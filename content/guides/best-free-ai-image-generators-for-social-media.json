@@ -19,6 +19,7 @@
     "Ideogram leads this shortlist because it is closely aligned with creating post visuals and concepts for social channels.",
     "Leonardo AI and Adobe Firefly are useful alternatives when your preferred editing, research, or setup workflow changes.",
     "Use free-plan options to test formats and visual direction before committing.",
+    "This beginner-level route asks social media creators to check text rendering, brand fit, usage terms, and platform dimensions before posting.",
     "Review generated output and confirm tool features on the official site before committing to a workflow."
   ],
   "recommendedToolSlugs": [
@@ -57,19 +58,19 @@
   ],
   "decisionPath": [
     {
-      "situation": "You want the most direct starting point for creating post visuals and concepts for social channels.",
-      "recommendation": "Ideogram",
-      "reason": "Selected for this guide's core workflow."
+      "situation": "If you need social post concepts that may include readable text elements, choose the first image option.",
+      "recommendation": "Choose Ideogram.",
+      "reason": "It is the starting choice here for social media creators exploring visual concepts and text-forward image ideas."
     },
     {
-      "situation": "You value iterating visual assets.",
-      "recommendation": "Leonardo AI",
-      "reason": "Selected for this guide's core workflow."
+      "situation": "If you need repeated asset exploration and control over visual directions, choose the iteration option.",
+      "recommendation": "Choose Leonardo AI.",
+      "reason": "It is relevant when comparing several visual directions before selecting assets for a campaign."
     },
     {
-      "situation": "You need creative exploration and image edits.",
-      "recommendation": "Adobe Firefly",
-      "reason": "Selected for this guide's core workflow."
+      "situation": "If you need creative exploration alongside image editing features, choose the Adobe option.",
+      "recommendation": "Choose Adobe Firefly.",
+      "reason": "It fits creators who want generation and edits in an Adobe-associated visual workflow."
     }
   ],
   "moneySavingTips": [
@@ -90,9 +91,13 @@
     {
       "question": "Can AI output be published without review?",
       "answer": "No. Review accuracy, brand fit, permissions, and final presentation before publishing or sharing client-facing work."
+    },
+    {
+      "question": "What should I verify before posting an AI-generated social image?",
+      "answer": "Confirm brand fit, readable text, correct dimensions, current usage terms, and that the image does not introduce misleading details or protected brand elements."
     }
   ],
-  "finalVerdict": "Start by testing Ideogram on one realistic creating post visuals and concepts for social channels project. Compare it with Leonardo AI if you need a different workflow, and choose only after reviewing the actual output and setup effort.",
+  "finalVerdict": "For a beginner social media creator making post visuals and concepts for social channels, try Ideogram first for initial image directions. Choose Leonardo AI for broader asset iteration or Adobe Firefly for an Adobe-associated editing route. Remain on a free-plan workflow until reviewed outputs fit your publishing needs.",
   "ctaToFinder": "Need a recommendation shaped by your workflow and budget? Use the Comparavy finder at /finder.",
   "visualSummary": {
     "headline": "A practical starting route for social media creators",

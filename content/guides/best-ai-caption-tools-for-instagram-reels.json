@@ -19,6 +19,7 @@
     "CapCut leads this shortlist because it is closely aligned with adding readable captions and repurposing short clips.",
     "Descript and Runway are useful alternatives when your preferred editing, research, or setup workflow changes.",
     "Validate caption accuracy in a free trial workflow before expanding output.",
+    "This beginner-level route starts with captions you can read and correct before learning more involved video production features.",
     "Review generated output and confirm tool features on the official site before committing to a workflow."
   ],
   "recommendedToolSlugs": [
@@ -57,19 +58,19 @@
   ],
   "decisionPath": [
     {
-      "situation": "You want the most direct starting point for adding readable captions and repurposing short clips.",
-      "recommendation": "CapCut",
-      "reason": "Selected for this guide's core workflow."
+      "situation": "If you need readable captions and simple reel edits in one beginner-friendly workflow, choose the first option.",
+      "recommendation": "Choose CapCut.",
+      "reason": "It is the practical starting option for Instagram creators making short captioned clips without a complicated editing setup."
     },
     {
-      "situation": "You value podcasts and talking-head videos.",
-      "recommendation": "Descript",
-      "reason": "Selected for this guide's core workflow."
+      "situation": "If you need to edit spoken recordings through their transcript before producing clips, choose the transcript option.",
+      "recommendation": "Choose Descript.",
+      "reason": "Transcript-first editing is useful for interviews, podcasts, and talking-head source material."
     },
     {
-      "situation": "You need ai video concept creation.",
-      "recommendation": "Runway",
-      "reason": "Selected for this guide's core workflow."
+      "situation": "If you need generated visual motion or creative clip concepts beyond caption cleanup, choose the creative option.",
+      "recommendation": "Choose Runway.",
+      "reason": "It is relevant when visual generation matters more than a basic captions-first workflow."
     }
   ],
   "moneySavingTips": [
@@ -90,9 +91,13 @@
     {
       "question": "Can AI output be published without review?",
       "answer": "No. Review accuracy, brand fit, permissions, and final presentation before publishing or sharing client-facing work."
+    },
+    {
+      "question": "What should I check before posting automatically generated captions?",
+      "answer": "Play the reel with sound and without sound, correct names and timing, and confirm that caption placement does not cover important on-screen text or platform controls."
     }
   ],
-  "finalVerdict": "Start by testing CapCut on one realistic adding readable captions and repurposing short clips project. Compare it with Descript if you need a different workflow, and choose only after reviewing the actual output and setup effort.",
+  "finalVerdict": "For a beginner Instagram creator adding readable captions and repurposing short clips, try CapCut first and review every caption before posting. Select Descript for transcript-led spoken content, or Runway when generated visual ideas are part of the brief. Confirm current plan limits before increasing output.",
   "ctaToFinder": "Need a recommendation shaped by your workflow and budget? Use the Comparavy finder at /finder.",
   "visualSummary": {
     "headline": "A practical starting route for Instagram creators",

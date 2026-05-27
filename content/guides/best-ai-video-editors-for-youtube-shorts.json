@@ -19,6 +19,7 @@
     "CapCut leads this shortlist because it is closely aligned with turning ideas or longer recordings into short vertical videos.",
     "Descript and Runway are useful alternatives when your preferred editing, research, or setup workflow changes.",
     "Start with an accessible workflow before paying for advanced production features.",
+    "This beginner-level route prioritizes a controllable first short with reviewed captions, framing, pacing, and rights before increasing volume.",
     "Review generated output and confirm tool features on the official site before committing to a workflow."
   ],
   "recommendedToolSlugs": [
@@ -57,19 +58,19 @@
   ],
   "decisionPath": [
     {
-      "situation": "You want the most direct starting point for turning ideas or longer recordings into short vertical videos.",
-      "recommendation": "CapCut",
-      "reason": "Selected for this guide's core workflow."
+      "situation": "If you need a beginner-friendly editing route for vertical clips and captions, choose the social editing option.",
+      "recommendation": "Choose CapCut.",
+      "reason": "It is the straightforward first choice here for YouTube Shorts creators assembling and checking short vertical edits."
     },
     {
-      "situation": "You value podcasts and talking-head videos.",
-      "recommendation": "Descript",
-      "reason": "Selected for this guide's core workflow."
+      "situation": "If you need to find highlights inside a spoken recording by editing its transcript, choose the transcript option.",
+      "recommendation": "Choose Descript.",
+      "reason": "It fits podcasts, interviews, and talking-head recordings that need selected excerpts before final video polishing."
     },
     {
-      "situation": "You need ai video concept creation.",
-      "recommendation": "Runway",
-      "reason": "Selected for this guide's core workflow."
+      "situation": "If you need generated motion concepts rather than primarily cutting existing footage, choose the creative video option.",
+      "recommendation": "Choose Runway.",
+      "reason": "It is a better fit when exploring created visuals is central to the short instead of ordinary clip editing."
     }
   ],
   "moneySavingTips": [
@@ -90,9 +91,13 @@
     {
       "question": "Can AI output be published without review?",
       "answer": "No. Review accuracy, brand fit, permissions, and final presentation before publishing or sharing client-facing work."
+    },
+    {
+      "question": "What should I verify before uploading a YouTube Short?",
+      "answer": "Check vertical framing, caption timing, audio rights, any generated visual disclosure needs, and whether the first seconds make sense without misleading the viewer."
     }
   ],
-  "finalVerdict": "Start by testing CapCut on one realistic turning ideas or longer recordings into short vertical videos project. Compare it with Descript if you need a different workflow, and choose only after reviewing the actual output and setup effort.",
+  "finalVerdict": "For a beginner YouTube Shorts creator turning ideas or longer recordings into short vertical videos, try CapCut first for an accessible edit. Use Descript for spoken source recordings and Runway for generated motion concepts. Pay for extra production features only after reviewed shorts fit your channel workflow.",
   "ctaToFinder": "Need a recommendation shaped by your workflow and budget? Use the Comparavy finder at /finder.",
   "visualSummary": {
     "headline": "A practical starting route for YouTube Shorts creators",
