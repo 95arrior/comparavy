@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import BadgeRow from "@/components/BadgeRow";
+import Logo from "@/components/Logo";
 import ToolIcon from "@/components/ToolIcon";
 import { toolsBySlug, type ToolSlug } from "@/data/tools";
 import { getPublishedGuides } from "@/lib/guides";
@@ -19,12 +20,7 @@ export default function GuidesPage() {
       <div className="mx-auto max-w-6xl">
         <header className="rounded-3xl border border-slate-200 bg-white px-6 py-10 shadow-sm sm:px-10 sm:py-14">
           <nav className="flex flex-wrap items-center justify-between gap-4">
-            <Link
-              href="/"
-              className="text-sm font-semibold tracking-[0.18em] text-teal-700"
-            >
-              COMPARAVY
-            </Link>
+            <Logo />
             <Link
               href="/finder"
               className="rounded-full border border-teal-200 px-5 py-2.5 text-sm font-semibold text-teal-800 transition hover:bg-teal-50"

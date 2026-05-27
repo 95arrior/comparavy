@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import BadgeRow, { getToolBadges } from "@/components/BadgeRow";
+import Logo from "@/components/Logo";
 import MetricBars from "@/components/MetricBars";
 import QuickSummaryCard from "@/components/QuickSummaryCard";
 import SectionHeading from "@/components/SectionHeading";
@@ -131,12 +132,15 @@ export default async function GuideDetailPage({ params }: GuidePageProps) {
     <main className="min-h-screen px-4 py-6 sm:px-6 sm:py-10">
       <article className="mx-auto max-w-5xl">
         <nav className="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <Link
-            href="/guides"
-            className="text-sm font-semibold tracking-[0.18em] text-teal-700"
-          >
-            COMPARAVY GUIDES
-          </Link>
+          <div className="flex flex-wrap items-center gap-4">
+            <Logo />
+            <Link
+              href="/guides"
+              className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-teal-200 hover:bg-teal-50"
+            >
+              Guides
+            </Link>
+          </div>
           <Link
             href="/finder"
             className="rounded-full border border-teal-200 px-5 py-2.5 text-sm font-semibold text-teal-800 transition hover:bg-teal-50"

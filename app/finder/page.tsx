@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import BadgeRow, { getToolBadges } from "@/components/BadgeRow";
+import Logo from "@/components/Logo";
 import MetricBars from "@/components/MetricBars";
 import ToolIcon from "@/components/ToolIcon";
 import { toolsBySlug, type ToolSlug } from "@/data/tools";
@@ -546,9 +547,7 @@ export default function FinderPage() {
     <main className="min-h-screen px-4 py-6 sm:px-6 sm:py-10">
       <div className="mx-auto max-w-5xl">
         <header className="mb-7 sm:mb-10">
-          <p className="text-sm font-semibold tracking-[0.18em] text-teal-700">
-            COMPARAVY
-          </p>
+          <Logo />
           <h1 className="mt-4 max-w-2xl text-3xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
             Find the AI tool that fits the job.
           </h1>

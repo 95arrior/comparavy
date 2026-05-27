@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import BadgeRow from "@/components/BadgeRow";
+import Logo from "@/components/Logo";
 import { getPublishedGuides } from "@/lib/guides";
 
 export const metadata: Metadata = {
@@ -62,18 +63,7 @@ export default function Home() {
     <main className="min-h-screen bg-slate-50 text-slate-900">
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-5 sm:px-6">
-          <Link
-            href="/"
-            className="flex items-center gap-3 text-sm font-semibold tracking-[0.18em] text-teal-700"
-          >
-            <span
-              aria-hidden="true"
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-700 text-sm font-semibold tracking-normal text-white"
-            >
-              C
-            </span>
-            COMPARAVY
-          </Link>
+          <Logo />
           <nav aria-label="Main navigation" className="flex items-center gap-2 sm:gap-3">
             <Link
               href="/guides"
@@ -261,12 +251,7 @@ export default function Home() {
 
       <footer className="border-t border-slate-200 bg-white px-4 py-8 sm:px-6">
         <div className="mx-auto flex max-w-6xl flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-          <Link
-            href="/"
-            className="text-sm font-semibold tracking-[0.18em] text-teal-700"
-          >
-            COMPARAVY
-          </Link>
+          <Logo />
           <nav aria-label="Footer navigation" className="flex items-center gap-6 text-sm">
             <Link href="/guides" className="text-slate-600 transition hover:text-teal-700">
               Guides
