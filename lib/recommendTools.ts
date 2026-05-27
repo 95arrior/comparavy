@@ -441,3 +441,9 @@ export function recommendTools(input: RecommendationInput): ToolRecommendation[]
     )
     .slice(0, 3);
 }
+
+export function getRecommendedTools(
+  input: RecommendationInput,
+): ToolRecommendation[] {
+  return recommendTools(input);
+}
