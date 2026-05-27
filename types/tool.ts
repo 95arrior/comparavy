@@ -26,6 +26,9 @@ export interface AiTool {
   readonly category: ToolCategory;
   readonly officialUrl: string;
   readonly affiliateUrl?: string;
+  readonly iconPath?: string;
+  readonly iconDomain?: string;
+  readonly brandColor?: string;
   readonly description: string;
   readonly bestFor: readonly string[];
   readonly notFor: readonly string[];

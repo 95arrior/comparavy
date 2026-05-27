@@ -11,6 +11,7 @@ export const tools = [
     name: "ChatGPT",
     category: "general-assistant",
     officialUrl: "https://chatgpt.com/",
+    iconDomain: "chatgpt.com",
     description:
       "A general-purpose assistant for drafting, brainstorming, explaining, file-based work, and everyday problem solving.",
     bestFor: [
@@ -46,6 +47,7 @@ export const tools = [
     name: "Claude",
     category: "general-assistant",
     officialUrl: "https://claude.ai/",
+    iconDomain: "claude.ai",
     description:
       "A conversational assistant commonly chosen for thoughtful writing, analysis, and working through long documents.",
     bestFor: [
@@ -81,6 +83,7 @@ export const tools = [
     name: "Gemini",
     category: "general-assistant",
     officialUrl: "https://gemini.google.com/",
+    iconDomain: "gemini.google.com",
     description:
       "Google's AI assistant for everyday prompts, ideation, research assistance, and workflows connected to Google services.",
     bestFor: [
@@ -116,6 +119,7 @@ export const tools = [
     name: "Perplexity",
     category: "research",
     officialUrl: "https://www.perplexity.ai/",
+    iconDomain: "perplexity.ai",
     description:
       "An answer engine oriented toward web research with cited sources that make follow-up checking easier.",
     bestFor: [
@@ -151,6 +155,7 @@ export const tools = [
     name: "Microsoft Copilot",
     category: "general-assistant",
     officialUrl: "https://copilot.microsoft.com/",
+    iconDomain: "copilot.microsoft.com",
     description:
       "Microsoft's general AI assistant for web conversations, drafting, and users invested in Microsoft workflows.",
     bestFor: [
@@ -186,6 +191,7 @@ export const tools = [
     name: "NotebookLM",
     category: "research",
     officialUrl: "https://notebooklm.google.com/",
+    iconDomain: "notebooklm.google.com",
     description:
       "A source-grounded notebook assistant designed to help users ask questions about materials they provide.",
     bestFor: [
@@ -221,6 +227,7 @@ export const tools = [
     name: "Grammarly",
     category: "writing",
     officialUrl: "https://www.grammarly.com/",
+    iconDomain: "grammarly.com",
     description:
       "A writing assistant focused on clarity, correctness, tone, and in-context help across common writing surfaces.",
     bestFor: [
@@ -256,6 +263,7 @@ export const tools = [
     name: "Jasper",
     category: "writing",
     officialUrl: "https://www.jasper.ai/",
+    iconDomain: "jasper.ai",
     description:
       "A marketing-oriented AI platform for producing and governing brand-aligned content across campaigns.",
     bestFor: [
@@ -291,6 +299,7 @@ export const tools = [
     name: "Copy.ai",
     category: "writing",
     officialUrl: "https://www.copy.ai/",
+    iconDomain: "copy.ai",
     description:
       "An AI platform for business content and go-to-market workflows, with emphasis on reusable processes.",
     bestFor: [
@@ -326,6 +335,7 @@ export const tools = [
     name: "Writesonic",
     category: "writing",
     officialUrl: "https://writesonic.com/",
+    iconDomain: "writesonic.com",
     description:
       "A marketing content platform geared toward articles, site copy, and discoverability-oriented workflows.",
     bestFor: [
@@ -361,6 +371,7 @@ export const tools = [
     name: "Notion AI",
     category: "productivity",
     officialUrl: "https://www.notion.com/product/ai",
+    iconDomain: "notion.com",
     description:
       "AI capabilities inside Notion for searching workspace knowledge, drafting, and working with project notes.",
     bestFor: [
@@ -396,6 +407,7 @@ export const tools = [
     name: "Canva Magic Studio",
     category: "design",
     officialUrl: "https://www.canva.com/magic/",
+    iconDomain: "canva.com",
     description:
       "AI-assisted creation features within Canva for layouts, social graphics, presentations, and simple brand assets.",
     bestFor: [
@@ -431,6 +443,7 @@ export const tools = [
     name: "Adobe Firefly",
     category: "image-generation",
     officialUrl: "https://firefly.adobe.com/",
+    iconDomain: "firefly.adobe.com",
     description:
       "Adobe's generative creative tool for generating and editing images and design elements through prompts.",
     bestFor: [
@@ -466,6 +479,7 @@ export const tools = [
     name: "Midjourney",
     category: "image-generation",
     officialUrl: "https://www.midjourney.com/",
+    iconDomain: "midjourney.com",
     description:
       "An AI image generation platform popular for visually rich concept art and stylized image exploration.",
     bestFor: [
@@ -501,6 +515,7 @@ export const tools = [
     name: "Ideogram",
     category: "image-generation",
     officialUrl: "https://ideogram.ai/",
+    iconDomain: "ideogram.ai",
     description:
       "An image generation tool suited to creative visuals, including concepts where rendered text matters.",
     bestFor: [
@@ -536,6 +551,7 @@ export const tools = [
     name: "Leonardo AI",
     category: "image-generation",
     officialUrl: "https://leonardo.ai/",
+    iconDomain: "leonardo.ai",
     description:
       "A generative visual platform offering image creation and creative asset workflows for makers and designers.",
     bestFor: [
@@ -571,6 +587,7 @@ export const tools = [
     name: "Runway",
     category: "video",
     officialUrl: "https://runwayml.com/",
+    iconDomain: "runwayml.com",
     description:
       "A creative AI video platform for generating, transforming, and exploring motion content.",
     bestFor: [
@@ -606,6 +623,7 @@ export const tools = [
     name: "Descript",
     category: "video",
     officialUrl: "https://www.descript.com/",
+    iconDomain: "descript.com",
     description:
       "An audio and video editor built around transcripts, with AI-assisted editing and production features.",
     bestFor: [
@@ -641,6 +659,7 @@ export const tools = [
     name: "CapCut",
     category: "video",
     officialUrl: "https://www.capcut.com/",
+    iconDomain: "capcut.com",
     description:
       "An accessible video editor with AI-assisted creation features for social and short-form content workflows.",
     bestFor: [
@@ -676,6 +695,7 @@ export const tools = [
     name: "Synthesia",
     category: "video",
     officialUrl: "https://www.synthesia.io/",
+    iconDomain: "synthesia.io",
     description:
       "An AI video platform centered on avatar-led business videos such as training, explainers, and internal content.",
     bestFor: [
@@ -711,6 +731,7 @@ export const tools = [
     name: "HeyGen",
     category: "video",
     officialUrl: "https://www.heygen.com/",
+    iconDomain: "heygen.com",
     description:
       "An AI video platform for avatar videos, translated video, and presenter-style communication content.",
     bestFor: [
@@ -746,6 +767,7 @@ export const tools = [
     name: "ElevenLabs",
     category: "audio",
     officialUrl: "https://elevenlabs.io/",
+    iconDomain: "elevenlabs.io",
     description:
       "An AI audio platform for text-to-speech, voice workflows, dubbing, and narrated content.",
     bestFor: [
@@ -781,6 +803,7 @@ export const tools = [
     name: "Otter.ai",
     category: "meetings",
     officialUrl: "https://otter.ai/",
+    iconDomain: "otter.ai",
     description:
       "A transcription and meeting note tool that helps capture conversations, summaries, and action items.",
     bestFor: [
@@ -816,6 +839,7 @@ export const tools = [
     name: "Gamma",
     category: "presentations",
     officialUrl: "https://gamma.app/",
+    iconDomain: "gamma.app",
     description:
       "An AI-assisted creation tool for presentations, documents, and lightweight web-style storytelling.",
     bestFor: [
@@ -851,6 +875,7 @@ export const tools = [
     name: "Zapier AI",
     category: "automation",
     officialUrl: "https://zapier.com/ai",
+    iconDomain: "zapier.com",
     description:
       "AI features in Zapier for helping users build automations and connect recurring work across apps.",
     bestFor: [
@@ -886,6 +911,7 @@ export const tools = [
     name: "Make",
     category: "automation",
     officialUrl: "https://www.make.com/en/ai-automation",
+    iconDomain: "make.com",
     description:
       "A visual automation platform with AI-related workflows for connecting apps and orchestrating multi-step processes.",
     bestFor: [
@@ -921,6 +947,7 @@ export const tools = [
     name: "n8n",
     category: "automation",
     officialUrl: "https://n8n.io/",
+    iconDomain: "n8n.io",
     description:
       "A workflow automation platform with AI workflow support and a self-hostable option for technically capable users.",
     bestFor: [
@@ -956,6 +983,7 @@ export const tools = [
     name: "Cursor",
     category: "coding",
     officialUrl: "https://cursor.com/",
+    iconDomain: "cursor.com",
     description:
       "An AI code editor built for writing, understanding, and changing software projects with assistant support.",
     bestFor: [
@@ -991,6 +1019,7 @@ export const tools = [
     name: "GitHub Copilot",
     category: "coding",
     officialUrl: "https://github.com/features/copilot",
+    iconDomain: "github.com",
     description:
       "An AI coding assistant integrated into developer workflows for code completion, chat, and software tasks.",
     bestFor: [
@@ -1026,6 +1055,7 @@ export const tools = [
     name: "Replit",
     category: "coding",
     officialUrl: "https://replit.com/ai",
+    iconDomain: "replit.com",
     description:
       "A browser-based development environment with AI-assisted app building and deployment-oriented workflows.",
     bestFor: [
@@ -1061,6 +1091,7 @@ export const tools = [
     name: "Framer AI",
     category: "website",
     officialUrl: "https://www.framer.com/ai/",
+    iconDomain: "framer.com",
     description:
       "AI-assisted website creation within Framer for generating and refining visual marketing sites.",
     bestFor: [
@@ -1096,6 +1127,7 @@ export const tools = [
     name: "DeepL Write",
     category: "writing",
     officialUrl: "https://www.deepl.com/write",
+    iconDomain: "deepl.com",
     description:
       "A writing improvement tool focused on wording, clarity, tone, and multilingual communication support.",
     bestFor: [

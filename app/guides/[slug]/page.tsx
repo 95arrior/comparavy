@@ -1,11 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import BadgeRow, { getToolBadges } from "@/components/BadgeRow";
+import MetricBars from "@/components/MetricBars";
+import QuickSummaryCard from "@/components/QuickSummaryCard";
+import SectionHeading from "@/components/SectionHeading";
+import ToolIcon from "@/components/ToolIcon";
+import { toolsBySlug, type ToolSlug } from "@/data/tools";
 import {
   getPublishedGuideBySlug,
   getPublishedGuides,
   type Guide,
 } from "@/lib/guides";
+import type { AiTool } from "@/types/tool";
 
 interface GuidePageProps {
   readonly params: Promise<{ slug: string }>;
@@ -32,55 +39,78 @@ export async function generateMetadata({
   };
 }
 
-function SectionHeading({
-  eyebrow,
-  children,
-}: {
-  readonly eyebrow: string;
-  readonly children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-700">
-        {eyebrow}
-      </p>
-      <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-        {children}
-      </h2>
-    </div>
-  );
-}
-
 function ComparisonTable({ guide }: { readonly guide: Guide }) {
   return (
     <div className="mt-7 overflow-x-auto rounded-2xl border border-slate-200">
-      <table className="min-w-[760px] w-full border-collapse text-left text-sm">
+      <table className="w-full min-w-[840px] border-collapse text-left text-sm">
         <thead className="bg-slate-50 text-slate-600">
           <tr>
             <th className="px-5 py-4 font-semibold">Tool</th>
-            <th className="px-5 py-4 font-semibold">Best for</th>
-            <th className="px-5 py-4 font-semibold">Free plan listed</th>
-            <th className="px-5 py-4 font-semibold">Ease</th>
+            <th className="px-5 py-4 font-semibold">Best fit</th>
+            <th className="w-48 px-5 py-4 font-semibold">Signals</th>
             <th className="px-5 py-4 font-semibold">Watch for</th>
           </tr>
         </thead>
         <tbody>
-          {guide.comparisonRows.map((row) => (
-            <tr key={row.toolSlug} className="border-t border-slate-200 align-top">
-              <td className="px-5 py-5">
-                <p className="font-semibold text-slate-900">{row.toolName}</p>
-                <p className="mt-2 text-xs leading-5 text-teal-700">
-                  {row.whyConsider}
-                </p>
-              </td>
-              <td className="px-5 py-5 leading-6 text-slate-600">{row.bestFor}</td>
-              <td className="px-5 py-5 text-slate-600">
-                {row.freePlan ? "Yes" : "Not listed"}
-              </td>
-              <td className="px-5 py-5 leading-6 text-slate-600">{row.easeOfUse}</td>
-              <td className="px-5 py-5 leading-6 text-slate-600">{row.watchFor}</td>
-            </tr>
-          ))}
+          {guide.comparisonRows.map((row, index) => {
+            const tool: AiTool | undefined = toolsBySlug.get(row.toolSlug as ToolSlug);
+
+            return (
+              <tr
+                key={row.toolSlug}
+                className={`border-t border-slate-200 align-top ${
+                  index === 0 ? "bg-teal-50/40" : "bg-white"
+                }`}
+              >
+                <td className="px-5 py-5">
+                  <div className="flex items-center gap-3">
+                    <ToolIcon
+                      name={row.toolName}
+                      slug={row.toolSlug}
+                      officialUrl={tool?.officialUrl}
+                      iconPath={tool?.iconPath}
+                      iconDomain={tool?.iconDomain}
+                      brandColor={tool?.brandColor}
+                      size="sm"
+                    />
+                    <div>
+                      <p className="font-semibold text-slate-900">{row.toolName}</p>
+                      {index === 0 && (
+                        <p className="mt-1 text-xs font-medium text-teal-700">
+                          Best first choice
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {row.freePlan && (
+                    <div className="mt-3">
+                      <BadgeRow badges={[{ label: "Free plan" }]} />
+                    </div>
+                  )}
+                </td>
+                <td className="px-5 py-5 leading-6 text-slate-600">
+                  <p className="font-medium text-slate-800">{row.bestFor}</p>
+                  <p className="mt-2 text-xs leading-5 text-teal-700">
+                    {row.whyConsider}
+                  </p>
+                </td>
+                <td className="px-5 py-5">
+                  {tool ? (
+                    <MetricBars
+                      tool={tool}
+                      metrics={["easeScore", "qualityScore"]}
+                      compact
+                    />
+                  ) : (
+                    <p className="leading-6 text-slate-600">{row.easeOfUse}</p>
+                  )}
+                </td>
+                <td className="px-5 py-5 leading-6 text-slate-600">
+                  {row.watchFor}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
@@ -94,6 +124,8 @@ export default async function GuideDetailPage({ params }: GuidePageProps) {
   if (!guide) {
     notFound();
   }
+
+  const primaryTool = toolsBySlug.get(guide.recommendedToolSlugs[0] as ToolSlug);
 
   return (
     <main className="min-h-screen px-4 py-6 sm:px-6 sm:py-10">
@@ -114,14 +146,12 @@ export default async function GuideDetailPage({ params }: GuidePageProps) {
         </nav>
 
         <header className="rounded-3xl border border-slate-200 bg-white px-6 py-9 shadow-sm sm:px-10 sm:py-12">
-          <div className="flex flex-wrap gap-2 text-xs font-medium">
-            <span className="rounded-full bg-teal-50 px-3 py-1.5 text-teal-800">
-              {guide.category}
-            </span>
-            <span className="rounded-full bg-slate-50 px-3 py-1.5 text-slate-700">
-              {guide.skillLevel} friendly
-            </span>
-          </div>
+          <BadgeRow
+            badges={[
+              { label: guide.category, tone: "teal" },
+              { label: `${guide.skillLevel} friendly` },
+            ]}
+          />
           <h1 className="mt-6 max-w-4xl text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
             {guide.title}
           </h1>
@@ -142,12 +172,47 @@ export default async function GuideDetailPage({ params }: GuidePageProps) {
           </dl>
         </header>
 
-        <section className="mt-6 rounded-3xl border border-teal-100 bg-teal-50/60 p-6 sm:p-8">
-          <SectionHeading eyebrow="Quick verdict">Where to start</SectionHeading>
-          <p className="mt-5 text-base leading-8 text-slate-700">
+        <QuickSummaryCard guide={guide} />
+
+        <section className="mt-6 rounded-3xl border border-teal-100 bg-teal-50/70 p-6 sm:p-8">
+          <SectionHeading eyebrow="Quick verdict" marker="⚡">
+            Where to start
+          </SectionHeading>
+          <p className="mt-5 max-w-4xl text-base leading-8 text-slate-700">
             {guide.quickVerdict}
           </p>
         </section>
+
+        {primaryTool && (
+          <section className="mt-6 grid gap-4 md:grid-cols-2">
+            <div className="rounded-3xl border border-teal-100 bg-white p-6 shadow-sm sm:p-8">
+              <SectionHeading eyebrow="Best for" marker="✅">
+                Choose {primaryTool.name} when
+              </SectionHeading>
+              <ul className="mt-6 space-y-3 text-sm leading-7 text-slate-700">
+                {primaryTool.bestFor.map((reason) => (
+                  <li key={reason} className="flex gap-3">
+                    <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-600" />
+                    <span>{reason}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="rounded-3xl border border-amber-100 bg-white p-6 shadow-sm sm:p-8">
+              <SectionHeading eyebrow="Avoid if" marker="⚠️">
+                Consider another option when
+              </SectionHeading>
+              <ul className="mt-6 space-y-3 text-sm leading-7 text-slate-700">
+                {primaryTool.avoidIf.map((reason) => (
+                  <li key={reason} className="flex gap-3">
+                    <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                    <span>{reason}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        )}
 
         <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
           <SectionHeading eyebrow="Key takeaways">What matters most</SectionHeading>
@@ -164,7 +229,11 @@ export default async function GuideDetailPage({ params }: GuidePageProps) {
         </section>
 
         <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-          <SectionHeading eyebrow="Comparison table">
+          <SectionHeading
+            eyebrow="Comparison"
+            marker="📊"
+            description="Scan the shortlist by practical fit and the signals available in the Comparavy catalog."
+          >
             Shortlisted tools
           </SectionHeading>
           <ComparisonTable guide={guide} />
@@ -192,20 +261,18 @@ export default async function GuideDetailPage({ params }: GuidePageProps) {
 
           <div className="space-y-6">
             <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-semibold tracking-tight text-slate-900">
-                Money-saving tips
-              </h2>
-              <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
+              <SectionHeading eyebrow="Budget" marker="💸">
+                Spend deliberately
+              </SectionHeading>
+              <ul className="mt-5 space-y-3 text-sm leading-6 text-slate-600">
                 {guide.moneySavingTips.map((tip) => (
-                  <li key={tip}>{tip}</li>
+                  <li key={tip} className="flex gap-3">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-600" />
+                    <span>{tip}</span>
+                  </li>
                 ))}
               </ul>
-            </section>
-            <section className="rounded-3xl border border-teal-100 bg-teal-50/60 p-6">
-              <h2 className="text-xl font-semibold tracking-tight text-slate-900">
-                Pricing note
-              </h2>
-              <p className="mt-4 text-sm leading-7 text-slate-700">
+              <p className="mt-6 rounded-2xl bg-teal-50 px-4 py-3 text-sm leading-7 text-slate-700">
                 {guide.pricingNote}
               </p>
             </section>
@@ -213,14 +280,22 @@ export default async function GuideDetailPage({ params }: GuidePageProps) {
         </section>
 
         <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-          <SectionHeading eyebrow="FAQ">Common questions</SectionHeading>
-          <div className="mt-6 divide-y divide-slate-200">
+          <SectionHeading eyebrow="FAQ" marker="🔎">
+            Common questions
+          </SectionHeading>
+          <div className="mt-6 space-y-3">
             {guide.faqs.map((faq) => (
-              <details key={faq.question} className="group py-5">
-                <summary className="cursor-pointer list-none pr-4 font-semibold text-slate-900">
-                  {faq.question}
+              <details
+                key={faq.question}
+                className="group rounded-2xl border border-slate-100 bg-slate-50/60 px-5 py-4 open:bg-white"
+              >
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold text-slate-900">
+                  <span>{faq.question}</span>
+                  <span className="text-lg font-normal text-teal-700 transition group-open:rotate-45">
+                    +
+                  </span>
                 </summary>
-                <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
+                <p className="mt-4 max-w-3xl border-t border-slate-100 pt-4 text-sm leading-7 text-slate-600">
                   {faq.answer}
                 </p>
               </details>
@@ -229,19 +304,26 @@ export default async function GuideDetailPage({ params }: GuidePageProps) {
         </section>
 
         <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-          <SectionHeading eyebrow="Final verdict">Make the decision</SectionHeading>
+          <SectionHeading eyebrow="Final verdict" marker="🎯">
+            Make the decision
+          </SectionHeading>
           <p className="mt-5 max-w-3xl text-base leading-8 text-slate-700">
             {guide.finalVerdict}
           </p>
-          <div className="mt-8 rounded-2xl bg-slate-900 p-6 text-white sm:flex sm:items-center sm:justify-between sm:gap-8">
-            <p className="max-w-xl text-sm leading-7 text-slate-200">
-              {guide.ctaToFinder}
-            </p>
+          <div className="mt-8 rounded-3xl bg-slate-900 p-6 text-white sm:flex sm:items-center sm:justify-between sm:gap-8 sm:p-7">
+            <div>
+              <p className="text-lg font-semibold text-white">
+                Need a choice matched to your constraints?
+              </p>
+              <p className="mt-2 max-w-xl text-sm leading-7 text-slate-300">
+                {guide.ctaToFinder}
+              </p>
+            </div>
             <Link
               href="/finder"
-              className="mt-5 inline-flex shrink-0 rounded-full bg-teal-500 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-400 sm:mt-0"
+              className="mt-6 inline-flex shrink-0 rounded-full bg-teal-400 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-300 sm:mt-0"
             >
-              Use the finder
+              Find my best match
             </Link>
           </div>
         </section>

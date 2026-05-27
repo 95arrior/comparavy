@@ -1,6 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
+import BadgeRow, { getToolBadges } from "@/components/BadgeRow";
+import MetricBars from "@/components/MetricBars";
+import ToolIcon from "@/components/ToolIcon";
 import { toolsBySlug, type ToolSlug } from "@/data/tools";
 import {
   getRecommendedTools,
@@ -300,38 +304,16 @@ function OptionButton({
   );
 }
 
-function Score({
-  label,
-  value,
-}: {
-  label: string;
-  value: number;
-}) {
-  return (
-    <div className="rounded-xl bg-slate-50 px-3 py-3">
-      <p className="text-xs text-slate-500">{label}</p>
-      <p className="mt-1 text-lg font-semibold text-slate-900">
-        {value}
-        <span className="text-sm font-normal text-slate-500">/10</span>
-      </p>
-    </div>
-  );
-}
-
 function RecommendationCard({
   recommendation,
   rank,
   compareOpen,
-  guideOpen,
   onCompare,
-  onGuide,
 }: {
   recommendation: ToolRecommendation;
   rank: number;
   compareOpen: boolean;
-  guideOpen: boolean;
   onCompare: () => void;
-  onGuide: () => void;
 }) {
   const { tool, reasons } = recommendation;
   const destination = tool.affiliateUrl ?? tool.officialUrl;
@@ -340,24 +322,29 @@ function RecommendationCard({
     .filter((alternative) => alternative !== undefined);
 
   return (
-    <article className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-700">
-            {rank === 1 ? "Top recommendation" : `Option ${rank}`}
-          </p>
-          <h3 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">
-            {tool.name}
-          </h3>
+    <article
+      className={`rounded-3xl border bg-white p-5 shadow-sm transition sm:p-7 ${
+        rank === 1
+          ? "border-teal-200 ring-1 ring-teal-100"
+          : "border-slate-200 hover:border-slate-300"
+      }`}
+    >
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <ToolIcon {...tool} size="lg" />
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-700">
+              {rank === 1 ? "Top recommendation" : `Option ${rank}`}
+            </p>
+            <h3 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
+              {tool.name}
+            </h3>
+          </div>
         </div>
-        {tool.freePlan && (
-          <span className="shrink-0 rounded-full bg-teal-50 px-3 py-1 text-xs font-medium text-teal-800">
-            Free plan
-          </span>
-        )}
+        <BadgeRow badges={getToolBadges(tool, rank === 1)} />
       </div>
 
-      <div className="mt-5">
+      <div className="mt-6 max-w-3xl">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
           Short verdict
         </p>
@@ -366,33 +353,51 @@ function RecommendationCard({
         </p>
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <Score label="Ease" value={tool.easeScore} />
-        <Score label="Speed" value={tool.speedScore} />
-        <Score label="Quality" value={tool.qualityScore} />
-        <Score label="Beginner" value={tool.beginnerScore} />
-      </div>
-
-      <div className="mt-6 grid gap-5 sm:grid-cols-3">
-        <div>
-          <p className="text-sm font-semibold text-slate-900">Best for</p>
-          <ul className="mt-2 space-y-2 text-sm leading-6 text-slate-600">
-            {tool.bestFor.map((item) => (
-              <li key={item}>{item}</li>
+      <div className="mt-7 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="rounded-2xl bg-slate-50 p-5">
+          <p className="mb-5 text-sm font-semibold text-slate-900">
+            Fit signals
+          </p>
+          <MetricBars tool={tool} />
+        </div>
+        <div className="rounded-2xl border border-slate-100 p-5">
+          <p className="text-sm font-semibold text-slate-900">
+            Why this appears in your results
+          </p>
+          <ul className="mt-4 space-y-2.5 text-sm leading-6 text-slate-600">
+            {reasons.map((reason) => (
+              <li key={reason} className="flex gap-3">
+                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-600" />
+                <span>{reason}</span>
+              </li>
             ))}
           </ul>
         </div>
-        <div>
+      </div>
+
+      <div className="mt-6 grid gap-3 sm:grid-cols-3">
+        <div className="rounded-2xl bg-teal-50/70 p-4">
+          <p className="text-sm font-semibold text-slate-900">Best for</p>
+          <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
+            {tool.bestFor.map((item) => (
+              <li key={item} className="flex gap-2">
+                <span className="text-teal-700">+</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="rounded-2xl bg-slate-50 p-4">
           <p className="text-sm font-semibold text-slate-900">Not for</p>
-          <ul className="mt-2 space-y-2 text-sm leading-6 text-slate-600">
+          <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
             {tool.notFor.map((item) => (
               <li key={item}>{item}</li>
             ))}
           </ul>
         </div>
-        <div>
+        <div className="rounded-2xl bg-amber-50/60 p-4">
           <p className="text-sm font-semibold text-slate-900">Avoid if</p>
-          <ul className="mt-2 space-y-2 text-sm leading-6 text-slate-600">
+          <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
             {tool.avoidIf.map((item) => (
               <li key={item}>{item}</li>
             ))}
@@ -400,32 +405,16 @@ function RecommendationCard({
         </div>
       </div>
 
-      <div className="mt-6 rounded-2xl bg-slate-50 p-4">
+      <div className="mt-6 flex flex-col gap-2 rounded-2xl border border-slate-100 bg-slate-50/60 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
           <p className="font-semibold text-slate-900">Pricing note</p>
           <p className="text-slate-600">
             Free plan: {tool.freePlan ? "Available" : "Not listed"}
           </p>
         </div>
-        <p className="mt-2 text-sm leading-6 text-slate-600">
+        <p className="text-sm leading-6 text-slate-600">
           {tool.pricingNote}
         </p>
-      </div>
-
-      <div className="mt-6">
-        <p className="text-sm font-semibold text-slate-900">
-          Reasons why recommended
-        </p>
-        <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
-          {reasons.map((reason) => (
-            <li key={reason} className="flex gap-2">
-              <span aria-hidden="true" className="text-teal-700">
-                +
-              </span>
-              <span>{reason}</span>
-            </li>
-          ))}
-        </ul>
       </div>
 
       <div className="mt-7 grid gap-2 sm:grid-cols-3">
@@ -449,14 +438,12 @@ function RecommendationCard({
         >
           Compare alternatives
         </button>
-        <button
-          type="button"
-          aria-expanded={guideOpen}
-          onClick={onGuide}
-          className="rounded-full border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+        <Link
+          href="/guides"
+          className="rounded-full border border-slate-200 bg-white px-4 py-3 text-center text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
         >
           Read full guide
-        </button>
+        </Link>
       </div>
 
       {compareOpen && (
@@ -471,38 +458,13 @@ function RecommendationCard({
                 href={alternative.officialUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-full bg-white px-4 py-2 text-sm text-slate-700 ring-1 ring-slate-200 transition hover:ring-teal-300"
+                className="flex items-center gap-2 rounded-2xl bg-white px-3 py-2 text-sm text-slate-700 ring-1 ring-slate-200 transition hover:ring-teal-300"
               >
+                <ToolIcon {...alternative} size="sm" />
                 {alternative.name}
               </a>
             ))}
           </div>
-        </div>
-      )}
-
-      {guideOpen && (
-        <div className="mt-5 rounded-2xl border border-slate-200 p-4 text-sm text-slate-600">
-          <p className="font-semibold text-slate-900">More decision context</p>
-          <p className="mt-3">
-            Setup difficulty:{" "}
-            <span className="font-medium text-slate-800">
-              {tool.setupDifficulty}
-            </span>
-          </p>
-          <p className="mt-3">Common workflows:</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {tool.useCases.map((useCase) => (
-              <span
-                key={useCase}
-                className="rounded-full bg-slate-50 px-3 py-1 text-slate-700"
-              >
-                {useCase}
-              </span>
-            ))}
-          </div>
-          <p className="mt-4 text-xs text-slate-500">
-            Pricing information last checked: {tool.pricingLastChecked}.
-          </p>
         </div>
       )}
     </article>
@@ -513,7 +475,6 @@ export default function FinderPage() {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<FinderAnswers>(INITIAL_ANSWERS);
   const [compareOpen, setCompareOpen] = useState<string | null>(null);
-  const [guideOpen, setGuideOpen] = useState<string | null>(null);
 
   const input =
     answers.goal &&
@@ -578,7 +539,6 @@ export default function FinderPage() {
   function resetFinder() {
     setAnswers({ ...INITIAL_ANSWERS });
     setCompareOpen(null);
-    setGuideOpen(null);
     setStep(0);
   }
 
@@ -759,16 +719,8 @@ export default function FinderPage() {
                   recommendation={recommendation}
                   rank={index + 1}
                   compareOpen={compareOpen === recommendation.tool.id}
-                  guideOpen={guideOpen === recommendation.tool.id}
                   onCompare={() =>
                     setCompareOpen((current) =>
-                      current === recommendation.tool.id
-                        ? null
-                        : recommendation.tool.id,
-                    )
-                  }
-                  onGuide={() =>
-                    setGuideOpen((current) =>
                       current === recommendation.tool.id
                         ? null
                         : recommendation.tool.id,

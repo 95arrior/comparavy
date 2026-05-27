@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import BadgeRow from "@/components/BadgeRow";
+import ToolIcon from "@/components/ToolIcon";
+import { toolsBySlug, type ToolSlug } from "@/data/tools";
 import { getPublishedGuides } from "@/lib/guides";
 
 export const metadata: Metadata = {
@@ -39,6 +42,18 @@ export default function GuidesPage() {
             Compare realistic starting options, tradeoffs, and budget-conscious
             decision paths before testing a tool yourself.
           </p>
+          <div className="mt-9 rounded-2xl bg-slate-900 p-5 text-white sm:flex sm:items-center sm:justify-between sm:gap-6">
+            <p className="max-w-xl text-sm leading-7 text-slate-300">
+              Not sure which guide fits? Answer five questions and get a shortlist
+              matched to your use case, budget, and experience level.
+            </p>
+            <Link
+              href="/finder"
+              className="mt-5 inline-flex shrink-0 rounded-full bg-teal-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-300 sm:mt-0"
+            >
+              Find my tool
+            </Link>
+          </div>
         </header>
 
         <section className="mt-10">
@@ -55,43 +70,77 @@ export default function GuidesPage() {
           </div>
 
           <div className="mt-7 grid gap-4 md:grid-cols-2">
-            {guides.map((guide) => (
-              <article
-                key={guide.slug}
-                className="flex flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
-              >
-                <div className="flex flex-wrap gap-2 text-xs font-medium text-teal-800">
-                  <span className="rounded-full bg-teal-50 px-3 py-1.5">
-                    {guide.category}
-                  </span>
-                  <span className="rounded-full bg-slate-50 px-3 py-1.5 text-slate-600">
-                    {guide.skillLevel}
-                  </span>
-                </div>
-                <h3 className="mt-5 text-2xl font-semibold tracking-tight text-slate-900">
-                  <Link
-                    href={`/guides/${guide.slug}`}
-                    className="transition hover:text-teal-700"
-                  >
-                    {guide.title}
-                  </Link>
-                </h3>
-                <p className="mt-4 flex-1 text-sm leading-7 text-slate-600">
-                  {guide.quickVerdict}
-                </p>
-                <div className="mt-6 border-t border-slate-100 pt-5">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    For {guide.persona}
+            {guides.map((guide) => {
+              const primaryTool = toolsBySlug.get(
+                guide.recommendedToolSlugs[0] as ToolSlug,
+              );
+
+              return (
+                <article
+                  key={guide.slug}
+                  className="flex flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-slate-300"
+                >
+                  <BadgeRow
+                    badges={[
+                      { label: guide.category, tone: "teal" },
+                      { label: guide.skillLevel },
+                    ]}
+                  />
+                  <h3 className="mt-5 text-2xl font-semibold tracking-tight text-slate-900">
+                    <Link
+                      href={`/guides/${guide.slug}`}
+                      className="transition hover:text-teal-700"
+                    >
+                      {guide.title}
+                    </Link>
+                  </h3>
+                  <dl className="mt-5 grid gap-3 rounded-2xl bg-slate-50 p-4 text-sm">
+                    <div>
+                      <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        For
+                      </dt>
+                      <dd className="mt-1 font-medium text-slate-800">
+                        {guide.persona}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Use case
+                      </dt>
+                      <dd className="mt-1 leading-6 text-slate-700">{guide.useCase}</dd>
+                    </div>
+                  </dl>
+                  {primaryTool && (
+                    <div className="mt-5 flex items-center gap-3">
+                      <ToolIcon {...primaryTool} size="sm" />
+                      <div>
+                        <p className="text-xs text-slate-500">Recommended start</p>
+                        <p className="text-sm font-semibold text-slate-900">
+                          {primaryTool.name}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  <p className="mt-5 flex-1 text-sm leading-7 text-slate-600">
+                    {guide.quickVerdict}
                   </p>
-                  <Link
-                    href={`/guides/${guide.slug}`}
-                    className="mt-4 inline-flex text-sm font-semibold text-teal-700 hover:text-teal-800"
-                  >
-                    Read guide
-                  </Link>
-                </div>
-              </article>
-            ))}
+                  <div className="mt-6 flex flex-wrap gap-3 border-t border-slate-100 pt-5">
+                    <Link
+                      href={`/guides/${guide.slug}`}
+                      className="rounded-full bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800"
+                    >
+                      Read guide
+                    </Link>
+                    <Link
+                      href="/finder"
+                      className="rounded-full border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-teal-200 hover:bg-teal-50"
+                    >
+                      Use finder
+                    </Link>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         </section>
       </div>
