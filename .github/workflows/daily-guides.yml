@@ -1,0 +1,55 @@
+name: Publish daily guides
+
+on:
+  schedule:
+    - cron: "17 9 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-guides-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Publish selected guide candidates
+        run: npm run auto:publish-guides -- --count 2
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ secrets.OPENAI_MODEL || 'gpt-4o' }}
+          MAX_DAILY_PUBLISH: 2
+
+      - name: Check guide quality
+        run: npm run check:guides
+
+      - name: Build application
+        run: npm run build
+
+      - name: Commit guide updates
+        shell: bash
+        run: |
+          git config user.name "comparavy-bot"
+          git config user.email "comparavy-bot@users.noreply.github.com"
+          git add content/guides
+          if git diff --cached --quiet; then
+            echo "No guide changes to commit."
+            exit 0
+          fi
+          git commit -m "Publish daily Comparavy guides"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

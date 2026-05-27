@@ -1,5 +1,6 @@
 import { access, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { guideTopics, type GuideTopic } from "@/data/guideTopics";
 import {
   PRICING_NOTICE,
@@ -25,7 +26,7 @@ interface ResponsesResult {
   }[];
 }
 
-const GUIDES_DIRECTORY = path.join(process.cwd(), "content", "guides");
+export const GUIDES_DIRECTORY = path.join(process.cwd(), "content", "guides");
 
 const GUIDE_SCHEMA = {
   type: "object",
@@ -172,7 +173,7 @@ function parseOptions(args: readonly string[]): GeneratorOptions {
   return { count, publish };
 }
 
-function createTemplateGuide(topic: GuideTopic, status: GuideStatus): Guide {
+export function createTemplateGuide(topic: GuideTopic, status: GuideStatus): Guide {
   const recommendations = getTopicRecommendations(topic, 3);
   const [first, second, third] = recommendations;
   const date = new Date().toISOString().slice(0, 10);
@@ -350,7 +351,7 @@ async function refineWithOpenAI(template: Guide): Promise<Guide> {
   return refined;
 }
 
-async function getExistingGuides(): Promise<Guide[]> {
+export async function getExistingGuides(): Promise<Guide[]> {
   try {
     await access(GUIDES_DIRECTORY);
   } catch {
@@ -460,7 +461,9 @@ async function main(): Promise<void> {
   console.log(`Failed quality: ${failedQuality}`);
 }
 
-main().catch((error: unknown) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((error: unknown) => {
+    console.error(error);
+    process.exitCode = 1;
+  });
+}
