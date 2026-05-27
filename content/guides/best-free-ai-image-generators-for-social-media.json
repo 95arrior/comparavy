@@ -1,0 +1,108 @@
+{
+  "slug": "best-free-ai-image-generators-for-social-media",
+  "title": "Best Free AI Image Generators for Social Media",
+  "metaTitle": "Best Free AI Image Generators for Social Media | Comparavy",
+  "metaDescription": "Compare AI tools for social media creators focused on creating post visuals and concepts for social channels. See practical fit, tradeoffs, and a free-first decision path.",
+  "category": "Image Creation",
+  "persona": "social media creators",
+  "useCase": "creating post visuals and concepts for social channels",
+  "budgetAngle": "Use free-plan options to test formats and visual direction before committing.",
+  "skillLevel": "beginner",
+  "primaryKeyword": "best free AI image generators for social media",
+  "secondaryKeywords": [
+    "free AI social images",
+    "AI post graphics",
+    "social media image generator"
+  ],
+  "quickVerdict": "Ideogram is the strongest first tool to consider for creating post visuals and concepts for social channels. Compare Leonardo AI when its workflow fits better, and keep Adobe Firefly on the shortlist for a different balance of control and simplicity.",
+  "keyTakeaways": [
+    "Ideogram leads this shortlist because it is closely aligned with creating post visuals and concepts for social channels.",
+    "Leonardo AI and Adobe Firefly are useful alternatives when your preferred editing, research, or setup workflow changes.",
+    "Use free-plan options to test formats and visual direction before committing.",
+    "Review generated output and confirm tool features on the official site before committing to a workflow."
+  ],
+  "recommendedToolSlugs": [
+    "ideogram",
+    "leonardo-ai",
+    "adobe-firefly"
+  ],
+  "comparisonRows": [
+    {
+      "toolSlug": "ideogram",
+      "toolName": "Ideogram",
+      "bestFor": "Graphics that include visual text concepts",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "whyConsider": "Selected for this guide's core workflow.",
+      "watchFor": "Final brand typography without manual checking"
+    },
+    {
+      "toolSlug": "leonardo-ai",
+      "toolName": "Leonardo AI",
+      "bestFor": "Iterating visual assets",
+      "freePlan": true,
+      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "whyConsider": "Selected for this guide's core workflow.",
+      "watchFor": "Simple grammar or note-taking work"
+    },
+    {
+      "toolSlug": "adobe-firefly",
+      "toolName": "Adobe Firefly",
+      "bestFor": "Creative exploration and image edits",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "Selected for this guide's core workflow.",
+      "watchFor": "Text-only business productivity"
+    }
+  ],
+  "decisionPath": [
+    {
+      "situation": "You want the most direct starting point for creating post visuals and concepts for social channels.",
+      "recommendation": "Ideogram",
+      "reason": "Selected for this guide's core workflow."
+    },
+    {
+      "situation": "You value iterating visual assets.",
+      "recommendation": "Leonardo AI",
+      "reason": "Selected for this guide's core workflow."
+    },
+    {
+      "situation": "You need creative exploration and image edits.",
+      "recommendation": "Adobe Firefly",
+      "reason": "Selected for this guide's core workflow."
+    }
+  ],
+  "moneySavingTips": [
+    "Test one representative project before paying for a longer-term workflow.",
+    "Use a listed free plan when it covers the experiment you need to run.",
+    "Avoid overlapping subscriptions until one tool has proven where it saves effort."
+  ],
+  "pricingNote": "Pricing can change. Check the official site before subscribing.",
+  "faqs": [
+    {
+      "question": "Which tool should social media creators try first?",
+      "answer": "Ideogram is the first tool to evaluate for this use case based on the current Comparavy catalog match. Test it on a real project and compare the result with your requirements."
+    },
+    {
+      "question": "Should I choose a free plan before subscribing?",
+      "answer": "A free-plan workflow is useful when it lets you test output quality and setup effort. Confirm current limits and plan details on the official site."
+    },
+    {
+      "question": "Can AI output be published without review?",
+      "answer": "No. Review accuracy, brand fit, permissions, and final presentation before publishing or sharing client-facing work."
+    }
+  ],
+  "finalVerdict": "Start by testing Ideogram on one realistic creating post visuals and concepts for social channels project. Compare it with Leonardo AI if you need a different workflow, and choose only after reviewing the actual output and setup effort.",
+  "ctaToFinder": "Need a recommendation shaped by your workflow and budget? Use the Comparavy finder at /finder.",
+  "visualSummary": {
+    "headline": "A practical starting route for social media creators",
+    "points": [
+      "Start with Ideogram",
+      "Compare Leonardo AI for an alternate workflow",
+      "Run a real project test before subscribing"
+    ]
+  },
+  "status": "published",
+  "createdAt": "2026-05-27",
+  "updatedAt": "2026-05-27"
+}
