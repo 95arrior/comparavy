@@ -9,6 +9,62 @@ export interface ContentQualityIssue {
   readonly message: string;
 }
 
+export interface GuideQualityResult {
+  readonly passed: boolean;
+  readonly score: number;
+  readonly warnings: string[];
+  readonly blockers: string[];
+}
+
+type GuideWithQualityMetadata = Guide & {
+  readonly testData?: unknown;
+  readonly uniquenessAngle?: string;
+};
+
+const GENERIC_PHRASES = [
+  "save time",
+  "boost productivity",
+  "streamline your workflow",
+  "game-changer",
+  "revolutionize",
+  "cutting-edge",
+  "powerful tool",
+  "robust solution",
+] as const;
+
+const TESTING_CLAIM_PATTERN =
+  /\b(?:we tested|i tested|hands-on tested|after testing|our testing)\b/i;
+const EXACT_MONTHLY_PRICE_PATTERN =
+  /\$\s*\d+(?:[.,]\d{1,2})?\s*(?:\/\s*(?:mo(?:nth)?|month)|per\s+month)\b/i;
+const WORDS_TO_IGNORE = new Set([
+  "about",
+  "adding",
+  "and",
+  "assistant",
+  "best",
+  "content",
+  "creating",
+  "drafting",
+  "focused",
+  "for",
+  "from",
+  "into",
+  "need",
+  "one",
+  "people",
+  "simple",
+  "starting",
+  "the",
+  "tool",
+  "tools",
+  "using",
+  "want",
+  "with",
+  "workflow",
+  "workflows",
+  "your",
+]);
+
 const TEXT_FIELDS = [
   "slug",
   "title",
@@ -52,6 +108,90 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function hasString(value: Record<string, unknown>, field: string): boolean {
   return typeof value[field] === "string" && value[field].trim().length > 0;
+}
+
+function normalizeText(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function textTerms(value: string): Set<string> {
+  return new Set(
+    normalizeText(value)
+      .split(" ")
+      .filter((term) => term.length > 2 && !WORDS_TO_IGNORE.has(term)),
+  );
+}
+
+function includesRelevantText(text: string, value: string): boolean {
+  const normalizedText = normalizeText(text);
+  const normalizedValue = normalizeText(value);
+
+  if (normalizedValue.length > 0 && normalizedText.includes(normalizedValue)) {
+    return true;
+  }
+
+  const expected = [...textTerms(value)];
+
+  if (expected.length === 0) {
+    return false;
+  }
+
+  const actual = textTerms(text);
+  const matches = expected.filter((term) => actual.has(term)).length;
+  return matches >= Math.min(2, expected.length);
+}
+
+function readerFacingText(guide: Guide): string {
+  return [
+    guide.quickVerdict,
+    ...guide.keyTakeaways,
+    ...guide.comparisonRows.flatMap((row) => [
+      row.toolName,
+      row.bestFor,
+      row.whyConsider,
+      row.watchFor,
+    ]),
+    ...guide.decisionPath.flatMap((step) => [
+      step.situation,
+      step.recommendation,
+      step.reason,
+    ]),
+    ...guide.moneySavingTips,
+    ...guide.faqs.flatMap((faq) => [faq.question, faq.answer]),
+    guide.finalVerdict,
+    guide.ctaToFinder,
+    guide.visualSummary.headline,
+    ...guide.visualSummary.points,
+  ].join(" ");
+}
+
+function catalogToolMatchesGuide(slug: string, guide: Guide): boolean {
+  const tool = toolsBySlug.get(slug as ToolSlug);
+
+  if (!tool) {
+    return false;
+  }
+
+  const guideTerms = textTerms(
+    [guide.title, guide.category, guide.useCase, guide.primaryKeyword].join(" "),
+  );
+  const toolTerms = textTerms(
+    [
+      tool.category,
+      tool.description,
+      ...tool.bestFor,
+      ...tool.useCases,
+      ...tool.primaryTags,
+    ].join(" "),
+  );
+
+  for (const term of guideTerms) {
+    if (toolTerms.has(term)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 export function validateGuideContent(value: unknown): ContentQualityIssue[] {
@@ -106,10 +246,16 @@ export function validateGuideContent(value: unknown): ContentQualityIssue[] {
 
   const guideText = JSON.stringify(value);
 
-  if (/\$\s*\d|\b\d+(?:\.\d+)?\s*(?:usd|dollars?)\b/i.test(guideText)) {
+  if (
+    EXACT_MONTHLY_PRICE_PATTERN.test(guideText) &&
+    !(
+      guideText.toLowerCase().includes("pricing can change") &&
+      guideText.toLowerCase().includes("official site")
+    )
+  ) {
     issues.push({
       field: "pricing",
-      message: "Do not state exact prices in guide content.",
+      message: "Exact monthly pricing requires a notice to check current pricing on the official site.",
     });
   }
 
@@ -232,4 +378,239 @@ export function assertGuideContentQuality(
     const detail = issues.map((issue) => `${issue.field}: ${issue.message}`).join(" ");
     throw new Error(`Invalid guide content in ${source}. ${detail}`);
   }
+}
+
+export function checkGuideQuality(
+  guide: Guide,
+  existingGuides: readonly Guide[] = [],
+): GuideQualityResult {
+  let score = 100;
+  const warnings: string[] = [];
+  const blockers: string[] = [];
+
+  function addBlocker(message: string, penalty = 12): void {
+    if (!blockers.includes(message)) {
+      blockers.push(message);
+      score -= penalty;
+    }
+  }
+
+  function addWarning(message: string, penalty = 4): void {
+    if (!warnings.includes(message)) {
+      warnings.push(message);
+      score -= penalty;
+    }
+  }
+
+  const validationIssues = validateGuideContent(guide);
+
+  for (const issue of validationIssues) {
+    addBlocker(`${issue.field}: ${issue.message}`, 10);
+  }
+
+  if (validationIssues.length > 0) {
+    return {
+      passed: false,
+      score: Math.max(0, score),
+      warnings,
+      blockers,
+    };
+  }
+
+  if (guide.quickVerdict.trim().length < 80) {
+    addBlocker("quickVerdict must contain at least 80 characters.", 12);
+  }
+
+  const requiredArrayCounts = [
+    ["keyTakeaways", guide.keyTakeaways.length, 5],
+    ["recommendedToolSlugs", guide.recommendedToolSlugs.length, 3],
+    ["comparisonRows", guide.comparisonRows.length, 3],
+    ["decisionPath", guide.decisionPath.length, 3],
+    ["moneySavingTips", guide.moneySavingTips.length, 3],
+    ["faqs", guide.faqs.length, 4],
+  ] as const;
+
+  for (const [field, count, minimum] of requiredArrayCounts) {
+    if (count < minimum) {
+      addBlocker(`${field} must contain at least ${minimum} items.`, 10);
+    }
+  }
+
+  if (guide.finalVerdict.trim().length < 120) {
+    addBlocker("finalVerdict must contain at least 120 characters.", 12);
+  }
+
+  if (!guide.ctaToFinder.includes("/finder")) {
+    addBlocker("ctaToFinder must refer readers to /finder.", 12);
+  }
+
+  if (guide.pricingNote.trim().length === 0) {
+    addBlocker("pricingNote is required.", 10);
+  }
+
+  if (
+    guide.visualSummary.headline.trim().length === 0 ||
+    guide.visualSummary.points.length === 0
+  ) {
+    addBlocker("visualSummary must include a headline and summary points.", 10);
+  }
+
+  const recommendedNames = guide.recommendedToolSlugs
+    .map((slug) => toolsBySlug.get(slug as ToolSlug)?.name)
+    .filter((name): name is string => Boolean(name));
+
+  if (
+    !recommendedNames.some((name) => includesRelevantText(guide.quickVerdict, name)) ||
+    !includesRelevantText(guide.quickVerdict, guide.useCase)
+  ) {
+    addWarning(
+      "quickVerdict is too generic; identify a recommended tool and the real use case.",
+      8,
+    );
+  }
+
+  if (!recommendedNames.some((name) => includesRelevantText(guide.finalVerdict, name))) {
+    addWarning("finalVerdict should name at least one specifically recommended tool.", 8);
+  }
+
+  const clearDecisionSteps = guide.decisionPath.filter((step) => {
+    const conditionalSituation = /\b(?:if|when|need|priority|want)\b/i.test(step.situation);
+    const knownRecommendation = recommendedNames.some((name) =>
+      includesRelevantText(step.recommendation, name),
+    );
+
+    return conditionalSituation && knownRecommendation && step.reason.trim().length >= 12;
+  }).length;
+
+  if (clearDecisionSteps < Math.min(3, guide.decisionPath.length)) {
+    addWarning(
+      'decisionPath should use clear "If you need X, choose Y" reasoning for each option.',
+      8,
+    );
+  }
+
+  const matchingRecommendations = guide.recommendedToolSlugs.filter((slug) =>
+    catalogToolMatchesGuide(slug, guide),
+  ).length;
+
+  if (matchingRecommendations < Math.min(2, guide.recommendedToolSlugs.length)) {
+    addWarning("Recommended tools do not show a clear catalog match for this use case.", 8);
+  }
+
+  const contentText = readerFacingText(guide);
+  const requiredContext = [
+    ["persona", guide.persona],
+    ["useCase", guide.useCase],
+    ["budgetAngle", guide.budgetAngle],
+  ] as const;
+
+  for (const [field, value] of requiredContext) {
+    if (!includesRelevantText(contentText, value)) {
+      addWarning(`Guide content should clearly address its ${field}.`, 4);
+    }
+  }
+
+  if (!includesRelevantText(contentText, guide.skillLevel)) {
+    addWarning("Guide content should clearly address its skillLevel.", 4);
+  }
+
+  const fullGuideText = JSON.stringify(guide);
+  const qualityMetadata = guide as GuideWithQualityMetadata;
+
+  if (TESTING_CLAIM_PATTERN.test(fullGuideText) && qualityMetadata.testData === undefined) {
+    addBlocker(
+      'Testing claims such as "we tested" require supporting guide.testData.',
+      30,
+    );
+  }
+
+  if (
+    EXACT_MONTHLY_PRICE_PATTERN.test(fullGuideText) &&
+    !(
+      fullGuideText.toLowerCase().includes("pricing can change") &&
+      fullGuideText.toLowerCase().includes("official site")
+    )
+  ) {
+    addBlocker(
+      "Exact monthly pricing must say pricing can change and direct readers to the official site.",
+      20,
+    );
+  }
+
+  const genericPhraseCount = GENERIC_PHRASES.reduce((count, phrase) => {
+    const occurrences = normalizeText(contentText).split(normalizeText(phrase)).length - 1;
+    return count + occurrences;
+  }, 0);
+
+  if (genericPhraseCount >= 3) {
+    addWarning(
+      `Guide uses ${genericPhraseCount} generic marketing phrases; replace them with decision-specific detail.`,
+      Math.min(10, genericPhraseCount * 2),
+    );
+  }
+
+  const guideSlug = normalizeText(guide.slug);
+  const guideTitle = normalizeText(guide.title);
+  const guideKeyword = normalizeText(guide.primaryKeyword);
+  const guideUseCase = normalizeText(guide.useCase);
+  const guidePersona = normalizeText(guide.persona);
+  const candidateSlugs = new Set(guide.recommendedToolSlugs);
+  let greatestRecommendationOverlap: { slug: string; count: number } | undefined;
+
+  for (const existing of existingGuides) {
+    if (guideSlug === normalizeText(existing.slug)) {
+      addBlocker(`Duplicate slug already used by ${existing.slug}.`, 20);
+    }
+
+    if (guideTitle === normalizeText(existing.title)) {
+      addBlocker(`Duplicate title already used by ${existing.slug}.`, 15);
+    }
+
+    if (guideKeyword === normalizeText(existing.primaryKeyword)) {
+      addBlocker(`Duplicate primaryKeyword already used by ${existing.slug}.`, 15);
+    }
+
+    if (
+      guideUseCase === normalizeText(existing.useCase) &&
+      guidePersona === normalizeText(existing.persona)
+    ) {
+      addBlocker(`Use case and persona already covered by ${existing.slug}.`, 15);
+    }
+
+    const overlap = existing.recommendedToolSlugs.filter((slug) =>
+      candidateSlugs.has(slug),
+    ).length;
+
+    if (!greatestRecommendationOverlap || overlap > greatestRecommendationOverlap.count) {
+      greatestRecommendationOverlap = { slug: existing.slug, count: overlap };
+    }
+
+    const existingAngle = (existing as GuideWithQualityMetadata).uniquenessAngle;
+    if (
+      qualityMetadata.uniquenessAngle &&
+      existingAngle &&
+      normalizeText(qualityMetadata.uniquenessAngle) === normalizeText(existingAngle)
+    ) {
+      addWarning(`uniquenessAngle is already used by ${existing.slug}.`, 8);
+    }
+  }
+
+  if (
+    greatestRecommendationOverlap &&
+    candidateSlugs.size > 0 &&
+    greatestRecommendationOverlap.count / candidateSlugs.size >= 0.8
+  ) {
+    addWarning(
+      `Recommended tools substantially overlap with ${greatestRecommendationOverlap.slug}.`,
+      6,
+    );
+  }
+
+  const finalScore = Math.max(0, score);
+  return {
+    passed: blockers.length === 0 && finalScore >= 85,
+    score: finalScore,
+    warnings,
+    blockers,
+  };
 }

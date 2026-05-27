@@ -1,9 +1,11 @@
-import { access, mkdir, readdir, writeFile } from "node:fs/promises";
+import { access, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { guideTopics, type GuideTopic } from "@/data/guideTopics";
 import {
   PRICING_NOTICE,
   assertGuideContentQuality,
+  checkGuideQuality,
+  type GuideQualityResult,
 } from "@/lib/contentQuality";
 import type { Guide, GuideStatus } from "@/lib/guides";
 import { getTopicRecommendations } from "@/lib/topicScoring";
@@ -191,11 +193,12 @@ function createTemplateGuide(topic: GuideTopic, status: GuideStatus): Guide {
     skillLevel: topic.skillLevel,
     primaryKeyword: topic.primaryKeyword,
     secondaryKeywords: topic.secondaryKeywords,
-    quickVerdict: `${first.tool.name} is the strongest first tool to consider for ${topic.useCase}. Compare ${second.tool.name} when its workflow fits better, and keep ${third.tool.name} on the shortlist for a different balance of control and simplicity.`,
+    quickVerdict: `For ${topic.persona} at a ${topic.skillLevel} skill level, ${first.tool.name} is the strongest first tool to consider for ${topic.useCase}. Compare ${second.tool.name} when its workflow fits better, and keep ${third.tool.name} on the shortlist for a different balance of control and simplicity.`,
     keyTakeaways: [
       `${first.tool.name} leads this shortlist because it is closely aligned with ${topic.useCase}.`,
       `${second.tool.name} and ${third.tool.name} are useful alternatives when your preferred editing, research, or setup workflow changes.`,
       topic.budgetAngle,
+      `This ${topic.skillLevel}-level guide prioritizes a manageable starting workflow for ${topic.persona}.`,
       "Review generated output and confirm tool features on the official site before committing to a workflow.",
     ],
     recommendedToolSlugs: recommendations.map(({ tool }) => tool.slug),
@@ -210,17 +213,17 @@ function createTemplateGuide(topic: GuideTopic, status: GuideStatus): Guide {
     })),
     decisionPath: [
       {
-        situation: `You want the most direct starting point for ${topic.useCase}.`,
+        situation: `If your goal is ${topic.useCase}, start with the most direct shortlisted workflow.`,
         recommendation: first.tool.name,
         reason: first.reasons[0] ?? "It is the leading catalog match for this guide.",
       },
       {
-        situation: `You value ${second.tool.bestFor[0]?.toLowerCase() ?? "an alternative workflow"}.`,
+        situation: `If ${second.tool.name}'s fit for ${second.tool.bestFor[0]?.toLowerCase() ?? "an alternative workflow"} matters most, compare this alternative.`,
         recommendation: second.tool.name,
         reason: second.reasons[0] ?? "It offers a relevant alternative workflow.",
       },
       {
-        situation: `You need ${third.tool.bestFor[0]?.toLowerCase() ?? "another option to compare"}.`,
+        situation: `If ${third.tool.name}'s fit for ${third.tool.bestFor[0]?.toLowerCase() ?? "another option to compare"} is relevant, include this option in your test.`,
         recommendation: third.tool.name,
         reason: third.reasons[0] ?? "It broadens the comparison for this use case.",
       },
@@ -246,8 +249,12 @@ function createTemplateGuide(topic: GuideTopic, status: GuideStatus): Guide {
         answer:
           "No. Review accuracy, brand fit, permissions, and final presentation before publishing or sharing client-facing work.",
       },
+      {
+        question: `When should I compare ${second.tool.name} with ${first.tool.name}?`,
+        answer: `Compare ${second.tool.name} when its fit for ${second.tool.bestFor[0]?.toLowerCase() ?? "your alternate workflow"} matters more than the first-choice workflow. Use the same realistic project so the decision is based on output and effort.`,
+      },
     ],
-    finalVerdict: `Start by testing ${first.tool.name} on one realistic ${topic.useCase} project. Compare it with ${second.tool.name} if you need a different workflow, and choose only after reviewing the actual output and setup effort.`,
+    finalVerdict: `For ${topic.persona}, start by testing ${first.tool.name} on one realistic assignment: ${topic.useCase}. Compare it with ${second.tool.name} if you need a different workflow, respect the stated budget approach, and choose only after reviewing actual output, setup effort, and current official plan details.`,
     ctaToFinder: "Need a recommendation shaped by your workflow and budget? Use the Comparavy finder at /finder.",
     visualSummary: {
       headline: `A practical starting route for ${topic.persona}`,
@@ -295,7 +302,7 @@ async function refineWithOpenAI(template: Guide): Promise<Guide> {
     body: JSON.stringify({
       model: process.env.OPENAI_GUIDE_MODEL ?? "gpt-5.4-mini",
       instructions:
-        "Improve the supplied Comparavy guide draft for clarity and usefulness. Preserve every factual catalog statement, selected tool slug, status, and date. Do not invent tool testing, performance claims, or exact current prices. pricingNote must remain exactly: Pricing can change. Check the official site before subscribing.",
+        'Improve the supplied Comparavy guide draft for clarity and decision usefulness. Preserve every factual catalog statement, selected tool slug, status, and date. Keep at least five key takeaways, three decision-path options phrased as clear "If you need X, choose Y" decisions, and four FAQs. Explicitly address the persona, use case, budget approach, and skill level. Do not invent tool testing, performance claims, or exact current prices. pricingNote must remain exactly: Pricing can change. Check the official site before subscribing.',
       input: JSON.stringify(template),
       text: {
         format: {
@@ -343,26 +350,53 @@ async function refineWithOpenAI(template: Guide): Promise<Guide> {
   return refined;
 }
 
-async function getExistingSlugs(): Promise<Set<string>> {
+async function getExistingGuides(): Promise<Guide[]> {
   try {
     await access(GUIDES_DIRECTORY);
   } catch {
-    return new Set();
+    return [];
   }
 
   const files = await readdir(GUIDES_DIRECTORY);
-  return new Set(
-    files.filter((file) => file.endsWith(".json")).map((file) => file.replace(/\.json$/, "")),
+  const guides: Guide[] = [];
+
+  for (const file of files.filter((entry) => entry.endsWith(".json"))) {
+    const value: unknown = JSON.parse(
+      await readFile(path.join(GUIDES_DIRECTORY, file), "utf8"),
+    );
+    assertGuideContentQuality(value, file);
+    guides.push(value);
+  }
+
+  return guides;
+}
+
+function logQuality(slug: string, result: GuideQualityResult): void {
+  console.log(
+    `[${slug}] Quality score: ${result.score}/100 (${result.passed ? "PASS" : "FAIL"})`,
   );
+
+  for (const warning of result.warnings) {
+    console.log(`[${slug}] Warning: ${warning}`);
+  }
+
+  for (const blocker of result.blockers) {
+    console.log(`[${slug}] Blocker: ${blocker}`);
+  }
 }
 
 async function main(): Promise<void> {
   const options = parseOptions(process.argv.slice(2));
   const status: GuideStatus = options.publish ? "published" : "draft";
-  const existingSlugs = await getExistingSlugs();
+  const existingGuides = await getExistingGuides();
+  const existingSlugs = new Set(existingGuides.map((guide) => guide.slug));
   const selectedTopics = guideTopics
     .filter((topic) => !existingSlugs.has(topic.slug))
     .slice(0, options.count);
+  let created = 0;
+  let published = 0;
+  let drafts = 0;
+  let failedQuality = 0;
 
   await mkdir(GUIDES_DIRECTORY, { recursive: true });
 
@@ -385,8 +419,31 @@ async function main(): Promise<void> {
     }
 
     assertGuideContentQuality(guide, topic.slug);
+    const result = checkGuideQuality(guide, existingGuides);
+    logQuality(guide.slug, result);
+
+    if (!result.passed) {
+      failedQuality += 1;
+      guide = { ...guide, status: "draft" };
+
+      if (options.publish) {
+        console.log(`[${guide.slug}] Publishing blocked; saving the guide as a draft.`);
+      } else {
+        console.log(`[${guide.slug}] Quality gate failed; retaining this guide as a draft.`);
+      }
+    }
+
     const filePath = path.join(GUIDES_DIRECTORY, `${guide.slug}.json`);
     await writeFile(filePath, `${JSON.stringify(guide, null, 2)}\n`, "utf8");
+    existingGuides.push(guide);
+    created += 1;
+
+    if (guide.status === "published") {
+      published += 1;
+    } else {
+      drafts += 1;
+    }
+
     console.log(`Created ${guide.status} guide: ${guide.slug}`);
   }
 
@@ -395,6 +452,12 @@ async function main(): Promise<void> {
       `Created ${selectedTopics.length} guide(s); no unused configured topics remain for the requested count.`,
     );
   }
+
+  console.log("Generation summary");
+  console.log(`Created: ${created}`);
+  console.log(`Published: ${published}`);
+  console.log(`Draft: ${drafts}`);
+  console.log(`Failed quality: ${failedQuality}`);
 }
 
 main().catch((error: unknown) => {
