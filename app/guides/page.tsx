@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import ActionLinks from "@/components/ActionLinks";
 import BadgeRow from "@/components/BadgeRow";
 import Logo from "@/components/Logo";
 import ToolIcon from "@/components/ToolIcon";
@@ -18,7 +19,7 @@ export default function GuidesPage() {
   return (
     <main className="min-h-screen px-4 py-8 sm:px-6 sm:py-12">
       <div className="mx-auto max-w-6xl">
-        <header className="rounded-3xl border border-slate-200 bg-white px-6 py-10 shadow-sm sm:px-10 sm:py-14">
+        <header className="rounded-3xl border border-slate-200 bg-white px-6 py-10 shadow-sm comparavy-reveal sm:px-10 sm:py-14">
           <nav className="flex flex-wrap items-center justify-between gap-4">
             <Logo />
             <div className="flex flex-wrap items-center gap-2">
@@ -46,17 +47,21 @@ export default function GuidesPage() {
             Compare realistic starting options, tradeoffs, and budget-conscious
             decision paths before testing a tool yourself.
           </p>
-          <div className="mt-9 rounded-2xl bg-slate-900 p-5 text-white sm:flex sm:items-center sm:justify-between sm:gap-6">
-            <p className="max-w-xl text-sm leading-7 text-slate-300">
-              Not sure which guide fits? Answer five questions and get a shortlist
-              matched to your use case, budget, and experience level.
+          <ActionLinks
+            className="mt-9"
+            items={[
+              { href: "/finder", label: "Use Finder", tone: "primary" },
+              { href: "/tools", label: "Browse Tools" },
+            ]}
+          />
+          <div className="mt-8 rounded-2xl border border-slate-100 bg-slate-50 p-5 text-slate-700">
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+              Fast path
             </p>
-            <Link
-              href="/finder"
-              className="mt-5 inline-flex shrink-0 rounded-full bg-teal-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-300 sm:mt-0"
-            >
-              Find my tool
-            </Link>
+            <p className="mt-2 max-w-xl text-sm leading-7">
+              Answer a few questions in Finder, then jump into the guide that
+              matches your workflow when you want a deeper comparison.
+            </p>
           </div>
         </header>
 
@@ -73,8 +78,26 @@ export default function GuidesPage() {
             </p>
           </div>
 
-          <div className="mt-7 grid gap-4 md:grid-cols-2">
-            {guides.map((guide) => {
+          {guides.length === 0 ? (
+            <div className="mt-7 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm comparavy-reveal sm:p-10">
+              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
+                Guides are being updated
+              </p>
+              <p className="mt-4 max-w-2xl text-base leading-8 text-slate-600">
+                Comparavy is preparing practical AI tool guides based on search
+                intent, real workflows, and decision-focused recommendations.
+              </p>
+              <ActionLinks
+                className="mt-7"
+                items={[
+                  { href: "/tools", label: "Explore AI Tools", tone: "primary" },
+                  { href: "/finder", label: "Use Finder" },
+                ]}
+              />
+            </div>
+          ) : (
+            <div className="mt-7 grid gap-4 md:grid-cols-2">
+              {guides.map((guide, index) => {
               const primaryTool = toolsBySlug.get(
                 guide.recommendedToolSlugs[0] as ToolSlug,
               );
@@ -82,7 +105,9 @@ export default function GuidesPage() {
               return (
                 <article
                   key={guide.slug}
-                  className="flex flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-slate-300"
+                  className={`flex flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-sm comparavy-card-lift comparavy-reveal ${
+                    index % 2 === 1 ? "comparavy-reveal-delay-1" : ""
+                  }`}
                 >
                   <BadgeRow
                     badges={[
@@ -98,7 +123,10 @@ export default function GuidesPage() {
                       {guide.title}
                     </Link>
                   </h3>
-                  <dl className="mt-5 grid gap-3 rounded-2xl bg-slate-50 p-4 text-sm">
+                  <p className="mt-3 text-sm leading-7 text-slate-600">
+                    {guide.quickVerdict}
+                  </p>
+                  <dl className="mt-5 grid gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm">
                     <div>
                       <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                         For
@@ -111,41 +139,37 @@ export default function GuidesPage() {
                       <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                         Use case
                       </dt>
-                      <dd className="mt-1 leading-6 text-slate-700">{guide.useCase}</dd>
+                      <dd className="mt-1 leading-6 text-slate-700">
+                        {guide.useCase}
+                      </dd>
                     </div>
                   </dl>
                   {primaryTool && (
-                    <div className="mt-5 flex items-center gap-3">
+                    <div className="mt-5 flex min-w-0 items-center gap-3">
                       <ToolIcon {...primaryTool} size={26} />
-                      <div>
-                        <p className="text-xs text-slate-500">Recommended start</p>
-                        <p className="text-sm font-semibold text-slate-900">
+                      <div className="min-w-0">
+                        <p className="truncate whitespace-nowrap text-sm font-semibold text-slate-900">
                           {primaryTool.name}
                         </p>
                       </div>
                     </div>
                   )}
-                  <p className="mt-5 flex-1 text-sm leading-7 text-slate-600">
-                    {guide.quickVerdict}
-                  </p>
-                  <div className="mt-6 flex flex-wrap gap-3 border-t border-slate-100 pt-5">
-                    <Link
-                      href={`/guides/${guide.slug}`}
-                      className="rounded-full bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800"
-                    >
-                      Read guide
-                    </Link>
-                    <Link
-                      href="/finder"
-                      className="rounded-full border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-teal-200 hover:bg-teal-50"
-                    >
-                      Use finder
-                    </Link>
-                  </div>
+                  <ActionLinks
+                    className="mt-6 border-t border-slate-100 pt-5"
+                    items={[
+                      {
+                        href: `/guides/${guide.slug}`,
+                        label: "Read Guide",
+                        tone: "primary",
+                      },
+                      { href: "/finder", label: "Use Finder" },
+                    ]}
+                  />
                 </article>
               );
-            })}
-          </div>
+              })}
+            </div>
+          )}
         </section>
       </div>
     </main>

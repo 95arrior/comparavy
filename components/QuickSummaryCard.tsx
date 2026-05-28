@@ -1,3 +1,4 @@
+import Link from "next/link";
 import BadgeRow, { getToolBadges } from "@/components/BadgeRow";
 import MetricBars from "@/components/MetricBars";
 import ToolIcon from "@/components/ToolIcon";
@@ -22,17 +23,22 @@ export default function QuickSummaryCard({ guide }: QuickSummaryCardProps) {
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-700">
             At a glance
           </p>
-          <div className="mt-4 flex items-center gap-3">
+          <div className="mt-4 flex min-w-0 items-center gap-3">
             <ToolIcon {...primaryTool} size={28} />
-            <div>
+            <div className="min-w-0">
               <p className="text-xs font-medium text-slate-500">Start with</p>
-              <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
-                {primaryTool.name}
+              <h2 className="truncate whitespace-nowrap text-2xl font-semibold tracking-tight text-slate-900">
+                <Link
+                  href={`/tools/${primaryTool.slug}`}
+                  className="block truncate transition hover:text-teal-700"
+                >
+                  {primaryTool.name}
+                </Link>
               </h2>
             </div>
           </div>
           <div className="mt-5">
-            <BadgeRow badges={getToolBadges(primaryTool, true)} />
+            <BadgeRow badges={getToolBadges(primaryTool)} />
           </div>
           <ul className="mt-6 space-y-3 text-sm leading-6 text-slate-700">
             {guide.visualSummary.points.map((point) => (
@@ -42,6 +48,11 @@ export default function QuickSummaryCard({ guide }: QuickSummaryCardProps) {
               </li>
             ))}
           </ul>
+          {guide.affiliateDisclosureNote && (
+            <p className="mt-5 text-xs leading-6 text-slate-500">
+              {guide.affiliateDisclosureNote}
+            </p>
+          )}
         </div>
         <div className="rounded-2xl bg-slate-50 p-5">
           <p className="mb-5 text-sm font-semibold text-slate-900">

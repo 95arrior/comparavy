@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import ActionLinks from "@/components/ActionLinks";
 import BadgeRow, { getToolBadges } from "@/components/BadgeRow";
 import Logo from "@/components/Logo";
 import MetricBars from "@/components/MetricBars";
@@ -280,6 +281,17 @@ const INITIAL_ANSWERS: FinderAnswers = {
   priority: null,
 };
 
+function RecommendationBadge({ label }: { readonly label: string }) {
+  return (
+    <span className="comparavy-star-badge inline-flex shrink-0 items-center gap-1.5 rounded-full bg-teal-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-800 ring-1 ring-teal-100">
+      <span aria-hidden="true" className="comparavy-star-badge__icon">
+        ✦
+      </span>
+      {label}
+    </span>
+  );
+}
+
 function OptionButton({
   label,
   selected,
@@ -317,55 +329,47 @@ function RecommendationCard({
   onCompare: () => void;
 }) {
   const { tool, reasons } = recommendation;
-  const destination = tool.affiliateUrl ?? tool.officialUrl;
+  const visitUrl = tool.affiliateUrl ?? tool.officialUrl;
   const alternatives = tool.alternatives
     .map((slug) => toolsBySlug.get(slug as ToolSlug))
     .filter((alternative) => alternative !== undefined);
 
   return (
     <article
-      className={`rounded-3xl border bg-white p-5 shadow-sm transition sm:p-7 ${
+      className={`rounded-3xl border bg-white p-5 shadow-sm comparavy-card-lift sm:p-6 ${
         rank === 1
           ? "border-teal-200 ring-1 ring-teal-100"
           : "border-slate-200 hover:border-slate-300"
       }`}
     >
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <ToolIcon {...tool} size={28} />
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-700">
-              {rank === 1 ? "Top recommendation" : `Option ${rank}`}
-            </p>
-            <h3 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
-              {tool.name}
-            </h3>
-          </div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <ToolIcon {...tool} size={26} />
+          <h3 className="min-w-0 flex-1 truncate whitespace-nowrap text-lg font-semibold tracking-tight text-slate-900">
+            {tool.name}
+          </h3>
+          {rank === 1 ? (
+            <RecommendationBadge label="Top pick" />
+          ) : (
+            <span className="rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 ring-1 ring-slate-200">
+              Option {rank}
+            </span>
+          )}
         </div>
+      </div>
+
+      <p className="comparavy-clamp-2 mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+        {tool.description}
+      </p>
+
+      <div className="mt-3">
         <BadgeRow badges={getToolBadges(tool, rank === 1)} />
       </div>
 
-      <div className="mt-6 max-w-3xl">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-          Short verdict
-        </p>
-        <p className="mt-2 text-[15px] leading-7 text-slate-700">
-          {tool.description}
-        </p>
-      </div>
-
-      <div className="mt-7 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-        <div className="rounded-2xl bg-slate-50 p-5">
-          <p className="mb-5 text-sm font-semibold text-slate-900">
-            Fit signals
-          </p>
-          <MetricBars tool={tool} />
-        </div>
-        <div className="rounded-2xl border border-slate-100 p-5">
-          <p className="text-sm font-semibold text-slate-900">
-            Why this appears in your results
-          </p>
-          <ul className="mt-4 space-y-2.5 text-sm leading-6 text-slate-600">
+      <div className="mt-5 grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-sm font-semibold text-slate-900">Why this fits</p>
+          <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
             {reasons.map((reason) => (
               <li key={reason} className="flex gap-3">
                 <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-600" />
@@ -374,10 +378,14 @@ function RecommendationCard({
             ))}
           </ul>
         </div>
+        <div className="rounded-2xl border border-slate-100 bg-white p-4">
+          <p className="mb-4 text-sm font-semibold text-slate-900">Fit signals</p>
+          <MetricBars tool={tool} />
+        </div>
       </div>
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-3">
-        <div className="rounded-2xl bg-teal-50/70 p-4">
+      <div className="mt-5 grid gap-3 sm:grid-cols-3">
+        <div className="rounded-2xl bg-teal-50/70 p-3.5">
           <p className="text-sm font-semibold text-slate-900">Best for</p>
           <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
             {tool.bestFor.map((item) => (
@@ -388,7 +396,7 @@ function RecommendationCard({
             ))}
           </ul>
         </div>
-        <div className="rounded-2xl bg-slate-50 p-4">
+        <div className="rounded-2xl bg-slate-50 p-3.5">
           <p className="text-sm font-semibold text-slate-900">Not for</p>
           <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
             {tool.notFor.map((item) => (
@@ -396,7 +404,7 @@ function RecommendationCard({
             ))}
           </ul>
         </div>
-        <div className="rounded-2xl bg-amber-50/60 p-4">
+        <div className="rounded-2xl bg-amber-50/60 p-3.5">
           <p className="text-sm font-semibold text-slate-900">Avoid if</p>
           <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
             {tool.avoidIf.map((item) => (
@@ -406,7 +414,7 @@ function RecommendationCard({
         </div>
       </div>
 
-      <div className="mt-6 flex flex-col gap-2 rounded-2xl border border-slate-100 bg-slate-50/60 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+      <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
           <p className="font-semibold text-slate-900">Pricing note</p>
           <p className="text-slate-600">
@@ -418,33 +426,29 @@ function RecommendationCard({
         </p>
       </div>
 
-      <div className="mt-7 grid gap-2 sm:grid-cols-3">
-        <a
-          href={destination}
-          target="_blank"
-          rel={
-            tool.affiliateUrl
-              ? "noopener noreferrer sponsored nofollow"
-              : "noopener noreferrer"
-          }
-          className="rounded-full bg-teal-700 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
-        >
-          Try this first
-        </a>
+      <div className="mt-6 flex flex-wrap gap-3">
+        <ActionLinks
+          items={[
+            {
+              href: visitUrl,
+              label: "Visit Site",
+              external: true,
+              tone: "primary",
+            },
+            {
+              href: `/tools/${tool.slug}`,
+              label: "View Tool Page",
+            },
+          ]}
+        />
         <button
           type="button"
           aria-expanded={compareOpen}
           onClick={onCompare}
-          className="rounded-full border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+          className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
         >
-          Compare alternatives
+          Compare Alternatives
         </button>
-        <Link
-          href="/guides"
-          className="rounded-full border border-slate-200 bg-white px-4 py-3 text-center text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
-        >
-          Read full guide
-        </Link>
       </div>
 
       {compareOpen && (
@@ -456,13 +460,15 @@ function RecommendationCard({
             {alternatives.map((alternative) => (
               <a
                 key={alternative.id}
-                href={alternative.officialUrl}
+                href={alternative.affiliateUrl ?? alternative.officialUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 rounded-2xl bg-white px-3 py-2 text-sm text-slate-700 ring-1 ring-slate-200 transition hover:ring-teal-300"
+                className="flex min-w-0 items-center gap-2 rounded-2xl bg-white px-3 py-2 text-sm text-slate-700 ring-1 ring-slate-200 transition hover:ring-teal-300"
               >
                 <ToolIcon {...alternative} size={26} />
-                {alternative.name}
+                <span className="min-w-0 truncate whitespace-nowrap">
+                  {alternative.name}
+                </span>
               </a>
             ))}
           </div>

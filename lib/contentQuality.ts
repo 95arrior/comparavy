@@ -36,6 +36,13 @@ const TESTING_CLAIM_PATTERN =
   /\b(?:we tested|i tested|hands-on tested|after testing|our testing)\b/i;
 const EXACT_MONTHLY_PRICE_PATTERN =
   /\$\s*\d+(?:[.,]\d{1,2})?\s*(?:\/\s*(?:mo(?:nth)?|month)|per\s+month)\b/i;
+const NEWS_CLAIM_PATTERN =
+  /\b(?:breaking news|breaking|latest update|latest updates|new today|just launched|today's breaking|news roundup)\b/i;
+const GUARANTEED_INCOME_PATTERN =
+  /\b(?:guaranteed income|guaranteed earnings|guaranteed sales|guaranteed clients|passive income guaranteed|make money fast|easy money)\b/i;
+const GET_RICH_QUICK_PATTERN =
+  /\b(?:get rich quick|zero effort income|make \$?\d+\s*(?:k|,000)?\s*(?:a|per)\s*(?:day|week|month)|earn \$?\d+\s*(?:k|,000)?\s*(?:a|per)\s*(?:day|week|month))\b/i;
+
 const WORDS_TO_IGNORE = new Set([
   "about",
   "adding",
@@ -68,6 +75,7 @@ const WORDS_TO_IGNORE = new Set([
 const TEXT_FIELDS = [
   "slug",
   "title",
+  "guideType",
   "metaTitle",
   "metaDescription",
   "category",
@@ -76,10 +84,22 @@ const TEXT_FIELDS = [
   "budgetAngle",
   "skillLevel",
   "primaryKeyword",
+  "audience",
+  "searchIntent",
+  "userPain",
+  "decisionQuestion",
+  "contentGap",
+  "uniqueAngle",
+  "aiOverviewAnswer",
   "quickVerdict",
   "pricingNote",
+  "pricingCaveat",
   "finalVerdict",
   "ctaToFinder",
+  "finderCTA",
+  "affiliateDisclosureNote",
+  "affiliateDisclosure",
+  "freshness",
   "status",
   "createdAt",
   "updatedAt",
@@ -87,18 +107,26 @@ const TEXT_FIELDS = [
 
 const ARRAY_FIELDS = [
   "secondaryKeywords",
+  "longTailKeywords",
   "keyTakeaways",
+  "bestPicksBySituation",
   "recommendedToolSlugs",
+  "recommendedTools",
   "comparisonRows",
   "decisionPath",
+  "whoShouldUseThis",
+  "whoShouldAvoidThis",
   "moneySavingTips",
   "faqs",
 ] as const;
 
 const STRING_ARRAY_FIELDS = [
   "secondaryKeywords",
+  "longTailKeywords",
   "keyTakeaways",
   "recommendedToolSlugs",
+  "whoShouldUseThis",
+  "whoShouldAvoidThis",
   "moneySavingTips",
 ] as const;
 
@@ -143,8 +171,30 @@ function includesRelevantText(text: string, value: string): boolean {
 
 function readerFacingText(guide: Guide): string {
   return [
+    guide.title,
+    guide.primaryKeyword,
+    guide.audience,
+    guide.searchIntent,
+    guide.userPain,
+    guide.decisionQuestion,
+    guide.contentGap,
+    guide.uniqueAngle,
+    guide.aiOverviewAnswer,
     guide.quickVerdict,
     ...guide.keyTakeaways,
+    ...guide.bestPicksBySituation.flatMap((pick) => [
+      pick.situation,
+      pick.toolName,
+      pick.why,
+    ]),
+    ...guide.recommendedTools.flatMap((tool) => [
+      tool.toolName,
+      tool.summary,
+      tool.bestFor,
+      tool.avoidIf,
+      ...tool.strengths,
+      ...tool.tradeoffs,
+    ]),
     ...guide.comparisonRows.flatMap((row) => [
       row.toolName,
       row.bestFor,
@@ -156,10 +206,15 @@ function readerFacingText(guide: Guide): string {
       step.recommendation,
       step.reason,
     ]),
+    ...guide.whoShouldUseThis,
+    ...guide.whoShouldAvoidThis,
     ...guide.moneySavingTips,
     ...guide.faqs.flatMap((faq) => [faq.question, faq.answer]),
+    guide.pricingCaveat,
     guide.finalVerdict,
     guide.ctaToFinder,
+    guide.finderCTA,
+    guide.affiliateDisclosure,
     guide.visualSummary.headline,
     ...guide.visualSummary.points,
   ].join(" ");
@@ -173,7 +228,14 @@ function catalogToolMatchesGuide(slug: string, guide: Guide): boolean {
   }
 
   const guideTerms = textTerms(
-    [guide.title, guide.category, guide.useCase, guide.primaryKeyword].join(" "),
+    [
+      guide.title,
+      guide.category,
+      guide.useCase,
+      guide.primaryKeyword,
+      guide.searchIntent,
+      guide.decisionQuestion,
+    ].join(" "),
   );
   const toolTerms = textTerms(
     [
@@ -192,6 +254,31 @@ function catalogToolMatchesGuide(slug: string, guide: Guide): boolean {
   }
 
   return false;
+}
+
+function validateObjectArray(
+  value: Record<string, unknown>,
+  field: string,
+  requiredStrings: readonly string[],
+): ContentQualityIssue[] {
+  const issues: ContentQualityIssue[] = [];
+  const entries = value[field];
+
+  if (!Array.isArray(entries)) {
+    return issues;
+  }
+
+  for (const entry of entries) {
+    if (!isRecord(entry) || requiredStrings.some((key) => !hasString(entry, key))) {
+      issues.push({
+        field,
+        message: `Every ${field} entry must include ${requiredStrings.join(", ")}.`,
+      });
+      break;
+    }
+  }
+
+  return issues;
 }
 
 export function validateGuideContent(value: unknown): ContentQualityIssue[] {
@@ -222,6 +309,18 @@ export function validateGuideContent(value: unknown): ContentQualityIssue[] {
     }
   }
 
+  if (
+    value.guideType !== "practical" &&
+    value.guideType !== "income" &&
+    value.guideType !== "trend-led" &&
+    value.guideType !== "evergreen"
+  ) {
+    issues.push({
+      field: "guideType",
+      message: 'Guide type must be "practical", "income", "trend-led", or "evergreen".',
+    });
+  }
+
   if (value.status !== "draft" && value.status !== "published") {
     issues.push({ field: "status", message: 'Status must be "draft" or "published".' });
   }
@@ -237,10 +336,61 @@ export function validateGuideContent(value: unknown): ContentQualityIssue[] {
     });
   }
 
+  if (
+    value.freshness !== "evergreen" &&
+    value.freshness !== "current" &&
+    value.freshness !== "seasonal"
+  ) {
+    issues.push({
+      field: "freshness",
+      message: "Freshness must be evergreen, current, or seasonal.",
+    });
+  }
+
   if (value.pricingNote !== PRICING_NOTICE) {
     issues.push({
       field: "pricingNote",
       message: `Use the standard pricing notice: "${PRICING_NOTICE}"`,
+    });
+  }
+
+  if (!hasString(value, "pricingCaveat") || !String(value.pricingCaveat).toLowerCase().includes("pricing can change")) {
+    issues.push({ field: "pricingCaveat", message: "The pricing caveat must say pricing can change." });
+  }
+
+  if (!hasString(value, "ctaToFinder") || !String(value.ctaToFinder).includes("/finder")) {
+    issues.push({ field: "ctaToFinder", message: "The CTA must direct readers to /finder." });
+  }
+
+  if (!hasString(value, "finderCTA") || !String(value.finderCTA).includes("/finder")) {
+    issues.push({ field: "finderCTA", message: "The finder CTA must direct readers to /finder." });
+  }
+
+  if (!includesRelevantText(String(value.affiliateDisclosureNote), "affiliate disclosure")) {
+    issues.push({
+      field: "affiliateDisclosureNote",
+      message: "The affiliate disclosure note should clearly mention the disclosure.",
+    });
+  }
+
+  if (!includesRelevantText(String(value.affiliateDisclosure), "affiliate disclosure")) {
+    issues.push({
+      field: "affiliateDisclosure",
+      message: "The affiliate disclosure should clearly mention the disclosure.",
+    });
+  }
+
+  if (typeof value.qualityScore !== "number" || value.qualityScore < 0 || value.qualityScore > 100) {
+    issues.push({
+      field: "qualityScore",
+      message: "qualityScore must be a number from 0 to 100.",
+    });
+  }
+
+  if (value.status === "published" && typeof value.qualityScore === "number" && value.qualityScore < 85) {
+    issues.push({
+      field: "qualityScore",
+      message: "Published guides require qualityScore >= 85.",
     });
   }
 
@@ -259,11 +409,51 @@ export function validateGuideContent(value: unknown): ContentQualityIssue[] {
     });
   }
 
-  if (!hasString(value, "ctaToFinder") || !String(value.ctaToFinder).includes("/finder")) {
-    issues.push({ field: "ctaToFinder", message: "The CTA must direct readers to /finder." });
+  if (NEWS_CLAIM_PATTERN.test(guideText)) {
+    issues.push({
+      field: "newsClaims",
+      message: "Guides should not make unsupported breaking-news or latest-update claims.",
+    });
+  }
+
+  if (TESTING_CLAIM_PATTERN.test(guideText)) {
+    issues.push({
+      field: "testingClaims",
+      message: 'Do not use fake testing claims such as "we tested" without test data.',
+    });
+  }
+
+  if (GUARANTEED_INCOME_PATTERN.test(guideText)) {
+    issues.push({
+      field: "incomeClaims",
+      message: "Do not make guaranteed income, sales, or client claims.",
+    });
+  }
+
+  if (GET_RICH_QUICK_PATTERN.test(guideText)) {
+    issues.push({
+      field: "incomeClaims",
+      message: "Do not use get-rich-quick claims.",
+    });
   }
 
   if (Array.isArray(value.recommendedToolSlugs)) {
+    const uniqueSlugs = new Set(value.recommendedToolSlugs);
+
+    if (uniqueSlugs.size !== value.recommendedToolSlugs.length) {
+      issues.push({
+        field: "recommendedToolSlugs",
+        message: "Recommended tool slugs must be unique.",
+      });
+    }
+
+    if (uniqueSlugs.size < 3 || uniqueSlugs.size > 7) {
+      issues.push({
+        field: "recommendedToolSlugs",
+        message: "Guides must recommend 3 to 7 unique tools.",
+      });
+    }
+
     for (const slug of value.recommendedToolSlugs) {
       if (typeof slug !== "string" || !toolsBySlug.has(slug as ToolSlug)) {
         issues.push({
@@ -274,76 +464,89 @@ export function validateGuideContent(value: unknown): ContentQualityIssue[] {
     }
   }
 
-  if (Array.isArray(value.comparisonRows)) {
-    for (const row of value.comparisonRows) {
-      if (
-        !isRecord(row) ||
-        !hasString(row, "toolSlug") ||
-        !hasString(row, "toolName") ||
-        !hasString(row, "bestFor") ||
-        typeof row.freePlan !== "boolean" ||
-        !hasString(row, "easeOfUse") ||
-        !hasString(row, "whyConsider") ||
-        !hasString(row, "watchFor")
-      ) {
-        issues.push({
-          field: "comparisonRows",
-          message: "Every row must include complete tool comparison details.",
-        });
-        break;
-      }
+  issues.push(
+    ...validateObjectArray(value, "bestPicksBySituation", [
+      "situation",
+      "toolSlug",
+      "toolName",
+      "why",
+    ]),
+  );
+  issues.push(
+    ...validateObjectArray(value, "recommendedTools", [
+      "toolSlug",
+      "toolName",
+      "summary",
+      "bestFor",
+      "avoidIf",
+      "toolPagePath",
+    ]),
+  );
+  issues.push(
+    ...validateObjectArray(value, "comparisonRows", [
+      "toolSlug",
+      "toolName",
+      "bestFor",
+      "easeOfUse",
+      "whyConsider",
+      "watchFor",
+    ]),
+  );
+  issues.push(
+    ...validateObjectArray(value, "decisionPath", [
+      "situation",
+      "recommendation",
+      "reason",
+    ]),
+  );
+  issues.push(...validateObjectArray(value, "faqs", ["question", "answer"]));
 
-      if (!toolsBySlug.has(row.toolSlug as ToolSlug)) {
+  if (Array.isArray(value.bestPicksBySituation)) {
+    for (const pick of value.bestPicksBySituation) {
+      if (isRecord(pick) && hasString(pick, "toolSlug") && !toolsBySlug.has(pick.toolSlug as ToolSlug)) {
         issues.push({
-          field: "comparisonRows",
-          message: `Unknown comparison tool slug: ${row.toolSlug}.`,
+          field: "bestPicksBySituation",
+          message: `Unknown best-pick tool slug: ${pick.toolSlug}.`,
         });
       }
     }
   }
 
-  if (
-    Array.isArray(value.decisionPath) &&
-    value.decisionPath.some(
-      (step) =>
-        !isRecord(step) ||
-        !hasString(step, "situation") ||
-        !hasString(step, "recommendation") ||
-        !hasString(step, "reason"),
-    )
-  ) {
-    issues.push({
-      field: "decisionPath",
-      message: "Every decision step must include a situation, recommendation, and reason.",
-    });
-  }
-
-  if (
-    Array.isArray(value.faqs) &&
-    value.faqs.some(
-      (faq) => !isRecord(faq) || !hasString(faq, "question") || !hasString(faq, "answer"),
-    )
-  ) {
-    issues.push({
-      field: "faqs",
-      message: "Every FAQ must include a question and answer.",
-    });
-  }
-
-  if (value.status === "published") {
-    const minimums = [
-      ["keyTakeaways", 3],
-      ["comparisonRows", 3],
-      ["decisionPath", 3],
-      ["moneySavingTips", 3],
-      ["faqs", 3],
-    ] as const;
-
-    for (const [field, minimum] of minimums) {
-      if (Array.isArray(value[field]) && value[field].length < minimum) {
+  if (Array.isArray(value.recommendedTools)) {
+    for (const tool of value.recommendedTools) {
+      if (isRecord(tool) && hasString(tool, "toolSlug") && !toolsBySlug.has(tool.toolSlug as ToolSlug)) {
         issues.push({
-          field,
-          message: `Published guides need at least ${minimum} entries.`,
+          field: "recommendedTools",
+          message: `Unknown recommended tool slug: ${tool.toolSlug}.`,
+        });
+      }
+
+      if (
+        isRecord(tool) &&
+        (!Array.isArray(tool.strengths) || tool.strengths.length === 0 ||
+          !Array.isArray(tool.tradeoffs) || tool.tradeoffs.length === 0)
+      ) {
+        issues.push({
+          field: "recommendedTools",
+          message: "Every recommended tool needs strengths and tradeoffs.",
+        });
+      }
+    }
+  }
+
+  if (Array.isArray(value.comparisonRows)) {
+    for (const row of value.comparisonRows) {
+      if (isRecord(row) && hasString(row, "toolSlug") && !toolsBySlug.has(row.toolSlug as ToolSlug)) {
+        issues.push({
+          field: "comparisonRows",
+          message: `Unknown comparison tool slug: ${row.toolSlug}.`,
+        });
+      }
+
+      if (isRecord(row) && typeof row.freePlan !== "boolean") {
+        issues.push({
+          field: "comparisonRows",
+          message: "Every comparison row must include a boolean freePlan value.",
         });
       }
     }
@@ -423,9 +626,13 @@ export function checkGuideQuality(
 
   const requiredArrayCounts = [
     ["keyTakeaways", guide.keyTakeaways.length, 5],
+    ["bestPicksBySituation", guide.bestPicksBySituation.length, 3],
     ["recommendedToolSlugs", guide.recommendedToolSlugs.length, 3],
+    ["recommendedTools", guide.recommendedTools.length, 3],
     ["comparisonRows", guide.comparisonRows.length, 3],
     ["decisionPath", guide.decisionPath.length, 3],
+    ["whoShouldUseThis", guide.whoShouldUseThis.length, 2],
+    ["whoShouldAvoidThis", guide.whoShouldAvoidThis.length, 2],
     ["moneySavingTips", guide.moneySavingTips.length, 3],
     ["faqs", guide.faqs.length, 4],
   ] as const;
@@ -436,6 +643,18 @@ export function checkGuideQuality(
     }
   }
 
+  if (guide.recommendedToolSlugs.length > 7) {
+    addBlocker("recommendedToolSlugs must not exceed 7 items.", 10);
+  }
+
+  if (new Set(guide.recommendedToolSlugs).size !== guide.recommendedToolSlugs.length) {
+    addBlocker("recommendedToolSlugs must be unique.", 10);
+  }
+
+  if (guide.comparisonRows.length > 7) {
+    addBlocker("comparisonRows must not exceed 7 items.", 10);
+  }
+
   if (guide.finalVerdict.trim().length < 120) {
     addBlocker("finalVerdict must contain at least 120 characters.", 12);
   }
@@ -444,15 +663,16 @@ export function checkGuideQuality(
     addBlocker("ctaToFinder must refer readers to /finder.", 12);
   }
 
-  if (guide.pricingNote.trim().length === 0) {
-    addBlocker("pricingNote is required.", 10);
+  if (!guide.finderCTA.includes("/finder")) {
+    addBlocker("finderCTA must refer readers to /finder.", 12);
   }
 
-  if (
-    guide.visualSummary.headline.trim().length === 0 ||
-    guide.visualSummary.points.length === 0
-  ) {
-    addBlocker("visualSummary must include a headline and summary points.", 10);
+  if (!guide.pricingCaveat.toLowerCase().includes("pricing can change")) {
+    addBlocker("pricingCaveat must say pricing can change.", 10);
+  }
+
+  if (guide.status === "published" && guide.qualityScore < 85) {
+    addBlocker("Published guides require qualityScore >= 85.", 20);
   }
 
   const recommendedNames = guide.recommendedToolSlugs
@@ -489,6 +709,10 @@ export function checkGuideQuality(
     );
   }
 
+  if (clearDecisionSteps < 3) {
+    addBlocker("Guides need usable decision logic across the full shortlist.", 10);
+  }
+
   const matchingRecommendations = guide.recommendedToolSlugs.filter((slug) =>
     catalogToolMatchesGuide(slug, guide),
   ).length;
@@ -499,6 +723,12 @@ export function checkGuideQuality(
 
   const contentText = readerFacingText(guide);
   const requiredContext = [
+    ["audience", guide.audience],
+    ["searchIntent", guide.searchIntent],
+    ["userPain", guide.userPain],
+    ["decisionQuestion", guide.decisionQuestion],
+    ["contentGap", guide.contentGap],
+    ["uniqueAngle", guide.uniqueAngle],
     ["persona", guide.persona],
     ["useCase", guide.useCase],
     ["budgetAngle", guide.budgetAngle],
@@ -510,10 +740,6 @@ export function checkGuideQuality(
     }
   }
 
-  if (!includesRelevantText(contentText, guide.skillLevel)) {
-    addWarning("Guide content should clearly address its skillLevel.", 4);
-  }
-
   const fullGuideText = JSON.stringify(guide);
   const qualityMetadata = guide as GuideWithQualityMetadata;
 
@@ -522,6 +748,18 @@ export function checkGuideQuality(
       'Testing claims such as "we tested" require supporting guide.testData.',
       30,
     );
+  }
+
+  if (NEWS_CLAIM_PATTERN.test(fullGuideText)) {
+    addBlocker("Guides should not make unsupported breaking-news or latest-update claims.", 12);
+  }
+
+  if (GUARANTEED_INCOME_PATTERN.test(fullGuideText)) {
+    addBlocker("Guide contains guaranteed income, sales, or client claims.", 30);
+  }
+
+  if (GET_RICH_QUICK_PATTERN.test(fullGuideText)) {
+    addBlocker("Guide contains get-rich-quick claims.", 30);
   }
 
   if (

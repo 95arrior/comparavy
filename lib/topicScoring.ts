@@ -44,13 +44,19 @@ const TIER_BONUS: Record<NonNullable<AiTool["recommendationTier"]>, number> = {
 
 export function scoreToolsForTopic(topic: GuideTopic): TopicToolScore[] {
   const topicTerms = terms(
-    [topic.title, topic.useCase, topic.persona, ...topic.secondaryKeywords].join(" "),
+    [
+      topic.title,
+      topic.audience ?? topic.persona,
+      topic.searchIntent ?? topic.useCase,
+      topic.notes ?? topic.selectionContext,
+      ...(topic.relatedKeywords ?? topic.secondaryKeywords),
+    ].join(" "),
   );
 
   return tools
     .map((tool) => {
       const reasons: string[] = [];
-      const preferredIndex = topic.preferredToolSlugs.indexOf(tool.slug);
+      const preferredIndex = topic.suggestedToolSlugs.indexOf(tool.slug);
       const toolTerms = terms(
         [
           tool.category,
@@ -67,12 +73,12 @@ export function scoreToolsForTopic(topic: GuideTopic): TopicToolScore[] {
         addReason(reasons, "Selected for this guide's core workflow.");
       }
 
-      if (topic.targetCategories.includes(tool.category)) {
+      if (topic.toolCategories.includes(tool.category)) {
         score += 42;
         addReason(reasons, `Matches the ${topic.category.toLowerCase()} category.`);
       }
 
-      if (tool.personas.includes(topic.persona) || tool.personas.includes("creator")) {
+      if (tool.personas.includes(topic.audience) || tool.personas.includes(topic.persona) || tool.personas.includes("creator")) {
         score += 8;
       }
 
@@ -99,6 +105,10 @@ export function scoreToolsForTopic(topic: GuideTopic): TopicToolScore[] {
 
       if (confidence > 5) {
         score += Math.min((confidence - 5) * 2, 8);
+      }
+
+      if (topic.suggestedToolSlugs[0] === tool.slug) {
+        score += 18;
       }
 
       if (reasons.length === 0) {

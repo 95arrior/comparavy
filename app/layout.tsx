@@ -6,6 +6,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Comparavy | AI Tool Decision Engine",
   description: "Find the right AI tool for your exact workflow in 60 seconds.",
+  icons: {
+    icon: "/icon.png",
+    apple: "/apple-icon.png",
+  },
   verification: {
     google: "3vjt4EUdAHqSiMyGG-6rrR9uq0XfQEbV5ANIBlxAj6s",
   },

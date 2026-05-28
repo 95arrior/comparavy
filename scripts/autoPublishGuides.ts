@@ -11,12 +11,15 @@ import {
   GUIDES_DIRECTORY,
   createTemplateGuide,
   getExistingGuides,
+  selectGuideTopics,
 } from "@/scripts/generateGuides";
 
 interface AutoPublishOptions {
   readonly count: number;
+  readonly type: "practical" | "income" | "trend-led" | "evergreen" | "mixed";
   readonly minQuality: number;
   readonly dryRun: boolean;
+  readonly publish: boolean;
 }
 
 interface Candidate {
@@ -31,7 +34,7 @@ interface Candidate {
 }
 
 const DEFAULT_COUNT = 2;
-const DEFAULT_MIN_QUALITY = 90;
+const DEFAULT_MIN_QUALITY = 85;
 const DEFAULT_MAX_DAILY_PUBLISH = 2;
 const CANDIDATE_MULTIPLIER = 3;
 
@@ -47,8 +50,10 @@ function parseNonNegativeInteger(value: string | undefined, option: string): num
 
 function parseOptions(args: readonly string[]): AutoPublishOptions {
   let count = DEFAULT_COUNT;
+  let type: AutoPublishOptions["type"] = "mixed";
   let minQuality = DEFAULT_MIN_QUALITY;
   let dryRun = false;
+  let publish = false;
 
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
@@ -58,8 +63,31 @@ function parseOptions(args: readonly string[]): AutoPublishOptions {
       continue;
     }
 
+    if (argument === "--publish") {
+      publish = true;
+      continue;
+    }
+
     if (argument === "--count") {
       count = parseNonNegativeInteger(args[index + 1], "--count");
+      index += 1;
+      continue;
+    }
+
+    if (argument === "--type") {
+      const rawType = args[index + 1];
+
+      if (
+        rawType !== "practical" &&
+        rawType !== "income" &&
+        rawType !== "trend-led" &&
+        rawType !== "evergreen" &&
+        rawType !== "mixed"
+      ) {
+        throw new Error("--type must be practical, income, trend-led, evergreen, or mixed.");
+      }
+
+      type = rawType;
       index += 1;
       continue;
     }
@@ -78,7 +106,7 @@ function parseOptions(args: readonly string[]): AutoPublishOptions {
     throw new Error(`Unknown option: ${argument}`);
   }
 
-  return { count, minQuality, dryRun };
+  return { count, type, minQuality, dryRun, publish };
 }
 
 function dailyPublishLimit(): number {
@@ -146,8 +174,24 @@ function requiredPublishingReasons(
     reasons.push("A pricing note is required.");
   }
 
+  if (!guide.guideType) {
+    reasons.push("Guide type is required for the publishing system.");
+  }
+
+  if (!guide.affiliateDisclosureNote?.trim()) {
+    reasons.push("An affiliate disclosure note is required.");
+  }
+
   if (!guide.ctaToFinder.includes("/finder")) {
     reasons.push("The finder CTA must refer readers to /finder.");
+  }
+
+  if (!guide.finderCTA.includes("/finder")) {
+    reasons.push("The finderCTA field must refer readers to /finder.");
+  }
+
+  if (guide.qualityScore < threshold) {
+    reasons.push(`Guide qualityScore ${guide.qualityScore} is below required threshold ${threshold}.`);
   }
 
   if (aiReview.available && (!aiReview.passed || aiReview.score < 85)) {
@@ -200,23 +244,45 @@ function logCandidate(candidate: Candidate): void {
 async function main(): Promise<void> {
   const options = parseOptions(process.argv.slice(2));
   const publishCount = Math.min(options.count, dailyPublishLimit());
-  const desiredCandidateCount = publishCount * CANDIDATE_MULTIPLIER;
+  const desiredCandidateCount = options.publish
+    ? publishCount * CANDIDATE_MULTIPLIER
+    : publishCount;
   const existingGuides = await getExistingGuides();
-  const existingSlugs = new Set(existingGuides.map((guide) => guide.slug));
-  const draftGuides = existingGuides.filter((guide) => guide.status === "draft");
-  const availableTopics = guideTopics.filter((topic) => !existingSlugs.has(topic.slug));
-  const newCandidateCount = Math.max(0, desiredCandidateCount - draftGuides.length);
-  const generatedGuides = availableTopics
-    .slice(0, newCandidateCount)
-    .map((topic) => createTemplateGuide(topic, "draft"));
-  const candidateGuides =
-    publishCount === 0 ? [] : [...draftGuides, ...generatedGuides];
+  const existingPublishedSlugs = new Set(
+    existingGuides.filter((guide) => guide.status === "published").map((guide) => guide.slug),
+  );
+  const existingDrafts = existingGuides.filter((guide) => guide.status === "draft");
+  const draftMap = new Map(existingDrafts.map((guide) => [guide.slug, guide]));
+  const selectedTopics = selectGuideTopics({
+    count: desiredCandidateCount,
+    type: options.type,
+    existingSlugs: existingPublishedSlugs,
+  });
+  const selectedDraftGuides = selectedTopics
+    .map((topic) => draftMap.get(topic.slug))
+    .filter(
+      (guide): guide is Guide =>
+        Boolean(guide?.guideType && guide.affiliateDisclosureNote?.trim()),
+    );
+  const topicsNeedingGeneration = selectedTopics.filter((topic) => {
+    const existingDraft = draftMap.get(topic.slug);
+    return !existingDraft?.guideType || !existingDraft.affiliateDisclosureNote?.trim();
+  });
+  const usedToolSlugs = new Set<string>();
+  const generatedGuides = topicsNeedingGeneration.map((topic) => {
+    const guide = createTemplateGuide(topic, "draft", usedToolSlugs);
+
+    for (const slug of guide.recommendedToolSlugs) {
+      usedToolSlugs.add(slug);
+    }
+
+    return guide;
+  });
+  const candidateGuides = [...selectedDraftGuides, ...generatedGuides];
   const comparisonSet = [...existingGuides, ...generatedGuides];
   const publishedGuides = existingGuides.filter((guide) => guide.status === "published");
   const reviewerUnavailable = !process.env.OPENAI_API_KEY;
-  const qualityThreshold = reviewerUnavailable
-    ? Math.max(options.minQuality, 92)
-    : options.minQuality;
+  const qualityThreshold = options.minQuality;
 
   if (options.count > publishCount) {
     console.log(
@@ -225,7 +291,7 @@ async function main(): Promise<void> {
   }
 
   if (reviewerUnavailable) {
-    console.log("AI reviewer unavailable; using stricter deterministic threshold.");
+    console.log("AI reviewer unavailable; using deterministic quality checks only.");
   }
 
   if (candidateGuides.length < desiredCandidateCount) {
@@ -265,7 +331,9 @@ async function main(): Promise<void> {
     logCandidate(candidate);
   }
 
-  const selected = candidates.filter((candidate) => candidate.eligible).slice(0, publishCount);
+  const selected = options.publish
+    ? candidates.filter((candidate) => candidate.eligible).slice(0, publishCount)
+    : [];
   const selectedSlugs = new Set(selected.map((candidate) => candidate.guide.slug));
   const today = new Date().toISOString().slice(0, 10);
 
@@ -273,13 +341,10 @@ async function main(): Promise<void> {
     await mkdir(GUIDES_DIRECTORY, { recursive: true });
 
     for (const candidate of candidates) {
-      if (!candidate.generated && !selectedSlugs.has(candidate.guide.slug)) {
-        continue;
-      }
-
-      const guide = selectedSlugs.has(candidate.guide.slug)
+      const guide = options.publish && selectedSlugs.has(candidate.guide.slug)
         ? { ...candidate.guide, status: "published" as const, updatedAt: today }
-        : candidate.guide;
+        : { ...candidate.guide, status: "draft" as const };
+
       const filePath = path.join(GUIDES_DIRECTORY, `${guide.slug}.json`);
       await writeFile(filePath, `${JSON.stringify(guide, null, 2)}\n`, "utf8");
     }
@@ -295,9 +360,10 @@ async function main(): Promise<void> {
   const draftCount = candidates.length - selected.length;
 
   console.log("Auto publish summary");
-  console.log(`Candidates created: ${generatedGuides.length}`);
+  console.log(`Candidates created: ${generatedGuides.length + selectedDraftGuides.length}`);
   console.log(`Candidates checked: ${candidates.length}`);
   console.log(`Published: ${options.dryRun ? 0 : selected.length}`);
+  console.log(`Publish mode: ${options.publish ? "publish" : "draft-only"}`);
 
   if (options.dryRun) {
     console.log(`Would publish: ${selected.length}`);
@@ -307,7 +373,7 @@ async function main(): Promise<void> {
   console.log(`Draft: ${draftCount}`);
   console.log(`Rejected: ${rejectedCount}`);
 
-  if (selected.length < publishCount) {
+  if (options.publish && selected.length < publishCount) {
     console.log(`Published fewer than requested because only ${selected.length} candidate(s) passed all gates.`);
   }
 }

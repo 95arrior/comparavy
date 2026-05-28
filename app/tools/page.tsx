@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import ActionLinks from "@/components/ActionLinks";
 import Logo from "@/components/Logo";
 import ToolsDirectory from "@/components/ToolsDirectory";
 import { tools } from "@/data/tools";
@@ -14,7 +15,7 @@ export default function ToolsPage() {
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-6 text-slate-900 sm:px-6 sm:py-10">
       <div className="mx-auto max-w-6xl">
-        <header className="rounded-3xl border border-slate-200 bg-white px-6 py-8 shadow-sm sm:px-10 sm:py-10">
+        <header className="rounded-3xl border border-slate-200 bg-white px-6 py-8 shadow-sm comparavy-reveal sm:px-10 sm:py-10">
           <nav className="flex flex-wrap items-center justify-between gap-4">
             <Logo />
             <div className="flex flex-wrap items-center gap-2">
@@ -43,6 +44,13 @@ export default function ToolsPage() {
             Browse the full Comparavy catalog, then open a tool page for a more
             detailed decision path.
           </p>
+          <ActionLinks
+            className="mt-8"
+            items={[
+              { href: "/finder", label: "Use Finder", tone: "primary" },
+              { href: "/guides", label: "Browse Guides" },
+            ]}
+          />
         </header>
 
         <ToolsDirectory tools={tools} />

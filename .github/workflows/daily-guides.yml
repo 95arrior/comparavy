@@ -1,8 +1,9 @@
-name: Publish daily guides
+name: Daily Comparavy Guides
 
 on:
   schedule:
-    - cron: "17 9 * * *"
+    # 09:00 UTC is 04:00 Eastern during US standard time and 05:00 Eastern during US daylight time.
+    - cron: "0 9 * * *"
   workflow_dispatch:
 
 permissions:
@@ -15,11 +16,14 @@ concurrency:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_MODEL: ${{ secrets.OPENAI_MODEL || 'gpt-5.4-mini' }}
     steps:
-      - name: Check out repository
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -28,20 +32,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Publish selected guide candidates
-        run: npm run auto:publish-guides -- --count 2
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_MODEL: ${{ secrets.OPENAI_MODEL || 'gpt-4o' }}
-          MAX_DAILY_PUBLISH: 2
+      - name: Generate and publish guide candidates
+        run: npm run auto:publish-guides -- --count 2 --type mixed --publish
 
       - name: Check guide quality
         run: npm run check:guides
 
-      - name: Build application
-        run: npm run build
-
-      - name: Commit guide updates
+      - name: Commit and push guide updates
         shell: bash
         run: |
           git config user.name "comparavy-bot"
@@ -51,5 +48,5 @@ jobs:
             echo "No guide changes to commit."
             exit 0
           fi
-          git commit -m "Publish daily Comparavy guides"
-          git push origin "HEAD:${GITHUB_REF_NAME}"
+          git commit -m "Auto publish daily AI tool guides"
+          git push

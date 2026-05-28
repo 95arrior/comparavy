@@ -120,7 +120,7 @@ export async function reviewGuideWithAI(guide: Guide): Promise<AiGuideReview> {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: process.env.OPENAI_MODEL ?? "gpt-4o",
+        model: process.env.OPENAI_MODEL ?? "gpt-5.4-mini",
         instructions:
           "You are a strict editorial reviewer for Comparavy, an AI tool decision engine serving US and global readers. Evaluate the supplied guide as written; do not rewrite it. Decide whether a busy creator can choose a suitable tool in under 60 seconds. Check that the Quick Verdict is specific, recommendations are practical, Best for / Not for / Avoid if tradeoffs are clear through comparison content, the decision path is usable, FAQs answer real concerns, and uncertain readers are directed to /finder. Reject fake testing claims, unsupported certainty, exact current pricing claims, generic filler, or content that would be low-value publishing. Return JSON only through the provided schema. A score of 85 or above should be reserved for publish-ready editorial quality.",
         input: JSON.stringify(guide),

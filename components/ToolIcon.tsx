@@ -48,15 +48,19 @@ export default function ToolIcon({
   className,
 }: ToolIconProps) {
   const iconConfig = getToolIconConfig(slug);
+  const isNotebookLM = slug === "notebooklm";
   const effectiveBrandColor = brandColor ?? iconConfig.brandColor;
-  const localIconSource = iconPath?.trim() || undefined;
+  const localIconSource = isNotebookLM ? undefined : iconPath?.trim() || undefined;
   const faviconSources = getFaviconCandidates({
     officialUrl,
-    iconDomain: iconDomain ?? iconConfig.iconDomain,
+    iconDomain: isNotebookLM ? "notebooklm.google.com" : iconDomain ?? iconConfig.iconDomain,
   });
-  const imageSources = localIconSource
-    ? [localIconSource, ...faviconSources]
+  const notebookLmSources = isNotebookLM
+    ? ["https://notebooklm.google.com/favicon.ico", ...faviconSources]
     : faviconSources;
+  const imageSources = localIconSource
+    ? [localIconSource, ...notebookLmSources]
+    : notebookLmSources;
 
   const [activeSourceIndex, setActiveSourceIndex] = useState(0);
   const [loadedSource, setLoadedSource] = useState<string | null>(null);
@@ -102,10 +106,7 @@ export default function ToolIcon({
         />
       )}
       {activeSource && !showImage && (
-        <span
-          aria-hidden="true"
-          className={`${PLACEHOLDER_CLASSES} animate-pulse`}
-        />
+        <span aria-hidden="true" className={PLACEHOLDER_CLASSES} />
       )}
       {showFallback && (
         <span

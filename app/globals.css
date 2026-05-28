@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8fafc;
+  --background: #f7f9fc;
   --foreground: #172033;
 }
 
@@ -13,107 +13,138 @@ body {
   margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+.comparavy-surface {
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.comparavy-reveal {
+  animation: comparavy-fade-up 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.comparavy-reveal-delay-1 {
+  animation-delay: 80ms;
+}
+
+.comparavy-reveal-delay-2 {
+  animation-delay: 160ms;
+}
+
+.comparavy-reveal-delay-3 {
+  animation-delay: 240ms;
+}
+
+.comparavy-card-lift {
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease;
+}
+
+.comparavy-card-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.08);
+}
+
+.comparavy-clamp-2 {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.comparavy-clamp-1 {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.comparavy-metric-bar {
+  transform: scaleX(0);
+  transform-origin: left center;
+  animation: comparavy-metric-fill 800ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: transform;
+}
+
+.comparavy-metric-bar__track {
+  overflow: hidden;
+}
+
+.comparavy-star-badge__icon {
+  display: inline-block;
+  color: #0f766e;
+  animation: comparavy-star-pulse 900ms ease-out 1 both;
+}
+
+.comparavy-section-divider {
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0), rgba(37, 99, 235, 0.16) 20%, rgba(96, 165, 250, 0.28) 50%, rgba(37, 99, 235, 0.16) 80%, rgba(37, 99, 235, 0));
 }
 
 .comparavy-logo-link {
   display: inline-flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
+  flex-shrink: 0;
   text-decoration: none;
   line-height: 1;
-  overflow: visible;
-  min-width: 9.5ch;
-  min-height: 1.85em;
-  padding: 0.12em 0.08em 0.2em;
+  min-height: 2rem;
 }
 
-.comparavy-wordmark {
-  position: relative;
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0;
-  white-space: nowrap;
-  color: #07111f;
-  font-family: inherit;
-  font-size: clamp(1.15rem, 1.35vw, 1.52rem);
-  font-weight: 850;
-  font-style: normal;
-  letter-spacing: -0.04em;
-  line-height: 1;
-  transform: translateZ(0);
-  transform-origin: left center;
-  overflow: visible;
-}
-
-.comparavy-wordmark::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -0.16em;
-  height: 2px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, rgba(37, 99, 235, 0), #2563eb 32%, #60a5fa 52%, rgba(37, 99, 235, 0) 82%);
-  opacity: 0;
-  transform: scaleX(0.08);
-  transform-origin: left center;
-  animation: comparavy-wordmark-scan 1.35s cubic-bezier(0.22, 1, 0.36, 1) 0.18s
-    forwards;
-  pointer-events: none;
-}
-
-.comparavy-wordmark__base,
-.comparavy-logo-accent {
-  display: inline-block;
-  white-space: nowrap;
-}
-
-.comparavy-wordmark__base {
-  color: #07111f;
-}
-
-.comparavy-logo-accent {
-  color: #2563eb;
-}
-
-@keyframes comparavy-wordmark-scan {
-  0% {
+@keyframes comparavy-fade-up {
+  from {
     opacity: 0;
-    transform: scaleX(0.08);
+    transform: translateY(12px);
   }
 
-  14% {
-    opacity: 0.9;
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes comparavy-metric-fill {
+  from {
+    transform: scaleX(0);
   }
 
-  64% {
-    opacity: 0.95;
+  to {
     transform: scaleX(1);
   }
+}
 
+@keyframes comparavy-star-pulse {
+  0%,
   100% {
-    opacity: 0;
-    transform: scaleX(1);
+    opacity: 0.72;
+    transform: scale(0.96);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
   }
 }
 
 @media (max-width: 640px) {
   .comparavy-logo-link {
-    min-width: 9.1ch;
-    min-height: 1.75em;
-    padding: 0.1em 0.06em 0.18em;
-  }
-
-  .comparavy-wordmark {
-    font-size: clamp(1.08rem, 3.8vw, 1.28rem);
-    letter-spacing: -0.032em;
+    min-height: 1.75rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .comparavy-wordmark::after {
+  .comparavy-reveal,
+  .comparavy-card-lift,
+  .comparavy-metric-bar,
+  .comparavy-star-badge__icon {
     animation: none;
-    opacity: 0;
+    transition: none;
   }
 }

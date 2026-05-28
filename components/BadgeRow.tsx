@@ -17,13 +17,9 @@ const TONE_CLASSES = {
 
 export function getToolBadges(
   tool: Pick<AiTool, "freePlan" | "beginnerScore" | "speedScore" | "qualityScore">,
-  bestFirstChoice = false,
+  _bestFirstChoice = false,
 ): Badge[] {
   const badges: Badge[] = [];
-
-  if (bestFirstChoice) {
-    badges.push({ label: "Best first choice", tone: "teal" });
-  }
 
   if (tool.freePlan) {
     badges.push({ label: "Free plan", tone: "slate" });

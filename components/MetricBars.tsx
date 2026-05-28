@@ -46,7 +46,7 @@ export default function MetricBars({
 }: MetricBarsProps) {
   return (
     <div className={compact ? "space-y-2.5" : "grid gap-4 sm:grid-cols-2"}>
-      {metrics.map((metric) => {
+      {metrics.map((metric, index) => {
         const value = tool[metric];
 
         return (
@@ -55,9 +55,10 @@ export default function MetricBars({
               <span className="font-medium text-slate-600">{METRIC_LABELS[metric]}</span>
               <span className="font-semibold text-slate-800">{value}/10</span>
             </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+            <div className="comparavy-metric-bar__track h-1.5 rounded-full bg-slate-100">
               <div
-                className={`h-full rounded-full bg-teal-600 ${BAR_WIDTHS[value]}`}
+                className={`comparavy-metric-bar h-full rounded-full bg-teal-600 ${BAR_WIDTHS[value]}`}
+                style={{ animationDelay: `${index * 90}ms` }}
               />
             </div>
           </div>
