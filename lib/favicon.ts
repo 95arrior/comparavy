@@ -29,3 +29,21 @@ export function getFaviconUrl({
 
   return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(normalizedDomain)}&sz=128`;
 }
+
+export function getFaviconCandidates({
+  officialUrl,
+  iconDomain,
+}: FaviconInput): readonly string[] {
+  const domain = iconDomain?.trim() || getDomainFromUrl(officialUrl);
+
+  if (!domain) {
+    return [];
+  }
+
+  const normalizedDomain = domain.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+
+  return [
+    `https://www.google.com/s2/favicons?domain=${encodeURIComponent(normalizedDomain)}&sz=128`,
+    `https://icons.duckduckgo.com/ip3/${encodeURIComponent(normalizedDomain)}.ico`,
+  ];
+}

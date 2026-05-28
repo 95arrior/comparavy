@@ -17,7 +17,7 @@ async function main(): Promise<void> {
   let localIconCount = 0;
   let faviconFallbackCount = 0;
   let safeSimpleIconCount = 0;
-  let letterFallbackOnlyCount = 0;
+  let cssFallbackOnlyCount = 0;
   let missingOfficialUrl = 0;
   let missingIconDomain = 0;
   let brokenLocalIconPath = 0;
@@ -81,7 +81,7 @@ async function main(): Promise<void> {
     }
 
     if (!localExists && !faviconUrl && !safeSimpleIcon) {
-      letterFallbackOnlyCount += 1;
+      cssFallbackOnlyCount += 1;
     }
   }
 
@@ -90,12 +90,15 @@ async function main(): Promise<void> {
   console.log(`Local icons: ${localIconCount}`);
   console.log(`Favicon fallback: ${faviconFallbackCount}`);
   console.log(`Safe simple-icons: ${safeSimpleIconCount}`);
-  console.log(`Letter fallback only: ${letterFallbackOnlyCount}`);
+  console.log(`CSS fallback only: ${cssFallbackOnlyCount}`);
   console.log(`Missing officialUrl: ${missingOfficialUrl}`);
   console.log(`Missing iconDomain: ${missingIconDomain}`);
   console.log(`Broken local iconPath: ${brokenLocalIconPath}`);
   console.log(
     `Forced favicon strategy: ${forcedFaviconTools.length ? forcedFaviconTools.join(", ") : "none"}`,
+  );
+  console.log(
+    "Visual note: ToolIcon resolves local files, then favicon candidates, then CSS fallback avatars.",
   );
 
   for (const warning of warnings) {

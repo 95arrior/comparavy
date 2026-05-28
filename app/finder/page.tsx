@@ -547,7 +547,23 @@ export default function FinderPage() {
     <main className="min-h-screen px-4 py-6 sm:px-6 sm:py-10">
       <div className="mx-auto max-w-5xl">
         <header className="mb-7 sm:mb-10">
-          <Logo />
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <Logo />
+            <nav className="flex items-center gap-2">
+              <Link
+                href="/tools"
+                className="rounded-full px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-teal-800"
+              >
+                Tools
+              </Link>
+              <Link
+                href="/guides"
+                className="rounded-full px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-teal-800"
+              >
+                Guides
+              </Link>
+            </nav>
+          </div>
           <h1 className="mt-4 max-w-2xl text-3xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
             Find the AI tool that fits the job.
           </h1>

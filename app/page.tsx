@@ -66,6 +66,12 @@ export default function Home() {
           <Logo />
           <nav aria-label="Main navigation" className="flex items-center gap-2 sm:gap-3">
             <Link
+              href="/tools"
+              className="rounded-full px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-teal-800"
+            >
+              Tools
+            </Link>
+            <Link
               href="/guides"
               className="rounded-full px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-teal-800"
             >

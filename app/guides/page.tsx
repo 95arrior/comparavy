@@ -21,12 +21,20 @@ export default function GuidesPage() {
         <header className="rounded-3xl border border-slate-200 bg-white px-6 py-10 shadow-sm sm:px-10 sm:py-14">
           <nav className="flex flex-wrap items-center justify-between gap-4">
             <Logo />
-            <Link
-              href="/finder"
-              className="rounded-full border border-teal-200 px-5 py-2.5 text-sm font-semibold text-teal-800 transition hover:bg-teal-50"
-            >
-              Use the finder
-            </Link>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href="/tools"
+                className="rounded-full px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-teal-800"
+              >
+                Tools
+              </Link>
+              <Link
+                href="/finder"
+                className="rounded-full border border-teal-200 px-5 py-2.5 text-sm font-semibold text-teal-800 transition hover:bg-teal-50"
+              >
+                Use the finder
+              </Link>
+            </div>
           </nav>
           <p className="mt-12 text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
             AI Tool Guides

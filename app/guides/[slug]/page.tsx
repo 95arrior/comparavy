@@ -135,6 +135,12 @@ export default async function GuideDetailPage({ params }: GuidePageProps) {
           <div className="flex flex-wrap items-center gap-4">
             <Logo />
             <Link
+              href="/tools"
+              className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-teal-200 hover:bg-teal-50"
+            >
+              Tools
+            </Link>
+            <Link
               href="/guides"
               className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-teal-200 hover:bg-teal-50"
             >
