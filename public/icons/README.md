@@ -12,3 +12,5 @@ iconPath: "/icons/writesonic.svg",
 Only use official or licensed transparent logo assets here. `ToolIcon` prefers
 an `iconPath` asset, then a supported Simple Icons SVG, then the official
 domain favicon before showing its neutral text fallback.
+
+`npm run check:icons` will warn if a referenced local file is missing.

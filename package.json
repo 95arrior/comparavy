@@ -8,6 +8,7 @@
     "start": "next start",
     "generate:guides": "tsx scripts/generateGuides.ts",
     "check:guides": "tsx scripts/checkGuides.ts",
+    "check:icons": "tsx scripts/checkToolIcons.ts",
     "auto:publish-guides": "tsx scripts/autoPublishGuides.ts"
   },
   "dependencies": {

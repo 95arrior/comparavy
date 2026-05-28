@@ -1,28 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import {
-  siAirtable,
-  siBuffer,
-  siClaude,
-  siCursor,
-  siDeepl,
-  siElevenlabs,
-  siFramer,
-  siGithubcopilot,
-  siGooglegemini,
-  siGrammarly,
-  siHubspot,
-  siMake,
-  siN8n,
-  siNotion,
-  siPerplexity,
-  siReplit,
-  siSemrush,
-  siVeed,
-  siZapier,
-  type SimpleIcon,
-} from "simple-icons";
+import { useEffect, useState } from "react";
+import type { SimpleIcon } from "simple-icons";
+import { getFaviconUrl } from "@/lib/favicon";
+import { getSimpleIcon, getToolIconConfig } from "@/lib/toolIcons";
 
 interface ToolIconProps {
   readonly name: string;
@@ -32,6 +13,7 @@ interface ToolIconProps {
   readonly iconDomain?: string;
   readonly brandColor?: string;
   readonly size?: "sm" | "md" | "lg";
+  readonly className?: string;
 }
 
 const SIZE_CLASSES = {
@@ -40,50 +22,19 @@ const SIZE_CLASSES = {
   lg: "h-12 w-12",
 } as const;
 
-const ICON_SIZE_CLASSES = {
-  sm: "h-6 w-6",
-  md: "h-7 w-7",
-  lg: "h-8 w-8",
+const ICON_CLASSES = {
+  sm: "p-1.5",
+  md: "p-1.5",
+  lg: "p-1.5",
 } as const;
 
-const SIMPLE_ICONS: Partial<Record<string, SimpleIcon>> = {
-  airtable: siAirtable,
-  buffer: siBuffer,
-  claude: siClaude,
-  cursor: siCursor,
-  "deepl-write": siDeepl,
-  elevenlabs: siElevenlabs,
-  "framer-ai": siFramer,
-  "github-copilot": siGithubcopilot,
-  gemini: siGooglegemini,
-  grammarly: siGrammarly,
-  hubspot: siHubspot,
-  make: siMake,
-  n8n: siN8n,
-  "notion-ai": siNotion,
-  perplexity: siPerplexity,
-  replit: siReplit,
-  semrush: siSemrush,
-  veed: siVeed,
-  "zapier-ai": siZapier,
-};
-
-function initials(name: string): string {
-  return name
-    .split(/[\s.]+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part.charAt(0).toUpperCase())
-    .join("");
+function firstLetter(name: string): string {
+  const initial = name.trim().charAt(0).toUpperCase();
+  return initial || "?";
 }
 
-function faviconUrl(iconDomain: string | undefined, officialUrl: string | undefined) {
-  try {
-    const domain = iconDomain ?? (officialUrl ? new URL(officialUrl).hostname : undefined);
-    return domain ? `https://${domain.replace(/^https?:\/\//, "")}/favicon.ico` : undefined;
-  } catch {
-    return undefined;
-  }
+function sourceKey(source: string | undefined): string | undefined {
+  return source ? source : undefined;
 }
 
 function iconColor(icon: SimpleIcon, brandColor: string | undefined): string {
@@ -102,38 +53,79 @@ export default function ToolIcon({
   iconDomain,
   brandColor,
   size = "md",
+  className,
 }: ToolIconProps) {
-  const [failedSource, setFailedSource] = useState<string | undefined>();
-  const simpleIcon = SIMPLE_ICONS[slug];
-  const favicon = faviconUrl(iconDomain, officialUrl);
-  const showLocalIcon = Boolean(iconPath && failedSource !== iconPath);
-  const showSimpleIcon = !showLocalIcon && Boolean(simpleIcon);
-  const showFavicon =
-    !showLocalIcon && !showSimpleIcon && Boolean(favicon && failedSource !== favicon);
-  const showsLogo = showLocalIcon || showSimpleIcon || showFavicon;
+  const iconConfig = getToolIconConfig(slug);
+  const simpleIcon = iconConfig.forceFavicon ? undefined : getSimpleIcon(iconConfig.simpleIconSlug);
+  const effectiveBrandColor =
+    brandColor ?? iconConfig.brandColor ?? (simpleIcon ? `#${simpleIcon.hex}` : undefined);
+  const favicon = getFaviconUrl({ officialUrl, iconDomain: iconDomain ?? iconConfig.iconDomain });
+
+  const [failedSources, setFailedSources] = useState<Record<string, true>>({});
+  const [loadedSources, setLoadedSources] = useState<Record<string, true>>({});
+
+  useEffect(() => {
+    setFailedSources({});
+    setLoadedSources({});
+  }, [iconPath, iconDomain, officialUrl, slug]);
+
+  const showLocalIcon = Boolean(iconPath && !failedSources[iconPath]);
+  const showFavicon = !showLocalIcon && Boolean(favicon && !failedSources[favicon]);
+  const showSimpleIcon = !showLocalIcon && !showFavicon && Boolean(simpleIcon);
+  const showFallback = !showLocalIcon && !showFavicon && !showSimpleIcon;
+
+  function markFailed(source: string | undefined) {
+    const key = sourceKey(source);
+    if (!key) {
+      return;
+    }
+
+    setFailedSources((current) =>
+      current[key] ? current : { ...current, [key]: true },
+    );
+  }
+
+  function markLoaded(source: string | undefined) {
+    const key = sourceKey(source);
+    if (!key) {
+      return;
+    }
+
+    setLoadedSources((current) =>
+      current[key] ? current : { ...current, [key]: true },
+    );
+  }
+
+  const imageSource = showLocalIcon ? iconPath : showFavicon ? favicon : undefined;
+  const imageLoaded = imageSource ? Boolean(loadedSources[imageSource]) : false;
 
   return (
     <span
-      className={`flex shrink-0 items-center justify-center overflow-hidden rounded-xl ${SIZE_CLASSES[size]} ${
-        showsLogo
-          ? "bg-transparent"
-          : "border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700"
-      }`}
+      className={`flex shrink-0 items-center justify-center overflow-hidden rounded-2xl ${SIZE_CLASSES[size]} ${
+        showFallback
+          ? "border border-slate-200 bg-slate-100 text-slate-700"
+          : "bg-transparent"
+      } ${className ?? ""}`}
+      aria-label={`${name} logo`}
     >
       {showLocalIcon && iconPath ? (
         <img
           src={iconPath}
           alt={`${name} logo`}
-          className={`${ICON_SIZE_CLASSES[size]} object-contain`}
-          onError={() => setFailedSource(iconPath)}
+          className={`block h-full w-full object-contain ${ICON_CLASSES[size]}`}
+          style={{ visibility: imageLoaded ? "visible" : "hidden" }}
+          onLoad={() => markLoaded(iconPath)}
+          onError={() => markFailed(iconPath)}
+          loading="lazy"
+          decoding="async"
         />
       ) : showSimpleIcon && simpleIcon ? (
         <svg
           role="img"
           aria-label={`${name} logo`}
           viewBox="0 0 24 24"
-          className={ICON_SIZE_CLASSES[size]}
-          fill={iconColor(simpleIcon, brandColor)}
+          className={`block h-full w-full ${ICON_CLASSES[size]}`}
+          fill={iconColor(simpleIcon, effectiveBrandColor)}
         >
           <path d={simpleIcon.path} />
         </svg>
@@ -141,11 +133,21 @@ export default function ToolIcon({
         <img
           src={favicon}
           alt={`${name} logo`}
-          className={`${ICON_SIZE_CLASSES[size]} object-contain`}
-          onError={() => setFailedSource(favicon)}
+          className={`block h-full w-full object-contain ${ICON_CLASSES[size]}`}
+          style={{ visibility: imageLoaded ? "visible" : "hidden" }}
+          onLoad={() => markLoaded(favicon)}
+          onError={() => markFailed(favicon)}
+          loading="lazy"
+          decoding="async"
         />
       ) : (
-        <span aria-label={`${name} logo unavailable`}>{initials(name)}</span>
+        <span
+          className="flex h-full w-full items-center justify-center rounded-2xl text-sm font-semibold tracking-tight"
+          style={{ color: effectiveBrandColor ?? "#334155" }}
+          aria-label={`${name} logo fallback`}
+        >
+          {firstLetter(name)}
+        </span>
       )}
     </span>
   );

@@ -1,10 +1,11 @@
+import { getToolIconConfig } from "@/lib/toolIcons";
 import type { AiTool } from "@/types/tool";
 
 const PRICING_NOTICE =
   "Pricing can change. Check the official site before subscribing.";
 const PRICING_LAST_CHECKED = "2026-05-27";
 
-export const tools = [
+const BASE_TOOLS: readonly AiTool[] = [
   {
     id: "chatgpt",
     slug: "chatgpt",
@@ -1266,6 +1267,16 @@ export const tools = [
     alternatives: ["grammarly", "chatgpt", "notion-ai"],
   },
 ] satisfies readonly AiTool[];
+
+export const tools = BASE_TOOLS.map((tool) => {
+  const iconConfig = getToolIconConfig(tool.slug);
+
+  return {
+    ...tool,
+    brandColor: tool.brandColor ?? iconConfig.brandColor,
+    iconDomain: tool.iconDomain ?? iconConfig.iconDomain,
+  };
+}) satisfies readonly AiTool[];
 
 export type ToolSlug = (typeof tools)[number]["slug"];
 
