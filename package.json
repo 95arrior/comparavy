@@ -9,6 +9,7 @@
     "generate:guides": "tsx scripts/generateGuides.ts",
     "check:guides": "tsx scripts/checkGuides.ts",
     "check:icons": "tsx scripts/checkToolIcons.ts",
+    "check:tools": "tsx scripts/checkTools.ts",
     "auto:publish-guides": "tsx scripts/autoPublishGuides.ts"
   },
   "dependencies": {

@@ -36,6 +36,12 @@ function addReason(reasons: string[], reason: string): void {
   }
 }
 
+const TIER_BONUS: Record<NonNullable<AiTool["recommendationTier"]>, number> = {
+  core: 14,
+  alternative: 6,
+  catalog: 0,
+};
+
 export function scoreToolsForTopic(topic: GuideTopic): TopicToolScore[] {
   const topicTerms = terms(
     [topic.title, topic.useCase, topic.persona, ...topic.secondaryKeywords].join(" "),
@@ -78,6 +84,21 @@ export function scoreToolsForTopic(topic: GuideTopic): TopicToolScore[] {
       if (topic.skillLevel === "beginner" && tool.beginnerScore >= 8) {
         score += 8;
         addReason(reasons, "Catalog data indicates a beginner-friendly setup.");
+      }
+
+      const tier = tool.recommendationTier ?? "catalog";
+      const confidence = tool.confidenceScore ?? 5;
+
+      score += TIER_BONUS[tier];
+
+      if (tier === "core") {
+        addReason(reasons, "Marked as a core catalog recommendation.");
+      } else if (tier === "alternative") {
+        addReason(reasons, "Marked as a useful alternative when the workflow shifts.");
+      }
+
+      if (confidence > 5) {
+        score += Math.min((confidence - 5) * 2, 8);
       }
 
       if (reasons.length === 0) {

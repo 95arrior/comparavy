@@ -46,4 +46,6 @@ export interface AiTool {
   readonly setupDifficulty: SetupDifficulty;
   readonly primaryTags: readonly string[];
   readonly alternatives: readonly string[];
+  readonly recommendationTier?: "core" | "alternative" | "catalog";
+  readonly confidenceScore?: number;
 }

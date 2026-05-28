@@ -1,5 +1,4 @@
 import BadgeRow, { getToolBadges } from "@/components/BadgeRow";
-import ToolIcon from "@/components/ToolIcon";
 import type { AiTool } from "@/types/tool";
 
 function formatCategory(category: AiTool["category"]): string {
@@ -32,25 +31,20 @@ export default function ToolDetailHeader({ tool }: ToolDetailHeaderProps) {
     <header className="rounded-3xl border border-slate-200 bg-white px-6 py-8 shadow-sm sm:px-8 sm:py-10">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-3xl">
-          <div className="flex items-start gap-4">
-            <ToolIcon {...tool} size="lg" />
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-teal-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-teal-800">
-                  {formatCategory(tool.category)}
-                </span>
-                <span className="rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600">
-                  {formatBudgetLabel(tool.budgetLevel)}
-                </span>
-              </div>
-              <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
-                {tool.name}
-              </h1>
-              <p className="mt-5 text-lg leading-8 text-slate-600">
-                {tool.description}
-              </p>
-            </div>
+          <h1 className="max-w-4xl text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+            {tool.name}
+          </h1>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-teal-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-teal-800">
+              {formatCategory(tool.category)}
+            </span>
+            <span className="rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+              {formatBudgetLabel(tool.budgetLevel)}
+            </span>
           </div>
+          <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base sm:leading-8">
+            {tool.description}
+          </p>
           <div className="mt-5">
             <BadgeRow badges={getToolBadges(tool)} />
           </div>

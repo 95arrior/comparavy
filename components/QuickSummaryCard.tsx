@@ -23,7 +23,7 @@ export default function QuickSummaryCard({ guide }: QuickSummaryCardProps) {
             At a glance
           </p>
           <div className="mt-4 flex items-center gap-3">
-            <ToolIcon {...primaryTool} size="lg" />
+            <ToolIcon {...primaryTool} size={28} />
             <div>
               <p className="text-xs font-medium text-slate-500">Start with</p>
               <h2 className="text-2xl font-semibold tracking-tight text-slate-900">

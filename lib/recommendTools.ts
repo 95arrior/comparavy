@@ -180,6 +180,12 @@ const BUDGET_RANK: Record<BudgetLevel, number> = {
   premium: 3,
 };
 
+const TIER_BONUS: Record<NonNullable<AiTool["recommendationTier"]>, number> = {
+  core: 16,
+  alternative: 7,
+  catalog: 0,
+};
+
 function normalize(value: string): string {
   return value
     .toLowerCase()
@@ -369,6 +375,24 @@ function scorePriority(
   }
 }
 
+function scoreRecommendationMetadata(tool: AiTool, reasons: string[]): number {
+  const tier = tool.recommendationTier ?? "catalog";
+  const confidence = tool.confidenceScore ?? 5;
+  let score = TIER_BONUS[tier];
+
+  if (tier === "core") {
+    addReason(reasons, "Marked as a core catalog recommendation.");
+  } else if (tier === "alternative") {
+    addReason(reasons, "Useful as an alternative when the workflow is more specific.");
+  }
+
+  if (confidence > 5) {
+    score += Math.min((confidence - 5) * 2, 8);
+  }
+
+  return score;
+}
+
 function scoreTool(
   tool: AiTool,
   input: RecommendationInput,
@@ -404,6 +428,7 @@ function scoreTool(
     }
   }
 
+  score += scoreRecommendationMetadata(tool, reasons);
   const useCaseMatch = getBestUseCaseMatch(tool, input.useCase);
   const tagOverlap = countOverlap(getTerms(input.useCase), getTerms(tool.primaryTags.join(" ")));
 

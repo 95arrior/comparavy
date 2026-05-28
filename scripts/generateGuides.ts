@@ -174,7 +174,7 @@ function parseOptions(args: readonly string[]): GeneratorOptions {
 }
 
 export function createTemplateGuide(topic: GuideTopic, status: GuideStatus): Guide {
-  const recommendations = getTopicRecommendations(topic, 3);
+  const recommendations = getTopicRecommendations(topic, 5);
   const [first, second, third] = recommendations;
   const date = new Date().toISOString().slice(0, 10);
 

@@ -116,7 +116,7 @@ export default function GuidesPage() {
                   </dl>
                   {primaryTool && (
                     <div className="mt-5 flex items-center gap-3">
-                      <ToolIcon {...primaryTool} size="sm" />
+                      <ToolIcon {...primaryTool} size={26} />
                       <div>
                         <p className="text-xs text-slate-500">Recommended start</p>
                         <p className="text-sm font-semibold text-slate-900">

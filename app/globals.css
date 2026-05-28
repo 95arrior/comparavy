@@ -610,7 +610,7 @@ nav {
   display: inline-block !important;
 
   font-family: Impact, "Arial Black", "Helvetica Neue", Arial, sans-serif !important;
-  font-size: clamp(1.38rem, 2vw, 1.78rem) !important;
+  font-size: clamp(1.14rem, 1.72vw, 1.34rem) !important;
   font-weight: 900 !important;
   font-style: italic !important;
 
@@ -712,12 +712,12 @@ nav {
 
 @media (max-width: 640px) {
   .comparavy-logo-link {
-    min-height: 36px !important;
-    padding: 4px 9px 6px 2px !important;
+    min-height: 34px !important;
+    padding: 3px 8px 5px 2px !important;
   }
 
   .comparavy-wordmark {
-    font-size: 1.28rem !important;
+    font-size: 1.12rem !important;
     letter-spacing: 0.014em !important;
     transform: skewX(-7deg) scaleX(1.01) translateZ(0) !important;
   }

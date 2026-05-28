@@ -37,13 +37,15 @@ export default function AlternativeTools({
           <Link
             key={alternative.slug}
             href={`/tools/${alternative.slug}`}
-            className="group flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 transition hover:border-teal-300 hover:bg-teal-50"
+            className="group rounded-2xl border border-slate-200 bg-slate-50/60 p-4 transition hover:border-teal-300 hover:bg-teal-50"
           >
-            <ToolIcon {...alternative} size="sm" />
-            <div className="min-w-0 flex-1">
-              <p className="font-semibold text-slate-900 transition group-hover:text-teal-800">
+            <div className="flex items-center gap-2">
+              <ToolIcon {...alternative} size={25} className="shrink-0" />
+              <p className="min-w-0 font-semibold leading-6 text-slate-900 transition group-hover:text-teal-800">
                 {alternative.name}
               </p>
+            </div>
+            <div className="mt-2">
               <p className="mt-1 text-sm leading-6 text-slate-600">
                 {alternative.description}
               </p>

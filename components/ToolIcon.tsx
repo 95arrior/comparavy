@@ -11,21 +11,30 @@ interface ToolIconProps {
   readonly iconPath?: string;
   readonly iconDomain?: string;
   readonly brandColor?: string;
-  readonly size?: "sm" | "md" | "lg";
+  readonly size?: number | "sm" | "md" | "lg";
   readonly className?: string;
 }
 
-const SIZE_CLASSES = {
-  sm: "h-[30px] w-[30px]",
-  md: "h-[32px] w-[32px]",
-  lg: "h-[34px] w-[34px]",
+const SIZE_MAP = {
+  sm: 26,
+  md: 28,
+  lg: 32,
 } as const;
 
-const IMAGE_CLASSES = "block h-full w-full object-contain scale-[1.08]";
+const IMAGE_CLASSES = "block h-full w-full object-contain scale-[1.04]";
+const PLACEHOLDER_CLASSES = "absolute inset-0 bg-slate-50";
 
 function firstLetter(name: string): string {
   const initial = name.trim().charAt(0).toUpperCase();
   return initial || "?";
+}
+
+function getSizePixels(size: ToolIconProps["size"]): number {
+  if (typeof size === "number") {
+    return size;
+  }
+
+  return SIZE_MAP[size ?? "md"];
 }
 
 export default function ToolIcon({
@@ -58,7 +67,8 @@ export default function ToolIcon({
   }, [localIconSource, iconDomain, officialUrl, slug]);
 
   const activeSource = imageSources[activeSourceIndex];
-  const showFallback = !activeSource || loadedSource !== activeSource;
+  const showImage = Boolean(activeSource && loadedSource === activeSource);
+  const showFallback = !activeSource;
 
   function handleError() {
     setLoadedSource(null);
@@ -68,22 +78,21 @@ export default function ToolIcon({
     });
   }
 
+  const sizePixels = getSizePixels(size);
+
   return (
     <span
-      className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-[10px] border ${SIZE_CLASSES[size]} ${
-        showFallback
-          ? "border-slate-200 bg-slate-100 text-slate-700"
-          : "border-slate-200 bg-white"
-      } ${className ?? ""}`}
+      className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-[8px] border border-slate-200 bg-white ${className ?? ""}`}
+      style={{ width: sizePixels, height: sizePixels }}
       aria-label={`${name} logo`}
     >
-      {activeSource ? (
+      {activeSource && (
         <img
           src={activeSource}
           alt={`${name} logo`}
           className={`${IMAGE_CLASSES} absolute inset-0 transition-opacity duration-150`}
           style={{
-            opacity: loadedSource === activeSource ? 1 : 0,
+            opacity: showImage ? 1 : 0,
             visibility: "visible",
           }}
           onLoad={() => setLoadedSource(activeSource)}
@@ -91,18 +100,22 @@ export default function ToolIcon({
           loading="lazy"
           decoding="async"
         />
-      ) : (
-        <span aria-hidden="true" />
       )}
-      <span
-        className={`absolute inset-0 flex items-center justify-center rounded-[10px] bg-slate-100 text-sm font-semibold tracking-tight text-slate-700 transition-opacity duration-150 ${
-          loadedSource === activeSource ? "opacity-0" : "opacity-100"
-        }`}
-        style={{ color: effectiveBrandColor ?? "#334155" }}
-        aria-label={`${name} logo fallback`}
-      >
-        {firstLetter(name)}
-      </span>
+      {activeSource && !showImage && (
+        <span
+          aria-hidden="true"
+          className={`${PLACEHOLDER_CLASSES} animate-pulse`}
+        />
+      )}
+      {showFallback && (
+        <span
+          className="absolute inset-0 flex items-center justify-center rounded-[8px] bg-slate-100 text-[0.9rem] font-semibold tracking-tight text-slate-700"
+          style={{ color: effectiveBrandColor ?? "#334155" }}
+          aria-label={`${name} logo fallback`}
+        >
+          {firstLetter(name)}
+        </span>
+      )}
     </span>
   );
 }

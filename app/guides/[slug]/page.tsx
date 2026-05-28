@@ -65,15 +65,11 @@ function ComparisonTable({ guide }: { readonly guide: Guide }) {
               >
                 <td className="px-5 py-5">
                   <div className="flex items-center gap-3">
-                    <ToolIcon
-                      name={row.toolName}
-                      slug={row.toolSlug}
-                      officialUrl={tool?.officialUrl}
-                      iconPath={tool?.iconPath}
-                      iconDomain={tool?.iconDomain}
-                      brandColor={tool?.brandColor}
-                      size="sm"
-                    />
+                    {tool ? (
+                      <ToolIcon {...tool} size={26} />
+                    ) : (
+                      <ToolIcon name={row.toolName} slug={row.toolSlug} size={26} />
+                    )}
                     <div>
                       <p className="font-semibold text-slate-900">{row.toolName}</p>
                       {index === 0 && (

@@ -332,7 +332,7 @@ function RecommendationCard({
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <ToolIcon {...tool} size="lg" />
+          <ToolIcon {...tool} size={28} />
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-700">
               {rank === 1 ? "Top recommendation" : `Option ${rank}`}
@@ -461,7 +461,7 @@ function RecommendationCard({
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 rounded-2xl bg-white px-3 py-2 text-sm text-slate-700 ring-1 ring-slate-200 transition hover:ring-teal-300"
               >
-                <ToolIcon {...alternative} size="sm" />
+                <ToolIcon {...alternative} size={26} />
                 {alternative.name}
               </a>
             ))}

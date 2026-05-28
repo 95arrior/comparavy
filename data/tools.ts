@@ -1,4 +1,5 @@
 import { getToolIconConfig } from "@/lib/toolIcons";
+import { EXTRA_TOOLS } from "@/data/toolCatalogExtras";
 import type { AiTool } from "@/types/tool";
 
 const PRICING_NOTICE =
@@ -1268,13 +1269,131 @@ const BASE_TOOLS: readonly AiTool[] = [
   },
 ] satisfies readonly AiTool[];
 
-export const tools = BASE_TOOLS.map((tool) => {
+const CORE_RECOMMENDATION_SLUGS = new Set<string>([
+  "chatgpt",
+  "claude",
+  "gemini",
+  "perplexity",
+  "notebooklm",
+  "microsoft-copilot",
+  "grammarly",
+  "deepl-write",
+  "jasper",
+  "copy-ai",
+  "writesonic",
+  "canva-magic-studio",
+  "adobe-firefly",
+  "ideogram",
+  "midjourney",
+  "runway",
+  "capcut",
+  "descript",
+  "elevenlabs",
+  "zapier-ai",
+  "make",
+  "n8n",
+  "cursor",
+  "github-copilot",
+  "replit",
+  "framer-ai",
+  "gamma",
+  "otter-ai",
+  "you-com",
+  "phind",
+  "fireflies",
+  "fathom",
+  "motion",
+  "reclaim",
+]);
+
+const ALTERNATIVE_RECOMMENDATION_SLUGS = new Set<string>([
+  "notion-ai",
+  "quillbot",
+  "wordtune",
+  "rytr",
+  "sudowrite",
+  "anyword",
+  "hyperwrite",
+  "textcortex",
+  "ahrefs",
+  "clearscope",
+  "neuronwriter",
+  "marketmuse",
+  "scalenut",
+  "seranking",
+  "rankmath",
+  "pika",
+  "kling-ai",
+  "invideo",
+  "kapwing",
+  "fliki",
+  "vizard-ai",
+  "clipchamp-ai",
+  "playht",
+  "lovo",
+  "resemble-ai",
+  "suno",
+  "udio",
+  "krisp",
+  "dalle",
+  "stable-diffusion",
+  "krea",
+  "freepik-ai",
+  "recraft",
+  "photoroom",
+  "clipdrop",
+  "fotor",
+  "gumloop",
+  "bardeen",
+  "relay-app",
+  "pipedream",
+  "coda-ai",
+  "workato",
+  "hootsuite",
+  "later",
+  "predis-ai",
+  "ocoya",
+  "adcreative-ai",
+  "metricool",
+  "windsurf",
+  "codeium",
+  "tabnine",
+  "sourcegraph-cody",
+  "bolt",
+  "lovable",
+  "v0",
+  "tl-dv",
+  "granola",
+]);
+
+function getRecommendationMetadata(slug: string): {
+  readonly recommendationTier: "core" | "alternative" | "catalog";
+  readonly confidenceScore: number;
+} {
+  if (CORE_RECOMMENDATION_SLUGS.has(slug)) {
+    return { recommendationTier: "core", confidenceScore: 9 };
+  }
+
+  if (ALTERNATIVE_RECOMMENDATION_SLUGS.has(slug)) {
+    return { recommendationTier: "alternative", confidenceScore: 7 };
+  }
+
+  return { recommendationTier: "catalog", confidenceScore: 5 };
+}
+
+const ALL_TOOLS = [...BASE_TOOLS, ...EXTRA_TOOLS] as const;
+
+export const tools = ALL_TOOLS.map((tool) => {
   const iconConfig = getToolIconConfig(tool.slug);
+  const recommendationMetadata = getRecommendationMetadata(tool.slug);
 
   return {
     ...tool,
     brandColor: tool.brandColor ?? iconConfig.brandColor,
     iconDomain: tool.iconDomain ?? iconConfig.iconDomain,
+    recommendationTier:
+      tool.recommendationTier ?? recommendationMetadata.recommendationTier,
+    confidenceScore: tool.confidenceScore ?? recommendationMetadata.confidenceScore,
   };
 }) satisfies readonly AiTool[];
 
