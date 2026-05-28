@@ -16,709 +16,104 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-.comparavy-logo-wordmark {
-  position: relative;
-  display: inline-block;
-  max-width: 100%;
-  color: #0b1f5e;
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 1.48rem;
-  font-style: italic;
-  font-weight: 900;
-  letter-spacing: 0.025em;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.comparavy-logo-wordmark::after {
-  position: absolute;
-  inset: 0;
-  content: attr(data-wordmark);
-  color: transparent;
-  background-image: linear-gradient(
-    105deg,
-    transparent 0%,
-    transparent 42%,
-    #0066cc 46%,
-    #2f80ed 49%,
-    #a7d8ff 50%,
-    #2f80ed 51%,
-    #0066cc 54%,
-    transparent 58%,
-    transparent 100%
-  );
-  background-position: 120% 50%;
-  background-size: 220% 100%;
-  background-clip: text;
-  -webkit-background-clip: text;
-  pointer-events: none;
-  animation: comparavy-logo-shine 5s linear infinite;
-}
-
-@media (min-width: 640px) {
-  .comparavy-logo-wordmark {
-    font-size: 1.78rem;
-  }
-}
-
-@keyframes comparavy-logo-shine {
-  0% {
-    background-position: 120% 50%;
-  }
-
-  68%,
-  100% {
-    background-position: -120% 50%;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .comparavy-logo-wordmark::after {
-    animation: none;
-    display: none;
-  }
-}
-
-/* ================================
-   Comparavy animated wordmark logo
-   ================================ */
-
 .comparavy-logo-link {
   display: inline-flex;
   align-items: center;
+  justify-content: flex-start;
   text-decoration: none;
   line-height: 1;
-  max-width: max-content;
+  overflow: visible;
+  min-width: 9.5ch;
+  min-height: 1.85em;
+  padding: 0.12em 0.08em 0.2em;
 }
 
 .comparavy-wordmark {
   position: relative;
-  display: inline-block;
-  font-size: clamp(1.35rem, 2.1vw, 2rem);
-  font-weight: 950;
-  font-style: italic;
-  letter-spacing: -0.075em;
-  line-height: 0.95;
-  transform: skewX(-8deg);
-  text-transform: uppercase;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0;
   white-space: nowrap;
-
-  background-image: linear-gradient(
-    105deg,
-    #003b8f 0%,
-    #005bbb 28%,
-    #0b66d8 40%,
-    #9bd7ff 48%,
-    #ffffff 50%,
-    #2f80ed 54%,
-    #005bbb 66%,
-    #003b8f 100%
-  );
-  background-size: 260% 100%;
-  background-position: 0% 50%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-
-  filter: drop-shadow(0 1px 0 rgba(0, 40, 120, 0.08));
-  animation: comparavy-logo-shine 5.2s cubic-bezier(0.45, 0, 0.2, 1) infinite;
-}
-
-@keyframes comparavy-logo-shine {
-  0% {
-    background-position: 0% 50%;
-  }
-  42% {
-    background-position: 0% 50%;
-  }
-  68% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 100% 50%;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .comparavy-wordmark {
-    animation: none;
-    background-position: 0% 50%;
-  }
-}
-
-@media (max-width: 640px) {
-  .comparavy-wordmark {
-    font-size: 1.45rem;
-    letter-spacing: -0.07em;
-  }
-}
-
-/* ================================
-   Comparavy logo clipping fix
-   ================================ */
-
-.comparavy-logo-link {
-  overflow: visible !important;
-  padding: 6px 6px 8px 2px !important;
-  min-height: 42px;
-}
-
-.comparavy-wordmark {
-  overflow: visible !important;
-  line-height: 1.18 !important;
-  padding: 0.12em 0.16em 0.16em 0.04em !important;
-  transform: skewX(-8deg) translateZ(0) !important;
-  transform-origin: center;
-  display: inline-block;
-}
-
-header,
-nav {
-  overflow: visible !important;
-}
-
-@media (max-width: 640px) {
-  .comparavy-logo-link {
-    padding: 5px 5px 7px 1px !important;
-    min-height: 38px;
-  }
-
-  .comparavy-wordmark {
-    line-height: 1.2 !important;
-    padding: 0.12em 0.16em 0.18em 0.04em !important;
-  }
-}
-
-/* ================================
-   Comparavy logo heavier refinement
-   ================================ */
-
-.comparavy-wordmark {
-  font-weight: 1000 !important;
-  letter-spacing: -0.095em !important;
-  line-height: 1.24 !important;
-  padding: 0.16em 0.22em 0.2em 0.06em !important;
-  -webkit-text-stroke: 0.45px rgba(0, 58, 143, 0.9);
-  text-shadow:
-    0.45px 0 0 rgba(0, 58, 143, 0.55),
-    -0.15px 0 0 rgba(0, 58, 143, 0.35),
-    0 1px 0 rgba(0, 58, 143, 0.08);
-}
-
-@media (max-width: 640px) {
-  .comparavy-wordmark {
-    font-weight: 1000 !important;
-    letter-spacing: -0.085em !important;
-    -webkit-text-stroke: 0.35px rgba(0, 58, 143, 0.85);
-  }
-}
-
-/* ================================
-   Comparavy logo brighter + spacing refinement
-   ================================ */
-
-.comparavy-wordmark {
-  letter-spacing: -0.055em !important;
-  color: transparent !important;
-
-  background-image: linear-gradient(
-    105deg,
-    #0066cc 0%,
-    #0b7cff 26%,
-    #2f80ed 42%,
-    #b8e3ff 49%,
-    #ffffff 51%,
-    #60a5fa 56%,
-    #1683ff 70%,
-    #005bbb 100%
-  ) !important;
-
-  background-size: 260% 100% !important;
-  -webkit-text-stroke: 0.25px rgba(0, 102, 204, 0.55) !important;
-  text-shadow:
-    0.25px 0 0 rgba(0, 102, 204, 0.28),
-    0 1px 0 rgba(37, 99, 235, 0.05) !important;
-}
-
-@media (max-width: 640px) {
-  .comparavy-wordmark {
-    letter-spacing: -0.045em !important;
-    -webkit-text-stroke: 0.2px rgba(0, 102, 204, 0.45) !important;
-  }
-}
-
-/* ================================
-   Comparavy logo extra bold refinement
-   ================================ */
-
-.comparavy-wordmark {
-  font-weight: 1000 !important;
-  letter-spacing: -0.05em !important;
-  transform: skewX(-8deg) scaleX(1.08) translateZ(0) !important;
-  transform-origin: left center !important;
-
-  -webkit-text-stroke: 0.75px rgba(0, 102, 204, 0.72) !important;
-
-  text-shadow:
-    0.6px 0 0 rgba(0, 102, 204, 0.5),
-    -0.3px 0 0 rgba(0, 102, 204, 0.3),
-    0 0.6px 0 rgba(0, 102, 204, 0.22),
-    0 1px 0 rgba(37, 99, 235, 0.08) !important;
-
-  padding: 0.18em 0.32em 0.22em 0.08em !important;
-}
-
-@media (max-width: 640px) {
-  .comparavy-wordmark {
-    transform: skewX(-7deg) scaleX(1.05) translateZ(0) !important;
-    letter-spacing: -0.045em !important;
-    -webkit-text-stroke: 0.55px rgba(0, 102, 204, 0.65) !important;
-  }
-}
-
-/* ================================
-   Comparavy logo ultra bold industrial-tech refinement
-   ================================ */
-
-.comparavy-logo-link {
-  overflow: visible !important;
-  padding: 8px 14px 10px 4px !important;
-  min-height: 48px !important;
-}
-
-.comparavy-wordmark {
-  font-family: Impact, "Arial Black", "Helvetica Neue", Arial, sans-serif !important;
-  font-size: clamp(1.7rem, 2.8vw, 2.45rem) !important;
-  font-weight: 900 !important;
-  font-style: italic !important;
-  letter-spacing: -0.018em !important;
-  line-height: 1.2 !important;
-
-  transform: skewX(-11deg) scaleX(1.18) translateZ(0) !important;
-  transform-origin: left center !important;
-
-  padding: 0.16em 0.42em 0.22em 0.08em !important;
-  white-space: nowrap !important;
-  overflow: visible !important;
-
-  background-image: linear-gradient(
-    105deg,
-    #005bbb 0%,
-    #006fe6 24%,
-    #0b7cff 38%,
-    #68bdff 47%,
-    #d7f0ff 50%,
-    #68bdff 53%,
-    #0b7cff 64%,
-    #0066cc 82%,
-    #004fa8 100%
-  ) !important;
-
-  background-size: 300% 100% !important;
-  background-position: 0% 50% !important;
-  -webkit-background-clip: text !important;
-  background-clip: text !important;
-  color: transparent !important;
-
-  -webkit-text-stroke: 1.35px rgba(0, 91, 187, 0.9) !important;
-
-  text-shadow:
-    1.1px 0 0 rgba(0, 91, 187, 0.85),
-    -0.55px 0 0 rgba(0, 91, 187, 0.6),
-    0 0.9px 0 rgba(0, 91, 187, 0.45),
-    0 -0.35px 0 rgba(0, 91, 187, 0.25),
-    0 1.5px 0 rgba(37, 99, 235, 0.08) !important;
-
-  filter: drop-shadow(0 1px 0 rgba(0, 65, 150, 0.12)) !important;
-  animation: comparavy-logo-power-shine 5.6s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
-}
-
-@keyframes comparavy-logo-power-shine {
-  0% {
-    background-position: 0% 50%;
-  }
-  38% {
-    background-position: 0% 50%;
-  }
-  58% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 100% 50%;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .comparavy-wordmark {
-    animation: none !important;
-    background-position: 0% 50% !important;
-  }
-}
-
-@media (max-width: 640px) {
-  .comparavy-logo-link {
-    padding: 7px 12px 9px 3px !important;
-    min-height: 44px !important;
-  }
-
-  .comparavy-wordmark {
-    font-size: 1.75rem !important;
-    letter-spacing: -0.015em !important;
-    transform: skewX(-10deg) scaleX(1.12) translateZ(0) !important;
-    -webkit-text-stroke: 1px rgba(0, 91, 187, 0.85) !important;
-  }
-}
-
-/* ================================
-   Comparavy logo final size down
-   ================================ */
-
-.comparavy-wordmark {
-  font-size: clamp(1.35rem, 2.05vw, 1.85rem) !important;
-  transform: skewX(-11deg) scaleX(1.08) translateZ(0) !important;
-  padding: 0.14em 0.34em 0.2em 0.06em !important;
-}
-
-.comparavy-logo-link {
-  min-height: 40px !important;
-  padding: 5px 10px 7px 3px !important;
-}
-
-@media (max-width: 640px) {
-  .comparavy-wordmark {
-    font-size: 1.35rem !important;
-    transform: skewX(-10deg) scaleX(1.04) translateZ(0) !important;
-    padding: 0.14em 0.3em 0.18em 0.05em !important;
-  }
-
-  .comparavy-logo-link {
-    min-height: 36px !important;
-    padding: 4px 8px 6px 2px !important;
-  }
-}
-
-/* ================================
-   Comparavy logo final balanced size/weight
-   ================================ */
-
-.comparavy-logo-link {
-  min-height: 38px !important;
-  padding: 4px 8px 6px 2px !important;
-  overflow: visible !important;
-}
-
-.comparavy-wordmark {
-  font-family: Impact, "Arial Black", "Helvetica Neue", Arial, sans-serif !important;
-  font-size: clamp(1.32rem, 1.95vw, 1.72rem) !important;
-  font-weight: 900 !important;
-  font-style: italic !important;
-  letter-spacing: -0.012em !important;
-  line-height: 1.18 !important;
-
-  transform: skewX(-10deg) scaleX(1.04) translateZ(0) !important;
-  transform-origin: left center !important;
-
-  padding: 0.14em 0.26em 0.18em 0.05em !important;
-  white-space: nowrap !important;
-  overflow: visible !important;
-
-  background-image: linear-gradient(
-    105deg,
-    #0062c7 0%,
-    #0072e8 30%,
-    #1683ff 44%,
-    #8fcaff 50%,
-    #3b9cff 56%,
-    #0873df 72%,
-    #005bbb 100%
-  ) !important;
-
-  background-size: 230% 100% !important;
-  background-position: 0% 50% !important;
-  -webkit-background-clip: text !important;
-  background-clip: text !important;
-  color: transparent !important;
-
-  -webkit-text-stroke: 0.55px rgba(0, 91, 187, 0.62) !important;
-
-  text-shadow:
-    0.35px 0 0 rgba(0, 91, 187, 0.32),
-    -0.15px 0 0 rgba(0, 91, 187, 0.18),
-    0 0.35px 0 rgba(0, 91, 187, 0.12) !important;
-
-  filter: drop-shadow(0 1px 0 rgba(0, 65, 150, 0.08)) !important;
-  animation: comparavy-logo-power-shine 6.4s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
-}
-
-@media (max-width: 640px) {
-  .comparavy-logo-link {
-    min-height: 34px !important;
-    padding: 3px 7px 5px 2px !important;
-  }
-
-  .comparavy-wordmark {
-    font-size: 1.26rem !important;
-    letter-spacing: -0.01em !important;
-    transform: skewX(-9deg) scaleX(1.02) translateZ(0) !important;
-    -webkit-text-stroke: 0.42px rgba(0, 91, 187, 0.55) !important;
-  }
-}
-
-/* ================================
-   Comparavy logo final light-blue soft weight + 7s shine
-   ================================ */
-
-.comparavy-logo-link {
-  display: inline-flex !important;
-  align-items: center !important;
-  text-decoration: none !important;
-  line-height: 1 !important;
-  overflow: visible !important;
-  min-height: 38px !important;
-  padding: 4px 10px 6px 2px !important;
-}
-
-.comparavy-wordmark {
-  position: relative !important;
-  display: inline-block !important;
-
-  font-family: Impact, "Arial Black", "Helvetica Neue", Arial, sans-serif !important;
-  font-size: clamp(1.3rem, 1.95vw, 1.7rem) !important;
-  font-weight: 800 !important;
-  font-style: italic !important;
-  letter-spacing: -0.005em !important;
-  line-height: 1.18 !important;
-
-  transform: skewX(-9deg) scaleX(1.01) translateZ(0) !important;
-  transform-origin: left center !important;
-
-  padding: 0.12em 0.22em 0.16em 0.04em !important;
-  white-space: nowrap !important;
-  overflow: visible !important;
-
-  color: #1683ff !important;
-  background: none !important;
-  -webkit-text-fill-color: #1683ff !important;
-  -webkit-text-stroke: 0.18px rgba(22, 131, 255, 0.35) !important;
-
-  text-shadow:
-    0.18px 0 0 rgba(22, 131, 255, 0.22),
-    0 0.4px 0 rgba(0, 102, 204, 0.08) !important;
-
-  filter: none !important;
-  animation: none !important;
+  color: #07111f;
+  font-family: inherit;
+  font-size: clamp(1.15rem, 1.35vw, 1.52rem);
+  font-weight: 850;
+  font-style: normal;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  transform: translateZ(0);
+  transform-origin: left center;
+  overflow: visible;
 }
 
 .comparavy-wordmark::after {
-  content: attr(data-text);
+  content: "";
   position: absolute;
-  inset: 0;
-  pointer-events: none;
-
-  background-image: linear-gradient(
-    105deg,
-    transparent 0%,
-    transparent 34%,
-    rgba(255, 255, 255, 0.95) 46%,
-    #b9e5ff 50%,
-    rgba(255, 255, 255, 0.95) 54%,
-    transparent 66%,
-    transparent 100%
-  );
-  background-size: 260% 100%;
-  background-position: -120% 50%;
-
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
-
+  left: 0;
+  right: 0;
+  bottom: -0.16em;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0), #2563eb 32%, #60a5fa 52%, rgba(37, 99, 235, 0) 82%);
   opacity: 0;
-  animation: comparavy-logo-soft-sweep 7s ease-in-out infinite;
+  transform: scaleX(0.08);
+  transform-origin: left center;
+  animation: comparavy-wordmark-scan 1.35s cubic-bezier(0.22, 1, 0.36, 1) 0.18s
+    forwards;
+  pointer-events: none;
 }
 
-@keyframes comparavy-logo-soft-sweep {
+.comparavy-wordmark__base,
+.comparavy-logo-accent {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.comparavy-wordmark__base {
+  color: #07111f;
+}
+
+.comparavy-logo-accent {
+  color: #2563eb;
+}
+
+@keyframes comparavy-wordmark-scan {
   0% {
     opacity: 0;
-    background-position: -120% 50%;
+    transform: scaleX(0.08);
   }
 
-  62% {
-    opacity: 0;
-    background-position: -120% 50%;
+  14% {
+    opacity: 0.9;
   }
 
-  70% {
-    opacity: 0.75;
-  }
-
-  82% {
-    opacity: 0.85;
-    background-position: 120% 50%;
-  }
-
-  90% {
-    opacity: 0;
-    background-position: 120% 50%;
+  64% {
+    opacity: 0.95;
+    transform: scaleX(1);
   }
 
   100% {
     opacity: 0;
-    background-position: 120% 50%;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .comparavy-wordmark::after {
-    animation: none !important;
-    opacity: 0 !important;
+    transform: scaleX(1);
   }
 }
 
 @media (max-width: 640px) {
   .comparavy-logo-link {
-    min-height: 34px !important;
-    padding: 3px 8px 5px 2px !important;
+    min-width: 9.1ch;
+    min-height: 1.75em;
+    padding: 0.1em 0.06em 0.18em;
   }
 
   .comparavy-wordmark {
-    font-size: 1.24rem !important;
-    font-weight: 800 !important;
-    letter-spacing: 0 !important;
-    transform: skewX(-8deg) scaleX(1) translateZ(0) !important;
-    -webkit-text-stroke: 0.12px rgba(22, 131, 255, 0.28) !important;
-  }
-}
-
-/* ================================
-   COMPARAVY final bright readable logo
-   ================================ */
-
-.comparavy-logo-link {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  text-decoration: none !important;
-  line-height: 1 !important;
-  overflow: visible !important;
-  min-height: 40px !important;
-  padding: 5px 12px 7px 3px !important;
-}
-
-.comparavy-wordmark {
-  position: relative !important;
-  display: inline-block !important;
-
-  font-family: Impact, "Arial Black", "Helvetica Neue", Arial, sans-serif !important;
-  font-size: clamp(1.14rem, 1.72vw, 1.34rem) !important;
-  font-weight: 900 !important;
-  font-style: italic !important;
-
-  /* 글자 식별용 간격 */
-  letter-spacing: 0.018em !important;
-
-  line-height: 1.18 !important;
-  text-transform: uppercase !important;
-  white-space: nowrap !important;
-  overflow: visible !important;
-
-  /* 너무 눕지 않게 */
-  transform: skewX(-8deg) scaleX(1.02) translateZ(0) !important;
-  transform-origin: left center !important;
-
-  padding: 0.12em 0.22em 0.17em 0.04em !important;
-
-  /* 밝은 블루 */
-  color: #1f8cff !important;
-  -webkit-text-fill-color: #1f8cff !important;
-  -webkit-text-stroke: 0.12px rgba(31, 140, 255, 0.25) !important;
-
-  background: none !important;
-  text-shadow:
-    0.25px 0 0 rgba(31, 140, 255, 0.22),
-    0 0.5px 0 rgba(0, 115, 230, 0.08) !important;
-
-  filter: none !important;
-  animation: none !important;
-}
-
-/* 7초 주기마다 한 번만 지나가는 단일 광택 */
-.comparavy-wordmark::after {
-  content: attr(data-text) !important;
-  position: absolute !important;
-  inset: 0 !important;
-  display: inline-block !important;
-  pointer-events: none !important;
-  white-space: nowrap !important;
-
-  font: inherit !important;
-  letter-spacing: inherit !important;
-  line-height: inherit !important;
-  transform: none !important;
-
-  color: transparent !important;
-  -webkit-text-fill-color: transparent !important;
-
-  background-image: linear-gradient(
-    100deg,
-    transparent 0%,
-    transparent 43%,
-    #dff4ff 48%,
-    #ffffff 50%,
-    #dff4ff 52%,
-    transparent 57%,
-    transparent 100%
-  ) !important;
-
-  background-size: 240% 100% !important;
-  background-position: -140% 50%;
-  -webkit-background-clip: text !important;
-  background-clip: text !important;
-
-  opacity: 0;
-  animation: comparavy-logo-shine-once 7s ease-in-out infinite !important;
-}
-
-@keyframes comparavy-logo-shine-once {
-  0%,
-  66% {
-    opacity: 0;
-    background-position: -140% 50%;
-  }
-
-  68% {
-    opacity: 0.95;
-    background-position: -140% 50%;
-  }
-
-  80% {
-    opacity: 0.95;
-    background-position: 135% 50%;
-  }
-
-  82%,
-  100% {
-    opacity: 0;
-    background-position: 135% 50%;
+    font-size: clamp(1.08rem, 3.8vw, 1.28rem);
+    letter-spacing: -0.032em;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .comparavy-wordmark::after {
-    animation: none !important;
-    opacity: 0 !important;
-  }
-}
-
-@media (max-width: 640px) {
-  .comparavy-logo-link {
-    min-height: 34px !important;
-    padding: 3px 8px 5px 2px !important;
-  }
-
-  .comparavy-wordmark {
-    font-size: 1.12rem !important;
-    letter-spacing: 0.014em !important;
-    transform: skewX(-7deg) scaleX(1.01) translateZ(0) !important;
+    animation: none;
+    opacity: 0;
   }
 }
