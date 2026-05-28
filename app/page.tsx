@@ -255,19 +255,6 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="border-t border-slate-200 bg-white px-4 py-8 sm:px-6">
-        <div className="mx-auto flex max-w-6xl flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-          <Logo />
-          <nav aria-label="Footer navigation" className="flex items-center gap-6 text-sm">
-            <Link href="/guides" className="text-slate-600 transition hover:text-teal-700">
-              Guides
-            </Link>
-            <Link href="/finder" className="text-slate-600 transition hover:text-teal-700">
-              Finder
-            </Link>
-          </nav>
-        </div>
-      </footer>
     </main>
   );
 }
