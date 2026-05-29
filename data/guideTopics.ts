@@ -210,7 +210,7 @@ export const guideTopics: readonly GuideTopic[] = [
     uniqueAngle: "Prioritize source-grounded answers and responsible study workflow.",
     aiOverviewAnswer: "NotebookLM is strongest when the source set is defined; ChatGPT or Claude can help rewrite notes after the source summary is checked.",
     toolCategories: ["research", "general-assistant", "productivity"],
-    suggestedToolSlugs: ["notebooklm", "chatgpt", "claude", "perplexity", "quillbot"],
+    suggestedToolSlugs: ["notebooklm", "chatgpt", "claude", "gemini", "perplexity", "elicit", "consensus", "scispace"],
     priority: 296,
     status: "active",
     freshness: "evergreen",

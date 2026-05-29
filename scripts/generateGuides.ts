@@ -8,8 +8,9 @@ import {
   checkGuideQuality,
   type GuideQualityResult,
 } from "@/lib/contentQuality";
+import { logGuideTopicToolSlugWarnings } from "@/lib/guideTopicValidation";
 import type { Guide, GuideStatus } from "@/lib/guides";
-import { getTopicRecommendations } from "@/lib/topicScoring";
+import { scoreToolsForTopic } from "@/lib/topicScoring";
 
 interface GeneratorOptions {
   readonly count: number;
@@ -30,6 +31,13 @@ interface ResponsesResult {
 }
 
 export const GUIDES_DIRECTORY = path.join(process.cwd(), "content", "guides");
+const MIN_RECOMMENDED_TOOLS = 3;
+const MAX_RECOMMENDED_TOOLS = 5;
+
+interface SkippedGuideTopic {
+  readonly slug: string;
+  readonly reason: string;
+}
 
 const GUIDE_SCHEMA = {
   type: "object",
@@ -392,9 +400,9 @@ export function createTemplateGuide(
   avoidToolSlugs: ReadonlySet<string> = new Set<string>(),
 ): Guide {
   const topicExcluded = new Set(topic.excludedToolSlugs ?? []);
-  const recommendations = getTopicRecommendations(topic, 8)
+  const recommendations = scoreToolsForTopic(topic)
     .filter(({ tool }) => !topicExcluded.has(tool.slug) && !avoidToolSlugs.has(tool.slug))
-    .slice(0, 5);
+    .slice(0, MAX_RECOMMENDED_TOOLS);
   const [first, second, third] = recommendations;
   const date = new Date().toISOString().slice(0, 10);
   const disclosureNote =
@@ -402,7 +410,9 @@ export function createTemplateGuide(
   const finderCTA = "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.";
 
   if (!first || !second || !third) {
-    throw new Error(`Not enough catalog matches for ${topic.slug}.`);
+    throw new Error(
+      `Not enough catalog matches for ${topic.slug}. Found ${recommendations.length}; ${MIN_RECOMMENDED_TOOLS} are required.`,
+    );
   }
 
   const recommendedToolSlugs = recommendations.map(({ tool }) => tool.slug);
@@ -545,6 +555,20 @@ export function createTemplateGuide(
   };
 }
 
+function tryCreateTemplateGuide(
+  topic: GuideTopic,
+  status: GuideStatus,
+  avoidToolSlugs: ReadonlySet<string>,
+): { readonly guide?: Guide; readonly skipped?: SkippedGuideTopic } {
+  try {
+    return { guide: createTemplateGuide(topic, status, avoidToolSlugs) };
+  } catch (error) {
+    const reason = String(error instanceof Error ? error.message : error);
+    console.warn(`[${topic.slug}] Warning: ${reason} Skipping this topic and trying the next eligible topic.`);
+    return { skipped: { slug: topic.slug, reason } };
+  }
+}
+
 function readOutputText(result: ResponsesResult): string | undefined {
   if (result.output_text) {
     return result.output_text;
@@ -681,10 +705,11 @@ function logQuality(slug: string, result: GuideQualityResult): void {
 async function main(): Promise<void> {
   const options = parseOptions(process.argv.slice(2));
   const status: GuideStatus = options.publish ? "published" : "draft";
+  logGuideTopicToolSlugWarnings();
   const existingGuides = await getExistingGuides();
   const existingSlugs = new Set(existingGuides.map((guide) => guide.slug));
-  const selectedTopics = selectGuideTopics({
-    count: options.count,
+  const candidateTopics = selectGuideTopics({
+    count: guideTopics.length,
     type: options.type,
     existingSlugs,
   });
@@ -693,6 +718,7 @@ async function main(): Promise<void> {
   let drafts = 0;
   let failedQuality = 0;
   const usedToolSlugs = new Set<string>();
+  const skippedTopics: SkippedGuideTopic[] = [];
 
   await mkdir(GUIDES_DIRECTORY, { recursive: true });
 
@@ -700,8 +726,20 @@ async function main(): Promise<void> {
     console.log("OPENAI_API_KEY is not set; generating safe catalog/template-based guide drafts only.");
   }
 
-  for (const topic of selectedTopics) {
-    const template = createTemplateGuide(topic, status, usedToolSlugs);
+  for (const topic of candidateTopics) {
+    if (created >= options.count) {
+      break;
+    }
+
+    const { guide: template, skipped } = tryCreateTemplateGuide(topic, status, usedToolSlugs);
+
+    if (!template) {
+      if (skipped) {
+        skippedTopics.push(skipped);
+      }
+      continue;
+    }
+
     let guide = template;
 
     if (process.env.OPENAI_API_KEY) {
@@ -746,10 +784,17 @@ async function main(): Promise<void> {
     console.log(`Created ${guide.status} guide: ${guide.slug}`);
   }
 
-  if (selectedTopics.length < options.count) {
+  if (created < options.count) {
     console.log(
-      `Created ${selectedTopics.length} guide(s); no unused configured topics remain for the requested count.`,
+      `Created ${created} guide(s); no more valid unused configured topics were available for the requested count.`,
     );
+  }
+
+  if (skippedTopics.length > 0) {
+    console.log("Skipped topics");
+    for (const skipped of skippedTopics) {
+      console.log(`[${skipped.slug}] ${skipped.reason}`);
+    }
   }
 
   console.log(`Guide track: ${options.type}`);
@@ -760,6 +805,12 @@ async function main(): Promise<void> {
   console.log(`Published: ${published}`);
   console.log(`Draft: ${drafts}`);
   console.log(`Failed quality: ${failedQuality}`);
+  console.log(`Skipped topics: ${skippedTopics.length}`);
+
+  if (options.count > 0 && created === 0) {
+    console.error("No valid guide candidates could be generated.");
+    process.exitCode = 1;
+  }
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

@@ -2,8 +2,8 @@ name: Daily Comparavy Guides
 
 on:
   schedule:
-    # 09:00 UTC is 04:00 Eastern during US standard time and 05:00 Eastern during US daylight time.
-    - cron: "0 9 * * *"
+    # Runs daily at 07:00 KST, which is 22:00 UTC.
+    - cron: "0 22 * * *"
   workflow_dispatch:
 
 permissions:

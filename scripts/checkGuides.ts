@@ -4,6 +4,7 @@ import {
   assertGuideContentQuality,
   checkGuideQuality,
 } from "@/lib/contentQuality";
+import { logGuideTopicToolSlugWarnings } from "@/lib/guideTopicValidation";
 import type { Guide } from "@/lib/guides";
 
 interface LoadedGuide {
@@ -14,6 +15,14 @@ interface LoadedGuide {
 const GUIDES_DIRECTORY = path.join(process.cwd(), "content", "guides");
 
 async function main(): Promise<void> {
+  const invalidSuggestedSlugs = logGuideTopicToolSlugWarnings();
+
+  if (invalidSuggestedSlugs.length > 0) {
+    console.log(
+      `Guide topic validation warning: ${invalidSuggestedSlugs.length} suggested tool slug(s) do not exist in the catalog.`,
+    );
+  }
+
   try {
     await access(GUIDES_DIRECTORY);
   } catch {

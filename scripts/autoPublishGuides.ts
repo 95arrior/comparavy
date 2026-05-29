@@ -1,11 +1,12 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { guideTopics } from "@/data/guideTopics";
+import { guideTopics, type GuideTopic } from "@/data/guideTopics";
 import {
   checkGuideQuality,
   type GuideQualityResult,
 } from "@/lib/contentQuality";
 import { reviewGuideWithAI, type AiGuideReview } from "@/lib/aiGuideReviewer";
+import { logGuideTopicToolSlugWarnings } from "@/lib/guideTopicValidation";
 import type { Guide } from "@/lib/guides";
 import {
   GUIDES_DIRECTORY,
@@ -31,6 +32,11 @@ interface Candidate {
   readonly aiReview: AiGuideReview;
   readonly eligible: boolean;
   readonly rejectionReasons: readonly string[];
+}
+
+interface SkippedTopic {
+  readonly slug: string;
+  readonly reason: string;
 }
 
 const DEFAULT_COUNT = 2;
@@ -213,16 +219,27 @@ function sortCandidates(left: Candidate, right: Candidate): number {
   );
 }
 
-function logCandidate(candidate: Candidate): void {
+function guideFilePath(slug: string): string {
+  return path.join(GUIDES_DIRECTORY, `${slug}.json`);
+}
+
+function logCandidate(candidate: Candidate, finalStatus: string): void {
   const aiScore = candidate.aiReview.available
     ? `${candidate.aiReview.score}/100 (${candidate.aiReview.passed ? "PASS" : "FAIL"})`
     : "unavailable";
 
-  console.log(
-    `[${candidate.guide.slug}] deterministic=${candidate.deterministic.score}/100 ` +
-      `ai=${aiScore} priority=${candidate.topicPriority} uniqueness=${candidate.uniquenessScore}/100 ` +
-      `eligible=${candidate.eligible ? "yes" : "no"}`,
-  );
+  console.log(`[${candidate.guide.slug}] Candidate report`);
+  console.log(`  Title: ${candidate.guide.title}`);
+  console.log(`  Guide type: ${candidate.guide.guideType}`);
+  console.log(`  Primary keyword: ${candidate.guide.primaryKeyword}`);
+  console.log(`  Selected tools: ${candidate.guide.recommendedToolSlugs.join(", ")}`);
+  console.log(`  Quality score: ${candidate.guide.qualityScore}/100`);
+  console.log(`  Deterministic check: ${candidate.deterministic.score}/100 (${candidate.deterministic.passed ? "PASS" : "FAIL"})`);
+  console.log(`  AI review: ${aiScore}`);
+  console.log(`  Priority: ${candidate.topicPriority}`);
+  console.log(`  Uniqueness: ${candidate.uniquenessScore}/100`);
+  console.log(`  Final status: ${finalStatus}`);
+  console.log(`  File path: ${guideFilePath(candidate.guide.slug)}`);
 
   for (const warning of candidate.deterministic.warnings) {
     console.log(`  Warning: ${warning}`);
@@ -241,8 +258,28 @@ function logCandidate(candidate: Candidate): void {
   }
 }
 
+function createDraftCandidate(
+  topic: GuideTopic,
+  usedToolSlugs: Set<string>,
+): { readonly guide?: Guide; readonly skipped?: SkippedTopic } {
+  try {
+    const guide = createTemplateGuide(topic, "draft", usedToolSlugs);
+
+    for (const slug of guide.recommendedToolSlugs) {
+      usedToolSlugs.add(slug);
+    }
+
+    return { guide };
+  } catch (error) {
+    const reason = String(error instanceof Error ? error.message : error);
+    console.warn(`[${topic.slug}] Warning: ${reason} Skipping this topic and trying the next eligible topic.`);
+    return { skipped: { slug: topic.slug, reason } };
+  }
+}
+
 async function main(): Promise<void> {
   const options = parseOptions(process.argv.slice(2));
+  logGuideTopicToolSlugWarnings();
   const publishCount = Math.min(options.count, dailyPublishLimit());
   const desiredCandidateCount = options.publish
     ? publishCount * CANDIDATE_MULTIPLIER
@@ -254,30 +291,39 @@ async function main(): Promise<void> {
   const existingDrafts = existingGuides.filter((guide) => guide.status === "draft");
   const draftMap = new Map(existingDrafts.map((guide) => [guide.slug, guide]));
   const selectedTopics = selectGuideTopics({
-    count: desiredCandidateCount,
+    count: guideTopics.length,
     type: options.type,
     existingSlugs: existingPublishedSlugs,
   });
-  const selectedDraftGuides = selectedTopics
-    .map((topic) => draftMap.get(topic.slug))
-    .filter(
-      (guide): guide is Guide =>
-        Boolean(guide?.guideType && guide.affiliateDisclosureNote?.trim()),
-    );
-  const topicsNeedingGeneration = selectedTopics.filter((topic) => {
-    const existingDraft = draftMap.get(topic.slug);
-    return !existingDraft?.guideType || !existingDraft.affiliateDisclosureNote?.trim();
-  });
   const usedToolSlugs = new Set<string>();
-  const generatedGuides = topicsNeedingGeneration.map((topic) => {
-    const guide = createTemplateGuide(topic, "draft", usedToolSlugs);
+  const selectedDraftGuides: Guide[] = [];
+  const generatedGuides: Guide[] = [];
+  const skippedTopics: SkippedTopic[] = [];
 
-    for (const slug of guide.recommendedToolSlugs) {
-      usedToolSlugs.add(slug);
+  for (const topic of selectedTopics) {
+    if (selectedDraftGuides.length + generatedGuides.length >= desiredCandidateCount) {
+      break;
     }
 
-    return guide;
-  });
+    const existingDraft = draftMap.get(topic.slug);
+
+    if (existingDraft?.guideType && existingDraft.affiliateDisclosureNote?.trim()) {
+      selectedDraftGuides.push(existingDraft);
+      continue;
+    }
+
+    const { guide, skipped } = createDraftCandidate(topic, usedToolSlugs);
+
+    if (guide) {
+      generatedGuides.push(guide);
+      continue;
+    }
+
+    if (skipped) {
+      skippedTopics.push(skipped);
+    }
+  }
+
   const candidateGuides = [...selectedDraftGuides, ...generatedGuides];
   const comparisonSet = [...existingGuides, ...generatedGuides];
   const publishedGuides = existingGuides.filter((guide) => guide.status === "published");
@@ -296,7 +342,7 @@ async function main(): Promise<void> {
 
   if (candidateGuides.length < desiredCandidateCount) {
     console.log(
-      `Only ${candidateGuides.length} candidate guide(s) are available from drafts and configured unused topics; target pool was ${desiredCandidateCount}.`,
+      `Only ${candidateGuides.length} candidate guide(s) are available from drafts and valid configured unused topics; target pool was ${desiredCandidateCount}.`,
     );
   }
 
@@ -327,15 +373,29 @@ async function main(): Promise<void> {
 
   candidates.sort(sortCandidates);
 
-  for (const candidate of candidates) {
-    logCandidate(candidate);
-  }
-
   const selected = options.publish
     ? candidates.filter((candidate) => candidate.eligible).slice(0, publishCount)
     : [];
   const selectedSlugs = new Set(selected.map((candidate) => candidate.guide.slug));
   const today = new Date().toISOString().slice(0, 10);
+
+  for (const candidate of candidates) {
+    const finalStatus = !candidate.eligible
+      ? "rejected"
+      : options.publish && selectedSlugs.has(candidate.guide.slug)
+        ? options.dryRun
+          ? "would publish"
+          : "published"
+        : "draft";
+    logCandidate(candidate, finalStatus);
+  }
+
+  if (skippedTopics.length > 0) {
+    console.log("Skipped topics");
+    for (const skipped of skippedTopics) {
+      console.log(`[${skipped.slug}] ${skipped.reason}`);
+    }
+  }
 
   if (!options.dryRun) {
     await mkdir(GUIDES_DIRECTORY, { recursive: true });
@@ -372,9 +432,15 @@ async function main(): Promise<void> {
 
   console.log(`Draft: ${draftCount}`);
   console.log(`Rejected: ${rejectedCount}`);
+  console.log(`Skipped topics: ${skippedTopics.length}`);
 
   if (options.publish && selected.length < publishCount) {
     console.log(`Published fewer than requested because only ${selected.length} candidate(s) passed all gates.`);
+  }
+
+  if (options.count > 0 && candidates.length === 0) {
+    console.error("No valid guide candidates could be generated.");
+    process.exitCode = 1;
   }
 }
 
