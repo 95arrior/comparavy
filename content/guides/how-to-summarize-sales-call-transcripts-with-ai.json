@@ -1,0 +1,463 @@
+{
+  "slug": "how-to-summarize-sales-call-transcripts-with-ai",
+  "title": "How to Summarize Sales Call Transcripts with AI",
+  "guideType": "how-to",
+  "type": "how-to",
+  "metaTitle": "How to Summarize Sales Call Transcripts with AI | Comparavy",
+  "metaDescription": "Learn how to turning sales call transcripts into follow-up notes and next steps. See the workflow, tools you can use, and the safest first step.",
+  "category": "Meetings",
+  "persona": "small sales teams",
+  "useCase": "turning sales call transcripts into follow-up notes and next steps",
+  "budgetAngle": "Compare tools on workflow fit and subscription risk before using them in paid client or revenue work.",
+  "skillLevel": "beginner",
+  "primaryKeyword": "how to summarize sales call transcripts with AI",
+  "secondaryKeywords": [
+    "AI sales call summary",
+    "sales transcript recap AI",
+    "call notes AI"
+  ],
+  "longTailKeywords": [
+    "how to turn a sales call transcript into follow up notes with AI",
+    "AI workflow for sales call summaries",
+    "summarize sales calls into next steps"
+  ],
+  "audience": "small sales teams",
+  "searchIntent": "turning sales call transcripts into follow-up notes and next steps",
+  "userPain": "The reader needs accurate follow-up context without rereading full transcripts.",
+  "decisionQuestion": "How do I summarize a sales call into next steps without losing context?",
+  "deviceIntent": "both",
+  "desktopUseCase": "Best on a computer when the transcript, CRM, and follow-up notes need to be reviewed together.",
+  "mobileUseCase": "Best on a phone when checking a short summary or confirming next steps after a call.",
+  "desktopSearchAngle": "Desktop readers usually want a deeper comparison, file handling, and a more deliberate review workflow.",
+  "mobileSearchAngle": "Mobile readers usually want a short answer first, then a quick next step they can finish in a few taps.",
+  "visualAssets": {
+    "hero": {
+      "type": "hero",
+      "alt": "How to Summarize Sales Call Transcripts with AI guide visual",
+      "promptOrDescription": "Editorial guide artwork for turning sales call transcripts into follow-up notes and next steps with a clean, problem-solving feel.",
+      "fileNameHint": "how-to-summarize-sales-call-transcripts-with-ai"
+    },
+    "workflow": {
+      "type": "workflow-diagram",
+      "alt": "How to Summarize Sales Call Transcripts with AI workflow diagram",
+      "steps": [
+        "Quick Answer",
+        "Real-World Scenario",
+        "What You Need",
+        "Step-by-Step Workflow",
+        "Best If You Are on a Computer"
+      ]
+    },
+    "toolStack": {
+      "type": "tool-stack",
+      "alt": "How to Summarize Sales Call Transcripts with AI recommended tool stack",
+      "tools": [
+        "Copy.ai",
+        "DeepL Write",
+        "Grammarly"
+      ]
+    },
+    "beforeAfter": {
+      "type": "before-after",
+      "alt": "How to Summarize Sales Call Transcripts with AI before and after comparison",
+      "before": "Before: manual work and scattered notes for turning sales call transcripts into follow-up notes and next steps.",
+      "after": "After: a faster workflow that leaves you with a clear, checked result."
+    }
+  },
+  "quickAnswer": "For turning sales call transcripts into follow-up notes and next steps, start with the real source material, ask for one specific output, and check the draft before you share or publish it. Copy.ai is the best first pass for this workflow, DeepL Write helps when the format or source handling needs a second pass, and Grammarly is better saved for cleanup after the facts are right.",
+  "quickDecision": "For turning sales call transcripts into follow-up notes and next steps, choose Copy.ai for sales and marketing workflow content. Choose DeepL Write when you need rephrasing professional messages. Choose Grammarly when the main job is polishing email and client-facing writing or when you need a lighter alternative.",
+  "realWorldScenario": "small sales teams need turning sales call transcripts into follow-up notes and next steps on a real task, not a generic tool roundup. Prepared 2026-05-29.",
+  "whatYouNeed": [
+    "uploaded PDFs, class notes, and other source documents",
+    "A clear final format for turning sales call transcripts into follow-up notes and next steps.",
+    "The audience, recipient, or grading criteria for the output.",
+    "Time to check facts, names, numbers, dates, and commitments before using the result."
+  ],
+  "timeEstimate": "Plan on 10 to 30 minutes for one careful first pass, depending on the source material.",
+  "contentGap": "Most lists focus on recording rather than follow-up usefulness.",
+  "uniqueAngle": "Turn transcripts into decisions, objections, and next actions.",
+  "aiOverviewAnswer": "Generate a call summary, extract objections and commitments, draft next steps, and verify the transcript before adding notes to a CRM.",
+  "quickVerdict": "For turning sales call transcripts into follow-up notes and next steps, start with the real source material, ask for one specific output, and check the draft before you share or publish it. Copy.ai is the best first pass for this workflow, DeepL Write helps when the format or source handling needs a second pass, and Grammarly is better saved for cleanup after the facts are right.",
+  "steps": [
+    {
+      "title": "Collect the source material",
+      "detail": "Put the real input in one place before opening a tool: uploaded PDFs, class notes, and other source documents, any required facts, the audience, and the format you need at the end. Remove private details you are not allowed to share.",
+      "why": "AI output is only as useful as the material and constraints you give it.",
+      "output": "A clean input bundle and one clear target format."
+    },
+    {
+      "title": "Ask for the first usable version",
+      "detail": "Use Copy.ai for a first pass that tries to turn sales call transcripts into follow-up notes and next steps. Ask it to preserve source facts, flag uncertainty, and organize the result into sections you can review.",
+      "why": "The first pass should create structure, not a finished answer you trust blindly.",
+      "output": "A structured draft with visible gaps or uncertain points.",
+      "toolSlug": "copy-ai",
+      "toolName": "Copy.ai"
+    },
+    {
+      "title": "Check the answer before polishing",
+      "detail": "Compare the draft with the original material. Fix names, dates, numbers, unsupported claims, missing context, and tone before you ask for nicer wording.",
+      "why": "Polished wrong information is harder to catch than rough information.",
+      "output": "A corrected draft that is ready for formatting or wording cleanup."
+    },
+    {
+      "title": "Change the format only after the facts are right",
+      "detail": "Use DeepL Write when the verified draft needs a different format, structure, or source-aware second pass. Keep the same facts so the rewrite does not drift from the original.",
+      "why": "Format changes are safer after the substance is already checked.",
+      "output": "A version that fits the channel, document, post, or recipient.",
+      "toolSlug": "deepl-write",
+      "toolName": "DeepL Write"
+    },
+    {
+      "title": "Finish with a human review",
+      "detail": "Use Grammarly for cleanup only after the main work is checked. Read the final result as the recipient would: on the device, in the app, or in the document where it will actually be used.",
+      "why": "The final review catches tone, missing context, and practical usability issues.",
+      "output": "A final result you can send, post, study from, or save with confidence.",
+      "toolSlug": "grammarly",
+      "toolName": "Grammarly"
+    }
+  ],
+  "toolsYouCanUse": [
+    {
+      "toolSlug": "copy-ai",
+      "toolName": "Copy.ai",
+      "why": "first-pass help for create outreach drafts from uploaded PDFs, class notes, and other source documents.",
+      "role": "first-pass help for create outreach drafts from uploaded PDFs, class notes, and other source documents.",
+      "bestUseCase": "sales and marketing workflow content for turning sales call transcripts into follow-up notes and next steps"
+    },
+    {
+      "toolSlug": "deepl-write",
+      "toolName": "DeepL Write",
+      "why": "second-pass support when the output needs adjust tone or a different format.",
+      "role": "second-pass support when the output needs adjust tone or a different format.",
+      "bestUseCase": "rephrasing professional messages when you want a different workflow than the top pick"
+    },
+    {
+      "toolSlug": "grammarly",
+      "toolName": "Grammarly",
+      "why": "review, cleanup, or alternate wording after the main draft is checked.",
+      "role": "review, cleanup, or alternate wording after the main draft is checked.",
+      "bestUseCase": "polishing email and client-facing writing when speed or a lighter setup matters more"
+    }
+  ],
+  "keyTakeaways": [
+    "What you need: the original source material, a clear output format, and a few minutes to review the result.",
+    "Start with Copy.ai for the first pass, but judge the output against turning sales call transcripts into follow-up notes and next steps, not against tool hype.",
+    "Use DeepL Write only when the workflow needs a different format or second pass.",
+    "Use Grammarly for cleanup after the main draft is fact-checked.",
+    "The reader needs accurate follow-up context without rereading full transcripts.",
+    "Most lists focus on recording rather than follow-up usefulness.",
+    "The useful next step is to test one real example before building a repeatable workflow."
+  ],
+  "bestPicksBySituation": [
+    {
+      "situation": "If you already have uploaded PDFs, class notes, and other source documents, choose Copy.ai.",
+      "toolSlug": "copy-ai",
+      "toolName": "Copy.ai",
+      "why": "Copy.ai is the closest match because it is built for sales and marketing workflow content and keeps the work tied to the original input."
+    },
+    {
+      "situation": "If you need turning sales call transcripts into follow-up notes and next steps and want a different workflow, choose DeepL Write.",
+      "toolSlug": "deepl-write",
+      "toolName": "DeepL Write",
+      "why": "DeepL Write is the better second choice when you want rephrasing professional messages instead of the first tool's exact workflow."
+    },
+    {
+      "situation": "If you want the cleanest rewrite or the lightest review step, choose Grammarly.",
+      "toolSlug": "grammarly",
+      "toolName": "Grammarly",
+      "why": "Grammarly helps when you need polishing email and client-facing writing and want a fallback that is easier to adapt on a phone or desktop."
+    }
+  ],
+  "recommendedToolSlugs": [
+    "copy-ai",
+    "deepl-write",
+    "grammarly",
+    "writesonic",
+    "tl-dv"
+  ],
+  "recommendedTools": [
+    {
+      "toolSlug": "copy-ai",
+      "toolName": "Copy.ai",
+      "summary": "Copy.ai is strongest when you need sales and marketing workflow content and want it tied to uploaded PDFs, class notes, and other source documents. It handles create outreach drafts better than a generic assistant, but it is a weaker choice if you need you only need an occasional general chat tool.",
+      "bestFor": "sales and marketing workflow content for turning sales call transcripts into follow-up notes and next steps",
+      "avoidIf": "you only need an occasional general chat tool if your real input is uploaded PDFs, class notes, and other source documents",
+      "strengths": [
+        "copywriting",
+        "marketing",
+        "workflows",
+        "sales"
+      ],
+      "tradeoffs": [
+        "Personal grammar corrections only",
+        "Media editing workflows"
+      ],
+      "toolPagePath": "/tools/copy-ai"
+    },
+    {
+      "toolSlug": "deepl-write",
+      "toolName": "DeepL Write",
+      "summary": "DeepL Write is strongest when you need rephrasing professional messages and want it tied to uploaded PDFs, class notes, and other source documents. It handles polish messages better than a generic assistant, but it is a weaker choice if you need you need specialist translation or legal review without a human expert.",
+      "bestFor": "rephrasing professional messages when you want a different workflow than the top pick",
+      "avoidIf": "you need specialist translation or legal review without a human expert if your main need is the top tool's exact workflow",
+      "strengths": [
+        "writing",
+        "clarity",
+        "tone",
+        "multilingual"
+      ],
+      "tradeoffs": [
+        "Generating rich visual content",
+        "Research requiring cited web sources"
+      ],
+      "toolPagePath": "/tools/deepl-write"
+    },
+    {
+      "toolSlug": "grammarly",
+      "toolName": "Grammarly",
+      "summary": "Grammarly is strongest when you need polishing email and client-facing writing and want it tied to uploaded PDFs, class notes, and other source documents. It handles polish emails better than a generic assistant, but it is a weaker choice if you need your writing environment cannot allow browser extensions or integrations.",
+      "bestFor": "polishing email and client-facing writing when speed or a lighter setup matters more",
+      "avoidIf": "your writing environment cannot allow browser extensions or integrations if you need the most polished or source-grounded final pass",
+      "strengths": [
+        "writing",
+        "editing",
+        "tone",
+        "email"
+      ],
+      "tradeoffs": [
+        "Long-form research from sources",
+        "Visual content generation"
+      ],
+      "toolPagePath": "/tools/grammarly"
+    },
+    {
+      "toolSlug": "writesonic",
+      "toolName": "Writesonic",
+      "summary": "Writesonic is strongest when you need marketing content ideation and want it tied to uploaded PDFs, class notes, and other source documents. It handles draft landing copy better than a generic assistant, but it is a weaker choice if you need you would publish generated content without editorial review.",
+      "bestFor": "marketing content ideation when speed or a lighter setup matters more",
+      "avoidIf": "you would publish generated content without editorial review if the task needs deeper review than a lightweight fallback can provide",
+      "strengths": [
+        "marketing",
+        "writing",
+        "seo-workflow",
+        "web-copy"
+      ],
+      "tradeoffs": [
+        "Users needing only basic proofreading",
+        "Dedicated graphic design production"
+      ],
+      "toolPagePath": "/tools/writesonic"
+    },
+    {
+      "toolSlug": "tl-dv",
+      "toolName": "tl;dv",
+      "summary": "tl;dv is strongest when you need workflows that need call clips and meeting notes and want it tied to uploaded PDFs, class notes, and other source documents. It handles call clips and meeting notes better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need call clips and meeting notes when speed or a lighter setup matters more",
+      "avoidIf": "you need publish-ready output without review if the workflow depends on another tool's stronger input handling or editing controls",
+      "strengths": [
+        "meetings",
+        "notes",
+        "transcription",
+        "summaries"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside meetings.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/tl-dv"
+    }
+  ],
+  "comparisonRows": [
+    {
+      "toolSlug": "copy-ai",
+      "toolName": "Copy.ai",
+      "bestFor": "sales and marketing workflow content for turning sales call transcripts into follow-up notes and next steps",
+      "freePlan": false,
+      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "whyConsider": "Copy.ai is worth considering because it is the clearest fit for turning sales call transcripts into follow-up notes and next steps. It is built for sales and marketing workflow content, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for personal grammar corrections only; this matters when the reader is turning sales call transcripts into follow-up notes and next steps."
+    },
+    {
+      "toolSlug": "deepl-write",
+      "toolName": "DeepL Write",
+      "bestFor": "rephrasing professional messages when you want a different workflow than the top pick",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "whyConsider": "DeepL Write is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for rephrasing professional messages, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for generating rich visual content; this matters when the reader is turning sales call transcripts into follow-up notes and next steps."
+    },
+    {
+      "toolSlug": "grammarly",
+      "toolName": "Grammarly",
+      "bestFor": "polishing email and client-facing writing when speed or a lighter setup matters more",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "whyConsider": "Grammarly is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for polishing email and client-facing writing, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for long-form research from sources; this matters when the reader is turning sales call transcripts into follow-up notes and next steps."
+    },
+    {
+      "toolSlug": "writesonic",
+      "toolName": "Writesonic",
+      "bestFor": "marketing content ideation when speed or a lighter setup matters more",
+      "freePlan": false,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "Writesonic is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for marketing content ideation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for users needing only basic proofreading; this matters when the reader is turning sales call transcripts into follow-up notes and next steps."
+    },
+    {
+      "toolSlug": "tl-dv",
+      "toolName": "tl;dv",
+      "bestFor": "workflows that need call clips and meeting notes when speed or a lighter setup matters more",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "whyConsider": "tl;dv is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need call clips and meeting notes, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside meetings.; this matters when the reader is turning sales call transcripts into follow-up notes and next steps."
+    }
+  ],
+  "decisionPath": [
+    {
+      "situation": "If you already have uploaded PDFs, class notes, and other source documents, start with Copy.ai.",
+      "recommendation": "Copy.ai",
+      "reason": "Copy.ai is the first-pass choice when the input is ready and the main job is to structure, summarize, draft, or clean it into a usable result."
+    },
+    {
+      "situation": "If the output needs a different format after the facts are checked, switch to DeepL Write.",
+      "recommendation": "DeepL Write",
+      "reason": "DeepL Write is better for the second pass when the job changes from drafting to formatting, layout, or a different presentation style."
+    },
+    {
+      "situation": "If the result is accurate but still rough, use Grammarly.",
+      "recommendation": "Grammarly",
+      "reason": "Grammarly fits the final cleanup step because the main source work is already done."
+    },
+    {
+      "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
+      "recommendation": "Copy.ai",
+      "reason": "Mobile works best for a short summary, a quick rewrite, or final approval; save side-by-side checking and larger edits for desktop."
+    },
+    {
+      "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
+      "recommendation": "DeepL Write",
+      "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
+    }
+  ],
+  "decisionTree": [
+    {
+      "situation": "If you already have uploaded PDFs, class notes, and other source documents, start with Copy.ai.",
+      "recommendation": "Copy.ai",
+      "reason": "Copy.ai is the first-pass choice when the input is ready and the main job is to structure, summarize, draft, or clean it into a usable result."
+    },
+    {
+      "situation": "If the output needs a different format after the facts are checked, switch to DeepL Write.",
+      "recommendation": "DeepL Write",
+      "reason": "DeepL Write is better for the second pass when the job changes from drafting to formatting, layout, or a different presentation style."
+    },
+    {
+      "situation": "If the result is accurate but still rough, use Grammarly.",
+      "recommendation": "Grammarly",
+      "reason": "Grammarly fits the final cleanup step because the main source work is already done."
+    },
+    {
+      "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
+      "recommendation": "Copy.ai",
+      "reason": "Mobile works best for a short summary, a quick rewrite, or final approval; save side-by-side checking and larger edits for desktop."
+    },
+    {
+      "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
+      "recommendation": "DeepL Write",
+      "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
+    }
+  ],
+  "moneySavingTips": [
+    "Test one representative project before paying for a longer-term workflow.",
+    "Use a listed free plan when it covers the experiment you need to run.",
+    "Avoid overlapping subscriptions until one tool has proven where it saves effort."
+  ],
+  "pricingNote": "Pricing can change. Check the official site before subscribing.",
+  "pricingCaveat": "Pricing can change. Check the official site before subscribing.",
+  "faqs": [
+    {
+      "question": "Can I use AI to summarize turning sales call transcripts into follow-up notes and next steps into a usable recap?",
+      "answer": "Yes, but the recap should still be checked against the original notes. Copy.ai is the best first pass for a structured recap, DeepL Write is useful when you want a different summary angle, and Grammarly helps turn rough notes into a cleaner client version."
+    },
+    {
+      "question": "Which AI tool is better for action items?",
+      "answer": "Copy.ai is the better starting point when action items need to stay close to the source notes. Use DeepL Write when you need a source-backed follow-up or a second look."
+    },
+    {
+      "question": "Is Copy.ai better than DeepL Write for client recaps?",
+      "answer": "Copy.ai is better when you already have notes from the meeting; DeepL Write is better when the recap needs more context or a broader source check."
+    },
+    {
+      "question": "What should I avoid before I send the recap?",
+      "answer": "Do not send the recap until commitments, dates, owners, and next steps are confirmed. That is the fastest way to keep the summary useful."
+    }
+  ],
+  "faq": [
+    {
+      "question": "Can I use AI to summarize turning sales call transcripts into follow-up notes and next steps into a usable recap?",
+      "answer": "Yes, but the recap should still be checked against the original notes. Copy.ai is the best first pass for a structured recap, DeepL Write is useful when you want a different summary angle, and Grammarly helps turn rough notes into a cleaner client version."
+    },
+    {
+      "question": "Which AI tool is better for action items?",
+      "answer": "Copy.ai is the better starting point when action items need to stay close to the source notes. Use DeepL Write when you need a source-backed follow-up or a second look."
+    },
+    {
+      "question": "Is Copy.ai better than DeepL Write for client recaps?",
+      "answer": "Copy.ai is better when you already have notes from the meeting; DeepL Write is better when the recap needs more context or a broader source check."
+    },
+    {
+      "question": "What should I avoid before I send the recap?",
+      "answer": "Do not send the recap until commitments, dates, owners, and next steps are confirmed. That is the fastest way to keep the summary useful."
+    }
+  ],
+  "whoShouldUseThis": [
+    "small sales teams who need turning sales call transcripts into follow-up notes and next steps.",
+    "Readers asking: How do I summarize a sales call into next steps without losing context?",
+    "Teams that understand this pain point: The reader needs accurate follow-up context without rereading full transcripts."
+  ],
+  "whoShouldAvoidThis": [
+    "Readers who need legal, financial, or compliance advice rather than tool comparison.",
+    "Users who want guaranteed outcomes instead of a workflow shortlist to evaluate."
+  ],
+  "finalVerdict": "The next step is to run this workflow on one real example of turning sales call transcripts into follow-up notes and next steps. Start with Copy.ai, use DeepL Write only if the format needs a second pass, finish with Grammarly or manual review, and do not reuse the workflow until the first result is accurate and useful.",
+  "realityCheck": "AI can speed up the work, but the user still has to review facts, shape the final result, and decide whether the workflow fits the job.",
+  "skillNeeded": "You need enough familiarity with turning sales call transcripts into follow-up notes and next steps to judge whether the output is accurate and useful.",
+  "firstStep": "What you need: uploaded PDFs, class notes, and other source documents, a clear final format, the audience or recipient, and time to check the AI result before using it.",
+  "commonMistakes": [
+    "Starting with a tool before defining the source material and output.",
+    "Copying the first AI result without checking facts, names, dates, links, or commitments.",
+    "Using the same prompt for every tool instead of matching the tool to its role.",
+    "Turning a practical workflow into a broad ranking page."
+  ],
+  "mistakesToAvoid": [
+    "Do not treat Copy.ai as the final answer without checking the result against your source material.",
+    "Do not use DeepL Write or Grammarly as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+  ],
+  "whatToAvoid": [
+    "Do not treat Copy.ai as the final answer without checking the result against your source material.",
+    "Do not use DeepL Write or Grammarly as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+  ],
+  "whatChanged": "Turn transcripts into decisions, objections, and next actions.",
+  "exampleWorkflow": "Collect uploaded PDFs, class notes, and other source documents and remove anything the AI should not use. Define the final output: what the reader needs to produce, send, post, study, or decide. Use AI to create a first structured draft for turn sales call transcripts into follow-up notes and next steps. Check names, numbers, sources, commitments, tone, and missing context against the original material. Polish the final result, save the reusable prompt, and choose the next tool only if the format or source type changes.",
+  "exampleResult": "Example result: a checked turn sales call transcripts into follow-up notes and next steps output that keeps the source facts, removes filler, names the next action, and is short enough to review before sending, posting, studying, or saving.",
+  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "visualSummary": {
+    "headline": "A practical starting route for small sales teams",
+    "points": [
+      "Start with Copy.ai for sales and marketing workflow content",
+      "Compare DeepL Write when the workflow changes",
+      "Run a real project test before subscribing"
+    ]
+  },
+  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "freshness": "evergreen",
+  "qualityScore": 92,
+  "status": "draft",
+  "createdAt": "2026-05-29",
+  "updatedAt": "2026-05-29"
+}

@@ -1,0 +1,463 @@
+{
+  "slug": "how-to-create-a-client-proposal-deck-with-ai",
+  "title": "How to Create a Client Proposal Deck with AI",
+  "guideType": "how-to",
+  "type": "how-to",
+  "metaTitle": "How to Create a Client Proposal Deck with AI | Comparavy",
+  "metaDescription": "Learn how to turning proposal notes into a polished client deck. See the workflow, tools you can use, and the safest first step.",
+  "category": "Presentations",
+  "persona": "freelancers",
+  "useCase": "turning proposal notes into a polished client deck",
+  "budgetAngle": "Compare tools on workflow fit and subscription risk before using them in paid client or revenue work.",
+  "skillLevel": "beginner",
+  "primaryKeyword": "how to create a client proposal deck with AI",
+  "secondaryKeywords": [
+    "AI proposal deck",
+    "client pitch deck AI",
+    "proposal slides AI"
+  ],
+  "longTailKeywords": [
+    "how to turn proposal notes into a deck with AI",
+    "AI workflow for client proposal slides",
+    "create client pitch deck from notes"
+  ],
+  "audience": "freelancers",
+  "searchIntent": "turning proposal notes into a polished client deck",
+  "userPain": "The reader needs a proposal deck quickly but must keep the offer accurate.",
+  "decisionQuestion": "How do I build a deck that explains the offer without overpromising?",
+  "deviceIntent": "both",
+  "desktopUseCase": "Best on a computer when building slides and checking the proposal copy against the scope.",
+  "mobileUseCase": "Best on a phone when reviewing slide text or sharing a preview link.",
+  "desktopSearchAngle": "Desktop readers usually want a deeper comparison, file handling, and a more deliberate review workflow.",
+  "mobileSearchAngle": "Mobile readers usually want a short answer first, then a quick next step they can finish in a few taps.",
+  "visualAssets": {
+    "hero": {
+      "type": "hero",
+      "alt": "How to Create a Client Proposal Deck with AI guide visual",
+      "promptOrDescription": "Editorial guide artwork for turning proposal notes into a polished client deck with a clean, problem-solving feel.",
+      "fileNameHint": "how-to-create-a-client-proposal-deck-with-ai"
+    },
+    "workflow": {
+      "type": "workflow-diagram",
+      "alt": "How to Create a Client Proposal Deck with AI workflow diagram",
+      "steps": [
+        "Quick Answer",
+        "Real-World Scenario",
+        "What You Need",
+        "Step-by-Step Workflow",
+        "Best If You Are on a Computer"
+      ]
+    },
+    "toolStack": {
+      "type": "tool-stack",
+      "alt": "How to Create a Client Proposal Deck with AI recommended tool stack",
+      "tools": [
+        "Gamma",
+        "Canva Magic Studio",
+        "Framer AI"
+      ]
+    },
+    "beforeAfter": {
+      "type": "before-after",
+      "alt": "How to Create a Client Proposal Deck with AI before and after comparison",
+      "before": "Before: manual work and scattered notes for turning proposal notes into a polished client deck.",
+      "after": "After: a faster workflow that leaves you with a clear, checked result."
+    }
+  },
+  "quickAnswer": "For turning proposal notes into a polished client deck, start with the real source material, ask for one specific output, and check the draft before you share or publish it. Gamma is the best first pass for this workflow, Canva Magic Studio helps when the format or source handling needs a second pass, and Framer AI is better saved for cleanup after the facts are right.",
+  "quickDecision": "For turning proposal notes into a polished client deck, choose Gamma for quick presentation first drafts. Choose Canva Magic Studio when you need non-designers creating polished visual assets. Choose Framer AI when the main job is landing page concepts or when you need a lighter alternative.",
+  "realWorldScenario": "freelancers need turning proposal notes into a polished client deck on a real task, not a generic tool roundup. Prepared 2026-05-29.",
+  "whatYouNeed": [
+    "uploaded PDFs, class notes, and other source documents",
+    "A clear final format for turning proposal notes into a polished client deck.",
+    "The audience, recipient, or grading criteria for the output.",
+    "Time to check facts, names, numbers, dates, and commitments before using the result."
+  ],
+  "timeEstimate": "Plan on 10 to 30 minutes for one careful first pass, depending on the source material.",
+  "contentGap": "Most rankings focus on slide design and ignore proposal structure.",
+  "uniqueAngle": "Use AI to clarify the offer before making slides.",
+  "aiOverviewAnswer": "Outline the client's problem, proposed scope, timeline, and next step, then generate slides and review every promise before sending.",
+  "quickVerdict": "For turning proposal notes into a polished client deck, start with the real source material, ask for one specific output, and check the draft before you share or publish it. Gamma is the best first pass for this workflow, Canva Magic Studio helps when the format or source handling needs a second pass, and Framer AI is better saved for cleanup after the facts are right.",
+  "steps": [
+    {
+      "title": "Collect the source material",
+      "detail": "Put the real input in one place before opening a tool: uploaded PDFs, class notes, and other source documents, any required facts, the audience, and the format you need at the end. Remove private details you are not allowed to share.",
+      "why": "AI output is only as useful as the material and constraints you give it.",
+      "output": "A clean input bundle and one clear target format."
+    },
+    {
+      "title": "Ask for the first usable version",
+      "detail": "Use Gamma for a first pass that tries to turn proposal notes into a polished client deck. Ask it to preserve source facts, flag uncertainty, and organize the result into sections you can review.",
+      "why": "The first pass should create structure, not a finished answer you trust blindly.",
+      "output": "A structured draft with visible gaps or uncertain points.",
+      "toolSlug": "gamma",
+      "toolName": "Gamma"
+    },
+    {
+      "title": "Check the answer before polishing",
+      "detail": "Compare the draft with the original material. Fix names, dates, numbers, unsupported claims, missing context, and tone before you ask for nicer wording.",
+      "why": "Polished wrong information is harder to catch than rough information.",
+      "output": "A corrected draft that is ready for formatting or wording cleanup."
+    },
+    {
+      "title": "Change the format only after the facts are right",
+      "detail": "Use Canva Magic Studio when the verified draft needs a different format, structure, or source-aware second pass. Keep the same facts so the rewrite does not drift from the original.",
+      "why": "Format changes are safer after the substance is already checked.",
+      "output": "A version that fits the channel, document, post, or recipient.",
+      "toolSlug": "canva-magic-studio",
+      "toolName": "Canva Magic Studio"
+    },
+    {
+      "title": "Finish with a human review",
+      "detail": "Use Framer AI for cleanup only after the main work is checked. Read the final result as the recipient would: on the device, in the app, or in the document where it will actually be used.",
+      "why": "The final review catches tone, missing context, and practical usability issues.",
+      "output": "A final result you can send, post, study from, or save with confidence.",
+      "toolSlug": "framer-ai",
+      "toolName": "Framer AI"
+    }
+  ],
+  "toolsYouCanUse": [
+    {
+      "toolSlug": "gamma",
+      "toolName": "Gamma",
+      "why": "first-pass help for draft pitch decks from uploaded PDFs, class notes, and other source documents.",
+      "role": "first-pass help for draft pitch decks from uploaded PDFs, class notes, and other source documents.",
+      "bestUseCase": "quick presentation first drafts for turning proposal notes into a polished client deck"
+    },
+    {
+      "toolSlug": "canva-magic-studio",
+      "toolName": "Canva Magic Studio",
+      "why": "second-pass support when the output needs draft presentations or a different format.",
+      "role": "second-pass support when the output needs draft presentations or a different format.",
+      "bestUseCase": "non-designers creating polished visual assets when you want a different workflow than the top pick"
+    },
+    {
+      "toolSlug": "framer-ai",
+      "toolName": "Framer AI",
+      "why": "review, cleanup, or alternate wording after the main draft is checked.",
+      "role": "review, cleanup, or alternate wording after the main draft is checked.",
+      "bestUseCase": "landing page concepts when speed or a lighter setup matters more"
+    }
+  ],
+  "keyTakeaways": [
+    "What you need: the original source material, a clear output format, and a few minutes to review the result.",
+    "Start with Gamma for the first pass, but judge the output against turning proposal notes into a polished client deck, not against tool hype.",
+    "Use Canva Magic Studio only when the workflow needs a different format or second pass.",
+    "Use Framer AI for cleanup after the main draft is fact-checked.",
+    "The reader needs a proposal deck quickly but must keep the offer accurate.",
+    "Most rankings focus on slide design and ignore proposal structure.",
+    "The useful next step is to test one real example before building a repeatable workflow."
+  ],
+  "bestPicksBySituation": [
+    {
+      "situation": "If you already have uploaded PDFs, class notes, and other source documents, choose Gamma.",
+      "toolSlug": "gamma",
+      "toolName": "Gamma",
+      "why": "Gamma is the closest match because it is built for quick presentation first drafts and keeps the work tied to the original input."
+    },
+    {
+      "situation": "If you need turning proposal notes into a polished client deck and want a different workflow, choose Canva Magic Studio.",
+      "toolSlug": "canva-magic-studio",
+      "toolName": "Canva Magic Studio",
+      "why": "Canva Magic Studio is the better second choice when you want non-designers creating polished visual assets instead of the first tool's exact workflow."
+    },
+    {
+      "situation": "If you want the cleanest rewrite or the lightest review step, choose Framer AI.",
+      "toolSlug": "framer-ai",
+      "toolName": "Framer AI",
+      "why": "Framer AI helps when you need landing page concepts and want a fallback that is easier to adapt on a phone or desktop."
+    }
+  ],
+  "recommendedToolSlugs": [
+    "gamma",
+    "canva-magic-studio",
+    "framer-ai",
+    "grammarly",
+    "deepl-write"
+  ],
+  "recommendedTools": [
+    {
+      "toolSlug": "gamma",
+      "toolName": "Gamma",
+      "summary": "Gamma is strongest when you need quick presentation first drafts and want it tied to uploaded PDFs, class notes, and other source documents. It handles draft pitch decks better than a generic assistant, but it is a weaker choice if you need you cannot manually verify content and brand alignment.",
+      "bestFor": "quick presentation first drafts for turning proposal notes into a polished client deck",
+      "avoidIf": "you cannot manually verify content and brand alignment if your real input is uploaded PDFs, class notes, and other source documents",
+      "strengths": [
+        "presentations",
+        "documents",
+        "pitch",
+        "storytelling"
+      ],
+      "tradeoffs": [
+        "Strictly controlled corporate slide templates without adjustment",
+        "Detailed video production"
+      ],
+      "toolPagePath": "/tools/gamma"
+    },
+    {
+      "toolSlug": "canva-magic-studio",
+      "toolName": "Canva Magic Studio",
+      "summary": "Canva Magic Studio is strongest when you need non-designers creating polished visual assets and want it tied to uploaded PDFs, class notes, and other source documents. It handles create social posts better than a generic assistant, but it is a weaker choice if you need your output requires full professional design control.",
+      "bestFor": "non-designers creating polished visual assets when you want a different workflow than the top pick",
+      "avoidIf": "your output requires full professional design control if your main need is the top tool's exact workflow",
+      "strengths": [
+        "design",
+        "templates",
+        "social-media",
+        "presentations"
+      ],
+      "tradeoffs": [
+        "Advanced professional image compositing",
+        "Highly controlled cinematic video generation"
+      ],
+      "toolPagePath": "/tools/canva-magic-studio"
+    },
+    {
+      "toolSlug": "framer-ai",
+      "toolName": "Framer AI",
+      "summary": "Framer AI is strongest when you need landing page concepts and want it tied to uploaded PDFs, class notes, and other source documents. It handles draft landing pages better than a generic assistant, but it is a weaker choice if you need you need substantial custom business logic.",
+      "bestFor": "landing page concepts when speed or a lighter setup matters more",
+      "avoidIf": "you need substantial custom business logic if you need the most polished or source-grounded final pass",
+      "strengths": [
+        "website",
+        "landing-page",
+        "design",
+        "no-code"
+      ],
+      "tradeoffs": [
+        "Complex application backends",
+        "General research and document analysis"
+      ],
+      "toolPagePath": "/tools/framer-ai"
+    },
+    {
+      "toolSlug": "grammarly",
+      "toolName": "Grammarly",
+      "summary": "Grammarly is strongest when you need polishing email and client-facing writing and want it tied to uploaded PDFs, class notes, and other source documents. It handles polish emails better than a generic assistant, but it is a weaker choice if you need your writing environment cannot allow browser extensions or integrations.",
+      "bestFor": "polishing email and client-facing writing when speed or a lighter setup matters more",
+      "avoidIf": "your writing environment cannot allow browser extensions or integrations if the task needs deeper review than a lightweight fallback can provide",
+      "strengths": [
+        "writing",
+        "editing",
+        "tone",
+        "email"
+      ],
+      "tradeoffs": [
+        "Long-form research from sources",
+        "Visual content generation"
+      ],
+      "toolPagePath": "/tools/grammarly"
+    },
+    {
+      "toolSlug": "deepl-write",
+      "toolName": "DeepL Write",
+      "summary": "DeepL Write is strongest when you need rephrasing professional messages and want it tied to uploaded PDFs, class notes, and other source documents. It handles polish messages better than a generic assistant, but it is a weaker choice if you need you need specialist translation or legal review without a human expert.",
+      "bestFor": "rephrasing professional messages when speed or a lighter setup matters more",
+      "avoidIf": "you need specialist translation or legal review without a human expert if the workflow depends on another tool's stronger input handling or editing controls",
+      "strengths": [
+        "writing",
+        "clarity",
+        "tone",
+        "multilingual"
+      ],
+      "tradeoffs": [
+        "Generating rich visual content",
+        "Research requiring cited web sources"
+      ],
+      "toolPagePath": "/tools/deepl-write"
+    }
+  ],
+  "comparisonRows": [
+    {
+      "toolSlug": "gamma",
+      "toolName": "Gamma",
+      "bestFor": "quick presentation first drafts for turning proposal notes into a polished client deck",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "whyConsider": "Gamma is worth considering because it is the clearest fit for turning proposal notes into a polished client deck. It is built for quick presentation first drafts, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for strictly controlled corporate slide templates without adjustment; this matters when the reader is turning proposal notes into a polished client deck."
+    },
+    {
+      "toolSlug": "canva-magic-studio",
+      "toolName": "Canva Magic Studio",
+      "bestFor": "non-designers creating polished visual assets when you want a different workflow than the top pick",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "whyConsider": "Canva Magic Studio is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for non-designers creating polished visual assets, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for advanced professional image compositing; this matters when the reader is turning proposal notes into a polished client deck."
+    },
+    {
+      "toolSlug": "framer-ai",
+      "toolName": "Framer AI",
+      "bestFor": "landing page concepts when speed or a lighter setup matters more",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "Framer AI is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for landing page concepts, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for complex application backends; this matters when the reader is turning proposal notes into a polished client deck."
+    },
+    {
+      "toolSlug": "grammarly",
+      "toolName": "Grammarly",
+      "bestFor": "polishing email and client-facing writing when speed or a lighter setup matters more",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "whyConsider": "Grammarly is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for polishing email and client-facing writing, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for long-form research from sources; this matters when the reader is turning proposal notes into a polished client deck."
+    },
+    {
+      "toolSlug": "deepl-write",
+      "toolName": "DeepL Write",
+      "bestFor": "rephrasing professional messages when speed or a lighter setup matters more",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "whyConsider": "DeepL Write is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for rephrasing professional messages, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for generating rich visual content; this matters when the reader is turning proposal notes into a polished client deck."
+    }
+  ],
+  "decisionPath": [
+    {
+      "situation": "If you already have uploaded PDFs, class notes, and other source documents, start with Gamma.",
+      "recommendation": "Gamma",
+      "reason": "Gamma is the first-pass choice when the input is ready and the main job is to structure, summarize, draft, or clean it into a usable result."
+    },
+    {
+      "situation": "If the output needs a different format after the facts are checked, switch to Canva Magic Studio.",
+      "recommendation": "Canva Magic Studio",
+      "reason": "Canva Magic Studio is better for the second pass when the job changes from drafting to formatting, layout, or a different presentation style."
+    },
+    {
+      "situation": "If the result is accurate but still rough, use Framer AI.",
+      "recommendation": "Framer AI",
+      "reason": "Framer AI fits the final cleanup step because the main source work is already done."
+    },
+    {
+      "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
+      "recommendation": "Gamma",
+      "reason": "Mobile works best for a short summary, a quick rewrite, or final approval; save side-by-side checking and larger edits for desktop."
+    },
+    {
+      "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
+      "recommendation": "Canva Magic Studio",
+      "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
+    }
+  ],
+  "decisionTree": [
+    {
+      "situation": "If you already have uploaded PDFs, class notes, and other source documents, start with Gamma.",
+      "recommendation": "Gamma",
+      "reason": "Gamma is the first-pass choice when the input is ready and the main job is to structure, summarize, draft, or clean it into a usable result."
+    },
+    {
+      "situation": "If the output needs a different format after the facts are checked, switch to Canva Magic Studio.",
+      "recommendation": "Canva Magic Studio",
+      "reason": "Canva Magic Studio is better for the second pass when the job changes from drafting to formatting, layout, or a different presentation style."
+    },
+    {
+      "situation": "If the result is accurate but still rough, use Framer AI.",
+      "recommendation": "Framer AI",
+      "reason": "Framer AI fits the final cleanup step because the main source work is already done."
+    },
+    {
+      "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
+      "recommendation": "Gamma",
+      "reason": "Mobile works best for a short summary, a quick rewrite, or final approval; save side-by-side checking and larger edits for desktop."
+    },
+    {
+      "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
+      "recommendation": "Canva Magic Studio",
+      "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
+    }
+  ],
+  "moneySavingTips": [
+    "Test one representative project before paying for a longer-term workflow.",
+    "Use a listed free plan when it covers the experiment you need to run.",
+    "Avoid overlapping subscriptions until one tool has proven where it saves effort."
+  ],
+  "pricingNote": "Pricing can change. Check the official site before subscribing.",
+  "pricingCaveat": "Pricing can change. Check the official site before subscribing.",
+  "faqs": [
+    {
+      "question": "Can I use AI to summarize turning proposal notes into a polished client deck into a usable recap?",
+      "answer": "Yes, but the recap should still be checked against the original notes. Gamma is the best first pass for a structured recap, Canva Magic Studio is useful when you want a different summary angle, and Framer AI helps turn rough notes into a cleaner client version."
+    },
+    {
+      "question": "Which AI tool is better for action items?",
+      "answer": "Gamma is the better starting point when action items need to stay close to the source notes. Use Canva Magic Studio when you need a source-backed follow-up or a second look."
+    },
+    {
+      "question": "Is Gamma better than Canva Magic Studio for client recaps?",
+      "answer": "Gamma is better when you already have notes from the meeting; Canva Magic Studio is better when the recap needs more context or a broader source check."
+    },
+    {
+      "question": "What should I avoid before I send the recap?",
+      "answer": "Do not send the recap until commitments, dates, owners, and next steps are confirmed. That is the fastest way to keep the summary useful."
+    }
+  ],
+  "faq": [
+    {
+      "question": "Can I use AI to summarize turning proposal notes into a polished client deck into a usable recap?",
+      "answer": "Yes, but the recap should still be checked against the original notes. Gamma is the best first pass for a structured recap, Canva Magic Studio is useful when you want a different summary angle, and Framer AI helps turn rough notes into a cleaner client version."
+    },
+    {
+      "question": "Which AI tool is better for action items?",
+      "answer": "Gamma is the better starting point when action items need to stay close to the source notes. Use Canva Magic Studio when you need a source-backed follow-up or a second look."
+    },
+    {
+      "question": "Is Gamma better than Canva Magic Studio for client recaps?",
+      "answer": "Gamma is better when you already have notes from the meeting; Canva Magic Studio is better when the recap needs more context or a broader source check."
+    },
+    {
+      "question": "What should I avoid before I send the recap?",
+      "answer": "Do not send the recap until commitments, dates, owners, and next steps are confirmed. That is the fastest way to keep the summary useful."
+    }
+  ],
+  "whoShouldUseThis": [
+    "freelancers who need turning proposal notes into a polished client deck.",
+    "Readers asking: How do I build a deck that explains the offer without overpromising?",
+    "Teams that understand this pain point: The reader needs a proposal deck quickly but must keep the offer accurate."
+  ],
+  "whoShouldAvoidThis": [
+    "Readers who need legal, financial, or compliance advice rather than tool comparison.",
+    "Users who want guaranteed outcomes instead of a workflow shortlist to evaluate."
+  ],
+  "finalVerdict": "The next step is to run this workflow on one real example of turning proposal notes into a polished client deck. Start with Gamma, use Canva Magic Studio only if the format needs a second pass, finish with Framer AI or manual review, and do not reuse the workflow until the first result is accurate and useful.",
+  "realityCheck": "AI can speed up the work, but the user still has to review facts, shape the final result, and decide whether the workflow fits the job.",
+  "skillNeeded": "You need enough familiarity with turning proposal notes into a polished client deck to judge whether the output is accurate and useful.",
+  "firstStep": "What you need: uploaded PDFs, class notes, and other source documents, a clear final format, the audience or recipient, and time to check the AI result before using it.",
+  "commonMistakes": [
+    "Starting with a tool before defining the source material and output.",
+    "Copying the first AI result without checking facts, names, dates, links, or commitments.",
+    "Using the same prompt for every tool instead of matching the tool to its role.",
+    "Turning a practical workflow into a broad ranking page."
+  ],
+  "mistakesToAvoid": [
+    "Do not treat Gamma as the final answer without checking the result against your source material.",
+    "Do not use Canva Magic Studio or Framer AI as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+  ],
+  "whatToAvoid": [
+    "Do not treat Gamma as the final answer without checking the result against your source material.",
+    "Do not use Canva Magic Studio or Framer AI as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+  ],
+  "whatChanged": "Use AI to clarify the offer before making slides.",
+  "exampleWorkflow": "Collect uploaded PDFs, class notes, and other source documents and remove anything the AI should not use. Define the final output: what the reader needs to produce, send, post, study, or decide. Use AI to create a first structured draft for turn proposal notes into a polished client deck. Check names, numbers, sources, commitments, tone, and missing context against the original material. Polish the final result, save the reusable prompt, and choose the next tool only if the format or source type changes.",
+  "exampleResult": "Example result: a checked turn proposal notes into a polished client deck output that keeps the source facts, removes filler, names the next action, and is short enough to review before sending, posting, studying, or saving.",
+  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "visualSummary": {
+    "headline": "A practical starting route for freelancers",
+    "points": [
+      "Start with Gamma for quick presentation first drafts",
+      "Compare Canva Magic Studio when the workflow changes",
+      "Run a real project test before subscribing"
+    ]
+  },
+  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "freshness": "evergreen",
+  "qualityScore": 92,
+  "status": "draft",
+  "createdAt": "2026-05-29",
+  "updatedAt": "2026-05-29"
+}

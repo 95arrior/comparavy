@@ -1,0 +1,463 @@
+{
+  "slug": "how-to-find-quotes-in-long-documents-with-ai",
+  "title": "How to Find Quotes in Long Documents with AI",
+  "guideType": "how-to",
+  "type": "how-to",
+  "metaTitle": "How to Find Quotes in Long Documents with AI | Comparavy",
+  "metaDescription": "Learn how to finding relevant source passages inside long documents. See the workflow, tools you can use, and the safest first step.",
+  "category": "Research",
+  "persona": "research-heavy professionals",
+  "useCase": "finding relevant source passages inside long documents",
+  "budgetAngle": "Prefer free or low-cost plans until the workflow proves useful on a real task.",
+  "skillLevel": "intermediate",
+  "primaryKeyword": "how to find quotes in long documents with AI",
+  "secondaryKeywords": [
+    "AI quote finder",
+    "find quotes in PDF AI",
+    "AI document search"
+  ],
+  "longTailKeywords": [
+    "how to find source quotes in long PDFs with AI",
+    "AI workflow for quote retrieval",
+    "find relevant passages in documents with AI"
+  ],
+  "audience": "research-heavy professionals",
+  "searchIntent": "finding relevant source passages inside long documents",
+  "userPain": "The reader needs quote support but cannot trust unsourced paraphrases.",
+  "decisionQuestion": "How do I use AI to find quotes while still checking the original document?",
+  "deviceIntent": "both",
+  "desktopUseCase": "Best on a computer when you need source files, notes, and citations visible at the same time.",
+  "mobileUseCase": "Best on a phone when checking one passage or saving a source for later.",
+  "desktopSearchAngle": "Desktop readers usually want a deeper comparison, file handling, and a more deliberate review workflow.",
+  "mobileSearchAngle": "Mobile readers usually want a short answer first, then a quick next step they can finish in a few taps.",
+  "visualAssets": {
+    "hero": {
+      "type": "hero",
+      "alt": "How to Find Quotes in Long Documents with AI guide visual",
+      "promptOrDescription": "Editorial guide artwork for finding relevant source passages inside long documents with a clean, problem-solving feel.",
+      "fileNameHint": "how-to-find-quotes-in-long-documents-with-ai"
+    },
+    "workflow": {
+      "type": "workflow-diagram",
+      "alt": "How to Find Quotes in Long Documents with AI workflow diagram",
+      "steps": [
+        "Quick Answer",
+        "Real-World Scenario",
+        "What You Need",
+        "Step-by-Step Workflow",
+        "Best If You Are on a Computer"
+      ]
+    },
+    "toolStack": {
+      "type": "tool-stack",
+      "alt": "How to Find Quotes in Long Documents with AI recommended tool stack",
+      "tools": [
+        "NotebookLM",
+        "SciSpace",
+        "Gemini"
+      ]
+    },
+    "beforeAfter": {
+      "type": "before-after",
+      "alt": "How to Find Quotes in Long Documents with AI before and after comparison",
+      "before": "Before: manual work and scattered notes for finding relevant source passages inside long documents.",
+      "after": "After: a faster workflow that leaves you with a clear, checked result."
+    }
+  },
+  "quickAnswer": "For finding relevant source passages inside long documents, start with the real source material, ask for one specific output, and check the draft before you share or publish it. NotebookLM is the best first pass for this workflow, SciSpace helps when the format or source handling needs a second pass, and Gemini is better saved for cleanup after the facts are right.",
+  "quickDecision": "For finding relevant source passages inside long documents, choose NotebookLM for working from a defined set of documents. Choose SciSpace when you need workflows that need reading and explaining research papers. Choose Gemini when the main job is users already working in Google's ecosystem or when you need a lighter alternative.",
+  "realWorldScenario": "research-heavy professionals need finding relevant source passages inside long documents on a real task, not a generic tool roundup. Prepared 2026-05-29.",
+  "whatYouNeed": [
+    "uploaded PDFs, class notes, and other source documents",
+    "A clear final format for finding relevant source passages inside long documents.",
+    "The audience, recipient, or grading criteria for the output.",
+    "Time to check facts, names, numbers, dates, and commitments before using the result."
+  ],
+  "timeEstimate": "Plan on 10 to 30 minutes for one careful first pass, depending on the source material.",
+  "contentGap": "Most content talks about summaries instead of quote retrieval.",
+  "uniqueAngle": "Use AI to locate candidate passages, then verify the exact wording yourself.",
+  "aiOverviewAnswer": "Upload or search the source, ask for passages tied to your question, open the original location, and copy only verified quotes.",
+  "quickVerdict": "For finding relevant source passages inside long documents, start with the real source material, ask for one specific output, and check the draft before you share or publish it. NotebookLM is the best first pass for this workflow, SciSpace helps when the format or source handling needs a second pass, and Gemini is better saved for cleanup after the facts are right.",
+  "steps": [
+    {
+      "title": "Collect the source material",
+      "detail": "Put the real input in one place before opening a tool: uploaded PDFs, class notes, and other source documents, any required facts, the audience, and the format you need at the end. Remove private details you are not allowed to share.",
+      "why": "AI output is only as useful as the material and constraints you give it.",
+      "output": "A clean input bundle and one clear target format."
+    },
+    {
+      "title": "Ask for the first usable version",
+      "detail": "Use NotebookLM for a first pass that tries to find relevant source passages inside long documents. Ask it to preserve source facts, flag uncertainty, and organize the result into sections you can review.",
+      "why": "The first pass should create structure, not a finished answer you trust blindly.",
+      "output": "A structured draft with visible gaps or uncertain points.",
+      "toolSlug": "notebooklm",
+      "toolName": "NotebookLM"
+    },
+    {
+      "title": "Check the answer before polishing",
+      "detail": "Compare the draft with the original material. Fix names, dates, numbers, unsupported claims, missing context, and tone before you ask for nicer wording.",
+      "why": "Polished wrong information is harder to catch than rough information.",
+      "output": "A corrected draft that is ready for formatting or wording cleanup."
+    },
+    {
+      "title": "Change the format only after the facts are right",
+      "detail": "Use SciSpace when the verified draft needs a different format, structure, or source-aware second pass. Keep the same facts so the rewrite does not drift from the original.",
+      "why": "Format changes are safer after the substance is already checked.",
+      "output": "A version that fits the channel, document, post, or recipient.",
+      "toolSlug": "scispace",
+      "toolName": "SciSpace"
+    },
+    {
+      "title": "Finish with a human review",
+      "detail": "Use Gemini for cleanup only after the main work is checked. Read the final result as the recipient would: on the device, in the app, or in the document where it will actually be used.",
+      "why": "The final review catches tone, missing context, and practical usability issues.",
+      "output": "A final result you can send, post, study from, or save with confidence.",
+      "toolSlug": "gemini",
+      "toolName": "Gemini"
+    }
+  ],
+  "toolsYouCanUse": [
+    {
+      "toolSlug": "notebooklm",
+      "toolName": "NotebookLM",
+      "why": "first-pass help for analyze research files from uploaded PDFs, class notes, and other source documents.",
+      "role": "first-pass help for analyze research files from uploaded PDFs, class notes, and other source documents.",
+      "bestUseCase": "working from a defined set of documents for finding relevant source passages inside long documents"
+    },
+    {
+      "toolSlug": "scispace",
+      "toolName": "SciSpace",
+      "why": "second-pass support when the output needs research workflows or a different format.",
+      "role": "second-pass support when the output needs research workflows or a different format.",
+      "bestUseCase": "workflows that need reading and explaining research papers when you want a different workflow than the top pick"
+    },
+    {
+      "toolSlug": "gemini",
+      "toolName": "Gemini",
+      "why": "review, cleanup, or alternate wording after the main draft is checked.",
+      "role": "review, cleanup, or alternate wording after the main draft is checked.",
+      "bestUseCase": "users already working in Google's ecosystem when speed or a lighter setup matters more"
+    }
+  ],
+  "keyTakeaways": [
+    "What you need: the original source material, a clear output format, and a few minutes to review the result.",
+    "Start with NotebookLM for the first pass, but judge the output against finding relevant source passages inside long documents, not against tool hype.",
+    "Use SciSpace only when the workflow needs a different format or second pass.",
+    "Use Gemini for cleanup after the main draft is fact-checked.",
+    "The reader needs quote support but cannot trust unsourced paraphrases.",
+    "Most content talks about summaries instead of quote retrieval.",
+    "The useful next step is to test one real example before building a repeatable workflow."
+  ],
+  "bestPicksBySituation": [
+    {
+      "situation": "If you already have uploaded PDFs, class notes, and other source documents, choose NotebookLM.",
+      "toolSlug": "notebooklm",
+      "toolName": "NotebookLM",
+      "why": "NotebookLM is the closest match because it is built for working from a defined set of documents and keeps the work tied to the original input."
+    },
+    {
+      "situation": "If you need finding relevant source passages inside long documents and want a different workflow, choose SciSpace.",
+      "toolSlug": "scispace",
+      "toolName": "SciSpace",
+      "why": "SciSpace is the better second choice when you want workflows that need reading and explaining research papers instead of the first tool's exact workflow."
+    },
+    {
+      "situation": "If you want the cleanest rewrite or the lightest review step, choose Gemini.",
+      "toolSlug": "gemini",
+      "toolName": "Gemini",
+      "why": "Gemini helps when you need users already working in Google's ecosystem and want a fallback that is easier to adapt on a phone or desktop."
+    }
+  ],
+  "recommendedToolSlugs": [
+    "notebooklm",
+    "scispace",
+    "gemini",
+    "you-com",
+    "phind"
+  ],
+  "recommendedTools": [
+    {
+      "toolSlug": "notebooklm",
+      "toolName": "NotebookLM",
+      "summary": "NotebookLM is strongest when you need working from a defined set of documents and want it tied to uploaded PDFs, class notes, and other source documents. It handles analyze research files better than a generic assistant, but it is a weaker choice if you need you do not have reliable source material to upload.",
+      "bestFor": "working from a defined set of documents for finding relevant source passages inside long documents",
+      "avoidIf": "you do not have reliable source material to upload if your real input is uploaded PDFs, class notes, and other source documents",
+      "strengths": [
+        "documents",
+        "research",
+        "sources",
+        "notes"
+      ],
+      "tradeoffs": [
+        "Open-ended web discovery as the primary task",
+        "Image or video production"
+      ],
+      "toolPagePath": "/tools/notebooklm"
+    },
+    {
+      "toolSlug": "scispace",
+      "toolName": "SciSpace",
+      "summary": "SciSpace is strongest when you need workflows that need reading and explaining research papers and want it tied to uploaded PDFs, class notes, and other source documents. It handles reading and explaining research papers better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need reading and explaining research papers when you want a different workflow than the top pick",
+      "avoidIf": "you need publish-ready output without review if your main need is the top tool's exact workflow",
+      "strengths": [
+        "research",
+        "sources",
+        "search",
+        "analysis"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside research.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/scispace"
+    },
+    {
+      "toolSlug": "gemini",
+      "toolName": "Gemini",
+      "summary": "Gemini is strongest when you need users already working in Google's ecosystem and want it tied to uploaded PDFs, class notes, and other source documents. It handles brainstorm campaigns better than a generic assistant, but it is a weaker choice if you need you cannot validate factual answers.",
+      "bestFor": "users already working in Google's ecosystem when speed or a lighter setup matters more",
+      "avoidIf": "you cannot validate factual answers if you need the most polished or source-grounded final pass",
+      "strengths": [
+        "chat",
+        "google",
+        "writing",
+        "productivity"
+      ],
+      "tradeoffs": [
+        "People needing a dedicated media production timeline",
+        "Users seeking deeply customizable automation"
+      ],
+      "toolPagePath": "/tools/gemini"
+    },
+    {
+      "toolSlug": "you-com",
+      "toolName": "You.com",
+      "summary": "You.com is strongest when you need workflows that need search-backed answers and lightweight assistant help and want it tied to uploaded PDFs, class notes, and other source documents. It handles search-backed answers and lightweight assistant help better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need search-backed answers and lightweight assistant help when speed or a lighter setup matters more",
+      "avoidIf": "you need publish-ready output without review if the task needs deeper review than a lightweight fallback can provide",
+      "strengths": [
+        "chat",
+        "assistant",
+        "brainstorming",
+        "writing"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside general assistant.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/you-com"
+    },
+    {
+      "toolSlug": "phind",
+      "toolName": "Phind",
+      "summary": "Phind is strongest when you need workflows that need developer-oriented research and technical answers and want it tied to uploaded PDFs, class notes, and other source documents. It handles developer-oriented research and technical answers better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need developer-oriented research and technical answers when speed or a lighter setup matters more",
+      "avoidIf": "you need publish-ready output without review if the workflow depends on another tool's stronger input handling or editing controls",
+      "strengths": [
+        "research",
+        "sources",
+        "search",
+        "analysis"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside research.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/phind"
+    }
+  ],
+  "comparisonRows": [
+    {
+      "toolSlug": "notebooklm",
+      "toolName": "NotebookLM",
+      "bestFor": "working from a defined set of documents for finding relevant source passages inside long documents",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "whyConsider": "NotebookLM is worth considering because it is the clearest fit for finding relevant source passages inside long documents. It is built for working from a defined set of documents, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for open-ended web discovery as the primary task; this matters when the reader is finding relevant source passages inside long documents."
+    },
+    {
+      "toolSlug": "scispace",
+      "toolName": "SciSpace",
+      "bestFor": "workflows that need reading and explaining research papers when you want a different workflow than the top pick",
+      "freePlan": true,
+      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "whyConsider": "SciSpace is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for workflows that need reading and explaining research papers, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside research.; this matters when the reader is finding relevant source passages inside long documents."
+    },
+    {
+      "toolSlug": "gemini",
+      "toolName": "Gemini",
+      "bestFor": "users already working in Google's ecosystem when speed or a lighter setup matters more",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "whyConsider": "Gemini is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for users already working in Google's ecosystem, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for people needing a dedicated media production timeline; this matters when the reader is finding relevant source passages inside long documents."
+    },
+    {
+      "toolSlug": "you-com",
+      "toolName": "You.com",
+      "bestFor": "workflows that need search-backed answers and lightweight assistant help when speed or a lighter setup matters more",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "You.com is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need search-backed answers and lightweight assistant help, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside general assistant.; this matters when the reader is finding relevant source passages inside long documents."
+    },
+    {
+      "toolSlug": "phind",
+      "toolName": "Phind",
+      "bestFor": "workflows that need developer-oriented research and technical answers when speed or a lighter setup matters more",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "Phind is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need developer-oriented research and technical answers, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside research.; this matters when the reader is finding relevant source passages inside long documents."
+    }
+  ],
+  "decisionPath": [
+    {
+      "situation": "If you already have uploaded PDFs, class notes, and other source documents, start with NotebookLM.",
+      "recommendation": "NotebookLM",
+      "reason": "NotebookLM is the first-pass choice when the input is ready and the main job is to structure, summarize, draft, or clean it into a usable result."
+    },
+    {
+      "situation": "If the output needs a different format after the facts are checked, switch to SciSpace.",
+      "recommendation": "SciSpace",
+      "reason": "SciSpace is better for the second pass when the job changes from drafting to formatting, layout, or a different presentation style."
+    },
+    {
+      "situation": "If the result is accurate but still rough, use Gemini.",
+      "recommendation": "Gemini",
+      "reason": "Gemini fits the final cleanup step because the main source work is already done."
+    },
+    {
+      "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
+      "recommendation": "NotebookLM",
+      "reason": "Mobile works best for a short summary, a quick rewrite, or final approval; save side-by-side checking and larger edits for desktop."
+    },
+    {
+      "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
+      "recommendation": "SciSpace",
+      "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
+    }
+  ],
+  "decisionTree": [
+    {
+      "situation": "If you already have uploaded PDFs, class notes, and other source documents, start with NotebookLM.",
+      "recommendation": "NotebookLM",
+      "reason": "NotebookLM is the first-pass choice when the input is ready and the main job is to structure, summarize, draft, or clean it into a usable result."
+    },
+    {
+      "situation": "If the output needs a different format after the facts are checked, switch to SciSpace.",
+      "recommendation": "SciSpace",
+      "reason": "SciSpace is better for the second pass when the job changes from drafting to formatting, layout, or a different presentation style."
+    },
+    {
+      "situation": "If the result is accurate but still rough, use Gemini.",
+      "recommendation": "Gemini",
+      "reason": "Gemini fits the final cleanup step because the main source work is already done."
+    },
+    {
+      "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
+      "recommendation": "NotebookLM",
+      "reason": "Mobile works best for a short summary, a quick rewrite, or final approval; save side-by-side checking and larger edits for desktop."
+    },
+    {
+      "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
+      "recommendation": "SciSpace",
+      "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
+    }
+  ],
+  "moneySavingTips": [
+    "Test one representative project before paying for a longer-term workflow.",
+    "Use a listed free plan when it covers the experiment you need to run.",
+    "Avoid overlapping subscriptions until one tool has proven where it saves effort."
+  ],
+  "pricingNote": "Pricing can change. Check the official site before subscribing.",
+  "pricingCaveat": "Pricing can change. Check the official site before subscribing.",
+  "faqs": [
+    {
+      "question": "Can I use AI to turn finding relevant source passages inside long documents into something usable without making it generic?",
+      "answer": "Yes, if you start with a clear angle and edit the result for your audience. NotebookLM is the best starting point for the first draft, SciSpace is useful when you need a different format or angle, and Gemini helps when the copy needs a final cleanup."
+    },
+    {
+      "question": "Which AI tool is better for repurposing content?",
+      "answer": "NotebookLM usually works best for the first rewrite, while SciSpace is better when the job shifts toward a different style or asset format."
+    },
+    {
+      "question": "Is NotebookLM better than SciSpace for this workflow?",
+      "answer": "NotebookLM is better when you want a direct content pass; SciSpace is better when the same input needs a new angle, layout, or structure."
+    },
+    {
+      "question": "What should I avoid before I publish or post it?",
+      "answer": "Avoid posting the first output without checking the hook, the flow, and the factual details. Use Gemini as the last cleanup step, not the only step."
+    }
+  ],
+  "faq": [
+    {
+      "question": "Can I use AI to turn finding relevant source passages inside long documents into something usable without making it generic?",
+      "answer": "Yes, if you start with a clear angle and edit the result for your audience. NotebookLM is the best starting point for the first draft, SciSpace is useful when you need a different format or angle, and Gemini helps when the copy needs a final cleanup."
+    },
+    {
+      "question": "Which AI tool is better for repurposing content?",
+      "answer": "NotebookLM usually works best for the first rewrite, while SciSpace is better when the job shifts toward a different style or asset format."
+    },
+    {
+      "question": "Is NotebookLM better than SciSpace for this workflow?",
+      "answer": "NotebookLM is better when you want a direct content pass; SciSpace is better when the same input needs a new angle, layout, or structure."
+    },
+    {
+      "question": "What should I avoid before I publish or post it?",
+      "answer": "Avoid posting the first output without checking the hook, the flow, and the factual details. Use Gemini as the last cleanup step, not the only step."
+    }
+  ],
+  "whoShouldUseThis": [
+    "research-heavy professionals who need finding relevant source passages inside long documents.",
+    "Readers asking: How do I use AI to find quotes while still checking the original document?",
+    "Teams that understand this pain point: The reader needs quote support but cannot trust unsourced paraphrases."
+  ],
+  "whoShouldAvoidThis": [
+    "Readers who need legal, financial, or compliance advice rather than tool comparison.",
+    "Users who want guaranteed outcomes instead of a workflow shortlist to evaluate."
+  ],
+  "finalVerdict": "The next step is to run this workflow on one real example of finding relevant source passages inside long documents. Start with NotebookLM, use SciSpace only if the format needs a second pass, finish with Gemini or manual review, and do not reuse the workflow until the first result is accurate and useful.",
+  "realityCheck": "AI can speed up the work, but the user still has to review facts, shape the final result, and decide whether the workflow fits the job.",
+  "skillNeeded": "You need enough familiarity with finding relevant source passages inside long documents to judge whether the output is accurate and useful.",
+  "firstStep": "What you need: uploaded PDFs, class notes, and other source documents, a clear final format, the audience or recipient, and time to check the AI result before using it.",
+  "commonMistakes": [
+    "Starting with a tool before defining the source material and output.",
+    "Copying the first AI result without checking facts, names, dates, links, or commitments.",
+    "Using the same prompt for every tool instead of matching the tool to its role.",
+    "Turning a practical workflow into a broad ranking page."
+  ],
+  "mistakesToAvoid": [
+    "Do not treat NotebookLM as the final answer without checking the result against your source material.",
+    "Do not use SciSpace or Gemini as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+  ],
+  "whatToAvoid": [
+    "Do not treat NotebookLM as the final answer without checking the result against your source material.",
+    "Do not use SciSpace or Gemini as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+  ],
+  "whatChanged": "Use AI to locate candidate passages, then verify the exact wording yourself.",
+  "exampleWorkflow": "Collect uploaded PDFs, class notes, and other source documents and remove anything the AI should not use. Define the final output: what the reader needs to produce, send, post, study, or decide. Use AI to create a first structured draft for find relevant source passages inside long documents. Check names, numbers, sources, commitments, tone, and missing context against the original material. Polish the final result, save the reusable prompt, and choose the next tool only if the format or source type changes.",
+  "exampleResult": "Example result: a checked find relevant source passages inside long documents output that keeps the source facts, removes filler, names the next action, and is short enough to review before sending, posting, studying, or saving.",
+  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "visualSummary": {
+    "headline": "A practical starting route for research-heavy professionals",
+    "points": [
+      "Start with NotebookLM for working from a defined set of documents",
+      "Compare SciSpace when the workflow changes",
+      "Run a real project test before subscribing"
+    ]
+  },
+  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "freshness": "evergreen",
+  "qualityScore": 92,
+  "status": "draft",
+  "createdAt": "2026-05-29",
+  "updatedAt": "2026-05-29"
+}
