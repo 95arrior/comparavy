@@ -1,0 +1,462 @@
+{
+  "slug": "how-to-turn-a-spreadsheet-into-a-plain-english-summary-with-ai",
+  "title": "How to Turn a Spreadsheet Into a Plain-English Summary with AI",
+  "guideType": "how-to",
+  "type": "how-to",
+  "metaTitle": "How to Turn a Spreadsheet Into a Plain-English Summary with AI | Comparavy",
+  "metaDescription": "Learn how to turning spreadsheet data into a plain-English summary. See the workflow, tools you can use, and the safest first step.",
+  "category": "General Assistant",
+  "persona": "small business operators",
+  "useCase": "turning spreadsheet data into a plain-English summary",
+  "budgetAngle": "Start with a focused use case and upgrade only after the tool saves enough time to justify the cost.",
+  "skillLevel": "beginner",
+  "primaryKeyword": "how to summarize a spreadsheet with AI",
+  "secondaryKeywords": [
+    "AI spreadsheet summary",
+    "data summary AI",
+    "plain English spreadsheet insights"
+  ],
+  "longTailKeywords": [
+    "how to turn spreadsheet data into a summary with AI",
+    "AI workflow for spreadsheet insights",
+    "summarize CSV data in plain English"
+  ],
+  "audience": "small business operators",
+  "searchIntent": "turning spreadsheet data into a plain-English summary",
+  "userPain": "The reader has rows of data but needs a clear summary of patterns and next questions.",
+  "decisionQuestion": "How do I summarize a spreadsheet without making unsupported claims?",
+  "deviceIntent": "both",
+  "desktopUseCase": "Best on a computer when uploading or reviewing CSV files and checking calculations. Use desktop to compare PDFs with accurate study notes before the final review.",
+  "mobileUseCase": "Best on a phone when reading a short summary or asking one follow-up question. Use mobile for quick checks on accurate study notes when the input is already prepared.",
+  "desktopSearchAngle": "Desktop readers usually want deeper comparison, file handling, and a deliberate review workflow for accurate study notes.",
+  "mobileSearchAngle": "Mobile readers usually want a short answer first, then a quick next step for accurate study notes they can finish in a few taps.",
+  "visualAssets": {
+    "hero": {
+      "type": "hero",
+      "alt": "How to Turn a Spreadsheet Into a Plain-English Summary with AI guide visual",
+      "promptOrDescription": "Editorial guide artwork for turning spreadsheet data into a plain-English summary with a clean, problem-solving feel.",
+      "fileNameHint": "how-to-turn-a-spreadsheet-into-a-plain-english-summary-with-ai"
+    },
+    "workflow": {
+      "type": "workflow-diagram",
+      "alt": "How to Turn a Spreadsheet Into a Plain-English Summary with AI workflow diagram",
+      "steps": [
+        "Quick Answer",
+        "Real-World Scenario",
+        "What You Need",
+        "Step-by-Step Workflow",
+        "Best If You Are on a Computer"
+      ]
+    },
+    "toolStack": {
+      "type": "tool-stack",
+      "alt": "How to Turn a Spreadsheet Into a Plain-English Summary with AI recommended tool stack",
+      "tools": [
+        "Gemini",
+        "Notion AI",
+        "Airtable"
+      ]
+    },
+    "beforeAfter": {
+      "type": "before-after",
+      "alt": "How to Turn a Spreadsheet Into a Plain-English Summary with AI before and after comparison",
+      "before": "Before: manual work and scattered notes for turning spreadsheet data into a plain-English summary.",
+      "after": "After: a faster workflow that leaves you with a clear, checked result."
+    }
+  },
+  "quickAnswer": "To handle turning spreadsheet data into a plain-English summary, start with PDFs, decide that the output must be accurate study notes, and use AI only after the source material is clear. Start with PDFs, decide that the output must be accurate study notes, use Gemini for one reviewable version, and check it before changing formats or adding another tool. Gemini should create the first reviewable version, Notion AI belongs in the second pass only when accurate study notes needs more control, and Airtable should be saved for review or export after the core result is right.",
+  "quickDecision": "For turning spreadsheet data into a plain-English summary, choose Gemini first when the input is PDFs and the output needs to be accurate study notes. Choose Notion AI when source document matters more. Choose Airtable when you need a lighter review, export, or fallback pass.",
+  "realWorldScenario": "small business operators have PDFs and lecture slides and need accurate study notes without drifting into an unrelated workflow. Prepared 2026-05-29.",
+  "whatYouNeed": [
+    "source content, audience notes, channel requirements, and the main message",
+    "A clear final format for turning spreadsheet data into a plain-English summary.",
+    "The audience, recipient, or grading criteria for the output.",
+    "Time to check facts, names, numbers, dates, and commitments before using the result."
+  ],
+  "timeEstimate": "Plan on 10 to 30 minutes for one careful first pass, depending on the source material.",
+  "contentGap": "Most content jumps to dashboards instead of a simple explanation workflow.",
+  "uniqueAngle": "Ask for observations, exceptions, and questions separately.",
+  "aiOverviewAnswer": "Clean the columns, ask AI for patterns and outliers, check the numbers, and turn the verified findings into a short summary.",
+  "quickVerdict": "To handle turning spreadsheet data into a plain-English summary, start with PDFs, decide that the output must be accurate study notes, and use AI only after the source material is clear. Start with PDFs, decide that the output must be accurate study notes, use Gemini for one reviewable version, and check it before changing formats or adding another tool. Gemini should create the first reviewable version, Notion AI belongs in the second pass only when accurate study notes needs more control, and Airtable should be saved for review or export after the core result is right.",
+  "steps": [
+    {
+      "title": "Prepare PDFs",
+      "detail": "Put the real input in one place before opening a tool: PDFs, lecture slides, class notes, research sources, turning spreadsheet data into a plain-English summary, any required facts, the audience, and the format you need at the end. Remove private details you are not allowed to share.",
+      "why": "AI output is only as useful as the material and constraints you give it.",
+      "output": "A clean input bundle and one clear target format: accurate study notes."
+    },
+    {
+      "title": "Ask for the first usable version",
+      "detail": "Use Gemini for a first pass that tries to turn spreadsheet data into a plain-English summary. Ask it to preserve source facts, flag uncertainty, and organize the result into sections you can review.",
+      "why": "The first pass should create a reviewable accurate study notes, not a finished answer you trust blindly.",
+      "output": "A structured accurate study notes with visible gaps or uncertain points.",
+      "toolSlug": "gemini",
+      "toolName": "Gemini"
+    },
+    {
+      "title": "Check the answer before polishing",
+      "detail": "Compare the AI output with PDFs. Fix names, dates, numbers, unsupported claims, missing context, and tone before you ask for nicer wording.",
+      "why": "Polished wrong information is harder to catch than rough information.",
+      "output": "A corrected accurate study notes that is ready for formatting or wording cleanup."
+    },
+    {
+      "title": "Change the format only after the facts are right",
+      "detail": "Use Notion AI when the verified accurate study notes needs a different format, structure, or source-aware second pass. Keep the same facts from PDFs so the rewrite does not drift from the original.",
+      "why": "Format changes are safer after the substance is already checked.",
+      "output": "A version that fits the channel, document, post, or recipient.",
+      "toolSlug": "notion-ai",
+      "toolName": "Notion AI"
+    },
+    {
+      "title": "Finish with a human review",
+      "detail": "Use Airtable for cleanup only after the main accurate study notes is checked against PDFs. Read the final result as the recipient would: on the device, in the app, or in the document where it will actually be used.",
+      "why": "The final review catches tone, missing context, and practical usability issues.",
+      "output": "A final result you can send, post, study from, or save with confidence.",
+      "toolSlug": "airtable",
+      "toolName": "Airtable"
+    }
+  ],
+  "toolsYouCanUse": [
+    {
+      "toolSlug": "gemini",
+      "toolName": "Gemini",
+      "why": "Primary tool for turning PDFs into accurate study notes.",
+      "role": "Primary tool for turning PDFs into accurate study notes.",
+      "bestUseCase": "users already working in Google's ecosystem for accurate study notes"
+    },
+    {
+      "toolSlug": "notion-ai",
+      "toolName": "Notion AI",
+      "why": "Second-pass tool when accurate study notes needs a different format, stronger controls, or validation.",
+      "role": "Second-pass tool when accurate study notes needs a different format, stronger controls, or validation.",
+      "bestUseCase": "teams or individuals already organizing work in Notion when source document matters more than the top pick"
+    },
+    {
+      "toolSlug": "airtable",
+      "toolName": "Airtable",
+      "why": "Review or finishing tool after the main output is checked.",
+      "role": "Review or finishing tool after the main output is checked.",
+      "bestUseCase": "workflows that need database-style workflows and AI-assisted ops when speed or a lighter setup matters more for quiz questions"
+    }
+  ],
+  "keyTakeaways": [
+    "What you need: PDFs, lecture slides, class notes, a clear output format, and a few minutes to review the result.",
+    "Start with Gemini for the first pass, but judge the output against turning spreadsheet data into a plain-English summary, not against tool hype.",
+    "Use Notion AI only when the workflow needs a different format or second pass.",
+    "Use Airtable for review after the main output is fact-checked.",
+    "The reader has rows of data but needs a clear summary of patterns and next questions.",
+    "Most content jumps to dashboards instead of a simple explanation workflow.",
+    "The useful next step is to test one real example before building a repeatable workflow."
+  ],
+  "bestPicksBySituation": [
+    {
+      "situation": "If you already have PDFs, choose Gemini.",
+      "toolSlug": "gemini",
+      "toolName": "Gemini",
+      "why": "Gemini is the closest match because it is built for users already working in Google's ecosystem and keeps the work tied to PDFs."
+    },
+    {
+      "situation": "If you need section summaries or stronger source document, choose Notion AI.",
+      "toolSlug": "notion-ai",
+      "toolName": "Notion AI",
+      "why": "Notion AI is the better second choice when teams or individuals already organizing work in Notion matters more than the first tool's handling of PDFs."
+    },
+    {
+      "situation": "If you want the lightest review or export step for accurate study notes, choose Airtable.",
+      "toolSlug": "airtable",
+      "toolName": "Airtable",
+      "why": "Airtable helps when you need workflows that need database-style workflows and AI-assisted ops and want a fallback that is easier to adapt on a phone or desktop."
+    }
+  ],
+  "recommendedToolSlugs": [
+    "gemini",
+    "notion-ai",
+    "airtable",
+    "notebooklm",
+    "you-com"
+  ],
+  "recommendedTools": [
+    {
+      "toolSlug": "gemini",
+      "toolName": "Gemini",
+      "summary": "Gemini is strongest when you need users already working in Google's ecosystem and want it tied to source content, audience notes, channel requirements, and the main message. It handles brainstorm campaigns better than a generic assistant, but it is a weaker choice if you need you cannot validate factual answers.",
+      "bestFor": "users already working in Google's ecosystem for accurate study notes",
+      "avoidIf": "you cannot validate factual answers if your real input is source content, audience notes, channel requirements, and the main message",
+      "strengths": [
+        "chat",
+        "google",
+        "writing",
+        "productivity"
+      ],
+      "tradeoffs": [
+        "People needing a dedicated media production timeline",
+        "Users seeking deeply customizable automation"
+      ],
+      "toolPagePath": "/tools/gemini"
+    },
+    {
+      "toolSlug": "notion-ai",
+      "toolName": "Notion AI",
+      "summary": "Notion AI is strongest when you need teams or individuals already organizing work in Notion and want it tied to source content, audience notes, channel requirements, and the main message. It handles summarize meeting notes better than a generic assistant, but it is a weaker choice if you need your useful information lives outside Notion.",
+      "bestFor": "teams or individuals already organizing work in Notion when source document matters more than the top pick",
+      "avoidIf": "your useful information lives outside Notion if your main need is the top tool's exact workflow",
+      "strengths": [
+        "workspace",
+        "notes",
+        "knowledge",
+        "productivity"
+      ],
+      "tradeoffs": [
+        "People who do not want to adopt Notion",
+        "Standalone image or video generation"
+      ],
+      "toolPagePath": "/tools/notion-ai"
+    },
+    {
+      "toolSlug": "airtable",
+      "toolName": "Airtable",
+      "summary": "Airtable is strongest when you need workflows that need database-style workflows and AI-assisted ops and want it tied to source content, audience notes, channel requirements, and the main message. It handles database-style workflows and AI-assisted ops better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need database-style workflows and AI-assisted ops when speed or a lighter setup matters more for quiz questions",
+      "avoidIf": "you need publish-ready output without review if you need the most polished or source-grounded final pass",
+      "strengths": [
+        "automation",
+        "integrations",
+        "workflows",
+        "no-code"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside automation.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/airtable"
+    },
+    {
+      "toolSlug": "notebooklm",
+      "toolName": "NotebookLM",
+      "summary": "NotebookLM is strongest when you need working from a defined set of documents and want it tied to source content, audience notes, channel requirements, and the main message. It handles analyze research files better than a generic assistant, but it is a weaker choice if you need you do not have reliable source material to upload.",
+      "bestFor": "working from a defined set of documents when speed or a lighter setup matters more for source-backed extracts",
+      "avoidIf": "you do not have reliable source material to upload if the task needs deeper review than a lightweight fallback can provide",
+      "strengths": [
+        "documents",
+        "research",
+        "sources",
+        "notes"
+      ],
+      "tradeoffs": [
+        "Open-ended web discovery as the primary task",
+        "Image or video production"
+      ],
+      "toolPagePath": "/tools/notebooklm"
+    },
+    {
+      "toolSlug": "you-com",
+      "toolName": "You.com",
+      "summary": "You.com is strongest when you need workflows that need search-backed answers and lightweight assistant help and want it tied to source content, audience notes, channel requirements, and the main message. It handles search-backed answers and lightweight assistant help better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need search-backed answers and lightweight assistant help when speed or a lighter setup matters more for turning spreadsheet data into a plain-English summary",
+      "avoidIf": "you need publish-ready output without review if the workflow depends on another tool's stronger input handling or editing controls",
+      "strengths": [
+        "chat",
+        "assistant",
+        "brainstorming",
+        "writing"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside general assistant.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/you-com"
+    }
+  ],
+  "comparisonRows": [
+    {
+      "toolSlug": "gemini",
+      "toolName": "Gemini",
+      "bestFor": "users already working in Google's ecosystem for accurate study notes",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "whyConsider": "Gemini is worth considering because it is the clearest fit for turning spreadsheet data into a plain-English summary. It is built for users already working in Google's ecosystem, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for people needing a dedicated media production timeline; this matters when the reader is turning spreadsheet data into a plain-English summary."
+    },
+    {
+      "toolSlug": "notion-ai",
+      "toolName": "Notion AI",
+      "bestFor": "teams or individuals already organizing work in Notion when source document matters more than the top pick",
+      "freePlan": false,
+      "easeOfUse": "Medium setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "Notion AI is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for teams or individuals already organizing work in Notion, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for people who do not want to adopt Notion; this matters when the reader is turning spreadsheet data into a plain-English summary."
+    },
+    {
+      "toolSlug": "airtable",
+      "toolName": "Airtable",
+      "bestFor": "workflows that need database-style workflows and AI-assisted ops when speed or a lighter setup matters more for quiz questions",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "Airtable is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need database-style workflows and AI-assisted ops, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside automation.; this matters when the reader is turning spreadsheet data into a plain-English summary."
+    },
+    {
+      "toolSlug": "notebooklm",
+      "toolName": "NotebookLM",
+      "bestFor": "working from a defined set of documents when speed or a lighter setup matters more for source-backed extracts",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "whyConsider": "NotebookLM is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for working from a defined set of documents, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for open-ended web discovery as the primary task; this matters when the reader is turning spreadsheet data into a plain-English summary."
+    },
+    {
+      "toolSlug": "you-com",
+      "toolName": "You.com",
+      "bestFor": "workflows that need search-backed answers and lightweight assistant help when speed or a lighter setup matters more for turning spreadsheet data into a plain-English summary",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "You.com is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need search-backed answers and lightweight assistant help, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside general assistant.; this matters when the reader is turning spreadsheet data into a plain-English summary."
+    }
+  ],
+  "decisionPath": [
+    {
+      "situation": "If you already have PDFs, start with Gemini.",
+      "recommendation": "Gemini",
+      "reason": "Gemini is the first-pass choice when the input is ready and the main job is to structure, summarize, or clean it into a usable result."
+    },
+    {
+      "situation": "If accurate study notes needs a different format after the facts are checked, switch to Notion AI.",
+      "recommendation": "Notion AI",
+      "reason": "Notion AI is better for the second pass when the job changes from source checking to formatting, layout, or another presentation style."
+    },
+    {
+      "situation": "If the result is accurate but still rough, use Airtable.",
+      "recommendation": "Airtable",
+      "reason": "Airtable fits the review step because the main source work is already done."
+    },
+    {
+      "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
+      "recommendation": "Gemini",
+      "reason": "Mobile works best for a short summary, a quick rewrite, or final approval; save side-by-side checking and larger edits for desktop."
+    },
+    {
+      "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
+      "recommendation": "Notion AI",
+      "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
+    }
+  ],
+  "decisionTree": [
+    {
+      "situation": "If you already have PDFs, start with Gemini.",
+      "recommendation": "Gemini",
+      "reason": "Gemini is the first-pass choice when the input is ready and the main job is to structure, summarize, or clean it into a usable result."
+    },
+    {
+      "situation": "If accurate study notes needs a different format after the facts are checked, switch to Notion AI.",
+      "recommendation": "Notion AI",
+      "reason": "Notion AI is better for the second pass when the job changes from source checking to formatting, layout, or another presentation style."
+    },
+    {
+      "situation": "If the result is accurate but still rough, use Airtable.",
+      "recommendation": "Airtable",
+      "reason": "Airtable fits the review step because the main source work is already done."
+    },
+    {
+      "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
+      "recommendation": "Gemini",
+      "reason": "Mobile works best for a short summary, a quick rewrite, or final approval; save side-by-side checking and larger edits for desktop."
+    },
+    {
+      "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
+      "recommendation": "Notion AI",
+      "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
+    }
+  ],
+  "moneySavingTips": [
+    "Test one representative project before paying for a longer-term workflow.",
+    "Use a listed free plan when it covers the experiment you need to run.",
+    "Avoid overlapping subscriptions until one tool has proven where it saves effort."
+  ],
+  "pricingNote": "Pricing can change. Check the official site before subscribing.",
+  "pricingCaveat": "Pricing can change. Check the official site before subscribing.",
+  "faqs": [
+    {
+      "question": "What input do I need before using AI for turning spreadsheet data into a plain-English summary?",
+      "answer": "Start with PDFs, lecture slides, class notes and decide that the output must be accurate study notes. That keeps Gemini focused on the actual job instead of drifting into a generic answer."
+    },
+    {
+      "question": "Which tool should I start with for accurate study notes?",
+      "answer": "Start with Gemini when the main input is PDFs. Compare Notion AI when source document matters more, and keep Airtable for review or fallback work."
+    },
+    {
+      "question": "What should I check before I use the result?",
+      "answer": "Check the result against PDFs, especially studying from an unchecked summary. Do not use the output until it still matches accurate study notes."
+    },
+    {
+      "question": "Can I finish this workflow on a phone, or should I use a computer?",
+      "answer": "Use mobile for on mobile, keep the task to one input and one output: pdfs to accurate study notes. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. accurate study notes usually benefits from desktop review before publishing, sending, or saving."
+    }
+  ],
+  "faq": [
+    {
+      "question": "What input do I need before using AI for turning spreadsheet data into a plain-English summary?",
+      "answer": "Start with PDFs, lecture slides, class notes and decide that the output must be accurate study notes. That keeps Gemini focused on the actual job instead of drifting into a generic answer."
+    },
+    {
+      "question": "Which tool should I start with for accurate study notes?",
+      "answer": "Start with Gemini when the main input is PDFs. Compare Notion AI when source document matters more, and keep Airtable for review or fallback work."
+    },
+    {
+      "question": "What should I check before I use the result?",
+      "answer": "Check the result against PDFs, especially studying from an unchecked summary. Do not use the output until it still matches accurate study notes."
+    },
+    {
+      "question": "Can I finish this workflow on a phone, or should I use a computer?",
+      "answer": "Use mobile for on mobile, keep the task to one input and one output: pdfs to accurate study notes. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. accurate study notes usually benefits from desktop review before publishing, sending, or saving."
+    }
+  ],
+  "whoShouldUseThis": [
+    "small business operators who need turning spreadsheet data into a plain-English summary.",
+    "Readers asking: How do I summarize a spreadsheet without making unsupported claims?",
+    "Teams that understand this pain point: The reader has rows of data but needs a clear summary of patterns and next questions."
+  ],
+  "whoShouldAvoidThis": [
+    "Readers who need legal, financial, or compliance advice rather than tool comparison.",
+    "Users who want guaranteed outcomes instead of a workflow shortlist to evaluate."
+  ],
+  "finalVerdict": "The next step is to run this workflow on one real example of turning spreadsheet data into a plain-English summary. Start with Gemini, use Notion AI only if the format needs a second pass, finish with Airtable or manual review, and do not reuse the workflow until the first result is accurate and useful.",
+  "realityCheck": "AI can speed up the work, but the user still has to review facts, shape the final result, and decide whether the workflow fits the job.",
+  "skillNeeded": "You need enough familiarity with turning spreadsheet data into a plain-English summary to judge whether the output is accurate and useful.",
+  "firstStep": "What you need: source content, audience notes, channel requirements, and the main message, a clear final format, the audience or recipient, and time to check the AI result before using it.",
+  "commonMistakes": [
+    "Studying from an unchecked summary",
+    "Removing page context",
+    "Mixing outside sources into a closed-source assignment"
+  ],
+  "mistakesToAvoid": [
+    "Do not treat Gemini as the final answer without checking the result against your source material.",
+    "Do not use Notion AI or Airtable as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+  ],
+  "whatToAvoid": [
+    "Do not treat Gemini as the final answer without checking the result against your source material.",
+    "Do not use Notion AI or Airtable as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+  ],
+  "whatChanged": "Ask for observations, exceptions, and questions separately.",
+  "exampleWorkflow": "Prepare the real input: PDFs, lecture slides, class notes. Define the target output before opening tools: accurate study notes or section summaries. Use Gemini for the first usable pass and ask it to preserve the constraints that matter in Document / PDF / study notes. Check the result against the input, then use Notion AI only if the output needs a format change or stronger second pass. Finish with a human review and use Airtable only for cleanup, export, or a lighter fallback.",
+  "exampleResult": "Example result: a checked turn spreadsheet data into a plain-English summary output that keeps the source facts, removes filler, names the next action, and is short enough to review before sending, posting, studying, or saving.",
+  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "visualSummary": {
+    "headline": "A practical starting route for small business operators",
+    "points": [
+      "Start with Gemini for users already working in Google's ecosystem",
+      "Compare Notion AI when the workflow changes",
+      "Run a real project test before subscribing"
+    ]
+  },
+  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "freshness": "evergreen",
+  "qualityScore": 92,
+  "status": "draft",
+  "createdAt": "2026-05-29",
+  "updatedAt": "2026-05-29"
+}

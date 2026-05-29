@@ -1,0 +1,462 @@
+{
+  "slug": "how-to-plan-a-side-hustle-service-package-with-ai",
+  "title": "How to Plan a Side Hustle Service Package with AI",
+  "guideType": "how-to",
+  "type": "how-to",
+  "metaTitle": "How to Plan a Side Hustle Service Package with AI | Comparavy",
+  "metaDescription": "Learn how to packaging a realistic service offer with deliverables and workflow steps. See the workflow, tools you can use, and the safest first step.",
+  "category": "Writing",
+  "persona": "new freelancers",
+  "useCase": "packaging a realistic service offer with deliverables and workflow steps",
+  "budgetAngle": "Compare tools on workflow fit and subscription risk before using them in paid client or revenue work.",
+  "skillLevel": "beginner",
+  "primaryKeyword": "how to plan a service package with AI",
+  "secondaryKeywords": [
+    "AI service package",
+    "freelance offer AI",
+    "side hustle package AI"
+  ],
+  "longTailKeywords": [
+    "how to create a freelance service package with AI",
+    "AI workflow for side hustle offer",
+    "turn skills into service package with AI"
+  ],
+  "audience": "new freelancers",
+  "searchIntent": "packaging a realistic service offer with deliverables and workflow steps",
+  "userPain": "The reader wants to sell a service but does not know how to define the offer clearly.",
+  "decisionQuestion": "How do I turn a skill into a clear offer without promising income?",
+  "deviceIntent": "both",
+  "desktopUseCase": "Best on a computer when defining deliverables, examples, scope, and a simple presentation. Use desktop to compare PDFs with accurate study notes before the final review.",
+  "mobileUseCase": "Best on a phone when capturing ideas or reviewing a short offer draft. Use mobile for quick checks on accurate study notes when the input is already prepared.",
+  "desktopSearchAngle": "Desktop readers usually want deeper comparison, file handling, and a deliberate review workflow for accurate study notes.",
+  "mobileSearchAngle": "Mobile readers usually want a short answer first, then a quick next step for accurate study notes they can finish in a few taps.",
+  "visualAssets": {
+    "hero": {
+      "type": "hero",
+      "alt": "How to Plan a Side Hustle Service Package with AI guide visual",
+      "promptOrDescription": "Editorial guide artwork for packaging a realistic service offer with deliverables and workflow steps with a clean, problem-solving feel.",
+      "fileNameHint": "how-to-plan-a-side-hustle-service-package-with-ai"
+    },
+    "workflow": {
+      "type": "workflow-diagram",
+      "alt": "How to Plan a Side Hustle Service Package with AI workflow diagram",
+      "steps": [
+        "Quick Answer",
+        "Real-World Scenario",
+        "What You Need",
+        "Step-by-Step Workflow",
+        "Best If You Are on a Computer"
+      ]
+    },
+    "toolStack": {
+      "type": "tool-stack",
+      "alt": "How to Plan a Side Hustle Service Package with AI recommended tool stack",
+      "tools": [
+        "Gamma",
+        "Notion AI",
+        "Canva Magic Studio"
+      ]
+    },
+    "beforeAfter": {
+      "type": "before-after",
+      "alt": "How to Plan a Side Hustle Service Package with AI before and after comparison",
+      "before": "Before: manual work and scattered notes for packaging a realistic service offer with deliverables and workflow steps.",
+      "after": "After: a faster workflow that leaves you with a clear, checked result."
+    }
+  },
+  "quickAnswer": "To handle packaging a realistic service offer with deliverables and workflow steps, start with PDFs, decide that the output must be accurate study notes, and use AI only after the source material is clear. Start with PDFs, decide that the output must be accurate study notes, use Gamma for one reviewable version, and check it before changing formats or adding another tool. Gamma should create the first reviewable version, Notion AI belongs in the second pass only when accurate study notes needs more control, and Canva Magic Studio should be saved for review or export after the core result is right.",
+  "quickDecision": "For packaging a realistic service offer with deliverables and workflow steps, choose Gamma first when the input is PDFs and the output needs to be accurate study notes. Choose Notion AI when source document matters more. Choose Canva Magic Studio when you need a lighter review, export, or fallback pass.",
+  "realWorldScenario": "new freelancers have PDFs and lecture slides and need accurate study notes without drifting into an unrelated workflow. Prepared 2026-05-29.",
+  "whatYouNeed": [
+    "source content, audience notes, channel requirements, and the main message",
+    "A clear final format for packaging a realistic service offer with deliverables and workflow steps.",
+    "The audience, recipient, or grading criteria for the output.",
+    "Time to check facts, names, numbers, dates, and commitments before using the result."
+  ],
+  "timeEstimate": "Plan on 10 to 30 minutes for one careful first pass, depending on the source material.",
+  "contentGap": "Most content jumps to income claims instead of offer structure and delivery workflow.",
+  "uniqueAngle": "Focus on defining a responsible offer, not promising earnings.",
+  "aiOverviewAnswer": "List the target customer, problem, deliverables, boundaries, and delivery steps, then use AI to turn that into a simple service package draft.",
+  "quickVerdict": "To handle packaging a realistic service offer with deliverables and workflow steps, start with PDFs, decide that the output must be accurate study notes, and use AI only after the source material is clear. Start with PDFs, decide that the output must be accurate study notes, use Gamma for one reviewable version, and check it before changing formats or adding another tool. Gamma should create the first reviewable version, Notion AI belongs in the second pass only when accurate study notes needs more control, and Canva Magic Studio should be saved for review or export after the core result is right.",
+  "steps": [
+    {
+      "title": "Prepare PDFs",
+      "detail": "Put the real input in one place before opening a tool: PDFs, lecture slides, class notes, research sources, packaging a realistic service offer with deliverables and workflow steps, any required facts, the audience, and the format you need at the end. Remove private details you are not allowed to share.",
+      "why": "AI output is only as useful as the material and constraints you give it.",
+      "output": "A clean input bundle and one clear target format: accurate study notes."
+    },
+    {
+      "title": "Ask for the first usable version",
+      "detail": "Use Gamma for a first pass that tries to packaging a realistic service offer with deliverables and workflow steps. Ask it to preserve source facts, flag uncertainty, and organize the result into sections you can review.",
+      "why": "The first pass should create a reviewable accurate study notes, not a finished answer you trust blindly.",
+      "output": "A structured accurate study notes with visible gaps or uncertain points.",
+      "toolSlug": "gamma",
+      "toolName": "Gamma"
+    },
+    {
+      "title": "Check the answer before polishing",
+      "detail": "Compare the AI output with PDFs. Fix names, dates, numbers, unsupported claims, missing context, and tone before you ask for nicer wording.",
+      "why": "Polished wrong information is harder to catch than rough information.",
+      "output": "A corrected accurate study notes that is ready for formatting or wording cleanup."
+    },
+    {
+      "title": "Change the format only after the facts are right",
+      "detail": "Use Notion AI when the verified accurate study notes needs a different format, structure, or source-aware second pass. Keep the same facts from PDFs so the rewrite does not drift from the original.",
+      "why": "Format changes are safer after the substance is already checked.",
+      "output": "A version that fits the channel, document, post, or recipient.",
+      "toolSlug": "notion-ai",
+      "toolName": "Notion AI"
+    },
+    {
+      "title": "Finish with a human review",
+      "detail": "Use Canva Magic Studio for cleanup only after the main accurate study notes is checked against PDFs. Read the final result as the recipient would: on the device, in the app, or in the document where it will actually be used.",
+      "why": "The final review catches tone, missing context, and practical usability issues.",
+      "output": "A final result you can send, post, study from, or save with confidence.",
+      "toolSlug": "canva-magic-studio",
+      "toolName": "Canva Magic Studio"
+    }
+  ],
+  "toolsYouCanUse": [
+    {
+      "toolSlug": "gamma",
+      "toolName": "Gamma",
+      "why": "Primary tool for turning PDFs into accurate study notes.",
+      "role": "Primary tool for turning PDFs into accurate study notes.",
+      "bestUseCase": "quick presentation starting versions for accurate study notes"
+    },
+    {
+      "toolSlug": "notion-ai",
+      "toolName": "Notion AI",
+      "why": "Second-pass tool when accurate study notes needs a different format, stronger controls, or validation.",
+      "role": "Second-pass tool when accurate study notes needs a different format, stronger controls, or validation.",
+      "bestUseCase": "teams or individuals already organizing work in Notion when source document matters more than the top pick"
+    },
+    {
+      "toolSlug": "canva-magic-studio",
+      "toolName": "Canva Magic Studio",
+      "why": "Review or finishing tool after the main output is checked.",
+      "role": "Review or finishing tool after the main output is checked.",
+      "bestUseCase": "non-designers creating polished visual assets when speed or a lighter setup matters more for quiz questions"
+    }
+  ],
+  "keyTakeaways": [
+    "What you need: PDFs, lecture slides, class notes, a clear output format, and a few minutes to review the result.",
+    "Start with Gamma for the first pass, but judge the output against packaging a realistic service offer with deliverables and workflow steps, not against tool hype.",
+    "Use Notion AI only when the workflow needs a different format or second pass.",
+    "Use Canva Magic Studio for review after the main output is fact-checked.",
+    "The reader wants to sell a service but does not know how to define the offer clearly.",
+    "Most content jumps to income claims instead of offer structure and delivery workflow.",
+    "The useful next step is to test one real example before building a repeatable workflow."
+  ],
+  "bestPicksBySituation": [
+    {
+      "situation": "If you already have PDFs, choose Gamma.",
+      "toolSlug": "gamma",
+      "toolName": "Gamma",
+      "why": "Gamma is the closest match because it is built for quick presentation starting versions and keeps the work tied to PDFs."
+    },
+    {
+      "situation": "If you need section summaries or stronger source document, choose Notion AI.",
+      "toolSlug": "notion-ai",
+      "toolName": "Notion AI",
+      "why": "Notion AI is the better second choice when teams or individuals already organizing work in Notion matters more than the first tool's handling of PDFs."
+    },
+    {
+      "situation": "If you want the lightest review or export step for accurate study notes, choose Canva Magic Studio.",
+      "toolSlug": "canva-magic-studio",
+      "toolName": "Canva Magic Studio",
+      "why": "Canva Magic Studio helps when you need non-designers creating polished visual assets and want a fallback that is easier to adapt on a phone or desktop."
+    }
+  ],
+  "recommendedToolSlugs": [
+    "gamma",
+    "notion-ai",
+    "canva-magic-studio",
+    "writesonic",
+    "deepl-write"
+  ],
+  "recommendedTools": [
+    {
+      "toolSlug": "gamma",
+      "toolName": "Gamma",
+      "summary": "Gamma is strongest when you need quick presentation starting versions and want it tied to source content, audience notes, channel requirements, and the main message. It handles draft pitch decks better than a generic assistant, but it is a weaker choice if you need you cannot manually verify content and brand alignment.",
+      "bestFor": "quick presentation starting versions for accurate study notes",
+      "avoidIf": "you cannot manually verify content and brand alignment if your real input is source content, audience notes, channel requirements, and the main message",
+      "strengths": [
+        "presentations",
+        "documents",
+        "pitch",
+        "storytelling"
+      ],
+      "tradeoffs": [
+        "Strictly controlled corporate slide templates without adjustment",
+        "Detailed video production"
+      ],
+      "toolPagePath": "/tools/gamma"
+    },
+    {
+      "toolSlug": "notion-ai",
+      "toolName": "Notion AI",
+      "summary": "Notion AI is strongest when you need teams or individuals already organizing work in Notion and want it tied to source content, audience notes, channel requirements, and the main message. It handles summarize meeting notes better than a generic assistant, but it is a weaker choice if you need your useful information lives outside Notion.",
+      "bestFor": "teams or individuals already organizing work in Notion when source document matters more than the top pick",
+      "avoidIf": "your useful information lives outside Notion if your main need is the top tool's exact workflow",
+      "strengths": [
+        "workspace",
+        "notes",
+        "knowledge",
+        "productivity"
+      ],
+      "tradeoffs": [
+        "People who do not want to adopt Notion",
+        "Standalone image or video generation"
+      ],
+      "toolPagePath": "/tools/notion-ai"
+    },
+    {
+      "toolSlug": "canva-magic-studio",
+      "toolName": "Canva Magic Studio",
+      "summary": "Canva Magic Studio is strongest when you need non-designers creating polished visual assets and want it tied to source content, audience notes, channel requirements, and the main message. It handles create social posts better than a generic assistant, but it is a weaker choice if you need your output requires full professional design control.",
+      "bestFor": "non-designers creating polished visual assets when speed or a lighter setup matters more for quiz questions",
+      "avoidIf": "your output requires full professional design control if you need the most polished or source-grounded final pass",
+      "strengths": [
+        "design",
+        "templates",
+        "social-media",
+        "presentations"
+      ],
+      "tradeoffs": [
+        "Advanced professional image compositing",
+        "Highly controlled cinematic video generation"
+      ],
+      "toolPagePath": "/tools/canva-magic-studio"
+    },
+    {
+      "toolSlug": "writesonic",
+      "toolName": "Writesonic",
+      "summary": "Writesonic is strongest when you need marketing content ideation and want it tied to source content, audience notes, channel requirements, and the main message. It handles draft landing copy better than a generic assistant, but it is a weaker choice if you need you would publish generated content without editorial review.",
+      "bestFor": "marketing content ideation when speed or a lighter setup matters more for source-backed extracts",
+      "avoidIf": "you would publish generated content without editorial review if the task needs deeper review than a lightweight fallback can provide",
+      "strengths": [
+        "marketing",
+        "writing",
+        "seo-workflow",
+        "web-copy"
+      ],
+      "tradeoffs": [
+        "Users needing only basic proofreading",
+        "Dedicated graphic design production"
+      ],
+      "toolPagePath": "/tools/writesonic"
+    },
+    {
+      "toolSlug": "deepl-write",
+      "toolName": "DeepL Write",
+      "summary": "DeepL Write is strongest when you need rephrasing professional messages and want it tied to source content, audience notes, channel requirements, and the main message. It handles polish messages better than a generic assistant, but it is a weaker choice if you need you need specialist translation or legal review without a human expert.",
+      "bestFor": "rephrasing professional messages when speed or a lighter setup matters more for packaging a realistic service offer with deliverables and workflow steps",
+      "avoidIf": "you need specialist translation or legal review without a human expert if the workflow depends on another tool's stronger input handling or editing controls",
+      "strengths": [
+        "writing",
+        "clarity",
+        "tone",
+        "multilingual"
+      ],
+      "tradeoffs": [
+        "Generating rich visual content",
+        "Research requiring cited web sources"
+      ],
+      "toolPagePath": "/tools/deepl-write"
+    }
+  ],
+  "comparisonRows": [
+    {
+      "toolSlug": "gamma",
+      "toolName": "Gamma",
+      "bestFor": "quick presentation starting versions for accurate study notes",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "whyConsider": "Gamma is worth considering because it is the clearest fit for packaging a realistic service offer with deliverables and workflow steps. It is built for quick presentation starting versions, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for strictly controlled corporate slide templates without adjustment; this matters when the reader is packaging a realistic service offer with deliverables and workflow steps."
+    },
+    {
+      "toolSlug": "notion-ai",
+      "toolName": "Notion AI",
+      "bestFor": "teams or individuals already organizing work in Notion when source document matters more than the top pick",
+      "freePlan": false,
+      "easeOfUse": "Medium setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "Notion AI is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for teams or individuals already organizing work in Notion, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for people who do not want to adopt Notion; this matters when the reader is packaging a realistic service offer with deliverables and workflow steps."
+    },
+    {
+      "toolSlug": "canva-magic-studio",
+      "toolName": "Canva Magic Studio",
+      "bestFor": "non-designers creating polished visual assets when speed or a lighter setup matters more for quiz questions",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "whyConsider": "Canva Magic Studio is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for non-designers creating polished visual assets, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for advanced professional image compositing; this matters when the reader is packaging a realistic service offer with deliverables and workflow steps."
+    },
+    {
+      "toolSlug": "writesonic",
+      "toolName": "Writesonic",
+      "bestFor": "marketing content ideation when speed or a lighter setup matters more for source-backed extracts",
+      "freePlan": false,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "Writesonic is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for marketing content ideation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for users needing only basic proofreading; this matters when the reader is packaging a realistic service offer with deliverables and workflow steps."
+    },
+    {
+      "toolSlug": "deepl-write",
+      "toolName": "DeepL Write",
+      "bestFor": "rephrasing professional messages when speed or a lighter setup matters more for packaging a realistic service offer with deliverables and workflow steps",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "whyConsider": "DeepL Write is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for rephrasing professional messages, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for generating rich visual content; this matters when the reader is packaging a realistic service offer with deliverables and workflow steps."
+    }
+  ],
+  "decisionPath": [
+    {
+      "situation": "If you already have PDFs, start with Gamma.",
+      "recommendation": "Gamma",
+      "reason": "Gamma is the first-pass choice when the input is ready and the main job is to structure, summarize, or clean it into a usable result."
+    },
+    {
+      "situation": "If accurate study notes needs a different format after the facts are checked, switch to Notion AI.",
+      "recommendation": "Notion AI",
+      "reason": "Notion AI is better for the second pass when the job changes from source checking to formatting, layout, or another presentation style."
+    },
+    {
+      "situation": "If the result is accurate but still rough, use Canva Magic Studio.",
+      "recommendation": "Canva Magic Studio",
+      "reason": "Canva Magic Studio fits the review step because the main source work is already done."
+    },
+    {
+      "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
+      "recommendation": "Gamma",
+      "reason": "Mobile works best for a short summary, a quick rewrite, or final approval; save side-by-side checking and larger edits for desktop."
+    },
+    {
+      "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
+      "recommendation": "Notion AI",
+      "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
+    }
+  ],
+  "decisionTree": [
+    {
+      "situation": "If you already have PDFs, start with Gamma.",
+      "recommendation": "Gamma",
+      "reason": "Gamma is the first-pass choice when the input is ready and the main job is to structure, summarize, or clean it into a usable result."
+    },
+    {
+      "situation": "If accurate study notes needs a different format after the facts are checked, switch to Notion AI.",
+      "recommendation": "Notion AI",
+      "reason": "Notion AI is better for the second pass when the job changes from source checking to formatting, layout, or another presentation style."
+    },
+    {
+      "situation": "If the result is accurate but still rough, use Canva Magic Studio.",
+      "recommendation": "Canva Magic Studio",
+      "reason": "Canva Magic Studio fits the review step because the main source work is already done."
+    },
+    {
+      "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
+      "recommendation": "Gamma",
+      "reason": "Mobile works best for a short summary, a quick rewrite, or final approval; save side-by-side checking and larger edits for desktop."
+    },
+    {
+      "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
+      "recommendation": "Notion AI",
+      "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
+    }
+  ],
+  "moneySavingTips": [
+    "Test one representative project before paying for a longer-term workflow.",
+    "Use a listed free plan when it covers the experiment you need to run.",
+    "Avoid overlapping subscriptions until one tool has proven where it saves effort."
+  ],
+  "pricingNote": "Pricing can change. Check the official site before subscribing.",
+  "pricingCaveat": "Pricing can change. Check the official site before subscribing.",
+  "faqs": [
+    {
+      "question": "What input do I need before using AI for packaging a realistic service offer with deliverables and workflow steps?",
+      "answer": "Start with PDFs, lecture slides, class notes and decide that the output must be accurate study notes. That keeps Gamma focused on the actual job instead of drifting into a generic answer."
+    },
+    {
+      "question": "Which tool should I start with for accurate study notes?",
+      "answer": "Start with Gamma when the main input is PDFs. Compare Notion AI when source document matters more, and keep Canva Magic Studio for review or fallback work."
+    },
+    {
+      "question": "What should I check before I use the result?",
+      "answer": "Check the result against PDFs, especially studying from an unchecked summary. Do not use the output until it still matches accurate study notes."
+    },
+    {
+      "question": "Can I finish this workflow on a phone, or should I use a computer?",
+      "answer": "Use mobile for on mobile, keep the task to one input and one output: pdfs to accurate study notes. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. accurate study notes usually benefits from desktop review before publishing, sending, or saving."
+    }
+  ],
+  "faq": [
+    {
+      "question": "What input do I need before using AI for packaging a realistic service offer with deliverables and workflow steps?",
+      "answer": "Start with PDFs, lecture slides, class notes and decide that the output must be accurate study notes. That keeps Gamma focused on the actual job instead of drifting into a generic answer."
+    },
+    {
+      "question": "Which tool should I start with for accurate study notes?",
+      "answer": "Start with Gamma when the main input is PDFs. Compare Notion AI when source document matters more, and keep Canva Magic Studio for review or fallback work."
+    },
+    {
+      "question": "What should I check before I use the result?",
+      "answer": "Check the result against PDFs, especially studying from an unchecked summary. Do not use the output until it still matches accurate study notes."
+    },
+    {
+      "question": "Can I finish this workflow on a phone, or should I use a computer?",
+      "answer": "Use mobile for on mobile, keep the task to one input and one output: pdfs to accurate study notes. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. accurate study notes usually benefits from desktop review before publishing, sending, or saving."
+    }
+  ],
+  "whoShouldUseThis": [
+    "new freelancers who need packaging a realistic service offer with deliverables and workflow steps.",
+    "Readers asking: How do I turn a skill into a clear offer without promising income?",
+    "Teams that understand this pain point: The reader wants to sell a service but does not know how to define the offer clearly."
+  ],
+  "whoShouldAvoidThis": [
+    "Readers who need legal, financial, or compliance advice rather than tool comparison.",
+    "Users who want guaranteed outcomes instead of a workflow shortlist to evaluate."
+  ],
+  "finalVerdict": "The next step is to run this workflow on one real example of packaging a realistic service offer with deliverables and workflow steps. Start with Gamma, use Notion AI only if the format needs a second pass, finish with Canva Magic Studio or manual review, and do not reuse the workflow until the first result is accurate and useful.",
+  "realityCheck": "AI can speed up the work, but the user still has to review facts, shape the final result, and decide whether the workflow fits the job.",
+  "skillNeeded": "You need enough familiarity with packaging a realistic service offer with deliverables and workflow steps to judge whether the output is accurate and useful.",
+  "firstStep": "What you need: source content, audience notes, channel requirements, and the main message, a clear final format, the audience or recipient, and time to check the AI result before using it.",
+  "commonMistakes": [
+    "Studying from an unchecked summary",
+    "Removing page context",
+    "Mixing outside sources into a closed-source assignment"
+  ],
+  "mistakesToAvoid": [
+    "Do not treat Gamma as the final answer without checking the result against your source material.",
+    "Do not use Notion AI or Canva Magic Studio as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+  ],
+  "whatToAvoid": [
+    "Do not treat Gamma as the final answer without checking the result against your source material.",
+    "Do not use Notion AI or Canva Magic Studio as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+  ],
+  "whatChanged": "Focus on defining a responsible offer, not promising earnings.",
+  "exampleWorkflow": "Prepare the real input: PDFs, lecture slides, class notes. Define the target output before opening tools: accurate study notes or section summaries. Use Gamma for the first usable pass and ask it to preserve the constraints that matter in Document / PDF / study notes. Check the result against the input, then use Notion AI only if the output needs a format change or stronger second pass. Finish with a human review and use Canva Magic Studio only for cleanup, export, or a lighter fallback.",
+  "exampleResult": "Example result: a checked packaging a realistic service offer with deliverables and workflow steps output that keeps the source facts, removes filler, names the next action, and is short enough to review before sending, posting, studying, or saving.",
+  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "visualSummary": {
+    "headline": "A practical starting route for new freelancers",
+    "points": [
+      "Start with Gamma for quick presentation starting versions",
+      "Compare Notion AI when the workflow changes",
+      "Run a real project test before subscribing"
+    ]
+  },
+  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "freshness": "evergreen",
+  "qualityScore": 92,
+  "status": "draft",
+  "createdAt": "2026-05-29",
+  "updatedAt": "2026-05-29"
+}
