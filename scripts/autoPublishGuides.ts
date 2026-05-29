@@ -19,6 +19,19 @@ import {
   type EditorialBlueprint,
   type TopicBucketId,
 } from "@/lib/editorialBlueprint";
+import {
+  bannedGenericPhrases,
+  comparavyGoldStandardPrompt,
+  decisionPathRules,
+  faqQualityRules,
+  guideTypeStandardForPrompt,
+  minimumDepthRules,
+  quickAnswerRules,
+  requiredHowToSections,
+  requiredIncomeSections,
+  requiredToolDecisionSections,
+  requiredTrendLedSections,
+} from "@/lib/editorialRules";
 import { logGuideTopicToolSlugWarnings } from "@/lib/guideTopicValidation";
 import { resolveGuideLayoutType, type GuideLayoutType } from "@/lib/guideTypes";
 import type { Guide } from "@/lib/guides";
@@ -51,6 +64,7 @@ interface Candidate {
   readonly aiReview: AiGuideReview;
   readonly mismatchGuardrail: LocalGuardrailResult;
   readonly depthGuardrail: LocalGuardrailResult;
+  readonly editorialPreflight: EditorialPreflightResult;
   readonly topicBucket: TopicBucketId;
   readonly improveAttempts: number;
   readonly eligible: boolean;
@@ -67,6 +81,14 @@ interface LocalGuardrailResult {
   readonly score: number;
   readonly warnings: string[];
   readonly blockers: string[];
+}
+
+interface EditorialPreflightResult extends LocalGuardrailResult {
+  readonly failedStandards: string[];
+  readonly missingSections: string[];
+  readonly bannedPhrasesFound: string[];
+  readonly topicMismatchReasons: string[];
+  readonly rewriteActions: string[];
 }
 
 interface TopicQueueEntry {
@@ -229,23 +251,7 @@ function uniquenessScore(guide: Guide, publishedGuides: readonly Guide[]): numbe
   return Math.round((1 - maximumOverlap / recommendations.size) * 100);
 }
 
-const FORBIDDEN_EDITORIAL_PHRASES = [
-  "selected for this guide",
-  "core workflow",
-  "fits your situation",
-  "strong option",
-  "useful for this use case",
-  "different workflow",
-  "final cleanup",
-  "rough content that needs rewriting or repackaging",
-  "first draft",
-  "citation style",
-  "good option",
-  "this tool is best because it helps",
-  "in today's digital world",
-  "leverage ai",
-  "unlock productivity",
-] as const;
+const FORBIDDEN_EDITORIAL_PHRASES = bannedGenericPhrases;
 
 const GENERIC_FAQ_QUESTIONS = [
   /^what is\b/i,
@@ -563,6 +569,211 @@ function minimumDepthGuardrail(guide: Guide, blueprint: EditorialBlueprint): Loc
   };
 }
 
+function requiredSectionsForGuideType(guideType: GuideLayoutType): readonly string[] {
+  if (guideType === "how-to") return requiredHowToSections;
+  if (guideType === "tool-decision") return requiredToolDecisionSections;
+  if (guideType === "income") return requiredIncomeSections;
+  return requiredTrendLedSections;
+}
+
+function hasUsableValue(value: unknown): boolean {
+  if (typeof value === "string") {
+    return value.trim().length > 0;
+  }
+
+  if (Array.isArray(value)) {
+    return value.length > 0;
+  }
+
+  return Boolean(value);
+}
+
+function firstAnswerText(guide: Guide): string {
+  return [
+    guide.quickAnswer ?? "",
+    guide.quickVerdict ?? "",
+    guide.quickDecision ?? "",
+    guide.aiOverviewAnswer ?? "",
+  ].find((value) => value.trim().length > 0) ?? "";
+}
+
+function looksGenericDeviceSection(value: string | undefined, blueprint: EditorialBlueprint): boolean {
+  const text = value?.trim() ?? "";
+
+  if (text.length < 80) {
+    return true;
+  }
+
+  if (!containsBlueprintInputOrOutput(text, blueprint)) {
+    return true;
+  }
+
+  return /\b(best on mobile|best on desktop|quick checks|wider workspace)\b/i.test(text) &&
+    !new RegExp(blueprint.topicSpecificTerms.slice(0, 4).map((term) => term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|"), "i").test(text);
+}
+
+function runEditorialPreflight(
+  guide: Guide,
+  blueprint: EditorialBlueprint,
+  deterministic: GuideQualityResult,
+  mismatchGuardrail: LocalGuardrailResult,
+  depthGuardrail: LocalGuardrailResult,
+): EditorialPreflightResult {
+  let score = 100;
+  const warnings: string[] = [];
+  const blockers: string[] = [];
+  const failedStandards: string[] = [];
+  const missingSections: string[] = [];
+  const bannedPhrasesFound: string[] = [];
+  const topicMismatchReasons: string[] = [...mismatchGuardrail.blockers];
+  const rewriteActions: string[] = [];
+  const guideType = candidateGuideType(guide);
+  const guideRecord = guide as unknown as Record<string, unknown>;
+  const text = fullGuideText(guide);
+
+  function fail(standard: string, message: string, action: string, penalty = 10): void {
+    if (!failedStandards.includes(standard)) {
+      failedStandards.push(standard);
+    }
+    if (!blockers.includes(message)) {
+      blockers.push(message);
+      score -= penalty;
+    }
+    if (!rewriteActions.includes(action)) {
+      rewriteActions.push(action);
+    }
+  }
+
+  for (const section of requiredSectionsForGuideType(guideType)) {
+    if (!hasUsableValue(guideRecord[section])) {
+      missingSections.push(section);
+      fail("required section", `Local editorial preflight: missing required ${guideType} section "${section}".`, `Rebuild missing ${section}.`, 8);
+    }
+  }
+
+  for (const phrase of bannedGenericPhrases) {
+    if (text.includes(phrase)) {
+      bannedPhrasesFound.push(phrase);
+      fail("generic filler", `Local editorial preflight: banned phrase found "${phrase}".`, "Remove banned generic filler and replace it with concrete input, output, and review language.", 10);
+    }
+  }
+
+  const answer = firstAnswerText(guide);
+  if (!containsBlueprintInputAndOutput(answer, blueprint)) {
+    fail(
+      "instant reward first 100 words",
+      "Local editorial preflight: first answer does not name a concrete input and output.",
+      "Rewrite Quick Answer / Quick Verdict so the first 100 words answer the job, input, output, first action, and review step.",
+      14,
+    );
+  }
+
+  if (/^(ai can help|in today's digital world|with ai, you can)/i.test(answer.trim())) {
+    fail(
+      "instant reward first 100 words",
+      "Local editorial preflight: first answer starts with generic AI background.",
+      "Start with the reader's job and first action, not AI background.",
+      14,
+    );
+  }
+
+  if (guideType === "how-to") {
+    const concreteSteps = (guide.steps ?? []).filter((step) =>
+      step.detail.trim().length >= 80 &&
+      Boolean(step.output?.trim()) &&
+      containsBlueprintInputOrOutput(`${step.title} ${step.detail} ${step.output ?? ""}`, blueprint),
+    ).length;
+
+    if (concreteSteps < minimumDepthRules.howToConcreteStepMinimum) {
+      fail(
+        "real workflow",
+        "Local editorial preflight: how-to guide does not have enough concrete workflow steps.",
+        "Deep rewrite the workflow with action, reason, output, and tool role for each step.",
+        12,
+      );
+    }
+
+    if (!guide.exampleResult?.trim()) {
+      fail(
+        "example result",
+        "Local editorial preflight: how-to guide is missing an example result.",
+        "Add a concrete example result that shows what the reader should end with.",
+        10,
+      );
+    }
+  }
+
+  if (guideType === "tool-decision" && guide.decisionPath.length < minimumDepthRules.toolDecisionBranchMinimum) {
+    fail(
+      "decision path",
+      "Local editorial preflight: tool-decision guide needs a stronger decision path.",
+      "Rewrite decisionPath with branching If/Then choices tied to input, output, device, and review depth.",
+      12,
+    );
+  }
+
+  const topicFaqs = guide.faqs.filter((faq) =>
+    countTermHits(`${faq.question} ${faq.answer}`.toLowerCase(), blueprint.topicSpecificTerms) > 0,
+  );
+
+  if (topicFaqs.length < Math.min(minimumDepthRules.minimumTopicSpecificFaqs, guide.faqs.length)) {
+    fail(
+      "high-intent FAQ",
+      "Local editorial preflight: FAQ is not specific enough to the topic.",
+      "Rewrite FAQ around source material, output, device, tool choice, and review risks.",
+      10,
+    );
+  }
+
+  const repeatedBestFor = repeatedFieldValues(guide.recommendedTools.map((tool) => tool.bestFor));
+  const repeatedAvoidIf = repeatedFieldValues(guide.recommendedTools.map((tool) => tool.avoidIf));
+
+  if (repeatedBestFor.length > 0 || repeatedAvoidIf.length > 0) {
+    fail(
+      "tool recommendations",
+      "Local editorial preflight: repeated Best for / Avoid if text across tools.",
+      "Rewrite tool recommendations so every tool has a distinct role, input fit, and avoid condition.",
+      12,
+    );
+  }
+
+  if (looksGenericDeviceSection(guide.mobileUseCase, blueprint) || looksGenericDeviceSection(guide.desktopUseCase, blueprint)) {
+    fail(
+      "mobile desktop usefulness",
+      "Local editorial preflight: mobile or desktop section is shallow or generic.",
+      "Rewrite mobile and desktop sections with different realistic use cases tied to the input and output.",
+      10,
+    );
+  }
+
+  for (const blocker of [...deterministic.blockers, ...mismatchGuardrail.blockers, ...depthGuardrail.blockers]) {
+    if (blocker.includes("Topic mismatch") && !topicMismatchReasons.includes(blocker)) {
+      topicMismatchReasons.push(blocker);
+    }
+  }
+
+  if (topicMismatchReasons.length > 0) {
+    fail(
+      "topic match",
+      `Local editorial preflight: topic mismatch detected: ${topicMismatchReasons.join(" | ")}`,
+      "Correct topic drift and rebuild language around the selected topic bucket.",
+      12,
+    );
+  }
+
+  return {
+    passed: blockers.length === 0 && Math.max(0, score) >= 85,
+    score: Math.max(0, score),
+    warnings,
+    blockers,
+    failedStandards,
+    missingSections,
+    bannedPhrasesFound,
+    topicMismatchReasons,
+    rewriteActions,
+  };
+}
+
 function unavailableAiReview(reason: string): AiGuideReview {
   return {
     attempted: false,
@@ -579,6 +790,7 @@ function unavailableAiReview(reason: string): AiGuideReview {
 function requiredPublishingReasons(
   guide: Guide,
   deterministic: GuideQualityResult,
+  editorialPreflight: EditorialPreflightResult,
   aiReview: AiGuideReview,
   threshold: number,
 ): string[] {
@@ -618,6 +830,14 @@ function requiredPublishingReasons(
 
   if (guide.qualityScore < threshold) {
     reasons.push(`Guide qualityScore ${guide.qualityScore} is below required threshold ${threshold}.`);
+  }
+
+  if (!editorialPreflight.passed) {
+    reasons.push(`Local editorial preflight failed: ${editorialPreflight.failedStandards.join(", ") || "unknown standard"}.`);
+  }
+
+  for (const action of editorialPreflight.rewriteActions) {
+    reasons.push(`Rewrite action taken: ${action}`);
   }
 
   if (!aiReview.attempted) {
@@ -701,6 +921,12 @@ function logCandidate(candidate: Candidate): void {
   console.log(`  Deterministic check: ${candidate.deterministic.score}/100 (${candidate.deterministic.passed ? "PASS" : "FAIL"})`);
   console.log(`  Mismatch guardrail: ${candidate.mismatchGuardrail.score}/100 (${candidate.mismatchGuardrail.passed ? "PASS" : "FAIL"})`);
   console.log(`  Depth guardrail: ${candidate.depthGuardrail.score}/100 (${candidate.depthGuardrail.passed ? "PASS" : "FAIL"})`);
+  console.log(`  Editorial preflight: ${candidate.editorialPreflight.score}/100 (${candidate.editorialPreflight.passed ? "PASS" : "FAIL"})`);
+  console.log(`  Failed standard: ${candidate.editorialPreflight.failedStandards.join(", ") || "None"}`);
+  console.log(`  Missing section: ${candidate.editorialPreflight.missingSections.join(", ") || "None"}`);
+  console.log(`  Banned phrase found: ${candidate.editorialPreflight.bannedPhrasesFound.join(", ") || "None"}`);
+  console.log(`  Topic mismatch reason: ${candidate.editorialPreflight.topicMismatchReasons.join(" | ") || "None"}`);
+  console.log(`  Rewrite action taken: ${candidate.editorialPreflight.rewriteActions.join(" | ") || "None"}`);
   console.log(`  AI review attempted: ${candidate.aiReview.attempted ? "yes" : "no"}`);
   console.log(`  AI review: ${formatAiReviewStatus(candidate.aiReview)}`);
   console.log(`  AI review unavailable reason: ${candidate.aiReview.unavailableReason ?? "None"}`);
@@ -728,6 +954,10 @@ function logCandidate(candidate: Candidate): void {
 
   for (const blocker of candidate.depthGuardrail.blockers) {
     console.log(`  Depth blocker: ${blocker}`);
+  }
+
+  for (const blocker of candidate.editorialPreflight.blockers) {
+    console.log(`  Preflight blocker: ${blocker}`);
   }
 
   for (const warning of candidate.aiReview.warnings) {
@@ -906,11 +1136,18 @@ function preferredGuideModels(): string[] {
 
 function rejectionReasonsForImprovement(
   deterministic: GuideQualityResult,
+  editorialPreflight: EditorialPreflightResult,
   aiReview: AiGuideReview,
 ): string[] {
   return [
     ...deterministic.blockers,
     ...deterministic.warnings,
+    ...editorialPreflight.blockers,
+    ...editorialPreflight.failedStandards.map((standard) => `Failed standard: ${standard}`),
+    ...editorialPreflight.missingSections.map((section) => `Missing section: ${section}`),
+    ...editorialPreflight.bannedPhrasesFound.map((phrase) => `Banned phrase found: ${phrase}`),
+    ...editorialPreflight.topicMismatchReasons.map((reason) => `Topic mismatch reason: ${reason}`),
+    ...editorialPreflight.rewriteActions.map((action) => `Rewrite action taken: ${action}`),
     ...aiReview.warnings,
     ...aiReview.suggestedFixes,
   ].filter((reason, index, all) => reason.trim().length > 0 && all.indexOf(reason) === index);
@@ -1024,6 +1261,7 @@ async function improveGuideWithAI(
   topic: GuideTopic,
   guide: Guide,
   deterministic: GuideQualityResult,
+  editorialPreflight: EditorialPreflightResult,
   aiReview: AiGuideReview,
   attempt: number,
 ): Promise<Guide> {
@@ -1033,7 +1271,7 @@ async function improveGuideWithAI(
     return guide;
   }
 
-  const warnings = rejectionReasonsForImprovement(deterministic, aiReview);
+  const warnings = rejectionReasonsForImprovement(deterministic, editorialPreflight, aiReview);
   const failureCategories = classifyFailureCategories(warnings, guide);
   const guideType = candidateGuideType(guide);
   const selectedTools = scoreToolsForTopic(topic).filter(({ tool }) =>
@@ -1053,14 +1291,24 @@ async function improveGuideWithAI(
       body: JSON.stringify({
         model,
         instructions:
-          "You are deeply rebuilding a failed Comparavy guide candidate after deterministic quality checks and strict AI editorial review. Return a complete guide JSON object only. This is a deep rewrite from the Gold Standard Editorial Blueprint and outline, not a field patch. Preserve only useful factual material from the failed draft. The blueprint is the source of truth for scenario, input material, desired output, workflow, mobile/desktop use, tool roles, comparison criteria, example result, FAQ, category language, and banned mismatched terms. You may change the title, angle, intro, workflow, tool guidance, FAQ, decision path, and final verdict while keeping the supplied slug and valid selected tool slugs. If guideType is how-to, the title must start with \"How to\", answer the problem in the first 100 words using blueprint input and output, put the practical workflow before tools, and rebuild realWorldScenario, whatYouNeed, step-by-step workflow with what/why/output detail, computer guidance, phone guidance, Tools you can use, Example result, Common mistakes, FAQ, and Next step. If guideType is tool-decision, write a Quick Verdict, put Which one should you choose before tool cards, justify the ranking with blueprint criteria, create unique tool cards, and use branching if/then decisionPath before tool-card detail. If guideType is income, include realityCheck, realistic offers, skillNeeded, firstStep, time/cost/difficulty, mistakes, and no guaranteed income language. If guideType is trend-led, include quickDecision, whatChanged when supported, whatToAvoid, comparisonRows, and a practical workflow without claiming breaking news. Fix the failure categories and warnings supplied. Do not invent prices, fake testing, guaranteed income, performance claims, legal advice, unsupported current-news claims, placeholder phrases, or any term listed in editorialBrief.editorialBlueprint.bannedMismatchedTerms. pricingNote and pricingCaveat must remain exactly: Pricing can change. Check the official site before subscribing.",
+          `${comparavyGoldStandardPrompt} You are deeply rebuilding a failed Comparavy guide candidate after local editorial preflight, deterministic quality checks, and strict AI editorial review. Return a complete guide JSON object only. This is a deep rewrite from the Gold Standard Writing System, guide type standard, Editorial Blueprint, and gold examples, not a field patch. Preserve only useful factual material from the failed draft. Identify the failed guide type first, then rebuild the article so the first 100 words answer the reader's job, input, output, first action, and review step. The blueprint is the source of truth for scenario, input material, desired output, workflow, mobile/desktop use, tool roles, comparison criteria, example result, FAQ, category language, and banned mismatched terms. Remove generic filler, correct topic mismatch, add concrete workflow steps, improve decision path, rewrite FAQ, rewrite Quick Answer or Quick Verdict, and make tool recommendations support the user problem. If guideType is how-to, the title must start with "How to", put the practical workflow before tools, and rebuild realWorldScenario, whatYouNeed, step-by-step workflow with what/why/output detail, computer guidance, phone guidance, Tools you can use, Example result, Common mistakes, FAQ, and Next step. If guideType is tool-decision, write a Quick Verdict, put Which one should you choose before tool cards, justify the ranking with blueprint criteria, create unique tool cards, and use branching if/then decisionPath before tool-card detail. If guideType is income, include realityCheck, realistic offers, skillNeeded, firstStep, time/cost/difficulty, mistakes, limitations, and no guaranteed income language. If guideType is trend-led, include quickDecision, whatChanged when supported, whatToAvoid, comparisonRows, and a practical workflow without claiming breaking news. Do not invent prices, fake testing, guaranteed income, performance claims, legal advice, unsupported current-news claims, placeholder phrases, repeated Best for / Avoid if text, or any term listed in editorialBrief.editorialBlueprint.bannedMismatchedTerms. pricingNote and pricingCaveat must remain exactly: Pricing can change. Check the official site before subscribing.`,
         input: JSON.stringify({
           attempt,
+          failedGuideType: guideType,
           warnings,
           failureCategories,
           specificFixes: specificRewriteFixes(failureCategories),
           editorialBrief,
           articleOutline,
+          guideTypeStandard: guideTypeStandardForPrompt(guideType),
+          goldStandardWritingSystem: comparavyGoldStandardPrompt,
+          localEditorialRules: {
+            bannedGenericPhrases,
+            quickAnswerRules,
+            minimumDepthRules,
+            faqQualityRules,
+            decisionPathRules,
+          },
           guide,
           strategy: [
             "Search intent first.",
@@ -1321,7 +1569,7 @@ function determineOpenAIReviewPolicy(
       return {
         mode: "skipped-local",
         unavailableReason:
-          "Local dry-run ran deterministic, mismatch, and depth checks only. AI review skipped because OPENAI_API_KEY is not set locally.",
+          "Local dry-run ran deterministic, editorial preflight, mismatch, and depth checks only. AI review skipped because OPENAI_API_KEY is not set locally.",
       };
     }
 
@@ -1389,17 +1637,25 @@ async function reviewAndImproveCandidate({
     mergeQualityResults(deterministic, mismatchGuardrail),
     depthGuardrail,
   );
-  let aiReview = deterministic.passed
+  let editorialPreflight = runEditorialPreflight(
+    currentGuide,
+    blueprint,
+    deterministic,
+    mismatchGuardrail,
+    depthGuardrail,
+  );
+  let aiReview = deterministic.passed && editorialPreflight.passed
     ? openAIReviewPolicy.mode === "enabled"
       ? await reviewGuideWithAI(currentGuide)
       : unavailableAiReview(
           openAIReviewPolicy.unavailableReason ??
             "AI editorial review was skipped because it is unavailable in this run.",
         )
-    : unavailableAiReview("AI editorial review was deferred until local guardrails pass.");
+    : unavailableAiReview("AI editorial review was deferred until local editorial preflight passes.");
   let rejectionReasons = requiredPublishingReasons(
     currentGuide,
     deterministic,
+    editorialPreflight,
     aiReview,
     threshold,
   );
@@ -1418,6 +1674,7 @@ async function reviewAndImproveCandidate({
         topic,
         currentGuide,
         deterministic,
+        editorialPreflight,
         aiReview,
         improveAttempts,
       );
@@ -1433,17 +1690,25 @@ async function reviewAndImproveCandidate({
       mergeQualityResults(deterministic, mismatchGuardrail),
       depthGuardrail,
     );
-    aiReview = deterministic.passed
+    editorialPreflight = runEditorialPreflight(
+      currentGuide,
+      blueprint,
+      deterministic,
+      mismatchGuardrail,
+      depthGuardrail,
+    );
+    aiReview = deterministic.passed && editorialPreflight.passed
       ? openAIReviewPolicy.mode === "enabled"
         ? await reviewGuideWithAI(currentGuide)
         : unavailableAiReview(
             openAIReviewPolicy.unavailableReason ??
               "AI editorial review was skipped because it is unavailable in this run.",
           )
-      : unavailableAiReview("AI editorial review was deferred until local guardrails pass.");
+      : unavailableAiReview("AI editorial review was deferred until local editorial preflight passes.");
     rejectionReasons = requiredPublishingReasons(
       currentGuide,
       deterministic,
+      editorialPreflight,
       aiReview,
       threshold,
     );
@@ -1459,6 +1724,7 @@ async function reviewAndImproveCandidate({
     aiReview,
     mismatchGuardrail,
     depthGuardrail,
+    editorialPreflight,
     topicBucket: blueprint.topicBucket,
     improveAttempts,
     eligible: rejectionReasons.length === 0,
@@ -1466,7 +1732,7 @@ async function reviewAndImproveCandidate({
     finalStatus: rejectionReasons.length === 0 ? "draft" : "rejected",
     slot,
     failureCategories: classifyFailureCategories(
-      rejectionReasonsForImprovement(deterministic, aiReview),
+      rejectionReasonsForImprovement(deterministic, editorialPreflight, aiReview),
       currentGuide,
     ),
   };
@@ -1491,7 +1757,7 @@ async function main(): Promise<void> {
 
   if (openAIReviewPolicy.mode === "skipped-local" && openAIDiagnostics.apiKeyPresent === false && options.dryRun) {
     console.log(
-      "Local dry-run ran deterministic, mismatch, and depth checks only. AI review skipped because OPENAI_API_KEY is not set locally.",
+      "Local dry-run ran deterministic, editorial preflight, mismatch, and depth checks only. AI review skipped because OPENAI_API_KEY is not set locally.",
     );
   }
 
@@ -1719,7 +1985,8 @@ async function main(): Promise<void> {
     (candidate) =>
       candidate.deterministic.passed &&
       candidate.mismatchGuardrail.passed &&
-      candidate.depthGuardrail.passed,
+      candidate.depthGuardrail.passed &&
+      candidate.editorialPreflight.passed,
   ).length;
 
   console.log("Auto publish summary");
@@ -1731,6 +1998,7 @@ async function main(): Promise<void> {
   console.log(`Candidates created: ${generatedCandidates.length}`);
   console.log(`Candidates improved: ${candidatesImproved}`);
   console.log(`Candidates blocked by mismatch guardrail: ${checkedCandidates.filter((candidate) => !candidate.mismatchGuardrail.passed).length}`);
+  console.log(`Candidates blocked by editorial preflight: ${checkedCandidates.filter((candidate) => !candidate.editorialPreflight.passed).length}`);
   console.log(`Candidates sent to AI review: ${checkedCandidates.filter((candidate) => candidate.aiReview.attempted).length}`);
   console.log(`True how-to guides attempted: ${howToGuidesAttempted}`);
   console.log(`Tool-decision guides attempted: ${toolDecisionGuidesAttempted}`);
@@ -1829,6 +2097,9 @@ async function main(): Promise<void> {
       console.log(`  Topic bucket: ${candidate.topicBucket}`);
       console.log(`  Mismatch guardrail: ${candidate.mismatchGuardrail.score}/100 (${candidate.mismatchGuardrail.passed ? "PASS" : "FAIL"})`);
       console.log(`  Depth guardrail: ${candidate.depthGuardrail.score}/100 (${candidate.depthGuardrail.passed ? "PASS" : "FAIL"})`);
+      console.log(`  Editorial preflight: ${candidate.editorialPreflight.score}/100 (${candidate.editorialPreflight.passed ? "PASS" : "FAIL"})`);
+      console.log(`  Failed standard: ${candidate.editorialPreflight.failedStandards.join(", ") || "None"}`);
+      console.log(`  Rewrite action taken: ${candidate.editorialPreflight.rewriteActions.join(" | ") || "None"}`);
       console.log(`  AI review attempted: ${candidate.aiReview.attempted ? "yes" : "no"}`);
       console.log(`  AI review score: ${candidate.aiReview.available ? `${candidate.aiReview.score}/100` : "unavailable"}`);
       console.log(`  AI review unavailable reason: ${candidate.aiReview.unavailableReason ?? "None"}`);

@@ -14,6 +14,15 @@ import {
   type EditorialBlueprint,
 } from "@/lib/editorialBlueprint";
 import {
+  bannedGenericPhrases,
+  comparavyGoldStandardPrompt,
+  decisionPathRules,
+  faqQualityRules,
+  guideTypeStandardForPrompt,
+  minimumDepthRules,
+  quickAnswerRules,
+} from "@/lib/editorialRules";
+import {
   inferGuideLayoutTypeFromTopic,
   type GuideLayoutType,
 } from "@/lib/guideTypes";
@@ -73,6 +82,9 @@ export interface EditorialBrief {
   readonly FAQQuestions: readonly string[];
   readonly internalLinks: readonly string[];
   readonly nextStepCTA: string;
+  readonly guideTypeStandard: string;
+  readonly goldStandardSummary: string;
+  readonly bannedGenericPhrases: readonly string[];
 }
 
 export interface ArticleOutline {
@@ -709,7 +721,7 @@ function quickAnswerForGuide(
 ): string {
   if (guideType === "how-to") {
     return ensurePeriod(
-      `To handle ${topic.searchIntent}, ${blueprint.first100WordsAnswer} ${firstTool.name} should create the first reviewable version, ${secondTool.name} belongs in the second pass only when ${blueprint.desiredOutput[0]} needs more control, and ${thirdTool.name} should be saved for review or export after the core result is right.`,
+      `To handle ${topic.searchIntent}, start with ${blueprint.inputMaterial[0]}, decide that the output must be ${blueprint.desiredOutput[0]}, and use AI only after the source material is clear. ${blueprint.first100WordsAnswer} ${firstTool.name} should create the first reviewable version, ${secondTool.name} belongs in the second pass only when ${blueprint.desiredOutput[0]} needs more control, and ${thirdTool.name} should be saved for review or export after the core result is right.`,
     );
   }
 
@@ -888,6 +900,9 @@ export function createEditorialBrief(
       : createFaqQuestions(topic, guideType, firstTool, secondTool),
     internalLinks: ["/finder", "/guides", ...toolRoleMap.slice(0, 3).map((tool) => `/tools/${tool.toolSlug}`)],
     nextStepCTA: "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+    guideTypeStandard: guideTypeStandardForPrompt(guideType),
+    goldStandardSummary: comparavyGoldStandardPrompt,
+    bannedGenericPhrases,
   };
 }
 
@@ -1944,10 +1959,19 @@ async function refineWithOpenAI(template: Guide): Promise<Guide> {
       body: JSON.stringify({
         model,
         instructions:
-          'You are producing a complete Comparavy guide from the Gold Standard Editorial Blueprint and outline, not filling a template. Return a complete guide JSON object only. Comparavy is a US-focused, AdSense-first AI problem-solving site. Treat editorialBrief.editorialBlueprint as the source of truth for scenario, input material, desired output, workflow, mobile/desktop use, tool roles, decision path, comparison criteria, example result, common mistakes, FAQ, category language, and banned mismatched terms. The article must be useful enough to bookmark: solve the reader problem first, then show which tools help and what to avoid. For how-to guides, the title must start with "How to", the first 100 words must answer the search intent with blueprint input and output, tools must be supporting actors after the workflow, and you must include realWorldScenario, whatYouNeed, steps with what/why/output detail, desktopUseCase, mobileUseCase, toolsYouCanUse, exampleResult, commonMistakes, search-intent FAQ, and a next step. For tool-decision guides, write a Quick Verdict, put Which one should you choose before tool cards, justify the ranking with blueprint criteria, decisionTree or equivalent decisionPath branching, bestPicksBySituation, comparisonRows, unique recommendedTools, who should use or avoid this, finalVerdict, and /finder CTA. For income guides, include realityCheck, realistic services, skillNeeded, firstStep, time/cost/difficulty, and no guaranteed income language. For trend-led guides, include quickDecision, whatChanged when supported, whatToAvoid, comparisonRows, and a practical workflow without claiming breaking news. Do not use placeholder phrases, generic marketing filler, fake testing, exact current pricing, guaranteed outcomes, unsupported current-news claims, or terms listed in editorialBrief.editorialBlueprint.bannedMismatchedTerms. pricingNote and pricingCaveat must remain exactly: Pricing can change. Check the official site before subscribing.',
+          `${comparavyGoldStandardPrompt} You are producing a complete Comparavy guide from the Gold Standard Editorial Blueprint, guide type standard, and outline, not filling a template. Return a complete guide JSON object only. Treat editorialBrief.editorialBlueprint as the source of truth for scenario, input material, desired output, workflow, mobile/desktop use, tool roles, decision path, comparison criteria, example result, common mistakes, FAQ, category language, and banned mismatched terms. The article must satisfy Instant Reward Psychology: answer the reader's real job in the first 100 words, do not start with generic AI background, and do not make readers inspect tool cards before they understand the solution. For how-to guides, solve the workflow first, title must start with "How to", tools must be supporting actors after the workflow, and every step must include action, reason, and output. For tool-decision guides, write a Quick Verdict, put Which one should you choose before tool cards, justify the ranking with blueprint criteria, decisionTree or equivalent decisionPath branching, bestPicksBySituation, comparisonRows, unique recommendedTools, who should use or avoid this, finalVerdict, and /finder CTA. For income guides, include realityCheck, realistic services, skillNeeded, firstStep, time/cost/difficulty, limitations, and no guaranteed income language. For trend-led guides, include quickDecision, whatChanged when supported, whatToAvoid, comparisonRows, and a practical workflow without claiming breaking news. Use high-intent FAQs tied to the task, source, output, device, or buying decision. Do not use placeholder phrases, generic marketing filler, fake testing, exact current pricing, guaranteed outcomes, unsupported current-news claims, repeated Best for / Avoid if text, or terms listed in editorialBrief.editorialBlueprint.bannedMismatchedTerms. pricingNote and pricingCaveat must remain exactly: Pricing can change. Check the official site before subscribing.`,
         input: JSON.stringify({
           editorialBrief,
           articleOutline,
+          goldStandardWritingSystem: comparavyGoldStandardPrompt,
+          guideTypeStandard: guideTypeStandardForPrompt(guideType),
+          localEditorialRules: {
+            bannedGenericPhrases,
+            quickAnswerRules,
+            minimumDepthRules,
+            faqQualityRules,
+            decisionPathRules,
+          },
           selectedToolSlugs: template.recommendedToolSlugs,
           catalogGroundedDraft: template,
         }),
