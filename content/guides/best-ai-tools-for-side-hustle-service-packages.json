@@ -51,8 +51,8 @@
       "alt": "Best AI Tools for Building Side Hustle Service Packages recommended tool stack",
       "tools": [
         "Gamma",
-        "ChatGPT",
-        "Notion AI"
+        "Canva Magic Studio",
+        "Reclaim"
       ]
     },
     "beforeAfter": {
@@ -62,97 +62,98 @@
       "after": "After: a faster workflow that leaves you with a clear, checked result."
     }
   },
-  "quickAnswer": "Gamma is the best starting point for packaging a realistic service offer with deliverables and workflow steps because it matches the core workflow most closely. Use ChatGPT if its setup or output style fits your situation better, and compare Notion AI when you need a different balance of speed, control, and review effort.",
-  "quickDecision": "Gamma is the best starting point for packaging a realistic service offer with deliverables and workflow steps because it matches the core workflow most closely. Use ChatGPT if its setup or output style fits your situation better, and compare Notion AI when you need a different balance of speed, control, and review effort.",
+  "quickAnswer": "For packaging a realistic service offer with deliverables and workflow steps, start with Gamma because it is best for quick presentation first drafts. Choose Canva Magic Studio when you need non-designers creating polished visual assets and want a different workflow. Avoid Gamma when you cannot manually verify content and brand alignment; in that case Reclaim is the better fallback.",
+  "quickDecision": "For packaging a realistic service offer with deliverables and workflow steps, choose Gamma for quick presentation first drafts. Choose Canva Magic Studio when you need non-designers creating polished visual assets. Choose Reclaim when the main job is calendar protection and scheduling or when you need a lighter alternative.",
   "contentGap": "Most content jumps to income claims instead of offer structure and delivery workflow.",
   "uniqueAngle": "Focus on defining a responsible offer, not promising earnings.",
   "aiOverviewAnswer": "Use ChatGPT or Claude to structure the offer, Canva or Gamma to present it, and Notion AI to organize delivery steps.",
-  "quickVerdict": "Gamma is the best starting point for packaging a realistic service offer with deliverables and workflow steps because it matches the core workflow most closely. Use ChatGPT if its setup or output style fits your situation better, and compare Notion AI when you need a different balance of speed, control, and review effort.",
+  "quickVerdict": "For packaging a realistic service offer with deliverables and workflow steps, start with Gamma because it is best for quick presentation first drafts. Choose Canva Magic Studio when you need non-designers creating polished visual assets and want a different workflow. Avoid Gamma when you cannot manually verify content and brand alignment; in that case Reclaim is the better fallback.",
   "steps": [
     {
-      "title": "Define the outcome",
-      "detail": "Write down the exact output you want for packaging a realistic service offer with deliverables and workflow steps so the AI pass has a clear target.",
+      "title": "Define the input type",
+      "detail": "Decide whether you already have rough content that needs rewriting or repackaging or still need to gather it before you touch the tools.",
       "toolSlug": "gamma",
       "toolName": "Gamma"
     },
     {
-      "title": "Run the first draft",
-      "detail": "Use Gamma to handle the initial pass, then check whether the output matches your source material and audience.",
+      "title": "Run the strongest first pass",
+      "detail": "Use Gamma on one real example so you can see how it handles quick presentation first drafts.",
       "toolSlug": "gamma",
       "toolName": "Gamma"
     },
     {
-      "title": "Refine the result",
-      "detail": "Switch to ChatGPT when you need a cleaner rewrite, stronger reasoning, or a different output style.",
-      "toolSlug": "chatgpt",
-      "toolName": "ChatGPT"
+      "title": "Compare the second choice",
+      "detail": "Try Canva Magic Studio on the same input if you need a different workflow, source style, or output format.",
+      "toolSlug": "canva-magic-studio",
+      "toolName": "Canva Magic Studio"
     },
     {
-      "title": "Review before sharing",
-      "detail": "Use Notion AI or a manual review to catch missing context, awkward phrasing, and factual slips before you publish or send anything.",
-      "toolSlug": "notion-ai",
-      "toolName": "Notion AI"
+      "title": "Check the final pass",
+      "detail": "Use Reclaim or a manual review to catch missing details, tone issues, or weak structure before you publish or send anything.",
+      "toolSlug": "reclaim",
+      "toolName": "Reclaim"
     }
   ],
   "toolsYouCanUse": [
     {
       "toolSlug": "gamma",
       "toolName": "Gamma",
-      "why": "Selected for this guide's core workflow."
+      "why": "Gamma is a practical fit for packaging a realistic service offer with deliverables and workflow steps because it is strongest at quick presentation first drafts."
     },
     {
-      "toolSlug": "chatgpt",
-      "toolName": "ChatGPT",
-      "why": "Selected for this guide's core workflow."
+      "toolSlug": "canva-magic-studio",
+      "toolName": "Canva Magic Studio",
+      "why": "Canva Magic Studio is a practical fit for packaging a realistic service offer with deliverables and workflow steps because it is strongest at non-designers creating polished visual assets."
     },
     {
-      "toolSlug": "notion-ai",
-      "toolName": "Notion AI",
-      "why": "Selected for this guide's core workflow."
+      "toolSlug": "reclaim",
+      "toolName": "Reclaim",
+      "why": "Reclaim is a practical fit for packaging a realistic service offer with deliverables and workflow steps because it is strongest at calendar protection and scheduling."
     }
   ],
   "keyTakeaways": [
-    "Gamma leads this shortlist because it is closely aligned with packaging a realistic service offer with deliverables and workflow steps for new freelancers.",
-    "ChatGPT and Notion AI are useful alternatives when your preferred editing, research, or setup workflow changes.",
+    "Gamma is the first tool to test because it best matches packaging a realistic service offer with deliverables and workflow steps.",
+    "Canva Magic Studio is the right second choice when the input type changes or you need a different output style.",
+    "Reclaim is the fallback when you want a lighter, faster, or more polished review step.",
+    "The right choice depends on whether you already have rough content that needs rewriting or repackaging or still need to discover, rewrite, or organize the material.",
     "The user wants to sell a service but does not know how to define the offer clearly.",
     "Most content jumps to income claims instead of offer structure and delivery workflow.",
-    "Compare tools on workflow fit and subscription risk before using them in paid client or revenue work.",
-    "Review generated output and confirm tool features on the official site before committing to a workflow."
+    "Compare tools on workflow fit and subscription risk before using them in paid client or revenue work."
   ],
   "bestPicksBySituation": [
     {
-      "situation": "If you need the most direct answer to: Which AI tools help turn skills into a clear service package without promising income?",
+      "situation": "If you already have rough content that needs rewriting or repackaging, choose Gamma.",
       "toolSlug": "gamma",
       "toolName": "Gamma",
-      "why": "Selected for this guide's core workflow."
+      "why": "Gamma is the closest match because it is built for quick presentation first drafts and keeps the work tied to the original input."
     },
     {
-      "situation": "If your priority is people who want one flexible starting point",
-      "toolSlug": "chatgpt",
-      "toolName": "ChatGPT",
-      "why": "Selected for this guide's core workflow."
+      "situation": "If you need packaging a realistic service offer with deliverables and workflow steps and want a different workflow, choose Canva Magic Studio.",
+      "toolSlug": "canva-magic-studio",
+      "toolName": "Canva Magic Studio",
+      "why": "Canva Magic Studio is the better second choice when you want non-designers creating polished visual assets instead of the first tool's exact workflow."
     },
     {
-      "situation": "If your priority is teams or individuals already organizing work in notion",
-      "toolSlug": "notion-ai",
-      "toolName": "Notion AI",
-      "why": "Selected for this guide's core workflow."
+      "situation": "If you want the cleanest rewrite or the lightest review step, choose Reclaim.",
+      "toolSlug": "reclaim",
+      "toolName": "Reclaim",
+      "why": "Reclaim helps when you need calendar protection and scheduling and want a fallback that is easier to adapt on a phone or desktop."
     }
   ],
   "recommendedToolSlugs": [
     "gamma",
-    "chatgpt",
-    "notion-ai",
-    "claude",
-    "canva-magic-studio"
+    "canva-magic-studio",
+    "reclaim",
+    "copy-ai",
+    "quillbot"
   ],
   "recommendedTools": [
     {
       "toolSlug": "gamma",
       "toolName": "Gamma",
-      "summary": "Gamma fits packaging a realistic service offer with deliverables and workflow steps when quick presentation first drafts.",
-      "bestFor": "Quick presentation first drafts",
-      "avoidIf": "You cannot manually verify content and brand alignment",
+      "summary": "Gamma is strongest when you need quick presentation first drafts and want to keep the output close to rough content that needs rewriting or repackaging. It handles draft pitch decks better than a generic assistant, but it is a weaker choice if you cannot manually verify content and brand alignment.",
+      "bestFor": "quick presentation first drafts for packaging a realistic service offer with deliverables and workflow steps",
+      "avoidIf": "you cannot manually verify content and brand alignment if your real input is rough content that needs rewriting or repackaging",
       "strengths": [
         "presentations",
         "documents",
@@ -166,65 +167,11 @@
       "toolPagePath": "/tools/gamma"
     },
     {
-      "toolSlug": "chatgpt",
-      "toolName": "ChatGPT",
-      "summary": "ChatGPT fits packaging a realistic service offer with deliverables and workflow steps when people who want one flexible starting point.",
-      "bestFor": "People who want one flexible starting point",
-      "avoidIf": "You need guaranteed accuracy without checking sources",
-      "strengths": [
-        "chat",
-        "writing",
-        "brainstorming",
-        "files"
-      ],
-      "tradeoffs": [
-        "Teams needing a dedicated approval workflow",
-        "Users seeking a single-purpose design editor"
-      ],
-      "toolPagePath": "/tools/chatgpt"
-    },
-    {
-      "toolSlug": "notion-ai",
-      "toolName": "Notion AI",
-      "summary": "Notion AI fits packaging a realistic service offer with deliverables and workflow steps when teams or individuals already organizing work in notion.",
-      "bestFor": "Teams or individuals already organizing work in Notion",
-      "avoidIf": "Your useful information lives outside Notion",
-      "strengths": [
-        "workspace",
-        "notes",
-        "knowledge",
-        "productivity"
-      ],
-      "tradeoffs": [
-        "People who do not want to adopt Notion",
-        "Standalone image or video generation"
-      ],
-      "toolPagePath": "/tools/notion-ai"
-    },
-    {
-      "toolSlug": "claude",
-      "toolName": "Claude",
-      "summary": "Claude fits packaging a realistic service offer with deliverables and workflow steps when long-form drafting and revision.",
-      "bestFor": "Long-form drafting and revision",
-      "avoidIf": "You cannot review generated analysis for mistakes",
-      "strengths": [
-        "chat",
-        "writing",
-        "documents",
-        "analysis"
-      ],
-      "tradeoffs": [
-        "People mainly needing a visual design canvas",
-        "Workflows requiring specialized video editing"
-      ],
-      "toolPagePath": "/tools/claude"
-    },
-    {
       "toolSlug": "canva-magic-studio",
       "toolName": "Canva Magic Studio",
-      "summary": "Canva Magic Studio fits packaging a realistic service offer with deliverables and workflow steps when non-designers creating polished visual assets.",
-      "bestFor": "Non-designers creating polished visual assets",
-      "avoidIf": "Your output requires full professional design control",
+      "summary": "Canva Magic Studio is strongest when you need polished visual assets from a non-designer workflow and want it tied to rough content that needs rewriting or repackaging. It handles social post creation better than a generic assistant, but it is a weaker choice if you need full professional design control.",
+      "bestFor": "non-designers creating polished visual assets when you want a different workflow than the top pick",
+      "avoidIf": "your output requires full professional design control",
       "strengths": [
         "design",
         "templates",
@@ -236,70 +183,129 @@
         "Highly controlled cinematic video generation"
       ],
       "toolPagePath": "/tools/canva-magic-studio"
+    },
+    {
+      "toolSlug": "reclaim",
+      "toolName": "Reclaim",
+      "summary": "Reclaim is strongest when you need calendar protection and scheduling and want it tied to rough content that needs rewriting or repackaging. It handles calendar protection and scheduling better than a generic assistant, but it is a weaker choice if you need publish-ready output without review.",
+      "bestFor": "calendar protection and scheduling when speed or a lighter setup matters more",
+      "avoidIf": "you need publish-ready output without review",
+      "strengths": [
+        "productivity",
+        "notes",
+        "workflow",
+        "planning"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside productivity.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/reclaim"
+    },
+    {
+      "toolSlug": "copy-ai",
+      "toolName": "Copy.ai",
+      "summary": "Copy.ai is strongest when you need sales and marketing workflow content and want it tied to rough content that needs rewriting or repackaging. It handles outreach drafts better than a generic assistant, but it is a weaker choice if you only need an occasional general chat tool.",
+      "bestFor": "sales and marketing workflow content when speed or a lighter setup matters more",
+      "avoidIf": "you only need an occasional general chat tool",
+      "strengths": [
+        "copywriting",
+        "marketing",
+        "workflows",
+        "sales"
+      ],
+      "tradeoffs": [
+        "Personal grammar corrections only",
+        "Media editing workflows"
+      ],
+      "toolPagePath": "/tools/copy-ai"
+    },
+    {
+      "toolSlug": "quillbot",
+      "toolName": "QuillBot",
+      "summary": "QuillBot is strongest when you need paraphrasing and grammar cleanup and want it tied to rough content that needs rewriting or repackaging. It handles paraphrasing and grammar cleanup better than a generic assistant, but it is a weaker choice if you need publish-ready output without review.",
+      "bestFor": "paraphrasing and grammar cleanup when speed or a lighter setup matters more",
+      "avoidIf": "you need publish-ready output without review",
+      "strengths": [
+        "writing",
+        "copy",
+        "editing",
+        "drafting"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside writing.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/quillbot"
     }
   ],
   "comparisonRows": [
     {
       "toolSlug": "gamma",
       "toolName": "Gamma",
-      "bestFor": "Quick presentation first drafts",
+      "bestFor": "quick presentation first drafts for packaging a realistic service offer with deliverables and workflow steps",
       "freePlan": true,
       "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
-      "whyConsider": "Selected for this guide's core workflow.",
-      "watchFor": "Strictly controlled corporate slide templates without adjustment"
-    },
-    {
-      "toolSlug": "chatgpt",
-      "toolName": "ChatGPT",
-      "bestFor": "People who want one flexible starting point",
-      "freePlan": true,
-      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
-      "whyConsider": "Selected for this guide's core workflow.",
-      "watchFor": "Teams needing a dedicated approval workflow"
-    },
-    {
-      "toolSlug": "notion-ai",
-      "toolName": "Notion AI",
-      "bestFor": "Teams or individuals already organizing work in Notion",
-      "freePlan": false,
-      "easeOfUse": "Medium setup; ease 8/10 in the Comparavy catalog",
-      "whyConsider": "Selected for this guide's core workflow.",
-      "watchFor": "People who do not want to adopt Notion"
-    },
-    {
-      "toolSlug": "claude",
-      "toolName": "Claude",
-      "bestFor": "Long-form drafting and revision",
-      "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
-      "whyConsider": "Selected for this guide's core workflow.",
-      "watchFor": "People mainly needing a visual design canvas"
+      "whyConsider": "Gamma is worth considering because it is the clearest fit for packaging a realistic service offer with deliverables and workflow steps. It is built for quick presentation first drafts, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for strictly controlled corporate slide templates without adjustment; this matters when packaging a realistic service offer with deliverables and workflow steps."
     },
     {
       "toolSlug": "canva-magic-studio",
       "toolName": "Canva Magic Studio",
-      "bestFor": "Non-designers creating polished visual assets",
+      "bestFor": "non-designers creating polished visual assets when you want a different workflow than the top pick",
       "freePlan": true,
       "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
-      "whyConsider": "Selected for this guide's core workflow.",
-      "watchFor": "Advanced professional image compositing"
+      "whyConsider": "Canva Magic Studio is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for non-designers creating polished visual assets, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for advanced professional image compositing; this matters when packaging a realistic service offer with deliverables and workflow steps."
+    },
+    {
+      "toolSlug": "reclaim",
+      "toolName": "Reclaim",
+      "bestFor": "calendar protection and scheduling when speed or a lighter setup matters more",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "Reclaim is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for calendar protection and scheduling, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for the fact that it is not the best choice when your main job is outside productivity."
+    },
+    {
+      "toolSlug": "copy-ai",
+      "toolName": "Copy.ai",
+      "bestFor": "sales and marketing workflow content when speed or a lighter setup matters more",
+      "freePlan": false,
+      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "whyConsider": "Copy.ai is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for sales and marketing workflow content, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for personal grammar corrections only; this matters when packaging a realistic service offer with deliverables and workflow steps."
+    },
+    {
+      "toolSlug": "quillbot",
+      "toolName": "QuillBot",
+      "bestFor": "paraphrasing and grammar cleanup when speed or a lighter setup matters more",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "whyConsider": "QuillBot is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for paraphrasing and grammar cleanup, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for the fact that it is not the best choice when your main job is outside writing."
     }
   ],
   "decisionPath": [
     {
-      "situation": "If your goal is packaging a realistic service offer with deliverables and workflow steps, start with the most direct shortlisted workflow.",
+      "situation": "If you already have rough content that needs rewriting or repackaging, start with Gamma.",
       "recommendation": "Gamma",
-      "reason": "Selected for this guide's core workflow."
+      "reason": "Gamma is the most direct first pass because it is built for quick presentation first drafts."
     },
     {
-      "situation": "If ChatGPT's fit for people who want one flexible starting point matters most, compare this alternative.",
-      "recommendation": "ChatGPT",
-      "reason": "Selected for this guide's core workflow."
+      "situation": "If you need a different source type or citation style, switch to Canva Magic Studio.",
+      "recommendation": "Canva Magic Studio",
+      "reason": "Canva Magic Studio is the better alternative when non-designers creating polished visual assets matters more than the top pick."
     },
     {
-      "situation": "If Notion AI's fit for teams or individuals already organizing work in notion is relevant, include this option in your test.",
-      "recommendation": "Notion AI",
-      "reason": "Selected for this guide's core workflow."
+      "situation": "If you need the final polish or the easiest follow-up pass, compare Reclaim.",
+      "recommendation": "Reclaim",
+      "reason": "Reclaim is useful when you want calendar protection and scheduling and do not want to overbuild the workflow."
+    },
+    {
+      "situation": "If you are working on a phone and need a quick answer, use the fastest or simplest option in the shortlist.",
+      "recommendation": "Canva Magic Studio",
+      "reason": "Canva Magic Studio is usually the faster fallback when you need a readable result with less setup."
     }
   ],
   "moneySavingTips": [
@@ -311,38 +317,38 @@
   "pricingCaveat": "Pricing can change. Check the official site before subscribing.",
   "faqs": [
     {
-      "question": "Which tool should new freelancers try first?",
-      "answer": "Gamma is the first tool to evaluate for this use case based on the current Comparavy catalog match. Test it on a real project and compare the result with your requirements."
+      "question": "Can I use AI to turn packaging a realistic service offer with deliverables and workflow steps into something usable without making it generic?",
+      "answer": "Yes, if you start with a clear angle and edit the result for your audience. Gamma is the best starting point for the first draft, Canva Magic Studio is useful when you need a different format or angle, and Reclaim helps when the copy needs a final cleanup."
     },
     {
-      "question": "Should I choose a free plan before subscribing?",
-      "answer": "A free-plan workflow is useful when it lets you test output quality and setup effort. Confirm current limits and plan details on the official site."
+      "question": "Which AI tool is better for repurposing content?",
+      "answer": "Gamma usually works best for the first rewrite, while Canva Magic Studio is better when the job shifts toward a different style or asset format."
     },
     {
-      "question": "Can AI output be published without review?",
-      "answer": "No. Review accuracy, brand fit, permissions, and final presentation before publishing or sharing client-facing work."
+      "question": "Is Gamma better than Canva Magic Studio for this workflow?",
+      "answer": "Gamma is better when you want a direct content pass; Canva Magic Studio is better when the same input needs a new angle, layout, or structure."
     },
     {
-      "question": "When should I compare ChatGPT with Gamma?",
-      "answer": "Compare ChatGPT when its fit for people who want one flexible starting point matters more than the first-choice workflow. Use the same realistic project so the decision is based on output and effort."
+      "question": "What should I avoid before I publish or post it?",
+      "answer": "Avoid posting the first output without checking the hook, the flow, and the factual details. Use Reclaim as the last cleanup step, not the only step."
     }
   ],
   "faq": [
     {
-      "question": "Which tool should new freelancers try first?",
-      "answer": "Gamma is the first tool to evaluate for this use case based on the current Comparavy catalog match. Test it on a real project and compare the result with your requirements."
+      "question": "Can I use AI to turn packaging a realistic service offer with deliverables and workflow steps into something usable without making it generic?",
+      "answer": "Yes, if you start with a clear angle and edit the result for your audience. Gamma is the best starting point for the first draft, Canva Magic Studio is useful when you need a different format or angle, and Reclaim helps when the copy needs a final cleanup."
     },
     {
-      "question": "Should I choose a free plan before subscribing?",
-      "answer": "A free-plan workflow is useful when it lets you test output quality and setup effort. Confirm current limits and plan details on the official site."
+      "question": "Which AI tool is better for repurposing content?",
+      "answer": "Gamma usually works best for the first rewrite, while Canva Magic Studio is better when the job shifts toward a different style or asset format."
     },
     {
-      "question": "Can AI output be published without review?",
-      "answer": "No. Review accuracy, brand fit, permissions, and final presentation before publishing or sharing client-facing work."
+      "question": "Is Gamma better than Canva Magic Studio for this workflow?",
+      "answer": "Gamma is better when you want a direct content pass; Canva Magic Studio is better when the same input needs a new angle, layout, or structure."
     },
     {
-      "question": "When should I compare ChatGPT with Gamma?",
-      "answer": "Compare ChatGPT when its fit for people who want one flexible starting point matters more than the first-choice workflow. Use the same realistic project so the decision is based on output and effort."
+      "question": "What should I avoid before I publish or post it?",
+      "answer": "Avoid posting the first output without checking the hook, the flow, and the factual details. Use Reclaim as the last cleanup step, not the only step."
     }
   ],
   "whoShouldUseThis": [
@@ -354,29 +360,29 @@
     "Readers who need legal, financial, or compliance advice rather than tool comparison.",
     "Users who want guaranteed outcomes instead of a workflow shortlist to evaluate."
   ],
-  "finalVerdict": "For new freelancers, start by testing Gamma on one realistic assignment: packaging a realistic service offer with deliverables and workflow steps. Compare it with ChatGPT if you need a different workflow, respect the stated budget approach, and choose only after reviewing actual output, setup effort, and current official plan details.",
+  "finalVerdict": "For new freelancers, start by testing Gamma on one realistic assignment: packaging a realistic service offer with deliverables and workflow steps. Compare it with Canva Magic Studio if you need a different workflow, use Reclaim for the final review, and choose only after checking actual output, setup effort, and current official plan details.",
   "realityCheck": "AI can help you package and deliver work faster, but it does not guarantee clients, revenue, or repeat demand.",
   "skillNeeded": "You need basic prompt writing, simple editing, and a clear understanding of the service you want to sell.",
   "firstStep": "Start with one real example of packaging a realistic service offer with deliverables and workflow steps and compare the output against your own standard before you scale the workflow.",
   "commonMistakes": [
-    "Skipping the source review before you rely on AI output for packaging a realistic service offer with deliverables and workflow steps.",
-    "Using only one tool and missing a better fit for a later step.",
-    "Publishing or sending the output before checking it against the original inputs."
+    "Choosing a tool before checking whether the input is rough content that needs rewriting or repackaging or something else.",
+    "Using the same prompt or workflow for every tool instead of matching each tool to its job.",
+    "Sharing the output before checking facts, tone, and missing context."
   ],
   "mistakesToAvoid": [
-    "Do not treat Gamma as a final answer without checking the result.",
-    "Do not use ChatGPT or Notion AI without confirming the workflow still matches your source material.",
-    "Do not skip review if the output will reach clients, customers, or classmates."
+    "Do not treat Gamma as the final answer without checking the result against your source material.",
+    "Do not use Canva Magic Studio or Reclaim as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
   ],
-  "exampleWorkflow": "A simple workflow is: collect the source material, ask Gamma for the first draft, then use ChatGPT or Notion AI to tighten the language and check the final result.",
-  "exampleResult": "The final result should be a clearer, shorter, and more usable version of the original material, with the main ideas preserved and the obvious errors removed.",
+  "exampleWorkflow": "Collect the source material, ask Gamma for the first draft, use Canva Magic Studio to compare a different workflow, and keep Reclaim for the final cleanup and review.",
+  "exampleResult": "The final result should be clearer, shorter, and easier to use, with the main ideas preserved and the obvious errors removed.",
   "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
   "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for new freelancers",
     "points": [
-      "Start with Gamma",
-      "Compare ChatGPT for an alternate workflow",
+      "Start with Gamma for quick presentation first drafts",
+      "Compare Canva Magic Studio when the workflow changes",
       "Run a real project test before subscribing"
     ]
   },

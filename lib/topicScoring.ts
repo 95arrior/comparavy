@@ -70,7 +70,10 @@ export function scoreToolsForTopic(topic: GuideTopic): TopicToolScore[] {
 
       if (preferredIndex >= 0) {
         score += 100 - preferredIndex * 5;
-        addReason(reasons, "Selected for this guide's core workflow.");
+        addReason(
+          reasons,
+          `${tool.name} is one of the topic's preferred tools for ${topic.searchIntent}.`,
+        );
       }
 
       if (topic.toolCategories.includes(tool.category)) {
@@ -112,7 +115,10 @@ export function scoreToolsForTopic(topic: GuideTopic): TopicToolScore[] {
       }
 
       if (reasons.length === 0) {
-        addReason(reasons, "Relevant catalog match for the stated use case.");
+        addReason(
+          reasons,
+          `${tool.name} is a catalog match for ${topic.searchIntent} and the surrounding workflow.`,
+        );
       }
 
       return { tool, score, reasons };
