@@ -1,0 +1,462 @@
+{
+  "slug": "how-to-turn-youtube-videos-into-newsletters-with-ai",
+  "title": "How to Turn YouTube Videos Into Newsletters with AI",
+  "guideType": "how-to",
+  "type": "how-to",
+  "metaTitle": "How to Turn YouTube Videos Into Newsletters with AI | Comparavy",
+  "metaDescription": "Learn how to turning video transcripts into useful email newsletter drafts. See the workflow, tools you can use, and the safest first step.",
+  "category": "Video",
+  "persona": "creator newsletters",
+  "useCase": "turning video transcripts into useful email newsletter drafts",
+  "budgetAngle": "Start with a focused use case and upgrade only after the tool saves enough time to justify the cost.",
+  "skillLevel": "beginner",
+  "primaryKeyword": "how to turn YouTube videos into newsletters with AI",
+  "secondaryKeywords": [
+    "YouTube to newsletter AI",
+    "video transcript to newsletter",
+    "AI newsletter workflow"
+  ],
+  "longTailKeywords": [
+    "how to convert a YouTube transcript into a newsletter with AI",
+    "AI workflow from video to email newsletter",
+    "turn video content into newsletter draft"
+  ],
+  "audience": "creator newsletters",
+  "searchIntent": "turning video transcripts into useful email newsletter drafts",
+  "userPain": "The reader has video content but needs a newsletter that reads like an email, not a transcript.",
+  "decisionQuestion": "How do I turn a video into a newsletter without sounding like a transcript summary?",
+  "deviceIntent": "both",
+  "desktopUseCase": "Best on a computer when editing transcript, outline, and newsletter draft together. Use desktop to compare podcast recordings with clean audio before the final review.",
+  "mobileUseCase": "Best on a phone when reviewing the subject line or shortening the opening paragraph. Use mobile for quick checks on clean audio when the input is already prepared.",
+  "desktopSearchAngle": "Desktop readers usually want deeper comparison, file handling, and a deliberate review workflow for clean audio.",
+  "mobileSearchAngle": "Mobile readers usually want a short answer first, then a quick next step for clean audio they can finish in a few taps.",
+  "visualAssets": {
+    "hero": {
+      "type": "hero",
+      "alt": "How to Turn YouTube Videos Into Newsletters with AI guide visual",
+      "promptOrDescription": "Editorial guide artwork for turning video transcripts into useful email newsletter drafts with a clean, problem-solving feel.",
+      "fileNameHint": "how-to-turn-youtube-videos-into-newsletters-with-ai"
+    },
+    "workflow": {
+      "type": "workflow-diagram",
+      "alt": "How to Turn YouTube Videos Into Newsletters with AI workflow diagram",
+      "steps": [
+        "Quick Answer",
+        "Real-World Scenario",
+        "What You Need",
+        "Step-by-Step Workflow",
+        "Best If You Are on a Computer"
+      ]
+    },
+    "toolStack": {
+      "type": "tool-stack",
+      "alt": "How to Turn YouTube Videos Into Newsletters with AI recommended tool stack",
+      "tools": [
+        "Descript",
+        "Grammarly",
+        "Notion AI"
+      ]
+    },
+    "beforeAfter": {
+      "type": "before-after",
+      "alt": "How to Turn YouTube Videos Into Newsletters with AI before and after comparison",
+      "before": "Before: manual work and scattered notes for turning video transcripts into useful email newsletter drafts.",
+      "after": "After: a faster workflow that leaves you with a clear, checked result."
+    }
+  },
+  "quickAnswer": "To handle turning video transcripts into useful email newsletter drafts, Start with podcast recordings, decide that the output must be clean audio, use Descript for one reviewable version, and check it before changing formats or adding another tool. Descript should create the first reviewable version, Grammarly belongs in the second pass only when clean audio needs more control, and Notion AI should be saved for review or export after the core result is right.",
+  "quickDecision": "For turning video transcripts into useful email newsletter drafts, choose Descript first when the input is podcast recordings and the output needs to be clean audio. Choose Grammarly when noise reduction matters more. Choose Notion AI when you need a lighter review, export, or fallback pass.",
+  "realWorldScenario": "creator newsletters have podcast recordings and episode transcript and need clean audio without drifting into an unrelated workflow. Prepared 2026-05-29.",
+  "whatYouNeed": [
+    "podcast recordings, episode transcripts, guest notes, and clip requirements",
+    "A clear final format for turning video transcripts into useful email newsletter drafts.",
+    "The audience, recipient, or grading criteria for the output.",
+    "Time to check facts, names, numbers, dates, and commitments before using the result."
+  ],
+  "timeEstimate": "Plan on 10 to 30 minutes for one careful first pass, depending on the source material.",
+  "contentGap": "Most results focus on clips, not newsletter structure and tone.",
+  "uniqueAngle": "Separate transcript cleanup, newsletter angle, and email voice.",
+  "aiOverviewAnswer": "Get the transcript, choose the reader takeaway, draft the email sections, and edit for voice, links, and claims before sending.",
+  "quickVerdict": "To handle turning video transcripts into useful email newsletter drafts, Start with podcast recordings, decide that the output must be clean audio, use Descript for one reviewable version, and check it before changing formats or adding another tool. Descript should create the first reviewable version, Grammarly belongs in the second pass only when clean audio needs more control, and Notion AI should be saved for review or export after the core result is right.",
+  "steps": [
+    {
+      "title": "Prepare podcast recordings",
+      "detail": "Put the real input in one place before opening a tool: podcast recordings, episode transcript, guest notes, raw audio, turning video transcripts into useful email newsletter drafts, any required facts, the audience, and the format you need at the end. Remove private details you are not allowed to share.",
+      "why": "AI output is only as useful as the material and constraints you give it.",
+      "output": "A clean input bundle and one clear target format: clean audio."
+    },
+    {
+      "title": "Ask for the first usable version",
+      "detail": "Use Descript for a first pass that tries to turn video transcripts into useful email newsletter drafts. Ask it to preserve source facts, flag uncertainty, and organize the result into sections you can review.",
+      "why": "The first pass should create a reviewable clean audio, not a finished answer you trust blindly.",
+      "output": "A structured clean audio with visible gaps or uncertain points.",
+      "toolSlug": "descript",
+      "toolName": "Descript"
+    },
+    {
+      "title": "Check the answer before polishing",
+      "detail": "Compare the AI output with podcast recordings. Fix names, dates, numbers, unsupported claims, missing context, and tone before you ask for nicer wording.",
+      "why": "Polished wrong information is harder to catch than rough information.",
+      "output": "A corrected clean audio that is ready for formatting or wording cleanup."
+    },
+    {
+      "title": "Change the format only after the facts are right",
+      "detail": "Use Grammarly when the verified clean audio needs a different format, structure, or source-aware second pass. Keep the same facts from podcast recordings so the rewrite does not drift from the original.",
+      "why": "Format changes are safer after the substance is already checked.",
+      "output": "A version that fits the channel, document, post, or recipient.",
+      "toolSlug": "grammarly",
+      "toolName": "Grammarly"
+    },
+    {
+      "title": "Finish with a human review",
+      "detail": "Use Notion AI for cleanup only after the main clean audio is checked against podcast recordings. Read the final result as the recipient would: on the device, in the app, or in the document where it will actually be used.",
+      "why": "The final review catches tone, missing context, and practical usability issues.",
+      "output": "A final result you can send, post, study from, or save with confidence.",
+      "toolSlug": "notion-ai",
+      "toolName": "Notion AI"
+    }
+  ],
+  "toolsYouCanUse": [
+    {
+      "toolSlug": "descript",
+      "toolName": "Descript",
+      "why": "Primary tool for turning podcast recordings into clean audio.",
+      "role": "Primary tool for turning podcast recordings into clean audio.",
+      "bestUseCase": "podcasts and talking-head videos for clean audio"
+    },
+    {
+      "toolSlug": "grammarly",
+      "toolName": "Grammarly",
+      "why": "Second-pass tool when clean audio needs a different format, stronger controls, or validation.",
+      "role": "Second-pass tool when clean audio needs a different format, stronger controls, or validation.",
+      "bestUseCase": "polishing email and client-facing writing when noise reduction matters more than the top pick"
+    },
+    {
+      "toolSlug": "notion-ai",
+      "toolName": "Notion AI",
+      "why": "Review or finishing tool after the main output is checked.",
+      "role": "Review or finishing tool after the main output is checked.",
+      "bestUseCase": "teams or individuals already organizing work in Notion when speed or a lighter setup matters more for captioned exports"
+    }
+  ],
+  "keyTakeaways": [
+    "What you need: podcast recordings, episode transcript, guest notes, a clear output format, and a few minutes to review the result.",
+    "Start with Descript for the first pass, but judge the output against turning video transcripts into useful email newsletter drafts, not against tool hype.",
+    "Use Grammarly only when the workflow needs a different format or second pass.",
+    "Use Notion AI for review after the main output is fact-checked.",
+    "The reader has video content but needs a newsletter that reads like an email, not a transcript.",
+    "Most results focus on clips, not newsletter structure and tone.",
+    "The useful next step is to test one real example before building a repeatable workflow."
+  ],
+  "bestPicksBySituation": [
+    {
+      "situation": "If you already have podcast recordings, choose Descript.",
+      "toolSlug": "descript",
+      "toolName": "Descript",
+      "why": "Descript is the closest match because it is built for podcasts and talking-head videos and keeps the work tied to podcast recordings."
+    },
+    {
+      "situation": "If you need short clips or stronger noise reduction, choose Grammarly.",
+      "toolSlug": "grammarly",
+      "toolName": "Grammarly",
+      "why": "Grammarly is the better second choice when polishing email and client-facing writing matters more than the first tool's handling of podcast recordings."
+    },
+    {
+      "situation": "If you want the lightest review or export step for clean audio, choose Notion AI.",
+      "toolSlug": "notion-ai",
+      "toolName": "Notion AI",
+      "why": "Notion AI helps when you need teams or individuals already organizing work in Notion and want a fallback that is easier to adapt on a phone or desktop."
+    }
+  ],
+  "recommendedToolSlugs": [
+    "descript",
+    "grammarly",
+    "notion-ai",
+    "fliki",
+    "capcut"
+  ],
+  "recommendedTools": [
+    {
+      "toolSlug": "descript",
+      "toolName": "Descript",
+      "summary": "Descript is strongest when you need podcasts and talking-head videos and want it tied to podcast recordings, episode transcripts, guest notes, and clip requirements. It handles edit podcasts better than a generic assistant, but it is a weaker choice if you need you need advanced timeline control above transcript-first editing.",
+      "bestFor": "podcasts and talking-head videos for clean audio",
+      "avoidIf": "you need advanced timeline control above transcript-first editing if your real input is podcast recordings, episode transcripts, guest notes, and clip requirements",
+      "strengths": [
+        "video-editing",
+        "audio",
+        "transcription",
+        "podcast"
+      ],
+      "tradeoffs": [
+        "Generative cinematic scenes as the primary goal",
+        "Static design asset production"
+      ],
+      "toolPagePath": "/tools/descript"
+    },
+    {
+      "toolSlug": "grammarly",
+      "toolName": "Grammarly",
+      "summary": "Grammarly is strongest when you need polishing email and client-facing writing and want it tied to podcast recordings, episode transcripts, guest notes, and clip requirements. It handles polish emails better than a generic assistant, but it is a weaker choice if you need your writing environment cannot allow browser extensions or integrations.",
+      "bestFor": "polishing email and client-facing writing when noise reduction matters more than the top pick",
+      "avoidIf": "your writing environment cannot allow browser extensions or integrations if your main need is the top tool's exact workflow",
+      "strengths": [
+        "writing",
+        "editing",
+        "tone",
+        "email"
+      ],
+      "tradeoffs": [
+        "Long-form research from sources",
+        "Visual content generation"
+      ],
+      "toolPagePath": "/tools/grammarly"
+    },
+    {
+      "toolSlug": "notion-ai",
+      "toolName": "Notion AI",
+      "summary": "Notion AI is strongest when you need teams or individuals already organizing work in Notion and want it tied to podcast recordings, episode transcripts, guest notes, and clip requirements. It handles summarize meeting notes better than a generic assistant, but it is a weaker choice if you need your useful information lives outside Notion.",
+      "bestFor": "teams or individuals already organizing work in Notion when speed or a lighter setup matters more for captioned exports",
+      "avoidIf": "your useful information lives outside Notion if you need the most polished or source-grounded final pass",
+      "strengths": [
+        "workspace",
+        "notes",
+        "knowledge",
+        "productivity"
+      ],
+      "tradeoffs": [
+        "People who do not want to adopt Notion",
+        "Standalone image or video generation"
+      ],
+      "toolPagePath": "/tools/notion-ai"
+    },
+    {
+      "toolSlug": "fliki",
+      "toolName": "Fliki",
+      "summary": "Fliki is strongest when you need workflows that need turning scripts into narrated videos and want it tied to podcast recordings, episode transcripts, guest notes, and clip requirements. It handles turning scripts into narrated videos better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need turning scripts into narrated videos when speed or a lighter setup matters more for show notes",
+      "avoidIf": "you need publish-ready output without review if the task needs deeper review than a lightweight fallback can provide",
+      "strengths": [
+        "video",
+        "clips",
+        "editing",
+        "short-form"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside video.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/fliki"
+    },
+    {
+      "toolSlug": "capcut",
+      "toolName": "CapCut",
+      "summary": "CapCut is strongest when you need short-form social video editing and want it tied to podcast recordings, episode transcripts, guest notes, and clip requirements. It handles edit reels better than a generic assistant, but it is a weaker choice if you need you need a specialized professional editing pipeline.",
+      "bestFor": "short-form social video editing when speed or a lighter setup matters more for turning video transcripts into useful email newsletter drafts",
+      "avoidIf": "you need a specialized professional editing pipeline if the workflow depends on another tool's stronger input handling or editing controls",
+      "strengths": [
+        "video-editing",
+        "social-media",
+        "captions",
+        "templates"
+      ],
+      "tradeoffs": [
+        "Detailed document analysis",
+        "Complex business process automation"
+      ],
+      "toolPagePath": "/tools/capcut"
+    }
+  ],
+  "comparisonRows": [
+    {
+      "toolSlug": "descript",
+      "toolName": "Descript",
+      "bestFor": "podcasts and talking-head videos for clean audio",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "Descript is worth considering because it is the clearest fit for turning video transcripts into useful email newsletter drafts. It is built for podcasts and talking-head videos, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for generative cinematic scenes as the primary goal; this matters when the reader is turning video transcripts into useful email newsletter drafts."
+    },
+    {
+      "toolSlug": "grammarly",
+      "toolName": "Grammarly",
+      "bestFor": "polishing email and client-facing writing when noise reduction matters more than the top pick",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "whyConsider": "Grammarly is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for polishing email and client-facing writing, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for long-form research from sources; this matters when the reader is turning video transcripts into useful email newsletter drafts."
+    },
+    {
+      "toolSlug": "notion-ai",
+      "toolName": "Notion AI",
+      "bestFor": "teams or individuals already organizing work in Notion when speed or a lighter setup matters more for captioned exports",
+      "freePlan": false,
+      "easeOfUse": "Medium setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "Notion AI is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for teams or individuals already organizing work in Notion, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for people who do not want to adopt Notion; this matters when the reader is turning video transcripts into useful email newsletter drafts."
+    },
+    {
+      "toolSlug": "fliki",
+      "toolName": "Fliki",
+      "bestFor": "workflows that need turning scripts into narrated videos when speed or a lighter setup matters more for show notes",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "Fliki is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need turning scripts into narrated videos, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside video.; this matters when the reader is turning video transcripts into useful email newsletter drafts."
+    },
+    {
+      "toolSlug": "capcut",
+      "toolName": "CapCut",
+      "bestFor": "short-form social video editing when speed or a lighter setup matters more for turning video transcripts into useful email newsletter drafts",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "whyConsider": "CapCut is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for short-form social video editing, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for detailed document analysis; this matters when the reader is turning video transcripts into useful email newsletter drafts."
+    }
+  ],
+  "decisionPath": [
+    {
+      "situation": "If you already have podcast recordings, start with Descript.",
+      "recommendation": "Descript",
+      "reason": "Descript is the first-pass choice when the input is ready and the main job is to structure, summarize, or clean it into a usable result."
+    },
+    {
+      "situation": "If clean audio needs a different format after the facts are checked, switch to Grammarly.",
+      "recommendation": "Grammarly",
+      "reason": "Grammarly is better for the second pass when the job changes from source checking to formatting, layout, or another presentation style."
+    },
+    {
+      "situation": "If the result is accurate but still rough, use Notion AI.",
+      "recommendation": "Notion AI",
+      "reason": "Notion AI fits the review step because the main source work is already done."
+    },
+    {
+      "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
+      "recommendation": "Descript",
+      "reason": "Mobile works best for a short summary, a quick rewrite, or final approval; save side-by-side checking and larger edits for desktop."
+    },
+    {
+      "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
+      "recommendation": "Grammarly",
+      "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
+    }
+  ],
+  "decisionTree": [
+    {
+      "situation": "If you already have podcast recordings, start with Descript.",
+      "recommendation": "Descript",
+      "reason": "Descript is the first-pass choice when the input is ready and the main job is to structure, summarize, or clean it into a usable result."
+    },
+    {
+      "situation": "If clean audio needs a different format after the facts are checked, switch to Grammarly.",
+      "recommendation": "Grammarly",
+      "reason": "Grammarly is better for the second pass when the job changes from source checking to formatting, layout, or another presentation style."
+    },
+    {
+      "situation": "If the result is accurate but still rough, use Notion AI.",
+      "recommendation": "Notion AI",
+      "reason": "Notion AI fits the review step because the main source work is already done."
+    },
+    {
+      "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
+      "recommendation": "Descript",
+      "reason": "Mobile works best for a short summary, a quick rewrite, or final approval; save side-by-side checking and larger edits for desktop."
+    },
+    {
+      "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
+      "recommendation": "Grammarly",
+      "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
+    }
+  ],
+  "moneySavingTips": [
+    "Test one representative project before paying for a longer-term workflow.",
+    "Use a listed free plan when it covers the experiment you need to run.",
+    "Avoid overlapping subscriptions until one tool has proven where it saves effort."
+  ],
+  "pricingNote": "Pricing can change. Check the official site before subscribing.",
+  "pricingCaveat": "Pricing can change. Check the official site before subscribing.",
+  "faqs": [
+    {
+      "question": "What input do I need before using AI for turning video transcripts into useful email newsletter drafts?",
+      "answer": "Start with podcast recordings, episode transcript, guest notes and decide that the output must be clean audio. That keeps Descript focused on the actual job instead of drifting into a generic answer."
+    },
+    {
+      "question": "Which tool should I start with for clean audio?",
+      "answer": "Start with Descript when the main input is podcast recordings. Compare Grammarly when noise reduction matters more, and keep Notion AI for review or fallback work."
+    },
+    {
+      "question": "What should I check before I use the result?",
+      "answer": "Check the result against podcast recordings, especially over-cleaning voices. Do not use the output until it still matches clean audio."
+    },
+    {
+      "question": "Can I finish this workflow on a phone, or should I use a computer?",
+      "answer": "Use mobile for on mobile, keep the task to one input and one output: podcast recordings to clean audio. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. clean audio usually benefits from desktop review before publishing, sending, or saving."
+    }
+  ],
+  "faq": [
+    {
+      "question": "What input do I need before using AI for turning video transcripts into useful email newsletter drafts?",
+      "answer": "Start with podcast recordings, episode transcript, guest notes and decide that the output must be clean audio. That keeps Descript focused on the actual job instead of drifting into a generic answer."
+    },
+    {
+      "question": "Which tool should I start with for clean audio?",
+      "answer": "Start with Descript when the main input is podcast recordings. Compare Grammarly when noise reduction matters more, and keep Notion AI for review or fallback work."
+    },
+    {
+      "question": "What should I check before I use the result?",
+      "answer": "Check the result against podcast recordings, especially over-cleaning voices. Do not use the output until it still matches clean audio."
+    },
+    {
+      "question": "Can I finish this workflow on a phone, or should I use a computer?",
+      "answer": "Use mobile for on mobile, keep the task to one input and one output: podcast recordings to clean audio. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. clean audio usually benefits from desktop review before publishing, sending, or saving."
+    }
+  ],
+  "whoShouldUseThis": [
+    "creator newsletters who need turning video transcripts into useful email newsletter drafts.",
+    "Readers asking: How do I turn a video into a newsletter without sounding like a transcript summary?",
+    "Teams that understand this pain point: The reader has video content but needs a newsletter that reads like an email, not a transcript."
+  ],
+  "whoShouldAvoidThis": [
+    "Readers who need legal, financial, or compliance advice rather than tool comparison.",
+    "Users who want guaranteed outcomes instead of a workflow shortlist to evaluate."
+  ],
+  "finalVerdict": "The next step is to run this workflow on one real example of turning video transcripts into useful email newsletter drafts. Start with Descript, use Grammarly only if the format needs a second pass, finish with Notion AI or manual review, and do not reuse the workflow until the first result is accurate and useful.",
+  "realityCheck": "AI can speed up the work, but the user still has to review facts, shape the final result, and decide whether the workflow fits the job.",
+  "skillNeeded": "You need enough familiarity with turning video transcripts into useful email newsletter drafts to judge whether the output is accurate and useful.",
+  "firstStep": "What you need: podcast recordings, episode transcripts, guest notes, and clip requirements, a clear final format, the audience or recipient, and time to check the AI result before using it.",
+  "commonMistakes": [
+    "Over-cleaning voices",
+    "Choosing clips before audio is clear",
+    "Trusting captions without review"
+  ],
+  "mistakesToAvoid": [
+    "Do not treat Descript as the final answer without checking the result against your source material.",
+    "Do not use Grammarly or Notion AI as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+  ],
+  "whatToAvoid": [
+    "Do not treat Descript as the final answer without checking the result against your source material.",
+    "Do not use Grammarly or Notion AI as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+  ],
+  "whatChanged": "Separate transcript cleanup, newsletter angle, and email voice.",
+  "exampleWorkflow": "Prepare the real input: podcast recordings, episode transcript, guest notes. Define the target output before opening tools: clean audio or short clips. Use Descript for the first usable pass and ask it to preserve the constraints that matter in Podcast / audio editing. Check the result against the input, then use Grammarly only if the output needs a format change or stronger second pass. Finish with a human review and use Notion AI only for cleanup, export, or a lighter fallback.",
+  "exampleResult": "Example result: a checked turn video transcripts into useful email newsletter drafts output that keeps the source facts, removes filler, names the next action, and is short enough to review before sending, posting, studying, or saving.",
+  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "visualSummary": {
+    "headline": "A practical starting route for creator newsletters",
+    "points": [
+      "Start with Descript for podcasts and talking-head videos",
+      "Compare Grammarly when the workflow changes",
+      "Run a real project test before subscribing"
+    ]
+  },
+  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "freshness": "evergreen",
+  "qualityScore": 92,
+  "status": "draft",
+  "createdAt": "2026-05-29",
+  "updatedAt": "2026-05-29"
+}

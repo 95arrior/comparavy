@@ -1,0 +1,462 @@
+{
+  "slug": "how-to-make-a-weekly-meal-plan-with-ai",
+  "title": "How to Make a Weekly Meal Plan with AI",
+  "guideType": "how-to",
+  "type": "how-to",
+  "metaTitle": "How to Make a Weekly Meal Plan with AI | Comparavy",
+  "metaDescription": "Learn how to creating a weekly meal plan and grocery list. See the workflow, tools you can use, and the safest first step.",
+  "category": "General Assistant",
+  "persona": "busy households",
+  "useCase": "creating a weekly meal plan and grocery list",
+  "budgetAngle": "Prefer free or low-cost plans until the workflow proves useful on a real task.",
+  "skillLevel": "beginner",
+  "primaryKeyword": "how to make a weekly meal plan with AI",
+  "secondaryKeywords": [
+    "AI meal plan workflow",
+    "weekly meal planning AI",
+    "grocery list AI"
+  ],
+  "longTailKeywords": [
+    "how to create a weekly meal plan and grocery list with AI",
+    "AI workflow for meal planning",
+    "make a meal plan from pantry items with AI"
+  ],
+  "audience": "busy households",
+  "searchIntent": "creating a weekly meal plan and grocery list",
+  "userPain": "The reader needs a realistic plan that fits time, budget, preferences, and pantry items.",
+  "decisionQuestion": "How do I use AI for meal planning without getting unrealistic recipes?",
+  "deviceIntent": "both",
+  "desktopUseCase": "Best on a computer when planning the full week and editing the grocery list. Use desktop to compare PDFs with accurate study notes before the final review.",
+  "mobileUseCase": "Best on a phone when checking pantry items or using the shopping list in a store. Use mobile for quick checks on accurate study notes when the input is already prepared.",
+  "desktopSearchAngle": "Desktop readers usually want deeper comparison, file handling, and a deliberate review workflow for accurate study notes.",
+  "mobileSearchAngle": "Mobile readers usually want a short answer first, then a quick next step for accurate study notes they can finish in a few taps.",
+  "visualAssets": {
+    "hero": {
+      "type": "hero",
+      "alt": "How to Make a Weekly Meal Plan with AI guide visual",
+      "promptOrDescription": "Editorial guide artwork for creating a weekly meal plan and grocery list with a clean, problem-solving feel.",
+      "fileNameHint": "how-to-make-a-weekly-meal-plan-with-ai"
+    },
+    "workflow": {
+      "type": "workflow-diagram",
+      "alt": "How to Make a Weekly Meal Plan with AI workflow diagram",
+      "steps": [
+        "Quick Answer",
+        "Real-World Scenario",
+        "What You Need",
+        "Step-by-Step Workflow",
+        "Best If You Are on a Computer"
+      ]
+    },
+    "toolStack": {
+      "type": "tool-stack",
+      "alt": "How to Make a Weekly Meal Plan with AI recommended tool stack",
+      "tools": [
+        "Gemini",
+        "Microsoft Copilot",
+        "Todoist AI"
+      ]
+    },
+    "beforeAfter": {
+      "type": "before-after",
+      "alt": "How to Make a Weekly Meal Plan with AI before and after comparison",
+      "before": "Before: manual work and scattered notes for creating a weekly meal plan and grocery list.",
+      "after": "After: a faster workflow that leaves you with a clear, checked result."
+    }
+  },
+  "quickAnswer": "To handle creating a weekly meal plan and grocery list, Start with PDFs, decide that the output must be accurate study notes, use Gemini for one reviewable version, and check it before changing formats or adding another tool. Gemini should create the first reviewable version, Microsoft Copilot belongs in the second pass only when accurate study notes needs more control, and Todoist AI should be saved for review or export after the core result is right.",
+  "quickDecision": "For creating a weekly meal plan and grocery list, choose Gemini first when the input is PDFs and the output needs to be accurate study notes. Choose Microsoft Copilot when source document matters more. Choose Todoist AI when you need a lighter review, export, or fallback pass.",
+  "realWorldScenario": "busy households have PDFs and lecture slides and need accurate study notes without drifting into an unrelated workflow. Prepared 2026-05-29.",
+  "whatYouNeed": [
+    "an early version that needs structure",
+    "A clear final format for creating a weekly meal plan and grocery list.",
+    "The audience, recipient, or grading criteria for the output.",
+    "Time to check facts, names, numbers, dates, and commitments before using the result."
+  ],
+  "timeEstimate": "Plan on 10 to 30 minutes for one careful first pass, depending on the source material.",
+  "contentGap": "Most tool lists skip constraints like prep time, leftovers, and grocery trips.",
+  "uniqueAngle": "Start with constraints and pantry reality before asking for recipes.",
+  "aiOverviewAnswer": "List your constraints, pantry items, and meals needed, ask AI for a simple plan, then turn it into a grocery list you can edit.",
+  "quickVerdict": "To handle creating a weekly meal plan and grocery list, Start with PDFs, decide that the output must be accurate study notes, use Gemini for one reviewable version, and check it before changing formats or adding another tool. Gemini should create the first reviewable version, Microsoft Copilot belongs in the second pass only when accurate study notes needs more control, and Todoist AI should be saved for review or export after the core result is right.",
+  "steps": [
+    {
+      "title": "Prepare PDFs",
+      "detail": "Put the real input in one place before opening a tool: PDFs, lecture slides, class notes, research sources, creating a weekly meal plan and grocery list, any required facts, the audience, and the format you need at the end. Remove private details you are not allowed to share.",
+      "why": "AI output is only as useful as the material and constraints you give it.",
+      "output": "A clean input bundle and one clear target format: accurate study notes."
+    },
+    {
+      "title": "Ask for the first usable version",
+      "detail": "Use Gemini for a first pass that tries to create a weekly meal plan and grocery list. Ask it to preserve source facts, flag uncertainty, and organize the result into sections you can review.",
+      "why": "The first pass should create a reviewable accurate study notes, not a finished answer you trust blindly.",
+      "output": "A structured accurate study notes with visible gaps or uncertain points.",
+      "toolSlug": "gemini",
+      "toolName": "Gemini"
+    },
+    {
+      "title": "Check the answer before polishing",
+      "detail": "Compare the AI output with PDFs. Fix names, dates, numbers, unsupported claims, missing context, and tone before you ask for nicer wording.",
+      "why": "Polished wrong information is harder to catch than rough information.",
+      "output": "A corrected accurate study notes that is ready for formatting or wording cleanup."
+    },
+    {
+      "title": "Change the format only after the facts are right",
+      "detail": "Use Microsoft Copilot when the verified accurate study notes needs a different format, structure, or source-aware second pass. Keep the same facts from PDFs so the rewrite does not drift from the original.",
+      "why": "Format changes are safer after the substance is already checked.",
+      "output": "A version that fits the channel, document, post, or recipient.",
+      "toolSlug": "microsoft-copilot",
+      "toolName": "Microsoft Copilot"
+    },
+    {
+      "title": "Finish with a human review",
+      "detail": "Use Todoist AI for cleanup only after the main accurate study notes is checked against PDFs. Read the final result as the recipient would: on the device, in the app, or in the document where it will actually be used.",
+      "why": "The final review catches tone, missing context, and practical usability issues.",
+      "output": "A final result you can send, post, study from, or save with confidence.",
+      "toolSlug": "todoist-ai",
+      "toolName": "Todoist AI"
+    }
+  ],
+  "toolsYouCanUse": [
+    {
+      "toolSlug": "gemini",
+      "toolName": "Gemini",
+      "why": "Primary tool for turning PDFs into accurate study notes.",
+      "role": "Primary tool for turning PDFs into accurate study notes.",
+      "bestUseCase": "users already working in Google's ecosystem for accurate study notes"
+    },
+    {
+      "toolSlug": "microsoft-copilot",
+      "toolName": "Microsoft Copilot",
+      "why": "Second-pass tool when accurate study notes needs a different format, stronger controls, or validation.",
+      "role": "Second-pass tool when accurate study notes needs a different format, stronger controls, or validation.",
+      "bestUseCase": "everyday assistance in a Microsoft-oriented workflow when source document matters more than the top pick"
+    },
+    {
+      "toolSlug": "todoist-ai",
+      "toolName": "Todoist AI",
+      "why": "Review or finishing tool after the main output is checked.",
+      "role": "Review or finishing tool after the main output is checked.",
+      "bestUseCase": "workflows that need task planning and prioritization when speed or a lighter setup matters more for quiz questions"
+    }
+  ],
+  "keyTakeaways": [
+    "What you need: PDFs, lecture slides, class notes, a clear output format, and a few minutes to review the result.",
+    "Start with Gemini for the first pass, but judge the output against creating a weekly meal plan and grocery list, not against tool hype.",
+    "Use Microsoft Copilot only when the workflow needs a different format or second pass.",
+    "Use Todoist AI for review after the main output is fact-checked.",
+    "The reader needs a realistic plan that fits time, budget, preferences, and pantry items.",
+    "Most tool lists skip constraints like prep time, leftovers, and grocery trips.",
+    "The useful next step is to test one real example before building a repeatable workflow."
+  ],
+  "bestPicksBySituation": [
+    {
+      "situation": "If you already have PDFs, choose Gemini.",
+      "toolSlug": "gemini",
+      "toolName": "Gemini",
+      "why": "Gemini is the closest match because it is built for users already working in Google's ecosystem and keeps the work tied to PDFs."
+    },
+    {
+      "situation": "If you need section summaries or stronger source document, choose Microsoft Copilot.",
+      "toolSlug": "microsoft-copilot",
+      "toolName": "Microsoft Copilot",
+      "why": "Microsoft Copilot is the better second choice when everyday assistance in a Microsoft-oriented workflow matters more than the first tool's handling of PDFs."
+    },
+    {
+      "situation": "If you want the lightest review or export step for accurate study notes, choose Todoist AI.",
+      "toolSlug": "todoist-ai",
+      "toolName": "Todoist AI",
+      "why": "Todoist AI helps when you need workflows that need task planning and prioritization and want a fallback that is easier to adapt on a phone or desktop."
+    }
+  ],
+  "recommendedToolSlugs": [
+    "gemini",
+    "microsoft-copilot",
+    "todoist-ai",
+    "notion-ai",
+    "you-com"
+  ],
+  "recommendedTools": [
+    {
+      "toolSlug": "gemini",
+      "toolName": "Gemini",
+      "summary": "Gemini is strongest when you need users already working in Google's ecosystem and want it tied to an early version that needs structure. It handles brainstorm campaigns better than a generic assistant, but it is a weaker choice if you need you cannot validate factual answers.",
+      "bestFor": "users already working in Google's ecosystem for accurate study notes",
+      "avoidIf": "you cannot validate factual answers if your real input is an early version that needs structure",
+      "strengths": [
+        "chat",
+        "google",
+        "writing",
+        "productivity"
+      ],
+      "tradeoffs": [
+        "People needing a dedicated media production timeline",
+        "Users seeking deeply customizable automation"
+      ],
+      "toolPagePath": "/tools/gemini"
+    },
+    {
+      "toolSlug": "microsoft-copilot",
+      "toolName": "Microsoft Copilot",
+      "summary": "Microsoft Copilot is strongest when you need everyday assistance in a Microsoft-oriented workflow and want it tied to an early version that needs structure. It handles draft business text better than a generic assistant, but it is a weaker choice if you need you need a feature available only in a separate work subscription.",
+      "bestFor": "everyday assistance in a Microsoft-oriented workflow when source document matters more than the top pick",
+      "avoidIf": "you need a feature available only in a separate work subscription if your main need is the top tool's exact workflow",
+      "strengths": [
+        "chat",
+        "microsoft",
+        "productivity",
+        "writing"
+      ],
+      "tradeoffs": [
+        "Advanced creative asset editing",
+        "Custom automation pipelines"
+      ],
+      "toolPagePath": "/tools/microsoft-copilot"
+    },
+    {
+      "toolSlug": "todoist-ai",
+      "toolName": "Todoist AI",
+      "summary": "Todoist AI is strongest when you need workflows that need task planning and prioritization and want it tied to an early version that needs structure. It handles task planning and prioritization better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need task planning and prioritization when speed or a lighter setup matters more for quiz questions",
+      "avoidIf": "you need publish-ready output without review if you need the most polished or source-grounded final pass",
+      "strengths": [
+        "productivity",
+        "notes",
+        "workflow",
+        "planning"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside productivity.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/todoist-ai"
+    },
+    {
+      "toolSlug": "notion-ai",
+      "toolName": "Notion AI",
+      "summary": "Notion AI is strongest when you need teams or individuals already organizing work in Notion and want it tied to an early version that needs structure. It handles summarize meeting notes better than a generic assistant, but it is a weaker choice if you need your useful information lives outside Notion.",
+      "bestFor": "teams or individuals already organizing work in Notion when speed or a lighter setup matters more for source-backed extracts",
+      "avoidIf": "your useful information lives outside Notion if the task needs deeper review than a lightweight fallback can provide",
+      "strengths": [
+        "workspace",
+        "notes",
+        "knowledge",
+        "productivity"
+      ],
+      "tradeoffs": [
+        "People who do not want to adopt Notion",
+        "Standalone image or video generation"
+      ],
+      "toolPagePath": "/tools/notion-ai"
+    },
+    {
+      "toolSlug": "you-com",
+      "toolName": "You.com",
+      "summary": "You.com is strongest when you need workflows that need search-backed answers and lightweight assistant help and want it tied to an early version that needs structure. It handles search-backed answers and lightweight assistant help better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need search-backed answers and lightweight assistant help when speed or a lighter setup matters more for creating a weekly meal plan and grocery list",
+      "avoidIf": "you need publish-ready output without review if the workflow depends on another tool's stronger input handling or editing controls",
+      "strengths": [
+        "chat",
+        "assistant",
+        "brainstorming",
+        "writing"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside general assistant.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/you-com"
+    }
+  ],
+  "comparisonRows": [
+    {
+      "toolSlug": "gemini",
+      "toolName": "Gemini",
+      "bestFor": "users already working in Google's ecosystem for accurate study notes",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "whyConsider": "Gemini is worth considering because it is the clearest fit for creating a weekly meal plan and grocery list. It is built for users already working in Google's ecosystem, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for people needing a dedicated media production timeline; this matters when the reader is creating a weekly meal plan and grocery list."
+    },
+    {
+      "toolSlug": "microsoft-copilot",
+      "toolName": "Microsoft Copilot",
+      "bestFor": "everyday assistance in a Microsoft-oriented workflow when source document matters more than the top pick",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "whyConsider": "Microsoft Copilot is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for everyday assistance in a Microsoft-oriented workflow, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for advanced creative asset editing; this matters when the reader is creating a weekly meal plan and grocery list."
+    },
+    {
+      "toolSlug": "todoist-ai",
+      "toolName": "Todoist AI",
+      "bestFor": "workflows that need task planning and prioritization when speed or a lighter setup matters more for quiz questions",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "whyConsider": "Todoist AI is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need task planning and prioritization, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside productivity.; this matters when the reader is creating a weekly meal plan and grocery list."
+    },
+    {
+      "toolSlug": "notion-ai",
+      "toolName": "Notion AI",
+      "bestFor": "teams or individuals already organizing work in Notion when speed or a lighter setup matters more for source-backed extracts",
+      "freePlan": false,
+      "easeOfUse": "Medium setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "Notion AI is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for teams or individuals already organizing work in Notion, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for people who do not want to adopt Notion; this matters when the reader is creating a weekly meal plan and grocery list."
+    },
+    {
+      "toolSlug": "you-com",
+      "toolName": "You.com",
+      "bestFor": "workflows that need search-backed answers and lightweight assistant help when speed or a lighter setup matters more for creating a weekly meal plan and grocery list",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "You.com is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need search-backed answers and lightweight assistant help, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside general assistant.; this matters when the reader is creating a weekly meal plan and grocery list."
+    }
+  ],
+  "decisionPath": [
+    {
+      "situation": "If you already have PDFs, start with Gemini.",
+      "recommendation": "Gemini",
+      "reason": "Gemini is the first-pass choice when the input is ready and the main job is to structure, summarize, or clean it into a usable result."
+    },
+    {
+      "situation": "If accurate study notes needs a different format after the facts are checked, switch to Microsoft Copilot.",
+      "recommendation": "Microsoft Copilot",
+      "reason": "Microsoft Copilot is better for the second pass when the job changes from source checking to formatting, layout, or another presentation style."
+    },
+    {
+      "situation": "If the result is accurate but still rough, use Todoist AI.",
+      "recommendation": "Todoist AI",
+      "reason": "Todoist AI fits the review step because the main source work is already done."
+    },
+    {
+      "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
+      "recommendation": "Gemini",
+      "reason": "Mobile works best for a short summary, a quick rewrite, or final approval; save side-by-side checking and larger edits for desktop."
+    },
+    {
+      "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
+      "recommendation": "Microsoft Copilot",
+      "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
+    }
+  ],
+  "decisionTree": [
+    {
+      "situation": "If you already have PDFs, start with Gemini.",
+      "recommendation": "Gemini",
+      "reason": "Gemini is the first-pass choice when the input is ready and the main job is to structure, summarize, or clean it into a usable result."
+    },
+    {
+      "situation": "If accurate study notes needs a different format after the facts are checked, switch to Microsoft Copilot.",
+      "recommendation": "Microsoft Copilot",
+      "reason": "Microsoft Copilot is better for the second pass when the job changes from source checking to formatting, layout, or another presentation style."
+    },
+    {
+      "situation": "If the result is accurate but still rough, use Todoist AI.",
+      "recommendation": "Todoist AI",
+      "reason": "Todoist AI fits the review step because the main source work is already done."
+    },
+    {
+      "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
+      "recommendation": "Gemini",
+      "reason": "Mobile works best for a short summary, a quick rewrite, or final approval; save side-by-side checking and larger edits for desktop."
+    },
+    {
+      "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
+      "recommendation": "Microsoft Copilot",
+      "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
+    }
+  ],
+  "moneySavingTips": [
+    "Test one representative project before paying for a longer-term workflow.",
+    "Use a listed free plan when it covers the experiment you need to run.",
+    "Avoid overlapping subscriptions until one tool has proven where it saves effort."
+  ],
+  "pricingNote": "Pricing can change. Check the official site before subscribing.",
+  "pricingCaveat": "Pricing can change. Check the official site before subscribing.",
+  "faqs": [
+    {
+      "question": "What input do I need before using AI for creating a weekly meal plan and grocery list?",
+      "answer": "Start with PDFs, lecture slides, class notes and decide that the output must be accurate study notes. That keeps Gemini focused on the actual job instead of drifting into a generic answer."
+    },
+    {
+      "question": "Which tool should I start with for accurate study notes?",
+      "answer": "Start with Gemini when the main input is PDFs. Compare Microsoft Copilot when source document matters more, and keep Todoist AI for review or fallback work."
+    },
+    {
+      "question": "What should I check before I use the result?",
+      "answer": "Check the result against PDFs, especially studying from an unchecked summary. Do not use the output until it still matches accurate study notes."
+    },
+    {
+      "question": "Can I finish this workflow on a phone, or should I use a computer?",
+      "answer": "Use mobile for on mobile, keep the task to one input and one output: pdfs to accurate study notes. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. accurate study notes usually benefits from desktop review before publishing, sending, or saving."
+    }
+  ],
+  "faq": [
+    {
+      "question": "What input do I need before using AI for creating a weekly meal plan and grocery list?",
+      "answer": "Start with PDFs, lecture slides, class notes and decide that the output must be accurate study notes. That keeps Gemini focused on the actual job instead of drifting into a generic answer."
+    },
+    {
+      "question": "Which tool should I start with for accurate study notes?",
+      "answer": "Start with Gemini when the main input is PDFs. Compare Microsoft Copilot when source document matters more, and keep Todoist AI for review or fallback work."
+    },
+    {
+      "question": "What should I check before I use the result?",
+      "answer": "Check the result against PDFs, especially studying from an unchecked summary. Do not use the output until it still matches accurate study notes."
+    },
+    {
+      "question": "Can I finish this workflow on a phone, or should I use a computer?",
+      "answer": "Use mobile for on mobile, keep the task to one input and one output: pdfs to accurate study notes. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. accurate study notes usually benefits from desktop review before publishing, sending, or saving."
+    }
+  ],
+  "whoShouldUseThis": [
+    "busy households who need creating a weekly meal plan and grocery list.",
+    "Readers asking: How do I use AI for meal planning without getting unrealistic recipes?",
+    "Teams that understand this pain point: The reader needs a realistic plan that fits time, budget, preferences, and pantry items."
+  ],
+  "whoShouldAvoidThis": [
+    "Readers who need legal, financial, or compliance advice rather than tool comparison.",
+    "Users who want guaranteed outcomes instead of a workflow shortlist to evaluate."
+  ],
+  "finalVerdict": "The next step is to run this workflow on one real example of creating a weekly meal plan and grocery list. Start with Gemini, use Microsoft Copilot only if the format needs a second pass, finish with Todoist AI or manual review, and do not reuse the workflow until the first result is accurate and useful.",
+  "realityCheck": "AI can speed up the work, but the user still has to review facts, shape the final result, and decide whether the workflow fits the job.",
+  "skillNeeded": "You need enough familiarity with creating a weekly meal plan and grocery list to judge whether the output is accurate and useful.",
+  "firstStep": "What you need: an early version that needs structure, a clear final format, the audience or recipient, and time to check the AI result before using it.",
+  "commonMistakes": [
+    "Studying from an unchecked summary",
+    "Removing page context",
+    "Mixing outside sources into a closed-source assignment"
+  ],
+  "mistakesToAvoid": [
+    "Do not treat Gemini as the final answer without checking the result against your source material.",
+    "Do not use Microsoft Copilot or Todoist AI as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+  ],
+  "whatToAvoid": [
+    "Do not treat Gemini as the final answer without checking the result against your source material.",
+    "Do not use Microsoft Copilot or Todoist AI as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+  ],
+  "whatChanged": "Start with constraints and pantry reality before asking for recipes.",
+  "exampleWorkflow": "Prepare the real input: PDFs, lecture slides, class notes. Define the target output before opening tools: accurate study notes or section summaries. Use Gemini for the first usable pass and ask it to preserve the constraints that matter in Document / PDF / study notes. Check the result against the input, then use Microsoft Copilot only if the output needs a format change or stronger second pass. Finish with a human review and use Todoist AI only for cleanup, export, or a lighter fallback.",
+  "exampleResult": "Example result: a checked create a weekly meal plan and grocery list output that keeps the source facts, removes filler, names the next action, and is short enough to review before sending, posting, studying, or saving.",
+  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "visualSummary": {
+    "headline": "A practical starting route for busy households",
+    "points": [
+      "Start with Gemini for users already working in Google's ecosystem",
+      "Compare Microsoft Copilot when the workflow changes",
+      "Run a real project test before subscribing"
+    ]
+  },
+  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "freshness": "evergreen",
+  "qualityScore": 92,
+  "status": "draft",
+  "createdAt": "2026-05-29",
+  "updatedAt": "2026-05-29"
+}

@@ -1,0 +1,462 @@
+{
+  "slug": "how-to-create-a-study-quiz-from-class-notes-with-ai",
+  "title": "How to Create a Study Quiz From Class Notes with AI",
+  "guideType": "how-to",
+  "type": "how-to",
+  "metaTitle": "How to Create a Study Quiz From Class Notes with AI | Comparavy",
+  "metaDescription": "Learn how to turning class notes into practice quiz questions. See the workflow, tools you can use, and the safest first step.",
+  "category": "Research",
+  "persona": "students",
+  "useCase": "turning class notes into practice quiz questions",
+  "budgetAngle": "Prefer free or low-cost plans until the workflow proves useful on a real task.",
+  "skillLevel": "beginner",
+  "primaryKeyword": "how to create a study quiz from class notes with AI",
+  "secondaryKeywords": [
+    "AI study quiz",
+    "class notes quiz AI",
+    "quiz questions from notes"
+  ],
+  "longTailKeywords": [
+    "how to turn class notes into quiz questions with AI",
+    "AI workflow for study quizzes",
+    "make practice questions from lecture notes"
+  ],
+  "audience": "students",
+  "searchIntent": "turning class notes into practice quiz questions",
+  "userPain": "The reader wants active recall practice but only has messy notes or slides.",
+  "decisionQuestion": "How do I turn notes into quiz questions without studying wrong answers?",
+  "deviceIntent": "both",
+  "desktopUseCase": "Best on a computer when notes, slides, and quiz answers need to be checked side by side. Use desktop to compare PDFs with accurate study notes before the final review.",
+  "mobileUseCase": "Best on a phone when practicing questions between classes. Use mobile for quick checks on accurate study notes when the input is already prepared.",
+  "desktopSearchAngle": "Desktop readers usually want deeper comparison, file handling, and a deliberate review workflow for accurate study notes.",
+  "mobileSearchAngle": "Mobile readers usually want a short answer first, then a quick next step for accurate study notes they can finish in a few taps.",
+  "visualAssets": {
+    "hero": {
+      "type": "hero",
+      "alt": "How to Create a Study Quiz From Class Notes with AI guide visual",
+      "promptOrDescription": "Editorial guide artwork for turning class notes into practice quiz questions with a clean, problem-solving feel.",
+      "fileNameHint": "how-to-create-a-study-quiz-from-class-notes-with-ai"
+    },
+    "workflow": {
+      "type": "workflow-diagram",
+      "alt": "How to Create a Study Quiz From Class Notes with AI workflow diagram",
+      "steps": [
+        "Quick Answer",
+        "Real-World Scenario",
+        "What You Need",
+        "Step-by-Step Workflow",
+        "Best If You Are on a Computer"
+      ]
+    },
+    "toolStack": {
+      "type": "tool-stack",
+      "alt": "How to Create a Study Quiz From Class Notes with AI recommended tool stack",
+      "tools": [
+        "NotebookLM",
+        "Gemini",
+        "SciSpace"
+      ]
+    },
+    "beforeAfter": {
+      "type": "before-after",
+      "alt": "How to Create a Study Quiz From Class Notes with AI before and after comparison",
+      "before": "Before: manual work and scattered notes for turning class notes into practice quiz questions.",
+      "after": "After: a faster workflow that leaves you with a clear, checked result."
+    }
+  },
+  "quickAnswer": "To handle turning class notes into practice quiz questions, Start with PDFs, decide that the output must be accurate study notes, use NotebookLM for one reviewable version, and check it before changing formats or adding another tool. NotebookLM should create the first reviewable version, Gemini belongs in the second pass only when accurate study notes needs more control, and SciSpace should be saved for review or export after the core result is right.",
+  "quickDecision": "For turning class notes into practice quiz questions, choose NotebookLM first when the input is PDFs and the output needs to be accurate study notes. Choose Gemini when source document matters more. Choose SciSpace when you need a lighter review, export, or fallback pass.",
+  "realWorldScenario": "students have PDFs and lecture slides and need accurate study notes without drifting into an unrelated workflow. Prepared 2026-05-29.",
+  "whatYouNeed": [
+    "uploaded PDFs, class notes, and other source documents",
+    "A clear final format for turning class notes into practice quiz questions.",
+    "The audience, recipient, or grading criteria for the output.",
+    "Time to check facts, names, numbers, dates, and commitments before using the result."
+  ],
+  "timeEstimate": "Plan on 10 to 30 minutes for one careful first pass, depending on the source material.",
+  "contentGap": "Most tools generate questions but do not explain source checking.",
+  "uniqueAngle": "Create questions only after grounding the quiz in the source notes.",
+  "aiOverviewAnswer": "Upload or paste the notes, ask for questions by topic, check answer keys against the source, and review missed questions first.",
+  "quickVerdict": "To handle turning class notes into practice quiz questions, Start with PDFs, decide that the output must be accurate study notes, use NotebookLM for one reviewable version, and check it before changing formats or adding another tool. NotebookLM should create the first reviewable version, Gemini belongs in the second pass only when accurate study notes needs more control, and SciSpace should be saved for review or export after the core result is right.",
+  "steps": [
+    {
+      "title": "Prepare PDFs",
+      "detail": "Put the real input in one place before opening a tool: PDFs, lecture slides, class notes, research sources, turning class notes into practice quiz questions, any required facts, the audience, and the format you need at the end. Remove private details you are not allowed to share.",
+      "why": "AI output is only as useful as the material and constraints you give it.",
+      "output": "A clean input bundle and one clear target format: accurate study notes."
+    },
+    {
+      "title": "Ask for the first usable version",
+      "detail": "Use NotebookLM for a first pass that tries to turn class notes into practice quiz questions. Ask it to preserve source facts, flag uncertainty, and organize the result into sections you can review.",
+      "why": "The first pass should create a reviewable accurate study notes, not a finished answer you trust blindly.",
+      "output": "A structured accurate study notes with visible gaps or uncertain points.",
+      "toolSlug": "notebooklm",
+      "toolName": "NotebookLM"
+    },
+    {
+      "title": "Check the answer before polishing",
+      "detail": "Compare the AI output with PDFs. Fix names, dates, numbers, unsupported claims, missing context, and tone before you ask for nicer wording.",
+      "why": "Polished wrong information is harder to catch than rough information.",
+      "output": "A corrected accurate study notes that is ready for formatting or wording cleanup."
+    },
+    {
+      "title": "Change the format only after the facts are right",
+      "detail": "Use Gemini when the verified accurate study notes needs a different format, structure, or source-aware second pass. Keep the same facts from PDFs so the rewrite does not drift from the original.",
+      "why": "Format changes are safer after the substance is already checked.",
+      "output": "A version that fits the channel, document, post, or recipient.",
+      "toolSlug": "gemini",
+      "toolName": "Gemini"
+    },
+    {
+      "title": "Finish with a human review",
+      "detail": "Use SciSpace for cleanup only after the main accurate study notes is checked against PDFs. Read the final result as the recipient would: on the device, in the app, or in the document where it will actually be used.",
+      "why": "The final review catches tone, missing context, and practical usability issues.",
+      "output": "A final result you can send, post, study from, or save with confidence.",
+      "toolSlug": "scispace",
+      "toolName": "SciSpace"
+    }
+  ],
+  "toolsYouCanUse": [
+    {
+      "toolSlug": "notebooklm",
+      "toolName": "NotebookLM",
+      "why": "Primary tool for turning PDFs into accurate study notes.",
+      "role": "Primary tool for turning PDFs into accurate study notes.",
+      "bestUseCase": "working from a defined set of documents for accurate study notes"
+    },
+    {
+      "toolSlug": "gemini",
+      "toolName": "Gemini",
+      "why": "Second-pass tool when accurate study notes needs a different format, stronger controls, or validation.",
+      "role": "Second-pass tool when accurate study notes needs a different format, stronger controls, or validation.",
+      "bestUseCase": "users already working in Google's ecosystem when source document matters more than the top pick"
+    },
+    {
+      "toolSlug": "scispace",
+      "toolName": "SciSpace",
+      "why": "Review or finishing tool after the main output is checked.",
+      "role": "Review or finishing tool after the main output is checked.",
+      "bestUseCase": "workflows that need reading and explaining research papers when speed or a lighter setup matters more for quiz questions"
+    }
+  ],
+  "keyTakeaways": [
+    "What you need: PDFs, lecture slides, class notes, a clear output format, and a few minutes to review the result.",
+    "Start with NotebookLM for the first pass, but judge the output against turning class notes into practice quiz questions, not against tool hype.",
+    "Use Gemini only when the workflow needs a different format or second pass.",
+    "Use SciSpace for review after the main output is fact-checked.",
+    "The reader wants active recall practice but only has messy notes or slides.",
+    "Most tools generate questions but do not explain source checking.",
+    "The useful next step is to test one real example before building a repeatable workflow."
+  ],
+  "bestPicksBySituation": [
+    {
+      "situation": "If you already have PDFs, choose NotebookLM.",
+      "toolSlug": "notebooklm",
+      "toolName": "NotebookLM",
+      "why": "NotebookLM is the closest match because it is built for working from a defined set of documents and keeps the work tied to PDFs."
+    },
+    {
+      "situation": "If you need section summaries or stronger source document, choose Gemini.",
+      "toolSlug": "gemini",
+      "toolName": "Gemini",
+      "why": "Gemini is the better second choice when users already working in Google's ecosystem matters more than the first tool's handling of PDFs."
+    },
+    {
+      "situation": "If you want the lightest review or export step for accurate study notes, choose SciSpace.",
+      "toolSlug": "scispace",
+      "toolName": "SciSpace",
+      "why": "SciSpace helps when you need workflows that need reading and explaining research papers and want a fallback that is easier to adapt on a phone or desktop."
+    }
+  ],
+  "recommendedToolSlugs": [
+    "notebooklm",
+    "gemini",
+    "scispace",
+    "notion-ai",
+    "you-com"
+  ],
+  "recommendedTools": [
+    {
+      "toolSlug": "notebooklm",
+      "toolName": "NotebookLM",
+      "summary": "NotebookLM is strongest when you need working from a defined set of documents and want it tied to uploaded PDFs, class notes, and other source documents. It handles analyze research files better than a generic assistant, but it is a weaker choice if you need you do not have reliable source material to upload.",
+      "bestFor": "working from a defined set of documents for accurate study notes",
+      "avoidIf": "you do not have reliable source material to upload if your real input is uploaded PDFs, class notes, and other source documents",
+      "strengths": [
+        "documents",
+        "research",
+        "sources",
+        "notes"
+      ],
+      "tradeoffs": [
+        "Open-ended web discovery as the primary task",
+        "Image or video production"
+      ],
+      "toolPagePath": "/tools/notebooklm"
+    },
+    {
+      "toolSlug": "gemini",
+      "toolName": "Gemini",
+      "summary": "Gemini is strongest when you need users already working in Google's ecosystem and want it tied to uploaded PDFs, class notes, and other source documents. It handles brainstorm campaigns better than a generic assistant, but it is a weaker choice if you need you cannot validate factual answers.",
+      "bestFor": "users already working in Google's ecosystem when source document matters more than the top pick",
+      "avoidIf": "you cannot validate factual answers if your main need is the top tool's exact workflow",
+      "strengths": [
+        "chat",
+        "google",
+        "writing",
+        "productivity"
+      ],
+      "tradeoffs": [
+        "People needing a dedicated media production timeline",
+        "Users seeking deeply customizable automation"
+      ],
+      "toolPagePath": "/tools/gemini"
+    },
+    {
+      "toolSlug": "scispace",
+      "toolName": "SciSpace",
+      "summary": "SciSpace is strongest when you need workflows that need reading and explaining research papers and want it tied to uploaded PDFs, class notes, and other source documents. It handles reading and explaining research papers better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need reading and explaining research papers when speed or a lighter setup matters more for quiz questions",
+      "avoidIf": "you need publish-ready output without review if you need the most polished or source-grounded final pass",
+      "strengths": [
+        "research",
+        "sources",
+        "search",
+        "analysis"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside research.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/scispace"
+    },
+    {
+      "toolSlug": "notion-ai",
+      "toolName": "Notion AI",
+      "summary": "Notion AI is strongest when you need teams or individuals already organizing work in Notion and want it tied to uploaded PDFs, class notes, and other source documents. It handles summarize meeting notes better than a generic assistant, but it is a weaker choice if you need your useful information lives outside Notion.",
+      "bestFor": "teams or individuals already organizing work in Notion when speed or a lighter setup matters more for source-backed extracts",
+      "avoidIf": "your useful information lives outside Notion if the task needs deeper review than a lightweight fallback can provide",
+      "strengths": [
+        "workspace",
+        "notes",
+        "knowledge",
+        "productivity"
+      ],
+      "tradeoffs": [
+        "People who do not want to adopt Notion",
+        "Standalone image or video generation"
+      ],
+      "toolPagePath": "/tools/notion-ai"
+    },
+    {
+      "toolSlug": "you-com",
+      "toolName": "You.com",
+      "summary": "You.com is strongest when you need workflows that need search-backed answers and lightweight assistant help and want it tied to uploaded PDFs, class notes, and other source documents. It handles search-backed answers and lightweight assistant help better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need search-backed answers and lightweight assistant help when speed or a lighter setup matters more for turning class notes into practice quiz questions",
+      "avoidIf": "you need publish-ready output without review if the workflow depends on another tool's stronger input handling or editing controls",
+      "strengths": [
+        "chat",
+        "assistant",
+        "brainstorming",
+        "writing"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside general assistant.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/you-com"
+    }
+  ],
+  "comparisonRows": [
+    {
+      "toolSlug": "notebooklm",
+      "toolName": "NotebookLM",
+      "bestFor": "working from a defined set of documents for accurate study notes",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "whyConsider": "NotebookLM is worth considering because it is the clearest fit for turning class notes into practice quiz questions. It is built for working from a defined set of documents, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for open-ended web discovery as the primary task; this matters when the reader is turning class notes into practice quiz questions."
+    },
+    {
+      "toolSlug": "gemini",
+      "toolName": "Gemini",
+      "bestFor": "users already working in Google's ecosystem when source document matters more than the top pick",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "whyConsider": "Gemini is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for users already working in Google's ecosystem, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for people needing a dedicated media production timeline; this matters when the reader is turning class notes into practice quiz questions."
+    },
+    {
+      "toolSlug": "scispace",
+      "toolName": "SciSpace",
+      "bestFor": "workflows that need reading and explaining research papers when speed or a lighter setup matters more for quiz questions",
+      "freePlan": true,
+      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "whyConsider": "SciSpace is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need reading and explaining research papers, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside research.; this matters when the reader is turning class notes into practice quiz questions."
+    },
+    {
+      "toolSlug": "notion-ai",
+      "toolName": "Notion AI",
+      "bestFor": "teams or individuals already organizing work in Notion when speed or a lighter setup matters more for source-backed extracts",
+      "freePlan": false,
+      "easeOfUse": "Medium setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "Notion AI is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for teams or individuals already organizing work in Notion, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for people who do not want to adopt Notion; this matters when the reader is turning class notes into practice quiz questions."
+    },
+    {
+      "toolSlug": "you-com",
+      "toolName": "You.com",
+      "bestFor": "workflows that need search-backed answers and lightweight assistant help when speed or a lighter setup matters more for turning class notes into practice quiz questions",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "You.com is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need search-backed answers and lightweight assistant help, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside general assistant.; this matters when the reader is turning class notes into practice quiz questions."
+    }
+  ],
+  "decisionPath": [
+    {
+      "situation": "If you already have PDFs, start with NotebookLM.",
+      "recommendation": "NotebookLM",
+      "reason": "NotebookLM is the first-pass choice when the input is ready and the main job is to structure, summarize, or clean it into a usable result."
+    },
+    {
+      "situation": "If accurate study notes needs a different format after the facts are checked, switch to Gemini.",
+      "recommendation": "Gemini",
+      "reason": "Gemini is better for the second pass when the job changes from source checking to formatting, layout, or another presentation style."
+    },
+    {
+      "situation": "If the result is accurate but still rough, use SciSpace.",
+      "recommendation": "SciSpace",
+      "reason": "SciSpace fits the review step because the main source work is already done."
+    },
+    {
+      "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
+      "recommendation": "NotebookLM",
+      "reason": "Mobile works best for a short summary, a quick rewrite, or final approval; save side-by-side checking and larger edits for desktop."
+    },
+    {
+      "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
+      "recommendation": "Gemini",
+      "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
+    }
+  ],
+  "decisionTree": [
+    {
+      "situation": "If you already have PDFs, start with NotebookLM.",
+      "recommendation": "NotebookLM",
+      "reason": "NotebookLM is the first-pass choice when the input is ready and the main job is to structure, summarize, or clean it into a usable result."
+    },
+    {
+      "situation": "If accurate study notes needs a different format after the facts are checked, switch to Gemini.",
+      "recommendation": "Gemini",
+      "reason": "Gemini is better for the second pass when the job changes from source checking to formatting, layout, or another presentation style."
+    },
+    {
+      "situation": "If the result is accurate but still rough, use SciSpace.",
+      "recommendation": "SciSpace",
+      "reason": "SciSpace fits the review step because the main source work is already done."
+    },
+    {
+      "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
+      "recommendation": "NotebookLM",
+      "reason": "Mobile works best for a short summary, a quick rewrite, or final approval; save side-by-side checking and larger edits for desktop."
+    },
+    {
+      "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
+      "recommendation": "Gemini",
+      "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
+    }
+  ],
+  "moneySavingTips": [
+    "Test one representative project before paying for a longer-term workflow.",
+    "Use a listed free plan when it covers the experiment you need to run.",
+    "Avoid overlapping subscriptions until one tool has proven where it saves effort."
+  ],
+  "pricingNote": "Pricing can change. Check the official site before subscribing.",
+  "pricingCaveat": "Pricing can change. Check the official site before subscribing.",
+  "faqs": [
+    {
+      "question": "What input do I need before using AI for turning class notes into practice quiz questions?",
+      "answer": "Start with PDFs, lecture slides, class notes and decide that the output must be accurate study notes. That keeps NotebookLM focused on the actual job instead of drifting into a generic answer."
+    },
+    {
+      "question": "Which tool should I start with for accurate study notes?",
+      "answer": "Start with NotebookLM when the main input is PDFs. Compare Gemini when source document matters more, and keep SciSpace for review or fallback work."
+    },
+    {
+      "question": "What should I check before I use the result?",
+      "answer": "Check the result against PDFs, especially studying from an unchecked summary. Do not use the output until it still matches accurate study notes."
+    },
+    {
+      "question": "Can I finish this workflow on a phone, or should I use a computer?",
+      "answer": "Use mobile for on mobile, keep the task to one input and one output: pdfs to accurate study notes. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. accurate study notes usually benefits from desktop review before publishing, sending, or saving."
+    }
+  ],
+  "faq": [
+    {
+      "question": "What input do I need before using AI for turning class notes into practice quiz questions?",
+      "answer": "Start with PDFs, lecture slides, class notes and decide that the output must be accurate study notes. That keeps NotebookLM focused on the actual job instead of drifting into a generic answer."
+    },
+    {
+      "question": "Which tool should I start with for accurate study notes?",
+      "answer": "Start with NotebookLM when the main input is PDFs. Compare Gemini when source document matters more, and keep SciSpace for review or fallback work."
+    },
+    {
+      "question": "What should I check before I use the result?",
+      "answer": "Check the result against PDFs, especially studying from an unchecked summary. Do not use the output until it still matches accurate study notes."
+    },
+    {
+      "question": "Can I finish this workflow on a phone, or should I use a computer?",
+      "answer": "Use mobile for on mobile, keep the task to one input and one output: pdfs to accurate study notes. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. accurate study notes usually benefits from desktop review before publishing, sending, or saving."
+    }
+  ],
+  "whoShouldUseThis": [
+    "students who need turning class notes into practice quiz questions.",
+    "Readers asking: How do I turn notes into quiz questions without studying wrong answers?",
+    "Teams that understand this pain point: The reader wants active recall practice but only has messy notes or slides."
+  ],
+  "whoShouldAvoidThis": [
+    "Readers who need legal, financial, or compliance advice rather than tool comparison.",
+    "Users who want guaranteed outcomes instead of a workflow shortlist to evaluate."
+  ],
+  "finalVerdict": "The next step is to run this workflow on one real example of turning class notes into practice quiz questions. Start with NotebookLM, use Gemini only if the format needs a second pass, finish with SciSpace or manual review, and do not reuse the workflow until the first result is accurate and useful.",
+  "realityCheck": "AI can speed up the work, but the user still has to review facts, shape the final result, and decide whether the workflow fits the job.",
+  "skillNeeded": "You need enough familiarity with turning class notes into practice quiz questions to judge whether the output is accurate and useful.",
+  "firstStep": "What you need: uploaded PDFs, class notes, and other source documents, a clear final format, the audience or recipient, and time to check the AI result before using it.",
+  "commonMistakes": [
+    "Studying from an unchecked summary",
+    "Removing page context",
+    "Mixing outside sources into a closed-source assignment"
+  ],
+  "mistakesToAvoid": [
+    "Do not treat NotebookLM as the final answer without checking the result against your source material.",
+    "Do not use Gemini or SciSpace as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+  ],
+  "whatToAvoid": [
+    "Do not treat NotebookLM as the final answer without checking the result against your source material.",
+    "Do not use Gemini or SciSpace as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+  ],
+  "whatChanged": "Create questions only after grounding the quiz in the source notes.",
+  "exampleWorkflow": "Prepare the real input: PDFs, lecture slides, class notes. Define the target output before opening tools: accurate study notes or section summaries. Use NotebookLM for the first usable pass and ask it to preserve the constraints that matter in Document / PDF / study notes. Check the result against the input, then use Gemini only if the output needs a format change or stronger second pass. Finish with a human review and use SciSpace only for cleanup, export, or a lighter fallback.",
+  "exampleResult": "Example result: a checked turn class notes into practice quiz questions output that keeps the source facts, removes filler, names the next action, and is short enough to review before sending, posting, studying, or saving.",
+  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "visualSummary": {
+    "headline": "A practical starting route for students",
+    "points": [
+      "Start with NotebookLM for working from a defined set of documents",
+      "Compare Gemini when the workflow changes",
+      "Run a real project test before subscribing"
+    ]
+  },
+  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "freshness": "evergreen",
+  "qualityScore": 92,
+  "status": "draft",
+  "createdAt": "2026-05-29",
+  "updatedAt": "2026-05-29"
+}
