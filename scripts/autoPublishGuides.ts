@@ -181,8 +181,35 @@ const PUBLISH_THRESHOLD = 85;
 const MAX_CANDIDATES_PER_RUN = 12;
 const MAX_CANDIDATES_PER_SLOT = 6;
 const MAX_IMPROVE_ATTEMPTS_PER_CANDIDATE = 2;
+const LOW_AI_SCORE_RETRY_CUTOFF = 60;
+const AVOID_BY_DEFAULT_GOLD_BRIEF_SLUGS = new Set([
+  "how-to-summarize-a-pdf-into-study-notes-with-ai",
+  "best-ai-tools-for-summarizing-pdfs-into-study-notes",
+]);
+const PREFERRED_GOLD_BRIEF_ORDER = new Map<string, number>([
+  ["how-to-turn-meeting-notes-into-a-client-recap-with-ai", 0],
+  ["how-to-turn-a-blog-post-into-an-instagram-carousel-with-ai", 1],
+  ["how-to-write-etsy-product-descriptions-with-ai", 2],
+  ["how-to-write-real-estate-listing-descriptions-with-ai", 3],
+  ["how-to-clean-podcast-audio-and-make-short-clips-with-ai", 4],
+  ["best-ai-tools-for-turning-meeting-notes-into-client-recaps", 5],
+  ["best-ai-tools-for-instagram-carousel-posts-from-blog-content", 6],
+  ["best-ai-tools-for-etsy-product-descriptions", 7],
+  ["best-ai-tools-for-real-estate-listing-descriptions", 8],
+  ["best-ai-tools-for-podcast-clips-and-video-podcast-repurposing", 9],
+]);
 const DEVICE_SECTION_PLACEHOLDER_PATTERN =
   /\b(placeholder|lorem ipsum|tbd|todo|coming soon|best on mobile|best on desktop|quick checks|wider workspace|on the go)\b/i;
+const UNSUPPORTED_TESTING_CLAIM_PATTERN =
+  /\b(?:we tested|i tested|tested by us|hands-on tested|after testing|our testing)\b/gi;
+const PLACEHOLDER_REPAIR_PATTERNS = [
+  { label: "first draft", pattern: /\bfirst draft\b/gi, replacement: "reviewable version" },
+  { label: "selected for this guide", pattern: /\bselected for this guide\b/gi, replacement: "matched to this workflow" },
+  { label: "core workflow", pattern: /\bcore workflow\b/gi, replacement: "main workflow" },
+  { label: "useful for this use case", pattern: /\buseful for this use case\b/gi, replacement: "useful for this task" },
+  { label: "Use mobile for on mobile", pattern: /\bUse mobile for on mobile\b/g, replacement: "Use mobile for quick review" },
+  { label: "Learn how to turning", pattern: /\bLearn how to turning\b/gi, replacement: "Learn how to turn" },
+] as const;
 
 function parseNonNegativeInteger(value: string | undefined, option: string): number {
   const parsed = Number(value);
@@ -341,6 +368,138 @@ const GENERIC_FAQ_QUESTIONS = [
 
 function normalizeForGuardrail(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function normalizeTitleForCollision(value: string): string {
+  return normalizeForGuardrail(value)
+    .split(" ")
+    .filter((term) =>
+      term.length > 1 &&
+      ![
+        "a",
+        "an",
+        "and",
+        "ai",
+        "best",
+        "for",
+        "from",
+        "how",
+        "into",
+        "the",
+        "to",
+        "tools",
+        "using",
+        "with",
+      ].includes(term),
+    )
+    .map((term) =>
+      term
+        .replace(/ies$/, "y")
+        .replace(/s$/, ""),
+    )
+    .join(" ");
+}
+
+function titlesCollide(left: string, right: string): boolean {
+  const normalizedLeft = normalizeTitleForCollision(left);
+  const normalizedRight = normalizeTitleForCollision(right);
+
+  if (!normalizedLeft || !normalizedRight) {
+    return false;
+  }
+
+  if (normalizedLeft === normalizedRight) {
+    return true;
+  }
+
+  const leftTerms = new Set(normalizedLeft.split(" ").filter(Boolean));
+  const rightTerms = new Set(normalizedRight.split(" ").filter(Boolean));
+  const shared = [...leftTerms].filter((term) => rightTerms.has(term)).length;
+  const denominator = Math.max(leftTerms.size, rightTerms.size, 1);
+
+  return shared / denominator >= 0.8;
+}
+
+function guideTitleCollision(brief: GuideGoldBrief, existingGuides: readonly Guide[]): Guide | undefined {
+  return existingGuides.find((guide) =>
+    titlesCollide(brief.title, guide.title) &&
+    (guide.slug !== brief.slug || guide.status === "published" || guide.status === "approved"),
+  );
+}
+
+function sanitizeTextForReview(value: string): { readonly value: string; readonly actions: readonly string[] } {
+  let repaired = value;
+  const actions: string[] = [];
+
+  UNSUPPORTED_TESTING_CLAIM_PATTERN.lastIndex = 0;
+  if (UNSUPPORTED_TESTING_CLAIM_PATTERN.test(repaired)) {
+    repaired = repaired.replace(UNSUPPORTED_TESTING_CLAIM_PATTERN, "").replace(/\s+/g, " ");
+    actions.push("Removed unsupported testing claim.");
+  }
+
+  for (const repair of PLACEHOLDER_REPAIR_PATTERNS) {
+    repair.pattern.lastIndex = 0;
+    if (repair.pattern.test(repaired)) {
+      repaired = repaired.replace(repair.pattern, repair.replacement).replace(/\s+/g, " ");
+      actions.push(`Repaired placeholder phrase: ${repair.label}.`);
+    }
+  }
+
+  return {
+    value: repaired.trim(),
+    actions,
+  };
+}
+
+function sanitizeValueForReview(value: unknown, actions: string[]): unknown {
+  if (typeof value === "string") {
+    const sanitized = sanitizeTextForReview(value);
+    actions.push(...sanitized.actions);
+    return sanitized.value;
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .map((entry) => sanitizeValueForReview(entry, actions))
+      .filter((entry) => !(typeof entry === "string" && entry.trim().length === 0));
+  }
+
+  if (isPlainRecord(value)) {
+    const sanitized: Record<string, unknown> = {};
+
+    for (const [key, entry] of Object.entries(value)) {
+      if (key === "testingClaims") {
+        const before = JSON.stringify(entry);
+        const repaired = sanitizeValueForReview(entry, actions);
+        const entries = Array.isArray(repaired) ? repaired.filter((item) => hasTextValue(item)) : repaired;
+
+        if (before !== JSON.stringify(entries)) {
+          actions.push("Removed unsupported testing claim.");
+        }
+
+        sanitized[key] = entries;
+        continue;
+      }
+
+      sanitized[key] = sanitizeValueForReview(entry, actions);
+    }
+
+    return sanitized;
+  }
+
+  return value;
+}
+
+function sanitizeGuideBeforeReview(guide: Guide): Guide {
+  const actions: string[] = [];
+  const sanitized = sanitizeValueForReview(guide, actions) as Guide;
+  const uniqueActions = actions.filter((action, index, all) => all.indexOf(action) === index);
+
+  for (const action of uniqueActions) {
+    console.log(`[${guide.slug}] ${action}`);
+  }
+
+  return sanitized;
 }
 
 function repeatedFieldValues(values: readonly string[]): string[] {
@@ -2103,24 +2262,25 @@ async function improveGuideWithAI(
     }
 
     const merged = mergeImprovedGuide(guide, parseGuideJsonText(text));
-    const validationIssues = validateGuideContent(merged.guide);
+    const sanitizedGuide = sanitizeGuideBeforeReview(merged.guide);
+    const validationIssues = validateGuideContent(sanitizedGuide);
 
     if (validationIssues.length > 0) {
       logImprovedGuideValidationFailure({
         slug: guide.slug,
         original: guide,
         patchRecord: merged.patchRecord,
-        mergedGuide: merged.guide,
+        mergedGuide: sanitizedGuide,
         restoredFields: merged.restoredFields,
         issues: validationIssues,
       });
-      assertGuideContentQuality(merged.guide, guide.slug);
+      assertGuideContentQuality(sanitizedGuide, guide.slug);
     }
 
     console.log(
       `[${guide.slug}] Improvement merge restored fields: ${merged.restoredFields.join(", ") || "None"}`,
     );
-    return merged.guide;
+    return sanitizedGuide;
   }
 
   throw new Error(lastFailure);
@@ -2396,7 +2556,7 @@ async function reviewAndImproveCandidate({
   readonly slot: GuideLayoutType;
   readonly openAIReviewPolicy: OpenAIReviewPolicy;
 }): Promise<Candidate> {
-  let currentGuide = guide;
+  let currentGuide = sanitizeGuideBeforeReview(guide);
   const selectedTools = scoreToolsForTopic(topic).filter(({ tool }) =>
     currentGuide.recommendedToolSlugs.includes(tool.slug),
   );
@@ -2436,10 +2596,18 @@ async function reviewAndImproveCandidate({
   );
   let improveAttempts = 0;
   let improvementFailureReason: string | undefined;
+  let skipFurtherImprovementForLowScore = aiReview.available && aiReview.score < LOW_AI_SCORE_RETRY_CUTOFF;
+
+  if (skipFurtherImprovementForLowScore) {
+    console.log(
+      `[${topic.slug}] AI review score ${aiReview.score}/100 is below ${LOW_AI_SCORE_RETRY_CUTOFF}; skipping improvement retries for this topic in this run.`,
+    );
+  }
 
   while (
     rejectionReasons.length > 0 &&
     openAIReviewPolicy.mode === "enabled" &&
+    !skipFurtherImprovementForLowScore &&
     improveAttempts < MAX_IMPROVE_ATTEMPTS_PER_CANDIDATE
   ) {
     improveAttempts += 1;
@@ -2489,6 +2657,14 @@ async function reviewAndImproveCandidate({
       aiReview,
       threshold,
     );
+    skipFurtherImprovementForLowScore = aiReview.available && aiReview.score < LOW_AI_SCORE_RETRY_CUTOFF;
+
+    if (skipFurtherImprovementForLowScore) {
+      console.log(
+        `[${topic.slug}] AI review score ${aiReview.score}/100 is below ${LOW_AI_SCORE_RETRY_CUTOFF} after improvement; trying the next gold brief.`,
+      );
+      break;
+    }
   }
 
   return {
@@ -2550,6 +2726,13 @@ function sortByPriorityDesc<T extends { readonly priority: number; readonly slug
   return right.priority - left.priority || left.slug.localeCompare(right.slug);
 }
 
+function sortGoldBriefsForQueue(left: GuideGoldBrief, right: GuideGoldBrief): number {
+  const leftPreferred = PREFERRED_GOLD_BRIEF_ORDER.get(left.slug) ?? Number.POSITIVE_INFINITY;
+  const rightPreferred = PREFERRED_GOLD_BRIEF_ORDER.get(right.slug) ?? Number.POSITIVE_INFINITY;
+
+  return leftPreferred - rightPreferred || sortByPriorityDesc(left, right);
+}
+
 function sortByUpdatedAtAsc(left: Guide, right: Guide): number {
   return left.updatedAt.localeCompare(right.updatedAt) || left.slug.localeCompare(right.slug);
 }
@@ -2565,6 +2748,7 @@ function guideGoldBriefBySlug(slug: string): GuideGoldBrief | undefined {
 function selectQueueCandidates(
   options: AutoPublishOptions,
   existingBlockedSlugs: ReadonlySet<string>,
+  existingGuides: readonly Guide[],
   count: number,
 ): QueueSelection[] {
   const selections: QueueSelection[] = [];
@@ -2573,8 +2757,27 @@ function selectQueueCandidates(
   const goldBriefs = guideGoldBriefs
     .filter((brief) => brief.status === "active")
     .filter((brief) => options.type === "mixed" || brief.guideType === options.type)
-    .filter((brief) => !existingBlockedSlugs.has(brief.slug))
-    .sort(sortByPriorityDesc);
+    .filter((brief) => {
+      if (existingBlockedSlugs.has(brief.slug)) {
+        console.log(`[${brief.slug}] Skipped gold brief: approved or published guide already exists with this slug.`);
+        return false;
+      }
+
+      if (AVOID_BY_DEFAULT_GOLD_BRIEF_SLUGS.has(brief.slug)) {
+        console.log(`[${brief.slug}] Skipped gold brief: temporarily avoided because this topic is failing repeatedly.`);
+        return false;
+      }
+
+      const collision = guideTitleCollision(brief, existingGuides);
+
+      if (collision) {
+        console.log(`[${brief.slug}] Skipped gold brief: title collides with existing guide ${collision.slug}.`);
+        return false;
+      }
+
+      return true;
+    })
+    .sort(sortGoldBriefsForQueue);
 
   if (options.type === "mixed") {
     const howToBriefs = goldBriefs.filter((brief) => brief.guideType === "how-to");
@@ -2778,21 +2981,33 @@ async function main(): Promise<void> {
     }
   }
 
+  const queueSlotCount = Math.max(1, targetSlots(options.type, Math.max(approvalTarget, 1)).length);
+  const generationSelectionTarget =
+    approvalTarget > 0 && approvedQueueBeforeRun.length === 0
+      ? Math.min(MAX_CANDIDATES_PER_RUN, Math.max(approvalTarget, queueSlotCount * MAX_CANDIDATES_PER_SLOT))
+      : approvalTarget;
+  const desiredNewApprovals =
+    options.publish && approvedQueueBeforeRun.length === 0 && approvalTarget > 0
+      ? 1
+      : approvalTarget;
+  const failedTopicSlugsThisRun = new Set<string>();
   const generationSelections = selectQueueCandidates(
     options,
     existingBlockedSlugs,
-    approvalTarget,
+    existingGuides,
+    generationSelectionTarget,
   );
 
-  if (generationSelections.length < approvalTarget && options.allowGenericTopics) {
+  if (generationSelections.length < generationSelectionTarget && options.allowGenericTopics) {
     genericFallbackUsed = true;
   }
 
-  if (!options.allowGenericTopics && generationSelections.length < approvalTarget) {
+  if (!options.allowGenericTopics && generationSelections.length < generationSelectionTarget) {
     console.log(
       `Gold briefs available for generation: ${generationSelections.length}; no generic fallback used.`,
     );
   }
+  console.log(`Gold brief queue candidates selected: ${generationSelections.length}`);
 
   const generationAvoidToolSlugs = new Set<string>(
     existingGuides
@@ -2802,6 +3017,16 @@ async function main(): Promise<void> {
   );
 
   for (const selection of generationSelections) {
+    if (desiredNewApprovals > 0 && newlyApproved.length >= desiredNewApprovals) {
+      console.log(`Approved generation target met after ${newlyApproved.length} approved guide(s); stopping candidate generation.`);
+      break;
+    }
+
+    if (failedTopicSlugsThisRun.has(selection.topic.slug)) {
+      console.log(`[${selection.topic.slug}] Skipped this run: topic already failed earlier in the run.`);
+      continue;
+    }
+
     const brief = selection.brief ?? guideGoldBriefBySlug(selection.topic.slug);
     const draft = buildGuideFromSelection(selection, "draft", generationAvoidToolSlugs);
     const candidate = await reviewAndImproveCandidate({
@@ -2848,6 +3073,13 @@ async function main(): Promise<void> {
     } else {
       rejectedGuides.push(finalGuide);
       console.log(`[${finalGuide.slug}] Rejected; AI review score or deterministic checks were below threshold.`);
+    }
+
+    if (candidate.aiReview.available && candidate.aiReview.score < LOW_AI_SCORE_RETRY_CUTOFF) {
+      failedTopicSlugsThisRun.add(selection.topic.slug);
+      console.log(
+        `[${selection.topic.slug}] Marked failed for this run after AI score ${candidate.aiReview.score}/100; trying the next gold brief.`,
+      );
     }
 
     console.log(
@@ -2898,7 +3130,7 @@ async function main(): Promise<void> {
   console.log("Auto publish summary:");
   console.log(`Approved guides available before run: ${approvedQueueBeforeRun.length}`);
   console.log(`Approved guides published: ${publishedThisRun.length}`);
-  console.log(`New gold brief candidates generated: ${generationSelections.filter((entry) => entry.source === "gold").length}`);
+  console.log(`New gold brief candidates generated: ${generatedSummaries.filter((entry) => entry.source === "gold").length}`);
   console.log(`Generic fallback used: ${options.allowGenericTopics && genericFallbackUsed ? "yes" : "no"}`);
   console.log(`Candidates sent to AI review: ${candidatesSentToAiReview}`);
   console.log("AI review scores:");
