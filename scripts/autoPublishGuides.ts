@@ -41,8 +41,9 @@ import { getApprovedGuides, getPublishedGuides } from "@/lib/guides";
 import { scoreToolsForTopic } from "@/lib/topicScoring";
 import {
   GUIDES_DIRECTORY,
-  GUIDE_SCHEMA,
+  type ArticleOutline,
   createArticleOutline,
+  type EditorialBrief,
   createEditorialBrief,
   createTemplateGuide,
   getExistingGuides,
@@ -78,6 +79,7 @@ interface Candidate {
   readonly finalStatus: CandidateFinalStatus;
   readonly slot: GuideLayoutType;
   readonly failureCategories: readonly string[];
+  readonly improvementFailureReason?: string;
 }
 
 type CandidateFinalStatus = "rejected" | "draft" | "approved" | "would publish" | "published";
@@ -130,6 +132,31 @@ interface SlotReport {
 interface OpenAIReviewPolicy {
   readonly mode: "enabled" | "skipped-local" | "unavailable";
   readonly unavailableReason?: string;
+}
+
+interface ImprovementRequestInput {
+  readonly attempt: number;
+  readonly failedGuideType: GuideLayoutType;
+  readonly warnings: readonly string[];
+  readonly failureCategories: readonly string[];
+  readonly specificFixes: readonly string[];
+  readonly editorialBrief: unknown;
+  readonly articleOutline: unknown;
+  readonly guideTypeStandard: string;
+  readonly localEditorialRules: unknown;
+  readonly failedDraft: unknown;
+  readonly strategy: readonly string[];
+}
+
+interface OpenAIImprovementFailure {
+  readonly model: string;
+  readonly requestType: string;
+  readonly status: number;
+  readonly category: string;
+  readonly safeMessage: string;
+  readonly responseFormatUsed: boolean;
+  readonly reasoningEffortUsed: boolean;
+  readonly payloadTruncated: boolean;
 }
 
 const DEFAULT_COUNT = 2;
@@ -1255,6 +1282,283 @@ function preferredGuideModels(): string[] {
   );
 }
 
+function truncateForOpenAI(value: string, maxLength: number): { readonly value: string; readonly truncated: boolean } {
+  if (value.length <= maxLength) {
+    return { value, truncated: false };
+  }
+
+  return {
+    value: `${value.slice(0, maxLength)}\n[truncated for OpenAI improvement request]`,
+    truncated: true,
+  };
+}
+
+function compactList(values: readonly string[], maxItems: number, maxLength: number): { readonly values: string[]; readonly truncated: boolean } {
+  let truncated = values.length > maxItems;
+  const compacted = values.slice(0, maxItems).map((value) => {
+    const result = truncateForOpenAI(value.replace(/\s+/g, " ").trim(), maxLength);
+    truncated ||= result.truncated;
+    return result.value;
+  });
+
+  return { values: compacted, truncated };
+}
+
+function compactEditorialBriefForImprovement(editorialBrief: EditorialBrief): unknown {
+  return {
+    guideType: editorialBrief.guideType,
+    targetReader: editorialBrief.targetReader,
+    searchIntent: editorialBrief.searchIntent,
+    userPain: editorialBrief.userPain,
+    realWorldScenario: editorialBrief.realWorldScenario,
+    jobToBeDone: editorialBrief.jobToBeDone,
+    primaryKeyword: editorialBrief.primaryKeyword,
+    longTailKeywords: editorialBrief.longTailKeywords,
+    deviceIntent: editorialBrief.deviceIntent,
+    mobileScenario: editorialBrief.mobileScenario,
+    desktopScenario: editorialBrief.desktopScenario,
+    whatTheReaderNeedsInFirst100Words: editorialBrief.whatTheReaderNeedsInFirst100Words,
+    whatThisArticleMustNotDo: editorialBrief.whatThisArticleMustNotDo,
+    coreWorkflow: editorialBrief.coreWorkflow,
+    toolRoleMap: editorialBrief.toolRoleMap,
+    decisionCriteria: editorialBrief.decisionCriteria,
+    examplesToInclude: editorialBrief.examplesToInclude,
+    commonMistakesToWarnAbout: editorialBrief.commonMistakesToWarnAbout,
+    FAQQuestions: editorialBrief.FAQQuestions,
+    nextStepCTA: editorialBrief.nextStepCTA,
+    guideTypeStandard: editorialBrief.guideTypeStandard,
+    editorialBlueprint: {
+      topicBucket: editorialBrief.editorialBlueprint.topicBucket,
+      inputMaterial: editorialBrief.editorialBlueprint.inputMaterial,
+      desiredOutput: editorialBrief.editorialBlueprint.desiredOutput,
+      first100WordsAnswer: editorialBrief.editorialBlueprint.first100WordsAnswer,
+      workflowSteps: editorialBrief.editorialBlueprint.workflowSteps,
+      mobileWorkflow: editorialBrief.editorialBlueprint.mobileWorkflow,
+      desktopWorkflow: editorialBrief.editorialBlueprint.desktopWorkflow,
+      toolRoleMap: editorialBrief.editorialBlueprint.toolRoleMap,
+      decisionPath: editorialBrief.editorialBlueprint.decisionPath,
+      comparisonCriteria: editorialBrief.editorialBlueprint.comparisonCriteria,
+      exampleResult: editorialBrief.editorialBlueprint.exampleResult,
+      commonMistakes: editorialBrief.editorialBlueprint.commonMistakes,
+      faqQuestions: editorialBrief.editorialBlueprint.faqQuestions,
+      allowedTerms: editorialBrief.editorialBlueprint.categoryLanguage.allowedVocabulary,
+      bannedMismatchedTerms: editorialBrief.editorialBlueprint.bannedMismatchedTerms,
+      topicSpecificTerms: editorialBrief.editorialBlueprint.topicSpecificTerms,
+    },
+  };
+}
+
+function compactGuideForImprovement(guide: Guide): unknown {
+  return {
+    slug: guide.slug,
+    title: guide.title,
+    guideType: guide.guideType,
+    type: guide.type,
+    metaTitle: guide.metaTitle,
+    metaDescription: guide.metaDescription,
+    category: guide.category,
+    primaryKeyword: guide.primaryKeyword,
+    secondaryKeywords: guide.secondaryKeywords,
+    longTailKeywords: guide.longTailKeywords,
+    audience: guide.audience,
+    searchIntent: guide.searchIntent,
+    userPain: guide.userPain,
+    decisionQuestion: guide.decisionQuestion,
+    deviceIntent: guide.deviceIntent,
+    desktopUseCase: guide.desktopUseCase,
+    mobileUseCase: guide.mobileUseCase,
+    quickAnswer: guide.quickAnswer,
+    quickVerdict: guide.quickVerdict,
+    quickDecision: guide.quickDecision,
+    realWorldScenario: guide.realWorldScenario,
+    whatYouNeed: guide.whatYouNeed,
+    aiOverviewAnswer: guide.aiOverviewAnswer,
+    steps: guide.steps,
+    toolsYouCanUse: guide.toolsYouCanUse,
+    keyTakeaways: guide.keyTakeaways,
+    bestPicksBySituation: guide.bestPicksBySituation,
+    recommendedToolSlugs: guide.recommendedToolSlugs,
+    recommendedTools: guide.recommendedTools,
+    comparisonRows: guide.comparisonRows,
+    decisionPath: guide.decisionPath,
+    whoShouldUseThis: guide.whoShouldUseThis,
+    whoShouldAvoidThis: guide.whoShouldAvoidThis,
+    commonMistakes: guide.commonMistakes,
+    mistakesToAvoid: guide.mistakesToAvoid,
+    whatToAvoid: guide.whatToAvoid,
+    exampleWorkflow: guide.exampleWorkflow,
+    exampleResult: guide.exampleResult,
+    faqs: guide.faqs,
+    finalVerdict: guide.finalVerdict,
+    visualSummary: guide.visualSummary,
+    qualityScore: guide.qualityScore,
+  };
+}
+
+function openAIErrorCategory(status: number, bodyText: string): string {
+  const normalized = bodyText.toLowerCase();
+
+  if (normalized.includes("context_length_exceeded") || normalized.includes("maximum context")) {
+    return "context_length_exceeded";
+  }
+
+  if (normalized.includes("unsupported_parameter") || normalized.includes("unsupported field")) {
+    return "unsupported_parameter";
+  }
+
+  if (normalized.includes("invalid_request_error") || normalized.includes("invalid request")) {
+    return "invalid_request";
+  }
+
+  if (normalized.includes("model_not_found") || normalized.includes("model unavailable")) {
+    return "model_unavailable";
+  }
+
+  if (normalized.includes("rate limit") || normalized.includes("too many requests") || status === 429) {
+    return "rate_limited";
+  }
+
+  if (status >= 500) {
+    return "upstream_error";
+  }
+
+  return status === 400 ? "bad_request" : "request_failed";
+}
+
+function safeOpenAIErrorMessage(bodyText: string): string {
+  if (!bodyText.trim()) {
+    return "OpenAI returned an empty error body.";
+  }
+
+  try {
+    const parsed = JSON.parse(bodyText) as {
+      readonly error?: {
+        readonly message?: unknown;
+        readonly type?: unknown;
+        readonly param?: unknown;
+        readonly code?: unknown;
+      };
+    };
+    const error = parsed.error;
+    const parts = [
+      typeof error?.message === "string" ? error.message : undefined,
+      typeof error?.type === "string" ? `type=${error.type}` : undefined,
+      typeof error?.param === "string" ? `param=${error.param}` : undefined,
+      typeof error?.code === "string" ? `code=${error.code}` : undefined,
+    ].filter((part): part is string => Boolean(part));
+
+    if (parts.length > 0) {
+      return truncateForOpenAI(parts.join(" | "), 700).value;
+    }
+  } catch {
+    // Fall through to a bounded plain-text body.
+  }
+
+  return truncateForOpenAI(bodyText.replace(/\s+/g, " ").trim(), 700).value;
+}
+
+function buildImprovementRequestInput({
+  attempt,
+  guideType,
+  warnings,
+  failureCategories,
+  editorialBrief,
+  articleOutline,
+  guide,
+}: {
+  readonly attempt: number;
+  readonly guideType: GuideLayoutType;
+  readonly warnings: readonly string[];
+  readonly failureCategories: readonly string[];
+  readonly editorialBrief: EditorialBrief;
+  readonly articleOutline: ArticleOutline;
+  readonly guide: Guide;
+}): { readonly input: ImprovementRequestInput; readonly payloadTruncated: boolean } {
+  const compactWarnings = compactList(warnings, 24, 360);
+  const compactFixes = compactList(specificRewriteFixes(failureCategories), 16, 360);
+  const draftJson = JSON.stringify(compactGuideForImprovement(guide));
+  const compactDraft = truncateForOpenAI(draftJson, 32_000);
+
+  return {
+    payloadTruncated: compactWarnings.truncated || compactFixes.truncated || compactDraft.truncated,
+    input: {
+      attempt,
+      failedGuideType: guideType,
+      warnings: compactWarnings.values,
+      failureCategories,
+      specificFixes: compactFixes.values,
+      editorialBrief: compactEditorialBriefForImprovement(editorialBrief),
+      articleOutline,
+      guideTypeStandard: guideTypeStandardForPrompt(guideType),
+      localEditorialRules: {
+        bannedGenericPhrases,
+        quickAnswerRules,
+        minimumDepthRules,
+        faqQualityRules,
+        decisionPathRules,
+      },
+      failedDraft: compactDraft.value,
+      strategy: [
+        "Rebuild the article around the reader's source input, desired output, first action, and review step.",
+        "Rewrite quickAnswer or quickVerdict first, then workflow, device guidance, example result, FAQs, and tool roles.",
+        "Remove malformed phrases, repeated keyword stuffing, generic filler, and tool-list framing in how-to guides.",
+        "Keep tools grounded in the selected slugs and explain distinct roles, tradeoffs, avoid conditions, and decision branches.",
+      ],
+    },
+  };
+}
+
+function buildImprovementRequestBody(model: string, input: ImprovementRequestInput): Record<string, unknown> {
+  return {
+    model,
+    instructions:
+      `${comparavyGoldStandardPrompt} You are deeply rebuilding a failed Comparavy guide candidate after local editorial preflight, deterministic quality checks, and strict AI editorial review. Return a complete guide JSON object only. This is a deep rewrite from the Gold Standard Writing System and Editorial Blueprint, not a field patch. Preserve only useful factual material from the failed draft. The blueprint is the source of truth for scenario, input material, desired output, workflow, mobile/desktop use, tool roles, comparison criteria, example result, FAQ, category language, and banned mismatched terms. Remove generic filler, correct topic mismatch, add concrete workflow steps, improve decision path, rewrite FAQ, rewrite Quick Answer or Quick Verdict, and make tool recommendations support the user problem. If guideType is how-to, the title must start with "How to", put the practical workflow before tools, and rebuild realWorldScenario, whatYouNeed, step-by-step workflow with what/why/output detail, computer guidance, phone guidance, Tools you can use, Example result, Common mistakes, FAQ, and Next step. If guideType is tool-decision, write a Quick Verdict, put Which one should you choose before tool cards, justify the ranking with blueprint criteria, create unique tool cards, and use branching if/then decisionPath before tool-card detail. Do not invent prices, fake testing, guaranteed income, performance claims, legal advice, unsupported current-news claims, placeholder phrases, malformed wording like "Use mobile for on mobile", repeated Best for / Avoid if text, or any banned mismatched term. pricingNote and pricingCaveat must remain exactly: Pricing can change. Check the official site before subscribing.`,
+    input: JSON.stringify(input),
+    max_output_tokens: 6000,
+    truncation: "auto",
+  };
+}
+
+function buildOpenAIImprovementFailure(
+  model: string,
+  status: number,
+  bodyText: string,
+  payloadTruncated: boolean,
+): OpenAIImprovementFailure {
+  return {
+    model,
+    requestType: "Responses API /v1/responses",
+    status,
+    category: openAIErrorCategory(status, bodyText),
+    safeMessage: safeOpenAIErrorMessage(bodyText),
+    responseFormatUsed: false,
+    reasoningEffortUsed: false,
+    payloadTruncated,
+  };
+}
+
+function logOpenAIImprovementFailure(slug: string, failure: OpenAIImprovementFailure): void {
+  console.warn(`[${slug}] OpenAI improvement request failed.`);
+  console.warn(`[${slug}] Improvement request type: ${failure.requestType}`);
+  console.warn(`[${slug}] Improvement model used: ${failure.model}`);
+  console.warn(`[${slug}] Improvement status code: ${failure.status}`);
+  console.warn(`[${slug}] Improvement safe reason category: ${failure.category}`);
+  console.warn(`[${slug}] Improvement safe API message: ${failure.safeMessage}`);
+  console.warn(
+    `[${slug}] Improvement response_format used: ${failure.responseFormatUsed ? "yes (Responses text.format json_schema)" : "no (plain JSON text)"}`,
+  );
+  console.warn(`[${slug}] Improvement reasoning_effort used: ${failure.reasoningEffortUsed ? "yes" : "no"}`);
+  console.warn(`[${slug}] Improvement payload truncated: ${failure.payloadTruncated ? "yes" : "no"}`);
+}
+
+function parseGuideJsonText(text: string): Guide {
+  const trimmed = text.trim();
+  const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  const jsonText = fenced?.[1]?.trim() ?? trimmed;
+
+  return JSON.parse(jsonText) as Guide;
+}
+
 function rejectionReasonsForImprovement(
   deterministic: GuideQualityResult,
   editorialPreflight: EditorialPreflightResult,
@@ -1400,62 +1704,40 @@ async function improveGuideWithAI(
   );
   const editorialBrief = createEditorialBrief(topic, guideType, selectedTools);
   const articleOutline = createArticleOutline(editorialBrief, guide.title);
+  const improvementInput = buildImprovementRequestInput({
+    attempt,
+    guideType,
+    warnings,
+    failureCategories,
+    editorialBrief,
+    articleOutline,
+    guide,
+  });
   let lastFailure = "OpenAI improvement request failed before a model response was returned.";
 
   for (const model of preferredGuideModels()) {
+    console.log(`[${topic.slug}] Improvement model used: ${model}`);
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model,
-        instructions:
-          `${comparavyGoldStandardPrompt} You are deeply rebuilding a failed Comparavy guide candidate after local editorial preflight, deterministic quality checks, and strict AI editorial review. Return a complete guide JSON object only. This is a deep rewrite from the Gold Standard Writing System, guide type standard, Editorial Blueprint, and gold examples, not a field patch. Preserve only useful factual material from the failed draft. Identify the failed guide type first, then rebuild the article so the first 100 words answer the reader's job, input, output, first action, and review step. The blueprint is the source of truth for scenario, input material, desired output, workflow, mobile/desktop use, tool roles, comparison criteria, example result, FAQ, category language, and banned mismatched terms. Remove generic filler, correct topic mismatch, add concrete workflow steps, improve decision path, rewrite FAQ, rewrite Quick Answer or Quick Verdict, and make tool recommendations support the user problem. If guideType is how-to, the title must start with "How to", put the practical workflow before tools, and rebuild realWorldScenario, whatYouNeed, step-by-step workflow with what/why/output detail, computer guidance, phone guidance, Tools you can use, Example result, Common mistakes, FAQ, and Next step. If guideType is tool-decision, write a Quick Verdict, put Which one should you choose before tool cards, justify the ranking with blueprint criteria, create unique tool cards, and use branching if/then decisionPath before tool-card detail. If guideType is income, include realityCheck, realistic offers, skillNeeded, firstStep, time/cost/difficulty, mistakes, limitations, and no guaranteed income language. If guideType is trend-led, include quickDecision, whatChanged when supported, whatToAvoid, comparisonRows, and a practical workflow without claiming breaking news. Do not invent prices, fake testing, guaranteed income, performance claims, legal advice, unsupported current-news claims, placeholder phrases, repeated Best for / Avoid if text, or any term listed in editorialBrief.editorialBlueprint.bannedMismatchedTerms. pricingNote and pricingCaveat must remain exactly: Pricing can change. Check the official site before subscribing.`,
-        input: JSON.stringify({
-          attempt,
-          failedGuideType: guideType,
-          warnings,
-          failureCategories,
-          specificFixes: specificRewriteFixes(failureCategories),
-          editorialBrief,
-          articleOutline,
-          guideTypeStandard: guideTypeStandardForPrompt(guideType),
-          goldStandardWritingSystem: comparavyGoldStandardPrompt,
-          localEditorialRules: {
-            bannedGenericPhrases,
-            quickAnswerRules,
-            minimumDepthRules,
-            faqQualityRules,
-            decisionPathRules,
-          },
-          guide,
-          strategy: [
-            "Search intent first.",
-            "User problem first.",
-            "Tool recommendation second.",
-            "Mobile readability is mandatory.",
-            "Desktop comparison depth should be useful but not overwhelming.",
-            "Every guide should include useful next steps.",
-            "How-to guides are practical workflows, not tool rankings.",
-            "Tool-decision guides need ranking criteria and branching choice logic.",
-          ],
-        }),
-        text: {
-          format: {
-            type: "json_schema",
-            name: "comparavy_improved_guide",
-            strict: true,
-            schema: GUIDE_SCHEMA,
-          },
-        },
-      }),
+      body: JSON.stringify(buildImprovementRequestBody(model, improvementInput.input)),
       signal: AbortSignal.timeout(90_000),
     });
 
     if (!response.ok) {
-      lastFailure = `OpenAI improvement request failed with status ${response.status} using ${model}.`;
+      const bodyText = await response.text();
+      const failure = buildOpenAIImprovementFailure(
+        model,
+        response.status,
+        bodyText,
+        improvementInput.payloadTruncated,
+      );
+      logOpenAIImprovementFailure(topic.slug, failure);
+      lastFailure =
+        `OpenAI improvement request failed with status ${response.status} (${failure.category}) using ${model}: ${failure.safeMessage}`;
       continue;
     }
 
@@ -1466,7 +1748,7 @@ async function improveGuideWithAI(
       throw new Error("OpenAI improvement returned no structured guide text.");
     }
 
-    const improved = restoreProtectedGuideFields(guide, JSON.parse(text) as Guide);
+    const improved = restoreProtectedGuideFields(guide, parseGuideJsonText(text));
     assertGuideContentQuality(improved, guide.slug);
     return improved;
   }
@@ -1668,6 +1950,8 @@ function printOpenAIDiagnostics(diagnostics: OpenAIReviewDiagnostics, options: A
   console.log("OpenAI diagnostics");
   console.log(`OPENAI_API_KEY present: ${diagnostics.apiKeyPresent ? "yes" : "no"}`);
   console.log(`OPENAI_MODEL value: ${diagnostics.model}`);
+  console.log(`Model used for AI review: ${diagnostics.model}`);
+  console.log(`Model used for improvement: ${preferredGuideModels()[0] ?? diagnostics.model}`);
   console.log(`OPENAI_REASONING_EFFORT value: ${diagnostics.reasoningEffort}`);
   console.log(`Running in GitHub Actions: ${diagnostics.runningInGitHubActions ? "yes" : "no"}`);
   console.log(`Dry run: ${options.dryRun ? "yes" : "no"}`);
@@ -1781,6 +2065,7 @@ async function reviewAndImproveCandidate({
     threshold,
   );
   let improveAttempts = 0;
+  let improvementFailureReason: string | undefined;
 
   while (
     rejectionReasons.length > 0 &&
@@ -1800,7 +2085,8 @@ async function reviewAndImproveCandidate({
         improveAttempts,
       );
     } catch (error) {
-      console.warn(`[${topic.slug}] Improvement failed: ${String(error)}`);
+      improvementFailureReason = String(error);
+      console.warn(`[${topic.slug}] Improvement failed: ${improvementFailureReason}`);
       break;
     }
 
@@ -1856,6 +2142,7 @@ async function reviewAndImproveCandidate({
       rejectionReasonsForImprovement(deterministic, editorialPreflight, aiReview),
       currentGuide,
     ),
+    improvementFailureReason,
   };
 }
 
@@ -2092,9 +2379,12 @@ async function main(): Promise<void> {
     readonly deterministic: GuideQualityResult;
     readonly aiReview: AiGuideReview;
     readonly finalStatus: "approved" | "draft" | "rejected";
+    readonly improveAttempts: number;
+    readonly improvementFailureReason?: string;
   }[] = [];
   let candidatesSentToAiReview = 0;
   let genericFallbackUsed = false;
+  const improvementFailures: string[] = [];
 
   const publishCandidates = approvedQueueBeforeRun.slice(0, publishQuota);
 
@@ -2144,29 +2434,39 @@ async function main(): Promise<void> {
   for (const selection of generationSelections) {
     const brief = selection.brief ?? guideGoldBriefBySlug(selection.topic.slug);
     const draft = buildGuideFromSelection(selection, "draft", generationAvoidToolSlugs);
-  const deterministic = checkGuideQuality(
-    draft,
-    existingGuides.filter((entry) => entry.slug !== draft.slug),
-  );
-    let aiReview: AiGuideReview;
+    const candidate = await reviewAndImproveCandidate({
+      topic: selection.topic,
+      guide: draft,
+      comparisonGuides: existingGuides.filter((entry) => entry.slug !== draft.slug),
+      publishedGuides: existingPublished,
+      threshold: PUBLISH_THRESHOLD,
+      slot: selection.brief?.guideType ?? resolveGuideLayoutType(selection.topic),
+      openAIReviewPolicy,
+    });
+    const finalStatus = candidate.eligible
+      ? "approved"
+      : !candidate.aiReview.attempted && candidate.deterministic.passed
+        ? "draft"
+        : "rejected";
+    const finalGuide = writeGuideStatus(candidate.guide, finalStatus);
 
-    if (deterministic.passed) {
+    if (candidate.aiReview.attempted) {
       candidatesSentToAiReview += 1;
-      aiReview = await reviewGuideWithAI(draft);
-    } else {
-      aiReview = unavailableQueueReview("AI review skipped because deterministic quality checks failed.");
     }
 
-    const finalStatus = finalStatusForGuide(deterministic, aiReview);
-    const finalGuide = writeGuideStatus(draft, finalStatus);
+    if (candidate.improvementFailureReason) {
+      improvementFailures.push(`[${candidate.guide.slug}] ${candidate.improvementFailureReason}`);
+    }
 
     generatedSummaries.push({
-      slug: draft.slug,
+      slug: candidate.guide.slug,
       source: selection.source,
-      sentToAiReview: deterministic.passed,
-      deterministic,
-      aiReview,
+      sentToAiReview: candidate.aiReview.attempted,
+      deterministic: candidate.deterministic,
+      aiReview: candidate.aiReview,
       finalStatus,
+      improveAttempts: candidate.improveAttempts,
+      improvementFailureReason: candidate.improvementFailureReason,
     });
 
     if (finalStatus === "approved") {
@@ -2181,15 +2481,22 @@ async function main(): Promise<void> {
     }
 
     console.log(
-      `[${finalGuide.slug}] Quality score: ${deterministic.score}/100 (${deterministic.passed ? "PASS" : "FAIL"})`,
+      `[${finalGuide.slug}] Quality score: ${candidate.deterministic.score}/100 (${candidate.deterministic.passed ? "PASS" : "FAIL"})`,
     );
-    for (const warning of deterministic.warnings) {
+    for (const warning of candidate.deterministic.warnings) {
       console.log(`[${finalGuide.slug}] Warning: ${warning}`);
     }
-    for (const blocker of deterministic.blockers) {
+    for (const blocker of candidate.deterministic.blockers) {
       console.log(`[${finalGuide.slug}] Blocker: ${blocker}`);
     }
-    console.log(`[${finalGuide.slug}] AI review: ${formatAiReviewStatus(aiReview)}`);
+    console.log(
+      `[${finalGuide.slug}] Editorial preflight: ${candidate.editorialPreflight.score}/100 (${candidate.editorialPreflight.passed ? "PASS" : "FAIL"})`,
+    );
+    console.log(`[${finalGuide.slug}] AI review: ${formatAiReviewStatus(candidate.aiReview)}`);
+    console.log(`[${finalGuide.slug}] Improvement attempts: ${candidate.improveAttempts}`);
+    if (candidate.improvementFailureReason) {
+      console.log(`[${finalGuide.slug}] Improvement failure: ${candidate.improvementFailureReason}`);
+    }
   }
 
   if (!options.dryRun) {
@@ -2222,6 +2529,22 @@ async function main(): Promise<void> {
   } else {
     for (const candidate of generatedSummaries) {
       console.log(`[${candidate.slug}] ${formatAiReviewStatus(candidate.aiReview)}`);
+    }
+  }
+  console.log("Improvement attempts:");
+  if (generatedSummaries.length === 0) {
+    console.log("None");
+  } else {
+    for (const candidate of generatedSummaries) {
+      console.log(`[${candidate.slug}] ${candidate.improveAttempts}`);
+    }
+  }
+  console.log("Improvement failures:");
+  if (improvementFailures.length === 0) {
+    console.log("None");
+  } else {
+    for (const failure of improvementFailures) {
+      console.log(failure);
     }
   }
   console.log(`Guides newly approved: ${newlyApproved.length}`);
