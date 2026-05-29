@@ -4,7 +4,7 @@ import type { GuideFreshness } from "@/data/guideTopics";
 import { assertGuideContentQuality } from "@/lib/contentQuality";
 import type { GuideDeviceIntent, GuideLayoutType } from "@/lib/guideTypes";
 
-export type GuideStatus = "draft" | "published";
+export type GuideStatus = "draft" | "published" | "rejected" | "candidate" | (string & {});
 export type GuideSkillLevel = "beginner" | "intermediate" | "advanced";
 
 export interface GuideComparisonRow {

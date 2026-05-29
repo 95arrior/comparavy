@@ -360,8 +360,8 @@ export function validateGuideContent(value: unknown): ContentQualityIssue[] {
     });
   }
 
-  if (value.status !== "draft" && value.status !== "published") {
-    issues.push({ field: "status", message: 'Status must be "draft" or "published".' });
+  if (typeof value.status !== "string" || value.status.trim().length === 0) {
+    issues.push({ field: "status", message: "Status must be a non-empty string." });
   }
 
   if (

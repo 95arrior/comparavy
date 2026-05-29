@@ -314,7 +314,7 @@ export const GUIDE_SCHEMA = {
       },
       required: ["headline", "points"],
     },
-    status: { type: "string", enum: ["draft", "published"] },
+    status: { type: "string" },
     freshness: { type: "string", enum: ["evergreen", "current", "seasonal"] },
     qualityScore: { type: "number" },
     createdAt: { type: "string" },
