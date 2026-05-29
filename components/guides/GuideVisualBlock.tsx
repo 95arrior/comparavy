@@ -1,6 +1,8 @@
 import Link from "next/link";
+import GuideToolActions from "@/components/guides/GuideToolActions";
 import ToolIcon from "@/components/ToolIcon";
 import { toolsBySlug } from "@/data/tools";
+import { resolveGuideTool } from "@/lib/guideTools";
 import { formatGuideLayoutLabel, resolveGuideLayoutType } from "@/lib/guideTypes";
 import type { Guide } from "@/lib/guides";
 
@@ -19,6 +21,9 @@ function FallbackHero({ guide }: { readonly guide: Guide }) {
     uniqueAngle: guide.uniqueAngle,
     notes: guide.contentGap,
   });
+  const primaryToolSlug =
+    guide.recommendedTools[0]?.toolSlug ?? guide.recommendedToolSlugs[0];
+  const primaryTool = resolveGuideTool(primaryToolSlug);
 
   return (
     <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-900 via-slate-800 to-teal-900 p-5 text-white shadow-sm">
@@ -31,6 +36,29 @@ function FallbackHero({ guide }: { readonly guide: Guide }) {
       <p className="mt-3 text-sm leading-7 text-slate-200">
         {guide.quickAnswer ?? guide.quickVerdict}
       </p>
+      {primaryTool && (
+        <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-center gap-3">
+              <ToolIcon {...primaryTool} size={24} className="border-white/20 bg-white" />
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-slate-300">Primary tool</p>
+                <p className="truncate whitespace-nowrap text-base font-semibold text-white">
+                  <Link href={`/tools/${primaryTool.slug}`}>{primaryTool.name}</Link>
+                </p>
+              </div>
+            </div>
+            <GuideToolActions
+              className="sm:justify-end"
+              slug={primaryTool.slug}
+              name={primaryTool.name}
+              officialUrl={primaryTool.officialUrl}
+              affiliateUrl={primaryTool.affiliateUrl}
+              showViewToolPage={false}
+            />
+          </div>
+        </div>
+      )}
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
         {guide.recommendedToolSlugs.slice(0, 3).map((slug) => {
           const tool = toolsBySlug.get(slug);

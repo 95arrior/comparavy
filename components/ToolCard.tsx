@@ -1,7 +1,7 @@
 import Link from "next/link";
-import ActionLinks from "@/components/ActionLinks";
 import BadgeRow, { getToolBadges } from "@/components/BadgeRow";
 import MetricBars from "@/components/MetricBars";
+import GuideToolActions from "@/components/guides/GuideToolActions";
 import ToolIcon from "@/components/ToolIcon";
 import type { AiTool } from "@/types/tool";
 
@@ -31,8 +31,6 @@ interface ToolCardProps {
 }
 
 export default function ToolCard({ tool }: ToolCardProps) {
-  const visitUrl = tool.affiliateUrl ?? tool.officialUrl;
-
   return (
     <article className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-4 shadow-sm comparavy-card-lift sm:p-5">
       <div className="flex min-w-0 items-center gap-2.5">
@@ -82,24 +80,15 @@ export default function ToolCard({ tool }: ToolCardProps) {
         </p>
       </div>
 
-      <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
+      <div className="mt-auto flex flex-col gap-3 border-t border-slate-100 pt-4">
         <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
           Pricing checked {tool.pricingLastChecked}
         </p>
-        <ActionLinks
-          className="justify-start sm:justify-end"
-          items={[
-            {
-              href: visitUrl,
-              label: "Visit Site",
-              external: true,
-              tone: "primary",
-            },
-            {
-              href: `/tools/${tool.slug}`,
-              label: "View Tool Page",
-            },
-          ]}
+        <GuideToolActions
+          slug={tool.slug}
+          name={tool.name}
+          officialUrl={tool.officialUrl}
+          affiliateUrl={tool.affiliateUrl}
         />
       </div>
     </article>

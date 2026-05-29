@@ -1,6 +1,7 @@
 import Link from "next/link";
 import ActionLinks from "@/components/ActionLinks";
 import FaqAccordion from "@/components/FaqAccordion";
+import GuideToolActions from "@/components/guides/GuideToolActions";
 import SectionHeading from "@/components/SectionHeading";
 import ToolCard from "@/components/ToolCard";
 import ToolIcon from "@/components/ToolIcon";
@@ -51,8 +52,6 @@ export default function ToolDecisionGuideLayout({ guide }: { readonly guide: Gui
               return null;
             }
 
-            const visitUrl = tool.affiliateUrl ?? tool.officialUrl;
-
             return (
               <article
                 key={pick.toolSlug}
@@ -76,12 +75,23 @@ export default function ToolDecisionGuideLayout({ guide }: { readonly guide: Gui
                   {pick.why}
                 </p>
 
-                <ActionLinks
-                  className="mt-auto pt-4 justify-start sm:justify-end"
-                  items={[
-                    { href: visitUrl, label: "Visit Site", external: true, tone: "primary" },
-                    { href: `/tools/${tool.slug}`, label: "View Tool Page" },
-                  ]}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {tool.primaryTags.slice(0, 2).map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 ring-1 ring-slate-200"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+
+                <GuideToolActions
+                  className="mt-4"
+                  slug={tool.slug}
+                  name={tool.name}
+                  officialUrl={tool.officialUrl}
+                  affiliateUrl={tool.affiliateUrl}
                 />
               </article>
             );

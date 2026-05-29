@@ -1,10 +1,14 @@
+import Link from "next/link";
 import ActionLinks from "@/components/ActionLinks";
 import BeforeAfterBlock from "@/components/guides/BeforeAfterBlock";
+import GuideToolActions from "@/components/guides/GuideToolActions";
 import DeviceUseCaseBlock from "@/components/guides/DeviceUseCaseBlock";
 import FaqAccordion from "@/components/FaqAccordion";
 import SectionHeading from "@/components/SectionHeading";
 import ToolStackCard from "@/components/guides/ToolStackCard";
+import ToolIcon from "@/components/ToolIcon";
 import WorkflowSteps from "@/components/guides/WorkflowSteps";
+import { resolveGuideTool } from "@/lib/guideTools";
 import type { Guide, GuideWorkflowStep } from "@/lib/guides";
 
 function fallbackSteps(guide: Guide): readonly GuideWorkflowStep[] {
@@ -45,15 +49,58 @@ export default function HowToGuideLayout({ guide }: { readonly guide: Guide }) {
             toolSlug: tool.toolSlug,
             toolName: tool.toolName,
             why: tool.summary,
-          }))).map((tool) => (
-            <div
-              key={tool.toolSlug}
-              className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4"
-            >
-              <p className="text-sm font-semibold text-slate-900">{tool.toolName}</p>
-              <p className="mt-2 text-sm leading-7 text-slate-600">{tool.why}</p>
-            </div>
-          ))}
+          }))).map((tool) => {
+            const catalogTool = resolveGuideTool(tool.toolSlug);
+
+            return (
+              <div
+                key={tool.toolSlug}
+                className="flex h-full flex-col rounded-2xl border border-slate-100 bg-slate-50/70 p-4"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  {catalogTool ? (
+                    <ToolIcon {...catalogTool} size={24} />
+                  ) : (
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[8px] bg-white text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
+                      {tool.toolName.charAt(0)}
+                    </span>
+                  )}
+                  <p className="min-w-0 flex-1 truncate whitespace-nowrap text-sm font-semibold text-slate-900">
+                    {catalogTool ? (
+                      <Link
+                        href={`/tools/${catalogTool.slug}`}
+                        className="block truncate transition hover:text-teal-700"
+                      >
+                        {catalogTool.name}
+                      </Link>
+                    ) : (
+                      tool.toolName
+                    )}
+                  </p>
+                </div>
+                <p className="mt-2 text-sm leading-7 text-slate-600">{tool.why}</p>
+                {catalogTool && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {catalogTool.primaryTags.slice(0, 2).map((tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 ring-1 ring-slate-200"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <GuideToolActions
+                  className="mt-4"
+                  slug={catalogTool?.slug}
+                  name={catalogTool?.name ?? tool.toolName}
+                  officialUrl={catalogTool?.officialUrl}
+                  affiliateUrl={catalogTool?.affiliateUrl}
+                />
+              </div>
+            );
+          })}
         </div>
       </section>
 

@@ -1,5 +1,6 @@
 import ActionLinks from "@/components/ActionLinks";
 import FaqAccordion from "@/components/FaqAccordion";
+import GuideToolActions from "@/components/guides/GuideToolActions";
 import SectionHeading from "@/components/SectionHeading";
 import ToolIcon from "@/components/ToolIcon";
 import { toolsBySlug, type ToolSlug } from "@/data/tools";
@@ -45,7 +46,7 @@ export default function TrendDecisionGuideLayout({ guide }: { readonly guide: Gu
             return (
               <article
                 key={pick.toolSlug}
-                className={`rounded-3xl border p-4 shadow-sm sm:p-5 ${
+                className={`flex h-full flex-col rounded-3xl border p-4 shadow-sm sm:p-5 ${
                   index === 0 ? "border-teal-200 bg-teal-50/40" : "border-slate-200 bg-slate-50/70"
                 }`}
               >
@@ -59,6 +60,23 @@ export default function TrendDecisionGuideLayout({ guide }: { readonly guide: Gu
                 </div>
                 <p className="mt-3 text-sm font-medium text-slate-900">{pick.situation}</p>
                 <p className="mt-2 text-sm leading-7 text-slate-600">{pick.why}</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {tool.primaryTags.slice(0, 2).map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 ring-1 ring-slate-200"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+                <GuideToolActions
+                  className="mt-4"
+                  slug={tool.slug}
+                  name={tool.name}
+                  officialUrl={tool.officialUrl}
+                  affiliateUrl={tool.affiliateUrl}
+                />
               </article>
             );
           })}

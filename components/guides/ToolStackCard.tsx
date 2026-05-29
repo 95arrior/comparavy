@@ -1,6 +1,7 @@
 import Link from "next/link";
 import ToolIcon from "@/components/ToolIcon";
-import { toolsBySlug } from "@/data/tools";
+import GuideToolActions from "@/components/guides/GuideToolActions";
+import { resolveGuideTool } from "@/lib/guideTools";
 import type { GuideToolUse } from "@/lib/guides";
 
 interface ToolStackCardProps {
@@ -32,12 +33,12 @@ export default function ToolStackCard({
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
         {tools.map((tool) => {
-          const catalogTool = toolsBySlug.get(tool.toolSlug);
+          const catalogTool = resolveGuideTool(tool.toolSlug);
 
           return (
             <article
               key={tool.toolSlug}
-              className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4"
+              className="flex h-full flex-col rounded-2xl border border-slate-100 bg-slate-50/70 p-4"
             >
               <div className="flex min-w-0 items-center gap-3">
                 {catalogTool ? (
@@ -63,6 +64,25 @@ export default function ToolStackCard({
                   <p className="mt-1 text-xs leading-5 text-slate-600">{tool.why}</p>
                 </div>
               </div>
+              {catalogTool && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {catalogTool.primaryTags.slice(0, 2).map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 ring-1 ring-slate-200"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <GuideToolActions
+                className="mt-4"
+                slug={catalogTool?.slug}
+                name={catalogTool?.name ?? tool.toolName}
+                officialUrl={catalogTool?.officialUrl}
+                affiliateUrl={catalogTool?.affiliateUrl}
+              />
             </article>
           );
         })}
