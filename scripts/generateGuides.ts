@@ -2083,7 +2083,11 @@ async function main(): Promise<void> {
   const status: GuideStatus = options.publish ? "published" : "draft";
   logGuideTopicToolSlugWarnings();
   const existingGuides = await getExistingGuides();
-  const existingSlugs = new Set(existingGuides.map((guide) => guide.slug));
+  const existingSlugs = new Set(
+    existingGuides
+      .filter((guide) => guide.status === "published" || guide.status === "approved")
+      .map((guide) => guide.slug),
+  );
   const recentPublishedToolSlugs = new Set<string>();
 
   for (const guide of existingGuides

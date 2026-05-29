@@ -3,6 +3,7 @@ import type { GuideLayoutType } from "@/lib/guideTypes";
 
 export type TopicBucketId =
   | "document-pdf-study-notes"
+  | "office-document-workflows"
   | "meeting-notes-client-recaps"
   | "social-content-captions"
   | "video-shorts-clips"
@@ -65,6 +66,17 @@ export const CATEGORY_WRITING_RULES: Record<TopicBucketId, CategoryWritingRules>
     commonMistakes: ["Studying from an unchecked summary", "Removing page context", "Mixing outside sources into a closed-source assignment"],
     usefulExamples: ["A two-page chapter summary with definitions and five quiz questions"],
     bannedIrrelevantVocabulary: ["brand control", "carousel slides", "product photo", "podcast clips", "lead routing", "appointment reminders"],
+  },
+  "office-document-workflows": {
+    id: "office-document-workflows",
+    label: "Office documents / summaries",
+    allowedVocabulary: ["resume", "cover letter", "contract", "spreadsheet", "summary", "task list", "quiz", "rewrite"],
+    typicalInput: ["resume bullets", "cover letter notes", "contracts", "spreadsheets", "voice memos"],
+    typicalOutput: ["rewritten resume sections", "cover letter drafts", "contract summaries", "task lists", "study quizzes"],
+    likelyTools: ["ChatGPT", "Claude", "Grammarly", "Notion AI", "Microsoft Copilot"],
+    commonMistakes: ["Skipping source details", "Turning a rewrite into generic filler", "Missing important names, dates, or constraints"],
+    usefulExamples: ["A resume summary with tailored bullets and a checked final version"],
+    bannedIrrelevantVocabulary: ["brand colors", "carousel slides", "podcast clips", "lead routing", "image editing"],
   },
   "meeting-notes-client-recaps": {
     id: "meeting-notes-client-recaps",
@@ -200,6 +212,7 @@ export function classifyTopicBucket(topic: GuideTopic): TopicBucketId {
 
   if (/\b(image|photo|photos|mockup|thumbnail|brand control|brand colors|firefly|photoroom)\b/.test(text)) return "image-editing-brand-control";
   if (/\b(agent|automation|automate|intake|routing|lead form|appointment|reminder|zapier|n8n)\b/.test(text)) return "automation-agents";
+  if (/\b(resume|cover letter|contract|spreadsheet|voice memo|task list|study quiz|quiz generation|quiz)\b/.test(text)) return "office-document-workflows";
   if (/\b(seo|brief|serp|keyword|ai overview|content planning)\b/.test(text)) return "seo-content-briefs";
   if (/\b(podcast|audio|recording|episode)\b/.test(text)) return "podcast-audio-editing";
   if (/\b(video|shorts|clip|avatar|ad creative|webinar)\b/.test(text)) return "video-shorts-clips";

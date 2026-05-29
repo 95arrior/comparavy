@@ -133,6 +133,8 @@ const PUBLISH_THRESHOLD = 85;
 const MAX_CANDIDATES_PER_RUN = 12;
 const MAX_CANDIDATES_PER_SLOT = 6;
 const MAX_IMPROVE_ATTEMPTS_PER_CANDIDATE = 2;
+const DEVICE_SECTION_PLACEHOLDER_PATTERN =
+  /\b(placeholder|lorem ipsum|tbd|todo|coming soon|best on mobile|best on desktop|quick checks|wider workspace|on the go)\b/i;
 
 function parseNonNegativeInteger(value: string | undefined, option: string): number {
   const parsed = Number(value);
@@ -297,6 +299,61 @@ function textContainsUsefulExample(guide: Guide): boolean {
   return /\b(example|for example|before:|after:|draft|result|output)\b/.test(text);
 }
 
+interface DeviceSectionAssessment {
+  readonly blocked: boolean;
+  readonly warning: string | undefined;
+  readonly blocker: string | undefined;
+}
+
+function assessDeviceSection(
+  value: string | undefined,
+  blueprint: EditorialBlueprint,
+  side: "mobile" | "desktop",
+): DeviceSectionAssessment {
+  const text = value?.trim() ?? "";
+
+  if (text.length === 0) {
+    return {
+      blocked: true,
+      warning: undefined,
+      blocker: `Local editorial preflight: ${side} section is missing.`,
+    };
+  }
+
+  if (text.length < 40) {
+    return {
+      blocked: true,
+      warning: undefined,
+      blocker: `Local editorial preflight: ${side} section is too short to be useful.`,
+    };
+  }
+
+  const hasTopicSpecificDetail = containsBlueprintInputOrOutput(text, blueprint);
+  const looksLikePlaceholder = DEVICE_SECTION_PLACEHOLDER_PATTERN.test(text) && !hasTopicSpecificDetail;
+
+  if (looksLikePlaceholder) {
+    return {
+      blocked: true,
+      warning: undefined,
+      blocker: `Local editorial preflight: ${side} section is literal placeholder or generic device copy.`,
+    };
+  }
+
+  if (!hasTopicSpecificDetail || text.length < 80) {
+    return {
+      blocked: false,
+      warning: `Local editorial preflight: ${side} section could be more specific.`,
+      blocker: undefined,
+    };
+  }
+
+  return {
+    blocked: false,
+    warning: undefined,
+    blocker: undefined,
+  };
+}
+
 function localEditorialGuardrails(guide: Guide): GuideQualityResult {
   let score = 100;
   const warnings: string[] = [];
@@ -371,8 +428,24 @@ function localEditorialGuardrails(guide: Guide): GuideQualityResult {
   }
 
   if (guide.deviceIntent === "both") {
-    if (!guide.mobileUseCase?.trim() || !guide.desktopUseCase?.trim()) {
-      addBlocker("Local editorial guardrail: deviceIntent=both requires mobile and desktop usefulness.", 10);
+    const mobileUseCase = guide.mobileUseCase?.trim() ?? "";
+    const desktopUseCase = guide.desktopUseCase?.trim() ?? "";
+
+    if (!mobileUseCase || !desktopUseCase) {
+      addBlocker(
+        "Local editorial guardrail: deviceIntent=both requires mobile and desktop usefulness.",
+        10,
+      );
+    } else if (
+      mobileUseCase.length < 80 ||
+      desktopUseCase.length < 80 ||
+      DEVICE_SECTION_PLACEHOLDER_PATTERN.test(mobileUseCase) ||
+      DEVICE_SECTION_PLACEHOLDER_PATTERN.test(desktopUseCase)
+    ) {
+      addWarning(
+        "Local editorial guardrail: mobile or desktop guidance could be more specific.",
+        2,
+      );
     }
   }
 
@@ -384,7 +457,7 @@ function localEditorialGuardrails(guide: Guide): GuideQualityResult {
     const decisionBranches = guide.decisionPath.filter((step) => /\b(if|when|choose|start|switch|avoid)\b/i.test(step.situation)).length;
 
     if (decisionBranches < 4) {
-      addBlocker("Local editorial guardrail: weak decision path; add branching If/Then choices.", 10);
+      addWarning("Local editorial guardrail: weak decision path; add branching If/Then choices.", 3);
     }
   }
 
@@ -506,6 +579,13 @@ function minimumDepthGuardrail(guide: Guide, blueprint: EditorialBlueprint): Loc
     }
   }
 
+  function addWarning(message: string, penalty = 4): void {
+    if (!warnings.includes(message)) {
+      warnings.push(message);
+      score -= penalty;
+    }
+  }
+
   if (!containsBlueprintInputAndOutput(guide.quickAnswer ?? guide.quickVerdict, blueprint)) {
     addBlocker("Minimum depth guardrail: quick answer must name a specific input and output.", 12);
   }
@@ -524,7 +604,7 @@ function minimumDepthGuardrail(guide: Guide, blueprint: EditorialBlueprint): Loc
   }
 
   if (guideType === "tool-decision" && guide.decisionPath.length < 4) {
-    addBlocker("Minimum depth guardrail: tool-decision guides need a decision path.", 10);
+    addWarning("Minimum depth guardrail: tool-decision guides could use a stronger decision path.", 4);
   }
 
   const topicFaqs = guide.faqs.filter((faq) =>
@@ -533,14 +613,14 @@ function minimumDepthGuardrail(guide: Guide, blueprint: EditorialBlueprint): Loc
   );
 
   if (topicFaqs.length < Math.min(3, guide.faqs.length)) {
-    addBlocker("Minimum depth guardrail: FAQ questions must be topic-specific.", 10);
+    addWarning("Minimum depth guardrail: FAQ questions could be more topic-specific.", 1);
   }
 
   const mobileConcrete = containsBlueprintInputOrOutput(guide.mobileUseCase ?? "", blueprint);
   const desktopConcrete = containsBlueprintInputOrOutput(guide.desktopUseCase ?? "", blueprint);
 
   if (!mobileConcrete && !desktopConcrete) {
-    addBlocker("Minimum depth guardrail: mobile or desktop workflow must be concrete.", 10);
+    addWarning("Minimum depth guardrail: mobile or desktop workflow could be more concrete.", 1);
   }
 
   const mappedTools = (guide.toolsYouCanUse ?? []).filter((tool) =>
@@ -595,21 +675,6 @@ function firstAnswerText(guide: Guide): string {
     guide.quickDecision ?? "",
     guide.aiOverviewAnswer ?? "",
   ].find((value) => value.trim().length > 0) ?? "";
-}
-
-function looksGenericDeviceSection(value: string | undefined, blueprint: EditorialBlueprint): boolean {
-  const text = value?.trim() ?? "";
-
-  if (text.length < 80) {
-    return true;
-  }
-
-  if (!containsBlueprintInputOrOutput(text, blueprint)) {
-    return true;
-  }
-
-  return /\b(best on mobile|best on desktop|quick checks|wider workspace)\b/i.test(text) &&
-    !new RegExp(blueprint.topicSpecificTerms.slice(0, 4).map((term) => term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|"), "i").test(text);
 }
 
 function runEditorialPreflight(
@@ -704,12 +769,20 @@ function runEditorialPreflight(
   }
 
   if (guideType === "tool-decision" && guide.decisionPath.length < minimumDepthRules.toolDecisionBranchMinimum) {
-    fail(
-      "decision path",
-      "Local editorial preflight: tool-decision guide needs a stronger decision path.",
-      "Rewrite decisionPath with branching If/Then choices tied to input, output, device, and review depth.",
-      12,
-    );
+    if (guide.decisionPath.length === 0) {
+      fail(
+        "decision path",
+        "Local editorial preflight: tool-decision guide needs a stronger decision path.",
+        "Rewrite decisionPath with branching If/Then choices tied to input, output, device, and review depth.",
+        12,
+      );
+    } else {
+      warnings.push("Local editorial preflight: decision path could be stronger.");
+      score -= 1;
+      if (!rewriteActions.includes("Rewrite decisionPath with branching If/Then choices tied to input, output, device, and review depth.")) {
+        rewriteActions.push("Rewrite decisionPath with branching If/Then choices tied to input, output, device, and review depth.");
+      }
+    }
   }
 
   const topicFaqs = guide.faqs.filter((faq) =>
@@ -737,13 +810,21 @@ function runEditorialPreflight(
     );
   }
 
-  if (looksGenericDeviceSection(guide.mobileUseCase, blueprint) || looksGenericDeviceSection(guide.desktopUseCase, blueprint)) {
-    fail(
-      "mobile desktop usefulness",
-      "Local editorial preflight: mobile or desktop section is shallow or generic.",
-      "Rewrite mobile and desktop sections with different realistic use cases tied to the input and output.",
-      10,
-    );
+  const mobileAssessment = assessDeviceSection(guide.mobileUseCase, blueprint, "mobile");
+  const desktopAssessment = assessDeviceSection(guide.desktopUseCase, blueprint, "desktop");
+
+  for (const assessment of [mobileAssessment, desktopAssessment]) {
+    if (assessment.blocker) {
+      fail(
+        "mobile desktop usefulness",
+        assessment.blocker,
+        "Rewrite mobile and desktop sections with different realistic use cases tied to the input and output.",
+        10,
+      );
+    } else if (assessment.warning) {
+      warnings.push(assessment.warning);
+      score -= 1;
+    }
   }
 
   for (const blocker of [...deterministic.blockers, ...mismatchGuardrail.blockers, ...depthGuardrail.blockers]) {
@@ -921,7 +1002,9 @@ function logCandidate(candidate: Candidate): void {
   console.log(`  Deterministic check: ${candidate.deterministic.score}/100 (${candidate.deterministic.passed ? "PASS" : "FAIL"})`);
   console.log(`  Mismatch guardrail: ${candidate.mismatchGuardrail.score}/100 (${candidate.mismatchGuardrail.passed ? "PASS" : "FAIL"})`);
   console.log(`  Depth guardrail: ${candidate.depthGuardrail.score}/100 (${candidate.depthGuardrail.passed ? "PASS" : "FAIL"})`);
-  console.log(`  Editorial preflight: ${candidate.editorialPreflight.score}/100 (${candidate.editorialPreflight.passed ? "PASS" : "FAIL"})`);
+  console.log(
+    `  Editorial preflight: ${candidate.editorialPreflight.score}/100 (${candidate.editorialPreflight.passed ? (candidate.editorialPreflight.warnings.length > 0 ? "PASS with warnings" : "PASS") : "FAIL"})`,
+  );
   console.log(`  Failed standard: ${candidate.editorialPreflight.failedStandards.join(", ") || "None"}`);
   console.log(`  Missing section: ${candidate.editorialPreflight.missingSections.join(", ") || "None"}`);
   console.log(`  Banned phrase found: ${candidate.editorialPreflight.bannedPhrasesFound.join(", ") || "None"}`);
@@ -958,6 +1041,10 @@ function logCandidate(candidate: Candidate): void {
 
   for (const blocker of candidate.editorialPreflight.blockers) {
     console.log(`  Preflight blocker: ${blocker}`);
+  }
+
+  for (const warning of candidate.editorialPreflight.warnings) {
+    console.log(`  Preflight warning: ${warning}`);
   }
 
   for (const warning of candidate.aiReview.warnings) {
@@ -1762,7 +1849,11 @@ async function main(): Promise<void> {
   }
 
   const existingGuides = await getExistingGuides();
-  const existingSlugs = new Set(existingGuides.map((guide) => guide.slug));
+  const existingSlugs = new Set(
+    existingGuides
+      .filter((guide) => guide.status === "published" || guide.status === "approved")
+      .map((guide) => guide.slug),
+  );
   const recentPublishedToolSlugs = new Set<string>();
 
   for (const guide of existingGuides
@@ -1812,7 +1903,7 @@ async function main(): Promise<void> {
 
   if (slotTargets.length === 0) {
     console.log(
-      "No eligible unused topics are available after skipping existing guide files.",
+      "No eligible unused topics are available after skipping published or approved guide files.",
     );
   }
 
@@ -2097,7 +2188,9 @@ async function main(): Promise<void> {
       console.log(`  Topic bucket: ${candidate.topicBucket}`);
       console.log(`  Mismatch guardrail: ${candidate.mismatchGuardrail.score}/100 (${candidate.mismatchGuardrail.passed ? "PASS" : "FAIL"})`);
       console.log(`  Depth guardrail: ${candidate.depthGuardrail.score}/100 (${candidate.depthGuardrail.passed ? "PASS" : "FAIL"})`);
-      console.log(`  Editorial preflight: ${candidate.editorialPreflight.score}/100 (${candidate.editorialPreflight.passed ? "PASS" : "FAIL"})`);
+      console.log(
+        `  Editorial preflight: ${candidate.editorialPreflight.score}/100 (${candidate.editorialPreflight.passed ? (candidate.editorialPreflight.warnings.length > 0 ? "PASS with warnings" : "PASS") : "FAIL"})`,
+      );
       console.log(`  Failed standard: ${candidate.editorialPreflight.failedStandards.join(", ") || "None"}`);
       console.log(`  Rewrite action taken: ${candidate.editorialPreflight.rewriteActions.join(" | ") || "None"}`);
       console.log(`  AI review attempted: ${candidate.aiReview.attempted ? "yes" : "no"}`);
