@@ -376,7 +376,7 @@
     },
     {
       "question": "Can I finish this workflow on a phone, or should I use a computer?",
-      "answer": "Use mobile for on mobile, keep the task to one input and one output: podcast recordings to clean audio. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. clean audio usually benefits from desktop review before publishing, sending, or saving."
+      "answer": "Use mobile for quick review, keep the task to one input and one output: podcast recordings to clean audio. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. clean audio usually benefits from desktop review before publishing, sending, or saving."
     }
   ],
   "faq": [
@@ -394,7 +394,7 @@
     },
     {
       "question": "Can I finish this workflow on a phone, or should I use a computer?",
-      "answer": "Use mobile for on mobile, keep the task to one input and one output: podcast recordings to clean audio. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. clean audio usually benefits from desktop review before publishing, sending, or saving."
+      "answer": "Use mobile for quick review, keep the task to one input and one output: podcast recordings to clean audio. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. clean audio usually benefits from desktop review before publishing, sending, or saving."
     }
   ],
   "whoShouldUseThis": [
@@ -442,7 +442,7 @@
   "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
   "qualityScore": 92,
-  "status": "draft",
+  "status": "rejected",
   "createdAt": "2026-05-29",
   "updatedAt": "2026-05-29"
 }

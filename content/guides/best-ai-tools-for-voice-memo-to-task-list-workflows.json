@@ -1,0 +1,448 @@
+{
+  "slug": "best-ai-tools-for-voice-memo-to-task-list-workflows",
+  "title": "Best AI Tools for Voice Memo to Task List Workflows",
+  "guideType": "tool-decision",
+  "type": "tool-decision",
+  "metaTitle": "Best AI Tools for Voice Memo to Task List Workflows | Comparavy",
+  "metaDescription": "Compare AI tools for busy professionals focused on turning voice memos into task lists. See practical fit, tradeoffs, and a free-first decision path.",
+  "category": "Meetings",
+  "persona": "busy professionals",
+  "useCase": "turning voice memos into task lists",
+  "budgetAngle": "Prefer free or low-cost plans until the workflow proves useful on a real task.",
+  "skillLevel": "beginner",
+  "primaryKeyword": "best AI tools for voice memo to task list workflows",
+  "secondaryKeywords": [
+    "voice memo AI",
+    "task list automation",
+    "transcribe memo to tasks"
+  ],
+  "longTailKeywords": [
+    "best AI tool for voice memo to task list",
+    "Otter vs ChatGPT for task extraction",
+    "AI workflow for memo-to-tasks"
+  ],
+  "audience": "busy professionals",
+  "searchIntent": "turning voice memos into task lists",
+  "userPain": "The reader has spoken notes and needs a usable to-do list fast.",
+  "decisionQuestion": "Which AI tool should I use to turn voice memos into task lists?",
+  "deviceIntent": "both",
+  "desktopUseCase": "Best on desktop when the transcript, action list, and notes need to stay visible together. Use desktop to compare resume bullets with rewritten resume sections before the final review.",
+  "mobileUseCase": "Best on mobile when you only need a quick capture or a short task list from a memo. Use mobile for quick checks on rewritten resume sections when the input is already prepared.",
+  "desktopSearchAngle": "Desktop readers usually want deeper comparison, file handling, and a deliberate review workflow for rewritten resume sections.",
+  "mobileSearchAngle": "Mobile readers usually want a short answer first, then a quick next step for rewritten resume sections they can finish in a few taps.",
+  "visualAssets": {
+    "hero": {
+      "type": "hero",
+      "alt": "Best AI Tools for Voice Memo to Task List Workflows guide visual",
+      "promptOrDescription": "Editorial guide artwork for turning voice memos into task lists with a clean, problem-solving feel.",
+      "fileNameHint": "best-ai-tools-for-voice-memo-to-task-list-workflows"
+    },
+    "workflow": {
+      "type": "workflow-diagram",
+      "alt": "Best AI Tools for Voice Memo to Task List Workflows workflow diagram",
+      "steps": [
+        "Quick Verdict",
+        "Which One Should You Choose?",
+        "Best Picks by Situation",
+        "Comparison Table",
+        "Tool Cards"
+      ]
+    },
+    "toolStack": {
+      "type": "tool-stack",
+      "alt": "Best AI Tools for Voice Memo to Task List Workflows recommended tool stack",
+      "tools": [
+        "Microsoft Copilot",
+        "ElevenLabs",
+        "Krisp"
+      ]
+    },
+    "beforeAfter": {
+      "type": "before-after",
+      "alt": "Best AI Tools for Voice Memo to Task List Workflows before and after comparison",
+      "before": "Before: manual work and scattered notes for turning voice memos into task lists.",
+      "after": "After: a faster workflow that leaves you with a clear, checked result."
+    }
+  },
+  "quickAnswer": "For turning voice memos into task lists, start with Microsoft Copilot because it is the closest fit for turning resume bullets into rewritten resume sections. Choose ElevenLabs when cover letter matters more. Avoid Microsoft Copilot when you need a feature available only in a separate work subscription; in that case Krisp is the better fallback.",
+  "quickDecision": "For turning voice memos into task lists, choose Microsoft Copilot first when the input is resume bullets and the output needs to be rewritten resume sections. Choose ElevenLabs when cover letter matters more. Choose Krisp when you need a lighter review, export, or fallback pass.",
+  "realWorldScenario": "busy professionals have resume bullets and cover letter notes and need rewritten resume sections without drifting into an unrelated workflow. Prepared 2026-05-29.",
+  "whatYouNeed": [
+    "turning voice memos into task lists",
+    "A clear final format for turning voice memos into task lists.",
+    "The audience, recipient, or grading criteria for the output.",
+    "Time to check facts, names, numbers, dates, and commitments before using the result."
+  ],
+  "timeEstimate": "Run one real comparison before subscribing or switching workflows.",
+  "contentGap": "Most articles confuse transcription with action-item extraction.",
+  "uniqueAngle": "Compare transcription accuracy, task extraction, and review speed.",
+  "aiOverviewAnswer": "Use Otter.ai or Granola for capture, ChatGPT or Claude for turning the memo into a task list, and Microsoft Copilot when the output needs to fit a broader office workflow.",
+  "quickVerdict": "For turning voice memos into task lists, start with Microsoft Copilot because it is the closest fit for turning resume bullets into rewritten resume sections. Choose ElevenLabs when cover letter matters more. Avoid Microsoft Copilot when you need a feature available only in a separate work subscription; in that case Krisp is the better fallback.",
+  "steps": [
+    {
+      "title": "Define the input type",
+      "detail": "Decide whether you already have turning voice memos into task lists or still need to gather it before you touch the tools.",
+      "why": "The best tool changes when the work starts from documents, web research, notes, media, or a blank draft.",
+      "output": "A clear starting condition for the comparison.",
+      "toolSlug": "microsoft-copilot",
+      "toolName": "Microsoft Copilot"
+    },
+    {
+      "title": "Run the strongest first pass",
+      "detail": "Use Microsoft Copilot on one real example so you can see how it handles everyday assistance in a Microsoft-oriented workflow.",
+      "why": "A real input exposes weaknesses faster than reading feature lists.",
+      "output": "One result you can judge against the source and desired format.",
+      "toolSlug": "microsoft-copilot",
+      "toolName": "Microsoft Copilot"
+    },
+    {
+      "title": "Compare the second choice",
+      "detail": "Try ElevenLabs on the same input if you need another source style, output format, or control model.",
+      "why": "Using the same input makes the comparison about fit, not luck.",
+      "output": "A side-by-side view of the tradeoff between the first two options.",
+      "toolSlug": "elevenlabs",
+      "toolName": "ElevenLabs"
+    },
+    {
+      "title": "Check the final pass",
+      "detail": "Use Krisp or a manual review to catch missing details, tone issues, or weak structure before you publish or send anything.",
+      "why": "The final choice should be based on review effort as much as output speed.",
+      "output": "A chosen tool path and a list of issues to watch before scaling.",
+      "toolSlug": "krisp",
+      "toolName": "Krisp"
+    }
+  ],
+  "toolsYouCanUse": [
+    {
+      "toolSlug": "microsoft-copilot",
+      "toolName": "Microsoft Copilot",
+      "why": "Primary tool for turning resume bullets into rewritten resume sections.",
+      "role": "Primary tool for turning resume bullets into rewritten resume sections.",
+      "bestUseCase": "everyday assistance in a Microsoft-oriented workflow for rewritten resume sections"
+    },
+    {
+      "toolSlug": "elevenlabs",
+      "toolName": "ElevenLabs",
+      "why": "Second-pass tool when rewritten resume sections needs a different format, stronger controls, or validation.",
+      "role": "Second-pass tool when rewritten resume sections needs a different format, stronger controls, or validation.",
+      "bestUseCase": "narration and voiceover creation when cover letter matters more than the top pick"
+    },
+    {
+      "toolSlug": "krisp",
+      "toolName": "Krisp",
+      "why": "Review or finishing tool after the main output is checked.",
+      "role": "Review or finishing tool after the main output is checked.",
+      "bestUseCase": "workflows that need noise cancellation and meeting audio cleanup when speed or a lighter setup matters more for contract summaries"
+    }
+  ],
+  "keyTakeaways": [
+    "Microsoft Copilot is the first tool to test because it best matches turning voice memos into task lists.",
+    "ElevenLabs is the right second choice when the input type changes or you need a different output style.",
+    "Krisp is the fallback when you want a lighter, faster, or more polished review step.",
+    "The right choice depends on whether you already have turning voice memos into task lists or still need to discover, rewrite, or organize the material.",
+    "The reader has spoken notes and needs a usable to-do list fast.",
+    "Most articles confuse transcription with action-item extraction.",
+    "Prefer free or low-cost plans until the workflow proves useful on a real task."
+  ],
+  "bestPicksBySituation": [
+    {
+      "situation": "If you already have resume bullets, choose Microsoft Copilot.",
+      "toolSlug": "microsoft-copilot",
+      "toolName": "Microsoft Copilot",
+      "why": "Microsoft Copilot is the closest match because it is built for everyday assistance in a Microsoft-oriented workflow and keeps the work tied to resume bullets."
+    },
+    {
+      "situation": "If you need cover letter drafts or stronger cover letter, choose ElevenLabs.",
+      "toolSlug": "elevenlabs",
+      "toolName": "ElevenLabs",
+      "why": "ElevenLabs is the better second choice when narration and voiceover creation matters more than the first tool's handling of resume bullets."
+    },
+    {
+      "situation": "If you want the lightest review or export step for rewritten resume sections, choose Krisp.",
+      "toolSlug": "krisp",
+      "toolName": "Krisp",
+      "why": "Krisp helps when you need workflows that need noise cancellation and meeting audio cleanup and want a fallback that is easier to adapt on a phone or desktop."
+    }
+  ],
+  "recommendedToolSlugs": [
+    "microsoft-copilot",
+    "elevenlabs",
+    "krisp",
+    "lovo",
+    "suno"
+  ],
+  "recommendedTools": [
+    {
+      "toolSlug": "microsoft-copilot",
+      "toolName": "Microsoft Copilot",
+      "summary": "Microsoft Copilot is strongest when you need everyday assistance in a Microsoft-oriented workflow and want it tied to turning voice memos into task lists. It handles draft business text better than a generic assistant, but it is a weaker choice if you need you need a feature available only in a separate work subscription.",
+      "bestFor": "everyday assistance in a Microsoft-oriented workflow for rewritten resume sections",
+      "avoidIf": "you need a feature available only in a separate work subscription if your real input is turning voice memos into task lists",
+      "strengths": [
+        "chat",
+        "microsoft",
+        "productivity",
+        "writing"
+      ],
+      "tradeoffs": [
+        "Advanced creative asset editing",
+        "Custom automation pipelines"
+      ],
+      "toolPagePath": "/tools/microsoft-copilot"
+    },
+    {
+      "toolSlug": "elevenlabs",
+      "toolName": "ElevenLabs",
+      "summary": "ElevenLabs is strongest when you need narration and voiceover creation and want it tied to turning voice memos into task lists. It handles generate narration better than a generic assistant, but it is a weaker choice if you need you lack permission for a voice or likeness you plan to use.",
+      "bestFor": "narration and voiceover creation when cover letter matters more than the top pick",
+      "avoidIf": "you lack permission for a voice or likeness you plan to use if your main need is the top tool's exact workflow",
+      "strengths": [
+        "voice",
+        "audio",
+        "narration",
+        "dubbing"
+      ],
+      "tradeoffs": [
+        "Visual design creation",
+        "Unapproved imitation of identifiable voices"
+      ],
+      "toolPagePath": "/tools/elevenlabs"
+    },
+    {
+      "toolSlug": "krisp",
+      "toolName": "Krisp",
+      "summary": "Krisp is strongest when you need workflows that need noise cancellation and meeting audio cleanup and want it tied to turning voice memos into task lists. It handles noise cancellation and meeting audio cleanup better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need noise cancellation and meeting audio cleanup when speed or a lighter setup matters more for contract summaries",
+      "avoidIf": "you need publish-ready output without review if you need the most polished or source-grounded final pass",
+      "strengths": [
+        "audio",
+        "voice",
+        "narration",
+        "music"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside audio.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/krisp"
+    },
+    {
+      "toolSlug": "lovo",
+      "toolName": "LOVO",
+      "summary": "LOVO is strongest when you need workflows that need brand voice narration and voiceovers and want it tied to turning voice memos into task lists. It handles brand voice narration and voiceovers better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need brand voice narration and voiceovers when speed or a lighter setup matters more for task lists",
+      "avoidIf": "you need publish-ready output without review if the task needs deeper review than a lightweight fallback can provide",
+      "strengths": [
+        "audio",
+        "voice",
+        "narration",
+        "music"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside audio.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/lovo"
+    },
+    {
+      "toolSlug": "suno",
+      "toolName": "Suno",
+      "summary": "Suno is strongest when you need workflows that need music and song generation and want it tied to turning voice memos into task lists. It handles music and song generation better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need music and song generation when speed or a lighter setup matters more for study quizzes",
+      "avoidIf": "you need publish-ready output without review if the workflow depends on another tool's stronger input handling or editing controls",
+      "strengths": [
+        "audio",
+        "voice",
+        "narration",
+        "music"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside audio.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/suno"
+    }
+  ],
+  "comparisonRows": [
+    {
+      "toolSlug": "microsoft-copilot",
+      "toolName": "Microsoft Copilot",
+      "bestFor": "everyday assistance in a Microsoft-oriented workflow for rewritten resume sections",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "whyConsider": "Microsoft Copilot is worth considering because it is the clearest fit for turning voice memos into task lists. It is built for everyday assistance in a Microsoft-oriented workflow, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for advanced creative asset editing; this matters when the reader is turning voice memos into task lists."
+    },
+    {
+      "toolSlug": "elevenlabs",
+      "toolName": "ElevenLabs",
+      "bestFor": "narration and voiceover creation when cover letter matters more than the top pick",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "ElevenLabs is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for narration and voiceover creation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for visual design creation; this matters when the reader is turning voice memos into task lists."
+    },
+    {
+      "toolSlug": "krisp",
+      "toolName": "Krisp",
+      "bestFor": "workflows that need noise cancellation and meeting audio cleanup when speed or a lighter setup matters more for contract summaries",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "whyConsider": "Krisp is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need noise cancellation and meeting audio cleanup, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside audio.; this matters when the reader is turning voice memos into task lists."
+    },
+    {
+      "toolSlug": "lovo",
+      "toolName": "LOVO",
+      "bestFor": "workflows that need brand voice narration and voiceovers when speed or a lighter setup matters more for task lists",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "LOVO is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need brand voice narration and voiceovers, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside audio.; this matters when the reader is turning voice memos into task lists."
+    },
+    {
+      "toolSlug": "suno",
+      "toolName": "Suno",
+      "bestFor": "workflows that need music and song generation when speed or a lighter setup matters more for study quizzes",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "Suno is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need music and song generation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside audio.; this matters when the reader is turning voice memos into task lists."
+    }
+  ],
+  "decisionPath": [
+    {
+      "situation": "If you already have resume bullets, start with Microsoft Copilot.",
+      "recommendation": "Microsoft Copilot",
+      "reason": "Microsoft Copilot is the most direct first pass because it is built for everyday assistance in a Microsoft-oriented workflow."
+    },
+    {
+      "situation": "If you need stronger cover letter for rewritten resume sections, switch to ElevenLabs.",
+      "recommendation": "ElevenLabs",
+      "reason": "ElevenLabs is the better alternative when narration and voiceover creation matters more than the top pick."
+    },
+    {
+      "situation": "If you need the easiest review, export, or follow-up pass, compare Krisp.",
+      "recommendation": "Krisp",
+      "reason": "Krisp is useful when you want workflows that need noise cancellation and meeting audio cleanup and do not want to overbuild the workflow."
+    },
+    {
+      "situation": "If you are on a desktop and want a fuller comparison, keep all three options open and compare their output side by side.",
+      "recommendation": "Microsoft Copilot",
+      "reason": "A desktop workflow makes it easier to compare Microsoft Copilot, ElevenLabs, and Krisp against the same source material."
+    }
+  ],
+  "decisionTree": [
+    {
+      "situation": "If you already have resume bullets, start with Microsoft Copilot.",
+      "recommendation": "Microsoft Copilot",
+      "reason": "Microsoft Copilot is the most direct first pass because it is built for everyday assistance in a Microsoft-oriented workflow."
+    },
+    {
+      "situation": "If you need stronger cover letter for rewritten resume sections, switch to ElevenLabs.",
+      "recommendation": "ElevenLabs",
+      "reason": "ElevenLabs is the better alternative when narration and voiceover creation matters more than the top pick."
+    },
+    {
+      "situation": "If you need the easiest review, export, or follow-up pass, compare Krisp.",
+      "recommendation": "Krisp",
+      "reason": "Krisp is useful when you want workflows that need noise cancellation and meeting audio cleanup and do not want to overbuild the workflow."
+    },
+    {
+      "situation": "If you are on a desktop and want a fuller comparison, keep all three options open and compare their output side by side.",
+      "recommendation": "Microsoft Copilot",
+      "reason": "A desktop workflow makes it easier to compare Microsoft Copilot, ElevenLabs, and Krisp against the same source material."
+    }
+  ],
+  "moneySavingTips": [
+    "Test one representative project before paying for a longer-term workflow.",
+    "Use a listed free plan when it covers the experiment you need to run.",
+    "Avoid overlapping subscriptions until one tool has proven where it saves effort."
+  ],
+  "pricingNote": "Pricing can change. Check the official site before subscribing.",
+  "pricingCaveat": "Pricing can change. Check the official site before subscribing.",
+  "faqs": [
+    {
+      "question": "What input do I need before using AI for turning voice memos into task lists?",
+      "answer": "Start with resume bullets, cover letter notes, contracts and decide that the output must be rewritten resume sections. That keeps Microsoft Copilot focused on the actual job instead of drifting into a generic answer."
+    },
+    {
+      "question": "Which tool should I start with for rewritten resume sections?",
+      "answer": "Start with Microsoft Copilot when the main input is resume bullets. Compare ElevenLabs when cover letter matters more, and keep Krisp for review or fallback work."
+    },
+    {
+      "question": "What should I check before I use the result?",
+      "answer": "Check the result against resume bullets, especially skipping source details. Do not use the output until it still matches rewritten resume sections."
+    },
+    {
+      "question": "Can I finish this workflow on a phone, or should I use a computer?",
+      "answer": "Use mobile for quick review, keep the task to one input and one output: resume bullets to rewritten resume sections. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. rewritten resume sections usually benefits from desktop review before publishing, sending, or saving."
+    }
+  ],
+  "faq": [
+    {
+      "question": "What input do I need before using AI for turning voice memos into task lists?",
+      "answer": "Start with resume bullets, cover letter notes, contracts and decide that the output must be rewritten resume sections. That keeps Microsoft Copilot focused on the actual job instead of drifting into a generic answer."
+    },
+    {
+      "question": "Which tool should I start with for rewritten resume sections?",
+      "answer": "Start with Microsoft Copilot when the main input is resume bullets. Compare ElevenLabs when cover letter matters more, and keep Krisp for review or fallback work."
+    },
+    {
+      "question": "What should I check before I use the result?",
+      "answer": "Check the result against resume bullets, especially skipping source details. Do not use the output until it still matches rewritten resume sections."
+    },
+    {
+      "question": "Can I finish this workflow on a phone, or should I use a computer?",
+      "answer": "Use mobile for quick review, keep the task to one input and one output: resume bullets to rewritten resume sections. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. rewritten resume sections usually benefits from desktop review before publishing, sending, or saving."
+    }
+  ],
+  "whoShouldUseThis": [
+    "busy professionals who need turning voice memos into task lists.",
+    "Readers asking: Which AI tool should I use to turn voice memos into task lists?",
+    "Teams that understand this pain point: The reader has spoken notes and needs a usable to-do list fast."
+  ],
+  "whoShouldAvoidThis": [
+    "Readers who need legal, financial, or compliance advice rather than tool comparison.",
+    "Users who want guaranteed outcomes instead of a workflow shortlist to evaluate."
+  ],
+  "finalVerdict": "For busy professionals, start by testing Microsoft Copilot on one realistic assignment: turning voice memos into task lists. Compare it with ElevenLabs when cover letter matters, use Krisp for final review, and choose only after checking actual output, setup effort, and current official plan details.",
+  "realityCheck": "AI can speed up the work, but the user still has to review facts, shape the final result, and decide whether the workflow fits the job.",
+  "skillNeeded": "You need enough familiarity with turning voice memos into task lists to judge whether the output is accurate and useful.",
+  "firstStep": "Start with one real example of turning voice memos into task lists and compare the output against your own standard before you scale the workflow.",
+  "commonMistakes": [
+    "Skipping source details",
+    "Turning a rewrite into generic filler",
+    "Missing important names, dates, or constraints"
+  ],
+  "mistakesToAvoid": [
+    "Do not treat Microsoft Copilot as the final answer without checking the result against your source material.",
+    "Do not use ElevenLabs or Krisp as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+  ],
+  "whatToAvoid": [
+    "Do not treat Microsoft Copilot as the final answer without checking the result against your source material.",
+    "Do not use ElevenLabs or Krisp as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+  ],
+  "whatChanged": "Compare transcription accuracy, task extraction, and review speed.",
+  "exampleWorkflow": "Prepare resume bullets, test Microsoft Copilot for rewritten resume sections, compare ElevenLabs when cover letter matters, and keep Krisp for review or export checks.",
+  "exampleResult": "The final result should be clearer, shorter, and easier to use, with the main ideas preserved and the obvious errors removed.",
+  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "visualSummary": {
+    "headline": "A practical starting route for busy professionals",
+    "points": [
+      "Start with Microsoft Copilot for everyday assistance in a Microsoft-oriented workflow",
+      "Compare ElevenLabs when the workflow changes",
+      "Run a real project test before subscribing"
+    ]
+  },
+  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "freshness": "evergreen",
+  "qualityScore": 92,
+  "status": "rejected",
+  "createdAt": "2026-05-29",
+  "updatedAt": "2026-05-29"
+}
