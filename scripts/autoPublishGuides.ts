@@ -7,7 +7,13 @@ import {
   checkGuideQuality,
   type GuideQualityResult,
 } from "@/lib/contentQuality";
-import { reviewGuideWithAI, type AiGuideReview } from "@/lib/aiGuideReviewer";
+import {
+  getOpenAIReviewDiagnostics,
+  probeOpenAIEditorialReview,
+  reviewGuideWithAI,
+  type AiGuideReview,
+  type OpenAIReviewDiagnostics,
+} from "@/lib/aiGuideReviewer";
 import {
   buildEditorialBlueprint,
   type EditorialBlueprint,
@@ -91,6 +97,11 @@ interface SlotReport {
   status: "pending" | "filled" | "failed";
   acceptedTitle?: string;
   rejectionReasons: string[];
+}
+
+interface OpenAIReviewPolicy {
+  readonly mode: "enabled" | "skipped-local" | "unavailable";
+  readonly unavailableReason?: string;
 }
 
 const DEFAULT_COUNT = 2;
@@ -554,12 +565,14 @@ function minimumDepthGuardrail(guide: Guide, blueprint: EditorialBlueprint): Loc
 
 function unavailableAiReview(reason: string): AiGuideReview {
   return {
+    attempted: false,
     available: false,
     passed: false,
     score: 0,
     verdict: reason,
     warnings: [reason],
     suggestedFixes: ["Run AI editorial review and require score >= 85 before publishing."],
+    unavailableReason: reason,
   };
 }
 
@@ -607,10 +620,15 @@ function requiredPublishingReasons(
     reasons.push(`Guide qualityScore ${guide.qualityScore} is below required threshold ${threshold}.`);
   }
 
-  if (!aiReview.available) {
-    reasons.push(`AI editorial review is required and must meet the publish threshold of ${PUBLISH_THRESHOLD}.`);
+  if (!aiReview.attempted) {
+    reasons.push(aiReview.unavailableReason ?? "AI editorial review was skipped before review could run.");
+  } else if (!aiReview.available) {
+    reasons.push(aiReview.unavailableReason ?? "AI editorial review was unavailable.");
   } else if (!aiReview.passed || aiReview.score < PUBLISH_THRESHOLD) {
-    reasons.push(`AI editorial review did not meet the publish threshold of ${PUBLISH_THRESHOLD}.`);
+    reasons.push(
+      aiReview.editorialFailureReason ??
+        `AI editorial review ran and scored ${aiReview.score}/100, below the publish threshold of ${PUBLISH_THRESHOLD}.`,
+    );
   }
 
   return reasons;
@@ -632,11 +650,34 @@ function guideFilePath(slug: string): string {
   return path.join(GUIDES_DIRECTORY, `${slug}.json`);
 }
 
-function logCandidate(candidate: Candidate): void {
-  const aiScore = candidate.aiReview.available
-    ? `${candidate.aiReview.score}/100 (${candidate.aiReview.passed ? "PASS" : "FAIL"})`
-    : "unavailable";
+function isLocalOpenAISkip(reason?: string): boolean {
+  return Boolean(
+    reason &&
+      /openai_api_key is not set locally|skipped locally|local dry-run/i.test(reason),
+  );
+}
 
+function formatAiReviewStatus(aiReview: AiGuideReview): string {
+  if (!aiReview.attempted) {
+    if (isLocalOpenAISkip(aiReview.unavailableReason)) {
+      return "skipped-local";
+    }
+
+    if (aiReview.unavailableReason?.toLowerCase().includes("guardrails")) {
+      return "skipped-guardrails";
+    }
+
+    return aiReview.unavailableReason ? `unavailable (${aiReview.unavailableReason})` : "unavailable";
+  }
+
+  if (!aiReview.available) {
+    return aiReview.unavailableReason ? `unavailable (${aiReview.unavailableReason})` : "unavailable";
+  }
+
+  return `${aiReview.score}/100 (${aiReview.passed ? "PASS" : "FAIL"})`;
+}
+
+function logCandidate(candidate: Candidate): void {
   console.log(`[${candidate.guide.slug}] Candidate report`);
   console.log(`  Title: ${candidate.guide.title}`);
   console.log(
@@ -660,7 +701,11 @@ function logCandidate(candidate: Candidate): void {
   console.log(`  Deterministic check: ${candidate.deterministic.score}/100 (${candidate.deterministic.passed ? "PASS" : "FAIL"})`);
   console.log(`  Mismatch guardrail: ${candidate.mismatchGuardrail.score}/100 (${candidate.mismatchGuardrail.passed ? "PASS" : "FAIL"})`);
   console.log(`  Depth guardrail: ${candidate.depthGuardrail.score}/100 (${candidate.depthGuardrail.passed ? "PASS" : "FAIL"})`);
-  console.log(`  AI review: ${aiScore}`);
+  console.log(`  AI review attempted: ${candidate.aiReview.attempted ? "yes" : "no"}`);
+  console.log(`  AI review: ${formatAiReviewStatus(candidate.aiReview)}`);
+  console.log(`  AI review unavailable reason: ${candidate.aiReview.unavailableReason ?? "None"}`);
+  console.log(`  AI review score: ${candidate.aiReview.available ? `${candidate.aiReview.score}/100` : "unavailable"}`);
+  console.log(`  Editorial failure reason: ${candidate.aiReview.editorialFailureReason ?? "None"}`);
   console.log(`  Improve attempt number: ${candidate.improveAttempts}`);
   console.log(`  Priority: ${candidate.topicPriority}`);
   console.log(`  Uniqueness: ${candidate.uniquenessScore}/100`);
@@ -696,8 +741,10 @@ function logCandidate(candidate: Candidate): void {
   if (candidate.finalStatus === "rejected") {
     const rejectionReasons = [
       ...candidate.aiReview.warnings,
+      candidate.aiReview.unavailableReason ?? "",
+      candidate.aiReview.editorialFailureReason ?? "",
       ...candidate.rejectionReasons,
-    ].filter((reason, index, all) => all.indexOf(reason) === index);
+    ].filter((reason, index, all) => reason.trim().length > 0 && all.indexOf(reason) === index);
 
     const topReasons = rejectionReasons.slice(0, 3);
 
@@ -1248,6 +1295,67 @@ function acceptedCountForType(candidates: readonly Candidate[], guideType: Guide
   return candidates.filter((candidate) => candidateGuideType(candidate.guide) === guideType).length;
 }
 
+function printOpenAIDiagnostics(diagnostics: OpenAIReviewDiagnostics, options: AutoPublishOptions): void {
+  console.log("OpenAI diagnostics");
+  console.log(`OPENAI_API_KEY present: ${diagnostics.apiKeyPresent ? "yes" : "no"}`);
+  console.log(`OPENAI_MODEL value: ${diagnostics.model}`);
+  console.log(`OPENAI_REASONING_EFFORT value: ${diagnostics.reasoningEffort}`);
+  console.log(`Running in GitHub Actions: ${diagnostics.runningInGitHubActions ? "yes" : "no"}`);
+  console.log(`Dry run: ${options.dryRun ? "yes" : "no"}`);
+  console.log(`Publish mode: ${options.publish ? "yes" : "no"}`);
+}
+
+function determineOpenAIReviewPolicy(
+  diagnostics: OpenAIReviewDiagnostics,
+  probe: Awaited<ReturnType<typeof probeOpenAIEditorialReview>>,
+  options: AutoPublishOptions,
+): OpenAIReviewPolicy {
+  if (!diagnostics.apiKeyPresent) {
+    if (options.publish || diagnostics.runningInGitHubActions) {
+      throw new Error(
+        "OPENAI_API_KEY is required for GitHub Actions publish mode. Set or update repository secret OPENAI_API_KEY under Settings → Secrets and variables → Actions.",
+      );
+    }
+
+    if (options.dryRun) {
+      return {
+        mode: "skipped-local",
+        unavailableReason:
+          "Local dry-run ran deterministic, mismatch, and depth checks only. AI review skipped because OPENAI_API_KEY is not set locally.",
+      };
+    }
+
+    return {
+      mode: "skipped-local",
+      unavailableReason:
+        "AI editorial review skipped because OPENAI_API_KEY is not set locally.",
+    };
+  }
+
+  if (!probe.available) {
+    const reason = probe.unavailableReason ?? "OpenAI editorial review probe failed.";
+
+    if (options.publish || diagnostics.runningInGitHubActions) {
+      if (reason.includes("authentication failed")) {
+        throw new Error(
+          `${reason} Set or update repository secret OPENAI_API_KEY under Settings → Secrets and variables → Actions.`,
+        );
+      }
+
+      throw new Error(reason);
+    }
+
+    return {
+      mode: "unavailable",
+      unavailableReason: reason,
+    };
+  }
+
+  return {
+    mode: "enabled",
+  };
+}
+
 async function reviewAndImproveCandidate({
   topic,
   guide,
@@ -1255,6 +1363,7 @@ async function reviewAndImproveCandidate({
   publishedGuides,
   threshold,
   slot,
+  openAIReviewPolicy,
 }: {
   readonly topic: GuideTopic;
   readonly guide: Guide;
@@ -1262,6 +1371,7 @@ async function reviewAndImproveCandidate({
   readonly publishedGuides: readonly Guide[];
   readonly threshold: number;
   readonly slot: GuideLayoutType;
+  readonly openAIReviewPolicy: OpenAIReviewPolicy;
 }): Promise<Candidate> {
   let currentGuide = guide;
   const selectedTools = scoreToolsForTopic(topic).filter(({ tool }) =>
@@ -1280,7 +1390,12 @@ async function reviewAndImproveCandidate({
     depthGuardrail,
   );
   let aiReview = deterministic.passed
-    ? await reviewGuideWithAI(currentGuide)
+    ? openAIReviewPolicy.mode === "enabled"
+      ? await reviewGuideWithAI(currentGuide)
+      : unavailableAiReview(
+          openAIReviewPolicy.unavailableReason ??
+            "AI editorial review was skipped because it is unavailable in this run.",
+        )
     : unavailableAiReview("AI editorial review was deferred until local guardrails pass.");
   let rejectionReasons = requiredPublishingReasons(
     currentGuide,
@@ -1292,7 +1407,7 @@ async function reviewAndImproveCandidate({
 
   while (
     rejectionReasons.length > 0 &&
-    Boolean(process.env.OPENAI_API_KEY) &&
+    openAIReviewPolicy.mode === "enabled" &&
     improveAttempts < MAX_IMPROVE_ATTEMPTS_PER_CANDIDATE
   ) {
     improveAttempts += 1;
@@ -1319,7 +1434,12 @@ async function reviewAndImproveCandidate({
       depthGuardrail,
     );
     aiReview = deterministic.passed
-      ? await reviewGuideWithAI(currentGuide)
+      ? openAIReviewPolicy.mode === "enabled"
+        ? await reviewGuideWithAI(currentGuide)
+        : unavailableAiReview(
+            openAIReviewPolicy.unavailableReason ??
+              "AI editorial review was skipped because it is unavailable in this run.",
+          )
       : unavailableAiReview("AI editorial review was deferred until local guardrails pass.");
     rejectionReasons = requiredPublishingReasons(
       currentGuide,
@@ -1357,6 +1477,24 @@ async function main(): Promise<void> {
   logGuideTopicToolSlugWarnings();
   const publishCount = Math.min(options.count, dailyPublishLimit());
   const targetAcceptedCount = publishCount;
+  const openAIDiagnostics = getOpenAIReviewDiagnostics();
+  printOpenAIDiagnostics(openAIDiagnostics, options);
+  const openAIProbe = openAIDiagnostics.apiKeyPresent
+    ? await probeOpenAIEditorialReview()
+    : {
+        attempted: false,
+        available: false,
+        model: openAIDiagnostics.model,
+        unavailableReason: "OPENAI_API_KEY is not set.",
+      };
+  const openAIReviewPolicy = determineOpenAIReviewPolicy(openAIDiagnostics, openAIProbe, options);
+
+  if (openAIReviewPolicy.mode === "skipped-local" && openAIDiagnostics.apiKeyPresent === false && options.dryRun) {
+    console.log(
+      "Local dry-run ran deterministic, mismatch, and depth checks only. AI review skipped because OPENAI_API_KEY is not set locally.",
+    );
+  }
+
   const existingGuides = await getExistingGuides();
   const existingSlugs = new Set(existingGuides.map((guide) => guide.slug));
   const recentPublishedToolSlugs = new Set<string>();
@@ -1391,7 +1529,6 @@ async function main(): Promise<void> {
   }));
 
   const publishedGuides = existingGuides.filter((guide) => guide.status === "published");
-  const reviewerUnavailable = !process.env.OPENAI_API_KEY;
 
   if (options.count > publishCount) {
     console.log(
@@ -1403,8 +1540,8 @@ async function main(): Promise<void> {
     console.log(`Requested minimum quality ${options.minQuality}; using strict minimum ${qualityThreshold}.`);
   }
 
-  if (reviewerUnavailable) {
-    console.log("AI reviewer unavailable; automatic publishing is blocked because AI editorial review >= 85 is required.");
+  if (openAIReviewPolicy.mode === "unavailable") {
+    console.log(`AI review unavailable reason: ${openAIReviewPolicy.unavailableReason ?? "Unknown"}`);
   }
 
   if (slotTargets.length === 0) {
@@ -1502,6 +1639,7 @@ async function main(): Promise<void> {
         publishedGuides,
         threshold: qualityThreshold,
         slot: slot.guideType,
+        openAIReviewPolicy,
       });
       candidatesImproved += candidate.improveAttempts > 0 ? 1 : 0;
 
@@ -1577,6 +1715,12 @@ async function main(): Promise<void> {
   const publishedCount = options.publish && !options.dryRun ? acceptedCandidates.length : 0;
   const approvedCount = !options.dryRun && !options.publish ? acceptedCandidates.length : 0;
   const draftCount = checkedCandidates.length - (options.publish ? publishedCount : approvedCount);
+  const localEligibleCount = checkedCandidates.filter(
+    (candidate) =>
+      candidate.deterministic.passed &&
+      candidate.mismatchGuardrail.passed &&
+      candidate.depthGuardrail.passed,
+  ).length;
 
   console.log("Auto publish summary");
   console.log(`Target count: ${targetAcceptedCount}`);
@@ -1587,17 +1731,21 @@ async function main(): Promise<void> {
   console.log(`Candidates created: ${generatedCandidates.length}`);
   console.log(`Candidates improved: ${candidatesImproved}`);
   console.log(`Candidates blocked by mismatch guardrail: ${checkedCandidates.filter((candidate) => !candidate.mismatchGuardrail.passed).length}`);
-  console.log(`Candidates sent to AI review: ${checkedCandidates.filter((candidate) => candidate.aiReview.available).length}`);
+  console.log(`Candidates sent to AI review: ${checkedCandidates.filter((candidate) => candidate.aiReview.attempted).length}`);
   console.log(`True how-to guides attempted: ${howToGuidesAttempted}`);
   console.log(`Tool-decision guides attempted: ${toolDecisionGuidesAttempted}`);
   console.log(`Candidates rewritten after AI review: ${candidatesImproved}`);
   console.log(`Candidates checked: ${checkedCandidates.length}`);
+  console.log(`AI review: ${openAIReviewPolicy.mode}`);
+  console.log(`AI review unavailable reason: ${openAIReviewPolicy.unavailableReason ?? "None"}`);
+  console.log(`AI review attempted: ${checkedCandidates.some((candidate) => candidate.aiReview.attempted) ? "yes" : "no"}`);
+  console.log(`Local eligible candidates: ${localEligibleCount}`);
   console.log("AI scores:");
   if (checkedCandidates.length === 0) {
     console.log("None");
   } else {
     for (const candidate of checkedCandidates) {
-      console.log(`[${candidate.guide.slug}] ${candidate.aiReview.available ? candidate.aiReview.score : "unavailable"}`);
+      console.log(`[${candidate.guide.slug}] ${formatAiReviewStatus(candidate.aiReview)}`);
     }
   }
   console.log(`Published: ${publishedCount}`);
@@ -1624,9 +1772,11 @@ async function main(): Promise<void> {
     const reasons = [
       ...candidate.failureCategories,
       ...candidate.aiReview.warnings,
+      candidate.aiReview.unavailableReason ?? "",
+      candidate.aiReview.editorialFailureReason ?? "",
       ...candidate.rejectionReasons,
     ];
-    for (const reason of reasons.slice(0, 3)) {
+    for (const reason of reasons.filter((entry) => entry.trim().length > 0).slice(0, 3)) {
       topRejectionReasons.set(reason, (topRejectionReasons.get(reason) ?? 0) + 1);
     }
   }
@@ -1669,6 +1819,8 @@ async function main(): Promise<void> {
   } else {
     for (const candidate of rejectedCandidates) {
       const topReason =
+        candidate.aiReview.unavailableReason ??
+        candidate.aiReview.editorialFailureReason ??
         candidate.aiReview.warnings[0] ??
         candidate.rejectionReasons[0] ??
         "Candidate did not pass all publish gates.";
@@ -1677,7 +1829,10 @@ async function main(): Promise<void> {
       console.log(`  Topic bucket: ${candidate.topicBucket}`);
       console.log(`  Mismatch guardrail: ${candidate.mismatchGuardrail.score}/100 (${candidate.mismatchGuardrail.passed ? "PASS" : "FAIL"})`);
       console.log(`  Depth guardrail: ${candidate.depthGuardrail.score}/100 (${candidate.depthGuardrail.passed ? "PASS" : "FAIL"})`);
-      console.log(`  AI review score: ${candidate.aiReview.available ? candidate.aiReview.score : "unavailable"}`);
+      console.log(`  AI review attempted: ${candidate.aiReview.attempted ? "yes" : "no"}`);
+      console.log(`  AI review score: ${candidate.aiReview.available ? `${candidate.aiReview.score}/100` : "unavailable"}`);
+      console.log(`  AI review unavailable reason: ${candidate.aiReview.unavailableReason ?? "None"}`);
+      console.log(`  Editorial failure reason: ${candidate.aiReview.editorialFailureReason ?? "None"}`);
       console.log(`  Top reason: ${topReason}`);
     }
   }

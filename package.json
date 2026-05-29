@@ -13,6 +13,7 @@
     "generate:trends": "tsx scripts/generateGuides.ts --type trend-led",
     "generate:mixed": "tsx scripts/generateGuides.ts --type mixed",
     "check:guides": "tsx scripts/checkGuides.ts",
+    "check:openai": "tsx scripts/checkOpenAI.ts",
     "check:icons": "tsx scripts/checkToolIcons.ts",
     "check:tools": "tsx scripts/checkTools.ts",
     "auto:publish-guides": "tsx scripts/autoPublishGuides.ts"

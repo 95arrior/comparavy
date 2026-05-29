@@ -32,6 +32,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Check OpenAI availability
+        run: npm run check:openai
+
       - name: Generate and publish guide candidates
         run: npm run auto:publish-guides -- --count 2 --type mixed --publish
 

@@ -1,12 +1,31 @@
 import type { Guide } from "@/lib/guides";
 
 export interface AiGuideReview {
+  readonly attempted: boolean;
   readonly available: boolean;
   readonly passed: boolean;
   readonly score: number;
   readonly verdict: string;
   readonly warnings: readonly string[];
   readonly suggestedFixes: readonly string[];
+  readonly unavailableReason?: string;
+  readonly editorialFailureReason?: string;
+}
+
+export interface OpenAIReviewDiagnostics {
+  readonly apiKeyPresent: boolean;
+  readonly model: string;
+  readonly reasoningEffort: string;
+  readonly runningInGitHubActions: boolean;
+}
+
+export interface OpenAIReviewProbeResult {
+  readonly attempted: boolean;
+  readonly available: boolean;
+  readonly model: string;
+  readonly unavailableReason?: string;
+  readonly status?: number;
+  readonly statusCategory?: string;
 }
 
 interface ResponsesResult {
@@ -35,23 +54,27 @@ const REVIEW_SCHEMA = {
 
 function unavailableReview(): AiGuideReview {
   return {
+    attempted: false,
     available: false,
     passed: false,
     score: 0,
     verdict: "AI editorial review unavailable because OPENAI_API_KEY is not set.",
     warnings: [],
     suggestedFixes: [],
+    unavailableReason: "AI editorial review skipped locally because OPENAI_API_KEY is not set.",
   };
 }
 
 function blockedReview(message: string): AiGuideReview {
   return {
+    attempted: true,
     available: true,
     passed: false,
     score: 0,
     verdict: "AI editorial review could not be completed; automatic publishing is blocked.",
     warnings: [message],
     suggestedFixes: ["Retry the AI editorial review before publishing this guide automatically."],
+    editorialFailureReason: message,
   };
 }
 
@@ -75,16 +98,159 @@ function readOutputText(result: ResponsesResult): string | undefined {
   return undefined;
 }
 
-function preferredReviewModels(): string[] {
-  return [
-    process.env.OPENAI_MODEL,
-    "gpt-5.5-high",
-    "gpt-5.4-mini",
-  ].filter((model, index, models): model is string =>
-    typeof model === "string" &&
-    model.trim().length > 0 &&
-    models.indexOf(model) === index,
-  );
+export function resolveOpenAIModel(): string {
+  return process.env.OPENAI_MODEL?.trim() || "gpt-5.4-mini";
+}
+
+export function getOpenAIReviewDiagnostics(): OpenAIReviewDiagnostics {
+  return {
+    apiKeyPresent: Boolean(process.env.OPENAI_API_KEY),
+    model: resolveOpenAIModel(),
+    reasoningEffort: process.env.OPENAI_REASONING_EFFORT?.trim() || "n/a",
+    runningInGitHubActions: process.env.GITHUB_ACTIONS === "true",
+  };
+}
+
+function classifyOpenAIHttpFailure(status: number, bodyText = ""): {
+  readonly category: string;
+  readonly message: string;
+} {
+  const normalizedBody = bodyText.toLowerCase();
+
+  if (status === 401) {
+    return {
+      category: "unauthorized",
+      message: "OpenAI authentication failed. Check GitHub secret OPENAI_API_KEY.",
+    };
+  }
+
+  if (
+    status === 402 ||
+    normalizedBody.includes("insufficient_quota") ||
+    normalizedBody.includes("billing") ||
+    normalizedBody.includes("quota")
+  ) {
+    return {
+      category: "billing_issue",
+      message: `OpenAI request failed with status ${status} (billing_issue).`,
+    };
+  }
+
+  if (
+    normalizedBody.includes("rate limit") ||
+    normalizedBody.includes("too many requests") ||
+    status === 429
+  ) {
+    return {
+      category: "rate_limited",
+      message: `OpenAI request failed with status ${status} (rate_limited).`,
+    };
+  }
+
+  if (status === 404 || status === 400 || status === 403) {
+    return {
+      category: "model_unavailable",
+      message: "OpenAI model unavailable. Check OPENAI_MODEL.",
+    };
+  }
+
+  if (status >= 500) {
+    return {
+      category: "upstream_error",
+      message: `OpenAI request failed with status ${status} (upstream_error).`,
+    };
+  }
+
+  return {
+    category: "request_failed",
+    message: `OpenAI request failed with status ${status}.`,
+  };
+}
+
+export async function probeOpenAIEditorialReview(): Promise<OpenAIReviewProbeResult> {
+  const apiKey = process.env.OPENAI_API_KEY;
+
+  if (!apiKey) {
+    return {
+      attempted: false,
+      available: false,
+      model: resolveOpenAIModel(),
+      unavailableReason: "OPENAI_API_KEY is not set.",
+    };
+  }
+
+  const model = resolveOpenAIModel();
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        input: "Return JSON only with {\"ok\": true}.",
+        text: {
+          format: {
+            type: "json_schema",
+            name: "comparavy_openai_probe",
+            strict: true,
+            schema: {
+              type: "object",
+              additionalProperties: false,
+              properties: {
+                ok: { type: "boolean" },
+              },
+              required: ["ok"],
+            },
+          },
+        },
+        max_output_tokens: 16,
+      }),
+      signal: AbortSignal.timeout(20_000),
+    });
+
+    if (!response.ok) {
+      const bodyText = await response.text();
+      const failure = classifyOpenAIHttpFailure(response.status, bodyText);
+      return {
+        attempted: true,
+        available: false,
+        model,
+        unavailableReason: failure.message,
+        status: response.status,
+        statusCategory: failure.category,
+      };
+    }
+
+    const result = (await response.json()) as ResponsesResult;
+    const text = readOutputText(result);
+
+    if (!text) {
+      return {
+        attempted: true,
+        available: false,
+        model,
+        unavailableReason: "OpenAI model returned no structured response during connectivity check.",
+        statusCategory: "invalid_response",
+      };
+    }
+
+    return {
+      attempted: true,
+      available: true,
+      model,
+    };
+  } catch (error) {
+    return {
+      attempted: true,
+      available: false,
+      model,
+      unavailableReason: `OpenAI connectivity check failed: ${String(error)}`,
+      statusCategory: "network_error",
+    };
+  }
 }
 
 function parseReview(value: unknown): AiGuideReview | undefined {
@@ -108,6 +274,7 @@ function parseReview(value: unknown): AiGuideReview | undefined {
   }
 
   return {
+    attempted: true,
     available: true,
     passed: review.passed,
     score: Math.max(0, Math.min(100, Math.round(review.score))),
@@ -125,50 +292,93 @@ export async function reviewGuideWithAI(guide: Guide): Promise<AiGuideReview> {
   }
 
   try {
-    let lastFailure = "OpenAI editorial review request did not run.";
-
-    for (const model of preferredReviewModels()) {
-      const response = await fetch("https://api.openai.com/v1/responses", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model,
-          instructions:
-            "You are a strict editorial reviewer for Comparavy, a US-focused, AdSense-first AI problem-solving content site. Evaluate the supplied guide as written; do not rewrite it. For how-to guides, score highly only when the article solves one clear reader problem first, the title starts with How to instead of Best AI Tools for, the first 100 words give a useful answer, the workflow includes what the reader needs, step-by-step actions, mobile and desktop guidance, tools used as workflow support, an example result, mistakes to avoid, high-intent FAQs, and a useful next step. For tool-decision guides, score highly only when a busy reader can choose a suitable tool in under 60 seconds, the guide names the best starting tool, explains when the second-best option is better, explains when to avoid the main recommendation, and compares the shortlisted tools on input type, output quality, source reliability, ease of use, speed, mobile suitability, desktop suitability, best use case, and limitation. Check that Best for / Avoid if / Watch for sections are specific and non-repetitive, the decision path uses real branching logic, FAQs answer high-intent questions, the title matches the evidence available, and uncertain readers are directed to /finder. Reject fake testing claims, unsupported certainty, exact current pricing claims, generic filler, repeated placeholder language, broad tool-list framing for how-to topics, or content that would be low-value publishing. Return JSON only through the provided schema. A score of 85 or above should be reserved for publish-ready editorial quality.",
-          input: JSON.stringify(guide),
-          text: {
-            format: {
-              type: "json_schema",
-              name: "comparavy_editorial_review",
-              strict: true,
-              schema: REVIEW_SCHEMA,
-            },
+    const model = resolveOpenAIModel();
+    const response = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        instructions:
+          "You are a strict editorial reviewer for Comparavy, a US-focused, AdSense-first AI problem-solving content site. Evaluate the supplied guide as written; do not rewrite it. For how-to guides, score highly only when the article solves one clear reader problem first, the title starts with How to instead of Best AI Tools for, the first 100 words give a useful answer, the workflow includes what the reader needs, step-by-step actions, mobile and desktop guidance, tools used as workflow support, an example result, mistakes to avoid, high-intent FAQs, and a useful next step. For tool-decision guides, score highly only when a busy reader can choose a suitable tool in under 60 seconds, the guide names the best starting tool, explains when the second-best option is better, explains when to avoid the main recommendation, and compares the shortlisted tools on input type, output quality, source reliability, ease of use, speed, mobile suitability, desktop suitability, best use case, and limitation. Check that Best for / Avoid if / Watch for sections are specific and non-repetitive, the decision path uses real branching logic, FAQs answer high-intent questions, the title matches the evidence available, and uncertain readers are directed to /finder. Reject fake testing claims, unsupported certainty, exact current pricing claims, generic filler, repeated placeholder language, broad tool-list framing for how-to topics, or content that would be low-value publishing. Return JSON only through the provided schema. A score of 85 or above should be reserved for publish-ready editorial quality.",
+        input: JSON.stringify(guide),
+        text: {
+          format: {
+            type: "json_schema",
+            name: "comparavy_editorial_review",
+            strict: true,
+            schema: REVIEW_SCHEMA,
           },
-        }),
-        signal: AbortSignal.timeout(60_000),
-      });
+        },
+      }),
+      signal: AbortSignal.timeout(60_000),
+    });
 
-      if (!response.ok) {
-        lastFailure = `OpenAI editorial review request failed with status ${response.status} using ${model}.`;
-        continue;
-      }
-
-      const result = (await response.json()) as ResponsesResult;
-      const text = readOutputText(result);
-
-      if (!text) {
-        return blockedReview("OpenAI editorial review returned no structured review text.");
-      }
-
-      const review = parseReview(JSON.parse(text) as unknown);
-      return review ?? blockedReview("OpenAI editorial review returned an invalid response shape.");
+    if (!response.ok) {
+      const bodyText = await response.text();
+      const failure = classifyOpenAIHttpFailure(response.status, bodyText);
+      return {
+        attempted: true,
+        available: false,
+        passed: false,
+        score: 0,
+        verdict: "AI editorial review could not be completed; automatic publishing is blocked.",
+        warnings: [failure.message],
+        suggestedFixes: ["Retry the AI editorial review before publishing this guide automatically."],
+        unavailableReason: failure.message,
+      };
     }
 
-    return blockedReview(lastFailure);
+    const result = (await response.json()) as ResponsesResult;
+    const text = readOutputText(result);
+
+    if (!text) {
+      return {
+        attempted: true,
+        available: false,
+        passed: false,
+        score: 0,
+        verdict: "AI editorial review could not be completed; automatic publishing is blocked.",
+        warnings: ["OpenAI editorial review returned no structured review text."],
+        suggestedFixes: ["Retry the AI editorial review before publishing this guide automatically."],
+        unavailableReason: "OpenAI editorial review returned no structured review text.",
+      };
+    }
+
+    const review = parseReview(JSON.parse(text) as unknown);
+
+    if (!review) {
+      return {
+        attempted: true,
+        available: false,
+        passed: false,
+        score: 0,
+        verdict: "AI editorial review could not be completed; automatic publishing is blocked.",
+        warnings: ["OpenAI editorial review returned an invalid response shape."],
+        suggestedFixes: ["Retry the AI editorial review before publishing this guide automatically."],
+        unavailableReason: "OpenAI editorial review returned an invalid response shape.",
+      };
+    }
+
+    return {
+      ...review,
+      editorialFailureReason:
+        review.passed && review.score >= 85
+          ? undefined
+          : `AI editorial review ran and scored ${review.score}/100, below the publish threshold of 85.`,
+    };
   } catch (error) {
-    return blockedReview(`OpenAI editorial review failed: ${String(error)}`);
+    return {
+      attempted: true,
+      available: false,
+      passed: false,
+      score: 0,
+      verdict: "AI editorial review could not be completed; automatic publishing is blocked.",
+      warnings: [`OpenAI editorial review failed: ${String(error)}`],
+      suggestedFixes: ["Retry the AI editorial review before publishing this guide automatically."],
+      unavailableReason: `OpenAI editorial review failed: ${String(error)}`,
+    };
   }
 }
