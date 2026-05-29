@@ -43,6 +43,38 @@ interface SkippedGuideTopic {
   readonly reason: string;
 }
 
+export interface EditorialBrief {
+  readonly guideType: GuideLayoutType;
+  readonly targetReader: string;
+  readonly searchIntent: string;
+  readonly userPain: string;
+  readonly realWorldScenario: string;
+  readonly jobToBeDone: string;
+  readonly primaryKeyword: string;
+  readonly longTailKeywords: readonly string[];
+  readonly deviceIntent: "desktop" | "mobile" | "both";
+  readonly mobileScenario: string;
+  readonly desktopScenario: string;
+  readonly whatTheReaderNeedsInFirst100Words: string;
+  readonly whatThisArticleMustNotDo: readonly string[];
+  readonly coreWorkflow: readonly string[];
+  readonly toolRoleMap: readonly { readonly toolSlug: string; readonly toolName: string; readonly role: string }[];
+  readonly decisionCriteria: readonly string[];
+  readonly contentGap: string;
+  readonly uniqueAngle: string;
+  readonly examplesToInclude: readonly string[];
+  readonly commonMistakesToWarnAbout: readonly string[];
+  readonly FAQQuestions: readonly string[];
+  readonly internalLinks: readonly string[];
+  readonly nextStepCTA: string;
+}
+
+export interface ArticleOutline {
+  readonly guideType: GuideLayoutType;
+  readonly title: string;
+  readonly sections: readonly string[];
+}
+
 export const GUIDE_SCHEMA = {
   type: "object",
   additionalProperties: false,
@@ -498,7 +530,7 @@ function toolAvoidPhrase(tool: { readonly avoidIf: readonly string[]; readonly n
 
 function toolWatchForPhrase(tool: { readonly notFor: readonly string[]; readonly avoidIf: readonly string[] }, topic: GuideTopic): string {
   return ensurePeriod(
-    `Watch for ${lowerFirst(tool.notFor[0] ?? tool.avoidIf[0] ?? "where the workflow starts to drift")}; this matters when ${topic.searchIntent}.`,
+    `Watch for ${lowerFirst(tool.notFor[0] ?? tool.avoidIf[0] ?? "where the workflow starts to drift")}; this matters when the reader is ${topic.searchIntent}.`,
   );
 }
 
@@ -543,7 +575,15 @@ function toolAvoidIfText(tool: { readonly avoidIf: readonly string[]; readonly n
     return `${base} if your main need is the top tool's exact workflow`;
   }
 
-  return `${base} if you need the most polished or source-grounded final pass`;
+  if (position === 2) {
+    return `${base} if you need the most polished or source-grounded final pass`;
+  }
+
+  if (position === 3) {
+    return `${base} if the task needs deeper review than a lightweight fallback can provide`;
+  }
+
+  return `${base} if the workflow depends on another tool's stronger input handling or editing controls`;
 }
 
 function toolWhyConsiderText(tool: { readonly name: string; readonly bestFor: readonly string[]; readonly useCases: readonly string[]; readonly avoidIf: readonly string[]; readonly notFor: readonly string[]; readonly speedScore: number; readonly easeScore: number; readonly qualityScore: number }, topic: GuideTopic, position: number): string {
@@ -582,8 +622,9 @@ function quickAnswerForGuide(
   guideType: GuideLayoutType,
 ): string {
   if (guideType === "how-to") {
+    const outcome = workflowVerbPhrase(topic);
     return ensurePeriod(
-      `To handle ${topic.searchIntent}, start by gathering the real source material, use ${firstTool.name} for the first AI pass, then check the result against the original before you share it. Use ${secondTool.name} when the job needs a different format, and keep ${thirdTool.name} for cleanup or review after the main workflow is done.`,
+      `To ${outcome} with AI, start with the real source material, ask for one specific output, and check the draft before you share or publish it. ${firstTool.name} is the best first pass for this workflow, ${secondTool.name} helps when the format or source handling needs a second pass, and ${thirdTool.name} is better saved for cleanup after the facts are right.`,
     );
   }
 
@@ -627,6 +668,184 @@ function titleForGuide(topic: GuideTopic, guideType: GuideLayoutType): string {
   }
 
   return topic.title;
+}
+
+function workflowVerbPhrase(topic: GuideTopic): string {
+  return topic.searchIntent
+    .replace(/^turning\b/i, "turn")
+    .replace(/^summarizing\b/i, "summarize")
+    .replace(/^summarising\b/i, "summarize")
+    .replace(/^creating\b/i, "create")
+    .replace(/^writing\b/i, "write")
+    .replace(/^drafting\b/i, "draft")
+    .replace(/^organizing\b/i, "organize")
+    .replace(/^cleaning\b/i, "clean")
+    .replace(/^making\b/i, "make")
+    .replace(/^building\b/i, "build")
+    .replace(/^finding\b/i, "find")
+    .replace(/^polishing\b/i, "polish")
+    .replace(/\s+with ai$/i, "")
+    .trim();
+}
+
+function createCoreWorkflow(topic: GuideTopic, guideType: GuideLayoutType): string[] {
+  const source = topicInputFocus(topic);
+  const outcome = workflowVerbPhrase(topic);
+
+  if (guideType === "how-to") {
+    return [
+      `Collect ${source} and remove anything the AI should not use.`,
+      `Define the final output: what the reader needs to produce, send, post, study, or decide.`,
+      `Use AI to create a first structured draft for ${outcome}.`,
+      "Check names, numbers, sources, commitments, tone, and missing context against the original material.",
+      "Polish the final result, save the reusable prompt, and choose the next tool only if the format or source type changes.",
+    ];
+  }
+
+  return [
+    `Confirm whether the work starts with ${source}, web research, media, or a blank draft.`,
+    "Pick the tool whose strengths match the input type before comparing features.",
+    "Compare output quality, source reliability, editing control, mobile speed, desktop depth, and review effort.",
+    "Choose the simplest paid plan only after one real task proves the fit.",
+  ];
+}
+
+function toolRole(tool: { readonly name: string; readonly category: string; readonly useCases: readonly string[] }, topic: GuideTopic, position: number): string {
+  const useCase = tool.useCases[position % Math.max(1, tool.useCases.length)] ?? topic.searchIntent;
+
+  if (position === 0) {
+    return `first-pass help for ${lowerFirst(useCase)} from ${topicInputFocus(topic)}`;
+  }
+
+  if (position === 1) {
+    return `second-pass support when the output needs ${lowerFirst(useCase)} or a different format`;
+  }
+
+  if (position === 2) {
+    return `review, cleanup, or alternate wording after the main draft is checked`;
+  }
+
+  return `fallback support for ${lowerFirst(tool.category.replace(/-/g, " "))} tasks in this workflow`;
+}
+
+function createFaqQuestions(topic: GuideTopic, guideType: GuideLayoutType, firstToolName: string, secondToolName: string): string[] {
+  if (guideType === "how-to") {
+    return [
+      `Can I use AI for ${topic.searchIntent} without losing important details?`,
+      `What should I check before I use the AI result?`,
+      `Is ${firstToolName} or ${secondToolName} better for this workflow?`,
+      "What is the fastest mobile version of this workflow?",
+    ];
+  }
+
+  return [
+    `Which AI tool should I try first for ${topic.searchIntent}?`,
+    `When should I choose ${secondToolName} instead of ${firstToolName}?`,
+    "Which option is better on a phone?",
+    "Which option is better for a longer desktop workflow?",
+  ];
+}
+
+export function createEditorialBrief(
+  topic: GuideTopic,
+  guideType: GuideLayoutType,
+  tools: readonly { readonly tool: { readonly slug: string; readonly name: string; readonly category: string; readonly useCases: readonly string[] } }[],
+): EditorialBrief {
+  const date = new Date().toISOString().slice(0, 10);
+  const toolRoleMap = tools.slice(0, MAX_RECOMMENDED_TOOLS).map(({ tool }, index) => ({
+    toolSlug: tool.slug,
+    toolName: tool.name,
+    role: toolRole(tool, topic, index),
+  }));
+  const firstTool = tools[0]?.tool.name ?? "the strongest matched tool";
+  const secondTool = tools[1]?.tool.name ?? "the second matched tool";
+  const deviceIntent = topic.deviceIntent ?? "both";
+
+  return {
+    guideType,
+    targetReader: topic.audience,
+    searchIntent: topic.searchIntent,
+    userPain: topic.userPain,
+    realWorldScenario: `${topic.audience} need ${topic.searchIntent} on a real task, not a generic tool roundup. Prepared ${date}.`,
+    jobToBeDone: `${workflowVerbPhrase(topic)} into a result the reader can review and use.`,
+    primaryKeyword: topic.primaryKeyword,
+    longTailKeywords: topic.longTailKeywords,
+    deviceIntent,
+    mobileScenario: topic.mobileUseCase ?? "The reader needs a short answer, a quick draft, or a review step they can finish from a phone.",
+    desktopScenario: topic.desktopUseCase ?? "The reader needs source material, AI output, and final editing space visible at the same time.",
+    whatTheReaderNeedsInFirst100Words:
+      guideType === "how-to"
+        ? `A direct answer that explains the first action, the source material to prepare, and the review step needed for ${topic.searchIntent}.`
+        : `A direct verdict naming the best starting tool, when to use the second choice, and when to avoid the top pick for ${topic.searchIntent}.`,
+    whatThisArticleMustNotDo: [
+      "Sound like a generic AI tool list.",
+      "Use placeholder recommendation language.",
+      "Promise guaranteed income, rankings, accuracy, engagement, or legal compliance.",
+      "Invent exact current prices, fake testing, or unsupported product claims.",
+      "Let tools replace the reader's review of source material.",
+    ],
+    coreWorkflow: createCoreWorkflow(topic, guideType),
+    toolRoleMap,
+    decisionCriteria: [
+      "input type",
+      "output format",
+      "source reliability",
+      "editing control",
+      "mobile speed",
+      "desktop depth",
+      "review effort",
+      "subscription risk",
+    ],
+    contentGap: topic.contentGap,
+    uniqueAngle: topic.uniqueAngle,
+    examplesToInclude: [
+      `A before-and-after example for ${topic.searchIntent}.`,
+      `A phone-friendly version using ${firstTool}.`,
+      `A desktop workflow that compares ${firstTool} and ${secondTool}.`,
+    ],
+    commonMistakesToWarnAbout: [
+      "Starting with a tool before defining the source material and output.",
+      "Copying the first AI result without checking facts, names, dates, links, or commitments.",
+      "Using the same prompt for every tool instead of matching the tool to its role.",
+      "Turning a practical workflow into a broad ranking page.",
+    ],
+    FAQQuestions: createFaqQuestions(topic, guideType, firstTool, secondTool),
+    internalLinks: ["/finder", "/guides", ...toolRoleMap.slice(0, 3).map((tool) => `/tools/${tool.toolSlug}`)],
+    nextStepCTA: "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  };
+}
+
+export function createArticleOutline(brief: EditorialBrief, title: string): ArticleOutline {
+  const sections = brief.guideType === "how-to"
+    ? [
+        "Quick Answer",
+        "What you need",
+        "Step-by-step workflow",
+        "Best if you are on a computer",
+        "Best if you are on your phone",
+        "Tools you can use",
+        "Example result",
+        "Common mistakes",
+        "FAQ",
+        "Next step",
+      ]
+    : [
+        "Quick Verdict",
+        "Best Picks by Situation",
+        "Comparison Table",
+        "Which one should you choose?",
+        "Tool Cards",
+        "Who should use this",
+        "Who should avoid this",
+        "Final Verdict",
+        "Finder CTA",
+      ];
+
+  return {
+    guideType: brief.guideType,
+    title,
+    sections,
+  };
 }
 
 function quickDecisionForGuide(
@@ -731,30 +950,33 @@ function buildHowToSteps(
   secondTool: { readonly slug: string; readonly name: string; readonly bestFor: readonly string[]; readonly avoidIf: readonly string[]; readonly notFor: readonly string[] },
   thirdTool: { readonly slug: string; readonly name: string; readonly bestFor: readonly string[]; readonly avoidIf: readonly string[]; readonly notFor: readonly string[] },
 ): { title: string; detail: string; toolSlug?: string; toolName?: string }[] {
+  const outcome = workflowVerbPhrase(topic);
+  const source = topicInputFocus(topic);
+
   return [
     {
-      title: "Gather the source material",
-      detail: `Start with the real inputs for ${topic.searchIntent}: notes, files, transcript text, product facts, or examples. The output will only be useful if the source is specific.`,
+      title: "Collect the source material",
+      detail: `Put the real input in one place before opening a tool: ${source}, any required facts, the audience, and the format you need at the end. Remove private details you are not allowed to share.`,
     },
     {
-      title: "Ask for the first useful draft",
-      detail: `Use ${firstTool.name} to create the first pass from that source material. Ask for a practical result, not a generic explanation of the topic.`,
+      title: "Ask for the first usable version",
+      detail: `Use ${firstTool.name} for a first pass that tries to ${outcome}. Ask it to preserve source facts, flag uncertainty, and organize the result into sections you can review.`,
       toolSlug: firstTool.slug,
       toolName: firstTool.name,
     },
     {
-      title: "Check the draft against the original",
-      detail: "Compare names, facts, dates, claims, missing context, and tone against the original input before you edit style or formatting.",
+      title: "Check the answer before polishing",
+      detail: `Compare the draft with the original material. Fix names, dates, numbers, unsupported claims, missing context, and tone before you ask for nicer wording.`,
     },
     {
-      title: "Change format only after the facts are right",
-      detail: `Use ${secondTool.name} when the result needs a visual, social, presentation, or alternate format. Keep the same source facts so the rewrite does not drift.`,
+      title: "Change the format only after the facts are right",
+      detail: `Use ${secondTool.name} when the verified draft needs a different format, structure, or source-aware second pass. Keep the same facts so the rewrite does not drift from the original.`,
       toolSlug: secondTool.slug,
       toolName: secondTool.name,
     },
     {
-      title: "Polish the final version",
-      detail: `Use ${thirdTool.name} or a manual review pass to tighten wording, remove filler, and make the final result easier to read on a phone or computer.`,
+      title: "Finish with a human review",
+      detail: `Use ${thirdTool.name} for cleanup only after the main work is checked. Read the final result as the recipient would: on the device, in the app, or in the document where it will actually be used.`,
       toolSlug: thirdTool.slug,
       toolName: thirdTool.name,
     },
@@ -771,22 +993,27 @@ function buildHowToDecisionPath(
     {
       situation: `If you already have ${topicInputFocus(topic)}, start with ${firstTool.name}.`,
       recommendation: firstTool.name,
-      reason: `${firstTool.name} is the fastest first pass because it can work from the source material you already have.`,
+      reason: `${firstTool.name} is the first-pass choice when the input is ready and the main job is to structure, summarize, draft, or clean it into a usable result.`,
     },
     {
-      situation: `If the output needs a different format after the facts are checked, use ${secondTool.name}.`,
+      situation: `If the output needs a different format after the facts are checked, switch to ${secondTool.name}.`,
       recommendation: secondTool.name,
       reason: `${secondTool.name} is better for the second pass when the job changes from drafting to formatting, layout, or a different presentation style.`,
     },
     {
-      situation: `If the result is almost right but still rough, use ${thirdTool.name}.`,
+      situation: `If the result is accurate but still rough, use ${thirdTool.name}.`,
       recommendation: thirdTool.name,
       reason: `${thirdTool.name} fits the final cleanup step because the main source work is already done.`,
     },
     {
-      situation: "If you are on your phone, keep the task small.",
+      situation: "If you are on your phone, keep the task small and finish one reviewable output.",
       recommendation: firstTool.name,
-      reason: "Use mobile for a short summary, quick rewrite, or final review; save side-by-side comparison and bigger edits for desktop.",
+      reason: "Mobile works best for a short summary, a quick rewrite, or final approval; save side-by-side checking and larger edits for desktop.",
+    },
+    {
+      situation: "If you are on a computer, compare the source, AI draft, and final version side by side.",
+      recommendation: secondTool.name,
+      reason: "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail.",
     },
   ];
 }
@@ -1125,6 +1352,8 @@ export function createTemplateGuide(
   const qualityScore = 92;
   const guideType = guideTypeOverride ?? resolveTopicGuideType(topic);
   const guideTitle = titleForGuide(topic, guideType);
+  const editorialBrief = createEditorialBrief(topic, guideType, recommendations);
+  const articleOutline = createArticleOutline(editorialBrief, guideTitle);
   const quickAnswer = quickAnswerForGuide(topic, first.tool, second.tool, third.tool, guideType);
   const quickDecision = quickDecisionForGuide(topic, first.tool, second.tool, third.tool);
   const steps = guideType === "how-to" ? buildHowToSteps(topic, first.tool, second.tool, third.tool) : [
@@ -1153,18 +1382,12 @@ export function createTemplateGuide(
       toolName: third.tool.name,
     },
   ];
-  const toolsYouCanUse = recommendations.slice(0, 3).map(({ tool }) => ({
+  const toolsYouCanUse = recommendations.slice(0, 3).map(({ tool }, index) => ({
     toolSlug: tool.slug,
     toolName: tool.name,
-    why: ensurePeriod(
-      `${tool.name} is a practical fit for ${topic.searchIntent} because it is strongest at ${toolInputPhrase(tool, topic)}.`,
-    ),
+    why: ensurePeriod(editorialBrief.toolRoleMap[index]?.role ?? `${tool.name} supports ${topic.searchIntent} when its role is clearly limited.`),
   }));
-  const commonMistakes = [
-    `Choosing a tool before checking whether the input is ${topicInputFocus(topic)} or something else.`,
-    `Using the same prompt or workflow for every tool instead of matching each tool to its job.`,
-    "Sharing the output before checking facts, tone, and missing context.",
-  ];
+  const commonMistakes = editorialBrief.commonMistakesToWarnAbout;
   const mistakesToAvoid = [
     `Do not treat ${first.tool.name} as the final answer without checking the result against your source material.`,
     `Do not use ${second.tool.name} or ${third.tool.name} as a shortcut around the real decision about input type and output quality.`,
@@ -1179,16 +1402,16 @@ export function createTemplateGuide(
       ? "You need basic prompt writing, simple editing, and a clear understanding of the service you want to sell."
       : `You need enough familiarity with ${topic.searchIntent} to judge whether the output is accurate and useful.`;
   const firstStep = guideType === "how-to"
-    ? `What you need: the original material for ${topic.searchIntent}, one clear output format, and time to check the AI result before using it.`
+    ? `What you need: ${topicInputFocus(topic)}, a clear final format, the audience or recipient, and time to check the AI result before using it.`
     : `Start with one real example of ${topic.useCase} and compare the output against your own standard before you scale the workflow.`;
   const exampleWorkflow = ensurePeriod(
     guideType === "how-to"
-      ? `Collect the source material, ask ${first.tool.name} for a first draft, verify it against the original, use ${second.tool.name} only if the format needs to change, and use ${third.tool.name} for the final cleanup.`
+      ? editorialBrief.coreWorkflow.join(" ")
       : `Collect the source material, ask ${first.tool.name} for the first draft, use ${second.tool.name} to compare a different workflow, and keep ${third.tool.name} for the final cleanup and review.`,
   );
   const exampleResult = ensurePeriod(
     guideType === "how-to"
-      ? `The final result should be specific enough to use immediately: it should preserve the source facts, remove filler, and include the next action the reader can take.`
+      ? `Example result: a checked ${workflowVerbPhrase(topic)} output that keeps the source facts, removes filler, names the next action, and is short enough to review before sending, posting, studying, or saving.`
       : `The final result should be clearer, shorter, and easier to use, with the main ideas preserved and the obvious errors removed.`,
   );
   const deviceIntent: Guide["deviceIntent"] = topic.deviceIntent ?? "both";
@@ -1206,11 +1429,7 @@ export function createTemplateGuide(
     workflow: {
       type: "workflow-diagram" as const,
       alt: `${guideTitle} workflow diagram`,
-      steps: [
-        "Problem or source material",
-        "AI draft or comparison pass",
-        "Human review and final result",
-      ],
+      steps: articleOutline.sections.slice(0, 5),
     },
     toolStack: {
       type: "tool-stack" as const,
@@ -1395,6 +1614,24 @@ async function refineWithOpenAI(template: Guide): Promise<Guide> {
     return template;
   }
 
+  const topic = guideTopics.find((entry) => entry.slug === template.slug);
+  const selectedToolsForBrief = topic
+    ? scoreToolsForTopic(topic).filter(({ tool }) => template.recommendedToolSlugs.includes(tool.slug))
+    : [];
+  const guideType = topic
+    ? resolveTopicGuideType(topic)
+    : inferGuideLayoutTypeFromTopic({
+        slug: template.slug,
+        title: template.title,
+        type: template.type,
+        guideType: template.guideType,
+        searchIntent: template.searchIntent,
+        decisionQuestion: template.decisionQuestion,
+        uniqueAngle: template.uniqueAngle,
+        notes: template.contentGap,
+      });
+  const editorialBrief = topic ? createEditorialBrief(topic, guideType, selectedToolsForBrief) : undefined;
+  const articleOutline = editorialBrief ? createArticleOutline(editorialBrief, template.title) : undefined;
   let lastFailure = "OpenAI request failed before a model response was returned.";
 
   for (const model of preferredGuideModels()) {
@@ -1407,8 +1644,13 @@ async function refineWithOpenAI(template: Guide): Promise<Guide> {
       body: JSON.stringify({
         model,
         instructions:
-          'You are editing a Comparavy guide draft for publication quality. Keep every factual catalog statement, selected tool slug, guideType, type, primaryKeyword, keyword arrays, audience, searchIntent, userPain, decisionQuestion, contentGap, uniqueAngle, aiOverviewAnswer, quickAnswer, quickDecision, steps, toolsYouCanUse, deviceIntent, desktopUseCase, mobileUseCase, desktopSearchAngle, mobileSearchAngle, visualAssets, realityCheck, skillNeeded, firstStep, commonMistakes, mistakesToAvoid, exampleWorkflow, exampleResult, affiliate disclosures, pricing caveats, status, freshness, qualityScore, and dates. Do not replace concrete tool reasons with generic phrases, placeholders, or filler. Keep Quick Verdict direct: name the best starting tool, explain when the second-best choice is better, and explain when to avoid the main recommendation. Keep bestFor, avoidIf, watchFor, comparisonRows, decisionPath, and FAQs specific to the actual workflow and different from one another. Use branching decision logic with real if/then paths. Do not invent tool testing, performance claims, exact current prices, guaranteed income claims, or breaking-news claims. pricingNote and pricingCaveat must remain exactly: Pricing can change. Check the official site before subscribing.',
-        input: JSON.stringify(template),
+          'You are producing a complete Comparavy guide from an editorial brief and outline, not filling a template. Return a complete guide JSON object only. Comparavy is a US-focused, AdSense-first AI problem-solving site. The article must be useful enough to bookmark: solve the reader problem first, then show which tools help and what to avoid. For how-to guides, the title must start with "How to", the first 100 words must answer the search intent, tools must be supporting actors, and the required sections are Quick Answer, What you need, Step-by-step workflow, computer guidance, phone guidance, Tools you can use, Example result, Common mistakes, FAQ, and Next step. For tool-decision guides, justify the ranking with a quick verdict, best picks by situation, comparison table, branching decision path, unique tool cards, who should use or avoid this, final verdict, and /finder CTA. Do not use placeholder phrases, generic marketing filler, fake testing, exact current pricing, guaranteed outcomes, or unsupported current-news claims. pricingNote and pricingCaveat must remain exactly: Pricing can change. Check the official site before subscribing.',
+        input: JSON.stringify({
+          editorialBrief,
+          articleOutline,
+          selectedToolSlugs: template.recommendedToolSlugs,
+          catalogGroundedDraft: template,
+        }),
         text: {
           format: {
             type: "json_schema",
