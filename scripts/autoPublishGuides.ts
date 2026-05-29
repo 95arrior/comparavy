@@ -422,7 +422,7 @@ function rejectionReasonsForImprovement(
 }
 
 function restoreProtectedGuideFields(original: Guide, improved: Guide): Guide {
-  return {
+  const restored: Guide = {
     ...improved,
     slug: original.slug,
     guideType: original.guideType,
@@ -451,9 +451,77 @@ function restoreProtectedGuideFields(original: Guide, improved: Guide): Guide {
     finderCTA: original.finderCTA,
     freshness: original.freshness,
     qualityScore: original.qualityScore,
-    status: "draft",
+    status: "draft" as const,
     createdAt: original.createdAt,
     updatedAt: original.updatedAt,
+  };
+
+  return normalizeGuideForLayout(restored);
+}
+
+function lowerFirst(value: string): string {
+  const text = value.replace(/\s+/g, " ").trim();
+
+  if (!text) {
+    return text;
+  }
+
+  return `${text[0].toLowerCase()}${text.slice(1)}`;
+}
+
+function ensureHowToTitle(guide: Guide): string {
+  if (/^how to\b/i.test(guide.title)) {
+    return guide.title;
+  }
+
+  const bestMatch = guide.title.match(/^best ai tools for\s+(.+)$/i);
+  const base = bestMatch?.[1] ?? guide.searchIntent;
+  const cleaned = base
+    .replace(/^turning\b/i, "Turn")
+    .replace(/^summarizing\b/i, "Summarize")
+    .replace(/^summarising\b/i, "Summarize")
+    .replace(/^making\b/i, "Make")
+    .replace(/^organizing\b/i, "Organize")
+    .replace(/^organising\b/i, "Organize")
+    .replace(/^translating\b/i, "Translate")
+    .replace(/^cleaning\b/i, "Clean")
+    .replace(/^building\b/i, "Build")
+    .replace(/^writing\b/i, "Write")
+    .replace(/^finding\b/i, "Find")
+    .replace(/^creating\b/i, "Create")
+    .replace(/^drafting\b/i, "Draft")
+    .replace(/^polishing\b/i, "Polish")
+    .replace(/^repurposing\b/i, "Repurpose")
+    .replace(/^converting\b/i, "Convert")
+    .replace(/\s+with ai$/i, "")
+    .trim();
+
+  return `How to ${lowerFirst(cleaned)} with AI`;
+}
+
+function normalizeGuideForLayout(guide: Guide): Guide {
+  const guideType = resolveGuideLayoutType({
+    slug: guide.slug,
+    title: guide.title,
+    type: guide.type,
+    guideType: guide.guideType,
+    searchIntent: guide.searchIntent,
+    decisionQuestion: guide.decisionQuestion,
+    uniqueAngle: guide.uniqueAngle,
+    notes: guide.contentGap,
+  });
+
+  if (guideType !== "how-to") {
+    return guide;
+  }
+
+  const title = ensureHowToTitle(guide);
+
+  return {
+    ...guide,
+    title,
+    metaTitle: `${title} | Comparavy`,
+    quickVerdict: guide.quickAnswer ?? guide.quickVerdict,
   };
 }
 
@@ -482,7 +550,7 @@ async function improveGuideWithAI(
       body: JSON.stringify({
         model,
         instructions:
-          "You are improving a Comparavy guide candidate after editorial review. Return a complete guide JSON object only. Keep the guide factual, US/global reader friendly, AdSense-first, and problem-solving first. Fix the specific warnings supplied. The first 100 words must give a clear answer. Rewrite vague Quick Verdict, placeholder recommendation language, repetitive Best for / Avoid if / Watch for sections, weak decision paths, generic FAQs, thin comparison evidence, broad Best AI Tools framing, weak mobile/desktop usefulness, and income overpromising. You may make the title more specific when the evidence does not support a broad Best AI Tools title. Do not invent prices, fake testing, guaranteed income, performance claims, or unsupported current-news claims. Keep selected tool slugs valid and make every recommended tool explain input handled, output created, best use case, and limitation. pricingNote and pricingCaveat must remain exactly: Pricing can change. Check the official site before subscribing.",
+          "You are deeply rewriting a failed Comparavy guide candidate after strict editorial review. Return a complete guide JSON object only. Keep the guide factual, US/global reader friendly, AdSense-first, and problem-solving first. The rewrite must feel substantially different from the failed draft, not like minor field tweaks. If guideType is how-to, the title must start with \"How to\" and must not start with \"Best AI Tools for\". A how-to guide must solve the reader's problem first and use tools only inside the workflow. For how-to guides, rebuild these sections: Quick Answer, What you need through firstStep, step-by-step workflow through steps, desktop/mobile guidance, toolsYouCanUse, exampleResult, commonMistakes, FAQ, and finalVerdict as a next step. If guideType is tool-decision, \"Best AI Tools for\" is allowed only when the ranking is justified by comparison criteria and a clear decision path. Fix the specific warnings supplied. The first 100 words must give a clear answer. Rewrite vague Quick Verdict, placeholder recommendation language, repetitive Best for / Avoid if / Watch for sections, weak decision paths, generic FAQs, thin comparison evidence, broad Best AI Tools framing, weak mobile/desktop usefulness, and income overpromising. Do not invent prices, fake testing, guaranteed income, performance claims, or unsupported current-news claims. Keep selected tool slugs valid and make every recommended tool explain input handled, output created, best use case, and limitation. pricingNote and pricingCaveat must remain exactly: Pricing can change. Check the official site before subscribing.",
         input: JSON.stringify({
           attempt,
           warnings,
@@ -494,6 +562,8 @@ async function improveGuideWithAI(
             "Mobile readability is mandatory.",
             "Desktop comparison depth should be useful but not overwhelming.",
             "Every guide should include useful next steps.",
+            "How-to guides are practical workflows, not tool rankings.",
+            "Tool-decision guides need ranking criteria and branching choice logic.",
           ],
         }),
         text: {
@@ -592,16 +662,16 @@ function buildTopicQueue(
   add(howToTopics[0], "how-to");
   add(toolDecisionTarget, "tool-decision");
 
-  for (const topic of howToTopics.slice(1)) {
-    add(topic, "how-to");
+  for (const topic of toolDecisionTopics.slice(1)) {
+    add(topic, "tool-decision");
   }
 
   for (const topic of practicalFallback.slice(1)) {
     add(topic, "tool-decision");
   }
 
-  for (const topic of toolDecisionTopics.slice(1)) {
-    add(topic, "tool-decision");
+  for (const topic of howToTopics.slice(1)) {
+    add(topic, "how-to");
   }
 
   for (const topic of mixedTopics) {
@@ -609,6 +679,61 @@ function buildTopicQueue(
   }
 
   return queue.slice(0, MAX_CANDIDATES_PER_RUN);
+}
+
+function resolveTopicEntryGuideType(entry: TopicQueueEntry): GuideLayoutType {
+  if (entry.guideTypeOverride) {
+    return entry.guideTypeOverride;
+  }
+
+  return resolveGuideLayoutType({
+    slug: entry.topic.slug,
+    title: entry.topic.title,
+    type: entry.topic.type,
+    guideType: entry.topic.guideType,
+    searchIntent: entry.topic.searchIntent,
+    decisionQuestion: entry.topic.decisionQuestion,
+    uniqueAngle: entry.topic.uniqueAngle,
+    notes: entry.topic.notes,
+  });
+}
+
+function targetGuideTypeCounts(type: GuideLayoutType | "mixed", count: number): Map<GuideLayoutType, number> {
+  const targets = new Map<GuideLayoutType, number>();
+
+  if (count <= 0) {
+    return targets;
+  }
+
+  if (type === "mixed") {
+    targets.set("how-to", 1);
+
+    if (count > 1) {
+      targets.set("tool-decision", 1);
+    }
+
+    return targets;
+  }
+
+  targets.set(type, count);
+  return targets;
+}
+
+function candidateGuideType(guide: Guide): GuideLayoutType {
+  return resolveGuideLayoutType({
+    slug: guide.slug,
+    title: guide.title,
+    type: guide.type,
+    guideType: guide.guideType,
+    searchIntent: guide.searchIntent,
+    decisionQuestion: guide.decisionQuestion,
+    uniqueAngle: guide.uniqueAngle,
+    notes: guide.contentGap,
+  });
+}
+
+function acceptedCountForType(candidates: readonly Candidate[], guideType: GuideLayoutType): number {
+  return candidates.filter((candidate) => candidateGuideType(candidate.guide) === guideType).length;
 }
 
 async function reviewAndImproveCandidate({
@@ -707,7 +832,10 @@ async function main(): Promise<void> {
   const rejectedTopics = new Set<string>();
   const rejectedCandidateReasons: { readonly slug: string; readonly reason: string }[] = [];
   let candidatesImproved = 0;
+  let howToGuidesAttempted = 0;
+  let toolDecisionGuidesAttempted = 0;
   const qualityThreshold = effectiveQualityThreshold(options.minQuality);
+  const targetTypeCounts = targetGuideTypeCounts(options.type, targetAcceptedCount);
 
   const publishedGuides = existingGuides.filter((guide) => guide.status === "published");
   const reviewerUnavailable = !process.env.OPENAI_API_KEY;
@@ -734,9 +862,23 @@ async function main(): Promise<void> {
 
   for (const entry of selectedTopics) {
     const { topic, guideTypeOverride } = entry;
+    const entryGuideType = resolveTopicEntryGuideType(entry);
 
     if (acceptedCandidates.length >= targetAcceptedCount) {
       break;
+    }
+
+    const targetForEntryType = targetTypeCounts.get(entryGuideType);
+
+    if (
+      targetForEntryType !== undefined &&
+      acceptedCountForType(acceptedCandidates, entryGuideType) >= targetForEntryType
+    ) {
+      skippedTopics.push({
+        slug: topic.slug,
+        reason: `${entryGuideType} target slot is already filled for this run.`,
+      });
+      continue;
     }
 
     if (checkedCandidates.length >= MAX_CANDIDATES_PER_RUN) {
@@ -769,6 +911,16 @@ async function main(): Promise<void> {
       continue;
     }
 
+    const generatedGuideType = candidateGuideType(guide);
+
+    if (generatedGuideType === "how-to") {
+      howToGuidesAttempted += 1;
+    }
+
+    if (generatedGuideType === "tool-decision") {
+      toolDecisionGuidesAttempted += 1;
+    }
+
     const comparisonSet = [
       ...existingGuides,
       ...generatedCandidates,
@@ -794,11 +946,11 @@ async function main(): Promise<void> {
 
     const finalStatus: CandidateFinalStatus = !candidate.eligible
       ? "rejected"
-      : options.publish
-        ? options.dryRun
-          ? "would publish"
-          : "published"
-        : "draft";
+      : options.dryRun
+        ? "would publish"
+        : options.publish
+          ? "published"
+          : "draft";
     const finalizedCandidate = { ...candidate, finalStatus };
 
     checkedCandidates.push(finalizedCandidate);
@@ -806,6 +958,20 @@ async function main(): Promise<void> {
     logCandidate(finalizedCandidate);
 
     if (finalizedCandidate.eligible) {
+      const finalizedType = candidateGuideType(finalizedCandidate.guide);
+      const targetForFinalizedType = targetTypeCounts.get(finalizedType);
+
+      if (
+        targetForFinalizedType !== undefined &&
+        acceptedCountForType(acceptedCandidates, finalizedType) >= targetForFinalizedType
+      ) {
+        skippedTopics.push({
+          slug: topic.slug,
+          reason: `${finalizedType} target slot is already filled for this run.`,
+        });
+        continue;
+      }
+
       acceptedCandidates.push(finalizedCandidate);
       continue;
     }
@@ -855,12 +1021,15 @@ async function main(): Promise<void> {
   console.log(`Target count: ${targetAcceptedCount}`);
   console.log(`Candidates created: ${generatedCandidates.length}`);
   console.log(`Candidates improved: ${candidatesImproved}`);
+  console.log(`True how-to guides attempted: ${howToGuidesAttempted}`);
+  console.log(`Tool-decision guides attempted: ${toolDecisionGuidesAttempted}`);
+  console.log(`Candidates rewritten after AI review: ${candidatesImproved}`);
   console.log(`Candidates checked: ${checkedCandidates.length}`);
   console.log(`Published: ${publishedCount}`);
   console.log(`Publish mode: ${options.publish ? "publish" : "draft-only"}`);
 
   if (options.dryRun) {
-    console.log(`Would publish: ${options.publish ? acceptedCandidates.length : 0}`);
+    console.log(`Would publish: ${acceptedCandidates.length}`);
     console.log("Dry run: no guide files modified.");
   }
 
@@ -881,6 +1050,27 @@ async function main(): Promise<void> {
   } else {
     for (const candidate of acceptedCandidates) {
       console.log(candidate.guide.title);
+    }
+  }
+  console.log("Final accepted titles:");
+  if (acceptedCandidates.length === 0) {
+    console.log("None");
+  } else {
+    for (const candidate of acceptedCandidates) {
+      console.log(candidate.guide.title);
+    }
+  }
+  console.log("Rejected titles and top reasons:");
+  const rejectedCandidates = checkedCandidates.filter((candidate) => !candidate.eligible);
+  if (rejectedCandidates.length === 0) {
+    console.log("None");
+  } else {
+    for (const candidate of rejectedCandidates) {
+      const topReason =
+        candidate.aiReview.warnings[0] ??
+        candidate.rejectionReasons[0] ??
+        "Candidate did not pass all publish gates.";
+      console.log(`${candidate.guide.title}: ${topReason}`);
     }
   }
   console.log(

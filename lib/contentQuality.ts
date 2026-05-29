@@ -849,6 +849,12 @@ export function checkGuideQuality(
     addBlocker("quickVerdict must contain at least 80 characters.", 12);
   }
 
+  const guideType = resolvedGuideType(guide as unknown as Record<string, unknown>);
+
+  if (guideType === "how-to" && /^best ai tools for\b/i.test(guide.title)) {
+    addWarning('How-to guide titles should start with "How to" instead of "Best AI Tools for".', 6);
+  }
+
   const requiredArrayCounts = [
     ["keyTakeaways", guide.keyTakeaways.length, 5],
     ["bestPicksBySituation", guide.bestPicksBySituation.length, 3],
