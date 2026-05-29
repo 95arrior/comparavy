@@ -1,0 +1,462 @@
+{
+  "slug": "how-to-make-product-mockup-images-with-ai",
+  "title": "How to Make Product Mockup Images with AI",
+  "guideType": "how-to",
+  "type": "how-to",
+  "metaTitle": "How to Make Product Mockup Images with AI | Comparavy",
+  "metaDescription": "Learn how to creating product mockup visuals for listings and marketing. See the workflow, tools you can use, and the safest first step.",
+  "category": "Image Generation",
+  "persona": "small ecommerce sellers",
+  "useCase": "creating product mockup visuals for listings and marketing",
+  "budgetAngle": "Compare tools on workflow fit and subscription risk before using them in paid client or revenue work.",
+  "skillLevel": "beginner",
+  "primaryKeyword": "how to make product mockup images with AI",
+  "secondaryKeywords": [
+    "AI product mockups",
+    "product photo mockup AI",
+    "AI listing visuals"
+  ],
+  "longTailKeywords": [
+    "how to create product mockup images with AI",
+    "AI workflow for ecommerce product mockups",
+    "make product listing visuals without a photoshoot"
+  ],
+  "audience": "small ecommerce sellers",
+  "searchIntent": "creating product mockup visuals for listings and marketing",
+  "userPain": "The reader needs better visuals but cannot risk misleading product images.",
+  "decisionQuestion": "How do I create useful mockups without making them look like exact product photos?",
+  "deviceIntent": "both",
+  "desktopUseCase": "Best on a computer when editing multiple images, backgrounds, and listing assets. Use desktop to compare product photos with edited images that match brand style before the final review.",
+  "mobileUseCase": "Best on a phone when removing a background or checking a mockup before upload. Use mobile for quick checks on edited images that match brand style when the input is already prepared.",
+  "desktopSearchAngle": "Desktop readers usually want deeper comparison, file handling, and a deliberate review workflow for edited images that match brand style.",
+  "mobileSearchAngle": "Mobile readers usually want a short answer first, then a quick next step for edited images that match brand style they can finish in a few taps.",
+  "visualAssets": {
+    "hero": {
+      "type": "hero",
+      "alt": "How to Make Product Mockup Images with AI guide visual",
+      "promptOrDescription": "Editorial guide artwork for creating product mockup visuals for listings and marketing with a clean, problem-solving feel.",
+      "fileNameHint": "how-to-make-product-mockup-images-with-ai"
+    },
+    "workflow": {
+      "type": "workflow-diagram",
+      "alt": "How to Make Product Mockup Images with AI workflow diagram",
+      "steps": [
+        "Quick Answer",
+        "Real-World Scenario",
+        "What You Need",
+        "Step-by-Step Workflow",
+        "Best If You Are on a Computer"
+      ]
+    },
+    "toolStack": {
+      "type": "tool-stack",
+      "alt": "How to Make Product Mockup Images with AI recommended tool stack",
+      "tools": [
+        "Photoroom",
+        "Canva Magic Studio",
+        "Adobe Firefly"
+      ]
+    },
+    "beforeAfter": {
+      "type": "before-after",
+      "alt": "How to Make Product Mockup Images with AI before and after comparison",
+      "before": "Before: manual work and scattered notes for creating product mockup visuals for listings and marketing.",
+      "after": "After: a faster workflow that leaves you with a clear, checked result."
+    }
+  },
+  "quickAnswer": "To handle creating product mockup visuals for listings and marketing, Start with product photos, decide that the output must be edited images that match brand style, use Photoroom for one reviewable version, and check it before changing formats or adding another tool. Photoroom should create the first reviewable version, Canva Magic Studio belongs in the second pass only when edited images that match brand style needs more control, and Adobe Firefly should be saved for review or export after the core result is right.",
+  "quickDecision": "For creating product mockup visuals for listings and marketing, choose Photoroom first when the input is product photos and the output needs to be edited images that match brand style. Choose Canva Magic Studio when brand colors matters more. Choose Adobe Firefly when you need a lighter review, export, or fallback pass.",
+  "realWorldScenario": "small ecommerce sellers have product photos and brand colors and need edited images that match brand style without drifting into an unrelated workflow. Prepared 2026-05-29.",
+  "whatYouNeed": [
+    "product photos, brand colors, reference images, and social or ad creative requirements",
+    "A clear final format for creating product mockup visuals for listings and marketing.",
+    "The audience, recipient, or grading criteria for the output.",
+    "Time to check facts, names, numbers, dates, and commitments before using the result."
+  ],
+  "timeEstimate": "Plan on 10 to 30 minutes for one careful first pass, depending on the source material.",
+  "contentGap": "Most rankings favor creative image quality over ecommerce accuracy.",
+  "uniqueAngle": "Separate background cleanup, mockup layout, and truth-in-listing review.",
+  "aiOverviewAnswer": "Start with accurate product photos, clean or place the product, create a mockup background, and label or review the image so it does not mislead buyers.",
+  "quickVerdict": "To handle creating product mockup visuals for listings and marketing, Start with product photos, decide that the output must be edited images that match brand style, use Photoroom for one reviewable version, and check it before changing formats or adding another tool. Photoroom should create the first reviewable version, Canva Magic Studio belongs in the second pass only when edited images that match brand style needs more control, and Adobe Firefly should be saved for review or export after the core result is right.",
+  "steps": [
+    {
+      "title": "Prepare product photos",
+      "detail": "Put the real input in one place before opening a tool: product photos, brand colors, reference images, social or ad creatives, creating product mockup visuals for listings and marketing, any required facts, the audience, and the format you need at the end. Remove private details you are not allowed to share.",
+      "why": "AI output is only as useful as the material and constraints you give it.",
+      "output": "A clean input bundle and one clear target format: edited images that match brand style."
+    },
+    {
+      "title": "Ask for the first usable version",
+      "detail": "Use Photoroom for a first pass that tries to create product mockup visuals for listings and marketing. Ask it to preserve source facts, flag uncertainty, and organize the result into sections you can review.",
+      "why": "The first pass should create a reviewable edited images that match brand style, not a finished answer you trust blindly.",
+      "output": "A structured edited images that match brand style with visible gaps or uncertain points.",
+      "toolSlug": "photoroom",
+      "toolName": "Photoroom"
+    },
+    {
+      "title": "Check the answer before polishing",
+      "detail": "Compare the AI output with product photos. Fix names, dates, numbers, unsupported claims, missing context, and tone before you ask for nicer wording.",
+      "why": "Polished wrong information is harder to catch than rough information.",
+      "output": "A corrected edited images that match brand style that is ready for formatting or wording cleanup."
+    },
+    {
+      "title": "Change the format only after the facts are right",
+      "detail": "Use Canva Magic Studio when the verified edited images that match brand style needs a different format, structure, or source-aware second pass. Keep the same facts from product photos so the rewrite does not drift from the original.",
+      "why": "Format changes are safer after the substance is already checked.",
+      "output": "A version that fits the channel, document, post, or recipient.",
+      "toolSlug": "canva-magic-studio",
+      "toolName": "Canva Magic Studio"
+    },
+    {
+      "title": "Finish with a human review",
+      "detail": "Use Adobe Firefly for cleanup only after the main edited images that match brand style is checked against product photos. Read the final result as the recipient would: on the device, in the app, or in the document where it will actually be used.",
+      "why": "The final review catches tone, missing context, and practical usability issues.",
+      "output": "A final result you can send, post, study from, or save with confidence.",
+      "toolSlug": "adobe-firefly",
+      "toolName": "Adobe Firefly"
+    }
+  ],
+  "toolsYouCanUse": [
+    {
+      "toolSlug": "photoroom",
+      "toolName": "Photoroom",
+      "why": "Primary tool for turning product photos into edited images that match brand style.",
+      "role": "Primary tool for turning product photos into edited images that match brand style.",
+      "bestUseCase": "workflows that need product photo cleanup and background removal for edited images that match brand style"
+    },
+    {
+      "toolSlug": "canva-magic-studio",
+      "toolName": "Canva Magic Studio",
+      "why": "Second-pass tool when edited images that match brand style needs a different format, stronger controls, or validation.",
+      "role": "Second-pass tool when edited images that match brand style needs a different format, stronger controls, or validation.",
+      "bestUseCase": "non-designers creating polished visual assets when brand colors matters more than the top pick"
+    },
+    {
+      "toolSlug": "adobe-firefly",
+      "toolName": "Adobe Firefly",
+      "why": "Review or finishing tool after the main output is checked.",
+      "role": "Review or finishing tool after the main output is checked.",
+      "bestUseCase": "creative exploration and image edits when speed or a lighter setup matters more for on-brand ad visuals"
+    }
+  ],
+  "keyTakeaways": [
+    "What you need: product photos, brand colors, reference images, a clear output format, and a few minutes to review the result.",
+    "Start with Photoroom for the first pass, but judge the output against creating product mockup visuals for listings and marketing, not against tool hype.",
+    "Use Canva Magic Studio only when the workflow needs a different format or second pass.",
+    "Use Adobe Firefly for review after the main output is fact-checked.",
+    "The reader needs better visuals but cannot risk misleading product images.",
+    "Most rankings favor creative image quality over ecommerce accuracy.",
+    "The useful next step is to test one real example before building a repeatable workflow."
+  ],
+  "bestPicksBySituation": [
+    {
+      "situation": "If you already have product photos, choose Photoroom.",
+      "toolSlug": "photoroom",
+      "toolName": "Photoroom",
+      "why": "Photoroom is the closest match because it is built for workflows that need product photo cleanup and background removal and keeps the work tied to product photos."
+    },
+    {
+      "situation": "If you need clean product mockups or stronger brand colors, choose Canva Magic Studio.",
+      "toolSlug": "canva-magic-studio",
+      "toolName": "Canva Magic Studio",
+      "why": "Canva Magic Studio is the better second choice when non-designers creating polished visual assets matters more than the first tool's handling of product photos."
+    },
+    {
+      "situation": "If you want the lightest review or export step for edited images that match brand style, choose Adobe Firefly.",
+      "toolSlug": "adobe-firefly",
+      "toolName": "Adobe Firefly",
+      "why": "Adobe Firefly helps when you need creative exploration and image edits and want a fallback that is easier to adapt on a phone or desktop."
+    }
+  ],
+  "recommendedToolSlugs": [
+    "photoroom",
+    "canva-magic-studio",
+    "adobe-firefly",
+    "ideogram",
+    "recraft"
+  ],
+  "recommendedTools": [
+    {
+      "toolSlug": "photoroom",
+      "toolName": "Photoroom",
+      "summary": "Photoroom is strongest when you need workflows that need product photo cleanup and background removal and want it tied to product photos, brand colors, reference images, and social or ad creative requirements. It handles product photo cleanup and background removal better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need product photo cleanup and background removal for edited images that match brand style",
+      "avoidIf": "you need publish-ready output without review if your real input is product photos, brand colors, reference images, and social or ad creative requirements",
+      "strengths": [
+        "images",
+        "visuals",
+        "generation",
+        "creative"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside image generation.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/photoroom"
+    },
+    {
+      "toolSlug": "canva-magic-studio",
+      "toolName": "Canva Magic Studio",
+      "summary": "Canva Magic Studio is strongest when you need non-designers creating polished visual assets and want it tied to product photos, brand colors, reference images, and social or ad creative requirements. It handles create social posts better than a generic assistant, but it is a weaker choice if you need your output requires full professional design control.",
+      "bestFor": "non-designers creating polished visual assets when brand colors matters more than the top pick",
+      "avoidIf": "your output requires full professional design control if your main need is the top tool's exact workflow",
+      "strengths": [
+        "design",
+        "templates",
+        "social-media",
+        "presentations"
+      ],
+      "tradeoffs": [
+        "Advanced professional image compositing",
+        "Highly controlled cinematic video generation"
+      ],
+      "toolPagePath": "/tools/canva-magic-studio"
+    },
+    {
+      "toolSlug": "adobe-firefly",
+      "toolName": "Adobe Firefly",
+      "summary": "Adobe Firefly is strongest when you need creative exploration and image edits and want it tied to product photos, brand colors, reference images, and social or ad creative requirements. It handles generate campaign imagery better than a generic assistant, but it is a weaker choice if you need you have not confirmed usage rights for your intended project.",
+      "bestFor": "creative exploration and image edits when speed or a lighter setup matters more for on-brand ad visuals",
+      "avoidIf": "you have not confirmed usage rights for your intended project if you need the most polished or source-grounded final pass",
+      "strengths": [
+        "images",
+        "design",
+        "editing",
+        "creative"
+      ],
+      "tradeoffs": [
+        "Text-only business productivity",
+        "Full video editing as the main need"
+      ],
+      "toolPagePath": "/tools/adobe-firefly"
+    },
+    {
+      "toolSlug": "ideogram",
+      "toolName": "Ideogram",
+      "summary": "Ideogram is strongest when you need graphics that include visual text concepts and want it tied to product photos, brand colors, reference images, and social or ad creative requirements. It handles mock up posters better than a generic assistant, but it is a weaker choice if you need you cannot review spelling and layout inside generated imagery.",
+      "bestFor": "graphics that include visual text concepts when speed or a lighter setup matters more for creating product mockup visuals for listings and marketing",
+      "avoidIf": "you cannot review spelling and layout inside generated imagery if the task needs deeper review than a lightweight fallback can provide",
+      "strengths": [
+        "images",
+        "text-in-image",
+        "posters",
+        "social-media"
+      ],
+      "tradeoffs": [
+        "Final brand typography without manual checking",
+        "Document research or writing workflows"
+      ],
+      "toolPagePath": "/tools/ideogram"
+    },
+    {
+      "toolSlug": "recraft",
+      "toolName": "Recraft",
+      "summary": "Recraft is strongest when you need workflows that need vector and brand asset generation and want it tied to product photos, brand colors, reference images, and social or ad creative requirements. It handles vector and brand asset generation better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need vector and brand asset generation when speed or a lighter setup matters more for edited images that match brand style",
+      "avoidIf": "you need publish-ready output without review if the workflow depends on another tool's stronger input handling or editing controls",
+      "strengths": [
+        "images",
+        "visuals",
+        "generation",
+        "creative"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside image generation.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/recraft"
+    }
+  ],
+  "comparisonRows": [
+    {
+      "toolSlug": "photoroom",
+      "toolName": "Photoroom",
+      "bestFor": "workflows that need product photo cleanup and background removal for edited images that match brand style",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "whyConsider": "Photoroom is worth considering because it is the clearest fit for creating product mockup visuals for listings and marketing. It is built for workflows that need product photo cleanup and background removal, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside image generation.; this matters when the reader is creating product mockup visuals for listings and marketing."
+    },
+    {
+      "toolSlug": "canva-magic-studio",
+      "toolName": "Canva Magic Studio",
+      "bestFor": "non-designers creating polished visual assets when brand colors matters more than the top pick",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "whyConsider": "Canva Magic Studio is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for non-designers creating polished visual assets, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for advanced professional image compositing; this matters when the reader is creating product mockup visuals for listings and marketing."
+    },
+    {
+      "toolSlug": "adobe-firefly",
+      "toolName": "Adobe Firefly",
+      "bestFor": "creative exploration and image edits when speed or a lighter setup matters more for on-brand ad visuals",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "Adobe Firefly is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for creative exploration and image edits, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for text-only business productivity; this matters when the reader is creating product mockup visuals for listings and marketing."
+    },
+    {
+      "toolSlug": "ideogram",
+      "toolName": "Ideogram",
+      "bestFor": "graphics that include visual text concepts when speed or a lighter setup matters more for creating product mockup visuals for listings and marketing",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "whyConsider": "Ideogram is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for graphics that include visual text concepts, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for final brand typography without manual checking; this matters when the reader is creating product mockup visuals for listings and marketing."
+    },
+    {
+      "toolSlug": "recraft",
+      "toolName": "Recraft",
+      "bestFor": "workflows that need vector and brand asset generation when speed or a lighter setup matters more for edited images that match brand style",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "Recraft is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need vector and brand asset generation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside image generation.; this matters when the reader is creating product mockup visuals for listings and marketing."
+    }
+  ],
+  "decisionPath": [
+    {
+      "situation": "If you already have product photos, start with Photoroom.",
+      "recommendation": "Photoroom",
+      "reason": "Photoroom is the first-pass choice when the input is ready and the main job is to structure, summarize, or clean it into a usable result."
+    },
+    {
+      "situation": "If edited images that match brand style needs a different format after the facts are checked, switch to Canva Magic Studio.",
+      "recommendation": "Canva Magic Studio",
+      "reason": "Canva Magic Studio is better for the second pass when the job changes from source checking to formatting, layout, or another presentation style."
+    },
+    {
+      "situation": "If the result is accurate but still rough, use Adobe Firefly.",
+      "recommendation": "Adobe Firefly",
+      "reason": "Adobe Firefly fits the review step because the main source work is already done."
+    },
+    {
+      "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
+      "recommendation": "Photoroom",
+      "reason": "Mobile works best for a short summary, a quick rewrite, or final approval; save side-by-side checking and larger edits for desktop."
+    },
+    {
+      "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
+      "recommendation": "Canva Magic Studio",
+      "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
+    }
+  ],
+  "decisionTree": [
+    {
+      "situation": "If you already have product photos, start with Photoroom.",
+      "recommendation": "Photoroom",
+      "reason": "Photoroom is the first-pass choice when the input is ready and the main job is to structure, summarize, or clean it into a usable result."
+    },
+    {
+      "situation": "If edited images that match brand style needs a different format after the facts are checked, switch to Canva Magic Studio.",
+      "recommendation": "Canva Magic Studio",
+      "reason": "Canva Magic Studio is better for the second pass when the job changes from source checking to formatting, layout, or another presentation style."
+    },
+    {
+      "situation": "If the result is accurate but still rough, use Adobe Firefly.",
+      "recommendation": "Adobe Firefly",
+      "reason": "Adobe Firefly fits the review step because the main source work is already done."
+    },
+    {
+      "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
+      "recommendation": "Photoroom",
+      "reason": "Mobile works best for a short summary, a quick rewrite, or final approval; save side-by-side checking and larger edits for desktop."
+    },
+    {
+      "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
+      "recommendation": "Canva Magic Studio",
+      "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
+    }
+  ],
+  "moneySavingTips": [
+    "Test one representative project before paying for a longer-term workflow.",
+    "Use a listed free plan when it covers the experiment you need to run.",
+    "Avoid overlapping subscriptions until one tool has proven where it saves effort."
+  ],
+  "pricingNote": "Pricing can change. Check the official site before subscribing.",
+  "pricingCaveat": "Pricing can change. Check the official site before subscribing.",
+  "faqs": [
+    {
+      "question": "What input do I need before using AI for creating product mockup visuals for listings and marketing?",
+      "answer": "Start with product photos, brand colors, reference images and decide that the output must be edited images that match brand style. That keeps Photoroom focused on the actual job instead of drifting into a generic answer."
+    },
+    {
+      "question": "Which tool should I start with for edited images that match brand style?",
+      "answer": "Start with Photoroom when the main input is product photos. Compare Canva Magic Studio when brand colors matters more, and keep Adobe Firefly for review or fallback work."
+    },
+    {
+      "question": "What should I check before I use the result?",
+      "answer": "Check the result against product photos, especially letting the background style drift. Do not use the output until it still matches edited images that match brand style."
+    },
+    {
+      "question": "Can I finish this workflow on a phone, or should I use a computer?",
+      "answer": "Use mobile for on mobile, keep the task to one input and one output: product photos to edited images that match brand style. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. edited images that match brand style usually benefits from desktop review before publishing, sending, or saving."
+    }
+  ],
+  "faq": [
+    {
+      "question": "What input do I need before using AI for creating product mockup visuals for listings and marketing?",
+      "answer": "Start with product photos, brand colors, reference images and decide that the output must be edited images that match brand style. That keeps Photoroom focused on the actual job instead of drifting into a generic answer."
+    },
+    {
+      "question": "Which tool should I start with for edited images that match brand style?",
+      "answer": "Start with Photoroom when the main input is product photos. Compare Canva Magic Studio when brand colors matters more, and keep Adobe Firefly for review or fallback work."
+    },
+    {
+      "question": "What should I check before I use the result?",
+      "answer": "Check the result against product photos, especially letting the background style drift. Do not use the output until it still matches edited images that match brand style."
+    },
+    {
+      "question": "Can I finish this workflow on a phone, or should I use a computer?",
+      "answer": "Use mobile for on mobile, keep the task to one input and one output: product photos to edited images that match brand style. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. edited images that match brand style usually benefits from desktop review before publishing, sending, or saving."
+    }
+  ],
+  "whoShouldUseThis": [
+    "small ecommerce sellers who need creating product mockup visuals for listings and marketing.",
+    "Readers asking: How do I create useful mockups without making them look like exact product photos?",
+    "Teams that understand this pain point: The reader needs better visuals but cannot risk misleading product images."
+  ],
+  "whoShouldAvoidThis": [
+    "Readers who need legal, financial, or compliance advice rather than tool comparison.",
+    "Users who want guaranteed outcomes instead of a workflow shortlist to evaluate."
+  ],
+  "finalVerdict": "The next step is to run this workflow on one real example of creating product mockup visuals for listings and marketing. Start with Photoroom, use Canva Magic Studio only if the format needs a second pass, finish with Adobe Firefly or manual review, and do not reuse the workflow until the first result is accurate and useful.",
+  "realityCheck": "AI can speed up the work, but the user still has to review facts, shape the final result, and decide whether the workflow fits the job.",
+  "skillNeeded": "You need enough familiarity with creating product mockup visuals for listings and marketing to judge whether the output is accurate and useful.",
+  "firstStep": "What you need: product photos, brand colors, reference images, and social or ad creative requirements, a clear final format, the audience or recipient, and time to check the AI result before using it.",
+  "commonMistakes": [
+    "Letting the background style drift",
+    "Ignoring logo clearance",
+    "Changing the product shape or color"
+  ],
+  "mistakesToAvoid": [
+    "Do not treat Photoroom as the final answer without checking the result against your source material.",
+    "Do not use Canva Magic Studio or Adobe Firefly as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+  ],
+  "whatToAvoid": [
+    "Do not treat Photoroom as the final answer without checking the result against your source material.",
+    "Do not use Canva Magic Studio or Adobe Firefly as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+  ],
+  "whatChanged": "Separate background cleanup, mockup layout, and truth-in-listing review.",
+  "exampleWorkflow": "Prepare the real input: product photos, brand colors, reference images. Define the target output before opening tools: edited images that match brand style or clean product mockups. Use Photoroom for the first usable pass and ask it to preserve the constraints that matter in Image editing / brand control. Check the result against the input, then use Canva Magic Studio only if the output needs a format change or stronger second pass. Finish with a human review and use Adobe Firefly only for cleanup, export, or a lighter fallback.",
+  "exampleResult": "Example result: a checked create product mockup visuals for listings and marketing output that keeps the source facts, removes filler, names the next action, and is short enough to review before sending, posting, studying, or saving.",
+  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "visualSummary": {
+    "headline": "A practical starting route for small ecommerce sellers",
+    "points": [
+      "Start with Photoroom for workflows that need product photo cleanup and background removal",
+      "Compare Canva Magic Studio when the workflow changes",
+      "Run a real project test before subscribing"
+    ]
+  },
+  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "freshness": "evergreen",
+  "qualityScore": 92,
+  "status": "draft",
+  "createdAt": "2026-05-29",
+  "updatedAt": "2026-05-29"
+}

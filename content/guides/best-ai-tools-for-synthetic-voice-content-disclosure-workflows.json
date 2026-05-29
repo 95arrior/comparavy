@@ -1,0 +1,448 @@
+{
+  "slug": "best-ai-tools-for-synthetic-voice-content-disclosure-workflows",
+  "title": "Best AI Tools for Synthetic Voice Content Workflows",
+  "guideType": "tool-decision",
+  "type": "tool-decision",
+  "metaTitle": "Best AI Tools for Synthetic Voice Content Workflows | Comparavy",
+  "metaDescription": "Compare AI tools for video creators focused on creating synthetic narration while managing quality and disclosure expectations. See practical fit, tradeoffs, and a free-first decision path.",
+  "category": "Audio",
+  "persona": "video creators",
+  "useCase": "creating synthetic narration while managing quality and disclosure expectations",
+  "budgetAngle": "Start with a focused use case and upgrade only after the tool saves enough time to justify the cost.",
+  "skillLevel": "intermediate",
+  "primaryKeyword": "AI tools for synthetic voice content workflow",
+  "secondaryKeywords": [
+    "AI voice tools disclosure",
+    "synthetic voice generator",
+    "AI narration workflow"
+  ],
+  "longTailKeywords": [
+    "best AI tools for synthetic voice narration workflow",
+    "ElevenLabs alternatives for AI voice content",
+    "AI voiceover workflow with review and disclosure"
+  ],
+  "audience": "video creators",
+  "searchIntent": "creating synthetic narration while managing quality and disclosure expectations",
+  "userPain": "The user wants AI voiceovers but worries about rights, realism, and audience trust.",
+  "decisionQuestion": "Which AI voice tool fits a responsible synthetic narration workflow?",
+  "deviceIntent": "both",
+  "desktopUseCase": "Best on desktop when you want to compare podcast recordings, keep the AI output visible, and edit clean audio in a wider workspace.",
+  "mobileUseCase": "Best on mobile when podcast recordings is already prepared and you need a quick review, small edit, or approval for clean audio.",
+  "desktopSearchAngle": "Desktop readers usually want deeper comparison, file handling, and a deliberate review workflow for clean audio.",
+  "mobileSearchAngle": "Mobile readers usually want a short answer first, then a quick next step for clean audio they can finish in a few taps.",
+  "visualAssets": {
+    "hero": {
+      "type": "hero",
+      "alt": "Best AI Tools for Synthetic Voice Content Workflows guide visual",
+      "promptOrDescription": "Editorial guide artwork for creating synthetic narration while managing quality and disclosure expectations with a clean, problem-solving feel.",
+      "fileNameHint": "best-ai-tools-for-synthetic-voice-content-disclosure-workflows"
+    },
+    "workflow": {
+      "type": "workflow-diagram",
+      "alt": "Best AI Tools for Synthetic Voice Content Workflows workflow diagram",
+      "steps": [
+        "Quick Verdict",
+        "Which One Should You Choose?",
+        "Best Picks by Situation",
+        "Comparison Table",
+        "Tool Cards"
+      ]
+    },
+    "toolStack": {
+      "type": "tool-stack",
+      "alt": "Best AI Tools for Synthetic Voice Content Workflows recommended tool stack",
+      "tools": [
+        "ElevenLabs",
+        "LOVO",
+        "PlayHT"
+      ]
+    },
+    "beforeAfter": {
+      "type": "before-after",
+      "alt": "Best AI Tools for Synthetic Voice Content Workflows before and after comparison",
+      "before": "Before: manual work and scattered notes for creating synthetic narration while managing quality and disclosure expectations.",
+      "after": "After: a faster workflow that leaves you with a clear, checked result."
+    }
+  },
+  "quickAnswer": "For creating synthetic narration while managing quality and disclosure expectations, start with ElevenLabs because it is the closest fit for turning podcast recordings into clean audio. Choose LOVO when noise reduction matters more. Avoid ElevenLabs when you lack permission for a voice or likeness you plan to use; in that case PlayHT is the better fallback.",
+  "quickDecision": "For creating synthetic narration while managing quality and disclosure expectations, choose ElevenLabs first when the input is podcast recordings and the output needs to be clean audio. Choose LOVO when noise reduction matters more. Choose PlayHT when you need a lighter review, export, or fallback pass.",
+  "realWorldScenario": "video creators have podcast recordings and episode transcript and need clean audio without drifting into an unrelated workflow. Prepared 2026-05-29.",
+  "whatYouNeed": [
+    "podcast recordings, episode transcripts, guest notes, and clip requirements",
+    "A clear final format for creating synthetic narration while managing quality and disclosure expectations.",
+    "The audience, recipient, or grading criteria for the output.",
+    "Time to check facts, names, numbers, dates, and commitments before using the result."
+  ],
+  "timeEstimate": "Run one real comparison before subscribing or switching workflows.",
+  "contentGap": "Most results compare voice quality without discussing workflow review.",
+  "uniqueAngle": "Compare voice quality, editing workflow, and trust safeguards.",
+  "aiOverviewAnswer": "Use ElevenLabs for polished narration, PlayHT or Lovo for alternatives, and Descript when editing around the narration matters.",
+  "quickVerdict": "For creating synthetic narration while managing quality and disclosure expectations, start with ElevenLabs because it is the closest fit for turning podcast recordings into clean audio. Choose LOVO when noise reduction matters more. Avoid ElevenLabs when you lack permission for a voice or likeness you plan to use; in that case PlayHT is the better fallback.",
+  "steps": [
+    {
+      "title": "Define the input type",
+      "detail": "Decide whether you already have podcast recordings, episode transcripts, guest notes, and clip requirements or still need to gather it before you touch the tools.",
+      "why": "The best tool changes when the work starts from documents, web research, notes, media, or a blank draft.",
+      "output": "A clear starting condition for the comparison.",
+      "toolSlug": "elevenlabs",
+      "toolName": "ElevenLabs"
+    },
+    {
+      "title": "Run the strongest first pass",
+      "detail": "Use ElevenLabs on one real example so you can see how it handles narration and voiceover creation.",
+      "why": "A real input exposes weaknesses faster than reading feature lists.",
+      "output": "One result you can judge against the source and desired format.",
+      "toolSlug": "elevenlabs",
+      "toolName": "ElevenLabs"
+    },
+    {
+      "title": "Compare the second choice",
+      "detail": "Try LOVO on the same input if you need another source style, output format, or control model.",
+      "why": "Using the same input makes the comparison about fit, not luck.",
+      "output": "A side-by-side view of the tradeoff between the first two options.",
+      "toolSlug": "lovo",
+      "toolName": "LOVO"
+    },
+    {
+      "title": "Check the final pass",
+      "detail": "Use PlayHT or a manual review to catch missing details, tone issues, or weak structure before you publish or send anything.",
+      "why": "The final choice should be based on review effort as much as output speed.",
+      "output": "A chosen tool path and a list of issues to watch before scaling.",
+      "toolSlug": "playht",
+      "toolName": "PlayHT"
+    }
+  ],
+  "toolsYouCanUse": [
+    {
+      "toolSlug": "elevenlabs",
+      "toolName": "ElevenLabs",
+      "why": "Primary tool for turning podcast recordings into clean audio.",
+      "role": "Primary tool for turning podcast recordings into clean audio.",
+      "bestUseCase": "narration and voiceover creation for clean audio"
+    },
+    {
+      "toolSlug": "lovo",
+      "toolName": "LOVO",
+      "why": "Second-pass tool when clean audio needs a different format, stronger controls, or validation.",
+      "role": "Second-pass tool when clean audio needs a different format, stronger controls, or validation.",
+      "bestUseCase": "workflows that need brand voice narration and voiceovers when noise reduction matters more than the top pick"
+    },
+    {
+      "toolSlug": "playht",
+      "toolName": "PlayHT",
+      "why": "Review or finishing tool after the main output is checked.",
+      "role": "Review or finishing tool after the main output is checked.",
+      "bestUseCase": "workflows that need text-to-speech narration when speed or a lighter setup matters more for captioned exports"
+    }
+  ],
+  "keyTakeaways": [
+    "ElevenLabs is the first tool to test because it best matches creating synthetic narration while managing quality and disclosure expectations.",
+    "LOVO is the right second choice when the input type changes or you need a different output style.",
+    "PlayHT is the fallback when you want a lighter, faster, or more polished review step.",
+    "The right choice depends on whether you already have podcast recordings, episode transcripts, guest notes, and clip requirements or still need to discover, rewrite, or organize the material.",
+    "The user wants AI voiceovers but worries about rights, realism, and audience trust.",
+    "Most results compare voice quality without discussing workflow review.",
+    "Start with a focused use case and upgrade only after the tool saves enough time to justify the cost."
+  ],
+  "bestPicksBySituation": [
+    {
+      "situation": "If you already have podcast recordings, choose ElevenLabs.",
+      "toolSlug": "elevenlabs",
+      "toolName": "ElevenLabs",
+      "why": "ElevenLabs is the closest match because it is built for narration and voiceover creation and keeps the work tied to podcast recordings."
+    },
+    {
+      "situation": "If you need short clips or stronger noise reduction, choose LOVO.",
+      "toolSlug": "lovo",
+      "toolName": "LOVO",
+      "why": "LOVO is the better second choice when workflows that need brand voice narration and voiceovers matters more than the first tool's handling of podcast recordings."
+    },
+    {
+      "situation": "If you want the lightest review or export step for clean audio, choose PlayHT.",
+      "toolSlug": "playht",
+      "toolName": "PlayHT",
+      "why": "PlayHT helps when you need workflows that need text-to-speech narration and want a fallback that is easier to adapt on a phone or desktop."
+    }
+  ],
+  "recommendedToolSlugs": [
+    "elevenlabs",
+    "lovo",
+    "playht",
+    "resemble-ai",
+    "descript"
+  ],
+  "recommendedTools": [
+    {
+      "toolSlug": "elevenlabs",
+      "toolName": "ElevenLabs",
+      "summary": "ElevenLabs is strongest when you need narration and voiceover creation and want it tied to podcast recordings, episode transcripts, guest notes, and clip requirements. It handles generate narration better than a generic assistant, but it is a weaker choice if you need you lack permission for a voice or likeness you plan to use.",
+      "bestFor": "narration and voiceover creation for clean audio",
+      "avoidIf": "you lack permission for a voice or likeness you plan to use if your real input is podcast recordings, episode transcripts, guest notes, and clip requirements",
+      "strengths": [
+        "voice",
+        "audio",
+        "narration",
+        "dubbing"
+      ],
+      "tradeoffs": [
+        "Visual design creation",
+        "Unapproved imitation of identifiable voices"
+      ],
+      "toolPagePath": "/tools/elevenlabs"
+    },
+    {
+      "toolSlug": "lovo",
+      "toolName": "LOVO",
+      "summary": "LOVO is strongest when you need workflows that need brand voice narration and voiceovers and want it tied to podcast recordings, episode transcripts, guest notes, and clip requirements. It handles brand voice narration and voiceovers better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need brand voice narration and voiceovers when noise reduction matters more than the top pick",
+      "avoidIf": "you need publish-ready output without review if your main need is the top tool's exact workflow",
+      "strengths": [
+        "audio",
+        "voice",
+        "narration",
+        "music"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside audio.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/lovo"
+    },
+    {
+      "toolSlug": "playht",
+      "toolName": "PlayHT",
+      "summary": "PlayHT is strongest when you need workflows that need text-to-speech narration and want it tied to podcast recordings, episode transcripts, guest notes, and clip requirements. It handles text-to-speech narration better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need text-to-speech narration when speed or a lighter setup matters more for captioned exports",
+      "avoidIf": "you need publish-ready output without review if you need the most polished or source-grounded final pass",
+      "strengths": [
+        "audio",
+        "voice",
+        "narration",
+        "music"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside audio.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/playht"
+    },
+    {
+      "toolSlug": "resemble-ai",
+      "toolName": "Resemble AI",
+      "summary": "Resemble AI is strongest when you need workflows that need voice cloning and speech generation and want it tied to podcast recordings, episode transcripts, guest notes, and clip requirements. It handles voice cloning and speech generation better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need voice cloning and speech generation when speed or a lighter setup matters more for show notes",
+      "avoidIf": "you need publish-ready output without review if the task needs deeper review than a lightweight fallback can provide",
+      "strengths": [
+        "audio",
+        "voice",
+        "narration",
+        "music"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside audio.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/resemble-ai"
+    },
+    {
+      "toolSlug": "descript",
+      "toolName": "Descript",
+      "summary": "Descript is strongest when you need podcasts and talking-head videos and want it tied to podcast recordings, episode transcripts, guest notes, and clip requirements. It handles edit podcasts better than a generic assistant, but it is a weaker choice if you need you need advanced timeline control above transcript-first editing.",
+      "bestFor": "podcasts and talking-head videos when speed or a lighter setup matters more for creating synthetic narration while managing quality and disclosure expectations",
+      "avoidIf": "you need advanced timeline control above transcript-first editing if the workflow depends on another tool's stronger input handling or editing controls",
+      "strengths": [
+        "video-editing",
+        "audio",
+        "transcription",
+        "podcast"
+      ],
+      "tradeoffs": [
+        "Generative cinematic scenes as the primary goal",
+        "Static design asset production"
+      ],
+      "toolPagePath": "/tools/descript"
+    }
+  ],
+  "comparisonRows": [
+    {
+      "toolSlug": "elevenlabs",
+      "toolName": "ElevenLabs",
+      "bestFor": "narration and voiceover creation for clean audio",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "ElevenLabs is worth considering because it is the clearest fit for creating synthetic narration while managing quality and disclosure expectations. It is built for narration and voiceover creation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for visual design creation; this matters when the reader is creating synthetic narration while managing quality and disclosure expectations."
+    },
+    {
+      "toolSlug": "lovo",
+      "toolName": "LOVO",
+      "bestFor": "workflows that need brand voice narration and voiceovers when noise reduction matters more than the top pick",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "LOVO is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for workflows that need brand voice narration and voiceovers, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside audio.; this matters when the reader is creating synthetic narration while managing quality and disclosure expectations."
+    },
+    {
+      "toolSlug": "playht",
+      "toolName": "PlayHT",
+      "bestFor": "workflows that need text-to-speech narration when speed or a lighter setup matters more for captioned exports",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "PlayHT is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need text-to-speech narration, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside audio.; this matters when the reader is creating synthetic narration while managing quality and disclosure expectations."
+    },
+    {
+      "toolSlug": "resemble-ai",
+      "toolName": "Resemble AI",
+      "bestFor": "workflows that need voice cloning and speech generation when speed or a lighter setup matters more for show notes",
+      "freePlan": false,
+      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "whyConsider": "Resemble AI is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need voice cloning and speech generation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside audio.; this matters when the reader is creating synthetic narration while managing quality and disclosure expectations."
+    },
+    {
+      "toolSlug": "descript",
+      "toolName": "Descript",
+      "bestFor": "podcasts and talking-head videos when speed or a lighter setup matters more for creating synthetic narration while managing quality and disclosure expectations",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "Descript is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for podcasts and talking-head videos, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for generative cinematic scenes as the primary goal; this matters when the reader is creating synthetic narration while managing quality and disclosure expectations."
+    }
+  ],
+  "decisionPath": [
+    {
+      "situation": "If you already have podcast recordings, start with ElevenLabs.",
+      "recommendation": "ElevenLabs",
+      "reason": "ElevenLabs is the most direct first pass because it is built for narration and voiceover creation."
+    },
+    {
+      "situation": "If you need stronger noise reduction for clean audio, switch to LOVO.",
+      "recommendation": "LOVO",
+      "reason": "LOVO is the better alternative when workflows that need brand voice narration and voiceovers matters more than the top pick."
+    },
+    {
+      "situation": "If you need the easiest review, export, or follow-up pass, compare PlayHT.",
+      "recommendation": "PlayHT",
+      "reason": "PlayHT is useful when you want workflows that need text-to-speech narration and do not want to overbuild the workflow."
+    },
+    {
+      "situation": "If you are working on a phone and need a quick answer, use the fastest or simplest option in the shortlist.",
+      "recommendation": "LOVO",
+      "reason": "LOVO is usually the faster fallback when you need a readable result with less setup."
+    }
+  ],
+  "decisionTree": [
+    {
+      "situation": "If you already have podcast recordings, start with ElevenLabs.",
+      "recommendation": "ElevenLabs",
+      "reason": "ElevenLabs is the most direct first pass because it is built for narration and voiceover creation."
+    },
+    {
+      "situation": "If you need stronger noise reduction for clean audio, switch to LOVO.",
+      "recommendation": "LOVO",
+      "reason": "LOVO is the better alternative when workflows that need brand voice narration and voiceovers matters more than the top pick."
+    },
+    {
+      "situation": "If you need the easiest review, export, or follow-up pass, compare PlayHT.",
+      "recommendation": "PlayHT",
+      "reason": "PlayHT is useful when you want workflows that need text-to-speech narration and do not want to overbuild the workflow."
+    },
+    {
+      "situation": "If you are working on a phone and need a quick answer, use the fastest or simplest option in the shortlist.",
+      "recommendation": "LOVO",
+      "reason": "LOVO is usually the faster fallback when you need a readable result with less setup."
+    }
+  ],
+  "moneySavingTips": [
+    "Test one representative project before paying for a longer-term workflow.",
+    "Use a listed free plan when it covers the experiment you need to run.",
+    "Avoid overlapping subscriptions until one tool has proven where it saves effort."
+  ],
+  "pricingNote": "Pricing can change. Check the official site before subscribing.",
+  "pricingCaveat": "Pricing can change. Check the official site before subscribing.",
+  "faqs": [
+    {
+      "question": "What input do I need before using AI for creating synthetic narration while managing quality and disclosure expectations?",
+      "answer": "Start with podcast recordings, episode transcript, guest notes and decide that the output must be clean audio. That keeps ElevenLabs focused on the actual job instead of drifting into a generic answer."
+    },
+    {
+      "question": "Which tool should I start with for clean audio?",
+      "answer": "Start with ElevenLabs when the main input is podcast recordings. Compare LOVO when noise reduction matters more, and keep PlayHT for review or fallback work."
+    },
+    {
+      "question": "What should I check before I use the result?",
+      "answer": "Check the result against podcast recordings, especially over-cleaning voices. Do not use the output until it still matches clean audio."
+    },
+    {
+      "question": "Can I finish this workflow on a phone, or should I use a computer?",
+      "answer": "Use mobile for on mobile, keep the task to one input and one output: podcast recordings to clean audio. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. clean audio usually benefits from desktop review before publishing, sending, or saving."
+    }
+  ],
+  "faq": [
+    {
+      "question": "What input do I need before using AI for creating synthetic narration while managing quality and disclosure expectations?",
+      "answer": "Start with podcast recordings, episode transcript, guest notes and decide that the output must be clean audio. That keeps ElevenLabs focused on the actual job instead of drifting into a generic answer."
+    },
+    {
+      "question": "Which tool should I start with for clean audio?",
+      "answer": "Start with ElevenLabs when the main input is podcast recordings. Compare LOVO when noise reduction matters more, and keep PlayHT for review or fallback work."
+    },
+    {
+      "question": "What should I check before I use the result?",
+      "answer": "Check the result against podcast recordings, especially over-cleaning voices. Do not use the output until it still matches clean audio."
+    },
+    {
+      "question": "Can I finish this workflow on a phone, or should I use a computer?",
+      "answer": "Use mobile for on mobile, keep the task to one input and one output: podcast recordings to clean audio. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. clean audio usually benefits from desktop review before publishing, sending, or saving."
+    }
+  ],
+  "whoShouldUseThis": [
+    "video creators who need creating synthetic narration while managing quality and disclosure expectations.",
+    "Readers asking: Which AI voice tool fits a responsible synthetic narration workflow?",
+    "Teams that understand this pain point: The user wants AI voiceovers but worries about rights, realism, and audience trust."
+  ],
+  "whoShouldAvoidThis": [
+    "Readers who need legal, financial, or compliance advice rather than tool comparison.",
+    "Users who want guaranteed outcomes instead of a workflow shortlist to evaluate."
+  ],
+  "finalVerdict": "For video creators, start by testing ElevenLabs on one realistic assignment: creating synthetic narration while managing quality and disclosure expectations. Compare it with LOVO when noise reduction matters, use PlayHT for final review, and choose only after checking actual output, setup effort, and current official plan details.",
+  "realityCheck": "AI can speed up the work, but the user still has to review facts, shape the final result, and decide whether the workflow fits the job.",
+  "skillNeeded": "You need enough familiarity with creating synthetic narration while managing quality and disclosure expectations to judge whether the output is accurate and useful.",
+  "firstStep": "Start with one real example of creating synthetic narration while managing quality and disclosure expectations and compare the output against your own standard before you scale the workflow.",
+  "commonMistakes": [
+    "Over-cleaning voices",
+    "Choosing clips before audio is clear",
+    "Trusting captions without review"
+  ],
+  "mistakesToAvoid": [
+    "Do not treat ElevenLabs as the final answer without checking the result against your source material.",
+    "Do not use LOVO or PlayHT as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+  ],
+  "whatToAvoid": [
+    "Do not treat ElevenLabs as the final answer without checking the result against your source material.",
+    "Do not use LOVO or PlayHT as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+  ],
+  "whatChanged": "Compare voice quality, editing workflow, and trust safeguards.",
+  "exampleWorkflow": "Prepare podcast recordings, test ElevenLabs for clean audio, compare LOVO when noise reduction matters, and keep PlayHT for review or export checks.",
+  "exampleResult": "The final result should be clearer, shorter, and easier to use, with the main ideas preserved and the obvious errors removed.",
+  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "visualSummary": {
+    "headline": "A practical starting route for video creators",
+    "points": [
+      "Start with ElevenLabs for narration and voiceover creation",
+      "Compare LOVO when the workflow changes",
+      "Run a real project test before subscribing"
+    ]
+  },
+  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "freshness": "current",
+  "qualityScore": 92,
+  "status": "draft",
+  "createdAt": "2026-05-29",
+  "updatedAt": "2026-05-29"
+}

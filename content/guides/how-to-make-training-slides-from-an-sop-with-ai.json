@@ -1,0 +1,462 @@
+{
+  "slug": "how-to-make-training-slides-from-an-sop-with-ai",
+  "title": "How to Make Training Slides From an SOP with AI",
+  "guideType": "how-to",
+  "type": "how-to",
+  "metaTitle": "How to Make Training Slides From an SOP with AI | Comparavy",
+  "metaDescription": "Learn how to turning an SOP into internal training slides. See the workflow, tools you can use, and the safest first step.",
+  "category": "Presentations",
+  "persona": "operations managers",
+  "useCase": "turning an SOP into internal training slides",
+  "budgetAngle": "Start with a focused use case and upgrade only after the tool saves enough time to justify the cost.",
+  "skillLevel": "intermediate",
+  "primaryKeyword": "how to make training slides from an SOP with AI",
+  "secondaryKeywords": [
+    "SOP to slides AI",
+    "training deck AI",
+    "AI internal training slides"
+  ],
+  "longTailKeywords": [
+    "how to turn an SOP into training slides with AI",
+    "AI workflow for operations training deck",
+    "make employee training slides from process docs"
+  ],
+  "audience": "operations managers",
+  "searchIntent": "turning an SOP into internal training slides",
+  "userPain": "The reader has process documentation but needs a teachable deck without rewriting every step manually.",
+  "decisionQuestion": "How do I turn a process document into training slides without losing accuracy?",
+  "deviceIntent": "both",
+  "desktopUseCase": "Best on a computer when the SOP, outline, and slide deck need to be compared side by side. Use desktop to compare proposal notes with client deck before the final review.",
+  "mobileUseCase": "Best on a phone when reviewing slide wording or sharing a draft for quick feedback. Use mobile for quick checks on client deck when the input is already prepared.",
+  "desktopSearchAngle": "Desktop readers usually want deeper comparison, file handling, and a deliberate review workflow for client deck.",
+  "mobileSearchAngle": "Mobile readers usually want a short answer first, then a quick next step for client deck they can finish in a few taps.",
+  "visualAssets": {
+    "hero": {
+      "type": "hero",
+      "alt": "How to Make Training Slides From an SOP with AI guide visual",
+      "promptOrDescription": "Editorial guide artwork for turning an SOP into internal training slides with a clean, problem-solving feel.",
+      "fileNameHint": "how-to-make-training-slides-from-an-sop-with-ai"
+    },
+    "workflow": {
+      "type": "workflow-diagram",
+      "alt": "How to Make Training Slides From an SOP with AI workflow diagram",
+      "steps": [
+        "Quick Answer",
+        "Real-World Scenario",
+        "What You Need",
+        "Step-by-Step Workflow",
+        "Best If You Are on a Computer"
+      ]
+    },
+    "toolStack": {
+      "type": "tool-stack",
+      "alt": "How to Make Training Slides From an SOP with AI recommended tool stack",
+      "tools": [
+        "Gamma",
+        "Canva Magic Studio",
+        "Notion AI"
+      ]
+    },
+    "beforeAfter": {
+      "type": "before-after",
+      "alt": "How to Make Training Slides From an SOP with AI before and after comparison",
+      "before": "Before: manual work and scattered notes for turning an SOP into internal training slides.",
+      "after": "After: a faster workflow that leaves you with a clear, checked result."
+    }
+  },
+  "quickAnswer": "To handle turning an SOP into internal training slides, Start with proposal notes, decide that the output must be client deck, use Gamma for one reviewable version, and check it before changing formats or adding another tool. Gamma should create the first reviewable version, Canva Magic Studio belongs in the second pass only when client deck needs more control, and Notion AI should be saved for review or export after the core result is right.",
+  "quickDecision": "For turning an SOP into internal training slides, choose Gamma first when the input is proposal notes and the output needs to be client deck. Choose Canva Magic Studio when slides matters more. Choose Notion AI when you need a lighter review, export, or fallback pass.",
+  "realWorldScenario": "operations managers have proposal notes and SOPs and need client deck without drifting into an unrelated workflow. Prepared 2026-05-29.",
+  "whatYouNeed": [
+    "proposal notes, source facts, audience goals, and slide requirements",
+    "A clear final format for turning an SOP into internal training slides.",
+    "The audience, recipient, or grading criteria for the output.",
+    "Time to check facts, names, numbers, dates, and commitments before using the result."
+  ],
+  "timeEstimate": "Plan on 10 to 30 minutes for one careful first pass, depending on the source material.",
+  "contentGap": "Most slide guides focus on design instead of process comprehension.",
+  "uniqueAngle": "Convert the SOP into learning objectives before designing slides.",
+  "aiOverviewAnswer": "Extract the process steps, turn them into learning objectives and slide sections, build the deck, then review it with a process owner.",
+  "quickVerdict": "To handle turning an SOP into internal training slides, Start with proposal notes, decide that the output must be client deck, use Gamma for one reviewable version, and check it before changing formats or adding another tool. Gamma should create the first reviewable version, Canva Magic Studio belongs in the second pass only when client deck needs more control, and Notion AI should be saved for review or export after the core result is right.",
+  "steps": [
+    {
+      "title": "Prepare proposal notes",
+      "detail": "Put the real input in one place before opening a tool: proposal notes, SOPs, research notes, meeting goals, turning an SOP into internal training slides, any required facts, the audience, and the format you need at the end. Remove private details you are not allowed to share.",
+      "why": "AI output is only as useful as the material and constraints you give it.",
+      "output": "A clean input bundle and one clear target format: client deck."
+    },
+    {
+      "title": "Ask for the first usable version",
+      "detail": "Use Gamma for a first pass that tries to turn an SOP into internal training slides. Ask it to preserve source facts, flag uncertainty, and organize the result into sections you can review.",
+      "why": "The first pass should create a reviewable client deck, not a finished answer you trust blindly.",
+      "output": "A structured client deck with visible gaps or uncertain points.",
+      "toolSlug": "gamma",
+      "toolName": "Gamma"
+    },
+    {
+      "title": "Check the answer before polishing",
+      "detail": "Compare the AI output with proposal notes. Fix names, dates, numbers, unsupported claims, missing context, and tone before you ask for nicer wording.",
+      "why": "Polished wrong information is harder to catch than rough information.",
+      "output": "A corrected client deck that is ready for formatting or wording cleanup."
+    },
+    {
+      "title": "Change the format only after the facts are right",
+      "detail": "Use Canva Magic Studio when the verified client deck needs a different format, structure, or source-aware second pass. Keep the same facts from proposal notes so the rewrite does not drift from the original.",
+      "why": "Format changes are safer after the substance is already checked.",
+      "output": "A version that fits the channel, document, post, or recipient.",
+      "toolSlug": "canva-magic-studio",
+      "toolName": "Canva Magic Studio"
+    },
+    {
+      "title": "Finish with a human review",
+      "detail": "Use Notion AI for cleanup only after the main client deck is checked against proposal notes. Read the final result as the recipient would: on the device, in the app, or in the document where it will actually be used.",
+      "why": "The final review catches tone, missing context, and practical usability issues.",
+      "output": "A final result you can send, post, study from, or save with confidence.",
+      "toolSlug": "notion-ai",
+      "toolName": "Notion AI"
+    }
+  ],
+  "toolsYouCanUse": [
+    {
+      "toolSlug": "gamma",
+      "toolName": "Gamma",
+      "why": "Primary tool for turning proposal notes into client deck.",
+      "role": "Primary tool for turning proposal notes into client deck.",
+      "bestUseCase": "quick presentation starting versions for client deck"
+    },
+    {
+      "toolSlug": "canva-magic-studio",
+      "toolName": "Canva Magic Studio",
+      "why": "Second-pass tool when client deck needs a different format, stronger controls, or validation.",
+      "role": "Second-pass tool when client deck needs a different format, stronger controls, or validation.",
+      "bestUseCase": "non-designers creating polished visual assets when slides matters more than the top pick"
+    },
+    {
+      "toolSlug": "notion-ai",
+      "toolName": "Notion AI",
+      "why": "Review or finishing tool after the main output is checked.",
+      "role": "Review or finishing tool after the main output is checked.",
+      "bestUseCase": "teams or individuals already organizing work in Notion when speed or a lighter setup matters more for one-page business plan"
+    }
+  ],
+  "keyTakeaways": [
+    "What you need: proposal notes, SOPs, research notes, a clear output format, and a few minutes to review the result.",
+    "Start with Gamma for the first pass, but judge the output against turning an SOP into internal training slides, not against tool hype.",
+    "Use Canva Magic Studio only when the workflow needs a different format or second pass.",
+    "Use Notion AI for review after the main output is fact-checked.",
+    "The reader has process documentation but needs a teachable deck without rewriting every step manually.",
+    "Most slide guides focus on design instead of process comprehension.",
+    "The useful next step is to test one real example before building a repeatable workflow."
+  ],
+  "bestPicksBySituation": [
+    {
+      "situation": "If you already have proposal notes, choose Gamma.",
+      "toolSlug": "gamma",
+      "toolName": "Gamma",
+      "why": "Gamma is the closest match because it is built for quick presentation starting versions and keeps the work tied to proposal notes."
+    },
+    {
+      "situation": "If you need training slides or stronger slides, choose Canva Magic Studio.",
+      "toolSlug": "canva-magic-studio",
+      "toolName": "Canva Magic Studio",
+      "why": "Canva Magic Studio is the better second choice when non-designers creating polished visual assets matters more than the first tool's handling of proposal notes."
+    },
+    {
+      "situation": "If you want the lightest review or export step for client deck, choose Notion AI.",
+      "toolSlug": "notion-ai",
+      "toolName": "Notion AI",
+      "why": "Notion AI helps when you need teams or individuals already organizing work in Notion and want a fallback that is easier to adapt on a phone or desktop."
+    }
+  ],
+  "recommendedToolSlugs": [
+    "gamma",
+    "canva-magic-studio",
+    "notion-ai",
+    "gemini",
+    "you-com"
+  ],
+  "recommendedTools": [
+    {
+      "toolSlug": "gamma",
+      "toolName": "Gamma",
+      "summary": "Gamma is strongest when you need quick presentation starting versions and want it tied to proposal notes, source facts, audience goals, and slide requirements. It handles draft pitch decks better than a generic assistant, but it is a weaker choice if you need you cannot manually verify content and brand alignment.",
+      "bestFor": "quick presentation starting versions for client deck",
+      "avoidIf": "you cannot manually verify content and brand alignment if your real input is proposal notes, source facts, audience goals, and slide requirements",
+      "strengths": [
+        "presentations",
+        "documents",
+        "pitch",
+        "storytelling"
+      ],
+      "tradeoffs": [
+        "Strictly controlled corporate slide templates without adjustment",
+        "Detailed video production"
+      ],
+      "toolPagePath": "/tools/gamma"
+    },
+    {
+      "toolSlug": "canva-magic-studio",
+      "toolName": "Canva Magic Studio",
+      "summary": "Canva Magic Studio is strongest when you need non-designers creating polished visual assets and want it tied to proposal notes, source facts, audience goals, and slide requirements. It handles create social posts better than a generic assistant, but it is a weaker choice if you need your output requires full professional design control.",
+      "bestFor": "non-designers creating polished visual assets when slides matters more than the top pick",
+      "avoidIf": "your output requires full professional design control if your main need is the top tool's exact workflow",
+      "strengths": [
+        "design",
+        "templates",
+        "social-media",
+        "presentations"
+      ],
+      "tradeoffs": [
+        "Advanced professional image compositing",
+        "Highly controlled cinematic video generation"
+      ],
+      "toolPagePath": "/tools/canva-magic-studio"
+    },
+    {
+      "toolSlug": "notion-ai",
+      "toolName": "Notion AI",
+      "summary": "Notion AI is strongest when you need teams or individuals already organizing work in Notion and want it tied to proposal notes, source facts, audience goals, and slide requirements. It handles summarize meeting notes better than a generic assistant, but it is a weaker choice if you need your useful information lives outside Notion.",
+      "bestFor": "teams or individuals already organizing work in Notion when speed or a lighter setup matters more for one-page business plan",
+      "avoidIf": "your useful information lives outside Notion if you need the most polished or source-grounded final pass",
+      "strengths": [
+        "workspace",
+        "notes",
+        "knowledge",
+        "productivity"
+      ],
+      "tradeoffs": [
+        "People who do not want to adopt Notion",
+        "Standalone image or video generation"
+      ],
+      "toolPagePath": "/tools/notion-ai"
+    },
+    {
+      "toolSlug": "gemini",
+      "toolName": "Gemini",
+      "summary": "Gemini is strongest when you need users already working in Google's ecosystem and want it tied to proposal notes, source facts, audience goals, and slide requirements. It handles brainstorm campaigns better than a generic assistant, but it is a weaker choice if you need you cannot validate factual answers.",
+      "bestFor": "users already working in Google's ecosystem when speed or a lighter setup matters more for speaker notes",
+      "avoidIf": "you cannot validate factual answers if the task needs deeper review than a lightweight fallback can provide",
+      "strengths": [
+        "chat",
+        "google",
+        "writing",
+        "productivity"
+      ],
+      "tradeoffs": [
+        "People needing a dedicated media production timeline",
+        "Users seeking deeply customizable automation"
+      ],
+      "toolPagePath": "/tools/gemini"
+    },
+    {
+      "toolSlug": "you-com",
+      "toolName": "You.com",
+      "summary": "You.com is strongest when you need workflows that need search-backed answers and lightweight assistant help and want it tied to proposal notes, source facts, audience goals, and slide requirements. It handles search-backed answers and lightweight assistant help better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need search-backed answers and lightweight assistant help when speed or a lighter setup matters more for turning an SOP into internal training slides",
+      "avoidIf": "you need publish-ready output without review if the workflow depends on another tool's stronger input handling or editing controls",
+      "strengths": [
+        "chat",
+        "assistant",
+        "brainstorming",
+        "writing"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside general assistant.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/you-com"
+    }
+  ],
+  "comparisonRows": [
+    {
+      "toolSlug": "gamma",
+      "toolName": "Gamma",
+      "bestFor": "quick presentation starting versions for client deck",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "whyConsider": "Gamma is worth considering because it is the clearest fit for turning an SOP into internal training slides. It is built for quick presentation starting versions, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for strictly controlled corporate slide templates without adjustment; this matters when the reader is turning an SOP into internal training slides."
+    },
+    {
+      "toolSlug": "canva-magic-studio",
+      "toolName": "Canva Magic Studio",
+      "bestFor": "non-designers creating polished visual assets when slides matters more than the top pick",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "whyConsider": "Canva Magic Studio is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for non-designers creating polished visual assets, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for advanced professional image compositing; this matters when the reader is turning an SOP into internal training slides."
+    },
+    {
+      "toolSlug": "notion-ai",
+      "toolName": "Notion AI",
+      "bestFor": "teams or individuals already organizing work in Notion when speed or a lighter setup matters more for one-page business plan",
+      "freePlan": false,
+      "easeOfUse": "Medium setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "Notion AI is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for teams or individuals already organizing work in Notion, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for people who do not want to adopt Notion; this matters when the reader is turning an SOP into internal training slides."
+    },
+    {
+      "toolSlug": "gemini",
+      "toolName": "Gemini",
+      "bestFor": "users already working in Google's ecosystem when speed or a lighter setup matters more for speaker notes",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "whyConsider": "Gemini is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for users already working in Google's ecosystem, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for people needing a dedicated media production timeline; this matters when the reader is turning an SOP into internal training slides."
+    },
+    {
+      "toolSlug": "you-com",
+      "toolName": "You.com",
+      "bestFor": "workflows that need search-backed answers and lightweight assistant help when speed or a lighter setup matters more for turning an SOP into internal training slides",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "You.com is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need search-backed answers and lightweight assistant help, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside general assistant.; this matters when the reader is turning an SOP into internal training slides."
+    }
+  ],
+  "decisionPath": [
+    {
+      "situation": "If you already have proposal notes, start with Gamma.",
+      "recommendation": "Gamma",
+      "reason": "Gamma is the first-pass choice when the input is ready and the main job is to structure, summarize, or clean it into a usable result."
+    },
+    {
+      "situation": "If client deck needs a different format after the facts are checked, switch to Canva Magic Studio.",
+      "recommendation": "Canva Magic Studio",
+      "reason": "Canva Magic Studio is better for the second pass when the job changes from source checking to formatting, layout, or another presentation style."
+    },
+    {
+      "situation": "If the result is accurate but still rough, use Notion AI.",
+      "recommendation": "Notion AI",
+      "reason": "Notion AI fits the review step because the main source work is already done."
+    },
+    {
+      "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
+      "recommendation": "Gamma",
+      "reason": "Mobile works best for a short summary, a quick rewrite, or final approval; save side-by-side checking and larger edits for desktop."
+    },
+    {
+      "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
+      "recommendation": "Canva Magic Studio",
+      "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
+    }
+  ],
+  "decisionTree": [
+    {
+      "situation": "If you already have proposal notes, start with Gamma.",
+      "recommendation": "Gamma",
+      "reason": "Gamma is the first-pass choice when the input is ready and the main job is to structure, summarize, or clean it into a usable result."
+    },
+    {
+      "situation": "If client deck needs a different format after the facts are checked, switch to Canva Magic Studio.",
+      "recommendation": "Canva Magic Studio",
+      "reason": "Canva Magic Studio is better for the second pass when the job changes from source checking to formatting, layout, or another presentation style."
+    },
+    {
+      "situation": "If the result is accurate but still rough, use Notion AI.",
+      "recommendation": "Notion AI",
+      "reason": "Notion AI fits the review step because the main source work is already done."
+    },
+    {
+      "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
+      "recommendation": "Gamma",
+      "reason": "Mobile works best for a short summary, a quick rewrite, or final approval; save side-by-side checking and larger edits for desktop."
+    },
+    {
+      "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
+      "recommendation": "Canva Magic Studio",
+      "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
+    }
+  ],
+  "moneySavingTips": [
+    "Test one representative project before paying for a longer-term workflow.",
+    "Use a listed free plan when it covers the experiment you need to run.",
+    "Avoid overlapping subscriptions until one tool has proven where it saves effort."
+  ],
+  "pricingNote": "Pricing can change. Check the official site before subscribing.",
+  "pricingCaveat": "Pricing can change. Check the official site before subscribing.",
+  "faqs": [
+    {
+      "question": "What input do I need before using AI for turning an SOP into internal training slides?",
+      "answer": "Start with proposal notes, SOPs, research notes and decide that the output must be client deck. That keeps Gamma focused on the actual job instead of drifting into a generic answer."
+    },
+    {
+      "question": "Which tool should I start with for client deck?",
+      "answer": "Start with Gamma when the main input is proposal notes. Compare Canva Magic Studio when slides matters more, and keep Notion AI for review or fallback work."
+    },
+    {
+      "question": "What should I check before I use the result?",
+      "answer": "Check the result against proposal notes, especially letting slides invent facts. Do not use the output until it still matches client deck."
+    },
+    {
+      "question": "Can I finish this workflow on a phone, or should I use a computer?",
+      "answer": "Use mobile for on mobile, keep the task to one input and one output: proposal notes to client deck. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. client deck usually benefits from desktop review before publishing, sending, or saving."
+    }
+  ],
+  "faq": [
+    {
+      "question": "What input do I need before using AI for turning an SOP into internal training slides?",
+      "answer": "Start with proposal notes, SOPs, research notes and decide that the output must be client deck. That keeps Gamma focused on the actual job instead of drifting into a generic answer."
+    },
+    {
+      "question": "Which tool should I start with for client deck?",
+      "answer": "Start with Gamma when the main input is proposal notes. Compare Canva Magic Studio when slides matters more, and keep Notion AI for review or fallback work."
+    },
+    {
+      "question": "What should I check before I use the result?",
+      "answer": "Check the result against proposal notes, especially letting slides invent facts. Do not use the output until it still matches client deck."
+    },
+    {
+      "question": "Can I finish this workflow on a phone, or should I use a computer?",
+      "answer": "Use mobile for on mobile, keep the task to one input and one output: proposal notes to client deck. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. client deck usually benefits from desktop review before publishing, sending, or saving."
+    }
+  ],
+  "whoShouldUseThis": [
+    "operations managers who need turning an SOP into internal training slides.",
+    "Readers asking: How do I turn a process document into training slides without losing accuracy?",
+    "Teams that understand this pain point: The reader has process documentation but needs a teachable deck without rewriting every step manually."
+  ],
+  "whoShouldAvoidThis": [
+    "Readers who need legal, financial, or compliance advice rather than tool comparison.",
+    "Users who want guaranteed outcomes instead of a workflow shortlist to evaluate."
+  ],
+  "finalVerdict": "The next step is to run this workflow on one real example of turning an SOP into internal training slides. Start with Gamma, use Canva Magic Studio only if the format needs a second pass, finish with Notion AI or manual review, and do not reuse the workflow until the first result is accurate and useful.",
+  "realityCheck": "AI can speed up the work, but the user still has to review facts, shape the final result, and decide whether the workflow fits the job.",
+  "skillNeeded": "You need enough familiarity with turning an SOP into internal training slides to judge whether the output is accurate and useful.",
+  "firstStep": "What you need: proposal notes, source facts, audience goals, and slide requirements, a clear final format, the audience or recipient, and time to check the AI result before using it.",
+  "commonMistakes": [
+    "Letting slides invent facts",
+    "Using too much text per slide",
+    "Skipping brand or audience review"
+  ],
+  "mistakesToAvoid": [
+    "Do not treat Gamma as the final answer without checking the result against your source material.",
+    "Do not use Canva Magic Studio or Notion AI as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+  ],
+  "whatToAvoid": [
+    "Do not treat Gamma as the final answer without checking the result against your source material.",
+    "Do not use Canva Magic Studio or Notion AI as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+  ],
+  "whatChanged": "Convert the SOP into learning objectives before designing slides.",
+  "exampleWorkflow": "Prepare the real input: proposal notes, SOPs, research notes. Define the target output before opening tools: client deck or training slides. Use Gamma for the first usable pass and ask it to preserve the constraints that matter in Presentations / slides. Check the result against the input, then use Canva Magic Studio only if the output needs a format change or stronger second pass. Finish with a human review and use Notion AI only for cleanup, export, or a lighter fallback.",
+  "exampleResult": "Example result: a checked turn an SOP into internal training slides output that keeps the source facts, removes filler, names the next action, and is short enough to review before sending, posting, studying, or saving.",
+  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "visualSummary": {
+    "headline": "A practical starting route for operations managers",
+    "points": [
+      "Start with Gamma for quick presentation starting versions",
+      "Compare Canva Magic Studio when the workflow changes",
+      "Run a real project test before subscribing"
+    ]
+  },
+  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "freshness": "evergreen",
+  "qualityScore": 92,
+  "status": "draft",
+  "createdAt": "2026-05-29",
+  "updatedAt": "2026-05-29"
+}

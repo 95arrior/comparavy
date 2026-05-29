@@ -1,0 +1,462 @@
+{
+  "slug": "how-to-automate-a-simple-lead-intake-workflow-with-ai",
+  "title": "How to Automate a Simple Lead Intake Workflow with AI",
+  "guideType": "how-to",
+  "type": "how-to",
+  "metaTitle": "How to Automate a Simple Lead Intake Workflow with AI | Comparavy",
+  "metaDescription": "Learn how to routing new leads and follow-up tasks without manual copying. See the workflow, tools you can use, and the safest first step.",
+  "category": "Automation",
+  "persona": "service businesses",
+  "useCase": "routing new leads and follow-up tasks without manual copying",
+  "budgetAngle": "Compare tools on workflow fit and subscription risk before using them in paid client or revenue work.",
+  "skillLevel": "intermediate",
+  "primaryKeyword": "how to automate lead intake with AI",
+  "secondaryKeywords": [
+    "AI lead intake workflow",
+    "no code lead automation",
+    "AI follow up workflow"
+  ],
+  "longTailKeywords": [
+    "how to build a lead intake workflow without code with AI",
+    "AI workflow for lead routing",
+    "automate lead follow up for small business"
+  ],
+  "audience": "service businesses",
+  "searchIntent": "routing new leads and follow-up tasks without manual copying",
+  "userPain": "The reader loses leads because intake, routing, and follow-up tasks are scattered.",
+  "decisionQuestion": "How do I create a simple lead workflow before buying a complex CRM setup?",
+  "deviceIntent": "both",
+  "desktopUseCase": "Best on a computer when connecting forms, spreadsheets, email, and task tools. Use desktop to compare lead forms with simple automated intake, routing, reminders, or follow-up workflow before the final review.",
+  "mobileUseCase": "Best on a phone when checking that new lead alerts and follow-up tasks arrive correctly. Use mobile for quick checks on simple automated intake, routing, reminders, or follow-up workflow when the input is already prepared.",
+  "desktopSearchAngle": "Desktop readers usually want deeper comparison, file handling, and a deliberate review workflow for simple automated intake, routing, reminders, or follow-up workflow.",
+  "mobileSearchAngle": "Mobile readers usually want a short answer first, then a quick next step for simple automated intake, routing, reminders, or follow-up workflow they can finish in a few taps.",
+  "visualAssets": {
+    "hero": {
+      "type": "hero",
+      "alt": "How to Automate a Simple Lead Intake Workflow with AI guide visual",
+      "promptOrDescription": "Editorial guide artwork for routing new leads and follow-up tasks without manual copying with a clean, problem-solving feel.",
+      "fileNameHint": "how-to-automate-a-simple-lead-intake-workflow-with-ai"
+    },
+    "workflow": {
+      "type": "workflow-diagram",
+      "alt": "How to Automate a Simple Lead Intake Workflow with AI workflow diagram",
+      "steps": [
+        "Quick Answer",
+        "Real-World Scenario",
+        "What You Need",
+        "Step-by-Step Workflow",
+        "Best If You Are on a Computer"
+      ]
+    },
+    "toolStack": {
+      "type": "tool-stack",
+      "alt": "How to Automate a Simple Lead Intake Workflow with AI recommended tool stack",
+      "tools": [
+        "Zapier AI",
+        "Make",
+        "n8n"
+      ]
+    },
+    "beforeAfter": {
+      "type": "before-after",
+      "alt": "How to Automate a Simple Lead Intake Workflow with AI before and after comparison",
+      "before": "Before: manual work and scattered notes for routing new leads and follow-up tasks without manual copying.",
+      "after": "After: a faster workflow that leaves you with a clear, checked result."
+    }
+  },
+  "quickAnswer": "To handle routing new leads and follow-up tasks without manual copying, Start with lead forms, decide that the output must be simple automated intake, routing, reminders, or follow-up workflow, use Zapier AI for one reviewable version, and check it before changing formats or adding another tool. Zapier AI should create the first reviewable version, Make belongs in the second pass only when simple automated intake, routing, reminders, or follow-up workflow needs more control, and n8n should be saved for review or export after the core result is right.",
+  "quickDecision": "For routing new leads and follow-up tasks without manual copying, choose Zapier AI first when the input is lead forms and the output needs to be simple automated intake, routing, reminders, or follow-up workflow. Choose Make when routing matters more. Choose n8n when you need a lighter review, export, or fallback pass.",
+  "realWorldScenario": "service businesses have lead forms and customer questions and need simple automated intake, routing, reminders, or follow-up workflow without drifting into an unrelated workflow. Prepared 2026-05-29.",
+  "whatYouNeed": [
+    "lead forms, customer questions, appointment requests, and task lists",
+    "A clear final format for routing new leads and follow-up tasks without manual copying.",
+    "The audience, recipient, or grading criteria for the output.",
+    "Time to check facts, names, numbers, dates, and commitments before using the result."
+  ],
+  "timeEstimate": "Plan on 10 to 30 minutes for one careful first pass, depending on the source material.",
+  "contentGap": "Most automation content is too technical for first-time workflow builders.",
+  "uniqueAngle": "Start with the intake steps and only automate the repeatable handoffs.",
+  "aiOverviewAnswer": "Map the lead source, required fields, owner, and follow-up task, then automate one handoff and test it before adding complexity.",
+  "quickVerdict": "To handle routing new leads and follow-up tasks without manual copying, Start with lead forms, decide that the output must be simple automated intake, routing, reminders, or follow-up workflow, use Zapier AI for one reviewable version, and check it before changing formats or adding another tool. Zapier AI should create the first reviewable version, Make belongs in the second pass only when simple automated intake, routing, reminders, or follow-up workflow needs more control, and n8n should be saved for review or export after the core result is right.",
+  "steps": [
+    {
+      "title": "Prepare lead forms",
+      "detail": "Put the real input in one place before opening a tool: lead forms, customer questions, appointment requests, task lists, routing new leads and follow-up tasks without manual copying, any required facts, the audience, and the format you need at the end. Remove private details you are not allowed to share.",
+      "why": "AI output is only as useful as the material and constraints you give it.",
+      "output": "A clean input bundle and one clear target format: simple automated intake, routing, reminders, or follow-up workflow."
+    },
+    {
+      "title": "Ask for the first usable version",
+      "detail": "Use Zapier AI for a first pass that tries to routing new leads and follow-up tasks without manual copying. Ask it to preserve source facts, flag uncertainty, and organize the result into sections you can review.",
+      "why": "The first pass should create a reviewable simple automated intake, routing, reminders, or follow-up workflow, not a finished answer you trust blindly.",
+      "output": "A structured simple automated intake, routing, reminders, or follow-up workflow with visible gaps or uncertain points.",
+      "toolSlug": "zapier-ai",
+      "toolName": "Zapier AI"
+    },
+    {
+      "title": "Check the answer before polishing",
+      "detail": "Compare the AI output with lead forms. Fix names, dates, numbers, unsupported claims, missing context, and tone before you ask for nicer wording.",
+      "why": "Polished wrong information is harder to catch than rough information.",
+      "output": "A corrected simple automated intake, routing, reminders, or follow-up workflow that is ready for formatting or wording cleanup."
+    },
+    {
+      "title": "Change the format only after the facts are right",
+      "detail": "Use Make when the verified simple automated intake, routing, reminders, or follow-up workflow needs a different format, structure, or source-aware second pass. Keep the same facts from lead forms so the rewrite does not drift from the original.",
+      "why": "Format changes are safer after the substance is already checked.",
+      "output": "A version that fits the channel, document, post, or recipient.",
+      "toolSlug": "make",
+      "toolName": "Make"
+    },
+    {
+      "title": "Finish with a human review",
+      "detail": "Use n8n for cleanup only after the main simple automated intake, routing, reminders, or follow-up workflow is checked against lead forms. Read the final result as the recipient would: on the device, in the app, or in the document where it will actually be used.",
+      "why": "The final review catches tone, missing context, and practical usability issues.",
+      "output": "A final result you can send, post, study from, or save with confidence.",
+      "toolSlug": "n8n",
+      "toolName": "n8n"
+    }
+  ],
+  "toolsYouCanUse": [
+    {
+      "toolSlug": "zapier-ai",
+      "toolName": "Zapier AI",
+      "why": "Primary tool for turning lead forms into simple automated intake, routing, reminders, or follow-up workflow.",
+      "role": "Primary tool for turning lead forms into simple automated intake, routing, reminders, or follow-up workflow.",
+      "bestUseCase": "non-technical app-to-app automation for simple automated intake, routing, reminders, or follow-up workflow"
+    },
+    {
+      "toolSlug": "make",
+      "toolName": "Make",
+      "why": "Second-pass tool when simple automated intake, routing, reminders, or follow-up workflow needs a different format, stronger controls, or validation.",
+      "role": "Second-pass tool when simple automated intake, routing, reminders, or follow-up workflow needs a different format, stronger controls, or validation.",
+      "bestUseCase": "visual multi-step automation building when routing matters more than the top pick"
+    },
+    {
+      "toolSlug": "n8n",
+      "toolName": "n8n",
+      "why": "Review or finishing tool after the main output is checked.",
+      "role": "Review or finishing tool after the main output is checked.",
+      "bestUseCase": "technical users building flexible AI workflows when speed or a lighter setup matters more for simple automated intake, routing, reminders, or follow-up workflow"
+    }
+  ],
+  "keyTakeaways": [
+    "What you need: lead forms, customer questions, appointment requests, a clear output format, and a few minutes to review the result.",
+    "Start with Zapier AI for the first pass, but judge the output against routing new leads and follow-up tasks without manual copying, not against tool hype.",
+    "Use Make only when the workflow needs a different format or second pass.",
+    "Use n8n for review after the main output is fact-checked.",
+    "The reader loses leads because intake, routing, and follow-up tasks are scattered.",
+    "Most automation content is too technical for first-time workflow builders.",
+    "The useful next step is to test one real example before building a repeatable workflow."
+  ],
+  "bestPicksBySituation": [
+    {
+      "situation": "If you already have lead forms, choose Zapier AI.",
+      "toolSlug": "zapier-ai",
+      "toolName": "Zapier AI",
+      "why": "Zapier AI is the closest match because it is built for non-technical app-to-app automation and keeps the work tied to lead forms."
+    },
+    {
+      "situation": "If you need routing new leads and follow-up tasks without manual copying or stronger routing, choose Make.",
+      "toolSlug": "make",
+      "toolName": "Make",
+      "why": "Make is the better second choice when visual multi-step automation building matters more than the first tool's handling of lead forms."
+    },
+    {
+      "situation": "If you want the lightest review or export step for simple automated intake, routing, reminders, or follow-up workflow, choose n8n.",
+      "toolSlug": "n8n",
+      "toolName": "n8n",
+      "why": "n8n helps when you need technical users building flexible AI workflows and want a fallback that is easier to adapt on a phone or desktop."
+    }
+  ],
+  "recommendedToolSlugs": [
+    "zapier-ai",
+    "make",
+    "n8n",
+    "bardeen",
+    "pipedream"
+  ],
+  "recommendedTools": [
+    {
+      "toolSlug": "zapier-ai",
+      "toolName": "Zapier AI",
+      "summary": "Zapier AI is strongest when you need non-technical app-to-app automation and want it tied to lead forms, customer questions, appointment requests, and task lists. It handles route leads better than a generic assistant, but it is a weaker choice if you need automation mistakes could trigger actions without review safeguards.",
+      "bestFor": "non-technical app-to-app automation for simple automated intake, routing, reminders, or follow-up workflow",
+      "avoidIf": "automation mistakes could trigger actions without review safeguards if your real input is lead forms, customer questions, appointment requests, and task lists",
+      "strengths": [
+        "automation",
+        "integrations",
+        "no-code",
+        "workflow"
+      ],
+      "tradeoffs": [
+        "Single prompt writing needs",
+        "Highly custom engineering-heavy integrations"
+      ],
+      "toolPagePath": "/tools/zapier-ai"
+    },
+    {
+      "toolSlug": "make",
+      "toolName": "Make",
+      "summary": "Make is strongest when you need visual multi-step automation building and want it tied to lead forms, customer questions, appointment requests, and task lists. It handles automate content handoffs better than a generic assistant, but it is a weaker choice if you need your process cannot tolerate failed or misconfigured runs.",
+      "bestFor": "visual multi-step automation building when routing matters more than the top pick",
+      "avoidIf": "your process cannot tolerate failed or misconfigured runs if your main need is the top tool's exact workflow",
+      "strengths": [
+        "automation",
+        "visual-builder",
+        "integrations",
+        "operations"
+      ],
+      "tradeoffs": [
+        "People wanting only a conversational assistant",
+        "Users unwilling to learn automation concepts"
+      ],
+      "toolPagePath": "/tools/make"
+    },
+    {
+      "toolSlug": "n8n",
+      "toolName": "n8n",
+      "summary": "n8n is strongest when you need technical users building flexible AI workflows and want it tied to lead forms, customer questions, appointment requests, and task lists. It handles build AI pipelines better than a generic assistant, but it is a weaker choice if you need you are not prepared to maintain self-hosting or choose hosted terms.",
+      "bestFor": "technical users building flexible AI workflows when speed or a lighter setup matters more for simple automated intake, routing, reminders, or follow-up workflow",
+      "avoidIf": "you are not prepared to maintain self-hosting or choose hosted terms if you need the most polished or source-grounded final pass",
+      "strengths": [
+        "automation",
+        "self-hosted",
+        "ai-workflows",
+        "integrations"
+      ],
+      "tradeoffs": [
+        "Beginners seeking a zero-setup recommendation",
+        "One-off creative generation tasks"
+      ],
+      "toolPagePath": "/tools/n8n"
+    },
+    {
+      "toolSlug": "bardeen",
+      "toolName": "Bardeen",
+      "summary": "Bardeen is strongest when you need workflows that need browser-based workflow automation and want it tied to lead forms, customer questions, appointment requests, and task lists. It handles browser-based workflow automation better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need browser-based workflow automation when speed or a lighter setup matters more for routing new leads and follow-up tasks without manual copying",
+      "avoidIf": "you need publish-ready output without review if the task needs deeper review than a lightweight fallback can provide",
+      "strengths": [
+        "automation",
+        "integrations",
+        "workflows",
+        "no-code"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside automation.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/bardeen"
+    },
+    {
+      "toolSlug": "pipedream",
+      "toolName": "Pipedream",
+      "summary": "Pipedream is strongest when you need workflows that need developer-friendly API workflows and want it tied to lead forms, customer questions, appointment requests, and task lists. It handles developer-friendly API workflows better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need developer-friendly API workflows when speed or a lighter setup matters more for simple automated intake, routing, reminders, or follow-up workflow",
+      "avoidIf": "you need publish-ready output without review if the workflow depends on another tool's stronger input handling or editing controls",
+      "strengths": [
+        "automation",
+        "integrations",
+        "workflows",
+        "no-code"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside automation.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/pipedream"
+    }
+  ],
+  "comparisonRows": [
+    {
+      "toolSlug": "zapier-ai",
+      "toolName": "Zapier AI",
+      "bestFor": "non-technical app-to-app automation for simple automated intake, routing, reminders, or follow-up workflow",
+      "freePlan": true,
+      "easeOfUse": "Medium setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "Zapier AI is worth considering because it is the clearest fit for routing new leads and follow-up tasks without manual copying. It is built for non-technical app-to-app automation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for single prompt writing needs; this matters when the reader is routing new leads and follow-up tasks without manual copying."
+    },
+    {
+      "toolSlug": "make",
+      "toolName": "Make",
+      "bestFor": "visual multi-step automation building when routing matters more than the top pick",
+      "freePlan": true,
+      "easeOfUse": "Medium setup; ease 6/10 in the Comparavy catalog",
+      "whyConsider": "Make is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for visual multi-step automation building, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for people wanting only a conversational assistant; this matters when the reader is routing new leads and follow-up tasks without manual copying."
+    },
+    {
+      "toolSlug": "n8n",
+      "toolName": "n8n",
+      "bestFor": "technical users building flexible AI workflows when speed or a lighter setup matters more for simple automated intake, routing, reminders, or follow-up workflow",
+      "freePlan": true,
+      "easeOfUse": "High setup; ease 4/10 in the Comparavy catalog",
+      "whyConsider": "n8n is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for technical users building flexible AI workflows, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for beginners seeking a zero-setup recommendation; this matters when the reader is routing new leads and follow-up tasks without manual copying."
+    },
+    {
+      "toolSlug": "bardeen",
+      "toolName": "Bardeen",
+      "bestFor": "workflows that need browser-based workflow automation when speed or a lighter setup matters more for routing new leads and follow-up tasks without manual copying",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "Bardeen is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need browser-based workflow automation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside automation.; this matters when the reader is routing new leads and follow-up tasks without manual copying."
+    },
+    {
+      "toolSlug": "pipedream",
+      "toolName": "Pipedream",
+      "bestFor": "workflows that need developer-friendly API workflows when speed or a lighter setup matters more for simple automated intake, routing, reminders, or follow-up workflow",
+      "freePlan": true,
+      "easeOfUse": "High setup; ease 6/10 in the Comparavy catalog",
+      "whyConsider": "Pipedream is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need developer-friendly API workflows, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside automation.; this matters when the reader is routing new leads and follow-up tasks without manual copying."
+    }
+  ],
+  "decisionPath": [
+    {
+      "situation": "If you already have lead forms, start with Zapier AI.",
+      "recommendation": "Zapier AI",
+      "reason": "Zapier AI is the first-pass choice when the input is ready and the main job is to structure, summarize, or clean it into a usable result."
+    },
+    {
+      "situation": "If simple automated intake, routing, reminders, or follow-up workflow needs a different format after the facts are checked, switch to Make.",
+      "recommendation": "Make",
+      "reason": "Make is better for the second pass when the job changes from source checking to formatting, layout, or another presentation style."
+    },
+    {
+      "situation": "If the result is accurate but still rough, use n8n.",
+      "recommendation": "n8n",
+      "reason": "n8n fits the review step because the main source work is already done."
+    },
+    {
+      "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
+      "recommendation": "Zapier AI",
+      "reason": "Mobile works best for a short summary, a quick rewrite, or final approval; save side-by-side checking and larger edits for desktop."
+    },
+    {
+      "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
+      "recommendation": "Make",
+      "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
+    }
+  ],
+  "decisionTree": [
+    {
+      "situation": "If you already have lead forms, start with Zapier AI.",
+      "recommendation": "Zapier AI",
+      "reason": "Zapier AI is the first-pass choice when the input is ready and the main job is to structure, summarize, or clean it into a usable result."
+    },
+    {
+      "situation": "If simple automated intake, routing, reminders, or follow-up workflow needs a different format after the facts are checked, switch to Make.",
+      "recommendation": "Make",
+      "reason": "Make is better for the second pass when the job changes from source checking to formatting, layout, or another presentation style."
+    },
+    {
+      "situation": "If the result is accurate but still rough, use n8n.",
+      "recommendation": "n8n",
+      "reason": "n8n fits the review step because the main source work is already done."
+    },
+    {
+      "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
+      "recommendation": "Zapier AI",
+      "reason": "Mobile works best for a short summary, a quick rewrite, or final approval; save side-by-side checking and larger edits for desktop."
+    },
+    {
+      "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
+      "recommendation": "Make",
+      "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
+    }
+  ],
+  "moneySavingTips": [
+    "Test one representative project before paying for a longer-term workflow.",
+    "Use a listed free plan when it covers the experiment you need to run.",
+    "Avoid overlapping subscriptions until one tool has proven where it saves effort."
+  ],
+  "pricingNote": "Pricing can change. Check the official site before subscribing.",
+  "pricingCaveat": "Pricing can change. Check the official site before subscribing.",
+  "faqs": [
+    {
+      "question": "What input do I need before using AI for routing new leads and follow-up tasks without manual copying?",
+      "answer": "Start with lead forms, customer questions, appointment requests and decide that the output must be simple automated intake, routing, reminders, or follow-up workflow. That keeps Zapier AI focused on the actual job instead of drifting into a generic answer."
+    },
+    {
+      "question": "Which tool should I start with for simple automated intake, routing, reminders, or follow-up workflow?",
+      "answer": "Start with Zapier AI when the main input is lead forms. Compare Make when routing matters more, and keep n8n for review or fallback work."
+    },
+    {
+      "question": "What should I check before I use the result?",
+      "answer": "Check the result against lead forms, especially automating before the manual path is clear. Do not use the output until it still matches simple automated intake, routing, reminders, or follow-up workflow."
+    },
+    {
+      "question": "Can I finish this workflow on a phone, or should I use a computer?",
+      "answer": "Use mobile for on mobile, keep the task to one input and one output: lead forms to simple automated intake, routing, reminders, or follow-up workflow. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. simple automated intake, routing, reminders, or follow-up workflow usually benefits from desktop review before publishing, sending, or saving."
+    }
+  ],
+  "faq": [
+    {
+      "question": "What input do I need before using AI for routing new leads and follow-up tasks without manual copying?",
+      "answer": "Start with lead forms, customer questions, appointment requests and decide that the output must be simple automated intake, routing, reminders, or follow-up workflow. That keeps Zapier AI focused on the actual job instead of drifting into a generic answer."
+    },
+    {
+      "question": "Which tool should I start with for simple automated intake, routing, reminders, or follow-up workflow?",
+      "answer": "Start with Zapier AI when the main input is lead forms. Compare Make when routing matters more, and keep n8n for review or fallback work."
+    },
+    {
+      "question": "What should I check before I use the result?",
+      "answer": "Check the result against lead forms, especially automating before the manual path is clear. Do not use the output until it still matches simple automated intake, routing, reminders, or follow-up workflow."
+    },
+    {
+      "question": "Can I finish this workflow on a phone, or should I use a computer?",
+      "answer": "Use mobile for on mobile, keep the task to one input and one output: lead forms to simple automated intake, routing, reminders, or follow-up workflow. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. simple automated intake, routing, reminders, or follow-up workflow usually benefits from desktop review before publishing, sending, or saving."
+    }
+  ],
+  "whoShouldUseThis": [
+    "service businesses who need routing new leads and follow-up tasks without manual copying.",
+    "Readers asking: How do I create a simple lead workflow before buying a complex CRM setup?",
+    "Teams that understand this pain point: The reader loses leads because intake, routing, and follow-up tasks are scattered."
+  ],
+  "whoShouldAvoidThis": [
+    "Readers who need legal, financial, or compliance advice rather than tool comparison.",
+    "Users who want guaranteed outcomes instead of a workflow shortlist to evaluate."
+  ],
+  "finalVerdict": "The next step is to run this workflow on one real example of routing new leads and follow-up tasks without manual copying. Start with Zapier AI, use Make only if the format needs a second pass, finish with n8n or manual review, and do not reuse the workflow until the first result is accurate and useful.",
+  "realityCheck": "AI can speed up the work, but the user still has to review facts, shape the final result, and decide whether the workflow fits the job.",
+  "skillNeeded": "You need enough familiarity with routing new leads and follow-up tasks without manual copying to judge whether the output is accurate and useful.",
+  "firstStep": "What you need: lead forms, customer questions, appointment requests, and task lists, a clear final format, the audience or recipient, and time to check the AI result before using it.",
+  "commonMistakes": [
+    "Automating before the manual path is clear",
+    "Skipping approval steps",
+    "Letting agents act without logs"
+  ],
+  "mistakesToAvoid": [
+    "Do not treat Zapier AI as the final answer without checking the result against your source material.",
+    "Do not use Make or n8n as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+  ],
+  "whatToAvoid": [
+    "Do not treat Zapier AI as the final answer without checking the result against your source material.",
+    "Do not use Make or n8n as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+  ],
+  "whatChanged": "Start with the intake steps and only automate the repeatable handoffs.",
+  "exampleWorkflow": "Prepare the real input: lead forms, customer questions, appointment requests. Define the target output before opening tools: simple automated intake, routing, reminders, or follow-up workflow or routing new leads and follow-up tasks without manual copying. Use Zapier AI for the first usable pass and ask it to preserve the constraints that matter in Automation / agents. Check the result against the input, then use Make only if the output needs a format change or stronger second pass. Finish with a human review and use n8n only for cleanup, export, or a lighter fallback.",
+  "exampleResult": "Example result: a checked routing new leads and follow-up tasks without manual copying output that keeps the source facts, removes filler, names the next action, and is short enough to review before sending, posting, studying, or saving.",
+  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "visualSummary": {
+    "headline": "A practical starting route for service businesses",
+    "points": [
+      "Start with Zapier AI for non-technical app-to-app automation",
+      "Compare Make when the workflow changes",
+      "Run a real project test before subscribing"
+    ]
+  },
+  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "freshness": "evergreen",
+  "qualityScore": 92,
+  "status": "draft",
+  "createdAt": "2026-05-29",
+  "updatedAt": "2026-05-29"
+}
