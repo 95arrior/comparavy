@@ -1,0 +1,398 @@
+{
+  "slug": "how-to-make-youtube-shorts-from-one-long-video-with-ai",
+  "title": "How to Make YouTube Shorts From One Long Video with AI",
+  "guideType": "how-to",
+  "type": "how-to",
+  "metaTitle": "How to Make YouTube Shorts From One Long Video with AI | Comparavy",
+  "metaDescription": "Learn how to turning one long video into short vertical clips. See the workflow, tools you can use, and the safest first step.",
+  "category": "Video",
+  "persona": "YouTube creators",
+  "useCase": "turning one long video into short vertical clips",
+  "budgetAngle": "Start with a focused use case and upgrade only after the tool saves enough time to justify the cost.",
+  "skillLevel": "beginner",
+  "primaryKeyword": "how to make YouTube Shorts from a long video with AI",
+  "secondaryKeywords": [
+    "AI YouTube Shorts workflow",
+    "long video to shorts AI",
+    "make clips from video with AI"
+  ],
+  "longTailKeywords": [
+    "how to turn one long video into YouTube Shorts with AI",
+    "AI workflow for finding short clips in long videos",
+    "make shorts from podcast or webinar video"
+  ],
+  "audience": "YouTube creators",
+  "searchIntent": "turning one long video into short vertical clips",
+  "userPain": "The reader has long videos but does not know which moments are worth clipping.",
+  "decisionQuestion": "How do I find and edit short clips without watching the full video repeatedly?",
+  "deviceIntent": "both",
+  "desktopUseCase": "Best on a computer when exporting multiple clips, reviewing transcripts, and adjusting framing.",
+  "mobileUseCase": "Best on a phone when approving captions, trimming a clip, or posting the final short.",
+  "desktopSearchAngle": "Desktop readers usually want a deeper comparison, file handling, and a more deliberate review workflow.",
+  "mobileSearchAngle": "Mobile readers usually want a short answer first, then a quick next step they can finish in a few taps.",
+  "visualAssets": {
+    "hero": {
+      "type": "hero",
+      "alt": "How to Make YouTube Shorts From One Long Video with AI guide visual",
+      "promptOrDescription": "Editorial guide artwork for turning one long video into short vertical clips with a clean, problem-solving feel.",
+      "fileNameHint": "how-to-make-youtube-shorts-from-one-long-video-with-ai"
+    },
+    "workflow": {
+      "type": "workflow-diagram",
+      "alt": "How to Make YouTube Shorts From One Long Video with AI workflow diagram",
+      "steps": [
+        "Problem or source material",
+        "AI draft or comparison pass",
+        "Human review and final result"
+      ]
+    },
+    "toolStack": {
+      "type": "tool-stack",
+      "alt": "How to Make YouTube Shorts From One Long Video with AI recommended tool stack",
+      "tools": [
+        "InVideo",
+        "Fliki",
+        "Kapwing"
+      ]
+    },
+    "beforeAfter": {
+      "type": "before-after",
+      "alt": "How to Make YouTube Shorts From One Long Video with AI before and after comparison",
+      "before": "Before: manual work and scattered notes for turning one long video into short vertical clips.",
+      "after": "After: a faster workflow that leaves you with a clear, checked result."
+    }
+  },
+  "quickAnswer": "To handle turning one long video into short vertical clips, start by gathering the real source material, use InVideo for the first AI pass, then check the result against the original before you share it. Use Fliki when the job needs a different format, and keep Kapwing for cleanup or review after the main workflow is done.",
+  "quickDecision": "For turning one long video into short vertical clips, choose InVideo for workflows that need social video creation from prompts. Choose Fliki when you need workflows that need turning scripts into narrated videos. Choose Kapwing when the main job is workflows that need quick editing and captions or when you need a lighter alternative.",
+  "contentGap": "Most lists rank clipping tools without explaining how to pick good moments.",
+  "uniqueAngle": "Use transcript-based clip selection before vertical editing.",
+  "aiOverviewAnswer": "Create a transcript, identify self-contained moments, generate clips, add captions, and review each short for context before publishing.",
+  "quickVerdict": "To handle turning one long video into short vertical clips, start by gathering the real source material, use InVideo for the first AI pass, then check the result against the original before you share it. Use Fliki when the job needs a different format, and keep Kapwing for cleanup or review after the main workflow is done.",
+  "steps": [
+    {
+      "title": "Gather the source material",
+      "detail": "Start with the real inputs for turning one long video into short vertical clips: notes, files, transcript text, product facts, or examples. The output will only be useful if the source is specific."
+    },
+    {
+      "title": "Ask for the first useful draft",
+      "detail": "Use InVideo to create the first pass from that source material. Ask for a practical result, not a generic explanation of the topic.",
+      "toolSlug": "invideo",
+      "toolName": "InVideo"
+    },
+    {
+      "title": "Check the draft against the original",
+      "detail": "Compare names, facts, dates, claims, missing context, and tone against the original input before you edit style or formatting."
+    },
+    {
+      "title": "Change format only after the facts are right",
+      "detail": "Use Fliki when the result needs a visual, social, presentation, or alternate format. Keep the same source facts so the rewrite does not drift.",
+      "toolSlug": "fliki",
+      "toolName": "Fliki"
+    },
+    {
+      "title": "Polish the final version",
+      "detail": "Use Kapwing or a manual review pass to tighten wording, remove filler, and make the final result easier to read on a phone or computer.",
+      "toolSlug": "kapwing",
+      "toolName": "Kapwing"
+    }
+  ],
+  "toolsYouCanUse": [
+    {
+      "toolSlug": "invideo",
+      "toolName": "InVideo",
+      "why": "InVideo is a practical fit for turning one long video into short vertical clips because it is strongest at workflows that need social video creation from prompts."
+    },
+    {
+      "toolSlug": "fliki",
+      "toolName": "Fliki",
+      "why": "Fliki is a practical fit for turning one long video into short vertical clips because it is strongest at workflows that need turning scripts into narrated videos."
+    },
+    {
+      "toolSlug": "kapwing",
+      "toolName": "Kapwing",
+      "why": "Kapwing is a practical fit for turning one long video into short vertical clips because it is strongest at workflows that need quick editing and captions."
+    }
+  ],
+  "keyTakeaways": [
+    "What you need: the original source material, a clear output format, and a few minutes to review the result.",
+    "Start with InVideo for the first pass, but judge the output against turning one long video into short vertical clips, not against tool hype.",
+    "Use Fliki only when the workflow needs a different format or second pass.",
+    "Use Kapwing for cleanup after the main draft is fact-checked.",
+    "The reader has long videos but does not know which moments are worth clipping.",
+    "Most lists rank clipping tools without explaining how to pick good moments.",
+    "The useful next step is to test one real example before building a repeatable workflow."
+  ],
+  "bestPicksBySituation": [
+    {
+      "situation": "If you already have turning one long video into short vertical clips, choose InVideo.",
+      "toolSlug": "invideo",
+      "toolName": "InVideo",
+      "why": "InVideo is the closest match because it is built for workflows that need social video creation from prompts and keeps the work tied to the original input."
+    },
+    {
+      "situation": "If you need turning one long video into short vertical clips and want a different workflow, choose Fliki.",
+      "toolSlug": "fliki",
+      "toolName": "Fliki",
+      "why": "Fliki is the better second choice when you want workflows that need turning scripts into narrated videos instead of the first tool's exact workflow."
+    },
+    {
+      "situation": "If you want the cleanest rewrite or the lightest review step, choose Kapwing.",
+      "toolSlug": "kapwing",
+      "toolName": "Kapwing",
+      "why": "Kapwing helps when you need workflows that need quick editing and captions and want a fallback that is easier to adapt on a phone or desktop."
+    }
+  ],
+  "recommendedToolSlugs": [
+    "invideo",
+    "fliki",
+    "kapwing",
+    "runway",
+    "clipchamp-ai"
+  ],
+  "recommendedTools": [
+    {
+      "toolSlug": "invideo",
+      "toolName": "InVideo",
+      "summary": "InVideo is strongest when you need workflows that need social video creation from prompts and want it tied to turning one long video into short vertical clips. It handles social video creation from prompts better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need social video creation from prompts for turning one long video into short vertical clips",
+      "avoidIf": "you need publish-ready output without review if your real input is turning one long video into short vertical clips",
+      "strengths": [
+        "video",
+        "clips",
+        "editing",
+        "short-form"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside video.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/invideo"
+    },
+    {
+      "toolSlug": "fliki",
+      "toolName": "Fliki",
+      "summary": "Fliki is strongest when you need workflows that need turning scripts into narrated videos and want it tied to turning one long video into short vertical clips. It handles turning scripts into narrated videos better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need turning scripts into narrated videos when you want a different workflow than the top pick",
+      "avoidIf": "you need publish-ready output without review if your main need is the top tool's exact workflow",
+      "strengths": [
+        "video",
+        "clips",
+        "editing",
+        "short-form"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside video.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/fliki"
+    },
+    {
+      "toolSlug": "kapwing",
+      "toolName": "Kapwing",
+      "summary": "Kapwing is strongest when you need workflows that need quick editing and captions and want it tied to turning one long video into short vertical clips. It handles quick editing and captions better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need quick editing and captions when speed or a lighter setup matters more",
+      "avoidIf": "you need publish-ready output without review if you need the most polished or source-grounded final pass",
+      "strengths": [
+        "video",
+        "clips",
+        "editing",
+        "short-form"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside video.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/kapwing"
+    },
+    {
+      "toolSlug": "runway",
+      "toolName": "Runway",
+      "summary": "Runway is strongest when you need aI video concept creation and want it tied to turning one long video into short vertical clips. It handles generate video concepts better than a generic assistant, but it is a weaker choice if you need you require consistent production footage without iteration.",
+      "bestFor": "aI video concept creation when speed or a lighter setup matters more",
+      "avoidIf": "you require consistent production footage without iteration if you need the most polished or source-grounded final pass",
+      "strengths": [
+        "video",
+        "generation",
+        "motion",
+        "creative"
+      ],
+      "tradeoffs": [
+        "Simple transcript editing only",
+        "People seeking a purely free production pipeline"
+      ],
+      "toolPagePath": "/tools/runway"
+    },
+    {
+      "toolSlug": "clipchamp-ai",
+      "toolName": "Clipchamp AI",
+      "summary": "Clipchamp AI is strongest when you need workflows that need fast browser-based video editing and want it tied to turning one long video into short vertical clips. It handles fast browser-based video editing better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need fast browser-based video editing when speed or a lighter setup matters more",
+      "avoidIf": "you need publish-ready output without review if you need the most polished or source-grounded final pass",
+      "strengths": [
+        "video",
+        "clips",
+        "editing",
+        "short-form"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside video.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/clipchamp-ai"
+    }
+  ],
+  "comparisonRows": [
+    {
+      "toolSlug": "invideo",
+      "toolName": "InVideo",
+      "bestFor": "workflows that need social video creation from prompts for turning one long video into short vertical clips",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "InVideo is worth considering because it is the clearest fit for turning one long video into short vertical clips. It is built for workflows that need social video creation from prompts, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside video.; this matters when turning one long video into short vertical clips."
+    },
+    {
+      "toolSlug": "fliki",
+      "toolName": "Fliki",
+      "bestFor": "workflows that need turning scripts into narrated videos when you want a different workflow than the top pick",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "Fliki is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for workflows that need turning scripts into narrated videos, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside video.; this matters when turning one long video into short vertical clips."
+    },
+    {
+      "toolSlug": "kapwing",
+      "toolName": "Kapwing",
+      "bestFor": "workflows that need quick editing and captions when speed or a lighter setup matters more",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "Kapwing is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need quick editing and captions, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside video.; this matters when turning one long video into short vertical clips."
+    },
+    {
+      "toolSlug": "runway",
+      "toolName": "Runway",
+      "bestFor": "aI video concept creation when speed or a lighter setup matters more",
+      "freePlan": true,
+      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "whyConsider": "Runway is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for aI video concept creation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for simple transcript editing only; this matters when turning one long video into short vertical clips."
+    },
+    {
+      "toolSlug": "clipchamp-ai",
+      "toolName": "Clipchamp AI",
+      "bestFor": "workflows that need fast browser-based video editing when speed or a lighter setup matters more",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "Clipchamp AI is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need fast browser-based video editing, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside video.; this matters when turning one long video into short vertical clips."
+    }
+  ],
+  "decisionPath": [
+    {
+      "situation": "If you already have turning one long video into short vertical clips, start with InVideo.",
+      "recommendation": "InVideo",
+      "reason": "InVideo is the fastest first pass because it can work from the source material you already have."
+    },
+    {
+      "situation": "If the output needs a different format after the facts are checked, use Fliki.",
+      "recommendation": "Fliki",
+      "reason": "Fliki is better for the second pass when the job changes from drafting to formatting, layout, or a different presentation style."
+    },
+    {
+      "situation": "If the result is almost right but still rough, use Kapwing.",
+      "recommendation": "Kapwing",
+      "reason": "Kapwing fits the final cleanup step because the main source work is already done."
+    },
+    {
+      "situation": "If you are on your phone, keep the task small.",
+      "recommendation": "InVideo",
+      "reason": "Use mobile for a short summary, quick rewrite, or final review; save side-by-side comparison and bigger edits for desktop."
+    }
+  ],
+  "moneySavingTips": [
+    "Test one representative project before paying for a longer-term workflow.",
+    "Use a listed free plan when it covers the experiment you need to run.",
+    "Avoid overlapping subscriptions until one tool has proven where it saves effort."
+  ],
+  "pricingNote": "Pricing can change. Check the official site before subscribing.",
+  "pricingCaveat": "Pricing can change. Check the official site before subscribing.",
+  "faqs": [
+    {
+      "question": "Can I use AI to handle turning one long video into short vertical clips without losing the core detail?",
+      "answer": "Yes, if you choose the tool that matches the input type and then review the output yourself. InVideo is the best starting point, Fliki is the strongest second choice, and Kapwing is the safer fallback when you need a different balance of speed and control."
+    },
+    {
+      "question": "Which AI tool is better when I need source checking?",
+      "answer": "Fliki is usually the better choice when source checking matters, while InVideo is stronger when the job starts with a known set of files or notes."
+    },
+    {
+      "question": "Is InVideo better than Fliki for this workflow?",
+      "answer": "InVideo is better when you want the most direct match for the main input; Fliki is better when the workflow changes enough to justify a different tool."
+    },
+    {
+      "question": "What should I avoid before I share the result?",
+      "answer": "Avoid sharing the first draft until you have checked facts, tone, and any missing context. Use Kapwing as a helper, not a replacement for review."
+    }
+  ],
+  "faq": [
+    {
+      "question": "Can I use AI to handle turning one long video into short vertical clips without losing the core detail?",
+      "answer": "Yes, if you choose the tool that matches the input type and then review the output yourself. InVideo is the best starting point, Fliki is the strongest second choice, and Kapwing is the safer fallback when you need a different balance of speed and control."
+    },
+    {
+      "question": "Which AI tool is better when I need source checking?",
+      "answer": "Fliki is usually the better choice when source checking matters, while InVideo is stronger when the job starts with a known set of files or notes."
+    },
+    {
+      "question": "Is InVideo better than Fliki for this workflow?",
+      "answer": "InVideo is better when you want the most direct match for the main input; Fliki is better when the workflow changes enough to justify a different tool."
+    },
+    {
+      "question": "What should I avoid before I share the result?",
+      "answer": "Avoid sharing the first draft until you have checked facts, tone, and any missing context. Use Kapwing as a helper, not a replacement for review."
+    }
+  ],
+  "whoShouldUseThis": [
+    "YouTube creators who need turning one long video into short vertical clips.",
+    "Readers asking: How do I find and edit short clips without watching the full video repeatedly?",
+    "Teams that understand this pain point: The reader has long videos but does not know which moments are worth clipping."
+  ],
+  "whoShouldAvoidThis": [
+    "Readers who need legal, financial, or compliance advice rather than tool comparison.",
+    "Users who want guaranteed outcomes instead of a workflow shortlist to evaluate."
+  ],
+  "finalVerdict": "The next step is to run this workflow on one real example of turning one long video into short vertical clips. Start with InVideo, use Fliki only if the format needs a second pass, finish with Kapwing or manual review, and do not reuse the workflow until the first result is accurate and useful.",
+  "realityCheck": "AI can speed up the work, but the user still has to review facts, shape the final result, and decide whether the workflow fits the job.",
+  "skillNeeded": "You need enough familiarity with turning one long video into short vertical clips to judge whether the output is accurate and useful.",
+  "firstStep": "What you need: the original material for turning one long video into short vertical clips, one clear output format, and time to check the AI result before using it.",
+  "commonMistakes": [
+    "Choosing a tool before checking whether the input is turning one long video into short vertical clips or something else.",
+    "Using the same prompt or workflow for every tool instead of matching each tool to its job.",
+    "Sharing the output before checking facts, tone, and missing context."
+  ],
+  "mistakesToAvoid": [
+    "Do not treat InVideo as the final answer without checking the result against your source material.",
+    "Do not use Fliki or Kapwing as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+  ],
+  "exampleWorkflow": "Collect the source material, ask InVideo for a first draft, verify it against the original, use Fliki only if the format needs to change, and use Kapwing for the final cleanup.",
+  "exampleResult": "The final result should be specific enough to use immediately: it should preserve the source facts, remove filler, and include the next action the reader can take.",
+  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "visualSummary": {
+    "headline": "A practical starting route for YouTube creators",
+    "points": [
+      "Start with InVideo for workflows that need social video creation from prompts",
+      "Compare Fliki when the workflow changes",
+      "Run a real project test before subscribing"
+    ]
+  },
+  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "freshness": "evergreen",
+  "qualityScore": 92,
+  "status": "draft",
+  "createdAt": "2026-05-29",
+  "updatedAt": "2026-05-29"
+}
