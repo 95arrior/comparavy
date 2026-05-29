@@ -1,4 +1,5 @@
 import { toolsBySlug, type ToolSlug } from "@/data/tools";
+import { resolveGuideLayoutType, type GuideLayoutType } from "@/lib/guideTypes";
 import type { Guide } from "@/lib/guides";
 
 export const PRICING_NOTICE =
@@ -75,7 +76,6 @@ const WORDS_TO_IGNORE = new Set([
 const TEXT_FIELDS = [
   "slug",
   "title",
-  "guideType",
   "metaTitle",
   "metaDescription",
   "category",
@@ -117,7 +117,6 @@ const ARRAY_FIELDS = [
   "whoShouldUseThis",
   "whoShouldAvoidThis",
   "moneySavingTips",
-  "faqs",
 ] as const;
 
 const STRING_ARRAY_FIELDS = [
@@ -169,6 +168,24 @@ function includesRelevantText(text: string, value: string): boolean {
   return matches >= Math.min(2, expected.length);
 }
 
+function guideFaqs(guide: Guide): Guide["faqs"] {
+  return guide.faq ?? guide.faqs;
+}
+
+function resolvedGuideType(value: Record<string, unknown>): GuideLayoutType {
+  return resolveGuideLayoutType({
+    slug: typeof value.slug === "string" ? value.slug : undefined,
+    title: typeof value.title === "string" ? value.title : undefined,
+    type: typeof value.type === "string" ? value.type : undefined,
+    guideType: typeof value.guideType === "string" ? value.guideType : undefined,
+    searchIntent: typeof value.searchIntent === "string" ? value.searchIntent : undefined,
+    decisionQuestion:
+      typeof value.decisionQuestion === "string" ? value.decisionQuestion : undefined,
+    uniqueAngle: typeof value.uniqueAngle === "string" ? value.uniqueAngle : undefined,
+    notes: typeof value.notes === "string" ? value.notes : undefined,
+  });
+}
+
 function readerFacingText(guide: Guide): string {
   return [
     guide.title,
@@ -177,11 +194,20 @@ function readerFacingText(guide: Guide): string {
     guide.searchIntent,
     guide.userPain,
     guide.decisionQuestion,
+    guide.quickAnswer ?? "",
+    guide.quickDecision ?? "",
     guide.contentGap,
     guide.uniqueAngle,
     guide.aiOverviewAnswer,
     guide.quickVerdict,
+    guide.realityCheck ?? "",
+    guide.skillNeeded ?? "",
+    guide.firstStep ?? "",
+    guide.exampleWorkflow ?? "",
+    guide.exampleResult ?? "",
     ...guide.keyTakeaways,
+    ...(guide.steps ?? []).flatMap((step) => [step.title, step.detail, step.toolName ?? "", step.toolSlug ?? ""]),
+    ...(guide.toolsYouCanUse ?? []).flatMap((tool) => [tool.toolName, tool.why]),
     ...guide.bestPicksBySituation.flatMap((pick) => [
       pick.situation,
       pick.toolName,
@@ -209,7 +235,9 @@ function readerFacingText(guide: Guide): string {
     ...guide.whoShouldUseThis,
     ...guide.whoShouldAvoidThis,
     ...guide.moneySavingTips,
-    ...guide.faqs.flatMap((faq) => [faq.question, faq.answer]),
+    ...(guide.commonMistakes ?? []),
+    ...(guide.mistakesToAvoid ?? []),
+    ...guideFaqs(guide).flatMap((faq) => [faq.question, faq.answer]),
     guide.pricingCaveat,
     guide.finalVerdict,
     guide.ctaToFinder,
@@ -217,6 +245,10 @@ function readerFacingText(guide: Guide): string {
     guide.affiliateDisclosure,
     guide.visualSummary.headline,
     ...guide.visualSummary.points,
+    guide.desktopUseCase ?? "",
+    guide.mobileUseCase ?? "",
+    guide.desktopSearchAngle ?? "",
+    guide.mobileSearchAngle ?? "",
   ].join(" ");
 }
 
@@ -309,15 +341,22 @@ export function validateGuideContent(value: unknown): ContentQualityIssue[] {
     }
   }
 
+  const rawGuideType = typeof value.guideType === "string" ? value.guideType : undefined;
+  const normalizedGuideType = resolvedGuideType(value);
+
   if (
-    value.guideType !== "practical" &&
-    value.guideType !== "income" &&
-    value.guideType !== "trend-led" &&
-    value.guideType !== "evergreen"
+    rawGuideType &&
+    rawGuideType !== "practical" &&
+    rawGuideType !== "evergreen" &&
+    rawGuideType !== "tool-decision" &&
+    rawGuideType !== "how-to" &&
+    rawGuideType !== "income" &&
+    rawGuideType !== "trend-led"
   ) {
     issues.push({
       field: "guideType",
-      message: 'Guide type must be "practical", "income", "trend-led", or "evergreen".',
+      message:
+        'Guide type must be "tool-decision", "how-to", "income", "trend-led", "practical", or "evergreen".',
     });
   }
 
@@ -345,6 +384,32 @@ export function validateGuideContent(value: unknown): ContentQualityIssue[] {
       field: "freshness",
       message: "Freshness must be evergreen, current, or seasonal.",
     });
+  }
+
+  if (
+    value.deviceIntent !== undefined &&
+    value.deviceIntent !== "desktop" &&
+    value.deviceIntent !== "mobile" &&
+    value.deviceIntent !== "both"
+  ) {
+    issues.push({
+      field: "deviceIntent",
+      message: 'Device intent must be "desktop", "mobile", or "both".',
+    });
+  }
+
+  if (value.deviceIntent === "both") {
+    if (
+      !hasString(value, "desktopUseCase") ||
+      !hasString(value, "mobileUseCase") ||
+      !hasString(value, "desktopSearchAngle") ||
+      !hasString(value, "mobileSearchAngle")
+    ) {
+      issues.push({
+        field: "deviceIntent",
+        message: "deviceIntent=both requires desktop and mobile use cases and search angles.",
+      });
+    }
   }
 
   if (value.pricingNote !== PRICING_NOTICE) {
@@ -391,6 +456,29 @@ export function validateGuideContent(value: unknown): ContentQualityIssue[] {
     issues.push({
       field: "qualityScore",
       message: "Published guides require qualityScore >= 85.",
+    });
+  }
+
+  if (Array.isArray(value.recommendedToolSlugs) && value.recommendedToolSlugs.length > 0) {
+    if (!hasString(value, "pricingCaveat")) {
+      issues.push({
+        field: "pricingCaveat",
+        message: "Guides that recommend tools should include a pricing caveat.",
+      });
+    }
+
+    if (!hasString(value, "affiliateDisclosureNote") || !hasString(value, "affiliateDisclosure")) {
+      issues.push({
+        field: "affiliateDisclosure",
+        message: "Guides that link to tools should include affiliate disclosure text.",
+      });
+    }
+  }
+
+  if (!hasString(value, "ctaToFinder") && !hasString(value, "firstStep")) {
+    issues.push({
+      field: "ctaToFinder",
+      message: "Guides need a Finder CTA or a useful next step.",
     });
   }
 
@@ -464,92 +552,229 @@ export function validateGuideContent(value: unknown): ContentQualityIssue[] {
     }
   }
 
-  issues.push(
-    ...validateObjectArray(value, "bestPicksBySituation", [
-      "situation",
-      "toolSlug",
-      "toolName",
-      "why",
-    ]),
-  );
-  issues.push(
-    ...validateObjectArray(value, "recommendedTools", [
-      "toolSlug",
-      "toolName",
-      "summary",
-      "bestFor",
-      "avoidIf",
-      "toolPagePath",
-    ]),
-  );
-  issues.push(
-    ...validateObjectArray(value, "comparisonRows", [
-      "toolSlug",
-      "toolName",
-      "bestFor",
-      "easeOfUse",
-      "whyConsider",
-      "watchFor",
-    ]),
-  );
-  issues.push(
-    ...validateObjectArray(value, "decisionPath", [
-      "situation",
-      "recommendation",
-      "reason",
-    ]),
-  );
-  issues.push(...validateObjectArray(value, "faqs", ["question", "answer"]));
+  if (normalizedGuideType === "tool-decision") {
+    if (!hasString(value, "quickVerdict")) {
+      issues.push({ field: "quickVerdict", message: "Tool-decision guides need a quick verdict." });
+    }
 
-  if (Array.isArray(value.bestPicksBySituation)) {
-    for (const pick of value.bestPicksBySituation) {
-      if (isRecord(pick) && hasString(pick, "toolSlug") && !toolsBySlug.has(pick.toolSlug as ToolSlug)) {
-        issues.push({
-          field: "bestPicksBySituation",
-          message: `Unknown best-pick tool slug: ${pick.toolSlug}.`,
-        });
+    issues.push(
+      ...validateObjectArray(value, "bestPicksBySituation", [
+        "situation",
+        "toolSlug",
+        "toolName",
+        "why",
+      ]),
+    );
+    issues.push(
+      ...validateObjectArray(value, "recommendedTools", [
+        "toolSlug",
+        "toolName",
+        "summary",
+        "bestFor",
+        "avoidIf",
+        "toolPagePath",
+      ]),
+    );
+    issues.push(
+      ...validateObjectArray(value, "comparisonRows", [
+        "toolSlug",
+        "toolName",
+        "bestFor",
+        "easeOfUse",
+        "whyConsider",
+        "watchFor",
+      ]),
+    );
+    issues.push(
+      ...validateObjectArray(value, "decisionPath", [
+        "situation",
+        "recommendation",
+        "reason",
+      ]),
+    );
+    issues.push(
+      ...validateObjectArray(value, "faqs", ["question", "answer"]),
+    );
+
+    if (Array.isArray(value.bestPicksBySituation)) {
+      for (const pick of value.bestPicksBySituation) {
+        if (isRecord(pick) && hasString(pick, "toolSlug") && !toolsBySlug.has(pick.toolSlug as ToolSlug)) {
+          issues.push({
+            field: "bestPicksBySituation",
+            message: `Unknown best-pick tool slug: ${pick.toolSlug}.`,
+          });
+        }
+      }
+    }
+
+    if (Array.isArray(value.recommendedTools)) {
+      for (const tool of value.recommendedTools) {
+        if (isRecord(tool) && hasString(tool, "toolSlug") && !toolsBySlug.has(tool.toolSlug as ToolSlug)) {
+          issues.push({
+            field: "recommendedTools",
+            message: `Unknown recommended tool slug: ${tool.toolSlug}.`,
+          });
+        }
+
+        if (
+          isRecord(tool) &&
+          (!Array.isArray(tool.strengths) || tool.strengths.length === 0 ||
+            !Array.isArray(tool.tradeoffs) || tool.tradeoffs.length === 0)
+        ) {
+          issues.push({
+            field: "recommendedTools",
+            message: "Every recommended tool needs strengths and tradeoffs.",
+          });
+        }
+      }
+    }
+
+    if (Array.isArray(value.comparisonRows)) {
+      for (const row of value.comparisonRows) {
+        if (isRecord(row) && hasString(row, "toolSlug") && !toolsBySlug.has(row.toolSlug as ToolSlug)) {
+          issues.push({
+            field: "comparisonRows",
+            message: `Unknown comparison tool slug: ${row.toolSlug}.`,
+          });
+        }
+
+        if (isRecord(row) && typeof row.freePlan !== "boolean") {
+          issues.push({
+            field: "comparisonRows",
+            message: "Every comparison row must include a boolean freePlan value.",
+          });
+        }
       }
     }
   }
 
-  if (Array.isArray(value.recommendedTools)) {
-    for (const tool of value.recommendedTools) {
-      if (isRecord(tool) && hasString(tool, "toolSlug") && !toolsBySlug.has(tool.toolSlug as ToolSlug)) {
-        issues.push({
-          field: "recommendedTools",
-          message: `Unknown recommended tool slug: ${tool.toolSlug}.`,
-        });
-      }
+  if (normalizedGuideType === "how-to") {
+    if (!hasString(value, "quickAnswer") && !hasString(value, "quickVerdict")) {
+      issues.push({
+        field: "quickAnswer",
+        message: "How-to guides need a short answer.",
+      });
+    }
 
-      if (
-        isRecord(tool) &&
-        (!Array.isArray(tool.strengths) || tool.strengths.length === 0 ||
-          !Array.isArray(tool.tradeoffs) || tool.tradeoffs.length === 0)
-      ) {
-        issues.push({
-          field: "recommendedTools",
-          message: "Every recommended tool needs strengths and tradeoffs.",
-        });
+    if (!Array.isArray(value.steps) || value.steps.length < 3) {
+      issues.push({
+        field: "steps",
+        message: "How-to guides need at least three workflow steps.",
+      });
+    }
+
+    if (!Array.isArray(value.toolsYouCanUse) || value.toolsYouCanUse.length < 2) {
+      issues.push({
+        field: "toolsYouCanUse",
+        message: "How-to guides need at least two tools you can use.",
+      });
+    }
+
+    if (!hasString(value, "exampleWorkflow") && !hasString(value, "exampleResult")) {
+      issues.push({
+        field: "exampleWorkflow",
+        message: "How-to guides need an example workflow or result.",
+      });
+    }
+
+    if (!Array.isArray(value.commonMistakes) && !Array.isArray(value.mistakesToAvoid)) {
+      issues.push({
+        field: "commonMistakes",
+        message: "How-to guides need a mistakes section.",
+      });
+    }
+
+    if (Array.isArray(value.steps)) {
+      for (const step of value.steps) {
+        if (
+          !isRecord(step) ||
+          !hasString(step, "title") ||
+          !hasString(step, "detail")
+        ) {
+          issues.push({
+            field: "steps",
+            message: "Each workflow step needs a title and detail.",
+          });
+          break;
+        }
+      }
+    }
+
+    if (Array.isArray(value.toolsYouCanUse)) {
+      for (const tool of value.toolsYouCanUse) {
+        if (
+          !isRecord(tool) ||
+          !hasString(tool, "toolSlug") ||
+          !hasString(tool, "toolName") ||
+          !hasString(tool, "why")
+        ) {
+          issues.push({
+            field: "toolsYouCanUse",
+            message: "Each tool suggestion needs toolSlug, toolName, and why.",
+          });
+          break;
+        }
       }
     }
   }
 
-  if (Array.isArray(value.comparisonRows)) {
-    for (const row of value.comparisonRows) {
-      if (isRecord(row) && hasString(row, "toolSlug") && !toolsBySlug.has(row.toolSlug as ToolSlug)) {
-        issues.push({
-          field: "comparisonRows",
-          message: `Unknown comparison tool slug: ${row.toolSlug}.`,
-        });
-      }
-
-      if (isRecord(row) && typeof row.freePlan !== "boolean") {
-        issues.push({
-          field: "comparisonRows",
-          message: "Every comparison row must include a boolean freePlan value.",
-        });
-      }
+  if (normalizedGuideType === "income") {
+    if (!hasString(value, "realityCheck")) {
+      issues.push({
+        field: "realityCheck",
+        message: "Income guides need a reality check.",
+      });
     }
+
+    if (!hasString(value, "skillNeeded")) {
+      issues.push({
+        field: "skillNeeded",
+        message: "Income guides need a skill-needed summary.",
+      });
+    }
+
+    if (!hasString(value, "firstStep")) {
+      issues.push({
+        field: "firstStep",
+        message: "Income guides need a first step.",
+      });
+    }
+
+    if (!Array.isArray(value.mistakesToAvoid) || value.mistakesToAvoid.length === 0) {
+      issues.push({
+        field: "mistakesToAvoid",
+        message: "Income guides need mistakes to avoid.",
+      });
+    }
+  }
+
+  if (normalizedGuideType === "trend-led") {
+    if (!hasString(value, "quickDecision") && !hasString(value, "quickVerdict")) {
+      issues.push({
+        field: "quickDecision",
+        message: "Trend-led guides need a quick decision.",
+      });
+    }
+
+    if (!Array.isArray(value.comparisonRows) || value.comparisonRows.length < 3) {
+      issues.push({
+        field: "comparisonRows",
+        message: "Trend-led guides need a comparison section.",
+      });
+    }
+
+    if (!Array.isArray(value.whoShouldAvoidThis) || value.whoShouldAvoidThis.length === 0) {
+      issues.push({
+        field: "whoShouldAvoidThis",
+        message: "Trend-led guides need a section on what to avoid.",
+      });
+    }
+  }
+
+  const faqField = Array.isArray(value.faq) ? "faq" : "faqs";
+
+  if (normalizedGuideType !== "tool-decision") {
+    issues.push(...validateObjectArray(value, faqField, ["question", "answer"]));
   }
 
   if (!isRecord(value.visualSummary)) {

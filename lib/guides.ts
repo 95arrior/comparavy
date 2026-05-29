@@ -1,7 +1,8 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
-import type { GuideFreshness, GuideType } from "@/data/guideTopics";
+import type { GuideFreshness } from "@/data/guideTopics";
 import { assertGuideContentQuality } from "@/lib/contentQuality";
+import type { GuideDeviceIntent, GuideLayoutType } from "@/lib/guideTypes";
 
 export type GuideStatus = "draft" | "published";
 export type GuideSkillLevel = "beginner" | "intermediate" | "advanced";
@@ -22,14 +23,60 @@ export interface GuideDecisionStep {
   readonly reason: string;
 }
 
+export interface GuideWorkflowStep {
+  readonly title: string;
+  readonly detail: string;
+  readonly toolSlug?: string;
+  readonly toolName?: string;
+}
+
 export interface GuideFaq {
   readonly question: string;
   readonly answer: string;
 }
 
+export interface GuideToolUse {
+  readonly toolSlug: string;
+  readonly toolName: string;
+  readonly why: string;
+}
+
 export interface GuideVisualSummary {
   readonly headline: string;
   readonly points: readonly string[];
+}
+
+export interface GuideVisualHeroAsset {
+  readonly type: "hero";
+  readonly alt: string;
+  readonly promptOrDescription: string;
+  readonly fileNameHint: string;
+}
+
+export interface GuideVisualWorkflowAsset {
+  readonly type: "workflow-diagram";
+  readonly alt: string;
+  readonly steps: readonly string[];
+}
+
+export interface GuideVisualToolStackAsset {
+  readonly type: "tool-stack";
+  readonly alt: string;
+  readonly tools: readonly string[];
+}
+
+export interface GuideVisualBeforeAfterAsset {
+  readonly type: "before-after";
+  readonly alt: string;
+  readonly before: string;
+  readonly after: string;
+}
+
+export interface GuideVisualAssets {
+  readonly hero?: GuideVisualHeroAsset;
+  readonly workflow?: GuideVisualWorkflowAsset;
+  readonly toolStack?: GuideVisualToolStackAsset;
+  readonly beforeAfter?: GuideVisualBeforeAfterAsset;
 }
 
 export interface BestPickBySituation {
@@ -53,8 +100,8 @@ export interface RecommendedGuideTool {
 export interface Guide {
   readonly slug: string;
   readonly title: string;
-  readonly guideType: GuideType;
-  readonly type?: GuideType;
+  readonly guideType?: GuideLayoutType | "practical" | "evergreen";
+  readonly type?: string;
   readonly metaTitle: string;
   readonly metaDescription: string;
   readonly category: string;
@@ -69,10 +116,20 @@ export interface Guide {
   readonly searchIntent: string;
   readonly userPain: string;
   readonly decisionQuestion: string;
+  readonly deviceIntent?: GuideDeviceIntent;
+  readonly desktopUseCase?: string;
+  readonly mobileUseCase?: string;
+  readonly desktopSearchAngle?: string;
+  readonly mobileSearchAngle?: string;
+  readonly visualAssets?: GuideVisualAssets;
+  readonly quickAnswer?: string;
+  readonly quickDecision?: string;
   readonly contentGap: string;
   readonly uniqueAngle: string;
   readonly aiOverviewAnswer: string;
   readonly quickVerdict: string;
+  readonly steps?: readonly GuideWorkflowStep[];
+  readonly toolsYouCanUse?: readonly GuideToolUse[];
   readonly keyTakeaways: readonly string[];
   readonly bestPicksBySituation: readonly BestPickBySituation[];
   readonly recommendedToolSlugs: readonly string[];
@@ -84,6 +141,14 @@ export interface Guide {
   readonly moneySavingTips: readonly string[];
   readonly pricingNote: string;
   readonly pricingCaveat: string;
+  readonly realityCheck?: string;
+  readonly skillNeeded?: string;
+  readonly firstStep?: string;
+  readonly commonMistakes?: readonly string[];
+  readonly mistakesToAvoid?: readonly string[];
+  readonly exampleWorkflow?: string;
+  readonly exampleResult?: string;
+  readonly faq?: readonly GuideFaq[];
   readonly faqs: readonly GuideFaq[];
   readonly finalVerdict: string;
   readonly ctaToFinder: string;

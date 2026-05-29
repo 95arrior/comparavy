@@ -1,13 +1,17 @@
 import { access, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { guideTopics, type GuideTopic, type GuideType } from "@/data/guideTopics";
+import { guideTopics, type GuideTopic } from "@/data/guideTopics";
 import {
   PRICING_NOTICE,
   assertGuideContentQuality,
   checkGuideQuality,
   type GuideQualityResult,
 } from "@/lib/contentQuality";
+import {
+  inferGuideLayoutTypeFromTopic,
+  type GuideLayoutType,
+} from "@/lib/guideTypes";
 import { logGuideTopicToolSlugWarnings } from "@/lib/guideTopicValidation";
 import type { Guide, GuideStatus } from "@/lib/guides";
 import { scoreToolsForTopic } from "@/lib/topicScoring";
@@ -18,7 +22,7 @@ interface GeneratorOptions {
   readonly publish: boolean;
 }
 
-export type GuideGenerationType = GuideType | "mixed";
+export type GuideGenerationType = GuideLayoutType | "mixed";
 
 interface ResponsesResult {
   readonly output_text?: string;
@@ -45,8 +49,8 @@ const GUIDE_SCHEMA = {
   properties: {
     slug: { type: "string" },
     title: { type: "string" },
-    guideType: { type: "string", enum: ["practical", "income", "trend-led", "evergreen"] },
-    type: { type: "string", enum: ["practical", "income", "trend-led", "evergreen"] },
+    guideType: { type: "string", enum: ["tool-decision", "how-to", "income", "trend-led"] },
+    type: { type: "string", enum: ["tool-decision", "how-to", "income", "trend-led"] },
     metaTitle: { type: "string" },
     metaDescription: { type: "string" },
     category: { type: "string" },
@@ -61,10 +65,92 @@ const GUIDE_SCHEMA = {
     searchIntent: { type: "string" },
     userPain: { type: "string" },
     decisionQuestion: { type: "string" },
+    deviceIntent: { type: "string", enum: ["desktop", "mobile", "both"] },
+    desktopUseCase: { type: "string" },
+    mobileUseCase: { type: "string" },
+    desktopSearchAngle: { type: "string" },
+    mobileSearchAngle: { type: "string" },
+    visualAssets: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        hero: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            type: { type: "string", const: "hero" },
+            alt: { type: "string" },
+            promptOrDescription: { type: "string" },
+            fileNameHint: { type: "string" },
+          },
+          required: ["type", "alt", "promptOrDescription", "fileNameHint"],
+        },
+        workflow: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            type: { type: "string", const: "workflow-diagram" },
+            alt: { type: "string" },
+            steps: { type: "array", items: { type: "string" } },
+          },
+          required: ["type", "alt", "steps"],
+        },
+        toolStack: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            type: { type: "string", const: "tool-stack" },
+            alt: { type: "string" },
+            tools: { type: "array", items: { type: "string" } },
+          },
+          required: ["type", "alt", "tools"],
+        },
+        beforeAfter: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            type: { type: "string", const: "before-after" },
+            alt: { type: "string" },
+            before: { type: "string" },
+            after: { type: "string" },
+          },
+          required: ["type", "alt", "before", "after"],
+        },
+      },
+    },
+    quickAnswer: { type: "string" },
+    quickDecision: { type: "string" },
     contentGap: { type: "string" },
     uniqueAngle: { type: "string" },
     aiOverviewAnswer: { type: "string" },
     quickVerdict: { type: "string" },
+    steps: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          title: { type: "string" },
+          detail: { type: "string" },
+          toolSlug: { type: "string" },
+          toolName: { type: "string" },
+        },
+        required: ["title", "detail"],
+      },
+    },
+    toolsYouCanUse: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          toolSlug: { type: "string" },
+          toolName: { type: "string" },
+          why: { type: "string" },
+        },
+        required: ["toolSlug", "toolName", "why"],
+      },
+    },
     keyTakeaways: { type: "array", items: { type: "string" } },
     bestPicksBySituation: {
       type: "array",
@@ -151,7 +237,26 @@ const GUIDE_SCHEMA = {
     moneySavingTips: { type: "array", items: { type: "string" } },
     pricingNote: { type: "string" },
     pricingCaveat: { type: "string" },
+    realityCheck: { type: "string" },
+    skillNeeded: { type: "string" },
+    firstStep: { type: "string" },
+    commonMistakes: { type: "array", items: { type: "string" } },
+    mistakesToAvoid: { type: "array", items: { type: "string" } },
+    exampleWorkflow: { type: "string" },
+    exampleResult: { type: "string" },
     faqs: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          question: { type: "string" },
+          answer: { type: "string" },
+        },
+        required: ["question", "answer"],
+      },
+    },
+    faq: {
       type: "array",
       items: {
         type: "object",
@@ -236,22 +341,36 @@ function sortTopicsByPriority(left: GuideTopic, right: GuideTopic): number {
   return right.priority - left.priority || left.slug.localeCompare(right.slug);
 }
 
+function resolveTopicGuideType(topic: GuideTopic): GuideLayoutType {
+  return inferGuideLayoutTypeFromTopic({
+    slug: topic.slug,
+    title: topic.title,
+    type: topic.type,
+    searchIntent: topic.searchIntent,
+    decisionQuestion: topic.decisionQuestion,
+    uniqueAngle: topic.uniqueAngle,
+    notes: topic.notes,
+  });
+}
+
 function parseGuideType(value: string | undefined): GuideGenerationType {
   if (!value || value === "mixed") {
     return "mixed";
   }
 
   if (
-    value === "practical" ||
+    value === "tool-decision" ||
+    value === "how-to" ||
     value === "income" ||
     value === "trend-led" ||
+    value === "practical" ||
     value === "evergreen"
   ) {
-    return value;
+    return value === "practical" || value === "evergreen" ? "tool-decision" : value;
   }
 
   throw new Error(
-    `Invalid --type value: ${value}. Use practical, income, trend-led, evergreen, or mixed.`,
+    `Invalid --type value: ${value}. Use tool-decision, how-to, income, trend-led, mixed, practical, or evergreen.`,
   );
 }
 
@@ -311,84 +430,61 @@ export function selectGuideTopics({
   const available = guideTopics
     .filter((topic) => topic.status === "active" && !existingSlugs.has(topic.slug))
     .sort(sortTopicsByPriority);
+  const classified = available.map((topic) => ({
+    topic,
+    guideType: resolveTopicGuideType(topic),
+  }));
 
-  const practical = available.filter((topic) => topic.type === "practical");
-  const income = available.filter((topic) => topic.type === "income");
-  const trendLed = available.filter((topic) => topic.type === "trend-led");
-  const evergreen = available.filter((topic) => topic.type === "evergreen");
-  const practicalOrIncome = available.filter(
-    (topic) => topic.type === "practical" || topic.type === "income",
-  );
+  const byType = {
+    "how-to": classified.filter((entry) => entry.guideType === "how-to"),
+    "tool-decision": classified.filter((entry) => entry.guideType === "tool-decision"),
+    income: classified.filter((entry) => entry.guideType === "income"),
+    "trend-led": classified.filter((entry) => entry.guideType === "trend-led"),
+  } as const;
 
   if (type !== "mixed") {
-    return available.filter((topic) => topic.type === type).slice(0, count);
-  }
-
-  if (count === 1) {
-    return available.slice(0, 1);
+    return classified
+      .filter((entry) => entry.guideType === type)
+      .map((entry) => entry.topic)
+      .slice(0, count);
   }
 
   const selected: GuideTopic[] = [];
-  const practicalCursor = [...practical];
-  const incomeCursor = [...income];
-  const practicalOrIncomeCursor = [...practicalOrIncome];
-  const trendLedCursor = [...trendLed];
-  const evergreenCursor = [...evergreen];
+  const seenSlugs = new Set<string>();
+  const preferredOrder: GuideLayoutType[] = ["how-to", "tool-decision", "income", "trend-led"];
 
-  if (count === 2) {
-    if (practicalCursor[0] && (!incomeCursor[0] || practicalCursor[0].priority >= incomeCursor[0].priority)) {
-      selected.push(practicalCursor.shift() as GuideTopic);
-    } else if (incomeCursor[0]) {
-      selected.push(incomeCursor.shift() as GuideTopic);
-    } else if (practicalOrIncomeCursor[0]) {
-      selected.push(practicalOrIncomeCursor.shift() as GuideTopic);
-    } else if (evergreenCursor[0]) {
-      selected.push(evergreenCursor.shift() as GuideTopic);
+  function takeNext(entries: readonly { readonly topic: GuideTopic }[]): GuideTopic | undefined {
+    for (const entry of entries) {
+      if (!seenSlugs.has(entry.topic.slug)) {
+        seenSlugs.add(entry.topic.slug);
+        return entry.topic;
+      }
     }
 
-    if (trendLedCursor[0]) {
-      selected.push(trendLedCursor.shift() as GuideTopic);
+    return undefined;
+  }
+
+  for (const guideType of preferredOrder) {
+    if (selected.length >= count) {
+      break;
+    }
+
+    const next = takeNext(byType[guideType]);
+
+    if (next) {
+      selected.push(next);
     }
   }
 
-  while (
-    selected.length < count &&
-    (practicalCursor.length > 0 ||
-      incomeCursor.length > 0 ||
-      trendLedCursor.length > 0 ||
-      evergreenCursor.length > 0)
-  ) {
-    const nextPractical = practicalCursor[0];
-    const nextIncome = incomeCursor[0];
-    const nextTrend = trendLedCursor[0];
-    const nextEvergreen = evergreenCursor[0];
-    const candidates = [nextPractical, nextIncome, nextTrend, nextEvergreen].filter(
-      (topic): topic is GuideTopic => Boolean(topic),
-    );
-    const next = candidates.sort(sortTopicsByPriority)[0];
+  while (selected.length < count) {
+    const next = available.find((topic) => !seenSlugs.has(topic.slug));
 
     if (!next) {
       break;
     }
 
+    seenSlugs.add(next.slug);
     selected.push(next);
-
-    if (next.type === "practical") {
-      practicalCursor.shift();
-      continue;
-    }
-
-    if (next.type === "income") {
-      incomeCursor.shift();
-      continue;
-    }
-
-    if (next.type === "trend-led") {
-      trendLedCursor.shift();
-      continue;
-    }
-
-    evergreenCursor.shift();
   }
 
   return selected.slice(0, count);
@@ -417,17 +513,136 @@ export function createTemplateGuide(
 
   const recommendedToolSlugs = recommendations.map(({ tool }) => tool.slug);
   const qualityScore = 92;
+  const guideType = resolveTopicGuideType(topic);
+  const quickAnswer =
+    guideType === "how-to"
+      ? `Start by defining the exact output you need for ${topic.searchIntent}, then use ${first.tool.name} for the first pass, ${second.tool.name} to refine the result, and ${third.tool.name} for a final review when you want a different workflow.`
+      : `${first.tool.name} is the best starting point for ${topic.searchIntent} because it matches the core workflow most closely. Use ${second.tool.name} if its setup or output style fits your situation better, and compare ${third.tool.name} when you need a different balance of speed, control, and review effort.`;
+  const quickDecision =
+    guideType === "trend-led"
+      ? `Choose ${first.tool.name} when you want the most practical fit for ${topic.searchIntent}; compare ${second.tool.name} if you want a different workflow, and keep ${third.tool.name} in view if you need another option to test.`
+      : quickAnswer;
+  const steps = [
+    {
+      title: "Define the outcome",
+      detail: `Write down the exact output you want for ${topic.useCase} so the AI pass has a clear target.`,
+      toolSlug: first.tool.slug,
+      toolName: first.tool.name,
+    },
+    {
+      title: "Run the first draft",
+      detail: `Use ${first.tool.name} to handle the initial pass, then check whether the output matches your source material and audience.`,
+      toolSlug: first.tool.slug,
+      toolName: first.tool.name,
+    },
+    {
+      title: "Refine the result",
+      detail: `Switch to ${second.tool.name} when you need a cleaner rewrite, stronger reasoning, or a different output style.`,
+      toolSlug: second.tool.slug,
+      toolName: second.tool.name,
+    },
+    {
+      title: "Review before sharing",
+      detail: `Use ${third.tool.name} or a manual review to catch missing context, awkward phrasing, and factual slips before you publish or send anything.`,
+      toolSlug: third.tool.slug,
+      toolName: third.tool.name,
+    },
+  ];
+  const toolsYouCanUse = recommendations.slice(0, 3).map(({ tool, reasons }) => ({
+    toolSlug: tool.slug,
+    toolName: tool.name,
+    why: reasons[0] ?? `${tool.name} is relevant for ${topic.searchIntent}.`,
+  }));
+  const commonMistakes = [
+    `Skipping the source review before you rely on AI output for ${topic.searchIntent}.`,
+    `Using only one tool and missing a better fit for a later step.`,
+    "Publishing or sending the output before checking it against the original inputs.",
+  ];
+  const mistakesToAvoid = [
+    `Do not treat ${first.tool.name} as a final answer without checking the result.`,
+    `Do not use ${second.tool.name} or ${third.tool.name} without confirming the workflow still matches your source material.`,
+    "Do not skip review if the output will reach clients, customers, or classmates.",
+  ];
+  const realityCheck =
+    guideType === "income"
+      ? "AI can help you package and deliver work faster, but it does not guarantee clients, revenue, or repeat demand."
+      : "AI can speed up the work, but the user still has to review facts, shape the final result, and decide whether the workflow fits the job.";
+  const skillNeeded =
+    guideType === "income"
+      ? `You need basic prompt writing, simple editing, and a clear understanding of the service you want to sell.`
+      : `You need enough familiarity with ${topic.searchIntent} to judge whether the output is accurate and useful.`;
+  const firstStep = `Start with one real example of ${topic.useCase} and compare the output against your own standard before you scale the workflow.`;
+  const exampleWorkflow = `A simple workflow is: collect the source material, ask ${first.tool.name} for the first draft, then use ${second.tool.name} or ${third.tool.name} to tighten the language and check the final result.`;
+  const exampleResult = `The final result should be a clearer, shorter, and more usable version of the original material, with the main ideas preserved and the obvious errors removed.`;
+  const deviceIntent: Guide["deviceIntent"] = "both";
+  const desktopUseCase = `Best on desktop when you want to compare tools, keep source material open, and edit the output in a wider workspace.`;
+  const mobileUseCase = `Best on mobile when you need a fast first pass, a quick summary, or a lightweight edit while away from your desk.`;
+  const desktopSearchAngle = `Desktop readers usually want a deeper comparison, file handling, and a more deliberate review workflow.`;
+  const mobileSearchAngle = `Mobile readers usually want a short answer first, then a quick next step they can finish in a few taps.`;
+  const visualAssets = {
+    hero: {
+      type: "hero" as const,
+      alt: `${topic.title} guide visual`,
+      promptOrDescription: `Editorial guide artwork for ${topic.searchIntent} with a clean, problem-solving feel.`,
+      fileNameHint: topic.slug,
+    },
+    workflow: {
+      type: "workflow-diagram" as const,
+      alt: `${topic.title} workflow diagram`,
+      steps: [
+        "Problem or source material",
+        "AI draft or comparison pass",
+        "Human review and final result",
+      ],
+    },
+    toolStack: {
+      type: "tool-stack" as const,
+      alt: `${topic.title} recommended tool stack`,
+      tools: recommendations.slice(0, 3).map(({ tool }) => tool.name),
+    },
+    beforeAfter: {
+      type: "before-after" as const,
+      alt: `${topic.title} before and after comparison`,
+      before: `Before: manual work and scattered notes for ${topic.searchIntent}.`,
+      after: `After: a faster workflow that leaves you with a clear, checked result.`,
+    },
+  };
+  const faqs = [
+    {
+      question: `Which tool should ${topic.audience} try first?`,
+      answer: `${first.tool.name} is the first tool to evaluate for this use case based on the current Comparavy catalog match. Test it on a real project and compare the result with your requirements.`,
+    },
+    {
+      question: "Should I choose a free plan before subscribing?",
+      answer:
+        "A free-plan workflow is useful when it lets you test output quality and setup effort. Confirm current limits and plan details on the official site.",
+    },
+    {
+      question: "Can AI output be published without review?",
+      answer:
+        "No. Review accuracy, brand fit, permissions, and final presentation before publishing or sharing client-facing work.",
+    },
+    {
+      question: `When should I compare ${second.tool.name} with ${first.tool.name}?`,
+      answer: `Compare ${second.tool.name} when its fit for ${second.tool.bestFor[0]?.toLowerCase() ?? "your alternate workflow"} matters more than the first-choice workflow. Use the same realistic project so the decision is based on output and effort.`,
+    },
+  ] as const;
+  const metaDescription =
+    guideType === "how-to"
+      ? `Learn how to ${topic.searchIntent}. See the workflow, tools you can use, and the safest first step.`
+      : guideType === "income"
+        ? `Use AI to support this workflow without hype. See the realistic steps, skill needed, and tools that help you deliver faster.`
+        : guideType === "trend-led"
+          ? `Compare current AI tool options for ${topic.audience}. See practical fit, tradeoffs, and a clear decision path.`
+          : `Compare AI tools for ${topic.audience} focused on ${topic.searchIntent}. See practical fit, tradeoffs, and a free-first decision path.`;
 
   return {
     slug: topic.slug,
     title: topic.title,
-    guideType: topic.type,
-    type: topic.type,
+    guideType,
+    type: guideType,
     metaTitle: `${topic.title} | Comparavy`,
-    metaDescription:
-      topic.type === "trend-led"
-        ? `Compare current AI tool options for ${topic.audience}. See practical fit, tradeoffs, and a clear decision path.`
-        : `Compare AI tools for ${topic.audience} focused on ${topic.searchIntent}. See practical fit, tradeoffs, and a free-first decision path.`,
+    metaDescription,
     category: topic.category,
     persona: topic.persona,
     useCase: topic.useCase,
@@ -440,10 +655,20 @@ export function createTemplateGuide(
     searchIntent: topic.searchIntent,
     userPain: topic.userPain,
     decisionQuestion: topic.decisionQuestion,
+    deviceIntent,
+    desktopUseCase,
+    mobileUseCase,
+    desktopSearchAngle,
+    mobileSearchAngle,
+    visualAssets,
+    quickAnswer,
+    quickDecision,
     contentGap: topic.contentGap,
     uniqueAngle: topic.uniqueAngle,
     aiOverviewAnswer: topic.aiOverviewAnswer,
-    quickVerdict: `${first.tool.name} is the best starting point for ${topic.searchIntent} because it matches the core workflow most closely. Use ${second.tool.name} if its setup or output style fits your situation better, and compare ${third.tool.name} when you need a different balance of speed, control, and review effort.`,
+    quickVerdict: quickAnswer,
+    steps,
+    toolsYouCanUse,
     keyTakeaways: [
       `${first.tool.name} leads this shortlist because it is closely aligned with ${topic.searchIntent} for ${topic.audience}.`,
       `${second.tool.name} and ${third.tool.name} are useful alternatives when your preferred editing, research, or setup workflow changes.`,
@@ -505,26 +730,8 @@ export function createTemplateGuide(
     ],
     pricingNote: PRICING_NOTICE,
     pricingCaveat: PRICING_NOTICE,
-    faqs: [
-      {
-        question: `Which tool should ${topic.audience} try first?`,
-        answer: `${first.tool.name} is the first tool to evaluate for this use case based on the current Comparavy catalog match. Test it on a real project and compare the result with your requirements.`,
-      },
-      {
-        question: "Should I choose a free plan before subscribing?",
-        answer:
-          "A free-plan workflow is useful when it lets you test output quality and setup effort. Confirm current limits and plan details on the official site.",
-      },
-      {
-        question: "Can AI output be published without review?",
-        answer:
-          "No. Review accuracy, brand fit, permissions, and final presentation before publishing or sharing client-facing work.",
-      },
-      {
-        question: `When should I compare ${second.tool.name} with ${first.tool.name}?`,
-        answer: `Compare ${second.tool.name} when its fit for ${second.tool.bestFor[0]?.toLowerCase() ?? "your alternate workflow"} matters more than the first-choice workflow. Use the same realistic project so the decision is based on output and effort.`,
-      },
-    ],
+    faqs,
+    faq: faqs,
     whoShouldUseThis: [
       `${topic.audience} who need ${topic.searchIntent}.`,
       `Readers asking: ${topic.decisionQuestion}`,
@@ -535,6 +742,13 @@ export function createTemplateGuide(
       "Users who want guaranteed outcomes instead of a workflow shortlist to evaluate.",
     ],
     finalVerdict: `For ${topic.persona}, start by testing ${first.tool.name} on one realistic assignment: ${topic.useCase}. Compare it with ${second.tool.name} if you need a different workflow, respect the stated budget approach, and choose only after reviewing actual output, setup effort, and current official plan details.`,
+    realityCheck,
+    skillNeeded,
+    firstStep,
+    commonMistakes,
+    mistakesToAvoid,
+    exampleWorkflow,
+    exampleResult,
     ctaToFinder: finderCTA,
     finderCTA,
     visualSummary: {
@@ -601,7 +815,7 @@ async function refineWithOpenAI(template: Guide): Promise<Guide> {
       body: JSON.stringify({
       model: process.env.OPENAI_GUIDE_MODEL ?? process.env.OPENAI_MODEL ?? "gpt-5.4-mini",
       instructions:
-        'Improve the supplied Comparavy guide draft for clarity and decision usefulness. Preserve every factual catalog statement, selected tool slug, guideType, type, primaryKeyword, keyword arrays, audience, searchIntent, userPain, decisionQuestion, contentGap, uniqueAngle, aiOverviewAnswer, affiliate disclosures, pricing caveats, status, freshness, qualityScore, and dates. Keep at least five key takeaways, three decision-path options phrased as clear "If you need X, choose Y" decisions, and four FAQs. Explicitly address the audience, use case, budget approach, and skill level. Do not invent tool testing, performance claims, exact current prices, guaranteed income claims, or breaking-news style claims. pricingNote and pricingCaveat must remain exactly: Pricing can change. Check the official site before subscribing.',
+        'Improve the supplied Comparavy guide draft for clarity and decision usefulness. Preserve every factual catalog statement, selected tool slug, guideType, type, primaryKeyword, keyword arrays, audience, searchIntent, userPain, decisionQuestion, contentGap, uniqueAngle, aiOverviewAnswer, quickAnswer, quickDecision, steps, toolsYouCanUse, deviceIntent, desktopUseCase, mobileUseCase, desktopSearchAngle, mobileSearchAngle, visualAssets, realityCheck, skillNeeded, firstStep, commonMistakes, mistakesToAvoid, exampleWorkflow, exampleResult, affiliate disclosures, pricing caveats, status, freshness, qualityScore, and dates. Keep at least five key takeaways, three decision-path options phrased as clear "If you need X, choose Y" decisions, and four FAQs. Explicitly address the audience, use case, budget approach, and skill level. Do not invent tool testing, performance claims, exact current prices, guaranteed income claims, or breaking-news style claims. pricingNote and pricingCaveat must remain exactly: Pricing can change. Check the official site before subscribing.',
       input: JSON.stringify(template),
       text: {
         format: {

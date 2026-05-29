@@ -5,6 +5,7 @@ import BadgeRow from "@/components/BadgeRow";
 import Logo from "@/components/Logo";
 import ToolIcon from "@/components/ToolIcon";
 import { toolsBySlug, type ToolSlug } from "@/data/tools";
+import { formatGuideLayoutLabel, resolveGuideLayoutType } from "@/lib/guideTypes";
 import { getPublishedGuides } from "@/lib/guides";
 
 export const metadata: Metadata = {
@@ -111,6 +112,7 @@ export default function GuidesPage() {
                 >
                   <BadgeRow
                     badges={[
+                      { label: formatGuideLayoutLabel(resolveGuideLayoutType(guide.guideType)), tone: "slate" },
                       { label: guide.category, tone: "teal" },
                       { label: guide.skillLevel },
                     ]}
@@ -124,7 +126,7 @@ export default function GuidesPage() {
                     </Link>
                   </h3>
                   <p className="mt-3 text-sm leading-7 text-slate-600">
-                    {guide.quickVerdict}
+                    {guide.quickAnswer ?? guide.quickVerdict}
                   </p>
                   <dl className="mt-5 grid gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm">
                     <div>

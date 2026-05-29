@@ -7,6 +7,7 @@ import {
 } from "@/lib/contentQuality";
 import { reviewGuideWithAI, type AiGuideReview } from "@/lib/aiGuideReviewer";
 import { logGuideTopicToolSlugWarnings } from "@/lib/guideTopicValidation";
+import { resolveGuideLayoutType, type GuideLayoutType } from "@/lib/guideTypes";
 import type { Guide } from "@/lib/guides";
 import {
   GUIDES_DIRECTORY,
@@ -17,7 +18,7 @@ import {
 
 interface AutoPublishOptions {
   readonly count: number;
-  readonly type: "practical" | "income" | "trend-led" | "evergreen" | "mixed";
+  readonly type: GuideLayoutType | "mixed";
   readonly minQuality: number;
   readonly dryRun: boolean;
   readonly publish: boolean;
@@ -84,16 +85,21 @@ function parseOptions(args: readonly string[]): AutoPublishOptions {
       const rawType = args[index + 1];
 
       if (
-        rawType !== "practical" &&
+        rawType !== "tool-decision" &&
+        rawType !== "how-to" &&
         rawType !== "income" &&
         rawType !== "trend-led" &&
+        rawType !== "practical" &&
         rawType !== "evergreen" &&
         rawType !== "mixed"
       ) {
-        throw new Error("--type must be practical, income, trend-led, evergreen, or mixed.");
+        throw new Error("--type must be tool-decision, how-to, income, trend-led, mixed, practical, or evergreen.");
       }
 
-      type = rawType;
+      type =
+        rawType === "practical" || rawType === "evergreen"
+          ? "tool-decision"
+          : (rawType as AutoPublishOptions["type"]);
       index += 1;
       continue;
     }
@@ -180,10 +186,6 @@ function requiredPublishingReasons(
     reasons.push("A pricing note is required.");
   }
 
-  if (!guide.guideType) {
-    reasons.push("Guide type is required for the publishing system.");
-  }
-
   if (!guide.affiliateDisclosureNote?.trim()) {
     reasons.push("An affiliate disclosure note is required.");
   }
@@ -230,7 +232,18 @@ function logCandidate(candidate: Candidate, finalStatus: string): void {
 
   console.log(`[${candidate.guide.slug}] Candidate report`);
   console.log(`  Title: ${candidate.guide.title}`);
-  console.log(`  Guide type: ${candidate.guide.guideType}`);
+  console.log(
+    `  Guide type: ${resolveGuideLayoutType({
+      slug: candidate.guide.slug,
+      title: candidate.guide.title,
+      type: candidate.guide.type,
+      guideType: candidate.guide.guideType,
+      searchIntent: candidate.guide.searchIntent,
+      decisionQuestion: candidate.guide.decisionQuestion,
+      uniqueAngle: candidate.guide.uniqueAngle,
+      notes: candidate.guide.contentGap,
+    })}`,
+  );
   console.log(`  Primary keyword: ${candidate.guide.primaryKeyword}`);
   console.log(`  Selected tools: ${candidate.guide.recommendedToolSlugs.join(", ")}`);
   console.log(`  Quality score: ${candidate.guide.qualityScore}/100`);
