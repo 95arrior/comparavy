@@ -26,6 +26,8 @@ export interface GuideDecisionStep {
 export interface GuideWorkflowStep {
   readonly title: string;
   readonly detail: string;
+  readonly why?: string;
+  readonly output?: string;
   readonly toolSlug?: string;
   readonly toolName?: string;
 }
@@ -39,6 +41,8 @@ export interface GuideToolUse {
   readonly toolSlug: string;
   readonly toolName: string;
   readonly why: string;
+  readonly role?: string;
+  readonly bestUseCase?: string;
 }
 
 export interface GuideVisualSummary {
@@ -124,6 +128,9 @@ export interface Guide {
   readonly visualAssets?: GuideVisualAssets;
   readonly quickAnswer?: string;
   readonly quickDecision?: string;
+  readonly realWorldScenario?: string;
+  readonly whatYouNeed?: readonly string[] | string;
+  readonly timeEstimate?: string;
   readonly contentGap: string;
   readonly uniqueAngle: string;
   readonly aiOverviewAnswer: string;
@@ -136,6 +143,7 @@ export interface Guide {
   readonly recommendedTools: readonly RecommendedGuideTool[];
   readonly comparisonRows: readonly GuideComparisonRow[];
   readonly decisionPath: readonly GuideDecisionStep[];
+  readonly decisionTree?: readonly GuideDecisionStep[];
   readonly whoShouldUseThis: readonly string[];
   readonly whoShouldAvoidThis: readonly string[];
   readonly moneySavingTips: readonly string[];
@@ -146,6 +154,8 @@ export interface Guide {
   readonly firstStep?: string;
   readonly commonMistakes?: readonly string[];
   readonly mistakesToAvoid?: readonly string[];
+  readonly whatToAvoid?: readonly string[];
+  readonly whatChanged?: string;
   readonly exampleWorkflow?: string;
   readonly exampleResult?: string;
   readonly faq?: readonly GuideFaq[];

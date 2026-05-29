@@ -1,4 +1,3 @@
-import GuideVisualBlock from "@/components/guides/GuideVisualBlock";
 import HowToGuideLayout from "@/components/guides/HowToGuideLayout";
 import IncomeGuideLayout from "@/components/guides/IncomeGuideLayout";
 import ToolDecisionGuideLayout from "@/components/guides/ToolDecisionGuideLayout";
@@ -24,7 +23,6 @@ export default function GuideDetailRenderer({ guide }: GuideDetailRendererProps)
 
   return (
     <div className="mt-6 space-y-6">
-      <GuideVisualBlock guide={guide} />
       {guideType === "how-to" ? (
         <HowToGuideLayout guide={guide} />
       ) : guideType === "income" ? (

@@ -11,6 +11,10 @@ export default function WorkflowSteps({
   title = "Workflow",
   description,
 }: WorkflowStepsProps) {
+  if (steps.length === 0) {
+    return null;
+  }
+
   return (
     <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
       <div>
@@ -27,7 +31,7 @@ export default function WorkflowSteps({
         )}
       </div>
 
-      <ol className="mt-5 grid gap-3">
+      <ol className="mt-5 grid gap-3 lg:grid-cols-2">
         {steps.map((step, index) => (
           <li
             key={`${step.title}-${index}`}
@@ -39,7 +43,26 @@ export default function WorkflowSteps({
               </span>
               <div className="min-w-0">
                 <p className="font-semibold text-slate-900">{step.title}</p>
-                <p className="mt-1 text-sm leading-7 text-slate-600">{step.detail}</p>
+                <p className="mt-2 text-sm leading-7 text-slate-600">
+                  <span className="font-semibold text-slate-900">What to do: </span>
+                  {step.detail}
+                </p>
+                {(step.why || step.output) && (
+                  <div className="mt-3 grid gap-2 text-sm leading-6 text-slate-600">
+                    {step.why && (
+                      <p>
+                        <span className="font-semibold text-slate-900">Why it matters: </span>
+                        {step.why}
+                      </p>
+                    )}
+                    {step.output && (
+                      <p>
+                        <span className="font-semibold text-slate-900">Expected output: </span>
+                        {step.output}
+                      </p>
+                    )}
+                  </div>
+                )}
                 {(step.toolName || step.toolSlug) && (
                   <p className="mt-2 text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
                     {step.toolName ?? step.toolSlug}

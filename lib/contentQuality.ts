@@ -196,6 +196,9 @@ function readerFacingText(guide: Guide): string {
     guide.decisionQuestion,
     guide.quickAnswer ?? "",
     guide.quickDecision ?? "",
+    guide.realWorldScenario ?? "",
+    ...(Array.isArray(guide.whatYouNeed) ? guide.whatYouNeed : [guide.whatYouNeed ?? ""]),
+    guide.timeEstimate ?? "",
     guide.contentGap,
     guide.uniqueAngle,
     guide.aiOverviewAnswer,
@@ -232,11 +235,18 @@ function readerFacingText(guide: Guide): string {
       step.recommendation,
       step.reason,
     ]),
+    ...(guide.decisionTree ?? []).flatMap((step) => [
+      step.situation,
+      step.recommendation,
+      step.reason,
+    ]),
     ...guide.whoShouldUseThis,
     ...guide.whoShouldAvoidThis,
     ...guide.moneySavingTips,
     ...(guide.commonMistakes ?? []),
     ...(guide.mistakesToAvoid ?? []),
+    ...(guide.whatToAvoid ?? []),
+    guide.whatChanged ?? "",
     ...guideFaqs(guide).flatMap((faq) => [faq.question, faq.answer]),
     guide.pricingCaveat,
     guide.finalVerdict,
@@ -592,6 +602,15 @@ export function validateGuideContent(value: unknown): ContentQualityIssue[] {
         "reason",
       ]),
     );
+    if (Array.isArray(value.decisionTree)) {
+      issues.push(
+        ...validateObjectArray(value, "decisionTree", [
+          "situation",
+          "recommendation",
+          "reason",
+        ]),
+      );
+    }
     issues.push(
       ...validateObjectArray(value, "faqs", ["question", "answer"]),
     );

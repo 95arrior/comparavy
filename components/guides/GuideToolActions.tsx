@@ -24,7 +24,7 @@ export default function GuideToolActions({
   showViewToolPage = true,
   className,
 }: GuideToolActionsProps) {
-  const visitUrl = affiliateUrl ?? officialUrl;
+  const visitUrl = officialUrl ? affiliateUrl ?? officialUrl : undefined;
 
   return (
     <div className={`flex flex-wrap gap-2.5 ${className ?? ""}`}>

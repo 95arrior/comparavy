@@ -152,6 +152,9 @@ export const GUIDE_SCHEMA = {
     },
     quickAnswer: { type: "string" },
     quickDecision: { type: "string" },
+    realWorldScenario: { type: "string" },
+    whatYouNeed: { type: "array", items: { type: "string" } },
+    timeEstimate: { type: "string" },
     contentGap: { type: "string" },
     uniqueAngle: { type: "string" },
     aiOverviewAnswer: { type: "string" },
@@ -164,6 +167,8 @@ export const GUIDE_SCHEMA = {
         properties: {
           title: { type: "string" },
           detail: { type: "string" },
+          why: { type: "string" },
+          output: { type: "string" },
           toolSlug: { type: "string" },
           toolName: { type: "string" },
         },
@@ -179,6 +184,8 @@ export const GUIDE_SCHEMA = {
           toolSlug: { type: "string" },
           toolName: { type: "string" },
           why: { type: "string" },
+          role: { type: "string" },
+          bestUseCase: { type: "string" },
         },
         required: ["toolSlug", "toolName", "why"],
       },
@@ -264,6 +271,19 @@ export const GUIDE_SCHEMA = {
         required: ["situation", "recommendation", "reason"],
       },
     },
+    decisionTree: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          situation: { type: "string" },
+          recommendation: { type: "string" },
+          reason: { type: "string" },
+        },
+        required: ["situation", "recommendation", "reason"],
+      },
+    },
     whoShouldUseThis: { type: "array", items: { type: "string" } },
     whoShouldAvoidThis: { type: "array", items: { type: "string" } },
     moneySavingTips: { type: "array", items: { type: "string" } },
@@ -274,6 +294,8 @@ export const GUIDE_SCHEMA = {
     firstStep: { type: "string" },
     commonMistakes: { type: "array", items: { type: "string" } },
     mistakesToAvoid: { type: "array", items: { type: "string" } },
+    whatToAvoid: { type: "array", items: { type: "string" } },
+    whatChanged: { type: "string" },
     exampleWorkflow: { type: "string" },
     exampleResult: { type: "string" },
     faqs: {
@@ -622,9 +644,8 @@ function quickAnswerForGuide(
   guideType: GuideLayoutType,
 ): string {
   if (guideType === "how-to") {
-    const outcome = workflowVerbPhrase(topic);
     return ensurePeriod(
-      `To ${outcome} with AI, start with the real source material, ask for one specific output, and check the draft before you share or publish it. ${firstTool.name} is the best first pass for this workflow, ${secondTool.name} helps when the format or source handling needs a second pass, and ${thirdTool.name} is better saved for cleanup after the facts are right.`,
+      `For ${topic.searchIntent}, start with the real source material, ask for one specific output, and check the draft before you share or publish it. ${firstTool.name} is the best first pass for this workflow, ${secondTool.name} helps when the format or source handling needs a second pass, and ${thirdTool.name} is better saved for cleanup after the facts are right.`,
     );
   }
 
@@ -816,30 +837,56 @@ export function createEditorialBrief(
 }
 
 export function createArticleOutline(brief: EditorialBrief, title: string): ArticleOutline {
-  const sections = brief.guideType === "how-to"
-    ? [
-        "Quick Answer",
-        "What you need",
-        "Step-by-step workflow",
-        "Best if you are on a computer",
-        "Best if you are on your phone",
-        "Tools you can use",
-        "Example result",
-        "Common mistakes",
-        "FAQ",
-        "Next step",
-      ]
-    : [
-        "Quick Verdict",
-        "Best Picks by Situation",
-        "Comparison Table",
-        "Which one should you choose?",
-        "Tool Cards",
-        "Who should use this",
-        "Who should avoid this",
-        "Final Verdict",
-        "Finder CTA",
-      ];
+  const sections =
+    brief.guideType === "how-to"
+      ? [
+          "Quick Answer",
+          "Real-World Scenario",
+          "What You Need",
+          "Step-by-Step Workflow",
+          "Best If You Are on a Computer",
+          "Best If You Are on Your Phone",
+          "Tools You Can Use",
+          "Example Result",
+          "Common Mistakes",
+          "FAQ",
+          "Next Step",
+        ]
+      : brief.guideType === "income"
+        ? [
+            "Reality Check",
+            "What You Can Offer",
+            "Skill Needed",
+            "Step-by-Step Workflow",
+            "Tools That Help",
+            "First Realistic Step",
+            "Time / Cost / Difficulty",
+            "Mistakes to Avoid",
+            "FAQ",
+            "Final Recommendation",
+          ]
+        : brief.guideType === "trend-led"
+          ? [
+              "Why People Are Comparing This",
+              "Quick Decision",
+              "Best for Each Situation",
+              "What Changed or Why It Matters",
+              "Comparison",
+              "What to Avoid",
+              "Recommended Workflow",
+              "Final Recommendation",
+            ]
+          : [
+              "Quick Verdict",
+              "Which One Should You Choose?",
+              "Best Picks by Situation",
+              "Comparison Table",
+              "Tool Cards",
+              "Who Should Use This",
+              "Who Should Avoid This",
+              "Final Verdict",
+              "Finder CTA",
+            ];
 
   return {
     guideType: brief.guideType,
@@ -949,7 +996,7 @@ function buildHowToSteps(
   firstTool: { readonly slug: string; readonly name: string; readonly bestFor: readonly string[]; readonly avoidIf: readonly string[]; readonly notFor: readonly string[] },
   secondTool: { readonly slug: string; readonly name: string; readonly bestFor: readonly string[]; readonly avoidIf: readonly string[]; readonly notFor: readonly string[] },
   thirdTool: { readonly slug: string; readonly name: string; readonly bestFor: readonly string[]; readonly avoidIf: readonly string[]; readonly notFor: readonly string[] },
-): { title: string; detail: string; toolSlug?: string; toolName?: string }[] {
+): { title: string; detail: string; why?: string; output?: string; toolSlug?: string; toolName?: string }[] {
   const outcome = workflowVerbPhrase(topic);
   const source = topicInputFocus(topic);
 
@@ -957,26 +1004,36 @@ function buildHowToSteps(
     {
       title: "Collect the source material",
       detail: `Put the real input in one place before opening a tool: ${source}, any required facts, the audience, and the format you need at the end. Remove private details you are not allowed to share.`,
+      why: "AI output is only as useful as the material and constraints you give it.",
+      output: "A clean input bundle and one clear target format.",
     },
     {
       title: "Ask for the first usable version",
       detail: `Use ${firstTool.name} for a first pass that tries to ${outcome}. Ask it to preserve source facts, flag uncertainty, and organize the result into sections you can review.`,
+      why: "The first pass should create structure, not a finished answer you trust blindly.",
+      output: "A structured draft with visible gaps or uncertain points.",
       toolSlug: firstTool.slug,
       toolName: firstTool.name,
     },
     {
       title: "Check the answer before polishing",
       detail: `Compare the draft with the original material. Fix names, dates, numbers, unsupported claims, missing context, and tone before you ask for nicer wording.`,
+      why: "Polished wrong information is harder to catch than rough information.",
+      output: "A corrected draft that is ready for formatting or wording cleanup.",
     },
     {
       title: "Change the format only after the facts are right",
       detail: `Use ${secondTool.name} when the verified draft needs a different format, structure, or source-aware second pass. Keep the same facts so the rewrite does not drift from the original.`,
+      why: "Format changes are safer after the substance is already checked.",
+      output: "A version that fits the channel, document, post, or recipient.",
       toolSlug: secondTool.slug,
       toolName: secondTool.name,
     },
     {
       title: "Finish with a human review",
       detail: `Use ${thirdTool.name} for cleanup only after the main work is checked. Read the final result as the recipient would: on the device, in the app, or in the document where it will actually be used.`,
+      why: "The final review catches tone, missing context, and practical usability issues.",
+      output: "A final result you can send, post, study from, or save with confidence.",
       toolSlug: thirdTool.slug,
       toolName: thirdTool.name,
     },
@@ -1360,24 +1417,32 @@ export function createTemplateGuide(
     {
       title: "Define the input type",
       detail: `Decide whether you already have ${topicInputFocus(topic)} or still need to gather it before you touch the tools.`,
+      why: "The best tool changes when the work starts from documents, web research, notes, media, or a blank draft.",
+      output: "A clear starting condition for the comparison.",
       toolSlug: first.tool.slug,
       toolName: first.tool.name,
     },
     {
       title: "Run the strongest first pass",
       detail: `Use ${first.tool.name} on one real example so you can see how it handles ${toolInputPhrase(first.tool, topic)}.`,
+      why: "A real input exposes weaknesses faster than reading feature lists.",
+      output: "One result you can judge against the source and desired format.",
       toolSlug: first.tool.slug,
       toolName: first.tool.name,
     },
     {
       title: "Compare the second choice",
       detail: `Try ${second.tool.name} on the same input if you need a different workflow, source style, or output format.`,
+      why: "Using the same input makes the comparison about fit, not luck.",
+      output: "A side-by-side view of the tradeoff between the first two options.",
       toolSlug: second.tool.slug,
       toolName: second.tool.name,
     },
     {
       title: "Check the final pass",
       detail: `Use ${third.tool.name} or a manual review to catch missing details, tone issues, or weak structure before you publish or send anything.`,
+      why: "The final choice should be based on review effort as much as output speed.",
+      output: "A chosen tool path and a list of issues to watch before scaling.",
       toolSlug: third.tool.slug,
       toolName: third.tool.name,
     },
@@ -1386,6 +1451,8 @@ export function createTemplateGuide(
     toolSlug: tool.slug,
     toolName: tool.name,
     why: ensurePeriod(editorialBrief.toolRoleMap[index]?.role ?? `${tool.name} supports ${topic.searchIntent} when its role is clearly limited.`),
+    role: ensurePeriod(editorialBrief.toolRoleMap[index]?.role ?? `${tool.name} supports ${topic.searchIntent} when its role is clearly limited.`),
+    bestUseCase: toolBestForText(tool, topic, index),
   }));
   const commonMistakes = editorialBrief.commonMistakesToWarnAbout;
   const mistakesToAvoid = [
@@ -1404,6 +1471,17 @@ export function createTemplateGuide(
   const firstStep = guideType === "how-to"
     ? `What you need: ${topicInputFocus(topic)}, a clear final format, the audience or recipient, and time to check the AI result before using it.`
     : `Start with one real example of ${topic.useCase} and compare the output against your own standard before you scale the workflow.`;
+  const whatYouNeed = [
+    topicInputFocus(topic),
+    `A clear final format for ${topic.useCase}.`,
+    "The audience, recipient, or grading criteria for the output.",
+    "Time to check facts, names, numbers, dates, and commitments before using the result.",
+  ];
+  const timeEstimate = guideType === "how-to"
+    ? "Plan on 10 to 30 minutes for one careful first pass, depending on the source material."
+    : guideType === "income"
+      ? "Start with one small sample before estimating package time or client pricing."
+      : "Run one real comparison before subscribing or switching workflows.";
   const exampleWorkflow = ensurePeriod(
     guideType === "how-to"
       ? editorialBrief.coreWorkflow.join(" ")
@@ -1484,6 +1562,9 @@ export function createTemplateGuide(
     visualAssets,
     quickAnswer,
     quickDecision,
+    realWorldScenario: editorialBrief.realWorldScenario,
+    whatYouNeed,
+    timeEstimate,
     contentGap: topic.contentGap,
     uniqueAngle: topic.uniqueAngle,
     aiOverviewAnswer: topic.aiOverviewAnswer,
@@ -1515,6 +1596,7 @@ export function createTemplateGuide(
       watchFor: toolWatchForPhrase(tool, topic),
     })),
     decisionPath,
+    decisionTree: decisionPath,
     moneySavingTips: [
       "Test one representative project before paying for a longer-term workflow.",
       "Use a listed free plan when it covers the experiment you need to run.",
@@ -1543,6 +1625,8 @@ export function createTemplateGuide(
     firstStep,
     commonMistakes,
     mistakesToAvoid,
+    whatToAvoid: mistakesToAvoid,
+    whatChanged: topic.uniqueAngle,
     exampleWorkflow,
     exampleResult,
     ctaToFinder: finderCTA,
@@ -1644,7 +1728,7 @@ async function refineWithOpenAI(template: Guide): Promise<Guide> {
       body: JSON.stringify({
         model,
         instructions:
-          'You are producing a complete Comparavy guide from an editorial brief and outline, not filling a template. Return a complete guide JSON object only. Comparavy is a US-focused, AdSense-first AI problem-solving site. The article must be useful enough to bookmark: solve the reader problem first, then show which tools help and what to avoid. For how-to guides, the title must start with "How to", the first 100 words must answer the search intent, tools must be supporting actors, and the required sections are Quick Answer, What you need, Step-by-step workflow, computer guidance, phone guidance, Tools you can use, Example result, Common mistakes, FAQ, and Next step. For tool-decision guides, justify the ranking with a quick verdict, best picks by situation, comparison table, branching decision path, unique tool cards, who should use or avoid this, final verdict, and /finder CTA. Do not use placeholder phrases, generic marketing filler, fake testing, exact current pricing, guaranteed outcomes, or unsupported current-news claims. pricingNote and pricingCaveat must remain exactly: Pricing can change. Check the official site before subscribing.',
+          'You are producing a complete Comparavy guide from an editorial brief and outline, not filling a template. Return a complete guide JSON object only. Comparavy is a US-focused, AdSense-first AI problem-solving site. The article must be useful enough to bookmark: solve the reader problem first, then show which tools help and what to avoid. For how-to guides, the title must start with "How to", the first 100 words must answer the search intent, tools must be supporting actors, and you must include realWorldScenario, whatYouNeed, steps with what/why/output detail, desktopUseCase, mobileUseCase, toolsYouCanUse, exampleResult, commonMistakes, search-intent FAQ, and a next step. For tool-decision guides, justify the ranking with quickVerdict, decisionTree or equivalent decisionPath branching, bestPicksBySituation, comparisonRows, unique recommendedTools, who should use or avoid this, finalVerdict, and /finder CTA. For income guides, include realityCheck, realistic services, skillNeeded, firstStep, time/cost/difficulty, and no guaranteed income language. For trend-led guides, include quickDecision, whatChanged when supported, whatToAvoid, comparisonRows, and a practical workflow without claiming breaking news. Do not use placeholder phrases, generic marketing filler, fake testing, exact current pricing, guaranteed outcomes, or unsupported current-news claims. pricingNote and pricingCaveat must remain exactly: Pricing can change. Check the official site before subscribing.',
         input: JSON.stringify({
           editorialBrief,
           articleOutline,
