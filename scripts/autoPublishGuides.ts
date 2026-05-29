@@ -7,6 +7,8 @@ import {
   PRICING_NOTICE,
   assertGuideContentQuality,
   checkGuideQuality,
+  validateGuideContent,
+  type ContentQualityIssue,
   type GuideQualityResult,
 } from "@/lib/contentQuality";
 import {
@@ -83,6 +85,19 @@ interface Candidate {
 }
 
 type CandidateFinalStatus = "rejected" | "draft" | "approved" | "would publish" | "published";
+type GuideRequiredArrayField =
+  | "secondaryKeywords"
+  | "longTailKeywords"
+  | "keyTakeaways"
+  | "bestPicksBySituation"
+  | "recommendedToolSlugs"
+  | "recommendedTools"
+  | "comparisonRows"
+  | "decisionPath"
+  | "whoShouldUseThis"
+  | "whoShouldAvoidThis"
+  | "moneySavingTips"
+  | "faqs";
 
 interface LocalGuardrailResult {
   readonly passed: boolean;
@@ -1498,6 +1513,9 @@ function buildImprovementRequestInput({
       },
       failedDraft: compactDraft.value,
       strategy: [
+        "Return one complete guide JSON object, not a partial object and not a patch.",
+        "Preserve every required field from failedDraft; when a field is not changing, copy it from failedDraft.",
+        "Do not omit keyTakeaways, bestPicksBySituation, recommendedTools, comparisonRows, decisionPath, steps, toolsYouCanUse, faqs, visualSummary, finalVerdict, deviceIntent, desktopUseCase, mobileUseCase, desktopSearchAngle, or mobileSearchAngle.",
         "Rebuild the article around the reader's source input, desired output, first action, and review step.",
         "Rewrite quickAnswer or quickVerdict first, then workflow, device guidance, example result, FAQs, and tool roles.",
         "Remove malformed phrases, repeated keyword stuffing, generic filler, and tool-list framing in how-to guides.",
@@ -1511,7 +1529,7 @@ function buildImprovementRequestBody(model: string, input: ImprovementRequestInp
   return {
     model,
     instructions:
-      `${comparavyGoldStandardPrompt} You are deeply rebuilding a failed Comparavy guide candidate after local editorial preflight, deterministic quality checks, and strict AI editorial review. Return a complete guide JSON object only. This is a deep rewrite from the Gold Standard Writing System and Editorial Blueprint, not a field patch. Preserve only useful factual material from the failed draft. The blueprint is the source of truth for scenario, input material, desired output, workflow, mobile/desktop use, tool roles, comparison criteria, example result, FAQ, category language, and banned mismatched terms. Remove generic filler, correct topic mismatch, add concrete workflow steps, improve decision path, rewrite FAQ, rewrite Quick Answer or Quick Verdict, and make tool recommendations support the user problem. If guideType is how-to, the title must start with "How to", put the practical workflow before tools, and rebuild realWorldScenario, whatYouNeed, step-by-step workflow with what/why/output detail, computer guidance, phone guidance, Tools you can use, Example result, Common mistakes, FAQ, and Next step. If guideType is tool-decision, write a Quick Verdict, put Which one should you choose before tool cards, justify the ranking with blueprint criteria, create unique tool cards, and use branching if/then decisionPath before tool-card detail. Do not invent prices, fake testing, guaranteed income, performance claims, legal advice, unsupported current-news claims, placeholder phrases, malformed wording like "Use mobile for on mobile", repeated Best for / Avoid if text, or any banned mismatched term. pricingNote and pricingCaveat must remain exactly: Pricing can change. Check the official site before subscribing.`,
+      `${comparavyGoldStandardPrompt} You are deeply rebuilding a failed Comparavy guide candidate after local editorial preflight, deterministic quality checks, and strict AI editorial review. Return one complete guide JSON object only. Do not return partial fields, a patch, Markdown, commentary, or a wrapper object. Preserve every required field from the failed draft; if a field is not being changed, copy it from the failed draft. Do not omit arrays such as keyTakeaways, bestPicksBySituation, recommendedTools, comparisonRows, decisionPath, steps, toolsYouCanUse, faqs, commonMistakes, mistakesToAvoid, whoShouldUseThis, whoShouldAvoidThis, or moneySavingTips. Do not omit visualSummary, finalVerdict, deviceIntent, desktopUseCase, mobileUseCase, desktopSearchAngle, or mobileSearchAngle. This is a deep rewrite from the Gold Standard Writing System and Editorial Blueprint, not a field patch. Preserve only useful factual material from the failed draft. The blueprint is the source of truth for scenario, input material, desired output, workflow, mobile/desktop use, tool roles, comparison criteria, example result, FAQ, category language, and banned mismatched terms. Remove generic filler, correct topic mismatch, add concrete workflow steps, improve decision path, rewrite FAQ, rewrite Quick Answer or Quick Verdict, and make tool recommendations support the user problem. If guideType is how-to, the title must start with "How to", put the practical workflow before tools, and rebuild realWorldScenario, whatYouNeed, step-by-step workflow with what/why/output detail, computer guidance, phone guidance, Tools you can use, Example result, Common mistakes, FAQ, and Next step. If guideType is tool-decision, write a Quick Verdict, put Which one should you choose before tool cards, justify the ranking with blueprint criteria, create unique tool cards, and use branching if/then decisionPath before tool-card detail. Do not invent prices, fake testing, guaranteed income, performance claims, legal advice, unsupported current-news claims, placeholder phrases, malformed wording like "Use mobile for on mobile", repeated Best for / Avoid if text, or any banned mismatched term. pricingNote and pricingCaveat must remain exactly: Pricing can change. Check the official site before subscribing.`,
     input: JSON.stringify(input),
     max_output_tokens: 6000,
     truncation: "auto",
@@ -1550,12 +1568,349 @@ function logOpenAIImprovementFailure(slug: string, failure: OpenAIImprovementFai
   console.warn(`[${slug}] Improvement payload truncated: ${failure.payloadTruncated ? "yes" : "no"}`);
 }
 
-function parseGuideJsonText(text: string): Guide {
+function parseGuideJsonText(text: string): unknown {
   const trimmed = text.trim();
   const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
   const jsonText = fenced?.[1]?.trim() ?? trimmed;
 
-  return JSON.parse(jsonText) as Guide;
+  return JSON.parse(jsonText) as unknown;
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function hasOwnField(value: Record<string, unknown>, field: string): boolean {
+  return Object.prototype.hasOwnProperty.call(value, field);
+}
+
+function hasTextValue(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function hasNonEmptyArray(value: unknown): value is readonly unknown[] {
+  return Array.isArray(value) && value.length > 0;
+}
+
+function hasStringArray(value: unknown): value is readonly string[] {
+  return Array.isArray(value) && value.length > 0 && value.every(hasTextValue);
+}
+
+function objectArrayHasRequiredStrings(
+  value: unknown,
+  requiredStrings: readonly string[],
+  minimum = 1,
+): boolean {
+  return (
+    Array.isArray(value) &&
+    value.length >= minimum &&
+    value.every((entry) =>
+      isPlainRecord(entry) && requiredStrings.every((field) => hasTextValue(entry[field])),
+    )
+  );
+}
+
+function hasRecommendedTools(value: unknown): boolean {
+  return (
+    objectArrayHasRequiredStrings(value, [
+      "toolSlug",
+      "toolName",
+      "summary",
+      "bestFor",
+      "avoidIf",
+      "toolPagePath",
+    ]) &&
+    (value as readonly unknown[]).every((entry) =>
+      isPlainRecord(entry) &&
+      hasStringArray(entry.strengths) &&
+      hasStringArray(entry.tradeoffs),
+    )
+  );
+}
+
+function hasComparisonRows(value: unknown): boolean {
+  return (
+    objectArrayHasRequiredStrings(value, [
+      "toolSlug",
+      "toolName",
+      "bestFor",
+      "easeOfUse",
+      "whyConsider",
+      "watchFor",
+    ]) &&
+    (value as readonly unknown[]).every((entry) =>
+      isPlainRecord(entry) && typeof entry.freePlan === "boolean",
+    )
+  );
+}
+
+function hasVisualSummary(value: unknown): boolean {
+  return (
+    isPlainRecord(value) &&
+    hasTextValue(value.headline) &&
+    hasStringArray(value.points)
+  );
+}
+
+function hasValidGuideField(value: unknown, field: string): boolean {
+  if (!isPlainRecord(value)) {
+    return false;
+  }
+
+  switch (field) {
+    case "secondaryKeywords":
+    case "longTailKeywords":
+    case "keyTakeaways":
+    case "recommendedToolSlugs":
+    case "whoShouldUseThis":
+    case "whoShouldAvoidThis":
+    case "moneySavingTips":
+    case "commonMistakes":
+    case "mistakesToAvoid":
+    case "whatToAvoid":
+      return hasStringArray(value[field]);
+    case "bestPicksBySituation":
+      return objectArrayHasRequiredStrings(value[field], ["situation", "toolSlug", "toolName", "why"]);
+    case "recommendedTools":
+      return hasRecommendedTools(value[field]);
+    case "comparisonRows":
+      return hasComparisonRows(value[field]);
+    case "decisionPath":
+    case "decisionTree":
+      return objectArrayHasRequiredStrings(value[field], ["situation", "recommendation", "reason"]);
+    case "steps":
+      return objectArrayHasRequiredStrings(value[field], ["title", "detail"], 3);
+    case "toolsYouCanUse":
+      return objectArrayHasRequiredStrings(value[field], ["toolSlug", "toolName", "why"], 2);
+    case "faqs":
+    case "faq":
+      return objectArrayHasRequiredStrings(value[field], ["question", "answer"]);
+    case "visualSummary":
+      return hasVisualSummary(value[field]);
+    default:
+      return hasTextValue(value[field]);
+  }
+}
+
+function restoreFieldFromOriginal(
+  merged: Record<string, unknown>,
+  original: Guide,
+  field: keyof Guide | GuideRequiredArrayField | "faq" | "decisionTree",
+  restoredFields: Set<string>,
+): void {
+  const originalRecord = original as unknown as Record<string, unknown>;
+
+  if (hasValidGuideField(originalRecord, field)) {
+    merged[field] = originalRecord[field];
+    restoredFields.add(field);
+  }
+}
+
+function preserveNonEmptyText(
+  merged: Record<string, unknown>,
+  original: Guide,
+  fields: readonly (keyof Guide)[],
+  restoredFields: Set<string>,
+): void {
+  const originalRecord = original as unknown as Record<string, unknown>;
+
+  for (const field of fields) {
+    if (!hasTextValue(merged[field]) && hasTextValue(originalRecord[field])) {
+      merged[field] = originalRecord[field];
+      restoredFields.add(field);
+    }
+  }
+}
+
+function preserveRequiredArrays(
+  merged: Record<string, unknown>,
+  original: Guide,
+  restoredFields: Set<string>,
+): void {
+  const requiredArrays: readonly GuideRequiredArrayField[] = [
+    "secondaryKeywords",
+    "longTailKeywords",
+    "keyTakeaways",
+    "bestPicksBySituation",
+    "recommendedToolSlugs",
+    "recommendedTools",
+    "comparisonRows",
+    "decisionPath",
+    "whoShouldUseThis",
+    "whoShouldAvoidThis",
+    "moneySavingTips",
+    "faqs",
+  ];
+
+  for (const field of requiredArrays) {
+    if (!hasValidGuideField(merged, field)) {
+      restoreFieldFromOriginal(merged, original, field, restoredFields);
+    }
+  }
+
+  if (!hasValidGuideField(merged, "faq") && hasValidGuideField(original, "faq")) {
+    restoreFieldFromOriginal(merged, original, "faq", restoredFields);
+  }
+}
+
+function preserveDeviceFields(
+  merged: Record<string, unknown>,
+  original: Guide,
+  restoredFields: Set<string>,
+): void {
+  const originalRecord = original as unknown as Record<string, unknown>;
+
+  if (
+    merged.deviceIntent !== "desktop" &&
+    merged.deviceIntent !== "mobile" &&
+    merged.deviceIntent !== "both" &&
+    typeof originalRecord.deviceIntent === "string"
+  ) {
+    merged.deviceIntent = originalRecord.deviceIntent;
+    restoredFields.add("deviceIntent");
+  }
+
+  if (merged.deviceIntent === "both") {
+    preserveNonEmptyText(
+      merged,
+      original,
+      ["desktopUseCase", "mobileUseCase", "desktopSearchAngle", "mobileSearchAngle"],
+      restoredFields,
+    );
+  }
+}
+
+function repairMergedImprovedGuide(
+  original: Guide,
+  merged: Record<string, unknown>,
+): { readonly guide: Guide; readonly restoredFields: readonly string[] } {
+  const restoredFields = new Set<string>();
+
+  preserveNonEmptyText(
+    merged,
+    original,
+    [
+      "title",
+      "metaTitle",
+      "metaDescription",
+      "category",
+      "persona",
+      "useCase",
+      "budgetAngle",
+      "skillLevel",
+      "primaryKeyword",
+      "audience",
+      "searchIntent",
+      "userPain",
+      "decisionQuestion",
+      "contentGap",
+      "uniqueAngle",
+      "aiOverviewAnswer",
+      "quickVerdict",
+      "pricingNote",
+      "pricingCaveat",
+      "finalVerdict",
+      "ctaToFinder",
+      "finderCTA",
+      "affiliateDisclosureNote",
+      "affiliateDisclosure",
+      "freshness",
+      "status",
+      "createdAt",
+      "updatedAt",
+    ],
+    restoredFields,
+  );
+  preserveRequiredArrays(merged, original, restoredFields);
+  preserveDeviceFields(merged, original, restoredFields);
+
+  if (!hasVisualSummary(merged.visualSummary)) {
+    restoreFieldFromOriginal(merged, original, "visualSummary", restoredFields);
+  }
+
+  const guideType = candidateGuideType(original);
+
+  if (guideType === "how-to") {
+    preserveNonEmptyText(
+      merged,
+      original,
+      ["quickAnswer", "exampleResult", "exampleWorkflow", "desktopUseCase", "mobileUseCase"],
+      restoredFields,
+    );
+
+    for (const field of ["steps", "toolsYouCanUse", "commonMistakes", "mistakesToAvoid"] as const) {
+      if (!hasValidGuideField(merged, field)) {
+        restoreFieldFromOriginal(merged, original, field, restoredFields);
+      }
+    }
+  }
+
+  if (guideType === "tool-decision") {
+    preserveNonEmptyText(merged, original, ["quickVerdict"], restoredFields);
+
+    for (const field of ["bestPicksBySituation", "recommendedTools", "comparisonRows", "decisionPath"] as const) {
+      if (!hasValidGuideField(merged, field)) {
+        restoreFieldFromOriginal(merged, original, field, restoredFields);
+      }
+    }
+  }
+
+  if (!hasValidGuideField(merged, "decisionTree") && hasValidGuideField(merged, "decisionPath")) {
+    merged.decisionTree = merged.decisionPath;
+    restoredFields.add("decisionTree");
+  }
+
+  return {
+    guide: restoreProtectedGuideFields(original, merged as unknown as Guide),
+    restoredFields: [...restoredFields].sort(),
+  };
+}
+
+function mergeImprovedGuide(
+  original: Guide,
+  improvedPatch: unknown,
+): { readonly guide: Guide; readonly restoredFields: readonly string[]; readonly patchRecord: Record<string, unknown> } {
+  const patchRecord = isPlainRecord(improvedPatch) ? improvedPatch : {};
+  const merged: Record<string, unknown> = {
+    ...(original as unknown as Record<string, unknown>),
+    ...patchRecord,
+  };
+
+  const repaired = repairMergedImprovedGuide(original, merged);
+
+  return {
+    ...repaired,
+    patchRecord,
+  };
+}
+
+function logImprovedGuideValidationFailure({
+  slug,
+  original,
+  patchRecord,
+  mergedGuide,
+  restoredFields,
+  issues,
+}: {
+  readonly slug: string;
+  readonly original: Guide;
+  readonly patchRecord: Record<string, unknown>;
+  readonly mergedGuide: Guide;
+  readonly restoredFields: readonly string[];
+  readonly issues: readonly ContentQualityIssue[];
+}): void {
+  console.warn(`[${slug}] Improved guide validation failed after merge/repair.`);
+  console.warn(`[${slug}] Improvement merge restored fields: ${restoredFields.join(", ") || "None"}`);
+
+  for (const issue of issues) {
+    console.warn(
+      `[${slug}] Invalid improved field "${issue.field}": ${issue.message} ` +
+        `originalHad=${hasValidGuideField(original, issue.field) ? "yes" : "no"} ` +
+        `improvedOmitted=${hasOwnField(patchRecord, issue.field) ? "no" : "yes"} ` +
+        `mergeRepairAttempted=${restoredFields.includes(issue.field) ? "yes" : "no"} ` +
+        `mergedValid=${hasValidGuideField(mergedGuide, issue.field) ? "yes" : "no"}`,
+    );
+  }
 }
 
 function rejectionReasonsForImprovement(
@@ -1747,9 +2102,25 @@ async function improveGuideWithAI(
       throw new Error("OpenAI improvement returned no structured guide text.");
     }
 
-    const improved = restoreProtectedGuideFields(guide, parseGuideJsonText(text));
-    assertGuideContentQuality(improved, guide.slug);
-    return improved;
+    const merged = mergeImprovedGuide(guide, parseGuideJsonText(text));
+    const validationIssues = validateGuideContent(merged.guide);
+
+    if (validationIssues.length > 0) {
+      logImprovedGuideValidationFailure({
+        slug: guide.slug,
+        original: guide,
+        patchRecord: merged.patchRecord,
+        mergedGuide: merged.guide,
+        restoredFields: merged.restoredFields,
+        issues: validationIssues,
+      });
+      assertGuideContentQuality(merged.guide, guide.slug);
+    }
+
+    console.log(
+      `[${guide.slug}] Improvement merge restored fields: ${merged.restoredFields.join(", ") || "None"}`,
+    );
+    return merged.guide;
   }
 
   throw new Error(lastFailure);
