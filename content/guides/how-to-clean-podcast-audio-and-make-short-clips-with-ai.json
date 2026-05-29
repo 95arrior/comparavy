@@ -64,7 +64,7 @@
       "after": "After: a faster workflow that leaves you with a clear, checked result."
     }
   },
-  "quickAnswer": "To handle cleaning podcast recordings and turning them into short clips, Start with podcast recordings, decide that the output must be clean audio, use Descript for one reviewable version, and check it before changing formats or adding another tool. Descript should create the first reviewable version, OpusClip belongs in the second pass only when clean audio needs more control, and CapCut should be saved for review or export after the core result is right.",
+  "quickAnswer": "To handle cleaning podcast recordings and turning them into short clips, start with podcast recordings, decide that the output must be clean audio, and use AI only after the source material is clear. Start with podcast recordings, decide that the output must be clean audio, use Descript for one reviewable version, and check it before changing formats or adding another tool. Descript should create the first reviewable version, OpusClip belongs in the second pass only when clean audio needs more control, and CapCut should be saved for review or export after the core result is right.",
   "quickDecision": "For cleaning podcast recordings and turning them into short clips, choose Descript first when the input is podcast recordings and the output needs to be clean audio. Choose OpusClip when noise reduction matters more. Choose CapCut when you need a lighter review, export, or fallback pass.",
   "realWorldScenario": "podcast creators have podcast recordings and episode transcript and need clean audio without drifting into an unrelated workflow. Prepared 2026-05-29.",
   "whatYouNeed": [
@@ -77,7 +77,7 @@
   "contentGap": "Most results split audio cleanup and clipping into separate tool lists.",
   "uniqueAngle": "Show the audio-first workflow, then the clip selection workflow.",
   "aiOverviewAnswer": "Clean the audio first, create or import a transcript, find strong moments, then export short clips with captions and review them before posting.",
-  "quickVerdict": "To handle cleaning podcast recordings and turning them into short clips, Start with podcast recordings, decide that the output must be clean audio, use Descript for one reviewable version, and check it before changing formats or adding another tool. Descript should create the first reviewable version, OpusClip belongs in the second pass only when clean audio needs more control, and CapCut should be saved for review or export after the core result is right.",
+  "quickVerdict": "To handle cleaning podcast recordings and turning them into short clips, start with podcast recordings, decide that the output must be clean audio, and use AI only after the source material is clear. Start with podcast recordings, decide that the output must be clean audio, use Descript for one reviewable version, and check it before changing formats or adding another tool. Descript should create the first reviewable version, OpusClip belongs in the second pass only when clean audio needs more control, and CapCut should be saved for review or export after the core result is right.",
   "steps": [
     {
       "title": "Prepare podcast recordings",

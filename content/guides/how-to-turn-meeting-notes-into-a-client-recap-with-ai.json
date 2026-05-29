@@ -26,10 +26,10 @@
   "userPain": "The reader has scattered notes and needs a client-ready summary without missing commitments.",
   "decisionQuestion": "How do I turn notes into a recap that includes decisions, owners, and next steps?",
   "deviceIntent": "both",
-  "desktopUseCase": "Best on a computer when you need the raw notes, draft recap, and client email open together.",
-  "mobileUseCase": "Best on a phone when you need a quick action-item list right after the call.",
-  "desktopSearchAngle": "Desktop readers usually want a deeper comparison, file handling, and a more deliberate review workflow.",
-  "mobileSearchAngle": "Mobile readers usually want a short answer first, then a quick next step they can finish in a few taps.",
+  "desktopUseCase": "Best on a computer when you need the raw notes, draft recap, and client email open together. Use desktop to compare call notes with client-ready recap before the final review.",
+  "mobileUseCase": "Best on a phone when you need a quick action-item list right after the call. Use mobile for quick checks on client-ready recap when the input is already prepared.",
+  "desktopSearchAngle": "Desktop readers usually want deeper comparison, file handling, and a deliberate review workflow for client-ready recap.",
+  "mobileSearchAngle": "Mobile readers usually want a short answer first, then a quick next step for client-ready recap they can finish in a few taps.",
   "visualAssets": {
     "hero": {
       "type": "hero",
@@ -41,9 +41,11 @@
       "type": "workflow-diagram",
       "alt": "How to Turn Meeting Notes Into a Client Recap with AI workflow diagram",
       "steps": [
-        "Problem or source material",
-        "AI draft or comparison pass",
-        "Human review and final result"
+        "Quick Answer",
+        "Real-World Scenario",
+        "What You Need",
+        "Step-by-Step Workflow",
+        "Best If You Are on a Computer"
       ]
     },
     "toolStack": {
@@ -51,8 +53,8 @@
       "alt": "How to Turn Meeting Notes Into a Client Recap with AI recommended tool stack",
       "tools": [
         "Notion AI",
-        "DeepL Write",
-        "Writesonic"
+        "Grammarly",
+        "DeepL Write"
       ]
     },
     "beforeAfter": {
@@ -62,100 +64,124 @@
       "after": "After: a faster workflow that leaves you with a clear, checked result."
     }
   },
-  "quickAnswer": "To handle turning rough meeting notes into a clear client recap, start by gathering the real source material, use Notion AI for the first AI pass, then check the result against the original before you share it. Use DeepL Write when the job needs a different format, and keep Writesonic for cleanup or review after the main workflow is done.",
-  "quickDecision": "For turning rough meeting notes into a clear client recap, choose Notion AI for teams or individuals already organizing work in Notion. Choose DeepL Write when you need rephrasing professional messages. Choose Writesonic when the main job is marketing content ideation or when you need a lighter alternative.",
+  "quickAnswer": "To handle turning rough meeting notes into a clear client recap, start with call notes, decide that the output must be client-ready recap, and use AI only after the source material is clear. Start with call notes, decide that the output must be client-ready recap, use Notion AI for one reviewable version, and check it before changing formats or adding another tool. Notion AI should create the first reviewable version, Grammarly belongs in the second pass only when client-ready recap needs more control, and DeepL Write should be saved for review or export after the core result is right.",
+  "quickDecision": "For turning rough meeting notes into a clear client recap, choose Notion AI first when the input is call notes and the output needs to be client-ready recap. Choose Grammarly when owners matters more. Choose DeepL Write when you need a lighter review, export, or fallback pass.",
+  "realWorldScenario": "consultants have call notes and transcripts and need client-ready recap without drifting into an unrelated workflow. Prepared 2026-05-29.",
+  "whatYouNeed": [
+    "call notes, decisions, owners, dates, and open client questions",
+    "A clear final format for turning rough meeting notes into a clear client recap.",
+    "The audience, recipient, or grading criteria for the output.",
+    "Time to check facts, names, numbers, dates, and commitments before using the result."
+  ],
+  "timeEstimate": "Plan on 10 to 30 minutes for one careful first pass, depending on the source material.",
   "contentGap": "Most content focuses on transcription instead of the client-ready follow-up.",
   "uniqueAngle": "Separate capture, cleanup, and final client wording.",
   "aiOverviewAnswer": "Paste the notes, ask AI to extract decisions and action items, then rewrite the recap in a client-safe tone and verify owners and dates.",
-  "quickVerdict": "To handle turning rough meeting notes into a clear client recap, start by gathering the real source material, use Notion AI for the first AI pass, then check the result against the original before you share it. Use DeepL Write when the job needs a different format, and keep Writesonic for cleanup or review after the main workflow is done.",
+  "quickVerdict": "To handle turning rough meeting notes into a clear client recap, start with call notes, decide that the output must be client-ready recap, and use AI only after the source material is clear. Start with call notes, decide that the output must be client-ready recap, use Notion AI for one reviewable version, and check it before changing formats or adding another tool. Notion AI should create the first reviewable version, Grammarly belongs in the second pass only when client-ready recap needs more control, and DeepL Write should be saved for review or export after the core result is right.",
   "steps": [
     {
-      "title": "Gather the source material",
-      "detail": "Start with the real inputs for turning rough meeting notes into a clear client recap: notes, files, transcript text, product facts, or examples. The output will only be useful if the source is specific."
+      "title": "Prepare call notes",
+      "detail": "Put the real input in one place before opening a tool: call notes, transcripts, agenda items, client questions, turning rough meeting notes into a clear client recap, any required facts, the audience, and the format you need at the end. Remove private details you are not allowed to share.",
+      "why": "AI output is only as useful as the material and constraints you give it.",
+      "output": "A clean input bundle and one clear target format: client-ready recap."
     },
     {
-      "title": "Ask for the first useful draft",
-      "detail": "Use Notion AI to create the first pass from that source material. Ask for a practical result, not a generic explanation of the topic.",
+      "title": "Ask for the first usable version",
+      "detail": "Use Notion AI for a first pass that tries to turn rough meeting notes into a clear client recap. Ask it to preserve source facts, flag uncertainty, and organize the result into sections you can review.",
+      "why": "The first pass should create a reviewable client-ready recap, not a finished answer you trust blindly.",
+      "output": "A structured client-ready recap with visible gaps or uncertain points.",
       "toolSlug": "notion-ai",
       "toolName": "Notion AI"
     },
     {
-      "title": "Check the draft against the original",
-      "detail": "Compare names, facts, dates, claims, missing context, and tone against the original input before you edit style or formatting."
+      "title": "Check the answer before polishing",
+      "detail": "Compare the AI output with call notes. Fix names, dates, numbers, unsupported claims, missing context, and tone before you ask for nicer wording.",
+      "why": "Polished wrong information is harder to catch than rough information.",
+      "output": "A corrected client-ready recap that is ready for formatting or wording cleanup."
     },
     {
-      "title": "Change format only after the facts are right",
-      "detail": "Use DeepL Write when the result needs a visual, social, presentation, or alternate format. Keep the same source facts so the rewrite does not drift.",
+      "title": "Change the format only after the facts are right",
+      "detail": "Use Grammarly when the verified client-ready recap needs a different format, structure, or source-aware second pass. Keep the same facts from call notes so the rewrite does not drift from the original.",
+      "why": "Format changes are safer after the substance is already checked.",
+      "output": "A version that fits the channel, document, post, or recipient.",
+      "toolSlug": "grammarly",
+      "toolName": "Grammarly"
+    },
+    {
+      "title": "Finish with a human review",
+      "detail": "Use DeepL Write for cleanup only after the main client-ready recap is checked against call notes. Read the final result as the recipient would: on the device, in the app, or in the document where it will actually be used.",
+      "why": "The final review catches tone, missing context, and practical usability issues.",
+      "output": "A final result you can send, post, study from, or save with confidence.",
       "toolSlug": "deepl-write",
       "toolName": "DeepL Write"
-    },
-    {
-      "title": "Polish the final version",
-      "detail": "Use Writesonic or a manual review pass to tighten wording, remove filler, and make the final result easier to read on a phone or computer.",
-      "toolSlug": "writesonic",
-      "toolName": "Writesonic"
     }
   ],
   "toolsYouCanUse": [
     {
       "toolSlug": "notion-ai",
       "toolName": "Notion AI",
-      "why": "Notion AI is a practical fit for turning rough meeting notes into a clear client recap because it is strongest at teams or individuals already organizing work in Notion."
+      "why": "Primary tool for turning call notes into client-ready recap.",
+      "role": "Primary tool for turning call notes into client-ready recap.",
+      "bestUseCase": "teams or individuals already organizing work in Notion for client-ready recap"
+    },
+    {
+      "toolSlug": "grammarly",
+      "toolName": "Grammarly",
+      "why": "Second-pass tool when client-ready recap needs a different format, stronger controls, or validation.",
+      "role": "Second-pass tool when client-ready recap needs a different format, stronger controls, or validation.",
+      "bestUseCase": "polishing email and client-facing writing when owners matters more than the top pick"
     },
     {
       "toolSlug": "deepl-write",
       "toolName": "DeepL Write",
-      "why": "DeepL Write is a practical fit for turning rough meeting notes into a clear client recap because it is strongest at rephrasing professional messages."
-    },
-    {
-      "toolSlug": "writesonic",
-      "toolName": "Writesonic",
-      "why": "Writesonic is a practical fit for turning rough meeting notes into a clear client recap because it is strongest at marketing content ideation."
+      "why": "Review or finishing tool after the main output is checked.",
+      "role": "Review or finishing tool after the main output is checked.",
+      "bestUseCase": "rephrasing professional messages when speed or a lighter setup matters more for follow-up email"
     }
   ],
   "keyTakeaways": [
-    "What you need: the original source material, a clear output format, and a few minutes to review the result.",
+    "What you need: call notes, transcripts, agenda items, a clear output format, and a few minutes to review the result.",
     "Start with Notion AI for the first pass, but judge the output against turning rough meeting notes into a clear client recap, not against tool hype.",
-    "Use DeepL Write only when the workflow needs a different format or second pass.",
-    "Use Writesonic for cleanup after the main draft is fact-checked.",
+    "Use Grammarly only when the workflow needs a different format or second pass.",
+    "Use DeepL Write for review after the main output is fact-checked.",
     "The reader has scattered notes and needs a client-ready summary without missing commitments.",
     "Most content focuses on transcription instead of the client-ready follow-up.",
     "The useful next step is to test one real example before building a repeatable workflow."
   ],
   "bestPicksBySituation": [
     {
-      "situation": "If you already have uploaded PDFs, class notes, and other source documents, choose Notion AI.",
+      "situation": "If you already have call notes, choose Notion AI.",
       "toolSlug": "notion-ai",
       "toolName": "Notion AI",
-      "why": "Notion AI is the closest match because it is built for teams or individuals already organizing work in Notion and keeps the work tied to the original input."
+      "why": "Notion AI is the closest match because it is built for teams or individuals already organizing work in Notion and keeps the work tied to call notes."
     },
     {
-      "situation": "If you need turning rough meeting notes into a clear client recap and want a different workflow, choose DeepL Write.",
+      "situation": "If you need action item list or stronger owners, choose Grammarly.",
+      "toolSlug": "grammarly",
+      "toolName": "Grammarly",
+      "why": "Grammarly is the better second choice when polishing email and client-facing writing matters more than the first tool's handling of call notes."
+    },
+    {
+      "situation": "If you want the lightest review or export step for client-ready recap, choose DeepL Write.",
       "toolSlug": "deepl-write",
       "toolName": "DeepL Write",
-      "why": "DeepL Write is the better second choice when you want rephrasing professional messages instead of the first tool's exact workflow."
-    },
-    {
-      "situation": "If you want the cleanest rewrite or the lightest review step, choose Writesonic.",
-      "toolSlug": "writesonic",
-      "toolName": "Writesonic",
-      "why": "Writesonic helps when you need marketing content ideation and want a fallback that is easier to adapt on a phone or desktop."
+      "why": "DeepL Write helps when you need rephrasing professional messages and want a fallback that is easier to adapt on a phone or desktop."
     }
   ],
   "recommendedToolSlugs": [
     "notion-ai",
+    "grammarly",
     "deepl-write",
     "writesonic",
-    "tl-dv",
-    "motion"
+    "reclaim"
   ],
   "recommendedTools": [
     {
       "toolSlug": "notion-ai",
       "toolName": "Notion AI",
-      "summary": "Notion AI is strongest when you need teams or individuals already organizing work in Notion and want it tied to uploaded PDFs, class notes, and other source documents. It handles summarize meeting notes better than a generic assistant, but it is a weaker choice if you need your useful information lives outside Notion.",
-      "bestFor": "teams or individuals already organizing work in Notion for turning rough meeting notes into a clear client recap",
-      "avoidIf": "your useful information lives outside Notion if your real input is uploaded PDFs, class notes, and other source documents",
+      "summary": "Notion AI is strongest when you need teams or individuals already organizing work in Notion and want it tied to call notes, decisions, owners, dates, and open client questions. It handles summarize meeting notes better than a generic assistant, but it is a weaker choice if you need your useful information lives outside Notion.",
+      "bestFor": "teams or individuals already organizing work in Notion for client-ready recap",
+      "avoidIf": "your useful information lives outside Notion if your real input is call notes, decisions, owners, dates, and open client questions",
       "strengths": [
         "workspace",
         "notes",
@@ -169,11 +195,29 @@
       "toolPagePath": "/tools/notion-ai"
     },
     {
+      "toolSlug": "grammarly",
+      "toolName": "Grammarly",
+      "summary": "Grammarly is strongest when you need polishing email and client-facing writing and want it tied to call notes, decisions, owners, dates, and open client questions. It handles polish emails better than a generic assistant, but it is a weaker choice if you need your writing environment cannot allow browser extensions or integrations.",
+      "bestFor": "polishing email and client-facing writing when owners matters more than the top pick",
+      "avoidIf": "your writing environment cannot allow browser extensions or integrations if your main need is the top tool's exact workflow",
+      "strengths": [
+        "writing",
+        "editing",
+        "tone",
+        "email"
+      ],
+      "tradeoffs": [
+        "Long-form research from sources",
+        "Visual content generation"
+      ],
+      "toolPagePath": "/tools/grammarly"
+    },
+    {
       "toolSlug": "deepl-write",
       "toolName": "DeepL Write",
-      "summary": "DeepL Write is strongest when you need rephrasing professional messages and want it tied to uploaded PDFs, class notes, and other source documents. It handles polish messages better than a generic assistant, but it is a weaker choice if you need you need specialist translation or legal review without a human expert.",
-      "bestFor": "rephrasing professional messages when you want a different workflow than the top pick",
-      "avoidIf": "you need specialist translation or legal review without a human expert if your main need is the top tool's exact workflow",
+      "summary": "DeepL Write is strongest when you need rephrasing professional messages and want it tied to call notes, decisions, owners, dates, and open client questions. It handles polish messages better than a generic assistant, but it is a weaker choice if you need you need specialist translation or legal review without a human expert.",
+      "bestFor": "rephrasing professional messages when speed or a lighter setup matters more for follow-up email",
+      "avoidIf": "you need specialist translation or legal review without a human expert if you need the most polished or source-grounded final pass",
       "strengths": [
         "writing",
         "clarity",
@@ -189,9 +233,9 @@
     {
       "toolSlug": "writesonic",
       "toolName": "Writesonic",
-      "summary": "Writesonic is strongest when you need marketing content ideation and want it tied to uploaded PDFs, class notes, and other source documents. It handles draft landing copy better than a generic assistant, but it is a weaker choice if you need you would publish generated content without editorial review.",
-      "bestFor": "marketing content ideation when speed or a lighter setup matters more",
-      "avoidIf": "you would publish generated content without editorial review if you need the most polished or source-grounded final pass",
+      "summary": "Writesonic is strongest when you need marketing content ideation and want it tied to call notes, decisions, owners, dates, and open client questions. It handles draft landing copy better than a generic assistant, but it is a weaker choice if you need you would publish generated content without editorial review.",
+      "bestFor": "marketing content ideation when speed or a lighter setup matters more for decision log",
+      "avoidIf": "you would publish generated content without editorial review if the task needs deeper review than a lightweight fallback can provide",
       "strengths": [
         "marketing",
         "writing",
@@ -205,29 +249,11 @@
       "toolPagePath": "/tools/writesonic"
     },
     {
-      "toolSlug": "tl-dv",
-      "toolName": "tl;dv",
-      "summary": "tl;dv is strongest when you need workflows that need call clips and meeting notes and want it tied to uploaded PDFs, class notes, and other source documents. It handles call clips and meeting notes better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
-      "bestFor": "workflows that need call clips and meeting notes when speed or a lighter setup matters more",
-      "avoidIf": "you need publish-ready output without review if you need the most polished or source-grounded final pass",
-      "strengths": [
-        "meetings",
-        "notes",
-        "transcription",
-        "summaries"
-      ],
-      "tradeoffs": [
-        "Not the best choice when your main job is outside meetings.",
-        "Not ideal when you need a single tool to do every job."
-      ],
-      "toolPagePath": "/tools/tl-dv"
-    },
-    {
-      "toolSlug": "motion",
-      "toolName": "Motion",
-      "summary": "Motion is strongest when you need workflows that need calendar planning and task prioritization and want it tied to uploaded PDFs, class notes, and other source documents. It handles calendar planning and task prioritization better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
-      "bestFor": "workflows that need calendar planning and task prioritization when speed or a lighter setup matters more",
-      "avoidIf": "you need publish-ready output without review if you need the most polished or source-grounded final pass",
+      "toolSlug": "reclaim",
+      "toolName": "Reclaim",
+      "summary": "Reclaim is strongest when you need workflows that need calendar protection and scheduling and want it tied to call notes, decisions, owners, dates, and open client questions. It handles calendar protection and scheduling better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need calendar protection and scheduling when speed or a lighter setup matters more for turning rough meeting notes into a clear client recap",
+      "avoidIf": "you need publish-ready output without review if the workflow depends on another tool's stronger input handling or editing controls",
       "strengths": [
         "productivity",
         "notes",
@@ -238,76 +264,108 @@
         "Not the best choice when your main job is outside productivity.",
         "Not ideal when you need a single tool to do every job."
       ],
-      "toolPagePath": "/tools/motion"
+      "toolPagePath": "/tools/reclaim"
     }
   ],
   "comparisonRows": [
     {
       "toolSlug": "notion-ai",
       "toolName": "Notion AI",
-      "bestFor": "teams or individuals already organizing work in Notion for turning rough meeting notes into a clear client recap",
+      "bestFor": "teams or individuals already organizing work in Notion for client-ready recap",
       "freePlan": false,
       "easeOfUse": "Medium setup; ease 8/10 in the Comparavy catalog",
       "whyConsider": "Notion AI is worth considering because it is the clearest fit for turning rough meeting notes into a clear client recap. It is built for teams or individuals already organizing work in Notion, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
-      "watchFor": "Watch for people who do not want to adopt Notion; this matters when turning rough meeting notes into a clear client recap."
+      "watchFor": "Watch for people who do not want to adopt Notion; this matters when the reader is turning rough meeting notes into a clear client recap."
+    },
+    {
+      "toolSlug": "grammarly",
+      "toolName": "Grammarly",
+      "bestFor": "polishing email and client-facing writing when owners matters more than the top pick",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "whyConsider": "Grammarly is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for polishing email and client-facing writing, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for long-form research from sources; this matters when the reader is turning rough meeting notes into a clear client recap."
     },
     {
       "toolSlug": "deepl-write",
       "toolName": "DeepL Write",
-      "bestFor": "rephrasing professional messages when you want a different workflow than the top pick",
+      "bestFor": "rephrasing professional messages when speed or a lighter setup matters more for follow-up email",
       "freePlan": true,
       "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
-      "whyConsider": "DeepL Write is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for rephrasing professional messages, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
-      "watchFor": "Watch for generating rich visual content; this matters when turning rough meeting notes into a clear client recap."
+      "whyConsider": "DeepL Write is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for rephrasing professional messages, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for generating rich visual content; this matters when the reader is turning rough meeting notes into a clear client recap."
     },
     {
       "toolSlug": "writesonic",
       "toolName": "Writesonic",
-      "bestFor": "marketing content ideation when speed or a lighter setup matters more",
+      "bestFor": "marketing content ideation when speed or a lighter setup matters more for decision log",
       "freePlan": false,
       "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
       "whyConsider": "Writesonic is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for marketing content ideation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
-      "watchFor": "Watch for users needing only basic proofreading; this matters when turning rough meeting notes into a clear client recap."
+      "watchFor": "Watch for users needing only basic proofreading; this matters when the reader is turning rough meeting notes into a clear client recap."
     },
     {
-      "toolSlug": "tl-dv",
-      "toolName": "tl;dv",
-      "bestFor": "workflows that need call clips and meeting notes when speed or a lighter setup matters more",
+      "toolSlug": "reclaim",
+      "toolName": "Reclaim",
+      "bestFor": "workflows that need calendar protection and scheduling when speed or a lighter setup matters more for turning rough meeting notes into a clear client recap",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
-      "whyConsider": "tl;dv is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need call clips and meeting notes, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
-      "watchFor": "Watch for not the best choice when your main job is outside meetings.; this matters when turning rough meeting notes into a clear client recap."
-    },
-    {
-      "toolSlug": "motion",
-      "toolName": "Motion",
-      "bestFor": "workflows that need calendar planning and task prioritization when speed or a lighter setup matters more",
-      "freePlan": false,
-      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
-      "whyConsider": "Motion is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need calendar planning and task prioritization, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
-      "watchFor": "Watch for not the best choice when your main job is outside productivity.; this matters when turning rough meeting notes into a clear client recap."
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "Reclaim is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need calendar protection and scheduling, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside productivity.; this matters when the reader is turning rough meeting notes into a clear client recap."
     }
   ],
   "decisionPath": [
     {
-      "situation": "If you already have uploaded PDFs, class notes, and other source documents, start with Notion AI.",
+      "situation": "If you already have call notes, start with Notion AI.",
       "recommendation": "Notion AI",
-      "reason": "Notion AI is the fastest first pass because it can work from the source material you already have."
+      "reason": "Notion AI is the first-pass choice when the input is ready and the main job is to structure, summarize, or clean it into a usable result."
     },
     {
-      "situation": "If the output needs a different format after the facts are checked, use DeepL Write.",
+      "situation": "If client-ready recap needs a different format after the facts are checked, switch to Grammarly.",
+      "recommendation": "Grammarly",
+      "reason": "Grammarly is better for the second pass when the job changes from source checking to formatting, layout, or another presentation style."
+    },
+    {
+      "situation": "If the result is accurate but still rough, use DeepL Write.",
       "recommendation": "DeepL Write",
-      "reason": "DeepL Write is better for the second pass when the job changes from drafting to formatting, layout, or a different presentation style."
+      "reason": "DeepL Write fits the review step because the main source work is already done."
     },
     {
-      "situation": "If the result is almost right but still rough, use Writesonic.",
-      "recommendation": "Writesonic",
-      "reason": "Writesonic fits the final cleanup step because the main source work is already done."
-    },
-    {
-      "situation": "If you are on your phone, keep the task small.",
+      "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
       "recommendation": "Notion AI",
-      "reason": "Use mobile for a short summary, quick rewrite, or final review; save side-by-side comparison and bigger edits for desktop."
+      "reason": "Mobile works best for a short summary, a quick rewrite, or final approval; save side-by-side checking and larger edits for desktop."
+    },
+    {
+      "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
+      "recommendation": "Grammarly",
+      "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
+    }
+  ],
+  "decisionTree": [
+    {
+      "situation": "If you already have call notes, start with Notion AI.",
+      "recommendation": "Notion AI",
+      "reason": "Notion AI is the first-pass choice when the input is ready and the main job is to structure, summarize, or clean it into a usable result."
+    },
+    {
+      "situation": "If client-ready recap needs a different format after the facts are checked, switch to Grammarly.",
+      "recommendation": "Grammarly",
+      "reason": "Grammarly is better for the second pass when the job changes from source checking to formatting, layout, or another presentation style."
+    },
+    {
+      "situation": "If the result is accurate but still rough, use DeepL Write.",
+      "recommendation": "DeepL Write",
+      "reason": "DeepL Write fits the review step because the main source work is already done."
+    },
+    {
+      "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
+      "recommendation": "Notion AI",
+      "reason": "Mobile works best for a short summary, a quick rewrite, or final approval; save side-by-side checking and larger edits for desktop."
+    },
+    {
+      "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
+      "recommendation": "Grammarly",
+      "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
     }
   ],
   "moneySavingTips": [
@@ -319,38 +377,38 @@
   "pricingCaveat": "Pricing can change. Check the official site before subscribing.",
   "faqs": [
     {
-      "question": "Can I use AI to turn turning rough meeting notes into a clear client recap into something usable without making it generic?",
-      "answer": "Yes, if you start with a clear angle and edit the result for your audience. Notion AI is the best starting point for the first draft, DeepL Write is useful when you need a different format or angle, and Writesonic helps when the copy needs a final cleanup."
+      "question": "What input do I need before using AI for turning rough meeting notes into a clear client recap?",
+      "answer": "Start with call notes, transcripts, agenda items and decide that the output must be client-ready recap. That keeps Notion AI focused on the actual job instead of drifting into a generic answer."
     },
     {
-      "question": "Which AI tool is better for repurposing content?",
-      "answer": "Notion AI usually works best for the first rewrite, while DeepL Write is better when the job shifts toward a different style or asset format."
+      "question": "Which tool should I start with for client-ready recap?",
+      "answer": "Start with Notion AI when the main input is call notes. Compare Grammarly when owners matters more, and keep DeepL Write for review or fallback work."
     },
     {
-      "question": "Is Notion AI better than DeepL Write for this workflow?",
-      "answer": "Notion AI is better when you want a direct content pass; DeepL Write is better when the same input needs a new angle, layout, or structure."
+      "question": "What should I check before I use the result?",
+      "answer": "Check the result against call notes, especially sending unverified owners or dates. Do not use the output until it still matches client-ready recap."
     },
     {
-      "question": "What should I avoid before I publish or post it?",
-      "answer": "Avoid posting the first output without checking the hook, the flow, and the factual details. Use Writesonic as the last cleanup step, not the only step."
+      "question": "Can I finish this workflow on a phone, or should I use a computer?",
+      "answer": "Use mobile for on mobile, keep the task to one input and one output: call notes to client-ready recap. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. client-ready recap usually benefits from desktop review before publishing, sending, or saving."
     }
   ],
   "faq": [
     {
-      "question": "Can I use AI to turn turning rough meeting notes into a clear client recap into something usable without making it generic?",
-      "answer": "Yes, if you start with a clear angle and edit the result for your audience. Notion AI is the best starting point for the first draft, DeepL Write is useful when you need a different format or angle, and Writesonic helps when the copy needs a final cleanup."
+      "question": "What input do I need before using AI for turning rough meeting notes into a clear client recap?",
+      "answer": "Start with call notes, transcripts, agenda items and decide that the output must be client-ready recap. That keeps Notion AI focused on the actual job instead of drifting into a generic answer."
     },
     {
-      "question": "Which AI tool is better for repurposing content?",
-      "answer": "Notion AI usually works best for the first rewrite, while DeepL Write is better when the job shifts toward a different style or asset format."
+      "question": "Which tool should I start with for client-ready recap?",
+      "answer": "Start with Notion AI when the main input is call notes. Compare Grammarly when owners matters more, and keep DeepL Write for review or fallback work."
     },
     {
-      "question": "Is Notion AI better than DeepL Write for this workflow?",
-      "answer": "Notion AI is better when you want a direct content pass; DeepL Write is better when the same input needs a new angle, layout, or structure."
+      "question": "What should I check before I use the result?",
+      "answer": "Check the result against call notes, especially sending unverified owners or dates. Do not use the output until it still matches client-ready recap."
     },
     {
-      "question": "What should I avoid before I publish or post it?",
-      "answer": "Avoid posting the first output without checking the hook, the flow, and the factual details. Use Writesonic as the last cleanup step, not the only step."
+      "question": "Can I finish this workflow on a phone, or should I use a computer?",
+      "answer": "Use mobile for on mobile, keep the task to one input and one output: call notes to client-ready recap. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. client-ready recap usually benefits from desktop review before publishing, sending, or saving."
     }
   ],
   "whoShouldUseThis": [
@@ -362,29 +420,35 @@
     "Readers who need legal, financial, or compliance advice rather than tool comparison.",
     "Users who want guaranteed outcomes instead of a workflow shortlist to evaluate."
   ],
-  "finalVerdict": "The next step is to run this workflow on one real example of turning rough meeting notes into a clear client recap. Start with Notion AI, use DeepL Write only if the format needs a second pass, finish with Writesonic or manual review, and do not reuse the workflow until the first result is accurate and useful.",
+  "finalVerdict": "The next step is to run this workflow on one real example of turning rough meeting notes into a clear client recap. Start with Notion AI, use Grammarly only if the format needs a second pass, finish with DeepL Write or manual review, and do not reuse the workflow until the first result is accurate and useful.",
   "realityCheck": "AI can speed up the work, but the user still has to review facts, shape the final result, and decide whether the workflow fits the job.",
   "skillNeeded": "You need enough familiarity with turning rough meeting notes into a clear client recap to judge whether the output is accurate and useful.",
-  "firstStep": "What you need: the original material for turning rough meeting notes into a clear client recap, one clear output format, and time to check the AI result before using it.",
+  "firstStep": "What you need: call notes, decisions, owners, dates, and open client questions, a clear final format, the audience or recipient, and time to check the AI result before using it.",
   "commonMistakes": [
-    "Choosing a tool before checking whether the input is uploaded PDFs, class notes, and other source documents or something else.",
-    "Using the same prompt or workflow for every tool instead of matching each tool to its job.",
-    "Sharing the output before checking facts, tone, and missing context."
+    "Sending unverified owners or dates",
+    "Turning notes into generic minutes",
+    "Dropping client commitments"
   ],
   "mistakesToAvoid": [
     "Do not treat Notion AI as the final answer without checking the result against your source material.",
-    "Do not use DeepL Write or Writesonic as a shortcut around the real decision about input type and output quality.",
+    "Do not use Grammarly or DeepL Write as a shortcut around the real decision about input type and output quality.",
     "Do not skip review if the output will reach clients, customers, classmates, or a public page."
   ],
-  "exampleWorkflow": "Collect the source material, ask Notion AI for a first draft, verify it against the original, use DeepL Write only if the format needs to change, and use Writesonic for the final cleanup.",
-  "exampleResult": "The final result should be specific enough to use immediately: it should preserve the source facts, remove filler, and include the next action the reader can take.",
+  "whatToAvoid": [
+    "Do not treat Notion AI as the final answer without checking the result against your source material.",
+    "Do not use Grammarly or DeepL Write as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+  ],
+  "whatChanged": "Separate capture, cleanup, and final client wording.",
+  "exampleWorkflow": "Prepare the real input: call notes, transcripts, agenda items. Define the target output before opening tools: client-ready recap or action item list. Use Notion AI for the first usable pass and ask it to preserve the constraints that matter in Meeting notes / client recaps. Check the result against the input, then use Grammarly only if the output needs a format change or stronger second pass. Finish with a human review and use DeepL Write only for cleanup, export, or a lighter fallback.",
+  "exampleResult": "Example result: a checked turn rough meeting notes into a clear client recap output that keeps the source facts, removes filler, names the next action, and is short enough to review before sending, posting, studying, or saving.",
   "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
   "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for consultants",
     "points": [
       "Start with Notion AI for teams or individuals already organizing work in Notion",
-      "Compare DeepL Write when the workflow changes",
+      "Compare Grammarly when the workflow changes",
       "Run a real project test before subscribing"
     ]
   },

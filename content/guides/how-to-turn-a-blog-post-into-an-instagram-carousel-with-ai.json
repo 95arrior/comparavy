@@ -26,10 +26,10 @@
   "userPain": "The reader has long-form content but needs a visual post that is short and scannable.",
   "decisionQuestion": "How do I turn one article into carousel slides without making generic social content?",
   "deviceIntent": "both",
-  "desktopUseCase": "Best on a computer when you need to copy from the article, edit slide text, and adjust the design layout.",
-  "mobileUseCase": "Best on a phone when you are shortening captions or reviewing the carousel before posting.",
-  "desktopSearchAngle": "Desktop readers usually want a deeper comparison, file handling, and a more deliberate review workflow.",
-  "mobileSearchAngle": "Mobile readers usually want a short answer first, then a quick next step they can finish in a few taps.",
+  "desktopUseCase": "Best on a computer when you need to copy from the article, edit slide text, and adjust the design layout. Use desktop to compare blog posts with captions before the final review.",
+  "mobileUseCase": "Best on a phone when you are shortening captions or reviewing the carousel before posting. Use mobile for quick checks on captions when the input is already prepared.",
+  "desktopSearchAngle": "Desktop readers usually want deeper comparison, file handling, and a deliberate review workflow for captions.",
+  "mobileSearchAngle": "Mobile readers usually want a short answer first, then a quick next step for captions they can finish in a few taps.",
   "visualAssets": {
     "hero": {
       "type": "hero",
@@ -41,9 +41,11 @@
       "type": "workflow-diagram",
       "alt": "How to Turn a Blog Post Into an Instagram Carousel with AI workflow diagram",
       "steps": [
-        "Problem or source material",
-        "AI draft or comparison pass",
-        "Human review and final result"
+        "Quick Answer",
+        "Real-World Scenario",
+        "What You Need",
+        "Step-by-Step Workflow",
+        "Best If You Are on a Computer"
       ]
     },
     "toolStack": {
@@ -62,36 +64,54 @@
       "after": "After: a faster workflow that leaves you with a clear, checked result."
     }
   },
-  "quickAnswer": "To handle turning a blog post into a short Instagram carousel, start by gathering the real source material, use Canva Magic Studio for the first AI pass, then check the result against the original before you share it. Use Adobe Firefly when the job needs a different format, and keep Predis.ai for cleanup or review after the main workflow is done.",
-  "quickDecision": "For turning a blog post into a short Instagram carousel, choose Canva Magic Studio for non-designers creating polished visual assets. Choose Adobe Firefly when you need creative exploration and image edits. Choose Predis.ai when the main job is workflows that need social content generation and scheduling or when you need a lighter alternative.",
+  "quickAnswer": "To handle turning a blog post into a short Instagram carousel, start with blog posts, decide that the output must be captions, and use AI only after the source material is clear. Start with blog posts, decide that the output must be captions, use Canva Magic Studio for one reviewable version, and check it before changing formats or adding another tool. Canva Magic Studio should create the first reviewable version, Adobe Firefly belongs in the second pass only when captions needs more control, and Predis.ai should be saved for review or export after the core result is right.",
+  "quickDecision": "For turning a blog post into a short Instagram carousel, choose Canva Magic Studio first when the input is blog posts and the output needs to be captions. Choose Adobe Firefly when post angle matters more. Choose Predis.ai when you need a lighter review, export, or fallback pass.",
+  "realWorldScenario": "content creators have blog posts and campaign notes and need captions without drifting into an unrelated workflow. Prepared 2026-05-29.",
+  "whatYouNeed": [
+    "the source idea, audience notes, brand voice, and channel requirements",
+    "A clear final format for turning a blog post into a short Instagram carousel.",
+    "The audience, recipient, or grading criteria for the output.",
+    "Time to check facts, names, numbers, dates, and commitments before using the result."
+  ],
+  "timeEstimate": "Plan on 10 to 30 minutes for one careful first pass, depending on the source material.",
   "contentGap": "Most results jump to design tools before shaping the carousel message.",
   "uniqueAngle": "Start with the narrative and slide outline, then move into design.",
   "aiOverviewAnswer": "Extract the main idea, turn it into 5 to 8 slide beats, design the carousel, and check the final copy for accuracy and readability.",
-  "quickVerdict": "To handle turning a blog post into a short Instagram carousel, start by gathering the real source material, use Canva Magic Studio for the first AI pass, then check the result against the original before you share it. Use Adobe Firefly when the job needs a different format, and keep Predis.ai for cleanup or review after the main workflow is done.",
+  "quickVerdict": "To handle turning a blog post into a short Instagram carousel, start with blog posts, decide that the output must be captions, and use AI only after the source material is clear. Start with blog posts, decide that the output must be captions, use Canva Magic Studio for one reviewable version, and check it before changing formats or adding another tool. Canva Magic Studio should create the first reviewable version, Adobe Firefly belongs in the second pass only when captions needs more control, and Predis.ai should be saved for review or export after the core result is right.",
   "steps": [
     {
-      "title": "Gather the source material",
-      "detail": "Start with the real inputs for turning a blog post into a short Instagram carousel: notes, files, transcript text, product facts, or examples. The output will only be useful if the source is specific."
+      "title": "Prepare blog posts",
+      "detail": "Put the real input in one place before opening a tool: blog posts, campaign notes, brand voice notes, existing posts, turning a blog post into a short Instagram carousel, any required facts, the audience, and the format you need at the end. Remove private details you are not allowed to share.",
+      "why": "AI output is only as useful as the material and constraints you give it.",
+      "output": "A clean input bundle and one clear target format: captions."
     },
     {
-      "title": "Ask for the first useful draft",
-      "detail": "Use Canva Magic Studio to create the first pass from that source material. Ask for a practical result, not a generic explanation of the topic.",
+      "title": "Ask for the first usable version",
+      "detail": "Use Canva Magic Studio for a first pass that tries to turn a blog post into a short Instagram carousel. Ask it to preserve source facts, flag uncertainty, and organize the result into sections you can review.",
+      "why": "The first pass should create a reviewable captions, not a finished answer you trust blindly.",
+      "output": "A structured captions with visible gaps or uncertain points.",
       "toolSlug": "canva-magic-studio",
       "toolName": "Canva Magic Studio"
     },
     {
-      "title": "Check the draft against the original",
-      "detail": "Compare names, facts, dates, claims, missing context, and tone against the original input before you edit style or formatting."
+      "title": "Check the answer before polishing",
+      "detail": "Compare the AI output with blog posts. Fix names, dates, numbers, unsupported claims, missing context, and tone before you ask for nicer wording.",
+      "why": "Polished wrong information is harder to catch than rough information.",
+      "output": "A corrected captions that is ready for formatting or wording cleanup."
     },
     {
-      "title": "Change format only after the facts are right",
-      "detail": "Use Adobe Firefly when the result needs a visual, social, presentation, or alternate format. Keep the same source facts so the rewrite does not drift.",
+      "title": "Change the format only after the facts are right",
+      "detail": "Use Adobe Firefly when the verified captions needs a different format, structure, or source-aware second pass. Keep the same facts from blog posts so the rewrite does not drift from the original.",
+      "why": "Format changes are safer after the substance is already checked.",
+      "output": "A version that fits the channel, document, post, or recipient.",
       "toolSlug": "adobe-firefly",
       "toolName": "Adobe Firefly"
     },
     {
-      "title": "Polish the final version",
-      "detail": "Use Predis.ai or a manual review pass to tighten wording, remove filler, and make the final result easier to read on a phone or computer.",
+      "title": "Finish with a human review",
+      "detail": "Use Predis.ai for cleanup only after the main captions is checked against blog posts. Read the final result as the recipient would: on the device, in the app, or in the document where it will actually be used.",
+      "why": "The final review catches tone, missing context, and practical usability issues.",
+      "output": "A final result you can send, post, study from, or save with confidence.",
       "toolSlug": "predis-ai",
       "toolName": "Predis.ai"
     }
@@ -100,43 +120,49 @@
     {
       "toolSlug": "canva-magic-studio",
       "toolName": "Canva Magic Studio",
-      "why": "Canva Magic Studio is a practical fit for turning a blog post into a short Instagram carousel because it is strongest at non-designers creating polished visual assets."
+      "why": "Primary tool for turning blog posts into captions.",
+      "role": "Primary tool for turning blog posts into captions.",
+      "bestUseCase": "non-designers creating polished visual assets for captions"
     },
     {
       "toolSlug": "adobe-firefly",
       "toolName": "Adobe Firefly",
-      "why": "Adobe Firefly is a practical fit for turning a blog post into a short Instagram carousel because it is strongest at creative exploration and image edits."
+      "why": "Second-pass tool when captions needs a different format, stronger controls, or validation.",
+      "role": "Second-pass tool when captions needs a different format, stronger controls, or validation.",
+      "bestUseCase": "creative exploration and image edits when post angle matters more than the top pick"
     },
     {
       "toolSlug": "predis-ai",
       "toolName": "Predis.ai",
-      "why": "Predis.ai is a practical fit for turning a blog post into a short Instagram carousel because it is strongest at workflows that need social content generation and scheduling."
+      "why": "Review or finishing tool after the main output is checked.",
+      "role": "Review or finishing tool after the main output is checked.",
+      "bestUseCase": "workflows that need social content generation and scheduling when speed or a lighter setup matters more for post schedule"
     }
   ],
   "keyTakeaways": [
-    "What you need: the original source material, a clear output format, and a few minutes to review the result.",
+    "What you need: blog posts, campaign notes, brand voice notes, a clear output format, and a few minutes to review the result.",
     "Start with Canva Magic Studio for the first pass, but judge the output against turning a blog post into a short Instagram carousel, not against tool hype.",
     "Use Adobe Firefly only when the workflow needs a different format or second pass.",
-    "Use Predis.ai for cleanup after the main draft is fact-checked.",
+    "Use Predis.ai for review after the main output is fact-checked.",
     "The reader has long-form content but needs a visual post that is short and scannable.",
     "Most results jump to design tools before shaping the carousel message.",
     "The useful next step is to test one real example before building a repeatable workflow."
   ],
   "bestPicksBySituation": [
     {
-      "situation": "If you already have draft emails that need careful wording without changing meaning, choose Canva Magic Studio.",
+      "situation": "If you already have blog posts, choose Canva Magic Studio.",
       "toolSlug": "canva-magic-studio",
       "toolName": "Canva Magic Studio",
-      "why": "Canva Magic Studio is the closest match because it is built for non-designers creating polished visual assets and keeps the work tied to the original input."
+      "why": "Canva Magic Studio is the closest match because it is built for non-designers creating polished visual assets and keeps the work tied to blog posts."
     },
     {
-      "situation": "If you need turning a blog post into a short Instagram carousel and want a different workflow, choose Adobe Firefly.",
+      "situation": "If you need carousel outline or stronger post angle, choose Adobe Firefly.",
       "toolSlug": "adobe-firefly",
       "toolName": "Adobe Firefly",
-      "why": "Adobe Firefly is the better second choice when you want creative exploration and image edits instead of the first tool's exact workflow."
+      "why": "Adobe Firefly is the better second choice when creative exploration and image edits matters more than the first tool's handling of blog posts."
     },
     {
-      "situation": "If you want the cleanest rewrite or the lightest review step, choose Predis.ai.",
+      "situation": "If you want the lightest review or export step for captions, choose Predis.ai.",
       "toolSlug": "predis-ai",
       "toolName": "Predis.ai",
       "why": "Predis.ai helps when you need workflows that need social content generation and scheduling and want a fallback that is easier to adapt on a phone or desktop."
@@ -146,16 +172,16 @@
     "canva-magic-studio",
     "adobe-firefly",
     "predis-ai",
-    "textcortex",
-    "hyperwrite"
+    "copy-ai",
+    "deepl-write"
   ],
   "recommendedTools": [
     {
       "toolSlug": "canva-magic-studio",
       "toolName": "Canva Magic Studio",
-      "summary": "Canva Magic Studio is strongest when you need non-designers creating polished visual assets and want it tied to draft emails that need careful wording without changing meaning. It handles create social posts better than a generic assistant, but it is a weaker choice if you need your output requires full professional design control.",
-      "bestFor": "non-designers creating polished visual assets for turning a blog post into a short Instagram carousel",
-      "avoidIf": "your output requires full professional design control if your real input is draft emails that need careful wording without changing meaning",
+      "summary": "Canva Magic Studio is strongest when you need non-designers creating polished visual assets and want it tied to the source idea, audience notes, brand voice, and channel requirements. It handles create social posts better than a generic assistant, but it is a weaker choice if you need your output requires full professional design control.",
+      "bestFor": "non-designers creating polished visual assets for captions",
+      "avoidIf": "your output requires full professional design control if your real input is the source idea, audience notes, brand voice, and channel requirements",
       "strengths": [
         "design",
         "templates",
@@ -171,8 +197,8 @@
     {
       "toolSlug": "adobe-firefly",
       "toolName": "Adobe Firefly",
-      "summary": "Adobe Firefly is strongest when you need creative exploration and image edits and want it tied to draft emails that need careful wording without changing meaning. It handles generate campaign imagery better than a generic assistant, but it is a weaker choice if you need you have not confirmed usage rights for your intended project.",
-      "bestFor": "creative exploration and image edits when you want a different workflow than the top pick",
+      "summary": "Adobe Firefly is strongest when you need creative exploration and image edits and want it tied to the source idea, audience notes, brand voice, and channel requirements. It handles generate campaign imagery better than a generic assistant, but it is a weaker choice if you need you have not confirmed usage rights for your intended project.",
+      "bestFor": "creative exploration and image edits when post angle matters more than the top pick",
       "avoidIf": "you have not confirmed usage rights for your intended project if your main need is the top tool's exact workflow",
       "strengths": [
         "images",
@@ -189,8 +215,8 @@
     {
       "toolSlug": "predis-ai",
       "toolName": "Predis.ai",
-      "summary": "Predis.ai is strongest when you need workflows that need social content generation and scheduling and want it tied to draft emails that need careful wording without changing meaning. It handles social content generation and scheduling better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
-      "bestFor": "workflows that need social content generation and scheduling when speed or a lighter setup matters more",
+      "summary": "Predis.ai is strongest when you need workflows that need social content generation and scheduling and want it tied to the source idea, audience notes, brand voice, and channel requirements. It handles social content generation and scheduling better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need social content generation and scheduling when speed or a lighter setup matters more for post schedule",
       "avoidIf": "you need publish-ready output without review if you need the most polished or source-grounded final pass",
       "strengths": [
         "productivity",
@@ -205,109 +231,141 @@
       "toolPagePath": "/tools/predis-ai"
     },
     {
-      "toolSlug": "textcortex",
-      "toolName": "TextCortex",
-      "summary": "TextCortex is strongest when you need workflows that need multichannel writing and content generation and want it tied to draft emails that need careful wording without changing meaning. It handles multichannel writing and content generation better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
-      "bestFor": "workflows that need multichannel writing and content generation when speed or a lighter setup matters more",
-      "avoidIf": "you need publish-ready output without review if you need the most polished or source-grounded final pass",
+      "toolSlug": "copy-ai",
+      "toolName": "Copy.ai",
+      "summary": "Copy.ai is strongest when you need sales and marketing workflow content and want it tied to the source idea, audience notes, brand voice, and channel requirements. It handles create outreach drafts better than a generic assistant, but it is a weaker choice if you need you only need an occasional general chat tool.",
+      "bestFor": "sales and marketing workflow content when speed or a lighter setup matters more for short social copy",
+      "avoidIf": "you only need an occasional general chat tool if the task needs deeper review than a lightweight fallback can provide",
       "strengths": [
-        "writing",
-        "copy",
-        "editing",
-        "drafting"
+        "copywriting",
+        "marketing",
+        "workflows",
+        "sales"
       ],
       "tradeoffs": [
-        "Not the best choice when your main job is outside writing.",
-        "Not ideal when you need a single tool to do every job."
+        "Personal grammar corrections only",
+        "Media editing workflows"
       ],
-      "toolPagePath": "/tools/textcortex"
+      "toolPagePath": "/tools/copy-ai"
     },
     {
-      "toolSlug": "hyperwrite",
-      "toolName": "HyperWrite",
-      "summary": "HyperWrite is strongest when you need workflows that need general drafting and AI writing assistance and want it tied to draft emails that need careful wording without changing meaning. It handles general drafting and AI writing assistance better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
-      "bestFor": "workflows that need general drafting and AI writing assistance when speed or a lighter setup matters more",
-      "avoidIf": "you need publish-ready output without review if you need the most polished or source-grounded final pass",
+      "toolSlug": "deepl-write",
+      "toolName": "DeepL Write",
+      "summary": "DeepL Write is strongest when you need rephrasing professional messages and want it tied to the source idea, audience notes, brand voice, and channel requirements. It handles polish messages better than a generic assistant, but it is a weaker choice if you need you need specialist translation or legal review without a human expert.",
+      "bestFor": "rephrasing professional messages when speed or a lighter setup matters more for turning a blog post into a short Instagram carousel",
+      "avoidIf": "you need specialist translation or legal review without a human expert if the workflow depends on another tool's stronger input handling or editing controls",
       "strengths": [
         "writing",
-        "copy",
-        "editing",
-        "drafting"
+        "clarity",
+        "tone",
+        "multilingual"
       ],
       "tradeoffs": [
-        "Not the best choice when your main job is outside writing.",
-        "Not ideal when you need a single tool to do every job."
+        "Generating rich visual content",
+        "Research requiring cited web sources"
       ],
-      "toolPagePath": "/tools/hyperwrite"
+      "toolPagePath": "/tools/deepl-write"
     }
   ],
   "comparisonRows": [
     {
       "toolSlug": "canva-magic-studio",
       "toolName": "Canva Magic Studio",
-      "bestFor": "non-designers creating polished visual assets for turning a blog post into a short Instagram carousel",
+      "bestFor": "non-designers creating polished visual assets for captions",
       "freePlan": true,
       "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
       "whyConsider": "Canva Magic Studio is worth considering because it is the clearest fit for turning a blog post into a short Instagram carousel. It is built for non-designers creating polished visual assets, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
-      "watchFor": "Watch for advanced professional image compositing; this matters when turning a blog post into a short Instagram carousel."
+      "watchFor": "Watch for advanced professional image compositing; this matters when the reader is turning a blog post into a short Instagram carousel."
     },
     {
       "toolSlug": "adobe-firefly",
       "toolName": "Adobe Firefly",
-      "bestFor": "creative exploration and image edits when you want a different workflow than the top pick",
+      "bestFor": "creative exploration and image edits when post angle matters more than the top pick",
       "freePlan": true,
       "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
       "whyConsider": "Adobe Firefly is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for creative exploration and image edits, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
-      "watchFor": "Watch for text-only business productivity; this matters when turning a blog post into a short Instagram carousel."
+      "watchFor": "Watch for text-only business productivity; this matters when the reader is turning a blog post into a short Instagram carousel."
     },
     {
       "toolSlug": "predis-ai",
       "toolName": "Predis.ai",
-      "bestFor": "workflows that need social content generation and scheduling when speed or a lighter setup matters more",
+      "bestFor": "workflows that need social content generation and scheduling when speed or a lighter setup matters more for post schedule",
       "freePlan": true,
       "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
       "whyConsider": "Predis.ai is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need social content generation and scheduling, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
-      "watchFor": "Watch for not the best choice when your main job is outside productivity.; this matters when turning a blog post into a short Instagram carousel."
+      "watchFor": "Watch for not the best choice when your main job is outside productivity.; this matters when the reader is turning a blog post into a short Instagram carousel."
     },
     {
-      "toolSlug": "textcortex",
-      "toolName": "TextCortex",
-      "bestFor": "workflows that need multichannel writing and content generation when speed or a lighter setup matters more",
-      "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
-      "whyConsider": "TextCortex is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need multichannel writing and content generation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
-      "watchFor": "Watch for not the best choice when your main job is outside writing.; this matters when turning a blog post into a short Instagram carousel."
+      "toolSlug": "copy-ai",
+      "toolName": "Copy.ai",
+      "bestFor": "sales and marketing workflow content when speed or a lighter setup matters more for short social copy",
+      "freePlan": false,
+      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "whyConsider": "Copy.ai is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for sales and marketing workflow content, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for personal grammar corrections only; this matters when the reader is turning a blog post into a short Instagram carousel."
     },
     {
-      "toolSlug": "hyperwrite",
-      "toolName": "HyperWrite",
-      "bestFor": "workflows that need general drafting and AI writing assistance when speed or a lighter setup matters more",
+      "toolSlug": "deepl-write",
+      "toolName": "DeepL Write",
+      "bestFor": "rephrasing professional messages when speed or a lighter setup matters more for turning a blog post into a short Instagram carousel",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
-      "whyConsider": "HyperWrite is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need general drafting and AI writing assistance, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
-      "watchFor": "Watch for not the best choice when your main job is outside writing.; this matters when turning a blog post into a short Instagram carousel."
+      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "whyConsider": "DeepL Write is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for rephrasing professional messages, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for generating rich visual content; this matters when the reader is turning a blog post into a short Instagram carousel."
     }
   ],
   "decisionPath": [
     {
-      "situation": "If you already have draft emails that need careful wording without changing meaning, start with Canva Magic Studio.",
+      "situation": "If you already have blog posts, start with Canva Magic Studio.",
       "recommendation": "Canva Magic Studio",
-      "reason": "Canva Magic Studio is the fastest first pass because it can work from the source material you already have."
+      "reason": "Canva Magic Studio is the first-pass choice when the input is ready and the main job is to structure, summarize, or clean it into a usable result."
     },
     {
-      "situation": "If the output needs a different format after the facts are checked, use Adobe Firefly.",
+      "situation": "If captions needs a different format after the facts are checked, switch to Adobe Firefly.",
       "recommendation": "Adobe Firefly",
-      "reason": "Adobe Firefly is better for the second pass when the job changes from drafting to formatting, layout, or a different presentation style."
+      "reason": "Adobe Firefly is better for the second pass when the job changes from source checking to formatting, layout, or another presentation style."
     },
     {
-      "situation": "If the result is almost right but still rough, use Predis.ai.",
+      "situation": "If the result is accurate but still rough, use Predis.ai.",
       "recommendation": "Predis.ai",
-      "reason": "Predis.ai fits the final cleanup step because the main source work is already done."
+      "reason": "Predis.ai fits the review step because the main source work is already done."
     },
     {
-      "situation": "If you are on your phone, keep the task small.",
+      "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
       "recommendation": "Canva Magic Studio",
-      "reason": "Use mobile for a short summary, quick rewrite, or final review; save side-by-side comparison and bigger edits for desktop."
+      "reason": "Mobile works best for a short summary, a quick rewrite, or final approval; save side-by-side checking and larger edits for desktop."
+    },
+    {
+      "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
+      "recommendation": "Adobe Firefly",
+      "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
+    }
+  ],
+  "decisionTree": [
+    {
+      "situation": "If you already have blog posts, start with Canva Magic Studio.",
+      "recommendation": "Canva Magic Studio",
+      "reason": "Canva Magic Studio is the first-pass choice when the input is ready and the main job is to structure, summarize, or clean it into a usable result."
+    },
+    {
+      "situation": "If captions needs a different format after the facts are checked, switch to Adobe Firefly.",
+      "recommendation": "Adobe Firefly",
+      "reason": "Adobe Firefly is better for the second pass when the job changes from source checking to formatting, layout, or another presentation style."
+    },
+    {
+      "situation": "If the result is accurate but still rough, use Predis.ai.",
+      "recommendation": "Predis.ai",
+      "reason": "Predis.ai fits the review step because the main source work is already done."
+    },
+    {
+      "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
+      "recommendation": "Canva Magic Studio",
+      "reason": "Mobile works best for a short summary, a quick rewrite, or final approval; save side-by-side checking and larger edits for desktop."
+    },
+    {
+      "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
+      "recommendation": "Adobe Firefly",
+      "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
     }
   ],
   "moneySavingTips": [
@@ -319,38 +377,38 @@
   "pricingCaveat": "Pricing can change. Check the official site before subscribing.",
   "faqs": [
     {
-      "question": "Can I use AI to rewrite turning a blog post into a short Instagram carousel without changing the meaning?",
-      "answer": "Yes, but you need to keep the original message in view. Canva Magic Studio is the best first pass when you want careful wording, Adobe Firefly is useful when you need a different rewrite style, and Predis.ai is the fallback for a final polish."
+      "question": "What input do I need before using AI for turning a blog post into a short Instagram carousel?",
+      "answer": "Start with blog posts, campaign notes, brand voice notes and decide that the output must be captions. That keeps Canva Magic Studio focused on the actual job instead of drifting into a generic answer."
     },
     {
-      "question": "Which AI tool is better for tone and clarity?",
-      "answer": "Canva Magic Studio is usually the safest place to start when you want cleaner tone without losing intent. Adobe Firefly becomes more useful when you need a more opinionated rewrite."
+      "question": "Which tool should I start with for captions?",
+      "answer": "Start with Canva Magic Studio when the main input is blog posts. Compare Adobe Firefly when post angle matters more, and keep Predis.ai for review or fallback work."
     },
     {
-      "question": "Is Canva Magic Studio better than Adobe Firefly for client emails?",
-      "answer": "Canva Magic Studio is better when accuracy and tone control matter more than speed; Adobe Firefly is the better fallback when you want a wider rewrite or a second opinion on wording."
+      "question": "What should I check before I use the result?",
+      "answer": "Check the result against blog posts, especially starting with a generic hook. Do not use the output until it still matches captions."
     },
     {
-      "question": "What should I avoid before I send the final version?",
-      "answer": "Do not send the rewritten text until you have checked the meaning, names, dates, and asks. That matters even more when you use Predis.ai for the final edit."
+      "question": "Can I finish this workflow on a phone, or should I use a computer?",
+      "answer": "Use mobile for on mobile, keep the task to one input and one output: blog posts to captions. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. captions usually benefits from desktop review before publishing, sending, or saving."
     }
   ],
   "faq": [
     {
-      "question": "Can I use AI to rewrite turning a blog post into a short Instagram carousel without changing the meaning?",
-      "answer": "Yes, but you need to keep the original message in view. Canva Magic Studio is the best first pass when you want careful wording, Adobe Firefly is useful when you need a different rewrite style, and Predis.ai is the fallback for a final polish."
+      "question": "What input do I need before using AI for turning a blog post into a short Instagram carousel?",
+      "answer": "Start with blog posts, campaign notes, brand voice notes and decide that the output must be captions. That keeps Canva Magic Studio focused on the actual job instead of drifting into a generic answer."
     },
     {
-      "question": "Which AI tool is better for tone and clarity?",
-      "answer": "Canva Magic Studio is usually the safest place to start when you want cleaner tone without losing intent. Adobe Firefly becomes more useful when you need a more opinionated rewrite."
+      "question": "Which tool should I start with for captions?",
+      "answer": "Start with Canva Magic Studio when the main input is blog posts. Compare Adobe Firefly when post angle matters more, and keep Predis.ai for review or fallback work."
     },
     {
-      "question": "Is Canva Magic Studio better than Adobe Firefly for client emails?",
-      "answer": "Canva Magic Studio is better when accuracy and tone control matter more than speed; Adobe Firefly is the better fallback when you want a wider rewrite or a second opinion on wording."
+      "question": "What should I check before I use the result?",
+      "answer": "Check the result against blog posts, especially starting with a generic hook. Do not use the output until it still matches captions."
     },
     {
-      "question": "What should I avoid before I send the final version?",
-      "answer": "Do not send the rewritten text until you have checked the meaning, names, dates, and asks. That matters even more when you use Predis.ai for the final edit."
+      "question": "Can I finish this workflow on a phone, or should I use a computer?",
+      "answer": "Use mobile for on mobile, keep the task to one input and one output: blog posts to captions. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. captions usually benefits from desktop review before publishing, sending, or saving."
     }
   ],
   "whoShouldUseThis": [
@@ -365,19 +423,25 @@
   "finalVerdict": "The next step is to run this workflow on one real example of turning a blog post into a short Instagram carousel. Start with Canva Magic Studio, use Adobe Firefly only if the format needs a second pass, finish with Predis.ai or manual review, and do not reuse the workflow until the first result is accurate and useful.",
   "realityCheck": "AI can speed up the work, but the user still has to review facts, shape the final result, and decide whether the workflow fits the job.",
   "skillNeeded": "You need enough familiarity with turning a blog post into a short Instagram carousel to judge whether the output is accurate and useful.",
-  "firstStep": "What you need: the original material for turning a blog post into a short Instagram carousel, one clear output format, and time to check the AI result before using it.",
+  "firstStep": "What you need: the source idea, audience notes, brand voice, and channel requirements, a clear final format, the audience or recipient, and time to check the AI result before using it.",
   "commonMistakes": [
-    "Choosing a tool before checking whether the input is draft emails that need careful wording without changing meaning or something else.",
-    "Using the same prompt or workflow for every tool instead of matching each tool to its job.",
-    "Sharing the output before checking facts, tone, and missing context."
+    "Starting with a generic hook",
+    "Ignoring the source angle",
+    "Posting without checking claims"
   ],
   "mistakesToAvoid": [
     "Do not treat Canva Magic Studio as the final answer without checking the result against your source material.",
     "Do not use Adobe Firefly or Predis.ai as a shortcut around the real decision about input type and output quality.",
     "Do not skip review if the output will reach clients, customers, classmates, or a public page."
   ],
-  "exampleWorkflow": "Collect the source material, ask Canva Magic Studio for a first draft, verify it against the original, use Adobe Firefly only if the format needs to change, and use Predis.ai for the final cleanup.",
-  "exampleResult": "The final result should be specific enough to use immediately: it should preserve the source facts, remove filler, and include the next action the reader can take.",
+  "whatToAvoid": [
+    "Do not treat Canva Magic Studio as the final answer without checking the result against your source material.",
+    "Do not use Adobe Firefly or Predis.ai as a shortcut around the real decision about input type and output quality.",
+    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+  ],
+  "whatChanged": "Start with the narrative and slide outline, then move into design.",
+  "exampleWorkflow": "Prepare the real input: blog posts, campaign notes, brand voice notes. Define the target output before opening tools: captions or carousel outline. Use Canva Magic Studio for the first usable pass and ask it to preserve the constraints that matter in Social content / captions. Check the result against the input, then use Adobe Firefly only if the output needs a format change or stronger second pass. Finish with a human review and use Predis.ai only for cleanup, export, or a lighter fallback.",
+  "exampleResult": "Example result: a checked turn a blog post into a short Instagram carousel output that keeps the source facts, removes filler, names the next action, and is short enough to review before sending, posting, studying, or saving.",
   "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
   "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
