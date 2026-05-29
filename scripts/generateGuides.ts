@@ -1911,14 +1911,7 @@ function readOutputText(result: ResponsesResult): string | undefined {
 }
 
 function preferredGuideModels(): string[] {
-  return [
-    process.env.OPENAI_GUIDE_MODEL ?? process.env.OPENAI_MODEL,
-    "gpt-5.4-mini",
-  ].filter((model, index, models): model is string =>
-    typeof model === "string" &&
-    model.trim().length > 0 &&
-    models.indexOf(model) === index,
-  );
+  return [process.env.OPENAI_MODEL?.trim() || "gpt-5.5"];
 }
 
 async function refineWithOpenAI(template: Guide): Promise<Guide> {

@@ -14,6 +14,7 @@ export interface AiGuideReview {
 
 export interface OpenAIReviewDiagnostics {
   readonly apiKeyPresent: boolean;
+  readonly modelRawEnvPresent: boolean;
   readonly model: string;
   readonly reasoningEffort: string;
   readonly runningInGitHubActions: boolean;
@@ -125,12 +126,13 @@ function readOutputText(result: ResponsesResult): string | undefined {
 }
 
 export function resolveOpenAIModel(): string {
-  return process.env.OPENAI_MODEL?.trim() || "gpt-5.4-mini";
+  return process.env.OPENAI_MODEL?.trim() || "gpt-5.5";
 }
 
 export function getOpenAIReviewDiagnostics(): OpenAIReviewDiagnostics {
   return {
     apiKeyPresent: Boolean(process.env.OPENAI_API_KEY),
+    modelRawEnvPresent: Boolean(process.env.OPENAI_MODEL?.trim()),
     model: resolveOpenAIModel(),
     reasoningEffort: process.env.OPENAI_REASONING_EFFORT?.trim() || "n/a",
     runningInGitHubActions: process.env.GITHUB_ACTIONS === "true",

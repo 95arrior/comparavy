@@ -18,7 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      OPENAI_MODEL: gpt-5.4-mini
+      OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
+      OPENAI_REASONING_EFFORT: ${{ secrets.OPENAI_REASONING_EFFORT }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4

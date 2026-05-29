@@ -14,6 +14,7 @@ import {
 import {
   getOpenAIReviewDiagnostics,
   probeOpenAIEditorialReview,
+  resolveOpenAIModel,
   reviewGuideWithAI,
   type AiGuideReview,
   type OpenAIReviewDiagnostics,
@@ -1445,14 +1446,7 @@ function readOutputText(result: ResponsesResult): string | undefined {
 }
 
 function preferredGuideModels(): string[] {
-  return [
-    process.env.OPENAI_GUIDE_MODEL ?? process.env.OPENAI_MODEL,
-    "gpt-5.4-mini",
-  ].filter((model, index, models): model is string =>
-    typeof model === "string" &&
-    model.trim().length > 0 &&
-    models.indexOf(model) === index,
-  );
+  return [resolveOpenAIModel()];
 }
 
 function truncateForOpenAI(value: string, maxLength: number): { readonly value: string; readonly truncated: boolean } {
@@ -2479,7 +2473,8 @@ function acceptedCountForType(candidates: readonly Candidate[], guideType: Guide
 function printOpenAIDiagnostics(diagnostics: OpenAIReviewDiagnostics, options: AutoPublishOptions): void {
   console.log("OpenAI diagnostics");
   console.log(`OPENAI_API_KEY present: ${diagnostics.apiKeyPresent ? "yes" : "no"}`);
-  console.log(`OPENAI_MODEL value: ${diagnostics.model}`);
+  console.log(`OPENAI_MODEL raw env present: ${diagnostics.modelRawEnvPresent ? "yes" : "no"}`);
+  console.log(`OPENAI_MODEL resolved value: ${diagnostics.model}`);
   console.log(`Model used for AI review: ${diagnostics.model}`);
   console.log(`Model used for improvement: ${preferredGuideModels()[0] ?? diagnostics.model}`);
   console.log(`OPENAI_REASONING_EFFORT value: ${diagnostics.reasoningEffort}`);

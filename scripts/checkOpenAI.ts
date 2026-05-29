@@ -8,7 +8,8 @@ function printDiagnostics(): void {
 
   console.log("OpenAI diagnostics");
   console.log(`OPENAI_API_KEY present: ${diagnostics.apiKeyPresent ? "yes" : "no"}`);
-  console.log(`OPENAI_MODEL value: ${diagnostics.model}`);
+  console.log(`OPENAI_MODEL raw env present: ${diagnostics.modelRawEnvPresent ? "yes" : "no"}`);
+  console.log(`OPENAI_MODEL resolved value: ${diagnostics.model}`);
   console.log(`OPENAI_REASONING_EFFORT value: ${diagnostics.reasoningEffort}`);
   console.log(`Running in GitHub Actions: ${diagnostics.runningInGitHubActions ? "yes" : "no"}`);
 
