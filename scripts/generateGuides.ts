@@ -1913,7 +1913,6 @@ function readOutputText(result: ResponsesResult): string | undefined {
 function preferredGuideModels(): string[] {
   return [
     process.env.OPENAI_GUIDE_MODEL ?? process.env.OPENAI_MODEL,
-    "gpt-5.5-high",
     "gpt-5.4-mini",
   ].filter((model, index, models): model is string =>
     typeof model === "string" &&

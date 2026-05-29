@@ -125,7 +125,7 @@ function readOutputText(result: ResponsesResult): string | undefined {
 }
 
 export function resolveOpenAIModel(): string {
-  return process.env.OPENAI_MODEL?.trim() || "gpt-5.5-high";
+  return process.env.OPENAI_MODEL?.trim() || "gpt-5.4-mini";
 }
 
 export function getOpenAIReviewDiagnostics(): OpenAIReviewDiagnostics {

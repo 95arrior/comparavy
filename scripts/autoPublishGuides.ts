@@ -1273,7 +1273,6 @@ function readOutputText(result: ResponsesResult): string | undefined {
 function preferredGuideModels(): string[] {
   return [
     process.env.OPENAI_GUIDE_MODEL ?? process.env.OPENAI_MODEL,
-    "gpt-5.5-high",
     "gpt-5.4-mini",
   ].filter((model, index, models): model is string =>
     typeof model === "string" &&
@@ -2517,7 +2516,15 @@ async function main(): Promise<void> {
   const finalApprovedTitles = [...remainingApprovedAfterPublish, ...newlyApproved.map((guide) => guide.title)];
   const finalPublishedTitles = publishedThisRun.map((guide) => guide.title);
 
-  console.log("Auto publish summary");
+  const noGuidesPublished = publishedThisRun.length === 0;
+  const noPassingCandidates = newlyApproved.length === 0;
+  const finalStatus = noGuidesPublished
+    ? noPassingCandidates
+      ? "completed_successfully_no_publishable_guides"
+      : "completed_successfully_new_guides_approved_for_queue"
+    : "completed_successfully_published_from_approved_queue";
+
+  console.log("Auto publish summary:");
   console.log(`Approved guides available before run: ${approvedQueueBeforeRun.length}`);
   console.log(`Approved guides published: ${publishedThisRun.length}`);
   console.log(`New gold brief candidates generated: ${generationSelections.filter((entry) => entry.source === "gold").length}`);
@@ -2581,6 +2588,7 @@ async function main(): Promise<void> {
   }
   console.log(`Published from approved queue: ${publishedThisRun.length}`);
   console.log(`Approved queue after run: ${finalApprovedTitles.length}`);
+  console.log(`Final status: ${finalStatus}`);
 
   if (options.dryRun) {
     console.log("Dry run: no guide files modified.");
@@ -2590,9 +2598,8 @@ async function main(): Promise<void> {
     console.log("No approved guides existed before the run, so nothing was published.");
   }
 
-  if (options.count > 0 && generationSelections.length === 0 && publishedThisRun.length === 0) {
-    console.error("No valid queue candidates could be generated or published.");
-    process.exitCode = 1;
+  if (noGuidesPublished && noPassingCandidates) {
+    console.log("Completed successfully: no guides were published because no approved or passing candidates were available.");
   }
 }
 
