@@ -50,7 +50,7 @@ export default function HowToGuideLayout({ guide }: { readonly guide: Guide }) {
             toolName: tool.toolName,
             why: tool.summary,
           }))).map((tool) => {
-            const catalogTool = resolveGuideTool(tool.toolSlug);
+            const catalogTool = resolveGuideTool(tool.toolSlug, tool.toolName);
 
             return (
               <div

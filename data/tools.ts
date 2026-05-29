@@ -157,6 +157,8 @@ const BASE_TOOLS: readonly AiTool[] = [
     name: "Microsoft Copilot",
     category: "general-assistant",
     officialUrl: "https://copilot.microsoft.com/",
+    iconPath:
+      "https://www.google.com/s2/favicons?domain_url=https://copilot.microsoft.com&sz=64",
     iconDomain: "copilot.microsoft.com",
     description:
       "Microsoft's general AI assistant for web conversations, drafting, and users invested in Microsoft workflows.",
@@ -192,8 +194,10 @@ const BASE_TOOLS: readonly AiTool[] = [
     slug: "notebooklm",
     name: "NotebookLM",
     category: "research",
-    officialUrl: "https://notebooklm.google.com/",
-    iconDomain: "notebooklm.google.com",
+    officialUrl: "https://notebooklm.google/",
+    iconPath:
+      "https://www.google.com/s2/favicons?domain_url=https://notebooklm.google&sz=64",
+    iconDomain: "notebooklm.google",
     description:
       "A source-grounded notebook assistant designed to help users ask questions about materials they provide.",
     bestFor: [

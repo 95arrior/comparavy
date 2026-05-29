@@ -22,7 +22,6 @@ const SIZE_MAP = {
 } as const;
 
 const IMAGE_CLASSES = "block h-full w-full object-contain scale-[1.04]";
-const PLACEHOLDER_CLASSES = "absolute inset-0 bg-slate-50";
 
 function firstLetter(name: string): string {
   const initial = name.trim().charAt(0).toUpperCase();
@@ -48,19 +47,14 @@ export default function ToolIcon({
   className,
 }: ToolIconProps) {
   const iconConfig = getToolIconConfig(slug);
-  const isNotebookLM = slug === "notebooklm";
   const effectiveBrandColor = brandColor ?? iconConfig.brandColor;
-  const localIconSource = isNotebookLM ? undefined : iconPath?.trim() || undefined;
+  const localIconSource = iconPath?.trim() || iconConfig.iconPath?.trim() || undefined;
+  const resolvedIconDomain = iconConfig.iconDomain ?? iconDomain;
   const faviconSources = getFaviconCandidates({
     officialUrl,
-    iconDomain: isNotebookLM ? "notebooklm.google.com" : iconDomain ?? iconConfig.iconDomain,
+    iconDomain: resolvedIconDomain,
   });
-  const notebookLmSources = isNotebookLM
-    ? ["https://notebooklm.google.com/favicon.ico", ...faviconSources]
-    : faviconSources;
-  const imageSources = localIconSource
-    ? [localIconSource, ...notebookLmSources]
-    : notebookLmSources;
+  const imageSources = localIconSource ? [localIconSource, ...faviconSources] : faviconSources;
 
   const [activeSourceIndex, setActiveSourceIndex] = useState(0);
   const [loadedSource, setLoadedSource] = useState<string | null>(null);
@@ -68,11 +62,11 @@ export default function ToolIcon({
   useEffect(() => {
     setActiveSourceIndex(0);
     setLoadedSource(null);
-  }, [localIconSource, iconDomain, officialUrl, slug]);
+  }, [localIconSource, resolvedIconDomain, officialUrl, slug]);
 
   const activeSource = imageSources[activeSourceIndex];
   const showImage = Boolean(activeSource && loadedSource === activeSource);
-  const showFallback = !activeSource;
+  const showFallback = !showImage;
 
   function handleError() {
     setLoadedSource(null);
@@ -104,9 +98,6 @@ export default function ToolIcon({
           loading="lazy"
           decoding="async"
         />
-      )}
-      {activeSource && !showImage && (
-        <span aria-hidden="true" className={PLACEHOLDER_CLASSES} />
       )}
       {showFallback && (
         <span

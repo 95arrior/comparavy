@@ -4,6 +4,10 @@ import { tools } from "@/data/tools";
 import { getFaviconUrl } from "@/lib/favicon";
 import { getToolIconConfig } from "@/lib/toolIcons";
 
+function isRemoteIconPath(value: string): boolean {
+  return /^https?:\/\//i.test(value.trim());
+}
+
 async function fileExists(filePath: string): Promise<boolean> {
   try {
     await access(filePath);
@@ -27,7 +31,8 @@ async function main(): Promise<void> {
 
   for (const tool of tools) {
     const iconConfig = getToolIconConfig(tool.slug);
-    const localPath = tool.iconPath
+    const remoteIconPath = tool.iconPath ? isRemoteIconPath(tool.iconPath) : false;
+    const localPath = tool.iconPath && !remoteIconPath
       ? path.join(process.cwd(), "public", tool.iconPath.replace(/^\//, ""))
       : undefined;
     const localExists = localPath ? await fileExists(localPath) : false;
@@ -48,7 +53,7 @@ async function main(): Promise<void> {
       warnings.push(`[${tool.slug}] missing iconDomain`);
     }
 
-    if (tool.iconPath && !localExists) {
+    if (tool.iconPath && !remoteIconPath && !localExists) {
       brokenLocalIconPath += 1;
       warnings.push(`[${tool.slug}] missing local icon file: ${tool.iconPath}`);
     }
@@ -63,9 +68,16 @@ async function main(): Promise<void> {
 
     if (
       tool.slug === "notebooklm" &&
-      (tool.iconDomain ?? iconConfig.iconDomain) !== "notebooklm.google.com"
+      (tool.iconDomain ?? iconConfig.iconDomain) !== "notebooklm.google"
     ) {
-      warnings.push(`[notebooklm] must use notebooklm.google.com favicon`);
+      warnings.push(`[notebooklm] must use notebooklm.google favicon`);
+    }
+
+    if (
+      (tool.slug === "microsoft-copilot" || tool.slug === "copilot") &&
+      (tool.iconDomain ?? iconConfig.iconDomain) !== "copilot.microsoft.com"
+    ) {
+      warnings.push(`[${tool.slug}] must use copilot.microsoft.com favicon`);
     }
 
     if (localExists) {

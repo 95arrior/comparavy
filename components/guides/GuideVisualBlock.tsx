@@ -1,7 +1,6 @@
 import Link from "next/link";
 import GuideToolActions from "@/components/guides/GuideToolActions";
 import ToolIcon from "@/components/ToolIcon";
-import { toolsBySlug } from "@/data/tools";
 import { resolveGuideTool } from "@/lib/guideTools";
 import { formatGuideLayoutLabel, resolveGuideLayoutType } from "@/lib/guideTypes";
 import type { Guide } from "@/lib/guides";
@@ -21,9 +20,13 @@ function FallbackHero({ guide }: { readonly guide: Guide }) {
     uniqueAngle: guide.uniqueAngle,
     notes: guide.contentGap,
   });
+  const primaryRecommendation = guide.recommendedTools[0];
   const primaryToolSlug =
-    guide.recommendedTools[0]?.toolSlug ?? guide.recommendedToolSlugs[0];
-  const primaryTool = resolveGuideTool(primaryToolSlug);
+    primaryRecommendation?.toolSlug ?? guide.recommendedToolSlugs[0];
+  const primaryTool = resolveGuideTool(
+    primaryToolSlug,
+    primaryRecommendation?.toolName,
+  );
 
   return (
     <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-900 via-slate-800 to-teal-900 p-5 text-white shadow-sm">
@@ -61,7 +64,7 @@ function FallbackHero({ guide }: { readonly guide: Guide }) {
       )}
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
         {guide.recommendedToolSlugs.slice(0, 3).map((slug) => {
-          const tool = toolsBySlug.get(slug);
+          const tool = resolveGuideTool(slug);
 
           return (
             <div key={slug} className="rounded-2xl bg-white/10 p-3">
@@ -124,7 +127,7 @@ function ToolStackVisual({ guide }: { readonly guide: Guide }) {
       </p>
       <div className="mt-4 grid gap-2">
         {tools.map((slug) => {
-          const tool = toolsBySlug.get(slug);
+          const tool = resolveGuideTool(slug);
 
           return (
             <div key={slug} className="flex items-center gap-3 rounded-2xl bg-slate-50/70 p-3">

@@ -1,10 +1,13 @@
-import { toolsBySlug, type ToolSlug } from "@/data/tools";
+import { resolveToolReference } from "@/lib/toolLookup";
 import type { AiTool } from "@/types/tool";
 
-export function resolveGuideTool(toolSlug?: string | null): AiTool | undefined {
-  if (!toolSlug) {
+export function resolveGuideTool(
+  toolSlug?: string | null,
+  toolName?: string | null,
+): AiTool | undefined {
+  if (!toolSlug && !toolName) {
     return undefined;
   }
 
-  return toolsBySlug.get(toolSlug as ToolSlug);
+  return resolveToolReference({ toolSlug, toolName });
 }

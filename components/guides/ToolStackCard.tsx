@@ -33,7 +33,7 @@ export default function ToolStackCard({
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
         {tools.map((tool) => {
-          const catalogTool = resolveGuideTool(tool.toolSlug);
+          const catalogTool = resolveGuideTool(tool.toolSlug, tool.toolName);
 
           return (
             <article
@@ -55,7 +55,7 @@ export default function ToolStackCard({
                         href={`/tools/${catalogTool.slug}`}
                         className="transition hover:text-teal-700"
                       >
-                        {tool.toolName}
+                        {catalogTool.name}
                       </Link>
                     ) : (
                       tool.toolName

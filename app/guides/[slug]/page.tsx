@@ -5,13 +5,13 @@ import ActionLinks from "@/components/ActionLinks";
 import GuideDetailRenderer from "@/components/guides/GuideDetailRenderer";
 import Logo from "@/components/Logo";
 import ToolIcon from "@/components/ToolIcon";
-import { toolsBySlug, type ToolSlug } from "@/data/tools";
 import { formatGuideLayoutLabel, resolveGuideLayoutType } from "@/lib/guideTypes";
 import {
   getPublishedGuideBySlug,
   getPublishedGuides,
   type Guide,
 } from "@/lib/guides";
+import { resolveGuideTool } from "@/lib/guideTools";
 
 interface GuidePageProps {
   readonly params: Promise<{ slug: string }>;
@@ -39,7 +39,11 @@ export async function generateMetadata({
 }
 
 function getPrimaryTool(guide: Guide) {
-  return toolsBySlug.get(guide.recommendedToolSlugs[0] as ToolSlug);
+  const primaryRecommendation = guide.recommendedTools[0];
+  return resolveGuideTool(
+    primaryRecommendation?.toolSlug ?? guide.recommendedToolSlugs[0],
+    primaryRecommendation?.toolName,
+  );
 }
 
 export default async function GuideDetailPage({ params }: GuidePageProps) {

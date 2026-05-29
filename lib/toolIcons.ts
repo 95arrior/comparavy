@@ -22,6 +22,7 @@ import {
 
 export interface ToolIconConfig {
   readonly simpleIconSlug?: string;
+  readonly iconPath?: string;
   readonly iconDomain?: string;
   readonly brandColor?: string;
   readonly forceFavicon?: boolean;
@@ -135,6 +136,14 @@ const TOOL_ICON_CONFIGS: Record<string, ToolIconConfig> = {
     brandColor: "#6D00CC",
   },
   "microsoft-copilot": {
+    iconPath:
+      "https://www.google.com/s2/favicons?domain_url=https://copilot.microsoft.com&sz=64",
+    iconDomain: "copilot.microsoft.com",
+    brandColor: "#0078D4",
+  },
+  copilot: {
+    iconPath:
+      "https://www.google.com/s2/favicons?domain_url=https://copilot.microsoft.com&sz=64",
     iconDomain: "copilot.microsoft.com",
     brandColor: "#0078D4",
   },
@@ -157,9 +166,10 @@ const TOOL_ICON_CONFIGS: Record<string, ToolIconConfig> = {
     brandColor: "#000000",
   },
   notebooklm: {
-    iconDomain: "notebooklm.google.com",
+    iconPath:
+      "https://www.google.com/s2/favicons?domain_url=https://notebooklm.google&sz=64",
+    iconDomain: "notebooklm.google",
     brandColor: "#4285F4",
-    forceFavicon: true,
   },
   "otter-ai": {
     iconDomain: "otter.ai",

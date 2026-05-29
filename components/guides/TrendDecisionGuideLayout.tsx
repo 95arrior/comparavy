@@ -3,12 +3,12 @@ import FaqAccordion from "@/components/FaqAccordion";
 import GuideToolActions from "@/components/guides/GuideToolActions";
 import SectionHeading from "@/components/SectionHeading";
 import ToolIcon from "@/components/ToolIcon";
-import { toolsBySlug, type ToolSlug } from "@/data/tools";
 import type { Guide } from "@/lib/guides";
+import { resolveGuideTool } from "@/lib/guideTools";
 import Link from "next/link";
 
-function getTool(toolSlug: string) {
-  return toolsBySlug.get(toolSlug as ToolSlug);
+function getTool(toolSlug: string, toolName?: string) {
+  return resolveGuideTool(toolSlug, toolName);
 }
 
 export default function TrendDecisionGuideLayout({ guide }: { readonly guide: Guide }) {
@@ -37,7 +37,7 @@ export default function TrendDecisionGuideLayout({ guide }: { readonly guide: Gu
         </SectionHeading>
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
           {guide.bestPicksBySituation.map((pick, index) => {
-            const tool = getTool(pick.toolSlug);
+            const tool = getTool(pick.toolSlug, pick.toolName);
 
             if (!tool) {
               return null;
@@ -100,7 +100,7 @@ export default function TrendDecisionGuideLayout({ guide }: { readonly guide: Gu
             </thead>
             <tbody>
               {guide.comparisonRows.map((row, index) => {
-                const tool = getTool(row.toolSlug);
+                const tool = getTool(row.toolSlug, row.toolName);
 
                 return (
                   <tr
@@ -119,11 +119,11 @@ export default function TrendDecisionGuideLayout({ guide }: { readonly guide: Gu
                         <div className="min-w-0">
                           <p className="max-w-44 truncate whitespace-nowrap font-semibold text-slate-900">
                             {tool ? (
-                              <Link
+                          <Link
                                 href={`/tools/${tool.slug}`}
                                 className="block truncate transition hover:text-teal-700"
                               >
-                                {row.toolName}
+                                {tool.name}
                               </Link>
                             ) : (
                               row.toolName

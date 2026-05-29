@@ -5,8 +5,8 @@ import GuideToolActions from "@/components/guides/GuideToolActions";
 import SectionHeading from "@/components/SectionHeading";
 import ToolCard from "@/components/ToolCard";
 import ToolIcon from "@/components/ToolIcon";
-import { toolsBySlug, type ToolSlug } from "@/data/tools";
 import type { Guide } from "@/lib/guides";
+import { resolveGuideTool } from "@/lib/guideTools";
 
 function formatBudgetLabel(freePlan: boolean, slug?: string): string {
   if (freePlan) {
@@ -20,8 +20,8 @@ function formatSetupLabel(easeOfUse: string): string {
   return easeOfUse;
 }
 
-function getTool(toolSlug: string) {
-  return toolsBySlug.get(toolSlug as ToolSlug);
+function getTool(toolSlug: string, toolName?: string) {
+  return resolveGuideTool(toolSlug, toolName);
 }
 
 export default function ToolDecisionGuideLayout({ guide }: { readonly guide: Guide }) {
@@ -46,7 +46,7 @@ export default function ToolDecisionGuideLayout({ guide }: { readonly guide: Gui
         </SectionHeading>
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
           {guide.bestPicksBySituation.map((pick, index) => {
-            const tool = getTool(pick.toolSlug);
+            const tool = getTool(pick.toolSlug, pick.toolName);
 
             if (!tool) {
               return null;
@@ -122,7 +122,7 @@ export default function ToolDecisionGuideLayout({ guide }: { readonly guide: Gui
             </thead>
             <tbody>
               {guide.comparisonRows.map((row, index) => {
-                const tool = getTool(row.toolSlug);
+                const tool = getTool(row.toolSlug, row.toolName);
 
                 return (
                   <tr
@@ -141,11 +141,11 @@ export default function ToolDecisionGuideLayout({ guide }: { readonly guide: Gui
                         <div className="min-w-0">
                           <p className="max-w-44 truncate whitespace-nowrap font-semibold text-slate-900">
                             {tool ? (
-                              <Link
+                          <Link
                                 href={`/tools/${tool.slug}`}
                                 className="block truncate transition hover:text-teal-700"
                               >
-                                {row.toolName}
+                                {tool.name}
                               </Link>
                             ) : (
                               row.toolName
