@@ -2,7 +2,6 @@ import type { MetadataRoute } from "next";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { tools } from "@/data/tools";
-import { getPublishedGuides } from "@/lib/guides";
 
 const SITE_URL = "https://www.comparavy.com";
 const TOOLS_SOURCE_PATH = path.join(process.cwd(), "data", "tools.ts");
@@ -51,7 +50,6 @@ function readGuideContent(): GuideContent[] {
 }
 
 const toolsSourceModified = statSync(TOOLS_SOURCE_PATH).mtime;
-const publishedGuideSlugs = new Set(getPublishedGuides().map((guide) => guide.slug));
 const guideContent = readGuideContent();
 const guideContentModified = guideContent.reduce(
   (latest, guide) => maxDate(latest, parseDate(guide.updatedAt, latest)),
@@ -89,7 +87,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   );
 
   const guideEntries: MetadataRoute.Sitemap = guideContent
-    .filter((guide) => guide.status === "published" || (!guide.status && publishedGuideSlugs.has(guide.slug)))
+    .filter((guide) => guide.status === "published")
     .map((guide) =>
       sitemapEntry(
         `/guides/${guide.slug}`,

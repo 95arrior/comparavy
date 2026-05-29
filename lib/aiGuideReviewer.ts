@@ -65,6 +65,32 @@ function unavailableReview(): AiGuideReview {
   };
 }
 
+function extractOpenAIErrorCategory(bodyText: string): string | undefined {
+  const normalized = bodyText.toLowerCase();
+
+  if (normalized.includes("context_length_exceeded") || normalized.includes("maximum context")) {
+    return "context_length_exceeded";
+  }
+
+  if (normalized.includes("unsupported_parameter") || normalized.includes("unsupported field")) {
+    return "unsupported_parameter";
+  }
+
+  if (normalized.includes("invalid_request_error") || normalized.includes("invalid request")) {
+    return "invalid_request";
+  }
+
+  if (normalized.includes("model_not_found") || normalized.includes("model unavailable")) {
+    return "model_unavailable";
+  }
+
+  if (normalized.includes("bad request")) {
+    return "bad_request";
+  }
+
+  return undefined;
+}
+
 function blockedReview(message: string): AiGuideReview {
   return {
     attempted: true,
@@ -99,7 +125,7 @@ function readOutputText(result: ResponsesResult): string | undefined {
 }
 
 export function resolveOpenAIModel(): string {
-  return process.env.OPENAI_MODEL?.trim() || "gpt-5.4-mini";
+  return process.env.OPENAI_MODEL?.trim() || "gpt-5.5-high";
 }
 
 export function getOpenAIReviewDiagnostics(): OpenAIReviewDiagnostics {
@@ -116,6 +142,7 @@ function classifyOpenAIHttpFailure(status: number, bodyText = ""): {
   readonly message: string;
 } {
   const normalizedBody = bodyText.toLowerCase();
+  const parsedCategory = extractOpenAIErrorCategory(bodyText);
 
   if (status === 401) {
     return {
@@ -147,10 +174,17 @@ function classifyOpenAIHttpFailure(status: number, bodyText = ""): {
     };
   }
 
-  if (status === 404 || status === 400 || status === 403) {
+  if (status === 400) {
     return {
-      category: "model_unavailable",
-      message: "OpenAI model unavailable. Check OPENAI_MODEL.",
+      category: parsedCategory ?? "invalid_request",
+      message: `OpenAI request failed with status 400 (${parsedCategory ?? "invalid_request"}).`,
+    };
+  }
+
+  if (status === 404 || status === 403) {
+    return {
+      category: parsedCategory ?? "model_unavailable",
+      message: `OpenAI model unavailable (${parsedCategory ?? "model_unavailable"}). Check OPENAI_MODEL.`,
     };
   }
 
@@ -207,6 +241,7 @@ export async function probeOpenAIEditorialReview(): Promise<OpenAIReviewProbeRes
           },
         },
         max_output_tokens: 16,
+        truncation: "auto",
       }),
       signal: AbortSignal.timeout(20_000),
     });
@@ -312,6 +347,7 @@ export async function reviewGuideWithAI(guide: Guide): Promise<AiGuideReview> {
             schema: REVIEW_SCHEMA,
           },
         },
+        truncation: "auto",
       }),
       signal: AbortSignal.timeout(60_000),
     });

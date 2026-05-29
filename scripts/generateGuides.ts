@@ -1975,6 +1975,7 @@ async function refineWithOpenAI(template: Guide): Promise<Guide> {
           selectedToolSlugs: template.recommendedToolSlugs,
           catalogGroundedDraft: template,
         }),
+        max_output_tokens: 3000,
         text: {
           format: {
             type: "json_schema",
@@ -1983,11 +1984,24 @@ async function refineWithOpenAI(template: Guide): Promise<Guide> {
             schema: GUIDE_SCHEMA,
           },
         },
+        truncation: "auto",
       }),
     });
 
     if (!response.ok) {
-      lastFailure = `OpenAI request failed with status ${response.status} using ${model}.`;
+      const bodyText = await response.text();
+      const normalizedBody = bodyText.toLowerCase();
+      const category =
+        normalizedBody.includes("context_length_exceeded") || normalizedBody.includes("maximum context")
+          ? "context_length_exceeded"
+          : normalizedBody.includes("unsupported_parameter") || normalizedBody.includes("unsupported field")
+            ? "unsupported_parameter"
+            : normalizedBody.includes("invalid_request_error") || normalizedBody.includes("invalid request")
+              ? "invalid_request"
+              : normalizedBody.includes("model_not_found") || normalizedBody.includes("model unavailable")
+                ? "model_unavailable"
+                : "request_failed";
+      lastFailure = `OpenAI request failed with status ${response.status} (${category}) using ${model}.`;
       continue;
     }
 

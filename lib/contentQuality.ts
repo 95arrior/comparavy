@@ -129,6 +129,14 @@ const STRING_ARRAY_FIELDS = [
   "moneySavingTips",
 ] as const;
 
+const SUPPORTED_GUIDE_STATUSES = new Set([
+  "draft",
+  "approved",
+  "published",
+  "rejected",
+  "candidate",
+]);
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -372,6 +380,11 @@ export function validateGuideContent(value: unknown): ContentQualityIssue[] {
 
   if (typeof value.status !== "string" || value.status.trim().length === 0) {
     issues.push({ field: "status", message: "Status must be a non-empty string." });
+  } else if (!SUPPORTED_GUIDE_STATUSES.has(value.status)) {
+    issues.push({
+      field: "status",
+      message: `Status must be one of ${[...SUPPORTED_GUIDE_STATUSES].join(", ")}.`,
+    });
   }
 
   if (
@@ -462,10 +475,14 @@ export function validateGuideContent(value: unknown): ContentQualityIssue[] {
     });
   }
 
-  if (value.status === "published" && typeof value.qualityScore === "number" && value.qualityScore < 85) {
+  if (
+    (value.status === "published" || value.status === "approved") &&
+    typeof value.qualityScore === "number" &&
+    value.qualityScore < 85
+  ) {
     issues.push({
       field: "qualityScore",
-      message: "Published guides require qualityScore >= 85.",
+      message: "Published and approved guides require qualityScore >= 85.",
     });
   }
 

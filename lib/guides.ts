@@ -200,6 +200,10 @@ export function getPublishedGuides(): Guide[] {
   return readAllGuideFiles().filter((guide) => guide.status === "published");
 }
 
+export function getApprovedGuides(): Guide[] {
+  return readAllGuideFiles().filter((guide) => guide.status === "approved");
+}
+
 export function getPublishedGuideBySlug(slug: string): Guide | undefined {
   return getPublishedGuides().find((guide) => guide.slug === slug);
 }

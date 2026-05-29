@@ -1,6 +1,8 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { guideTopics, type GuideTopic } from "@/data/guideTopics";
+import { guideGoldBriefs, type GuideGoldBrief } from "@/data/guideGoldBriefs";
 import {
   PRICING_NOTICE,
   assertGuideContentQuality,
@@ -35,6 +37,7 @@ import {
 import { logGuideTopicToolSlugWarnings } from "@/lib/guideTopicValidation";
 import { resolveGuideLayoutType, type GuideLayoutType } from "@/lib/guideTypes";
 import type { Guide } from "@/lib/guides";
+import { getApprovedGuides, getPublishedGuides } from "@/lib/guides";
 import { scoreToolsForTopic } from "@/lib/topicScoring";
 import {
   GUIDES_DIRECTORY,
@@ -52,6 +55,9 @@ interface AutoPublishOptions {
   readonly minQuality: number;
   readonly dryRun: boolean;
   readonly publish: boolean;
+  readonly approve: boolean;
+  readonly generateApproved: boolean;
+  readonly allowGenericTopics: boolean;
 }
 
 interface Candidate {
@@ -152,6 +158,9 @@ function parseOptions(args: readonly string[]): AutoPublishOptions {
   let minQuality = DEFAULT_MIN_QUALITY;
   let dryRun = false;
   let publish = false;
+  let approve = false;
+  let generateApproved = false;
+  let allowGenericTopics = false;
 
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
@@ -163,6 +172,22 @@ function parseOptions(args: readonly string[]): AutoPublishOptions {
 
     if (argument === "--publish") {
       publish = true;
+      continue;
+    }
+
+    if (argument === "--approve") {
+      approve = true;
+      generateApproved = true;
+      continue;
+    }
+
+    if (argument === "--generate-approved") {
+      generateApproved = true;
+      continue;
+    }
+
+    if (argument === "--allow-generic-topics") {
+      allowGenericTopics = true;
       continue;
     }
 
@@ -209,7 +234,16 @@ function parseOptions(args: readonly string[]): AutoPublishOptions {
     throw new Error(`Unknown option: ${argument}`);
   }
 
-  return { count, type, minQuality, dryRun, publish };
+  return {
+    count,
+    type,
+    minQuality,
+    dryRun,
+    publish,
+    approve,
+    generateApproved,
+    allowGenericTopics,
+  };
 }
 
 function dailyPublishLimit(): number {
@@ -1646,7 +1680,7 @@ function determineOpenAIReviewPolicy(
   options: AutoPublishOptions,
 ): OpenAIReviewPolicy {
   if (!diagnostics.apiKeyPresent) {
-    if (options.publish || diagnostics.runningInGitHubActions) {
+    if (!options.dryRun && (options.publish || diagnostics.runningInGitHubActions)) {
       throw new Error(
         "OPENAI_API_KEY is required for GitHub Actions publish mode. Set or update repository secret OPENAI_API_KEY under Settings → Secrets and variables → Actions.",
       );
@@ -1670,7 +1704,7 @@ function determineOpenAIReviewPolicy(
   if (!probe.available) {
     const reason = probe.unavailableReason ?? "OpenAI editorial review probe failed.";
 
-    if (options.publish || diagnostics.runningInGitHubActions) {
+    if (!options.dryRun && (options.publish || diagnostics.runningInGitHubActions)) {
       if (reason.includes("authentication failed")) {
         throw new Error(
           `${reason} Set or update repository secret OPENAI_API_KEY under Settings → Secrets and variables → Actions.`,
@@ -1825,11 +1859,191 @@ async function reviewAndImproveCandidate({
   };
 }
 
+interface QueueSelection {
+  readonly source: "gold" | "generic";
+  readonly brief?: GuideGoldBrief;
+  readonly topic: GuideTopic;
+}
+
+interface GeneratedQueueGuide {
+  readonly guide: Guide;
+  readonly source: "gold" | "generic";
+  readonly briefSlug: string;
+  readonly deterministic: GuideQualityResult;
+  readonly aiReview: AiGuideReview;
+  readonly finalStatus: "approved" | "draft" | "rejected";
+  readonly sentToAiReview: boolean;
+  readonly writeStatus: "approved" | "draft" | "rejected";
+}
+
+function unavailableQueueReview(reason: string): AiGuideReview {
+  return {
+    attempted: false,
+    available: false,
+    passed: false,
+    score: 0,
+    verdict: reason,
+    warnings: [reason],
+    suggestedFixes: ["Run the AI editorial review before approving this guide."],
+    unavailableReason: reason,
+  };
+}
+
+function sortByPriorityDesc<T extends { readonly priority: number; readonly slug: string }>(left: T, right: T): number {
+  return right.priority - left.priority || left.slug.localeCompare(right.slug);
+}
+
+function sortByUpdatedAtAsc(left: Guide, right: Guide): number {
+  return left.updatedAt.localeCompare(right.updatedAt) || left.slug.localeCompare(right.slug);
+}
+
+function guideTopicBySlug(slug: string): GuideTopic | undefined {
+  return guideTopics.find((topic) => topic.slug === slug);
+}
+
+function guideGoldBriefBySlug(slug: string): GuideGoldBrief | undefined {
+  return guideGoldBriefs.find((brief) => brief.slug === slug);
+}
+
+function selectQueueCandidates(
+  options: AutoPublishOptions,
+  existingBlockedSlugs: ReadonlySet<string>,
+  count: number,
+): QueueSelection[] {
+  const selections: QueueSelection[] = [];
+  const selectedSlugs = new Set<string>();
+
+  const goldBriefs = guideGoldBriefs
+    .filter((brief) => brief.status === "active")
+    .filter((brief) => options.type === "mixed" || brief.guideType === options.type)
+    .filter((brief) => !existingBlockedSlugs.has(brief.slug))
+    .sort(sortByPriorityDesc);
+
+  if (options.type === "mixed") {
+    const howToBriefs = goldBriefs.filter((brief) => brief.guideType === "how-to");
+    const toolDecisionBriefs = goldBriefs.filter((brief) => brief.guideType === "tool-decision");
+    let round = 0;
+
+    while (selections.length < count && (howToBriefs.length > 0 || toolDecisionBriefs.length > 0)) {
+      const primaryPool = round % 2 === 0 ? howToBriefs : toolDecisionBriefs;
+      const secondaryPool = round % 2 === 0 ? toolDecisionBriefs : howToBriefs;
+      const brief = primaryPool.shift() ?? secondaryPool.shift();
+
+      if (!brief) {
+        break;
+      }
+
+      const topic = guideTopicBySlug(brief.slug);
+
+      if (!topic || selectedSlugs.has(brief.slug)) {
+        continue;
+      }
+
+      selectedSlugs.add(brief.slug);
+      selections.push({ source: "gold", brief, topic });
+      round += 1;
+    }
+  } else {
+    for (const brief of goldBriefs) {
+      if (selections.length >= count) {
+        break;
+      }
+
+      const topic = guideTopicBySlug(brief.slug);
+
+      if (!topic || selectedSlugs.has(brief.slug)) {
+        continue;
+      }
+
+      selectedSlugs.add(brief.slug);
+      selections.push({ source: "gold", brief, topic });
+    }
+  }
+
+  if (options.allowGenericTopics && selections.length < count) {
+    const genericTopics = selectGuideTopics({
+      count: count - selections.length,
+      type: options.type,
+      existingSlugs: new Set([...existingBlockedSlugs, ...selectedSlugs]),
+    });
+
+    for (const topic of genericTopics) {
+      if (selections.length >= count) {
+        break;
+      }
+
+      selections.push({ source: "generic", topic });
+    }
+  }
+
+  return selections.slice(0, count);
+}
+
+function buildGuideFromSelection(
+  selection: QueueSelection,
+  status: "draft" | "approved" | "published",
+  avoidToolSlugs: ReadonlySet<string>,
+): Guide {
+  return createTemplateGuide(
+    selection.topic,
+    status,
+    avoidToolSlugs,
+    selection.brief?.guideType ?? resolveGuideLayoutType(selection.topic),
+  );
+}
+
+async function reviewGeneratedGuide(
+  guide: Guide,
+  existingGuides: readonly Guide[],
+): Promise<{ readonly deterministic: GuideQualityResult; readonly aiReview: AiGuideReview }> {
+  const deterministic = checkGuideQuality(
+    guide,
+    existingGuides.filter((entry) => entry.slug !== guide.slug),
+  );
+
+  if (!deterministic.passed) {
+    return {
+      deterministic,
+      aiReview: unavailableQueueReview("AI review skipped because deterministic quality checks failed."),
+    };
+  }
+
+  const aiReview = await reviewGuideWithAI(guide);
+  return { deterministic, aiReview };
+}
+
+function finalStatusForGuide(
+  deterministic: GuideQualityResult,
+  aiReview: AiGuideReview,
+): "approved" | "draft" | "rejected" {
+  if (!deterministic.passed) {
+    return "rejected";
+  }
+
+  if (!aiReview.attempted) {
+    return "draft";
+  }
+
+  if (!aiReview.available) {
+    return "rejected";
+  }
+
+  return aiReview.passed && aiReview.score >= PUBLISH_THRESHOLD ? "approved" : "rejected";
+}
+
+function writeGuideStatus(guide: Guide, status: "draft" | "approved" | "published" | "rejected"): Guide {
+  const updatedAt = new Date().toISOString().slice(0, 10);
+  return status === "published"
+    ? { ...guide, status, updatedAt }
+    : status === "approved"
+      ? { ...guide, status, updatedAt }
+      : { ...guide, status };
+}
+
 async function main(): Promise<void> {
   const options = parseOptions(process.argv.slice(2));
   logGuideTopicToolSlugWarnings();
-  const publishCount = Math.min(options.count, dailyPublishLimit());
-  const targetAcceptedCount = publishCount;
+
   const openAIDiagnostics = getOpenAIReviewDiagnostics();
   printOpenAIDiagnostics(openAIDiagnostics, options);
   const openAIProbe = openAIDiagnostics.apiKeyPresent
@@ -1842,381 +2056,226 @@ async function main(): Promise<void> {
       };
   const openAIReviewPolicy = determineOpenAIReviewPolicy(openAIDiagnostics, openAIProbe, options);
 
-  if (openAIReviewPolicy.mode === "skipped-local" && openAIDiagnostics.apiKeyPresent === false && options.dryRun) {
-    console.log(
-      "Local dry-run ran deterministic, editorial preflight, mismatch, and depth checks only. AI review skipped because OPENAI_API_KEY is not set locally.",
-    );
-  }
-
-  const existingGuides = await getExistingGuides();
-  const existingSlugs = new Set(
-    existingGuides
-      .filter((guide) => guide.status === "published" || guide.status === "approved")
-      .map((guide) => guide.slug),
-  );
-  const recentPublishedToolSlugs = new Set<string>();
-
-  for (const guide of existingGuides
-    .filter((entry) => entry.status === "published")
-    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
-    .slice(0, 4)) {
-    for (const slug of guide.recommendedToolSlugs) {
-      recentPublishedToolSlugs.add(slug);
-    }
-  }
-
-  const usedToolSlugs = new Set<string>();
-  const acceptedCandidates: Candidate[] = [];
-  const checkedCandidates: Candidate[] = [];
-  const generatedCandidates: Guide[] = [];
-  const skippedTopics: SkippedTopic[] = [];
-  const rejectedTopics = new Set<string>();
-  const rejectedCandidateReasons: { readonly slug: string; readonly reason: string }[] = [];
-  let candidatesImproved = 0;
-  let howToGuidesAttempted = 0;
-  let toolDecisionGuidesAttempted = 0;
-  const qualityThreshold = effectiveQualityThreshold(options.minQuality);
-  const slotTargets = targetSlots(options.type, targetAcceptedCount);
-  const slotReports: SlotReport[] = slotTargets.map((slot) => ({
-    guideType: slot.guideType,
-    target: slot.count,
-    attempts: 0,
-    status: "pending",
-    rejectionReasons: [],
-  }));
-
-  const publishedGuides = existingGuides.filter((guide) => guide.status === "published");
-
-  if (options.count > publishCount) {
-    console.log(
-      `Requested ${options.count} publication(s); MAX_DAILY_PUBLISH limits this run to ${publishCount}.`,
-    );
-  }
-
-  if (qualityThreshold > options.minQuality) {
-    console.log(`Requested minimum quality ${options.minQuality}; using strict minimum ${qualityThreshold}.`);
-  }
-
   if (openAIReviewPolicy.mode === "unavailable") {
     console.log(`AI review unavailable reason: ${openAIReviewPolicy.unavailableReason ?? "Unknown"}`);
   }
 
-  if (slotTargets.length === 0) {
+  const existingGuides = await getExistingGuides();
+  const existingApproved = existingGuides.filter((guide) => guide.status === "approved");
+  const existingPublished = existingGuides.filter((guide) => guide.status === "published");
+  const existingBlockedSlugs = new Set([...existingApproved, ...existingPublished].map((guide) => guide.slug));
+  const approvedQueueBeforeRun = [...existingApproved].sort(sortByUpdatedAtAsc);
+  const publishQuota = options.publish ? Math.min(options.count, dailyPublishLimit(), approvedQueueBeforeRun.length) : 0;
+  const approvalTarget = options.publish
+    ? Math.max(0, options.count - approvedQueueBeforeRun.length)
+    : options.count;
+
+  console.log(`Approved guides available before run: ${approvedQueueBeforeRun.length}`);
+  if (options.publish) {
+    console.log(`Requested publish count: ${options.count}`);
+    console.log(`Daily publish limit: ${dailyPublishLimit()}`);
+    console.log(`Approved guides publishable this run: ${publishQuota}`);
+  }
+
+  if (!options.publish && !options.generateApproved && !options.approve) {
+    console.log("No explicit action flag supplied; defaulting to approved generation.");
+  }
+
+  const approvedTitlesBeforeRun = approvedQueueBeforeRun.map((guide) => guide.title);
+  const publishedThisRun: Guide[] = [];
+  const newlyApproved: Guide[] = [];
+  const rejectedGuides: Guide[] = [];
+  const generatedSummaries: {
+    readonly slug: string;
+    readonly source: "gold" | "generic";
+    readonly sentToAiReview: boolean;
+    readonly deterministic: GuideQualityResult;
+    readonly aiReview: AiGuideReview;
+    readonly finalStatus: "approved" | "draft" | "rejected";
+  }[] = [];
+  let candidatesSentToAiReview = 0;
+  let genericFallbackUsed = false;
+
+  const publishCandidates = approvedQueueBeforeRun.slice(0, publishQuota);
+
+  if (options.publish && approvedQueueBeforeRun.length === 0) {
+    console.log("No approved guides were available before the run; publishing nothing.");
+  }
+
+  if (!options.dryRun && options.publish && publishCandidates.length > 0) {
+    await mkdir(GUIDES_DIRECTORY, { recursive: true });
+
+    for (const guide of publishCandidates) {
+      const publishedGuide = writeGuideStatus(guide, "published");
+      await writeFile(guideFilePath(publishedGuide.slug), `${JSON.stringify(publishedGuide, null, 2)}\n`, "utf8");
+      publishedThisRun.push(publishedGuide);
+      console.log(`[${publishedGuide.slug}] Published from approved queue.`);
+    }
+  } else if (options.publish) {
+    for (const guide of publishCandidates) {
+      publishedThisRun.push(writeGuideStatus(guide, "published"));
+      console.log(`[${guide.slug}] Would publish from approved queue (dry run).`);
+    }
+  }
+
+  const generationSelections = selectQueueCandidates(
+    options,
+    existingBlockedSlugs,
+    approvalTarget,
+  );
+
+  if (generationSelections.length < approvalTarget && options.allowGenericTopics) {
+    genericFallbackUsed = true;
+  }
+
+  if (!options.allowGenericTopics && generationSelections.length < approvalTarget) {
     console.log(
-      "No eligible unused topics are available after skipping published or approved guide files.",
+      `Gold briefs available for generation: ${generationSelections.length}; no generic fallback used.`,
     );
   }
 
-  for (const slot of slotTargets) {
-    const report = slotReports.find((entry) => entry.guideType === slot.guideType);
-    const skippedSlugs = new Set<string>([...rejectedTopics]);
-    const slotTopics = selectTopicsForSlot(slot.guideType, existingSlugs, skippedSlugs);
+  const generationAvoidToolSlugs = new Set<string>(
+    existingGuides
+      .filter((guide) => guide.status === "published" || guide.status === "approved")
+      .flatMap((guide) => guide.recommendedToolSlugs)
+      .slice(0, 16),
+  );
 
-    console.log(`[slot:${slot.guideType}] Target ${slot.count}; trying up to ${MAX_CANDIDATES_PER_SLOT} candidate topic(s).`);
+  for (const selection of generationSelections) {
+    const brief = selection.brief ?? guideGoldBriefBySlug(selection.topic.slug);
+    const draft = buildGuideFromSelection(selection, "draft", generationAvoidToolSlugs);
+  const deterministic = checkGuideQuality(
+    draft,
+    existingGuides.filter((entry) => entry.slug !== draft.slug),
+  );
+    let aiReview: AiGuideReview;
 
-    if (slotTopics.length === 0) {
-      if (report) {
-        report.status = "failed";
-        report.rejectionReasons.push("No eligible unused topics for this slot.");
-      }
-      continue;
+    if (deterministic.passed) {
+      candidatesSentToAiReview += 1;
+      aiReview = await reviewGuideWithAI(draft);
+    } else {
+      aiReview = unavailableQueueReview("AI review skipped because deterministic quality checks failed.");
     }
 
-    for (const entry of slotTopics) {
-      const { topic, guideTypeOverride } = entry;
+    const finalStatus = finalStatusForGuide(deterministic, aiReview);
+    const finalGuide = writeGuideStatus(draft, finalStatus);
 
-      if (acceptedCountForType(acceptedCandidates, slot.guideType) >= slot.count) {
-        break;
-      }
+    generatedSummaries.push({
+      slug: draft.slug,
+      source: selection.source,
+      sentToAiReview: deterministic.passed,
+      deterministic,
+      aiReview,
+      finalStatus,
+    });
 
-      if (checkedCandidates.length >= MAX_CANDIDATES_PER_RUN) {
-        console.log(`Reached maxCandidatesPerRun limit of ${MAX_CANDIDATES_PER_RUN}.`);
-        break;
-      }
-
-      if (existingSlugs.has(topic.slug) || rejectedTopics.has(topic.slug)) {
-        skippedTopics.push({
-          slug: topic.slug,
-          reason: existingSlugs.has(topic.slug)
-            ? "A guide file with this slug already exists."
-            : "Topic already failed in this run.",
-        });
-        continue;
-      }
-
-      if (report) {
-        report.attempts += 1;
-      }
-
-      const avoidToolSlugs = new Set<string>([...usedToolSlugs, ...recentPublishedToolSlugs]);
-      const { guide, skipped } = createDraftCandidate(
-        topic,
-        usedToolSlugs,
-        avoidToolSlugs,
-        guideTypeOverride,
-      );
-
-      if (!guide) {
-        if (skipped) {
-          skippedTopics.push(skipped);
-          report?.rejectionReasons.push(skipped.reason);
-        }
-        continue;
-      }
-
-      const generatedGuideType = candidateGuideType(guide);
-
-      if (generatedGuideType === "how-to") {
-        howToGuidesAttempted += 1;
-      }
-
-      if (generatedGuideType === "tool-decision") {
-        toolDecisionGuidesAttempted += 1;
-      }
-
-      const comparisonSet = [
-        ...publishedGuides,
-        ...generatedCandidates,
-        ...acceptedCandidates.map((candidate) => candidate.guide),
-      ];
-
-      if (hasDuplicateToolSet(guide, comparisonSet)) {
-        const reason = "Recommended tool set exactly matches an existing or earlier candidate guide.";
-        rejectedTopics.add(topic.slug);
-        skippedTopics.push({ slug: topic.slug, reason });
-        rejectedCandidateReasons.push({ slug: topic.slug, reason });
-        report?.rejectionReasons.push(reason);
-        continue;
-      }
-
-      const candidate = await reviewAndImproveCandidate({
-        topic,
-        guide,
-        comparisonGuides: comparisonSet,
-        publishedGuides,
-        threshold: qualityThreshold,
-        slot: slot.guideType,
-        openAIReviewPolicy,
-      });
-      candidatesImproved += candidate.improveAttempts > 0 ? 1 : 0;
-
-      const finalStatus: CandidateFinalStatus = !candidate.eligible
-        ? "rejected"
-        : options.dryRun
-          ? "would publish"
-          : options.publish
-            ? "published"
-            : "approved";
-      const finalizedCandidate = { ...candidate, finalStatus };
-
-      checkedCandidates.push(finalizedCandidate);
-      generatedCandidates.push(finalizedCandidate.guide);
-      logCandidate(finalizedCandidate);
-
-      if (finalizedCandidate.eligible) {
-        acceptedCandidates.push(finalizedCandidate);
-        for (const slug of finalizedCandidate.guide.recommendedToolSlugs) {
-          usedToolSlugs.add(slug);
-        }
-        if (report) {
-          report.status = "filled";
-          report.acceptedTitle = finalizedCandidate.guide.title;
-        }
-        break;
-      }
-
-      rejectedTopics.add(topic.slug);
-      const reason =
-        finalizedCandidate.rejectionReasons[0] ??
-        finalizedCandidate.aiReview.warnings[0] ??
-        "Candidate did not pass all publish gates.";
-      rejectedCandidateReasons.push({ slug: topic.slug, reason });
-      report?.rejectionReasons.push(reason);
+    if (finalStatus === "approved") {
+      newlyApproved.push(finalGuide);
+      console.log(`[${finalGuide.slug}] Approved from ${selection.source} ${brief ? "brief" : "topic"}.`);
+    } else if (finalStatus === "draft") {
+      rejectedGuides.push(finalGuide);
+      console.log(`[${finalGuide.slug}] Saved as draft; AI review was unavailable.`);
+    } else {
+      rejectedGuides.push(finalGuide);
+      console.log(`[${finalGuide.slug}] Rejected; AI review score or deterministic checks were below threshold.`);
     }
 
-    if (report && report.status !== "filled") {
-      report.status = "failed";
+    console.log(
+      `[${finalGuide.slug}] Quality score: ${deterministic.score}/100 (${deterministic.passed ? "PASS" : "FAIL"})`,
+    );
+    for (const warning of deterministic.warnings) {
+      console.log(`[${finalGuide.slug}] Warning: ${warning}`);
     }
+    for (const blocker of deterministic.blockers) {
+      console.log(`[${finalGuide.slug}] Blocker: ${blocker}`);
+    }
+    console.log(`[${finalGuide.slug}] AI review: ${formatAiReviewStatus(aiReview)}`);
   }
 
   if (!options.dryRun) {
     await mkdir(GUIDES_DIRECTORY, { recursive: true });
-    const today = new Date().toISOString().slice(0, 10);
 
-    for (const candidate of checkedCandidates) {
-      const guide = options.publish && candidate.eligible
-        ? { ...candidate.guide, status: "published" as const, updatedAt: today }
-        : candidate.eligible
-          ? { ...candidate.guide, status: "approved" as const, updatedAt: today }
-          : { ...candidate.guide, status: "draft" as const };
+    for (const guide of newlyApproved) {
+      await writeFile(guideFilePath(guide.slug), `${JSON.stringify(guide, null, 2)}\n`, "utf8");
+    }
 
-      const filePath = path.join(GUIDES_DIRECTORY, `${guide.slug}.json`);
-      await writeFile(filePath, `${JSON.stringify(guide, null, 2)}\n`, "utf8");
+    for (const guide of rejectedGuides) {
+      await writeFile(guideFilePath(guide.slug), `${JSON.stringify(guide, null, 2)}\n`, "utf8");
     }
   }
 
-  for (const candidate of acceptedCandidates) {
-    console.log(
-      `[${candidate.guide.slug}] ${options.dryRun ? "Would publish (dry run)." : options.publish ? "Published." : "Approved for later publishing."}`,
-    );
-  }
-
-  if (skippedTopics.length > 0) {
-    console.log("Skipped topics");
-    for (const skipped of skippedTopics) {
-      console.log(`[${skipped.slug}] ${skipped.reason}`);
-    }
-  }
-
-  const rejectedCount = checkedCandidates.filter((candidate) => !candidate.eligible).length;
-  const publishedCount = options.publish && !options.dryRun ? acceptedCandidates.length : 0;
-  const approvedCount = !options.dryRun && !options.publish ? acceptedCandidates.length : 0;
-  const draftCount = checkedCandidates.length - (options.publish ? publishedCount : approvedCount);
-  const localEligibleCount = checkedCandidates.filter(
-    (candidate) =>
-      candidate.deterministic.passed &&
-      candidate.mismatchGuardrail.passed &&
-      candidate.depthGuardrail.passed &&
-      candidate.editorialPreflight.passed,
-  ).length;
+  const remainingApprovedAfterPublish = approvedQueueBeforeRun
+    .slice(publishQuota)
+    .map((guide) => guide.title);
+  const finalApprovedTitles = [...remainingApprovedAfterPublish, ...newlyApproved.map((guide) => guide.title)];
+  const finalPublishedTitles = publishedThisRun.map((guide) => guide.title);
 
   console.log("Auto publish summary");
-  console.log(`Target count: ${targetAcceptedCount}`);
-  const howToSlot = slotReports.find((slot) => slot.guideType === "how-to");
-  const toolDecisionSlot = slotReports.find((slot) => slot.guideType === "tool-decision");
-  console.log(`How-to slot status: ${howToSlot ? `${howToSlot.status} (${howToSlot.attempts} attempt${howToSlot.attempts === 1 ? "" : "s"})` : "not targeted"}`);
-  console.log(`Tool-decision slot status: ${toolDecisionSlot ? `${toolDecisionSlot.status} (${toolDecisionSlot.attempts} attempt${toolDecisionSlot.attempts === 1 ? "" : "s"})` : "not targeted"}`);
-  console.log(`Candidates created: ${generatedCandidates.length}`);
-  console.log(`Candidates improved: ${candidatesImproved}`);
-  console.log(`Candidates blocked by mismatch guardrail: ${checkedCandidates.filter((candidate) => !candidate.mismatchGuardrail.passed).length}`);
-  console.log(`Candidates blocked by editorial preflight: ${checkedCandidates.filter((candidate) => !candidate.editorialPreflight.passed).length}`);
-  console.log(`Candidates sent to AI review: ${checkedCandidates.filter((candidate) => candidate.aiReview.attempted).length}`);
-  console.log(`True how-to guides attempted: ${howToGuidesAttempted}`);
-  console.log(`Tool-decision guides attempted: ${toolDecisionGuidesAttempted}`);
-  console.log(`Candidates rewritten after AI review: ${candidatesImproved}`);
-  console.log(`Candidates checked: ${checkedCandidates.length}`);
-  console.log(`AI review: ${openAIReviewPolicy.mode}`);
-  console.log(`AI review unavailable reason: ${openAIReviewPolicy.unavailableReason ?? "None"}`);
-  console.log(`AI review attempted: ${checkedCandidates.some((candidate) => candidate.aiReview.attempted) ? "yes" : "no"}`);
-  console.log(`Local eligible candidates: ${localEligibleCount}`);
-  console.log("AI scores:");
-  if (checkedCandidates.length === 0) {
+  console.log(`Approved guides available before run: ${approvedQueueBeforeRun.length}`);
+  console.log(`Approved guides published: ${publishedThisRun.length}`);
+  console.log(`New gold brief candidates generated: ${generationSelections.filter((entry) => entry.source === "gold").length}`);
+  console.log(`Generic fallback used: ${options.allowGenericTopics && genericFallbackUsed ? "yes" : "no"}`);
+  console.log(`Candidates sent to AI review: ${candidatesSentToAiReview}`);
+  console.log("AI review scores:");
+  if (generatedSummaries.length === 0) {
     console.log("None");
   } else {
-    for (const candidate of checkedCandidates) {
-      console.log(`[${candidate.guide.slug}] ${formatAiReviewStatus(candidate.aiReview)}`);
+    for (const candidate of generatedSummaries) {
+      console.log(`[${candidate.slug}] ${formatAiReviewStatus(candidate.aiReview)}`);
     }
   }
-  console.log(`Published: ${publishedCount}`);
-  console.log(`Approved: ${approvedCount}`);
-  console.log(`Publish mode: ${options.publish ? "publish" : "draft-only"}`);
-
-  if (options.dryRun) {
-    console.log(`Would publish: ${acceptedCandidates.length}`);
-    console.log("Dry run: no guide files modified.");
-  }
-
-  console.log(`Draft: ${draftCount}`);
-  console.log(`Rejected: ${rejectedCount}`);
-  console.log(`Skipped topics: ${skippedTopics.length}`);
-  console.log("Slot details:");
-  for (const slot of slotReports) {
-    console.log(`[slot:${slot.guideType}] status=${slot.status}; attempts=${slot.attempts}; accepted=${slot.acceptedTitle ?? "none"}`);
-    for (const reason of slot.rejectionReasons.slice(0, 3)) {
-      console.log(`[slot:${slot.guideType}] rejection=${reason}`);
-    }
-  }
-  const topRejectionReasons = new Map<string, number>();
-  for (const candidate of checkedCandidates.filter((entry) => !entry.eligible)) {
-    const reasons = [
-      ...candidate.failureCategories,
-      ...candidate.aiReview.warnings,
-      candidate.aiReview.unavailableReason ?? "",
-      candidate.aiReview.editorialFailureReason ?? "",
-      ...candidate.rejectionReasons,
-    ];
-    for (const reason of reasons.filter((entry) => entry.trim().length > 0).slice(0, 3)) {
-      topRejectionReasons.set(reason, (topRejectionReasons.get(reason) ?? 0) + 1);
-    }
-  }
-  console.log("Top rejection reasons:");
-  if (topRejectionReasons.size === 0) {
+  console.log(`Guides newly approved: ${newlyApproved.length}`);
+  if (newlyApproved.length === 0) {
     console.log("None");
   } else {
-    for (const [reason, count] of [...topRejectionReasons.entries()].sort((left, right) => right[1] - left[1]).slice(0, 8)) {
-      console.log(`${reason}: ${count}`);
+    for (const guide of newlyApproved) {
+      console.log(guide.title);
     }
   }
-  console.log("Rejected candidate reasons:");
-  if (rejectedCandidateReasons.length === 0) {
+  console.log(`Guides rejected: ${rejectedGuides.length}`);
+  if (rejectedGuides.length === 0) {
     console.log("None");
   } else {
-    for (const rejected of rejectedCandidateReasons) {
-      console.log(`[${rejected.slug}] ${rejected.reason}`);
+    for (const guide of rejectedGuides) {
+      console.log(guide.title);
     }
   }
   console.log("Final published titles:");
-  if (!options.publish || options.dryRun || acceptedCandidates.length === 0) {
+  if (finalPublishedTitles.length === 0) {
     console.log("None");
   } else {
-    for (const candidate of acceptedCandidates) {
-      console.log(candidate.guide.title);
+    for (const title of finalPublishedTitles) {
+      console.log(title);
     }
   }
-  console.log("Final accepted titles:");
-  if (acceptedCandidates.length === 0) {
+  console.log("Final approved titles:");
+  if (finalApprovedTitles.length === 0) {
     console.log("None");
   } else {
-    for (const candidate of acceptedCandidates) {
-      console.log(candidate.guide.title);
+    for (const title of finalApprovedTitles) {
+      console.log(title);
     }
   }
-  console.log("Rejected titles and top reasons:");
-  const rejectedCandidates = checkedCandidates.filter((candidate) => !candidate.eligible);
-  if (rejectedCandidates.length === 0) {
-    console.log("None");
-  } else {
-    for (const candidate of rejectedCandidates) {
-      const topReason =
-        candidate.aiReview.unavailableReason ??
-        candidate.aiReview.editorialFailureReason ??
-        candidate.aiReview.warnings[0] ??
-        candidate.rejectionReasons[0] ??
-        "Candidate did not pass all publish gates.";
-      console.log(`Title: ${candidate.guide.title}`);
-      console.log(`  Guide type: ${candidateGuideType(candidate.guide)}`);
-      console.log(`  Topic bucket: ${candidate.topicBucket}`);
-      console.log(`  Mismatch guardrail: ${candidate.mismatchGuardrail.score}/100 (${candidate.mismatchGuardrail.passed ? "PASS" : "FAIL"})`);
-      console.log(`  Depth guardrail: ${candidate.depthGuardrail.score}/100 (${candidate.depthGuardrail.passed ? "PASS" : "FAIL"})`);
-      console.log(
-        `  Editorial preflight: ${candidate.editorialPreflight.score}/100 (${candidate.editorialPreflight.passed ? (candidate.editorialPreflight.warnings.length > 0 ? "PASS with warnings" : "PASS") : "FAIL"})`,
-      );
-      console.log(`  Failed standard: ${candidate.editorialPreflight.failedStandards.join(", ") || "None"}`);
-      console.log(`  Rewrite action taken: ${candidate.editorialPreflight.rewriteActions.join(" | ") || "None"}`);
-      console.log(`  AI review attempted: ${candidate.aiReview.attempted ? "yes" : "no"}`);
-      console.log(`  AI review score: ${candidate.aiReview.available ? `${candidate.aiReview.score}/100` : "unavailable"}`);
-      console.log(`  AI review unavailable reason: ${candidate.aiReview.unavailableReason ?? "None"}`);
-      console.log(`  Editorial failure reason: ${candidate.aiReview.editorialFailureReason ?? "None"}`);
-      console.log(`  Top reason: ${topReason}`);
-    }
-  }
-  console.log(
-    `Final status: ${acceptedCandidates.length >= targetAcceptedCount ? "target met" : "target not met before limits were reached"}`,
-  );
+  console.log(`Published from approved queue: ${publishedThisRun.length}`);
+  console.log(`Approved queue after run: ${finalApprovedTitles.length}`);
 
-  if (acceptedCandidates.length < targetAcceptedCount) {
-    console.log(
-      `Published fewer than requested because only ${acceptedCandidates.length} candidate(s) passed all gates after fallback and improvement attempts.`,
-    );
+  if (options.dryRun) {
+    console.log("Dry run: no guide files modified.");
   }
 
-  if (options.count > 0 && checkedCandidates.length === 0) {
-    console.error("No valid guide candidates could be generated.");
+  if (options.publish && approvedQueueBeforeRun.length === 0) {
+    console.log("No approved guides existed before the run, so nothing was published.");
+  }
+
+  if (options.count > 0 && generationSelections.length === 0 && publishedThisRun.length === 0) {
+    console.error("No valid queue candidates could be generated or published.");
     process.exitCode = 1;
   }
 }
 
-main().catch((error: unknown) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((error: unknown) => {
+    console.error(error);
+    process.exitCode = 1;
+  });
+}
