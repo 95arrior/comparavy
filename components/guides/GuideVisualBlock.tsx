@@ -155,7 +155,7 @@ function ToolStackVisual({ guide }: { readonly guide: Guide }) {
 }
 
 function BeforeAfterVisual({ guide }: { readonly guide: Guide }) {
-  const before = guide.visualAssets?.beforeAfter?.before ?? `Before: scattered notes or a messy first draft for ${guide.searchIntent}.`;
+  const before = guide.visualAssets?.beforeAfter?.before ?? `Before: scattered notes or a messy starting version for ${guide.searchIntent}.`;
   const after = guide.visualAssets?.beforeAfter?.after ?? `After: a checked, usable result that is ready to review, refine, or send.`;
 
   return (

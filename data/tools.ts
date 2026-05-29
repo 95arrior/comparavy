@@ -18,7 +18,7 @@ const BASE_TOOLS: readonly AiTool[] = [
       "A general-purpose assistant for drafting, brainstorming, explaining, file-based work, and everyday problem solving.",
     bestFor: [
       "People who want one flexible starting point",
-      "Brainstorming and first drafts",
+      "Brainstorming and initial versions",
       "Everyday questions and document help",
     ],
     notFor: [
@@ -957,7 +957,7 @@ const BASE_TOOLS: readonly AiTool[] = [
     description:
       "An AI-assisted creation tool for presentations, documents, and lightweight web-style storytelling.",
     bestFor: [
-      "Quick presentation first drafts",
+      "Quick presentation starting versions",
       "Simple visual proposals and briefs",
       "Non-designers needing structure",
     ],

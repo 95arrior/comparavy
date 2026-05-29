@@ -38,7 +38,7 @@ export default function IncomeGuideLayout({ guide }: { readonly guide: Guide }) 
           <SectionHeading eyebrow="What you can offer">Realistic service shape</SectionHeading>
           <p className="mt-4 text-sm leading-7 text-slate-600">{guide.useCase}</p>
           <p className="mt-4 text-sm leading-7 text-slate-600">
-            {guide.exampleWorkflow ?? "Start with one small, reviewable deliverable such as captions, product descriptions, client recaps, basic content calendars, or cleaned-up first drafts."}
+            {guide.exampleWorkflow ?? "Start with one small, reviewable deliverable such as captions, product descriptions, client recaps, basic content calendars, or cleaned-up initial versions."}
           </p>
         </div>
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">

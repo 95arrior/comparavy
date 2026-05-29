@@ -8,6 +8,11 @@ import {
   type GuideQualityResult,
 } from "@/lib/contentQuality";
 import { reviewGuideWithAI, type AiGuideReview } from "@/lib/aiGuideReviewer";
+import {
+  buildEditorialBlueprint,
+  type EditorialBlueprint,
+  type TopicBucketId,
+} from "@/lib/editorialBlueprint";
 import { logGuideTopicToolSlugWarnings } from "@/lib/guideTopicValidation";
 import { resolveGuideLayoutType, type GuideLayoutType } from "@/lib/guideTypes";
 import type { Guide } from "@/lib/guides";
@@ -38,6 +43,9 @@ interface Candidate {
   readonly uniquenessScore: number;
   readonly deterministic: GuideQualityResult;
   readonly aiReview: AiGuideReview;
+  readonly mismatchGuardrail: LocalGuardrailResult;
+  readonly depthGuardrail: LocalGuardrailResult;
+  readonly topicBucket: TopicBucketId;
   readonly improveAttempts: number;
   readonly eligible: boolean;
   readonly rejectionReasons: readonly string[];
@@ -46,7 +54,14 @@ interface Candidate {
   readonly failureCategories: readonly string[];
 }
 
-type CandidateFinalStatus = "rejected" | "draft" | "would publish" | "published";
+type CandidateFinalStatus = "rejected" | "draft" | "approved" | "would publish" | "published";
+
+interface LocalGuardrailResult {
+  readonly passed: boolean;
+  readonly score: number;
+  readonly warnings: string[];
+  readonly blockers: string[];
+}
 
 interface TopicQueueEntry {
   readonly topic: GuideTopic;
@@ -209,6 +224,11 @@ const FORBIDDEN_EDITORIAL_PHRASES = [
   "fits your situation",
   "strong option",
   "useful for this use case",
+  "different workflow",
+  "final cleanup",
+  "rough content that needs rewriting or repackaging",
+  "first draft",
+  "citation style",
   "good option",
   "this tool is best because it helps",
   "in today's digital world",
@@ -379,6 +399,159 @@ function runDeterministicQualityCheck(guide: Guide, comparisonGuides: readonly G
   );
 }
 
+function fullGuideText(guide: Guide): string {
+  return JSON.stringify(guide).toLowerCase();
+}
+
+function countTermHits(text: string, terms: readonly string[]): number {
+  return terms.filter((term) => {
+    const normalized = term.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    return normalized.length > 0 && text.includes(normalized);
+  }).length;
+}
+
+function topicMismatchGuardrail(guide: Guide, blueprint: EditorialBlueprint): LocalGuardrailResult {
+  let score = 100;
+  const warnings: string[] = [];
+  const blockers: string[] = [];
+  const text = fullGuideText(guide);
+  const matchedBannedTerms = blueprint.bannedMismatchedTerms.filter((term) =>
+    text.includes(term.toLowerCase()),
+  );
+  const topicTermHits = countTermHits(text, blueprint.topicSpecificTerms);
+
+  if (matchedBannedTerms.length > 0) {
+    blockers.push(`Topic mismatch guardrail: unrelated terms found: ${matchedBannedTerms.join(", ")}.`);
+    score -= Math.min(40, matchedBannedTerms.length * 12);
+  }
+
+  if (topicTermHits < Math.min(4, blueprint.topicSpecificTerms.length)) {
+    blockers.push(`Topic mismatch guardrail: guide does not use enough ${blueprint.topicBucket} language.`);
+    score -= 18;
+  }
+
+  if (blueprint.topicBucket === "image-editing-brand-control" && /\b(citation|citations|blog post hooks|transcript|content repurposing)\b/i.test(text)) {
+    blockers.push("Topic mismatch guardrail: image editing guide drifted into writing, citations, transcripts, or repurposing.");
+    score -= 20;
+  }
+
+  if (blueprint.topicBucket === "automation-agents" && /\b(caption|captions|publishing hooks|blog drafts|image editing|brand control)\b/i.test(text)) {
+    blockers.push("Topic mismatch guardrail: automation guide drifted into captions, publishing, writing, or image editing.");
+    score -= 20;
+  }
+
+  if (blueprint.topicBucket === "video-shorts-clips" && /\b(citation|citations|pdfs?|study notes|source bibliography)\b/i.test(text)) {
+    blockers.push("Topic mismatch guardrail: video guide drifted into citations, PDFs, or study notes.");
+    score -= 20;
+  }
+
+  return {
+    passed: blockers.length === 0 && score >= 85,
+    score: Math.max(0, score),
+    warnings,
+    blockers,
+  };
+}
+
+function containsBlueprintInputAndOutput(text: string, blueprint: EditorialBlueprint): boolean {
+  const normalizedText = normalizeForGuardrail(text);
+  const hasInput = blueprint.inputMaterial.some((input) => {
+    const terms = normalizeForGuardrail(input).split(" ").filter((term) => term.length > 3);
+    return terms.some((term) => normalizedText.includes(term));
+  });
+  const hasOutput = blueprint.desiredOutput.some((output) => {
+    const terms = normalizeForGuardrail(output).split(" ").filter((term) => term.length > 3);
+    return terms.some((term) => normalizedText.includes(term));
+  });
+
+  return hasInput && hasOutput;
+}
+
+function containsBlueprintInputOrOutput(text: string, blueprint: EditorialBlueprint): boolean {
+  const normalizedText = normalizeForGuardrail(text);
+  const topicTerms = [...blueprint.inputMaterial, ...blueprint.desiredOutput].flatMap((value) =>
+    normalizeForGuardrail(value).split(" ").filter((term) => term.length > 3),
+  );
+
+  return topicTerms.some((term) => normalizedText.includes(term));
+}
+
+function minimumDepthGuardrail(guide: Guide, blueprint: EditorialBlueprint): LocalGuardrailResult {
+  let score = 100;
+  const warnings: string[] = [];
+  const blockers: string[] = [];
+  const guideType = candidateGuideType(guide);
+
+  function addBlocker(message: string, penalty = 10): void {
+    if (!blockers.includes(message)) {
+      blockers.push(message);
+      score -= penalty;
+    }
+  }
+
+  if (!containsBlueprintInputAndOutput(guide.quickAnswer ?? guide.quickVerdict, blueprint)) {
+    addBlocker("Minimum depth guardrail: quick answer must name a specific input and output.", 12);
+  }
+
+  const concreteSteps = (guide.steps ?? []).filter((step) =>
+    step.detail.trim().length >= 80 &&
+    containsBlueprintInputOrOutput(`${step.title} ${step.detail} ${step.output ?? ""}`, blueprint),
+  ).length;
+
+  if (guideType === "how-to" && concreteSteps < 4) {
+    addBlocker("Minimum depth guardrail: workflow needs at least four concrete topic-specific steps.", 12);
+  }
+
+  if (!guide.exampleResult?.trim()) {
+    addBlocker("Minimum depth guardrail: example result is required.", 10);
+  }
+
+  if (guideType === "tool-decision" && guide.decisionPath.length < 4) {
+    addBlocker("Minimum depth guardrail: tool-decision guides need a decision path.", 10);
+  }
+
+  const topicFaqs = guide.faqs.filter((faq) =>
+    countTermHits(faq.question.toLowerCase(), blueprint.topicSpecificTerms) > 0 ||
+    countTermHits(faq.answer.toLowerCase(), blueprint.topicSpecificTerms) > 0,
+  );
+
+  if (topicFaqs.length < Math.min(3, guide.faqs.length)) {
+    addBlocker("Minimum depth guardrail: FAQ questions must be topic-specific.", 10);
+  }
+
+  const mobileConcrete = containsBlueprintInputOrOutput(guide.mobileUseCase ?? "", blueprint);
+  const desktopConcrete = containsBlueprintInputOrOutput(guide.desktopUseCase ?? "", blueprint);
+
+  if (!mobileConcrete && !desktopConcrete) {
+    addBlocker("Minimum depth guardrail: mobile or desktop workflow must be concrete.", 10);
+  }
+
+  const mappedTools = (guide.toolsYouCanUse ?? []).filter((tool) =>
+    Boolean(tool.role?.trim()) &&
+    containsBlueprintInputOrOutput(`${tool.why} ${tool.role ?? ""} ${tool.bestUseCase ?? ""}`, blueprint),
+  ).length;
+
+  if (mappedTools < Math.min(2, guide.recommendedToolSlugs.length)) {
+    addBlocker("Minimum depth guardrail: tools must be mapped to workflow roles, not just listed.", 10);
+  }
+
+  if (guideType === "tool-decision") {
+    const repeatedBestFor = repeatedFieldValues(guide.recommendedTools.map((tool) => tool.bestFor));
+    const repeatedAvoidIf = repeatedFieldValues(guide.recommendedTools.map((tool) => tool.avoidIf));
+
+    if (repeatedBestFor.length > 0 || repeatedAvoidIf.length > 0) {
+      addBlocker("Minimum depth guardrail: repeated Best for / Avoid if text across tools.", 10);
+    }
+  }
+
+  return {
+    passed: blockers.length === 0 && score >= 85,
+    score: Math.max(0, score),
+    warnings,
+    blockers,
+  };
+}
+
 function unavailableAiReview(reason: string): AiGuideReview {
   return {
     available: false,
@@ -479,11 +652,14 @@ function logCandidate(candidate: Candidate): void {
     })}`,
   );
   console.log(`  Slot: ${candidate.slot}`);
+  console.log(`  Topic bucket: ${candidate.topicBucket}`);
   console.log(`  Topic slug: ${candidate.topicSlug}`);
   console.log(`  Primary keyword: ${candidate.guide.primaryKeyword}`);
   console.log(`  Selected tools: ${candidate.guide.recommendedToolSlugs.join(", ")}`);
   console.log(`  Quality score: ${candidate.guide.qualityScore}/100`);
   console.log(`  Deterministic check: ${candidate.deterministic.score}/100 (${candidate.deterministic.passed ? "PASS" : "FAIL"})`);
+  console.log(`  Mismatch guardrail: ${candidate.mismatchGuardrail.score}/100 (${candidate.mismatchGuardrail.passed ? "PASS" : "FAIL"})`);
+  console.log(`  Depth guardrail: ${candidate.depthGuardrail.score}/100 (${candidate.depthGuardrail.passed ? "PASS" : "FAIL"})`);
   console.log(`  AI review: ${aiScore}`);
   console.log(`  Improve attempt number: ${candidate.improveAttempts}`);
   console.log(`  Priority: ${candidate.topicPriority}`);
@@ -499,6 +675,14 @@ function logCandidate(candidate: Candidate): void {
 
   for (const blocker of candidate.deterministic.blockers) {
     console.log(`  Blocker: ${blocker}`);
+  }
+
+  for (const blocker of candidate.mismatchGuardrail.blockers) {
+    console.log(`  Mismatch blocker: ${blocker}`);
+  }
+
+  for (const blocker of candidate.depthGuardrail.blockers) {
+    console.log(`  Depth blocker: ${blocker}`);
   }
 
   for (const warning of candidate.aiReview.warnings) {
@@ -569,10 +753,12 @@ function classifyFailureCategories(reasons: readonly string[], guide: Guide): st
   }
 
   add("vague quick answer", /quick answer|quick verdict|first 100|too generic/);
-  add("too much tool-list content", /tool list|broad tool|best ai tools|supporting actors|placeholder phrase/);
+  add("too much tool-list content", /tool list|broad tool|supporting actors|placeholder phrase/);
   add("weak decision path", /decision path|branching|if\/then|decision logic/);
   add("generic FAQ", /faq|generic question/);
-  add("repeated Best for / Avoid if", /repeated best for|repeated avoid if|watch for/);
+  add("repeated Best for / Avoid if", /repeated best for|repeated avoid if/);
+  add("topic mismatch", /topic mismatch|unrelated terms|does not use enough/);
+  add("minimum depth", /minimum depth|tools must be mapped|input and output/);
   add("lack of concrete workflow", /workflow|step-by-step|concrete example|example result/);
   add("title too broad", /title|best ai tools for/);
   add("no mobile/desktop usefulness", /mobile|desktop|deviceintent/);
@@ -581,6 +767,9 @@ function classifyFailureCategories(reasons: readonly string[], guide: Guide): st
 
   if (candidateGuideType(guide) === "how-to" && !/^how to\b/i.test(guide.title)) {
     categories.push("title too broad");
+    if (/^best ai tools\b/i.test(guide.title)) {
+      categories.push("too much tool-list content");
+    }
   }
 
   return categories.filter((category, index, all) => all.indexOf(category) === index);
@@ -817,7 +1006,7 @@ async function improveGuideWithAI(
       body: JSON.stringify({
         model,
         instructions:
-          "You are deeply rebuilding a failed Comparavy guide candidate after deterministic quality checks and strict AI editorial review. Return a complete guide JSON object only. This is a deep rewrite from the editorial brief and outline, not a field patch. Preserve only useful factual material from the failed draft. You may change the title, angle, intro, workflow, tool guidance, FAQ, decision path, and final verdict while keeping the supplied slug and valid selected tool slugs. If guideType is how-to, the title must start with \"How to\", tools must support the workflow instead of dominating it, and you must rebuild Quick Answer, realWorldScenario, whatYouNeed, step-by-step workflow with what/why/output detail, computer guidance, phone guidance, Tools you can use, Example result, Common mistakes, FAQ, and Next step. If guideType is tool-decision, justify the ranking with criteria, comparison evidence, unique tool cards, and a branching decisionTree or equivalent decisionPath before tool-card detail. If guideType is income, include realityCheck, realistic offers, skillNeeded, firstStep, time/cost/difficulty, mistakes, and no guaranteed income language. If guideType is trend-led, include quickDecision, whatChanged when supported, whatToAvoid, comparisonRows, and a practical workflow without claiming breaking news. Fix the failure categories and warnings supplied. Do not invent prices, fake testing, guaranteed income, performance claims, legal advice, or unsupported current-news claims. pricingNote and pricingCaveat must remain exactly: Pricing can change. Check the official site before subscribing.",
+          "You are deeply rebuilding a failed Comparavy guide candidate after deterministic quality checks and strict AI editorial review. Return a complete guide JSON object only. This is a deep rewrite from the Gold Standard Editorial Blueprint and outline, not a field patch. Preserve only useful factual material from the failed draft. The blueprint is the source of truth for scenario, input material, desired output, workflow, mobile/desktop use, tool roles, comparison criteria, example result, FAQ, category language, and banned mismatched terms. You may change the title, angle, intro, workflow, tool guidance, FAQ, decision path, and final verdict while keeping the supplied slug and valid selected tool slugs. If guideType is how-to, the title must start with \"How to\", answer the problem in the first 100 words using blueprint input and output, put the practical workflow before tools, and rebuild realWorldScenario, whatYouNeed, step-by-step workflow with what/why/output detail, computer guidance, phone guidance, Tools you can use, Example result, Common mistakes, FAQ, and Next step. If guideType is tool-decision, write a Quick Verdict, put Which one should you choose before tool cards, justify the ranking with blueprint criteria, create unique tool cards, and use branching if/then decisionPath before tool-card detail. If guideType is income, include realityCheck, realistic offers, skillNeeded, firstStep, time/cost/difficulty, mistakes, and no guaranteed income language. If guideType is trend-led, include quickDecision, whatChanged when supported, whatToAvoid, comparisonRows, and a practical workflow without claiming breaking news. Fix the failure categories and warnings supplied. Do not invent prices, fake testing, guaranteed income, performance claims, legal advice, unsupported current-news claims, placeholder phrases, or any term listed in editorialBrief.editorialBlueprint.bannedMismatchedTerms. pricingNote and pricingCaveat must remain exactly: Pricing can change. Check the official site before subscribing.",
         input: JSON.stringify({
           attempt,
           warnings,
@@ -1075,7 +1264,21 @@ async function reviewAndImproveCandidate({
   readonly slot: GuideLayoutType;
 }): Promise<Candidate> {
   let currentGuide = guide;
+  const selectedTools = scoreToolsForTopic(topic).filter(({ tool }) =>
+    currentGuide.recommendedToolSlugs.includes(tool.slug),
+  );
+  const blueprint = buildEditorialBlueprint({
+    topic,
+    guideType: candidateGuideType(currentGuide),
+    tools: selectedTools,
+  });
   let deterministic = runDeterministicQualityCheck(currentGuide, comparisonGuides);
+  let mismatchGuardrail = topicMismatchGuardrail(currentGuide, blueprint);
+  let depthGuardrail = minimumDepthGuardrail(currentGuide, blueprint);
+  deterministic = mergeQualityResults(
+    mergeQualityResults(deterministic, mismatchGuardrail),
+    depthGuardrail,
+  );
   let aiReview = deterministic.passed
     ? await reviewGuideWithAI(currentGuide)
     : unavailableAiReview("AI editorial review was deferred until local guardrails pass.");
@@ -1109,6 +1312,12 @@ async function reviewAndImproveCandidate({
     }
 
     deterministic = runDeterministicQualityCheck(currentGuide, comparisonGuides);
+    mismatchGuardrail = topicMismatchGuardrail(currentGuide, blueprint);
+    depthGuardrail = minimumDepthGuardrail(currentGuide, blueprint);
+    deterministic = mergeQualityResults(
+      mergeQualityResults(deterministic, mismatchGuardrail),
+      depthGuardrail,
+    );
     aiReview = deterministic.passed
       ? await reviewGuideWithAI(currentGuide)
       : unavailableAiReview("AI editorial review was deferred until local guardrails pass.");
@@ -1128,6 +1337,9 @@ async function reviewAndImproveCandidate({
     uniquenessScore: uniquenessScore(currentGuide, publishedGuides),
     deterministic,
     aiReview,
+    mismatchGuardrail,
+    depthGuardrail,
+    topicBucket: blueprint.topicBucket,
     improveAttempts,
     eligible: rejectionReasons.length === 0,
     rejectionReasons,
@@ -1269,7 +1481,7 @@ async function main(): Promise<void> {
       }
 
       const comparisonSet = [
-        ...existingGuides,
+        ...publishedGuides,
         ...generatedCandidates,
         ...acceptedCandidates.map((candidate) => candidate.guide),
       ];
@@ -1299,7 +1511,7 @@ async function main(): Promise<void> {
           ? "would publish"
           : options.publish
             ? "published"
-            : "draft";
+            : "approved";
       const finalizedCandidate = { ...candidate, finalStatus };
 
       checkedCandidates.push(finalizedCandidate);
@@ -1339,7 +1551,9 @@ async function main(): Promise<void> {
     for (const candidate of checkedCandidates) {
       const guide = options.publish && candidate.eligible
         ? { ...candidate.guide, status: "published" as const, updatedAt: today }
-        : { ...candidate.guide, status: "draft" as const };
+        : candidate.eligible
+          ? { ...candidate.guide, status: "approved" as const, updatedAt: today }
+          : { ...candidate.guide, status: "draft" as const };
 
       const filePath = path.join(GUIDES_DIRECTORY, `${guide.slug}.json`);
       await writeFile(filePath, `${JSON.stringify(guide, null, 2)}\n`, "utf8");
@@ -1348,7 +1562,7 @@ async function main(): Promise<void> {
 
   for (const candidate of acceptedCandidates) {
     console.log(
-      `[${candidate.guide.slug}] ${options.dryRun ? "Would publish (dry run)." : "Published."}`,
+      `[${candidate.guide.slug}] ${options.dryRun ? "Would publish (dry run)." : options.publish ? "Published." : "Approved for later publishing."}`,
     );
   }
 
@@ -1360,8 +1574,9 @@ async function main(): Promise<void> {
   }
 
   const rejectedCount = checkedCandidates.filter((candidate) => !candidate.eligible).length;
-  const publishedCount = options.dryRun ? 0 : acceptedCandidates.length;
-  const draftCount = checkedCandidates.length - publishedCount;
+  const publishedCount = options.publish && !options.dryRun ? acceptedCandidates.length : 0;
+  const approvedCount = !options.dryRun && !options.publish ? acceptedCandidates.length : 0;
+  const draftCount = checkedCandidates.length - (options.publish ? publishedCount : approvedCount);
 
   console.log("Auto publish summary");
   console.log(`Target count: ${targetAcceptedCount}`);
@@ -1371,11 +1586,22 @@ async function main(): Promise<void> {
   console.log(`Tool-decision slot status: ${toolDecisionSlot ? `${toolDecisionSlot.status} (${toolDecisionSlot.attempts} attempt${toolDecisionSlot.attempts === 1 ? "" : "s"})` : "not targeted"}`);
   console.log(`Candidates created: ${generatedCandidates.length}`);
   console.log(`Candidates improved: ${candidatesImproved}`);
+  console.log(`Candidates blocked by mismatch guardrail: ${checkedCandidates.filter((candidate) => !candidate.mismatchGuardrail.passed).length}`);
+  console.log(`Candidates sent to AI review: ${checkedCandidates.filter((candidate) => candidate.aiReview.available).length}`);
   console.log(`True how-to guides attempted: ${howToGuidesAttempted}`);
   console.log(`Tool-decision guides attempted: ${toolDecisionGuidesAttempted}`);
   console.log(`Candidates rewritten after AI review: ${candidatesImproved}`);
   console.log(`Candidates checked: ${checkedCandidates.length}`);
+  console.log("AI scores:");
+  if (checkedCandidates.length === 0) {
+    console.log("None");
+  } else {
+    for (const candidate of checkedCandidates) {
+      console.log(`[${candidate.guide.slug}] ${candidate.aiReview.available ? candidate.aiReview.score : "unavailable"}`);
+    }
+  }
   console.log(`Published: ${publishedCount}`);
+  console.log(`Approved: ${approvedCount}`);
   console.log(`Publish mode: ${options.publish ? "publish" : "draft-only"}`);
 
   if (options.dryRun) {
@@ -1446,7 +1672,13 @@ async function main(): Promise<void> {
         candidate.aiReview.warnings[0] ??
         candidate.rejectionReasons[0] ??
         "Candidate did not pass all publish gates.";
-      console.log(`${candidate.guide.title}: ${topReason}`);
+      console.log(`Title: ${candidate.guide.title}`);
+      console.log(`  Guide type: ${candidateGuideType(candidate.guide)}`);
+      console.log(`  Topic bucket: ${candidate.topicBucket}`);
+      console.log(`  Mismatch guardrail: ${candidate.mismatchGuardrail.score}/100 (${candidate.mismatchGuardrail.passed ? "PASS" : "FAIL"})`);
+      console.log(`  Depth guardrail: ${candidate.depthGuardrail.score}/100 (${candidate.depthGuardrail.passed ? "PASS" : "FAIL"})`);
+      console.log(`  AI review score: ${candidate.aiReview.available ? candidate.aiReview.score : "unavailable"}`);
+      console.log(`  Top reason: ${topReason}`);
     }
   }
   console.log(

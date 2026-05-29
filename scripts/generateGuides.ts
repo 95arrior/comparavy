@@ -9,6 +9,11 @@ import {
   type GuideQualityResult,
 } from "@/lib/contentQuality";
 import {
+  buildEditorialBlueprint,
+  classifyTopicBucket,
+  type EditorialBlueprint,
+} from "@/lib/editorialBlueprint";
+import {
   inferGuideLayoutTypeFromTopic,
   type GuideLayoutType,
 } from "@/lib/guideTypes";
@@ -45,6 +50,7 @@ interface SkippedGuideTopic {
 
 export interface EditorialBrief {
   readonly guideType: GuideLayoutType;
+  readonly editorialBlueprint: EditorialBlueprint;
   readonly targetReader: string;
   readonly searchIntent: string;
   readonly userPain: string;
@@ -486,6 +492,52 @@ function cleanCatalogPhrase(value: string, toolName?: string): string {
 }
 
 function topicInputFocus(topic: GuideTopic): string {
+  const bucket = classifyTopicBucket(topic);
+
+  if (bucket === "image-editing-brand-control") {
+    return "product photos, brand colors, reference images, and social or ad creative requirements";
+  }
+
+  if (bucket === "automation-agents") {
+    return "lead forms, customer questions, appointment requests, and task lists";
+  }
+
+  if (bucket === "seo-content-briefs") {
+    return "a target keyword, SERP notes, customer questions, and competitor heading notes";
+  }
+
+  if (bucket === "video-shorts-clips") {
+    return "video footage, ad scripts, captions, and export requirements";
+  }
+
+  if (bucket === "podcast-audio-editing") {
+    return "podcast recordings, episode transcripts, guest notes, and clip requirements";
+  }
+
+  if (bucket === "ecommerce-product-descriptions") {
+    return "verified product details, photos, dimensions, materials, and customer questions";
+  }
+
+  if (bucket === "meeting-notes-client-recaps") {
+    return "call notes, decisions, owners, dates, and open client questions";
+  }
+
+  if (bucket === "social-content-captions") {
+    return "the source idea, audience notes, brand voice, and channel requirements";
+  }
+
+  if (bucket === "presentations-slides") {
+    return "proposal notes, source facts, audience goals, and slide requirements";
+  }
+
+  if (bucket === "real-estate-listings") {
+    return "verified property facts, feature notes, room details, and broker requirements";
+  }
+
+  if (bucket === "coding-app-prototypes") {
+    return "requirements, existing code or wireframes, error details, and acceptance criteria";
+  }
+
   const text = `${topic.searchIntent} ${topic.useCase} ${topic.contentGap} ${topic.uniqueAngle}`.toLowerCase();
 
   if (/\b(pdf|document|documents|notes|study|lecture|class)\b/.test(text)) {
@@ -497,7 +549,7 @@ function topicInputFocus(topic: GuideTopic): string {
   }
 
   if (/\b(email|message|client email|rewrite)\b/.test(text)) {
-    return "draft emails that need careful wording without changing meaning";
+    return "email text that needs careful wording without changing meaning";
   }
 
   if (/\b(meeting|recap|action items|minutes)\b/.test(text)) {
@@ -505,17 +557,25 @@ function topicInputFocus(topic: GuideTopic): string {
   }
 
   if (/\b(blog|carousel|social|post|caption|marketing|content)\b/.test(text)) {
-    return "rough content that needs rewriting or repackaging";
+    return "source content, audience notes, channel requirements, and the main message";
   }
 
   if (/\b(plan|outline|brief|proposal|summary)\b/.test(text)) {
-    return "an early draft that needs structure";
+    return "an early version that needs structure";
   }
 
   return topic.useCase;
 }
 
-function topicFaqTheme(topic: GuideTopic): "research" | "writing" | "content" | "meetings" | "general" {
+function topicFaqTheme(topic: GuideTopic): "research" | "writing" | "content" | "meetings" | "image" | "automation" | "seo" | "video" | "ecommerce" | "general" {
+  const bucket = classifyTopicBucket(topic);
+
+  if (bucket === "image-editing-brand-control") return "image";
+  if (bucket === "automation-agents") return "automation";
+  if (bucket === "seo-content-briefs") return "seo";
+  if (bucket === "video-shorts-clips" || bucket === "podcast-audio-editing") return "video";
+  if (bucket === "ecommerce-product-descriptions" || bucket === "real-estate-listings") return "ecommerce";
+
   const text = `${topic.searchIntent} ${topic.useCase} ${topic.contentGap}`.toLowerCase();
 
   if (/\b(pdf|study|research|sources|citations|industry|market|brief)\b/.test(text)) {
@@ -562,7 +622,7 @@ function toolSummary(tool: { readonly name: string; readonly bestFor: readonly s
   const outputFocus =
     tool.useCases[0] ??
     (position === 0
-      ? "the first clean draft"
+      ? "the first clean version"
       : position === 1
         ? "the second-pass comparison"
         : "the final review");
@@ -572,18 +632,20 @@ function toolSummary(tool: { readonly name: string; readonly bestFor: readonly s
   );
 }
 
-function toolBestForText(tool: { readonly bestFor: readonly string[]; readonly useCases: readonly string[] }, topic: GuideTopic, position: number): string {
+function toolBestForText(tool: { readonly bestFor: readonly string[]; readonly useCases: readonly string[] }, topic: GuideTopic, position: number, blueprint?: EditorialBlueprint): string {
   const base = toolInputPhrase(tool, topic);
+  const output = blueprint?.desiredOutput[position % Math.max(1, blueprint.desiredOutput.length)] ?? topic.searchIntent;
+  const criterion = blueprint?.comparisonCriteria[position % Math.max(1, blueprint.comparisonCriteria.length)] ?? "setup";
 
   if (position === 0) {
-    return `${base} for ${topic.searchIntent}`;
+    return `${base} for ${output}`;
   }
 
   if (position === 1) {
-    return `${base} when you want a different workflow than the top pick`;
+    return `${base} when ${criterion} matters more than the top pick`;
   }
 
-  return `${base} when speed or a lighter setup matters more`;
+  return `${base} when speed or a lighter setup matters more for ${output}`;
 }
 
 function toolAvoidIfText(tool: { readonly avoidIf: readonly string[]; readonly notFor: readonly string[] }, topic: GuideTopic, position: number): string {
@@ -622,21 +684,23 @@ function toolWhyConsiderText(tool: { readonly name: string; readonly bestFor: re
 }
 
 function quickVerdictForGuide(
+  blueprint: EditorialBlueprint,
   topic: GuideTopic,
   firstTool: { readonly name: string; readonly bestFor: readonly string[]; readonly avoidIf: readonly string[]; readonly notFor: readonly string[] },
   secondTool: { readonly name: string; readonly bestFor: readonly string[]; readonly avoidIf: readonly string[]; readonly notFor: readonly string[] },
   thirdTool: { readonly name: string; readonly bestFor: readonly string[]; readonly avoidIf: readonly string[]; readonly notFor: readonly string[] },
 ): string {
-  const firstReason = toolInputPhrase(firstTool, topic);
-  const secondReason = toolInputPhrase(secondTool, topic);
+  const firstReason = blueprint.desiredOutput[0] ?? toolInputPhrase(firstTool, topic);
+  const secondReason = blueprint.comparisonCriteria[1] ?? toolInputPhrase(secondTool, topic);
   const avoidReason = toolAvoidPhrase(firstTool);
 
   return ensurePeriod(
-    `For ${topic.searchIntent}, start with ${firstTool.name} because it is best for ${firstReason}. Choose ${secondTool.name} when you need ${secondReason} and want a different workflow. Avoid ${firstTool.name} when ${avoidReason}; in that case ${thirdTool.name} is the better fallback.`,
+    `For ${topic.searchIntent}, start with ${firstTool.name} because it is the closest fit for turning ${blueprint.inputMaterial[0]} into ${firstReason}. Choose ${secondTool.name} when ${secondReason} matters more. Avoid ${firstTool.name} when ${avoidReason}; in that case ${thirdTool.name} is the better fallback.`,
   );
 }
 
 function quickAnswerForGuide(
+  blueprint: EditorialBlueprint,
   topic: GuideTopic,
   firstTool: { readonly name: string; readonly bestFor: readonly string[]; readonly avoidIf: readonly string[]; readonly notFor: readonly string[] },
   secondTool: { readonly name: string; readonly bestFor: readonly string[]; readonly avoidIf: readonly string[]; readonly notFor: readonly string[] },
@@ -645,11 +709,11 @@ function quickAnswerForGuide(
 ): string {
   if (guideType === "how-to") {
     return ensurePeriod(
-      `For ${topic.searchIntent}, start with the real source material, ask for one specific output, and check the draft before you share or publish it. ${firstTool.name} is the best first pass for this workflow, ${secondTool.name} helps when the format or source handling needs a second pass, and ${thirdTool.name} is better saved for cleanup after the facts are right.`,
+      `To handle ${topic.searchIntent}, ${blueprint.first100WordsAnswer} ${firstTool.name} should create the first reviewable version, ${secondTool.name} belongs in the second pass only when ${blueprint.desiredOutput[0]} needs more control, and ${thirdTool.name} should be saved for review or export after the core result is right.`,
     );
   }
 
-  return quickVerdictForGuide(topic, firstTool, secondTool, thirdTool);
+  return quickVerdictForGuide(blueprint, topic, firstTool, secondTool, thirdTool);
 }
 
 function howToTitleFromTopic(topic: GuideTopic): string {
@@ -773,10 +837,11 @@ export function createEditorialBrief(
   tools: readonly { readonly tool: { readonly slug: string; readonly name: string; readonly category: string; readonly useCases: readonly string[] } }[],
 ): EditorialBrief {
   const date = new Date().toISOString().slice(0, 10);
+  const editorialBlueprint = buildEditorialBlueprint({ topic, guideType, tools });
   const toolRoleMap = tools.slice(0, MAX_RECOMMENDED_TOOLS).map(({ tool }, index) => ({
     toolSlug: tool.slug,
     toolName: tool.name,
-    role: toolRole(tool, topic, index),
+    role: editorialBlueprint.toolRoleMap[index]?.role ?? toolRole(tool, topic, index),
   }));
   const firstTool = tools[0]?.tool.name ?? "the strongest matched tool";
   const secondTool = tools[1]?.tool.name ?? "the second matched tool";
@@ -784,53 +849,43 @@ export function createEditorialBrief(
 
   return {
     guideType,
+    editorialBlueprint,
     targetReader: topic.audience,
     searchIntent: topic.searchIntent,
     userPain: topic.userPain,
-    realWorldScenario: `${topic.audience} need ${topic.searchIntent} on a real task, not a generic tool roundup. Prepared ${date}.`,
-    jobToBeDone: `${workflowVerbPhrase(topic)} into a result the reader can review and use.`,
+    realWorldScenario: `${editorialBlueprint.realWorldScenario} Prepared ${date}.`,
+    jobToBeDone: editorialBlueprint.jobToBeDone,
     primaryKeyword: topic.primaryKeyword,
     longTailKeywords: topic.longTailKeywords,
     deviceIntent,
-    mobileScenario: topic.mobileUseCase ?? "The reader needs a short answer, a quick draft, or a review step they can finish from a phone.",
-    desktopScenario: topic.desktopUseCase ?? "The reader needs source material, AI output, and final editing space visible at the same time.",
+    mobileScenario: topic.mobileUseCase ?? editorialBlueprint.mobileWorkflow.join(" "),
+    desktopScenario: topic.desktopUseCase ?? editorialBlueprint.desktopWorkflow.join(" "),
     whatTheReaderNeedsInFirst100Words:
       guideType === "how-to"
-        ? `A direct answer that explains the first action, the source material to prepare, and the review step needed for ${topic.searchIntent}.`
-        : `A direct verdict naming the best starting tool, when to use the second choice, and when to avoid the top pick for ${topic.searchIntent}.`,
+        ? editorialBlueprint.first100WordsAnswer
+        : editorialBlueprint.first100WordsAnswer,
     whatThisArticleMustNotDo: [
       "Sound like a generic AI tool list.",
       "Use placeholder recommendation language.",
       "Promise guaranteed income, rankings, accuracy, engagement, or legal compliance.",
       "Invent exact current prices, fake testing, or unsupported product claims.",
       "Let tools replace the reader's review of source material.",
+      ...editorialBlueprint.bannedMismatchedTerms.map((term) => `Drift into unrelated language about ${term}.`),
     ],
-    coreWorkflow: createCoreWorkflow(topic, guideType),
+    coreWorkflow: editorialBlueprint.workflowSteps,
     toolRoleMap,
-    decisionCriteria: [
-      "input type",
-      "output format",
-      "source reliability",
-      "editing control",
-      "mobile speed",
-      "desktop depth",
-      "review effort",
-      "subscription risk",
-    ],
+    decisionCriteria: editorialBlueprint.comparisonCriteria,
     contentGap: topic.contentGap,
     uniqueAngle: topic.uniqueAngle,
     examplesToInclude: [
-      `A before-and-after example for ${topic.searchIntent}.`,
+      editorialBlueprint.exampleResult,
       `A phone-friendly version using ${firstTool}.`,
       `A desktop workflow that compares ${firstTool} and ${secondTool}.`,
     ],
-    commonMistakesToWarnAbout: [
-      "Starting with a tool before defining the source material and output.",
-      "Copying the first AI result without checking facts, names, dates, links, or commitments.",
-      "Using the same prompt for every tool instead of matching the tool to its role.",
-      "Turning a practical workflow into a broad ranking page.",
-    ],
-    FAQQuestions: createFaqQuestions(topic, guideType, firstTool, secondTool),
+    commonMistakesToWarnAbout: editorialBlueprint.commonMistakes,
+    FAQQuestions: editorialBlueprint.faqQuestions.length > 0
+      ? editorialBlueprint.faqQuestions
+      : createFaqQuestions(topic, guideType, firstTool, secondTool),
     internalLinks: ["/finder", "/guides", ...toolRoleMap.slice(0, 3).map((tool) => `/tools/${tool.toolSlug}`)],
     nextStepCTA: "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
   };
@@ -896,17 +951,19 @@ export function createArticleOutline(brief: EditorialBrief, title: string): Arti
 }
 
 function quickDecisionForGuide(
+  blueprint: EditorialBlueprint,
   topic: GuideTopic,
   firstTool: { readonly name: string; readonly bestFor: readonly string[]; readonly avoidIf: readonly string[]; readonly notFor: readonly string[] },
   secondTool: { readonly name: string; readonly bestFor: readonly string[]; readonly avoidIf: readonly string[]; readonly notFor: readonly string[] },
   thirdTool: { readonly name: string; readonly bestFor: readonly string[]; readonly avoidIf: readonly string[]; readonly notFor: readonly string[] },
 ): string {
   return ensurePeriod(
-    `For ${topic.searchIntent}, choose ${firstTool.name} for ${toolInputPhrase(firstTool, topic)}. Choose ${secondTool.name} when you need ${toolInputPhrase(secondTool, topic)}. Choose ${thirdTool.name} when the main job is ${toolInputPhrase(thirdTool, topic)} or when you need a lighter alternative.`,
+    `For ${topic.searchIntent}, choose ${firstTool.name} first when the input is ${blueprint.inputMaterial[0]} and the output needs to be ${blueprint.desiredOutput[0]}. Choose ${secondTool.name} when ${blueprint.comparisonCriteria[1] ?? "control"} matters more. Choose ${thirdTool.name} when you need a lighter review, export, or fallback pass.`,
   );
 }
 
 function buildBestPicksBySituation(
+  blueprint: EditorialBlueprint,
   topic: GuideTopic,
   firstTool: { readonly tool: { readonly slug: string; readonly name: string; readonly bestFor: readonly string[]; readonly avoidIf: readonly string[]; readonly notFor: readonly string[] } ; readonly reasons: readonly string[] },
   secondTool: { readonly tool: { readonly slug: string; readonly name: string; readonly bestFor: readonly string[]; readonly avoidIf: readonly string[]; readonly notFor: readonly string[] } ; readonly reasons: readonly string[] },
@@ -914,23 +971,23 @@ function buildBestPicksBySituation(
 ): { situation: string; toolSlug: string; toolName: string; why: string }[] {
   return [
     {
-      situation: `If you already have ${topicInputFocus(topic)}, choose ${firstTool.tool.name}.`,
+      situation: `If you already have ${blueprint.inputMaterial[0]}, choose ${firstTool.tool.name}.`,
       toolSlug: firstTool.tool.slug,
       toolName: firstTool.tool.name,
       why: ensurePeriod(
-        `${firstTool.tool.name} is the closest match because it is built for ${toolInputPhrase(firstTool.tool, topic)} and keeps the work tied to the original input.`,
+        `${firstTool.tool.name} is the closest match because it is built for ${toolInputPhrase(firstTool.tool, topic)} and keeps the work tied to ${blueprint.inputMaterial[0]}.`,
       ),
     },
     {
-      situation: `If you need ${topic.searchIntent} and want a different workflow, choose ${secondTool.tool.name}.`,
+      situation: `If you need ${blueprint.desiredOutput[1] ?? topic.searchIntent} or stronger ${blueprint.comparisonCriteria[1] ?? "output control"}, choose ${secondTool.tool.name}.`,
       toolSlug: secondTool.tool.slug,
       toolName: secondTool.tool.name,
       why: ensurePeriod(
-        `${secondTool.tool.name} is the better second choice when you want ${toolInputPhrase(secondTool.tool, topic)} instead of the first tool's exact workflow.`,
+        `${secondTool.tool.name} is the better second choice when ${toolInputPhrase(secondTool.tool, topic)} matters more than the first tool's handling of ${blueprint.inputMaterial[0]}.`,
       ),
     },
     {
-      situation: `If you want the cleanest rewrite or the lightest review step, choose ${thirdTool.tool.name}.`,
+      situation: `If you want the lightest review or export step for ${blueprint.desiredOutput[0]}, choose ${thirdTool.tool.name}.`,
       toolSlug: thirdTool.tool.slug,
       toolName: thirdTool.tool.name,
       why: ensurePeriod(
@@ -941,6 +998,7 @@ function buildBestPicksBySituation(
 }
 
 function buildDecisionPath(
+  blueprint: EditorialBlueprint,
   topic: GuideTopic,
   firstTool: { readonly tool: { readonly slug: string; readonly name: string; readonly bestFor: readonly string[]; readonly avoidIf: readonly string[]; readonly notFor: readonly string[] } ; readonly reasons: readonly string[] },
   secondTool: { readonly tool: { readonly slug: string; readonly name: string; readonly bestFor: readonly string[]; readonly avoidIf: readonly string[]; readonly notFor: readonly string[] } ; readonly reasons: readonly string[] },
@@ -948,21 +1006,21 @@ function buildDecisionPath(
 ): { situation: string; recommendation: string; reason: string }[] {
   const path = [
     {
-      situation: `If you already have ${topicInputFocus(topic)}, start with ${firstTool.tool.name}.`,
+      situation: `If you already have ${blueprint.inputMaterial[0]}, start with ${firstTool.tool.name}.`,
       recommendation: firstTool.tool.name,
       reason: ensurePeriod(
         `${firstTool.tool.name} is the most direct first pass because it is built for ${toolInputPhrase(firstTool.tool, topic)}.`,
       ),
     },
     {
-      situation: `If you need a different source type or citation style, switch to ${secondTool.tool.name}.`,
+      situation: `If you need stronger ${blueprint.comparisonCriteria[1] ?? "output control"} for ${blueprint.desiredOutput[0]}, switch to ${secondTool.tool.name}.`,
       recommendation: secondTool.tool.name,
       reason: ensurePeriod(
         `${secondTool.tool.name} is the better alternative when ${toolInputPhrase(secondTool.tool, topic)} matters more than the top pick.`,
       ),
     },
     {
-      situation: `If you need the final polish or the easiest follow-up pass, compare ${thirdTool.tool.name}.`,
+      situation: `If you need the easiest review, export, or follow-up pass, compare ${thirdTool.tool.name}.`,
       recommendation: thirdTool.tool.name,
       reason: ensurePeriod(
         `${thirdTool.tool.name} is useful when you want ${toolInputPhrase(thirdTool.tool, topic)} and do not want to overbuild the workflow.`,
@@ -992,38 +1050,39 @@ function buildDecisionPath(
 }
 
 function buildHowToSteps(
+  blueprint: EditorialBlueprint,
   topic: GuideTopic,
   firstTool: { readonly slug: string; readonly name: string; readonly bestFor: readonly string[]; readonly avoidIf: readonly string[]; readonly notFor: readonly string[] },
   secondTool: { readonly slug: string; readonly name: string; readonly bestFor: readonly string[]; readonly avoidIf: readonly string[]; readonly notFor: readonly string[] },
   thirdTool: { readonly slug: string; readonly name: string; readonly bestFor: readonly string[]; readonly avoidIf: readonly string[]; readonly notFor: readonly string[] },
 ): { title: string; detail: string; why?: string; output?: string; toolSlug?: string; toolName?: string }[] {
   const outcome = workflowVerbPhrase(topic);
-  const source = topicInputFocus(topic);
+  const source = blueprint.inputMaterial.join(", ");
 
   return [
     {
-      title: "Collect the source material",
+      title: `Prepare ${blueprint.inputMaterial[0]}`,
       detail: `Put the real input in one place before opening a tool: ${source}, any required facts, the audience, and the format you need at the end. Remove private details you are not allowed to share.`,
       why: "AI output is only as useful as the material and constraints you give it.",
-      output: "A clean input bundle and one clear target format.",
+      output: `A clean input bundle and one clear target format: ${blueprint.desiredOutput[0]}.`,
     },
     {
       title: "Ask for the first usable version",
       detail: `Use ${firstTool.name} for a first pass that tries to ${outcome}. Ask it to preserve source facts, flag uncertainty, and organize the result into sections you can review.`,
-      why: "The first pass should create structure, not a finished answer you trust blindly.",
-      output: "A structured draft with visible gaps or uncertain points.",
+      why: `The first pass should create a reviewable ${blueprint.desiredOutput[0]}, not a finished answer you trust blindly.`,
+      output: `A structured ${blueprint.desiredOutput[0]} with visible gaps or uncertain points.`,
       toolSlug: firstTool.slug,
       toolName: firstTool.name,
     },
     {
       title: "Check the answer before polishing",
-      detail: `Compare the draft with the original material. Fix names, dates, numbers, unsupported claims, missing context, and tone before you ask for nicer wording.`,
+      detail: `Compare the AI output with ${blueprint.inputMaterial[0]}. Fix names, dates, numbers, unsupported claims, missing context, and tone before you ask for nicer wording.`,
       why: "Polished wrong information is harder to catch than rough information.",
-      output: "A corrected draft that is ready for formatting or wording cleanup.",
+      output: `A corrected ${blueprint.desiredOutput[0]} that is ready for formatting or wording cleanup.`,
     },
     {
       title: "Change the format only after the facts are right",
-      detail: `Use ${secondTool.name} when the verified draft needs a different format, structure, or source-aware second pass. Keep the same facts so the rewrite does not drift from the original.`,
+      detail: `Use ${secondTool.name} when the verified ${blueprint.desiredOutput[0]} needs a different format, structure, or source-aware second pass. Keep the same facts from ${blueprint.inputMaterial[0]} so the rewrite does not drift from the original.`,
       why: "Format changes are safer after the substance is already checked.",
       output: "A version that fits the channel, document, post, or recipient.",
       toolSlug: secondTool.slug,
@@ -1031,7 +1090,7 @@ function buildHowToSteps(
     },
     {
       title: "Finish with a human review",
-      detail: `Use ${thirdTool.name} for cleanup only after the main work is checked. Read the final result as the recipient would: on the device, in the app, or in the document where it will actually be used.`,
+      detail: `Use ${thirdTool.name} for cleanup only after the main ${blueprint.desiredOutput[0]} is checked against ${blueprint.inputMaterial[0]}. Read the final result as the recipient would: on the device, in the app, or in the document where it will actually be used.`,
       why: "The final review catches tone, missing context, and practical usability issues.",
       output: "A final result you can send, post, study from, or save with confidence.",
       toolSlug: thirdTool.slug,
@@ -1041,6 +1100,7 @@ function buildHowToSteps(
 }
 
 function buildHowToDecisionPath(
+  blueprint: EditorialBlueprint,
   topic: GuideTopic,
   firstTool: { readonly name: string },
   secondTool: { readonly name: string },
@@ -1048,19 +1108,19 @@ function buildHowToDecisionPath(
 ): { situation: string; recommendation: string; reason: string }[] {
   return [
     {
-      situation: `If you already have ${topicInputFocus(topic)}, start with ${firstTool.name}.`,
+      situation: `If you already have ${blueprint.inputMaterial[0]}, start with ${firstTool.name}.`,
       recommendation: firstTool.name,
-      reason: `${firstTool.name} is the first-pass choice when the input is ready and the main job is to structure, summarize, draft, or clean it into a usable result.`,
+      reason: `${firstTool.name} is the first-pass choice when the input is ready and the main job is to structure, summarize, or clean it into a usable result.`,
     },
     {
-      situation: `If the output needs a different format after the facts are checked, switch to ${secondTool.name}.`,
+      situation: `If ${blueprint.desiredOutput[0]} needs a different format after the facts are checked, switch to ${secondTool.name}.`,
       recommendation: secondTool.name,
-      reason: `${secondTool.name} is better for the second pass when the job changes from drafting to formatting, layout, or a different presentation style.`,
+      reason: `${secondTool.name} is better for the second pass when the job changes from source checking to formatting, layout, or another presentation style.`,
     },
     {
       situation: `If the result is accurate but still rough, use ${thirdTool.name}.`,
       recommendation: thirdTool.name,
-      reason: `${thirdTool.name} fits the final cleanup step because the main source work is already done.`,
+      reason: `${thirdTool.name} fits the review step because the main source work is already done.`,
     },
     {
       situation: "If you are on your phone, keep the task small and finish one reviewable output.",
@@ -1075,12 +1135,12 @@ function buildHowToDecisionPath(
   ];
 }
 
-function buildHowToKeyTakeaways(topic: GuideTopic, firstTool: { readonly name: string }, secondTool: { readonly name: string }, thirdTool: { readonly name: string }): string[] {
+function buildHowToKeyTakeaways(blueprint: EditorialBlueprint, topic: GuideTopic, firstTool: { readonly name: string }, secondTool: { readonly name: string }, thirdTool: { readonly name: string }): string[] {
   return [
-    `What you need: the original source material, a clear output format, and a few minutes to review the result.`,
+    `What you need: ${blueprint.inputMaterial.slice(0, 3).join(", ")}, a clear output format, and a few minutes to review the result.`,
     `Start with ${firstTool.name} for the first pass, but judge the output against ${topic.searchIntent}, not against tool hype.`,
     `Use ${secondTool.name} only when the workflow needs a different format or second pass.`,
-    `Use ${thirdTool.name} for cleanup after the main draft is fact-checked.`,
+    `Use ${thirdTool.name} for review after the main output is fact-checked.`,
     topic.userPain,
     topic.contentGap,
     "The useful next step is to test one real example before building a repeatable workflow.",
@@ -1088,12 +1148,163 @@ function buildHowToKeyTakeaways(topic: GuideTopic, firstTool: { readonly name: s
 }
 
 function buildFaqs(
+  blueprint: EditorialBlueprint,
   topic: GuideTopic,
   firstTool: { readonly name: string; readonly bestFor: readonly string[] },
   secondTool: { readonly name: string; readonly bestFor: readonly string[] },
   thirdTool: { readonly name: string; readonly bestFor: readonly string[] },
 ): { question: string; answer: string }[] {
+  const blueprintFaqs = [
+    {
+      question: blueprint.faqQuestions[0] ?? `What input do I need before using AI for ${topic.searchIntent}?`,
+      answer: ensurePeriod(
+        `Start with ${blueprint.inputMaterial.slice(0, 3).join(", ")} and decide that the output must be ${blueprint.desiredOutput[0]}. That keeps ${firstTool.name} focused on the actual job instead of drifting into a generic answer.`,
+      ),
+    },
+    {
+      question: blueprint.faqQuestions[1] ?? `Which tool should I start with for ${topic.searchIntent}?`,
+      answer: ensurePeriod(
+        `Start with ${firstTool.name} when the main input is ${blueprint.inputMaterial[0]}. Compare ${secondTool.name} when ${blueprint.comparisonCriteria[1] ?? "output control"} matters more, and keep ${thirdTool.name} for review or fallback work.`,
+      ),
+    },
+    {
+      question: blueprint.faqQuestions[2] ?? "What should I check before I use the result?",
+      answer: ensurePeriod(
+        `Check the result against ${blueprint.inputMaterial[0]}, especially ${blueprint.commonMistakes[0]?.toLowerCase() ?? "missing details"}. Do not use the output until it still matches ${blueprint.desiredOutput[0]}.`,
+      ),
+    },
+    {
+      question: blueprint.faqQuestions[3] ?? "Can I finish this workflow on a phone, or should I use a computer?",
+      answer: ensurePeriod(
+        `Use mobile for ${blueprint.mobileWorkflow[0].toLowerCase()} Use desktop when you need ${blueprint.desktopWorkflow[0].toLowerCase()} ${blueprint.desiredOutput[0]} usually benefits from desktop review before publishing, sending, or saving.`,
+      ),
+    },
+  ];
+
+  if (blueprintFaqs.length >= 4) {
+    return blueprintFaqs;
+  }
+
   const theme = topicFaqTheme(topic);
+
+  if (theme === "image") {
+    return [
+      {
+        question: `What files do I need before using AI for ${topic.searchIntent}?`,
+        answer: ensurePeriod(
+          `Prepare the product photos, brand colors, reference images, and final ad or social sizes before choosing a tool. ${firstTool.name} is the starting point for the main edit, while ${secondTool.name} is better when the image needs stronger style or format control.`,
+        ),
+      },
+      {
+        question: "How do I keep AI image edits on brand?",
+        answer: "Use the same reference image, color values, logo clearance rules, crop size, and review checklist for every version. Reject any output that changes the product shape, product color, or brand style.",
+      },
+      {
+        question: `Is ${firstTool.name} or ${secondTool.name} better for brand-controlled image editing?`,
+        answer: ensurePeriod(
+          `${firstTool.name} is better when you need the main edit quickly from prepared assets. ${secondTool.name} is better when the image needs more control over style, composition, or a second export format.`,
+        ),
+      },
+      {
+        question: "Can I finish brand image edits on a phone?",
+        answer: "Use mobile for review, crop checks, background swaps, and approvals. Use desktop when you need precise layout, multiple reference images, or side-by-side brand comparison.",
+      },
+    ];
+  }
+
+  if (theme === "automation") {
+    return [
+      {
+        question: `What should I map before building AI automation for ${topic.searchIntent}?`,
+        answer: ensurePeriod(
+          `Write the manual path first: trigger, input, routing rule, approval point, reminder, and follow-up. ${firstTool.name} is the first tool to test when the path is clear, while ${secondTool.name} is better when the handoff needs more control.`,
+        ),
+      },
+      {
+        question: "What is a safe first automation for a small business?",
+        answer: "Start with intake, routing, reminders, or follow-up where a person can still approve the result. Avoid automating refunds, legal messages, or sensitive customer decisions without a manual checkpoint.",
+      },
+      {
+        question: `Is ${firstTool.name} better than ${secondTool.name} for automation agents?`,
+        answer: ensurePeriod(
+          `${firstTool.name} is better for the first simple workflow if it matches your trigger and app stack. ${secondTool.name} is better when the workflow needs more branching, logging, or handoff control.`,
+        ),
+      },
+      {
+        question: "Can I build the automation from my phone?",
+        answer: "Use mobile to approve runs, check notifications, or update simple tasks. Build and debug the trigger, fields, and logs on desktop so you can see the full path.",
+      },
+    ];
+  }
+
+  if (theme === "seo") {
+    return [
+      {
+        question: `What input should I collect before creating an SEO brief for ${topic.searchIntent}?`,
+        answer: "Collect the target keyword, search intent notes, SERP observations, competitor headings, internal link candidates, and customer questions before opening the tool.",
+      },
+      {
+        question: "How do I avoid awkward AI phrasing in SEO briefs?",
+        answer: "Write the reader problem in plain language first, then use AI to organize the brief. Remove generated phrases that do not sound like a real searcher or editor would use them.",
+      },
+      {
+        question: `Should I use ${firstTool.name} or ${secondTool.name} for SEO briefs?`,
+        answer: ensurePeriod(
+          `${firstTool.name} is the better starting point when it matches your keyword and brief structure. ${secondTool.name} is better when you need a second view of intent, headings, or coverage gaps.`,
+        ),
+      },
+      {
+        question: "What should an AI SEO brief include?",
+        answer: "Include search intent, target reader, required sections, answer-first notes, examples, internal links, FAQs, and constraints the writer should not ignore.",
+      },
+    ];
+  }
+
+  if (theme === "video") {
+    return [
+      {
+        question: `What do I need before using AI for ${topic.searchIntent}?`,
+        answer: "Prepare the source video or audio, transcript if available, target length, aspect ratio, caption style, and review checklist before generating clips or scenes.",
+      },
+      {
+        question: `Is ${firstTool.name} or ${secondTool.name} better for clips and video ads?`,
+        answer: ensurePeriod(
+          `${firstTool.name} is better when the source material and target format match its editing flow. ${secondTool.name} is better when you need a different export style, scene treatment, or caption workflow.`,
+        ),
+      },
+      {
+        question: "What should I check before publishing AI-edited video?",
+        answer: "Review captions, cuts, speaker identity, product claims, music rights, opening frame, and whether the clip still matches the original message.",
+      },
+      {
+        question: "Can I edit short videos on mobile?",
+        answer: "Mobile works for caption checks, trims, approvals, and posting. Use desktop for timeline cleanup, multiple exports, and comparing several clip options.",
+      },
+    ];
+  }
+
+  if (theme === "ecommerce") {
+    return [
+      {
+        question: `What product details should I give AI for ${topic.searchIntent}?`,
+        answer: "Use verified materials, dimensions, variants, care notes, photos, shipping constraints, and customer questions. Do not let the tool invent benefits or specs.",
+      },
+      {
+        question: `Is ${firstTool.name} or ${secondTool.name} better for product listings?`,
+        answer: ensurePeriod(
+          `${firstTool.name} is better for the first listing pass when the facts are ready. ${secondTool.name} is better when you need translation, polish, or another marketplace-specific version.`,
+        ),
+      },
+      {
+        question: "What should I check before publishing AI product copy?",
+        answer: "Verify dimensions, materials, claims, photos, policy language, and whether the listing matches the actual product the customer will receive.",
+      },
+      {
+        question: "Can I write product descriptions on mobile?",
+        answer: "Use mobile for quick edits, title checks, and photo review. Use desktop when you are comparing variants, batch editing, or checking marketplace requirements.",
+      },
+    ];
+  }
 
   if (theme === "research") {
     return [
@@ -1118,7 +1329,7 @@ function buildFaqs(
       {
         question: "What should I avoid when I use AI summaries for school or work?",
         answer: ensurePeriod(
-          `Avoid copying the first draft straight into your notes or deliverable. Read the source, check the claims, and use ${thirdTool.name} only after the factual base is solid.`,
+          `Avoid copying the first AI output straight into your notes or deliverable. Read the source, check the claims, and use ${thirdTool.name} only after the factual base is solid.`,
         ),
       },
     ];
@@ -1158,7 +1369,7 @@ function buildFaqs(
       {
         question: `Can I use AI to turn ${topic.searchIntent} into something usable without making it generic?`,
         answer: ensurePeriod(
-          `Yes, if you start with a clear angle and edit the result for your audience. ${firstTool.name} is the best starting point for the first draft, ${secondTool.name} is useful when you need a different format or angle, and ${thirdTool.name} helps when the copy needs a final cleanup.`,
+          `Yes, if you start with a clear angle and edit the result for your audience. ${firstTool.name} is the best starting point for the first pass, ${secondTool.name} is useful when you need another format or angle, and ${thirdTool.name} helps when the copy needs final review.`,
         ),
       },
       {
@@ -1233,7 +1444,7 @@ function buildFaqs(
     {
       question: "What should I avoid before I share the result?",
       answer: ensurePeriod(
-        `Avoid sharing the first draft until you have checked facts, tone, and any missing context. Use ${thirdTool.name} as a helper, not a replacement for review.`,
+        `Avoid sharing the first AI output until you have checked facts, tone, and any missing context. Use ${thirdTool.name} as a helper, not a replacement for review.`,
       ),
     },
   ];
@@ -1410,10 +1621,11 @@ export function createTemplateGuide(
   const guideType = guideTypeOverride ?? resolveTopicGuideType(topic);
   const guideTitle = titleForGuide(topic, guideType);
   const editorialBrief = createEditorialBrief(topic, guideType, recommendations);
+  const { editorialBlueprint } = editorialBrief;
   const articleOutline = createArticleOutline(editorialBrief, guideTitle);
-  const quickAnswer = quickAnswerForGuide(topic, first.tool, second.tool, third.tool, guideType);
-  const quickDecision = quickDecisionForGuide(topic, first.tool, second.tool, third.tool);
-  const steps = guideType === "how-to" ? buildHowToSteps(topic, first.tool, second.tool, third.tool) : [
+  const quickAnswer = quickAnswerForGuide(editorialBlueprint, topic, first.tool, second.tool, third.tool, guideType);
+  const quickDecision = quickDecisionForGuide(editorialBlueprint, topic, first.tool, second.tool, third.tool);
+  const steps = guideType === "how-to" ? buildHowToSteps(editorialBlueprint, topic, first.tool, second.tool, third.tool) : [
     {
       title: "Define the input type",
       detail: `Decide whether you already have ${topicInputFocus(topic)} or still need to gather it before you touch the tools.`,
@@ -1432,7 +1644,7 @@ export function createTemplateGuide(
     },
     {
       title: "Compare the second choice",
-      detail: `Try ${second.tool.name} on the same input if you need a different workflow, source style, or output format.`,
+      detail: `Try ${second.tool.name} on the same input if you need another source style, output format, or control model.`,
       why: "Using the same input makes the comparison about fit, not luck.",
       output: "A side-by-side view of the tradeoff between the first two options.",
       toolSlug: second.tool.slug,
@@ -1452,7 +1664,7 @@ export function createTemplateGuide(
     toolName: tool.name,
     why: ensurePeriod(editorialBrief.toolRoleMap[index]?.role ?? `${tool.name} supports ${topic.searchIntent} when its role is clearly limited.`),
     role: ensurePeriod(editorialBrief.toolRoleMap[index]?.role ?? `${tool.name} supports ${topic.searchIntent} when its role is clearly limited.`),
-    bestUseCase: toolBestForText(tool, topic, index),
+    bestUseCase: toolBestForText(tool, topic, index, editorialBlueprint),
   }));
   const commonMistakes = editorialBrief.commonMistakesToWarnAbout;
   const mistakesToAvoid = [
@@ -1485,7 +1697,7 @@ export function createTemplateGuide(
   const exampleWorkflow = ensurePeriod(
     guideType === "how-to"
       ? editorialBrief.coreWorkflow.join(" ")
-      : `Collect the source material, ask ${first.tool.name} for the first draft, use ${second.tool.name} to compare a different workflow, and keep ${third.tool.name} for the final cleanup and review.`,
+      : `Prepare ${editorialBlueprint.inputMaterial[0]}, test ${first.tool.name} for ${editorialBlueprint.desiredOutput[0]}, compare ${second.tool.name} when ${editorialBlueprint.comparisonCriteria[1] ?? "output control"} matters, and keep ${third.tool.name} for review or export checks.`,
   );
   const exampleResult = ensurePeriod(
     guideType === "how-to"
@@ -1493,10 +1705,14 @@ export function createTemplateGuide(
       : `The final result should be clearer, shorter, and easier to use, with the main ideas preserved and the obvious errors removed.`,
   );
   const deviceIntent: Guide["deviceIntent"] = topic.deviceIntent ?? "both";
-  const desktopUseCase = topic.desktopUseCase ?? `Best on desktop when you want to compare tools, keep source material open, and edit the output in a wider workspace.`;
-  const mobileUseCase = topic.mobileUseCase ?? `Best on mobile when you need a fast first pass, a quick summary, or a lightweight edit while away from your desk.`;
-  const desktopSearchAngle = `Desktop readers usually want a deeper comparison, file handling, and a more deliberate review workflow.`;
-  const mobileSearchAngle = `Mobile readers usually want a short answer first, then a quick next step they can finish in a few taps.`;
+  const desktopUseCase = topic.desktopUseCase
+    ? `${topic.desktopUseCase} Use desktop to compare ${editorialBlueprint.inputMaterial[0]} with ${editorialBlueprint.desiredOutput[0]} before the final review.`
+    : `Best on desktop when you want to compare ${editorialBlueprint.inputMaterial[0]}, keep the AI output visible, and edit ${editorialBlueprint.desiredOutput[0]} in a wider workspace.`;
+  const mobileUseCase = topic.mobileUseCase
+    ? `${topic.mobileUseCase} Use mobile for quick checks on ${editorialBlueprint.desiredOutput[0]} when the input is already prepared.`
+    : `Best on mobile when ${editorialBlueprint.inputMaterial[0]} is already prepared and you need a quick review, small edit, or approval for ${editorialBlueprint.desiredOutput[0]}.`;
+  const desktopSearchAngle = `Desktop readers usually want deeper comparison, file handling, and a deliberate review workflow for ${editorialBlueprint.desiredOutput[0]}.`;
+  const mobileSearchAngle = `Mobile readers usually want a short answer first, then a quick next step for ${editorialBlueprint.desiredOutput[0]} they can finish in a few taps.`;
   const visualAssets = {
     hero: {
       type: "hero" as const,
@@ -1521,7 +1737,7 @@ export function createTemplateGuide(
       after: `After: a faster workflow that leaves you with a clear, checked result.`,
     },
   };
-  const faqs = buildFaqs(topic, first.tool, second.tool, third.tool);
+  const faqs = buildFaqs(editorialBlueprint, topic, first.tool, second.tool, third.tool);
   const metaDescription =
     guideType === "how-to"
       ? `Learn how to ${topic.searchIntent}. See the workflow, tools you can use, and the safest first step.`
@@ -1530,10 +1746,10 @@ export function createTemplateGuide(
         : guideType === "trend-led"
           ? `Compare current AI tool options for ${topic.audience}. See practical fit, tradeoffs, and a clear decision path.`
           : `Compare AI tools for ${topic.audience} focused on ${topic.searchIntent}. See practical fit, tradeoffs, and a free-first decision path.`;
-  const bestPicksBySituation = buildBestPicksBySituation(topic, first, second, third);
+  const bestPicksBySituation = buildBestPicksBySituation(editorialBlueprint, topic, first, second, third);
   const decisionPath = guideType === "how-to"
-    ? buildHowToDecisionPath(topic, first.tool, second.tool, third.tool)
-    : buildDecisionPath(topic, first, second, third);
+    ? buildHowToDecisionPath(editorialBlueprint, topic, first.tool, second.tool, third.tool)
+    : buildDecisionPath(editorialBlueprint, topic, first, second, third);
 
   return {
     slug: topic.slug,
@@ -1572,7 +1788,7 @@ export function createTemplateGuide(
     steps,
     toolsYouCanUse,
     keyTakeaways: guideType === "how-to"
-      ? buildHowToKeyTakeaways(topic, first.tool, second.tool, third.tool)
+      ? buildHowToKeyTakeaways(editorialBlueprint, topic, first.tool, second.tool, third.tool)
       : buildKeyTakeaways(topic, first.tool, second.tool, third.tool),
     bestPicksBySituation,
     recommendedToolSlugs,
@@ -1580,7 +1796,7 @@ export function createTemplateGuide(
       toolSlug: tool.slug,
       toolName: tool.name,
       summary: toolSummary(tool, topic, index),
-      bestFor: toolBestForText(tool, topic, index),
+      bestFor: toolBestForText(tool, topic, index, editorialBlueprint),
       avoidIf: toolAvoidIfText(tool, topic, index),
       strengths: tool.primaryTags.slice(0, 4),
       tradeoffs: tool.notFor.slice(0, 3),
@@ -1589,7 +1805,7 @@ export function createTemplateGuide(
     comparisonRows: recommendations.map(({ tool }, index) => ({
       toolSlug: tool.slug,
       toolName: tool.name,
-      bestFor: toolBestForText(tool, topic, index),
+      bestFor: toolBestForText(tool, topic, index, editorialBlueprint),
       freePlan: tool.freePlan,
       easeOfUse: `${tool.setupDifficulty} setup; ease ${tool.easeScore}/10 in the Comparavy catalog`,
       whyConsider: toolWhyConsiderText(tool, topic, index),
@@ -1618,7 +1834,7 @@ export function createTemplateGuide(
     finalVerdict: ensurePeriod(
       guideType === "how-to"
         ? `The next step is to run this workflow on one real example of ${topic.useCase}. Start with ${first.tool.name}, use ${second.tool.name} only if the format needs a second pass, finish with ${third.tool.name} or manual review, and do not reuse the workflow until the first result is accurate and useful.`
-        : `For ${topic.persona}, start by testing ${first.tool.name} on one realistic assignment: ${topic.useCase}. Compare it with ${second.tool.name} if you need a different workflow, use ${third.tool.name} for the final review, and choose only after checking actual output, setup effort, and current official plan details.`,
+        : `For ${topic.persona}, start by testing ${first.tool.name} on one realistic assignment: ${topic.useCase}. Compare it with ${second.tool.name} when ${editorialBlueprint.comparisonCriteria[1] ?? "output control"} matters, use ${third.tool.name} for final review, and choose only after checking actual output, setup effort, and current official plan details.`,
     ),
     realityCheck,
     skillNeeded,
@@ -1728,7 +1944,7 @@ async function refineWithOpenAI(template: Guide): Promise<Guide> {
       body: JSON.stringify({
         model,
         instructions:
-          'You are producing a complete Comparavy guide from an editorial brief and outline, not filling a template. Return a complete guide JSON object only. Comparavy is a US-focused, AdSense-first AI problem-solving site. The article must be useful enough to bookmark: solve the reader problem first, then show which tools help and what to avoid. For how-to guides, the title must start with "How to", the first 100 words must answer the search intent, tools must be supporting actors, and you must include realWorldScenario, whatYouNeed, steps with what/why/output detail, desktopUseCase, mobileUseCase, toolsYouCanUse, exampleResult, commonMistakes, search-intent FAQ, and a next step. For tool-decision guides, justify the ranking with quickVerdict, decisionTree or equivalent decisionPath branching, bestPicksBySituation, comparisonRows, unique recommendedTools, who should use or avoid this, finalVerdict, and /finder CTA. For income guides, include realityCheck, realistic services, skillNeeded, firstStep, time/cost/difficulty, and no guaranteed income language. For trend-led guides, include quickDecision, whatChanged when supported, whatToAvoid, comparisonRows, and a practical workflow without claiming breaking news. Do not use placeholder phrases, generic marketing filler, fake testing, exact current pricing, guaranteed outcomes, or unsupported current-news claims. pricingNote and pricingCaveat must remain exactly: Pricing can change. Check the official site before subscribing.',
+          'You are producing a complete Comparavy guide from the Gold Standard Editorial Blueprint and outline, not filling a template. Return a complete guide JSON object only. Comparavy is a US-focused, AdSense-first AI problem-solving site. Treat editorialBrief.editorialBlueprint as the source of truth for scenario, input material, desired output, workflow, mobile/desktop use, tool roles, decision path, comparison criteria, example result, common mistakes, FAQ, category language, and banned mismatched terms. The article must be useful enough to bookmark: solve the reader problem first, then show which tools help and what to avoid. For how-to guides, the title must start with "How to", the first 100 words must answer the search intent with blueprint input and output, tools must be supporting actors after the workflow, and you must include realWorldScenario, whatYouNeed, steps with what/why/output detail, desktopUseCase, mobileUseCase, toolsYouCanUse, exampleResult, commonMistakes, search-intent FAQ, and a next step. For tool-decision guides, write a Quick Verdict, put Which one should you choose before tool cards, justify the ranking with blueprint criteria, decisionTree or equivalent decisionPath branching, bestPicksBySituation, comparisonRows, unique recommendedTools, who should use or avoid this, finalVerdict, and /finder CTA. For income guides, include realityCheck, realistic services, skillNeeded, firstStep, time/cost/difficulty, and no guaranteed income language. For trend-led guides, include quickDecision, whatChanged when supported, whatToAvoid, comparisonRows, and a practical workflow without claiming breaking news. Do not use placeholder phrases, generic marketing filler, fake testing, exact current pricing, guaranteed outcomes, unsupported current-news claims, or terms listed in editorialBrief.editorialBlueprint.bannedMismatchedTerms. pricingNote and pricingCaveat must remain exactly: Pricing can change. Check the official site before subscribing.',
         input: JSON.stringify({
           editorialBrief,
           articleOutline,
