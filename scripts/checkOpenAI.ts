@@ -29,15 +29,16 @@ async function main(): Promise<void> {
   }
 
   const probe = await probeOpenAIEditorialReview();
+  console.log(`Model used for connectivity check: ${probe.model}`);
 
   if (probe.available) {
-    console.log(`OpenAI connectivity check: success using ${probe.model}`);
+    console.log("OpenAI connectivity check: success");
     return;
   }
 
   console.error("OpenAI connectivity check: failed");
   if (probe.statusCategory) {
-    console.error(`Status category: ${probe.statusCategory}`);
+    console.error(`Failure category: ${probe.statusCategory}`);
   }
   if (probe.unavailableReason) {
     console.error(probe.unavailableReason);

@@ -92,6 +92,69 @@ function extractOpenAIErrorCategory(bodyText: string): string | undefined {
   return undefined;
 }
 
+function classifyOpenAIConnectivityFailure(status: number, bodyText = ""): {
+  readonly category: string;
+  readonly message: string;
+} {
+  const normalizedBody = bodyText.toLowerCase();
+
+  if (status === 401) {
+    return {
+      category: "authentication",
+      message: "OpenAI authentication failed. Check GitHub secret OPENAI_API_KEY.",
+    };
+  }
+
+  if (
+    status === 402 ||
+    normalizedBody.includes("insufficient_quota") ||
+    normalizedBody.includes("billing") ||
+    normalizedBody.includes("quota")
+  ) {
+    return {
+      category: "billing",
+      message: `OpenAI connectivity check failed with status ${status} (billing).`,
+    };
+  }
+
+  if (
+    normalizedBody.includes("rate limit") ||
+    normalizedBody.includes("too many requests") ||
+    status === 429
+  ) {
+    return {
+      category: "rate_limit",
+      message: `OpenAI connectivity check failed with status ${status} (rate_limit).`,
+    };
+  }
+
+  if (status === 400) {
+    return {
+      category: "unexpected_response",
+      message: "OpenAI connectivity check failed with status 400 (unexpected_response).",
+    };
+  }
+
+  if (status === 404 || status === 403) {
+    return {
+      category: "model",
+      message: "OpenAI model unavailable. Check OPENAI_MODEL.",
+    };
+  }
+
+  if (status >= 500) {
+    return {
+      category: "unexpected_response",
+      message: `OpenAI connectivity check failed with status ${status} (unexpected_response).`,
+    };
+  }
+
+  return {
+    category: "unexpected_response",
+    message: `OpenAI connectivity check failed with status ${status} (unexpected_response).`,
+  };
+}
+
 function blockedReview(message: string): AiGuideReview {
   return {
     attempted: true,
@@ -226,22 +289,7 @@ export async function probeOpenAIEditorialReview(): Promise<OpenAIReviewProbeRes
       },
       body: JSON.stringify({
         model,
-        input: "Return JSON only with {\"ok\": true}.",
-        text: {
-          format: {
-            type: "json_schema",
-            name: "comparavy_openai_probe",
-            strict: true,
-            schema: {
-              type: "object",
-              additionalProperties: false,
-              properties: {
-                ok: { type: "boolean" },
-              },
-              required: ["ok"],
-            },
-          },
-        },
+        input: "Reply with exactly: ok",
         max_output_tokens: 16,
         truncation: "auto",
       }),
@@ -250,7 +298,7 @@ export async function probeOpenAIEditorialReview(): Promise<OpenAIReviewProbeRes
 
     if (!response.ok) {
       const bodyText = await response.text();
-      const failure = classifyOpenAIHttpFailure(response.status, bodyText);
+      const failure = classifyOpenAIConnectivityFailure(response.status, bodyText);
       return {
         attempted: true,
         available: false,
@@ -264,13 +312,13 @@ export async function probeOpenAIEditorialReview(): Promise<OpenAIReviewProbeRes
     const result = (await response.json()) as ResponsesResult;
     const text = readOutputText(result);
 
-    if (!text) {
+    if (!text?.trim()) {
       return {
         attempted: true,
         available: false,
         model,
-        unavailableReason: "OpenAI model returned no structured response during connectivity check.",
-        statusCategory: "invalid_response",
+        unavailableReason: "OpenAI connectivity check returned an empty response.",
+        statusCategory: "unexpected_response",
       };
     }
 
@@ -285,7 +333,7 @@ export async function probeOpenAIEditorialReview(): Promise<OpenAIReviewProbeRes
       available: false,
       model,
       unavailableReason: `OpenAI connectivity check failed: ${String(error)}`,
-      statusCategory: "network_error",
+      statusCategory: "unexpected_response",
     };
   }
 }

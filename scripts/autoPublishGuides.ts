@@ -2909,6 +2909,20 @@ async function main(): Promise<void> {
         model: openAIDiagnostics.model,
         unavailableReason: "OPENAI_API_KEY is not set.",
       };
+  if (openAIDiagnostics.apiKeyPresent) {
+    console.log(`Model used for connectivity check: ${openAIProbe.model}`);
+    if (openAIProbe.available) {
+      console.log("OpenAI connectivity check: success");
+    } else {
+      console.log("OpenAI connectivity check: failed");
+      if (openAIProbe.statusCategory) {
+        console.log(`Failure category: ${openAIProbe.statusCategory}`);
+      }
+      if (openAIProbe.unavailableReason) {
+        console.log(openAIProbe.unavailableReason);
+      }
+    }
+  }
   const openAIReviewPolicy = determineOpenAIReviewPolicy(openAIDiagnostics, openAIProbe, options);
 
   if (openAIReviewPolicy.mode === "unavailable") {
