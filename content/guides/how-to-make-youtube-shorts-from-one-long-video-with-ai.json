@@ -66,7 +66,7 @@
   },
   "quickAnswer": "To handle turning one long video into short vertical clips, start with long videos, decide that the output must be short clips, and use AI only after the source material is clear. Start with long videos, decide that the output must be short clips, use OpusClip for one reviewable version, and check it before changing formats or adding another tool. OpusClip should create the first reviewable version, CapCut belongs in the second pass only when short clips needs more control, and Descript should be saved for review or export after the core result is right.",
   "quickDecision": "For turning one long video into short vertical clips, choose OpusClip first when the input is long videos and the output needs to be short clips. Choose CapCut when short matters more. Choose Descript when you need a lighter review, export, or fallback pass.",
-  "realWorldScenario": "YouTube creators have long videos and webinar recordings and need short clips without drifting into an unrelated workflow. Prepared 2026-05-29.",
+  "realWorldScenario": "YouTube creators have long videos and webinar recordings and need short clips without drifting into an unrelated workflow. Prepared 2026-05-30.",
   "whatYouNeed": [
     "video footage, ad scripts, captions, and export requirements",
     "A clear final format for turning one long video into short vertical clips.",
@@ -457,6 +457,6 @@
   "freshness": "evergreen",
   "qualityScore": 92,
   "status": "rejected",
-  "createdAt": "2026-05-29",
-  "updatedAt": "2026-05-29"
+  "createdAt": "2026-05-30",
+  "updatedAt": "2026-05-30"
 }

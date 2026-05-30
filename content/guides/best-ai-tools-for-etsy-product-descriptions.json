@@ -66,7 +66,7 @@
   },
   "quickAnswer": "For writing accurate Etsy product descriptions faster, start with Grammarly because it is the closest fit for turning product notes into product descriptions. Choose DeepL Write when SKU matters more. Avoid Grammarly when your writing environment cannot allow browser extensions or integrations; in that case Copy.ai is the better fallback.",
   "quickDecision": "For writing accurate Etsy product descriptions faster, choose Grammarly first when the input is product notes and the output needs to be product descriptions. Choose DeepL Write when SKU matters more. Choose Copy.ai when you need a lighter review, export, or fallback pass.",
-  "realWorldScenario": "etsy sellers have product notes and materials and need product descriptions without drifting into an unrelated workflow. Prepared 2026-05-29.",
+  "realWorldScenario": "etsy sellers have product notes and materials and need product descriptions without drifting into an unrelated workflow. Prepared 2026-05-30.",
   "whatYouNeed": [
     "verified product details, photos, dimensions, materials, and customer questions",
     "A clear final format for writing accurate Etsy product descriptions faster.",
@@ -443,6 +443,6 @@
   "freshness": "evergreen",
   "qualityScore": 92,
   "status": "rejected",
-  "createdAt": "2026-05-29",
-  "updatedAt": "2026-05-29"
+  "createdAt": "2026-05-30",
+  "updatedAt": "2026-05-30"
 }

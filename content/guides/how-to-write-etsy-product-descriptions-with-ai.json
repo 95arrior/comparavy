@@ -66,7 +66,7 @@
   },
   "quickAnswer": "To handle writing Etsy product descriptions from accurate product details, start with product notes, decide that the output must be product descriptions, and use AI only after the source material is clear. Start with product notes, decide that the output must be product descriptions, use Grammarly for one reviewable version, and check it before changing formats or adding another tool. Grammarly should create the first reviewable version, Copy.ai belongs in the second pass only when product descriptions needs more control, and Canva Magic Studio should be saved for review or export after the core result is right.",
   "quickDecision": "For writing Etsy product descriptions from accurate product details, choose Grammarly first when the input is product notes and the output needs to be product descriptions. Choose Copy.ai when SKU matters more. Choose Canva Magic Studio when you need a lighter review, export, or fallback pass.",
-  "realWorldScenario": "Etsy sellers have product notes and materials and need product descriptions without drifting into an unrelated workflow. Prepared 2026-05-29.",
+  "realWorldScenario": "Etsy sellers have product notes and materials and need product descriptions without drifting into an unrelated workflow. Prepared 2026-05-30.",
   "whatYouNeed": [
     "verified product details, photos, dimensions, materials, and customer questions",
     "A clear final format for writing Etsy product descriptions from accurate product details.",
@@ -457,6 +457,6 @@
   "freshness": "evergreen",
   "qualityScore": 92,
   "status": "rejected",
-  "createdAt": "2026-05-29",
-  "updatedAt": "2026-05-29"
+  "createdAt": "2026-05-30",
+  "updatedAt": "2026-05-30"
 }

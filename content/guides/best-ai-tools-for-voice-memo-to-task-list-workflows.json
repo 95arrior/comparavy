@@ -66,7 +66,7 @@
   },
   "quickAnswer": "For turning voice memos into task lists, start with Microsoft Copilot because it is the closest fit for turning resume bullets into rewritten resume sections. Choose ElevenLabs when cover letter matters more. Avoid Microsoft Copilot when you need a feature available only in a separate work subscription; in that case Krisp is the better fallback.",
   "quickDecision": "For turning voice memos into task lists, choose Microsoft Copilot first when the input is resume bullets and the output needs to be rewritten resume sections. Choose ElevenLabs when cover letter matters more. Choose Krisp when you need a lighter review, export, or fallback pass.",
-  "realWorldScenario": "busy professionals have resume bullets and cover letter notes and need rewritten resume sections without drifting into an unrelated workflow. Prepared 2026-05-29.",
+  "realWorldScenario": "busy professionals have resume bullets and cover letter notes and need rewritten resume sections without drifting into an unrelated workflow. Prepared 2026-05-30.",
   "whatYouNeed": [
     "turning voice memos into task lists",
     "A clear final format for turning voice memos into task lists.",
@@ -443,6 +443,6 @@
   "freshness": "evergreen",
   "qualityScore": 92,
   "status": "rejected",
-  "createdAt": "2026-05-29",
-  "updatedAt": "2026-05-29"
+  "createdAt": "2026-05-30",
+  "updatedAt": "2026-05-30"
 }

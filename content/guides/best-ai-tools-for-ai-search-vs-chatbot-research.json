@@ -66,7 +66,7 @@
   },
   "quickAnswer": "For deciding when to use an AI search engine versus a general chatbot, start with You.com because it is the closest fit for turning target keyword into SEO brief. Choose NotebookLM when SERP matters more. Avoid You.com when you need publish-ready output without review; in that case Gemini is the better fallback.",
   "quickDecision": "For deciding when to use an AI search engine versus a general chatbot, choose You.com first when the input is target keyword and the output needs to be SEO brief. Choose NotebookLM when SERP matters more. Choose Gemini when you need a lighter review, export, or fallback pass.",
-  "realWorldScenario": "knowledge workers have target keyword and SERP notes and need SEO brief without drifting into an unrelated workflow. Prepared 2026-05-29.",
+  "realWorldScenario": "knowledge workers have target keyword and SERP notes and need SEO brief without drifting into an unrelated workflow. Prepared 2026-05-30.",
   "whatYouNeed": [
     "a target keyword, SERP notes, customer questions, and competitor heading notes",
     "A clear final format for deciding when to use an AI search engine versus a general chatbot.",
@@ -443,6 +443,6 @@
   "freshness": "current",
   "qualityScore": 92,
   "status": "rejected",
-  "createdAt": "2026-05-29",
-  "updatedAt": "2026-05-29"
+  "createdAt": "2026-05-30",
+  "updatedAt": "2026-05-30"
 }

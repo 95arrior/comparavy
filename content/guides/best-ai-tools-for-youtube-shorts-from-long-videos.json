@@ -66,7 +66,7 @@
   },
   "quickAnswer": "For turning long videos into short vertical clips, start with OpusClip because it is the closest fit for turning podcast recordings into clean audio. Choose CapCut when noise reduction matters more. Avoid OpusClip when you cannot review clips, captions, and context before publishing; in that case Descript is the better fallback.",
   "quickDecision": "For turning long videos into short vertical clips, choose OpusClip first when the input is podcast recordings and the output needs to be clean audio. Choose CapCut when noise reduction matters more. Choose Descript when you need a lighter review, export, or fallback pass.",
-  "realWorldScenario": "video creators have podcast recordings and episode transcript and need clean audio without drifting into an unrelated workflow. Prepared 2026-05-29.",
+  "realWorldScenario": "video creators have podcast recordings and episode transcript and need clean audio without drifting into an unrelated workflow. Prepared 2026-05-30.",
   "whatYouNeed": [
     "podcast recordings, episode transcripts, guest notes, and clip requirements",
     "A clear final format for turning long videos into short vertical clips.",
@@ -443,6 +443,6 @@
   "freshness": "evergreen",
   "qualityScore": 92,
   "status": "rejected",
-  "createdAt": "2026-05-29",
-  "updatedAt": "2026-05-29"
+  "createdAt": "2026-05-30",
+  "updatedAt": "2026-05-30"
 }

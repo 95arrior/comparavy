@@ -66,7 +66,7 @@
   },
   "quickAnswer": "To handle turning a long email thread into decisions, open questions, and next actions, start with call notes, decide that the output must be client-ready recap, and use AI only after the source material is clear. Start with call notes, decide that the output must be client-ready recap, use Grammarly for one reviewable version, and check it before changing formats or adding another tool. Grammarly should create the first reviewable version, Notion AI belongs in the second pass only when client-ready recap needs more control, and Microsoft Copilot should be saved for review or export after the core result is right.",
   "quickDecision": "For turning a long email thread into decisions, open questions, and next actions, choose Grammarly first when the input is call notes and the output needs to be client-ready recap. Choose Notion AI when owners matters more. Choose Microsoft Copilot when you need a lighter review, export, or fallback pass.",
-  "realWorldScenario": "client-facing professionals have call notes and transcripts and need client-ready recap without drifting into an unrelated workflow. Prepared 2026-05-29.",
+  "realWorldScenario": "client-facing professionals have call notes and transcripts and need client-ready recap without drifting into an unrelated workflow. Prepared 2026-05-30.",
   "whatYouNeed": [
     "call notes, decisions, owners, dates, and open client questions",
     "A clear final format for turning a long email thread into decisions, open questions, and next actions.",
@@ -457,6 +457,6 @@
   "freshness": "evergreen",
   "qualityScore": 92,
   "status": "rejected",
-  "createdAt": "2026-05-29",
-  "updatedAt": "2026-05-29"
+  "createdAt": "2026-05-30",
+  "updatedAt": "2026-05-30"
 }

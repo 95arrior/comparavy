@@ -66,7 +66,7 @@
   },
   "quickAnswer": "To handle turning class notes into practice quiz questions, start with resume bullets, decide that the output must be rewritten resume sections, and use AI only after the source material is clear. Start with resume bullets, decide that the output must be rewritten resume sections, use NotebookLM for one reviewable version, and check it before changing formats or adding another tool. NotebookLM should create the first reviewable version, Gemini belongs in the second pass only when rewritten resume sections needs more control, and SciSpace should be saved for review or export after the core result is right.",
   "quickDecision": "For turning class notes into practice quiz questions, choose NotebookLM first when the input is resume bullets and the output needs to be rewritten resume sections. Choose Gemini when cover letter matters more. Choose SciSpace when you need a lighter review, export, or fallback pass.",
-  "realWorldScenario": "students have resume bullets and cover letter notes and need rewritten resume sections without drifting into an unrelated workflow. Prepared 2026-05-29.",
+  "realWorldScenario": "students have resume bullets and cover letter notes and need rewritten resume sections without drifting into an unrelated workflow. Prepared 2026-05-30.",
   "whatYouNeed": [
     "uploaded PDFs, class notes, and other source documents",
     "A clear final format for turning class notes into practice quiz questions.",
@@ -457,6 +457,6 @@
   "freshness": "evergreen",
   "qualityScore": 92,
   "status": "rejected",
-  "createdAt": "2026-05-29",
-  "updatedAt": "2026-05-29"
+  "createdAt": "2026-05-30",
+  "updatedAt": "2026-05-30"
 }
