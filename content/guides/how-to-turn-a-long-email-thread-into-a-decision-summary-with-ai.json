@@ -53,8 +53,8 @@
       "alt": "How to Turn a Long Email Thread Into a Decision Summary with AI recommended tool stack",
       "tools": [
         "Grammarly",
-        "Notion AI",
-        "Microsoft Copilot"
+        "DeepL Write",
+        "Gemini"
       ]
     },
     "beforeAfter": {
@@ -64,8 +64,8 @@
       "after": "After: a faster workflow that leaves you with a clear, checked result."
     }
   },
-  "quickAnswer": "To handle turning a long email thread into decisions, open questions, and next actions, start with call notes, decide that the output must be client-ready recap, and use AI only after the source material is clear. Start with call notes, decide that the output must be client-ready recap, use Grammarly for one reviewable version, and check it before changing formats or adding another tool. Grammarly should create the first reviewable version, Notion AI belongs in the second pass only when client-ready recap needs more control, and Microsoft Copilot should be saved for review or export after the core result is right.",
-  "quickDecision": "For turning a long email thread into decisions, open questions, and next actions, choose Grammarly first when the input is call notes and the output needs to be client-ready recap. Choose Notion AI when owners matters more. Choose Microsoft Copilot when you need a lighter review, export, or fallback pass.",
+  "quickAnswer": "To handle turning a long email thread into decisions, open questions, and next actions, start with call notes, decide that the output must be client-ready recap, and use AI only after the source material is clear. Start with call notes, decide that the output must be client-ready recap, use Grammarly for one reviewable version, and check it before changing formats or adding another tool. Grammarly should create the first reviewable version, DeepL Write belongs in the second pass only when client-ready recap needs more control, and Gemini should be saved for review or export after the core result is right.",
+  "quickDecision": "For turning a long email thread into decisions, open questions, and next actions, choose Grammarly first when the input is call notes and the output needs to be client-ready recap. Choose DeepL Write when owners matters more. Choose Gemini when you need a lighter review, export, or fallback pass.",
   "realWorldScenario": "client-facing professionals have call notes and transcripts and need client-ready recap without drifting into an unrelated workflow. Prepared 2026-05-30.",
   "whatYouNeed": [
     "call notes, decisions, owners, dates, and open client questions",
@@ -77,7 +77,7 @@
   "contentGap": "Most email AI advice focuses on writing replies instead of extracting the decision trail.",
   "uniqueAngle": "Separate decisions, open questions, owners, and quoted evidence before drafting the recap.",
   "aiOverviewAnswer": "Paste or export the thread, ask AI to separate decisions from open questions, verify the source messages, and draft a short recap with owners and next steps.",
-  "quickVerdict": "To handle turning a long email thread into decisions, open questions, and next actions, start with call notes, decide that the output must be client-ready recap, and use AI only after the source material is clear. Start with call notes, decide that the output must be client-ready recap, use Grammarly for one reviewable version, and check it before changing formats or adding another tool. Grammarly should create the first reviewable version, Notion AI belongs in the second pass only when client-ready recap needs more control, and Microsoft Copilot should be saved for review or export after the core result is right.",
+  "quickVerdict": "To handle turning a long email thread into decisions, open questions, and next actions, start with call notes, decide that the output must be client-ready recap, and use AI only after the source material is clear. Start with call notes, decide that the output must be client-ready recap, use Grammarly for one reviewable version, and check it before changing formats or adding another tool. Grammarly should create the first reviewable version, DeepL Write belongs in the second pass only when client-ready recap needs more control, and Gemini should be saved for review or export after the core result is right.",
   "steps": [
     {
       "title": "Prepare call notes",
@@ -101,19 +101,19 @@
     },
     {
       "title": "Change the format only after the facts are right",
-      "detail": "Use Notion AI when the verified client-ready recap needs a different format, structure, or source-aware second pass. Keep the same facts from call notes so the rewrite does not drift from the original.",
+      "detail": "Use DeepL Write when the verified client-ready recap needs a different format, structure, or source-aware second pass. Keep the same facts from call notes so the rewrite does not drift from the original.",
       "why": "Format changes are safer after the substance is already checked.",
       "output": "A version that fits the channel, document, post, or recipient.",
-      "toolSlug": "notion-ai",
-      "toolName": "Notion AI"
+      "toolSlug": "deepl-write",
+      "toolName": "DeepL Write"
     },
     {
       "title": "Finish with a human review",
-      "detail": "Use Microsoft Copilot for cleanup only after the main client-ready recap is checked against call notes. Read the final result as the recipient would: on the device, in the app, or in the document where it will actually be used.",
+      "detail": "Use Gemini for cleanup only after the main client-ready recap is checked against call notes. Read the final result as the recipient would: on the device, in the app, or in the document where it will actually be used.",
       "why": "The final review catches tone, missing context, and practical usability issues.",
       "output": "A final result you can send, post, study from, or save with confidence.",
-      "toolSlug": "microsoft-copilot",
-      "toolName": "Microsoft Copilot"
+      "toolSlug": "gemini",
+      "toolName": "Gemini"
     }
   ],
   "toolsYouCanUse": [
@@ -125,25 +125,25 @@
       "bestUseCase": "polishing email and client-facing writing for client-ready recap"
     },
     {
-      "toolSlug": "notion-ai",
-      "toolName": "Notion AI",
+      "toolSlug": "deepl-write",
+      "toolName": "DeepL Write",
       "why": "Second-pass tool when client-ready recap needs a different format, stronger controls, or validation.",
       "role": "Second-pass tool when client-ready recap needs a different format, stronger controls, or validation.",
-      "bestUseCase": "teams or individuals already organizing work in Notion when owners matters more than the top pick"
+      "bestUseCase": "rephrasing professional messages when owners matters more than the top pick"
     },
     {
-      "toolSlug": "microsoft-copilot",
-      "toolName": "Microsoft Copilot",
+      "toolSlug": "gemini",
+      "toolName": "Gemini",
       "why": "Review or finishing tool after the main output is checked.",
       "role": "Review or finishing tool after the main output is checked.",
-      "bestUseCase": "everyday assistance in a Microsoft-oriented workflow when speed or a lighter setup matters more for follow-up email"
+      "bestUseCase": "users already working in Google's ecosystem when speed or a lighter setup matters more for follow-up email"
     }
   ],
   "keyTakeaways": [
     "What you need: call notes, transcripts, agenda items, a clear output format, and a few minutes to review the result.",
     "Start with Grammarly for the first pass, but judge the output against turning a long email thread into decisions, open questions, and next actions, not against tool hype.",
-    "Use Notion AI only when the workflow needs a different format or second pass.",
-    "Use Microsoft Copilot for review after the main output is fact-checked.",
+    "Use DeepL Write only when the workflow needs a different format or second pass.",
+    "Use Gemini for review after the main output is fact-checked.",
     "The reader has a messy email chain and needs to know what was decided without rereading every reply.",
     "Most email AI advice focuses on writing replies instead of extracting the decision trail.",
     "The useful next step is to test one real example before building a repeatable workflow."
@@ -156,24 +156,24 @@
       "why": "Grammarly is the closest match because it is built for polishing email and client-facing writing and keeps the work tied to call notes."
     },
     {
-      "situation": "If you need action item list or stronger owners, choose Notion AI.",
-      "toolSlug": "notion-ai",
-      "toolName": "Notion AI",
-      "why": "Notion AI is the better second choice when teams or individuals already organizing work in Notion matters more than the first tool's handling of call notes."
+      "situation": "If you need action item list or stronger owners, choose DeepL Write.",
+      "toolSlug": "deepl-write",
+      "toolName": "DeepL Write",
+      "why": "DeepL Write is the better second choice when rephrasing professional messages matters more than the first tool's handling of call notes."
     },
     {
-      "situation": "If you want the lightest review or export step for client-ready recap, choose Microsoft Copilot.",
-      "toolSlug": "microsoft-copilot",
-      "toolName": "Microsoft Copilot",
-      "why": "Microsoft Copilot helps when you need everyday assistance in a Microsoft-oriented workflow and want a fallback that is easier to adapt on a phone or desktop."
+      "situation": "If you want the lightest review or export step for client-ready recap, choose Gemini.",
+      "toolSlug": "gemini",
+      "toolName": "Gemini",
+      "why": "Gemini helps when you need users already working in Google's ecosystem and want a fallback that is easier to adapt on a phone or desktop."
     }
   ],
   "recommendedToolSlugs": [
     "grammarly",
-    "notion-ai",
-    "microsoft-copilot",
     "deepl-write",
-    "gemini"
+    "gemini",
+    "writesonic",
+    "you-com"
   ],
   "recommendedTools": [
     {
@@ -195,47 +195,11 @@
       "toolPagePath": "/tools/grammarly"
     },
     {
-      "toolSlug": "notion-ai",
-      "toolName": "Notion AI",
-      "summary": "Notion AI is strongest when you need teams or individuals already organizing work in Notion and want it tied to call notes, decisions, owners, dates, and open client questions. It handles summarize meeting notes better than a generic assistant, but it is a weaker choice if you need your useful information lives outside Notion.",
-      "bestFor": "teams or individuals already organizing work in Notion when owners matters more than the top pick",
-      "avoidIf": "your useful information lives outside Notion if your main need is the top tool's exact workflow",
-      "strengths": [
-        "workspace",
-        "notes",
-        "knowledge",
-        "productivity"
-      ],
-      "tradeoffs": [
-        "People who do not want to adopt Notion",
-        "Standalone image or video generation"
-      ],
-      "toolPagePath": "/tools/notion-ai"
-    },
-    {
-      "toolSlug": "microsoft-copilot",
-      "toolName": "Microsoft Copilot",
-      "summary": "Microsoft Copilot is strongest when you need everyday assistance in a Microsoft-oriented workflow and want it tied to call notes, decisions, owners, dates, and open client questions. It handles draft business text better than a generic assistant, but it is a weaker choice if you need you need a feature available only in a separate work subscription.",
-      "bestFor": "everyday assistance in a Microsoft-oriented workflow when speed or a lighter setup matters more for follow-up email",
-      "avoidIf": "you need a feature available only in a separate work subscription if you need the most polished or source-grounded final pass",
-      "strengths": [
-        "chat",
-        "microsoft",
-        "productivity",
-        "writing"
-      ],
-      "tradeoffs": [
-        "Advanced creative asset editing",
-        "Custom automation pipelines"
-      ],
-      "toolPagePath": "/tools/microsoft-copilot"
-    },
-    {
       "toolSlug": "deepl-write",
       "toolName": "DeepL Write",
       "summary": "DeepL Write is strongest when you need rephrasing professional messages and want it tied to call notes, decisions, owners, dates, and open client questions. It handles polish messages better than a generic assistant, but it is a weaker choice if you need you need specialist translation or legal review without a human expert.",
-      "bestFor": "rephrasing professional messages when speed or a lighter setup matters more for decision log",
-      "avoidIf": "you need specialist translation or legal review without a human expert if the task needs deeper review than a lightweight fallback can provide",
+      "bestFor": "rephrasing professional messages when owners matters more than the top pick",
+      "avoidIf": "you need specialist translation or legal review without a human expert if your main need is the top tool's exact workflow",
       "strengths": [
         "writing",
         "clarity",
@@ -252,8 +216,8 @@
       "toolSlug": "gemini",
       "toolName": "Gemini",
       "summary": "Gemini is strongest when you need users already working in Google's ecosystem and want it tied to call notes, decisions, owners, dates, and open client questions. It handles brainstorm campaigns better than a generic assistant, but it is a weaker choice if you need you cannot validate factual answers.",
-      "bestFor": "users already working in Google's ecosystem when speed or a lighter setup matters more for turning a long email thread into decisions, open questions, and next actions",
-      "avoidIf": "you cannot validate factual answers if the workflow depends on another tool's stronger input handling or editing controls",
+      "bestFor": "users already working in Google's ecosystem when speed or a lighter setup matters more for follow-up email",
+      "avoidIf": "you cannot validate factual answers if you need the most polished or source-grounded final pass",
       "strengths": [
         "chat",
         "google",
@@ -265,6 +229,42 @@
         "Users seeking deeply customizable automation"
       ],
       "toolPagePath": "/tools/gemini"
+    },
+    {
+      "toolSlug": "writesonic",
+      "toolName": "Writesonic",
+      "summary": "Writesonic is strongest when you need marketing content ideation and want it tied to call notes, decisions, owners, dates, and open client questions. It handles draft landing copy better than a generic assistant, but it is a weaker choice if you need you would publish generated content without editorial review.",
+      "bestFor": "marketing content ideation when speed or a lighter setup matters more for decision log",
+      "avoidIf": "you would publish generated content without editorial review if the task needs deeper review than a lightweight fallback can provide",
+      "strengths": [
+        "marketing",
+        "writing",
+        "seo-workflow",
+        "web-copy"
+      ],
+      "tradeoffs": [
+        "Users needing only basic proofreading",
+        "Dedicated graphic design production"
+      ],
+      "toolPagePath": "/tools/writesonic"
+    },
+    {
+      "toolSlug": "you-com",
+      "toolName": "You.com",
+      "summary": "You.com is strongest when you need workflows that need search-backed answers and lightweight assistant help and want it tied to call notes, decisions, owners, dates, and open client questions. It handles search-backed answers and lightweight assistant help better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need search-backed answers and lightweight assistant help when speed or a lighter setup matters more for turning a long email thread into decisions, open questions, and next actions",
+      "avoidIf": "you need publish-ready output without review if the workflow depends on another tool's stronger input handling or editing controls",
+      "strengths": [
+        "chat",
+        "assistant",
+        "brainstorming",
+        "writing"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside general assistant.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/you-com"
     }
   ],
   "comparisonRows": [
@@ -278,40 +278,40 @@
       "watchFor": "Watch for long-form research from sources; this matters when the reader is turning a long email thread into decisions, open questions, and next actions."
     },
     {
-      "toolSlug": "notion-ai",
-      "toolName": "Notion AI",
-      "bestFor": "teams or individuals already organizing work in Notion when owners matters more than the top pick",
-      "freePlan": false,
-      "easeOfUse": "Medium setup; ease 8/10 in the Comparavy catalog",
-      "whyConsider": "Notion AI is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for teams or individuals already organizing work in Notion, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
-      "watchFor": "Watch for people who do not want to adopt Notion; this matters when the reader is turning a long email thread into decisions, open questions, and next actions."
-    },
-    {
-      "toolSlug": "microsoft-copilot",
-      "toolName": "Microsoft Copilot",
-      "bestFor": "everyday assistance in a Microsoft-oriented workflow when speed or a lighter setup matters more for follow-up email",
-      "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
-      "whyConsider": "Microsoft Copilot is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for everyday assistance in a Microsoft-oriented workflow, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
-      "watchFor": "Watch for advanced creative asset editing; this matters when the reader is turning a long email thread into decisions, open questions, and next actions."
-    },
-    {
       "toolSlug": "deepl-write",
       "toolName": "DeepL Write",
-      "bestFor": "rephrasing professional messages when speed or a lighter setup matters more for decision log",
+      "bestFor": "rephrasing professional messages when owners matters more than the top pick",
       "freePlan": true,
       "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
-      "whyConsider": "DeepL Write is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for rephrasing professional messages, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "whyConsider": "DeepL Write is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for rephrasing professional messages, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for generating rich visual content; this matters when the reader is turning a long email thread into decisions, open questions, and next actions."
     },
     {
       "toolSlug": "gemini",
       "toolName": "Gemini",
-      "bestFor": "users already working in Google's ecosystem when speed or a lighter setup matters more for turning a long email thread into decisions, open questions, and next actions",
+      "bestFor": "users already working in Google's ecosystem when speed or a lighter setup matters more for follow-up email",
       "freePlan": true,
       "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
       "whyConsider": "Gemini is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for users already working in Google's ecosystem, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for people needing a dedicated media production timeline; this matters when the reader is turning a long email thread into decisions, open questions, and next actions."
+    },
+    {
+      "toolSlug": "writesonic",
+      "toolName": "Writesonic",
+      "bestFor": "marketing content ideation when speed or a lighter setup matters more for decision log",
+      "freePlan": false,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "Writesonic is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for marketing content ideation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for users needing only basic proofreading; this matters when the reader is turning a long email thread into decisions, open questions, and next actions."
+    },
+    {
+      "toolSlug": "you-com",
+      "toolName": "You.com",
+      "bestFor": "workflows that need search-backed answers and lightweight assistant help when speed or a lighter setup matters more for turning a long email thread into decisions, open questions, and next actions",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "You.com is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need search-backed answers and lightweight assistant help, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside general assistant.; this matters when the reader is turning a long email thread into decisions, open questions, and next actions."
     }
   ],
   "decisionPath": [
@@ -321,14 +321,14 @@
       "reason": "Grammarly is the first-pass choice when the input is ready and the main job is to structure, summarize, or clean it into a usable result."
     },
     {
-      "situation": "If client-ready recap needs a different format after the facts are checked, switch to Notion AI.",
-      "recommendation": "Notion AI",
-      "reason": "Notion AI is better for the second pass when the job changes from source checking to formatting, layout, or another presentation style."
+      "situation": "If client-ready recap needs a different format after the facts are checked, switch to DeepL Write.",
+      "recommendation": "DeepL Write",
+      "reason": "DeepL Write is better for the second pass when the job changes from source checking to formatting, layout, or another presentation style."
     },
     {
-      "situation": "If the result is accurate but still rough, use Microsoft Copilot.",
-      "recommendation": "Microsoft Copilot",
-      "reason": "Microsoft Copilot fits the review step because the main source work is already done."
+      "situation": "If the result is accurate but still rough, use Gemini.",
+      "recommendation": "Gemini",
+      "reason": "Gemini fits the review step because the main source work is already done."
     },
     {
       "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
@@ -337,7 +337,7 @@
     },
     {
       "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
-      "recommendation": "Notion AI",
+      "recommendation": "DeepL Write",
       "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
     }
   ],
@@ -348,14 +348,14 @@
       "reason": "Grammarly is the first-pass choice when the input is ready and the main job is to structure, summarize, or clean it into a usable result."
     },
     {
-      "situation": "If client-ready recap needs a different format after the facts are checked, switch to Notion AI.",
-      "recommendation": "Notion AI",
-      "reason": "Notion AI is better for the second pass when the job changes from source checking to formatting, layout, or another presentation style."
+      "situation": "If client-ready recap needs a different format after the facts are checked, switch to DeepL Write.",
+      "recommendation": "DeepL Write",
+      "reason": "DeepL Write is better for the second pass when the job changes from source checking to formatting, layout, or another presentation style."
     },
     {
-      "situation": "If the result is accurate but still rough, use Microsoft Copilot.",
-      "recommendation": "Microsoft Copilot",
-      "reason": "Microsoft Copilot fits the review step because the main source work is already done."
+      "situation": "If the result is accurate but still rough, use Gemini.",
+      "recommendation": "Gemini",
+      "reason": "Gemini fits the review step because the main source work is already done."
     },
     {
       "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
@@ -364,7 +364,7 @@
     },
     {
       "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
-      "recommendation": "Notion AI",
+      "recommendation": "DeepL Write",
       "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
     }
   ],
@@ -382,7 +382,7 @@
     },
     {
       "question": "Which tool should I start with for client-ready recap?",
-      "answer": "Start with Grammarly when the main input is call notes. Compare Notion AI when owners matters more, and keep Microsoft Copilot for review or fallback work."
+      "answer": "Start with Grammarly when the main input is call notes. Compare DeepL Write when owners matters more, and keep Gemini for review or fallback work."
     },
     {
       "question": "What should I check before I use the result?",
@@ -400,7 +400,7 @@
     },
     {
       "question": "Which tool should I start with for client-ready recap?",
-      "answer": "Start with Grammarly when the main input is call notes. Compare Notion AI when owners matters more, and keep Microsoft Copilot for review or fallback work."
+      "answer": "Start with Grammarly when the main input is call notes. Compare DeepL Write when owners matters more, and keep Gemini for review or fallback work."
     },
     {
       "question": "What should I check before I use the result?",
@@ -420,7 +420,7 @@
     "Readers who need legal, financial, or compliance advice rather than tool comparison.",
     "Users who want guaranteed outcomes instead of a workflow shortlist to evaluate."
   ],
-  "finalVerdict": "The next step is to run this workflow on one real example of turning a long email thread into decisions, open questions, and next actions. Start with Grammarly, use Notion AI only if the format needs a second pass, finish with Microsoft Copilot or manual review, and do not reuse the workflow until the first result is accurate and useful.",
+  "finalVerdict": "The next step is to run this workflow on one real example of turning a long email thread into decisions, open questions, and next actions. Start with Grammarly, use DeepL Write only if the format needs a second pass, finish with Gemini or manual review, and do not reuse the workflow until the first result is accurate and useful.",
   "realityCheck": "AI can speed up the work, but the user still has to review facts, shape the final result, and decide whether the workflow fits the job.",
   "skillNeeded": "You need enough familiarity with turning a long email thread into decisions, open questions, and next actions to judge whether the output is accurate and useful.",
   "firstStep": "What you need: call notes, decisions, owners, dates, and open client questions, a clear final format, the audience or recipient, and time to check the AI result before using it.",
@@ -431,16 +431,16 @@
   ],
   "mistakesToAvoid": [
     "Do not treat Grammarly as the final answer without checking the result against your source material.",
-    "Do not use Notion AI or Microsoft Copilot as a shortcut around the real decision about input type and output quality.",
+    "Do not use DeepL Write or Gemini as a shortcut around the real decision about input type and output quality.",
     "Do not skip review if the output will reach clients, customers, classmates, or a public page."
   ],
   "whatToAvoid": [
     "Do not treat Grammarly as the final answer without checking the result against your source material.",
-    "Do not use Notion AI or Microsoft Copilot as a shortcut around the real decision about input type and output quality.",
+    "Do not use DeepL Write or Gemini as a shortcut around the real decision about input type and output quality.",
     "Do not skip review if the output will reach clients, customers, classmates, or a public page."
   ],
   "whatChanged": "Separate decisions, open questions, owners, and quoted evidence before drafting the recap.",
-  "exampleWorkflow": "Prepare the real input: call notes, transcripts, agenda items. Define the target output before opening tools: client-ready recap or action item list. Use Grammarly for the first usable pass and ask it to preserve the constraints that matter in Meeting notes / client recaps. Check the result against the input, then use Notion AI only if the output needs a format change or stronger second pass. Finish with a human review and use Microsoft Copilot only for cleanup, export, or a lighter fallback.",
+  "exampleWorkflow": "Prepare the real input: call notes, transcripts, agenda items. Define the target output before opening tools: client-ready recap or action item list. Use Grammarly for the first usable pass and ask it to preserve the constraints that matter in Meeting notes / client recaps. Check the result against the input, then use DeepL Write only if the output needs a format change or stronger second pass. Finish with a human review and use Gemini only for cleanup, export, or a lighter fallback.",
   "exampleResult": "Example result: a checked turn a long email thread into decisions, open questions, and next actions output that keeps the source facts, removes filler, names the next action, and is short enough to review before sending, posting, studying, or saving.",
   "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
   "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
@@ -448,7 +448,7 @@
     "headline": "A practical starting route for client-facing professionals",
     "points": [
       "Start with Grammarly for polishing email and client-facing writing",
-      "Compare Notion AI when the workflow changes",
+      "Compare DeepL Write when the workflow changes",
       "Run a real project test before subscribing"
     ]
   },

@@ -172,8 +172,8 @@
     "notebooklm",
     "gemini",
     "scispace",
-    "notion-ai",
-    "you-com"
+    "you-com",
+    "reclaim"
   ],
   "recommendedTools": [
     {
@@ -231,29 +231,11 @@
       "toolPagePath": "/tools/scispace"
     },
     {
-      "toolSlug": "notion-ai",
-      "toolName": "Notion AI",
-      "summary": "Notion AI is strongest when you need teams or individuals already organizing work in Notion and want it tied to uploaded PDFs, class notes, and other source documents. It handles summarize meeting notes better than a generic assistant, but it is a weaker choice if you need your useful information lives outside Notion.",
-      "bestFor": "teams or individuals already organizing work in Notion when speed or a lighter setup matters more for task lists",
-      "avoidIf": "your useful information lives outside Notion if the task needs deeper review than a lightweight fallback can provide",
-      "strengths": [
-        "workspace",
-        "notes",
-        "knowledge",
-        "productivity"
-      ],
-      "tradeoffs": [
-        "People who do not want to adopt Notion",
-        "Standalone image or video generation"
-      ],
-      "toolPagePath": "/tools/notion-ai"
-    },
-    {
       "toolSlug": "you-com",
       "toolName": "You.com",
       "summary": "You.com is strongest when you need workflows that need search-backed answers and lightweight assistant help and want it tied to uploaded PDFs, class notes, and other source documents. It handles search-backed answers and lightweight assistant help better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
-      "bestFor": "workflows that need search-backed answers and lightweight assistant help when speed or a lighter setup matters more for study quizzes",
-      "avoidIf": "you need publish-ready output without review if the workflow depends on another tool's stronger input handling or editing controls",
+      "bestFor": "workflows that need search-backed answers and lightweight assistant help when speed or a lighter setup matters more for task lists",
+      "avoidIf": "you need publish-ready output without review if the task needs deeper review than a lightweight fallback can provide",
       "strengths": [
         "chat",
         "assistant",
@@ -265,6 +247,24 @@
         "Not ideal when you need a single tool to do every job."
       ],
       "toolPagePath": "/tools/you-com"
+    },
+    {
+      "toolSlug": "reclaim",
+      "toolName": "Reclaim",
+      "summary": "Reclaim is strongest when you need workflows that need calendar protection and scheduling and want it tied to uploaded PDFs, class notes, and other source documents. It handles calendar protection and scheduling better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need calendar protection and scheduling when speed or a lighter setup matters more for study quizzes",
+      "avoidIf": "you need publish-ready output without review if the workflow depends on another tool's stronger input handling or editing controls",
+      "strengths": [
+        "productivity",
+        "notes",
+        "workflow",
+        "planning"
+      ],
+      "tradeoffs": [
+        "Not the best choice when your main job is outside productivity.",
+        "Not ideal when you need a single tool to do every job."
+      ],
+      "toolPagePath": "/tools/reclaim"
     }
   ],
   "comparisonRows": [
@@ -296,22 +296,22 @@
       "watchFor": "Watch for not the best choice when your main job is outside research.; this matters when the reader is turning class notes into practice quiz questions."
     },
     {
-      "toolSlug": "notion-ai",
-      "toolName": "Notion AI",
-      "bestFor": "teams or individuals already organizing work in Notion when speed or a lighter setup matters more for task lists",
-      "freePlan": false,
-      "easeOfUse": "Medium setup; ease 8/10 in the Comparavy catalog",
-      "whyConsider": "Notion AI is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for teams or individuals already organizing work in Notion, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
-      "watchFor": "Watch for people who do not want to adopt Notion; this matters when the reader is turning class notes into practice quiz questions."
-    },
-    {
       "toolSlug": "you-com",
       "toolName": "You.com",
-      "bestFor": "workflows that need search-backed answers and lightweight assistant help when speed or a lighter setup matters more for study quizzes",
+      "bestFor": "workflows that need search-backed answers and lightweight assistant help when speed or a lighter setup matters more for task lists",
       "freePlan": true,
       "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
       "whyConsider": "You.com is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need search-backed answers and lightweight assistant help, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside general assistant.; this matters when the reader is turning class notes into practice quiz questions."
+    },
+    {
+      "toolSlug": "reclaim",
+      "toolName": "Reclaim",
+      "bestFor": "workflows that need calendar protection and scheduling when speed or a lighter setup matters more for study quizzes",
+      "freePlan": true,
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "Reclaim is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need calendar protection and scheduling, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside productivity.; this matters when the reader is turning class notes into practice quiz questions."
     }
   ],
   "decisionPath": [

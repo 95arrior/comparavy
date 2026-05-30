@@ -169,7 +169,7 @@
     "notebooklm",
     "gemini",
     "phind",
-    "microsoft-copilot"
+    "consensus"
   ],
   "recommendedTools": [
     {
@@ -245,22 +245,22 @@
       "toolPagePath": "/tools/phind"
     },
     {
-      "toolSlug": "microsoft-copilot",
-      "toolName": "Microsoft Copilot",
-      "summary": "Microsoft Copilot is strongest when you need everyday assistance in a Microsoft-oriented workflow and want it tied to a target keyword, SERP notes, customer questions, and competitor heading notes. It handles draft business text better than a generic assistant, but it is a weaker choice if you need you need a feature available only in a separate work subscription.",
-      "bestFor": "everyday assistance in a Microsoft-oriented workflow when speed or a lighter setup matters more for deciding when to use an AI search engine versus a general chatbot",
-      "avoidIf": "you need a feature available only in a separate work subscription if the workflow depends on another tool's stronger input handling or editing controls",
+      "toolSlug": "consensus",
+      "toolName": "Consensus",
+      "summary": "Consensus is strongest when you need workflows that need finding research-backed academic answers and want it tied to a target keyword, SERP notes, customer questions, and competitor heading notes. It handles finding research-backed academic answers better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
+      "bestFor": "workflows that need finding research-backed academic answers when speed or a lighter setup matters more for deciding when to use an AI search engine versus a general chatbot",
+      "avoidIf": "you need publish-ready output without review if the workflow depends on another tool's stronger input handling or editing controls",
       "strengths": [
-        "chat",
-        "microsoft",
-        "productivity",
-        "writing"
+        "research",
+        "sources",
+        "search",
+        "analysis"
       ],
       "tradeoffs": [
-        "Advanced creative asset editing",
-        "Custom automation pipelines"
+        "Not the best choice when your main job is outside research.",
+        "Not ideal when you need a single tool to do every job."
       ],
-      "toolPagePath": "/tools/microsoft-copilot"
+      "toolPagePath": "/tools/consensus"
     }
   ],
   "comparisonRows": [
@@ -301,13 +301,13 @@
       "watchFor": "Watch for not the best choice when your main job is outside research.; this matters when the reader is deciding when to use an AI search engine versus a general chatbot."
     },
     {
-      "toolSlug": "microsoft-copilot",
-      "toolName": "Microsoft Copilot",
-      "bestFor": "everyday assistance in a Microsoft-oriented workflow when speed or a lighter setup matters more for deciding when to use an AI search engine versus a general chatbot",
+      "toolSlug": "consensus",
+      "toolName": "Consensus",
+      "bestFor": "workflows that need finding research-backed academic answers when speed or a lighter setup matters more for deciding when to use an AI search engine versus a general chatbot",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
-      "whyConsider": "Microsoft Copilot is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for everyday assistance in a Microsoft-oriented workflow, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
-      "watchFor": "Watch for advanced creative asset editing; this matters when the reader is deciding when to use an AI search engine versus a general chatbot."
+      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "whyConsider": "Consensus is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need finding research-backed academic answers, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
+      "watchFor": "Watch for not the best choice when your main job is outside research.; this matters when the reader is deciding when to use an AI search engine versus a general chatbot."
     }
   ],
   "decisionPath": [
