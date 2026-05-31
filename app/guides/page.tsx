@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import ActionLinks from "@/components/ActionLinks";
 import BadgeRow from "@/components/BadgeRow";
-import Logo from "@/components/Logo";
+import SiteHeader from "@/components/SiteHeader";
 import ToolIcon from "@/components/ToolIcon";
 import { toolsBySlug, type ToolSlug } from "@/data/tools";
 import { formatGuideLayoutLabel, resolveGuideLayoutType } from "@/lib/guideTypes";
@@ -20,25 +20,9 @@ export default function GuidesPage() {
   return (
     <main className="min-h-screen px-4 py-8 sm:px-6 sm:py-12">
       <div className="mx-auto max-w-6xl">
+        <SiteHeader active="shortcuts" className="mb-6 rounded-3xl border border-slate-200 shadow-sm" />
         <header className="rounded-3xl border border-slate-200 bg-white px-6 py-10 shadow-sm ateflo-reveal sm:px-10 sm:py-14">
-          <nav className="flex flex-wrap items-center justify-between gap-4">
-            <Logo />
-            <div className="flex flex-wrap items-center gap-2">
-              <Link
-                href="/tools"
-                className="rounded-full px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-teal-800"
-              >
-                Tools
-              </Link>
-              <Link
-                href="/finder"
-                className="rounded-full border border-teal-200 px-5 py-2.5 text-sm font-semibold text-teal-800 transition hover:bg-teal-50"
-              >
-                Use the finder
-              </Link>
-            </div>
-          </nav>
-          <p className="mt-12 text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
             AI Shortcuts
           </p>
           <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">

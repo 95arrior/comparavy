@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import ActionLinks from "@/components/ActionLinks";
-import Logo from "@/components/Logo";
+import SiteHeader from "@/components/SiteHeader";
 import ToolsDirectory from "@/components/ToolsDirectory";
 import { tools } from "@/data/tools";
 
@@ -15,26 +14,9 @@ export default function ToolsPage() {
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-6 text-slate-900 sm:px-6 sm:py-10">
       <div className="mx-auto max-w-6xl">
+        <SiteHeader active="tools" className="mb-6 rounded-3xl border border-slate-200 shadow-sm" />
         <header className="rounded-3xl border border-slate-200 bg-white px-6 py-8 shadow-sm ateflo-reveal sm:px-10 sm:py-10">
-          <nav className="flex flex-wrap items-center justify-between gap-4">
-            <Logo />
-            <div className="flex flex-wrap items-center gap-2">
-              <Link
-                href="/guides"
-                className="rounded-full px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-teal-800"
-              >
-                Shortcuts
-              </Link>
-              <Link
-                href="/finder"
-                className="rounded-full border border-teal-200 bg-teal-50 px-4 py-2.5 text-sm font-semibold text-teal-800 transition hover:bg-teal-100"
-              >
-                Finder
-              </Link>
-            </div>
-          </nav>
-
-          <p className="mt-10 text-sm font-semibold uppercase tracking-[0.18em] text-teal-700">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-teal-700">
             AI Tools
           </p>
           <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">

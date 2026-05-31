@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import BadgeRow from "@/components/BadgeRow";
-import Logo from "@/components/Logo";
+import CopyTextButton from "@/components/CopyTextButton";
+import SiteHeader from "@/components/SiteHeader";
 import { getPublishedGuides, type Guide } from "@/lib/guides";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE } from "@/lib/site";
 
@@ -61,6 +62,51 @@ const whyPoints = [
   },
 ] as const;
 
+const starterShortcuts = [
+  {
+    title: "Turn messy notes into a clear action plan",
+    category: "Notes to output",
+    detail:
+      "Paste raw notes and ask AI for decisions, tasks, owners, dates, and open questions.",
+    prompt:
+      "Turn these messy notes into a clear action plan. Separate decisions, tasks, owners, deadlines, open questions, and anything I should verify.",
+  },
+  {
+    title: "Summarize a PDF into study or work notes",
+    category: "Document workflow",
+    detail:
+      "Extract the useful points, quotes, definitions, and next actions without losing context.",
+    prompt:
+      "Summarize this document for practical use. Give me the main points, useful quotes, definitions, risks, and a short checklist of what to do next.",
+  },
+  {
+    title: "Turn one rough idea into a finished first draft",
+    category: "Idea to draft",
+    detail:
+      "Move from a loose idea to an outline, draft, and review checklist you can improve.",
+    prompt:
+      "Help me turn this rough idea into a finished first draft. Create an outline, draft the first version, then list what I should fact-check and improve.",
+  },
+] as const;
+
+const moneyStarterWorkflows = [
+  {
+    title: "Client recap from meeting notes",
+    detail:
+      "Convert notes into a concise recap with decisions, next steps, and polite follow-up language.",
+  },
+  {
+    title: "One-page offer from a service idea",
+    detail:
+      "Shape a small business service into audience, promise, deliverables, pricing caveats, and next step.",
+  },
+  {
+    title: "Product description from rough bullets",
+    detail:
+      "Turn feature notes into clear benefits, use cases, objections, and a polished product draft.",
+  },
+] as const;
+
 function guideSummary(guide: Guide): string {
   return guide.quickAnswer ?? guide.quickDecision ?? guide.quickVerdict ?? guide.metaDescription;
 }
@@ -98,6 +144,41 @@ function ShortcutCard({
   );
 }
 
+function StarterShortcutCard({
+  shortcut,
+}: {
+  readonly shortcut: (typeof starterShortcuts)[number];
+}) {
+  return (
+    <article className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-teal-200 hover:shadow-md">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">
+        {shortcut.category}
+      </p>
+      <h3 className="mt-3 text-xl font-semibold tracking-tight text-slate-950">
+        {shortcut.title}
+      </h3>
+      <p className="mt-3 flex-1 text-sm leading-6 text-slate-600">
+        {shortcut.detail}
+      </p>
+      <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50 p-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+          Starter prompt
+        </p>
+        <p className="mt-2 text-sm leading-6 text-slate-700">{shortcut.prompt}</p>
+      </div>
+      <div className="mt-5 flex flex-wrap gap-3">
+        <CopyTextButton text={shortcut.prompt} />
+        <Link
+          href="/finder"
+          className="inline-flex min-h-11 items-center justify-center rounded-full bg-teal-700 px-4 text-sm font-semibold text-white transition hover:bg-teal-800"
+        >
+          Find a tool
+        </Link>
+      </div>
+    </article>
+  );
+}
+
 function pickMoneyWorkflows(guides: readonly Guide[]): readonly Guide[] {
   const moneyTerms = ["business", "client", "etsy", "proposal", "real estate", "selling", "service", "product"];
   const matches = guides.filter((guide) => {
@@ -116,55 +197,31 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#FBFAF7] text-slate-900">
-      <header className="border-b border-slate-200/80 bg-[#FBFAF7]/95">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-5 sm:px-6">
-          <Logo />
-          <nav aria-label="Main navigation" className="flex items-center gap-2 sm:gap-3">
-            <Link
-              href="/guides"
-              className="rounded-full px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-white hover:text-teal-800"
-            >
-              Shortcuts
-            </Link>
-            <Link
-              href="/tools"
-              className="rounded-full px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-white hover:text-teal-800"
-            >
-              Tools
-            </Link>
-            <Link
-              href="/finder"
-              className="rounded-full border border-teal-200 bg-teal-50 px-4 py-2.5 text-sm font-semibold text-teal-800 transition hover:bg-teal-100"
-            >
-              Finder
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <SiteHeader active="shortcuts" />
 
-      <section className="px-4 pb-12 pt-12 sm:px-6 sm:pb-16 sm:pt-16">
-        <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[1fr_360px] lg:items-center">
+      <section className="px-4 pb-10 pt-9 sm:px-6 sm:pb-16 sm:pt-16">
+        <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1fr_360px] lg:items-center">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-teal-700">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-700 sm:text-sm">
               {SITE_TAGLINE}
             </p>
-            <h1 className="mt-5 max-w-3xl text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+            <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-tight text-slate-950 sm:mt-5 sm:text-5xl lg:text-6xl">
               Finish real work faster with AI.
             </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
+            <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:mt-6 sm:text-lg sm:leading-8">
               Copy practical AI workflows for turning messy notes, PDFs, blog
               posts, product ideas, and small business tasks into finished outputs.
             </p>
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-7 flex flex-col gap-3 sm:mt-9 sm:flex-row">
               <Link
                 href="/guides"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-teal-700 px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-teal-700 px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800"
               >
                 Browse Shortcuts <span aria-hidden="true">&rarr;</span>
               </Link>
               <Link
                 href="/finder"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-6 py-3.5 text-sm font-semibold text-slate-800 transition hover:border-teal-200 hover:bg-teal-50"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-6 text-sm font-semibold text-slate-800 transition hover:border-teal-200 hover:bg-teal-50"
               >
                 Find the Right AI Tool <span aria-hidden="true">&rarr;</span>
               </Link>
@@ -214,9 +271,13 @@ export default function Home() {
             </Link>
           </div>
           <div className="mt-8 grid gap-4 md:grid-cols-3">
-            {popularShortcuts.map((guide) => (
-              <ShortcutCard key={guide.slug} guide={guide} />
-            ))}
+            {popularShortcuts.length > 0
+              ? popularShortcuts.map((guide) => (
+                  <ShortcutCard key={guide.slug} guide={guide} />
+                ))
+              : starterShortcuts.map((shortcut) => (
+                  <StarterShortcutCard key={shortcut.title} shortcut={shortcut} />
+                ))}
           </div>
         </div>
       </section>
@@ -256,25 +317,43 @@ export default function Home() {
             Practical shortcuts for client, product, and small business work.
           </h2>
           <div className="mt-8 grid gap-4 md:grid-cols-3">
-            {moneyWorkflows.map((guide) => (
-              <article key={guide.slug} className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-200">
-                  {guide.category}
-                </p>
-                <h3 className="mt-4 text-xl font-semibold tracking-tight text-white">
-                  <Link href={`/guides/${guide.slug}`} className="transition hover:text-teal-200">
-                    {guide.title}
-                  </Link>
-                </h3>
-                <p className="mt-3 text-sm leading-6 text-slate-300">{guide.useCase}</p>
-                <Link
-                  href={`/guides/${guide.slug}`}
-                  className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-teal-200 transition hover:text-white"
-                >
-                  Open workflow <span aria-hidden="true">&rarr;</span>
-                </Link>
-              </article>
-            ))}
+            {moneyWorkflows.length > 0
+              ? moneyWorkflows.map((guide) => (
+                  <article key={guide.slug} className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-200">
+                      {guide.category}
+                    </p>
+                    <h3 className="mt-4 text-xl font-semibold tracking-tight text-white">
+                      <Link href={`/guides/${guide.slug}`} className="transition hover:text-teal-200">
+                        {guide.title}
+                      </Link>
+                    </h3>
+                    <p className="mt-3 text-sm leading-6 text-slate-300">{guide.useCase}</p>
+                    <Link
+                      href={`/guides/${guide.slug}`}
+                      className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-teal-200 transition hover:text-white"
+                    >
+                      Open workflow <span aria-hidden="true">&rarr;</span>
+                    </Link>
+                  </article>
+                ))
+              : moneyStarterWorkflows.map((workflow) => (
+                  <article key={workflow.title} className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-200">
+                      Practical workflow
+                    </p>
+                    <h3 className="mt-4 text-xl font-semibold tracking-tight text-white">
+                      {workflow.title}
+                    </h3>
+                    <p className="mt-3 text-sm leading-6 text-slate-300">{workflow.detail}</p>
+                    <Link
+                      href="/finder"
+                      className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full border border-white/15 px-4 text-sm font-semibold text-teal-200 transition hover:border-teal-200 hover:text-white"
+                    >
+                      Match a tool <span aria-hidden="true">&rarr;</span>
+                    </Link>
+                  </article>
+                ))}
           </div>
         </div>
       </section>
@@ -306,11 +385,24 @@ export default function Home() {
               </h2>
             </div>
           </div>
-          <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {latestShortcuts.map((guide) => (
-              <ShortcutCard key={guide.slug} guide={guide} label="Read shortcut" />
-            ))}
-          </div>
+          {latestShortcuts.length > 0 ? (
+            <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {latestShortcuts.map((guide) => (
+                <ShortcutCard key={guide.slug} guide={guide} label="Read shortcut" />
+              ))}
+            </div>
+          ) : (
+            <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+              <p className="text-sm font-semibold text-slate-950">
+                Published shortcuts are queued behind the quality bar.
+              </p>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
+                AteFlo only shows shortcuts after they pass review. Until then,
+                use the starter prompts above or answer the finder questions to
+                choose a workflow-safe tool.
+              </p>
+            </div>
+          )}
         </div>
       </section>
 

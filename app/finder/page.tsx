@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useState } from "react";
 import ActionLinks from "@/components/ActionLinks";
 import BadgeRow, { getToolBadges } from "@/components/BadgeRow";
-import Logo from "@/components/Logo";
 import MetricBars from "@/components/MetricBars";
+import SiteHeader from "@/components/SiteHeader";
 import ToolIcon from "@/components/ToolIcon";
 import { toolsBySlug, type ToolSlug } from "@/data/tools";
 import {
@@ -552,31 +552,22 @@ export default function FinderPage() {
   return (
     <main className="min-h-screen px-4 py-6 sm:px-6 sm:py-10">
       <div className="mx-auto max-w-5xl">
+        <SiteHeader active="finder" className="mb-7 rounded-3xl border border-slate-200 shadow-sm sm:mb-10" />
         <header className="mb-7 sm:mb-10">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <Logo />
-            <nav className="flex items-center gap-2">
-              <Link
-                href="/tools"
-                className="rounded-full px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-teal-800"
-              >
-                Tools
-              </Link>
-              <Link
-                href="/guides"
-                className="rounded-full px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-teal-800"
-              >
-                Shortcuts
-              </Link>
-            </nav>
-          </div>
-          <h1 className="mt-4 max-w-2xl text-3xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
+          <h1 className="max-w-2xl text-3xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
             What are you trying to finish?
           </h1>
           <p className="mt-4 max-w-xl text-base leading-7 text-slate-600 sm:text-lg">
-            Make five simple choices. AteFlo will narrow the options to tools
-            that fit the output, workflow, budget, and priority.
+            Make five simple choices. AteFlo starts with the output you need to
+            finish, then narrows the workflow and tool options that fit.
           </p>
+          <div className="mt-5 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">
+            {["Output first", "Workflow fit", "Tools second"].map((label) => (
+              <span key={label} className="rounded-full border border-slate-200 bg-white px-3 py-2">
+                {label}
+              </span>
+            ))}
+          </div>
         </header>
 
         <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-7">
@@ -728,9 +719,9 @@ export default function FinderPage() {
         {isResultsStep && (
           <section id="finder-results" aria-live="polite" className="mt-8">
             <div className="mb-6">
-              <p className="text-sm font-medium text-teal-700">Results</p>
+              <p className="text-sm font-medium text-teal-700">Shortcut match</p>
               <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
-                Your best fit
+                Your best workflow fit
               </h2>
             </div>
             <div className="space-y-4 sm:space-y-5">
