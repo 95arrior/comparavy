@@ -41,15 +41,14 @@ export default function ShortcutBrief({ guide }: ShortcutBriefProps) {
       value: finishedOutput(guide),
     },
     {
-      label: "Workflow to copy",
+      label: "Prompt builder",
       value:
-        guide.steps && guide.steps.length > 0
-          ? `${guide.steps.length} checked steps, with a copyable starter prompt below.`
-          : "A starter prompt and review path you can copy into your AI tool.",
+        "Fill in a few details, copy one generated prompt, then paste it into your AI chat tool.",
     },
     {
-      label: "Tool decision",
-      value: guide.quickDecision ?? guide.quickVerdict,
+      label: "Review step",
+      value:
+        "Check names, dates, claims, missing details, and sensitive information before using the result.",
     },
   ];
 

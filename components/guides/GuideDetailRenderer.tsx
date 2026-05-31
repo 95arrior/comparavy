@@ -54,7 +54,7 @@ export default function GuideDetailRenderer({ guide }: GuideDetailRendererProps)
         <ToolDecisionGuideLayout guide={guide} />
       )}
 
-      <HelpfulFeedback />
+      <HelpfulFeedback guideSlug={guide.slug} guideTitle={guide.title} />
       <RelatedShortcuts guides={relatedGuides(guide)} />
     </div>
   );

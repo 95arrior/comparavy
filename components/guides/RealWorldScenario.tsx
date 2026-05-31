@@ -20,7 +20,7 @@ export default function RealWorldScenario({
         <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
           <p className="text-sm font-semibold text-slate-900">Reader</p>
           <p className="mt-2 text-sm leading-7 text-slate-600">
-            {audience} trying to handle {useCase}.
+            {audience} who need a clear way to handle {useCase}.
           </p>
         </div>
         <div className="rounded-2xl border border-teal-100 bg-white p-4">

@@ -4,7 +4,6 @@ import DeviceUseCaseBlock from "@/components/guides/DeviceUseCaseBlock";
 import ExampleResultBlock from "@/components/guides/ExampleResultBlock";
 import FinderCta from "@/components/guides/FinderCta";
 import GuideToolCard from "@/components/guides/GuideToolCard";
-import QuickAnswerBox from "@/components/guides/QuickAnswerBox";
 import FaqAccordion from "@/components/FaqAccordion";
 import SectionHeading from "@/components/SectionHeading";
 import ToolIcon from "@/components/ToolIcon";
@@ -45,13 +44,6 @@ export default function ToolDecisionGuideLayout({ guide }: { readonly guide: Gui
 
   return (
     <div className="space-y-6">
-      <QuickAnswerBox
-        eyebrow="Quick verdict"
-        title="The shortest path to a decision"
-        answer={guide.quickAnswer ?? guide.quickVerdict}
-        fallback={`Choose the tool that best matches ${guide.useCase}, then test it on one real example before paying for another subscription.`}
-      />
-
       <DecisionTree steps={decisionSteps(guide)} />
 
       <DeviceUseCaseBlock

@@ -176,6 +176,11 @@ function includesRelevantText(text: string, value: string): boolean {
   return matches >= Math.min(2, expected.length);
 }
 
+function mentionsFinder(value: string): boolean {
+  const normalized = normalizeText(value);
+  return value.includes("/finder") || normalized.includes("finder");
+}
+
 function guideFaqs(guide: Guide): Guide["faqs"] {
   return guide.faq ?? guide.faqs;
 }
@@ -446,12 +451,12 @@ export function validateGuideContent(value: unknown): ContentQualityIssue[] {
     issues.push({ field: "pricingCaveat", message: "The pricing caveat must say pricing can change." });
   }
 
-  if (!hasString(value, "ctaToFinder") || !String(value.ctaToFinder).includes("/finder")) {
-    issues.push({ field: "ctaToFinder", message: "The CTA must direct readers to /finder." });
+  if (!hasString(value, "ctaToFinder") || !mentionsFinder(String(value.ctaToFinder))) {
+    issues.push({ field: "ctaToFinder", message: "The CTA must direct readers to Finder." });
   }
 
-  if (!hasString(value, "finderCTA") || !String(value.finderCTA).includes("/finder")) {
-    issues.push({ field: "finderCTA", message: "The finder CTA must direct readers to /finder." });
+  if (!hasString(value, "finderCTA") || !mentionsFinder(String(value.finderCTA))) {
+    issues.push({ field: "finderCTA", message: "The finder CTA must direct readers to Finder." });
   }
 
   if (!includesRelevantText(String(value.affiliateDisclosureNote), "affiliate disclosure")) {
@@ -926,12 +931,12 @@ export function checkGuideQuality(
     addBlocker("finalVerdict must contain at least 120 characters.", 12);
   }
 
-  if (!guide.ctaToFinder.includes("/finder")) {
-    addBlocker("ctaToFinder must refer readers to /finder.", 12);
+  if (!mentionsFinder(guide.ctaToFinder)) {
+    addBlocker("ctaToFinder must refer readers to Finder.", 12);
   }
 
-  if (!guide.finderCTA.includes("/finder")) {
-    addBlocker("finderCTA must refer readers to /finder.", 12);
+  if (!mentionsFinder(guide.finderCTA)) {
+    addBlocker("finderCTA must refer readers to Finder.", 12);
   }
 
   if (!guide.pricingCaveat.toLowerCase().includes("pricing can change")) {

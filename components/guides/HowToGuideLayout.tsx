@@ -2,7 +2,6 @@ import CommonMistakes from "@/components/guides/CommonMistakes";
 import DeviceUseCaseBlock from "@/components/guides/DeviceUseCaseBlock";
 import ExampleResultBlock from "@/components/guides/ExampleResultBlock";
 import FinderCta from "@/components/guides/FinderCta";
-import QuickAnswerBox from "@/components/guides/QuickAnswerBox";
 import RealWorldScenario from "@/components/guides/RealWorldScenario";
 import ToolsYouCanUse from "@/components/guides/ToolsYouCanUse";
 import WorkflowSteps from "@/components/guides/WorkflowSteps";
@@ -46,11 +45,6 @@ export default function HowToGuideLayout({ guide }: { readonly guide: Guide }) {
 
   return (
     <div className="space-y-6">
-      <QuickAnswerBox
-        answer={guide.quickAnswer ?? guide.quickVerdict}
-        fallback={`Start with the real source material, create one draft for ${guide.useCase}, then check the result before you send, post, or save it.`}
-      />
-
       <RealWorldScenario
         scenario={guide.realWorldScenario}
         audience={guide.audience}
