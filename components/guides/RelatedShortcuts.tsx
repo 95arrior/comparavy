@@ -1,13 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import BadgeRow from "@/components/BadgeRow";
+import ToolIcon from "@/components/ToolIcon";
 import { trackEvent } from "@/lib/analytics";
 import type { Guide } from "@/lib/guides";
+import type { ShortcutWorksWithTool } from "@/components/guides/ShortcutsDiscovery";
+
+export interface RelatedShortcutItem {
+  readonly slug: string;
+  readonly title: string;
+  readonly summary: string;
+  readonly category: string;
+  readonly skillLevel: string;
+  readonly worksWithTools: readonly ShortcutWorksWithTool[];
+}
 
 interface RelatedShortcutsProps {
   readonly guide: Guide;
-  readonly guides: readonly Guide[];
+  readonly guides: readonly RelatedShortcutItem[];
 }
 
 export default function RelatedShortcuts({ guide, guides }: RelatedShortcutsProps) {
@@ -15,7 +25,7 @@ export default function RelatedShortcuts({ guide, guides }: RelatedShortcutsProp
     return null;
   }
 
-  function trackRelatedClick(destination: Guide) {
+  function trackRelatedClick(destination: RelatedShortcutItem) {
     trackEvent("related_shortcut_click", {
       guide_slug: guide.slug,
       guide_title: guide.title,
@@ -30,11 +40,8 @@ export default function RelatedShortcuts({ guide, guides }: RelatedShortcutsProp
       <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
         Related shortcuts
       </p>
-      <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
-        Choose the next useful shortcut
-      </h2>
       <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
-        Use another AteFlo shortcut when your next task starts from a different input.
+        Open another AteFlo shortcut when your next task starts from a different input.
       </p>
       <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {guides.map((relatedGuide) => (
@@ -42,13 +49,15 @@ export default function RelatedShortcuts({ guide, guides }: RelatedShortcutsProp
             key={relatedGuide.slug}
             className="group flex h-full min-w-0 flex-col rounded-2xl border border-slate-200 bg-slate-50/70 p-4 transition hover:-translate-y-0.5 hover:border-teal-200 hover:bg-white hover:shadow-sm"
           >
-            <div className="flex items-center justify-between gap-3">
-              <BadgeRow badges={[{ label: relatedGuide.category, tone: "teal" }]} />
-              <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-500 ring-1 ring-slate-200">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-teal-50 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-teal-800">
+                {relatedGuide.category}
+              </span>
+              <span className="text-xs font-medium capitalize text-slate-500">
                 {relatedGuide.skillLevel}
               </span>
             </div>
-            <h3 className="ateflo-clamp-3 mt-4 text-base font-semibold leading-6 text-slate-950 md:min-h-[4.5rem]">
+            <h3 className="ateflo-clamp-3 mt-4 text-base font-semibold leading-6 text-slate-950">
               <Link
                 href={`/guides/${relatedGuide.slug}`}
                 data-event="related_shortcut_click"
@@ -61,39 +70,27 @@ export default function RelatedShortcuts({ guide, guides }: RelatedShortcutsProp
                 {relatedGuide.title}
               </Link>
             </h3>
-            <p className="ateflo-clamp-3 mt-2 text-sm leading-6 text-slate-600 md:min-h-[4.5rem]">
-              {relatedGuide.metaDescription}
+            <p className="ateflo-clamp-3 mt-2 text-sm leading-6 text-slate-600">
+              {relatedGuide.summary}
             </p>
-            <div className="mt-4 rounded-2xl border border-slate-100 bg-white p-4 text-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">
-                Input -&gt; Output
-              </p>
-              <dl className="mt-3 space-y-3">
-                <div>
-                  <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                    Input
-                  </dt>
-                  <dd className="mt-1 break-words leading-6 text-slate-700">
-                    {Array.isArray(relatedGuide.whatYouNeed)
-                      ? relatedGuide.whatYouNeed[0]
-                      : relatedGuide.whatYouNeed || relatedGuide.userPain}
-                  </dd>
+            {relatedGuide.worksWithTools.length > 0 && (
+              <div className="mt-4 rounded-2xl border border-slate-100 bg-white p-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                  Works with
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {relatedGuide.worksWithTools.map((tool) => (
+                    <span
+                      key={tool.slug}
+                      className="inline-flex min-h-9 max-w-full items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-sm font-semibold text-slate-800"
+                    >
+                      <ToolIcon {...tool} size={22} />
+                      <span className="truncate">{tool.name}</span>
+                    </span>
+                  ))}
                 </div>
-                <div>
-                  <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                    Output
-                  </dt>
-                  <dd className="mt-1 break-words leading-6 text-slate-700">
-                    {relatedGuide.steps
-                      ?.filter((step) => step.output)
-                      .at(-1)
-                      ?.output ??
-                      relatedGuide.exampleResult ??
-                      relatedGuide.visualSummary.headline}
-                  </dd>
-                </div>
-              </dl>
-            </div>
+              </div>
+            )}
             <div className="mt-auto pt-4">
               <Link
                 href={`/guides/${relatedGuide.slug}`}

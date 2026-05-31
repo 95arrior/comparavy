@@ -30,8 +30,19 @@ interface ShortcutsDiscoveryProps {
   readonly shortcuts: readonly ShortcutDiscoveryItem[];
 }
 
+const SEARCH_CHIPS = [
+  "Meeting notes",
+  "Etsy listing",
+  "Follow-up email",
+  "Product description",
+] as const;
+
 function normalizeSearch(value: string): string {
-  return value.trim().toLowerCase();
+  return value
+    .toLowerCase()
+    .replace(/[-_]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProps) {
@@ -43,13 +54,21 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
     }
 
     return shortcuts.filter((shortcut) =>
-      shortcut.searchText.includes(normalizedQuery),
+      normalizeSearch(shortcut.searchText).includes(normalizedQuery),
     );
   }, [normalizedQuery, shortcuts]);
 
   return (
     <section className="mt-5 sm:mt-6">
       <div className="rounded-3xl border border-teal-100 bg-white p-3 shadow-sm ateflo-reveal sm:p-4">
+        <div className="mb-4 px-1">
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
+            What are you trying to finish?
+          </p>
+          <p className="mt-1 text-sm leading-6 text-slate-600">
+            Search for a shortcut by task, input, output, or tool.
+          </p>
+        </div>
         <label htmlFor="shortcut-search" className="sr-only">
           Search shortcuts
         </label>
@@ -57,7 +76,7 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
           id="shortcut-search"
           type="search"
           value={query}
-          placeholder="Search shortcuts by task, input, output, or tool..."
+          placeholder="Search “meeting notes”, “Etsy listing”, “follow-up email”..."
           data-event="shortcuts_search_used"
           className="min-h-14 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-base text-slate-950 shadow-sm outline-none transition focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100 placeholder:text-slate-400"
           onChange={(event) => setQuery(event.target.value)}
@@ -66,6 +85,20 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
           <p>
             {filteredShortcuts.length} of {shortcuts.length} shortcuts
           </p>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2 px-1">
+          {SEARCH_CHIPS.map((chip) => (
+            <button
+              key={chip}
+              type="button"
+              data-event="search_chip_click"
+              data-search-chip={chip}
+              className="inline-flex min-h-9 items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+              onClick={() => setQuery(chip)}
+            >
+              {chip}
+            </button>
+          ))}
         </div>
       </div>
 

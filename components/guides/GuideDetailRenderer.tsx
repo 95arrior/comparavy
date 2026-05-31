@@ -2,11 +2,15 @@ import GuideExecutionShortcut from "@/components/guides/GuideExecutionShortcut";
 import HelpfulFeedback from "@/components/guides/HelpfulFeedback";
 import HowToGuideLayout from "@/components/guides/HowToGuideLayout";
 import IncomeGuideLayout from "@/components/guides/IncomeGuideLayout";
-import RelatedShortcuts from "@/components/guides/RelatedShortcuts";
+import RelatedShortcuts, {
+  type RelatedShortcutItem,
+} from "@/components/guides/RelatedShortcuts";
 import ShortcutBrief from "@/components/guides/ShortcutBrief";
 import ToolDecisionGuideLayout from "@/components/guides/ToolDecisionGuideLayout";
 import TrendDecisionGuideLayout from "@/components/guides/TrendDecisionGuideLayout";
 import ViewShortcutsCta from "@/components/guides/ViewShortcutsCta";
+import type { ShortcutWorksWithTool } from "@/components/guides/ShortcutsDiscovery";
+import { toolsBySlug, type ToolSlug } from "@/data/tools";
 import { resolveGuideLayoutType } from "@/lib/guideTypes";
 import { getPublishedGuides, type Guide } from "@/lib/guides";
 
@@ -21,6 +25,33 @@ function relatedGuides(guide: Guide): readonly Guide[] {
   );
 
   return (related.length >= 3 ? related : guides).slice(0, 3);
+}
+
+function guideWorksWithTools(guide: Guide): readonly ShortcutWorksWithTool[] {
+  const tools = guide.recommendedToolSlugs.flatMap((slug) => {
+    const tool = toolsBySlug.get(slug as ToolSlug);
+    return tool ? [tool] : [];
+  });
+
+  return tools.slice(0, 3).map((tool) => ({
+    slug: tool.slug,
+    name: tool.name,
+    officialUrl: tool.officialUrl,
+    iconPath: tool.iconPath,
+    iconDomain: tool.iconDomain,
+    brandColor: tool.brandColor,
+  }));
+}
+
+function toRelatedShortcutItem(guide: Guide): RelatedShortcutItem {
+  return {
+    slug: guide.slug,
+    title: guide.title,
+    summary: guide.quickAnswer ?? guide.quickVerdict ?? guide.metaDescription,
+    category: guide.category,
+    skillLevel: guide.skillLevel,
+    worksWithTools: guideWorksWithTools(guide),
+  };
 }
 
 export default function GuideDetailRenderer({ guide }: GuideDetailRendererProps) {
@@ -56,7 +87,10 @@ export default function GuideDetailRenderer({ guide }: GuideDetailRendererProps)
         topicCluster={guide.topicCluster}
       />
       <ViewShortcutsCta />
-      <RelatedShortcuts guide={guide} guides={relatedGuides(guide)} />
+      <RelatedShortcuts
+        guide={guide}
+        guides={relatedGuides(guide).map(toRelatedShortcutItem)}
+      />
     </div>
   );
 }

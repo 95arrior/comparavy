@@ -51,11 +51,46 @@ function guideWorksWithTools(guide: Guide): readonly ShortcutWorksWithTool[] {
   }));
 }
 
+function guideSearchAliases(guide: Guide): readonly string[] {
+  switch (guide.slug) {
+    case "how-to-turn-meeting-notes-into-a-client-recap-with-ai":
+      return [
+        "meeting notes",
+        "client recap",
+        "follow-up email",
+        "follow up email",
+        "action items",
+        "meeting summary",
+        "client email",
+        "call notes",
+        "owners",
+        "deadlines",
+        "open questions",
+      ];
+    case "best-ai-tools-for-etsy-product-descriptions":
+      return [
+        "Etsy",
+        "Etsy listing",
+        "product description",
+        "product title",
+        "listing copy",
+        "tags",
+        "keywords",
+        "handmade product",
+        "shop",
+        "seller",
+      ];
+    default:
+      return [];
+  }
+}
+
 function toDiscoveryItem(guide: Guide): ShortcutDiscoveryItem {
   const guideTypeLabel = formatGuideLayoutLabel(resolveGuideLayoutType(guide.guideType));
   const input = firstGuideInput(guide);
   const output = guideOutput(guide);
   const worksWithTools = guideWorksWithTools(guide);
+  const searchAliases = guideSearchAliases(guide);
   const searchableValues = [
     guide.title,
     guide.metaDescription,
@@ -66,8 +101,10 @@ function toDiscoveryItem(guide: Guide): ShortcutDiscoveryItem {
     input,
     output,
     guide.topicCluster,
+    guide.audience,
     guideTypeLabel,
     ...worksWithTools.map((tool) => tool.name),
+    ...searchAliases,
   ];
 
   return {
