@@ -1,8 +1,13 @@
+import { Suspense } from "react";
 import Script from "next/script";
-
-const GA_MEASUREMENT_ID = "G-V7HFSSXLHM";
+import GoogleAnalyticsPageViews from "@/components/GoogleAnalyticsPageViews";
+import { GA_MEASUREMENT_ID } from "@/lib/analytics";
 
 export default function GoogleAnalytics() {
+  if (!GA_MEASUREMENT_ID) {
+    return null;
+  }
+
   return (
     <>
       <Script
@@ -14,9 +19,12 @@ export default function GoogleAnalytics() {
           window.dataLayer = window.dataLayer || [];
           function gtag(){window.dataLayer.push(arguments);}
           gtag('js', new Date());
-          gtag('config', '${GA_MEASUREMENT_ID}');
+          gtag('config', ${JSON.stringify(GA_MEASUREMENT_ID)}, { send_page_view: false });
         `}
       </Script>
+      <Suspense fallback={null}>
+        <GoogleAnalyticsPageViews />
+      </Suspense>
     </>
   );
 }
