@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ToolIcon from "@/components/ToolIcon";
+import { trackEvent } from "@/lib/analytics";
 
 export interface ShortcutWorksWithTool {
   readonly slug: string;
@@ -47,6 +48,7 @@ function normalizeSearch(value: string): string {
 
 export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProps) {
   const [query, setQuery] = useState("");
+  const trackedSearches = useRef<Set<string>>(new Set());
   const normalizedQuery = normalizeSearch(query);
   const filteredShortcuts = useMemo(() => {
     if (!normalizedQuery) {
@@ -57,6 +59,48 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
       normalizeSearch(shortcut.searchText).includes(normalizedQuery),
     );
   }, [normalizedQuery, shortcuts]);
+
+  useEffect(() => {
+    if (normalizedQuery.length < 2 || trackedSearches.current.has(normalizedQuery)) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      trackedSearches.current.add(normalizedQuery);
+      trackEvent("shortcuts_search_used", {
+        source_page: "guides",
+        search_query_length: query.trim().length,
+        result_count: filteredShortcuts.length,
+      });
+    }, 500);
+
+    return () => window.clearTimeout(timer);
+  }, [filteredShortcuts.length, normalizedQuery, query]);
+
+  function matchingShortcutCount(chip: string): number {
+    const normalizedChip = normalizeSearch(chip);
+
+    return shortcuts.filter((shortcut) =>
+      normalizeSearch(shortcut.searchText).includes(normalizedChip),
+    ).length;
+  }
+
+  function handleSearchChipClick(chip: string) {
+    setQuery(chip);
+    trackEvent("search_chip_click", {
+      source_page: "guides",
+      chip_label: chip,
+      result_count: matchingShortcutCount(chip),
+    });
+  }
+
+  function trackShortcutClick(shortcut: ShortcutDiscoveryItem) {
+    trackEvent("shortcut_card_click", {
+      source_page: "guides",
+      destination_slug: shortcut.slug,
+      destination_title: shortcut.title,
+    });
+  }
 
   return (
     <section className="mt-5 sm:mt-6">
@@ -94,7 +138,7 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
               data-event="search_chip_click"
               data-search-chip={chip}
               className="inline-flex min-h-9 items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
-              onClick={() => setQuery(chip)}
+              onClick={() => handleSearchChipClick(chip)}
             >
               {chip}
             </button>
@@ -112,6 +156,14 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
           </p>
           <Link
             href="/finder"
+            data-event="finder_cta_click"
+            data-action-location="shortcuts_search_empty_state"
+            onClick={() =>
+              trackEvent("finder_cta_click", {
+                source_page: "guides",
+                action_location: "shortcuts_search_empty_state",
+              })
+            }
             className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
           >
             Open Finder
@@ -141,6 +193,7 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
                   data-event="shortcut_card_click"
                   data-guide-slug={shortcut.slug}
                   data-action-location="shortcuts_listing_title"
+                  onClick={() => trackShortcutClick(shortcut)}
                   className="transition group-hover:text-teal-800 hover:text-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
                 >
                   {shortcut.title}
@@ -180,6 +233,7 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
                   data-event="shortcut_card_click"
                   data-guide-slug={shortcut.slug}
                   data-action-location="shortcuts_listing_button"
+                  onClick={() => trackShortcutClick(shortcut)}
                   className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-teal-700 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
                 >
                   Open Shortcut

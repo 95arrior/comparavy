@@ -89,6 +89,7 @@ export default function ToolCard({ tool }: ToolCardProps) {
           name={tool.name}
           officialUrl={tool.officialUrl}
           affiliateUrl={tool.affiliateUrl}
+          sourcePage="tools_directory"
         />
       </div>
     </article>

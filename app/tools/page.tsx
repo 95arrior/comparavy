@@ -29,7 +29,16 @@ export default function ToolsPage() {
           <ActionLinks
             className="mt-8"
             items={[
-              { href: "/finder", label: "Use Finder", tone: "primary" },
+              {
+                href: "/finder",
+                label: "Use Finder",
+                tone: "primary",
+                eventName: "finder_cta_click",
+                eventParams: {
+                  source_page: "tools",
+                  action_location: "tools_header",
+                },
+              },
               { href: "/guides", label: "Browse Shortcuts" },
             ]}
           />

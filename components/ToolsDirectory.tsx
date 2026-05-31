@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import ToolCard from "@/components/ToolCard";
+import TrackedLink from "@/components/TrackedLink";
 import type { AiTool, BudgetLevel, ToolCategory } from "@/types/tool";
 import { TOOL_CATEGORIES } from "@/types/tool";
 
@@ -197,12 +197,17 @@ export default function ToolsDirectory({ tools }: ToolsDirectoryProps) {
               >
                 Reset filters
               </button>
-              <Link
+              <TrackedLink
                 href="/finder"
+                eventName="finder_cta_click"
+                eventParams={{
+                  source_page: "tools",
+                  action_location: "tools_empty_state",
+                }}
                 className="rounded-full bg-teal-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-800"
               >
                 Use Finder
-              </Link>
+              </TrackedLink>
             </div>
           </div>
         )}
@@ -219,12 +224,17 @@ export default function ToolsDirectory({ tools }: ToolsDirectoryProps) {
               budget, and comfort level.
             </p>
           </div>
-          <Link
+          <TrackedLink
             href="/finder"
+            eventName="finder_cta_click"
+            eventParams={{
+              source_page: "tools",
+              action_location: "tools_bottom_cta",
+            }}
             className="inline-flex shrink-0 items-center justify-center rounded-full bg-teal-400 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-300"
           >
             Use Finder
-          </Link>
+          </TrackedLink>
         </div>
       </section>
     </>

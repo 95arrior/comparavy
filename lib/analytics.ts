@@ -19,6 +19,9 @@ const ALLOWED_PARAM_KEYS = new Set([
   "tool_slug",
   "tool_name",
   "source_page",
+  "search_query_length",
+  "result_count",
+  "chip_label",
 ]);
 
 declare global {

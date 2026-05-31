@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import ActionLinks from "@/components/ActionLinks";
 import AlternativeTools from "@/components/AlternativeTools";
 import Logo from "@/components/Logo";
 import SectionHeading from "@/components/SectionHeading";
 import ToolDetailHeader from "@/components/ToolDetailHeader";
+import TrackedLink from "@/components/TrackedLink";
 import { tools, toolsBySlug, type ToolSlug } from "@/data/tools";
 import type { AiTool } from "@/types/tool";
 
@@ -94,12 +96,17 @@ export default async function ToolDetailPage({ params }: ToolPageProps) {
               Shortcuts
             </Link>
           </div>
-          <Link
+          <TrackedLink
             href="/finder"
+            eventName="finder_cta_click"
+            eventParams={{
+              source_page: "tool_detail",
+              action_location: "tool_detail_header",
+            }}
             className="rounded-full border border-teal-200 px-5 py-2.5 text-sm font-semibold text-teal-800 transition hover:bg-teal-50"
           >
             Use Finder
-          </Link>
+          </TrackedLink>
         </nav>
 
         <ToolDetailHeader tool={tool} />
@@ -218,28 +225,36 @@ export default async function ToolDetailPage({ params }: ToolPageProps) {
                 If you are ready to test the product, open the official site. If
                 you are still comparing, jump to Finder or open a related shortcut.
               </p>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <a
-                  href={visitUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center rounded-full bg-teal-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-800"
-                >
-                  Visit Official Site
-                </a>
-                <Link
-                  href="/finder"
-                  className="inline-flex items-center justify-center rounded-full border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-teal-200 hover:bg-teal-50"
-                >
-                  Use Finder
-                </Link>
-                <Link
-                  href="/guides"
-                  className="inline-flex items-center justify-center rounded-full border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-teal-200 hover:bg-teal-50"
-                >
-                  Browse Shortcuts
-                </Link>
-              </div>
+              <ActionLinks
+                className="mt-6"
+                items={[
+                  {
+                    href: visitUrl,
+                    label: "Visit Official Site",
+                    external: true,
+                    tone: "primary",
+                    eventName: "tool_visit_click",
+                    eventParams: {
+                      tool_slug: tool.slug,
+                      tool_name: tool.name,
+                      source_page: "tool_detail",
+                    },
+                  },
+                  {
+                    href: "/finder",
+                    label: "Use Finder",
+                    eventName: "finder_cta_click",
+                    eventParams: {
+                      source_page: "tool_detail",
+                      action_location: "tool_detail_next_step",
+                    },
+                  },
+                  {
+                    href: "/guides",
+                    label: "Browse Shortcuts",
+                  },
+                ]}
+              />
             </section>
           </aside>
         </section>
