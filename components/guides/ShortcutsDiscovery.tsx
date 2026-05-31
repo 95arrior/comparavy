@@ -2,6 +2,16 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import ToolIcon from "@/components/ToolIcon";
+
+export interface ShortcutWorksWithTool {
+  readonly slug: string;
+  readonly name: string;
+  readonly officialUrl?: string;
+  readonly iconPath?: string;
+  readonly iconDomain?: string;
+  readonly brandColor?: string;
+}
 
 export interface ShortcutDiscoveryItem {
   readonly slug: string;
@@ -14,7 +24,7 @@ export interface ShortcutDiscoveryItem {
   readonly timeEstimate?: string;
   readonly guideTypeLabel: string;
   readonly topicCluster?: string;
-  readonly toolNames: readonly string[];
+  readonly worksWithTools: readonly ShortcutWorksWithTool[];
   readonly searchText: string;
 }
 
@@ -40,28 +50,29 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
   }, [normalizedQuery, shortcuts]);
 
   return (
-    <section className="mt-6">
-      <label htmlFor="shortcut-search" className="sr-only">
-        Search shortcuts
-      </label>
-      <input
-        id="shortcut-search"
-        type="search"
-        value={query}
-        placeholder="Search shortcuts by task, input, output, or tool..."
-        data-event="shortcuts_search_used"
-        className="min-h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-100 placeholder:text-slate-400"
-        onChange={(event) => setQuery(event.target.value)}
-      />
-
-      <div className="mt-3 flex items-center justify-between gap-4 text-sm text-slate-500">
-        <p>
-          {filteredShortcuts.length} of {shortcuts.length} shortcuts
-        </p>
+    <section className="mt-5 sm:mt-6">
+      <div className="rounded-3xl border border-teal-100 bg-white p-3 shadow-sm ateflo-reveal sm:p-4">
+        <label htmlFor="shortcut-search" className="sr-only">
+          Search shortcuts
+        </label>
+        <input
+          id="shortcut-search"
+          type="search"
+          value={query}
+          placeholder="Search shortcuts by task, input, output, or tool..."
+          data-event="shortcuts_search_used"
+          className="min-h-14 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-base text-slate-950 shadow-sm outline-none transition focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100 placeholder:text-slate-400"
+          onChange={(event) => setQuery(event.target.value)}
+        />
+        <div className="mt-3 flex items-center justify-between gap-4 px-1 text-sm text-slate-500">
+          <p>
+            {filteredShortcuts.length} of {shortcuts.length} shortcuts
+          </p>
+        </div>
       </div>
 
       {filteredShortcuts.length === 0 ? (
-        <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm ateflo-reveal">
+        <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm ateflo-reveal sm:mt-7">
           <p className="text-lg font-semibold text-slate-950">
             No matching shortcuts yet.
           </p>
@@ -76,7 +87,7 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
           </Link>
         </div>
       ) : (
-        <div className="mt-5 grid gap-4 md:grid-cols-2">
+        <div className="mt-6 grid gap-4 md:grid-cols-2 sm:mt-7">
           {filteredShortcuts.map((shortcut, index) => (
             <article
               key={shortcut.slug}
@@ -96,7 +107,7 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
                 </span>
               </div>
 
-              <h2 className="ateflo-clamp-2 mt-4 text-xl font-semibold leading-7 tracking-tight text-slate-950 sm:text-2xl sm:leading-8">
+              <h2 className="ateflo-clamp-2 mt-4 text-xl font-semibold leading-7 tracking-tight text-slate-950 sm:text-2xl sm:leading-8 md:min-h-16">
                 <Link
                   href={`/guides/${shortcut.slug}`}
                   data-event="shortcut_card_click"
@@ -108,11 +119,11 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
                 </Link>
               </h2>
 
-              <p className="ateflo-clamp-3 mt-3 text-sm leading-7 text-slate-600">
+              <p className="ateflo-clamp-3 mt-3 text-sm leading-7 text-slate-600 md:min-h-[5.25rem]">
                 {shortcut.summary}
               </p>
 
-              <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50/80 p-4 text-sm">
+              <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50/80 p-4 text-sm md:min-h-[9.5rem]">
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">
                   Input -&gt; Output
                 </p>
@@ -136,10 +147,27 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
                 </dl>
               </div>
 
-              {shortcut.toolNames.length > 0 && (
-                <p className="ateflo-clamp-1 mt-4 text-sm text-slate-500">
-                  Tools: {shortcut.toolNames.join(", ")}
-                </p>
+              {shortcut.worksWithTools.length > 0 && (
+                <div className="mt-4 rounded-2xl border border-slate-100 bg-white p-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                    Works with
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {shortcut.worksWithTools.map((tool, toolIndex) => (
+                      <span
+                        key={tool.slug}
+                        className="inline-flex min-h-9 max-w-full items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-sm font-semibold text-slate-800"
+                      >
+                        <ToolIcon
+                          {...tool}
+                          size={22}
+                          loading={index === 0 && toolIndex < 2 ? "eager" : "lazy"}
+                        />
+                        <span className="truncate">{tool.name}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
               )}
 
               <div className="mt-auto pt-5">

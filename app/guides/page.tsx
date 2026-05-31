@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import SiteHeader from "@/components/SiteHeader";
 import ShortcutsDiscovery, {
   type ShortcutDiscoveryItem,
+  type ShortcutWorksWithTool,
 } from "@/components/guides/ShortcutsDiscovery";
 import { toolsBySlug, type ToolSlug } from "@/data/tools";
 import { formatGuideLayoutLabel, resolveGuideLayoutType } from "@/lib/guideTypes";
@@ -34,21 +35,27 @@ function guideOutput(guide: Guide): string {
   );
 }
 
-function guideToolNames(guide: Guide): readonly string[] {
-  const names = guide.recommendedToolSlugs
-    .map((slug) => toolsBySlug.get(slug as ToolSlug)?.name)
-    .filter((name): name is string => Boolean(name));
+function guideWorksWithTools(guide: Guide): readonly ShortcutWorksWithTool[] {
+  const tools = guide.recommendedToolSlugs.flatMap((slug) => {
+    const tool = toolsBySlug.get(slug as ToolSlug);
+    return tool ? [tool] : [];
+  });
 
-  return names.length > 0
-    ? names
-    : guide.recommendedTools.map((tool) => tool.toolName);
+  return tools.slice(0, 3).map((tool) => ({
+    slug: tool.slug,
+    name: tool.name,
+    officialUrl: tool.officialUrl,
+    iconPath: tool.iconPath,
+    iconDomain: tool.iconDomain,
+    brandColor: tool.brandColor,
+  }));
 }
 
 function toDiscoveryItem(guide: Guide): ShortcutDiscoveryItem {
   const guideTypeLabel = formatGuideLayoutLabel(resolveGuideLayoutType(guide.guideType));
   const input = firstGuideInput(guide);
   const output = guideOutput(guide);
-  const toolNames = guideToolNames(guide);
+  const worksWithTools = guideWorksWithTools(guide);
   const searchableValues = [
     guide.title,
     guide.metaDescription,
@@ -60,7 +67,7 @@ function toDiscoveryItem(guide: Guide): ShortcutDiscoveryItem {
     output,
     guide.topicCluster,
     guideTypeLabel,
-    ...toolNames,
+    ...worksWithTools.map((tool) => tool.name),
   ];
 
   return {
@@ -74,7 +81,7 @@ function toDiscoveryItem(guide: Guide): ShortcutDiscoveryItem {
     timeEstimate: guide.timeEstimate,
     guideTypeLabel,
     topicCluster: guide.topicCluster,
-    toolNames,
+    worksWithTools,
     searchText: searchableValues
       .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
       .join(" ")
