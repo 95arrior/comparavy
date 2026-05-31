@@ -7,6 +7,21 @@ interface HomeShortcutStripProps {
   readonly shortcuts: readonly ShortcutDiscoveryItem[];
 }
 
+const PRIMARY_TOOL_BY_SLUG: Record<string, string> = {
+  "best-ai-tools-for-etsy-product-descriptions": "canva-magic-studio",
+  "best-ai-tools-for-small-business-content-calendars": "canva-magic-studio",
+  "how-to-summarize-a-pdf-into-study-notes-with-ai": "claude",
+  "how-to-turn-meeting-notes-into-a-client-recap-with-ai": "otter-ai",
+};
+
+function primaryToolFor(shortcut: ShortcutDiscoveryItem) {
+  const preferredSlug = PRIMARY_TOOL_BY_SLUG[shortcut.slug];
+  return (
+    shortcut.worksWithTools.find((tool) => tool.slug === preferredSlug) ??
+    shortcut.worksWithTools[0]
+  );
+}
+
 function StripCard({
   shortcut,
   duplicate = false,
@@ -14,12 +29,17 @@ function StripCard({
   readonly shortcut: ShortcutDiscoveryItem;
   readonly duplicate?: boolean;
 }) {
+  const primaryTool = primaryToolFor(shortcut);
+  const remainingToolCount = primaryTool
+    ? Math.max(shortcut.worksWithTools.length - 1, 0)
+    : 0;
+
   return (
-    <article className="flex h-full w-[280px] shrink-0 flex-col rounded-3xl border border-slate-200 bg-white p-5 shadow-sm ateflo-card-lift sm:w-[340px]">
+    <article className="flex h-full w-[300px] shrink-0 flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-sm ateflo-card-lift sm:w-[380px] lg:w-[410px]">
       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">
         {shortcut.category}
       </p>
-      <h3 className="ateflo-clamp-2 mt-3 text-lg font-semibold leading-7 tracking-tight text-slate-950">
+      <h3 className="ateflo-clamp-2 mt-4 text-lg font-semibold leading-7 tracking-tight text-slate-950 sm:text-xl sm:leading-8">
         {duplicate ? (
           <span>{shortcut.title}</span>
         ) : (
@@ -31,46 +51,48 @@ function StripCard({
           </Link>
         )}
       </h3>
-      <p className="ateflo-clamp-3 mt-2 text-sm leading-6 text-slate-600">
+      <p className="ateflo-clamp-3 mt-3 text-sm leading-6 text-slate-600">
         {shortcut.summary}
       </p>
-      {shortcut.worksWithTools.length > 0 && (
-        <div className="mt-4">
+      {primaryTool && (
+        <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50/80 p-3">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
             Works with
           </p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {shortcut.worksWithTools.slice(0, 2).map((tool) => (
-              <span
-                key={tool.slug}
-                className="inline-flex min-h-8 max-w-full items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-800"
-              >
-                <ToolIcon {...tool} size={20} />
-                <span className="truncate">{tool.name}</span>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <span className="inline-flex min-h-9 max-w-full items-center gap-2 rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-semibold text-slate-800">
+              <ToolIcon {...primaryTool} size={22} />
+              <span className="truncate">{primaryTool.name}</span>
+            </span>
+            {remainingToolCount > 0 && (
+              <span className="inline-flex min-h-9 items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-500">
+                +{remainingToolCount} more
               </span>
-            ))}
+            )}
           </div>
         </div>
       )}
-      {duplicate ? (
-        <span className="mt-auto inline-flex min-h-11 items-center justify-center rounded-full bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white">
-          Open Shortcut
-        </span>
-      ) : (
-        <TrackedLink
-          href={`/shortcuts/${shortcut.slug}`}
-          eventName="shortcut_card_click"
-          eventParams={{
-            source_page: "home",
-            destination_slug: shortcut.slug,
-            destination_title: shortcut.title,
-            action_location: "home_shortcut_strip",
-          }}
-          className="mt-auto inline-flex min-h-11 items-center justify-center rounded-full bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
-        >
-          Open Shortcut
-        </TrackedLink>
-      )}
+      <div className="mt-auto pt-6">
+        {duplicate ? (
+          <span className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white">
+            Open Shortcut
+          </span>
+        ) : (
+          <TrackedLink
+            href={`/shortcuts/${shortcut.slug}`}
+            eventName="shortcut_card_click"
+            eventParams={{
+              source_page: "home",
+              destination_slug: shortcut.slug,
+              destination_title: shortcut.title,
+              action_location: "home_shortcut_strip",
+            }}
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+          >
+            Open Shortcut
+          </TrackedLink>
+        )}
+      </div>
     </article>
   );
 }
@@ -81,8 +103,8 @@ export default function HomeShortcutStrip({ shortcuts }: HomeShortcutStripProps)
   }
 
   return (
-    <section className="border-y border-slate-200/80 bg-white px-4 py-12 sm:px-6 sm:py-14">
-      <div className="mx-auto max-w-6xl">
+    <section className="overflow-hidden border-y border-slate-200/80 bg-white px-4 py-14 sm:px-6 sm:py-16">
+      <div className="mx-auto max-w-7xl">
         <div className="flex flex-wrap items-end justify-between gap-5">
           <div>
             <p className="text-sm font-semibold text-teal-700">
@@ -91,6 +113,9 @@ export default function HomeShortcutStrip({ shortcuts }: HomeShortcutStripProps)
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
               Start with a task that looks familiar.
             </h2>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
+              Pick a shortcut, fill in a few details, and copy the prompt.
+            </p>
           </div>
           <Link
             href="/shortcuts"
@@ -100,7 +125,7 @@ export default function HomeShortcutStrip({ shortcuts }: HomeShortcutStripProps)
           </Link>
         </div>
 
-        <div className="ateflo-shortcut-strip mt-8">
+        <div className="ateflo-shortcut-strip mt-9">
           <div className="ateflo-shortcut-strip-track">
             <div className="flex gap-4 pr-4">
               {shortcuts.map((shortcut) => (

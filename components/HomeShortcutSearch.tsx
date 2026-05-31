@@ -23,15 +23,16 @@ export default function HomeShortcutSearch({ shortcuts }: HomeShortcutSearchProp
   const [query, setQuery] = useState("");
   const trackedSearches = useRef<Set<string>>(new Set());
   const normalizedQuery = normalizeSearch(query);
+  const hasActiveSearch = normalizedQuery.length > 0;
   const filteredShortcuts = useMemo(() => {
-    if (!normalizedQuery) {
-      return shortcuts.slice(0, 3);
+    if (!hasActiveSearch) {
+      return [];
     }
 
     return shortcuts.filter((shortcut) =>
       normalizeSearch(shortcut.searchText).includes(normalizedQuery),
     );
-  }, [normalizedQuery, shortcuts]);
+  }, [hasActiveSearch, normalizedQuery, shortcuts]);
 
   useEffect(() => {
     if (normalizedQuery.length < 2 || trackedSearches.current.has(normalizedQuery)) {
@@ -77,8 +78,8 @@ export default function HomeShortcutSearch({ shortcuts }: HomeShortcutSearchProp
   }
 
   return (
-    <section className="mx-auto -mt-2 max-w-4xl px-4 pb-10 sm:px-6 sm:pb-12">
-      <div className="rounded-3xl border border-teal-100 bg-white p-4 shadow-sm ateflo-reveal sm:p-5">
+    <section className="mx-auto max-w-5xl px-4 pb-12 sm:px-6 sm:pb-14">
+      <div className="rounded-3xl border border-teal-100 bg-white p-5 shadow-md shadow-teal-900/5 ateflo-reveal sm:p-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
@@ -103,7 +104,7 @@ export default function HomeShortcutSearch({ shortcuts }: HomeShortcutSearchProp
           placeholder="Search “meeting notes”, “Etsy listing”, “PDF study notes”..."
           data-event="shortcuts_search_used"
           data-action-location="home_search"
-          className="mt-5 min-h-14 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-base text-slate-950 shadow-sm outline-none transition focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100 placeholder:text-slate-400"
+          className="mt-6 min-h-14 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-base text-slate-950 shadow-sm outline-none transition focus:border-teal-600 focus:bg-white focus:ring-4 focus:ring-teal-100 placeholder:text-slate-400"
           onChange={(event) => setQuery(event.target.value)}
         />
 
@@ -122,64 +123,66 @@ export default function HomeShortcutSearch({ shortcuts }: HomeShortcutSearchProp
           ))}
         </div>
 
-        <div className="mt-5 grid gap-3">
-          {filteredShortcuts.length === 0 ? (
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-sm font-semibold text-slate-950">
-                No matching shortcuts yet.
-              </p>
-              <p className="mt-1 text-sm leading-6 text-slate-600">
-                Try another task, or browse all shortcuts.
-              </p>
-              <Link
-                href="/shortcuts"
-                className="mt-4 inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
-              >
-                Browse all shortcuts
-              </Link>
-            </div>
-          ) : (
-            filteredShortcuts.slice(0, 4).map((shortcut) => (
-              <article
-                key={shortcut.slug}
-                className="group rounded-2xl border border-slate-200 bg-slate-50/70 p-4 transition hover:border-teal-200 hover:bg-white hover:shadow-sm"
-              >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">
-                      {shortcut.category}
-                    </p>
-                    <h2 className="mt-2 text-base font-semibold leading-6 text-slate-950 sm:text-lg">
-                      <Link
-                        href={`/shortcuts/${shortcut.slug}`}
-                        data-event="shortcut_card_click"
-                        data-guide-slug={shortcut.slug}
-                        data-action-location="home_search_result_title"
-                        onClick={() => trackShortcutClick(shortcut, "home_search_result_title")}
-                        className="transition group-hover:text-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
-                      >
-                        {shortcut.title}
-                      </Link>
-                    </h2>
-                    <p className="ateflo-clamp-2 mt-1 text-sm leading-6 text-slate-600">
-                      {shortcut.summary}
-                    </p>
+        {hasActiveSearch && (
+          <div className="mt-6 grid gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
+            {filteredShortcuts.length === 0 ? (
+              <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                <p className="text-sm font-semibold text-slate-950">
+                  No matching shortcuts yet.
+                </p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  Try another task, or browse all shortcuts.
+                </p>
+                <Link
+                  href="/shortcuts"
+                  className="mt-4 inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+                >
+                  Browse all shortcuts
+                </Link>
+              </div>
+            ) : (
+              filteredShortcuts.slice(0, 4).map((shortcut) => (
+                <article
+                  key={shortcut.slug}
+                  className="group rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-teal-200 hover:shadow-sm"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">
+                        {shortcut.category}
+                      </p>
+                      <h2 className="mt-2 text-base font-semibold leading-6 text-slate-950 sm:text-lg">
+                        <Link
+                          href={`/shortcuts/${shortcut.slug}`}
+                          data-event="shortcut_card_click"
+                          data-guide-slug={shortcut.slug}
+                          data-action-location="home_search_result_title"
+                          onClick={() => trackShortcutClick(shortcut, "home_search_result_title")}
+                          className="transition group-hover:text-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+                        >
+                          {shortcut.title}
+                        </Link>
+                      </h2>
+                      <p className="ateflo-clamp-2 mt-1 text-sm leading-6 text-slate-600">
+                        {shortcut.summary}
+                      </p>
+                    </div>
+                    <Link
+                      href={`/shortcuts/${shortcut.slug}`}
+                      data-event="shortcut_card_click"
+                      data-guide-slug={shortcut.slug}
+                      data-action-location="home_search_result_button"
+                      onClick={() => trackShortcutClick(shortcut, "home_search_result_button")}
+                      className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+                    >
+                      Open Shortcut
+                    </Link>
                   </div>
-                  <Link
-                    href={`/shortcuts/${shortcut.slug}`}
-                    data-event="shortcut_card_click"
-                    data-guide-slug={shortcut.slug}
-                    data-action-location="home_search_result_button"
-                    onClick={() => trackShortcutClick(shortcut, "home_search_result_button")}
-                    className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
-                  >
-                    Open Shortcut
-                  </Link>
-                </div>
-              </article>
-            ))
-          )}
-        </div>
+                </article>
+              ))
+            )}
+          </div>
+        )}
       </div>
     </section>
   );

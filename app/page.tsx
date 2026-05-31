@@ -52,18 +52,14 @@ export default function Home() {
     <main className="ateflo-page-shell min-h-screen bg-[#FBFAF7] text-slate-900">
       <SiteHeader active="shortcuts" />
 
-      <section className="px-4 pb-8 pt-10 sm:px-6 sm:pb-10 sm:pt-14">
+      <section className="px-4 pb-7 pt-12 sm:px-6 sm:pb-9 sm:pt-16 lg:pt-18">
         <div className="mx-auto max-w-4xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-700 sm:text-sm">
             AteFlo AI Shortcut Engine
           </p>
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+          <h1 className="mt-6 text-3xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
             Get the right AI prompt for the task you need to finish.
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
-            Search AteFlo shortcuts, fill in a few details, copy the prompt, and
-            paste it into your AI tool.
-          </p>
         </div>
       </section>
 
