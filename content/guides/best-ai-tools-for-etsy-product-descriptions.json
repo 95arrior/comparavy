@@ -202,6 +202,11 @@
     "jasper",
     "writesonic"
   ],
+  "worksWithToolSlugs": [
+    "canva-magic-studio",
+    "chatgpt",
+    "claude"
+  ],
   "recommendedTools": [
     {
       "toolSlug": "chatgpt",
@@ -452,5 +457,6 @@
   "qualityScore": 94,
   "status": "published",
   "createdAt": "2026-05-31",
-  "updatedAt": "2026-05-31"
+  "updatedAt": "2026-05-31",
+  "publishedAt": "2026-05-31T10:00:00.000Z"
 }

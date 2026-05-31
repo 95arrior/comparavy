@@ -7,6 +7,7 @@ import ToolIcon from "@/components/ToolIcon";
 import { trackEvent } from "@/lib/analytics";
 import {
   normalizeSearch,
+  shortcutSearchRelevance,
   type ShortcutDiscoveryItem,
 } from "@/lib/shortcutDiscovery";
 
@@ -21,19 +22,8 @@ const SEARCH_CHIPS = [
   "Content calendar",
 ] as const;
 
-const PRIMARY_TOOL_BY_SLUG: Record<string, string> = {
-  "best-ai-tools-for-etsy-product-descriptions": "canva-magic-studio",
-  "best-ai-tools-for-small-business-content-calendars": "canva-magic-studio",
-  "how-to-summarize-a-pdf-into-study-notes-with-ai": "claude",
-  "how-to-turn-meeting-notes-into-a-client-recap-with-ai": "otter-ai",
-};
-
 function primaryToolFor(shortcut: ShortcutDiscoveryItem) {
-  const preferredSlug = PRIMARY_TOOL_BY_SLUG[shortcut.slug];
-  return (
-    shortcut.worksWithTools.find((tool) => tool.slug === preferredSlug) ??
-    shortcut.worksWithTools[0]
-  );
+  return shortcut.worksWithTools[0];
 }
 
 export default function HomeShortcutSearch({ shortcuts }: HomeShortcutSearchProps) {
@@ -48,9 +38,16 @@ export default function HomeShortcutSearch({ shortcuts }: HomeShortcutSearchProp
       return [];
     }
 
-    return shortcuts.filter((shortcut) =>
-      normalizeSearch(shortcut.searchText).includes(normalizedQuery),
-    );
+    return shortcuts
+      .filter((shortcut) =>
+        normalizeSearch(shortcut.searchText).includes(normalizedQuery),
+      )
+      .map((shortcut) => ({
+        shortcut,
+        relevance: shortcutSearchRelevance(shortcut, normalizedQuery),
+      }))
+      .sort((left, right) => right.relevance - left.relevance)
+      .map((item) => item.shortcut);
   }, [hasActiveSearch, normalizedQuery, shortcuts]);
 
   function trackSearchUsage() {

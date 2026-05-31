@@ -8,19 +8,8 @@ interface HomeShortcutStripProps {
   readonly shortcuts: readonly ShortcutDiscoveryItem[];
 }
 
-const PRIMARY_TOOL_BY_SLUG: Record<string, string> = {
-  "best-ai-tools-for-etsy-product-descriptions": "canva-magic-studio",
-  "best-ai-tools-for-small-business-content-calendars": "canva-magic-studio",
-  "how-to-summarize-a-pdf-into-study-notes-with-ai": "claude",
-  "how-to-turn-meeting-notes-into-a-client-recap-with-ai": "otter-ai",
-};
-
 function primaryToolFor(shortcut: ShortcutDiscoveryItem) {
-  const preferredSlug = PRIMARY_TOOL_BY_SLUG[shortcut.slug];
-  return (
-    shortcut.worksWithTools.find((tool) => tool.slug === preferredSlug) ??
-    shortcut.worksWithTools[0]
-  );
+  return shortcut.worksWithTools[0];
 }
 
 function StripCard({

@@ -141,6 +141,9 @@ export interface Guide {
   readonly quickVerdict: string;
   readonly steps?: readonly GuideWorkflowStep[];
   readonly toolsYouCanUse?: readonly GuideToolUse[];
+  readonly worksWithToolSlugs?: readonly string[];
+  readonly worksWithTools?: readonly string[];
+  readonly toolSlugs?: readonly string[];
   readonly keyTakeaways: readonly string[];
   readonly bestPicksBySituation: readonly BestPickBySituation[];
   readonly recommendedToolSlugs: readonly string[];
@@ -175,6 +178,7 @@ export interface Guide {
   readonly status: GuideStatus;
   readonly createdAt: string;
   readonly updatedAt: string;
+  readonly publishedAt?: string;
 }
 
 const GUIDES_DIRECTORY = path.join(process.cwd(), "content", "guides");
@@ -223,12 +227,49 @@ function readAllGuideFiles(): Guide[] {
     .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
 }
 
+function publicPublishSortValue(guide: Guide): string {
+  if (guide.publishedAt?.trim()) {
+    return guide.publishedAt;
+  }
+
+  if (guide.updatedAt?.trim()) {
+    return guide.updatedAt;
+  }
+
+  if (guide.createdAt?.trim()) {
+    return guide.createdAt;
+  }
+
+  const priority = typeof guide.publishPriority === "number" ? guide.publishPriority : 9999;
+  return `0000-00-00T00:00:${String(9999 - priority).padStart(4, "0")}Z`;
+}
+
+function sortPublishedGuides(left: Guide, right: Guide): number {
+  const dateSort = publicPublishSortValue(right).localeCompare(publicPublishSortValue(left));
+
+  if (dateSort !== 0) {
+    return dateSort;
+  }
+
+  const leftPriority = typeof left.publishPriority === "number" ? left.publishPriority : 9999;
+  const rightPriority = typeof right.publishPriority === "number" ? right.publishPriority : 9999;
+  const prioritySort = rightPriority - leftPriority;
+
+  if (prioritySort !== 0) {
+    return prioritySort;
+  }
+
+  return left.slug.localeCompare(right.slug);
+}
+
 export function getAllGuides(): Guide[] {
   return readAllGuideFiles();
 }
 
 export function getPublishedGuides(): Guide[] {
-  return readAllGuideFiles().filter((guide) => guide.status === "published");
+  return readAllGuideFiles()
+    .filter((guide) => guide.status === "published")
+    .sort(sortPublishedGuides);
 }
 
 export function getApprovedGuides(): Guide[] {

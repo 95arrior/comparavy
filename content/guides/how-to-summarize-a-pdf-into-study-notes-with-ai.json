@@ -209,6 +209,11 @@
     "notion-ai",
     "notebooklm"
   ],
+  "worksWithToolSlugs": [
+    "chatgpt",
+    "claude",
+    "gemini"
+  ],
   "recommendedTools": [
     {
       "toolSlug": "notebooklm",
@@ -459,5 +464,6 @@
   "qualityScore": 94,
   "status": "published",
   "createdAt": "2026-05-31",
-  "updatedAt": "2026-05-31"
+  "updatedAt": "2026-05-31",
+  "publishedAt": "2026-05-31T16:00:00.000Z"
 }

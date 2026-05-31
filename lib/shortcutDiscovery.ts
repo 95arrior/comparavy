@@ -14,6 +14,21 @@ export function normalizeSearch(value: string): string {
     .trim();
 }
 
+const TOPIC_WORKS_WITH_SLUGS: Record<string, readonly string[]> = {
+  "best-ai-tools-for-etsy-product-descriptions": ["canva-magic-studio", "chatgpt", "claude"],
+  "best-ai-tools-for-small-business-content-calendars": ["canva-magic-studio", "chatgpt", "claude"],
+  "how-to-summarize-a-pdf-into-study-notes-with-ai": ["chatgpt", "claude", "gemini"],
+  "how-to-turn-a-blog-post-into-an-instagram-carousel-with-ai": ["canva-magic-studio", "chatgpt", "claude"],
+  "how-to-turn-meeting-notes-into-a-client-recap-with-ai": ["otter-ai", "chatgpt", "claude"],
+  "blog-to-instagram-carousel": ["canva-magic-studio", "chatgpt", "claude"],
+  "etsy-product-descriptions": ["canva-magic-studio", "chatgpt", "claude"],
+  "meeting-notes-client-recaps": ["otter-ai", "chatgpt", "claude"],
+  "pdf-study-notes": ["chatgpt", "claude", "gemini"],
+  "small-business-content-calendar": ["canva-magic-studio", "chatgpt", "claude"],
+};
+
+const FALLBACK_WORKS_WITH_SLUGS = ["chatgpt", "claude", "gemini"] as const;
+
 function firstGuideInput(guide: Guide): string {
   const whatYouNeed = guide.whatYouNeed;
 
@@ -35,8 +50,99 @@ function guideOutput(guide: Guide): string {
   );
 }
 
+function validToolSlugs(slugs: readonly string[]): string[] {
+  const seen = new Set<string>();
+  const valid: string[] = [];
+
+  for (const slug of slugs) {
+    if (seen.has(slug) || !toolsBySlug.has(slug as ToolSlug)) {
+      continue;
+    }
+
+    seen.add(slug);
+    valid.push(slug);
+  }
+
+  return valid;
+}
+
+function stringArrayValue(value: unknown): readonly string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+    : [];
+}
+
+function toolObjectSlugs(value: unknown): readonly string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object") {
+      return [];
+    }
+
+    const slug = (item as { readonly toolSlug?: unknown; readonly slug?: unknown }).toolSlug ??
+      (item as { readonly toolSlug?: unknown; readonly slug?: unknown }).slug;
+
+    return typeof slug === "string" && slug.trim().length > 0 ? [slug] : [];
+  });
+}
+
+function explicitWorksWithSlugs(guide: Guide): string[] {
+  const metadata = guide as unknown as {
+    readonly worksWithToolSlugs?: unknown;
+    readonly worksWithTools?: unknown;
+    readonly toolSlugs?: unknown;
+    readonly tools?: unknown;
+  };
+
+  return validToolSlugs([
+    ...stringArrayValue(metadata.worksWithToolSlugs),
+    ...stringArrayValue(metadata.worksWithTools),
+    ...stringArrayValue(metadata.toolSlugs),
+    ...stringArrayValue(metadata.tools),
+    ...toolObjectSlugs(metadata.worksWithTools),
+  ]);
+}
+
+function topicWorksWithSlugs(guide: Guide): string[] {
+  return validToolSlugs([
+    ...(TOPIC_WORKS_WITH_SLUGS[guide.slug] ?? []),
+    ...(guide.topicCluster ? TOPIC_WORKS_WITH_SLUGS[guide.topicCluster] ?? [] : []),
+  ]);
+}
+
+function fallbackWorksWithSlugs(guide: Guide): string[] {
+  return validToolSlugs([
+    ...guide.recommendedToolSlugs,
+    ...toolObjectSlugs(guide.recommendedTools),
+    ...toolObjectSlugs(guide.toolsYouCanUse),
+    ...toolObjectSlugs(guide.bestPicksBySituation),
+    ...toolObjectSlugs(guide.comparisonRows),
+    ...toolObjectSlugs(guide.steps),
+    ...FALLBACK_WORKS_WITH_SLUGS,
+  ]);
+}
+
+function resolveWorksWithSlugs(guide: Guide): string[] {
+  const explicit = explicitWorksWithSlugs(guide);
+
+  if (explicit.length > 0) {
+    return explicit;
+  }
+
+  const topic = topicWorksWithSlugs(guide);
+
+  if (topic.length > 0) {
+    return topic;
+  }
+
+  return fallbackWorksWithSlugs(guide);
+}
+
 export function guideWorksWithTools(guide: Guide): readonly ShortcutWorksWithTool[] {
-  const tools = guide.recommendedToolSlugs.flatMap((slug) => {
+  const tools = resolveWorksWithSlugs(guide).flatMap((slug) => {
     const tool = toolsBySlug.get(slug as ToolSlug);
     return tool ? [tool] : [];
   });
@@ -151,7 +257,39 @@ export function shortcutSearchValues(guide: Guide): readonly string[] {
   ].filter((value): value is string => typeof value === "string" && value.trim().length > 0);
 }
 
+export function shortcutSearchRelevance(shortcut: ShortcutDiscoveryItem, normalizedQuery: string): number {
+  if (!normalizedQuery) {
+    return 0;
+  }
+
+  const queryTerms = normalizedQuery.split(" ").filter(Boolean);
+  let score = 0;
+  const title = normalizeSearch(shortcut.title);
+  const summary = normalizeSearch(shortcut.summary);
+  const category = normalizeSearch(shortcut.category);
+  const topicCluster = normalizeSearch(shortcut.topicCluster ?? "");
+  const aliases = shortcut.searchAliases.map(normalizeSearch);
+  const tools = shortcut.worksWithTools.map((tool) => normalizeSearch(tool.name));
+  const allTermsMatch = queryTerms.every((term) => shortcut.searchText.includes(term));
+
+  if (title === normalizedQuery) score += 180;
+  if (title.includes(normalizedQuery)) score += 120;
+  if (title.startsWith(normalizedQuery)) score += 40;
+  if (aliases.some((alias) => alias === normalizedQuery)) score += 110;
+  if (aliases.some((alias) => alias.includes(normalizedQuery))) score += 85;
+  if (summary.includes(normalizedQuery)) score += 55;
+  if (category.includes(normalizedQuery)) score += 35;
+  if (topicCluster.includes(normalizedQuery)) score += 35;
+  if (tools.some((tool) => tool.includes(normalizedQuery))) score += 30;
+  if (allTermsMatch) score += 20;
+  if (shortcut.searchText.includes(normalizedQuery)) score += 10;
+
+  return score;
+}
+
 export function toDiscoveryItem(guide: Guide): ShortcutDiscoveryItem {
+  const searchAliases = guideSearchAliases(guide);
+
   return {
     slug: guide.slug,
     title: guide.title,
@@ -162,6 +300,7 @@ export function toDiscoveryItem(guide: Guide): ShortcutDiscoveryItem {
     guideTypeLabel: formatGuideLayoutLabel(resolveGuideLayoutType(guide.guideType)),
     topicCluster: guide.topicCluster,
     worksWithTools: guideWorksWithTools(guide),
+    searchAliases,
     searchText: shortcutSearchValues(guide).join(" ").toLowerCase(),
   };
 }

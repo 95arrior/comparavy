@@ -201,6 +201,11 @@
     "chatgpt",
     "claude"
   ],
+  "worksWithToolSlugs": [
+    "canva-magic-studio",
+    "chatgpt",
+    "claude"
+  ],
   "recommendedTools": [
     {
       "toolSlug": "canva-magic-studio",
@@ -397,5 +402,6 @@
   "qualityScore": 94,
   "status": "published",
   "createdAt": "2026-05-31",
-  "updatedAt": "2026-05-31"
+  "updatedAt": "2026-05-31",
+  "publishedAt": "2026-06-01T02:00:00.000Z"
 }

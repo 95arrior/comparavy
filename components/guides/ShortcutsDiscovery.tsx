@@ -5,7 +5,7 @@ import CategoryChip from "@/components/CategoryChip";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ToolIcon from "@/components/ToolIcon";
 import { trackEvent } from "@/lib/analytics";
-import { normalizeSearch } from "@/lib/shortcutDiscovery";
+import { normalizeSearch, shortcutSearchRelevance } from "@/lib/shortcutDiscovery";
 
 export interface ShortcutWorksWithTool {
   readonly slug: string;
@@ -26,6 +26,7 @@ export interface ShortcutDiscoveryItem {
   readonly guideTypeLabel: string;
   readonly topicCluster?: string;
   readonly worksWithTools: readonly ShortcutWorksWithTool[];
+  readonly searchAliases: readonly string[];
   readonly searchText: string;
 }
 
@@ -49,9 +50,16 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
       return shortcuts;
     }
 
-    return shortcuts.filter((shortcut) =>
-      normalizeSearch(shortcut.searchText).includes(normalizedQuery),
-    );
+    return shortcuts
+      .filter((shortcut) =>
+        normalizeSearch(shortcut.searchText).includes(normalizedQuery),
+      )
+      .map((shortcut) => ({
+        shortcut,
+        relevance: shortcutSearchRelevance(shortcut, normalizedQuery),
+      }))
+      .sort((left, right) => right.relevance - left.relevance)
+      .map((item) => item.shortcut);
   }, [normalizedQuery, shortcuts]);
 
   useEffect(() => {
@@ -123,6 +131,7 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
           <p>
             {filteredShortcuts.length} of {shortcuts.length} shortcuts
           </p>
+          <p>{normalizedQuery ? "Sorted by relevance" : "Newest first"}</p>
         </div>
         <div className="mt-4 flex flex-wrap gap-2 px-1">
           {SEARCH_CHIPS.map((chip) => (
