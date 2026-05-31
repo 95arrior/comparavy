@@ -33,29 +33,27 @@ function StripCard({
   const remainingToolCount = primaryTool
     ? Math.max(shortcut.worksWithTools.length - 1, 0)
     : 0;
+  const shortcutHref = `/shortcuts/${shortcut.slug}`;
 
   return (
-    <article className="flex h-full w-[300px] shrink-0 flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-sm ateflo-card-lift sm:w-[380px] lg:w-[410px]">
+    <article className="flex min-h-[430px] w-[300px] shrink-0 flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-sm ateflo-card-lift sm:w-[390px] sm:p-7 lg:w-[430px]">
       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">
         {shortcut.category}
       </p>
       <h3 className="ateflo-clamp-2 mt-4 text-lg font-semibold leading-7 tracking-tight text-slate-950 sm:text-xl sm:leading-8">
-        {duplicate ? (
-          <span>{shortcut.title}</span>
-        ) : (
-          <Link
-            href={`/shortcuts/${shortcut.slug}`}
-            className="transition hover:text-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
-          >
-            {shortcut.title}
-          </Link>
-        )}
+        <Link
+          href={shortcutHref}
+          tabIndex={duplicate ? -1 : undefined}
+          className="transition hover:text-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+        >
+          {shortcut.title}
+        </Link>
       </h3>
-      <p className="ateflo-clamp-3 mt-3 text-sm leading-6 text-slate-600">
+      <p className="ateflo-clamp-3 mt-4 text-sm leading-6 text-slate-600">
         {shortcut.summary}
       </p>
       {primaryTool && (
-        <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50/80 p-3">
+        <div className="mt-7 rounded-2xl border border-slate-100 bg-slate-50/80 p-3">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
             Works with
           </p>
@@ -72,14 +70,18 @@ function StripCard({
           </div>
         </div>
       )}
-      <div className="mt-auto pt-6">
+      <div className="mt-auto pt-7">
         {duplicate ? (
-          <span className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white">
+          <Link
+            href={shortcutHref}
+            tabIndex={-1}
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-teal-800"
+          >
             Open Shortcut
-          </span>
+          </Link>
         ) : (
           <TrackedLink
-            href={`/shortcuts/${shortcut.slug}`}
+            href={shortcutHref}
             eventName="shortcut_card_click"
             eventParams={{
               source_page: "home",
@@ -103,8 +105,8 @@ export default function HomeShortcutStrip({ shortcuts }: HomeShortcutStripProps)
   }
 
   return (
-    <section className="overflow-hidden border-y border-slate-200/80 bg-white px-4 py-14 sm:px-6 sm:py-16">
-      <div className="mx-auto max-w-7xl">
+    <section className="overflow-hidden border-y border-slate-200/80 bg-white py-14 sm:py-16">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-wrap items-end justify-between gap-5">
           <div>
             <p className="text-sm font-semibold text-teal-700">
@@ -124,18 +126,22 @@ export default function HomeShortcutStrip({ shortcuts }: HomeShortcutStripProps)
             Browse all shortcuts
           </Link>
         </div>
+      </div>
 
-        <div className="ateflo-shortcut-strip mt-9">
-          <div className="ateflo-shortcut-strip-track">
-            <div className="flex gap-4 pr-4">
-              {shortcuts.map((shortcut) => (
-                <StripCard key={shortcut.slug} shortcut={shortcut} />
-              ))}
-            </div>
-            <div className="hidden gap-4 pr-4 md:flex" aria-hidden="true">
-              {shortcuts.map((shortcut) => (
-                <StripCard key={`${shortcut.slug}-duplicate`} shortcut={shortcut} duplicate />
-              ))}
+      <div className="mt-9 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-[1600px]">
+          <div className="ateflo-shortcut-strip">
+            <div className="ateflo-shortcut-strip-track">
+              <div className="flex items-stretch gap-5 pr-5">
+                {shortcuts.map((shortcut) => (
+                  <StripCard key={shortcut.slug} shortcut={shortcut} />
+                ))}
+              </div>
+              <div className="hidden items-stretch gap-5 pr-5 md:flex">
+                {shortcuts.map((shortcut) => (
+                  <StripCard key={`${shortcut.slug}-duplicate`} shortcut={shortcut} duplicate />
+                ))}
+              </div>
             </div>
           </div>
         </div>
