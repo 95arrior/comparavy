@@ -75,8 +75,6 @@ function toDiscoveryItem(guide: Guide): ShortcutDiscoveryItem {
     title: guide.title,
     summary: guide.quickAnswer ?? guide.quickVerdict ?? guide.metaDescription,
     category: guide.category,
-    input,
-    output,
     skillLevel: guide.skillLevel,
     timeEstimate: guide.timeEstimate,
     guideTypeLabel,

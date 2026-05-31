@@ -18,8 +18,6 @@ export interface ShortcutDiscoveryItem {
   readonly title: string;
   readonly summary: string;
   readonly category: string;
-  readonly input: string;
-  readonly output: string;
   readonly skillLevel: string;
   readonly timeEstimate?: string;
   readonly guideTypeLabel: string;
@@ -99,11 +97,8 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
                 <span className="rounded-full bg-teal-50 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-teal-800">
                   {shortcut.category}
                 </span>
-                <span className="rounded-full bg-slate-50 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
-                  {shortcut.guideTypeLabel}
-                </span>
-                <span className="rounded-full bg-slate-50 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
-                  {shortcut.timeEstimate ?? shortcut.skillLevel}
+                <span className="text-xs font-medium text-slate-500">
+                  {shortcut.guideTypeLabel} · {shortcut.timeEstimate ?? shortcut.skillLevel}
                 </span>
               </div>
 
@@ -123,32 +118,8 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
                 {shortcut.summary}
               </p>
 
-              <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50/80 p-4 text-sm md:min-h-[9.5rem]">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">
-                  Input -&gt; Output
-                </p>
-                <dl className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <div className="min-w-0">
-                    <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                      Input
-                    </dt>
-                    <dd className="ateflo-clamp-2 mt-1 leading-6 text-slate-700">
-                      {shortcut.input}
-                    </dd>
-                  </div>
-                  <div className="min-w-0">
-                    <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                      Output
-                    </dt>
-                    <dd className="ateflo-clamp-2 mt-1 leading-6 text-slate-700">
-                      {shortcut.output}
-                    </dd>
-                  </div>
-                </dl>
-              </div>
-
               {shortcut.worksWithTools.length > 0 && (
-                <div className="mt-4 rounded-2xl border border-slate-100 bg-white p-3">
+                <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50/80 p-3">
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                     Works with
                   </p>
