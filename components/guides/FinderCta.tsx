@@ -32,7 +32,7 @@ export default function FinderCta({
             tone: "primary",
             eventName: "finder_cta_click",
             eventParams: {
-              source_page: "guide_detail",
+              source_page: "shortcut_detail",
               guide_slug: guide.slug,
               guide_title: guide.title,
               topic_cluster: guide.topicCluster,

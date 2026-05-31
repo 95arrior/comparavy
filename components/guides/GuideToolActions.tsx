@@ -26,7 +26,7 @@ export default function GuideToolActions({
   name,
   officialUrl,
   affiliateUrl,
-  sourcePage = "guide_detail",
+  sourcePage = "shortcut_detail",
   guideSlug,
   showViewToolPage = true,
   className,
