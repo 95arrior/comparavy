@@ -398,7 +398,7 @@
   ],
   "whatChanged": "Start with the user problem and final format, then pick the AI tool that reduces review work.",
   "exampleWorkflow": "Write a product fact sheet, paste the prompt into ChatGPT, Claude, Gemini, Microsoft Copilot, or another AI chat tool, ask for a review pass that removes hype and clarifies details, then paste the final version into Etsy and check the first lines on mobile.",
-  "exampleResult": "Example output: Title: Handmade Blue Ceramic Mug, 12 oz Coffee Lover Gift. Opening: Start your morning with a handmade ceramic mug finished in a calm blue glaze. Bullets: 12 oz size; handmade ceramic; microwave safe; good for coffee, tea, or desk use. Needs Seller Review: confirm dishwasher safety, processing time, shipping limits, and personalization options.",
+  "exampleResult": "Example output: Title: Handmade Blue Ceramic Mug, 12 oz Coffee Lover Gift. Opening: Start your morning with a handmade ceramic mug finished in a calm blue glaze. Facts: 12 oz size, handmade ceramic, blue glaze, microwave safe. Buyer benefits: useful for coffee, tea, desk use, and simple gifting. Description: This handmade mug keeps the listing mobile-readable by leading with material, size, use case, and care facts. Keyword ideas: handmade mug, blue ceramic mug, coffee lover gift, 12 oz mug. Needs Seller Review: confirm dishwasher safety, processing time, shipping limits, personalization options, and any claim not in the product facts.",
   "faq": [
     {
       "question": "What is the best AI tool to start with for Etsy product descriptions?",

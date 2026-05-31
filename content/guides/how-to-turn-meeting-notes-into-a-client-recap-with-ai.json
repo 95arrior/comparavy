@@ -390,7 +390,7 @@
   ],
   "whatChanged": "Separate decisions, tasks, and open questions before drafting the client email.",
   "exampleWorkflow": "Paste the notes into ChatGPT, Claude, Gemini, Microsoft Copilot, or another AI chat tool, ask for decisions and action items, draft a five-sentence recap, then verify commitments against the source notes.",
-  "exampleResult": "Example output: Subject: Recap and next steps from our homepage call. Hi Sam, thanks for today. The homepage draft is the next priority, with a target of Friday. Sarah will send logo files, and I will prepare the homepage draft. Open question: we still need to confirm the pricing page copy. Best, [Your name]",
+  "exampleResult": "Example output: Subject: Recap and next steps from our homepage call. Hi Sam, thanks for today. Here is the short recap from our homepage call. Decision: the homepage draft is the next priority. Action items: Sarah will send logo files, and I will prepare the homepage draft by Friday. Open question: we still need to confirm the pricing page copy. Risk/blocker: the pricing page may hold up final homepage copy if it stays unresolved. Best, [Your name]",
   "faq": [
     {
       "question": "What AI prompt should I use for a client meeting recap?",

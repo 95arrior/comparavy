@@ -93,9 +93,9 @@
   "quickDecision": "Use ChatGPT for flexible study note drafting, Claude for longer pasted text, Gemini or Copilot if your school or work already uses Google or Microsoft tools, and Notion AI if your notes live in Notion.",
   "realWorldScenario": "A college student has a 38-page economics PDF due before a Monday quiz. They do not need a beautiful summary; they need the main ideas, vocabulary, formulas, likely test points, and a way to review the material on a phone between classes.",
   "whatYouNeed": [
-    "The PDF, the page range or chapters that matter, and the assignment or quiz goal",
+    "The PDF text, notes, or document excerpt you are allowed to paste, plus the chapters or sections that matter",
     "A final study format, such as outline, flashcards, quiz questions, glossary, or one-page cram sheet",
-    "Time to verify definitions, numbers, dates, formulas, and page references"
+    "Time to verify definitions, numbers, dates, formulas, and any source references"
   ],
   "timeEstimate": "Plan on 10 to 30 minutes for one careful first pass.",
   "contentGap": "Most articles recommend tools before explaining the workflow that makes the output useful.",
@@ -113,7 +113,7 @@
     },
     {
       "title": "Ask for a structured first pass",
-      "detail": "Copy this prompt: \"Summarize this PDF into study notes by section. Include core idea, key terms, formulas or dates, likely quiz questions, and page references. Mark uncertain points instead of guessing.\"",
+      "detail": "Use the prompt builder to ask for a short overview, key concepts, study notes, important terms, quiz questions with answer key, flashcards, and a Needs review section. If page numbers are not in your pasted text, tell the AI not to create page references.",
       "why": "A clear format makes the first result easier to review.",
       "output": "A structured set of notes you can check against the PDF.",
       "toolSlug": "notebooklm",
@@ -389,23 +389,23 @@
   "skillNeeded": "You need enough context to check names, dates, claims, and final wording before using the output.",
   "firstStep": "Run one real example through NotebookLM and judge the result against the source material.",
   "commonMistakes": [
-    "Starting with a vague prompt",
-    "Skipping source review",
-    "Using the first draft without adapting it to the final channel"
+    "Asking AI to summarize a PDF without pasting the actual text or giving the section range that matters.",
+    "Studying invented facts, quotes, authors, citations, or page numbers because the output sounded confident.",
+    "Using quiz questions that cannot be answered from the source material you provided."
   ],
   "mistakesToAvoid": [
-    "Do not starting with a vague prompt.",
-    "Do not skipping source review.",
-    "Do not using the first draft without adapting it to the final channel."
+    "Do not ask the AI to summarize a PDF it cannot actually read.",
+    "Do not keep invented facts, quotes, citations, page numbers, authors, or claims.",
+    "Do not use quiz questions unless the answers are supported by your pasted text or notes."
   ],
   "whatToAvoid": [
-    "Do not starting with a vague prompt.",
-    "Do not skipping source review.",
-    "Do not using the first draft without adapting it to the final channel."
+    "Do not ask the AI to summarize a PDF without providing the text, notes, or section range.",
+    "Do not keep invented facts, quotes, citations, page numbers, authors, or claims.",
+    "Do not study from quiz questions unless the answers are supported by your source material."
   ],
   "whatChanged": "Start with the user problem and final format, then pick the AI tool that reduces review work.",
-  "exampleWorkflow": "Upload the PDF to NotebookLM, ask for notes by section with page references, verify the output against the PDF, then use ChatGPT to convert the checked notes into ten quiz questions and a one-page cram sheet.",
-  "exampleResult": "Example output: Section 2 notes with three key terms, two formulas, page references for each definition, five likely quiz questions, and a short 'review next' list for the parts you still do not understand.",
+  "exampleWorkflow": "Paste the allowed PDF text or section notes into the prompt builder, ask for notes by section with a Needs review list, verify the output against the PDF, then use the checked notes as quiz questions, flashcards, and a one-page cram sheet.",
+  "exampleResult": "Example output: Overview: Section 2 explains how supply and demand affect market price. Key concepts: scarcity, demand curve, supply curve, equilibrium, shortage, and surplus. Study notes: demand describes buyer behavior at different prices; supply describes seller behavior at different prices. Quiz question: what happens to equilibrium price when demand rises and supply stays the same? Flashcard: Front: What is equilibrium? Back: The point where quantity supplied equals quantity demanded. Needs review: confirm graph labels and any formulas against the original PDF.",
   "faq": [
     {
       "question": "Which tool should I start with for summarizing a PDF into study notes?",

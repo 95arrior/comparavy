@@ -114,8 +114,10 @@ const promptConfigs: Record<string, PromptBuilderConfig> = {
       "Opening: Start your morning with a handmade ceramic mug finished in a calm blue glaze.",
       "Facts: 12 oz size; handmade ceramic; blue glaze; microwave safe.",
       "Buyer benefits: useful for coffee, tea, desk use, and simple gifting.",
-      "Description: This blue ceramic mug is a simple everyday gift for coffee lovers who want something handmade and useful.",
-      "Needs Seller Review: confirm dishwasher safety, processing time, shipping limits, and personalization options.",
+      "Bullets: 12 oz capacity; handmade ceramic; calm blue glaze; gift-ready for coffee lovers.",
+      "Description: This handmade blue ceramic mug keeps the listing clear on mobile by leading with size, material, use case, and care facts.",
+      "Keyword ideas: handmade mug, blue ceramic mug, coffee lover gift, 12 oz mug.",
+      "Needs Seller Review: confirm dishwasher safety, processing time, shipping limits, personalization options, and any claim not listed in the product facts.",
     ],
     checkBeforeUsing: [
       "Check every material, size, color, and care detail.",
@@ -133,11 +135,12 @@ ${detailLines(values, etsyFields)}
 Finished output:
 1. Etsy product title
 2. Buyer-focused opening
-3. Scannable bullet points
-4. Mobile-readable product description
-5. Tag or keyword ideas
-6. Short seller review checklist before publishing
-7. Needs Seller Review section
+3. Product facts separated from buyer benefits
+4. Scannable bullet points
+5. Mobile-readable product description
+6. Tag or keyword ideas
+7. Short seller review checklist before publishing
+8. Needs Seller Review section
 
 Rules:
 - Do not invent materials, sizes, shipping times, guarantees, or product claims.
@@ -145,6 +148,7 @@ Rules:
 - Separate buyer benefits from product facts.
 - Keep the listing mobile-readable.
 - Do not create fake urgency, fake reviews, fake discounts, or unsupported claims.
+- Do not treat keyword ideas as verified Etsy search volume.
 - Keep claims specific to the product facts I gave you.
 - Keep the tone warm, clear, and buyer-friendly.`;
     },
@@ -178,10 +182,11 @@ Rules:
       "Client wants homepage draft by Friday. Sarah sends logo files. Pricing page copy is still open.",
     exampleOutput: [
       "Subject: Recap and next steps from our homepage call",
-      "Hi Sam,",
-      "Thanks for today. The homepage draft is the next priority, with a target of Friday.",
-      "Action items: Sarah will send logo files. I will prepare the homepage draft. Deadline not specified for logo files.",
+      "Hi Sam, thanks for today. Here is the short recap from our homepage call.",
+      "Decision: The homepage draft is the next priority.",
+      "Action items: Sarah will send logo files. I will prepare the homepage draft by Friday.",
       "Open question: We still need to confirm the pricing page copy.",
+      "Risk/blocker: The pricing page may hold up the final homepage copy if it stays unresolved.",
       "Best, [Your name]",
     ],
     checkBeforeUsing: [
@@ -205,7 +210,7 @@ Finished output:
 4. Deadlines
 5. Open questions
 6. Risks or blockers
-7. Short client-ready follow-up email
+7. Short client-ready follow-up email with subject line, greeting, recap, action items, open questions, and closing
 
 Rules:
 - Use only the information in my notes.
@@ -252,7 +257,8 @@ Rules:
       "Overview: The section explains how supply and demand interact to set market price.",
       "Study notes: Demand is how much buyers want at different prices; supply is how much sellers offer.",
       "Key concepts: scarcity, demand curve, supply curve, equilibrium, shortage, surplus.",
-      "Quiz questions: What happens to equilibrium price when demand rises and supply stays the same?",
+      "Important term: Equilibrium means the point where quantity supplied equals quantity demanded.",
+      "Quiz question: What happens to equilibrium price when demand rises and supply stays the same?",
       "Flashcard: Front: What is equilibrium? Back: The point where quantity supplied equals quantity demanded.",
       "Study plan: Review definitions first, practice graph questions second, then revisit Needs review items.",
       "Needs review: Confirm the exact graph labels and any formulas against the original PDF.",
@@ -275,7 +281,7 @@ Finished output:
 2. Key concepts
 3. Bullet study notes
 4. Important terms
-5. Quiz questions
+5. Quiz questions with answer key
 6. Flashcards or review questions if appropriate
 7. Confusing sections or Needs review section
 8. Short study plan if useful
@@ -285,6 +291,7 @@ Rules:
 - Do not invent facts, quotes, citations, page numbers, authors, or claims.
 - If something is unclear, mark it as "Needs review."
 - Do not pretend to read a PDF file unless the actual text is provided.
+- If I did not provide page numbers, do not create page references.
 - Keep the notes easy to study from.
 - Make quiz questions answerable from the provided material.
 - Do not paste private, confidential, legal, medical, client, or restricted documents into an AI tool.
@@ -318,6 +325,7 @@ Rules:
     exampleOutput: [
       "Weekly theme: Easy lunches and weekend celebrations.",
       "Calendar idea: Monday lunch box reminder, Wednesday behind-the-scenes cake prep, Friday weekend order CTA.",
+      "Channel plan: Instagram for behind-the-scenes visuals, Facebook for local pickup reminders, email for weekly order deadline.",
       "Post idea: A short Instagram reel showing the lunch box assembly process.",
       "CTA: Message us by Thursday to reserve a weekend cake pickup.",
       "Needs owner input: confirm current prices, pickup times, and photo availability.",
@@ -340,7 +348,7 @@ ${detailLines(values, contentCalendarFields)}
 Finished output:
 1. Content themes
 2. Weekly posting ideas
-3. Simple content calendar
+3. Simple content calendar with channel, format, topic, owner, asset needed, and review status
 4. Channel suggestions
 5. Post ideas
 6. Call-to-action ideas

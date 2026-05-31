@@ -388,23 +388,23 @@
   "skillNeeded": "You need enough context to check names, dates, claims, and final wording before using the output.",
   "firstStep": "Run one real example through the prompt builder and judge whether the calendar is realistic for the business to review and publish.",
   "commonMistakes": [
-    "Starting with a vague prompt",
-    "Skipping source review",
-    "Using the first draft without adapting it to the final channel"
+    "Asking for a content calendar without giving the business type, target customer, offer, channels, and realistic posting capacity.",
+    "Keeping ideas that require photos, approvals, discounts, or capacity the business does not actually have.",
+    "Letting AI invent testimonials, customer results, guaranteed growth claims, or fake proof."
   ],
   "mistakesToAvoid": [
-    "Do not starting with a vague prompt.",
-    "Do not skipping source review.",
-    "Do not using the first draft without adapting it to the final channel."
+    "Do not start with a vague request for content ideas.",
+    "Do not keep posts your business cannot realistically create, approve, or publish.",
+    "Do not publish invented testimonials, customer results, guaranteed growth claims, or fake proof."
   ],
   "whatToAvoid": [
-    "Do not starting with a vague prompt.",
-    "Do not skipping source review.",
-    "Do not using the first draft without adapting it to the final channel."
+    "Do not ask for a content calendar without business type, target customer, offer, channels, and posting capacity.",
+    "Do not keep ideas that require assets, approvals, discounts, or availability the business does not have.",
+    "Do not publish invented testimonials, customer results, guaranteed growth claims, or fake proof."
   ],
   "whatChanged": "Start with the user problem and final format, then pick the AI tool that reduces review work.",
   "exampleWorkflow": "Ask ChatGPT or Claude for a 30-day calendar from your offers, FAQs, and local dates, move the approved plan into Notion or a spreadsheet for team review, then use Canva for the posts that need visuals.",
-  "exampleResult": "Example output: a monthly calendar with channel, topic, format, goal, owner, asset needed, draft caption angle, and approval status for each post.",
+  "exampleResult": "Example output: Week 1 theme: easy lunches and weekend celebrations. Monday Instagram post: lunch box reminder with a photo of this week's options; CTA: message by noon for weekday pickup. Wednesday Facebook post: behind-the-scenes cake prep; CTA: ask about custom cake dates. Friday email: weekend order reminder; CTA: reserve by Thursday. Needs owner input: confirm current prices, pickup times, photo availability, and order capacity before posting.",
   "faq": [
     {
       "question": "Which tool should I start with for choosing AI tools for small business content calendars?",
