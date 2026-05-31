@@ -3,7 +3,7 @@
   "title": "Best AI Tools for Building No-Code Lead Intake Workflows",
   "guideType": "how-to",
   "type": "how-to",
-  "metaTitle": "Best AI Tools for Building No-Code Lead Intake Workflows | Comparavy",
+  "metaTitle": "Best AI Tools for Building No-Code Lead Intake Workflows | AteFlo",
   "metaDescription": "Learn how to routing new leads and follow-up tasks without manual copying. See the workflow, tools you can use, and the safest first step.",
   "category": "Automation",
   "persona": "service businesses",
@@ -245,7 +245,7 @@
       "toolName": "Zapier AI",
       "bestFor": "non-technical app-to-app automation for routing new leads and follow-up tasks without manual copying",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Zapier AI is worth considering because it is the clearest fit for routing new leads and follow-up tasks without manual copying. It is built for non-technical app-to-app automation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for single prompt writing needs; this matters when routing new leads and follow-up tasks without manual copying."
     },
@@ -254,7 +254,7 @@
       "toolName": "Make",
       "bestFor": "visual multi-step automation building when you want a different workflow than the top pick",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 6/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 6/10 in the AteFlo catalog",
       "whyConsider": "Make is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for visual multi-step automation building, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for people wanting only a conversational assistant; this matters when routing new leads and follow-up tasks without manual copying."
     },
@@ -263,7 +263,7 @@
       "toolName": "n8n",
       "bestFor": "technical users building flexible AI workflows when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "High setup; ease 4/10 in the Comparavy catalog",
+      "easeOfUse": "High setup; ease 4/10 in the AteFlo catalog",
       "whyConsider": "n8n is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for technical users building flexible AI workflows, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for beginners seeking a zero-setup recommendation; this matters when routing new leads and follow-up tasks without manual copying."
     },
@@ -272,7 +272,7 @@
       "toolName": "Bardeen",
       "bestFor": "workflows that need browser-based workflow automation when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Bardeen is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need browser-based workflow automation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside automation.; this matters when routing new leads and follow-up tasks without manual copying."
     },
@@ -281,7 +281,7 @@
       "toolName": "Pipedream",
       "bestFor": "workflows that need developer-friendly API workflows when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "High setup; ease 6/10 in the Comparavy catalog",
+      "easeOfUse": "High setup; ease 6/10 in the AteFlo catalog",
       "whyConsider": "Pipedream is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need developer-friendly API workflows, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside automation.; this matters when routing new leads and follow-up tasks without manual copying."
     }
@@ -376,8 +376,8 @@
   ],
   "exampleWorkflow": "Collect the source material, ask Zapier AI for the first draft, use Make to compare a different workflow, and keep n8n for the final cleanup and review.",
   "exampleResult": "The final result should be clearer, shorter, and easier to use, with the main ideas preserved and the obvious errors removed.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for service businesses",
     "points": [
@@ -386,8 +386,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
   "qualityScore": 92,
   "status": "draft",

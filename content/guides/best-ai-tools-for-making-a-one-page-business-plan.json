@@ -3,7 +3,7 @@
   "title": "Best AI Tools for Making a One-Page Business Plan",
   "guideType": "practical",
   "type": "practical",
-  "metaTitle": "Best AI Tools for Making a One-Page Business Plan | Comparavy",
+  "metaTitle": "Best AI Tools for Making a One-Page Business Plan | AteFlo",
   "metaDescription": "Compare AI tools for first-time founders focused on turning a rough idea into a concise one-page business plan. See practical fit, tradeoffs, and a free-first decision path.",
   "category": "General Assistant",
   "persona": "first-time founders",
@@ -162,7 +162,7 @@
       "toolName": "ChatGPT",
       "bestFor": "People who want one flexible starting point",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 10/10 in the AteFlo catalog",
       "whyConsider": "Selected for this guide's core workflow.",
       "watchFor": "Teams needing a dedicated approval workflow"
     },
@@ -171,7 +171,7 @@
       "toolName": "Gamma",
       "bestFor": "Quick presentation first drafts",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "Selected for this guide's core workflow.",
       "watchFor": "Strictly controlled corporate slide templates without adjustment"
     },
@@ -180,7 +180,7 @@
       "toolName": "Claude",
       "bestFor": "Long-form drafting and revision",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "Selected for this guide's core workflow.",
       "watchFor": "People mainly needing a visual design canvas"
     },
@@ -189,7 +189,7 @@
       "toolName": "Notion AI",
       "bestFor": "Teams or individuals already organizing work in Notion",
       "freePlan": false,
-      "easeOfUse": "Medium setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Selected for this guide's core workflow.",
       "watchFor": "People who do not want to adopt Notion"
     },
@@ -198,7 +198,7 @@
       "toolName": "Canva Magic Studio",
       "bestFor": "Non-designers creating polished visual assets",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 10/10 in the AteFlo catalog",
       "whyConsider": "Selected for this guide's core workflow.",
       "watchFor": "Advanced professional image compositing"
     }
@@ -230,7 +230,7 @@
   "faqs": [
     {
       "question": "Which tool should first-time founders try first?",
-      "answer": "ChatGPT is the first tool to evaluate for this use case based on the current Comparavy catalog match. Test it on a real project and compare the result with your requirements."
+      "answer": "ChatGPT is the first tool to evaluate for this use case based on the current AteFlo catalog match. Test it on a real project and compare the result with your requirements."
     },
     {
       "question": "Should I choose a free plan before subscribing?",
@@ -255,8 +255,8 @@
     "Users who want guaranteed outcomes instead of a workflow shortlist to evaluate."
   ],
   "finalVerdict": "For first-time founders, start by testing ChatGPT on one realistic assignment: turning a rough idea into a concise one-page business plan. Compare it with Gamma if you need a different workflow, respect the stated budget approach, and choose only after reviewing actual output, setup effort, and current official plan details.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for first-time founders",
     "points": [
@@ -265,8 +265,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
   "qualityScore": 92,
   "status": "draft",

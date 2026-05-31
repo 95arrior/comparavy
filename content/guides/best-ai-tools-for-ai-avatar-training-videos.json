@@ -3,7 +3,7 @@
   "title": "Best AI Tools for AI Avatar Training Videos",
   "guideType": "tool-decision",
   "type": "tool-decision",
-  "metaTitle": "Best AI Tools for AI Avatar Training Videos | Comparavy",
+  "metaTitle": "Best AI Tools for AI Avatar Training Videos | AteFlo",
   "metaDescription": "Compare AI tools for training managers focused on creating internal training videos with avatar presenters. See practical fit, tradeoffs, and a free-first decision path.",
   "category": "Video",
   "persona": "training managers",
@@ -269,7 +269,7 @@
       "toolName": "Synthesia",
       "bestFor": "structured explainer or training videos for creating internal training videos with avatar presenters",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Synthesia is worth considering because it is the clearest fit for creating internal training videos with avatar presenters. It is built for structured explainer or training videos, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for cinematic creative video generation; this matters when the reader is creating internal training videos with avatar presenters."
     },
@@ -278,7 +278,7 @@
       "toolName": "HeyGen",
       "bestFor": "avatar-led marketing or explainers when you want a different workflow than the top pick",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "HeyGen is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for avatar-led marketing or explainers, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for traditional manual video editing as the full workflow; this matters when the reader is creating internal training videos with avatar presenters."
     },
@@ -287,7 +287,7 @@
       "toolName": "Canva Magic Studio",
       "bestFor": "non-designers creating polished visual assets when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 10/10 in the AteFlo catalog",
       "whyConsider": "Canva Magic Studio is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for non-designers creating polished visual assets, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for advanced professional image compositing; this matters when the reader is creating internal training videos with avatar presenters."
     },
@@ -296,7 +296,7 @@
       "toolName": "CapCut",
       "bestFor": "short-form social video editing when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "CapCut is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for short-form social video editing, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for detailed document analysis; this matters when the reader is creating internal training videos with avatar presenters."
     },
@@ -305,7 +305,7 @@
       "toolName": "Descript",
       "bestFor": "podcasts and talking-head videos when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Descript is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for podcasts and talking-head videos, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for generative cinematic scenes as the primary goal; this matters when the reader is creating internal training videos with avatar presenters."
     }
@@ -429,8 +429,8 @@
   "whatChanged": "Rank by training update speed, script control, and professional tone.",
   "exampleWorkflow": "Collect the source material, ask Synthesia for the first draft, use HeyGen to compare a different workflow, and keep Canva Magic Studio for the final cleanup and review.",
   "exampleResult": "The final result should be clearer, shorter, and easier to use, with the main ideas preserved and the obvious errors removed.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for training managers",
     "points": [
@@ -439,8 +439,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "current",
   "qualityScore": 92,
   "status": "draft",

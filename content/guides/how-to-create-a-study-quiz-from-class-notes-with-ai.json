@@ -3,7 +3,7 @@
   "title": "How to Create a Study Quiz From Class Notes with AI",
   "guideType": "how-to",
   "type": "how-to",
-  "metaTitle": "How to Create a Study Quiz From Class Notes with AI | Comparavy",
+  "metaTitle": "How to Create a Study Quiz From Class Notes with AI | AteFlo",
   "metaDescription": "Learn how to turn class notes into practice quiz questions. See the workflow, tools you can use, and the safest first step.",
   "category": "Research",
   "persona": "students",
@@ -273,7 +273,7 @@
       "toolName": "NotebookLM",
       "bestFor": "working from a defined set of documents for rewritten resume sections",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "NotebookLM is worth considering because it is the clearest fit for turning class notes into practice quiz questions. It is built for working from a defined set of documents, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for open-ended web discovery as the primary task; this matters when the reader is turning class notes into practice quiz questions."
     },
@@ -282,7 +282,7 @@
       "toolName": "Gemini",
       "bestFor": "users already working in Google's ecosystem when cover letter matters more than the top pick",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "Gemini is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for users already working in Google's ecosystem, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for people needing a dedicated media production timeline; this matters when the reader is turning class notes into practice quiz questions."
     },
@@ -291,7 +291,7 @@
       "toolName": "SciSpace",
       "bestFor": "workflows that need reading and explaining research papers when speed or a lighter setup matters more for contract summaries",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 7/10 in the AteFlo catalog",
       "whyConsider": "SciSpace is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need reading and explaining research papers, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside research.; this matters when the reader is turning class notes into practice quiz questions."
     },
@@ -300,7 +300,7 @@
       "toolName": "You.com",
       "bestFor": "workflows that need search-backed answers and lightweight assistant help when speed or a lighter setup matters more for task lists",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "You.com is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need search-backed answers and lightweight assistant help, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside general assistant.; this matters when the reader is turning class notes into practice quiz questions."
     },
@@ -309,7 +309,7 @@
       "toolName": "Reclaim",
       "bestFor": "workflows that need calendar protection and scheduling when speed or a lighter setup matters more for study quizzes",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Reclaim is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need calendar protection and scheduling, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside productivity.; this matters when the reader is turning class notes into practice quiz questions."
     }
@@ -442,8 +442,8 @@
   "whatChanged": "Create questions only after grounding the quiz in the source notes.",
   "exampleWorkflow": "Prepare the real input: resume bullets, cover letter notes, contracts. Define the target output before opening tools: rewritten resume sections or cover letter drafts. Use NotebookLM for the first usable pass and ask it to preserve the constraints that matter in Office documents / summaries. Check the result against the input, then use Gemini only if the output needs a format change or stronger second pass. Finish with a human review and use SciSpace only for cleanup, export, or a lighter fallback.",
   "exampleResult": "Example result: a checked turn class notes into practice quiz questions output that keeps the source facts, removes filler, names the next action, and is short enough to review before sending, posting, studying, or saving.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for students",
     "points": [
@@ -452,8 +452,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
   "qualityScore": 92,
   "status": "rejected",

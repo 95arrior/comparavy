@@ -3,7 +3,7 @@
   "title": "How to Make a Weekly Meal Plan with AI",
   "guideType": "how-to",
   "type": "how-to",
-  "metaTitle": "How to Make a Weekly Meal Plan with AI | Comparavy",
+  "metaTitle": "How to Make a Weekly Meal Plan with AI | AteFlo",
   "metaDescription": "Learn how to creating a weekly meal plan and grocery list. See the workflow, tools you can use, and the safest first step.",
   "category": "General Assistant",
   "persona": "busy households",
@@ -273,7 +273,7 @@
       "toolName": "Gemini",
       "bestFor": "users already working in Google's ecosystem for accurate study notes",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "Gemini is worth considering because it is the clearest fit for creating a weekly meal plan and grocery list. It is built for users already working in Google's ecosystem, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for people needing a dedicated media production timeline; this matters when the reader is creating a weekly meal plan and grocery list."
     },
@@ -282,7 +282,7 @@
       "toolName": "Microsoft Copilot",
       "bestFor": "everyday assistance in a Microsoft-oriented workflow when source document matters more than the top pick",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "Microsoft Copilot is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for everyday assistance in a Microsoft-oriented workflow, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for advanced creative asset editing; this matters when the reader is creating a weekly meal plan and grocery list."
     },
@@ -291,7 +291,7 @@
       "toolName": "Todoist AI",
       "bestFor": "workflows that need task planning and prioritization when speed or a lighter setup matters more for quiz questions",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "Todoist AI is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need task planning and prioritization, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside productivity.; this matters when the reader is creating a weekly meal plan and grocery list."
     },
@@ -300,7 +300,7 @@
       "toolName": "Notion AI",
       "bestFor": "teams or individuals already organizing work in Notion when speed or a lighter setup matters more for source-backed extracts",
       "freePlan": false,
-      "easeOfUse": "Medium setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Notion AI is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for teams or individuals already organizing work in Notion, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for people who do not want to adopt Notion; this matters when the reader is creating a weekly meal plan and grocery list."
     },
@@ -309,7 +309,7 @@
       "toolName": "You.com",
       "bestFor": "workflows that need search-backed answers and lightweight assistant help when speed or a lighter setup matters more for creating a weekly meal plan and grocery list",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "You.com is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need search-backed answers and lightweight assistant help, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside general assistant.; this matters when the reader is creating a weekly meal plan and grocery list."
     }
@@ -442,8 +442,8 @@
   "whatChanged": "Start with constraints and pantry reality before asking for recipes.",
   "exampleWorkflow": "Prepare the real input: PDFs, lecture slides, class notes. Define the target output before opening tools: accurate study notes or section summaries. Use Gemini for the first usable pass and ask it to preserve the constraints that matter in Document / PDF / study notes. Check the result against the input, then use Microsoft Copilot only if the output needs a format change or stronger second pass. Finish with a human review and use Todoist AI only for cleanup, export, or a lighter fallback.",
   "exampleResult": "Example result: a checked create a weekly meal plan and grocery list output that keeps the source facts, removes filler, names the next action, and is short enough to review before sending, posting, studying, or saving.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for busy households",
     "points": [
@@ -452,8 +452,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
   "qualityScore": 92,
   "status": "draft",

@@ -5,7 +5,7 @@
   "topicCluster": "meeting-notes-client-recaps",
   "publishPriority": 1,
   "type": "how-to",
-  "metaTitle": "How to Turn Meeting Notes Into a Client Recap with AI | Comparavy",
+  "metaTitle": "How to Turn Meeting Notes Into a Client Recap with AI | AteFlo",
   "metaDescription": "Turn messy meeting notes into a clear client recap with AI, including decisions, action items, open questions, and a client-ready follow-up structure.",
   "category": "Productivity",
   "persona": "client service professionals",
@@ -412,8 +412,8 @@
     }
   ],
   "finalVerdict": "For meeting notes to client recaps, use ChatGPT or Claude for the draft after you extract decisions and action items. Add Otter.ai or Fireflies only when capture is the problem, and keep Notion AI for teams that already work in Notion.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
   "visualSummary": {
     "headline": "A safer client recap workflow",
     "points": [
@@ -422,8 +422,8 @@
       "Review commitments before sending"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
   "qualityScore": 94,
   "status": "approved",

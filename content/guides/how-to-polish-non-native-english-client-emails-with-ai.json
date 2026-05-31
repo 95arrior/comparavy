@@ -3,7 +3,7 @@
   "title": "How to Polish Non-Native English Client Emails with AI",
   "guideType": "how-to",
   "type": "how-to",
-  "metaTitle": "How to Polish Non-Native English Client Emails with AI | Comparavy",
+  "metaTitle": "How to Polish Non-Native English Client Emails with AI | AteFlo",
   "metaDescription": "Learn how to polishing client emails without changing their meaning. See the workflow, tools you can use, and the safest first step.",
   "category": "Writing",
   "persona": "non-native English freelancers",
@@ -249,7 +249,7 @@
       "toolName": "Grammarly",
       "bestFor": "polishing email and client-facing writing for polishing client emails without changing their meaning",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 10/10 in the AteFlo catalog",
       "whyConsider": "Grammarly is worth considering because it is the clearest fit for polishing client emails without changing their meaning. It is built for polishing email and client-facing writing, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for long-form research from sources; this matters when the reader is polishing client emails without changing their meaning."
     },
@@ -258,7 +258,7 @@
       "toolName": "DeepL Write",
       "bestFor": "rephrasing professional messages when you want a different workflow than the top pick",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 10/10 in the AteFlo catalog",
       "whyConsider": "DeepL Write is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for rephrasing professional messages, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for generating rich visual content; this matters when the reader is polishing client emails without changing their meaning."
     },
@@ -267,7 +267,7 @@
       "toolName": "QuillBot",
       "bestFor": "workflows that need paraphrasing and grammar cleanup when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 10/10 in the AteFlo catalog",
       "whyConsider": "QuillBot is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need paraphrasing and grammar cleanup, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside writing.; this matters when the reader is polishing client emails without changing their meaning."
     },
@@ -276,7 +276,7 @@
       "toolName": "Wordtune",
       "bestFor": "workflows that need rewriting and tone adjustments when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "Wordtune is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need rewriting and tone adjustments, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside writing.; this matters when the reader is polishing client emails without changing their meaning."
     },
@@ -285,7 +285,7 @@
       "toolName": "HyperWrite",
       "bestFor": "workflows that need general drafting and AI writing assistance when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "HyperWrite is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need general drafting and AI writing assistance, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside writing.; this matters when the reader is polishing client emails without changing their meaning."
     }
@@ -386,8 +386,8 @@
   ],
   "exampleWorkflow": "Collect draft emails that need careful wording without changing meaning and remove anything the AI should not use. Define the final output: what the reader needs to produce, send, post, study, or decide. Use AI to create a first structured draft for polish client emails without changing their meaning. Check names, numbers, sources, commitments, tone, and missing context against the original material. Polish the final result, save the reusable prompt, and choose the next tool only if the format or source type changes.",
   "exampleResult": "Example result: a checked polish client emails without changing their meaning output that keeps the source facts, removes filler, names the next action, and is short enough to review before sending, posting, studying, or saving.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for non-native English freelancers",
     "points": [
@@ -396,8 +396,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
   "qualityScore": 92,
   "status": "draft",

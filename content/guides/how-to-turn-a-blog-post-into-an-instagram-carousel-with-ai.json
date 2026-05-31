@@ -5,8 +5,8 @@
   "topicCluster": "blog-to-instagram-carousel",
   "publishPriority": 3,
   "type": "how-to",
-  "metaTitle": "How to Turn a Blog Post Into an Instagram Carousel with AI | Comparavy",
-  "metaDescription": "How to Turn a Blog Post Into an Instagram Carousel with AI. Practical workflow, prompt examples, tool choices, common mistakes, and a Finder CTA.",
+  "metaTitle": "How to Turn a Blog Post Into an Instagram Carousel with AI | AteFlo",
+  "metaDescription": "How to Turn a Blog Post Into an Instagram Carousel with AI. Practical workflow, prompt examples, tool choices, common mistakes, and a practical next step.",
   "category": "Social Media",
   "persona": "Content creators",
   "useCase": "turning a blog post into an Instagram carousel",
@@ -412,8 +412,8 @@
     }
   ],
   "finalVerdict": "The best carousel is not a shrunken blog post. Use AI to find the strongest angle, write short slide copy, and keep the original article as the fact check. Then use a visual tool like Canva to make the post readable on a phone.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
   "visualSummary": {
     "headline": "A practical route for turning a blog post into an Instagram carousel",
     "points": [
@@ -422,8 +422,8 @@
       "Use Claude when the destination fits"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
   "qualityScore": 94,
   "status": "approved",

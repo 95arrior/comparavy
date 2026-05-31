@@ -3,7 +3,7 @@
   "title": "How to Make YouTube Shorts From One Long Video with AI",
   "guideType": "how-to",
   "type": "how-to",
-  "metaTitle": "How to Make YouTube Shorts From One Long Video with AI | Comparavy",
+  "metaTitle": "How to Make YouTube Shorts From One Long Video with AI | AteFlo",
   "metaDescription": "Learn how to turn one long video into short vertical clips. See the workflow, tools you can use, and the safest first step.",
   "category": "Video",
   "persona": "YouTube creators",
@@ -273,7 +273,7 @@
       "toolName": "OpusClip",
       "bestFor": "creators repurposing long videos into short clips for short clips",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "OpusClip is worth considering because it is the clearest fit for turning one long video into short vertical clips. It is built for creators repurposing long videos into short clips, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for full timeline editing for complex productions; this matters when the reader is turning one long video into short vertical clips."
     },
@@ -282,7 +282,7 @@
       "toolName": "CapCut",
       "bestFor": "short-form social video editing when short matters more than the top pick",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "CapCut is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for short-form social video editing, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for detailed document analysis; this matters when the reader is turning one long video into short vertical clips."
     },
@@ -291,7 +291,7 @@
       "toolName": "Descript",
       "bestFor": "podcasts and talking-head videos when speed or a lighter setup matters more for avatar videos",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Descript is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for podcasts and talking-head videos, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for generative cinematic scenes as the primary goal; this matters when the reader is turning one long video into short vertical clips."
     },
@@ -300,7 +300,7 @@
       "toolName": "Vizard AI",
       "bestFor": "workflows that need repurposing long videos into clips when speed or a lighter setup matters more for captioned exports",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Vizard AI is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need repurposing long videos into clips, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside video.; this matters when the reader is turning one long video into short vertical clips."
     },
@@ -309,7 +309,7 @@
       "toolName": "InVideo",
       "bestFor": "workflows that need social video creation from prompts when speed or a lighter setup matters more for turning one long video into short vertical clips",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "InVideo is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need social video creation from prompts, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside video.; this matters when the reader is turning one long video into short vertical clips."
     }
@@ -442,8 +442,8 @@
   "whatChanged": "Use transcript-based clip selection before vertical editing.",
   "exampleWorkflow": "Prepare the real input: long videos, webinar recordings, ad scripts. Define the target output before opening tools: short clips or video ads. Use OpusClip for the first usable pass and ask it to preserve the constraints that matter in Video / shorts / clips. Check the result against the input, then use CapCut only if the output needs a format change or stronger second pass. Finish with a human review and use Descript only for cleanup, export, or a lighter fallback.",
   "exampleResult": "Example result: a checked turn one long video into short vertical clips output that keeps the source facts, removes filler, names the next action, and is short enough to review before sending, posting, studying, or saving.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for YouTube creators",
     "points": [
@@ -452,8 +452,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
   "qualityScore": 92,
   "status": "rejected",

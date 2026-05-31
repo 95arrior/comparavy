@@ -5,8 +5,8 @@
   "topicCluster": "pdf-study-notes",
   "publishPriority": 2,
   "type": "how-to",
-  "metaTitle": "How to Summarize a PDF Into Study Notes with AI | Comparavy",
-  "metaDescription": "How to Summarize a PDF Into Study Notes with AI. Practical workflow, prompt examples, tool choices, common mistakes, and a Finder CTA.",
+  "metaTitle": "How to Summarize a PDF Into Study Notes with AI | AteFlo",
+  "metaDescription": "How to Summarize a PDF Into Study Notes with AI. Practical workflow, prompt examples, tool choices, common mistakes, and a practical next step.",
   "category": "Study",
   "persona": "Students",
   "useCase": "summarizing a PDF into study notes",
@@ -412,8 +412,8 @@
     }
   ],
   "finalVerdict": "Use AI to make studying faster, not to replace reading the source. Start with NotebookLM for grounded PDF notes, verify the important facts, then use ChatGPT or Claude to reshape the checked notes into flashcards, quizzes, or a cleaner outline.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
   "visualSummary": {
     "headline": "A practical route for summarizing a PDF into study notes",
     "points": [
@@ -422,8 +422,8 @@
       "Use Claude when the destination fits"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
   "qualityScore": 94,
   "status": "approved",

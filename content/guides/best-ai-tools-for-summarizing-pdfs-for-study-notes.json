@@ -3,7 +3,7 @@
   "title": "Best AI Tools for Summarizing PDFs Into Study Notes",
   "guideType": "practical",
   "type": "practical",
-  "metaTitle": "Best AI Tools for Summarizing PDFs Into Study Notes | Comparavy",
+  "metaTitle": "Best AI Tools for Summarizing PDFs Into Study Notes | AteFlo",
   "metaDescription": "Compare AI tools for students focused on turning PDFs and class materials into usable study notes. See practical fit, tradeoffs, and a free-first decision path.",
   "category": "Research",
   "persona": "students",
@@ -162,7 +162,7 @@
       "toolName": "NotebookLM",
       "bestFor": "Working from a defined set of documents",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "Selected for this guide's core workflow.",
       "watchFor": "Open-ended web discovery as the primary task"
     },
@@ -171,7 +171,7 @@
       "toolName": "Gemini",
       "bestFor": "Users already working in Google's ecosystem",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "Selected for this guide's core workflow.",
       "watchFor": "People needing a dedicated media production timeline"
     },
@@ -180,7 +180,7 @@
       "toolName": "Perplexity",
       "bestFor": "Starting research with visible sources",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "Selected for this guide's core workflow.",
       "watchFor": "Final fact checking without opening sources"
     },
@@ -189,7 +189,7 @@
       "toolName": "Elicit",
       "bestFor": "Elicit fits workflows that need literature review workflows and paper synthesis.",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 7/10 in the AteFlo catalog",
       "whyConsider": "Selected for this guide's core workflow.",
       "watchFor": "Not the best choice when your main job is outside research."
     },
@@ -198,7 +198,7 @@
       "toolName": "Consensus",
       "bestFor": "Consensus fits workflows that need finding research-backed academic answers.",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Selected for this guide's core workflow.",
       "watchFor": "Not the best choice when your main job is outside research."
     }
@@ -230,7 +230,7 @@
   "faqs": [
     {
       "question": "Which tool should students try first?",
-      "answer": "NotebookLM is the first tool to evaluate for this use case based on the current Comparavy catalog match. Test it on a real project and compare the result with your requirements."
+      "answer": "NotebookLM is the first tool to evaluate for this use case based on the current AteFlo catalog match. Test it on a real project and compare the result with your requirements."
     },
     {
       "question": "Should I choose a free plan before subscribing?",
@@ -255,8 +255,8 @@
     "Users who want guaranteed outcomes instead of a workflow shortlist to evaluate."
   ],
   "finalVerdict": "For students, start by testing NotebookLM on one realistic assignment: turning PDFs and class materials into usable study notes. Compare it with Gemini if you need a different workflow, respect the stated budget approach, and choose only after reviewing actual output, setup effort, and current official plan details.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for students",
     "points": [
@@ -265,8 +265,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
   "qualityScore": 92,
   "status": "draft",

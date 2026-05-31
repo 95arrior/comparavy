@@ -106,7 +106,7 @@ export default async function ToolDetailPage({ params }: ToolPageProps) {
 
         <section className="mt-6 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
           <div className="space-y-6">
-            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm comparavy-reveal sm:p-8">
+            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm ateflo-reveal sm:p-8">
               <SectionHeading
                 eyebrow="What this tool is best for"
                 marker="✅"
@@ -199,7 +199,7 @@ export default async function ToolDetailPage({ params }: ToolPageProps) {
           <aside className="space-y-6">
             <AlternativeTools currentTool={tool} alternatives={alternatives} />
 
-            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm comparavy-reveal">
+            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm ateflo-reveal">
               <SectionHeading eyebrow="Quick context" marker="📌">
                 Why this page exists
               </SectionHeading>
@@ -210,7 +210,7 @@ export default async function ToolDetailPage({ params }: ToolPageProps) {
               </p>
             </section>
 
-            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm comparavy-reveal">
+            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm ateflo-reveal">
               <SectionHeading eyebrow="Next step" marker="➡️">
                 Use the right CTA
               </SectionHeading>

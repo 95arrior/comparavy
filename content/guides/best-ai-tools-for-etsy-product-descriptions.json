@@ -5,8 +5,8 @@
   "topicCluster": "etsy-product-descriptions",
   "publishPriority": 1,
   "type": "tool-decision",
-  "metaTitle": "Best AI Tools for Etsy Product Descriptions | Comparavy",
-  "metaDescription": "Best AI Tools for Etsy Product Descriptions. Practical workflow, prompt examples, tool choices, common mistakes, and a Finder CTA.",
+  "metaTitle": "Best AI Tools for Etsy Product Descriptions | AteFlo",
+  "metaDescription": "Best AI Tools for Etsy Product Descriptions. Practical workflow, prompt examples, tool choices, common mistakes, and a practical next step.",
   "category": "Ecommerce",
   "persona": "Etsy sellers",
   "useCase": "choosing AI tools for Etsy product descriptions",
@@ -412,8 +412,8 @@
     }
   ],
   "finalVerdict": "For most Etsy sellers, ChatGPT plus a careful fact sheet is enough to create useful first drafts. Add Claude when tone and clarity matter, and consider Jasper only when you need repeatable brand copy across a broader shop catalog.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
   "visualSummary": {
     "headline": "A practical route for choosing AI tools for Etsy product descriptions",
     "points": [
@@ -422,8 +422,8 @@
       "Use Jasper when the destination fits"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
   "qualityScore": 94,
   "status": "approved",

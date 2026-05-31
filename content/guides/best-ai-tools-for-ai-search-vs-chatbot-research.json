@@ -3,7 +3,7 @@
   "title": "Best AI Tools for AI Search vs Chatbot Research",
   "guideType": "tool-decision",
   "type": "tool-decision",
-  "metaTitle": "Best AI Tools for AI Search vs Chatbot Research | Comparavy",
+  "metaTitle": "Best AI Tools for AI Search vs Chatbot Research | AteFlo",
   "metaDescription": "Compare AI tools for knowledge workers focused on deciding when to use an AI search engine versus a general chatbot. See practical fit, tradeoffs, and a free-first decision path.",
   "category": "Research",
   "persona": "knowledge workers",
@@ -269,7 +269,7 @@
       "toolName": "You.com",
       "bestFor": "workflows that need search-backed answers and lightweight assistant help for SEO brief",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "You.com is worth considering because it is the clearest fit for deciding when to use an AI search engine versus a general chatbot. It is built for workflows that need search-backed answers and lightweight assistant help, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside general assistant.; this matters when the reader is deciding when to use an AI search engine versus a general chatbot."
     },
@@ -278,7 +278,7 @@
       "toolName": "NotebookLM",
       "bestFor": "working from a defined set of documents when SERP matters more than the top pick",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "NotebookLM is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for working from a defined set of documents, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for open-ended web discovery as the primary task; this matters when the reader is deciding when to use an AI search engine versus a general chatbot."
     },
@@ -287,7 +287,7 @@
       "toolName": "Gemini",
       "bestFor": "users already working in Google's ecosystem when speed or a lighter setup matters more for heading structure",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "Gemini is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for users already working in Google's ecosystem, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for people needing a dedicated media production timeline; this matters when the reader is deciding when to use an AI search engine versus a general chatbot."
     },
@@ -296,7 +296,7 @@
       "toolName": "Phind",
       "bestFor": "workflows that need developer-oriented research and technical answers when speed or a lighter setup matters more for content requirements",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Phind is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need developer-oriented research and technical answers, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside research.; this matters when the reader is deciding when to use an AI search engine versus a general chatbot."
     },
@@ -305,7 +305,7 @@
       "toolName": "Consensus",
       "bestFor": "workflows that need finding research-backed academic answers when speed or a lighter setup matters more for deciding when to use an AI search engine versus a general chatbot",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Consensus is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need finding research-backed academic answers, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside research.; this matters when the reader is deciding when to use an AI search engine versus a general chatbot."
     }
@@ -428,8 +428,8 @@
   "whatChanged": "Give a clear decision matrix for search discovery, document work, and synthesis.",
   "exampleWorkflow": "Prepare target keyword, test You.com for SEO brief, compare NotebookLM when SERP matters, and keep Gemini for review or export checks.",
   "exampleResult": "The final result should be clearer, shorter, and easier to use, with the main ideas preserved and the obvious errors removed.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for knowledge workers",
     "points": [
@@ -438,8 +438,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "current",
   "qualityScore": 92,
   "status": "rejected",

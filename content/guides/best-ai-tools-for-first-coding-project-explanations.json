@@ -3,7 +3,7 @@
   "title": "Best AI Tools for First Coding Project Explanations",
   "guideType": "tool-decision",
   "type": "tool-decision",
-  "metaTitle": "Best AI Tools for First Coding Project Explanations | Comparavy",
+  "metaTitle": "Best AI Tools for First Coding Project Explanations | AteFlo",
   "metaDescription": "Compare AI tools for beginner developers focused on understanding code and debugging a first small project. See practical fit, tradeoffs, and a free-first decision path.",
   "category": "Coding",
   "persona": "beginner developers",
@@ -244,7 +244,7 @@
       "toolName": "Cursor",
       "bestFor": "Developers and technical builders",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 6/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 6/10 in the AteFlo catalog",
       "whyConsider": "Selected for this guide's core workflow.",
       "watchFor": "Non-technical users seeking a simple business answer"
     },
@@ -253,7 +253,7 @@
       "toolName": "GitHub Copilot",
       "bestFor": "Developers working in supported editors and GitHub",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 7/10 in the AteFlo catalog",
       "whyConsider": "Selected for this guide's core workflow.",
       "watchFor": "People who do not work with code"
     },
@@ -262,7 +262,7 @@
       "toolName": "Replit",
       "bestFor": "Prototyping small apps in the browser",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 7/10 in the AteFlo catalog",
       "whyConsider": "Selected for this guide's core workflow.",
       "watchFor": "No-code users needing a finished business system without oversight"
     },
@@ -271,7 +271,7 @@
       "toolName": "You.com",
       "bestFor": "You.com fits workflows that need search-backed answers and lightweight assistant help.",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Matches the coding category.",
       "watchFor": "Not the best choice when your main job is outside general assistant."
     },
@@ -280,7 +280,7 @@
       "toolName": "Gemini",
       "bestFor": "Users already working in Google's ecosystem",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "Matches the coding category.",
       "watchFor": "People needing a dedicated media production timeline"
     }
@@ -312,7 +312,7 @@
   "faqs": [
     {
       "question": "Which tool should beginner developers try first?",
-      "answer": "Cursor is the first tool to evaluate for this use case based on the current Comparavy catalog match. Test it on a real project and compare the result with your requirements."
+      "answer": "Cursor is the first tool to evaluate for this use case based on the current AteFlo catalog match. Test it on a real project and compare the result with your requirements."
     },
     {
       "question": "Should I choose a free plan before subscribing?",
@@ -330,7 +330,7 @@
   "faq": [
     {
       "question": "Which tool should beginner developers try first?",
-      "answer": "Cursor is the first tool to evaluate for this use case based on the current Comparavy catalog match. Test it on a real project and compare the result with your requirements."
+      "answer": "Cursor is the first tool to evaluate for this use case based on the current AteFlo catalog match. Test it on a real project and compare the result with your requirements."
     },
     {
       "question": "Should I choose a free plan before subscribing?",
@@ -370,8 +370,8 @@
   ],
   "exampleWorkflow": "A simple workflow is: collect the source material, ask Cursor for the first draft, then use GitHub Copilot or Replit to tighten the language and check the final result.",
   "exampleResult": "The final result should be a clearer, shorter, and more usable version of the original material, with the main ideas preserved and the obvious errors removed.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for beginner developers",
     "points": [
@@ -380,8 +380,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
   "qualityScore": 92,
   "status": "draft",

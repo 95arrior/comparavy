@@ -3,7 +3,7 @@
   "title": "Best AI Tools for Finding Quotes in Long Documents",
   "guideType": "how-to",
   "type": "how-to",
-  "metaTitle": "Best AI Tools for Finding Quotes in Long Documents | Comparavy",
+  "metaTitle": "Best AI Tools for Finding Quotes in Long Documents | AteFlo",
   "metaDescription": "Learn how to finding relevant source passages inside long documents. See the workflow, tools you can use, and the safest first step.",
   "category": "Research",
   "persona": "research-heavy professionals",
@@ -245,7 +245,7 @@
       "toolName": "SciSpace",
       "bestFor": "workflows that need reading and explaining research papers for finding relevant source passages inside long documents",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 7/10 in the AteFlo catalog",
       "whyConsider": "SciSpace is worth considering because it is the clearest fit for finding relevant source passages inside long documents. It is built for workflows that need reading and explaining research papers, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside research.; this matters when finding relevant source passages inside long documents."
     },
@@ -254,7 +254,7 @@
       "toolName": "Gemini",
       "bestFor": "users already working in Google's ecosystem when you want a different workflow than the top pick",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "Gemini is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for users already working in Google's ecosystem, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for people needing a dedicated media production timeline; this matters when finding relevant source passages inside long documents."
     },
@@ -263,7 +263,7 @@
       "toolName": "Microsoft Copilot",
       "bestFor": "everyday assistance in a Microsoft-oriented workflow when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "Microsoft Copilot is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for everyday assistance in a Microsoft-oriented workflow, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for advanced creative asset editing; this matters when finding relevant source passages inside long documents."
     },
@@ -272,7 +272,7 @@
       "toolName": "Consensus",
       "bestFor": "workflows that need finding research-backed academic answers when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Consensus is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need finding research-backed academic answers, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside research.; this matters when finding relevant source passages inside long documents."
     },
@@ -281,7 +281,7 @@
       "toolName": "Elicit",
       "bestFor": "workflows that need literature review workflows and paper synthesis when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 7/10 in the AteFlo catalog",
       "whyConsider": "Elicit is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need literature review workflows and paper synthesis, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside research.; this matters when finding relevant source passages inside long documents."
     }
@@ -376,8 +376,8 @@
   ],
   "exampleWorkflow": "Collect the source material, ask SciSpace for the first draft, use Gemini to compare a different workflow, and keep Microsoft Copilot for the final cleanup and review.",
   "exampleResult": "The final result should be clearer, shorter, and easier to use, with the main ideas preserved and the obvious errors removed.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for research-heavy professionals",
     "points": [
@@ -386,8 +386,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
   "qualityScore": 92,
   "status": "draft",

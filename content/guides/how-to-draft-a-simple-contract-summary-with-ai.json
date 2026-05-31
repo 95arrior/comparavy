@@ -3,7 +3,7 @@
   "title": "How to Draft a Simple Contract Summary with AI",
   "guideType": "how-to",
   "type": "how-to",
-  "metaTitle": "How to Draft a Simple Contract Summary with AI | Comparavy",
+  "metaTitle": "How to Draft a Simple Contract Summary with AI | AteFlo",
   "metaDescription": "Learn how to summarizing a contract into plain-English notes. See the workflow, tools you can use, and the safest first step.",
   "category": "Research",
   "persona": "freelancers",
@@ -273,7 +273,7 @@
       "toolName": "NotebookLM",
       "bestFor": "working from a defined set of documents for accurate study notes",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "NotebookLM is worth considering because it is the clearest fit for summarizing a contract into plain-English notes. It is built for working from a defined set of documents, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for open-ended web discovery as the primary task; this matters when the reader is summarizing a contract into plain-English notes."
     },
@@ -282,7 +282,7 @@
       "toolName": "Grammarly",
       "bestFor": "polishing email and client-facing writing when source document matters more than the top pick",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 10/10 in the AteFlo catalog",
       "whyConsider": "Grammarly is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for polishing email and client-facing writing, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for long-form research from sources; this matters when the reader is summarizing a contract into plain-English notes."
     },
@@ -291,7 +291,7 @@
       "toolName": "Gemini",
       "bestFor": "users already working in Google's ecosystem when speed or a lighter setup matters more for quiz questions",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "Gemini is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for users already working in Google's ecosystem, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for people needing a dedicated media production timeline; this matters when the reader is summarizing a contract into plain-English notes."
     },
@@ -300,7 +300,7 @@
       "toolName": "DeepL Write",
       "bestFor": "rephrasing professional messages when speed or a lighter setup matters more for source-backed extracts",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 10/10 in the AteFlo catalog",
       "whyConsider": "DeepL Write is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for rephrasing professional messages, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for generating rich visual content; this matters when the reader is summarizing a contract into plain-English notes."
     },
@@ -309,7 +309,7 @@
       "toolName": "You.com",
       "bestFor": "workflows that need search-backed answers and lightweight assistant help when speed or a lighter setup matters more for summarizing a contract into plain-English notes",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "You.com is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need search-backed answers and lightweight assistant help, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside general assistant.; this matters when the reader is summarizing a contract into plain-English notes."
     }
@@ -442,8 +442,8 @@
   "whatChanged": "Use AI for plain-English notes and question lists, not final legal judgment.",
   "exampleWorkflow": "Prepare the real input: PDFs, lecture slides, class notes. Define the target output before opening tools: accurate study notes or section summaries. Use NotebookLM for the first usable pass and ask it to preserve the constraints that matter in Document / PDF / study notes. Check the result against the input, then use Grammarly only if the output needs a format change or stronger second pass. Finish with a human review and use Gemini only for cleanup, export, or a lighter fallback.",
   "exampleResult": "Example result: a checked summarize a contract into plain-English notes output that keeps the source facts, removes filler, names the next action, and is short enough to review before sending, posting, studying, or saving.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for freelancers",
     "points": [
@@ -452,8 +452,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
   "qualityScore": 92,
   "status": "draft",

@@ -5,7 +5,7 @@
   "topicCluster": "meeting-notes-client-recaps",
   "publishPriority": 6,
   "type": "tool-decision",
-  "metaTitle": "Best AI Tools for Turning Meeting Notes Into Client Recaps | Comparavy",
+  "metaTitle": "Best AI Tools for Turning Meeting Notes Into Client Recaps | AteFlo",
   "metaDescription": "Compare AI tools for turning meeting notes into client recaps, including transcription, summary quality, task extraction, and client-safe follow-up.",
   "category": "Productivity",
   "persona": "consultants and account managers",
@@ -379,8 +379,8 @@
     }
   ],
   "finalVerdict": "For client recaps, start with ChatGPT when notes already exist and use Claude for longer, more complex notes. Add Otter.ai or Fireflies only when transcript capture is the real gap, and use Notion AI when the recap belongs in a workspace.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
   "visualSummary": {
     "headline": "Choose by workflow stage",
     "points": [
@@ -389,8 +389,8 @@
       "Store project recaps in Notion AI"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
   "qualityScore": 94,
   "status": "approved",

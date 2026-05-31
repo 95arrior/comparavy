@@ -3,7 +3,7 @@
   "title": "How to Write a Follow-Up Email After a Sales Call with AI",
   "guideType": "how-to",
   "type": "how-to",
-  "metaTitle": "How to Write a Follow-Up Email After a Sales Call with AI | Comparavy",
+  "metaTitle": "How to Write a Follow-Up Email After a Sales Call with AI | AteFlo",
   "metaDescription": "Learn how to writing a follow-up email from sales call notes. See the workflow, tools you can use, and the safest first step.",
   "category": "Meetings",
   "persona": "small sales teams",
@@ -249,7 +249,7 @@
       "toolName": "Grammarly",
       "bestFor": "polishing email and client-facing writing for writing a follow-up email from sales call notes",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 10/10 in the AteFlo catalog",
       "whyConsider": "Grammarly is worth considering because it is the clearest fit for writing a follow-up email from sales call notes. It is built for polishing email and client-facing writing, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for long-form research from sources; this matters when the reader is writing a follow-up email from sales call notes."
     },
@@ -258,7 +258,7 @@
       "toolName": "Copy.ai",
       "bestFor": "sales and marketing workflow content when you want a different workflow than the top pick",
       "freePlan": false,
-      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 7/10 in the AteFlo catalog",
       "whyConsider": "Copy.ai is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for sales and marketing workflow content, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for personal grammar corrections only; this matters when the reader is writing a follow-up email from sales call notes."
     },
@@ -267,7 +267,7 @@
       "toolName": "DeepL Write",
       "bestFor": "rephrasing professional messages when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 10/10 in the AteFlo catalog",
       "whyConsider": "DeepL Write is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for rephrasing professional messages, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for generating rich visual content; this matters when the reader is writing a follow-up email from sales call notes."
     },
@@ -276,7 +276,7 @@
       "toolName": "Writesonic",
       "bestFor": "marketing content ideation when speed or a lighter setup matters more",
       "freePlan": false,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Writesonic is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for marketing content ideation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for users needing only basic proofreading; this matters when the reader is writing a follow-up email from sales call notes."
     },
@@ -285,7 +285,7 @@
       "toolName": "Jasper",
       "bestFor": "marketing teams managing repeated content when speed or a lighter setup matters more",
       "freePlan": false,
-      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 7/10 in the AteFlo catalog",
       "whyConsider": "Jasper is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for marketing teams managing repeated content, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for a casual one-off writing need; this matters when the reader is writing a follow-up email from sales call notes."
     }
@@ -386,8 +386,8 @@
   ],
   "exampleWorkflow": "Collect uploaded PDFs, class notes, and other source documents and remove anything the AI should not use. Define the final output: what the reader needs to produce, send, post, study, or decide. Use AI to create a first structured draft for write a follow-up email from sales call notes. Check names, numbers, sources, commitments, tone, and missing context against the original material. Polish the final result, save the reusable prompt, and choose the next tool only if the format or source type changes.",
   "exampleResult": "Example result: a checked write a follow-up email from sales call notes output that keeps the source facts, removes filler, names the next action, and is short enough to review before sending, posting, studying, or saving.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for small sales teams",
     "points": [
@@ -396,8 +396,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
   "qualityScore": 92,
   "status": "draft",

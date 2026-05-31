@@ -3,7 +3,7 @@
   "title": "Best ChatGPT Alternatives When You Need Citations",
   "guideType": "tool-decision",
   "type": "tool-decision",
-  "metaTitle": "Best ChatGPT Alternatives When You Need Citations | Comparavy",
+  "metaTitle": "Best ChatGPT Alternatives When You Need Citations | AteFlo",
   "metaDescription": "Compare AI tools for busy researchers focused on finding AI assistants that show sources for research-style answers. See practical fit, tradeoffs, and a free-first decision path.",
   "category": "Research",
   "persona": "busy researchers",
@@ -247,7 +247,7 @@
       "toolName": "You.com",
       "bestFor": "workflows that need search-backed answers and lightweight assistant help for finding AI assistants that show sources for research-style answers",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "You.com is worth considering because it is the clearest fit for finding AI assistants that show sources for research-style answers. It is built for workflows that need search-backed answers and lightweight assistant help, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside general assistant.; this matters when the reader is finding AI assistants that show sources for research-style answers."
     },
@@ -256,7 +256,7 @@
       "toolName": "Phind",
       "bestFor": "workflows that need developer-oriented research and technical answers when you want a different workflow than the top pick",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Phind is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for workflows that need developer-oriented research and technical answers, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside research.; this matters when the reader is finding AI assistants that show sources for research-style answers."
     },
@@ -265,7 +265,7 @@
       "toolName": "Kagi Assistant",
       "bestFor": "workflows that need private web search and focused answers when speed or a lighter setup matters more",
       "freePlan": false,
-      "easeOfUse": "Low setup; ease 7/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 7/10 in the AteFlo catalog",
       "whyConsider": "Kagi Assistant is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need private web search and focused answers, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside research.; this matters when the reader is finding AI assistants that show sources for research-style answers."
     },
@@ -274,7 +274,7 @@
       "toolName": "Consensus",
       "bestFor": "workflows that need finding research-backed academic answers when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Consensus is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need finding research-backed academic answers, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside research.; this matters when the reader is finding AI assistants that show sources for research-style answers."
     },
@@ -283,7 +283,7 @@
       "toolName": "Elicit",
       "bestFor": "workflows that need literature review workflows and paper synthesis when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 7/10 in the AteFlo catalog",
       "whyConsider": "Elicit is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need literature review workflows and paper synthesis, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside research.; this matters when the reader is finding AI assistants that show sources for research-style answers."
     }
@@ -379,8 +379,8 @@
   ],
   "exampleWorkflow": "Collect the source material, ask You.com for the first draft, use Phind to compare a different workflow, and keep Kagi Assistant for the final cleanup and review.",
   "exampleResult": "The final result should be clearer, shorter, and easier to use, with the main ideas preserved and the obvious errors removed.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for busy researchers",
     "points": [
@@ -389,8 +389,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "current",
   "qualityScore": 92,
   "status": "draft",

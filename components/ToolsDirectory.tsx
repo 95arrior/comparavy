@@ -89,7 +89,7 @@ export default function ToolsDirectory({ tools }: ToolsDirectoryProps) {
 
   return (
     <>
-      <section className="mt-10 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm comparavy-reveal sm:p-6">
+      <section className="mt-10 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm ateflo-reveal sm:p-6">
         <div className="grid gap-4 lg:grid-cols-[1.2fr_0.9fr_0.9fr_0.9fr] lg:items-end">
           <label className="block">
             <span className="text-sm font-medium text-slate-700">Search tools</span>

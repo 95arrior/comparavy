@@ -283,8 +283,8 @@ const INITIAL_ANSWERS: FinderAnswers = {
 
 function RecommendationBadge({ label }: { readonly label: string }) {
   return (
-    <span className="comparavy-star-badge inline-flex shrink-0 items-center gap-1.5 rounded-full bg-teal-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-800 ring-1 ring-teal-100">
-      <span aria-hidden="true" className="comparavy-star-badge__icon">
+    <span className="ateflo-star-badge inline-flex shrink-0 items-center gap-1.5 rounded-full bg-teal-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-800 ring-1 ring-teal-100">
+      <span aria-hidden="true" className="ateflo-star-badge__icon">
         ✦
       </span>
       {label}
@@ -336,7 +336,7 @@ function RecommendationCard({
 
   return (
     <article
-      className={`rounded-3xl border bg-white p-5 shadow-sm comparavy-card-lift sm:p-6 ${
+      className={`rounded-3xl border bg-white p-5 shadow-sm ateflo-card-lift sm:p-6 ${
         rank === 1
           ? "border-teal-200 ring-1 ring-teal-100"
           : "border-slate-200 hover:border-slate-300"
@@ -358,7 +358,7 @@ function RecommendationCard({
         </div>
       </div>
 
-      <p className="comparavy-clamp-2 mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+      <p className="ateflo-clamp-2 mt-3 max-w-2xl text-sm leading-6 text-slate-600">
         {tool.description}
       </p>
 

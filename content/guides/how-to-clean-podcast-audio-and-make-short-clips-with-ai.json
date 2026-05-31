@@ -3,7 +3,7 @@
   "title": "How to Clean Podcast Audio and Make Short Clips with AI",
   "guideType": "how-to",
   "type": "how-to",
-  "metaTitle": "How to Clean Podcast Audio and Make Short Clips with AI | Comparavy",
+  "metaTitle": "How to Clean Podcast Audio and Make Short Clips with AI | AteFlo",
   "metaDescription": "Learn how to cleaning podcast recordings and turning them into short clips. See the workflow, tools you can use, and the safest first step.",
   "category": "Audio",
   "persona": "podcast creators",
@@ -273,7 +273,7 @@
       "toolName": "Descript",
       "bestFor": "podcasts and talking-head videos for clean audio",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Descript is worth considering because it is the clearest fit for cleaning podcast recordings and turning them into short clips. It is built for podcasts and talking-head videos, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for generative cinematic scenes as the primary goal; this matters when the reader is cleaning podcast recordings and turning them into short clips."
     },
@@ -282,7 +282,7 @@
       "toolName": "OpusClip",
       "bestFor": "creators repurposing long videos into short clips when noise reduction matters more than the top pick",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "OpusClip is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for creators repurposing long videos into short clips, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for full timeline editing for complex productions; this matters when the reader is cleaning podcast recordings and turning them into short clips."
     },
@@ -291,7 +291,7 @@
       "toolName": "CapCut",
       "bestFor": "short-form social video editing when speed or a lighter setup matters more for captioned exports",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "CapCut is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for short-form social video editing, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for detailed document analysis; this matters when the reader is cleaning podcast recordings and turning them into short clips."
     },
@@ -300,7 +300,7 @@
       "toolName": "Krisp",
       "bestFor": "workflows that need noise cancellation and meeting audio cleanup when speed or a lighter setup matters more for show notes",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 10/10 in the AteFlo catalog",
       "whyConsider": "Krisp is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need noise cancellation and meeting audio cleanup, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside audio.; this matters when the reader is cleaning podcast recordings and turning them into short clips."
     },
@@ -309,7 +309,7 @@
       "toolName": "Vizard AI",
       "bestFor": "workflows that need repurposing long videos into clips when speed or a lighter setup matters more for cleaning podcast recordings and turning them into short clips",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Vizard AI is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need repurposing long videos into clips, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside video.; this matters when the reader is cleaning podcast recordings and turning them into short clips."
     }
@@ -442,8 +442,8 @@
   "whatChanged": "Show the audio-first workflow, then the clip selection workflow.",
   "exampleWorkflow": "Prepare the real input: podcast recordings, episode transcript, guest notes. Define the target output before opening tools: clean audio or short clips. Use Descript for the first usable pass and ask it to preserve the constraints that matter in Podcast / audio editing. Check the result against the input, then use OpusClip only if the output needs a format change or stronger second pass. Finish with a human review and use CapCut only for cleanup, export, or a lighter fallback.",
   "exampleResult": "Example result: a checked clean podcast recordings and turning them into short clips output that keeps the source facts, removes filler, names the next action, and is short enough to review before sending, posting, studying, or saving.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for podcast creators",
     "points": [
@@ -452,8 +452,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
   "qualityScore": 92,
   "status": "rejected",

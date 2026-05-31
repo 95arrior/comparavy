@@ -55,7 +55,7 @@ export default function AlternativeTools({
   return (
     <section
       id="alternatives"
-      className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm comparavy-reveal"
+      className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm ateflo-reveal"
     >
       <div>
         <p className="text-sm font-semibold text-teal-700">Alternatives</p>

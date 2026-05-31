@@ -3,7 +3,7 @@
   "title": "Best AI Tools for Source-Grounded Research Workflows",
   "guideType": "trend-led",
   "type": "trend-led",
-  "metaTitle": "Best AI Tools for Source-Grounded Research Workflows | Comparavy",
+  "metaTitle": "Best AI Tools for Source-Grounded Research Workflows | AteFlo",
   "metaDescription": "Compare current AI tool options for research-heavy professionals. See practical fit, tradeoffs, and a clear decision path.",
   "category": "Research",
   "persona": "research-heavy professionals",
@@ -244,7 +244,7 @@
       "toolName": "NotebookLM",
       "bestFor": "Working from a defined set of documents",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "Selected for this guide's core workflow.",
       "watchFor": "Open-ended web discovery as the primary task"
     },
@@ -253,7 +253,7 @@
       "toolName": "Perplexity",
       "bestFor": "Starting research with visible sources",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "Selected for this guide's core workflow.",
       "watchFor": "Final fact checking without opening sources"
     },
@@ -262,7 +262,7 @@
       "toolName": "Consensus",
       "bestFor": "Consensus fits workflows that need finding research-backed academic answers.",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Selected for this guide's core workflow.",
       "watchFor": "Not the best choice when your main job is outside research."
     },
@@ -271,7 +271,7 @@
       "toolName": "Elicit",
       "bestFor": "Elicit fits workflows that need literature review workflows and paper synthesis.",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 7/10 in the AteFlo catalog",
       "whyConsider": "Selected for this guide's core workflow.",
       "watchFor": "Not the best choice when your main job is outside research."
     },
@@ -280,7 +280,7 @@
       "toolName": "SciSpace",
       "bestFor": "SciSpace fits workflows that need reading and explaining research papers.",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 7/10 in the AteFlo catalog",
       "whyConsider": "Selected for this guide's core workflow.",
       "watchFor": "Not the best choice when your main job is outside research."
     }
@@ -312,7 +312,7 @@
   "faqs": [
     {
       "question": "Which tool should research-heavy professionals try first?",
-      "answer": "NotebookLM is the first tool to evaluate for this use case based on the current Comparavy catalog match. Test it on a real project and compare the result with your requirements."
+      "answer": "NotebookLM is the first tool to evaluate for this use case based on the current AteFlo catalog match. Test it on a real project and compare the result with your requirements."
     },
     {
       "question": "Should I choose a free plan before subscribing?",
@@ -330,7 +330,7 @@
   "faq": [
     {
       "question": "Which tool should research-heavy professionals try first?",
-      "answer": "NotebookLM is the first tool to evaluate for this use case based on the current Comparavy catalog match. Test it on a real project and compare the result with your requirements."
+      "answer": "NotebookLM is the first tool to evaluate for this use case based on the current AteFlo catalog match. Test it on a real project and compare the result with your requirements."
     },
     {
       "question": "Should I choose a free plan before subscribing?",
@@ -370,8 +370,8 @@
   ],
   "exampleWorkflow": "A simple workflow is: collect the source material, ask NotebookLM for the first draft, then use Perplexity or Consensus to tighten the language and check the final result.",
   "exampleResult": "The final result should be a clearer, shorter, and more usable version of the original material, with the main ideas preserved and the obvious errors removed.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for research-heavy professionals",
     "points": [
@@ -380,8 +380,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "current",
   "qualityScore": 92,
   "status": "draft",

@@ -3,7 +3,7 @@
   "title": "Best AI Tools for Small Business Automation Agents",
   "guideType": "tool-decision",
   "type": "tool-decision",
-  "metaTitle": "Best AI Tools for Small Business Automation Agents | Comparavy",
+  "metaTitle": "Best AI Tools for Small Business Automation Agents | AteFlo",
   "metaDescription": "Compare AI tools for small business operators focused on automating repeatable tasks with AI-assisted workflows. See practical fit, tradeoffs, and a free-first decision path.",
   "category": "Automation",
   "persona": "small business operators",
@@ -269,7 +269,7 @@
       "toolName": "Zapier AI",
       "bestFor": "non-technical app-to-app automation for automating repeatable tasks with AI-assisted workflows",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Zapier AI is worth considering because it is the clearest fit for automating repeatable tasks with AI-assisted workflows. It is built for non-technical app-to-app automation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for single prompt writing needs; this matters when the reader is automating repeatable tasks with AI-assisted workflows."
     },
@@ -278,7 +278,7 @@
       "toolName": "Make",
       "bestFor": "visual multi-step automation building when you want a different workflow than the top pick",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 6/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 6/10 in the AteFlo catalog",
       "whyConsider": "Make is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for visual multi-step automation building, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for people wanting only a conversational assistant; this matters when the reader is automating repeatable tasks with AI-assisted workflows."
     },
@@ -287,7 +287,7 @@
       "toolName": "n8n",
       "bestFor": "technical users building flexible AI workflows when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "High setup; ease 4/10 in the Comparavy catalog",
+      "easeOfUse": "High setup; ease 4/10 in the AteFlo catalog",
       "whyConsider": "n8n is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for technical users building flexible AI workflows, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for beginners seeking a zero-setup recommendation; this matters when the reader is automating repeatable tasks with AI-assisted workflows."
     },
@@ -296,7 +296,7 @@
       "toolName": "Gumloop",
       "bestFor": "workflows that need AI workflow automation when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 7/10 in the AteFlo catalog",
       "whyConsider": "Gumloop is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need AI workflow automation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside automation.; this matters when the reader is automating repeatable tasks with AI-assisted workflows."
     },
@@ -305,7 +305,7 @@
       "toolName": "Bardeen",
       "bestFor": "workflows that need browser-based workflow automation when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Bardeen is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need browser-based workflow automation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside automation.; this matters when the reader is automating repeatable tasks with AI-assisted workflows."
     }
@@ -429,8 +429,8 @@
   "whatChanged": "Translate the agent trend into simple intake, routing, and follow-up automations.",
   "exampleWorkflow": "Collect the source material, ask Zapier AI for the first draft, use Make to compare a different workflow, and keep n8n for the final cleanup and review.",
   "exampleResult": "The final result should be clearer, shorter, and easier to use, with the main ideas preserved and the obvious errors removed.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for small business operators",
     "points": [
@@ -439,8 +439,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "current",
   "qualityScore": 92,
   "status": "draft",

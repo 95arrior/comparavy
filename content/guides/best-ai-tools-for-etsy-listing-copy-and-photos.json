@@ -3,7 +3,7 @@
   "title": "Best AI Tools for Etsy Listing Copy and Product Photos",
   "guideType": "income",
   "type": "income",
-  "metaTitle": "Best AI Tools for Etsy Listing Copy and Product Photos | Comparavy",
+  "metaTitle": "Best AI Tools for Etsy Listing Copy and Product Photos | AteFlo",
   "metaDescription": "Use AI to support this workflow without hype. See the realistic steps, skill needed, and tools that help you deliver faster.",
   "category": "Writing",
   "persona": "Etsy sellers",
@@ -245,7 +245,7 @@
       "toolName": "Photoroom",
       "bestFor": "workflows that need product photo cleanup and background removal for improving listing descriptions and visuals for handmade or digital products",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 10/10 in the AteFlo catalog",
       "whyConsider": "Photoroom is worth considering because it is the clearest fit for improving listing descriptions and visuals for handmade or digital products. It is built for workflows that need product photo cleanup and background removal, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside image generation.; this matters when improving listing descriptions and visuals for handmade or digital products."
     },
@@ -254,7 +254,7 @@
       "toolName": "Grammarly",
       "bestFor": "polishing email and client-facing writing when you want a different workflow than the top pick",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 10/10 in the AteFlo catalog",
       "whyConsider": "Grammarly is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for polishing email and client-facing writing, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for long-form research from sources; this matters when improving listing descriptions and visuals for handmade or digital products."
     },
@@ -263,7 +263,7 @@
       "toolName": "Canva Magic Studio",
       "bestFor": "non-designers creating polished visual assets when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 10/10 in the AteFlo catalog",
       "whyConsider": "Canva Magic Studio is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for non-designers creating polished visual assets, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for advanced professional image compositing; this matters when improving listing descriptions and visuals for handmade or digital products."
     },
@@ -272,7 +272,7 @@
       "toolName": "DeepL Write",
       "bestFor": "rephrasing professional messages when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 10/10 in the AteFlo catalog",
       "whyConsider": "DeepL Write is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for rephrasing professional messages, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for generating rich visual content; this matters when improving listing descriptions and visuals for handmade or digital products."
     },
@@ -281,7 +281,7 @@
       "toolName": "Clipdrop",
       "bestFor": "workflows that need image cleanup and generative edits when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Clipdrop is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need image cleanup and generative edits, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside image generation.; this matters when improving listing descriptions and visuals for handmade or digital products."
     }
@@ -376,8 +376,8 @@
   ],
   "exampleWorkflow": "Collect the source material, ask Photoroom for the first draft, use Grammarly to compare a different workflow, and keep Canva Magic Studio for the final cleanup and review.",
   "exampleResult": "The final result should be clearer, shorter, and easier to use, with the main ideas preserved and the obvious errors removed.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for Etsy sellers",
     "points": [
@@ -386,8 +386,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "seasonal",
   "qualityScore": 92,
   "status": "draft",

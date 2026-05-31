@@ -20,7 +20,7 @@ export default function GuidesPage() {
   return (
     <main className="min-h-screen px-4 py-8 sm:px-6 sm:py-12">
       <div className="mx-auto max-w-6xl">
-        <header className="rounded-3xl border border-slate-200 bg-white px-6 py-10 shadow-sm comparavy-reveal sm:px-10 sm:py-14">
+        <header className="rounded-3xl border border-slate-200 bg-white px-6 py-10 shadow-sm ateflo-reveal sm:px-10 sm:py-14">
           <nav className="flex flex-wrap items-center justify-between gap-4">
             <Logo />
             <div className="flex flex-wrap items-center gap-2">
@@ -80,7 +80,7 @@ export default function GuidesPage() {
           </div>
 
           {guides.length === 0 ? (
-            <div className="mt-7 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm comparavy-reveal sm:p-10">
+            <div className="mt-7 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm ateflo-reveal sm:p-10">
               <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
                 Shortcuts are being updated
               </p>
@@ -106,8 +106,8 @@ export default function GuidesPage() {
               return (
                 <article
                   key={guide.slug}
-                  className={`flex flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-sm comparavy-card-lift comparavy-reveal ${
-                    index % 2 === 1 ? "comparavy-reveal-delay-1" : ""
+                  className={`flex flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-sm ateflo-card-lift ateflo-reveal ${
+                    index % 2 === 1 ? "ateflo-reveal-delay-1" : ""
                   }`}
                 >
                   <BadgeRow

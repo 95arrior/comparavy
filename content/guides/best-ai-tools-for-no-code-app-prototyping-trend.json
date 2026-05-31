@@ -3,7 +3,7 @@
   "title": "Best AI Tools for No-Code App Prototyping",
   "guideType": "tool-decision",
   "type": "tool-decision",
-  "metaTitle": "Best AI Tools for No-Code App Prototyping | Comparavy",
+  "metaTitle": "Best AI Tools for No-Code App Prototyping | AteFlo",
   "metaDescription": "Compare AI tools for non-technical founders focused on turning an app idea into a clickable prototype or simple build. See practical fit, tradeoffs, and a free-first decision path.",
   "category": "Website",
   "persona": "non-technical founders",
@@ -247,7 +247,7 @@
       "toolName": "v0",
       "bestFor": "workflows that need UI generation from prompts for turning an app idea into a clickable prototype or simple build",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "v0 is worth considering because it is the clearest fit for turning an app idea into a clickable prototype or simple build. It is built for workflows that need UI generation from prompts, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside website.; this matters when the reader is turning an app idea into a clickable prototype or simple build."
     },
@@ -256,7 +256,7 @@
       "toolName": "Bolt",
       "bestFor": "workflows that need app prototyping in the browser when you want a different workflow than the top pick",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Bolt is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for workflows that need app prototyping in the browser, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside coding.; this matters when the reader is turning an app idea into a clickable prototype or simple build."
     },
@@ -265,7 +265,7 @@
       "toolName": "Replit",
       "bestFor": "prototyping small apps in the browser when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 7/10 in the AteFlo catalog",
       "whyConsider": "Replit is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for prototyping small apps in the browser, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for no-code users needing a finished business system without oversight; this matters when the reader is turning an app idea into a clickable prototype or simple build."
     },
@@ -274,7 +274,7 @@
       "toolName": "Lovable",
       "bestFor": "workflows that need building apps from prompts when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Lovable is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need building apps from prompts, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside coding.; this matters when the reader is turning an app idea into a clickable prototype or simple build."
     },
@@ -283,7 +283,7 @@
       "toolName": "Framer AI",
       "bestFor": "landing page concepts when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Framer AI is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for landing page concepts, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for complex application backends; this matters when the reader is turning an app idea into a clickable prototype or simple build."
     }
@@ -379,8 +379,8 @@
   ],
   "exampleWorkflow": "Collect the source material, ask v0 for the first draft, use Bolt to compare a different workflow, and keep Replit for the final cleanup and review.",
   "exampleResult": "The final result should be clearer, shorter, and easier to use, with the main ideas preserved and the obvious errors removed.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for non-technical founders",
     "points": [
@@ -389,8 +389,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "current",
   "qualityScore": 92,
   "status": "draft",

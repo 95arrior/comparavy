@@ -3,7 +3,7 @@
   "title": "Best AI Music Tools for Creator Videos",
   "guideType": "tool-decision",
   "type": "tool-decision",
-  "metaTitle": "Best AI Music Tools for Creator Videos | Comparavy",
+  "metaTitle": "Best AI Music Tools for Creator Videos | AteFlo",
   "metaDescription": "Compare AI tools for video creators focused on creating or testing music ideas for video content. See practical fit, tradeoffs, and a free-first decision path.",
   "category": "Audio",
   "persona": "video creators",
@@ -269,7 +269,7 @@
       "toolName": "Suno",
       "bestFor": "workflows that need music and song generation for clean audio",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Suno is worth considering because it is the clearest fit for creating or testing music ideas for video content. It is built for workflows that need music and song generation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside audio.; this matters when the reader is creating or testing music ideas for video content."
     },
@@ -278,7 +278,7 @@
       "toolName": "ElevenLabs",
       "bestFor": "narration and voiceover creation when noise reduction matters more than the top pick",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "ElevenLabs is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for narration and voiceover creation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for visual design creation; this matters when the reader is creating or testing music ideas for video content."
     },
@@ -287,7 +287,7 @@
       "toolName": "Udio",
       "bestFor": "workflows that need music generation and songwriting when speed or a lighter setup matters more for captioned exports",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Udio is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need music generation and songwriting, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside audio.; this matters when the reader is creating or testing music ideas for video content."
     },
@@ -296,7 +296,7 @@
       "toolName": "AIVA",
       "bestFor": "workflows that need music composition and soundtrack creation when speed or a lighter setup matters more for show notes",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 7/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 7/10 in the AteFlo catalog",
       "whyConsider": "AIVA is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need music composition and soundtrack creation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside audio.; this matters when the reader is creating or testing music ideas for video content."
     },
@@ -305,7 +305,7 @@
       "toolName": "Descript",
       "bestFor": "podcasts and talking-head videos when speed or a lighter setup matters more for creating or testing music ideas for video content",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Descript is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for podcasts and talking-head videos, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for generative cinematic scenes as the primary goal; this matters when the reader is creating or testing music ideas for video content."
     }
@@ -428,8 +428,8 @@
   "whatChanged": "Compare ideation, editing fit, and caution around usage rights.",
   "exampleWorkflow": "Prepare podcast recordings, test Suno for clean audio, compare ElevenLabs when noise reduction matters, and keep Udio for review or export checks.",
   "exampleResult": "The final result should be clearer, shorter, and easier to use, with the main ideas preserved and the obvious errors removed.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for video creators",
     "points": [
@@ -438,8 +438,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "current",
   "qualityScore": 92,
   "status": "draft",

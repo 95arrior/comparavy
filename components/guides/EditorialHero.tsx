@@ -28,7 +28,7 @@ export default function EditorialHero({ guide }: EditorialHeroProps) {
   });
 
   return (
-    <header className="rounded-3xl border border-slate-200 bg-white px-6 py-8 shadow-sm comparavy-reveal sm:px-10 sm:py-10">
+    <header className="rounded-3xl border border-slate-200 bg-white px-6 py-8 shadow-sm ateflo-reveal sm:px-10 sm:py-10">
       <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
         {formatGuideLayoutLabel(guideType)}
       </p>

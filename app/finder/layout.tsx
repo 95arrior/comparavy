@@ -2,17 +2,17 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
-  title: "Finder",
+  title: "What Are You Trying to Finish?",
   description:
     "Answer what you are trying to finish and get a practical AI tool shortlist for the workflow.",
   openGraph: {
-    title: "AteFlo Finder",
+    title: "What are you trying to finish? | AteFlo",
     description:
       "Answer what you are trying to finish and get a practical AI tool shortlist for the workflow.",
   },
   twitter: {
     card: "summary",
-    title: "AteFlo Finder",
+    title: "What are you trying to finish? | AteFlo",
     description:
       "Answer what you are trying to finish and get a practical AI tool shortlist for the workflow.",
   },

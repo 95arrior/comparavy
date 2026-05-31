@@ -3,7 +3,7 @@
   "title": "How to Organize Research Sources with AI",
   "guideType": "how-to",
   "type": "how-to",
-  "metaTitle": "How to Organize Research Sources with AI | Comparavy",
+  "metaTitle": "How to Organize Research Sources with AI | AteFlo",
   "metaDescription": "Learn how to organizing research sources into themes and usable notes. See the workflow, tools you can use, and the safest first step.",
   "category": "Research",
   "persona": "research-heavy professionals",
@@ -247,7 +247,7 @@
       "toolName": "Elicit",
       "bestFor": "workflows that need literature review workflows and paper synthesis for organizing research sources into themes and usable notes",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 7/10 in the AteFlo catalog",
       "whyConsider": "Elicit is worth considering because it is the clearest fit for organizing research sources into themes and usable notes. It is built for workflows that need literature review workflows and paper synthesis, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside research.; this matters when organizing research sources into themes and usable notes."
     },
@@ -256,7 +256,7 @@
       "toolName": "Consensus",
       "bestFor": "workflows that need finding research-backed academic answers when you want a different workflow than the top pick",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Consensus is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for workflows that need finding research-backed academic answers, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside research.; this matters when organizing research sources into themes and usable notes."
     },
@@ -265,7 +265,7 @@
       "toolName": "Phind",
       "bestFor": "workflows that need developer-oriented research and technical answers when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Phind is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need developer-oriented research and technical answers, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside research.; this matters when organizing research sources into themes and usable notes."
     },
@@ -274,7 +274,7 @@
       "toolName": "Microsoft Copilot",
       "bestFor": "everyday assistance in a Microsoft-oriented workflow when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "Microsoft Copilot is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for everyday assistance in a Microsoft-oriented workflow, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for advanced creative asset editing; this matters when organizing research sources into themes and usable notes."
     },
@@ -283,7 +283,7 @@
       "toolName": "Metricool",
       "bestFor": "workflows that need analytics and social scheduling when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Metricool is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need analytics and social scheduling, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside productivity.; this matters when organizing research sources into themes and usable notes."
     }
@@ -378,8 +378,8 @@
   ],
   "exampleWorkflow": "Collect the source material, ask Elicit for a first draft, verify it against the original, use Consensus only if the format needs to change, and use Phind for the final cleanup.",
   "exampleResult": "The final result should be specific enough to use immediately: it should preserve the source facts, remove filler, and include the next action the reader can take.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for research-heavy professionals",
     "points": [
@@ -388,8 +388,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
   "qualityScore": 92,
   "status": "draft",

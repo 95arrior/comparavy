@@ -3,7 +3,7 @@
   "title": "Best AI Tools for Creating Instagram Carousel Posts From a Blog",
   "guideType": "how-to",
   "type": "how-to",
-  "metaTitle": "Best AI Tools for Creating Instagram Carousel Posts From a Blog | Comparavy",
+  "metaTitle": "Best AI Tools for Creating Instagram Carousel Posts From a Blog | AteFlo",
   "metaDescription": "Learn how to repurposing a blog post into a short visual carousel. See the workflow, tools you can use, and the safest first step.",
   "category": "Writing",
   "persona": "content creators",
@@ -244,7 +244,7 @@
       "toolName": "Canva Magic Studio",
       "bestFor": "Non-designers creating polished visual assets",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 10/10 in the AteFlo catalog",
       "whyConsider": "Selected for this guide's core workflow.",
       "watchFor": "Advanced professional image compositing"
     },
@@ -253,7 +253,7 @@
       "toolName": "ChatGPT",
       "bestFor": "People who want one flexible starting point",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 10/10 in the AteFlo catalog",
       "whyConsider": "Selected for this guide's core workflow.",
       "watchFor": "Teams needing a dedicated approval workflow"
     },
@@ -262,7 +262,7 @@
       "toolName": "Claude",
       "bestFor": "Long-form drafting and revision",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "Selected for this guide's core workflow.",
       "watchFor": "People mainly needing a visual design canvas"
     },
@@ -271,7 +271,7 @@
       "toolName": "Adobe Firefly",
       "bestFor": "Creative exploration and image edits",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Selected for this guide's core workflow.",
       "watchFor": "Text-only business productivity"
     },
@@ -280,7 +280,7 @@
       "toolName": "Predis.ai",
       "bestFor": "Predis.ai fits workflows that need social content generation and scheduling.",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Selected for this guide's core workflow.",
       "watchFor": "Not the best choice when your main job is outside productivity."
     }
@@ -312,7 +312,7 @@
   "faqs": [
     {
       "question": "Which tool should content creators try first?",
-      "answer": "Canva Magic Studio is the first tool to evaluate for this use case based on the current Comparavy catalog match. Test it on a real project and compare the result with your requirements."
+      "answer": "Canva Magic Studio is the first tool to evaluate for this use case based on the current AteFlo catalog match. Test it on a real project and compare the result with your requirements."
     },
     {
       "question": "Should I choose a free plan before subscribing?",
@@ -330,7 +330,7 @@
   "faq": [
     {
       "question": "Which tool should content creators try first?",
-      "answer": "Canva Magic Studio is the first tool to evaluate for this use case based on the current Comparavy catalog match. Test it on a real project and compare the result with your requirements."
+      "answer": "Canva Magic Studio is the first tool to evaluate for this use case based on the current AteFlo catalog match. Test it on a real project and compare the result with your requirements."
     },
     {
       "question": "Should I choose a free plan before subscribing?",
@@ -370,8 +370,8 @@
   ],
   "exampleWorkflow": "A simple workflow is: collect the source material, ask Canva Magic Studio for the first draft, then use ChatGPT or Claude to tighten the language and check the final result.",
   "exampleResult": "The final result should be a clearer, shorter, and more usable version of the original material, with the main ideas preserved and the obvious errors removed.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for content creators",
     "points": [
@@ -380,8 +380,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
   "qualityScore": 92,
   "status": "draft",

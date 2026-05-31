@@ -3,7 +3,7 @@
   "title": "How to Create Social Media Captions with AI",
   "guideType": "how-to",
   "type": "how-to",
-  "metaTitle": "How to Create Social Media Captions with AI | Comparavy",
+  "metaTitle": "How to Create Social Media Captions with AI | AteFlo",
   "metaDescription": "Learn how to writing social media captions from post ideas. See the workflow, tools you can use, and the safest first step.",
   "category": "Writing",
   "persona": "solo creators",
@@ -247,7 +247,7 @@
       "toolName": "Ocoya",
       "bestFor": "workflows that need social copy and post creation for writing social media captions from post ideas",
       "freePlan": false,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Ocoya is worth considering because it is the clearest fit for writing social media captions from post ideas. It is built for workflows that need social copy and post creation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside productivity.; this matters when writing social media captions from post ideas."
     },
@@ -256,7 +256,7 @@
       "toolName": "Surfer SEO",
       "bestFor": "teams optimizing search-focused web content when you want a different workflow than the top pick",
       "freePlan": false,
-      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 7/10 in the AteFlo catalog",
       "whyConsider": "Surfer SEO is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for teams optimizing search-focused web content, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for general chat assistance without a content workflow; this matters when writing social media captions from post ideas."
     },
@@ -265,7 +265,7 @@
       "toolName": "ElevenLabs",
       "bestFor": "narration and voiceover creation when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "ElevenLabs is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for narration and voiceover creation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for visual design creation; this matters when writing social media captions from post ideas."
     },
@@ -274,7 +274,7 @@
       "toolName": "Ideogram",
       "bestFor": "graphics that include visual text concepts when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "Ideogram is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for graphics that include visual text concepts, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for final brand typography without manual checking; this matters when writing social media captions from post ideas."
     },
@@ -283,7 +283,7 @@
       "toolName": "ClickUp AI",
       "bestFor": "workflows that need workspace tasks and AI-assisted project coordination when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "ClickUp AI is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need workspace tasks and AI-assisted project coordination, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside productivity.; this matters when writing social media captions from post ideas."
     }
@@ -378,8 +378,8 @@
   ],
   "exampleWorkflow": "Collect the source material, ask Ocoya for a first draft, verify it against the original, use Surfer SEO only if the format needs to change, and use ElevenLabs for the final cleanup.",
   "exampleResult": "The final result should be specific enough to use immediately: it should preserve the source facts, remove filler, and include the next action the reader can take.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for solo creators",
     "points": [
@@ -388,8 +388,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
   "qualityScore": 92,
   "status": "draft",

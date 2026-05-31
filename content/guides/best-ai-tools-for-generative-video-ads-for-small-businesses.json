@@ -3,7 +3,7 @@
   "title": "Best AI Tools for Generative Video Ads for Small Businesses",
   "guideType": "tool-decision",
   "type": "tool-decision",
-  "metaTitle": "Best AI Tools for Generative Video Ads for Small Businesses | Comparavy",
+  "metaTitle": "Best AI Tools for Generative Video Ads for Small Businesses | AteFlo",
   "metaDescription": "Compare AI tools for small business marketers focused on creating simple video ad concepts without a production team. See practical fit, tradeoffs, and a free-first decision path.",
   "category": "Video",
   "persona": "small business marketers",
@@ -269,7 +269,7 @@
       "toolName": "InVideo",
       "bestFor": "workflows that need social video creation from prompts for creating simple video ad concepts without a production team",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "InVideo is worth considering because it is the clearest fit for creating simple video ad concepts without a production team. It is built for workflows that need social video creation from prompts, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside video.; this matters when the reader is creating simple video ad concepts without a production team."
     },
@@ -278,7 +278,7 @@
       "toolName": "Canva Magic Studio",
       "bestFor": "non-designers creating polished visual assets when you want a different workflow than the top pick",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 10/10 in the AteFlo catalog",
       "whyConsider": "Canva Magic Studio is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for non-designers creating polished visual assets, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for advanced professional image compositing; this matters when the reader is creating simple video ad concepts without a production team."
     },
@@ -287,7 +287,7 @@
       "toolName": "Runway",
       "bestFor": "aI video concept creation when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 7/10 in the AteFlo catalog",
       "whyConsider": "Runway is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for aI video concept creation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for simple transcript editing only; this matters when the reader is creating simple video ad concepts without a production team."
     },
@@ -296,7 +296,7 @@
       "toolName": "HeyGen",
       "bestFor": "avatar-led marketing or explainers when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "HeyGen is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for avatar-led marketing or explainers, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for traditional manual video editing as the full workflow; this matters when the reader is creating simple video ad concepts without a production team."
     },
@@ -305,7 +305,7 @@
       "toolName": "Synthesia",
       "bestFor": "structured explainer or training videos when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Synthesia is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for structured explainer or training videos, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for cinematic creative video generation; this matters when the reader is creating simple video ad concepts without a production team."
     }
@@ -429,8 +429,8 @@
   "whatChanged": "Compare concept generation, template editing, and spokesperson workflows.",
   "exampleWorkflow": "Collect the source material, ask InVideo for the first draft, use Canva Magic Studio to compare a different workflow, and keep Runway for the final cleanup and review.",
   "exampleResult": "The final result should be clearer, shorter, and easier to use, with the main ideas preserved and the obvious errors removed.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for small business marketers",
     "points": [
@@ -439,8 +439,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "current",
   "qualityScore": 92,
   "status": "draft",

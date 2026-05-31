@@ -3,7 +3,7 @@
   "title": "How to Create a One-Page Business Plan with AI",
   "guideType": "how-to",
   "type": "how-to",
-  "metaTitle": "How to Create a One-Page Business Plan with AI | Comparavy",
+  "metaTitle": "How to Create a One-Page Business Plan with AI | AteFlo",
   "metaDescription": "Learn how to turning a rough idea into a concise one-page business plan. See the workflow, tools you can use, and the safest first step.",
   "category": "General Assistant",
   "persona": "first-time founders",
@@ -273,7 +273,7 @@
       "toolName": "Gamma",
       "bestFor": "quick presentation starting versions for accurate study notes",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "Gamma is worth considering because it is the clearest fit for turning a rough idea into a concise one-page business plan. It is built for quick presentation starting versions, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for strictly controlled corporate slide templates without adjustment; this matters when the reader is turning a rough idea into a concise one-page business plan."
     },
@@ -282,7 +282,7 @@
       "toolName": "Notion AI",
       "bestFor": "teams or individuals already organizing work in Notion when source document matters more than the top pick",
       "freePlan": false,
-      "easeOfUse": "Medium setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Notion AI is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for teams or individuals already organizing work in Notion, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for people who do not want to adopt Notion; this matters when the reader is turning a rough idea into a concise one-page business plan."
     },
@@ -291,7 +291,7 @@
       "toolName": "Canva Magic Studio",
       "bestFor": "non-designers creating polished visual assets when speed or a lighter setup matters more for quiz questions",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 10/10 in the AteFlo catalog",
       "whyConsider": "Canva Magic Studio is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for non-designers creating polished visual assets, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for advanced professional image compositing; this matters when the reader is turning a rough idea into a concise one-page business plan."
     },
@@ -300,7 +300,7 @@
       "toolName": "Gemini",
       "bestFor": "users already working in Google's ecosystem when speed or a lighter setup matters more for source-backed extracts",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "Gemini is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for users already working in Google's ecosystem, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for people needing a dedicated media production timeline; this matters when the reader is turning a rough idea into a concise one-page business plan."
     },
@@ -309,7 +309,7 @@
       "toolName": "Microsoft Copilot",
       "bestFor": "everyday assistance in a Microsoft-oriented workflow when speed or a lighter setup matters more for turning a rough idea into a concise one-page business plan",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "Microsoft Copilot is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for everyday assistance in a Microsoft-oriented workflow, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for advanced creative asset editing; this matters when the reader is turning a rough idea into a concise one-page business plan."
     }
@@ -442,8 +442,8 @@
   "whatChanged": "Write a plan that separates facts, assumptions, and next tests.",
   "exampleWorkflow": "Prepare the real input: PDFs, lecture slides, class notes. Define the target output before opening tools: accurate study notes or section summaries. Use Gamma for the first usable pass and ask it to preserve the constraints that matter in Document / PDF / study notes. Check the result against the input, then use Notion AI only if the output needs a format change or stronger second pass. Finish with a human review and use Canva Magic Studio only for cleanup, export, or a lighter fallback.",
   "exampleResult": "Example result: a checked turn a rough idea into a concise one-page business plan output that keeps the source facts, removes filler, names the next action, and is short enough to review before sending, posting, studying, or saving.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for first-time founders",
     "points": [
@@ -452,8 +452,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
   "qualityScore": 92,
   "status": "draft",

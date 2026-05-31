@@ -3,7 +3,7 @@
   "title": "Best AI Tools for Podcast Clips and Video Podcast Repurposing",
   "guideType": "tool-decision",
   "type": "tool-decision",
-  "metaTitle": "Best AI Tools for Podcast Clips and Video Podcast Repurposing | Comparavy",
+  "metaTitle": "Best AI Tools for Podcast Clips and Video Podcast Repurposing | AteFlo",
   "metaDescription": "Compare AI tools for podcast creators focused on turning podcast episodes into clips, captions, and shareable assets. See practical fit, tradeoffs, and a free-first decision path.",
   "category": "Video",
   "persona": "podcast creators",
@@ -269,7 +269,7 @@
       "toolName": "Descript",
       "bestFor": "podcasts and talking-head videos for clean audio",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Descript is worth considering because it is the clearest fit for turning podcast episodes into clips, captions, and shareable assets. It is built for podcasts and talking-head videos, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for generative cinematic scenes as the primary goal; this matters when the reader is turning podcast episodes into clips, captions, and shareable assets."
     },
@@ -278,7 +278,7 @@
       "toolName": "OpusClip",
       "bestFor": "creators repurposing long videos into short clips when noise reduction matters more than the top pick",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "OpusClip is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for creators repurposing long videos into short clips, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for full timeline editing for complex productions; this matters when the reader is turning podcast episodes into clips, captions, and shareable assets."
     },
@@ -287,7 +287,7 @@
       "toolName": "CapCut",
       "bestFor": "short-form social video editing when speed or a lighter setup matters more for captioned exports",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "CapCut is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for short-form social video editing, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for detailed document analysis; this matters when the reader is turning podcast episodes into clips, captions, and shareable assets."
     },
@@ -296,7 +296,7 @@
       "toolName": "Vizard AI",
       "bestFor": "workflows that need repurposing long videos into clips when speed or a lighter setup matters more for show notes",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Vizard AI is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need repurposing long videos into clips, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside video.; this matters when the reader is turning podcast episodes into clips, captions, and shareable assets."
     },
@@ -305,7 +305,7 @@
       "toolName": "Fliki",
       "bestFor": "workflows that need turning scripts into narrated videos when speed or a lighter setup matters more for turning podcast episodes into clips, captions, and shareable assets",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Fliki is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need turning scripts into narrated videos, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside video.; this matters when the reader is turning podcast episodes into clips, captions, and shareable assets."
     }
@@ -428,8 +428,8 @@
   "whatChanged": "Recommend tools by episode format and desired level of manual control.",
   "exampleWorkflow": "Prepare podcast recordings, test Descript for clean audio, compare OpusClip when noise reduction matters, and keep CapCut for review or export checks.",
   "exampleResult": "The final result should be clearer, shorter, and easier to use, with the main ideas preserved and the obvious errors removed.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for podcast creators",
     "points": [
@@ -438,8 +438,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "current",
   "qualityScore": 92,
   "status": "draft",

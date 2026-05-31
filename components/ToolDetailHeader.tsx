@@ -32,7 +32,7 @@ export default function ToolDetailHeader({ tool }: ToolDetailHeaderProps) {
   const visitUrl = tool.affiliateUrl ?? tool.officialUrl;
 
   return (
-    <header className="rounded-3xl border border-slate-200 bg-white px-6 py-8 shadow-sm comparavy-reveal sm:px-8 sm:py-10">
+    <header className="rounded-3xl border border-slate-200 bg-white px-6 py-8 shadow-sm ateflo-reveal sm:px-8 sm:py-10">
       <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-3xl">
           <div className="flex min-w-0 items-center gap-3">

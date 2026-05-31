@@ -318,7 +318,7 @@ export default function Home() {
         <div className="mx-auto max-w-6xl rounded-2xl border border-teal-100 bg-teal-50 px-6 py-8 sm:flex sm:items-center sm:justify-between sm:gap-8 sm:px-8">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-800">
-              Finder CTA
+              Need a tool shortlist?
             </p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
               Not sure which shortcut or tool fits?

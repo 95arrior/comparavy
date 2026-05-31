@@ -5,8 +5,8 @@
   "topicCluster": "small-business-content-calendar",
   "publishPriority": 5,
   "type": "how-to",
-  "metaTitle": "How to Create a Content Calendar for a Small Business with AI | Comparavy",
-  "metaDescription": "How to Create a Content Calendar for a Small Business with AI. Practical workflow, prompt examples, tool choices, common mistakes, and a Finder CTA.",
+  "metaTitle": "How to Create a Content Calendar for a Small Business with AI | AteFlo",
+  "metaDescription": "How to Create a Content Calendar for a Small Business with AI. Practical workflow, prompt examples, tool choices, common mistakes, and a practical next step.",
   "category": "Marketing",
   "persona": "Small business owners",
   "useCase": "creating a content calendar for a small business",
@@ -412,8 +412,8 @@
     }
   ],
   "finalVerdict": "A useful small-business content calendar is built around capacity, customers, and offers. Use AI to create the first plan, then cut it down to what your team can produce and schedule consistently.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
   "visualSummary": {
     "headline": "A practical route for creating a content calendar for a small business",
     "points": [
@@ -422,8 +422,8 @@
       "Use Buffer when the destination fits"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
   "qualityScore": 94,
   "status": "approved",

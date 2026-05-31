@@ -3,7 +3,7 @@
   "title": "How to Find Quotes in Long Documents with AI",
   "guideType": "how-to",
   "type": "how-to",
-  "metaTitle": "How to Find Quotes in Long Documents with AI | Comparavy",
+  "metaTitle": "How to Find Quotes in Long Documents with AI | AteFlo",
   "metaDescription": "Learn how to finding relevant source passages inside long documents. See the workflow, tools you can use, and the safest first step.",
   "category": "Research",
   "persona": "research-heavy professionals",
@@ -273,7 +273,7 @@
       "toolName": "NotebookLM",
       "bestFor": "working from a defined set of documents for finding relevant source passages inside long documents",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "NotebookLM is worth considering because it is the clearest fit for finding relevant source passages inside long documents. It is built for working from a defined set of documents, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for open-ended web discovery as the primary task; this matters when the reader is finding relevant source passages inside long documents."
     },
@@ -282,7 +282,7 @@
       "toolName": "SciSpace",
       "bestFor": "workflows that need reading and explaining research papers when you want a different workflow than the top pick",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 7/10 in the AteFlo catalog",
       "whyConsider": "SciSpace is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for workflows that need reading and explaining research papers, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside research.; this matters when the reader is finding relevant source passages inside long documents."
     },
@@ -291,7 +291,7 @@
       "toolName": "Gemini",
       "bestFor": "users already working in Google's ecosystem when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "Gemini is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for users already working in Google's ecosystem, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for people needing a dedicated media production timeline; this matters when the reader is finding relevant source passages inside long documents."
     },
@@ -300,7 +300,7 @@
       "toolName": "You.com",
       "bestFor": "workflows that need search-backed answers and lightweight assistant help when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "You.com is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need search-backed answers and lightweight assistant help, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside general assistant.; this matters when the reader is finding relevant source passages inside long documents."
     },
@@ -309,7 +309,7 @@
       "toolName": "Phind",
       "bestFor": "workflows that need developer-oriented research and technical answers when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Phind is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need developer-oriented research and technical answers, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside research.; this matters when the reader is finding relevant source passages inside long documents."
     }
@@ -443,8 +443,8 @@
   "whatChanged": "Use AI to locate candidate passages, then verify the exact wording yourself.",
   "exampleWorkflow": "Collect uploaded PDFs, class notes, and other source documents and remove anything the AI should not use. Define the final output: what the reader needs to produce, send, post, study, or decide. Use AI to create a first structured draft for find relevant source passages inside long documents. Check names, numbers, sources, commitments, tone, and missing context against the original material. Polish the final result, save the reusable prompt, and choose the next tool only if the format or source type changes.",
   "exampleResult": "Example result: a checked find relevant source passages inside long documents output that keeps the source facts, removes filler, names the next action, and is short enough to review before sending, posting, studying, or saving.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for research-heavy professionals",
     "points": [
@@ -453,8 +453,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
   "qualityScore": 92,
   "status": "draft",

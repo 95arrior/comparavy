@@ -3,7 +3,7 @@
   "title": "Best AI Tools for Consistent AI Image Style",
   "guideType": "tool-decision",
   "type": "tool-decision",
-  "metaTitle": "Best AI Tools for Consistent AI Image Style | Comparavy",
+  "metaTitle": "Best AI Tools for Consistent AI Image Style | AteFlo",
   "metaDescription": "Compare AI tools for visual creators focused on creating multiple images that feel visually consistent. See practical fit, tradeoffs, and a free-first decision path.",
   "category": "Image Generation",
   "persona": "visual creators",
@@ -269,7 +269,7 @@
       "toolName": "Midjourney",
       "bestFor": "high-impact visual ideation for edited images that match brand style",
       "freePlan": false,
-      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 7/10 in the AteFlo catalog",
       "whyConsider": "Midjourney is worth considering because it is the clearest fit for creating multiple images that feel visually consistent. It is built for high-impact visual ideation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for people seeking an ongoing free plan; this matters when the reader is creating multiple images that feel visually consistent."
     },
@@ -278,7 +278,7 @@
       "toolName": "Krea",
       "bestFor": "workflows that need fast visual exploration and image enhancement when brand colors matters more than the top pick",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Krea is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for workflows that need fast visual exploration and image enhancement, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside image generation.; this matters when the reader is creating multiple images that feel visually consistent."
     },
@@ -287,7 +287,7 @@
       "toolName": "Leonardo AI",
       "bestFor": "iterating visual assets when speed or a lighter setup matters more for on-brand ad visuals",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 7/10 in the AteFlo catalog",
       "whyConsider": "Leonardo AI is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for iterating visual assets, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for simple grammar or note-taking work; this matters when the reader is creating multiple images that feel visually consistent."
     },
@@ -296,7 +296,7 @@
       "toolName": "Canva Magic Studio",
       "bestFor": "non-designers creating polished visual assets when speed or a lighter setup matters more for creating multiple images that feel visually consistent",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 10/10 in the AteFlo catalog",
       "whyConsider": "Canva Magic Studio is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for non-designers creating polished visual assets, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for advanced professional image compositing; this matters when the reader is creating multiple images that feel visually consistent."
     },
@@ -305,7 +305,7 @@
       "toolName": "Adobe Firefly",
       "bestFor": "creative exploration and image edits when speed or a lighter setup matters more for edited images that match brand style",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Adobe Firefly is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for creative exploration and image edits, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for text-only business productivity; this matters when the reader is creating multiple images that feel visually consistent."
     }
@@ -428,8 +428,8 @@
   "whatChanged": "Compare repeatability, editing control, and brand workflow.",
   "exampleWorkflow": "Prepare product photos, test Midjourney for edited images that match brand style, compare Krea when brand colors matters, and keep Leonardo AI for review or export checks.",
   "exampleResult": "The final result should be clearer, shorter, and easier to use, with the main ideas preserved and the obvious errors removed.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for visual creators",
     "points": [
@@ -438,8 +438,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "current",
   "qualityScore": 92,
   "status": "draft",

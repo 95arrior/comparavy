@@ -3,7 +3,7 @@
   "title": "Best AI Tools for YouTube Shorts From Long Videos",
   "guideType": "tool-decision",
   "type": "tool-decision",
-  "metaTitle": "Best AI Tools for YouTube Shorts From Long Videos | Comparavy",
+  "metaTitle": "Best AI Tools for YouTube Shorts From Long Videos | AteFlo",
   "metaDescription": "Compare AI tools for video creators focused on turning long videos into short vertical clips. See practical fit, tradeoffs, and a free-first decision path.",
   "category": "Video",
   "persona": "video creators",
@@ -269,7 +269,7 @@
       "toolName": "OpusClip",
       "bestFor": "creators repurposing long videos into short clips for clean audio",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "OpusClip is worth considering because it is the clearest fit for turning long videos into short vertical clips. It is built for creators repurposing long videos into short clips, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for full timeline editing for complex productions; this matters when the reader is turning long videos into short vertical clips."
     },
@@ -278,7 +278,7 @@
       "toolName": "CapCut",
       "bestFor": "short-form social video editing when noise reduction matters more than the top pick",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "CapCut is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for short-form social video editing, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for detailed document analysis; this matters when the reader is turning long videos into short vertical clips."
     },
@@ -287,7 +287,7 @@
       "toolName": "Descript",
       "bestFor": "podcasts and talking-head videos when speed or a lighter setup matters more for captioned exports",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Descript is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for podcasts and talking-head videos, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for generative cinematic scenes as the primary goal; this matters when the reader is turning long videos into short vertical clips."
     },
@@ -296,7 +296,7 @@
       "toolName": "Runway",
       "bestFor": "aI video concept creation when speed or a lighter setup matters more for show notes",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 7/10 in the AteFlo catalog",
       "whyConsider": "Runway is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for aI video concept creation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for simple transcript editing only; this matters when the reader is turning long videos into short vertical clips."
     },
@@ -305,7 +305,7 @@
       "toolName": "HeyGen",
       "bestFor": "avatar-led marketing or explainers when speed or a lighter setup matters more for turning long videos into short vertical clips",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "HeyGen is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for avatar-led marketing or explainers, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for traditional manual video editing as the full workflow; this matters when the reader is turning long videos into short vertical clips."
     }
@@ -428,8 +428,8 @@
   "whatChanged": "Compare clip detection, editing control, and output formats.",
   "exampleWorkflow": "Prepare podcast recordings, test OpusClip for clean audio, compare CapCut when noise reduction matters, and keep Descript for review or export checks.",
   "exampleResult": "The final result should be clearer, shorter, and easier to use, with the main ideas preserved and the obvious errors removed.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for video creators",
     "points": [
@@ -438,8 +438,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
   "qualityScore": 92,
   "status": "rejected",

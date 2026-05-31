@@ -32,7 +32,7 @@ interface ToolCardProps {
 
 export default function ToolCard({ tool }: ToolCardProps) {
   return (
-    <article className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-4 shadow-sm comparavy-card-lift sm:p-5">
+    <article className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-4 shadow-sm ateflo-card-lift sm:p-5">
       <div className="flex min-w-0 items-center gap-2.5">
         <ToolIcon {...tool} size={24} />
         <h2 className="min-w-0 flex-1 truncate whitespace-nowrap text-base font-semibold tracking-tight text-slate-900">
@@ -45,7 +45,7 @@ export default function ToolCard({ tool }: ToolCardProps) {
         </span>
       </div>
 
-      <p className="comparavy-clamp-2 mt-3 text-sm leading-6 text-slate-600">
+      <p className="ateflo-clamp-2 mt-3 text-sm leading-6 text-slate-600">
         {tool.description}
       </p>
 

@@ -3,7 +3,7 @@
   "title": "Best AI Coding Assistants for Non-Engineers",
   "guideType": "tool-decision",
   "type": "tool-decision",
-  "metaTitle": "Best AI Coding Assistants for Non-Engineers | Comparavy",
+  "metaTitle": "Best AI Coding Assistants for Non-Engineers | AteFlo",
   "metaDescription": "Compare AI tools for non-technical builders focused on using AI coding tools without losing control of the project. See practical fit, tradeoffs, and a free-first decision path.",
   "category": "Coding",
   "persona": "non-technical builders",
@@ -269,7 +269,7 @@
       "toolName": "Replit",
       "bestFor": "prototyping small apps in the browser for working prototype",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 7/10 in the AteFlo catalog",
       "whyConsider": "Replit is worth considering because it is the clearest fit for using AI coding tools without losing control of the project. It is built for prototyping small apps in the browser, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for no-code users needing a finished business system without oversight; this matters when the reader is using AI coding tools without losing control of the project."
     },
@@ -278,7 +278,7 @@
       "toolName": "Cursor",
       "bestFor": "developers and technical builders when repo matters more than the top pick",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 6/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 6/10 in the AteFlo catalog",
       "whyConsider": "Cursor is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for developers and technical builders, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for non-technical users seeking a simple business answer; this matters when the reader is using AI coding tools without losing control of the project."
     },
@@ -287,7 +287,7 @@
       "toolName": "GitHub Copilot",
       "bestFor": "developers working in supported editors and GitHub when speed or a lighter setup matters more for bug fix",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 7/10 in the AteFlo catalog",
       "whyConsider": "GitHub Copilot is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for developers working in supported editors and GitHub, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for people who do not work with code; this matters when the reader is using AI coding tools without losing control of the project."
     },
@@ -296,7 +296,7 @@
       "toolName": "Bolt",
       "bestFor": "workflows that need app prototyping in the browser when speed or a lighter setup matters more for implementation plan",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Bolt is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need app prototyping in the browser, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside coding.; this matters when the reader is using AI coding tools without losing control of the project."
     },
@@ -305,7 +305,7 @@
       "toolName": "You.com",
       "bestFor": "workflows that need search-backed answers and lightweight assistant help when speed or a lighter setup matters more for using AI coding tools without losing control of the project",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "You.com is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need search-backed answers and lightweight assistant help, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside general assistant.; this matters when the reader is using AI coding tools without losing control of the project."
     }
@@ -428,8 +428,8 @@
   "whatChanged": "Rank tools by clarity, environment simplicity, and handoff risk.",
   "exampleWorkflow": "Prepare feature idea, test Replit for working prototype, compare Cursor when repo matters, and keep GitHub Copilot for review or export checks.",
   "exampleResult": "The final result should be clearer, shorter, and easier to use, with the main ideas preserved and the obvious errors removed.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for non-technical builders",
     "points": [
@@ -438,8 +438,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "current",
   "qualityScore": 92,
   "status": "draft",

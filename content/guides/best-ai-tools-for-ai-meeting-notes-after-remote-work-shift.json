@@ -3,7 +3,7 @@
   "title": "Best AI Meeting Note Tools for Hybrid Teams",
   "guideType": "tool-decision",
   "type": "tool-decision",
-  "metaTitle": "Best AI Meeting Note Tools for Hybrid Teams | Comparavy",
+  "metaTitle": "Best AI Meeting Note Tools for Hybrid Teams | AteFlo",
   "metaDescription": "Compare AI tools for hybrid teams focused on choosing a meeting note tool for distributed work and follow-up. See practical fit, tradeoffs, and a free-first decision path.",
   "category": "Meetings",
   "persona": "hybrid teams",
@@ -247,7 +247,7 @@
       "toolName": "tl;dv",
       "bestFor": "workflows that need call clips and meeting notes for choosing a meeting note tool for distributed work and follow-up",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "tl;dv is worth considering because it is the clearest fit for choosing a meeting note tool for distributed work and follow-up. It is built for workflows that need call clips and meeting notes, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside meetings.; this matters when the reader is choosing a meeting note tool for distributed work and follow-up."
     },
@@ -256,7 +256,7 @@
       "toolName": "Reclaim",
       "bestFor": "workflows that need calendar protection and scheduling when you want a different workflow than the top pick",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Reclaim is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for workflows that need calendar protection and scheduling, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside productivity.; this matters when the reader is choosing a meeting note tool for distributed work and follow-up."
     },
@@ -265,7 +265,7 @@
       "toolName": "Notion AI",
       "bestFor": "teams or individuals already organizing work in Notion when speed or a lighter setup matters more",
       "freePlan": false,
-      "easeOfUse": "Medium setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Notion AI is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for teams or individuals already organizing work in Notion, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for people who do not want to adopt Notion; this matters when the reader is choosing a meeting note tool for distributed work and follow-up."
     },
@@ -274,7 +274,7 @@
       "toolName": "Motion",
       "bestFor": "workflows that need calendar planning and task prioritization when speed or a lighter setup matters more",
       "freePlan": false,
-      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 7/10 in the AteFlo catalog",
       "whyConsider": "Motion is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need calendar planning and task prioritization, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside productivity.; this matters when the reader is choosing a meeting note tool for distributed work and follow-up."
     },
@@ -283,7 +283,7 @@
       "toolName": "Later",
       "bestFor": "workflows that need social planning and publishing when speed or a lighter setup matters more",
       "freePlan": false,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Later is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need social planning and publishing, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside productivity.; this matters when the reader is choosing a meeting note tool for distributed work and follow-up."
     }
@@ -379,8 +379,8 @@
   ],
   "exampleWorkflow": "Collect the source material, ask tl;dv for the first draft, use Reclaim to compare a different workflow, and keep Notion AI for the final cleanup and review.",
   "exampleResult": "The final result should be clearer, shorter, and easier to use, with the main ideas preserved and the obvious errors removed.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for hybrid teams",
     "points": [
@@ -389,8 +389,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "current",
   "qualityScore": 92,
   "status": "draft",

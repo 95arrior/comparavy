@@ -3,7 +3,7 @@
   "title": "How to Turn a Webinar Transcript Into a Summary Email with AI",
   "guideType": "how-to",
   "type": "how-to",
-  "metaTitle": "How to Turn a Webinar Transcript Into a Summary Email with AI | Comparavy",
+  "metaTitle": "How to Turn a Webinar Transcript Into a Summary Email with AI | AteFlo",
   "metaDescription": "Learn how to turning a webinar transcript into a useful summary email. See the workflow, tools you can use, and the safest first step.",
   "category": "Writing",
   "persona": "marketing teams",
@@ -247,7 +247,7 @@
       "toolName": "Kling AI",
       "bestFor": "workflows that need high-quality generative video clips for turning a webinar transcript into a useful summary email",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 7/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 7/10 in the AteFlo catalog",
       "whyConsider": "Kling AI is worth considering because it is the clearest fit for turning a webinar transcript into a useful summary email. It is built for workflows that need high-quality generative video clips, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside video.; this matters when turning a webinar transcript into a useful summary email."
     },
@@ -256,7 +256,7 @@
       "toolName": "Pika",
       "bestFor": "workflows that need text-to-video concept generation when you want a different workflow than the top pick",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Pika is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for workflows that need text-to-video concept generation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside video.; this matters when turning a webinar transcript into a useful summary email."
     },
@@ -265,7 +265,7 @@
       "toolName": "HeyGen",
       "bestFor": "avatar-led marketing or explainers when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "HeyGen is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for avatar-led marketing or explainers, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for traditional manual video editing as the full workflow; this matters when turning a webinar transcript into a useful summary email."
     },
@@ -274,7 +274,7 @@
       "toolName": "Synthesia",
       "bestFor": "structured explainer or training videos when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Synthesia is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for structured explainer or training videos, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for cinematic creative video generation; this matters when turning a webinar transcript into a useful summary email."
     },
@@ -283,7 +283,7 @@
       "toolName": "Framer AI",
       "bestFor": "landing page concepts when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Framer AI is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for landing page concepts, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for complex application backends; this matters when turning a webinar transcript into a useful summary email."
     }
@@ -378,8 +378,8 @@
   ],
   "exampleWorkflow": "Collect the source material, ask Kling AI for a first draft, verify it against the original, use Pika only if the format needs to change, and use HeyGen for the final cleanup.",
   "exampleResult": "The final result should be specific enough to use immediately: it should preserve the source facts, remove filler, and include the next action the reader can take.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for marketing teams",
     "points": [
@@ -388,8 +388,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
   "qualityScore": 92,
   "status": "draft",

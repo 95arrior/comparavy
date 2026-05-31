@@ -3,7 +3,7 @@
   "title": "How to Build a Simple Landing Page From Copy with AI",
   "guideType": "how-to",
   "type": "how-to",
-  "metaTitle": "How to Build a Simple Landing Page From Copy with AI | Comparavy",
+  "metaTitle": "How to Build a Simple Landing Page From Copy with AI | AteFlo",
   "metaDescription": "Learn how to turning written offer copy into a basic landing page. See the workflow, tools you can use, and the safest first step.",
   "category": "Website",
   "persona": "creator businesses",
@@ -249,7 +249,7 @@
       "toolName": "Framer AI",
       "bestFor": "landing page concepts for turning written offer copy into a basic landing page",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Framer AI is worth considering because it is the clearest fit for turning written offer copy into a basic landing page. It is built for landing page concepts, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for complex application backends; this matters when the reader is turning written offer copy into a basic landing page."
     },
@@ -258,7 +258,7 @@
       "toolName": "v0",
       "bestFor": "workflows that need UI generation from prompts when you want a different workflow than the top pick",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "v0 is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for workflows that need UI generation from prompts, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside website.; this matters when the reader is turning written offer copy into a basic landing page."
     },
@@ -267,7 +267,7 @@
       "toolName": "Lovable",
       "bestFor": "workflows that need building apps from prompts when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Medium setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Lovable is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need building apps from prompts, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside coding.; this matters when the reader is turning written offer copy into a basic landing page."
     },
@@ -276,7 +276,7 @@
       "toolName": "Writesonic",
       "bestFor": "marketing content ideation when speed or a lighter setup matters more",
       "freePlan": false,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Writesonic is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for marketing content ideation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for users needing only basic proofreading; this matters when the reader is turning written offer copy into a basic landing page."
     },
@@ -285,7 +285,7 @@
       "toolName": "DeepL Write",
       "bestFor": "rephrasing professional messages when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 10/10 in the AteFlo catalog",
       "whyConsider": "DeepL Write is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for rephrasing professional messages, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for generating rich visual content; this matters when the reader is turning written offer copy into a basic landing page."
     }
@@ -386,8 +386,8 @@
   ],
   "exampleWorkflow": "Collect turning written offer copy into a basic landing page and remove anything the AI should not use. Define the final output: what the reader needs to produce, send, post, study, or decide. Use AI to create a first structured draft for turn written offer copy into a basic landing page. Check names, numbers, sources, commitments, tone, and missing context against the original material. Polish the final result, save the reusable prompt, and choose the next tool only if the format or source type changes.",
   "exampleResult": "Example result: a checked turn written offer copy into a basic landing page output that keeps the source facts, removes filler, names the next action, and is short enough to review before sending, posting, studying, or saving.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for creator businesses",
     "points": [
@@ -396,8 +396,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
   "qualityScore": 92,
   "status": "draft",

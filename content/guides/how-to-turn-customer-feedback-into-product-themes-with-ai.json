@@ -3,7 +3,7 @@
   "title": "How to Turn Customer Feedback Into Product Themes with AI",
   "guideType": "how-to",
   "type": "how-to",
-  "metaTitle": "How to Turn Customer Feedback Into Product Themes with AI | Comparavy",
+  "metaTitle": "How to Turn Customer Feedback Into Product Themes with AI | AteFlo",
   "metaDescription": "Learn how to grouping customer comments into themes and next actions. See the workflow, tools you can use, and the safest first step.",
   "category": "Research",
   "persona": "small product teams",
@@ -249,7 +249,7 @@
       "toolName": "NotebookLM",
       "bestFor": "working from a defined set of documents for grouping customer comments into themes and next actions",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "NotebookLM is worth considering because it is the clearest fit for grouping customer comments into themes and next actions. It is built for working from a defined set of documents, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for open-ended web discovery as the primary task; this matters when the reader is grouping customer comments into themes and next actions."
     },
@@ -258,7 +258,7 @@
       "toolName": "Notion AI",
       "bestFor": "teams or individuals already organizing work in Notion when you want a different workflow than the top pick",
       "freePlan": false,
-      "easeOfUse": "Medium setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Medium setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Notion AI is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for teams or individuals already organizing work in Notion, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for people who do not want to adopt Notion; this matters when the reader is grouping customer comments into themes and next actions."
     },
@@ -267,7 +267,7 @@
       "toolName": "Airtable",
       "bestFor": "workflows that need database-style workflows and AI-assisted ops when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Airtable is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need database-style workflows and AI-assisted ops, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside automation.; this matters when the reader is grouping customer comments into themes and next actions."
     },
@@ -276,7 +276,7 @@
       "toolName": "Gemini",
       "bestFor": "users already working in Google's ecosystem when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 9/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 9/10 in the AteFlo catalog",
       "whyConsider": "Gemini is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for users already working in Google's ecosystem, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for people needing a dedicated media production timeline; this matters when the reader is grouping customer comments into themes and next actions."
     },
@@ -285,7 +285,7 @@
       "toolName": "You.com",
       "bestFor": "workflows that need search-backed answers and lightweight assistant help when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "You.com is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need search-backed answers and lightweight assistant help, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside general assistant.; this matters when the reader is grouping customer comments into themes and next actions."
     }
@@ -386,8 +386,8 @@
   ],
   "exampleWorkflow": "Collect an early draft that needs structure and remove anything the AI should not use. Define the final output: what the reader needs to produce, send, post, study, or decide. Use AI to create a first structured draft for grouping customer comments into themes and next actions. Check names, numbers, sources, commitments, tone, and missing context against the original material. Polish the final result, save the reusable prompt, and choose the next tool only if the format or source type changes.",
   "exampleResult": "Example result: a checked grouping customer comments into themes and next actions output that keeps the source facts, removes filler, names the next action, and is short enough to review before sending, posting, studying, or saving.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for small product teams",
     "points": [
@@ -396,8 +396,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
   "qualityScore": 92,
   "status": "draft",

@@ -3,7 +3,7 @@
   "title": "Best AI Tools for AI-Generated Product Photo Workflows",
   "guideType": "tool-decision",
   "type": "tool-decision",
-  "metaTitle": "Best AI Tools for AI-Generated Product Photo Workflows | Comparavy",
+  "metaTitle": "Best AI Tools for AI-Generated Product Photo Workflows | AteFlo",
   "metaDescription": "Compare AI tools for ecommerce sellers focused on improving product visuals with AI-generated backgrounds or mockups. See practical fit, tradeoffs, and a free-first decision path.",
   "category": "Image Generation",
   "persona": "ecommerce sellers",
@@ -247,7 +247,7 @@
       "toolName": "Photoroom",
       "bestFor": "workflows that need product photo cleanup and background removal for improving product visuals with AI-generated backgrounds or mockups",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 10/10 in the AteFlo catalog",
       "whyConsider": "Photoroom is worth considering because it is the clearest fit for improving product visuals with AI-generated backgrounds or mockups. It is built for workflows that need product photo cleanup and background removal, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside image generation.; this matters when the reader is improving product visuals with AI-generated backgrounds or mockups."
     },
@@ -256,7 +256,7 @@
       "toolName": "Adobe Firefly",
       "bestFor": "creative exploration and image edits when you want a different workflow than the top pick",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Adobe Firefly is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for creative exploration and image edits, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for text-only business productivity; this matters when the reader is improving product visuals with AI-generated backgrounds or mockups."
     },
@@ -265,7 +265,7 @@
       "toolName": "Recraft",
       "bestFor": "workflows that need vector and brand asset generation when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Recraft is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need vector and brand asset generation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside image generation.; this matters when the reader is improving product visuals with AI-generated backgrounds or mockups."
     },
@@ -274,7 +274,7 @@
       "toolName": "Krea",
       "bestFor": "workflows that need fast visual exploration and image enhancement when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 8/10 in the AteFlo catalog",
       "whyConsider": "Krea is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need fast visual exploration and image enhancement, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for not the best choice when your main job is outside image generation.; this matters when the reader is improving product visuals with AI-generated backgrounds or mockups."
     },
@@ -283,7 +283,7 @@
       "toolName": "Canva Magic Studio",
       "bestFor": "non-designers creating polished visual assets when speed or a lighter setup matters more",
       "freePlan": true,
-      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
+      "easeOfUse": "Low setup; ease 10/10 in the AteFlo catalog",
       "whyConsider": "Canva Magic Studio is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for non-designers creating polished visual assets, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
       "watchFor": "Watch for advanced professional image compositing; this matters when the reader is improving product visuals with AI-generated backgrounds or mockups."
     }
@@ -379,8 +379,8 @@
   ],
   "exampleWorkflow": "Collect the source material, ask Photoroom for the first draft, use Adobe Firefly to compare a different workflow, and keep Recraft for the final cleanup and review.",
   "exampleResult": "The final result should be clearer, shorter, and easier to use, with the main ideas preserved and the obvious errors removed.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
+  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
   "visualSummary": {
     "headline": "A practical starting route for ecommerce sellers",
     "points": [
@@ -389,8 +389,8 @@
       "Run a real project test before subscribing"
     ]
   },
-  "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
-  "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
+  "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "current",
   "qualityScore": 92,
   "status": "draft",
