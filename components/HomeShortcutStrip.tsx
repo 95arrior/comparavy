@@ -36,7 +36,7 @@ function StripCard({
   const shortcutHref = `/shortcuts/${shortcut.slug}`;
 
   return (
-    <article className="flex min-h-[430px] w-[300px] shrink-0 flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-sm ateflo-card-lift sm:w-[390px] sm:p-7 lg:w-[430px]">
+    <article className="flex min-h-[430px] w-[300px] shrink-0 flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-teal-200 hover:shadow-md sm:w-[390px] sm:p-7 lg:w-[430px]">
       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">
         {shortcut.category}
       </p>
@@ -106,7 +106,7 @@ export default function HomeShortcutStrip({ shortcuts }: HomeShortcutStripProps)
 
   return (
     <section className="overflow-hidden border-y border-slate-200/80 bg-white py-14 sm:py-16">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1152px] px-4 sm:px-6">
         <div className="flex flex-wrap items-end justify-between gap-5">
           <div>
             <p className="text-sm font-semibold text-teal-700">
@@ -128,7 +128,7 @@ export default function HomeShortcutStrip({ shortcuts }: HomeShortcutStripProps)
         </div>
       </div>
 
-      <div className="mt-9 px-4 sm:px-6 lg:px-8">
+      <div className="mt-9 px-4 sm:px-6 lg:px-20">
         <div className="mx-auto max-w-[1600px]">
           <div className="ateflo-shortcut-strip">
             <div className="ateflo-shortcut-strip-track">
