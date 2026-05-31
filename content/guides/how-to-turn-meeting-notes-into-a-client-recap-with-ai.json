@@ -90,7 +90,7 @@
     },
     {
       "title": "Extract facts before writing",
-      "detail": "Paste this prompt into ChatGPT, Claude, Gemini, Microsoft Copilot, or another AI chat tool that can handle your notes: \"Extract decisions, action items, owners, due dates, risks, and open questions from these meeting notes. If a commitment is unclear, label it unclear instead of guessing.\"",
+      "detail": "Use the Quick Prompt above for a short recap email, or the Better Prompt for decisions, action items, owners, deadlines, risks, open questions, and a client-ready email. Paste it into ChatGPT, Claude, Gemini, Microsoft Copilot, or another AI chat tool with your notes.",
       "why": "Client-facing follow-up needs accuracy more than speed.",
       "output": "A checked list of decisions, owners, dates, and open questions.",
       "toolSlug": "chatgpt",

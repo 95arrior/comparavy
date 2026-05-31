@@ -5,6 +5,13 @@ export interface AiGuideReview {
   readonly available: boolean;
   readonly passed: boolean;
   readonly score: number;
+  readonly scoreBreakdown?: {
+    readonly promptUsabilityScore: number;
+    readonly beginnerReadabilityScore: number;
+    readonly finishedOutputClarityScore: number;
+    readonly copyPasteReadinessScore: number;
+    readonly safetyTrustScore: number;
+  };
   readonly verdict: string;
   readonly warnings: readonly string[];
   readonly suggestedFixes: readonly string[];
@@ -46,11 +53,29 @@ const REVIEW_SCHEMA = {
   properties: {
     passed: { type: "boolean" },
     score: { type: "number" },
+    scoreBreakdown: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        promptUsabilityScore: { type: "number" },
+        beginnerReadabilityScore: { type: "number" },
+        finishedOutputClarityScore: { type: "number" },
+        copyPasteReadinessScore: { type: "number" },
+        safetyTrustScore: { type: "number" },
+      },
+      required: [
+        "promptUsabilityScore",
+        "beginnerReadabilityScore",
+        "finishedOutputClarityScore",
+        "copyPasteReadinessScore",
+        "safetyTrustScore",
+      ],
+    },
     verdict: { type: "string" },
     warnings: { type: "array", items: { type: "string" } },
     suggestedFixes: { type: "array", items: { type: "string" } },
   },
-  required: ["passed", "score", "verdict", "warnings", "suggestedFixes"],
+  required: ["passed", "score", "scoreBreakdown", "verdict", "warnings", "suggestedFixes"],
 } as const;
 
 function unavailableReview(): AiGuideReview {
@@ -344,11 +369,18 @@ function parseReview(value: unknown): AiGuideReview | undefined {
   }
 
   const review = value as Record<string, unknown>;
+  const scoreBreakdown = review.scoreBreakdown as Record<string, unknown> | undefined;
 
   if (
     typeof review.passed !== "boolean" ||
     typeof review.score !== "number" ||
     !Number.isFinite(review.score) ||
+    !scoreBreakdown ||
+    typeof scoreBreakdown.promptUsabilityScore !== "number" ||
+    typeof scoreBreakdown.beginnerReadabilityScore !== "number" ||
+    typeof scoreBreakdown.finishedOutputClarityScore !== "number" ||
+    typeof scoreBreakdown.copyPasteReadinessScore !== "number" ||
+    typeof scoreBreakdown.safetyTrustScore !== "number" ||
     typeof review.verdict !== "string" ||
     !Array.isArray(review.warnings) ||
     !review.warnings.every((entry) => typeof entry === "string") ||
@@ -363,6 +395,13 @@ function parseReview(value: unknown): AiGuideReview | undefined {
     available: true,
     passed: review.passed,
     score: Math.max(0, Math.min(100, Math.round(review.score))),
+    scoreBreakdown: {
+      promptUsabilityScore: Math.max(0, Math.min(100, Math.round(scoreBreakdown.promptUsabilityScore))),
+      beginnerReadabilityScore: Math.max(0, Math.min(100, Math.round(scoreBreakdown.beginnerReadabilityScore))),
+      finishedOutputClarityScore: Math.max(0, Math.min(100, Math.round(scoreBreakdown.finishedOutputClarityScore))),
+      copyPasteReadinessScore: Math.max(0, Math.min(100, Math.round(scoreBreakdown.copyPasteReadinessScore))),
+      safetyTrustScore: Math.max(0, Math.min(100, Math.round(scoreBreakdown.safetyTrustScore))),
+    },
     verdict: review.verdict,
     warnings: review.warnings,
     suggestedFixes: review.suggestedFixes,
@@ -387,7 +426,7 @@ export async function reviewGuideWithAI(guide: Guide): Promise<AiGuideReview> {
       body: JSON.stringify({
         model,
         instructions:
-          "You are a strict editorial reviewer for AteFlo, a US-focused, AdSense-first AI problem-solving content site. Evaluate the supplied guide as written; do not rewrite it. For how-to guides, score highly only when the article solves one clear reader problem first, the title starts with How to instead of Best AI Tools for, the first 100 words give a useful answer, the workflow includes what the reader needs, step-by-step actions, mobile and desktop guidance, tools used as workflow support, an example result, mistakes to avoid, high-intent FAQs, and a useful next step. For tool-decision guides, score highly only when a busy reader can choose a suitable tool in under 60 seconds, the guide names the best starting tool, explains when the second-best option is better, explains when to avoid the main recommendation, and compares the shortlisted tools on input type, output quality, source reliability, ease of use, speed, mobile suitability, desktop suitability, best use case, and limitation. Check that Best for / Avoid if / Watch for sections are specific and non-repetitive, the decision path uses real branching logic, FAQs answer high-intent questions, the title matches the evidence available, and uncertain readers are directed to /finder. Reject fake testing claims, unsupported certainty, exact current pricing claims, generic filler, repeated placeholder language, broad tool-list framing for how-to topics, or content that would be low-value publishing. Return JSON only through the provided schema. A score of 85 or above should be reserved for publish-ready editorial quality.",
+          "You are a strict editorial reviewer for AteFlo, a US-focused, AdSense-first AI Shortcut Engine. Evaluate the supplied guide as written; do not rewrite it. For how-to guides, score highly only when the article solves one clear reader problem first, the title starts with How to instead of Best AI Tools for, the first 100 words give a useful answer, the workflow includes what the reader needs, step-by-step actions, mobile and desktop guidance, tools used as workflow support, an example result, mistakes to avoid, high-intent FAQs, and a useful next step. For tool-decision guides, score highly only when a busy reader can choose a suitable tool in under 60 seconds, the guide names the best starting tool, explains when the second-best option is better, explains when to avoid the main recommendation, and compares the shortlisted tools on input type, output quality, source reliability, ease of use, speed, mobile suitability, desktop suitability, best use case, and limitation. Apply the Beginner Prompt Usability Test: the page must explain how to use the prompt, show what to paste, show what the user will get, make prompts start with the actual task, avoid internal AteFlo-only language inside prompts, include [PASTE HERE] style placeholders, include safety rules when needed, be understandable to older or non-technical users, and include a review prompt or checking step. Score the guide with Prompt Usability Score, Beginner Readability Score, Finished Output Clarity Score, Copy-Paste Readiness Score, and Safety/Trust Score in scoreBreakdown. Check that Best for / Avoid if / Watch for sections are specific and non-repetitive, the decision path uses real branching logic, FAQs answer high-intent questions, the title matches the evidence available, and uncertain readers are directed to /finder. Reject fake testing claims, unsupported certainty, exact current pricing claims, generic filler, repeated placeholder language, broad tool-list framing for how-to topics, or content that would be low-value publishing. Return JSON only through the provided schema. A score of 85 or above should be reserved for publish-ready editorial quality.",
         input: JSON.stringify(guide),
         text: {
           format: {

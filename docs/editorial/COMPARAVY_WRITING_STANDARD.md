@@ -13,6 +13,25 @@ The reader should leave with:
 - A clear sense of which tool to start with and why.
 - A reason to trust the limitations, warnings, and next step.
 
+## Beginner Prompt Usability Test
+
+Every new AteFlo shortcut must be simple enough for a reader who has never written an AI prompt before.
+
+Before a guide can be approved, check:
+
+- Does the page explain how to use the prompt?
+- Does it show what to paste?
+- Does it show what the user will get?
+- Does the prompt start with the actual task?
+- Does the prompt avoid internal AteFlo-only language?
+- Does the prompt include `[PASTE HERE]` placeholders or equivalent clear paste areas?
+- Does the prompt include safety rules when missing facts, private details, claims, deadlines, or promises matter?
+- Can a beginner copy it without editing much?
+- Can an older or non-technical user understand the flow?
+- Is there a review prompt or checking step?
+
+AI editorial review should score each guide on Prompt Usability, Beginner Readability, Finished Output Clarity, Copy-Paste Readiness, and Safety/Trust. The publish threshold remains 85.
+
 ## 2. US Audience Writing Style
 
 Write in direct US English. Use plain wording, short paragraphs, concrete examples, and practical tradeoffs. Avoid hype, vague productivity language, academic filler, and affiliate-style ranking language.

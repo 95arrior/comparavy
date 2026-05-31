@@ -1,4 +1,4 @@
-import CopyPromptCard from "@/components/guides/CopyPromptCard";
+import GuideExecutionShortcut from "@/components/guides/GuideExecutionShortcut";
 import HelpfulFeedback from "@/components/guides/HelpfulFeedback";
 import HowToGuideLayout from "@/components/guides/HowToGuideLayout";
 import IncomeGuideLayout from "@/components/guides/IncomeGuideLayout";
@@ -12,38 +12,6 @@ import { getPublishedGuides, type Guide } from "@/lib/guides";
 
 interface GuideDetailRendererProps {
   readonly guide: Guide;
-}
-
-function starterPrompt(guide: Guide): string {
-  const copiedStep = guide.steps?.find((step) => /(?:Copy|Paste) this prompt/i.test(step.detail));
-  const quotedPrompt = copiedStep?.detail.match(/(?:Copy|Paste) this prompt[^:]*:\s*"([^"]+)"/i)?.[1];
-  const inputLines = Array.isArray(guide.whatYouNeed)
-    ? guide.whatYouNeed.slice(0, 3)
-    : typeof guide.whatYouNeed === "string"
-      ? [guide.whatYouNeed]
-      : [guide.userPain];
-  const finishLine =
-    guide.steps
-      ?.filter((step) => step.output?.trim())
-      .at(-1)
-      ?.output ??
-    guide.exampleResult ??
-    `A checked final output for ${guide.useCase}.`;
-
-  return [
-    `I want to complete this AteFlo shortcut: ${guide.useCase}.`,
-    `Audience/context: ${guide.persona}.`,
-    `Finished output I need: ${finishLine}`,
-    "",
-    "Input I have:",
-    ...inputLines.map((item) => `- ${item}`),
-    "",
-    "Prompt to run:",
-    quotedPrompt ??
-      "Use my source material below to create the finished output. Keep facts separate from assumptions, preserve important constraints, and flag anything I should verify before using the result.",
-    "",
-    "My source material:",
-  ].join("\n");
 }
 
 function relatedGuides(guide: Guide): readonly Guide[] {
@@ -74,11 +42,7 @@ export default function GuideDetailRenderer({ guide }: GuideDetailRendererProps)
       </div>
 
       <ShortcutBrief guide={guide} />
-      <CopyPromptCard
-        prompt={starterPrompt(guide)}
-        title="Copy the shortcut prompt"
-        description="Paste this into ChatGPT, Claude, Gemini, Copilot, or another AI chat tool that can handle your input, then replace the source material with your real notes, product facts, transcript, or task details."
-      />
+      <GuideExecutionShortcut guide={guide} />
 
       {guideType === "how-to" ? (
         <HowToGuideLayout guide={guide} />

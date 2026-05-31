@@ -129,6 +129,8 @@ export const guideTypeStandards: Record<GuideLayoutType, string[]> = {
   "how-to": [
     "Solve one concrete problem before discussing tools.",
     "The first 100 words must name the input, output, first action, and review step.",
+    "Show what the reader should paste, where to paste it, and what finished output they should expect.",
+    "Include a copy-paste-ready prompt and a checking step that a beginner can follow.",
     "Put the practical workflow before tools.",
     "Every step needs action, reason, and expected output.",
     "Mobile and desktop guidance must describe different realistic situations.",
@@ -137,6 +139,8 @@ export const guideTypeStandards: Record<GuideLayoutType, string[]> = {
   "tool-decision": [
     "Help the reader choose between tools quickly.",
     "Quick Verdict must name the best starting tool, second-best condition, and avoid condition.",
+    "When prompts are included, they must start with the actual task, include [PASTE HERE] placeholders, and avoid AteFlo-only language.",
+    "Include review or verification guidance before the reader uses the output.",
     "Decision path must use branching If/Then logic.",
     "Compare tools by real criteria tied to the reader's input and output.",
     "Best for and Avoid if text must be distinct for every tool.",
@@ -167,5 +171,6 @@ export const comparavyGoldStandardPrompt = [
   "Do not make users read tool cards before understanding the solution.",
   "A how-to guide solves the workflow; a tool-decision guide ranks tools only after the choice logic is clear.",
   "Use concrete inputs, outputs, review steps, mobile situations, desktop situations, and example results.",
+  "Every shortcut must pass the Beginner Prompt Usability Test: explain how to use the prompt, show what to paste, show what the user will get, start prompts with the actual task, avoid internal AteFlo-only prompt language, include [PASTE HERE] placeholders, include safety rules when needed, make the flow understandable to non-technical users, and include a review prompt or checking step.",
   "Reject filler, fake testing, fake certainty, repeated tool-card language, and unsupported claims.",
 ].join(" ");

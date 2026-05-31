@@ -90,8 +90,8 @@
     },
     {
       "title": "Run the listing prompt",
-      "detail": "Paste this prompt into ChatGPT, Claude, Gemini, Microsoft Copilot, or another AI chat tool that can handle your product facts: \"Turn these product facts into an Etsy description for [buyer]. Start with the buyer benefit, then add scannable bullets for materials, size, personalization, care, and shipping limits. Do not invent claims. Flag any missing detail instead.\"",
-      "why": "The prompt tells the tool what to finish and what not to invent.",
+      "detail": "Use the Quick Prompt above for a simple description, or the Better Prompt for a fuller title, bullets, description, tags, and seller review notes. Paste it into ChatGPT, Claude, Gemini, Microsoft Copilot, or another AI chat tool with your product facts.",
+      "why": "The prompt tells the tool what to finish, what details to use, and what not to invent.",
       "output": "A reviewable Etsy description draft.",
       "toolSlug": "chatgpt",
       "toolName": "ChatGPT"

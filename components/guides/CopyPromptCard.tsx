@@ -1,32 +1,50 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 interface CopyPromptCardProps {
   readonly prompt: string;
   readonly title?: string;
   readonly description?: string;
+  readonly buttonLabel?: string;
 }
 
 export default function CopyPromptCard({
   prompt,
   title = "Start with this prompt",
   description = "Copy this prompt, replace the source material, and review the output before using it.",
+  buttonLabel = "Copy Prompt",
 }: CopyPromptCardProps) {
-  const [copied, setCopied] = useState(false);
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
+  const statusId = useId();
+  const resetTimer = useRef<number | undefined>(undefined);
+  const sectionId = `copy-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "prompt"}`;
+
+  useEffect(() => {
+    return () => {
+      if (resetTimer.current !== undefined) {
+        window.clearTimeout(resetTimer.current);
+      }
+    };
+  }, []);
 
   async function copyPrompt() {
     try {
       await navigator.clipboard.writeText(prompt);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1800);
+      setCopyState("copied");
+
+      if (resetTimer.current !== undefined) {
+        window.clearTimeout(resetTimer.current);
+      }
+
+      resetTimer.current = window.setTimeout(() => setCopyState("idle"), 3200);
     } catch {
-      setCopied(false);
+      setCopyState("failed");
     }
   }
 
   return (
-    <section id="copy-prompt" className="scroll-mt-6 rounded-3xl border border-teal-200 bg-white p-5 shadow-sm sm:p-6">
+    <section id={sectionId} className="scroll-mt-6 rounded-3xl border border-teal-200 bg-white p-5 shadow-sm sm:p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
@@ -39,13 +57,45 @@ export default function CopyPromptCard({
             {description}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={copyPrompt}
-          className="min-h-11 rounded-full bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
-        >
-          {copied ? "Copied" : "Copy Prompt"}
-        </button>
+        <div className="sm:max-w-xs">
+          <button
+            type="button"
+            onClick={copyPrompt}
+            aria-describedby={statusId}
+            className="ateflo-copy-button inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-teal-700 px-5 py-3 text-base font-semibold text-white shadow-sm transition duration-150 hover:bg-teal-800 hover:shadow-md active:translate-y-px active:bg-teal-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 sm:w-auto sm:text-sm"
+          >
+            {copyState === "copied" && (
+              <svg
+                aria-hidden="true"
+                className="h-4 w-4"
+                viewBox="0 0 20 20"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M16.25 5.75 8.5 13.5 4.75 9.75"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
+            {copyState === "copied" ? "Copied!" : buttonLabel}
+          </button>
+          <p
+            id={statusId}
+            role="status"
+            aria-live="polite"
+            className="mt-2 min-h-5 text-sm leading-5 text-slate-600"
+          >
+            {copyState === "copied"
+              ? "Prompt copied — paste it into ChatGPT, Claude, Gemini, Copilot, or another AI chat tool."
+              : copyState === "failed"
+                ? "Copy failed. Select the prompt text below and copy it manually."
+                : ""}
+          </p>
+        </div>
       </div>
       <pre className="mt-5 max-w-full whitespace-pre-wrap break-words rounded-2xl border border-slate-800 bg-slate-950 p-4 text-sm leading-7 text-slate-100 [overflow-wrap:anywhere]">
         {prompt}

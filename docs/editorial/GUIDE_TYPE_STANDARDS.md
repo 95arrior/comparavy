@@ -11,6 +11,10 @@ Reader intent: "Show me how to get this done without wasting time."
 Required structure:
 
 - Quick Answer
+- How to use this shortcut
+- Fill this in first
+- Copy-paste-ready prompt
+- Review prompt or checking step
 - Real-World Scenario
 - What You Need
 - Step-by-Step Workflow
@@ -27,6 +31,8 @@ First 100 words must include the problem, starting input, desired output, first 
 Strong article:
 
 - Starts with the answer.
+- Shows what the reader has, what they will get, and what details to prepare.
+- Gives a prompt that starts with the actual task and includes clear paste placeholders.
 - Shows a real workflow before tool recommendations.
 - Makes tools support steps.
 - Gives mobile and desktop advice that is not copied.
@@ -61,6 +67,9 @@ Reader intent: "Which tool should I use first, and when should I choose somethin
 Required structure:
 
 - Quick Verdict
+- How to use this shortcut when prompts are included
+- Fill this in first when prompts are included
+- Copy-paste-ready prompt and review prompt when useful
 - Which One Should You Choose?
 - Decision Path
 - Best Picks by Situation
@@ -78,6 +87,7 @@ First 100 words must name the best starting tool, the best alternative, when to 
 Strong article:
 
 - Gives a fast choice.
+- Makes any prompt easy to copy, paste, and check without knowing prompt-writing terms.
 - Uses real decision criteria.
 - Explains better/worse fit by situation.
 - Uses distinct Best for / Avoid if language.
