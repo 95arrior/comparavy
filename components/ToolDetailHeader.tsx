@@ -36,7 +36,7 @@ export default function ToolDetailHeader({ tool }: ToolDetailHeaderProps) {
       <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-3xl">
           <div className="flex min-w-0 items-center gap-3">
-            <ToolIcon {...tool} size={28} />
+            <ToolIcon {...tool} size={28} loading="eager" />
             <h1 className="min-w-0 flex-1 truncate whitespace-nowrap text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
               {tool.name}
             </h1>
@@ -71,6 +71,12 @@ export default function ToolDetailHeader({ tool }: ToolDetailHeaderProps) {
                 label: "Visit Official Site",
                 external: true,
                 tone: "primary",
+                eventName: "tool_visit_click",
+                eventParams: {
+                  tool_slug: tool.slug,
+                  tool_name: tool.name,
+                  source_page: "tool_detail",
+                },
               },
               {
                 href: "#alternatives",
@@ -79,6 +85,13 @@ export default function ToolDetailHeader({ tool }: ToolDetailHeaderProps) {
               {
                 href: "/finder",
                 label: "Use Finder",
+                eventName: "finder_cta_click",
+                eventParams: {
+                  source_page: "tool_detail",
+                  tool_slug: tool.slug,
+                  tool_name: tool.name,
+                  action_location: "tool_detail_header",
+                },
               },
             ]}
           />

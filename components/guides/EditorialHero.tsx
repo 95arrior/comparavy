@@ -1,5 +1,6 @@
 import Link from "next/link";
 import TopCopyPromptButton from "@/components/guides/TopCopyPromptButton";
+import ShareGuideButton from "@/components/guides/ShareGuideButton";
 import { formatGuideLayoutLabel, resolveGuideLayoutType } from "@/lib/guideTypes";
 import type { Guide } from "@/lib/guides";
 
@@ -54,19 +55,18 @@ export default function EditorialHero({ guide }: EditorialHeroProps) {
       </div>
 
       <div className="mt-6 flex flex-wrap items-start gap-3">
-        <TopCopyPromptButton />
-        <Link
-          href="/finder"
-          className="inline-flex min-h-11 items-center justify-center rounded-full bg-teal-700 px-4 py-2.5 text-center text-sm font-semibold text-white transition duration-150 hover:-translate-y-0.5 hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
-        >
-          Use Finder
-        </Link>
+        <TopCopyPromptButton guideSlug={guide.slug} />
         <Link
           href="/guides"
-          className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2.5 text-center text-sm font-semibold text-slate-700 transition duration-150 hover:-translate-y-0.5 hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+          className="inline-flex min-h-11 items-center justify-center rounded-full border border-teal-200 bg-teal-50 px-4 py-2.5 text-center text-sm font-semibold text-teal-900 transition duration-150 hover:-translate-y-0.5 hover:border-teal-300 hover:bg-teal-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
         >
           View Shortcuts
         </Link>
+        <ShareGuideButton
+          title={guide.title}
+          guideSlug={guide.slug}
+          topicCluster={guide.topicCluster}
+        />
       </div>
     </header>
   );

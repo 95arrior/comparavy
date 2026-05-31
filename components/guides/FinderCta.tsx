@@ -26,7 +26,19 @@ export default function FinderCta({
       <ActionLinks
         className="mt-5 sm:mt-0"
         items={[
-          { href: "/finder", label: "Open Finder", tone: "primary" },
+          {
+            href: "/finder",
+            label: "Open Finder",
+            tone: "primary",
+            eventName: "finder_cta_click",
+            eventParams: {
+              source_page: "guide_detail",
+              guide_slug: guide.slug,
+              guide_title: guide.title,
+              topic_cluster: guide.topicCluster,
+              action_location: "guide_finder_cta",
+            },
+          },
           { href: secondaryHref, label: secondaryLabel },
         ]}
       />

@@ -3,6 +3,7 @@ import Link from "next/link";
 import BadgeRow from "@/components/BadgeRow";
 import CopyTextButton from "@/components/CopyTextButton";
 import SiteHeader from "@/components/SiteHeader";
+import TrackedLink from "@/components/TrackedLink";
 import { getPublishedGuides, type Guide } from "@/lib/guides";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE } from "@/lib/site";
 
@@ -168,12 +169,17 @@ function StarterShortcutCard({
       </div>
       <div className="mt-auto flex flex-wrap gap-3 pt-5">
         <CopyTextButton text={shortcut.prompt} />
-        <Link
+        <TrackedLink
           href="/finder"
+          eventName="finder_cta_click"
+          eventParams={{
+            source_page: "homepage",
+            action_location: "starter_shortcut_card",
+          }}
           className="inline-flex min-h-11 items-center justify-center rounded-full bg-teal-700 px-4 text-sm font-semibold text-white transition hover:bg-teal-800"
         >
           Find a tool
-        </Link>
+        </TrackedLink>
       </div>
     </article>
   );
@@ -219,12 +225,17 @@ export default function Home() {
               >
                 Browse Shortcuts <span aria-hidden="true">&rarr;</span>
               </Link>
-              <Link
+              <TrackedLink
                 href="/finder"
+                eventName="finder_cta_click"
+                eventParams={{
+                  source_page: "homepage",
+                  action_location: "hero_secondary",
+                }}
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-6 text-sm font-semibold text-slate-800 transition hover:border-teal-200 hover:bg-teal-50"
               >
                 Find the Right AI Tool <span aria-hidden="true">&rarr;</span>
-              </Link>
+              </TrackedLink>
             </div>
           </div>
 
@@ -346,12 +357,17 @@ export default function Home() {
                       {workflow.title}
                     </h3>
                     <p className="mt-3 text-sm leading-6 text-slate-300">{workflow.detail}</p>
-                    <Link
+                    <TrackedLink
                       href="/finder"
+                      eventName="finder_cta_click"
+                      eventParams={{
+                        source_page: "homepage",
+                        action_location: "money_workflow_card",
+                      }}
                       className="mt-auto inline-flex min-h-11 items-center gap-2 rounded-full border border-white/15 px-4 py-2.5 text-sm font-semibold text-teal-200 transition hover:border-teal-200 hover:text-white"
                     >
                       Match a tool <span aria-hidden="true">&rarr;</span>
-                    </Link>
+                    </TrackedLink>
                   </article>
                 ))}
           </div>
@@ -420,12 +436,17 @@ export default function Home() {
               The finder will narrow the tool options from there.
             </p>
           </div>
-          <Link
+          <TrackedLink
             href="/finder"
+            eventName="finder_cta_click"
+            eventParams={{
+              source_page: "homepage",
+              action_location: "bottom_cta",
+            }}
             className="mt-6 inline-flex shrink-0 items-center justify-center rounded-full bg-teal-700 px-6 py-3 text-sm font-semibold text-white transition hover:bg-teal-800 sm:mt-0"
           >
             Find the Right AI Tool
-          </Link>
+          </TrackedLink>
         </div>
       </section>
     </main>

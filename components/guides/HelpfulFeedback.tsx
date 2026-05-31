@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { trackEvent } from "@/lib/analytics";
 
 interface HelpfulFeedbackProps {
   readonly guideSlug: string;
   readonly guideTitle: string;
+  readonly topicCluster?: string;
 }
 
 type HelpfulChoice = "yes" | "no";
@@ -17,6 +19,7 @@ const choiceMessages: Record<HelpfulChoice, string> = {
 export default function HelpfulFeedback({
   guideSlug,
   guideTitle,
+  topicCluster,
 }: HelpfulFeedbackProps) {
   const [choice, setChoice] = useState<"yes" | "no" | null>(null);
   const storageKey = useMemo(
@@ -45,16 +48,11 @@ export default function HelpfulFeedback({
       // Feedback should still work visually if local storage is blocked.
     }
 
-    window.dispatchEvent(
-      new CustomEvent("ateflo:helpful-feedback", {
-        detail: {
-          event_name:
-            nextChoice === "yes" ? "helpful_yes_click" : "helpful_no_click",
-          guide_slug: guideSlug,
-          guide_title: guideTitle,
-        },
-      }),
-    );
+    trackEvent(nextChoice === "yes" ? "helpful_yes_click" : "helpful_no_click", {
+      guide_slug: guideSlug,
+      guide_title: guideTitle,
+      topic_cluster: topicCluster,
+    });
   }
 
   return (
@@ -72,6 +70,7 @@ export default function HelpfulFeedback({
           <button
             type="button"
             aria-pressed={choice === "yes"}
+            data-event="helpful_yes_click"
             data-event-name="helpful_yes_click"
             data-guide-slug={guideSlug}
             data-guide-title={guideTitle}
@@ -87,6 +86,7 @@ export default function HelpfulFeedback({
           <button
             type="button"
             aria-pressed={choice === "no"}
+            data-event="helpful_no_click"
             data-event-name="helpful_no_click"
             data-guide-slug={guideSlug}
             data-guide-title={guideTitle}

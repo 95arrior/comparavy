@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getFaviconCandidates } from "@/lib/favicon";
 import { getToolIconConfig } from "@/lib/toolIcons";
 
@@ -13,6 +13,7 @@ interface ToolIconProps {
   readonly brandColor?: string;
   readonly size?: number | "sm" | "md" | "lg";
   readonly className?: string;
+  readonly loading?: "lazy" | "eager";
 }
 
 const SIZE_MAP = {
@@ -45,6 +46,7 @@ export default function ToolIcon({
   brandColor,
   size = "md",
   className,
+  loading = "lazy",
 }: ToolIconProps) {
   const iconConfig = getToolIconConfig(slug);
   const effectiveBrandColor = brandColor ?? iconConfig.brandColor;
@@ -58,6 +60,7 @@ export default function ToolIcon({
 
   const [activeSourceIndex, setActiveSourceIndex] = useState(0);
   const [loadedSource, setLoadedSource] = useState<string | null>(null);
+  const imageRef = useRef<HTMLImageElement | null>(null);
 
   useEffect(() => {
     setActiveSourceIndex(0);
@@ -67,6 +70,14 @@ export default function ToolIcon({
   const activeSource = imageSources[activeSourceIndex];
   const showImage = Boolean(activeSource && loadedSource === activeSource);
   const showFallback = !showImage;
+
+  useEffect(() => {
+    const image = imageRef.current;
+
+    if (activeSource && image?.complete && image.naturalWidth > 0) {
+      setLoadedSource(activeSource);
+    }
+  }, [activeSource]);
 
   function handleError() {
     setLoadedSource(null);
@@ -86,6 +97,7 @@ export default function ToolIcon({
     >
       {activeSource && (
         <img
+          ref={imageRef}
           src={activeSource}
           alt={`${name} logo`}
           className={`${IMAGE_CLASSES} absolute inset-0 transition-opacity duration-150`}
@@ -95,7 +107,7 @@ export default function ToolIcon({
           }}
           onLoad={() => setLoadedSource(activeSource)}
           onError={handleError}
-          loading="lazy"
+          loading={loading}
           decoding="async"
         />
       )}

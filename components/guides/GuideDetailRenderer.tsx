@@ -3,7 +3,6 @@ import HelpfulFeedback from "@/components/guides/HelpfulFeedback";
 import HowToGuideLayout from "@/components/guides/HowToGuideLayout";
 import IncomeGuideLayout from "@/components/guides/IncomeGuideLayout";
 import RelatedShortcuts from "@/components/guides/RelatedShortcuts";
-import ShareGuideButton from "@/components/guides/ShareGuideButton";
 import ShortcutBrief from "@/components/guides/ShortcutBrief";
 import ToolDecisionGuideLayout from "@/components/guides/ToolDecisionGuideLayout";
 import TrendDecisionGuideLayout from "@/components/guides/TrendDecisionGuideLayout";
@@ -37,10 +36,6 @@ export default function GuideDetailRenderer({ guide }: GuideDetailRendererProps)
 
   return (
     <div className="mt-6 space-y-6">
-      <div className="flex flex-wrap justify-end gap-3">
-        <ShareGuideButton title={guide.title} />
-      </div>
-
       <ShortcutBrief guide={guide} />
       <GuideExecutionShortcut guide={guide} />
 
@@ -54,8 +49,12 @@ export default function GuideDetailRenderer({ guide }: GuideDetailRendererProps)
         <ToolDecisionGuideLayout guide={guide} />
       )}
 
-      <HelpfulFeedback guideSlug={guide.slug} guideTitle={guide.title} />
-      <RelatedShortcuts guides={relatedGuides(guide)} />
+      <HelpfulFeedback
+        guideSlug={guide.slug}
+        guideTitle={guide.title}
+        topicCluster={guide.topicCluster}
+      />
+      <RelatedShortcuts guide={guide} guides={relatedGuides(guide)} />
     </div>
   );
 }

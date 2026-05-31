@@ -434,6 +434,12 @@ function RecommendationCard({
               label: "Visit Site",
               external: true,
               tone: "primary",
+              eventName: "tool_visit_click",
+              eventParams: {
+                tool_slug: tool.slug,
+                tool_name: tool.name,
+                source_page: "finder",
+              },
             },
             {
               href: `/tools/${tool.slug}`,

@@ -1,10 +1,15 @@
+"use client";
+
 import Link from "next/link";
+import { trackEvent } from "@/lib/analytics";
 
 interface GuideToolActionsProps {
   readonly slug?: string;
   readonly name: string;
   readonly officialUrl?: string;
   readonly affiliateUrl?: string;
+  readonly sourcePage?: string;
+  readonly guideSlug?: string;
   readonly showViewToolPage?: boolean;
   readonly className?: string;
 }
@@ -21,6 +26,8 @@ export default function GuideToolActions({
   name,
   officialUrl,
   affiliateUrl,
+  sourcePage = "guide_detail",
+  guideSlug,
   showViewToolPage = true,
   className,
 }: GuideToolActionsProps) {
@@ -35,6 +42,16 @@ export default function GuideToolActions({
           rel="noopener noreferrer"
           className={`${BASE_BUTTON_CLASSES} ${PRIMARY_CLASSES}`}
           aria-label={`Visit ${name} site`}
+          data-event="tool_visit_click"
+          data-guide-slug={guideSlug}
+          onClick={() =>
+            trackEvent("tool_visit_click", {
+              tool_slug: slug,
+              tool_name: name,
+              source_page: sourcePage,
+              guide_slug: guideSlug,
+            })
+          }
         >
           Visit Site
         </a>

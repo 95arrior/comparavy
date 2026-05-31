@@ -40,7 +40,11 @@ function CopyIcon({ copied }: { readonly copied: boolean }) {
   );
 }
 
-export default function TopCopyPromptButton() {
+interface TopCopyPromptButtonProps {
+  readonly guideSlug: string;
+}
+
+export default function TopCopyPromptButton({ guideSlug }: TopCopyPromptButtonProps) {
   const [copied, setCopied] = useState(false);
   const resetTimer = useRef<number | undefined>(undefined);
 
@@ -68,7 +72,16 @@ export default function TopCopyPromptButton() {
     <div>
       <button
         type="button"
-        onClick={() => window.dispatchEvent(new CustomEvent(PROMPT_COPY_REQUEST_EVENT))}
+        data-event="copy_prompt_click"
+        data-guide-slug={guideSlug}
+        data-action-location="top_button"
+        onClick={() =>
+          window.dispatchEvent(
+            new CustomEvent(PROMPT_COPY_REQUEST_EVENT, {
+              detail: { action_location: "top_button" },
+            }),
+          )
+        }
         className="ateflo-primary-copy-button inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-center text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
       >
         <span className="relative z-10 inline-flex items-center gap-2">

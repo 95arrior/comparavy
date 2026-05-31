@@ -61,7 +61,7 @@ export default async function GuideDetailPage({ params }: GuidePageProps) {
   return (
     <main className="ateflo-page-shell min-h-screen bg-[#F7F9FC] px-4 py-6 sm:px-6 sm:py-10">
       <article className="mx-auto max-w-6xl">
-        <nav className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <nav className="mb-6 flex flex-wrap items-center gap-4">
           <div className="flex flex-wrap items-center gap-4">
             <Logo />
             <Link
@@ -77,12 +77,6 @@ export default async function GuideDetailPage({ params }: GuidePageProps) {
               Shortcuts
             </Link>
           </div>
-          <Link
-            href="/finder"
-            className="rounded-full border border-teal-200 px-5 py-2.5 text-sm font-semibold text-teal-800 transition hover:bg-teal-50"
-          >
-            Use Finder
-          </Link>
         </nav>
 
         <EditorialHero guide={guide} />

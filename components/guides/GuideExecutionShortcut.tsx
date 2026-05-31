@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { trackEvent } from "@/lib/analytics";
 import type { Guide } from "@/lib/guides";
 
 const PROMPT_COPY_REQUEST_EVENT = "ateflo:prompt-copy-request";
 const PROMPT_COPIED_EVENT = "ateflo:prompt-copied";
+
+type CopyActionLocation = "top_button" | "prompt_builder";
 
 interface PromptField {
   readonly key: string;
@@ -186,6 +189,10 @@ function hasAnyInput(values: Record<string, string>): boolean {
   return Object.values(values).some((value) => value.trim().length > 0);
 }
 
+function filledFieldCount(values: Record<string, string>): number {
+  return Object.values(values).filter((value) => value.trim().length > 0).length;
+}
+
 async function copyTextToClipboard(text: string): Promise<void> {
   if (navigator.clipboard?.writeText) {
     try {
@@ -253,11 +260,15 @@ function FieldInput({
   field,
   value,
   onChange,
+  onFocus,
+  onBlur,
   inputRef,
 }: {
   readonly field: PromptField;
   readonly value: string;
   readonly onChange: (value: string) => void;
+  readonly onFocus?: () => void;
+  readonly onBlur?: (value: string) => void;
   readonly inputRef?: React.RefObject<HTMLInputElement | HTMLTextAreaElement | null>;
 }) {
   const inputClasses =
@@ -270,7 +281,12 @@ function FieldInput({
         <textarea
           ref={inputRef as React.RefObject<HTMLTextAreaElement | null> | undefined}
           value={value}
-          onChange={(event) => onChange(event.target.value)}
+          onFocus={onFocus}
+          onBlur={(event) => onBlur?.(event.target.value)}
+          onChange={(event) => {
+            onFocus?.();
+            onChange(event.target.value);
+          }}
           placeholder={field.placeholder}
           rows={4}
           className={`${inputClasses} resize-y`}
@@ -279,7 +295,12 @@ function FieldInput({
         <input
           ref={inputRef as React.RefObject<HTMLInputElement | null> | undefined}
           value={value}
-          onChange={(event) => onChange(event.target.value)}
+          onFocus={onFocus}
+          onBlur={(event) => onBlur?.(event.target.value)}
+          onChange={(event) => {
+            onFocus?.();
+            onChange(event.target.value);
+          }}
           placeholder={field.placeholder}
           className={inputClasses}
         />
@@ -311,9 +332,20 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
   const firstInputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
   const sectionRef = useRef<HTMLDivElement | null>(null);
   const resetTimer = useRef<number | undefined>(undefined);
+  const startedFields = useRef<Set<string>>(new Set());
+  const completedFields = useRef<Set<string>>(new Set());
 
   const generatedPrompt = useMemo(() => config?.buildPrompt(values) ?? "", [config, values]);
   const hasDetails = hasAnyInput(values);
+
+  const baseGuideParams = useMemo(
+    () => ({
+      guide_slug: guide.slug,
+      guide_title: guide.title,
+      topic_cluster: guide.topicCluster,
+    }),
+    [guide.slug, guide.title, guide.topicCluster],
+  );
 
   useEffect(() => {
     return () => {
@@ -323,7 +355,18 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
     };
   }, []);
 
-  async function copyPrompt(): Promise<boolean> {
+  function trackCopyPrompt(actionLocation: CopyActionLocation) {
+    trackEvent("copy_prompt_click", {
+      ...baseGuideParams,
+      action_location: actionLocation,
+      filled_field_count: filledFieldCount(values),
+      has_user_input: hasAnyInput(values),
+    });
+  }
+
+  async function copyPrompt(actionLocation: CopyActionLocation): Promise<boolean> {
+    trackCopyPrompt(actionLocation);
+
     try {
       await copyTextToClipboard(generatedPrompt);
       setCopyState("copied");
@@ -342,8 +385,14 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
   }
 
   useEffect(() => {
-    async function handleTopCopyRequest() {
+    async function handleTopCopyRequest(event: Event) {
+      const actionLocation =
+        event instanceof CustomEvent && event.detail?.action_location === "top_button"
+          ? "top_button"
+          : "top_button";
+
       if (!hasAnyInput(values)) {
+        trackCopyPrompt(actionLocation);
         const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         sectionRef.current?.scrollIntoView({
           behavior: prefersReducedMotion ? "auto" : "smooth",
@@ -353,7 +402,7 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
         return;
       }
 
-      await copyPrompt();
+      await copyPrompt(actionLocation);
     }
 
     window.addEventListener(PROMPT_COPY_REQUEST_EVENT, handleTopCopyRequest);
@@ -366,6 +415,31 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
 
   function updateValue(key: string, value: string) {
     setValues((current) => ({ ...current, [key]: value }));
+  }
+
+  function handleFieldStarted(fieldKey: string) {
+    if (startedFields.current.has(fieldKey)) {
+      return;
+    }
+
+    startedFields.current.add(fieldKey);
+    trackEvent("prompt_field_started", {
+      ...baseGuideParams,
+      field_key: fieldKey,
+      action_location: "prompt_builder",
+    });
+  }
+
+  function handleFieldBlur(fieldKey: string, value: string) {
+    if (!value.trim() || completedFields.current.has(fieldKey)) {
+      return;
+    }
+
+    completedFields.current.add(fieldKey);
+    trackEvent("prompt_field_completed", {
+      ...baseGuideParams,
+      filled_field_count: filledFieldCount({ ...values, [fieldKey]: value }),
+    });
   }
 
   return (
@@ -402,7 +476,9 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
                 key={field.key}
                 field={field}
                 value={values[field.key] ?? ""}
+                onFocus={() => handleFieldStarted(field.key)}
                 onChange={(value) => updateValue(field.key, value)}
+                onBlur={(value) => handleFieldBlur(field.key, value)}
                 inputRef={index === 0 ? firstInputRef : undefined}
               />
             ))}
@@ -422,7 +498,9 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
                     key={field.key}
                     field={field}
                     value={values[field.key] ?? ""}
+                    onFocus={() => handleFieldStarted(field.key)}
                     onChange={(value) => updateValue(field.key, value)}
+                    onBlur={(value) => handleFieldBlur(field.key, value)}
                   />
                 ))}
               </div>
@@ -448,7 +526,10 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
           <div className="sm:max-w-xs">
             <button
               type="button"
-              onClick={copyPrompt}
+              data-event="copy_prompt_click"
+              data-guide-slug={guide.slug}
+              data-action-location="prompt_builder"
+              onClick={() => copyPrompt("prompt_builder")}
               className="ateflo-primary-copy-button inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-base font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 sm:w-auto sm:text-sm"
             >
               <span className="relative z-10 inline-flex items-center gap-2">

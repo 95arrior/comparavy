@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { trackEvent } from "@/lib/analytics";
 
 type ActionTone = "primary" | "secondary";
 
@@ -8,6 +11,8 @@ export interface ActionLinkItem {
   readonly external?: boolean;
   readonly tone?: ActionTone;
   readonly rel?: string;
+  readonly eventName?: string;
+  readonly eventParams?: Record<string, string | number | boolean | null | undefined>;
 }
 
 interface ActionLinksProps {
@@ -28,6 +33,15 @@ export default function ActionLinks({ items, className }: ActionLinksProps) {
     <div className={`flex flex-wrap gap-3 ${className ?? ""}`}>
       {items.map((item) => {
         const classes = `${BASE_CLASSES} ${TONE_CLASSES[item.tone ?? "secondary"]}`;
+        const actionLocation =
+          typeof item.eventParams?.action_location === "string"
+            ? item.eventParams.action_location
+            : undefined;
+        const handleClick = () => {
+          if (item.eventName) {
+            trackEvent(item.eventName, item.eventParams);
+          }
+        };
 
         if (item.external) {
           return (
@@ -37,6 +51,9 @@ export default function ActionLinks({ items, className }: ActionLinksProps) {
               target="_blank"
               rel={item.rel ?? "noopener noreferrer"}
               className={classes}
+              data-event={item.eventName}
+              data-action-location={actionLocation}
+              onClick={handleClick}
             >
               {item.label}
             </a>
@@ -44,7 +61,14 @@ export default function ActionLinks({ items, className }: ActionLinksProps) {
         }
 
         return (
-          <Link key={`${item.href}-${item.label}`} href={item.href} className={classes}>
+          <Link
+            key={`${item.href}-${item.label}`}
+            href={item.href}
+            className={classes}
+            data-event={item.eventName}
+            data-action-location={actionLocation}
+            onClick={handleClick}
+          >
             {item.label}
           </Link>
         );

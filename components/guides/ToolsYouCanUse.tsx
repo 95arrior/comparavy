@@ -51,6 +51,8 @@ export default function ToolsYouCanUse({
               toolName={tool.toolName}
               role={tool.why}
               bestUseCase={recommendation?.bestFor}
+              sourcePage="guide_detail"
+              guideSlug={guide.slug}
               compact={compact}
             />
           );

@@ -12,6 +12,8 @@ interface GuideToolCardProps {
   readonly avoidItIf?: string;
   readonly watchFor?: string;
   readonly practicalExample?: string;
+  readonly sourcePage?: string;
+  readonly guideSlug?: string;
   readonly compact?: boolean;
   readonly highlight?: boolean;
 }
@@ -25,6 +27,8 @@ export default function GuideToolCard({
   avoidItIf,
   watchFor,
   practicalExample,
+  sourcePage,
+  guideSlug,
   compact = false,
   highlight = false,
 }: GuideToolCardProps) {
@@ -99,6 +103,8 @@ export default function GuideToolCard({
         name={name}
         officialUrl={catalogTool?.officialUrl}
         affiliateUrl={catalogTool?.affiliateUrl}
+        sourcePage={sourcePage}
+        guideSlug={guideSlug}
       />
     </article>
   );

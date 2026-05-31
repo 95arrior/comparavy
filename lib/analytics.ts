@@ -1,7 +1,25 @@
 export const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+const ANALYTICS_DEBUG = process.env.NEXT_PUBLIC_ANALYTICS_DEBUG === "true";
 
 type AnalyticsValue = string | number | boolean | null | undefined;
 type AnalyticsParams = Record<string, AnalyticsValue>;
+
+const ALLOWED_PARAM_KEYS = new Set([
+  "guide_slug",
+  "guide_title",
+  "guide_type",
+  "topic_cluster",
+  "action_location",
+  "field_key",
+  "filled_field_count",
+  "has_user_input",
+  "destination_slug",
+  "destination_title",
+  "share_method",
+  "tool_slug",
+  "tool_name",
+  "source_page",
+]);
 
 declare global {
   interface Window {
@@ -18,6 +36,14 @@ function canUseAnalytics(): boolean {
   );
 }
 
+function debugLog(eventName: string, params: AnalyticsParams) {
+  if (!ANALYTICS_DEBUG || typeof window === "undefined") {
+    return;
+  }
+
+  console.info("[AteFlo analytics]", eventName, params);
+}
+
 export function pageview(path: string) {
   if (!canUseAnalytics()) {
     return;
@@ -31,13 +57,17 @@ export function pageview(path: string) {
 }
 
 export function trackEvent(eventName: string, params: AnalyticsParams = {}) {
+  const safeParams = Object.fromEntries(
+    Object.entries(params).filter(
+      ([key, value]) => ALLOWED_PARAM_KEYS.has(key) && value !== undefined,
+    ),
+  );
+
+  debugLog(eventName, safeParams);
+
   if (!canUseAnalytics()) {
     return;
   }
-
-  const safeParams = Object.fromEntries(
-    Object.entries(params).filter(([, value]) => value !== undefined),
-  );
 
   window.gtag?.("event", eventName, safeParams);
 }

@@ -83,76 +83,83 @@ export default function GuidesPage() {
           ) : (
             <div className="mt-7 grid gap-4 md:grid-cols-2">
               {guides.map((guide, index) => {
-              const primaryTool = toolsBySlug.get(
-                guide.recommendedToolSlugs[0] as ToolSlug,
-              );
+                const primaryTool = toolsBySlug.get(
+                  guide.recommendedToolSlugs[0] as ToolSlug,
+                );
 
-              return (
-                <article
-                  key={guide.slug}
-                  className={`flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-sm ateflo-card-lift ateflo-reveal ${
-                    index % 2 === 1 ? "ateflo-reveal-delay-1" : ""
-                  }`}
-                >
-                  <BadgeRow
-                    badges={[
-                      { label: formatGuideLayoutLabel(resolveGuideLayoutType(guide.guideType)), tone: "slate" },
-                      { label: guide.category, tone: "teal" },
-                      { label: guide.skillLevel },
-                    ]}
-                  />
-                  <h3 className="ateflo-clamp-3 mt-5 text-2xl font-semibold leading-8 tracking-tight text-slate-900 md:min-h-24">
-                    <Link
-                      href={`/guides/${guide.slug}`}
-                      className="transition hover:text-teal-700"
-                    >
-                      {guide.title}
-                    </Link>
-                  </h3>
-                  <p className="ateflo-clamp-4 mt-3 text-sm leading-7 text-slate-600">
-                    {guide.quickAnswer ?? guide.quickVerdict}
-                  </p>
-                  <dl className="mt-5 grid gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm md:min-h-[12rem]">
-                    <div>
-                      <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        For
-                      </dt>
-                      <dd className="mt-1 font-medium text-slate-800">
-                        {guide.persona}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        Use case
-                      </dt>
-                      <dd className="mt-1 leading-6 text-slate-700">
-                        {guide.useCase}
-                      </dd>
-                    </div>
-                  </dl>
-                  {primaryTool && (
-                    <div className="mt-5 flex min-w-0 items-center gap-3">
-                      <ToolIcon {...primaryTool} size={26} />
-                      <div className="min-w-0">
-                        <p className="truncate whitespace-nowrap text-sm font-semibold text-slate-900">
-                          {primaryTool.name}
-                        </p>
+                return (
+                  <article
+                    key={guide.slug}
+                    className={`flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-sm ateflo-card-lift ateflo-reveal ${
+                      index % 2 === 1 ? "ateflo-reveal-delay-1" : ""
+                    }`}
+                  >
+                    <BadgeRow
+                      badges={[
+                        {
+                          label: formatGuideLayoutLabel(resolveGuideLayoutType(guide.guideType)),
+                          tone: "slate",
+                        },
+                        { label: guide.category, tone: "teal" },
+                        { label: guide.skillLevel },
+                      ]}
+                    />
+                    <h3 className="ateflo-clamp-3 mt-5 text-2xl font-semibold leading-8 tracking-tight text-slate-900 md:min-h-24">
+                      <Link
+                        href={`/guides/${guide.slug}`}
+                        className="transition hover:text-teal-700"
+                      >
+                        {guide.title}
+                      </Link>
+                    </h3>
+                    <p className="ateflo-clamp-4 mt-3 text-sm leading-7 text-slate-600">
+                      {guide.quickAnswer ?? guide.quickVerdict}
+                    </p>
+                    <dl className="mt-5 grid gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm md:min-h-[12rem]">
+                      <div>
+                        <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          For
+                        </dt>
+                        <dd className="mt-1 font-medium text-slate-800">
+                          {guide.persona}
+                        </dd>
                       </div>
-                    </div>
-                  )}
-                  <ActionLinks
-                    className="mt-auto border-t border-slate-100 pt-5"
-                    items={[
-                      {
-                        href: `/guides/${guide.slug}`,
-                        label: "Read Shortcut",
-                        tone: "primary",
-                      },
-                      { href: "/finder", label: "Use Finder" },
-                    ]}
-                  />
-                </article>
-              );
+                      <div>
+                        <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          Use case
+                        </dt>
+                        <dd className="mt-1 leading-6 text-slate-700">
+                          {guide.useCase}
+                        </dd>
+                      </div>
+                    </dl>
+                    {primaryTool && (
+                      <div className="mt-5 flex min-h-12 min-w-0 items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 px-3 py-2.5">
+                        <ToolIcon
+                          {...primaryTool}
+                          size={28}
+                          loading={index < 2 ? "eager" : "lazy"}
+                        />
+                        <div className="min-w-0">
+                          <p className="truncate whitespace-nowrap text-sm font-semibold leading-none text-slate-900">
+                            {primaryTool.name}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    <ActionLinks
+                      className="mt-auto border-t border-slate-100 pt-5"
+                      items={[
+                        {
+                          href: `/guides/${guide.slug}`,
+                          label: "Read Shortcut",
+                          tone: "primary",
+                        },
+                        { href: "/finder", label: "Use Finder" },
+                      ]}
+                    />
+                  </article>
+                );
               })}
             </div>
           )}
