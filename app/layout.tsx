@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
+import RouteScrollManager from "@/components/RouteScrollManager";
 import SiteFooter from "@/components/SiteFooter";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
 import "./globals.css";
@@ -46,6 +47,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <RouteScrollManager />
         <GoogleAnalytics />
         {children}
         <SiteFooter />

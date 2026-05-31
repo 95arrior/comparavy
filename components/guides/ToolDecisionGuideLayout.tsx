@@ -77,7 +77,7 @@ export default function ToolDecisionGuideLayout({ guide }: { readonly guide: Gui
             return (
               <article
                 key={pick.toolSlug}
-                className={`rounded-2xl border p-4 ${
+                className={`flex h-full flex-col rounded-2xl border p-4 ${
                   index === 0 ? "border-teal-200 bg-teal-50/40" : "border-slate-100 bg-slate-50/70"
                 }`}
               >
@@ -89,8 +89,8 @@ export default function ToolDecisionGuideLayout({ guide }: { readonly guide: Gui
                     </Link>
                   </h3>
                 </div>
-                <p className="mt-3 text-sm font-medium leading-6 text-slate-900">{pick.situation}</p>
-                <p className="mt-2 text-sm leading-7 text-slate-600">{pick.why}</p>
+                <p className="mt-3 text-sm font-medium leading-6 text-slate-900 md:min-h-[4.5rem]">{pick.situation}</p>
+                <p className="mt-auto pt-2 text-sm leading-7 text-slate-600">{pick.why}</p>
               </article>
             );
           })}

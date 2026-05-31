@@ -66,8 +66,8 @@
       "after": "After: a concise recap with decisions, owners, due dates, and open questions."
     }
   },
-  "quickAnswer": "To turn meeting notes into a client recap, paste the notes or transcript into AI, ask for decisions, action items, owners, dates, and open questions, then turn that into a short email. Use Otter.ai or Fireflies if you need meeting capture, ChatGPT or Claude for the recap draft, and Notion AI when the recap should stay inside a project workspace. The key is to review every commitment before sending it to a client.",
-  "quickDecision": "Use Otter.ai or Fireflies for capture, ChatGPT or Claude for the recap draft, and Notion AI when the recap belongs in your project workspace.",
+  "quickAnswer": "To turn meeting notes into a client recap, paste the notes or transcript into ChatGPT, Claude, Gemini, Microsoft Copilot, or another AI chat tool that can handle your input. Ask for decisions, action items, owners, dates, and open questions before drafting the email. Use Otter.ai or Fireflies if capture is the problem, Claude for longer notes, and Notion AI when the recap should stay inside a project workspace.",
+  "quickDecision": "Choose the tool based on where the work already lives: Otter.ai or Fireflies for capture, ChatGPT for flexible recap drafting, Claude for longer notes, Microsoft Copilot for Microsoft 365 workplaces, and Notion AI when the recap belongs in Notion.",
   "realWorldScenario": "You finish a 45-minute client call with decisions, requests, and loose follow-ups. The client expects a recap today, but your notes are too rough to forward.",
   "whatYouNeed": [
     "Rough meeting notes or a transcript",
@@ -78,7 +78,7 @@
   "contentGap": "Most advice stops at summarizing a meeting instead of preparing a client-safe follow-up.",
   "uniqueAngle": "Separate decisions, tasks, and open questions before drafting the client email.",
   "aiOverviewAnswer": "Use AI to extract decisions, action items, owners, dates, and open questions from meeting notes, then draft a short recap and review every commitment before sending.",
-  "quickVerdict": "For turning meeting notes into a client recap, use ChatGPT or Claude for the draft after capture, Otter.ai or Fireflies for the transcript, and Notion AI when the recap should stay with project notes.",
+  "quickVerdict": "For turning meeting notes into a client recap, use an AI chat tool for the draft after capture. ChatGPT is flexible for recap emails, Claude is useful for longer notes, Otter.ai or Fireflies help when you need a transcript, and Notion AI fits when the recap should stay with project notes.",
   "steps": [
     {
       "title": "Capture the source notes",
@@ -90,7 +90,7 @@
     },
     {
       "title": "Extract facts before writing",
-      "detail": "Copy this prompt: \"Extract decisions, action items, owners, due dates, risks, and open questions from these meeting notes. If a commitment is unclear, label it unclear instead of guessing.\"",
+      "detail": "Paste this prompt into ChatGPT, Claude, Gemini, Microsoft Copilot, or another AI chat tool that can handle your notes: \"Extract decisions, action items, owners, due dates, risks, and open questions from these meeting notes. If a commitment is unclear, label it unclear instead of guessing.\"",
       "why": "Client-facing follow-up needs accuracy more than speed.",
       "output": "A checked list of decisions, owners, dates, and open questions.",
       "toolSlug": "chatgpt",
@@ -98,7 +98,7 @@
     },
     {
       "title": "Draft the client email",
-      "detail": "Ask AI to turn the checked list into a short recap email with greeting, summary, decisions, action items, open questions, and next meeting note.",
+      "detail": "Ask the AI chat tool to turn the checked list into a short recap email with greeting, summary, decisions, action items, open questions, and next meeting note.",
       "why": "Client-facing follow-up needs accuracy more than speed.",
       "output": "A client recap draft that is specific and easy to scan.",
       "toolSlug": "claude",
@@ -117,16 +117,16 @@
     {
       "toolSlug": "chatgpt",
       "toolName": "ChatGPT",
-      "why": "Use ChatGPT to turn extracted notes into a concise recap email.",
-      "role": "Use ChatGPT to turn extracted notes into a concise recap email.",
-      "bestUseCase": "general cleanup and drafting"
+      "why": "Use ChatGPT for flexible drafting when you already have extracted decisions, action items, owners, and open questions.",
+      "role": "Use ChatGPT for flexible client recap drafts from checked notes.",
+      "bestUseCase": "flexible recap email drafting"
     },
     {
       "toolSlug": "claude",
       "toolName": "Claude",
-      "why": "Use Claude when the notes are long and need careful grouping.",
-      "role": "Use Claude when the notes are long and need careful grouping.",
-      "bestUseCase": "careful long-form review and restructuring"
+      "why": "Use Claude when the notes or transcript are long and need careful grouping before the recap email.",
+      "role": "Use Claude for longer notes that need grouping and careful rewrite.",
+      "bestUseCase": "long-note grouping and recap cleanup"
     },
     {
       "toolSlug": "otter-ai",
@@ -182,11 +182,11 @@
     {
       "toolSlug": "chatgpt",
       "toolName": "ChatGPT",
-      "summary": "ChatGPT is useful for client recap drafting when you need general cleanup and drafting. It can speed up the first useful version, but the output still needs a human review before it reaches a client, student, customer, or public page.",
+      "summary": "ChatGPT is useful for flexible client recap drafting after you have extracted decisions, action items, owners, and open questions. It can speed up the first email draft, but every commitment still needs human review before sending.",
       "bestFor": "turning extracted notes into a client-ready email",
       "avoidIf": "you cannot manually verify the commitments",
       "strengths": [
-        "general cleanup and drafting",
+        "flexible recap drafting",
         "clear workflow fit",
         "fast first draft",
         "review-friendly output"
@@ -200,11 +200,11 @@
     {
       "toolSlug": "claude",
       "toolName": "Claude",
-      "summary": "Claude is useful for long-note recap cleanup when you need careful long-form review and restructuring. It can speed up the first useful version, but the output still needs a human review before it reaches a client, student, customer, or public page.",
+      "summary": "Claude is useful when the notes or transcript are long and need grouping before the client email. It can preserve context better than a short summary pass, but names, dates, owners, and commitments still need review.",
       "bestFor": "careful grouping of decisions and follow-ups",
       "avoidIf": "you only need a short one-line summary",
       "strengths": [
-        "careful long-form review and restructuring",
+        "long-note grouping and cleanup",
         "clear workflow fit",
         "fast first draft",
         "review-friendly output"
@@ -218,7 +218,7 @@
     {
       "toolSlug": "otter-ai",
       "toolName": "Otter.ai",
-      "summary": "Otter.ai is useful for meeting capture when you need meeting transcription and recall. It can speed up the first useful version, but the output still needs a human review before it reaches a client, student, customer, or public page.",
+      "summary": "Otter.ai is useful when the bottleneck is capturing the meeting before you draft anything. Use it for transcripts and recall, then review the transcript before turning it into a client recap.",
       "bestFor": "creating a transcript before drafting",
       "avoidIf": "recording is not permitted",
       "strengths": [
@@ -236,7 +236,7 @@
     {
       "toolSlug": "fireflies",
       "toolName": "Fireflies",
-      "summary": "Fireflies is useful for team meeting records when you need meeting transcripts and searchable notes. It can speed up the first useful version, but the output still needs a human review before it reaches a client, student, customer, or public page.",
+      "summary": "Fireflies is useful when a team needs searchable meeting records before follow-up writing. It fits recurring meeting workflows better than a one-off recap.",
       "bestFor": "searchable transcripts and follow-up records",
       "avoidIf": "you only need a one-off recap",
       "strengths": [
@@ -254,7 +254,7 @@
     {
       "toolSlug": "notion-ai",
       "toolName": "Notion AI",
-      "summary": "Notion AI is useful for project workspace recaps when you need workspace notes and project pages. It can speed up the first useful version, but the output still needs a human review before it reaches a client, student, customer, or public page.",
+      "summary": "Notion AI is useful when meeting notes, project pages, and follow-up tasks already live in Notion. It keeps the recap close to project context, but the final client-facing wording still needs review.",
       "bestFor": "keeping notes and recap in one workspace",
       "avoidIf": "your team does not use Notion",
       "strengths": [
@@ -319,12 +319,12 @@
   ],
   "decisionPath": [
     {
-      "situation": "If you already have notes, choose ChatGPT for the recap draft.",
+      "situation": "If you already have checked notes, choose ChatGPT for a flexible recap draft.",
       "recommendation": "ChatGPT",
       "reason": "It moves quickly from bullets to a readable email."
     },
     {
-      "situation": "If the notes are long, choose Claude for grouping before drafting.",
+      "situation": "If the notes are long or messy, choose Claude for grouping before drafting.",
       "recommendation": "Claude",
       "reason": "It handles longer context well."
     },
@@ -373,12 +373,12 @@
     "Do not let AI invent a deadline."
   ],
   "whatChanged": "Separate decisions, tasks, and open questions before drafting the client email.",
-  "exampleWorkflow": "Paste the notes, ask for decisions and action items, draft a five-sentence recap, then verify commitments against the source notes.",
+  "exampleWorkflow": "Paste the notes into ChatGPT, Claude, Gemini, Microsoft Copilot, or another AI chat tool, ask for decisions and action items, draft a five-sentence recap, then verify commitments against the source notes.",
   "exampleResult": "Example output: a recap email with three decisions, four action items with owners, two open questions, and one next meeting note.",
   "faq": [
     {
       "question": "What AI prompt should I use for a client meeting recap?",
-      "answer": "Ask AI to extract decisions, action items, owners, due dates, risks, and open questions first. Then ask for a short client email based only on the checked list."
+      "answer": "Paste the notes into ChatGPT, Claude, Gemini, Microsoft Copilot, or another AI chat tool that can handle your input. Ask it to extract decisions, action items, owners, due dates, risks, and open questions first. Then ask for a short client email based only on the checked list."
     },
     {
       "question": "What should be in a client recap?",
@@ -396,7 +396,7 @@
   "faqs": [
     {
       "question": "What AI prompt should I use for a client meeting recap?",
-      "answer": "Ask AI to extract decisions, action items, owners, due dates, risks, and open questions first. Then ask for a short client email based only on the checked list."
+      "answer": "Paste the notes into ChatGPT, Claude, Gemini, Microsoft Copilot, or another AI chat tool that can handle your input. Ask it to extract decisions, action items, owners, due dates, risks, and open questions first. Then ask for a short client email based only on the checked list."
     },
     {
       "question": "What should be in a client recap?",
@@ -411,7 +411,7 @@
       "answer": "Mark unclear owners, dates, and commitments as open questions instead of letting AI guess. That is safer than sending a confident but wrong recap."
     }
   ],
-  "finalVerdict": "For meeting notes to client recaps, use ChatGPT or Claude for the draft after you extract decisions and action items. Add Otter.ai or Fireflies only when capture is the problem, and keep Notion AI for teams that already work in Notion.",
+  "finalVerdict": "For meeting notes to client recaps, use the AI chat tool that fits your source material after you extract decisions and action items. ChatGPT works for flexible drafting, Claude fits longer notes, Otter.ai or Fireflies help when capture is the problem, and Notion AI fits teams already working in Notion.",
   "ctaToFinder": "Use Finder at /finder if your meeting workflow starts with a recording tool, a long transcript, a CRM note, or a team workspace instead of rough notes.",
   "finderCTA": "Use Finder at /finder if your meeting workflow starts with a recording tool, a long transcript, a CRM note, or a team workspace instead of rough notes.",
   "visualSummary": {

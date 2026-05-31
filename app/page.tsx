@@ -126,17 +126,17 @@ function ShortcutCard({
           { label: guide.skillLevel },
         ]}
       />
-      <h3 className="mt-4 text-xl font-semibold tracking-tight text-slate-950">
+      <h3 className="ateflo-clamp-3 mt-4 text-xl font-semibold leading-7 tracking-tight text-slate-950 md:min-h-[5.25rem]">
         <Link href={`/guides/${guide.slug}`} className="transition hover:text-teal-700">
           {guide.title}
         </Link>
       </h3>
-      <p className="mt-3 flex-1 text-sm leading-6 text-slate-600">
+      <p className="ateflo-clamp-4 mt-3 text-sm leading-6 text-slate-600">
         {guideSummary(guide)}
       </p>
       <Link
         href={`/guides/${guide.slug}`}
-        className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-teal-700 transition hover:text-teal-900"
+        className="mt-auto inline-flex items-center gap-2 pt-5 text-sm font-semibold text-teal-700 transition hover:text-teal-900"
       >
         {label} <span aria-hidden="true">&rarr;</span>
       </Link>
@@ -154,19 +154,19 @@ function StarterShortcutCard({
       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">
         {shortcut.category}
       </p>
-      <h3 className="mt-3 text-xl font-semibold tracking-tight text-slate-950">
+      <h3 className="mt-3 text-xl font-semibold leading-7 tracking-tight text-slate-950 md:min-h-[3.5rem]">
         {shortcut.title}
       </h3>
-      <p className="mt-3 flex-1 text-sm leading-6 text-slate-600">
+      <p className="mt-3 text-sm leading-6 text-slate-600 md:min-h-[4.5rem]">
         {shortcut.detail}
       </p>
-      <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50 p-4">
+      <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50 p-4 md:min-h-[11.5rem]">
         <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
           Starter prompt
         </p>
         <p className="mt-2 text-sm leading-6 text-slate-700">{shortcut.prompt}</p>
       </div>
-      <div className="mt-5 flex flex-wrap gap-3">
+      <div className="mt-auto flex flex-wrap gap-3 pt-5">
         <CopyTextButton text={shortcut.prompt} />
         <Link
           href="/finder"
@@ -196,7 +196,7 @@ export default function Home() {
   const latestShortcuts = guides.slice(0, 6);
 
   return (
-    <main className="min-h-screen bg-[#FBFAF7] text-slate-900">
+    <main className="ateflo-page-shell min-h-screen bg-[#FBFAF7] text-slate-900">
       <SiteHeader active="shortcuts" />
 
       <section className="px-4 pb-10 pt-9 sm:px-6 sm:pb-16 sm:pt-16">
@@ -293,17 +293,17 @@ export default function Home() {
               <Link
                 key={choice.title}
                 href={choice.href}
-                className="group rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-teal-300 hover:bg-teal-50"
+                className="group flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-teal-300 hover:bg-teal-50"
               >
                 <div className="flex items-center justify-between gap-4">
-                  <h3 className="font-semibold text-slate-950 group-hover:text-teal-800">
+                  <h3 className="font-semibold leading-6 text-slate-950 group-hover:text-teal-800 md:min-h-12">
                     {choice.title}
                   </h3>
                   <span className="text-slate-400 transition group-hover:text-teal-700" aria-hidden="true">
                     &rarr;
                   </span>
                 </div>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{choice.detail}</p>
+                <p className="mt-auto pt-2 text-sm leading-6 text-slate-600">{choice.detail}</p>
               </Link>
             ))}
           </div>
@@ -319,36 +319,36 @@ export default function Home() {
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             {moneyWorkflows.length > 0
               ? moneyWorkflows.map((guide) => (
-                  <article key={guide.slug} className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                  <article key={guide.slug} className="flex h-full flex-col rounded-2xl border border-white/10 bg-white/5 p-5">
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-200">
                       {guide.category}
                     </p>
-                    <h3 className="mt-4 text-xl font-semibold tracking-tight text-white">
+                    <h3 className="ateflo-clamp-3 mt-4 text-xl font-semibold leading-7 tracking-tight text-white md:min-h-[5.25rem]">
                       <Link href={`/guides/${guide.slug}`} className="transition hover:text-teal-200">
                         {guide.title}
                       </Link>
                     </h3>
-                    <p className="mt-3 text-sm leading-6 text-slate-300">{guide.useCase}</p>
+                    <p className="ateflo-clamp-3 mt-3 text-sm leading-6 text-slate-300">{guide.useCase}</p>
                     <Link
                       href={`/guides/${guide.slug}`}
-                      className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-teal-200 transition hover:text-white"
+                      className="mt-auto inline-flex items-center gap-2 pt-5 text-sm font-semibold text-teal-200 transition hover:text-white"
                     >
                       Open workflow <span aria-hidden="true">&rarr;</span>
                     </Link>
                   </article>
                 ))
               : moneyStarterWorkflows.map((workflow) => (
-                  <article key={workflow.title} className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                  <article key={workflow.title} className="flex h-full flex-col rounded-2xl border border-white/10 bg-white/5 p-5">
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-200">
                       Practical workflow
                     </p>
-                    <h3 className="mt-4 text-xl font-semibold tracking-tight text-white">
+                    <h3 className="mt-4 text-xl font-semibold leading-7 tracking-tight text-white md:min-h-[3.5rem]">
                       {workflow.title}
                     </h3>
                     <p className="mt-3 text-sm leading-6 text-slate-300">{workflow.detail}</p>
                     <Link
                       href="/finder"
-                      className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full border border-white/15 px-4 text-sm font-semibold text-teal-200 transition hover:border-teal-200 hover:text-white"
+                      className="mt-auto inline-flex min-h-11 items-center gap-2 rounded-full border border-white/15 px-4 py-2.5 text-sm font-semibold text-teal-200 transition hover:border-teal-200 hover:text-white"
                     >
                       Match a tool <span aria-hidden="true">&rarr;</span>
                     </Link>
@@ -366,8 +366,8 @@ export default function Home() {
           </h2>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {whyPoints.map((point) => (
-              <div key={point.title} className="rounded-2xl border border-slate-200 bg-[#FBFAF7] p-5">
-                <h3 className="text-base font-semibold text-slate-950">{point.title}</h3>
+              <div key={point.title} className="flex h-full flex-col rounded-2xl border border-slate-200 bg-[#FBFAF7] p-5">
+                <h3 className="text-base font-semibold leading-6 text-slate-950 md:min-h-12">{point.title}</h3>
                 <p className="mt-3 text-sm leading-6 text-slate-600">{point.detail}</p>
               </div>
             ))}

@@ -21,17 +21,17 @@ export default function RelatedShortcuts({ guides }: RelatedShortcutsProps) {
       </h2>
       <div className="mt-5 grid gap-4 md:grid-cols-3">
         {guides.map((guide) => (
-          <article key={guide.slug} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+          <article key={guide.slug} className="flex h-full flex-col rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
             <BadgeRow badges={[{ label: guide.category, tone: "teal" }]} />
-            <h3 className="mt-3 text-base font-semibold leading-6 text-slate-950">
+            <h3 className="ateflo-clamp-3 mt-3 text-base font-semibold leading-6 text-slate-950 md:min-h-[4.5rem]">
               <Link href={`/guides/${guide.slug}`} className="transition hover:text-teal-700">
                 {guide.title}
               </Link>
             </h3>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
+            <p className="ateflo-clamp-3 mt-2 text-sm leading-6 text-slate-600">
               {guide.metaDescription}
             </p>
-            <dl className="mt-4 space-y-3 rounded-2xl border border-slate-100 bg-white p-4 text-sm">
+            <dl className="mt-auto space-y-3 rounded-2xl border border-slate-100 bg-white p-4 pt-4 text-sm">
               <div>
                 <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                   Input

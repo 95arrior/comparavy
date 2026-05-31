@@ -18,7 +18,7 @@ export default function GuidesPage() {
   const guides = getPublishedGuides();
 
   return (
-    <main className="min-h-screen px-4 py-8 sm:px-6 sm:py-12">
+    <main className="ateflo-page-shell min-h-screen px-4 py-8 sm:px-6 sm:py-12">
       <div className="mx-auto max-w-6xl">
         <SiteHeader active="shortcuts" className="mb-6 rounded-3xl border border-slate-200 shadow-sm" />
         <header className="rounded-3xl border border-slate-200 bg-white px-6 py-10 shadow-sm ateflo-reveal sm:px-10 sm:py-14">
@@ -90,7 +90,7 @@ export default function GuidesPage() {
               return (
                 <article
                   key={guide.slug}
-                  className={`flex flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-sm ateflo-card-lift ateflo-reveal ${
+                  className={`flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-sm ateflo-card-lift ateflo-reveal ${
                     index % 2 === 1 ? "ateflo-reveal-delay-1" : ""
                   }`}
                 >
@@ -101,7 +101,7 @@ export default function GuidesPage() {
                       { label: guide.skillLevel },
                     ]}
                   />
-                  <h3 className="mt-5 text-2xl font-semibold tracking-tight text-slate-900">
+                  <h3 className="ateflo-clamp-3 mt-5 text-2xl font-semibold leading-8 tracking-tight text-slate-900 md:min-h-24">
                     <Link
                       href={`/guides/${guide.slug}`}
                       className="transition hover:text-teal-700"
@@ -109,10 +109,10 @@ export default function GuidesPage() {
                       {guide.title}
                     </Link>
                   </h3>
-                  <p className="mt-3 text-sm leading-7 text-slate-600">
+                  <p className="ateflo-clamp-4 mt-3 text-sm leading-7 text-slate-600">
                     {guide.quickAnswer ?? guide.quickVerdict}
                   </p>
-                  <dl className="mt-5 grid gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm">
+                  <dl className="mt-5 grid gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm md:min-h-[12rem]">
                     <div>
                       <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                         For
@@ -141,7 +141,7 @@ export default function GuidesPage() {
                     </div>
                   )}
                   <ActionLinks
-                    className="mt-6 border-t border-slate-100 pt-5"
+                    className="mt-auto border-t border-slate-100 pt-5"
                     items={[
                       {
                         href: `/guides/${guide.slug}`,

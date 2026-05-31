@@ -77,7 +77,7 @@ export default function ToolStackCard({
                 </div>
               )}
               <GuideToolActions
-                className="mt-4"
+                className="mt-auto pt-4"
                 slug={catalogTool?.slug}
                 name={catalogTool?.name ?? tool.toolName}
                 officialUrl={catalogTool?.officialUrl}

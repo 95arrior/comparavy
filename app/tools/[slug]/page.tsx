@@ -76,7 +76,7 @@ export default async function ToolDetailPage({ params }: ToolPageProps) {
   const visitUrl = tool.affiliateUrl ?? tool.officialUrl;
 
   return (
-    <main className="min-h-screen px-4 py-6 sm:px-6 sm:py-10">
+    <main className="ateflo-page-shell min-h-screen px-4 py-6 sm:px-6 sm:py-10">
       <article className="mx-auto max-w-6xl">
         <nav className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-3 sm:gap-4">

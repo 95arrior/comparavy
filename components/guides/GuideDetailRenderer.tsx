@@ -15,8 +15,8 @@ interface GuideDetailRendererProps {
 }
 
 function starterPrompt(guide: Guide): string {
-  const copiedStep = guide.steps?.find((step) => step.detail.includes("Copy this prompt:"));
-  const quotedPrompt = copiedStep?.detail.match(/Copy this prompt:\s*"([^"]+)"/)?.[1];
+  const copiedStep = guide.steps?.find((step) => /(?:Copy|Paste) this prompt/i.test(step.detail));
+  const quotedPrompt = copiedStep?.detail.match(/(?:Copy|Paste) this prompt[^:]*:\s*"([^"]+)"/i)?.[1];
   const inputLines = Array.isArray(guide.whatYouNeed)
     ? guide.whatYouNeed.slice(0, 3)
     : typeof guide.whatYouNeed === "string"
@@ -77,7 +77,7 @@ export default function GuideDetailRenderer({ guide }: GuideDetailRendererProps)
       <CopyPromptCard
         prompt={starterPrompt(guide)}
         title="Copy the shortcut prompt"
-        description="Paste this into your AI tool, then replace the source material with your real notes, product facts, transcript, or task details."
+        description="Paste this into ChatGPT, Claude, Gemini, Copilot, or another AI chat tool that can handle your input, then replace the source material with your real notes, product facts, transcript, or task details."
       />
 
       {guideType === "how-to" ? (

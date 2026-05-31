@@ -336,7 +336,7 @@ function RecommendationCard({
 
   return (
     <article
-      className={`rounded-3xl border bg-white p-5 shadow-sm ateflo-card-lift sm:p-6 ${
+      className={`flex flex-col rounded-3xl border bg-white p-5 shadow-sm ateflo-card-lift sm:p-6 ${
         rank === 1
           ? "border-teal-200 ring-1 ring-teal-100"
           : "border-slate-200 hover:border-slate-300"
@@ -367,7 +367,7 @@ function RecommendationCard({
       </div>
 
       <div className="mt-5 grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
-        <div className="rounded-2xl bg-slate-50 p-4">
+        <div className="flex h-full flex-col rounded-2xl bg-slate-50 p-4">
           <p className="text-sm font-semibold text-slate-900">Why this fits</p>
           <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
             {reasons.map((reason) => (
@@ -378,14 +378,14 @@ function RecommendationCard({
             ))}
           </ul>
         </div>
-        <div className="rounded-2xl border border-slate-100 bg-white p-4">
+        <div className="flex h-full flex-col rounded-2xl border border-slate-100 bg-white p-4">
           <p className="mb-4 text-sm font-semibold text-slate-900">Fit signals</p>
           <MetricBars tool={tool} />
         </div>
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
-        <div className="rounded-2xl bg-teal-50/70 p-3.5">
+        <div className="flex h-full flex-col rounded-2xl bg-teal-50/70 p-3.5">
           <p className="text-sm font-semibold text-slate-900">Best for</p>
           <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
             {tool.bestFor.map((item) => (
@@ -396,7 +396,7 @@ function RecommendationCard({
             ))}
           </ul>
         </div>
-        <div className="rounded-2xl bg-slate-50 p-3.5">
+        <div className="flex h-full flex-col rounded-2xl bg-slate-50 p-3.5">
           <p className="text-sm font-semibold text-slate-900">Not for</p>
           <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
             {tool.notFor.map((item) => (
@@ -404,7 +404,7 @@ function RecommendationCard({
             ))}
           </ul>
         </div>
-        <div className="rounded-2xl bg-amber-50/60 p-3.5">
+        <div className="flex h-full flex-col rounded-2xl bg-amber-50/60 p-3.5">
           <p className="text-sm font-semibold text-slate-900">Avoid if</p>
           <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
             {tool.avoidIf.map((item) => (
@@ -426,7 +426,7 @@ function RecommendationCard({
         </p>
       </div>
 
-      <div className="mt-6 flex flex-wrap gap-3">
+      <div className="mt-auto flex flex-wrap gap-3 pt-6">
         <ActionLinks
           items={[
             {
@@ -550,7 +550,7 @@ export default function FinderPage() {
   }
 
   return (
-    <main className="min-h-screen px-4 py-6 sm:px-6 sm:py-10">
+    <main className="ateflo-page-shell min-h-screen px-4 py-6 sm:px-6 sm:py-10">
       <div className="mx-auto max-w-5xl">
         <SiteHeader active="finder" className="mb-7 rounded-3xl border border-slate-200 shadow-sm sm:mb-10" />
         <header className="mb-7 sm:mb-10">

@@ -59,7 +59,7 @@ export default async function GuideDetailPage({ params }: GuidePageProps) {
   }
 
   return (
-    <main className="min-h-screen bg-[#F7F9FC] px-4 py-6 sm:px-6 sm:py-10">
+    <main className="ateflo-page-shell min-h-screen bg-[#F7F9FC] px-4 py-6 sm:px-6 sm:py-10">
       <article className="mx-auto max-w-6xl">
         <nav className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-4">

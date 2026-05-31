@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function ToolsPage() {
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-6 text-slate-900 sm:px-6 sm:py-10">
+    <main className="ateflo-page-shell min-h-screen bg-slate-50 px-4 py-6 text-slate-900 sm:px-6 sm:py-10">
       <div className="mx-auto max-w-6xl">
         <SiteHeader active="tools" className="mb-6 rounded-3xl border border-slate-200 shadow-sm" />
         <header className="rounded-3xl border border-slate-200 bg-white px-6 py-8 shadow-sm ateflo-reveal sm:px-10 sm:py-10">

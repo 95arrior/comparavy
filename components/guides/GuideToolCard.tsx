@@ -94,7 +94,7 @@ export default function GuideToolCard({
       )}
 
       <GuideToolActions
-        className="mt-4"
+        className="mt-auto pt-4"
         slug={slug}
         name={name}
         officialUrl={catalogTool?.officialUrl}
