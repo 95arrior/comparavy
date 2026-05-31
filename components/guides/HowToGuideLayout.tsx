@@ -1,7 +1,7 @@
-import ActionLinks from "@/components/ActionLinks";
 import CommonMistakes from "@/components/guides/CommonMistakes";
 import DeviceUseCaseBlock from "@/components/guides/DeviceUseCaseBlock";
 import ExampleResultBlock from "@/components/guides/ExampleResultBlock";
+import FinderCta from "@/components/guides/FinderCta";
 import QuickAnswerBox from "@/components/guides/QuickAnswerBox";
 import RealWorldScenario from "@/components/guides/RealWorldScenario";
 import ToolsYouCanUse from "@/components/guides/ToolsYouCanUse";
@@ -115,21 +115,7 @@ export default function HowToGuideLayout({ guide }: { readonly guide: Guide }) {
         <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-700">
           {guide.finalVerdict}
         </p>
-        <div className="mt-7 rounded-3xl bg-slate-900 p-5 text-white sm:flex sm:items-center sm:justify-between sm:gap-6">
-          <div>
-            <p className="text-lg font-semibold text-white">Need a faster starting point?</p>
-            <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-300">
-              {guide.finderCTA || guide.ctaToFinder}
-            </p>
-          </div>
-          <ActionLinks
-            className="mt-5 sm:mt-0"
-            items={[
-              { href: "/finder", label: "Use Finder", tone: "primary" },
-              { href: "/guides", label: "Related Shortcuts" },
-            ]}
-          />
-        </div>
+        <FinderCta guide={guide} secondaryLabel="Related Shortcuts" />
       </section>
     </div>
   );

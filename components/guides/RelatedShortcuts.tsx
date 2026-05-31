@@ -31,6 +31,31 @@ export default function RelatedShortcuts({ guides }: RelatedShortcutsProps) {
             <p className="mt-2 text-sm leading-6 text-slate-600">
               {guide.metaDescription}
             </p>
+            <dl className="mt-4 space-y-3 rounded-2xl border border-slate-100 bg-white p-4 text-sm">
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                  Input
+                </dt>
+                <dd className="mt-1 break-words leading-6 text-slate-700">
+                  {Array.isArray(guide.whatYouNeed)
+                    ? guide.whatYouNeed[0]
+                    : guide.whatYouNeed || guide.userPain}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                  Output
+                </dt>
+                <dd className="mt-1 break-words leading-6 text-slate-700">
+                  {guide.steps
+                    ?.filter((step) => step.output)
+                    .at(-1)
+                    ?.output ??
+                    guide.exampleResult ??
+                    guide.visualSummary.headline}
+                </dd>
+              </div>
+            </dl>
           </article>
         ))}
       </div>

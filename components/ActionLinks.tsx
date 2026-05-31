@@ -16,7 +16,7 @@ interface ActionLinksProps {
 }
 
 const BASE_CLASSES =
-  "inline-flex items-center justify-center rounded-full px-4 py-2.5 text-sm font-semibold transition duration-150 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2";
+  "inline-flex min-h-11 items-center justify-center rounded-full px-4 py-2.5 text-center text-sm font-semibold transition duration-150 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2";
 
 const TONE_CLASSES: Record<ActionTone, string> = {
   primary: "bg-teal-700 text-white hover:bg-teal-800",

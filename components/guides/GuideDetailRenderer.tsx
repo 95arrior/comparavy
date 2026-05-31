@@ -4,6 +4,7 @@ import HowToGuideLayout from "@/components/guides/HowToGuideLayout";
 import IncomeGuideLayout from "@/components/guides/IncomeGuideLayout";
 import RelatedShortcuts from "@/components/guides/RelatedShortcuts";
 import ShareGuideButton from "@/components/guides/ShareGuideButton";
+import ShortcutBrief from "@/components/guides/ShortcutBrief";
 import ToolDecisionGuideLayout from "@/components/guides/ToolDecisionGuideLayout";
 import TrendDecisionGuideLayout from "@/components/guides/TrendDecisionGuideLayout";
 import { resolveGuideLayoutType } from "@/lib/guideTypes";
@@ -14,12 +15,34 @@ interface GuideDetailRendererProps {
 }
 
 function starterPrompt(guide: Guide): string {
+  const copiedStep = guide.steps?.find((step) => step.detail.includes("Copy this prompt:"));
+  const quotedPrompt = copiedStep?.detail.match(/Copy this prompt:\s*"([^"]+)"/)?.[1];
+  const inputLines = Array.isArray(guide.whatYouNeed)
+    ? guide.whatYouNeed.slice(0, 3)
+    : typeof guide.whatYouNeed === "string"
+      ? [guide.whatYouNeed]
+      : [guide.userPain];
+  const finishLine =
+    guide.steps
+      ?.filter((step) => step.output?.trim())
+      .at(-1)
+      ?.output ??
+    guide.exampleResult ??
+    `A checked final output for ${guide.useCase}.`;
+
   return [
-    `Help me complete this workflow: ${guide.useCase}.`,
+    `I want to complete this AteFlo shortcut: ${guide.useCase}.`,
     `Audience/context: ${guide.persona}.`,
-    "Use my source material below. Turn it into a clear finished output, keep facts separate from assumptions, and flag anything I should verify.",
+    `Finished output I need: ${finishLine}`,
     "",
-    "Source material:",
+    "Input I have:",
+    ...inputLines.map((item) => `- ${item}`),
+    "",
+    "Prompt to run:",
+    quotedPrompt ??
+      "Use my source material below to create the finished output. Keep facts separate from assumptions, preserve important constraints, and flag anything I should verify before using the result.",
+    "",
+    "My source material:",
   ].join("\n");
 }
 
@@ -50,6 +73,13 @@ export default function GuideDetailRenderer({ guide }: GuideDetailRendererProps)
         <ShareGuideButton title={guide.title} />
       </div>
 
+      <ShortcutBrief guide={guide} />
+      <CopyPromptCard
+        prompt={starterPrompt(guide)}
+        title="Copy the shortcut prompt"
+        description="Paste this into your AI tool, then replace the source material with your real notes, product facts, transcript, or task details."
+      />
+
       {guideType === "how-to" ? (
         <HowToGuideLayout guide={guide} />
       ) : guideType === "income" ? (
@@ -60,7 +90,6 @@ export default function GuideDetailRenderer({ guide }: GuideDetailRendererProps)
         <ToolDecisionGuideLayout guide={guide} />
       )}
 
-      <CopyPromptCard prompt={starterPrompt(guide)} />
       <HelpfulFeedback />
       <RelatedShortcuts guides={relatedGuides(guide)} />
     </div>

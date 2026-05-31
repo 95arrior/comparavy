@@ -28,7 +28,9 @@ export async function generateMetadata({
   }
 
   return {
-    title: guide.metaTitle,
+    title: {
+      absolute: guide.metaTitle,
+    },
     description: guide.metaDescription,
     keywords: [guide.primaryKeyword, ...guide.secondaryKeywords],
     alternates: {

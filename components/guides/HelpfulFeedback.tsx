@@ -13,27 +13,32 @@ export default function HelpfulFeedback() {
             Was this helpful?
           </p>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            This saves feedback locally for now while the site stays database-free.
+            Mark whether this shortcut matched the job you came to finish.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {(["yes", "no"] as const).map((value) => (
             <button
               key={value}
               type="button"
               aria-pressed={choice === value}
               onClick={() => setChoice(value)}
-              className={`rounded-full border px-4 py-2.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 ${
+              className={`min-h-11 rounded-full border px-4 py-2.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 ${
                 choice === value
                   ? "border-teal-700 bg-teal-700 text-white"
                   : "border-slate-200 bg-white text-slate-700 hover:border-teal-200 hover:bg-teal-50"
               }`}
             >
-              {value === "yes" ? "Yes" : "Not Yet"}
+              {value === "yes" ? "Yes" : "Not yet"}
             </button>
           ))}
         </div>
       </div>
+      {choice && (
+        <p className="mt-4 text-sm leading-6 text-slate-600">
+          Thanks. No personal data is collected from this placeholder control.
+        </p>
+      )}
     </section>
   );
 }

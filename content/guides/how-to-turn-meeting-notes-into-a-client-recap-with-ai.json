@@ -358,62 +358,62 @@
   "skillNeeded": "You need enough context to check names, dates, claims, and final wording before using the output.",
   "firstStep": "Paste one real set of meeting notes into AI and ask for decisions, action items, owners, dates, and open questions.",
   "commonMistakes": [
-    "Sending the recap without checking names and dates",
-    "Mixing open questions with confirmed decisions",
-    "Letting AI invent a deadline"
+    "Sending the recap without checking client names, dates, owners, and commitments against the source notes.",
+    "Mixing open questions with confirmed decisions, which makes the client think something was agreed.",
+    "Letting AI invent a deadline, next meeting, or owner when the notes are unclear."
   ],
   "mistakesToAvoid": [
-    "Do not sending the recap without checking names and dates.",
-    "Do not mixing open questions with confirmed decisions.",
-    "Do not letting AI invent a deadline."
+    "Do not send the recap without checking names and dates.",
+    "Do not mix open questions with confirmed decisions.",
+    "Do not let AI invent a deadline."
   ],
   "whatToAvoid": [
-    "Do not sending the recap without checking names and dates.",
-    "Do not mixing open questions with confirmed decisions.",
-    "Do not letting AI invent a deadline."
+    "Do not send the recap without checking names and dates.",
+    "Do not mix open questions with confirmed decisions.",
+    "Do not let AI invent a deadline."
   ],
   "whatChanged": "Separate decisions, tasks, and open questions before drafting the client email.",
   "exampleWorkflow": "Paste the notes, ask for decisions and action items, draft a five-sentence recap, then verify commitments against the source notes.",
   "exampleResult": "Example output: a recap email with three decisions, four action items with owners, two open questions, and one next meeting note.",
   "faq": [
     {
-      "question": "Can I use AI to send the recap automatically?",
-      "answer": "Do not send automatically. Use AI for the draft, then review commitments, tone, and client-sensitive details."
+      "question": "What AI prompt should I use for a client meeting recap?",
+      "answer": "Ask AI to extract decisions, action items, owners, due dates, risks, and open questions first. Then ask for a short client email based only on the checked list."
     },
     {
       "question": "What should be in a client recap?",
       "answer": "Include decisions, action items, owners, dates, open questions, and the next step."
     },
     {
-      "question": "Should I include the full transcript?",
-      "answer": "Usually no. Send the concise recap unless the client specifically needs the transcript."
+      "question": "Can I use AI to send the recap automatically?",
+      "answer": "Do not send automatically. Use AI for the draft, then review commitments, tone, and client-sensitive details before sending."
     },
     {
-      "question": "What if the notes are incomplete?",
-      "answer": "Mark unclear items as open questions instead of letting AI guess."
+      "question": "What if the meeting notes are incomplete?",
+      "answer": "Mark unclear owners, dates, and commitments as open questions instead of letting AI guess. That is safer than sending a confident but wrong recap."
     }
   ],
   "faqs": [
     {
-      "question": "Can I use AI to send the recap automatically?",
-      "answer": "Do not send automatically. Use AI for the draft, then review commitments, tone, and client-sensitive details."
+      "question": "What AI prompt should I use for a client meeting recap?",
+      "answer": "Ask AI to extract decisions, action items, owners, due dates, risks, and open questions first. Then ask for a short client email based only on the checked list."
     },
     {
       "question": "What should be in a client recap?",
       "answer": "Include decisions, action items, owners, dates, open questions, and the next step."
     },
     {
-      "question": "Should I include the full transcript?",
-      "answer": "Usually no. Send the concise recap unless the client specifically needs the transcript."
+      "question": "Can I use AI to send the recap automatically?",
+      "answer": "Do not send automatically. Use AI for the draft, then review commitments, tone, and client-sensitive details before sending."
     },
     {
-      "question": "What if the notes are incomplete?",
-      "answer": "Mark unclear items as open questions instead of letting AI guess."
+      "question": "What if the meeting notes are incomplete?",
+      "answer": "Mark unclear owners, dates, and commitments as open questions instead of letting AI guess. That is safer than sending a confident but wrong recap."
     }
   ],
   "finalVerdict": "For meeting notes to client recaps, use ChatGPT or Claude for the draft after you extract decisions and action items. Add Otter.ai or Fireflies only when capture is the problem, and keep Notion AI for teams that already work in Notion.",
-  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
-  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
+  "ctaToFinder": "Use Finder at /finder if your meeting workflow starts with a recording tool, a long transcript, a CRM note, or a team workspace instead of rough notes.",
+  "finderCTA": "Use Finder at /finder if your meeting workflow starts with a recording tool, a long transcript, a CRM note, or a team workspace instead of rough notes.",
   "visualSummary": {
     "headline": "A safer client recap workflow",
     "points": [

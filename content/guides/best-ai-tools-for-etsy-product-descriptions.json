@@ -153,22 +153,22 @@
   ],
   "bestPicksBySituation": [
     {
-      "situation": "If you need general cleanup and drafting, start with ChatGPT.",
+      "situation": "If you have a product fact sheet and need a first Etsy description draft, start with ChatGPT.",
       "toolSlug": "chatgpt",
       "toolName": "ChatGPT",
-      "why": "ChatGPT is the strongest first fit for this workflow."
+      "why": "It is flexible enough to turn materials, size, personalization, care, and buyer context into a reviewable listing draft."
     },
     {
-      "situation": "If you need careful long-form review and restructuring, choose Claude.",
+      "situation": "If the draft sounds too pushy, vague, or repetitive, choose Claude.",
       "toolSlug": "claude",
       "toolName": "Claude",
-      "why": "Claude is better when review depth or source handling matters."
+      "why": "It is useful for calming the tone, grouping details, and making the copy easier for a buyer to scan."
     },
     {
-      "situation": "If brand-aware marketing copy drafts matters most, choose Jasper.",
+      "situation": "If you manage many listings and need a repeatable shop voice, choose Jasper.",
       "toolSlug": "jasper",
       "toolName": "Jasper",
-      "why": "Jasper fits the destination step better."
+      "why": "It makes more sense after you already know the listing structure and want more consistent brand language."
     }
   ],
   "recommendedToolSlugs": [
@@ -274,29 +274,29 @@
     {
       "toolSlug": "chatgpt",
       "toolName": "ChatGPT",
-      "bestFor": "general cleanup and drafting",
+      "bestFor": "First Etsy listing drafts from verified product facts",
       "freePlan": true,
       "easeOfUse": "Low setup; strong for flexible prompting",
-      "whyConsider": "ChatGPT fits the workflow when this stage matters most.",
-      "watchFor": "Do not use it as a substitute for checking the final output."
+      "whyConsider": "Use it when you want a fast buyer-focused description, title ideas, or bullet structure from your own product details.",
+      "watchFor": "It can invent details if your fact sheet is thin, so verify materials, dimensions, care notes, and shipping limits."
     },
     {
       "toolSlug": "claude",
       "toolName": "Claude",
-      "bestFor": "careful long-form review and restructuring",
+      "bestFor": "Tone cleanup and calmer product copy",
       "freePlan": true,
       "easeOfUse": "Low setup; strong for longer source material",
-      "whyConsider": "Claude fits the workflow when this stage matters most.",
-      "watchFor": "Do not use it as a substitute for checking the final output."
+      "whyConsider": "Use it when the first draft needs less hype, clearer grouping, or a more careful rewrite from long product notes.",
+      "watchFor": "It still needs your review for product accuracy, trademark language, and personalization rules."
     },
     {
       "toolSlug": "jasper",
       "toolName": "Jasper",
-      "bestFor": "brand-aware marketing copy drafts",
+      "bestFor": "Repeatable brand voice across a larger shop",
       "freePlan": false,
       "easeOfUse": "Medium setup; useful for repeatable brand copy",
-      "whyConsider": "Jasper fits the workflow when this stage matters most.",
-      "watchFor": "Do not use it as a substitute for checking the final output."
+      "whyConsider": "Use it when you already have multiple listings and want templates or voice controls across a catalog.",
+      "watchFor": "It may be more setup than a small shop needs for one or two listings."
     },
     {
       "toolSlug": "writesonic",
@@ -304,8 +304,8 @@
       "bestFor": "marketing copy and SEO-friendly drafts",
       "freePlan": true,
       "easeOfUse": "Low setup; useful for ecommerce copy variants",
-      "whyConsider": "Writesonic fits the workflow when this stage matters most.",
-      "watchFor": "Do not use it as a substitute for checking the final output."
+      "whyConsider": "Use it when you want extra title or description variants after the core facts are already correct.",
+      "watchFor": "Do not let keyword phrasing make the listing sound inaccurate or spammy."
     },
     {
       "toolSlug": "copy-ai",
@@ -313,8 +313,8 @@
       "bestFor": "marketing copy variations and campaign drafts",
       "freePlan": true,
       "easeOfUse": "Low setup; useful for short promotional copy",
-      "whyConsider": "Copy.ai fits the workflow when this stage matters most.",
-      "watchFor": "Do not use it as a substitute for checking the final output."
+      "whyConsider": "Use it for short copy variations, shop announcements, or promotional snippets related to the listing.",
+      "watchFor": "It is less useful if your main problem is product-detail accuracy."
     }
   ],
   "decisionPath": [
@@ -340,8 +340,8 @@
     }
   ],
   "whoShouldUseThis": [
-    "Etsy sellers who need choosing AI tools for Etsy product descriptions.",
-    "Readers asking: Which AI tool should I use for Etsy product descriptions?"
+    "Etsy sellers who have real product facts but need stronger buyer-facing listing copy.",
+    "Small shop owners comparing ChatGPT, Claude, Jasper, and copy tools before paying for another subscription."
   ],
   "whoShouldAvoidThis": [
     "Users who cannot review AI output before using it.",
@@ -358,62 +358,62 @@
   "skillNeeded": "You need enough context to check names, dates, claims, and final wording before using the output.",
   "firstStep": "Run one real example through ChatGPT and judge the result against the source material.",
   "commonMistakes": [
-    "Starting with a vague prompt",
-    "Skipping source review",
-    "Using the first draft without adapting it to the final channel"
+    "Asking for a description before you provide materials, dimensions, variations, care notes, and personalization limits.",
+    "Letting the tool invent shipping promises, medical claims, trademark language, or guaranteed outcomes.",
+    "Publishing the first draft without checking how the opening lines read on Etsy mobile."
   ],
   "mistakesToAvoid": [
-    "Do not starting with a vague prompt.",
-    "Do not skipping source review.",
-    "Do not using the first draft without adapting it to the final channel."
+    "Do not start with a vague prompt or blank product idea.",
+    "Do not skip source review for materials, dimensions, variations, and shipping limits.",
+    "Do not use the first draft without adapting it to Etsy's listing format."
   ],
   "whatToAvoid": [
-    "Do not starting with a vague prompt.",
-    "Do not skipping source review.",
-    "Do not using the first draft without adapting it to the final channel."
+    "Do not start with a vague prompt or blank product idea.",
+    "Do not skip source review for materials, dimensions, variations, and shipping limits.",
+    "Do not use the first draft without adapting it to Etsy's listing format."
   ],
   "whatChanged": "Start with the user problem and final format, then pick the AI tool that reduces review work.",
   "exampleWorkflow": "Write a product fact sheet, draft the listing in ChatGPT, ask Claude to remove hype and clarify the details, then paste the final version into Etsy and check the first lines on mobile.",
   "exampleResult": "Example output: a buyer-focused opening, product detail bullets, personalization instructions, care notes, gift-use suggestions, and a short closing that does not overpromise.",
   "faq": [
     {
-      "question": "Which tool should I start with for choosing AI tools for Etsy product descriptions?",
-      "answer": "Start with ChatGPT, then compare Claude if the source material is longer or needs more careful review."
+      "question": "What is the best AI tool to start with for Etsy product descriptions?",
+      "answer": "Start with ChatGPT if you have a clear product fact sheet. It is flexible for first drafts, titles, bullets, and buyer-focused rewrites. Compare Claude when the wording needs calmer polish."
     },
     {
-      "question": "Can I use the AI result without editing it?",
-      "answer": "No. Review facts, tone, formatting, and any claims before using the output."
+      "question": "Can AI write my Etsy listing without product facts?",
+      "answer": "It can draft generic copy, but that is risky. Give the tool materials, dimensions, variations, care notes, personalization rules, and shipping limits so it does not guess."
     },
     {
-      "question": "Should I do this on mobile or desktop?",
-      "answer": "Best on mobile when polishing short listing copy. Best on desktop when comparing facts, title, description, tags, and final wording."
+      "question": "Should I use AI for Etsy titles and tags too?",
+      "answer": "You can use AI for title and tag ideas, but review them against the actual product and Etsy's current listing fields. Do not force keywords that make the product sound inaccurate."
     },
     {
-      "question": "How do I avoid generic AI output?",
-      "answer": "Give the tool real source material, a specific audience, a required format, and examples of what to avoid."
+      "question": "Is Jasper worth it for a small Etsy shop?",
+      "answer": "Usually not for one listing. Consider Jasper when you have enough listings that repeatable brand voice and templates save real editing time."
     }
   ],
   "faqs": [
     {
-      "question": "Which tool should I start with for choosing AI tools for Etsy product descriptions?",
-      "answer": "Start with ChatGPT, then compare Claude if the source material is longer or needs more careful review."
+      "question": "What is the best AI tool to start with for Etsy product descriptions?",
+      "answer": "Start with ChatGPT if you have a clear product fact sheet. It is flexible for first drafts, titles, bullets, and buyer-focused rewrites. Compare Claude when the wording needs calmer polish."
     },
     {
-      "question": "Can I use the AI result without editing it?",
-      "answer": "No. Review facts, tone, formatting, and any claims before using the output."
+      "question": "Can AI write my Etsy listing without product facts?",
+      "answer": "It can draft generic copy, but that is risky. Give the tool materials, dimensions, variations, care notes, personalization rules, and shipping limits so it does not guess."
     },
     {
-      "question": "Should I do this on mobile or desktop?",
-      "answer": "Best on mobile when polishing short listing copy. Best on desktop when comparing facts, title, description, tags, and final wording."
+      "question": "Should I use AI for Etsy titles and tags too?",
+      "answer": "You can use AI for title and tag ideas, but review them against the actual product and Etsy's current listing fields. Do not force keywords that make the product sound inaccurate."
     },
     {
-      "question": "How do I avoid generic AI output?",
-      "answer": "Give the tool real source material, a specific audience, a required format, and examples of what to avoid."
+      "question": "Is Jasper worth it for a small Etsy shop?",
+      "answer": "Usually not for one listing. Consider Jasper when you have enough listings that repeatable brand voice and templates save real editing time."
     }
   ],
   "finalVerdict": "For most Etsy sellers, ChatGPT plus a careful fact sheet is enough to create useful first drafts. Add Claude when tone and clarity matter, and consider Jasper only when you need repeatable brand copy across a broader shop catalog.",
-  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
-  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
+  "ctaToFinder": "Use Finder at /finder if your Etsy workflow starts with photos, tags, translations, or bulk catalog cleanup instead of one product description.",
+  "finderCTA": "Use Finder at /finder if your Etsy workflow starts with photos, tags, translations, or bulk catalog cleanup instead of one product description.",
   "visualSummary": {
     "headline": "A practical route for choosing AI tools for Etsy product descriptions",
     "points": [

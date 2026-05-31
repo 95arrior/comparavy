@@ -30,9 +30,9 @@ export default function EditorialHero({ guide }: EditorialHeroProps) {
   return (
     <header className="rounded-3xl border border-slate-200 bg-white px-6 py-8 shadow-sm ateflo-reveal sm:px-10 sm:py-10">
       <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
-        {formatGuideLayoutLabel(guideType)}
+        AteFlo AI Shortcut · {formatGuideLayoutLabel(guideType)}
       </p>
-      <h1 className="mt-3 max-w-4xl text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
+      <h1 className="mt-3 max-w-4xl text-3xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
         {guide.title}
       </h1>
       <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
@@ -55,6 +55,7 @@ export default function EditorialHero({ guide }: EditorialHeroProps) {
       <ActionLinks
         className="mt-6"
         items={[
+          { href: "#copy-prompt", label: "Copy Prompt", tone: "primary" },
           { href: "/finder", label: "Use Finder", tone: "primary" },
           { href: "/guides", label: "View Shortcuts" },
         ]}

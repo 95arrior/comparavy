@@ -1,6 +1,11 @@
-import ActionLinks from "@/components/ActionLinks";
+import CommonMistakes from "@/components/guides/CommonMistakes";
 import DecisionTree from "@/components/guides/DecisionTree";
+import DeviceUseCaseBlock from "@/components/guides/DeviceUseCaseBlock";
+import ExampleResultBlock from "@/components/guides/ExampleResultBlock";
+import FinderCta from "@/components/guides/FinderCta";
 import GuideToolCard from "@/components/guides/GuideToolCard";
+import QuickAnswerBox from "@/components/guides/QuickAnswerBox";
+import FaqAccordion from "@/components/FaqAccordion";
 import SectionHeading from "@/components/SectionHeading";
 import ToolIcon from "@/components/ToolIcon";
 import type { Guide, GuideDecisionStep } from "@/lib/guides";
@@ -36,16 +41,27 @@ function decisionSteps(guide: Guide): readonly GuideDecisionStep[] {
 }
 
 export default function ToolDecisionGuideLayout({ guide }: { readonly guide: Guide }) {
+  const faqItems = guide.faq ?? guide.faqs;
+
   return (
     <div className="space-y-6">
-      <section className="rounded-3xl border border-teal-100 bg-teal-50/80 p-5 shadow-sm sm:p-6">
-        <SectionHeading eyebrow="Quick verdict">The shortest path to a decision</SectionHeading>
-        <p className="mt-4 max-w-3xl text-base leading-7 text-slate-800 sm:text-lg sm:leading-8">
-          {guide.quickVerdict}
-        </p>
-      </section>
+      <QuickAnswerBox
+        eyebrow="Quick verdict"
+        title="The shortest path to a decision"
+        answer={guide.quickAnswer ?? guide.quickVerdict}
+        fallback={`Choose the tool that best matches ${guide.useCase}, then test it on one real example before paying for another subscription.`}
+      />
 
       <DecisionTree steps={decisionSteps(guide)} />
+
+      <DeviceUseCaseBlock
+        desktopUseCase={guide.desktopUseCase}
+        mobileUseCase={guide.mobileUseCase}
+        desktopSearchAngle={guide.desktopSearchAngle}
+        mobileSearchAngle={guide.mobileSearchAngle}
+        desktopFallback="Use a computer when you need to compare source facts, draft output, and tool fit side by side."
+        mobileFallback="Use your phone for a quick short-list decision or a small copy edit, then do final review on the source material."
+      />
 
       <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <SectionHeading
@@ -80,6 +96,12 @@ export default function ToolDecisionGuideLayout({ guide }: { readonly guide: Gui
           })}
         </div>
       </section>
+
+      <ExampleResultBlock
+        before={guide.exampleWorkflow ?? guide.contentGap}
+        result={guide.exampleResult}
+        fallback={`A practical tool choice for ${guide.useCase}, plus a first draft or decision path you can review against the source material.`}
+      />
 
       <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <SectionHeading
@@ -195,24 +217,30 @@ export default function ToolDecisionGuideLayout({ guide }: { readonly guide: Gui
         </div>
       </section>
 
+      <CommonMistakes
+        mistakes={guide.commonMistakes ?? guide.mistakesToAvoid}
+        fallback={[
+          "Do not choose a tool before you know the source material and finished output.",
+          "Do not pay for a new tool until one real example proves it reduces review work.",
+          "Do not publish AI output without checking facts, claims, privacy, and final formatting.",
+        ]}
+      />
+
+      {faqItems.length > 0 && (
+        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <SectionHeading eyebrow="FAQ">Real questions before choosing</SectionHeading>
+          <div className="mt-6">
+            <FaqAccordion items={faqItems} />
+          </div>
+        </section>
+      )}
+
       <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <SectionHeading eyebrow="Final verdict">Make the call</SectionHeading>
         <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-700 sm:text-base sm:leading-8">
           {guide.finalVerdict}
         </p>
-        <div className="mt-7 rounded-3xl bg-slate-900 p-5 text-white sm:flex sm:items-center sm:justify-between sm:gap-6">
-          <div>
-            <p className="text-lg font-semibold text-white">Need a personalized shortcut?</p>
-            <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-300">{guide.finderCTA || guide.ctaToFinder}</p>
-          </div>
-          <ActionLinks
-            className="mt-5 sm:mt-0"
-            items={[
-              { href: "/finder", label: "Use Finder", tone: "primary" },
-              { href: "/guides", label: "Back to Shortcuts" },
-            ]}
-          />
-        </div>
+        <FinderCta guide={guide} secondaryLabel="Back to Shortcuts" />
       </section>
     </div>
   );
