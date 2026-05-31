@@ -2487,12 +2487,21 @@ function determineOpenAIReviewPolicy(
   diagnostics: OpenAIReviewDiagnostics,
   probe: Awaited<ReturnType<typeof probeOpenAIEditorialReview>>,
   options: AutoPublishOptions,
+  requiresOpenAIReview: boolean,
 ): OpenAIReviewPolicy {
   if (!diagnostics.apiKeyPresent) {
-    if (!options.dryRun && (options.publish || diagnostics.runningInGitHubActions)) {
+    if (requiresOpenAIReview && !options.dryRun) {
       throw new Error(
-        "OPENAI_API_KEY is required for GitHub Actions publish mode. Set or update repository secret OPENAI_API_KEY under Settings → Secrets and variables → Actions.",
+        "OPENAI_API_KEY is required when generating or reviewing new guides. Set or update repository secret OPENAI_API_KEY under Settings → Secrets and variables → Actions.",
       );
+    }
+
+    if (!requiresOpenAIReview) {
+      return {
+        mode: "skipped-local",
+        unavailableReason:
+          "OpenAI review skipped because this run can publish from the existing approved queue.",
+      };
     }
 
     if (options.dryRun) {
@@ -2507,6 +2516,14 @@ function determineOpenAIReviewPolicy(
       mode: "skipped-local",
       unavailableReason:
         "AI editorial review skipped because OPENAI_API_KEY is not set locally.",
+    };
+  }
+
+  if (!requiresOpenAIReview) {
+    return {
+      mode: "skipped-local",
+      unavailableReason:
+        "OpenAI review skipped because this run can publish from the existing approved queue.",
     };
   }
 
@@ -2947,17 +2964,30 @@ async function main(): Promise<void> {
   const options = parseOptions(process.argv.slice(2));
   logGuideTopicToolSlugWarnings();
 
+  const existingGuides = await getExistingGuides();
+  const existingApproved = existingGuides.filter((guide) => guide.status === "approved");
+  const existingPublished = existingGuides.filter((guide) => guide.status === "published");
+  const existingBlockedSlugs = new Set([...existingApproved, ...existingPublished].map((guide) => guide.slug));
+  const approvedQueueBeforeRun = [...existingApproved].sort(sortByUpdatedAtAsc);
+  const publishQuota = options.publish ? Math.min(options.count, dailyPublishLimit(), approvedQueueBeforeRun.length) : 0;
+  const approvalTarget = options.publish
+    ? Math.max(0, options.count - approvedQueueBeforeRun.length)
+    : options.count;
+  const requiresOpenAIReview = approvalTarget > 0;
+
   const openAIDiagnostics = getOpenAIReviewDiagnostics();
   printOpenAIDiagnostics(openAIDiagnostics, options);
-  const openAIProbe = openAIDiagnostics.apiKeyPresent
+  const openAIProbe = openAIDiagnostics.apiKeyPresent && requiresOpenAIReview
     ? await probeOpenAIEditorialReview()
     : {
         attempted: false,
         available: false,
         model: openAIDiagnostics.model,
-        unavailableReason: "OPENAI_API_KEY is not set.",
+        unavailableReason: requiresOpenAIReview
+          ? "OPENAI_API_KEY is not set."
+          : "OpenAI probe skipped because approved-queue publishing does not require AI review.",
       };
-  if (openAIDiagnostics.apiKeyPresent) {
+  if (openAIDiagnostics.apiKeyPresent && requiresOpenAIReview) {
     console.log(`Model used for connectivity check: ${openAIProbe.model}`);
     if (openAIProbe.available) {
       console.log("OpenAI connectivity check: success");
@@ -2971,21 +3001,16 @@ async function main(): Promise<void> {
       }
     }
   }
-  const openAIReviewPolicy = determineOpenAIReviewPolicy(openAIDiagnostics, openAIProbe, options);
+  const openAIReviewPolicy = determineOpenAIReviewPolicy(
+    openAIDiagnostics,
+    openAIProbe,
+    options,
+    requiresOpenAIReview,
+  );
 
   if (openAIReviewPolicy.mode === "unavailable") {
     console.log(`AI review unavailable reason: ${openAIReviewPolicy.unavailableReason ?? "Unknown"}`);
   }
-
-  const existingGuides = await getExistingGuides();
-  const existingApproved = existingGuides.filter((guide) => guide.status === "approved");
-  const existingPublished = existingGuides.filter((guide) => guide.status === "published");
-  const existingBlockedSlugs = new Set([...existingApproved, ...existingPublished].map((guide) => guide.slug));
-  const approvedQueueBeforeRun = [...existingApproved].sort(sortByUpdatedAtAsc);
-  const publishQuota = options.publish ? Math.min(options.count, dailyPublishLimit(), approvedQueueBeforeRun.length) : 0;
-  const approvalTarget = options.publish
-    ? Math.max(0, options.count - approvedQueueBeforeRun.length)
-    : options.count;
 
   console.log(`Approved guides available before run: ${approvedQueueBeforeRun.length}`);
   if (options.publish) {
