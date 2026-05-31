@@ -67,48 +67,48 @@
     }
   },
   "quickAnswer": "Choose NotebookLM when your main job is turning an uploaded PDF into source-grounded study notes. Choose ChatGPT when you already have text excerpts and need flashcards, quizzes, or simpler explanations. Choose Claude when the PDF is long and you want a careful outline or cleaner study guide. The best tool is the one that keeps you closest to the source while reducing review time.",
-  "quickDecision": "Start with NotebookLM; compare ChatGPT when source handling or review depth matters, and use Claude when the final destination fits that tool better.",
-  "realWorldScenario": "A realistic user has source material, limited time, and needs choosing AI tools for PDF study notes without creating vague AI filler.",
+  "quickDecision": "Choose NotebookLM when the PDF is the source of truth, ChatGPT when you need flashcards or quiz questions from checked notes, Claude when the document is long, and Perplexity only when you need outside context with sources.",
+  "realWorldScenario": "A student has a long assigned PDF and a quiz coming up. The shortcut is not to ask for a vague summary; it is to choose the tool that keeps notes tied to the source, then convert verified notes into the study format they will actually use.",
   "whatYouNeed": [
-    "The real source material, not a vague topic",
-    "A clear final format and audience",
-    "Time to check claims, names, dates, and tone before using the output"
+    "The PDF, page range, chapter list, or assignment prompt",
+    "A final study format, such as outline, quiz, flashcards, glossary, or one-page cram sheet",
+    "Time to verify definitions, formulas, dates, and page references against the PDF"
   ],
   "timeEstimate": "Plan on 10 to 30 minutes for one careful first pass.",
   "contentGap": "Most articles recommend tools before explaining the workflow that makes the output useful.",
   "uniqueAngle": "Start with the user problem and final format, then pick the AI tool that reduces review work.",
-  "aiOverviewAnswer": "Use AI to turn source material into a structured draft for choosing AI tools for PDF study notes, then verify the output, remove filler, and move the result into the channel where it will be used.",
+  "aiOverviewAnswer": "For PDF study notes, start with a source-aware tool such as NotebookLM, ask for section notes with page references, verify the important facts, then use ChatGPT or Claude to turn the checked notes into flashcards, quiz questions, or a one-page outline.",
   "quickVerdict": "NotebookLM is the first pick for source-grounded PDF notes. ChatGPT is better for converting verified notes into drills and flashcards. Claude is useful for long documents that need careful restructuring.",
   "steps": [
     {
-      "title": "Prepare the source",
-      "detail": "Gather the exact material you want to turn into choosing AI tools for PDF study notes: notes, PDFs, product facts, article text, or calendar constraints.",
-      "why": "Good input reduces generic output.",
-      "output": "A clean source bundle.",
+      "title": "Define the study source",
+      "detail": "Upload or gather the PDF, choose the page range or chapters, and note the assignment goal before comparing tools.",
+      "why": "Study notes are only useful when they stay tied to the material being tested.",
+      "output": "A clear source set and study goal.",
       "toolSlug": "notebooklm",
       "toolName": "NotebookLM"
     },
     {
-      "title": "Ask for a structured first pass",
-      "detail": "Prompt AI for a specific format, with sections, bullets, or fields that match the final use.",
-      "why": "A clear format makes the first result easier to review.",
-      "output": "A reviewable draft.",
+      "title": "Run the study-note prompt",
+      "detail": "Copy this prompt: \"Summarize this PDF into study notes by section. Include key ideas, terms, formulas or dates, likely quiz questions, and page references. Mark anything uncertain instead of guessing.\"",
+      "why": "The prompt creates notes you can verify instead of a loose summary.",
+      "output": "Source-linked notes ready for checking.",
       "toolSlug": "notebooklm",
       "toolName": "NotebookLM"
     },
     {
-      "title": "Check against the source",
-      "detail": "Review names, claims, dates, examples, and missing context before polishing the wording.",
-      "why": "Polished wrong information is still wrong.",
-      "output": "A corrected draft.",
+      "title": "Verify before studying",
+      "detail": "Open the PDF beside the AI output and check definitions, formulas, numbers, dates, quotes, and page references you plan to study from.",
+      "why": "Memorizing a wrong AI summary is worse than reading more slowly.",
+      "output": "A corrected set of study notes.",
       "toolSlug": "chatgpt",
       "toolName": "ChatGPT"
     },
     {
-      "title": "Move to the final channel",
-      "detail": "Adapt the checked result for the client email, study note system, social post, product listing, or calendar tool where it will be used.",
-      "why": "The output is only useful when it fits the place where the work happens.",
-      "output": "A ready-to-use version.",
+      "title": "Convert into a study format",
+      "detail": "Ask ChatGPT or Claude to turn the verified notes into flashcards, a one-page cram sheet, quiz questions, or a phone-friendly review outline.",
+      "why": "The finished shortcut should help you study, not just summarize.",
+      "output": "A study-ready output you can review on desktop or mobile.",
       "toolSlug": "claude",
       "toolName": "Claude"
     }
@@ -144,11 +144,11 @@
     }
   ],
   "keyTakeaways": [
-    "Start with the real source material for choosing AI tools for PDF study notes.",
-    "Use NotebookLM as the first practical option.",
-    "Compare ChatGPT when review depth or source handling matters.",
-    "Use Claude when the destination workflow fits it better.",
-    "Review the output before using it publicly or with a client.",
+    "Start with the PDF, page range, and study goal.",
+    "Use NotebookLM when source-grounded notes matter most.",
+    "Use ChatGPT to turn checked notes into flashcards or quiz questions.",
+    "Use Claude when the PDF is long and the outline needs restructuring.",
+    "Verify key facts before studying from the AI output.",
     "Use Finder if you need a narrower tool recommendation."
   ],
   "bestPicksBySituation": [

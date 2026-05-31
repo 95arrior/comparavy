@@ -82,33 +82,33 @@
   "steps": [
     {
       "title": "Capture the source notes",
-      "detail": "Collect the transcript, chat notes, and any client requests before prompting AI.",
+      "detail": "Collect the transcript, chat notes, client requests, decisions, possible owners, due dates, and any context the client expects you to remember before prompting AI.",
       "why": "Clean input gives the model less room to guess.",
-      "output": "Put notes or transcript in one place",
+      "output": "One source bundle with notes, transcript excerpts, and known client context.",
       "toolSlug": "otter-ai",
       "toolName": "Otter.ai"
     },
     {
       "title": "Extract facts before writing",
-      "detail": "This prevents the recap from becoming a vague summary.",
+      "detail": "Copy this prompt: \"Extract decisions, action items, owners, due dates, risks, and open questions from these meeting notes. If a commitment is unclear, label it unclear instead of guessing.\"",
       "why": "Client-facing follow-up needs accuracy more than speed.",
-      "output": "Ask for decisions, owners, dates, and open questions",
+      "output": "A checked list of decisions, owners, dates, and open questions.",
       "toolSlug": "chatgpt",
       "toolName": "ChatGPT"
     },
     {
       "title": "Draft the client email",
-      "detail": "A client recap should be readable, specific, and easy to scan.",
+      "detail": "Ask AI to turn the checked list into a short recap email with greeting, summary, decisions, action items, open questions, and next meeting note.",
       "why": "Client-facing follow-up needs accuracy more than speed.",
-      "output": "Turn the extracted list into a short recap",
+      "output": "A client recap draft that is specific and easy to scan.",
       "toolSlug": "claude",
       "toolName": "Claude"
     },
     {
       "title": "Review commitments",
-      "detail": "The email should never invent a commitment the client did not make.",
+      "detail": "Compare the recap against the source notes and remove invented commitments, wrong dates, vague owners, and sensitive details that should not be sent.",
       "why": "Client-facing follow-up needs accuracy more than speed.",
-      "output": "Check dates, names, and promises manually",
+      "output": "A send-ready recap with verified names, dates, owners, and commitments.",
       "toolSlug": "notion-ai",
       "toolName": "Notion AI"
     }

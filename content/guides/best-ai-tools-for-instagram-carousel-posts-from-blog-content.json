@@ -67,48 +67,48 @@
     }
   },
   "quickAnswer": "Use ChatGPT or Claude when you need to turn a blog post into a tight slide outline. Use Canva Magic Studio when the hard part is design. Use Predis.ai when you want a faster social workflow with caption and scheduling support. The right choice depends on the bottleneck: message, layout, or publishing.",
-  "quickDecision": "Start with Canva Magic Studio; compare ChatGPT when source handling or review depth matters, and use Predis.ai when the final destination fits that tool better.",
-  "realWorldScenario": "A realistic user has source material, limited time, and needs choosing AI tools for Instagram carousel posts from blog content without creating vague AI filler.",
+  "quickDecision": "Choose ChatGPT or Claude when the slide story is the problem, Canva Magic Studio when layout is the bottleneck, Predis.ai when caption and scheduling support matter, and Copy.ai when you need multiple hook variations.",
+  "realWorldScenario": "A creator or small business has a useful blog post but needs a phone-readable Instagram carousel, not a shrunken article. The shortcut is to choose the tool that handles the weak point: extracting the angle, writing slide copy, designing the post, or preparing the caption.",
   "whatYouNeed": [
-    "The real source material, not a vague topic",
-    "A clear final format and audience",
-    "Time to check claims, names, dates, and tone before using the output"
+    "The blog post, target reader, and one action the Instagram viewer should take",
+    "A final carousel format, usually 7 to 10 slides plus caption and alt-text notes",
+    "Time to verify that every claim still matches the original article"
   ],
   "timeEstimate": "Plan on 10 to 30 minutes for one careful first pass.",
   "contentGap": "Most articles recommend tools before explaining the workflow that makes the output useful.",
   "uniqueAngle": "Start with the user problem and final format, then pick the AI tool that reduces review work.",
-  "aiOverviewAnswer": "Use AI to turn source material into a structured draft for choosing AI tools for Instagram carousel posts from blog content, then verify the output, remove filler, and move the result into the channel where it will be used.",
-  "quickVerdict": "Pick ChatGPT or Claude for the slide story, Canva Magic Studio for the carousel design, and Predis.ai when you want a more social-media-specific workflow from draft to scheduled post.",
+  "aiOverviewAnswer": "For blog-to-carousel work, use ChatGPT or Claude to extract one strong angle, Canva Magic Studio to design readable slides, and Predis.ai or Copy.ai when caption variations and social workflow matter. The finished output should be a swipeable carousel, not compressed blog paragraphs.",
+  "quickVerdict": "For choosing AI tools for Instagram carousel posts from blog content, pick ChatGPT or Claude for the slide story, Canva Magic Studio for carousel design, and Predis.ai when you want a social workflow from draft to scheduled post.",
   "steps": [
     {
-      "title": "Prepare the source",
-      "detail": "Gather the exact material you want to turn into choosing AI tools for Instagram carousel posts from blog content: notes, PDFs, product facts, article text, or calendar constraints.",
-      "why": "Good input reduces generic output.",
-      "output": "A clean source bundle.",
+      "title": "Choose the carousel angle",
+      "detail": "Paste the blog post title, URL or text, target reader, and desired viewer action into the tool before comparing options.",
+      "why": "A carousel needs one clear idea, not every point from the article.",
+      "output": "A source bundle with article, audience, goal, and CTA.",
       "toolSlug": "canva-magic-studio",
       "toolName": "Canva Magic Studio"
     },
     {
-      "title": "Ask for a structured first pass",
-      "detail": "Prompt AI for a specific format, with sections, bullets, or fields that match the final use.",
-      "why": "A clear format makes the first result easier to review.",
-      "output": "A reviewable draft.",
+      "title": "Run the carousel prompt",
+      "detail": "Copy this prompt: \"Turn this blog post into a 9-slide Instagram carousel. Give me three possible angles first. For the chosen angle, write one hook slide, six teaching slides with 8 to 14 words each, one example slide, one CTA slide, caption draft, and alt-text notes. Do not add claims missing from the article.\"",
+      "why": "This produces a concrete slide script instead of a vague content idea.",
+      "output": "A carousel outline ready for design.",
       "toolSlug": "canva-magic-studio",
       "toolName": "Canva Magic Studio"
     },
     {
-      "title": "Check against the source",
-      "detail": "Review names, claims, dates, examples, and missing context before polishing the wording.",
-      "why": "Polished wrong information is still wrong.",
-      "output": "A corrected draft.",
+      "title": "Check claims and slide length",
+      "detail": "Compare every claim to the blog post, shorten crowded slides, and keep one idea per slide before choosing a design tool.",
+      "why": "Readable slides matter more than squeezing in every paragraph.",
+      "output": "A corrected slide script with source-backed points.",
       "toolSlug": "chatgpt",
       "toolName": "ChatGPT"
     },
     {
-      "title": "Move to the final channel",
-      "detail": "Adapt the checked result for the client email, study note system, social post, product listing, or calendar tool where it will be used.",
-      "why": "The output is only useful when it fits the place where the work happens.",
-      "output": "A ready-to-use version.",
+      "title": "Design and preview on mobile",
+      "detail": "Paste the approved slide copy into Canva, Predis.ai, or your design workflow, then preview the slides on a phone before scheduling.",
+      "why": "The finished shortcut has to be readable where people swipe.",
+      "output": "A designed carousel with caption and alt-text notes.",
       "toolSlug": "predis-ai",
       "toolName": "Predis.ai"
     }
@@ -144,11 +144,11 @@
     }
   ],
   "keyTakeaways": [
-    "Start with the real source material for choosing AI tools for Instagram carousel posts from blog content.",
-    "Use Canva Magic Studio as the first practical option.",
-    "Compare ChatGPT when review depth or source handling matters.",
-    "Use Predis.ai when the destination workflow fits it better.",
-    "Review the output before using it publicly or with a client.",
+    "Start with one article and one carousel angle.",
+    "Use ChatGPT or Claude when the slide story is unclear.",
+    "Use Canva Magic Studio when design speed is the bottleneck.",
+    "Use Predis.ai when caption and scheduling workflow matter.",
+    "Preview the finished carousel on a phone before publishing.",
     "Use Finder if you need a narrower tool recommendation."
   ],
   "bestPicksBySituation": [

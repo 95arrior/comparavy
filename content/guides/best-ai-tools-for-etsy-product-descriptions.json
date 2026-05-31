@@ -67,48 +67,48 @@
     }
   },
   "quickAnswer": "Use ChatGPT when you need quick Etsy description drafts from product facts. Use Claude when you want a cleaner, less pushy rewrite. Use Jasper when you manage a larger catalog and care about repeatable brand voice. No tool should invent materials, shipping promises, medical claims, or personalization rules; the seller still needs to verify every listing detail.",
-  "quickDecision": "Start with ChatGPT; compare Claude when source handling or review depth matters, and use Jasper when the final destination fits that tool better.",
-  "realWorldScenario": "A realistic user has source material, limited time, and needs choosing AI tools for Etsy product descriptions without creating vague AI filler.",
+  "quickDecision": "Choose ChatGPT when you need fast drafts from a product fact sheet, Claude when the wording needs calmer buyer-focused polish, and Jasper when you are managing many listings with one brand voice.",
+  "realWorldScenario": "An Etsy seller has a handmade product ready to list, but the description sounds thin, repetitive, or too salesy. The shortcut is to choose a writing tool that turns verified product facts into buyer-readable copy without inventing materials, shipping promises, or personalization rules.",
   "whatYouNeed": [
-    "The real source material, not a vague topic",
-    "A clear final format and audience",
-    "Time to check claims, names, dates, and tone before using the output"
+    "A product fact sheet with material, size, color, variations, care notes, personalization rules, and shipping limits",
+    "A target buyer or use case, such as gift buyer, wedding customer, teacher, or pet owner",
+    "Time to verify every claim before the copy reaches Etsy"
   ],
   "timeEstimate": "Plan on 10 to 30 minutes for one careful first pass.",
   "contentGap": "Most articles recommend tools before explaining the workflow that makes the output useful.",
   "uniqueAngle": "Start with the user problem and final format, then pick the AI tool that reduces review work.",
-  "aiOverviewAnswer": "Use AI to turn source material into a structured draft for choosing AI tools for Etsy product descriptions, then verify the output, remove filler, and move the result into the channel where it will be used.",
-  "quickVerdict": "ChatGPT is the practical first pick for most Etsy sellers. Claude is strong for polishing and tone control. Jasper makes more sense when brand consistency across many listings matters.",
+  "aiOverviewAnswer": "For Etsy product descriptions, use ChatGPT for the first buyer-focused draft, Claude for tone cleanup, and Jasper when a larger shop needs repeatable brand voice. The finished output should be an accurate listing description, not a generic product blurb.",
+  "quickVerdict": "For choosing AI tools for Etsy product descriptions, ChatGPT is the practical first pick for most Etsy sellers. Claude is strong for polishing product description tone, and Jasper makes more sense when brand consistency across many listings matters.",
   "steps": [
     {
-      "title": "Prepare the source",
-      "detail": "Gather the exact material you want to turn into choosing AI tools for Etsy product descriptions: notes, PDFs, product facts, article text, or calendar constraints.",
-      "why": "Good input reduces generic output.",
-      "output": "A clean source bundle.",
+      "title": "Build the product fact sheet",
+      "detail": "Collect material, dimensions, color, variations, personalization rules, care instructions, processing limits, and the top buyer use case before you test any tool.",
+      "why": "Etsy copy gets risky when the tool fills missing product details with guesses.",
+      "output": "A source sheet the tool can safely write from.",
       "toolSlug": "chatgpt",
       "toolName": "ChatGPT"
     },
     {
-      "title": "Ask for a structured first pass",
-      "detail": "Prompt AI for a specific format, with sections, bullets, or fields that match the final use.",
-      "why": "A clear format makes the first result easier to review.",
-      "output": "A reviewable draft.",
+      "title": "Run the listing prompt",
+      "detail": "Copy this prompt: \"Turn these product facts into an Etsy description for [buyer]. Start with the buyer benefit, then add scannable bullets for materials, size, personalization, care, and shipping limits. Do not invent claims. Flag any missing detail instead.\"",
+      "why": "The prompt tells the tool what to finish and what not to invent.",
+      "output": "A reviewable Etsy description draft.",
       "toolSlug": "chatgpt",
       "toolName": "ChatGPT"
     },
     {
-      "title": "Check against the source",
-      "detail": "Review names, claims, dates, examples, and missing context before polishing the wording.",
-      "why": "Polished wrong information is still wrong.",
-      "output": "A corrected draft.",
+      "title": "Review for unsupported claims",
+      "detail": "Check the draft against the product facts and remove claims about materials, delivery, personalization, safety, medical benefits, or trademarks that you cannot support.",
+      "why": "A polished listing can still create buyer complaints if the facts are wrong.",
+      "output": "A corrected description that matches the actual product.",
       "toolSlug": "claude",
       "toolName": "Claude"
     },
     {
-      "title": "Move to the final channel",
-      "detail": "Adapt the checked result for the client email, study note system, social post, product listing, or calendar tool where it will be used.",
-      "why": "The output is only useful when it fits the place where the work happens.",
-      "output": "A ready-to-use version.",
+      "title": "Check the first lines on Etsy",
+      "detail": "Paste the final copy into Etsy, read the first two lines on mobile, and make sure the product, buyer benefit, and key limitation are clear before the fold.",
+      "why": "The finished output has to work in the listing, not just inside the AI chat.",
+      "output": "A mobile-readable product description ready for final shop review.",
       "toolSlug": "jasper",
       "toolName": "Jasper"
     }
@@ -144,11 +144,11 @@
     }
   ],
   "keyTakeaways": [
-    "Start with the real source material for choosing AI tools for Etsy product descriptions.",
-    "Use ChatGPT as the first practical option.",
-    "Compare Claude when review depth or source handling matters.",
-    "Use Jasper when the destination workflow fits it better.",
-    "Review the output before using it publicly or with a client.",
+    "Start with product facts, not a blank prompt.",
+    "Use ChatGPT for quick first drafts from a fact sheet.",
+    "Use Claude when the draft sounds too pushy or unclear.",
+    "Use Jasper when a larger shop needs repeatable brand voice.",
+    "Review the description for unsupported claims before publishing.",
     "Use Finder if you need a narrower tool recommendation."
   ],
   "bestPicksBySituation": [

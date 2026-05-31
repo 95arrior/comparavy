@@ -67,48 +67,48 @@
     }
   },
   "quickAnswer": "Use ChatGPT when you need to turn offers, FAQs, and seasonal ideas into a 30-day content plan. Use Notion AI when the calendar needs to live in a shared workspace. Use Buffer or Later when scheduling, approvals, and visual planning are the bottleneck. The best choice is the one your team will actually update every week.",
-  "quickDecision": "Start with ChatGPT; compare Buffer when source handling or review depth matters, and use Later when the final destination fits that tool better.",
-  "realWorldScenario": "A realistic user has source material, limited time, and needs choosing AI tools for small business content calendars without creating vague AI filler.",
+  "quickDecision": "Choose ChatGPT when planning is the bottleneck, Notion AI when the calendar needs team ownership, Buffer for simple scheduling, Later for visual social planning, and Metricool when reporting matters.",
+  "realWorldScenario": "A small business owner has offers, seasonal dates, FAQs, and customer stories, but posts only when someone remembers. The shortcut is to pick the tool that turns those inputs into a realistic 30-day calendar the team can actually maintain.",
   "whatYouNeed": [
-    "The real source material, not a vague topic",
-    "A clear final format and audience",
-    "Time to check claims, names, dates, and tone before using the output"
+    "Current offers, FAQs, seasonal dates, promotions, channels, and posting capacity",
+    "A final calendar format, such as Notion, spreadsheet, Buffer, Later, or Metricool",
+    "Time to cut ideas your team cannot create, approve, or schedule"
   ],
   "timeEstimate": "Plan on 10 to 30 minutes for one careful first pass.",
   "contentGap": "Most articles recommend tools before explaining the workflow that makes the output useful.",
   "uniqueAngle": "Start with the user problem and final format, then pick the AI tool that reduces review work.",
-  "aiOverviewAnswer": "Use AI to turn source material into a structured draft for choosing AI tools for small business content calendars, then verify the output, remove filler, and move the result into the channel where it will be used.",
-  "quickVerdict": "Start with ChatGPT for planning, Notion AI for workspace organization, Buffer for lightweight scheduling, and Later when visual social planning is central to the workflow.",
+  "aiOverviewAnswer": "For a small business content calendar, use AI to turn offers, FAQs, seasonal events, and capacity limits into a 30-day plan with channel, topic, format, goal, owner, and asset notes. Choose the tool based on the bottleneck: planning, workspace, scheduling, visual layout, or reporting.",
+  "quickVerdict": "For choosing AI tools for small business content calendars, start with ChatGPT for planning, Notion AI for workspace organization, Buffer for lightweight scheduling, and Later when visual social planning is central to the workflow.",
   "steps": [
     {
-      "title": "Prepare the source",
-      "detail": "Gather the exact material you want to turn into choosing AI tools for small business content calendars: notes, PDFs, product facts, article text, or calendar constraints.",
-      "why": "Good input reduces generic output.",
-      "output": "A clean source bundle.",
+      "title": "List the business inputs",
+      "detail": "Gather offers, FAQs, seasonal dates, local events, customer stories, promotions, available photos, channels, and how many posts the team can realistically create.",
+      "why": "A calendar built from real business inputs is more useful than a generic list of post ideas.",
+      "output": "A source brief for a realistic monthly calendar.",
       "toolSlug": "chatgpt",
       "toolName": "ChatGPT"
     },
     {
-      "title": "Ask for a structured first pass",
-      "detail": "Prompt AI for a specific format, with sections, bullets, or fields that match the final use.",
-      "why": "A clear format makes the first result easier to review.",
-      "output": "A reviewable draft.",
+      "title": "Run the calendar prompt",
+      "detail": "Copy this prompt: \"Create a 30-day content calendar from these inputs. Include date, channel, topic, format, business goal, caption angle, asset needed, owner, and approval status. Keep the plan realistic for [posting capacity].\"",
+      "why": "A structured prompt turns scattered business notes into a calendar the team can review.",
+      "output": "A 30-day draft calendar with fields ready for editing.",
       "toolSlug": "chatgpt",
       "toolName": "ChatGPT"
     },
     {
-      "title": "Check against the source",
-      "detail": "Review names, claims, dates, examples, and missing context before polishing the wording.",
-      "why": "Polished wrong information is still wrong.",
-      "output": "A corrected draft.",
+      "title": "Cut unrealistic posts",
+      "detail": "Remove ideas that need assets you do not have, dates you cannot support, approvals you cannot get, or claims that do not match the actual offer.",
+      "why": "A smaller calendar that ships is better than a crowded plan nobody follows.",
+      "output": "A practical content calendar with feasible posts.",
       "toolSlug": "buffer",
       "toolName": "Buffer"
     },
     {
-      "title": "Move to the final channel",
-      "detail": "Adapt the checked result for the client email, study note system, social post, product listing, or calendar tool where it will be used.",
-      "why": "The output is only useful when it fits the place where the work happens.",
-      "output": "A ready-to-use version.",
+      "title": "Move into the scheduling workflow",
+      "detail": "Put the approved plan into Notion, Buffer, Later, Metricool, Hootsuite, or the spreadsheet your team already checks, then assign owners and due dates.",
+      "why": "The calendar is only useful when it lives where publishing decisions happen.",
+      "output": "A working calendar with ownership, deadlines, and next posts.",
       "toolSlug": "later",
       "toolName": "Later"
     }
@@ -144,11 +144,11 @@
     }
   ],
   "keyTakeaways": [
-    "Start with the real source material for choosing AI tools for small business content calendars.",
-    "Use ChatGPT as the first practical option.",
-    "Compare Buffer when review depth or source handling matters.",
-    "Use Later when the destination workflow fits it better.",
-    "Review the output before using it publicly or with a client.",
+    "Start with offers, FAQs, dates, and capacity before choosing a tool.",
+    "Use ChatGPT when planning is the hardest part.",
+    "Use Notion AI when ownership and team review matter.",
+    "Use Buffer or Later when scheduling and visual planning are the bottleneck.",
+    "Use Metricool or Hootsuite when reporting and multi-channel management matter.",
     "Use Finder if you need a narrower tool recommendation."
   ],
   "bestPicksBySituation": [

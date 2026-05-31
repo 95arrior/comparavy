@@ -70,9 +70,9 @@
   "quickDecision": "Start with NotebookLM; compare ChatGPT when source handling or review depth matters, and use Claude when the final destination fits that tool better.",
   "realWorldScenario": "A college student has a 38-page economics PDF due before a Monday quiz. They do not need a beautiful summary; they need the main ideas, vocabulary, formulas, likely test points, and a way to review the material on a phone between classes.",
   "whatYouNeed": [
-    "The real source material, not a vague topic",
-    "A clear final format and audience",
-    "Time to check claims, names, dates, and tone before using the output"
+    "The PDF, the page range or chapters that matter, and the assignment or quiz goal",
+    "A final study format, such as outline, flashcards, quiz questions, glossary, or one-page cram sheet",
+    "Time to verify definitions, numbers, dates, formulas, and page references"
   ],
   "timeEstimate": "Plan on 10 to 30 minutes for one careful first pass.",
   "contentGap": "Most articles recommend tools before explaining the workflow that makes the output useful.",
@@ -90,7 +90,7 @@
     },
     {
       "title": "Ask for a structured first pass",
-      "detail": "Ask for study notes in a fixed format: core idea, key terms, formulas or dates, likely exam questions, and page references for each section.",
+      "detail": "Copy this prompt: \"Summarize this PDF into study notes by section. Include core idea, key terms, formulas or dates, likely quiz questions, and page references. Mark uncertain points instead of guessing.\"",
       "why": "A clear format makes the first result easier to review.",
       "output": "A structured set of notes you can check against the PDF.",
       "toolSlug": "notebooklm",

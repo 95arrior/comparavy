@@ -79,34 +79,67 @@
   "uniqueAngle": "Compare tools by capture, cleanup, and client-safe handoff.",
   "aiOverviewAnswer": "Choose a capture tool if you need transcripts, a general assistant for recap drafting, and a workspace assistant when the recap needs to stay near project notes.",
   "quickVerdict": "For client recap workflows, choose ChatGPT for fast recap drafts, Claude for longer notes, Otter.ai or Fireflies for meeting capture, and Notion AI when the recap belongs inside a project workspace.",
-  "steps": [],
+  "steps": [
+    {
+      "title": "Decide whether capture or drafting is the bottleneck",
+      "detail": "If you already have usable notes, compare ChatGPT and Claude first. If you keep missing details during calls, compare Otter.ai or Fireflies before drafting tools.",
+      "why": "Buying a recorder will not fix a weak recap process, and a drafting tool will not recover details you never captured.",
+      "output": "A clear first tool category: capture, draft, or workspace handoff.",
+      "toolSlug": "chatgpt",
+      "toolName": "ChatGPT"
+    },
+    {
+      "title": "Run one recap prompt on the same notes",
+      "detail": "Copy this prompt: \"Turn these meeting notes into a client recap email. Include decisions, action items, owner, due date, open questions, and a polite closing. Flag unclear commitments instead of guessing.\"",
+      "why": "Using the same prompt and source notes makes the comparison fair.",
+      "output": "A draft recap you can compare across tools.",
+      "toolSlug": "claude",
+      "toolName": "Claude"
+    },
+    {
+      "title": "Score the draft against client risk",
+      "detail": "Check whether the tool preserved names, owners, dates, commitments, and open questions without adding promises that were not in the meeting.",
+      "why": "Client recap quality depends on accuracy more than summary length.",
+      "output": "A shortlist based on correctness and review time.",
+      "toolSlug": "otter-ai",
+      "toolName": "Otter.ai"
+    },
+    {
+      "title": "Test the final handoff",
+      "detail": "Move the corrected recap into email, Notion, or your project workspace and confirm the workflow still feels fast after the review step.",
+      "why": "The best tool is the one that helps you send the right recap consistently.",
+      "output": "A repeatable notes-to-client-recap workflow.",
+      "toolSlug": "notion-ai",
+      "toolName": "Notion AI"
+    }
+  ],
   "toolsYouCanUse": [
     {
       "toolSlug": "chatgpt",
       "toolName": "ChatGPT",
-      "why": "Use ChatGPT for the part of the workflow where it fits best.",
-      "role": "Use ChatGPT for the part of the workflow where it fits best.",
+      "why": "Use ChatGPT when notes already exist and you need a fast first recap draft with decisions, actions, and open questions.",
+      "role": "Fast recap drafting from existing notes.",
       "bestUseCase": "general cleanup and drafting"
     },
     {
       "toolSlug": "claude",
       "toolName": "Claude",
-      "why": "Use Claude for the part of the workflow where it fits best.",
-      "role": "Use Claude for the part of the workflow where it fits best.",
+      "why": "Use Claude when the transcript is long, messy, or needs careful grouping before it becomes client-facing.",
+      "role": "Careful cleanup for long or messy notes.",
       "bestUseCase": "careful long-form review and restructuring"
     },
     {
       "toolSlug": "otter-ai",
       "toolName": "Otter.ai",
-      "why": "Use Otter.ai for the part of the workflow where it fits best.",
-      "role": "Use Otter.ai for the part of the workflow where it fits best.",
+      "why": "Use Otter.ai when capturing the meeting accurately is the problem you need to solve first.",
+      "role": "Meeting capture before recap drafting.",
       "bestUseCase": "meeting transcription and recall"
     },
     {
       "toolSlug": "fireflies",
       "toolName": "Fireflies",
-      "why": "Use Fireflies for the part of the workflow where it fits best.",
-      "role": "Use Fireflies for the part of the workflow where it fits best.",
+      "why": "Use Fireflies when searchable transcripts and team access are more important than a one-off recap draft.",
+      "role": "Searchable team transcript workflow.",
       "bestUseCase": "meeting transcripts and searchable notes"
     }
   ],

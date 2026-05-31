@@ -70,15 +70,15 @@
   "quickDecision": "Start with ChatGPT; compare Notion AI when source handling or review depth matters, and use Buffer when the final destination fits that tool better.",
   "realWorldScenario": "A local service business posts only when someone remembers. The owner wants a realistic month of content that supports sales, answers customer questions, and does not require filming a new video every day.",
   "whatYouNeed": [
-    "The real source material, not a vague topic",
-    "A clear final format and audience",
-    "Time to check claims, names, dates, and tone before using the output"
+    "Your offers, FAQs, seasonal dates, promotions, channels, and realistic weekly posting capacity",
+    "A final calendar home, such as Notion, Buffer, Later, a spreadsheet, or your current scheduler",
+    "Time to cut posts your team cannot create, approve, or schedule"
   ],
   "timeEstimate": "Plan on 10 to 30 minutes for one careful first pass.",
   "contentGap": "Most articles recommend tools before explaining the workflow that makes the output useful.",
   "uniqueAngle": "Start with the user problem and final format, then pick the AI tool that reduces review work.",
   "aiOverviewAnswer": "Use AI to turn source material into a structured draft for creating a content calendar for a small business, then verify the output, remove filler, and move the result into the channel where it will be used.",
-  "quickVerdict": "Use ChatGPT to draft the calendar strategy, Notion AI to turn it into an editable team workspace, and Buffer or Later when scheduling and approvals matter more than brainstorming.",
+  "quickVerdict": "For creating a content calendar for a small business, use ChatGPT to draft the calendar strategy, Notion AI to turn it into an editable team workspace, and Buffer or Later when scheduling and approvals matter more than brainstorming.",
   "steps": [
     {
       "title": "Prepare the source",
@@ -90,7 +90,7 @@
     },
     {
       "title": "Ask for a structured first pass",
-      "detail": "Ask AI for a calendar table with date, channel, topic, format, goal, draft caption angle, asset needed, and owner.",
+      "detail": "Copy this prompt: \"Create a 30-day content calendar from these business inputs. Include date, channel, topic, format, business goal, caption angle, asset needed, owner, and approval status. Keep it realistic for [posting capacity].\"",
       "why": "A clear format makes the first result easier to review.",
       "output": "A 30-day calendar draft you can sort and edit.",
       "toolSlug": "chatgpt",
@@ -411,7 +411,7 @@
       "answer": "Give the tool real source material, a specific audience, a required format, and examples of what to avoid."
     }
   ],
-  "finalVerdict": "A useful small-business content calendar is built around capacity, customers, and offers. Use AI to create the first plan, then cut it down to what your team can produce and schedule consistently.",
+  "finalVerdict": "A useful small-business content calendar is built around capacity, customers, and offers. Use ChatGPT to create the first plan, organize the approved version in Notion AI or your spreadsheet, then schedule only the posts your team can produce consistently in Buffer or Later.",
   "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
   "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
   "visualSummary": {
