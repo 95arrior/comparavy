@@ -9,38 +9,15 @@ import ShortcutBrief from "@/components/guides/ShortcutBrief";
 import ToolDecisionGuideLayout from "@/components/guides/ToolDecisionGuideLayout";
 import TrendDecisionGuideLayout from "@/components/guides/TrendDecisionGuideLayout";
 import ViewShortcutsCta from "@/components/guides/ViewShortcutsCta";
-import type { ShortcutWorksWithTool } from "@/components/guides/ShortcutsDiscovery";
-import { toolsBySlug, type ToolSlug } from "@/data/tools";
 import { resolveGuideLayoutType } from "@/lib/guideTypes";
 import { getPublishedGuides, type Guide } from "@/lib/guides";
+import {
+  guideWorksWithTools,
+  selectRelatedShortcuts,
+} from "@/lib/shortcutDiscovery";
 
 interface GuideDetailRendererProps {
   readonly guide: Guide;
-}
-
-function relatedGuides(guide: Guide): readonly Guide[] {
-  const guides = getPublishedGuides().filter((item) => item.slug !== guide.slug);
-  const related = guides.filter(
-    (item) => item.category === guide.category || item.skillLevel === guide.skillLevel,
-  );
-
-  return (related.length >= 3 ? related : guides).slice(0, 3);
-}
-
-function guideWorksWithTools(guide: Guide): readonly ShortcutWorksWithTool[] {
-  const tools = guide.recommendedToolSlugs.flatMap((slug) => {
-    const tool = toolsBySlug.get(slug as ToolSlug);
-    return tool ? [tool] : [];
-  });
-
-  return tools.slice(0, 3).map((tool) => ({
-    slug: tool.slug,
-    name: tool.name,
-    officialUrl: tool.officialUrl,
-    iconPath: tool.iconPath,
-    iconDomain: tool.iconDomain,
-    brandColor: tool.brandColor,
-  }));
 }
 
 function toRelatedShortcutItem(guide: Guide): RelatedShortcutItem {
@@ -55,6 +32,7 @@ function toRelatedShortcutItem(guide: Guide): RelatedShortcutItem {
 }
 
 export default function GuideDetailRenderer({ guide }: GuideDetailRendererProps) {
+  const relatedSelection = selectRelatedShortcuts(guide, getPublishedGuides());
   const guideType = resolveGuideLayoutType({
     slug: guide.slug,
     title: guide.title,
@@ -89,7 +67,9 @@ export default function GuideDetailRenderer({ guide }: GuideDetailRendererProps)
       <ViewShortcutsCta />
       <RelatedShortcuts
         guide={guide}
-        guides={relatedGuides(guide).map(toRelatedShortcutItem)}
+        guides={relatedSelection.guides.map(toRelatedShortcutItem)}
+        sectionTitle={relatedSelection.sectionTitle}
+        sectionSubtitle={relatedSelection.sectionSubtitle}
       />
     </div>
   );

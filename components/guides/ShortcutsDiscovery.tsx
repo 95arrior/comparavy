@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ToolIcon from "@/components/ToolIcon";
 import { trackEvent } from "@/lib/analytics";
+import { normalizeSearch } from "@/lib/shortcutDiscovery";
 
 export interface ShortcutWorksWithTool {
   readonly slug: string;
@@ -37,14 +38,6 @@ const SEARCH_CHIPS = [
   "Follow-up email",
   "Product description",
 ] as const;
-
-function normalizeSearch(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[-_]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
 
 export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProps) {
   const [query, setQuery] = useState("");

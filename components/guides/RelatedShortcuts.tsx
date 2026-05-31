@@ -18,9 +18,16 @@ export interface RelatedShortcutItem {
 interface RelatedShortcutsProps {
   readonly guide: Guide;
   readonly guides: readonly RelatedShortcutItem[];
+  readonly sectionTitle?: string;
+  readonly sectionSubtitle?: string;
 }
 
-export default function RelatedShortcuts({ guide, guides }: RelatedShortcutsProps) {
+export default function RelatedShortcuts({
+  guide,
+  guides,
+  sectionTitle = "Related shortcuts",
+  sectionSubtitle = "Open another AteFlo shortcut when your next task starts from a different input.",
+}: RelatedShortcutsProps) {
   if (guides.length === 0) {
     return null;
   }
@@ -38,10 +45,10 @@ export default function RelatedShortcuts({ guide, guides }: RelatedShortcutsProp
   return (
     <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
       <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
-        Related shortcuts
+        {sectionTitle}
       </p>
       <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
-        Open another AteFlo shortcut when your next task starts from a different input.
+        {sectionSubtitle}
       </p>
       <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {guides.map((relatedGuide) => (

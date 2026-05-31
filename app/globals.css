@@ -153,6 +153,34 @@ html {
   background: linear-gradient(90deg, rgba(37, 99, 235, 0), rgba(37, 99, 235, 0.16) 20%, rgba(96, 165, 250, 0.28) 50%, rgba(37, 99, 235, 0.16) 80%, rgba(37, 99, 235, 0));
 }
 
+.ateflo-shortcut-strip {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 0.5rem;
+  scrollbar-width: thin;
+}
+
+.ateflo-shortcut-strip-track {
+  display: flex;
+  width: max-content;
+  gap: 0;
+}
+
+@media (min-width: 768px) {
+  .ateflo-shortcut-strip {
+    overflow: hidden;
+    padding-bottom: 0;
+  }
+
+  .ateflo-shortcut-strip-track {
+    animation: ateflo-shortcut-marquee 48s linear infinite;
+  }
+
+  .ateflo-shortcut-strip:hover .ateflo-shortcut-strip-track {
+    animation-play-state: paused;
+  }
+}
+
 .ateflo-logo-link {
   display: inline-flex;
   align-items: center;
@@ -234,6 +262,16 @@ html {
   }
 }
 
+@keyframes ateflo-shortcut-marquee {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
 @media (max-width: 640px) {
   .ateflo-logo-link {
     min-height: 1.75rem;
@@ -255,6 +293,7 @@ html {
   .ateflo-copy-button,
   .ateflo-primary-copy-button,
   .ateflo-primary-copy-button::before,
+  .ateflo-shortcut-strip-track,
   .ateflo-metric-bar,
   .ateflo-star-badge__icon {
     animation: none;
