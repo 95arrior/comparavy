@@ -6,6 +6,7 @@ import RelatedShortcuts from "@/components/guides/RelatedShortcuts";
 import ShortcutBrief from "@/components/guides/ShortcutBrief";
 import ToolDecisionGuideLayout from "@/components/guides/ToolDecisionGuideLayout";
 import TrendDecisionGuideLayout from "@/components/guides/TrendDecisionGuideLayout";
+import ViewShortcutsCta from "@/components/guides/ViewShortcutsCta";
 import { resolveGuideLayoutType } from "@/lib/guideTypes";
 import { getPublishedGuides, type Guide } from "@/lib/guides";
 
@@ -54,6 +55,7 @@ export default function GuideDetailRenderer({ guide }: GuideDetailRendererProps)
         guideTitle={guide.title}
         topicCluster={guide.topicCluster}
       />
+      <ViewShortcutsCta />
       <RelatedShortcuts guide={guide} guides={relatedGuides(guide)} />
     </div>
   );
