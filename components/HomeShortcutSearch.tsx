@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import CategoryChip from "@/components/CategoryChip";
 import ToolIcon from "@/components/ToolIcon";
 import { trackEvent } from "@/lib/analytics";
 import {
@@ -212,27 +213,26 @@ export default function HomeShortcutSearch({ shortcuts }: HomeShortcutSearchProp
                   return (
                     <article
                       key={shortcut.slug}
-                      className="group rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-teal-200 hover:shadow-md ateflo-search-result-card sm:p-6"
                       style={{ animationDelay: `${index * 45}ms` }}
+                      className="ateflo-search-result-card"
                     >
-                      <div className="flex gap-4">
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">
-                            {shortcut.category}
-                          </p>
+                      <Link
+                        href={`/shortcuts/${shortcut.slug}`}
+                        aria-label={`Open shortcut: ${shortcut.title}`}
+                        data-event="shortcut_card_click"
+                        data-guide-slug={shortcut.slug}
+                        data-action-location="home_search_result_card"
+                        onClick={() =>
+                          trackShortcutClick(shortcut, "home_search_result_card")
+                        }
+                        className="group flex h-full cursor-pointer flex-col rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-teal-200 hover:bg-teal-50/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 sm:p-6"
+                      >
+                        <div>
+                          <CategoryChip label={shortcut.category} />
                           <h2 className="mt-2 text-lg font-semibold leading-7 text-slate-950 sm:text-xl">
-                            <Link
-                              href={`/shortcuts/${shortcut.slug}`}
-                              data-event="shortcut_card_click"
-                              data-guide-slug={shortcut.slug}
-                              data-action-location="home_search_result_title"
-                              onClick={() =>
-                                trackShortcutClick(shortcut, "home_search_result_title")
-                              }
-                              className="transition group-hover:text-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
-                            >
+                            <span className="transition group-hover:text-teal-800">
                               {shortcut.title}
-                            </Link>
+                            </span>
                           </h2>
                           <p className="ateflo-clamp-2 mt-2 text-sm leading-6 text-slate-600">
                             {shortcut.summary}
@@ -256,32 +256,10 @@ export default function HomeShortcutSearch({ shortcuts }: HomeShortcutSearchProp
                             </div>
                           )}
                         </div>
-                        <Link
-                          href={`/shortcuts/${shortcut.slug}`}
-                          aria-label={`Open shortcut: ${shortcut.title}`}
-                          data-event="shortcut_card_click"
-                          data-guide-slug={shortcut.slug}
-                          data-action-location="home_search_result_button"
-                          onClick={() =>
-                            trackShortcutClick(shortcut, "home_search_result_button")
-                          }
-                          className="mt-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-teal-700 text-white shadow-lg shadow-teal-900/15 transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 active:scale-95 sm:h-14 sm:w-14"
-                        >
-                          <svg
-                            viewBox="0 0 24 24"
-                            className="h-5 w-5"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2.2"
-                            aria-hidden="true"
-                          >
-                            <path d="M5 12h14" />
-                            <path d="m13 6 6 6-6 6" />
-                          </svg>
-                        </Link>
-                      </div>
+                        <span className="mt-auto inline-flex pt-5 text-sm font-semibold text-teal-800">
+                          Open this shortcut
+                        </span>
+                      </Link>
                     </article>
                   );
                 })}

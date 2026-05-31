@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import CategoryChip from "@/components/CategoryChip";
 import ToolIcon from "@/components/ToolIcon";
 import { trackEvent } from "@/lib/analytics";
 import type { Guide } from "@/lib/guides";
@@ -57,9 +58,7 @@ export default function RelatedShortcuts({
             className="group flex h-full min-w-0 flex-col rounded-2xl border border-slate-200 bg-slate-50/70 p-4 transition hover:-translate-y-0.5 hover:border-teal-200 hover:bg-white hover:shadow-sm"
           >
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-teal-50 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-teal-800">
-                {relatedGuide.category}
-              </span>
+              <CategoryChip label={relatedGuide.category} />
               <span className="text-xs font-medium capitalize text-slate-500">
                 {relatedGuide.skillLevel}
               </span>

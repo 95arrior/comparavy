@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import CategoryChip from "@/components/CategoryChip";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ToolIcon from "@/components/ToolIcon";
 import { trackEvent } from "@/lib/analytics";
@@ -172,9 +173,7 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
               }`}
             >
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-teal-50 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-teal-800">
-                  {shortcut.category}
-                </span>
+                <CategoryChip label={shortcut.category} />
                 <span className="text-xs font-medium text-slate-500">
                   {shortcut.guideTypeLabel} · {shortcut.timeEstimate ?? shortcut.skillLevel}
                 </span>
