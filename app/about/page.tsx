@@ -5,6 +5,18 @@ export const metadata: Metadata = {
   title: "About",
   description:
     "Learn how AteFlo helps people turn messy inputs into finished outputs with AI shortcuts.",
+  openGraph: {
+    title: "About | AteFlo",
+    description:
+      "Learn how AteFlo helps people turn messy inputs into finished outputs with AI shortcuts.",
+    url: "/about",
+  },
+  twitter: {
+    card: "summary",
+    title: "About | AteFlo",
+    description:
+      "Learn how AteFlo helps people turn messy inputs into finished outputs with AI shortcuts.",
+  },
 };
 
 export default function AboutPage() {

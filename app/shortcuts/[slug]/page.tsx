@@ -28,23 +28,21 @@ export async function generateMetadata({
   }
 
   return {
-    title: {
-      absolute: guide.metaTitle,
-    },
+    title: guide.title,
     description: guide.metaDescription,
     keywords: [guide.primaryKeyword, ...guide.secondaryKeywords],
     alternates: {
       canonical: `/shortcuts/${guide.slug}`,
     },
     openGraph: {
-      title: guide.metaTitle,
+      title: `${guide.title} | AteFlo`,
       description: guide.metaDescription,
       url: `/shortcuts/${guide.slug}`,
       type: "article",
     },
     twitter: {
       card: "summary",
-      title: guide.metaTitle,
+      title: `${guide.title} | AteFlo`,
       description: guide.metaDescription,
     },
   };

@@ -5,6 +5,18 @@ export const metadata: Metadata = {
   title: "Contact",
   description:
     "Contact AteFlo for shortcut suggestions, corrections, partnership inquiries, and privacy questions.",
+  openGraph: {
+    title: "Contact | AteFlo",
+    description:
+      "Contact AteFlo for shortcut suggestions, corrections, partnership inquiries, and privacy questions.",
+    url: "/contact",
+  },
+  twitter: {
+    card: "summary",
+    title: "Contact | AteFlo",
+    description:
+      "Contact AteFlo for shortcut suggestions, corrections, partnership inquiries, and privacy questions.",
+  },
 };
 
 export default function ContactPage() {

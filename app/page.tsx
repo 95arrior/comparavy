@@ -5,19 +5,24 @@ import CopyTextButton from "@/components/CopyTextButton";
 import SiteHeader from "@/components/SiteHeader";
 import TrackedLink from "@/components/TrackedLink";
 import { getPublishedGuides, type Guide } from "@/lib/guides";
-import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE } from "@/lib/site";
+import { SITE_TAGLINE } from "@/lib/site";
+
+const HOME_TITLE = "AteFlo | AI Shortcuts for Real Work";
+const HOME_DESCRIPTION =
+  "Copy practical AI shortcuts for turning notes, documents, product ideas, and business tasks into finished outputs.";
 
 export const metadata: Metadata = {
-  title: "Finish Real Work Faster with AI",
-  description:
-    "Copy practical AI workflows for turning messy notes, PDFs, blog posts, product ideas, and small business tasks into finished outputs.",
+  title: {
+    absolute: HOME_TITLE,
+  },
+  description: HOME_DESCRIPTION,
   openGraph: {
-    title: `${SITE_NAME} | Finish real work faster with AI`,
-    description: SITE_DESCRIPTION,
+    title: HOME_TITLE,
+    description: HOME_DESCRIPTION,
   },
   twitter: {
-    title: `${SITE_NAME} | Finish real work faster with AI`,
-    description: SITE_DESCRIPTION,
+    title: HOME_TITLE,
+    description: HOME_DESCRIPTION,
   },
 };
 

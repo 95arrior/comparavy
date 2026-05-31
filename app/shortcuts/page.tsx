@@ -15,6 +15,18 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/shortcuts",
   },
+  openGraph: {
+    title: "AI Shortcuts | AteFlo",
+    description:
+      "Shortcuts for finishing real work with AI by turning messy inputs into finished outputs.",
+    url: "/shortcuts",
+  },
+  twitter: {
+    card: "summary",
+    title: "AI Shortcuts | AteFlo",
+    description:
+      "Shortcuts for finishing real work with AI by turning messy inputs into finished outputs.",
+  },
 };
 
 function firstGuideInput(guide: Guide): string {

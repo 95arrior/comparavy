@@ -35,7 +35,7 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${tool.name} | AI Tool`,
+    title: tool.name,
     description: `${tool.description} Compare fit, pricing notes, and alternatives for AI shortcut workflows.`,
     keywords: [
       tool.name,

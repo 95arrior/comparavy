@@ -5,6 +5,18 @@ export const metadata: Metadata = {
   title: "Affiliate Disclosure",
   description:
     "Affiliate disclosure for AteFlo, including commission relationships and pricing reminders.",
+  openGraph: {
+    title: "Affiliate Disclosure | AteFlo",
+    description:
+      "Affiliate disclosure for AteFlo, including commission relationships and pricing reminders.",
+    url: "/affiliate-disclosure",
+  },
+  twitter: {
+    card: "summary",
+    title: "Affiliate Disclosure | AteFlo",
+    description:
+      "Affiliate disclosure for AteFlo, including commission relationships and pricing reminders.",
+  },
 };
 
 export default function AffiliateDisclosurePage() {

@@ -5,6 +5,18 @@ export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
     "Simple privacy information for AteFlo, including analytics, cookies, and data questions.",
+  openGraph: {
+    title: "Privacy Policy | AteFlo",
+    description:
+      "Simple privacy information for AteFlo, including analytics, cookies, and data questions.",
+    url: "/privacy",
+  },
+  twitter: {
+    card: "summary",
+    title: "Privacy Policy | AteFlo",
+    description:
+      "Simple privacy information for AteFlo, including analytics, cookies, and data questions.",
+  },
 };
 
 export default function PrivacyPage() {

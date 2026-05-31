@@ -8,6 +8,18 @@ export const metadata: Metadata = {
   title: "AI Tools",
   description:
     "Browse AI tools when you need a specific app for an AteFlo shortcut or workflow.",
+  openGraph: {
+    title: "AI Tools | AteFlo",
+    description:
+      "Browse AI tools when you need a specific app for an AteFlo shortcut or workflow.",
+    url: "/tools",
+  },
+  twitter: {
+    card: "summary",
+    title: "AI Tools | AteFlo",
+    description:
+      "Browse AI tools when you need a specific app for an AteFlo shortcut or workflow.",
+  },
 };
 
 export default function ToolsPage() {
