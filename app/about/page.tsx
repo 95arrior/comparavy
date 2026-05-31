@@ -2,17 +2,17 @@ import type { Metadata } from "next";
 import StaticPageShell from "@/components/StaticPageShell";
 
 export const metadata: Metadata = {
-  title: "About Comparavy | AI Tool Comparison",
+  title: "About",
   description:
-    "Learn what Comparavy does, who it is for, and how recommendations are organized.",
+    "Learn how AteFlo helps people turn messy inputs into finished outputs with AI shortcuts.",
 };
 
 export default function AboutPage() {
   return (
     <StaticPageShell
-      eyebrow="About Comparavy"
-      title="Comparavy helps people choose the right AI tool for the job."
-      intro="The site focuses on clear, practical comparisons so readers can narrow options quickly without sorting through hype."
+      eyebrow="About AteFlo"
+      title="AteFlo helps people finish real work faster with AI."
+      intro="The site focuses on practical shortcuts that turn notes, documents, ideas, and business tasks into useful outputs."
     >
       <section className="grid gap-4 md:grid-cols-2">
         <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
@@ -20,10 +20,9 @@ export default function AboutPage() {
             What it does
           </p>
           <p className="mt-4 text-base leading-8 text-slate-700">
-            Comparavy organizes AI tools around the decisions people actually
-            make: use case, budget, skill level, setup difficulty, and practical
-            fit. The goal is to help you narrow choices quickly and understand
-            the tradeoffs before you spend time or money.
+            AteFlo organizes AI workflows around the outputs people actually
+            need: summaries, drafts, plans, recaps, content, and business assets.
+            Tool choice matters, but the shortcut starts with the work.
           </p>
         </article>
 
@@ -43,7 +42,7 @@ export default function AboutPage() {
             How recommendations work
           </p>
           <p className="mt-4 text-base leading-8 text-slate-700">
-            Recommendations are based on fit, not hype. Comparavy groups tools
+            Recommendations are based on fit, not hype. AteFlo groups tools
             by the kind of work they support, what they tend to cost, how much
             setup they usually require, and how well they suit a given skill
             level or workflow.
@@ -75,8 +74,8 @@ export default function AboutPage() {
               Next step
             </p>
             <p className="mt-2 text-base leading-7 text-slate-700">
-              Start with the finder if you want a short list matched to your
-              workflow, budget, and experience level.
+              Start with the finder if you want a short list matched to what you
+              are trying to finish, your budget, and your experience level.
             </p>
           </div>
           <a

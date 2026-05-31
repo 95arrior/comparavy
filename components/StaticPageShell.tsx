@@ -11,7 +11,7 @@ interface StaticPageShellProps {
 
 const topLinks = [
   { href: "/finder", label: "Finder" },
-  { href: "/guides", label: "Guides" },
+  { href: "/guides", label: "Shortcuts" },
   { href: "/tools", label: "Tools" },
 ] as const;
 

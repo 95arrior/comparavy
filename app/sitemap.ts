@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { tools } from "@/data/tools";
+import { SITE_URL } from "@/lib/site";
 
-const SITE_URL = "https://www.comparavy.com";
 const TOOLS_SOURCE_PATH = path.join(process.cwd(), "data", "tools.ts");
 const GUIDES_DIRECTORY = path.join(process.cwd(), "content", "guides");
 

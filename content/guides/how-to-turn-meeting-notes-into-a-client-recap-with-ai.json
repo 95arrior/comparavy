@@ -2,461 +2,431 @@
   "slug": "how-to-turn-meeting-notes-into-a-client-recap-with-ai",
   "title": "How to Turn Meeting Notes Into a Client Recap with AI",
   "guideType": "how-to",
+  "topicCluster": "meeting-notes-client-recaps",
+  "publishPriority": 1,
   "type": "how-to",
   "metaTitle": "How to Turn Meeting Notes Into a Client Recap with AI | Comparavy",
-  "metaDescription": "Learn how to turning rough meeting notes into a clear client recap. See the workflow, tools you can use, and the safest first step.",
-  "category": "Meetings",
-  "persona": "consultants",
-  "useCase": "turning rough meeting notes into a clear client recap",
-  "budgetAngle": "Start with a focused use case and upgrade only after the tool saves enough time to justify the cost.",
+  "metaDescription": "Turn messy meeting notes into a clear client recap with AI, including decisions, action items, open questions, and a client-ready follow-up structure.",
+  "category": "Productivity",
+  "persona": "client service professionals",
+  "useCase": "turning meeting notes into a client recap",
+  "budgetAngle": "Use an included note, meeting, or chat tool before paying for a dedicated recap workflow.",
   "skillLevel": "beginner",
   "primaryKeyword": "how to turn meeting notes into a client recap with AI",
   "secondaryKeywords": [
     "AI client recap",
-    "meeting notes to follow up email",
-    "AI action item summary"
+    "meeting notes to client email",
+    "AI meeting follow-up"
   ],
   "longTailKeywords": [
     "how to write a client recap from meeting notes with AI",
-    "AI workflow for meeting notes and action items",
-    "turn messy notes into client follow up"
+    "AI prompt for client meeting recap",
+    "turn messy call notes into action items"
   ],
-  "audience": "consultants",
-  "searchIntent": "turning rough meeting notes into a clear client recap",
-  "userPain": "The reader has scattered notes and needs a client-ready summary without missing commitments.",
-  "decisionQuestion": "How do I turn notes into a recap that includes decisions, owners, and next steps?",
+  "audience": "consultants, freelancers, and account managers",
+  "searchIntent": "creating a client recap from meeting notes",
+  "userPain": "The reader has notes from a call but needs a polished recap without missing decisions or next steps.",
+  "decisionQuestion": "How do I turn rough meeting notes into a client-ready recap?",
   "deviceIntent": "both",
-  "desktopUseCase": "Best on a computer when you need the raw notes, draft recap, and client email open together. Use desktop to compare call notes with client-ready recap before the final review.",
-  "mobileUseCase": "Best on a phone when you need a quick action-item list right after the call. Use mobile for quick checks on client-ready recap when the input is already prepared.",
-  "desktopSearchAngle": "Desktop readers usually want deeper comparison, file handling, and a deliberate review workflow for client-ready recap.",
-  "mobileSearchAngle": "Mobile readers usually want a short answer first, then a quick next step for client-ready recap they can finish in a few taps.",
+  "desktopUseCase": "Best on desktop when the notes, transcript, project brief, and email draft need to stay visible together.",
+  "mobileUseCase": "Best on mobile when you need to capture a quick recap right after the call and send a rough internal follow-up.",
+  "desktopSearchAngle": "Desktop readers want a deliberate review workflow before sending a client-facing email.",
+  "mobileSearchAngle": "Mobile readers want the fastest safe path from notes to a short recap they can review later.",
   "visualAssets": {
     "hero": {
       "type": "hero",
       "alt": "How to Turn Meeting Notes Into a Client Recap with AI guide visual",
-      "promptOrDescription": "Editorial guide artwork for turning rough meeting notes into a clear client recap with a clean, problem-solving feel.",
+      "promptOrDescription": "Clean editorial artwork showing meeting notes becoming a structured client recap.",
       "fileNameHint": "how-to-turn-meeting-notes-into-a-client-recap-with-ai"
     },
     "workflow": {
       "type": "workflow-diagram",
       "alt": "How to Turn Meeting Notes Into a Client Recap with AI workflow diagram",
       "steps": [
-        "Quick Answer",
-        "Real-World Scenario",
-        "What You Need",
-        "Step-by-Step Workflow",
-        "Best If You Are on a Computer"
+        "Capture notes",
+        "Extract decisions",
+        "Draft recap",
+        "Check commitments",
+        "Send next step"
       ]
     },
     "toolStack": {
       "type": "tool-stack",
-      "alt": "How to Turn Meeting Notes Into a Client Recap with AI recommended tool stack",
+      "alt": "How to Turn Meeting Notes Into a Client Recap with AI tool stack",
       "tools": [
-        "Notion AI",
-        "Grammarly",
-        "DeepL Write"
+        "ChatGPT",
+        "Claude",
+        "Otter.ai"
       ]
     },
     "beforeAfter": {
       "type": "before-after",
-      "alt": "How to Turn Meeting Notes Into a Client Recap with AI before and after comparison",
-      "before": "Before: manual work and scattered notes for turning rough meeting notes into a clear client recap.",
-      "after": "After: a faster workflow that leaves you with a clear, checked result."
+      "alt": "How to Turn Meeting Notes Into a Client Recap with AI before and after",
+      "before": "Before: scattered notes, partial action items, and unclear ownership.",
+      "after": "After: a concise recap with decisions, owners, due dates, and open questions."
     }
   },
-  "quickAnswer": "To handle turning rough meeting notes into a clear client recap, start with call notes, decide that the output must be client-ready recap, and use AI only after the source material is clear. Start with call notes, decide that the output must be client-ready recap, use Notion AI for one reviewable version, and check it before changing formats or adding another tool. Notion AI should create the first reviewable version, Grammarly belongs in the second pass only when client-ready recap needs more control, and DeepL Write should be saved for review or export after the core result is right.",
-  "quickDecision": "For turning rough meeting notes into a clear client recap, choose Notion AI first when the input is call notes and the output needs to be client-ready recap. Choose Grammarly when owners matters more. Choose DeepL Write when you need a lighter review, export, or fallback pass.",
-  "realWorldScenario": "consultants have call notes and transcripts and need client-ready recap without drifting into an unrelated workflow. Prepared 2026-05-29.",
+  "quickAnswer": "To turn meeting notes into a client recap, paste the notes or transcript into AI, ask for decisions, action items, owners, dates, and open questions, then turn that into a short email. Use Otter.ai or Fireflies if you need meeting capture, ChatGPT or Claude for the recap draft, and Notion AI when the recap should stay inside a project workspace. The key is to review every commitment before sending it to a client.",
+  "quickDecision": "Use Otter.ai or Fireflies for capture, ChatGPT or Claude for the recap draft, and Notion AI when the recap belongs in your project workspace.",
+  "realWorldScenario": "You finish a 45-minute client call with decisions, requests, and loose follow-ups. The client expects a recap today, but your notes are too rough to forward.",
   "whatYouNeed": [
-    "call notes, decisions, owners, dates, and open client questions",
-    "A clear final format for turning rough meeting notes into a clear client recap.",
-    "The audience, recipient, or grading criteria for the output.",
-    "Time to check facts, names, numbers, dates, and commitments before using the result."
+    "Rough meeting notes or a transcript",
+    "Client name, project context, and preferred tone",
+    "A place to verify owners, dates, and commitments before sending"
   ],
-  "timeEstimate": "Plan on 10 to 30 minutes for one careful first pass, depending on the source material.",
-  "contentGap": "Most content focuses on transcription instead of the client-ready follow-up.",
-  "uniqueAngle": "Separate capture, cleanup, and final client wording.",
-  "aiOverviewAnswer": "Paste the notes, ask AI to extract decisions and action items, then rewrite the recap in a client-safe tone and verify owners and dates.",
-  "quickVerdict": "To handle turning rough meeting notes into a clear client recap, start with call notes, decide that the output must be client-ready recap, and use AI only after the source material is clear. Start with call notes, decide that the output must be client-ready recap, use Notion AI for one reviewable version, and check it before changing formats or adding another tool. Notion AI should create the first reviewable version, Grammarly belongs in the second pass only when client-ready recap needs more control, and DeepL Write should be saved for review or export after the core result is right.",
+  "timeEstimate": "Plan on 10 to 20 minutes for one careful recap.",
+  "contentGap": "Most advice stops at summarizing a meeting instead of preparing a client-safe follow-up.",
+  "uniqueAngle": "Separate decisions, tasks, and open questions before drafting the client email.",
+  "aiOverviewAnswer": "Use AI to extract decisions, action items, owners, dates, and open questions from meeting notes, then draft a short recap and review every commitment before sending.",
+  "quickVerdict": "For turning meeting notes into a client recap, use ChatGPT or Claude for the draft after capture, Otter.ai or Fireflies for the transcript, and Notion AI when the recap should stay with project notes.",
   "steps": [
     {
-      "title": "Prepare call notes",
-      "detail": "Put the real input in one place before opening a tool: call notes, transcripts, agenda items, client questions, turning rough meeting notes into a clear client recap, any required facts, the audience, and the format you need at the end. Remove private details you are not allowed to share.",
-      "why": "AI output is only as useful as the material and constraints you give it.",
-      "output": "A clean input bundle and one clear target format: client-ready recap."
+      "title": "Capture the source notes",
+      "detail": "Collect the transcript, chat notes, and any client requests before prompting AI.",
+      "why": "Clean input gives the model less room to guess.",
+      "output": "Put notes or transcript in one place",
+      "toolSlug": "otter-ai",
+      "toolName": "Otter.ai"
     },
     {
-      "title": "Ask for the first usable version",
-      "detail": "Use Notion AI for a first pass that tries to turn rough meeting notes into a clear client recap. Ask it to preserve source facts, flag uncertainty, and organize the result into sections you can review.",
-      "why": "The first pass should create a reviewable client-ready recap, not a finished answer you trust blindly.",
-      "output": "A structured client-ready recap with visible gaps or uncertain points.",
+      "title": "Extract facts before writing",
+      "detail": "This prevents the recap from becoming a vague summary.",
+      "why": "Client-facing follow-up needs accuracy more than speed.",
+      "output": "Ask for decisions, owners, dates, and open questions",
+      "toolSlug": "chatgpt",
+      "toolName": "ChatGPT"
+    },
+    {
+      "title": "Draft the client email",
+      "detail": "A client recap should be readable, specific, and easy to scan.",
+      "why": "Client-facing follow-up needs accuracy more than speed.",
+      "output": "Turn the extracted list into a short recap",
+      "toolSlug": "claude",
+      "toolName": "Claude"
+    },
+    {
+      "title": "Review commitments",
+      "detail": "The email should never invent a commitment the client did not make.",
+      "why": "Client-facing follow-up needs accuracy more than speed.",
+      "output": "Check dates, names, and promises manually",
       "toolSlug": "notion-ai",
       "toolName": "Notion AI"
-    },
-    {
-      "title": "Check the answer before polishing",
-      "detail": "Compare the AI output with call notes. Fix names, dates, numbers, unsupported claims, missing context, and tone before you ask for nicer wording.",
-      "why": "Polished wrong information is harder to catch than rough information.",
-      "output": "A corrected client-ready recap that is ready for formatting or wording cleanup."
-    },
-    {
-      "title": "Change the format only after the facts are right",
-      "detail": "Use Grammarly when the verified client-ready recap needs a different format, structure, or source-aware second pass. Keep the same facts from call notes so the rewrite does not drift from the original.",
-      "why": "Format changes are safer after the substance is already checked.",
-      "output": "A version that fits the channel, document, post, or recipient.",
-      "toolSlug": "grammarly",
-      "toolName": "Grammarly"
-    },
-    {
-      "title": "Finish with a human review",
-      "detail": "Use DeepL Write for cleanup only after the main client-ready recap is checked against call notes. Read the final result as the recipient would: on the device, in the app, or in the document where it will actually be used.",
-      "why": "The final review catches tone, missing context, and practical usability issues.",
-      "output": "A final result you can send, post, study from, or save with confidence.",
-      "toolSlug": "deepl-write",
-      "toolName": "DeepL Write"
     }
   ],
   "toolsYouCanUse": [
     {
-      "toolSlug": "notion-ai",
-      "toolName": "Notion AI",
-      "why": "Primary tool for turning call notes into client-ready recap.",
-      "role": "Primary tool for turning call notes into client-ready recap.",
-      "bestUseCase": "teams or individuals already organizing work in Notion for client-ready recap"
+      "toolSlug": "chatgpt",
+      "toolName": "ChatGPT",
+      "why": "Use ChatGPT to turn extracted notes into a concise recap email.",
+      "role": "Use ChatGPT to turn extracted notes into a concise recap email.",
+      "bestUseCase": "general cleanup and drafting"
     },
     {
-      "toolSlug": "grammarly",
-      "toolName": "Grammarly",
-      "why": "Second-pass tool when client-ready recap needs a different format, stronger controls, or validation.",
-      "role": "Second-pass tool when client-ready recap needs a different format, stronger controls, or validation.",
-      "bestUseCase": "polishing email and client-facing writing when owners matters more than the top pick"
+      "toolSlug": "claude",
+      "toolName": "Claude",
+      "why": "Use Claude when the notes are long and need careful grouping.",
+      "role": "Use Claude when the notes are long and need careful grouping.",
+      "bestUseCase": "careful long-form review and restructuring"
     },
     {
-      "toolSlug": "deepl-write",
-      "toolName": "DeepL Write",
-      "why": "Review or finishing tool after the main output is checked.",
-      "role": "Review or finishing tool after the main output is checked.",
-      "bestUseCase": "rephrasing professional messages when speed or a lighter setup matters more for follow-up email"
+      "toolSlug": "otter-ai",
+      "toolName": "Otter.ai",
+      "why": "Use Otter.ai when you need a transcript before drafting.",
+      "role": "Use Otter.ai when you need a transcript before drafting.",
+      "bestUseCase": "meeting transcription and recall"
+    },
+    {
+      "toolSlug": "fireflies",
+      "toolName": "Fireflies",
+      "why": "Use Fireflies when the team wants searchable meeting records.",
+      "role": "Use Fireflies when the team wants searchable meeting records.",
+      "bestUseCase": "meeting transcripts and searchable notes"
     }
   ],
   "keyTakeaways": [
-    "What you need: call notes, transcripts, agenda items, a clear output format, and a few minutes to review the result.",
-    "Start with Notion AI for the first pass, but judge the output against turning rough meeting notes into a clear client recap, not against tool hype.",
-    "Use Grammarly only when the workflow needs a different format or second pass.",
-    "Use DeepL Write for review after the main output is fact-checked.",
-    "The reader has scattered notes and needs a client-ready summary without missing commitments.",
-    "Most content focuses on transcription instead of the client-ready follow-up.",
-    "The useful next step is to test one real example before building a repeatable workflow."
+    "Extract decisions before drafting.",
+    "Keep action items separate from open questions.",
+    "Use a meeting tool only when capture is the bottleneck.",
+    "Review commitments before sending a client-facing recap.",
+    "A good recap is short enough for the client to scan.",
+    "Use Finder if you need a tool matched to your workflow."
   ],
   "bestPicksBySituation": [
     {
-      "situation": "If you already have call notes, choose Notion AI.",
-      "toolSlug": "notion-ai",
-      "toolName": "Notion AI",
-      "why": "Notion AI is the closest match because it is built for teams or individuals already organizing work in Notion and keeps the work tied to call notes."
+      "situation": "If you have rough notes and need a recap email, start with ChatGPT.",
+      "toolSlug": "chatgpt",
+      "toolName": "ChatGPT",
+      "why": "It is fast for turning structured bullets into a readable email."
     },
     {
-      "situation": "If you need action item list or stronger owners, choose Grammarly.",
-      "toolSlug": "grammarly",
-      "toolName": "Grammarly",
-      "why": "Grammarly is the better second choice when polishing email and client-facing writing matters more than the first tool's handling of call notes."
+      "situation": "If the notes are long or messy, use Claude.",
+      "toolSlug": "claude",
+      "toolName": "Claude",
+      "why": "It is strong at grouping context without flattening the details."
     },
     {
-      "situation": "If you want the lightest review or export step for client-ready recap, choose DeepL Write.",
-      "toolSlug": "deepl-write",
-      "toolName": "DeepL Write",
-      "why": "DeepL Write helps when you need rephrasing professional messages and want a fallback that is easier to adapt on a phone or desktop."
+      "situation": "If you need meeting capture first, use Otter.ai.",
+      "toolSlug": "otter-ai",
+      "toolName": "Otter.ai",
+      "why": "It gives you a transcript before you write the recap."
     }
   ],
   "recommendedToolSlugs": [
-    "notion-ai",
-    "grammarly",
-    "deepl-write",
-    "writesonic",
-    "reclaim"
+    "chatgpt",
+    "claude",
+    "otter-ai",
+    "fireflies",
+    "notion-ai"
   ],
   "recommendedTools": [
     {
+      "toolSlug": "chatgpt",
+      "toolName": "ChatGPT",
+      "summary": "ChatGPT is useful for client recap drafting when you need general cleanup and drafting. It can speed up the first useful version, but the output still needs a human review before it reaches a client, student, customer, or public page.",
+      "bestFor": "turning extracted notes into a client-ready email",
+      "avoidIf": "you cannot manually verify the commitments",
+      "strengths": [
+        "general cleanup and drafting",
+        "clear workflow fit",
+        "fast first draft",
+        "review-friendly output"
+      ],
+      "tradeoffs": [
+        "Plan details can change.",
+        "Sensitive or high-stakes material still needs human review."
+      ],
+      "toolPagePath": "/tools/chatgpt"
+    },
+    {
+      "toolSlug": "claude",
+      "toolName": "Claude",
+      "summary": "Claude is useful for long-note recap cleanup when you need careful long-form review and restructuring. It can speed up the first useful version, but the output still needs a human review before it reaches a client, student, customer, or public page.",
+      "bestFor": "careful grouping of decisions and follow-ups",
+      "avoidIf": "you only need a short one-line summary",
+      "strengths": [
+        "careful long-form review and restructuring",
+        "clear workflow fit",
+        "fast first draft",
+        "review-friendly output"
+      ],
+      "tradeoffs": [
+        "Plan details can change.",
+        "Sensitive or high-stakes material still needs human review."
+      ],
+      "toolPagePath": "/tools/claude"
+    },
+    {
+      "toolSlug": "otter-ai",
+      "toolName": "Otter.ai",
+      "summary": "Otter.ai is useful for meeting capture when you need meeting transcription and recall. It can speed up the first useful version, but the output still needs a human review before it reaches a client, student, customer, or public page.",
+      "bestFor": "creating a transcript before drafting",
+      "avoidIf": "recording is not permitted",
+      "strengths": [
+        "meeting transcription and recall",
+        "clear workflow fit",
+        "fast first draft",
+        "review-friendly output"
+      ],
+      "tradeoffs": [
+        "Plan details can change.",
+        "Sensitive or high-stakes material still needs human review."
+      ],
+      "toolPagePath": "/tools/otter-ai"
+    },
+    {
+      "toolSlug": "fireflies",
+      "toolName": "Fireflies",
+      "summary": "Fireflies is useful for team meeting records when you need meeting transcripts and searchable notes. It can speed up the first useful version, but the output still needs a human review before it reaches a client, student, customer, or public page.",
+      "bestFor": "searchable transcripts and follow-up records",
+      "avoidIf": "you only need a one-off recap",
+      "strengths": [
+        "meeting transcripts and searchable notes",
+        "clear workflow fit",
+        "fast first draft",
+        "review-friendly output"
+      ],
+      "tradeoffs": [
+        "Plan details can change.",
+        "Sensitive or high-stakes material still needs human review."
+      ],
+      "toolPagePath": "/tools/fireflies"
+    },
+    {
       "toolSlug": "notion-ai",
       "toolName": "Notion AI",
-      "summary": "Notion AI is strongest when you need teams or individuals already organizing work in Notion and want it tied to call notes, decisions, owners, dates, and open client questions. It handles summarize meeting notes better than a generic assistant, but it is a weaker choice if you need your useful information lives outside Notion.",
-      "bestFor": "teams or individuals already organizing work in Notion for client-ready recap",
-      "avoidIf": "your useful information lives outside Notion if your real input is call notes, decisions, owners, dates, and open client questions",
+      "summary": "Notion AI is useful for project workspace recaps when you need workspace notes and project pages. It can speed up the first useful version, but the output still needs a human review before it reaches a client, student, customer, or public page.",
+      "bestFor": "keeping notes and recap in one workspace",
+      "avoidIf": "your team does not use Notion",
       "strengths": [
-        "workspace",
-        "notes",
-        "knowledge",
-        "productivity"
+        "workspace notes and project pages",
+        "clear workflow fit",
+        "fast first draft",
+        "review-friendly output"
       ],
       "tradeoffs": [
-        "People who do not want to adopt Notion",
-        "Standalone image or video generation"
+        "Plan details can change.",
+        "Sensitive or high-stakes material still needs human review."
       ],
       "toolPagePath": "/tools/notion-ai"
-    },
-    {
-      "toolSlug": "grammarly",
-      "toolName": "Grammarly",
-      "summary": "Grammarly is strongest when you need polishing email and client-facing writing and want it tied to call notes, decisions, owners, dates, and open client questions. It handles polish emails better than a generic assistant, but it is a weaker choice if you need your writing environment cannot allow browser extensions or integrations.",
-      "bestFor": "polishing email and client-facing writing when owners matters more than the top pick",
-      "avoidIf": "your writing environment cannot allow browser extensions or integrations if your main need is the top tool's exact workflow",
-      "strengths": [
-        "writing",
-        "editing",
-        "tone",
-        "email"
-      ],
-      "tradeoffs": [
-        "Long-form research from sources",
-        "Visual content generation"
-      ],
-      "toolPagePath": "/tools/grammarly"
-    },
-    {
-      "toolSlug": "deepl-write",
-      "toolName": "DeepL Write",
-      "summary": "DeepL Write is strongest when you need rephrasing professional messages and want it tied to call notes, decisions, owners, dates, and open client questions. It handles polish messages better than a generic assistant, but it is a weaker choice if you need you need specialist translation or legal review without a human expert.",
-      "bestFor": "rephrasing professional messages when speed or a lighter setup matters more for follow-up email",
-      "avoidIf": "you need specialist translation or legal review without a human expert if you need the most polished or source-grounded final pass",
-      "strengths": [
-        "writing",
-        "clarity",
-        "tone",
-        "multilingual"
-      ],
-      "tradeoffs": [
-        "Generating rich visual content",
-        "Research requiring cited web sources"
-      ],
-      "toolPagePath": "/tools/deepl-write"
-    },
-    {
-      "toolSlug": "writesonic",
-      "toolName": "Writesonic",
-      "summary": "Writesonic is strongest when you need marketing content ideation and want it tied to call notes, decisions, owners, dates, and open client questions. It handles draft landing copy better than a generic assistant, but it is a weaker choice if you need you would publish generated content without editorial review.",
-      "bestFor": "marketing content ideation when speed or a lighter setup matters more for decision log",
-      "avoidIf": "you would publish generated content without editorial review if the task needs deeper review than a lightweight fallback can provide",
-      "strengths": [
-        "marketing",
-        "writing",
-        "seo-workflow",
-        "web-copy"
-      ],
-      "tradeoffs": [
-        "Users needing only basic proofreading",
-        "Dedicated graphic design production"
-      ],
-      "toolPagePath": "/tools/writesonic"
-    },
-    {
-      "toolSlug": "reclaim",
-      "toolName": "Reclaim",
-      "summary": "Reclaim is strongest when you need workflows that need calendar protection and scheduling and want it tied to call notes, decisions, owners, dates, and open client questions. It handles calendar protection and scheduling better than a generic assistant, but it is a weaker choice if you need you need publish-ready output without review.",
-      "bestFor": "workflows that need calendar protection and scheduling when speed or a lighter setup matters more for turning rough meeting notes into a clear client recap",
-      "avoidIf": "you need publish-ready output without review if the workflow depends on another tool's stronger input handling or editing controls",
-      "strengths": [
-        "productivity",
-        "notes",
-        "workflow",
-        "planning"
-      ],
-      "tradeoffs": [
-        "Not the best choice when your main job is outside productivity.",
-        "Not ideal when you need a single tool to do every job."
-      ],
-      "toolPagePath": "/tools/reclaim"
     }
   ],
   "comparisonRows": [
     {
+      "toolSlug": "chatgpt",
+      "toolName": "ChatGPT",
+      "bestFor": "Client recap email drafts",
+      "freePlan": true,
+      "easeOfUse": "Low setup; strong for flexible prompting",
+      "whyConsider": "Strong for turning structured bullets into polished recap text.",
+      "watchFor": "Check every commitment before sending."
+    },
+    {
+      "toolSlug": "claude",
+      "toolName": "Claude",
+      "bestFor": "Long or messy notes",
+      "freePlan": true,
+      "easeOfUse": "Low setup; strong for longer source material",
+      "whyConsider": "Useful when the notes need grouping before drafting.",
+      "watchFor": "Can still miss implied owners."
+    },
+    {
+      "toolSlug": "otter-ai",
+      "toolName": "Otter.ai",
+      "bestFor": "Transcription before recap",
+      "freePlan": true,
+      "easeOfUse": "Low setup; built around meeting capture",
+      "whyConsider": "Helpful when you need the raw call captured first.",
+      "watchFor": "Recording consent and transcript accuracy matter."
+    },
+    {
+      "toolSlug": "fireflies",
+      "toolName": "Fireflies",
+      "bestFor": "Team transcript records",
+      "freePlan": true,
+      "easeOfUse": "Low setup; useful for team meeting records",
+      "whyConsider": "Useful for searchable records before follow-up.",
+      "watchFor": "May be more workflow than a solo user needs."
+    },
+    {
       "toolSlug": "notion-ai",
       "toolName": "Notion AI",
-      "bestFor": "teams or individuals already organizing work in Notion for client-ready recap",
+      "bestFor": "Workspace recap storage",
       "freePlan": false,
-      "easeOfUse": "Medium setup; ease 8/10 in the Comparavy catalog",
-      "whyConsider": "Notion AI is worth considering because it is the clearest fit for turning rough meeting notes into a clear client recap. It is built for teams or individuals already organizing work in Notion, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
-      "watchFor": "Watch for people who do not want to adopt Notion; this matters when the reader is turning rough meeting notes into a clear client recap."
-    },
-    {
-      "toolSlug": "grammarly",
-      "toolName": "Grammarly",
-      "bestFor": "polishing email and client-facing writing when owners matters more than the top pick",
-      "freePlan": true,
-      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
-      "whyConsider": "Grammarly is worth considering because it gives you a different tradeoff if you already know the first option is too narrow. It is built for polishing email and client-facing writing, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
-      "watchFor": "Watch for long-form research from sources; this matters when the reader is turning rough meeting notes into a clear client recap."
-    },
-    {
-      "toolSlug": "deepl-write",
-      "toolName": "DeepL Write",
-      "bestFor": "rephrasing professional messages when speed or a lighter setup matters more for follow-up email",
-      "freePlan": true,
-      "easeOfUse": "Low setup; ease 10/10 in the Comparavy catalog",
-      "whyConsider": "DeepL Write is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for rephrasing professional messages, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
-      "watchFor": "Watch for generating rich visual content; this matters when the reader is turning rough meeting notes into a clear client recap."
-    },
-    {
-      "toolSlug": "writesonic",
-      "toolName": "Writesonic",
-      "bestFor": "marketing content ideation when speed or a lighter setup matters more for decision log",
-      "freePlan": false,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
-      "whyConsider": "Writesonic is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for marketing content ideation, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
-      "watchFor": "Watch for users needing only basic proofreading; this matters when the reader is turning rough meeting notes into a clear client recap."
-    },
-    {
-      "toolSlug": "reclaim",
-      "toolName": "Reclaim",
-      "bestFor": "workflows that need calendar protection and scheduling when speed or a lighter setup matters more for turning rough meeting notes into a clear client recap",
-      "freePlan": true,
-      "easeOfUse": "Low setup; ease 8/10 in the Comparavy catalog",
-      "whyConsider": "Reclaim is worth considering because it is a useful fallback when you want a faster or lighter setup. It is built for workflows that need calendar protection and scheduling, which makes it better than a generic chat tool when the input and output need to stay close to the use case.",
-      "watchFor": "Watch for not the best choice when your main job is outside productivity.; this matters when the reader is turning rough meeting notes into a clear client recap."
+      "easeOfUse": "Medium setup; strongest when the work already lives in Notion",
+      "whyConsider": "Keeps the recap near project notes.",
+      "watchFor": "Best only when Notion is already part of the workflow."
     }
   ],
   "decisionPath": [
     {
-      "situation": "If you already have call notes, start with Notion AI.",
+      "situation": "If you already have notes, choose ChatGPT for the recap draft.",
+      "recommendation": "ChatGPT",
+      "reason": "It moves quickly from bullets to a readable email."
+    },
+    {
+      "situation": "If the notes are long, choose Claude for grouping before drafting.",
+      "recommendation": "Claude",
+      "reason": "It handles longer context well."
+    },
+    {
+      "situation": "If you need a transcript first, choose Otter.ai or Fireflies.",
+      "recommendation": "Otter.ai or Fireflies",
+      "reason": "Capture quality matters before writing."
+    },
+    {
+      "situation": "If the project lives in Notion, choose Notion AI.",
       "recommendation": "Notion AI",
-      "reason": "Notion AI is the first-pass choice when the input is ready and the main job is to structure, summarize, or clean it into a usable result."
-    },
-    {
-      "situation": "If client-ready recap needs a different format after the facts are checked, switch to Grammarly.",
-      "recommendation": "Grammarly",
-      "reason": "Grammarly is better for the second pass when the job changes from source checking to formatting, layout, or another presentation style."
-    },
-    {
-      "situation": "If the result is accurate but still rough, use DeepL Write.",
-      "recommendation": "DeepL Write",
-      "reason": "DeepL Write fits the review step because the main source work is already done."
-    },
-    {
-      "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
-      "recommendation": "Notion AI",
-      "reason": "Mobile works best for a short summary, a quick rewrite, or final approval; save side-by-side checking and larger edits for desktop."
-    },
-    {
-      "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
-      "recommendation": "Grammarly",
-      "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
-    }
-  ],
-  "decisionTree": [
-    {
-      "situation": "If you already have call notes, start with Notion AI.",
-      "recommendation": "Notion AI",
-      "reason": "Notion AI is the first-pass choice when the input is ready and the main job is to structure, summarize, or clean it into a usable result."
-    },
-    {
-      "situation": "If client-ready recap needs a different format after the facts are checked, switch to Grammarly.",
-      "recommendation": "Grammarly",
-      "reason": "Grammarly is better for the second pass when the job changes from source checking to formatting, layout, or another presentation style."
-    },
-    {
-      "situation": "If the result is accurate but still rough, use DeepL Write.",
-      "recommendation": "DeepL Write",
-      "reason": "DeepL Write fits the review step because the main source work is already done."
-    },
-    {
-      "situation": "If you are on your phone, keep the task small and finish one reviewable output.",
-      "recommendation": "Notion AI",
-      "reason": "Mobile works best for a short summary, a quick rewrite, or final approval; save side-by-side checking and larger edits for desktop."
-    },
-    {
-      "situation": "If you are on a computer, compare the source, AI draft, and final version side by side.",
-      "recommendation": "Grammarly",
-      "reason": "Desktop is better when the workflow needs source checking, longer inputs, file uploads, layout work, or a cleaner audit trail."
-    }
-  ],
-  "moneySavingTips": [
-    "Test one representative project before paying for a longer-term workflow.",
-    "Use a listed free plan when it covers the experiment you need to run.",
-    "Avoid overlapping subscriptions until one tool has proven where it saves effort."
-  ],
-  "pricingNote": "Pricing can change. Check the official site before subscribing.",
-  "pricingCaveat": "Pricing can change. Check the official site before subscribing.",
-  "faqs": [
-    {
-      "question": "What input do I need before using AI for turning rough meeting notes into a clear client recap?",
-      "answer": "Start with call notes, transcripts, agenda items and decide that the output must be client-ready recap. That keeps Notion AI focused on the actual job instead of drifting into a generic answer."
-    },
-    {
-      "question": "Which tool should I start with for client-ready recap?",
-      "answer": "Start with Notion AI when the main input is call notes. Compare Grammarly when owners matters more, and keep DeepL Write for review or fallback work."
-    },
-    {
-      "question": "What should I check before I use the result?",
-      "answer": "Check the result against call notes, especially sending unverified owners or dates. Do not use the output until it still matches client-ready recap."
-    },
-    {
-      "question": "Can I finish this workflow on a phone, or should I use a computer?",
-      "answer": "Use mobile for on mobile, keep the task to one input and one output: call notes to client-ready recap. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. client-ready recap usually benefits from desktop review before publishing, sending, or saving."
-    }
-  ],
-  "faq": [
-    {
-      "question": "What input do I need before using AI for turning rough meeting notes into a clear client recap?",
-      "answer": "Start with call notes, transcripts, agenda items and decide that the output must be client-ready recap. That keeps Notion AI focused on the actual job instead of drifting into a generic answer."
-    },
-    {
-      "question": "Which tool should I start with for client-ready recap?",
-      "answer": "Start with Notion AI when the main input is call notes. Compare Grammarly when owners matters more, and keep DeepL Write for review or fallback work."
-    },
-    {
-      "question": "What should I check before I use the result?",
-      "answer": "Check the result against call notes, especially sending unverified owners or dates. Do not use the output until it still matches client-ready recap."
-    },
-    {
-      "question": "Can I finish this workflow on a phone, or should I use a computer?",
-      "answer": "Use mobile for on mobile, keep the task to one input and one output: call notes to client-ready recap. Use desktop when you need on desktop, keep the input, ai output, and final editor visible side by side. client-ready recap usually benefits from desktop review before publishing, sending, or saving."
+      "reason": "It keeps the recap near project context."
     }
   ],
   "whoShouldUseThis": [
-    "consultants who need turning rough meeting notes into a clear client recap.",
-    "Readers asking: How do I turn notes into a recap that includes decisions, owners, and next steps?",
-    "Teams that understand this pain point: The reader has scattered notes and needs a client-ready summary without missing commitments."
+    "Consultants who send client recaps after calls",
+    "Freelancers who need clean follow-up emails"
   ],
   "whoShouldAvoidThis": [
-    "Readers who need legal, financial, or compliance advice rather than tool comparison.",
-    "Users who want guaranteed outcomes instead of a workflow shortlist to evaluate."
+    "Teams that cannot use cloud AI for client notes",
+    "Anyone who needs legal or compliance approval before sending recap language"
   ],
-  "finalVerdict": "The next step is to run this workflow on one real example of turning rough meeting notes into a clear client recap. Start with Notion AI, use Grammarly only if the format needs a second pass, finish with DeepL Write or manual review, and do not reuse the workflow until the first result is accurate and useful.",
-  "realityCheck": "AI can speed up the work, but the user still has to review facts, shape the final result, and decide whether the workflow fits the job.",
-  "skillNeeded": "You need enough familiarity with turning rough meeting notes into a clear client recap to judge whether the output is accurate and useful.",
-  "firstStep": "What you need: call notes, decisions, owners, dates, and open client questions, a clear final format, the audience or recipient, and time to check the AI result before using it.",
+  "moneySavingTips": [
+    "Run one real example before paying for another subscription.",
+    "Use a free or already-included plan until the workflow proves it saves review time.",
+    "Avoid overlapping tools when one tool can handle the capture, draft, and review steps well enough."
+  ],
+  "pricingNote": "Pricing can change. Check the official site before subscribing.",
+  "pricingCaveat": "Pricing can change. Check the official site before subscribing.",
+  "realityCheck": "AI can draft the recap, but you own the accuracy of every promise, deadline, and next step.",
+  "skillNeeded": "You need enough context to check names, dates, claims, and final wording before using the output.",
+  "firstStep": "Paste one real set of meeting notes into AI and ask for decisions, action items, owners, dates, and open questions.",
   "commonMistakes": [
-    "Sending unverified owners or dates",
-    "Turning notes into generic minutes",
-    "Dropping client commitments"
+    "Sending the recap without checking names and dates",
+    "Mixing open questions with confirmed decisions",
+    "Letting AI invent a deadline"
   ],
   "mistakesToAvoid": [
-    "Do not treat Notion AI as the final answer without checking the result against your source material.",
-    "Do not use Grammarly or DeepL Write as a shortcut around the real decision about input type and output quality.",
-    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+    "Do not sending the recap without checking names and dates.",
+    "Do not mixing open questions with confirmed decisions.",
+    "Do not letting AI invent a deadline."
   ],
   "whatToAvoid": [
-    "Do not treat Notion AI as the final answer without checking the result against your source material.",
-    "Do not use Grammarly or DeepL Write as a shortcut around the real decision about input type and output quality.",
-    "Do not skip review if the output will reach clients, customers, classmates, or a public page."
+    "Do not sending the recap without checking names and dates.",
+    "Do not mixing open questions with confirmed decisions.",
+    "Do not letting AI invent a deadline."
   ],
-  "whatChanged": "Separate capture, cleanup, and final client wording.",
-  "exampleWorkflow": "Prepare the real input: call notes, transcripts, agenda items. Define the target output before opening tools: client-ready recap or action item list. Use Notion AI for the first usable pass and ask it to preserve the constraints that matter in Meeting notes / client recaps. Check the result against the input, then use Grammarly only if the output needs a format change or stronger second pass. Finish with a human review and use DeepL Write only for cleanup, export, or a lighter fallback.",
-  "exampleResult": "Example result: a checked turn rough meeting notes into a clear client recap output that keeps the source facts, removes filler, names the next action, and is short enough to review before sending, posting, studying, or saving.",
-  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
-  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+  "whatChanged": "Separate decisions, tasks, and open questions before drafting the client email.",
+  "exampleWorkflow": "Paste the notes, ask for decisions and action items, draft a five-sentence recap, then verify commitments against the source notes.",
+  "exampleResult": "Example output: a recap email with three decisions, four action items with owners, two open questions, and one next meeting note.",
+  "faq": [
+    {
+      "question": "Can I use AI to send the recap automatically?",
+      "answer": "Do not send automatically. Use AI for the draft, then review commitments, tone, and client-sensitive details."
+    },
+    {
+      "question": "What should be in a client recap?",
+      "answer": "Include decisions, action items, owners, dates, open questions, and the next step."
+    },
+    {
+      "question": "Should I include the full transcript?",
+      "answer": "Usually no. Send the concise recap unless the client specifically needs the transcript."
+    },
+    {
+      "question": "What if the notes are incomplete?",
+      "answer": "Mark unclear items as open questions instead of letting AI guess."
+    }
+  ],
+  "faqs": [
+    {
+      "question": "Can I use AI to send the recap automatically?",
+      "answer": "Do not send automatically. Use AI for the draft, then review commitments, tone, and client-sensitive details."
+    },
+    {
+      "question": "What should be in a client recap?",
+      "answer": "Include decisions, action items, owners, dates, open questions, and the next step."
+    },
+    {
+      "question": "Should I include the full transcript?",
+      "answer": "Usually no. Send the concise recap unless the client specifically needs the transcript."
+    },
+    {
+      "question": "What if the notes are incomplete?",
+      "answer": "Mark unclear items as open questions instead of letting AI guess."
+    }
+  ],
+  "finalVerdict": "For meeting notes to client recaps, use ChatGPT or Claude for the draft after you extract decisions and action items. Add Otter.ai or Fireflies only when capture is the problem, and keep Notion AI for teams that already work in Notion.",
+  "ctaToFinder": "Use the Comparavy finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
+  "finderCTA": "Use the Comparavy finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
   "visualSummary": {
-    "headline": "A practical starting route for consultants",
+    "headline": "A safer client recap workflow",
     "points": [
-      "Start with Notion AI for teams or individuals already organizing work in Notion",
-      "Compare Grammarly when the workflow changes",
-      "Run a real project test before subscribing"
+      "Extract facts before drafting",
+      "Use AI for structure and wording",
+      "Review commitments before sending"
     ]
   },
   "affiliateDisclosureNote": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "affiliateDisclosure": "Some Comparavy links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
-  "qualityScore": 92,
-  "status": "draft",
-  "createdAt": "2026-05-29",
-  "updatedAt": "2026-05-29"
+  "qualityScore": 94,
+  "status": "approved",
+  "createdAt": "2026-05-31",
+  "updatedAt": "2026-05-31"
 }

@@ -566,16 +566,16 @@ export default function FinderPage() {
                 href="/guides"
                 className="rounded-full px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-teal-800"
               >
-                Guides
+                Shortcuts
               </Link>
             </nav>
           </div>
           <h1 className="mt-4 max-w-2xl text-3xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
-            Find the AI tool that fits the job.
+            What are you trying to finish?
           </h1>
           <p className="mt-4 max-w-xl text-base leading-7 text-slate-600 sm:text-lg">
-            Make five simple choices. We will narrow the options to tools that
-            fit your workflow, budget, and priorities.
+            Make five simple choices. AteFlo will narrow the options to tools
+            that fit the output, workflow, budget, and priority.
           </p>
         </header>
 
@@ -619,7 +619,7 @@ export default function FinderPage() {
               {step === 0 && (
                 <>
                   <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
-                    What do you need AI for?
+                    What do you need to finish?
                   </h2>
                   <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {GOALS.map((goal) => (
@@ -637,7 +637,7 @@ export default function FinderPage() {
               {step === 1 && (
                 <>
                   <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
-                    Which specific use case fits best?
+                    Which specific workflow fits best?
                   </h2>
                   <p className="mt-2 text-sm text-slate-500">
                     Selected: {answers.goal?.label}

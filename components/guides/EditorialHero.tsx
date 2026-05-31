@@ -56,7 +56,7 @@ export default function EditorialHero({ guide }: EditorialHeroProps) {
         className="mt-6"
         items={[
           { href: "/finder", label: "Use Finder", tone: "primary" },
-          { href: "/guides", label: "View Guides" },
+          { href: "/guides", label: "View Shortcuts" },
         ]}
       />
     </header>

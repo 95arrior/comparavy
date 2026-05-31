@@ -2,16 +2,16 @@ import type { Metadata } from "next";
 import StaticPageShell from "@/components/StaticPageShell";
 
 export const metadata: Metadata = {
-  title: "Affiliate Disclosure | Comparavy",
+  title: "Affiliate Disclosure",
   description:
-    "Affiliate disclosure for Comparavy, including commission relationships and pricing reminders.",
+    "Affiliate disclosure for AteFlo, including commission relationships and pricing reminders.",
 };
 
 export default function AffiliateDisclosurePage() {
   return (
     <StaticPageShell
       eyebrow="Affiliate disclosure"
-      title="Some links on Comparavy may be affiliate links."
+      title="Some links on AteFlo may be affiliate links."
       intro="This page explains how affiliate relationships may affect certain links without changing how recommendations are made."
     >
       <section className="grid gap-4 md:grid-cols-2">
@@ -20,8 +20,8 @@ export default function AffiliateDisclosurePage() {
             Affiliate links
           </p>
           <p className="mt-4 text-base leading-8 text-slate-700">
-            Some links on Comparavy may be affiliate links. If you sign up
-            through certain links, Comparavy may earn a commission.
+            Some links on AteFlo may be affiliate links. If you sign up
+            through certain links, AteFlo may earn a commission.
           </p>
         </article>
 
@@ -50,7 +50,7 @@ export default function AffiliateDisclosurePage() {
             Why it matters
           </p>
           <p className="mt-4 text-base leading-8 text-slate-700">
-            Transparency helps readers understand how Comparavy works while
+            Transparency helps readers understand how AteFlo works while
             keeping the comparison process direct and easy to trust.
           </p>
         </article>

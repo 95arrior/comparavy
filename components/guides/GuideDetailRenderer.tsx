@@ -1,12 +1,35 @@
+import CopyPromptCard from "@/components/guides/CopyPromptCard";
+import HelpfulFeedback from "@/components/guides/HelpfulFeedback";
 import HowToGuideLayout from "@/components/guides/HowToGuideLayout";
 import IncomeGuideLayout from "@/components/guides/IncomeGuideLayout";
+import RelatedShortcuts from "@/components/guides/RelatedShortcuts";
+import ShareGuideButton from "@/components/guides/ShareGuideButton";
 import ToolDecisionGuideLayout from "@/components/guides/ToolDecisionGuideLayout";
 import TrendDecisionGuideLayout from "@/components/guides/TrendDecisionGuideLayout";
 import { resolveGuideLayoutType } from "@/lib/guideTypes";
-import type { Guide } from "@/lib/guides";
+import { getPublishedGuides, type Guide } from "@/lib/guides";
 
 interface GuideDetailRendererProps {
   readonly guide: Guide;
+}
+
+function starterPrompt(guide: Guide): string {
+  return [
+    `Help me complete this workflow: ${guide.useCase}.`,
+    `Audience/context: ${guide.persona}.`,
+    "Use my source material below. Turn it into a clear finished output, keep facts separate from assumptions, and flag anything I should verify.",
+    "",
+    "Source material:",
+  ].join("\n");
+}
+
+function relatedGuides(guide: Guide): readonly Guide[] {
+  const guides = getPublishedGuides().filter((item) => item.slug !== guide.slug);
+  const related = guides.filter(
+    (item) => item.category === guide.category || item.skillLevel === guide.skillLevel,
+  );
+
+  return (related.length >= 3 ? related : guides).slice(0, 3);
 }
 
 export default function GuideDetailRenderer({ guide }: GuideDetailRendererProps) {
@@ -23,6 +46,10 @@ export default function GuideDetailRenderer({ guide }: GuideDetailRendererProps)
 
   return (
     <div className="mt-6 space-y-6">
+      <div className="flex flex-wrap justify-end gap-3">
+        <ShareGuideButton title={guide.title} />
+      </div>
+
       {guideType === "how-to" ? (
         <HowToGuideLayout guide={guide} />
       ) : guideType === "income" ? (
@@ -32,6 +59,10 @@ export default function GuideDetailRenderer({ guide }: GuideDetailRendererProps)
       ) : (
         <ToolDecisionGuideLayout guide={guide} />
       )}
+
+      <CopyPromptCard prompt={starterPrompt(guide)} />
+      <HelpfulFeedback />
+      <RelatedShortcuts guides={relatedGuides(guide)} />
     </div>
   );
 }

@@ -105,6 +105,8 @@ export interface Guide {
   readonly slug: string;
   readonly title: string;
   readonly guideType?: GuideLayoutType | "practical" | "evergreen";
+  readonly topicCluster?: string;
+  readonly publishPriority?: number;
   readonly type?: string;
   readonly metaTitle: string;
   readonly metaDescription: string;
@@ -175,6 +177,33 @@ export interface Guide {
 
 const GUIDES_DIRECTORY = path.join(process.cwd(), "content", "guides");
 
+function replacePublicBrandText(value: string): string {
+  return value
+    .replaceAll("Comparavy", "AteFlo")
+    .replaceAll("comparavy.com", "ateflo.com");
+}
+
+function normalizePublicGuideBrand<T>(value: T): T {
+  if (typeof value === "string") {
+    return replacePublicBrandText(value) as T;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => normalizePublicGuideBrand(item)) as T;
+  }
+
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [
+        key,
+        normalizePublicGuideBrand(item),
+      ]),
+    ) as T;
+  }
+
+  return value;
+}
+
 function readAllGuideFiles(): Guide[] {
   if (!existsSync(GUIDES_DIRECTORY)) {
     return [];
@@ -187,7 +216,7 @@ function readAllGuideFiles(): Guide[] {
       const value: unknown = JSON.parse(readFileSync(filePath, "utf8"));
 
       assertGuideContentQuality(value, fileName);
-      return value;
+      return normalizePublicGuideBrand(value as Guide);
     })
     .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
 }

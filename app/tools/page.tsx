@@ -6,9 +6,9 @@ import ToolsDirectory from "@/components/ToolsDirectory";
 import { tools } from "@/data/tools";
 
 export const metadata: Metadata = {
-  title: "AI Tools Directory | Comparavy",
+  title: "AI Tools",
   description:
-    "Browse the Comparavy AI tools directory with filters for category, budget, and free plans.",
+    "Browse AI tools when you need a specific app for an AteFlo shortcut or workflow.",
 };
 
 export default function ToolsPage() {
@@ -23,7 +23,7 @@ export default function ToolsPage() {
                 href="/guides"
                 className="rounded-full px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-teal-800"
               >
-                Guides
+                Shortcuts
               </Link>
               <Link
                 href="/finder"
@@ -35,20 +35,20 @@ export default function ToolsPage() {
           </nav>
 
           <p className="mt-10 text-sm font-semibold uppercase tracking-[0.18em] text-teal-700">
-            AI Tools Directory
+            AI Tools
           </p>
           <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
-            Compare AI tools by category, budget, and fit.
+            Find a tool after you know what you are trying to finish.
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-            Browse the full Comparavy catalog, then open a tool page for a more
-            detailed decision path.
+            The tools catalog stays available for comparison, but AteFlo starts
+            with the shortcut and uses tools as support for the work.
           </p>
           <ActionLinks
             className="mt-8"
             items={[
               { href: "/finder", label: "Use Finder", tone: "primary" },
-              { href: "/guides", label: "Browse Guides" },
+              { href: "/guides", label: "Browse Shortcuts" },
             ]}
           />
         </header>

@@ -160,7 +160,7 @@ export function guideTypeStandardForPrompt(guideType: GuideLayoutType): string {
 }
 
 export const comparavyGoldStandardPrompt = [
-  "Comparavy Gold Standard Writing System:",
+  "AteFlo Gold Standard Writing System:",
   "The article must deliver an instant useful answer in the first 100 words.",
   "Write for the searcher's job, pain, desired result, and next action.",
   "Do not start with generic AI background.",

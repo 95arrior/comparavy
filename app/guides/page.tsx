@@ -9,9 +9,9 @@ import { formatGuideLayoutLabel, resolveGuideLayoutType } from "@/lib/guideTypes
 import { getPublishedGuides } from "@/lib/guides";
 
 export const metadata: Metadata = {
-  title: "AI Tool Guides | Comparavy",
+  title: "AI Shortcuts",
   description:
-    "Practical AI tool comparisons for creators, solopreneurs, and small businesses.",
+    "Practical AI shortcuts and workflows for turning messy inputs into finished outputs.",
 };
 
 export default function GuidesPage() {
@@ -39,14 +39,14 @@ export default function GuidesPage() {
             </div>
           </nav>
           <p className="mt-12 text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
-            AI Tool Guides
+            AI Shortcuts
           </p>
           <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
-            Practical guides for choosing tools by workflow.
+            Practical workflows for finishing real work with AI.
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
-            Compare realistic starting options, tradeoffs, and budget-conscious
-            decision paths before testing a tool yourself.
+            Start with notes, documents, ideas, or business tasks and follow a
+            clear shortcut toward a finished output.
           </p>
           <ActionLinks
             className="mt-9"
@@ -60,8 +60,8 @@ export default function GuidesPage() {
               Fast path
             </p>
             <p className="mt-2 max-w-xl text-sm leading-7">
-              Answer a few questions in Finder, then jump into the guide that
-              matches your workflow when you want a deeper comparison.
+              Answer a few questions in Finder, then jump into the shortcut that
+              matches what you are trying to finish.
             </p>
           </div>
         </header>
@@ -69,29 +69,29 @@ export default function GuidesPage() {
         <section className="mt-10">
           <div className="flex items-end justify-between gap-4">
             <div>
-              <p className="text-sm font-medium text-teal-700">Published guides</p>
+              <p className="text-sm font-medium text-teal-700">Published shortcuts</p>
               <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
-                Start with a use case
+                Start with the work
               </h2>
             </div>
             <p className="hidden text-sm text-slate-500 sm:block">
-              {guides.length} guides available
+              {guides.length} shortcuts available
             </p>
           </div>
 
           {guides.length === 0 ? (
             <div className="mt-7 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm comparavy-reveal sm:p-10">
               <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
-                Guides are being updated
+                Shortcuts are being updated
               </p>
               <p className="mt-4 max-w-2xl text-base leading-8 text-slate-600">
-                Comparavy is preparing practical AI tool guides based on search
-                intent, real workflows, and decision-focused recommendations.
+                AteFlo is preparing practical AI shortcuts based on search
+                intent, real workflows, and useful finished outputs.
               </p>
               <ActionLinks
                 className="mt-7"
                 items={[
-                  { href: "/tools", label: "Explore AI Tools", tone: "primary" },
+                  { href: "/guides", label: "Browse Shortcuts", tone: "primary" },
                   { href: "/finder", label: "Use Finder" },
                 ]}
               />
@@ -161,7 +161,7 @@ export default function GuidesPage() {
                     items={[
                       {
                         href: `/guides/${guide.slug}`,
-                        label: "Read Guide",
+                        label: "Read Shortcut",
                         tone: "primary",
                       },
                       { href: "/finder", label: "Use Finder" },

@@ -24,13 +24,27 @@ export async function generateMetadata({
   const guide = getPublishedGuideBySlug(slug);
 
   if (!guide) {
-    return { title: "Guide Not Found | Comparavy" };
+    return { title: "Shortcut Not Found" };
   }
 
   return {
     title: guide.metaTitle,
     description: guide.metaDescription,
     keywords: [guide.primaryKeyword, ...guide.secondaryKeywords],
+    alternates: {
+      canonical: `/guides/${guide.slug}`,
+    },
+    openGraph: {
+      title: guide.metaTitle,
+      description: guide.metaDescription,
+      url: `/guides/${guide.slug}`,
+      type: "article",
+    },
+    twitter: {
+      card: "summary",
+      title: guide.metaTitle,
+      description: guide.metaDescription,
+    },
   };
 }
 
@@ -58,7 +72,7 @@ export default async function GuideDetailPage({ params }: GuidePageProps) {
               href="/guides"
               className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-teal-200 hover:bg-teal-50"
             >
-              Guides
+              Shortcuts
             </Link>
           </div>
           <Link

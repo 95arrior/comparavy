@@ -1,10 +1,11 @@
 import Link from "next/link";
 import Logo from "@/components/Logo";
+import { SITE_TAGLINE } from "@/lib/site";
 
 const mainLinks = [
+  { href: "/guides", label: "Shortcuts" },
   { href: "/finder", label: "Finder" },
   { href: "/tools", label: "Tools" },
-  { href: "/guides", label: "Guides" },
 ] as const;
 
 const policyLinks = [
@@ -21,8 +22,8 @@ export default function SiteFooter() {
         <div className="space-y-3">
           <Logo />
           <p className="max-w-xl text-sm leading-6 text-slate-600">
-            Comparavy helps people find the right AI tool for their workflow with
-            practical comparisons and clear tradeoffs.
+            {SITE_TAGLINE} Practical AI workflows for turning messy inputs into
+            finished outputs.
           </p>
         </div>
 

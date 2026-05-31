@@ -2,17 +2,17 @@ import type { Metadata } from "next";
 import StaticPageShell from "@/components/StaticPageShell";
 
 export const metadata: Metadata = {
-  title: "Contact Comparavy | Support and Corrections",
+  title: "Contact",
   description:
-    "Contact Comparavy for tool suggestions, corrections, partnership inquiries, and privacy questions.",
+    "Contact AteFlo for shortcut suggestions, corrections, partnership inquiries, and privacy questions.",
 };
 
 export default function ContactPage() {
   return (
     <StaticPageShell
       eyebrow="Contact"
-      title="Get in touch with Comparavy."
-      intro="Use this page for tool suggestions, corrections, partnership inquiries, or privacy questions."
+      title="Get in touch with AteFlo."
+      intro="Use this page for shortcut suggestions, corrections, partnership inquiries, or privacy questions."
     >
       <section className="grid gap-4 md:grid-cols-2">
         <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
@@ -22,10 +22,10 @@ export default function ContactPage() {
           <p className="mt-4 text-base leading-8 text-slate-700">
             Reach us at{" "}
             <a
-              href="mailto:hello@comparavy.com"
+              href="mailto:hello@ateflo.com"
               className="font-semibold text-teal-700 transition hover:text-teal-900"
             >
-              hello@comparavy.com
+              hello@ateflo.com
             </a>
             .
           </p>
@@ -70,7 +70,7 @@ export default function ContactPage() {
               Prefer to browse first?
             </p>
             <p className="mt-2 text-base leading-7 text-slate-700">
-              You can also start with the finder or browse the guides before
+            You can also start with the finder or browse the shortcuts before
               reaching out.
             </p>
           </div>
@@ -85,7 +85,7 @@ export default function ContactPage() {
               href="/guides"
               className="inline-flex shrink-0 rounded-full border border-teal-200 bg-white px-5 py-3 text-sm font-semibold text-teal-800 transition hover:bg-teal-100"
             >
-              Browse guides
+              Browse shortcuts
             </a>
           </div>
         </div>

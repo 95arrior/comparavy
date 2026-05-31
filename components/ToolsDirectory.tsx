@@ -186,7 +186,7 @@ export default function ToolsDirectory({ tools }: ToolsDirectoryProps) {
               No tools match these filters.
             </p>
             <p className="mt-3 text-sm leading-7 text-slate-600">
-              Try clearing one filter or jump to the AI Tool Finder for a more
+              Try clearing one filter or jump to the Finder for a more
               guided recommendation.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
@@ -201,7 +201,7 @@ export default function ToolsDirectory({ tools }: ToolsDirectoryProps) {
                 href="/finder"
                 className="rounded-full bg-teal-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-800"
               >
-                Use the AI Tool Finder
+                Use Finder
               </Link>
             </div>
           </div>
@@ -215,7 +215,7 @@ export default function ToolsDirectory({ tools }: ToolsDirectoryProps) {
               Not sure which one fits you?
             </p>
             <p className="mt-3 text-lg leading-8 text-slate-200">
-              Use the AI Tool Finder to get a shortlist matched to your workflow,
+              Use Finder to get a shortlist matched to your workflow,
               budget, and comfort level.
             </p>
           </div>
@@ -223,7 +223,7 @@ export default function ToolsDirectory({ tools }: ToolsDirectoryProps) {
             href="/finder"
             className="inline-flex shrink-0 items-center justify-center rounded-full bg-teal-400 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-300"
           >
-            Use the AI Tool Finder
+            Use Finder
           </Link>
         </div>
       </section>

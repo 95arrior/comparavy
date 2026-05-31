@@ -126,7 +126,7 @@ export default function HowToGuideLayout({ guide }: { readonly guide: Guide }) {
             className="mt-5 sm:mt-0"
             items={[
               { href: "/finder", label: "Use Finder", tone: "primary" },
-              { href: "/guides", label: "Related Guides" },
+              { href: "/guides", label: "Related Shortcuts" },
             ]}
           />
         </div>

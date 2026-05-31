@@ -29,20 +29,33 @@ export async function generateMetadata({
   const tool = toolsBySlug.get(slug as ToolSlug);
 
   if (!tool) {
-    return { title: "Tool Not Found | Comparavy" };
+    return { title: "Tool Not Found" };
   }
 
   return {
-    title: `${tool.name} | Comparavy AI Tools`,
-    description: `${tool.description} Compare fit, pricing notes, and alternatives in the Comparavy tools directory.`,
+    title: `${tool.name} | AI Tool`,
+    description: `${tool.description} Compare fit, pricing notes, and alternatives for AI shortcut workflows.`,
     keywords: [
       tool.name,
       tool.category,
       ...tool.primaryTags,
       ...tool.personas,
       "AI tools",
-      "Comparavy",
+      "AteFlo",
     ],
+    alternates: {
+      canonical: `/tools/${tool.slug}`,
+    },
+    openGraph: {
+      title: `${tool.name} | AteFlo`,
+      description: tool.description,
+      url: `/tools/${tool.slug}`,
+    },
+    twitter: {
+      card: "summary",
+      title: `${tool.name} | AteFlo`,
+      description: tool.description,
+    },
   };
 }
 
@@ -78,7 +91,7 @@ export default async function ToolDetailPage({ params }: ToolPageProps) {
               href="/guides"
               className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-teal-200 hover:bg-teal-50"
             >
-              Guides
+              Shortcuts
             </Link>
           </div>
           <Link
@@ -203,7 +216,7 @@ export default async function ToolDetailPage({ params }: ToolPageProps) {
               </SectionHeading>
               <p className="mt-5 text-sm leading-7 text-slate-700">
                 If you are ready to test the product, open the official site. If
-                you are still comparing, jump to Finder or open a related guide.
+                you are still comparing, jump to Finder or open a related shortcut.
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <a
@@ -224,7 +237,7 @@ export default async function ToolDetailPage({ params }: ToolPageProps) {
                   href="/guides"
                   className="inline-flex items-center justify-center rounded-full border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-teal-200 hover:bg-teal-50"
                 >
-                  Browse Guides
+                  Browse Shortcuts
                 </Link>
               </div>
             </section>

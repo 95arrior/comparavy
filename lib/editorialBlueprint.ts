@@ -335,7 +335,7 @@ export function buildEditorialBlueprint({
     ],
     topicSpecificTerms: unique([...categoryLanguage.allowedVocabulary, ...inputMaterial, ...desiredOutput]),
     bannedMismatchedTerms: unique(categoryLanguage.bannedIrrelevantVocabulary),
-    nextStepCTA: "Use the Comparavy finder at /finder for a recommendation matched to your workflow and budget.",
+    nextStepCTA: "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
     categoryLanguage,
   };
 }

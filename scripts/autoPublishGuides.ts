@@ -1682,7 +1682,7 @@ function buildImprovementRequestBody(model: string, input: ImprovementRequestInp
   return {
     model,
     instructions:
-      `${comparavyGoldStandardPrompt} You are deeply rebuilding a failed Comparavy guide candidate after local editorial preflight, deterministic quality checks, and strict AI editorial review. Return one complete guide JSON object only. Do not return partial fields, a patch, Markdown, commentary, or a wrapper object. Preserve every required field from the failed draft; if a field is not being changed, copy it from the failed draft. Do not omit arrays such as keyTakeaways, bestPicksBySituation, recommendedTools, comparisonRows, decisionPath, steps, toolsYouCanUse, faqs, commonMistakes, mistakesToAvoid, whoShouldUseThis, whoShouldAvoidThis, or moneySavingTips. Do not omit visualSummary, finalVerdict, deviceIntent, desktopUseCase, mobileUseCase, desktopSearchAngle, or mobileSearchAngle. This is a deep rewrite from the Gold Standard Writing System and Editorial Blueprint, not a field patch. Preserve only useful factual material from the failed draft. The blueprint is the source of truth for scenario, input material, desired output, workflow, mobile/desktop use, tool roles, comparison criteria, example result, FAQ, category language, and banned mismatched terms. Remove generic filler, correct topic mismatch, add concrete workflow steps, improve decision path, rewrite FAQ, rewrite Quick Answer or Quick Verdict, and make tool recommendations support the user problem. If guideType is how-to, the title must start with "How to", put the practical workflow before tools, and rebuild realWorldScenario, whatYouNeed, step-by-step workflow with what/why/output detail, computer guidance, phone guidance, Tools you can use, Example result, Common mistakes, FAQ, and Next step. If guideType is tool-decision, write a Quick Verdict, put Which one should you choose before tool cards, justify the ranking with blueprint criteria, create unique tool cards, and use branching if/then decisionPath before tool-card detail. Do not invent prices, fake testing, guaranteed income, performance claims, legal advice, unsupported current-news claims, placeholder phrases, malformed wording like "Use mobile for on mobile", repeated Best for / Avoid if text, or any banned mismatched term. pricingNote and pricingCaveat must remain exactly: Pricing can change. Check the official site before subscribing.`,
+      `${comparavyGoldStandardPrompt} You are deeply rebuilding a failed AteFlo guide candidate after local editorial preflight, deterministic quality checks, and strict AI editorial review. Return one complete guide JSON object only. Do not return partial fields, a patch, Markdown, commentary, or a wrapper object. Preserve every required field from the failed draft; if a field is not being changed, copy it from the failed draft. Do not omit arrays such as keyTakeaways, bestPicksBySituation, recommendedTools, comparisonRows, decisionPath, steps, toolsYouCanUse, faqs, commonMistakes, mistakesToAvoid, whoShouldUseThis, whoShouldAvoidThis, or moneySavingTips. Do not omit visualSummary, finalVerdict, deviceIntent, desktopUseCase, mobileUseCase, desktopSearchAngle, or mobileSearchAngle. This is a deep rewrite from the Gold Standard Writing System and Editorial Blueprint, not a field patch. Preserve only useful factual material from the failed draft. The blueprint is the source of truth for scenario, input material, desired output, workflow, mobile/desktop use, tool roles, comparison criteria, example result, FAQ, category language, and banned mismatched terms. Remove generic filler, correct topic mismatch, add concrete workflow steps, improve decision path, rewrite FAQ, rewrite Quick Answer or Quick Verdict, and make tool recommendations support the user problem. If guideType is how-to, the title must start with "How to", put the practical workflow before tools, and rebuild realWorldScenario, whatYouNeed, step-by-step workflow with what/why/output detail, computer guidance, phone guidance, Tools you can use, Example result, Common mistakes, FAQ, and Next step. If guideType is tool-decision, write a Quick Verdict, put Which one should you choose before tool cards, justify the ranking with blueprint criteria, create unique tool cards, and use branching if/then decisionPath before tool-card detail. Do not invent prices, fake testing, guaranteed income, performance claims, legal advice, unsupported current-news claims, placeholder phrases, malformed wording like "Use mobile for on mobile", repeated Best for / Avoid if text, or any banned mismatched term. pricingNote and pricingCaveat must remain exactly: Pricing can change. Check the official site before subscribing.`,
     input: JSON.stringify(input),
     max_output_tokens: 6000,
     truncation: "auto",
@@ -2184,7 +2184,7 @@ function normalizeGuideForLayout(guide: Guide): Guide {
   return {
     ...guide,
     title,
-    metaTitle: `${title} | Comparavy`,
+    metaTitle: `${title} | AteFlo`,
     quickVerdict: guide.quickAnswer ?? guide.quickVerdict,
   };
 }
@@ -2729,7 +2729,55 @@ function sortGoldBriefsForQueue(left: GuideGoldBrief, right: GuideGoldBrief): nu
 }
 
 function sortByUpdatedAtAsc(left: Guide, right: Guide): number {
-  return left.updatedAt.localeCompare(right.updatedAt) || left.slug.localeCompare(right.slug);
+  const leftPriority = typeof left.publishPriority === "number" ? left.publishPriority : Number.POSITIVE_INFINITY;
+  const rightPriority = typeof right.publishPriority === "number" ? right.publishPriority : Number.POSITIVE_INFINITY;
+
+  return leftPriority - rightPriority || left.updatedAt.localeCompare(right.updatedAt) || left.slug.localeCompare(right.slug);
+}
+
+function guideTopicCluster(guide: Guide): string {
+  return guide.topicCluster?.trim() || guide.slug;
+}
+
+function selectPublishCandidates(
+  approvedQueue: readonly Guide[],
+  publishQuota: number,
+): Guide[] {
+  const selected: Guide[] = [];
+  const usedClusters = new Set<string>();
+
+  for (const guide of approvedQueue) {
+    if (selected.length >= publishQuota) {
+      break;
+    }
+
+    const cluster = guideTopicCluster(guide);
+
+    if (usedClusters.has(cluster)) {
+      continue;
+    }
+
+    selected.push(guide);
+    usedClusters.add(cluster);
+  }
+
+  if (selected.length >= publishQuota) {
+    return selected;
+  }
+
+  const selectedSlugs = new Set(selected.map((guide) => guide.slug));
+
+  for (const guide of approvedQueue) {
+    if (selected.length >= publishQuota) {
+      break;
+    }
+
+    if (!selectedSlugs.has(guide.slug)) {
+      selected.push(guide);
+    }
+  }
+
+  return selected;
 }
 
 function guideTopicBySlug(slug: string): GuideTopic | undefined {
@@ -2968,7 +3016,7 @@ async function main(): Promise<void> {
   let genericFallbackUsed = false;
   const improvementFailures: string[] = [];
 
-  const publishCandidates = approvedQueueBeforeRun.slice(0, publishQuota);
+  const publishCandidates = selectPublishCandidates(approvedQueueBeforeRun, publishQuota);
 
   if (options.publish && approvedQueueBeforeRun.length === 0) {
     console.log("No approved guides were available before the run; publishing nothing.");
@@ -3122,8 +3170,9 @@ async function main(): Promise<void> {
     }
   }
 
+  const publishedCandidateSlugs = new Set(publishCandidates.map((guide) => guide.slug));
   const remainingApprovedAfterPublish = approvedQueueBeforeRun
-    .slice(publishQuota)
+    .filter((guide) => !publishedCandidateSlugs.has(guide.slug))
     .map((guide) => guide.title);
   const finalApprovedTitles = [...remainingApprovedAfterPublish, ...newlyApproved.map((guide) => guide.title)];
   const finalPublishedTitles = publishedThisRun.map((guide) => guide.title);
