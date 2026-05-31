@@ -68,7 +68,7 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
     const timer = window.setTimeout(() => {
       trackedSearches.current.add(normalizedQuery);
       trackEvent("shortcuts_search_used", {
-        source_page: "guides",
+        source_page: "shortcuts",
         search_query_length: query.trim().length,
         result_count: filteredShortcuts.length,
       });
@@ -88,7 +88,7 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
   function handleSearchChipClick(chip: string) {
     setQuery(chip);
     trackEvent("search_chip_click", {
-      source_page: "guides",
+      source_page: "shortcuts",
       chip_label: chip,
       result_count: matchingShortcutCount(chip),
     });
@@ -96,7 +96,7 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
 
   function trackShortcutClick(shortcut: ShortcutDiscoveryItem) {
     trackEvent("shortcut_card_click", {
-      source_page: "guides",
+      source_page: "shortcuts",
       destination_slug: shortcut.slug,
       destination_title: shortcut.title,
     });
@@ -160,7 +160,7 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
             data-action-location="shortcuts_search_empty_state"
             onClick={() =>
               trackEvent("finder_cta_click", {
-                source_page: "guides",
+                source_page: "shortcuts",
                 action_location: "shortcuts_search_empty_state",
               })
             }
@@ -189,7 +189,7 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
 
               <h2 className="ateflo-clamp-2 mt-4 text-xl font-semibold leading-7 tracking-tight text-slate-950 sm:text-2xl sm:leading-8 md:min-h-16">
                 <Link
-                  href={`/guides/${shortcut.slug}`}
+                  href={`/shortcuts/${shortcut.slug}`}
                   data-event="shortcut_card_click"
                   data-guide-slug={shortcut.slug}
                   data-action-location="shortcuts_listing_title"
@@ -229,7 +229,7 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
 
               <div className="mt-auto pt-5">
                 <Link
-                  href={`/guides/${shortcut.slug}`}
+                  href={`/shortcuts/${shortcut.slug}`}
                   data-event="shortcut_card_click"
                   data-guide-slug={shortcut.slug}
                   data-action-location="shortcuts_listing_button"

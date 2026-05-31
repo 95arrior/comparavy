@@ -25,17 +25,17 @@ const needs = [
   {
     title: "Summarize a document",
     detail: "Turn PDFs, notes, and transcripts into useful briefs.",
-    href: "/guides",
+    href: "/shortcuts",
   },
   {
     title: "Ship content",
     detail: "Make blog posts, carousels, captions, and newsletters easier to finish.",
-    href: "/guides",
+    href: "/shortcuts",
   },
   {
     title: "Polish client work",
     detail: "Clean up emails, recaps, proposals, and small business assets.",
-    href: "/guides",
+    href: "/shortcuts",
   },
   {
     title: "Pick a tool",
@@ -128,7 +128,7 @@ function ShortcutCard({
         ]}
       />
       <h3 className="ateflo-clamp-3 mt-4 text-xl font-semibold leading-7 tracking-tight text-slate-950 md:min-h-[5.25rem]">
-        <Link href={`/guides/${guide.slug}`} className="transition hover:text-teal-700">
+        <Link href={`/shortcuts/${guide.slug}`} className="transition hover:text-teal-700">
           {guide.title}
         </Link>
       </h3>
@@ -136,7 +136,7 @@ function ShortcutCard({
         {guideSummary(guide)}
       </p>
       <Link
-        href={`/guides/${guide.slug}`}
+        href={`/shortcuts/${guide.slug}`}
         className="mt-auto inline-flex items-center gap-2 pt-5 text-sm font-semibold text-teal-700 transition hover:text-teal-900"
       >
         {label} <span aria-hidden="true">&rarr;</span>
@@ -220,7 +220,7 @@ export default function Home() {
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:mt-9 sm:flex-row">
               <Link
-                href="/guides"
+                href="/shortcuts"
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-teal-700 px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800"
               >
                 Browse Shortcuts <span aria-hidden="true">&rarr;</span>
@@ -256,7 +256,7 @@ export default function Home() {
               ))}
             </div>
             <Link
-              href="/guides"
+              href="/shortcuts"
               className="mt-7 flex items-center justify-between rounded-2xl bg-slate-950 px-5 py-4 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
               Start with shortcuts <span aria-hidden="true">&rarr;</span>
@@ -275,7 +275,7 @@ export default function Home() {
               </h2>
             </div>
             <Link
-              href="/guides"
+              href="/shortcuts"
               className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-teal-200 hover:bg-teal-50"
             >
               View all shortcuts <span aria-hidden="true">&rarr;</span>
@@ -335,13 +335,13 @@ export default function Home() {
                       {guide.category}
                     </p>
                     <h3 className="ateflo-clamp-3 mt-4 text-xl font-semibold leading-7 tracking-tight text-white md:min-h-[5.25rem]">
-                      <Link href={`/guides/${guide.slug}`} className="transition hover:text-teal-200">
+                      <Link href={`/shortcuts/${guide.slug}`} className="transition hover:text-teal-200">
                         {guide.title}
                       </Link>
                     </h3>
                     <p className="ateflo-clamp-3 mt-3 text-sm leading-6 text-slate-300">{guide.useCase}</p>
                     <Link
-                      href={`/guides/${guide.slug}`}
+                      href={`/shortcuts/${guide.slug}`}
                       className="mt-auto inline-flex items-center gap-2 pt-5 text-sm font-semibold text-teal-200 transition hover:text-white"
                     >
                       Open workflow <span aria-hidden="true">&rarr;</span>

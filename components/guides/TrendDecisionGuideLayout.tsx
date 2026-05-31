@@ -151,7 +151,7 @@ export default function TrendDecisionGuideLayout({ guide }: { readonly guide: Gu
             className="mt-5 sm:mt-0"
             items={[
               { href: "/finder", label: "Use Finder", tone: "primary" },
-              { href: "/guides", label: "Back to Shortcuts" },
+              { href: "/shortcuts", label: "Back to Shortcuts" },
             ]}
           />
         </div>

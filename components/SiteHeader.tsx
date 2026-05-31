@@ -17,7 +17,7 @@ const navItems: readonly {
   readonly label: string;
   readonly primary?: boolean;
 }[] = [
-  { key: "shortcuts", href: "/guides", label: "Shortcuts", primary: true },
+  { key: "shortcuts", href: "/shortcuts", label: "Shortcuts", primary: true },
   { key: "finder", href: "/finder", label: "Finder" },
   { key: "tools", href: "/tools", label: "Tools" },
 ];

@@ -75,7 +75,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     sitemapEntry("/", guideContentModified, "daily", 1),
     sitemapEntry("/finder", guideContentModified, "weekly", 0.9),
     sitemapEntry("/tools", toolsSourceModified, "weekly", 0.9),
-    sitemapEntry("/guides", guideContentModified, "weekly", 0.9),
+    sitemapEntry("/shortcuts", guideContentModified, "weekly", 0.9),
     sitemapEntry("/about", guideContentModified, "monthly", 0.3),
     sitemapEntry("/contact", guideContentModified, "monthly", 0.3),
     sitemapEntry("/privacy", guideContentModified, "monthly", 0.3),
@@ -90,7 +90,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     .filter((guide) => guide.status === "published")
     .map((guide) =>
       sitemapEntry(
-        `/guides/${guide.slug}`,
+        `/shortcuts/${guide.slug}`,
         parseDate(guide.updatedAt, guideContentModified),
         "weekly",
         0.8,

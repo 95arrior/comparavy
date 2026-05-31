@@ -59,7 +59,7 @@ export default function RelatedShortcuts({ guide, guides }: RelatedShortcutsProp
             </div>
             <h3 className="ateflo-clamp-3 mt-4 text-base font-semibold leading-6 text-slate-950">
               <Link
-                href={`/guides/${relatedGuide.slug}`}
+                href={`/shortcuts/${relatedGuide.slug}`}
                 data-event="related_shortcut_click"
                 data-guide-slug={guide.slug}
                 data-destination-slug={relatedGuide.slug}
@@ -93,7 +93,7 @@ export default function RelatedShortcuts({ guide, guides }: RelatedShortcutsProp
             )}
             <div className="mt-auto pt-4">
               <Link
-                href={`/guides/${relatedGuide.slug}`}
+                href={`/shortcuts/${relatedGuide.slug}`}
                 aria-label={`Open shortcut: ${relatedGuide.title}`}
                 data-event="related_shortcut_click"
                 data-guide-slug={guide.slug}

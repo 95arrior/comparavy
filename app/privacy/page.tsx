@@ -67,7 +67,7 @@ export default function PrivacyPage() {
             </p>
           </div>
           <a
-            href="/guides"
+            href="/shortcuts"
             className="inline-flex shrink-0 rounded-full bg-teal-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-800"
           >
             Browse shortcuts

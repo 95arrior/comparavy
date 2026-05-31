@@ -39,7 +39,7 @@ export default function ToolsPage() {
                   action_location: "tools_header",
                 },
               },
-              { href: "/guides", label: "Browse Shortcuts" },
+              { href: "/shortcuts", label: "Browse Shortcuts" },
             ]}
           />
         </header>

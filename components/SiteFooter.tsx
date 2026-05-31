@@ -3,7 +3,7 @@ import Logo from "@/components/Logo";
 import { SITE_TAGLINE } from "@/lib/site";
 
 const mainLinks = [
-  { href: "/guides", label: "Shortcuts" },
+  { href: "/shortcuts", label: "Shortcuts" },
   { href: "/finder", label: "Finder" },
   { href: "/tools", label: "Tools" },
 ] as const;

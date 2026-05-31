@@ -82,7 +82,7 @@ export default function ContactPage() {
               Use the finder
             </a>
             <a
-              href="/guides"
+              href="/shortcuts"
               className="inline-flex shrink-0 rounded-full border border-teal-200 bg-white px-5 py-3 text-sm font-semibold text-teal-800 transition hover:bg-teal-100"
             >
               Browse shortcuts

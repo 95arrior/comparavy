@@ -9,7 +9,7 @@ interface FinderCtaProps {
 
 export default function FinderCta({
   guide,
-  secondaryHref = "/guides",
+  secondaryHref = "/shortcuts",
   secondaryLabel = "Browse Shortcuts",
 }: FinderCtaProps) {
   return (

@@ -898,7 +898,7 @@ export function createEditorialBrief(
     FAQQuestions: editorialBlueprint.faqQuestions.length > 0
       ? editorialBlueprint.faqQuestions
       : createFaqQuestions(topic, guideType, firstTool, secondTool),
-    internalLinks: ["/finder", "/guides", ...toolRoleMap.slice(0, 3).map((tool) => `/tools/${tool.toolSlug}`)],
+    internalLinks: ["/finder", "/shortcuts", ...toolRoleMap.slice(0, 3).map((tool) => `/tools/${tool.toolSlug}`)],
     nextStepCTA: "Use the AteFlo finder at /finder for a recommendation matched to your workflow and budget.",
     guideTypeStandard: guideTypeStandardForPrompt(guideType),
     goldStandardSummary: comparavyGoldStandardPrompt,

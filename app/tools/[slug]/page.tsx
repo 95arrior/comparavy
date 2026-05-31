@@ -90,7 +90,7 @@ export default async function ToolDetailPage({ params }: ToolPageProps) {
               Tools
             </Link>
             <Link
-              href="/guides"
+              href="/shortcuts"
               className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-teal-200 hover:bg-teal-50"
             >
               Shortcuts
@@ -250,7 +250,7 @@ export default async function ToolDetailPage({ params }: ToolPageProps) {
                     },
                   },
                   {
-                    href: "/guides",
+                    href: "/shortcuts",
                     label: "Browse Shortcuts",
                   },
                 ]}
