@@ -67,9 +67,15 @@ function guideWorksWithTools(guide: Guide): readonly ShortcutWorksWithTool[] {
 }
 
 function guideSearchAliases(guide: Guide): readonly string[] {
+  const guideAliases = [
+    ...(guide.searchAliases ?? []),
+    ...(guide.searchKeywords ?? []),
+  ];
+
   switch (guide.slug) {
     case "how-to-turn-meeting-notes-into-a-client-recap-with-ai":
       return [
+        ...guideAliases,
         "meeting notes",
         "client recap",
         "follow-up email",
@@ -84,6 +90,7 @@ function guideSearchAliases(guide: Guide): readonly string[] {
       ];
     case "best-ai-tools-for-etsy-product-descriptions":
       return [
+        ...guideAliases,
         "Etsy",
         "Etsy listing",
         "product description",
@@ -95,8 +102,44 @@ function guideSearchAliases(guide: Guide): readonly string[] {
         "shop",
         "seller",
       ];
+    case "how-to-summarize-a-pdf-into-study-notes-with-ai":
+      return [
+        ...guideAliases,
+        "PDF",
+        "PDF summary",
+        "summarize PDF",
+        "study notes",
+        "quiz questions",
+        "flashcards",
+        "review questions",
+        "student notes",
+        "class notes",
+        "document summary",
+        "exam prep",
+        "textbook chapter",
+        "lecture notes",
+      ];
+    case "best-ai-tools-for-small-business-content-calendars":
+      return [
+        ...guideAliases,
+        "small business",
+        "content calendar",
+        "social media planning",
+        "social media plan",
+        "content planning",
+        "Instagram posts",
+        "Facebook posts",
+        "local business marketing",
+        "weekly content plan",
+        "marketing calendar",
+        "content ideas",
+        "social posts",
+        "business promotion",
+        "local service business",
+        "small business marketing",
+      ];
     default:
-      return [];
+      return guideAliases;
   }
 }
 

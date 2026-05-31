@@ -1,27 +1,50 @@
 {
   "slug": "how-to-summarize-a-pdf-into-study-notes-with-ai",
-  "title": "How to Summarize a PDF Into Study Notes with AI",
+  "title": "How to Summarize a PDF Into Study Notes and Quiz Questions with AI",
   "guideType": "how-to",
   "topicCluster": "pdf-study-notes",
   "publishPriority": 2,
   "type": "how-to",
-  "metaTitle": "How to Summarize a PDF Into Study Notes with AI | AteFlo",
-  "metaDescription": "How to Summarize a PDF Into Study Notes with AI. Practical workflow, prompt examples, tool choices, common mistakes, and a practical next step.",
+  "metaTitle": "How to Summarize a PDF Into Study Notes and Quiz Questions with AI | AteFlo",
+  "metaDescription": "Turn a PDF or pasted document text into study notes, key concepts, quiz questions, and review prompts using a copy-ready AI shortcut.",
   "category": "Study",
   "persona": "Students",
   "useCase": "summarizing a PDF into study notes",
   "budgetAngle": "Start with free or already-included tools until one real workflow proves worth paying for.",
   "skillLevel": "beginner",
-  "primaryKeyword": "how to summarize a PDF into study notes with AI",
+  "primaryKeyword": "how to summarize a PDF into study notes and quiz questions with AI",
   "secondaryKeywords": [
     "PDF study notes AI",
     "AI study notes",
-    "summarize PDF for studying"
+    "summarize PDF for studying",
+    "AI quiz questions from PDF"
   ],
   "longTailKeywords": [
     "how to make study notes from a PDF with AI",
     "AI prompt for PDF study notes",
     "turn a reading into study notes"
+  ],
+  "searchAliases": [
+    "PDF",
+    "PDF summary",
+    "summarize PDF",
+    "study notes",
+    "quiz questions",
+    "flashcards",
+    "review questions",
+    "student notes",
+    "class notes",
+    "document summary",
+    "exam prep",
+    "textbook chapter",
+    "lecture notes"
+  ],
+  "searchKeywords": [
+    "summarize PDF for studying",
+    "AI PDF study notes",
+    "PDF to quiz questions",
+    "PDF to flashcards",
+    "study guide from PDF"
   ],
   "audience": "students and adult learners",
   "searchIntent": "summarizing PDFs into study notes",
@@ -66,8 +89,8 @@
       "after": "After: a clear workflow with reviewed output and a practical next step."
     }
   },
-  "quickAnswer": "Upload the PDF to a source-aware AI tool, ask for chapter-by-chapter study notes with key terms, test questions, and page references, then spot-check the output against the original before you study from it. NotebookLM is the safest first stop for source-grounded notes. ChatGPT or Claude can help rewrite dense notes into flashcards, outlines, or plain-English explanations after you verify the facts.",
-  "quickDecision": "Start with NotebookLM; compare ChatGPT when source handling or review depth matters, and use Claude when the final destination fits that tool better.",
+  "quickAnswer": "Paste PDF text or notes into the prompt builder, add your study goal, then copy one prompt to create study notes, key concepts, quiz questions, flashcards, and a Needs review section. Use only material you are allowed to paste into an AI tool, and check facts against the PDF before studying from the result.",
+  "quickDecision": "Use ChatGPT for flexible study note drafting, Claude for longer pasted text, Gemini or Copilot if your school or work already uses Google or Microsoft tools, and Notion AI if your notes live in Notion.",
   "realWorldScenario": "A college student has a 38-page economics PDF due before a Monday quiz. They do not need a beautiful summary; they need the main ideas, vocabulary, formulas, likely test points, and a way to review the material on a phone between classes.",
   "whatYouNeed": [
     "The PDF, the page range or chapters that matter, and the assignment or quiz goal",
@@ -77,8 +100,8 @@
   "timeEstimate": "Plan on 10 to 30 minutes for one careful first pass.",
   "contentGap": "Most articles recommend tools before explaining the workflow that makes the output useful.",
   "uniqueAngle": "Start with the user problem and final format, then pick the AI tool that reduces review work.",
-  "aiOverviewAnswer": "Use AI to turn source material into a structured draft for summarizing a PDF into study notes, then verify the output, remove filler, and move the result into the channel where it will be used.",
-  "quickVerdict": "Start with NotebookLM when the PDF itself is the source of truth. Use ChatGPT to turn verified notes into flashcards, quizzes, or simpler explanations. Use Claude when the PDF is long and you want a careful outline or rewritten study guide.",
+  "aiOverviewAnswer": "Use AI to turn allowed PDF text into study notes, key concepts, quiz questions, flashcards, and review prompts, then verify the result against the original source before studying from it.",
+  "quickVerdict": "For summarizing a PDF into study notes and quiz questions, start with ChatGPT for a flexible draft or Claude for longer pasted text. Use Gemini, Microsoft Copilot, or Notion AI when your study workflow already lives there, then verify important facts against the PDF.",
   "steps": [
     {
       "title": "Prepare the source",
@@ -115,32 +138,39 @@
   ],
   "toolsYouCanUse": [
     {
-      "toolSlug": "notebooklm",
-      "toolName": "NotebookLM",
-      "why": "Use NotebookLM for source-grounded study notes from uploaded material in this workflow.",
-      "role": "Use NotebookLM for source-grounded study notes from uploaded material in this workflow.",
-      "bestUseCase": "source-grounded study notes from uploaded material"
-    },
-    {
       "toolSlug": "chatgpt",
       "toolName": "ChatGPT",
-      "why": "Use ChatGPT for general cleanup and drafting in this workflow.",
-      "role": "Use ChatGPT for general cleanup and drafting in this workflow.",
-      "bestUseCase": "general cleanup and drafting"
+      "why": "Use ChatGPT for flexible study note drafting, quiz questions, and plain-English explanations after you paste allowed text.",
+      "role": "Use ChatGPT for flexible study note drafting.",
+      "bestUseCase": "flexible study notes and quiz drafting"
     },
     {
       "toolSlug": "claude",
       "toolName": "Claude",
-      "why": "Use Claude for careful long-form review and restructuring in this workflow.",
-      "role": "Use Claude for careful long-form review and restructuring in this workflow.",
-      "bestUseCase": "careful long-form review and restructuring"
+      "why": "Use Claude when your pasted document text is long or you want a careful outline with clearer sections.",
+      "role": "Use Claude for longer pasted text or longer document sections.",
+      "bestUseCase": "longer pasted text and structured study guides"
     },
     {
-      "toolSlug": "perplexity",
-      "toolName": "Perplexity",
-      "why": "Use Perplexity for source discovery and cited research checks in this workflow.",
-      "role": "Use Perplexity for source discovery and cited research checks in this workflow.",
-      "bestUseCase": "source discovery and cited research checks"
+      "toolSlug": "gemini",
+      "toolName": "Gemini",
+      "why": "Use Gemini if your study material and notes already live in a Google workflow.",
+      "role": "Use Gemini if your school or workflow already uses Google tools.",
+      "bestUseCase": "Google-based study workflows"
+    },
+    {
+      "toolSlug": "microsoft-copilot",
+      "toolName": "Microsoft Copilot",
+      "why": "Use Microsoft Copilot if your class or workplace uses Microsoft 365 and the notes need to move into Word or OneNote.",
+      "role": "Use Microsoft Copilot if your workflow already uses Microsoft 365.",
+      "bestUseCase": "Microsoft 365 study workflows"
+    },
+    {
+      "toolSlug": "notion-ai",
+      "toolName": "Notion AI",
+      "why": "Use Notion AI if your study notes, class pages, or review plan already live in Notion.",
+      "role": "Use Notion AI if your notes live in Notion.",
+      "bestUseCase": "Notion-based study notes"
     }
   ],
   "keyTakeaways": [
@@ -172,11 +202,12 @@
     }
   ],
   "recommendedToolSlugs": [
-    "notebooklm",
     "chatgpt",
     "claude",
-    "perplexity",
-    "microsoft-copilot"
+    "gemini",
+    "microsoft-copilot",
+    "notion-ai",
+    "notebooklm"
   ],
   "recommendedTools": [
     {
@@ -411,9 +442,9 @@
       "answer": "Give the tool real source material, a specific audience, a required format, and examples of what to avoid."
     }
   ],
-  "finalVerdict": "Use AI to make studying faster, not to replace reading the source. Start with NotebookLM for grounded PDF notes, verify the important facts, then use ChatGPT or Claude to reshape the checked notes into flashcards, quizzes, or a cleaner outline.",
-  "ctaToFinder": "Use the AteFlo finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
-  "finderCTA": "Use the AteFlo finder at /finder for a recommendation matched to your workflow, budget, and comfort level.",
+  "finalVerdict": "Use ChatGPT for a flexible first study guide, Claude for longer pasted PDF sections, Gemini or Microsoft Copilot if your school workflow already uses those tools, and Notion AI if your notes live in Notion. Paste only material you are allowed to use, then verify facts, quotes, and unclear items against the PDF before studying from the result.",
+  "ctaToFinder": "Open the Finder for a recommendation matched to your workflow, budget, and comfort level.",
+  "finderCTA": "Open the Finder for a recommendation matched to your workflow, budget, and comfort level.",
   "visualSummary": {
     "headline": "A practical route for summarizing a PDF into study notes",
     "points": [
@@ -426,7 +457,7 @@
   "affiliateDisclosure": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",
   "freshness": "evergreen",
   "qualityScore": 94,
-  "status": "approved",
+  "status": "published",
   "createdAt": "2026-05-31",
   "updatedAt": "2026-05-31"
 }

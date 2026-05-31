@@ -48,6 +48,30 @@ const meetingFields = {
   questions: "Open questions",
 } as const;
 
+const pdfStudyFields = {
+  pdfTopic: "PDF topic or class",
+  pdfText: "Pasted PDF text or notes",
+  studyGoal: "Study goal",
+  extraNotes: "Extra notes",
+  confusingSections: "Confusing sections",
+  deadline: "Exam date or deadline",
+  outputStyle: "Preferred output style",
+  keyTerms: "Key terms to focus on",
+} as const;
+
+const contentCalendarFields = {
+  businessType: "Business type",
+  targetCustomer: "Target customer",
+  offer: "Offer or service",
+  channels: "Content channels",
+  extraNotes: "Extra notes",
+  postingFrequency: "Posting frequency",
+  localArea: "Local area or niche",
+  promotionGoal: "Promotion goal",
+  tone: "Tone",
+  themesToAvoid: "Content themes to avoid",
+} as const;
+
 function valueOrPlaceholder(values: Record<string, string>, key: string, placeholder: string): string {
   return values[key]?.trim() || `[${placeholder}]`;
 }
@@ -181,6 +205,131 @@ Rules:
 - If something is unclear, put it under Open Questions.
 - If the notes include private client details, remove sensitive information before pasting them into an AI tool.
 - Keep the email professional, simple, and easy to scan.`;
+    },
+  },
+  "how-to-summarize-a-pdf-into-study-notes-with-ai": {
+    whatYouWillMake:
+      "Study notes with key concepts, a bullet summary, quiz questions, flashcards or review prompts, confusing terms to revisit, and a Needs review section.",
+    primaryFields: [
+      { key: "pdfTopic", label: "PDF topic or class", placeholder: "Example: Economics chapter on supply and demand" },
+      {
+        key: "pdfText",
+        label: "Pasted PDF text or notes",
+        placeholder: "Paste the PDF section, class notes, or allowed document text here",
+        multiline: true,
+      },
+      { key: "studyGoal", label: "Study goal", placeholder: "Example: Prepare for a Friday quiz" },
+      {
+        key: "extraNotes",
+        label: "Extra notes",
+        placeholder: "Example: Focus on definitions, formulas, and likely test points",
+        multiline: true,
+      },
+    ],
+    optionalFields: [
+      { key: "confusingSections", label: "Confusing sections", placeholder: "Example: Elasticity formulas and graph labels" },
+      { key: "deadline", label: "Exam date or deadline", placeholder: "Example: Quiz on Friday" },
+      { key: "outputStyle", label: "Preferred output style", placeholder: "Example: Short bullets, flashcards, or one-page review sheet" },
+      { key: "keyTerms", label: "Key terms to focus on", placeholder: "Example: scarcity, demand curve, equilibrium" },
+    ],
+    privateNote:
+      "Do not paste private, confidential, legal, medical, client, or restricted documents into an AI tool.",
+    exampleInput:
+      "Economics chapter on supply and demand, copied section notes, quiz Friday, focus on formulas and definitions.",
+    exampleOutput: [
+      "Study notes: Demand is how much buyers want at different prices; supply is how much sellers offer.",
+      "Key concepts: scarcity, demand curve, supply curve, equilibrium, shortage, surplus.",
+      "Quiz questions: What happens to equilibrium price when demand rises and supply stays the same?",
+      "Flashcard: Front: What is equilibrium? Back: The point where quantity supplied equals quantity demanded.",
+      "Needs review: Confirm the exact graph labels and any formulas against the original PDF.",
+    ],
+    checkBeforeUsing: [
+      "Check important facts, definitions, numbers, and formulas against the PDF.",
+      "Do not study from invented quotes, citations, page numbers, or claims.",
+      "Keep unclear items in Needs review until you verify them.",
+      "Do not paste restricted or private documents into an AI tool.",
+    ],
+    buildPrompt(values) {
+      return `Create study notes and quiz questions from the PDF text or notes below.
+
+Study details:
+${detailLines(values, pdfStudyFields)}
+
+Finished output:
+1. Study notes by section
+2. Key concepts and terms
+3. Bullet summary
+4. Quiz questions
+5. Flashcards or review questions
+6. Confusing terms to review
+7. Needs review section for unclear information
+
+Rules:
+- Use only the information I provide.
+- Do not invent facts, quotes, citations, page numbers, or claims.
+- If something is unclear, mark it as Needs review.
+- Do not paste private, confidential, legal, medical, client, or restricted documents into an AI tool.
+- Keep the notes clear enough for a beginner to study from.`;
+    },
+  },
+  "best-ai-tools-for-small-business-content-calendars": {
+    whatYouWillMake:
+      "A small business content plan with content themes, weekly posting ideas, a simple calendar, channel suggestions, post ideas, call-to-action ideas, and a review checklist.",
+    primaryFields: [
+      { key: "businessType", label: "Business type", placeholder: "Example: Neighborhood bakery" },
+      { key: "targetCustomer", label: "Target customer", placeholder: "Example: Busy parents and local office workers" },
+      { key: "offer", label: "Offer or service", placeholder: "Example: Custom cakes and weekday lunch boxes" },
+      { key: "channels", label: "Content channels", placeholder: "Example: Instagram, Facebook, email" },
+      {
+        key: "extraNotes",
+        label: "Extra notes",
+        placeholder: "Example: Seasonal promos, FAQs, customer questions, or posts that worked before",
+        multiline: true,
+      },
+    ],
+    optionalFields: [
+      { key: "postingFrequency", label: "Posting frequency", placeholder: "Example: 3 posts per week" },
+      { key: "localArea", label: "Local area or niche", placeholder: "Example: Downtown Austin" },
+      { key: "promotionGoal", label: "Promotion goal", placeholder: "Example: Promote catering orders for June" },
+      { key: "tone", label: "Tone", placeholder: "Example: Friendly, practical, local" },
+      { key: "themesToAvoid", label: "Content themes to avoid", placeholder: "Example: Discount-heavy posts or health claims" },
+    ],
+    exampleInput:
+      "Neighborhood bakery, busy parents and local office workers, custom cakes and weekday lunch boxes, Instagram and Facebook, 3 posts per week.",
+    exampleOutput: [
+      "Weekly theme: Easy lunches and weekend celebrations.",
+      "Calendar idea: Monday lunch box reminder, Wednesday behind-the-scenes cake prep, Friday weekend order CTA.",
+      "Post idea: A short Instagram reel showing the lunch box assembly process.",
+      "CTA: Message us by Thursday to reserve a weekend cake pickup.",
+      "Review checklist: Verify dates, availability, prices, claims, and photos before posting.",
+    ],
+    checkBeforeUsing: [
+      "Remove any claim about guaranteed growth, sales, or income.",
+      "Do not use invented testimonials, customer results, or fake proof.",
+      "Verify dates, offers, prices, capacity, and local details before posting.",
+      "Keep anything marked Needs owner input out of the live calendar until reviewed.",
+    ],
+    buildPrompt(values) {
+      return `Create a small business content calendar and social media planning draft from the details below.
+
+Business details:
+${detailLines(values, contentCalendarFields)}
+
+Finished output:
+1. Content themes
+2. Weekly posting ideas
+3. Simple content calendar
+4. Channel suggestions
+5. Post ideas
+6. Call-to-action ideas
+7. Review checklist
+
+Rules:
+- Do not claim guaranteed growth, guaranteed sales, or guaranteed income.
+- Do not invent customer results, testimonials, or fake proof.
+- Keep ideas realistic for a small business owner to review and edit.
+- Mark missing details as Needs owner input.
+- Make the calendar practical enough for a busy owner to use.`;
     },
   },
 };

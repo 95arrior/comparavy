@@ -179,7 +179,7 @@ export default function ToolDecisionGuideLayout({ guide }: { readonly guide: Gui
                 avoidItIf={tool.avoidIf}
                 watchFor={comparison?.watchFor}
                 practicalExample={`Use it for one real ${guide.useCase} test before you commit to a repeatable workflow.`}
-                sourcePage="guide_detail"
+                sourcePage="shortcut_detail"
                 guideSlug={guide.slug}
                 highlight={index === 0}
               />

@@ -118,6 +118,8 @@ export interface Guide {
   readonly primaryKeyword: string;
   readonly secondaryKeywords: readonly string[];
   readonly longTailKeywords: readonly string[];
+  readonly searchAliases?: readonly string[];
+  readonly searchKeywords?: readonly string[];
   readonly audience: string;
   readonly searchIntent: string;
   readonly userPain: string;
