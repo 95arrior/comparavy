@@ -72,6 +72,20 @@ const contentCalendarFields = {
   themesToAvoid: "Content themes to avoid",
 } as const;
 
+const blogCarouselFields = {
+  topic: "Blog post topic",
+  sourceText: "Blog post text or summary",
+  targetAudience: "Target audience",
+  mainTakeaway: "Main takeaway",
+  tone: "Tone",
+  extraNotes: "Extra notes",
+  slideCount: "Number of slides",
+  cta: "Call to action",
+  brandVoice: "Brand voice",
+  visualStyle: "Visual style",
+  avoid: "Things to avoid",
+} as const;
+
 function valueOrPlaceholder(values: Record<string, string>, key: string, placeholder: string): string {
   return values[key]?.trim() || `[${placeholder}]`;
 }
@@ -365,6 +379,82 @@ Rules:
 - Make the calendar practical enough for a busy owner to use.`;
     },
   },
+  "how-to-turn-a-blog-post-into-an-instagram-carousel-with-ai": {
+    whatYouWillMake:
+      "An Instagram carousel draft with a clear hook, slide-by-slide outline, short slide text, visual notes, caption, call to action, and review checklist.",
+    primaryFields: [
+      { key: "topic", label: "Blog post topic", placeholder: "Example: Five ways small business owners can plan social media content faster" },
+      {
+        key: "sourceText",
+        label: "Blog post text or summary",
+        placeholder: "Paste the blog post, section notes, or a short summary here",
+        multiline: true,
+      },
+      { key: "targetAudience", label: "Target audience", placeholder: "Example: Busy small business owners who post on Instagram" },
+      { key: "mainTakeaway", label: "Main takeaway", placeholder: "Example: Plan one week of posts from one focused idea" },
+      { key: "tone", label: "Tone", placeholder: "Example: Practical, warm, and direct" },
+      {
+        key: "extraNotes",
+        label: "Extra notes",
+        placeholder: "Example: Keep it beginner-friendly and avoid hype",
+        multiline: true,
+      },
+    ],
+    optionalFields: [
+      { key: "slideCount", label: "Number of slides", placeholder: "Example: 7 slides" },
+      { key: "cta", label: "Call to action", placeholder: "Example: Save this for your next planning session" },
+      { key: "brandVoice", label: "Brand voice", placeholder: "Example: Helpful, calm, and not salesy" },
+      { key: "visualStyle", label: "Visual style", placeholder: "Example: Clean Canva carousel with simple icons" },
+      { key: "avoid", label: "Things to avoid", placeholder: "Example: Clickbait, fake stats, crowded slides" },
+    ],
+    exampleInput:
+      "A blog post about five ways small business owners can plan social media content faster.",
+    exampleOutput: [
+      "Slide 1 hook: Plan a week of posts without starting from zero.",
+      "Slide 2: Choose one business goal before choosing post ideas.",
+      "Slide 3: Pull three useful tips from your blog post.",
+      "Slide 4: Turn each tip into one simple slide.",
+      "Slide 5: Add one example your audience recognizes.",
+      "Slide 6: End with one clear next step.",
+      "Caption: Your next content plan can start with one useful article. Pick the main takeaway, turn it into short slides, and review every claim before posting.",
+      "Review checklist: Confirm each slide matches the blog post, remove invented claims, shorten crowded text, and check the CTA before designing.",
+    ],
+    checkBeforeUsing: [
+      "Confirm the carousel matches the original blog post.",
+      "Remove any statistic, quote, case study, or claim that was not in your source.",
+      "Keep slide text short enough to read on a phone.",
+      "Make sure each slide has one clear idea.",
+      "Confirm the call to action is specific and easy to follow.",
+      "Review visual notes before designing in Canva or another design tool.",
+      "Make sure the caption matches the carousel.",
+    ],
+    buildPrompt(values) {
+      return `Turn this blog post into an Instagram carousel draft and caption.
+
+Blog post details:
+${detailLines(values, blogCarouselFields)}
+
+Finished output:
+1. Carousel title or hook
+2. Slide-by-slide outline
+3. Short text for each slide
+4. Visual suggestion for each slide
+5. Instagram caption
+6. Call to action
+7. Hashtag or keyword ideas if appropriate
+8. Review checklist before posting
+
+Rules:
+- Use only the blog post details I provide.
+- Do not invent statistics, quotes, case studies, examples, results, or claims.
+- If information is missing, mark it as "Needs input."
+- Keep slide text short and mobile-readable.
+- Make each slide focused on one idea.
+- Avoid clickbait, engagement bait, fake urgency, or unsupported claims.
+- Keep the caption clear, useful, and aligned with the carousel.
+- Make the final result easy to review before posting.`;
+    },
+  },
 };
 
 function hasAnyInput(values: Record<string, string>): boolean {
@@ -643,7 +733,7 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
               You can copy the prompt right away, but filling this in helps the AI give you a stronger result.
             </p>
             <p className="mt-3 text-sm leading-6 text-slate-600">
-              After copying, paste the prompt into ChatGPT, Claude, Gemini, Copilot, or another AI chat tool.
+              After copying, paste the prompt into ChatGPT, Claude, Gemini, Copilot, Canva, or another suitable AI tool.
             </p>
             {config.privateNote && (
               <p className="mt-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
