@@ -1,213 +1,84 @@
-import CopyPromptCard from "@/components/guides/CopyPromptCard";
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Guide } from "@/lib/guides";
 
-interface PromptOption {
-  readonly title: string;
-  readonly buttonLabel: string;
-  readonly description: string;
-  readonly prompt: string;
+const PROMPT_COPY_REQUEST_EVENT = "ateflo:prompt-copy-request";
+const PROMPT_COPIED_EVENT = "ateflo:prompt-copied";
+
+interface PromptField {
+  readonly key: string;
+  readonly label: string;
+  readonly placeholder: string;
+  readonly multiline?: boolean;
 }
 
-interface ExecutionShortcutConfig {
-  readonly whatYouHave: string;
-  readonly whatYouGet: string;
-  readonly fillIntro: string;
-  readonly fillItems: readonly string[];
-  readonly fillNote: string;
-  readonly howToUse: readonly string[];
-  readonly prompts: readonly PromptOption[];
+interface PromptBuilderConfig {
+  readonly whatYouWillMake: string;
+  readonly primaryFields: readonly PromptField[];
+  readonly optionalFields: readonly PromptField[];
+  readonly privateNote?: string;
   readonly exampleInput: string;
   readonly exampleOutput: readonly string[];
   readonly checkBeforeUsing: readonly string[];
+  readonly buildPrompt: (values: Record<string, string>) => string;
 }
 
-const etsyQuickPrompt = `Create a simple Etsy product description from the product details below.
+const etsyFields = {
+  product: "Product",
+  material: "Material",
+  size: "Size",
+  targetBuyer: "Target buyer",
+  extraNotes: "Extra notes",
+  color: "Color",
+  personalization: "Personalization",
+  shippingLimits: "Shipping limits",
+  occasion: "Occasion or use case",
+} as const;
 
-Product details:
-[PASTE YOUR PRODUCT DETAILS HERE]
+const meetingFields = {
+  notes: "Meeting notes",
+  project: "Client or project",
+  deadlines: "Known deadlines",
+  extraNotes: "Extra notes",
+  owners: "Task owners",
+  questions: "Open questions",
+} as const;
 
-Target buyer:
-[TARGET BUYER]
+function valueOrPlaceholder(values: Record<string, string>, key: string, placeholder: string): string {
+  return values[key]?.trim() || `[${placeholder}]`;
+}
 
-Finished output:
-- A short buyer-focused opening
-- 4 to 6 scannable bullet points
-- A mobile-readable product description
-- A short Needs seller input section if anything important is missing
+function detailLines(
+  values: Record<string, string>,
+  fields: Record<string, string>,
+): string {
+  return Object.entries(fields)
+    .map(([key, label]) => `${label}: ${valueOrPlaceholder(values, key, label.toUpperCase())}`)
+    .join("\n");
+}
 
-Rules:
-- Do not invent materials, sizes, shipping times, guarantees, or product claims.
-- If a detail is missing, mark it as Needs seller input.
-- Keep the copy clear, honest, and easy to read on a phone.`;
-
-const etsyBetterPrompt = `Create an Etsy listing draft from the product details below.
-
-Product details:
-[PASTE YOUR PRODUCT DETAILS HERE]
-
-Target buyer:
-[TARGET BUYER]
-
-Finished output:
-1. Etsy product title
-2. Buyer-focused opening
-3. Scannable bullet points
-4. Mobile-readable product description
-5. Tag or keyword ideas
-6. Needs Seller Review section
-
-Rules:
-- Do not invent materials, sizes, shipping times, guarantees, or product claims.
-- If a detail is missing, mark it as Needs seller input.
-- Keep claims specific to the product facts I gave you.
-- Make the listing helpful for a real buyer, not overly salesy.`;
-
-const etsyReviewPrompt = `Review this Etsy listing draft before I publish it.
-
-Listing draft:
-[PASTE YOUR CURRENT LISTING OR AI DRAFT HERE]
-
-Known product facts:
-[PASTE YOUR PRODUCT DETAILS HERE]
-
-Check for:
-- Unclear claims
-- Missing product details
-- Exaggerated language
-- Unsupported shipping or guarantee claims
-- Anything the seller should verify before publishing
-
-Finished output:
-- Safe to keep
-- Needs seller input
-- Suggested edits
-- Final checklist
-
-Rules:
-- Do not add new product claims.
-- Do not invent missing details.
-- If something cannot be verified from the product facts, mark it as Needs seller input.`;
-
-const meetingQuickPrompt = `Turn these meeting notes into a short client recap email.
-
-Meeting notes:
-[PASTE MEETING NOTES HERE]
-
-Client or project:
-[PASTE CLIENT OR PROJECT NAME HERE]
-
-Finished output:
-- A short recap email
-- Action items
-- Owners
-- Deadlines
-- Open questions
-
-Rules:
-- Use only the information in my notes.
-- Do not invent details, decisions, deadlines, or promises.
-- If something is unclear, put it under Open Questions.
-- Keep the email professional, simple, and easy to scan.`;
-
-const meetingBetterPrompt = `Turn these meeting notes into a client-ready recap and follow-up email.
-
-Meeting notes:
-[PASTE MEETING NOTES HERE]
-
-Client or project:
-[PASTE CLIENT OR PROJECT NAME HERE]
-
-Known deadlines:
-[PASTE KNOWN DEADLINES HERE]
-
-Task owners:
-[PASTE TASK OWNERS HERE]
-
-Finished output:
-1. Key decisions
-2. Action items
-3. Owners
-4. Deadlines
-5. Open questions
-6. Risks or blockers
-7. Short client-ready follow-up email
-
-Rules:
-- Use only the information in my notes.
-- Do not invent decisions, deadlines, or promises.
-- If something is unclear, put it under Open Questions.
-- Keep private or sensitive details out of the client email unless they clearly belong there.`;
-
-const meetingReviewPrompt = `Review this client recap email before I send it.
-
-Client recap email:
-[PASTE YOUR CLIENT RECAP EMAIL HERE]
-
-Original meeting notes:
-[PASTE MEETING NOTES HERE]
-
-Check for:
-- Unclear promises
-- Missing owners
-- Missing deadlines
-- Invented details
-- Tone problems
-- Private details that should be removed
-
-Finished output:
-- Safe to send
-- Needs review
-- Suggested edits
-- Open questions to confirm first
-
-Rules:
-- Use only the information in the notes and email.
-- Do not invent missing details.
-- If a promise, owner, or deadline is not clearly supported by the notes, mark it as Needs review.`;
-
-const executionConfigs: Record<string, ExecutionShortcutConfig> = {
+const promptConfigs: Record<string, PromptBuilderConfig> = {
   "best-ai-tools-for-etsy-product-descriptions": {
-    whatYouHave: "Product facts for an Etsy listing, even if they are messy or incomplete.",
-    whatYouGet: "A clear listing draft with a title, opening, bullets, description, keywords, and review notes.",
-    fillIntro: "Use short notes. Full sentences are not required.",
-    fillItems: [
-      "Product:",
-      "Material:",
-      "Size:",
-      "Color:",
-      "Personalization:",
-      "Care notes:",
-      "Shipping limits:",
-      "Target buyer:",
-      "Occasion or use:",
+    whatYouWillMake:
+      "An Etsy listing draft with a title, buyer-focused opening, scannable bullets, product description, keyword ideas, and seller review notes.",
+    primaryFields: [
+      { key: "product", label: "Product", placeholder: "Handmade ceramic mug" },
+      { key: "material", label: "Material", placeholder: "Ceramic" },
+      { key: "size", label: "Size", placeholder: "12 oz" },
+      { key: "targetBuyer", label: "Target buyer", placeholder: "Coffee lovers, gift buyers" },
+      {
+        key: "extraNotes",
+        label: "Extra notes",
+        placeholder: "Microwave safe, handmade, care notes, anything important",
+        multiline: true,
+      },
     ],
-    fillNote:
-      "If you do not know one of these details, leave it blank. The prompt will ask the AI to mark it as Needs seller input instead of inventing it.",
-    howToUse: [
-      "Fill in the product details you already know.",
-      "Copy the Quick Prompt for a fast draft, or the Better Prompt for a fuller listing.",
-      "Paste it into ChatGPT, Claude, Gemini, Copilot, or another AI chat tool.",
-      "Review the result before using it in your shop.",
-    ],
-    prompts: [
-      {
-        title: "Quick Prompt",
-        buttonLabel: "Copy Quick Prompt",
-        description: "Use this when you need a simple Etsy description fast.",
-        prompt: etsyQuickPrompt,
-      },
-      {
-        title: "Better Prompt",
-        buttonLabel: "Copy Better Prompt",
-        description: "Use this when you want a fuller listing draft with title, bullets, keywords, and review notes.",
-        prompt: etsyBetterPrompt,
-      },
-      {
-        title: "Review Prompt",
-        buttonLabel: "Copy Review Prompt",
-        description: "Use this after you have a listing draft and want to check it before publishing.",
-        prompt: etsyReviewPrompt,
-      },
+    optionalFields: [
+      { key: "color", label: "Color", placeholder: "Blue glaze" },
+      { key: "personalization", label: "Personalization", placeholder: "Name engraving available" },
+      { key: "shippingLimits", label: "Shipping limits", placeholder: "US only, ships in 3-5 business days" },
+      { key: "occasion", label: "Occasion or use case", placeholder: "Birthday gift, housewarming gift" },
     ],
     exampleInput:
       "Handmade ceramic mug, blue glaze, 12 oz, microwave safe, gift for coffee lovers.",
@@ -223,46 +94,52 @@ const executionConfigs: Record<string, ExecutionShortcutConfig> = {
       "Read the first two lines on your phone before publishing.",
       "Keep anything marked Needs seller input out of the live listing until you verify it.",
     ],
+    buildPrompt(values) {
+      return `Create an Etsy listing draft from the product details below.
+
+Product details:
+${detailLines(values, etsyFields)}
+
+Finished output:
+1. Etsy product title
+2. Buyer-focused opening
+3. Scannable bullet points
+4. Mobile-readable product description
+5. Tag or keyword ideas
+6. Needs Seller Review section
+
+Rules:
+- Do not invent materials, sizes, shipping times, guarantees, or product claims.
+- If a detail is missing, mark it as Needs seller input.
+- Keep claims specific to the product facts I gave you.
+- Make the listing helpful for a real buyer, not overly salesy.`;
+    },
   },
   "how-to-turn-meeting-notes-into-a-client-recap-with-ai": {
-    whatYouHave: "Rough meeting notes, a transcript, or quick bullets from a client call.",
-    whatYouGet: "A client-ready recap with decisions, action items, owners, deadlines, open questions, and a short email.",
-    fillIntro: "Remove private details first if they do not need to go into the AI tool.",
-    fillItems: [
-      "Meeting notes:",
-      "Client or project:",
-      "Known deadlines:",
-      "Task owners:",
-      "Open questions:",
-    ],
-    fillNote:
-      "If the notes include private client details, remove anything sensitive before pasting them into an AI tool.",
-    howToUse: [
-      "Paste in your rough notes or transcript.",
-      "Copy the Quick Prompt for a short recap, or the Better Prompt for a fuller follow-up.",
-      "Paste it into ChatGPT, Claude, Gemini, Copilot, or another AI chat tool.",
-      "Check names, owners, dates, and promises before sending anything to a client.",
-    ],
-    prompts: [
+    whatYouWillMake:
+      "A client-ready recap with key decisions, action items, owners, deadlines, open questions, risks or blockers, and a short follow-up email.",
+    primaryFields: [
       {
-        title: "Quick Prompt",
-        buttonLabel: "Copy Quick Prompt",
-        description: "Use this when you need a short client recap email quickly.",
-        prompt: meetingQuickPrompt,
+        key: "notes",
+        label: "Meeting notes",
+        placeholder: "Client wants homepage draft by Friday. Sarah sends logo files.",
+        multiline: true,
       },
+      { key: "project", label: "Client or project", placeholder: "Acme homepage refresh" },
+      { key: "deadlines", label: "Known deadlines", placeholder: "Homepage draft due Friday" },
       {
-        title: "Better Prompt",
-        buttonLabel: "Copy Better Prompt",
-        description: "Use this when you need decisions, owners, deadlines, risks, open questions, and a polished email.",
-        prompt: meetingBetterPrompt,
-      },
-      {
-        title: "Review Prompt",
-        buttonLabel: "Copy Review Prompt",
-        description: "Use this after you have a recap email and want to check it before sending.",
-        prompt: meetingReviewPrompt,
+        key: "extraNotes",
+        label: "Extra notes",
+        placeholder: "Tone, context, follow-up preferences, or anything important",
+        multiline: true,
       },
     ],
+    optionalFields: [
+      { key: "owners", label: "Task owners", placeholder: "Sarah: logo files; me: homepage draft" },
+      { key: "questions", label: "Open questions", placeholder: "Pricing page copy still open" },
+    ],
+    privateNote:
+      "If the notes include private client details, remove sensitive information before pasting them into an AI tool.",
     exampleInput:
       "Client wants homepage draft by Friday. Sarah sends logo files. Pricing page copy is still open.",
     exampleOutput: [
@@ -277,8 +154,136 @@ const executionConfigs: Record<string, ExecutionShortcutConfig> = {
       "Move unclear items into Open Questions instead of guessing.",
       "Read the email once as the client before sending.",
     ],
+    buildPrompt(values) {
+      return `Turn these meeting notes into a client-ready recap and follow-up email.
+
+Meeting details:
+${detailLines(values, meetingFields)}
+
+Finished output:
+1. Key decisions
+2. Action items
+3. Owners
+4. Deadlines
+5. Open questions
+6. Risks or blockers
+7. Short client-ready follow-up email
+
+Rules:
+- Use only the information in my notes.
+- Do not invent decisions, deadlines, or promises.
+- If something is unclear, put it under Open Questions.
+- If the notes include private client details, remove sensitive information before pasting them into an AI tool.
+- Keep the email professional, simple, and easy to scan.`;
+    },
   },
 };
+
+function hasAnyInput(values: Record<string, string>): boolean {
+  return Object.values(values).some((value) => value.trim().length > 0);
+}
+
+async function copyTextToClipboard(text: string): Promise<void> {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch {
+      // Fall through to the textarea fallback for restricted browser contexts.
+    }
+  }
+
+  const textArea = document.createElement("textarea");
+  textArea.value = text;
+  textArea.setAttribute("readonly", "true");
+  textArea.style.position = "fixed";
+  textArea.style.left = "-9999px";
+  textArea.style.top = "0";
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+
+  const copied = document.execCommand("copy");
+  document.body.removeChild(textArea);
+
+  if (!copied) {
+    throw new Error("Copy command failed.");
+  }
+}
+
+function CopyIcon({ copied }: { readonly copied: boolean }) {
+  if (copied) {
+    return (
+      <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 20 20" fill="none">
+        <path
+          d="M16.25 5.75 8.5 13.5 4.75 9.75"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 20 20" fill="none">
+      <path
+        d="M7.5 6.5V4.75A1.75 1.75 0 0 1 9.25 3h4A1.75 1.75 0 0 1 15 4.75v6A1.75 1.75 0 0 1 13.25 12H11.5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M5.25 8h4A1.75 1.75 0 0 1 11 9.75v5A1.75 1.75 0 0 1 9.25 16.5h-4A1.75 1.75 0 0 1 3.5 14.75v-5A1.75 1.75 0 0 1 5.25 8Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function FieldInput({
+  field,
+  value,
+  onChange,
+  inputRef,
+}: {
+  readonly field: PromptField;
+  readonly value: string;
+  readonly onChange: (value: string) => void;
+  readonly inputRef?: React.RefObject<HTMLInputElement | HTMLTextAreaElement | null>;
+}) {
+  const inputClasses =
+    "mt-2 min-h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100";
+
+  return (
+    <label className="block">
+      <span className="text-sm font-semibold text-slate-900">{field.label}</span>
+      {field.multiline ? (
+        <textarea
+          ref={inputRef as React.RefObject<HTMLTextAreaElement | null> | undefined}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={field.placeholder}
+          rows={4}
+          className={`${inputClasses} resize-y`}
+        />
+      ) : (
+        <input
+          ref={inputRef as React.RefObject<HTMLInputElement | null> | undefined}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={field.placeholder}
+          className={inputClasses}
+        />
+      )}
+    </label>
+  );
+}
 
 function SimpleCard({
   title,
@@ -289,73 +294,179 @@ function SimpleCard({
 }) {
   return (
     <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-      <h2 className="text-lg font-semibold tracking-tight text-slate-950">{title}</h2>
+      <h2 className="text-xl font-semibold tracking-tight text-slate-950">{title}</h2>
       {children}
     </section>
   );
 }
 
 export default function GuideExecutionShortcut({ guide }: { readonly guide: Guide }) {
-  const config = executionConfigs[guide.slug];
+  const config = promptConfigs[guide.slug];
+  const [values, setValues] = useState<Record<string, string>>({});
+  const [showMore, setShowMore] = useState(false);
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
+  const firstInputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
+  const sectionRef = useRef<HTMLDivElement | null>(null);
+  const resetTimer = useRef<number | undefined>(undefined);
+
+  const generatedPrompt = useMemo(() => config?.buildPrompt(values) ?? "", [config, values]);
+  const hasDetails = hasAnyInput(values);
+
+  useEffect(() => {
+    return () => {
+      if (resetTimer.current !== undefined) {
+        window.clearTimeout(resetTimer.current);
+      }
+    };
+  }, []);
+
+  async function copyPrompt(): Promise<boolean> {
+    try {
+      await copyTextToClipboard(generatedPrompt);
+      setCopyState("copied");
+      window.dispatchEvent(new CustomEvent(PROMPT_COPIED_EVENT));
+
+      if (resetTimer.current !== undefined) {
+        window.clearTimeout(resetTimer.current);
+      }
+
+      resetTimer.current = window.setTimeout(() => setCopyState("idle"), 3200);
+      return true;
+    } catch {
+      setCopyState("failed");
+      return false;
+    }
+  }
+
+  useEffect(() => {
+    async function handleTopCopyRequest() {
+      if (!hasAnyInput(values)) {
+        const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        sectionRef.current?.scrollIntoView({
+          behavior: prefersReducedMotion ? "auto" : "smooth",
+          block: "start",
+        });
+        window.setTimeout(() => firstInputRef.current?.focus(), 250);
+        return;
+      }
+
+      await copyPrompt();
+    }
+
+    window.addEventListener(PROMPT_COPY_REQUEST_EVENT, handleTopCopyRequest);
+    return () => window.removeEventListener(PROMPT_COPY_REQUEST_EVENT, handleTopCopyRequest);
+  });
 
   if (!config) {
     return null;
   }
 
+  function updateValue(key: string, value: string) {
+    setValues((current) => ({ ...current, [key]: value }));
+  }
+
   return (
-    <div className="space-y-5">
-      <div className="grid gap-4 md:grid-cols-2">
-        <SimpleCard title="What you have">
-          <p className="mt-3 text-base leading-7 text-slate-700">{config.whatYouHave}</p>
-        </SimpleCard>
-        <SimpleCard title="What you'll get">
-          <p className="mt-3 text-base leading-7 text-slate-700">{config.whatYouGet}</p>
-        </SimpleCard>
-      </div>
+    <div ref={sectionRef} id="prompt-builder" className="scroll-mt-6 space-y-5">
+      <SimpleCard title="What you'll make">
+        <p className="mt-3 text-base leading-7 text-slate-700">{config.whatYouWillMake}</p>
+      </SimpleCard>
 
-      <div className="grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
-        <SimpleCard title="How to use this shortcut">
-          <ol className="mt-4 space-y-3 text-base leading-7 text-slate-700">
-            {config.howToUse.map((step, index) => (
-              <li key={step} className="flex gap-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-700 text-sm font-semibold text-white">
-                  {index + 1}
-                </span>
-                <span>{step}</span>
-              </li>
-            ))}
-          </ol>
-        </SimpleCard>
-
-        <SimpleCard title="Fill this in first">
-          <p className="mt-3 text-base leading-7 text-slate-700">{config.fillIntro}</p>
-          <div className="mt-4 grid gap-2 sm:grid-cols-2">
-            {config.fillItems.map((item) => (
-              <div
-                key={item}
-                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800"
-              >
-                {item}
-              </div>
-            ))}
+      <section className="rounded-3xl border border-teal-200 bg-white p-5 shadow-sm sm:p-6">
+        <div className="grid gap-6 lg:grid-cols-[0.92fr_1.08fr]">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
+              Add details
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+              Add a few details for a better result
+            </h2>
+            <p className="mt-3 text-base leading-7 text-slate-700">
+              You can copy the prompt right away, but filling this in helps the AI give you a stronger result.
+            </p>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              After copying, paste the prompt into ChatGPT, Claude, Gemini, Copilot, or another AI chat tool.
+            </p>
+            {config.privateNote && (
+              <p className="mt-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+                {config.privateNote}
+              </p>
+            )}
           </div>
-          <p className="mt-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
-            {config.fillNote}
-          </p>
-        </SimpleCard>
-      </div>
 
-      <div className="space-y-5">
-        {config.prompts.map((prompt) => (
-          <CopyPromptCard
-            key={prompt.title}
-            title={prompt.title}
-            description={prompt.description}
-            prompt={prompt.prompt}
-            buttonLabel={prompt.buttonLabel}
-          />
-        ))}
-      </div>
+          <div className="grid gap-4">
+            {config.primaryFields.map((field, index) => (
+              <FieldInput
+                key={field.key}
+                field={field}
+                value={values[field.key] ?? ""}
+                onChange={(value) => updateValue(field.key, value)}
+                inputRef={index === 0 ? firstInputRef : undefined}
+              />
+            ))}
+
+            <button
+              type="button"
+              onClick={() => setShowMore((current) => !current)}
+              className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+            >
+              {showMore ? "Hide more details" : "More details"}
+            </button>
+
+            {showMore && (
+              <div className="grid gap-4 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                {config.optionalFields.map((field) => (
+                  <FieldInput
+                    key={field.key}
+                    field={field}
+                    value={values[field.key] ?? ""}
+                    onChange={(value) => updateValue(field.key, value)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section id="copy-prompt" className="scroll-mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
+              Use this prompt
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+              Copy one prompt and paste it into your AI tool
+            </h2>
+            <p className="mt-3 max-w-2xl text-base leading-7 text-slate-700">
+              Your details are inserted automatically. Blank fields stay as clear placeholders.
+            </p>
+          </div>
+
+          <div className="sm:max-w-xs">
+            <button
+              type="button"
+              onClick={copyPrompt}
+              className="ateflo-primary-copy-button inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-base font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 sm:w-auto sm:text-sm"
+            >
+              <span className="relative z-10 inline-flex items-center gap-2">
+                <CopyIcon copied={copyState === "copied"} />
+                {copyState === "copied" ? "Copied!" : "Copy Prompt"}
+              </span>
+            </button>
+            <p role="status" aria-live="polite" className="mt-2 min-h-5 text-sm leading-5 text-slate-600">
+              {copyState === "copied"
+                ? "Prompt copied. Now paste it into your AI tool."
+                : copyState === "failed"
+                  ? "Copy failed. Select the prompt text below and copy it manually."
+                  : ""}
+            </p>
+          </div>
+        </div>
+
+        <pre className="mt-5 max-w-full whitespace-pre-wrap break-words rounded-2xl border border-slate-800 bg-slate-950 p-4 text-sm leading-7 text-slate-100 [overflow-wrap:anywhere]">
+          {generatedPrompt}
+        </pre>
+      </section>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <SimpleCard title="Example result">

@@ -1,4 +1,5 @@
-import ActionLinks from "@/components/ActionLinks";
+import Link from "next/link";
+import TopCopyPromptButton from "@/components/guides/TopCopyPromptButton";
 import { formatGuideLayoutLabel, resolveGuideLayoutType } from "@/lib/guideTypes";
 import type { Guide } from "@/lib/guides";
 
@@ -52,14 +53,21 @@ export default function EditorialHero({ guide }: EditorialHeroProps) {
         ))}
       </div>
 
-      <ActionLinks
-        className="mt-6"
-        items={[
-          { href: "#copy-prompt", label: "Copy Prompt", tone: "primary" },
-          { href: "/finder", label: "Use Finder", tone: "primary" },
-          { href: "/guides", label: "View Shortcuts" },
-        ]}
-      />
+      <div className="mt-6 flex flex-wrap items-start gap-3">
+        <TopCopyPromptButton />
+        <Link
+          href="/finder"
+          className="inline-flex min-h-11 items-center justify-center rounded-full bg-teal-700 px-4 py-2.5 text-center text-sm font-semibold text-white transition duration-150 hover:-translate-y-0.5 hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+        >
+          Use Finder
+        </Link>
+        <Link
+          href="/guides"
+          className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2.5 text-center text-sm font-semibold text-slate-700 transition duration-150 hover:-translate-y-0.5 hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+        >
+          View Shortcuts
+        </Link>
+      </div>
     </header>
   );
 }

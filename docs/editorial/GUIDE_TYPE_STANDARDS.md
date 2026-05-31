@@ -11,10 +11,11 @@ Reader intent: "Show me how to get this done without wasting time."
 Required structure:
 
 - Quick Answer
-- How to use this shortcut
-- Fill this in first
-- Copy-paste-ready prompt
-- Review prompt or checking step
+- What you'll make
+- One generated prompt builder
+- More details toggle for optional fields when useful
+- Copy Prompt action
+- Check before using checklist
 - Real-World Scenario
 - What You Need
 - Step-by-Step Workflow
@@ -32,7 +33,8 @@ Strong article:
 
 - Starts with the answer.
 - Shows what the reader has, what they will get, and what details to prepare.
-- Gives a prompt that starts with the actual task and includes clear paste placeholders.
+- Gives one generated prompt that starts with the actual task and includes clear placeholders when fields are blank.
+- Explains that filling in details improves the result but is not required.
 - Shows a real workflow before tool recommendations.
 - Makes tools support steps.
 - Gives mobile and desktop advice that is not copied.
@@ -67,9 +69,9 @@ Reader intent: "Which tool should I use first, and when should I choose somethin
 Required structure:
 
 - Quick Verdict
-- How to use this shortcut when prompts are included
-- Fill this in first when prompts are included
-- Copy-paste-ready prompt and review prompt when useful
+- One generated prompt builder when prompts are included
+- More details toggle for optional fields when useful
+- Check before using checklist when prompt output needs review
 - Which One Should You Choose?
 - Decision Path
 - Best Picks by Situation
@@ -87,7 +89,8 @@ First 100 words must name the best starting tool, the best alternative, when to 
 Strong article:
 
 - Gives a fast choice.
-- Makes any prompt easy to copy, paste, and check without knowing prompt-writing terms.
+- Makes any prompt easy to generate, copy, paste, and check without knowing prompt-writing terms.
+- Avoids multiple public prompt choices unless the topic truly requires them.
 - Uses real decision criteria.
 - Explains better/worse fit by situation.
 - Uses distinct Best for / Avoid if language.

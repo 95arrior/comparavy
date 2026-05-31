@@ -13,24 +13,25 @@ The reader should leave with:
 - A clear sense of which tool to start with and why.
 - A reason to trust the limitations, warnings, and next step.
 
-## Beginner Prompt Usability Test
+## Prompt Builder Usability Test
 
 Every new AteFlo shortcut must be simple enough for a reader who has never written an AI prompt before.
 
 Before a guide can be approved, check:
 
-- Does the page explain how to use the prompt?
-- Does it show what to paste?
-- Does it show what the user will get?
-- Does the prompt start with the actual task?
+- Does the public page use one primary generated prompt instead of multiple prompt choices?
+- Does the builder explain that filling in details improves the result but is not required?
+- Are optional fields hidden behind a simple "More details" toggle when useful?
+- Does it show what the user will make?
+- Does the prompt work in ChatGPT, Claude, Gemini, Copilot, or another AI chat tool?
 - Does the prompt avoid internal AteFlo-only language?
-- Does the prompt include `[PASTE HERE]` placeholders or equivalent clear paste areas?
+- Does the prompt include clear placeholders when fields are blank?
 - Does the prompt include safety rules when missing facts, private details, claims, deadlines, or promises matter?
 - Can a beginner copy it without editing much?
 - Can an older or non-technical user understand the flow?
-- Is there a review prompt or checking step?
+- Is review guidance presented as a simple checklist unless the topic truly needs another prompt?
 
-AI editorial review should score each guide on Prompt Usability, Beginner Readability, Finished Output Clarity, Copy-Paste Readiness, and Safety/Trust. The publish threshold remains 85.
+AI editorial review should score each guide on Copy-Paste Readiness, Beginner Simplicity, Prompt Builder Usability, Finished Output Clarity, and Safety/Trust. The publish threshold remains 85.
 
 ## 2. US Audience Writing Style
 

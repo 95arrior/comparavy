@@ -129,8 +129,9 @@ export const guideTypeStandards: Record<GuideLayoutType, string[]> = {
   "how-to": [
     "Solve one concrete problem before discussing tools.",
     "The first 100 words must name the input, output, first action, and review step.",
-    "Show what the reader should paste, where to paste it, and what finished output they should expect.",
-    "Include a copy-paste-ready prompt and a checking step that a beginner can follow.",
+    "Show one primary generated prompt, where to paste it, and what finished output to expect.",
+    "Keep optional prompt-builder details behind a More details toggle when useful.",
+    "Use a checking checklist instead of a separate public review prompt unless the topic truly needs one.",
     "Put the practical workflow before tools.",
     "Every step needs action, reason, and expected output.",
     "Mobile and desktop guidance must describe different realistic situations.",
@@ -139,7 +140,8 @@ export const guideTypeStandards: Record<GuideLayoutType, string[]> = {
   "tool-decision": [
     "Help the reader choose between tools quickly.",
     "Quick Verdict must name the best starting tool, second-best condition, and avoid condition.",
-    "When prompts are included, they must start with the actual task, include [PASTE HERE] placeholders, and avoid AteFlo-only language.",
+    "When prompts are included, the public page should use one primary generated prompt instead of multiple prompt choices.",
+    "Prompts must start with the actual task, work in common AI chat tools, include clear placeholders, and avoid AteFlo-only language.",
     "Include review or verification guidance before the reader uses the output.",
     "Decision path must use branching If/Then logic.",
     "Compare tools by real criteria tied to the reader's input and output.",
@@ -171,6 +173,6 @@ export const comparavyGoldStandardPrompt = [
   "Do not make users read tool cards before understanding the solution.",
   "A how-to guide solves the workflow; a tool-decision guide ranks tools only after the choice logic is clear.",
   "Use concrete inputs, outputs, review steps, mobile situations, desktop situations, and example results.",
-  "Every shortcut must pass the Beginner Prompt Usability Test: explain how to use the prompt, show what to paste, show what the user will get, start prompts with the actual task, avoid internal AteFlo-only prompt language, include [PASTE HERE] placeholders, include safety rules when needed, make the flow understandable to non-technical users, and include a review prompt or checking step.",
+  "Every shortcut must pass the Prompt Builder Usability Test: use one primary generated prompt on the public page, keep optional form fields behind a More details toggle when useful, explain that filling in details improves the result but is not required, make the prompt usable in ChatGPT, Claude, Gemini, Copilot, or another AI chat tool, avoid internal AteFlo-only prompt language, include safety rules when needed, and use checklist review guidance instead of multiple public prompt choices.",
   "Reject filler, fake testing, fake certainty, repeated tool-card language, and unsupported claims.",
 ].join(" ");

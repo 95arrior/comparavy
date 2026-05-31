@@ -90,7 +90,7 @@
     },
     {
       "title": "Extract facts before writing",
-      "detail": "Use the Quick Prompt above for a short recap email, or the Better Prompt for decisions, action items, owners, deadlines, risks, open questions, and a client-ready email. Paste it into ChatGPT, Claude, Gemini, Microsoft Copilot, or another AI chat tool with your notes.",
+      "detail": "Paste your notes into the short prompt builder above, then copy the generated prompt into ChatGPT, Claude, Gemini, Microsoft Copilot, or another AI chat tool.",
       "why": "Client-facing follow-up needs accuracy more than speed.",
       "output": "A checked list of decisions, owners, dates, and open questions.",
       "toolSlug": "chatgpt",
