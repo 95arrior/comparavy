@@ -23,6 +23,25 @@
     "ChatGPT vs Jasper for Etsy listings",
     "AI tools for handmade product copy"
   ],
+  "searchAliases": [
+    "Etsy",
+    "Etsy listing",
+    "product description",
+    "product title",
+    "listing copy",
+    "tags",
+    "keywords",
+    "handmade product",
+    "shop",
+    "seller"
+  ],
+  "searchKeywords": [
+    "Etsy product description",
+    "Etsy listing title",
+    "Etsy tags",
+    "handmade product copy",
+    "seller listing copy"
+  ],
   "audience": "Etsy sellers and handmade shop owners",
   "searchIntent": "choosing AI tools for Etsy listing copy",
   "userPain": "The reader needs a tool that helps write accurate, buyer-friendly product copy.",
@@ -56,7 +75,7 @@
       "tools": [
         "ChatGPT",
         "Claude",
-        "Jasper"
+        "Canva"
       ]
     },
     "beforeAfter": {
@@ -125,6 +144,13 @@
       "bestUseCase": "tone cleanup from longer product details"
     },
     {
+      "toolSlug": "canva-magic-studio",
+      "toolName": "Canva Magic Studio",
+      "why": "Use Canva when the listing draft needs matching product graphics, listing images, or simple visual assets after the copy is checked.",
+      "role": "Use Canva when the final Etsy output needs visuals.",
+      "bestUseCase": "listing visuals and product graphics"
+    },
+    {
       "toolSlug": "jasper",
       "toolName": "Jasper",
       "why": "Use Jasper when a larger shop already needs repeatable brand voice across many listings.",
@@ -144,6 +170,7 @@
     "Paste the prompt into ChatGPT, Claude, Gemini, Microsoft Copilot, or another AI chat tool that can handle your input.",
     "Use ChatGPT for flexible first drafts from a fact sheet.",
     "Use Claude when the draft is long, too pushy, or unclear.",
+    "Use Canva when the finished listing needs matching visuals or product graphics.",
     "Use Jasper when a larger shop needs repeatable brand voice.",
     "Review the description for unsupported claims before publishing.",
     "Use Finder if you need a narrower tool recommendation."
@@ -162,18 +189,18 @@
       "why": "It is useful for calming the tone, grouping details, and making the copy easier for a buyer to scan."
     },
     {
-      "situation": "If you manage many listings and need a repeatable shop voice, choose Jasper.",
-      "toolSlug": "jasper",
-      "toolName": "Jasper",
-      "why": "It makes more sense after you already know the listing structure and want more consistent brand language."
+      "situation": "If the listing draft needs matching visuals, listing images, or social graphics, choose Canva.",
+      "toolSlug": "canva-magic-studio",
+      "toolName": "Canva Magic Studio",
+      "why": "It fits the step after the listing copy is checked and the final output needs usable visuals."
     }
   ],
   "recommendedToolSlugs": [
     "chatgpt",
     "claude",
+    "canva-magic-studio",
     "jasper",
-    "writesonic",
-    "copy-ai"
+    "writesonic"
   ],
   "recommendedTools": [
     {
@@ -326,9 +353,9 @@
       "reason": "It is useful for grouping details and removing hype without flattening the buyer context."
     },
     {
-      "situation": "If you need brand-aware marketing copy drafts, choose Jasper.",
-      "recommendation": "Jasper",
-      "reason": "It fits the final destination better."
+      "situation": "If the checked listing needs matching product graphics or visual assets, choose Canva.",
+      "recommendation": "Canva Magic Studio",
+      "reason": "It helps turn a reviewed listing draft into simple visuals without changing the product facts."
     },
     {
       "situation": "If the material is sensitive, redact it before using any cloud AI tool.",
@@ -408,7 +435,7 @@
       "answer": "Usually not for one listing. Consider Jasper when you have enough listings that repeatable brand voice and templates save real editing time."
     }
   ],
-  "finalVerdict": "For most Etsy sellers, one capable AI chat tool plus a careful fact sheet is enough to create useful first drafts. Use ChatGPT for flexible drafting, Claude when tone and long details matter, and Jasper only when you need repeatable brand copy across a broader shop catalog.",
+  "finalVerdict": "For most Etsy sellers, one capable AI chat tool plus a careful fact sheet is enough to create useful first drafts. Use ChatGPT for flexible drafting, Claude when tone and long details matter, Canva when the checked listing needs visuals, and Jasper only when you need repeatable brand copy across a broader shop catalog.",
   "ctaToFinder": "Open the Finder if your Etsy workflow starts with photos, tags, translations, or bulk catalog cleanup instead of one product description.",
   "finderCTA": "Open the Finder if your Etsy workflow starts with photos, tags, translations, or bulk catalog cleanup instead of one product description.",
   "visualSummary": {
@@ -416,7 +443,7 @@
     "points": [
       "Start with verified product facts",
       "Compare Claude for review depth",
-      "Use Jasper when the destination fits"
+      "Use Canva when the output needs visuals"
     ]
   },
   "affiliateDisclosureNote": "Some AteFlo links may be affiliate links. Review the affiliate disclosure and official site before subscribing.",

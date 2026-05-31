@@ -23,6 +23,26 @@
     "AI prompt for client meeting recap",
     "turn messy call notes into action items"
   ],
+  "searchAliases": [
+    "meeting notes",
+    "client recap",
+    "follow-up email",
+    "follow up email",
+    "action items",
+    "meeting summary",
+    "client email",
+    "call notes",
+    "owners",
+    "deadlines",
+    "open questions"
+  ],
+  "searchKeywords": [
+    "meeting recap email",
+    "client follow-up email",
+    "meeting action items",
+    "call summary",
+    "project recap"
+  ],
   "audience": "consultants, freelancers, and account managers",
   "searchIntent": "creating a client recap from meeting notes",
   "userPain": "The reader has notes from a call but needs a polished recap without missing decisions or next steps.",

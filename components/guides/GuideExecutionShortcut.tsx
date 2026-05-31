@@ -112,13 +112,15 @@ const promptConfigs: Record<string, PromptBuilderConfig> = {
     exampleOutput: [
       "Title: Handmade Blue Ceramic Mug, 12 oz Coffee Lover Gift",
       "Opening: Start your morning with a handmade ceramic mug finished in a calm blue glaze.",
-      "Bullets: 12 oz size; handmade ceramic; microwave safe; good for coffee, tea, or desk use.",
+      "Facts: 12 oz size; handmade ceramic; blue glaze; microwave safe.",
+      "Buyer benefits: useful for coffee, tea, desk use, and simple gifting.",
       "Description: This blue ceramic mug is a simple everyday gift for coffee lovers who want something handmade and useful.",
       "Needs Seller Review: confirm dishwasher safety, processing time, shipping limits, and personalization options.",
     ],
     checkBeforeUsing: [
       "Check every material, size, color, and care detail.",
       "Remove any shipping, guarantee, or safety claim you cannot prove.",
+      "Remove fake urgency, fake reviews, fake discounts, or unsupported product claims.",
       "Read the first two lines on your phone before publishing.",
       "Keep anything marked Needs seller input out of the live listing until you verify it.",
     ],
@@ -134,13 +136,17 @@ Finished output:
 3. Scannable bullet points
 4. Mobile-readable product description
 5. Tag or keyword ideas
-6. Needs Seller Review section
+6. Short seller review checklist before publishing
+7. Needs Seller Review section
 
 Rules:
 - Do not invent materials, sizes, shipping times, guarantees, or product claims.
-- If a detail is missing, mark it as Needs seller input.
+- If a detail is missing, mark it as "Needs seller input."
+- Separate buyer benefits from product facts.
+- Keep the listing mobile-readable.
+- Do not create fake urgency, fake reviews, fake discounts, or unsupported claims.
 - Keep claims specific to the product facts I gave you.
-- Make the listing helpful for a real buyer, not overly salesy.`;
+- Keep the tone warm, clear, and buyer-friendly.`;
     },
   },
   "how-to-turn-meeting-notes-into-a-client-recap-with-ai": {
@@ -174,14 +180,16 @@ Rules:
       "Subject: Recap and next steps from our homepage call",
       "Hi Sam,",
       "Thanks for today. The homepage draft is the next priority, with a target of Friday.",
-      "Action items: Sarah will send logo files. I will prepare the homepage draft.",
+      "Action items: Sarah will send logo files. I will prepare the homepage draft. Deadline not specified for logo files.",
       "Open question: We still need to confirm the pricing page copy.",
       "Best, [Your name]",
     ],
     checkBeforeUsing: [
       "Confirm every owner, deadline, and promise against your notes.",
       "Remove private details the client should not receive.",
+      "Make sure open questions did not become confirmed decisions.",
       "Move unclear items into Open Questions instead of guessing.",
+      "Keep the follow-up email short enough to scan.",
       "Read the email once as the client before sending.",
     ],
     buildPrompt(values) {
@@ -201,10 +209,14 @@ Finished output:
 
 Rules:
 - Use only the information in my notes.
-- Do not invent decisions, deadlines, or promises.
-- If something is unclear, put it under Open Questions.
-- If the notes include private client details, remove sensitive information before pasting them into an AI tool.
-- Keep the email professional, simple, and easy to scan.`;
+- Do not invent decisions, deadlines, owners, or promises.
+- If an owner is not clearly stated, write "Owner not specified."
+- If a deadline is not clearly stated, write "Deadline not specified."
+- Do not turn open questions into confirmed decisions.
+- Put unclear items under Open Questions instead of guessing.
+- Remove sensitive client details that should not be included in an email.
+- Keep the follow-up email professional, simple, and easy to scan.
+- Keep the email under 180 words unless the notes require more detail.`;
     },
   },
   "how-to-summarize-a-pdf-into-study-notes-with-ai": {
@@ -237,15 +249,18 @@ Rules:
     exampleInput:
       "Economics chapter on supply and demand, copied section notes, quiz Friday, focus on formulas and definitions.",
     exampleOutput: [
+      "Overview: The section explains how supply and demand interact to set market price.",
       "Study notes: Demand is how much buyers want at different prices; supply is how much sellers offer.",
       "Key concepts: scarcity, demand curve, supply curve, equilibrium, shortage, surplus.",
       "Quiz questions: What happens to equilibrium price when demand rises and supply stays the same?",
       "Flashcard: Front: What is equilibrium? Back: The point where quantity supplied equals quantity demanded.",
+      "Study plan: Review definitions first, practice graph questions second, then revisit Needs review items.",
       "Needs review: Confirm the exact graph labels and any formulas against the original PDF.",
     ],
     checkBeforeUsing: [
       "Check important facts, definitions, numbers, and formulas against the PDF.",
       "Do not study from invented quotes, citations, page numbers, or claims.",
+      "Make sure quiz questions can be answered from the provided text.",
       "Keep unclear items in Needs review until you verify them.",
       "Do not paste restricted or private documents into an AI tool.",
     ],
@@ -256,18 +271,22 @@ Study details:
 ${detailLines(values, pdfStudyFields)}
 
 Finished output:
-1. Study notes by section
-2. Key concepts and terms
-3. Bullet summary
-4. Quiz questions
-5. Flashcards or review questions
-6. Confusing terms to review
-7. Needs review section for unclear information
+1. Short overview
+2. Key concepts
+3. Bullet study notes
+4. Important terms
+5. Quiz questions
+6. Flashcards or review questions if appropriate
+7. Confusing sections or Needs review section
+8. Short study plan if useful
 
 Rules:
-- Use only the information I provide.
-- Do not invent facts, quotes, citations, page numbers, or claims.
-- If something is unclear, mark it as Needs review.
+- Use only the text or notes I provide.
+- Do not invent facts, quotes, citations, page numbers, authors, or claims.
+- If something is unclear, mark it as "Needs review."
+- Do not pretend to read a PDF file unless the actual text is provided.
+- Keep the notes easy to study from.
+- Make quiz questions answerable from the provided material.
 - Do not paste private, confidential, legal, medical, client, or restricted documents into an AI tool.
 - Keep the notes clear enough for a beginner to study from.`;
     },
@@ -301,11 +320,14 @@ Rules:
       "Calendar idea: Monday lunch box reminder, Wednesday behind-the-scenes cake prep, Friday weekend order CTA.",
       "Post idea: A short Instagram reel showing the lunch box assembly process.",
       "CTA: Message us by Thursday to reserve a weekend cake pickup.",
+      "Needs owner input: confirm current prices, pickup times, and photo availability.",
       "Review checklist: Verify dates, availability, prices, claims, and photos before posting.",
     ],
     checkBeforeUsing: [
       "Remove any claim about guaranteed growth, sales, or income.",
       "Do not use invented testimonials, customer results, or fake proof.",
+      "Make sure ideas match the business, customer, offer, and channels you entered.",
+      "Cut posts that are too hype-driven or unrealistic to create.",
       "Verify dates, offers, prices, capacity, and local details before posting.",
       "Keep anything marked Needs owner input out of the live calendar until reviewed.",
     ],
@@ -328,7 +350,10 @@ Rules:
 - Do not claim guaranteed growth, guaranteed sales, or guaranteed income.
 - Do not invent customer results, testimonials, or fake proof.
 - Keep ideas realistic for a small business owner to review and edit.
-- Mark missing details as Needs owner input.
+- If important details are missing, mark them as "Needs owner input."
+- Match ideas to the business type, customer, offer, and channels provided.
+- Keep posts practical, not hype-driven.
+- Include a simple review checklist before posting.
 - Make the calendar practical enough for a busy owner to use.`;
     },
   },

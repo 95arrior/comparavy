@@ -202,7 +202,7 @@ function pickMoneyWorkflows(guides: readonly Guide[]): readonly Guide[] {
 
 export default function Home() {
   const guides = getPublishedGuides();
-  const popularShortcuts = guides.slice(0, 3);
+  const featuredShortcuts = guides.slice(0, 3);
   const moneyWorkflows = pickMoneyWorkflows(guides);
   const latestShortcuts = guides.slice(0, 6);
 
@@ -274,7 +274,7 @@ export default function Home() {
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-wrap items-end justify-between gap-5">
             <div>
-              <p className="text-sm font-semibold text-teal-700">Popular AI shortcuts</p>
+              <p className="text-sm font-semibold text-teal-700">Featured AI shortcuts</p>
               <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
                 Copy a workflow and finish the task.
               </h2>
@@ -287,8 +287,8 @@ export default function Home() {
             </Link>
           </div>
           <div className="mt-8 grid gap-4 md:grid-cols-3">
-            {popularShortcuts.length > 0
-              ? popularShortcuts.map((guide) => (
+            {featuredShortcuts.length > 0
+              ? featuredShortcuts.map((guide) => (
                   <ShortcutCard key={guide.slug} guide={guide} />
                 ))
               : starterShortcuts.map((shortcut) => (
