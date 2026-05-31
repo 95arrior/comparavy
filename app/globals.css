@@ -153,6 +153,20 @@ html {
   background: linear-gradient(90deg, rgba(37, 99, 235, 0), rgba(37, 99, 235, 0.16) 20%, rgba(96, 165, 250, 0.28) 50%, rgba(37, 99, 235, 0.16) 80%, rgba(37, 99, 235, 0));
 }
 
+.ateflo-home-search-box {
+  background:
+    linear-gradient(#ffffff, #ffffff) padding-box,
+    linear-gradient(135deg, rgba(15, 118, 110, 0.62), rgba(20, 184, 166, 0.24), rgba(15, 118, 110, 0.5)) border-box;
+}
+
+.ateflo-search-results {
+  animation: ateflo-results-enter 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ateflo-search-result-card {
+  animation: ateflo-result-card-enter 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 .ateflo-shortcut-strip {
   overflow-x: auto;
   overflow-y: hidden;
@@ -272,6 +286,30 @@ html {
   }
 }
 
+@keyframes ateflo-results-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ateflo-result-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (max-width: 640px) {
   .ateflo-logo-link {
     min-height: 1.75rem;
@@ -293,6 +331,8 @@ html {
   .ateflo-copy-button,
   .ateflo-primary-copy-button,
   .ateflo-primary-copy-button::before,
+  .ateflo-search-results,
+  .ateflo-search-result-card,
   .ateflo-shortcut-strip-track,
   .ateflo-metric-bar,
   .ateflo-star-badge__icon {
