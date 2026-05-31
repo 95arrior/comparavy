@@ -20,7 +20,7 @@ export default function SiteFooter() {
     <footer className="border-t border-slate-200 bg-white px-4 py-8 sm:px-6">
       <div className="mx-auto flex max-w-6xl flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
         <div className="space-y-3">
-          <Logo />
+          <Logo variant="footer" />
           <p className="max-w-xl text-sm leading-6 text-slate-600">
             {SITE_TAGLINE} Practical AI workflows for turning messy inputs into
             finished outputs.

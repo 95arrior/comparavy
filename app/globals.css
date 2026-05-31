@@ -98,6 +98,18 @@ html {
   min-height: 2rem;
 }
 
+.ateflo-logo-image {
+  display: block;
+  width: 136px;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.ateflo-logo-link[data-logo-variant="footer"] .ateflo-logo-image {
+  width: 118px;
+}
+
 @keyframes ateflo-fade-up {
   from {
     opacity: 0;
@@ -136,6 +148,14 @@ html {
 @media (max-width: 640px) {
   .ateflo-logo-link {
     min-height: 1.75rem;
+  }
+
+  .ateflo-logo-image {
+    width: 112px;
+  }
+
+  .ateflo-logo-link[data-logo-variant="footer"] .ateflo-logo-image {
+    width: 104px;
   }
 }
 

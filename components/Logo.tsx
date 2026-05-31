@@ -1,15 +1,25 @@
 import Link from "next/link";
 import { SITE_NAME } from "@/lib/site";
 
-export default function Logo() {
+interface LogoProps {
+  readonly variant?: "header" | "footer";
+}
+
+export default function Logo({ variant = "header" }: LogoProps) {
   return (
-    <Link href="/" aria-label={`${SITE_NAME} home`} className="ateflo-logo-link">
-      <span className="inline-flex items-center gap-2 text-xl font-semibold tracking-tight text-slate-950">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-700 text-sm font-bold text-white">
-          A
-        </span>
-        {SITE_NAME}
-      </span>
+    <Link
+      href="/"
+      aria-label={`${SITE_NAME} home`}
+      className="ateflo-logo-link"
+      data-logo-variant={variant}
+    >
+      <img
+        src="/ateflo-logo.svg"
+        alt={SITE_NAME}
+        width="393"
+        height="147"
+        className="ateflo-logo-image"
+      />
     </Link>
   );
 }
