@@ -20,6 +20,8 @@ const ALLOWED_PARAM_KEYS = new Set([
   "tool_name",
   "source_page",
   "search_query_length",
+  "previous_query_length",
+  "previous_result_count",
   "result_count",
   "chip_label",
 ]);

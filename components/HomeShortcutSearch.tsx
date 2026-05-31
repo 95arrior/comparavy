@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import type { FormEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import CategoryChip from "@/components/CategoryChip";
 import ToolIcon from "@/components/ToolIcon";
@@ -43,6 +42,7 @@ export default function HomeShortcutSearch({ shortcuts }: HomeShortcutSearchProp
   const inputRef = useRef<HTMLInputElement | null>(null);
   const normalizedQuery = normalizeSearch(query);
   const hasActiveSearch = normalizedQuery.length > 0;
+  const hasQueryText = query.length > 0;
   const filteredShortcuts = useMemo(() => {
     if (!hasActiveSearch) {
       return [];
@@ -96,11 +96,18 @@ export default function HomeShortcutSearch({ shortcuts }: HomeShortcutSearchProp
     });
   }
 
-  function handleSearchSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    inputRef.current?.focus();
+  function handleClearSearch() {
+    const previousQueryLength = query.trim().length;
+    const previousResultCount = filteredShortcuts.length;
 
-    trackSearchUsage();
+    setQuery("");
+    trackEvent("shortcuts_search_cleared", {
+      source_page: "home",
+      previous_query_length: previousQueryLength,
+      previous_result_count: previousResultCount,
+      result_count: 0,
+    });
+    window.requestAnimationFrame(() => inputRef.current?.focus());
   }
 
   function trackShortcutClick(shortcut: ShortcutDiscoveryItem, actionLocation: string) {
@@ -115,7 +122,7 @@ export default function HomeShortcutSearch({ shortcuts }: HomeShortcutSearchProp
   return (
     <section className="mx-auto max-w-6xl px-4 pb-12 sm:px-6 sm:pb-14">
       <div className="ateflo-reveal">
-        <form className="mx-auto max-w-4xl" onSubmit={handleSearchSubmit}>
+        <div className="mx-auto max-w-4xl">
           <label htmlFor="home-shortcut-search" className="sr-only">
             Search shortcuts
           </label>
@@ -145,30 +152,33 @@ export default function HomeShortcutSearch({ shortcuts }: HomeShortcutSearchProp
               placeholder="Find the right prompt or shortcut for your task..."
               data-event="shortcuts_search_used"
               data-action-location="home_search"
-              className="min-h-12 min-w-0 flex-1 bg-transparent text-base font-medium text-slate-950 outline-none placeholder:text-slate-400 sm:min-h-14 sm:text-lg"
+              className="ateflo-home-search-input min-h-12 min-w-0 flex-1 bg-transparent text-base font-medium text-slate-950 outline-none placeholder:text-slate-400 sm:min-h-14 sm:text-lg"
               onChange={(event) => setQuery(event.target.value)}
             />
-            <button
-              type="submit"
-              aria-label="Search shortcuts"
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-teal-700 text-white shadow-lg shadow-teal-900/15 transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 active:scale-95 sm:h-14 sm:w-14"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                className="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2.2"
-                aria-hidden="true"
+            {hasQueryText && (
+              <button
+                type="button"
+                aria-label="Clear search"
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-teal-100 bg-teal-50 text-teal-800 shadow-sm transition hover:border-teal-200 hover:bg-teal-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 active:scale-95 sm:h-14 sm:w-14"
+                onClick={handleClearSearch}
               >
-                <path d="M5 12h14" />
-                <path d="m13 6 6 6-6 6" />
-              </svg>
-            </button>
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2.2"
+                  aria-hidden="true"
+                >
+                  <path d="M6 6l12 12" />
+                  <path d="M18 6 6 18" />
+                </svg>
+              </button>
+            )}
           </div>
-        </form>
+        </div>
 
         <div className="mt-5 flex flex-wrap justify-center gap-2">
           {SEARCH_CHIPS.map((chip) => (

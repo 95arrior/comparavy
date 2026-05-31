@@ -159,6 +159,12 @@ html {
     linear-gradient(135deg, rgba(15, 118, 110, 0.62), rgba(20, 184, 166, 0.24), rgba(15, 118, 110, 0.5)) border-box;
 }
 
+.ateflo-home-search-input::-webkit-search-cancel-button,
+.ateflo-home-search-input::-webkit-search-decoration {
+  appearance: none;
+  -webkit-appearance: none;
+}
+
 .ateflo-search-results {
   animation: ateflo-results-enter 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
