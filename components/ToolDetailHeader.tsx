@@ -1,6 +1,7 @@
 import ActionLinks from "@/components/ActionLinks";
 import BadgeRow, { getToolCardBadges } from "@/components/BadgeRow";
 import ToolIcon from "@/components/ToolIcon";
+import ToolTagChips from "@/components/ToolTagChips";
 import type { AiTool } from "@/types/tool";
 
 function formatCategory(category: AiTool["category"]): string {
@@ -31,6 +32,9 @@ export default function ToolDetailHeader({ tool }: ToolDetailHeaderProps) {
           </p>
           <div className="mt-5">
             <BadgeRow badges={getToolCardBadges(tool)} maxVisible={5} />
+          </div>
+          <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50/70 p-3.5">
+            <ToolTagChips tags={tool.primaryTags} maxVisible={6} />
           </div>
           <ActionLinks
             className="mt-6"

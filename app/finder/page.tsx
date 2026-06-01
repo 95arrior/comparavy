@@ -550,7 +550,7 @@ function RecommendationCard({
 
   return (
     <article
-      className={`flex h-full min-h-[620px] flex-col rounded-3xl border bg-white p-5 shadow-sm ateflo-card-lift sm:p-6 ${
+      className={`flex h-full min-h-[620px] flex-col rounded-3xl border bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_16px_38px_rgba(15,23,42,0.035)] ateflo-card-lift sm:p-6 ${
         rank === 1
           ? "border-teal-200 ring-1 ring-teal-100"
           : "border-slate-200 hover:border-slate-300"
@@ -558,7 +558,9 @@ function RecommendationCard({
     >
       <div className="flex min-h-12 flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2.5">
-          <ToolIcon {...tool} size={26} />
+          <div className="rounded-2xl bg-slate-50 p-1.5 ring-1 ring-slate-100">
+            <ToolIcon {...tool} size={26} />
+          </div>
           <h3 className="min-w-0 flex-1 truncate whitespace-nowrap text-lg font-semibold tracking-tight text-slate-900">
             {tool.name}
           </h3>
@@ -592,18 +594,18 @@ function RecommendationCard({
             ))}
           </ul>
         </div>
-        <div className="flex min-h-52 flex-col rounded-2xl border border-slate-100 bg-white p-4">
-          <p className="mb-4 text-sm font-semibold text-slate-900">Fit signals</p>
+        <div className="flex min-h-52 flex-col rounded-2xl border border-slate-100 bg-gradient-to-b from-slate-50 to-white p-4">
+          <div className="mb-4 flex items-center justify-between">
+            <p className="text-sm font-semibold text-slate-900">Fit signals</p>
+            <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
+          </div>
           <MetricBars tool={tool} />
         </div>
       </div>
 
-      <div className="mt-5 min-h-[116px] rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-          Key tags
-        </p>
-        <div className="mt-2 max-h-[62px] overflow-hidden">
-          <ToolTagChips tags={tool.primaryTags} maxVisible={4} />
+      <div className="mt-5 min-h-[92px] rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+        <div className="max-h-12 overflow-hidden">
+          <ToolTagChips tags={tool.primaryTags} maxVisible={5} animate />
         </div>
       </div>
 

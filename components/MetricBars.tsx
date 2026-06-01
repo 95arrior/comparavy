@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
 import type { AiTool, ToolScore } from "@/types/tool";
 
 export type MetricKey =
@@ -26,28 +29,53 @@ const DEFAULT_METRICS: readonly MetricKey[] = [
   "beginnerScore",
 ];
 
-const BAR_WIDTHS: Record<ToolScore, string> = {
-  1: "w-[10%]",
-  2: "w-[20%]",
-  3: "w-[30%]",
-  4: "w-[40%]",
-  5: "w-[50%]",
-  6: "w-[60%]",
-  7: "w-[70%]",
-  8: "w-[80%]",
-  9: "w-[90%]",
-  10: "w-full",
-};
-
 export default function MetricBars({
   tool,
   metrics = DEFAULT_METRICS,
   compact = false,
 }: MetricBarsProps) {
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const root = rootRef.current;
+
+    if (!root) {
+      return;
+    }
+
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    if (prefersReducedMotion || !("IntersectionObserver" in window)) {
+      setIsVisible(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.35 },
+    );
+
+    observer.observe(root);
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div className={compact ? "space-y-2.5" : "grid gap-4 sm:grid-cols-2"}>
+    <div
+      ref={rootRef}
+      className={compact ? "space-y-2.5" : "grid gap-4 sm:grid-cols-2"}
+    >
       {metrics.map((metric, index) => {
         const value = tool[metric];
+        const width = `${value * 10}%`;
 
         return (
           <div key={metric}>
@@ -57,8 +85,12 @@ export default function MetricBars({
             </div>
             <div className="ateflo-metric-bar__track h-1.5 rounded-full bg-slate-100">
               <div
-                className={`ateflo-metric-bar h-full rounded-full bg-teal-600 ${BAR_WIDTHS[value]}`}
-                style={{ animationDelay: `${index * 90}ms` }}
+                className="ateflo-metric-bar h-full rounded-full bg-teal-600"
+                style={{
+                  width,
+                  transform: isVisible ? "scaleX(1)" : "scaleX(0)",
+                  transitionDelay: `${index * 70}ms`,
+                }}
               />
             </div>
           </div>

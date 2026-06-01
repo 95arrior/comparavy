@@ -121,13 +121,13 @@ export default function BadgeRow({
       {visibleBadges.map((badge) => (
         <span
           key={badge.label}
-          className={`inline-flex min-h-7 items-center rounded-full px-2.5 py-1 text-[11px] font-semibold leading-none ring-1 ring-inset ${TONE_CLASSES[badge.tone ?? "slate"]}`}
+          className={`inline-flex min-h-7 items-center justify-center rounded-full px-2.5 py-1 text-[11px] font-semibold leading-none ring-1 ring-inset ${TONE_CLASSES[badge.tone ?? "slate"]}`}
         >
           {badge.label}
         </span>
       ))}
       {hiddenCount > 0 && (
-        <span className="inline-flex min-h-7 items-center rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold leading-none text-slate-500 ring-1 ring-inset ring-slate-200">
+        <span className="inline-flex min-h-7 items-center justify-center rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold leading-none text-slate-500 ring-1 ring-inset ring-slate-200">
           +{hiddenCount} more
         </span>
       )}
