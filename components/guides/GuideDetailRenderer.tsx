@@ -5,6 +5,7 @@ import IncomeGuideLayout from "@/components/guides/IncomeGuideLayout";
 import RelatedShortcuts, {
   type RelatedShortcutItem,
 } from "@/components/guides/RelatedShortcuts";
+import ResultPreviewFrame from "@/components/guides/ResultPreviewFrame";
 import ShortcutBrief from "@/components/guides/ShortcutBrief";
 import ToolDecisionGuideLayout from "@/components/guides/ToolDecisionGuideLayout";
 import TrendDecisionGuideLayout from "@/components/guides/TrendDecisionGuideLayout";
@@ -46,6 +47,7 @@ export default function GuideDetailRenderer({ guide }: GuideDetailRendererProps)
 
   return (
     <div className="mt-6 space-y-6">
+      <ResultPreviewFrame guide={guide} />
       <ShortcutBrief guide={guide} />
       <GuideExecutionShortcut guide={guide} />
 

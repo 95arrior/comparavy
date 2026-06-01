@@ -46,6 +46,11 @@ export interface EditorialBlueprint {
   readonly toolRoleMap: readonly { readonly toolSlug: string; readonly toolName: string; readonly role: string }[];
   readonly decisionPath: readonly string[];
   readonly comparisonCriteria: readonly string[];
+  readonly previewConcept: {
+    readonly beforeInput: string;
+    readonly afterOutput: string;
+    readonly whyItWorks: string;
+  };
   readonly exampleResult: string;
   readonly commonMistakes: readonly string[];
   readonly faqQuestions: readonly string[];
@@ -325,6 +330,12 @@ export function buildEditorialBlueprint({
       "mobile usefulness",
       "desktop depth",
     ]),
+    previewConcept: {
+      beforeInput: `${inputMaterial[0]} that is rough, incomplete, or not yet shaped for ${desiredOutput[0]}.`,
+      afterOutput: `${desiredOutput[0]} with clear sections, review notes, and no unsupported performance or success claims.`,
+      whyItWorks:
+        "The preview must be a mobile-readable Mac-style before-and-after frame near the top, with crawlable HTML text and a compact AI Shortcut brief below it.",
+    },
     exampleResult: `Example result: ${desiredOutput[0]} built from ${inputMaterial[0]}, with the original constraints preserved and the final review notes resolved.`,
     commonMistakes: categoryLanguage.commonMistakes,
     faqQuestions: [

@@ -7,6 +7,12 @@ export interface GuideGoldBriefToolRole {
   readonly role: string;
 }
 
+export interface GuideGoldBriefPreviewConcept {
+  readonly beforeInput: string;
+  readonly afterOutput: string;
+  readonly whyItWorks: string;
+}
+
 export interface GuideGoldBrief {
   readonly slug: string;
   readonly guideType: GuideGoldBriefType;
@@ -28,6 +34,7 @@ export interface GuideGoldBrief {
   readonly decisionPath: readonly string[];
   readonly comparisonCriteria: readonly string[];
   readonly exampleResult: string;
+  readonly previewConcept?: GuideGoldBriefPreviewConcept;
   readonly commonMistakes: readonly string[];
   readonly faqQuestions: readonly string[];
   readonly allowedTerms: readonly string[];
@@ -37,6 +44,19 @@ export interface GuideGoldBrief {
   readonly status: GuideGoldBriefStatus;
   readonly priority: number;
 }
+
+export const guidePreviewQualityRules = {
+  requireMacStyleFrame: true,
+  requireBeforeInput: true,
+  requireAfterOutput: true,
+  requireWhyItWorks: true,
+  requireMobileReadableContent: true,
+  keepPromptBuilderNearTop: true,
+  compactShortcutBriefLabels: ["Input", "Output", "Time", "Works with"],
+  banFakeTestimonials: true,
+  banFakeSuccessClaims: true,
+  banUnsupportedPerformanceClaims: true,
+} as const;
 
 export const guideGoldBriefs = [
   {
