@@ -28,6 +28,13 @@ For each candidate topic, record:
 - Primary keyword
 - Secondary keywords
 - Likely search intent
+- Searcher's likely situation
+- Why they searched Google instead of using AI directly
+- What they want to finish
+- What they are afraid AI might get wrong
+- What AteFlo prompt structure will fix
+- What proof or reward the page must show
+- Whether the page can get them to Copy Prompt quickly
 - Competing content type
 - Content gap AteFlo can fill
 - Recommended title
@@ -50,10 +57,14 @@ A topic can move forward only when all of these are true:
 
 - The query describes a clear task, input, and finished output.
 - The primary keyword is specific enough to support a prompt-builder page.
+- The searcher's reason for using Google is clear.
+- The page can reduce prompt uncertainty, outcome uncertainty, or trust risk.
 - The SERP leaves room for practical workflow content, not just tool lists.
 - AteFlo can provide a stronger workflow than "ask ChatGPT to do it."
 - The page can include a concrete prompt builder, example output, and review
   checklist.
+- The visitor can understand what to make, what to fill in, and where to copy
+  the prompt within 10 seconds.
 - The topic does not create AdSense, trust, legal, medical, financial, privacy,
   or unsupported-claims risk.
 
@@ -67,6 +78,8 @@ Reject or hold a topic if:
 - AteFlo cannot provide a stronger prompt workflow than a normal ChatGPT answer.
 - It has no clear finished output.
 - It creates AdSense or trust risks.
+- It cannot explain why a Google searcher would prefer this page over prompting
+  AI from scratch.
 
 ## Gold Brief Storage
 

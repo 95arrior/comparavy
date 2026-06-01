@@ -17,11 +17,13 @@ the AteFlo quality standard.
 Every public shortcut must pass:
 
 1. Search Intent Gate
-2. Differentiation Gate
-3. Prompt Quality Gate
-4. Layout and Conversion Gate
-5. Monetization Safety Gate
-6. Works With Gate
+2. Google Searcher Psychology Gate
+3. Search-to-Copy Promise
+4. Differentiation Gate
+5. Prompt Quality Gate
+6. Layout and Conversion Gate
+7. Monetization Safety Gate
+8. Works With Gate
 
 The full standards live in:
 
@@ -54,6 +56,24 @@ Required research output:
 - Keyword Planner note when owner data is provided
 - Search Console query note when available
 
+## Future Topic Review Format
+
+Every candidate topic review must include:
+
+- Primary keyword
+- Searcher's likely situation
+- Why they searched Google instead of using AI directly
+- What they want to finish
+- What they are afraid AI might get wrong
+- What AteFlo prompt structure will fix
+- What proof or reward the page must show
+- Whether the page can get them to Copy Prompt quickly
+- Publish / hold / reject decision
+
+Do not approve a topic review that only says the topic has AI interest. The
+review must explain the searcher's uncertainty, immediate desired outcome, and
+why AteFlo is faster or safer than asking AI from scratch.
+
 ## Hold Conditions
 
 Hold or reject the topic if:
@@ -65,9 +85,24 @@ Hold or reject the topic if:
 - It has no clear finished output.
 - It creates AdSense, privacy, compliance, or trust risk.
 - It lacks topic-specific Works with tools.
+- It cannot satisfy the Search-to-Copy Promise within the first screen.
+- It cannot explain what the user should check before using the AI output.
 
 ## Automation Rule
 
 `scripts/autoPublishGuides.ts` must hold approved-queue publishing and gold-brief
 generation when `topicResearch` is missing, incomplete, or not validated. Generic
 fallback topics must remain disabled unless they have explicit research evidence.
+
+## Google Searcher Psychology Rule
+
+AteFlo should assume many visitors are not confident prompt writers. They came
+from Google because they want a trusted structure, examples, and checks before
+using AI. The public page must reward that click quickly:
+
+- Name the finished output early.
+- Make the input fields obvious.
+- Put Copy Prompt near the action.
+- Show an example output.
+- Explain what the prompt prevents, such as invented facts, missing owners,
+  false product claims, or generic personal wording.

@@ -45,3 +45,70 @@ for:
 - The Check before using section catches real topic-specific risks.
 - Tool recommendations support the workflow instead of turning the page into a
   generic listicle.
+
+## Google Searcher Psychology
+
+AteFlo should serve people who search Google before using AI directly. These
+visitors often know AI can help, but they do not want to design the prompt from
+scratch. They may want external validation, a fast answer on mobile, a reusable
+workflow, a clear example, or a safer structure before they paste anything into
+an AI tool.
+
+Future content should be written for these mental states:
+
+- Prompt uncertainty
+- Outcome urgency
+- Risk avoidance
+- Example seeking
+- Trust seeking
+- Low confidence
+- Mobile impatience
+- Reusable workflow desire
+
+This changes topic selection and article creation. A topic is stronger when the
+searcher needs a specific prompt structure, example output, and checklist. A
+topic is weaker when a normal AI answer would be just as good.
+
+## Examples
+
+### Meeting Notes to Follow-Up Email
+
+Query: `how to turn meeting notes into follow up email with AI`
+
+Searcher psychology: They have messy notes and need a client-safe email. They
+fear inventing commitments, using wrong deadlines, or missing owners.
+
+AteFlo must provide:
+
+- Fields for notes, client/project, deadlines, owners, and open questions.
+- Prompt rules for missing owners and deadlines.
+- Example recap.
+- Check-before-sending list.
+
+### Dating App Bio
+
+Query: `AI dating app bio`
+
+Searcher psychology: They want a better bio but do not want to sound fake,
+generic, or desperate.
+
+AteFlo must provide:
+
+- Fields for personality, interests, tone, and dealbreakers.
+- Prompt rules to avoid cliches and invented traits.
+- Example bio options.
+- Check-before-using list.
+
+### Etsy Product Description
+
+Query: `AI Etsy product description`
+
+Searcher psychology: They want a listing draft but fear AI inventing product
+facts, materials, shipping details, or false claims.
+
+AteFlo must provide:
+
+- Product detail fields.
+- Prompt rules for missing information.
+- Seller review checklist.
+- Mobile-readable listing output.

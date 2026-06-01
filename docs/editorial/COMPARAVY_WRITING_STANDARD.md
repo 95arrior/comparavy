@@ -17,7 +17,8 @@ The reader should leave with:
 
 Before writing, approving, or publishing any AteFlo shortcut, validate the
 topic with live search-intent research. Use the full gate in
-`docs/editorial/TOPIC_SEO_RESEARCH_GATE.md`.
+`docs/editorial/TOPIC_SEO_RESEARCH_GATE.md` and the publishing engine rules in
+`docs/ateflo-publishing-engine.md`.
 
 At minimum, the topic must prove:
 
@@ -31,6 +32,17 @@ At minimum, the topic must prove:
   published shortcut.
 
 Hold or reject topics that cannot pass this gate.
+
+## Google Searcher Psychology
+
+AteFlo pages are for searchers who often go to Google before they ask an AI tool
+directly. They may know AI can help but still need a trusted prompt, an example,
+a checklist, and a faster path to a usable result. Every article should explain
+the task quickly, show the action early, and reduce the reader's uncertainty
+before asking them to trust the AI output.
+
+If the page cannot move the searcher from query intent to Copy Prompt within the
+first screen, hold the topic.
 
 ## Prompt Builder Usability Test
 
