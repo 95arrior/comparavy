@@ -36,7 +36,7 @@ export async function generateMetadata({
 
   return {
     title: tool.name,
-    description: `${tool.description} Compare fit, pricing notes, and alternatives for AI shortcut workflows.`,
+    description: `${tool.description} Compare fit, pricing notes, and alternatives for AteFlo shortcut workflows.`,
     keywords: [
       tool.name,
       tool.category,
@@ -211,9 +211,9 @@ export default async function ToolDetailPage({ params }: ToolPageProps) {
                 Why this page exists
               </SectionHeading>
               <p className="mt-5 text-sm leading-7 text-slate-700">
-                This page is built for fast reading: the summary sits at the top,
-                the decision factors are grouped into compact cards, and the main
-                actions stay visible so you can move on quickly.
+                This page helps you decide whether this tool fits the shortcut
+                task you are trying to finish. Start with the fit summary, then
+                compare tradeoffs and alternatives.
               </p>
             </section>
 
@@ -222,8 +222,8 @@ export default async function ToolDetailPage({ params }: ToolPageProps) {
                 Use the right CTA
               </SectionHeading>
               <p className="mt-5 text-sm leading-7 text-slate-700">
-                If you are ready to test the product, open the official site. If
-                you are still comparing, jump to Finder or open a related shortcut.
+                If this tool fits your shortcut workflow, open the official site.
+                If you are still choosing, use Finder or browse the shortcuts.
               </p>
               <ActionLinks
                 className="mt-6"

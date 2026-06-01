@@ -25,7 +25,10 @@ html {
 }
 
 .ateflo-reveal {
-  animation: ateflo-fade-up 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  opacity: 0;
+  transform: translateY(12px) scale(0.98);
+  animation: ateflo-card-spring-enter 420ms cubic-bezier(0.18, 1.06, 0.28, 1) both;
+  will-change: opacity, transform;
 }
 
 .ateflo-reveal-delay-1 {
@@ -46,16 +49,14 @@ html {
 
 .ateflo-card-lift {
   transition:
-    transform 180ms ease,
     box-shadow 180ms ease,
     border-color 180ms ease,
     background-color 180ms ease;
 }
 
 .ateflo-card-lift:hover {
-  transform: translateY(-2px);
   box-shadow:
-    0 22px 44px rgba(15, 23, 42, 0.1),
+    0 18px 34px rgba(15, 23, 42, 0.08),
     0 1px 0 rgba(255, 255, 255, 0.72) inset;
 }
 
@@ -75,7 +76,6 @@ html {
     0 10px 22px rgba(15, 118, 110, 0.18),
     0 0 0 1px rgba(20, 184, 166, 0.28);
   transition:
-    transform 160ms ease,
     box-shadow 160ms ease,
     filter 160ms ease;
 }
@@ -92,7 +92,6 @@ html {
 }
 
 .ateflo-primary-copy-button:hover {
-  transform: translateY(-1px);
   box-shadow:
     0 14px 28px rgba(15, 118, 110, 0.22),
     0 0 0 1px rgba(20, 184, 166, 0.38);
@@ -146,8 +145,9 @@ html {
 
 .ateflo-finder-result-card {
   opacity: 0;
-  transform: translateY(10px);
-  animation: ateflo-result-card-enter 360ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  transform: translateY(12px) scale(0.98);
+  animation: ateflo-card-spring-enter 420ms cubic-bezier(0.18, 1.06, 0.28, 1) forwards;
+  will-change: opacity, transform;
 }
 
 .ateflo-tag-rail {
@@ -183,11 +183,19 @@ html {
 }
 
 .ateflo-search-results {
-  animation: ateflo-results-enter 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  opacity: 0;
+  transform: translateY(10px) scale(0.985);
+  animation: ateflo-card-spring-enter 360ms cubic-bezier(0.18, 1.04, 0.28, 1) both;
+  will-change: opacity, transform;
 }
 
-.ateflo-search-result-card {
-  animation: ateflo-result-card-enter 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+.ateflo-search-result-card,
+.ateflo-featured-shortcut-card,
+.ateflo-related-shortcut-card {
+  opacity: 0;
+  transform: translateY(12px) scale(0.98);
+  animation: ateflo-card-spring-enter 420ms cubic-bezier(0.18, 1.06, 0.28, 1) both;
+  will-change: opacity, transform;
 }
 
 .ateflo-shortcut-strip {
@@ -332,14 +340,36 @@ html {
 }
 
 @keyframes ateflo-result-card-enter {
-  from {
+  0% {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(12px) scale(0.98);
   }
 
-  to {
+  70% {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(-1px) scale(1.003);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes ateflo-card-spring-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+
+  70% {
+    opacity: 1;
+    transform: translateY(-1px) scale(1.003);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -380,6 +410,8 @@ html {
   .ateflo-primary-copy-button::before,
   .ateflo-search-results,
   .ateflo-search-result-card,
+  .ateflo-featured-shortcut-card,
+  .ateflo-related-shortcut-card,
   .ateflo-finder-result-card,
   .ateflo-shortcut-strip-track,
   .ateflo-tag-rail-track,
@@ -389,9 +421,15 @@ html {
     transition: none;
   }
 
+  .ateflo-reveal,
+  .ateflo-search-results,
+  .ateflo-search-result-card,
+  .ateflo-featured-shortcut-card,
+  .ateflo-related-shortcut-card,
   .ateflo-finder-result-card {
     opacity: 1;
     transform: none;
+    will-change: auto;
   }
 
   .ateflo-card-lift:hover {

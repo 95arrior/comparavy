@@ -112,7 +112,7 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
             What are you trying to finish?
           </p>
           <p className="mt-1 text-sm leading-6 text-slate-600">
-            Search for a shortcut by task, input, output, or tool.
+            Search by the task you need to finish, the input you have, or the output you want.
           </p>
         </div>
         <label htmlFor="shortcut-search" className="sr-only">
@@ -140,7 +140,7 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
               type="button"
               data-event="search_chip_click"
               data-search-chip={chip}
-              className="inline-flex min-h-9 items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+              className="inline-flex min-h-9 items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
               onClick={() => handleSearchChipClick(chip)}
             >
               {chip}
@@ -167,7 +167,7 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
                 action_location: "shortcuts_search_empty_state",
               })
             }
-            className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+            className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
           >
             Open Finder
           </Link>
@@ -177,9 +177,8 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
           {filteredShortcuts.map((shortcut, index) => (
             <article
               key={shortcut.slug}
-              className={`group flex h-full min-w-0 flex-col rounded-3xl border border-slate-200 bg-white p-5 shadow-sm ateflo-card-lift ateflo-reveal sm:p-6 ${
-                index % 2 === 1 ? "ateflo-reveal-delay-1" : ""
-              }`}
+              style={{ animationDelay: `${Math.min(index * 55, 220)}ms` }}
+              className="group flex h-full min-w-0 flex-col rounded-3xl border border-slate-200 bg-white p-5 shadow-sm ateflo-card-lift ateflo-reveal sm:p-6"
             >
               <div className="flex flex-wrap items-center gap-2">
                 <CategoryChip label={shortcut.category} />
@@ -235,7 +234,7 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
                   data-guide-slug={shortcut.slug}
                   data-action-location="shortcuts_listing_button"
                   onClick={() => trackShortcutClick(shortcut)}
-                  className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-teal-700 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+                  className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-teal-700 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
                 >
                   Open Shortcut
                 </Link>

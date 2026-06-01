@@ -52,14 +52,14 @@ export default function AlternativeTools({
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={`Visit ${alternative.name} official site`}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-teal-700 text-white transition hover:-translate-y-0.5 hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-teal-700 text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
               >
                 <AteFloIcon name="open" className="h-4 w-4" />
               </a>
               <Link
                 href={`/tools/${alternative.slug}`}
                 aria-label={`View ${alternative.name} tool page`}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:-translate-y-0.5 hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
               >
                 <AteFloIcon name="search" className="h-4 w-4" />
               </Link>

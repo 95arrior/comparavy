@@ -97,7 +97,7 @@ export default function ToolsDirectory({ tools }: ToolsDirectoryProps) {
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search by name, use case, or tag"
+              placeholder="Search by shortcut task, use case, or tag"
               className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-teal-300 focus:ring-2 focus:ring-teal-100"
             />
           </label>
@@ -221,7 +221,7 @@ export default function ToolsDirectory({ tools }: ToolsDirectoryProps) {
             </p>
             <p className="mt-3 text-lg leading-8 text-slate-200">
               Use Finder to get a shortlist matched to your workflow,
-              budget, and comfort level.
+              budget, and the output you need to finish.
             </p>
           </div>
           <TrackedLink

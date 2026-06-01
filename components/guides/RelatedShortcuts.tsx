@@ -52,10 +52,11 @@ export default function RelatedShortcuts({
         {sectionSubtitle}
       </p>
       <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {guides.map((relatedGuide) => (
+        {guides.map((relatedGuide, index) => (
           <article
             key={relatedGuide.slug}
-            className="group flex h-full min-w-0 flex-col rounded-2xl border border-slate-200 bg-slate-50/70 p-4 transition hover:-translate-y-0.5 hover:border-teal-200 hover:bg-white hover:shadow-sm"
+            style={{ animationDelay: `${Math.min(index * 60, 180)}ms` }}
+            className="ateflo-related-shortcut-card group flex h-full min-w-0 flex-col rounded-2xl border border-slate-200 bg-slate-50/70 p-4 transition hover:border-teal-200 hover:bg-white hover:shadow-sm"
           >
             <div className="flex flex-wrap items-center gap-2">
               <CategoryChip label={relatedGuide.category} />
@@ -106,7 +107,7 @@ export default function RelatedShortcuts({
                 data-destination-slug={relatedGuide.slug}
                 data-action-location="related_shortcuts_button"
                 onClick={() => trackRelatedClick(relatedGuide)}
-                className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-teal-700 px-4 py-2.5 text-center text-sm font-semibold text-white transition group-hover:bg-teal-800 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+                className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-teal-700 px-4 py-2.5 text-center text-sm font-semibold text-white transition group-hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
               >
                 Open Shortcut
               </Link>

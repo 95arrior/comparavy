@@ -9,7 +9,7 @@ import { toDiscoveryItem } from "@/lib/shortcutDiscovery";
 
 const HOME_TITLE = "AteFlo | AI Prompts for Real Work";
 const HOME_DESCRIPTION =
-  "Find copy-ready AI prompts for meeting notes, Etsy listings, PDFs, small business content, and other tasks you need to finish.";
+  "Stop guessing what to ask AI. Find task-specific prompts for meeting notes, Etsy listings, PDFs, small business content, and other work you need to finish.";
 
 export const metadata: Metadata = {
   title: {
@@ -60,6 +60,10 @@ export default function Home() {
           <h1 className="mt-6 text-3xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
             Get the right AI prompt for the task you need to finish.
           </h1>
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
+            Stop guessing what to ask AI. Choose a task, fill in a few
+            details, and copy a prompt built for the result you need.
+          </p>
         </div>
       </section>
 
@@ -105,7 +109,7 @@ export default function Home() {
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-700">
               Browse every published AteFlo shortcut, or use Finder when you
-              know the workflow but still need help choosing a tool.
+              know the task but still need help choosing the right prompt or tool.
             </p>
           </div>
           <div className="mt-6 flex flex-col gap-3 sm:mt-0 sm:flex-row">

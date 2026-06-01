@@ -26,7 +26,7 @@ function StripCard({
   const shortcutHref = `/shortcuts/${shortcut.slug}`;
 
   return (
-    <article className="flex min-h-[430px] w-[300px] shrink-0 flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-teal-200 hover:shadow-md sm:w-[390px] sm:p-7 lg:w-[430px]">
+    <article className="ateflo-featured-shortcut-card flex min-h-[430px] w-[300px] shrink-0 flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-teal-200 hover:shadow-md sm:w-[390px] sm:p-7 lg:w-[430px]">
       <CategoryChip label={shortcut.category} />
       <h3 className="ateflo-clamp-2 mt-4 text-lg font-semibold leading-7 tracking-tight text-slate-950 sm:text-xl sm:leading-8">
         <Link
@@ -63,7 +63,7 @@ function StripCard({
           <Link
             href={shortcutHref}
             tabIndex={-1}
-            className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-teal-800"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800"
           >
             Open Shortcut
           </Link>
@@ -77,7 +77,7 @@ function StripCard({
               destination_title: shortcut.title,
               action_location: "home_shortcut_strip",
             }}
-            className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
           >
             Open Shortcut
           </TrackedLink>

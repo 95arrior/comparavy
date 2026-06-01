@@ -136,7 +136,7 @@ export default function HomeShortcutSearch({ shortcuts }: HomeShortcutSearchProp
               id="home-shortcut-search"
               type="search"
               value={query}
-              placeholder="Find the right prompt or shortcut for your task..."
+              placeholder="Search by task, input, or output..."
               data-event="shortcuts_search_used"
               data-action-location="home_search"
               className="ateflo-home-search-input min-h-12 min-w-0 flex-1 bg-transparent text-base font-medium text-slate-950 outline-none placeholder:text-slate-400 sm:min-h-14 sm:text-lg"
@@ -171,7 +171,7 @@ export default function HomeShortcutSearch({ shortcuts }: HomeShortcutSearchProp
         </div>
 
         {hasActiveSearch && (
-          <div className="mx-auto mt-7 max-w-5xl rounded-[2rem] border border-teal-100 bg-white/85 p-3 shadow-xl shadow-teal-950/5 backdrop-blur ateflo-search-results sm:p-4">
+          <div className="mx-auto mt-7 max-w-5xl rounded-[2rem] border border-teal-100 bg-white/95 p-3 shadow-xl shadow-teal-950/5 ateflo-search-results sm:p-4">
             {filteredShortcuts.length === 0 ? (
               <div className="rounded-3xl border border-slate-200 bg-white p-5">
                 <p className="text-sm font-semibold text-slate-950">
