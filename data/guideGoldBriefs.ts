@@ -48,7 +48,7 @@ export interface GuideGoldBrief {
 
 export const guidePreviewQualityRules = {
   requireTaskMatchedPreviewType: true,
-  requireScrollFocusAnimationSupport: true,
+  requireBlurToFocusRevealSupport: true,
   requireReducedMotionFallback: true,
   requireBeforeInput: true,
   requireAfterOutput: true,

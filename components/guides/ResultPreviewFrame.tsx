@@ -1,6 +1,4 @@
-"use client";
-
-import { useEffect, useRef, useState } from "react";
+import ScrollFocusReveal from "@/components/guides/ScrollFocusReveal";
 import type { Guide } from "@/lib/guides";
 
 type PreviewType =
@@ -391,16 +389,18 @@ function typeLabel(type: PreviewType): string {
 function resultShellClass(type: PreviewType): string {
   switch (type) {
     case "listing_result":
-      return "border-teal-200 bg-gradient-to-br from-white to-teal-50/50";
+      return "border-teal-200 bg-gradient-to-br from-white via-white to-teal-50";
     case "calendar_result":
-      return "border-emerald-200 bg-gradient-to-br from-white to-emerald-50/45";
+      return "border-emerald-200 bg-gradient-to-br from-white via-white to-emerald-50";
     case "carousel_result":
-      return "border-slate-200 bg-gradient-to-br from-white to-slate-50";
+      return "border-teal-200 bg-gradient-to-br from-white via-slate-50 to-teal-50";
     case "email_result":
+      return "border-teal-200 bg-gradient-to-br from-white via-white to-slate-50";
     case "document_result":
+      return "border-teal-200 bg-gradient-to-br from-white via-white to-teal-50/70";
     case "ai_result":
     default:
-      return "border-teal-100 bg-white";
+      return "border-teal-200 bg-white";
   }
 }
 
@@ -412,7 +412,10 @@ function renderSections(sections?: readonly PreviewSection[]) {
   return (
     <div className="grid gap-3">
       {sections.map((section) => (
-        <div key={section.heading} className="rounded-2xl bg-[#F6FBF8] p-3 sm:p-4">
+        <div
+          key={section.heading}
+          className="rounded-2xl border border-teal-100 bg-white p-3 shadow-sm sm:p-4"
+        >
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-teal-800">
             {section.heading}
           </p>
@@ -440,7 +443,7 @@ function renderCalendarRows(rows?: readonly PreviewRow[]) {
       {rows.map((row) => (
         <div
           key={`${row.label}-${row.value}`}
-          className="grid gap-2 rounded-2xl border border-emerald-100 bg-white/85 p-3 sm:grid-cols-[5rem_1fr]"
+          className="grid gap-2 rounded-2xl border border-emerald-100 bg-white p-3 shadow-sm sm:grid-cols-[5rem_1fr]"
         >
           <div className="inline-flex h-9 w-fit items-center rounded-full bg-emerald-100 px-3 text-sm font-semibold text-emerald-900 sm:w-full sm:justify-center">
             {row.label}
@@ -467,7 +470,7 @@ function renderCarouselRows(rows?: readonly PreviewRow[]) {
       {rows.map((row) => (
         <div
           key={`${row.label}-${row.value}`}
-          className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm"
+          className="flex min-h-[8.75rem] flex-col rounded-2xl border border-teal-100 bg-gradient-to-br from-white to-teal-50/60 p-3 shadow-sm"
         >
           <div className="flex items-center gap-2">
             <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-teal-600 text-xs font-bold text-white">
@@ -476,7 +479,7 @@ function renderCarouselRows(rows?: readonly PreviewRow[]) {
             <p className="text-sm font-semibold text-slate-950">{row.value}</p>
           </div>
           {row.meta ? (
-            <p className="mt-3 text-sm leading-6 text-slate-600">{row.meta}</p>
+            <p className="mt-auto pt-3 text-sm leading-6 text-slate-600">{row.meta}</p>
           ) : null}
         </div>
       ))}
@@ -508,114 +511,76 @@ function renderResultBody(preview: PreviewContent) {
 
 export default function ResultPreviewFrame({ guide }: { readonly guide: Guide }) {
   const preview = PREVIEW_BY_SLUG[guide.slug] ?? fallbackPreview(guide);
-  const previewRef = useRef<HTMLElement | null>(null);
-  const [isInView, setIsInView] = useState(false);
-
-  useEffect(() => {
-    const previewElement = previewRef.current;
-
-    if (!previewElement) {
-      return;
-    }
-
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    if (prefersReducedMotion || !("IntersectionObserver" in window)) {
-      setIsInView(true);
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          setIsInView(true);
-          observer.disconnect();
-        }
-      },
-      {
-        rootMargin: "0px 0px -12% 0px",
-        threshold: 0.28,
-      },
-    );
-
-    observer.observe(previewElement);
-    return () => observer.disconnect();
-  }, []);
 
   return (
-    <section
-      ref={previewRef}
-      className={`overflow-hidden rounded-[1.5rem] border bg-white shadow-[0_18px_48px_rgba(15,23,42,0.08)] transition-[opacity,transform,border-color,box-shadow] duration-500 ease-out motion-reduce:translate-y-0 motion-reduce:scale-100 motion-reduce:opacity-100 ${
-        isInView
-          ? "translate-y-0 scale-100 border-teal-200 opacity-100 shadow-[0_22px_58px_rgba(15,118,110,0.14)]"
-          : "translate-y-2 scale-[0.965] border-teal-100 opacity-[0.88]"
-      }`}
-    >
-      <div className="flex items-center justify-between gap-4 border-b border-slate-200 bg-[#F8FAF8] px-4 py-3 sm:px-5">
-        <div className="flex items-center gap-2" aria-hidden="true">
-          <span className="h-3 w-3 rounded-full bg-[#ff6b5f]" />
-          <span className="h-3 w-3 rounded-full bg-[#f6c85f]" />
-          <span className="h-3 w-3 rounded-full bg-[#39c277]" />
-        </div>
-        <p className="min-w-0 truncate text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-          {preview.windowTitle}
-        </p>
-        <span className="h-3 w-14" aria-hidden="true" />
-      </div>
-
-      <div className="bg-[#FCFBF7] p-4 sm:p-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-700">
-              Example result
-            </p>
-            <h2 className="mt-2 text-xl font-semibold text-slate-950 sm:text-2xl">
-              See what this shortcut can produce
-            </h2>
+    <ScrollFocusReveal>
+      <section className="overflow-hidden rounded-[1.65rem] bg-gradient-to-br from-teal-900 via-teal-700 to-slate-950 p-[1px] shadow-[0_24px_70px_rgba(15,23,42,0.16)]">
+        <div className="flex items-center justify-between gap-4 rounded-t-[1.6rem] border-b border-white/10 bg-slate-950/70 px-4 py-3 text-white sm:px-5">
+          <div className="flex items-center gap-2" aria-hidden="true">
+            <span className="h-3 w-3 rounded-full bg-[#ff6b5f]" />
+            <span className="h-3 w-3 rounded-full bg-[#f6c85f]" />
+            <span className="h-3 w-3 rounded-full bg-[#39c277]" />
           </div>
-          <span className="inline-flex h-8 w-fit items-center justify-center rounded-full border border-teal-100 bg-teal-50 px-3 text-xs font-semibold text-teal-800">
-            {typeLabel(preview.type)}
-          </span>
-        </div>
-
-        <div className="mt-5 rounded-2xl border border-slate-200 bg-white/85 p-3 sm:p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-            {preview.inputTitle}
+          <p className="min-w-0 truncate text-xs font-semibold uppercase tracking-[0.14em] text-teal-50">
+            {preview.windowTitle}
           </p>
-          <p className="mt-2 text-sm leading-6 text-slate-700">{preview.input}</p>
+          <span className="hidden h-3 w-14 rounded-full bg-white/10 sm:block" aria-hidden="true" />
         </div>
 
-        <div className={`mt-4 rounded-[1.25rem] border p-4 shadow-sm sm:p-5 ${resultShellClass(preview.type)}`}>
-          <div className="flex flex-col gap-2 border-b border-slate-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="rounded-b-[1.6rem] bg-[#FCFBF7] p-4 sm:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">
-                {preview.resultLabel}
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-700">
+                Result preview
               </p>
-              <h3 className="mt-2 text-lg font-semibold text-slate-950 sm:text-xl">
-                {preview.resultTitle}
-              </h3>
+              <h2 className="mt-2 text-xl font-semibold text-slate-950 sm:text-2xl">
+                A realistic output this shortcut is built to create
+              </h2>
             </div>
-            <span className="inline-flex h-8 w-fit items-center rounded-full bg-slate-950 px-3 text-xs font-semibold text-white">
-              Review-ready draft
+            <span className="inline-flex h-8 w-fit items-center justify-center rounded-full border border-teal-200 bg-white px-3 text-xs font-semibold text-teal-800 shadow-sm">
+              {typeLabel(preview.type)}
             </span>
           </div>
 
-          {preview.intro ? (
-            <p className="mt-4 rounded-2xl bg-white/75 p-3 text-sm font-medium leading-6 text-slate-800 sm:p-4">
-              {preview.intro}
+          <div className="mt-5 rounded-2xl border border-teal-100 bg-white/90 p-3 shadow-sm sm:p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+              {preview.inputTitle}
             </p>
-          ) : null}
+            <p className="mt-2 text-sm leading-6 text-slate-700">{preview.input}</p>
+          </div>
 
-          <div className="mt-4">{renderResultBody(preview)}</div>
-        </div>
+          <div className={`mt-4 rounded-[1.35rem] border p-4 shadow-[0_18px_40px_rgba(15,23,42,0.08)] sm:p-5 ${resultShellClass(preview.type)}`}>
+            <div className="flex flex-col gap-2 border-b border-slate-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">
+                  {preview.resultLabel}
+                </p>
+                <h3 className="mt-2 text-lg font-semibold text-slate-950 sm:text-xl">
+                  {preview.resultTitle}
+                </h3>
+              </div>
+              <span className="inline-flex h-8 w-fit items-center rounded-full bg-teal-900 px-3 text-xs font-semibold text-white">
+                Review-ready draft
+              </span>
+            </div>
 
-        <div className="mt-4 rounded-2xl border border-teal-100 bg-white/90 p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-800">
-            Why it works
-          </p>
-          <p className="mt-2 text-sm leading-6 text-slate-700">{preview.whyItWorks}</p>
+            {preview.intro ? (
+              <p className="mt-4 rounded-2xl border border-slate-100 bg-white p-3 text-sm font-medium leading-6 text-slate-800 shadow-sm sm:p-4">
+                {preview.intro}
+              </p>
+            ) : null}
+
+            <div className="mt-4">{renderResultBody(preview)}</div>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-teal-100 bg-white/90 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-800">
+              Why it works
+            </p>
+            <p className="mt-2 text-sm leading-6 text-slate-700">{preview.whyItWorks}</p>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </ScrollFocusReveal>
   );
 }

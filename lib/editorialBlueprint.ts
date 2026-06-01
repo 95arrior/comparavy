@@ -336,7 +336,7 @@ export function buildEditorialBlueprint({
       beforeInput: `${inputMaterial[0]} that is rough, incomplete, or not yet shaped for ${desiredOutput[0]}.`,
       afterOutput: `${desiredOutput[0]} with clear sections, review notes, and no unsupported performance or success claims.`,
       whyItWorks:
-        "The preview must be a mobile-readable, output-matched result frame near the top, with crawlable HTML text, scroll-focus animation support, reduced-motion fallback, and a compact AI Shortcut brief below it.",
+        "The preview must be a mobile-readable, output-matched result frame near the top, with crawlable HTML text, blur-to-focus reveal support, reduced-motion fallback, and a compact AI Shortcut brief below it.",
     },
     exampleResult: `Example result: ${desiredOutput[0]} built from ${inputMaterial[0]}, with the original constraints preserved and the final review notes resolved.`,
     commonMistakes: categoryLanguage.commonMistakes,
