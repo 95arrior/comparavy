@@ -581,8 +581,8 @@ export default function ResultPreviewFrame({ guide }: { readonly guide: Guide })
 
   return (
     <ScrollFocusReveal>
-      <section className="overflow-hidden rounded-[1.65rem] bg-gradient-to-br from-teal-900 via-teal-700 to-slate-950 p-[1px] shadow-[0_24px_70px_rgba(15,23,42,0.16)]">
-        <div className="flex items-center justify-between gap-4 rounded-t-[1.6rem] border-b border-white/10 bg-slate-950/70 px-4 py-3 text-white sm:px-5">
+      <section className="overflow-hidden rounded-[1.75rem] border border-teal-100 bg-[#F7FBF7] p-2 shadow-[0_26px_80px_rgba(15,23,42,0.14)]">
+        <div className="flex items-center justify-between gap-4 rounded-t-[1.35rem] border border-b-0 border-slate-900 bg-slate-950 px-4 py-3 text-white shadow-sm sm:px-5">
           <div className="flex items-center gap-2" aria-hidden="true">
             <span className="h-3 w-3 rounded-full bg-[#ff6b5f]" />
             <span className="h-3 w-3 rounded-full bg-[#f6c85f]" />
@@ -594,7 +594,7 @@ export default function ResultPreviewFrame({ guide }: { readonly guide: Guide })
           <span className="hidden h-3 w-14 rounded-full bg-white/10 sm:block" aria-hidden="true" />
         </div>
 
-        <div className="rounded-b-[1.6rem] bg-[#FCFBF7] p-4 sm:p-6">
+        <div className="rounded-b-[1.35rem] border border-teal-100 bg-[#FCFBF7] p-4 sm:p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-700">
@@ -609,42 +609,52 @@ export default function ResultPreviewFrame({ guide }: { readonly guide: Guide })
             </span>
           </div>
 
-          <div className="mt-5 rounded-2xl border border-teal-100 bg-white/90 p-3 shadow-sm sm:p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-              {preview.inputTitle}
-            </p>
-            <p className="mt-2 text-sm leading-6 text-slate-700">{preview.input}</p>
-          </div>
+          <div className="relative mt-5">
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_17rem] lg:items-start">
+              <div
+                className={`relative rounded-[1.45rem] border p-4 shadow-[0_22px_54px_rgba(15,23,42,0.12)] sm:p-5 ${resultShellClass(preview.type)}`}
+              >
+                <div className="flex flex-col gap-2 border-b border-slate-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">
+                      {preview.resultLabel}
+                    </p>
+                    <h3 className="mt-2 text-lg font-semibold text-slate-950 sm:text-xl">
+                      {preview.resultTitle}
+                    </h3>
+                  </div>
+                  <span className="inline-flex h-8 w-fit items-center rounded-full bg-teal-900 px-3 text-xs font-semibold text-white shadow-sm">
+                    Review-ready draft
+                  </span>
+                </div>
 
-          <div className={`mt-4 rounded-[1.35rem] border p-4 shadow-[0_18px_40px_rgba(15,23,42,0.08)] sm:p-5 ${resultShellClass(preview.type)}`}>
-            <div className="flex flex-col gap-2 border-b border-slate-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">
-                  {preview.resultLabel}
-                </p>
-                <h3 className="mt-2 text-lg font-semibold text-slate-950 sm:text-xl">
-                  {preview.resultTitle}
-                </h3>
+                {preview.intro ? (
+                  <p className="mt-4 rounded-2xl border border-slate-100 bg-white p-3 text-sm font-medium leading-6 text-slate-800 shadow-sm sm:p-4">
+                    {preview.intro}
+                  </p>
+                ) : null}
+
+                <div className="mt-4">{renderResultBody(preview)}</div>
               </div>
-              <span className="inline-flex h-8 w-fit items-center rounded-full bg-teal-900 px-3 text-xs font-semibold text-white">
-                Review-ready draft
-              </span>
+
+              <div className="grid gap-3 lg:-ml-6 lg:pt-9">
+                <div className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_16px_36px_rgba(15,23,42,0.10)]">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                    {preview.inputTitle}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-700">{preview.input}</p>
+                </div>
+
+                <div className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_16px_36px_rgba(15,23,42,0.08)]">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-800">
+                    Why it works
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-700">
+                    {preview.whyItWorks}
+                  </p>
+                </div>
+              </div>
             </div>
-
-            {preview.intro ? (
-              <p className="mt-4 rounded-2xl border border-slate-100 bg-white p-3 text-sm font-medium leading-6 text-slate-800 shadow-sm sm:p-4">
-                {preview.intro}
-              </p>
-            ) : null}
-
-            <div className="mt-4">{renderResultBody(preview)}</div>
-          </div>
-
-          <div className="mt-4 rounded-2xl border border-teal-100 bg-white/90 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-800">
-              Why it works
-            </p>
-            <p className="mt-2 text-sm leading-6 text-slate-700">{preview.whyItWorks}</p>
           </div>
         </div>
       </section>
