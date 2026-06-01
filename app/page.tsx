@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import HomePreviewMockup from "@/components/HomePreviewMockup";
 import HomeShortcutSearch from "@/components/HomeShortcutSearch";
 import HomeShortcutStrip from "@/components/HomeShortcutStrip";
 import SiteHeader from "@/components/SiteHeader";
@@ -65,8 +64,6 @@ export default function Home() {
       </section>
 
       <HomeShortcutSearch shortcuts={shortcuts} />
-
-      <HomePreviewMockup />
 
       <HomeShortcutStrip shortcuts={shortcuts} />
 

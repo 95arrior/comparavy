@@ -1,5 +1,6 @@
 import Link from "next/link";
 import CategoryChip from "@/components/CategoryChip";
+import ShortcutResultPreview from "@/components/guides/ShortcutResultPreview";
 import ToolIcon from "@/components/ToolIcon";
 import TrackedLink from "@/components/TrackedLink";
 import type { ShortcutDiscoveryItem } from "@/lib/shortcutDiscovery";
@@ -26,7 +27,13 @@ function StripCard({
   const shortcutHref = `/shortcuts/${shortcut.slug}`;
 
   return (
-    <article className="flex min-h-[430px] w-[300px] shrink-0 flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-teal-200 hover:shadow-md sm:w-[390px] sm:p-7 lg:w-[430px]">
+    <article className="flex min-h-[560px] w-[300px] shrink-0 flex-col rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-teal-200 hover:shadow-md sm:w-[390px] sm:p-6 lg:w-[430px]">
+      <ShortcutResultPreview
+        slug={shortcut.slug}
+        title={shortcut.title}
+        topicCluster={shortcut.topicCluster}
+        className="mb-5"
+      />
       <CategoryChip label={shortcut.category} />
       <h3 className="ateflo-clamp-2 mt-4 text-lg font-semibold leading-7 tracking-tight text-slate-950 sm:text-xl sm:leading-8">
         <Link

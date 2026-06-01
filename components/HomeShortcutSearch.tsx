@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import AteFloIcon from "@/components/AteFloIcon";
 import CategoryChip from "@/components/CategoryChip";
+import ShortcutResultPreview from "@/components/guides/ShortcutResultPreview";
 import ToolIcon from "@/components/ToolIcon";
 import { trackEvent } from "@/lib/analytics";
 import {
@@ -213,6 +214,12 @@ export default function HomeShortcutSearch({ shortcuts }: HomeShortcutSearchProp
                         className="group flex h-full cursor-pointer flex-col rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-teal-200 hover:bg-teal-50/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 sm:p-6"
                       >
                         <div>
+                          <ShortcutResultPreview
+                            slug={shortcut.slug}
+                            title={shortcut.title}
+                            topicCluster={shortcut.topicCluster}
+                            className="mb-5"
+                          />
                           <CategoryChip label={shortcut.category} />
                           <h2 className="mt-2 text-lg font-semibold leading-7 text-slate-950 sm:text-xl">
                             <span className="transition group-hover:text-teal-800">
