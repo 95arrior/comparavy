@@ -6,7 +6,7 @@
   "publishPriority": 5,
   "type": "how-to",
   "metaTitle": "How to Create a Content Calendar for a Small Business with AI | AteFlo",
-  "metaDescription": "How to Create a Content Calendar for a Small Business with AI. Practical workflow, prompt examples, tool choices, common mistakes, and a practical next step.",
+  "metaDescription": "Create a small business content calendar with a copy-ready AI prompt, weekly post ideas, channel plan, CTAs, and review checklist.",
   "category": "Marketing",
   "persona": "Small business owners",
   "useCase": "creating a content calendar for a small business",
@@ -22,6 +22,25 @@
     "AI prompt for small business content calendar",
     "create a monthly content plan with AI",
     "AI marketing calendar for small business"
+  ],
+  "searchAliases": [
+    "small business content calendar",
+    "social media calendar",
+    "weekly content plan",
+    "content planning",
+    "Instagram post ideas",
+    "Facebook post ideas",
+    "marketing calendar",
+    "local business content plan",
+    "AI content calendar prompt",
+    "ChatGPT prompt for content calendar"
+  ],
+  "searchKeywords": [
+    "how to create a content calendar for small business",
+    "small business content calendar prompt",
+    "AI content calendar prompt",
+    "ChatGPT prompt for social media calendar",
+    "weekly social media calendar"
   ],
   "audience": "small business owners and local marketers",
   "searchIntent": "creating a practical content calendar",
@@ -374,7 +393,7 @@
   ],
   "whatChanged": "Start with the user problem and final format, then pick the AI tool that reduces review work.",
   "exampleWorkflow": "Feed ChatGPT your services, seasonal offers, FAQs, and posting capacity, ask for a 30-day calendar, cut anything unrealistic, then move the approved plan into Notion or Buffer with owners and due dates.",
-  "exampleResult": "Example output: a four-week calendar with two educational posts, one customer story, one offer reminder, one local event tie-in, one email idea, asset notes, and an owner for each item.",
+  "exampleResult": "Example output: Week 1 theme: easy lunches and weekend celebrations. Monday Instagram: lunch box reminder with a photo of this week's options; CTA: save this week's menu. Wednesday short video: behind-the-scenes cake prep; CTA: ask about custom cake dates. Friday email: weekend order reminder; CTA: reserve by Thursday. Review checklist: confirm dates, offer terms, prices, availability, photos, and any claims before scheduling.",
   "faq": [
     {
       "question": "Which tool should I start with for creating a content calendar for a small business?",

@@ -8,6 +8,7 @@ export interface GuideGoldBriefToolRole {
 }
 
 export interface GuideGoldBriefPreviewConcept {
+  readonly previewType?: "ai_result" | "document_result" | "email_result" | "calendar_result" | "carousel_result" | "listing_result";
   readonly beforeInput: string;
   readonly afterOutput: string;
   readonly whyItWorks: string;
@@ -46,11 +47,18 @@ export interface GuideGoldBrief {
 }
 
 export const guidePreviewQualityRules = {
-  requireMacStyleFrame: true,
+  requireTaskMatchedPreviewType: true,
+  requireScrollFocusAnimationSupport: true,
+  requireReducedMotionFallback: true,
   requireBeforeInput: true,
   requireAfterOutput: true,
   requireWhyItWorks: true,
   requireMobileReadableContent: true,
+  requireTaskFirstSeoTarget: true,
+  requirePromptAwareSecondaryKeywordLayer: true,
+  requireRealisticExampleInput: true,
+  requireRealisticExampleOutput: true,
+  requireTopicSpecificPromptRules: true,
   keepPromptBuilderNearTop: true,
   compactShortcutBriefLabels: ["Input", "Output", "Time", "Works with"],
   banFakeTestimonials: true,

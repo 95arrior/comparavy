@@ -6,7 +6,7 @@
   "publishPriority": 4,
   "type": "how-to",
   "metaTitle": "How to Write Etsy Product Descriptions with AI | AteFlo",
-  "metaDescription": "How to Write Etsy Product Descriptions with AI. Practical workflow, prompt examples, tool choices, common mistakes, and a practical next step.",
+  "metaDescription": "Write Etsy product descriptions from verified product facts with a copy-ready AI prompt, listing draft, keyword ideas, and seller review checklist.",
   "category": "Ecommerce",
   "persona": "Etsy sellers",
   "useCase": "writing Etsy product descriptions",
@@ -22,6 +22,24 @@
     "AI prompt for Etsy product descriptions",
     "write Etsy listing copy with AI",
     "turn product notes into Etsy descriptions"
+  ],
+  "searchAliases": [
+    "Etsy product description",
+    "Etsy listing description",
+    "Etsy listing copy",
+    "product title",
+    "product bullets",
+    "handmade product copy",
+    "seller review checklist",
+    "AI prompt for Etsy listing",
+    "ChatGPT prompt for Etsy product description"
+  ],
+  "searchKeywords": [
+    "how to write Etsy product descriptions",
+    "Etsy product description prompt",
+    "ChatGPT prompt for Etsy listing",
+    "AI Etsy listing copy",
+    "Etsy title and description"
   ],
   "audience": "Etsy sellers and handmade shop owners",
   "searchIntent": "writing Etsy product descriptions",
@@ -374,7 +392,7 @@
   ],
   "whatChanged": "Start with the user problem and final format, then pick the AI tool that reduces review work.",
   "exampleWorkflow": "Create a product fact sheet for a personalized ceramic mug, ask ChatGPT for a buyer-focused description, have Claude tighten the wording, then compare every detail against the actual listing options before publishing.",
-  "exampleResult": "Example output: a two-sentence buyer benefit, bullet list for size/material/personalization, care instructions, gift-use suggestions, and a short note telling buyers what to enter at checkout.",
+  "exampleResult": "Example output: Title: [Product name] personalized [material] gift for [buyer/use case]. Opening: A warm first line that names the item, buyer, and verified use case. Bullets: Material: [seller-provided material]. Size: [seller-provided dimensions]. Personalization: [seller-provided options and limits]. Care: [seller-provided care notes]. Keyword ideas: [product type], [buyer use], [material], [occasion], [style]. Needs Seller Review: confirm materials, measurements, care, personalization rules, shipping limits, and any product claim before publishing.",
   "faq": [
     {
       "question": "Which tool should I start with for writing Etsy product descriptions?",

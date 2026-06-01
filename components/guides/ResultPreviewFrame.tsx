@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
 import type { Guide } from "@/lib/guides";
 
 type PreviewType =
@@ -54,9 +57,9 @@ const PREVIEW_BY_SLUG: Record<string, PreviewContent> = {
       {
         heading: "Action items",
         items: [
-          "Sarah sends final logo files.",
-          "We prepare the homepage draft by Friday.",
-          "Client confirms who approves testimonial wording.",
+          "Sarah owns final logo files. Deadline: before homepage draft review.",
+          "We own the homepage draft. Deadline: Friday.",
+          "Client owns testimonial approval path. Deadline: before final copy review.",
         ],
       },
       {
@@ -103,6 +106,12 @@ const PREVIEW_BY_SLUG: Record<string, PreviewContent> = {
         ],
       },
       {
+        heading: "Keyword and tag ideas",
+        items: [
+          "[product type], [buyer use], [material], [occasion], [style], [personalization option]",
+        ],
+      },
+      {
         heading: "Seller review",
         items: [
           "Confirm materials, measurements, personalization rules, processing time, shipping limits, and any safety or trademark-sensitive wording before publishing.",
@@ -139,6 +148,12 @@ const PREVIEW_BY_SLUG: Record<string, PreviewContent> = {
         ],
       },
       {
+        heading: "Keyword and tag ideas",
+        items: [
+          "[product type], [recipient], [occasion], [material], [style], [custom option]",
+        ],
+      },
+      {
         heading: "Needs Seller Review",
         items: [
           "Check every material, measurement, shipping, care, trademark, and safety detail before publishing.",
@@ -168,11 +183,25 @@ const PREVIEW_BY_SLUG: Record<string, PreviewContent> = {
         ],
       },
       {
+        heading: "Study notes",
+        items: [
+          "Main idea: rewrite the section in plain language.",
+          "Important detail: connect the definition to the example in the provided text.",
+          "Memory cue: group related terms before practicing questions.",
+        ],
+      },
+      {
         heading: "Quick review questions",
         items: [
           "What is the difference between Concept A and Concept B?",
           "Which example in the PDF supports the main idea?",
           "What detail needs source review before using it in class notes?",
+        ],
+      },
+      {
+        heading: "Answer check",
+        items: [
+          "Answers should come from the supplied PDF text, not outside knowledge or invented citations.",
         ],
       },
       {
@@ -271,27 +300,27 @@ const PREVIEW_BY_SLUG: Record<string, PreviewContent> = {
       {
         label: "1",
         value: "Hook",
-        meta: "The one mistake readers make when they try [topic]",
+        meta: "Plan a week of posts without starting from zero",
       },
       {
         label: "2",
         value: "Problem",
-        meta: "Explain why the common approach feels confusing or hard to finish.",
+        meta: "Posting feels hard when every idea starts as a blank page.",
       },
       {
         label: "3",
         value: "Key idea",
-        meta: "Turn the article’s main point into one short teaching slide.",
+        meta: "Use one blog post as the source for several short teaching points.",
       },
       {
         label: "4",
         value: "Example",
-        meta: "Use only an example already present in the blog post.",
+        meta: "Pull one tip from the article and turn it into a one-sentence slide.",
       },
       {
         label: "5",
         value: "Action step",
-        meta: "Give the reader one clear next step and a save/share CTA.",
+        meta: "Pick one article, extract the main takeaway, and draft five slides.",
       },
     ],
     sections: [
@@ -479,9 +508,49 @@ function renderResultBody(preview: PreviewContent) {
 
 export default function ResultPreviewFrame({ guide }: { readonly guide: Guide }) {
   const preview = PREVIEW_BY_SLUG[guide.slug] ?? fallbackPreview(guide);
+  const previewRef = useRef<HTMLElement | null>(null);
+  const [isInView, setIsInView] = useState(false);
+
+  useEffect(() => {
+    const previewElement = previewRef.current;
+
+    if (!previewElement) {
+      return;
+    }
+
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (prefersReducedMotion || !("IntersectionObserver" in window)) {
+      setIsInView(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setIsInView(true);
+          observer.disconnect();
+        }
+      },
+      {
+        rootMargin: "0px 0px -12% 0px",
+        threshold: 0.28,
+      },
+    );
+
+    observer.observe(previewElement);
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <section className="overflow-hidden rounded-[1.5rem] border border-teal-100 bg-white shadow-[0_18px_48px_rgba(15,23,42,0.08)]">
+    <section
+      ref={previewRef}
+      className={`overflow-hidden rounded-[1.5rem] border bg-white shadow-[0_18px_48px_rgba(15,23,42,0.08)] transition-[opacity,transform,border-color,box-shadow] duration-500 ease-out motion-reduce:translate-y-0 motion-reduce:scale-100 motion-reduce:opacity-100 ${
+        isInView
+          ? "translate-y-0 scale-100 border-teal-200 opacity-100 shadow-[0_22px_58px_rgba(15,118,110,0.14)]"
+          : "translate-y-2 scale-[0.965] border-teal-100 opacity-[0.88]"
+      }`}
+    >
       <div className="flex items-center justify-between gap-4 border-b border-slate-200 bg-[#F8FAF8] px-4 py-3 sm:px-5">
         <div className="flex items-center gap-2" aria-hidden="true">
           <span className="h-3 w-3 rounded-full bg-[#ff6b5f]" />

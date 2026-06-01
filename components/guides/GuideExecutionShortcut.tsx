@@ -458,6 +458,13 @@ Rules:
   },
 };
 
+const promptConfigAliases: Record<string, string> = {
+  "how-to-write-etsy-product-descriptions-with-ai":
+    "best-ai-tools-for-etsy-product-descriptions",
+  "how-to-create-a-content-calendar-for-a-small-business-with-ai":
+    "best-ai-tools-for-small-business-content-calendars",
+};
+
 function hasAnyInput(values: Record<string, string>): boolean {
   return Object.values(values).some((value) => value.trim().length > 0);
 }
@@ -567,7 +574,7 @@ function SimpleCard({
 }
 
 export default function GuideExecutionShortcut({ guide }: { readonly guide: Guide }) {
-  const config = promptConfigs[guide.slug];
+  const config = promptConfigs[guide.slug] ?? promptConfigs[promptConfigAliases[guide.slug] ?? ""];
   const [values, setValues] = useState<Record<string, string>>({});
   const [showMore, setShowMore] = useState(false);
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
