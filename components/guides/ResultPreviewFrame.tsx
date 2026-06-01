@@ -1,363 +1,547 @@
 import type { Guide } from "@/lib/guides";
 
+type PreviewType =
+  | "ai_result"
+  | "document_result"
+  | "email_result"
+  | "calendar_result"
+  | "carousel_result"
+  | "listing_result";
+
 interface PreviewSection {
   readonly heading: string;
   readonly items: readonly string[];
 }
 
+interface PreviewRow {
+  readonly label: string;
+  readonly value: string;
+  readonly meta?: string;
+}
+
 interface PreviewContent {
+  readonly type: PreviewType;
   readonly windowTitle: string;
-  readonly beforeTitle: string;
-  readonly before: readonly string[];
-  readonly afterTitle: string;
-  readonly after: readonly PreviewSection[];
+  readonly resultLabel: string;
+  readonly inputTitle: string;
+  readonly input: string;
+  readonly resultTitle: string;
+  readonly intro?: string;
+  readonly sections?: readonly PreviewSection[];
+  readonly rows?: readonly PreviewRow[];
   readonly whyItWorks: string;
 }
 
 const PREVIEW_BY_SLUG: Record<string, PreviewContent> = {
   "how-to-turn-meeting-notes-into-a-client-recap-with-ai": {
-    windowTitle: "Client recap draft",
-    beforeTitle: "Messy meeting notes",
-    before: [
-      "Client wants launch copy by Friday. Pricing page still open.",
-      "Sarah sends logo files. We own homepage draft. Question: who approves testimonials?",
-      "Need recap email, decisions, action items, open questions.",
-    ],
-    afterTitle: "Client-ready recap email",
-    after: [
+    type: "email_result",
+    windowTitle: "AI recap result",
+    resultLabel: "Email and recap draft",
+    inputTitle: "Input used",
+    input:
+      "Messy client meeting notes: launch copy due Friday, logo files from Sarah, pricing page unresolved, testimonial approver unknown.",
+    resultTitle: "Client recap and follow-up email",
+    intro:
+      "Subject: Recap: launch copy next steps and open approvals",
+    sections: [
       {
-        heading: "Subject",
-        items: ["Recap: launch copy next steps and open approvals"],
-      },
-      {
-        heading: "Decisions",
+        heading: "Key decisions",
         items: [
-          "Homepage draft is the next priority.",
-          "Pricing page copy stays open until final package details are confirmed.",
+          "Homepage draft is the next copy priority.",
+          "Pricing page wording stays open until package details are confirmed.",
         ],
       },
       {
         heading: "Action items",
         items: [
-          "Sarah sends logo files.",
+          "Sarah sends final logo files.",
           "We prepare the homepage draft by Friday.",
           "Client confirms who approves testimonial wording.",
         ],
       },
       {
-        heading: "Closing",
-        items: ["Reply with the testimonial approver and any pricing-page constraints before Friday."],
+        heading: "Open questions",
+        items: [
+          "Who has final approval on testimonial edits?",
+          "Are there pricing constraints we should avoid mentioning yet?",
+        ],
+      },
+      {
+        heading: "Follow-up note",
+        items: [
+          "Thanks for today. I’ll move forward with the homepage draft and hold the pricing page until the package details are final. Please send the testimonial approver and any pricing constraints before Friday so I can keep the draft accurate.",
+        ],
       },
     ],
     whyItWorks:
-      "It turns scattered notes into decisions, owners, questions, and a reply-friendly next step.",
+      "The output matches the shortcut promise: decisions, owners, dates, open questions, and a sendable client follow-up.",
   },
   "how-to-write-etsy-product-descriptions-with-ai": {
-    windowTitle: "Listing draft preview",
-    beforeTitle: "Rough product facts",
-    before: [
-      "Product name, material, dimensions, color, care notes, personalization rules, and buyer use case.",
-      "Seller still needs to confirm shipping limits, processing time, and any claim not in the fact sheet.",
-    ],
-    afterTitle: "Reviewable listing draft",
-    after: [
+    type: "listing_result",
+    windowTitle: "AI listing draft",
+    resultLabel: "Etsy-ready draft",
+    inputTitle: "Input used",
+    input:
+      "Seller-provided product facts: item name, verified materials, dimensions, color options, personalization rules, care notes, and intended buyer use.",
+    resultTitle: "Reviewable Etsy listing draft",
+    intro:
+      "[Product name] - personalized [material] gift for [buyer/use case]",
+    sections: [
       {
-        heading: "Product title",
-        items: ["[Product name] - [material/color] [use case], [key verified detail]"],
+        heading: "Short description",
+        items: [
+          "A buyer-focused opening that names the item, explains the use case, and only uses details from the seller’s fact sheet.",
+        ],
       },
+      {
+        heading: "Bullet details",
+        items: [
+          "Material: [seller-provided material]",
+          "Size: [seller-provided dimensions]",
+          "Personalization: [seller-provided options and limits]",
+          "Care: [seller-provided care notes]",
+        ],
+      },
+      {
+        heading: "Seller review",
+        items: [
+          "Confirm materials, measurements, personalization rules, processing time, shipping limits, and any safety or trademark-sensitive wording before publishing.",
+        ],
+      },
+    ],
+    whyItWorks:
+      "It gives the seller a usable listing structure without inventing product claims or shop policies.",
+  },
+  "best-ai-tools-for-etsy-product-descriptions": {
+    type: "listing_result",
+    windowTitle: "AI tool output preview",
+    resultLabel: "Listing result",
+    inputTitle: "Input used",
+    input:
+      "Product facts, shop tone, buyer use case, and listing fields that need a title, description, bullets, and review notes.",
+    resultTitle: "Polished Etsy-ready listing result",
+    intro:
+      "[Verified product name] - [style/material] [buyer use] with optional personalization",
+    sections: [
       {
         heading: "Buyer-focused opening",
         items: [
-          "A clear first sentence that names the item, who it is for, and the main verified use.",
+          "A concise first paragraph that explains what the item is, who it is for, and how it can be used, based only on verified seller details.",
         ],
       },
       {
-        heading: "Bullets",
+        heading: "Details to include",
         items: [
-          "Material: [seller-provided material]",
-          "Size or format: [seller-provided dimensions]",
-          "Care or personalization: [verified seller notes]",
-        ],
-      },
-      {
-        heading: "Tag ideas",
-        items: ["[product type], [buyer use], [material], [occasion], [style]"],
-      },
-      {
-        heading: "Needs Seller Review",
-        items: ["Confirm processing time, shipping limits, safety claims, trademark terms, and care instructions."],
-      },
-    ],
-    whyItWorks:
-      "It gives the seller a usable listing shape while keeping unsupported details in review fields.",
-  },
-  "best-ai-tools-for-etsy-product-descriptions": {
-    windowTitle: "Etsy listing workflow preview",
-    beforeTitle: "Rough product facts",
-    before: [
-      "Product fact sheet, buyer use case, shop tone, and listing fields that need drafting.",
-      "Tool choice is still open: flexible draft, calmer rewrite, or repeatable shop voice.",
-    ],
-    afterTitle: "Tool-guided listing draft",
-    after: [
-      {
-        heading: "Start here",
-        items: ["Use a general AI chat tool for the first title, opening, bullets, and description draft."],
-      },
-      {
-        heading: "Listing output",
-        items: [
-          "Title: [verified product name] with buyer-friendly keywords.",
-          "Opening: one sentence that names the item and use case.",
-          "Bullets: material, size, care, personalization, and review notes.",
+          "Materials and dimensions from the product sheet.",
+          "Personalization options and character limits.",
+          "Care instructions supplied by the seller.",
+          "Shipping or processing note marked for seller confirmation.",
         ],
       },
       {
         heading: "Needs Seller Review",
-        items: ["Check every material, measurement, shipping, care, trademark, and safety detail before publishing."],
+        items: [
+          "Check every material, measurement, shipping, care, trademark, and safety detail before publishing.",
+        ],
       },
     ],
     whyItWorks:
-      "It connects tool choice to a concrete listing result instead of treating the tool as the outcome.",
+      "The tool recommendation is grounded in the real deliverable: a listing draft the seller can review and improve.",
   },
   "how-to-summarize-a-pdf-into-study-notes-with-ai": {
-    windowTitle: "Study notes preview",
-    beforeTitle: "Short document excerpt",
-    before: [
-      "A class reading or PDF section with headings, key terms, and passages the student is allowed to process.",
-      "The source needs summarizing, quiz questions, and a review list.",
-    ],
-    afterTitle: "Study-ready notes",
-    after: [
-      {
-        heading: "Overview",
-        items: ["This section explains the main idea in plain language without adding outside facts."],
-      },
+    type: "document_result",
+    windowTitle: "AI study notes result",
+    resultLabel: "Study notes",
+    inputTitle: "Input used",
+    input:
+      "A class PDF section with headings, key terms, and passages the student is allowed to summarize.",
+    resultTitle: "Study-ready notes from the PDF",
+    intro:
+      "Overview: This section explains the main idea in plain language, using only the provided PDF text.",
+    sections: [
       {
         heading: "Key concepts",
-        items: ["Concept A: definition from the provided text.", "Concept B: why it matters in this section."],
+        items: [
+          "Concept A: definition or explanation from the assigned reading.",
+          "Concept B: how it connects to the section’s main argument.",
+          "Term to verify: recheck the source wording before memorizing.",
+        ],
       },
       {
-        heading: "Quiz questions",
-        items: ["What is the main difference between Concept A and Concept B?", "Which detail needs source review before memorizing?"],
+        heading: "Quick review questions",
+        items: [
+          "What is the difference between Concept A and Concept B?",
+          "Which example in the PDF supports the main idea?",
+          "What detail needs source review before using it in class notes?",
+        ],
       },
       {
         heading: "Needs review",
-        items: ["Recheck names, formulas, dates, definitions, and any confusing term against the PDF."],
-      },
-    ],
-    whyItWorks:
-      "It separates summary, concepts, practice questions, and source-review items so the notes are usable for studying.",
-  },
-  "how-to-create-a-content-calendar-for-a-small-business-with-ai": {
-    windowTitle: "Content calendar preview",
-    beforeTitle: "Rough business info",
-    before: [
-      "Business type, services, local dates, offers, customer questions, available channels, and posting capacity.",
-      "Needs a realistic plan without growth promises.",
-    ],
-    afterTitle: "Weekly planning draft",
-    after: [
-      {
-        heading: "Week 1 calendar",
         items: [
-          "Mon: customer question post for the main service.",
-          "Wed: behind-the-scenes or process post.",
-          "Fri: offer reminder with a clear next step.",
+          "Verify names, definitions, formulas, dates, citations, and any confusing terms against the original PDF.",
         ],
       },
+    ],
+    whyItWorks:
+      "It creates usable study notes while keeping the review step tied to the source document.",
+  },
+  "how-to-create-a-content-calendar-for-a-small-business-with-ai": {
+    type: "calendar_result",
+    windowTitle: "AI calendar result",
+    resultLabel: "Content plan",
+    inputTitle: "Input used",
+    input:
+      "Business type, services, customer questions, available channels, local dates, offers, and weekly posting capacity.",
+    resultTitle: "One-week small business content calendar",
+    rows: [
       {
-        heading: "Channel suggestions",
-        items: ["Use Instagram for visual posts, email for existing customers, and Google Business Profile for local updates."],
+        label: "Mon",
+        value: "Answer a common customer question",
+        meta: "Instagram post - CTA: Save this checklist",
       },
       {
-        heading: "CTA ideas",
-        items: ["Book a consultation.", "Reply with your question.", "Save this checklist for later."],
+        label: "Wed",
+        value: "Show the process behind the main service",
+        meta: "Short video - CTA: Reply with your question",
       },
       {
-        heading: "Review checklist",
-        items: ["Confirm dates, offer terms, service availability, and claims before scheduling."],
+        label: "Fri",
+        value: "Remind customers about a verified offer",
+        meta: "Email or local update - CTA: Book a consultation",
+      },
+    ],
+    sections: [
+      {
+        heading: "Review before scheduling",
+        items: [
+          "Confirm dates, offer terms, service availability, images, and any claim before publishing.",
+        ],
       },
     ],
     whyItWorks:
-      "It turns loose business context into a schedule the owner can review without implying guaranteed results.",
+      "The output is a practical calendar the owner can review, not a vague marketing brainstorm or growth promise.",
   },
   "best-ai-tools-for-small-business-content-calendars": {
-    windowTitle: "Calendar tool choice preview",
-    beforeTitle: "Rough planning inputs",
-    before: [
-      "Offers, customer questions, seasonal dates, team capacity, and where the calendar should live.",
-      "The business needs a plan and a tool choice, not a generic tool list.",
-    ],
-    afterTitle: "Decision-ready calendar plan",
-    after: [
+    type: "calendar_result",
+    windowTitle: "AI calendar workflow",
+    resultLabel: "Tool-backed content plan",
+    inputTitle: "Input used",
+    input:
+      "Offers, seasonal dates, common customer questions, team capacity, preferred channels, and where the calendar should live.",
+    resultTitle: "Decision-ready calendar plan",
+    rows: [
       {
-        heading: "Calendar shape",
-        items: ["Four weekly themes with post ideas, channel notes, owners, and review reminders."],
+        label: "Week 1",
+        value: "Service education theme",
+        meta: "AI chat tool drafts post angles and captions",
       },
+      {
+        label: "Week 2",
+        value: "Customer question theme",
+        meta: "Workspace tool tracks review status and owners",
+      },
+      {
+        label: "Week 3",
+        value: "Offer or event theme",
+        meta: "Scheduler only after claims and dates are reviewed",
+      },
+    ],
+    sections: [
       {
         heading: "Tool fit",
         items: [
-          "Use an AI chat tool for theme and caption drafts.",
-          "Use a workspace tool if the team needs shared planning.",
-          "Use a scheduler only after posts are reviewed.",
+          "Use an AI chat tool for ideas and draft copy.",
+          "Use a workspace tool if more than one person reviews the calendar.",
+          "Use a scheduler after final human review.",
         ],
-      },
-      {
-        heading: "Review checklist",
-        items: ["Check offer terms, dates, availability, images, and claims before publishing."],
       },
     ],
     whyItWorks:
-      "It makes the tool decision depend on the finished calendar workflow, not the loudest feature list.",
+      "The preview shows how the tool choice supports the finished calendar workflow instead of acting as a generic tool list.",
   },
   "how-to-turn-a-blog-post-into-an-instagram-carousel-with-ai": {
-    windowTitle: "Carousel outline preview",
-    beforeTitle: "Blog source",
-    before: [
+    type: "carousel_result",
+    windowTitle: "AI carousel result",
+    resultLabel: "Carousel outline",
+    inputTitle: "Input used",
+    input:
       "A blog post with one main argument, supporting points, and a clear reader takeaway.",
-      "Needs short slide text, caption draft, and a review pass against the article.",
-    ],
-    afterTitle: "Instagram carousel draft",
-    after: [
+    resultTitle: "Slide-by-slide Instagram carousel plan",
+    rows: [
       {
-        heading: "Slide 1 hook",
-        items: ["The one mistake readers make when they try [topic]."],
+        label: "1",
+        value: "Hook",
+        meta: "The one mistake readers make when they try [topic]",
       },
       {
-        heading: "Slide flow",
+        label: "2",
+        value: "Problem",
+        meta: "Explain why the common approach feels confusing or hard to finish.",
+      },
+      {
+        label: "3",
+        value: "Key idea",
+        meta: "Turn the article’s main point into one short teaching slide.",
+      },
+      {
+        label: "4",
+        value: "Example",
+        meta: "Use only an example already present in the blog post.",
+      },
+      {
+        label: "5",
+        value: "Action step",
+        meta: "Give the reader one clear next step and a save/share CTA.",
+      },
+    ],
+    sections: [
+      {
+        heading: "Caption draft",
         items: [
-          "Slide 2: define the problem.",
-          "Slide 3: explain the first key point.",
-          "Slide 4: show a practical example from the article.",
-          "Slide 5: summarize the action step.",
+          "Short setup, one takeaway, and a prompt to read the full post or save the carousel.",
         ],
       },
       {
-        heading: "Caption draft",
-        items: ["Short setup, one takeaway, and a prompt to read the full post or save the carousel."],
-      },
-      {
         heading: "Review checklist",
-        items: ["Verify every claim against the blog post and remove any statistic, quote, or case study not in the source."],
+        items: [
+          "Verify every claim against the blog post and remove any statistic, quote, or case study not in the source.",
+        ],
       },
     ],
     whyItWorks:
-      "It converts the article into slide beats while keeping the final check tied to the original source.",
+      "It turns the blog post into visible slide beats, which is the real output users need before opening a design tool.",
   },
 };
 
 function fallbackPreview(guide: Guide): PreviewContent {
   return {
-    windowTitle: "Shortcut output preview",
-    beforeTitle: "Rough input",
-    before: [
+    type: "ai_result",
+    windowTitle: "AI result preview",
+    resultLabel: "Reviewable result",
+    inputTitle: "Input used",
+    input:
       guide.exampleWorkflow ??
-        guide.contentGap ??
-        "Messy source material, loose notes, or a rough draft.",
-    ],
-    afterTitle: "Reviewable finished output",
-    after: [
-      {
-        heading: "Finished result",
-        items: [
-          guide.exampleResult ??
-            guide.visualSummary.headline ??
-            `A structured output for ${guide.useCase}.`,
-        ],
-      },
+      guide.contentGap ??
+      "Messy source material, loose notes, or a rough draft.",
+    resultTitle: "Finished output shape",
+    intro:
+      guide.exampleResult ??
+      guide.visualSummary.headline ??
+      `A structured output for ${guide.useCase}.`,
+    sections: [
       {
         heading: "Review checklist",
-        items: ["Check names, dates, claims, missing details, and sensitive information before using it."],
+        items: [
+          "Check names, dates, claims, missing details, and sensitive information before using it.",
+        ],
       },
     ],
     whyItWorks:
-      "It shows the shape of the final result while keeping human review visible before use.",
+      "It shows the realistic shape of the final result while keeping human review visible before use.",
   };
+}
+
+function typeLabel(type: PreviewType): string {
+  switch (type) {
+    case "email_result":
+      return "Email result";
+    case "listing_result":
+      return "Listing result";
+    case "document_result":
+      return "Document result";
+    case "calendar_result":
+      return "Calendar result";
+    case "carousel_result":
+      return "Carousel result";
+    case "ai_result":
+    default:
+      return "AI result";
+  }
+}
+
+function resultShellClass(type: PreviewType): string {
+  switch (type) {
+    case "listing_result":
+      return "border-teal-200 bg-gradient-to-br from-white to-teal-50/50";
+    case "calendar_result":
+      return "border-emerald-200 bg-gradient-to-br from-white to-emerald-50/45";
+    case "carousel_result":
+      return "border-slate-200 bg-gradient-to-br from-white to-slate-50";
+    case "email_result":
+    case "document_result":
+    case "ai_result":
+    default:
+      return "border-teal-100 bg-white";
+  }
+}
+
+function renderSections(sections?: readonly PreviewSection[]) {
+  if (!sections?.length) {
+    return null;
+  }
+
+  return (
+    <div className="grid gap-3">
+      {sections.map((section) => (
+        <div key={section.heading} className="rounded-2xl bg-[#F6FBF8] p-3 sm:p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-teal-800">
+            {section.heading}
+          </p>
+          <ul className="mt-2 space-y-1.5 text-sm leading-6 text-slate-700">
+            {section.items.map((item) => (
+              <li key={item} className="flex gap-2">
+                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-500/70" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function renderCalendarRows(rows?: readonly PreviewRow[]) {
+  if (!rows?.length) {
+    return null;
+  }
+
+  return (
+    <div className="grid gap-2">
+      {rows.map((row) => (
+        <div
+          key={`${row.label}-${row.value}`}
+          className="grid gap-2 rounded-2xl border border-emerald-100 bg-white/85 p-3 sm:grid-cols-[5rem_1fr]"
+        >
+          <div className="inline-flex h-9 w-fit items-center rounded-full bg-emerald-100 px-3 text-sm font-semibold text-emerald-900 sm:w-full sm:justify-center">
+            {row.label}
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-slate-950">{row.value}</p>
+            {row.meta ? (
+              <p className="mt-1 text-sm leading-6 text-slate-600">{row.meta}</p>
+            ) : null}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function renderCarouselRows(rows?: readonly PreviewRow[]) {
+  if (!rows?.length) {
+    return null;
+  }
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      {rows.map((row) => (
+        <div
+          key={`${row.label}-${row.value}`}
+          className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm"
+        >
+          <div className="flex items-center gap-2">
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-teal-600 text-xs font-bold text-white">
+              {row.label}
+            </span>
+            <p className="text-sm font-semibold text-slate-950">{row.value}</p>
+          </div>
+          {row.meta ? (
+            <p className="mt-3 text-sm leading-6 text-slate-600">{row.meta}</p>
+          ) : null}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function renderResultBody(preview: PreviewContent) {
+  if (preview.type === "calendar_result") {
+    return (
+      <div className="space-y-4">
+        {renderCalendarRows(preview.rows)}
+        {renderSections(preview.sections)}
+      </div>
+    );
+  }
+
+  if (preview.type === "carousel_result") {
+    return (
+      <div className="space-y-4">
+        {renderCarouselRows(preview.rows)}
+        {renderSections(preview.sections)}
+      </div>
+    );
+  }
+
+  return renderSections(preview.sections);
 }
 
 export default function ResultPreviewFrame({ guide }: { readonly guide: Guide }) {
   const preview = PREVIEW_BY_SLUG[guide.slug] ?? fallbackPreview(guide);
 
   return (
-    <section className="overflow-hidden rounded-[1.75rem] border border-teal-100 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.08)]">
-      <div className="flex items-center justify-between gap-4 border-b border-slate-200 bg-slate-50/90 px-4 py-3 sm:px-5">
+    <section className="overflow-hidden rounded-[1.5rem] border border-teal-100 bg-white shadow-[0_18px_48px_rgba(15,23,42,0.08)]">
+      <div className="flex items-center justify-between gap-4 border-b border-slate-200 bg-[#F8FAF8] px-4 py-3 sm:px-5">
         <div className="flex items-center gap-2" aria-hidden="true">
           <span className="h-3 w-3 rounded-full bg-[#ff6b5f]" />
           <span className="h-3 w-3 rounded-full bg-[#f6c85f]" />
           <span className="h-3 w-3 rounded-full bg-[#39c277]" />
         </div>
-        <p className="min-w-0 truncate text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+        <p className="min-w-0 truncate text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
           {preview.windowTitle}
         </p>
-        <span className="h-3 w-16" aria-hidden="true" />
+        <span className="h-3 w-14" aria-hidden="true" />
       </div>
 
       <div className="bg-[#FCFBF7] p-4 sm:p-6">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">
-              Example transformation
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-700">
+              Example result
             </p>
-            <h2 className="mt-2 text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl">
-              See the result before you copy the prompt
+            <h2 className="mt-2 text-xl font-semibold text-slate-950 sm:text-2xl">
+              See what this shortcut can produce
             </h2>
           </div>
-          <span className="inline-flex w-fit rounded-full border border-teal-100 bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-800">
-            Review-ready
+          <span className="inline-flex h-8 w-fit items-center justify-center rounded-full border border-teal-100 bg-teal-50 px-3 text-xs font-semibold text-teal-800">
+            {typeLabel(preview.type)}
           </span>
         </div>
 
-        <div className="mt-5 grid gap-4 lg:grid-cols-[0.82fr_1.18fr]">
-          <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-              Before
-            </p>
-            <h3 className="mt-2 text-base font-semibold text-slate-900">
-              {preview.beforeTitle}
-            </h3>
-            <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
-              {preview.before.map((item) => (
-                <li key={item} className="flex gap-2">
-                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="rounded-2xl border border-teal-100 bg-white p-4 shadow-sm">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-700">
-                  After
-                </p>
-                <h3 className="mt-2 text-lg font-semibold tracking-tight text-slate-950">
-                  {preview.afterTitle}
-                </h3>
-              </div>
-              <span className="h-2.5 w-2.5 rounded-full bg-teal-500" aria-hidden="true" />
-            </div>
-
-            <div className="mt-4 grid gap-3">
-              {preview.after.map((section) => (
-                <div key={section.heading} className="rounded-2xl bg-teal-50/45 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-800">
-                    {section.heading}
-                  </p>
-                  <ul className="mt-2 space-y-1.5 text-sm leading-6 text-slate-700">
-                    {section.items.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </div>
+        <div className="mt-5 rounded-2xl border border-slate-200 bg-white/85 p-3 sm:p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+            {preview.inputTitle}
+          </p>
+          <p className="mt-2 text-sm leading-6 text-slate-700">{preview.input}</p>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-slate-200 bg-white/85 p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+        <div className={`mt-4 rounded-[1.25rem] border p-4 shadow-sm sm:p-5 ${resultShellClass(preview.type)}`}>
+          <div className="flex flex-col gap-2 border-b border-slate-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">
+                {preview.resultLabel}
+              </p>
+              <h3 className="mt-2 text-lg font-semibold text-slate-950 sm:text-xl">
+                {preview.resultTitle}
+              </h3>
+            </div>
+            <span className="inline-flex h-8 w-fit items-center rounded-full bg-slate-950 px-3 text-xs font-semibold text-white">
+              Review-ready draft
+            </span>
+          </div>
+
+          {preview.intro ? (
+            <p className="mt-4 rounded-2xl bg-white/75 p-3 text-sm font-medium leading-6 text-slate-800 sm:p-4">
+              {preview.intro}
+            </p>
+          ) : null}
+
+          <div className="mt-4">{renderResultBody(preview)}</div>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-teal-100 bg-white/90 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-800">
             Why it works
           </p>
           <p className="mt-2 text-sm leading-6 text-slate-700">{preview.whyItWorks}</p>
