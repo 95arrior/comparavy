@@ -458,11 +458,124 @@ Rules:
   },
 };
 
+promptConfigs["how-to-write-etsy-product-descriptions-with-ai"] =
+  promptConfigs["best-ai-tools-for-etsy-product-descriptions"];
+promptConfigs["how-to-create-a-content-calendar-for-a-small-business-with-ai"] =
+  promptConfigs["best-ai-tools-for-small-business-content-calendars"];
+
+promptConfigs["best-ai-tools-for-etsy-product-descriptions"] = {
+  whatYouWillMake:
+    "A decision-ready tool recommendation for Etsy listing copy, plus the exact listing output each tool should help you create.",
+  primaryFields: [
+    { key: "product", label: "Product", placeholder: "Example: Handmade ceramic mug" },
+    { key: "material", label: "Material", placeholder: "Example: Ceramic" },
+    { key: "targetBuyer", label: "Target buyer", placeholder: "Example: Coffee lovers, gift buyers" },
+    { key: "extraNotes", label: "Listing challenge", placeholder: "Example: Need better title, less generic description, or calmer rewrite", multiline: true },
+  ],
+  optionalFields: [
+    { key: "size", label: "Size", placeholder: "Example: 12 oz" },
+    { key: "color", label: "Color", placeholder: "Example: Blue glaze" },
+    { key: "personalization", label: "Personalization", placeholder: "Example: Name engraving available" },
+    { key: "shippingLimits", label: "Shipping limits", placeholder: "Example: US only, ships in 3-5 business days" },
+  ],
+  exampleInput:
+    "Handmade ceramic mug, blue glaze, gift buyers, needs a better title and less generic description.",
+  exampleOutput: [
+    "Start with: a flexible AI chat tool for the first title, opening, bullets, and review checklist.",
+    "Use a calmer rewrite tool if: the first draft sounds too salesy or adds unsupported claims.",
+    "Use a design/workflow tool if: copy is already reviewed and the next task is shop visuals or repeatable listing production.",
+    "Expected output: title, buyer-focused opening, bullets, tag ideas, and Needs Seller Review.",
+    "Review: confirm material, size, care, shipping limits, personalization rules, and any product claim before publishing.",
+  ],
+  checkBeforeUsing: [
+    "Do not treat the tool recommendation as proof that listing details are correct.",
+    "Verify every product fact before publishing.",
+    "Do not invent pricing, search volume, trademark terms, or seller policies.",
+    "Choose the tool based on the work bottleneck: draft, rewrite, design, or workflow.",
+    "Keep unsupported claims in Needs Seller Review.",
+  ],
+  buildPrompt(values) {
+    return `Recommend the best AI tool workflow for creating Etsy product descriptions, titles, and listing copy from the details below.
+
+Listing details:
+${detailLines(values, etsyFields)}
+
+Finished output:
+1. Best starting tool type for this listing job
+2. Use this if...
+3. Choose another option if...
+4. Avoid this approach if...
+5. What listing output the tool should produce
+6. Seller review checklist before publishing
+
+Rules:
+- Do not claim tools were tested unless I provide test data.
+- Do not invent pricing, search volume, Etsy ranking claims, seller policies, materials, sizes, shipping times, guarantees, or product claims.
+- Base the recommendation on the work I need to finish: title, description, rewrite, tags, visuals, or workflow.
+- If important details are missing, write "Needs seller input."
+- Keep the output practical for an Etsy seller choosing what to use next.
+- Include the listing sections the chosen tool should help produce.`;
+  },
+};
+
+promptConfigs["best-ai-tools-for-small-business-content-calendars"] = {
+  whatYouWillMake:
+    "A decision-ready recommendation for choosing the right AI tool workflow for a small business content calendar.",
+  primaryFields: [
+    { key: "businessType", label: "Business type", placeholder: "Example: Neighborhood bakery" },
+    { key: "targetCustomer", label: "Target customer", placeholder: "Example: Busy parents and local office workers" },
+    { key: "offer", label: "Offer or service", placeholder: "Example: Custom cakes and weekday lunch boxes" },
+    { key: "channels", label: "Content channels", placeholder: "Example: Instagram, Facebook, email" },
+    { key: "extraNotes", label: "Planning challenge", placeholder: "Example: Need weekly themes, captions, approvals, or scheduling help", multiline: true },
+  ],
+  optionalFields: [
+    { key: "postingFrequency", label: "Posting frequency", placeholder: "Example: 3 posts per week" },
+    { key: "localArea", label: "Local area or niche", placeholder: "Example: Downtown Austin" },
+    { key: "promotionGoal", label: "Promotion goal", placeholder: "Example: Promote catering orders for June" },
+    { key: "tone", label: "Tone", placeholder: "Example: Friendly, practical, local" },
+    { key: "themesToAvoid", label: "Content themes to avoid", placeholder: "Example: Discount-heavy posts or health claims" },
+  ],
+  exampleInput:
+    "Neighborhood bakery, Instagram and Facebook, 3 posts per week, needs weekly themes and a simple approval workflow.",
+  exampleOutput: [
+    "Start with: an AI chat tool for weekly themes, post angles, caption drafts, and CTA ideas.",
+    "Use a workspace tool if: owners, deadlines, approvals, and asset status need to stay visible.",
+    "Use a scheduler if: posts are already reviewed and the bottleneck is publishing on time.",
+    "Expected output: weekly theme, channel, post idea, format, CTA, owner, asset needed, review status.",
+    "Review: confirm dates, offers, availability, prices, claims, and photos before scheduling.",
+  ],
+  checkBeforeUsing: [
+    "Do not choose a scheduler before the calendar is reviewed.",
+    "Do not make guaranteed growth, sales, follower, or income claims.",
+    "Choose the tool based on bottleneck: planning, design, workflow, or scheduling.",
+    "Verify dates, offers, capacity, images, and claims before publishing.",
+    "Keep missing business details in Needs owner input.",
+  ],
+  buildPrompt(values) {
+    return `Recommend the best AI tool workflow for planning a small business content calendar from the details below.
+
+Business details:
+${detailLines(values, contentCalendarFields)}
+
+Finished output:
+1. Best starting tool type for this content calendar job
+2. Use this if...
+3. Choose another option if...
+4. Avoid this approach if...
+5. What the finished calendar should include
+6. Review checklist before scheduling or publishing
+
+Rules:
+- Do not claim tools were tested unless I provide test data.
+- Do not invent pricing, guaranteed growth, guaranteed sales, follower gains, income claims, testimonials, or fake proof.
+- Base the recommendation on the bottleneck: planning, captions, visuals, team workflow, or scheduling.
+- If important details are missing, write "Needs owner input."
+- Keep the recommendation realistic for a small business owner.
+- Include the calendar fields the chosen tool should help produce.`;
+  },
+};
+
 const promptConfigAliases: Record<string, string> = {
-  "how-to-write-etsy-product-descriptions-with-ai":
-    "best-ai-tools-for-etsy-product-descriptions",
-  "how-to-create-a-content-calendar-for-a-small-business-with-ai":
-    "best-ai-tools-for-small-business-content-calendars",
 };
 
 function hasAnyInput(values: Record<string, string>): boolean {

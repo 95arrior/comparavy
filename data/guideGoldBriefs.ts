@@ -8,7 +8,7 @@ export interface GuideGoldBriefToolRole {
 }
 
 export interface GuideGoldBriefPreviewConcept {
-  readonly previewType?: "ai_result" | "document_result" | "email_result" | "calendar_result" | "carousel_result" | "listing_result";
+  readonly previewType?: "product_result" | "visual_content_result" | "document_result" | "decision_result" | "calendar_result";
   readonly beforeInput: string;
   readonly afterOutput: string;
   readonly whyItWorks: string;
@@ -50,6 +50,12 @@ export const guidePreviewQualityRules = {
   requireTaskMatchedPreviewType: true,
   requireBlurToFocusRevealSupport: true,
   requireReducedMotionFallback: true,
+  avoidEmptyLayoutBoxes: true,
+  useProductResultOnlyForActualProducts: true,
+  useDocumentResultForTextOutputs: true,
+  useDecisionResultForRecommendations: true,
+  useVisualContentResultForSocialOrVisualOutputs: true,
+  useCalendarResultForSchedulesAndPlans: true,
   requireBeforeInput: true,
   requireAfterOutput: true,
   requireWhyItWorks: true,

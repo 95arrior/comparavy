@@ -47,7 +47,7 @@ export interface EditorialBlueprint {
   readonly decisionPath: readonly string[];
   readonly comparisonCriteria: readonly string[];
   readonly previewConcept: {
-    readonly previewType: "ai_result" | "document_result" | "email_result" | "calendar_result" | "carousel_result" | "listing_result";
+    readonly previewType: "product_result" | "visual_content_result" | "document_result" | "decision_result" | "calendar_result";
     readonly beforeInput: string;
     readonly afterOutput: string;
     readonly whyItWorks: string;
@@ -332,7 +332,7 @@ export function buildEditorialBlueprint({
       "desktop depth",
     ]),
     previewConcept: {
-      previewType: "ai_result",
+      previewType: "document_result",
       beforeInput: `${inputMaterial[0]} that is rough, incomplete, or not yet shaped for ${desiredOutput[0]}.`,
       afterOutput: `${desiredOutput[0]} with clear sections, review notes, and no unsupported performance or success claims.`,
       whyItWorks:

@@ -412,7 +412,7 @@
   ],
   "whatChanged": "Start with the user problem and final format, then pick the AI tool that reduces review work.",
   "exampleWorkflow": "Ask ChatGPT or Claude for a 30-day calendar from your offers, FAQs, and local dates, move the approved plan into Notion or a spreadsheet for team review, then use Canva for the posts that need visuals.",
-  "exampleResult": "Example output: Week 1 theme: easy lunches and weekend celebrations. Monday Instagram post: lunch box reminder with a photo of this week's options; CTA: message by noon for weekday pickup. Wednesday Facebook post: behind-the-scenes cake prep; CTA: ask about custom cake dates. Friday email: weekend order reminder; CTA: reserve by Thursday. Needs owner input: confirm current prices, pickup times, photo availability, and order capacity before posting.",
+  "exampleResult": "Example output: Start with an AI chat tool if the bottleneck is weekly themes, post angles, captions, and CTA ideas. Choose a workspace tool if owners, review status, deadlines, and approvals need to stay visible. Use a scheduler only after the plan is reviewed and the bottleneck is publishing on time. Expected calendar output: week, channel, post idea, format, CTA, owner, asset needed, and review status. Review before scheduling: confirm dates, offers, availability, prices, claims, and photos.",
   "faq": [
     {
       "question": "Which tool should I start with for choosing AI tools for small business content calendars?",

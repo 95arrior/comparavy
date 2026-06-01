@@ -2,12 +2,11 @@ import ScrollFocusReveal from "@/components/guides/ScrollFocusReveal";
 import type { Guide } from "@/lib/guides";
 
 type PreviewType =
-  | "ai_result"
+  | "product_result"
+  | "visual_content_result"
   | "document_result"
-  | "email_result"
-  | "calendar_result"
-  | "carousel_result"
-  | "listing_result";
+  | "decision_result"
+  | "calendar_result";
 
 interface PreviewSection {
   readonly heading: string;
@@ -35,7 +34,7 @@ interface PreviewContent {
 
 const PREVIEW_BY_SLUG: Record<string, PreviewContent> = {
   "how-to-turn-meeting-notes-into-a-client-recap-with-ai": {
-    type: "email_result",
+    type: "document_result",
     windowTitle: "AI recap result",
     resultLabel: "Email and recap draft",
     inputTitle: "Input used",
@@ -78,7 +77,7 @@ const PREVIEW_BY_SLUG: Record<string, PreviewContent> = {
       "The output matches the shortcut promise: decisions, owners, dates, open questions, and a sendable client follow-up.",
   },
   "how-to-write-etsy-product-descriptions-with-ai": {
-    type: "listing_result",
+    type: "document_result",
     windowTitle: "AI listing draft",
     resultLabel: "Etsy-ready draft",
     inputTitle: "Input used",
@@ -120,35 +119,39 @@ const PREVIEW_BY_SLUG: Record<string, PreviewContent> = {
       "It gives the seller a usable listing structure without inventing product claims or shop policies.",
   },
   "best-ai-tools-for-etsy-product-descriptions": {
-    type: "listing_result",
-    windowTitle: "AI tool output preview",
-    resultLabel: "Listing result",
+    type: "decision_result",
+    windowTitle: "AI tool decision preview",
+    resultLabel: "Decision preview",
     inputTitle: "Input used",
     input:
       "Product facts, shop tone, buyer use case, and listing fields that need a title, description, bullets, and review notes.",
-    resultTitle: "Polished Etsy-ready listing result",
+    resultTitle: "Choose the right tool for the listing job",
     intro:
-      "[Verified product name] - [style/material] [buyer use] with optional personalization",
+      "Start with the tool that best matches the listing work you need to finish, then review the generated copy before publishing.",
+    rows: [
+      {
+        label: "Use an AI chat tool",
+        value: "Best when you need a title, buyer-focused opening, bullets, and a first description draft.",
+        meta: "Good fit for flexible drafting from verified product facts.",
+      },
+      {
+        label: "Use a calmer rewrite tool",
+        value: "Best when the first draft sounds too salesy or needs a cleaner, more careful tone.",
+        meta: "Keep every material, size, and policy detail tied to the seller's source notes.",
+      },
+      {
+        label: "Use a design/workflow tool",
+        value: "Best after the copy is reviewed and you need image layouts, shop assets, or a repeatable process.",
+        meta: "Do not treat design polish as proof that product claims are verified.",
+      },
+    ],
     sections: [
       {
-        heading: "Buyer-focused opening",
+        heading: "Finished listing output",
         items: [
-          "A concise first paragraph that explains what the item is, who it is for, and how it can be used, based only on verified seller details.",
-        ],
-      },
-      {
-        heading: "Details to include",
-        items: [
+          "Title and buyer-focused opening.",
           "Materials and dimensions from the product sheet.",
-          "Personalization options and character limits.",
-          "Care instructions supplied by the seller.",
-          "Shipping or processing note marked for seller confirmation.",
-        ],
-      },
-      {
-        heading: "Keyword and tag ideas",
-        items: [
-          "[product type], [recipient], [occasion], [material], [style], [custom option]",
+          "Bullets, tag ideas, and Needs Seller Review notes.",
         ],
       },
       {
@@ -249,28 +252,28 @@ const PREVIEW_BY_SLUG: Record<string, PreviewContent> = {
       "The output is a practical calendar the owner can review, not a vague marketing brainstorm or growth promise.",
   },
   "best-ai-tools-for-small-business-content-calendars": {
-    type: "calendar_result",
-    windowTitle: "AI calendar workflow",
-    resultLabel: "Tool-backed content plan",
+    type: "decision_result",
+    windowTitle: "AI calendar tool decision",
+    resultLabel: "Decision preview",
     inputTitle: "Input used",
     input:
       "Offers, seasonal dates, common customer questions, team capacity, preferred channels, and where the calendar should live.",
-    resultTitle: "Decision-ready calendar plan",
+    resultTitle: "Choose the tool by the calendar bottleneck",
     rows: [
       {
-        label: "Week 1",
-        value: "Service education theme",
-        meta: "AI chat tool drafts post angles and captions",
+        label: "Planning",
+        value: "Use an AI chat tool when you need weekly themes, post angles, caption drafts, and CTAs.",
+        meta: "Best when ideas and copy are the main bottleneck.",
       },
       {
-        label: "Week 2",
-        value: "Customer question theme",
-        meta: "Workspace tool tracks review status and owners",
+        label: "Workflow",
+        value: "Use a workspace tool when owners, review status, deadlines, and approvals need to stay visible.",
+        meta: "Best when more than one person touches the calendar.",
       },
       {
-        label: "Week 3",
-        value: "Offer or event theme",
-        meta: "Scheduler only after claims and dates are reviewed",
+        label: "Publishing",
+        value: "Use a scheduler after dates, claims, assets, and offer details have been reviewed.",
+        meta: "Best after the content plan is approved.",
       },
     ],
     sections: [
@@ -287,7 +290,7 @@ const PREVIEW_BY_SLUG: Record<string, PreviewContent> = {
       "The preview shows how the tool choice supports the finished calendar workflow instead of acting as a generic tool list.",
   },
   "how-to-turn-a-blog-post-into-an-instagram-carousel-with-ai": {
-    type: "carousel_result",
+    type: "visual_content_result",
     windowTitle: "AI carousel result",
     resultLabel: "Carousel outline",
     inputTitle: "Input used",
@@ -342,7 +345,7 @@ const PREVIEW_BY_SLUG: Record<string, PreviewContent> = {
 
 function fallbackPreview(guide: Guide): PreviewContent {
   return {
-    type: "ai_result",
+    type: "document_result",
     windowTitle: "AI result preview",
     resultLabel: "Reviewable result",
     inputTitle: "Input used",
@@ -370,37 +373,34 @@ function fallbackPreview(guide: Guide): PreviewContent {
 
 function typeLabel(type: PreviewType): string {
   switch (type) {
-    case "email_result":
-      return "Email result";
-    case "listing_result":
-      return "Listing result";
+    case "product_result":
+      return "Product result";
+    case "visual_content_result":
+      return "Visual content result";
     case "document_result":
       return "Document result";
+    case "decision_result":
+      return "Decision result";
     case "calendar_result":
       return "Calendar result";
-    case "carousel_result":
-      return "Carousel result";
-    case "ai_result":
     default:
-      return "AI result";
+      return "Result preview";
   }
 }
 
 function resultShellClass(type: PreviewType): string {
   switch (type) {
-    case "listing_result":
-      return "border-teal-200 bg-gradient-to-br from-white via-white to-teal-50";
+    case "product_result":
+      return "border-teal-200 bg-gradient-to-br from-white via-teal-50/60 to-white";
+    case "visual_content_result":
+      return "border-teal-200 bg-gradient-to-br from-white via-slate-50 to-teal-50";
     case "calendar_result":
       return "border-emerald-200 bg-gradient-to-br from-white via-white to-emerald-50";
-    case "carousel_result":
-      return "border-teal-200 bg-gradient-to-br from-white via-slate-50 to-teal-50";
-    case "email_result":
-      return "border-teal-200 bg-gradient-to-br from-white via-white to-slate-50";
+    case "decision_result":
+      return "border-slate-200 bg-gradient-to-br from-white via-slate-50 to-teal-50/60";
     case "document_result":
-      return "border-teal-200 bg-gradient-to-br from-white via-white to-teal-50/70";
-    case "ai_result":
     default:
-      return "border-teal-200 bg-white";
+      return "border-teal-200 bg-gradient-to-br from-white via-white to-teal-50/70";
   }
 }
 
@@ -487,6 +487,55 @@ function renderCarouselRows(rows?: readonly PreviewRow[]) {
   );
 }
 
+function renderDecisionRows(rows?: readonly PreviewRow[]) {
+  if (!rows?.length) {
+    return null;
+  }
+
+  return (
+    <div className="grid gap-3 lg:grid-cols-3">
+      {rows.map((row) => (
+        <div
+          key={`${row.label}-${row.value}`}
+          className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+        >
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-teal-700">
+            {row.label}
+          </p>
+          <p className="mt-3 text-sm font-semibold leading-6 text-slate-950">{row.value}</p>
+          {row.meta ? (
+            <p className="mt-auto pt-3 text-sm leading-6 text-slate-600">{row.meta}</p>
+          ) : null}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function renderProductRows(rows?: readonly PreviewRow[]) {
+  if (!rows?.length) {
+    return null;
+  }
+
+  return (
+    <div className="rounded-2xl border border-teal-100 bg-white p-4 shadow-sm">
+      <div className="grid gap-3 sm:grid-cols-2">
+        {rows.map((row) => (
+          <div key={`${row.label}-${row.value}`} className="rounded-xl bg-teal-50/70 p-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-teal-800">
+              {row.label}
+            </p>
+            <p className="mt-2 text-sm font-semibold leading-6 text-slate-950">{row.value}</p>
+            {row.meta ? (
+              <p className="mt-1 text-sm leading-6 text-slate-600">{row.meta}</p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function renderResultBody(preview: PreviewContent) {
   if (preview.type === "calendar_result") {
     return (
@@ -497,10 +546,28 @@ function renderResultBody(preview: PreviewContent) {
     );
   }
 
-  if (preview.type === "carousel_result") {
+  if (preview.type === "visual_content_result") {
     return (
       <div className="space-y-4">
         {renderCarouselRows(preview.rows)}
+        {renderSections(preview.sections)}
+      </div>
+    );
+  }
+
+  if (preview.type === "decision_result") {
+    return (
+      <div className="space-y-4">
+        {renderDecisionRows(preview.rows)}
+        {renderSections(preview.sections)}
+      </div>
+    );
+  }
+
+  if (preview.type === "product_result") {
+    return (
+      <div className="space-y-4">
+        {renderProductRows(preview.rows)}
         {renderSections(preview.sections)}
       </div>
     );
