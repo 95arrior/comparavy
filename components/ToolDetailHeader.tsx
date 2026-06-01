@@ -1,5 +1,5 @@
 import ActionLinks from "@/components/ActionLinks";
-import BadgeRow, { getToolBadges } from "@/components/BadgeRow";
+import BadgeRow, { getToolCardBadges } from "@/components/BadgeRow";
 import ToolIcon from "@/components/ToolIcon";
 import type { AiTool } from "@/types/tool";
 
@@ -7,21 +7,6 @@ function formatCategory(category: AiTool["category"]): string {
   return category
     .replace(/-/g, " ")
     .replace(/\b\w/g, (character) => character.toUpperCase());
-}
-
-function formatBudgetLabel(budgetLevel: AiTool["budgetLevel"]): string {
-  switch (budgetLevel) {
-    case "free":
-      return "Free";
-    case "under20":
-      return "Under $20";
-    case "under50":
-      return "Under $50";
-    case "premium":
-      return "Premium";
-    default:
-      return budgetLevel;
-  }
 }
 
 interface ToolDetailHeaderProps {
@@ -44,24 +29,8 @@ export default function ToolDetailHeader({ tool }: ToolDetailHeaderProps) {
           <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg">
             {tool.description}
           </p>
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-teal-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-teal-800">
-              {formatCategory(tool.category)}
-            </span>
-            <span className="rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600">
-              {formatBudgetLabel(tool.budgetLevel)}
-            </span>
-            <span className="rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600">
-              Setup {tool.setupDifficulty}
-            </span>
-            {tool.freePlan && (
-              <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-800">
-                Free plan
-              </span>
-            )}
-          </div>
           <div className="mt-5">
-            <BadgeRow badges={getToolBadges(tool)} />
+            <BadgeRow badges={getToolCardBadges(tool)} maxVisible={5} />
           </div>
           <ActionLinks
             className="mt-6"

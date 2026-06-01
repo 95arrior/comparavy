@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import ActionLinks from "@/components/ActionLinks";
-import BadgeRow, { getToolBadges } from "@/components/BadgeRow";
+import BadgeRow, { getToolCardBadges } from "@/components/BadgeRow";
 import MetricBars from "@/components/MetricBars";
 import SiteHeader from "@/components/SiteHeader";
 import ToolIcon from "@/components/ToolIcon";
@@ -16,276 +16,432 @@ import {
   type ToolRecommendation,
 } from "@/lib/recommendTools";
 
-type GoalId =
-  | "videos"
-  | "writing"
-  | "images"
-  | "growth"
-  | "automation"
-  | "free";
+type TaskId =
+  | "content"
+  | "summarize"
+  | "social"
+  | "product-copy"
+  | "messy-notes"
+  | "compare-tools";
+type SourceId =
+  | "meeting-notes"
+  | "pdf-text"
+  | "product-details"
+  | "blog-post"
+  | "business-idea"
+  | "nothing-yet";
+type OutputId =
+  | "email-recap"
+  | "study-notes"
+  | "product-listing"
+  | "content-calendar"
+  | "instagram-carousel"
+  | "tool-recommendation";
+type ContextId =
+  | "work"
+  | "school"
+  | "etsy"
+  | "small-business"
+  | "social-media"
+  | "personal";
+type EnvironmentId =
+  | "any-chat"
+  | "google-workspace"
+  | "microsoft-365"
+  | "notion"
+  | "canva"
+  | "unsure";
 
-interface Choice<T extends string> {
-  id: T;
-  label: string;
-}
-
-interface GoalChoice extends Choice<GoalId> {
-  query: string;
-}
-
-interface UseCaseChoice extends Choice<string> {
-  query: string;
-  goalQuery?: string;
+interface FinderChoice<T extends string> {
+  readonly id: T;
+  readonly label: string;
+  readonly query: string;
+  readonly description?: string;
+  readonly goalQuery?: string;
+  readonly useCaseQuery?: string;
+  readonly budget?: RecommendationBudget;
+  readonly priority?: RecommendationPriority;
+  readonly preferredToolSlugs?: readonly ToolSlug[];
 }
 
 interface FinderAnswers {
-  goal: GoalChoice | null;
-  useCase: UseCaseChoice | null;
-  budget: RecommendationBudget | null;
-  skillLevel: SkillLevel | null;
-  priority: RecommendationPriority | null;
+  task: FinderChoice<TaskId> | null;
+  source: FinderChoice<SourceId> | null;
+  output: FinderChoice<OutputId> | null;
+  context: FinderChoice<ContextId> | null;
+  environment: FinderChoice<EnvironmentId> | null;
 }
 
-const GOALS: readonly GoalChoice[] = [
-  { id: "videos", label: "Make videos", query: "video" },
-  { id: "writing", label: "Write content", query: "writing" },
-  { id: "images", label: "Design images", query: "design images" },
-  { id: "growth", label: "Grow online", query: "marketing writing design" },
-  { id: "automation", label: "Automate work", query: "automation" },
-  { id: "free", label: "Start free", query: "general help" },
+interface ShortcutMatch {
+  readonly slug: string;
+  readonly title: string;
+  readonly description: string;
+  readonly useCase: string;
+  readonly category: string;
+  readonly persona: string;
+  readonly searchText: string;
+  readonly recommendedToolSlugs: readonly ToolSlug[];
+}
+
+interface ScoredShortcut {
+  readonly shortcut: ShortcutMatch;
+  readonly score: number;
+}
+
+const PUBLISHED_SHORTCUTS: readonly ShortcutMatch[] = [
+  {
+    slug: "how-to-turn-meeting-notes-into-a-client-recap-with-ai",
+    title: "How to Turn Meeting Notes Into a Client Recap and Follow-Up Email with AI",
+    description:
+      "Turn messy meeting notes into a client recap and follow-up email with decisions, action items, owners, open questions, and review steps.",
+    useCase: "turning meeting notes into a client recap",
+    category: "Productivity",
+    persona: "client service professionals",
+    searchText:
+      "meeting notes client recap follow-up email action items meeting summary client email call notes owners deadlines open questions work messy notes",
+    recommendedToolSlugs: ["chatgpt", "claude", "otter-ai", "fireflies"],
+  },
+  {
+    slug: "how-to-summarize-a-pdf-into-study-notes-with-ai",
+    title: "How to Summarize a PDF Into Study Notes and Quiz Questions with AI",
+    description:
+      "Turn a PDF or pasted document text into study notes, key concepts, quiz questions, and review prompts.",
+    useCase: "summarizing a PDF into study notes",
+    category: "Study",
+    persona: "Students",
+    searchText:
+      "pdf document text class notes lecture notes textbook chapter study notes quiz questions flashcards review questions school student exam prep summarize",
+    recommendedToolSlugs: ["chatgpt", "claude", "gemini", "microsoft-copilot"],
+  },
+  {
+    slug: "how-to-write-etsy-product-descriptions-with-ai",
+    title: "How to Write Etsy Product Descriptions with AI",
+    description:
+      "Turn product facts into accurate Etsy descriptions with buyer-focused copy and a review step.",
+    useCase: "writing Etsy product descriptions",
+    category: "Ecommerce",
+    persona: "Etsy sellers",
+    searchText:
+      "etsy product details product description listing copy handmade product shop seller product listing title tags ecommerce online shop",
+    recommendedToolSlugs: ["chatgpt", "claude", "jasper", "grammarly"],
+  },
+  {
+    slug: "best-ai-tools-for-etsy-product-descriptions",
+    title: "Best AI Tools for Etsy Product Descriptions, Titles, and Listings",
+    description:
+      "Compare AI tools for Etsy product descriptions, titles, listings, prompts, and safer listing workflows.",
+    useCase: "choosing AI tools for Etsy product descriptions",
+    category: "Ecommerce",
+    persona: "Etsy sellers",
+    searchText:
+      "etsy product description product title listing copy tags keywords handmade product shop seller compare tools product listing",
+    recommendedToolSlugs: ["chatgpt", "claude", "canva-magic-studio", "jasper"],
+  },
+  {
+    slug: "how-to-create-a-content-calendar-for-a-small-business-with-ai",
+    title: "How to Create a Content Calendar for a Small Business with AI",
+    description:
+      "Create a small business content calendar from offers, events, audience notes, and brand voice.",
+    useCase: "creating a content calendar for a small business",
+    category: "Marketing",
+    persona: "Small business owners",
+    searchText:
+      "small business content calendar social media planning weekly content plan marketing calendar content ideas social posts business promotion local business",
+    recommendedToolSlugs: ["chatgpt", "notion-ai", "buffer", "canva-magic-studio"],
+  },
+  {
+    slug: "best-ai-tools-for-small-business-content-calendars",
+    title: "Best AI Tools for Small Business Content Calendars and Social Media Planning",
+    description:
+      "Compare AI tools for planning small business content calendars, social posts, weekly themes, and marketing ideas.",
+    useCase: "choosing AI tools for small business content calendars",
+    category: "Marketing",
+    persona: "Small business owners",
+    searchText:
+      "small business content calendar social media planning instagram posts facebook posts weekly content plan marketing calendar compare tools",
+    recommendedToolSlugs: ["chatgpt", "claude", "canva-magic-studio", "notion-ai"],
+  },
+  {
+    slug: "how-to-turn-a-blog-post-into-an-instagram-carousel-with-ai",
+    title: "How to Turn a Blog Post Into an Instagram Carousel with AI",
+    description:
+      "Turn a blog post into an Instagram carousel outline, slide text, caption, visual notes, and review checklist.",
+    useCase: "turning a blog post into an Instagram carousel",
+    category: "Social Media",
+    persona: "Content creators",
+    searchText:
+      "blog post instagram carousel carousel slides social media content repurpose blog post instagram caption slide outline canva carousel content creator",
+    recommendedToolSlugs: ["canva-magic-studio", "chatgpt", "claude"],
+  },
 ];
 
-const USE_CASES: Record<GoalId, readonly UseCaseChoice[]> = {
-  videos: [
-    {
-      id: "youtube-shorts",
-      label: "YouTube Shorts",
-      query: "create short clips youtube social video",
-    },
-    {
-      id: "long-youtube",
-      label: "Long-form YouTube",
-      query: "edit video recordings youtube",
-    },
-    {
-      id: "podcast-clips",
-      label: "Podcast clips",
-      query: "edit podcasts create clips transcribe media",
-    },
-    {
-      id: "instagram-reels",
-      label: "Instagram Reels",
-      query: "edit reels short videos social templates",
-    },
-    {
-      id: "captions",
-      label: "Captions/subtitles",
-      query: "caption short videos transcribe media",
-    },
-    {
-      id: "voiceover",
-      label: "Voiceover",
-      query: "generate narration prototype voiceovers voice",
-      goalQuery: "audio voiceover video",
-    },
-  ],
-  writing: [
-    { id: "blog", label: "Blog posts", query: "outline articles draft blog posts" },
-    {
-      id: "newsletters",
-      label: "Email newsletters",
-      query: "draft emails produce marketing copy email",
-    },
-    {
-      id: "english",
-      label: "Better English",
-      query: "polish messages adjust tone rewrite passages",
-    },
-    {
-      id: "freelance",
-      label: "Freelance writing",
-      query: "edit articles develop messaging draft briefs",
-    },
-    {
-      id: "seo-writing",
-      label: "SEO writing",
-      query: "outline articles marketing seo workflow web copy",
-    },
-    {
-      id: "captions",
-      label: "Social captions",
-      query: "produce marketing copy social media captions",
-    },
-  ],
-  images: [
-    {
-      id: "social-posts",
-      label: "Social media posts",
-      query: "create social posts generate social graphics",
-    },
-    { id: "logos", label: "Logos", query: "test logo directions design branding" },
-    {
-      id: "mockups",
-      label: "Product mockups",
-      query: "generate product visuals create asset concepts",
-    },
-    {
-      id: "thumbnails",
-      label: "Thumbnails",
-      query: "generate social graphics create image concepts",
-    },
-    {
-      id: "pinterest",
-      label: "Pinterest pins",
-      query: "create social posts design graphics templates",
-    },
-    {
-      id: "ai-art",
-      label: "AI art",
-      query: "develop visual concepts explore styles illustration",
-      goalQuery: "images illustration visual art",
-    },
-  ],
-  growth: [
-    {
-      id: "seo",
-      label: "SEO",
-      query: "outline articles marketing seo workflow web copy",
-      goalQuery: "writing marketing research",
-    },
-    {
-      id: "email-marketing",
-      label: "Email marketing",
-      query: "produce marketing copy draft emails campaign copy",
-      goalQuery: "writing marketing email",
-    },
-    {
-      id: "scheduling",
-      label: "Social scheduling",
-      query: "automate content handoffs create social posts social media",
-      goalQuery: "automation design social media",
-    },
-    {
-      id: "etsy",
-      label: "Etsy sellers",
-      query: "generate product visuals create social posts marketing",
-      goalQuery: "design images marketing",
-    },
-    {
-      id: "real-estate",
-      label: "Real estate content",
-      query: "produce marketing copy create social posts campaigns",
-      goalQuery: "writing design marketing",
-    },
-    {
-      id: "small-business",
-      label: "Small business marketing",
-      query: "produce marketing copy create social posts campaign assets",
-      goalQuery: "writing design marketing",
-    },
-  ],
-  automation: [
-    {
-      id: "calendar",
-      label: "Content calendar",
-      query: "automate content handoffs organize tasks content",
-    },
-    {
-      id: "repetitive",
-      label: "Repetitive tasks",
-      query: "connect form workflows trigger follow-ups workflow automation",
-    },
-    {
-      id: "research",
-      label: "Research",
-      query: "research competitors collect source links brief topics",
-      goalQuery: "research sources",
-    },
-    {
-      id: "summaries",
-      label: "Summaries",
-      query: "summarize incoming items summarize documents",
-      goalQuery: "productivity research automation",
-    },
-    {
-      id: "no-code",
-      label: "No-code workflows",
-      query: "connect form workflows automate content handoffs no code",
-    },
-    {
-      id: "crm",
-      label: "CRM/admin tasks",
-      query: "route leads process leads trigger follow-ups",
-    },
-  ],
-  free: [
-    {
-      id: "free-writing",
-      label: "Free writing tools",
-      query: "writing polish messages draft emails",
-      goalQuery: "writing",
-    },
-    {
-      id: "free-video",
-      label: "Free video tools",
-      query: "video create clips edit reels",
-      goalQuery: "video",
-    },
-    {
-      id: "free-images",
-      label: "Free image tools",
-      query: "images create social posts generate image concepts",
-      goalQuery: "design images",
-    },
-    {
-      id: "free-automation",
-      label: "Free automation tools",
-      query: "automation connect form workflows no code",
-      goalQuery: "automation",
-    },
-    {
-      id: "free-seo",
-      label: "Free SEO tools",
-      query: "seo outline articles marketing research",
-      goalQuery: "writing marketing research",
-    },
-  ],
-};
-
-const BUDGETS: readonly Choice<RecommendationBudget>[] = [
-  { id: "free", label: "Free" },
-  { id: "under20", label: "Under $20/month" },
-  { id: "under50", label: "Under $50/month" },
-  { id: "premium", label: "Best regardless of price" },
+const TASKS: readonly FinderChoice<TaskId>[] = [
+  { id: "content", label: "Write or improve content", query: "writing content copy draft improve" },
+  { id: "summarize", label: "Summarize notes or documents", query: "summarize notes documents pdf study recap" },
+  { id: "social", label: "Plan social media", query: "social media content calendar carousel captions" },
+  { id: "product-copy", label: "Create business or product copy", query: "business product copy etsy listing marketing" },
+  { id: "messy-notes", label: "Turn messy notes into a finished output", query: "messy notes finished output recap email summary" },
+  { id: "compare-tools", label: "Compare AI tools", query: "compare ai tools recommendations alternatives", priority: "professional" },
 ];
 
-const SKILL_LEVELS: readonly Choice<SkillLevel>[] = [
-  { id: "beginner", label: "Beginner" },
-  { id: "intermediate", label: "Intermediate" },
-  { id: "advanced", label: "Advanced" },
+const SOURCES: readonly FinderChoice<SourceId>[] = [
+  { id: "meeting-notes", label: "Meeting notes", query: "meeting notes call notes decisions action items" },
+  { id: "pdf-text", label: "PDF or document text", query: "pdf document text class notes lecture textbook" },
+  { id: "product-details", label: "Product details", query: "product details materials dimensions product facts etsy" },
+  { id: "blog-post", label: "Blog post", query: "blog post article source content" },
+  { id: "business-idea", label: "Business idea", query: "business idea offer audience small business" },
+  { id: "nothing-yet", label: "Nothing yet", query: "start from scratch brainstorm plan", budget: "free" },
 ];
 
-const PRIORITIES: readonly Choice<RecommendationPriority>[] = [
-  { id: "fastest", label: "Fastest workflow" },
-  { id: "quality", label: "Best quality" },
-  { id: "easy", label: "Easiest setup" },
-  { id: "free", label: "Best free plan" },
-  { id: "professional", label: "Professional control" },
+const OUTPUTS: readonly FinderChoice<OutputId>[] = [
+  { id: "email-recap", label: "Email or recap", query: "email recap follow-up client summary", priority: "quality" },
+  { id: "study-notes", label: "Study notes", query: "study notes quiz questions flashcards review", priority: "quality" },
+  { id: "product-listing", label: "Product listing", query: "product listing etsy description title tags", priority: "quality" },
+  { id: "content-calendar", label: "Content calendar", query: "content calendar weekly social media plan", priority: "easy" },
+  { id: "instagram-carousel", label: "Instagram carousel", query: "instagram carousel slide outline caption canva", priority: "easy" },
+  { id: "tool-recommendation", label: "Tool recommendation", query: "tool recommendation compare alternatives", priority: "professional" },
 ];
+
+const CONTEXTS: readonly FinderChoice<ContextId>[] = [
+  { id: "work", label: "Work", query: "work client professional productivity" },
+  { id: "school", label: "School", query: "school student study notes class" },
+  { id: "etsy", label: "Etsy or online shop", query: "etsy online shop ecommerce product listing seller" },
+  { id: "small-business", label: "Small business", query: "small business local business content marketing" },
+  { id: "social-media", label: "Social media", query: "social media instagram carousel content calendar" },
+  { id: "personal", label: "Personal productivity", query: "personal productivity notes tasks" },
+];
+
+const ENVIRONMENTS: readonly FinderChoice<EnvironmentId>[] = [
+  {
+    id: "any-chat",
+    label: "Any AI chat tool",
+    query: "chatgpt claude gemini copilot chat tool",
+    budget: "free",
+    preferredToolSlugs: ["chatgpt", "claude", "gemini"],
+  },
+  {
+    id: "google-workspace",
+    label: "Google Workspace",
+    query: "google workspace gemini docs gmail sheets",
+    preferredToolSlugs: ["gemini", "notebooklm"],
+  },
+  {
+    id: "microsoft-365",
+    label: "Microsoft 365",
+    query: "microsoft 365 copilot word outlook teams",
+    preferredToolSlugs: ["microsoft-copilot"],
+  },
+  {
+    id: "notion",
+    label: "Notion",
+    query: "notion workspace notes project docs",
+    preferredToolSlugs: ["notion-ai"],
+  },
+  {
+    id: "canva",
+    label: "Canva",
+    query: "canva design carousel social graphics",
+    preferredToolSlugs: ["canva-magic-studio"],
+    priority: "easy",
+  },
+  {
+    id: "unsure",
+    label: "I am not sure",
+    query: "not sure beginner simple recommendation",
+    budget: "free",
+    priority: "easy",
+  },
+];
+
+const STEP_TITLES = [
+  "What are you trying to finish?",
+  "What input do you already have?",
+  "What finished output do you need?",
+  "Where will you use the result?",
+  "Which tool environment do you prefer?",
+] as const;
 
 const INITIAL_ANSWERS: FinderAnswers = {
-  goal: null,
-  useCase: null,
-  budget: null,
-  skillLevel: null,
-  priority: null,
+  task: null,
+  source: null,
+  output: null,
+  context: null,
+  environment: null,
 };
+
+const DIRECT_SHORTCUT_BOOSTS: Record<string, readonly string[]> = {
+  "meeting-notes:email-recap": ["how-to-turn-meeting-notes-into-a-client-recap-with-ai"],
+  "pdf-text:study-notes": ["how-to-summarize-a-pdf-into-study-notes-with-ai"],
+  "product-details:product-listing": [
+    "how-to-write-etsy-product-descriptions-with-ai",
+    "best-ai-tools-for-etsy-product-descriptions",
+  ],
+  "blog-post:instagram-carousel": ["how-to-turn-a-blog-post-into-an-instagram-carousel-with-ai"],
+  "business-idea:content-calendar": [
+    "how-to-create-a-content-calendar-for-a-small-business-with-ai",
+    "best-ai-tools-for-small-business-content-calendars",
+  ],
+};
+
+const STOP_WORDS = new Set([
+  "and",
+  "for",
+  "the",
+  "with",
+  "into",
+  "from",
+  "that",
+  "this",
+  "tool",
+  "tools",
+  "output",
+]);
+
+function tokenize(value: string): string[] {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, " ")
+    .split(/\s+/)
+    .filter((term) => term.length > 2 && !STOP_WORDS.has(term));
+}
+
+function selectedText(answers: FinderAnswers): string {
+  return [
+    answers.task?.query,
+    answers.source?.query,
+    answers.output?.query,
+    answers.context?.query,
+    answers.environment?.query,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function wantsToolRecommendation(answers: FinderAnswers): boolean {
+  return (
+    answers.task?.id === "compare-tools" ||
+    answers.output?.id === "tool-recommendation"
+  );
+}
+
+function getShortcutMatches(answers: FinderAnswers): ScoredShortcut[] {
+  if (
+    !answers.task ||
+    !answers.source ||
+    !answers.output ||
+    !answers.context ||
+    !answers.environment ||
+    wantsToolRecommendation(answers)
+  ) {
+    return [];
+  }
+
+  const terms = tokenize(selectedText(answers));
+  const directKey = `${answers.source.id}:${answers.output.id}`;
+  const boostedSlugs = new Set(DIRECT_SHORTCUT_BOOSTS[directKey] ?? []);
+  const contextTerm = answers.context.query.split(" ")[0] ?? "";
+
+  return PUBLISHED_SHORTCUTS.map((shortcut) => {
+    const haystack = `${shortcut.title} ${shortcut.description} ${shortcut.useCase} ${shortcut.category} ${shortcut.persona} ${shortcut.searchText}`.toLowerCase();
+    const overlapScore = terms.reduce(
+      (score, term) => score + (haystack.includes(term) ? 1 : 0),
+      0,
+    );
+    const directBoost = boostedSlugs.has(shortcut.slug) ? 20 : 0;
+    const contextBoost = haystack.includes(contextTerm) ? 2 : 0;
+
+    return { shortcut, score: overlapScore + directBoost + contextBoost };
+  })
+    .filter((match) => match.score >= 7)
+    .sort((left, right) => right.score - left.score)
+    .slice(0, 2);
+}
+
+function buildRecommendationInput(answers: FinderAnswers) {
+  if (
+    !answers.task ||
+    !answers.source ||
+    !answers.output ||
+    !answers.context ||
+    !answers.environment
+  ) {
+    return null;
+  }
+
+  const budget: RecommendationBudget =
+    answers.environment.budget ?? answers.source.budget ?? "under20";
+  const skillLevel: SkillLevel = "beginner";
+  const priority: RecommendationPriority =
+    answers.output.priority ?? answers.environment.priority ?? answers.task.priority ?? "easy";
+
+  return {
+    goal: [
+      answers.task.goalQuery ?? answers.task.query,
+      answers.context.query,
+      answers.environment.goalQuery ?? answers.environment.query,
+    ].join(" "),
+    useCase: [
+      answers.source.query,
+      answers.output.useCaseQuery ?? answers.output.query,
+      answers.context.query,
+      answers.environment.useCaseQuery ?? answers.environment.query,
+    ].join(" "),
+    budget,
+    skillLevel,
+    priority,
+  };
+}
+
+function getShortcutToolRecommendations(
+  shortcuts: readonly ScoredShortcut[],
+  generalRecommendations: readonly ToolRecommendation[],
+  answers: FinderAnswers,
+): ToolRecommendation[] {
+  const preferredSlugs = answers.environment?.preferredToolSlugs ?? [];
+  const shortcutSlugs = shortcuts.flatMap((match) => match.shortcut.recommendedToolSlugs);
+  const orderedSlugs = [...preferredSlugs, ...shortcutSlugs];
+  const seen = new Set<string>();
+  const shortcutTools: ToolRecommendation[] = [];
+
+  for (const slug of orderedSlugs) {
+    if (seen.has(slug)) {
+      continue;
+    }
+
+    const tool = toolsBySlug.get(slug);
+
+    if (!tool) {
+      continue;
+    }
+
+    seen.add(slug);
+    shortcutTools.push({
+      tool,
+      score: 1000 - shortcutTools.length,
+      reasons: [
+        "Fits the shortcut path matched above.",
+        "Works with the input and output you selected.",
+      ],
+    });
+  }
+
+  for (const recommendation of generalRecommendations) {
+    if (seen.has(recommendation.tool.slug)) {
+      continue;
+    }
+
+    seen.add(recommendation.tool.slug);
+    shortcutTools.push(recommendation);
+  }
+
+  return shortcutTools.slice(0, 3);
+}
 
 function RecommendationBadge({ label }: { readonly label: string }) {
   return (
     <span className="ateflo-star-badge inline-flex shrink-0 items-center gap-1.5 rounded-full bg-teal-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-800 ring-1 ring-teal-100">
       <span aria-hidden="true" className="ateflo-star-badge__icon">
-        ✦
+        *
       </span>
       {label}
     </span>
@@ -294,10 +450,12 @@ function RecommendationBadge({ label }: { readonly label: string }) {
 
 function OptionButton({
   label,
+  description,
   selected,
   onClick,
 }: {
   label: string;
+  description?: string;
   selected: boolean;
   onClick: () => void;
 }) {
@@ -312,8 +470,63 @@ function OptionButton({
           : "border-slate-200 bg-white text-slate-800 hover:border-teal-300 hover:bg-teal-50"
       }`}
     >
-      {label}
+      <span className="block leading-5">{label}</span>
+      {description && (
+        <span className={`mt-1 block text-sm leading-5 ${selected ? "text-teal-50" : "text-slate-500"}`}>
+          {description}
+        </span>
+      )}
     </button>
+  );
+}
+
+function ShortcutResultCard({
+  match,
+  rank,
+}: {
+  readonly match: ScoredShortcut;
+  readonly rank: number;
+}) {
+  const { shortcut } = match;
+
+  return (
+    <article className="flex h-full flex-col rounded-3xl border border-teal-200 bg-white p-5 shadow-sm ring-1 ring-teal-100 ateflo-card-lift sm:p-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-teal-700">
+            {rank === 1 ? "Best shortcut match" : "Also relevant"}
+          </p>
+          <h3 className="mt-2 text-xl font-semibold tracking-tight text-slate-900">
+            <Link href={`/shortcuts/${shortcut.slug}`} className="transition hover:text-teal-700">
+              {shortcut.title}
+            </Link>
+          </h3>
+        </div>
+        <RecommendationBadge label="Shortcut" />
+      </div>
+
+      <p className="mt-3 text-sm leading-6 text-slate-600">{shortcut.description}</p>
+
+      <div className="mt-4 flex flex-wrap gap-1.5">
+        {[shortcut.category, shortcut.persona].map((label) => (
+          <span
+            key={label}
+            className="inline-flex min-h-7 items-center rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-semibold leading-none text-slate-700 ring-1 ring-inset ring-slate-200"
+          >
+            {label}
+          </span>
+        ))}
+      </div>
+
+      <div className="mt-auto pt-5">
+        <Link
+          href={`/shortcuts/${shortcut.slug}`}
+          className="inline-flex min-h-11 items-center justify-center rounded-full bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+        >
+          Open Shortcut
+        </Link>
+      </div>
+    </article>
   );
 }
 
@@ -336,41 +549,41 @@ function RecommendationCard({
 
   return (
     <article
-      className={`flex flex-col rounded-3xl border bg-white p-5 shadow-sm ateflo-card-lift sm:p-6 ${
+      className={`flex h-full min-h-[620px] flex-col rounded-3xl border bg-white p-5 shadow-sm ateflo-card-lift sm:p-6 ${
         rank === 1
           ? "border-teal-200 ring-1 ring-teal-100"
           : "border-slate-200 hover:border-slate-300"
       }`}
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex min-h-12 flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2.5">
           <ToolIcon {...tool} size={26} />
           <h3 className="min-w-0 flex-1 truncate whitespace-nowrap text-lg font-semibold tracking-tight text-slate-900">
             {tool.name}
           </h3>
-          {rank === 1 ? (
-            <RecommendationBadge label="Top pick" />
-          ) : (
-            <span className="rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 ring-1 ring-slate-200">
-              Option {rank}
-            </span>
-          )}
         </div>
+        {rank === 1 ? (
+          <RecommendationBadge label="Top tool" />
+        ) : (
+          <span className="rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 ring-1 ring-slate-200">
+            Option {rank}
+          </span>
+        )}
       </div>
 
-      <p className="ateflo-clamp-2 mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+      <p className="ateflo-clamp-2 mt-3 min-h-12 max-w-2xl text-sm leading-6 text-slate-600">
         {tool.description}
       </p>
 
-      <div className="mt-3">
-        <BadgeRow badges={getToolBadges(tool, rank === 1)} />
+      <div className="mt-3 min-h-16">
+        <BadgeRow badges={getToolCardBadges(tool)} maxVisible={3} />
       </div>
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
-        <div className="flex h-full flex-col rounded-2xl bg-slate-50 p-4">
+      <div className="mt-5 grid gap-4">
+        <div className="flex min-h-52 flex-col rounded-2xl bg-slate-50 p-4">
           <p className="text-sm font-semibold text-slate-900">Why this fits</p>
           <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
-            {reasons.map((reason) => (
+            {reasons.slice(0, 3).map((reason) => (
               <li key={reason} className="flex gap-3">
                 <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-600" />
                 <span>{reason}</span>
@@ -378,39 +591,9 @@ function RecommendationCard({
             ))}
           </ul>
         </div>
-        <div className="flex h-full flex-col rounded-2xl border border-slate-100 bg-white p-4">
+        <div className="flex min-h-52 flex-col rounded-2xl border border-slate-100 bg-white p-4">
           <p className="mb-4 text-sm font-semibold text-slate-900">Fit signals</p>
           <MetricBars tool={tool} />
-        </div>
-      </div>
-
-      <div className="mt-5 grid gap-3 sm:grid-cols-3">
-        <div className="flex h-full flex-col rounded-2xl bg-teal-50/70 p-3.5">
-          <p className="text-sm font-semibold text-slate-900">Best for</p>
-          <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
-            {tool.bestFor.map((item) => (
-              <li key={item} className="flex gap-2">
-                <span className="text-teal-700">+</span>
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="flex h-full flex-col rounded-2xl bg-slate-50 p-3.5">
-          <p className="text-sm font-semibold text-slate-900">Not for</p>
-          <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
-            {tool.notFor.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </div>
-        <div className="flex h-full flex-col rounded-2xl bg-amber-50/60 p-3.5">
-          <p className="text-sm font-semibold text-slate-900">Avoid if</p>
-          <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
-            {tool.avoidIf.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
         </div>
       </div>
 
@@ -421,7 +604,7 @@ function RecommendationCard({
             Free plan: {tool.freePlan ? "Available" : "Not listed"}
           </p>
         </div>
-        <p className="text-sm leading-6 text-slate-600">
+        <p className="ateflo-clamp-2 text-sm leading-6 text-slate-600">
           {tool.pricingNote}
         </p>
       </div>
@@ -439,6 +622,7 @@ function RecommendationCard({
                 tool_slug: tool.slug,
                 tool_name: tool.name,
                 source_page: "finder",
+                action_location: "finder_tool_result",
               },
             },
             {
@@ -451,7 +635,7 @@ function RecommendationCard({
           type="button"
           aria-expanded={compareOpen}
           onClick={onCompare}
-          className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+          className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
         >
           Compare Alternatives
         </button>
@@ -489,64 +673,50 @@ export default function FinderPage() {
   const [answers, setAnswers] = useState<FinderAnswers>(INITIAL_ANSWERS);
   const [compareOpen, setCompareOpen] = useState<string | null>(null);
 
-  const input =
-    answers.goal &&
-    answers.useCase &&
-    answers.budget &&
-    answers.skillLevel &&
-    answers.priority
-      ? {
-          goal: answers.useCase.goalQuery ?? answers.goal.query,
-          useCase: answers.useCase.query,
-          budget: answers.budget,
-          skillLevel: answers.skillLevel,
-          priority: answers.priority,
-        }
-      : null;
-  const recommendations = input ? getRecommendedTools(input) : [];
-  const selectedUseCases = answers.goal ? USE_CASES[answers.goal.id] : [];
-  const isResultsStep = step === 5 && recommendations.length > 0;
+  const input = buildRecommendationInput(answers);
+  const shortcutMatches = getShortcutMatches(answers);
+  const generalRecommendations = input ? getRecommendedTools(input) : [];
+  const recommendations = input
+    ? shortcutMatches.length > 0 && !wantsToolRecommendation(answers)
+      ? getShortcutToolRecommendations(shortcutMatches, generalRecommendations, answers)
+      : generalRecommendations.slice(0, 3)
+    : [];
+  const isResultsStep = step === 5 && input !== null;
 
-  function chooseGoal(goal: GoalChoice) {
-    setAnswers({
-      goal,
-      useCase: null,
-      budget: null,
-      skillLevel: null,
-      priority: null,
+  function chooseAnswer<Key extends keyof FinderAnswers>(
+    key: Key,
+    value: NonNullable<FinderAnswers[Key]>,
+    nextStep: number,
+  ) {
+    setAnswers((current) => {
+      const next = { ...current, [key]: value };
+
+      if (key === "task") {
+        next.source = null;
+        next.output = null;
+        next.context = null;
+        next.environment = null;
+      }
+
+      if (key === "source") {
+        next.output = null;
+        next.context = null;
+        next.environment = null;
+      }
+
+      if (key === "output") {
+        next.context = null;
+        next.environment = null;
+      }
+
+      if (key === "context") {
+        next.environment = null;
+      }
+
+      return next;
     });
-    setStep(1);
-  }
-
-  function chooseUseCase(useCase: UseCaseChoice) {
-    setAnswers((current) => ({
-      ...current,
-      useCase,
-      budget: null,
-      skillLevel: null,
-      priority: null,
-    }));
-    setStep(2);
-  }
-
-  function chooseBudget(budget: RecommendationBudget) {
-    setAnswers((current) => ({
-      ...current,
-      budget,
-      skillLevel: null,
-      priority: null,
-    }));
-    setStep(3);
-  }
-
-  function chooseSkillLevel(skillLevel: SkillLevel) {
-    setAnswers((current) => ({ ...current, skillLevel, priority: null }));
-    setStep(4);
-  }
-
-  function choosePriority(priority: RecommendationPriority) {
-    setAnswers((current) => ({ ...current, priority }));
-    setStep(5);
+    setCompareOpen(null);
+    setStep(nextStep);
   }
 
   function resetFinder() {
@@ -555,25 +725,26 @@ export default function FinderPage() {
     setStep(0);
   }
 
+  const summaryChips = [
+    answers.task?.label,
+    answers.source?.label,
+    answers.output?.label,
+    answers.context?.label,
+    answers.environment?.label,
+  ].filter(Boolean);
+
   return (
     <main className="ateflo-page-shell min-h-screen px-4 py-6 sm:px-6 sm:py-10">
       <div className="mx-auto max-w-5xl">
         <SiteHeader active="finder" className="mb-7 rounded-3xl border border-slate-200 shadow-sm sm:mb-10" />
         <header className="mb-7 sm:mb-10">
-          <h1 className="max-w-2xl text-3xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
-            What are you trying to finish?
+          <h1 className="max-w-3xl text-3xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
+            Find the right AI shortcut or tool.
           </h1>
-          <p className="mt-4 max-w-xl text-base leading-7 text-slate-600 sm:text-lg">
-            Make five simple choices. AteFlo starts with the output you need to
-            finish, then narrows the workflow and tool options that fit.
+          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+            Answer a few simple questions and AteFlo will point you toward a
+            shortcut or tool that fits the task you want to finish.
           </p>
-          <div className="mt-5 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">
-            {["Output first", "Workflow fit", "Tools second"].map((label) => (
-              <span key={label} className="rounded-full border border-slate-200 bg-white px-3 py-2">
-                {label}
-              </span>
-            ))}
-          </div>
         </header>
 
         <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-7">
@@ -613,97 +784,78 @@ export default function FinderPage() {
 
           {!isResultsStep && (
             <div className="mt-8 sm:mt-10">
+              <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
+                {STEP_TITLES[step]}
+              </h2>
+              {step > 0 && (
+                <p className="mt-2 text-sm text-slate-500">
+                  {summaryChips.slice(0, step).join(" / ")}
+                </p>
+              )}
+
               {step === 0 && (
-                <>
-                  <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
-                    What do you need to finish?
-                  </h2>
-                  <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {GOALS.map((goal) => (
-                      <OptionButton
-                        key={goal.id}
-                        label={goal.label}
-                        selected={answers.goal?.id === goal.id}
-                        onClick={() => chooseGoal(goal)}
-                      />
-                    ))}
-                  </div>
-                </>
+                <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {TASKS.map((choice) => (
+                    <OptionButton
+                      key={choice.id}
+                      label={choice.label}
+                      selected={answers.task?.id === choice.id}
+                      onClick={() => chooseAnswer("task", choice, 1)}
+                    />
+                  ))}
+                </div>
               )}
 
               {step === 1 && (
-                <>
-                  <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
-                    Which specific workflow fits best?
-                  </h2>
-                  <p className="mt-2 text-sm text-slate-500">
-                    Selected: {answers.goal?.label}
-                  </p>
-                  <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {selectedUseCases.map((useCase) => (
-                      <OptionButton
-                        key={useCase.id}
-                        label={useCase.label}
-                        selected={answers.useCase?.id === useCase.id}
-                        onClick={() => chooseUseCase(useCase)}
-                      />
-                    ))}
-                  </div>
-                </>
+                <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {SOURCES.map((choice) => (
+                    <OptionButton
+                      key={choice.id}
+                      label={choice.label}
+                      selected={answers.source?.id === choice.id}
+                      onClick={() => chooseAnswer("source", choice, 2)}
+                    />
+                  ))}
+                </div>
               )}
 
               {step === 2 && (
-                <>
-                  <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
-                    What is your budget?
-                  </h2>
-                  <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                    {BUDGETS.map((budget) => (
-                      <OptionButton
-                        key={budget.id}
-                        label={budget.label}
-                        selected={answers.budget === budget.id}
-                        onClick={() => chooseBudget(budget.id)}
-                      />
-                    ))}
-                  </div>
-                </>
+                <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {OUTPUTS.map((choice) => (
+                    <OptionButton
+                      key={choice.id}
+                      label={choice.label}
+                      selected={answers.output?.id === choice.id}
+                      onClick={() => chooseAnswer("output", choice, 3)}
+                    />
+                  ))}
+                </div>
               )}
 
               {step === 3 && (
-                <>
-                  <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
-                    What is your skill level?
-                  </h2>
-                  <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                    {SKILL_LEVELS.map((level) => (
-                      <OptionButton
-                        key={level.id}
-                        label={level.label}
-                        selected={answers.skillLevel === level.id}
-                        onClick={() => chooseSkillLevel(level.id)}
-                      />
-                    ))}
-                  </div>
-                </>
+                <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {CONTEXTS.map((choice) => (
+                    <OptionButton
+                      key={choice.id}
+                      label={choice.label}
+                      selected={answers.context?.id === choice.id}
+                      onClick={() => chooseAnswer("context", choice, 4)}
+                    />
+                  ))}
+                </div>
               )}
 
               {step === 4 && (
-                <>
-                  <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
-                    What matters most?
-                  </h2>
-                  <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {PRIORITIES.map((priority) => (
-                      <OptionButton
-                        key={priority.id}
-                        label={priority.label}
-                        selected={answers.priority === priority.id}
-                        onClick={() => choosePriority(priority.id)}
-                      />
-                    ))}
-                  </div>
-                </>
+                <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {ENVIRONMENTS.map((choice) => (
+                    <OptionButton
+                      key={choice.id}
+                      label={choice.label}
+                      selected={answers.environment?.id === choice.id}
+                      onClick={() => chooseAnswer("environment", choice, 5)}
+                    />
+                  ))}
+                </div>
               )}
             </div>
           )}
@@ -711,12 +863,11 @@ export default function FinderPage() {
           {isResultsStep && (
             <div className="mt-8">
               <div className="flex flex-wrap gap-2 text-sm text-slate-600">
-                <span className="rounded-full bg-slate-50 px-3 py-2">
-                  {answers.goal?.label}
-                </span>
-                <span className="rounded-full bg-slate-50 px-3 py-2">
-                  {answers.useCase?.label}
-                </span>
+                {summaryChips.map((label) => (
+                  <span key={label} className="rounded-full bg-slate-50 px-3 py-2">
+                    {label}
+                  </span>
+                ))}
               </div>
             </div>
           )}
@@ -725,12 +876,52 @@ export default function FinderPage() {
         {isResultsStep && (
           <section id="finder-results" aria-live="polite" className="mt-8">
             <div className="mb-6">
-              <p className="text-sm font-medium text-teal-700">Shortcut match</p>
+              <p className="text-sm font-medium text-teal-700">
+                {shortcutMatches.length > 0 ? "Shortcut first" : "Closest fit"}
+              </p>
               <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
                 Your best workflow fit
               </h2>
+              {shortcutMatches.length === 0 && !wantsToolRecommendation(answers) && (
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+                  AteFlo does not have an exact published shortcut for this path
+                  yet. Start with the closest tools below, or browse all current
+                  shortcuts.
+                </p>
+              )}
             </div>
-            <div className="space-y-4 sm:space-y-5">
+
+            {shortcutMatches.length > 0 && !wantsToolRecommendation(answers) && (
+              <div className="mb-6 grid gap-4 md:grid-cols-2">
+                {shortcutMatches.map((match, index) => (
+                  <ShortcutResultCard
+                    key={match.shortcut.slug}
+                    match={match}
+                    rank={index + 1}
+                  />
+                ))}
+              </div>
+            )}
+
+            {shortcutMatches.length === 0 && !wantsToolRecommendation(answers) && (
+              <div className="mb-6">
+                <Link
+                  href="/shortcuts"
+                  className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+                >
+                  Browse Published Shortcuts
+                </Link>
+              </div>
+            )}
+
+            <div className="mb-4">
+              <p className="text-sm font-semibold text-slate-900">
+                {shortcutMatches.length > 0 && !wantsToolRecommendation(answers)
+                  ? "Tools that fit this shortcut"
+                  : "Tool recommendations"}
+              </p>
+            </div>
+            <div className="grid gap-4 lg:grid-cols-3">
               {recommendations.map((recommendation, index) => (
                 <RecommendationCard
                   key={recommendation.tool.id}
