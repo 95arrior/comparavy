@@ -2,7 +2,11 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { guideTopics, type GuideTopic } from "@/data/guideTopics";
-import { guideGoldBriefs, type GuideGoldBrief } from "@/data/guideGoldBriefs";
+import {
+  guideGoldBriefs,
+  type GuideGoldBrief,
+  type GuideTopicResearchGate,
+} from "@/data/guideGoldBriefs";
 import {
   PRICING_NOTICE,
   assertGuideContentQuality,
@@ -2752,6 +2756,85 @@ function sortByUpdatedAtAsc(left: Guide, right: Guide): number {
   return leftPriority - rightPriority || left.updatedAt.localeCompare(right.updatedAt) || left.slug.localeCompare(right.slug);
 }
 
+function nonEmpty(value: string | undefined): boolean {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function nonEmptyArray(value: readonly string[] | undefined): boolean {
+  return Array.isArray(value) && value.some((item) => item.trim().length > 0);
+}
+
+function topicResearchGateStatus(
+  research: GuideTopicResearchGate | undefined,
+): { readonly passed: boolean; readonly reason: string } {
+  if (!research) {
+    return {
+      passed: false,
+      reason:
+        "missing Topic and SEO Research Gate; validate live search intent before writing or publishing.",
+    };
+  }
+
+  if (research.status !== "validated") {
+    return {
+      passed: false,
+      reason: `research status is ${research.status}; only validated topics can be written or published.`,
+    };
+  }
+
+  const missingFields = [
+    ["primary keyword", nonEmpty(research.primaryKeyword)],
+    ["likely search intent", nonEmpty(research.likelySearchIntent)],
+    ["competing content type", nonEmpty(research.competingContentType)],
+    ["content gap", nonEmpty(research.contentGap)],
+    ["recommended title", nonEmpty(research.recommendedTitle)],
+    ["recommended meta description", nonEmpty(research.recommendedMetaDescription)],
+    ["search aliases", nonEmptyArray(research.searchAliases)],
+    ["search keywords", nonEmptyArray(research.searchKeywords)],
+    ["why publish now", nonEmpty(research.whyPublishNow)],
+    ["SERP notes", nonEmpty(research.serp?.notes)],
+  ]
+    .filter(([, present]) => !present)
+    .map(([label]) => label);
+
+  if (missingFields.length > 0) {
+    return {
+      passed: false,
+      reason: `research gate is incomplete: ${missingFields.join(", ")}.`,
+    };
+  }
+
+  if (!Array.isArray(research.evidence) || !research.evidence.some((entry) => entry.source === "google-search")) {
+    return {
+      passed: false,
+      reason: "research gate must include live Google Search/SERP evidence.",
+    };
+  }
+
+  if (!research.serp?.roomForPromptBuilderPage) {
+    return {
+      passed: false,
+      reason:
+        "research gate says there is no clear room for a practical AteFlo prompt-builder page.",
+    };
+  }
+
+  return { passed: true, reason: "validated" };
+}
+
+function guideResearchGateStatus(guide: Guide): { readonly passed: boolean; readonly reason: string } {
+  const brief = guideGoldBriefBySlug(guide.slug);
+
+  if (!brief) {
+    return {
+      passed: false,
+      reason: "missing linked gold brief with Topic and SEO Research Gate evidence.",
+    };
+  }
+
+  return topicResearchGateStatus(brief.topicResearch);
+}
+
 function guideTopicCluster(guide: Guide): string {
   return guide.topicCluster?.trim() || guide.slug;
 }
@@ -2762,10 +2845,30 @@ function selectPublishCandidates(
 ): Guide[] {
   const selected: Guide[] = [];
   const usedClusters = new Set<string>();
+  const gateLogged = new Set<string>();
+
+  function canPublish(guide: Guide): boolean {
+    const gate = guideResearchGateStatus(guide);
+
+    if (!gate.passed) {
+      if (!gateLogged.has(guide.slug)) {
+        console.log(`[${guide.slug}] Held from publishing: ${gate.reason}`);
+        gateLogged.add(guide.slug);
+      }
+
+      return false;
+    }
+
+    return true;
+  }
 
   for (const guide of approvedQueue) {
     if (selected.length >= publishQuota) {
       break;
+    }
+
+    if (!canPublish(guide)) {
+      continue;
     }
 
     const cluster = guideTopicCluster(guide);
@@ -2789,7 +2892,7 @@ function selectPublishCandidates(
       break;
     }
 
-    if (!selectedSlugs.has(guide.slug)) {
+    if (!selectedSlugs.has(guide.slug) && canPublish(guide)) {
       selected.push(guide);
     }
   }
@@ -2818,6 +2921,13 @@ function selectQueueCandidates(
     .filter((brief) => brief.status === "active")
     .filter((brief) => options.type === "mixed" || brief.guideType === options.type)
     .filter((brief) => {
+      const gate = topicResearchGateStatus(brief.topicResearch);
+
+      if (!gate.passed) {
+        console.log(`[${brief.slug}] Skipped gold brief: ${gate.reason}`);
+        return false;
+      }
+
       if (existingBlockedSlugs.has(brief.slug)) {
         console.log(`[${brief.slug}] Skipped gold brief: approved or published guide already exists with this slug.`);
         return false;
@@ -2881,19 +2991,9 @@ function selectQueueCandidates(
   }
 
   if (options.allowGenericTopics && selections.length < count) {
-    const genericTopics = selectGuideTopics({
-      count: count - selections.length,
-      type: options.type,
-      existingSlugs: new Set([...existingBlockedSlugs, ...selectedSlugs]),
-    });
-
-    for (const topic of genericTopics) {
-      if (selections.length >= count) {
-        break;
-      }
-
-      selections.push({ source: "generic", topic });
-    }
+    console.log(
+      "Generic topic fallback held: Topic and SEO Research Gate evidence is required before writing new shortcuts.",
+    );
   }
 
   return selections.slice(0, count);

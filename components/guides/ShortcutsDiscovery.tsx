@@ -104,6 +104,35 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
     });
   }
 
+  if (shortcuts.length === 0) {
+    return (
+      <section className="mt-5 sm:mt-6">
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm ateflo-reveal sm:p-7">
+          <p className="text-lg font-semibold text-slate-950">
+            New AteFlo shortcuts are being reviewed.
+          </p>
+          <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
+            Check back soon for copy-ready AI prompt workflows.
+          </p>
+          <Link
+            href="/finder"
+            data-event="finder_cta_click"
+            data-action-location="shortcuts_review_empty_state"
+            onClick={() =>
+              trackEvent("finder_cta_click", {
+                source_page: "shortcuts",
+                action_location: "shortcuts_review_empty_state",
+              })
+            }
+            className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+          >
+            Open Finder
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="mt-5 sm:mt-6">
       <div className="rounded-3xl border border-teal-100 bg-white p-3 shadow-sm ateflo-reveal sm:p-4">

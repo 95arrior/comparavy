@@ -14,6 +14,52 @@ export interface GuideGoldBriefPreviewConcept {
   readonly whyItWorks: string;
 }
 
+export type GuideTopicResearchStatus = "validated" | "hold" | "rejected";
+export type GuideTopicIntentLane =
+  | "Work/Productivity"
+  | "Money/Business/Selling"
+  | "Fun/Personal/Desire";
+export type GuideTopicResearchSource =
+  | "google-search"
+  | "google-trends"
+  | "trending-now"
+  | "keyword-planner"
+  | "search-console"
+  | "owner-data";
+
+export interface GuideTopicResearchEvidence {
+  readonly source: GuideTopicResearchSource;
+  readonly checkedAt: string;
+  readonly query?: string;
+  readonly url?: string;
+  readonly finding: string;
+}
+
+export interface GuideTopicResearchSerpAssessment {
+  readonly dominantCompetitors: readonly string[];
+  readonly weakResults: readonly string[];
+  readonly roomForPromptBuilderPage: boolean;
+  readonly notes: string;
+}
+
+export interface GuideTopicResearchGate {
+  readonly status: GuideTopicResearchStatus;
+  readonly primaryKeyword: string;
+  readonly secondaryKeywords: readonly string[];
+  readonly likelySearchIntent: string;
+  readonly competingContentType: string;
+  readonly contentGap: string;
+  readonly recommendedTitle: string;
+  readonly recommendedMetaDescription: string;
+  readonly searchAliases: readonly string[];
+  readonly searchKeywords: readonly string[];
+  readonly whyPublishNow: string;
+  readonly intentLane: GuideTopicIntentLane;
+  readonly serp: GuideTopicResearchSerpAssessment;
+  readonly evidence: readonly GuideTopicResearchEvidence[];
+  readonly rejectionReasons?: readonly string[];
+}
+
 export interface GuideGoldBrief {
   readonly slug: string;
   readonly guideType: GuideGoldBriefType;
@@ -36,6 +82,7 @@ export interface GuideGoldBrief {
   readonly comparisonCriteria: readonly string[];
   readonly exampleResult: string;
   readonly previewConcept?: GuideGoldBriefPreviewConcept;
+  readonly topicResearch?: GuideTopicResearchGate;
   readonly commonMistakes: readonly string[];
   readonly faqQuestions: readonly string[];
   readonly allowedTerms: readonly string[];
@@ -72,7 +119,7 @@ export const guidePreviewQualityRules = {
   banUnsupportedPerformanceClaims: true,
 } as const;
 
-export const guideGoldBriefs = [
+export const guideGoldBriefs: readonly GuideGoldBrief[] = [
   {
     slug: "how-to-summarize-a-pdf-into-study-notes-with-ai",
     guideType: "how-to",
@@ -1443,4 +1490,4 @@ export const guideGoldBriefs = [
     status: "active",
     priority: 481,
   },
-] as const satisfies readonly GuideGoldBrief[];
+];

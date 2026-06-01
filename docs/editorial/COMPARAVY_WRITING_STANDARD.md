@@ -13,6 +13,25 @@ The reader should leave with:
 - A clear sense of which tool to start with and why.
 - A reason to trust the limitations, warnings, and next step.
 
+## Topic and SEO Research Gate
+
+Before writing, approving, or publishing any AteFlo shortcut, validate the
+topic with live search-intent research. Use the full gate in
+`docs/editorial/TOPIC_SEO_RESEARCH_GATE.md`.
+
+At minimum, the topic must prove:
+
+- It matches a real task-based search query, preferably a long-tail query.
+- The live Google SERP leaves room for a practical prompt-builder page.
+- Google Trends, Trending Now, Keyword Planner, Search Console, or owner data
+  support the timing when that data is relevant or available.
+- The shortcut has a clear input, finished output, prompt workflow, example
+  output, and review checklist.
+- It is not merely a broad AI tools article or a repeat of an existing
+  published shortcut.
+
+Hold or reject topics that cannot pass this gate.
+
 ## Prompt Builder Usability Test
 
 Every new AteFlo shortcut must be simple enough for a reader who has never written an AI prompt before.
