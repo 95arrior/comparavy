@@ -7,6 +7,7 @@ import BadgeRow, { getToolCardBadges } from "@/components/BadgeRow";
 import MetricBars from "@/components/MetricBars";
 import SiteHeader from "@/components/SiteHeader";
 import ToolIcon from "@/components/ToolIcon";
+import ToolTagChips from "@/components/ToolTagChips";
 import { toolsBySlug, type ToolSlug } from "@/data/tools";
 import {
   getRecommendedTools,
@@ -580,7 +581,7 @@ function RecommendationCard({
       </div>
 
       <div className="mt-5 grid gap-4">
-        <div className="flex min-h-52 flex-col rounded-2xl bg-slate-50 p-4">
+        <div className="flex min-h-48 flex-col rounded-2xl bg-slate-50 p-4">
           <p className="text-sm font-semibold text-slate-900">Why this fits</p>
           <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
             {reasons.slice(0, 3).map((reason) => (
@@ -594,6 +595,15 @@ function RecommendationCard({
         <div className="flex min-h-52 flex-col rounded-2xl border border-slate-100 bg-white p-4">
           <p className="mb-4 text-sm font-semibold text-slate-900">Fit signals</p>
           <MetricBars tool={tool} />
+        </div>
+      </div>
+
+      <div className="mt-5 min-h-[116px] rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+          Key tags
+        </p>
+        <div className="mt-2 max-h-[62px] overflow-hidden">
+          <ToolTagChips tags={tool.primaryTags} maxVisible={4} />
         </div>
       </div>
 

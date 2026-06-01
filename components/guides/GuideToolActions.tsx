@@ -12,6 +12,7 @@ interface GuideToolActionsProps {
   readonly guideSlug?: string;
   readonly showViewToolPage?: boolean;
   readonly className?: string;
+  readonly layout?: "wrap" | "grid";
 }
 
 const BASE_BUTTON_CLASSES =
@@ -30,11 +31,14 @@ export default function GuideToolActions({
   guideSlug,
   showViewToolPage = true,
   className,
+  layout = "wrap",
 }: GuideToolActionsProps) {
   const visitUrl = officialUrl ? affiliateUrl ?? officialUrl : undefined;
+  const layoutClasses =
+    layout === "grid" ? "grid grid-cols-2 gap-2.5" : "flex flex-wrap gap-2.5";
 
   return (
-    <div className={`flex flex-wrap gap-2.5 ${className ?? ""}`}>
+    <div className={`${layoutClasses} ${className ?? ""}`}>
       {visitUrl && (
         <a
           href={visitUrl}

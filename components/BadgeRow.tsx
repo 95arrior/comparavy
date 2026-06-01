@@ -102,8 +102,8 @@ export function getToolCardBadges(
       label: tool.freePlan ? "Free plan" : formatBudgetLabel(tool.budgetLevel),
       tone: "slate",
     },
-    { label: `${tool.setupDifficulty} setup`, tone: "slate" },
     ...getToolBadges(tool),
+    { label: `${tool.setupDifficulty} setup`, tone: "slate" },
   ]);
 }
 
