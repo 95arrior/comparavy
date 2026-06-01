@@ -1,47 +1,11 @@
 import Link from "next/link";
+import AteFloIcon from "@/components/AteFloIcon";
 import ToolIcon from "@/components/ToolIcon";
 import type { AiTool } from "@/types/tool";
 
 interface AlternativeToolsProps {
   readonly currentTool: AiTool;
   readonly alternatives: readonly AiTool[];
-}
-
-function HomeIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="h-4 w-4"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="m3 10.5 9-7 9 7" />
-      <path d="M5 10v10h14V10" />
-      <path d="M9 20v-6h6v6" />
-    </svg>
-  );
-}
-
-function SearchIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="h-4 w-4"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="11" cy="11" r="7" />
-      <path d="m20 20-3.5-3.5" />
-    </svg>
-  );
 }
 
 export default function AlternativeTools({
@@ -90,14 +54,14 @@ export default function AlternativeTools({
                 aria-label={`Visit ${alternative.name} official site`}
                 className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-teal-700 text-white transition hover:-translate-y-0.5 hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
               >
-                <HomeIcon />
+                <AteFloIcon name="open" className="h-4 w-4" />
               </a>
               <Link
                 href={`/tools/${alternative.slug}`}
                 aria-label={`View ${alternative.name} tool page`}
                 className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:-translate-y-0.5 hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
               >
-                <SearchIcon />
+                <AteFloIcon name="search" className="h-4 w-4" />
               </Link>
             </div>
           </div>

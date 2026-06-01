@@ -1,3 +1,5 @@
+import AteFloIcon, { getTagIconName } from "@/components/AteFloIcon";
+
 interface ToolTagChipsProps {
   readonly tags: readonly string[];
   readonly maxVisible?: number;
@@ -10,75 +12,14 @@ function formatTag(tag: string): string {
     .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
-function getTagSymbol(tag: string): string {
-  const normalized = tag.toLowerCase();
-
-  if (normalized.startsWith("+")) {
-    return "+";
-  }
-
-  if (
-    normalized.includes("fast") ||
-    normalized.includes("speed") ||
-    normalized.includes("clip") ||
-    normalized.includes("automation")
-  ) {
-    return ">";
-  }
-
-  if (
-    normalized.includes("beginner") ||
-    normalized.includes("easy") ||
-    normalized.includes("simple")
-  ) {
-    return "+";
-  }
-
-  if (
-    normalized.includes("team") ||
-    normalized.includes("meeting") ||
-    normalized.includes("collaboration")
-  ) {
-    return "o";
-  }
-
-  if (
-    normalized.includes("document") ||
-    normalized.includes("pdf") ||
-    normalized.includes("research") ||
-    normalized.includes("source")
-  ) {
-    return "#";
-  }
-
-  if (
-    normalized.includes("design") ||
-    normalized.includes("image") ||
-    normalized.includes("creative") ||
-    normalized.includes("video")
-  ) {
-    return "*";
-  }
-
-  if (
-    normalized.includes("writing") ||
-    normalized.includes("copy") ||
-    normalized.includes("content")
-  ) {
-    return "~";
-  }
-
-  return ".";
-}
-
 function TagPill({ tag }: { readonly tag: string }) {
   return (
     <span className="inline-flex min-h-7 shrink-0 items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-white/90 px-2.5 py-1 text-[11px] font-semibold leading-none text-slate-700 shadow-[0_1px_0_rgba(15,23,42,0.03)]">
       <span
         aria-hidden="true"
-        className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-teal-50 text-[9px] font-bold leading-none text-teal-700"
+        className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-teal-50 text-teal-700"
       >
-        {getTagSymbol(tag)}
+        <AteFloIcon name={getTagIconName(tag)} className="h-3 w-3" />
       </span>
       {formatTag(tag)}
     </span>

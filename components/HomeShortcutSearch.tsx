@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import AteFloIcon from "@/components/AteFloIcon";
 import CategoryChip from "@/components/CategoryChip";
 import ToolIcon from "@/components/ToolIcon";
 import { trackEvent } from "@/lib/analytics";
@@ -128,18 +129,7 @@ export default function HomeShortcutSearch({ shortcuts }: HomeShortcutSearchProp
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-teal-50 text-teal-700"
               aria-hidden="true"
             >
-              <svg
-                viewBox="0 0 24 24"
-                className="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-              >
-                <path d="m21 21-4.35-4.35" />
-                <circle cx="11" cy="11" r="7" />
-              </svg>
+              <AteFloIcon name="search" className="h-5 w-5" />
             </span>
             <input
               ref={inputRef}
@@ -159,19 +149,7 @@ export default function HomeShortcutSearch({ shortcuts }: HomeShortcutSearchProp
                 className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-teal-100 bg-teal-50 text-teal-800 shadow-sm transition hover:border-teal-200 hover:bg-teal-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 active:scale-95 sm:h-14 sm:w-14"
                 onClick={handleClearSearch}
               >
-                <svg
-                  viewBox="0 0 24 24"
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2.2"
-                  aria-hidden="true"
-                >
-                  <path d="M6 6l12 12" />
-                  <path d="M18 6 6 18" />
-                </svg>
+                <AteFloIcon name="close" className="h-5 w-5" />
               </button>
             )}
           </div>

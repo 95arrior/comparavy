@@ -1,43 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import AteFloIcon from "@/components/AteFloIcon";
 
 const PROMPT_COPY_REQUEST_EVENT = "ateflo:prompt-copy-request";
 const PROMPT_COPIED_EVENT = "ateflo:prompt-copied";
 
 function CopyIcon({ copied }: { readonly copied: boolean }) {
-  if (copied) {
-    return (
-      <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 20 20" fill="none">
-        <path
-          d="M16.25 5.75 8.5 13.5 4.75 9.75"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    );
-  }
-
-  return (
-    <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 20 20" fill="none">
-      <path
-        d="M7.5 6.5V4.75A1.75 1.75 0 0 1 9.25 3h4A1.75 1.75 0 0 1 15 4.75v6A1.75 1.75 0 0 1 13.25 12H11.5"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M5.25 8h4A1.75 1.75 0 0 1 11 9.75v5A1.75 1.75 0 0 1 9.25 16.5h-4A1.75 1.75 0 0 1 3.5 14.75v-5A1.75 1.75 0 0 1 5.25 8Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+  return <AteFloIcon name={copied ? "productivity" : "copy"} className="h-4 w-4" />;
 }
 
 interface TopCopyPromptButtonProps {

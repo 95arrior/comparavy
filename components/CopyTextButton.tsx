@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import AteFloIcon from "@/components/AteFloIcon";
 
 interface CopyTextButtonProps {
   readonly text: string;
@@ -25,6 +26,7 @@ export default function CopyTextButton({
       onClick={copyText}
       className="inline-flex min-h-11 items-center justify-center rounded-full border border-teal-200 bg-white px-4 text-sm font-semibold text-teal-800 transition hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
     >
+      <AteFloIcon name="copy" className="mr-2 h-4 w-4 shrink-0" />
       {copied ? "Copied" : label}
     </button>
   );

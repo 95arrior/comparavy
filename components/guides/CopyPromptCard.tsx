@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import AteFloIcon from "@/components/AteFloIcon";
 
 interface CopyPromptCardProps {
   readonly prompt: string;
@@ -64,23 +65,10 @@ export default function CopyPromptCard({
             aria-describedby={statusId}
             className="ateflo-copy-button inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-teal-700 px-5 py-3 text-base font-semibold text-white shadow-sm transition duration-150 hover:bg-teal-800 hover:shadow-md active:translate-y-px active:bg-teal-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 sm:w-auto sm:text-sm"
           >
-            {copyState === "copied" && (
-              <svg
-                aria-hidden="true"
-                className="h-4 w-4"
-                viewBox="0 0 20 20"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M16.25 5.75 8.5 13.5 4.75 9.75"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            )}
+            <AteFloIcon
+              name={copyState === "copied" ? "productivity" : "copy"}
+              className="h-4 w-4"
+            />
             {copyState === "copied" ? "Copied!" : buttonLabel}
           </button>
           <p

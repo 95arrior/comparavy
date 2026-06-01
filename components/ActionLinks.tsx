@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import AteFloIcon from "@/components/AteFloIcon";
 import { trackEvent } from "@/lib/analytics";
 
 type ActionTone = "primary" | "secondary";
@@ -56,6 +57,7 @@ export default function ActionLinks({ items, className }: ActionLinksProps) {
               onClick={handleClick}
             >
               {item.label}
+              <AteFloIcon name="open" className="ml-2 h-3.5 w-3.5 shrink-0" />
             </a>
           );
         }

@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 import ActionLinks from "@/components/ActionLinks";
+import AteFloIcon, { type AteFloIconName } from "@/components/AteFloIcon";
 import BadgeRow, { getToolCardBadges } from "@/components/BadgeRow";
+import CategoryChip from "@/components/CategoryChip";
 import MetricBars, { type MetricKey } from "@/components/MetricBars";
 import SiteHeader from "@/components/SiteHeader";
 import ToolIcon from "@/components/ToolIcon";
@@ -62,6 +64,7 @@ interface FinderChoice<T extends string> {
   readonly budget?: RecommendationBudget;
   readonly priority?: RecommendationPriority;
   readonly preferredToolSlugs?: readonly ToolSlug[];
+  readonly icon?: AteFloIconName;
 }
 
 interface FinderAnswers {
@@ -176,12 +179,43 @@ const PUBLISHED_SHORTCUTS: readonly ShortcutMatch[] = [
 ];
 
 const TASKS: readonly FinderChoice<TaskId>[] = [
-  { id: "content", label: "Write or improve content", query: "writing content copy draft improve" },
-  { id: "summarize", label: "Summarize notes or documents", query: "summarize notes documents pdf study recap" },
-  { id: "social", label: "Plan social media", query: "social media content calendar carousel captions" },
-  { id: "product-copy", label: "Create business or product copy", query: "business product copy etsy listing marketing" },
-  { id: "messy-notes", label: "Turn messy notes into a finished output", query: "messy notes finished output recap email summary" },
-  { id: "compare-tools", label: "Compare AI tools", query: "compare ai tools recommendations alternatives", priority: "professional" },
+  {
+    id: "content",
+    label: "Write or improve content",
+    query: "writing content copy draft improve",
+    icon: "writing",
+  },
+  {
+    id: "summarize",
+    label: "Summarize notes or documents",
+    query: "summarize notes documents pdf study recap",
+    icon: "documents",
+  },
+  {
+    id: "social",
+    label: "Plan social media",
+    query: "social media content calendar carousel captions",
+    icon: "marketing",
+  },
+  {
+    id: "product-copy",
+    label: "Create business or product copy",
+    query: "business product copy etsy listing marketing",
+    icon: "small-business",
+  },
+  {
+    id: "messy-notes",
+    label: "Turn messy notes into a finished output",
+    query: "messy notes finished output recap email summary",
+    icon: "structured",
+  },
+  {
+    id: "compare-tools",
+    label: "Compare AI tools",
+    query: "compare ai tools recommendations alternatives",
+    priority: "professional",
+    icon: "search",
+  },
 ];
 
 const SOURCES: readonly FinderChoice<SourceId>[] = [
@@ -457,11 +491,13 @@ function RecommendationBadge({ label }: { readonly label: string }) {
 function OptionButton({
   label,
   description,
+  icon,
   selected,
   onClick,
 }: {
   label: string;
   description?: string;
+  icon?: AteFloIconName;
   selected: boolean;
   onClick: () => void;
 }) {
@@ -476,7 +512,15 @@ function OptionButton({
           : "border-slate-200 bg-white text-slate-800 hover:border-teal-300 hover:bg-teal-50"
       }`}
     >
-      <span className="block leading-5">{label}</span>
+      <span className="flex items-center gap-2 leading-5">
+        {icon && (
+          <AteFloIcon
+            name={icon}
+            className={`h-4 w-4 shrink-0 ${selected ? "text-teal-50" : "text-teal-700"}`}
+          />
+        )}
+        <span>{label}</span>
+      </span>
       {description && (
         <span className={`mt-1 block text-sm leading-5 ${selected ? "text-teal-50" : "text-slate-500"}`}>
           {description}
@@ -514,14 +558,10 @@ function ShortcutResultCard({
       <p className="mt-3 text-sm leading-6 text-slate-600">{shortcut.description}</p>
 
       <div className="mt-4 flex flex-wrap gap-1.5">
-        {[shortcut.category, shortcut.persona].map((label) => (
-          <span
-            key={label}
-            className="inline-flex min-h-7 items-center rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-semibold leading-none text-slate-700 ring-1 ring-inset ring-slate-200"
-          >
-            {label}
-          </span>
-        ))}
+        <CategoryChip label={shortcut.category} />
+        <span className="inline-flex min-h-7 items-center justify-center rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-semibold leading-none text-slate-700 ring-1 ring-inset ring-slate-200">
+          {shortcut.persona}
+        </span>
       </div>
 
       <div className="mt-auto pt-5">
@@ -752,6 +792,7 @@ export default function FinderPage() {
                     <OptionButton
                       key={choice.id}
                       label={choice.label}
+                      icon={choice.icon}
                       selected={answers.task?.id === choice.id}
                       onClick={() => chooseAnswer("task", choice, 1)}
                     />
