@@ -22,6 +22,7 @@ function stageLabel(index: number) {
 
 export default function HomeInteractiveDemo() {
   const [activeStep, setActiveStep] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   const [copied, setCopied] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const resetTimer = useRef<number | undefined>(undefined);
@@ -30,16 +31,16 @@ export default function HomeInteractiveDemo() {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     setPrefersReducedMotion(reducedMotion);
 
-    if (reducedMotion) {
+    if (reducedMotion || isPaused) {
       return;
     }
 
     const interval = window.setInterval(() => {
       setActiveStep((current) => (current + 1) % stages.length);
-    }, 1800);
+    }, 1500);
 
     return () => window.clearInterval(interval);
-  }, []);
+  }, [isPaused]);
 
   useEffect(() => {
     return () => {
@@ -55,8 +56,8 @@ export default function HomeInteractiveDemo() {
     }
 
     return activeStep === step
-      ? "border-teal-300 bg-teal-50/50 shadow-[0_16px_36px_rgba(15,118,110,0.10)]"
-      : "border-slate-200 bg-white";
+      ? "scale-[1.01] border-teal-300 bg-teal-50/50 shadow-[0_16px_36px_rgba(15,118,110,0.10)]"
+      : "scale-100 border-slate-200 bg-white";
   }
 
   function handleCopyDemo() {
@@ -74,10 +75,15 @@ export default function HomeInteractiveDemo() {
     () => (prefersReducedMotion ? "Full demo" : stageLabel(activeStep)),
     [activeStep, prefersReducedMotion],
   );
+  const isCopiedStage = copied || activeStep === 4;
 
   return (
     <section className="px-4 pb-12 sm:px-6 sm:pb-14" aria-labelledby="home-demo-heading">
-      <div className="mx-auto max-w-6xl rounded-3xl border border-teal-100 bg-white p-4 shadow-sm sm:p-5">
+      <div
+        className="mx-auto max-w-6xl rounded-3xl border border-teal-100 bg-white p-4 shadow-sm sm:p-5"
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+      >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
@@ -94,6 +100,23 @@ export default function HomeInteractiveDemo() {
             <span className="h-2 w-2 rounded-full bg-teal-600" aria-hidden="true" />
             {currentStage}
           </div>
+        </div>
+
+        <div
+          className="mt-4 flex items-center gap-2"
+          aria-label={`Current demo stage: ${currentStage}`}
+        >
+          {stages.map((stage, index) => (
+            <span
+              key={stage}
+              className={`h-2 rounded-full transition-all duration-300 motion-reduce:transition-none ${
+                activeStep === index && !prefersReducedMotion
+                  ? "w-8 bg-teal-600"
+                  : "w-2 bg-slate-200"
+              }`}
+              aria-hidden="true"
+            />
+          ))}
         </div>
 
         <div
@@ -222,18 +245,20 @@ export default function HomeInteractiveDemo() {
                   <button
                     type="button"
                     onClick={handleCopyDemo}
-                    className="ateflo-primary-copy-button inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-base font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 sm:w-auto sm:text-sm"
+                    className={`ateflo-primary-copy-button inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-base font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 sm:w-auto sm:text-sm ${
+                      activeStep === 4 && !prefersReducedMotion ? "scale-[1.03]" : "scale-100"
+                    }`}
                   >
                     <span className="relative z-10 inline-flex items-center gap-2">
                       <AteFloIcon
-                        name={copied ? "productivity" : "copy"}
+                        name={isCopiedStage ? "productivity" : "copy"}
                         className="h-4 w-4"
                       />
-                      {copied ? "Copied!" : "Copy Prompt"}
+                      {isCopiedStage ? "Copied!" : "Copy Prompt"}
                     </span>
                   </button>
                   <p role="status" aria-live="polite" className="min-h-5 text-sm text-slate-600">
-                    {copied ? "Demo copied state shown." : ""}
+                    {isCopiedStage ? "Prompt is ready to paste into an AI tool." : ""}
                   </p>
                 </div>
               </div>
