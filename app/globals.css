@@ -144,6 +144,12 @@ html {
   overflow: hidden;
 }
 
+.ateflo-finder-result-card {
+  opacity: 0;
+  transform: translateY(10px);
+  animation: ateflo-result-card-enter 360ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
 .ateflo-tag-rail {
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
@@ -374,12 +380,18 @@ html {
   .ateflo-primary-copy-button::before,
   .ateflo-search-results,
   .ateflo-search-result-card,
+  .ateflo-finder-result-card,
   .ateflo-shortcut-strip-track,
   .ateflo-tag-rail-track,
   .ateflo-metric-bar,
   .ateflo-star-badge__icon {
     animation: none;
     transition: none;
+  }
+
+  .ateflo-finder-result-card {
+    opacity: 1;
+    transform: none;
   }
 
   .ateflo-card-lift:hover {

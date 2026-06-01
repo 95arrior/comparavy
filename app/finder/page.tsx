@@ -4,10 +4,9 @@ import Link from "next/link";
 import { useState } from "react";
 import ActionLinks from "@/components/ActionLinks";
 import BadgeRow, { getToolCardBadges } from "@/components/BadgeRow";
-import MetricBars from "@/components/MetricBars";
+import MetricBars, { type MetricKey } from "@/components/MetricBars";
 import SiteHeader from "@/components/SiteHeader";
 import ToolIcon from "@/components/ToolIcon";
-import ToolTagChips from "@/components/ToolTagChips";
 import { toolsBySlug, type ToolSlug } from "@/data/tools";
 import {
   getRecommendedTools,
@@ -298,6 +297,12 @@ const STOP_WORDS = new Set([
   "output",
 ]);
 
+const FINDER_RESULT_METRICS: readonly MetricKey[] = [
+  "easeScore",
+  "qualityScore",
+  "speedScore",
+];
+
 function tokenize(value: string): string[] {
   return value
     .toLowerCase()
@@ -534,94 +539,65 @@ function ShortcutResultCard({
 function RecommendationCard({
   recommendation,
   rank,
-  compareOpen,
-  onCompare,
 }: {
   recommendation: ToolRecommendation;
   rank: number;
-  compareOpen: boolean;
-  onCompare: () => void;
 }) {
   const { tool, reasons } = recommendation;
   const visitUrl = tool.affiliateUrl ?? tool.officialUrl;
-  const alternatives = tool.alternatives
-    .map((slug) => toolsBySlug.get(slug as ToolSlug))
-    .filter((alternative) => alternative !== undefined);
+  const rankLabel = rank === 1 ? "Top Tool" : `Option ${rank}`;
+  const primaryReason =
+    reasons[0] ?? `Best for ${tool.bestFor[0]?.toLowerCase() ?? "this workflow"}.`;
 
   return (
     <article
-      className={`flex h-full min-h-[620px] flex-col rounded-3xl border bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_16px_38px_rgba(15,23,42,0.035)] ateflo-card-lift sm:p-6 ${
+      className={`ateflo-finder-result-card flex h-full min-h-[360px] flex-col rounded-3xl border bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_16px_38px_rgba(15,23,42,0.035)] ateflo-card-lift sm:p-6 ${
         rank === 1
           ? "border-teal-200 ring-1 ring-teal-100"
           : "border-slate-200 hover:border-slate-300"
       }`}
+      style={{ animationDelay: `${(rank - 1) * 100}ms` }}
     >
-      <div className="flex min-h-12 flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <div className="rounded-2xl bg-slate-50 p-1.5 ring-1 ring-slate-100">
-            <ToolIcon {...tool} size={26} />
-          </div>
-          <h3 className="min-w-0 flex-1 truncate whitespace-nowrap text-lg font-semibold tracking-tight text-slate-900">
-            {tool.name}
-          </h3>
-        </div>
-        {rank === 1 ? (
-          <RecommendationBadge label="Top tool" />
-        ) : (
-          <span className="rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 ring-1 ring-slate-200">
-            Option {rank}
-          </span>
-        )}
+      <div className="flex items-center justify-between gap-3">
+        <RecommendationBadge label={rankLabel} />
+        <span className="rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-500 ring-1 ring-slate-200">
+          {tool.setupDifficulty} setup
+        </span>
       </div>
 
-      <p className="ateflo-clamp-2 mt-3 min-h-12 max-w-2xl text-sm leading-6 text-slate-600">
-        {tool.description}
+      <div className="mt-4 flex min-h-12 min-w-0 items-center gap-3">
+        <div className="rounded-2xl bg-slate-50 p-1.5 ring-1 ring-slate-100">
+          <ToolIcon {...tool} size={28} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate whitespace-nowrap text-lg font-semibold tracking-tight text-slate-900">
+            {tool.name}
+          </h3>
+          <p className="ateflo-clamp-1 mt-1 text-xs font-medium uppercase tracking-[0.14em] text-teal-700">
+            {tool.category.replace(/-/g, " ")}
+          </p>
+        </div>
+      </div>
+
+      <p className="ateflo-clamp-2 mt-4 min-h-12 text-sm leading-6 text-slate-600">
+        {primaryReason}
       </p>
 
-      <div className="mt-3 min-h-16">
+      <div className="mt-3 min-h-8 overflow-hidden">
         <BadgeRow badges={getToolCardBadges(tool)} maxVisible={3} />
       </div>
 
-      <div className="mt-5 grid gap-4">
-        <div className="flex min-h-48 flex-col rounded-2xl bg-slate-50 p-4">
-          <p className="text-sm font-semibold text-slate-900">Why this fits</p>
-          <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
-            {reasons.slice(0, 3).map((reason) => (
-              <li key={reason} className="flex gap-3">
-                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-600" />
-                <span>{reason}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="flex min-h-52 flex-col rounded-2xl border border-slate-100 bg-gradient-to-b from-slate-50 to-white p-4">
-          <div className="mb-4 flex items-center justify-between">
-            <p className="text-sm font-semibold text-slate-900">Fit signals</p>
-            <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
-          </div>
-          <MetricBars tool={tool} />
-        </div>
-      </div>
-
-      <div className="mt-5 min-h-[92px] rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
-        <div className="max-h-12 overflow-hidden">
-          <ToolTagChips tags={tool.primaryTags} maxVisible={5} animate />
-        </div>
-      </div>
-
-      <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-          <p className="font-semibold text-slate-900">Pricing note</p>
-          <p className="text-slate-600">
-            Free plan: {tool.freePlan ? "Available" : "Not listed"}
+      <div className="mt-4 rounded-2xl border border-slate-100 bg-gradient-to-b from-slate-50 to-white p-3.5">
+        <div className="mb-3 flex items-center justify-between">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+            Fit signals
           </p>
+          <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
         </div>
-        <p className="ateflo-clamp-2 text-sm leading-6 text-slate-600">
-          {tool.pricingNote}
-        </p>
+        <MetricBars tool={tool} metrics={FINDER_RESULT_METRICS} compact />
       </div>
 
-      <div className="mt-auto flex flex-wrap gap-3 pt-6">
+      <div className="mt-auto flex flex-col gap-3 pt-5">
         <ActionLinks
           items={[
             {
@@ -643,39 +619,7 @@ function RecommendationCard({
             },
           ]}
         />
-        <button
-          type="button"
-          aria-expanded={compareOpen}
-          onClick={onCompare}
-          className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
-        >
-          Compare Alternatives
-        </button>
       </div>
-
-      {compareOpen && (
-        <div className="mt-5 rounded-2xl border border-teal-100 bg-teal-50/60 p-4">
-          <p className="text-sm font-semibold text-slate-900">
-            Compare with these alternatives
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {alternatives.map((alternative) => (
-              <a
-                key={alternative.id}
-                href={alternative.affiliateUrl ?? alternative.officialUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex min-w-0 items-center gap-2 rounded-2xl bg-white px-3 py-2 text-sm text-slate-700 ring-1 ring-slate-200 transition hover:ring-teal-300"
-              >
-                <ToolIcon {...alternative} size={26} />
-                <span className="min-w-0 truncate whitespace-nowrap">
-                  {alternative.name}
-                </span>
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
     </article>
   );
 }
@@ -683,7 +627,6 @@ function RecommendationCard({
 export default function FinderPage() {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<FinderAnswers>(INITIAL_ANSWERS);
-  const [compareOpen, setCompareOpen] = useState<string | null>(null);
 
   const input = buildRecommendationInput(answers);
   const shortcutMatches = getShortcutMatches(answers);
@@ -727,13 +670,11 @@ export default function FinderPage() {
 
       return next;
     });
-    setCompareOpen(null);
     setStep(nextStep);
   }
 
   function resetFinder() {
     setAnswers({ ...INITIAL_ANSWERS });
-    setCompareOpen(null);
     setStep(0);
   }
 
@@ -939,14 +880,6 @@ export default function FinderPage() {
                   key={recommendation.tool.id}
                   recommendation={recommendation}
                   rank={index + 1}
-                  compareOpen={compareOpen === recommendation.tool.id}
-                  onCompare={() =>
-                    setCompareOpen((current) =>
-                      current === recommendation.tool.id
-                        ? null
-                        : recommendation.tool.id,
-                    )
-                  }
                 />
               ))}
             </div>
