@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import CategoryChip from "@/components/CategoryChip";
-import ShortcutResultPreview from "@/components/guides/ShortcutResultPreview";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ToolIcon from "@/components/ToolIcon";
 import { trackEvent } from "@/lib/analytics";
@@ -182,13 +181,6 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
                 index % 2 === 1 ? "ateflo-reveal-delay-1" : ""
               }`}
             >
-              <ShortcutResultPreview
-                slug={shortcut.slug}
-                title={shortcut.title}
-                topicCluster={shortcut.topicCluster}
-                className="mb-5"
-              />
-
               <div className="flex flex-wrap items-center gap-2">
                 <CategoryChip label={shortcut.category} />
                 <span className="text-xs font-medium text-slate-500">
