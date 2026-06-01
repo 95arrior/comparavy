@@ -814,13 +814,13 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
         <div className="grid gap-6 lg:grid-cols-[0.92fr_1.08fr]">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
-              Add details
+              Fill in details
             </p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
-              Add a few details for a better result
+              Fill in the details you have
             </h2>
             <p className="mt-3 text-base leading-7 text-slate-700">
-              You can copy the prompt right away, but filling this in helps the AI give you a stronger result.
+              You can copy the prompt right away, but these fields help the AI return a more useful first draft.
             </p>
             <p className="mt-3 text-sm leading-6 text-slate-600">
               After copying, paste the prompt into ChatGPT, Claude, Gemini, Copilot, Canva, or another suitable AI tool.
@@ -875,7 +875,7 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
-              Use this prompt
+              Generated prompt
             </p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
               Copy one prompt and paste it into your AI tool

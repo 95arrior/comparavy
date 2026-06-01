@@ -49,6 +49,20 @@ export default function GuideDetailRenderer({ guide }: GuideDetailRendererProps)
       <ShortcutBrief guide={guide} />
       <GuideExecutionShortcut guide={guide} />
 
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
+          Need the full workflow?
+        </p>
+        <h2 className="mt-2 text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl">
+          Read this after you have the prompt.
+        </h2>
+        <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
+          The sections below explain workflow steps, tool choices, common
+          mistakes, and FAQs. They stay here for review and SEO, but the prompt
+          builder above is the fastest path to using the shortcut.
+        </p>
+      </section>
+
       {guideType === "how-to" ? (
         <HowToGuideLayout guide={guide} />
       ) : guideType === "income" ? (

@@ -5,10 +5,6 @@ interface EditorialHeroProps {
   readonly guide: Guide;
 }
 
-function formatSkillLevel(value: Guide["skillLevel"]): string {
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
-
 function heroSummary(guide: Guide): string {
   switch (guide.slug) {
     case "how-to-turn-meeting-notes-into-a-client-recap-with-ai":
@@ -33,28 +29,14 @@ export default function EditorialHero({ guide }: EditorialHeroProps) {
         {heroSummary(guide)}
       </p>
 
-      <div className="mt-5 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.14em]">
-        {[
-          formatSkillLevel(guide.skillLevel),
-          guide.timeEstimate,
-          guide.category,
-          "Works in AI chat tools",
-        ]
-          .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
-          .map((value, index) => (
-            <span
-              key={`${value}-${index}`}
-              className={`rounded-full px-3 py-1.5 ${
-                index === 0 ? "bg-teal-50 text-teal-800" : "bg-slate-50 text-slate-600"
-              }`}
-            >
-              {value}
-            </span>
-          ))}
-      </div>
-
-      <div className="mt-6">
+      <div className="mt-6 flex flex-wrap items-start gap-3">
         <TopCopyPromptButton guideSlug={guide.slug} />
+        <a
+          href="#prompt-builder"
+          className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+        >
+          Fill in details
+        </a>
       </div>
     </header>
   );
