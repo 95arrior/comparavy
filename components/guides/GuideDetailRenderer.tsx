@@ -46,8 +46,25 @@ export default function GuideDetailRenderer({ guide }: GuideDetailRendererProps)
 
   return (
     <div className="mt-6 space-y-6">
-      <ShortcutBrief guide={guide} />
-      <GuideExecutionShortcut guide={guide} />
+      <section className="rounded-[2rem] border-2 border-teal-100 bg-teal-50/40 p-3 shadow-sm sm:p-4">
+        <div className="rounded-[1.5rem] border border-white/80 bg-white/90 p-4 shadow-sm sm:p-5">
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
+            Start here
+          </p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
+            Build and copy the prompt first.
+          </h2>
+          <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base sm:leading-8">
+            This is the execution area for the shortcut. Review what you will
+            make, add the details you have, copy the generated prompt, then
+            check the example output before using the result.
+          </p>
+        </div>
+        <div className="mt-3 space-y-5 sm:mt-4">
+          <ShortcutBrief guide={guide} />
+          <GuideExecutionShortcut guide={guide} />
+        </div>
+      </section>
 
       <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
