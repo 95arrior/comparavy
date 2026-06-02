@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import SiteHeader from "@/components/SiteHeader";
 import ShortcutsDiscovery from "@/components/guides/ShortcutsDiscovery";
-import { getPublishedGuides } from "@/lib/guides";
-import { toDiscoveryItem } from "@/lib/shortcutDiscovery";
+import { getPublishedShortcutDiscoveryItems } from "@/lib/publishedShortcuts";
 
 export const metadata: Metadata = {
   title: "AI Shortcuts",
@@ -25,9 +24,10 @@ export const metadata: Metadata = {
   },
 };
 
+export const revalidate = 0;
+
 export default function ShortcutsPage() {
-  const guides = getPublishedGuides();
-  const shortcuts = guides.map(toDiscoveryItem);
+  const shortcuts = getPublishedShortcutDiscoveryItems();
 
   return (
     <main className="ateflo-page-shell min-h-screen px-4 py-8 sm:px-6 sm:py-12">

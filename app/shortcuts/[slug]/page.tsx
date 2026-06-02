@@ -13,6 +13,8 @@ interface ShortcutPageProps {
   readonly params: Promise<{ slug: string }>;
 }
 
+export const dynamicParams = false;
+
 export function generateStaticParams() {
   return getPublishedGuides().map((guide) => ({ slug: guide.slug }));
 }

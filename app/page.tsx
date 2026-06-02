@@ -4,8 +4,7 @@ import HomeShortcutSearch from "@/components/HomeShortcutSearch";
 import HomeShortcutStrip from "@/components/HomeShortcutStrip";
 import SiteHeader from "@/components/SiteHeader";
 import TrackedLink from "@/components/TrackedLink";
-import { getPublishedGuides } from "@/lib/guides";
-import { toDiscoveryItem } from "@/lib/shortcutDiscovery";
+import { getPublishedShortcutDiscoveryItems } from "@/lib/publishedShortcuts";
 
 const HOME_TITLE = "AteFlo | AI Prompts for Real Work";
 const HOME_DESCRIPTION =
@@ -25,6 +24,8 @@ export const metadata: Metadata = {
     description: HOME_DESCRIPTION,
   },
 };
+
+export const revalidate = 0;
 
 const howItWorks = [
   {
@@ -46,7 +47,7 @@ const howItWorks = [
 ] as const;
 
 export default function Home() {
-  const shortcuts = getPublishedGuides().map(toDiscoveryItem);
+  const shortcuts = getPublishedShortcutDiscoveryItems();
 
   return (
     <main className="ateflo-page-shell min-h-screen bg-[#FBFAF7] text-slate-900">

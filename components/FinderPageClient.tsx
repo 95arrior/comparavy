@@ -1,0 +1,844 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+import ActionLinks from "@/components/ActionLinks";
+import AteFloIcon, { type AteFloIconName } from "@/components/AteFloIcon";
+import BadgeRow, { getToolCardBadges } from "@/components/BadgeRow";
+import CategoryChip from "@/components/CategoryChip";
+import MetricBars, { type MetricKey } from "@/components/MetricBars";
+import SiteHeader from "@/components/SiteHeader";
+import ToolIcon from "@/components/ToolIcon";
+import { toolsBySlug, type ToolSlug } from "@/data/tools";
+import {
+  getRecommendedTools,
+  type RecommendationBudget,
+  type RecommendationPriority,
+  type SkillLevel,
+  type ToolRecommendation,
+} from "@/lib/recommendTools";
+
+type TaskId =
+  | "content"
+  | "summarize"
+  | "social"
+  | "product-copy"
+  | "messy-notes"
+  | "compare-tools";
+type SourceId =
+  | "meeting-notes"
+  | "pdf-text"
+  | "product-details"
+  | "blog-post"
+  | "business-idea"
+  | "nothing-yet";
+type OutputId =
+  | "email-recap"
+  | "study-notes"
+  | "product-listing"
+  | "content-calendar"
+  | "instagram-carousel"
+  | "tool-recommendation";
+type ContextId =
+  | "work"
+  | "school"
+  | "etsy"
+  | "small-business"
+  | "social-media"
+  | "personal";
+type EnvironmentId =
+  | "any-chat"
+  | "google-workspace"
+  | "microsoft-365"
+  | "notion"
+  | "canva"
+  | "unsure";
+
+interface FinderChoice<T extends string> {
+  readonly id: T;
+  readonly label: string;
+  readonly query: string;
+  readonly description?: string;
+  readonly goalQuery?: string;
+  readonly useCaseQuery?: string;
+  readonly budget?: RecommendationBudget;
+  readonly priority?: RecommendationPriority;
+  readonly preferredToolSlugs?: readonly ToolSlug[];
+  readonly icon?: AteFloIconName;
+}
+
+interface FinderAnswers {
+  task: FinderChoice<TaskId> | null;
+  source: FinderChoice<SourceId> | null;
+  output: FinderChoice<OutputId> | null;
+  context: FinderChoice<ContextId> | null;
+  environment: FinderChoice<EnvironmentId> | null;
+}
+
+export interface ShortcutMatch {
+  readonly slug: string;
+  readonly title: string;
+  readonly description: string;
+  readonly useCase: string;
+  readonly category: string;
+  readonly persona: string;
+  readonly searchText: string;
+  readonly recommendedToolSlugs: readonly ToolSlug[];
+}
+
+interface ScoredShortcut {
+  readonly shortcut: ShortcutMatch;
+  readonly score: number;
+}
+
+const TASKS: readonly FinderChoice<TaskId>[] = [
+  {
+    id: "content",
+    label: "Write or improve content",
+    query: "writing content copy draft improve",
+    icon: "writing",
+  },
+  {
+    id: "summarize",
+    label: "Summarize notes or documents",
+    query: "summarize notes documents pdf study recap",
+    icon: "documents",
+  },
+  {
+    id: "social",
+    label: "Plan social media",
+    query: "social media content calendar carousel captions",
+    icon: "marketing",
+  },
+  {
+    id: "product-copy",
+    label: "Create business or product copy",
+    query: "business product copy etsy listing marketing",
+    icon: "small-business",
+  },
+  {
+    id: "messy-notes",
+    label: "Turn messy notes into a finished output",
+    query: "messy notes finished output recap email summary",
+    icon: "structured",
+  },
+  {
+    id: "compare-tools",
+    label: "Compare AI tools",
+    query: "compare ai tools recommendations alternatives",
+    priority: "professional",
+    icon: "search",
+  },
+];
+
+const SOURCES: readonly FinderChoice<SourceId>[] = [
+  { id: "meeting-notes", label: "Meeting notes", query: "meeting notes call notes decisions action items" },
+  { id: "pdf-text", label: "PDF or document text", query: "pdf document text class notes lecture textbook" },
+  { id: "product-details", label: "Product details", query: "product details materials dimensions product facts etsy" },
+  { id: "blog-post", label: "Blog post", query: "blog post article source content" },
+  { id: "business-idea", label: "Business idea", query: "business idea offer audience small business" },
+  { id: "nothing-yet", label: "Nothing yet", query: "start from scratch brainstorm plan", budget: "free" },
+];
+
+const OUTPUTS: readonly FinderChoice<OutputId>[] = [
+  { id: "email-recap", label: "Email or recap", query: "email recap follow-up client summary", priority: "quality" },
+  { id: "study-notes", label: "Study notes", query: "study notes quiz questions flashcards review", priority: "quality" },
+  { id: "product-listing", label: "Product listing", query: "product listing etsy description title tags", priority: "quality" },
+  { id: "content-calendar", label: "Content calendar", query: "content calendar weekly social media plan", priority: "easy" },
+  { id: "instagram-carousel", label: "Instagram carousel", query: "instagram carousel slide outline caption canva", priority: "easy" },
+  { id: "tool-recommendation", label: "Tool recommendation", query: "tool recommendation compare alternatives", priority: "professional" },
+];
+
+const CONTEXTS: readonly FinderChoice<ContextId>[] = [
+  { id: "work", label: "Work", query: "work client professional productivity" },
+  { id: "school", label: "School", query: "school student study notes class" },
+  { id: "etsy", label: "Etsy or online shop", query: "etsy online shop ecommerce product listing seller" },
+  { id: "small-business", label: "Small business", query: "small business local business content marketing" },
+  { id: "social-media", label: "Social media", query: "social media instagram carousel content calendar" },
+  { id: "personal", label: "Personal productivity", query: "personal productivity notes tasks" },
+];
+
+const ENVIRONMENTS: readonly FinderChoice<EnvironmentId>[] = [
+  {
+    id: "any-chat",
+    label: "Any AI chat tool",
+    query: "chatgpt claude gemini copilot chat tool",
+    budget: "free",
+    preferredToolSlugs: ["chatgpt", "claude", "gemini"],
+  },
+  {
+    id: "google-workspace",
+    label: "Google Workspace",
+    query: "google workspace gemini docs gmail sheets",
+    preferredToolSlugs: ["gemini", "notebooklm"],
+  },
+  {
+    id: "microsoft-365",
+    label: "Microsoft 365",
+    query: "microsoft 365 copilot word outlook teams",
+    preferredToolSlugs: ["microsoft-copilot"],
+  },
+  {
+    id: "notion",
+    label: "Notion",
+    query: "notion workspace notes project docs",
+    preferredToolSlugs: ["notion-ai"],
+  },
+  {
+    id: "canva",
+    label: "Canva",
+    query: "canva design carousel social graphics",
+    preferredToolSlugs: ["canva-magic-studio"],
+    priority: "easy",
+  },
+  {
+    id: "unsure",
+    label: "I am not sure",
+    query: "not sure beginner simple recommendation",
+    budget: "free",
+    priority: "easy",
+  },
+];
+
+const STEP_TITLES = [
+  "What are you trying to finish?",
+  "What input do you already have?",
+  "What finished output do you need?",
+  "Where will you use the result?",
+  "Which tool environment do you prefer?",
+] as const;
+
+const INITIAL_ANSWERS: FinderAnswers = {
+  task: null,
+  source: null,
+  output: null,
+  context: null,
+  environment: null,
+};
+
+const DIRECT_SHORTCUT_BOOSTS: Record<string, readonly string[]> = {};
+
+const STOP_WORDS = new Set([
+  "and",
+  "for",
+  "the",
+  "with",
+  "into",
+  "from",
+  "that",
+  "this",
+  "tool",
+  "tools",
+  "output",
+]);
+
+const FINDER_RESULT_METRICS: readonly MetricKey[] = [
+  "easeScore",
+  "qualityScore",
+  "speedScore",
+];
+
+function tokenize(value: string): string[] {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, " ")
+    .split(/\s+/)
+    .filter((term) => term.length > 2 && !STOP_WORDS.has(term));
+}
+
+function selectedText(answers: FinderAnswers): string {
+  return [
+    answers.task?.query,
+    answers.source?.query,
+    answers.output?.query,
+    answers.context?.query,
+    answers.environment?.query,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function wantsToolRecommendation(answers: FinderAnswers): boolean {
+  return (
+    answers.task?.id === "compare-tools" ||
+    answers.output?.id === "tool-recommendation"
+  );
+}
+
+function getShortcutMatches(
+  answers: FinderAnswers,
+  publishedShortcuts: readonly ShortcutMatch[],
+): ScoredShortcut[] {
+  if (
+    !answers.task ||
+    !answers.source ||
+    !answers.output ||
+    !answers.context ||
+    !answers.environment ||
+    wantsToolRecommendation(answers)
+  ) {
+    return [];
+  }
+
+  const terms = tokenize(selectedText(answers));
+  const directKey = `${answers.source.id}:${answers.output.id}`;
+  const boostedSlugs = new Set(DIRECT_SHORTCUT_BOOSTS[directKey] ?? []);
+  const contextTerm = answers.context.query.split(" ")[0] ?? "";
+
+  return publishedShortcuts.map((shortcut) => {
+    const haystack = `${shortcut.title} ${shortcut.description} ${shortcut.useCase} ${shortcut.category} ${shortcut.persona} ${shortcut.searchText}`.toLowerCase();
+    const overlapScore = terms.reduce(
+      (score, term) => score + (haystack.includes(term) ? 1 : 0),
+      0,
+    );
+    const directBoost = boostedSlugs.has(shortcut.slug) ? 20 : 0;
+    const contextBoost = haystack.includes(contextTerm) ? 2 : 0;
+
+    return { shortcut, score: overlapScore + directBoost + contextBoost };
+  })
+    .filter((match) => match.score >= 7)
+    .sort((left, right) => right.score - left.score)
+    .slice(0, 2);
+}
+
+function buildRecommendationInput(answers: FinderAnswers) {
+  if (
+    !answers.task ||
+    !answers.source ||
+    !answers.output ||
+    !answers.context ||
+    !answers.environment
+  ) {
+    return null;
+  }
+
+  const budget: RecommendationBudget =
+    answers.environment.budget ?? answers.source.budget ?? "under20";
+  const skillLevel: SkillLevel = "beginner";
+  const priority: RecommendationPriority =
+    answers.output.priority ?? answers.environment.priority ?? answers.task.priority ?? "easy";
+
+  return {
+    goal: [
+      answers.task.goalQuery ?? answers.task.query,
+      answers.context.query,
+      answers.environment.goalQuery ?? answers.environment.query,
+    ].join(" "),
+    useCase: [
+      answers.source.query,
+      answers.output.useCaseQuery ?? answers.output.query,
+      answers.context.query,
+      answers.environment.useCaseQuery ?? answers.environment.query,
+    ].join(" "),
+    budget,
+    skillLevel,
+    priority,
+  };
+}
+
+function getShortcutToolRecommendations(
+  shortcuts: readonly ScoredShortcut[],
+  generalRecommendations: readonly ToolRecommendation[],
+  answers: FinderAnswers,
+): ToolRecommendation[] {
+  const preferredSlugs = answers.environment?.preferredToolSlugs ?? [];
+  const shortcutSlugs = shortcuts.flatMap((match) => match.shortcut.recommendedToolSlugs);
+  const orderedSlugs = [...preferredSlugs, ...shortcutSlugs];
+  const seen = new Set<string>();
+  const shortcutTools: ToolRecommendation[] = [];
+
+  for (const slug of orderedSlugs) {
+    if (seen.has(slug)) {
+      continue;
+    }
+
+    const tool = toolsBySlug.get(slug);
+
+    if (!tool) {
+      continue;
+    }
+
+    seen.add(slug);
+    shortcutTools.push({
+      tool,
+      score: 1000 - shortcutTools.length,
+      reasons: [
+        "Fits the shortcut path matched above.",
+        "Works with the input and output you selected.",
+      ],
+    });
+  }
+
+  for (const recommendation of generalRecommendations) {
+    if (seen.has(recommendation.tool.slug)) {
+      continue;
+    }
+
+    seen.add(recommendation.tool.slug);
+    shortcutTools.push(recommendation);
+  }
+
+  return shortcutTools.slice(0, 3);
+}
+
+function RecommendationBadge({ label }: { readonly label: string }) {
+  return (
+    <span className="ateflo-star-badge inline-flex shrink-0 items-center gap-1.5 rounded-full bg-teal-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-800 ring-1 ring-teal-100">
+      <span aria-hidden="true" className="ateflo-star-badge__icon">
+        *
+      </span>
+      {label}
+    </span>
+  );
+}
+
+function OptionButton({
+  label,
+  description,
+  icon,
+  selected,
+  onClick,
+}: {
+  label: string;
+  description?: string;
+  icon?: AteFloIconName;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={onClick}
+      className={`min-h-14 rounded-2xl border px-4 py-4 text-left text-[15px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 ${
+        selected
+          ? "border-teal-700 bg-teal-700 text-white shadow-sm"
+          : "border-slate-200 bg-white text-slate-800 hover:border-teal-300 hover:bg-teal-50"
+      }`}
+    >
+      <span className="flex items-center gap-2 leading-5">
+        {icon && (
+          <AteFloIcon
+            name={icon}
+            className={`h-4 w-4 shrink-0 ${selected ? "text-teal-50" : "text-teal-700"}`}
+          />
+        )}
+        <span>{label}</span>
+      </span>
+      {description && (
+        <span className={`mt-1 block text-sm leading-5 ${selected ? "text-teal-50" : "text-slate-500"}`}>
+          {description}
+        </span>
+      )}
+    </button>
+  );
+}
+
+function ShortcutResultCard({
+  match,
+  rank,
+}: {
+  readonly match: ScoredShortcut;
+  readonly rank: number;
+}) {
+  const { shortcut } = match;
+
+  return (
+    <article className="flex h-full flex-col rounded-3xl border border-teal-200 bg-white p-5 shadow-sm ring-1 ring-teal-100 ateflo-card-lift sm:p-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-teal-700">
+            {rank === 1 ? "Best shortcut match" : "Also relevant"}
+          </p>
+          <h3 className="mt-2 text-xl font-semibold tracking-tight text-slate-900">
+            <Link href={`/shortcuts/${shortcut.slug}`} className="transition hover:text-teal-700">
+              {shortcut.title}
+            </Link>
+          </h3>
+        </div>
+        <RecommendationBadge label="Shortcut" />
+      </div>
+
+      <p className="mt-3 text-sm leading-6 text-slate-600">{shortcut.description}</p>
+
+      <div className="mt-4 flex flex-wrap gap-1.5">
+        <CategoryChip label={shortcut.category} />
+        <span className="inline-flex min-h-7 items-center justify-center rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-semibold leading-none text-slate-700 ring-1 ring-inset ring-slate-200">
+          {shortcut.persona}
+        </span>
+      </div>
+
+      <div className="mt-auto pt-5">
+        <Link
+          href={`/shortcuts/${shortcut.slug}`}
+          className="inline-flex min-h-11 items-center justify-center rounded-full bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+        >
+          Open Shortcut
+        </Link>
+      </div>
+    </article>
+  );
+}
+
+function RecommendationCard({
+  recommendation,
+  rank,
+}: {
+  recommendation: ToolRecommendation;
+  rank: number;
+}) {
+  const { tool, reasons } = recommendation;
+  const visitUrl = tool.affiliateUrl ?? tool.officialUrl;
+  const rankLabel = rank === 1 ? "Top Tool" : `Option ${rank}`;
+  const primaryReason =
+    reasons[0] ?? `Best for ${tool.bestFor[0]?.toLowerCase() ?? "this workflow"}.`;
+
+  return (
+    <article
+      className={`ateflo-finder-result-card flex h-full min-h-[360px] flex-col rounded-3xl border bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_16px_38px_rgba(15,23,42,0.035)] ateflo-card-lift sm:p-6 ${
+        rank === 1
+          ? "border-teal-200 ring-1 ring-teal-100"
+          : "border-slate-200 hover:border-slate-300"
+      }`}
+      style={{ animationDelay: `${(rank - 1) * 100}ms` }}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <RecommendationBadge label={rankLabel} />
+        <span className="rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-500 ring-1 ring-slate-200">
+          {tool.setupDifficulty} setup
+        </span>
+      </div>
+
+      <div className="mt-4 flex min-h-12 min-w-0 items-center gap-3">
+        <div className="rounded-2xl bg-slate-50 p-1.5 ring-1 ring-slate-100">
+          <ToolIcon {...tool} size={28} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate whitespace-nowrap text-lg font-semibold tracking-tight text-slate-900">
+            {tool.name}
+          </h3>
+          <p className="ateflo-clamp-1 mt-1 text-xs font-medium uppercase tracking-[0.14em] text-teal-700">
+            {tool.category.replace(/-/g, " ")}
+          </p>
+        </div>
+      </div>
+
+      <p className="ateflo-clamp-2 mt-4 min-h-12 text-sm leading-6 text-slate-600">
+        {primaryReason}
+      </p>
+
+      <div className="mt-3 min-h-8 overflow-hidden">
+        <BadgeRow badges={getToolCardBadges(tool)} maxVisible={3} />
+      </div>
+
+      <div className="mt-4 rounded-2xl border border-slate-100 bg-gradient-to-b from-slate-50 to-white p-3.5">
+        <div className="mb-3 flex items-center justify-between">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+            Fit signals
+          </p>
+          <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
+        </div>
+        <MetricBars tool={tool} metrics={FINDER_RESULT_METRICS} compact />
+      </div>
+
+      <div className="mt-auto flex flex-col gap-3 pt-5">
+        <ActionLinks
+          items={[
+            {
+              href: visitUrl,
+              label: "Visit Site",
+              external: true,
+              tone: "primary",
+              eventName: "tool_visit_click",
+              eventParams: {
+                tool_slug: tool.slug,
+                tool_name: tool.name,
+                source_page: "finder",
+                action_location: "finder_tool_result",
+              },
+            },
+            {
+              href: `/tools/${tool.slug}`,
+              label: "View Tool Page",
+            },
+          ]}
+        />
+      </div>
+    </article>
+  );
+}
+
+export default function FinderPageClient({
+  shortcuts,
+}: {
+  readonly shortcuts: readonly ShortcutMatch[];
+}) {
+  const [step, setStep] = useState(0);
+  const [answers, setAnswers] = useState<FinderAnswers>(INITIAL_ANSWERS);
+
+  const input = buildRecommendationInput(answers);
+  const shortcutMatches = getShortcutMatches(answers, shortcuts);
+  const generalRecommendations = input ? getRecommendedTools(input) : [];
+  const recommendations = input
+    ? shortcutMatches.length > 0 && !wantsToolRecommendation(answers)
+      ? getShortcutToolRecommendations(shortcutMatches, generalRecommendations, answers)
+      : generalRecommendations.slice(0, 3)
+    : [];
+  const isResultsStep = step === 5 && input !== null;
+
+  function chooseAnswer<Key extends keyof FinderAnswers>(
+    key: Key,
+    value: NonNullable<FinderAnswers[Key]>,
+    nextStep: number,
+  ) {
+    setAnswers((current) => {
+      const next = { ...current, [key]: value };
+
+      if (key === "task") {
+        next.source = null;
+        next.output = null;
+        next.context = null;
+        next.environment = null;
+      }
+
+      if (key === "source") {
+        next.output = null;
+        next.context = null;
+        next.environment = null;
+      }
+
+      if (key === "output") {
+        next.context = null;
+        next.environment = null;
+      }
+
+      if (key === "context") {
+        next.environment = null;
+      }
+
+      return next;
+    });
+    setStep(nextStep);
+  }
+
+  function resetFinder() {
+    setAnswers({ ...INITIAL_ANSWERS });
+    setStep(0);
+  }
+
+  const summaryChips = [
+    answers.task?.label,
+    answers.source?.label,
+    answers.output?.label,
+    answers.context?.label,
+    answers.environment?.label,
+  ].filter(Boolean);
+
+  return (
+    <main className="ateflo-page-shell min-h-screen px-4 py-6 sm:px-6 sm:py-10">
+      <div className="mx-auto max-w-5xl">
+        <SiteHeader active="finder" className="mb-7 rounded-3xl border border-slate-200 shadow-sm sm:mb-10" />
+        <header className="mb-7 sm:mb-10">
+          <h1 className="max-w-3xl text-3xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
+            Find the right AI shortcut or tool.
+          </h1>
+          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+            Answer a few simple questions and AteFlo will point you toward a
+            shortcut or tool that fits the task you want to finish.
+          </p>
+        </header>
+
+        <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-7">
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-sm font-medium text-slate-600">
+              {isResultsStep ? "5 of 5 complete" : `Step ${step + 1} of 5`}
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={step === 0}
+                onClick={() => setStep((current) => Math.max(0, current - 1))}
+                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={resetFinder}
+                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-5 flex gap-2" aria-label="Finder progress">
+            {[0, 1, 2, 3, 4].map((index) => (
+              <span
+                key={index}
+                className={`h-1.5 flex-1 rounded-full ${
+                  index < step ? "bg-teal-700" : "bg-slate-200"
+                }`}
+              />
+            ))}
+          </div>
+
+          {!isResultsStep && (
+            <div className="mt-8 sm:mt-10">
+              <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
+                {STEP_TITLES[step]}
+              </h2>
+              {step > 0 && (
+                <p className="mt-2 text-sm text-slate-500">
+                  {summaryChips.slice(0, step).join(" / ")}
+                </p>
+              )}
+
+              {step === 0 && (
+                <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {TASKS.map((choice) => (
+                    <OptionButton
+                      key={choice.id}
+                      label={choice.label}
+                      icon={choice.icon}
+                      selected={answers.task?.id === choice.id}
+                      onClick={() => chooseAnswer("task", choice, 1)}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {step === 1 && (
+                <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {SOURCES.map((choice) => (
+                    <OptionButton
+                      key={choice.id}
+                      label={choice.label}
+                      selected={answers.source?.id === choice.id}
+                      onClick={() => chooseAnswer("source", choice, 2)}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {step === 2 && (
+                <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {OUTPUTS.map((choice) => (
+                    <OptionButton
+                      key={choice.id}
+                      label={choice.label}
+                      selected={answers.output?.id === choice.id}
+                      onClick={() => chooseAnswer("output", choice, 3)}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {step === 3 && (
+                <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {CONTEXTS.map((choice) => (
+                    <OptionButton
+                      key={choice.id}
+                      label={choice.label}
+                      selected={answers.context?.id === choice.id}
+                      onClick={() => chooseAnswer("context", choice, 4)}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {step === 4 && (
+                <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {ENVIRONMENTS.map((choice) => (
+                    <OptionButton
+                      key={choice.id}
+                      label={choice.label}
+                      selected={answers.environment?.id === choice.id}
+                      onClick={() => chooseAnswer("environment", choice, 5)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {isResultsStep && (
+            <div className="mt-8">
+              <div className="flex flex-wrap gap-2 text-sm text-slate-600">
+                {summaryChips.map((label) => (
+                  <span key={label} className="rounded-full bg-slate-50 px-3 py-2">
+                    {label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+
+        {isResultsStep && (
+          <section id="finder-results" aria-live="polite" className="mt-8">
+            <div className="mb-6">
+              <p className="text-sm font-medium text-teal-700">
+                {shortcutMatches.length > 0 ? "Shortcut first" : "Closest fit"}
+              </p>
+              <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
+                Your best workflow fit
+              </h2>
+              {shortcutMatches.length === 0 && !wantsToolRecommendation(answers) && (
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+                  AteFlo does not have an exact published shortcut for this path
+                  yet. Start with the closest tools below, or browse all current
+                  shortcuts.
+                </p>
+              )}
+            </div>
+
+            {shortcutMatches.length > 0 && !wantsToolRecommendation(answers) && (
+              <div className="mb-6 grid gap-4 md:grid-cols-2">
+                {shortcutMatches.map((match, index) => (
+                  <ShortcutResultCard
+                    key={match.shortcut.slug}
+                    match={match}
+                    rank={index + 1}
+                  />
+                ))}
+              </div>
+            )}
+
+            {shortcutMatches.length === 0 && !wantsToolRecommendation(answers) && (
+              <div className="mb-6">
+                <Link
+                  href="/shortcuts"
+                  className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+                >
+                  Browse Published Shortcuts
+                </Link>
+              </div>
+            )}
+
+            <div className="mb-4">
+              <p className="text-sm font-semibold text-slate-900">
+                {shortcutMatches.length > 0 && !wantsToolRecommendation(answers)
+                  ? "Tools that fit this shortcut"
+                  : "Tool recommendations"}
+              </p>
+            </div>
+            <div className="grid gap-4 lg:grid-cols-3">
+              {recommendations.map((recommendation, index) => (
+                <RecommendationCard
+                  key={recommendation.tool.id}
+                  recommendation={recommendation}
+                  rank={index + 1}
+                />
+              ))}
+            </div>
+            <p className="mt-7 text-sm leading-6 text-slate-500">
+              Some links may be affiliate links. We recommend tools based on
+              fit, not commission.
+            </p>
+          </section>
+        )}
+      </div>
+    </main>
+  );
+}
