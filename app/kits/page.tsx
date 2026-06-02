@@ -6,21 +6,21 @@ import { getFeaturedKit, getKits } from "@/data/kits";
 export const metadata: Metadata = {
   title: "AteFlo Kits | AI Workflow Kits for Real Work",
   description:
-    "Explore AteFlo paid AI workflow kits for high-value tasks that need prompts, examples, revision steps, and review checklists.",
+    "Browse AteFlo paid AI workflow kits with packaged prompts, templates, examples, checklists, and action plans for tasks worth finishing.",
   alternates: {
     canonical: "/kits",
   },
   openGraph: {
     title: "AteFlo Kits | AI Workflow Kits for Real Work",
     description:
-      "Complete AI workflows for people who need structured results, not another vague prompt pack.",
+      "Packaged prompts, templates, examples, checklists, and action plans for tasks worth finishing.",
     url: "/kits",
   },
   twitter: {
     card: "summary",
     title: "AteFlo Kits | AI Workflow Kits for Real Work",
     description:
-      "Complete AI workflows for people who need structured results, not another vague prompt pack.",
+      "Packaged prompts, templates, examples, checklists, and action plans for tasks worth finishing.",
   },
 };
 
@@ -78,29 +78,29 @@ export default function KitsPage() {
 
         <header className="rounded-3xl border border-slate-200 bg-white px-5 py-7 shadow-sm sm:px-8 sm:py-9">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-teal-700">
-            AteFlo Kits
+            AteFlo Product Shelf
           </p>
           <h1 className="mt-4 max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-5xl">
-            AI workflow kits for people who need the result, not another prompt pack.
+            AI workflow kits for real work.
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-8 text-slate-600">
-            AteFlo kits are paid or early-access workflow products. Use them
-            when a high-value task needs inputs, prompt sequences, examples,
-            templates, setup guidance, and review checklists.
+            Packaged prompts, templates, examples, checklists, and action plans
+            for tasks worth finishing.
           </p>
         </header>
 
         <section className="mt-7">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-sm font-semibold text-teal-700">Featured kit</p>
+              <p className="text-sm font-semibold text-teal-700">Featured product shelf</p>
               <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
                 Start with local business visibility
               </h2>
             </div>
             <p className="max-w-xl text-sm leading-7 text-slate-600">
-              Free shortcuts remain samples. Kits are the repeatable workflow
-              for owners and operators who need usable assets.
+              Local Business is the flagship kit box: business inputs go in,
+              posts, page copy, review replies, checklists, and a 30-day plan
+              come out for owner review.
             </p>
           </div>
           <div className="mt-5">
@@ -108,9 +108,9 @@ export default function KitsPage() {
           </div>
         </section>
 
-        <section className="mt-9">
+        <section id="kit-boxes" className="mt-9">
           <div>
-            <p className="text-sm font-semibold text-teal-700">All kits</p>
+            <p className="text-sm font-semibold text-teal-700">Kit boxes</p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
               Choose the workflow closest to the result you need.
             </h2>

@@ -8,7 +8,10 @@ const mainLinks = [
     href: "/kits/local-business-ai-visibility-kit",
     label: "Local Business Kit",
   },
-  { href: "/#free-samples", label: "Free Samples" },
+  {
+    href: "/kits/job-application-ai-kit",
+    label: "Job Application Kit",
+  },
   { href: "/tools", label: "Tools" },
 ] as const;
 

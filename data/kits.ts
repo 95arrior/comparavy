@@ -135,9 +135,14 @@ export const kits: readonly AteFloKit[] = [
           "Yes. The workflow can be used in English, Korean, or another language if your AI tool supports it. You should still review local wording, compliance, platform rules, and business details.",
       },
       {
-        question: "Does it work for Naver Place or Instagram?",
+        question: "Can I use it for Instagram, Facebook, or Naver Place?",
         answer:
-          "The kit is structured around local visibility assets and can help draft copy for platforms such as Naver Place, Instagram, Facebook, and Google Business Profile. It does not automatically publish or configure those platforms.",
+          "Yes. The kit is structured around local visibility assets and can help draft copy for platforms such as Instagram, Facebook, Naver Place, and Google Business Profile. It does not automatically publish or configure those platforms.",
+      },
+      {
+        question: "Does it install GA4, Search Console, or Meta Pixel?",
+        answer:
+          "No. The setup module is checklist guidance only. It can help you remember what to review or configure, but it does not automatically install analytics, search, pixel, or business tools.",
       },
       {
         question: "Is this a marketing agency service?",

@@ -53,6 +53,46 @@ templates, website copy builder, social caption builder, setup checklists, a
 
 ## Kit-first Pivot: Local Business AI Visibility Kit
 
+## Factory Store Identity
+
+AteFlo is a workflow kit factory for AI-powered work.
+
+Users bring business details, job details, profile notes, or content ideas.
+AteFlo packages those inputs into structured AI workflow kits:
+
+Input worksheet -> prompt sequence -> example output -> review checklist ->
+action plan.
+
+AteFlo should not be positioned as:
+
+- AI shortcut directory
+- free prompt site
+- generic AI tools directory
+- prompt pack store
+
+AteFlo should be positioned as:
+
+- paid AI workflow kit store
+- kit factory for real-world outputs
+- structured workflows that help users go from input to usable result
+- productized AI work system
+
+The factory metaphor is a product explanation, not a decorative gimmick.
+Inputs go in, workflow modules assemble the kit, sample outputs come out, and
+the full kit unlocks the complete workflow.
+
+Sample kit builders must be deterministic/template-based unless a real product
+backend is intentionally added. They must not call an AI API, store raw user
+input, send user input to analytics, or send user input to external services.
+
+Allowed sample-builder analytics params are:
+
+- kit_slug
+- source_page
+- action_location
+- preview_field_count
+- has_preview_generated
+
 ### New Site Identity
 
 AteFlo is an AI workflow kit store with free shortcuts as samples.

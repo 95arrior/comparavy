@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import FactoryAssemblyVisual from "@/components/kits/FactoryAssemblyVisual";
 import KitCard from "@/components/kits/KitCard";
 import KitCtaLink from "@/components/kits/KitCtaLink";
-import LocalBusinessKitPreview from "@/components/kits/LocalBusinessKitPreview";
+import KitPreviewBuilder from "@/components/kits/KitPreviewBuilder";
 import SiteHeader from "@/components/SiteHeader";
 import {
   getFeaturedKit,
@@ -14,7 +15,7 @@ import {
 
 const HOME_TITLE = "AteFlo | AI Workflow Kits for Real Work";
 const HOME_DESCRIPTION =
-  "AteFlo sells AI workflow kits for creating review-ready business assets, job application materials, profile drafts, and other high-value outputs.";
+  "AteFlo is a workflow kit factory for AI-powered work: packaged prompts, templates, examples, checklists, and action plans for tasks worth finishing.";
 
 export const metadata: Metadata = {
   title: {
@@ -33,52 +34,36 @@ export const metadata: Metadata = {
 
 export const revalidate = 0;
 
-const whatYouGet = [
-  {
-    title: "Posts",
-    copy: "Google Business Profile updates, offers, events, and local promotions.",
-  },
-  {
-    title: "Review replies",
-    copy: "Careful response workflows without fake customer details or promises.",
-  },
-  {
-    title: "Website copy",
-    copy: "Homepage, service page, FAQ, and local page copy from real business facts.",
-  },
-  {
-    title: "Social captions",
-    copy: "Instagram and Facebook captions for services, updates, and seasonal offers.",
-  },
-  {
-    title: "Setup checklist",
-    copy: "Guided visibility checks for profiles, analytics, search, and pixel basics.",
-  },
-  {
-    title: "30-day plan",
-    copy: "A repeatable local visibility plan with owner review steps.",
-  },
+const boxContents = [
+  "Input Worksheet",
+  "Prompt Sequences",
+  "Example Outputs",
+  "Review Checklists",
+  "Website Copy",
+  "Social Captions",
+  "30-Day Plan",
+  "Setup Checklist",
 ] as const;
 
-const paidReasons = [
+const scratchVsKit = [
   {
-    title: "Not a prompt dump",
-    copy: "The kit organizes inputs, prompt sequences, templates, examples, and review steps.",
+    title: "Asking AI from scratch",
+    items: [
+      "Scattered prompts",
+      "Missing steps",
+      "Generic drafts",
+      "Easy to forget review checks",
+    ],
   },
   {
-    title: "Built around local outputs",
-    copy: "Posts, review replies, page copy, captions, setup checks, and a 30-day plan.",
+    title: "Using an AteFlo kit",
+    items: [
+      "Structured inputs",
+      "Ordered prompt sequence",
+      "Example outputs",
+      "Review rules and action plan",
+    ],
   },
-  {
-    title: "Includes review safeguards",
-    copy: "Check prices, dates, claims, hours, availability, and platform wording before use.",
-  },
-] as const;
-
-const freeSamples = [
-  "Google Business Profile post prompt",
-  "Dating app bio prompt",
-  "Voice memo to task list prompt",
 ] as const;
 
 export default function Home() {
@@ -86,58 +71,123 @@ export default function Home() {
   const featuredKitHref = getKitHref(featuredKit);
   const featuredKitCtaHref = getKitCtaHref(featuredKit);
   const hasCheckout = kitHasCheckout(featuredKit);
-  const otherKits = getKits().filter((kit) => kit.slug !== featuredKit.slug).slice(0, 3);
+  const otherKits = getKits().filter((kit) => kit.slug !== featuredKit.slug);
 
   return (
     <main className="ateflo-page-shell min-h-screen bg-[#FBFAF7] text-slate-900">
       <SiteHeader active="kits" />
 
       <section className="px-4 pb-8 pt-10 sm:px-6 sm:pb-10 sm:pt-14">
-        <div className="mx-auto grid max-w-6xl gap-7 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-          <div className="rounded-3xl border border-teal-100 bg-teal-50 p-6 shadow-sm sm:p-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-800 sm:text-sm">
-              Flagship paid kit
+        <div className="mx-auto grid max-w-6xl gap-7 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-700 sm:text-sm">
+              AteFlo Workflow Kit Factory
             </p>
             <h1 className="mt-5 text-4xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
-              Local Business AI Visibility Kit
+              Bring the details. AteFlo builds the kit.
             </h1>
-            <p className="mt-5 text-base leading-8 text-slate-700 sm:text-lg">
-              Turn your business details into Google Business Profile posts,
-              review replies, website copy, social captions, visibility
-              checklists, and a 30-day action plan.
+            <p className="mt-5 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
+              AteFlo packages prompts, templates, examples, checklists, and
+              action plans into workflow kits you can use with ChatGPT, Claude,
+              Gemini, Copilot, or another AI tool.
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
               <a
-                href="#preview-kit"
+                href="#build-sample-kit"
                 className="inline-flex min-h-12 items-center justify-center rounded-full bg-teal-700 px-6 py-3 text-sm font-semibold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
               >
-                Preview the kit
+                Build your sample kit
               </a>
-              <KitCtaLink
-                href={featuredKitCtaHref}
-                kitSlug={featuredKit.slug}
-                sourcePage="homepage"
-                actionLocation="homepage_hero_secondary"
-                hasCheckout={hasCheckout}
-                className="inline-flex min-h-12 items-center justify-center rounded-full border border-teal-200 bg-white px-6 py-3 text-sm font-semibold text-teal-800 transition hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+              <Link
+                href="/kits"
+                className="inline-flex min-h-12 items-center justify-center rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
               >
-                {featuredKit.ctaLabel}
-              </KitCtaLink>
+                Explore kits
+              </Link>
             </div>
-            <p className="mt-5 rounded-2xl border border-teal-100 bg-white/70 p-4 text-sm leading-6 text-slate-700">
-              No ranking or sales guarantees. Built for review-ready marketing
-              assets you can edit before publishing.
+            <p className="mt-5 rounded-2xl border border-teal-100 bg-white p-4 text-sm leading-6 text-slate-700 shadow-sm">
+              Flagship product: <span className="font-semibold text-teal-900">Local Business AI Visibility Kit</span>.
+              No ranking, lead, sales, customer, income, or business growth
+              guarantees.
             </p>
           </div>
+          <FactoryAssemblyVisual />
+        </div>
+      </section>
 
-          <LocalBusinessKitPreview
+      <section className="px-4 py-10 sm:px-6 sm:py-12">
+        <div className="mx-auto max-w-6xl">
+          <KitPreviewBuilder
             kitSlug={featuredKit.slug}
             ctaHref={featuredKitCtaHref}
             hasCheckout={hasCheckout}
             sourcePage="homepage"
             variant="compact"
-            className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
+            className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7"
           />
+        </div>
+      </section>
+
+      <section className="px-4 py-10 sm:px-6 sm:py-12">
+        <div className="mx-auto max-w-6xl">
+          <div className="max-w-2xl">
+            <p className="text-sm font-semibold text-teal-700">What comes in the box</p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
+              A packaged workflow, not loose prompts.
+            </h2>
+          </div>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {boxContents.map((item, index) => (
+              <article
+                key={item}
+                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+              >
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-50 text-sm font-semibold text-teal-800">
+                  {index + 1}
+                </span>
+                <h3 className="mt-4 text-base font-semibold text-slate-950">
+                  {item}
+                </h3>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="px-4 py-10 sm:px-6 sm:py-12">
+        <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[0.72fr_1.28fr] lg:items-stretch">
+          <div className="rounded-3xl border border-teal-100 bg-teal-50 p-6 shadow-sm sm:p-7">
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-800">
+              Flagship kit
+            </p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+              Local Business AI Visibility Kit
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-slate-700">
+              Built for local owners who need review-ready posts, review
+              replies, page copy, social captions, setup checklists, and a
+              30-day local visibility plan.
+            </p>
+            <div className="mt-6 flex flex-col gap-3">
+              <KitCtaLink
+                href={featuredKitCtaHref}
+                kitSlug={featuredKit.slug}
+                sourcePage="homepage"
+                actionLocation="homepage_flagship_cta"
+                hasCheckout={hasCheckout}
+                className="inline-flex min-h-11 items-center justify-center rounded-full bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+              >
+                {featuredKit.ctaLabel}
+              </KitCtaLink>
+              <Link
+                href={featuredKitHref}
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-teal-200 bg-white px-5 py-2.5 text-sm font-semibold text-teal-800 transition hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+              >
+                View product page
+              </Link>
+            </div>
+          </div>
+          <KitCard kit={featuredKit} sourcePage="homepage_featured" />
         </div>
       </section>
 
@@ -145,29 +195,21 @@ export default function Home() {
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-sm font-semibold text-teal-700">What you get</p>
+              <p className="text-sm font-semibold text-teal-700">Other kit boxes</p>
               <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
-                The local visibility assets owners usually need.
+                Productized workflows for other high-value tasks.
               </h2>
             </div>
             <Link
-              href={featuredKitHref}
-              className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+              href="/kits"
+              className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
             >
-              See full kit
+              Browse the shelf
             </Link>
           </div>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {whatYouGet.map((item) => (
-              <article
-                key={item.title}
-                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-              >
-                <h3 className="text-base font-semibold text-slate-950">
-                  {item.title}
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{item.copy}</p>
-              </article>
+          <div className="mt-6 grid gap-4 lg:grid-cols-2">
+            {otherKits.map((kit) => (
+              <KitCard key={kit.slug} kit={kit} sourcePage="homepage" compact />
             ))}
           </div>
         </div>
@@ -176,77 +218,63 @@ export default function Home() {
       <section className="px-4 py-10 sm:px-6 sm:py-12">
         <div className="mx-auto max-w-6xl rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-7">
           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
-            Why it is worth paying for
+            Why not just ask ChatGPT?
           </p>
-          <div className="mt-5 grid gap-4 md:grid-cols-3">
-            {paidReasons.map((item) => (
-              <article key={item.title} className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
-                <h3 className="text-base font-semibold text-slate-950">
-                  {item.title}
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{item.copy}</p>
+          <div className="mt-6 grid gap-4 lg:grid-cols-2">
+            {scratchVsKit.map((column) => (
+              <article
+                key={column.title}
+                className="rounded-2xl border border-slate-100 bg-slate-50/80 p-5"
+              >
+                <h2 className="text-lg font-semibold text-slate-950">
+                  {column.title}
+                </h2>
+                <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-700">
+                  {column.items.map((item) => (
+                    <li key={item} className="flex gap-3">
+                      <span aria-hidden="true" className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-700" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
               </article>
             ))}
           </div>
+          <p className="mt-5 text-sm leading-7 text-slate-600">
+            AteFlo does not claim to be smarter than your AI tool. It helps you
+            use AI more practically by packaging the inputs, sequence, examples,
+            checks, and final action plan.
+          </p>
         </div>
       </section>
 
-      <section className="px-4 py-10 sm:px-6 sm:py-12">
-        <div className="mx-auto max-w-6xl">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold text-teal-700">Other kits</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
-                More workflow kits for high-value tasks.
-              </h2>
-            </div>
+      <section className="px-4 pb-16 pt-10 sm:px-6 sm:pb-20">
+        <div className="mx-auto max-w-6xl rounded-3xl border border-teal-100 bg-teal-50 p-6 shadow-sm sm:flex sm:items-center sm:justify-between sm:gap-8 sm:p-8">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-800">
+              Start the factory line
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+              Build your first sample kit.
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-700">
+              Try the sample builder, then unlock the full workflow if the kit
+              matches the work you need to finish.
+            </p>
+          </div>
+          <div className="mt-6 flex flex-col gap-3 sm:mt-0 sm:flex-row">
+            <a
+              href="#build-sample-kit"
+              className="inline-flex min-h-11 items-center justify-center rounded-full bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+            >
+              Build sample kit
+            </a>
             <Link
               href="/kits"
-              className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+              className="inline-flex min-h-11 items-center justify-center rounded-full border border-teal-200 bg-white px-5 py-2.5 text-sm font-semibold text-teal-800 transition hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
             >
               Explore kits
             </Link>
-          </div>
-          <div className="mt-6 grid gap-4 lg:grid-cols-3">
-            {otherKits.map((kit) => (
-              <KitCard key={kit.slug} kit={kit} sourcePage="homepage" compact />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="free-samples" className="px-4 py-10 sm:px-6 sm:py-12">
-        <div className="mx-auto max-w-6xl rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-7">
-          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
-            Free samples
-          </p>
-          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h2 className="text-2xl font-semibold tracking-tight text-slate-950">
-                Try free samples before choosing a full kit.
-              </h2>
-              <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
-                Free samples are supporting workflows. The paid kits are the
-                complete products with worksheets, templates, examples, and
-                review checklists.
-              </p>
-            </div>
-            <Link
-              href="/kits"
-              className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
-            >
-              Compare full kits
-            </Link>
-          </div>
-          <div className="mt-5 grid gap-3 md:grid-cols-3">
-            {freeSamples.map((sample) => (
-              <div
-                key={sample}
-                className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4 text-sm font-semibold text-slate-700"
-              >
-                {sample}
-              </div>
-            ))}
           </div>
         </div>
       </section>

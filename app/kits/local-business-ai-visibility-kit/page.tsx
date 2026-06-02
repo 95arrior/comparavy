@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import FaqAccordion from "@/components/FaqAccordion";
+import FactoryAssemblyVisual from "@/components/kits/FactoryAssemblyVisual";
+import KitPreviewBuilder from "@/components/kits/KitPreviewBuilder";
 import KitCtaLink from "@/components/kits/KitCtaLink";
-import LocalBusinessKitPreview from "@/components/kits/LocalBusinessKitPreview";
 import SiteHeader from "@/components/SiteHeader";
 import {
   type AteFloKit,
@@ -82,56 +83,40 @@ export default function LocalBusinessAiVisibilityKitPage() {
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-8 text-slate-600">
                 A practical AI workflow kit for creating Google Business Profile
-                posts, review replies, website copy, social content, and a
-                visibility checklist without starting from a blank page.
+                posts, review replies, website copy, social captions, setup
+                checklists, and a 30-day local visibility plan.
               </p>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <KitPrimaryCta actionLocation="local_business_kit_hero" />
                 <a
-                  href="#preview-kit"
+                  href="#build-sample-kit"
                   className={secondaryCtaClass}
                 >
-                  Preview your kit
+                  Build a sample
                 </a>
               </div>
+              <p className="mt-5 rounded-2xl border border-teal-100 bg-teal-50 p-4 text-sm leading-6 text-slate-700">
+                No ranking or sales guarantees. Built for review-ready assets
+                you can edit before publishing.
+              </p>
             </div>
 
-            <aside className="rounded-3xl border border-teal-100 bg-teal-50 p-5 sm:p-6">
-              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-800">
-                What it helps you create
-              </p>
-              <ul className="mt-4 space-y-3 text-sm leading-7 text-slate-700">
-                {[
-                  "Google Business Profile updates",
-                  "Offer and event-style posts",
-                  "Review responses",
-                  "Homepage and service page copy",
-                  "FAQ answers",
-                  "Instagram and Facebook captions",
-                  "Local promotion ideas",
-                  "30-day visibility plan",
-                  "GA4, Search Console, and Meta Pixel setup checklist guidance",
-                ].map((item) => (
-                  <li key={item} className="flex gap-3">
-                    <span aria-hidden="true" className="mt-2 h-2 w-2 shrink-0 rounded-full bg-teal-700" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </aside>
+            <FactoryAssemblyVisual />
           </div>
         </section>
 
-        <LocalBusinessKitPreview
+        <KitPreviewBuilder
           kitSlug={kit.slug}
           ctaHref={getKitCtaHref(kit)}
           hasCheckout={kitHasCheckout(kit)}
           sourcePage="local_business_kit"
+          variant="full"
+          title="Build a sample visibility kit"
         />
 
         <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
-            What you get
+            What you unlock
           </p>
           <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[
@@ -187,10 +172,10 @@ export default function LocalBusinessAiVisibilityKitPage() {
         >
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
-              What is inside
+              Full kit modules
             </p>
             <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
-              A local visibility workflow, not a prompt dump.
+              A local visibility workflow, boxed into reusable modules.
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
               Each module starts from real business details, creates a specific
