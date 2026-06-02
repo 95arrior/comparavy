@@ -129,12 +129,18 @@ the searcher's actual job.
 - Treat Fill in details as a guided prompt setup, not a plain generic form. It
   should make the user feel they only need to add a few useful details before
   AteFlo builds the prompt.
+- Single-line fields in the primary setup group should let Enter move focus to
+  the next visible primary field without opening More details or submitting the
+  page. More details stays optional and separate.
 - Copy Prompt feedback must stay stable in place: the button keeps its size,
-  changes to "Copied ✓", and resets without layout jump.
+  changes to "Copied ✓", and stays copied until the generated prompt changes.
 - A generated-prompt typing reveal is allowed only as lightweight visual polish;
-  the full prompt must remain available immediately for copy and screen readers.
+  the full prompt must remain available immediately for copy and screen readers,
+  and the reveal should be slow enough to notice without delaying copying.
 - Collapsed supporting content must exist in the initial HTML and must not be
   fetched only after click.
+- Explore more shortcuts should stay visible, not hidden behind a collapsed
+  disclosure. Use Related shortcuts only when the relationship is real.
 - Related or Explore Works with rows may use logo-only compact mode, but every
   logo needs an accessible label and keyboard-accessible tooltip or fallback.
 - Bottom sticky build/copy prompt buttons should not be used by default. A

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useId, useState } from "react";
 import CategoryChip from "@/components/CategoryChip";
 import ToolIcon from "@/components/ToolIcon";
 import { trackEvent } from "@/lib/analytics";
@@ -30,9 +29,6 @@ export default function RelatedShortcuts({
   sectionTitle = "Related shortcuts",
   sectionSubtitle = "Open another AteFlo shortcut when your next task starts from a different input.",
 }: RelatedShortcutsProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const contentId = useId();
-
   if (guides.length === 0) {
     return null;
   }
@@ -49,38 +45,16 @@ export default function RelatedShortcuts({
 
   return (
     <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-      <button
-        type="button"
-        aria-expanded={isOpen}
-        aria-controls={contentId}
-        onClick={() => setIsOpen((current) => !current)}
-        className="flex w-full items-start justify-between gap-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
-      >
-        <span className="min-w-0">
-          <span className="block text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
-            {sectionTitle}
-          </span>
-          <span className="mt-2 block max-w-2xl text-sm leading-7 text-slate-600">
-            {sectionSubtitle}
-          </span>
-        </span>
-        <span
-          aria-hidden="true"
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-lg font-normal text-teal-700 transition motion-reduce:transition-none ${
-            isOpen ? "rotate-45 bg-teal-50" : ""
-          }`}
-        >
-          +
-        </span>
-      </button>
-      <div
-        id={contentId}
-        className={`grid transition-all duration-300 ease-out motion-reduce:transition-none ${
-          isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-        }`}
-      >
-        <div className="overflow-hidden">
-          <div className="mt-5 grid gap-4 border-t border-slate-100 pt-5 md:grid-cols-2 xl:grid-cols-3">
+      <div>
+        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
+          {sectionTitle}
+        </p>
+        <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
+          {sectionSubtitle}
+        </p>
+      </div>
+
+      <div className="mt-5 grid gap-4 border-t border-slate-100 pt-5 md:grid-cols-2 xl:grid-cols-3">
             {guides.map((relatedGuide, index) => (
               <article
                 key={relatedGuide.slug}
@@ -153,8 +127,6 @@ export default function RelatedShortcuts({
                 </div>
               </article>
             ))}
-          </div>
-        </div>
       </div>
     </section>
   );

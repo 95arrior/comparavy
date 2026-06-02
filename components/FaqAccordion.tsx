@@ -47,8 +47,8 @@ export default function FaqAccordion({ items }: FaqAccordionProps) {
               </span>
             </button>
             <div
-              className={`grid transition-all duration-300 ease-out ${
-                open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+              className={`ateflo-detail-disclosure grid motion-reduce:transition-none ${
+                open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
               }`}
             >
               <div className="min-h-0 overflow-hidden">

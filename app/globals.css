@@ -105,6 +105,17 @@ html {
     0 0 0 1px rgba(20, 184, 166, 0.3);
 }
 
+.ateflo-back-to-top {
+  right: max(1rem, calc((100vw - 72rem) / 2 + 1rem));
+  bottom: calc(1rem + env(safe-area-inset-bottom));
+}
+
+.ateflo-detail-disclosure {
+  transition:
+    grid-template-rows 360ms ease,
+    opacity 260ms ease;
+}
+
 .ateflo-copy-sparks {
   position: absolute;
   inset: 0;
@@ -484,6 +495,13 @@ html {
   }
 }
 
+@media (min-width: 640px) {
+  .ateflo-back-to-top {
+    right: max(1.5rem, calc((100vw - 72rem) / 2 + 1.5rem));
+    bottom: calc(1.5rem + env(safe-area-inset-bottom));
+  }
+}
+
 @media (min-width: 768px) {
   .ateflo-tag-rail {
     overflow: hidden;
@@ -505,6 +523,8 @@ html {
   .ateflo-copy-button,
   .ateflo-primary-copy-button,
   .ateflo-primary-copy-button::before,
+  .ateflo-back-to-top,
+  .ateflo-detail-disclosure,
   .ateflo-copy-spark,
   .ateflo-typing-caret,
   .ateflo-helpful-success,

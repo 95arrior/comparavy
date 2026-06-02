@@ -51,7 +51,7 @@ export default function CollapsedGuideSection({
       </button>
       <div
         id={contentId}
-        className={`grid transition-all duration-300 ease-out motion-reduce:transition-none ${
+        className={`ateflo-detail-disclosure grid motion-reduce:transition-none ${
           isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
         }`}
       >

@@ -909,6 +909,7 @@ function FieldInput({
   onFocus,
   onBlur,
   inputRef,
+  onEnterNext,
 }: {
   readonly field: PromptField;
   readonly value: string;
@@ -917,7 +918,8 @@ function FieldInput({
   readonly onChange: (value: string) => void;
   readonly onFocus?: () => void;
   readonly onBlur?: (value: string) => void;
-  readonly inputRef?: React.RefObject<HTMLInputElement | HTMLTextAreaElement | null>;
+  readonly inputRef?: React.Ref<HTMLInputElement | HTMLTextAreaElement>;
+  readonly onEnterNext?: () => void;
 }) {
   const [isFocused, setIsFocused] = useState(false);
   const isComplete = value.trim().length > 0;
@@ -966,7 +968,7 @@ function FieldInput({
       </span>
       {field.multiline ? (
         <textarea
-          ref={inputRef as React.RefObject<HTMLTextAreaElement | null> | undefined}
+          ref={inputRef as React.Ref<HTMLTextAreaElement> | undefined}
           value={value}
           onFocus={handleFocus}
           onBlur={(event) => handleBlur(event.target.value)}
@@ -980,10 +982,18 @@ function FieldInput({
         />
       ) : (
         <input
-          ref={inputRef as React.RefObject<HTMLInputElement | null> | undefined}
+          ref={inputRef as React.Ref<HTMLInputElement> | undefined}
           value={value}
           onFocus={handleFocus}
           onBlur={(event) => handleBlur(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key !== "Enter") {
+              return;
+            }
+
+            event.preventDefault();
+            onEnterNext?.();
+          }}
           onChange={(event) => {
             onFocus?.();
             onChange(event.target.value);
@@ -1043,7 +1053,7 @@ function SmoothActionDisclosure({
       </button>
       <div
         id={contentId}
-        className={`grid transition-all duration-300 ease-out motion-reduce:transition-none ${
+        className={`ateflo-detail-disclosure grid motion-reduce:transition-none ${
           isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
         }`}
       >
@@ -1059,6 +1069,10 @@ function AnimatedPromptPreview({ text }: { readonly text: string }) {
   const containerRef = useRef<HTMLPreElement | null>(null);
   const [hasEntered, setHasEntered] = useState(false);
   const [visibleLength, setVisibleLength] = useState(text.length);
+  const targetStepCount = Math.max(28, Math.min(48, Math.ceil(text.length / 80)));
+  const targetDuration = Math.max(1600, Math.min(2400, text.length * 3.6));
+  const step = Math.max(16, Math.ceil(text.length / targetStepCount));
+  const intervalMs = Math.max(34, Math.ceil(targetDuration / targetStepCount));
 
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -1094,7 +1108,7 @@ function AnimatedPromptPreview({ text }: { readonly text: string }) {
         setHasEntered(true);
         observer.disconnect();
       },
-      { threshold: 0.35 },
+      { threshold: 0.68 },
     );
 
     observer.observe(node);
@@ -1106,13 +1120,12 @@ function AnimatedPromptPreview({ text }: { readonly text: string }) {
       return;
     }
 
-    const step = Math.max(18, Math.ceil(text.length / 26));
     const timer = window.setTimeout(() => {
       setVisibleLength((current) => Math.min(text.length, current + step));
-    }, 26);
+    }, intervalMs);
 
     return () => window.clearTimeout(timer);
-  }, [hasEntered, text, visibleLength]);
+  }, [hasEntered, intervalMs, step, text, visibleLength]);
 
   const visibleText = text.slice(0, visibleLength);
   const isTyping = visibleLength < text.length;
@@ -1195,9 +1208,10 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
   const [copyBurstId, setCopyBurstId] = useState(0);
   const [showCopyBurst, setShowCopyBurst] = useState(false);
   const firstInputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
+  const primaryInputRefs = useRef<Array<HTMLInputElement | HTMLTextAreaElement | null>>([]);
+  const optionalInputRefs = useRef<Array<HTMLInputElement | HTMLTextAreaElement | null>>([]);
   const copyButtonRef = useRef<HTMLButtonElement | null>(null);
   const sectionRef = useRef<HTMLDivElement | null>(null);
-  const resetTimer = useRef<number | undefined>(undefined);
   const burstTimer = useRef<number | undefined>(undefined);
   const startedFields = useRef<Set<string>>(new Set());
   const completedFields = useRef<Set<string>>(new Set());
@@ -1218,9 +1232,6 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
 
   useEffect(() => {
     return () => {
-      if (resetTimer.current !== undefined) {
-        window.clearTimeout(resetTimer.current);
-      }
       if (burstTimer.current !== undefined) {
         window.clearTimeout(burstTimer.current);
       }
@@ -1258,11 +1269,6 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
         burstTimer.current = window.setTimeout(() => setShowCopyBurst(false), 760);
       }
 
-      if (resetTimer.current !== undefined) {
-        window.clearTimeout(resetTimer.current);
-      }
-
-      resetTimer.current = window.setTimeout(() => setCopyState("idle"), 1200);
       return true;
     } catch {
       setCopyState("failed");
@@ -1300,7 +1306,19 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
   }
 
   function updateValue(key: string, value: string) {
+    if (copyState === "copied") {
+      setCopyState("idle");
+      setShowCopyBurst(false);
+    }
+
     setValues((current) => ({ ...current, [key]: value }));
+  }
+
+  function focusNextField(
+    refs: React.MutableRefObject<Array<HTMLInputElement | HTMLTextAreaElement | null>>,
+    index: number,
+  ) {
+    refs.current[index + 1]?.focus();
   }
 
   function handleFieldStarted(fieldKey: string) {
@@ -1337,9 +1355,10 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
       <section className="rounded-3xl border border-teal-200 bg-white p-5 shadow-sm sm:p-6">
         <div className="grid gap-6 lg:grid-cols-[0.92fr_1.08fr]">
           <div className="space-y-4">
-            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
+            <div className="inline-flex items-center gap-2 rounded-full border border-teal-100 bg-teal-50 px-3 py-1.5 text-sm font-semibold uppercase tracking-[0.14em] text-teal-800">
+              <span aria-hidden="true" className="h-2 w-2 rounded-full bg-teal-600" />
               Fill in details
-            </p>
+            </div>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
               {config.detailHeading ?? "Fill in the details you have"}
             </h2>
@@ -1382,7 +1401,14 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
                 onFocus={() => handleFieldStarted(field.key)}
                 onChange={(value) => updateValue(field.key, value)}
                 onBlur={(value) => handleFieldBlur(field.key, value)}
-                inputRef={index === 0 ? firstInputRef : undefined}
+                inputRef={(element) => {
+                  primaryInputRefs.current[index] = element;
+
+                  if (index === 0) {
+                    firstInputRef.current = element;
+                  }
+                }}
+                onEnterNext={() => focusNextField(primaryInputRefs, index)}
               />
             ))}
 
@@ -1406,6 +1432,10 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
                     onFocus={() => handleFieldStarted(field.key)}
                     onChange={(value) => updateValue(field.key, value)}
                     onBlur={(value) => handleFieldBlur(field.key, value)}
+                    inputRef={(element) => {
+                      optionalInputRefs.current[index] = element;
+                    }}
+                    onEnterNext={() => focusNextField(optionalInputRefs, index)}
                   />
                 ))}
               </div>

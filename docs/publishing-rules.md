@@ -149,12 +149,16 @@ Future shortcuts should use the current AteFlo interaction pattern:
 
 - Do not add a Before/After proof card by default.
 - Keep Fill in details as a guided prompt setup, not a plain generic form.
+- Single-line primary inputs should use Enter to move to the next visible
+  primary field. More details remains optional and separate.
 - Copy Prompt must keep a stable button size and show in-place "Copied ✓"
-  feedback.
+  feedback until the prompt content changes.
 - A lightweight generated-prompt typing reveal is allowed, but copy must be
-  available immediately and the full prompt must remain in the HTML.
+  available immediately, the full prompt must remain in the HTML, and the
+  animation should be slow enough to notice.
 - Collapsed supporting content must be present in the initial HTML for SEO and
   accessibility.
+- Explore more shortcuts should be visible by default, not collapsed.
 - Related or Explore Works with rows can use compact logo-only mode with
   accessible labels and tooltips.
 - Do not use a bottom sticky build/copy prompt button by default.

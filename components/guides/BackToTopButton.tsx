@@ -33,7 +33,7 @@ export default function BackToTopButton() {
       type="button"
       aria-label="Back to top"
       onClick={scrollToTop}
-      className="ateflo-back-to-top ateflo-primary-copy-button fixed bottom-4 right-4 z-40 inline-flex h-12 w-12 items-center justify-center rounded-full text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 sm:bottom-6 sm:right-6"
+      className="ateflo-back-to-top ateflo-primary-copy-button fixed z-40 inline-flex h-12 w-12 items-center justify-center rounded-full text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
     >
       <svg
         aria-hidden="true"
