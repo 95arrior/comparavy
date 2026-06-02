@@ -43,6 +43,19 @@ function bestFor(guide: Guide): string {
   return guide.useCase;
 }
 
+function actionSummaryTitle(guide: Guide): string {
+  switch (guide.slug) {
+    case "how-to-turn-a-voice-memo-into-a-to-do-list-with-ai":
+      return "Use it when the memo is already text.";
+    case "how-to-write-google-business-profile-posts-with-ai":
+      return "Use it before a local update goes public.";
+    case "how-to-write-a-dating-app-bio-with-ai-without-sounding-generic":
+      return "Use it when you want options that still sound personal.";
+    default:
+      return "Use it when you want a structured prompt before the full guide.";
+  }
+}
+
 export default function ShortcutBrief({ guide }: ShortcutBriefProps) {
   const worksWith = guideWorksWithTools(guide)
     .slice(0, 3)
@@ -76,7 +89,7 @@ export default function ShortcutBrief({ guide }: ShortcutBriefProps) {
             Action summary
           </p>
           <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-950">
-            Use this shortcut when you want the prompt first.
+            {actionSummaryTitle(guide)}
           </h2>
         </div>
         <p className="max-w-sm text-sm leading-6 text-slate-600">

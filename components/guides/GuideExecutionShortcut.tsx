@@ -19,6 +19,9 @@ interface PromptField {
 
 interface PromptBuilderConfig {
   readonly whatYouWillMake: string;
+  readonly detailHeading?: string;
+  readonly detailDescription?: string;
+  readonly pasteInstruction?: string;
   readonly primaryFields: readonly PromptField[];
   readonly optionalFields: readonly PromptField[];
   readonly privateNote?: string;
@@ -619,6 +622,11 @@ Rules:
 promptConfigs["how-to-turn-a-voice-memo-into-a-to-do-list-with-ai"] = {
   whatYouWillMake:
     "A cleaned-up task list with priority levels, next actions, owners, deadlines, quick wins, unclear items, and questions to clarify.",
+  detailHeading: "Paste the transcript and the context you remember",
+  detailDescription:
+    "The prompt works from text, not raw audio. Add only the details you want the AI to use.",
+  pasteInstruction:
+    "Paste the copied prompt into ChatGPT, Claude, Gemini, Copilot, Notion AI, or another AI chat tool.",
   primaryFields: [
     {
       key: "transcript",
@@ -642,6 +650,8 @@ promptConfigs["how-to-turn-a-voice-memo-into-a-to-do-list-with-ai"] = {
     { key: "categories", label: "Categories", placeholder: "Example: Work, errands, finance" },
     { key: "ignore", label: "Things to ignore", placeholder: "Example: Random ideas that are not real tasks" },
   ],
+  privateNote:
+    "If you only have audio, transcribe it first with your phone, Otter.ai, or another transcription tool. Then paste the transcript here.",
   exampleInput:
     "Remind me to email Sarah about the proposal, book the dentist, check the invoice, and maybe move the client call if Friday is too packed.",
   exampleOutput: [
@@ -690,6 +700,11 @@ Rules:
 promptConfigs["how-to-write-google-business-profile-posts-with-ai"] = {
   whatYouWillMake:
     "A review-ready Google Business Profile post with update, offer-style, and event-style versions where relevant, plus CTA options, a visual idea, and owner review checklist.",
+  detailHeading: "Add the local update and anything the owner must verify",
+  detailDescription:
+    "Use real business facts only. Missing offer, date, pricing, or availability details should stay marked for owner review.",
+  pasteInstruction:
+    "Paste the copied prompt into ChatGPT, Claude, Gemini, Copilot, or another AI chat tool before reviewing the post.",
   primaryFields: [
     { key: "businessType", label: "Business type", placeholder: "Example: Local dog grooming salon" },
     { key: "location", label: "Location or service area", placeholder: "Example: Austin, Texas" },
@@ -755,6 +770,11 @@ Rules:
 promptConfigs["how-to-write-a-dating-app-bio-with-ai-without-sounding-generic"] = {
   whatYouWillMake:
     "Three natural dating app bio options, three prompt-answer options, three opening line ideas if appropriate, a cliche warning list, and a review checklist.",
+  detailHeading: "Add real details you would actually say out loud",
+  detailDescription:
+    "You are not trying to sound perfect. Give the AI true traits, interests, tone, and boundaries so the options feel like you.",
+  pasteInstruction:
+    "Paste the copied prompt into ChatGPT, Claude, Gemini, or another AI chat tool, then edit anything that sounds off.",
   primaryFields: [
     { key: "appType", label: "App or profile type", placeholder: "Example: Hinge profile, Bumble bio, Tinder bio" },
     { key: "traits", label: "Personality traits", placeholder: "Example: Dry humor, thoughtful, outdoorsy, low-key" },
@@ -1055,13 +1075,15 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
               Fill in details
             </p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
-              Fill in the details you have
+              {config.detailHeading ?? "Fill in the details you have"}
             </h2>
             <p className="mt-3 text-base leading-7 text-slate-700">
-              You can copy the prompt right away, but these fields help the AI return a more useful first draft.
+              {config.detailDescription ??
+                "You can copy the prompt right away, but these fields help the AI return a more useful first draft."}
             </p>
             <p className="mt-3 text-sm leading-6 text-slate-600">
-              After copying, paste the prompt into ChatGPT, Claude, Gemini, Copilot, Canva, or another suitable AI tool.
+              {config.pasteInstruction ??
+                "After copying, paste the prompt into ChatGPT, Claude, Gemini, Copilot, Canva, or another suitable AI tool."}
             </p>
             {config.privateNote && (
               <p className="mt-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">

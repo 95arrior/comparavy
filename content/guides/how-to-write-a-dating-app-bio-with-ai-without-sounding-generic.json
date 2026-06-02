@@ -44,16 +44,16 @@
   ],
   "audience": "dating app users who want help sounding specific, natural, respectful, and true to themselves",
   "searchIntent": "writing a better dating app bio or prompt answers with AI",
-  "userPain": "The reader wants a better profile but worries AI will make them sound fake, desperate, generic, arrogant, or unlike themselves.",
+  "userPain": "The reader wants a better profile but does not want to sound fake, generic, desperate, arrogant, or like AI wrote the whole thing.",
   "decisionQuestion": "How do I use AI to write a dating app bio that sounds natural and still feels like me?",
   "deviceIntent": "both",
   "desktopUseCase": "Best on desktop when rewriting multiple profile sections, comparing tone, and editing examples calmly.",
   "mobileUseCase": "Best on mobile when updating a Hinge, Bumble, Tinder, or other dating app profile from the phone.",
   "desktopSearchAngle": "Desktop readers may want several bio options and prompt answers to compare before editing.",
   "mobileSearchAngle": "Mobile readers want a fast dating bio prompt and examples they can adapt without overthinking.",
-  "quickAnswer": "Fill in your app type, personality traits, interests, relationship goal, tone, and things to avoid, then copy a prompt that creates natural bio options, prompt-answer ideas, opening line ideas, cliche warnings, and a review checklist.",
+  "quickAnswer": "Add real traits, interests, relationship goal, tone, and things to avoid, then copy a prompt that gives you natural dating bio options you can edit.",
   "quickDecision": "Use ChatGPT, Claude, or Gemini for a natural dating app bio draft, but only publish lines that are true, specific, respectful, and still sound like you.",
-  "realWorldScenario": "You like coffee shops, hiking, dry humor, and indie movies, and you want something intentional without sounding too serious too fast. The shortcut turns those real details into options without inventing a lifestyle or personality.",
+  "realWorldScenario": "You like coffee shops, hiking, dry humor, and indie movies, and you want something intentional without sounding too serious too fast. The shortcut turns those real details into options you can edit, not a polished fake version of you.",
   "whatYouNeed": [
     "Dating app or profile type",
     "Personality traits and real interests",
@@ -61,10 +61,10 @@
     "Things to avoid, dealbreakers, humor level, or examples you like"
   ],
   "timeEstimate": "6-9 minutes",
-  "contentGap": "Many dating bio generators promise instant bios, but searchers need a safer prompt that keeps the result specific, true, and less obviously AI-written.",
-  "uniqueAngle": "AteFlo makes the AI ask from real traits and boundaries, then includes cliche warnings and a does this sound like me review instead of outputting polished generic lines.",
+  "contentGap": "Many dating bio generators promise instant bios, but searchers need warmer options that stay true, specific, and less obviously AI-written.",
+  "uniqueAngle": "AteFlo starts from real traits and boundaries, then adds cliche warnings and a does this sound like me review so the final bio feels natural.",
   "aiOverviewAnswer": "To write a dating app bio with AI without sounding generic, give the AI your app type, real traits, interests, relationship goal, tone, and things to avoid, then ask for several natural bio options, prompt-answer ideas, opening lines, cliche warnings, and a truth-check before using anything.",
-  "quickVerdict": "Use ChatGPT, Claude, or Gemini for writing a dating app bio with AI without sounding generic, but keep only the lines that are true, specific, respectful, and easy to say out loud.",
+  "quickVerdict": "Use ChatGPT, Claude, or Gemini for dating app bio options, but keep only lines that are true, specific, respectful, and easy to say out loud.",
   "steps": [
     {
       "title": "Add real profile details",
@@ -335,7 +335,7 @@
       "answer": "No shortcut should promise matches, dates, or romantic outcomes. The goal is a truthful, specific bio that avoids generic AI wording."
     }
   ],
-  "finalVerdict": "For writing a dating app bio with AI without sounding generic, use ChatGPT, Claude, or Gemini to create options from real details, then edit hard for truth and tone. A good result should sound specific enough to start a conversation and natural enough that you would say it out loud.",
+  "finalVerdict": "For writing a dating app bio with AI without sounding generic, use ChatGPT, Claude, or Gemini to create options from real details, then edit hard for truth and tone. You are not trying to sound perfect; you are trying to sound specific, natural, and easy to reply to.",
   "ctaToFinder": "Use Finder if you want to compare the AI tools that fit this shortcut before choosing where to paste the prompt.",
   "finderCTA": "Open Finder to compare tools for this shortcut and pick the option that matches your device, privacy needs, and workflow.",
   "visualSummary": {

@@ -17,10 +17,10 @@ interface HomeShortcutSearchProps {
 }
 
 const SEARCH_CHIPS = [
-  "Meeting notes",
-  "Etsy listing",
-  "PDF study notes",
-  "Content calendar",
+  "Voice memo",
+  "Google Business Profile",
+  "Dating app bio",
+  "Local business post",
 ] as const;
 
 function primaryToolFor(shortcut: ShortcutDiscoveryItem) {

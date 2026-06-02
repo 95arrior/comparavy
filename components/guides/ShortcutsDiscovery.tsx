@@ -35,10 +35,10 @@ interface ShortcutsDiscoveryProps {
 }
 
 const SEARCH_CHIPS = [
-  "Meeting notes",
-  "Etsy listing",
-  "Follow-up email",
-  "Product description",
+  "Voice memo",
+  "Google Business Profile",
+  "Dating app bio",
+  "Local business post",
 ] as const;
 
 export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProps) {
@@ -151,7 +151,7 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
           id="shortcut-search"
           type="search"
           value={query}
-          placeholder="Search “meeting notes”, “Etsy listing”, “follow-up email”..."
+          placeholder="Search voice memo, Google Business Profile, dating app bio..."
           data-event="shortcuts_search_used"
           className="min-h-14 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-base text-slate-950 shadow-sm outline-none transition focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100 placeholder:text-slate-400"
           onChange={(event) => setQuery(event.target.value)}
@@ -212,7 +212,7 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
               <div className="flex flex-wrap items-center gap-2">
                 <CategoryChip label={shortcut.category} />
                 <span className="text-xs font-medium text-slate-500">
-                  {shortcut.guideTypeLabel} · {shortcut.timeEstimate ?? shortcut.skillLevel}
+                  {shortcut.guideTypeLabel}
                 </span>
               </div>
 
@@ -229,7 +229,7 @@ export default function ShortcutsDiscovery({ shortcuts }: ShortcutsDiscoveryProp
                 </Link>
               </h2>
 
-              <p className="ateflo-clamp-3 mt-3 text-sm leading-7 text-slate-600 md:min-h-[5.25rem]">
+              <p className="ateflo-clamp-2 mt-3 text-sm leading-6 text-slate-600">
                 {shortcut.summary}
               </p>
 

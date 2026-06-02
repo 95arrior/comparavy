@@ -1,6 +1,5 @@
 import CommonMistakes from "@/components/guides/CommonMistakes";
 import DeviceUseCaseBlock from "@/components/guides/DeviceUseCaseBlock";
-import ExampleResultBlock from "@/components/guides/ExampleResultBlock";
 import FinderCta from "@/components/guides/FinderCta";
 import RealWorldScenario from "@/components/guides/RealWorldScenario";
 import ToolsYouCanUse from "@/components/guides/ToolsYouCanUse";
@@ -66,7 +65,7 @@ export default function HowToGuideLayout({ guide }: { readonly guide: Guide }) {
       <WorkflowSteps
         steps={steps}
         title="Step-by-step workflow"
-        description="Do the work in order: source material first, AI draft second, human review before anything reaches another person."
+        description={`Use this as the review path after copying the prompt for ${guide.useCase}.`}
       />
 
       <DeviceUseCaseBlock
@@ -79,12 +78,6 @@ export default function HowToGuideLayout({ guide }: { readonly guide: Guide }) {
       />
 
       <ToolsYouCanUse guide={guide} />
-
-      <ExampleResultBlock
-        before={guide.exampleWorkflow ?? guide.contentGap}
-        result={guide.exampleResult}
-        fallback={`A checked result for ${guide.useCase}: clear structure, preserved facts, next actions, and no unchecked names, dates, numbers, or commitments.`}
-      />
 
       <CommonMistakes
         mistakes={guide.commonMistakes ?? guide.mistakesToAvoid}

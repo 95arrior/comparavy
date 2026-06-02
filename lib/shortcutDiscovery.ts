@@ -334,13 +334,26 @@ export function shortcutSearchRelevance(shortcut: ShortcutDiscoveryItem, normali
   return score;
 }
 
+function discoverySummary(guide: Guide): string {
+  switch (guide.slug) {
+    case "how-to-turn-a-voice-memo-into-a-to-do-list-with-ai":
+      return "Turn a messy voice memo transcript into tasks, priorities, deadlines, and next actions.";
+    case "how-to-write-google-business-profile-posts-with-ai":
+      return "Create review-ready Google Business Profile posts for updates, offers, and local promotions.";
+    case "how-to-write-a-dating-app-bio-with-ai-without-sounding-generic":
+      return "Write dating app bio options that sound specific, natural, and not AI-generated.";
+    default:
+      return guide.quickAnswer ?? guide.quickVerdict ?? guide.metaDescription;
+  }
+}
+
 export function toDiscoveryItem(guide: Guide): ShortcutDiscoveryItem {
   const searchAliases = guideSearchAliases(guide);
 
   return {
     slug: guide.slug,
     title: guide.title,
-    summary: guide.quickAnswer ?? guide.quickVerdict ?? guide.metaDescription,
+    summary: discoverySummary(guide),
     category: guide.category,
     skillLevel: guide.skillLevel,
     timeEstimate: guide.timeEstimate,
@@ -433,7 +446,7 @@ export function selectRelatedShortcuts(
     }))
     .sort((left, right) => right.score - left.score);
 
-  const strongMatches = scored.filter((item) => item.score >= 20);
+  const strongMatches = scored.filter((item) => item.score >= 60);
 
   if (strongMatches.length > 0) {
     return {

@@ -50,9 +50,9 @@
   "mobileUseCase": "Best on mobile when a business owner needs a quick update post from the shop, office, or job site.",
   "desktopSearchAngle": "Desktop readers want a repeatable GBP post workflow with versions, CTAs, and owner review checks.",
   "mobileSearchAngle": "Mobile readers want a short local post prompt they can copy before publishing a timely update.",
-  "quickAnswer": "Fill in business type, location, offer or update, target customer, and tone, then copy a prompt that creates Google Business Profile post options, CTA ideas, a visual idea, and an owner review checklist.",
+  "quickAnswer": "Add your business type, location, offer or update, customer, and tone, then copy a prompt for review-ready Google Business Profile post options and owner checks.",
   "quickDecision": "Use ChatGPT, Claude, Gemini, or Microsoft Copilot for the copy draft, and use Canva Magic Studio only after the post copy is reviewed and you need a simple supporting visual.",
-  "realWorldScenario": "A local dog grooming salon in Austin wants to promote summer de-shedding appointments. The owner needs a clear GBP update, a CTA, and a checklist for dates, hours, and offer details before posting.",
+  "realWorldScenario": "A local dog grooming salon in Austin wants to promote summer de-shedding appointments. The owner needs a clear local update, a CTA, and a checklist for dates, hours, pricing, and offer details before posting.",
   "whatYouNeed": [
     "Business type and location or service area",
     "Offer, update, event, or announcement",
@@ -60,8 +60,8 @@
     "Restrictions, dates, CTA, and details to avoid"
   ],
   "timeEstimate": "7-10 minutes",
-  "contentGap": "Many GBP post resources give generic prompts or marketing advice, but local owners need a structured draft that avoids fake discounts, unsupported claims, and automatic publishing.",
-  "uniqueAngle": "AteFlo builds the post around owner review: missing details are marked, risky claims are blocked, and offer or event versions appear only when the input supports them.",
+  "contentGap": "Many GBP post resources give generic prompts or marketing advice, but local owners need a structured draft that avoids fake discounts, invented testimonials, unsupported claims, and automatic publishing.",
+  "uniqueAngle": "AteFlo builds the post around owner review: missing details are marked as Needs owner input, risky claims are blocked, and offer or event versions appear only when the input supports them.",
   "aiOverviewAnswer": "To write a Google Business Profile post with AI, provide the business type, location, update, customer, tone, CTA, restrictions, and dates, then ask for short local post versions, CTA options, a visual idea, and a review checklist that flags missing offer details and unsupported claims.",
   "quickVerdict": "Use ChatGPT, Claude, Gemini, or Microsoft Copilot for writing Google Business Profile posts with AI; use Canva Magic Studio after review if the local update also needs a simple visual.",
   "steps": [

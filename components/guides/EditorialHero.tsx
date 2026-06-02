@@ -6,6 +6,12 @@ interface EditorialHeroProps {
 
 function heroSummary(guide: Guide): string {
   switch (guide.slug) {
+    case "how-to-turn-a-voice-memo-into-a-to-do-list-with-ai":
+      return "Start with a transcript. This shortcut turns messy spoken notes into tasks, priorities, deadlines, owners, quick wins, and questions to clarify.";
+    case "how-to-write-google-business-profile-posts-with-ai":
+      return "Write a local update, offer, or announcement that is ready for owner review before it goes on Google Business Profile.";
+    case "how-to-write-a-dating-app-bio-with-ai-without-sounding-generic":
+      return "Use real details to draft bio options that sound specific, natural, and easy to reply to.";
     case "how-to-turn-meeting-notes-into-a-client-recap-with-ai":
       return "You have meeting notes. Use this shortcut to create a clear client recap and follow-up email, then check owners, deadlines, and open questions before sending.";
     case "best-ai-tools-for-etsy-product-descriptions":

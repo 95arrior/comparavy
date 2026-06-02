@@ -50,20 +50,20 @@
   "mobileUseCase": "Best on mobile when copying a short voice memo transcript from a phone and turning it into a quick task list.",
   "desktopSearchAngle": "Desktop readers are likely organizing a longer transcript into projects, owners, and priorities.",
   "mobileSearchAngle": "Mobile readers want a fast voice memo to tasks prompt they can copy before the note gets forgotten.",
-  "quickAnswer": "Paste your voice memo transcript into the prompt builder, add context, deadlines, and people involved, then copy a prompt that turns the memo into tasks, priorities, owners, deadlines, quick wins, and clarification questions.",
+  "quickAnswer": "Paste a voice memo transcript, add the context you know, and copy a prompt that turns it into tasks, priorities, deadlines, owners, quick wins, and next actions.",
   "quickDecision": "Use the prompt when you already have a transcript. Use Otter.ai first if you still need to transcribe a recording before asking ChatGPT, Claude, or another AI tool to extract tasks.",
-  "realWorldScenario": "You recorded a quick memo after a meeting or errand run: email Sarah about the proposal, book the dentist, check the invoice, and maybe move a call. The shortcut turns that spoken mess into a reviewed list instead of a vague summary.",
+  "realWorldScenario": "You recorded a quick memo after a meeting or errand run: email Sarah about the proposal, book the dentist, check the invoice, and maybe move a call. Start with the transcript, then turn that spoken mess into a checked task list.",
   "whatYouNeed": [
     "Voice memo transcript or pasted voice note text",
     "Context or project name",
     "Known deadlines and people involved",
     "Any extra notes about priorities, categories, or things to ignore"
   ],
-  "timeEstimate": "5-8 minutes",
-  "contentGap": "Many voice memo tools focus on transcription, but searchers need the next step: a task list that separates real actions from vague ideas and flags missing deadlines or owners.",
-  "uniqueAngle": "AteFlo treats the voice memo as raw source material and forces the AI to label owners, deadlines, quick wins, and unclear items instead of smoothing everything into a generic summary.",
+  "timeEstimate": "2-5 min if transcribed",
+  "contentGap": "Many voice memo tools focus on audio or transcription, but searchers need the next step: a task list that separates real actions from loose ideas and flags missing deadlines or owners.",
+  "uniqueAngle": "AteFlo is honest about the transcript step, then forces the AI to label owners, deadlines, quick wins, and unclear items instead of smoothing everything into a generic summary.",
   "aiOverviewAnswer": "To turn a voice memo into a to-do list with AI, transcribe the memo, paste the transcript into a structured prompt, ask for tasks, priorities, owners, deadlines, quick wins, and unclear items, then review missing dates and commitments before moving tasks into your app.",
-  "quickVerdict": "Use ChatGPT, Claude, or Microsoft Copilot for turning a voice memo into a clear to-do list once you have a transcript; use Otter.ai first only when the recording still needs transcription.",
+  "quickVerdict": "Use ChatGPT, Claude, or Microsoft Copilot for turning a transcript into a clear to-do list; use Otter.ai or your phone first when the memo is still only audio.",
   "steps": [
     {
       "title": "Paste the transcript",
@@ -401,7 +401,7 @@
       "answer": "No. The rules tell the AI to use only your transcript and provided details, then put unclear items under Needs clarification."
     }
   ],
-  "finalVerdict": "For turning a voice memo into a clear to-do list, start with ChatGPT or Claude after you have a transcript, and use Otter.ai first only when the source is still audio. The strongest output comes from forcing the AI to label deadlines, owners, quick wins, and unclear items instead of accepting a smooth summary.",
+  "finalVerdict": "For turning a voice memo into a clear to-do list, start with ChatGPT or Claude after you have a transcript, and use Otter.ai or your phone first when the source is still audio. The stronger output comes from forcing the AI to label deadlines, owners, quick wins, and unclear items instead of accepting a smooth summary.",
   "ctaToFinder": "Use Finder if you want to compare the AI tools that fit this shortcut before choosing where to paste the prompt.",
   "finderCTA": "Open Finder to compare tools for this shortcut and pick the option that matches your device, privacy needs, and workflow.",
   "visualSummary": {
