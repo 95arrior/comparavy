@@ -1,294 +1,167 @@
 # AteFlo Paid Kit Engine
 
-AteFlo is moving from content-first growth to a product-first revenue model.
-Free shortcuts remain useful samples, but the main paid product is a complete AI
-workflow kit. The site should now read as an AI workflow kit store, not a free
-shortcut directory.
+AteFlo is Korea-first and revenue-first. The flagship paid product is **AI 온라인
+영업 세팅 키트**.
 
-## Market Research Patterns
+The product direction is no longer a shortcut directory, a generic prompt-pack
+store, or a simple local-business copy kit. Free shortcuts and guide content can
+support discovery, but they are not the main business. The main business is a
+paid execution package that helps Korean small business owners and service
+operators prepare the online setup needed before inquiries, bookings, or sales
+can happen.
 
-Recent market research on paid career templates, Notion job trackers, AI cover
-letter tools, resume kits, and prompt products showed these patterns:
+## Product Focus
 
-- Strong paid products sell a finished workflow, not a raw list. The better
-  career products bundle inputs, tailored outputs, examples, export/review
-  steps, trackers, or checklists.
-- Job-search buyers respond to specificity: job post analysis, tailored resume
-  bullets, cover letters, follow-ups, interview preparation, and organization
-  around each role.
-- Visible prices for lightweight templates often sit around low single digits
-  to about $25. More complete app-like products use subscriptions or platform
-  pricing, but AteFlo should not invent a market price before checkout is real.
-- Strong CTAs are direct and outcome-based: get the kit, generate, download,
-  buy, or get started. AteFlo should use calm CTAs without fake urgency.
-- Useful trust language focuses on what is included, how the workflow works,
-  what users must review, and what the product does not guarantee.
-- Weak or scammy products lean on huge prompt counts, fake scarcity, fake
-  testimonials, guaranteed hiring/income language, inflated success metrics,
-  or "AI will do everything" positioning.
+Flagship:
 
-Sources reviewed included AI cover letter and application-kit pages, paid Notion
-job-tracking templates, Gumroad-style prompt products, and digital-product
-checkout examples. AteFlo should borrow the structure of outcome, workflow,
-inclusions, sample, safety boundaries, CTA, and FAQ, but must not copy copy,
-assets, testimonials, pricing claims, or layouts.
+- AI 온라인 영업 세팅 키트
 
-Local-business research added these patterns:
+Primary audience:
 
-- Google Business Profile posts are a repeatable local visibility job: updates,
-  offers, events, photos, and owner-facing review before publishing.
-- Local-business AI marketing products sell time savings, repeated content
-  creation, and cross-channel assets such as Google Business Profile posts,
-  social captions, email ideas, flyers, and content calendars.
-- Strong local-business products start from business facts and brand context,
-  then produce assets owners can review or adapt.
-- Weak local-business prompt products over-index on prompt volume, unsupported
-  growth claims, fake reviews, vague "book more jobs" promises, or fake
-  productivity metrics.
+- 네일샵
+- 카페
+- 필라테스
+- 강아지 미용
+- 학원
+- 병원·클리닉
+- 청소·인테리어
+- 1인 서비스업
+- 온라인 상담/교육 서비스
+- 예약 기반 서비스
 
-For AteFlo, the structural lesson is to sell a local visibility workflow:
-business input worksheet, prompt sequence, local post templates, review response
-templates, website copy builder, social caption builder, setup checklists, a
-30-day plan, and final review rules.
+Core user problem:
 
-## Kit-first Pivot: Local Business AI Visibility Kit
-
-## AI Workflow Kit Store Identity
-
-AteFlo is a premium AI Workflow Kit Store and kit studio for AI-powered work.
-
-Users bring business details, job details, profile notes, or content ideas.
-AteFlo packages those inputs into structured AI workflow kits:
-
-Input worksheet -> prompt sequence -> example output -> review checklist ->
-action plan.
-
-AteFlo should not be positioned as:
-
-- AI shortcut directory
-- free prompt site
-- generic AI tools directory
-- prompt pack store
-
-AteFlo should be positioned as:
-
-- paid AI workflow kit store
-- kit studio for real-world outputs
-- structured workflows that help users go from input to usable result
-- productized AI work system
-
-The factory/studio metaphor is a product explanation, not a decorative gimmick.
-Inputs go in, workflow modules assemble the kit, sample outputs come out, and
-the full kit unlocks the complete workflow.
-
-Sample kit builders must be deterministic/template-based unless a real product
-backend is intentionally added. They must not call an AI API, store raw user
-input, send user input to analytics, or send user input to external services.
-
-Allowed sample-builder analytics params are:
-
-- kit_slug
-- source_page
-- action_location
-- preview_field_count
-- has_preview_generated
-
-### New Site Identity
-
-AteFlo is an AI workflow kit store with free shortcuts as samples.
-
-### Revenue-first Rule
-
-Every major page should help users understand or buy a kit. Free pages can still
-be useful, but they should support the paid workflow-kit path.
-
-### Free Shortcut Role
-
-Free shortcuts are:
-
-- sample workflows
-- search entry points
-- trust builders
-- proof of prompt quality
-- not the main product
-
-### Paid Kit Role
-
-Paid kits provide:
-
-- full workflows
-- prompt sequences
-- input worksheets
-- examples
-- checklists
-- templates
-- setup guidance
-- review rules
-
-### Flagship Product
-
-Local Business AI Visibility Kit.
-
-### Why This Product
-
-- Local businesses need posts, page copy, review responses, and visibility
-  assets repeatedly.
-- Owners are busy and often do not have a dedicated marketer.
-- Generic AI prompts create generic marketing and may invent business details.
-- Business visibility is tied to revenue, so willingness to pay can be higher
-  than for low-stakes personal prompts.
-- The kit can include setup and checklist value that ChatGPT alone does not
-  organize.
-
-### Product Safety
-
-The Local Business AI Visibility Kit must not include:
-
-- ranking guarantees
-- sales guarantees
-- lead guarantees
-- fake reviews
-- review manipulation
-- fake testimonials
-- invented pricing, discounts, certifications, hours, or availability
+가게나 서비스를 온라인에서 알리고 싶은데 홈페이지, 네이버플레이스,
+인스타/SNS, 리뷰 답변, 카카오채널/DM, 이벤트 문구, 결제, 도메인, GA4,
+Search Console, SEO 기본 세팅 중 무엇부터 해야 하는지 모른다.
 
 ## Positioning
 
-AteFlo sells AI workflow kits, not generic prompt packs.
+AteFlo sells a button-based execution package, not a list of prompts.
 
-People should not pay for "a list of prompts." They should pay for a complete
-workflow that helps them finish a high-value task faster, safer, and with less
-guessing.
+The product should feel like:
 
-## Free vs Paid
+사용자가 짧게 답한다 -> 먼저 챙길 세팅 3가지를 본다 -> 잠긴 유료 모듈을
+확인한다 -> 전체 패키지에서 필요한 항목을 버튼으로 하나씩 진행한다.
 
-Free shortcuts are:
+Preferred tone:
 
-- search entry points
-- trust builders
-- sample workflows
-- proof of prompt quality
-- a way to understand AteFlo before paying
+- Korean-first
+- clear and friendly
+- Toss-like guided flow
+- one clear next action
+- short explanations
+- careful claims
 
-Paid kits are:
+Avoid:
 
-- complete workflows
-- multiple coordinated prompts
-- examples
-- checklists
-- templates
-- revision prompts
-- delivery-ready structures
+- automatic setup claims before automation exists
+- guaranteed sales, rankings, leads, bookings, customers, income, hiring, or
+  business growth
+- fake urgency
+- fake discounts
+- prompt-count selling
+- returning to free shortcut strategy as the main product
 
-## Why Users Pay
+## Free Role
 
-Users pay when a kit helps them:
+The free experience is a diagnostic sample. It should help the user understand
+what is missing without giving away the full execution package.
 
-- save time
-- avoid bad AI output
-- reduce uncertainty
-- get structured results
-- avoid starting from a blank page
-- repeat the workflow
-- reduce career, business, or personal risk
+Free diagnostic includes:
 
-## Product Rules
+- 3 simple chat questions
+- 3 missing setup recommendations
+- short explanations
+- locked module preview
+- early-access or checkout CTA
 
-Every paid kit must include:
+Free diagnostic does not include:
 
-- outcome promise
-- user situation
-- input worksheet
-- prompt sequence
-- example inputs
-- example outputs
-- review checklist
-- do-not-invent rules
-- revision prompts
-- final delivery checklist
+- full website copy
+- full Naver Place copy package
+- full Instagram content pack
+- full review response pack
+- full Kakao/DM scripts
+- full coupon/event copy set
+- full 30-day plan
+- full SEO checklist
+- full payment/domain/analytics setup guide
 
-Every kit page must explain what the kit helps users create, what they must
-provide, and what they must review before using the output.
+## Paid Role
 
-## Safety Rules
+The paid product unlocks a module dashboard. Each module should feel like a
+task button, not an article.
 
-Paid kit pages and kit content must not include:
+Paid modules:
 
-- guaranteed income
-- guaranteed sales
-- guaranteed rankings
-- guaranteed hiring
-- guaranteed dating success
-- fake testimonials
-- invented pricing
-- fake scarcity
-- fake discount countdowns
-- fake purchase counts
-- fake popularity claims
+- 홈페이지 만들기
+- 네이버플레이스 세팅
+- 인스타/SNS 홍보 세트
+- 리뷰 답변 시스템
+- 카카오채널/DM 응대 문구
+- 이벤트·쿠폰 문구
+- 결제·도메인·분석·SEO 세팅 체크리스트
+- 7일 오픈 플랜
 
-## First Product
+Each paid module should include:
 
-### Local Business AI Visibility Kit
+- guided questions
+- ready-to-copy prompt/template
+- checklist
+- next action
+- review rules
+- repeated use
 
-Positioning:
-A practical AI workflow system for turning business details into review-ready
-local posts, page copy, review replies, social captions, and visibility
-checklists.
+## Implementation Rules
 
-Core modules:
+V1 must be simple and safe:
 
-- Business Input Worksheet
-- Google Business Profile Post System
-- Review Response Pack
-- Local Website Copy Pack
-- Social Content Pack
-- Visibility Setup Checklist
-- 30-Day Local Visibility Plan
-- Final Review Checklist
+- chat-style diagnostic
+- locked module preview
+- paid dashboard concept
+- template-based prompts/checklists
+- no AI API
+- no real automation
+- Toss early-access or checkout placeholder only
 
-Required boundaries:
+Do not send raw user input to analytics. Allowed event params are limited to:
 
-- No guaranteed rankings
-- No guaranteed leads
-- No guaranteed sales
-- No fake reviews or review manipulation
-- No invented discounts, prices, certifications, hours, or availability
-
-## Secondary Products
-
-- Job Application AI Kit
-- Dating Profile Rewrite Kit
-- Content Repurposing Kit
-- Study Notes AI Kit
-
-## Future Product Candidates
-
-- Content Repurposing Kit
-- Study Notes AI Kit
-
-## Landing Page Rules
-
-Paid kit pages should use this structure:
-
-1. Outcome-focused hero with one primary CTA
-2. Pain section
-3. What is inside
-4. Small free sample
-5. Why this is different
-6. Who it is for
-7. Who it is not for
-8. CTA section
-9. FAQ
-
-CTA behavior:
-
-- If a real checkout URL exists through an environment variable, the primary CTA
-  links to checkout.
-- If no checkout URL exists, the CTA becomes an early-access action.
-- Analytics can track safe kit events, but must not include user input.
-
-Allowed kit event params:
-
+- selected_path
 - kit_slug
 - source_page
 - action_location
+- step_name
+- selected_option_type
+- has_custom_input
+- has_diagnosis_generated
+
+Never send:
+
+- business name
+- location
+- service name
+- raw answers
+- free text
+
+## Payment Rules
+
+Toss Payments is the intended Korea-first checkout provider, but real charges
+must not be implemented before product V1 exists.
+
+Rules:
+
+- never expose secret keys client-side
+- use 사전 신청하기 or checkout placeholder language until payment is ready
+- confirm payments server-side when real checkout is added
+- do not imply AteFlo directly installs Toss Payments, domains, analytics, SEO,
+  or third-party tools unless that automation exists
+
+## Source Of Truth
+
+Detailed product requirements live in:
+
+- `docs/online-sales-setup-kit.md`
+- `docs/toss-payments-plan.md`
+- `docs/implementation-sequence.md`
+
