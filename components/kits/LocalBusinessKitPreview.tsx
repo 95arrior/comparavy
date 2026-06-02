@@ -7,6 +7,9 @@ interface LocalBusinessKitPreviewProps {
   readonly kitSlug: string;
   readonly ctaHref: string;
   readonly hasCheckout: boolean;
+  readonly sourcePage?: string;
+  readonly variant?: "full" | "compact";
+  readonly className?: string;
 }
 
 const fields = [
@@ -53,6 +56,9 @@ export default function LocalBusinessKitPreview({
   kitSlug,
   ctaHref,
   hasCheckout,
+  sourcePage = "local_business_kit",
+  variant = "full",
+  className,
 }: LocalBusinessKitPreviewProps) {
   const [values, setValues] = useState<PreviewValues>({
     businessType: "",
@@ -87,12 +93,17 @@ export default function LocalBusinessKitPreview({
     };
   }, [values]);
 
+  const visibleFields = variant === "compact" ? fields.slice(0, 3) : fields;
+  const sectionClassName =
+    className ??
+    "mt-8 rounded-3xl border border-teal-100 bg-white p-5 shadow-sm sm:p-7";
+
   function updateValue(key: FieldKey, value: string) {
     if (!hasStarted.current && value.trim().length > 0) {
       hasStarted.current = true;
       trackEvent("kit_preview_started", {
         kit_slug: kitSlug,
-        source_page: "local_business_kit",
+        source_page: sourcePage,
         action_location: "local_business_preview_form",
         preview_field_count: 1,
         has_preview_generated: false,
@@ -106,7 +117,7 @@ export default function LocalBusinessKitPreview({
     setHasGenerated(true);
     trackEvent("kit_preview_generated", {
       kit_slug: kitSlug,
-      source_page: "local_business_kit",
+      source_page: sourcePage,
       action_location: "local_business_preview_form",
       preview_field_count: filledCount,
       has_preview_generated: true,
@@ -116,14 +127,14 @@ export default function LocalBusinessKitPreview({
   function handleUnlockClick() {
     trackEvent("kit_unlock_click", {
       kit_slug: kitSlug,
-      source_page: "local_business_kit",
+      source_page: sourcePage,
       action_location: "local_business_preview_unlock",
       preview_field_count: filledCount,
       has_preview_generated: hasGenerated,
     });
     trackEvent(hasCheckout ? "kit_checkout_click" : "kit_interest_click", {
       kit_slug: kitSlug,
-      source_page: "local_business_kit",
+      source_page: sourcePage,
       action_location: "local_business_preview_unlock",
     });
   }
@@ -132,14 +143,16 @@ export default function LocalBusinessKitPreview({
   const external = isExternalHref(ctaHref);
 
   return (
-    <section className="mt-8 rounded-3xl border border-teal-100 bg-white p-5 shadow-sm sm:p-7">
+    <section id="preview-kit" className={sectionClassName}>
       <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
             Preview your kit
           </p>
           <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
-            Add a few details and see a small free sample.
+            {variant === "compact"
+              ? "Generate a small local marketing sample."
+              : "Add a few details and see a small free sample."}
           </h2>
           <p className="mt-3 text-sm leading-7 text-slate-600">
             This preview is template-based. It does not call an AI API, store
@@ -147,7 +160,7 @@ export default function LocalBusinessKitPreview({
           </p>
 
           <div className="mt-5 grid gap-3">
-            {fields.map((field) => (
+            {visibleFields.map((field) => (
               <label key={field.key} className="grid gap-1.5">
                 <span className="text-sm font-semibold text-slate-800">
                   {field.label}
@@ -171,7 +184,7 @@ export default function LocalBusinessKitPreview({
               Generate free preview
             </button>
             <p className="text-sm text-slate-500">
-              {filledCount} of {fields.length} details added
+              {filledCount} of {visibleFields.length} details added
             </p>
           </div>
         </div>

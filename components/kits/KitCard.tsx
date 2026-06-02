@@ -56,12 +56,18 @@ export default function KitCard({ kit, sourcePage, compact = false }: KitCardPro
       </p>
 
       {!compact && (
-        <div className="mt-5 grid gap-3 text-sm leading-6 sm:grid-cols-2">
+        <div className="mt-5 grid gap-3 text-sm leading-6 lg:grid-cols-3">
           <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-3">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
               For
             </p>
             <p className="mt-2 text-slate-700">{kit.audience}</p>
+          </div>
+          <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+              Outcome
+            </p>
+            <p className="mt-2 text-slate-700">{kit.outcome}</p>
           </div>
           <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-3">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">

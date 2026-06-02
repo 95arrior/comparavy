@@ -8,8 +8,8 @@ const mainLinks = [
     href: "/kits/local-business-ai-visibility-kit",
     label: "Local Business Kit",
   },
+  { href: "/#free-samples", label: "Free Samples" },
   { href: "/tools", label: "Tools" },
-  { href: "/finder", label: "Finder" },
 ] as const;
 
 const policyLinks = [

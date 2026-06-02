@@ -70,10 +70,6 @@ const storeFaq = [
 export default function KitsPage() {
   const kits = getKits();
   const featuredKit = getFeaturedKit();
-  const secondaryActiveKits = kits.filter(
-    (kit) => kit.status === "active" && kit.slug !== featuredKit.slug,
-  );
-  const comingSoonKits = kits.filter((kit) => kit.status === "coming-soon");
 
   return (
     <main className="ateflo-page-shell min-h-screen px-4 py-8 sm:px-6 sm:py-12">
@@ -112,35 +108,19 @@ export default function KitsPage() {
           </div>
         </section>
 
-        {secondaryActiveKits.length > 0 && (
-          <section className="mt-9">
-            <div>
-              <p className="text-sm font-semibold text-teal-700">Available next</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
-                Secondary workflow kits
-              </h2>
-            </div>
-            <div className="mt-5 grid gap-4 lg:grid-cols-2">
-              {secondaryActiveKits.map((kit) => (
-                <KitCard key={kit.slug} kit={kit} sourcePage="kits" />
-              ))}
-            </div>
-          </section>
-        )}
-
         <section className="mt-9">
           <div>
-            <p className="text-sm font-semibold text-teal-700">Coming soon</p>
+            <p className="text-sm font-semibold text-teal-700">All kits</p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
-              Future workflow kits
+              Choose the workflow closest to the result you need.
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
-              These are planned only if the workflow can be specific, useful,
-              and safer than a generic prompt pack.
+              Local Business is the flagship product. Other kits are secondary
+              or coming soon until their workflows are strong enough to sell.
             </p>
           </div>
           <div className="mt-5 grid gap-4 lg:grid-cols-2">
-            {comingSoonKits.map((kit) => (
+            {kits.map((kit) => (
               <KitCard key={kit.slug} kit={kit} sourcePage="kits" />
             ))}
           </div>

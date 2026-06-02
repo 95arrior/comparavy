@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import Logo from "@/components/Logo";
 
-type NavKey = "finder" | "kits" | "tools";
+type NavKey = "finder" | "free-samples" | "kits" | "local-business-kit" | "tools";
 
 interface SiteHeaderProps {
   readonly active?: NavKey;
@@ -18,8 +18,13 @@ const navItems: readonly {
   readonly primary?: boolean;
 }[] = [
   { key: "kits", href: "/kits", label: "Kits", primary: true },
+  {
+    key: "local-business-kit",
+    href: "/kits/local-business-ai-visibility-kit",
+    label: "Local Business Kit",
+  },
+  { key: "free-samples", href: "/#free-samples", label: "Free Samples" },
   { key: "tools", href: "/tools", label: "Tools" },
-  { key: "finder", href: "/finder", label: "Finder" },
 ];
 
 function navClass(active: boolean, primary = false): string {

@@ -88,10 +88,10 @@ export default function LocalBusinessAiVisibilityKitPage() {
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <KitPrimaryCta actionLocation="local_business_kit_hero" />
                 <a
-                  href="#whats-inside"
+                  href="#preview-kit"
                   className={secondaryCtaClass}
                 >
-                  See what&apos;s inside
+                  Preview your kit
                 </a>
               </div>
             </div>
@@ -122,6 +122,38 @@ export default function LocalBusinessAiVisibilityKitPage() {
           </div>
         </section>
 
+        <LocalBusinessKitPreview
+          kitSlug={kit.slug}
+          ctaHref={getKitCtaHref(kit)}
+          hasCheckout={kitHasCheckout(kit)}
+          sourcePage="local_business_kit"
+        />
+
+        <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
+            What you get
+          </p>
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              "Google Business Profile posts",
+              "Review response workflows",
+              "Website and service page copy",
+              "Instagram and Facebook captions",
+              "Visibility setup checklist",
+              "30-day local visibility plan",
+            ].map((item) => (
+              <article
+                key={item}
+                className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4"
+              >
+                <h2 className="text-base font-semibold text-slate-950">
+                  {item}
+                </h2>
+              </article>
+            ))}
+          </div>
+        </section>
+
         <section className="mt-6 grid gap-4 md:grid-cols-3">
           {[
             {
@@ -148,12 +180,6 @@ export default function LocalBusinessAiVisibilityKitPage() {
             </article>
           ))}
         </section>
-
-        <LocalBusinessKitPreview
-          kitSlug={kit.slug}
-          ctaHref={getKitCtaHref(kit)}
-          hasCheckout={kitHasCheckout(kit)}
-        />
 
         <section
           id="whats-inside"
