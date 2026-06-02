@@ -70,20 +70,20 @@ export default function HomeShortcutStrip({ shortcuts }: HomeShortcutStripProps)
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
             <p className="text-sm font-semibold text-teal-700">
-              Featured AI shortcuts
+              Free sample shortcuts
             </p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
-              Start with a task that looks familiar.
+              Try a shortcut before buying a full kit.
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
-              Pick a shortcut, fill in a few details, and copy the prompt.
+              Use these free workflows as samples of AteFlo prompt quality.
             </p>
           </div>
           <Link
             href="/shortcuts"
             className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
           >
-            Browse all shortcuts
+            Browse free shortcuts
           </Link>
         </div>
       </div>

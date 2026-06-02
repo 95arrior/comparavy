@@ -17,10 +17,10 @@ const navItems: readonly {
   readonly label: string;
   readonly primary?: boolean;
 }[] = [
-  { key: "shortcuts", href: "/shortcuts", label: "Shortcuts", primary: true },
-  { key: "finder", href: "/finder", label: "Finder" },
-  { key: "kits", href: "/kits", label: "Kits" },
+  { key: "kits", href: "/kits", label: "Kits", primary: true },
+  { key: "shortcuts", href: "/shortcuts", label: "Free Shortcuts" },
   { key: "tools", href: "/tools", label: "Tools" },
+  { key: "finder", href: "/finder", label: "Finder" },
 ];
 
 function navClass(active: boolean, primary = false): string {

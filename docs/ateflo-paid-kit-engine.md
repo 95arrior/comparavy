@@ -2,7 +2,8 @@
 
 AteFlo is moving from content-first growth to a product-first revenue model.
 Free shortcuts remain useful samples, but the main paid product is a complete AI
-workflow kit.
+workflow kit. The site should now read as an AI workflow kit store, not a free
+shortcut directory.
 
 ## Market Research Patterns
 
@@ -31,6 +32,85 @@ job-tracking templates, Gumroad-style prompt products, and digital-product
 checkout examples. AteFlo should borrow the structure of outcome, workflow,
 inclusions, sample, safety boundaries, CTA, and FAQ, but must not copy copy,
 assets, testimonials, pricing claims, or layouts.
+
+Local-business research added these patterns:
+
+- Google Business Profile posts are a repeatable local visibility job: updates,
+  offers, events, photos, and owner-facing review before publishing.
+- Local-business AI marketing products sell time savings, repeated content
+  creation, and cross-channel assets such as Google Business Profile posts,
+  social captions, email ideas, flyers, and content calendars.
+- Strong local-business products start from business facts and brand context,
+  then produce assets owners can review or adapt.
+- Weak local-business prompt products over-index on prompt volume, unsupported
+  growth claims, fake reviews, vague "book more jobs" promises, or fake
+  productivity metrics.
+
+For AteFlo, the structural lesson is to sell a local visibility workflow:
+business input worksheet, prompt sequence, local post templates, review response
+templates, website copy builder, social caption builder, setup checklists, a
+30-day plan, and final review rules.
+
+## Kit-first Pivot: Local Business AI Visibility Kit
+
+### New Site Identity
+
+AteFlo is an AI workflow kit store with free shortcuts as samples.
+
+### Revenue-first Rule
+
+Every major page should help users understand or buy a kit. Free pages can still
+be useful, but they should support the paid workflow-kit path.
+
+### Free Shortcut Role
+
+Free shortcuts are:
+
+- sample workflows
+- search entry points
+- trust builders
+- proof of prompt quality
+- not the main product
+
+### Paid Kit Role
+
+Paid kits provide:
+
+- full workflows
+- prompt sequences
+- input worksheets
+- examples
+- checklists
+- templates
+- setup guidance
+- review rules
+
+### Flagship Product
+
+Local Business AI Visibility Kit.
+
+### Why This Product
+
+- Local businesses need posts, page copy, review responses, and visibility
+  assets repeatedly.
+- Owners are busy and often do not have a dedicated marketer.
+- Generic AI prompts create generic marketing and may invent business details.
+- Business visibility is tied to revenue, so willingness to pay can be higher
+  than for low-stakes personal prompts.
+- The kit can include setup and checklist value that ChatGPT alone does not
+  organize.
+
+### Product Safety
+
+The Local Business AI Visibility Kit must not include:
+
+- ranking guarantees
+- sales guarantees
+- lead guarantees
+- fake reviews
+- review manipulation
+- fake testimonials
+- invented pricing, discounts, certifications, hours, or availability
 
 ## Positioning
 
@@ -108,36 +188,41 @@ Paid kit pages and kit content must not include:
 
 ## First Product
 
-### Job Application AI Kit
+### Local Business AI Visibility Kit
 
 Positioning:
-A practical AI workflow kit for turning job posts, experience notes, and career
-details into better application materials.
+A practical AI workflow system for turning business details into review-ready
+local posts, page copy, review replies, social captions, and visibility
+checklists.
 
 Core modules:
 
-- Job post analyzer
-- Resume bullet builder
-- Skills match prompt
-- Cover letter builder
-- LinkedIn About rewrite
-- Interview answer builder
-- Recruiter follow-up email
-- Final application checklist
+- Business Input Worksheet
+- Google Business Profile Post System
+- Review Response Pack
+- Local Website Copy Pack
+- Social Content Pack
+- Visibility Setup Checklist
+- 30-Day Local Visibility Plan
+- Final Review Checklist
 
 Required boundaries:
 
-- No guaranteed interviews
-- No guaranteed hiring
-- No ATS success guarantee
-- No salary increase claim
-- No recruiter response guarantee
-- No invented job titles, metrics, credentials, dates, or experience
+- No guaranteed rankings
+- No guaranteed leads
+- No guaranteed sales
+- No fake reviews or review manipulation
+- No invented discounts, prices, certifications, hours, or availability
+
+## Secondary Products
+
+- Job Application AI Kit
+- Dating Profile Rewrite Kit
+- Content Repurposing Kit
+- Study Notes AI Kit
 
 ## Future Product Candidates
 
-- Local Business AI Marketing Kit
-- Dating Profile Rewrite Kit
 - Content Repurposing Kit
 - Study Notes AI Kit
 

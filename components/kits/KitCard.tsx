@@ -26,9 +26,16 @@ export default function KitCard({ kit, sourcePage, compact = false }: KitCardPro
   return (
     <article
       id={kit.slug}
-      className="flex h-full min-w-0 flex-col rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
+      className={`flex h-full min-w-0 flex-col rounded-3xl border bg-white p-5 shadow-sm sm:p-6 ${
+        kit.isFeatured ? "border-teal-200" : "border-slate-200"
+      }`}
     >
       <div className="flex flex-wrap items-center gap-2">
+        {kit.productLabel && (
+          <span className="inline-flex rounded-full bg-teal-700 px-3 py-1 text-xs font-semibold text-white">
+            {kit.productLabel}
+          </span>
+        )}
         <span
           className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
             active
@@ -44,7 +51,9 @@ export default function KitCard({ kit, sourcePage, compact = false }: KitCardPro
       <h3 className="mt-4 text-xl font-semibold leading-7 tracking-tight text-slate-950">
         {kit.title}
       </h3>
-      <p className="mt-3 text-sm leading-7 text-slate-600">{kit.outcome}</p>
+      <p className="mt-3 text-sm leading-7 text-slate-600">
+        {kit.oneLinePromise}
+      </p>
 
       <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">

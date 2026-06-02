@@ -174,13 +174,13 @@ export default function HomeShortcutSearch({ shortcuts }: HomeShortcutSearchProp
                   No matching shortcuts yet.
                 </p>
                 <p className="mt-1 text-sm leading-6 text-slate-600">
-                  Try another task, or browse all shortcuts.
+                  Try another task, or browse free shortcuts.
                 </p>
                 <Link
                   href="/shortcuts"
                   className="mt-4 inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
                 >
-                  Browse all shortcuts
+                  Browse free shortcuts
                 </Link>
               </div>
             ) : (

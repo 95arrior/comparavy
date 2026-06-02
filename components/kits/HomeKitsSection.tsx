@@ -1,22 +1,23 @@
 import Link from "next/link";
 import KitCard from "@/components/kits/KitCard";
-import { getKits } from "@/data/kits";
+import { getFeaturedKit, getKits } from "@/data/kits";
 
 export default function HomeKitsSection() {
-  const kits = getKits();
+  const featuredKit = getFeaturedKit();
+  const kits = getKits().filter((kit) => kit.slug !== featuredKit.slug);
 
   return (
     <section className="px-4 py-12 sm:px-6 sm:py-14">
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-teal-700">AteFlo Kits</p>
+            <p className="text-sm font-semibold text-teal-700">More AteFlo kits</p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
-              Complete AI workflows for high-value tasks.
+              More workflows for high-value tasks.
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
-              AteFlo kits are complete AI workflows for people who need the
-              result, not another vague prompt.
+              Job applications, personal profile rewrites, content
+              repurposing, and study workflows are next in the kit roadmap.
             </p>
           </div>
           <Link

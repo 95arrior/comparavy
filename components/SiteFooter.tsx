@@ -3,9 +3,10 @@ import Logo from "@/components/Logo";
 import { SITE_TAGLINE } from "@/lib/site";
 
 const mainLinks = [
-  { href: "/shortcuts", label: "Shortcuts" },
-  { href: "/finder", label: "Finder" },
+  { href: "/kits", label: "Kits" },
+  { href: "/shortcuts", label: "Free Shortcuts" },
   { href: "/tools", label: "Tools" },
+  { href: "/finder", label: "Finder" },
 ] as const;
 
 const policyLinks = [
