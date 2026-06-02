@@ -1,4 +1,5 @@
 import Link from "next/link";
+import HomeHeroKitConsole from "@/components/home/HomeHeroKitConsole";
 import HomeSampleKitConsole from "@/components/home/HomeSampleKitConsole";
 import KitCtaLink from "@/components/kits/KitCtaLink";
 import TrackedLink from "@/components/TrackedLink";
@@ -74,87 +75,6 @@ const productCopy: Record<
     modules: ["Source Worksheet", "Prompt Sequence", "Platform Checklist"],
   },
 };
-
-function KitConsoleHero() {
-  return (
-    <div
-      aria-label="Local Business AI Visibility Kit console"
-      className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-4 shadow-sm sm:p-5 lg:p-6"
-    >
-      <div
-        className="absolute inset-x-8 top-1/2 hidden h-px bg-gradient-to-r from-transparent via-teal-200 to-transparent lg:block"
-        aria-hidden="true"
-      />
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <span className="rounded-full border border-teal-100 bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-800">
-          Local Business AI Visibility Kit
-        </span>
-        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
-          Flagship kit
-        </span>
-      </div>
-
-      <div className="mt-5 grid gap-4 lg:grid-cols-[0.82fr_0.66fr_1fr] lg:items-stretch">
-        <div className="rounded-3xl border border-slate-100 bg-slate-50/80 p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-            Inputs
-          </p>
-          <div className="mt-4 grid gap-3">
-            {["Business type", "Location", "Main offer"].map((item, index) => (
-              <div
-                key={item}
-                className={`ateflo-reveal ateflo-reveal-delay-${index + 1} rounded-2xl border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-800 shadow-sm`}
-              >
-                {item}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="relative grid min-h-48 place-items-center rounded-3xl border border-teal-100 bg-teal-50 p-4">
-          <div
-            className="absolute inset-4 rounded-[1.4rem] border border-teal-100"
-            aria-hidden="true"
-          />
-          <div className="ateflo-factory-pulse relative grid h-24 w-24 place-items-center rounded-3xl border border-teal-200 bg-white text-center text-sm font-semibold text-teal-800 shadow-sm">
-            Assemble
-          </div>
-        </div>
-
-        <div className="rounded-3xl border border-slate-100 bg-white p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-            Sealed kit box
-          </p>
-          <div className="mt-4 grid gap-3">
-            {["GBP posts", "Review replies", "Website copy"].map((item, index) => (
-              <div
-                key={item}
-                className={`ateflo-reveal ateflo-reveal-delay-${index + 1} rounded-2xl border border-teal-100 bg-teal-50 p-3 text-sm font-semibold text-teal-900`}
-              >
-                {item}
-              </div>
-            ))}
-          </div>
-          <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-              Locked modules
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {["30-day plan", "Setup checklist", "Social pack"].map((item) => (
-                <span
-                  key={item}
-                  className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600"
-                >
-                  {item}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function ProductBox({
   kit,
@@ -287,35 +207,35 @@ export default function HomeStorefront() {
     <main className="ateflo-page-shell min-h-screen bg-[#FBFAF7] text-slate-900">
       <SiteHeader active="kits" />
 
-      <section className="flex min-h-[calc(100svh-82px)] items-center px-4 py-8 sm:px-6 sm:py-10">
-        <div className="mx-auto grid w-full max-w-6xl gap-5 lg:grid-cols-[0.84fr_1.16fr] lg:items-center">
-          <div className="rounded-[2rem] border border-teal-100 bg-teal-700 p-6 text-white shadow-sm sm:p-8">
+      <section className="px-4 py-6 sm:px-6 sm:py-8">
+        <div className="mx-auto grid min-h-[calc(100svh-104px)] w-full max-w-6xl gap-5 overflow-hidden rounded-[2.25rem] border border-slate-800 bg-slate-950 p-4 shadow-sm sm:p-5 lg:grid-cols-[0.35fr_0.65fr] lg:items-center lg:p-6">
+          <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5 text-white sm:p-7">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-100">
               AI Workflow Kit Store
             </p>
             <h1 className="mt-4 text-4xl font-semibold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
               Build AI workflow kits for work worth finishing.
             </h1>
-            <p className="mt-5 max-w-xl text-base leading-8 text-teal-50">
+            <p className="mt-5 text-base leading-8 text-slate-300">
               AteFlo turns your details into packaged prompts, examples,
               checklists, and action plans you can use with your AI tool.
             </p>
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-7 flex flex-col gap-3">
               <a
                 href="#build-sample-kit"
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-teal-800 transition hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-teal-700"
+                className="inline-flex min-h-12 items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-teal-800 transition hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
               >
                 Build sample kit
               </a>
               <Link
                 href="/kits"
-                className="inline-flex min-h-12 items-center justify-center rounded-full border border-teal-200 bg-teal-800 px-6 py-3 text-sm font-semibold text-white transition hover:bg-teal-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-teal-700"
+                className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
               >
                 Explore kits
               </Link>
             </div>
           </div>
-          <KitConsoleHero />
+          <HomeHeroKitConsole kitSlug={featuredKit.slug} />
         </div>
       </section>
 

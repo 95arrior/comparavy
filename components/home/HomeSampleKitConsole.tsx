@@ -9,7 +9,7 @@ interface HomeSampleKitConsoleProps {
   readonly hasCheckout: boolean;
 }
 
-type FieldKey = "businessType" | "location" | "offer";
+type FieldKey = "businessType" | "location" | "offer" | "customer";
 type Values = Record<FieldKey, string>;
 
 const fields: ReadonlyArray<{
@@ -31,6 +31,11 @@ const fields: ReadonlyArray<{
     key: "offer",
     label: "Main offer",
     placeholder: "summer de-shedding appointments",
+  },
+  {
+    key: "customer",
+    label: "Target customer",
+    placeholder: "busy pet owners",
   },
 ];
 
@@ -61,6 +66,7 @@ export default function HomeSampleKitConsole({
     businessType: "",
     location: "",
     offer: "",
+    customer: "",
   });
   const [hasGenerated, setHasGenerated] = useState(false);
   const hasStarted = useRef(false);
@@ -74,10 +80,11 @@ export default function HomeSampleKitConsole({
     const businessType = clean(values.businessType, "local business");
     const location = clean(values.location, "your service area");
     const offer = clean(values.offer, "your main offer");
+    const customer = clean(values.customer, "local customers");
 
     return {
-      post: `${businessType} in ${location}: ${offer} is available this week. Message us to check current openings, and review dates, prices, and availability before publishing.`,
-      caption: `${offer} for ${location} customers. Check availability and confirm the details before booking.`,
+      post: `${businessType} in ${location}: ${offer} is available this week for ${customer}. Message us to check current openings, and review dates, prices, and availability before publishing.`,
+      caption: `${offer} for ${customer} in ${location}. Check availability and confirm the details before booking.`,
       checklist: [
         "Confirm dates, hours, prices, and availability.",
         "Add one real local detail or service note.",
@@ -149,6 +156,9 @@ export default function HomeSampleKitConsole({
             <label key={field.key} className="grid gap-1.5">
               <span className="text-sm font-semibold text-teal-50">
                 {field.label}
+                {field.key === "customer" ? (
+                  <span className="font-medium text-teal-100"> optional</span>
+                ) : null}
               </span>
               <input
                 value={values[field.key]}
@@ -255,7 +265,7 @@ export default function HomeSampleKitConsole({
                 Your sample kit appears here.
               </p>
               <p className="mt-2 max-w-md text-sm leading-7 text-slate-600">
-                Enter three business details to generate a local post, social
+                Enter a few business details to generate a local post, social
                 caption, and visibility checklist. Nothing is sent to an AI API.
               </p>
             </div>
