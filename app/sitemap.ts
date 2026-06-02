@@ -1,11 +1,13 @@
 import type { MetadataRoute } from "next";
 import { statSync } from "node:fs";
 import path from "node:path";
+import { getActiveKits } from "@/data/kits";
 import { tools } from "@/data/tools";
 import { getAllGuides, getPublishedGuides } from "@/lib/guides";
 import { SITE_URL } from "@/lib/site";
 
 const TOOLS_SOURCE_PATH = path.join(process.cwd(), "data", "tools.ts");
+const KITS_SOURCE_PATH = path.join(process.cwd(), "data", "kits.ts");
 
 function absoluteUrl(pathname: string): string {
   return `${SITE_URL}${pathname}`;
@@ -25,6 +27,7 @@ function maxDate(left: Date, right: Date): Date {
 }
 
 const toolsSourceModified = statSync(TOOLS_SOURCE_PATH).mtime;
+const kitsSourceModified = statSync(KITS_SOURCE_PATH).mtime;
 const allGuides = getAllGuides();
 const guideContentModified = allGuides.reduce(
   (latest, guide) => maxDate(latest, parseDate(guide.updatedAt, latest)),
@@ -49,6 +52,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const staticEntries: MetadataRoute.Sitemap = [
     sitemapEntry("/", guideContentModified, "daily", 1),
     sitemapEntry("/finder", guideContentModified, "weekly", 0.9),
+    sitemapEntry("/kits", kitsSourceModified, "weekly", 0.85),
     sitemapEntry("/tools", toolsSourceModified, "weekly", 0.9),
     sitemapEntry("/shortcuts", guideContentModified, "weekly", 0.9),
     sitemapEntry("/about", guideContentModified, "monthly", 0.3),
@@ -70,5 +74,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ),
   );
 
-  return [...staticEntries, ...toolEntries, ...guideEntries];
+  const kitEntries: MetadataRoute.Sitemap = getActiveKits().map((kit) =>
+    sitemapEntry(`/kits/${kit.slug}`, kitsSourceModified, "weekly", 0.8),
+  );
+
+  return [...staticEntries, ...toolEntries, ...guideEntries, ...kitEntries];
 }

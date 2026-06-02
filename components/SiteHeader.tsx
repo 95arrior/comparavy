@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import Logo from "@/components/Logo";
 
-type NavKey = "shortcuts" | "finder" | "tools";
+type NavKey = "shortcuts" | "finder" | "kits" | "tools";
 
 interface SiteHeaderProps {
   readonly active?: NavKey;
@@ -19,6 +19,7 @@ const navItems: readonly {
 }[] = [
   { key: "shortcuts", href: "/shortcuts", label: "Shortcuts", primary: true },
   { key: "finder", href: "/finder", label: "Finder" },
+  { key: "kits", href: "/kits", label: "Kits" },
   { key: "tools", href: "/tools", label: "Tools" },
 ];
 

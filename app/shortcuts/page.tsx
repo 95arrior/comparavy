@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import KitsInlineCta from "@/components/kits/KitsInlineCta";
 import SiteHeader from "@/components/SiteHeader";
 import ShortcutsDiscovery from "@/components/guides/ShortcutsDiscovery";
 import { getPublishedShortcutDiscoveryItems } from "@/lib/publishedShortcuts";
@@ -44,6 +45,9 @@ export default function ShortcutsPage() {
         </header>
 
         <ShortcutsDiscovery shortcuts={shortcuts} />
+        <div className="mt-6">
+          <KitsInlineCta sourcePage="shortcuts" />
+        </div>
       </div>
     </main>
   );

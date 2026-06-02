@@ -3,6 +3,7 @@ import GuideExecutionShortcut from "@/components/guides/GuideExecutionShortcut";
 import HelpfulFeedback from "@/components/guides/HelpfulFeedback";
 import HowToGuideLayout from "@/components/guides/HowToGuideLayout";
 import IncomeGuideLayout from "@/components/guides/IncomeGuideLayout";
+import KitsInlineCta from "@/components/kits/KitsInlineCta";
 import RelatedShortcuts, {
   type RelatedShortcutItem,
 } from "@/components/guides/RelatedShortcuts";
@@ -63,6 +64,7 @@ export default function GuideDetailRenderer({ guide }: GuideDetailRendererProps)
         guideTitle={guide.title}
         topicCluster={guide.topicCluster}
       />
+      <KitsInlineCta sourcePage="shortcut_detail" />
       <ViewShortcutsCta />
       <RelatedShortcuts
         guide={guide}

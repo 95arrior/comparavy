@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import HomeShortcutSearch from "@/components/HomeShortcutSearch";
 import HomeShortcutStrip from "@/components/HomeShortcutStrip";
+import HomeKitsSection from "@/components/kits/HomeKitsSection";
 import SiteHeader from "@/components/SiteHeader";
 import TrackedLink from "@/components/TrackedLink";
 import { getPublishedShortcutDiscoveryItems } from "@/lib/publishedShortcuts";
@@ -71,6 +72,8 @@ export default function Home() {
       <HomeShortcutSearch shortcuts={shortcuts} />
 
       <HomeShortcutStrip shortcuts={shortcuts} />
+
+      <HomeKitsSection />
 
       <section className="px-4 py-12 sm:px-6 sm:py-14">
         <div className="mx-auto max-w-6xl">
