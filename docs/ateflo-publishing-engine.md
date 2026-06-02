@@ -25,11 +25,12 @@ Every future public shortcut must pass:
 Before writing or publishing, answer:
 
 1. Why did this person search Google instead of asking ChatGPT or Claude?
-2. What uncertainty are they trying to reduce?
-3. What result do they want immediately?
-4. What would make them trust this page?
-5. What would make them leave?
-6. What makes AteFlo faster or safer than asking AI from scratch?
+2. What do they want to finish?
+3. What uncertainty are they trying to reduce?
+4. What bad AI output do they fear?
+5. What would make them trust and use this page?
+6. What would make them leave?
+7. What makes AteFlo faster or safer than asking AI from scratch?
 
 The strongest AteFlo topics serve searchers who need a trusted structure before
 using AI. They may be uncertain about the prompt, worried about bad outputs,
@@ -56,11 +57,36 @@ Every candidate topic must include:
 - Searcher's likely situation
 - Why they searched Google instead of using AI directly
 - What they want to finish
+- What uncertainty they want to reduce
 - What they are afraid AI might get wrong
+- What would make them trust and use the page
+- What would make them leave
 - What AteFlo prompt structure will fix
 - What proof or reward the page must show
 - Whether the page can get them to Copy Prompt quickly
 - Publish / hold / reject decision
+
+## Topic-Specific Language Rule
+
+AteFlo pages may reuse the same action-first structure, but the language must
+not feel templated. Each future shortcut must use topic-specific:
+
+- Top summary
+- Input fields
+- Generated prompt rules
+- Example output
+- Check before using checklist
+- Tone based on the user's search intent
+
+Hold or reject a shortcut that repeats generic wording across pages, such as:
+
+- "Build and copy the prompt first"
+- "Use this shortcut when you want the prompt first"
+- "Read this after you have the prompt"
+- "Do the work in order"
+
+These ideas must be rewritten in the vocabulary of the topic and the user's
+real situation.
 
 ## Article Layout Rule
 
@@ -77,6 +103,15 @@ Preferred order for public shortcut pages:
 
 Do not start with long educational intros. Do not bury the prompt builder. Do
 not start with tool comparison unless the query is tool-decision intent.
+Copy Prompt, Example output, and Check before using must stay near the action.
+Workflow, tools, FAQ, and supporting SEO content belong lower on the page.
+
+## Shortcut Card Rule
+
+`/shortcuts` cards are for scanning. Each card should contain one short value
+proposition sentence, not a long summary. Do not repeat generic timing text
+across cards. The card should help the reader choose a task quickly, then open
+the detail page for the prompt workflow.
 
 ## Failure Tests
 

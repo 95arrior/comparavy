@@ -45,6 +45,11 @@ for:
 - The Check before using section catches real topic-specific risks.
 - Tool recommendations support the workflow instead of turning the page into a
   generic listicle.
+- The top summary, input fields, generated prompt rules, example output,
+  checklist, and tone are specific to the topic.
+- The `/shortcuts` card uses one short value proposition sentence and does not
+  ask the reader to parse an article summary.
+- The page does not reuse generic boilerplate phrases from other shortcuts.
 
 ## Google Searcher Psychology
 
@@ -68,6 +73,11 @@ Future content should be written for these mental states:
 This changes topic selection and article creation. A topic is stronger when the
 searcher needs a specific prompt structure, example output, and checklist. A
 topic is weaker when a normal AI answer would be just as good.
+
+Before writing a shortcut, the topic review must identify why the user searched
+Google instead of asking AI directly, what they want to finish, what uncertainty
+they want to reduce, what bad AI output they fear, what would make them trust
+and use the page, and what would make them leave.
 
 ## Examples
 

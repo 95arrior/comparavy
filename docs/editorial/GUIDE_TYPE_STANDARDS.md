@@ -28,12 +28,17 @@ Required structure:
 - Next Step
 
 First 100 words must include the problem, starting input, desired output, first action, and review warning.
+The prompt builder, Copy Prompt, Example output, and Check before using
+checklist must appear before long article content. Workflow, tools, and FAQ
+belong lower on the page.
 
 Strong article:
 
 - Starts with the answer.
 - Shows what the reader has, what they will get, and what details to prepare.
 - Gives one generated prompt that starts with the actual task and includes clear placeholders when fields are blank.
+- Uses topic-specific top summary, input fields, generated prompt rules,
+  example output, checklist, and tone.
 - Explains that filling in details improves the result but is not required.
 - Shows a real workflow before tool recommendations.
 - Makes tools support steps.
@@ -46,6 +51,11 @@ Weak article:
 - Reads like a top tools list.
 - Gives generic steps that could apply to any topic.
 - Uses shallow device sections.
+- Repeats generic boilerplate from another shortcut, such as "Build and copy
+  the prompt first," "Use this shortcut when you want the prompt first," "Read
+  this after you have the prompt," or "Do the work in order."
+- Uses a long multi-sentence `/shortcuts` card summary instead of one short
+  value proposition sentence.
 
 Common failures:
 

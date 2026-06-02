@@ -64,7 +64,10 @@ Every candidate topic review must include:
 - Searcher's likely situation
 - Why they searched Google instead of using AI directly
 - What they want to finish
+- What uncertainty they want to reduce
 - What they are afraid AI might get wrong
+- What would make them trust and use the page
+- What would make them leave
 - What AteFlo prompt structure will fix
 - What proof or reward the page must show
 - Whether the page can get them to Copy Prompt quickly
@@ -87,6 +90,10 @@ Hold or reject the topic if:
 - It lacks topic-specific Works with tools.
 - It cannot satisfy the Search-to-Copy Promise within the first screen.
 - It cannot explain what the user should check before using the AI output.
+- It repeats generic page boilerplate from another shortcut instead of speaking
+  in the language of the topic.
+- Its `/shortcuts` card summary is a long article excerpt instead of one short
+  value proposition sentence.
 
 ## Automation Rule
 
@@ -106,3 +113,32 @@ using AI. The public page must reward that click quickly:
 - Show an example output.
 - Explain what the prompt prevents, such as invented facts, missing owners,
   false product claims, or generic personal wording.
+
+## Topic-Specific Readability Rule
+
+AteFlo pages can share the same action-first layout, but future shortcuts must
+not share generic wording. Each published shortcut needs topic-specific:
+
+- Top summary.
+- Input fields.
+- Generated prompt rules.
+- Example output.
+- Check before using checklist.
+- Tone based on user intent.
+
+Reject or hold any shortcut that repeats phrases like "Build and copy the
+prompt first," "Use this shortcut when you want the prompt first," "Read this
+after you have the prompt," or "Do the work in order" unless the wording has
+been rewritten for the actual topic.
+
+## Card and Layout Rule
+
+The `/shortcuts` card is for scanning, not reading:
+
+- Use one short value proposition sentence only.
+- Do not use long multi-sentence summaries.
+- Do not repeat generic timing text across cards.
+
+The detail page must keep the prompt builder before long article content. Copy
+Prompt, Example output, and Check before using must appear near the action.
+Workflow, tools, and FAQ belong lower on the page.

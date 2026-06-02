@@ -31,7 +31,10 @@ For each candidate topic, record:
 - Searcher's likely situation
 - Why they searched Google instead of using AI directly
 - What they want to finish
+- What uncertainty they want to reduce
 - What they are afraid AI might get wrong
+- What would make them trust and use the page
+- What would make them leave
 - What AteFlo prompt structure will fix
 - What proof or reward the page must show
 - Whether the page can get them to Copy Prompt quickly
@@ -63,6 +66,8 @@ A topic can move forward only when all of these are true:
 - AteFlo can provide a stronger workflow than "ask ChatGPT to do it."
 - The page can include a concrete prompt builder, example output, and review
   checklist.
+- The page can use topic-specific language, fields, prompt rules, example
+  output, checklist, and tone instead of generic boilerplate.
 - The visitor can understand what to make, what to fill in, and where to copy
   the prompt within 10 seconds.
 - The topic does not create AdSense, trust, legal, medical, financial, privacy,
@@ -80,6 +85,8 @@ Reject or hold a topic if:
 - It creates AdSense or trust risks.
 - It cannot explain why a Google searcher would prefer this page over prompting
   AI from scratch.
+- It cannot produce a one-sentence `/shortcuts` card value proposition that is
+  specific to the topic.
 
 ## Gold Brief Storage
 

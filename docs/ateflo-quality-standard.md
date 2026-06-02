@@ -26,11 +26,12 @@ another tool.
 Before publishing, answer:
 
 1. Why did this person search Google instead of asking ChatGPT or Claude?
-2. What uncertainty are they trying to reduce?
-3. What result do they want immediately?
-4. What would make them trust this page?
-5. What would make them leave?
-6. What makes AteFlo faster or safer than asking AI from scratch?
+2. What do they want to finish?
+3. What uncertainty are they trying to reduce?
+4. What bad AI output do they fear?
+5. What would make them trust and use this page?
+6. What would make them leave?
+7. What makes AteFlo faster or safer than asking AI from scratch?
 
 ### Searcher Mental States
 
@@ -83,6 +84,34 @@ quickly, do not publish it.
 - The prompt must produce the result promised by the title.
 - The prompt must avoid internal AteFlo-only wording.
 
+## Topic-Specific Language Gate
+
+AteFlo pages can share a common action-first layout, but they must not share
+generic boilerplate language. Every shortcut must have:
+
+- Topic-specific top summary.
+- Topic-specific input fields.
+- Topic-specific generated prompt rules.
+- Topic-specific example output.
+- Topic-specific Check before using checklist.
+- Topic-specific tone based on user intent.
+
+Rewrite common layout language to fit the task. A voice-memo shortcut can sound
+fast, practical, and action-oriented. A local-business shortcut should sound
+review-ready and cautious. A personal/desire shortcut, such as a dating bio,
+should sound natural, human, and personal rather than corporate.
+
+Reject or hold any shortcut that repeats generic page phrases across topics,
+including:
+
+- "Build and copy the prompt first"
+- "Use this shortcut when you want the prompt first"
+- "Read this after you have the prompt"
+- "Do the work in order"
+
+These phrases are acceptable only when rewritten to fit the specific topic and
+the searcher's actual job.
+
 ## Layout and Conversion Gate
 
 - Shortcut detail pages must be action-first.
@@ -92,6 +121,9 @@ quickly, do not publish it.
 - Check before using must be topic-specific and close to the action.
 - Workflow, tools, FAQ, and supporting article content should appear lower on
   the page.
+- Keep SEO-supporting content below the prompt workflow.
+- Do not put long intros, detailed tool explanations, or FAQs above the prompt
+  builder.
 
 For users arriving from Google:
 
@@ -134,6 +166,22 @@ Preferred order:
 - The visible Works with row should help the reader understand where to run the
   workflow, not pad the card.
 
+## Shortcut Card Gate
+
+The `/shortcuts` listing is for scanning and choosing, not reading. Each card
+must show:
+
+- Category chip.
+- Guide type only if it helps scanning.
+- Title.
+- One short value proposition sentence only.
+- Compact Works with row.
+- Open Shortcut action or card click.
+
+Do not use long multi-sentence summaries on cards. Do not repeat generic timing
+text across cards. Save details, caveats, and workflow explanation for the
+detail page.
+
 ## Article Failure Tests
 
 Reject or hold a shortcut if:
@@ -149,3 +197,7 @@ Reject or hold a shortcut if:
 7. The page does not explain what to check before using the AI output.
 8. The topic is searched, but AteFlo cannot provide a stronger output than a
    generic AI answer.
+9. It uses the same intro, prompt-builder guidance, example style, or checklist
+   language as another published shortcut with only nouns swapped.
+10. The card summary reads like an article excerpt instead of one short value
+    proposition sentence.

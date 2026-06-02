@@ -44,6 +44,32 @@ before asking them to trust the AI output.
 If the page cannot move the searcher from query intent to Copy Prompt within the
 first screen, hold the topic.
 
+Before writing each shortcut, identify:
+
+- Why the user searched Google instead of asking AI directly.
+- What they want to finish.
+- What uncertainty they want to reduce.
+- What bad AI output they fear.
+- What would make them trust and use the page.
+- What would make them leave.
+
+## Topic-Specific Shortcut Language
+
+AteFlo shortcuts may share a common action-first layout, but they must not share
+generic boilerplate language. Every shortcut needs topic-specific:
+
+- Top summary.
+- Input fields.
+- Generated prompt rules.
+- Example output.
+- Check before using checklist.
+- Tone based on user intent.
+
+Reject or hold drafts that reuse phrases like "Build and copy the prompt
+first," "Use this shortcut when you want the prompt first," "Read this after
+you have the prompt," or "Do the work in order" unless they are rewritten to
+fit the specific task.
+
 ## Prompt Builder Usability Test
 
 Every new AteFlo shortcut must be simple enough for a reader who has never written an AI prompt before.
@@ -100,6 +126,9 @@ Most readers scan first. Make the first screen useful.
 - Put the workflow before long tool cards in how-to guides.
 - Keep lists scannable.
 - Avoid intros that explain AI in general.
+- Keep `/shortcuts` cards to one short value proposition sentence. Cards are
+  for scanning, not reading.
+- Do not repeat generic timing text across cards.
 - Make mobile workflow advice specific to quick review, approvals, drafts, checks, or small edits.
 
 ## 5. Desktop-Depth Rules
