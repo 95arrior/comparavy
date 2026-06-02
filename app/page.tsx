@@ -15,7 +15,7 @@ import {
 
 const HOME_TITLE = "AteFlo | AI Workflow Kits for Real Work";
 const HOME_DESCRIPTION =
-  "AteFlo is a workflow kit factory for AI-powered work: packaged prompts, templates, examples, checklists, and action plans for tasks worth finishing.";
+  "AteFlo is an AI Workflow Kit Store with packaged prompts, examples, checklists, and action plans for tasks worth finishing.";
 
 export const metadata: Metadata = {
   title: {
@@ -81,22 +81,22 @@ export default function Home() {
         <div className="mx-auto grid max-w-6xl gap-7 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-700 sm:text-sm">
-              AteFlo Workflow Kit Factory
+              Premium AI Workflow Kit Store
             </p>
             <h1 className="mt-5 text-4xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
-              Bring the details. AteFlo builds the kit.
+              Build ready-to-use AI workflow kits for real work.
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-              AteFlo packages prompts, templates, examples, checklists, and
-              action plans into workflow kits you can use with ChatGPT, Claude,
-              Gemini, Copilot, or another AI tool.
+              AteFlo turns your details into structured prompts, example
+              outputs, checklists, and action plans you can use with ChatGPT,
+              Claude, Gemini, Copilot, or another AI tool.
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
               <a
                 href="#build-sample-kit"
                 className="inline-flex min-h-12 items-center justify-center rounded-full bg-teal-700 px-6 py-3 text-sm font-semibold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
               >
-                Build your sample kit
+                Build a sample kit
               </a>
               <Link
                 href="/kits"
@@ -107,8 +107,9 @@ export default function Home() {
             </div>
             <p className="mt-5 rounded-2xl border border-teal-100 bg-white p-4 text-sm leading-6 text-slate-700 shadow-sm">
               Flagship product: <span className="font-semibold text-teal-900">Local Business AI Visibility Kit</span>.
-              No ranking, lead, sales, customer, income, or business growth
-              guarantees.
+              Enter business details, generate a sample, then unlock the full
+              workflow package. No ranking, lead, sales, customer, income, or
+              business growth guarantees.
             </p>
           </div>
           <FactoryAssemblyVisual />
@@ -218,7 +219,7 @@ export default function Home() {
       <section className="px-4 py-10 sm:px-6 sm:py-12">
         <div className="mx-auto max-w-6xl rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-7">
           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
-            Why not just ask ChatGPT?
+            Why not just ask AI?
           </p>
           <div className="mt-6 grid gap-4 lg:grid-cols-2">
             {scratchVsKit.map((column) => (
@@ -241,9 +242,9 @@ export default function Home() {
             ))}
           </div>
           <p className="mt-5 text-sm leading-7 text-slate-600">
-            AteFlo does not claim to be smarter than your AI tool. It helps you
-            use AI more practically by packaging the inputs, sequence, examples,
-            checks, and final action plan.
+            AteFlo does not replace AI tools or claim to be smarter than them.
+            It helps you use AI more practically by packaging the inputs,
+            sequence, examples, checks, and final action plan.
           </p>
         </div>
       </section>

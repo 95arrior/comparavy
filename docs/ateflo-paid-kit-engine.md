@@ -53,9 +53,9 @@ templates, website copy builder, social caption builder, setup checklists, a
 
 ## Kit-first Pivot: Local Business AI Visibility Kit
 
-## Factory Store Identity
+## AI Workflow Kit Store Identity
 
-AteFlo is a workflow kit factory for AI-powered work.
+AteFlo is a premium AI Workflow Kit Store and kit studio for AI-powered work.
 
 Users bring business details, job details, profile notes, or content ideas.
 AteFlo packages those inputs into structured AI workflow kits:
@@ -73,11 +73,11 @@ AteFlo should not be positioned as:
 AteFlo should be positioned as:
 
 - paid AI workflow kit store
-- kit factory for real-world outputs
+- kit studio for real-world outputs
 - structured workflows that help users go from input to usable result
 - productized AI work system
 
-The factory metaphor is a product explanation, not a decorative gimmick.
+The factory/studio metaphor is a product explanation, not a decorative gimmick.
 Inputs go in, workflow modules assemble the kit, sample outputs come out, and
 the full kit unlocks the complete workflow.
 

@@ -1,6 +1,7 @@
-# AteFlo Factory Store
+# AteFlo AI Workflow Kit Store
 
-AteFlo is a workflow kit factory for AI-powered work.
+AteFlo is a premium AI Workflow Kit Store and kit studio for real-world
+outputs.
 
 Users bring business details, job details, profile notes, or content ideas.
 AteFlo packages those inputs into structured AI workflow kits:
@@ -12,7 +13,7 @@ Input worksheet -> prompt sequence -> example output -> review checklist -> acti
 AteFlo should be positioned as:
 
 - a paid AI workflow kit store
-- a kit factory for real-world outputs
+- a kit studio for real-world outputs
 - a productized AI work system
 - a structured path from user input to usable result
 
@@ -30,7 +31,7 @@ that help them finish valuable tasks with less guessing and safer review steps.
 
 ## Factory Metaphor
 
-The factory metaphor is functional, not decorative:
+The factory/studio metaphor is functional, not decorative:
 
 - Inputs go in.
 - Workflow modules assemble the kit.

@@ -172,7 +172,7 @@ export default function LocalBusinessAiVisibilityKitPage() {
         >
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
-              Full kit modules
+              What comes in the box
             </p>
             <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
               A local visibility workflow, boxed into reusable modules.

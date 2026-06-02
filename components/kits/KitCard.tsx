@@ -17,6 +17,10 @@ function statusLabel(kit: AteFloKit): string {
   return kit.status === "active" ? kit.priceLabel : "Coming soon";
 }
 
+function moduleCountLabel(kit: AteFloKit): string {
+  return `${kit.modules.length} modules`;
+}
+
 export default function KitCard({ kit, sourcePage, compact = false }: KitCardProps) {
   const detailHref = getKitHref(kit);
   const ctaHref = getKitCtaHref(kit);
@@ -26,26 +30,30 @@ export default function KitCard({ kit, sourcePage, compact = false }: KitCardPro
   return (
     <article
       id={kit.slug}
-      className={`flex h-full min-w-0 flex-col rounded-3xl border bg-white p-5 shadow-sm sm:p-6 ${
-        kit.isFeatured ? "border-teal-200" : "border-slate-200"
+      className={`ateflo-card-lift flex h-full min-w-0 flex-col rounded-3xl border bg-white p-5 shadow-sm sm:p-6 ${
+        kit.isFeatured ? "border-teal-200 bg-teal-50/30" : "border-slate-200"
       }`}
     >
-      <div className="flex flex-wrap items-center gap-2">
-        {kit.productLabel && (
-          <span className="inline-flex rounded-full bg-teal-700 px-3 py-1 text-xs font-semibold text-white">
-            {kit.productLabel}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {kit.productLabel && (
+            <span className="inline-flex rounded-full bg-teal-700 px-3 py-1 text-xs font-semibold text-white">
+              {kit.productLabel}
+            </span>
+          )}
+          <span
+            className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+              active
+                ? "bg-teal-50 text-teal-800"
+                : "border border-slate-200 bg-slate-50 text-slate-600"
+            }`}
+          >
+            {statusLabel(kit)}
           </span>
-        )}
-        <span
-          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-            active
-              ? "bg-teal-50 text-teal-800"
-              : "border border-slate-200 bg-slate-50 text-slate-600"
-          }`}
-        >
-          {statusLabel(kit)}
+        </div>
+        <span className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-500">
+          {moduleCountLabel(kit)}
         </span>
-        <span className="text-xs font-medium text-slate-500">AI workflow kit</span>
       </div>
 
       <h3 className="mt-4 text-xl font-semibold leading-7 tracking-tight text-slate-950">
@@ -78,10 +86,28 @@ export default function KitCard({ kit, sourcePage, compact = false }: KitCardPro
         </div>
       )}
 
-      <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-          Inside
-        </p>
+      {compact && (
+        <div className="mt-4 grid grid-cols-2 gap-3 text-xs font-semibold text-slate-600">
+          <div className="rounded-2xl border border-slate-100 bg-white p-3">
+            <p className="uppercase tracking-[0.14em] text-slate-500">For</p>
+            <p className="mt-2 text-slate-700">{kit.shortTitle.replace(" Kit", "")}</p>
+          </div>
+          <div className="rounded-2xl border border-slate-100 bg-white p-3">
+            <p className="uppercase tracking-[0.14em] text-slate-500">Type</p>
+            <p className="mt-2 text-slate-700">Workflow kit</p>
+          </div>
+        </div>
+      )}
+
+      <div className="mt-5 rounded-2xl border border-slate-100 bg-white p-4">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+            Box contents
+          </p>
+          <span className="text-xs font-semibold text-teal-700">
+            {statusLabel(kit)}
+          </span>
+        </div>
         <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
           {kit.whatIsInside.slice(0, compact ? 3 : 4).map((item) => (
             <li key={item} className="flex gap-2">
