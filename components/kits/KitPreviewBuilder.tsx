@@ -11,6 +11,7 @@ interface KitPreviewBuilderProps {
   readonly variant?: "compact" | "full";
   readonly title?: string;
   readonly className?: string;
+  readonly showLockedAfterGenerateOnly?: boolean;
 }
 
 const fields = [
@@ -66,6 +67,7 @@ export default function KitPreviewBuilder({
   variant = "full",
   title,
   className,
+  showLockedAfterGenerateOnly = false,
 }: KitPreviewBuilderProps) {
   const [values, setValues] = useState<PreviewValues>({
     businessType: "",
@@ -259,39 +261,41 @@ export default function KitPreviewBuilder({
             </div>
           )}
 
-          <div className="mt-5 rounded-2xl border border-teal-100 bg-teal-50 p-4">
-            <p className="text-sm font-semibold text-teal-900">
-              Unlock the full Local Business AI Visibility Kit
-            </p>
-            <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
-              {[
-                "30 Google Business Profile post workflows",
-                "Review Response Pack",
-                "Website Copy Builder",
-                "Social Content Pack",
-                "Visibility Setup Checklist",
-                "30-Day Local Visibility Plan",
-                "Final Review Checklist",
-              ].map((item) => (
-                <li key={item} className="flex gap-2">
-                  <span aria-hidden="true" className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-700" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-            <a
-              href={ctaHref}
-              target={external ? "_blank" : undefined}
-              rel={external ? "noreferrer" : undefined}
-              onClick={handleUnlockClick}
-              data-event="kit_unlock_click"
-              data-kit-slug={kitSlug}
-              data-action-location="local_business_preview_unlock"
-              className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
-            >
-              {ctaLabel}
-            </a>
-          </div>
+          {(!showLockedAfterGenerateOnly || hasGenerated) && (
+            <div className="mt-5 rounded-2xl border border-teal-100 bg-teal-50 p-4">
+              <p className="text-sm font-semibold text-teal-900">
+                Unlock the full Local Business AI Visibility Kit
+              </p>
+              <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
+                {[
+                  "30 Google Business Profile post workflows",
+                  "Review Response Pack",
+                  "Website Copy Builder",
+                  "Social Content Pack",
+                  "Visibility Setup Checklist",
+                  "30-Day Local Visibility Plan",
+                  "Final Review Checklist",
+                ].map((item) => (
+                  <li key={item} className="flex gap-2">
+                    <span aria-hidden="true" className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-700" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <a
+                href={ctaHref}
+                target={external ? "_blank" : undefined}
+                rel={external ? "noreferrer" : undefined}
+                onClick={handleUnlockClick}
+                data-event="kit_unlock_click"
+                data-kit-slug={kitSlug}
+                data-action-location="local_business_preview_unlock"
+                className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+              >
+                {ctaLabel}
+              </a>
+            </div>
+          )}
         </div>
       </div>
     </section>
