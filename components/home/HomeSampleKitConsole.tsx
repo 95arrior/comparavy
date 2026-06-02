@@ -40,12 +40,12 @@ const fields: ReadonlyArray<{
 ];
 
 const lockedModules = [
-  "30 Post Workflows",
-  "Review Response Pack",
-  "Website Copy Builder",
-  "Social Content Pack",
-  "Visibility Setup Checklist",
-  "30-Day Plan",
+  "홈페이지 만들기",
+  "네이버플레이스 세팅",
+  "인스타/SNS 홍보 세트",
+  "리뷰 답변 시스템",
+  "세팅 체크리스트",
+  "7일 오픈 플랜",
 ] as const;
 
 function clean(value: string, fallback: string): string {
@@ -149,7 +149,7 @@ export default function HomeSampleKitConsole({
           Sample kit console
         </p>
         <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
-          Build a sample local visibility kit.
+          온라인 영업 세팅 샘플을 만들어보세요.
         </h2>
         <div className="mt-6 grid gap-3">
           {fields.map((field) => (

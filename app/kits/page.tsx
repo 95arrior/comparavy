@@ -94,13 +94,13 @@ export default function KitsPage() {
             <div>
               <p className="text-sm font-semibold text-teal-700">Featured product shelf</p>
               <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
-                Start with local business visibility
+                온라인 영업 세팅부터 시작하세요
               </h2>
             </div>
             <p className="max-w-xl text-sm leading-7 text-slate-600">
-              Local Business is the flagship kit box: business inputs go in,
-              posts, page copy, review replies, checklists, and a 30-day plan
-              come out for owner review.
+              AteFlo의 flagship product는 AI 온라인 영업 세팅 키트입니다.
+              홈페이지, 네이버플레이스, SNS, 리뷰 답변, 결제·도메인·분석·SEO
+              체크리스트를 순서대로 정리합니다.
             </p>
           </div>
           <div className="mt-5">
@@ -115,8 +115,8 @@ export default function KitsPage() {
               Choose the workflow closest to the result you need.
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
-              Local Business is the flagship product. Other kits are secondary
-              or coming soon until their workflows are strong enough to sell.
+              AI 온라인 영업 세팅 키트가 flagship product입니다. 다른 키트는
+              secondary 또는 coming soon 상태로 유지합니다.
             </p>
           </div>
           <div className="mt-5 grid gap-4 lg:grid-cols-2">

@@ -49,7 +49,7 @@ The homepage must feel like a paid product store within five seconds.
 Above the fold should communicate:
 
 - AteFlo sells AI workflow kits.
-- Local Business AI Visibility Kit is the flagship product.
+- AI 온라인 영업 세팅 키트 is the flagship product.
 - Users can build a small sample kit.
 - Full kits include templates, examples, checklists, and action plans.
 
@@ -87,5 +87,6 @@ Factory store pages must not claim or imply:
 - fake discounts
 - fake reviews or review manipulation
 
-The Local Business AI Visibility Kit must present outputs as review-ready
-drafts and checklists, not automatic publishing or business growth automation.
+AI 온라인 영업 세팅 키트 must present outputs as review-ready drafts,
+templates, and checklists, not automatic publishing, automatic installation, or
+business growth automation.

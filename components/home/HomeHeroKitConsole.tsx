@@ -96,7 +96,7 @@ export default function HomeHeroKitConsole({ kitSlug }: HomeHeroKitConsoleProps)
       />
       <div className="relative flex flex-wrap items-center justify-between gap-3">
         <span className="rounded-full border border-teal-300/30 bg-teal-300/10 px-3 py-1 text-xs font-semibold text-teal-100">
-          Local Business AI Visibility Kit
+          AI 온라인 영업 세팅 키트
         </span>
         <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200">
           flagship

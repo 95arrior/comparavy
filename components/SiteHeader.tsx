@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import Logo from "@/components/Logo";
 
-type NavKey = "finder" | "kits" | "local-business-kit" | "other-kits" | "tools";
+type NavKey = "finder" | "kits" | "online-sales-kit" | "other-kits" | "tools";
 
 interface SiteHeaderProps {
   readonly active?: NavKey;
@@ -19,9 +19,9 @@ const navItems: readonly {
 }[] = [
   { key: "kits", href: "/kits", label: "Kits", primary: true },
   {
-    key: "local-business-kit",
-    href: "/kits/local-business-ai-visibility-kit",
-    label: "Local Business Kit",
+    key: "online-sales-kit",
+    href: "/kits/online-sales-setup-kit",
+    label: "온라인 영업 세팅",
   },
   { key: "other-kits", href: "/kits#kit-boxes", label: "Other Kits" },
   { key: "tools", href: "/tools", label: "Tools" },

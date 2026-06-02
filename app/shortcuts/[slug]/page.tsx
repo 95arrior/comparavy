@@ -6,7 +6,7 @@ interface ShortcutRedirectPageProps {
 
 function shortcutRedirectDestination(slug: string): string {
   if (slug === "how-to-write-google-business-profile-posts-with-ai") {
-    return "/kits/local-business-ai-visibility-kit";
+    return "/kits/online-sales-setup-kit";
   }
 
   if (slug === "how-to-write-a-dating-app-bio-with-ai-without-sounding-generic") {

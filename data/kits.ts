@@ -34,135 +34,131 @@ export interface AteFloKit {
 }
 
 const jobKitCheckoutUrl = process.env.NEXT_PUBLIC_JOB_KIT_CHECKOUT_URL;
-const localBusinessKitCheckoutUrl =
-  process.env.NEXT_PUBLIC_LOCAL_BUSINESS_KIT_CHECKOUT_URL;
+const onlineSalesSetupKitCheckoutUrl =
+  process.env.NEXT_PUBLIC_ONLINE_SALES_SETUP_KIT_CHECKOUT_URL;
 
 export const kits: readonly AteFloKit[] = [
   {
-    slug: "local-business-ai-visibility-kit",
-    title: "Local Business AI Visibility Kit",
-    shortTitle: "Local Business Kit",
+    slug: "online-sales-setup-kit",
+    title: "AI 온라인 영업 세팅 키트",
+    shortTitle: "온라인 영업 세팅",
     status: "active",
     isFeatured: true,
     productLabel: "Flagship kit",
     audience:
-      "Local business owners, service providers, solo operators, and small teams.",
+      "한국 소상공인, 로컬 서비스업, 1인 사업자, 예약 기반 서비스 운영자",
     outcome:
-      "Review-ready local marketing assets and setup guidance for Google Business Profile, website pages, social posts, and weekly visibility work.",
+      "홈페이지, 네이버플레이스, 인스타/SNS, 리뷰 답변, 카카오채널/DM, 이벤트 문구, 결제·도메인·분석·SEO 기본 점검을 순서대로 정리하는 온라인 영업 준비 패키지.",
     pain:
-      "Local business owners do not just need AI copy. They need posts, review replies, page copy, and setup steps in the right order without invented business claims.",
+      "온라인에서 손님을 받고 싶지만 홈페이지, 채널, 문의 흐름, 결제, 도메인, 분석, SEO 중 무엇부터 해야 할지 막막한 상황.",
     oneLinePromise:
-      "Turn your business details into local posts, website copy, review replies, and visibility checklists you can review and use.",
+      "가게나 서비스를 온라인에서 손님 받을 준비 상태로 만들기 위한 문구, 채널 세팅, 홍보 흐름, 결제·도메인·분석·SEO 체크리스트를 순서대로 정리해드려요.",
     whatIsInside: [
-      "Business Input Worksheet for services, location, offers, tone, restrictions, and details AI must not invent",
-      "Prompt sequence for Google Business Profile posts, review replies, website copy, social captions, and local promotion ideas",
-      "Reusable local post, review response, website copy, and social caption templates",
-      "Visibility setup checklist for GA4, Search Console, Meta Pixel, and profile basics as guided steps",
-      "30-day local visibility plan plus final owner review checklist",
+      "홈페이지 첫 문장, 서비스 소개문, CTA, FAQ, SEO 제목/설명 정리",
+      "네이버플레이스 소개문, 대표 서비스 설명, 사진 설명, FAQ, 기본 정보 점검",
+      "인스타/SNS 게시글 주제, 캡션, 스토리 문구, CTA, 주간 업로드 흐름",
+      "리뷰 답변, 카카오채널/DM 응대, 이벤트·쿠폰 문구 템플릿",
+      "Toss Payments 준비, 도메인, GA4, Search Console, Meta Pixel, SEO 기본 점검 체크리스트",
+      "7일 오픈 플랜과 항목별 review rules",
     ],
     modules: [
       {
-        title: "Business Input Worksheet",
+        title: "홈페이지 만들기",
         detail:
-          "Collect the business facts, service area, customer type, offers, tone, and restrictions before generating anything.",
+          "홈페이지 첫 문장, 서비스 소개문, CTA, FAQ, SEO 제목/설명, 도메인/배포 체크리스트를 정리합니다.",
       },
       {
-        title: "Google Business Profile Post System",
+        title: "네이버플레이스 세팅",
         detail:
-          "Create updates, offers, event-style posts, local promotion ideas, CTAs, and owner review notes.",
+          "매장/서비스 소개문, 대표 서비스 설명, 사진 설명 문구, FAQ, 기본 정보 점검 항목을 정리합니다.",
       },
       {
-        title: "Review Response Pack",
+        title: "인스타/SNS 홍보 세트",
         detail:
-          "Draft respectful review replies without inventing customer details, refunds, promises, or private information.",
+          "게시글 주제, 캡션, CTA, 스토리 문구, 해시태그 방향, 주간 업로드 흐름을 만듭니다.",
       },
       {
-        title: "Local Website Copy Pack",
+        title: "리뷰 답변 시스템",
         detail:
-          "Build homepage, service page, FAQ, and location-focused copy from verified business details.",
+          "좋은 리뷰, 보통 리뷰, 불만 리뷰 답변과 재방문 유도 문구, 위험 표현 체크리스트를 정리합니다.",
       },
       {
-        title: "Social Content Pack",
+        title: "카카오채널/DM 응대 문구",
         detail:
-          "Turn local offers, seasonal updates, and service notes into Instagram and Facebook captions.",
+          "첫 응대, 가격 문의, 예약 문의, 자주 묻는 질문, 상담 종료 문구를 준비합니다.",
       },
       {
-        title: "Visibility Setup Checklist",
+        title: "이벤트·쿠폰 문구",
         detail:
-          "Use guided setup steps for Google Business Profile basics, GA4, Search Console, Meta Pixel, and profile review.",
+          "이벤트 제목, 쿠폰 안내문, 기간 안내문, 주의사항, SNS/플레이스용 홍보 문구를 정리합니다.",
       },
       {
-        title: "30-Day Local Visibility Plan",
+        title: "결제·도메인·분석·SEO 세팅 체크리스트",
         detail:
-          "Plan a month of repeatable local updates, review response checks, service copy improvements, and social posts.",
+          "Toss Payments 준비, 도메인 구매, GA4, Search Console, Meta Pixel, 네이버 서치어드바이저, SEO 기본 점검을 체크리스트로 안내합니다.",
       },
       {
-        title: "Final Review Checklist",
+        title: "7일 오픈 플랜",
         detail:
-          "Check prices, dates, certifications, hours, offers, review language, and claims before publishing.",
+          "Day 1부터 Day 7까지 무엇을 쓰고, 어디에 올리고, 무엇을 점검할지 순서대로 정리합니다.",
       },
     ],
     sampleItems: [
-      "Input: local dog grooming salon in Austin, summer de-shedding appointments, busy pet owners",
-      "Output: Google Business Profile update, short social caption, CTA, and owner review checklist",
-      "Review: confirm offer details, appointment availability, pricing, dates, and any claims before publishing",
+      "Input: 업종, 현재 손님을 받는 채널, 가장 필요한 목표",
+      "Output: 먼저 챙기면 좋은 세팅 3가지와 잠긴 유료 모듈 preview",
+      "Review: 가격, 기간, 운영시간, 가능 여부, 외부 도구 설치 항목은 직접 확인",
     ],
-    priceLabel: localBusinessKitCheckoutUrl ? "Paid kit" : "Early access",
-    ctaLabel: localBusinessKitCheckoutUrl ? "Get the kit" : "Get early access",
-    checkoutUrlEnvKey: "NEXT_PUBLIC_LOCAL_BUSINESS_KIT_CHECKOUT_URL",
-    checkoutUrl: localBusinessKitCheckoutUrl,
+    priceLabel: onlineSalesSetupKitCheckoutUrl ? "Paid kit" : "Early access",
+    ctaLabel: onlineSalesSetupKitCheckoutUrl ? "전체 패키지 열기" : "사전 신청하기",
+    checkoutUrlEnvKey: "NEXT_PUBLIC_ONLINE_SALES_SETUP_KIT_CHECKOUT_URL",
+    checkoutUrl: onlineSalesSetupKitCheckoutUrl,
     relatedShortcutSlugs: ["how-to-write-google-business-profile-posts-with-ai"],
     safetyNotes: [
-      "No guaranteed rankings, leads, sales, customers, income, or business growth.",
-      "No fake reviews, review manipulation, fake testimonials, or invented customer stories.",
-      "No invented discounts, prices, certifications, hours, availability, or service details.",
-      "Setup checklists are guidance only; the kit does not automatically install analytics, pixels, or business tools.",
+      "매출, 상위노출, 고객 증가, 예약 증가, 광고 효율, 사업 성장을 보장하지 않습니다.",
+      "리뷰 조작, fake testimonials, invented customer stories를 만들지 않습니다.",
+      "가격, 할인, 자격, 운영시간, 가능 여부, 서비스 세부사항을 invent하지 않습니다.",
+      "결제·도메인·분석·SEO 항목은 V1에서 체크리스트 안내이며 자동 설치가 아닙니다.",
     ],
     faq: [
       {
-        question: "Does this guarantee more customers?",
+        question: "이 키트가 매출이나 예약을 보장하나요?",
         answer:
-          "No. It helps you create and review local marketing assets, but results depend on your business, market, execution, and many factors outside the kit.",
+          "아니요. 이 키트는 온라인 영업 준비에 필요한 문구, 흐름, 체크리스트를 정리해주는 실행 패키지이며 매출, 예약, 고객 증가, 상위노출을 보장하지 않습니다.",
       },
       {
-        question: "Does it write Google Business Profile posts?",
+        question: "홍보 문구만 만들어주는 서비스인가요?",
         answer:
-          "Yes. The kit includes prompts and templates for Google Business Profile updates, offers, event-style posts, CTAs, and owner review checklists.",
+          "아니요. 홈페이지, 네이버플레이스, 인스타/SNS, 리뷰 답변, 카카오채널/DM, 이벤트 문구, 결제·도메인·분석·SEO 기본 점검까지 순서대로 정리하는 패키지입니다.",
       },
       {
-        question: "Can I use it in Korea and globally?",
+        question: "Toss Payments나 GA4를 자동 설치해주나요?",
         answer:
-          "Yes. The workflow can be used in English, Korean, or another language if your AI tool supports it. You should still review local wording, compliance, platform rules, and business details.",
+          "아니요. V1에서는 직접 설치가 필요한 항목을 체크리스트와 준비 순서로 안내합니다. 자동 설치나 결제 연동을 주장하지 않습니다.",
       },
       {
-        question: "Can I use it for Instagram, Facebook, or Naver Place?",
+        question: "어떤 업종에 맞나요?",
         answer:
-          "Yes. The kit is structured around local visibility assets and can help draft copy for platforms such as Instagram, Facebook, Naver Place, and Google Business Profile. It does not automatically publish or configure those platforms.",
+          "네일샵, 카페, 필라테스, 강아지 미용, 학원, 병원·클리닉, 청소·인테리어, 1인 서비스업, 온라인 상담/교육, 예약 기반 서비스에 맞춰 설계합니다.",
       },
       {
-        question: "Does it install GA4, Search Console, or Meta Pixel?",
+        question: "구매 전에는 무엇을 볼 수 있나요?",
         answer:
-          "No. The setup module is checklist guidance only. It can help you remember what to review or configure, but it does not automatically install analytics, search, pixel, or business tools.",
+          "무료 진단에서는 3개의 짧은 질문 뒤 먼저 챙기면 좋은 세팅 3가지를 보여주고, 전체 유료 모듈은 잠긴 preview로 보여줍니다.",
       },
       {
-        question: "Is this a marketing agency service?",
+        question: "AI API가 바로 쓰이나요?",
         answer:
-          "No. It is a self-serve AI workflow kit. It gives you worksheets, prompts, templates, and checklists so you can create and review your own assets.",
+          "V1에서는 AI API를 쓰지 않고 template과 checklist 중심으로 시작합니다. AteFlo 내부 생성 기능은 V2에서 추가합니다.",
       },
       {
-        question: "What do I receive?",
+        question: "결제는 지금 가능한가요?",
         answer:
-          "The intended kit includes a business input worksheet, prompt sequence library, local post templates, review response templates, website copy builder, social caption builder, visibility setup checklist, 30-day plan, and final review checklist.",
+          "Toss Payments checkout은 추후 연결 예정입니다. checkout URL이 없을 때는 사전 신청 CTA만 사용하며 실제 결제는 발생하지 않습니다.",
       },
       {
-        question: "Which AI tools can I use?",
+        question: "결과물을 그대로 사용해도 되나요?",
         answer:
-          "Use it with ChatGPT, Claude, Gemini, Copilot, or another AI chat tool that can work from pasted business details and instructions.",
-      },
-      {
-        question: "Can I edit everything?",
-        answer:
-          "Yes. The workflow is built for owner review and editing. You should adjust every asset for your real business details before publishing.",
+          "반드시 실제 가격, 운영시간, 기간, 자격, 서비스 가능 여부, 법적·전문적 표현을 직접 확인한 뒤 사용해야 합니다.",
       },
     ],
   },
@@ -460,12 +456,16 @@ export function getFeaturedKit(): AteFloKit {
 }
 
 export function getKitBySlug(slug: string): AteFloKit | undefined {
+  if (slug === "local-business-ai-visibility-kit") {
+    return kits.find((kit) => kit.slug === "online-sales-setup-kit");
+  }
+
   return kits.find((kit) => kit.slug === slug);
 }
 
 export function getKitHref(kit: AteFloKit): string {
   if (
-    kit.slug === "local-business-ai-visibility-kit" ||
+    kit.slug === "online-sales-setup-kit" ||
     kit.slug === "job-application-ai-kit"
   ) {
     return `/kits/${kit.slug}`;
@@ -480,7 +480,7 @@ export function getKitCtaHref(kit: AteFloKit): string {
   }
 
   if (
-    kit.slug === "local-business-ai-visibility-kit" ||
+    kit.slug === "online-sales-setup-kit" ||
     kit.slug === "job-application-ai-kit"
   ) {
     return `/kits/${kit.slug}#early-access`;

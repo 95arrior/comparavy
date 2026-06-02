@@ -5,8 +5,8 @@ import { SITE_TAGLINE } from "@/lib/site";
 const mainLinks = [
   { href: "/kits", label: "Kits" },
   {
-    href: "/kits/local-business-ai-visibility-kit",
-    label: "Local Business Kit",
+    href: "/kits/online-sales-setup-kit",
+    label: "온라인 영업 세팅",
   },
   {
     href: "/kits/job-application-ai-kit",

@@ -14,7 +14,7 @@ import {
 } from "@/data/kits";
 
 const shelfKitSlugs = [
-  "local-business-ai-visibility-kit",
+  "online-sales-setup-kit",
   "job-application-ai-kit",
   "dating-profile-rewrite-kit",
   "content-repurposing-kit",
@@ -44,14 +44,14 @@ const productCopy: Record<
     readonly modules: readonly string[];
   }
 > = {
-  "local-business-ai-visibility-kit": {
-    forLabel: "Local owners",
-    produces: "Posts, review replies, page copy, social captions, setup checks.",
+  "online-sales-setup-kit": {
+    forLabel: "한국 소상공인",
+    produces: "홍보 문구부터 결제·도메인·분석·SEO 세팅까지 필요한 순서를 정리해드릴게요.",
     modules: [
-      "30 Post Workflows",
-      "Review Response Pack",
-      "Website Copy Builder",
-      "30-Day Plan",
+      "홈페이지 만들기",
+      "네이버플레이스 세팅",
+      "SNS 홍보 세트",
+      "7일 오픈 플랜",
     ],
   },
   "job-application-ai-kit": {
@@ -88,6 +88,10 @@ function ProductBox({
   const ctaHref = getKitCtaHref(kit);
   const hasCheckout = kitHasCheckout(kit);
   const active = kit.status === "active";
+  const assemblyHref =
+    featured && kit.slug === "online-sales-setup-kit"
+      ? "/assemble/online-sales-setup-kit"
+      : undefined;
 
   return (
     <article
@@ -159,7 +163,20 @@ function ProductBox({
       </div>
 
       <div className="mt-auto flex flex-col gap-3 pt-5 sm:flex-row">
-        {active ? (
+        {active && assemblyHref ? (
+          <TrackedLink
+            href={assemblyHref}
+            eventName="kit_assembly_started"
+            eventParams={{
+              kit_slug: kit.slug,
+              source_page: "homepage",
+              action_location: "homepage_featured_box",
+            }}
+            className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full bg-teal-700 px-5 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+          >
+            세팅 확인하기
+          </TrackedLink>
+        ) : active ? (
           <KitCtaLink
             href={ctaHref}
             kitSlug={kit.slug}
@@ -252,7 +269,7 @@ export default function HomeStorefront() {
               Product shelf
             </p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
-              Pick a kit box.
+              필요한 세팅 키트를 고르세요.
             </h2>
           </div>
           <Link

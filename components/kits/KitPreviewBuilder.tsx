@@ -264,7 +264,7 @@ export default function KitPreviewBuilder({
           {(!showLockedAfterGenerateOnly || hasGenerated) && (
             <div className="mt-5 rounded-2xl border border-teal-100 bg-teal-50 p-4">
               <p className="text-sm font-semibold text-teal-900">
-                Unlock the full Local Business AI Visibility Kit
+                Unlock the full AI 온라인 영업 세팅 키트
               </p>
               <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
                 {[

@@ -19,7 +19,7 @@ export default function FactoryAssemblyVisual() {
           </p>
         </div>
         <span className="rounded-full border border-teal-100 bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-800">
-          Local Business Kit
+          온라인 영업 세팅
         </span>
       </div>
 
