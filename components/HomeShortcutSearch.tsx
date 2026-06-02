@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import AteFloIcon from "@/components/AteFloIcon";
 import CategoryChip from "@/components/CategoryChip";
-import ToolIcon from "@/components/ToolIcon";
+import ShortcutWorksWithCompact from "@/components/ShortcutWorksWithCompact";
 import { trackEvent } from "@/lib/analytics";
 import {
   normalizeSearch,
@@ -22,10 +22,6 @@ const SEARCH_CHIPS = [
   "Dating app bio",
   "Local business post",
 ] as const;
-
-function primaryToolFor(shortcut: ShortcutDiscoveryItem) {
-  return shortcut.worksWithTools[0];
-}
 
 export default function HomeShortcutSearch({ shortcuts }: HomeShortcutSearchProps) {
   const [query, setQuery] = useState("");
@@ -189,13 +185,7 @@ export default function HomeShortcutSearch({ shortcuts }: HomeShortcutSearchProp
               </div>
             ) : (
               <div className="grid gap-3">
-                {filteredShortcuts.slice(0, 4).map((shortcut, index) => {
-                  const primaryTool = primaryToolFor(shortcut);
-                  const remainingToolCount = primaryTool
-                    ? Math.max(shortcut.worksWithTools.length - 1, 0)
-                    : 0;
-
-                  return (
+                {filteredShortcuts.slice(0, 4).map((shortcut, index) => (
                     <article
                       key={shortcut.slug}
                       style={{ animationDelay: `${index * 45}ms` }}
@@ -222,32 +212,14 @@ export default function HomeShortcutSearch({ shortcuts }: HomeShortcutSearchProp
                           <p className="ateflo-clamp-2 mt-2 text-sm leading-6 text-slate-600">
                             {shortcut.summary}
                           </p>
-                          {primaryTool && (
-                            <div className="mt-4">
-                              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                                Works with
-                              </p>
-                              <div className="mt-2 flex flex-wrap items-center gap-2">
-                                <span className="inline-flex min-h-9 max-w-full items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-sm font-semibold text-slate-800">
-                                  <ToolIcon {...primaryTool} size={22} />
-                                  <span className="truncate">{primaryTool.name}</span>
-                                </span>
-                                {remainingToolCount > 0 && (
-                                  <span className="inline-flex min-h-9 items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-semibold text-slate-500">
-                                    +{remainingToolCount} more
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          )}
+                          <ShortcutWorksWithCompact shortcut={shortcut} className="mt-4" />
                         </div>
                         <span className="mt-auto inline-flex pt-5 text-sm font-semibold text-teal-800">
                           Open this shortcut
                         </span>
                       </Link>
                     </article>
-                  );
-                })}
+                ))}
               </div>
             )}
           </div>

@@ -26,6 +26,7 @@ export interface ShortcutDiscoveryItem {
   readonly guideTypeLabel: string;
   readonly topicCluster?: string;
   readonly worksWithTools: readonly ShortcutWorksWithTool[];
+  readonly compactWorksWithTools?: readonly ShortcutWorksWithTool[];
   readonly searchAliases: readonly string[];
   readonly searchText: string;
 }

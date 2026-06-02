@@ -147,13 +147,16 @@ function resolveWorksWithSlugs(guide: Guide): string[] {
   return fallbackWorksWithSlugs(guide);
 }
 
-export function guideWorksWithTools(guide: Guide): readonly ShortcutWorksWithTool[] {
+export function guideWorksWithTools(
+  guide: Guide,
+  limit = 3,
+): readonly ShortcutWorksWithTool[] {
   const tools = resolveWorksWithSlugs(guide).flatMap((slug) => {
     const tool = toolsBySlug.get(slug as ToolSlug);
     return tool ? [tool] : [];
   });
 
-  return tools.slice(0, 3).map((tool) => ({
+  return tools.slice(0, limit).map((tool) => ({
     slug: tool.slug,
     name: tool.name,
     officialUrl: tool.officialUrl,
@@ -360,6 +363,7 @@ export function toDiscoveryItem(guide: Guide): ShortcutDiscoveryItem {
     guideTypeLabel: formatGuideLayoutLabel(resolveGuideLayoutType(guide.guideType)),
     topicCluster: guide.topicCluster,
     worksWithTools: guideWorksWithTools(guide),
+    compactWorksWithTools: guideWorksWithTools(guide, 5),
     searchAliases,
     searchText: shortcutSearchValues(guide).join(" ").toLowerCase(),
   };
