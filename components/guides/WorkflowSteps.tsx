@@ -1,3 +1,4 @@
+import CollapsedGuideSection from "@/components/guides/CollapsedGuideSection";
 import type { GuideWorkflowStep } from "@/lib/guides";
 
 interface WorkflowStepsProps {
@@ -16,21 +17,11 @@ export default function WorkflowSteps({
   }
 
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-700">
-          Step-by-step
-        </p>
-        <h3 className="mt-2 text-xl font-semibold tracking-tight text-slate-900">
-          {title}
-        </h3>
-        {description && (
-          <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
-            {description}
-          </p>
-        )}
-      </div>
-
+    <CollapsedGuideSection
+      eyebrow="Step-by-step"
+      title={title}
+      description={description}
+    >
       <ol className="mt-5 grid gap-3 lg:grid-cols-2">
         {steps.map((step, index) => (
           <li
@@ -73,6 +64,6 @@ export default function WorkflowSteps({
           </li>
         ))}
       </ol>
-    </section>
+    </CollapsedGuideSection>
   );
 }

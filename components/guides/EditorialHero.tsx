@@ -1,4 +1,5 @@
 import type { Guide } from "@/lib/guides";
+import PromptHeroButton from "@/components/guides/PromptHeroButton";
 
 interface EditorialHeroProps {
   readonly guide: Guide;
@@ -53,12 +54,10 @@ export default function EditorialHero({ guide }: EditorialHeroProps) {
             {pill}
           </span>
         ))}
-        <a
-          href="#prompt-builder"
-          className="inline-flex min-h-9 items-center rounded-full bg-teal-700 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
-        >
-          Start shortcut
-        </a>
+      </div>
+
+      <div className="mt-5 max-w-xs">
+        <PromptHeroButton />
       </div>
     </header>
   );

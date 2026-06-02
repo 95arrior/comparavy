@@ -16,6 +16,7 @@ interface TopCopyPromptButtonProps {
 
 export default function TopCopyPromptButton({ guideSlug }: TopCopyPromptButtonProps) {
   const [copied, setCopied] = useState(false);
+  const [promptVisible, setPromptVisible] = useState(false);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const resetTimer = useRef<number | undefined>(undefined);
 
@@ -50,8 +51,28 @@ export default function TopCopyPromptButton({ guideSlug }: TopCopyPromptButtonPr
     };
   }, []);
 
+  useEffect(() => {
+    const target = document.getElementById("prompt-builder");
+
+    if (!target) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setPromptVisible(entry.isIntersecting),
+      { threshold: 0.2 },
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, []);
+
+  if (promptVisible) {
+    return null;
+  }
+
   return (
-    <div>
+    <div className="pointer-events-none fixed inset-x-4 bottom-4 z-40 flex justify-center lg:inset-x-auto lg:right-6 lg:justify-end">
       <button
         ref={buttonRef}
         type="button"
@@ -65,14 +86,14 @@ export default function TopCopyPromptButton({ guideSlug }: TopCopyPromptButtonPr
             }),
           )
         }
-        className="ateflo-primary-copy-button inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-center text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+        className="ateflo-primary-copy-button pointer-events-auto inline-flex min-h-12 w-full max-w-sm items-center justify-center gap-2 rounded-full px-5 py-3 text-center text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 lg:w-auto"
       >
         <span className="relative z-10 inline-flex items-center gap-2">
           <CopyIcon copied={copied} />
-          {copied ? "Copied ✓" : "Copy Prompt"}
+          {copied ? "Copied ✓" : "Build or copy prompt"}
         </span>
       </button>
-      <p role="status" aria-live="polite" className="mt-2 min-h-5 max-w-xs text-xs leading-5 text-slate-600">
+      <p className="sr-only" role="status" aria-live="polite">
         {copied ? "Prompt copied. Paste it into ChatGPT, Claude, Gemini, Copilot, or another AI chat tool." : ""}
       </p>
     </div>

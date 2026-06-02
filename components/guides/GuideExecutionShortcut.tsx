@@ -944,6 +944,57 @@ function SimpleCard({
   );
 }
 
+function ResultExampleDisclosure({
+  exampleInput,
+  exampleOutput,
+}: {
+  readonly exampleInput: string;
+  readonly exampleOutput: readonly string[];
+}) {
+  if (!exampleInput.trim() && exampleOutput.length === 0) {
+    return null;
+  }
+
+  return (
+    <details className="group rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <summary className="flex cursor-pointer list-none items-start justify-between gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden">
+        <span className="min-w-0">
+          <span className="block text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
+            Example result
+          </span>
+          <span className="mt-2 block text-xl font-semibold tracking-tight text-slate-950">
+            See what the result can look like
+          </span>
+          <span className="mt-2 block max-w-2xl text-sm leading-7 text-slate-600">
+            Use this as a review shape, not a promise that every AI tool will write the exact same output.
+          </span>
+        </span>
+        <span
+          aria-hidden="true"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-lg font-normal text-teal-700 transition group-open:rotate-45 group-open:bg-teal-50"
+        >
+          +
+        </span>
+      </summary>
+
+      <div className="mt-5 grid gap-4 border-t border-slate-100 pt-5 lg:grid-cols-2">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-sm font-semibold text-slate-900">Example input</p>
+          <p className="mt-2 text-sm leading-6 text-slate-700">{exampleInput}</p>
+        </div>
+        <div className="rounded-2xl border border-teal-100 bg-teal-50/70 p-4">
+          <p className="text-sm font-semibold text-slate-900">Example output</p>
+          <ul className="mt-2 space-y-2 text-sm leading-6 text-slate-700">
+            {exampleOutput.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </details>
+  );
+}
+
 export default function GuideExecutionShortcut({ guide }: { readonly guide: Guide }) {
   const config = promptConfigs[guide.slug] ?? promptConfigs[promptConfigAliases[guide.slug] ?? ""];
   const [values, setValues] = useState<Record<string, string>>({});
@@ -1187,32 +1238,20 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
         </pre>
       </section>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <SimpleCard title="Example result">
-          <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-sm font-semibold text-slate-900">Example input</p>
-            <p className="mt-2 text-sm leading-6 text-slate-700">{config.exampleInput}</p>
-          </div>
-          <div className="mt-4 rounded-2xl border border-teal-100 bg-teal-50/70 p-4">
-            <p className="text-sm font-semibold text-slate-900">Example output</p>
-            <ul className="mt-2 space-y-2 text-sm leading-6 text-slate-700">
-              {config.exampleOutput.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </div>
-        </SimpleCard>
+      <ResultExampleDisclosure
+        exampleInput={config.exampleInput}
+        exampleOutput={config.exampleOutput}
+      />
 
-        <SimpleCard title="Check before using">
-          <ul className="mt-4 space-y-3 text-base leading-7 text-slate-700">
-            {config.checkBeforeUsing.map((item) => (
-              <li key={item} className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                {item}
-              </li>
-            ))}
-          </ul>
-        </SimpleCard>
-      </div>
+      <SimpleCard title="Check before using">
+        <ul className="mt-4 space-y-3 text-base leading-7 text-slate-700">
+          {config.checkBeforeUsing.map((item) => (
+            <li key={item} className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+              {item}
+            </li>
+          ))}
+        </ul>
+      </SimpleCard>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import SectionHeading from "@/components/SectionHeading";
+import CollapsedGuideSection from "@/components/guides/CollapsedGuideSection";
 
 interface RealWorldScenarioProps {
   readonly scenario?: string;
@@ -14,8 +14,7 @@ export default function RealWorldScenario({
   userPain,
 }: RealWorldScenarioProps) {
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-      <SectionHeading eyebrow="Real-world scenario">Who this is for</SectionHeading>
+    <CollapsedGuideSection eyebrow="Real-world scenario" title="Who this is for">
       <div className="mt-5 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
         <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
           <p className="text-sm font-semibold text-slate-900">Reader</p>
@@ -30,6 +29,6 @@ export default function RealWorldScenario({
           </p>
         </div>
       </div>
-    </section>
+    </CollapsedGuideSection>
   );
 }

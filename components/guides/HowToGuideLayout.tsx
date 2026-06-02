@@ -1,3 +1,4 @@
+import CollapsedGuideSection from "@/components/guides/CollapsedGuideSection";
 import CommonMistakes from "@/components/guides/CommonMistakes";
 import DeviceUseCaseBlock from "@/components/guides/DeviceUseCaseBlock";
 import FinderCta from "@/components/guides/FinderCta";
@@ -5,7 +6,6 @@ import RealWorldScenario from "@/components/guides/RealWorldScenario";
 import ToolsYouCanUse from "@/components/guides/ToolsYouCanUse";
 import WorkflowSteps from "@/components/guides/WorkflowSteps";
 import FaqAccordion from "@/components/FaqAccordion";
-import SectionHeading from "@/components/SectionHeading";
 import type { Guide, GuideWorkflowStep } from "@/lib/guides";
 
 function fallbackSteps(guide: Guide): readonly GuideWorkflowStep[] {
@@ -51,8 +51,7 @@ export default function HowToGuideLayout({ guide }: { readonly guide: Guide }) {
         userPain={guide.userPain}
       />
 
-      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <SectionHeading eyebrow="What you need">A short starting checklist</SectionHeading>
+      <CollapsedGuideSection eyebrow="What you need" title="A short starting checklist">
         <ul className="mt-5 grid gap-3 text-sm leading-7 text-slate-700 sm:grid-cols-2">
           {whatYouNeedItems(guide).map((item) => (
             <li key={item} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
@@ -60,7 +59,7 @@ export default function HowToGuideLayout({ guide }: { readonly guide: Guide }) {
             </li>
           ))}
         </ul>
-      </section>
+      </CollapsedGuideSection>
 
       <WorkflowSteps
         steps={steps}
@@ -89,21 +88,19 @@ export default function HowToGuideLayout({ guide }: { readonly guide: Guide }) {
       />
 
       {faqItems.length > 0 && (
-        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-          <SectionHeading eyebrow="FAQ">Search-intent questions</SectionHeading>
+        <CollapsedGuideSection eyebrow="FAQ" title="Search-intent questions">
           <div className="mt-6">
             <FaqAccordion items={faqItems} />
           </div>
-        </section>
+        </CollapsedGuideSection>
       )}
 
-      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <SectionHeading eyebrow="Next step">Run one real example</SectionHeading>
+      <CollapsedGuideSection eyebrow="Next step" title="Run one real example">
         <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-700">
           {guide.finalVerdict}
         </p>
         <FinderCta guide={guide} secondaryLabel="Related Shortcuts" />
-      </section>
+      </CollapsedGuideSection>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import SectionHeading from "@/components/SectionHeading";
+import CollapsedGuideSection from "@/components/guides/CollapsedGuideSection";
 
 interface CommonMistakesProps {
   readonly mistakes?: readonly string[];
@@ -20,8 +20,7 @@ export default function CommonMistakes({
   }
 
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-      <SectionHeading eyebrow={eyebrow}>{title}</SectionHeading>
+    <CollapsedGuideSection eyebrow={eyebrow} title={title}>
       <ul className="mt-5 grid gap-3 text-sm leading-7 text-slate-700 lg:grid-cols-2">
         {items.map((item) => (
           <li key={item} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
@@ -29,6 +28,6 @@ export default function CommonMistakes({
           </li>
         ))}
       </ul>
-    </section>
+    </CollapsedGuideSection>
   );
 }

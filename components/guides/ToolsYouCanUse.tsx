@@ -1,4 +1,4 @@
-import SectionHeading from "@/components/SectionHeading";
+import CollapsedGuideSection from "@/components/guides/CollapsedGuideSection";
 import GuideToolCard from "@/components/guides/GuideToolCard";
 import type { Guide, GuideToolUse } from "@/lib/guides";
 
@@ -34,10 +34,11 @@ export default function ToolsYouCanUse({
   }
 
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-      <SectionHeading eyebrow="Tool support" description={description}>
-        {title}
-      </SectionHeading>
+    <CollapsedGuideSection
+      eyebrow="Tool support"
+      title={title}
+      description={description}
+    >
       <div className="mt-5 grid gap-3 lg:grid-cols-3">
         {tools.map((tool) => {
           const recommendation = guide.recommendedTools.find(
@@ -58,6 +59,6 @@ export default function ToolsYouCanUse({
           );
         })}
       </div>
-    </section>
+    </CollapsedGuideSection>
   );
 }
