@@ -19,12 +19,18 @@ const TOPIC_WORKS_WITH_SLUGS: Record<string, readonly string[]> = {
   "best-ai-tools-for-small-business-content-calendars": ["canva-magic-studio", "chatgpt", "claude"],
   "how-to-summarize-a-pdf-into-study-notes-with-ai": ["chatgpt", "claude", "gemini"],
   "how-to-turn-a-blog-post-into-an-instagram-carousel-with-ai": ["canva-magic-studio", "chatgpt", "claude"],
+  "how-to-turn-a-voice-memo-into-a-to-do-list-with-ai": ["chatgpt", "notion-ai", "otter-ai"],
   "how-to-turn-meeting-notes-into-a-client-recap-with-ai": ["otter-ai", "chatgpt", "claude"],
+  "how-to-write-a-dating-app-bio-with-ai-without-sounding-generic": ["chatgpt", "claude", "gemini"],
+  "how-to-write-google-business-profile-posts-with-ai": ["chatgpt", "gemini", "canva-magic-studio"],
   "blog-to-instagram-carousel": ["canva-magic-studio", "chatgpt", "claude"],
+  "dating-app-bio": ["chatgpt", "claude", "gemini"],
   "etsy-product-descriptions": ["canva-magic-studio", "chatgpt", "claude"],
+  "google-business-profile-posts": ["chatgpt", "gemini", "canva-magic-studio"],
   "meeting-notes-client-recaps": ["otter-ai", "chatgpt", "claude"],
   "pdf-study-notes": ["chatgpt", "claude", "gemini"],
   "small-business-content-calendar": ["canva-magic-studio", "chatgpt", "claude"],
+  "voice-memo-to-task-list": ["chatgpt", "notion-ai", "otter-ai"],
 };
 
 const FALLBACK_WORKS_WITH_SLUGS = ["chatgpt", "claude", "gemini"] as const;
@@ -178,6 +184,47 @@ export function guideSearchAliases(guide: Guide): readonly string[] {
         "owners",
         "deadlines",
         "open questions",
+      ];
+    case "how-to-turn-a-voice-memo-into-a-to-do-list-with-ai":
+      return [
+        ...guideAliases,
+        "voice memo to do list",
+        "voice memo task list",
+        "voice note to tasks",
+        "turn voice memo into tasks",
+        "AI to do list from voice note",
+        "action items from voice memo",
+        "messy notes to task list",
+        "phone voice memo tasks",
+        "reminder list from voice memo",
+        "to do list",
+      ];
+    case "how-to-write-google-business-profile-posts-with-ai":
+      return [
+        ...guideAliases,
+        "Google Business Profile posts",
+        "Google Business Profile post ideas",
+        "Google business posts AI",
+        "local business post ideas",
+        "GBP posts",
+        "Google Maps business posts",
+        "small business update post",
+        "local business promotion post",
+        "AI Google business post",
+      ];
+    case "how-to-write-a-dating-app-bio-with-ai-without-sounding-generic":
+      return [
+        ...guideAliases,
+        "AI dating app bio",
+        "dating app bio with AI",
+        "Hinge bio AI",
+        "Bumble bio AI",
+        "Tinder bio AI",
+        "dating profile bio",
+        "dating app prompt answers",
+        "write dating profile",
+        "dating bio not generic",
+        "dating app bio ideas",
       ];
     case "best-ai-tools-for-etsy-product-descriptions":
       return [

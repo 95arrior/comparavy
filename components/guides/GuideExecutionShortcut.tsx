@@ -87,6 +87,47 @@ const blogCarouselFields = {
   avoid: "Things to avoid",
 } as const;
 
+const voiceMemoFields = {
+  transcript: "Voice memo transcript",
+  context: "Context or project",
+  deadlines: "Known deadlines",
+  people: "People involved",
+  extraNotes: "Extra notes",
+  priorityStyle: "Priority style",
+  timeAvailable: "Time available",
+  categories: "Categories",
+  ignore: "Things to ignore",
+} as const;
+
+const googleBusinessProfileFields = {
+  businessType: "Business type",
+  location: "Location or service area",
+  offer: "Offer or update",
+  targetCustomer: "Target customer",
+  tone: "Tone",
+  extraNotes: "Extra notes",
+  postType: "Post type",
+  cta: "CTA",
+  dateDetails: "Date or event details",
+  restrictions: "Restrictions",
+  avoid: "Things to avoid",
+} as const;
+
+const datingBioFields = {
+  appType: "App or profile type",
+  traits: "Personality traits",
+  interests: "Interests",
+  relationshipGoal: "Relationship goal",
+  tone: "Tone",
+  avoid: "Things to avoid",
+  ageContext: "Age range context",
+  lifestyle: "City or lifestyle",
+  dealbreakers: "Dealbreakers",
+  favoriteActivity: "Favorite activity",
+  humorLevel: "Humor level",
+  examplesLiked: "Examples you like",
+} as const;
+
 function valueOrPlaceholder(values: Record<string, string>, key: string, placeholder: string): string {
   return values[key]?.trim() || `[${placeholder}]`;
 }
@@ -572,6 +613,203 @@ Rules:
 - If important details are missing, write "Needs owner input."
 - Keep the recommendation realistic for a small business owner.
 - Include the calendar fields the chosen tool should help produce.`;
+  },
+};
+
+promptConfigs["how-to-turn-a-voice-memo-into-a-to-do-list-with-ai"] = {
+  whatYouWillMake:
+    "A cleaned-up task list with priority levels, next actions, owners, deadlines, quick wins, unclear items, and questions to clarify.",
+  primaryFields: [
+    {
+      key: "transcript",
+      label: "Voice memo transcript",
+      placeholder: "Example: Remind me to email Sarah about the proposal, book the dentist...",
+      multiline: true,
+    },
+    { key: "context", label: "Context or project", placeholder: "Example: Friday personal admin and client follow-up" },
+    { key: "deadlines", label: "Known deadlines", placeholder: "Example: Proposal follow-up this week" },
+    { key: "people", label: "People involved", placeholder: "Example: Sarah, client team, dentist office" },
+    {
+      key: "extraNotes",
+      label: "Extra notes",
+      placeholder: "Example: Separate personal errands from client tasks",
+      multiline: true,
+    },
+  ],
+  optionalFields: [
+    { key: "priorityStyle", label: "Priority style", placeholder: "Example: High, medium, low" },
+    { key: "timeAvailable", label: "Time available", placeholder: "Example: 30 minutes today" },
+    { key: "categories", label: "Categories", placeholder: "Example: Work, errands, finance" },
+    { key: "ignore", label: "Things to ignore", placeholder: "Example: Random ideas that are not real tasks" },
+  ],
+  exampleInput:
+    "Remind me to email Sarah about the proposal, book the dentist, check the invoice, and maybe move the client call if Friday is too packed.",
+  exampleOutput: [
+    "Task: Email Sarah about the proposal. Priority: High. Owner: me. Deadline: Deadline not specified. Next action: Draft and send the proposal follow-up email.",
+    "Task: Book the dentist. Priority: Medium. Owner: me. Deadline: Deadline not specified. Next action: Call or use the dentist office booking page.",
+    "Task: Check the invoice. Priority: Medium. Owner: me. Deadline: Deadline not specified. Next action: Open the invoice and confirm payment status.",
+    "Quick win: Book the dentist if the office has online scheduling.",
+    "Needs clarification: Decide whether to move the client call. Friday may be too packed, but no new time was provided.",
+  ],
+  checkBeforeUsing: [
+    "Confirm every deadline before adding it to your calendar.",
+    "Confirm every owner before assigning the task to someone else.",
+    "Remove tasks that were only passing ideas.",
+    "Add missing dates where the AI wrote Deadline not specified.",
+    "Move unclear items into a clarification list instead of treating them as confirmed tasks.",
+  ],
+  buildPrompt(values) {
+    return `Turn this voice memo transcript into a clear to-do list.
+
+Voice memo details:
+${detailLines(values, voiceMemoFields)}
+
+Finished output:
+1. Cleaned-up task list
+2. Priority level for each task
+3. Clear next action for each task
+4. Owner if mentioned
+5. Deadline if mentioned
+6. Quick wins
+7. Unclear or incomplete items
+8. Questions to clarify
+
+Rules:
+- Use only the transcript and details I provide.
+- Do not invent tasks, deadlines, owners, or commitments.
+- If a deadline is not clear, write "Deadline not specified."
+- If an owner is not clear, write "Owner not specified."
+- Turn vague reminders into clear next actions when possible.
+- Put unclear or incomplete items under "Needs clarification."
+- Do not turn every random idea into a task.
+- Keep the list easy to scan.
+- Make the output useful in ChatGPT, Claude, Gemini, Microsoft Copilot, or another AI chat tool.`;
+  },
+};
+
+promptConfigs["how-to-write-google-business-profile-posts-with-ai"] = {
+  whatYouWillMake:
+    "A review-ready Google Business Profile post with update, offer-style, and event-style versions where relevant, plus CTA options, a visual idea, and owner review checklist.",
+  primaryFields: [
+    { key: "businessType", label: "Business type", placeholder: "Example: Local dog grooming salon" },
+    { key: "location", label: "Location or service area", placeholder: "Example: Austin, Texas" },
+    { key: "offer", label: "Offer or update", placeholder: "Example: Summer de-shedding appointments" },
+    { key: "targetCustomer", label: "Target customer", placeholder: "Example: Busy pet owners" },
+    { key: "tone", label: "Tone", placeholder: "Example: Friendly, clear, local, not hype-driven" },
+    {
+      key: "extraNotes",
+      label: "Extra notes",
+      placeholder: "Example: Owner must confirm availability and prices before posting",
+      multiline: true,
+    },
+  ],
+  optionalFields: [
+    { key: "postType", label: "Post type", placeholder: "Example: Update, offer, event, announcement" },
+    { key: "cta", label: "CTA", placeholder: "Example: Call to ask about openings" },
+    { key: "dateDetails", label: "Date or event details", placeholder: "Example: Available in June and July" },
+    { key: "restrictions", label: "Restrictions", placeholder: "Example: Appointment availability varies" },
+    { key: "avoid", label: "Things to avoid", placeholder: "Example: Do not mention prices or discounts" },
+  ],
+  exampleInput:
+    "Local dog grooming salon in Austin, offering summer de-shedding appointments for busy pet owners.",
+  exampleOutput: [
+    "Update post: Summer shedding season is here in Austin. Our local dog grooming salon is offering de-shedding appointment options for busy pet owners who want help keeping coats easier to manage.",
+    "CTA option: Call or message us to ask about available appointment times.",
+    "Offer-style version: Needs owner input before posting if there is a discount, package, price, or limited-time offer.",
+    "Visual idea: A real photo of grooming tools, a clean coat after brushing, or the grooming station.",
+    "Owner review: Confirm appointment availability, dates, hours, pricing if mentioned, restrictions, and any offer details.",
+  ],
+  checkBeforeUsing: [
+    "Verify offer details before posting.",
+    "Verify dates and event information.",
+    "Verify business hours and appointment availability.",
+    "Verify pricing if the post mentions it.",
+    "Remove unsupported claims, fake proof, or hype.",
+    "Confirm the CTA matches how customers should contact the business.",
+  ],
+  buildPrompt(values) {
+    return `Write Google Business Profile posts with AI from the business details below.
+
+Business details:
+${detailLines(values, googleBusinessProfileFields)}
+
+Finished output:
+1. Short Google Business Profile update post
+2. Offer-style version if the details support an offer
+3. Event-style version if the details support an event
+4. CTA options
+5. Photo or visual idea
+6. Review checklist before publishing
+
+Rules:
+- Do not claim guaranteed rankings, leads, sales, or growth.
+- Do not invent discounts, prices, reviews, testimonials, certifications, awards, business hours, or availability.
+- If details are missing, mark them as "Needs owner input."
+- Keep the post clear, local, and easy to read.
+- Avoid hype and unsupported claims.
+- Make the post ready for owner review, not automatic publishing.
+- Keep the output useful in ChatGPT, Claude, Gemini, Microsoft Copilot, or another AI chat tool.`;
+  },
+};
+
+promptConfigs["how-to-write-a-dating-app-bio-with-ai-without-sounding-generic"] = {
+  whatYouWillMake:
+    "Three natural dating app bio options, three prompt-answer options, three opening line ideas if appropriate, a cliche warning list, and a review checklist.",
+  primaryFields: [
+    { key: "appType", label: "App or profile type", placeholder: "Example: Hinge profile, Bumble bio, Tinder bio" },
+    { key: "traits", label: "Personality traits", placeholder: "Example: Dry humor, thoughtful, outdoorsy, low-key" },
+    { key: "interests", label: "Interests", placeholder: "Example: Coffee shops, hiking, indie movies" },
+    { key: "relationshipGoal", label: "Relationship goal", placeholder: "Example: Intentional, but not too serious too fast" },
+    { key: "tone", label: "Tone", placeholder: "Example: Natural, warm, lightly funny" },
+    { key: "avoid", label: "Things to avoid", placeholder: "Example: Generic lines, bragging, sounding desperate" },
+  ],
+  optionalFields: [
+    { key: "ageContext", label: "Age range context", placeholder: "Example: Early 30s" },
+    { key: "lifestyle", label: "City or lifestyle", placeholder: "Example: City weekends, casual hikes, quiet nights" },
+    { key: "dealbreakers", label: "Dealbreakers", placeholder: "Example: Not looking for hookup-only messaging" },
+    { key: "favoriteActivity", label: "Favorite activity", placeholder: "Example: Finding a new coffee shop after a hike" },
+    { key: "humorLevel", label: "Humor level", placeholder: "Example: Dry, subtle, not try-hard" },
+    { key: "examplesLiked", label: "Examples you like", placeholder: "Example: Short, specific bios with one conversation hook" },
+  ],
+  exampleInput:
+    "Likes coffee shops, hiking, dry humor, indie movies, looking for something intentional but not too serious too fast.",
+  exampleOutput: [
+    "Bio option 1: Coffee shops, uphill trails, dry humor, and indie movies that make me overthink the ending. Looking for something intentional, with room to take it one good conversation at a time.",
+    "Bio option 2: Happiest with a good latte, a weekend hike, and someone who can appreciate a quiet movie plus a sarcastic side comment.",
+    "Prompt answer: The way to win me over: suggest a coffee spot, then be willing to debate the movie afterward.",
+    "Opening line idea: What is your most defensible coffee order?",
+    "Cliche warning: Avoid partner in crime, fluent in sarcasm, and anything that sounds like a dating app template.",
+  ],
+  checkBeforeUsing: [
+    "Make sure the bio sounds like you.",
+    "Remove anything untrue or exaggerated.",
+    "Avoid cliches unless you intentionally want that tone.",
+    "Avoid oversharing private details.",
+    "Keep the tone natural and respectful.",
+    "Verify the copy fits the app style and space limits.",
+  ],
+  buildPrompt(values) {
+    return `Write a dating app bio with AI without making it sound generic.
+
+Profile details:
+${detailLines(values, datingBioFields)}
+
+Finished output:
+1. Three dating app bio options
+2. Three short prompt-answer options
+3. Three opening line ideas if appropriate for the app
+4. Cliche warning list
+5. "Does this sound like me?" review checklist
+
+Rules:
+- Do not invent personality traits, job, achievements, lifestyle, height, income, relationship goals, or personal details.
+- Avoid cliches like "partner in crime" unless I ask for that tone.
+- Avoid sounding fake, desperate, arrogant, manipulative, or overly polished.
+- Keep the bio natural, specific, respectful, and safe.
+- Do not guarantee matches, dates, romantic success, or replies.
+- If details are missing, mark them as "Needs your input."
+- Make every option easy for a beginner to review and edit.
+- Keep the output useful in ChatGPT, Claude, Gemini, Microsoft Copilot, or another AI chat tool.`;
   },
 };
 
