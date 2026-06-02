@@ -1,88 +1,25 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import EditorialHero from "@/components/guides/EditorialHero";
-import GuideDetailRenderer from "@/components/guides/GuideDetailRenderer";
-import Logo from "@/components/Logo";
-import {
-  getPublishedGuideBySlug,
-  getPublishedGuides,
-} from "@/lib/guides";
+import { permanentRedirect } from "next/navigation";
 
-interface ShortcutPageProps {
+interface ShortcutRedirectPageProps {
   readonly params: Promise<{ slug: string }>;
 }
 
-export const dynamicParams = false;
+function shortcutRedirectDestination(slug: string): string {
+  if (slug === "how-to-write-google-business-profile-posts-with-ai") {
+    return "/kits/local-business-ai-visibility-kit";
+  }
 
-export function generateStaticParams() {
-  return getPublishedGuides().map((guide) => ({ slug: guide.slug }));
+  if (slug === "how-to-write-a-dating-app-bio-with-ai-without-sounding-generic") {
+    return "/kits#dating-profile-rewrite-kit";
+  }
+
+  return "/kits";
 }
 
-export async function generateMetadata({
+export default async function ShortcutRedirectPage({
   params,
-}: ShortcutPageProps): Promise<Metadata> {
+}: ShortcutRedirectPageProps) {
   const { slug } = await params;
-  const guide = getPublishedGuideBySlug(slug);
 
-  if (!guide) {
-    return { title: "Shortcut Not Found" };
-  }
-
-  return {
-    title: guide.title,
-    description: guide.metaDescription,
-    keywords: [guide.primaryKeyword, ...guide.secondaryKeywords],
-    alternates: {
-      canonical: `/shortcuts/${guide.slug}`,
-    },
-    openGraph: {
-      title: `${guide.title} | AteFlo`,
-      description: guide.metaDescription,
-      url: `/shortcuts/${guide.slug}`,
-      type: "article",
-    },
-    twitter: {
-      card: "summary",
-      title: `${guide.title} | AteFlo`,
-      description: guide.metaDescription,
-    },
-  };
-}
-
-export default async function ShortcutDetailPage({ params }: ShortcutPageProps) {
-  const { slug } = await params;
-  const guide = getPublishedGuideBySlug(slug);
-
-  if (!guide) {
-    notFound();
-  }
-
-  return (
-    <main className="ateflo-page-shell min-h-screen bg-[#F7F9FC] px-4 py-6 sm:px-6 sm:py-10">
-      <article className="mx-auto max-w-6xl">
-        <nav className="mb-6 flex flex-wrap items-center gap-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <Logo />
-            <Link
-              href="/tools"
-              className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-teal-200 hover:bg-teal-50"
-            >
-              Tools
-            </Link>
-            <Link
-              href="/shortcuts"
-              className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-teal-200 hover:bg-teal-50"
-            >
-              Shortcuts
-            </Link>
-          </div>
-        </nav>
-
-        <EditorialHero guide={guide} />
-
-        <GuideDetailRenderer guide={guide} />
-      </article>
-    </main>
-  );
+  permanentRedirect(shortcutRedirectDestination(slug));
 }

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import FaqAccordion from "@/components/FaqAccordion";
 import KitCtaLink from "@/components/kits/KitCtaLink";
+import LocalBusinessKitPreview from "@/components/kits/LocalBusinessKitPreview";
 import SiteHeader from "@/components/SiteHeader";
-import TrackedLink from "@/components/TrackedLink";
 import {
   type AteFloKit,
   getKitBySlug,
@@ -87,20 +87,12 @@ export default function LocalBusinessAiVisibilityKitPage() {
               </p>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <KitPrimaryCta actionLocation="local_business_kit_hero" />
-                <TrackedLink
-                  href="/shortcuts/how-to-write-google-business-profile-posts-with-ai"
-                  eventName="shortcut_card_click"
-                  eventParams={{
-                    source_page: "local_business_kit",
-                    action_location: "local_business_kit_try_free_shortcut",
-                    destination_slug: "how-to-write-google-business-profile-posts-with-ai",
-                    destination_title:
-                      "How to Write Google Business Profile Posts with AI",
-                  }}
+                <a
+                  href="#whats-inside"
                   className={secondaryCtaClass}
                 >
-                  Try a free shortcut
-                </TrackedLink>
+                  See what&apos;s inside
+                </a>
               </div>
             </div>
 
@@ -157,7 +149,16 @@ export default function LocalBusinessAiVisibilityKitPage() {
           ))}
         </section>
 
-        <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+        <LocalBusinessKitPreview
+          kitSlug={kit.slug}
+          ctaHref={getKitCtaHref(kit)}
+          hasCheckout={kitHasCheckout(kit)}
+        />
+
+        <section
+          id="whats-inside"
+          className="mt-8 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7"
+        >
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
               What is inside
@@ -304,12 +305,13 @@ export default function LocalBusinessAiVisibilityKitPage() {
                 Use it with your AI chat tool
               </p>
               <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
-                Get the kit when checkout is connected.
+                Get the complete workflow.
               </h2>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-700">
+                <span className="font-semibold text-teal-900">{kit.priceLabel}.</span>{" "}
                 Use it with ChatGPT, Claude, Gemini, Copilot, or another AI chat
-                tool. If checkout is not configured yet, this action records
-                early interest without sending business details.
+                tool. If checkout is not configured yet, the CTA records early
+                interest without sending business details.
               </p>
             </div>
             <KitPrimaryCta actionLocation="local_business_kit_bottom_cta" />

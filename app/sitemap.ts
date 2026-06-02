@@ -3,7 +3,7 @@ import { statSync } from "node:fs";
 import path from "node:path";
 import { getActiveKits } from "@/data/kits";
 import { tools } from "@/data/tools";
-import { getAllGuides, getPublishedGuides } from "@/lib/guides";
+import { getAllGuides } from "@/lib/guides";
 import { SITE_URL } from "@/lib/site";
 
 const TOOLS_SOURCE_PATH = path.join(process.cwd(), "data", "tools.ts");
@@ -54,7 +54,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     sitemapEntry("/finder", guideContentModified, "weekly", 0.9),
     sitemapEntry("/kits", kitsSourceModified, "weekly", 0.85),
     sitemapEntry("/tools", toolsSourceModified, "weekly", 0.9),
-    sitemapEntry("/shortcuts", guideContentModified, "weekly", 0.9),
     sitemapEntry("/about", guideContentModified, "monthly", 0.3),
     sitemapEntry("/contact", guideContentModified, "monthly", 0.3),
     sitemapEntry("/privacy", guideContentModified, "monthly", 0.3),
@@ -65,18 +64,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     sitemapEntry(`/tools/${tool.slug}`, toolsSourceModified, "monthly", 0.75),
   );
 
-  const guideEntries: MetadataRoute.Sitemap = getPublishedGuides().map((guide) =>
-    sitemapEntry(
-      `/shortcuts/${guide.slug}`,
-      parseDate(guide.updatedAt, guideContentModified),
-      "weekly",
-      0.8,
-    ),
-  );
-
   const kitEntries: MetadataRoute.Sitemap = getActiveKits().map((kit) =>
     sitemapEntry(`/kits/${kit.slug}`, kitsSourceModified, "weekly", 0.8),
   );
 
-  return [...staticEntries, ...toolEntries, ...guideEntries, ...kitEntries];
+  return [...staticEntries, ...toolEntries, ...kitEntries];
 }

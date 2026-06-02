@@ -23,7 +23,9 @@ const ALLOWED_PARAM_KEYS = new Set([
   "search_query_length",
   "previous_query_length",
   "previous_result_count",
+  "preview_field_count",
   "result_count",
+  "has_preview_generated",
   "chip_label",
 ]);
 

@@ -4,7 +4,10 @@ import { SITE_TAGLINE } from "@/lib/site";
 
 const mainLinks = [
   { href: "/kits", label: "Kits" },
-  { href: "/shortcuts", label: "Free Shortcuts" },
+  {
+    href: "/kits/local-business-ai-visibility-kit",
+    label: "Local Business Kit",
+  },
   { href: "/tools", label: "Tools" },
   { href: "/finder", label: "Finder" },
 ] as const;

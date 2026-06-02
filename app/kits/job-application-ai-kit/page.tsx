@@ -87,15 +87,16 @@ export default function JobApplicationAiKitPage() {
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <KitPrimaryCta actionLocation="job_kit_hero" />
                 <TrackedLink
-                  href="/shortcuts"
-                  eventName="shortcut_card_click"
+                  href="/kits"
+                  eventName="kit_card_click"
                   eventParams={{
+                    kit_slug: kit.slug,
                     source_page: "job_application_kit",
-                    action_location: "job_kit_try_free_shortcuts",
+                    action_location: "job_kit_explore_kits",
                   }}
                   className={secondaryCtaClass}
                 >
-                  Try free shortcuts
+                  Explore kits
                 </TrackedLink>
               </div>
             </div>

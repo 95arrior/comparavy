@@ -1,5 +1,5 @@
 import { permanentRedirect } from "next/navigation";
 
 export default function GuidesRedirectPage() {
-  permanentRedirect("/shortcuts");
+  permanentRedirect("/kits");
 }
