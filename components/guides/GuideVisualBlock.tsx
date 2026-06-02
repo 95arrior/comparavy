@@ -155,21 +155,21 @@ function ToolStackVisual({ guide }: { readonly guide: Guide }) {
 }
 
 function BeforeAfterVisual({ guide }: { readonly guide: Guide }) {
-  const before = guide.visualAssets?.beforeAfter?.before ?? `Before: scattered notes or a messy starting version for ${guide.searchIntent}.`;
-  const after = guide.visualAssets?.beforeAfter?.after ?? `After: a checked, usable result that is ready to review, refine, or send.`;
+  const before = guide.visualAssets?.beforeAfter?.before ?? `Starting point: scattered notes or a messy draft for ${guide.searchIntent}.`;
+  const after = guide.visualAssets?.beforeAfter?.after ?? "Result: a checked, usable draft that is ready to review, refine, or send.";
 
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-700">
-        Before and after
+        Example result
       </p>
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
         <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-4 text-sm leading-7 text-amber-950/80">
-          <p className="font-semibold text-amber-900">Before</p>
+          <p className="font-semibold text-amber-900">Starting point</p>
           {before}
         </div>
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4 text-sm leading-7 text-emerald-950/80">
-          <p className="font-semibold text-emerald-900">After</p>
+          <p className="font-semibold text-emerald-900">Result</p>
           {after}
         </div>
       </div>

@@ -1,3 +1,7 @@
+"use client";
+
+import { useId, useState } from "react";
+
 interface CollapsedGuideSectionProps {
   readonly eyebrow: string;
   readonly title: string;
@@ -11,9 +15,18 @@ export default function CollapsedGuideSection({
   description,
   children,
 }: CollapsedGuideSectionProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const contentId = useId();
+
   return (
-    <details className="group rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-      <summary className="flex cursor-pointer list-none items-start justify-between gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden">
+    <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <button
+        type="button"
+        aria-expanded={isOpen}
+        aria-controls={contentId}
+        onClick={() => setIsOpen((current) => !current)}
+        className="flex w-full cursor-pointer items-start justify-between gap-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+      >
         <span className="min-w-0">
           <span className="block text-xs font-semibold uppercase tracking-[0.16em] text-teal-700">
             {eyebrow}
@@ -29,12 +42,23 @@ export default function CollapsedGuideSection({
         </span>
         <span
           aria-hidden="true"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-lg font-normal text-teal-700 transition group-open:rotate-45 group-open:bg-teal-50"
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-lg font-normal text-teal-700 transition motion-reduce:transition-none ${
+            isOpen ? "rotate-45 bg-teal-50" : ""
+          }`}
         >
           +
         </span>
-      </summary>
-      <div className="mt-5 border-t border-slate-100 pt-5">{children}</div>
-    </details>
+      </button>
+      <div
+        id={contentId}
+        className={`grid transition-all duration-300 ease-out motion-reduce:transition-none ${
+          isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div className="mt-5 border-t border-slate-100 pt-5">{children}</div>
+        </div>
+      </div>
+    </section>
   );
 }

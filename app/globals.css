@@ -105,6 +105,55 @@ html {
     0 0 0 1px rgba(20, 184, 166, 0.3);
 }
 
+.ateflo-copy-sparks {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.ateflo-copy-spark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0.32rem;
+  height: 0.32rem;
+  border-radius: 9999px;
+  background: currentColor;
+  opacity: 0;
+  animation: ateflo-copy-spark 620ms ease-out both;
+}
+
+.ateflo-typing-caret {
+  display: inline-block;
+  width: 0.42rem;
+  height: 1em;
+  margin-left: 0.12rem;
+  border-radius: 9999px;
+  background: currentColor;
+  opacity: 0.78;
+  vertical-align: -0.14em;
+  animation: ateflo-typing-caret 760ms ease-in-out infinite;
+}
+
+.ateflo-helpful-success {
+  animation: ateflo-helpful-glow 720ms ease-out both;
+}
+
+.ateflo-helpful-ripple {
+  position: absolute;
+  right: 1.5rem;
+  top: 50%;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 9999px;
+  background: rgba(20, 184, 166, 0.12);
+  transform: translateY(-50%) scale(0.7);
+  animation: ateflo-helpful-ripple 760ms ease-out both;
+  pointer-events: none;
+}
+
 .ateflo-clamp-2 {
   display: -webkit-box;
   overflow: hidden;
@@ -307,6 +356,54 @@ html {
   }
 }
 
+@keyframes ateflo-copy-spark {
+  0% {
+    opacity: 0.95;
+    transform: translate(-50%, -50%) scale(0.75);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--spark-x)), calc(-50% + var(--spark-y))) scale(1.05);
+  }
+}
+
+@keyframes ateflo-typing-caret {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+
+  45% {
+    opacity: 0.95;
+  }
+}
+
+@keyframes ateflo-helpful-glow {
+  0%,
+  100% {
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+
+  45% {
+    box-shadow:
+      0 16px 34px rgba(15, 118, 110, 0.12),
+      0 0 0 1px rgba(20, 184, 166, 0.22);
+  }
+}
+
+@keyframes ateflo-helpful-ripple {
+  0% {
+    opacity: 0.65;
+    transform: translateY(-50%) scale(0.7);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-50%) scale(1.4);
+  }
+}
+
 @keyframes ateflo-shortcut-marquee {
   from {
     transform: translateX(0);
@@ -408,6 +505,10 @@ html {
   .ateflo-copy-button,
   .ateflo-primary-copy-button,
   .ateflo-primary-copy-button::before,
+  .ateflo-copy-spark,
+  .ateflo-typing-caret,
+  .ateflo-helpful-success,
+  .ateflo-helpful-ripple,
   .ateflo-search-results,
   .ateflo-search-result-card,
   .ateflo-featured-shortcut-card,

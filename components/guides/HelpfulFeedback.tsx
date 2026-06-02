@@ -22,6 +22,7 @@ export default function HelpfulFeedback({
   topicCluster,
 }: HelpfulFeedbackProps) {
   const [choice, setChoice] = useState<"yes" | "no" | null>(null);
+  const [celebrate, setCelebrate] = useState(false);
   const storageKey = useMemo(
     () => `ateflo:helpful-feedback:${guideSlug}`,
     [guideSlug],
@@ -42,6 +43,14 @@ export default function HelpfulFeedback({
   function handleChoice(nextChoice: HelpfulChoice) {
     setChoice(nextChoice);
 
+    if (nextChoice === "yes" && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setCelebrate(false);
+      window.requestAnimationFrame(() => setCelebrate(true));
+      window.setTimeout(() => setCelebrate(false), 820);
+    } else {
+      setCelebrate(false);
+    }
+
     try {
       window.localStorage.setItem(storageKey, nextChoice);
     } catch {
@@ -56,7 +65,14 @@ export default function HelpfulFeedback({
   }
 
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+    <section
+      className={`relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 ${
+        celebrate ? "ateflo-helpful-success" : ""
+      }`}
+    >
+      {celebrate && (
+        <span aria-hidden="true" className="ateflo-helpful-ripple" />
+      )}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="max-w-2xl">
           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
@@ -104,10 +120,10 @@ export default function HelpfulFeedback({
       {choice && (
         <p
           role="status"
-          aria-live="polite"
-          className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700"
-        >
-          {choiceMessages[choice]}
+        aria-live="polite"
+        className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700"
+      >
+        {choiceMessages[choice]}
         </p>
       )}
     </section>

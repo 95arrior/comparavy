@@ -124,6 +124,21 @@ the searcher's actual job.
 - Keep SEO-supporting content below the prompt workflow.
 - Do not put long intros, detailed tool explanations, or FAQs above the prompt
   builder.
+- Do not add a Before/After proof card by default. Use the normal Example
+  result reveal for example input and output.
+- Treat Fill in details as a guided prompt setup, not a plain generic form. It
+  should make the user feel they only need to add a few useful details before
+  AteFlo builds the prompt.
+- Copy Prompt feedback must stay stable in place: the button keeps its size,
+  changes to "Copied ✓", and resets without layout jump.
+- A generated-prompt typing reveal is allowed only as lightweight visual polish;
+  the full prompt must remain available immediately for copy and screen readers.
+- Collapsed supporting content must exist in the initial HTML and must not be
+  fetched only after click.
+- Related or Explore Works with rows may use logo-only compact mode, but every
+  logo needs an accessible label and keyboard-accessible tooltip or fallback.
+- Bottom sticky build/copy prompt buttons should not be used by default. A
+  subtle floating Back to top button is allowed.
 
 For users arriving from Google:
 

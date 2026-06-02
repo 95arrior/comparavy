@@ -142,3 +142,20 @@ The `/shortcuts` card is for scanning, not reading:
 The detail page must keep the prompt builder before long article content. Copy
 Prompt, Example output, and Check before using must appear near the action.
 Workflow, tools, and FAQ belong lower on the page.
+
+## Shortcut Interaction Rule
+
+Future shortcuts should use the current AteFlo interaction pattern:
+
+- Do not add a Before/After proof card by default.
+- Keep Fill in details as a guided prompt setup, not a plain generic form.
+- Copy Prompt must keep a stable button size and show in-place "Copied ✓"
+  feedback.
+- A lightweight generated-prompt typing reveal is allowed, but copy must be
+  available immediately and the full prompt must remain in the HTML.
+- Collapsed supporting content must be present in the initial HTML for SEO and
+  accessibility.
+- Related or Explore Works with rows can use compact logo-only mode with
+  accessible labels and tooltips.
+- Do not use a bottom sticky build/copy prompt button by default.
+- A subtle floating Back to top button is allowed.

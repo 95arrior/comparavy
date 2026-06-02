@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import AteFloIcon from "@/components/AteFloIcon";
 import { trackEvent } from "@/lib/analytics";
 import type { Guide } from "@/lib/guides";
@@ -876,9 +876,35 @@ function CopyIcon({ copied }: { readonly copied: boolean }) {
   return <AteFloIcon name={copied ? "productivity" : "copy"} className="h-4 w-4" />;
 }
 
+function CopySparkBurst({ burstId }: { readonly burstId: number }) {
+  return (
+    <span key={burstId} aria-hidden="true" className="ateflo-copy-sparks">
+      {[
+        ["-22px", "-18px", "0ms", "text-teal-100"],
+        ["20px", "-20px", "70ms", "text-white"],
+        ["28px", "2px", "120ms", "text-teal-100"],
+        ["-26px", "4px", "40ms", "text-white"],
+        ["-10px", "-28px", "100ms", "text-teal-100"],
+      ].map(([x, y, delay, color], index) => (
+        <span
+          key={`${burstId}-${index}`}
+          className={`ateflo-copy-spark ${color}`}
+          style={{
+            "--spark-x": x,
+            "--spark-y": y,
+            animationDelay: delay,
+          } as React.CSSProperties}
+        />
+      ))}
+    </span>
+  );
+}
+
 function FieldInput({
   field,
   value,
+  index,
+  optional = false,
   onChange,
   onFocus,
   onBlur,
@@ -886,23 +912,64 @@ function FieldInput({
 }: {
   readonly field: PromptField;
   readonly value: string;
+  readonly index: number;
+  readonly optional?: boolean;
   readonly onChange: (value: string) => void;
   readonly onFocus?: () => void;
   readonly onBlur?: (value: string) => void;
   readonly inputRef?: React.RefObject<HTMLInputElement | HTMLTextAreaElement | null>;
 }) {
+  const [isFocused, setIsFocused] = useState(false);
+  const isComplete = value.trim().length > 0;
   const inputClasses =
-    "mt-2 min-h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100";
+    "mt-3 min-h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100";
+
+  function handleFocus() {
+    setIsFocused(true);
+    onFocus?.();
+  }
+
+  function handleBlur(valueOnBlur: string) {
+    setIsFocused(false);
+    onBlur?.(valueOnBlur);
+  }
 
   return (
-    <label className="block">
-      <span className="text-sm font-semibold text-slate-900">{field.label}</span>
+    <label
+      className={`block rounded-3xl border p-4 transition motion-reduce:transition-none ${
+        isFocused
+          ? "border-teal-300 bg-teal-50/50 shadow-sm"
+          : isComplete
+            ? "border-teal-100 bg-white"
+            : "border-slate-200 bg-slate-50/70"
+      }`}
+    >
+      <span className="flex items-center justify-between gap-3">
+        <span className="flex min-w-0 items-center gap-3">
+          <span
+            aria-hidden="true"
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs font-semibold ${
+              isComplete
+                ? "border-teal-200 bg-teal-50 text-teal-700"
+                : "border-slate-200 bg-white text-slate-500"
+            }`}
+          >
+            {isComplete ? "✓" : String(index + 1).padStart(2, "0")}
+          </span>
+          <span className="min-w-0 text-sm font-semibold text-slate-900">
+            {field.label}
+          </span>
+        </span>
+        <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-500">
+          {optional ? "Optional" : "Setup"}
+        </span>
+      </span>
       {field.multiline ? (
         <textarea
           ref={inputRef as React.RefObject<HTMLTextAreaElement | null> | undefined}
           value={value}
-          onFocus={onFocus}
-          onBlur={(event) => onBlur?.(event.target.value)}
+          onFocus={handleFocus}
+          onBlur={(event) => handleBlur(event.target.value)}
           onChange={(event) => {
             onFocus?.();
             onChange(event.target.value);
@@ -915,8 +982,8 @@ function FieldInput({
         <input
           ref={inputRef as React.RefObject<HTMLInputElement | null> | undefined}
           value={value}
-          onFocus={onFocus}
-          onBlur={(event) => onBlur?.(event.target.value)}
+          onFocus={handleFocus}
+          onBlur={(event) => handleBlur(event.target.value)}
           onChange={(event) => {
             onFocus?.();
             onChange(event.target.value);
@@ -926,6 +993,147 @@ function FieldInput({
         />
       )}
     </label>
+  );
+}
+
+function SmoothActionDisclosure({
+  eyebrow,
+  title,
+  description,
+  children,
+}: {
+  readonly eyebrow: string;
+  readonly title: string;
+  readonly description?: string;
+  readonly children: React.ReactNode;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const contentId = useId();
+
+  return (
+    <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <button
+        type="button"
+        aria-expanded={isOpen}
+        aria-controls={contentId}
+        onClick={() => setIsOpen((current) => !current)}
+        className="flex w-full items-start justify-between gap-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+      >
+        <span className="min-w-0">
+          <span className="block text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
+            {eyebrow}
+          </span>
+          <span className="mt-2 block text-xl font-semibold tracking-tight text-slate-950">
+            {title}
+          </span>
+          {description && (
+            <span className="mt-2 block max-w-2xl text-sm leading-7 text-slate-600">
+              {description}
+            </span>
+          )}
+        </span>
+        <span
+          aria-hidden="true"
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-lg font-normal text-teal-700 transition motion-reduce:transition-none ${
+            isOpen ? "rotate-45 bg-teal-50" : ""
+          }`}
+        >
+          +
+        </span>
+      </button>
+      <div
+        id={contentId}
+        className={`grid transition-all duration-300 ease-out motion-reduce:transition-none ${
+          isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div className="mt-5 border-t border-slate-100 pt-5">{children}</div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function AnimatedPromptPreview({ text }: { readonly text: string }) {
+  const containerRef = useRef<HTMLPreElement | null>(null);
+  const [hasEntered, setHasEntered] = useState(false);
+  const [visibleLength, setVisibleLength] = useState(text.length);
+
+  useEffect(() => {
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (prefersReducedMotion) {
+      setHasEntered(true);
+      setVisibleLength(text.length);
+      return;
+    }
+
+    if (!hasEntered) {
+      setVisibleLength(0);
+      return;
+    }
+
+    setVisibleLength((current) => Math.min(current, text.length));
+  }, [hasEntered, text]);
+
+  useEffect(() => {
+    const node = containerRef.current;
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (!node || hasEntered || prefersReducedMotion) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) {
+          return;
+        }
+
+        setHasEntered(true);
+        observer.disconnect();
+      },
+      { threshold: 0.35 },
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasEntered]);
+
+  useEffect(() => {
+    if (!hasEntered || visibleLength >= text.length) {
+      return;
+    }
+
+    const step = Math.max(18, Math.ceil(text.length / 26));
+    const timer = window.setTimeout(() => {
+      setVisibleLength((current) => Math.min(text.length, current + step));
+    }, 26);
+
+    return () => window.clearTimeout(timer);
+  }, [hasEntered, text, visibleLength]);
+
+  const visibleText = text.slice(0, visibleLength);
+  const isTyping = visibleLength < text.length;
+
+  return (
+    <pre
+      ref={containerRef}
+      className="relative mt-5 max-w-full whitespace-pre-wrap break-words rounded-2xl border border-slate-800 bg-slate-950 p-4 text-sm leading-7 text-slate-100 [overflow-wrap:anywhere]"
+    >
+      <span aria-hidden="true" className="invisible block whitespace-pre-wrap">
+        {text}
+      </span>
+      <span
+        aria-hidden="true"
+        className="absolute inset-4 whitespace-pre-wrap break-words [overflow-wrap:anywhere]"
+      >
+        {visibleText}
+        {isTyping && <span className="ateflo-typing-caret" />}
+      </span>
+      <span className="sr-only">{text}</span>
+    </pre>
   );
 }
 
@@ -956,28 +1164,12 @@ function ResultExampleDisclosure({
   }
 
   return (
-    <details className="group rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-      <summary className="flex cursor-pointer list-none items-start justify-between gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden">
-        <span className="min-w-0">
-          <span className="block text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
-            Example result
-          </span>
-          <span className="mt-2 block text-xl font-semibold tracking-tight text-slate-950">
-            See what the result can look like
-          </span>
-          <span className="mt-2 block max-w-2xl text-sm leading-7 text-slate-600">
-            Use this as a review shape, not a promise that every AI tool will write the exact same output.
-          </span>
-        </span>
-        <span
-          aria-hidden="true"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-lg font-normal text-teal-700 transition group-open:rotate-45 group-open:bg-teal-50"
-        >
-          +
-        </span>
-      </summary>
-
-      <div className="mt-5 grid gap-4 border-t border-slate-100 pt-5 lg:grid-cols-2">
+    <SmoothActionDisclosure
+      eyebrow="Example result"
+      title="See what the result can look like"
+      description="Use this as a review shape, not a promise that every AI tool will write the exact same output."
+    >
+      <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <p className="text-sm font-semibold text-slate-900">Example input</p>
           <p className="mt-2 text-sm leading-6 text-slate-700">{exampleInput}</p>
@@ -991,7 +1183,7 @@ function ResultExampleDisclosure({
           </ul>
         </div>
       </div>
-    </details>
+    </SmoothActionDisclosure>
   );
 }
 
@@ -1000,15 +1192,20 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
   const [values, setValues] = useState<Record<string, string>>({});
   const [showMore, setShowMore] = useState(false);
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
+  const [copyBurstId, setCopyBurstId] = useState(0);
+  const [showCopyBurst, setShowCopyBurst] = useState(false);
   const firstInputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
   const copyButtonRef = useRef<HTMLButtonElement | null>(null);
   const sectionRef = useRef<HTMLDivElement | null>(null);
   const resetTimer = useRef<number | undefined>(undefined);
+  const burstTimer = useRef<number | undefined>(undefined);
   const startedFields = useRef<Set<string>>(new Set());
   const completedFields = useRef<Set<string>>(new Set());
 
   const generatedPrompt = useMemo(() => config?.buildPrompt(values) ?? "", [config, values]);
   const hasDetails = hasAnyInput(values);
+  const detailCount = filledFieldCount(values);
+  const totalFieldCount = (config?.primaryFields.length ?? 0) + (config?.optionalFields.length ?? 0);
 
   const baseGuideParams = useMemo(
     () => ({
@@ -1023,6 +1220,9 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
     return () => {
       if (resetTimer.current !== undefined) {
         window.clearTimeout(resetTimer.current);
+      }
+      if (burstTimer.current !== undefined) {
+        window.clearTimeout(burstTimer.current);
       }
     };
   }, []);
@@ -1045,14 +1245,17 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
       window.dispatchEvent(new CustomEvent(PROMPT_COPIED_EVENT));
 
       if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-        copyButtonRef.current?.animate(
-          [
-            { transform: "scale(1)" },
-            { transform: "scale(1.02)" },
-            { transform: "scale(1)" },
-          ],
-          { duration: 220, easing: "ease-out" },
-        );
+        setShowCopyBurst(false);
+        window.requestAnimationFrame(() => {
+          setCopyBurstId((current) => current + 1);
+          setShowCopyBurst(true);
+        });
+
+        if (burstTimer.current !== undefined) {
+          window.clearTimeout(burstTimer.current);
+        }
+
+        burstTimer.current = window.setTimeout(() => setShowCopyBurst(false), 760);
       }
 
       if (resetTimer.current !== undefined) {
@@ -1133,7 +1336,7 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
 
       <section className="rounded-3xl border border-teal-200 bg-white p-5 shadow-sm sm:p-6">
         <div className="grid gap-6 lg:grid-cols-[0.92fr_1.08fr]">
-          <div>
+          <div className="space-y-4">
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
               Fill in details
             </p>
@@ -1148,6 +1351,20 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
               {config.pasteInstruction ??
                 "After copying, paste the prompt into ChatGPT, Claude, Gemini, Copilot, Canva, or another suitable AI tool."}
             </p>
+            <div className="rounded-3xl border border-teal-100 bg-teal-50/70 p-4">
+              <p className="text-sm font-semibold text-teal-900">
+                {detailCount === 0
+                  ? "Add a few details to shape the prompt."
+                  : `${detailCount} detail${detailCount === 1 ? "" : "s"} added`}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-teal-900/80">
+                {detailCount === 0
+                  ? "AteFlo will keep blanks as clear placeholders, so you can still copy quickly."
+                  : detailCount < Math.min(3, totalFieldCount)
+                    ? "Add one or two more details for a stronger first draft."
+                    : "The generated prompt is ready for a more specific AI output."}
+              </p>
+            </div>
             {config.privateNote && (
               <p className="mt-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
                 {config.privateNote}
@@ -1160,6 +1377,7 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
               <FieldInput
                 key={field.key}
                 field={field}
+                index={index}
                 value={values[field.key] ?? ""}
                 onFocus={() => handleFieldStarted(field.key)}
                 onChange={(value) => updateValue(field.key, value)}
@@ -1178,10 +1396,12 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
 
             {showMore && (
               <div className="grid gap-4 rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                {config.optionalFields.map((field) => (
+                {config.optionalFields.map((field, index) => (
                   <FieldInput
                     key={field.key}
                     field={field}
+                    index={config.primaryFields.length + index}
+                    optional
                     value={values[field.key] ?? ""}
                     onFocus={() => handleFieldStarted(field.key)}
                     onChange={(value) => updateValue(field.key, value)}
@@ -1216,11 +1436,14 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
               data-guide-slug={guide.slug}
               data-action-location="prompt_builder"
               onClick={() => copyPrompt("prompt_builder")}
-              className="ateflo-primary-copy-button inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-base font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 sm:w-auto sm:text-sm"
+              className="ateflo-primary-copy-button inline-flex min-h-12 w-full min-w-40 items-center justify-center gap-2 rounded-full px-5 py-3 text-base font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 sm:w-auto sm:text-sm"
             >
+              {showCopyBurst && <CopySparkBurst burstId={copyBurstId} />}
               <span className="relative z-10 inline-flex items-center gap-2">
                 <CopyIcon copied={copyState === "copied"} />
-                {copyState === "copied" ? "Copied ✓" : "Copy Prompt"}
+                <span className="inline-block min-w-24 text-center">
+                  {copyState === "copied" ? "Copied ✓" : "Copy Prompt"}
+                </span>
               </span>
             </button>
             <p role="status" aria-live="polite" className="mt-2 min-h-5 text-sm leading-5 text-slate-600">
@@ -1233,9 +1456,7 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
           </div>
         </div>
 
-        <pre className="mt-5 max-w-full whitespace-pre-wrap break-words rounded-2xl border border-slate-800 bg-slate-950 p-4 text-sm leading-7 text-slate-100 [overflow-wrap:anywhere]">
-          {generatedPrompt}
-        </pre>
+        <AnimatedPromptPreview text={generatedPrompt} />
       </section>
 
       <ResultExampleDisclosure
@@ -1243,7 +1464,10 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
         exampleOutput={config.exampleOutput}
       />
 
-      <SimpleCard title="Check before using">
+      <SmoothActionDisclosure
+        eyebrow="Check before using"
+        title="Review the AI output before you use it"
+      >
         <ul className="mt-4 space-y-3 text-base leading-7 text-slate-700">
           {config.checkBeforeUsing.map((item) => (
             <li key={item} className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
@@ -1251,7 +1475,7 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
             </li>
           ))}
         </ul>
-      </SimpleCard>
+      </SmoothActionDisclosure>
     </div>
   );
 }

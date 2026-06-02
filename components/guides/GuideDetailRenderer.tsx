@@ -1,4 +1,4 @@
-import BeforeAfterProofCard from "@/components/guides/BeforeAfterProofCard";
+import BackToTopButton from "@/components/guides/BackToTopButton";
 import GuideExecutionShortcut from "@/components/guides/GuideExecutionShortcut";
 import HelpfulFeedback from "@/components/guides/HelpfulFeedback";
 import HowToGuideLayout from "@/components/guides/HowToGuideLayout";
@@ -7,7 +7,6 @@ import RelatedShortcuts, {
   type RelatedShortcutItem,
 } from "@/components/guides/RelatedShortcuts";
 import ToolDecisionGuideLayout from "@/components/guides/ToolDecisionGuideLayout";
-import TopCopyPromptButton from "@/components/guides/TopCopyPromptButton";
 import TrendDecisionGuideLayout from "@/components/guides/TrendDecisionGuideLayout";
 import ViewShortcutsCta from "@/components/guides/ViewShortcutsCta";
 import { resolveGuideLayoutType } from "@/lib/guideTypes";
@@ -47,11 +46,6 @@ export default function GuideDetailRenderer({ guide }: GuideDetailRendererProps)
 
   return (
     <div className="mt-6 space-y-6">
-      <BeforeAfterProofCard
-        before={guide.exampleWorkflow}
-        after={guide.exampleResult}
-      />
-
       <GuideExecutionShortcut guide={guide} />
 
       {guideType === "how-to" ? (
@@ -76,7 +70,7 @@ export default function GuideDetailRenderer({ guide }: GuideDetailRendererProps)
         sectionTitle={relatedSelection.sectionTitle}
         sectionSubtitle={relatedSelection.sectionSubtitle}
       />
-      <TopCopyPromptButton guideSlug={guide.slug} />
+      <BackToTopButton />
     </div>
   );
 }
