@@ -16,17 +16,29 @@ interface TopCopyPromptButtonProps {
 
 export default function TopCopyPromptButton({ guideSlug }: TopCopyPromptButtonProps) {
   const [copied, setCopied] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
   const resetTimer = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     function handleCopied() {
       setCopied(true);
 
+      if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        buttonRef.current?.animate(
+          [
+            { transform: "scale(1)" },
+            { transform: "scale(1.02)" },
+            { transform: "scale(1)" },
+          ],
+          { duration: 220, easing: "ease-out" },
+        );
+      }
+
       if (resetTimer.current !== undefined) {
         window.clearTimeout(resetTimer.current);
       }
 
-      resetTimer.current = window.setTimeout(() => setCopied(false), 2800);
+      resetTimer.current = window.setTimeout(() => setCopied(false), 1200);
     }
 
     window.addEventListener(PROMPT_COPIED_EVENT, handleCopied);
@@ -41,6 +53,7 @@ export default function TopCopyPromptButton({ guideSlug }: TopCopyPromptButtonPr
   return (
     <div>
       <button
+        ref={buttonRef}
         type="button"
         data-event="copy_prompt_click"
         data-guide-slug={guideSlug}
@@ -56,7 +69,7 @@ export default function TopCopyPromptButton({ guideSlug }: TopCopyPromptButtonPr
       >
         <span className="relative z-10 inline-flex items-center gap-2">
           <CopyIcon copied={copied} />
-          {copied ? "Copied!" : "Copy Prompt"}
+          {copied ? "Copied ✓" : "Copy Prompt"}
         </span>
       </button>
       <p role="status" aria-live="polite" className="mt-2 min-h-5 max-w-xs text-xs leading-5 text-slate-600">

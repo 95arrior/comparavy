@@ -1,3 +1,4 @@
+import BeforeAfterProofCard from "@/components/guides/BeforeAfterProofCard";
 import GuideExecutionShortcut from "@/components/guides/GuideExecutionShortcut";
 import HelpfulFeedback from "@/components/guides/HelpfulFeedback";
 import HowToGuideLayout from "@/components/guides/HowToGuideLayout";
@@ -111,6 +112,10 @@ export default function GuideDetailRenderer({ guide }: GuideDetailRendererProps)
           </p>
         </div>
         <div className="mt-3 space-y-5 sm:mt-4">
+          <BeforeAfterProofCard
+            before={guide.exampleWorkflow}
+            after={guide.exampleResult}
+          />
           <ShortcutBrief guide={guide} />
           <GuideExecutionShortcut guide={guide} />
         </div>

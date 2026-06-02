@@ -950,6 +950,7 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
   const [showMore, setShowMore] = useState(false);
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
   const firstInputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
+  const copyButtonRef = useRef<HTMLButtonElement | null>(null);
   const sectionRef = useRef<HTMLDivElement | null>(null);
   const resetTimer = useRef<number | undefined>(undefined);
   const startedFields = useRef<Set<string>>(new Set());
@@ -992,11 +993,22 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
       setCopyState("copied");
       window.dispatchEvent(new CustomEvent(PROMPT_COPIED_EVENT));
 
+      if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        copyButtonRef.current?.animate(
+          [
+            { transform: "scale(1)" },
+            { transform: "scale(1.02)" },
+            { transform: "scale(1)" },
+          ],
+          { duration: 220, easing: "ease-out" },
+        );
+      }
+
       if (resetTimer.current !== undefined) {
         window.clearTimeout(resetTimer.current);
       }
 
-      resetTimer.current = window.setTimeout(() => setCopyState("idle"), 3200);
+      resetTimer.current = window.setTimeout(() => setCopyState("idle"), 1200);
       return true;
     } catch {
       setCopyState("failed");
@@ -1147,6 +1159,7 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
 
           <div className="sm:max-w-xs">
             <button
+              ref={copyButtonRef}
               type="button"
               data-event="copy_prompt_click"
               data-guide-slug={guide.slug}
@@ -1156,7 +1169,7 @@ export default function GuideExecutionShortcut({ guide }: { readonly guide: Guid
             >
               <span className="relative z-10 inline-flex items-center gap-2">
                 <CopyIcon copied={copyState === "copied"} />
-                {copyState === "copied" ? "Copied!" : "Copy Prompt"}
+                {copyState === "copied" ? "Copied ✓" : "Copy Prompt"}
               </span>
             </button>
             <p role="status" aria-live="polite" className="mt-2 min-h-5 text-sm leading-5 text-slate-600">
