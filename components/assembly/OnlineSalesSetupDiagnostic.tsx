@@ -48,7 +48,6 @@ interface OnlineSalesSetupDiagnosticProps {
   readonly hasCheckout: boolean;
 }
 
-const progressSteps = ["상황 확인", "필요한 세팅 찾기", "전체 패키지 열기"] as const;
 const localChips = [
   "네, 동네 손님이 중요해요",
   "아니요, 온라인 고객이 더 중요해요",
@@ -188,7 +187,7 @@ function ChatBubble({
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[88%] rounded-2xl px-4 py-3 text-sm leading-7 shadow-sm sm:max-w-[74%] ${
+        className={`max-w-[88%] whitespace-pre-line rounded-2xl px-4 py-3 text-sm leading-7 shadow-sm sm:max-w-[74%] ${
           isUser
             ? "rounded-tr-md bg-teal-700 text-white"
             : "rounded-tl-md border border-slate-200 bg-white text-slate-800"
@@ -288,7 +287,7 @@ function ChatComposer({
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-[1.5rem] border border-slate-200 bg-white p-3 shadow-sm"
+      className="rounded-[1.5rem] border border-slate-200 bg-white p-3"
     >
       <div className="grid gap-2 sm:grid-cols-[1fr_auto_auto]">
         <label className="sr-only" htmlFor="chat-answer">
@@ -350,13 +349,7 @@ export default function OnlineSalesSetupDiagnostic({
   ctaHref,
   hasCheckout,
 }: OnlineSalesSetupDiagnosticProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "bot-business-question",
-      role: "bot",
-      text: "어떤 일을 하고 계세요?",
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [currentStep, setCurrentStep] = useState<FlowStep>("business");
   const [inputValue, setInputValue] = useState("");
   const [context, setContext] = useState<Partial<DiagnosisContext>>({
@@ -407,6 +400,8 @@ export default function OnlineSalesSetupDiagnostic({
 
   const currentSuggestions = getCurrentSuggestions(currentStep, businessType);
   const showComposer =
+    messages.length > 0 &&
+    !isBotResponding &&
     currentStep !== "ready" &&
     currentStep !== "diagnosis" &&
     !diagnosisGenerated;
@@ -418,10 +413,14 @@ export default function OnlineSalesSetupDiagnostic({
 
     startedRef.current = true;
     trackEvent("assembly_started", eventParams("assembly_page_loaded", context));
+    typeBotMessages(["어떤 일을 하고 계세요?"], "business");
   }, [context]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    bottomRef.current?.scrollIntoView({
+      block: "nearest",
+      behavior: isReducedMotionPreferred() ? "auto" : "smooth",
+    });
   }, [messages, isThinking, typingText, currentStep, diagnosisGenerated]);
 
   useEffect(() => {
@@ -683,26 +682,30 @@ export default function OnlineSalesSetupDiagnostic({
   }
 
   return (
-    <div className="mt-8 grid gap-5">
-      <aside className="rounded-[1.75rem] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-        <p className="text-sm font-semibold text-teal-700">진행 순서</p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          {progressSteps.map((step, index) => (
-            <div
-              key={step}
-              className="rounded-2xl border border-slate-100 bg-slate-50/80 p-3"
-            >
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-teal-50 text-sm font-semibold text-teal-800">
-                {index + 1}
-              </span>
-              <p className="mt-2 text-sm font-semibold text-slate-900">{step}</p>
+    <div className="mx-auto w-full">
+      <section className="relative flex min-h-[min(42rem,calc(100svh-8rem))] min-w-0 flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+        <div className="chat-rainbow-line absolute inset-x-0 top-0 h-1" />
+        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 sm:px-5">
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-slate-950 text-xs font-semibold text-white">
+              AF
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-slate-950">AteFlo</p>
+              <p className="text-xs font-semibold text-slate-500">
+                온라인 영업 세팅 진단
+              </p>
             </div>
-          ))}
+          </div>
+          <span className="rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-800">
+            무료
+          </span>
         </div>
-      </aside>
 
-      <section className="min-w-0 rounded-[1.75rem] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-        <div className="space-y-4" aria-live="polite">
+        <div
+          className="flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-5 sm:py-6"
+          aria-live="polite"
+        >
           {messages.map((message) => (
             <ChatBubble key={message.id} variant={message.role}>
               {message.text}
@@ -714,7 +717,7 @@ export default function OnlineSalesSetupDiagnostic({
         </div>
 
         {showComposer ? (
-          <div className="mt-5">
+          <div className="border-t border-slate-100 bg-slate-50/60 p-3 sm:p-4">
             <ChatComposer
               value={inputValue}
               placeholder={stepPlaceholders[currentStep]}
@@ -731,7 +734,7 @@ export default function OnlineSalesSetupDiagnostic({
         ) : null}
 
         {currentStep === "ready" && !diagnosisGenerated ? (
-          <div className="mt-5 flex justify-end">
+          <div className="border-t border-slate-100 bg-slate-50/60 p-3 text-right sm:p-4">
             <button
               type="button"
               onClick={generateDiagnosis}
@@ -743,8 +746,41 @@ export default function OnlineSalesSetupDiagnostic({
         ) : null}
       </section>
 
+      <style jsx>{`
+        .chat-rainbow-line {
+          background: linear-gradient(
+            90deg,
+            #5eead4,
+            #93c5fd,
+            #c4b5fd,
+            #f0abfc,
+            #fda4af,
+            #fde68a,
+            #5eead4
+          );
+          background-size: 220% 100%;
+          animation: chatRainbowFlow 7s linear infinite;
+        }
+
+        @keyframes chatRainbowFlow {
+          from {
+            background-position: 0% 50%;
+          }
+          to {
+            background-position: 220% 50%;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .chat-rainbow-line {
+            animation: none;
+            background-position: 50% 50%;
+          }
+        }
+      `}</style>
+
       {diagnosisGenerated ? (
-        <section>
+        <section className="mt-5">
           <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
             <p className="text-sm font-semibold text-teal-700">무료 진단 결과</p>
             <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
