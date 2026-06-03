@@ -12,15 +12,12 @@ import {
 } from "react";
 import {
   buildModuleGroups,
-  businessChips,
-  channelChips,
   classifyBusinessType,
   classifyChannel,
   classifyGoal,
   classifyOperationHint,
   generateAdaptiveDiagnosis,
   getChannelQuestion,
-  getGoalChips,
   type BusinessTypeCategory,
   type DiagnosisContext,
   type LocalContext,
@@ -35,7 +32,8 @@ const DASHBOARD_PREVIEW_PATH = "/dashboard/online-sales-setup-kit";
 type RequiredStep = "business" | "channel" | "need" | "local";
 type OptionalStep = "region";
 type FlowStep = RequiredStep | OptionalStep | "ready" | "diagnosis";
-type SelectedOptionType = "chip" | "custom" | "skip";
+type SelectedOptionType = "custom" | "skip";
+type ConfidenceLevel = "high" | "medium" | "low";
 
 interface ChatMessage {
   readonly id: string;
@@ -48,18 +46,16 @@ interface OnlineSalesSetupDiagnosticProps {
   readonly hasCheckout: boolean;
 }
 
-const localChips = [
-  "네, 동네 손님이 중요해요",
-  "아니요, 온라인 고객이 더 중요해요",
-  "잘 모르겠어요",
-] as const;
-
 const stepPlaceholders: Record<RequiredStep | OptionalStep, string> = {
-  business: "예: 학원인데 샵인샵 느낌이에요, 성수동 네일샵이에요",
+  business: "예: 성수동 네일샵이에요 / 학원인데 샵인샵 느낌이에요",
   channel: "예: 네이버플레이스, 인스타, 블로그, 지인 소개, 아직 없어요",
-  need: "예: 학부모 상담이 잘 이어지지 않아요",
-  local: "예: 네, 동네 손님이 중요해요",
+  need: "예: 예약 문의가 안 와요 / 인스타 글이 판매로 안 이어져요 / 뭐부터 해야 할지 모르겠어요",
+  local: "예: 네, 성수동 손님이 중요해요 / 아니요, 온라인 고객이 더 중요해요",
   region: "예: 서울 성수동, 부산 해운대",
+};
+
+const stepHelperText: Partial<Record<RequiredStep | OptionalStep, string>> = {
+  business: "편하게 적어주세요. 제가 알아서 분류해볼게요.",
 };
 
 function isReducedMotionPreferred(): boolean {
@@ -110,7 +106,9 @@ function eventParams(
   extra: {
     readonly stepName?: string;
     readonly selectedOptionType?: SelectedOptionType;
+    readonly confidenceLevel?: ConfidenceLevel;
     readonly hasCustomInput?: boolean;
+    readonly wasRejected?: boolean;
     readonly hasDiagnosisGenerated?: boolean;
   } = {},
 ) {
@@ -125,7 +123,9 @@ function eventParams(
     goal_category: context.goal,
     local_context_selected:
       context.localContext === undefined ? undefined : context.localContext,
+    confidence_level: extra.confidenceLevel,
     has_custom_input: extra.hasCustomInput,
+    was_rejected: extra.wasRejected,
     has_diagnosis_generated: extra.hasDiagnosisGenerated,
   };
 }
@@ -136,6 +136,18 @@ function botMessageId() {
 
 function splitTypingChunks(text: string): string[] {
   return text.split(/(\s+)/).filter(Boolean);
+}
+
+function getTypingDelay(text: string, chunkCount: number): number {
+  const targetDuration =
+    text.length <= 18 ? 1050 : text.length <= 54 ? 1550 : 2050;
+
+  return Math.max(82, Math.min(170, Math.round(targetDuration / chunkCount)));
+}
+
+function getThinkingDelay(texts: readonly string[]): number {
+  const totalLength = texts.join("").length;
+  return Math.min(1100, Math.max(760, totalLength * 12));
 }
 
 function getBusinessConfirmation(
@@ -163,16 +175,66 @@ function getBusinessConfirmation(
   return confirmations[businessType];
 }
 
-function getCurrentSuggestions(
-  step: FlowStep,
-  businessType: BusinessTypeCategory,
-): readonly string[] {
-  if (step === "business") return businessChips;
-  if (step === "channel") return channelChips;
-  if (step === "need") return getGoalChips(businessType);
-  if (step === "local") return localChips;
+function isMeaninglessInput(value: string): boolean {
+  const normalized = value.trim().toLowerCase();
+  const compact = normalized.replace(/\s/g, "");
+  const knownEnglishTerms = ["pt", "sns", "dm", "blog", "instagram"];
 
-  return [];
+  if (!compact) return true;
+  if (compact.length < 2) return true;
+  if (/^[0-9.,!?…~\-_/]+$/.test(compact)) return true;
+  if (/^[ㄱ-ㅎㅏ-ㅣㅋㅎㅠㅜ]+$/.test(compact)) return true;
+  if (/^(ㅋ+|ㅎ+|ㅠ+|ㅜ+|하+|헤+|흠+)$/.test(compact)) return true;
+  if (/^[a-z]+$/.test(compact)) {
+    return !knownEnglishTerms.some((term) => compact.includes(term));
+  }
+
+  return false;
+}
+
+function getClarificationMessage(step: RequiredStep | OptionalStep): string {
+  if (step === "business") {
+    return "조금 더 구체적으로 알려주세요.\n예: 성수동 네일샵, 학원인데 샵인샵, 강아지 미용 예약제";
+  }
+
+  if (step === "channel") {
+    return "어디에서 문의가 들어오는지 조금만 더 적어주세요.\n예: 네이버에서 좀 들어와요, 인스타로 문의가 와요, 아직 없어요";
+  }
+
+  if (step === "need") {
+    return "지금 막힌 부분을 한 문장으로 적어주세요.\n예: 예약 문의가 안 와요, 학부모 상담이 부족해요";
+  }
+
+  if (step === "local") {
+    return "지역 손님이 중요한지 알려주세요.\n예: 네, 성수동 손님이 중요해요 / 아니요, 온라인 고객이 더 중요해요";
+  }
+
+  return "지역이나 상권을 적어주세요. 건너뛰어도 괜찮아요.";
+}
+
+function confidenceForStep(
+  step: RequiredStep | OptionalStep,
+  label: string,
+  context: Partial<DiagnosisContext>,
+): ConfidenceLevel {
+  if (step === "region") return "medium";
+  if (step === "business") {
+    return classifyBusinessType(label) === "fallback" ? "medium" : "high";
+  }
+  if (step === "channel") {
+    return classifyChannel(label) === "unsure" ? "medium" : "high";
+  }
+  if (step === "need") {
+    return classifyGoal(label) === "unsure" ? "medium" : "high";
+  }
+  if (step === "local") {
+    const localContext = localContextFromLabel(label);
+    return localContext === "unsure" && context.localContext === undefined
+      ? "medium"
+      : "high";
+  }
+
+  return "medium";
 }
 
 function ChatBubble({
@@ -226,48 +288,25 @@ function TypingBubble({ text }: { readonly text: string }) {
   );
 }
 
-function ChipButton({
-  children,
-  onClick,
-  disabled,
-}: {
-  readonly children: ReactNode;
-  readonly onClick: () => void;
-  readonly disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="min-h-10 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-teal-300 hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 motion-reduce:transition-none"
-    >
-      {children}
-    </button>
-  );
-}
-
 function ChatComposer({
   value,
   placeholder,
-  suggestions,
+  helperText,
   disabled,
   showSkip,
   inputRef,
   onChange,
   onSubmit,
-  onSuggestionClick,
   onSkip,
 }: {
   readonly value: string;
   readonly placeholder: string;
-  readonly suggestions: readonly string[];
+  readonly helperText?: string;
   readonly disabled: boolean;
   readonly showSkip: boolean;
   readonly inputRef: React.RefObject<HTMLTextAreaElement | null>;
   readonly onChange: (value: string) => void;
   readonly onSubmit: () => void;
-  readonly onSuggestionClick: (value: string) => void;
   readonly onSkip: () => void;
 }) {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -322,24 +361,10 @@ function ChatComposer({
           </button>
         ) : null}
       </div>
-
-      {suggestions.length > 0 ? (
-        <div className="mt-3">
-          <p className="mb-2 text-xs font-semibold text-slate-500">
-            빠른 선택
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {suggestions.map((suggestion) => (
-              <ChipButton
-                key={suggestion}
-                disabled={disabled}
-                onClick={() => onSuggestionClick(suggestion)}
-              >
-                {suggestion}
-              </ChipButton>
-            ))}
-          </div>
-        </div>
+      {helperText ? (
+        <p className="mt-2 px-1 text-xs font-semibold leading-5 text-slate-500">
+          {helperText}
+        </p>
       ) : null}
     </form>
   );
@@ -398,7 +423,10 @@ export default function OnlineSalesSetupDiagnostic({
     ],
   );
 
-  const currentSuggestions = getCurrentSuggestions(currentStep, businessType);
+  const currentHelperText =
+    currentStep === "diagnosis" || currentStep === "ready"
+      ? undefined
+      : stepHelperText[currentStep];
   const showComposer =
     messages.length > 0 &&
     !isBotResponding &&
@@ -479,7 +507,7 @@ export default function OnlineSalesSetupDiagnostic({
         setTypingText(chunks.slice(0, chunkIndex).join(""));
 
         if (chunkIndex < chunks.length) {
-          schedule(tick, 42);
+          schedule(tick, getTypingDelay(text, chunks.length));
           return;
         }
 
@@ -505,29 +533,69 @@ export default function OnlineSalesSetupDiagnostic({
     schedule(() => {
       setIsThinking(false);
       typeOneMessage(0);
-    }, 720);
+    }, getThinkingDelay(texts));
   }
 
   function recordStepAnalytics(
     step: RequiredStep | OptionalStep,
     optionType: SelectedOptionType,
     nextContext: Partial<DiagnosisContext>,
+    extra: {
+      readonly confidenceLevel?: ConfidenceLevel;
+      readonly wasRejected?: boolean;
+    } = {},
   ) {
     trackEvent(
       "chat_step_answered",
       eventParams("diagnostic_chat", nextContext, {
         stepName: stepNameForStep(step),
         selectedOptionType: optionType,
+        confidenceLevel: extra.confidenceLevel,
         hasCustomInput: optionType === "custom",
+        wasRejected: extra.wasRejected,
         hasDiagnosisGenerated: false,
       }),
     );
+  }
+
+  function rejectAnswer(label: string) {
+    if (currentStep === "ready" || currentStep === "diagnosis") {
+      return;
+    }
+
+    setMessages((current) => [
+      ...current,
+      {
+        id: `user-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        role: "user",
+        text: label,
+      },
+    ]);
+    setInputValue("");
+
+    const rejectedParams = eventParams("diagnostic_chat_rejected", context, {
+      stepName: stepNameForStep(currentStep),
+      selectedOptionType: "custom",
+      confidenceLevel: "low",
+      hasCustomInput: true,
+      wasRejected: true,
+      hasDiagnosisGenerated: false,
+    });
+
+    trackEvent("chat_input_rejected", rejectedParams);
+    trackEvent("chat_clarification_shown", rejectedParams);
+    typeBotMessages([getClarificationMessage(currentStep)], currentStep);
   }
 
   function submitAnswer(rawValue: string, optionType: SelectedOptionType) {
     const label = rawValue.trim();
 
     if (!label || isBotResponding || currentStep === "ready") {
+      return;
+    }
+
+    if (optionType !== "skip" && isMeaninglessInput(label)) {
+      rejectAnswer(label);
       return;
     }
 
@@ -554,7 +622,10 @@ export default function OnlineSalesSetupDiagnostic({
         businessType: classifiedBusinessType,
       };
       setContext(nextContext);
-      recordStepAnalytics("business", optionType, nextContext);
+      recordStepAnalytics("business", optionType, nextContext, {
+        confidenceLevel: confidenceForStep("business", label, nextContext),
+        wasRejected: false,
+      });
       typeBotMessages(
         [
           getBusinessConfirmation(classifiedBusinessType, operationHint),
@@ -572,7 +643,10 @@ export default function OnlineSalesSetupDiagnostic({
         channel: classifiedChannel,
       };
       setContext(nextContext);
-      recordStepAnalytics("channel", optionType, nextContext);
+      recordStepAnalytics("channel", optionType, nextContext, {
+        confidenceLevel: confidenceForStep("channel", label, nextContext),
+        wasRejected: false,
+      });
       typeBotMessages(
         [
           "좋아요. 그 흐름을 기준으로 이어서 볼게요.",
@@ -590,7 +664,10 @@ export default function OnlineSalesSetupDiagnostic({
         goal: classifiedGoal,
       };
       setContext(nextContext);
-      recordStepAnalytics("need", optionType, nextContext);
+      recordStepAnalytics("need", optionType, nextContext, {
+        confidenceLevel: confidenceForStep("need", label, nextContext),
+        wasRejected: false,
+      });
       typeBotMessages(
         ["좋아요. 필요한 부분을 기준으로 볼게요.", "지역 손님이 중요한가요?"],
         "local",
@@ -605,7 +682,10 @@ export default function OnlineSalesSetupDiagnostic({
         localContext,
       };
       setContext(nextContext);
-      recordStepAnalytics("local", optionType, nextContext);
+      recordStepAnalytics("local", optionType, nextContext, {
+        confidenceLevel: confidenceForStep("local", label, nextContext),
+        wasRejected: false,
+      });
 
       if (localContext === "local") {
         typeBotMessages(
@@ -631,7 +711,10 @@ export default function OnlineSalesSetupDiagnostic({
         hasRegionText: optionType !== "skip",
       };
       setContext(nextContext);
-      recordStepAnalytics("region", optionType, nextContext);
+      recordStepAnalytics("region", optionType, nextContext, {
+        confidenceLevel: optionType === "skip" ? "medium" : "high",
+        wasRejected: false,
+      });
       typeBotMessages(
         ["좋아요. 지역은 문구를 자연스럽게 맞추는 참고로만 볼게요."],
         "ready",
@@ -721,13 +804,12 @@ export default function OnlineSalesSetupDiagnostic({
             <ChatComposer
               value={inputValue}
               placeholder={stepPlaceholders[currentStep]}
-              suggestions={currentSuggestions}
+              helperText={currentHelperText}
               disabled={isBotResponding}
               showSkip={currentStep === "region"}
               inputRef={inputRef}
               onChange={setInputValue}
               onSubmit={submitTypedAnswer}
-              onSuggestionClick={(suggestion) => submitAnswer(suggestion, "chip")}
               onSkip={() => submitAnswer("건너뛰기", "skip")}
             />
           </div>
