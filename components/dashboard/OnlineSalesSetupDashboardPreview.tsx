@@ -1,10 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { trackEvent } from "@/lib/analytics";
 
 const KIT_SLUG = "online-sales-setup-kit";
 const SOURCE_PAGE = "online_sales_setup_dashboard";
+const HOMEPAGE_BUILDER_PATH =
+  "/dashboard/online-sales-setup-kit/homepage-builder";
 
 const modules = [
   {
@@ -104,6 +107,13 @@ export default function OnlineSalesSetupDashboardPreview({
     );
   }
 
+  function trackHomepageBuilderOpen() {
+    trackEvent(
+      "paid_module_preview_clicked",
+      eventParams("module_route_button", { moduleSlug: "homepage-builder" }),
+    );
+  }
+
   function handleCtaClick() {
     trackEvent(
       hasCheckout ? "kit_checkout_click" : "kit_interest_click",
@@ -133,19 +143,14 @@ export default function OnlineSalesSetupDashboardPreview({
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           {modules.map((module) => {
             const isSelected = selectedModule.slug === module.slug;
+            const cardClassName = `flex min-h-32 flex-col rounded-2xl border p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 motion-reduce:transition-none ${
+              isSelected
+                ? "border-teal-300 bg-teal-50"
+                : "border-slate-200 bg-slate-50/80 hover:border-teal-200 hover:bg-white"
+            }`;
 
-            return (
-              <button
-                key={module.slug}
-                type="button"
-                onClick={() => selectModule(module.slug)}
-                className={`flex min-h-32 flex-col rounded-2xl border p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 motion-reduce:transition-none ${
-                  isSelected
-                    ? "border-teal-300 bg-teal-50"
-                    : "border-slate-200 bg-slate-50/80 hover:border-teal-200 hover:bg-white"
-                }`}
-                aria-pressed={isSelected}
-              >
+            const cardContent = (
+              <>
                 <span className="flex items-start justify-between gap-3">
                   <span className="text-base font-semibold leading-6 text-slate-950">
                     {module.name}
@@ -157,6 +162,32 @@ export default function OnlineSalesSetupDashboardPreview({
                 <span className="mt-3 text-sm leading-6 text-slate-600">
                   {module.summary}
                 </span>
+              </>
+            );
+
+            if (module.slug === "website") {
+              return (
+                <Link
+                  key={module.slug}
+                  href={HOMEPAGE_BUILDER_PATH}
+                  onClick={trackHomepageBuilderOpen}
+                  className={cardClassName}
+                  aria-label="홈페이지 만들기 모듈 미리보기 열기"
+                >
+                  {cardContent}
+                </Link>
+              );
+            }
+
+            return (
+              <button
+                key={module.slug}
+                type="button"
+                onClick={() => selectModule(module.slug)}
+                className={cardClassName}
+                aria-pressed={isSelected}
+              >
+                {cardContent}
               </button>
             );
           })}
