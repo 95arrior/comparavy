@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { trackEvent } from "@/lib/analytics";
 
 const KIT_SLUG = "online-sales-setup-kit";
 const SOURCE_PAGE = "online_sales_setup_assembly";
+const DASHBOARD_PREVIEW_PATH = "/dashboard/online-sales-setup-kit";
 
 type RequiredStep = "business" | "channel" | "need";
 type OptionalStep = "region";
@@ -96,14 +98,14 @@ const diagnosisItems = [
 ] as const;
 
 const lockedModules = [
-  "홈페이지 만들기",
-  "네이버플레이스 세팅",
-  "인스타/SNS 홍보 세트",
-  "리뷰 답변 시스템",
-  "카카오채널/DM 응대 문구",
-  "이벤트·쿠폰 문구",
-  "결제·도메인·분석·SEO 세팅 체크리스트",
-  "7일 오픈 플랜",
+  { slug: "website", name: "홈페이지 만들기" },
+  { slug: "naver-place", name: "네이버플레이스 세팅" },
+  { slug: "instagram-sns", name: "인스타/SNS 홍보 세트" },
+  { slug: "review-replies", name: "리뷰 답변 시스템" },
+  { slug: "kakao-dm", name: "카카오채널/DM 응대 문구" },
+  { slug: "event-coupon", name: "이벤트·쿠폰 문구" },
+  { slug: "setup-checklist", name: "결제·도메인·분석·SEO 세팅 체크리스트" },
+  { slug: "seven-day-open-plan", name: "7일 오픈 플랜" },
 ] as const;
 
 function nextStep(current: RequiredStep): FlowStep {
@@ -135,6 +137,15 @@ function eventParams(
     selected_option_type: extra.selectedOptionType,
     has_custom_input: extra.hasCustomInput,
     has_diagnosis_generated: extra.hasDiagnosisGenerated,
+  };
+}
+
+function modulePreviewParams(moduleSlug: string) {
+  return {
+    kit_slug: KIT_SLUG,
+    module_slug: moduleSlug,
+    source_page: SOURCE_PAGE,
+    action_location: "assembly_locked_module",
   };
 }
 
@@ -331,6 +342,10 @@ export default function OnlineSalesSetupDiagnostic({
     }
   }
 
+  function handleLockedModuleClick(moduleSlug: string) {
+    trackEvent("paid_module_preview_clicked", modulePreviewParams(moduleSlug));
+  }
+
   return (
     <div className="mt-8 grid gap-5 lg:grid-cols-[0.72fr_0.28fr]">
       <section className="min-w-0 rounded-3xl border border-slate-200 bg-slate-50/80 p-4 shadow-sm sm:p-5">
@@ -510,11 +525,11 @@ export default function OnlineSalesSetupDiagnostic({
             </p>
             <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {lockedModules.map((module) => (
-                <button
-                  key={module}
-                  type="button"
-                  disabled
-                  className="flex min-h-24 cursor-not-allowed items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-left opacity-95"
+                <Link
+                  key={module.slug}
+                  href={DASHBOARD_PREVIEW_PATH}
+                  onClick={() => handleLockedModuleClick(module.slug)}
+                  className="flex min-h-24 items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-left opacity-95 transition hover:border-teal-200 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 motion-reduce:transition-none"
                 >
                   <span
                     aria-hidden="true"
@@ -523,9 +538,9 @@ export default function OnlineSalesSetupDiagnostic({
                     잠금
                   </span>
                   <span className="text-sm font-semibold leading-6 text-slate-700">
-                    {module}
+                    {module.name}
                   </span>
-                </button>
+                </Link>
               ))}
             </div>
 

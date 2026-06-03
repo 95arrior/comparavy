@@ -9,6 +9,7 @@ const ALLOWED_PARAM_KEYS = new Set([
   "guide_title",
   "guide_type",
   "kit_slug",
+  "module_slug",
   "topic_cluster",
   "action_location",
   "field_key",
