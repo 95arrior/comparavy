@@ -3,6 +3,10 @@
 이 문서는 AteFlo의 flagship paid product인 **AI 온라인 영업 세팅 키트**의
 source of truth입니다.
 
+Paid content leakage rules are defined in `docs/paid-content-boundary.md`.
+The first paid module blueprint is defined in
+`docs/homepage-builder-module.md`.
+
 ## 1. Product Name
 
 AI 온라인 영업 세팅 키트
@@ -77,6 +81,9 @@ SEO, 외부 채널 세팅은 V1에서 체크리스트와 준비 순서로 안내
 - next action
 - review rules
 - repeated use
+
+Full prompts, templates, detailed checklists, and complete paid outputs must
+stay locked until payment/access control exists.
 
 ## 6. Chat-Guided Diagnostic Flow
 
@@ -651,4 +658,3 @@ Do not use:
 - 광고 효율 보장
 - 자동 설치 보장
 - 클릭 한 번으로 모든 외부 플랫폼 세팅 완료
-

@@ -10,6 +10,11 @@ paid execution package that helps Korean small business owners and service
 operators prepare the online setup needed before inquiries, bookings, or sales
 can happen.
 
+Paid content protection is part of the product. Public previews can show module
+names, benefits, locked outlines, and tiny samples, but they must not expose the
+full prompts, templates, detailed checklists, or complete outputs before
+payment/access control exists.
+
 ## Product Focus
 
 Flagship:
@@ -162,6 +167,7 @@ Rules:
 Detailed product requirements live in:
 
 - `docs/online-sales-setup-kit.md`
+- `docs/paid-content-boundary.md`
+- `docs/homepage-builder-module.md`
 - `docs/toss-payments-plan.md`
 - `docs/implementation-sequence.md`
-
