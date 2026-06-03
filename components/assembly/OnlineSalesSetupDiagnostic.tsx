@@ -1,14 +1,38 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
+import {
+  buildModuleGroups,
+  businessChips,
+  channelChips,
+  classifyBusinessType,
+  classifyChannel,
+  classifyGoal,
+  generateAdaptiveDiagnosis,
+  getBusinessTypeLabel,
+  getChannelQuestion,
+  getGoalChips,
+  type BusinessTypeCategory,
+  type ChannelCategory,
+  type DiagnosisContext,
+  type GoalCategory,
+  type LocalContext,
+} from "@/data/diagnosisEngine";
 import { trackEvent } from "@/lib/analytics";
 
 const KIT_SLUG = "online-sales-setup-kit";
 const SOURCE_PAGE = "online_sales_setup_assembly";
 const DASHBOARD_PREVIEW_PATH = "/dashboard/online-sales-setup-kit";
 
-type RequiredStep = "business" | "channel" | "need";
+type RequiredStep = "business" | "channel" | "need" | "local";
 type OptionalStep = "region";
 type FlowStep = RequiredStep | OptionalStep | "ready" | "diagnosis";
 type SelectedOptionType = "chip" | "custom" | "skip";
@@ -19,109 +43,52 @@ interface Answer {
   readonly hasCustomInput: boolean;
 }
 
-interface QuestionConfig {
-  readonly key: RequiredStep;
-  readonly stepName: string;
-  readonly message: string;
-  readonly chips: readonly string[];
-}
-
 interface OnlineSalesSetupDiagnosticProps {
   readonly ctaHref: string;
   readonly hasCheckout: boolean;
 }
 
 const progressSteps = ["상황 확인", "필요한 세팅 찾기", "전체 패키지 열기"] as const;
-
-const questions: readonly QuestionConfig[] = [
-  {
-    key: "business",
-    stepName: "business_type",
-    message: "어떤 일을 하고 계세요?",
-    chips: [
-      "네일샵",
-      "카페",
-      "필라테스",
-      "강아지 미용",
-      "학원",
-      "병원·클리닉",
-      "청소·인테리어",
-      "온라인 서비스",
-      "직접 입력",
-    ],
-  },
-  {
-    key: "channel",
-    stepName: "current_channel",
-    message: "지금 어디에서 손님을 받고 있나요?",
-    chips: [
-      "네이버플레이스",
-      "인스타그램",
-      "블로그",
-      "카카오채널",
-      "홈페이지",
-      "아직 없어요",
-      "잘 모르겠어요",
-    ],
-  },
-  {
-    key: "need",
-    stepName: "main_need",
-    message: "지금 가장 필요한 건 뭐예요?",
-    chips: [
-      "문의 늘리기",
-      "예약 받기",
-      "구매로 연결하기",
-      "신뢰도 높이기",
-      "이벤트 알리기",
-      "뭐부터 해야 할지 모르겠어요",
-    ],
-  },
-];
-
-const diagnosisItems = [
-  {
-    title: "온라인 첫인상 세팅",
-    description:
-      "손님이 처음 봤을 때 무엇을 하는 곳인지 바로 알 수 있는 소개 문구가 필요해요.",
-  },
-  {
-    title: "문의/예약 연결 세팅",
-    description:
-      "글을 보고 바로 문의하거나 예약할 수 있는 문구와 버튼 흐름이 필요해요.",
-  },
-  {
-    title: "노출 점검 세팅",
-    description:
-      "네이버플레이스, 인스타그램, 홈페이지, 분석 도구 중 빠진 부분을 점검해야 해요.",
-  },
+const localChips = [
+  "네, 동네 손님이 중요해요",
+  "아니요, 온라인 고객이 더 중요해요",
+  "잘 모르겠어요",
 ] as const;
 
-const lockedModules = [
-  { slug: "website", name: "홈페이지 만들기" },
-  { slug: "naver-place", name: "네이버플레이스 세팅" },
-  { slug: "instagram-sns", name: "인스타/SNS 홍보 세트" },
-  { slug: "review-replies", name: "리뷰 답변 시스템" },
-  { slug: "kakao-dm", name: "카카오채널/DM 응대 문구" },
-  { slug: "event-coupon", name: "이벤트·쿠폰 문구" },
-  { slug: "setup-checklist", name: "결제·도메인·분석·SEO 세팅 체크리스트" },
-  { slug: "seven-day-open-plan", name: "7일 오픈 플랜" },
-] as const;
+function isReducedMotionPreferred(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
 
-function nextStep(current: RequiredStep): FlowStep {
-  if (current === "business") {
-    return "channel";
+function localContextFromLabel(label: string): LocalContext {
+  if (label.startsWith("네,")) {
+    return "local";
   }
 
-  if (current === "channel") {
-    return "need";
+  if (label.startsWith("아니요")) {
+    return "online";
   }
 
-  return "region";
+  return "unsure";
+}
+
+function stepNameForStep(step: RequiredStep | OptionalStep): string {
+  const stepNames: Record<RequiredStep | OptionalStep, string> = {
+    business: "business_type",
+    channel: "current_channel",
+    need: "main_need",
+    local: "local_context",
+    region: "optional_region",
+  };
+
+  return stepNames[step];
 }
 
 function eventParams(
   actionLocation: string,
+  context: Partial<DiagnosisContext>,
   extra: {
     readonly stepName?: string;
     readonly selectedOptionType?: SelectedOptionType;
@@ -135,17 +102,13 @@ function eventParams(
     action_location: actionLocation,
     step_name: extra.stepName,
     selected_option_type: extra.selectedOptionType,
+    business_type_category: context.businessType,
+    channel_category: context.channel,
+    goal_category: context.goal,
+    local_context_selected:
+      context.localContext === undefined ? undefined : context.localContext,
     has_custom_input: extra.hasCustomInput,
     has_diagnosis_generated: extra.hasDiagnosisGenerated,
-  };
-}
-
-function modulePreviewParams(moduleSlug: string) {
-  return {
-    kit_slug: KIT_SLUG,
-    module_slug: moduleSlug,
-    source_page: SOURCE_PAGE,
-    action_location: "assembly_locked_module",
   };
 }
 
@@ -176,18 +139,113 @@ function ChatBubble({
 function ChipButton({
   children,
   onClick,
+  selected = false,
 }: {
   readonly children: ReactNode;
   readonly onClick: () => void;
+  readonly selected?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="min-h-11 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 motion-reduce:transition-none"
+      aria-pressed={selected}
+      className={`min-h-11 rounded-full border px-4 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 motion-reduce:transition-none ${
+        selected
+          ? "border-teal-300 bg-teal-50 text-teal-900"
+          : "border-slate-200 bg-white text-slate-700 hover:border-teal-300 hover:bg-teal-50"
+      }`}
     >
       {children}
     </button>
+  );
+}
+
+function QuestionBlock({
+  message,
+  answer,
+  chips,
+  isCurrent,
+  showDirectInput,
+  allowDirectInput = true,
+  directInputPlaceholder,
+  directInputValue,
+  onDirectInputChange,
+  onDirectInputSubmit,
+  onDirectInputOpen,
+  onChipClick,
+}: {
+  readonly message: string;
+  readonly answer?: Answer;
+  readonly chips: readonly string[];
+  readonly isCurrent: boolean;
+  readonly showDirectInput: boolean;
+  readonly allowDirectInput?: boolean;
+  readonly directInputPlaceholder: string;
+  readonly directInputValue: string;
+  readonly onDirectInputChange: (value: string) => void;
+  readonly onDirectInputSubmit: () => void;
+  readonly onDirectInputOpen: () => void;
+  readonly onChipClick: (chip: string) => void;
+}) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    onDirectInputSubmit();
+  }
+
+  return (
+    <div className="space-y-3">
+      <ChatBubble>{message}</ChatBubble>
+      {answer ? <ChatBubble variant="user">{answer.label}</ChatBubble> : null}
+      {isCurrent ? (
+        <div className="rounded-3xl border border-slate-200 bg-white p-4">
+          <div className="flex flex-wrap gap-2">
+            {chips.map((chip) => (
+              <ChipButton
+                key={chip}
+                selected={answer?.label === chip}
+                onClick={() => onChipClick(chip)}
+              >
+                {chip}
+              </ChipButton>
+            ))}
+          </div>
+
+          {showDirectInput ? (
+            <form
+              onSubmit={handleSubmit}
+              className="mt-4 grid gap-2 sm:grid-cols-[1fr_auto]"
+            >
+              <label className="sr-only" htmlFor={`custom-${message}`}>
+                직접 입력
+              </label>
+              <input
+                id={`custom-${message}`}
+                value={directInputValue}
+                onChange={(event) => onDirectInputChange(event.target.value)}
+                placeholder={directInputPlaceholder}
+                className="min-h-11 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 outline-none transition placeholder:font-medium placeholder:text-slate-400 focus:border-teal-300 focus:ring-2 focus:ring-teal-100 motion-reduce:transition-none"
+              />
+              <button
+                type="submit"
+                disabled={!directInputValue.trim()}
+                className="min-h-11 rounded-full bg-teal-700 px-5 py-2 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 motion-reduce:transition-none"
+              >
+                입력 완료
+              </button>
+            </form>
+          ) : allowDirectInput ? (
+            <button
+              type="button"
+              onClick={onDirectInputOpen}
+              className="mt-3 text-sm font-semibold text-teal-700 transition hover:text-teal-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 motion-reduce:transition-none"
+            >
+              직접 입력할게요
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -199,13 +257,59 @@ export default function OnlineSalesSetupDiagnostic({
     Partial<Record<RequiredStep | OptionalStep, Answer>>
   >({});
   const [currentStep, setCurrentStep] = useState<FlowStep>("business");
-  const [customBusinessValue, setCustomBusinessValue] = useState("");
-  const [showCustomBusinessInput, setShowCustomBusinessInput] = useState(false);
+  const [pendingStep, setPendingStep] = useState<FlowStep | null>(null);
+  const [activeCustomStep, setActiveCustomStep] = useState<
+    RequiredStep | OptionalStep | null
+  >(null);
+  const [customValue, setCustomValue] = useState("");
   const [regionValue, setRegionValue] = useState("");
+  const [context, setContext] = useState<Partial<DiagnosisContext>>({
+    businessType: "fallback",
+  });
   const [diagnosisGenerated, setDiagnosisGenerated] = useState(false);
   const [interestRecorded, setInterestRecorded] = useState(false);
   const startedRef = useRef(false);
   const lockedViewedRef = useRef(false);
+
+  const businessType = context.businessType ?? "fallback";
+  const channelQuestion = getChannelQuestion(businessType);
+  const goalChips = getGoalChips(businessType);
+  const hasAnyCustomInput = Boolean(
+    answers.business?.hasCustomInput ||
+      answers.channel?.hasCustomInput ||
+      answers.need?.hasCustomInput ||
+      answers.region?.hasCustomInput,
+  );
+
+  const completeContext: DiagnosisContext = {
+    businessType,
+    channel: context.channel ?? "unsure",
+    goal: context.goal ?? "unsure",
+    localContext: context.localContext ?? "unsure",
+    hasRegionText: Boolean(answers.region?.hasCustomInput),
+  };
+
+  const diagnosisItems = useMemo(
+    () => generateAdaptiveDiagnosis(completeContext),
+    [
+      completeContext.businessType,
+      completeContext.channel,
+      completeContext.goal,
+      completeContext.localContext,
+      completeContext.hasRegionText,
+    ],
+  );
+
+  const moduleGroups = useMemo(
+    () => buildModuleGroups(completeContext),
+    [
+      completeContext.businessType,
+      completeContext.channel,
+      completeContext.goal,
+      completeContext.localContext,
+      completeContext.hasRegionText,
+    ],
+  );
 
   useEffect(() => {
     if (startedRef.current) {
@@ -213,54 +317,89 @@ export default function OnlineSalesSetupDiagnostic({
     }
 
     startedRef.current = true;
-    trackEvent("assembly_started", eventParams("assembly_page_loaded"));
-  }, []);
+    trackEvent("assembly_started", eventParams("assembly_page_loaded", context));
+  }, [context]);
+
+  function moveToStep(nextStep: FlowStep) {
+    if (isReducedMotionPreferred()) {
+      setCurrentStep(nextStep);
+      return;
+    }
+
+    setPendingStep(nextStep);
+    window.setTimeout(() => {
+      setCurrentStep(nextStep);
+      setPendingStep(null);
+    }, 180);
+  }
 
   function recordAnswer(
-    key: RequiredStep,
+    step: RequiredStep,
     label: string,
     optionType: SelectedOptionType,
     hasCustomInput: boolean,
   ) {
-    const question = questions.find((item) => item.key === key);
+    let nextContext: Partial<DiagnosisContext> = context;
+    let nextStep: FlowStep = "ready";
 
+    if (step === "business") {
+      const classifiedBusinessType = classifyBusinessType(label);
+      nextContext = {
+        ...context,
+        businessType: classifiedBusinessType,
+      };
+      nextStep = "channel";
+    }
+
+    if (step === "channel") {
+      const classifiedChannel = classifyChannel(label);
+      nextContext = {
+        ...context,
+        channel: classifiedChannel,
+      };
+      nextStep = "need";
+    }
+
+    if (step === "need") {
+      const classifiedGoal = classifyGoal(label);
+      nextContext = {
+        ...context,
+        goal: classifiedGoal,
+      };
+      nextStep = "local";
+    }
+
+    if (step === "local") {
+      const localContext = localContextFromLabel(label);
+      nextContext = {
+        ...context,
+        localContext,
+      };
+      nextStep = localContext === "local" ? "region" : "ready";
+    }
+
+    setContext(nextContext);
     setAnswers((current) => ({
       ...current,
-      [key]: { label, optionType, hasCustomInput },
+      [step]: { label, optionType, hasCustomInput },
     }));
-    setCurrentStep(nextStep(key));
+    setActiveCustomStep(null);
+    setCustomValue("");
 
     trackEvent(
       "chat_step_answered",
-      eventParams("diagnostic_chat", {
-        stepName: question?.stepName,
+      eventParams("diagnostic_chat", nextContext, {
+        stepName: stepNameForStep(step),
         selectedOptionType: optionType,
         hasCustomInput,
         hasDiagnosisGenerated: false,
       }),
     );
+
+    moveToStep(nextStep);
   }
 
-  function handleChipClick(question: QuestionConfig, chip: string) {
-    if (question.key === "business" && chip === "직접 입력") {
-      setShowCustomBusinessInput(true);
-      return;
-    }
-
-    recordAnswer(question.key, chip, "chip", false);
-  }
-
-  function submitCustomBusiness() {
-    const trimmed = customBusinessValue.trim();
-
-    if (!trimmed) {
-      return;
-    }
-
-    recordAnswer("business", trimmed, "custom", true);
-  }
-
-  function submitRegion(optionType: SelectedOptionType) {
+  function recordRegion(optionType: SelectedOptionType) {
     const label = optionType === "skip" ? "건너뛰기" : regionValue.trim();
 
     if (optionType !== "skip" && !label) {
@@ -275,17 +414,42 @@ export default function OnlineSalesSetupDiagnostic({
         hasCustomInput: optionType === "custom",
       },
     }));
-    setCurrentStep("ready");
+    setActiveCustomStep(null);
 
     trackEvent(
       "chat_step_answered",
-      eventParams("diagnostic_region", {
-        stepName: "optional_region",
+      eventParams("diagnostic_region", context, {
+        stepName: stepNameForStep("region"),
         selectedOptionType: optionType,
         hasCustomInput: optionType === "custom",
         hasDiagnosisGenerated: false,
       }),
     );
+
+    moveToStep("ready");
+  }
+
+  function handleChipClick(step: RequiredStep, chip: string) {
+    if (step === "business" && chip === "직접 입력") {
+      setActiveCustomStep(step);
+      return;
+    }
+
+    recordAnswer(step, chip, "chip", false);
+  }
+
+  function submitCustomStep(step: RequiredStep | OptionalStep) {
+    if (step === "region") {
+      recordRegion("custom");
+      return;
+    }
+
+    const trimmed = customValue.trim();
+    if (!trimmed) {
+      return;
+    }
+
+    recordAnswer(step, trimmed, "custom", true);
   }
 
   function generateDiagnosis() {
@@ -294,10 +458,8 @@ export default function OnlineSalesSetupDiagnostic({
 
     trackEvent(
       "setup_diagnosis_generated",
-      eventParams("diagnosis_button", {
-        hasCustomInput: Boolean(
-          answers.business?.hasCustomInput || answers.region?.hasCustomInput,
-        ),
+      eventParams("diagnosis_button", completeContext, {
+        hasCustomInput: hasAnyCustomInput,
         hasDiagnosisGenerated: true,
       }),
     );
@@ -306,10 +468,8 @@ export default function OnlineSalesSetupDiagnostic({
       lockedViewedRef.current = true;
       trackEvent(
         "locked_modules_viewed",
-        eventParams("diagnosis_results", {
-          hasCustomInput: Boolean(
-            answers.business?.hasCustomInput || answers.region?.hasCustomInput,
-          ),
+        eventParams("diagnosis_results", completeContext, {
+          hasCustomInput: hasAnyCustomInput,
           hasDiagnosisGenerated: true,
         }),
       );
@@ -318,21 +478,9 @@ export default function OnlineSalesSetupDiagnostic({
 
   function handleUnlockClick() {
     trackEvent(
-      "kit_unlock_click",
-      eventParams("locked_modules_cta", {
-        hasCustomInput: Boolean(
-          answers.business?.hasCustomInput || answers.region?.hasCustomInput,
-        ),
-        hasDiagnosisGenerated: diagnosisGenerated,
-      }),
-    );
-
-    trackEvent(
       hasCheckout ? "kit_checkout_click" : "kit_interest_click",
-      eventParams("locked_modules_cta", {
-        hasCustomInput: Boolean(
-          answers.business?.hasCustomInput || answers.region?.hasCustomInput,
-        ),
+      eventParams("locked_modules_cta", completeContext, {
+        hasCustomInput: hasAnyCustomInput,
         hasDiagnosisGenerated: diagnosisGenerated,
       }),
     );
@@ -340,10 +488,6 @@ export default function OnlineSalesSetupDiagnostic({
     if (!hasCheckout) {
       setInterestRecorded(true);
     }
-  }
-
-  function handleLockedModuleClick(moduleSlug: string) {
-    trackEvent("paid_module_preview_clicked", modulePreviewParams(moduleSlug));
   }
 
   return (
@@ -372,77 +516,94 @@ export default function OnlineSalesSetupDiagnostic({
             세팅을 정리해드릴게요.
           </ChatBubble>
 
-          {questions.map((question) => {
-            const answer = answers[question.key];
-            const isCurrent = currentStep === question.key;
-            const shouldShow =
-              answer ||
-              isCurrent ||
-              (question.key === "channel" && answers.business) ||
-              (question.key === "need" && answers.channel);
+          <QuestionBlock
+            message="어떤 일을 하고 계세요?"
+            answer={answers.business}
+            chips={businessChips}
+            isCurrent={currentStep === "business"}
+            showDirectInput={activeCustomStep === "business"}
+            allowDirectInput={false}
+            directInputPlaceholder="예: 학원인데 샵인샵 느낌이에요"
+            directInputValue={customValue}
+            onDirectInputChange={setCustomValue}
+            onDirectInputOpen={() => setActiveCustomStep("business")}
+            onDirectInputSubmit={() => submitCustomStep("business")}
+            onChipClick={(chip) => handleChipClick("business", chip)}
+          />
 
-            if (!shouldShow) {
-              return null;
-            }
+          {answers.business ? (
+            <p className="pl-1 text-sm font-semibold text-slate-500">
+              {getBusinessTypeLabel(businessType)} 기준으로 이어서 볼게요.
+            </p>
+          ) : null}
 
-            return (
-              <div key={question.key} className="space-y-3">
-                <ChatBubble>{question.message}</ChatBubble>
-                {answer ? (
-                  <ChatBubble variant="user">{answer.label}</ChatBubble>
-                ) : null}
-                {isCurrent ? (
-                  <div className="rounded-3xl border border-slate-200 bg-white p-4">
-                    <div className="flex flex-wrap gap-2">
-                      {question.chips.map((chip) => (
-                        <ChipButton
-                          key={chip}
-                          onClick={() => handleChipClick(question, chip)}
-                        >
-                          {chip}
-                        </ChipButton>
-                      ))}
-                    </div>
+          {answers.business || currentStep === "channel" ? (
+            <QuestionBlock
+              message={channelQuestion}
+              answer={answers.channel}
+              chips={channelChips}
+              isCurrent={currentStep === "channel"}
+              showDirectInput={activeCustomStep === "channel"}
+              directInputPlaceholder="예: 인스타 DM이랑 지인 소개"
+              directInputValue={customValue}
+              onDirectInputChange={setCustomValue}
+              onDirectInputOpen={() => setActiveCustomStep("channel")}
+              onDirectInputSubmit={() => submitCustomStep("channel")}
+              onChipClick={(chip) => handleChipClick("channel", chip)}
+            />
+          ) : null}
 
-                    {question.key === "business" && showCustomBusinessInput ? (
-                      <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_auto]">
-                        <label className="sr-only" htmlFor="custom-business">
-                          직접 입력
-                        </label>
-                        <input
-                          id="custom-business"
-                          value={customBusinessValue}
-                          onChange={(event) =>
-                            setCustomBusinessValue(event.target.value)
-                          }
-                          placeholder="예: 사진 스튜디오, 상담 서비스"
-                          className="min-h-11 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 outline-none transition placeholder:font-medium placeholder:text-slate-400 focus:border-teal-300 focus:ring-2 focus:ring-teal-100 motion-reduce:transition-none"
-                        />
-                        <button
-                          type="button"
-                          onClick={submitCustomBusiness}
-                          disabled={!customBusinessValue.trim()}
-                          className="min-h-11 rounded-full bg-teal-700 px-5 py-2 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 motion-reduce:transition-none"
-                        >
-                          입력 완료
-                        </button>
-                      </div>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
-            );
-          })}
+          {answers.channel || currentStep === "need" ? (
+            <QuestionBlock
+              message="지금 가장 막힌 부분은 어디예요?"
+              answer={answers.need}
+              chips={goalChips}
+              isCurrent={currentStep === "need"}
+              showDirectInput={activeCustomStep === "need"}
+              directInputPlaceholder="예: 학부모 상담으로 잘 이어지지 않아요"
+              directInputValue={customValue}
+              onDirectInputChange={setCustomValue}
+              onDirectInputOpen={() => setActiveCustomStep("need")}
+              onDirectInputSubmit={() => submitCustomStep("need")}
+              onChipClick={(chip) => handleChipClick("need", chip)}
+            />
+          ) : null}
+
+          {answers.need || currentStep === "local" ? (
+            <QuestionBlock
+              message="지역 손님이 중요한가요?"
+              answer={answers.local}
+              chips={localChips}
+              isCurrent={currentStep === "local"}
+              showDirectInput={false}
+              allowDirectInput={false}
+              directInputPlaceholder=""
+              directInputValue=""
+              onDirectInputChange={() => undefined}
+              onDirectInputOpen={() => undefined}
+              onDirectInputSubmit={() => undefined}
+              onChipClick={(chip) => handleChipClick("local", chip)}
+            />
+          ) : null}
 
           {(currentStep === "region" || answers.region) && (
             <div className="space-y-3">
-              <ChatBubble>지역이나 상권을 넣으면 더 정확해져요</ChatBubble>
+              <ChatBubble>
+                지역이나 상권을 적어주세요. 지역을 넣으면 문구와 진단을 더
+                자연스럽게 맞춰드릴게요.
+              </ChatBubble>
               {answers.region ? (
                 <ChatBubble variant="user">{answers.region.label}</ChatBubble>
               ) : null}
               {currentStep === "region" ? (
                 <div className="rounded-3xl border border-slate-200 bg-white p-4">
-                  <div className="grid gap-2 sm:grid-cols-[1fr_auto_auto]">
+                  <form
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      recordRegion("custom");
+                    }}
+                    className="grid gap-2 sm:grid-cols-[1fr_auto_auto]"
+                  >
                     <label className="sr-only" htmlFor="region-input">
                       지역이나 상권
                     </label>
@@ -454,8 +615,7 @@ export default function OnlineSalesSetupDiagnostic({
                       className="min-h-11 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 outline-none transition placeholder:font-medium placeholder:text-slate-400 focus:border-teal-300 focus:ring-2 focus:ring-teal-100 motion-reduce:transition-none"
                     />
                     <button
-                      type="button"
-                      onClick={() => submitRegion("custom")}
+                      type="submit"
                       disabled={!regionValue.trim()}
                       className="min-h-11 rounded-full bg-teal-700 px-5 py-2 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 motion-reduce:transition-none"
                     >
@@ -463,16 +623,18 @@ export default function OnlineSalesSetupDiagnostic({
                     </button>
                     <button
                       type="button"
-                      onClick={() => submitRegion("skip")}
+                      onClick={() => recordRegion("skip")}
                       className="min-h-11 rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 motion-reduce:transition-none"
                     >
                       건너뛰기
                     </button>
-                  </div>
+                  </form>
                 </div>
               ) : null}
             </div>
           )}
+
+          {pendingStep ? <ChatBubble>다음 질문을 준비할게요.</ChatBubble> : null}
 
           {currentStep === "ready" ? (
             <div className="flex justify-end">
@@ -521,26 +683,40 @@ export default function OnlineSalesSetupDiagnostic({
 
           <div className="mt-6 rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
             <p className="text-sm font-semibold text-teal-700">
-              전체 패키지에서 이어서 만들 수 있어요
+              전체 패키지에서는 이렇게 이어서 만들 수 있어요
             </p>
-            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {lockedModules.map((module) => (
-                <Link
-                  key={module.slug}
-                  href={DASHBOARD_PREVIEW_PATH}
-                  onClick={() => handleLockedModuleClick(module.slug)}
-                  className="flex min-h-24 items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-left opacity-95 transition hover:border-teal-200 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 motion-reduce:transition-none"
+            <div className="mt-5 grid gap-4 lg:grid-cols-2">
+              {moduleGroups.map((group) => (
+                <article
+                  key={group.slug}
+                  className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4"
                 >
-                  <span
-                    aria-hidden="true"
-                    className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-sm font-semibold text-slate-500"
-                  >
-                    잠금
-                  </span>
-                  <span className="text-sm font-semibold leading-6 text-slate-700">
-                    {module.name}
-                  </span>
-                </Link>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-base font-semibold text-slate-950">
+                        {group.title}
+                      </h3>
+                      <p className="mt-1 text-sm leading-6 text-slate-600">
+                        {group.description}
+                      </p>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-500">
+                      잠금
+                    </span>
+                  </div>
+                  <div className="mt-4 grid gap-2">
+                    {group.modules.map((module) => (
+                      <Link
+                        key={`${group.slug}-${module.slug}`}
+                        href={DASHBOARD_PREVIEW_PATH}
+                        className="flex min-h-12 items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-semibold leading-6 text-slate-700 transition hover:border-teal-200 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 motion-reduce:transition-none"
+                      >
+                        <span>{module.name}</span>
+                        <span className="text-xs text-slate-400">잠금</span>
+                      </Link>
+                    ))}
+                  </div>
+                </article>
               ))}
             </div>
 

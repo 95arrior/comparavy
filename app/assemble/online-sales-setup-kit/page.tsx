@@ -16,7 +16,7 @@ const hasKitCheckout = kitHasCheckout(kit);
 export const metadata: Metadata = {
   title: "온라인 영업 세팅 진단 | AteFlo Kit Studio",
   description:
-    "몇 가지 질문에 답하면 지금 먼저 챙기면 좋은 온라인 영업 세팅 3가지를 보여드립니다.",
+    "업종, 채널, 목표, 지역 맥락을 바탕으로 지금 먼저 챙기면 좋은 온라인 영업 세팅 3가지를 확인하세요.",
 };
 
 export const revalidate = 0;
