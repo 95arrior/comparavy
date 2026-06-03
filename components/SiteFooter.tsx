@@ -1,25 +1,23 @@
 import Link from "next/link";
 import Logo from "@/components/Logo";
-import { SITE_TAGLINE } from "@/lib/site";
-
 const mainLinks = [
-  { href: "/kits", label: "Kits" },
+  { href: "/kits", label: "실행 패키지" },
   {
     href: "/kits/online-sales-setup-kit",
     label: "온라인 영업 세팅",
   },
   {
     href: "/kits/job-application-ai-kit",
-    label: "Job Application Kit",
+    label: "취업 준비",
   },
-  { href: "/tools", label: "Tools" },
+  { href: "/tools", label: "도구" },
 ] as const;
 
 const policyLinks = [
-  { href: "/about", label: "About" },
-  { href: "/contact", label: "Contact" },
-  { href: "/privacy", label: "Privacy" },
-  { href: "/affiliate-disclosure", label: "Affiliate disclosure" },
+  { href: "/about", label: "소개" },
+  { href: "/contact", label: "문의" },
+  { href: "/privacy", label: "개인정보" },
+  { href: "/affiliate-disclosure", label: "제휴 고지" },
 ] as const;
 
 export default function SiteFooter() {
@@ -29,8 +27,8 @@ export default function SiteFooter() {
         <div className="space-y-3">
           <Logo variant="footer" />
           <p className="max-w-xl text-sm leading-6 text-slate-600">
-            {SITE_TAGLINE} Practical AI workflows for turning messy inputs into
-            finished outputs.
+            지금 막힌 일을 선택하면 먼저 챙기면 좋은 세팅을 진단하고,
+            필요한 실행 패키지를 안내합니다.
           </p>
         </div>
 

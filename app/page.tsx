@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import HomeStorefront from "@/components/home/HomeStorefront";
+import ProductHomeFlow from "@/components/product/ProductHomeFlow";
 
-const HOME_TITLE = "AteFlo | AI Workflow Kits for Real Work";
+const HOME_TITLE = "AteFlo | 내 상황에 맞는 AI 실행 패키지";
 const HOME_DESCRIPTION =
-  "AteFlo helps you build AI workflow kits with structured prompts, examples, checklists, and action plans for real work.";
+  "지금 막힌 일을 선택하면 먼저 챙기면 좋은 온라인 세팅을 진단하고, 필요한 실행 패키지를 안내합니다.";
 
 export const metadata: Metadata = {
   title: {
@@ -23,5 +23,5 @@ export const metadata: Metadata = {
 export const revalidate = 0;
 
 export default function Home() {
-  return <HomeStorefront />;
+  return <ProductHomeFlow />;
 }

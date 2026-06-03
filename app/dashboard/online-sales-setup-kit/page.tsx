@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import OnlineSalesSetupDashboardPreview from "@/components/dashboard/OnlineSalesSetupDashboardPreview";
-import SiteHeader from "@/components/SiteHeader";
+import ProductDashboardPreview from "@/components/product/ProductDashboardPreview";
+import ProductShell from "@/components/product/ProductShell";
 import { getKitBySlug, getKitCtaHref, kitHasCheckout } from "@/data/kits";
 
 const KIT_SLUG = "online-sales-setup-kit";
@@ -27,35 +27,27 @@ export const revalidate = 0;
 
 export default function OnlineSalesSetupDashboardPage() {
   return (
-    <main className="ateflo-page-shell min-h-screen px-4 py-8 sm:px-6 sm:py-12">
-      <div className="mx-auto max-w-6xl">
-        <SiteHeader active="online-sales-kit" className="mb-6 rounded-3xl border border-slate-200 shadow-sm" />
+    <ProductShell>
+      <section className="mx-auto max-w-3xl text-center">
+        <p className="text-sm font-semibold text-teal-700">
+          대시보드 미리보기
+        </p>
+        <h1 className="mt-4 text-3xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-5xl">
+          AI 온라인 영업 세팅 키트
+        </h1>
+        <p className="mx-auto mt-4 max-w-2xl text-base leading-8 text-slate-600">
+          온라인에서 손님을 받을 준비를 버튼으로 하나씩 정리하는 실행
+          패키지입니다.
+        </p>
+        <span className="mt-5 inline-flex rounded-full bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-800">
+          미리보기
+        </span>
+      </section>
 
-        <section className="rounded-3xl border border-slate-200 bg-white px-5 py-8 shadow-sm sm:px-8 sm:py-10">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-teal-700">
-                대시보드 미리보기
-              </p>
-              <h1 className="mt-5 max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-5xl">
-                AI 온라인 영업 세팅 키트
-              </h1>
-              <p className="mt-5 max-w-3xl text-base leading-8 text-slate-600">
-                온라인에서 손님을 받을 준비를 버튼으로 하나씩 정리하는 실행
-                패키지입니다.
-              </p>
-            </div>
-            <span className="inline-flex w-fit items-center rounded-full border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-800">
-              미리보기
-            </span>
-          </div>
-        </section>
-
-        <OnlineSalesSetupDashboardPreview
-          ctaHref={kitCtaHref}
-          hasCheckout={hasKitCheckout}
-        />
-      </div>
-    </main>
+      <ProductDashboardPreview
+        ctaHref={kitCtaHref}
+        hasCheckout={hasKitCheckout}
+      />
+    </ProductShell>
   );
 }

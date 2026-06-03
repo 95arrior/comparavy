@@ -347,8 +347,25 @@ export default function OnlineSalesSetupDiagnostic({
   }
 
   return (
-    <div className="mt-8 grid gap-5 lg:grid-cols-[0.72fr_0.28fr]">
-      <section className="min-w-0 rounded-3xl border border-slate-200 bg-slate-50/80 p-4 shadow-sm sm:p-5">
+    <div className="mt-8 grid gap-5">
+      <aside className="rounded-[1.75rem] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <p className="text-sm font-semibold text-teal-700">진행 순서</p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          {progressSteps.map((step, index) => (
+            <div
+              key={step}
+              className="rounded-2xl border border-slate-100 bg-slate-50/80 p-3"
+            >
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-teal-50 text-sm font-semibold text-teal-800">
+                {index + 1}
+              </span>
+              <p className="mt-2 text-sm font-semibold text-slate-900">{step}</p>
+            </div>
+          ))}
+        </div>
+      </aside>
+
+      <section className="min-w-0 rounded-[1.75rem] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <div className="space-y-4" aria-live="polite">
           <ChatBubble>
             안녕하세요. 몇 가지만 답하면 지금 먼저 챙기면 좋은 온라인 영업
@@ -471,26 +488,9 @@ export default function OnlineSalesSetupDiagnostic({
         </div>
       </section>
 
-      <aside className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-        <p className="text-sm font-semibold text-teal-700">진행 순서</p>
-        <div className="mt-4 grid gap-3">
-          {progressSteps.map((step, index) => (
-            <div
-              key={step}
-              className="rounded-2xl border border-slate-100 bg-slate-50/80 p-3"
-            >
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-teal-50 text-sm font-semibold text-teal-800">
-                {index + 1}
-              </span>
-              <p className="mt-2 text-sm font-semibold text-slate-900">{step}</p>
-            </div>
-          ))}
-        </div>
-      </aside>
-
       {diagnosisGenerated ? (
-        <section className="lg:col-span-2">
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+        <section>
+          <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
             <p className="text-sm font-semibold text-teal-700">무료 진단 결과</p>
             <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
               지금 먼저 챙기면 좋은 세팅 3가지예요
@@ -519,7 +519,7 @@ export default function OnlineSalesSetupDiagnostic({
             </p>
           </div>
 
-          <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+          <div className="mt-6 rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
             <p className="text-sm font-semibold text-teal-700">
               전체 패키지에서 이어서 만들 수 있어요
             </p>

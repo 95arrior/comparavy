@@ -5,7 +5,7 @@ import SiteFooter from "@/components/SiteFooter";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
-const DEFAULT_TITLE = "AteFlo | AI Workflow Kits for Real Work";
+const DEFAULT_TITLE = "AteFlo | 내 상황에 맞는 AI 실행 패키지";
 const WEBSITE_JSON_LD = {
   "@context": "https://schema.org",
   "@type": "WebSite",

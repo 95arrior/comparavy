@@ -1,0 +1,311 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { trackEvent } from "@/lib/analytics";
+
+const KIT_SLUG = "online-sales-setup-kit";
+const SOURCE_PAGE = "online_sales_setup_dashboard";
+const HOMEPAGE_BUILDER_PATH =
+  "/dashboard/online-sales-setup-kit/homepage-builder";
+
+const modulePreviews = {
+  "homepage-builder": {
+    name: "홈페이지 만들기",
+    summary: "처음 보는 손님이 바로 이해할 첫 화면 문구를 정리해요.",
+    preview:
+      "구매 후에는 가게 정보와 서비스 내용을 입력하고, 홈페이지 첫 문장, 서비스 소개문, CTA, FAQ, SEO 제목/설명을 순서대로 만들 수 있어요.",
+    href: HOMEPAGE_BUILDER_PATH,
+  },
+  "naver-place": {
+    name: "네이버플레이스 세팅",
+    summary: "플레이스에 필요한 소개와 기본 점검 항목을 챙겨요.",
+    preview:
+      "구매 후에는 매장 소개, 대표 서비스 설명, 사진 설명, FAQ, 기본 정보 점검 항목을 정리할 수 있어요.",
+  },
+  "seo-title-description": {
+    name: "SEO 제목/설명",
+    summary: "검색 결과에 보일 기본 제목과 설명 방향을 잡아요.",
+    preview:
+      "구매 후에는 홈페이지와 주요 채널에 맞는 검색용 제목 후보와 설명 문구 후보를 정리할 수 있어요.",
+  },
+  "cta-flow": {
+    name: "CTA",
+    summary: "문의, 예약, 상담으로 이어지는 버튼 문구를 준비해요.",
+    preview:
+      "구매 후에는 손님이 다음 행동을 쉽게 고를 수 있도록 문의/예약 버튼 문구와 안내 흐름을 만들 수 있어요.",
+  },
+  "kakao-dm": {
+    name: "카카오채널/DM",
+    summary: "처음 문의가 왔을 때 바로 쓸 응대 흐름을 준비해요.",
+    preview:
+      "구매 후에는 첫 응대, 가격 문의, 예약 문의, 자주 묻는 질문, 상담 종료 문구를 순서대로 정리할 수 있어요.",
+  },
+  "reservation-price-inquiry": {
+    name: "예약/가격 문의",
+    summary: "반복 문의에 흔들리지 않도록 답변 기준을 잡아요.",
+    preview:
+      "구매 후에는 가격, 예약 가능 시간, 상담 전 확인사항을 과장 없이 안내하는 문구를 만들 수 있어요.",
+  },
+  "review-replies": {
+    name: "리뷰 답변",
+    summary: "상황별 리뷰 답변을 안전한 톤으로 준비해요.",
+    preview:
+      "구매 후에는 좋은 리뷰, 보통 리뷰, 불만 리뷰에 맞는 답변과 위험 표현 체크리스트를 사용할 수 있어요.",
+  },
+  faq: {
+    name: "FAQ",
+    summary: "처음 방문하는 손님이 궁금해할 질문을 정리해요.",
+    preview:
+      "구매 후에는 문의 전에 확인하면 좋은 질문과 답변 구조를 서비스 흐름에 맞춰 만들 수 있어요.",
+  },
+  "risk-expression-check": {
+    name: "위험 표현 체크",
+    summary: "과장되거나 법적으로 민감한 표현을 피하도록 점검해요.",
+    preview:
+      "구매 후에는 홍보 문구와 답변에서 피해야 할 보장성 표현을 기본 체크리스트로 확인할 수 있어요.",
+  },
+  "instagram-sns": {
+    name: "인스타/SNS",
+    summary: "게시글과 스토리에서 말할 주제와 흐름을 잡아요.",
+    preview:
+      "구매 후에는 게시글 주제, 캡션, CTA, 스토리 문구, 주간 업로드 흐름을 만들 수 있어요.",
+  },
+  "event-coupon": {
+    name: "이벤트·쿠폰",
+    summary: "혜택을 알릴 때 필요한 제목과 안내문을 준비해요.",
+    preview:
+      "구매 후에는 이벤트 제목, 쿠폰 안내, 기간 안내, 주의사항, SNS/플레이스용 홍보 문구를 만들 수 있어요.",
+  },
+  "setup-checklist": {
+    name: "결제·도메인·분석·SEO 체크리스트",
+    summary: "직접 설치가 필요한 항목을 준비 순서로 점검해요.",
+    preview:
+      "구매 후에는 토스페이먼츠 준비, 도메인, GA4, Search Console, SEO 제목/설명 기본 점검 순서를 확인할 수 있어요.",
+  },
+  "seven-day-open-plan": {
+    name: "7일 오픈 플랜",
+    summary: "일주일 동안 만들고 올릴 일을 순서대로 잡아요.",
+    preview:
+      "구매 후에는 7일 동안 무엇을 만들고, 어디에 올리고, 무엇을 점검해야 하는지 순서대로 볼 수 있어요.",
+  },
+} as const;
+
+type ModuleSlug = keyof typeof modulePreviews;
+
+const groups: readonly {
+  readonly title: string;
+  readonly description: string;
+  readonly modules: readonly ModuleSlug[];
+}[] = [
+  {
+    title: "첫인상 만들기",
+    description: "처음 본 손님이 무엇을 하는 곳인지 바로 알 수 있게 정리해요.",
+    modules: ["homepage-builder", "naver-place", "seo-title-description"],
+  },
+  {
+    title: "문의로 연결하기",
+    description: "관심을 문의, 예약, 상담으로 이어지게 만드는 흐름을 잡아요.",
+    modules: ["cta-flow", "kakao-dm", "reservation-price-inquiry"],
+  },
+  {
+    title: "신뢰 쌓기",
+    description: "리뷰와 FAQ를 안전한 표현으로 정리해 불안을 줄여요.",
+    modules: ["review-replies", "faq", "risk-expression-check"],
+  },
+  {
+    title: "7일 실행하기",
+    description: "SNS, 이벤트, 세팅 점검을 일주일 흐름으로 나눠 진행해요.",
+    modules: [
+      "instagram-sns",
+      "event-coupon",
+      "setup-checklist",
+      "seven-day-open-plan",
+    ],
+  },
+] as const;
+
+interface ProductDashboardPreviewProps {
+  readonly ctaHref: string;
+  readonly hasCheckout: boolean;
+}
+
+function eventParams(
+  actionLocation: string,
+  extra: { readonly moduleSlug?: string } = {},
+) {
+  return {
+    kit_slug: KIT_SLUG,
+    module_slug: extra.moduleSlug,
+    source_page: SOURCE_PAGE,
+    action_location: actionLocation,
+  };
+}
+
+export default function ProductDashboardPreview({
+  ctaHref,
+  hasCheckout,
+}: ProductDashboardPreviewProps) {
+  const [selectedModuleSlug, setSelectedModuleSlug] =
+    useState<ModuleSlug>("homepage-builder");
+  const [interestRecorded, setInterestRecorded] = useState(false);
+  const selectedModule = modulePreviews[selectedModuleSlug];
+
+  useEffect(() => {
+    trackEvent("paid_dashboard_viewed", eventParams("dashboard_loaded"));
+  }, []);
+
+  function selectModule(moduleSlug: ModuleSlug) {
+    setSelectedModuleSlug(moduleSlug);
+    trackEvent(
+      "paid_module_preview_clicked",
+      eventParams("module_preview_button", { moduleSlug }),
+    );
+  }
+
+  function handleCtaClick() {
+    trackEvent(
+      hasCheckout ? "kit_checkout_click" : "kit_interest_click",
+      eventParams("dashboard_cta"),
+    );
+
+    if (!hasCheckout) {
+      setInterestRecorded(true);
+    }
+  }
+
+  return (
+    <div className="mt-7 grid gap-5 lg:grid-cols-[1fr_21rem]">
+      <section className="grid gap-4">
+        {groups.map((group, index) => (
+          <article
+            key={group.title}
+            className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
+          >
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700">
+                  {index + 1}
+                </span>
+                <h2 className="mt-4 text-2xl font-semibold tracking-tight text-slate-950">
+                  {group.title}
+                </h2>
+                <p className="mt-2 text-sm leading-7 text-slate-600">
+                  {group.description}
+                </p>
+              </div>
+              <span className="inline-flex w-fit rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-800">
+                잠금
+              </span>
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              {group.modules.map((moduleSlug) => {
+                const module = modulePreviews[moduleSlug];
+                const isSelected = selectedModuleSlug === moduleSlug;
+                const className = `flex min-h-28 flex-col rounded-2xl border p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 motion-reduce:transition-none ${
+                  isSelected
+                    ? "border-teal-300 bg-teal-50"
+                    : "border-slate-200 bg-slate-50/70 hover:border-teal-200 hover:bg-white"
+                }`;
+                const content = (
+                  <>
+                    <span className="flex items-start justify-between gap-3">
+                      <span className="text-base font-semibold leading-6 text-slate-950">
+                        {module.name}
+                      </span>
+                      <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-500">
+                        잠금
+                      </span>
+                    </span>
+                    <span className="mt-3 text-sm leading-6 text-slate-600">
+                      {module.summary}
+                    </span>
+                  </>
+                );
+
+                if ("href" in module) {
+                  return (
+                    <Link
+                      key={moduleSlug}
+                      href={module.href}
+                      onClick={() => selectModule(moduleSlug)}
+                      className={className}
+                    >
+                      {content}
+                    </Link>
+                  );
+                }
+
+                return (
+                  <button
+                    key={moduleSlug}
+                    type="button"
+                    onClick={() => selectModule(moduleSlug)}
+                    className={className}
+                    aria-pressed={isSelected}
+                  >
+                    {content}
+                  </button>
+                );
+              })}
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
+        <section className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-sm font-semibold text-teal-700">선택한 모듈</p>
+          <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
+            {selectedModule.name}
+          </h2>
+          <p className="mt-3 text-sm leading-7 text-slate-600">
+            {selectedModule.preview}
+          </p>
+          <p className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm leading-7 text-slate-600">
+            지금은 미리보기입니다. 작성 템플릿, 전체 체크리스트, 복사 버튼은
+            결제 후 열리는 화면에만 들어갑니다.
+          </p>
+        </section>
+
+        <section className="rounded-[1.75rem] border border-teal-100 bg-teal-50 p-5 shadow-sm">
+          <h2 className="text-xl font-semibold tracking-tight text-slate-950">
+            전체 실행 패키지는 결제 후 열릴 예정이에요
+          </h2>
+          <p className="mt-3 text-sm leading-7 text-slate-700">
+            지금은 사전 신청 단계입니다. 정식 오픈 후에는 토스페이먼츠 결제를
+            통해 전체 모듈을 사용할 수 있게 준비할 예정이에요.
+          </p>
+
+          {hasCheckout ? (
+            <a
+              href={ctaHref}
+              target={ctaHref.startsWith("http") ? "_blank" : undefined}
+              rel={ctaHref.startsWith("http") ? "noreferrer" : undefined}
+              onClick={handleCtaClick}
+              className="mt-5 inline-flex min-h-12 items-center justify-center rounded-full bg-slate-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 motion-reduce:transition-none"
+            >
+              전체 패키지 열기
+            </a>
+          ) : (
+            <button
+              type="button"
+              onClick={handleCtaClick}
+              className="mt-5 inline-flex min-h-12 items-center justify-center rounded-full bg-slate-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 motion-reduce:transition-none"
+            >
+              사전 신청하기
+            </button>
+          )}
+
+          {interestRecorded ? (
+            <p className="mt-3 text-sm font-semibold text-teal-900">
+              사전 신청 관심이 기록됐어요. 정식 오픈 준비가 되면 연결할
+              예정이에요.
+            </p>
+          ) : null}
+        </section>
+      </aside>
+    </div>
+  );
+}
