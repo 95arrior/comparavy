@@ -36,6 +36,7 @@ export type GoalCategory =
   | "unsure";
 
 export type LocalContext = "local" | "online" | "unsure";
+export type OperationHint = "shared-space" | "none";
 
 export interface DiagnosisContext {
   readonly businessType: BusinessTypeCategory;
@@ -84,6 +85,10 @@ const businessKeywordMap: readonly {
     ],
   },
   {
+    category: "pet",
+    keywords: ["강아지", "반려견", "반려동물", "애견", "고양이", "펫", "미용"],
+  },
+  {
     category: "beauty",
     keywords: [
       "네일",
@@ -102,10 +107,6 @@ const businessKeywordMap: readonly {
     keywords: ["필라테스", "헬스", "pt", "요가", "운동", "체형", "재활", "체육"],
   },
   {
-    category: "pet",
-    keywords: ["강아지", "반려견", "반려동물", "애견", "고양이", "펫", "미용"],
-  },
-  {
     category: "food",
     keywords: ["카페", "음식점", "식당", "디저트", "베이커리", "커피", "브런치"],
   },
@@ -115,7 +116,7 @@ const businessKeywordMap: readonly {
   },
   {
     category: "clinic",
-    keywords: ["병원", "의원", "치과", "한의원", "클리닉", "피부과", "상담"],
+    keywords: ["병원", "의원", "치과", "한의원", "클리닉", "피부과"],
   },
   {
     category: "online-service",
@@ -176,7 +177,6 @@ export const businessChips = [
   "병원·클리닉",
   "청소·인테리어",
   "온라인 서비스",
-  "직접 입력",
 ] as const;
 
 export const channelChips = [
@@ -208,7 +208,6 @@ const goalChipsByBusinessType: Record<BusinessTypeCategory, readonly string[]> =
     "후기/신뢰",
     "블로그 글",
     "네이버 노출",
-    "뭐부터 해야 할지 모르겠어요",
   ],
   beauty: [
     "예약 문의",
@@ -217,7 +216,6 @@ const goalChipsByBusinessType: Record<BusinessTypeCategory, readonly string[]> =
     "리뷰 답변",
     "이벤트 안내",
     "재방문 유도",
-    "뭐부터 해야 할지 모르겠어요",
   ],
   fitness: [
     "상담 문의",
@@ -225,7 +223,6 @@ const goalChipsByBusinessType: Record<BusinessTypeCategory, readonly string[]> =
     "프로그램 소개",
     "후기/신뢰",
     "인스타 홍보",
-    "뭐부터 해야 할지 모르겠어요",
   ],
   pet: [
     "예약 문의",
@@ -233,7 +230,6 @@ const goalChipsByBusinessType: Record<BusinessTypeCategory, readonly string[]> =
     "가격 문의 답변",
     "후기/신뢰",
     "재방문 유도",
-    "뭐부터 해야 할지 모르겠어요",
   ],
   food: [
     "신규 방문",
@@ -242,7 +238,6 @@ const goalChipsByBusinessType: Record<BusinessTypeCategory, readonly string[]> =
     "리뷰 답변",
     "인스타 콘텐츠",
     "네이버플레이스 정리",
-    "뭐부터 해야 할지 모르겠어요",
   ],
   "home-service": [
     "상담 문의",
@@ -251,7 +246,6 @@ const goalChipsByBusinessType: Record<BusinessTypeCategory, readonly string[]> =
     "후기/신뢰",
     "지역 노출",
     "홈페이지 문구",
-    "뭐부터 해야 할지 모르겠어요",
   ],
   clinic: [
     "상담 문의",
@@ -260,7 +254,6 @@ const goalChipsByBusinessType: Record<BusinessTypeCategory, readonly string[]> =
     "FAQ 정리",
     "리뷰 답변",
     "홈페이지 문구",
-    "뭐부터 해야 할지 모르겠어요",
   ],
   "online-service": [
     "상품 소개",
@@ -269,7 +262,6 @@ const goalChipsByBusinessType: Record<BusinessTypeCategory, readonly string[]> =
     "랜딩페이지 문구",
     "후기/신뢰",
     "결제/신청 흐름",
-    "뭐부터 해야 할지 모르겠어요",
   ],
   fallback: fallbackGoalChips,
 };
@@ -293,6 +285,15 @@ function classifyByKeywords<T extends string>(
 
 export function classifyBusinessType(value: string): BusinessTypeCategory {
   return classifyByKeywords(value, businessKeywordMap, "fallback");
+}
+
+export function classifyOperationHint(value: string): OperationHint {
+  const normalized = normalize(value);
+  const sharedSpaceKeywords = ["샵인샵", "공유공간", "입점"];
+
+  return sharedSpaceKeywords.some((keyword) => normalized.includes(keyword))
+    ? "shared-space"
+    : "none";
 }
 
 export function classifyChannel(value: string): ChannelCategory {
