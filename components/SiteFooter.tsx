@@ -1,14 +1,10 @@
 import Link from "next/link";
 import Logo from "@/components/Logo";
 const mainLinks = [
-  { href: "/kits", label: "실행 패키지" },
+  { href: "/assemble/online-sales-setup-kit", label: "무료 진단" },
   {
     href: "/kits/online-sales-setup-kit",
     label: "온라인 영업 세팅",
-  },
-  {
-    href: "/kits/job-application-ai-kit",
-    label: "취업 준비",
   },
   { href: "/tools", label: "도구" },
 ] as const;

@@ -1,87 +1,121 @@
-import ProductChoiceCard from "@/components/product/ProductChoiceCard";
+import HomeDiagnosticCta from "@/components/product/HomeDiagnosticCta";
 import ProductShell from "@/components/product/ProductShell";
 
-const choices = [
+const steps = [
   {
-    label: "가게 홍보",
-    title: "손님이 우리 가게를 더 쉽게 찾게 하고 싶어요",
-    subtitle:
-      "홍보 문구부터 결제·도메인·분석·SEO 세팅까지 필요한 순서를 정리해드릴게요.",
-    action: "세팅 확인하기",
-    href: "/assemble/online-sales-setup-kit",
-    selectedPath: "online-sales-setup-kit",
-    kitSlug: "online-sales-setup-kit",
-    featured: true,
-    actionLocation: "home_primary_online_sales_setup",
+    title: "상황을 답해요",
+    description: "하고 있는 일과 지금 쓰는 채널을 간단히 고릅니다.",
   },
   {
-    label: "취업 준비",
-    title: "이력서·자소서, 오늘 안에 정리하고 싶어요",
-    subtitle:
-      "채용공고에 맞춰 내 경험을 문장, 자기소개서, 면접 답변으로 정리해드릴게요.",
-    action: "지원서 샘플 보기",
-    href: "/kits/job-application-ai-kit",
-    selectedPath: "job-application-ai-kit",
-    kitSlug: "job-application-ai-kit",
-    actionLocation: "home_job_application",
+    title: "빠진 세팅을 확인해요",
+    description: "먼저 챙기면 좋은 온라인 영업 세팅 3가지를 봅니다.",
   },
   {
-    label: "SNS 판매",
-    title: "올리는 글을 문의나 구매로 이어지게 만들고 싶어요",
-    subtitle:
-      "인스타, 블로그, SNS 글을 판매 흐름과 CTA까지 함께 정리해드릴게요.",
-    action: "판매 흐름 보기",
-    href: "/kits/online-sales-setup-kit",
-    selectedPath: "sns-sales-flow",
-    kitSlug: "online-sales-setup-kit",
-    actionLocation: "home_sns_sales",
+    title: "전체 실행 패키지를 열어요",
+    description: "홈페이지, 채널, 리뷰, 결제 준비를 이어서 정리합니다.",
+  },
+] as const;
+
+const outcomeGroups = [
+  {
+    title: "첫인상 만들기",
+    description: "홈페이지 첫 문장, 네이버플레이스 소개, SEO 제목/설명",
   },
   {
-    label: "상품 만들기",
-    title: "내가 할 줄 아는 걸 돈 받는 상품으로 만들고 싶어요",
-    subtitle:
-      "재능, 노하우, 서비스를 패키지, 가격표, 소개 문구로 바꿔드릴게요.",
-    action: "상품 구조 보기",
-    href: "/kits",
-    selectedPath: "offer-packaging",
-    actionLocation: "home_offer_packaging",
+    title: "문의로 연결하기",
+    description: "문의 버튼 문구, 카카오채널/DM 응대, 예약 안내",
+  },
+  {
+    title: "신뢰 쌓기",
+    description: "리뷰 답변, FAQ, 위험 표현 체크",
+  },
+  {
+    title: "7일 실행하기",
+    description: "SNS 홍보, 이벤트 문구, 결제·도메인·분석·SEO 체크리스트",
   },
 ] as const;
 
 export default function ProductHomeFlow() {
   return (
-    <ProductShell>
-      <section className="flex min-h-[calc(100svh-8rem)] flex-col justify-center py-6 sm:py-10">
+    <ProductShell minimalHeader>
+      <section className="flex min-h-[calc(100svh-8rem)] flex-col justify-center py-8 text-center sm:py-14">
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-sm font-semibold text-teal-700">
-            AteFlo 실행 패키지
+            AI 온라인 영업 세팅 키트
           </p>
           <h1 className="mt-4 text-4xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-6xl">
-            지금 막힌 일을 골라보세요
+            가게 홍보, 어디서부터 시작해야 할지 모르겠나요?
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-            몇 가지만 선택하면, 지금 먼저 챙기면 좋은 세팅을 보여드릴게요.
+            몇 가지 질문에 답하면 지금 먼저 챙기면 좋은 온라인 영업 세팅
+            3가지를 보여드려요.
+          </p>
+          <div className="mt-8">
+            <HomeDiagnosticCta actionLocation="home_hero" />
+          </div>
+          <p className="mx-auto mt-4 max-w-lg text-sm leading-7 text-slate-500">
+            진단은 무료예요. 전체 실행 패키지는 사전 신청 후 열릴 예정이에요.
           </p>
         </div>
+      </section>
 
-        <div className="mt-10 grid gap-4 md:grid-cols-2">
-          {choices.map((choice) => (
-            <ProductChoiceCard key={choice.title} {...choice} />
+      <section className="pb-10">
+        <div className="grid gap-3 sm:grid-cols-3">
+          {steps.map((step, index) => (
+            <article
+              key={step.title}
+              className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm"
+            >
+              <span className="mx-auto flex h-9 w-9 items-center justify-center rounded-2xl bg-teal-50 text-sm font-semibold text-teal-800 sm:mx-0">
+                {index + 1}
+              </span>
+              <h2 className="mt-4 text-lg font-semibold tracking-tight text-slate-950">
+                {step.title}
+              </h2>
+              <p className="mt-2 text-sm leading-7 text-slate-600">
+                {step.description}
+              </p>
+            </article>
           ))}
         </div>
+      </section>
 
-        <div className="mt-4">
-          <ProductChoiceCard
-            label="쉬운 시작"
-            title="뭘 해야 할지 모르겠어요"
-            subtitle="지금 가진 것만 보고 가장 쉬운 시작점을 추천해드릴게요."
-            action="추천받기"
-            href="/assemble/online-sales-setup-kit"
-            selectedPath="unknown-start"
-            kitSlug="online-sales-setup-kit"
-            actionLocation="home_unknown_start"
-            variant="helper"
-          />
+      <section className="pb-12 sm:pb-16">
+        <div className="mx-auto max-w-3xl text-center">
+          <h2 className="text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
+            전체 패키지에서는 이런 흐름을 이어서 만들 수 있어요
+          </h2>
+        </div>
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          {outcomeGroups.map((group) => (
+            <article
+              key={group.title}
+              className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <h3 className="text-xl font-semibold tracking-tight text-slate-950">
+                  {group.title}
+                </h3>
+                <span className="shrink-0 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                  잠금 미리보기
+                </span>
+              </div>
+              <p className="mt-4 text-sm leading-7 text-slate-600">
+                {group.description}
+              </p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="pb-16 text-center sm:pb-20">
+        <div className="rounded-[1.75rem] border border-teal-100 bg-white p-6 shadow-sm sm:p-8">
+          <h2 className="text-2xl font-semibold tracking-tight text-slate-950">
+            지금 빠진 세팅부터 확인해보세요
+          </h2>
+          <div className="mt-6">
+            <HomeDiagnosticCta actionLocation="home_final_cta" />
+          </div>
         </div>
       </section>
     </ProductShell>

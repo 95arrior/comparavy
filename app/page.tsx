@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import ProductHomeFlow from "@/components/product/ProductHomeFlow";
 
-const HOME_TITLE = "AteFlo | 내 상황에 맞는 AI 실행 패키지";
+const HOME_TITLE = "AteFlo | 온라인 영업 세팅 무료 진단";
 const HOME_DESCRIPTION =
-  "지금 막힌 일을 선택하면 먼저 챙기면 좋은 온라인 세팅을 진단하고, 필요한 실행 패키지를 안내합니다.";
+  "몇 가지 질문에 답하면 지금 먼저 챙기면 좋은 온라인 영업 세팅 3가지를 확인하고, 전체 실행 패키지를 준비할 수 있습니다.";
 
 export const metadata: Metadata = {
   title: {
