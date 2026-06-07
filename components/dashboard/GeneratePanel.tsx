@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ARTICLE_TYPES, TONES } from "@/lib/articlePrompt";
 import AteFloLogo from "@/components/AteFloLogo";
 import type { Article } from "./types";
@@ -21,6 +21,13 @@ export default function GeneratePanel({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
+
+  // 작성 중엔 항상 맨 아래(쓰이는 끝)가 보이도록 자동 스크롤
+  useEffect(() => {
+    const el = previewRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [preview]);
 
   const outOfQuota = remaining <= 0;
 
@@ -166,23 +173,24 @@ export default function GeneratePanel({
       {preview !== null && (
         <div className="mt-6">
           <div className="mb-2 text-xs font-medium text-neutral-500">실시간 미리보기</div>
-          <div className="h-80 overflow-y-auto rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+          <div ref={previewRef} className="h-80 overflow-y-auto rounded-xl border border-neutral-200 bg-neutral-50 p-4">
             {preview ? (
-              <div
-                className="prose prose-sm prose-neutral max-w-none"
-                dangerouslySetInnerHTML={{ __html: preview }}
-              />
+              <>
+                <div
+                  className="prose prose-sm prose-neutral max-w-none"
+                  dangerouslySetInnerHTML={{ __html: preview }}
+                />
+                {/* 써지는 텍스트 바로 아래 로고 — 작성 중 움직이고, 멈추면 정지 */}
+                <div className="mt-3">
+                  <AteFloLogo pro={pro} animated={loading} size={22} />
+                </div>
+              </>
             ) : (
               <p className="text-sm text-neutral-400">글을 구상하는 중…</p>
             )}
           </div>
         </div>
       )}
-
-      {/* 웹 클로드식: 하단에 로고만. 생성 중엔 움직이고, 끝나면 멈춤. */}
-      <div className="pointer-events-none fixed bottom-5 left-6 z-30">
-        <AteFloLogo pro={pro} animated={loading} size={26} />
-      </div>
     </div>
   );
 }

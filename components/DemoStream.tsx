@@ -50,7 +50,7 @@ export default function DemoStream() {
       <div className="mb-2 text-xs font-medium text-neutral-400">
         실시간으로 이렇게 써집니다 — 우리가 뽑은 실제 글입니다
       </div>
-      <div className="relative h-80 overflow-hidden rounded-xl border border-neutral-200 bg-white/70 p-5 backdrop-blur">
+      <div className="h-80 overflow-hidden rounded-xl border border-neutral-200 bg-white/70 p-5 backdrop-blur">
         {rendered.length === 0 && <p className="text-sm text-neutral-300">글을 구상하는 중…</p>}
         {rendered.map((b) => {
           if (b.tag === "title") {
@@ -76,10 +76,9 @@ export default function DemoStream() {
             </p>
           );
         })}
-        {/* 글쓰기 하단에 로고만 (클로드식) */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 rounded-b-xl bg-gradient-to-t from-white via-white/70 to-transparent" />
-        <div className="absolute bottom-3 left-5">
-          <AteFloLogo animated size={24} />
+        {/* 작성되는 텍스트 바로 아래에 로고 — 타이핑 중엔 움직이고, 다 쓰면 멈춤 */}
+        <div className="mt-3">
+          <AteFloLogo animated={n < TOTAL} size={22} />
         </div>
       </div>
     </div>
