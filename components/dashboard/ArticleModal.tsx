@@ -124,21 +124,18 @@ export default function ArticleModal({
           <button onClick={onClose} className="text-sm text-neutral-400 transition hover:text-neutral-900">닫기 ✕</button>
         </div>
 
-        <label className="mt-4 block text-xs font-medium text-neutral-500">제목</label>
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="mt-1 w-full rounded-xl border border-neutral-300 px-4 py-2.5 text-base font-medium outline-none transition focus:border-neutral-900"
-        />
-
         <div className="mt-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-xs text-neutral-500">
           <p><strong className="text-neutral-700">메타 제목:</strong> {article.meta_title}</p>
           <p className="mt-1"><strong className="text-neutral-700">메타 설명:</strong> {article.meta_description}</p>
         </div>
 
-        <label className="mt-4 block text-xs font-medium text-neutral-500">본문</label>
-        <div className="mt-1">
-          <ArticleEditor initialHtml={article.body_html} onChange={setBodyHtml} />
+        <div className="mt-4">
+          <ArticleEditor
+            title={title}
+            onTitleChange={setTitle}
+            initialHtml={article.body_html}
+            onChange={setBodyHtml}
+          />
         </div>
 
         {article.faq.length > 0 && (

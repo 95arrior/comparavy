@@ -110,9 +110,13 @@ const EditorImage = Image.extend({
 export default function ArticleEditor({
   initialHtml,
   onChange,
+  title,
+  onTitleChange,
 }: {
   initialHtml: string;
   onChange: (html: string) => void;
+  title?: string;
+  onTitleChange?: (t: string) => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [linkOpen, setLinkOpen] = useState(false);
@@ -233,6 +237,16 @@ export default function ArticleEditor({
       </div>
 
       <div className="mx-auto max-w-[720px] px-8 py-8">
+        {onTitleChange && (
+          <input
+            value={title ?? ""}
+            onChange={(e) => onTitleChange(e.target.value)}
+            placeholder="제목을 입력하세요 (검색에 노출되는 H1)"
+            className={`font-pretendard mb-5 w-full bg-transparent text-3xl font-bold leading-tight text-neutral-900 outline-none placeholder:text-neutral-300 ${
+              (title ?? "").trim() === "" ? "rounded-lg border border-dashed border-neutral-300 px-3 py-2" : ""
+            }`}
+          />
+        )}
         <EditorContent editor={editor} />
       </div>
     </div>
