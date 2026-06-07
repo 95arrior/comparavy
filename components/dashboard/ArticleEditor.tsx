@@ -21,6 +21,7 @@ const IconH3 = () => (
   <svg width="20" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6v12M11 6v12M4 12h7" /><path d="M16 8h4l-2.5 3a2.2 2.2 0 1 1-1.7 3.6" strokeWidth="1.7" /></svg>
 );
 const IconList = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6h11M9 12h11M9 18h11" /><circle cx="4" cy="6" r="1" fill="currentColor" /><circle cx="4" cy="12" r="1" fill="currentColor" /><circle cx="4" cy="18" r="1" fill="currentColor" /></svg>;
+const IconOrderedList = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 6h11M9 12h11M9 18h11" /><text x="1.5" y="8" fontSize="7" fill="currentColor" stroke="none">1</text><text x="1.5" y="14" fontSize="7" fill="currentColor" stroke="none">2</text><text x="1.5" y="20" fontSize="7" fill="currentColor" stroke="none">3</text></svg>;
 const IconLink = () => <S d="M9 15l6-6M10.5 6.5l1.8-1.8a4 4 0 0 1 5.7 5.7L15.5 12M13.5 17.5l-1.8 1.8a4 4 0 0 1-5.7-5.7L8.5 12" />;
 const IconImage = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="8.5" cy="9.5" r="1.5" /><path d="M21 16l-5-5L5 20" /></svg>;
 const IconAlignLeft = () => <S d="M4 6h16M4 12h10M4 18h13" />;
@@ -123,7 +124,15 @@ export default function ArticleEditor({
     ],
     content: initialHtml,
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
-    editorProps: { attributes: { class: "ateflo-article" } },
+    editorProps: {
+      attributes: { class: "ateflo-article" },
+      // 붙여넣기 정리: 인라인 스타일/클래스/span·font 제거 (스키마가 나머지 정리)
+      transformPastedHTML: (html) =>
+        html
+          .replace(/ style="[^"]*"/g, "")
+          .replace(/ class="[^"]*"/g, "")
+          .replace(/<\/?(span|font|o:p)[^>]*>/g, ""),
+    },
   });
 
   if (!editor) return <div className="h-[60vh] rounded-xl border border-neutral-200" />;
@@ -171,7 +180,7 @@ export default function ArticleEditor({
   );
 
   return (
-    <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
+    <div className="rounded-xl border border-neutral-200 bg-white">
       <div className="sticky top-0 z-10 border-b border-neutral-200 bg-white/95 backdrop-blur">
         <div className="flex flex-wrap items-center gap-0.5 px-3 py-2">
           <Btn title="실행취소 (Ctrl+Z)" disabled={!editor.can().undo()} onClick={() => editor.chain().focus().undo().run()}><IconUndo /></Btn>
@@ -181,6 +190,7 @@ export default function ArticleEditor({
           <Btn title="소제목" active={editor.isActive("heading", { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}><IconH3 /></Btn>
           <Btn title="굵게" active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()}><IconBold /></Btn>
           <Btn title="목록" active={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()}><IconList /></Btn>
+          <Btn title="번호 목록" active={editor.isActive("orderedList")} onClick={() => editor.chain().focus().toggleOrderedList().run()}><IconOrderedList /></Btn>
           <span className="mx-1 h-5 w-px bg-neutral-200" />
           <Btn title="링크 (텍스트를 드래그한 뒤 클릭)" active={editor.isActive("link")} onClick={openLink}><IconLink /></Btn>
           <Btn title="이미지" onClick={() => fileRef.current?.click()}><IconImage /></Btn>

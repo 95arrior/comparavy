@@ -89,13 +89,45 @@ export interface PublishResult {
   status: string;
 }
 
+/** 본문의 base64(data:) 이미지를 WP 미디어로 업로드하고 URL로 교체한다. */
+async function uploadDataImages(html: string, creds: WordPressCredentials): Promise<string> {
+  const base = normalizeSiteUrl(creds.siteUrl);
+  const uris = Array.from(new Set(html.match(/data:image\/[A-Za-z0-9.+-]+;base64,[^"')\s]+/g) ?? []));
+  for (const uri of uris) {
+    try {
+      const comma = uri.indexOf(",");
+      const mime = uri.slice(5, comma).split(";")[0];
+      const ext = (mime.split("/")[1] || "png").replace("jpeg", "jpg").replace("svg+xml", "svg");
+      const buffer = Buffer.from(uri.slice(comma + 1), "base64");
+      const res = await fetch(`${base}/wp-json/wp/v2/media`, {
+        method: "POST",
+        headers: {
+          Authorization: authHeader(creds),
+          "Content-Type": mime,
+          "Content-Disposition": `attachment; filename="ateflo-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}"`,
+        },
+        body: buffer,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.source_url) html = html.split(uri).join(data.source_url);
+      }
+    } catch {
+      // 한 이미지 업로드 실패해도 발행은 계속 (해당 이미지는 그대로 둠)
+    }
+  }
+  return html;
+}
+
 /** 글을 워드프레스에 발행(또는 초안 저장/예약)한다. */
 export async function publishPost(input: PublishInput): Promise<PublishResult> {
   const base = normalizeSiteUrl(input.siteUrl);
+  // base64 이미지를 WP 미디어로 업로드해 본문을 깔끔한 URL로 교체
+  const contentHtml = await uploadDataImages(input.contentHtml, input);
   const body: Record<string, unknown> = {
     title: input.title,
     // 본문 + 구조화 데이터(JSON-LD) → 검색 리치 결과
-    content: input.contentHtml + buildStructuredData(input),
+    content: contentHtml + buildStructuredData(input),
     status: input.status ?? "draft",
   };
   if (input.metaDescription) body.excerpt = input.metaDescription;

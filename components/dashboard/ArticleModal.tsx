@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import ArticleEditor from "./ArticleEditor";
 import type { Article } from "./types";
 
 export default function ArticleModal({
@@ -22,8 +23,36 @@ export default function ArticleModal({
   const [publishing, setPublishing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [autoSavedAt, setAutoSavedAt] = useState<string | null>(null);
+  const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const dirty = title !== article.title || bodyHtml !== article.body_html;
+
+  // 자동저장: 변경 후 3초 멈추면 저장하고 "자동저장 완료" 표시
+  useEffect(() => {
+    if (!dirty) return;
+    if (autoTimer.current) clearTimeout(autoTimer.current);
+    autoTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/articles/${article.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title, body_html: bodyHtml }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          onUpdated(data.article);
+          setAutoSavedAt(new Date().toLocaleTimeString("ko-KR"));
+        }
+      } catch {
+        // 자동저장 실패는 조용히 무시 (수동 저장 가능)
+      }
+    }, 3000);
+    return () => {
+      if (autoTimer.current) clearTimeout(autoTimer.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, bodyHtml]);
 
   async function save() {
     setSaving(true);
@@ -107,13 +136,10 @@ export default function ArticleModal({
           <p className="mt-1"><strong className="text-neutral-700">메타 설명:</strong> {article.meta_description}</p>
         </div>
 
-        <label className="mt-4 block text-xs font-medium text-neutral-500">본문 (HTML)</label>
-        <textarea
-          value={bodyHtml}
-          onChange={(e) => setBodyHtml(e.target.value)}
-          rows={14}
-          className="mt-1 w-full rounded-xl border border-neutral-300 px-4 py-3 font-mono text-xs leading-relaxed outline-none transition focus:border-neutral-900"
-        />
+        <label className="mt-4 block text-xs font-medium text-neutral-500">본문</label>
+        <div className="mt-1">
+          <ArticleEditor initialHtml={article.body_html} onChange={setBodyHtml} />
+        </div>
 
         {article.faq.length > 0 && (
           <div className="mt-4">
@@ -137,6 +163,9 @@ export default function ArticleModal({
               <a href={article.wp_link} target="_blank" rel="noreferrer" className="underline">글 보기</a>
             )}
           </p>
+        )}
+        {autoSavedAt && (
+          <p className="mt-2 text-xs text-neutral-400">{dirty ? "수정 중…" : `✓ 자동저장 완료 · ${autoSavedAt}`}</p>
         )}
 
         <div className="mt-6 flex flex-wrap items-center gap-3">
