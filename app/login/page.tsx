@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { isDisposableEmail } from "@/lib/disposableEmail";
 import { SITE_NAME } from "@/lib/site";
 
 export default function LoginPage() {
@@ -24,6 +25,10 @@ export default function LoginPage() {
   async function signInWithEmail(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (isDisposableEmail(email)) {
+      setError("일회용 이메일 주소는 사용할 수 없습니다. 사용 중인 이메일로 가입해 주세요.");
+      return;
+    }
     setLoading(true);
     const supabase = createSupabaseBrowserClient();
     const { error } = await supabase.auth.signInWithOtp({

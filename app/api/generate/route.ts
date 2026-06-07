@@ -4,6 +4,8 @@ import { ensureUserRow, rolloverIfNeeded } from "@/lib/userPlan";
 import { PLANS } from "@/lib/plans";
 import { generateArticle } from "@/lib/generateArticle";
 import { countKoreanChars } from "@/lib/humanizer";
+import { isDisposableEmail } from "@/lib/disposableEmail";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 export const maxDuration = 300;
 
@@ -19,6 +21,23 @@ export async function POST(request: Request) {
 
   if (!user) {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+  }
+
+  // 어뷰징 방어 ① 일회용 이메일 차단 (대량 무료계정 방지)
+  if (user.email && isDisposableEmail(user.email)) {
+    return NextResponse.json(
+      { error: "일회용 이메일 주소로는 이용할 수 없습니다. 사용 중인 이메일로 가입해 주세요." },
+      { status: 403 },
+    );
+  }
+
+  // 어뷰징 방어 ② 버스트 rate limit (5분당 5회) — 비용 급증·자동화 방지
+  const rl = await checkRateLimit(supabase, user.id, "generate", 5, 300);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: `요청이 너무 잦습니다. ${rl.retryAfterSec ?? 60}초 후 다시 시도해 주세요.` },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSec ?? 60) } },
+    );
   }
 
   let body: {
