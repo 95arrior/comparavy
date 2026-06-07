@@ -699,21 +699,53 @@ html {
 }
 
 /* ── AteFlo 로고 (먹는 모션 로더) ───────────────────────────── */
-@property --ateflo-sweep {
-  syntax: "<percentage>";
+/* 입은 3시 방향 중심. 입 반각(--ateflo-gap)이 21.6deg(열림)↔0deg(다묾)로 양쪽이 동시에 모인다. */
+@property --ateflo-gap {
+  syntax: "<angle>";
   inherits: false;
-  initial-value: 88%;
+  initial-value: 21.6deg;
+}
+@property --ateflo-spin {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
 }
 
 .ateflo-logo {
   display: inline-block;
   aspect-ratio: 1 / 1;
   border-radius: 50%;
-  /* 입(웨지)이 오른쪽을 향하도록 from 112deg. sweep = 채워진 비율. */
+  background: var(--ateflo-color, #4b5fe1);
+  /* 마스크로 입(투명 섹터)을 도려낸다 — 배경(색/무지개)과 독립적으로 모양만 담당 */
+  -webkit-mask: conic-gradient(
+    #000 0deg,
+    #000 calc(90deg - var(--ateflo-gap)),
+    transparent calc(90deg - var(--ateflo-gap)),
+    transparent calc(90deg + var(--ateflo-gap)),
+    #000 calc(90deg + var(--ateflo-gap)),
+    #000 360deg
+  );
+  mask: conic-gradient(
+    #000 0deg,
+    #000 calc(90deg - var(--ateflo-gap)),
+    transparent calc(90deg - var(--ateflo-gap)),
+    transparent calc(90deg + var(--ateflo-gap)),
+    #000 calc(90deg + var(--ateflo-gap)),
+    #000 360deg
+  );
+}
+
+/* 프로: 부드러운 파스텔 무지개(제미나이 원색과 다른 톤)가 배경에 깔림 */
+.ateflo-logo--pro {
   background: conic-gradient(
-    from 112deg,
-    var(--ateflo-color, #4b5fe1) var(--ateflo-sweep, 88%),
-    transparent 0
+    from var(--ateflo-spin),
+    #7c8bff,
+    #c08cff,
+    #ff9ec8,
+    #ffd79c,
+    #9cffce,
+    #9cdcff,
+    #7c8bff
   );
 }
 
@@ -721,27 +753,24 @@ html {
   animation: ateflo-chew 0.85s ease-in-out infinite;
 }
 
-/* 프로: 씹는 모션 + 무지개 요동 */
+/* 프로 + 애니메이션: 씹기 + 무지개가 천천히 영롱하게 회전 */
 .ateflo-logo--anim.ateflo-logo--pro {
-  animation: ateflo-chew 0.85s ease-in-out infinite, ateflo-hue 2.4s linear infinite;
+  animation: ateflo-chew 0.85s ease-in-out infinite, ateflo-spin 5s linear infinite;
 }
 
 @keyframes ateflo-chew {
   0%,
   100% {
-    --ateflo-sweep: 88%;
+    --ateflo-gap: 21.6deg;
   }
   50% {
-    --ateflo-sweep: 100%;
+    --ateflo-gap: 0deg;
   }
 }
 
-@keyframes ateflo-hue {
-  from {
-    filter: hue-rotate(0deg) saturate(1.5);
-  }
+@keyframes ateflo-spin {
   to {
-    filter: hue-rotate(360deg) saturate(1.5);
+    --ateflo-spin: 360deg;
   }
 }
 
