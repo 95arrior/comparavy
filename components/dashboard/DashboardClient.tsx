@@ -79,6 +79,16 @@ export default function DashboardClient(props: DashboardProps) {
         </div>
       </header>
 
+      {selected && (
+        <ArticleModal
+          article={selected}
+          wpConnected={Boolean(wpSiteUrl)}
+          onClose={() => setSelected(null)}
+          onUpdated={onUpdated}
+        />
+      )}
+
+      {!selected && (
       <main className="mx-auto max-w-5xl px-6 py-10">
         {!allDone && (
           <div className="mb-6 rounded-xl border border-dashed border-neutral-200 bg-neutral-50/70 px-4 py-3">
@@ -126,14 +136,6 @@ export default function DashboardClient(props: DashboardProps) {
           <WordPressPanel siteUrl={wpSiteUrl} onConnected={setWpSiteUrl} onDisconnected={() => setWpSiteUrl(null)} />
         )}
       </main>
-
-      {selected && (
-        <ArticleModal
-          article={selected}
-          wpConnected={Boolean(wpSiteUrl)}
-          onClose={() => setSelected(null)}
-          onUpdated={onUpdated}
-        />
       )}
     </div>
   );

@@ -263,13 +263,17 @@ export default function GeneratePanel({
         <div className="mt-6">
           <div className="mb-2 text-xs font-medium text-neutral-500">실시간 미리보기</div>
           <div ref={previewRef} className="h-80 overflow-y-auto rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-            {preview && (
-              <div
-                className="prose prose-sm prose-neutral max-w-none"
-                dangerouslySetInnerHTML={{ __html: preview }}
-              />
+            {preview ? (
+              <>
+                <div
+                  className="prose prose-sm prose-neutral max-w-none"
+                  dangerouslySetInnerHTML={{ __html: preview }}
+                />
+                {loading && <span className="ml-0.5 inline-block animate-pulse text-neutral-500">▍</span>}
+              </>
+            ) : (
+              loading && <p className="text-sm text-neutral-400">글을 구상하고 있어요…</p>
             )}
-            {loading && <span className="ml-0.5 inline-block animate-pulse text-neutral-500">▍</span>}
             {/* 로고 — 구상 중·작성 중엔 움직이고, 완료되면 멈춤 */}
             <div className="mt-3">
               <AteFloLogo pro={pro} animated={loading} size={22} />

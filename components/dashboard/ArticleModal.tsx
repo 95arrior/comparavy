@@ -107,13 +107,13 @@ export default function ArticleModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 sm:p-8" onClick={onClose}>
-      <div
-        className="my-4 w-full max-w-2xl rounded-2xl bg-white p-6 sm:p-8"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between gap-4">
-          <span className="truncate text-xs text-neutral-400">{article.keyword}</span>
+    <>
+      {/* 상단 액션바 — 스크롤해도 따라옴 */}
+      <div className="sticky top-0 z-30 border-b border-neutral-200 bg-white/95 backdrop-blur">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-6 py-3">
+          <button onClick={onClose} className="flex items-center gap-1.5 text-sm text-neutral-500 transition hover:text-neutral-900">
+            <span className="text-base leading-none">←</span> 목록으로
+          </button>
           <div className="flex shrink-0 items-center gap-2">
             <button
               onClick={save}
@@ -129,8 +129,16 @@ export default function ArticleModal({
             >
               {publishing ? "처리 중…" : "워드프레스에 발행"}
             </button>
-            <button onClick={onClose} className="ml-1 text-sm text-neutral-400 transition hover:text-neutral-900">✕</button>
           </div>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-3xl px-6 py-8">
+        <div className="flex items-center justify-between gap-4">
+          <span className="truncate text-xs text-neutral-400">키워드 · {article.keyword}</span>
+          {autoSavedAt && (
+            <span className="shrink-0 text-xs text-neutral-400">{dirty ? "수정 중…" : `✓ 자동저장 · ${autoSavedAt}`}</span>
+          )}
         </div>
 
         <div className="mt-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-xs text-neutral-500">
@@ -138,7 +146,7 @@ export default function ArticleModal({
           <p className="mt-1"><strong className="text-neutral-700">메타 설명:</strong> {article.meta_description}</p>
         </div>
 
-        <div className="mt-4">
+        <div className="mt-5">
           <ArticleEditor
             title={title}
             onTitleChange={setTitle}
@@ -147,11 +155,12 @@ export default function ArticleModal({
             originalHtml={article.original_html ?? undefined}
             initialHtml={article.body_html}
             onChange={setBodyHtml}
+            toolbarOffset="top-[57px]"
           />
         </div>
 
         {article.faq.length > 0 && (
-          <div className="mt-4">
+          <div className="mt-6">
             <p className="text-xs font-medium text-neutral-500">자주 묻는 질문</p>
             <ul className="mt-2 space-y-2">
               {article.faq.map((f, i) => (
@@ -173,11 +182,7 @@ export default function ArticleModal({
             )}
           </p>
         )}
-        {autoSavedAt && (
-          <p className="mt-2 text-xs text-neutral-400">{dirty ? "수정 중…" : `✓ 자동저장 완료 · ${autoSavedAt}`}</p>
-        )}
-
       </div>
-    </div>
+    </>
   );
 }

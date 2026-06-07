@@ -132,6 +132,7 @@ export default function ArticleEditor({
   featuredImage,
   onFeaturedChange,
   originalHtml,
+  toolbarOffset = "top-0",
 }: {
   initialHtml: string;
   onChange: (html: string) => void;
@@ -140,6 +141,8 @@ export default function ArticleEditor({
   featuredImage?: string | null;
   onFeaturedChange?: (src: string | null) => void;
   originalHtml?: string;
+  /** 스크롤 시 툴바가 고정될 상단 오프셋 (상위 고정 바와 겹치지 않게). 예: "top-[57px]" */
+  toolbarOffset?: string;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const featRef = useRef<HTMLInputElement>(null);
@@ -250,7 +253,7 @@ export default function ArticleEditor({
 
   return (
     <div className="rounded-xl border border-neutral-200 bg-white">
-      <div className="sticky top-0 z-20 border-b border-neutral-200 bg-white shadow-md">
+      <div className={`sticky ${toolbarOffset} z-20 border-b border-neutral-200 bg-white shadow-md`}>
         <div className="flex flex-wrap items-center gap-0.5 px-3 py-2">
           <Btn title="실행취소 (Ctrl+Z)" disabled={!editor.can().undo()} onClick={() => editor.chain().focus().undo().run()}><IconUndo /></Btn>
           <Btn title="다시실행 (Ctrl+Shift+Z)" disabled={!editor.can().redo()} onClick={() => editor.chain().focus().redo().run()}><IconRedo /></Btn>
