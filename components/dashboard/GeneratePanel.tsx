@@ -128,19 +128,25 @@ export default function GeneratePanel({
           />
         </div>
 
-        <button type="button" onClick={() => setShowOpts((v) => !v)} className="text-left text-xs font-medium text-neutral-500 hover:text-neutral-900">
-          {showOpts ? "▾ 옵션 접기" : "▸ 옵션 더보기 (글 유형 · 문체 · 내 관점)"}
+        <button
+          type="button"
+          onClick={() => setShowOpts((v) => !v)}
+          className="flex items-center gap-2 rounded-lg border border-neutral-200 px-3 py-2 text-sm font-medium text-neutral-600 transition hover:border-neutral-400 hover:text-neutral-900"
+        >
+          <span className="text-base leading-none">{showOpts ? "▾" : "▸"}</span>
+          글 유형 · 문체 · 내 관점 {showOpts ? "접기" : "설정"}
         </button>
 
         {showOpts && (
           <>
         <div>
           <label className="block text-sm font-medium">관점 / 각도 (선택)</label>
-          <input
+          <textarea
             value={angle}
             onChange={(e) => setAngle(e.target.value)}
-            placeholder="예: 직접 키워본 경험을 바탕으로 한 현실적인 조언"
-            className="mt-2 w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm outline-none transition focus:border-neutral-900"
+            rows={2}
+            placeholder="예: 직접 키워본 경험을 바탕으로 한 현실적인 조언 (길게 써도 됩니다)"
+            className="mt-2 w-full resize-y rounded-xl border border-neutral-300 px-4 py-3 text-sm leading-relaxed outline-none transition focus:border-neutral-900"
           />
         </div>
 
