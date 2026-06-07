@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
+import { ensureUserRow } from "@/lib/userPlan";
+import { PLANS } from "@/lib/plans";
 import { verifyConnection } from "@/lib/wordpress";
 
 export async function POST(request: Request) {
@@ -13,6 +15,15 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+  }
+
+  // 플랜 게이트: 워드프레스 연결은 프로 전용
+  const planRow = await ensureUserRow(supabase, user.id);
+  if (!PLANS[planRow.plan].wordpress) {
+    return NextResponse.json(
+      { error: "워드프레스 연결은 프로 플랜 기능입니다. 프로로 업그레이드해 주세요.", upgrade: true },
+      { status: 403 },
+    );
   }
 
   const body = await request.json().catch(() => ({}));
