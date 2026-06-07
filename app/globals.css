@@ -705,12 +705,6 @@ html {
   inherits: false;
   initial-value: 21.6deg;
 }
-@property --ateflo-spin {
-  syntax: "<angle>";
-  inherits: false;
-  initial-value: 0deg;
-}
-
 .ateflo-logo {
   display: inline-block;
   aspect-ratio: 1 / 1;
@@ -737,16 +731,11 @@ html {
 
 /* 프로: 부드러운 파스텔 무지개(제미나이 원색과 다른 톤)가 배경에 깔림 */
 .ateflo-logo--pro {
-  background: conic-gradient(
-    from var(--ateflo-spin),
-    #7c8bff,
-    #c08cff,
-    #ff9ec8,
-    #ffd79c,
-    #9cffce,
-    #9cdcff,
-    #7c8bff
-  );
+  /* 갤럭시 AI 스타일: 회전이 아니라 흐르는 무지개(파랑·바이올렛·핑크·시안 오로라). */
+  background: linear-gradient(120deg, #4b5fe1, #7b5cff, #c45cff, #ff6fd8, #5cc8ff, #4b5fe1);
+  background-size: 220% 220%;
+  background-position: 0% 50%;
+  filter: saturate(1.1);
 }
 
 .ateflo-logo--anim {
@@ -755,7 +744,7 @@ html {
 
 /* 프로 + 애니메이션: 씹기 + 무지개가 천천히 영롱하게 회전 */
 .ateflo-logo--anim.ateflo-logo--pro {
-  animation: ateflo-chew 0.85s ease-in-out infinite, ateflo-spin 5s linear infinite;
+  animation: ateflo-chew 0.85s ease-in-out infinite, ateflo-flow 6s ease-in-out infinite;
 }
 
 @keyframes ateflo-chew {
@@ -768,9 +757,15 @@ html {
   }
 }
 
-@keyframes ateflo-spin {
-  to {
-    --ateflo-spin: 360deg;
+@keyframes ateflo-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
   }
 }
 
