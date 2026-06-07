@@ -11,18 +11,18 @@ export const metadata: Metadata = {
 };
 
 const STEPS = [
-  { n: "01", title: "키워드 + 내 관점 입력", body: "노출하고 싶은 키워드를 넣고, 내 경험이나 관점이 있으면 한 줄 더하세요. 그게 남들과 다른 글의 시작입니다." },
-  { n: "02", title: "눈앞에서 써지는 글", body: "AI가 글을 써 내려가는 과정을 실시간으로 봅니다. 매번 다른 구조로, 지어내는 정보 없이." },
-  { n: "03", title: "워드프레스 1클릭 발행", body: "검토·수정하고 클릭 한 번으로 내 사이트에 발행. 복사·붙여넣기도, 정리 작업도 없습니다." },
+  { n: "01", title: "키워드랑 내 생각 입력", body: "쓰고 싶은 키워드를 넣으세요. 내 경험이나 의견이 있으면 한 줄 보태면 됩니다. 그게 남들 글이랑 갈리는 지점입니다." },
+  { n: "02", title: "써지는 걸 실시간으로", body: "글이 한 줄씩 써지는 걸 그대로 봅니다. 구조는 매번 바뀌고, 없는 정보는 안 넣습니다." },
+  { n: "03", title: "워드프레스에 바로", body: "보고 고친 다음 버튼 하나로 내 사이트에 올립니다. 복사해서 붙여넣는 일 없습니다." },
 ];
 
 const FEATURES = [
-  { title: "막연한 자동생성이 아닙니다", body: "‘키워드 넣으면 끝’인 도구는 널렸습니다. 우리는 ‘어떻게 쓰는가’ — 구조·관점·정직성 — 를 로직으로 설계했습니다. AI를 시키는 게 아니라, AI로 제대로 쓰는 것." },
-  { title: "같은 키워드, 매번 다른 글", body: "1,000명이 같은 키워드로 생성해도 구조가 겹치지 않게, 다양화 엔진이 매번 다른 골격을 고릅니다. 복붙 양산글이 아닙니다." },
-  { title: "지어내지 않습니다", body: "가짜 통계·후기·경험을 만들지 않습니다. 내 블로그에 내 이름으로 발행해도 안전합니다." },
-  { title: "사람이 쓴 듯한 한국어", body: "‘알아보겠습니다’ 같은 AI 상투어와 번역투를 걷어냅니다. 읽는 사람은 AI 글인지 모릅니다." },
-  { title: "한국 구글 SEO 내장", body: "제목·메타·FAQ·소제목 구조까지 검색 노출에 맞춰 자동으로. 따로 공부할 필요 없습니다." },
-  { title: "발행까지가 제품입니다", body: "글 생성에서 끝나지 않습니다. 워드프레스 1클릭 발행 — 운영자의 손이 가장 덜 가도록 편의성까지 설계했습니다." },
+  { title: "그냥 껍데기 도구가 아닙니다", body: "키워드 넣으면 글 뱉는 도구는 많습니다. AteFlo는 글을 어떻게 쓰는지부터 직접 짰습니다. 구조도, 관점도, 정직함도 거기서 나옵니다." },
+  { title: "같은 키워드, 매번 다른 글", body: "남들이랑 같은 키워드로 써도 글 구조가 안 겹칩니다. 복붙한 듯한 양산글이 안 나옵니다." },
+  { title: "없는 얘기 안 지어냅니다", body: "가짜 통계나 후기, 안 해본 경험을 만들지 않습니다. 내 블로그에 그대로 올려도 탈 없습니다." },
+  { title: "AI 티 안 나는 한국어", body: "'알아보겠습니다' 같은 뻔한 말투랑 번역투를 뺍니다. 읽는 사람은 AI가 썼는지 모릅니다." },
+  { title: "SEO는 알아서 잡아줍니다", body: "제목, 메타, FAQ, 소제목까지 한국 구글에 맞게 자동으로. SEO 따로 공부 안 해도 됩니다." },
+  { title: "쓰는 걸로 안 끝납니다", body: "워드프레스에 버튼 하나로 발행까지. 글 만들어 놓고 올리느라 고생하는 일 없습니다." },
 ];
 
 export default async function Home() {
@@ -32,7 +32,7 @@ export default async function Home() {
     user = (await supabase.auth.getUser()).data.user;
   }
   const ctaHref = user ? "/dashboard" : "/login";
-  const ctaLabel = user ? "대시보드로 이동" : "시작하기";
+  const ctaLabel = user ? "대시보드로 이동" : "무료로 시작";
 
   return (
     <div className="min-h-screen bg-white text-neutral-900 antialiased">
@@ -41,7 +41,7 @@ export default async function Home() {
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
           <span className="text-base font-semibold tracking-tight">{SITE_NAME}</span>
           <nav className="hidden items-center gap-8 text-sm text-neutral-500 md:flex">
-            <Link href="#how" className="transition hover:text-neutral-900">작동 방식</Link>
+            <Link href="#how" className="transition hover:text-neutral-900">사용법</Link>
             <Link href="#features" className="transition hover:text-neutral-900">기능</Link>
             <Link href="/pricing" className="transition hover:text-neutral-900">요금</Link>
           </nav>
@@ -57,14 +57,14 @@ export default async function Home() {
       {/* Hero */}
       <section className="hero-aurora relative overflow-hidden">
         <div className="relative z-10 mx-auto max-w-3xl px-6 pb-28 pt-28 text-center sm:pt-44">
-          <p className="mono-rise text-sm font-medium tracking-tight text-neutral-400">AI에게 시키는 게 아니라, AI로 제대로 씁니다.</p>
+          <p className="mono-rise text-sm font-medium tracking-tight text-neutral-400">워드프레스 블로그를 위한 AI 글쓰기</p>
           <h1 className="mono-rise mono-d1 mt-6 text-5xl font-semibold leading-[1.12] tracking-tight sm:text-7xl">
             <span className="block">대부분의 AI 글은</span>
             <span className="block"><WordCycle /></span>
-            <span className="block text-neutral-400">이건 다릅니다.</span>
+            <span className="block text-neutral-400">그래서 검색에 안 뜹니다.</span>
           </h1>
           <p className="mono-rise mono-d2 mx-auto mt-8 max-w-xl text-lg leading-relaxed text-neutral-500">
-            ChatGPT에 ‘써줘’ 하면 다 비슷하고, 티 나고, 검색에 안 뜹니다. {SITE_NAME}는 글 쓰는 방식을 직접 설계했습니다 — 매번 다른 구조로, 지어내지 않고, 한국 구글 검색에 맞게. 그리고 워드프레스에 1클릭으로 발행합니다.
+            ChatGPT한테 ‘써줘’ 해서 나온 글, 티 납니다. {SITE_NAME}는 글 뽑는 방식을 새로 짰습니다. 키워드만 넣으면 매번 다른 구조로, 없는 얘기 안 지어내고, 한국 구글에 맞게 써서 워드프레스에 바로 올립니다.
           </p>
           <div className="mono-rise mono-d3 mt-10 flex flex-col justify-center gap-3 sm:flex-row sm:items-center">
             <Link href={ctaHref} className="rounded-full bg-neutral-900 px-7 py-3.5 text-center text-sm font-medium text-white transition hover:bg-neutral-700">
@@ -74,7 +74,7 @@ export default async function Home() {
               요금 보기
             </Link>
           </div>
-          <p className="mono-rise mono-d4 mt-5 text-sm text-neutral-400">무료로 시작 · 카드 등록 불필요</p>
+          <p className="mono-rise mono-d4 mt-5 text-sm text-neutral-400">무료 3편 · 카드 등록 없음</p>
         </div>
       </section>
 
@@ -82,8 +82,8 @@ export default async function Home() {
       <section className="border-t border-neutral-200/70 bg-neutral-50">
         <div className="mx-auto max-w-5xl px-6 py-24">
           <p className="max-w-3xl text-2xl font-medium leading-snug tracking-tight text-neutral-500 sm:text-3xl">
-            “그냥 ChatGPT 쓰면 되지 않나요?” 맞습니다, 천 단어는 누구나 몇 초면 뽑습니다. 문제는 그 글이 다 비슷하고, AI 티가 나고,
-            <span className="text-neutral-900"> 구글 검색에 뜨지 않는다는 것</span>. 우리는 ‘얼마나 빨리’가 아니라 ‘어떻게 쓰는가’를 설계했습니다 — 발행해서 트래픽과 수익이 되는 글이 되도록.
+            “그냥 ChatGPT 쓰면 되잖아요.” 네, 천 단어는 누구나 1분이면 뽑습니다. 근데 다 비슷하게 생겨서
+            <span className="text-neutral-900"> 검색에 안 잡히는 게 문제죠</span>. 우리가 신경 쓴 건 속도가 아니라 어떻게 쓰느냐입니다. 올렸을 때 사람이 끝까지 읽고, 구글이 띄워주는 글.
           </p>
         </div>
       </section>
@@ -91,7 +91,7 @@ export default async function Home() {
       {/* How it works */}
       <section id="how" className="scroll-mt-16 border-t border-neutral-200/70">
         <div className="mx-auto max-w-5xl px-6 py-24">
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">작동 방식</h2>
+          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">이렇게 씁니다</h2>
           <div className="mt-14 grid gap-px overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-200 md:grid-cols-3">
             {STEPS.map((s) => (
               <div key={s.n} className="bg-white p-8">
@@ -107,7 +107,7 @@ export default async function Home() {
       {/* Features */}
       <section id="features" className="scroll-mt-16 border-t border-neutral-200/70 bg-neutral-50">
         <div className="mx-auto max-w-5xl px-6 py-24">
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">왜 그냥 ChatGPT가 아니라 {SITE_NAME}인가</h2>
+          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">왜 그냥 ChatGPT 안 쓰고요?</h2>
           <div className="mt-14 grid gap-x-12 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((f) => (
               <div key={f.title}>
@@ -123,7 +123,7 @@ export default async function Home() {
       <section className="border-t border-neutral-200/70">
         <div className="mx-auto max-w-5xl px-6 py-24">
           <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">요금</h2>
-          <p className="mt-3 text-neutral-500">무료 3편으로 충분히 확인한 뒤, 본격 발행은 프로로. 외주 글 1편 값이면 한 달치입니다.</p>
+          <p className="mt-3 text-neutral-500">무료 3편 먼저 써보세요. 괜찮으면 그때 프로. 외주 글 한 편 값이면 한 달 50편입니다.</p>
           <div className="mt-12 grid max-w-3xl gap-px overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-200 sm:grid-cols-2">
             {[PLANS.free, PLANS.pro].map((plan) => (
               <div key={plan.key} className="flex flex-col bg-white p-8">
@@ -144,7 +144,7 @@ export default async function Home() {
                     plan.highlight ? "bg-neutral-900 text-white hover:bg-neutral-700" : "border border-neutral-300 text-neutral-900 hover:border-neutral-900"
                   }`}
                 >
-                  {plan.price === 0 ? "시작하기" : "프로 선택"}
+                  {plan.price === 0 ? "무료로 시작" : "프로 선택"}
                 </Link>
               </div>
             ))}
@@ -156,10 +156,10 @@ export default async function Home() {
       <section className="border-t border-neutral-200/70 bg-neutral-50">
         <div className="mx-auto max-w-5xl px-6 py-28 text-center">
           <h2 className="mx-auto max-w-2xl text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
-            AI한테 ‘써줘’ 하지 말고,<br />검색에 뜨는 글을 쓰게 하세요.
+            AI 글 양산해봤자<br />검색엔 안 뜹니다.
           </h2>
           <p className="mx-auto mt-5 max-w-xl text-neutral-500">
-            남들과 똑같은 AI 글로는 상위 노출도, 광고 수익도 없습니다. 무료 3편으로 차이를 직접 확인하세요.
+            무료 3편 써보고 차이가 없으면 안 쓰셔도 됩니다.
           </p>
           <Link href={ctaHref} className="mt-10 inline-block rounded-full bg-neutral-900 px-8 py-4 text-sm font-medium text-white transition hover:bg-neutral-700">
             {ctaLabel}

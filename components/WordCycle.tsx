@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-const WORDS = ["뻔합니다.", "영혼이 없습니다.", "AI 티가 납니다.", "다 비슷합니다."];
+const WORDS = ["뻔합니다.", "다 비슷합니다.", "AI 티가 납니다.", "금방 묻힙니다."];
 
 export default function WordCycle() {
   const [index, setIndex] = useState(0);
