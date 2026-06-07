@@ -65,6 +65,8 @@ export interface ArticlePromptInput {
   tone: string;
   /** 목표 글자수 (한국어 기준) */
   maxWords: number;
+  /** 구조 다양성 지침 (P1-C — 매번 다른 글이 되도록 생성 전에 주입) */
+  variantInstruction?: string;
 }
 
 export function buildSystemPrompt(): string {
@@ -92,6 +94,7 @@ export function buildUserPrompt(input: ArticlePromptInput): string {
     "",
     `글 유형 지침: ${typeInstruction}`,
     `문체 지침: ${toneInstruction}`,
+    input.variantInstruction ? `구성 방식(다양성 — 매번 다른 글이 되도록): ${input.variantInstruction}` : "",
     "",
     `목표 분량: 약 ${input.maxWords.toLocaleString()}자 (공백 제외 한국어 글자수 기준). 너무 짧으면 안 된다.`,
     "",

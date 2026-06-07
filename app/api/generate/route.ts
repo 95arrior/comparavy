@@ -6,6 +6,7 @@ import { streamArticle } from "@/lib/generateArticle";
 import { countKoreanChars } from "@/lib/humanizer";
 import { isDisposableEmail } from "@/lib/disposableEmail";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { normalizeKeyword, pickVariant, simhash } from "@/lib/diversity";
 
 export const maxDuration = 300;
 
@@ -73,6 +74,16 @@ export async function POST(request: Request) {
   const tone = body.tone ?? "friendly";
   const usedSoFar = row.articles_used;
 
+  // P1-C 다양성: 이미 쓴 구조를 피해 새 구조를 고른다 (생성 전, 모델 호출 0 추가).
+  const keywordNorm = normalizeKeyword(keyword);
+  const { data: usedRows } = await supabase
+    .from("article_patterns")
+    .select("signature")
+    .eq("user_id", user.id)
+    .eq("keyword_norm", keywordNorm);
+  const usedSignatures = (usedRows ?? []).map((r: { signature: string }) => r.signature);
+  const variant = pickVariant(usedSignatures, `${user.id}:${keywordNorm}:${usedSignatures.length}`);
+
   // SSE 스트리밍: 글이 써지는 과정을 실시간으로 흘려보낸다.
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
@@ -81,7 +92,7 @@ export async function POST(request: Request) {
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
       try {
         const article = await streamArticle(
-          { keyword, angle: body.angle, type, tone, maxWords },
+          { keyword, angle: body.angle, type, tone, maxWords, variantInstruction: variant.instruction },
           (bodyHtml) => send({ type: "body", html: bodyHtml }),
         );
 
@@ -105,6 +116,7 @@ export async function POST(request: Request) {
             body_html: article.body_html,
             faq: article.faq,
             char_count: charCount,
+            simhash: simhash(article.body_html), // 근접 중복 모니터링용 (재생성 안 함)
             status: "draft",
           })
           .select("*")
@@ -120,6 +132,14 @@ export async function POST(request: Request) {
           .from("users")
           .update({ articles_used: usedSoFar + 1 })
           .eq("id", user.id);
+
+        // 다양성 원장 기록 → 다음 생성 때 이 구조를 피한다
+        await supabase
+          .from("article_patterns")
+          .upsert(
+            { user_id: user.id, keyword_norm: keywordNorm, signature: variant.key, last_used_at: new Date().toISOString() },
+            { onConflict: "user_id,keyword_norm,signature" },
+          );
 
         send({ type: "done", article: saved });
       } catch (err) {
