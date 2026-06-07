@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 
-// 홈 데모: 실제 생성처럼 글이 한 글자씩 써지는 모습 (미리 만든 예시, API 호출 0).
-const BLOCKS: { tag: "h3" | "p"; text: string }[] = [
-  { tag: "h3", text: "강아지 분리불안, 왜 생길까" },
-  { tag: "p", text: "혼자 있는 시간이 길어지면 강아지는 불안을 학습합니다. 짖음, 배변 실수, 가구 물어뜯기가 대표 신호예요." },
-  { tag: "h3", text: "오늘부터 할 수 있는 것" },
-  { tag: "p", text: "외출 전 과한 인사를 줄이세요. 5분 외출부터 시작해 시간을 천천히 늘리면, 혼자 있는 게 별일 아니라는 걸 배웁니다." },
+// 홈 데모: 우리 실제 생성 로직으로 뽑은 진짜 글(키워드 "강아지 분리불안 해결 방법")을
+// 짧게 잘라 정적으로 박은 것. 실제처럼 한 글자씩 타이핑되지만 런타임 API 호출은 0.
+const BLOCKS: { tag: "title" | "h3" | "p"; text: string }[] = [
+  { tag: "title", text: "강아지 분리불안 해결 방법: 따라 하면 끝나는 단계별 훈련" },
+  { tag: "p", text: "주인이 신발만 신어도 짖고, 문이 닫히면 하울링과 배변 실수가 시작된다면 분리불안일 가능성이 큽니다. 핵심은 '혼자 있어도 아무 일 없다'는 경험을 작은 단위로 반복해 쌓는 것입니다." },
+  { tag: "h3", text: "1단계: 외출 신호부터 무뎌지게 만들기" },
+  { tag: "p", text: "강아지는 열쇠 소리, 외투 걸치기 같은 신호를 외출과 연결해 미리 불안해집니다. 외출 생각이 없을 때 열쇠를 집었다 그냥 내려놓고, 신발을 신고 앉았다 다시 벗으며 그 연결을 끊어 주세요." },
 ];
 const TOTAL = BLOCKS.reduce((sum, b) => sum + b.text.length, 0);
 
@@ -21,13 +22,13 @@ export default function DemoStream() {
       i += 1;
       setN(i);
       if (i < TOTAL) {
-        timer = setTimeout(tick, 30);
+        timer = setTimeout(tick, 28);
       } else {
         timer = setTimeout(() => {
           i = 0;
           setN(0);
-          timer = setTimeout(tick, 700);
-        }, 2800);
+          timer = setTimeout(tick, 800);
+        }, 3200);
       }
     };
     timer = setTimeout(tick, 500);
@@ -38,31 +39,43 @@ export default function DemoStream() {
   const rendered = BLOCKS.map((b, idx) => {
     const shown = Math.max(0, Math.min(b.text.length, remaining));
     remaining -= b.text.length;
-    const active = shown > 0 && shown < b.text.length;
-    return { idx, tag: b.tag, text: b.text.slice(0, shown), active, started: shown > 0 };
+    return { idx, tag: b.tag, text: b.text.slice(0, shown), active: shown > 0 && shown < b.text.length, started: shown > 0 };
   }).filter((b) => b.started);
+
+  const cursor = <span className="ml-0.5 inline-block animate-pulse text-neutral-400">▍</span>;
 
   return (
     <div className="mx-auto w-full max-w-xl text-left">
       <div className="mb-2 flex items-center gap-2 text-xs font-medium text-neutral-400">
         <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
-        실시간으로 이렇게 써집니다
+        실시간으로 이렇게 써집니다 — 우리가 뽑은 실제 글입니다
       </div>
-      <div className="h-56 overflow-hidden rounded-xl border border-neutral-200 bg-white/70 p-5 backdrop-blur">
+      <div className="h-80 overflow-hidden rounded-xl border border-neutral-200 bg-white/70 p-5 backdrop-blur">
         {rendered.length === 0 && <p className="text-sm text-neutral-300">글을 구상하는 중…</p>}
-        {rendered.map((b) =>
-          b.tag === "h3" ? (
-            <h3 key={b.idx} className="mt-3 text-sm font-semibold text-neutral-900 first:mt-0">
+        {rendered.map((b) => {
+          if (b.tag === "title") {
+            return (
+              <p key={b.idx} className="text-base font-semibold leading-snug text-neutral-900">
+                {b.text}
+                {b.active && cursor}
+              </p>
+            );
+          }
+          if (b.tag === "h3") {
+            return (
+              <h3 key={b.idx} className="mt-4 text-sm font-semibold text-neutral-900">
+                {b.text}
+                {b.active && cursor}
+              </h3>
+            );
+          }
+          return (
+            <p key={b.idx} className="mt-2 text-sm leading-relaxed text-neutral-600">
               {b.text}
-              {b.active && <span className="ml-0.5 inline-block animate-pulse">▍</span>}
-            </h3>
-          ) : (
-            <p key={b.idx} className="mt-1.5 text-sm leading-relaxed text-neutral-600">
-              {b.text}
-              {b.active && <span className="ml-0.5 inline-block animate-pulse">▍</span>}
+              {b.active && cursor}
             </p>
-          ),
-        )}
+          );
+        })}
       </div>
     </div>
   );
