@@ -28,6 +28,9 @@ const IconAlignCenter = () => <S d="M4 6h16M7 12h10M5 18h14" />;
 const IconAlignRight = () => <S d="M4 6h16M10 12h10M7 18h13" />;
 const IconAlignFull = () => <S d="M4 6h16M4 12h16M4 18h16" />;
 const IconTrash = () => <S d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" />;
+const IconUndo = () => <S d="M9 7L4 12l5 5M4 12h11a5 5 0 0 1 0 10h-1" />;
+const IconRedo = () => <S d="M15 7l5 5-5 5M20 12H9a5 5 0 0 0 0 10h1" />;
+const IconOpen = () => <S d="M14 5h5v5M19 5l-8 8M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5" />;
 
 /* ── 이미지 노드 (정렬 + 하단 설명) ─────────────────────────── */
 const ALIGNS = [
@@ -125,6 +128,8 @@ export default function ArticleEditor({
 
   if (!editor) return <div className="h-[60vh] rounded-xl border border-neutral-200" />;
 
+  const activeHref = editor.isActive("link") ? ((editor.getAttributes("link").href as string) || "") : null;
+
   function openLink() {
     setLinkUrl((editor!.getAttributes("link").href as string) || "https://");
     setLinkOpen(true);
@@ -157,6 +162,9 @@ export default function ArticleEditor({
     <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
       <div className="sticky top-0 z-10 border-b border-neutral-200 bg-white/95 backdrop-blur">
         <div className="flex flex-wrap items-center gap-0.5 px-3 py-2">
+          <Btn title="실행취소 (Ctrl+Z)" onClick={() => editor.chain().focus().undo().run()}><IconUndo /></Btn>
+          <Btn title="다시실행 (Ctrl+Shift+Z)" onClick={() => editor.chain().focus().redo().run()}><IconRedo /></Btn>
+          <span className="mx-1 h-5 w-px bg-neutral-200" />
           <Btn title="제목" active={editor.isActive("heading", { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}><IconH2 /></Btn>
           <Btn title="소제목" active={editor.isActive("heading", { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}><IconH3 /></Btn>
           <Btn title="굵게" active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()}><IconBold /></Btn>
@@ -178,6 +186,16 @@ export default function ArticleEditor({
             />
             <button type="button" onClick={applyLink} className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm text-white">적용</button>
             <button type="button" onClick={() => setLinkOpen(false)} className="rounded-md px-2 py-1.5 text-sm text-neutral-400">취소</button>
+          </div>
+        )}
+        {activeHref && !linkOpen && (
+          <div className="flex items-center gap-2 border-t border-neutral-100 px-3 py-2 text-sm">
+            <span className="truncate text-neutral-500">🔗 {activeHref}</span>
+            <a href={activeHref} target="_blank" rel="noreferrer" className="ml-auto flex items-center gap-1 rounded-md border border-neutral-300 px-2 py-1 text-xs hover:border-neutral-900">
+              <IconOpen /> 열기
+            </a>
+            <button type="button" onClick={openLink} className="rounded-md px-2 py-1 text-xs text-neutral-500 hover:bg-neutral-100">편집</button>
+            <button type="button" onClick={() => editor.chain().focus().extendMarkRange("link").unsetLink().run()} className="rounded-md px-2 py-1 text-xs text-red-500 hover:bg-red-50">해제</button>
           </div>
         )}
       </div>
