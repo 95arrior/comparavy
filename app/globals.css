@@ -733,14 +733,15 @@ html {
 .ateflo-logo--pro {
   /* 갤럭시 AI식: 은은한 파스텔 색 덩어리들이 규칙 없이 부드럽게 떠다니는 메시 그라데이션 */
   background:
-    radial-gradient(50% 50% at 30% 25%, #8b9bff 0%, transparent 60%),
-    radial-gradient(50% 50% at 75% 30%, #aec6ff 0%, transparent 60%),
-    radial-gradient(50% 50% at 70% 75%, #f2b8d6 0%, transparent 60%),
-    radial-gradient(50% 50% at 25% 72%, #bdeccb 0%, transparent 60%),
-    radial-gradient(55% 55% at 50% 50%, #ffd9b0 0%, transparent 65%),
-    #dfe4ff;
+    radial-gradient(52% 52% at 30% 25%, #5b6dff 0%, transparent 66%),
+    radial-gradient(52% 52% at 75% 30%, #57a0ff 0%, transparent 66%),
+    radial-gradient(52% 52% at 70% 75%, #ff7ec0 0%, transparent 66%),
+    radial-gradient(52% 52% at 25% 72%, #5fdd92 0%, transparent 66%),
+    radial-gradient(58% 58% at 50% 50%, #ffb56b 0%, transparent 70%),
+    #cdd6ff;
   background-size: 200% 200%, 190% 190%, 210% 210%, 180% 180%, 200% 200%, auto;
   background-position: 30% 25%, 75% 30%, 70% 75%, 25% 72%, 50% 50%, 0 0;
+  filter: saturate(1.15);
 }
 
 .ateflo-logo--anim {
