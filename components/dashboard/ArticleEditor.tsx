@@ -10,6 +10,8 @@ import { Table } from "@tiptap/extension-table";
 import { TableRow } from "@tiptap/extension-table-row";
 import { TableHeader } from "@tiptap/extension-table-header";
 import { TableCell } from "@tiptap/extension-table-cell";
+import { TextAlign } from "@tiptap/extension-text-align";
+import { TextStyle } from "@tiptap/extension-text-style";
 
 /* ── 아이콘 (라인, currentColor) ─────────────────────────── */
 const S = ({ d, fill = false }: { d: string; fill?: boolean }) => (
@@ -106,6 +108,21 @@ const EditorImage = Image.extend({
   },
 });
 
+/* 글자 크기: TextStyle에 fontSize 속성 추가 */
+const FontSize = TextStyle.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      fontSize: {
+        default: null,
+        parseHTML: (el: HTMLElement) => el.style.fontSize || null,
+        renderHTML: (attrs: { fontSize?: string | null }) =>
+          attrs.fontSize ? { style: `font-size: ${attrs.fontSize}` } : {},
+      },
+    };
+  },
+});
+
 /* ── 에디터 ───────────────────────────────────────────────── */
 export default function ArticleEditor({
   initialHtml,
@@ -143,6 +160,8 @@ export default function ArticleEditor({
       TableRow,
       TableHeader,
       TableCell,
+      TextAlign.configure({ types: ["heading", "paragraph"] }),
+      FontSize,
     ],
     content: initialHtml,
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
@@ -157,14 +176,15 @@ export default function ArticleEditor({
     },
   });
 
-  // 제목 textarea 높이 자동 조절(여러 줄 줄바꿈, 가로 스크롤 없음)
+  // 제목 textarea 높이 자동 조절(여러 줄 줄바꿈, 가로 스크롤 없음).
+  // editor를 의존성에 넣어, 에디터 준비 후 텍스트영역이 마운트되면 초기 높이도 잡히게 한다.
   useEffect(() => {
     const el = titleRef.current;
     if (el) {
       el.style.height = "auto";
       el.style.height = `${el.scrollHeight}px`;
     }
-  }, [title]);
+  }, [title, editor]);
 
   if (!editor) return <div className="h-[60vh] rounded-xl border border-neutral-200" />;
 
@@ -240,6 +260,24 @@ export default function ArticleEditor({
           <Btn title="굵게" active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()}><IconBold /></Btn>
           <Btn title="목록" active={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()}><IconList /></Btn>
           <Btn title="번호 목록" active={editor.isActive("orderedList")} onClick={() => editor.chain().focus().toggleOrderedList().run()}><IconOrderedList /></Btn>
+          <span className="mx-1 h-5 w-px bg-neutral-200" />
+          <Btn title="왼쪽 정렬" active={editor.isActive({ textAlign: "left" })} onClick={() => editor.chain().focus().setTextAlign("left").run()}><IconAlignLeft /></Btn>
+          <Btn title="가운데 정렬" active={editor.isActive({ textAlign: "center" })} onClick={() => editor.chain().focus().setTextAlign("center").run()}><IconAlignCenter /></Btn>
+          <Btn title="오른쪽 정렬" active={editor.isActive({ textAlign: "right" })} onClick={() => editor.chain().focus().setTextAlign("right").run()}><IconAlignRight /></Btn>
+          <select
+            title="글자 크기"
+            value={(editor.getAttributes("textStyle").fontSize as string) ?? ""}
+            onChange={(e) => {
+              const v = e.target.value;
+              editor.chain().focus().setMark("textStyle", { fontSize: v || null }).run();
+            }}
+            className="ml-1 rounded-md border border-neutral-200 px-1.5 py-1 text-xs text-neutral-600 outline-none"
+          >
+            <option value="">크기</option>
+            <option value="0.9rem">작게</option>
+            <option value="1.15rem">크게</option>
+            <option value="1.4rem">더 크게</option>
+          </select>
           <span className="mx-1 h-5 w-px bg-neutral-200" />
           <Btn title="링크 (텍스트를 드래그한 뒤 클릭)" active={editor.isActive("link")} onClick={openLink}><IconLink /></Btn>
           <Btn title="이미지" onClick={() => fileRef.current?.click()}><IconImage /></Btn>
