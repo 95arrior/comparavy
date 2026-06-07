@@ -59,10 +59,10 @@ export default async function Home() {
       <section className="hero-aurora relative overflow-hidden">
         <div className="relative z-10 mx-auto max-w-3xl px-6 pb-24 pt-24 text-center sm:pt-32">
           <p className="mono-rise text-sm font-medium tracking-tight text-neutral-400">워드프레스 블로그를 위한 AI 글쓰기</p>
-          <h1 className="mono-rise mono-d1 mt-5 text-4xl font-semibold leading-[1.15] tracking-tight sm:text-6xl">
+          <h1 className="font-pretendard mono-rise mono-d1 mt-5 text-4xl font-bold leading-[1.15] tracking-tight sm:text-6xl">
             글쓰기, 키워드 하나면 끝
           </h1>
-          <p className="mono-rise mono-d2 mx-auto mt-6 max-w-xl text-lg leading-relaxed text-neutral-500">
+          <p className="mono-rise mono-d2 mx-auto mt-6 max-w-md text-base leading-relaxed text-neutral-500">
             어떤 구조로, 어떤 흐름으로 글을 써야 좋은 글이 되는지. 우리는 그 답을 알고, 키워드 하나로 글을 씁니다.
           </p>
           <div className="mono-rise mono-d3 mt-10">
