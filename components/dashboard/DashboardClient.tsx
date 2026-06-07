@@ -32,6 +32,7 @@ export default function DashboardClient(props: DashboardProps) {
     setArticles((prev) => [article, ...prev]);
     setArticlesUsed((n) => n + 1);
     setTab("articles");
+    setSelected(article); // 생성 직후 바로 편집 화면 열기
   }
 
   function onUpdated(updated: Article) {
