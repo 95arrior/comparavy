@@ -17,6 +17,7 @@ export default function GeneratePanel({
   const [tone, setTone] = useState(TONES[0].key);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
 
   const outOfQuota = remaining <= 0;
 
@@ -28,22 +29,59 @@ export default function GeneratePanel({
       return;
     }
     setLoading(true);
+    setPreview("");
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ keyword, angle, type, tone }),
       });
-      const data = await res.json();
-      if (!res.ok) {
+
+      // 사전 검사 실패(429/403 등)는 일반 JSON 으로 옴
+      if (!res.ok || !res.body) {
+        const data = await res.json().catch(() => ({}));
         setError(data.error ?? "글 생성에 실패했습니다.");
+        setPreview(null);
         return;
       }
-      onGenerated(data.article);
-      setKeyword("");
-      setAngle("");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = "";
+      let done = false;
+      while (!done) {
+        const chunk = await reader.read();
+        if (chunk.done) break;
+        buf += decoder.decode(chunk.value, { stream: true });
+        const parts = buf.split("\n\n");
+        buf = parts.pop() ?? "";
+        for (const part of parts) {
+          const line = part.replace(/^data: /, "").trim();
+          if (!line) continue;
+          let msg: { type: string; html?: string; article?: Article; error?: string };
+          try {
+            msg = JSON.parse(line);
+          } catch {
+            continue;
+          }
+          if (msg.type === "body") {
+            setPreview(msg.html ?? "");
+          } else if (msg.type === "done" && msg.article) {
+            onGenerated(msg.article);
+            setKeyword("");
+            setAngle("");
+            setPreview(null);
+            done = true;
+          } else if (msg.type === "error") {
+            setError(msg.error ?? "글 생성에 실패했습니다.");
+            setPreview(null);
+            done = true;
+          }
+        }
+      }
     } catch {
       setError("네트워크 오류가 발생했습니다.");
+      setPreview(null);
     } finally {
       setLoading(false);
     }
@@ -117,9 +155,29 @@ export default function GeneratePanel({
           disabled={loading || outOfQuota}
           className="w-full rounded-full bg-neutral-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
         >
-          {outOfQuota ? "이번 달 한도 소진" : loading ? "생성 중… (최대 1분)" : "글 생성하기"}
+          {outOfQuota ? "이번 달 한도 소진" : loading ? "글을 쓰는 중…" : "글 생성하기"}
         </button>
       </form>
+
+      {/* 실시간 생성 미리보기 — 고정 높이 스크롤로 layout shift 방지 */}
+      {preview !== null && (
+        <div className="mt-6">
+          <div className="mb-2 flex items-center gap-2 text-xs font-medium text-neutral-500">
+            <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+            실시간으로 글을 작성하고 있어요…
+          </div>
+          <div className="h-80 overflow-y-auto rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+            {preview ? (
+              <div
+                className="prose prose-sm prose-neutral max-w-none"
+                dangerouslySetInnerHTML={{ __html: preview }}
+              />
+            ) : (
+              <p className="text-sm text-neutral-400">글을 구상하는 중…</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

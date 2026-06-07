@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { ensureUserRow, rolloverIfNeeded } from "@/lib/userPlan";
 import { PLANS } from "@/lib/plans";
-import { generateArticle } from "@/lib/generateArticle";
+import { streamArticle } from "@/lib/generateArticle";
 import { countKoreanChars } from "@/lib/humanizer";
 import { isDisposableEmail } from "@/lib/disposableEmail";
 import { checkRateLimit } from "@/lib/rateLimit";
@@ -71,50 +71,71 @@ export async function POST(request: Request) {
   const maxWords = PLANS[row.plan].maxWords;
   const type = body.type ?? "howto";
   const tone = body.tone ?? "friendly";
+  const usedSoFar = row.articles_used;
 
-  // 글 생성
-  let article;
-  try {
-    article = await generateArticle({ keyword, angle: body.angle, type, tone, maxWords });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "글 생성 중 오류가 발생했습니다.";
-    return NextResponse.json({ error: message }, { status: 502 });
-  }
+  // SSE 스트리밍: 글이 써지는 과정을 실시간으로 흘려보낸다.
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      const send = (obj: unknown) =>
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
+      try {
+        const article = await streamArticle(
+          { keyword, angle: body.angle, type, tone, maxWords },
+          (bodyHtml) => send({ type: "body", html: bodyHtml }),
+        );
 
-  // 길이 검증 (목표 글자수의 절반 미만이면 너무 짧음)
-  const charCount = countKoreanChars(article.body_html);
-  if (charCount < maxWords * 0.5) {
-    return NextResponse.json(
-      { error: "생성된 글이 너무 짧습니다. 다시 시도해 주세요." },
-      { status: 502 },
-    );
-  }
+        // 길이 검증 (목표 글자수의 절반 미만이면 너무 짧음)
+        const charCount = countKoreanChars(article.body_html);
+        if (charCount < maxWords * 0.5) {
+          send({ type: "error", error: "생성된 글이 너무 짧습니다. 다시 시도해 주세요." });
+          controller.close();
+          return;
+        }
 
-  // 저장 + 사용량 증가
-  const { data: saved, error: saveError } = await supabase
-    .from("articles")
-    .insert({
-      user_id: user.id,
-      keyword,
-      title: article.title,
-      meta_title: article.meta_title,
-      meta_description: article.meta_description,
-      body_html: article.body_html,
-      faq: article.faq,
-      char_count: charCount,
-      status: "draft",
-    })
-    .select("*")
-    .single();
+        // 저장 + 사용량 증가
+        const { data: saved, error: saveError } = await supabase
+          .from("articles")
+          .insert({
+            user_id: user.id,
+            keyword,
+            title: article.title,
+            meta_title: article.meta_title,
+            meta_description: article.meta_description,
+            body_html: article.body_html,
+            faq: article.faq,
+            char_count: charCount,
+            status: "draft",
+          })
+          .select("*")
+          .single();
 
-  if (saveError) {
-    return NextResponse.json({ error: "글을 저장하지 못했습니다." }, { status: 500 });
-  }
+        if (saveError) {
+          send({ type: "error", error: "글을 저장하지 못했습니다." });
+          controller.close();
+          return;
+        }
 
-  await supabase
-    .from("users")
-    .update({ articles_used: row.articles_used + 1 })
-    .eq("id", user.id);
+        await supabase
+          .from("users")
+          .update({ articles_used: usedSoFar + 1 })
+          .eq("id", user.id);
 
-  return NextResponse.json({ article: saved });
+        send({ type: "done", article: saved });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "글 생성 중 오류가 발생했습니다.";
+        send({ type: "error", error: message });
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+    },
+  });
 }

@@ -93,3 +93,98 @@ export async function generateArticle(
     faq: Array.isArray(raw.faq) ? raw.faq : [],
   };
 }
+
+/**
+ * 누적된 부분 JSON에서 body_html 값을 현재까지 만큼 추출한다(스트리밍 표시용).
+ * 닫는 따옴표가 아직 안 왔으면 지금까지 들어온 부분을 반환. JSON 이스케이프 처리.
+ */
+function extractBodyHtml(acc: string): string | null {
+  const ki = acc.indexOf('"body_html"');
+  if (ki === -1) return null;
+  const colon = acc.indexOf(":", ki + 11);
+  if (colon === -1) return null;
+  let i = colon + 1;
+  while (i < acc.length && acc[i] !== '"') i++;
+  if (i >= acc.length) return null;
+  let out = "";
+  let j = i + 1;
+  while (j < acc.length) {
+    const c = acc[j];
+    if (c === "\\") {
+      const next = acc[j + 1];
+      if (next === undefined) break; // 이스케이프가 잘림 → 여기까지
+      if (next === "u") {
+        const hex = acc.slice(j + 2, j + 6);
+        if (hex.length < 4) break;
+        out += String.fromCharCode(parseInt(hex, 16));
+        j += 6;
+      } else {
+        const map: Record<string, string> = { n: "\n", t: "\t", r: "\r", '"': '"', "\\": "\\", "/": "/" };
+        out += map[next] ?? next;
+        j += 2;
+      }
+    } else if (c === '"') {
+      break; // 닫는 따옴표
+    } else {
+      out += c;
+      j++;
+    }
+  }
+  return out;
+}
+
+/**
+ * generateArticle 와 동일한 생성을 스트리밍으로 수행한다(같은 프롬프트·모델·tool
+ * = 품질 동일). 본문이 들어오는 대로 onBody(현재까지 body_html)를 호출하고,
+ * 완료 시 최종 GeneratedArticle 를 반환한다.
+ */
+export async function streamArticle(
+  input: ArticlePromptInput,
+  onBody: (bodyHtmlSoFar: string) => void,
+): Promise<GeneratedArticle> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY 가 설정되지 않았습니다.");
+
+  const client = new Anthropic({ apiKey });
+  const model = process.env.ANTHROPIC_MODEL || "claude-opus-4-8";
+  const maxTokens = Math.min(16000, Math.ceil(input.maxWords * 2 + 1200));
+
+  const stream = client.messages.stream({
+    model,
+    max_tokens: maxTokens,
+    system: buildSystemPrompt(),
+    tools: [SAVE_TOOL],
+    tool_choice: { type: "tool", name: "save_article" },
+    messages: [{ role: "user", content: buildUserPrompt(input) }],
+  });
+
+  let acc = "";
+  let lastBody = "";
+  for await (const event of stream) {
+    if (
+      event.type === "content_block_delta" &&
+      event.delta.type === "input_json_delta"
+    ) {
+      acc += event.delta.partial_json;
+      const body = extractBodyHtml(acc);
+      if (body !== null && body !== lastBody) {
+        lastBody = body;
+        onBody(body);
+      }
+    }
+  }
+
+  const final = await stream.finalMessage();
+  const block = final.content.find((b) => b.type === "tool_use");
+  if (!block || block.type !== "tool_use") {
+    throw new Error("글 생성에 실패했습니다. 다시 시도해 주세요.");
+  }
+  const raw = block.input as Partial<GeneratedArticle>;
+  return {
+    title: (raw.title ?? "").trim(),
+    meta_title: clamp(raw.meta_title ?? raw.title ?? "", 60),
+    meta_description: clamp(raw.meta_description ?? "", 160),
+    body_html: (raw.body_html ?? "").trim(),
+    faq: Array.isArray(raw.faq) ? raw.faq : [],
+  };
+}
