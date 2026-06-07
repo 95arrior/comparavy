@@ -43,6 +43,44 @@ export interface PublishInput extends WordPressCredentials {
   status?: "draft" | "publish" | "future";
   /** status가 future일 때 예약 시각 (ISO 8601, 사이트 시간대 기준) */
   date?: string;
+  /** SEO 메타 설명 (excerpt로 전달 → SEO 플러그인/검색 스니펫) */
+  metaDescription?: string;
+  /** FAQ → FAQPage 구조화 데이터(JSON-LD)로 변환해 리치 결과 노출 */
+  faq?: { question: string; answer: string }[];
+  /** SEO 친화적 슬러그(URL) */
+  slug?: string;
+}
+
+function jsonLd(obj: unknown): string {
+  return `<script type="application/ld+json">${JSON.stringify(obj).replace(/</g, "\\u003c")}</script>`;
+}
+
+/** Article + FAQPage 구조화 데이터(JSON-LD)를 만든다 — 구글 리치 결과용. */
+function buildStructuredData(input: PublishInput): string {
+  const blocks: string[] = [
+    jsonLd({
+      "@context": "https://schema.org",
+      "@type": "Article",
+      headline: input.title,
+      description: input.metaDescription ?? "",
+      inLanguage: "ko-KR",
+      datePublished: new Date().toISOString(),
+    }),
+  ];
+  if (input.faq && input.faq.length > 0) {
+    blocks.push(
+      jsonLd({
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: input.faq.map((f) => ({
+          "@type": "Question",
+          name: f.question,
+          acceptedAnswer: { "@type": "Answer", text: f.answer },
+        })),
+      }),
+    );
+  }
+  return "\n" + blocks.join("\n");
 }
 
 export interface PublishResult {
@@ -56,9 +94,12 @@ export async function publishPost(input: PublishInput): Promise<PublishResult> {
   const base = normalizeSiteUrl(input.siteUrl);
   const body: Record<string, unknown> = {
     title: input.title,
-    content: input.contentHtml,
+    // 본문 + 구조화 데이터(JSON-LD) → 검색 리치 결과
+    content: input.contentHtml + buildStructuredData(input),
     status: input.status ?? "draft",
   };
+  if (input.metaDescription) body.excerpt = input.metaDescription;
+  if (input.slug) body.slug = input.slug;
   if (input.status === "future" && input.date) {
     body.date = input.date;
   }

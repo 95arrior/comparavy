@@ -24,11 +24,11 @@ const SAVE_TOOL: Anthropic.Tool = {
   input_schema: {
     type: "object",
     properties: {
-      title: { type: "string", description: "글 제목 (한국어, 매력적이고 검색 의도에 맞게)" },
-      meta_title: { type: "string", description: "SEO 메타 제목 (한국어, 60자 이하)" },
+      title: { type: "string", description: "글 제목(H1). 핵심 키워드를 앞쪽에 자연스럽게, 검색 의도에 맞게" },
+      meta_title: { type: "string", description: "검색결과 노출용 제목. 핵심 키워드를 앞에, 한국어 30자 내외(검색결과에서 잘리지 않게)" },
       meta_description: {
         type: "string",
-        description: "SEO 메타 설명 (한국어, 160자 이하)",
+        description: "검색결과 설명문(스니펫). 키워드 포함 + 클릭 유도, 한국어 75자 내외",
       },
       body_html: {
         type: "string",

@@ -63,6 +63,11 @@ export async function POST(request: Request) {
       appPassword: conn.app_password,
       title: article.title,
       contentHtml: article.body_html,
+      metaDescription: article.meta_description ?? undefined,
+      faq: Array.isArray(article.faq) ? article.faq : undefined,
+      slug: article.keyword
+        ? article.keyword.trim().toLowerCase().replace(/\s+/g, "-")
+        : undefined,
       status,
       date,
     });
