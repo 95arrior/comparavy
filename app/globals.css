@@ -731,11 +731,16 @@ html {
 
 /* 프로: 부드러운 파스텔 무지개(제미나이 원색과 다른 톤)가 배경에 깔림 */
 .ateflo-logo--pro {
-  /* 갤럭시 AI 스타일: 회전이 아니라 흐르는 무지개(파랑·바이올렛·핑크·시안 오로라). */
-  background: linear-gradient(120deg, #4b5fe1, #7b5cff, #c45cff, #ff6fd8, #5cc8ff, #4b5fe1);
-  background-size: 220% 220%;
-  background-position: 0% 50%;
-  filter: saturate(1.1);
+  /* 갤럭시 AI식: 은은한 파스텔 색 덩어리들이 규칙 없이 부드럽게 떠다니는 메시 그라데이션 */
+  background:
+    radial-gradient(50% 50% at 30% 25%, #8b9bff 0%, transparent 60%),
+    radial-gradient(50% 50% at 75% 30%, #aec6ff 0%, transparent 60%),
+    radial-gradient(50% 50% at 70% 75%, #f2b8d6 0%, transparent 60%),
+    radial-gradient(50% 50% at 25% 72%, #bdeccb 0%, transparent 60%),
+    radial-gradient(55% 55% at 50% 50%, #ffd9b0 0%, transparent 65%),
+    #dfe4ff;
+  background-size: 200% 200%, 190% 190%, 210% 210%, 180% 180%, 200% 200%, auto;
+  background-position: 30% 25%, 75% 30%, 70% 75%, 25% 72%, 50% 50%, 0 0;
 }
 
 .ateflo-logo--anim {
@@ -744,7 +749,7 @@ html {
 
 /* 프로 + 애니메이션: 씹기 + 무지개가 천천히 영롱하게 회전 */
 .ateflo-logo--anim.ateflo-logo--pro {
-  animation: ateflo-chew 0.85s ease-in-out infinite, ateflo-flow 6s ease-in-out infinite;
+  animation: ateflo-chew 0.85s ease-in-out infinite, ateflo-mesh 11s ease-in-out infinite;
 }
 
 @keyframes ateflo-chew {
@@ -757,15 +762,25 @@ html {
   }
 }
 
-@keyframes ateflo-flow {
+/* 각 색 덩어리가 서로 다른 지점으로 떠다녀 규칙 없는 영롱한 요동 (마지막 값은 정적 베이스) */
+@keyframes ateflo-mesh {
   0% {
-    background-position: 0% 50%;
+    background-position: 20% 15%, 80% 25%, 70% 80%, 20% 70%, 50% 45%, 0 0;
   }
-  50% {
-    background-position: 100% 50%;
+  20% {
+    background-position: 45% 35%, 55% 55%, 85% 60%, 10% 90%, 35% 65%, 0 0;
+  }
+  40% {
+    background-position: 15% 60%, 90% 40%, 50% 90%, 40% 50%, 65% 35%, 0 0;
+  }
+  60% {
+    background-position: 55% 20%, 60% 75%, 80% 50%, 5% 60%, 40% 70%, 0 0;
+  }
+  80% {
+    background-position: 35% 50%, 75% 35%, 60% 70%, 30% 85%, 55% 50%, 0 0;
   }
   100% {
-    background-position: 0% 50%;
+    background-position: 20% 15%, 80% 25%, 70% 80%, 20% 70%, 50% 45%, 0 0;
   }
 }
 
