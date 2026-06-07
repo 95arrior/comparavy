@@ -73,4 +73,13 @@ export async function applyPlan(
     .from("users")
     .update({ plan, articles_limit: limits.articles_limit, ...extra })
     .eq("id", userId);
+
+  // 유료 전환 시 무료 미리보기(티저) 잠금 해제 → 결제 직후 바로 전체 글 열람·발행 가능
+  if (plan !== "free") {
+    await supabase
+      .from("articles")
+      .update({ locked: false })
+      .eq("user_id", userId)
+      .eq("locked", true);
+  }
 }

@@ -59,6 +59,7 @@ export default function GeneratePanel({
   }, []);
 
   const outOfQuota = remaining <= 0;
+  const teaserMode = !pro && outOfQuota; // 무료 한도 소진 → 결제 유도용 잠금 미리보기 1편 허용
 
   function stopReveal() {
     if (revealRef.current) {
@@ -249,12 +250,24 @@ export default function GeneratePanel({
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 
+        {teaserMode && (
+          <p className="rounded-lg bg-amber-50 px-4 py-2.5 text-sm text-amber-700">
+            무료 3편을 다 썼어요. 미리보기 1편을 만들어 드릴게요 — 끝까지 보고 발행하려면 프로로 업그레이드하면 돼요.
+          </p>
+        )}
+
         <button
           type="submit"
-          disabled={loading || outOfQuota}
+          disabled={loading || (outOfQuota && !teaserMode)}
           className="w-full rounded-full bg-neutral-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
         >
-          {outOfQuota ? "이번 달 한도를 다 썼어요" : loading ? <span className="inline-flex items-center text-2xl leading-none"><Dots /></span> : "글 생성하기"}
+          {outOfQuota && !teaserMode
+            ? "이번 달 한도를 다 썼어요"
+            : loading
+            ? <span className="inline-flex items-center text-2xl leading-none"><Dots /></span>
+            : teaserMode
+            ? "무료 미리보기 만들기"
+            : "글 생성하기"}
         </button>
       </form>
 

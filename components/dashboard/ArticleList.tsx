@@ -44,13 +44,17 @@ export default function ArticleList({
       {articles.map((a) => (
         <div
           key={a.id}
-          className="flex w-full items-center justify-between gap-4 rounded-2xl border border-neutral-200 bg-white p-5 transition hover:border-neutral-400"
+          className="relative flex w-full items-center justify-between gap-4 rounded-2xl border border-neutral-200 bg-white p-5 pr-12 transition hover:border-neutral-400"
         >
           <button onClick={() => onOpen(a)} className="min-w-0 flex-1 text-left">
             <div className="flex items-center gap-2">
-              <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLE[a.status]}`}>
-                {STATUS_LABEL[a.status]}
-              </span>
+              {a.locked ? (
+                <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">🔒 미리보기</span>
+              ) : (
+                <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLE[a.status]}`}>
+                  {STATUS_LABEL[a.status]}
+                </span>
+              )}
               <span className="truncate text-xs text-neutral-400">{a.keyword}</span>
             </div>
             <h3 className="mt-2 truncate text-base font-medium tracking-tight">{a.title}</h3>
@@ -58,10 +62,15 @@ export default function ArticleList({
               {(a.char_count ?? 0).toLocaleString()}자 · {new Date(a.created_at).toLocaleDateString("ko-KR")}
             </p>
           </button>
-          <div className="flex shrink-0 items-center gap-3">
-            <button onClick={() => onOpen(a)} className="text-sm text-neutral-400 transition hover:text-neutral-700">열기 →</button>
-            <button onClick={() => onDelete(a.id)} className="text-sm text-red-400 transition hover:text-red-600">삭제</button>
-          </div>
+          <button onClick={() => onOpen(a)} className="shrink-0 text-sm text-neutral-400 transition hover:text-neutral-700">열기 →</button>
+          <button
+            onClick={() => onDelete(a.id)}
+            title="삭제"
+            aria-label="삭제"
+            className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full text-neutral-300 transition hover:bg-neutral-100 hover:text-neutral-700"
+          >
+            ✕
+          </button>
         </div>
       ))}
     </div>

@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import ArticleEditor from "./ArticleEditor";
+import { PLANS, formatKRW } from "@/lib/plans";
 import type { Article } from "./types";
 
 export default function ArticleModal({
@@ -106,6 +108,50 @@ export default function ArticleModal({
     }
   }
 
+  // 무료 한도 초과로 만든 미리보기(티저): 상단만 보이고 아래는 블러 + 결제 유도. 프로 결제 전까지 유지.
+  if (article.locked) {
+    return (
+      <>
+        <div className="sticky top-0 z-30 border-b border-neutral-200 bg-white/95 backdrop-blur">
+          <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-6 py-3">
+            <button onClick={onClose} className="flex items-center gap-1.5 text-sm text-neutral-500 transition hover:text-neutral-900">
+              <span className="text-base leading-none">←</span> 목록으로
+            </button>
+            <Link href="/pricing" className="rounded-full bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700">
+              프로로 잠금 해제
+            </Link>
+          </div>
+        </div>
+
+        <div className="mx-auto max-w-3xl px-6 py-8">
+          <span className="text-xs text-neutral-400">미리보기 · {article.keyword}</span>
+          <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight sm:text-3xl">{article.title}</h1>
+
+          <div className="relative mt-6">
+            <div className="prose prose-neutral max-w-none" dangerouslySetInnerHTML={{ __html: article.body_html }} />
+            {/* 초중반부터 블러 + 흰색 페이드로 가린다 */}
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 top-[28%] bg-gradient-to-b from-white/10 via-white/75 to-white backdrop-blur-[3px]" />
+          </div>
+
+          {/* 결제 유도 — 발행 욕구가 최고조일 때 */}
+          <div className="mt-2 rounded-2xl border border-neutral-200 bg-neutral-50 p-6 text-center">
+            <p className="text-base font-semibold tracking-tight">이 글, 끝까지 보고 바로 발행하고 싶다면</p>
+            <p className="mt-2 text-sm leading-relaxed text-neutral-500">
+              프로로 업그레이드하면 이 글의 잠금이 풀려요. 매달 50편까지, 한 편당 5,000자 깊이로 쓰고 워드프레스에 바로 발행할 수 있어요.
+            </p>
+            <Link
+              href="/pricing"
+              className="mt-5 inline-block rounded-full bg-neutral-900 px-6 py-3 text-sm font-medium text-white transition hover:bg-neutral-700"
+            >
+              프로로 업그레이드하고 잠금 해제 →
+            </Link>
+            <p className="mt-3 text-xs text-neutral-400">{formatKRW(PLANS.pro.price)}/월 · 언제든 해지</p>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       {/* 상단 액션바 — 스크롤해도 따라옴 */}
@@ -117,7 +163,7 @@ export default function ArticleModal({
           <div className="flex shrink-0 items-center gap-2">
             <button
               onClick={save}
-              disabled={!dirty || saving}
+              disabled={saving}
               className="rounded-full border border-neutral-300 px-4 py-1.5 text-sm font-medium transition hover:border-neutral-900 disabled:opacity-40"
             >
               {saving ? "저장 중…" : "저장"}
@@ -140,6 +186,18 @@ export default function ArticleModal({
             <span className="shrink-0 text-xs text-neutral-400">{dirty ? "수정 중…" : `✓ 자동저장 · ${autoSavedAt}`}</span>
           )}
         </div>
+
+        {(error || message) && (
+          <div className={`mt-3 rounded-lg px-4 py-2.5 text-sm ${error ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"}`}>
+            {error ?? message}
+            {!error && message && article.wp_link && (
+              <>
+                {" "}
+                <a href={article.wp_link} target="_blank" rel="noreferrer" className="underline">글 보기</a>
+              </>
+            )}
+          </div>
+        )}
 
         <div className="mt-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-xs text-neutral-500">
           <p><strong className="text-neutral-700">메타 제목:</strong> {article.meta_title}</p>
@@ -173,15 +231,6 @@ export default function ArticleModal({
           </div>
         )}
 
-        {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
-        {message && (
-          <p className="mt-4 text-sm text-emerald-600">
-            {message}{" "}
-            {article.wp_link && (
-              <a href={article.wp_link} target="_blank" rel="noreferrer" className="underline">글 보기</a>
-            )}
-          </p>
-        )}
       </div>
     </>
   );

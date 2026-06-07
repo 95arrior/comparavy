@@ -18,6 +18,8 @@ export interface Article {
   wp_link: string | null;
   featured_image: string | null;
   original_html: string | null;
+  /** 무료 한도 초과 시 만든 미리보기(티저). true면 상단만 보이고 하단 블러 + 결제 유도. 프로 결제 시 해제. */
+  locked?: boolean;
   created_at: string;
 }
 

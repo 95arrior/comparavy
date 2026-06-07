@@ -62,14 +62,32 @@ export async function POST(request: Request) {
   let row = await ensureUserRow(supabase, user.id);
   row = await rolloverIfNeeded(supabase, row);
 
+  // 한도 초과 처리: 프로는 차단. 무료는 결제 유도용 "미리보기(티저)"를 단 1개만 허용한다.
+  // (모델 호출은 평소와 동일하게 1회 — 1글=1콜 불변식 유지, 추가 비용은 무료 1편 분량으로 제한)
+  let teaser = false;
   if (row.articles_used >= row.articles_limit) {
-    return NextResponse.json(
-      { error: "이번 달 생성 한도를 모두 사용했습니다. 프로로 업그레이드하면 더 많이 생성할 수 있습니다." },
-      { status: 403 },
-    );
+    if (row.plan !== "free") {
+      return NextResponse.json(
+        { error: "이번 달 생성 한도를 모두 사용했습니다." },
+        { status: 403 },
+      );
+    }
+    const { count: lockedCount } = await supabase
+      .from("articles")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("locked", true);
+    if ((lockedCount ?? 0) > 0) {
+      return NextResponse.json(
+        { error: "무료 미리보기를 이미 만들었어요. 프로로 업그레이드하면 잠금이 풀리고 계속 생성할 수 있어요." },
+        { status: 403 },
+      );
+    }
+    teaser = true;
   }
 
-  const maxWords = PLANS[row.plan].maxWords;
+  // 티저는 비용 최소화를 위해 무료 분량으로 생성한다 (모델 호출은 동일하게 1회).
+  const maxWords = teaser ? PLANS.free.maxWords : PLANS[row.plan].maxWords;
   const type = body.type ?? "howto";
   const tone = body.tone ?? "friendly";
   const usedSoFar = row.articles_used;
@@ -119,6 +137,7 @@ export async function POST(request: Request) {
             simhash: simhash(article.body_html), // 근접 중복 모니터링용 (재생성 안 함)
             original_html: article.body_html, // AI 원본 복구용 (수정해도 보존)
             status: "draft",
+            locked: teaser, // 무료 한도 초과 미리보기면 잠금 (상단만 노출 + 결제 유도)
           })
           .select("*")
           .single();
@@ -130,10 +149,13 @@ export async function POST(request: Request) {
           return;
         }
 
-        await supabase
-          .from("users")
-          .update({ articles_used: usedSoFar + 1 })
-          .eq("id", user.id);
+        // 티저(미리보기)는 사용량을 올리지 않는다 (정식 글이 아니라 결제 유도용 잠금 글).
+        if (!teaser) {
+          await supabase
+            .from("users")
+            .update({ articles_used: usedSoFar + 1 })
+            .eq("id", user.id);
+        }
 
         // 다양성 원장 기록 → 다음 생성 때 이 구조를 피한다
         await supabase
