@@ -3,7 +3,8 @@ import Link from "next/link";
 import { SITE_NAME, SITE_DESCRIPTION } from "@/lib/site";
 import { PLANS, formatKRW } from "@/lib/plans";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
-import WordCycle from "@/components/WordCycle";
+import HeroInput from "@/components/HeroInput";
+import DemoStream from "@/components/DemoStream";
 
 export const metadata: Metadata = {
   title: { absolute: `${SITE_NAME} — 발행할 가치가 있는 AI 블로그 글` },
@@ -54,27 +55,20 @@ export default async function Home() {
         </div>
       </header>
 
-      {/* Hero */}
+      {/* Hero — 도구 우선: 입력창 + 실시간 데모를 첫 화면에 */}
       <section className="hero-aurora relative overflow-hidden">
-        <div className="relative z-10 mx-auto max-w-3xl px-6 pb-28 pt-28 text-center sm:pt-44">
+        <div className="relative z-10 mx-auto max-w-3xl px-6 pb-24 pt-24 text-center sm:pt-32">
           <p className="mono-rise text-sm font-medium tracking-tight text-neutral-400">워드프레스 블로그를 위한 AI 글쓰기</p>
-          <h1 className="mono-rise mono-d1 mt-6 text-5xl font-semibold leading-[1.12] tracking-tight sm:text-7xl">
-            <span className="block">대부분의 AI 글은</span>
-            <span className="block"><WordCycle /></span>
-            <span className="block text-neutral-400">그래서 검색에 안 뜹니다.</span>
+          <h1 className="mono-rise mono-d1 mt-5 text-4xl font-semibold leading-[1.15] tracking-tight sm:text-6xl">
+            키워드만 넣으면,<br />검색에 뜨는 한국어 글이 써집니다.
           </h1>
-          <p className="mono-rise mono-d2 mx-auto mt-8 max-w-xl text-lg leading-relaxed text-neutral-500">
-            ChatGPT한테 ‘써줘’ 해서 나온 글, 티 납니다. {SITE_NAME}는 글 뽑는 방식을 새로 짰습니다. 키워드만 넣으면 매번 다른 구조로, 없는 얘기 안 지어내고, 한국 구글에 맞게 써서 워드프레스에 바로 올립니다.
-          </p>
-          <div className="mono-rise mono-d3 mt-10 flex flex-col justify-center gap-3 sm:flex-row sm:items-center">
-            <Link href={ctaHref} className="rounded-full bg-neutral-900 px-7 py-3.5 text-center text-sm font-medium text-white transition hover:bg-neutral-700">
-              {ctaLabel}
-            </Link>
-            <Link href="/pricing" className="rounded-full border border-neutral-300 bg-white/70 px-7 py-3.5 text-center text-sm font-medium text-neutral-900 backdrop-blur transition hover:border-neutral-900">
-              요금 보기
-            </Link>
+          <div className="mono-rise mono-d2 mt-10">
+            <HeroInput loggedIn={!!user} />
+            <p className="mt-4 text-sm text-neutral-400">무료 3편 · 카드 등록 없음</p>
           </div>
-          <p className="mono-rise mono-d4 mt-5 text-sm text-neutral-400">무료 3편 · 카드 등록 없음</p>
+          <div className="mono-rise mono-d3 mt-12">
+            <DemoStream />
+          </div>
         </div>
       </section>
 
