@@ -117,8 +117,11 @@ export default function ArticleEditor({
   onChange: (html: string) => void;
   title?: string;
   onTitleChange?: (t: string) => void;
+  featuredImage?: string | null;
+  onFeaturedChange?: (src: string | null) => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const featRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
@@ -180,6 +183,14 @@ export default function ArticleEditor({
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => editor!.chain().focus().setImage({ src: String(reader.result) }).run();
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  }
+  function onPickFeatured(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !onFeaturedChange) return;
+    const reader = new FileReader();
+    reader.onload = () => onFeaturedChange(String(reader.result));
     reader.readAsDataURL(file);
     e.target.value = "";
   }
@@ -247,6 +258,26 @@ export default function ArticleEditor({
       </div>
 
       <div className="mx-auto max-w-[720px] px-8 py-8">
+        {onFeaturedChange && (
+          <div className="mb-4">
+            {featuredImage ? (
+              <div className="relative inline-block">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={featuredImage} alt="대표 이미지" className="max-h-52 rounded-lg" />
+                <button type="button" onClick={() => onFeaturedChange(null)} className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-1 text-xs text-white hover:bg-black/80">제거</button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => featRef.current?.click()}
+                className="flex items-center gap-2 rounded-lg border border-dashed border-neutral-300 px-3 py-2 text-sm text-neutral-400 transition hover:border-neutral-500 hover:text-neutral-600"
+              >
+                <IconImage /> 대표 이미지 추가 <span className="text-neutral-300">(선택)</span>
+              </button>
+            )}
+            <input ref={featRef} type="file" accept="image/*" className="hidden" onChange={onPickFeatured} />
+          </div>
+        )}
         {onTitleChange && (
           <textarea
             ref={titleRef}

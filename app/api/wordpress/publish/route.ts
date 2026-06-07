@@ -68,6 +68,7 @@ export async function POST(request: Request) {
       slug: article.keyword
         ? article.keyword.trim().toLowerCase().replace(/\s+/g, "-")
         : undefined,
+      featuredImage: article.featured_image ?? undefined,
       status,
       date,
     });

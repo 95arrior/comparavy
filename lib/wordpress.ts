@@ -49,6 +49,8 @@ export interface PublishInput extends WordPressCredentials {
   faq?: { question: string; answer: string }[];
   /** SEO 친화적 슬러그(URL) */
   slug?: string;
+  /** 대표 이미지(선택, data:base64) → WP featured_media */
+  featuredImage?: string | null;
 }
 
 function jsonLd(obj: unknown): string {
@@ -89,32 +91,39 @@ export interface PublishResult {
   status: string;
 }
 
-/** 본문의 base64(data:) 이미지를 WP 미디어로 업로드하고 URL로 교체한다. */
-async function uploadDataImages(html: string, creds: WordPressCredentials): Promise<string> {
+/** data:base64 이미지 1개를 WP 미디어로 업로드. 실패 시 null. */
+async function uploadMedia(dataUri: string, creds: WordPressCredentials): Promise<{ id: number; url: string } | null> {
   const base = normalizeSiteUrl(creds.siteUrl);
+  try {
+    const comma = dataUri.indexOf(",");
+    const mime = dataUri.slice(5, comma).split(";")[0];
+    const ext = (mime.split("/")[1] || "png").replace("jpeg", "jpg").replace("svg+xml", "svg");
+    const buffer = Buffer.from(dataUri.slice(comma + 1), "base64");
+    const res = await fetch(`${base}/wp-json/wp/v2/media`, {
+      method: "POST",
+      headers: {
+        Authorization: authHeader(creds),
+        "Content-Type": mime,
+        "Content-Disposition": `attachment; filename="ateflo-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}"`,
+      },
+      body: buffer,
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.source_url) return { id: data.id, url: data.source_url };
+    }
+  } catch {
+    // 무시
+  }
+  return null;
+}
+
+/** 본문의 base64 이미지를 WP 미디어로 업로드하고 URL로 교체한다. */
+async function uploadDataImages(html: string, creds: WordPressCredentials): Promise<string> {
   const uris = Array.from(new Set(html.match(/data:image\/[A-Za-z0-9.+-]+;base64,[^"')\s]+/g) ?? []));
   for (const uri of uris) {
-    try {
-      const comma = uri.indexOf(",");
-      const mime = uri.slice(5, comma).split(";")[0];
-      const ext = (mime.split("/")[1] || "png").replace("jpeg", "jpg").replace("svg+xml", "svg");
-      const buffer = Buffer.from(uri.slice(comma + 1), "base64");
-      const res = await fetch(`${base}/wp-json/wp/v2/media`, {
-        method: "POST",
-        headers: {
-          Authorization: authHeader(creds),
-          "Content-Type": mime,
-          "Content-Disposition": `attachment; filename="ateflo-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}"`,
-        },
-        body: buffer,
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data?.source_url) html = html.split(uri).join(data.source_url);
-      }
-    } catch {
-      // 한 이미지 업로드 실패해도 발행은 계속 (해당 이미지는 그대로 둠)
-    }
+    const media = await uploadMedia(uri, creds);
+    if (media) html = html.split(uri).join(media.url);
   }
   return html;
 }
@@ -123,7 +132,9 @@ async function uploadDataImages(html: string, creds: WordPressCredentials): Prom
 export async function publishPost(input: PublishInput): Promise<PublishResult> {
   const base = normalizeSiteUrl(input.siteUrl);
   // base64 이미지를 WP 미디어로 업로드해 본문을 깔끔한 URL로 교체
-  const contentHtml = await uploadDataImages(input.contentHtml, input);
+  let contentHtml = await uploadDataImages(input.contentHtml, input);
+  // 워드프레스가 글 제목을 H1으로 렌더하므로, 본문의 H1은 H2로 강등 (H1 중복 방지)
+  contentHtml = contentHtml.replace(/<h1(\s[^>]*)?>/gi, "<h2>").replace(/<\/h1>/gi, "</h2>");
   const body: Record<string, unknown> = {
     title: input.title,
     // 본문 + 구조화 데이터(JSON-LD) → 검색 리치 결과
@@ -132,6 +143,11 @@ export async function publishPost(input: PublishInput): Promise<PublishResult> {
   };
   if (input.metaDescription) body.excerpt = input.metaDescription;
   if (input.slug) body.slug = input.slug;
+  // 대표 이미지 업로드 → featured_media (선택, 안 고르면 없이 발행)
+  if (input.featuredImage?.startsWith("data:")) {
+    const media = await uploadMedia(input.featuredImage, input);
+    if (media) body.featured_media = media.id;
+  }
   if (input.status === "future" && input.date) {
     body.date = input.date;
   }

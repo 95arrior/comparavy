@@ -19,6 +19,7 @@ export default function ArticleModal({
 }) {
   const [title, setTitle] = useState(article.title);
   const [bodyHtml, setBodyHtml] = useState(article.body_html);
+  const [featured, setFeatured] = useState<string | null>(article.featured_image ?? null);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -26,7 +27,7 @@ export default function ArticleModal({
   const [autoSavedAt, setAutoSavedAt] = useState<string | null>(null);
   const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const dirty = title !== article.title || bodyHtml !== article.body_html;
+  const dirty = title !== article.title || bodyHtml !== article.body_html || featured !== (article.featured_image ?? null);
 
   // 자동저장: 변경 후 3초 멈추면 저장하고 "자동저장 완료" 표시
   useEffect(() => {
@@ -37,7 +38,7 @@ export default function ArticleModal({
         const res = await fetch(`/api/articles/${article.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title, body_html: bodyHtml }),
+          body: JSON.stringify({ title, body_html: bodyHtml, featured_image: featured }),
         });
         if (res.ok) {
           const data = await res.json();
@@ -52,7 +53,7 @@ export default function ArticleModal({
       if (autoTimer.current) clearTimeout(autoTimer.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, bodyHtml]);
+  }, [title, bodyHtml, featured]);
 
   async function save() {
     setSaving(true);
@@ -133,6 +134,8 @@ export default function ArticleModal({
           <ArticleEditor
             title={title}
             onTitleChange={setTitle}
+            featuredImage={featured}
+            onFeaturedChange={setFeatured}
             initialHtml={article.body_html}
             onChange={setBodyHtml}
           />

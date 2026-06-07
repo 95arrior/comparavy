@@ -32,6 +32,9 @@ export async function PATCH(
   if (typeof body.meta_description === "string") {
     update.meta_description = body.meta_description.slice(0, 160);
   }
+  if (typeof body.featured_image === "string" || body.featured_image === null) {
+    update.featured_image = body.featured_image;
+  }
 
   const { data, error } = await supabase
     .from("articles")
