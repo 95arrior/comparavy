@@ -63,7 +63,7 @@ export default function GeneratePanel({
       // 사전 검사 실패(429/403 등)는 일반 JSON 으로 옴
       if (!res.ok || !res.body) {
         const data = await res.json().catch(() => ({}));
-        setError(data.error ?? "글 생성에 실패했습니다.");
+        setError(data.error ?? "글 생성에 실패했어요.");
         setPreview(null);
         return;
       }
@@ -96,14 +96,14 @@ export default function GeneratePanel({
             setPreview(null);
             done = true;
           } else if (msg.type === "error") {
-            setError(msg.error ?? "글 생성에 실패했습니다.");
+            setError(msg.error ?? "글 생성에 실패했어요.");
             setPreview(null);
             done = true;
           }
         }
       }
     } catch {
-      setError("네트워크 오류가 발생했습니다.");
+      setError("네트워크 오류가 났어요. 잠시 후 다시 시도해 주세요.");
       setPreview(null);
     } finally {
       setLoading(false);
@@ -111,7 +111,7 @@ export default function GeneratePanel({
   }
 
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-white p-6 sm:p-8">
+    <div className="mx-auto max-w-2xl rounded-2xl border border-neutral-200 bg-white p-6 sm:p-8">
       <h2 className="text-lg font-semibold tracking-tight">새 글 생성</h2>
       <p className="mt-1 text-sm text-neutral-500">
         키워드를 입력하면 한국어 SEO 글을 만듭니다. 이번 달 남은 횟수: {Math.max(0, remaining)}편
@@ -192,7 +192,7 @@ export default function GeneratePanel({
           disabled={loading || outOfQuota}
           className="w-full rounded-full bg-neutral-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
         >
-          {outOfQuota ? "이번 달 한도 소진" : loading ? "글을 쓰는 중…" : "글 생성하기"}
+          {outOfQuota ? "이번 달 한도를 다 썼어요" : loading ? "글을 쓰고 있어요…" : "글 생성하기"}
         </button>
       </form>
 
@@ -207,7 +207,7 @@ export default function GeneratePanel({
                 dangerouslySetInnerHTML={{ __html: preview }}
               />
             ) : (
-              <p className="text-sm text-neutral-400">글을 구상하는 중…</p>
+              <p className="text-sm text-neutral-400">글을 구상하고 있어요…</p>
             )}
             {/* 로고 — 구상 중·작성 중엔 움직이고, 완료되면 멈춤 */}
             <div className="mt-3">

@@ -54,7 +54,7 @@ export default function ArticleList({
             </div>
             <h3 className="mt-2 truncate text-base font-medium tracking-tight">{a.title}</h3>
             <p className="mt-1 text-xs text-neutral-400">
-              {a.char_count.toLocaleString()}자 · {new Date(a.created_at).toLocaleDateString("ko-KR")}
+              {(a.char_count ?? 0).toLocaleString()}자 · {new Date(a.created_at).toLocaleDateString("ko-KR")}
             </p>
           </div>
           <span className="ml-4 shrink-0 text-sm text-neutral-400">열기 →</span>

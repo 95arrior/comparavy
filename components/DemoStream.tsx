@@ -69,7 +69,7 @@ export default function DemoStream() {
     <div className="mx-auto w-full max-w-xl text-left">
       <div className="mb-2 text-xs font-medium text-neutral-400">지금, 이렇게 써지고 있어요</div>
       <div className="h-80 overflow-hidden rounded-xl border border-neutral-200 bg-white/70 p-5 backdrop-blur">
-        {rendered.length === 0 && <p className="text-sm text-neutral-300">글을 구상하는 중…</p>}
+        {rendered.length === 0 && <p className="text-sm text-neutral-300">글을 구상하고 있어요…</p>}
         {rendered.map((b) => {
           if (b.tag === "title") {
             return (
