@@ -152,8 +152,20 @@ export default function ArticleEditor({
     e.target.value = "";
   }
 
-  const Btn = ({ onClick, active, title, children }: { onClick: () => void; active?: boolean; title: string; children: React.ReactNode }) => (
-    <button type="button" title={title} onClick={onClick} className={`flex h-8 w-8 items-center justify-center rounded-md transition ${active ? "bg-neutral-900 text-white" : "text-neutral-600 hover:bg-neutral-100"}`}>
+  const Btn = ({ onClick, active, title, disabled, children }: { onClick: () => void; active?: boolean; title: string; disabled?: boolean; children: React.ReactNode }) => (
+    <button
+      type="button"
+      title={title}
+      disabled={disabled}
+      onClick={onClick}
+      className={`flex h-8 w-8 items-center justify-center rounded-md transition ${
+        disabled
+          ? "cursor-not-allowed text-neutral-300"
+          : active
+          ? "bg-neutral-900 text-white"
+          : "text-neutral-600 hover:bg-neutral-100"
+      }`}
+    >
       {children}
     </button>
   );
@@ -162,8 +174,8 @@ export default function ArticleEditor({
     <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
       <div className="sticky top-0 z-10 border-b border-neutral-200 bg-white/95 backdrop-blur">
         <div className="flex flex-wrap items-center gap-0.5 px-3 py-2">
-          <Btn title="실행취소 (Ctrl+Z)" onClick={() => editor.chain().focus().undo().run()}><IconUndo /></Btn>
-          <Btn title="다시실행 (Ctrl+Shift+Z)" onClick={() => editor.chain().focus().redo().run()}><IconRedo /></Btn>
+          <Btn title="실행취소 (Ctrl+Z)" disabled={!editor.can().undo()} onClick={() => editor.chain().focus().undo().run()}><IconUndo /></Btn>
+          <Btn title="다시실행 (Ctrl+Shift+Z)" disabled={!editor.can().redo()} onClick={() => editor.chain().focus().redo().run()}><IconRedo /></Btn>
           <span className="mx-1 h-5 w-px bg-neutral-200" />
           <Btn title="제목" active={editor.isActive("heading", { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}><IconH2 /></Btn>
           <Btn title="소제목" active={editor.isActive("heading", { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}><IconH3 /></Btn>
