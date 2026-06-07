@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import AteFloLogo from "@/components/AteFloLogo";
 
 // 홈 데모: 우리 실제 생성 로직으로 뽑은 진짜 글(키워드 "강아지 분리불안 해결 방법")을
 // 짧게 잘라 정적으로 박은 것. 실제처럼 한 글자씩 타이핑되지만 런타임 API 호출은 0.
@@ -47,7 +48,7 @@ export default function DemoStream() {
   return (
     <div className="mx-auto w-full max-w-xl text-left">
       <div className="mb-2 flex items-center gap-2 text-xs font-medium text-neutral-400">
-        <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+        <AteFloLogo size={16} />
         실시간으로 이렇게 써집니다 — 우리가 뽑은 실제 글입니다
       </div>
       <div className="h-80 overflow-hidden rounded-xl border border-neutral-200 bg-white/70 p-5 backdrop-blur">

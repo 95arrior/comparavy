@@ -697,3 +697,57 @@ html {
     transform: none;
   }
 }
+
+/* ── AteFlo 로고 (먹는 모션 로더) ───────────────────────────── */
+@property --ateflo-sweep {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 88%;
+}
+
+.ateflo-logo {
+  display: inline-block;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  /* 입(웨지)이 오른쪽을 향하도록 from 112deg. sweep = 채워진 비율. */
+  background: conic-gradient(
+    from 112deg,
+    var(--ateflo-color, #4b5fe1) var(--ateflo-sweep, 88%),
+    transparent 0
+  );
+}
+
+.ateflo-logo--anim {
+  animation: ateflo-chew 0.85s ease-in-out infinite;
+}
+
+/* 프로: 씹는 모션 + 무지개 요동 */
+.ateflo-logo--anim.ateflo-logo--pro {
+  animation: ateflo-chew 0.85s ease-in-out infinite, ateflo-hue 2.4s linear infinite;
+}
+
+@keyframes ateflo-chew {
+  0%,
+  100% {
+    --ateflo-sweep: 88%;
+  }
+  50% {
+    --ateflo-sweep: 100%;
+  }
+}
+
+@keyframes ateflo-hue {
+  from {
+    filter: hue-rotate(0deg) saturate(1.5);
+  }
+  to {
+    filter: hue-rotate(360deg) saturate(1.5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ateflo-logo--anim,
+  .ateflo-logo--anim.ateflo-logo--pro {
+    animation: none;
+  }
+}

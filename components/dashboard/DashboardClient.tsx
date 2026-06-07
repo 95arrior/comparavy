@@ -109,6 +109,7 @@ export default function DashboardClient(props: DashboardProps) {
           <GeneratePanel
             remaining={props.articlesLimit - articlesUsed}
             onGenerated={onGenerated}
+            pro={props.plan === "pro"}
           />
         )}
         {tab === "articles" && (

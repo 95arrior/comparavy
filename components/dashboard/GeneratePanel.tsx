@@ -2,14 +2,17 @@
 
 import { useState } from "react";
 import { ARTICLE_TYPES, TONES } from "@/lib/articlePrompt";
+import AteFloLogo from "@/components/AteFloLogo";
 import type { Article } from "./types";
 
 export default function GeneratePanel({
   remaining,
   onGenerated,
+  pro,
 }: {
   remaining: number;
   onGenerated: (article: Article) => void;
+  pro: boolean;
 }) {
   const [keyword, setKeyword] = useState("");
   const [angle, setAngle] = useState("");
@@ -153,8 +156,9 @@ export default function GeneratePanel({
         <button
           type="submit"
           disabled={loading || outOfQuota}
-          className="w-full rounded-full bg-neutral-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 rounded-full bg-neutral-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
         >
+          {loading && <AteFloLogo pro={pro} size={16} />}
           {outOfQuota ? "이번 달 한도 소진" : loading ? "글을 쓰는 중…" : "글 생성하기"}
         </button>
       </form>
@@ -163,7 +167,7 @@ export default function GeneratePanel({
       {preview !== null && (
         <div className="mt-6">
           <div className="mb-2 flex items-center gap-2 text-xs font-medium text-neutral-500">
-            <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+            <AteFloLogo pro={pro} size={18} />
             실시간으로 글을 작성하고 있어요…
           </div>
           <div className="h-80 overflow-y-auto rounded-xl border border-neutral-200 bg-neutral-50 p-4">
