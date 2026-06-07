@@ -45,6 +45,12 @@ export default function DashboardClient(props: DashboardProps) {
     setSelected(null);
   }
 
+  async function deleteArticle(id: string) {
+    if (!confirm("이 글을 삭제할까요?")) return;
+    await fetch(`/api/articles/${id}`, { method: "DELETE" });
+    onDeleted(id);
+  }
+
   const steps = [
     { label: "첫 글 생성하기", done: articles.length > 0 },
     { label: "워드프레스 사이트 연결하기", done: Boolean(wpSiteUrl) },
@@ -114,7 +120,7 @@ export default function DashboardClient(props: DashboardProps) {
           />
         )}
         {tab === "articles" && (
-          <ArticleList articles={articles} onOpen={setSelected} onGoGenerate={() => setTab("generate")} />
+          <ArticleList articles={articles} onOpen={setSelected} onGoGenerate={() => setTab("generate")} onDelete={deleteArticle} />
         )}
         {tab === "wordpress" && (
           <WordPressPanel siteUrl={wpSiteUrl} onConnected={setWpSiteUrl} onDisconnected={() => setWpSiteUrl(null)} />
@@ -127,7 +133,6 @@ export default function DashboardClient(props: DashboardProps) {
           wpConnected={Boolean(wpSiteUrl)}
           onClose={() => setSelected(null)}
           onUpdated={onUpdated}
-          onDeleted={onDeleted}
         />
       )}
     </div>

@@ -29,7 +29,7 @@ export const PLANS: Record<PlanKey, Plan> = {
     name: "프로",
     price: 29900,
     articles: 50,
-    maxWords: 3000,
+    maxWords: 5000,
     wordpress: true,
     highlight: true,
   },

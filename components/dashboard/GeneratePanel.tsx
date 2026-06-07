@@ -12,10 +12,10 @@ function tokenize(html: string): string[] {
 
 // 버튼의 "…" 점이 차례대로 튀는 애니메이션
 const Dots = () => (
-  <span className="ml-0.5 inline-flex">
-    <span className="animate-bounce">.</span>
-    <span className="animate-bounce [animation-delay:0.15s]">.</span>
-    <span className="animate-bounce [animation-delay:0.3s]">.</span>
+  <span className="inline-flex gap-1.5">
+    <span className="animate-bounce">·</span>
+    <span className="animate-bounce [animation-delay:0.15s]">·</span>
+    <span className="animate-bounce [animation-delay:0.3s]">·</span>
   </span>
 );
 
@@ -72,7 +72,13 @@ export default function GeneratePanel({
     revealRef.current = setInterval(() => {
       const tokens = tokenize(targetRef.current);
       if (shownRef.current < tokens.length) {
-        shownRef.current = Math.min(tokens.length, shownRef.current + 6);
+        // 사람이 타이핑하듯 한 틱에 글자 2개만. 태그(<...>)는 시간 안 잡아먹게 즉시 통과.
+        let typed = 0;
+        while (shownRef.current < tokens.length && typed < 2) {
+          const tok = tokens[shownRef.current];
+          shownRef.current += 1;
+          if (!tok.startsWith("<")) typed += 1;
+        }
         setPreview(tokens.slice(0, shownRef.current).join(""));
       } else if (doneRef.current) {
         // 다 따라잡았고 서버도 끝남 → 잠깐 보여주고 편집 화면 열기
@@ -87,7 +93,7 @@ export default function GeneratePanel({
           onGenerated(art);
         }, 500);
       }
-    }, 16);
+    }, 32);
   }
 
   async function submit(e: React.FormEvent) {
@@ -248,7 +254,7 @@ export default function GeneratePanel({
           disabled={loading || outOfQuota}
           className="w-full rounded-full bg-neutral-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
         >
-          {outOfQuota ? "이번 달 한도를 다 썼어요" : loading ? <span className="inline-flex items-center">글을 쓰고 있어요<Dots /></span> : "글 생성하기"}
+          {outOfQuota ? "이번 달 한도를 다 썼어요" : loading ? <span className="inline-flex items-center text-2xl leading-none"><Dots /></span> : "글 생성하기"}
         </button>
       </form>
 
@@ -257,14 +263,13 @@ export default function GeneratePanel({
         <div className="mt-6">
           <div className="mb-2 text-xs font-medium text-neutral-500">실시간 미리보기</div>
           <div ref={previewRef} className="h-80 overflow-y-auto rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-            {preview ? (
+            {preview && (
               <div
                 className="prose prose-sm prose-neutral max-w-none"
                 dangerouslySetInnerHTML={{ __html: preview }}
               />
-            ) : (
-              <p className="text-sm text-neutral-400">글을 구상하고 있어요…</p>
             )}
+            {loading && <span className="ml-0.5 inline-block animate-pulse text-neutral-500">▍</span>}
             {/* 로고 — 구상 중·작성 중엔 움직이고, 완료되면 멈춤 */}
             <div className="mt-3">
               <AteFloLogo pro={pro} animated={loading} size={22} />

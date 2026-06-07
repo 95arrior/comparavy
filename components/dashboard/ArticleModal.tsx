@@ -9,13 +9,11 @@ export default function ArticleModal({
   wpConnected,
   onClose,
   onUpdated,
-  onDeleted,
 }: {
   article: Article;
   wpConnected: boolean;
   onClose: () => void;
   onUpdated: (a: Article) => void;
-  onDeleted: (id: string) => void;
 }) {
   const [title, setTitle] = useState(article.title);
   const [bodyHtml, setBodyHtml] = useState(article.body_html);
@@ -108,21 +106,31 @@ export default function ArticleModal({
     }
   }
 
-  async function remove() {
-    if (!confirm("이 글을 삭제할까요?")) return;
-    await fetch(`/api/articles/${article.id}`, { method: "DELETE" });
-    onDeleted(article.id);
-  }
-
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 sm:p-8" onClick={onClose}>
       <div
         className="my-4 w-full max-w-2xl rounded-2xl bg-white p-6 sm:p-8"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-4">
-          <span className="text-xs text-neutral-400">{article.keyword}</span>
-          <button onClick={onClose} className="text-sm text-neutral-400 transition hover:text-neutral-900">닫기 ✕</button>
+        <div className="flex items-center justify-between gap-4">
+          <span className="truncate text-xs text-neutral-400">{article.keyword}</span>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              onClick={save}
+              disabled={!dirty || saving}
+              className="rounded-full border border-neutral-300 px-4 py-1.5 text-sm font-medium transition hover:border-neutral-900 disabled:opacity-40"
+            >
+              {saving ? "저장 중…" : "저장"}
+            </button>
+            <button
+              onClick={() => publish("publish")}
+              disabled={publishing}
+              className="rounded-full bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
+            >
+              {publishing ? "처리 중…" : "워드프레스에 발행"}
+            </button>
+            <button onClick={onClose} className="ml-1 text-sm text-neutral-400 transition hover:text-neutral-900">✕</button>
+          </div>
         </div>
 
         <div className="mt-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-xs text-neutral-500">
@@ -169,30 +177,6 @@ export default function ArticleModal({
           <p className="mt-2 text-xs text-neutral-400">{dirty ? "수정 중…" : `✓ 자동저장 완료 · ${autoSavedAt}`}</p>
         )}
 
-        <div className="mt-6 flex flex-wrap items-center gap-3">
-          <button
-            onClick={save}
-            disabled={!dirty || saving}
-            className="rounded-full border border-neutral-300 px-5 py-2.5 text-sm font-medium transition hover:border-neutral-900 disabled:opacity-40"
-          >
-            {saving ? "저장 중…" : "저장"}
-          </button>
-          <button
-            onClick={() => publish("publish")}
-            disabled={publishing}
-            className="rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
-          >
-            {publishing ? "처리 중…" : "워드프레스에 발행"}
-          </button>
-          <button
-            onClick={() => publish("draft")}
-            disabled={publishing}
-            className="rounded-full border border-neutral-300 px-5 py-2.5 text-sm font-medium transition hover:border-neutral-900 disabled:opacity-50"
-          >
-            초안으로 보내기
-          </button>
-          <button onClick={remove} className="ml-auto text-sm text-red-500 transition hover:text-red-700">삭제</button>
-        </div>
       </div>
     </div>
   );

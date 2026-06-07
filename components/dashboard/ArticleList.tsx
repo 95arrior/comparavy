@@ -18,10 +18,12 @@ export default function ArticleList({
   articles,
   onOpen,
   onGoGenerate,
+  onDelete,
 }: {
   articles: Article[];
   onOpen: (article: Article) => void;
   onGoGenerate: () => void;
+  onDelete: (id: string) => void;
 }) {
   if (articles.length === 0) {
     return (
@@ -40,12 +42,11 @@ export default function ArticleList({
   return (
     <div className="space-y-3">
       {articles.map((a) => (
-        <button
+        <div
           key={a.id}
-          onClick={() => onOpen(a)}
-          className="flex w-full items-center justify-between rounded-2xl border border-neutral-200 bg-white p-5 text-left transition hover:border-neutral-400"
+          className="flex w-full items-center justify-between gap-4 rounded-2xl border border-neutral-200 bg-white p-5 transition hover:border-neutral-400"
         >
-          <div className="min-w-0">
+          <button onClick={() => onOpen(a)} className="min-w-0 flex-1 text-left">
             <div className="flex items-center gap-2">
               <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLE[a.status]}`}>
                 {STATUS_LABEL[a.status]}
@@ -56,9 +57,12 @@ export default function ArticleList({
             <p className="mt-1 text-xs text-neutral-400">
               {(a.char_count ?? 0).toLocaleString()}자 · {new Date(a.created_at).toLocaleDateString("ko-KR")}
             </p>
+          </button>
+          <div className="flex shrink-0 items-center gap-3">
+            <button onClick={() => onOpen(a)} className="text-sm text-neutral-400 transition hover:text-neutral-700">열기 →</button>
+            <button onClick={() => onDelete(a.id)} className="text-sm text-red-400 transition hover:text-red-600">삭제</button>
           </div>
-          <span className="ml-4 shrink-0 text-sm text-neutral-400">열기 →</span>
-        </button>
+        </div>
       ))}
     </div>
   );
