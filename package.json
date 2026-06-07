@@ -6,23 +6,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "generate:guides": "tsx scripts/generateGuides.ts",
-    "generate:practical": "tsx scripts/generateGuides.ts --type practical",
-    "generate:income": "tsx scripts/generateGuides.ts --type income",
-    "generate:evergreen": "tsx scripts/generateGuides.ts --type evergreen",
-    "generate:trends": "tsx scripts/generateGuides.ts --type trend-led",
-    "generate:mixed": "tsx scripts/generateGuides.ts --type mixed",
-    "check:guides": "tsx scripts/checkGuides.ts",
-    "check:openai": "tsx scripts/checkOpenAI.ts",
-    "check:icons": "tsx scripts/checkToolIcons.ts",
-    "check:tools": "tsx scripts/checkTools.ts",
-    "auto:publish-guides": "tsx scripts/autoPublishGuides.ts"
+    "check:generation": "node --env-file=.env.local --import tsx scripts/verifyGeneration.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.100.1",
+    "@supabase/ssr": "^0.10.3",
+    "@supabase/supabase-js": "^2.107.0",
+    "@tosspayments/tosspayments-sdk": "^2.7.0",
     "next": "^16.2.6",
     "react": "^19.2.6",
-    "react-dom": "^19.2.6",
-    "simple-icons": "^16.21.0"
+    "react-dom": "^19.2.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.0",

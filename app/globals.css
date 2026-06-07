@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fbfaf7;
-  --foreground: #172033;
+  --background: #ffffff;
+  --foreground: #1a1a1a;
 }
 
 * {
@@ -22,6 +22,68 @@ html {
 
 .ateflo-surface {
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+/* ── Minimal mono theme ──────────────────────────────────── */
+/* Subtle hairline used to separate sections on black. */
+.mono-hairline {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Restrained entrance animation: a short fade + rise, once, on mount.
+   Staggered via delay classes. Disabled for reduced-motion users. */
+@keyframes mono-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+.mono-rise {
+  animation: mono-rise 650ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.mono-d1 { animation-delay: 70ms; }
+.mono-d2 { animation-delay: 140ms; }
+.mono-d3 { animation-delay: 210ms; }
+.mono-d4 { animation-delay: 280ms; }
+.mono-d5 { animation-delay: 350ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mono-rise { animation: none; }
+}
+
+/* Hero aurora: very soft, slowly drifting color glow on white. Minimal, not flashy. */
+.hero-aurora { position: relative; }
+.hero-aurora::before {
+  content: "";
+  position: absolute;
+  inset: -10%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 45% 38% at 28% 30%, rgba(66, 133, 244, 0.10), transparent 62%),
+    radial-gradient(ellipse 42% 36% at 72% 32%, rgba(161, 66, 244, 0.08), transparent 62%),
+    radial-gradient(ellipse 48% 40% at 52% 72%, rgba(52, 168, 83, 0.07), transparent 62%),
+    radial-gradient(ellipse 40% 34% at 80% 70%, rgba(251, 188, 5, 0.06), transparent 62%);
+}
+
+/* Soft rainbow aurora glow around a card (dashboard panels). Subtle by design. */
+.aurora-glow {
+  position: relative;
+  isolation: isolate;
+}
+.aurora-glow::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  z-index: -1;
+  border-radius: inherit;
+  background: conic-gradient(
+    from 140deg at 50% 50%,
+    #4285f4, #a142f4, #ea4335, #fbbc05, #34a853, #4285f4
+  );
+  filter: blur(22px);
+  opacity: 0.28;
+}
+@media (prefers-reduced-motion: reduce) {
+  .aurora-glow::before { filter: blur(22px); }
 }
 
 .ateflo-reveal {

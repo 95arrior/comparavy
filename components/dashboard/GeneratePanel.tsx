@@ -1,0 +1,125 @@
+"use client";
+
+import { useState } from "react";
+import { ARTICLE_TYPES, TONES } from "@/lib/articlePrompt";
+import type { Article } from "./types";
+
+export default function GeneratePanel({
+  remaining,
+  onGenerated,
+}: {
+  remaining: number;
+  onGenerated: (article: Article) => void;
+}) {
+  const [keyword, setKeyword] = useState("");
+  const [angle, setAngle] = useState("");
+  const [type, setType] = useState(ARTICLE_TYPES[0].key);
+  const [tone, setTone] = useState(TONES[0].key);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const outOfQuota = remaining <= 0;
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!keyword.trim()) {
+      setError("키워드를 입력해 주세요.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keyword, angle, type, tone }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "글 생성에 실패했습니다.");
+        return;
+      }
+      onGenerated(data.article);
+      setKeyword("");
+      setAngle("");
+    } catch {
+      setError("네트워크 오류가 발생했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-neutral-200 bg-white p-6 sm:p-8">
+      <h2 className="text-lg font-semibold tracking-tight">새 글 생성</h2>
+      <p className="mt-1 text-sm text-neutral-500">
+        키워드를 입력하면 한국어 SEO 글을 만듭니다. 이번 달 남은 횟수: {Math.max(0, remaining)}편
+      </p>
+
+      <form onSubmit={submit} className="mt-6 space-y-5">
+        <div>
+          <label className="block text-sm font-medium">키워드 *</label>
+          <input
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            placeholder="예: 강아지 분리불안 해결 방법"
+            className="mt-2 w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm outline-none transition focus:border-neutral-900"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium">관점 / 각도 (선택)</label>
+          <input
+            value={angle}
+            onChange={(e) => setAngle(e.target.value)}
+            placeholder="예: 직접 키워본 경험을 바탕으로 한 현실적인 조언"
+            className="mt-2 w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm outline-none transition focus:border-neutral-900"
+          />
+        </div>
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium">글 유형</label>
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              className="mt-2 w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm outline-none transition focus:border-neutral-900"
+            >
+              {ARTICLE_TYPES.map((t) => (
+                <option key={t.key} value={t.key}>{t.label}</option>
+              ))}
+            </select>
+            <p className="mt-1.5 text-xs text-neutral-400">
+              {ARTICLE_TYPES.find((t) => t.key === type)?.hint}
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium">문체</label>
+            <select
+              value={tone}
+              onChange={(e) => setTone(e.target.value)}
+              className="mt-2 w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm outline-none transition focus:border-neutral-900"
+            >
+              {TONES.map((t) => (
+                <option key={t.key} value={t.key}>{t.label}</option>
+              ))}
+            </select>
+            <p className="mt-1.5 text-xs text-neutral-400">
+              {TONES.find((t) => t.key === tone)?.hint}
+            </p>
+          </div>
+        </div>
+
+        {error && <p className="text-sm text-red-600">{error}</p>}
+
+        <button
+          type="submit"
+          disabled={loading || outOfQuota}
+          className="w-full rounded-full bg-neutral-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
+        >
+          {outOfQuota ? "이번 달 한도 소진" : loading ? "생성 중… (최대 1분)" : "글 생성하기"}
+        </button>
+      </form>
+    </div>
+  );
+}

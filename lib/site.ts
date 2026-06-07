@@ -1,5 +1,4 @@
 export const SITE_NAME = "AteFlo";
 export const SITE_URL = "https://ateflo.com";
-export const SITE_TAGLINE = "내 상황에 맞는 AI 실행 패키지.";
 export const SITE_DESCRIPTION =
-  "지금 막힌 일을 선택하면 먼저 챙기면 좋은 온라인 세팅을 진단하고, 필요한 실행 패키지를 안내합니다.";
+  "키워드만 입력하면 사람이 쓴 듯한 한국어 SEO 글을 작성해 워드프레스에 바로 발행합니다 — 구글 검색에 노출되고, 발행할 가치가 있는 글로.";
