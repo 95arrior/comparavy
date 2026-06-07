@@ -1,12 +1,103 @@
 "use client";
 
-import { useRef } from "react";
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useRef, useState } from "react";
+import { useEditor, EditorContent, ReactNodeViewRenderer, NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
+import { mergeAttributes } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
 
-// 노션식 WYSIWYG 에디터(Tiptap). 실제 블로그 폭으로 보이고, 드래그 후 링크/이미지 삽입.
+/* ── 아이콘 (라인, currentColor) ─────────────────────────── */
+const S = ({ d, fill = false }: { d: string; fill?: boolean }) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill={fill ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d={d} />
+  </svg>
+);
+const IconBold = () => <S d="M7 5h6a3.5 3.5 0 0 1 0 7H7zM7 12h7a3.5 3.5 0 0 1 0 7H7z" />;
+const IconH2 = () => (
+  <svg width="20" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6v12M12 6v12M4 12h8" /><path d="M16 10c0-1.5 1.2-2.5 2.7-2.5S21.5 8.5 21.5 10c0 2.5-5 3-5 6h5" strokeWidth="1.7" /></svg>
+);
+const IconH3 = () => (
+  <svg width="20" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6v12M11 6v12M4 12h7" /><path d="M16 8h4l-2.5 3a2.2 2.2 0 1 1-1.7 3.6" strokeWidth="1.7" /></svg>
+);
+const IconList = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6h11M9 12h11M9 18h11" /><circle cx="4" cy="6" r="1" fill="currentColor" /><circle cx="4" cy="12" r="1" fill="currentColor" /><circle cx="4" cy="18" r="1" fill="currentColor" /></svg>;
+const IconLink = () => <S d="M9 15l6-6M10.5 6.5l1.8-1.8a4 4 0 0 1 5.7 5.7L15.5 12M13.5 17.5l-1.8 1.8a4 4 0 0 1-5.7-5.7L8.5 12" />;
+const IconImage = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="8.5" cy="9.5" r="1.5" /><path d="M21 16l-5-5L5 20" /></svg>;
+const IconAlignLeft = () => <S d="M4 6h16M4 12h10M4 18h13" />;
+const IconAlignCenter = () => <S d="M4 6h16M7 12h10M5 18h14" />;
+const IconAlignRight = () => <S d="M4 6h16M10 12h10M7 18h13" />;
+const IconAlignFull = () => <S d="M4 6h16M4 12h16M4 18h16" />;
+const IconTrash = () => <S d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" />;
+
+/* ── 이미지 노드 (정렬 + 하단 설명) ─────────────────────────── */
+const ALIGNS = [
+  { k: "left", t: "왼쪽", Icon: IconAlignLeft },
+  { k: "center", t: "가운데", Icon: IconAlignCenter },
+  { k: "right", t: "오른쪽", Icon: IconAlignRight },
+  { k: "full", t: "꽉 채움", Icon: IconAlignFull },
+] as const;
+
+function ImageView({ node, updateAttributes, deleteNode, selected }: NodeViewProps) {
+  const { src, align, caption, alt } = node.attrs as { src: string; align: string; caption: string; alt: string };
+  return (
+    <NodeViewWrapper as="figure" className={`align-${align} group relative`}>
+      <span className="relative inline-block max-w-full">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt={caption || alt || ""} className={selected ? "ring-2 ring-blue-500" : ""} />
+        <span
+          contentEditable={false}
+          className={`absolute left-1/2 top-2 flex -translate-x-1/2 items-center gap-0.5 rounded-full bg-black/70 px-1 py-0.5 text-white transition ${selected ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
+        >
+          {ALIGNS.map(({ k, t, Icon }) => (
+            <button key={k} type="button" title={t} onClick={() => updateAttributes({ align: k })} className={`rounded p-1 ${align === k ? "text-white" : "text-white/55 hover:text-white"}`}>
+              <Icon />
+            </button>
+          ))}
+          <span className="mx-0.5 h-3.5 w-px bg-white/30" />
+          <button type="button" title="삭제" onClick={() => deleteNode()} className="rounded p-1 text-white/55 hover:text-red-300"><IconTrash /></button>
+        </span>
+      </span>
+      <figcaption contentEditable={false}>
+        <input
+          value={caption ?? ""}
+          onChange={(e) => updateAttributes({ caption: e.target.value })}
+          placeholder="이미지 설명 추가 (SEO에 좋아요)"
+          className="w-full border-0 bg-transparent text-center text-sm text-neutral-500 outline-none placeholder:text-neutral-300"
+        />
+      </figcaption>
+    </NodeViewWrapper>
+  );
+}
+
+const EditorImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      align: {
+        default: "center",
+        parseHTML: (el) => el.getAttribute("data-align") || "center",
+        renderHTML: (attrs) => ({ "data-align": attrs.align }),
+      },
+      caption: {
+        default: "",
+        parseHTML: (el) => el.getAttribute("data-caption") || "",
+        renderHTML: (attrs) => ({ "data-caption": attrs.caption }),
+      },
+    };
+  },
+  renderHTML({ node, HTMLAttributes }) {
+    const align = node.attrs.align || "center";
+    const caption = node.attrs.caption || "";
+    const img = ["img", mergeAttributes(HTMLAttributes, { alt: caption || node.attrs.alt || "" })];
+    const children = caption ? [img, ["figcaption", {}, caption]] : [img];
+    return ["figure", { class: `align-${align}` }, ...children];
+  },
+  addNodeView() {
+    return ReactNodeViewRenderer(ImageView);
+  },
+});
+
+/* ── 에디터 ───────────────────────────────────────────────── */
 export default function ArticleEditor({
   initialHtml,
   onChange,
@@ -15,75 +106,82 @@ export default function ArticleEditor({
   onChange: (html: string) => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
 
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
-      // Tiptap v3 StarterKit에 Link 포함 → 여기서 설정
       StarterKit.configure({
         link: { openOnClick: false, autolink: true, HTMLAttributes: { rel: "noopener", target: "_blank" } },
       }),
-      Image.configure({ allowBase64: true }),
+      EditorImage.configure({ allowBase64: true }),
       Placeholder.configure({ placeholder: "내용을 입력하세요…" }),
     ],
     content: initialHtml,
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
-    editorProps: {
-      attributes: { class: "prose prose-neutral max-w-none min-h-[55vh] focus:outline-none" },
-    },
+    editorProps: { attributes: { class: "ateflo-article" } },
   });
 
   if (!editor) return <div className="h-[60vh] rounded-xl border border-neutral-200" />;
 
-  function setLink() {
-    const prev = (editor!.getAttributes("link").href as string) ?? "";
-    const url = window.prompt("링크 주소 (https://...)", prev || "https://");
-    if (url === null) return;
-    if (url.trim() === "") {
-      editor!.chain().focus().extendMarkRange("link").unsetLink().run();
-      return;
-    }
-    editor!.chain().focus().extendMarkRange("link").setLink({ href: url.trim() }).run();
+  function openLink() {
+    setLinkUrl((editor!.getAttributes("link").href as string) || "https://");
+    setLinkOpen(true);
   }
-
+  function applyLink() {
+    const url = linkUrl.trim();
+    if (url === "" || url === "https://") {
+      editor!.chain().focus().extendMarkRange("link").unsetLink().run();
+    } else {
+      editor!.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+    }
+    setLinkOpen(false);
+  }
   function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
-      const alt = window.prompt("이미지 설명(alt) — SEO에 중요", "") ?? "";
-      editor!.chain().focus().setImage({ src: String(reader.result), alt }).run();
-    };
+    reader.onload = () => editor!.chain().focus().setImage({ src: String(reader.result) }).run();
     reader.readAsDataURL(file);
     e.target.value = "";
   }
 
-  const Btn = ({ onClick, active, children }: { onClick: () => void; active?: boolean; children: React.ReactNode }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded-md px-2.5 py-1 text-sm transition ${active ? "bg-neutral-900 text-white" : "text-neutral-600 hover:bg-neutral-100"}`}
-    >
+  const Btn = ({ onClick, active, title, children }: { onClick: () => void; active?: boolean; title: string; children: React.ReactNode }) => (
+    <button type="button" title={title} onClick={onClick} className={`flex h-8 w-8 items-center justify-center rounded-md transition ${active ? "bg-neutral-900 text-white" : "text-neutral-600 hover:bg-neutral-100"}`}>
       {children}
     </button>
   );
 
   return (
     <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
-      {/* 툴바 (상단 고정) */}
-      <div className="sticky top-0 z-10 flex flex-wrap items-center gap-0.5 border-b border-neutral-200 bg-white/95 px-3 py-2 backdrop-blur">
-        <Btn onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive("heading", { level: 2 })}>제목</Btn>
-        <Btn onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive("heading", { level: 3 })}>소제목</Btn>
-        <Btn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")}>굵게</Btn>
-        <Btn onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive("bulletList")}>• 목록</Btn>
-        <span className="mx-1 h-4 w-px bg-neutral-200" />
-        <Btn onClick={setLink} active={editor.isActive("link")}>🔗 링크</Btn>
-        <Btn onClick={() => fileRef.current?.click()}>🖼 이미지</Btn>
-        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickFile} />
-        <span className="ml-auto text-xs text-neutral-400">텍스트를 드래그한 뒤 링크를 누르면 링크가 걸려요</span>
+      <div className="sticky top-0 z-10 border-b border-neutral-200 bg-white/95 backdrop-blur">
+        <div className="flex flex-wrap items-center gap-0.5 px-3 py-2">
+          <Btn title="제목" active={editor.isActive("heading", { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}><IconH2 /></Btn>
+          <Btn title="소제목" active={editor.isActive("heading", { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}><IconH3 /></Btn>
+          <Btn title="굵게" active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()}><IconBold /></Btn>
+          <Btn title="목록" active={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()}><IconList /></Btn>
+          <span className="mx-1 h-5 w-px bg-neutral-200" />
+          <Btn title="링크 (텍스트를 드래그한 뒤 클릭)" active={editor.isActive("link")} onClick={openLink}><IconLink /></Btn>
+          <Btn title="이미지" onClick={() => fileRef.current?.click()}><IconImage /></Btn>
+          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickFile} />
+        </div>
+        {linkOpen && (
+          <div className="flex items-center gap-2 border-t border-neutral-100 px-3 py-2">
+            <input
+              autoFocus
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") applyLink(); if (e.key === "Escape") setLinkOpen(false); }}
+              placeholder="https://..."
+              className="flex-1 rounded-md border border-neutral-300 px-3 py-1.5 text-sm outline-none focus:border-neutral-900"
+            />
+            <button type="button" onClick={applyLink} className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm text-white">적용</button>
+            <button type="button" onClick={() => setLinkOpen(false)} className="rounded-md px-2 py-1.5 text-sm text-neutral-400">취소</button>
+          </div>
+        )}
       </div>
 
-      {/* 실제 블로그 폭으로 — 발행 모습 그대로 */}
       <div className="mx-auto max-w-[720px] px-8 py-8">
         <EditorContent editor={editor} />
       </div>
