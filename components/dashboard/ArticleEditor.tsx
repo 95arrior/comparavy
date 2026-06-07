@@ -112,6 +112,8 @@ export default function ArticleEditor({
   onChange,
   title,
   onTitleChange,
+  featuredImage,
+  onFeaturedChange,
 }: {
   initialHtml: string;
   onChange: (html: string) => void;
