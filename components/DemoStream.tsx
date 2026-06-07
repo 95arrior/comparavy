@@ -76,13 +76,10 @@ export default function DemoStream() {
             </p>
           );
         })}
-        {/* 글쓰기 하단 인디케이터 — 대시보드 실제 생성 화면과 동일 */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 rounded-b-xl bg-gradient-to-t from-white via-white/80 to-transparent" />
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2">
-          <div className="flex items-center gap-2 rounded-full border border-neutral-200 bg-white/95 px-3 py-1.5 shadow-sm">
-            <AteFloLogo animated size={20} />
-            <span className="text-xs font-medium text-neutral-500">작성 중…</span>
-          </div>
+        {/* 글쓰기 하단에 로고만 (클로드식) */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 rounded-b-xl bg-gradient-to-t from-white via-white/70 to-transparent" />
+        <div className="absolute bottom-3 left-5">
+          <AteFloLogo animated size={24} />
         </div>
       </div>
     </div>

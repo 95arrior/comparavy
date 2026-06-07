@@ -179,12 +179,9 @@ export default function GeneratePanel({
         </div>
       )}
 
-      {/* 웹 클로드식: 하단 중앙에 계속 떠다니는 로고. 생성 중엔 씹고(움직임), 끝나면 멈춤. */}
-      <div className="pointer-events-none fixed bottom-5 left-1/2 z-30 -translate-x-1/2">
-        <div className="flex items-center gap-2 rounded-full border border-neutral-200 bg-white/90 px-3 py-1.5 shadow-sm backdrop-blur">
-          <AteFloLogo pro={pro} animated={loading} size={22} />
-          {loading && <span className="text-xs font-medium text-neutral-500">작성 중…</span>}
-        </div>
+      {/* 웹 클로드식: 하단에 로고만. 생성 중엔 움직이고, 끝나면 멈춤. */}
+      <div className="pointer-events-none fixed bottom-5 left-6 z-30">
+        <AteFloLogo pro={pro} animated={loading} size={26} />
       </div>
     </div>
   );
