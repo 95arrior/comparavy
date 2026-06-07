@@ -30,6 +30,16 @@ export default function GeneratePanel({
     if (el) el.scrollTop = el.scrollHeight;
   }, [preview]);
 
+  // 메인에서 입력한 키워드를 이어받아 프리필 (login 거쳐도 유지)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const kw = localStorage.getItem("ateflo_kw");
+    if (kw) {
+      setKeyword(kw);
+      localStorage.removeItem("ateflo_kw");
+    }
+  }, []);
+
   const outOfQuota = remaining <= 0;
 
   async function submit(e: React.FormEvent) {
@@ -41,6 +51,8 @@ export default function GeneratePanel({
     }
     setLoading(true);
     setPreview("");
+    // 생성 화면으로 포커스(스크롤)
+    setTimeout(() => previewRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 60);
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
@@ -184,19 +196,17 @@ export default function GeneratePanel({
           <div className="mb-2 text-xs font-medium text-neutral-500">실시간 미리보기</div>
           <div ref={previewRef} className="h-80 overflow-y-auto rounded-xl border border-neutral-200 bg-neutral-50 p-4">
             {preview ? (
-              <>
-                <div
-                  className="prose prose-sm prose-neutral max-w-none"
-                  dangerouslySetInnerHTML={{ __html: preview }}
-                />
-                {/* 써지는 텍스트 바로 아래 로고 — 작성 중 움직이고, 멈추면 정지 */}
-                <div className="mt-3">
-                  <AteFloLogo pro={pro} animated={loading} size={22} />
-                </div>
-              </>
+              <div
+                className="prose prose-sm prose-neutral max-w-none"
+                dangerouslySetInnerHTML={{ __html: preview }}
+              />
             ) : (
               <p className="text-sm text-neutral-400">글을 구상하는 중…</p>
             )}
+            {/* 로고 — 구상 중·작성 중엔 움직이고, 완료되면 멈춤 */}
+            <div className="mt-3">
+              <AteFloLogo pro={pro} animated={loading} size={22} />
+            </div>
           </div>
         </div>
       )}

@@ -124,7 +124,8 @@ export async function POST(request: Request) {
           .single();
 
         if (saveError) {
-          send({ type: "error", error: "글을 저장하지 못했습니다." });
+          // 진단용: 실제 DB 오류 메시지 표면화 (대부분 마이그레이션 미실행 = 컬럼 없음)
+          send({ type: "error", error: `저장 실패: ${saveError.message ?? "알 수 없는 오류"}` });
           controller.close();
           return;
         }

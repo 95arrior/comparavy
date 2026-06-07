@@ -11,11 +11,10 @@ export default function HeroInput({ loggedIn }: { loggedIn: boolean }) {
   function go(e: React.FormEvent) {
     e.preventDefault();
     const k = keyword.trim();
-    if (loggedIn) {
-      router.push(k ? `/dashboard?k=${encodeURIComponent(k)}` : "/dashboard");
-    } else {
-      router.push("/login");
-    }
+    if (!k) return; // 빈 키워드면 이동하지 않음
+    // 로그인 거쳐도 키워드가 유지되도록 저장 → 대시보드에서 이어받아 프리필
+    localStorage.setItem("ateflo_kw", k);
+    router.push(loggedIn ? "/dashboard" : "/login");
   }
 
   return (

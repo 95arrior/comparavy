@@ -74,15 +74,15 @@ export default function DashboardClient(props: DashboardProps) {
 
       <main className="mx-auto max-w-5xl px-6 py-10">
         {!allDone && (
-          <div className="mb-8 rounded-2xl border border-neutral-200 bg-white p-6">
-            <h2 className="text-sm font-semibold">시작하기</h2>
-            <ul className="mt-4 space-y-2">
+          <div className="mb-6 rounded-xl border border-dashed border-neutral-200 bg-neutral-50/70 px-4 py-3">
+            <p className="text-xs font-medium text-neutral-400">처음이세요? · 시작 가이드</p>
+            <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1.5">
               {steps.map((s) => (
-                <li key={s.label} className="flex items-center gap-3 text-sm">
-                  <span className={`flex h-5 w-5 items-center justify-center rounded-full text-xs ${s.done ? "bg-emerald-500 text-white" : "border border-neutral-300 text-neutral-400"}`}>
+                <li key={s.label} className="flex items-center gap-2 text-xs">
+                  <span className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] ${s.done ? "bg-emerald-500 text-white" : "border border-neutral-300 text-neutral-400"}`}>
                     {s.done ? "✓" : ""}
                   </span>
-                  <span className={s.done ? "text-neutral-400 line-through" : "text-neutral-700"}>{s.label}</span>
+                  <span className={s.done ? "text-neutral-300 line-through" : "text-neutral-500"}>{s.label}</span>
                 </li>
               ))}
             </ul>
