@@ -156,9 +156,8 @@ export default function GeneratePanel({
         <button
           type="submit"
           disabled={loading || outOfQuota}
-          className="flex w-full items-center justify-center gap-2 rounded-full bg-neutral-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
+          className="w-full rounded-full bg-neutral-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
         >
-          {loading && <AteFloLogo pro={pro} size={16} />}
           {outOfQuota ? "이번 달 한도 소진" : loading ? "글을 쓰는 중…" : "글 생성하기"}
         </button>
       </form>
@@ -166,10 +165,7 @@ export default function GeneratePanel({
       {/* 실시간 생성 미리보기 — 고정 높이 스크롤로 layout shift 방지 */}
       {preview !== null && (
         <div className="mt-6">
-          <div className="mb-2 flex items-center gap-2 text-xs font-medium text-neutral-500">
-            <AteFloLogo pro={pro} size={18} />
-            실시간으로 글을 작성하고 있어요…
-          </div>
+          <div className="mb-2 text-xs font-medium text-neutral-500">실시간 미리보기</div>
           <div className="h-80 overflow-y-auto rounded-xl border border-neutral-200 bg-neutral-50 p-4">
             {preview ? (
               <div
@@ -182,6 +178,14 @@ export default function GeneratePanel({
           </div>
         </div>
       )}
+
+      {/* 웹 클로드식: 하단 중앙에 계속 떠다니는 로고. 생성 중엔 씹고(움직임), 끝나면 멈춤. */}
+      <div className="pointer-events-none fixed bottom-5 left-1/2 z-30 -translate-x-1/2">
+        <div className="flex items-center gap-2 rounded-full border border-neutral-200 bg-white/90 px-3 py-1.5 shadow-sm backdrop-blur">
+          <AteFloLogo pro={pro} animated={loading} size={22} />
+          {loading && <span className="text-xs font-medium text-neutral-500">작성 중…</span>}
+        </div>
+      </div>
     </div>
   );
 }
