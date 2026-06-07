@@ -98,10 +98,10 @@ export async function generateArticle(
  * 누적된 부분 JSON에서 body_html 값을 현재까지 만큼 추출한다(스트리밍 표시용).
  * 닫는 따옴표가 아직 안 왔으면 지금까지 들어온 부분을 반환. JSON 이스케이프 처리.
  */
-function extractBodyHtml(acc: string): string | null {
-  const ki = acc.indexOf('"body_html"');
+function extractJsonString(acc: string, key: string): string | null {
+  const ki = acc.indexOf(`"${key}"`);
   if (ki === -1) return null;
-  const colon = acc.indexOf(":", ki + 11);
+  const colon = acc.indexOf(":", ki + key.length + 2);
   if (colon === -1) return null;
   let i = colon + 1;
   while (i < acc.length && acc[i] !== '"') i++;
@@ -141,6 +141,7 @@ function extractBodyHtml(acc: string): string | null {
 export async function streamArticle(
   input: ArticlePromptInput,
   onBody: (bodyHtmlSoFar: string) => void,
+  onTitle?: (titleSoFar: string) => void,
 ): Promise<GeneratedArticle> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY 가 설정되지 않았습니다.");
@@ -160,13 +161,22 @@ export async function streamArticle(
 
   let acc = "";
   let lastBody = "";
+  let lastTitle = "";
   for await (const event of stream) {
     if (
       event.type === "content_block_delta" &&
       event.delta.type === "input_json_delta"
     ) {
       acc += event.delta.partial_json;
-      const body = extractBodyHtml(acc);
+      // 제목이 본문보다 먼저 스트리밍됨 → 미리보기 맨 위 H1으로 먼저 띄운다
+      if (onTitle) {
+        const t = extractJsonString(acc, "title");
+        if (t !== null && t !== lastTitle) {
+          lastTitle = t;
+          onTitle(t);
+        }
+      }
+      const body = extractJsonString(acc, "body_html");
       if (body !== null && body !== lastBody) {
         lastBody = body;
         onBody(body);

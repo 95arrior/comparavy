@@ -41,6 +41,8 @@ export default function GeneratePanel({
   const doneRef = useRef<Article | null>(null);
   const shownRef = useRef(0);
   const revealRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const titleRef = useRef("");
+  const bodyRef = useRef("");
 
   // 작성 중엔 항상 맨 아래(쓰이는 끝)가 보이도록 자동 스크롤
   useEffect(() => {
@@ -66,6 +68,11 @@ export default function GeneratePanel({
       clearInterval(revealRef.current);
       revealRef.current = null;
     }
+  }
+  // 제목(H1) + 본문을 합쳐 미리보기 타깃 구성 → 편집화면에서 볼 형태 그대로 타이핑됨
+  function composeTarget() {
+    const t = titleRef.current ? `<h1>${titleRef.current}</h1>` : "";
+    targetRef.current = t + bodyRef.current;
   }
   // 서버가 한 번에 줘도 일정 속도로 타이핑되게 (메인 데모처럼)
   function startReveal() {
@@ -107,6 +114,8 @@ export default function GeneratePanel({
     setLoading(true);
     setPreview("");
     targetRef.current = "";
+    titleRef.current = "";
+    bodyRef.current = "";
     doneRef.current = null;
     shownRef.current = 0;
     setTimeout(() => previewRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 60);
@@ -141,14 +150,18 @@ export default function GeneratePanel({
         for (const part of parts) {
           const line = part.replace(/^data: /, "").trim();
           if (!line) continue;
-          let msg: { type: string; html?: string; article?: Article; error?: string };
+          let msg: { type: string; html?: string; title?: string; article?: Article; error?: string };
           try {
             msg = JSON.parse(line);
           } catch {
             continue;
           }
-          if (msg.type === "body") {
-            targetRef.current = msg.html ?? ""; // reveal 루프가 일정 속도로 따라감
+          if (msg.type === "title") {
+            titleRef.current = msg.title ?? "";
+            composeTarget(); // reveal 루프가 일정 속도로 따라감
+          } else if (msg.type === "body") {
+            bodyRef.current = msg.html ?? "";
+            composeTarget();
           } else if (msg.type === "done" && msg.article) {
             doneRef.current = msg.article; // 다 따라잡으면 편집 열림
             done = true;
@@ -250,12 +263,6 @@ export default function GeneratePanel({
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 
-        {teaserMode && (
-          <p className="rounded-lg bg-amber-50 px-4 py-2.5 text-sm text-amber-700">
-            무료 3편을 다 썼어요. 미리보기 1편을 만들어 드릴게요 — 끝까지 보고 발행하려면 프로로 업그레이드하면 돼요.
-          </p>
-        )}
-
         <button
           type="submit"
           disabled={loading || (outOfQuota && !teaserMode)}
@@ -265,8 +272,6 @@ export default function GeneratePanel({
             ? "이번 달 한도를 다 썼어요"
             : loading
             ? <span className="inline-flex items-center text-2xl leading-none"><Dots /></span>
-            : teaserMode
-            ? "무료 미리보기 만들기"
             : "글 생성하기"}
         </button>
       </form>

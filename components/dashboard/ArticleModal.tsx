@@ -127,25 +127,22 @@ export default function ArticleModal({
           <span className="text-xs text-neutral-400">미리보기 · {article.keyword}</span>
           <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight sm:text-3xl">{article.title}</h1>
 
-          <div className="relative mt-6">
+          {/* 위 4~5줄만 보이고 그 아래는 전부 블러 + 결제 버튼을 블러 위에 띄운다 */}
+          <div className="relative mt-6 min-h-[24rem] overflow-hidden">
             <div className="prose prose-neutral max-w-none" dangerouslySetInnerHTML={{ __html: article.body_html }} />
-            {/* 초중반부터 블러 + 흰색 페이드로 가린다 */}
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 top-[28%] bg-gradient-to-b from-white/10 via-white/75 to-white backdrop-blur-[3px]" />
-          </div>
-
-          {/* 결제 유도 — 발행 욕구가 최고조일 때 */}
-          <div className="mt-2 rounded-2xl border border-neutral-200 bg-neutral-50 p-6 text-center">
-            <p className="text-base font-semibold tracking-tight">이 글, 끝까지 보고 바로 발행하고 싶다면</p>
-            <p className="mt-2 text-sm leading-relaxed text-neutral-500">
-              프로로 업그레이드하면 이 글의 잠금이 풀려요. 매달 50편까지, 한 편당 5,000자 깊이로 쓰고 워드프레스에 바로 발행할 수 있어요.
-            </p>
-            <Link
-              href="/pricing"
-              className="mt-5 inline-block rounded-full bg-neutral-900 px-6 py-3 text-sm font-medium text-white transition hover:bg-neutral-700"
-            >
-              프로로 업그레이드하고 잠금 해제 →
-            </Link>
-            <p className="mt-3 text-xs text-neutral-400">{formatKRW(PLANS.pro.price)}/월 · 언제든 해지</p>
+            <div className="absolute inset-x-0 bottom-0 top-[7.5rem] flex flex-col items-center gap-3 bg-gradient-to-b from-white/30 via-white/85 to-white px-6 pt-12 text-center backdrop-blur-md">
+              <p className="text-base font-semibold tracking-tight">여기부터는 프로 회원만 볼 수 있어요</p>
+              <p className="max-w-md text-sm leading-relaxed text-neutral-500">
+                프로로 업그레이드하면 이 글 전체가 열리고, 매달 50편까지 5,000자 깊이로 쓰고 워드프레스에 바로 발행할 수 있어요.
+              </p>
+              <Link
+                href="/pricing"
+                className="mt-1 rounded-full bg-neutral-900 px-6 py-3 text-sm font-medium text-white shadow-lg transition hover:bg-neutral-700"
+              >
+                프로로 업그레이드하고 전체 보기 →
+              </Link>
+              <p className="text-xs text-neutral-400">{formatKRW(PLANS.pro.price)}/월 · 언제든 해지</p>
+            </div>
           </div>
         </div>
       </>

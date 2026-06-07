@@ -62,7 +62,6 @@ export default function ArticleList({
               {(a.char_count ?? 0).toLocaleString()}자 · {new Date(a.created_at).toLocaleDateString("ko-KR")}
             </p>
           </button>
-          <button onClick={() => onOpen(a)} className="shrink-0 text-sm text-neutral-400 transition hover:text-neutral-700">열기 →</button>
           <button
             onClick={() => onDelete(a.id)}
             title="삭제"

@@ -112,6 +112,7 @@ export async function POST(request: Request) {
         const article = await streamArticle(
           { keyword, angle: body.angle, type, tone, maxWords, variantInstruction: variant.instruction },
           (bodyHtml) => send({ type: "body", html: bodyHtml }),
+          (title) => send({ type: "title", title }),
         );
 
         // 길이 검증 (목표 글자수의 절반 미만이면 너무 짧음)
