@@ -6,6 +6,10 @@ import { mergeAttributes } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
+import { Table } from "@tiptap/extension-table";
+import { TableRow } from "@tiptap/extension-table-row";
+import { TableHeader } from "@tiptap/extension-table-header";
+import { TableCell } from "@tiptap/extension-table-cell";
 
 /* ── 아이콘 (라인, currentColor) ─────────────────────────── */
 const S = ({ d, fill = false }: { d: string; fill?: boolean }) => (
@@ -29,6 +33,7 @@ const IconAlignCenter = () => <S d="M4 6h16M7 12h10M5 18h14" />;
 const IconAlignRight = () => <S d="M4 6h16M10 12h10M7 18h13" />;
 const IconAlignFull = () => <S d="M4 6h16M4 12h16M4 18h16" />;
 const IconTrash = () => <S d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" />;
+const IconTable = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="1" /><path d="M3 10h18M3 15h18M9 4v16M15 4v16" /></svg>;
 const IconUndo = () => <S d="M9 7L4 12l5 5M4 12h11a5 5 0 0 1 0 10h-1" />;
 const IconRedo = () => <S d="M15 7l5 5-5 5M20 12H9a5 5 0 0 0 0 10h1" />;
 const IconOpen = () => <S d="M14 5h5v5M19 5l-8 8M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5" />;
@@ -121,6 +126,10 @@ export default function ArticleEditor({
       }),
       EditorImage.configure({ allowBase64: true }),
       Placeholder.configure({ placeholder: "내용을 입력하세요…" }),
+      Table.configure({ resizable: true }),
+      TableRow,
+      TableHeader,
+      TableCell,
     ],
     content: initialHtml,
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
@@ -181,7 +190,7 @@ export default function ArticleEditor({
 
   return (
     <div className="rounded-xl border border-neutral-200 bg-white">
-      <div className="sticky top-0 z-10 border-b border-neutral-200 bg-white/95 backdrop-blur">
+      <div className="sticky top-0 z-20 border-b border-neutral-200 bg-white shadow-md">
         <div className="flex flex-wrap items-center gap-0.5 px-3 py-2">
           <Btn title="실행취소 (Ctrl+Z)" disabled={!editor.can().undo()} onClick={() => editor.chain().focus().undo().run()}><IconUndo /></Btn>
           <Btn title="다시실행 (Ctrl+Shift+Z)" disabled={!editor.can().redo()} onClick={() => editor.chain().focus().redo().run()}><IconRedo /></Btn>
@@ -194,6 +203,7 @@ export default function ArticleEditor({
           <span className="mx-1 h-5 w-px bg-neutral-200" />
           <Btn title="링크 (텍스트를 드래그한 뒤 클릭)" active={editor.isActive("link")} onClick={openLink}><IconLink /></Btn>
           <Btn title="이미지" onClick={() => fileRef.current?.click()}><IconImage /></Btn>
+          <Btn title="표 (3×3)" onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}><IconTable /></Btn>
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickFile} />
         </div>
         {linkOpen && (

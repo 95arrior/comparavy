@@ -21,6 +21,7 @@ export default function GeneratePanel({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [showOpts, setShowOpts] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
 
   // 작성 중엔 항상 맨 아래(쓰이는 끝)가 보이도록 자동 스크롤
@@ -115,6 +116,12 @@ export default function GeneratePanel({
           />
         </div>
 
+        <button type="button" onClick={() => setShowOpts((v) => !v)} className="text-left text-xs font-medium text-neutral-500 hover:text-neutral-900">
+          {showOpts ? "▾ 옵션 접기" : "▸ 옵션 더보기 (글 유형 · 문체 · 내 관점)"}
+        </button>
+
+        {showOpts && (
+          <>
         <div>
           <label className="block text-sm font-medium">관점 / 각도 (선택)</label>
           <input
@@ -157,6 +164,8 @@ export default function GeneratePanel({
             </p>
           </div>
         </div>
+          </>
+        )}
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 

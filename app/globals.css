@@ -868,6 +868,23 @@ html {
   color: #8a8a8a;
   text-align: center;
 }
+.ateflo-article table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.3em 0;
+  font-size: 0.97em;
+}
+.ateflo-article th,
+.ateflo-article td {
+  border: 1px solid #d8d8d8;
+  padding: 0.55em 0.75em;
+  text-align: left;
+  vertical-align: top;
+}
+.ateflo-article th {
+  background: #f5f6f8;
+  font-weight: 700;
+}
 /* placeholder */
 .ateflo-article p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
