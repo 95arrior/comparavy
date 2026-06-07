@@ -60,9 +60,12 @@ export default async function Home() {
         <div className="relative z-10 mx-auto max-w-3xl px-6 pb-24 pt-24 text-center sm:pt-32">
           <p className="mono-rise text-sm font-medium tracking-tight text-neutral-400">워드프레스 블로그를 위한 AI 글쓰기</p>
           <h1 className="mono-rise mono-d1 mt-5 text-4xl font-semibold leading-[1.15] tracking-tight sm:text-6xl">
-            키워드만 넣으면,<br />검색에 뜨는 한국어 글이 써집니다.
+            글쓰기, 키워드 하나면 끝
           </h1>
-          <div className="mono-rise mono-d2 mt-10">
+          <p className="mono-rise mono-d2 mx-auto mt-6 max-w-xl text-lg leading-relaxed text-neutral-500">
+            어떤 구조로, 어떤 흐름으로 글을 써야 좋은 글이 되는지. 우리는 그 답을 알고, 키워드 하나로 글을 씁니다.
+          </p>
+          <div className="mono-rise mono-d3 mt-10">
             <HeroInput loggedIn={!!user} />
             <p className="mt-4 text-sm text-neutral-400">무료 3편 · 카드 등록 없음</p>
           </div>
