@@ -136,6 +136,7 @@ export default function ArticleModal({
             onTitleChange={setTitle}
             featuredImage={featured}
             onFeaturedChange={setFeatured}
+            originalHtml={article.original_html ?? undefined}
             initialHtml={article.body_html}
             onChange={setBodyHtml}
           />

@@ -17,6 +17,7 @@ export interface Article {
   status: "draft" | "published" | "future";
   wp_link: string | null;
   featured_image: string | null;
+  original_html: string | null;
   created_at: string;
 }
 

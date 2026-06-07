@@ -117,6 +117,7 @@ export async function POST(request: Request) {
             faq: article.faq,
             char_count: charCount,
             simhash: simhash(article.body_html), // 근접 중복 모니터링용 (재생성 안 함)
+            original_html: article.body_html, // AI 원본 복구용 (수정해도 보존)
             status: "draft",
           })
           .select("*")

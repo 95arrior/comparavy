@@ -114,6 +114,7 @@ export default function ArticleEditor({
   onTitleChange,
   featuredImage,
   onFeaturedChange,
+  originalHtml,
 }: {
   initialHtml: string;
   onChange: (html: string) => void;
@@ -121,12 +122,14 @@ export default function ArticleEditor({
   onTitleChange?: (t: string) => void;
   featuredImage?: string | null;
   onFeaturedChange?: (src: string | null) => void;
+  originalHtml?: string;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const featRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
+  const [linkNofollow, setLinkNofollow] = useState(false);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -176,9 +179,19 @@ export default function ArticleEditor({
     if (url === "" || url === "https://") {
       editor!.chain().focus().extendMarkRange("link").unsetLink().run();
     } else {
-      editor!.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+      editor!.chain().focus().extendMarkRange("link").setLink({
+        href: url,
+        target: "_blank",
+        rel: linkNofollow ? "noopener nofollow" : "noopener",
+      }).run();
     }
     setLinkOpen(false);
+  }
+  function restoreOriginal() {
+    if (!originalHtml) return;
+    if (!window.confirm("지금 내용을 버리고 AI가 처음 쓴 글로 되돌릴까요?")) return;
+    editor!.commands.setContent(originalHtml);
+    onChange(originalHtml);
   }
   function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -232,6 +245,11 @@ export default function ArticleEditor({
           <Btn title="이미지" onClick={() => fileRef.current?.click()}><IconImage /></Btn>
           <Btn title="표 (3×3)" onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}><IconTable /></Btn>
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickFile} />
+          {originalHtml && (
+            <button type="button" title="AI가 처음 쓴 글로 되돌리기" onClick={restoreOriginal} className="ml-auto flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium text-neutral-500 hover:bg-neutral-100">
+              ↺ AI 원본
+            </button>
+          )}
         </div>
         {linkOpen && (
           <div className="flex items-center gap-2 border-t border-neutral-100 px-3 py-2">
@@ -243,6 +261,10 @@ export default function ArticleEditor({
               placeholder="https://..."
               className="flex-1 rounded-md border border-neutral-300 px-3 py-1.5 text-sm outline-none focus:border-neutral-900"
             />
+            <label className="flex shrink-0 items-center gap-1 text-xs text-neutral-500">
+              <input type="checkbox" checked={linkNofollow} onChange={(e) => setLinkNofollow(e.target.checked)} />
+              nofollow
+            </label>
             <button type="button" onClick={applyLink} className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm text-white">적용</button>
             <button type="button" onClick={() => setLinkOpen(false)} className="rounded-md px-2 py-1.5 text-sm text-neutral-400">취소</button>
           </div>
@@ -294,6 +316,9 @@ export default function ArticleEditor({
           />
         )}
         <EditorContent editor={editor} />
+      </div>
+      <div className="border-t border-neutral-100 px-4 py-2 text-right text-xs text-neutral-400">
+        공백 제외 {editor.getText().replace(/\s/g, "").length.toLocaleString()}자
       </div>
     </div>
   );
