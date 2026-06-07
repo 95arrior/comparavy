@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useEditor, EditorContent, ReactNodeViewRenderer, NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
 import { mergeAttributes } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
@@ -119,6 +119,7 @@ export default function ArticleEditor({
   onTitleChange?: (t: string) => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const titleRef = useRef<HTMLTextAreaElement>(null);
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
 
@@ -147,6 +148,15 @@ export default function ArticleEditor({
           .replace(/<\/?(span|font|o:p)[^>]*>/g, ""),
     },
   });
+
+  // 제목 textarea 높이 자동 조절(여러 줄 줄바꿈, 가로 스크롤 없음)
+  useEffect(() => {
+    const el = titleRef.current;
+    if (el) {
+      el.style.height = "auto";
+      el.style.height = `${el.scrollHeight}px`;
+    }
+  }, [title]);
 
   if (!editor) return <div className="h-[60vh] rounded-xl border border-neutral-200" />;
 
@@ -238,11 +248,14 @@ export default function ArticleEditor({
 
       <div className="mx-auto max-w-[720px] px-8 py-8">
         {onTitleChange && (
-          <input
+          <textarea
+            ref={titleRef}
+            rows={1}
             value={title ?? ""}
             onChange={(e) => onTitleChange(e.target.value)}
             placeholder="제목을 입력하세요 (검색에 노출되는 H1)"
-            className={`font-pretendard mb-5 w-full bg-transparent text-3xl font-bold leading-tight text-neutral-900 outline-none placeholder:text-neutral-300 ${
+            style={{ resize: "none", overflow: "hidden" }}
+            className={`font-pretendard mb-5 block w-full bg-transparent text-3xl font-bold leading-tight text-neutral-900 outline-none placeholder:text-neutral-300 ${
               (title ?? "").trim() === "" ? "rounded-lg border border-dashed border-neutral-300 px-3 py-2" : ""
             }`}
           />
