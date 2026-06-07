@@ -47,11 +47,10 @@ export default function DemoStream() {
 
   return (
     <div className="mx-auto w-full max-w-xl text-left">
-      <div className="mb-2 flex items-center gap-2 text-xs font-medium text-neutral-400">
-        <AteFloLogo size={16} />
+      <div className="mb-2 text-xs font-medium text-neutral-400">
         실시간으로 이렇게 써집니다 — 우리가 뽑은 실제 글입니다
       </div>
-      <div className="h-80 overflow-hidden rounded-xl border border-neutral-200 bg-white/70 p-5 backdrop-blur">
+      <div className="relative h-80 overflow-hidden rounded-xl border border-neutral-200 bg-white/70 p-5 backdrop-blur">
         {rendered.length === 0 && <p className="text-sm text-neutral-300">글을 구상하는 중…</p>}
         {rendered.map((b) => {
           if (b.tag === "title") {
@@ -77,6 +76,14 @@ export default function DemoStream() {
             </p>
           );
         })}
+        {/* 글쓰기 하단 인디케이터 — 대시보드 실제 생성 화면과 동일 */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 rounded-b-xl bg-gradient-to-t from-white via-white/80 to-transparent" />
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2">
+          <div className="flex items-center gap-2 rounded-full border border-neutral-200 bg-white/95 px-3 py-1.5 shadow-sm">
+            <AteFloLogo animated size={20} />
+            <span className="text-xs font-medium text-neutral-500">작성 중…</span>
+          </div>
+        </div>
       </div>
     </div>
   );
