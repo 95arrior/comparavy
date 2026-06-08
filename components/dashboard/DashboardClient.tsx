@@ -279,7 +279,7 @@ export default function DashboardClient(props: DashboardProps) {
                 </>
               )}
             </section>
-            <ServiceIntro loggedIn />
+            <ServiceIntro loggedIn currentPlan={props.plan} />
             <SiteFooter />
           </div>
         )}

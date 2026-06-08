@@ -35,6 +35,20 @@ export const PLANS: Record<PlanKey, Plan> = {
   },
 };
 
+/** 플랜 카드에 노출할 가치(핵심 기능) 목록 */
+export const PLAN_FEATURES: Record<PlanKey, string[]> = {
+  free: ["월 3편 생성", "글당 1,500자", "실시간 생성 화면", "AI 티 제거 · 정직성 보장", "복사해서 사용"],
+  pro: [
+    "월 50편 생성",
+    "글당 5,000자 깊이",
+    "워드프레스 1클릭 발행",
+    "한국 구글 SEO 자동 (제목·메타·FAQ·소제목)",
+    "구조 다양성 — 매번 다른 글",
+    "AI 티 제거 · 정직성 보장",
+    "우선 처리",
+  ],
+};
+
 /** 토스 빌링 주문명에 사용 */
 export const PRO_ORDER_NAME = "AteFlo 프로 월 구독";
 

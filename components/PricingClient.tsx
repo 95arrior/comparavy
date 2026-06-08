@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
-import { PLANS, formatKRW, type PlanKey } from "@/lib/plans";
+import { PLANS, formatKRW, PLAN_FEATURES, type PlanKey } from "@/lib/plans";
 
 export default function PricingClient({
   loggedIn,
@@ -61,59 +61,84 @@ export default function PricingClient({
     }
   }
 
-  const cards: { plan: typeof PLANS.free; cta: string; action: "current" | "free" | "pro" }[] = [
-    {
-      plan: PLANS.free,
-      cta: currentPlan === "free" ? "현재 이용 중" : "무료로 시작",
-      action: currentPlan === "free" ? "current" : "free",
-    },
-    {
-      plan: PLANS.pro,
-      cta: currentPlan === "pro" ? "현재 이용 중" : loggedIn ? "프로 구독하기" : "로그인하고 시작",
-      action: currentPlan === "pro" ? "current" : "pro",
-    },
-  ];
+  const isPro = currentPlan === "pro";
+
+  const Feats = ({ plan }: { plan: PlanKey }) => (
+    <ul className="mt-6 space-y-2.5 text-sm text-neutral-600">
+      {PLAN_FEATURES[plan].map((f) => (
+        <li key={f} className="flex gap-2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4B5FE1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 shrink-0">
+            <path d="M5 13l4 4L19 7" />
+          </svg>
+          {f}
+        </li>
+      ))}
+    </ul>
+  );
+
+  const CurrentBtn = ({ rainbow }: { rainbow?: boolean }) => (
+    <button
+      onClick={() => router.push("/")}
+      className={`group mt-8 rounded-full px-5 py-2.5 text-sm font-medium transition ${
+        rainbow ? "ateflo-rainbow" : "border border-neutral-300 text-neutral-900 hover:border-neutral-900"
+      }`}
+    >
+      <span className="group-hover:hidden">현재 이용 중</span>
+      <span className="hidden group-hover:inline">시작하기</span>
+    </button>
+  );
 
   return (
     <div className="mt-12">
       <div className="grid gap-px overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-200 sm:grid-cols-2">
-        {cards.map(({ plan, cta, action }) => (
-          <div key={plan.key} className="flex flex-col bg-white p-8">
-            <div className="flex items-baseline justify-between">
-              <h3 className="text-lg font-medium tracking-tight">{plan.name}</h3>
-              {plan.highlight && <span className="text-xs text-neutral-400">가장 인기</span>}
-            </div>
-            <p className="mt-3">
-              <span className="text-4xl font-semibold tracking-tight">
-                {plan.price === 0 ? "무료" : formatKRW(plan.price)}
-              </span>
-              {plan.price !== 0 && <span className="text-sm text-neutral-400">/월</span>}
-            </p>
-            <ul className="mt-5 space-y-2 text-sm text-neutral-600">
-              <li>월 {plan.articles}편 생성</li>
-              <li>글당 최대 {plan.maxWords.toLocaleString()}자</li>
-              {plan.wordpress ? (
-                <li>워드프레스 자동발행</li>
+        {/* 무료 */}
+        <div className="relative flex flex-col bg-white p-8">
+          <div className={isPro ? "pointer-events-none select-none opacity-50 blur-[2px]" : ""}>
+            <h3 className="text-lg font-medium tracking-tight">{PLANS.free.name}</h3>
+            <p className="mt-3"><span className="text-4xl font-semibold tracking-tight">무료</span></p>
+            <Feats plan="free" />
+            {!isPro &&
+              (currentPlan === "free" && loggedIn ? (
+                <CurrentBtn />
               ) : (
-                <li>생성·복사·내보내기 (발행은 프로)</li>
-              )}
-            </ul>
-            <button
-              disabled={action === "current" || (action === "pro" && loading)}
-              onClick={() => {
-                if (action === "pro") startPro();
-                else if (action === "free") router.push(loggedIn ? "/" : "/login");
-              }}
-              className={`mt-8 rounded-full px-5 py-2.5 text-center text-sm font-medium transition ${
-                plan.highlight
-                  ? "bg-neutral-900 text-white hover:bg-neutral-700 disabled:opacity-50"
-                  : "border border-neutral-300 text-neutral-900 hover:border-neutral-900 disabled:opacity-50"
-              }`}
-            >
-              {action === "pro" && loading ? "결제창 여는 중…" : cta}
-            </button>
+                <button
+                  onClick={() => router.push(loggedIn ? "/" : "/login")}
+                  className="mt-8 rounded-full border border-neutral-300 px-5 py-2.5 text-sm font-medium text-neutral-900 transition hover:border-neutral-900"
+                >
+                  무료로 시작
+                </button>
+              ))}
           </div>
-        ))}
+          {isPro && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="rounded-full bg-neutral-900/85 px-4 py-1.5 text-sm font-medium text-white">프로 이용 중</span>
+            </div>
+          )}
+        </div>
+
+        {/* 프로 — 버튼은 항상 무지개 */}
+        <div className="flex flex-col bg-white p-8">
+          <div className="flex items-baseline justify-between">
+            <h3 className="text-lg font-medium tracking-tight">{PLANS.pro.name}</h3>
+            <span className="rounded-full px-2.5 py-0.5 text-xs font-medium" style={{ background: "#4B5FE11a", color: "#4B5FE1" }}>가장 인기</span>
+          </div>
+          <p className="mt-3">
+            <span className="text-4xl font-semibold tracking-tight">{formatKRW(PLANS.pro.price)}</span>
+            <span className="text-sm text-neutral-400">/월</span>
+          </p>
+          <Feats plan="pro" />
+          {isPro ? (
+            <CurrentBtn rainbow />
+          ) : (
+            <button
+              disabled={loading}
+              onClick={startPro}
+              className="ateflo-rainbow mt-8 rounded-full px-5 py-2.5 text-sm font-medium transition disabled:opacity-50"
+            >
+              {loading ? "결제창 여는 중…" : loggedIn ? "프로 구독하기" : "로그인하고 시작"}
+            </button>
+          )}
+        </div>
       </div>
 
       {error && <p className="mt-6 text-center text-sm text-red-600">{error}</p>}
@@ -186,7 +211,7 @@ export default function PricingClient({
               <button
                 disabled={!agreeOrder || !agreeRecurring || loading}
                 onClick={confirmAndPay}
-                className="flex-1 rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
+                className="ateflo-rainbow flex-1 rounded-full px-5 py-2.5 text-sm font-medium transition disabled:opacity-50"
               >
                 {loading ? "결제창 여는 중…" : "동의하고 결제"}
               </button>

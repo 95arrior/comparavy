@@ -1,6 +1,6 @@
-import Link from "next/link";
-import { PLANS, formatKRW } from "@/lib/plans";
 import Reveal from "@/components/Reveal";
+import PricingCards from "@/components/PricingCards";
+import type { PlanKey } from "@/lib/plans";
 
 const BRAND = "#4B5FE1";
 
@@ -181,7 +181,7 @@ function PublishCard() {
   );
 }
 
-export default function ServiceIntro({ loggedIn = false }: { loggedIn?: boolean }) {
+export default function ServiceIntro({ loggedIn = false, currentPlan = "free" }: { loggedIn?: boolean; currentPlan?: PlanKey }) {
   return (
     <>
       <Section
@@ -236,30 +236,8 @@ export default function ServiceIntro({ loggedIn = false }: { loggedIn?: boolean 
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">요금</h2>
             <p className="mt-3 text-neutral-500">무료 3편 먼저 써보세요. 괜찮으면 그때 프로. 외주 글 한 편 값이면 한 달 50편입니다.</p>
           </Reveal>
-          <Reveal delay={120}>
-            <div className="mt-12 grid max-w-3xl gap-px overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-200 sm:grid-cols-2">
-              {[PLANS.free, PLANS.pro].map((plan) => (
-                <div key={plan.key} className="flex flex-col bg-white p-8">
-                  <div className="flex items-baseline justify-between">
-                    <h3 className="text-lg font-medium tracking-tight">{plan.name}</h3>
-                    {plan.highlight && <span className="rounded-full px-2.5 py-0.5 text-xs font-medium" style={{ background: `${BRAND}1a`, color: BRAND }}>가장 인기</span>}
-                  </div>
-                  <p className="mt-3">
-                    <span className="text-4xl font-semibold tracking-tight">{plan.price === 0 ? "무료" : formatKRW(plan.price)}</span>
-                    {plan.price !== 0 && <span className="text-sm text-neutral-400">/월</span>}
-                  </p>
-                  <p className="mt-3 text-sm text-neutral-500">월 {plan.articles}편 · 글당 최대 {plan.maxWords.toLocaleString()}자{plan.wordpress ? " · 워드프레스 자동발행" : ""}</p>
-                  <Link
-                    href={plan.price === 0 ? (loggedIn ? "/" : "/login") : "/pricing"}
-                    className={`mt-8 rounded-full px-5 py-2.5 text-center text-sm font-medium transition ${
-                      plan.highlight ? "bg-neutral-900 text-white hover:bg-neutral-700" : "border border-neutral-300 text-neutral-900 hover:border-neutral-900"
-                    }`}
-                  >
-                    {plan.price === 0 ? "무료로 시작" : "프로 선택"}
-                  </Link>
-                </div>
-              ))}
-            </div>
+          <Reveal delay={120} className="mt-12">
+            <PricingCards loggedIn={loggedIn} currentPlan={currentPlan} />
           </Reveal>
         </div>
       </section>
