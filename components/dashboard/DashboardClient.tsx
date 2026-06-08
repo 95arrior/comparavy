@@ -10,6 +10,7 @@ import WritingView, { type GenParams } from "./WritingView";
 import WordPressPanel from "./WordPressPanel";
 import AteFloLogo from "@/components/AteFloLogo";
 import Brand from "@/components/Brand";
+import AdminDashboard from "./AdminDashboard";
 import HeroInput from "@/components/HeroInput";
 import DemoStream from "@/components/DemoStream";
 import ServiceIntro from "@/components/ServiceIntro";
@@ -33,15 +34,6 @@ const ICON: Record<string, React.ReactNode> = {
   panel: <Svg><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M9 4v16" /></Svg>,
   admin: <Svg><path d="M4 20h16" /><path d="M7 20v-6M12 20v-9M17 20v-4" /></Svg>,
 };
-
-function StatCard({ label, value, prefix = "", suffix = "" }: { label: string; value: number | null | undefined; prefix?: string; suffix?: string }) {
-  return (
-    <div className="rounded-2xl border border-neutral-200 bg-white p-5">
-      <p className="text-xs font-medium text-neutral-400">{label}</p>
-      <p className="mt-1 text-3xl font-semibold tracking-tight">{value === null || value === undefined ? "—" : `${prefix}${value.toLocaleString()}${suffix}`}</p>
-    </div>
-  );
-}
 
 export default function DashboardClient(props: DashboardProps) {
   const [tab, setTab] = useState<Tab>("generate");
@@ -317,7 +309,7 @@ export default function DashboardClient(props: DashboardProps) {
 
         {!selected && !genParams && tab !== "generate" && (
           <main key={tab} className="ateflo-page-in mx-auto max-w-5xl px-6 py-10">
-            {tab !== "account" && !allDone && nextStep && (
+            {tab !== "account" && tab !== "admin" && !allDone && nextStep && (
               <div className="mb-6 flex flex-wrap items-center gap-4 rounded-2xl border border-[#4B5FE1]/30 bg-[#4B5FE1]/5 px-5 py-4">
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-semibold text-[#4B5FE1]">다음 단계 · {steps.filter((s) => s.done).length + 1} / {steps.length}</p>
@@ -354,39 +346,7 @@ export default function DashboardClient(props: DashboardProps) {
                 <p className="mt-4 text-xs text-neutral-400">구독 취소·회원 탈퇴는 곧 추가됩니다.</p>
               </div>
             )}
-            {tab === "admin" && props.isAdmin && (
-              <div>
-                <h2 className="text-lg font-semibold tracking-tight">관리자 통계</h2>
-                <p className="mt-1 text-sm text-neutral-500">새로고침하면 최신 수치예요. (오늘 = 한국시간 기준)</p>
-
-                <p className="mt-8 text-sm font-medium text-neutral-400">매출 · 전환</p>
-                <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <StatCard label="예상 월매출(MRR)" value={props.adminStats?.mrr} prefix="₩" />
-                  <StatCard label="전환율(무료→프로)" value={props.adminStats?.conversion} suffix="%" />
-                </div>
-
-                <p className="mt-8 text-sm font-medium text-neutral-400">회원</p>
-                <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <StatCard label="전체 회원" value={props.adminStats?.usersTotal} />
-                  <StatCard label="오늘 가입" value={props.adminStats?.usersToday} />
-                  <StatCard label="무료" value={props.adminStats?.freeUsers} />
-                  <StatCard label="프로" value={props.adminStats?.proUsers} />
-                </div>
-
-                <p className="mt-8 text-sm font-medium text-neutral-400">글</p>
-                <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <StatCard label="전체 글" value={props.adminStats?.articlesTotal} />
-                  <StatCard label="오늘 생성" value={props.adminStats?.articlesToday} />
-                  <StatCard label="발행됨" value={props.adminStats?.publishedArticles} />
-                  <StatCard label="미리보기(잠금)" value={props.adminStats?.lockedArticles} />
-                </div>
-
-                <p className="mt-8 text-sm font-medium text-neutral-400">연동</p>
-                <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <StatCard label="워드프레스 연결" value={props.adminStats?.wpConnections} />
-                </div>
-              </div>
-            )}
+            {tab === "admin" && props.isAdmin && <AdminDashboard stats={props.adminStats} />}
           </main>
         )}
       </div>
