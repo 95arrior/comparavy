@@ -151,7 +151,7 @@ export default function DashboardClient(props: DashboardProps) {
               <button
                 onClick={() => goTab("generate")}
                 aria-label="메인으로"
-                className="flex min-w-0 flex-1 items-center gap-1.5 rounded-lg py-1 transition hover:bg-neutral-50"
+                className="flex h-10 min-w-0 flex-1 items-center gap-1.5 rounded-lg transition hover:bg-neutral-50"
               >
                 <span className="flex w-7 shrink-0 items-center justify-center"><AteFloLogo size={22} /></span>
                 <span className={`${ubuntu.className} -translate-y-px truncate text-lg font-bold leading-none tracking-tight text-neutral-900`}>{SITE_NAME}</span>
@@ -169,7 +169,7 @@ export default function DashboardClient(props: DashboardProps) {
             <button
               onClick={() => setNavOpen(true)}
               aria-label="사이드바 열기"
-              className="group relative flex w-7 shrink-0 items-center justify-center rounded-lg transition hover:bg-neutral-100"
+              className="group relative flex h-10 w-7 shrink-0 items-center justify-center rounded-lg transition hover:bg-neutral-100"
             >
               <span className="transition group-hover:opacity-0"><AteFloLogo size={22} /></span>
               <span className="absolute text-neutral-700 opacity-0 transition group-hover:opacity-100">{ICON.panel}</span>
