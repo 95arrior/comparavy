@@ -1,12 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Reveal from "@/components/Reveal";
+import { useState, useEffect, useRef } from "react";
 
 const BRAND = "#3f91ff";
 const STORAGE_KEY = "ateflo_wp_guide_progress";
-// 페이지 슬라이드(약 0.35s)가 끝난 뒤 박스가 올라오도록 등장 지연
-const BASE_DELAY = 420;
+export const WP_GUIDE_STEP_COUNT = 5;
 
 // 검색창 목업
 function SearchMock() {
@@ -99,6 +97,8 @@ function fmt(line: string) {
 
 export default function WpGuideView({ onBack, onGoConnect }: { onBack: () => void; onGoConnect: () => void }) {
   const [checked, setChecked] = useState<boolean[]>(() => STEPS.map(() => false));
+  const currentRef = useRef<HTMLDivElement>(null);
+  const firstRun = useRef(true);
 
   useEffect(() => {
     try {
@@ -128,6 +128,16 @@ export default function WpGuideView({ onBack, onGoConnect }: { onBack: () => voi
   const done = checked.filter(Boolean).length;
   const currentIdx = checked.findIndex((c) => !c); // -1이면 전부 완료
   const allDone = done === STEPS.length;
+  const visibleCount = allDone ? STEPS.length : currentIdx + 1; // 완료한 단계 + 지금 단계까지만 노출
+
+  // 단계가 바뀌면 '지금 단계' 박스로 부드럽게 포커싱 (첫 렌더는 제외)
+  useEffect(() => {
+    if (firstRun.current) {
+      firstRun.current = false;
+      return;
+    }
+    currentRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [currentIdx]);
 
   return (
     <div className="ateflo-page-in">
@@ -147,90 +157,95 @@ export default function WpGuideView({ onBack, onGoConnect }: { onBack: () => voi
       </div>
 
       <div className="mx-auto max-w-2xl px-6 py-12 sm:py-14">
-        <Reveal delay={BASE_DELAY}>
+        <div>
           <p className="text-sm font-semibold tracking-tight" style={{ color: BRAND }}>워드프레스 5분 시작 가이드</p>
           <h1 className="mt-3 text-3xl font-bold leading-[1.2] tracking-tight sm:text-4xl">
-            하나씩 체크하며<br />따라 하면 끝나요.
+            한 단계씩,<br />따라만 하면 끝나요.
           </h1>
           <p className="mt-4 text-base leading-relaxed text-neutral-500">
-            끝낸 단계는 왼쪽 동그라미를 눌러 체크하세요. <b className="text-neutral-700">지금 할 차례</b>는 파랗게 표시돼요.
+            지금 할 단계만 보여드려요. 끝내고 <b className="text-neutral-700">‘이 단계 완료했어요’</b>를 누르면 다음 단계가 나와요.
           </p>
-        </Reveal>
+        </div>
 
-        <div className="mt-10 space-y-5">
-          {STEPS.map((step, i) => {
-            const isCurrent = i === currentIdx;
+        <div className="mt-10 space-y-4">
+          {STEPS.slice(0, visibleCount).map((step, i) => {
             const isDone = checked[i];
+            const isCurrent = i === currentIdx;
+
+            // 완료한 단계 = 접힌 카드
+            if (isDone) {
+              return (
+                <div key={i} className="flex items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-5 py-4">
+                  <button
+                    onClick={() => toggle(i)}
+                    aria-label="이 단계 다시 하기"
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-sm font-bold text-white"
+                  >
+                    ✓
+                  </button>
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-neutral-500">{i + 1}. {step.title}</span>
+                  <button onClick={() => toggle(i)} className="shrink-0 text-xs text-neutral-400 transition hover:text-neutral-600">다시 보기</button>
+                </div>
+              );
+            }
+
+            // 지금 단계 = 펼친 카드 (포커싱 대상)
             return (
-              <Reveal key={i} delay={BASE_DELAY + (i + 1) * 80}>
-                <div
-                  className={`rounded-2xl border bg-white p-6 transition ${
-                    isCurrent ? "shadow-md" : "shadow-sm"
-                  }`}
-                  style={isCurrent ? { borderColor: BRAND, boxShadow: `0 0 0 2px ${BRAND}33` } : { borderColor: "#e5e5e5" }}
-                >
-                  <div className="flex items-start gap-3">
-                    {/* 체크 동그라미 (탭하면 완료 토글) */}
+              <div
+                key={i}
+                ref={isCurrent ? currentRef : undefined}
+                className="ateflo-step-in rounded-2xl border bg-white p-6 shadow-md"
+                style={{ borderColor: BRAND, boxShadow: `0 0 0 2px ${BRAND}33` }}
+              >
+                <div className="flex items-start gap-3">
+                  <span
+                    className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-base font-bold text-white"
+                    style={{ background: BRAND, boxShadow: `0 0 0 4px ${BRAND}22` }}
+                  >
+                    {i + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-lg font-semibold tracking-tight text-neutral-900">{step.title}</h2>
+                      <span className="rounded-full px-2 py-0.5 text-xs font-medium text-white" style={{ background: BRAND }}>👉 지금 할 차례</span>
+                    </div>
+                    <ul className="mt-3 space-y-2.5">
+                      {step.lines.map((line, j) => (
+                        <li key={j} className="flex gap-2.5 text-sm leading-relaxed text-neutral-700">
+                          <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-neutral-300" />
+                          <span dangerouslySetInnerHTML={fmt(line)} />
+                        </li>
+                      ))}
+                    </ul>
+                    {step.visual}
+                    {step.tip && (
+                      <p className="mt-4 rounded-xl px-4 py-3 text-sm leading-relaxed text-neutral-600" style={{ background: `${BRAND}0d` }}>
+                        💡 {step.tip}
+                      </p>
+                    )}
                     <button
                       onClick={() => toggle(i)}
-                      aria-label={isDone ? "완료 취소" : "완료 체크"}
-                      className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-base font-bold transition ${
-                        isDone ? "text-white" : isCurrent ? "text-white" : "bg-neutral-100 text-neutral-400"
-                      } ${isCurrent && !isDone ? "ring-4" : ""}`}
-                      style={{
-                        background: isDone ? "#22c55e" : isCurrent ? BRAND : undefined,
-                        ...(isCurrent && !isDone ? { boxShadow: `0 0 0 4px ${BRAND}22` } : {}),
-                      }}
+                      className="mt-5 rounded-full px-5 py-2.5 text-sm font-medium text-white transition"
+                      style={{ background: BRAND }}
                     >
-                      {isDone ? "✓" : i + 1}
+                      이 단계 완료했어요 →
                     </button>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h2 className={`text-lg font-semibold tracking-tight ${isDone ? "text-neutral-400" : "text-neutral-900"}`}>{step.title}</h2>
-                        {isCurrent && (
-                          <span className="rounded-full px-2 py-0.5 text-xs font-medium text-white" style={{ background: BRAND }}>👉 지금 할 차례</span>
-                        )}
-                      </div>
-                      <ul className={`mt-3 space-y-2.5 ${isDone ? "opacity-50" : ""}`}>
-                        {step.lines.map((line, j) => (
-                          <li key={j} className="flex gap-2.5 text-sm leading-relaxed text-neutral-700">
-                            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-neutral-300" />
-                            <span dangerouslySetInnerHTML={fmt(line)} />
-                          </li>
-                        ))}
-                      </ul>
-                      {!isDone && step.visual}
-                      {!isDone && step.tip && (
-                        <p className="mt-4 rounded-xl px-4 py-3 text-sm leading-relaxed text-neutral-600" style={{ background: `${BRAND}0d` }}>
-                          💡 {step.tip}
-                        </p>
-                      )}
-                      {!isDone && (
-                        <button
-                          onClick={() => toggle(i)}
-                          className="mt-4 text-sm font-medium transition"
-                          style={{ color: BRAND }}
-                        >
-                          이 단계 완료했어요 →
-                        </button>
-                      )}
-                    </div>
                   </div>
                 </div>
-              </Reveal>
+              </div>
             );
           })}
         </div>
 
-        <Reveal delay={BASE_DELAY + (STEPS.length + 1) * 80} className="mt-10">
-          <div className={`rounded-2xl border p-6 text-center transition ${allDone ? "" : "border-neutral-200 bg-neutral-50"}`} style={allDone ? { borderColor: BRAND, background: `${BRAND}0d` } : {}}>
-            <p className="text-base font-semibold tracking-tight">{allDone ? "다 하셨어요! 🎉 이제 연결만 하면 끝이에요" : "앱 비밀번호를 복사했다면 연결하러 가요"}</p>
+        {allDone && (
+          <div className="ateflo-step-in mt-6 rounded-2xl border p-6 text-center" style={{ borderColor: BRAND, background: `${BRAND}0d` }}>
+            <p className="text-base font-semibold tracking-tight">다 하셨어요! 🎉 이제 연결만 하면 끝이에요</p>
             <p className="mt-1.5 text-sm text-neutral-500">연결 화면에서 사이트 주소·사용자명·앱 비밀번호를 붙여넣으세요.</p>
             <button onClick={onGoConnect} className="mt-5 inline-block rounded-full px-6 py-3 text-sm font-medium text-white transition" style={{ background: BRAND }}>
               워드프레스 연결하러 가기 →
             </button>
           </div>
-        </Reveal>
+        )}
       </div>
     </div>
   );

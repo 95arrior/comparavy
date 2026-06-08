@@ -55,6 +55,15 @@ html {
   animation: ateflo-page-in 0.35s ease-out backwards;
 }
 
+/* 가이드: 단계 박스가 아래에서 위로 올라오며 등장 */
+@keyframes ateflo-step-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: none; }
+}
+.ateflo-step-in {
+  animation: ateflo-step-in 0.4s ease-out backwards;
+}
+
 /* ── Minimal mono theme ──────────────────────────────────── */
 /* Subtle hairline used to separate sections on black. */
 .mono-hairline {

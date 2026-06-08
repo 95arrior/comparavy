@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const GUIDE_STEPS = [
   "워드프레스 관리자(wp-admin)에 로그인합니다.",
@@ -26,6 +26,24 @@ export default function WordPressPanel({
   const [appPassword, setAppPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // 시작 가이드 진행 상태 (중간에 나갔다 오면 '진행 중' 표시)
+  const [guideDone, setGuideDone] = useState(0);
+  const [guideTotal, setGuideTotal] = useState(0);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("ateflo_wp_guide_progress");
+      if (raw) {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) {
+          setGuideTotal(arr.length);
+          setGuideDone(arr.filter(Boolean).length);
+        }
+      }
+    } catch {
+      // 무시
+    }
+  }, []);
+  const guideInProgress = guideTotal > 0 && guideDone > 0 && guideDone < guideTotal;
 
   async function connect(e: React.FormEvent) {
     e.preventDefault();
@@ -90,8 +108,12 @@ export default function WordPressPanel({
           className="mt-5 flex w-full items-center justify-between gap-3 rounded-xl border border-[#3f91ff]/30 bg-[#3f91ff]/5 px-4 py-3.5 text-left transition hover:bg-[#3f91ff]/10"
         >
           <span>
-            <span className="block text-sm font-medium text-neutral-900">워드프레스가 아직 없으세요?</span>
-            <span className="mt-0.5 block text-xs text-neutral-500">처음이어도 5분이면 끝, 따라하기 가이드</span>
+            <span className="block text-sm font-medium text-neutral-900">
+              {guideInProgress ? "아직 진행 중이세요! 이어서 하기" : "워드프레스가 아직 없으세요?"}
+            </span>
+            <span className="mt-0.5 block text-xs text-neutral-500">
+              {guideInProgress ? `시작 가이드 ${guideDone}/${guideTotal}단계 완료` : "처음이어도 5분이면 끝, 따라하기 가이드"}
+            </span>
           </span>
           <span className="shrink-0 text-lg" style={{ color: "#3f91ff" }}>→</span>
         </button>
