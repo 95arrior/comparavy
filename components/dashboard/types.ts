@@ -30,6 +30,7 @@ export interface DashboardProps {
   plan: PlanKey;
   articlesUsed: number;
   articlesLimit: number;
+  subStatus?: string | null;
   initialArticles: Article[];
   wpSiteUrl: string | null;
   isAdmin?: boolean;

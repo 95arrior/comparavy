@@ -43,7 +43,7 @@ export default function DashboardClient(props: DashboardProps) {
   const [wpSiteUrl, setWpSiteUrl] = useState<string | null>(props.wpSiteUrl);
   const [selected, setSelected] = useState<Article | null>(null);
   const [genParams, setGenParams] = useState<GenParams | null>(null);
-  const [subCanceled, setSubCanceled] = useState(false);
+  const [subCanceled, setSubCanceled] = useState(props.subStatus === "canceled");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -392,34 +392,37 @@ export default function DashboardClient(props: DashboardProps) {
                   <div className="flex justify-between gap-4"><dt className="text-neutral-500">플랜</dt><dd className="font-medium">{PLANS[props.plan].name}</dd></div>
                   <div className="flex justify-between gap-4"><dt className="text-neutral-500">이번 달 사용량</dt><dd>{articlesUsed} / {props.articlesLimit}편</dd></div>
                 </dl>
-                <div className="mt-6 flex flex-wrap gap-2">
+                <div className="mt-6">
                   <button onClick={signOut} className="rounded-full border border-neutral-300 px-4 py-2 text-sm font-medium transition hover:border-neutral-900">
                     로그아웃
                   </button>
-                  {props.plan === "pro" && !subCanceled && (
-                    <button onClick={cancelSubscription} disabled={busy} className="rounded-full border border-neutral-300 px-4 py-2 text-sm font-medium transition hover:border-neutral-900 disabled:opacity-50">
-                      구독 해지
-                    </button>
-                  )}
                 </div>
 
-                {subCanceled && (
+                {props.plan === "pro" && subCanceled && (
                   <p className="mt-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-600">
                     구독 해지가 예약됐어요. 남은 이용 기간까지는 그대로 쓰실 수 있고, 다음 결제는 진행되지 않아요.
                   </p>
                 )}
 
-                {/* 회원 탈퇴 — 위험 작업, 2단계 확인 */}
-                <div className="mt-8 border-t border-neutral-100 pt-6">
+                {/* 계정 관리 — 눈에 띄지 않게(작은 텍스트), 단 접근은 가능하게 */}
+                <div className="mt-10 flex flex-col items-start gap-2 border-t border-neutral-100 pt-5 text-xs">
+                  {props.plan === "pro" && !subCanceled && (
+                    <button onClick={cancelSubscription} disabled={busy} className="text-neutral-400 transition hover:text-neutral-600 disabled:opacity-50">
+                      구독 해지
+                    </button>
+                  )}
                   {!confirmDelete ? (
-                    <button onClick={() => setConfirmDelete(true)} className="text-sm font-medium text-red-500 transition hover:text-red-600">
+                    <button onClick={() => setConfirmDelete(true)} className="text-neutral-400 transition hover:text-red-500">
                       회원 탈퇴
                     </button>
                   ) : (
-                    <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+                    <div className="w-full rounded-xl border border-red-200 bg-red-50 p-4">
                       <p className="text-sm font-medium text-red-900">정말 탈퇴할까요?</p>
                       <p className="mt-1 text-sm leading-relaxed text-red-800">
                         작성한 글, 워드프레스 연결, 구독을 포함한 모든 정보가 <b>영구 삭제</b>되고 되돌릴 수 없어요.
+                      </p>
+                      <p className="mt-1 text-xs leading-relaxed text-red-700">
+                        이미 결제한 구독료는 환불되지 않으며, 환불은 <a href="/refund" target="_blank" className="underline">환불 정책</a>을 따라요.
                       </p>
                       <div className="mt-3 flex flex-wrap gap-2">
                         <button onClick={deleteAccount} disabled={busy} className="rounded-full bg-red-600 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-50">
