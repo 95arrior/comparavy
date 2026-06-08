@@ -11,7 +11,9 @@ import WordPressPanel from "./WordPressPanel";
 import AteFloLogo from "@/components/AteFloLogo";
 import Brand from "@/components/Brand";
 import AdminDashboard from "./AdminDashboard";
-import { ANNOUNCEMENTS, LATEST_ANNOUNCEMENT_ID } from "@/lib/announcements";
+import NewsView from "./NewsView";
+import WpGuideView from "./WpGuideView";
+import { LATEST_ANNOUNCEMENT_ID } from "@/lib/announcements";
 import HeroInput from "@/components/HeroInput";
 import DemoStream from "@/components/DemoStream";
 import ServiceIntro from "@/components/ServiceIntro";
@@ -47,7 +49,7 @@ export default function DashboardClient(props: DashboardProps) {
   const [subCanceled, setSubCanceled] = useState(props.subStatus === "canceled");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [showNews, setShowNews] = useState(false);
+  const [page, setPage] = useState<null | "news" | "guide">(null);
   const [unreadNews, setUnreadNews] = useState(false);
 
   // 메인에서 키워드+유형+문체를 받고 왔으면, 바로 작성화면을 띄운다(뎁스 축소)
@@ -166,14 +168,23 @@ export default function DashboardClient(props: DashboardProps) {
     }
   }, []);
   function openNews() {
-    setNavOpen(false); // 모바일 전체화면 사이드바를 닫아 공지 패널이 가려지지 않게
-    setShowNews(true);
+    setSelected(null);
+    setGenParams(null);
+    setNavOpen(false);
+    setPage("news");
     setUnreadNews(false);
     try {
       localStorage.setItem("ateflo_seen_announcement", LATEST_ANNOUNCEMENT_ID);
     } catch {
       // 무시
     }
+  }
+
+  function openGuide() {
+    setSelected(null);
+    setGenParams(null);
+    setNavOpen(false);
+    setPage("guide");
   }
 
   // 모바일에서 사이드바(전체화면)가 열리면 뒤 페이지 스크롤 잠금 — 사이드바만 스크롤되게
@@ -189,6 +200,7 @@ export default function DashboardClient(props: DashboardProps) {
   function goTab(k: Tab) {
     setSelected(null);
     setGenParams(null);
+    setPage(null);
     setTab(k);
     closeOnMobile();
   }
@@ -218,27 +230,6 @@ export default function DashboardClient(props: DashboardProps) {
     <div className="flex min-h-screen bg-neutral-50 text-neutral-900 antialiased">
       {/* 모바일: 사이드바 열렸을 때 뒤 어둡게 (탭하면 닫힘) */}
       {navOpen && <div onClick={() => setNavOpen(false)} className="fixed inset-0 z-40 bg-black/30 md:hidden" />}
-
-      {/* 공지·업데이트 패널 */}
-      {showNews && (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/40 sm:items-center sm:p-6" onClick={() => setShowNews(false)}>
-          <div onClick={(e) => e.stopPropagation()} className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-white p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-2xl sm:pb-5">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-semibold tracking-tight">공지 · 업데이트</h3>
-              <button onClick={() => setShowNews(false)} aria-label="닫기" className="text-neutral-400 transition hover:text-neutral-700">✕</button>
-            </div>
-            <ul className="mt-4 space-y-4">
-              {ANNOUNCEMENTS.map((a) => (
-                <li key={a.id} className="border-b border-neutral-100 pb-4 last:border-0 last:pb-0">
-                  <p className="text-xs text-neutral-400">{a.date}</p>
-                  <p className="mt-0.5 text-sm font-medium text-neutral-900">{a.title}</p>
-                  <p className="mt-1 text-sm leading-relaxed text-neutral-600">{a.body}</p>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
 
       {/* 좌측 레일 — 데스크톱은 접힘/펼침 레일, 모바일은 햄버거로 여는 오버레이 */}
       <aside
@@ -359,7 +350,7 @@ export default function DashboardClient(props: DashboardProps) {
       {/* 메인 */}
       <div className="min-w-0 flex-1">
         {/* 모바일 상단바 — 햄버거로 사이드바 열기 (편집·작성 화면엔 자체 상단바가 있어 숨김) */}
-        {!selected && !genParams && (
+        {!selected && !genParams && !page && (
           <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-neutral-200 bg-white/95 px-4 py-2.5 backdrop-blur md:hidden">
             <button onClick={() => setNavOpen(true)} aria-label="메뉴 열기" className="flex h-9 w-9 items-center justify-center rounded-lg text-neutral-600 transition hover:bg-neutral-100">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 8h16M4 15h9" /></svg>
@@ -368,7 +359,10 @@ export default function DashboardClient(props: DashboardProps) {
           </div>
         )}
 
-        {selected && (
+        {page === "news" && <NewsView onBack={() => setPage(null)} />}
+        {page === "guide" && <WpGuideView onBack={() => setPage(null)} onGoConnect={() => goTab("wordpress")} />}
+
+        {!page && selected && (
           <ArticleModal
             article={selected}
             wpConnected={Boolean(wpSiteUrl)}
@@ -378,7 +372,7 @@ export default function DashboardClient(props: DashboardProps) {
           />
         )}
 
-        {!selected && genParams && (
+        {!page && !selected && genParams && (
           <WritingView
             params={genParams}
             pro={props.plan === "pro"}
@@ -392,7 +386,7 @@ export default function DashboardClient(props: DashboardProps) {
         )}
 
         {/* 새 글 = 메인 화면 (중앙 입력 + 데모 + 스크롤 시 서비스 소개) */}
-        {!selected && !genParams && tab === "generate" && (
+        {!page && !selected && !genParams && tab === "generate" && (
           <div className="ateflo-page-in">
             <section className="mx-auto max-w-3xl px-6 pb-20 pt-16 text-center sm:pt-24">
               <p className="text-sm font-medium tracking-tight text-neutral-400">워드프레스 블로그를 위한 AI 글쓰기</p>
@@ -422,7 +416,7 @@ export default function DashboardClient(props: DashboardProps) {
           </div>
         )}
 
-        {!selected && !genParams && tab !== "generate" && (
+        {!page && !selected && !genParams && tab !== "generate" && (
           <main key={tab} className="ateflo-page-in mx-auto max-w-5xl px-6 py-10">
             {tab !== "account" && tab !== "admin" && !allDone && nextStep && (
               <div className="mb-6 flex flex-wrap items-center gap-4 rounded-2xl border border-[#3f91ff]/30 bg-[#3f91ff]/5 px-5 py-4">
@@ -443,7 +437,7 @@ export default function DashboardClient(props: DashboardProps) {
               <ArticleList articles={articles} onOpen={setSelected} onGoGenerate={() => goTab("generate")} />
             )}
             {tab === "wordpress" && (
-              <WordPressPanel siteUrl={wpSiteUrl} onConnected={setWpSiteUrl} onDisconnected={() => setWpSiteUrl(null)} />
+              <WordPressPanel siteUrl={wpSiteUrl} onConnected={setWpSiteUrl} onDisconnected={() => setWpSiteUrl(null)} onOpenGuide={openGuide} />
             )}
             {tab === "account" && (
               <div className="mx-auto max-w-xl rounded-2xl border border-neutral-200 bg-white p-6 sm:p-8">
