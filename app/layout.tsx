@@ -11,6 +11,7 @@ export const metadata: Metadata = {
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
+  keywords: ["에이트플로", "AteFlo", "워드프레스 AI 글쓰기", "한국어 SEO 글", "AI 블로그 자동 발행", "블로그 글 자동 생성"],
   openGraph: {
     title: `${SITE_NAME} — 발행할 가치가 있는 AI 블로그 글`,
     description: SITE_DESCRIPTION,
@@ -38,6 +39,19 @@ export default function RootLayout({
         />
       </head>
       <body>
+        {/* 구조화 데이터 — 구글이 브랜드의 한글명(에이트플로)을 인식하도록 */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: SITE_NAME,
+              alternateName: "에이트플로",
+              url: SITE_URL,
+            }),
+          }}
+        />
         <RouteScrollManager />
         <GoogleAnalytics />
         {children}
