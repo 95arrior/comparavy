@@ -11,12 +11,27 @@ const GUIDE_STEPS = [
 ];
 
 // 워드프레스가 아예 없는 사람을 위한 시작 가이드 (무료 낭비 방지·활성화)
-const START_STEPS = [
-  "‘원클릭 워드프레스 설치’를 지원하는 호스팅에 가입합니다. (자체 도메인·플러그인을 쓰려면 자기호스팅 워드프레스를 권장)",
-  "호스팅의 ‘워드프레스 1클릭 설치’로 사이트를 만들고 도메인을 연결합니다.",
-  "워드프레스 관리자(wp-admin)에 로그인합니다.",
-  "위 ‘애플리케이션 비밀번호’ 5단계대로 비밀번호를 발급합니다.",
-  "아래에 사이트 주소·사용자명·앱 비밀번호를 입력해 연결하면 끝이에요!",
+const START_STEPS: { t: string; d: string }[] = [
+  {
+    t: "워드프레스 호스팅에 가입하세요",
+    d: "처음이라면 ‘원클릭(자동) 워드프레스 설치’를 지원하는 호스팅이 제일 쉬워요. 국내는 ‘카페24 워드프레스 호스팅’ 같은 곳이 한국어라 편하고, 보통 월 몇천 원대예요.",
+  },
+  {
+    t: "‘워드프레스 자동 설치’ 버튼을 누르세요",
+    d: "호스팅 관리 화면에서 버튼 한 번이면 설치돼요. 이때 만드는 ‘아이디·비밀번호’는 꼭 적어두세요. 다음에 워드프레스에 로그인할 때 쓰는 정보예요.",
+  },
+  {
+    t: "내 사이트 관리자 페이지에 들어가세요",
+    d: "주소창에 ‘내 사이트 주소 + /wp-admin’을 입력하면 로그인 화면이 나와요. 예) https://myblog.com/wp-admin → 2번에서 적어둔 아이디·비밀번호로 로그인.",
+  },
+  {
+    t: "앱 비밀번호를 발급하세요",
+    d: "로그인했다면, 바로 아래 ‘애플리케이션 비밀번호 발급’ 5단계를 그대로 따라 하면 돼요. (일반 로그인 비밀번호와 다른, 연결 전용 비밀번호예요)",
+  },
+  {
+    t: "AteFlo에 연결하면 끝이에요!",
+    d: "맨 아래 칸에 ① 사이트 주소 ② 사용자명(워드프레스 로그인 아이디) ③ 방금 복사한 앱 비밀번호를 넣고 ‘사이트 연결하기’를 누르세요.",
+  },
 ];
 
 export default function WordPressPanel({
@@ -101,13 +116,16 @@ export default function WordPressPanel({
           <span className="shrink-0 text-neutral-400">{showStart ? "▲" : "▼"}</span>
         </button>
         {showStart && (
-          <ol className="space-y-2 px-4 pb-4 text-sm text-neutral-600">
+          <ol className="space-y-3.5 px-4 pb-4 text-sm">
             {START_STEPS.map((step, i) => (
               <li key={i} className="flex gap-3">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs text-white" style={{ background: "#3f91ff" }}>
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs text-white" style={{ background: "#3f91ff" }}>
                   {i + 1}
                 </span>
-                <span>{step}</span>
+                <span>
+                  <span className="block font-medium text-neutral-800">{step.t}</span>
+                  <span className="mt-0.5 block leading-relaxed text-neutral-500">{step.d}</span>
+                </span>
               </li>
             ))}
           </ol>

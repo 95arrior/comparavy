@@ -166,6 +166,7 @@ export default function DashboardClient(props: DashboardProps) {
     }
   }, []);
   function openNews() {
+    setNavOpen(false); // 모바일 전체화면 사이드바를 닫아 공지 패널이 가려지지 않게
     setShowNews(true);
     setUnreadNews(false);
     try {
@@ -220,7 +221,7 @@ export default function DashboardClient(props: DashboardProps) {
 
       {/* 공지·업데이트 패널 */}
       {showNews && (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 sm:items-center sm:p-6" onClick={() => setShowNews(false)}>
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/40 sm:items-center sm:p-6" onClick={() => setShowNews(false)}>
           <div onClick={(e) => e.stopPropagation()} className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-white p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-2xl sm:pb-5">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-semibold tracking-tight">공지 · 업데이트</h3>
