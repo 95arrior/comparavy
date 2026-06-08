@@ -12,6 +12,7 @@ import WordPressPanel from "./WordPressPanel";
 import AteFloLogo from "@/components/AteFloLogo";
 import HeroInput from "@/components/HeroInput";
 import DemoStream from "@/components/DemoStream";
+import ServiceIntro from "@/components/ServiceIntro";
 import Link from "next/link";
 
 type Tab = "generate" | "articles" | "wordpress" | "account";
@@ -144,7 +145,7 @@ export default function DashboardClient(props: DashboardProps) {
         {navOpen ? (
           <div className="mb-2 flex h-10 items-center justify-between pl-2 pr-1">
             <div className="flex items-center gap-2">
-              <AteFloLogo size={22} />
+              <AteFloLogo size={24} />
               <span className="font-semibold tracking-tight">{SITE_NAME}</span>
             </div>
             <button
@@ -241,9 +242,39 @@ export default function DashboardClient(props: DashboardProps) {
           />
         )}
 
-        {!selected && !genParams && (
+        {/* 새 글 = 메인 화면 (중앙 입력 + 데모 + 스크롤 시 서비스 소개) */}
+        {!selected && !genParams && tab === "generate" && (
+          <div>
+            <section className="mx-auto max-w-3xl px-6 pb-20 pt-16 text-center sm:pt-24">
+              <p className="text-sm font-medium tracking-tight text-neutral-400">워드프레스 블로그를 위한 AI 글쓰기</p>
+              <h1 className="font-pretendard mt-5 text-4xl font-bold leading-[1.15] tracking-tight sm:text-6xl">글쓰기, 키워드 하나면 끝</h1>
+              <p className="mx-auto mt-6 max-w-md text-base leading-relaxed text-neutral-500">
+                어떤 구조로, 어떤 흐름으로 글을 써야 좋은 글이 되는지. 우리는 그 답을 알고, 키워드 하나로 글을 씁니다.
+              </p>
+              {blocked && lockedArticle ? (
+                <div className="mx-auto mt-10 max-w-xl rounded-2xl border border-amber-200 bg-amber-50 p-6 text-left">
+                  <p className="text-sm font-medium text-amber-900">무료 미리보기를 만들었어요 🔒</p>
+                  <p className="mt-1 text-sm leading-relaxed text-amber-800">끝까지 보고 발행하려면, 그리고 글을 더 만들려면 프로로 업그레이드하세요.</p>
+                  <p className="mt-3 truncate text-sm font-medium text-neutral-900">“{lockedArticle.title}”</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button onClick={() => setSelected(lockedArticle)} className="rounded-full border border-amber-300 bg-white px-4 py-1.5 text-sm font-medium text-amber-900 transition hover:bg-amber-100">미리보기 글 보기</button>
+                    <Link href="/pricing" className="rounded-full bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700">프로로 업그레이드</Link>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="mt-10"><HeroInput loggedIn onStart={setGenParams} /></div>
+                  <div className="mt-12"><DemoStream /></div>
+                </>
+              )}
+            </section>
+            <ServiceIntro />
+          </div>
+        )}
+
+        {!selected && !genParams && tab !== "generate" && (
           <main className="mx-auto max-w-5xl px-6 py-10">
-            {tab !== "account" && tab !== "generate" && !allDone && (
+            {tab !== "account" && !allDone && (
               <div className="mb-6 rounded-xl border border-neutral-200 bg-white px-5 py-4">
                 <p className="text-xs font-medium text-neutral-400">처음이세요? · 시작 가이드</p>
                 {nextStep && (
@@ -272,41 +303,6 @@ export default function DashboardClient(props: DashboardProps) {
               </div>
             )}
 
-            {tab === "generate" && (
-              <div className="mx-auto max-w-2xl pt-6 text-center sm:pt-10">
-                <h1 className="font-pretendard text-3xl font-bold tracking-tight sm:text-4xl">어떤 글을 써드릴까요?</h1>
-                <p className="mt-3 text-sm text-neutral-500">키워드 하나만 입력하면 한국어 SEO 글을 써드려요.</p>
-                {blocked && lockedArticle ? (
-                  <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-6 text-left">
-                    <p className="text-sm font-medium text-amber-900">무료 미리보기를 만들었어요 🔒</p>
-                    <p className="mt-1 text-sm leading-relaxed text-amber-800">
-                      끝까지 보고 발행하려면, 그리고 글을 더 만들려면 프로로 업그레이드하세요.
-                    </p>
-                    <p className="mt-3 truncate text-sm font-medium text-neutral-900">“{lockedArticle.title}”</p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <button
-                        onClick={() => setSelected(lockedArticle)}
-                        className="rounded-full border border-amber-300 bg-white px-4 py-1.5 text-sm font-medium text-amber-900 transition hover:bg-amber-100"
-                      >
-                        미리보기 글 보기
-                      </button>
-                      <Link href="/pricing" className="rounded-full bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700">
-                        프로로 업그레이드
-                      </Link>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="mt-8">
-                      <HeroInput loggedIn onStart={setGenParams} />
-                    </div>
-                    <div className="mt-12">
-                      <DemoStream />
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
             {tab === "articles" && (
               <ArticleList articles={articles} onOpen={setSelected} onGoGenerate={() => goTab("generate")} />
             )}
