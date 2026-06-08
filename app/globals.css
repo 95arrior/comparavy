@@ -49,7 +49,10 @@ html {
   to { opacity: 1; transform: translateX(0); }
 }
 .ateflo-page-in {
-  animation: ateflo-page-in 0.35s ease-out both;
+  /* backwards: 진입 애니메이션만, 끝난 뒤 transform을 남기지 않음
+     (both로 두면 transform이 남아 내부 position:fixed 요소가 화면이 아닌 이 박스 기준으로 잡혀,
+      스크롤 시 모바일 사이드바가 화면 밖으로 밀리는 버그가 생김) */
+  animation: ateflo-page-in 0.35s ease-out backwards;
 }
 
 /* ── Minimal mono theme ──────────────────────────────────── */

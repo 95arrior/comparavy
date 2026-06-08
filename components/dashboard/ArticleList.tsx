@@ -47,13 +47,13 @@ export default function ArticleList({
           <button onClick={() => onOpen(a)} className="min-w-0 flex-1 text-left">
             <div className="flex items-center gap-2">
               {a.locked ? (
-                <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">🔒 미리보기</span>
+                <span className="shrink-0 whitespace-nowrap rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">🔒 미리보기</span>
               ) : (
-                <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLE[a.status]}`}>
+                <span className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLE[a.status]}`}>
                   {STATUS_LABEL[a.status]}
                 </span>
               )}
-              <span className="truncate text-xs text-neutral-400">{a.keyword}</span>
+              <span className="min-w-0 truncate text-xs text-neutral-400">{a.keyword}</span>
             </div>
             <h3 className="mt-2 truncate text-base font-medium tracking-tight">{a.title}</h3>
             <p className="mt-1 text-xs text-neutral-400">
