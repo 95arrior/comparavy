@@ -34,11 +34,11 @@ const ICON: Record<string, React.ReactNode> = {
   admin: <Svg><path d="M4 20h16" /><path d="M7 20v-6M12 20v-9M17 20v-4" /></Svg>,
 };
 
-function StatCard({ label, value }: { label: string; value: number | null | undefined }) {
+function StatCard({ label, value, prefix = "", suffix = "" }: { label: string; value: number | null | undefined; prefix?: string; suffix?: string }) {
   return (
     <div className="rounded-2xl border border-neutral-200 bg-white p-5">
       <p className="text-xs font-medium text-neutral-400">{label}</p>
-      <p className="mt-1 text-3xl font-semibold tracking-tight">{value === null || value === undefined ? "—" : value.toLocaleString()}</p>
+      <p className="mt-1 text-3xl font-semibold tracking-tight">{value === null || value === undefined ? "—" : `${prefix}${value.toLocaleString()}${suffix}`}</p>
     </div>
   );
 }
@@ -357,7 +357,13 @@ export default function DashboardClient(props: DashboardProps) {
             {tab === "admin" && props.isAdmin && (
               <div>
                 <h2 className="text-lg font-semibold tracking-tight">관리자 통계</h2>
-                <p className="mt-1 text-sm text-neutral-500">새로고침하면 최신 수치예요.</p>
+                <p className="mt-1 text-sm text-neutral-500">새로고침하면 최신 수치예요. (오늘 = 한국시간 기준)</p>
+
+                <p className="mt-8 text-sm font-medium text-neutral-400">매출 · 전환</p>
+                <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <StatCard label="예상 월매출(MRR)" value={props.adminStats?.mrr} prefix="₩" />
+                  <StatCard label="전환율(무료→프로)" value={props.adminStats?.conversion} suffix="%" />
+                </div>
 
                 <p className="mt-8 text-sm font-medium text-neutral-400">회원</p>
                 <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">

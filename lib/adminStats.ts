@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from "./supabase-server";
+import { PLANS } from "./plans";
 
 export type AdminStats = {
   usersTotal: number | null;
@@ -10,6 +11,10 @@ export type AdminStats = {
   publishedArticles: number | null;
   lockedArticles: number | null;
   wpConnections: number | null;
+  /** 예상 월매출(MRR) = 프로 수 × 프로 가격 */
+  mrr: number | null;
+  /** 전환율(무료→프로) % */
+  conversion: number | null;
 };
 
 // ADMIN_EMAILS(쉼표 구분)에 등록된 이메일인지
@@ -32,9 +37,10 @@ async function count(admin: any, table: string, build?: (q: any) => any): Promis
 
 export async function getAdminStats(): Promise<AdminStats> {
   const admin = createSupabaseAdminClient();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayIso = today.toISOString();
+  // '오늘'은 한국시간(KST, UTC+9) 자정 기준 — 서버가 UTC여도 정확하게
+  const KST = 9 * 60 * 60 * 1000;
+  const kstMidnightUtcMs = Math.floor((Date.now() + KST) / 86400000) * 86400000 - KST;
+  const todayIso = new Date(kstMidnightUtcMs).toISOString();
 
   const [usersTotal, usersToday, proUsers, articlesTotal, articlesToday, publishedArticles, lockedArticles, wpConnections] =
     await Promise.all([
@@ -49,5 +55,7 @@ export async function getAdminStats(): Promise<AdminStats> {
     ]);
 
   const freeUsers = usersTotal !== null && proUsers !== null ? usersTotal - proUsers : null;
-  return { usersTotal, usersToday, proUsers, freeUsers, articlesTotal, articlesToday, publishedArticles, lockedArticles, wpConnections };
+  const mrr = proUsers !== null ? proUsers * PLANS.pro.price : null;
+  const conversion = usersTotal && usersTotal > 0 && proUsers !== null ? Math.round((proUsers / usersTotal) * 100) : null;
+  return { usersTotal, usersToday, proUsers, freeUsers, articlesTotal, articlesToday, publishedArticles, lockedArticles, wpConnections, mrr, conversion };
 }
