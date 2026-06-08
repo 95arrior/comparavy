@@ -55,7 +55,8 @@ export async function POST(request: Request) {
 
   const keyword = (body.keyword ?? "").trim();
   // 글자(한글/영문) 2개 미만이면 무의미 입력으로 보고 차단 — 헛 생성(비용) 방지
-  if ((keyword.match(/\p{L}/gu) ?? []).length < 2) {
+  // 완성된 한글 음절(가–힣)·영문자만 '글자'로 인정 → 자모(ㅁㅇ·ㅋㅋ)·숫자·기호만 입력 시 차단(헛 생성·비용 낭비 방지)
+  if ((keyword.match(/[가-힣a-zA-Z]/g) ?? []).length < 2) {
     return NextResponse.json({ error: "검색할 만한 키워드를 입력해 주세요." }, { status: 400 });
   }
 

@@ -47,7 +47,8 @@ export default function HeroInput({ loggedIn, onStart }: { loggedIn: boolean; on
     e.preventDefault();
     const k = keyword.trim();
     // 글자(한글/영문)가 2개 미만이면 무의미 입력(숫자·특수문자·빈칸)으로 보고 차단 — 헛 생성 방지
-    const letters = (k.match(/\p{L}/gu) ?? []).length;
+    // 완성된 한글 음절(가–힣)·영문자만 '글자'로 인정 → ‘ㅁㅇ·ㅋㅋ·ㅠㅠ’ 같은 자모/무의미 입력 차단
+    const letters = (k.match(/[가-힣a-zA-Z]/g) ?? []).length;
     if (letters < 2) {
       setErr(true);
       inputRef.current?.focus();
