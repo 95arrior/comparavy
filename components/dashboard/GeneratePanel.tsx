@@ -1,54 +1,24 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { ARTICLE_TYPES, TONES } from "@/lib/articlePrompt";
-import AteFloLogo from "@/components/AteFloLogo";
-import type { Article } from "./types";
-
-// HTML을 태그/문자 단위로 쪼갠다(타이핑 시 태그가 잘리지 않게)
-function tokenize(html: string): string[] {
-  return html.match(/<[^>]*>|[^<]/g) ?? [];
-}
-
-// 버튼의 "…" 점이 차례대로 튀는 애니메이션
-const Dots = () => (
-  <span className="inline-flex gap-1.5">
-    <span className="animate-bounce">·</span>
-    <span className="animate-bounce [animation-delay:0.15s]">·</span>
-    <span className="animate-bounce [animation-delay:0.3s]">·</span>
-  </span>
-);
+import type { GenParams } from "./WritingView";
 
 export default function GeneratePanel({
   remaining,
-  onGenerated,
+  onStart,
   pro,
 }: {
   remaining: number;
-  onGenerated: (article: Article) => void;
+  onStart: (params: GenParams) => void;
   pro: boolean;
 }) {
   const [keyword, setKeyword] = useState("");
   const [angle, setAngle] = useState("");
   const [type, setType] = useState(ARTICLE_TYPES[0].key);
   const [tone, setTone] = useState(TONES[0].key);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
   const [showOpts, setShowOpts] = useState(false);
-  const previewRef = useRef<HTMLDivElement>(null);
-  const targetRef = useRef("");
-  const doneRef = useRef<Article | null>(null);
-  const shownRef = useRef(0);
-  const revealRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const titleRef = useRef("");
-  const bodyRef = useRef("");
-
-  // 작성 중엔 항상 맨 아래(쓰이는 끝)가 보이도록 자동 스크롤
-  useEffect(() => {
-    const el = previewRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [preview]);
 
   // 메인에서 입력한 키워드를 이어받아 프리필 (login 거쳐도 유지)
   useEffect(() => {
@@ -63,127 +33,15 @@ export default function GeneratePanel({
   const outOfQuota = remaining <= 0;
   const teaserMode = !pro && outOfQuota; // 무료 한도 소진 → 결제 유도용 잠금 미리보기 1편 허용
 
-  function stopReveal() {
-    if (revealRef.current) {
-      clearInterval(revealRef.current);
-      revealRef.current = null;
-    }
-  }
-  // 제목(H1) + 본문을 합쳐 미리보기 타깃 구성 → 편집화면에서 볼 형태 그대로 타이핑됨
-  function composeTarget() {
-    const t = titleRef.current ? `<h1>${titleRef.current}</h1>` : "";
-    targetRef.current = t + bodyRef.current;
-  }
-  // 서버가 한 번에 줘도 일정 속도로 타이핑되게 (메인 데모처럼)
-  function startReveal() {
-    stopReveal();
-    revealRef.current = setInterval(() => {
-      const tokens = tokenize(targetRef.current);
-      if (shownRef.current < tokens.length) {
-        // 사람이 타이핑하듯 한 틱에 글자 2개만. 태그(<...>)는 시간 안 잡아먹게 즉시 통과.
-        let typed = 0;
-        while (shownRef.current < tokens.length && typed < 2) {
-          const tok = tokens[shownRef.current];
-          shownRef.current += 1;
-          if (!tok.startsWith("<")) typed += 1;
-        }
-        setPreview(tokens.slice(0, shownRef.current).join(""));
-      } else if (doneRef.current) {
-        // 다 따라잡았고 서버도 끝남 → 잠깐 보여주고 편집 화면 열기
-        const art = doneRef.current;
-        doneRef.current = null;
-        stopReveal();
-        setLoading(false);
-        setKeyword("");
-        setAngle("");
-        setTimeout(() => {
-          setPreview(null);
-          onGenerated(art);
-        }, 500);
-      }
-    }, 32);
-  }
-
-  async function submit(e: React.FormEvent) {
+  function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     if (!keyword.trim()) {
       setError("키워드를 입력해 주세요.");
       return;
     }
-    setLoading(true);
-    setPreview("");
-    targetRef.current = "";
-    titleRef.current = "";
-    bodyRef.current = "";
-    doneRef.current = null;
-    shownRef.current = 0;
-    setTimeout(() => previewRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 60);
-    startReveal();
-    try {
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ keyword, angle, type, tone }),
-      });
-
-      // 사전 검사 실패(429/403 등)는 일반 JSON 으로 옴
-      if (!res.ok || !res.body) {
-        const data = await res.json().catch(() => ({}));
-        stopReveal();
-        setError(data.error ?? "글 생성에 실패했어요.");
-        setPreview(null);
-        setLoading(false);
-        return;
-      }
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buf = "";
-      let done = false;
-      while (!done) {
-        const chunk = await reader.read();
-        if (chunk.done) break;
-        buf += decoder.decode(chunk.value, { stream: true });
-        const parts = buf.split("\n\n");
-        buf = parts.pop() ?? "";
-        for (const part of parts) {
-          const line = part.replace(/^data: /, "").trim();
-          if (!line) continue;
-          let msg: { type: string; html?: string; title?: string; article?: Article; error?: string };
-          try {
-            msg = JSON.parse(line);
-          } catch {
-            continue;
-          }
-          if (msg.type === "title") {
-            titleRef.current = msg.title ?? "";
-            composeTarget(); // reveal 루프가 일정 속도로 따라감
-          } else if (msg.type === "body") {
-            bodyRef.current = msg.html ?? "";
-            composeTarget();
-          } else if (msg.type === "done" && msg.article) {
-            doneRef.current = msg.article; // 다 따라잡으면 편집 열림
-            done = true;
-          } else if (msg.type === "error") {
-            stopReveal();
-            setError(msg.error ?? "글 생성에 실패했어요.");
-            setPreview(null);
-            done = true;
-          }
-        }
-      }
-    } catch {
-      stopReveal();
-      setError("네트워크 오류가 났어요. 잠시 후 다시 시도해 주세요.");
-      setPreview(null);
-    } finally {
-      // done이면 reveal이 마무리하며 loading을 끈다. 그 외(에러·중단)엔 여기서 정리.
-      if (!doneRef.current) {
-        stopReveal();
-        setLoading(false);
-      }
-    }
+    // 실제 생성·타이핑은 전체 페이지 작성 화면(WritingView)에서 진행
+    onStart({ keyword: keyword.trim(), angle, type, tone });
   }
 
   return (
@@ -265,40 +123,12 @@ export default function GeneratePanel({
 
         <button
           type="submit"
-          disabled={loading || (outOfQuota && !teaserMode)}
+          disabled={outOfQuota && !teaserMode}
           className="w-full rounded-full bg-neutral-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
         >
-          {outOfQuota && !teaserMode
-            ? "이번 달 한도를 다 썼어요"
-            : loading
-            ? <span className="inline-flex items-center text-2xl leading-none"><Dots /></span>
-            : "글 생성하기"}
+          {outOfQuota && !teaserMode ? "이번 달 한도를 다 썼어요" : "글 생성하기"}
         </button>
       </form>
-
-      {/* 실시간 생성 미리보기 — 고정 높이 스크롤로 layout shift 방지 */}
-      {preview !== null && (
-        <div className="mt-6">
-          <div className="mb-2 text-xs font-medium text-neutral-500">실시간 미리보기</div>
-          <div ref={previewRef} className="h-80 overflow-y-auto rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-            {preview ? (
-              <>
-                <div
-                  className="prose prose-sm prose-neutral max-w-none"
-                  dangerouslySetInnerHTML={{ __html: preview }}
-                />
-                {loading && <span className="ml-0.5 inline-block animate-pulse text-neutral-500">▍</span>}
-              </>
-            ) : (
-              loading && <p className="text-sm text-neutral-400">글을 구상하고 있어요…</p>
-            )}
-            {/* 로고 — 구상 중·작성 중엔 움직이고, 완료되면 멈춤 */}
-            <div className="mt-3">
-              <AteFloLogo pro={pro} animated={loading} size={22} />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

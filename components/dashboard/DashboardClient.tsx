@@ -9,6 +9,7 @@ import type { Article, DashboardProps } from "./types";
 import GeneratePanel from "./GeneratePanel";
 import ArticleList from "./ArticleList";
 import ArticleModal from "./ArticleModal";
+import WritingView, { type GenParams } from "./WritingView";
 import WordPressPanel from "./WordPressPanel";
 
 type Tab = "generate" | "articles" | "wordpress";
@@ -19,6 +20,7 @@ export default function DashboardClient(props: DashboardProps) {
   const [articlesUsed, setArticlesUsed] = useState(props.articlesUsed);
   const [wpSiteUrl, setWpSiteUrl] = useState<string | null>(props.wpSiteUrl);
   const [selected, setSelected] = useState<Article | null>(null);
+  const [genParams, setGenParams] = useState<GenParams | null>(null);
 
   const hasPublished = articles.some((a) => a.status === "published" || a.status === "future");
 
@@ -97,7 +99,19 @@ export default function DashboardClient(props: DashboardProps) {
         />
       )}
 
-      {!selected && (
+      {!selected && genParams && (
+        <WritingView
+          params={genParams}
+          pro={props.plan === "pro"}
+          onDone={(article) => {
+            setGenParams(null);
+            onGenerated(article);
+          }}
+          onExit={() => setGenParams(null)}
+        />
+      )}
+
+      {!selected && !genParams && (
       <main className="mx-auto max-w-5xl px-6 py-10">
         {!allDone && (
           <div className="mb-6 rounded-xl border border-neutral-200 bg-white px-5 py-4">
@@ -147,7 +161,7 @@ export default function DashboardClient(props: DashboardProps) {
         {tab === "generate" && (
           <GeneratePanel
             remaining={props.articlesLimit - articlesUsed}
-            onGenerated={onGenerated}
+            onStart={setGenParams}
             pro={props.plan === "pro"}
           />
         )}
