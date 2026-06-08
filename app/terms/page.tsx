@@ -4,7 +4,7 @@ import { SITE_NAME } from "@/lib/site";
 
 export const metadata: Metadata = { title: "이용약관" };
 
-const UPDATED = "2026년 1월 1일";
+const UPDATED = "2026년 6월 9일";
 
 export default function TermsPage() {
   return (
@@ -16,6 +16,7 @@ export default function TermsPage() {
 
       <LegalSection heading="1. 서비스 내용">
         <p>회사는 이용자가 입력한 키워드를 바탕으로 한국어 SEO 글을 생성하고, 이용자가 연결한 워드프레스 사이트에 발행할 수 있는 기능을 제공합니다.</p>
+        <p>서비스는 무료 요금제(이메일당 평생 3편)와 유료 프로 요금제(월 정기결제, 글 50편·워드프레스 자동 발행)로 제공됩니다.</p>
       </LegalSection>
 
       <LegalSection heading="2. 회원가입 및 계정">
@@ -26,6 +27,7 @@ export default function TermsPage() {
         <p>프로 요금제는 월 단위 정기결제로 제공되며, 이용자가 해지하지 않는 한 매 결제 주기마다 자동으로 갱신·청구됩니다.</p>
         <p>이용자는 대시보드 또는 고객센터를 통해 언제든지 다음 결제 갱신을 해지할 수 있으며, 해지 시 이미 결제된 이용 기간이 끝날 때까지 서비스를 이용할 수 있습니다.</p>
         <p>요금 및 정책이 변경될 경우 회사는 사전에 공지하며, 변경은 다음 결제 주기부터 적용됩니다.</p>
+        <p>이용자는 대시보드에서 회원 탈퇴를 할 수 있으며, 탈퇴 시 구독은 즉시 해지되어 추가 청구가 발생하지 않고, 계정 및 데이터는 개인정보처리방침에 따라 처리됩니다.</p>
       </LegalSection>
 
       <LegalSection heading="4. 생성 콘텐츠에 대한 책임">

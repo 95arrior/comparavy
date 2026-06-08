@@ -419,10 +419,10 @@ export default function DashboardClient(props: DashboardProps) {
                     <div className="w-full rounded-xl border border-red-200 bg-red-50 p-4">
                       <p className="text-sm font-medium text-red-900">정말 탈퇴할까요?</p>
                       <p className="mt-1 text-sm leading-relaxed text-red-800">
-                        작성한 글, 워드프레스 연결, 구독을 포함한 모든 정보가 <b>영구 삭제</b>되고 되돌릴 수 없어요.
+                        <b>구독이 즉시 해지</b>되어 추가 청구는 없어요. 작성한 글·워드프레스 연결·계정 정보가 <b>모두 영구 삭제</b>되고 되돌릴 수 없어요.
                       </p>
                       <p className="mt-1 text-xs leading-relaxed text-red-700">
-                        이미 결제한 구독료는 환불되지 않으며, 환불은 <a href="/refund" target="_blank" className="underline">환불 정책</a>을 따라요.
+                        이미 결제한 이용권은 환불되지 않으며, 환불은 <a href="/refund" target="_blank" className="underline">환불 정책</a>을 따라요.
                       </p>
                       <div className="mt-3 flex flex-wrap gap-2">
                         <button onClick={deleteAccount} disabled={busy} className="rounded-full bg-red-600 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-50">

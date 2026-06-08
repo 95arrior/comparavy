@@ -5,7 +5,7 @@ import { BUSINESS } from "@/lib/business";
 
 export const metadata: Metadata = { title: "개인정보처리방침" };
 
-const UPDATED = "2026년 1월 1일";
+const UPDATED = "2026년 6월 9일";
 
 export default function PrivacyPage() {
   return (
@@ -26,7 +26,11 @@ export default function PrivacyPage() {
       </LegalSection>
 
       <LegalSection heading="3. 보유 및 이용 기간">
-        <p>회원 탈퇴 시 또는 수집·이용 목적 달성 시 지체 없이 파기합니다. 다만 관련 법령에 따라 보존이 필요한 경우 해당 기간 동안 보관합니다(예: 전자상거래법에 따른 계약·결제 기록 5년).</p>
+        <p>회원 탈퇴 시 개인정보는 지체 없이 파기합니다. 다만 다음의 경우 예외적으로 보관합니다.</p>
+        <ul className="list-disc space-y-1 pl-5">
+          <li>관련 법령에 따라 보존이 필요한 경우 해당 기간 동안 보관(예: 전자상거래법에 따른 계약·결제 기록 5년).</li>
+          <li>무료 혜택의 부정 재취득(탈퇴 후 반복 재가입)을 방지하기 위해, 가입 이메일의 <b>일방향 해시값</b>(원본 이메일로 복원 불가)을 보관할 수 있습니다. 이는 부정이용 방지 목적의 최소한의 정보입니다.</li>
+        </ul>
       </LegalSection>
 
       <LegalSection heading="4. 개인정보의 제3자 제공 및 처리위탁">
