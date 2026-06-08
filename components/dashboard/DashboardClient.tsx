@@ -197,6 +197,11 @@ export default function DashboardClient(props: DashboardProps) {
     }
   }, [navOpen]);
 
+  // 탭·뷰(공지/가이드/글편집/작성) 전환 시 항상 맨 위에서 시작
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [tab, page, selected, genParams]);
+
   function goTab(k: Tab) {
     setSelected(null);
     setGenParams(null);

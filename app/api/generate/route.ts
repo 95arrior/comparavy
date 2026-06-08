@@ -94,8 +94,9 @@ export async function POST(request: Request) {
     teaser = true;
   }
 
-  // 티저는 비용 최소화를 위해 무료 분량으로 생성한다 (모델 호출은 동일하게 1회).
-  const maxWords = teaser ? PLANS.free.maxWords : PLANS[row.plan].maxWords;
+  // 티저(4번째 잠금 글)는 프로 품질(5000자)로 생성한다 — 결제해서 풀면 진짜 5000자 글을 얻어
+  // "그럴 거면 결제하고 5000자짜리 했지" 후회를 없앤다. (티저는 이메일당 평생 1회라 비용 통제됨)
+  const maxWords = teaser ? PLANS.pro.maxWords : PLANS[row.plan].maxWords;
   const type = body.type ?? "howto";
   const tone = body.tone ?? "friendly";
   const usedSoFar = row.articles_used;
