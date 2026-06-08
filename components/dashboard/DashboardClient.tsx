@@ -121,14 +121,13 @@ export default function DashboardClient(props: DashboardProps) {
       <button
         key={k}
         onClick={() => goTab(k)}
-        className={`group relative flex items-center gap-3 rounded-xl text-sm transition ${navOpen ? "px-3 py-2.5" : "h-10 w-10 justify-center"} ${
+        className={`group relative flex h-10 w-full items-center gap-2 rounded-lg px-2 text-sm transition ${
           active ? "bg-neutral-100 font-medium text-neutral-900" : "text-neutral-600 hover:bg-neutral-50"
         }`}
       >
-        <span className="shrink-0">{icon}</span>
-        {navOpen ? (
-          <span className="truncate">{label}</span>
-        ) : (
+        <span className="flex w-7 shrink-0 items-center justify-center">{icon}</span>
+        <span className={`truncate transition-opacity duration-150 ${navOpen ? "opacity-100" : "opacity-0"}`}>{label}</span>
+        {!navOpen && (
           <span className="pointer-events-none absolute left-12 z-50 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100">
             {label}
           </span>
@@ -139,38 +138,35 @@ export default function DashboardClient(props: DashboardProps) {
 
   return (
     <div className="flex min-h-screen bg-neutral-50 text-neutral-900 antialiased">
-      {/* 좌측 레일 (ChatGPT식) */}
-      <aside className={`sticky top-0 flex h-screen shrink-0 flex-col border-r border-neutral-200 bg-white px-2 py-3 ${navOpen ? "w-64" : "w-[60px] items-center"}`}>
-        {/* 상단: 로고 ↔ 토글 */}
-        {navOpen ? (
-          <div className="mb-2 flex h-10 items-center justify-between pl-2 pr-1">
-            <div className="flex items-center gap-2">
-              <AteFloLogo size={24} />
-              <span className="font-semibold tracking-tight">{SITE_NAME}</span>
-            </div>
-            <button
-              onClick={() => setNavOpen(false)}
-              aria-label="사이드바 닫기"
-              className="group relative flex h-8 w-8 items-center justify-center rounded-lg text-neutral-500 transition hover:bg-neutral-100"
-            >
-              {ICON.panel}
-              <span className="pointer-events-none absolute right-0 top-10 z-50 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100">사이드바 닫기</span>
-            </button>
-          </div>
-        ) : (
+      {/* 좌측 레일 (ChatGPT식) — 아이콘 위치 고정, 폭만 부드럽게 + 라벨 페이드 */}
+      <aside className={`sticky top-0 flex h-screen shrink-0 flex-col border-r border-neutral-200 bg-white px-2 py-3 transition-[width] duration-200 ease-out ${navOpen ? "w-64" : "w-[56px]"}`}>
+        {/* 상단: 로고(항상 같은 자리) + 브랜드명/닫기(펼침 시 페이드) */}
+        <div className="mb-2 flex h-10 items-center gap-2 px-2">
           <button
             onClick={() => setNavOpen(true)}
+            disabled={navOpen}
             aria-label="사이드바 열기"
-            className="group relative mb-2 flex h-10 w-10 items-center justify-center rounded-lg transition hover:bg-neutral-100"
+            className="group relative flex w-7 shrink-0 items-center justify-center rounded-lg transition enabled:hover:bg-neutral-100"
           >
-            <span className="transition group-hover:opacity-0"><AteFloLogo size={24} /></span>
-            <span className="absolute text-neutral-700 opacity-0 transition group-hover:opacity-100">{ICON.panel}</span>
-            <span className="pointer-events-none absolute left-12 z-50 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100">사이드바 열기</span>
+            <span className={navOpen ? "" : "transition group-hover:opacity-0"}><AteFloLogo size={22} /></span>
+            {!navOpen && <span className="absolute text-neutral-700 opacity-0 transition group-hover:opacity-100">{ICON.panel}</span>}
+            {!navOpen && (
+              <span className="pointer-events-none absolute left-12 z-50 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100">사이드바 열기</span>
+            )}
           </button>
-        )}
+          <span className={`flex-1 truncate font-semibold tracking-tight transition-opacity duration-150 ${navOpen ? "opacity-100" : "opacity-0"}`}>{SITE_NAME}</span>
+          <button
+            onClick={() => setNavOpen(false)}
+            aria-label="사이드바 닫기"
+            className={`group relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-neutral-500 transition hover:bg-neutral-100 ${navOpen ? "" : "pointer-events-none opacity-0"}`}
+          >
+            {ICON.panel}
+            <span className="pointer-events-none absolute right-0 top-10 z-50 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100">사이드바 닫기</span>
+          </button>
+        </div>
 
         {/* 내비 */}
-        <nav className={`flex flex-col gap-1 ${navOpen ? "" : "items-center"}`}>
+        <nav className="flex flex-col gap-1">
           {navItems.map((it) => railBtn(it.key, it.label, ICON[it.key]))}
         </nav>
 
@@ -200,20 +196,19 @@ export default function DashboardClient(props: DashboardProps) {
         {/* 하단: 내 정보 (사용자) */}
         <button
           onClick={() => goTab("account")}
-          className={`group relative mt-auto flex items-center gap-2 rounded-lg transition hover:bg-neutral-50 ${
-            navOpen ? "px-2 py-2" : "h-10 w-10 justify-center"
-          } ${tab === "account" && !selected && !genParams ? "bg-neutral-100" : ""}`}
+          className={`group relative mt-auto flex h-12 w-full items-center gap-2 rounded-lg px-2 transition hover:bg-neutral-50 ${
+            tab === "account" && !selected && !genParams ? "bg-neutral-100" : ""
+          }`}
         >
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-neutral-800 text-xs font-medium text-white">{initial}</span>
-          {navOpen ? (
-            <span className="min-w-0 text-left">
-              <span className="block truncate text-sm font-medium text-neutral-800">{displayName}</span>
-              <span className="block text-xs text-neutral-400">{PLANS[props.plan].name}</span>
-            </span>
-          ) : (
-            <span className="pointer-events-none absolute left-12 z-50 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100">
-              내 정보
-            </span>
+          <span className="flex w-7 shrink-0 items-center justify-center">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-neutral-800 text-xs font-medium text-white">{initial}</span>
+          </span>
+          <span className={`min-w-0 flex-1 text-left transition-opacity duration-150 ${navOpen ? "opacity-100" : "opacity-0"}`}>
+            <span className="block truncate text-sm font-medium text-neutral-800">{displayName}</span>
+            <span className="block text-xs text-neutral-400">{PLANS[props.plan].name}</span>
+          </span>
+          {!navOpen && (
+            <span className="pointer-events-none absolute left-12 z-50 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100">내 정보</span>
           )}
         </button>
       </aside>
