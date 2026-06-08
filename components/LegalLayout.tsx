@@ -6,6 +6,12 @@ import { BUSINESS, mailOrderText } from "@/lib/business";
 export function BusinessInfo() {
   return (
     <>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/debugging-heroes-logo.png"
+        alt={`${BUSINESS.company} 로고`}
+        className="mb-4 h-9 w-auto rounded-md"
+      />
       <p>상호: {BUSINESS.company} / 대표자: {BUSINESS.ceo}</p>
       <p>사업자등록번호: {BUSINESS.bizNumber} / 통신판매업 신고번호: {mailOrderText}</p>
       <p>주소: {BUSINESS.address}</p>
