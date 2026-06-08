@@ -102,7 +102,7 @@ export default function PricingClient({
               disabled={action === "current" || (action === "pro" && loading)}
               onClick={() => {
                 if (action === "pro") startPro();
-                else if (action === "free") router.push(loggedIn ? "/dashboard" : "/login");
+                else if (action === "free") router.push(loggedIn ? "/" : "/login");
               }}
               className={`mt-8 rounded-full px-5 py-2.5 text-center text-sm font-medium transition ${
                 plan.highlight

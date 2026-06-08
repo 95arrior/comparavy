@@ -1,9 +1,17 @@
 import Link from "next/link";
 import { PLANS, formatKRW } from "@/lib/plans";
 import Reveal from "@/components/Reveal";
-import AteFloLogo from "@/components/AteFloLogo";
 
 const BRAND = "#4B5FE1";
+
+// 로고 마크(파비콘과 동일한 입 벌린 원) — 작게 써도 안 깨지는 인라인 SVG
+function LogoMark({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
+      <path fill={BRAND} d="M16 16 L28.99 8.5 A15 15 0 1 0 28.99 23.5 Z" />
+    </svg>
+  );
+}
 
 function Check({ size = 28 }: { size?: number }) {
   return (
@@ -36,7 +44,7 @@ function Section({
       <div className="mx-auto grid max-w-5xl items-center gap-10 px-6 py-24 sm:py-28 lg:grid-cols-2 lg:gap-16">
         <Reveal className={flip ? "lg:order-2" : ""}>
           <p className="flex items-center gap-1.5 text-sm font-semibold tracking-tight" style={{ color: BRAND }}>
-            <AteFloLogo size={16} animated={false} />
+            <LogoMark />
             {eyebrow}
           </p>
           <h2 className="mt-4 text-3xl font-bold leading-[1.22] tracking-tight sm:text-[2.5rem] sm:leading-[1.18]">{title}</h2>
@@ -180,7 +188,7 @@ export default function ServiceIntro() {
         id="how"
         eyebrow="AI 글, 다 똑같다는 분들께"
         title={<>1분이면 쓰지만,<br />검색엔 안 잡히죠.</>}
-        sub="ChatGPT로 천 단어는 누구나 1분이면 뽑아요. 근데 다 비슷하게 생겨서 묻혀요. 우리가 신경 쓴 건 속도가 아니라 ‘어떻게 쓰느냐’예요."
+        sub="글 한 편, ChatGPT로 1분이면 나오죠. 근데 다 비슷해서 묻혀요. 우린 ‘빨리’가 아니라 ‘검색에 걸리게’ 씁니다."
         visual={<BuriedResults />}
         tint
       />
@@ -188,35 +196,35 @@ export default function ServiceIntro() {
         id="features"
         eyebrow="구조 다양성"
         title={<>같은 키워드,<br />매번 다른 글.</>}
-        sub="남들과 같은 키워드로 써도 글 구조가 안 겹치게 만들었어요. 복붙한 듯한 양산글이 안 나와요."
+        sub="옆 블로그랑 같은 키워드로 써도, 글 생김새가 안 겹쳐요. 복붙한 듯한 양산글처럼 안 보입니다."
         visual={<StructureCompare />}
         flip
       />
       <Section
         eyebrow="한 번에 끝나요"
         title={<>프롬프트 다시,<br />또 고치고… 그만.</>}
-        sub="직접 시키면 톤·구조가 한 번에 안 나와서 대화를 계속 이어가게 되죠. 그러다 글 맥락도 흐트러지고요. AteFlo는 좋은 글이 나오는 프롬프트·구조를 미리 짜뒀어요. 키워드만 넣으면 끝이에요."
+        sub="‘이렇게 써줘’ 시키고, 또 고치고… 그 왕복을 우리가 미리 다 해뒀어요. 키워드만 넣으세요. 한 번에 나옵니다."
         visual={<PromptHassle />}
         tint
       />
       <Section
         eyebrow="사람이 쓴 것처럼"
         title={<>AI 티 빼고,<br />없는 얘긴 안 지어내요.</>}
-        sub="‘알아보겠습니다’ 같은 말투·번역투를 걸러내고, 가짜 통계·후기는 만들지 않도록 규칙을 박아뒀어요. 그대로 올려도 탈 안 나게요."
+        sub="‘알아보겠습니다’ 같은 티 나는 말투, 다 걸러요. 안 해본 얘기·없는 통계는 안 만들고요. 그대로 올려도 돼요."
         visual={<CleanCheck />}
         flip
       />
       <Section
         eyebrow="쓰고 끝이 아니에요"
         title={<>제목·메타·FAQ까지,<br />워드프레스에 한 번에.</>}
-        sub="한국 구글에 맞춘 SEO 기본기를 자동으로 갖추고, 버튼 하나로 내 워드프레스에 발행해요. (프로 플랜)"
+        sub="제목·메타·FAQ까지 알아서 챙기고, 버튼 하나로 내 워드프레스에 올라가요. 복붙은 이제 그만. (프로 플랜)"
         visual={<PublishCard />}
         tint
       />
       <Section
         eyebrow="외주 한 편 값"
         title={<>외주 글 한 편이면,<br />여기선 한 달 50편.</>}
-        sub="블로그 글 외주는 보통 한 편에 수만 원이에요. 한 달 ₩29,900이면 50편을 직접 쓰고 워드프레스에 바로 올려요."
+        sub="외주 글 한 편 값이면, 여기선 한 달 50편. 직접 쓰고, 바로 올려요."
         visual={<CostCompare />}
         flip
       />
