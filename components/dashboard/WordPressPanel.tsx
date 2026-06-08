@@ -10,6 +10,15 @@ const GUIDE_STEPS = [
   "생성된 비밀번호(공백 포함)를 복사해 아래에 붙여넣습니다.",
 ];
 
+// 워드프레스가 아예 없는 사람을 위한 시작 가이드 (무료 낭비 방지·활성화)
+const START_STEPS = [
+  "‘원클릭 워드프레스 설치’를 지원하는 호스팅에 가입합니다. (자체 도메인·플러그인을 쓰려면 자기호스팅 워드프레스를 권장)",
+  "호스팅의 ‘워드프레스 1클릭 설치’로 사이트를 만들고 도메인을 연결합니다.",
+  "워드프레스 관리자(wp-admin)에 로그인합니다.",
+  "위 ‘애플리케이션 비밀번호’ 5단계대로 비밀번호를 발급합니다.",
+  "아래에 사이트 주소·사용자명·앱 비밀번호를 입력해 연결하면 끝이에요!",
+];
+
 export default function WordPressPanel({
   siteUrl,
   onConnected,
@@ -24,6 +33,7 @@ export default function WordPressPanel({
   const [appPassword, setAppPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showStart, setShowStart] = useState(false);
 
   async function connect(e: React.FormEvent) {
     e.preventDefault();
@@ -80,7 +90,31 @@ export default function WordPressPanel({
         애플리케이션 비밀번호로 안전하게 연결합니다. 일반 로그인 비밀번호가 아닙니다.
       </p>
 
-      <ol className="mt-6 space-y-2 rounded-xl border border-neutral-200 bg-neutral-50 p-5 text-sm text-neutral-600">
+      {/* 워드프레스가 없는 사람을 위한 시작 가이드 (접이식) */}
+      <div className="mt-5 rounded-xl border border-[#3f91ff]/30 bg-[#3f91ff]/5">
+        <button
+          type="button"
+          onClick={() => setShowStart((v) => !v)}
+          className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-medium text-neutral-800"
+        >
+          <span>워드프레스가 아직 없으세요? <span className="text-neutral-500">5분 시작 가이드</span></span>
+          <span className="shrink-0 text-neutral-400">{showStart ? "▲" : "▼"}</span>
+        </button>
+        {showStart && (
+          <ol className="space-y-2 px-4 pb-4 text-sm text-neutral-600">
+            {START_STEPS.map((step, i) => (
+              <li key={i} className="flex gap-3">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs text-white" style={{ background: "#3f91ff" }}>
+                  {i + 1}
+                </span>
+                <span>{step}</span>
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
+
+      <ol className="mt-5 space-y-2 rounded-xl border border-neutral-200 bg-neutral-50 p-5 text-sm text-neutral-600">
         {GUIDE_STEPS.map((step, i) => (
           <li key={i} className="flex gap-3">
             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-xs text-white">

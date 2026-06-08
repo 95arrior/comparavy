@@ -11,6 +11,7 @@ import WordPressPanel from "./WordPressPanel";
 import AteFloLogo from "@/components/AteFloLogo";
 import Brand from "@/components/Brand";
 import AdminDashboard from "./AdminDashboard";
+import { ANNOUNCEMENTS, LATEST_ANNOUNCEMENT_ID } from "@/lib/announcements";
 import HeroInput from "@/components/HeroInput";
 import DemoStream from "@/components/DemoStream";
 import ServiceIntro from "@/components/ServiceIntro";
@@ -46,6 +47,8 @@ export default function DashboardClient(props: DashboardProps) {
   const [subCanceled, setSubCanceled] = useState(props.subStatus === "canceled");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [showNews, setShowNews] = useState(false);
+  const [unreadNews, setUnreadNews] = useState(false);
 
   // 메인에서 키워드+유형+문체를 받고 왔으면, 바로 작성화면을 띄운다(뎁스 축소)
   useEffect(() => {
@@ -154,6 +157,24 @@ export default function DashboardClient(props: DashboardProps) {
     if (typeof window !== "undefined" && window.innerWidth < 768) setNavOpen(false);
   }
 
+  // 공지·업데이트 알림 (안 읽은 소식 점 표시)
+  useEffect(() => {
+    try {
+      setUnreadNews(localStorage.getItem("ateflo_seen_announcement") !== LATEST_ANNOUNCEMENT_ID);
+    } catch {
+      // 무시
+    }
+  }, []);
+  function openNews() {
+    setShowNews(true);
+    setUnreadNews(false);
+    try {
+      localStorage.setItem("ateflo_seen_announcement", LATEST_ANNOUNCEMENT_ID);
+    } catch {
+      // 무시
+    }
+  }
+
   // 모바일에서 사이드바(전체화면)가 열리면 뒤 페이지 스크롤 잠금 — 사이드바만 스크롤되게
   useEffect(() => {
     if (navOpen && window.innerWidth < 768) {
@@ -196,6 +217,27 @@ export default function DashboardClient(props: DashboardProps) {
     <div className="flex min-h-screen bg-neutral-50 text-neutral-900 antialiased">
       {/* 모바일: 사이드바 열렸을 때 뒤 어둡게 (탭하면 닫힘) */}
       {navOpen && <div onClick={() => setNavOpen(false)} className="fixed inset-0 z-40 bg-black/30 md:hidden" />}
+
+      {/* 공지·업데이트 패널 */}
+      {showNews && (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 sm:items-center sm:p-6" onClick={() => setShowNews(false)}>
+          <div onClick={(e) => e.stopPropagation()} className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-white p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-2xl sm:pb-5">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-semibold tracking-tight">공지 · 업데이트</h3>
+              <button onClick={() => setShowNews(false)} aria-label="닫기" className="text-neutral-400 transition hover:text-neutral-700">✕</button>
+            </div>
+            <ul className="mt-4 space-y-4">
+              {ANNOUNCEMENTS.map((a) => (
+                <li key={a.id} className="border-b border-neutral-100 pb-4 last:border-0 last:pb-0">
+                  <p className="text-xs text-neutral-400">{a.date}</p>
+                  <p className="mt-0.5 text-sm font-medium text-neutral-900">{a.title}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-neutral-600">{a.body}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
 
       {/* 좌측 레일 — 데스크톱은 접힘/펼침 레일, 모바일은 햄버거로 여는 오버레이 */}
       <aside
@@ -274,10 +316,26 @@ export default function DashboardClient(props: DashboardProps) {
           </div>
         )}
 
-        {/* 하단: 내 정보 (사용자) */}
+        {/* 하단: 공지 + 내 정보 */}
+        <div className="mt-auto flex flex-col gap-1">
+        {/* 공지·업데이트 알림 */}
+        <button
+          onClick={openNews}
+          className={`group relative flex h-9 items-center rounded-lg text-sm text-neutral-600 transition hover:bg-neutral-50 ${navOpen ? "w-full" : "w-9"}`}
+        >
+          <span className="relative flex h-9 w-9 shrink-0 items-center justify-center">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>
+            {unreadNews && <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#3f91ff] ring-2 ring-white" />}
+          </span>
+          {navOpen && <span className="truncate pr-2">공지</span>}
+          {!navOpen && (
+            <span className="pointer-events-none absolute left-11 z-50 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100">공지</span>
+          )}
+        </button>
+        {/* 내 정보 (사용자) */}
         <button
           onClick={() => goTab("account")}
-          className={`group relative mt-auto flex items-center rounded-lg transition hover:bg-neutral-50 ${navOpen ? "h-12 w-full" : "h-9 w-9"} ${
+          className={`group relative flex items-center rounded-lg transition hover:bg-neutral-50 ${navOpen ? "h-12 w-full" : "h-9 w-9"} ${
             tab === "account" && !selected && !genParams ? "bg-neutral-100" : ""
           }`}
         >
@@ -294,6 +352,7 @@ export default function DashboardClient(props: DashboardProps) {
             <span className="pointer-events-none absolute left-11 z-50 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100">내 정보</span>
           )}
         </button>
+        </div>
       </aside>
 
       {/* 메인 */}
