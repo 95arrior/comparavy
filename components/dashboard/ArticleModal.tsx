@@ -131,7 +131,7 @@ export default function ArticleModal({
           <div className="relative mt-6 max-h-[24rem] overflow-hidden">
             <div className="prose prose-neutral max-w-none" dangerouslySetInnerHTML={{ __html: article.body_html }} />
             {/* 3줄 아래부터 흐려지고 흰색으로 사라짐 */}
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 top-[4.75rem] bg-gradient-to-b from-transparent via-white/70 to-white backdrop-blur-[2px]" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 top-[4.75rem] bg-gradient-to-b from-transparent via-neutral-50/70 to-neutral-50 backdrop-blur-[2px]" />
             {/* 결제 카드: 흐려진 영역 위 중앙 */}
             <div className="absolute inset-x-0 bottom-5 flex justify-center px-4">
               <div className="w-full max-w-sm rounded-2xl border border-neutral-200 bg-white p-5 text-center shadow-xl">
