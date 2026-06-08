@@ -13,17 +13,19 @@ export const metadata: Metadata = {
   description: SITE_DESCRIPTION,
   keywords: ["에이트플로", "AteFlo", "워드프레스 AI 글쓰기", "한국어 SEO 글", "AI 블로그 자동 발행", "블로그 글 자동 생성"],
   openGraph: {
-    title: `${SITE_NAME} — 블로그 글쓰기, 키워드 하나면 끝`,
-    description: SITE_DESCRIPTION,
+    title: "에이트플로",
+    description: "글쓰기, 키워드 하나면 끝",
     url: SITE_URL,
     siteName: SITE_NAME,
     locale: "ko_KR",
     type: "website",
+    images: [{ url: "/og.jpg", width: 1672, height: 941, alt: "에이트플로 AteFlo" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: `${SITE_NAME} — 블로그 글쓰기, 키워드 하나면 끝`,
-    description: SITE_DESCRIPTION,
+    title: "에이트플로",
+    description: "글쓰기, 키워드 하나면 끝",
+    images: ["/og.jpg"],
   },
 };
 
