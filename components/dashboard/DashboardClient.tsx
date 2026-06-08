@@ -110,10 +110,16 @@ export default function DashboardClient(props: DashboardProps) {
   const lockedArticle = articles.find((a) => a.locked) ?? null;
   const blocked = props.plan !== "pro" && articlesUsed >= props.articlesLimit && !!lockedArticle;
 
+  // 모바일에선 메뉴 선택 후 오버레이 사이드바를 닫는다
+  function closeOnMobile() {
+    if (typeof window !== "undefined" && window.innerWidth < 768) setNavOpen(false);
+  }
+
   function goTab(k: Tab) {
     setSelected(null);
     setGenParams(null);
     setTab(k);
+    closeOnMobile();
   }
 
   const railBtn = (k: Tab, label: string, icon: React.ReactNode) => {
@@ -139,8 +145,15 @@ export default function DashboardClient(props: DashboardProps) {
 
   return (
     <div className="flex min-h-screen bg-neutral-50 text-neutral-900 antialiased">
-      {/* 좌측 레일 (ChatGPT식) — 아이콘 위치 고정, 폭만 부드럽게 + 라벨 페이드 */}
-      <aside className={`sticky top-0 z-40 flex h-screen shrink-0 flex-col border-r border-neutral-200 bg-white px-2 py-3 transition-[width] duration-200 ease-out ${navOpen ? "w-64" : "w-[56px]"}`}>
+      {/* 모바일: 사이드바 열렸을 때 뒤 어둡게 (탭하면 닫힘) */}
+      {navOpen && <div onClick={() => setNavOpen(false)} className="fixed inset-0 z-40 bg-black/30 md:hidden" />}
+
+      {/* 좌측 레일 — 데스크톱은 접힘/펼침 레일, 모바일은 햄버거로 여는 오버레이 */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex h-screen w-64 flex-col border-r border-neutral-200 bg-white px-2 py-3 transition-transform duration-200 ease-out md:sticky md:top-0 md:z-40 md:translate-x-0 md:shrink-0 md:transition-[width] ${
+          navOpen ? "translate-x-0 md:w-64" : "-translate-x-full md:w-[56px]"
+        }`}
+      >
         {/* 상단: 로고(항상 같은 자리) + 브랜드명/닫기(펼침 시 페이드) */}
         <div className="mb-2 flex h-9 items-center gap-1">
           {navOpen ? (
@@ -191,6 +204,7 @@ export default function DashboardClient(props: DashboardProps) {
                   onClick={() => {
                     setGenParams(null);
                     setSelected(a);
+                    closeOnMobile();
                   }}
                   title={a.title}
                   className="truncate rounded-lg px-2 py-1.5 text-left text-sm text-neutral-600 transition hover:bg-neutral-100"
@@ -227,6 +241,14 @@ export default function DashboardClient(props: DashboardProps) {
 
       {/* 메인 */}
       <div className="min-w-0 flex-1">
+        {/* 모바일 상단바 — 햄버거로 사이드바 열기 */}
+        <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-neutral-200 bg-white/95 px-4 py-2.5 backdrop-blur md:hidden">
+          <button onClick={() => setNavOpen(true)} aria-label="메뉴 열기" className="flex h-9 w-9 items-center justify-center rounded-lg text-neutral-600 transition hover:bg-neutral-100">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+          </button>
+          <Brand />
+        </div>
+
         {selected && (
           <ArticleModal
             article={selected}

@@ -41,7 +41,7 @@ export default function BillingSuccess({
           return;
         }
         setState("done");
-        setTimeout(() => router.push("/dashboard"), 1500);
+        setTimeout(() => router.push("/"), 1500);
       } catch {
         setState("error");
         setMessage("네트워크 오류가 발생했습니다.");
