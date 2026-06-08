@@ -227,7 +227,7 @@ export default function WritingView({
             )}
           </>
         )}
-        <div ref={endRef} />
+        <div ref={endRef} className="scroll-mb-40" />
       </div>
 
       {phase === "done" && (
