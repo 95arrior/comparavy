@@ -82,7 +82,7 @@ export default async function Home() {
             글쓰기, 키워드 하나면 끝
           </h1>
           <p className="mono-rise mono-d2 mx-auto mt-6 max-w-md text-base leading-relaxed text-neutral-500">
-            좋은 글은 구조와 흐름에서 갈립니다. 그 답을 알고, 키워드 하나로 씁니다.
+            어떤 구조로, 어떤 흐름으로 글을 써야 좋은 글이 되는지.<br />우리는 그 답을 알고, 키워드 하나로 글을 씁니다.
           </p>
           <div className="mono-rise mono-d3 mt-10">
             <HeroInput loggedIn={!!user} />
