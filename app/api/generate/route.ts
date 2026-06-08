@@ -136,15 +136,26 @@ export async function POST(request: Request) {
           simhash: simhash(article.body_html), // 근접 중복 모니터링용 (재생성 안 함)
           original_html: article.body_html, // AI 원본 복구용 (수정해도 보존)
           status: "draft",
+          write_note: article.write_note || null, // 글쓴이용 메모 (마이그레이션 0007)
         };
         // 티저(잠금 미리보기)일 때만 locked 사용 → 마이그레이션(0006) 전에도 일반 생성은 정상 동작
         if (teaser) insertPayload.locked = true;
 
-        const { data: saved, error: saveError } = await supabase
+        let { data: saved, error: saveError } = await supabase
           .from("articles")
           .insert(insertPayload)
           .select("*")
           .single();
+
+        // write_note 컬럼이 아직 없으면(마이그레이션 0007 전) 그 필드만 빼고 재시도 → 생성은 항상 동작
+        if (saveError && /write_note/i.test(saveError.message ?? "")) {
+          delete insertPayload.write_note;
+          ({ data: saved, error: saveError } = await supabase
+            .from("articles")
+            .insert(insertPayload)
+            .select("*")
+            .single());
+        }
 
         if (saveError) {
           // 진단용: 실제 DB 오류 메시지 표면화 (대부분 마이그레이션 미실행 = 컬럼 없음)

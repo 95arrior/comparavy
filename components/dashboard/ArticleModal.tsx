@@ -222,6 +222,13 @@ export default function ArticleModal({
           />
         </div>
 
+        {article.write_note && (
+          <div className="mt-6 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3">
+            <p className="text-xs font-medium text-neutral-500">이 글, 이렇게 썼어요</p>
+            <p className="mt-1 text-sm leading-relaxed text-neutral-600">{article.write_note}</p>
+          </div>
+        )}
+
         {article.faq.length > 0 && (
           <div className="mt-6">
             <p className="text-xs font-medium text-neutral-500">자주 묻는 질문</p>

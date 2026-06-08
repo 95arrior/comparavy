@@ -20,6 +20,8 @@ export interface Article {
   original_html: string | null;
   /** 무료 한도 초과 시 만든 미리보기(티저). true면 상단만 보이고 하단 블러 + 결제 유도. 프로 결제 시 해제. */
   locked?: boolean;
+  /** 글쓴이용 메모: 검색 의도·구성 이유 (본문 아님, FAQ 위에 표시) */
+  write_note?: string | null;
   created_at: string;
 }
 

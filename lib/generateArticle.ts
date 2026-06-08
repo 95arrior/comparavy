@@ -16,6 +16,8 @@ export interface GeneratedArticle {
   meta_description: string;
   body_html: string;
   faq: FaqItem[];
+  /** 글쓴이에게 보여줄 짧은 메모: 검색 의도를 어떻게 보고 왜 이렇게 구성했는지 (본문 아님) */
+  write_note: string;
 }
 
 const SAVE_TOOL: Anthropic.Tool = {
@@ -45,6 +47,11 @@ const SAVE_TOOL: Anthropic.Tool = {
           },
           required: ["question", "answer"],
         },
+      },
+      write_note: {
+        type: "string",
+        description:
+          "글쓴이(블로그 운영자)에게 보여줄 짧은 메모 1~2문장. 이 키워드의 검색 의도를 어떻게 파악했고, 왜 이런 소제목·순서·구성으로 썼는지 담백하게 설명한다. 자기소개·인사·메타 표현 없이. 본문에는 절대 포함하지 않는다.",
       },
     },
     required: ["title", "meta_title", "meta_description", "body_html", "faq"],
@@ -91,6 +98,7 @@ export async function generateArticle(
     meta_description: clamp(raw.meta_description ?? "", 160),
     body_html: (raw.body_html ?? "").trim(),
     faq: Array.isArray(raw.faq) ? raw.faq : [],
+    write_note: clamp(raw.write_note ?? "", 400),
   };
 }
 
@@ -196,5 +204,6 @@ export async function streamArticle(
     meta_description: clamp(raw.meta_description ?? "", 160),
     body_html: (raw.body_html ?? "").trim(),
     faq: Array.isArray(raw.faq) ? raw.faq : [],
+    write_note: clamp(raw.write_note ?? "", 400),
   };
 }

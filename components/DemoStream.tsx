@@ -30,6 +30,7 @@ const ARTICLES: Block[][] = [
 export default function DemoStream() {
   const [ai, setAi] = useState(0);
   const [n, setN] = useState(0);
+  const [show, setShow] = useState(true);
   const blocks = ARTICLES[ai];
 
   useEffect(() => {
@@ -42,11 +43,15 @@ export default function DemoStream() {
       if (i < total) {
         timer = setTimeout(tick, 28);
       } else {
-        // 다 쓰면 잠깐 멈췄다가 다음 글로
+        // 다 쓰면 잠깐 멈췄다가 → 부드럽게 페이드아웃 → 다음 글 페이드인 (뚝 끊김 방지)
         timer = setTimeout(() => {
-          setN(0);
-          setAi((a) => (a + 1) % ARTICLES.length);
-        }, 3000);
+          setShow(false);
+          timer = setTimeout(() => {
+            setN(0);
+            setAi((a) => (a + 1) % ARTICLES.length);
+            setShow(true);
+          }, 450);
+        }, 2200);
       }
     };
     timer = setTimeout(tick, 500);
@@ -67,8 +72,9 @@ export default function DemoStream() {
 
   return (
     <div className="mx-auto w-full max-w-xl text-left">
-      <div className="mb-2 text-xs font-medium text-neutral-400">지금, 이렇게 써지고 있어요</div>
+      <div className="mb-2 text-xs font-medium text-neutral-400">키워드 하나로, 이렇게 써져요</div>
       <div className="h-80 overflow-hidden rounded-xl border border-neutral-200 bg-white/70 p-5 backdrop-blur">
+        <div className={`transition-opacity duration-500 ${show ? "opacity-100" : "opacity-0"}`}>
         {rendered.length === 0 && <p className="text-sm text-neutral-300">글을 구상하고 있어요…</p>}
         {rendered.map((b) => {
           if (b.tag === "title") {
@@ -96,6 +102,7 @@ export default function DemoStream() {
         })}
         <div className="mt-3">
           <AteFloLogo animated={n < total} size={22} />
+        </div>
         </div>
       </div>
     </div>
