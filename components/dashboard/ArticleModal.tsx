@@ -128,12 +128,12 @@ export default function ArticleModal({
           <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight sm:text-3xl">{article.title}</h1>
 
           {/* 위 ~3줄만 선명, 그 아래는 블러+페이드, 결제 카드가 가운데 떠 있음 (일반적인 페이월 방식) */}
-          <div className="relative mt-6 max-h-[24rem] overflow-hidden">
+          <div className="relative mt-6 max-h-[30rem] overflow-hidden">
             <div className="prose prose-neutral max-w-none" dangerouslySetInnerHTML={{ __html: article.body_html }} />
-            {/* 3줄 아래부터 흐려지고 흰색으로 사라짐 */}
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 top-[4.75rem] bg-gradient-to-b from-transparent via-neutral-50/70 to-neutral-50 backdrop-blur-[2px]" />
-            {/* 결제 카드: 흐려진 영역 위 중앙 */}
-            <div className="absolute inset-x-0 bottom-5 flex justify-center px-4">
+            {/* 3줄 아래부터 흐려지고 배경색으로 완전히 사라짐(카드 주변은 단단한 배경) */}
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 top-[4.75rem] bg-gradient-to-b from-transparent via-neutral-50/85 to-neutral-50 backdrop-blur-[2px]" />
+            {/* 결제 카드: 흐려진 영역 위 중앙, 바닥에서 충분히 띄워 그라데이션·그림자가 안 잘리게 */}
+            <div className="absolute inset-x-0 bottom-12 flex justify-center px-4">
               <div className="w-full max-w-sm rounded-2xl border border-neutral-200 bg-white p-5 text-center shadow-xl">
                 <p className="text-base font-semibold tracking-tight">여기부터는 프로 회원만 볼 수 있어요</p>
                 <p className="mt-1.5 text-sm leading-relaxed text-neutral-500">
