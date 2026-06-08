@@ -112,7 +112,7 @@ export default function HeroInput({ loggedIn, onStart }: { loggedIn: boolean; on
           {ARTICLE_TYPES.map((t) => (
             <button key={t.key} type="button" onClick={() => setType(type === t.key ? "" : t.key)} title={t.hint} aria-label={TYPE_SHORT[t.key] ?? t.label} className={chipCls(type === t.key)}>
               {TYPE_ICON[t.key]}
-              {type === t.key && <span>{TYPE_SHORT[t.key] ?? t.label}</span>}
+              <span className={type === t.key ? "" : "hidden sm:inline"}>{TYPE_SHORT[t.key] ?? t.label}</span>
             </button>
           ))}
         </div>
@@ -121,7 +121,7 @@ export default function HeroInput({ loggedIn, onStart }: { loggedIn: boolean; on
           {TONES.map((t) => (
             <button key={t.key} type="button" onClick={() => setTone(tone === t.key ? "" : t.key)} title={t.hint} aria-label={TONE_SHORT[t.key] ?? t.label} className={chipCls(tone === t.key)}>
               {TONE_ICON[t.key]}
-              {tone === t.key && <span>{TONE_SHORT[t.key] ?? t.label}</span>}
+              <span className={tone === t.key ? "" : "hidden sm:inline"}>{TONE_SHORT[t.key] ?? t.label}</span>
             </button>
           ))}
         </div>

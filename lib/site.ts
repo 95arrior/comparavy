@@ -1,4 +1,4 @@
 export const SITE_NAME = "AteFlo";
 export const SITE_URL = "https://ateflo.com";
 export const SITE_DESCRIPTION =
-  "키워드만 넣으면, 검색에 뜨는 한국어 블로그 글이 완성돼요. 워드프레스에 올리는 것까지 한 번에 끝내세요.";
+  "글 쓰느라 시간 쓰지 마세요. 키워드만 넣으면 검색 잘 되는 블로그 글이 완성되고, 워드프레스에 바로 올라가요.";

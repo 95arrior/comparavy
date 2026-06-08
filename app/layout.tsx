@@ -7,13 +7,13 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${SITE_NAME} — 키워드 하나로 끝내는 블로그 글쓰기`,
+    default: `${SITE_NAME} — 블로그 글쓰기, 키워드 하나면 끝`,
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
   keywords: ["에이트플로", "AteFlo", "워드프레스 AI 글쓰기", "한국어 SEO 글", "AI 블로그 자동 발행", "블로그 글 자동 생성"],
   openGraph: {
-    title: `${SITE_NAME} — 키워드 하나로 끝내는 블로그 글쓰기`,
+    title: `${SITE_NAME} — 블로그 글쓰기, 키워드 하나면 끝`,
     description: SITE_DESCRIPTION,
     url: SITE_URL,
     siteName: SITE_NAME,
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: `${SITE_NAME} — 키워드 하나로 끝내는 블로그 글쓰기`,
+    title: `${SITE_NAME} — 블로그 글쓰기, 키워드 하나면 끝`,
     description: SITE_DESCRIPTION,
   },
 };

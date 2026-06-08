@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient, createSupabaseAdminClient, hasSupabaseEnv } from "@/lib/supabase-server";
+import { emailHash } from "@/lib/userPlan";
 
 /**
  * 회원 탈퇴 — 사용자의 모든 데이터(글·워드프레스 연결·계정 행)와 인증 계정을 영구 삭제.
@@ -20,6 +21,18 @@ export async function POST() {
 
   const admin = createSupabaseAdminClient();
   const uid = user.id;
+
+  // 무료 어뷰징 방지 — 탈퇴 이메일을 단방향 해시로 기록(평문 미저장). 재가입해도 무료 미제공(평생 1회).
+  if (user.email) {
+    try {
+      await admin.from("deleted_accounts").upsert(
+        { email_hash: emailHash(user.email), deleted_at: new Date().toISOString() },
+        { onConflict: "email_hash" },
+      );
+    } catch {
+      // 테이블 없거나 실패해도 탈퇴 자체는 진행
+    }
+  }
 
   // 데이터 삭제 (각 테이블 개별 — 일부가 없어도 진행)
   await admin.from("articles").delete().eq("user_id", uid);

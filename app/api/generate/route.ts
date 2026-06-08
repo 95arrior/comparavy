@@ -60,7 +60,7 @@ export async function POST(request: Request) {
   }
 
   // 플랜·사용량 확인
-  let row = await ensureUserRow(supabase, user.id);
+  let row = await ensureUserRow(supabase, user.id, user.email);
   row = await rolloverIfNeeded(supabase, row);
 
   // 한도 초과 처리: 프로는 차단. 무료는 결제 유도용 "미리보기(티저)"를 단 1개만 허용한다.

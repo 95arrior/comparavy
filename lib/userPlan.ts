@@ -1,5 +1,12 @@
+import { createHash } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { type PlanKey, planLimits } from "./plans";
+import { createSupabaseAdminClient } from "./supabase-server";
+
+/** 이메일을 단방향 해시로 — 탈퇴 이력 대조용(평문 미저장) */
+export function emailHash(email: string): string {
+  return createHash("sha256").update(email.trim().toLowerCase()).digest("hex");
+}
 
 export interface UserRow {
   id: string;
@@ -20,6 +27,7 @@ export interface UserRow {
 export async function ensureUserRow(
   supabase: SupabaseClient,
   userId: string,
+  email?: string | null,
 ): Promise<UserRow> {
   const { data } = await supabase
     .from("users")
@@ -29,16 +37,39 @@ export async function ensureUserRow(
 
   if (data) return data as UserRow;
 
-  const limits = planLimits("free");
+  // 신규 가입 — 과거 탈퇴 이력이 있으면 무료 미제공(무료는 이메일당 평생 1회)
+  let freeLimit = planLimits("free").articles_limit;
+  let priorAccount = false;
+  if (email) {
+    try {
+      const admin = createSupabaseAdminClient();
+      const { data: prior } = await admin
+        .from("deleted_accounts")
+        .select("email_hash")
+        .eq("email_hash", emailHash(email))
+        .maybeSingle();
+      if (prior) {
+        freeLimit = 0;
+        priorAccount = true;
+      }
+    } catch {
+      // deleted_accounts 테이블이 없거나 조회 실패 시 기본값(무료 제공) 유지
+    }
+  }
+
+  const insertData: Record<string, unknown> = {
+    id: userId,
+    plan: "free",
+    articles_limit: freeLimit,
+    articles_used: 0,
+    period_start: new Date().toISOString(),
+  };
+  // 재가입자는 티저(미리보기)도 막아 추가 모델 호출(비용)까지 차단
+  if (priorAccount) insertData.teaser_used = true;
+
   const { data: inserted, error } = await supabase
     .from("users")
-    .insert({
-      id: userId,
-      plan: "free",
-      articles_limit: limits.articles_limit,
-      articles_used: 0,
-      period_start: new Date().toISOString(),
-    })
+    .insert(insertData)
     .select("*")
     .single();
 

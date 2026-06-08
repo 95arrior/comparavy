@@ -14,7 +14,7 @@ import DashboardClient from "@/components/dashboard/DashboardClient";
 import type { Article } from "@/components/dashboard/types";
 
 export const metadata: Metadata = {
-  title: { absolute: `${SITE_NAME} — 키워드 하나로 끝내는 블로그 글쓰기` },
+  title: { absolute: `${SITE_NAME} — 블로그 글쓰기, 키워드 하나면 끝` },
   description: SITE_DESCRIPTION,
 };
 
@@ -30,7 +30,7 @@ export default async function Home() {
 
   // 로그인하면 홈이 곧 작업공간 — '대시보드로 이동'하는 뎁스를 없앤다
   if (user && supabase) {
-    const row = await ensureUserRow(supabase, user.id);
+    const row = await ensureUserRow(supabase, user.id, user.email);
     const { data: articles } = await supabase
       .from("articles")
       .select("*")
