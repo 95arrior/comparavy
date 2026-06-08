@@ -103,6 +103,7 @@ export default function DashboardClient(props: DashboardProps) {
         <WritingView
           params={genParams}
           pro={props.plan === "pro"}
+          isTeaser={props.plan !== "pro" && articlesUsed >= props.articlesLimit}
           onDone={(article) => {
             setGenParams(null);
             onGenerated(article);

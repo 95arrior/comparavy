@@ -9,6 +9,12 @@ function tokenize(html: string): string[] {
   return html.match(/<[^>]*>|[^<]/g) ?? [];
 }
 
+// 티저(잠금 미리보기)는 본문 ~3줄만 쓰고 블러로 넘어간다
+const TEASER_BODY_CHARS = 130;
+
+// 제목 쓰고 본문 시작 전 대기 구간 안내 (순환)
+const WAIT_MSGS = ["거의 다 준비됐어요…", "조금만 기다려주세요!", "곧 본문이 시작돼요"];
+
 export interface GenParams {
   keyword: string;
   angle: string;
@@ -21,26 +27,42 @@ export interface GenParams {
 export default function WritingView({
   params,
   pro,
+  isTeaser,
   onDone,
   onExit,
 }: {
   params: GenParams;
   pro: boolean;
+  isTeaser: boolean;
   onDone: (article: Article) => void;
   onExit: () => void;
 }) {
   const [preview, setPreview] = useState("");
   const [finished, setFinished] = useState(false); // 타이핑 완료(편집 전환 직전)
+  const [bodyStarted, setBodyStarted] = useState(false);
+  const [waitTick, setWaitTick] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   const targetRef = useRef("");
   const titleRef = useRef("");
   const bodyRef = useRef("");
+  const bodyStartedRef = useRef(false);
   const doneArtRef = useRef<Article | null>(null);
   const shownRef = useRef(0);
+  const visibleRef = useRef(0); // 지금까지 보여준 '글자' 수(태그 제외)
   const revealRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fetchedRef = useRef(false);
   const endRef = useRef<HTMLDivElement>(null);
+
+  const phase = error
+    ? "error"
+    : finished
+    ? "done"
+    : !preview
+    ? "thinking"
+    : !bodyStarted
+    ? "waiting"
+    : "writing";
 
   useEffect(() => {
     startReveal(); // 타자기 루프 (StrictMode 재마운트 시 재시작됨)
@@ -52,7 +74,14 @@ export default function WritingView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 써내려갈 때 끝이 보이게 살짝 따라 내려간다
+  // 대기 구간 동안 안내 문구 순환
+  useEffect(() => {
+    if (phase !== "waiting") return;
+    const id = setInterval(() => setWaitTick((t) => t + 1), 1500);
+    return () => clearInterval(id);
+  }, [phase]);
+
+  // 써내려갈 때 끝(작성 표시)이 보이게 살짝 따라 내려간다
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [preview]);
@@ -71,21 +100,27 @@ export default function WritingView({
     stopReveal();
     revealRef.current = setInterval(() => {
       const tokens = tokenize(targetRef.current);
-      if (shownRef.current < tokens.length) {
+      // 티저는 제목 + 본문 ~3줄까지만 타이핑하고 멈춘다
+      const capReached = isTeaser && visibleRef.current >= titleRef.current.length + TEASER_BODY_CHARS;
+      if (shownRef.current < tokens.length && !capReached) {
         // 사람이 타이핑하듯 한 틱에 글자 2개만. 태그(<...>)는 즉시 통과.
         let typed = 0;
         while (shownRef.current < tokens.length && typed < 2) {
           const tok = tokens[shownRef.current];
           shownRef.current += 1;
-          if (!tok.startsWith("<")) typed += 1;
+          if (!tok.startsWith("<")) {
+            typed += 1;
+            visibleRef.current += 1;
+          }
         }
         setPreview(tokens.slice(0, shownRef.current).join(""));
-      } else if (doneArtRef.current) {
+      } else if (doneArtRef.current && (shownRef.current >= tokens.length || capReached)) {
+        // 비티저=다 따라잡은 뒤 / 티저=3줄 + 서버 완료 → 편집(또는 잠금 블러) 화면으로
         const art = doneArtRef.current;
         doneArtRef.current = null;
         stopReveal();
         setFinished(true);
-        setTimeout(() => onDone(art), 500); // 잠깐 보여주고 편집 화면으로
+        setTimeout(() => onDone(art), 500);
       }
     }, 32);
   }
@@ -129,8 +164,12 @@ export default function WritingView({
           } else if (msg.type === "body") {
             bodyRef.current = msg.html ?? "";
             composeTarget();
+            if (!bodyStartedRef.current && (msg.html ?? "").trim()) {
+              bodyStartedRef.current = true;
+              setBodyStarted(true);
+            }
           } else if (msg.type === "done" && msg.article) {
-            doneArtRef.current = msg.article; // 타이핑이 다 따라잡으면 편집 열림
+            doneArtRef.current = msg.article; // 타이핑이 다 따라잡으면(또는 티저 3줄) 전환
             done = true;
           } else if (msg.type === "error") {
             stopReveal();
@@ -145,7 +184,12 @@ export default function WritingView({
     }
   }
 
-  const writing = !error && !finished;
+  const indicatorText =
+    phase === "writing"
+      ? "글을 쓰고 있어요…"
+      : phase === "waiting"
+      ? WAIT_MSGS[waitTick % WAIT_MSGS.length]
+      : "글을 구상하고 있어요…";
 
   return (
     <>
@@ -154,12 +198,6 @@ export default function WritingView({
           <button onClick={onExit} className="flex items-center gap-1.5 text-sm text-neutral-500 transition hover:text-neutral-900">
             <span className="text-base leading-none">←</span> 글 목록으로
           </button>
-          {writing && (
-            <span className="flex items-center gap-2 text-sm text-neutral-500">
-              <AteFloLogo pro={pro} animated size={18} />
-              글을 쓰고 있어요
-            </span>
-          )}
         </div>
       </div>
 
@@ -173,13 +211,21 @@ export default function WritingView({
               </button>
             </div>
           </div>
-        ) : preview ? (
-          <>
-            <div className="prose prose-neutral max-w-none" dangerouslySetInnerHTML={{ __html: preview }} />
-            {writing && <span className="ml-0.5 inline-block animate-pulse text-neutral-500">▍</span>}
-          </>
         ) : (
-          <p className="text-sm text-neutral-400">글을 구상하고 있어요…</p>
+          <>
+            {preview && (
+              <>
+                <div className="prose prose-neutral max-w-none" dangerouslySetInnerHTML={{ __html: preview }} />
+                {phase === "writing" && <span className="ml-0.5 inline-block animate-pulse text-neutral-500">▍</span>}
+              </>
+            )}
+            {phase !== "done" && (
+              <div className="mt-5 flex items-center gap-2 text-sm text-neutral-400">
+                <AteFloLogo pro={pro} animated size={18} />
+                <span>{indicatorText}</span>
+              </div>
+            )}
+          </>
         )}
         <div ref={endRef} />
       </div>
