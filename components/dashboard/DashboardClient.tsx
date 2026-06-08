@@ -260,7 +260,7 @@ export default function DashboardClient(props: DashboardProps) {
               <p className="text-sm font-medium tracking-tight text-neutral-400">워드프레스 블로그를 위한 AI 글쓰기</p>
               <h1 className="font-pretendard mt-5 text-4xl font-bold leading-[1.15] tracking-tight sm:text-6xl">글쓰기, 키워드 하나면 끝</h1>
               <p className="mx-auto mt-6 max-w-md text-base leading-relaxed text-neutral-500">
-                어떤 구조로, 어떤 흐름으로 글을 써야 좋은 글이 되는지. 우리는 그 답을 알고, 키워드 하나로 글을 씁니다.
+                좋은 글은 구조와 흐름에서 갈립니다. 그 답을 알고, 키워드 하나로 씁니다.
               </p>
               {blocked && lockedArticle ? (
                 <div className="mx-auto mt-10 max-w-xl rounded-2xl border border-amber-200 bg-amber-50 p-6 text-left">
