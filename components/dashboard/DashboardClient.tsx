@@ -163,7 +163,7 @@ export default function DashboardClient(props: DashboardProps) {
 
       {/* 좌측 레일 — 데스크톱은 접힘/펼침 레일, 모바일은 햄버거로 여는 오버레이 */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex h-screen w-full flex-col border-r border-neutral-200 bg-white px-2 py-3 transition-transform duration-200 ease-out md:sticky md:top-0 md:z-40 md:w-64 md:translate-x-0 md:shrink-0 md:transition-[width] ${
+        className={`fixed inset-y-0 left-0 z-50 flex h-[100dvh] w-full flex-col border-r border-neutral-200 bg-white px-2 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-transform duration-200 ease-out md:sticky md:top-0 md:z-40 md:h-screen md:w-64 md:translate-x-0 md:shrink-0 md:transition-[width] ${
           navOpen ? "translate-x-0 md:w-64" : "-translate-x-full md:w-[56px]"
         }`}
       >
@@ -211,7 +211,7 @@ export default function DashboardClient(props: DashboardProps) {
           <div className="mt-4 min-h-0 flex-1 overflow-y-auto">
             <p className="px-2 pb-1 text-xs font-medium text-neutral-400">최근</p>
             <div className="flex flex-col">
-              {articles.slice(0, 25).map((a) => (
+              {articles.slice(0, 5).map((a) => (
                 <button
                   key={a.id}
                   onClick={() => {
@@ -226,6 +226,14 @@ export default function DashboardClient(props: DashboardProps) {
                   {a.title}
                 </button>
               ))}
+              {articles.length > 5 && (
+                <button
+                  onClick={() => goTab("articles")}
+                  className="mt-0.5 rounded-lg px-2 py-1.5 text-left text-sm font-medium text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-600"
+                >
+                  더보기 ({articles.length})
+                </button>
+              )}
             </div>
           </div>
         )}
