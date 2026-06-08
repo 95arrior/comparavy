@@ -229,7 +229,7 @@ export default function DashboardClient(props: DashboardProps) {
               {articles.length > 5 && (
                 <button
                   onClick={() => goTab("articles")}
-                  className="mt-0.5 rounded-lg px-2 py-1.5 text-left text-sm font-medium text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-600"
+                  className="mt-3 self-center rounded-full px-4 py-1.5 text-center text-xs font-medium text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-600"
                 >
                   더보기 ({articles.length})
                 </button>
