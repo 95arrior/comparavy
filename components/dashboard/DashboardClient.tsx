@@ -24,7 +24,7 @@ function Svg({ children }: { children: React.ReactNode }) {
 const ICON: Record<string, React.ReactNode> = {
   generate: <Svg><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" /></Svg>,
   articles: <Svg><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M9 13h6M9 17h5" /></Svg>,
-  wordpress: <Svg><path d="M9 15l6-6" /><path d="M10.5 6.5l1.8-1.8a4 4 0 0 1 5.7 5.7L15.5 12" /><path d="M13.5 17.5l-1.8 1.8a4 4 0 0 1-5.7-5.7L8.5 12" /></Svg>,
+  wordpress: <Svg><circle cx="12" cy="12" r="9" /><path d="M6.5 9.5l2.3 5.5 3.2-4.5 3.2 4.5 2.3-5.5" /></Svg>,
   account: <Svg><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></Svg>,
   panel: <Svg><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M9 4v16" /></Svg>,
 };
@@ -130,7 +130,7 @@ export default function DashboardClient(props: DashboardProps) {
   return (
     <div className="flex min-h-screen bg-neutral-50 text-neutral-900 antialiased">
       {/* 좌측 레일 (ChatGPT식) */}
-      <aside className={`sticky top-0 flex h-screen shrink-0 flex-col border-r border-neutral-200 bg-white px-2 py-3 transition-[width] ${navOpen ? "w-64" : "w-[60px]"}`}>
+      <aside className={`sticky top-0 flex h-screen shrink-0 flex-col border-r border-neutral-200 bg-white px-2 py-3 ${navOpen ? "w-64" : "w-[60px] items-center"}`}>
         {/* 상단: 로고 ↔ 토글 */}
         {navOpen ? (
           <div className="mb-2 flex items-center justify-between pl-2 pr-1">
@@ -151,7 +151,7 @@ export default function DashboardClient(props: DashboardProps) {
           <button
             onClick={() => setNavOpen(true)}
             aria-label="사이드바 열기"
-            className="group relative mb-2 flex h-10 w-10 items-center justify-center self-center rounded-lg transition hover:bg-neutral-100"
+            className="group relative mb-2 flex h-10 w-10 items-center justify-center rounded-lg transition hover:bg-neutral-100"
           >
             <span className="transition group-hover:opacity-0"><AteFloLogo size={24} /></span>
             <span className="absolute text-neutral-700 opacity-0 transition group-hover:opacity-100">{ICON.panel}</span>
@@ -192,7 +192,7 @@ export default function DashboardClient(props: DashboardProps) {
           onClick={() => goTab("account")}
           title="내 정보"
           className={`mt-auto flex items-center gap-2 rounded-lg transition hover:bg-neutral-100 ${
-            navOpen ? "px-2 py-2" : "h-10 w-10 justify-center self-center"
+            navOpen ? "px-2 py-2" : "h-10 w-10 justify-center"
           } ${tab === "account" && !selected && !genParams ? "bg-neutral-100" : ""}`}
         >
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-neutral-800 text-xs font-medium text-white">{initial}</span>
