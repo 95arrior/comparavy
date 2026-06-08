@@ -43,6 +43,9 @@ export default function DashboardClient(props: DashboardProps) {
   const [wpSiteUrl, setWpSiteUrl] = useState<string | null>(props.wpSiteUrl);
   const [selected, setSelected] = useState<Article | null>(null);
   const [genParams, setGenParams] = useState<GenParams | null>(null);
+  const [subCanceled, setSubCanceled] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   // 메인에서 키워드+유형+문체를 받고 왔으면, 바로 작성화면을 띄운다(뎁스 축소)
   useEffect(() => {
@@ -72,6 +75,39 @@ export default function DashboardClient(props: DashboardProps) {
     const supabase = createSupabaseBrowserClient();
     await supabase.auth.signOut();
     window.location.href = "/";
+  }
+
+  // 구독 해지 — 다음 청구만 중단, 남은 기간은 그대로 이용
+  async function cancelSubscription() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const res = await fetch("/api/billing/cancel", { method: "POST" });
+      if (res.ok) setSubCanceled(true);
+      else alert("해지 처리에 실패했어요. 잠시 후 다시 시도해주세요.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // 회원 탈퇴 — 모든 데이터·계정 영구 삭제 (되돌릴 수 없음)
+  async function deleteAccount() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const res = await fetch("/api/account/delete", { method: "POST" });
+      if (res.ok) {
+        const supabase = createSupabaseBrowserClient();
+        await supabase.auth.signOut();
+        window.location.href = "/";
+      } else {
+        alert("탈퇴 처리에 실패했어요. 잠시 후 다시 시도해주세요.");
+        setBusy(false);
+      }
+    } catch {
+      alert("탈퇴 처리 중 오류가 발생했어요.");
+      setBusy(false);
+    }
   }
 
   function onGenerated(article: Article) {
@@ -356,12 +392,46 @@ export default function DashboardClient(props: DashboardProps) {
                   <div className="flex justify-between gap-4"><dt className="text-neutral-500">플랜</dt><dd className="font-medium">{PLANS[props.plan].name}</dd></div>
                   <div className="flex justify-between gap-4"><dt className="text-neutral-500">이번 달 사용량</dt><dd>{articlesUsed} / {props.articlesLimit}편</dd></div>
                 </dl>
-                <div className="mt-6">
+                <div className="mt-6 flex flex-wrap gap-2">
                   <button onClick={signOut} className="rounded-full border border-neutral-300 px-4 py-2 text-sm font-medium transition hover:border-neutral-900">
                     로그아웃
                   </button>
+                  {props.plan === "pro" && !subCanceled && (
+                    <button onClick={cancelSubscription} disabled={busy} className="rounded-full border border-neutral-300 px-4 py-2 text-sm font-medium transition hover:border-neutral-900 disabled:opacity-50">
+                      구독 해지
+                    </button>
+                  )}
                 </div>
-                <p className="mt-4 text-xs text-neutral-400">구독 취소·회원 탈퇴는 곧 추가됩니다.</p>
+
+                {subCanceled && (
+                  <p className="mt-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-600">
+                    구독 해지가 예약됐어요. 남은 이용 기간까지는 그대로 쓰실 수 있고, 다음 결제는 진행되지 않아요.
+                  </p>
+                )}
+
+                {/* 회원 탈퇴 — 위험 작업, 2단계 확인 */}
+                <div className="mt-8 border-t border-neutral-100 pt-6">
+                  {!confirmDelete ? (
+                    <button onClick={() => setConfirmDelete(true)} className="text-sm font-medium text-red-500 transition hover:text-red-600">
+                      회원 탈퇴
+                    </button>
+                  ) : (
+                    <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+                      <p className="text-sm font-medium text-red-900">정말 탈퇴할까요?</p>
+                      <p className="mt-1 text-sm leading-relaxed text-red-800">
+                        작성한 글, 워드프레스 연결, 구독을 포함한 모든 정보가 <b>영구 삭제</b>되고 되돌릴 수 없어요.
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button onClick={deleteAccount} disabled={busy} className="rounded-full bg-red-600 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-50">
+                          {busy ? "탈퇴 처리 중…" : "탈퇴하기"}
+                        </button>
+                        <button onClick={() => setConfirmDelete(false)} disabled={busy} className="rounded-full border border-neutral-300 px-4 py-1.5 text-sm font-medium transition hover:border-neutral-900">
+                          취소
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
             {tab === "admin" && props.isAdmin && <AdminDashboard stats={props.adminStats} />}
