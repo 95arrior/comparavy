@@ -1,6 +1,6 @@
 import type { AdminStats } from "@/lib/adminStats";
 
-const BRAND = "#4B5FE1";
+const BRAND = "#3f91ff";
 const STATUS_KO: Record<string, string> = { draft: "초안", published: "발행됨", future: "예약됨" };
 
 // 큰 금액은 만/억 단위로 압축해 카드 칸을 안 넘게
@@ -42,7 +42,7 @@ function Card({
 }) {
   const text = display ?? (value === null ? "—" : `${prefix}${value.toLocaleString()}${suffix}`);
   return (
-    <div className={`min-w-0 rounded-2xl border p-5 ${accent ? "border-[#4B5FE1]/30 bg-[#4B5FE1]/5" : "border-neutral-200 bg-white"}`}>
+    <div className={`min-w-0 rounded-2xl border p-5 ${accent ? "border-[#3f91ff]/30 bg-[#3f91ff]/5" : "border-neutral-200 bg-white"}`}>
       <p className="text-xs font-medium text-neutral-400">{label}</p>
       <p className={`mt-1 truncate text-3xl font-semibold tracking-tight ${accent ? "" : "text-neutral-900"}`} style={accent ? { color: BRAND } : undefined}>
         {text}

@@ -293,26 +293,29 @@ export default function ArticleEditor({
           )}
         </div>
         {linkOpen && (
-          <div className="flex items-center gap-2 border-t border-neutral-100 px-3 py-2">
+          <div className="flex flex-col gap-2 border-t border-neutral-100 px-3 py-2 sm:flex-row sm:items-center">
             <input
               autoFocus
               value={linkUrl}
               onChange={(e) => setLinkUrl(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") applyLink(); if (e.key === "Escape") setLinkOpen(false); }}
               placeholder="https://..."
-              className="flex-1 rounded-md border border-neutral-300 px-3 py-1.5 text-sm outline-none focus:border-neutral-900"
+              inputMode="url"
+              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900 sm:flex-1 sm:py-1.5"
             />
-            <label className="flex shrink-0 items-center gap-1 text-xs text-neutral-500">
-              <input type="checkbox" checked={linkNofollow} onChange={(e) => setLinkNofollow(e.target.checked)} />
-              nofollow
-            </label>
-            <button type="button" onClick={applyLink} className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm text-white">적용</button>
-            <button type="button" onClick={() => setLinkOpen(false)} className="rounded-md px-2 py-1.5 text-sm text-neutral-400">취소</button>
+            <div className="flex items-center gap-2">
+              <label className="mr-auto flex shrink-0 items-center gap-1 text-xs text-neutral-500 sm:mr-0">
+                <input type="checkbox" checked={linkNofollow} onChange={(e) => setLinkNofollow(e.target.checked)} />
+                nofollow
+              </label>
+              <button type="button" onClick={applyLink} className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm text-white">적용</button>
+              <button type="button" onClick={() => setLinkOpen(false)} className="rounded-md px-2 py-1.5 text-sm text-neutral-400">취소</button>
+            </div>
           </div>
         )}
         {activeHref && !linkOpen && (
-          <div className="flex items-center gap-2 border-t border-neutral-100 px-3 py-2 text-sm">
-            <span className="truncate text-neutral-500">🔗 {activeHref}</span>
+          <div className="flex flex-wrap items-center gap-2 border-t border-neutral-100 px-3 py-2 text-sm">
+            <span className="min-w-0 flex-1 truncate text-neutral-500">🔗 {activeHref}</span>
             <a href={activeHref} target="_blank" rel="noreferrer" className="ml-auto flex items-center gap-1 rounded-md border border-neutral-300 px-2 py-1 text-xs hover:border-neutral-900">
               <IconOpen /> 열기
             </a>

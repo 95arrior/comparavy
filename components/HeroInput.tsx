@@ -35,8 +35,9 @@ const TONE_SHORT: Record<string, string> = { friendly: "친근", professional: "
 // 키워드 + 유형/문체를 함께 받아, 대시보드 생성탭을 거치지 않고 바로 작성화면으로 보낸다(뎁스 축소).
 export default function HeroInput({ loggedIn, onStart }: { loggedIn: boolean; onStart?: (p: GenParams) => void }) {
   const [keyword, setKeyword] = useState("");
-  const [type, setType] = useState(ARTICLE_TYPES[0].key);
-  const [tone, setTone] = useState(TONES[0].key);
+  // 기본 미선택("") — 안 고르면 최적값(howto/friendly)으로 생성. 선택한 칩 다시 누르면 해제(토글).
+  const [type, setType] = useState("");
+  const [tone, setTone] = useState("");
   const [err, setErr] = useState(false);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -53,13 +54,16 @@ export default function HeroInput({ loggedIn, onStart }: { loggedIn: boolean; on
       return;
     }
     setLoading(true); // 무지개 효과로 "시작됨" 표시 (Enter·클릭 동일)
+    // 안 고르면 최적 기본값으로 (미선택 허용)
+    const t = type || "howto";
+    const tn = tone || "friendly";
     // 작업공간 안(로그인)에서는 페이지 이동 없이 바로 작성화면으로 — 무지개 잠깐 보여준 뒤
     if (onStart) {
-      setTimeout(() => onStart({ keyword: k, angle: "", type, tone }), 650);
+      setTimeout(() => onStart({ keyword: k, angle: "", type: t, tone: tn }), 650);
       return;
     }
     // 대시보드가 이걸 읽어 바로 작성화면을 띄운다 (로그인 거쳐도 유지)
-    localStorage.setItem("ateflo_gen", JSON.stringify({ keyword: k, type, tone }));
+    localStorage.setItem("ateflo_gen", JSON.stringify({ keyword: k, type: t, tone: tn }));
     // 무지개가 잠깐 요동치는 걸 보여준 뒤 이동 (즉시 이동하면 버튼이 사라진 것처럼 보임)
     setTimeout(() => router.push(loggedIn ? "/dashboard" : "/login"), 650);
   }
@@ -106,7 +110,7 @@ export default function HeroInput({ loggedIn, onStart }: { loggedIn: boolean; on
         <div className="flex flex-wrap items-center justify-center gap-2">
           <span className="w-7 shrink-0 text-xs text-neutral-300">유형</span>
           {ARTICLE_TYPES.map((t) => (
-            <button key={t.key} type="button" onClick={() => setType(t.key)} title={t.hint} aria-label={TYPE_SHORT[t.key] ?? t.label} className={chipCls(type === t.key)}>
+            <button key={t.key} type="button" onClick={() => setType(type === t.key ? "" : t.key)} title={t.hint} aria-label={TYPE_SHORT[t.key] ?? t.label} className={chipCls(type === t.key)}>
               {TYPE_ICON[t.key]}
               {type === t.key && <span>{TYPE_SHORT[t.key] ?? t.label}</span>}
             </button>
@@ -115,7 +119,7 @@ export default function HeroInput({ loggedIn, onStart }: { loggedIn: boolean; on
         <div className="flex flex-wrap items-center justify-center gap-2">
           <span className="w-7 shrink-0 text-xs text-neutral-300">문체</span>
           {TONES.map((t) => (
-            <button key={t.key} type="button" onClick={() => setTone(t.key)} title={t.hint} aria-label={TONE_SHORT[t.key] ?? t.label} className={chipCls(tone === t.key)}>
+            <button key={t.key} type="button" onClick={() => setTone(tone === t.key ? "" : t.key)} title={t.hint} aria-label={TONE_SHORT[t.key] ?? t.label} className={chipCls(tone === t.key)}>
               {TONE_ICON[t.key]}
               {tone === t.key && <span>{TONE_SHORT[t.key] ?? t.label}</span>}
             </button>

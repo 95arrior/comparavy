@@ -67,7 +67,7 @@ export default function PricingClient({
     <ul className="mt-6 space-y-2.5 text-sm text-neutral-600">
       {PLAN_FEATURES[plan].map((f) => (
         <li key={f} className="flex gap-2">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4B5FE1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 shrink-0">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3f91ff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 shrink-0">
             <path d="M5 13l4 4L19 7" />
           </svg>
           {f}
@@ -119,7 +119,7 @@ export default function PricingClient({
         <div className="flex flex-col bg-white p-8">
           <div className="flex items-baseline justify-between">
             <h3 className="text-lg font-medium tracking-tight">{PLANS.pro.name}</h3>
-            <span className="rounded-full px-2.5 py-0.5 text-xs font-medium" style={{ background: "#4B5FE11a", color: "#4B5FE1" }}>가장 인기</span>
+            <span className="rounded-full px-2.5 py-0.5 text-xs font-medium" style={{ background: "#3f91ff1a", color: "#3f91ff" }}>가장 인기</span>
           </div>
           <p className="mt-3">
             <span className="text-4xl font-semibold tracking-tight">{formatKRW(PLANS.pro.price)}</span>

@@ -118,6 +118,16 @@ export default function DashboardClient(props: DashboardProps) {
     if (typeof window !== "undefined" && window.innerWidth < 768) setNavOpen(false);
   }
 
+  // 모바일에서 사이드바(전체화면)가 열리면 뒤 페이지 스크롤 잠금 — 사이드바만 스크롤되게
+  useEffect(() => {
+    if (navOpen && window.innerWidth < 768) {
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = "";
+      };
+    }
+  }, [navOpen]);
+
   function goTab(k: Tab) {
     setSelected(null);
     setGenParams(null);
@@ -153,7 +163,7 @@ export default function DashboardClient(props: DashboardProps) {
 
       {/* 좌측 레일 — 데스크톱은 접힘/펼침 레일, 모바일은 햄버거로 여는 오버레이 */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex h-screen w-64 flex-col border-r border-neutral-200 bg-white px-2 py-3 transition-transform duration-200 ease-out md:sticky md:top-0 md:z-40 md:translate-x-0 md:shrink-0 md:transition-[width] ${
+        className={`fixed inset-y-0 left-0 z-50 flex h-screen w-full flex-col border-r border-neutral-200 bg-white px-2 py-3 transition-transform duration-200 ease-out md:sticky md:top-0 md:z-40 md:w-64 md:translate-x-0 md:shrink-0 md:transition-[width] ${
           navOpen ? "translate-x-0 md:w-64" : "-translate-x-full md:w-[56px]"
         }`}
       >
@@ -248,7 +258,7 @@ export default function DashboardClient(props: DashboardProps) {
         {!selected && !genParams && (
           <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-neutral-200 bg-white/95 px-4 py-2.5 backdrop-blur md:hidden">
             <button onClick={() => setNavOpen(true)} aria-label="메뉴 열기" className="flex h-9 w-9 items-center justify-center rounded-lg text-neutral-600 transition hover:bg-neutral-100">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 8h16M4 15h9" /></svg>
             </button>
             <Brand pro={props.plan === "pro"} />
           </div>
@@ -281,8 +291,8 @@ export default function DashboardClient(props: DashboardProps) {
           <div className="ateflo-page-in">
             <section className="mx-auto max-w-3xl px-6 pb-20 pt-16 text-center sm:pt-24">
               <p className="text-sm font-medium tracking-tight text-neutral-400">워드프레스 블로그를 위한 AI 글쓰기</p>
-              <h1 className="font-pretendard mt-5 text-4xl font-bold leading-[1.15] tracking-tight sm:text-6xl">글쓰기, 키워드 하나면 끝</h1>
-              <p className="mx-auto mt-6 max-w-md text-base leading-relaxed text-neutral-500">
+              <h1 className="font-pretendard mt-5 whitespace-nowrap text-[1.65rem] font-bold leading-[1.15] tracking-tight sm:whitespace-normal sm:text-6xl">글쓰기, 키워드 하나면 끝</h1>
+              <p className="mx-auto mt-6 max-w-md text-sm leading-relaxed text-neutral-500 sm:text-base">
                 어떤 구조로, 어떤 흐름으로 글을 써야 좋은 글이 되는지.<br />우리는 그 답을 알고, 키워드 하나로 글을 씁니다.
               </p>
               {blocked && lockedArticle ? (
@@ -310,14 +320,14 @@ export default function DashboardClient(props: DashboardProps) {
         {!selected && !genParams && tab !== "generate" && (
           <main key={tab} className="ateflo-page-in mx-auto max-w-5xl px-6 py-10">
             {tab !== "account" && tab !== "admin" && !allDone && nextStep && (
-              <div className="mb-6 flex flex-wrap items-center gap-4 rounded-2xl border border-[#4B5FE1]/30 bg-[#4B5FE1]/5 px-5 py-4">
+              <div className="mb-6 flex flex-wrap items-center gap-4 rounded-2xl border border-[#3f91ff]/30 bg-[#3f91ff]/5 px-5 py-4">
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-[#4B5FE1]">다음 단계 · {steps.filter((s) => s.done).length + 1} / {steps.length}</p>
+                  <p className="text-xs font-semibold text-[#3f91ff]">다음 단계 · {steps.filter((s) => s.done).length + 1} / {steps.length}</p>
                   <p className="mt-1 text-sm font-medium text-neutral-900">{nextStep.msg}</p>
                 </div>
                 <button
                   onClick={() => goTab(nextStep.tab)}
-                  className="shrink-0 rounded-full bg-[#4B5FE1] px-5 py-2 text-sm font-medium text-white transition hover:opacity-90"
+                  className="shrink-0 rounded-full bg-[#3f91ff] px-5 py-2 text-sm font-medium text-white transition hover:opacity-90"
                 >
                   {nextStep.tab === "generate" ? "새 글 쓰러 가기 →" : "바로 가기 →"}
                 </button>

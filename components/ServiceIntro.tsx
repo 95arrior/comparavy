@@ -2,7 +2,7 @@ import Reveal from "@/components/Reveal";
 import PricingCards from "@/components/PricingCards";
 import type { PlanKey } from "@/lib/plans";
 
-const BRAND = "#4B5FE1";
+const BRAND = "#3f91ff";
 
 // 로고 마크(파비콘과 동일한 입 벌린 원) — 작게 써도 안 깨지는 인라인 SVG
 function LogoMark({ size = 16 }: { size?: number }) {
