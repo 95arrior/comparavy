@@ -7,6 +7,7 @@ import { countKoreanChars } from "@/lib/humanizer";
 import { isDisposableEmail } from "@/lib/disposableEmail";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { normalizeKeyword, pickVariant, simhash } from "@/lib/diversity";
+import { looksLikeGarbageKeyword, isMeaningfulKeyword } from "@/lib/keywordGuard";
 
 export const maxDuration = 300;
 
@@ -54,10 +55,13 @@ export async function POST(request: Request) {
   }
 
   const keyword = (body.keyword ?? "").trim();
-  // 글자(한글/영문) 2개 미만이면 무의미 입력으로 보고 차단 — 헛 생성(비용) 방지
-  // 완성된 한글 음절(가–힣)·영문자만 '글자'로 인정 → 자모(ㅁㅇ·ㅋㅋ)·숫자·기호만 입력 시 차단(헛 생성·비용 낭비 방지)
-  if ((keyword.match(/[가-힣a-zA-Z]/g) ?? []).length < 2) {
-    return NextResponse.json({ error: "검색할 만한 키워드를 입력해 주세요." }, { status: 400 });
+  // 1차(규칙): 자모(ㅁㅇ)·숫자·기호·반복(aaaa)·자판난타(qwrt) 등 명백한 쓰레기 차단 — 헛 생성·비용 낭비 방지
+  if (looksLikeGarbageKeyword(keyword)) {
+    return NextResponse.json({ error: "검색할 만한 키워드를 입력해 주세요. (예: 강아지 분리불안)" }, { status: 400 });
+  }
+  // 2차(싼 모델): 'asdfqwer'·무작위 음절·의미 없는 문장 등 규칙을 통과한 무의미 입력 차단
+  if (!(await isMeaningfulKeyword(keyword))) {
+    return NextResponse.json({ error: "글로 쓸 만한 주제를 입력해 주세요. (예: 강아지 분리불안 해결 방법)" }, { status: 400 });
   }
 
   // 플랜·사용량 확인
