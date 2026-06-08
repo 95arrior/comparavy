@@ -45,7 +45,9 @@ export default function HeroInput({ loggedIn, onStart }: { loggedIn: boolean; on
   function go(e: React.FormEvent) {
     e.preventDefault();
     const k = keyword.trim();
-    if (!k) {
+    // 글자(한글/영문)가 2개 미만이면 무의미 입력(숫자·특수문자·빈칸)으로 보고 차단 — 헛 생성 방지
+    const letters = (k.match(/\p{L}/gu) ?? []).length;
+    if (letters < 2) {
       setErr(true);
       inputRef.current?.focus();
       return;
@@ -97,7 +99,7 @@ export default function HeroInput({ loggedIn, onStart }: { loggedIn: boolean; on
           {loading ? "준비하고 있어요…" : "글 생성"}
         </button>
       </form>
-      {err && <p className="mt-2 pl-4 text-left text-sm text-red-500">키워드를 먼저 입력해 주세요.</p>}
+      {err && <p className="mt-2 pl-4 text-left text-sm text-red-500">검색할 만한 키워드를 입력해 주세요 (예: 강아지 분리불안).</p>}
 
       {/* 유형 · 문체 — 아이콘 칩 (선택. 안 골라도 기본값으로 생성) */}
       <div className="mt-5 space-y-2">

@@ -54,8 +54,9 @@ export async function POST(request: Request) {
   }
 
   const keyword = (body.keyword ?? "").trim();
-  if (!keyword) {
-    return NextResponse.json({ error: "키워드를 입력해 주세요." }, { status: 400 });
+  // 글자(한글/영문) 2개 미만이면 무의미 입력으로 보고 차단 — 헛 생성(비용) 방지
+  if ((keyword.match(/\p{L}/gu) ?? []).length < 2) {
+    return NextResponse.json({ error: "검색할 만한 키워드를 입력해 주세요." }, { status: 400 });
   }
 
   // 플랜·사용량 확인
