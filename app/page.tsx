@@ -3,13 +3,18 @@ import Link from "next/link";
 import { SITE_NAME, SITE_DESCRIPTION } from "@/lib/site";
 import { PLANS, formatKRW } from "@/lib/plans";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
+import { ensureUserRow } from "@/lib/userPlan";
 import HeroInput from "@/components/HeroInput";
 import DemoStream from "@/components/DemoStream";
+import DashboardClient from "@/components/dashboard/DashboardClient";
+import type { Article } from "@/components/dashboard/types";
 
 export const metadata: Metadata = {
   title: { absolute: `${SITE_NAME} — 발행할 가치가 있는 AI 블로그 글` },
   description: SITE_DESCRIPTION,
 };
+
+export const dynamic = "force-dynamic";
 
 const STEPS = [
   { n: "01", title: "키워드랑 내 생각 입력", body: "쓰고 싶은 키워드를 넣으세요. 내 경험이나 의견이 있으면 한 줄 보태면 됩니다. 그게 남들 글이랑 갈리는 지점입니다." },
@@ -28,12 +33,40 @@ const FEATURES = [
 
 export default async function Home() {
   let user = null;
+  let supabase = null;
   if (hasSupabaseEnv()) {
-    const supabase = await createSupabaseServerClient();
+    supabase = await createSupabaseServerClient();
     user = (await supabase.auth.getUser()).data.user;
   }
-  const ctaHref = user ? "/dashboard" : "/login";
-  const ctaLabel = user ? "대시보드로 이동" : "무료로 시작";
+
+  // 로그인하면 홈이 곧 작업공간 — '대시보드로 이동'하는 뎁스를 없앤다
+  if (user && supabase) {
+    const row = await ensureUserRow(supabase, user.id);
+    const { data: articles } = await supabase
+      .from("articles")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+    const { data: conn } = await supabase
+      .from("wordpress_connections")
+      .select("site_url")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    return (
+      <DashboardClient
+        email={user.email ?? ""}
+        plan={row.plan}
+        articlesUsed={row.articles_used}
+        articlesLimit={row.articles_limit}
+        initialArticles={(articles ?? []) as Article[]}
+        wpSiteUrl={conn?.site_url ?? null}
+      />
+    );
+  }
+
+  // 비로그인 → 마케팅 랜딩
+  const ctaHref = "/login";
+  const ctaLabel = "무료로 시작";
 
   return (
     <div className="min-h-screen bg-white text-neutral-900 antialiased">
