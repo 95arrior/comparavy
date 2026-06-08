@@ -49,10 +49,11 @@ export default function HeroInput({ loggedIn }: { loggedIn: boolean }) {
       inputRef.current?.focus();
       return;
     }
-    setLoading(true); // 무지개 효과로 "시작됨" 표시 (이동 직전까지)
+    setLoading(true); // 무지개 효과로 "시작됨" 표시
     // 대시보드가 이걸 읽어 바로 작성화면을 띄운다 (로그인 거쳐도 유지)
     localStorage.setItem("ateflo_gen", JSON.stringify({ keyword: k, type, tone }));
-    router.push(loggedIn ? "/dashboard" : "/login");
+    // 무지개가 잠깐 요동치는 걸 보여준 뒤 이동 (즉시 이동하면 버튼이 사라진 것처럼 보임)
+    setTimeout(() => router.push(loggedIn ? "/dashboard" : "/login"), 650);
   }
 
   const chipCls = (on: boolean) =>

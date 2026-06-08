@@ -36,9 +36,10 @@ html {
   100% { background-position: 200% 50%; }
 }
 .ateflo-rainbow {
+  background-color: #1a1a1a; /* 그라데이션 못 그려도 버튼이 사라지지 않게 폴백 */
   background-image: linear-gradient(90deg, #ff5f6d, #ffc371, #47c97e, #2ec5ce, #845ec2, #ff5f6d);
   background-size: 200% 100%;
-  animation: ateflo-rainbow 1.6s linear infinite;
+  animation: ateflo-rainbow 1.2s linear infinite;
   color: #fff;
 }
 
