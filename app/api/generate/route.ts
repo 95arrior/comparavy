@@ -124,22 +124,25 @@ export async function POST(request: Request) {
         }
 
         // 저장 + 사용량 증가
+        const insertPayload: Record<string, unknown> = {
+          user_id: user.id,
+          keyword,
+          title: article.title,
+          meta_title: article.meta_title,
+          meta_description: article.meta_description,
+          body_html: article.body_html,
+          faq: article.faq,
+          char_count: charCount,
+          simhash: simhash(article.body_html), // 근접 중복 모니터링용 (재생성 안 함)
+          original_html: article.body_html, // AI 원본 복구용 (수정해도 보존)
+          status: "draft",
+        };
+        // 티저(잠금 미리보기)일 때만 locked 사용 → 마이그레이션(0006) 전에도 일반 생성은 정상 동작
+        if (teaser) insertPayload.locked = true;
+
         const { data: saved, error: saveError } = await supabase
           .from("articles")
-          .insert({
-            user_id: user.id,
-            keyword,
-            title: article.title,
-            meta_title: article.meta_title,
-            meta_description: article.meta_description,
-            body_html: article.body_html,
-            faq: article.faq,
-            char_count: charCount,
-            simhash: simhash(article.body_html), // 근접 중복 모니터링용 (재생성 안 함)
-            original_html: article.body_html, // AI 원본 복구용 (수정해도 보존)
-            status: "draft",
-            locked: teaser, // 무료 한도 초과 미리보기면 잠금 (상단만 노출 + 결제 유도)
-          })
+          .insert(insertPayload)
           .select("*")
           .single();
 
