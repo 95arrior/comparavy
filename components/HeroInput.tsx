@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ARTICLE_TYPES, TONES } from "@/lib/articlePrompt";
+import type { GenParams } from "./dashboard/WritingView";
 
 // 에디터 툴바와 같은 라인 아이콘(majesticons) 스타일
 function Ico({ children }: { children: React.ReactNode }) {
@@ -32,7 +33,7 @@ const TONE_SHORT: Record<string, string> = { friendly: "친근", professional: "
 
 // 홈 도구형 입력창. 익명은 가입 게이트(마진·어뷰징 방어), 로그인 상태는 대시보드로.
 // 키워드 + 유형/문체를 함께 받아, 대시보드 생성탭을 거치지 않고 바로 작성화면으로 보낸다(뎁스 축소).
-export default function HeroInput({ loggedIn }: { loggedIn: boolean }) {
+export default function HeroInput({ loggedIn, onStart }: { loggedIn: boolean; onStart?: (p: GenParams) => void }) {
   const [keyword, setKeyword] = useState("");
   const [type, setType] = useState(ARTICLE_TYPES[0].key);
   const [tone, setTone] = useState(TONES[0].key);
@@ -47,6 +48,11 @@ export default function HeroInput({ loggedIn }: { loggedIn: boolean }) {
     if (!k) {
       setErr(true);
       inputRef.current?.focus();
+      return;
+    }
+    // 작업공간 안(로그인)에서는 페이지 이동 없이 바로 작성화면으로
+    if (onStart) {
+      onStart({ keyword: k, angle: "", type, tone });
       return;
     }
     setLoading(true); // 무지개 효과로 "시작됨" 표시

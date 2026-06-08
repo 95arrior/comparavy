@@ -5,12 +5,14 @@ import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { SITE_NAME } from "@/lib/site";
 import { PLANS } from "@/lib/plans";
 import type { Article, DashboardProps } from "./types";
-import GeneratePanel from "./GeneratePanel";
 import ArticleList from "./ArticleList";
 import ArticleModal from "./ArticleModal";
 import WritingView, { type GenParams } from "./WritingView";
 import WordPressPanel from "./WordPressPanel";
 import AteFloLogo from "@/components/AteFloLogo";
+import HeroInput from "@/components/HeroInput";
+import DemoStream from "@/components/DemoStream";
+import Link from "next/link";
 
 type Tab = "generate" | "articles" | "wordpress" | "account";
 
@@ -103,6 +105,8 @@ export default function DashboardClient(props: DashboardProps) {
 
   const displayName = props.email.split("@")[0] || props.email;
   const initial = (props.email.trim()[0] ?? "?").toUpperCase();
+  const lockedArticle = articles.find((a) => a.locked) ?? null;
+  const blocked = props.plan !== "pro" && articlesUsed >= props.articlesLimit && !!lockedArticle;
 
   function goTab(k: Tab) {
     setSelected(null);
@@ -116,13 +120,18 @@ export default function DashboardClient(props: DashboardProps) {
       <button
         key={k}
         onClick={() => goTab(k)}
-        title={label}
-        className={`flex items-center gap-3 rounded-xl py-2.5 text-sm transition ${navOpen ? "px-3" : "w-10 justify-center"} ${
-          active ? "bg-neutral-900 text-white" : "text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+        className={`group relative flex items-center gap-3 rounded-xl text-sm transition ${navOpen ? "px-3 py-2.5" : "h-10 w-10 justify-center"} ${
+          active ? "bg-neutral-100 font-medium text-neutral-900" : "text-neutral-600 hover:bg-neutral-50"
         }`}
       >
         <span className="shrink-0">{icon}</span>
-        {navOpen && <span className="truncate">{label}</span>}
+        {navOpen ? (
+          <span className="truncate">{label}</span>
+        ) : (
+          <span className="pointer-events-none absolute left-12 z-50 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100">
+            {label}
+          </span>
+        )}
       </button>
     );
   };
@@ -133,7 +142,7 @@ export default function DashboardClient(props: DashboardProps) {
       <aside className={`sticky top-0 flex h-screen shrink-0 flex-col border-r border-neutral-200 bg-white px-2 py-3 ${navOpen ? "w-64" : "w-[60px] items-center"}`}>
         {/* 상단: 로고 ↔ 토글 */}
         {navOpen ? (
-          <div className="mb-2 flex items-center justify-between pl-2 pr-1">
+          <div className="mb-2 flex h-10 items-center justify-between pl-2 pr-1">
             <div className="flex items-center gap-2">
               <AteFloLogo size={22} />
               <span className="font-semibold tracking-tight">{SITE_NAME}</span>
@@ -190,16 +199,19 @@ export default function DashboardClient(props: DashboardProps) {
         {/* 하단: 내 정보 (사용자) */}
         <button
           onClick={() => goTab("account")}
-          title="내 정보"
-          className={`mt-auto flex items-center gap-2 rounded-lg transition hover:bg-neutral-100 ${
+          className={`group relative mt-auto flex items-center gap-2 rounded-lg transition hover:bg-neutral-50 ${
             navOpen ? "px-2 py-2" : "h-10 w-10 justify-center"
           } ${tab === "account" && !selected && !genParams ? "bg-neutral-100" : ""}`}
         >
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-neutral-800 text-xs font-medium text-white">{initial}</span>
-          {navOpen && (
+          {navOpen ? (
             <span className="min-w-0 text-left">
               <span className="block truncate text-sm font-medium text-neutral-800">{displayName}</span>
               <span className="block text-xs text-neutral-400">{PLANS[props.plan].name}</span>
+            </span>
+          ) : (
+            <span className="pointer-events-none absolute left-12 z-50 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100">
+              내 정보
             </span>
           )}
         </button>
@@ -231,7 +243,7 @@ export default function DashboardClient(props: DashboardProps) {
 
         {!selected && !genParams && (
           <main className="mx-auto max-w-5xl px-6 py-10">
-            {tab !== "account" && !allDone && (
+            {tab !== "account" && tab !== "generate" && !allDone && (
               <div className="mb-6 rounded-xl border border-neutral-200 bg-white px-5 py-4">
                 <p className="text-xs font-medium text-neutral-400">처음이세요? · 시작 가이드</p>
                 {nextStep && (
@@ -261,16 +273,39 @@ export default function DashboardClient(props: DashboardProps) {
             )}
 
             {tab === "generate" && (
-              <GeneratePanel
-                remaining={props.articlesLimit - articlesUsed}
-                onStart={setGenParams}
-                pro={props.plan === "pro"}
-                lockedTeaser={articles.find((a) => a.locked) ?? null}
-                onOpenLocked={() => {
-                  const t = articles.find((a) => a.locked);
-                  if (t) setSelected(t);
-                }}
-              />
+              <div className="mx-auto max-w-2xl pt-6 text-center sm:pt-10">
+                <h1 className="font-pretendard text-3xl font-bold tracking-tight sm:text-4xl">어떤 글을 써드릴까요?</h1>
+                <p className="mt-3 text-sm text-neutral-500">키워드 하나만 입력하면 한국어 SEO 글을 써드려요.</p>
+                {blocked && lockedArticle ? (
+                  <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-6 text-left">
+                    <p className="text-sm font-medium text-amber-900">무료 미리보기를 만들었어요 🔒</p>
+                    <p className="mt-1 text-sm leading-relaxed text-amber-800">
+                      끝까지 보고 발행하려면, 그리고 글을 더 만들려면 프로로 업그레이드하세요.
+                    </p>
+                    <p className="mt-3 truncate text-sm font-medium text-neutral-900">“{lockedArticle.title}”</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        onClick={() => setSelected(lockedArticle)}
+                        className="rounded-full border border-amber-300 bg-white px-4 py-1.5 text-sm font-medium text-amber-900 transition hover:bg-amber-100"
+                      >
+                        미리보기 글 보기
+                      </button>
+                      <Link href="/pricing" className="rounded-full bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700">
+                        프로로 업그레이드
+                      </Link>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="mt-8">
+                      <HeroInput loggedIn onStart={setGenParams} />
+                    </div>
+                    <div className="mt-12">
+                      <DemoStream />
+                    </div>
+                  </>
+                )}
+              </div>
             )}
             {tab === "articles" && (
               <ArticleList articles={articles} onOpen={setSelected} onGoGenerate={() => goTab("generate")} />
