@@ -3,6 +3,7 @@ import Link from "next/link";
 import { SITE_NAME, SITE_DESCRIPTION } from "@/lib/site";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { ensureUserRow } from "@/lib/userPlan";
+import { isAdminEmail, getAdminStats } from "@/lib/adminStats";
 import HeroInput from "@/components/HeroInput";
 import DemoStream from "@/components/DemoStream";
 import Brand from "@/components/Brand";
@@ -40,6 +41,8 @@ export default async function Home() {
       .select("site_url")
       .eq("user_id", user.id)
       .maybeSingle();
+    const isAdmin = isAdminEmail(user.email);
+    const adminStats = isAdmin ? await getAdminStats() : null;
     return (
       <DashboardClient
         email={user.email ?? ""}
@@ -48,6 +51,8 @@ export default async function Home() {
         articlesLimit={row.articles_limit}
         initialArticles={(articles ?? []) as Article[]}
         wpSiteUrl={conn?.site_url ?? null}
+        isAdmin={isAdmin}
+        adminStats={adminStats}
       />
     );
   }

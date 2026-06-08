@@ -16,7 +16,7 @@ import ServiceIntro from "@/components/ServiceIntro";
 import SiteFooter from "@/components/SiteFooter";
 import Link from "next/link";
 
-type Tab = "generate" | "articles" | "wordpress" | "account";
+type Tab = "generate" | "articles" | "wordpress" | "account" | "admin";
 
 function Svg({ children }: { children: React.ReactNode }) {
   return (
@@ -31,7 +31,17 @@ const ICON: Record<string, React.ReactNode> = {
   wordpress: <Svg><circle cx="12" cy="12" r="9" /><path d="M6.5 9.5l2.3 5.5 3.2-4.5 3.2 4.5 2.3-5.5" /></Svg>,
   account: <Svg><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></Svg>,
   panel: <Svg><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M9 4v16" /></Svg>,
+  admin: <Svg><path d="M4 20h16" /><path d="M7 20v-6M12 20v-9M17 20v-4" /></Svg>,
 };
+
+function StatCard({ label, value }: { label: string; value: number | null | undefined }) {
+  return (
+    <div className="rounded-2xl border border-neutral-200 bg-white p-5">
+      <p className="text-xs font-medium text-neutral-400">{label}</p>
+      <p className="mt-1 text-3xl font-semibold tracking-tight">{value === null || value === undefined ? "—" : value.toLocaleString()}</p>
+    </div>
+  );
+}
 
 export default function DashboardClient(props: DashboardProps) {
   const [tab, setTab] = useState<Tab>("generate");
@@ -103,6 +113,7 @@ export default function DashboardClient(props: DashboardProps) {
     { key: "generate", label: "새 글" },
     { key: "articles", label: articles.length ? `내 글 (${articles.length})` : "내 글" },
     { key: "wordpress", label: "워드프레스" },
+    ...(props.isAdmin ? [{ key: "admin" as Tab, label: "관리" }] : []),
   ];
 
   const displayName = props.email.split("@")[0] || props.email;
@@ -341,6 +352,33 @@ export default function DashboardClient(props: DashboardProps) {
                   </button>
                 </div>
                 <p className="mt-4 text-xs text-neutral-400">구독 취소·회원 탈퇴는 곧 추가됩니다.</p>
+              </div>
+            )}
+            {tab === "admin" && props.isAdmin && (
+              <div>
+                <h2 className="text-lg font-semibold tracking-tight">관리자 통계</h2>
+                <p className="mt-1 text-sm text-neutral-500">새로고침하면 최신 수치예요.</p>
+
+                <p className="mt-8 text-sm font-medium text-neutral-400">회원</p>
+                <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <StatCard label="전체 회원" value={props.adminStats?.usersTotal} />
+                  <StatCard label="오늘 가입" value={props.adminStats?.usersToday} />
+                  <StatCard label="무료" value={props.adminStats?.freeUsers} />
+                  <StatCard label="프로" value={props.adminStats?.proUsers} />
+                </div>
+
+                <p className="mt-8 text-sm font-medium text-neutral-400">글</p>
+                <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <StatCard label="전체 글" value={props.adminStats?.articlesTotal} />
+                  <StatCard label="오늘 생성" value={props.adminStats?.articlesToday} />
+                  <StatCard label="발행됨" value={props.adminStats?.publishedArticles} />
+                  <StatCard label="미리보기(잠금)" value={props.adminStats?.lockedArticles} />
+                </div>
+
+                <p className="mt-8 text-sm font-medium text-neutral-400">연동</p>
+                <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <StatCard label="워드프레스 연결" value={props.adminStats?.wpConnections} />
+                </div>
               </div>
             )}
           </main>

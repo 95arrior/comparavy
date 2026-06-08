@@ -32,4 +32,6 @@ export interface DashboardProps {
   articlesLimit: number;
   initialArticles: Article[];
   wpSiteUrl: string | null;
+  isAdmin?: boolean;
+  adminStats?: import("@/lib/adminStats").AdminStats | null;
 }
