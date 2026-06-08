@@ -32,7 +32,7 @@ export default async function PricingPage() {
     <div className="min-h-screen bg-white text-neutral-900 antialiased">
       <header className="border-b border-neutral-200/70">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-          <Link href="/"><Brand /></Link>
+          <Link href="/"><Brand pro={currentPlan === "pro"} /></Link>
           <Link href={loggedIn ? "/" : "/login"} className="text-sm text-neutral-500 transition hover:text-neutral-900">
             {loggedIn ? "내 작업공간" : "로그인"}
           </Link>

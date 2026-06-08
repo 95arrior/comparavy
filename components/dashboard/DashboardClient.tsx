@@ -247,7 +247,7 @@ export default function DashboardClient(props: DashboardProps) {
             <button onClick={() => setNavOpen(true)} aria-label="메뉴 열기" className="flex h-9 w-9 items-center justify-center rounded-lg text-neutral-600 transition hover:bg-neutral-100">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
             </button>
-            <Brand />
+            <Brand pro={props.plan === "pro"} />
           </div>
         )}
 
@@ -300,7 +300,7 @@ export default function DashboardClient(props: DashboardProps) {
               )}
             </section>
             <ServiceIntro loggedIn currentPlan={props.plan} />
-            <SiteFooter />
+            <SiteFooter pro={props.plan === "pro"} />
           </div>
         )}
 
