@@ -9,11 +9,13 @@ import type { Article } from "./types";
 export default function ArticleModal({
   article,
   wpConnected,
+  canPublish,
   onClose,
   onUpdated,
 }: {
   article: Article;
   wpConnected: boolean;
+  canPublish?: boolean;
   onClose: () => void;
   onUpdated: (a: Article) => void;
 }) {
@@ -25,6 +27,7 @@ export default function ArticleModal({
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [autoSavedAt, setAutoSavedAt] = useState<string | null>(null);
+  const [showUpsell, setShowUpsell] = useState(false);
   const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const dirty = title !== article.title || bodyHtml !== article.body_html || featured !== (article.featured_image ?? null);
@@ -145,7 +148,7 @@ export default function ArticleModal({
               <div className="w-full max-w-sm rounded-2xl border border-neutral-200 bg-white p-5 text-center shadow-xl">
                 <p className="text-base font-semibold tracking-tight">여기부터는 프로 회원만 볼 수 있어요</p>
                 <p className="mt-1.5 text-sm leading-relaxed text-neutral-500">
-                  프로로 업그레이드하면 이 글 전체가 열리고, 매달 50편까지 5,000자 깊이로 쓰고 워드프레스에 바로 발행할 수 있어요.
+                  프로로 업그레이드하면 이 글 전체가 열리고, 매달 30편까지 5,000자 깊이로 쓰고 워드프레스에 바로 발행할 수 있어요.
                 </p>
                 <Link
                   href="/pricing"
@@ -179,7 +182,7 @@ export default function ArticleModal({
               {saving ? "저장 중…" : "저장"}
             </button>
             <button
-              onClick={() => publish("publish")}
+              onClick={() => (canPublish ? publish("publish") : setShowUpsell(true))}
               disabled={publishing}
               className="rounded-full bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
             >
@@ -206,6 +209,22 @@ export default function ArticleModal({
                 <a href={article.wp_link} target="_blank" rel="noreferrer" className="underline">글 보기</a>
               </>
             )}
+          </div>
+        )}
+
+        {showUpsell && !canPublish && (
+          <div className="mt-4 rounded-2xl border border-[#3f91ff]/30 bg-[#3f91ff]/5 p-5">
+            <p className="text-base font-semibold tracking-tight">이 글, 워드프레스에 바로 올리고 싶으세요? 🚀</p>
+            <p className="mt-1.5 text-sm leading-relaxed text-neutral-600">
+              지금 쓴 이 글을 프로로 업그레이드하면 <b>버튼 하나로 워드프레스에 발행</b>돼요. 제목·메타·FAQ까지 자동으로요. 복붙은 이제 그만.
+            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <Link href="/pricing" className="ateflo-rainbow rounded-full px-5 py-2 text-sm font-medium text-white transition">
+                프로로 1클릭 발행하기 →
+              </Link>
+              <span className="text-xs text-neutral-400">{formatKRW(PLANS.pro.price)}/월 · 언제든 해지</span>
+              <button onClick={() => setShowUpsell(false)} className="ml-auto text-xs text-neutral-400 transition hover:text-neutral-600">닫기</button>
+            </div>
           </div>
         )}
 

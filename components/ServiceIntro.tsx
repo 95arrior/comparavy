@@ -112,7 +112,7 @@ function CostCompare() {
       <div className="rounded-2xl border-2 bg-white p-5 shadow-sm" style={{ borderColor: BRAND }}>
         <p className="text-sm font-medium" style={{ color: BRAND }}>AteFlo 프로</p>
         <p className="mt-1 text-2xl font-bold tracking-tight">
-          월 ₩29,900 <span className="text-base font-medium text-neutral-400">/ 50편</span>
+          월 ₩29,900 <span className="text-base font-medium text-neutral-400">/ 30편</span>
         </p>
       </div>
     </div>
@@ -223,8 +223,8 @@ export default function ServiceIntro({ loggedIn = false, currentPlan = "free" }:
       />
       <Section
         eyebrow="외주 한 편 값"
-        title={<>외주 글 한 편이면,<br />여기선 한 달 50편.</>}
-        sub="외주 글 한 편 값이면, 여기선 한 달 50편. 키워드만 넣고, 바로 올려요."
+        title={<>외주 글 한 편이면,<br />여기선 한 달 30편.</>}
+        sub="외주 글 한 편 값이면, 여기선 한 달 30편. 키워드만 넣고, 바로 올려요."
         visual={<CostCompare />}
         flip
       />
@@ -234,7 +234,7 @@ export default function ServiceIntro({ loggedIn = false, currentPlan = "free" }:
         <div className="mx-auto max-w-5xl px-6 py-24">
           <Reveal>
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">요금</h2>
-            <p className="mt-3 text-neutral-500">외주 글 한 편 값이면 한 달 50편. 무료 3편으로 먼저 확인하고 정하세요.</p>
+            <p className="mt-3 text-neutral-500">외주 글 한 편 값이면 한 달 30편. 무료 3편으로 먼저 확인하고 정하세요.</p>
           </Reveal>
           <Reveal delay={120} className="mt-12">
             <PricingCards loggedIn={loggedIn} currentPlan={currentPlan} />

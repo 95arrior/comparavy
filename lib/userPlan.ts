@@ -82,6 +82,8 @@ export async function rolloverIfNeeded(
   supabase: SupabaseClient,
   row: UserRow,
 ): Promise<UserRow> {
+  // 무료는 평생 3편(리셋 없음). 유료 구독만 매 결제주기마다 사용량을 리셋한다.
+  if (row.plan === "free") return row;
   const start = new Date(row.period_start).getTime();
   const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
   if (Date.now() - start < THIRTY_DAYS) return row;

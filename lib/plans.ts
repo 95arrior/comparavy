@@ -28,7 +28,7 @@ export const PLANS: Record<PlanKey, Plan> = {
     key: "pro",
     name: "프로",
     price: 29900,
-    articles: 50,
+    articles: 30,
     maxWords: 5000,
     wordpress: true,
     highlight: true,
@@ -37,9 +37,9 @@ export const PLANS: Record<PlanKey, Plan> = {
 
 /** 플랜 카드에 노출할 가치(핵심 기능) 목록 */
 export const PLAN_FEATURES: Record<PlanKey, string[]> = {
-  free: ["월 3편 생성", "글당 1,500자", "실시간 생성 화면", "AI 글 같은 말투 제거 · 정직성 보장", "복사해서 사용"],
+  free: ["평생 무료 3편", "글당 1,500자", "실시간 생성 화면", "AI 글 같은 말투 제거 · 정직성 보장", "복사해서 사용"],
   pro: [
-    "월 50편 생성",
+    "월 30편 생성",
     "글당 5,000자 깊이",
     "워드프레스 1클릭 발행",
     "한국 구글 SEO 자동 (제목·메타·FAQ·소제목)",
