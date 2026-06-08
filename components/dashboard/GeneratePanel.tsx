@@ -1,17 +1,23 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useEffect } from "react";
 import { ARTICLE_TYPES, TONES } from "@/lib/articlePrompt";
 import type { GenParams } from "./WritingView";
+import type { Article } from "./types";
 
 export default function GeneratePanel({
   remaining,
   onStart,
   pro,
+  lockedTeaser,
+  onOpenLocked,
 }: {
   remaining: number;
   onStart: (params: GenParams) => void;
   pro: boolean;
+  lockedTeaser: Article | null;
+  onOpenLocked: () => void;
 }) {
   const [keyword, setKeyword] = useState("");
   const [angle, setAngle] = useState("");
@@ -31,7 +37,9 @@ export default function GeneratePanel({
   }, []);
 
   const outOfQuota = remaining <= 0;
-  const teaserMode = !pro && outOfQuota; // 무료 한도 소진 → 결제 유도용 잠금 미리보기 1편 허용
+  const hasTeaser = !!lockedTeaser;
+  const teaserMode = !pro && outOfQuota && !hasTeaser; // 아직 미리보기 안 만든 무료 한도소진 → 1편 허용
+  const blocked = !pro && outOfQuota && hasTeaser; // 이미 미리보기 있음 → 추가 생성 차단, 결제 유도
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -50,6 +58,30 @@ export default function GeneratePanel({
       <p className="mt-1 text-sm text-neutral-500">
         키워드를 입력하면 한국어 SEO 글을 만듭니다. 이번 달 남은 횟수: {Math.max(0, remaining)}편
       </p>
+
+      {blocked && lockedTeaser && (
+        <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-5">
+          <p className="text-sm font-medium text-amber-900">무료 미리보기를 만들었어요 🔒</p>
+          <p className="mt-1 text-sm leading-relaxed text-amber-800">
+            끝까지 보고 발행하려면 프로로 업그레이드하세요. 추가 글 생성도 프로에서 열려요.
+          </p>
+          <p className="mt-3 truncate text-sm font-medium text-neutral-900">“{lockedTeaser.title}”</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              onClick={onOpenLocked}
+              className="rounded-full border border-amber-300 bg-white px-4 py-1.5 text-sm font-medium text-amber-900 transition hover:bg-amber-100"
+            >
+              미리보기 글 보기
+            </button>
+            <Link
+              href="/pricing"
+              className="rounded-full bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700"
+            >
+              프로로 업그레이드
+            </Link>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={submit} className="mt-6 space-y-5">
         <div>
@@ -126,7 +158,11 @@ export default function GeneratePanel({
           disabled={outOfQuota && !teaserMode}
           className="w-full rounded-full bg-neutral-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
         >
-          {outOfQuota && !teaserMode ? "이번 달 한도를 다 썼어요" : "글 생성하기"}
+          {blocked
+            ? "프로로 업그레이드하면 계속 쓸 수 있어요"
+            : outOfQuota && !teaserMode
+            ? "이번 달 한도를 다 썼어요"
+            : "글 생성하기"}
         </button>
       </form>
     </div>

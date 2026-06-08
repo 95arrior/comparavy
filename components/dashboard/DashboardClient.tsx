@@ -163,6 +163,11 @@ export default function DashboardClient(props: DashboardProps) {
             remaining={props.articlesLimit - articlesUsed}
             onStart={setGenParams}
             pro={props.plan === "pro"}
+            lockedTeaser={articles.find((a) => a.locked) ?? null}
+            onOpenLocked={() => {
+              const t = articles.find((a) => a.locked);
+              if (t) setSelected(t);
+            }}
           />
         )}
         {tab === "articles" && (
