@@ -56,8 +56,10 @@ export default function HeroInput({ loggedIn }: { loggedIn: boolean }) {
   }
 
   const chipCls = (on: boolean) =>
-    `flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-      on ? "border-neutral-900 bg-neutral-900 text-white" : "border-neutral-300 text-neutral-600 hover:border-neutral-500"
+    `flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1 text-xs transition ${
+      on
+        ? "border-neutral-900 bg-neutral-900 font-medium text-white"
+        : "border-neutral-200 text-neutral-500 hover:border-neutral-400 hover:text-neutral-700"
     }`;
 
   return (
@@ -90,10 +92,10 @@ export default function HeroInput({ loggedIn }: { loggedIn: boolean }) {
       </form>
       {err && <p className="mt-2 pl-4 text-left text-sm text-red-500">키워드를 먼저 입력해 주세요.</p>}
 
-      {/* 유형 · 문체 — 아이콘 칩 (대시보드와 동일한 옵션) */}
-      <div className="mt-5 space-y-3">
+      {/* 유형 · 문체 — 아이콘 칩 (선택. 안 골라도 기본값으로 생성) */}
+      <div className="mt-5 space-y-2">
         <div className="flex flex-wrap items-center justify-center gap-2">
-          <span className="w-7 shrink-0 text-xs font-medium text-neutral-400">유형</span>
+          <span className="w-7 shrink-0 text-xs text-neutral-300">유형</span>
           {ARTICLE_TYPES.map((t) => (
             <button key={t.key} type="button" onClick={() => setType(t.key)} title={t.hint} className={chipCls(type === t.key)}>
               {TYPE_ICON[t.key]}
@@ -102,7 +104,7 @@ export default function HeroInput({ loggedIn }: { loggedIn: boolean }) {
           ))}
         </div>
         <div className="flex flex-wrap items-center justify-center gap-2">
-          <span className="w-7 shrink-0 text-xs font-medium text-neutral-400">문체</span>
+          <span className="w-7 shrink-0 text-xs text-neutral-300">문체</span>
           {TONES.map((t) => (
             <button key={t.key} type="button" onClick={() => setTone(t.key)} title={t.hint} className={chipCls(tone === t.key)}>
               {TONE_ICON[t.key]}
@@ -110,6 +112,7 @@ export default function HeroInput({ loggedIn }: { loggedIn: boolean }) {
             </button>
           ))}
         </div>
+        <p className="pt-0.5 text-center text-[11px] text-neutral-400">안 골라도 괜찮아요 · 기본값으로 써드려요</p>
       </div>
     </div>
   );
