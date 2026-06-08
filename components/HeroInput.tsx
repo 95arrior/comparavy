@@ -50,12 +50,12 @@ export default function HeroInput({ loggedIn, onStart }: { loggedIn: boolean; on
       inputRef.current?.focus();
       return;
     }
-    // 작업공간 안(로그인)에서는 페이지 이동 없이 바로 작성화면으로
+    setLoading(true); // 무지개 효과로 "시작됨" 표시 (Enter·클릭 동일)
+    // 작업공간 안(로그인)에서는 페이지 이동 없이 바로 작성화면으로 — 무지개 잠깐 보여준 뒤
     if (onStart) {
-      onStart({ keyword: k, angle: "", type, tone });
+      setTimeout(() => onStart({ keyword: k, angle: "", type, tone }), 650);
       return;
     }
-    setLoading(true); // 무지개 효과로 "시작됨" 표시
     // 대시보드가 이걸 읽어 바로 작성화면을 띄운다 (로그인 거쳐도 유지)
     localStorage.setItem("ateflo_gen", JSON.stringify({ keyword: k, type, tone }));
     // 무지개가 잠깐 요동치는 걸 보여준 뒤 이동 (즉시 이동하면 버튼이 사라진 것처럼 보임)

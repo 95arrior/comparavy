@@ -143,7 +143,7 @@ export default function DashboardClient(props: DashboardProps) {
   return (
     <div className="flex min-h-screen bg-neutral-50 text-neutral-900 antialiased">
       {/* 좌측 레일 (ChatGPT식) — 아이콘 위치 고정, 폭만 부드럽게 + 라벨 페이드 */}
-      <aside className={`sticky top-0 flex h-screen shrink-0 flex-col border-r border-neutral-200 bg-white px-2 py-3 transition-[width] duration-200 ease-out ${navOpen ? "w-64" : "w-[56px]"}`}>
+      <aside className={`sticky top-0 z-40 flex h-screen shrink-0 flex-col border-r border-neutral-200 bg-white px-2 py-3 transition-[width] duration-200 ease-out ${navOpen ? "w-64" : "w-[56px]"}`}>
         {/* 상단: 로고(항상 같은 자리) + 브랜드명/닫기(펼침 시 페이드) */}
         <div className="mb-2 flex h-9 items-center gap-1">
           {navOpen ? (
