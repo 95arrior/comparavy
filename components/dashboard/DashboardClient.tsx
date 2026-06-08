@@ -149,7 +149,7 @@ export default function DashboardClient(props: DashboardProps) {
               <button
                 onClick={() => goTab("generate")}
                 aria-label="메인으로"
-                className="flex h-9 min-w-0 flex-1 items-center rounded-lg px-1 transition hover:bg-neutral-50"
+                className="flex h-9 min-w-0 flex-1 items-center rounded-lg pl-[7px] transition hover:bg-neutral-50"
               >
                 <Brand pro={props.plan === "pro"} />
               </button>
