@@ -14,7 +14,7 @@ import DashboardClient from "@/components/dashboard/DashboardClient";
 import type { Article } from "@/components/dashboard/types";
 
 export const metadata: Metadata = {
-  title: { absolute: `${SITE_NAME} — 발행할 가치가 있는 AI 블로그 글` },
+  title: { absolute: `${SITE_NAME} — 키워드 하나로 끝내는 블로그 글쓰기` },
   description: SITE_DESCRIPTION,
 };
 

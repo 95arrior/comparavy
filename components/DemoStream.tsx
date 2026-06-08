@@ -34,19 +34,23 @@ export default function DemoStream() {
   const blocks = ARTICLES[ai];
 
   useEffect(() => {
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
     const total = ARTICLES[ai].reduce((s, b) => s + b.text.length, 0);
     let i = 0;
-    let timer: ReturnType<typeof setTimeout>;
     const tick = () => {
+      if (cancelled) return;
       i += 1;
       setN(i);
       if (i < total) {
         timer = setTimeout(tick, 28);
       } else {
-        // 다 쓰면 잠깐 멈췄다가 → 부드럽게 페이드아웃 → 다음 글 페이드인 (뚝 끊김 방지)
+        // 다 쓰면 잠깐 멈췄다가 → 페이드아웃 → 다음 글로 교체 (겹침 방지: cancelled 가드)
         timer = setTimeout(() => {
+          if (cancelled) return;
           setShow(false);
           timer = setTimeout(() => {
+            if (cancelled) return;
             setN(0);
             setAi((a) => (a + 1) % ARTICLES.length);
             setShow(true);
@@ -55,7 +59,10 @@ export default function DemoStream() {
       }
     };
     timer = setTimeout(tick, 500);
-    return () => clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [ai]);
 
   const total = blocks.reduce((s, b) => s + b.text.length, 0);
@@ -73,8 +80,8 @@ export default function DemoStream() {
   return (
     <div className="mx-auto w-full max-w-xl text-left">
       <div className="mb-2 text-xs font-medium text-neutral-400">키워드 하나로, 이렇게 써져요</div>
-      <div className="h-80 overflow-hidden rounded-xl border border-neutral-200 bg-white/70 p-5 backdrop-blur">
-        <div className={`transition-opacity duration-500 ${show ? "opacity-100" : "opacity-0"}`}>
+      <div className="h-80 overflow-hidden rounded-xl border border-neutral-200 bg-white p-5 [mask-image:linear-gradient(to_bottom,#000_80%,transparent)]">
+        <div key={ai} className={`transition-opacity duration-500 ${show ? "opacity-100" : "opacity-0"}`}>
         {rendered.length === 0 && <p className="text-sm text-neutral-300">글을 구상하고 있어요…</p>}
         {rendered.map((b) => {
           if (b.tag === "title") {
