@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PLANS, formatKRW } from "@/lib/plans";
 import Reveal from "@/components/Reveal";
+import AteFloLogo from "@/components/AteFloLogo";
 
 const BRAND = "#4B5FE1";
 
@@ -34,7 +35,10 @@ function Section({
     <section id={id} className={`scroll-mt-16 border-t border-neutral-200/70 ${tint ? "bg-neutral-50" : ""}`}>
       <div className="mx-auto grid max-w-5xl items-center gap-10 px-6 py-24 sm:py-28 lg:grid-cols-2 lg:gap-16">
         <Reveal className={flip ? "lg:order-2" : ""}>
-          <p className="text-sm font-semibold tracking-tight" style={{ color: BRAND }}>✶ {eyebrow}</p>
+          <p className="flex items-center gap-1.5 text-sm font-semibold tracking-tight" style={{ color: BRAND }}>
+            <AteFloLogo size={16} animated={false} />
+            {eyebrow}
+          </p>
           <h2 className="mt-4 text-3xl font-bold leading-[1.22] tracking-tight sm:text-[2.5rem] sm:leading-[1.18]">{title}</h2>
           <p className="mt-5 max-w-md text-base leading-relaxed text-neutral-500">{sub}</p>
         </Reveal>
@@ -70,6 +74,39 @@ function BuriedResults() {
         <Row />
       </div>
       <p className="mt-5 text-center text-xs text-neutral-400">다 비슷한 글… 내 글은 어디에 있죠?</p>
+    </div>
+  );
+}
+
+function PromptHassle() {
+  const msgs = ["톤을 더 자연스럽게 바꿔줘", "FAQ도 넣어줘", "너무 기네, 좀 줄여줘", "음… 처음 게 더 나았는데"];
+  return (
+    <div className="mx-auto max-w-sm rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm">
+      <p className="text-xs font-medium text-neutral-400">직접 프롬프트로 쓰면</p>
+      <div className="mt-4 space-y-2.5">
+        {msgs.map((m, i) => (
+          <div key={i} className="ml-auto w-fit max-w-[85%] rounded-2xl rounded-br-sm bg-neutral-100 px-3.5 py-2 text-sm text-neutral-600">{m}</div>
+        ))}
+      </div>
+      <p className="mt-4 text-center text-xs text-neutral-400">원하는 글까지 몇 번이나 다시…</p>
+    </div>
+  );
+}
+
+function CostCompare() {
+  return (
+    <div className="mx-auto max-w-sm space-y-3">
+      <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
+        <p className="text-sm text-neutral-500">외주 글 1편</p>
+        <p className="mt-1 text-2xl font-bold tracking-tight text-neutral-500">보통 ₩30,000~</p>
+      </div>
+      <div className="flex items-center justify-center text-neutral-300">↓</div>
+      <div className="rounded-2xl border-2 bg-white p-5 shadow-sm" style={{ borderColor: BRAND }}>
+        <p className="text-sm font-medium" style={{ color: BRAND }}>AteFlo 프로</p>
+        <p className="mt-1 text-2xl font-bold tracking-tight">
+          월 ₩29,900 <span className="text-base font-medium text-neutral-400">/ 50편</span>
+        </p>
+      </div>
     </div>
   );
 }
@@ -156,17 +193,31 @@ export default function ServiceIntro() {
         flip
       />
       <Section
+        eyebrow="한 번에 끝나요"
+        title={<>프롬프트 다시,<br />또 고치고… 그만.</>}
+        sub="직접 시키면 톤·구조가 한 번에 안 나와서 대화를 계속 이어가게 되죠. 그러다 글 맥락도 흐트러지고요. AteFlo는 좋은 글이 나오는 프롬프트·구조를 미리 짜뒀어요. 키워드만 넣으면 끝이에요."
+        visual={<PromptHassle />}
+        tint
+      />
+      <Section
         eyebrow="사람이 쓴 것처럼"
         title={<>AI 티 빼고,<br />없는 얘긴 안 지어내요.</>}
         sub="‘알아보겠습니다’ 같은 말투·번역투를 걸러내고, 가짜 통계·후기는 만들지 않도록 규칙을 박아뒀어요. 그대로 올려도 탈 안 나게요."
         visual={<CleanCheck />}
-        tint
+        flip
       />
       <Section
         eyebrow="쓰고 끝이 아니에요"
         title={<>제목·메타·FAQ까지,<br />워드프레스에 한 번에.</>}
         sub="한국 구글에 맞춘 SEO 기본기를 자동으로 갖추고, 버튼 하나로 내 워드프레스에 발행해요. (프로 플랜)"
         visual={<PublishCard />}
+        tint
+      />
+      <Section
+        eyebrow="외주 한 편 값"
+        title={<>외주 글 한 편이면,<br />여기선 한 달 50편.</>}
+        sub="블로그 글 외주는 보통 한 편에 수만 원이에요. 한 달 ₩29,900이면 50편을 직접 쓰고 워드프레스에 바로 올려요."
+        visual={<CostCompare />}
         flip
       />
 
