@@ -7,16 +7,18 @@ import { chargeBillingKey, makeOrderId } from "@/lib/toss";
 const PERIOD_DAYS = 30;
 
 /**
- * 정기 청구 엔드포인트. 스케줄러(cron)가 호출한다.
- * 보호: Authorization: Bearer <BILLING_CRON_SECRET>
+ * 정기 청구. 스케줄러(cron)가 매일 호출한다.
+ * 인증: Vercel Cron은 GET + `Authorization: Bearer <CRON_SECRET>`. 수동 호출은 BILLING_CRON_SECRET 도 허용.
  * next_billing_at 이 도래한 active 구독을 청구한다.
  */
-export async function POST(request: Request) {
-  const secret = process.env.BILLING_CRON_SECRET;
+function authorized(request: Request): boolean {
   const auth = request.headers.get("authorization");
-  if (!secret || auth !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: "권한이 없습니다." }, { status: 401 });
-  }
+  const cron = process.env.CRON_SECRET;
+  const billing = process.env.BILLING_CRON_SECRET;
+  return Boolean((cron && auth === `Bearer ${cron}`) || (billing && auth === `Bearer ${billing}`));
+}
+
+async function runCharge() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return NextResponse.json({ error: "서버 설정이 완료되지 않았습니다." }, { status: 500 });
   }
@@ -67,4 +69,14 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ ok: true, charged, failed, total: rows.length });
+}
+
+export async function GET(request: Request) {
+  if (!authorized(request)) return NextResponse.json({ error: "권한이 없습니다." }, { status: 401 });
+  return runCharge();
+}
+
+export async function POST(request: Request) {
+  if (!authorized(request)) return NextResponse.json({ error: "권한이 없습니다." }, { status: 401 });
+  return runCharge();
 }
