@@ -255,7 +255,7 @@ export default function DashboardClient(props: DashboardProps) {
 
         {/* 새 글 = 메인 화면 (중앙 입력 + 데모 + 스크롤 시 서비스 소개) */}
         {!selected && !genParams && tab === "generate" && (
-          <div>
+          <div className="ateflo-page-in">
             <section className="mx-auto max-w-3xl px-6 pb-20 pt-16 text-center sm:pt-24">
               <p className="text-sm font-medium tracking-tight text-neutral-400">워드프레스 블로그를 위한 AI 글쓰기</p>
               <h1 className="font-pretendard mt-5 text-4xl font-bold leading-[1.15] tracking-tight sm:text-6xl">글쓰기, 키워드 하나면 끝</h1>
@@ -285,33 +285,19 @@ export default function DashboardClient(props: DashboardProps) {
         )}
 
         {!selected && !genParams && tab !== "generate" && (
-          <main className="mx-auto max-w-5xl px-6 py-10">
-            {tab !== "account" && !allDone && (
-              <div className="mb-6 rounded-xl border border-neutral-200 bg-white px-5 py-4">
-                <p className="text-xs font-medium text-neutral-400">처음이세요? · 시작 가이드</p>
-                {nextStep && (
-                  <div className="mt-2 flex flex-wrap items-center gap-3">
-                    <p className="text-sm font-medium text-neutral-900">{nextStep.msg}</p>
-                    {nextStep.tab !== "generate" && (
-                      <button
-                        onClick={() => goTab(nextStep.tab)}
-                        className="rounded-full bg-neutral-900 px-4 py-1.5 text-xs font-medium text-white transition hover:bg-neutral-700"
-                      >
-                        바로 가기
-                      </button>
-                    )}
-                  </div>
-                )}
-                <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5">
-                  {steps.map((s) => (
-                    <li key={s.label} className="flex items-center gap-2 text-xs">
-                      <span className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] ${s.done ? "bg-emerald-500 text-white" : "border border-neutral-300 text-neutral-400"}`}>
-                        {s.done ? "✓" : ""}
-                      </span>
-                      <span className={s.done ? "text-neutral-300 line-through" : "text-neutral-500"}>{s.label}</span>
-                    </li>
-                  ))}
-                </ul>
+          <main key={tab} className="ateflo-page-in mx-auto max-w-5xl px-6 py-10">
+            {tab !== "account" && !allDone && nextStep && (
+              <div className="mb-6 flex flex-wrap items-center gap-4 rounded-2xl border border-[#4B5FE1]/30 bg-[#4B5FE1]/5 px-5 py-4">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-[#4B5FE1]">다음 단계 · {steps.filter((s) => s.done).length + 1} / {steps.length}</p>
+                  <p className="mt-1 text-sm font-medium text-neutral-900">{nextStep.msg}</p>
+                </div>
+                <button
+                  onClick={() => goTab(nextStep.tab)}
+                  className="shrink-0 rounded-full bg-[#4B5FE1] px-5 py-2 text-sm font-medium text-white transition hover:opacity-90"
+                >
+                  {nextStep.tab === "generate" ? "새 글 쓰러 가기 →" : "바로 가기 →"}
+                </button>
               </div>
             )}
 

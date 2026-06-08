@@ -209,8 +209,8 @@ export default function ServiceIntro({ loggedIn = false, currentPlan = "free" }:
       />
       <Section
         eyebrow="사람이 쓴 것처럼"
-        title={<>AI 티 빼고,<br />없는 얘긴 안 지어내요.</>}
-        sub="‘알아보겠습니다’ 같은 티 나는 말투, 다 걸러요. 안 해본 얘기·없는 통계는 안 만들고요. 그대로 올려도 돼요."
+        title={<>AI가 쓴 티 빼고,<br />없는 얘긴 안 지어내요.</>}
+        sub="‘알아보겠습니다’ 같은 AI 글 특유의 말투, 다 걸러요. 안 해본 얘기·없는 통계는 안 만들고요. 그대로 올려도 돼요."
         visual={<CleanCheck />}
         flip
       />

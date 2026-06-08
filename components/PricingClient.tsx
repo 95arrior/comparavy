@@ -76,15 +76,14 @@ export default function PricingClient({
     </ul>
   );
 
-  const CurrentBtn = ({ rainbow }: { rainbow?: boolean }) => (
+  const CurrentBtn = () => (
     <button
       onClick={() => router.push("/")}
-      className={`group mt-8 rounded-full px-5 py-2.5 text-sm font-medium transition ${
-        rainbow ? "ateflo-rainbow" : "border border-neutral-300 text-neutral-900 hover:border-neutral-900"
-      }`}
+      className="group relative mt-8 rounded-full border border-neutral-300 px-5 py-2.5 text-sm font-medium text-neutral-900 transition hover:border-neutral-900"
     >
-      <span className="group-hover:hidden">현재 이용 중</span>
-      <span className="hidden group-hover:inline">시작하기</span>
+      <span className="invisible">현재 이용 중</span>
+      <span className="absolute inset-0 flex items-center justify-center transition-opacity duration-200 group-hover:opacity-0">현재 이용 중</span>
+      <span className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100">시작하기</span>
     </button>
   );
 
@@ -128,12 +127,12 @@ export default function PricingClient({
           </p>
           <Feats plan="pro" />
           {isPro ? (
-            <CurrentBtn rainbow />
+            <CurrentBtn />
           ) : (
             <button
               disabled={loading}
               onClick={startPro}
-              className="ateflo-rainbow mt-8 rounded-full px-5 py-2.5 text-sm font-medium transition disabled:opacity-50"
+              className="mt-8 rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
             >
               {loading ? "결제창 여는 중…" : loggedIn ? "프로 구독하기" : "로그인하고 시작"}
             </button>
@@ -211,7 +210,7 @@ export default function PricingClient({
               <button
                 disabled={!agreeOrder || !agreeRecurring || loading}
                 onClick={confirmAndPay}
-                className="ateflo-rainbow flex-1 rounded-full px-5 py-2.5 text-sm font-medium transition disabled:opacity-50"
+                className="flex-1 rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
               >
                 {loading ? "결제창 여는 중…" : "동의하고 결제"}
               </button>

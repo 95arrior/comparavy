@@ -20,17 +20,16 @@ function Features({ plan }: { plan: PlanKey }) {
   );
 }
 
-// 호버하면 '시작하기'로 바뀌는 현재 이용중 버튼
-function CurrentBtn({ onClick, rainbow }: { onClick: () => void; rainbow?: boolean }) {
+// 호버하면 '시작하기'로 부드럽게 크로스페이드 (크기 고정)
+function CurrentBtn({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className={`group mt-8 rounded-full px-5 py-2.5 text-sm font-medium transition ${
-        rainbow ? "ateflo-rainbow" : "border border-neutral-300 text-neutral-900 hover:border-neutral-900"
-      }`}
+      className="group relative mt-8 rounded-full border border-neutral-300 px-5 py-2.5 text-sm font-medium text-neutral-900 transition hover:border-neutral-900"
     >
-      <span className="group-hover:hidden">현재 이용 중</span>
-      <span className="hidden group-hover:inline">시작하기</span>
+      <span className="invisible">현재 이용 중</span>
+      <span className="absolute inset-0 flex items-center justify-center transition-opacity duration-200 group-hover:opacity-0">현재 이용 중</span>
+      <span className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100">시작하기</span>
     </button>
   );
 }
@@ -80,11 +79,11 @@ export default function PricingCards({ loggedIn, currentPlan }: { loggedIn: bool
         </p>
         <Features plan="pro" />
         {isPro ? (
-          <CurrentBtn onClick={toTop} rainbow />
+          <CurrentBtn onClick={toTop} />
         ) : (
           <button
             onClick={() => router.push(loggedIn ? "/pricing" : "/login")}
-            className="ateflo-rainbow mt-8 rounded-full px-5 py-2.5 text-sm font-medium transition"
+            className="mt-8 rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700"
           >
             {loggedIn ? "프로 구독하기" : "프로 선택"}
           </button>
