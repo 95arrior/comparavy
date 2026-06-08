@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SITE_NAME } from "@/lib/site";
+import Brand from "@/components/Brand";
 
 export function LegalSection({
   heading,
@@ -29,9 +29,7 @@ export default function LegalLayout({
     <div className="min-h-screen bg-white text-neutral-900 antialiased">
       <header className="border-b border-neutral-200/70">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
-          <Link href="/" className="text-base font-semibold tracking-tight">
-            {SITE_NAME}
-          </Link>
+          <Link href="/"><Brand /></Link>
           <Link href="/" className="text-sm text-neutral-500 transition hover:text-neutral-900">
             홈으로
           </Link>
