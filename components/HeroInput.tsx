@@ -55,31 +55,10 @@ export default function HeroInput({ loggedIn }: { loggedIn: boolean }) {
     router.push(loggedIn ? "/dashboard" : "/login");
   }
 
-  const Chip = ({
-    active,
-    onClick,
-    icon,
-    label,
-    title,
-  }: {
-    active: boolean;
-    onClick: () => void;
-    icon: React.ReactNode;
-    label: string;
-    title: string;
-  }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      title={title}
-      className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-        active ? "border-neutral-900 bg-neutral-900 text-white" : "border-neutral-300 text-neutral-600 hover:border-neutral-500"
-      }`}
-    >
-      {icon}
-      {label}
-    </button>
-  );
+  const chipCls = (on: boolean) =>
+    `flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+      on ? "border-neutral-900 bg-neutral-900 text-white" : "border-neutral-300 text-neutral-600 hover:border-neutral-500"
+    }`;
 
   return (
     <div className="mx-auto w-full max-w-xl">
@@ -112,17 +91,23 @@ export default function HeroInput({ loggedIn }: { loggedIn: boolean }) {
       {err && <p className="mt-2 pl-4 text-left text-sm text-red-500">키워드를 먼저 입력해 주세요.</p>}
 
       {/* 유형 · 문체 — 아이콘 칩 (대시보드와 동일한 옵션) */}
-      <div className="mt-4 space-y-2">
-        <div className="flex flex-wrap items-center justify-center gap-1.5">
-          <span className="mr-1 text-xs font-medium text-neutral-400">유형</span>
+      <div className="mt-5 space-y-3">
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <span className="w-7 shrink-0 text-xs font-medium text-neutral-400">유형</span>
           {ARTICLE_TYPES.map((t) => (
-            <Chip key={t.key} active={type === t.key} onClick={() => setType(t.key)} icon={TYPE_ICON[t.key]} label={TYPE_SHORT[t.key] ?? t.label} title={t.hint} />
+            <button key={t.key} type="button" onClick={() => setType(t.key)} title={t.hint} className={chipCls(type === t.key)}>
+              {TYPE_ICON[t.key]}
+              {TYPE_SHORT[t.key] ?? t.label}
+            </button>
           ))}
         </div>
-        <div className="flex flex-wrap items-center justify-center gap-1.5">
-          <span className="mr-1 text-xs font-medium text-neutral-400">문체</span>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <span className="w-7 shrink-0 text-xs font-medium text-neutral-400">문체</span>
           {TONES.map((t) => (
-            <Chip key={t.key} active={tone === t.key} onClick={() => setTone(t.key)} icon={TONE_ICON[t.key]} label={TONE_SHORT[t.key] ?? t.label} title={t.hint} />
+            <button key={t.key} type="button" onClick={() => setTone(t.key)} title={t.hint} className={chipCls(tone === t.key)}>
+              {TONE_ICON[t.key]}
+              {TONE_SHORT[t.key] ?? t.label}
+            </button>
           ))}
         </div>
       </div>

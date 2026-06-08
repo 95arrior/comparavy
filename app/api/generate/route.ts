@@ -77,7 +77,9 @@ export async function POST(request: Request) {
       .select("id", { count: "exact", head: true })
       .eq("user_id", user.id)
       .eq("locked", true);
-    if ((lockedCount ?? 0) > 0) {
+    // 영구 플래그(teaser_used) 또는 현존 잠금 글이 있으면 추가 티저 금지.
+    // → 글이 30일 만료/삭제돼도 teaser_used가 남아 무한 무료생성을 막는다.
+    if (row.teaser_used || (lockedCount ?? 0) > 0) {
       return NextResponse.json(
         { error: "무료 미리보기를 이미 만들었어요. 프로로 업그레이드하면 잠금이 풀리고 계속 생성할 수 있어요." },
         { status: 403 },
@@ -170,6 +172,9 @@ export async function POST(request: Request) {
             .from("users")
             .update({ articles_used: usedSoFar + 1 })
             .eq("id", user.id);
+        } else {
+          // 티저를 만들었음을 영구 기록 → 글이 삭제·만료돼도 재생성 차단 (컬럼 없으면 무시됨)
+          await supabase.from("users").update({ teaser_used: true }).eq("id", user.id);
         }
 
         // 다양성 원장 기록 → 다음 생성 때 이 구조를 피한다

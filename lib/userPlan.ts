@@ -12,6 +12,8 @@ export interface UserRow {
   sub_status: string | null;
   next_billing_at: string | null;
   current_period_end: string | null;
+  /** 무료 미리보기(티저)를 이미 만들었는지 — 삭제·만료돼도 유지(재생성 차단) */
+  teaser_used?: boolean;
 }
 
 /** 사용자 행을 가져오고, 없으면 무료 플랜으로 생성한다. */
