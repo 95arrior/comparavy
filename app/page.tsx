@@ -5,6 +5,8 @@ import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-serve
 import { ensureUserRow } from "@/lib/userPlan";
 import HeroInput from "@/components/HeroInput";
 import DemoStream from "@/components/DemoStream";
+import Brand from "@/components/Brand";
+import LandingNav from "@/components/LandingNav";
 import ServiceIntro from "@/components/ServiceIntro";
 import SiteFooter from "@/components/SiteFooter";
 import DashboardClient from "@/components/dashboard/DashboardClient";
@@ -58,13 +60,11 @@ export default async function Home() {
     <div className="min-h-screen bg-white text-neutral-900 antialiased">
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-neutral-200/70 bg-white/80 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-          <span className="text-base font-semibold tracking-tight">{SITE_NAME}</span>
-          <nav className="hidden items-center gap-8 text-sm text-neutral-500 md:flex">
-            <Link href="#how" className="transition hover:text-neutral-900">사용법</Link>
-            <Link href="#features" className="transition hover:text-neutral-900">기능</Link>
-            <Link href="/pricing" className="transition hover:text-neutral-900">요금</Link>
-          </nav>
+        <div className="relative mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
+          <Link href="/"><Brand /></Link>
+          <div className="absolute left-1/2 -translate-x-1/2">
+            <LandingNav />
+          </div>
           <div className="flex items-center gap-5">
             {!user && <Link href="/login" className="hidden text-sm text-neutral-500 transition hover:text-neutral-900 sm:block">로그인</Link>}
             <Link href={ctaHref} className="rounded-full bg-neutral-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-neutral-700">
