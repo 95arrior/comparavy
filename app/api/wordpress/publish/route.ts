@@ -21,7 +21,7 @@ export async function POST(request: Request) {
   const planRow = await ensureUserRow(supabase, user.id);
   if (!PLANS[planRow.plan].wordpress) {
     return NextResponse.json(
-      { error: "워드프레스 자동발행은 프로 플랜 기능입니다. 프로로 업그레이드하면 1클릭으로 발행할 수 있어요.", upgrade: true },
+      { error: "워드프레스 자동발행은 프로 플랜 기능입니다. 프로로 업그레이드하면 원클릭으로 발행할 수 있어요.", upgrade: true },
       { status: 403 },
     );
   }

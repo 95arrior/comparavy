@@ -220,7 +220,7 @@ export default function ArticleModal({
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <Link href="/pricing" className="ateflo-rainbow rounded-full px-5 py-2 text-sm font-medium text-white transition">
-                프로로 1클릭 발행하기 →
+                프로 업그레이드 →
               </Link>
               <span className="text-xs text-neutral-400">{formatKRW(PLANS.pro.price)}/월 · 언제든 해지</span>
               <button onClick={() => setShowUpsell(false)} className="ml-auto text-xs text-neutral-400 transition hover:text-neutral-600">닫기</button>

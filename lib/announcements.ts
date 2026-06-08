@@ -11,7 +11,7 @@ export const ANNOUNCEMENTS: Announcement[] = [
   {
     id: "2026-06-09-publish",
     date: "2026.06.09",
-    title: "워드프레스 1클릭 발행 + 모바일 개선",
+    title: "워드프레스 원클릭 발행 + 모바일 개선",
     body: "글을 쓰고 버튼 하나로 워드프레스에 바로 올릴 수 있어요. 모바일 화면도 더 깔끔해졌어요.",
   },
   {
