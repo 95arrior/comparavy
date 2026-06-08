@@ -48,17 +48,8 @@ export async function PATCH(
   return NextResponse.json({ article: data });
 }
 
-export async function DELETE(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  if (!hasSupabaseEnv()) {
-    return NextResponse.json({ error: "서버 설정이 완료되지 않았습니다." }, { status: 500 });
-  }
-  const { id } = await params;
-  const { supabase, user } = await getUser();
-  if (!user) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
-
-  await supabase.from("articles").delete().eq("id", id).eq("user_id", user.id);
-  return NextResponse.json({ ok: true });
+export async function DELETE() {
+  // 글 삭제는 지원하지 않는다.
+  // (무료 한도 카운터는 monotonic이지만, 잠금 티저를 지우고 재생성하는 무한 무료생성 빈틈을 원천 차단)
+  return NextResponse.json({ error: "글 삭제는 지원하지 않습니다." }, { status: 403 });
 }

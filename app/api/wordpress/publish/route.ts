@@ -45,6 +45,13 @@ export async function POST(request: Request) {
   if (!article) {
     return NextResponse.json({ error: "글을 찾을 수 없습니다." }, { status: 404 });
   }
+  // 잠금(미리보기) 글은 발행 불가 — 방어
+  if (article.locked) {
+    return NextResponse.json(
+      { error: "미리보기 글은 발행할 수 없어요. 프로로 업그레이드하면 전체 글을 발행할 수 있어요.", upgrade: true },
+      { status: 403 },
+    );
+  }
 
   // 워드프레스 연결 조회
   const { data: conn } = await supabase

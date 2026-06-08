@@ -18,12 +18,10 @@ export default function ArticleList({
   articles,
   onOpen,
   onGoGenerate,
-  onDelete,
 }: {
   articles: Article[];
   onOpen: (article: Article) => void;
   onGoGenerate: () => void;
-  onDelete: (id: string) => void;
 }) {
   if (articles.length === 0) {
     return (
@@ -44,7 +42,7 @@ export default function ArticleList({
       {articles.map((a) => (
         <div
           key={a.id}
-          className="relative flex w-full items-center justify-between gap-4 rounded-2xl border border-neutral-200 bg-white p-5 pr-12 transition hover:border-neutral-400"
+          className="flex w-full items-center justify-between gap-4 rounded-2xl border border-neutral-200 bg-white p-5 transition hover:border-neutral-400"
         >
           <button onClick={() => onOpen(a)} className="min-w-0 flex-1 text-left">
             <div className="flex items-center gap-2">
@@ -62,14 +60,7 @@ export default function ArticleList({
               {(a.char_count ?? 0).toLocaleString()}자 · {new Date(a.created_at).toLocaleDateString("ko-KR")}
             </p>
           </button>
-          <button
-            onClick={() => onDelete(a.id)}
-            title="삭제"
-            aria-label="삭제"
-            className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full text-neutral-300 transition hover:bg-neutral-100 hover:text-neutral-700"
-          >
-            ✕
-          </button>
+          <span className="shrink-0 text-sm text-neutral-300">→</span>
         </div>
       ))}
     </div>
