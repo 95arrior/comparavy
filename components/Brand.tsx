@@ -8,7 +8,7 @@ const ubuntu = Ubuntu({ subsets: ["latin"], weight: "700", display: "swap" });
 export default function Brand({ pro = false, size = 22 }: { pro?: boolean; size?: number }) {
   return (
     <span className="flex items-center gap-1.5">
-      <AteFloLogo size={size} pro={pro} className="shrink-0" />
+      <AteFloLogo size={size} pro={pro} animated={false} className="shrink-0" />
       <span className={`${ubuntu.className} text-lg font-bold leading-none tracking-tight text-neutral-900`}>{SITE_NAME}</span>
     </span>
   );
