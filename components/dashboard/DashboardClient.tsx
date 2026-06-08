@@ -154,7 +154,7 @@ export default function DashboardClient(props: DashboardProps) {
                 aria-label="메인으로"
                 className="flex h-9 min-w-0 flex-1 items-center rounded-lg transition hover:bg-neutral-50"
               >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center"><AteFloLogo size={22} /></span>
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center"><AteFloLogo size={22} pro={props.plan === "pro"} /></span>
                 <span className={`${ubuntu.className} -ml-1 -translate-y-px truncate text-lg font-bold leading-none tracking-tight text-neutral-900`}>{SITE_NAME}</span>
               </button>
               <button
@@ -172,7 +172,7 @@ export default function DashboardClient(props: DashboardProps) {
               aria-label="사이드바 열기"
               className="group relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition hover:bg-neutral-100"
             >
-              <span className="absolute inset-0 flex items-center justify-center group-hover:opacity-0"><AteFloLogo size={22} /></span>
+              <span className="absolute inset-0 flex items-center justify-center group-hover:opacity-0"><AteFloLogo size={22} pro={props.plan === "pro"} /></span>
               <span className="absolute inset-0 flex items-center justify-center text-neutral-700 opacity-0 group-hover:opacity-100">{ICON.panel}</span>
               <span className="pointer-events-none absolute left-11 z-50 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100">사이드바 열기</span>
             </button>

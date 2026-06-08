@@ -29,6 +29,11 @@ export default function ArticleModal({
 
   const dirty = title !== article.title || bodyHtml !== article.body_html || featured !== (article.featured_image ?? null);
 
+  // 편집 화면 열릴 때 항상 맨 위로 (작성 화면에서 스크롤 내려와 있어도)
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, []);
+
   // 자동저장: 변경 후 3초 멈추면 저장하고 "자동저장 완료" 표시
   useEffect(() => {
     if (!dirty) return;

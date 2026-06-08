@@ -1,4 +1,7 @@
-// 서비스 소개 섹션 (선언문 + 사용법 + 기능). 비로그인 홈과 로그인 새 글 화면 양쪽에서 재사용.
+import Link from "next/link";
+import { PLANS, formatKRW } from "@/lib/plans";
+
+// 서비스 소개 (선언문 + 사용법 + 기능 + 가격). 비로그인 홈과 로그인 새 글 화면 양쪽에서 재사용.
 
 const STEPS = [
   { n: "01", title: "키워드랑 내 생각 입력", body: "쓰고 싶은 키워드를 넣으세요. 내 경험이나 의견이 있으면 한 줄 보태면 됩니다. 그게 남들 글이랑 갈리는 지점입니다." },
@@ -18,13 +21,22 @@ const FEATURES = [
 export default function ServiceIntro() {
   return (
     <>
-      {/* Manifesto */}
+      {/* Manifesto — 한 줄씩 리듬, 핵심구절 강조 */}
       <section className="border-t border-neutral-200/70 bg-neutral-50">
-        <div className="mx-auto max-w-5xl px-6 py-24">
-          <p className="max-w-3xl text-2xl font-medium leading-snug tracking-tight text-neutral-500 sm:text-3xl">
-            “그냥 ChatGPT 쓰면 되잖아요.” 네, 천 단어는 누구나 1분이면 뽑습니다. 근데 다 비슷하게 생겨서
-            <span className="text-neutral-900"> 검색에 안 잡히는 게 문제죠</span>. 우리가 신경 쓴 건 속도가 아니라 어떻게 쓰느냐입니다. 올렸을 때 사람이 끝까지 읽고, 구글이 띄워주는 글.
-          </p>
+        <div className="mx-auto max-w-3xl px-6 py-24 sm:py-28">
+          <p className="text-sm font-medium text-neutral-400">“AI로 쓰면 다 똑같은 거 아니에요?”</p>
+          <div className="mt-6 space-y-3 text-2xl font-semibold leading-snug tracking-tight sm:text-[2rem]">
+            <p className="text-neutral-900">맞아요. 글 한 편 쓰는 거, 이제 1분이면 해요.</p>
+            <p className="text-neutral-400">
+              근데 다 비슷하게 나와서, <span className="text-neutral-900">검색에 안 잡히는 게 문제죠.</span>
+            </p>
+            <p className="text-neutral-900">
+              우리가 신경 쓴 건 속도가 아니라 <span className="text-[#4B5FE1]">어떻게 쓰느냐</span>입니다.
+            </p>
+            <p className="text-neutral-900">
+              올렸을 때 사람이 끝까지 읽고, <span className="text-[#4B5FE1]">구글이 띄워주는 글.</span>
+            </p>
+          </div>
         </div>
       </section>
 
@@ -35,8 +47,8 @@ export default function ServiceIntro() {
           <div className="mt-14 grid gap-px overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-200 md:grid-cols-3">
             {STEPS.map((s) => (
               <div key={s.n} className="bg-white p-8">
-                <span className="text-sm font-medium text-neutral-300">{s.n}</span>
-                <h3 className="mt-4 text-lg font-medium tracking-tight">{s.title}</h3>
+                <span className="text-lg font-bold text-[#4B5FE1]">{s.n}</span>
+                <h3 className="mt-3 text-lg font-medium tracking-tight">{s.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-neutral-500">{s.body}</p>
               </div>
             ))}
@@ -51,8 +63,42 @@ export default function ServiceIntro() {
           <div className="mt-14 grid gap-x-12 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((f) => (
               <div key={f.title}>
-                <h3 className="text-base font-medium tracking-tight">{f.title}</h3>
+                <div className="h-1 w-8 rounded-full bg-[#4B5FE1]/80" />
+                <h3 className="mt-4 text-base font-medium tracking-tight">{f.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-neutral-500">{f.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section id="pricing" className="scroll-mt-16 border-t border-neutral-200/70">
+        <div className="mx-auto max-w-5xl px-6 py-24">
+          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">요금</h2>
+          <p className="mt-3 text-neutral-500">무료 3편 먼저 써보세요. 괜찮으면 그때 프로. 외주 글 한 편 값이면 한 달 50편입니다.</p>
+          <div className="mt-12 grid max-w-3xl gap-px overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-200 sm:grid-cols-2">
+            {[PLANS.free, PLANS.pro].map((plan) => (
+              <div key={plan.key} className="flex flex-col bg-white p-8">
+                <div className="flex items-baseline justify-between">
+                  <h3 className="text-lg font-medium tracking-tight">{plan.name}</h3>
+                  {plan.highlight && <span className="rounded-full bg-[#4B5FE1]/10 px-2.5 py-0.5 text-xs font-medium text-[#4B5FE1]">가장 인기</span>}
+                </div>
+                <p className="mt-3">
+                  <span className="text-4xl font-semibold tracking-tight">
+                    {plan.price === 0 ? "무료" : formatKRW(plan.price)}
+                  </span>
+                  {plan.price !== 0 && <span className="text-sm text-neutral-400">/월</span>}
+                </p>
+                <p className="mt-3 text-sm text-neutral-500">월 {plan.articles}편 · 글당 최대 {plan.maxWords.toLocaleString()}자{plan.wordpress ? " · 워드프레스 자동발행" : ""}</p>
+                <Link
+                  href="/pricing"
+                  className={`mt-8 rounded-full px-5 py-2.5 text-center text-sm font-medium transition ${
+                    plan.highlight ? "bg-neutral-900 text-white hover:bg-neutral-700" : "border border-neutral-300 text-neutral-900 hover:border-neutral-900"
+                  }`}
+                >
+                  {plan.price === 0 ? "무료로 시작" : "프로 선택"}
+                </Link>
               </div>
             ))}
           </div>

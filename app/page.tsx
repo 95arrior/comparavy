@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SITE_NAME, SITE_DESCRIPTION } from "@/lib/site";
-import { PLANS, formatKRW } from "@/lib/plans";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { ensureUserRow } from "@/lib/userPlan";
 import HeroInput from "@/components/HeroInput";
@@ -96,39 +95,6 @@ export default async function Home() {
       </section>
 
       <ServiceIntro />
-
-      {/* Pricing */}
-      <section className="border-t border-neutral-200/70">
-        <div className="mx-auto max-w-5xl px-6 py-24">
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">요금</h2>
-          <p className="mt-3 text-neutral-500">무료 3편 먼저 써보세요. 괜찮으면 그때 프로. 외주 글 한 편 값이면 한 달 50편입니다.</p>
-          <div className="mt-12 grid max-w-3xl gap-px overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-200 sm:grid-cols-2">
-            {[PLANS.free, PLANS.pro].map((plan) => (
-              <div key={plan.key} className="flex flex-col bg-white p-8">
-                <div className="flex items-baseline justify-between">
-                  <h3 className="text-lg font-medium tracking-tight">{plan.name}</h3>
-                  {plan.highlight && <span className="text-xs text-neutral-400">가장 인기</span>}
-                </div>
-                <p className="mt-3">
-                  <span className="text-4xl font-semibold tracking-tight">
-                    {plan.price === 0 ? "무료" : formatKRW(plan.price)}
-                  </span>
-                  {plan.price !== 0 && <span className="text-sm text-neutral-400">/월</span>}
-                </p>
-                <p className="mt-3 text-sm text-neutral-500">월 {plan.articles}편 · 글당 최대 {plan.maxWords.toLocaleString()}자</p>
-                <Link
-                  href="/pricing"
-                  className={`mt-8 rounded-full px-5 py-2.5 text-center text-sm font-medium transition ${
-                    plan.highlight ? "bg-neutral-900 text-white hover:bg-neutral-700" : "border border-neutral-300 text-neutral-900 hover:border-neutral-900"
-                  }`}
-                >
-                  {plan.price === 0 ? "무료로 시작" : "프로 선택"}
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* CTA */}
       <section className="border-t border-neutral-200/70 bg-neutral-50">
