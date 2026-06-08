@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { SITE_NAME } from "@/lib/site";
+import Brand from "@/components/Brand";
 
 export default function SiteFooter() {
   return (
     <footer className="border-t border-neutral-200/70">
       <div className="mx-auto flex max-w-5xl flex-col gap-4 px-6 py-10 text-sm text-neutral-500 sm:flex-row sm:items-center sm:justify-between">
-        <span className="font-semibold text-neutral-900">{SITE_NAME}</span>
+        <Brand />
         <nav className="flex flex-wrap gap-6">
           <Link href="/pricing" className="transition hover:text-neutral-900">요금</Link>
           <Link href="/terms" className="transition hover:text-neutral-900">이용약관</Link>
