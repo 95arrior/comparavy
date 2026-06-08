@@ -14,6 +14,9 @@ import HeroInput from "@/components/HeroInput";
 import DemoStream from "@/components/DemoStream";
 import ServiceIntro from "@/components/ServiceIntro";
 import Link from "next/link";
+import { Ubuntu } from "next/font/google";
+
+const ubuntu = Ubuntu({ subsets: ["latin"], weight: "700", display: "swap" });
 
 type Tab = "generate" | "articles" | "wordpress" | "account";
 
@@ -141,28 +144,38 @@ export default function DashboardClient(props: DashboardProps) {
       {/* 좌측 레일 (ChatGPT식) — 아이콘 위치 고정, 폭만 부드럽게 + 라벨 페이드 */}
       <aside className={`sticky top-0 flex h-screen shrink-0 flex-col border-r border-neutral-200 bg-white px-2 py-3 transition-[width] duration-200 ease-out ${navOpen ? "w-64" : "w-[56px]"}`}>
         {/* 상단: 로고(항상 같은 자리) + 브랜드명/닫기(펼침 시 페이드) */}
-        <div className="mb-2 flex h-10 items-center gap-2 px-2">
-          <button
-            onClick={() => setNavOpen(true)}
-            disabled={navOpen}
-            aria-label="사이드바 열기"
-            className="group relative flex w-7 shrink-0 items-center justify-center rounded-lg transition enabled:hover:bg-neutral-100"
-          >
-            <span className={navOpen ? "" : "transition group-hover:opacity-0"}><AteFloLogo size={22} /></span>
-            {!navOpen && <span className="absolute text-neutral-700 opacity-0 transition group-hover:opacity-100">{ICON.panel}</span>}
-            {!navOpen && (
+        <div className="mb-2 flex h-10 items-center gap-1 px-2">
+          {navOpen ? (
+            <>
+              {/* 로고 + 브랜드 = 한 덩어리, 클릭 시 메인으로 (메인이면 그대로) */}
+              <button
+                onClick={() => goTab("generate")}
+                aria-label="메인으로"
+                className="flex min-w-0 flex-1 items-center gap-1.5 rounded-lg py-1 transition hover:bg-neutral-50"
+              >
+                <span className="flex w-7 shrink-0 items-center justify-center"><AteFloLogo size={22} /></span>
+                <span className={`${ubuntu.className} -translate-y-px truncate text-lg font-bold leading-none tracking-tight text-neutral-900`}>{SITE_NAME}</span>
+              </button>
+              <button
+                onClick={() => setNavOpen(false)}
+                aria-label="사이드바 닫기"
+                className="group relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-neutral-500 transition hover:bg-neutral-100"
+              >
+                {ICON.panel}
+                <span className="pointer-events-none absolute right-0 top-10 z-50 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100">사이드바 닫기</span>
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => setNavOpen(true)}
+              aria-label="사이드바 열기"
+              className="group relative flex w-7 shrink-0 items-center justify-center rounded-lg transition hover:bg-neutral-100"
+            >
+              <span className="transition group-hover:opacity-0"><AteFloLogo size={22} /></span>
+              <span className="absolute text-neutral-700 opacity-0 transition group-hover:opacity-100">{ICON.panel}</span>
               <span className="pointer-events-none absolute left-12 z-50 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100">사이드바 열기</span>
-            )}
-          </button>
-          <span className={`flex-1 truncate font-semibold tracking-tight transition-opacity duration-150 ${navOpen ? "opacity-100" : "opacity-0"}`}>{SITE_NAME}</span>
-          <button
-            onClick={() => setNavOpen(false)}
-            aria-label="사이드바 닫기"
-            className={`group relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-neutral-500 transition hover:bg-neutral-100 ${navOpen ? "" : "pointer-events-none opacity-0"}`}
-          >
-            {ICON.panel}
-            <span className="pointer-events-none absolute right-0 top-10 z-50 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100">사이드바 닫기</span>
-          </button>
+            </button>
+          )}
         </div>
 
         {/* 내비 */}
