@@ -91,7 +91,6 @@ export default async function Home() {
           </p>
           <div className="mono-rise mono-d3 mt-10">
             <HeroInput loggedIn={!!user} />
-            <p className="mt-4 text-sm text-neutral-400">무료 3편 · 카드 등록 없음</p>
           </div>
           <div className="mono-rise mono-d3 mt-12">
             <DemoStream />
@@ -105,10 +104,10 @@ export default async function Home() {
       <section className="border-t border-neutral-200/70 bg-neutral-50">
         <div className="mx-auto max-w-5xl px-6 py-28 text-center">
           <h2 className="mx-auto max-w-2xl text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
-            AI 글 양산해봤자<br />검색엔 안 뜹니다.
+            좋은 글인지,<br />직접 확인해보세요.
           </h2>
           <p className="mx-auto mt-5 max-w-xl text-neutral-500">
-            무료 3편 써보고 차이가 없으면 안 쓰셔도 됩니다.
+            키워드 하나만 넣어보면 알 수 있어요.
           </p>
           <Link href={ctaHref} className="mt-10 inline-block rounded-full bg-neutral-900 px-8 py-4 text-sm font-medium text-white transition hover:bg-neutral-700">
             {ctaLabel}

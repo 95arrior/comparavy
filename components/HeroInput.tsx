@@ -103,25 +103,25 @@ export default function HeroInput({ loggedIn, onStart }: { loggedIn: boolean; on
 
       {/* 유형 · 문체 — 아이콘 칩 (선택. 안 골라도 기본값으로 생성) */}
       <div className="mt-5 space-y-2">
-        <div className="flex flex-nowrap items-center justify-start gap-2 overflow-x-auto pb-1 sm:justify-center [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex flex-wrap items-center justify-center gap-2">
           <span className="w-7 shrink-0 text-xs text-neutral-300">유형</span>
           {ARTICLE_TYPES.map((t) => (
-            <button key={t.key} type="button" onClick={() => setType(t.key)} title={t.hint} className={chipCls(type === t.key)}>
+            <button key={t.key} type="button" onClick={() => setType(t.key)} title={t.hint} aria-label={TYPE_SHORT[t.key] ?? t.label} className={chipCls(type === t.key)}>
               {TYPE_ICON[t.key]}
-              {TYPE_SHORT[t.key] ?? t.label}
+              {type === t.key && <span>{TYPE_SHORT[t.key] ?? t.label}</span>}
             </button>
           ))}
         </div>
-        <div className="flex flex-nowrap items-center justify-start gap-2 overflow-x-auto pb-1 sm:justify-center [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex flex-wrap items-center justify-center gap-2">
           <span className="w-7 shrink-0 text-xs text-neutral-300">문체</span>
           {TONES.map((t) => (
-            <button key={t.key} type="button" onClick={() => setTone(t.key)} title={t.hint} className={chipCls(tone === t.key)}>
+            <button key={t.key} type="button" onClick={() => setTone(t.key)} title={t.hint} aria-label={TONE_SHORT[t.key] ?? t.label} className={chipCls(tone === t.key)}>
               {TONE_ICON[t.key]}
-              {TONE_SHORT[t.key] ?? t.label}
+              {tone === t.key && <span>{TONE_SHORT[t.key] ?? t.label}</span>}
             </button>
           ))}
         </div>
-        <p className="pt-0.5 text-center text-[11px] text-neutral-400">안 골라도 괜찮아요 · 기본값으로 써드려요</p>
+        <p className="pt-0.5 text-center text-[11px] text-neutral-400">선택하지 않아도 최적화로 생성됩니다</p>
       </div>
     </div>
   );
