@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import LegalLayout, { LegalSection } from "@/components/LegalLayout";
+import LegalLayout, { LegalSection, BusinessInfo } from "@/components/LegalLayout";
 import { SITE_NAME } from "@/lib/site";
+import { BUSINESS } from "@/lib/business";
 
 export const metadata: Metadata = { title: "개인정보처리방침" };
 
@@ -47,19 +48,16 @@ export default function PrivacyPage() {
       </LegalSection>
 
       <LegalSection heading="7. 개인정보 보호책임자">
-        <p>성명: [담당자 성명 입력]</p>
-        <p>연락처: support@ateflo.com</p>
+        <p>성명: {BUSINESS.privacyOfficer}</p>
+        <p>연락처: {BUSINESS.email}</p>
       </LegalSection>
 
       <LegalSection heading="8. 사업자 정보">
-        <p>상호: [상호 입력] / 대표자: [대표자 입력]</p>
-        <p>사업자등록번호: [번호 입력] / 통신판매업 신고번호: [번호 입력]</p>
-        <p>주소: [주소 입력] / 연락처: [연락처 입력]</p>
+        <BusinessInfo />
       </LegalSection>
 
       <p className="mt-6 rounded-xl border border-amber-500/30 bg-amber-50 px-4 py-3 text-xs text-amber-700">
-        본 문서는 일반 템플릿이며 법률 자문이 아닙니다. 사업에 적용하기 전 반드시 전문가(변호사)의 검토를 받으시고,
-        대괄호([ ])로 표시된 사업자 정보를 실제 값으로 채워 주세요.
+        본 문서는 일반 템플릿이며 법률 자문이 아닙니다. 사업에 적용하기 전 반드시 전문가(변호사)의 검토를 받으시길 권합니다.
       </p>
     </LegalLayout>
   );

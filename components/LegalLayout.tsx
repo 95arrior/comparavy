@@ -1,5 +1,18 @@
 import Link from "next/link";
 import Brand from "@/components/Brand";
+import { BUSINESS, mailOrderText } from "@/lib/business";
+
+// 사업자 정보 블록 — 약관·개인정보·환불 페이지에서 공용으로 사용 (값은 lib/business.ts 한 곳에서)
+export function BusinessInfo() {
+  return (
+    <>
+      <p>상호: {BUSINESS.company} / 대표자: {BUSINESS.ceo}</p>
+      <p>사업자등록번호: {BUSINESS.bizNumber} / 통신판매업 신고번호: {mailOrderText}</p>
+      <p>주소: {BUSINESS.address}</p>
+      <p>연락처: {BUSINESS.phone} / 이메일: {BUSINESS.email}</p>
+    </>
+  );
+}
 
 export function LegalSection({
   heading,
