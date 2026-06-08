@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { SITE_NAME } from "@/lib/site";
@@ -21,6 +21,29 @@ export default function DashboardClient(props: DashboardProps) {
   const [wpSiteUrl, setWpSiteUrl] = useState<string | null>(props.wpSiteUrl);
   const [selected, setSelected] = useState<Article | null>(null);
   const [genParams, setGenParams] = useState<GenParams | null>(null);
+
+  // 메인에서 키워드+유형+문체를 받고 왔으면, 생성탭 거치지 않고 바로 작성화면을 띄운다(뎁스 축소)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const raw = localStorage.getItem("ateflo_gen");
+    if (!raw) return;
+    localStorage.removeItem("ateflo_gen");
+    try {
+      const g = JSON.parse(raw) as { keyword?: string; type?: string; tone?: string };
+      if (!g.keyword) return;
+      const overLimit = props.plan !== "pro" && props.articlesUsed >= props.articlesLimit;
+      const hasTeaser = props.initialArticles.some((a) => a.locked);
+      if (overLimit && hasTeaser) {
+        // 이미 미리보기를 만든 무료 사용자 → 자동 시작 대신 생성탭(차단 안내)으로
+        setTab("generate");
+        return;
+      }
+      setGenParams({ keyword: g.keyword, angle: "", type: g.type ?? "howto", tone: g.tone ?? "friendly" });
+    } catch {
+      // 무시
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const hasPublished = articles.some((a) => a.status === "published" || a.status === "future");
 

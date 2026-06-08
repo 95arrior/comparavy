@@ -30,6 +30,18 @@ html {
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
+/* 생성 시작 표시용 무지개 버튼 (흐르는 그라데이션) */
+@keyframes ateflo-rainbow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+.ateflo-rainbow {
+  background-image: linear-gradient(90deg, #ff5f6d, #ffc371, #47c97e, #2ec5ce, #845ec2, #ff5f6d);
+  background-size: 200% 100%;
+  animation: ateflo-rainbow 1.6s linear infinite;
+  color: #fff;
+}
+
 /* ── Minimal mono theme ──────────────────────────────────── */
 /* Subtle hairline used to separate sections on black. */
 .mono-hairline {
