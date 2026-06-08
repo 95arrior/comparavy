@@ -69,7 +69,7 @@ export default function HeroInput({ loggedIn, onStart }: { loggedIn: boolean; on
   }
 
   const chipCls = (on: boolean) =>
-    `flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1 text-xs transition ${
+    `flex items-center gap-1 whitespace-nowrap rounded-full border px-2 py-1 text-[11px] transition sm:gap-1.5 sm:px-2.5 sm:text-xs ${
       on
         ? "border-neutral-900 bg-neutral-900 font-medium text-white"
         : "border-neutral-200 text-neutral-500 hover:border-neutral-400 hover:text-neutral-700"
@@ -109,7 +109,7 @@ export default function HeroInput({ loggedIn, onStart }: { loggedIn: boolean; on
       <div className="mt-4">
         <p className="mb-1.5 text-center text-xs text-neutral-300">유형·문체</p>
         <div className="space-y-2">
-          <div className="flex flex-wrap items-center justify-center gap-2">
+          <div className="flex flex-nowrap items-center justify-center gap-1.5 sm:gap-2">
             {ARTICLE_TYPES.map((t) => (
               <button key={t.key} type="button" onClick={() => setType(type === t.key ? "" : t.key)} title={t.hint} className={chipCls(type === t.key)}>
                 {TYPE_ICON[t.key]}
@@ -117,7 +117,7 @@ export default function HeroInput({ loggedIn, onStart }: { loggedIn: boolean; on
               </button>
             ))}
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-2">
+          <div className="flex flex-nowrap items-center justify-center gap-1.5 sm:gap-2">
             {TONES.map((t) => (
               <button key={t.key} type="button" onClick={() => setTone(tone === t.key ? "" : t.key)} title={t.hint} className={chipCls(tone === t.key)}>
                 {TONE_ICON[t.key]}
