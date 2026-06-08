@@ -91,7 +91,7 @@ export default function WordPressPanel({
         >
           <span>
             <span className="block text-sm font-medium text-neutral-900">워드프레스가 아직 없으세요?</span>
-            <span className="mt-0.5 block text-xs text-neutral-500">80대도 따라 하는 5분 시작 가이드 보기</span>
+            <span className="mt-0.5 block text-xs text-neutral-500">처음이어도 5분이면 끝, 따라하기 가이드</span>
           </span>
           <span className="shrink-0 text-lg" style={{ color: "#3f91ff" }}>→</span>
         </button>
