@@ -71,7 +71,7 @@ export async function generateArticle(
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY 가 설정되지 않았습니다.");
 
   const client = new Anthropic({ apiKey });
-  const model = process.env.ANTHROPIC_MODEL || "claude-opus-4-8";
+  const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
 
   // 한국어는 글자수 기준. 한글 1자 ≈ 1.5~2토큰으로 보고 여유 있게 budget 산정.
   const maxTokens = Math.min(16000, Math.ceil(input.maxWords * 2 + 1200));
@@ -155,7 +155,7 @@ export async function streamArticle(
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY 가 설정되지 않았습니다.");
 
   const client = new Anthropic({ apiKey });
-  const model = process.env.ANTHROPIC_MODEL || "claude-opus-4-8";
+  const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
   const maxTokens = Math.min(16000, Math.ceil(input.maxWords * 2 + 1200));
 
   const stream = client.messages.stream({
