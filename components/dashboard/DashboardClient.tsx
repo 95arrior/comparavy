@@ -125,14 +125,14 @@ export default function DashboardClient(props: DashboardProps) {
       <button
         key={k}
         onClick={() => goTab(k)}
-        className={`group relative flex h-10 w-full items-center gap-2 rounded-lg px-2 text-sm transition ${
+        className={`group relative flex h-9 items-center rounded-lg text-sm transition ${navOpen ? "w-full" : "w-9"} ${
           active ? "bg-neutral-100 font-medium text-neutral-900" : "text-neutral-600 hover:bg-neutral-50"
         }`}
       >
-        <span className="flex w-7 shrink-0 items-center justify-center">{icon}</span>
-        <span className={`truncate transition-opacity duration-150 ${navOpen ? "opacity-100" : "opacity-0"}`}>{label}</span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center">{icon}</span>
+        {navOpen && <span className="truncate pr-2">{label}</span>}
         {!navOpen && (
-          <span className="pointer-events-none absolute left-12 z-50 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100">
+          <span className="pointer-events-none absolute left-11 z-50 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100">
             {label}
           </span>
         )}
@@ -145,22 +145,22 @@ export default function DashboardClient(props: DashboardProps) {
       {/* 좌측 레일 (ChatGPT식) — 아이콘 위치 고정, 폭만 부드럽게 + 라벨 페이드 */}
       <aside className={`sticky top-0 flex h-screen shrink-0 flex-col border-r border-neutral-200 bg-white px-2 py-3 transition-[width] duration-200 ease-out ${navOpen ? "w-64" : "w-[56px]"}`}>
         {/* 상단: 로고(항상 같은 자리) + 브랜드명/닫기(펼침 시 페이드) */}
-        <div className="mb-2 flex h-10 items-center gap-1 px-2">
+        <div className="mb-2 flex h-9 items-center gap-1">
           {navOpen ? (
             <>
               {/* 로고 + 브랜드 = 한 덩어리, 클릭 시 메인으로 (메인이면 그대로) */}
               <button
                 onClick={() => goTab("generate")}
                 aria-label="메인으로"
-                className="flex h-10 min-w-0 flex-1 items-center gap-1.5 rounded-lg transition hover:bg-neutral-50"
+                className="flex h-9 min-w-0 flex-1 items-center rounded-lg transition hover:bg-neutral-50"
               >
-                <span className="flex w-7 shrink-0 items-center justify-center"><AteFloLogo size={22} /></span>
-                <span className={`${ubuntu.className} -translate-y-px truncate text-lg font-bold leading-none tracking-tight text-neutral-900`}>{SITE_NAME}</span>
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center"><AteFloLogo size={22} /></span>
+                <span className={`${ubuntu.className} -ml-1 -translate-y-px truncate text-lg font-bold leading-none tracking-tight text-neutral-900`}>{SITE_NAME}</span>
               </button>
               <button
                 onClick={() => setNavOpen(false)}
                 aria-label="사이드바 닫기"
-                className="group relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-neutral-500 transition hover:bg-neutral-100"
+                className="group relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-neutral-500 transition hover:bg-neutral-100"
               >
                 {ICON.panel}
                 <span className="pointer-events-none absolute right-0 top-10 z-50 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100">사이드바 닫기</span>
@@ -170,11 +170,11 @@ export default function DashboardClient(props: DashboardProps) {
             <button
               onClick={() => setNavOpen(true)}
               aria-label="사이드바 열기"
-              className="group relative flex h-10 w-7 shrink-0 items-center justify-center rounded-lg transition hover:bg-neutral-100"
+              className="group relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition hover:bg-neutral-100"
             >
               <span className="absolute inset-0 flex items-center justify-center group-hover:opacity-0"><AteFloLogo size={22} /></span>
               <span className="absolute inset-0 flex items-center justify-center text-neutral-700 opacity-0 group-hover:opacity-100">{ICON.panel}</span>
-              <span className="pointer-events-none absolute left-12 z-50 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100">사이드바 열기</span>
+              <span className="pointer-events-none absolute left-11 z-50 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100">사이드바 열기</span>
             </button>
           )}
         </div>
@@ -210,19 +210,21 @@ export default function DashboardClient(props: DashboardProps) {
         {/* 하단: 내 정보 (사용자) */}
         <button
           onClick={() => goTab("account")}
-          className={`group relative mt-auto flex h-12 w-full items-center gap-2 rounded-lg px-2 transition hover:bg-neutral-50 ${
+          className={`group relative mt-auto flex items-center rounded-lg transition hover:bg-neutral-50 ${navOpen ? "h-12 w-full" : "h-9 w-9"} ${
             tab === "account" && !selected && !genParams ? "bg-neutral-100" : ""
           }`}
         >
-          <span className="flex w-7 shrink-0 items-center justify-center">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center">
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-neutral-800 text-xs font-medium text-white">{initial}</span>
           </span>
-          <span className={`min-w-0 flex-1 text-left transition-opacity duration-150 ${navOpen ? "opacity-100" : "opacity-0"}`}>
-            <span className="block truncate text-sm font-medium text-neutral-800">{displayName}</span>
-            <span className="block text-xs text-neutral-400">{PLANS[props.plan].name}</span>
-          </span>
+          {navOpen && (
+            <span className="min-w-0 flex-1 pr-2 text-left">
+              <span className="block truncate text-sm font-medium text-neutral-800">{displayName}</span>
+              <span className="block text-xs text-neutral-400">{PLANS[props.plan].name}</span>
+            </span>
+          )}
           {!navOpen && (
-            <span className="pointer-events-none absolute left-12 z-50 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100">내 정보</span>
+            <span className="pointer-events-none absolute left-11 z-50 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100">내 정보</span>
           )}
         </button>
       </aside>
