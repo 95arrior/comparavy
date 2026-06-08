@@ -3,6 +3,13 @@ import type { AdminStats } from "@/lib/adminStats";
 const BRAND = "#4B5FE1";
 const STATUS_KO: Record<string, string> = { draft: "초안", published: "발행됨", future: "예약됨" };
 
+// 큰 금액은 만/억 단위로 압축해 카드 칸을 안 넘게
+function formatKRWShort(won: number): string {
+  if (won >= 1e8) return `₩${(won / 1e8).toLocaleString("ko-KR", { maximumFractionDigits: 1 })}억`;
+  if (won >= 1e7) return `₩${Math.round(won / 1e4).toLocaleString("ko-KR")}만`;
+  return `₩${won.toLocaleString("ko-KR")}`;
+}
+
 function fmtDate(iso: string): string {
   if (!iso) return "";
   try {
@@ -24,18 +31,21 @@ function Card({
   prefix = "",
   suffix = "",
   accent = false,
+  display,
 }: {
   label: string;
   value: number | null;
   prefix?: string;
   suffix?: string;
   accent?: boolean;
+  display?: string;
 }) {
+  const text = display ?? (value === null ? "—" : `${prefix}${value.toLocaleString()}${suffix}`);
   return (
-    <div className={`rounded-2xl border p-5 ${accent ? "border-[#4B5FE1]/30 bg-[#4B5FE1]/5" : "border-neutral-200 bg-white"}`}>
+    <div className={`min-w-0 rounded-2xl border p-5 ${accent ? "border-[#4B5FE1]/30 bg-[#4B5FE1]/5" : "border-neutral-200 bg-white"}`}>
       <p className="text-xs font-medium text-neutral-400">{label}</p>
-      <p className={`mt-1 text-3xl font-semibold tracking-tight ${accent ? "text-[#4B5FE1]" : "text-neutral-900"}`} style={accent ? { color: BRAND } : undefined}>
-        {value === null ? "—" : `${prefix}${value.toLocaleString()}${suffix}`}
+      <p className={`mt-1 truncate text-3xl font-semibold tracking-tight ${accent ? "" : "text-neutral-900"}`} style={accent ? { color: BRAND } : undefined}>
+        {text}
       </p>
     </div>
   );
@@ -61,7 +71,7 @@ export default function AdminDashboard({ stats }: { stats?: AdminStats | null })
       {/* 핵심 지표 */}
       <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Card label="전체 회원" value={stats.usersTotal} />
-        <Card label="예상 월매출(MRR)" value={stats.mrr} prefix="₩" accent />
+        <Card label="예상 월매출(MRR)" value={stats.mrr} display={stats.mrr === null ? "—" : formatKRWShort(stats.mrr)} accent />
         <Card label="오늘 가입" value={stats.usersToday} />
         <Card label="오늘 생성" value={stats.articlesToday} />
       </div>
