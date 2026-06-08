@@ -144,9 +144,9 @@ export default function ArticleModal({
                 </p>
                 <Link
                   href="/pricing"
-                  className="mt-4 inline-block rounded-full bg-neutral-900 px-6 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700"
+                  className="ateflo-rainbow mt-4 inline-block rounded-full px-6 py-2.5 text-sm font-medium text-white transition"
                 >
-                  프로로 업그레이드하고 전체 보기 →
+                  프로 업그레이드하고 전체보기 →
                 </Link>
                 <p className="mt-2 text-xs text-neutral-400">{formatKRW(PLANS.pro.price)}/월 · 언제든 해지</p>
               </div>
