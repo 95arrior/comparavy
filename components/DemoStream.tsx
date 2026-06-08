@@ -100,11 +100,17 @@ export default function DemoStream() {
             </p>
           );
         })}
+        {rendered.length > 0 && n >= total && (
+          <p className="mt-3 text-sm text-neutral-300">⋯ 소제목을 이어가며 끝까지</p>
+        )}
         <div className="mt-3">
           <AteFloLogo animated={n < total} size={22} />
         </div>
         </div>
       </div>
+      <p className="mt-2 text-center text-xs text-neutral-400">
+        위는 일부 미리보기예요 · 실제 글은 소제목 여러 개로 길게 써드려요
+      </p>
     </div>
   );
 }
