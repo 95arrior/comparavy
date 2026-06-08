@@ -10,6 +10,7 @@ import ArticleList from "./ArticleList";
 import ArticleModal from "./ArticleModal";
 import WritingView, { type GenParams } from "./WritingView";
 import WordPressPanel from "./WordPressPanel";
+import AteFloLogo from "@/components/AteFloLogo";
 
 type Tab = "generate" | "articles" | "wordpress" | "account";
 
@@ -20,12 +21,12 @@ function Svg({ children }: { children: React.ReactNode }) {
     </svg>
   );
 }
-const ICON: Record<Tab | "menu", React.ReactNode> = {
+const ICON: Record<string, React.ReactNode> = {
   generate: <Svg><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" /></Svg>,
   articles: <Svg><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M9 13h6M9 17h5" /></Svg>,
   wordpress: <Svg><path d="M9 15l6-6" /><path d="M10.5 6.5l1.8-1.8a4 4 0 0 1 5.7 5.7L15.5 12" /><path d="M13.5 17.5l-1.8 1.8a4 4 0 0 1-5.7-5.7L8.5 12" /></Svg>,
   account: <Svg><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></Svg>,
-  menu: <Svg><path d="M4 6h16M4 12h16M4 18h16" /></Svg>,
+  panel: <Svg><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M9 4v16" /></Svg>,
 };
 
 export default function DashboardClient(props: DashboardProps) {
@@ -100,6 +101,9 @@ export default function DashboardClient(props: DashboardProps) {
     { key: "wordpress", label: "워드프레스" },
   ];
 
+  const displayName = props.email.split("@")[0] || props.email;
+  const initial = (props.email.trim()[0] ?? "?").toUpperCase();
+
   function goTab(k: Tab) {
     setSelected(null);
     setGenParams(null);
@@ -125,22 +129,80 @@ export default function DashboardClient(props: DashboardProps) {
 
   return (
     <div className="flex min-h-screen bg-neutral-50 text-neutral-900 antialiased">
-      {/* 좌측 레일 */}
-      <aside className={`sticky top-0 flex h-screen shrink-0 flex-col border-r border-neutral-200 bg-white p-3 transition-[width] ${navOpen ? "w-56" : "w-16"}`}>
-        <button
-          onClick={() => setNavOpen((v) => !v)}
-          title="메뉴"
-          className={`mb-3 flex items-center gap-2 rounded-xl py-2.5 text-neutral-700 transition hover:bg-neutral-100 ${navOpen ? "px-3" : "w-10 justify-center"}`}
-        >
-          <span className="shrink-0">{ICON.menu}</span>
-          {navOpen && <span className="font-semibold tracking-tight">{SITE_NAME}</span>}
-        </button>
+      {/* 좌측 레일 (ChatGPT식) */}
+      <aside className={`sticky top-0 flex h-screen shrink-0 flex-col border-r border-neutral-200 bg-white px-2 py-3 transition-[width] ${navOpen ? "w-64" : "w-[60px]"}`}>
+        {/* 상단: 로고 ↔ 토글 */}
+        {navOpen ? (
+          <div className="mb-2 flex items-center justify-between pl-2 pr-1">
+            <div className="flex items-center gap-2">
+              <AteFloLogo size={22} />
+              <span className="font-semibold tracking-tight">{SITE_NAME}</span>
+            </div>
+            <button
+              onClick={() => setNavOpen(false)}
+              aria-label="사이드바 닫기"
+              className="group relative flex h-8 w-8 items-center justify-center rounded-lg text-neutral-500 transition hover:bg-neutral-100"
+            >
+              {ICON.panel}
+              <span className="pointer-events-none absolute right-0 top-10 z-50 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100">사이드바 닫기</span>
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setNavOpen(true)}
+            aria-label="사이드바 열기"
+            className="group relative mb-2 flex h-10 w-10 items-center justify-center self-center rounded-lg transition hover:bg-neutral-100"
+          >
+            <span className="transition group-hover:opacity-0"><AteFloLogo size={24} /></span>
+            <span className="absolute text-neutral-700 opacity-0 transition group-hover:opacity-100">{ICON.panel}</span>
+            <span className="pointer-events-none absolute left-12 z-50 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100">사이드바 열기</span>
+          </button>
+        )}
 
-        <nav className="flex flex-col gap-1">
+        {/* 내비 */}
+        <nav className={`flex flex-col gap-1 ${navOpen ? "" : "items-center"}`}>
           {navItems.map((it) => railBtn(it.key, it.label, ICON[it.key]))}
         </nav>
 
-        <div className="mt-auto">{railBtn("account", "내 정보", ICON.account)}</div>
+        {/* 최근 글 (펼침 모드) — 클릭 시 편집 */}
+        {navOpen && articles.length > 0 && (
+          <div className="mt-4 min-h-0 flex-1 overflow-y-auto">
+            <p className="px-2 pb-1 text-xs font-medium text-neutral-400">최근</p>
+            <div className="flex flex-col">
+              {articles.slice(0, 25).map((a) => (
+                <button
+                  key={a.id}
+                  onClick={() => {
+                    setGenParams(null);
+                    setSelected(a);
+                  }}
+                  title={a.title}
+                  className="truncate rounded-lg px-2 py-1.5 text-left text-sm text-neutral-600 transition hover:bg-neutral-100"
+                >
+                  {a.locked ? "🔒 " : ""}
+                  {a.title}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 하단: 내 정보 (사용자) */}
+        <button
+          onClick={() => goTab("account")}
+          title="내 정보"
+          className={`mt-auto flex items-center gap-2 rounded-lg transition hover:bg-neutral-100 ${
+            navOpen ? "px-2 py-2" : "h-10 w-10 justify-center self-center"
+          } ${tab === "account" && !selected && !genParams ? "bg-neutral-100" : ""}`}
+        >
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-neutral-800 text-xs font-medium text-white">{initial}</span>
+          {navOpen && (
+            <span className="min-w-0 text-left">
+              <span className="block truncate text-sm font-medium text-neutral-800">{displayName}</span>
+              <span className="block text-xs text-neutral-400">{PLANS[props.plan].name}</span>
+            </span>
+          )}
+        </button>
       </aside>
 
       {/* 메인 */}
