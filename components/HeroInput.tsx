@@ -103,7 +103,7 @@ export default function HeroInput({ loggedIn, onStart }: { loggedIn: boolean; on
 
       {/* 유형 · 문체 — 아이콘 칩 (선택. 안 골라도 기본값으로 생성) */}
       <div className="mt-5 space-y-2">
-        <div className="flex flex-wrap items-center justify-center gap-2">
+        <div className="flex flex-nowrap items-center justify-start gap-2 overflow-x-auto pb-1 sm:justify-center [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <span className="w-7 shrink-0 text-xs text-neutral-300">유형</span>
           {ARTICLE_TYPES.map((t) => (
             <button key={t.key} type="button" onClick={() => setType(t.key)} title={t.hint} className={chipCls(type === t.key)}>
@@ -112,7 +112,7 @@ export default function HeroInput({ loggedIn, onStart }: { loggedIn: boolean; on
             </button>
           ))}
         </div>
-        <div className="flex flex-wrap items-center justify-center gap-2">
+        <div className="flex flex-nowrap items-center justify-start gap-2 overflow-x-auto pb-1 sm:justify-center [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <span className="w-7 shrink-0 text-xs text-neutral-300">문체</span>
           {TONES.map((t) => (
             <button key={t.key} type="button" onClick={() => setTone(t.key)} title={t.hint} className={chipCls(tone === t.key)}>
