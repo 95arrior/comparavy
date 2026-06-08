@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
-import { SITE_NAME } from "@/lib/site";
 import { PLANS } from "@/lib/plans";
 import type { Article, DashboardProps } from "./types";
 import ArticleList from "./ArticleList";
@@ -10,14 +9,12 @@ import ArticleModal from "./ArticleModal";
 import WritingView, { type GenParams } from "./WritingView";
 import WordPressPanel from "./WordPressPanel";
 import AteFloLogo from "@/components/AteFloLogo";
+import Brand from "@/components/Brand";
 import HeroInput from "@/components/HeroInput";
 import DemoStream from "@/components/DemoStream";
 import ServiceIntro from "@/components/ServiceIntro";
 import SiteFooter from "@/components/SiteFooter";
 import Link from "next/link";
-import { Ubuntu } from "next/font/google";
-
-const ubuntu = Ubuntu({ subsets: ["latin"], weight: "700", display: "swap" });
 
 type Tab = "generate" | "articles" | "wordpress" | "account";
 
@@ -152,10 +149,9 @@ export default function DashboardClient(props: DashboardProps) {
               <button
                 onClick={() => goTab("generate")}
                 aria-label="메인으로"
-                className="flex h-9 min-w-0 flex-1 items-center rounded-lg transition hover:bg-neutral-50"
+                className="flex h-9 min-w-0 flex-1 items-center rounded-lg px-1 transition hover:bg-neutral-50"
               >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center"><AteFloLogo size={22} pro={props.plan === "pro"} /></span>
-                <span className={`${ubuntu.className} -ml-1 -translate-y-px truncate text-lg font-bold leading-none tracking-tight text-neutral-900`}>{SITE_NAME}</span>
+                <Brand pro={props.plan === "pro"} />
               </button>
               <button
                 onClick={() => setNavOpen(false)}

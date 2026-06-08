@@ -186,9 +186,9 @@ export default function ServiceIntro({ loggedIn = false, currentPlan = "free" }:
     <>
       <Section
         id="how"
-        eyebrow="AI 글, 다 똑같다는 분들께"
-        title={<>1분이면 쓰지만,<br />검색엔 안 잡히죠.</>}
-        sub="글 한 편, ChatGPT로 1분이면 나오죠. 근데 다 비슷해서 묻혀요. 우린 ‘빨리’가 아니라 ‘검색에 걸리게’ 씁니다."
+        eyebrow="“AI로 쓰면 다 똑같은 거 아니에요?”"
+        title={<>다 비슷하게 나와서,<br />검색에 안 잡혀요.</>}
+        sub="글 한 편 쓰는 거, 이제 1분이면 해요. 우리가 신경 쓴 건 속도가 아니라 어떻게 쓰느냐예요. 올렸을 때 사람이 끝까지 읽고, 구글이 띄워주는 글."
         visual={<BuriedResults />}
         tint
       />
@@ -196,14 +196,14 @@ export default function ServiceIntro({ loggedIn = false, currentPlan = "free" }:
         id="features"
         eyebrow="구조 다양성"
         title={<>같은 키워드,<br />매번 다른 글.</>}
-        sub="옆 블로그랑 같은 키워드로 써도, 글 생김새가 안 겹쳐요. 복붙한 듯한 양산글처럼 안 보입니다."
+        sub="옆 블로그와 같은 키워드를 써도 구조가 달라요. 찍어낸 티 안 납니다."
         visual={<StructureCompare />}
         flip
       />
       <Section
         eyebrow="한 번에 끝나요"
         title={<>프롬프트 다시,<br />또 고치고… 그만.</>}
-        sub="‘이렇게 써줘’ 시키고, 또 고치고… 그 왕복을 우리가 미리 다 해뒀어요. 키워드만 넣으세요. 한 번에 나옵니다."
+        sub="‘이렇게 써줘, 다시 해줘, 좀 줄여줘…’ 그 왔다갔다, 우리가 미리 다 해뒀어요. 키워드만 넣으세요. 한 번에 나옵니다."
         visual={<PromptHassle />}
         tint
       />
@@ -217,14 +217,14 @@ export default function ServiceIntro({ loggedIn = false, currentPlan = "free" }:
       <Section
         eyebrow="쓰고 끝이 아니에요"
         title={<>제목·메타·FAQ까지,<br />워드프레스에 한 번에.</>}
-        sub="제목·메타·FAQ까지 알아서 챙기고, 버튼 하나로 내 워드프레스에 올라가요. 복붙은 이제 그만. (프로 플랜)"
+        sub="제목·메타·FAQ까지 알아서 챙기고 버튼 하나로 워드프레스에 올라가요. 복붙, 이제 안 하셔도 돼요. (프로 플랜)"
         visual={<PublishCard />}
         tint
       />
       <Section
         eyebrow="외주 한 편 값"
         title={<>외주 글 한 편이면,<br />여기선 한 달 50편.</>}
-        sub="외주 글 한 편 값이면, 여기선 한 달 50편. 직접 쓰고, 바로 올려요."
+        sub="외주 글 한 편 값이면, 여기선 한 달 50편. 키워드만 넣고, 바로 올려요."
         visual={<CostCompare />}
         flip
       />
@@ -234,7 +234,7 @@ export default function ServiceIntro({ loggedIn = false, currentPlan = "free" }:
         <div className="mx-auto max-w-5xl px-6 py-24">
           <Reveal>
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">요금</h2>
-            <p className="mt-3 text-neutral-500">무료 3편 먼저 써보세요. 괜찮으면 그때 프로. 외주 글 한 편 값이면 한 달 50편입니다.</p>
+            <p className="mt-3 text-neutral-500">외주 글 한 편 값이면 한 달 50편. 무료 3편으로 먼저 확인하고 정하세요.</p>
           </Reveal>
           <Reveal delay={120} className="mt-12">
             <PricingCards loggedIn={loggedIn} currentPlan={currentPlan} />
