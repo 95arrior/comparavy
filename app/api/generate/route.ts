@@ -109,8 +109,14 @@ export async function POST(request: Request) {
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
-      const send = (obj: unknown) =>
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
+      // 클라이언트가 끊겨도(모바일 화면 off·백그라운드 탭) 생성·저장은 끝까지 진행되도록, 전송은 best-effort
+      const send = (obj: unknown) => {
+        try {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
+        } catch {
+          // 수신 측이 끊김 — 무시하고 생성 계속
+        }
+      };
       try {
         const article = await streamArticle(
           { keyword, angle: body.angle, type, tone, maxWords, variantInstruction: variant.instruction },
@@ -122,7 +128,6 @@ export async function POST(request: Request) {
         const charCount = countKoreanChars(article.body_html);
         if (charCount < maxWords * 0.5) {
           send({ type: "error", error: "생성된 글이 너무 짧습니다. 다시 시도해 주세요." });
-          controller.close();
           return;
         }
 
@@ -163,7 +168,6 @@ export async function POST(request: Request) {
         if (saveError) {
           // 진단용: 실제 DB 오류 메시지 표면화 (대부분 마이그레이션 미실행 = 컬럼 없음)
           send({ type: "error", error: `저장 실패: ${saveError.message ?? "알 수 없는 오류"}` });
-          controller.close();
           return;
         }
 
@@ -191,7 +195,11 @@ export async function POST(request: Request) {
         const message = err instanceof Error ? err.message : "글 생성 중 오류가 발생했습니다.";
         send({ type: "error", error: message });
       } finally {
-        controller.close();
+        try {
+          controller.close();
+        } catch {
+          // 클라이언트가 이미 끊겼으면 무시 (생성·저장은 위에서 완료됨)
+        }
       }
     },
   });
