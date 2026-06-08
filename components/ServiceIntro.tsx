@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { PLANS, formatKRW } from "@/lib/plans";
-import DemoStream from "@/components/DemoStream";
 import Reveal from "@/components/Reveal";
 
 const BRAND = "#4B5FE1";
@@ -48,6 +47,33 @@ function Section({
 }
 
 // 우측 목업 카드들 (실제 스크린샷 없이 CSS로)
+function BuriedResults() {
+  const Row = () => (
+    <div className="opacity-45">
+      <div className="h-2.5 w-3/4 rounded-full bg-neutral-300" />
+      <div className="mt-2 h-1.5 w-2/3 rounded-full bg-neutral-200" />
+      <div className="mt-1.5 h-1.5 w-1/2 rounded-full bg-neutral-200" />
+    </div>
+  );
+  return (
+    <div className="mx-auto max-w-sm rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm">
+      <div className="flex items-center gap-2 rounded-full border border-neutral-200 px-4 py-2.5 text-sm text-neutral-400">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <circle cx="11" cy="11" r="7" />
+          <path d="M21 21l-3.5-3.5" />
+        </svg>
+        강아지 분리불안 해결 방법
+      </div>
+      <div className="mt-5 space-y-4">
+        <Row />
+        <Row />
+        <Row />
+      </div>
+      <p className="mt-5 text-center text-xs text-neutral-400">다 비슷한 글… 내 글은 어디에 있죠?</p>
+    </div>
+  );
+}
+
 function StructureCompare() {
   const lines = (pattern: number[]) => (
     <div className="mt-3 space-y-2">
@@ -118,7 +144,7 @@ export default function ServiceIntro() {
         eyebrow="AI 글, 다 똑같다는 분들께"
         title={<>1분이면 쓰지만,<br />검색엔 안 잡히죠.</>}
         sub="ChatGPT로 천 단어는 누구나 1분이면 뽑아요. 근데 다 비슷하게 생겨서 묻혀요. 우리가 신경 쓴 건 속도가 아니라 ‘어떻게 쓰느냐’예요."
-        visual={<DemoStream />}
+        visual={<BuriedResults />}
         tint
       />
       <Section
