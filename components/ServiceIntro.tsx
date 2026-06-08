@@ -181,7 +181,7 @@ function PublishCard() {
   );
 }
 
-export default function ServiceIntro() {
+export default function ServiceIntro({ loggedIn = false }: { loggedIn?: boolean }) {
   return (
     <>
       <Section
@@ -250,7 +250,7 @@ export default function ServiceIntro() {
                   </p>
                   <p className="mt-3 text-sm text-neutral-500">월 {plan.articles}편 · 글당 최대 {plan.maxWords.toLocaleString()}자{plan.wordpress ? " · 워드프레스 자동발행" : ""}</p>
                   <Link
-                    href="/pricing"
+                    href={plan.price === 0 ? (loggedIn ? "/" : "/login") : "/pricing"}
                     className={`mt-8 rounded-full px-5 py-2.5 text-center text-sm font-medium transition ${
                       plan.highlight ? "bg-neutral-900 text-white hover:bg-neutral-700" : "border border-neutral-300 text-neutral-900 hover:border-neutral-900"
                     }`}

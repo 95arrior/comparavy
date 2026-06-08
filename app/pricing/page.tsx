@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { ensureUserRow } from "@/lib/userPlan";
-import { SITE_NAME } from "@/lib/site";
+import Brand from "@/components/Brand";
 import PricingClient from "@/components/PricingClient";
 
 export const dynamic = "force-dynamic";
@@ -32,10 +32,7 @@ export default async function PricingPage() {
     <div className="min-h-screen bg-white text-neutral-900 antialiased">
       <header className="border-b border-neutral-200/70">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-          <Link href="/" className="flex items-center gap-1.5 text-base font-semibold tracking-tight">
-            <svg width="20" height="20" viewBox="0 0 32 32" aria-hidden="true"><path fill="#4B5FE1" d="M16 16 L28.99 8.5 A15 15 0 1 0 28.99 23.5 Z" /></svg>
-            {SITE_NAME}
-          </Link>
+          <Link href="/"><Brand /></Link>
           <Link href={loggedIn ? "/" : "/login"} className="text-sm text-neutral-500 transition hover:text-neutral-900">
             {loggedIn ? "내 작업공간" : "로그인"}
           </Link>
