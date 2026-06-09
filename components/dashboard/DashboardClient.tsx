@@ -52,7 +52,7 @@ export default function DashboardClient(props: DashboardProps) {
   const [page, setPage] = useState<null | "news" | "guide">(null);
   const [unreadNews, setUnreadNews] = useState(false);
   // 워드프레스 카테고리·태그를 미리 불러둔다 → 글 편집 모달에서 드롭다운이 즉시 뜨도록(매번 새로 가져오는 1초 지연 제거)
-  const [wpCategories, setWpCategories] = useState<{ id: number; name: string }[]>([]);
+  const [wpCategories, setWpCategories] = useState<{ id: number; name: string; count?: number }[]>([]);
   const [wpTags, setWpTags] = useState<string[]>([]);
   useEffect(() => {
     if (!wpSiteUrl || props.plan !== "pro") return;
@@ -394,6 +394,7 @@ export default function DashboardClient(props: DashboardProps) {
             wpCategories={wpCategories}
             wpTags={wpTags}
             onCategoryCreated={(c) => setWpCategories((prev) => (prev.some((x) => x.name === c.name) ? prev : [c, ...prev]))}
+            onCategoryDeleted={(id) => setWpCategories((prev) => prev.filter((x) => x.id !== id))}
             onClose={() => setSelected(null)}
             onUpdated={onUpdated}
           />
