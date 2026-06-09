@@ -53,6 +53,10 @@ export interface PublishInput extends WordPressCredentials {
   featuredImage?: string | null;
   /** 이미 발행한 글의 워드프레스 글 ID. 있으면 새 글을 만들지 않고 그 글을 수정(재발행)한다 → 중복 글 방지 */
   postId?: number | null;
+  /** 카테고리 이름 (없으면 WP에서 새로 생성). 미지정 시 '미분류'로 올라가 SEO에 불리 → 가급적 지정 */
+  categoryName?: string | null;
+  /** 워드프레스 태그 이름들 (없으면 새로 생성) */
+  tags?: string[];
 }
 
 /**
@@ -76,9 +80,14 @@ function jsonLd(obj: unknown): string {
   return `<script type="application/ld+json">${JSON.stringify(obj).replace(/</g, "\\u003c")}</script>`;
 }
 
-/** Article + FAQPage 구조화 데이터(JSON-LD)를 만든다 — 구글 리치 결과용. */
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+/** Article 구조화 데이터(JSON-LD). FAQ는 본문 마이크로데이터로 따로 넣는다(아래 renderFaqSection). */
 function buildStructuredData(input: PublishInput): string {
-  const blocks: string[] = [
+  return (
+    "\n" +
     jsonLd({
       "@context": "https://schema.org",
       "@type": "Article",
@@ -86,22 +95,85 @@ function buildStructuredData(input: PublishInput): string {
       description: input.metaDescription ?? "",
       inLanguage: "ko-KR",
       datePublished: new Date().toISOString(),
-    }),
-  ];
-  if (input.faq && input.faq.length > 0) {
-    blocks.push(
-      jsonLd({
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        mainEntity: input.faq.map((f) => ({
-          "@type": "Question",
-          name: f.question,
-          acceptedAnswer: { "@type": "Answer", text: f.answer },
-        })),
-      }),
-    );
+    })
+  );
+}
+
+/**
+ * FAQ를 '보이는 HTML + schema.org 마이크로데이터'로 렌더한다.
+ * - <script> JSON-LD는 워드프레스가 자주 제거하지만, 마이크로데이터(itemprop 등 HTML 속성)는 살아남아
+ *   구글 FAQ 리치결과가 안정적으로 붙는다. 플러그인(Yoast·Rank Math) 없이도 동작.
+ */
+function renderFaqSection(faq: { question: string; answer: string }[]): string {
+  const items = faq
+    .map(
+      (f) =>
+        `<div itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">` +
+        `<h3 itemprop="name">${escapeHtml(f.question)}</h3>` +
+        `<div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">` +
+        `<p itemprop="text">${escapeHtml(f.answer)}</p>` +
+        `</div></div>`,
+    )
+    .join("\n");
+  return `\n<section itemscope itemtype="https://schema.org/FAQPage">\n<h2>자주 묻는 질문</h2>\n${items}\n</section>`;
+}
+
+/**
+ * 본문에 이미 들어있는 '평문 FAQ'(편집기에서 ＋추가로 넣은 것)를 제거한다.
+ * → 발행 시 마이크로데이터 FAQ를 새로 붙이므로 중복을 막는다.
+ * 매칭: '자주 묻는 질문' H2와, FAQ 질문과 같은 텍스트의 H3 + 바로 뒤 P.
+ */
+function stripExistingFaq(html: string, faq: { question: string; answer: string }[]): string {
+  let out = html;
+  const questions = new Set(faq.map((f) => f.question.trim()));
+  // '자주 묻는 질문' 제목 제거
+  out = out.replace(/<h2[^>]*>\s*자주\s*묻는\s*질문\s*<\/h2>/gi, "");
+  // 질문 H3 + 다음 P 제거
+  out = out.replace(/<h3[^>]*>([\s\S]*?)<\/h3>\s*<p[^>]*>[\s\S]*?<\/p>/gi, (m, inner: string) => {
+    const text = inner.replace(/<[^>]+>/g, "").trim();
+    return questions.has(text) ? "" : m;
+  });
+  return out;
+}
+
+/** 분류(category)·태그(tag) 용어를 찾거나 없으면 만들어 term id를 돌려준다. */
+async function findOrCreateTerm(
+  base: string,
+  creds: WordPressCredentials,
+  taxonomy: "categories" | "tags",
+  name: string,
+): Promise<number | null> {
+  const trimmed = name.trim();
+  if (!trimmed) return null;
+  try {
+    // 이미 있으면 그 id 사용 (정확히 같은 이름)
+    const sr = await fetch(`${base}/wp-json/wp/v2/${taxonomy}?search=${encodeURIComponent(trimmed)}&per_page=100`, {
+      headers: { Authorization: authHeader(creds) },
+    });
+    if (sr.ok) {
+      const list = (await sr.json()) as { id: number; name: string }[];
+      const exact = list.find((t) => (t.name || "").trim().toLowerCase() === trimmed.toLowerCase());
+      if (exact) return exact.id;
+    }
+    // 없으면 생성
+    const cr = await fetch(`${base}/wp-json/wp/v2/${taxonomy}`, {
+      method: "POST",
+      headers: { Authorization: authHeader(creds), "Content-Type": "application/json" },
+      body: JSON.stringify({ name: trimmed }),
+    });
+    if (cr.ok) {
+      const data = await cr.json();
+      if (data?.id) return data.id as number;
+    } else {
+      // 동시 생성 충돌(term_exists) 시 응답에 기존 id가 담겨 옴
+      const data = await cr.json().catch(() => null);
+      const existing = data?.data?.term_id ?? data?.additional_data?.[0];
+      if (typeof existing === "number") return existing;
+    }
+  } catch {
+    // 무시 (분류 실패해도 발행 자체는 진행)
   }
-  return "\n" + blocks.join("\n");
+  return null;
 }
 
 export interface PublishResult {
@@ -174,14 +246,33 @@ export async function publishPost(input: PublishInput): Promise<PublishResult> {
   contentHtml = contentHtml.replace(/<h1(\s[^>]*)?>/gi, "<h2>").replace(/<\/h1>/gi, "</h2>");
   // 이미지가 본문 폭을 넘어 거대해지거나 가로 스크롤이 생기지 않게 제약 → 편집 화면과 동일하게 보이도록(WYSIWYG)
   contentHtml = constrainImages(contentHtml);
+  // FAQ: 본문의 평문 FAQ는 제거하고, 마이크로데이터가 붙은 FAQ 섹션을 맨 끝에 한 번만 넣는다(구글 FAQ 리치결과).
+  if (input.faq && input.faq.length > 0) {
+    contentHtml = stripExistingFaq(contentHtml, input.faq) + renderFaqSection(input.faq);
+  }
   const body: Record<string, unknown> = {
     title: input.title,
-    // 본문 + 구조화 데이터(JSON-LD) → 검색 리치 결과
+    // 본문 + Article 구조화 데이터(JSON-LD)
     content: contentHtml + buildStructuredData(input),
     status: input.status ?? "draft",
   };
   if (input.metaDescription) body.excerpt = input.metaDescription;
   if (input.slug) body.slug = input.slug;
+
+  // 카테고리: 지정되면 찾거나 생성해 연결 (미지정 시 '미분류'로 올라가 SEO 불리)
+  if (input.categoryName) {
+    const catId = await findOrCreateTerm(base, input, "categories", input.categoryName);
+    if (catId) body.categories = [catId];
+  }
+  // 태그: 각 이름을 찾거나 생성해 id로 연결
+  if (input.tags && input.tags.length > 0) {
+    const ids: number[] = [];
+    for (const name of input.tags.slice(0, 8)) {
+      const id = await findOrCreateTerm(base, input, "tags", name);
+      if (id) ids.push(id);
+    }
+    if (ids.length) body.tags = ids;
+  }
   // 대표 이미지 업로드 → featured_media (base64·스토리지 URL 모두 지원, 안 고르면 없이 발행)
   if (input.featuredImage) {
     const media = await uploadMedia(input.featuredImage, input);

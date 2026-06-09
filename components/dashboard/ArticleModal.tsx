@@ -36,6 +36,38 @@ export default function ArticleModal({
   const editorRef = useRef<ArticleEditorHandle>(null);
   const FAQ_HEADING = "자주 묻는 질문";
 
+  // 발행 설정: 카테고리·태그
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
+  const [category, setCategory] = useState("");
+  const [newCatMode, setNewCatMode] = useState(false);
+  const [tags, setTags] = useState<string[]>(Array.isArray(article.tags) ? article.tags : []);
+  const [tagInput, setTagInput] = useState("");
+
+  // 연결된 워드프레스의 기존 카테고리 불러오기 (발행 가능 = 프로 + 연결됐을 때만)
+  useEffect(() => {
+    if (!canEdit || !wpConnected) return;
+    let alive = true;
+    fetch("/api/wordpress/categories")
+      .then((r) => r.json())
+      .then((d) => {
+        if (alive && Array.isArray(d.categories)) setCategories(d.categories);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [canEdit, wpConnected]);
+
+  function addTag() {
+    const v = tagInput.trim().replace(/^#/, "");
+    if (!v || tags.includes(v) || tags.length >= 8) {
+      setTagInput("");
+      return;
+    }
+    setTags((prev) => [...prev, v]);
+    setTagInput("");
+  }
+
   // 토스트 자동 사라짐
   useEffect(() => {
     if (!toast) return;
@@ -214,7 +246,7 @@ export default function ArticleModal({
       const res = await fetch("/api/wordpress/publish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ articleId: article.id, status }),
+        body: JSON.stringify({ articleId: article.id, status, category, tags }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -474,6 +506,72 @@ export default function ArticleModal({
           <p><strong className="text-neutral-700">메타 제목:</strong> {article.meta_title}</p>
           <p className="mt-1"><strong className="text-neutral-700">메타 설명:</strong> {article.meta_description}</p>
         </div>
+
+        {/* 발행 설정: 카테고리 · 태그 (SEO) */}
+        {wpConnected && (
+          <div className="mt-4 rounded-xl border border-neutral-200 bg-white px-4 py-3.5">
+            <p className="text-sm font-medium">발행 설정 <span className="font-normal text-neutral-400">· 워드프레스</span></p>
+
+            {/* 카테고리 */}
+            <div className="mt-3">
+              <label className="block text-xs font-medium text-neutral-600">카테고리</label>
+              {newCatMode ? (
+                <div className="mt-1.5 flex items-center gap-2">
+                  <input
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    placeholder="새 카테고리 이름 (예: 강아지 건강)"
+                    className="min-w-0 flex-1 rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900"
+                  />
+                  <button
+                    onClick={() => { setNewCatMode(false); setCategory(""); }}
+                    className="shrink-0 text-xs text-neutral-400 hover:text-neutral-600"
+                  >
+                    취소
+                  </button>
+                </div>
+              ) : (
+                <select
+                  value={category}
+                  onChange={(e) => {
+                    if (e.target.value === "__new__") { setNewCatMode(true); setCategory(""); }
+                    else setCategory(e.target.value);
+                  }}
+                  className="mt-1.5 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900"
+                >
+                  <option value="">미분류 (선택 안 함 · SEO 비추천)</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.name}>{c.name}</option>
+                  ))}
+                  <option value="__new__">＋ 새 카테고리 만들기…</option>
+                </select>
+              )}
+              {!category && <p className="mt-1 text-xs text-amber-600">카테고리를 정하면 SEO에 유리해요.</p>}
+            </div>
+
+            {/* 태그 */}
+            <div className="mt-3">
+              <label className="block text-xs font-medium text-neutral-600">태그 <span className="font-normal text-neutral-400">(3~5개 권장)</span></label>
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                {tags.map((t) => (
+                  <span key={t} className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2.5 py-1 text-xs">
+                    {t}
+                    <button onClick={() => setTags((prev) => prev.filter((x) => x !== t))} className="text-neutral-400 hover:text-neutral-700" aria-label="태그 삭제">×</button>
+                  </span>
+                ))}
+                <input
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(); } }}
+                  onBlur={addTag}
+                  placeholder={tags.length >= 8 ? "최대 8개" : "태그 입력 후 Enter"}
+                  disabled={tags.length >= 8}
+                  className="min-w-[8rem] flex-1 rounded-lg border border-neutral-200 px-2.5 py-1 text-xs outline-none focus:border-neutral-900 disabled:bg-neutral-50"
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="mt-5 flex items-start gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-2.5 text-xs leading-relaxed text-neutral-500">
           <span aria-hidden className="mt-px">💡</span>

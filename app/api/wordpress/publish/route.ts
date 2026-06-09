@@ -30,6 +30,8 @@ export async function POST(request: Request) {
   const articleId = body.articleId as string | undefined;
   const status = (body.status as "draft" | "publish" | "future") ?? "publish";
   const date = body.date as string | undefined;
+  const categoryName = typeof body.category === "string" ? body.category.trim() : "";
+  const tagsOverride = Array.isArray(body.tags) ? (body.tags as string[]) : null;
 
   if (!articleId) {
     return NextResponse.json({ error: "발행할 글을 선택해 주세요." }, { status: 400 });
@@ -78,6 +80,9 @@ export async function POST(request: Request) {
       featuredImage: article.featured_image ?? undefined,
       // 이미 발행한 글이면 그 워드프레스 글을 수정(재발행) → 중복 글 방지
       postId: article.wp_post_id ?? undefined,
+      // 카테고리(미지정 시 미분류) · 태그(없으면 글에 저장된 AI 태그 사용)
+      categoryName: categoryName || undefined,
+      tags: tagsOverride ?? (Array.isArray(article.tags) ? article.tags : undefined),
       status,
       date,
     });

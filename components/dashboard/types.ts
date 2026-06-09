@@ -13,6 +13,8 @@ export interface Article {
   meta_description: string;
   body_html: string;
   faq: FaqItem[];
+  /** 워드프레스 태그 (3~5개) */
+  tags?: string[];
   char_count: number;
   status: "draft" | "published" | "future";
   wp_link: string | null;

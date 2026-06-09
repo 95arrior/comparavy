@@ -16,6 +16,8 @@ export interface GeneratedArticle {
   meta_description: string;
   body_html: string;
   faq: FaqItem[];
+  /** 워드프레스 태그 3~5개 (한국어 검색어/연관어) */
+  tags: string[];
   /** 글쓴이에게 보여줄 짧은 메모: 검색 의도를 어떻게 보고 왜 이렇게 구성했는지 (본문 아님) */
   write_note: string;
 }
@@ -48,19 +50,41 @@ const SAVE_TOOL: Anthropic.Tool = {
           required: ["question", "answer"],
         },
       },
+      tags: {
+        type: "array",
+        description:
+          "워드프레스 태그 3~5개. 글 주제의 핵심 키워드·연관 검색어를 한국어 명사형으로(예: '강아지 분리불안', '훈련 방법'). 너무 일반적이거나(예: '정보') 문장형은 금지.",
+        items: { type: "string" },
+      },
       write_note: {
         type: "string",
         description:
           "글쓴이(블로그 운영자)에게 보여줄 짧은 메모 1~2문장. 이 키워드의 검색 의도를 어떻게 파악했고, 왜 이런 소제목·순서·구성으로 썼는지 담백하게 설명한다. 자기소개·인사·메타 표현 없이. 본문에는 절대 포함하지 않는다.",
       },
     },
-    required: ["title", "meta_title", "meta_description", "body_html", "faq"],
+    required: ["title", "meta_title", "meta_description", "body_html", "faq", "tags"],
   },
 };
 
 function clamp(text: string, max: number): string {
   const trimmed = (text ?? "").trim();
   return trimmed.length <= max ? trimmed : trimmed.slice(0, max);
+}
+
+/** 태그 정리: 문자열만, 공백 제거, 중복 제거, 빈 값 제거, 최대 5개·각 30자 */
+function cleanTags(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const t of raw) {
+    if (typeof t !== "string") continue;
+    const v = t.trim().replace(/^#/, "").slice(0, 30);
+    if (!v || seen.has(v)) continue;
+    seen.add(v);
+    out.push(v);
+    if (out.length >= 5) break;
+  }
+  return out;
 }
 
 /** Anthropic 모델로 한국어 SEO 글 1편을 생성한다. */
@@ -98,6 +122,7 @@ export async function generateArticle(
     meta_description: clamp(raw.meta_description ?? "", 160),
     body_html: (raw.body_html ?? "").trim(),
     faq: Array.isArray(raw.faq) ? raw.faq : [],
+    tags: cleanTags(raw.tags),
     write_note: clamp(raw.write_note ?? "", 400),
   };
 }
@@ -204,6 +229,7 @@ export async function streamArticle(
     meta_description: clamp(raw.meta_description ?? "", 160),
     body_html: (raw.body_html ?? "").trim(),
     faq: Array.isArray(raw.faq) ? raw.faq : [],
+    tags: cleanTags(raw.tags),
     write_note: clamp(raw.write_note ?? "", 400),
   };
 }
