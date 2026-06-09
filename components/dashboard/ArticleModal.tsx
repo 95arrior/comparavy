@@ -42,6 +42,7 @@ export default function ArticleModal({
   const [newCatMode, setNewCatMode] = useState(false);
   const [newCatInput, setNewCatInput] = useState("");
   const [creatingCat, setCreatingCat] = useState(false);
+  const [catOpen, setCatOpen] = useState(false);
 
   // '확인' → 워드프레스에 카테고리를 지금 생성(또는 기존 것 사용). 미리 여러 개 만들어 둬도 다 유지된다.
   async function confirmNewCategory() {
@@ -651,17 +652,50 @@ export default function ArticleModal({
                   </div>
                 ) : (
                   <div className="ateflo-fade-in">
-                    <select
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      className="mt-2 w-full appearance-none rounded-xl border border-neutral-300 bg-white bg-[length:1.1rem] bg-[right_0.9rem_center] bg-no-repeat px-3.5 py-2.5 text-sm outline-none transition focus:border-neutral-900"
-                      style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23999' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\")" }}
-                    >
-                      <option value="">분류 선택 안 함</option>
-                      {catOptions.map((name) => (
-                        <option key={name} value={name}>{name}</option>
-                      ))}
-                    </select>
+                    {/* 커스텀 드롭다운: 클릭 즉시 아래로 부드럽게 펼쳐지고, 셀렉박스를 가리지 않음 */}
+                    <div className="relative mt-2">
+                      <button
+                        type="button"
+                        onClick={() => setCatOpen((o) => !o)}
+                        className={`flex w-full items-center justify-between rounded-xl border bg-white px-3.5 py-2.5 text-left text-sm outline-none transition ${catOpen ? "border-neutral-900" : "border-neutral-300"}`}
+                      >
+                        <span className={category ? "text-neutral-900" : "text-neutral-400"}>{category || "분류 선택 안 함"}</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2" className={`transition-transform ${catOpen ? "rotate-180" : ""}`}><path d="M6 9l6 6 6-6" /></svg>
+                      </button>
+                      {catOpen && (
+                        <>
+                          <div className="fixed inset-0 z-10" onClick={() => setCatOpen(false)} />
+                          <div className="ateflo-dropdown absolute left-0 right-0 top-full z-20 mt-2 max-h-60 overflow-auto rounded-xl border border-neutral-200 bg-white p-1 shadow-lg">
+                            <button
+                              type="button"
+                              onClick={() => { setCategory(""); setCatOpen(false); }}
+                              className={`block w-full rounded-lg px-3 py-2 text-left text-sm transition hover:bg-neutral-100 ${!category ? "font-medium" : "text-neutral-500"}`}
+                            >
+                              분류 선택 안 함
+                            </button>
+                            {catOptions.map((name) => (
+                              <button
+                                key={name}
+                                type="button"
+                                onClick={() => { setCategory(name); setCatOpen(false); }}
+                                className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition hover:bg-neutral-100 ${category === name ? "font-medium text-neutral-900" : "text-neutral-700"}`}
+                              >
+                                {name}
+                                {category === name && <span className="text-emerald-600">✓</span>}
+                              </button>
+                            ))}
+                            <div className="my-1 h-px bg-neutral-100" />
+                            <button
+                              type="button"
+                              onClick={() => { setNewCatMode(true); setCatOpen(false); }}
+                              className="block w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-neutral-500 transition hover:bg-neutral-100"
+                            >
+                              ＋ 새 카테고리 만들기
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
                     <div className="mt-2 flex items-center justify-between gap-3">
                       <p className={`text-xs ${category ? "text-emerald-600" : "text-amber-600"}`}>
                         {category ? `✓ ‘${category}’ 분류로 발행돼요` : "미선택 시 ‘미분류’로 올라가요. 정해두면 SEO에 유리해요."}
