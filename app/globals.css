@@ -88,6 +88,23 @@ html {
   animation: ateflo-chew 0.85s ease-in-out 1.5s infinite, ateflo-mesh 11s ease-in-out 1.5s infinite;
 }
 
+/* 프로 전용 — 검색창 둘레를 무지개가 빙글빙글 도는 테두리 (입력창 모양은 안 돌고 색만 회전) */
+@property --ateflo-ring-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes ateflo-ring-spin {
+  to { --ateflo-ring-angle: 360deg; }
+}
+.ateflo-rainbow-spin {
+  background: conic-gradient(
+    from var(--ateflo-ring-angle),
+    #3f91ff, #b06bff, #ff4d6d, #ffd23a, #2fd07a, #3f91ff
+  );
+  animation: ateflo-ring-spin 3.2s linear infinite;
+}
+
 /* 폭죽 조각 */
 @keyframes ateflo-confetti {
   0%   { transform: translate(0, 0) rotate(0deg); opacity: 1; }

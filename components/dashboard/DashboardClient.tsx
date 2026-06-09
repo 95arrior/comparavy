@@ -411,7 +411,7 @@ export default function DashboardClient(props: DashboardProps) {
                 </div>
               ) : (
                 <>
-                  <div className="mt-10"><HeroInput loggedIn onStart={setGenParams} /></div>
+                  <div className="mt-10"><HeroInput loggedIn pro={props.plan === "pro"} onStart={setGenParams} /></div>
                   <div className="mt-12"><DemoStream /></div>
                 </>
               )}

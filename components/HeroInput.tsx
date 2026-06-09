@@ -33,7 +33,7 @@ const TONE_SHORT: Record<string, string> = { friendly: "친근", professional: "
 
 // 홈 도구형 입력창. 익명은 가입 게이트(마진·어뷰징 방어), 로그인 상태는 대시보드로.
 // 키워드 + 유형/문체를 함께 받아, 대시보드 생성탭을 거치지 않고 바로 작성화면으로 보낸다(뎁스 축소).
-export default function HeroInput({ loggedIn, onStart }: { loggedIn: boolean; onStart?: (p: GenParams) => void }) {
+export default function HeroInput({ loggedIn, onStart, pro = false }: { loggedIn: boolean; onStart?: (p: GenParams) => void; pro?: boolean }) {
   const [keyword, setKeyword] = useState("");
   // 기본 미선택("") — 안 고르면 최적값(howto/friendly)으로 생성. 선택한 칩 다시 누르면 해제(토글).
   const [type, setType] = useState("");
@@ -78,12 +78,14 @@ export default function HeroInput({ loggedIn, onStart }: { loggedIn: boolean; on
 
   return (
     <div className="mx-auto w-full max-w-xl">
-      <form
-        onSubmit={go}
-        className={`flex w-full items-center gap-2 rounded-full border bg-white p-2 shadow-sm transition ${
-          err ? "border-red-400 focus-within:border-red-500" : "border-neutral-300 focus-within:border-neutral-900"
-        }`}
-      >
+      <div className={pro ? "relative" : ""}>
+        {pro && <div aria-hidden className="ateflo-rainbow-spin pointer-events-none absolute -inset-[3px] rounded-full" />}
+        <form
+          onSubmit={go}
+          className={`relative flex w-full items-center gap-2 rounded-full border bg-white p-2 shadow-sm transition ${
+            err ? "border-red-400 focus-within:border-red-500" : pro ? "border-transparent" : "border-neutral-300 focus-within:border-neutral-900"
+          }`}
+        >
         <input
           ref={inputRef}
           value={keyword}
@@ -103,7 +105,8 @@ export default function HeroInput({ loggedIn, onStart }: { loggedIn: boolean; on
         >
           {loading ? "준비하고 있어요…" : "글 생성"}
         </button>
-      </form>
+        </form>
+      </div>
       {err && <p className="mt-2 pl-4 text-left text-sm text-red-500">검색할 만한 키워드를 입력해 주세요 (예: 강아지 분리불안).</p>}
 
       {/* 유형 · 문체 — 아이콘 칩 (선택. 안 골라도 기본값으로 생성) */}
