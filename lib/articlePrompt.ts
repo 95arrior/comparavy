@@ -111,7 +111,7 @@ export function buildUserPrompt(input: ArticlePromptInput): string {
     `문체 지침: ${toneInstruction}`,
     input.variantInstruction ? `구성 방식(다양성 — 매번 다른 글이 되도록): ${input.variantInstruction}` : "",
     "",
-    `목표 분량: 약 ${input.maxWords.toLocaleString()}자(공백 제외 한국어 글자수). 이 분량에 맞춘다 — 너무 짧지도, 목표를 크게 넘기지도 않게 ${input.maxWords.toLocaleString()}자 안팎으로 쓴다. 분량을 채우려고 군더더기·반복으로 늘리지 않는다.`,
+    `목표 분량: ${Math.round(input.maxWords * 0.7).toLocaleString()}~${input.maxWords.toLocaleString()}자(공백 제외 한국어 글자수). 주제와 맥락에 맞춰 이 범위 안에서 충분한 깊이로 쓰되, 분량을 억지로 채우려고 군더더기·반복·일반론으로 늘리지 않는다. 정해진 글자수를 채우는 것보다 글의 품질(쓸모·깊이)이 우선이다.`,
     "",
     "구조: 도입(상투어 없이 바로 핵심) → 본문(<h2> 소제목 여러 개, 필요 시 <h3>·목록) → 자주 묻는 질문(FAQ) 3~5개 → 짧은 마무리.",
     "깊이: 형식적인 나열·표면적 요약을 금지한다. 각 소제목마다 '왜 그런지', '구체적으로 어떻게 하는지', 판단 기준·실제 예시·흔한 실수·주의점·대안을 파고든다. 이 키워드로 검색한 사람이 다른 글을 더 안 봐도 될 만큼 충분하고 실전적으로 다룬다. 누구나 쓸 수 있는 뻔한 내용 대신, 실제로 쓸모 있는 디테일을 담는다.",
