@@ -653,7 +653,7 @@ export default function ArticleModal({
                 ) : (
                   <div className="ateflo-fade-in">
                     {/* 커스텀 드롭다운: 클릭 즉시 아래로 부드럽게 펼쳐지고, 셀렉박스를 가리지 않음 */}
-                    <div className="relative mt-2">
+                    <div className={`relative mt-2 ${catOpen ? "z-50" : ""}`}>
                       <button
                         type="button"
                         onClick={() => setCatOpen((o) => !o)}
@@ -664,8 +664,8 @@ export default function ArticleModal({
                       </button>
                       {catOpen && (
                         <>
-                          <div className="fixed inset-0 z-10" onClick={() => setCatOpen(false)} />
-                          <div className="ateflo-dropdown absolute left-0 right-0 top-full z-20 mt-2 max-h-60 overflow-auto rounded-xl border border-neutral-200 bg-white p-1 shadow-lg">
+                          <div className="fixed inset-0 z-40" onClick={() => setCatOpen(false)} />
+                          <div className="ateflo-dropdown absolute left-0 right-0 top-full z-50 mt-2 max-h-60 overflow-auto rounded-xl border border-neutral-200 bg-white p-1 shadow-lg">
                             <button
                               type="button"
                               onClick={() => { setCategory(""); setCatOpen(false); }}
