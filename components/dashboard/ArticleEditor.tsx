@@ -141,8 +141,6 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
   onTitleChange?: (t: string) => void;
   featuredImage?: string | null;
   onFeaturedChange?: (src: string | null) => void;
-  /** 대표이미지 추천 검색어 (보통 글 키워드) */
-  imageQuery?: string;
   originalHtml?: string;
   /** 스크롤 시 툴바가 고정될 상단 오프셋 (상위 고정 바와 겹치지 않게). 예: "top-[57px]" */
   toolbarOffset?: string;
@@ -153,33 +151,12 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
   onTitleChange,
   featuredImage,
   onFeaturedChange,
-  imageQuery,
   originalHtml,
   toolbarOffset = "top-0",
 }, ref) {
   const fileRef = useRef<HTMLInputElement>(null);
   const featRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef<HTMLTextAreaElement>(null);
-  const [imgSuggestOpen, setImgSuggestOpen] = useState(false);
-  const [imgSuggestions, setImgSuggestions] = useState<{ thumb: string; full: string; alt: string }[]>([]);
-  const [imgLoading, setImgLoading] = useState(false);
-  const [imgNeedsKey, setImgNeedsKey] = useState(false);
-
-  async function loadImageSuggestions() {
-    setImgSuggestOpen(true);
-    setImgLoading(true);
-    setImgNeedsKey(false);
-    try {
-      const res = await fetch(`/api/images/search?query=${encodeURIComponent(imageQuery || title || "")}`);
-      const data = await res.json();
-      if (data.needsKey) setImgNeedsKey(true);
-      setImgSuggestions(Array.isArray(data.images) ? data.images : []);
-    } catch {
-      setImgSuggestions([]);
-    } finally {
-      setImgLoading(false);
-    }
-  }
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const [linkNofollow, setLinkNofollow] = useState(false);
@@ -433,57 +410,13 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
                 <figcaption className="mt-1.5 text-xs text-neutral-400">대표 이미지 · 발행 시 글 상단에 이 폭으로 나와요</figcaption>
               </figure>
             ) : (
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => featRef.current?.click()}
-                  className="flex items-center gap-2 rounded-lg border border-dashed border-neutral-300 px-3 py-2 text-sm text-neutral-400 transition hover:border-neutral-500 hover:text-neutral-600"
-                >
-                  <IconImage /> 대표 이미지 추가 <span className="text-neutral-300">(선택)</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={loadImageSuggestions}
-                  className="flex items-center gap-1.5 rounded-lg border border-neutral-300 px-3 py-2 text-sm font-medium text-neutral-600 transition hover:border-neutral-900"
-                >
-                  ✨ 추천 이미지
-                </button>
-              </div>
-            )}
-
-            {/* 추천 이미지 그리드 — 마음에 드는 걸 골라 대표이미지로 (별로면 위에서 ‘제거’) */}
-            {imgSuggestOpen && (
-              <div className="mt-3 rounded-xl border border-neutral-200 bg-neutral-50/60 p-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium text-neutral-600">추천 이미지 · 눌러서 선택</p>
-                  <div className="flex items-center gap-2">
-                    <button type="button" onClick={loadImageSuggestions} disabled={imgLoading} className="text-xs text-neutral-500 transition hover:text-neutral-900 disabled:opacity-40">다시 추천</button>
-                    <button type="button" onClick={() => setImgSuggestOpen(false)} className="text-xs text-neutral-400 transition hover:text-neutral-700">닫기</button>
-                  </div>
-                </div>
-                {imgLoading ? (
-                  <p className="py-6 text-center text-xs text-neutral-400">불러오는 중…</p>
-                ) : imgNeedsKey ? (
-                  <p className="py-4 text-center text-xs leading-relaxed text-neutral-500">이미지 추천을 켜려면 Pexels 무료 키 설정이 필요해요.<br />(관리자에게 문의)</p>
-                ) : imgSuggestions.length === 0 ? (
-                  <p className="py-4 text-center text-xs text-neutral-400">맞는 이미지를 못 찾았어요. ‘다시 추천’ 또는 직접 업로드해 주세요.</p>
-                ) : (
-                  <div className="mt-2 grid grid-cols-3 gap-2">
-                    {imgSuggestions.map((img) => (
-                      <button
-                        key={img.full}
-                        type="button"
-                        onClick={() => { onFeaturedChange?.(img.full); setImgSuggestOpen(false); }}
-                        className="group relative aspect-[3/2] overflow-hidden rounded-lg border border-neutral-200 transition hover:border-neutral-900"
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={img.thumb} alt={img.alt} className="h-full w-full object-cover transition group-hover:scale-105" />
-                      </button>
-                    ))}
-                  </div>
-                )}
-                <p className="mt-2 text-[11px] text-neutral-400">사진: Pexels</p>
-              </div>
+              <button
+                type="button"
+                onClick={() => featRef.current?.click()}
+                className="flex items-center gap-2 rounded-lg border border-dashed border-neutral-300 px-3 py-2 text-sm text-neutral-400 transition hover:border-neutral-500 hover:text-neutral-600"
+              >
+                <IconImage /> 대표 이미지 추가 <span className="text-neutral-300">(선택)</span>
+              </button>
             )}
             <input ref={featRef} type="file" accept="image/*" className="hidden" onChange={onPickFeatured} />
           </div>

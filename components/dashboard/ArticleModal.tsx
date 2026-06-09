@@ -954,7 +954,6 @@ export default function ArticleModal({
             onTitleChange={setTitle}
             featuredImage={featured}
             onFeaturedChange={setFeatured}
-            imageQuery={article.keyword}
             originalHtml={article.original_html ?? undefined}
             initialHtml={article.body_html}
             onChange={setBodyHtml}
