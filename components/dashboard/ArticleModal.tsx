@@ -67,18 +67,25 @@ export default function ArticleModal({
 
   const [aiSuggested, setAiSuggested] = useState<string[]>([]);
   const [suggesting, setSuggesting] = useState(false);
-  const [aiUsed, setAiUsed] = useState(false);
+  // AI 태그 추천은 글당 1회. 한 번 누르면 이 기기에서 영구 비활성(새로고침·재방문해도 유지) → 크레딧 낭비 방지.
+  const aiUsedKey = `ateflo_ai_tags_${article.id}`;
+  const [aiUsed, setAiUsed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(aiUsedKey) === "1";
+  });
 
   // 이 글 내용을 분석해 태그 추천 (기존 글 포함). 크레딧 절약 위해 글당 1회만 호출.
   async function suggestTags() {
     if (aiUsed || suggesting) return;
+    // 클릭 즉시 영구 비활성 (한 번 누르면 모델 호출=크레딧 → 무조건 1회로 제한)
+    setAiUsed(true);
+    if (typeof window !== "undefined") localStorage.setItem(aiUsedKey, "1");
     setSuggesting(true);
     try {
       const res = await fetch(`/api/articles/${article.id}/suggest-tags`, { method: "POST" });
       const data = await res.json();
       if (res.ok && Array.isArray(data.tags)) {
         setAiSuggested(data.tags);
-        setAiUsed(true);
         if (!data.tags.length) setToast("추천할 태그를 찾지 못했어요.");
       } else {
         setToast(data.error ?? "태그 추천에 실패했어요.");
@@ -212,7 +219,7 @@ export default function ArticleModal({
       if (autoTimer.current) clearTimeout(autoTimer.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, bodyHtml, featured]);
+  }, [title, bodyHtml, featured, tags, category]);
 
   // 저장 시점의 '진짜 최신' 본문 — React 상태가 한 박자 늦더라도 에디터에서 직접 읽어 누락을 막는다.
   function currentBody(): string {
@@ -540,6 +547,9 @@ export default function ArticleModal({
         {wpConnected && (() => {
           // 추천(눌러서 추가)은 한 곳으로 모은다: AI 추천 먼저, 그다음 이미 쓰던 태그. 이미 담긴 건 제외·중복 제거.
           const suggestions = Array.from(new Set([...aiSuggested, ...existingTags])).filter((t) => !tags.includes(t));
+          // 드롭다운 옵션: WP에서 가져온 목록 + 현재 선택값(아직 WP에 없는 새 카테고리 포함) → 다시 열어도 안 사라짐
+          const catNames = categories.map((c) => c.name);
+          const catOptions = category && !catNames.includes(category) ? [category, ...catNames] : catNames;
           return (
             <div className="mt-4 rounded-2xl border border-neutral-200 bg-white p-5">
               <p className="text-[15px] font-semibold tracking-tight">발행 설정</p>
@@ -549,7 +559,7 @@ export default function ArticleModal({
               <div className="mt-5">
                 <label className="text-[13px] font-medium text-neutral-700">카테고리</label>
                 {newCatMode ? (
-                  <div className="mt-2 flex items-center gap-2">
+                  <div className="ateflo-fade-in mt-2 flex items-center gap-2">
                     <input
                       value={newCatInput}
                       autoFocus
@@ -590,7 +600,7 @@ export default function ArticleModal({
                     </button>
                   </div>
                 ) : (
-                  <>
+                  <div className="ateflo-fade-in">
                     <select
                       value={category}
                       onChange={(e) => setCategory(e.target.value)}
@@ -598,8 +608,8 @@ export default function ArticleModal({
                       style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23999' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\")" }}
                     >
                       <option value="">분류 선택 안 함</option>
-                      {categories.map((c) => (
-                        <option key={c.id} value={c.name}>{c.name}</option>
+                      {catOptions.map((name) => (
+                        <option key={name} value={name}>{name}</option>
                       ))}
                     </select>
                     <div className="mt-2 flex items-center justify-between gap-3">
@@ -607,13 +617,13 @@ export default function ArticleModal({
                         {category ? `✓ ‘${category}’ 분류로 발행돼요` : "미선택 시 ‘미분류’로 올라가요. 정해두면 SEO에 유리해요."}
                       </p>
                       <button
-                        onClick={() => { setNewCatMode(true); setCategory(""); }}
+                        onClick={() => setNewCatMode(true)}
                         className="shrink-0 text-xs font-medium text-neutral-500 transition hover:text-neutral-900"
                       >
                         ＋ 새 카테고리
                       </button>
                     </div>
-                  </>
+                  </div>
                 )}
               </div>
 
@@ -638,7 +648,7 @@ export default function ArticleModal({
                     <span className="px-1 text-sm text-neutral-400">아래 추천에서 골라 담아주세요</span>
                   ) : (
                     tags.map((t) => (
-                      <span key={t} className="inline-flex items-center gap-1 rounded-full bg-neutral-900 py-1 pl-2.5 pr-1.5 text-xs font-medium text-white">
+                      <span key={t} className="ateflo-chip-in inline-flex items-center gap-1 rounded-full bg-neutral-900 py-1 pl-2.5 pr-1.5 text-xs font-medium text-white">
                         {t}
                         <button onClick={() => setTags((prev) => prev.filter((x) => x !== t))} className="flex h-4 w-4 items-center justify-center rounded-full text-white/60 transition hover:bg-white/20 hover:text-white" aria-label="태그 삭제">×</button>
                       </span>
@@ -660,7 +670,7 @@ export default function ArticleModal({
                           <button
                             key={t}
                             onClick={() => setTags((prev) => (prev.length >= 8 || prev.includes(t) ? prev : [...prev, t]))}
-                            className={`rounded-full border px-2.5 py-1 text-xs transition ${
+                            className={`ateflo-chip-in rounded-full border px-2.5 py-1 text-xs transition ${
                               fromAi
                                 ? "border-neutral-900/15 bg-neutral-900/[0.04] font-medium text-neutral-800 hover:border-neutral-900"
                                 : "border-dashed border-neutral-300 text-neutral-500 hover:border-neutral-900 hover:text-neutral-900"
