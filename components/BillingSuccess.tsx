@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import ProCelebration from "@/components/ProCelebration";
 
 type State = "processing" | "done" | "error";
 
@@ -41,7 +42,7 @@ export default function BillingSuccess({
           return;
         }
         setState("done");
-        setTimeout(() => router.push("/"), 1500);
+        setTimeout(() => router.push("/"), 4200); // 축하 애니메이션을 다 보여준 뒤 이동
       } catch {
         setState("error");
         setMessage("네트워크 오류가 발생했습니다.");
@@ -59,8 +60,13 @@ export default function BillingSuccess({
       )}
       {state === "done" && (
         <>
-          <h1 className="text-xl font-semibold tracking-tight text-emerald-600">프로 구독이 시작되었습니다 🎉</h1>
-          <p className="mt-2 text-sm text-neutral-500">대시보드로 이동합니다…</p>
+          <ProCelebration />
+          <button
+            onClick={() => router.push("/")}
+            className="ateflo-rainbow mt-8 rounded-full px-6 py-2.5 text-sm font-medium text-white transition"
+          >
+            바로 시작하기 →
+          </button>
         </>
       )}
       {state === "error" && (

@@ -64,6 +64,34 @@ html {
   animation: ateflo-step-in 0.4s ease-out backwards;
 }
 
+/* ── 프로 전환 축하 ─────────────────────────────────── */
+/* 파란 로고: 팝 등장 → 입을 쫙 벌리며 사라짐(--ateflo-gap 0→179deg) */
+@keyframes ateflo-celebrate-blue {
+  0%   { transform: scale(0.2); opacity: 0; --ateflo-gap: 21.6deg; }
+  16%  { transform: scale(1.12); opacity: 1; }
+  30%  { transform: scale(1); --ateflo-gap: 21.6deg; }
+  58%  { --ateflo-gap: 30deg; opacity: 1; }
+  82%  { --ateflo-gap: 120deg; transform: scale(1.12); opacity: 1; }
+  100% { --ateflo-gap: 179deg; transform: scale(1.4); opacity: 0; }
+}
+.ateflo-celebrate-blue { animation: ateflo-celebrate-blue 1.5s ease-in-out forwards; }
+
+/* 프로 무지개 로고: 파란 로고가 사라진 뒤 팝 등장 (요동은 자식의 mesh/chew가 담당) */
+@keyframes ateflo-celebrate-pro {
+  0%, 52% { transform: scale(0); opacity: 0; }
+  68%     { transform: scale(1.28); opacity: 1; }
+  84%     { transform: scale(0.94); }
+  100%    { transform: scale(1); opacity: 1; }
+}
+.ateflo-celebrate-pro { display: inline-block; animation: ateflo-celebrate-pro 1.7s ease-out forwards; }
+
+/* 폭죽 조각 */
+@keyframes ateflo-confetti {
+  0%   { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+  100% { transform: translate(var(--dx, 0), var(--dy, 0)) rotate(var(--rot, 0deg)); opacity: 0; }
+}
+.ateflo-confetti { animation: ateflo-confetti 1.1s ease-out forwards; }
+
 /* ── Minimal mono theme ──────────────────────────────────── */
 /* Subtle hairline used to separate sections on black. */
 .mono-hairline {
