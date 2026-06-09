@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect, useRef, useMemo } from "react";
 import ArticleEditor, { type ArticleEditorHandle } from "./ArticleEditor";
+import CenterToast from "./CenterToast";
 import { PLANS, formatKRW } from "@/lib/plans";
 import type { Article } from "./types";
 
@@ -481,11 +482,7 @@ export default function ArticleModal({
   if (!canEdit) {
     return (
       <>
-        {toast && (
-          <div className="ateflo-toast pointer-events-none fixed left-1/2 top-5 z-50 -translate-x-1/2 rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white shadow-lg md:left-[calc(50%+8rem)]">
-            {toast}
-          </div>
-        )}
+        {toast && <CenterToast>{toast}</CenterToast>}
         <div className="sticky top-0 z-30 border-b border-neutral-200 bg-white/95 backdrop-blur">
           <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-6 py-3">
             <button onClick={onClose} className="flex items-center gap-1.5 text-sm text-neutral-500 transition hover:text-neutral-900">
@@ -640,12 +637,8 @@ export default function ArticleModal({
         </div>
       </div>
 
-      {/* 저장 완료 등 토스트 — 화면 상단 가운데에 잠깐 떴다 사라짐 */}
-      {toast && (
-        <div className="ateflo-toast pointer-events-none fixed left-1/2 top-5 z-50 -translate-x-1/2 rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white shadow-lg md:left-[calc(50%+8rem)]">
-          {toast}
-        </div>
-      )}
+      {/* 저장 완료 등 토스트 — 화면 정중앙 상단(portal) */}
+      {toast && <CenterToast>{toast}</CenterToast>}
 
       {/* 자동저장 표시 — 화면에 고정되어 스크롤을 따라다님(현재 보는 위치 우하단에 항상 보임) */}
       {(autoSavedAt || dirty || saveFailed) && (

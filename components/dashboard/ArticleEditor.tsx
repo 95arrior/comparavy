@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect, forwardRef, useImperativeHandle } from "react";
+import CenterToast from "./CenterToast";
 import { useEditor, EditorContent, ReactNodeViewRenderer, NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
 import { mergeAttributes } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
@@ -315,11 +316,7 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
 
   return (
     <div className="rounded-xl border border-neutral-200 bg-white">
-      {uploading && (
-        <div className="fixed left-1/2 top-5 z-50 -translate-x-1/2 rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white shadow-lg md:left-[calc(50%+8rem)]">
-          이미지 업로드 중…
-        </div>
-      )}
+      {uploading && <CenterToast>이미지 업로드 중…</CenterToast>}
       <div className={`sticky ${toolbarOffset} z-20 border-b border-neutral-200 bg-white shadow-md`}>
         <div className="flex flex-wrap items-center gap-0.5 px-3 py-2">
           <Btn title="실행취소 (Ctrl+Z)" disabled={!editor.can().undo()} onClick={() => editor.chain().focus().undo().run()}><IconUndo /></Btn>

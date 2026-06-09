@@ -19,11 +19,16 @@ export type AdminStats = {
   recentArticles: { title: string; status: string; locked: boolean; created_at: string }[];
 };
 
-// ADMIN_EMAILS(쉼표 구분)에 등록된 이메일인지
+// 코드 기본 관리자 (env 없이도 항상 관리자). 서버 전용 파일이라 노출되지 않음.
+const BASE_ADMINS = ["w.95arrior@gmail.com", "tjdghdlgh@gmail.com"];
+
+// ADMIN_EMAILS(쉼표 구분) + 기본 목록에 등록된 이메일인지
 export function isAdminEmail(email?: string | null): boolean {
-  const list = (process.env.ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((s) => s.trim().toLowerCase())
+  const list = [
+    ...BASE_ADMINS,
+    ...(process.env.ADMIN_EMAILS ?? "").split(",").map((s) => s.trim()),
+  ]
+    .map((s) => s.toLowerCase())
     .filter(Boolean);
   return !!email && list.includes(email.toLowerCase());
 }
