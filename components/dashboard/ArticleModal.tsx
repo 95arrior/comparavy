@@ -42,8 +42,9 @@ export default function ArticleModal({
   const [newCatMode, setNewCatMode] = useState(false);
   const [tags, setTags] = useState<string[]>(Array.isArray(article.tags) ? article.tags : []);
   const [tagInput, setTagInput] = useState("");
+  const [existingTags, setExistingTags] = useState<string[]>([]);
 
-  // 연결된 워드프레스의 기존 카테고리 불러오기 (발행 가능 = 프로 + 연결됐을 때만)
+  // 연결된 워드프레스의 기존 카테고리·태그 불러오기 (발행 가능 = 프로 + 연결됐을 때만)
   useEffect(() => {
     if (!canEdit || !wpConnected) return;
     let alive = true;
@@ -51,6 +52,12 @@ export default function ArticleModal({
       .then((r) => r.json())
       .then((d) => {
         if (alive && Array.isArray(d.categories)) setCategories(d.categories);
+      })
+      .catch(() => {});
+    fetch("/api/wordpress/tags")
+      .then((r) => r.json())
+      .then((d) => {
+        if (alive && Array.isArray(d.tags)) setExistingTags(d.tags);
       })
       .catch(() => {});
     return () => {
@@ -569,6 +576,27 @@ export default function ArticleModal({
                   className="min-w-[8rem] flex-1 rounded-lg border border-neutral-200 px-2.5 py-1 text-xs outline-none focus:border-neutral-900 disabled:bg-neutral-50"
                 />
               </div>
+
+              {/* 기존 태그 재사용 추천 — 새 태그 남발 대신 묶어서 SEO 가치↑ */}
+              {existingTags.filter((t) => !tags.includes(t)).length > 0 && tags.length < 8 && (
+                <div className="mt-2">
+                  <p className="text-xs text-neutral-400">이미 쓰던 태그 재사용 (눌러서 추가)</p>
+                  <div className="mt-1 flex flex-wrap gap-1.5">
+                    {existingTags
+                      .filter((t) => !tags.includes(t))
+                      .slice(0, 12)
+                      .map((t) => (
+                        <button
+                          key={t}
+                          onClick={() => setTags((prev) => (prev.length >= 8 || prev.includes(t) ? prev : [...prev, t]))}
+                          className="rounded-full border border-dashed border-neutral-300 px-2.5 py-1 text-xs text-neutral-500 transition hover:border-neutral-900 hover:text-neutral-900"
+                        >
+                          ＋ {t}
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
