@@ -396,11 +396,19 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
         {onFeaturedChange && (
           <div className="mb-4">
             {featuredImage ? (
-              <div className="relative inline-block">
+              <figure className="relative">
+                {/* 발행 결과와 동일하게 본문 폭에 꽉 차게 표시 (편집=발행 일치) */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={featuredImage} alt="대표 이미지" className="max-h-52 rounded-lg" />
-                <button type="button" onClick={() => onFeaturedChange(null)} className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-1 text-xs text-white hover:bg-black/80">제거</button>
-              </div>
+                <img src={featuredImage} alt="대표 이미지" className="w-full rounded-xl" />
+                <button
+                  type="button"
+                  onClick={() => onFeaturedChange(null)}
+                  className="absolute right-2.5 top-2.5 flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white backdrop-blur transition hover:bg-black/80"
+                >
+                  제거
+                </button>
+                <figcaption className="mt-1.5 text-xs text-neutral-400">대표 이미지 · 발행 시 글 상단에 이 폭으로 나와요</figcaption>
+              </figure>
             ) : (
               <button
                 type="button"
