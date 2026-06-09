@@ -100,7 +100,8 @@ html {
 .ateflo-rainbow-spin {
   background: conic-gradient(
     from var(--ateflo-ring-angle),
-    #3f91ff, #b06bff, #ff4d6d, #ffd23a, #2fd07a, #3f91ff
+    rgba(63, 145, 255, 0.6), rgba(176, 107, 255, 0.6), rgba(255, 77, 109, 0.6),
+    rgba(255, 210, 58, 0.6), rgba(47, 208, 122, 0.6), rgba(63, 145, 255, 0.6)
   );
   animation: ateflo-ring-spin 3.2s linear infinite;
 }
