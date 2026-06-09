@@ -226,6 +226,37 @@ export default function ArticleModal({
     window.scrollTo({ top: 0 });
   }, []);
 
+  // 모달을 닫을 때(언마운트) 아직 자동저장 안 된 변경이 있으면 즉시 저장한다.
+  // (자동저장 3초가 차기 전에 목록으로 나가면 변경이 사라지던 문제 방지 — keepalive로 언마운트 중에도 전송 완료)
+  const flushRef = useRef<{ id: string; payload: Record<string, unknown>; dirty: boolean; canEdit: boolean }>({
+    id: article.id,
+    payload: {},
+    dirty: false,
+    canEdit: Boolean(canEdit),
+  });
+  flushRef.current = {
+    id: article.id,
+    payload: { title, body_html: bodyHtml, featured_image: featured, tags, category },
+    dirty,
+    canEdit: Boolean(canEdit),
+  };
+  useEffect(() => {
+    return () => {
+      const f = flushRef.current;
+      if (!f.canEdit || !f.dirty) return;
+      try {
+        fetch(`/api/articles/${f.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(f.payload),
+          keepalive: true,
+        });
+      } catch {
+        // 무시 (최선 노력)
+      }
+    };
+  }, []);
+
   // 자동저장: 변경 후 3초 멈추면 저장하고 "자동저장 완료" 표시
   useEffect(() => {
     if (!dirty) return;
