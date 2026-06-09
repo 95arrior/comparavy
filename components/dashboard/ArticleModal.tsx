@@ -53,29 +53,29 @@ export default function ArticleModal({
   const [creatingCat, setCreatingCat] = useState(false);
   const [catOpen, setCatOpen] = useState(false);
   const [catToDelete, setCatToDelete] = useState<{ id: number; name: string; count: number } | null>(null);
-  const [reassignTo, setReassignTo] = useState<number>(0); // 0 = 미분류로
   const [deletingCat, setDeletingCat] = useState(false);
 
-  async function deleteCategory() {
+  // reassignToId: 0이면 미분류로, 그 외엔 해당 카테고리로 글 옮긴 뒤 삭제
+  async function deleteCategory(reassignToId: number) {
     if (!catToDelete || deletingCat) return;
+    const target = catToDelete;
     setDeletingCat(true);
     try {
       const res = await fetch("/api/wordpress/categories", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: catToDelete.id, reassignToId: reassignTo || undefined }),
+        body: JSON.stringify({ id: target.id, reassignToId: reassignToId || undefined }),
       });
       const data = await res.json();
       if (res.ok) {
-        setCategories((prev) => prev.filter((c) => c.id !== catToDelete.id));
-        onCategoryDeleted?.(catToDelete.id);
-        if (category === catToDelete.name) {
-          const target = categories.find((c) => c.id === reassignTo);
-          setCategory(target ? target.name : "");
+        setCategories((prev) => prev.filter((c) => c.id !== target.id));
+        onCategoryDeleted?.(target.id);
+        if (category === target.name) {
+          const moved = categories.find((c) => c.id === reassignToId);
+          setCategory(moved ? moved.name : "");
         }
-        setToast(`‘${catToDelete.name}’ 삭제했어요`);
+        setToast(`‘${target.name}’ 삭제했어요`);
         setCatToDelete(null);
-        setReassignTo(0);
       } else {
         setToast(data.error ?? "카테고리 삭제에 실패했어요.");
       }
@@ -692,87 +692,99 @@ export default function ArticleModal({
                       <button
                         type="button"
                         onClick={() => setCatOpen((o) => !o)}
-                        className={`flex w-full items-center justify-between rounded-xl border bg-white px-3.5 py-2.5 text-left text-sm outline-none transition ${catOpen ? "border-neutral-900" : "border-neutral-300"}`}
+                        className={`flex w-full items-center justify-between gap-2 rounded-xl border bg-white px-3.5 py-3 text-left text-sm outline-none transition ${catOpen ? "border-neutral-900 ring-2 ring-neutral-900/5" : "border-neutral-300 hover:border-neutral-400"}`}
                       >
                         <span className={category ? "text-neutral-900" : "text-neutral-400"}>{category || "분류 선택 안 함"}</span>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2" className={`transition-transform ${catOpen ? "rotate-180" : ""}`}><path d="M6 9l6 6 6-6" /></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`shrink-0 text-neutral-400 transition-transform duration-200 ${catOpen ? "rotate-180" : ""}`}><path d="m6 9 6 6 6-6" /></svg>
                       </button>
                       {catOpen && (
                         <>
-                          <div className="fixed inset-0 z-40" onClick={() => { setCatOpen(false); setCatToDelete(null); setReassignTo(0); }} />
-                          <div className="ateflo-dropdown absolute left-0 right-0 top-full z-50 mt-2 max-h-72 overflow-auto rounded-xl border border-neutral-200 bg-white p-1 shadow-lg">
+                          <div className="fixed inset-0 z-40" onClick={() => { setCatOpen(false); setCatToDelete(null); }} />
+                          <div className="ateflo-dropdown absolute left-0 right-0 top-full z-50 mt-2 max-h-72 overflow-auto rounded-2xl border border-neutral-200 bg-white p-1.5 shadow-xl">
                             {catToDelete ? (
-                              /* 삭제 확인 */
-                              <div className="p-2">
-                                <p className="px-1 text-sm font-semibold">‘{catToDelete.name}’ 삭제</p>
+                              /* 삭제 확인 — 옮길 곳을 누르면 옮기고 삭제 (네이티브 셀렉트 없이 같은 리스트 스타일) */
+                              <div>
+                                <div className="px-2.5 py-2">
+                                  <p className="text-sm font-semibold text-neutral-900">‘{catToDelete.name}’ 삭제</p>
+                                  <p className="mt-0.5 text-xs leading-relaxed text-neutral-500">
+                                    {catToDelete.count > 0
+                                      ? `이 분류의 글 ${catToDelete.count}개를 어디로 옮길까요? 고르면 옮기고 삭제해요.`
+                                      : "글이 없어 바로 삭제할 수 있어요."}
+                                  </p>
+                                </div>
                                 {catToDelete.count > 0 ? (
                                   <>
-                                    <p className="mt-1.5 px-1 text-xs leading-relaxed text-amber-600">
-                                      이 카테고리에 글 {catToDelete.count}개가 있어요. 삭제하면 그 글들의 분류가 바뀌어요.
-                                    </p>
-                                    <label className="mt-2.5 block px-1 text-xs font-medium text-neutral-600">글을 어디로 옮길까요?</label>
-                                    <select
-                                      value={reassignTo}
-                                      onChange={(e) => setReassignTo(Number(e.target.value))}
-                                      className="mt-1 w-full rounded-lg border border-neutral-300 px-2.5 py-2 text-sm outline-none focus:border-neutral-900"
+                                    {categories.filter((c) => c.id !== catToDelete.id).map((c) => (
+                                      <button
+                                        key={c.id}
+                                        type="button"
+                                        disabled={deletingCat}
+                                        onClick={() => deleteCategory(c.id)}
+                                        className="block w-full rounded-lg px-2.5 py-2.5 text-left text-sm text-neutral-800 transition hover:bg-neutral-100 disabled:opacity-50"
+                                      >
+                                        <span className="font-medium">{c.name}</span><span className="text-neutral-400">(으)로 옮기고 삭제</span>
+                                      </button>
+                                    ))}
+                                    <button
+                                      type="button"
+                                      disabled={deletingCat}
+                                      onClick={() => deleteCategory(0)}
+                                      className="block w-full rounded-lg px-2.5 py-2 text-left text-xs text-neutral-400 transition hover:bg-neutral-100 disabled:opacity-50"
                                     >
-                                      <option value={0}>미분류로 보내기 (SEO 비추천)</option>
-                                      {categories.filter((c) => c.id !== catToDelete.id).map((c) => (
-                                        <option key={c.id} value={c.id}>‘{c.name}’(으)로 옮기기</option>
-                                      ))}
-                                    </select>
+                                      미분류로 보내고 삭제 (비추천)
+                                    </button>
                                   </>
                                 ) : (
-                                  <p className="mt-1.5 px-1 text-xs text-neutral-500">글이 없어 바로 삭제할 수 있어요.</p>
-                                )}
-                                <div className="mt-3 flex gap-2 px-1">
                                   <button
                                     type="button"
-                                    onClick={deleteCategory}
                                     disabled={deletingCat}
-                                    className="flex-1 rounded-lg bg-red-600 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-50"
+                                    onClick={() => deleteCategory(0)}
+                                    className="block w-full rounded-lg px-2.5 py-2.5 text-left text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-50"
                                   >
                                     {deletingCat ? "삭제 중…" : "삭제"}
                                   </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => { setCatToDelete(null); setReassignTo(0); }}
-                                    disabled={deletingCat}
-                                    className="rounded-lg border border-neutral-300 px-3 py-2 text-sm transition hover:border-neutral-900 disabled:opacity-50"
-                                  >
-                                    취소
-                                  </button>
-                                </div>
+                                )}
+                                <div className="my-1 h-px bg-neutral-100" />
+                                <button
+                                  type="button"
+                                  disabled={deletingCat}
+                                  onClick={() => setCatToDelete(null)}
+                                  className="block w-full rounded-lg px-2.5 py-2.5 text-left text-sm text-neutral-500 transition hover:bg-neutral-100 disabled:opacity-50"
+                                >
+                                  취소
+                                </button>
                               </div>
                             ) : (
                               <>
                                 <button
                                   type="button"
                                   onClick={() => { setCategory(""); setCatOpen(false); }}
-                                  className={`block w-full rounded-lg px-3 py-2 text-left text-sm transition hover:bg-neutral-100 ${!category ? "font-medium" : "text-neutral-500"}`}
+                                  className={`block w-full rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-neutral-100 ${!category ? "font-medium" : "text-neutral-500"}`}
                                 >
                                   분류 선택 안 함
                                 </button>
                                 {categories.map((c) => (
-                                  <div key={c.id} className="group flex items-center rounded-lg hover:bg-neutral-100">
+                                  <div key={c.id} className={`group flex items-center rounded-lg transition ${category === c.name ? "bg-neutral-50" : "hover:bg-neutral-100"}`}>
                                     <button
                                       type="button"
                                       onClick={() => { setCategory(c.name); setCatOpen(false); }}
-                                      className={`flex min-w-0 flex-1 items-center gap-1.5 px-3 py-2 text-left text-sm ${category === c.name ? "font-medium text-neutral-900" : "text-neutral-700"}`}
+                                      className={`flex min-w-0 flex-1 items-center gap-2 px-3 py-2.5 text-left text-sm ${category === c.name ? "font-medium text-neutral-900" : "text-neutral-800"}`}
                                     >
+                                      {category === c.name
+                                        ? <span className="shrink-0 text-emerald-600">✓</span>
+                                        : <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-neutral-300" />}
                                       <span className="truncate">{c.name}</span>
                                       {typeof c.count === "number" && c.count > 0 && (
-                                        <span className="shrink-0 text-xs text-neutral-400">· 글 {c.count}</span>
+                                        <span className="ml-auto shrink-0 rounded-full bg-neutral-100 px-1.5 text-xs text-neutral-400">{c.count}</span>
                                       )}
-                                      {category === c.name && <span className="ml-auto shrink-0 text-emerald-600">✓</span>}
                                     </button>
                                     <button
                                       type="button"
-                                      onClick={() => { setCatToDelete({ id: c.id, name: c.name, count: c.count ?? 0 }); setReassignTo(0); }}
+                                      onClick={() => setCatToDelete({ id: c.id, name: c.name, count: c.count ?? 0 })}
                                       title="이 카테고리 삭제"
-                                      className="mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-neutral-300 opacity-0 transition hover:bg-red-50 hover:text-red-600 group-hover:opacity-100"
+                                      className="mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-neutral-300 transition hover:bg-red-50 hover:text-red-600 md:opacity-0 md:group-hover:opacity-100"
                                     >
-                                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" /></svg>
+                                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" /></svg>
                                     </button>
                                   </div>
                                 ))}
@@ -780,17 +792,17 @@ export default function ArticleModal({
                                   <button
                                     type="button"
                                     onClick={() => setCatOpen(false)}
-                                    className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-medium text-neutral-900 transition hover:bg-neutral-100"
+                                    className="flex w-full items-center gap-2 rounded-lg bg-neutral-50 px-3 py-2.5 text-left text-sm font-medium text-neutral-900"
                                   >
-                                    {category}
-                                    <span className="text-emerald-600">✓</span>
+                                    <span className="shrink-0 text-emerald-600">✓</span>
+                                    <span className="truncate">{category}</span>
                                   </button>
                                 )}
                                 <div className="my-1 h-px bg-neutral-100" />
                                 <button
                                   type="button"
                                   onClick={() => { setNewCatMode(true); setCatOpen(false); }}
-                                  className="block w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-neutral-500 transition hover:bg-neutral-100"
+                                  className="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-neutral-500 transition hover:bg-neutral-100"
                                 >
                                   ＋ 새 카테고리 만들기
                                 </button>
@@ -800,17 +812,9 @@ export default function ArticleModal({
                         </>
                       )}
                     </div>
-                    <div className="mt-2 flex items-center justify-between gap-3">
-                      <p className={`text-xs ${category ? "text-emerald-600" : "text-amber-600"}`}>
-                        {category ? `✓ ‘${category}’ 분류로 발행돼요` : "미선택 시 ‘미분류’로 올라가요. 정해두면 SEO에 유리해요."}
-                      </p>
-                      <button
-                        onClick={() => setNewCatMode(true)}
-                        className="shrink-0 text-xs font-medium text-neutral-500 transition hover:text-neutral-900"
-                      >
-                        ＋ 새 카테고리
-                      </button>
-                    </div>
+                    <p className={`mt-2 text-xs ${category ? "text-emerald-600" : "text-amber-500"}`}>
+                      {category ? `‘${category}’ 분류로 발행돼요` : "미선택 시 ‘미분류’로 올라가요. 정해두면 검색에 유리해요."}
+                    </p>
                   </div>
                 )}
               </div>
