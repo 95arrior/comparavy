@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import ArticleEditor, { type ArticleEditorHandle } from "./ArticleEditor";
 import { PLANS, formatKRW } from "@/lib/plans";
 import type { Article } from "./types";
@@ -28,11 +28,10 @@ export default function ArticleModal({
   const [error, setError] = useState<string | null>(null);
   const [autoSavedAt, setAutoSavedAt] = useState<string | null>(null);
   const [showUpsell, setShowUpsell] = useState(false);
-  const [addedFaq, setAddedFaq] = useState<Set<number>>(new Set());
-  const [faqHeaderAdded, setFaqHeaderAdded] = useState(false);
   const [saveFailed, setSaveFailed] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const editorRef = useRef<ArticleEditorHandle>(null);
+  const FAQ_HEADING = "자주 묻는 질문";
 
   // 토스트 자동 사라짐
   useEffect(() => {
@@ -41,17 +40,51 @@ export default function ArticleModal({
     return () => clearTimeout(t);
   }, [toast]);
 
-  // FAQ 한 개를 골라 본문 맨 아래에 텍스트로 추가 (방문자에게 보이는 자주 묻는 질문 섹션).
+  // 본문(HTML)에 들어있는 H3(=FAQ 질문) 텍스트 집합. 추가/제거 버튼 상태의 '진짜 기준'.
+  // → 새로고침해도 저장된 본문 기준으로 정확히 표시되고, 저장 안 됐으면 다시 '추가'로 보인다.
+  const faqInBody = useMemo(() => {
+    if (typeof window === "undefined") return new Set<string>();
+    const doc = new DOMParser().parseFromString(bodyHtml, "text/html");
+    const set = new Set<string>();
+    doc.querySelectorAll("h3").forEach((h) => set.add((h.textContent || "").trim()));
+    return set;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bodyHtml]);
+
+  const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  // FAQ 한 개를 본문 맨 아래에 추가 (방문자에게 보이는 자주 묻는 질문 섹션).
   function addFaqItem(i: number) {
     const f = article.faq[i];
-    if (!f || addedFaq.has(i)) return;
-    const esc = (s: string) =>
-      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    // 첫 항목을 추가할 때만 '자주 묻는 질문' 제목(H2)을 한 번 넣는다.
-    const header = faqHeaderAdded ? "" : `<h2>자주 묻는 질문</h2>`;
+    if (!f) return;
+    // 현재 본문에 FAQ가 하나도 없으면 '자주 묻는 질문' 제목(H2)을 한 번만 넣는다.
+    const anyFaq = article.faq.some((x) => faqInBody.has(x.question.trim()));
+    const header = anyFaq ? "" : `<h2>${FAQ_HEADING}</h2>`;
     editorRef.current?.appendContent(`${header}<h3>${esc(f.question)}</h3><p>${esc(f.answer)}</p>`);
-    setFaqHeaderAdded(true);
-    setAddedFaq((prev) => new Set(prev).add(i));
+  }
+
+  // 추가했던 FAQ 한 개를 본문에서 제거 (해당 H3 + 다음 P, FAQ가 다 빠지면 제목 H2도 제거).
+  function removeFaqItem(i: number) {
+    const f = article.faq[i];
+    if (!f) return;
+    const html = editorRef.current?.getHTML() ?? bodyHtml;
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    doc.querySelectorAll("h3").forEach((h) => {
+      if ((h.textContent || "").trim() === f.question.trim()) {
+        const next = h.nextElementSibling;
+        if (next && next.tagName === "P") next.remove();
+        h.remove();
+      }
+    });
+    // 남은 FAQ가 없으면 '자주 묻는 질문' 제목도 제거
+    const remaining = new Set<string>();
+    doc.querySelectorAll("h3").forEach((h) => remaining.add((h.textContent || "").trim()));
+    if (!article.faq.some((x) => remaining.has(x.question.trim()))) {
+      doc.querySelectorAll("h2").forEach((h) => {
+        if ((h.textContent || "").trim() === FAQ_HEADING) h.remove();
+      });
+    }
+    editorRef.current?.setHTML(doc.body.innerHTML);
   }
   const [copied, setCopied] = useState(false);
 
@@ -386,24 +419,33 @@ export default function ArticleModal({
         {article.faq.length > 0 && (
           <div className="mt-6">
             <p className="text-xs font-medium text-neutral-500">자주 묻는 질문</p>
-            <p className="mt-1 text-xs text-neutral-400">＋ 버튼으로 원하는 질문만 골라 글 맨 아래에 추가할 수 있어요.</p>
+            <p className="mt-1 text-xs text-neutral-400">＋ 버튼으로 원하는 질문만 골라 글 맨 아래에 추가할 수 있어요. (추가한 질문은 ‘제거’로 다시 뺄 수 있어요)</p>
             <ul className="mt-2 space-y-2">
               {article.faq.map((f, i) => {
-                const added = addedFaq.has(i);
+                const added = faqInBody.has(f.question.trim());
                 return (
                   <li key={i} className="flex items-start gap-3 rounded-xl border border-neutral-200 px-4 py-3 text-sm">
                     <div className="min-w-0 flex-1">
                       <p className="font-medium">{f.question}</p>
                       <p className="mt-1 text-neutral-600">{f.answer}</p>
                     </div>
-                    <button
-                      onClick={() => addFaqItem(i)}
-                      disabled={added}
-                      className="shrink-0 rounded-full border border-neutral-300 px-3 py-1 text-xs font-medium transition hover:border-neutral-900 disabled:cursor-default disabled:border-emerald-200 disabled:bg-emerald-50 disabled:text-emerald-600 disabled:opacity-100"
-                      title={added ? "이미 본문에 추가했어요" : "이 질문을 글 본문 맨 아래에 추가"}
-                    >
-                      {added ? "✓ 추가됨" : "＋ 추가"}
-                    </button>
+                    {added ? (
+                      <button
+                        onClick={() => removeFaqItem(i)}
+                        className="shrink-0 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-medium text-red-600 transition hover:border-red-400"
+                        title="이 질문을 본문에서 제거"
+                      >
+                        － 제거
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => addFaqItem(i)}
+                        className="shrink-0 rounded-full border border-neutral-300 px-3 py-1 text-xs font-medium transition hover:border-neutral-900"
+                        title="이 질문을 글 본문 맨 아래에 추가"
+                      >
+                        ＋ 추가
+                      </button>
+                    )}
                   </li>
                 );
               })}

@@ -129,6 +129,8 @@ export interface ArticleEditorHandle {
   appendContent: (html: string) => void;
   /** 저장 시점의 최신 본문 HTML을 직접 읽는다 (React 상태 지연과 무관) */
   getHTML: () => string | null;
+  /** 본문 전체를 주어진 HTML로 교체 (FAQ 제거 등) */
+  setHTML: (html: string) => void;
 }
 
 /* ── 에디터 ───────────────────────────────────────────────── */
@@ -158,6 +160,7 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const [linkNofollow, setLinkNofollow] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -209,6 +212,11 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
         }, 50);
       },
       getHTML: () => editor?.getHTML() ?? null,
+      setHTML: (html: string) => {
+        if (!editor) return;
+        editor.commands.setContent(html);
+        onChange(html);
+      },
     }),
     [editor],
   );
@@ -240,21 +248,52 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
     editor!.commands.setContent(originalHtml);
     onChange(originalHtml);
   }
-  function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => editor!.chain().focus().setImage({ src: String(reader.result) }).run();
-    reader.readAsDataURL(file);
-    e.target.value = "";
+  // 파일 → base64로 읽어 스토리지에 업로드하고 공개 URL을 받는다.
+  // (본문엔 무거운 base64 대신 URL만 들어가 저장 실패를 막는다)
+  function readDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error("read"));
+      reader.readAsDataURL(file);
+    });
   }
-  function onPickFeatured(e: React.ChangeEvent<HTMLInputElement>) {
+  async function uploadImage(file: File): Promise<string | null> {
+    try {
+      const dataUri = await readDataUrl(file);
+      const res = await fetch("/api/upload-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dataUri }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error ?? "이미지 업로드에 실패했어요.");
+        return null;
+      }
+      return data.url as string;
+    } catch {
+      alert("이미지 업로드 중 오류가 났어요. 다시 시도해 주세요.");
+      return null;
+    }
+  }
+  async function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file || !onFeaturedChange) return;
-    const reader = new FileReader();
-    reader.onload = () => onFeaturedChange(String(reader.result));
-    reader.readAsDataURL(file);
     e.target.value = "";
+    if (!file) return;
+    setUploading(true);
+    const url = await uploadImage(file);
+    setUploading(false);
+    if (url) editor!.chain().focus().setImage({ src: url }).run();
+  }
+  async function onPickFeatured(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !onFeaturedChange) return;
+    setUploading(true);
+    const url = await uploadImage(file);
+    setUploading(false);
+    if (url) onFeaturedChange(url);
   }
 
   const Btn = ({ onClick, active, title, disabled, children }: { onClick: () => void; active?: boolean; title: string; disabled?: boolean; children: React.ReactNode }) => (
@@ -277,6 +316,11 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
 
   return (
     <div className="rounded-xl border border-neutral-200 bg-white">
+      {uploading && (
+        <div className="fixed left-1/2 top-5 z-50 -translate-x-1/2 rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white shadow-lg">
+          이미지 업로드 중…
+        </div>
+      )}
       <div className={`sticky ${toolbarOffset} z-20 border-b border-neutral-200 bg-white shadow-md`}>
         <div className="flex flex-wrap items-center gap-0.5 px-3 py-2">
           <Btn title="실행취소 (Ctrl+Z)" disabled={!editor.can().undo()} onClick={() => editor.chain().focus().undo().run()}><IconUndo /></Btn>
