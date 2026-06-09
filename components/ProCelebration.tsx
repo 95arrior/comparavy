@@ -48,9 +48,9 @@ export default function ProCelebration() {
         {/* 파란 로고: 팝 등장 → 입 쫙 벌리며 사라짐 */}
         <span className="ateflo-logo ateflo-celebrate-blue absolute" style={{ width: 92, height: 92 }} />
 
-        {/* 프로 무지개 로고: 등장 + 요동(mesh/chew) */}
+        {/* 프로 무지개 로고: 한바퀴 돌며 등장 → (등장 후) 입 움직임+요동 */}
         <span className="ateflo-celebrate-pro absolute">
-          <span className="ateflo-logo ateflo-logo--pro ateflo-logo--anim block" style={{ width: 92, height: 92 }} />
+          <span className="ateflo-logo ateflo-logo--pro ateflo-celebrate-pro-chew block" style={{ width: 92, height: 92 }} />
         </span>
       </div>
 
