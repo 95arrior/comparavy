@@ -29,6 +29,7 @@ export default function ArticleModal({
   const [autoSavedAt, setAutoSavedAt] = useState<string | null>(null);
   const [showUpsell, setShowUpsell] = useState(false);
   const [faqAdded, setFaqAdded] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
   const editorRef = useRef<ArticleEditorHandle>(null);
 
   // FAQ를 본문 맨 아래에 실제 텍스트로 추가 (방문자에게 보이는 자주 묻는 질문 섹션).
@@ -85,15 +86,19 @@ export default function ArticleModal({
         const res = await fetch(`/api/articles/${article.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title, body_html: bodyHtml, featured_image: featured }),
+          body: JSON.stringify({ title, body_html: currentBody(), featured_image: featured }),
         });
         if (res.ok) {
           const data = await res.json();
           onUpdated(data.article);
           setAutoSavedAt(new Date().toLocaleTimeString("ko-KR"));
+          setSaveFailed(false);
+        } else {
+          setSaveFailed(true);
         }
       } catch {
-        // 자동저장 실패는 조용히 무시 (수동 저장 가능)
+        // 자동저장 실패를 화면에 표시 → 수동 저장 유도 (예전엔 조용히 묻혀 '저장 안 됨'처럼 보였음)
+        setSaveFailed(true);
       }
     }, 3000);
     return () => {
@@ -102,14 +107,22 @@ export default function ArticleModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title, bodyHtml, featured]);
 
+  // 저장 시점의 '진짜 최신' 본문 — React 상태가 한 박자 늦더라도 에디터에서 직접 읽어 누락을 막는다.
+  function currentBody(): string {
+    return editorRef.current?.getHTML() ?? bodyHtml;
+  }
+
   async function save() {
+    if (autoTimer.current) clearTimeout(autoTimer.current);
+    const liveBody = currentBody();
+    setBodyHtml(liveBody);
     setSaving(true);
     setError(null);
     try {
       const res = await fetch(`/api/articles/${article.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, body_html: bodyHtml }),
+        body: JSON.stringify({ title, body_html: liveBody, featured_image: featured }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -117,7 +130,11 @@ export default function ArticleModal({
         return;
       }
       onUpdated(data.article);
+      setSaveFailed(false);
+      setAutoSavedAt(new Date().toLocaleTimeString("ko-KR"));
       setMessage("저장했습니다.");
+    } catch {
+      setError("저장 중 오류가 났어요. 인터넷 연결을 확인하고 다시 시도해 주세요.");
     } finally {
       setSaving(false);
     }
@@ -136,10 +153,12 @@ export default function ArticleModal({
       // 발행 전에 현재 편집 내용을 먼저 저장(완료까지 대기). 발행 API는 DB 본문을 읽으므로,
       // 자동저장(3초 디바운스)이 아직 안 끝났으면 편집분이 누락되는 문제를 막는다.
       if (autoTimer.current) clearTimeout(autoTimer.current);
+      const liveBody = currentBody();
+      setBodyHtml(liveBody);
       const saveRes = await fetch(`/api/articles/${article.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, body_html: bodyHtml, featured_image: featured }),
+        body: JSON.stringify({ title, body_html: liveBody, featured_image: featured }),
       });
       if (!saveRes.ok) {
         setError("편집 내용 저장에 실패해 발행을 멈췄어요. 잠시 후 다시 시도해 주세요.");
@@ -266,13 +285,25 @@ export default function ArticleModal({
       </div>
 
       {/* 자동저장 표시 — 화면에 고정되어 스크롤을 따라다님(현재 보는 위치 우하단에 항상 보임) */}
-      {(autoSavedAt || dirty) && (
+      {(autoSavedAt || dirty || saveFailed) && (
         <div
-          className={`pointer-events-none fixed bottom-5 right-5 z-40 rounded-full px-3.5 py-1.5 text-xs font-medium shadow-md backdrop-blur transition ${
-            dirty ? "bg-neutral-900/85 text-white" : "bg-emerald-600/90 text-white"
+          className={`fixed bottom-5 right-5 z-40 rounded-full px-3.5 py-1.5 text-xs font-medium shadow-md backdrop-blur transition ${
+            saveFailed
+              ? "bg-red-600/90 text-white"
+              : dirty
+                ? "bg-neutral-900/85 text-white pointer-events-none"
+                : "bg-emerald-600/90 text-white pointer-events-none"
           }`}
         >
-          {dirty ? "수정 중…" : `✓ 자동저장됨${autoSavedAt ? ` · ${autoSavedAt}` : ""}`}
+          {saveFailed ? (
+            <button onClick={save} className="font-medium">
+              ⚠ 저장 실패 — 눌러서 다시 저장
+            </button>
+          ) : dirty ? (
+            "수정 중…"
+          ) : (
+            `✓ 자동저장됨${autoSavedAt ? ` · ${autoSavedAt}` : ""}`
+          )}
         </div>
       )}
 

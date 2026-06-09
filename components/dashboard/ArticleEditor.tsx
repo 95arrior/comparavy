@@ -127,6 +127,8 @@ const FontSize = TextStyle.extend({
 export interface ArticleEditorHandle {
   /** 본문 맨 아래에 HTML을 덧붙이고 그 위치로 스크롤 */
   appendContent: (html: string) => void;
+  /** 저장 시점의 최신 본문 HTML을 직접 읽는다 (React 상태 지연과 무관) */
+  getHTML: () => string | null;
 }
 
 /* ── 에디터 ───────────────────────────────────────────────── */
@@ -206,6 +208,7 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
           document.querySelector(".ateflo-article")?.scrollIntoView({ block: "end", behavior: "smooth" });
         }, 50);
       },
+      getHTML: () => editor?.getHTML() ?? null,
     }),
     [editor],
   );
