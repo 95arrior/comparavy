@@ -42,6 +42,30 @@ export default function HeroInput({ loggedIn, onStart, pro = false }: { loggedIn
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  // 글감 추천
+  const [ideaOpen, setIdeaOpen] = useState(false);
+  const [topic, setTopic] = useState("");
+  const [ideas, setIdeas] = useState<string[]>([]);
+  const [ideaLoading, setIdeaLoading] = useState(false);
+
+  async function fetchIdeas() {
+    const tp = topic.trim();
+    if (!tp || ideaLoading) return;
+    setIdeaLoading(true);
+    try {
+      const res = await fetch("/api/keyword-ideas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic: tp }),
+      });
+      const data = await res.json();
+      setIdeas(Array.isArray(data.ideas) ? data.ideas : []);
+    } catch {
+      setIdeas([]);
+    } finally {
+      setIdeaLoading(false);
+    }
+  }
 
   function go(e: React.FormEvent) {
     e.preventDefault();
@@ -131,6 +155,68 @@ export default function HeroInput({ loggedIn, onStart, pro = false }: { loggedIn
         </div>
         <p className="pt-1.5 text-center text-[11px] text-neutral-400">선택하지 않아도 최적화로 생성됩니다</p>
       </div>
+
+      {/* 글감 추천 — 로그인(작업공간)에서만. 뭘 쓸지 모를 때 분야 넣으면 키워드 추천 */}
+      {loggedIn && (
+        <div className="mt-5">
+          {!ideaOpen ? (
+            <button
+              type="button"
+              onClick={() => setIdeaOpen(true)}
+              className="mx-auto flex items-center gap-1.5 rounded-full border border-neutral-200 px-3.5 py-1.5 text-xs font-medium text-neutral-500 transition hover:border-neutral-400 hover:text-neutral-800"
+            >
+              💡 뭘 쓸지 모르겠어요? 글감 추천받기
+            </button>
+          ) : (
+            <div className="ateflo-fade-in rounded-2xl border border-neutral-200 bg-white p-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">글감 추천</p>
+                <button type="button" onClick={() => setIdeaOpen(false)} className="text-xs text-neutral-400 transition hover:text-neutral-700">닫기</button>
+              </div>
+              <div className="mt-2.5 flex items-center gap-2">
+                <input
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); fetchIdeas(); } }}
+                  placeholder="어떤 분야예요? (예: 강아지, 재테크, 다이어트)"
+                  className="min-w-0 flex-1 rounded-xl border border-neutral-300 px-3.5 py-2.5 text-sm outline-none transition focus:border-neutral-900"
+                />
+                <button
+                  type="button"
+                  onClick={fetchIdeas}
+                  disabled={!topic.trim() || ideaLoading}
+                  className="shrink-0 rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-40"
+                >
+                  {ideaLoading ? "추천 중…" : "추천받기"}
+                </button>
+              </div>
+
+              {ideas.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-xs text-neutral-400">마음에 드는 글감을 누르면 위 칸에 채워져요</p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {ideas.map((idea) => (
+                      <button
+                        key={idea}
+                        type="button"
+                        onClick={() => {
+                          setKeyword(idea);
+                          if (err) setErr(false);
+                          inputRef.current?.focus();
+                          inputRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+                        }}
+                        className="ateflo-chip-in rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-xs text-neutral-700 transition hover:border-neutral-900 hover:bg-white"
+                      >
+                        {idea}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
