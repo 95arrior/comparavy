@@ -28,6 +28,12 @@ export type AdminStats = {
   costTotalKrw: number | null;
   /** 실제 토큰 기반 오늘 비용(원) */
   costTodayKrw: number | null;
+  /** 종류별 비용 분해 (generate/tag_suggest/keyword_ideas …) */
+  costByKind: { kind: string; krw: number }[];
+  /** 퍼널: 글을 1편 이상 만든 사용자 수 */
+  usersWithArticles: number | null;
+  /** 퍼널: 1편 이상 발행한 사용자 수 */
+  usersWithPublished: number | null;
   /** 최근 7일 일별 가입/글 (KST) */
   dailyUsers: { date: string; count: number }[];
   dailyArticles: { date: string; count: number }[];
@@ -118,24 +124,48 @@ export async function getAdminStats(): Promise<AdminStats> {
   // 실제 토큰 기반 비용 (usage_log). 테이블/로그 없으면 null → 추정치로 표시
   let costTotalKrw: number | null = null;
   let costTodayKrw: number | null = null;
+  let costByKind: { kind: string; krw: number }[] = [];
   try {
     const { data: usage, error } = await admin
       .from("usage_log")
-      .select("model,input_tokens,output_tokens,created_at")
+      .select("model,kind,input_tokens,output_tokens,created_at")
       .limit(50000);
     if (!error && usage) {
       let total = 0;
       let today = 0;
-      for (const u of usage as { model: string; input_tokens: number; output_tokens: number; created_at: string }[]) {
+      const kindMap: Record<string, number> = {};
+      for (const u of usage as { model: string; kind: string; input_tokens: number; output_tokens: number; created_at: string }[]) {
         const c = costKrw(u.model, u.input_tokens || 0, u.output_tokens || 0);
         total += c;
         if (u.created_at >= todayIso) today += c;
+        kindMap[u.kind] = (kindMap[u.kind] || 0) + c;
       }
       costTotalKrw = Math.round(total);
       costTodayKrw = Math.round(today);
+      costByKind = Object.entries(kindMap).map(([kind, krw]) => ({ kind, krw: Math.round(krw) })).sort((a, b) => b.krw - a.krw);
     }
   } catch {
     // usage_log 없음 → null 유지
+  }
+
+  // 퍼널: 글을 만든/발행한 '사용자 수'(distinct)
+  let usersWithArticles: number | null = null;
+  let usersWithPublished: number | null = null;
+  try {
+    const { data: au } = await admin.from("articles").select("user_id,status").limit(50000);
+    if (au) {
+      const all = new Set<string>();
+      const pub = new Set<string>();
+      for (const r of au as { user_id: string | null; status: string }[]) {
+        if (!r.user_id) continue;
+        all.add(r.user_id);
+        if (r.status === "published") pub.add(r.user_id);
+      }
+      usersWithArticles = all.size;
+      usersWithPublished = pub.size;
+    }
+  } catch {
+    // 무시
   }
 
   // 최근 가입 (이메일은 auth에 있어 admin API로)
@@ -165,5 +195,5 @@ export async function getAdminStats(): Promise<AdminStats> {
     created_at: a.created_at ?? "",
   }));
 
-  return { usersTotal, usersToday, proUsers, freeUsers, articlesTotal, articlesToday, publishedArticles, lockedArticles, wpConnections, mrr, conversion, articlesPerUser, wpConnectRate, publishRate, estCostKrw, costTotalKrw, costTodayKrw, dailyUsers, dailyArticles, recentUsers, recentArticles };
+  return { usersTotal, usersToday, proUsers, freeUsers, articlesTotal, articlesToday, publishedArticles, lockedArticles, wpConnections, mrr, conversion, articlesPerUser, wpConnectRate, publishRate, estCostKrw, costTotalKrw, costTodayKrw, costByKind, usersWithArticles, usersWithPublished, dailyUsers, dailyArticles, recentUsers, recentArticles };
 }
