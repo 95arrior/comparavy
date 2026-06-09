@@ -86,6 +86,25 @@ export default function WritingView({
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [preview]);
 
+  // 화면을 닫았다(백그라운드) 돌아오면, 그동안 받은 내용을 즉시 다 보여준다(fast-forward).
+  // 서버는 백그라운드에서도 끝까지 생성·저장하므로, 돌아오면 바로 완성돼 보인다.
+  useEffect(() => {
+    function onVisible() {
+      if (document.visibilityState !== "visible") return;
+      const tokens = tokenize(targetRef.current);
+      const cap = titleRef.current.length + TEASER_BODY_CHARS;
+      while (shownRef.current < tokens.length) {
+        if (isTeaser && visibleRef.current >= cap) break;
+        if (!tokens[shownRef.current].startsWith("<")) visibleRef.current += 1;
+        shownRef.current += 1;
+      }
+      setPreview(tokens.slice(0, shownRef.current).join(""));
+    }
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isTeaser]);
+
   function stopReveal() {
     if (revealRef.current) {
       clearInterval(revealRef.current);

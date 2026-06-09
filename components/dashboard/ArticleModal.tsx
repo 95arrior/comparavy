@@ -28,6 +28,31 @@ export default function ArticleModal({
   const [error, setError] = useState<string | null>(null);
   const [autoSavedAt, setAutoSavedAt] = useState<string | null>(null);
   const [showUpsell, setShowUpsell] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  // 본문을 클립보드로 복사 (서식 유지 HTML + 평문 동시) — 무료 사용자가 블로그에 붙여넣어 쓰는 핵심 기능
+  async function copyBody() {
+    try {
+      const html = `<h1>${title}</h1>\n${bodyHtml}`;
+      const tmp = document.createElement("div");
+      tmp.innerHTML = html;
+      const text = `${title}\n\n${tmp.innerText}`;
+      if (navigator.clipboard && typeof window !== "undefined" && "ClipboardItem" in window) {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            "text/html": new Blob([html], { type: "text/html" }),
+            "text/plain": new Blob([text], { type: "text/plain" }),
+          }),
+        ]);
+      } else {
+        await navigator.clipboard.writeText(text);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch {
+      // 무시
+    }
+  }
   const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const dirty = title !== article.title || bodyHtml !== article.body_html || featured !== (article.featured_image ?? null);
@@ -174,6 +199,12 @@ export default function ArticleModal({
             <span className="text-base leading-none">←</span> 목록으로
           </button>
           <div className="flex shrink-0 items-center gap-2">
+            <button
+              onClick={copyBody}
+              className="rounded-full border border-neutral-300 px-4 py-1.5 text-sm font-medium transition hover:border-neutral-900"
+            >
+              {copied ? "복사됨 ✓" : "복사"}
+            </button>
             <button
               onClick={save}
               disabled={saving}
