@@ -56,6 +56,8 @@ export default function ArticleModal({
   const [catOpen, setCatOpen] = useState(false);
   const [catToDelete, setCatToDelete] = useState<{ id: number; name: string; count: number } | null>(null);
   const [deletingCat, setDeletingCat] = useState(false);
+  const [addToc, setAddToc] = useState(true);
+  const [addInternalLinks, setAddInternalLinks] = useState(true);
 
   // reassignToId: 0이면 미분류로, 그 외엔 해당 카테고리로 글 옮긴 뒤 삭제
   async function deleteCategory(reassignToId: number) {
@@ -395,7 +397,7 @@ export default function ArticleModal({
       const res = await fetch("/api/wordpress/publish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ articleId: article.id, status, category, tags, date }),
+        body: JSON.stringify({ articleId: article.id, status, category, tags, date, addToc, addInternalLinks }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -934,6 +936,42 @@ export default function ArticleModal({
                     </div>
                   </div>
                 )}
+              </div>
+
+              <div className="my-5 h-px bg-neutral-100" />
+
+              {/* 발행 옵션: 목차 · 내부 링크 */}
+              <div className="space-y-3.5">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-medium text-neutral-800">목차 자동 추가</p>
+                    <p className="mt-0.5 text-xs text-neutral-400">소제목으로 목차를 만들어요. 가독성·체류시간↑</p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={addToc}
+                    onClick={() => setAddToc((v) => !v)}
+                    className={`relative h-6 w-10 shrink-0 rounded-full transition ${addToc ? "bg-neutral-900" : "bg-neutral-300"}`}
+                  >
+                    <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-all ${addToc ? "left-[18px]" : "left-0.5"}`} />
+                  </button>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-medium text-neutral-800">관련 글 자동 링크</p>
+                    <p className="mt-0.5 text-xs text-neutral-400">내가 쓴 다른 글로 연결해 SEO·체류 강화</p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={addInternalLinks}
+                    onClick={() => setAddInternalLinks((v) => !v)}
+                    className={`relative h-6 w-10 shrink-0 rounded-full transition ${addInternalLinks ? "bg-neutral-900" : "bg-neutral-300"}`}
+                  >
+                    <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-all ${addInternalLinks ? "left-[18px]" : "left-0.5"}`} />
+                  </button>
+                </div>
               </div>
             </div>
           );

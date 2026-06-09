@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { ensureUserRow } from "@/lib/userPlan";
 import { PLANS } from "@/lib/plans";
-import { publishPost } from "@/lib/wordpress";
+import { publishPost, insertInternalLinks } from "@/lib/wordpress";
 
 export async function POST(request: Request) {
   if (!hasSupabaseEnv()) {
@@ -32,6 +32,8 @@ export async function POST(request: Request) {
   const date = body.date as string | undefined;
   const categoryName = typeof body.category === "string" ? body.category.trim() : "";
   const tagsOverride = Array.isArray(body.tags) ? (body.tags as string[]) : null;
+  const addToc = body.addToc !== false; // 기본 켜짐
+  const addInternalLinks = body.addInternalLinks !== false; // 기본 켜짐
 
   if (!articleId) {
     return NextResponse.json({ error: "발행할 글을 선택해 주세요." }, { status: 400 });
@@ -65,13 +67,31 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "먼저 워드프레스 사이트를 연결해 주세요." }, { status: 400 });
   }
 
+  // 내부 링크 자동: 내가 이미 발행한 다른 글들의 키워드를 본문에서 찾아 그 글로 링크
+  let contentHtml = article.body_html as string;
+  if (addInternalLinks) {
+    const { data: others } = await supabase
+      .from("articles")
+      .select("id, keyword, wp_link")
+      .eq("user_id", user.id)
+      .eq("status", "published")
+      .not("wp_link", "is", null)
+      .neq("id", articleId)
+      .limit(50);
+    const candidates = (others ?? [])
+      .filter((o) => o.wp_link && o.keyword)
+      .map((o) => ({ phrase: String(o.keyword), url: String(o.wp_link) }))
+      .sort((a, b) => b.phrase.length - a.phrase.length);
+    if (candidates.length) contentHtml = insertInternalLinks(contentHtml, candidates);
+  }
+
   try {
     const result = await publishPost({
       siteUrl: conn.site_url,
       username: conn.username,
       appPassword: conn.app_password,
       title: article.title,
-      contentHtml: article.body_html,
+      contentHtml,
       metaDescription: article.meta_description ?? undefined,
       faq: Array.isArray(article.faq) ? article.faq : undefined,
       slug: article.keyword
@@ -83,6 +103,7 @@ export async function POST(request: Request) {
       // 카테고리(미지정 시 미분류) · 태그(없으면 글에 저장된 AI 태그 사용)
       categoryName: categoryName || undefined,
       tags: tagsOverride ?? (Array.isArray(article.tags) ? article.tags : undefined),
+      addToc,
       status,
       date,
     });

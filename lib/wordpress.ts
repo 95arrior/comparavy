@@ -57,6 +57,8 @@ export interface PublishInput extends WordPressCredentials {
   categoryName?: string | null;
   /** 워드프레스 태그 이름들 (없으면 새로 생성) */
   tags?: string[];
+  /** 소제목 기반 목차(TOC) 자동 추가 */
+  addToc?: boolean;
 }
 
 /**
@@ -82,6 +84,63 @@ function jsonLd(obj: unknown): string {
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+/**
+ * 본문 소제목(H2·H3)에 앵커 id를 달고, 맨 위에 목차를 넣는다. 소제목 2개 미만이면 그대로 둔다.
+ * (가독성·체류시간↑, 구글이 점프링크를 보여줄 수 있음)
+ */
+function addTableOfContents(html: string): string {
+  const items: { level: string; text: string; id: string }[] = [];
+  let idx = 0;
+  const withIds = html.replace(/<(h[23])((?:\s[^>]*)?)>([\s\S]*?)<\/\1>/gi, (m, tag, attrs, inner) => {
+    const text = String(inner).replace(/<[^>]+>/g, "").trim();
+    if (!text) return m;
+    idx++;
+    const existing = /id=["']([^"']+)["']/i.exec(attrs);
+    const id = existing ? existing[1] : `toc-${idx}`;
+    items.push({ level: String(tag).toLowerCase(), text, id });
+    if (existing) return m;
+    return `<${tag}${attrs} id="${id}">${inner}</${tag}>`;
+  });
+  if (items.length < 2) return html;
+  const lis = items
+    .map((it) => `<li style="margin-left:${it.level === "h3" ? "1.2em" : "0"}"><a href="#${it.id}">${escapeHtml(it.text)}</a></li>`)
+    .join("");
+  const toc = `<div class="ateflo-toc" style="border:1px solid #eee;border-radius:10px;padding:14px 18px;margin:0 0 24px"><p style="margin:0 0 8px;font-weight:700">목차</p><ul style="margin:0;padding-left:1.1em">${lis}</ul></div>`;
+  return toc + withIds;
+}
+
+/**
+ * 본문 텍스트에서 후보 문구(다른 글의 키워드)를 찾아 그 글로 가는 내부 링크를 단다.
+ * 태그 안/기존 링크 안은 건드리지 않고, 문구당 1회·최대 4개까지. (SEO 내부링크)
+ */
+export function insertInternalLinks(html: string, candidates: { phrase: string; url: string }[]): string {
+  const list = candidates.filter((c) => c.phrase && c.phrase.trim().length >= 2 && c.url);
+  if (!list.length) return html;
+  const parts = html.split(/(<[^>]+>)/);
+  let insideA = false;
+  const usedUrl = new Set<string>();
+  let linkCount = 0;
+  for (let i = 0; i < parts.length; i++) {
+    const p = parts[i];
+    if (p.startsWith("<")) {
+      if (/^<a\b/i.test(p)) insideA = true;
+      else if (/^<\/a>/i.test(p)) insideA = false;
+      continue;
+    }
+    if (insideA || linkCount >= 4) continue;
+    for (const c of list) {
+      if (usedUrl.has(c.url) || linkCount >= 4) continue;
+      const at = p.indexOf(c.phrase);
+      if (at === -1) continue;
+      parts[i] = p.slice(0, at) + `<a href="${c.url}">${c.phrase}</a>` + p.slice(at + c.phrase.length);
+      usedUrl.add(c.url);
+      linkCount++;
+      break;
+    }
+  }
+  return parts.join("");
 }
 
 /** Article 구조화 데이터(JSON-LD). FAQ는 본문 마이크로데이터로 따로 넣는다(아래 renderFaqSection). */
@@ -246,6 +305,8 @@ export async function publishPost(input: PublishInput): Promise<PublishResult> {
   contentHtml = contentHtml.replace(/<h1(\s[^>]*)?>/gi, "<h2>").replace(/<\/h1>/gi, "</h2>");
   // 이미지가 본문 폭을 넘어 거대해지거나 가로 스크롤이 생기지 않게 제약 → 편집 화면과 동일하게 보이도록(WYSIWYG)
   contentHtml = constrainImages(contentHtml);
+  // 목차(TOC) 자동: 소제목에 앵커 달고 맨 위에 목차 (FAQ 추가 전에 적용 → FAQ는 목차에서 제외)
+  if (input.addToc) contentHtml = addTableOfContents(contentHtml);
   // FAQ: 본문의 평문 FAQ는 제거하고, 마이크로데이터가 붙은 FAQ 섹션을 맨 끝에 한 번만 넣는다(구글 FAQ 리치결과).
   if (input.faq && input.faq.length > 0) {
     contentHtml = stripExistingFaq(contentHtml, input.faq) + renderFaqSection(input.faq);
