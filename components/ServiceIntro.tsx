@@ -181,6 +181,23 @@ function PublishCard() {
   );
 }
 
+function MobilePublish() {
+  return (
+    <div className="mx-auto flex max-w-sm items-center justify-center">
+      <div className="relative w-48 rounded-[2.2rem] border-[7px] border-neutral-900 bg-white p-3.5 shadow-xl">
+        <div className="mx-auto mb-3 h-1 w-12 rounded-full bg-neutral-200" />
+        <div className="rounded-lg bg-neutral-50 px-3 py-2 text-[11px] font-medium text-neutral-500">강아지 분리불안 해결법</div>
+        <button className="mt-2.5 w-full rounded-lg py-2 text-[11px] font-semibold text-white" style={{ background: BRAND }}>
+          워드프레스에 발행
+        </button>
+        <div className="mt-2.5 flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-2 text-[11px] font-medium text-emerald-700">
+          <Check size={13} /> 게시 완료 · 지하철에서 1분
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ServiceIntro({ loggedIn = false, currentPlan = "free" }: { loggedIn?: boolean; currentPlan?: PlanKey }) {
   return (
     <>
@@ -222,11 +239,18 @@ export default function ServiceIntro({ loggedIn = false, currentPlan = "free" }:
         tint
       />
       <Section
+        eyebrow="노트북, 안 챙겨도 돼요"
+        title={<>휴대폰만 있으면,<br />어디서든 발행.</>}
+        sub="출퇴근 지하철에서, 여행지에서, 카페에서. 노트북 없이 휴대폰으로 키워드만 넣으면 바로 글이 만들어지고 블로그에 올라가요. 블로그 운영이 손안에서 끝나요."
+        visual={<MobilePublish />}
+        flip
+      />
+      <Section
         eyebrow="외주 한 편 값"
         title={<>외주 글 한 편이면,<br />여기선 한 달 30편.</>}
         sub="외주 글 한 편 값이면, 여기선 한 달 30편. 키워드만 넣고, 바로 올려요."
         visual={<CostCompare />}
-        flip
+        tint
       />
 
       {/* 요금 */}
