@@ -15,9 +15,23 @@ export type AdminStats = {
   mrr: number | null;
   /** 전환율(무료→프로) % */
   conversion: number | null;
+  /** 사용자당 평균 글 수 */
+  articlesPerUser: number | null;
+  /** 워드프레스 연결률 % (연결/전체회원) */
+  wpConnectRate: number | null;
+  /** 발행률 % (발행/전체 글) */
+  publishRate: number | null;
+  /** 추정 누적 생성 비용(원) — 토큰 미집계, 글당 평균 추정치 기반 */
+  estCostKrw: number | null;
+  /** 최근 7일 일별 가입/글 (KST) */
+  dailyUsers: { date: string; count: number }[];
+  dailyArticles: { date: string; count: number }[];
   recentUsers: { email: string; created_at: string }[];
   recentArticles: { title: string; status: string; locked: boolean; created_at: string }[];
 };
+
+// 글 1편당 추정 생성비(원). 토큰 미집계라 대략치 — 실제 집계 붙기 전 모니터링용.
+const EST_COST_PER_ARTICLE_KRW = 120;
 
 // 코드 기본 관리자 (env 없이도 항상 관리자). 서버 전용 파일이라 노출되지 않음.
 const BASE_ADMINS = ["w.95arrior@gmail.com", "tjdghdlgh@gmail.com"];
@@ -64,6 +78,37 @@ export async function getAdminStats(): Promise<AdminStats> {
   const freeUsers = usersTotal !== null && proUsers !== null ? usersTotal - proUsers : null;
   const mrr = proUsers !== null ? proUsers * PLANS.pro.price : null;
   const conversion = usersTotal && usersTotal > 0 && proUsers !== null ? Math.round((proUsers / usersTotal) * 100) : null;
+  const articlesPerUser =
+    usersTotal && usersTotal > 0 && articlesTotal !== null ? Math.round((articlesTotal / usersTotal) * 10) / 10 : null;
+  const wpConnectRate =
+    usersTotal && usersTotal > 0 && wpConnections !== null ? Math.round((wpConnections / usersTotal) * 100) : null;
+  const publishRate =
+    articlesTotal && articlesTotal > 0 && publishedArticles !== null ? Math.round((publishedArticles / articlesTotal) * 100) : null;
+  const estCostKrw = articlesTotal !== null ? articlesTotal * EST_COST_PER_ARTICLE_KRW : null;
+
+  // 최근 7일 일별 가입/글 (KST 자정 경계)
+  const dayMs = 86400000;
+  const startMs = kstMidnightUtcMs - 6 * dayMs;
+  const days: string[] = [];
+  for (let i = 0; i < 7; i++) {
+    const k = new Date(startMs + i * dayMs + KST);
+    days.push(`${String(k.getUTCMonth() + 1).padStart(2, "0")}/${String(k.getUTCDate()).padStart(2, "0")}`);
+  }
+  const bucket = (rows: { created_at: string }[] | null) => {
+    const counts = new Array(7).fill(0);
+    for (const r of rows ?? []) {
+      const idx = Math.floor((new Date(r.created_at).getTime() - startMs) / dayMs);
+      if (idx >= 0 && idx < 7) counts[idx]++;
+    }
+    return days.map((date, i) => ({ date, count: counts[i] }));
+  };
+  const startIso = new Date(startMs).toISOString();
+  const [uRows, aRows] = await Promise.all([
+    admin.from("users").select("created_at").gte("created_at", startIso),
+    admin.from("articles").select("created_at").gte("created_at", startIso),
+  ]);
+  const dailyUsers = bucket(uRows.data as { created_at: string }[] | null);
+  const dailyArticles = bucket(aRows.data as { created_at: string }[] | null);
 
   // 최근 가입 (이메일은 auth에 있어 admin API로)
   let recentUsers: { email: string; created_at: string }[] = [];
@@ -92,5 +137,5 @@ export async function getAdminStats(): Promise<AdminStats> {
     created_at: a.created_at ?? "",
   }));
 
-  return { usersTotal, usersToday, proUsers, freeUsers, articlesTotal, articlesToday, publishedArticles, lockedArticles, wpConnections, mrr, conversion, recentUsers, recentArticles };
+  return { usersTotal, usersToday, proUsers, freeUsers, articlesTotal, articlesToday, publishedArticles, lockedArticles, wpConnections, mrr, conversion, articlesPerUser, wpConnectRate, publishRate, estCostKrw, dailyUsers, dailyArticles, recentUsers, recentArticles };
 }
