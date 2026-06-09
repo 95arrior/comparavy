@@ -15,6 +15,8 @@ export interface Article {
   faq: FaqItem[];
   /** 워드프레스 태그 (3~5개) */
   tags?: string[];
+  /** 워드프레스 카테고리(분류) 이름 */
+  category?: string | null;
   char_count: number;
   status: "draft" | "published" | "future";
   wp_link: string | null;

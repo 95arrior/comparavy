@@ -38,10 +38,10 @@ export default function ArticleModal({
 
   // 발행 설정: 카테고리·태그
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState(article.category ?? "");
   const [newCatMode, setNewCatMode] = useState(false);
+  const [newCatInput, setNewCatInput] = useState("");
   const [tags, setTags] = useState<string[]>(Array.isArray(article.tags) ? article.tags : []);
-  const [tagInput, setTagInput] = useState("");
   const [existingTags, setExistingTags] = useState<string[]>([]);
 
   // 연결된 워드프레스의 기존 카테고리·태그 불러오기 (발행 가능 = 프로 + 연결됐을 때만)
@@ -68,16 +68,6 @@ export default function ArticleModal({
   const [aiSuggested, setAiSuggested] = useState<string[]>([]);
   const [suggesting, setSuggesting] = useState(false);
   const [aiUsed, setAiUsed] = useState(false);
-
-  function addTag() {
-    const v = tagInput.trim().replace(/^#/, "");
-    if (!v || tags.includes(v) || tags.length >= 8) {
-      setTagInput("");
-      return;
-    }
-    setTags((prev) => [...prev, v]);
-    setTagInput("");
-  }
 
   // 이 글 내용을 분석해 태그 추천 (기존 글 포함). 크레딧 절약 위해 글당 1회만 호출.
   async function suggestTags() {
@@ -180,7 +170,14 @@ export default function ArticleModal({
   }
   const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const dirty = title !== article.title || bodyHtml !== article.body_html || featured !== (article.featured_image ?? null);
+  const tagsChanged = JSON.stringify(tags) !== JSON.stringify(Array.isArray(article.tags) ? article.tags : []);
+  const categoryChanged = category !== (article.category ?? "");
+  const dirty =
+    title !== article.title ||
+    bodyHtml !== article.body_html ||
+    featured !== (article.featured_image ?? null) ||
+    tagsChanged ||
+    categoryChanged;
 
   // 편집 화면 열릴 때 항상 맨 위로 (작성 화면에서 스크롤 내려와 있어도)
   useEffect(() => {
@@ -196,7 +193,7 @@ export default function ArticleModal({
         const res = await fetch(`/api/articles/${article.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title, body_html: currentBody(), featured_image: featured }),
+          body: JSON.stringify({ title, body_html: currentBody(), featured_image: featured, tags, category }),
         });
         if (res.ok) {
           const data = await res.json();
@@ -232,7 +229,7 @@ export default function ArticleModal({
       const res = await fetch(`/api/articles/${article.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, body_html: liveBody, featured_image: featured }),
+        body: JSON.stringify({ title, body_html: liveBody, featured_image: featured, tags, category }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -268,7 +265,7 @@ export default function ArticleModal({
       const saveRes = await fetch(`/api/articles/${article.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, body_html: liveBody, featured_image: featured }),
+        body: JSON.stringify({ title, body_html: liveBody, featured_image: featured, tags, category }),
       });
       if (!saveRes.ok) {
         setError("편집 내용 저장에 실패해 발행을 멈췄어요. 잠시 후 다시 시도해 주세요.");
@@ -554,15 +551,40 @@ export default function ArticleModal({
                 {newCatMode ? (
                   <div className="mt-2 flex items-center gap-2">
                     <input
-                      value={category}
+                      value={newCatInput}
                       autoFocus
-                      onChange={(e) => setCategory(e.target.value)}
+                      onChange={(e) => setNewCatInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          const name = newCatInput.trim();
+                          if (!name) return;
+                          setCategories((prev) => (prev.some((c) => c.name === name) ? prev : [{ id: -Date.now(), name }, ...prev]));
+                          setCategory(name);
+                          setNewCatInput("");
+                          setNewCatMode(false);
+                        }
+                      }}
                       placeholder="새 카테고리 이름 (예: 강아지 건강)"
                       className="min-w-0 flex-1 rounded-xl border border-neutral-300 px-3.5 py-2.5 text-sm outline-none transition focus:border-neutral-900"
                     />
                     <button
-                      onClick={() => { setNewCatMode(false); setCategory(""); }}
-                      className="shrink-0 rounded-lg px-2 py-1.5 text-[13px] text-neutral-400 transition hover:text-neutral-700"
+                      onClick={() => {
+                        const name = newCatInput.trim();
+                        if (!name) return;
+                        setCategories((prev) => (prev.some((c) => c.name === name) ? prev : [{ id: -Date.now(), name }, ...prev]));
+                        setCategory(name);
+                        setNewCatInput("");
+                        setNewCatMode(false);
+                      }}
+                      disabled={!newCatInput.trim()}
+                      className="shrink-0 rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-30"
+                    >
+                      확인
+                    </button>
+                    <button
+                      onClick={() => { setNewCatMode(false); setNewCatInput(""); }}
+                      className="shrink-0 rounded-lg px-1.5 py-1.5 text-[13px] text-neutral-400 transition hover:text-neutral-700"
                     >
                       취소
                     </button>
@@ -610,23 +632,18 @@ export default function ArticleModal({
                   </button>
                 </div>
 
-                {/* 태그를 모으는 단 하나의 곳: 선택된 칩 + 직접 입력 (추천을 누르면 여기로 들어옴) */}
-                <div className="mt-2 flex flex-wrap items-center gap-1.5 rounded-xl border border-neutral-300 px-3 py-2.5 transition focus-within:border-neutral-900">
-                  {tags.map((t) => (
-                    <span key={t} className="inline-flex items-center gap-1 rounded-full bg-neutral-100 py-1 pl-2.5 pr-1.5 text-xs font-medium text-neutral-800">
-                      {t}
-                      <button onClick={() => setTags((prev) => prev.filter((x) => x !== t))} className="flex h-4 w-4 items-center justify-center rounded-full text-neutral-400 transition hover:bg-neutral-200 hover:text-neutral-700" aria-label="태그 삭제">×</button>
-                    </span>
-                  ))}
-                  <input
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(); } }}
-                    onBlur={addTag}
-                    placeholder={tags.length === 0 ? "태그를 입력하고 Enter" : tags.length >= 8 ? "최대 8개" : "추가…"}
-                    disabled={tags.length >= 8}
-                    className="min-w-[6rem] flex-1 bg-transparent px-1 py-0.5 text-sm outline-none disabled:opacity-50"
-                  />
+                {/* 선택된 태그 (추천을 누르면 여기로 모임). 직접 입력 없이 추천으로만 채운다. */}
+                <div className="mt-2 flex min-h-[2.75rem] flex-wrap items-center gap-1.5 rounded-xl border border-neutral-200 bg-neutral-50/60 px-3 py-2.5">
+                  {tags.length === 0 ? (
+                    <span className="px-1 text-sm text-neutral-400">아래 추천에서 골라 담아주세요</span>
+                  ) : (
+                    tags.map((t) => (
+                      <span key={t} className="inline-flex items-center gap-1 rounded-full bg-neutral-900 py-1 pl-2.5 pr-1.5 text-xs font-medium text-white">
+                        {t}
+                        <button onClick={() => setTags((prev) => prev.filter((x) => x !== t))} className="flex h-4 w-4 items-center justify-center rounded-full text-white/60 transition hover:bg-white/20 hover:text-white" aria-label="태그 삭제">×</button>
+                      </span>
+                    ))
+                  )}
                 </div>
                 <p className="mt-1.5 text-xs text-neutral-400">{tags.length}/8개 · 3~5개를 권장해요</p>
 

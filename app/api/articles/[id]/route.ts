@@ -45,14 +45,22 @@ export async function PATCH(
   if (typeof body.featured_image === "string" || body.featured_image === null) {
     update.featured_image = body.featured_image;
   }
+  if (Array.isArray(body.tags)) {
+    update.tags = body.tags.filter((t: unknown): t is string => typeof t === "string").slice(0, 8);
+  }
+  if (typeof body.category === "string") update.category = body.category;
 
-  const { data, error } = await supabase
-    .from("articles")
-    .update(update)
-    .eq("id", id)
-    .eq("user_id", user.id)
-    .select("*")
-    .single();
+  const run = () =>
+    supabase.from("articles").update(update).eq("id", id).eq("user_id", user.id).select("*").single();
+
+  let { data, error } = await run();
+  // 아직 마이그레이션 안 된 선택 컬럼(tags·category)을 가리키는 오류면 그 컬럼만 빼고 재시도 → 저장이 깨지지 않게
+  for (const col of ["tags", "category"]) {
+    if (error && new RegExp(col, "i").test(error.message ?? "")) {
+      delete update[col];
+      ({ data, error } = await run());
+    }
+  }
 
   if (error) return NextResponse.json({ error: "저장하지 못했습니다." }, { status: 500 });
   return NextResponse.json({ article: data });
