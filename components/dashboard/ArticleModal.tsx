@@ -238,12 +238,20 @@ export default function ArticleModal({
         </div>
       </div>
 
+      {/* 자동저장 표시 — 화면에 고정되어 스크롤을 따라다님(현재 보는 위치 우하단에 항상 보임) */}
+      {(autoSavedAt || dirty) && (
+        <div
+          className={`pointer-events-none fixed bottom-5 right-5 z-40 rounded-full px-3.5 py-1.5 text-xs font-medium shadow-md backdrop-blur transition ${
+            dirty ? "bg-neutral-900/85 text-white" : "bg-emerald-600/90 text-white"
+          }`}
+        >
+          {dirty ? "수정 중…" : `✓ 자동저장됨${autoSavedAt ? ` · ${autoSavedAt}` : ""}`}
+        </div>
+      )}
+
       <div className="mx-auto max-w-3xl px-6 py-8">
         <div className="flex items-center justify-between gap-4">
           <span className="truncate text-xs text-neutral-400">키워드 · {article.keyword}</span>
-          {autoSavedAt && (
-            <span className="shrink-0 text-xs text-neutral-400">{dirty ? "수정 중…" : `✓ 자동저장 · ${autoSavedAt}`}</span>
-          )}
         </div>
 
         {(error || message) && (

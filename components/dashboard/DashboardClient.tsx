@@ -199,10 +199,11 @@ export default function DashboardClient(props: DashboardProps) {
     }
   }, [navOpen]);
 
-  // 탭·뷰(공지/가이드/글편집/작성) 전환 시 항상 맨 위에서 시작
+  // 탭·뷰(공지/가이드/글편집/작성) 전환 시 항상 맨 위에서 시작.
+  // selected는 '객체'가 아니라 'id'로 의존 → 자동저장으로 글 내용이 갱신될 때는 스크롤이 튀지 않음.
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [tab, page, selected, genParams]);
+  }, [tab, page, selected?.id, genParams]);
 
   function goTab(k: Tab) {
     if (genParams) return; // 글 생성 중엔 실수로 이동 못 하게 (취소는 작성화면의 버튼으로만)

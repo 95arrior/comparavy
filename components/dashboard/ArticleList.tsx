@@ -10,7 +10,8 @@ const STATUS_LABEL: Record<Article["status"], string> = {
 
 const STATUS_STYLE: Record<Article["status"], string> = {
   draft: "bg-neutral-100 text-neutral-600",
-  published: "bg-emerald-100 text-emerald-700",
+  // 발행됨은 한눈에 띄게 진한 초록 + 흰 글씨
+  published: "bg-emerald-600 text-white",
   future: "bg-amber-100 text-amber-700",
 };
 
