@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     // 3) 프로 플랜 적용
     const now = new Date();
     const next = new Date(now.getTime() + PERIOD_DAYS * 24 * 60 * 60 * 1000);
-    await applyPlan(supabase, user.id, "pro", {
+    await applyPlan(user.id, "pro", {
       billing_key: billingKey,
       customer_key: customerKey,
       sub_status: "active",

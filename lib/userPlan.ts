@@ -78,10 +78,7 @@ export async function ensureUserRow(
 }
 
 /** 월 사용량 주기를 갱신한다 (period_start로부터 30일 경과 시 사용량 초기화). */
-export async function rolloverIfNeeded(
-  supabase: SupabaseClient,
-  row: UserRow,
-): Promise<UserRow> {
+export async function rolloverIfNeeded(row: UserRow): Promise<UserRow> {
   // 무료는 평생 3편(리셋 없음). 유료 구독만 매 결제주기마다 사용량을 리셋한다.
   if (row.plan === "free") return row;
   const start = new Date(row.period_start).getTime();
@@ -89,7 +86,8 @@ export async function rolloverIfNeeded(
   if (Date.now() - start < THIRTY_DAYS) return row;
 
   const now = new Date().toISOString();
-  await supabase
+  // 쓰기는 서비스롤로 — 유저 권한(RLS)으로 users update가 막히던 문제 방지
+  await createSupabaseAdminClient()
     .from("users")
     .update({ articles_used: 0, period_start: now })
     .eq("id", row.id);
@@ -98,20 +96,21 @@ export async function rolloverIfNeeded(
 
 /** 플랜을 적용한다 (한도 갱신 + 추가 필드). 결제 성공/해지 시 사용. */
 export async function applyPlan(
-  supabase: SupabaseClient,
   userId: string,
   plan: PlanKey,
   extra: Partial<UserRow> = {},
 ): Promise<void> {
+  // 쓰기는 서비스롤로 — 유저 권한(RLS)으로 users update가 막히던 문제 방지
+  const admin = createSupabaseAdminClient();
   const limits = planLimits(plan);
-  await supabase
+  await admin
     .from("users")
     .update({ plan, articles_limit: limits.articles_limit, ...extra })
     .eq("id", userId);
 
   // 유료 전환 시 무료 미리보기(티저) 잠금 해제 → 결제 직후 바로 전체 글 열람·발행 가능
   if (plan !== "free") {
-    await supabase
+    await admin
       .from("articles")
       .update({ locked: false })
       .eq("user_id", userId)

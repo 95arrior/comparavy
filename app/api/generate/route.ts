@@ -66,7 +66,7 @@ export async function POST(request: Request) {
 
   // 플랜·사용량 확인
   let row = await ensureUserRow(supabase, user.id, user.email);
-  row = await rolloverIfNeeded(supabase, row);
+  row = await rolloverIfNeeded(row);
 
   // 증가/카운트는 서비스롤로 (유저 RLS로 막히던 문제 방지)
   const adminDb = createSupabaseAdminClient();

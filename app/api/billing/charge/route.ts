@@ -60,7 +60,7 @@ async function runCharge() {
       charged++;
     } catch {
       // 청구 실패 → 무료로 강등 (구독 비활성화)
-      await applyPlan(supabase, row.id, "free", {
+      await applyPlan(row.id, "free", {
         sub_status: "canceled",
         next_billing_at: null,
       });
