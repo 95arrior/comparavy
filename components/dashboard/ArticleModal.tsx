@@ -28,20 +28,30 @@ export default function ArticleModal({
   const [error, setError] = useState<string | null>(null);
   const [autoSavedAt, setAutoSavedAt] = useState<string | null>(null);
   const [showUpsell, setShowUpsell] = useState(false);
-  const [faqAdded, setFaqAdded] = useState(false);
+  const [addedFaq, setAddedFaq] = useState<Set<number>>(new Set());
+  const [faqHeaderAdded, setFaqHeaderAdded] = useState(false);
   const [saveFailed, setSaveFailed] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
   const editorRef = useRef<ArticleEditorHandle>(null);
 
-  // FAQ를 본문 맨 아래에 실제 텍스트로 추가 (방문자에게 보이는 자주 묻는 질문 섹션).
-  function addFaqToBody() {
-    if (!article.faq.length) return;
+  // 토스트 자동 사라짐
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 2200);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  // FAQ 한 개를 골라 본문 맨 아래에 텍스트로 추가 (방문자에게 보이는 자주 묻는 질문 섹션).
+  function addFaqItem(i: number) {
+    const f = article.faq[i];
+    if (!f || addedFaq.has(i)) return;
     const esc = (s: string) =>
       s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const html =
-      `<h2>자주 묻는 질문</h2>` +
-      article.faq.map((f) => `<h3>${esc(f.question)}</h3><p>${esc(f.answer)}</p>`).join("");
-    editorRef.current?.appendContent(html);
-    setFaqAdded(true);
+    // 첫 항목을 추가할 때만 '자주 묻는 질문' 제목(H2)을 한 번 넣는다.
+    const header = faqHeaderAdded ? "" : `<h2>자주 묻는 질문</h2>`;
+    editorRef.current?.appendContent(`${header}<h3>${esc(f.question)}</h3><p>${esc(f.answer)}</p>`);
+    setFaqHeaderAdded(true);
+    setAddedFaq((prev) => new Set(prev).add(i));
   }
   const [copied, setCopied] = useState(false);
 
@@ -132,7 +142,7 @@ export default function ArticleModal({
       onUpdated(data.article);
       setSaveFailed(false);
       setAutoSavedAt(new Date().toLocaleTimeString("ko-KR"));
-      setMessage("저장했습니다.");
+      setToast("저장이 완료되었습니다.");
     } catch {
       setError("저장 중 오류가 났어요. 인터넷 연결을 확인하고 다시 시도해 주세요.");
     } finally {
@@ -284,6 +294,13 @@ export default function ArticleModal({
         </div>
       </div>
 
+      {/* 저장 완료 등 토스트 — 화면 상단 가운데에 잠깐 떴다 사라짐 */}
+      {toast && (
+        <div className="ateflo-toast pointer-events-none fixed left-1/2 top-5 z-50 -translate-x-1/2 rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white shadow-lg">
+          {toast}
+        </div>
+      )}
+
       {/* 자동저장 표시 — 화면에 고정되어 스크롤을 따라다님(현재 보는 위치 우하단에 항상 보임) */}
       {(autoSavedAt || dirty || saveFailed) && (
         <div
@@ -368,24 +385,28 @@ export default function ArticleModal({
 
         {article.faq.length > 0 && (
           <div className="mt-6">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-xs font-medium text-neutral-500">자주 묻는 질문</p>
-              <button
-                onClick={addFaqToBody}
-                disabled={faqAdded}
-                className="flex items-center gap-1 rounded-full border border-neutral-300 px-3 py-1 text-xs font-medium transition hover:border-neutral-900 disabled:cursor-default disabled:border-emerald-200 disabled:text-emerald-600 disabled:opacity-100"
-                title="이 질문들을 글 본문 맨 아래에 추가합니다"
-              >
-                {faqAdded ? "✓ 본문에 추가됨" : "＋ 글 맨 아래에 추가"}
-              </button>
-            </div>
+            <p className="text-xs font-medium text-neutral-500">자주 묻는 질문</p>
+            <p className="mt-1 text-xs text-neutral-400">＋ 버튼으로 원하는 질문만 골라 글 맨 아래에 추가할 수 있어요.</p>
             <ul className="mt-2 space-y-2">
-              {article.faq.map((f, i) => (
-                <li key={i} className="rounded-xl border border-neutral-200 px-4 py-3 text-sm">
-                  <p className="font-medium">{f.question}</p>
-                  <p className="mt-1 text-neutral-600">{f.answer}</p>
-                </li>
-              ))}
+              {article.faq.map((f, i) => {
+                const added = addedFaq.has(i);
+                return (
+                  <li key={i} className="flex items-start gap-3 rounded-xl border border-neutral-200 px-4 py-3 text-sm">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium">{f.question}</p>
+                      <p className="mt-1 text-neutral-600">{f.answer}</p>
+                    </div>
+                    <button
+                      onClick={() => addFaqItem(i)}
+                      disabled={added}
+                      className="shrink-0 rounded-full border border-neutral-300 px-3 py-1 text-xs font-medium transition hover:border-neutral-900 disabled:cursor-default disabled:border-emerald-200 disabled:bg-emerald-50 disabled:text-emerald-600 disabled:opacity-100"
+                      title={added ? "이미 본문에 추가했어요" : "이 질문을 글 본문 맨 아래에 추가"}
+                    >
+                      {added ? "✓ 추가됨" : "＋ 추가"}
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         )}
