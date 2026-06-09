@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient, createSupabaseAdminClient, hasSupabaseEnv } from "@/lib/supabase-server";
+import { ensureUserRow } from "@/lib/userPlan";
 
 const BUCKET = "article-images";
 const MAX_BYTES = 8 * 1024 * 1024; // 8MB
@@ -18,6 +19,15 @@ export async function POST(request: Request) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+
+  // 이미지 삽입(편집)은 프로 전용
+  const planRow = await ensureUserRow(supabase, user.id);
+  if (planRow.plan !== "pro") {
+    return NextResponse.json(
+      { error: "이미지 삽입은 프로 플랜 기능이에요.", upgrade: true },
+      { status: 403 },
+    );
+  }
 
   const body = await request.json().catch(() => ({}));
   const dataUri = typeof body.dataUri === "string" ? body.dataUri : "";

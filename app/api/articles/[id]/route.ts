@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { countKoreanChars } from "@/lib/humanizer";
+import { ensureUserRow } from "@/lib/userPlan";
 
 async function getUser() {
   const supabase = await createSupabaseServerClient();
@@ -20,6 +21,15 @@ export async function PATCH(
   const { id } = await params;
   const { supabase, user } = await getUser();
   if (!user) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+
+  // 글 편집은 프로 전용 (무료는 생성·복사만)
+  const planRow = await ensureUserRow(supabase, user.id);
+  if (planRow.plan !== "pro") {
+    return NextResponse.json(
+      { error: "글 편집은 프로 플랜 기능이에요. 프로로 업그레이드하면 수정·이미지 삽입·발행을 할 수 있어요.", upgrade: true },
+      { status: 403 },
+    );
+  }
 
   const body = await request.json().catch(() => ({}));
   const update: Record<string, unknown> = {};

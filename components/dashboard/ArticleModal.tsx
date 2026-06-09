@@ -10,12 +10,15 @@ export default function ArticleModal({
   article,
   wpConnected,
   canPublish,
+  canEdit,
   onClose,
   onUpdated,
 }: {
   article: Article;
   wpConnected: boolean;
   canPublish?: boolean;
+  /** 편집(수정·이미지 삽입)은 프로 전용. 무료는 읽기전용 + 복사만. */
+  canEdit?: boolean;
   onClose: () => void;
   onUpdated: (a: Article) => void;
 }) {
@@ -283,6 +286,83 @@ export default function ArticleModal({
               </div>
             </div>
           </div>
+        </div>
+      </>
+    );
+  }
+
+  // 무료 플랜: 읽기전용. AI가 쓴 글을 '복사'해서 블로그에 붙여넣는 것까지만.
+  // 편집(수정·이미지 삽입)과 워드프레스 발행은 프로 전용 → 프로 결제 유도.
+  if (!canEdit) {
+    return (
+      <>
+        {toast && (
+          <div className="ateflo-toast pointer-events-none fixed left-1/2 top-5 z-50 -translate-x-1/2 rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white shadow-lg md:left-[calc(50%+8rem)]">
+            {toast}
+          </div>
+        )}
+        <div className="sticky top-0 z-30 border-b border-neutral-200 bg-white/95 backdrop-blur">
+          <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-6 py-3">
+            <button onClick={onClose} className="flex items-center gap-1.5 text-sm text-neutral-500 transition hover:text-neutral-900">
+              <span className="text-base leading-none">←</span> 목록으로
+            </button>
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                onClick={() => {
+                  copyBody();
+                  setToast("복사했어요. 블로그에 붙여넣어 보세요.");
+                }}
+                className="rounded-full border border-neutral-300 px-4 py-1.5 text-sm font-medium transition hover:border-neutral-900"
+              >
+                {copied ? "복사됨 ✓" : "복사"}
+              </button>
+              <Link
+                href="/pricing"
+                className="rounded-full bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700"
+              >
+                프로로 편집하기
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        <div className="mx-auto max-w-3xl px-6 py-8">
+          <span className="truncate text-xs text-neutral-400">키워드 · {article.keyword}</span>
+          <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight sm:text-3xl">{article.title}</h1>
+
+          <div className="mt-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-xs text-neutral-500">
+            <p><strong className="text-neutral-700">메타 제목:</strong> {article.meta_title}</p>
+            <p className="mt-1"><strong className="text-neutral-700">메타 설명:</strong> {article.meta_description}</p>
+          </div>
+
+          {/* 편집 유도 안내 */}
+          <div className="mt-4 flex items-center justify-between gap-4 rounded-xl border border-neutral-200 bg-white px-4 py-3">
+            <p className="text-sm text-neutral-600">
+              <span className="font-medium text-neutral-900">글 수정·이미지 넣기·워드프레스 발행</span>은 프로 기능이에요. 지금은 복사해서 블로그에 붙여넣을 수 있어요.
+            </p>
+            <Link
+              href="/pricing"
+              className="ateflo-rainbow shrink-0 rounded-full px-4 py-2 text-sm font-medium text-white transition"
+            >
+              프로 업그레이드 →
+            </Link>
+          </div>
+
+          <div className="prose prose-neutral mt-6 max-w-none" dangerouslySetInnerHTML={{ __html: article.body_html }} />
+
+          {article.faq.length > 0 && (
+            <div className="mt-8">
+              <p className="text-sm font-bold">자주 묻는 질문</p>
+              <ul className="mt-2 space-y-2">
+                {article.faq.map((f, i) => (
+                  <li key={i} className="rounded-xl border border-neutral-200 px-4 py-3 text-sm">
+                    <p className="font-medium">{f.question}</p>
+                    <p className="mt-1 text-neutral-600">{f.answer}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </>
     );

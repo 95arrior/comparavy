@@ -376,6 +376,7 @@ export default function DashboardClient(props: DashboardProps) {
             article={selected}
             wpConnected={Boolean(wpSiteUrl)}
             canPublish={props.plan === "pro"}
+            canEdit={props.plan === "pro"}
             onClose={() => setSelected(null)}
             onUpdated={onUpdated}
           />
