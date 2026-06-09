@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { ensureUserRow } from "@/lib/userPlan";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 /** 한국어 주제를 스톡 사진 검색용 영어 키워드로 (haiku, 실패 시 원문 사용) */
 async function toEnglishQuery(korean: string): Promise<string> {
@@ -43,6 +44,15 @@ export async function GET(request: Request) {
   const planRow = await ensureUserRow(supabase, user.id);
   if (planRow.plan !== "pro") {
     return NextResponse.json({ error: "이미지 추천은 프로 플랜 기능이에요.", upgrade: true }, { status: 403 });
+  }
+
+  // 사용자별 제한: 5분당 20회 (한 사람이 폭주로 외부 API 한도를 까먹는 것 방지)
+  const rl = await checkRateLimit(supabase, user.id, "image_search", 20, 300);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: `이미지 추천이 너무 잦아요. ${rl.retryAfterSec ?? 60}초 후 다시 시도해 주세요.` },
+      { status: 429 },
+    );
   }
 
   const key = process.env.PEXELS_API_KEY;
