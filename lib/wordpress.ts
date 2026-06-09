@@ -110,14 +110,24 @@ export interface PublishResult {
   status: string;
 }
 
-/** data:base64 이미지 1개를 WP 미디어로 업로드. 실패 시 null. */
-async function uploadMedia(dataUri: string, creds: WordPressCredentials): Promise<{ id: number; url: string } | null> {
+/** 이미지(base64 data URI 또는 http(s) URL) 1개를 WP 미디어로 업로드. 실패 시 null. */
+async function uploadMedia(source: string, creds: WordPressCredentials): Promise<{ id: number; url: string } | null> {
   const base = normalizeSiteUrl(creds.siteUrl);
   try {
-    const comma = dataUri.indexOf(",");
-    const mime = dataUri.slice(5, comma).split(";")[0];
+    let buffer: Buffer;
+    let mime: string;
+    if (source.startsWith("data:")) {
+      const comma = source.indexOf(",");
+      mime = source.slice(5, comma).split(";")[0] || "image/png";
+      buffer = Buffer.from(source.slice(comma + 1), "base64");
+    } else {
+      // 스토리지 등 URL → 내려받아 업로드
+      const r = await fetch(source);
+      if (!r.ok) return null;
+      mime = (r.headers.get("content-type") || "image/jpeg").split(";")[0];
+      buffer = Buffer.from(await r.arrayBuffer());
+    }
     const ext = (mime.split("/")[1] || "png").replace("jpeg", "jpg").replace("svg+xml", "svg");
-    const buffer = Buffer.from(dataUri.slice(comma + 1), "base64");
     const res = await fetch(`${base}/wp-json/wp/v2/media`, {
       method: "POST",
       headers: {
@@ -125,7 +135,7 @@ async function uploadMedia(dataUri: string, creds: WordPressCredentials): Promis
         "Content-Type": mime,
         "Content-Disposition": `attachment; filename="ateflo-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}"`,
       },
-      body: buffer,
+      body: new Uint8Array(buffer),
     });
     if (res.ok) {
       const data = await res.json();
@@ -137,12 +147,20 @@ async function uploadMedia(dataUri: string, creds: WordPressCredentials): Promis
   return null;
 }
 
-/** 본문의 base64 이미지를 WP 미디어로 업로드하고 URL로 교체한다. */
-async function uploadDataImages(html: string, creds: WordPressCredentials): Promise<string> {
-  const uris = Array.from(new Set(html.match(/data:image\/[A-Za-z0-9.+-]+;base64,[^"')\s]+/g) ?? []));
-  for (const uri of uris) {
-    const media = await uploadMedia(uri, creds);
-    if (media) html = html.split(uri).join(media.url);
+/**
+ * 본문 이미지를 WP 미디어 라이브러리로 옮기고 URL로 교체한다.
+ * - base64 data URI
+ * - 우리 Supabase 스토리지(article-images) URL
+ * → 발행 후 글이 우리 스토리지에 의존하지 않고, 사용자 WP 안에 이미지가 보관된다.
+ */
+async function uploadInlineImages(html: string, creds: WordPressCredentials): Promise<string> {
+  const dataUris = html.match(/data:image\/[A-Za-z0-9.+-]+;base64,[^"')\s]+/g) ?? [];
+  const storageUrls =
+    html.match(/https?:\/\/[^"')\s]*\/storage\/v1\/object\/public\/article-images\/[^"')\s]+/g) ?? [];
+  const sources = Array.from(new Set([...dataUris, ...storageUrls]));
+  for (const src of sources) {
+    const media = await uploadMedia(src, creds);
+    if (media) html = html.split(src).join(media.url);
   }
   return html;
 }
@@ -150,8 +168,8 @@ async function uploadDataImages(html: string, creds: WordPressCredentials): Prom
 /** 글을 워드프레스에 발행(또는 초안 저장/예약)한다. */
 export async function publishPost(input: PublishInput): Promise<PublishResult> {
   const base = normalizeSiteUrl(input.siteUrl);
-  // base64 이미지를 WP 미디어로 업로드해 본문을 깔끔한 URL로 교체
-  let contentHtml = await uploadDataImages(input.contentHtml, input);
+  // 본문 이미지(base64·스토리지 URL)를 WP 미디어로 옮기고 URL로 교체
+  let contentHtml = await uploadInlineImages(input.contentHtml, input);
   // 워드프레스가 글 제목을 H1으로 렌더하므로, 본문의 H1은 H2로 강등 (H1 중복 방지)
   contentHtml = contentHtml.replace(/<h1(\s[^>]*)?>/gi, "<h2>").replace(/<\/h1>/gi, "</h2>");
   // 이미지가 본문 폭을 넘어 거대해지거나 가로 스크롤이 생기지 않게 제약 → 편집 화면과 동일하게 보이도록(WYSIWYG)
@@ -164,8 +182,8 @@ export async function publishPost(input: PublishInput): Promise<PublishResult> {
   };
   if (input.metaDescription) body.excerpt = input.metaDescription;
   if (input.slug) body.slug = input.slug;
-  // 대표 이미지 업로드 → featured_media (선택, 안 고르면 없이 발행)
-  if (input.featuredImage?.startsWith("data:")) {
+  // 대표 이미지 업로드 → featured_media (base64·스토리지 URL 모두 지원, 안 고르면 없이 발행)
+  if (input.featuredImage) {
     const media = await uploadMedia(input.featuredImage, input);
     if (media) body.featured_media = media.id;
   }
