@@ -395,7 +395,15 @@ export default function ArticleModal({
           <p className="mt-1"><strong className="text-neutral-700">메타 설명:</strong> {article.meta_description}</p>
         </div>
 
-        <div className="mt-5">
+        <div className="mt-5 flex items-start gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-2.5 text-xs leading-relaxed text-neutral-500">
+          <span aria-hidden className="mt-px">💡</span>
+          <p>
+            여기서는 <span className="font-medium text-neutral-700">글의 구조와 내용</span>을 다듬는 곳이에요. 제목·소제목·목록·이미지 배치는 그대로 발행돼요.
+            다만 <span className="font-medium text-neutral-700">실제 색·폰트·간격은 연결한 블로그 테마</span>를 따라가서, 미리보기와 조금 다르게 보일 수 있어요.
+          </p>
+        </div>
+
+        <div className="mt-3">
           <ArticleEditor
             ref={editorRef}
             title={title}
