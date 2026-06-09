@@ -223,9 +223,16 @@ export default function WritingView({
     <>
       <div className="sticky top-0 z-30 border-b border-neutral-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-6 py-3">
-          <button onClick={onExit} className="flex items-center gap-1.5 text-sm text-neutral-500 transition hover:text-neutral-900">
-            <span className="text-base leading-none">←</span> 글 목록으로
-          </button>
+          {phase === "error" ? (
+            <button onClick={onExit} className="flex items-center gap-1.5 text-sm text-neutral-500 transition hover:text-neutral-900">
+              <span className="text-base leading-none">←</span> 글 목록으로
+            </button>
+          ) : (
+            // 생성 중엔 취소·이동 불가 — 끝까지 쓴 뒤 자동으로 편집 화면으로 넘어간다
+            <span className="flex items-center gap-2 text-sm text-neutral-400">
+              <AteFloLogo pro={pro} animated size={16} /> 글을 쓰고 있어요 · 잠시만 기다려 주세요
+            </span>
+          )}
         </div>
       </div>
 

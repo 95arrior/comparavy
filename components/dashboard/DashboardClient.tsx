@@ -168,6 +168,7 @@ export default function DashboardClient(props: DashboardProps) {
     }
   }, []);
   function openNews() {
+    if (genParams) return; // 생성 중 차단
     setSelected(null);
     setGenParams(null);
     setNavOpen(false);
@@ -181,6 +182,7 @@ export default function DashboardClient(props: DashboardProps) {
   }
 
   function openGuide() {
+    if (genParams) return; // 생성 중 차단
     setSelected(null);
     setGenParams(null);
     setNavOpen(false);
@@ -203,6 +205,7 @@ export default function DashboardClient(props: DashboardProps) {
   }, [tab, page, selected, genParams]);
 
   function goTab(k: Tab) {
+    if (genParams) return; // 글 생성 중엔 실수로 이동 못 하게 (취소는 작성화면의 버튼으로만)
     setSelected(null);
     setGenParams(null);
     setPage(null);
