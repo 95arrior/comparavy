@@ -137,7 +137,7 @@ function stripExistingFaq(html: string, faq: { question: string; answer: string 
 }
 
 /** 분류(category)·태그(tag) 용어를 찾거나 없으면 만들어 term id를 돌려준다. */
-async function findOrCreateTerm(
+export async function findOrCreateTerm(
   base: string,
   creds: WordPressCredentials,
   taxonomy: "categories" | "tags",

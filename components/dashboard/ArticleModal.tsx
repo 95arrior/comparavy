@@ -41,6 +41,41 @@ export default function ArticleModal({
   const [category, setCategory] = useState(article.category ?? "");
   const [newCatMode, setNewCatMode] = useState(false);
   const [newCatInput, setNewCatInput] = useState("");
+  const [creatingCat, setCreatingCat] = useState(false);
+
+  // '확인' → 워드프레스에 카테고리를 지금 생성(또는 기존 것 사용). 미리 여러 개 만들어 둬도 다 유지된다.
+  async function confirmNewCategory() {
+    const name = newCatInput.trim();
+    if (!name || creatingCat) return;
+    if (categories.some((c) => c.name === name)) {
+      setCategory(name);
+      setNewCatInput("");
+      setNewCatMode(false);
+      return;
+    }
+    setCreatingCat(true);
+    try {
+      const res = await fetch("/api/wordpress/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      const data = await res.json();
+      if (res.ok && data.id) {
+        setCategories((prev) => [{ id: data.id, name: data.name }, ...prev.filter((c) => c.name !== data.name)]);
+        setCategory(data.name);
+        setNewCatInput("");
+        setNewCatMode(false);
+        setToast(`카테고리 ‘${data.name}’ 만들었어요`);
+      } else {
+        setToast(data.error ?? "카테고리 생성에 실패했어요.");
+      }
+    } catch {
+      setToast("카테고리 생성 중 오류가 났어요.");
+    } finally {
+      setCreatingCat(false);
+    }
+  }
   const [tags, setTags] = useState<string[]>(Array.isArray(article.tags) ? article.tags : []);
   const [existingTags, setExistingTags] = useState<string[]>([]);
 
@@ -564,37 +599,21 @@ export default function ArticleModal({
                       value={newCatInput}
                       autoFocus
                       onChange={(e) => setNewCatInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          const name = newCatInput.trim();
-                          if (!name) return;
-                          setCategories((prev) => (prev.some((c) => c.name === name) ? prev : [{ id: -Date.now(), name }, ...prev]));
-                          setCategory(name);
-                          setNewCatInput("");
-                          setNewCatMode(false);
-                        }
-                      }}
+                      onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); confirmNewCategory(); } }}
                       placeholder="새 카테고리 이름 (예: 강아지 건강)"
                       className="min-w-0 flex-1 rounded-xl border border-neutral-300 px-3.5 py-2.5 text-sm outline-none transition focus:border-neutral-900"
                     />
                     <button
-                      onClick={() => {
-                        const name = newCatInput.trim();
-                        if (!name) return;
-                        setCategories((prev) => (prev.some((c) => c.name === name) ? prev : [{ id: -Date.now(), name }, ...prev]));
-                        setCategory(name);
-                        setNewCatInput("");
-                        setNewCatMode(false);
-                      }}
-                      disabled={!newCatInput.trim()}
+                      onClick={confirmNewCategory}
+                      disabled={!newCatInput.trim() || creatingCat}
                       className="shrink-0 rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-30"
                     >
-                      확인
+                      {creatingCat ? "생성 중…" : "확인"}
                     </button>
                     <button
                       onClick={() => { setNewCatMode(false); setNewCatInput(""); }}
-                      className="shrink-0 rounded-lg px-1.5 py-1.5 text-[13px] text-neutral-400 transition hover:text-neutral-700"
+                      disabled={creatingCat}
+                      className="shrink-0 rounded-lg px-1.5 py-1.5 text-[13px] text-neutral-400 transition hover:text-neutral-700 disabled:opacity-40"
                     >
                       취소
                     </button>
