@@ -145,9 +145,12 @@ export default function WordPressPanel({
           <input
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="admin"
+            placeholder="예: admin, myblog"
             className="mt-2 w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm outline-none transition focus:border-neutral-900"
           />
+          <p className="mt-1.5 text-xs text-neutral-500">
+            워드프레스 관리자(wp-admin)에 로그인할 때 쓰는 아이디예요. (사람마다 달라요 — admin이 아닐 수 있어요)
+          </p>
         </div>
         <div>
           <label className="block text-sm font-medium">애플리케이션 비밀번호</label>
@@ -157,6 +160,9 @@ export default function WordPressPanel({
             placeholder="xxxx xxxx xxxx xxxx xxxx xxxx"
             className="mt-2 w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm outline-none transition focus:border-neutral-900"
           />
+          <p className="mt-1.5 text-xs text-neutral-500">
+            로그인 비밀번호가 <span className="font-medium">아니에요.</span> ‘사용자 → 프로필’에서 발급한 앱 비밀번호를 넣어주세요.
+          </p>
         </div>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
