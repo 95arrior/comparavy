@@ -133,6 +133,19 @@ export default function ArticleModal({
     setError(null);
     setMessage(null);
     try {
+      // 발행 전에 현재 편집 내용을 먼저 저장(완료까지 대기). 발행 API는 DB 본문을 읽으므로,
+      // 자동저장(3초 디바운스)이 아직 안 끝났으면 편집분이 누락되는 문제를 막는다.
+      if (autoTimer.current) clearTimeout(autoTimer.current);
+      const saveRes = await fetch(`/api/articles/${article.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, body_html: bodyHtml, featured_image: featured }),
+      });
+      if (!saveRes.ok) {
+        setError("편집 내용 저장에 실패해 발행을 멈췄어요. 잠시 후 다시 시도해 주세요.");
+        return;
+      }
+
       const res = await fetch("/api/wordpress/publish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
