@@ -79,6 +79,31 @@ export default function ArticleList({
     );
   }
 
+  // 내 글 전체를 HTML 파일로 내려받기 (이탈/락인 방지 — 내 콘텐츠는 언제든 내 것)
+  function exportAll() {
+    const esc = (s: string) => (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const items = articles.filter((a) => !a.locked);
+    if (items.length === 0) return;
+    const body = items
+      .map(
+        (a) =>
+          `<article style="max-width:720px;margin:0 auto 64px">\n<h1>${esc(a.title)}</h1>\n` +
+          (a.meta_description ? `<p style="color:#888"><em>${esc(a.meta_description)}</em></p>\n` : "") +
+          `${a.body_html}\n<hr style="margin-top:48px;border:none;border-top:1px solid #eee">\n</article>`,
+      )
+      .join("\n");
+    const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>에이트플로 내보내기</title></head><body style="font-family:system-ui,sans-serif;line-height:1.7;color:#222;padding:40px 20px">\n${body}\n</body></html>`;
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `ateflo-글-${new Date().toISOString().slice(0, 10)}.html`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
   const statusChips: { key: StatusFilter; label: string }[] = [
     { key: "all", label: "전체" },
     { key: "published", label: "발행됨" },
@@ -116,7 +141,16 @@ export default function ArticleList({
           ))}
         </div>
 
-        <div className="relative shrink-0">
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            onClick={exportAll}
+            title="내 글 전체를 HTML 파일로 저장"
+            className="hidden items-center gap-1.5 rounded-full border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-neutral-900 sm:flex"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" /></svg>
+            내보내기
+          </button>
+          <div className="relative">
           <button
             onClick={() => setSortOpen((o) => !o)}
             className="flex items-center gap-1.5 rounded-full border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-neutral-900"
@@ -141,6 +175,7 @@ export default function ArticleList({
               </div>
             </>
           )}
+          </div>
         </div>
       </div>
 

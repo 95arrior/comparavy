@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { ensureUserRow } from "@/lib/userPlan";
 import { logUsage } from "@/lib/usageLog";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 /**
  * 글 내용(제목+본문)을 분석해 SEO 태그 3~5개를 추천한다. (싼 모델 haiku 사용, 프로 전용)
@@ -22,6 +23,11 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   const planRow = await ensureUserRow(supabase, user.id);
   if (planRow.plan !== "pro") {
     return NextResponse.json({ error: "태그 추천은 프로 플랜 기능이에요.", upgrade: true }, { status: 403 });
+  }
+
+  const rl = await checkRateLimit(supabase, user.id, "tag_suggest", 12, 300);
+  if (!rl.ok) {
+    return NextResponse.json({ error: `추천이 너무 잦아요. ${rl.retryAfterSec ?? 60}초 후 다시 시도해 주세요.` }, { status: 429 });
   }
 
   const { data: article } = await supabase

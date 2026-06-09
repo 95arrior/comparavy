@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient, createSupabaseAdminClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { ensureUserRow } from "@/lib/userPlan";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 const BUCKET = "article-images";
 const MAX_BYTES = 8 * 1024 * 1024; // 8MB
@@ -27,6 +28,12 @@ export async function POST(request: Request) {
       { error: "이미지 삽입은 프로 플랜 기능이에요.", upgrade: true },
       { status: 403 },
     );
+  }
+
+  // 업로드 폭주로 스토리지 남용 방지 (5분당 40장)
+  const rl = await checkRateLimit(supabase, user.id, "upload_image", 40, 300);
+  if (!rl.ok) {
+    return NextResponse.json({ error: `업로드가 너무 잦아요. ${rl.retryAfterSec ?? 60}초 후 다시 시도해 주세요.` }, { status: 429 });
   }
 
   const body = await request.json().catch(() => ({}));
