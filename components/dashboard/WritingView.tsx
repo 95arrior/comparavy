@@ -52,6 +52,7 @@ export default function WritingView({
   const visibleRef = useRef(0); // 지금까지 보여준 '글자' 수(태그 제외)
   const revealRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fetchedRef = useRef(false);
+  const abortRef = useRef<AbortController | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   const phase = error
@@ -70,7 +71,10 @@ export default function WritingView({
       fetchedRef.current = true; // 네트워크 호출은 1회만 (= 1글 1콜 유지)
       run();
     }
-    return () => stopReveal();
+    return () => {
+      stopReveal();
+      abortRef.current?.abort();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -146,10 +150,13 @@ export default function WritingView({
 
   async function run() {
     try {
+      const ctrl = new AbortController();
+      abortRef.current = ctrl;
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(params),
+        signal: ctrl.signal,
       });
       // 사전 검사 실패(429/403 등)는 일반 JSON 으로 옴
       if (!res.ok || !res.body) {
@@ -197,7 +204,9 @@ export default function WritingView({
           }
         }
       }
-    } catch {
+    } catch (e) {
+      // 사용자가 화면을 떠난 것(abort)은 오류 아님 — 서버는 끝까지 생성·저장한다
+      if (e instanceof DOMException && e.name === "AbortError") return;
       stopReveal();
       setError("네트워크 오류가 났어요. 잠시 후 다시 시도해 주세요.");
     }

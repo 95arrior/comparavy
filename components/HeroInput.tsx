@@ -79,7 +79,7 @@ export default function HeroInput({ loggedIn, onStart, pro = false }: { loggedIn
   return (
     <div className="mx-auto w-full max-w-xl">
       <div className={pro ? "relative" : ""}>
-        {pro && <div aria-hidden className="ateflo-rainbow-spin pointer-events-none absolute -inset-[3px] rounded-full" />}
+        {pro && <div aria-hidden className="ateflo-rainbow-spin pointer-events-none absolute -inset-[1.5px] rounded-full opacity-55" />}
         <form
           onSubmit={go}
           className={`relative flex w-full items-center gap-2 rounded-full border bg-white p-2 shadow-sm transition ${
