@@ -40,6 +40,8 @@ export default function ArticleModal({
   const [error, setError] = useState<string | null>(null);
   const [autoSavedAt, setAutoSavedAt] = useState<string | null>(null);
   const [showUpsell, setShowUpsell] = useState(false);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [scheduleAt, setScheduleAt] = useState("");
   const [saveFailed, setSaveFailed] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const editorRef = useRef<ArticleEditorHandle>(null);
@@ -330,6 +332,13 @@ export default function ArticleModal({
     return editorRef.current?.getHTML() ?? bodyHtml;
   }
 
+  // 예약 최소 시각(지금) — datetime-local 형식 YYYY-MM-DDTHH:mm
+  function minScheduleAt(): string {
+    const d = new Date(Date.now() + 60000);
+    const p = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+
   async function save() {
     if (autoTimer.current) clearTimeout(autoTimer.current);
     const liveBody = currentBody();
@@ -358,7 +367,7 @@ export default function ArticleModal({
     }
   }
 
-  async function publish(status: "draft" | "publish") {
+  async function publish(status: "draft" | "publish" | "future", date?: string) {
     if (!wpConnected) {
       setError("먼저 워드프레스 탭에서 사이트를 연결해 주세요.");
       return;
@@ -386,7 +395,7 @@ export default function ArticleModal({
       const res = await fetch("/api/wordpress/publish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ articleId: article.id, status, category, tags }),
+        body: JSON.stringify({ articleId: article.id, status, category, tags, date }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -397,17 +406,19 @@ export default function ArticleModal({
         ...article,
         title,
         body_html: bodyHtml,
-        status: status === "publish" ? "published" : "draft",
+        status: status === "publish" ? "published" : status === "future" ? "future" : "draft",
         wp_link: data.link ?? article.wp_link,
         // 발행된 워드프레스 글 ID 저장 → 다음 발행은 같은 글을 수정(재발행), 버튼도 "재발행"으로 전환
         wp_post_id: data.postId ?? article.wp_post_id,
       });
       setMessage(
-        status === "publish"
-          ? isRepublish
-            ? "수정한 내용을 워드프레스에 다시 반영했어요."
-            : "워드프레스에 발행했습니다."
-          : "워드프레스에 초안으로 저장했습니다.",
+        status === "future"
+          ? `예약했어요. ${date ? new Date(date).toLocaleString("ko-KR", { dateStyle: "medium", timeStyle: "short" }) : ""}에 자동 발행돼요.`
+          : status === "publish"
+            ? isRepublish
+              ? "수정한 내용을 워드프레스에 다시 반영했어요."
+              : "워드프레스에 발행했습니다."
+            : "워드프레스에 초안으로 저장했습니다.",
       );
     } finally {
       setPublishing(false);
@@ -548,9 +559,10 @@ export default function ArticleModal({
           <button onClick={onClose} className="flex items-center gap-1.5 text-sm text-neutral-500 transition hover:text-neutral-900">
             <span className="text-base leading-none">←</span> 목록으로
           </button>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="relative flex shrink-0 items-center gap-2">
             <button
               onClick={copyBody}
+              title="복사"
               className="rounded-full border border-neutral-300 px-4 py-1.5 text-sm font-medium transition hover:border-neutral-900"
             >
               {copied ? "복사됨 ✓" : "복사"}
@@ -562,6 +574,16 @@ export default function ArticleModal({
             >
               {saving ? "저장 중…" : "저장"}
             </button>
+            {canPublish && (
+              <button
+                onClick={() => setScheduleOpen((o) => !o)}
+                disabled={publishing}
+                title="예약 발행"
+                className={`flex h-8 w-8 items-center justify-center rounded-full border transition disabled:opacity-50 ${scheduleOpen ? "border-neutral-900 bg-neutral-900 text-white" : "border-neutral-300 text-neutral-600 hover:border-neutral-900"}`}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+              </button>
+            )}
             <button
               onClick={() => (canPublish ? publish("publish") : setShowUpsell(true))}
               disabled={publishing}
@@ -573,8 +595,45 @@ export default function ArticleModal({
                   : "처리 중…"
                 : article.wp_post_id
                   ? "재발행"
-                  : "워드프레스에 발행"}
+                  : "발행"}
             </button>
+
+            {scheduleOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setScheduleOpen(false)} />
+                <div className="ateflo-dropdown absolute right-0 top-full z-50 mt-2 w-72 rounded-2xl border border-neutral-200 bg-white p-4 shadow-xl">
+                  <p className="text-sm font-semibold">예약 발행</p>
+                  <p className="mt-1 text-xs leading-relaxed text-neutral-500">정한 시간에 워드프레스로 자동 발행돼요. 출퇴근길에 미리 예약해두세요.</p>
+                  <input
+                    type="datetime-local"
+                    min={minScheduleAt()}
+                    value={scheduleAt}
+                    onChange={(e) => setScheduleAt(e.target.value)}
+                    className="mt-3 w-full rounded-xl border border-neutral-300 px-3 py-2.5 text-sm outline-none focus:border-neutral-900"
+                  />
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      onClick={() => {
+                        if (!scheduleAt) return;
+                        const date = scheduleAt.length === 16 ? `${scheduleAt}:00` : scheduleAt;
+                        setScheduleOpen(false);
+                        publish("future", date);
+                      }}
+                      disabled={!scheduleAt || publishing}
+                      className="flex-1 rounded-xl bg-neutral-900 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-40"
+                    >
+                      {publishing ? "예약 중…" : "예약하기"}
+                    </button>
+                    <button
+                      onClick={() => setScheduleOpen(false)}
+                      className="rounded-xl border border-neutral-300 px-3 py-2.5 text-sm transition hover:border-neutral-900"
+                    >
+                      취소
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
