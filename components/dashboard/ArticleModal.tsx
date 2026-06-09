@@ -65,6 +65,9 @@ export default function ArticleModal({
     };
   }, [canEdit, wpConnected]);
 
+  const [aiSuggested, setAiSuggested] = useState<string[]>([]);
+  const [suggesting, setSuggesting] = useState(false);
+
   function addTag() {
     const v = tagInput.trim().replace(/^#/, "");
     if (!v || tags.includes(v) || tags.length >= 8) {
@@ -73,6 +76,25 @@ export default function ArticleModal({
     }
     setTags((prev) => [...prev, v]);
     setTagInput("");
+  }
+
+  // 이 글 내용을 분석해 태그 추천 (기존 글 포함)
+  async function suggestTags() {
+    setSuggesting(true);
+    try {
+      const res = await fetch(`/api/articles/${article.id}/suggest-tags`, { method: "POST" });
+      const data = await res.json();
+      if (res.ok && Array.isArray(data.tags)) {
+        setAiSuggested(data.tags.filter((t: string) => !tags.includes(t)));
+        if (!data.tags.length) setToast("추천할 태그를 찾지 못했어요.");
+      } else {
+        setToast(data.error ?? "태그 추천에 실패했어요.");
+      }
+    } catch {
+      setToast("태그 추천 중 오류가 났어요.");
+    } finally {
+      setSuggesting(false);
+    }
   }
 
   // 토스트 자동 사라짐
@@ -516,76 +538,117 @@ export default function ArticleModal({
 
         {/* 발행 설정: 카테고리 · 태그 (SEO) */}
         {wpConnected && (
-          <div className="mt-4 rounded-xl border border-neutral-200 bg-white px-4 py-3.5">
-            <p className="text-sm font-medium">발행 설정 <span className="font-normal text-neutral-400">· 워드프레스</span></p>
-
-            {/* 카테고리 */}
-            <div className="mt-3">
-              <label className="block text-xs font-medium text-neutral-600">카테고리</label>
-              {newCatMode ? (
-                <div className="mt-1.5 flex items-center gap-2">
-                  <input
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    placeholder="새 카테고리 이름 (예: 강아지 건강)"
-                    className="min-w-0 flex-1 rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900"
-                  />
-                  <button
-                    onClick={() => { setNewCatMode(false); setCategory(""); }}
-                    className="shrink-0 text-xs text-neutral-400 hover:text-neutral-600"
-                  >
-                    취소
-                  </button>
-                </div>
-              ) : (
-                <select
-                  value={category}
-                  onChange={(e) => {
-                    if (e.target.value === "__new__") { setNewCatMode(true); setCategory(""); }
-                    else setCategory(e.target.value);
-                  }}
-                  className="mt-1.5 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900"
-                >
-                  <option value="">미분류 (선택 안 함 · SEO 비추천)</option>
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.name}>{c.name}</option>
-                  ))}
-                  <option value="__new__">＋ 새 카테고리 만들기…</option>
-                </select>
-              )}
-              {!category && <p className="mt-1 text-xs text-amber-600">카테고리를 정하면 SEO에 유리해요.</p>}
+          <div className="mt-4 overflow-hidden rounded-2xl border border-neutral-200 bg-white">
+            <div className="flex items-center gap-2 border-b border-neutral-100 bg-neutral-50/70 px-4 py-3">
+              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-neutral-900 text-xs text-white">W</span>
+              <div>
+                <p className="text-sm font-semibold leading-none">발행 설정</p>
+                <p className="mt-0.5 text-xs text-neutral-400">워드프레스 분류 · 검색 노출(SEO)</p>
+              </div>
             </div>
 
-            {/* 태그 */}
-            <div className="mt-3">
-              <label className="block text-xs font-medium text-neutral-600">태그 <span className="font-normal text-neutral-400">(3~5개 권장)</span></label>
-              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                {tags.map((t) => (
-                  <span key={t} className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2.5 py-1 text-xs">
-                    {t}
-                    <button onClick={() => setTags((prev) => prev.filter((x) => x !== t))} className="text-neutral-400 hover:text-neutral-700" aria-label="태그 삭제">×</button>
-                  </span>
-                ))}
-                <input
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(); } }}
-                  onBlur={addTag}
-                  placeholder={tags.length >= 8 ? "최대 8개" : "태그 입력 후 Enter"}
-                  disabled={tags.length >= 8}
-                  className="min-w-[8rem] flex-1 rounded-lg border border-neutral-200 px-2.5 py-1 text-xs outline-none focus:border-neutral-900 disabled:bg-neutral-50"
-                />
+            <div className="space-y-5 px-4 py-4">
+              {/* 카테고리 */}
+              <div>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-neutral-800">카테고리</label>
+                  {!category && <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-600">미분류 · SEO 비추천</span>}
+                  {category && <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-600">✓ {category}</span>}
+                </div>
+                {newCatMode ? (
+                  <div className="mt-2 flex items-center gap-2">
+                    <input
+                      value={category}
+                      autoFocus
+                      onChange={(e) => setCategory(e.target.value)}
+                      placeholder="새 카테고리 이름 (예: 강아지 건강)"
+                      className="min-w-0 flex-1 rounded-xl border border-neutral-300 px-3 py-2.5 text-sm outline-none transition focus:border-neutral-900"
+                    />
+                    <button
+                      onClick={() => { setNewCatMode(false); setCategory(""); }}
+                      className="shrink-0 rounded-lg px-2 py-1 text-xs text-neutral-400 transition hover:text-neutral-700"
+                    >
+                      취소
+                    </button>
+                  </div>
+                ) : (
+                  <select
+                    value={category}
+                    onChange={(e) => {
+                      if (e.target.value === "__new__") { setNewCatMode(true); setCategory(""); }
+                      else setCategory(e.target.value);
+                    }}
+                    className="mt-2 w-full rounded-xl border border-neutral-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-neutral-900"
+                  >
+                    <option value="">선택 안 함 (미분류로 발행)</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.name}>{c.name}</option>
+                    ))}
+                    <option value="__new__">＋ 새 카테고리 만들기…</option>
+                  </select>
+                )}
               </div>
 
-              {/* 기존 태그 재사용 추천 — 새 태그 남발 대신 묶어서 SEO 가치↑ */}
-              {existingTags.filter((t) => !tags.includes(t)).length > 0 && tags.length < 8 && (
-                <div className="mt-2">
-                  <p className="text-xs text-neutral-400">이미 쓰던 태그 재사용 (눌러서 추가)</p>
-                  <div className="mt-1 flex flex-wrap gap-1.5">
-                    {existingTags
-                      .filter((t) => !tags.includes(t))
-                      .slice(0, 12)
-                      .map((t) => (
+              <div className="border-t border-neutral-100" />
+
+              {/* 태그 */}
+              <div>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-neutral-800">
+                    태그 <span className="text-xs font-normal text-neutral-400">{tags.length}/8 · 3~5개 권장</span>
+                  </label>
+                  <button
+                    onClick={suggestTags}
+                    disabled={suggesting || tags.length >= 8}
+                    className="flex items-center gap-1 rounded-full border border-neutral-300 px-3 py-1 text-xs font-medium transition hover:border-neutral-900 disabled:opacity-40"
+                  >
+                    {suggesting ? "분석 중…" : "✨ AI 태그 추천"}
+                  </button>
+                </div>
+
+                {/* 입력 + 선택된 칩 (한 박스 안) */}
+                <div className="mt-2 flex flex-wrap items-center gap-1.5 rounded-xl border border-neutral-300 px-2.5 py-2 transition focus-within:border-neutral-900">
+                  {tags.map((t) => (
+                    <span key={t} className="inline-flex items-center gap-1 rounded-full bg-neutral-900 px-2.5 py-1 text-xs font-medium text-white">
+                      {t}
+                      <button onClick={() => setTags((prev) => prev.filter((x) => x !== t))} className="text-white/60 transition hover:text-white" aria-label="태그 삭제">×</button>
+                    </span>
+                  ))}
+                  <input
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(); } }}
+                    onBlur={addTag}
+                    placeholder={tags.length === 0 ? "태그 입력 후 Enter" : tags.length >= 8 ? "최대 8개" : "추가…"}
+                    disabled={tags.length >= 8}
+                    className="min-w-[6rem] flex-1 bg-transparent px-1 py-1 text-sm outline-none disabled:opacity-50"
+                  />
+                </div>
+
+                {/* AI 추천 결과 */}
+                {aiSuggested.filter((t) => !tags.includes(t)).length > 0 && tags.length < 8 && (
+                  <div className="mt-2.5">
+                    <p className="text-xs font-medium text-neutral-500">✨ 이 글 분석 추천</p>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {aiSuggested.filter((t) => !tags.includes(t)).map((t) => (
+                        <button
+                          key={t}
+                          onClick={() => setTags((prev) => (prev.length >= 8 || prev.includes(t) ? prev : [...prev, t]))}
+                          className="rounded-full border border-neutral-900 bg-neutral-900 px-2.5 py-1 text-xs font-medium text-white transition hover:bg-neutral-700"
+                        >
+                          ＋ {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 기존 태그 재사용 — 새 태그 남발 대신 묶어서 SEO 가치↑ */}
+                {existingTags.filter((t) => !tags.includes(t)).length > 0 && tags.length < 8 && (
+                  <div className="mt-2.5">
+                    <p className="text-xs font-medium text-neutral-500">이미 쓰던 태그 재사용 <span className="font-normal text-neutral-400">(권장)</span></p>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {existingTags.filter((t) => !tags.includes(t)).slice(0, 12).map((t) => (
                         <button
                           key={t}
                           onClick={() => setTags((prev) => (prev.length >= 8 || prev.includes(t) ? prev : [...prev, t]))}
@@ -594,9 +657,10 @@ export default function ArticleModal({
                           ＋ {t}
                         </button>
                       ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         )}
