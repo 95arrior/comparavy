@@ -78,11 +78,11 @@ export default function HeroInput({ loggedIn, onStart, pro = false }: { loggedIn
 
   return (
     <div className="mx-auto w-full max-w-xl">
-      <div className={pro ? "ateflo-rainbow-spin rounded-full p-[1.5px]" : ""}>
+      <div>
         <form
           onSubmit={go}
           className={`relative flex w-full items-center gap-2 rounded-full bg-white p-2 shadow-sm transition ${
-            err ? "border border-red-400 focus-within:border-red-500" : pro ? "" : "border border-neutral-300 focus-within:border-neutral-900"
+            err ? "border border-red-400 focus-within:border-red-500" : pro ? "ateflo-rainbow-spin" : "border border-neutral-300 focus-within:border-neutral-900"
           }`}
         >
         <input

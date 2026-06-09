@@ -97,13 +97,26 @@ html {
 @keyframes ateflo-ring-spin {
   to { --ateflo-ring-angle: 360deg; }
 }
+/* mask로 테두리만 도려내는 정석 기법 — 한 요소라 사방 두께가 균일하다 */
 .ateflo-rainbow-spin {
+  position: relative;
+}
+.ateflo-rainbow-spin::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
   background: conic-gradient(
     from var(--ateflo-ring-angle),
     rgba(63, 145, 255, 0.6), rgba(176, 107, 255, 0.6), rgba(255, 77, 109, 0.6),
     rgba(255, 210, 58, 0.6), rgba(47, 208, 122, 0.6), rgba(63, 145, 255, 0.6)
   );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
   animation: ateflo-ring-spin 3.2s linear infinite;
+  pointer-events: none;
 }
 
 /* 폭죽 조각 */
