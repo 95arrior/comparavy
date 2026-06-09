@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
-import ArticleEditor from "./ArticleEditor";
+import ArticleEditor, { type ArticleEditorHandle } from "./ArticleEditor";
 import { PLANS, formatKRW } from "@/lib/plans";
 import type { Article } from "./types";
 
@@ -28,6 +28,20 @@ export default function ArticleModal({
   const [error, setError] = useState<string | null>(null);
   const [autoSavedAt, setAutoSavedAt] = useState<string | null>(null);
   const [showUpsell, setShowUpsell] = useState(false);
+  const [faqAdded, setFaqAdded] = useState(false);
+  const editorRef = useRef<ArticleEditorHandle>(null);
+
+  // FAQ를 본문 맨 아래에 실제 텍스트로 추가 (방문자에게 보이는 자주 묻는 질문 섹션).
+  function addFaqToBody() {
+    if (!article.faq.length) return;
+    const esc = (s: string) =>
+      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const html =
+      `<h2>자주 묻는 질문</h2>` +
+      article.faq.map((f) => `<h3>${esc(f.question)}</h3><p>${esc(f.answer)}</p>`).join("");
+    editorRef.current?.appendContent(html);
+    setFaqAdded(true);
+  }
   const [copied, setCopied] = useState(false);
 
   // 본문을 클립보드로 복사 (서식 유지 HTML + 평문 동시) — 무료 사용자가 블로그에 붙여넣어 쓰는 핵심 기능
@@ -289,6 +303,7 @@ export default function ArticleModal({
 
         <div className="mt-5">
           <ArticleEditor
+            ref={editorRef}
             title={title}
             onTitleChange={setTitle}
             featuredImage={featured}
@@ -309,7 +324,17 @@ export default function ArticleModal({
 
         {article.faq.length > 0 && (
           <div className="mt-6">
-            <p className="text-xs font-medium text-neutral-500">자주 묻는 질문</p>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs font-medium text-neutral-500">자주 묻는 질문</p>
+              <button
+                onClick={addFaqToBody}
+                disabled={faqAdded}
+                className="flex items-center gap-1 rounded-full border border-neutral-300 px-3 py-1 text-xs font-medium transition hover:border-neutral-900 disabled:cursor-default disabled:border-emerald-200 disabled:text-emerald-600 disabled:opacity-100"
+                title="이 질문들을 글 본문 맨 아래에 추가합니다"
+              >
+                {faqAdded ? "✓ 본문에 추가됨" : "＋ 글 맨 아래에 추가"}
+              </button>
+            </div>
             <ul className="mt-2 space-y-2">
               {article.faq.map((f, i) => (
                 <li key={i} className="rounded-xl border border-neutral-200 px-4 py-3 text-sm">

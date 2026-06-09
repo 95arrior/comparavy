@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { useEditor, EditorContent, ReactNodeViewRenderer, NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
 import { mergeAttributes } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
@@ -123,17 +123,14 @@ const FontSize = TextStyle.extend({
   },
 });
 
+/** 부모가 ref로 호출할 수 있는 에디터 명령 */
+export interface ArticleEditorHandle {
+  /** 본문 맨 아래에 HTML을 덧붙이고 그 위치로 스크롤 */
+  appendContent: (html: string) => void;
+}
+
 /* ── 에디터 ───────────────────────────────────────────────── */
-export default function ArticleEditor({
-  initialHtml,
-  onChange,
-  title,
-  onTitleChange,
-  featuredImage,
-  onFeaturedChange,
-  originalHtml,
-  toolbarOffset = "top-0",
-}: {
+const ArticleEditor = forwardRef<ArticleEditorHandle, {
   initialHtml: string;
   onChange: (html: string) => void;
   title?: string;
@@ -143,7 +140,16 @@ export default function ArticleEditor({
   originalHtml?: string;
   /** 스크롤 시 툴바가 고정될 상단 오프셋 (상위 고정 바와 겹치지 않게). 예: "top-[57px]" */
   toolbarOffset?: string;
-}) {
+}>(function ArticleEditor({
+  initialHtml,
+  onChange,
+  title,
+  onTitleChange,
+  featuredImage,
+  onFeaturedChange,
+  originalHtml,
+  toolbarOffset = "top-0",
+}, ref) {
   const fileRef = useRef<HTMLInputElement>(null);
   const featRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef<HTMLTextAreaElement>(null);
@@ -188,6 +194,21 @@ export default function ArticleEditor({
       el.style.height = `${el.scrollHeight}px`;
     }
   }, [title, editor]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      appendContent: (html: string) => {
+        if (!editor) return;
+        editor.chain().focus("end").insertContent(html).run();
+        // 추가된 위치(맨 끝)로 부드럽게 스크롤
+        setTimeout(() => {
+          document.querySelector(".ateflo-article")?.scrollIntoView({ block: "end", behavior: "smooth" });
+        }, 50);
+      },
+    }),
+    [editor],
+  );
 
   if (!editor) return <div className="h-[60vh] rounded-xl border border-neutral-200" />;
 
@@ -366,4 +387,6 @@ export default function ArticleEditor({
       </div>
     </div>
   );
-}
+});
+
+export default ArticleEditor;
