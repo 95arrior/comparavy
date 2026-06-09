@@ -8,6 +8,7 @@ import { isDisposableEmail } from "@/lib/disposableEmail";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { normalizeKeyword, pickVariant, simhash } from "@/lib/diversity";
 import { looksLikeGarbageKeyword, isMeaningfulKeyword } from "@/lib/keywordGuard";
+import { logUsage } from "@/lib/usageLog";
 
 export const maxDuration = 300;
 
@@ -141,6 +142,7 @@ export async function POST(request: Request) {
           { keyword, angle: body.angle, type, tone, maxWords, variantInstruction: variant.instruction },
           (bodyHtml) => send({ type: "body", html: bodyHtml }),
           (title) => send({ type: "title", title }),
+          (u) => { void logUsage({ userId: user.id, model: u.model, kind: "generate", inputTokens: u.inputTokens, outputTokens: u.outputTokens }); },
         );
 
         // 길이 검증 (목표 글자수의 절반 미만이면 너무 짧음)

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { ensureUserRow } from "@/lib/userPlan";
+import { logUsage } from "@/lib/usageLog";
 
 /**
  * 글 내용(제목+본문)을 분석해 SEO 태그 3~5개를 추천한다. (싼 모델 haiku 사용, 프로 전용)
@@ -52,6 +53,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
         },
       ],
     });
+    void logUsage({ userId: user.id, model: "claude-haiku-4-5", kind: "tag_suggest", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
     const text = res.content.find((b) => b.type === "text");
     const raw = text && text.type === "text" ? text.text : "[]";
     const match = raw.match(/\[[\s\S]*\]/);

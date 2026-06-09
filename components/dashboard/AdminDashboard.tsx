@@ -77,7 +77,22 @@ export default function AdminDashboard({ stats }: { stats?: AdminStats | null })
         <Card label="전체 회원" value={stats.usersTotal} hint={stats.usersToday !== null ? `오늘 +${stats.usersToday}` : undefined} />
         <Card label="예상 월매출(MRR)" value={stats.mrr} display={stats.mrr === null ? "—" : formatKRWShort(stats.mrr)} accent hint={stats.proUsers !== null ? `프로 ${stats.proUsers}명` : undefined} />
         <Card label="전환율 무료→프로" value={stats.conversion} suffix="%" hint={stats.freeUsers !== null ? `무료 ${stats.freeUsers} · 프로 ${stats.proUsers}` : undefined} />
-        <Card label="추정 누적 비용" value={stats.estCostKrw} display={stats.estCostKrw === null ? "—" : formatKRWShort(stats.estCostKrw)} hint="글당 추정치 기반" />
+        <Card
+          label={stats.costTotalKrw !== null ? "API 누적 비용" : "추정 누적 비용"}
+          value={null}
+          display={
+            stats.costTotalKrw !== null
+              ? formatKRWShort(stats.costTotalKrw)
+              : stats.estCostKrw === null
+                ? "—"
+                : formatKRWShort(stats.estCostKrw)
+          }
+          hint={
+            stats.costTotalKrw !== null
+              ? `오늘 ${formatKRWShort(stats.costTodayKrw ?? 0)} · 실토큰 집계`
+              : "글당 추정치 (토큰 집계 전)"
+          }
+        />
       </div>
 
       {/* 7일 추이 */}

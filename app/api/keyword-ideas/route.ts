@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { logUsage } from "@/lib/usageLog";
 
 /**
  * 분야/주제를 받아 '바로 글로 쓸 만한' 한국어 블로그 글감 키워드를 추천한다. (로그인 사용자, haiku)
@@ -44,6 +45,7 @@ export async function POST(request: Request) {
         },
       ],
     });
+    void logUsage({ userId: user.id, model: "claude-haiku-4-5", kind: "keyword_ideas", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
     const t = res.content.find((b) => b.type === "text");
     const raw = t && t.type === "text" ? t.text : "[]";
     const match = raw.match(/\[[\s\S]*\]/);

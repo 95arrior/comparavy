@@ -179,6 +179,7 @@ export async function streamArticle(
   input: ArticlePromptInput,
   onBody: (bodyHtmlSoFar: string) => void,
   onTitle?: (titleSoFar: string) => void,
+  onUsage?: (u: { model: string; inputTokens: number; outputTokens: number }) => void,
 ): Promise<GeneratedArticle> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY 가 설정되지 않았습니다.");
@@ -222,6 +223,11 @@ export async function streamArticle(
   }
 
   const final = await stream.finalMessage();
+  onUsage?.({
+    model,
+    inputTokens: final.usage?.input_tokens ?? 0,
+    outputTokens: final.usage?.output_tokens ?? 0,
+  });
   const block = final.content.find((b) => b.type === "tool_use");
   if (!block || block.type !== "tool_use") {
     throw new Error("글 생성에 실패했습니다. 다시 시도해 주세요.");

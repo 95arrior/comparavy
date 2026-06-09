@@ -1,5 +1,6 @@
 import { createSupabaseAdminClient } from "./supabase-server";
 import { PLANS } from "./plans";
+import { costKrw } from "./usageLog";
 
 export type AdminStats = {
   usersTotal: number | null;
@@ -21,8 +22,12 @@ export type AdminStats = {
   wpConnectRate: number | null;
   /** 발행률 % (발행/전체 글) */
   publishRate: number | null;
-  /** 추정 누적 생성 비용(원) — 토큰 미집계, 글당 평균 추정치 기반 */
+  /** 추정 누적 생성 비용(원) — 토큰 미집계분 대비 fallback */
   estCostKrw: number | null;
+  /** 실제 토큰 기반 누적 비용(원) — usage_log 집계. null이면 집계 전 */
+  costTotalKrw: number | null;
+  /** 실제 토큰 기반 오늘 비용(원) */
+  costTodayKrw: number | null;
   /** 최근 7일 일별 가입/글 (KST) */
   dailyUsers: { date: string; count: number }[];
   dailyArticles: { date: string; count: number }[];
@@ -110,6 +115,29 @@ export async function getAdminStats(): Promise<AdminStats> {
   const dailyUsers = bucket(uRows.data as { created_at: string }[] | null);
   const dailyArticles = bucket(aRows.data as { created_at: string }[] | null);
 
+  // 실제 토큰 기반 비용 (usage_log). 테이블/로그 없으면 null → 추정치로 표시
+  let costTotalKrw: number | null = null;
+  let costTodayKrw: number | null = null;
+  try {
+    const { data: usage, error } = await admin
+      .from("usage_log")
+      .select("model,input_tokens,output_tokens,created_at")
+      .limit(50000);
+    if (!error && usage) {
+      let total = 0;
+      let today = 0;
+      for (const u of usage as { model: string; input_tokens: number; output_tokens: number; created_at: string }[]) {
+        const c = costKrw(u.model, u.input_tokens || 0, u.output_tokens || 0);
+        total += c;
+        if (u.created_at >= todayIso) today += c;
+      }
+      costTotalKrw = Math.round(total);
+      costTodayKrw = Math.round(today);
+    }
+  } catch {
+    // usage_log 없음 → null 유지
+  }
+
   // 최근 가입 (이메일은 auth에 있어 admin API로)
   let recentUsers: { email: string; created_at: string }[] = [];
   try {
@@ -137,5 +165,5 @@ export async function getAdminStats(): Promise<AdminStats> {
     created_at: a.created_at ?? "",
   }));
 
-  return { usersTotal, usersToday, proUsers, freeUsers, articlesTotal, articlesToday, publishedArticles, lockedArticles, wpConnections, mrr, conversion, articlesPerUser, wpConnectRate, publishRate, estCostKrw, dailyUsers, dailyArticles, recentUsers, recentArticles };
+  return { usersTotal, usersToday, proUsers, freeUsers, articlesTotal, articlesToday, publishedArticles, lockedArticles, wpConnections, mrr, conversion, articlesPerUser, wpConnectRate, publishRate, estCostKrw, costTotalKrw, costTodayKrw, dailyUsers, dailyArticles, recentUsers, recentArticles };
 }
