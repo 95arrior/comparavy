@@ -329,7 +329,7 @@ export default function ArticleModal({
 
       {/* 저장 완료 등 토스트 — 화면 상단 가운데에 잠깐 떴다 사라짐 */}
       {toast && (
-        <div className="ateflo-toast pointer-events-none fixed left-1/2 top-5 z-50 -translate-x-1/2 rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white shadow-lg">
+        <div className="ateflo-toast pointer-events-none fixed left-1/2 top-5 z-50 -translate-x-1/2 rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white shadow-lg md:left-[calc(50%+8rem)]">
           {toast}
         </div>
       )}

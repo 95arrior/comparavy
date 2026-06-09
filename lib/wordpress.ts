@@ -55,6 +55,23 @@ export interface PublishInput extends WordPressCredentials {
   postId?: number | null;
 }
 
+/**
+ * 발행 본문의 모든 <img>를 편집 화면과 똑같이 보이도록 제약한다.
+ * - 거대한 원본 크기를 강제하는 width/height 속성 제거
+ * - max-width:100%; height:auto 로 본문 폭에 맞춤 (가로 스크롤·레이아웃 깨짐 방지)
+ */
+function constrainImages(html: string): string {
+  return html.replace(/<img\b([^>]*)>/gi, (_m, attrsRaw: string) => {
+    let attrs = attrsRaw.replace(/\s(width|height)\s*=\s*("[^"]*"|'[^']*'|\d+)/gi, "");
+    const fit = "max-width:100%;height:auto;";
+    if (/style\s*=/.test(attrs)) {
+      attrs = attrs.replace(/style\s*=\s*"([^"]*)"/i, (_s, css: string) => `style="${css.replace(/;?\s*$/, ";")}${fit}"`);
+      return `<img${attrs}>`;
+    }
+    return `<img${attrs} style="${fit}">`;
+  });
+}
+
 function jsonLd(obj: unknown): string {
   return `<script type="application/ld+json">${JSON.stringify(obj).replace(/</g, "\\u003c")}</script>`;
 }
@@ -137,6 +154,8 @@ export async function publishPost(input: PublishInput): Promise<PublishResult> {
   let contentHtml = await uploadDataImages(input.contentHtml, input);
   // 워드프레스가 글 제목을 H1으로 렌더하므로, 본문의 H1은 H2로 강등 (H1 중복 방지)
   contentHtml = contentHtml.replace(/<h1(\s[^>]*)?>/gi, "<h2>").replace(/<\/h1>/gi, "</h2>");
+  // 이미지가 본문 폭을 넘어 거대해지거나 가로 스크롤이 생기지 않게 제약 → 편집 화면과 동일하게 보이도록(WYSIWYG)
+  contentHtml = constrainImages(contentHtml);
   const body: Record<string, unknown> = {
     title: input.title,
     // 본문 + 구조화 데이터(JSON-LD) → 검색 리치 결과

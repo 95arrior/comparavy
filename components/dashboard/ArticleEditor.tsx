@@ -205,11 +205,10 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
     () => ({
       appendContent: (html: string) => {
         if (!editor) return;
-        editor.chain().focus("end").insertContent(html).run();
-        // 추가된 위치(맨 끝)로 부드럽게 스크롤
-        setTimeout(() => {
-          document.querySelector(".ateflo-article")?.scrollIntoView({ block: "end", behavior: "smooth" });
-        }, 50);
+        // 본문 맨 끝에 추가하되 포커스/스크롤은 옮기지 않는다 (현재 보던 위치 그대로 유지)
+        const y = window.scrollY;
+        editor.chain().insertContentAt(editor.state.doc.content.size, html).run();
+        requestAnimationFrame(() => window.scrollTo(0, y));
       },
       getHTML: () => editor?.getHTML() ?? null,
       setHTML: (html: string) => {
@@ -317,7 +316,7 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
   return (
     <div className="rounded-xl border border-neutral-200 bg-white">
       {uploading && (
-        <div className="fixed left-1/2 top-5 z-50 -translate-x-1/2 rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white shadow-lg">
+        <div className="fixed left-1/2 top-5 z-50 -translate-x-1/2 rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white shadow-lg md:left-[calc(50%+8rem)]">
           이미지 업로드 중…
         </div>
       )}
