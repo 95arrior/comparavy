@@ -51,6 +51,20 @@ export default function DashboardClient(props: DashboardProps) {
   const [busy, setBusy] = useState(false);
   const [page, setPage] = useState<null | "news" | "guide">(null);
   const [unreadNews, setUnreadNews] = useState(false);
+  // 워드프레스 카테고리·태그를 미리 불러둔다 → 글 편집 모달에서 드롭다운이 즉시 뜨도록(매번 새로 가져오는 1초 지연 제거)
+  const [wpCategories, setWpCategories] = useState<{ id: number; name: string }[]>([]);
+  const [wpTags, setWpTags] = useState<string[]>([]);
+  useEffect(() => {
+    if (!wpSiteUrl || props.plan !== "pro") return;
+    let alive = true;
+    fetch("/api/wordpress/categories").then((r) => r.json()).then((d) => {
+      if (alive && Array.isArray(d.categories)) setWpCategories(d.categories);
+    }).catch(() => {});
+    fetch("/api/wordpress/tags").then((r) => r.json()).then((d) => {
+      if (alive && Array.isArray(d.tags)) setWpTags(d.tags);
+    }).catch(() => {});
+    return () => { alive = false; };
+  }, [wpSiteUrl, props.plan]);
 
   // 메인에서 키워드+유형+문체를 받고 왔으면, 바로 작성화면을 띄운다(뎁스 축소)
   useEffect(() => {
@@ -377,6 +391,9 @@ export default function DashboardClient(props: DashboardProps) {
             wpConnected={Boolean(wpSiteUrl)}
             canPublish={props.plan === "pro"}
             canEdit={props.plan === "pro"}
+            wpCategories={wpCategories}
+            wpTags={wpTags}
+            onCategoryCreated={(c) => setWpCategories((prev) => (prev.some((x) => x.name === c.name) ? prev : [c, ...prev]))}
             onClose={() => setSelected(null)}
             onUpdated={onUpdated}
           />

@@ -11,6 +11,9 @@ export default function ArticleModal({
   wpConnected,
   canPublish,
   canEdit,
+  wpCategories,
+  wpTags,
+  onCategoryCreated,
   onClose,
   onUpdated,
 }: {
@@ -19,6 +22,10 @@ export default function ArticleModal({
   canPublish?: boolean;
   /** 편집(수정·이미지 삽입)은 프로 전용. 무료는 읽기전용 + 복사만. */
   canEdit?: boolean;
+  /** 미리 불러온 워드프레스 카테고리·태그 (드롭다운 즉시 표시용) */
+  wpCategories?: { id: number; name: string }[];
+  wpTags?: string[];
+  onCategoryCreated?: (c: { id: number; name: string }) => void;
   onClose: () => void;
   onUpdated: (a: Article) => void;
 }) {
@@ -37,7 +44,7 @@ export default function ArticleModal({
   const FAQ_HEADING = "자주 묻는 질문";
 
   // 발행 설정: 카테고리·태그
-  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>(wpCategories ?? []);
   const [category, setCategory] = useState(article.category ?? "");
   const [newCatMode, setNewCatMode] = useState(false);
   const [newCatInput, setNewCatInput] = useState("");
@@ -64,6 +71,7 @@ export default function ArticleModal({
       const data = await res.json();
       if (res.ok && data.id) {
         setCategories((prev) => [{ id: data.id, name: data.name }, ...prev.filter((c) => c.name !== data.name)]);
+        onCategoryCreated?.({ id: data.id, name: data.name });
         setCategory(data.name);
         setNewCatInput("");
         setNewCatMode(false);
@@ -78,28 +86,22 @@ export default function ArticleModal({
     }
   }
   const [tags, setTags] = useState<string[]>(Array.isArray(article.tags) ? article.tags : []);
-  const [existingTags, setExistingTags] = useState<string[]>([]);
+  const [existingTags, setExistingTags] = useState<string[]>(wpTags ?? []);
 
-  // 연결된 워드프레스의 기존 카테고리·태그 불러오기 (발행 가능 = 프로 + 연결됐을 때만)
+  // 카테고리·태그는 대시보드에서 미리 불러온 값을 props로 받아 즉시 표시한다.
+  // (대시보드 로딩이 모달 오픈보다 늦게 끝난 경우에도 반영되도록, 로컬에서 만든 항목은 보존하며 병합)
   useEffect(() => {
-    if (!canEdit || !wpConnected) return;
-    let alive = true;
-    fetch("/api/wordpress/categories")
-      .then((r) => r.json())
-      .then((d) => {
-        if (alive && Array.isArray(d.categories)) setCategories(d.categories);
-      })
-      .catch(() => {});
-    fetch("/api/wordpress/tags")
-      .then((r) => r.json())
-      .then((d) => {
-        if (alive && Array.isArray(d.tags)) setExistingTags(d.tags);
-      })
-      .catch(() => {});
-    return () => {
-      alive = false;
-    };
-  }, [canEdit, wpConnected]);
+    if (wpCategories && wpCategories.length) {
+      setCategories((prev) => {
+        const merged = [...wpCategories];
+        for (const c of prev) if (!merged.some((m) => m.name === c.name)) merged.push(c);
+        return merged;
+      });
+    }
+  }, [wpCategories]);
+  useEffect(() => {
+    if (wpTags && wpTags.length) setExistingTags(wpTags);
+  }, [wpTags]);
 
   const [aiSuggested, setAiSuggested] = useState<string[]>([]);
   const [suggesting, setSuggesting] = useState(false);
@@ -623,7 +625,7 @@ export default function ArticleModal({
               <p className="mt-1 text-[13px] leading-relaxed text-neutral-400">카테고리와 태그를 정하면 검색에 더 잘 잡혀요.</p>
 
               {/* 카테고리 */}
-              <div className="mt-5">
+              <div className={`mt-5 ${catOpen ? "relative z-50" : ""}`}>
                 <label className="text-[13px] font-medium text-neutral-700">카테고리</label>
                 {newCatMode ? (
                   <div className="ateflo-fade-in mt-2 flex items-center gap-2">
