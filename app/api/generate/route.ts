@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
+import { createSupabaseServerClient, createSupabaseAdminClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { ensureUserRow, rolloverIfNeeded } from "@/lib/userPlan";
 import { PLANS } from "@/lib/plans";
 import { streamArticle } from "@/lib/generateArticle";
@@ -68,10 +68,24 @@ export async function POST(request: Request) {
   let row = await ensureUserRow(supabase, user.id, user.email);
   row = await rolloverIfNeeded(supabase, row);
 
+  // 증가/카운트는 서비스롤로 (유저 RLS로 막히던 문제 방지)
+  const adminDb = createSupabaseAdminClient();
+  // 무료(평생 한도)는 카운터에만 의존하지 않고 '실제 생성한 글 수'와 함께 큰 값을 써서 한도가 새지 않게 막는다.
+  // (프로는 월마다 카운터가 리셋되므로 전체 글 수로 막으면 안 됨 → 카운터 그대로 사용)
+  let used = row.articles_used ?? 0;
+  if (row.plan === "free") {
+    const { count: realUsed } = await adminDb
+      .from("articles")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("locked", false);
+    used = Math.max(used, realUsed ?? 0);
+  }
+
   // 한도 초과 처리: 프로는 차단. 무료는 결제 유도용 "미리보기(티저)"를 단 1개만 허용한다.
   // (모델 호출은 평소와 동일하게 1회 — 1글=1콜 불변식 유지, 추가 비용은 무료 1편 분량으로 제한)
   let teaser = false;
-  if (row.articles_used >= row.articles_limit) {
+  if (used >= row.articles_limit) {
     if (row.plan !== "free") {
       return NextResponse.json(
         { error: "이번 달 생성 한도를 모두 사용했습니다." },
@@ -99,7 +113,6 @@ export async function POST(request: Request) {
   const maxWords = teaser ? PLANS.pro.maxWords : PLANS[row.plan].maxWords;
   const type = body.type ?? "howto";
   const tone = body.tone ?? "friendly";
-  const usedSoFar = row.articles_used;
 
   // P1-C 다양성: 이미 쓴 구조를 피해 새 구조를 고른다 (생성 전, 모델 호출 0 추가).
   const keywordNorm = normalizeKeyword(keyword);
@@ -178,14 +191,15 @@ export async function POST(request: Request) {
         }
 
         // 티저(미리보기)는 사용량을 올리지 않는다 (정식 글이 아니라 결제 유도용 잠금 글).
+        // 증가는 서비스롤(adminDb)로 — 유저 권한(RLS) 때문에 카운터가 안 올라가던 버그 방지.
         if (!teaser) {
-          await supabase
+          await adminDb
             .from("users")
-            .update({ articles_used: usedSoFar + 1 })
+            .update({ articles_used: used + 1 })
             .eq("id", user.id);
         } else {
-          // 티저를 만들었음을 영구 기록 → 글이 삭제·만료돼도 재생성 차단 (컬럼 없으면 무시됨)
-          await supabase.from("users").update({ teaser_used: true }).eq("id", user.id);
+          // 티저를 만들었음을 영구 기록 → 글이 삭제·만료돼도 재생성 차단 (컬럼 없으면 에러는 무시)
+          await adminDb.from("users").update({ teaser_used: true }).eq("id", user.id);
         }
 
         // 다양성 원장 기록 → 다음 생성 때 이 구조를 피한다
