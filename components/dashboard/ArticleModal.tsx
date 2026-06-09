@@ -67,6 +67,7 @@ export default function ArticleModal({
 
   const [aiSuggested, setAiSuggested] = useState<string[]>([]);
   const [suggesting, setSuggesting] = useState(false);
+  const [aiUsed, setAiUsed] = useState(false);
 
   function addTag() {
     const v = tagInput.trim().replace(/^#/, "");
@@ -78,14 +79,16 @@ export default function ArticleModal({
     setTagInput("");
   }
 
-  // 이 글 내용을 분석해 태그 추천 (기존 글 포함)
+  // 이 글 내용을 분석해 태그 추천 (기존 글 포함). 크레딧 절약 위해 글당 1회만 호출.
   async function suggestTags() {
+    if (aiUsed || suggesting) return;
     setSuggesting(true);
     try {
       const res = await fetch(`/api/articles/${article.id}/suggest-tags`, { method: "POST" });
       const data = await res.json();
       if (res.ok && Array.isArray(data.tags)) {
-        setAiSuggested(data.tags.filter((t: string) => !tags.includes(t)));
+        setAiSuggested(data.tags);
+        setAiUsed(true);
         if (!data.tags.length) setToast("추천할 태그를 찾지 못했어요.");
       } else {
         setToast(data.error ?? "태그 추천에 실패했어요.");
@@ -537,24 +540,17 @@ export default function ArticleModal({
         </div>
 
         {/* 발행 설정: 카테고리 · 태그 (SEO) */}
-        {wpConnected && (
-          <div className="mt-4 overflow-hidden rounded-2xl border border-neutral-200 bg-white">
-            <div className="flex items-center gap-2 border-b border-neutral-100 bg-neutral-50/70 px-4 py-3">
-              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-neutral-900 text-xs text-white">W</span>
-              <div>
-                <p className="text-sm font-semibold leading-none">발행 설정</p>
-                <p className="mt-0.5 text-xs text-neutral-400">워드프레스 분류 · 검색 노출(SEO)</p>
-              </div>
-            </div>
+        {wpConnected && (() => {
+          // 추천(눌러서 추가)은 한 곳으로 모은다: AI 추천 먼저, 그다음 이미 쓰던 태그. 이미 담긴 건 제외·중복 제거.
+          const suggestions = Array.from(new Set([...aiSuggested, ...existingTags])).filter((t) => !tags.includes(t));
+          return (
+            <div className="mt-4 rounded-2xl border border-neutral-200 bg-white p-5">
+              <p className="text-[15px] font-semibold tracking-tight">발행 설정</p>
+              <p className="mt-1 text-[13px] leading-relaxed text-neutral-400">카테고리와 태그를 정하면 검색에 더 잘 잡혀요.</p>
 
-            <div className="space-y-5 px-4 py-4">
               {/* 카테고리 */}
-              <div>
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-neutral-800">카테고리</label>
-                  {!category && <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-600">미분류 · SEO 비추천</span>}
-                  {category && <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-600">✓ {category}</span>}
-                </div>
+              <div className="mt-5">
+                <label className="text-[13px] font-medium text-neutral-700">카테고리</label>
                 {newCatMode ? (
                   <div className="mt-2 flex items-center gap-2">
                     <input
@@ -562,56 +558,64 @@ export default function ArticleModal({
                       autoFocus
                       onChange={(e) => setCategory(e.target.value)}
                       placeholder="새 카테고리 이름 (예: 강아지 건강)"
-                      className="min-w-0 flex-1 rounded-xl border border-neutral-300 px-3 py-2.5 text-sm outline-none transition focus:border-neutral-900"
+                      className="min-w-0 flex-1 rounded-xl border border-neutral-300 px-3.5 py-2.5 text-sm outline-none transition focus:border-neutral-900"
                     />
                     <button
                       onClick={() => { setNewCatMode(false); setCategory(""); }}
-                      className="shrink-0 rounded-lg px-2 py-1 text-xs text-neutral-400 transition hover:text-neutral-700"
+                      className="shrink-0 rounded-lg px-2 py-1.5 text-[13px] text-neutral-400 transition hover:text-neutral-700"
                     >
                       취소
                     </button>
                   </div>
                 ) : (
-                  <select
-                    value={category}
-                    onChange={(e) => {
-                      if (e.target.value === "__new__") { setNewCatMode(true); setCategory(""); }
-                      else setCategory(e.target.value);
-                    }}
-                    className="mt-2 w-full rounded-xl border border-neutral-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-neutral-900"
-                  >
-                    <option value="">선택 안 함 (미분류로 발행)</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.name}>{c.name}</option>
-                    ))}
-                    <option value="__new__">＋ 새 카테고리 만들기…</option>
-                  </select>
+                  <>
+                    <select
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      className="mt-2 w-full appearance-none rounded-xl border border-neutral-300 bg-white bg-[length:1.1rem] bg-[right_0.9rem_center] bg-no-repeat px-3.5 py-2.5 text-sm outline-none transition focus:border-neutral-900"
+                      style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23999' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\")" }}
+                    >
+                      <option value="">분류 선택 안 함</option>
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.name}>{c.name}</option>
+                      ))}
+                    </select>
+                    <div className="mt-2 flex items-center justify-between gap-3">
+                      <p className={`text-xs ${category ? "text-emerald-600" : "text-amber-600"}`}>
+                        {category ? `✓ ‘${category}’ 분류로 발행돼요` : "미선택 시 ‘미분류’로 올라가요. 정해두면 SEO에 유리해요."}
+                      </p>
+                      <button
+                        onClick={() => { setNewCatMode(true); setCategory(""); }}
+                        className="shrink-0 text-xs font-medium text-neutral-500 transition hover:text-neutral-900"
+                      >
+                        ＋ 새 카테고리
+                      </button>
+                    </div>
+                  </>
                 )}
               </div>
 
-              <div className="border-t border-neutral-100" />
+              <div className="my-5 h-px bg-neutral-100" />
 
               {/* 태그 */}
               <div>
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-neutral-800">
-                    태그 <span className="text-xs font-normal text-neutral-400">{tags.length}/8 · 3~5개 권장</span>
-                  </label>
+                <div className="flex items-center justify-between gap-3">
+                  <label className="text-[13px] font-medium text-neutral-700">태그</label>
                   <button
                     onClick={suggestTags}
-                    disabled={suggesting || tags.length >= 8}
-                    className="flex items-center gap-1 rounded-full border border-neutral-300 px-3 py-1 text-xs font-medium transition hover:border-neutral-900 disabled:opacity-40"
+                    disabled={suggesting || aiUsed || tags.length >= 8}
+                    className="flex items-center gap-1 rounded-full border border-neutral-300 px-3 py-1.5 text-xs font-medium transition hover:border-neutral-900 disabled:border-neutral-200 disabled:text-neutral-300"
                   >
-                    {suggesting ? "분석 중…" : "✨ AI 태그 추천"}
+                    {suggesting ? "분석 중…" : aiUsed ? "✓ 추천 완료" : "✨ AI 태그 추천"}
                   </button>
                 </div>
 
-                {/* 입력 + 선택된 칩 (한 박스 안) */}
-                <div className="mt-2 flex flex-wrap items-center gap-1.5 rounded-xl border border-neutral-300 px-2.5 py-2 transition focus-within:border-neutral-900">
+                {/* 태그를 모으는 단 하나의 곳: 선택된 칩 + 직접 입력 (추천을 누르면 여기로 들어옴) */}
+                <div className="mt-2 flex flex-wrap items-center gap-1.5 rounded-xl border border-neutral-300 px-3 py-2.5 transition focus-within:border-neutral-900">
                   {tags.map((t) => (
-                    <span key={t} className="inline-flex items-center gap-1 rounded-full bg-neutral-900 px-2.5 py-1 text-xs font-medium text-white">
+                    <span key={t} className="inline-flex items-center gap-1 rounded-full bg-neutral-100 py-1 pl-2.5 pr-1.5 text-xs font-medium text-neutral-800">
                       {t}
-                      <button onClick={() => setTags((prev) => prev.filter((x) => x !== t))} className="text-white/60 transition hover:text-white" aria-label="태그 삭제">×</button>
+                      <button onClick={() => setTags((prev) => prev.filter((x) => x !== t))} className="flex h-4 w-4 items-center justify-center rounded-full text-neutral-400 transition hover:bg-neutral-200 hover:text-neutral-700" aria-label="태그 삭제">×</button>
                     </span>
                   ))}
                   <input
@@ -619,51 +623,43 @@ export default function ArticleModal({
                     onChange={(e) => setTagInput(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(); } }}
                     onBlur={addTag}
-                    placeholder={tags.length === 0 ? "태그 입력 후 Enter" : tags.length >= 8 ? "최대 8개" : "추가…"}
+                    placeholder={tags.length === 0 ? "태그를 입력하고 Enter" : tags.length >= 8 ? "최대 8개" : "추가…"}
                     disabled={tags.length >= 8}
-                    className="min-w-[6rem] flex-1 bg-transparent px-1 py-1 text-sm outline-none disabled:opacity-50"
+                    className="min-w-[6rem] flex-1 bg-transparent px-1 py-0.5 text-sm outline-none disabled:opacity-50"
                   />
                 </div>
+                <p className="mt-1.5 text-xs text-neutral-400">{tags.length}/8개 · 3~5개를 권장해요</p>
 
-                {/* AI 추천 결과 */}
-                {aiSuggested.filter((t) => !tags.includes(t)).length > 0 && tags.length < 8 && (
-                  <div className="mt-2.5">
-                    <p className="text-xs font-medium text-neutral-500">✨ 이 글 분석 추천</p>
-                    <div className="mt-1.5 flex flex-wrap gap-1.5">
-                      {aiSuggested.filter((t) => !tags.includes(t)).map((t) => (
-                        <button
-                          key={t}
-                          onClick={() => setTags((prev) => (prev.length >= 8 || prev.includes(t) ? prev : [...prev, t]))}
-                          className="rounded-full border border-neutral-900 bg-neutral-900 px-2.5 py-1 text-xs font-medium text-white transition hover:bg-neutral-700"
-                        >
-                          ＋ {t}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* 기존 태그 재사용 — 새 태그 남발 대신 묶어서 SEO 가치↑ */}
-                {existingTags.filter((t) => !tags.includes(t)).length > 0 && tags.length < 8 && (
-                  <div className="mt-2.5">
-                    <p className="text-xs font-medium text-neutral-500">이미 쓰던 태그 재사용 <span className="font-normal text-neutral-400">(권장)</span></p>
-                    <div className="mt-1.5 flex flex-wrap gap-1.5">
-                      {existingTags.filter((t) => !tags.includes(t)).slice(0, 12).map((t) => (
-                        <button
-                          key={t}
-                          onClick={() => setTags((prev) => (prev.length >= 8 || prev.includes(t) ? prev : [...prev, t]))}
-                          className="rounded-full border border-dashed border-neutral-300 px-2.5 py-1 text-xs text-neutral-500 transition hover:border-neutral-900 hover:text-neutral-900"
-                        >
-                          ＋ {t}
-                        </button>
-                      ))}
+                {/* 추천 (눌러서 위 칸에 추가) — AI + 기존 태그를 한 곳에 */}
+                {suggestions.length > 0 && tags.length < 8 && (
+                  <div className="mt-3">
+                    <p className="text-xs font-medium text-neutral-500">
+                      {aiUsed ? "추천 태그 · 눌러서 추가" : "이미 쓰던 태그 · 눌러서 추가"}
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {suggestions.slice(0, 14).map((t) => {
+                        const fromAi = aiSuggested.includes(t);
+                        return (
+                          <button
+                            key={t}
+                            onClick={() => setTags((prev) => (prev.length >= 8 || prev.includes(t) ? prev : [...prev, t]))}
+                            className={`rounded-full border px-2.5 py-1 text-xs transition ${
+                              fromAi
+                                ? "border-neutral-900/15 bg-neutral-900/[0.04] font-medium text-neutral-800 hover:border-neutral-900"
+                                : "border-dashed border-neutral-300 text-neutral-500 hover:border-neutral-900 hover:text-neutral-900"
+                            }`}
+                          >
+                            {fromAi && <span className="mr-0.5">✨</span>}＋ {t}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         <div className="mt-5 flex items-start gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-2.5 text-xs leading-relaxed text-neutral-500">
           <span aria-hidden className="mt-px">💡</span>
