@@ -9,7 +9,7 @@ export const BUSINESS = {
   mailOrder: "", // 통신판매업 신고번호 — '더디→디버깅히어로즈' 상호/도메인 변경신고 후 입력. 비우면 '신고 예정'
   address: "경기도 광주시 초월읍 산이길51번길 33-47 106동 301호",
   email: "cs@ateflo.com",
-  phone: "010-4015-6751",
+  phone: "070-8983-9559",
   privacyOfficer: "박신우",
 } as const;
 
