@@ -51,6 +51,8 @@ export interface PublishInput extends WordPressCredentials {
   slug?: string;
   /** 대표 이미지(선택, data:base64) → WP featured_media */
   featuredImage?: string | null;
+  /** 이미 발행한 글의 워드프레스 글 ID. 있으면 새 글을 만들지 않고 그 글을 수정(재발행)한다 → 중복 글 방지 */
+  postId?: number | null;
 }
 
 function jsonLd(obj: unknown): string {
@@ -152,14 +154,27 @@ export async function publishPost(input: PublishInput): Promise<PublishResult> {
     body.date = input.date;
   }
 
-  const res = await fetch(`${base}/wp-json/wp/v2/posts`, {
-    method: "POST",
-    headers: {
-      Authorization: authHeader(input),
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
+  // 이미 발행한 글이면(postId 있음) 그 글을 수정 → 같은 글을 또 만드는 중복 발행 방지(재발행).
+  // 워드프레스에서 그 글이 삭제됐으면(404) 새 글로 생성하도록 폴백한다.
+  const create = () =>
+    fetch(`${base}/wp-json/wp/v2/posts`, {
+      method: "POST",
+      headers: { Authorization: authHeader(input), "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+  let res: Response;
+  if (input.postId) {
+    res = await fetch(`${base}/wp-json/wp/v2/posts/${input.postId}`, {
+      method: "POST",
+      headers: { Authorization: authHeader(input), "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    // 워드프레스 쪽에서 글이 삭제됨 → 새 글로 발행
+    if (res.status === 404) res = await create();
+  } else {
+    res = await create();
+  }
 
   if (!res.ok) {
     let message = `발행 실패 (${res.status}).`;

@@ -76,6 +76,8 @@ export async function POST(request: Request) {
         ? article.keyword.trim().toLowerCase().replace(/\s+/g, "-")
         : undefined,
       featuredImage: article.featured_image ?? undefined,
+      // 이미 발행한 글이면 그 워드프레스 글을 수정(재발행) → 중복 글 방지
+      postId: article.wp_post_id ?? undefined,
       status,
       date,
     });
@@ -89,7 +91,7 @@ export async function POST(request: Request) {
       })
       .eq("id", articleId);
 
-    return NextResponse.json({ ok: true, link: result.link });
+    return NextResponse.json({ ok: true, link: result.link, postId: result.id });
   } catch (err) {
     const message = err instanceof Error ? err.message : "발행 중 오류가 발생했습니다.";
     return NextResponse.json({ error: message }, { status: 502 });

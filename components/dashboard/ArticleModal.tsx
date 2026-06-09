@@ -114,6 +114,7 @@ export default function ArticleModal({
       setError("먼저 워드프레스 탭에서 사이트를 연결해 주세요.");
       return;
     }
+    const isRepublish = Boolean(article.wp_post_id);
     setPublishing(true);
     setError(null);
     setMessage(null);
@@ -134,8 +135,16 @@ export default function ArticleModal({
         body_html: bodyHtml,
         status: status === "publish" ? "published" : "draft",
         wp_link: data.link ?? article.wp_link,
+        // 발행된 워드프레스 글 ID 저장 → 다음 발행은 같은 글을 수정(재발행), 버튼도 "재발행"으로 전환
+        wp_post_id: data.postId ?? article.wp_post_id,
       });
-      setMessage(status === "publish" ? "워드프레스에 발행했습니다." : "워드프레스에 초안으로 저장했습니다.");
+      setMessage(
+        status === "publish"
+          ? isRepublish
+            ? "수정한 내용을 워드프레스에 다시 반영했어요."
+            : "워드프레스에 발행했습니다."
+          : "워드프레스에 초안으로 저장했습니다.",
+      );
     } finally {
       setPublishing(false);
     }
@@ -217,7 +226,13 @@ export default function ArticleModal({
               disabled={publishing}
               className="rounded-full bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
             >
-              {publishing ? "처리 중…" : "워드프레스에 발행"}
+              {publishing
+                ? article.wp_post_id
+                  ? "재발행 중…"
+                  : "처리 중…"
+                : article.wp_post_id
+                  ? "재발행"
+                  : "워드프레스에 발행"}
             </button>
           </div>
         </div>
