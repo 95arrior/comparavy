@@ -39,6 +39,9 @@ export type AdminStats = {
   dailyArticles: { date: string; count: number }[];
   recentUsers: { email: string; created_at: string }[];
   recentArticles: { title: string; status: string; locked: boolean; created_at: string }[];
+  /** 사전 등록(웨이트리스트) 총원 + 목록(최신순) */
+  waitlistCount: number | null;
+  waitlist: { email: string; created_at: string; source: string | null }[];
 };
 
 // 글 1편당 추정 생성비(원). 토큰 미집계라 대략치 — 실제 집계 붙기 전 모니터링용.
@@ -195,5 +198,22 @@ export async function getAdminStats(): Promise<AdminStats> {
     created_at: a.created_at ?? "",
   }));
 
-  return { usersTotal, usersToday, proUsers, freeUsers, articlesTotal, articlesToday, publishedArticles, lockedArticles, wpConnections, mrr, conversion, articlesPerUser, wpConnectRate, publishRate, estCostKrw, costTotalKrw, costTodayKrw, costByKind, usersWithArticles, usersWithPublished, dailyUsers, dailyArticles, recentUsers, recentArticles };
+  // 사전 등록(웨이트리스트) — 총원 + 목록(최신순). 테이블 없으면 무시.
+  let waitlistCount: number | null = null;
+  let waitlist: { email: string; created_at: string; source: string | null }[] = [];
+  try {
+    waitlistCount = await count(admin, "waitlist");
+    const { data: wl } = await admin
+      .from("waitlist")
+      .select("email,created_at,source")
+      .order("created_at", { ascending: false })
+      .limit(500);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    waitlist = (wl ?? []).map((w: any) => ({ email: w.email ?? "", created_at: w.created_at ?? "", source: w.source ?? null }));
+  } catch {
+    waitlistCount = null;
+    waitlist = [];
+  }
+
+  return { usersTotal, usersToday, proUsers, freeUsers, articlesTotal, articlesToday, publishedArticles, lockedArticles, wpConnections, mrr, conversion, articlesPerUser, wpConnectRate, publishRate, estCostKrw, costTotalKrw, costTodayKrw, costByKind, usersWithArticles, usersWithPublished, dailyUsers, dailyArticles, recentUsers, recentArticles, waitlistCount, waitlist };
 }

@@ -1,4 +1,8 @@
+"use client";
+
+import { useState } from "react";
 import type { AdminStats } from "@/lib/adminStats";
+import Segmented from "./Segmented";
 
 const BRAND = "#3f91ff";
 const STATUS_KO: Record<string, string> = { draft: "초안", published: "발행됨", future: "예약됨" };
@@ -165,7 +169,50 @@ function CostBreakdown({ stats }: { stats: AdminStats }) {
   );
 }
 
+function WaitlistView({ stats }: { stats: AdminStats }) {
+  const [copied, setCopied] = useState(false);
+  const list = stats.waitlist ?? [];
+  function copyAll() {
+    const text = list.map((w) => w.email).join("\n");
+    navigator.clipboard?.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    });
+  }
+  return (
+    <Section title="사전 등록 대기자" desc="출시 전 사전 등록한 이메일 (최신순). 오픈하면 이 목록으로 안내하면 돼요.">
+      <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-4 sm:p-5">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-2xl font-bold tracking-tight">{(stats.waitlistCount ?? list.length).toLocaleString()}<span className="ml-1 text-sm font-medium text-neutral-400">명</span></p>
+          {list.length > 0 && (
+            <button onClick={copyAll} className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-600 transition active:scale-95 hover:border-neutral-900">
+              {copied ? "복사됨 ✓" : "이메일 전체 복사"}
+            </button>
+          )}
+        </div>
+        <ul className="mt-4 divide-y divide-neutral-100">
+          {list.length === 0 ? (
+            <li className="py-3 text-sm text-neutral-400">아직 등록자가 없어요</li>
+          ) : (
+            list.map((w, i) => (
+              <li key={i} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+                <span className="min-w-0 flex items-center gap-2">
+                  <span className="w-6 shrink-0 text-right text-xs text-neutral-300">{i + 1}</span>
+                  <span className="min-w-0 truncate text-neutral-700">{w.email}</span>
+                  {w.source && <span className="shrink-0 rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] text-neutral-400">{w.source}</span>}
+                </span>
+                <span className="shrink-0 text-xs text-neutral-400">{fmtDate(w.created_at)}</span>
+              </li>
+            ))
+          )}
+        </ul>
+      </div>
+    </Section>
+  );
+}
+
 export default function AdminDashboard({ stats }: { stats?: AdminStats | null }) {
+  const [view, setView] = useState<"stats" | "waitlist">("stats");
   if (!stats) return <p className="text-sm text-neutral-500">통계를 불러오지 못했어요.</p>;
 
   return (
@@ -173,6 +220,21 @@ export default function AdminDashboard({ stats }: { stats?: AdminStats | null })
       <h2 className="text-lg font-semibold tracking-tight">관리자 대시보드</h2>
       <p className="mt-1 text-sm text-neutral-500">서비스 현황 한눈에 보기 · 오늘=한국시간 · 새로고침하면 최신</p>
 
+      <div className="mt-4">
+        <Segmented
+          options={[
+            { value: "stats", label: "분석" },
+            { value: "waitlist", label: "대기자", count: stats.waitlistCount ?? 0 },
+          ]}
+          value={view}
+          onChange={setView}
+        />
+      </div>
+
+      {view === "waitlist" ? (
+        <WaitlistView stats={stats} />
+      ) : (
+        <>
       {/* 요약 */}
       <Section title="요약">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -246,6 +308,8 @@ export default function AdminDashboard({ stats }: { stats?: AdminStats | null })
           </div>
         </div>
       </Section>
+        </>
+      )}
     </div>
   );
 }

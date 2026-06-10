@@ -20,7 +20,10 @@ export default function WaitlistLanding() {
       <header className="sticky top-0 z-40 border-b border-neutral-200/70 bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
           <Brand />
-          <span className="rounded-full bg-neutral-900/5 px-3 py-1 text-xs font-medium text-neutral-500">곧 오픈</span>
+          <div className="flex items-center gap-4">
+            <span className="rounded-full bg-neutral-900/5 px-3 py-1 text-xs font-medium text-neutral-500">곧 오픈</span>
+            <a href="/login" className="text-xs text-neutral-400 transition hover:text-neutral-700">로그인</a>
+          </div>
         </div>
       </header>
 
