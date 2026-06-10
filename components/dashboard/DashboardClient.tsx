@@ -556,7 +556,7 @@ export default function DashboardClient(props: DashboardProps) {
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-rose-900">결제에 실패했어요</p>
                 <p className="mt-0.5 text-xs leading-relaxed text-rose-700">
-                  카드를 확인해 주세요. 며칠간 다시 시도하고, 그동안은 만든 글 열람·발행은 그대로 쓸 수 있어요. 계속 실패하면 무료로 전환돼요.
+                  카드를 다시 등록해 주세요. 며칠간 재시도하고, 계속 실패하면 무료로 바뀌어요.
                 </p>
               </div>
               <a
@@ -579,7 +579,7 @@ export default function DashboardClient(props: DashboardProps) {
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-amber-900">워드프레스 연결이 만료됐어요</p>
                 <p className="mt-0.5 text-xs leading-relaxed text-amber-700">
-                  앱 비밀번호가 바뀌었거나 만료된 것 같아요. 다시 연결해야 발행할 수 있어요.
+                  다시 연결해야 발행할 수 있어요.
                 </p>
               </div>
               <button
@@ -661,8 +661,8 @@ export default function DashboardClient(props: DashboardProps) {
                         <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#3f91ff]/30 border-t-[#3f91ff]" />
                         <p className="text-sm font-semibold text-[#2f7fe6]">글을 만들고 있어요…</p>
                       </div>
-                      <p className="mt-3 text-sm leading-relaxed text-neutral-600">
-                        ‘<b className="text-neutral-900">{generatingArticle.keyword}</b>’ 글을 쓰는 중이에요. 창을 닫거나 다른 일을 봐도 괜찮아요 — 다 만들어지면 여기에서 바로 알려드릴게요.
+                      <p className="mt-2.5 text-sm leading-relaxed text-neutral-600">
+                        ‘<b className="text-neutral-900">{generatingArticle.keyword}</b>’ · 다 되면 여기서 알려드려요. 창은 닫아도 괜찮아요.
                       </p>
                     </div>
                   ) : doneArticle ? (
@@ -776,7 +776,7 @@ export default function DashboardClient(props: DashboardProps) {
                 {props.plan === "pro" && props.subStatus === "past_due" && (
                   <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">
                     <p className="text-sm leading-relaxed text-rose-800">
-                      결제에 실패해 <b className="text-rose-900">재시도 중</b>이에요. 카드를 다시 등록하면 바로 정상으로 돌아오고, 새 글 30편도 다시 채워져요. 그동안 새 글 생성은 잠시 멈춰 있어요.
+                      결제 실패로 <b className="text-rose-900">재시도 중</b>이에요. 카드를 다시 등록하면 바로 정상으로 돌아와요. 그동안 새 글 생성은 멈춰 있어요.
                     </p>
                     <a href="/pricing" className="mt-3 inline-block rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700">
                       카드 다시 등록
@@ -787,13 +787,13 @@ export default function DashboardClient(props: DashboardProps) {
                 {props.plan === "pro" && subCanceled && (
                   <div className="mt-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3">
                     <p className="text-sm leading-relaxed text-neutral-600">
-                      구독 해지를 예약했어요.{" "}
+                      해지를 예약했어요.{" "}
                       {props.currentPeriodEnd ? (
-                        <><b className="text-neutral-800">{new Date(props.currentPeriodEnd).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}까지</b> 그대로 쓰실 수 있고,</>
+                        <><b className="text-neutral-800">{new Date(props.currentPeriodEnd).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}까지</b> 쓸 수 있고,</>
                       ) : (
-                        <>남은 이용 기간까지는 그대로 쓰실 수 있고,</>
+                        <>남은 기간까지 쓸 수 있고,</>
                       )}{" "}
-                      다음 결제는 진행되지 않아요.
+                      다음 결제는 안 나가요.
                     </p>
                     <button
                       onClick={resumeSubscription}
@@ -817,11 +817,11 @@ export default function DashboardClient(props: DashboardProps) {
                         <p className="text-sm font-medium text-neutral-900">구독을 해지할까요?</p>
                         <p className="mt-1 text-sm leading-relaxed text-neutral-600">
                           {props.currentPeriodEnd ? (
-                            <><b className="text-neutral-800">{new Date(props.currentPeriodEnd).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}까지</b>는 그대로 쓰실 수 있어요.</>
+                            <><b className="text-neutral-800">{new Date(props.currentPeriodEnd).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}까지</b> 쓸 수 있어요.</>
                           ) : (
-                            <>남은 이용 기간까지는 그대로 쓰실 수 있어요.</>
+                            <>남은 기간까지 쓸 수 있어요.</>
                           )}{" "}
-                          다음 결제만 진행되지 않고, 언제든 다시 켤 수 있어요.
+                          다음 결제만 안 나가고, 언제든 다시 켤 수 있어요.
                         </p>
                         <div className="mt-3 flex flex-wrap gap-2">
                           <button onClick={cancelSubscription} disabled={busy} className="rounded-lg bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:opacity-50">

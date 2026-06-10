@@ -312,12 +312,12 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
       title={title}
       disabled={disabled}
       onClick={onClick}
-      className={`flex h-8 w-8 items-center justify-center rounded-md transition ${
+      className={`flex h-9 w-9 items-center justify-center rounded-lg transition duration-150 active:scale-90 ${
         disabled
           ? "cursor-not-allowed text-neutral-300"
           : active
-          ? "bg-neutral-900 text-white"
-          : "text-neutral-600 hover:bg-neutral-100"
+          ? "bg-neutral-900 text-white shadow-sm"
+          : "text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
       }`}
     >
       {children}
@@ -325,14 +325,14 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
   );
 
   return (
-    <div className="rounded-xl border border-neutral-200 bg-white">
+    <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
       <CenterToast message={uploading ? "이미지를 올리고 있어요…" : errToast} />
 
       {confirmRestore && (
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/30 px-4" onClick={() => setConfirmRestore(false)}>
           <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
             <p className="text-base font-semibold text-neutral-900">처음 쓴 글로 되돌릴까요?</p>
-            <p className="mt-2 text-sm leading-relaxed text-neutral-600">지금까지 수정한 내용이 모두 사라지고, AI가 처음 쓴 글로 돌아가요. 되돌릴 수 없어요.</p>
+            <p className="mt-2 text-sm leading-relaxed text-neutral-600">수정한 내용이 모두 사라져요. 되돌릴 수 없어요.</p>
             <div className="mt-4 flex justify-end gap-2">
               <button onClick={() => setConfirmRestore(false)} className="rounded-lg border border-neutral-300 px-4 py-1.5 text-sm font-medium transition hover:border-neutral-900">취소</button>
               <button onClick={doRestore} className="rounded-lg bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-800">되돌리기</button>
@@ -340,42 +340,46 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
           </div>
         </div>
       )}
-      <div className={`sticky ${toolbarOffset} z-20 border-b border-neutral-200 bg-white shadow-md`}>
-        <div className="flex flex-wrap items-center gap-0.5 px-3 py-2">
+      <div className={`sticky ${toolbarOffset} z-20 border-b border-neutral-200 bg-white/95 backdrop-blur`}>
+        <div className="flex flex-wrap items-center gap-1 px-3 py-2">
           <Btn title="실행취소 (Ctrl+Z)" disabled={!editor.can().undo()} onClick={() => editor.chain().focus().undo().run()}><IconUndo /></Btn>
           <Btn title="다시실행 (Ctrl+Shift+Z)" disabled={!editor.can().redo()} onClick={() => editor.chain().focus().redo().run()}><IconRedo /></Btn>
-          <span className="mx-1 h-5 w-px bg-neutral-200" />
+          <span className="mx-1.5 h-5 w-px bg-neutral-200/80" />
           <Btn title="제목" active={editor.isActive("heading", { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}><IconH2 /></Btn>
           <Btn title="소제목" active={editor.isActive("heading", { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}><IconH3 /></Btn>
           <Btn title="굵게" active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()}><IconBold /></Btn>
           <Btn title="목록" active={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()}><IconList /></Btn>
           <Btn title="번호 목록" active={editor.isActive("orderedList")} onClick={() => editor.chain().focus().toggleOrderedList().run()}><IconOrderedList /></Btn>
-          <span className="mx-1 h-5 w-px bg-neutral-200" />
+          <span className="mx-1.5 h-5 w-px bg-neutral-200/80" />
           <Btn title="왼쪽 정렬" active={editor.isActive({ textAlign: "left" })} onClick={() => editor.chain().focus().setTextAlign("left").run()}><IconAlignLeft /></Btn>
           <Btn title="가운데 정렬" active={editor.isActive({ textAlign: "center" })} onClick={() => editor.chain().focus().setTextAlign("center").run()}><IconAlignCenter /></Btn>
           <Btn title="오른쪽 정렬" active={editor.isActive({ textAlign: "right" })} onClick={() => editor.chain().focus().setTextAlign("right").run()}><IconAlignRight /></Btn>
-          <select
-            title="글자 크기"
-            value={(editor.getAttributes("textStyle").fontSize as string) ?? ""}
-            onChange={(e) => {
-              const v = e.target.value;
-              editor.chain().focus().setMark("textStyle", { fontSize: v || null }).run();
-            }}
-            className="ml-1 rounded-md border border-neutral-200 px-1.5 py-1 text-xs text-neutral-600 outline-none"
-          >
-            <option value="">크기</option>
-            <option value="0.9rem">작게</option>
-            <option value="1.15rem">크게</option>
-            <option value="1.4rem">더 크게</option>
-          </select>
-          <span className="mx-1 h-5 w-px bg-neutral-200" />
+          <div className="relative ml-1">
+            <select
+              title="글자 크기"
+              value={(editor.getAttributes("textStyle").fontSize as string) ?? ""}
+              onChange={(e) => {
+                const v = e.target.value;
+                editor.chain().focus().setMark("textStyle", { fontSize: v || null }).run();
+              }}
+              className="h-9 cursor-pointer appearance-none rounded-lg border border-neutral-200 bg-white pl-3 pr-7 text-xs font-medium text-neutral-600 outline-none transition hover:border-neutral-300 focus:border-neutral-900"
+            >
+              <option value="">본문 크기</option>
+              <option value="0.9rem">작게</option>
+              <option value="1.15rem">크게</option>
+              <option value="1.4rem">더 크게</option>
+            </select>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400"><path d="m6 9 6 6 6-6" /></svg>
+          </div>
+          <span className="mx-1.5 h-5 w-px bg-neutral-200/80" />
           <Btn title="링크 (텍스트를 드래그한 뒤 클릭)" active={editor.isActive("link")} onClick={openLink}><IconLink /></Btn>
           <Btn title="이미지" onClick={() => fileRef.current?.click()}><IconImage /></Btn>
           <Btn title="표 (3×3)" onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}><IconTable /></Btn>
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickFile} />
           {originalHtml && (
-            <button type="button" title="AI가 처음 쓴 글로 되돌리기" onClick={restoreOriginal} className="ml-auto flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium text-neutral-500 hover:bg-neutral-100">
-              ↺ AI 원본
+            <button type="button" title="AI가 처음 쓴 글로 되돌리기" onClick={restoreOriginal} className="ml-auto flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-800 active:scale-95">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /></svg>
+              AI 원본
             </button>
           )}
         </div>
@@ -388,26 +392,24 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
               onKeyDown={(e) => { if (e.key === "Enter") applyLink(); if (e.key === "Escape") setLinkOpen(false); }}
               placeholder="https://..."
               inputMode="url"
-              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900 sm:flex-1 sm:py-1.5"
+              className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none transition focus:border-neutral-900 sm:flex-1 sm:py-1.5"
             />
             <div className="flex items-center gap-2">
-              <label className="mr-auto flex shrink-0 items-center gap-1 text-xs text-neutral-500 sm:mr-0">
-                <input type="checkbox" checked={linkNofollow} onChange={(e) => setLinkNofollow(e.target.checked)} />
+              <label className="mr-auto flex shrink-0 cursor-pointer items-center gap-1.5 text-xs text-neutral-500 sm:mr-0">
+                <input type="checkbox" checked={linkNofollow} onChange={(e) => setLinkNofollow(e.target.checked)} className="accent-neutral-900" />
                 nofollow
               </label>
-              <button type="button" onClick={applyLink} className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm text-white">적용</button>
-              <button type="button" onClick={() => setLinkOpen(false)} className="rounded-md px-2 py-1.5 text-sm text-neutral-400">취소</button>
+              <button type="button" onClick={applyLink} className="rounded-lg bg-neutral-900 px-3.5 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-800 active:scale-95">적용</button>
+              <button type="button" onClick={() => setLinkOpen(false)} className="rounded-lg px-2.5 py-1.5 text-sm text-neutral-400 transition hover:bg-neutral-100">취소</button>
             </div>
           </div>
         )}
         {activeHref && !linkOpen && (
           <div className="flex flex-wrap items-center gap-2 border-t border-neutral-100 px-3 py-2 text-sm">
-            <span className="min-w-0 flex-1 truncate text-neutral-500">🔗 {activeHref}</span>
-            <a href={activeHref} target="_blank" rel="noreferrer" className="ml-auto flex items-center gap-1 rounded-md border border-neutral-300 px-2 py-1 text-xs hover:border-neutral-900">
-              <IconOpen /> 열기
-            </a>
-            <button type="button" onClick={openLink} className="rounded-md px-2 py-1 text-xs text-neutral-500 hover:bg-neutral-100">편집</button>
-            <button type="button" onClick={() => editor.chain().focus().extendMarkRange("link").unsetLink().run()} className="rounded-md px-2 py-1 text-xs text-red-500 hover:bg-red-50">해제</button>
+            <span className="flex min-w-0 flex-1 items-center gap-1.5 truncate text-neutral-500"><IconLink /> {activeHref}</span>
+            <a href={activeHref} target="_blank" rel="noreferrer" className="ml-auto flex items-center gap-1 rounded-lg border border-neutral-300 px-2.5 py-1 text-xs transition hover:border-neutral-900"><IconOpen /> 열기</a>
+            <button type="button" onClick={openLink} className="rounded-lg px-2.5 py-1 text-xs text-neutral-500 transition hover:bg-neutral-100">편집</button>
+            <button type="button" onClick={() => editor.chain().focus().extendMarkRange("link").unsetLink().run()} className="rounded-lg px-2.5 py-1 text-xs text-red-500 transition hover:bg-red-50">해제</button>
           </div>
         )}
       </div>
