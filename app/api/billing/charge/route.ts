@@ -60,9 +60,12 @@ async function runCharge() {
       charged++;
     } catch {
       // 청구 실패 → 무료로 강등 (구독 비활성화)
+      // 무료 '체험 3편'은 신규 가입자용 → 강등된 전(前) 프로에게는 신규 생성 0편으로 맞춘다.
+      // (기존에 만든 글·워드프레스 연결은 그대로 보존 — 재구독하면 다시 발행 가능)
       await applyPlan(row.id, "free", {
         sub_status: "canceled",
         next_billing_at: null,
+        articles_used: PLANS.free.articles,
       });
       failed++;
     }
