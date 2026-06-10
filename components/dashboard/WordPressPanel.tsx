@@ -3,11 +3,11 @@
 import { useState, useEffect } from "react";
 
 const GUIDE_STEPS = [
-  "워드프레스 관리자(wp-admin)에 로그인합니다.",
-  "‘사용자 → 프로필’ 화면으로 이동합니다.",
-  "아래로 스크롤해 ‘애플리케이션 비밀번호’ 섹션을 찾습니다.",
-  "이름(예: AteFlo)을 입력하고 ‘새 애플리케이션 비밀번호 추가’를 누릅니다.",
-  "생성된 비밀번호(공백 포함)를 복사해 아래에 붙여넣습니다.",
+  "워드프레스 관리자(wp-admin)에 로그인해요.",
+  "‘사용자 → 프로필’ 화면으로 가요.",
+  "아래로 내려 ‘애플리케이션 비밀번호’ 칸을 찾아요.",
+  "이름(예: AteFlo)을 적고 ‘새 애플리케이션 비밀번호 추가’를 눌러요.",
+  "만들어진 비밀번호(공백 포함)를 복사해 아래에 붙여넣어요.",
 ];
 
 export default function WordPressPanel({
@@ -57,7 +57,7 @@ export default function WordPressPanel({
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "연결에 실패했습니다.");
+        setError(data.error ?? "연결하지 못했어요. 입력 정보를 확인하고 다시 시도해 주세요.");
         return;
       }
       onConnected(data.siteUrl);
@@ -82,7 +82,7 @@ export default function WordPressPanel({
           <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
           {siteUrl}
         </p>
-        <p className="mt-4 text-sm text-neutral-500">이제 글 목록에서 글을 열어 바로 발행할 수 있습니다.</p>
+        <p className="mt-4 text-sm text-neutral-500">이제 글 목록에서 글을 열어 바로 발행할 수 있어요.</p>
         <button
           onClick={disconnect}
           className="mt-6 rounded-full border border-neutral-300 px-5 py-2.5 text-sm font-medium transition hover:border-red-400 hover:text-red-600"
@@ -97,7 +97,7 @@ export default function WordPressPanel({
     <div className="rounded-2xl border border-neutral-200 bg-white p-6 sm:p-8">
       <h2 className="text-lg font-semibold tracking-tight">워드프레스 사이트 연결</h2>
       <p className="mt-1 text-sm text-neutral-500">
-        애플리케이션 비밀번호로 안전하게 연결합니다. 일반 로그인 비밀번호가 아닙니다.
+        애플리케이션 비밀번호로 안전하게 연결해요. 일반 로그인 비밀번호가 아니에요.
       </p>
 
       {/* 워드프레스가 없는 사람을 위한 시작 가이드 버튼 → 풀페이지 가이드 */}

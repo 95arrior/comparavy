@@ -15,7 +15,7 @@ export default function LoginPage() {
       provider: "google",
       options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
-    if (error) setError("구글 로그인을 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+    if (error) setError("구글 로그인을 시작하지 못했어요. 잠시 후 다시 시도해 주세요.");
   }
 
   return (
@@ -25,7 +25,7 @@ export default function LoginPage() {
           <Brand />
         </Link>
         <h1 className="mt-8 text-center text-2xl font-semibold tracking-tight">로그인 또는 회원가입</h1>
-        <p className="mt-2 text-center text-sm text-neutral-500">무료로 시작하세요. 카드 등록이 필요 없습니다.</p>
+        <p className="mt-2 text-center text-sm text-neutral-500">무료로 시작하세요. 카드 등록도 필요 없어요.</p>
 
         <button
           onClick={signInWithGoogle}

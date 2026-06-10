@@ -68,7 +68,7 @@ export default function ArticleList({
   if (articles.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-neutral-300 bg-white p-12 text-center">
-        <p className="text-sm text-neutral-500">아직 생성한 글이 없습니다.</p>
+        <p className="text-sm text-neutral-500">아직 만든 글이 없어요.</p>
         <button
           onClick={onGoGenerate}
           className="mt-4 rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700"

@@ -356,13 +356,13 @@ export default function ArticleModal({
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "저장에 실패했습니다.");
+        setError(data.error ?? "저장하지 못했어요. 다시 시도해 주세요.");
         return;
       }
       onUpdated(data.article);
       setSaveFailed(false);
       setAutoSavedAt(new Date().toLocaleTimeString("ko-KR"));
-      setToast("저장이 완료되었습니다.");
+      setToast("저장했어요.");
     } catch {
       setError("저장 중 오류가 났어요. 인터넷 연결을 확인하고 다시 시도해 주세요.");
     } finally {
@@ -402,7 +402,7 @@ export default function ArticleModal({
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "발행에 실패했습니다.");
+        setError(data.error ?? "발행하지 못했어요. 잠시 후 다시 시도해 주세요.");
         return;
       }
       onUpdated({
@@ -420,8 +420,8 @@ export default function ArticleModal({
           : status === "publish"
             ? isRepublish
               ? "수정한 내용을 워드프레스에 다시 반영했어요."
-              : "워드프레스에 발행했습니다."
-            : "워드프레스에 초안으로 저장했습니다.",
+              : "워드프레스에 발행했어요."
+            : "워드프레스에 초안으로 저장했어요.",
       );
     } finally {
       setPublishing(false);
