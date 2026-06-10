@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "check:generation": "node --env-file=.env.local --import tsx scripts/verifyGeneration.ts"
+    "check:generation": "node --env-file=.env.local --import tsx scripts/verifyGeneration.ts",
+    "ig:verify": "node --env-file=.env.local --import tsx scripts/ig-publish.ts verify",
+    "ig:publish": "node --env-file=.env.local --import tsx scripts/ig-publish.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",
