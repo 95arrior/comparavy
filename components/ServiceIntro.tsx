@@ -172,7 +172,7 @@ function PublishCard() {
       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full text-white" style={{ background: BRAND }}>
         <Check size={32} />
       </div>
-      <p className="mt-5 text-lg font-semibold">워드프레스에 게시됐어요</p>
+      <p className="mt-5 text-lg font-semibold">워드프레스에 올렸어요</p>
       <p className="mt-1.5 text-sm text-neutral-400">myblog.com/dog-separation-anxiety</p>
       <div className="mt-5 rounded-xl bg-neutral-50 px-4 py-3 text-sm font-medium" style={{ color: BRAND }}>
         제목 · 메타 · FAQ까지 자동으로 ✓
