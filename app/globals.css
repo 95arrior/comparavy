@@ -180,6 +180,15 @@ html {
 @keyframes ateflo-caret { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 .ateflo-caret { animation: ateflo-caret 0.9s step-end infinite; }
 
+/* 스크롤 유도 — 마우스 안 점이 아래로 내려가며 사라짐 */
+@keyframes ateflo-scrolldot {
+  0%   { opacity: 0; transform: translateY(0); }
+  25%  { opacity: 1; }
+  70%  { opacity: 1; transform: translateY(7px); }
+  100% { opacity: 0; transform: translateY(7px); }
+}
+.ateflo-scrolldot { animation: ateflo-scrolldot 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+
 /* 랜딩 목업 — '작동하는' 미니멀 루프 애니메이션 */
 /* 글 생성: 줄이 왼쪽부터 차오르며 타이핑되는 느낌 (scaleX) */
 @keyframes ateflo-type {

@@ -3,6 +3,7 @@ import DemoStream from "@/components/DemoStream";
 import ServiceIntro from "@/components/ServiceIntro";
 import SiteFooter from "@/components/SiteFooter";
 import LandingIntro from "@/components/LandingIntro";
+import ScrollHint from "@/components/ScrollHint";
 import WaitlistForm from "@/components/WaitlistForm";
 import Reveal from "@/components/Reveal";
 import ProductShowcase from "@/components/ProductShowcase";
@@ -20,6 +21,7 @@ export default function WaitlistLanding() {
   return (
     <div className="min-h-screen bg-white text-neutral-900 antialiased">
       <LandingIntro />
+      <ScrollHint />
 
       <header className="sticky top-0 z-40 border-b border-neutral-200/70 bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
