@@ -35,7 +35,7 @@ export async function generateCardNews(topic: string, angleLabel = ""): Promise<
   const year = new Date(Date.now() + 9 * 60 * 60 * 1000).getUTCFullYear();
   const client = new Anthropic({ apiKey });
   const res = await client.messages.create({
-    model: "claude-sonnet-4-6",
+    model: "claude-haiku-4-5",
     max_tokens: 1300,
     messages: [
       {

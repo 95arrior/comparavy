@@ -240,8 +240,10 @@ function SocialView({ stats }: { stats: AdminStats }) {
   if (!s) return <Section title="SNS 발행"><p className="text-sm text-neutral-400">설정을 불러오지 못했어요. (마이그레이션 0017 실행 필요)</p></Section>;
 
   const hourLabel = (h: number) => (h === 0 ? "오전 12시" : h < 12 ? `오전 ${h}시` : h === 12 ? "오후 12시" : `오후 ${h - 12}시`);
+  const perDay = s.postsPerDay ?? 2;
+  const step = Math.max(1, Math.floor(24 / perDay));
   const slots: number[] = [];
-  for (let h = s.postingHour; h < s.postingHour + 24; h += s.intervalHours) slots.push(h % 24);
+  for (let k = 0; k < perDay; k++) slots.push((s.postingHour + k * step) % 24);
   slots.sort((a, b) => a - b);
   const scheduleText = slots.map(hourLabel).join(" · ");
 
@@ -252,12 +254,12 @@ function SocialView({ stats }: { stats: AdminStats }) {
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
           <Stat label="발행 대기" value={`${s.queueCount}개`} accent />
           <Stat label="발행 완료" value={`${s.publishedCount}개`} />
-          <Stat label="자동 발행" value={s.autoEnabled ? "켜짐" : "꺼짐"} hint={s.autoEnabled ? `${s.intervalHours}시간마다` : "지금은 멈춤"} />
+          <Stat label="자동 발행" value={s.autoEnabled ? "켜짐" : "꺼짐"} hint={s.autoEnabled ? `하루 ${perDay}개` : "지금은 멈춤"} />
         </div>
       </Section>
 
       {/* 자동 발행 제어 */}
-      <Section title="자동 발행" desc="보관함에 쌓인 글을 정해둔 주기마다 인스타에 자동 게시해요.">
+      <Section title="자동 발행" desc="보관함에 쌓인 글을 하루 발행 수만큼 시간 간격을 두고 인스타에 자동 게시해요.">
         <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
@@ -274,21 +276,18 @@ function SocialView({ stats }: { stats: AdminStats }) {
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
             <label className="flex items-center gap-2 text-neutral-500">
-              발행 주기
+              하루 발행 수
               <select
-                value={s.intervalHours}
-                onChange={(e) => call({ action: "settings", intervalHours: Number(e.target.value) }, "주기 변경됨")}
+                value={perDay}
+                onChange={(e) => call({ action: "settings", postsPerDay: Number(e.target.value) }, "발행 수 변경됨")}
                 disabled={busy}
                 className="rounded-lg border border-neutral-300 px-2.5 py-1.5 text-sm outline-none"
               >
-                <option value={6}>6시간마다</option>
-                <option value={12}>12시간마다</option>
-                <option value={24}>하루 1회</option>
-                <option value={48}>이틀 1회</option>
+                {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>하루 {n}개</option>)}
               </select>
             </label>
             <label className="flex items-center gap-2 text-neutral-500">
-              발행 시각
+              시작 시각
               <select
                 value={s.postingHour}
                 onChange={(e) => call({ action: "settings", postingHour: Number(e.target.value) }, "시각 변경됨")}
@@ -307,7 +306,7 @@ function SocialView({ stats }: { stats: AdminStats }) {
       </Section>
 
       {/* 보관함 목록 */}
-      <Section title="보관함" desc="카드뉴스는 로컬에서 `npm run card:gen` 으로 생성해 여기 쌓여요. 오래된 것부터 자동 발행돼요. (발행된 글은 인스타 API로 못 지움 — 인스타 앱에서 직접 삭제)">
+      <Section title="보관함" desc="카드뉴스는 로컬에서 `npm run card:gen:bulk -- 20` 으로 한 번에 여러 개 만들어 쌓아둬요. 오래된 것부터 자동 발행돼요. (발행된 글은 인스타 API로 못 지움 · 인스타 앱에서 직접 삭제)">
         <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-4 sm:p-5">
           <ul className="divide-y divide-neutral-100">
             {s.posts.length === 0 ? (

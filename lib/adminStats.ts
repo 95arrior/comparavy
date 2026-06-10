@@ -46,6 +46,7 @@ export type AdminStats = {
   social: {
     autoEnabled: boolean;
     intervalHours: number;
+    postsPerDay: number;
     postingHour: number;
     lastPublishedAt: string | null;
     queueCount: number;
@@ -242,6 +243,7 @@ export async function getAdminStats(): Promise<AdminStats> {
     social = {
       autoEnabled: !!s?.auto_enabled,
       intervalHours: s?.interval_hours ?? 24,
+      postsPerDay: s?.posts_per_day ?? 2,
       postingHour: s?.posting_hour ?? 9,
       lastPublishedAt: s?.last_published_at ?? null,
       queueCount: list.filter((p) => p.status === "queued").length,
