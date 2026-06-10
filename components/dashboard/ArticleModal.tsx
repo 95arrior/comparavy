@@ -536,9 +536,15 @@ export default function ArticleModal({
           <span className="truncate text-xs text-neutral-400">키워드 · {article.keyword}</span>
           <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight sm:text-3xl">{article.title}</h1>
 
-          <div className="mt-4 rounded-xl border border-neutral-200 bg-white px-4 py-3 text-xs text-neutral-500">
-            <p><strong className="text-neutral-700">메타 제목:</strong> {article.meta_title}</p>
-            <p className="mt-1"><strong className="text-neutral-700">메타 설명:</strong> {article.meta_description}</p>
+          <div className="mt-4 space-y-2.5 rounded-xl border border-neutral-200 bg-white px-4 py-3">
+            <div>
+              <p className="text-[11px] font-medium text-neutral-400">메타 제목</p>
+              <p className="mt-0.5 text-[11px] leading-relaxed text-neutral-600">{article.meta_title}</p>
+            </div>
+            <div>
+              <p className="text-[11px] font-medium text-neutral-400">메타 설명</p>
+              <p className="mt-0.5 text-[11px] leading-relaxed text-neutral-600">{article.meta_description}</p>
+            </div>
           </div>
 
           {/* 편집 유도 안내 */}
@@ -737,9 +743,15 @@ export default function ArticleModal({
           </div>
         )}
 
-        <div className="mt-4 rounded-xl border border-neutral-200 bg-white px-4 py-3 text-xs text-neutral-500">
-          <p><strong className="text-neutral-700">메타 제목:</strong> {article.meta_title}</p>
-          <p className="mt-1"><strong className="text-neutral-700">메타 설명:</strong> {article.meta_description}</p>
+        <div className="mt-4 space-y-2.5 rounded-xl border border-neutral-200 bg-white px-4 py-3">
+          <div>
+            <p className="text-[11px] font-medium text-neutral-400">메타 제목</p>
+            <p className="mt-0.5 text-[11px] leading-relaxed text-neutral-600">{article.meta_title}</p>
+          </div>
+          <div>
+            <p className="text-[11px] font-medium text-neutral-400">메타 설명</p>
+            <p className="mt-0.5 text-[11px] leading-relaxed text-neutral-600">{article.meta_description}</p>
+          </div>
         </div>
 
         {/* 발행 설정: 카테고리 · 태그 (SEO) */}

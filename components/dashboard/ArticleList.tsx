@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { Article } from "./types";
+import CenterToast from "./CenterToast";
 
 const STATUS_LABEL: Record<Article["status"], string> = {
   draft: "초안",
@@ -31,11 +32,13 @@ export default function ArticleList({
   onOpen,
   onGoGenerate,
   onUpdated,
+  wpConnected,
 }: {
   articles: Article[];
   onOpen: (article: Article) => void;
   onGoGenerate: () => void;
   onUpdated?: (a: Article) => void;
+  wpConnected?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
@@ -43,6 +46,33 @@ export default function ArticleList({
   const [sortOpen, setSortOpen] = useState(false);
   const [confirmUnpub, setConfirmUnpub] = useState<Article | null>(null);
   const [unpubBusy, setUnpubBusy] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState<string | null>(null);
+
+  // 워드프레스에서 직접 내리거나 지운 글을 우리 상태로 동기화
+  async function syncWp() {
+    if (syncing) return;
+    setSyncing(true);
+    setSyncMsg(null);
+    try {
+      const res = await fetch("/api/wordpress/sync", { method: "POST" });
+      const data = await res.json();
+      if (res.ok && Array.isArray(data.changed)) {
+        for (const c of data.changed as { id: string; status: Article["status"]; clearedWp: boolean }[]) {
+          const a = articles.find((x) => x.id === c.id);
+          if (a) onUpdated?.({ ...a, status: c.status, ...(c.clearedWp ? { wp_post_id: null, wp_link: null } : {}) });
+        }
+        setSyncMsg(data.changed.length ? `${data.changed.length}개 글 상태를 맞췄어요` : "이미 최신이에요");
+      } else {
+        setSyncMsg(data.error ?? "동기화하지 못했어요");
+      }
+    } catch {
+      setSyncMsg("동기화하지 못했어요");
+    } finally {
+      setSyncing(false);
+      setTimeout(() => setSyncMsg(null), 2500);
+    }
+  }
 
   async function doUnpublish() {
     if (!confirmUnpub || unpubBusy) return;
@@ -144,6 +174,17 @@ export default function ArticleList({
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
+          {wpConnected && (
+            <button
+              onClick={syncWp}
+              disabled={syncing}
+              title="워드프레스에서 내리거나 지운 글을 우리 목록과 맞춰요"
+              className="flex items-center gap-1.5 rounded-xl border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-neutral-900 disabled:opacity-50"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={syncing ? "animate-spin" : ""}><path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6" /></svg>
+              {syncing ? "동기화 중…" : "동기화"}
+            </button>
+          )}
           <div className="relative">
           <button
             onClick={() => setSortOpen((o) => !o)}
@@ -217,6 +258,8 @@ export default function ArticleList({
           ))}
         </div>
       )}
+
+      {syncMsg && <CenterToast>{syncMsg}</CenterToast>}
 
       {/* 글 내리기 확인 */}
       {confirmUnpub && (
