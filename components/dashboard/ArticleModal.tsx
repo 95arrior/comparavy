@@ -335,11 +335,23 @@ export default function ArticleModal({
     return editorRef.current?.getHTML() ?? bodyHtml;
   }
 
-  // 예약 최소 시각(지금) — datetime-local 형식 YYYY-MM-DDTHH:mm
+  const pad2 = (n: number) => String(n).padStart(2, "0");
+  const toLocalInput = (d: Date) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  // 예약 최소 시각(지금)
   function minScheduleAt(): string {
-    const d = new Date(Date.now() + 60000);
-    const p = (n: number) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+    return toLocalInput(new Date(Date.now() + 60000));
+  }
+  // 빠른 선택용 시각 (dayOffset일 뒤 hour시 정각)
+  function presetAt(dayOffset: number, hour: number): string {
+    const d = new Date();
+    d.setDate(d.getDate() + dayOffset);
+    d.setHours(hour, 0, 0, 0);
+    return toLocalInput(d);
+  }
+  // 선택된 예약 시각 사람이 읽기 좋게
+  function fmtSchedule(v: string): string {
+    if (!v) return "";
+    return new Date(v).toLocaleString("ko-KR", { month: "long", day: "numeric", weekday: "short", hour: "numeric", minute: "2-digit" });
   }
 
   async function save() {
@@ -422,6 +434,15 @@ export default function ArticleModal({
               ? "수정한 내용을 워드프레스에 다시 반영했어요."
               : "워드프레스에 발행했어요."
             : "워드프레스에 초안으로 저장했어요.",
+      );
+      setToast(
+        status === "future"
+          ? "예약했어요 🗓️"
+          : status === "publish"
+            ? isRepublish
+              ? "재발행했어요 🎉"
+              : "발행했어요 🎉"
+            : "초안으로 저장했어요",
       );
     } finally {
       setPublishing(false);
@@ -600,16 +621,39 @@ export default function ArticleModal({
             {scheduleOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setScheduleOpen(false)} />
-                <div className="ateflo-dropdown absolute right-0 top-full z-50 mt-2 w-72 rounded-2xl border border-neutral-100 bg-white shadow-sm p-4 shadow-xl">
+                <div className="ateflo-dropdown absolute right-0 top-full z-50 mt-2 w-72 rounded-2xl border border-neutral-100 bg-white p-4 shadow-xl">
                   <p className="text-sm font-semibold">예약 발행</p>
-                  <p className="mt-1 text-xs leading-relaxed text-neutral-500">정한 시간에 워드프레스로 자동 발행돼요. 출퇴근길에 미리 예약해두세요.</p>
+                  <p className="mt-1 text-xs leading-relaxed text-neutral-500">정한 시간에 워드프레스로 자동 발행돼요.</p>
+
+                  <div className="mt-3 grid grid-cols-2 gap-1.5">
+                    {[
+                      { label: "오늘 저녁 8시", v: presetAt(0, 20) },
+                      { label: "내일 오전 9시", v: presetAt(1, 9) },
+                      { label: "내일 저녁 8시", v: presetAt(1, 20) },
+                      { label: "모레 오전 9시", v: presetAt(2, 9) },
+                    ].filter((p) => p.v > minScheduleAt()).map((p) => (
+                      <button
+                        key={p.label}
+                        type="button"
+                        onClick={() => setScheduleAt(p.v)}
+                        className={`rounded-lg border px-2.5 py-2 text-xs font-medium transition ${scheduleAt === p.v ? "border-neutral-900 bg-neutral-900 text-white" : "border-neutral-200 text-neutral-600 hover:border-neutral-900"}`}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <label className="mt-3 block text-xs font-medium text-neutral-500">직접 고르기</label>
                   <input
                     type="datetime-local"
                     min={minScheduleAt()}
                     value={scheduleAt}
                     onChange={(e) => setScheduleAt(e.target.value)}
-                    className="mt-3 w-full rounded-xl border border-neutral-300 px-3 py-2.5 text-sm outline-none focus:border-neutral-900"
+                    className="mt-1 w-full rounded-xl border border-neutral-300 px-3 py-2.5 text-sm outline-none focus:border-neutral-900"
                   />
+
+                  {scheduleAt && <p className="mt-2 text-xs font-medium text-emerald-600">✓ {fmtSchedule(scheduleAt)}에 발행돼요</p>}
+
                   <div className="mt-3 flex gap-2">
                     <button
                       onClick={() => {
@@ -621,13 +665,13 @@ export default function ArticleModal({
                       disabled={!scheduleAt || publishing}
                       className="flex-1 rounded-xl bg-neutral-900 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-40"
                     >
-                      {publishing ? "예약 중…" : "예약하기"}
+                      {publishing ? "예약하는 중…" : "예약하기"}
                     </button>
                     <button
                       onClick={() => setScheduleOpen(false)}
                       className="rounded-xl border border-neutral-300 px-3 py-2.5 text-sm transition hover:border-neutral-900"
                     >
-                      취소
+                      닫기
                     </button>
                   </div>
                 </div>
