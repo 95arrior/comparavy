@@ -404,7 +404,8 @@ export default function ArticleModal({
         body: JSON.stringify({ title, body_html: liveBody, featured_image: featured, tags, category }),
       });
       if (!saveRes.ok) {
-        setError("편집 내용 저장에 실패해 발행을 멈췄어요. 잠시 후 다시 시도해 주세요.");
+        setError("편집 내용을 저장하지 못해 발행을 멈췄어요. (옛 글에 큰 이미지가 있으면 지웠다가 다시 넣어 주세요)");
+        setToast("발행을 멈췄어요");
         return;
       }
 
@@ -416,6 +417,7 @@ export default function ArticleModal({
       const data = await res.json();
       if (!res.ok) {
         setError(data.error ?? "발행하지 못했어요. 잠시 후 다시 시도해 주세요.");
+        setToast("발행하지 못했어요");
         return;
       }
       onUpdated({
