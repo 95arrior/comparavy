@@ -220,9 +220,6 @@ function SocialView({ stats }: { stats: AdminStats }) {
   const s = stats.social;
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
-  const [type, setType] = useState("image");
-  const [urls, setUrls] = useState("");
-  const [caption, setCaption] = useState("");
 
   async function call(payload: Record<string, unknown>, okMsg?: string) {
     if (busy) return;
@@ -246,8 +243,17 @@ function SocialView({ stats }: { stats: AdminStats }) {
 
   return (
     <>
+      {/* 숫자 요약 */}
+      <Section title="SNS 발행 현황" desc="클로드가 만든 카드뉴스가 보관함에 쌓이고, 주기마다 자동 게시돼요.">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+          <Stat label="발행 대기" value={`${s.queueCount}개`} accent />
+          <Stat label="발행 완료" value={`${s.publishedCount}개`} />
+          <Stat label="자동 발행" value={s.autoEnabled ? "켜짐" : "꺼짐"} hint={s.autoEnabled ? `${s.intervalHours}시간마다` : "지금은 멈춤"} />
+        </div>
+      </Section>
+
       {/* 자동 발행 제어 */}
-      <Section title="자동 발행" desc="대기열에 쌓아두면 정해둔 주기마다 인스타에 자동 게시돼요.">
+      <Section title="자동 발행" desc="보관함에 쌓인 글을 정해둔 주기마다 인스타에 자동 게시해요.">
         <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
@@ -278,38 +284,15 @@ function SocialView({ stats }: { stats: AdminStats }) {
               </select>
             </label>
             <span className="text-neutral-400">
-              대기 <b className="text-neutral-700">{s.queueCount}</b> · 발행 <b className="text-neutral-700">{s.publishedCount}</b>
-              {nextAt && s.autoEnabled && <> · 다음 발행 ~{nextAt.toLocaleString("ko-KR", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}</>}
+              {nextAt && s.autoEnabled ? <>다음 발행 예정 ~{nextAt.toLocaleString("ko-KR", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}</> : "보관함에 글이 쌓이면 자동으로 올라가요"}
+              {msg && <span className="ml-2 text-neutral-500">· {msg}</span>}
             </span>
           </div>
         </div>
       </Section>
 
-      {/* 대기열에 추가 */}
-      <Section title="대기열에 추가" desc="미디어는 인스타가 가져갈 공개 URL이어야 해요. 캐러셀은 URL을 줄바꿈으로 여러 개.">
-        <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-5">
-          <div className="flex flex-wrap items-center gap-2">
-            {(["image", "reel", "carousel"] as const).map((t) => (
-              <button key={t} onClick={() => setType(t)} className={`rounded-lg px-3 py-1.5 text-xs font-medium transition active:scale-95 ${type === t ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"}`}>
-                {SOC_TYPE_KO[t]}
-              </button>
-            ))}
-          </div>
-          <textarea value={urls} onChange={(e) => setUrls(e.target.value)} rows={type === "carousel" ? 3 : 1} placeholder="미디어 공개 URL (캐러셀은 줄바꿈으로 여러 개)" className="mt-3 w-full rounded-xl border border-neutral-300 px-3.5 py-2.5 text-sm outline-none transition focus:border-neutral-900" />
-          <textarea value={caption} onChange={(e) => setCaption(e.target.value)} rows={3} placeholder="캡션 (해시태그 포함)" className="mt-2 w-full rounded-xl border border-neutral-300 px-3.5 py-2.5 text-sm outline-none transition focus:border-neutral-900" />
-          <button
-            onClick={() => { const list = urls.split("\n").map((u) => u.trim()).filter(Boolean); call({ action: "add", type, mediaUrls: list, caption }, "대기열에 추가했어요"); setUrls(""); setCaption(""); }}
-            disabled={busy}
-            className="mt-3 rounded-lg bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition active:scale-95 hover:bg-neutral-800 disabled:opacity-50"
-          >
-            대기열에 추가
-          </button>
-          {msg && <span className="ml-3 text-xs text-neutral-500">{msg}</span>}
-        </div>
-      </Section>
-
-      {/* 대기열 목록 */}
-      <Section title="발행 대기열">
+      {/* 보관함 목록 */}
+      <Section title="보관함" desc="클로드가 생성한 카드뉴스가 여기 쌓여요. 오래된 것부터 자동 발행돼요.">
         <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-4 sm:p-5">
           <ul className="divide-y divide-neutral-100">
             {s.posts.length === 0 ? (
