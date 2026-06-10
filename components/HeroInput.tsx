@@ -94,10 +94,10 @@ export default function HeroInput({ loggedIn, onStart, pro = false }: { loggedIn
   }
 
   const chipCls = (on: boolean) =>
-    `flex items-center gap-1 whitespace-nowrap rounded-xl border px-2 py-1 text-[11px] transition sm:gap-1.5 sm:px-2.5 sm:text-xs ${
+    `flex items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-xs font-medium transition-all duration-200 active:scale-90 sm:text-sm ${
       on
-        ? "border-neutral-900 bg-neutral-900 font-medium text-white"
-        : "border-neutral-200 text-neutral-500 hover:border-neutral-400 hover:text-neutral-700"
+        ? "bg-neutral-900 text-white shadow-sm ateflo-pop"
+        : "bg-neutral-50 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800"
     }`;
 
   return (
@@ -133,27 +133,32 @@ export default function HeroInput({ loggedIn, onStart, pro = false }: { loggedIn
       {err && <p className="mt-2 pl-4 text-left text-sm text-red-500">검색할 만한 키워드를 입력해 주세요 (예: 강아지 분리불안).</p>}
 
       {/* 유형 · 문체 — 아이콘 칩 (선택. 안 골라도 기본값으로 생성) */}
-      <div className="mt-4">
-        <p className="mb-1.5 text-center text-xs text-neutral-300">유형·문체</p>
-        <div className="space-y-2">
-          <div className="flex flex-nowrap items-center justify-center gap-1.5 sm:gap-2">
-            {ARTICLE_TYPES.map((t) => (
-              <button key={t.key} type="button" onClick={() => setType(type === t.key ? "" : t.key)} title={t.hint} className={chipCls(type === t.key)}>
-                {TYPE_ICON[t.key]}
-                <span>{TYPE_SHORT[t.key] ?? t.label}</span>
-              </button>
-            ))}
+      <div className="mt-5">
+        <div className="space-y-3">
+          <div>
+            <p className="mb-2 text-center text-[11px] font-medium tracking-wide text-neutral-300">글 유형</p>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {ARTICLE_TYPES.map((t) => (
+                <button key={t.key} type="button" onClick={() => setType(type === t.key ? "" : t.key)} title={t.hint} className={chipCls(type === t.key)}>
+                  {TYPE_ICON[t.key]}
+                  <span>{TYPE_SHORT[t.key] ?? t.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="flex flex-nowrap items-center justify-center gap-1.5 sm:gap-2">
-            {TONES.map((t) => (
-              <button key={t.key} type="button" onClick={() => setTone(tone === t.key ? "" : t.key)} title={t.hint} className={chipCls(tone === t.key)}>
-                {TONE_ICON[t.key]}
-                <span>{TONE_SHORT[t.key] ?? t.label}</span>
-              </button>
-            ))}
+          <div>
+            <p className="mb-2 text-center text-[11px] font-medium tracking-wide text-neutral-300">문체</p>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {TONES.map((t) => (
+                <button key={t.key} type="button" onClick={() => setTone(tone === t.key ? "" : t.key)} title={t.hint} className={chipCls(tone === t.key)}>
+                  {TONE_ICON[t.key]}
+                  <span>{TONE_SHORT[t.key] ?? t.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-        <p className="pt-1.5 text-center text-[11px] text-neutral-400">선택하지 않아도 최적화로 생성됩니다</p>
+        <p className="pt-3 text-center text-[11px] text-neutral-400">안 골라도 알아서 최적으로 써드려요</p>
       </div>
 
       {/* 글감 추천 — 로그인(작업공간)에서만. 뭘 쓸지 모를 때 분야 넣으면 키워드 추천 */}
