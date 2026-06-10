@@ -1,5 +1,6 @@
 import { publishImage, publishReel, publishCarousel, type IgCreds } from "./instagram";
 import { createSupabaseAdminClient } from "./supabase-server";
+import { decryptSecret } from "./crypto";
 
 export interface SocialPostRow {
   id: string;
@@ -25,7 +26,7 @@ export async function resolveIgCreds(): Promise<IgCreds | null> {
   try {
     const admin = createSupabaseAdminClient();
     const { data } = await admin.from("social_settings").select("ig_access_token").eq("id", 1).maybeSingle();
-    if (data?.ig_access_token) return { igUserId, token: data.ig_access_token };
+    if (data?.ig_access_token) return { igUserId, token: decryptSecret(data.ig_access_token) };
   } catch {
     // 컬럼 없거나 조회 실패 시 환경변수로 폴백
   }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { refreshIgToken } from "@/lib/instagram";
+import { encryptSecret, decryptSecret } from "@/lib/crypto";
 
 // 인스타 장기 토큰 자동 갱신 (주 1회 cron). 60일 만료 전 갱신해 발행이 끊기지 않게 한다.
 function authorized(req: Request): boolean {
@@ -16,7 +17,7 @@ async function run() {
   }
   const admin = createSupabaseAdminClient();
   const { data: s } = await admin.from("social_settings").select("ig_access_token").eq("id", 1).maybeSingle();
-  const token = s?.ig_access_token || process.env.IG_ACCESS_TOKEN;
+  const token = (s?.ig_access_token ? decryptSecret(s.ig_access_token) : "") || process.env.IG_ACCESS_TOKEN;
   if (!token) return NextResponse.json({ ok: false, error: "갱신할 토큰이 없어요 (IG_ACCESS_TOKEN 또는 DB)" }, { status: 400 });
 
   try {
@@ -24,7 +25,7 @@ async function run() {
     const expiresAt = new Date(Date.now() + expiresInSec * 1000).toISOString();
     await admin
       .from("social_settings")
-      .update({ ig_access_token: next, ig_token_expires_at: expiresAt, ig_token_refreshed_at: new Date().toISOString() })
+      .update({ ig_access_token: encryptSecret(next), ig_token_expires_at: expiresAt, ig_token_refreshed_at: new Date().toISOString() })
       .eq("id", 1);
     return NextResponse.json({ ok: true, expiresAt });
   } catch (e) {

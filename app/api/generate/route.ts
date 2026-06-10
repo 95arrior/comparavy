@@ -10,6 +10,7 @@ import { normalizeKeyword, pickVariant, simhash } from "@/lib/diversity";
 import { looksLikeGarbageKeyword, isMeaningfulKeyword } from "@/lib/keywordGuard";
 import { isAdminEmail } from "@/lib/adminStats";
 import { logUsage } from "@/lib/usageLog";
+import { recordAiResult } from "@/lib/aiHealth";
 
 export const maxDuration = 300;
 
@@ -249,9 +250,11 @@ export async function POST(request: Request) {
           );
 
         send({ type: "done", article: saved });
+        void recordAiResult(true);
       } catch (err) {
         if (genId) { try { await supabase.from("articles").delete().eq("id", genId); } catch {} }
         const message = err instanceof Error ? err.message : "글을 만드는 중 문제가 생겼어요. 다시 시도해 주세요.";
+        void recordAiResult(false, message);
         send({ type: "error", error: message });
       } finally {
         try {

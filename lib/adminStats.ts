@@ -49,10 +49,14 @@ export type AdminStats = {
     postsPerDay: number;
     postingHour: number;
     lastPublishedAt: string | null;
+    tokenExpiresAt: string | null;
     queueCount: number;
     publishedCount: number;
+    failedCount: number;
     posts: { id: string; type: string; caption: string; status: string; mediaUrls: string[]; created_at: string; error: string | null }[];
   } | null;
+  /** 클로드(생성) 헬스 — 크레딧 소진 등으로 글·카드 생성이 멈췄는지 */
+  ai: { ok: boolean; lastError: string | null; updatedAt: string | null } | null;
 };
 
 // 글 1편당 추정 생성비(원). 토큰 미집계라 대략치 — 실제 집계 붙기 전 모니터링용.
@@ -246,13 +250,23 @@ export async function getAdminStats(): Promise<AdminStats> {
       postsPerDay: s?.posts_per_day ?? 2,
       postingHour: s?.posting_hour ?? 9,
       lastPublishedAt: s?.last_published_at ?? null,
+      tokenExpiresAt: s?.ig_token_expires_at ?? null,
       queueCount: list.filter((p) => p.status === "queued").length,
       publishedCount: list.filter((p) => p.status === "published").length,
+      failedCount: list.filter((p) => p.status === "failed").length,
       posts: list,
     };
   } catch {
     social = null;
   }
 
-  return { usersTotal, usersToday, proUsers, freeUsers, articlesTotal, articlesToday, publishedArticles, lockedArticles, wpConnections, mrr, conversion, articlesPerUser, wpConnectRate, publishRate, estCostKrw, costTotalKrw, costTodayKrw, costByKind, usersWithArticles, usersWithPublished, dailyUsers, dailyArticles, recentUsers, recentArticles, waitlistCount, waitlist, social };
+  let ai: AdminStats["ai"] = null;
+  try {
+    const { data: h } = await admin.from("ai_health").select("ok,last_error,updated_at").eq("id", 1).maybeSingle();
+    if (h) ai = { ok: !!h.ok, lastError: h.last_error ?? null, updatedAt: h.updated_at ?? null };
+  } catch {
+    ai = null;
+  }
+
+  return { usersTotal, usersToday, proUsers, freeUsers, articlesTotal, articlesToday, publishedArticles, lockedArticles, wpConnections, mrr, conversion, articlesPerUser, wpConnectRate, publishRate, estCostKrw, costTotalKrw, costTodayKrw, costByKind, usersWithArticles, usersWithPublished, dailyUsers, dailyArticles, recentUsers, recentArticles, waitlistCount, waitlist, social, ai };
 }

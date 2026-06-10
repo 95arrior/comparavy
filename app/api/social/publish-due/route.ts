@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { publishSocialPost } from "@/lib/socialPublish";
+import { slotHours, minGapHours } from "@/lib/socialSchedule";
 
 export const maxDuration = 300;
 
@@ -20,17 +21,16 @@ async function run() {
   const { data: settings } = await admin.from("social_settings").select("*").eq("id", 1).maybeSingle();
   if (!settings?.auto_enabled) return NextResponse.json({ ok: true, skipped: "disabled" });
 
-  // 하루 발행 수만큼 시작 시각부터 24시간을 고르게 나눈 슬롯에 1건씩 발행
-  const perDay = Math.max(1, Math.min(8, settings.posts_per_day ?? 2));
+  // 하루 발행 수만큼 시작 시각 ~ 저녁 상한 안에서 고르게 분산 (새벽 발행 방지)
+  const perDay = Math.max(1, Math.min(5, settings.posts_per_day ?? 2));
   const startHour = settings.posting_hour ?? 9;
-  const step = Math.max(1, Math.floor(24 / perDay)); // 예) 2개→12h, 5개→4h
   const kstHour = new Date(Date.now() + 9 * 3600000).getUTCHours();
-  const slots = new Set<number>();
-  for (let k = 0; k < perDay; k++) slots.add((startHour + k * step) % 24);
-  if (!slots.has(kstHour)) return NextResponse.json({ ok: true, skipped: "not_slot" });
+  const slots = slotHours(startHour, perDay);
+  if (!slots.includes(kstHour)) return NextResponse.json({ ok: true, skipped: "not_slot" });
 
   // 같은 슬롯에서 중복 발행 방지 (cron이 시간당 1회 돌지만 안전장치)
-  if (settings.last_published_at && Date.now() - new Date(settings.last_published_at).getTime() < (step - 1) * 3600000) {
+  const gap = minGapHours(startHour, perDay);
+  if (settings.last_published_at && Date.now() - new Date(settings.last_published_at).getTime() < (gap - 1) * 3600000) {
     return NextResponse.json({ ok: true, skipped: "recently" });
   }
 

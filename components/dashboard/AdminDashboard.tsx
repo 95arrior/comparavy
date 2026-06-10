@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { AdminStats } from "@/lib/adminStats";
 import Segmented from "./Segmented";
+import { slotHours } from "@/lib/socialSchedule";
 
 const BRAND = "#3f91ff";
 const STATUS_KO: Record<string, string> = { draft: "초안", published: "발행됨", future: "예약됨" };
@@ -241,14 +242,12 @@ function SocialView({ stats }: { stats: AdminStats }) {
 
   const hourLabel = (h: number) => (h === 0 ? "오전 12시" : h < 12 ? `오전 ${h}시` : h === 12 ? "오후 12시" : `오후 ${h - 12}시`);
   const perDay = s.postsPerDay ?? 2;
-  const step = Math.max(1, Math.floor(24 / perDay));
-  const slots: number[] = [];
-  for (let k = 0; k < perDay; k++) slots.push((s.postingHour + k * step) % 24);
-  slots.sort((a, b) => a - b);
-  const scheduleText = slots.map(hourLabel).join(" · ");
+  const scheduleText = slotHours(s.postingHour, perDay).map(hourLabel).join(" · ");
 
   const daysLeft = perDay > 0 ? Math.floor(s.queueCount / perDay) : 0;
   const lowStock = s.autoEnabled && s.queueCount < perDay * 3; // 3일치 미만이면 경고
+  const tokenDays = s.tokenExpiresAt ? Math.floor((new Date(s.tokenExpiresAt).getTime() - Date.now()) / 86400000) : null;
+  const tokenWarn = tokenDays !== null && tokenDays < 14; // 자동 갱신이 도는데도 14일 미만이면 점검 필요
 
   return (
     <>
@@ -275,6 +274,19 @@ function SocialView({ stats }: { stats: AdminStats }) {
           <p className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
             대기열이 얼마 안 남았어요{daysLeft <= 0 ? " (곧 끊겨요)" : ` (약 ${daysLeft}일치)`}. 터미널에서 <code className="rounded bg-amber-100 px-1.5 py-0.5 font-mono text-[13px]">npm run card:gen:bulk -- 20</code> 으로 더 채워두세요.
           </p>
+        )}
+        {s.failedCount > 0 && (
+          <p className="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+            발행 실패 <b>{s.failedCount}건</b> (3회 재시도 후 멈춤). 아래 보관함에서 원인을 확인하고 ‘지금 발행’으로 재시도하세요.
+          </p>
+        )}
+        {tokenWarn && (
+          <p className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            인스타 토큰이 <b>{tokenDays! <= 0 ? "만료됐어요" : `${tokenDays}일 뒤 만료`}</b>. 자동 갱신(주 1회)이 도는지 확인하고, 안 되면 토큰을 다시 발급해 주세요.
+          </p>
+        )}
+        {tokenDays !== null && !tokenWarn && (
+          <p className="mt-2 text-xs text-neutral-400">인스타 토큰 약 {tokenDays}일 남음 (자동 갱신 중)</p>
         )}
       </Section>
 
@@ -366,6 +378,13 @@ export default function AdminDashboard({ stats }: { stats?: AdminStats | null })
     <div>
       <h2 className="text-lg font-semibold tracking-tight">관리자 대시보드</h2>
       <p className="mt-1 text-sm text-neutral-500">서비스 현황 한눈에 보기 · 오늘=한국시간 · 새로고침하면 최신</p>
+
+      {stats.ai && !stats.ai.ok && (
+        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <b>⚠️ 글·카드 생성이 중단됐어요.</b> Claude 크레딧/결제 문제로 보여요. Anthropic 콘솔에서 크레딧을 충전하면 자동 복구돼요.
+          {stats.ai.lastError && <span className="ml-1 text-red-500">({stats.ai.lastError.slice(0, 80)})</span>}
+        </div>
+      )}
 
       <div className="mt-4">
         <Segmented

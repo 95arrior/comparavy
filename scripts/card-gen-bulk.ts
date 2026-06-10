@@ -8,15 +8,25 @@
  * 앵글(주제 카테고리)을 골고루 섞어 중복을 줄인다. haiku라 한 세트당 비용은 1원 안팎.
  */
 import { renderCards } from "../lib/cardRender";
-import { generateCardNews, ANGLES } from "../lib/cardNews";
+import { generateCardNews, assessCard, ANGLES } from "../lib/cardNews";
 import { createSupabaseAdminClient } from "../lib/supabase-server";
 
 const BUCKET = "social-cards";
 
-async function buildOne(admin: ReturnType<typeof createSupabaseAdminClient>, seq: number) {
+async function buildOne(admin: ReturnType<typeof createSupabaseAdminClient>, seq: number, avoid: string[]) {
   // 앵글을 순환시켜 골고루 섞는다
   const a = ANGLES[seq % ANGLES.length];
-  const card = await generateCardNews(a.seed, a.label);
+  const opts = { avoidTopics: avoid, useWebSearch: a.web, model: a.web ? "claude-sonnet-4-6" : undefined };
+
+  // 품질 게이트 — 미달이면 1회 재생성, 그래도 안 되면 스킵
+  let card = await generateCardNews(a.seed, a.label, opts);
+  let check = assessCard(card);
+  if (!check.ok) {
+    card = await generateCardNews(a.seed, a.label, opts);
+    check = assessCard(card);
+  }
+  if (!check.ok) return { skipped: true as const, label: a.label, reasons: check.reasons };
+
   const pngs = await renderCards(card.slides);
   const stamp = `${Date.now()}-${seq}`;
   const urls: string[] = [];
@@ -26,21 +36,29 @@ async function buildOne(admin: ReturnType<typeof createSupabaseAdminClient>, seq
     if (error) throw new Error("업로드 실패: " + error.message);
     urls.push(admin.storage.from(BUCKET).getPublicUrl(path).data.publicUrl);
   }
-  const { error } = await admin.from("social_posts").insert({ type: "carousel", media_urls: urls, caption: card.caption });
+  const { error } = await admin.from("social_posts").insert({ type: "carousel", media_urls: urls, caption: card.caption, topic: a.seed });
   if (error) throw new Error("보관함 저장 실패: " + error.message);
-  return { label: a.label, title: card.slides[0]?.title ?? "" };
+  return { skipped: false as const, label: a.label, title: card.slides[0]?.title ?? "" };
 }
 
 async function main() {
   const n = Math.max(1, Math.min(50, Number(process.argv[2]) || 10));
-  console.log(`🗂  카드뉴스 ${n}세트 벌크 생성 시작 (모델: haiku)`);
+  console.log(`🗂  카드뉴스 ${n}세트 벌크 생성 시작 (haiku · 유머는 sonnet+웹검색 · 품질 게이트 ON)`);
   const admin = createSupabaseAdminClient();
   await admin.storage.createBucket(BUCKET, { public: true }).catch(() => {});
+
+  // 최근 올린 주제 — 중복 회피용
+  const { data: recent } = await admin.from("social_posts").select("topic").order("created_at", { ascending: false }).limit(20);
+  const avoid: string[] = (recent ?? []).map((r: { topic: string | null }) => r.topic).filter((t): t is string => !!t);
 
   let ok = 0;
   for (let i = 0; i < n; i++) {
     try {
-      const r = await buildOne(admin, i);
+      const r = await buildOne(admin, i, avoid);
+      if (r.skipped) {
+        console.log(`  ⏭  ${i + 1}/${n} [${r.label}] 품질 미달로 스킵 (${r.reasons.join(", ")})`);
+        continue;
+      }
       ok++;
       console.log(`  ✅ ${i + 1}/${n} [${r.label}] ${r.title.replace(/\n/g, " ")}`);
     } catch (e) {
