@@ -204,8 +204,10 @@ export default function ArticleList({
               {(a.status === "published" || a.status === "future") && !a.locked ? (
                 <button
                   onClick={() => setConfirmUnpub(a)}
-                  className="shrink-0 rounded-lg border border-neutral-200 px-2.5 py-1.5 text-xs font-medium text-neutral-500 transition hover:border-red-300 hover:text-red-600"
+                  title="발행 취소(글 내리기)"
+                  className="flex shrink-0 items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-neutral-400 transition hover:bg-red-50 hover:text-red-600"
                 >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 17V3M6 11l6 6 6-6M5 21h14" /></svg>
                   내리기
                 </button>
               ) : (
