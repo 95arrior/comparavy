@@ -149,7 +149,11 @@ export async function POST(request: Request) {
         // (품질 우선·억지로 안 채움 지침과 충돌하지 않게 0.5→0.4로 완화 → 좋은 짧은 글 오반려·토큰 낭비 감소)
         const charCount = countKoreanChars(article.body_html);
         if (charCount < maxWords * 0.4) {
-          send({ type: "error", error: "생성이 중간에 끊긴 것 같아요. 한 번만 다시 시도해 주세요. (횟수는 차감되지 않아요)" });
+          send({
+            type: "error",
+            error:
+              "이 주제는 글로 풀기엔 다소 좁아서 충분한 분량이 안 나왔어요. 구글 검색에 잘 잡히는 글은 어느 정도 깊이가 필요해요. 조금 더 넓은 주제나 다른 키워드로 다시 시도해 주세요. (횟수는 차감되지 않아요)",
+          });
           return;
         }
 

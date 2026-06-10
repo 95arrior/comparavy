@@ -183,15 +183,22 @@ function PublishCard() {
 
 function MobilePublish() {
   return (
-    <div className="mx-auto flex max-w-sm items-center justify-center">
-      <div className="relative w-48 rounded-[2.2rem] border-[7px] border-neutral-900 bg-white p-3.5 shadow-xl">
-        <div className="mx-auto mb-3 h-1 w-12 rounded-full bg-neutral-200" />
-        <div className="rounded-lg bg-neutral-50 px-3 py-2 text-[11px] font-medium text-neutral-500">강아지 분리불안 해결법</div>
-        <button className="mt-2.5 w-full rounded-lg py-2 text-[11px] font-semibold text-white" style={{ background: BRAND }}>
+    <div className="mx-auto w-56">
+      <div className="relative rounded-[2.6rem] border-[9px] border-neutral-900 bg-white p-4 shadow-2xl">
+        <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-neutral-200" />
+        <p className="text-[11px] font-medium text-neutral-400">키워드</p>
+        <div className="mt-1.5 rounded-xl bg-neutral-50 px-3 py-2.5 text-[13px] font-medium text-neutral-700">강아지 분리불안</div>
+        <button className="mt-3 w-full rounded-xl py-2.5 text-[13px] font-semibold text-white" style={{ background: BRAND }}>
           워드프레스에 발행
         </button>
-        <div className="mt-2.5 flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-2 text-[11px] font-medium text-emerald-700">
-          <Check size={13} /> 게시 완료 · 지하철에서 1분
+        <div className="mt-3 flex items-center gap-2.5 rounded-xl bg-emerald-50 px-3 py-2.5">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
+            <Check size={15} />
+          </span>
+          <div className="leading-tight">
+            <p className="text-[13px] font-semibold text-emerald-700">게시 완료</p>
+            <p className="text-[11px] text-emerald-600/80">지하철에서 1분 만에</p>
+          </div>
         </div>
       </div>
     </div>
