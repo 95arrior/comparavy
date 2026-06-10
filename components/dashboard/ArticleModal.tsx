@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useEffect, useRef, useMemo } from "react";
 import ArticleEditor, { type ArticleEditorHandle } from "./ArticleEditor";
 import CenterToast from "./CenterToast";
+import ScheduleCalendar from "./ScheduleCalendar";
 import { PLANS, formatKRW } from "@/lib/plans";
 import type { Article } from "./types";
 
@@ -621,7 +622,7 @@ export default function ArticleModal({
             {scheduleOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setScheduleOpen(false)} />
-                <div className="ateflo-dropdown absolute right-0 top-full z-50 mt-2 w-72 rounded-2xl border border-neutral-100 bg-white p-4 shadow-xl">
+                <div className="ateflo-dropdown absolute right-0 top-full z-50 mt-2 w-80 rounded-2xl border border-neutral-100 bg-white p-4 shadow-xl">
                   <p className="text-sm font-semibold">예약 발행</p>
                   <p className="mt-1 text-xs leading-relaxed text-neutral-500">정한 시간에 워드프레스로 자동 발행돼요.</p>
 
@@ -643,16 +644,10 @@ export default function ArticleModal({
                     ))}
                   </div>
 
-                  <label className="mt-3 block text-xs font-medium text-neutral-500">직접 고르기</label>
-                  <input
-                    type="datetime-local"
-                    min={minScheduleAt()}
-                    value={scheduleAt}
-                    onChange={(e) => setScheduleAt(e.target.value)}
-                    className="mt-1 w-full rounded-xl border border-neutral-300 px-3 py-2.5 text-sm outline-none focus:border-neutral-900"
-                  />
+                  <p className="mb-1.5 mt-3 text-xs font-medium text-neutral-500">직접 고르기</p>
+                  <ScheduleCalendar value={scheduleAt} onChange={setScheduleAt} min={new Date(Date.now() + 60000)} />
 
-                  {scheduleAt && <p className="mt-2 text-xs font-medium text-emerald-600">✓ {fmtSchedule(scheduleAt)}에 발행돼요</p>}
+                  {scheduleAt && <p className="mt-2.5 text-xs font-medium text-emerald-600">✓ {fmtSchedule(scheduleAt)}에 발행돼요</p>}
 
                   <div className="mt-3 flex gap-2">
                     <button
