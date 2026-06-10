@@ -66,6 +66,36 @@ export default function DashboardClient(props: DashboardProps) {
     return () => { alive = false; };
   }, [wpSiteUrl, props.plan]);
 
+  // 예약 글이 시간 지나 워드프레스에서 자동 발행됐는지 자동 동기화 (탭 이동 시 + 2분마다).
+  // → 버튼 안 눌러도 '예약됨' 칩이 알아서 '발행됨'으로 바뀐다. (예약 글만 검사해서 가벼움)
+  useEffect(() => {
+    if (!wpSiteUrl || props.plan !== "pro") return;
+    let alive = true;
+    const run = async () => {
+      try {
+        const res = await fetch("/api/wordpress/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ futureOnly: true }),
+        });
+        const data = await res.json();
+        if (alive && res.ok && Array.isArray(data.changed) && data.changed.length) {
+          setArticles((prev) =>
+            prev.map((a) => {
+              const c = (data.changed as { id: string; status: Article["status"]; clearedWp: boolean }[]).find((x) => x.id === a.id);
+              return c ? { ...a, status: c.status, ...(c.clearedWp ? { wp_post_id: null, wp_link: null } : {}) } : a;
+            }),
+          );
+        }
+      } catch {
+        // 무시
+      }
+    };
+    run();
+    const t = setInterval(run, 120000);
+    return () => { alive = false; clearInterval(t); };
+  }, [tab, wpSiteUrl, props.plan]);
+
   // 메인에서 키워드+유형+문체를 받고 왔으면, 바로 작성화면을 띄운다(뎁스 축소)
   useEffect(() => {
     if (typeof window === "undefined") return;

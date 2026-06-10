@@ -10,10 +10,13 @@ import { ensureUserRow } from "@/lib/userPlan";
  * - WP에서 글이 사라짐(404) → 초안 + 워드프레스 연결정보(wp_post_id/link) 제거
  * (프로 전용)
  */
-export async function POST() {
+export async function POST(request: Request) {
   if (!hasSupabaseEnv()) {
     return NextResponse.json({ error: "서버 설정이 아직이에요. 잠시 후 다시 시도해 주세요." }, { status: 500 });
   }
+  // futureOnly: 예약(future) 글만 검사 → 자동 동기화에 쓰는 가벼운 모드
+  const reqBody = await request.json().catch(() => ({}));
+  const futureOnly = reqBody?.futureOnly === true;
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -32,12 +35,13 @@ export async function POST() {
     .maybeSingle();
   if (!conn) return NextResponse.json({ error: "먼저 워드프레스를 연결해 주세요." }, { status: 400 });
 
-  const { data: arts } = await supabase
+  let q = supabase
     .from("articles")
     .select("id, status, wp_post_id")
     .eq("user_id", user.id)
-    .not("wp_post_id", "is", null)
-    .limit(200);
+    .not("wp_post_id", "is", null);
+  if (futureOnly) q = q.eq("status", "future");
+  const { data: arts } = await q.limit(200);
 
   const base = conn.site_url.replace(/\/+$/, "");
   const auth = "Basic " + Buffer.from(`${conn.username}:${conn.app_password}`).toString("base64");

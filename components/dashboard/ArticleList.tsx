@@ -178,7 +178,7 @@ export default function ArticleList({
             <button
               onClick={syncWp}
               disabled={syncing}
-              title="워드프레스에서 내리거나 지운 글을 우리 목록과 맞춰요"
+              title="워드프레스에서 직접 글을 삭제·발행·숨김 처리했을 때, 누르면 내 글 목록 상태에도 반영돼요. (예약 발행은 자동으로 맞춰져요)"
               className="flex items-center gap-1.5 rounded-xl border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-neutral-900 disabled:opacity-50"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={syncing ? "animate-spin" : ""}><path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6" /></svg>
