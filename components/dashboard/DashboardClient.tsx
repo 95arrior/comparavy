@@ -16,6 +16,7 @@ import Brand from "@/components/Brand";
 import AdminDashboard from "./AdminDashboard";
 import NewsView from "./NewsView";
 import WpGuideView from "./WpGuideView";
+import SitemapGuideView from "./SitemapGuideView";
 import { LATEST_ANNOUNCEMENT_ID } from "@/lib/announcements";
 import HeroInput from "@/components/HeroInput";
 import DemoStream from "@/components/DemoStream";
@@ -52,7 +53,7 @@ export default function DashboardClient(props: DashboardProps) {
   const [subCanceled, setSubCanceled] = useState(props.subStatus === "canceled");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [page, setPage] = useState<null | "news" | "guide">(null);
+  const [page, setPage] = useState<null | "news" | "guide" | "sitemap">(null);
   const [unreadNews, setUnreadNews] = useState(false);
   // 워드프레스 카테고리·태그를 미리 불러둔다 → 글 편집 모달에서 드롭다운이 즉시 뜨도록(매번 새로 가져오는 1초 지연 제거)
   const [wpCategories, setWpCategories] = useState<{ id: number; name: string; count?: number }[]>([]);
@@ -364,6 +365,14 @@ export default function DashboardClient(props: DashboardProps) {
     setPage("guide");
   }
 
+  function openSitemapGuide() {
+    if (genParams) return;
+    setSelected(null);
+    setGenParams(null);
+    setNavOpen(false);
+    setPage("sitemap");
+  }
+
   // 모바일에서 사이드바(전체화면)가 열리면 뒤 페이지 스크롤 잠금 — 사이드바만 스크롤되게
   useEffect(() => {
     if (navOpen && window.innerWidth < 768) {
@@ -594,6 +603,7 @@ export default function DashboardClient(props: DashboardProps) {
 
         {page === "news" && <NewsView onBack={() => setPage(null)} />}
         {page === "guide" && <WpGuideView onBack={() => setPage(null)} onGoConnect={() => goTab("wordpress")} />}
+        {page === "sitemap" && <SitemapGuideView onBack={() => setPage(null)} />}
 
         {!page && selected && (
           <ArticleModal
@@ -730,7 +740,7 @@ export default function DashboardClient(props: DashboardProps) {
               </>
             )}
             {tab === "wordpress" && (
-              <WordPressPanel siteUrl={wpSiteUrl} onConnected={setWpSiteUrl} onDisconnected={() => setWpSiteUrl(null)} onOpenGuide={openGuide} />
+              <WordPressPanel siteUrl={wpSiteUrl} onConnected={setWpSiteUrl} onDisconnected={() => setWpSiteUrl(null)} onOpenGuide={openGuide} onOpenSitemapGuide={openSitemapGuide} />
             )}
             {tab === "account" && (
               <div className="mx-auto max-w-xl rounded-2xl border border-neutral-100 bg-white shadow-sm p-6 sm:p-8">

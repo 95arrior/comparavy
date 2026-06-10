@@ -15,11 +15,13 @@ export default function WordPressPanel({
   onConnected,
   onDisconnected,
   onOpenGuide,
+  onOpenSitemapGuide,
 }: {
   siteUrl: string | null;
   onConnected: (siteUrl: string) => void;
   onDisconnected: () => void;
   onOpenGuide?: () => void;
+  onOpenSitemapGuide?: () => void;
 }) {
   const [site, setSite] = useState("");
   const [username, setUsername] = useState("");
@@ -76,19 +78,37 @@ export default function WordPressPanel({
 
   if (siteUrl) {
     return (
-      <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-6 sm:p-8">
-        <h2 className="text-lg font-semibold tracking-tight">워드프레스 연결됨</h2>
-        <p className="mt-2 flex items-center gap-2 text-sm text-neutral-600">
-          <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
-          {siteUrl}
-        </p>
-        <p className="mt-4 text-sm text-neutral-500">이제 글 목록에서 글을 열어 바로 발행할 수 있어요.</p>
-        <button
-          onClick={disconnect}
-          className="mt-6 rounded-xl border border-neutral-300 px-5 py-2.5 text-sm font-medium transition hover:border-red-400 hover:text-red-600"
-        >
-          연결 해제
-        </button>
+      <div className="space-y-4">
+        <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-6 sm:p-8">
+          <h2 className="text-lg font-semibold tracking-tight">워드프레스 연결됨</h2>
+          <p className="mt-2 flex items-center gap-2 text-sm text-neutral-600">
+            <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+            {siteUrl}
+          </p>
+          <p className="mt-4 text-sm text-neutral-500">이제 글 목록에서 글을 열어 바로 발행할 수 있어요.</p>
+          <button
+            onClick={disconnect}
+            className="mt-6 rounded-xl border border-neutral-300 px-5 py-2.5 text-sm font-medium transition active:scale-95 hover:border-red-400 hover:text-red-600"
+          >
+            연결 해제
+          </button>
+        </div>
+
+        {/* 구글 등록(사이트맵) 안내 — 글을 써도 구글이 모르면 검색에 안 뜸 */}
+        {onOpenSitemapGuide && (
+          <button
+            onClick={onOpenSitemapGuide}
+            className="flex w-full items-center gap-3 rounded-2xl border border-neutral-100 bg-white p-5 text-left shadow-sm transition active:scale-[0.99] hover:border-neutral-300"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#3f91ff]/10 text-[#3f91ff]">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7" /><path d="M21 21l-3.5-3.5M8 11h6M11 8v6" /></svg>
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold text-neutral-900">구글에 내 블로그 등록하기</span>
+              <span className="mt-0.5 block text-xs text-neutral-500">한 번만 등록하면 검색에 잡혀요. 따라하기 가이드 →</span>
+            </span>
+          </button>
+        )}
       </div>
     );
   }
