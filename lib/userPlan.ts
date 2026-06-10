@@ -21,6 +21,8 @@ export interface UserRow {
   current_period_end: string | null;
   /** 무료 미리보기(티저)를 이미 만들었는지 — 삭제·만료돼도 유지(재생성 차단) */
   teaser_used?: boolean;
+  /** 글감 추천 사용량 (글 한도×3 까지). 프로는 결제주기마다 리셋, 무료는 평생 누적 */
+  keyword_ideas_used?: number;
 }
 
 /** 사용자 행을 가져오고, 없으면 무료 플랜으로 생성한다. */
@@ -87,11 +89,11 @@ export async function rolloverIfNeeded(row: UserRow): Promise<UserRow> {
 
   const now = new Date().toISOString();
   // 쓰기는 서비스롤로 — 유저 권한(RLS)으로 users update가 막히던 문제 방지
-  await createSupabaseAdminClient()
-    .from("users")
-    .update({ articles_used: 0, period_start: now })
-    .eq("id", row.id);
-  return { ...row, articles_used: 0, period_start: now };
+  const admin = createSupabaseAdminClient();
+  await admin.from("users").update({ articles_used: 0, period_start: now }).eq("id", row.id);
+  // 글감 추천 카운터도 결제주기마다 리셋 (별도 update — 컬럼 없으면 무시되어 위 리셋엔 영향 없음)
+  await admin.from("users").update({ keyword_ideas_used: 0 }).eq("id", row.id);
+  return { ...row, articles_used: 0, period_start: now, keyword_ideas_used: 0 };
 }
 
 /** 플랜을 적용한다 (한도 갱신 + 추가 필드). 결제 성공/해지 시 사용. */
