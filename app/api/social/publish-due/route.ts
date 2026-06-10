@@ -20,10 +20,17 @@ async function run() {
   const { data: settings } = await admin.from("social_settings").select("*").eq("id", 1).maybeSingle();
   if (!settings?.auto_enabled) return NextResponse.json({ ok: true, skipped: "disabled" });
 
-  // 주기 도달 확인 (self-throttle) — cron은 자주 돌아도 interval 안 됐으면 건너뜀
-  const intervalMs = (settings.interval_hours ?? 24) * 3600000;
-  if (settings.last_published_at && Date.now() - new Date(settings.last_published_at).getTime() < intervalMs) {
-    return NextResponse.json({ ok: true, skipped: "not_due" });
+  const interval = settings.interval_hours ?? 24;
+  const startHour = settings.posting_hour ?? 9;
+  // 발행 시각(KST 슬롯): startHour 부터 interval 간격. 예) 9시·(12h면)21시
+  const kstHour = new Date(Date.now() + 9 * 3600000).getUTCHours();
+  const slots = new Set<number>();
+  for (let h = startHour; h < startHour + 24; h += interval) slots.add(h % 24);
+  if (!slots.has(kstHour)) return NextResponse.json({ ok: true, skipped: "not_slot" });
+
+  // 같은 슬롯에서 중복 발행 방지 (cron이 시간당 1회 돌지만 안전장치)
+  if (settings.last_published_at && Date.now() - new Date(settings.last_published_at).getTime() < (interval - 1) * 3600000) {
+    return NextResponse.json({ ok: true, skipped: "recently" });
   }
 
   // 가장 오래된 대기 글 1건

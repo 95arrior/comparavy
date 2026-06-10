@@ -32,6 +32,7 @@ export async function POST(request: Request) {
     const patch: Record<string, unknown> = {};
     if (typeof body.autoEnabled === "boolean") patch.auto_enabled = body.autoEnabled;
     if (typeof body.intervalHours === "number" && body.intervalHours > 0) patch.interval_hours = Math.min(720, Math.round(body.intervalHours));
+    if (typeof body.postingHour === "number" && body.postingHour >= 0 && body.postingHour <= 23) patch.posting_hour = Math.round(body.postingHour);
     if (Object.keys(patch).length) await admin.from("social_settings").update(patch).eq("id", 1);
     return NextResponse.json({ ok: true });
   }

@@ -257,7 +257,11 @@ function SocialView({ stats }: { stats: AdminStats }) {
 
   if (!s) return <Section title="SNS 발행"><p className="text-sm text-neutral-400">설정을 불러오지 못했어요. (마이그레이션 0017 실행 필요)</p></Section>;
 
-  const nextAt = s.lastPublishedAt ? new Date(new Date(s.lastPublishedAt).getTime() + s.intervalHours * 3600000) : null;
+  const hourLabel = (h: number) => (h === 0 ? "오전 12시" : h < 12 ? `오전 ${h}시` : h === 12 ? "오후 12시" : `오후 ${h - 12}시`);
+  const slots: number[] = [];
+  for (let h = s.postingHour; h < s.postingHour + 24; h += s.intervalHours) slots.push(h % 24);
+  slots.sort((a, b) => a - b);
+  const scheduleText = slots.map(hourLabel).join(" · ");
 
   return (
     <>
@@ -301,11 +305,22 @@ function SocialView({ stats }: { stats: AdminStats }) {
                 <option value={48}>이틀 1회</option>
               </select>
             </label>
-            <span className="text-neutral-400">
-              {nextAt && s.autoEnabled ? <>다음 발행 예정 ~{nextAt.toLocaleString("ko-KR", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}</> : "보관함에 글이 쌓이면 자동으로 올라가요"}
-              {msg && <span className="ml-2 text-neutral-500">· {msg}</span>}
-            </span>
+            <label className="flex items-center gap-2 text-neutral-500">
+              발행 시각
+              <select
+                value={s.postingHour}
+                onChange={(e) => call({ action: "settings", postingHour: Number(e.target.value) }, "시각 변경됨")}
+                disabled={busy}
+                className="rounded-lg border border-neutral-300 px-2.5 py-1.5 text-sm outline-none"
+              >
+                {[7, 8, 9, 10, 11, 12, 13, 17, 18, 19, 20, 21, 22].map((h) => <option key={h} value={h}>{hourLabel(h)}</option>)}
+              </select>
+            </label>
           </div>
+          <p className="mt-3 text-sm text-neutral-500">
+            {s.autoEnabled ? <>매일 <b className="text-neutral-800">{scheduleText}</b>(한국시간)에 자동 발행돼요</> : "‘시작’을 누르면 정해둔 시각에 맞춰 자동 발행돼요"}
+            {msg && <span className="ml-2 text-neutral-400">· {msg}</span>}
+          </p>
         </div>
       </Section>
 
@@ -333,7 +348,7 @@ function SocialView({ stats }: { stats: AdminStats }) {
       </Section>
 
       {/* 보관함 목록 */}
-      <Section title="보관함" desc="클로드가 생성한 카드뉴스가 여기 쌓여요. 오래된 것부터 자동 발행돼요.">
+      <Section title="보관함" desc="클로드가 생성한 카드뉴스가 여기 쌓여요. 오래된 것부터 자동 발행돼요. (이미 발행된 글은 인스타 API로 못 지워요 — 인스타 앱에서 직접 삭제)">
         <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-4 sm:p-5">
           <ul className="divide-y divide-neutral-100">
             {s.posts.length === 0 ? (
@@ -347,7 +362,14 @@ function SocialView({ stats }: { stats: AdminStats }) {
                   {p.status !== "published" && (
                     <button onClick={() => call({ action: "publishNow", id: p.id }, "발행했어요")} disabled={busy} className="shrink-0 text-xs font-medium text-neutral-500 transition hover:text-neutral-900 disabled:opacity-50">지금 발행</button>
                   )}
-                  <button onClick={() => call({ action: "delete", id: p.id }, "삭제했어요")} disabled={busy} className="shrink-0 text-xs text-neutral-400 transition hover:text-red-500 disabled:opacity-50">삭제</button>
+                  <button
+                    onClick={() => call({ action: "delete", id: p.id }, p.status === "published" ? "기록만 삭제됐어요 (인스타는 앱에서 삭제)" : "삭제했어요")}
+                    disabled={busy}
+                    title={p.status === "published" ? "기록만 삭제돼요. 인스타 게시물은 인스타 앱에서 직접 삭제하세요." : "대기열에서 삭제"}
+                    className="shrink-0 text-xs text-neutral-400 transition hover:text-red-500 disabled:opacity-50"
+                  >
+                    {p.status === "published" ? "기록 삭제" : "삭제"}
+                  </button>
                 </li>
               ))
             )}
