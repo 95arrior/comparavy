@@ -48,7 +48,7 @@ function MiniBars({ title, data, color, suffix = "" }: { title: string; data: { 
   const max = Math.max(1, ...data.map((d) => d.count));
   const total = data.reduce((s, d) => s + d.count, 0);
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-white p-4 sm:p-5">
+    <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-4 sm:p-5">
       <div className="flex items-baseline justify-between">
         <p className="text-sm font-medium text-neutral-900">{title}</p>
         <p className="text-xs text-neutral-400">7일 합 {total.toLocaleString()}{suffix}</p>
@@ -94,7 +94,7 @@ function Funnel({ stats }: { stats: AdminStats }) {
     }
   }
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-white p-4 sm:p-5">
+    <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-4 sm:p-5">
       <div className="space-y-3">
         {steps.map((s, i) => {
           const widthPct = Math.max(2, Math.round((s.value / base) * 100));
@@ -141,7 +141,7 @@ function CostBreakdown({ stats }: { stats: AdminStats }) {
         <Stat label="누적 API 비용" value={won(stats.costTotalKrw)} accent />
         <Stat label="오늘 비용" value={won(stats.costTodayKrw ?? 0)} />
       </div>
-      <div className="rounded-2xl border border-neutral-200 bg-white p-4 sm:p-5 lg:col-span-2">
+      <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-4 sm:p-5 lg:col-span-2">
         <p className="text-sm font-medium text-neutral-900">종류별 비용</p>
         <div className="mt-3 space-y-2.5">
           {stats.costByKind.length === 0 ? (
@@ -214,7 +214,7 @@ export default function AdminDashboard({ stats }: { stats?: AdminStats | null })
       {/* 최근 활동 */}
       <Section title="최근 활동">
         <div className="grid gap-3 lg:grid-cols-2">
-          <div className="rounded-2xl border border-neutral-200 bg-white p-4 sm:p-5">
+          <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-4 sm:p-5">
             <p className="text-sm font-medium text-neutral-900">최근 가입</p>
             <ul className="mt-3 divide-y divide-neutral-100">
               {stats.recentUsers.length === 0 ? (
@@ -229,7 +229,7 @@ export default function AdminDashboard({ stats }: { stats?: AdminStats | null })
               )}
             </ul>
           </div>
-          <div className="rounded-2xl border border-neutral-200 bg-white p-4 sm:p-5">
+          <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-4 sm:p-5">
             <p className="text-sm font-medium text-neutral-900">최근 글</p>
             <ul className="mt-3 divide-y divide-neutral-100">
               {stats.recentArticles.length === 0 ? (

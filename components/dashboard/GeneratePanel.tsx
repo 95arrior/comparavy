@@ -53,7 +53,7 @@ export default function GeneratePanel({
   }
 
   return (
-    <div className="mx-auto max-w-2xl rounded-2xl border border-neutral-200 bg-white p-6 sm:p-8">
+    <div className="mx-auto max-w-2xl rounded-2xl border border-neutral-100 bg-white shadow-sm p-6 sm:p-8">
       <h2 className="text-lg font-semibold tracking-tight">새 글 생성</h2>
       <p className="mt-1 text-sm text-neutral-500">
         키워드를 입력하면 한국어 SEO 글을 만듭니다. 이번 달 남은 횟수: {Math.max(0, remaining)}편

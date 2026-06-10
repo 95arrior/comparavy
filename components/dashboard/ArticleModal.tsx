@@ -457,7 +457,7 @@ export default function ArticleModal({
             <div className="pointer-events-none absolute -inset-x-6 bottom-0 top-[4.75rem] bg-gradient-to-b from-transparent via-neutral-50/85 to-neutral-50 backdrop-blur-[2px] [mask-image:linear-gradient(to_bottom,transparent,#000_3rem)] [-webkit-mask-image:linear-gradient(to_bottom,transparent,#000_3rem)]" />
             {/* 결제 카드: 흐려진 영역 위 중앙, 바닥에서 충분히 띄워 그라데이션·그림자가 안 잘리게 */}
             <div className="absolute inset-x-0 bottom-12 flex justify-center px-4">
-              <div className="w-full max-w-sm rounded-2xl border border-neutral-200 bg-white p-5 text-center shadow-xl">
+              <div className="w-full max-w-sm rounded-2xl border border-neutral-100 bg-white shadow-sm p-5 text-center shadow-xl">
                 <p className="text-base font-semibold tracking-tight">여기부터는 프로 회원만 볼 수 있어요</p>
                 <p className="mt-1.5 text-sm leading-relaxed text-neutral-500">
                   프로로 업그레이드하면 이 글 전체가 열리고, 매달 30편까지 5,000자 깊이로 쓰고 워드프레스에 바로 발행할 수 있어요.
@@ -600,7 +600,7 @@ export default function ArticleModal({
             {scheduleOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setScheduleOpen(false)} />
-                <div className="ateflo-dropdown absolute right-0 top-full z-50 mt-2 w-72 rounded-2xl border border-neutral-200 bg-white p-4 shadow-xl">
+                <div className="ateflo-dropdown absolute right-0 top-full z-50 mt-2 w-72 rounded-2xl border border-neutral-100 bg-white shadow-sm p-4 shadow-xl">
                   <p className="text-sm font-semibold">예약 발행</p>
                   <p className="mt-1 text-xs leading-relaxed text-neutral-500">정한 시간에 워드프레스로 자동 발행돼요. 출퇴근길에 미리 예약해두세요.</p>
                   <input
@@ -707,7 +707,7 @@ export default function ArticleModal({
           const suggestions = Array.from(new Set([...aiSuggested, ...existingTags])).filter((t) => !tags.includes(t));
           // 드롭다운 옵션: WP에서 가져온 목록 + 현재 선택값(아직 WP에 없는 새 카테고리 포함) → 다시 열어도 안 사라짐
           return (
-            <div className="mt-4 rounded-2xl border border-neutral-200 bg-white p-5">
+            <div className="mt-4 rounded-2xl border border-neutral-100 bg-white shadow-sm p-5">
               <p className="text-[15px] font-semibold tracking-tight">발행 설정</p>
               <p className="mt-1 text-[13px] leading-relaxed text-neutral-400">카테고리와 태그를 정하면 검색에 더 잘 잡혀요.</p>
 
@@ -754,7 +754,7 @@ export default function ArticleModal({
                       {catOpen && (
                         <>
                           <div className="fixed inset-0 z-40" onClick={() => { setCatOpen(false); setCatToDelete(null); }} />
-                          <div className="ateflo-dropdown absolute left-0 right-0 top-full z-50 mt-2 max-h-72 overflow-auto rounded-2xl border border-neutral-200 bg-white p-1.5 shadow-xl">
+                          <div className="ateflo-dropdown absolute left-0 right-0 top-full z-50 mt-2 max-h-72 overflow-auto rounded-2xl border border-neutral-100 bg-white shadow-sm p-1.5 shadow-xl">
                             {catToDelete ? (
                               /* 삭제 확인 — 옮길 곳을 누르면 옮기고 삭제 (네이티브 셀렉트 없이 같은 리스트 스타일) */
                               <div>

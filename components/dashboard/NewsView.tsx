@@ -29,7 +29,7 @@ export default function NewsView({ onBack }: { onBack: () => void }) {
         <div className="mt-12 space-y-5">
           {ANNOUNCEMENTS.map((a, i) => (
             <Reveal key={a.id} delay={BASE_DELAY + (i + 1) * 70}>
-              <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+              <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-6 shadow-sm">
                 <p className="text-xs font-medium text-neutral-400">{a.date}</p>
                 <h2 className="mt-1 text-lg font-semibold tracking-tight">{a.title}</h2>
                 <p className="mt-2 text-sm leading-relaxed text-neutral-600">{a.body}</p>

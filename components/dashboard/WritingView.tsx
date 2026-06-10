@@ -267,7 +267,7 @@ export default function WritingView({
 
       {phase === "done" && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-white/70 backdrop-blur-sm">
-          <div className="flex flex-col items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-10 py-7 shadow-xl">
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-neutral-100 bg-white shadow-sm px-10 py-7 shadow-xl">
             <AteFloLogo pro={pro} animated size={30} />
             <p className="text-sm font-medium text-neutral-800">워드프레스 형식으로 정리하고 있어요…</p>
             <p className="text-xs text-neutral-400">제목·소제목·메타 정보를 다듬는 중</p>

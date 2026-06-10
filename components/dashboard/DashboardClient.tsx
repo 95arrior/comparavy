@@ -307,13 +307,14 @@ export default function DashboardClient(props: DashboardProps) {
               {articles.slice(0, 5).map((a) => (
                 <button
                   key={a.id}
+                  disabled={!!genParams}
                   onClick={() => {
-                    setGenParams(null);
+                    if (genParams) return; // 글 생성 중엔 이동 차단 (생성이 사라지지 않게)
                     setSelected(a);
                     closeOnMobile();
                   }}
                   title={a.title}
-                  className="truncate rounded-lg px-2 py-1.5 text-left text-sm text-neutral-600 transition hover:bg-neutral-100"
+                  className="truncate rounded-lg px-2 py-1.5 text-left text-sm text-neutral-600 transition hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {a.locked ? "🔒 " : ""}
                   {a.title}
@@ -479,7 +480,7 @@ export default function DashboardClient(props: DashboardProps) {
               <WordPressPanel siteUrl={wpSiteUrl} onConnected={setWpSiteUrl} onDisconnected={() => setWpSiteUrl(null)} onOpenGuide={openGuide} />
             )}
             {tab === "account" && (
-              <div className="mx-auto max-w-xl rounded-2xl border border-neutral-200 bg-white p-6 sm:p-8">
+              <div className="mx-auto max-w-xl rounded-2xl border border-neutral-100 bg-white shadow-sm p-6 sm:p-8">
                 <h2 className="text-lg font-semibold tracking-tight">내 정보</h2>
                 <dl className="mt-5 space-y-3 text-sm">
                   <div className="flex justify-between gap-4"><dt className="text-neutral-500">이메일</dt><dd className="truncate">{props.email}</dd></div>
