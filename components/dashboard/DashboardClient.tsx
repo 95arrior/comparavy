@@ -6,6 +6,7 @@ import { PLANS } from "@/lib/plans";
 import type { Article, DashboardProps } from "./types";
 import ArticleList from "./ArticleList";
 import ArticleModal from "./ArticleModal";
+import CenterToast from "./CenterToast";
 import WritingView, { type GenParams } from "./WritingView";
 import WordPressPanel from "./WordPressPanel";
 import AteFloLogo from "@/components/AteFloLogo";
@@ -55,6 +56,7 @@ export default function DashboardClient(props: DashboardProps) {
   const [wpCategories, setWpCategories] = useState<{ id: number; name: string; count?: number }[]>([]);
   const [wpTags, setWpTags] = useState<string[]>([]);
   const [wpExpired, setWpExpired] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   // 워드프레스 연결 유효성 점검 — 앱 비밀번호 만료·삭제·사이트 다운 시 배너로 재연결을 유도한다.
   useEffect(() => {
@@ -73,6 +75,13 @@ export default function DashboardClient(props: DashboardProps) {
       alive = false;
     };
   }, [wpSiteUrl, props.plan]);
+
+  // 토스트 자동 사라짐
+  useEffect(() => {
+    if (!notice) return;
+    const t = setTimeout(() => setNotice(null), 2400);
+    return () => clearTimeout(t);
+  }, [notice]);
   useEffect(() => {
     if (!wpSiteUrl || props.plan !== "pro") return;
     let alive = true;
@@ -151,8 +160,12 @@ export default function DashboardClient(props: DashboardProps) {
     setBusy(true);
     try {
       const res = await fetch("/api/billing/cancel", { method: "POST" });
-      if (res.ok) setSubCanceled(true);
-      else alert("해지 처리에 실패했어요. 잠시 후 다시 시도해주세요.");
+      if (res.ok) {
+        setSubCanceled(true);
+        setNotice("구독 해지를 예약했어요");
+      } else {
+        setNotice("해지 처리에 실패했어요. 잠시 후 다시 시도해 주세요.");
+      }
     } finally {
       setBusy(false);
     }
@@ -432,6 +445,8 @@ export default function DashboardClient(props: DashboardProps) {
           </div>
         )}
 
+        {notice && <CenterToast>{notice}</CenterToast>}
+
         {/* 워드프레스 연결 만료 배너 — 발행이 조용히 실패하기 전에 재연결을 유도 */}
         {!page && !selected && !genParams && wpExpired && (
           <div className="px-4 pt-4 sm:px-6">
@@ -567,6 +582,15 @@ export default function DashboardClient(props: DashboardProps) {
                     <dt className="text-neutral-500">{props.plan === "pro" ? "이번 달 생성" : "평생 생성"}</dt>
                     <dd>{articlesUsed} / {props.articlesLimit}편 <span className="text-neutral-400">(남은 {Math.max(0, props.articlesLimit - articlesUsed)}편)</span></dd>
                   </div>
+                  {props.plan === "pro" && !subCanceled && props.nextBillingAt && (
+                    <div className="flex justify-between gap-4">
+                      <dt className="text-neutral-500">다음 결제</dt>
+                      <dd>
+                        {new Date(props.nextBillingAt).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}
+                        <span className="text-neutral-400"> · ₩{PLANS.pro.price.toLocaleString("ko-KR")}/월</span>
+                      </dd>
+                    </div>
+                  )}
                 </dl>
                 {props.plan === "pro" ? (
                   <p className="mt-3 rounded-xl bg-neutral-50 px-4 py-3 text-xs leading-relaxed text-neutral-600">
@@ -591,7 +615,13 @@ export default function DashboardClient(props: DashboardProps) {
 
                 {props.plan === "pro" && subCanceled && (
                   <p className="mt-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-600">
-                    구독 해지가 예약됐어요. 남은 이용 기간까지는 그대로 쓰실 수 있고, 다음 결제는 진행되지 않아요.
+                    구독 해지를 예약했어요.{" "}
+                    {props.currentPeriodEnd ? (
+                      <><b className="text-neutral-800">{new Date(props.currentPeriodEnd).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}까지</b> 그대로 쓰실 수 있고,</>
+                    ) : (
+                      <>남은 이용 기간까지는 그대로 쓰실 수 있고,</>
+                    )}{" "}
+                    다음 결제는 진행되지 않아요.
                   </p>
                 )}
 

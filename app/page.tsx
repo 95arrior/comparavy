@@ -54,6 +54,8 @@ export default async function Home() {
         articlesLimit={row.articles_limit}
         periodStart={row.period_start ?? null}
         subStatus={row.sub_status}
+        nextBillingAt={row.next_billing_at ?? null}
+        currentPeriodEnd={row.current_period_end ?? null}
         initialArticles={(articles ?? []) as Article[]}
         wpSiteUrl={conn?.site_url ?? null}
         isAdmin={isAdmin}

@@ -38,6 +38,8 @@ export interface DashboardProps {
   articlesLimit: number;
   periodStart?: string | null;
   subStatus?: string | null;
+  nextBillingAt?: string | null;
+  currentPeriodEnd?: string | null;
   initialArticles: Article[];
   wpSiteUrl: string | null;
   isAdmin?: boolean;
