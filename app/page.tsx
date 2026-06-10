@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { SITE_NAME, SITE_DESCRIPTION } from "@/lib/site";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
@@ -25,6 +26,9 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
+  // 인트로 세션당 1회 — 쿠키가 있으면 인트로 건너뜀(재방문·새로고침 시 바로 콘텐츠, 깜빡임 없음)
+  const introSeen = (await cookies()).get("ateflo_intro")?.value === "1";
+
   let user = null;
   let supabase = null;
   if (hasSupabaseEnv()) {
@@ -75,7 +79,7 @@ export default async function Home() {
 
   // 출시 전 잠금: 비로그인 방문자는 사전 등록(웨이트리스트) 랜딩만
   if (prelaunch) {
-    return <WaitlistLanding />;
+    return <WaitlistLanding introSeen={introSeen} />;
   }
 
   // 비로그인 → 마케팅 랜딩
@@ -84,7 +88,7 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-white text-neutral-900 antialiased">
-      <LandingIntro />
+      <LandingIntro skip={introSeen} />
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-neutral-200/70 bg-white/80 backdrop-blur">
         <div className="relative mx-auto flex max-w-5xl items-center justify-between px-6 py-5">

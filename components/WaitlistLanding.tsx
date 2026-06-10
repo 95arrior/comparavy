@@ -17,10 +17,10 @@ const WALLS = [
 ];
 
 /** 출시 전 사전 등록(웨이트리스트) 랜딩. 앱은 잠그고, 기대감·페인·기능으로 이메일을 모은다. */
-export default function WaitlistLanding() {
+export default function WaitlistLanding({ introSeen = false }: { introSeen?: boolean }) {
   return (
     <div className="min-h-screen bg-white text-neutral-900 antialiased">
-      <LandingIntro />
+      <LandingIntro skip={introSeen} />
       <ScrollHint />
 
       <header className="sticky top-0 z-40 border-b border-neutral-200/70 bg-white/80 backdrop-blur">

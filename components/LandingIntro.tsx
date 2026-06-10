@@ -1,23 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const COLORS = ["#3f91ff", "#ffd23a", "#ff4d6d", "#2fd07a", "#b06bff"];
 
 type Piece = { key: number; dx: number; dy: number; rot: number; color: string; delay: number; round: boolean };
 
 /**
- * 첫 페인트부터 화면을 덮는 인트로(깜빡임 0) — 시그니처 모션(파란 로고 팝 → 무지개 회전 등장 + 폭죽)을
- * 보여준 뒤 부드럽게 사라지며 랜딩이 드러난다. 새로고침·재방문마다 매번 재생.
+ * 시그니처 인트로 — 시그니처 모션(파란 로고 핑퐁 → 무지개 회전 등장 + 폭죽)을 보여준 뒤 사라진다.
  *
- * phase 기본값을 "playing"으로 둬 SSR HTML에 오버레이가 포함됨 → 콘텐츠가 먼저 보이는 깜빡임 없음.
- * 폭죽(랜덤)은 마운트 후 생성해 hydration 불일치를 피한다(로고/배경은 결정적이라 SSR 안전).
+ * 전환 최적화: 세션당 1회만 재생(skip=true면 즉시 통과 → 재방문·새로고침은 바로 콘텐츠).
+ * skip은 서버에서 쿠키로 판단해 넘겨줌 → 깜빡임 없음. 탭하면 즉시 건너뛰기 가능.
  */
-export default function LandingIntro() {
-  const [phase, setPhase] = useState<"playing" | "leaving" | "done">("playing");
+export default function LandingIntro({ skip = false }: { skip?: boolean }) {
+  const [phase, setPhase] = useState<"playing" | "leaving" | "done">(skip ? "done" : "playing");
   const [pieces, setPieces] = useState<Piece[]>([]);
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useEffect(() => {
+    if (skip) return;
+    // 이번 세션은 봤다고 표시 (세션 쿠키 — 브라우저 닫으면 초기화)
+    document.cookie = "ateflo_intro=1; path=/; SameSite=Lax";
     setPieces(
       Array.from({ length: 36 }).map((_, i) => {
         const angle = Math.random() * Math.PI * 2;
@@ -33,29 +36,34 @@ export default function LandingIntro() {
         };
       }),
     );
-    // 인트로 동안 스크롤 잠금
-    const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    const unlock = () => {
-      document.body.style.overflow = prevOverflow;
-    };
-    const t1 = setTimeout(() => setPhase("leaving"), 3700);
-    const t2 = setTimeout(() => {
-      setPhase("done");
-      unlock();
-    }, 4200);
+    timers.current = [
+      setTimeout(() => setPhase("leaving"), 3700),
+      setTimeout(() => {
+        setPhase("done");
+        document.body.style.overflow = "";
+      }, 4200),
+    ];
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      unlock();
+      timers.current.forEach(clearTimeout);
+      document.body.style.overflow = "";
     };
-  }, []);
+  }, [skip]);
+
+  function skipNow() {
+    if (phase !== "playing") return;
+    timers.current.forEach(clearTimeout);
+    document.body.style.overflow = "";
+    setPhase("leaving");
+    setTimeout(() => setPhase("done"), 400);
+  }
 
   if (phase === "done") return null;
 
   return (
     <div
-      className={`fixed inset-0 z-[200] flex flex-col items-center justify-center bg-white transition-opacity duration-500 ${
+      onClick={skipNow}
+      className={`fixed inset-0 z-[200] flex cursor-pointer flex-col items-center justify-center bg-white transition-opacity duration-500 ${
         phase === "leaving" ? "pointer-events-none opacity-0" : "opacity-100"
       }`}
     >
@@ -84,6 +92,12 @@ export default function LandingIntro() {
         </span>
       </div>
       <p className="ateflo-intro-word mt-8 text-2xl font-bold tracking-tight text-neutral-900">AteFlo</p>
+      <button
+        onClick={skipNow}
+        className="absolute bottom-7 text-xs font-medium text-neutral-300 transition hover:text-neutral-500"
+      >
+        건너뛰기
+      </button>
     </div>
   );
 }
