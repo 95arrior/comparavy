@@ -28,6 +28,8 @@ export interface Article {
   locked?: boolean;
   /** 글쓴이용 메모: 검색 의도·구성 이유 (본문 아님, FAQ 위에 표시) */
   write_note?: string | null;
+  /** 발행/예약 일시 — 콘텐츠 캘린더 표시용 (예약=예약 시각, 발행=발행 시각) */
+  publish_at?: string | null;
   created_at: string;
 }
 

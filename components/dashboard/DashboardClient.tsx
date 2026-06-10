@@ -6,6 +6,7 @@ import { PLANS } from "@/lib/plans";
 import type { Article, DashboardProps } from "./types";
 import ArticleList from "./ArticleList";
 import ArticleModal from "./ArticleModal";
+import ContentCalendar from "./ContentCalendar";
 import CenterToast from "./CenterToast";
 import WritingView, { type GenParams } from "./WritingView";
 import WordPressPanel from "./WordPressPanel";
@@ -58,6 +59,7 @@ export default function DashboardClient(props: DashboardProps) {
   const [wpExpired, setWpExpired] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [calView, setCalView] = useState(false); // 내 글: 목록 ↔ 캘린더
 
   // 워드프레스 연결 유효성 점검 — 앱 비밀번호 만료·삭제·사이트 다운 시 배너로 재연결을 유도한다.
   useEffect(() => {
@@ -621,13 +623,35 @@ export default function DashboardClient(props: DashboardProps) {
             )}
 
             {tab === "articles" && (
-              <ArticleList
-                articles={articles}
-                onOpen={setSelected}
-                onGoGenerate={() => goTab("generate")}
-                onUpdated={(updated) => setArticles((prev) => prev.map((a) => (a.id === updated.id ? updated : a)))}
-                wpConnected={Boolean(wpSiteUrl)}
-              />
+              <>
+                {articles.length > 0 && (
+                  <div className="mb-4 inline-flex rounded-xl border border-neutral-200 bg-white p-1">
+                    <button
+                      onClick={() => setCalView(false)}
+                      className={`rounded-lg px-3.5 py-1.5 text-sm font-medium transition ${!calView ? "bg-neutral-900 text-white" : "text-neutral-500 hover:text-neutral-800"}`}
+                    >
+                      목록
+                    </button>
+                    <button
+                      onClick={() => setCalView(true)}
+                      className={`rounded-lg px-3.5 py-1.5 text-sm font-medium transition ${calView ? "bg-neutral-900 text-white" : "text-neutral-500 hover:text-neutral-800"}`}
+                    >
+                      캘린더
+                    </button>
+                  </div>
+                )}
+                {calView && articles.length > 0 ? (
+                  <ContentCalendar articles={articles} onOpen={setSelected} />
+                ) : (
+                  <ArticleList
+                    articles={articles}
+                    onOpen={setSelected}
+                    onGoGenerate={() => goTab("generate")}
+                    onUpdated={(updated) => setArticles((prev) => prev.map((a) => (a.id === updated.id ? updated : a)))}
+                    wpConnected={Boolean(wpSiteUrl)}
+                  />
+                )}
+              </>
             )}
             {tab === "wordpress" && (
               <WordPressPanel siteUrl={wpSiteUrl} onConnected={setWpSiteUrl} onDisconnected={() => setWpSiteUrl(null)} onOpenGuide={openGuide} />

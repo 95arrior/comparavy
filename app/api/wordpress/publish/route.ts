@@ -109,12 +109,16 @@ export async function POST(request: Request) {
       date,
     });
 
+    // 콘텐츠 캘린더용 발행/예약 일시 — 예약은 그 시각, 즉시 발행은 지금, 초안은 비움
+    const publishAt =
+      status === "future" ? date ?? null : status === "publish" ? new Date().toISOString() : null;
     await supabase
       .from("articles")
       .update({
         status: status === "publish" ? "published" : status,
         wp_post_id: result.id,
         wp_link: result.link,
+        publish_at: publishAt,
       })
       .eq("id", articleId);
 
