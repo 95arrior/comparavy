@@ -12,7 +12,7 @@ function Frame({ label, children }: { label: string; children: React.ReactNode }
         <span className="h-2.5 w-2.5 rounded-full bg-neutral-200" />
         <span className="ml-2 text-xs font-medium text-neutral-400">{label}</span>
       </div>
-      <div className="p-5">{children}</div>
+      <div className="flex min-h-[244px] flex-col justify-center p-5">{children}</div>
     </div>
   );
 }
