@@ -37,7 +37,20 @@ export async function POST() {
   // 데이터 삭제 (각 테이블 개별 — 일부가 없어도 진행)
   await admin.from("articles").delete().eq("user_id", uid);
   await admin.from("wordpress_connections").delete().eq("user_id", uid);
+  await admin.from("usage_log").delete().eq("user_id", uid);
+  await admin.from("rate_limits").delete().eq("user_id", uid);
+  await admin.from("article_patterns").delete().eq("user_id", uid);
   await admin.from("users").delete().eq("id", uid);
+
+  // 업로드한 이미지(스토리지)도 삭제 — 잊힐 권리(완전 삭제)
+  try {
+    const { data: files } = await admin.storage.from("article-images").list(uid, { limit: 1000 });
+    if (files && files.length) {
+      await admin.storage.from("article-images").remove(files.map((f) => `${uid}/${f.name}`));
+    }
+  } catch {
+    // 무시 (버킷/파일 없어도 탈퇴 진행)
+  }
 
   // 인증 계정 삭제
   const { error } = await admin.auth.admin.deleteUser(uid);

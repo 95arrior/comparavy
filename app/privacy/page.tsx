@@ -47,16 +47,25 @@ export default function PrivacyPage() {
         <p>이용자는 언제든지 개인정보 열람·정정·삭제·처리정지를 요청할 수 있으며, 대시보드에서 워드프레스 연결 해제 및 계정 삭제를 직접 할 수 있습니다.</p>
       </LegalSection>
 
-      <LegalSection heading="6. 개인정보의 안전성 확보 조치">
-        <p>회사는 개인정보 보호를 위해 접근 통제, 전송 구간 암호화 등 합리적인 보호조치를 취합니다. 다만 어떤 전송·저장 방식도 완전히 안전하다고 보장할 수는 없습니다.</p>
+      <LegalSection heading="6. 만 14세 미만 아동의 개인정보">
+        <p>회사는 만 14세 미만 아동의 개인정보를 수집하지 않으며, 본 서비스는 만 14세 이상만 이용할 수 있습니다. 만 14세 미만임이 확인되면 해당 정보를 지체 없이 파기합니다.</p>
       </LegalSection>
 
-      <LegalSection heading="7. 개인정보 보호책임자">
+      <LegalSection heading="7. 쿠키 등 자동 수집 장치 및 분석 도구">
+        <p>회사는 서비스 이용 통계와 개선을 위해 Google Analytics를 사용하며, 이 과정에서 쿠키를 통해 접속 기록·페이지 이용 정보가 수집될 수 있습니다(국외 이전 가능).</p>
+        <p>이용자는 브라우저 설정에서 쿠키 저장을 거부할 수 있으며, 이 경우 일부 기능 이용에 제한이 있을 수 있습니다. Google Analytics 수집 거부는 브라우저 부가기능(tools.google.com/dlpage/gaoptout)을 통해서도 가능합니다.</p>
+      </LegalSection>
+
+      <LegalSection heading="8. 개인정보의 안전성 확보 조치">
+        <p>회사는 개인정보 보호를 위해 접근 통제, 전송 구간 암호화(HTTPS), 그리고 워드프레스 애플리케이션 비밀번호 등 민감정보의 저장 시 암호화(AES-256) 등 합리적인 보호조치를 취합니다. 다만 어떤 전송·저장 방식도 완전히 안전하다고 보장할 수는 없습니다.</p>
+      </LegalSection>
+
+      <LegalSection heading="9. 개인정보 보호책임자">
         <p>성명: {BUSINESS.privacyOfficer}</p>
         <p>연락처: {BUSINESS.email}</p>
       </LegalSection>
 
-      <LegalSection heading="8. 사업자 정보">
+      <LegalSection heading="10. 사업자 정보">
         <BusinessInfo />
       </LegalSection>
 
