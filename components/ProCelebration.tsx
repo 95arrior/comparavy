@@ -17,7 +17,7 @@ export default function ProCelebration() {
           dy: Math.sin(angle) * dist,
           rot: Math.random() * 720 - 360,
           color: COLORS[i % COLORS.length],
-          delay: 0.78 + Math.random() * 0.25,
+          delay: 1.5 + Math.random() * 0.3,
           round: i % 2 === 0,
         };
       }),

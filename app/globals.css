@@ -75,12 +75,15 @@ html {
 /* ── 프로 전환 축하 ─────────────────────────────────── */
 /* 파란 로고: 팝 등장 → 입 벌리며 한바퀴(360°) 돌고 사라짐 */
 @keyframes ateflo-celebrate-blue {
-  0%   { transform: scale(0.2) rotate(0deg); opacity: 0; --ateflo-gap: 21.6deg; }
-  18%  { transform: scale(1.12) rotate(0deg); opacity: 1; --ateflo-gap: 21.6deg; }
-  34%  { transform: scale(1) rotate(0deg); opacity: 1; --ateflo-gap: 21.6deg; }
+  0%   { transform: scale(0); opacity: 0; --ateflo-gap: 21.6deg; }
+  16%  { transform: scale(1.28); opacity: 1; --ateflo-gap: 21.6deg; }  /* 통 튀어오름 */
+  30%  { transform: scale(0.9); --ateflo-gap: 21.6deg; }               /* 핑 */
+  44%  { transform: scale(1.08); --ateflo-gap: 21.6deg; }              /* 퐁 */
+  56%  { transform: scale(0.97); --ateflo-gap: 21.6deg; }
+  68%  { transform: scale(1); opacity: 1; --ateflo-gap: 21.6deg; }     /* 안착 */
   100% { transform: scale(0.15) rotate(360deg); opacity: 0; --ateflo-gap: 75deg; }
 }
-.ateflo-celebrate-blue { animation: ateflo-celebrate-blue 1.3s cubic-bezier(0.5, 0, 0.4, 1) forwards; }
+.ateflo-celebrate-blue { animation: ateflo-celebrate-blue 2.1s cubic-bezier(0.45, 0, 0.4, 1) forwards; }
 
 /* 프로 무지개 로고: 파란 로고가 사라진 뒤 한바퀴(360°) 돌며 등장 */
 @keyframes ateflo-celebrate-pro {
@@ -89,11 +92,11 @@ html {
   86%     { transform: scale(0.95) rotate(0deg); }
   100%    { transform: scale(1) rotate(0deg); opacity: 1; }
 }
-.ateflo-celebrate-pro { display: inline-block; animation: ateflo-celebrate-pro 1.7s cubic-bezier(0.4, 0, 0.3, 1) forwards; }
+.ateflo-celebrate-pro { display: inline-block; animation: ateflo-celebrate-pro 2.6s cubic-bezier(0.4, 0, 0.3, 1) forwards; }
 
 /* 프로 로고의 입 움직임(chew) + 무지개 요동 — 한바퀴 돌며 등장한 '뒤'(약 1.5s)에 시작 */
 .ateflo-celebrate-pro-chew {
-  animation: ateflo-chew 0.85s ease-in-out 1.5s infinite, ateflo-mesh 11s ease-in-out 1.5s infinite;
+  animation: ateflo-chew 0.85s ease-in-out 2.3s infinite, ateflo-mesh 11s ease-in-out 2.3s infinite;
 }
 
 /* 프로 전용 — 검색창 둘레를 무지개가 빙글빙글 도는 테두리 (입력창 모양은 안 돌고 색만 회전) */
