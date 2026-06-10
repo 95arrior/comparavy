@@ -73,7 +73,10 @@ export default function WaitlistForm({ source = "landing", autoFocus = false }: 
       {err ? (
         <p className="mt-2 pl-2 text-left text-xs text-red-500">{err}</p>
       ) : (
-        <p className="mt-2.5 text-center text-xs text-neutral-400">오픈하면 가장 먼저 초대해드릴게요 · 스팸 없어요</p>
+        <p className="mt-2.5 text-center text-xs leading-relaxed text-neutral-400">
+          오픈하면 가장 먼저 초대해드릴게요 · 스팸 없어요<br />
+          신청 시 출시 알림을 위한 <a href="/privacy" target="_blank" className="underline hover:text-neutral-600">개인정보 수집·이용</a>에 동의해요.
+        </p>
       )}
     </form>
   );
