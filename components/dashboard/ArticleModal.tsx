@@ -35,6 +35,8 @@ export default function ArticleModal({
 }) {
   const [title, setTitle] = useState(article.title);
   const [bodyHtml, setBodyHtml] = useState(article.body_html);
+  const [metaTitle, setMetaTitle] = useState(article.meta_title ?? "");
+  const [metaDesc, setMetaDesc] = useState(article.meta_description ?? "");
   const [featured, setFeatured] = useState<string | null>(article.featured_image ?? null);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -261,6 +263,8 @@ export default function ArticleModal({
   const dirty =
     title !== article.title ||
     bodyHtml !== article.body_html ||
+    metaTitle !== (article.meta_title ?? "") ||
+    metaDesc !== (article.meta_description ?? "") ||
     featured !== (article.featured_image ?? null) ||
     tagsChanged ||
     categoryChanged;
@@ -280,7 +284,7 @@ export default function ArticleModal({
   });
   flushRef.current = {
     id: article.id,
-    payload: { title, body_html: bodyHtml, featured_image: featured, tags, category },
+    payload: { title, body_html: bodyHtml, meta_title: metaTitle, meta_description: metaDesc, featured_image: featured, tags, category },
     dirty,
     canEdit: Boolean(canEdit),
   };
@@ -310,7 +314,7 @@ export default function ArticleModal({
         const res = await fetch(`/api/articles/${article.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title, body_html: currentBody(), featured_image: featured, tags, category }),
+          body: JSON.stringify({ title, body_html: currentBody(), meta_title: metaTitle, meta_description: metaDesc, featured_image: featured, tags, category }),
         });
         if (res.ok) {
           const data = await res.json();
@@ -329,7 +333,7 @@ export default function ArticleModal({
       if (autoTimer.current) clearTimeout(autoTimer.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, bodyHtml, featured, tags, category]);
+  }, [title, bodyHtml, metaTitle, metaDesc, featured, tags, category]);
 
   // 저장 시점의 '진짜 최신' 본문 — React 상태가 한 박자 늦더라도 에디터에서 직접 읽어 누락을 막는다.
   function currentBody(): string {
@@ -365,7 +369,7 @@ export default function ArticleModal({
       const res = await fetch(`/api/articles/${article.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, body_html: liveBody, featured_image: featured, tags, category }),
+        body: JSON.stringify({ title, body_html: liveBody, meta_title: metaTitle, meta_description: metaDesc, featured_image: featured, tags, category }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -401,7 +405,7 @@ export default function ArticleModal({
       const saveRes = await fetch(`/api/articles/${article.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, body_html: liveBody, featured_image: featured, tags, category }),
+        body: JSON.stringify({ title, body_html: liveBody, meta_title: metaTitle, meta_description: metaDesc, featured_image: featured, tags, category }),
       });
       if (!saveRes.ok) {
         setError("편집 내용을 저장하지 못해 발행을 멈췄어요. (옛 글에 큰 이미지가 있으면 지웠다가 다시 넣어 주세요)");
@@ -424,6 +428,8 @@ export default function ArticleModal({
         ...article,
         title,
         body_html: bodyHtml,
+        meta_title: metaTitle,
+        meta_description: metaDesc,
         status: status === "publish" ? "published" : status === "future" ? "future" : "draft",
         wp_link: data.link ?? article.wp_link,
         // 발행된 워드프레스 글 ID 저장 → 다음 발행은 같은 글을 수정(재발행), 버튼도 "재발행"으로 전환
@@ -743,14 +749,33 @@ export default function ArticleModal({
           </div>
         )}
 
-        <div className="mt-4 space-y-2.5 rounded-xl border border-neutral-200 bg-white px-4 py-3">
+        <div className="mt-4 space-y-3 rounded-xl border border-neutral-200 bg-white px-4 py-3.5">
           <div>
-            <p className="text-[11px] font-medium text-neutral-400">메타 제목</p>
-            <p className="mt-0.5 text-[11px] leading-relaxed text-neutral-600">{article.meta_title}</p>
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-medium text-neutral-500">메타 제목 <span className="font-normal text-neutral-400">· 검색결과 제목</span></label>
+              <span className={`text-[10px] ${metaTitle.length > 60 ? "text-red-500" : "text-neutral-300"}`}>{metaTitle.length}/60</span>
+            </div>
+            <input
+              value={metaTitle}
+              onChange={(e) => setMetaTitle(e.target.value)}
+              maxLength={60}
+              placeholder="검색결과에 보일 제목"
+              className="mt-1 w-full rounded-lg border border-neutral-200 px-3 py-2 text-xs outline-none transition focus:border-neutral-900"
+            />
           </div>
           <div>
-            <p className="text-[11px] font-medium text-neutral-400">메타 설명</p>
-            <p className="mt-0.5 text-[11px] leading-relaxed text-neutral-600">{article.meta_description}</p>
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-medium text-neutral-500">메타 설명 <span className="font-normal text-neutral-400">· 검색결과 스니펫</span></label>
+              <span className={`text-[10px] ${metaDesc.length > 160 ? "text-red-500" : "text-neutral-300"}`}>{metaDesc.length}/160</span>
+            </div>
+            <textarea
+              value={metaDesc}
+              onChange={(e) => setMetaDesc(e.target.value)}
+              maxLength={160}
+              rows={2}
+              placeholder="검색결과에 보일 한두 문장 설명"
+              className="mt-1 w-full resize-none rounded-lg border border-neutral-200 px-3 py-2 text-xs leading-relaxed outline-none transition focus:border-neutral-900"
+            />
           </div>
         </div>
 
