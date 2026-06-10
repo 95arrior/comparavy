@@ -32,7 +32,7 @@ export default function FeatureGrid() {
             글쓰기부터 발행·관리까지,<br />이 안에서 다 돼요
           </h2>
           <p className="mx-auto mt-4 max-w-md text-center text-base leading-relaxed text-neutral-500">
-            도구 이것저것 옮겨다닐 필요 없어요. 당신은 키워드만, 나머지는 AteFlo가.
+            도구 여기저기 옮겨다닐 필요 없어요. 키워드만 넣으면 나머지는 AteFlo가 해요.
           </p>
         </Reveal>
         <div className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

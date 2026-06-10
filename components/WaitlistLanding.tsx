@@ -36,8 +36,8 @@ export default function WaitlistLanding() {
             글쓰기, 키워드 하나면 끝
           </h1>
           <p className="mono-rise mono-d2 mx-auto mt-6 max-w-lg text-sm leading-relaxed text-neutral-500 sm:text-base">
-            블로그로 돈 벌려면 글이 꾸준히 쌓여야 하는데, 그 글쓰기가 제일 큰 벽이죠.<br />
-            키워드 하나면 글이 완성되고 — 다듬고, 워드프레스에 <b className="text-neutral-700">발행·예약</b>까지. 블로그 운영이 한 곳에서 끝나요.
+            블로그로 돈 벌려면 글이 꾸준히 쌓여야 하는데, 글쓰기가 제일 큰 벽이죠.<br />
+            키워드 하나면 글이 완성돼요. 다듬고, 워드프레스에 <b className="text-neutral-700">발행·예약</b>까지 한 곳에서 끝나요.
           </p>
           <div className="mono-rise mono-d3 mt-9">
             <WaitlistForm source="hero" />
@@ -82,8 +82,8 @@ export default function WaitlistLanding() {
         <div className="mx-auto max-w-2xl px-6 py-24 text-center">
           <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">솔직하게 말할게요</h2>
           <p className="mt-5 text-base leading-relaxed text-neutral-500">
-            방문자 수는 약속하지 않아요. 그건 시간·꾸준함·구글에 달린 거니까요.<br />
-            대신 우리는 — <b className="text-neutral-800">검색 의도에 맞는 좋은 글을, 빠르고 꾸준히 쌓게</b> 해드려요. 성공 확률을 높이는 도구예요.
+            방문자 수는 약속하지 않아요. 그건 시간과 꾸준함, 구글에 달린 거니까요.<br />
+            대신 <b className="text-neutral-800">좋은 글을 빠르고 꾸준히 쌓게</b> 해드려요. 성공 확률을 높이는 도구예요.
           </p>
         </div>
       </section>
