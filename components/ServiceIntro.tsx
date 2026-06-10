@@ -1,5 +1,6 @@
 import Reveal from "@/components/Reveal";
 import PricingCards from "@/components/PricingCards";
+import CountUp from "@/components/CountUp";
 import type { PlanKey } from "@/lib/plans";
 
 const BRAND = "#3f91ff";
@@ -271,9 +272,13 @@ export default function ServiceIntro({ loggedIn = false, currentPlan = "free", w
           </Reveal>
           {waitlist ? (
             <Reveal delay={120} className="mt-8">
-              <div className="rounded-2xl border-2 bg-white p-6 text-center shadow-sm" style={{ borderColor: BRAND }}>
-                <p className="text-2xl font-bold tracking-tight">월 ₩29,900 <span className="text-base font-medium text-neutral-400">/ 30편</span></p>
-                <p className="mt-2 text-sm text-neutral-500">아직 오픈 전이에요. 위에서 사전 등록하면 가장 먼저 알려드릴게요.</p>
+              <div className="rounded-2xl border-2 bg-white p-8 text-center shadow-sm" style={{ borderColor: BRAND }}>
+                <p className="flex items-baseline justify-center gap-1.5">
+                  <span className="text-base font-medium text-neutral-400">월</span>
+                  <span className="text-5xl font-bold tracking-tight sm:text-6xl">₩<CountUp to={29900} /></span>
+                  <span className="text-base font-medium text-neutral-400">/ 30편</span>
+                </p>
+                <p className="mt-3 text-sm text-neutral-500">아직 오픈 전이에요. 위에서 신청하면 가장 먼저 알려드릴게요.</p>
               </div>
             </Reveal>
           ) : (
