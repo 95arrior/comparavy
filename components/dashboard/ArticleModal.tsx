@@ -657,7 +657,7 @@ export default function ArticleModal({
                         key={p.label}
                         type="button"
                         onClick={() => setScheduleAt(p.v)}
-                        className={`rounded-lg border px-2.5 py-2 text-xs font-medium transition ${scheduleAt === p.v ? "border-neutral-900 bg-neutral-900 text-white" : "border-neutral-200 text-neutral-600 hover:border-neutral-900"}`}
+                        className={`rounded-lg border px-2.5 py-2 text-xs font-medium transition active:scale-95 ${scheduleAt === p.v ? "border-neutral-900 bg-neutral-900 text-white ateflo-pop" : "border-neutral-200 text-neutral-600 hover:border-neutral-900"}`}
                       >
                         {p.label}
                       </button>
@@ -1000,13 +1000,13 @@ export default function ArticleModal({
                           <button
                             key={t}
                             onClick={() => setTags((prev) => (prev.length >= 8 || prev.includes(t) ? prev : [...prev, t]))}
-                            className={`ateflo-chip-in rounded-xl border px-2.5 py-1 text-xs transition ${
+                            className={`ateflo-chip-in flex items-center gap-0.5 rounded-xl border px-2.5 py-1 text-xs transition active:scale-95 ${
                               fromAi
                                 ? "border-neutral-900/15 bg-neutral-900/[0.04] font-medium text-neutral-800 hover:border-neutral-900"
                                 : "border-dashed border-neutral-300 text-neutral-500 hover:border-neutral-900 hover:text-neutral-900"
                             }`}
                           >
-                            {fromAi && <span className="mr-0.5">✨</span>}＋ {t}
+                            {fromAi && <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" className="mr-0.5"><path d="M12 2l1.6 6.4L20 10l-6.4 1.6L12 18l-1.6-6.4L4 10l6.4-1.6z" /></svg>}＋ {t}
                           </button>
                         );
                       })}

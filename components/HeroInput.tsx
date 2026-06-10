@@ -122,7 +122,7 @@ export default function HeroInput({ loggedIn, onStart, pro = false }: { loggedIn
         <button
           type="submit"
           disabled={loading}
-          className={`shrink-0 rounded-xl px-6 py-2.5 text-sm font-medium text-white transition ${
+          className={`shrink-0 rounded-xl px-6 py-2.5 text-sm font-medium text-white transition active:scale-95 ${
             loading ? "ateflo-rainbow" : "bg-neutral-900 hover:bg-neutral-700"
           }`}
         >
@@ -133,32 +133,27 @@ export default function HeroInput({ loggedIn, onStart, pro = false }: { loggedIn
       {err && <p className="mt-2 pl-4 text-left text-sm text-red-500">검색할 만한 키워드를 입력해 주세요 (예: 강아지 분리불안).</p>}
 
       {/* 유형 · 문체 — 아이콘 칩 (선택. 안 골라도 기본값으로 생성) */}
-      <div className="mt-5">
-        <div className="space-y-3">
-          <div>
-            <p className="mb-2 text-center text-[11px] font-medium tracking-wide text-neutral-300">글 유형</p>
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              {ARTICLE_TYPES.map((t) => (
-                <button key={t.key} type="button" onClick={() => setType(type === t.key ? "" : t.key)} title={t.hint} className={chipCls(type === t.key)}>
-                  {TYPE_ICON[t.key]}
-                  <span>{TYPE_SHORT[t.key] ?? t.label}</span>
-                </button>
-              ))}
-            </div>
+      <div className="mt-4">
+        <p className="mb-2 text-center text-xs text-neutral-300">유형·문체</p>
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center justify-center gap-1.5">
+            {ARTICLE_TYPES.map((t) => (
+              <button key={t.key} type="button" onClick={() => setType(type === t.key ? "" : t.key)} title={t.hint} className={chipCls(type === t.key)}>
+                {TYPE_ICON[t.key]}
+                <span>{TYPE_SHORT[t.key] ?? t.label}</span>
+              </button>
+            ))}
           </div>
-          <div>
-            <p className="mb-2 text-center text-[11px] font-medium tracking-wide text-neutral-300">문체</p>
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              {TONES.map((t) => (
-                <button key={t.key} type="button" onClick={() => setTone(tone === t.key ? "" : t.key)} title={t.hint} className={chipCls(tone === t.key)}>
-                  {TONE_ICON[t.key]}
-                  <span>{TONE_SHORT[t.key] ?? t.label}</span>
-                </button>
-              ))}
-            </div>
+          <div className="flex flex-wrap items-center justify-center gap-1.5">
+            {TONES.map((t) => (
+              <button key={t.key} type="button" onClick={() => setTone(tone === t.key ? "" : t.key)} title={t.hint} className={chipCls(tone === t.key)}>
+                {TONE_ICON[t.key]}
+                <span>{TONE_SHORT[t.key] ?? t.label}</span>
+              </button>
+            ))}
           </div>
         </div>
-        <p className="pt-3 text-center text-[11px] text-neutral-400">안 골라도 알아서 최적으로 써드려요</p>
+        <p className="pt-2 text-center text-[11px] text-neutral-400">안 골라도 알아서 최적으로 써드려요</p>
       </div>
 
       {/* 글감 추천 — 로그인(작업공간)에서만. 뭘 쓸지 모를 때 분야 넣으면 키워드 추천 */}
@@ -168,9 +163,10 @@ export default function HeroInput({ loggedIn, onStart, pro = false }: { loggedIn
             <button
               type="button"
               onClick={() => setIdeaOpen(true)}
-              className="mx-auto flex items-center gap-1.5 rounded-xl border border-neutral-200 px-3.5 py-1.5 text-xs font-medium text-neutral-500 transition hover:border-neutral-400 hover:text-neutral-800"
+              className="mx-auto flex items-center gap-1.5 rounded-xl border border-neutral-200 px-3.5 py-1.5 text-xs font-medium text-neutral-500 transition active:scale-95 hover:border-neutral-400 hover:text-neutral-800"
             >
-              💡 뭘 쓸지 모르겠어요? 글감 추천받기
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.7 10.7c.5.4.7.9.7 1.3v.5h6v-.5c0-.4.2-.9.7-1.3A6 6 0 0 0 12 3Z" /></svg>
+              뭘 쓸지 모르겠어요? 글감 추천받기
             </button>
           ) : (
             <div className="ateflo-fade-in rounded-2xl border border-neutral-200 bg-white p-4">
@@ -190,7 +186,7 @@ export default function HeroInput({ loggedIn, onStart, pro = false }: { loggedIn
                   type="button"
                   onClick={fetchIdeas}
                   disabled={!topic.trim() || ideaLoading}
-                  className="shrink-0 rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-40"
+                  className="shrink-0 rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition active:scale-95 hover:bg-neutral-700 disabled:opacity-40"
                 >
                   {ideaLoading ? "추천 중…" : "추천받기"}
                 </button>
@@ -210,7 +206,7 @@ export default function HeroInput({ loggedIn, onStart, pro = false }: { loggedIn
                           inputRef.current?.focus();
                           inputRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
                         }}
-                        className="ateflo-chip-in rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-xs text-neutral-700 transition hover:border-neutral-900 hover:bg-white"
+                        className="ateflo-chip-in rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-xs text-neutral-700 transition active:scale-95 hover:border-neutral-900 hover:bg-white"
                       >
                         {idea}
                       </button>
