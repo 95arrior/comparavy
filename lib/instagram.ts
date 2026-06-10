@@ -73,6 +73,18 @@ export async function publishCarousel(creds: IgCreds, imageUrls: string[], capti
   return publishContainer(creds, parent);
 }
 
+/**
+ * 인스타 장기 토큰 갱신 (Instagram Login 토큰, graph.instagram.com 기준).
+ * 유효한 토큰을 다시 60일 연장한다. 토큰이 발급 24시간 이후~만료 전이어야 한다.
+ */
+export async function refreshIgToken(token: string): Promise<{ token: string; expiresInSec: number }> {
+  const base = process.env.IG_REFRESH_BASE || "https://graph.instagram.com";
+  const res = await fetch(`${base}/refresh_access_token?grant_type=ig_refresh_token&access_token=${encodeURIComponent(token)}`);
+  const data = await res.json();
+  if (!res.ok || !data.access_token) throw new Error(`토큰 갱신 실패: ${data.error?.message ?? JSON.stringify(data)}`);
+  return { token: data.access_token as string, expiresInSec: Number(data.expires_in) || 5184000 };
+}
+
 /** 토큰·계정 점검 — 계정 이름을 돌려준다(설정 검증용). */
 export async function verifyIg(creds: IgCreds): Promise<{ ok: boolean; username?: string; error?: string }> {
   try {

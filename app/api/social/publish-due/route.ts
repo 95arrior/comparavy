@@ -50,8 +50,11 @@ async function run() {
     await admin.from("social_settings").update({ last_published_at: new Date().toISOString() }).eq("id", 1);
     return NextResponse.json({ ok: true, published: post.id });
   }
-  await admin.from("social_posts").update({ status: "failed", error: r.error }).eq("id", post.id);
-  return NextResponse.json({ ok: false, error: r.error });
+  // 실패: 3회까지 다음 슬롯에 자동 재시도(queued 유지), 그 이상이면 failed 확정
+  const attempts = (post.attempts ?? 0) + 1;
+  const giveUp = attempts >= 3;
+  await admin.from("social_posts").update({ status: giveUp ? "failed" : "queued", attempts, error: r.error }).eq("id", post.id);
+  return NextResponse.json({ ok: false, retry: !giveUp, attempts, error: r.error });
 }
 
 export async function GET(req: Request) {
