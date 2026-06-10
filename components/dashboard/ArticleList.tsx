@@ -88,10 +88,12 @@ export default function ArticleList({
         onUpdated?.({ ...confirmUnpub, status: "draft" });
         setConfirmUnpub(null);
       } else {
-        alert(data.error ?? "글을 내리지 못했어요. 다시 시도해 주세요.");
+        setSyncMsg(data.error ?? "글을 내리지 못했어요. 다시 시도해 주세요.");
+        setTimeout(() => setSyncMsg(null), 2500);
       }
     } catch {
-      alert("글을 내리지 못했어요. 다시 시도해 주세요.");
+      setSyncMsg("글을 내리지 못했어요. 다시 시도해 주세요.");
+      setTimeout(() => setSyncMsg(null), 2500);
     } finally {
       setUnpubBusy(false);
     }
@@ -124,11 +126,17 @@ export default function ArticleList({
   // 글이 아예 없을 때
   if (articles.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-neutral-300 bg-white p-12 text-center">
-        <p className="text-sm text-neutral-500">아직 만든 글이 없어요.</p>
+      <div className="rounded-2xl border border-dashed border-neutral-300 bg-white px-6 py-14 text-center">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100 text-neutral-400">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z" /><path d="M9 13h6M9 17h4" />
+          </svg>
+        </div>
+        <p className="mt-4 text-base font-semibold text-neutral-900">아직 만든 글이 없어요</p>
+        <p className="mt-1 text-sm text-neutral-500">키워드 하나만 입력하면 첫 글이 완성돼요.</p>
         <button
           onClick={onGoGenerate}
-          className="mt-4 rounded-xl bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700"
+          className="mt-5 rounded-xl bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700"
         >
           첫 글 생성하기
         </button>
@@ -216,8 +224,15 @@ export default function ArticleList({
 
       {/* 목록 */}
       {filtered.length === 0 ? (
-        <div className="mt-4 rounded-2xl border border-dashed border-neutral-300 bg-white p-10 text-center text-sm text-neutral-500">
-          조건에 맞는 글이 없어요.
+        <div className="mt-4 rounded-2xl border border-dashed border-neutral-300 bg-white px-6 py-12 text-center">
+          <p className="text-sm font-medium text-neutral-700">조건에 맞는 글이 없어요</p>
+          <p className="mt-1 text-xs text-neutral-500">검색어나 필터를 바꿔보세요.</p>
+          <button
+            onClick={() => { setQuery(""); setStatus("all"); setSort("new"); }}
+            className="mt-4 rounded-lg border border-neutral-300 px-4 py-1.5 text-sm font-medium text-neutral-700 transition hover:border-neutral-900"
+          >
+            필터 초기화
+          </button>
         </div>
       ) : (
         <div className="mt-4 space-y-3">

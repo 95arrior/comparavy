@@ -219,11 +219,11 @@ export default function DashboardClient(props: DashboardProps) {
         await supabase.auth.signOut();
         window.location.href = "/";
       } else {
-        alert("탈퇴 처리에 실패했어요. 잠시 후 다시 시도해주세요.");
+        setNotice("탈퇴 처리에 실패했어요. 잠시 후 다시 시도해 주세요.");
         setBusy(false);
       }
     } catch {
-      alert("탈퇴 처리 중 오류가 발생했어요.");
+      setNotice("탈퇴 처리 중 오류가 났어요. 잠시 후 다시 시도해 주세요.");
       setBusy(false);
     }
   }
@@ -613,7 +613,7 @@ export default function DashboardClient(props: DashboardProps) {
                 </div>
                 <button
                   onClick={() => goTab(nextStep.tab)}
-                  className="shrink-0 rounded-full bg-[#3f91ff] px-5 py-2 text-sm font-medium text-white transition hover:opacity-90"
+                  className="shrink-0 rounded-xl bg-[#3f91ff] px-5 py-2 text-sm font-medium text-white transition hover:opacity-90"
                 >
                   {nextStep.tab === "generate" ? "새 글 쓰러 가기 →" : "바로 가기 →"}
                 </button>

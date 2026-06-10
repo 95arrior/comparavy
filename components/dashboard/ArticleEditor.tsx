@@ -162,6 +162,12 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
   const [linkUrl, setLinkUrl] = useState("");
   const [linkNofollow, setLinkNofollow] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [confirmRestore, setConfirmRestore] = useState(false);
+  const [errToast, setErrToast] = useState<string | null>(null);
+  function showError(msg: string) {
+    setErrToast(msg);
+    setTimeout(() => setErrToast(null), 2600);
+  }
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -244,9 +250,13 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
   }
   function restoreOriginal() {
     if (!originalHtml) return;
-    if (!window.confirm("지금까지 수정한 내용이 모두 사라지고, AI가 처음 쓴 글로 되돌아가요. 계속할까요?")) return;
+    setConfirmRestore(true);
+  }
+  function doRestore() {
+    if (!originalHtml) return;
     editor!.commands.setContent(originalHtml);
     onChange(originalHtml);
+    setConfirmRestore(false);
   }
   // 파일 → base64로 읽어 스토리지에 업로드하고 공개 URL을 받는다.
   // (본문엔 무거운 base64 대신 URL만 들어가 저장 실패를 막는다)
@@ -268,12 +278,12 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
       });
       const data = await res.json();
       if (!res.ok) {
-        alert(data.error ?? "이미지를 올리지 못했어요. 다시 시도해 주세요.");
+        showError(data.error ?? "이미지를 올리지 못했어요. 다시 시도해 주세요.");
         return null;
       }
       return data.url as string;
     } catch {
-      alert("이미지 업로드 중 오류가 났어요. 다시 시도해 주세요.");
+      showError("이미지 업로드 중 오류가 났어요. 다시 시도해 주세요.");
       return null;
     }
   }
@@ -316,7 +326,20 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
 
   return (
     <div className="rounded-xl border border-neutral-200 bg-white">
-      <CenterToast message={uploading ? "이미지를 올리고 있어요…" : null} />
+      <CenterToast message={uploading ? "이미지를 올리고 있어요…" : errToast} />
+
+      {confirmRestore && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/30 px-4" onClick={() => setConfirmRestore(false)}>
+          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+            <p className="text-base font-semibold text-neutral-900">처음 쓴 글로 되돌릴까요?</p>
+            <p className="mt-2 text-sm leading-relaxed text-neutral-600">지금까지 수정한 내용이 모두 사라지고, AI가 처음 쓴 글로 돌아가요. 되돌릴 수 없어요.</p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button onClick={() => setConfirmRestore(false)} className="rounded-lg border border-neutral-300 px-4 py-1.5 text-sm font-medium transition hover:border-neutral-900">취소</button>
+              <button onClick={doRestore} className="rounded-lg bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-800">되돌리기</button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className={`sticky ${toolbarOffset} z-20 border-b border-neutral-200 bg-white shadow-md`}>
         <div className="flex flex-wrap items-center gap-0.5 px-3 py-2">
           <Btn title="실행취소 (Ctrl+Z)" disabled={!editor.can().undo()} onClick={() => editor.chain().focus().undo().run()}><IconUndo /></Btn>
