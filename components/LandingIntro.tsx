@@ -33,11 +33,21 @@ export default function LandingIntro() {
         };
       }),
     );
+    // 인트로 동안 스크롤 잠금
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const unlock = () => {
+      document.body.style.overflow = prevOverflow;
+    };
     const t1 = setTimeout(() => setPhase("leaving"), 3700);
-    const t2 = setTimeout(() => setPhase("done"), 4200);
+    const t2 = setTimeout(() => {
+      setPhase("done");
+      unlock();
+    }, 4200);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
+      unlock();
     };
   }, []);
 
