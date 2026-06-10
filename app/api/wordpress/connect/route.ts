@@ -3,6 +3,7 @@ import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-serve
 import { ensureUserRow } from "@/lib/userPlan";
 import { PLANS } from "@/lib/plans";
 import { verifyConnection } from "@/lib/wordpress";
+import { encryptSecret } from "@/lib/crypto";
 
 export async function POST(request: Request) {
   if (!hasSupabaseEnv()) {
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
   const { error } = await supabase
     .from("wordpress_connections")
     .upsert(
-      { user_id: user.id, site_url: siteUrl, username, app_password: appPassword },
+      { user_id: user.id, site_url: siteUrl, username, app_password: encryptSecret(appPassword) },
       { onConflict: "user_id" },
     );
 

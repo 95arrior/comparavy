@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from "./supabase-server";
+import { decryptSecret } from "./crypto";
 
 type ArticleRow = { id: string; status: string; wp_post_id: number | null };
 type Conn = { site_url: string; username: string; app_password: string } | null | undefined;
@@ -14,7 +15,7 @@ export async function syncScheduledStatuses(articles: ArticleRow[] | null | unde
   if (!futures.length) return;
 
   const base = conn.site_url.replace(/\/+$/, "");
-  const auth = "Basic " + Buffer.from(`${conn.username}:${conn.app_password}`).toString("base64");
+  const auth = "Basic " + Buffer.from(`${conn.username}:${decryptSecret(conn.app_password)}`).toString("base64");
   const admin = createSupabaseAdminClient();
 
   await Promise.all(

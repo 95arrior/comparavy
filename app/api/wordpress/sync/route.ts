@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient, createSupabaseAdminClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { ensureUserRow } from "@/lib/userPlan";
+import { decryptSecret } from "@/lib/crypto";
 
 /**
  * 워드프레스 상태를 우리 '내 글'로 동기화한다. (사용자가 WP에서 직접 내리거나 지운 것 반영)
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
   const { data: arts } = await q.limit(200);
 
   const base = conn.site_url.replace(/\/+$/, "");
-  const auth = "Basic " + Buffer.from(`${conn.username}:${conn.app_password}`).toString("base64");
+  const auth = "Basic " + Buffer.from(`${conn.username}:${decryptSecret(conn.app_password)}`).toString("base64");
   const admin = createSupabaseAdminClient();
 
   const changed: { id: string; status: string; clearedWp: boolean }[] = [];

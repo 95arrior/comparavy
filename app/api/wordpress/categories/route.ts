@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { ensureUserRow } from "@/lib/userPlan";
 import { findOrCreateTerm } from "@/lib/wordpress";
+import { decryptSecret } from "@/lib/crypto";
 
 /** 연결된 워드프레스의 기존 카테고리 목록을 돌려준다 (발행 시 선택용). */
 export async function GET() {
@@ -23,7 +24,7 @@ export async function GET() {
 
   try {
     const base = conn.site_url.replace(/\/+$/, "");
-    const token = Buffer.from(`${conn.username}:${conn.app_password}`).toString("base64");
+    const token = Buffer.from(`${conn.username}:${decryptSecret(conn.app_password)}`).toString("base64");
     const res = await fetch(`${base}/wp-json/wp/v2/categories?per_page=100&orderby=count&order=desc`, {
       headers: { Authorization: `Basic ${token}` },
     });
@@ -69,7 +70,7 @@ export async function POST(request: Request) {
   const base = conn.site_url.replace(/\/+$/, "");
   const id = await findOrCreateTerm(
     base,
-    { siteUrl: conn.site_url, username: conn.username, appPassword: conn.app_password },
+    { siteUrl: conn.site_url, username: conn.username, appPassword: decryptSecret(conn.app_password) },
     "categories",
     name,
   );
@@ -110,7 +111,7 @@ export async function DELETE(request: Request) {
   if (!conn) return NextResponse.json({ error: "먼저 워드프레스를 연결해 주세요." }, { status: 400 });
 
   const base = conn.site_url.replace(/\/+$/, "");
-  const auth = "Basic " + Buffer.from(`${conn.username}:${conn.app_password}`).toString("base64");
+  const auth = "Basic " + Buffer.from(`${conn.username}:${decryptSecret(conn.app_password)}`).toString("base64");
 
   try {
     // 옮길 카테고리가 지정되면, 그 카테고리에 속한 글들을 먼저 이동시킨다(다른 카테고리는 보존).

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
+import { decryptSecret } from "@/lib/crypto";
 
 /** 연결된 워드프레스의 기존 태그 목록(많이 쓰인 순)을 돌려준다 — 재사용 유도(SEO). */
 export async function GET() {
@@ -21,7 +22,7 @@ export async function GET() {
 
   try {
     const base = conn.site_url.replace(/\/+$/, "");
-    const token = Buffer.from(`${conn.username}:${conn.app_password}`).toString("base64");
+    const token = Buffer.from(`${conn.username}:${decryptSecret(conn.app_password)}`).toString("base64");
     // 많이 쓰인 태그 우선 → 재사용 가치가 높은 것부터 추천
     const res = await fetch(`${base}/wp-json/wp/v2/tags?per_page=30&orderby=count&order=desc`, {
       headers: { Authorization: `Basic ${token}` },

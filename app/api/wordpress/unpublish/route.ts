@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { ensureUserRow } from "@/lib/userPlan";
+import { decryptSecret } from "@/lib/crypto";
 
 /**
  * 글 내리기(발행 취소). 워드프레스 글을 비공개(draft)로 바꾸고, 우리 상태도 '초안'으로.
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
   if (article.wp_post_id && conn) {
     try {
       const base = conn.site_url.replace(/\/+$/, "");
-      const auth = "Basic " + Buffer.from(`${conn.username}:${conn.app_password}`).toString("base64");
+      const auth = "Basic " + Buffer.from(`${conn.username}:${decryptSecret(conn.app_password)}`).toString("base64");
       const res = await fetch(`${base}/wp-json/wp/v2/posts/${article.wp_post_id}`, {
         method: "POST",
         headers: { Authorization: auth, "Content-Type": "application/json" },

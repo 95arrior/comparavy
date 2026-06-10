@@ -3,6 +3,7 @@ import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-serve
 import { ensureUserRow } from "@/lib/userPlan";
 import { PLANS } from "@/lib/plans";
 import { publishPost, insertInternalLinks } from "@/lib/wordpress";
+import { decryptSecret } from "@/lib/crypto";
 
 export async function POST(request: Request) {
   if (!hasSupabaseEnv()) {
@@ -89,7 +90,7 @@ export async function POST(request: Request) {
     const result = await publishPost({
       siteUrl: conn.site_url,
       username: conn.username,
-      appPassword: conn.app_password,
+      appPassword: decryptSecret(conn.app_password),
       title: article.title,
       contentHtml,
       metaDescription: article.meta_description ?? undefined,
