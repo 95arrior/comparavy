@@ -482,7 +482,7 @@ export default function DashboardClient(props: DashboardProps) {
           </div>
         )}
 
-        {notice && <CenterToast>{notice}</CenterToast>}
+        <CenterToast message={notice} />
 
         {/* 워드프레스 연결 만료 배너 — 발행이 조용히 실패하기 전에 재연결을 유도 */}
         {!page && !selected && !genParams && wpExpired && (

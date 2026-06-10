@@ -518,7 +518,7 @@ export default function ArticleModal({
   if (!canEdit) {
     return (
       <>
-        {toast && <CenterToast>{toast}</CenterToast>}
+        <CenterToast message={toast} />
         <div className="sticky top-0 z-30 border-b border-neutral-200 bg-white/95 backdrop-blur">
           <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-6 py-3">
             <button onClick={onClose} className="flex items-center gap-1.5 text-sm text-neutral-500 transition hover:text-neutral-900">
@@ -697,7 +697,7 @@ export default function ArticleModal({
       </div>
 
       {/* 저장 완료 등 토스트 — 화면 정중앙 상단(portal) */}
-      {toast && <CenterToast>{toast}</CenterToast>}
+      <CenterToast message={toast} />
 
       {/* 자동저장 표시 — 화면에 고정되어 스크롤을 따라다님(현재 보는 위치 우하단에 항상 보임) */}
       {(autoSavedAt || dirty || saveFailed) && (

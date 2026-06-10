@@ -259,7 +259,7 @@ export default function ArticleList({
         </div>
       )}
 
-      {syncMsg && <CenterToast>{syncMsg}</CenterToast>}
+      <CenterToast message={syncMsg} />
 
       {/* 글 내리기 확인 */}
       {confirmUnpub && (

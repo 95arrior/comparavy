@@ -316,7 +316,7 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
 
   return (
     <div className="rounded-xl border border-neutral-200 bg-white">
-      {uploading && <CenterToast>이미지를 올리고 있어요…</CenterToast>}
+      <CenterToast message={uploading ? "이미지를 올리고 있어요…" : null} />
       <div className={`sticky ${toolbarOffset} z-20 border-b border-neutral-200 bg-white shadow-md`}>
         <div className="flex flex-wrap items-center gap-0.5 px-3 py-2">
           <Btn title="실행취소 (Ctrl+Z)" disabled={!editor.can().undo()} onClick={() => editor.chain().focus().undo().run()}><IconUndo /></Btn>
