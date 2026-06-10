@@ -5,6 +5,7 @@ import SiteFooter from "@/components/SiteFooter";
 import LandingIntro from "@/components/LandingIntro";
 import WaitlistForm from "@/components/WaitlistForm";
 import ProductShowcase from "@/components/ProductShowcase";
+import CalendarShowcase from "@/components/CalendarShowcase";
 import FeatureGrid from "@/components/FeatureGrid";
 
 const WALLS = [
@@ -70,6 +71,9 @@ export default function WaitlistLanding() {
 
       {/* 실제 화면 목업 — 무엇을 하는 서비스인지 한눈에 */}
       <ProductShowcase />
+
+      {/* 예약 발행 캘린더 — 스케줄 관리 어필 */}
+      <CalendarShowcase />
 
       {/* 이런 것까지 자동 — 기능 breadth를 한눈에 */}
       <FeatureGrid />
