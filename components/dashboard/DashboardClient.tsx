@@ -473,8 +473,25 @@ export default function DashboardClient(props: DashboardProps) {
                 <dl className="mt-5 space-y-3 text-sm">
                   <div className="flex justify-between gap-4"><dt className="text-neutral-500">이메일</dt><dd className="truncate">{props.email}</dd></div>
                   <div className="flex justify-between gap-4"><dt className="text-neutral-500">플랜</dt><dd className="font-medium">{PLANS[props.plan].name}</dd></div>
-                  <div className="flex justify-between gap-4"><dt className="text-neutral-500">이번 달 사용량</dt><dd>{articlesUsed} / {props.articlesLimit}편</dd></div>
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-neutral-500">{props.plan === "pro" ? "이번 달 사용량" : "평생 사용량"}</dt>
+                    <dd>{articlesUsed} / {props.articlesLimit}편 <span className="text-neutral-400">(남은 {Math.max(0, props.articlesLimit - articlesUsed)}편)</span></dd>
+                  </div>
                 </dl>
+                {props.plan === "pro" ? (
+                  <p className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-700">
+                    매달 {props.articlesLimit}편으로 새로 채워져요. <b>이번 달에 안 쓴 글은 다음 달로 이월되지 않아요.</b>
+                    {(() => {
+                      if (!props.periodStart) return null;
+                      const next = new Date(new Date(props.periodStart).getTime() + 30 * 24 * 60 * 60 * 1000);
+                      return <> · 다음 초기화 {next.toLocaleDateString("ko-KR", { month: "long", day: "numeric" })}</>;
+                    })()}
+                  </p>
+                ) : (
+                  <p className="mt-3 rounded-xl bg-neutral-50 px-4 py-3 text-xs leading-relaxed text-neutral-500">
+                    무료는 <b>평생 {props.articlesLimit}편</b>이에요. (매달 초기화 없음) 더 쓰려면 프로로 업그레이드하세요.
+                  </p>
+                )}
                 <div className="mt-6">
                   <button onClick={signOut} className="rounded-full border border-neutral-300 px-4 py-2 text-sm font-medium transition hover:border-neutral-900">
                     로그아웃

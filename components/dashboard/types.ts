@@ -36,6 +36,7 @@ export interface DashboardProps {
   plan: PlanKey;
   articlesUsed: number;
   articlesLimit: number;
+  periodStart?: string | null;
   subStatus?: string | null;
   initialArticles: Article[];
   wpSiteUrl: string | null;
