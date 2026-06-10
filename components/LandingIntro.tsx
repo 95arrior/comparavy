@@ -33,8 +33,8 @@ export default function LandingIntro() {
         };
       }),
     );
-    const t1 = setTimeout(() => setPhase("leaving"), 3200);
-    const t2 = setTimeout(() => setPhase("done"), 3700);
+    const t1 = setTimeout(() => setPhase("leaving"), 3700);
+    const t2 = setTimeout(() => setPhase("done"), 4200);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
