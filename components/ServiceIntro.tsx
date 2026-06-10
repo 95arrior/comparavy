@@ -212,7 +212,7 @@ export default function ServiceIntro({ loggedIn = false, currentPlan = "free" }:
         id="how"
         eyebrow="“AI로 쓰면 다 똑같은 거 아니에요?”"
         title={<>다 비슷하게 나와서,<br />검색에 안 잡혀요.</>}
-        sub="글 한 편 쓰는 거, 이제 1분이면 해요. 우리가 신경 쓴 건 속도가 아니라 어떻게 쓰느냐예요. 올렸을 때 사람이 끝까지 읽고, 구글이 띄워주는 글."
+        sub="글 한 편 쓰는 거, 이제 1분이면 해요. 우리가 신경 쓴 건 속도가 아니라 어떻게 쓰느냐예요. 사람이 끝까지 읽고, 구글이 좋아하는 구조로 쓴 글."
         visual={<BuriedResults />}
         tint
       />
