@@ -13,7 +13,11 @@ export default function CenterToast({ children }: { children: React.ReactNode })
   useEffect(() => setMounted(true), []);
   if (!mounted) return null;
   return createPortal(
-    <div className="pointer-events-none fixed left-1/2 top-5 z-[100] -translate-x-1/2">
+    <div
+      className="pointer-events-none fixed top-5 z-[100] -translate-x-1/2"
+      // 콘텐츠 영역 기준 중앙: 뷰포트 중앙(50%)에서 사이드바 보정값(--toast-shift)만큼 오른쪽으로
+      style={{ left: "calc(50% + var(--toast-shift, 0px))" }}
+    >
       <div className="ateflo-fade-in rounded-xl bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white shadow-lg">
         {children}
       </div>

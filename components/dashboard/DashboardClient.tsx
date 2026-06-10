@@ -83,6 +83,24 @@ export default function DashboardClient(props: DashboardProps) {
     const t = setTimeout(() => setNotice(null), 2400);
     return () => clearTimeout(t);
   }, [notice]);
+
+  // 상단 토스트를 '콘텐츠 영역' 기준 중앙에 띄우기 위한 보정값.
+  // 데스크톱은 좌측 사이드바(펼침 256 / 접힘 56)가 레이아웃 폭을 차지하므로 그 절반만큼 오른쪽으로 민다.
+  // 모바일은 사이드바가 오버레이라 폭을 차지하지 않으므로 보정 0.
+  useEffect(() => {
+    const root = document.documentElement;
+    const apply = () => {
+      const desktop = window.matchMedia("(min-width: 768px)").matches;
+      const sidebar = navOpen ? 256 : 56;
+      root.style.setProperty("--toast-shift", desktop ? `${sidebar / 2}px` : "0px");
+    };
+    apply();
+    window.addEventListener("resize", apply);
+    return () => {
+      window.removeEventListener("resize", apply);
+      root.style.removeProperty("--toast-shift");
+    };
+  }, [navOpen]);
   useEffect(() => {
     if (!wpSiteUrl || props.plan !== "pro") return;
     let alive = true;
