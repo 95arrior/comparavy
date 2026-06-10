@@ -2,7 +2,11 @@
 // 흐름: ① 미디어 컨테이너 생성 → ② 처리 완료 대기(폴링) → ③ 발행(media_publish)
 // 미디어(영상·이미지)는 인스타가 가져갈 수 있는 '공개 URL'이어야 한다(Supabase Storage 등).
 
-const GRAPH = "https://graph.facebook.com/v21.0";
+// 토큰 종류에 따라 베이스가 다름:
+//  - 페이스북 로그인(페이지 토큰) → https://graph.facebook.com/v21.0
+//  - 인스타 로그인(앱 대시보드 토큰) → https://graph.instagram.com/v21.0
+// .env.local 의 IG_API_BASE 로 바꿀 수 있게(기본은 facebook).
+const GRAPH = process.env.IG_API_BASE || "https://graph.facebook.com/v21.0";
 
 export interface IgCreds {
   igUserId: string; // 인스타 비즈니스 계정 ID (숫자)
@@ -72,7 +76,7 @@ export async function publishCarousel(creds: IgCreds, imageUrls: string[], capti
 /** 토큰·계정 점검 — 계정 이름을 돌려준다(설정 검증용). */
 export async function verifyIg(creds: IgCreds): Promise<{ ok: boolean; username?: string; error?: string }> {
   try {
-    const res = await fetch(`${GRAPH}/${creds.igUserId}?fields=username,name&access_token=${creds.token}`);
+    const res = await fetch(`${GRAPH}/${creds.igUserId}?fields=username&access_token=${creds.token}`);
     const data = await res.json();
     if (!res.ok) return { ok: false, error: data.error?.message ?? "확인 실패" };
     return { ok: true, username: data.username };
