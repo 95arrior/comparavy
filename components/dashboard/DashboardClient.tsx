@@ -61,6 +61,10 @@ export default function DashboardClient(props: DashboardProps) {
   const [notice, setNotice] = useState<string | null>(null);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [calView, setCalView] = useState(false); // 내 글: 목록 ↔ 캘린더
+  const [doneId, setDoneId] = useState<string | null>(null); // 백그라운드 생성 완료 → '보러가기'로 안내
+  // 백그라운드에서 생성 중인 글(도중 이탈 후 복귀 시 메인에 '생성 중' 카드로 표시)
+  const generatingArticle = articles.find((a) => a.status === "generating") ?? null;
+  const doneArticle = doneId ? articles.find((a) => a.id === doneId) ?? null : null;
 
   // 워드프레스 연결 유효성 점검 — 앱 비밀번호 만료·삭제·사이트 다운 시 배너로 재연결을 유도한다.
   useEffect(() => {
@@ -86,6 +90,30 @@ export default function DashboardClient(props: DashboardProps) {
     const t = setTimeout(() => setNotice(null), 2400);
     return () => clearTimeout(t);
   }, [notice]);
+
+  // 백그라운드 생성 폴링 — '생성 중' 글이 완료(또는 실패)됐는지 주기적으로 확인.
+  // (생성 도중 새로고침·이탈로 돌아왔을 때, 서버가 끝까지 저장한 결과를 메인에서 받아준다)
+  useEffect(() => {
+    if (!generatingArticle) return;
+    const id = generatingArticle.id;
+    const supabase = createSupabaseBrowserClient();
+    let alive = true;
+    const t = setInterval(async () => {
+      const { data } = await supabase.from("articles").select("*").eq("id", id).maybeSingle();
+      if (!alive) return;
+      if (!data) {
+        setArticles((prev) => prev.filter((a) => a.id !== id));
+        setNotice("생성에 실패했어요. 다시 시도해 주세요.");
+      } else if (data.status !== "generating") {
+        setArticles((prev) => prev.map((a) => (a.id === id ? (data as Article) : a)));
+        setDoneId(id);
+      }
+    }, 4000);
+    return () => {
+      alive = false;
+      clearInterval(t);
+    };
+  }, [generatingArticle?.id]);
 
   // 브라우저 뒤로가기/앞으로가기를 '앱 내부 이동'으로 — 탭·글·하위페이지 상태를 히스토리에 동기화.
   // → 글을 보다 뒤로가기를 누르면 사이트 밖으로 튕기지 않고 직전 화면으로 돌아간다.
@@ -291,7 +319,7 @@ export default function DashboardClient(props: DashboardProps) {
 
   const navItems: { key: Tab; label: string }[] = [
     { key: "generate", label: "새 글" },
-    { key: "articles", label: articles.length ? `내 글 (${articles.length})` : "내 글" },
+    { key: "articles", label: (() => { const n = articles.filter((a) => a.status !== "generating").length; return n ? `내 글 (${n})` : "내 글"; })() },
     { key: "wordpress", label: "워드프레스" },
     ...(props.isAdmin ? [{ key: "admin" as Tab, label: "관리" }] : []),
   ];
@@ -627,8 +655,31 @@ export default function DashboardClient(props: DashboardProps) {
                       <span className="text-neutral-400">/ {props.articlesLimit}</span>
                     </button>
                   </div>
-                  <div className="mt-6"><HeroInput loggedIn pro={props.plan === "pro"} onStart={setGenParams} /></div>
-                  <div className="mt-12"><DemoStream /></div>
+                  {generatingArticle ? (
+                    <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-[#3f91ff]/30 bg-[#3f91ff]/5 p-8 text-left">
+                      <div className="flex items-center gap-3">
+                        <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#3f91ff]/30 border-t-[#3f91ff]" />
+                        <p className="text-sm font-semibold text-[#2f7fe6]">글을 만들고 있어요…</p>
+                      </div>
+                      <p className="mt-3 text-sm leading-relaxed text-neutral-600">
+                        ‘<b className="text-neutral-900">{generatingArticle.keyword}</b>’ 글을 쓰는 중이에요. 창을 닫거나 다른 일을 봐도 괜찮아요 — 다 만들어지면 여기에서 바로 알려드릴게요.
+                      </p>
+                    </div>
+                  ) : doneArticle ? (
+                    <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-emerald-200 bg-emerald-50 p-8 text-left">
+                      <p className="text-sm font-semibold text-emerald-700">글이 완성됐어요 🎉</p>
+                      <p className="mt-2 truncate text-sm font-medium text-neutral-900">“{doneArticle.title}”</p>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <button onClick={() => { const a = doneArticle; setDoneId(null); setSelected(a); }} className="rounded-xl bg-neutral-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-neutral-700">보러 가기</button>
+                        <button onClick={() => setDoneId(null)} className="rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-600 transition hover:border-neutral-900">새 글 쓰기</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="mt-6"><HeroInput loggedIn pro={props.plan === "pro"} onStart={setGenParams} /></div>
+                      <div className="mt-12"><DemoStream /></div>
+                    </>
+                  )}
                 </>
               )}
             </section>

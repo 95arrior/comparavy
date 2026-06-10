@@ -9,6 +9,7 @@ const STATUS_LABEL: Record<Article["status"], string> = {
   draft: "초안",
   published: "발행됨",
   future: "예약됨",
+  generating: "생성 중", // 목록에선 필터링되어 실제로 표시되지 않음
 };
 
 const STATUS_STYLE: Record<Article["status"], string> = {
@@ -16,6 +17,7 @@ const STATUS_STYLE: Record<Article["status"], string> = {
   // 발행됨은 한눈에 띄게 진한 초록 + 흰 글씨
   published: "bg-emerald-600 text-white",
   future: "bg-amber-100 text-amber-700",
+  generating: "bg-neutral-100 text-neutral-500",
 };
 
 type StatusFilter = "all" | Article["status"];
@@ -29,7 +31,7 @@ const SORT_LABEL: Record<Sort, string> = {
 };
 
 export default function ArticleList({
-  articles,
+  articles: allArticles,
   onOpen,
   onGoGenerate,
   onUpdated,
@@ -41,6 +43,8 @@ export default function ArticleList({
   onUpdated?: (a: Article) => void;
   wpConnected?: boolean;
 }) {
+  // 생성 중인 자리표시 글은 목록·카운트에서 제외 (메인의 '생성 중' 카드에서만 보여줌)
+  const articles = allArticles.filter((a) => a.status !== "generating");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
   const [sort, setSort] = useState<Sort>("new");
@@ -102,7 +106,7 @@ export default function ArticleList({
 
   // 상태별 개수 (필터 칩에 표시)
   const counts = useMemo(() => {
-    const c = { all: articles.length, draft: 0, published: 0, future: 0 } as Record<StatusFilter, number>;
+    const c = { all: articles.length, draft: 0, published: 0, future: 0, generating: 0 } as Record<StatusFilter, number>;
     for (const a of articles) c[a.status] = (c[a.status] ?? 0) + 1;
     return c;
   }, [articles]);

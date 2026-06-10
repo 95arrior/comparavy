@@ -18,7 +18,7 @@ export interface Article {
   /** 워드프레스 카테고리(분류) 이름 */
   category?: string | null;
   char_count: number;
-  status: "draft" | "published" | "future";
+  status: "draft" | "published" | "future" | "generating";
   wp_link: string | null;
   /** 발행된 워드프레스 글 ID — 있으면 재발행 시 새 글이 아니라 이 글을 수정 */
   wp_post_id: number | null;

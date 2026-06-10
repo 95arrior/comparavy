@@ -137,7 +137,29 @@ export async function POST(request: Request) {
           // 수신 측이 끊김 — 무시하고 생성 계속
         }
       };
+      let genId: string | null = null;
       try {
+        // 생성 시작 즉시 '생성 중' 자리표시 행을 만든다 → 도중 새로고침·뒤로가기로 떠나도
+        // 메인에서 '생성 중'을 보여주고, 완료되면 '보러가기'로 이어줄 수 있다.
+        {
+          const genInsert: Record<string, unknown> = {
+            user_id: user.id,
+            keyword,
+            title: "글 생성 중…",
+            body_html: "",
+            char_count: 0,
+            status: "generating",
+          };
+          if (teaser) genInsert.locked = true;
+          let { data: ph, error: phErr } = await supabase.from("articles").insert(genInsert).select("id").single();
+          if (phErr && /locked/i.test(phErr.message ?? "")) {
+            delete genInsert.locked;
+            ({ data: ph, error: phErr } = await supabase.from("articles").insert(genInsert).select("id").single());
+          }
+          genId = ph?.id ?? null;
+          if (genId) send({ type: "generating", id: genId });
+        }
+
         const article = await streamArticle(
           { keyword, angle: body.angle, type, tone, maxWords, variantInstruction: variant.instruction },
           (bodyHtml) => send({ type: "body", html: bodyHtml }),
@@ -149,6 +171,7 @@ export async function POST(request: Request) {
         // (품질 우선·억지로 안 채움 지침과 충돌하지 않게 0.5→0.4로 완화 → 좋은 짧은 글 오반려·토큰 낭비 감소)
         const charCount = countKoreanChars(article.body_html);
         if (charCount < maxWords * 0.4) {
+          if (genId) await supabase.from("articles").delete().eq("id", genId); // 자리표시 행 정리
           send({
             type: "error",
             error:
@@ -176,25 +199,24 @@ export async function POST(request: Request) {
         // 티저(잠금 미리보기)일 때만 locked 사용 → 마이그레이션(0006) 전에도 일반 생성은 정상 동작
         if (teaser) insertPayload.locked = true;
 
-        let { data: saved, error: saveError } = await supabase
-          .from("articles")
-          .insert(insertPayload)
-          .select("*")
-          .single();
+        // 자리표시 행이 있으면 그 행을 채우고(UPDATE), 없으면 새로 INSERT
+        const writeArticle = () =>
+          genId
+            ? supabase.from("articles").update(insertPayload).eq("id", genId).select("*").single()
+            : supabase.from("articles").insert(insertPayload).select("*").single();
+
+        let { data: saved, error: saveError } = await writeArticle();
 
         // 아직 없는 선택 컬럼(write_note·tags 등)을 가리키는 오류면 그 컬럼만 빼고 재시도 → 마이그레이션 전에도 생성은 항상 동작
         for (const col of ["tags", "write_note"]) {
           if (saveError && new RegExp(col, "i").test(saveError.message ?? "")) {
             delete insertPayload[col];
-            ({ data: saved, error: saveError } = await supabase
-              .from("articles")
-              .insert(insertPayload)
-              .select("*")
-              .single());
+            ({ data: saved, error: saveError } = await writeArticle());
           }
         }
 
         if (saveError) {
+          if (genId) { try { await supabase.from("articles").delete().eq("id", genId); } catch {} }
           // 진단용: 실제 DB 오류 메시지 표면화 (대부분 마이그레이션 미실행 = 컬럼 없음)
           send({ type: "error", error: `저장 실패: ${saveError.message ?? "알 수 없는 오류"}` });
           return;
@@ -222,6 +244,7 @@ export async function POST(request: Request) {
 
         send({ type: "done", article: saved });
       } catch (err) {
+        if (genId) { try { await supabase.from("articles").delete().eq("id", genId); } catch {} }
         const message = err instanceof Error ? err.message : "글을 만드는 중 문제가 생겼어요. 다시 시도해 주세요.";
         send({ type: "error", error: message });
       } finally {

@@ -50,6 +50,9 @@ export async function POST(request: Request) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return NextResponse.json({ error: "AI 설정이 아직이에요." }, { status: 500 });
 
+  // 현재 연도(한국시간) — 모델이 학습 시점 과거 연도(2024·2025)를 습관적으로 붙이는 것을 막는다
+  const year = new Date(Date.now() + 9 * 60 * 60 * 1000).getUTCFullYear();
+
   try {
     const client = new Anthropic({ apiKey });
     const res = await client.messages.create({
@@ -60,8 +63,8 @@ export async function POST(request: Request) {
           role: "user",
           content:
             `‘${topic}’ 분야의 블로그에 바로 쓸 만한 글감(검색 키워드) 9개를 추천해줘.\n` +
-            "규칙: ① 한국 사람이 실제로 구글/네이버에 검색하는 구체적인 롱테일 키워드 ② 검색 의도를 다양하게(방법·추천·후기·비교·가격·주의점 등) ③ 너무 광범위한 한 단어 금지, 문장형 금지 ④ 각 키워드는 바로 글 제목 소재가 되게 구체적으로.\n" +
-            "출력은 JSON 배열만. 예: [\"강아지 분리불안 훈련 방법\",\"소형견 사료 추천 2026\",\"강아지 슬개골 탈구 초기 증상\"]",
+            `규칙: ① 한국 사람이 실제로 구글/네이버에 검색하는 구체적인 롱테일 키워드 ② 검색 의도를 다양하게(방법·추천·후기·비교·가격·주의점 등) ③ 너무 광범위한 한 단어 금지, 문장형 금지 ④ 각 키워드는 바로 글 제목 소재가 되게 구체적으로 ⑤ 연도를 붙일 경우 반드시 올해(${year}년)를 쓴다. 지난 연도(2024·2025 등)는 절대 쓰지 않는다. 굳이 연도가 필요 없으면 빼도 된다.\n` +
+            `출력은 JSON 배열만. 예: [\"강아지 분리불안 훈련 방법\",\"소형견 사료 추천 ${year}\",\"강아지 슬개골 탈구 초기 증상\"]`,
         },
       ],
     });
