@@ -6,6 +6,7 @@ import { useState } from "react";
 export default function WaitlistForm({ source = "landing", autoFocus = false }: { source?: string; autoFocus?: boolean }) {
   const [email, setEmail] = useState("");
   const [state, setState] = useState<"idle" | "loading" | "done">("idle");
+  const [already, setAlready] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   async function submit(e: React.FormEvent) {
@@ -24,8 +25,11 @@ export default function WaitlistForm({ source = "landing", autoFocus = false }: 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: v, source }),
       });
-      if (res.ok) setState("done");
-      else {
+      if (res.ok) {
+        const d = await res.json().catch(() => ({}));
+        setAlready(d.already === true);
+        setState("done");
+      } else {
         const d = await res.json().catch(() => ({}));
         setErr(d.error ?? "등록에 실패했어요. 잠시 후 다시 시도해 주세요.");
         setState("idle");
@@ -43,8 +47,8 @@ export default function WaitlistForm({ source = "landing", autoFocus = false }: 
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
         </span>
         <div>
-          <p className="text-sm font-semibold text-emerald-800">신청 완료!</p>
-          <p className="text-xs text-emerald-700">오픈하면 가장 먼저 메일로 알려드릴게요.</p>
+          <p className="text-sm font-semibold text-emerald-800">{already ? "이미 신청하셨어요!" : "신청 완료!"}</p>
+          <p className="text-xs text-emerald-700">{already ? "오픈하면 잊지 않고 가장 먼저 알려드릴게요." : "오픈하면 가장 먼저 메일로 알려드릴게요."}</p>
         </div>
       </div>
     );

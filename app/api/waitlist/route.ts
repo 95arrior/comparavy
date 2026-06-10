@@ -17,10 +17,13 @@ export async function POST(request: Request) {
 
   try {
     const admin = createSupabaseAdminClient();
-    // 같은 이메일은 조용히 무시(중복이어도 사용자에겐 성공으로) → "이미 등록됨"도 긍정 경험
-    const { error } = await admin.from("waitlist").upsert({ email, source }, { onConflict: "email" });
-    if (error) return NextResponse.json({ error: "등록에 실패했어요. 잠시 후 다시 시도해 주세요." }, { status: 502 });
-    return NextResponse.json({ ok: true });
+    const { error } = await admin.from("waitlist").insert({ email, source });
+    if (error) {
+      // 유니크 제약 위반 = 이미 등록된 이메일 → 중복 안내
+      if (error.code === "23505") return NextResponse.json({ ok: true, already: true });
+      return NextResponse.json({ error: "등록에 실패했어요. 잠시 후 다시 시도해 주세요." }, { status: 502 });
+    }
+    return NextResponse.json({ ok: true, already: false });
   } catch {
     return NextResponse.json({ error: "등록에 실패했어요. 잠시 후 다시 시도해 주세요." }, { status: 502 });
   }
