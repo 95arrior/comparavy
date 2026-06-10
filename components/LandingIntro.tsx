@@ -28,13 +28,13 @@ export default function LandingIntro() {
           dy: Math.sin(angle) * dist,
           rot: Math.random() * 720 - 360,
           color: COLORS[i % COLORS.length],
-          delay: 1.5 + Math.random() * 0.35,
+          delay: 2.4 + Math.random() * 0.35,
           round: i % 2 === 0,
         };
       }),
     );
-    const t1 = setTimeout(() => setPhase("leaving"), 3700);
-    const t2 = setTimeout(() => setPhase("done"), 4200);
+    const t1 = setTimeout(() => setPhase("leaving"), 4800);
+    const t2 = setTimeout(() => setPhase("done"), 5300);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
