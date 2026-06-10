@@ -169,6 +169,9 @@ html {
   to   { opacity: 1; transform: translateY(0); }
 }
 .ateflo-intro-word { animation: ateflo-intro-word 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.95s both; }
+/* 타이핑 커서 깜빡임 (목업) */
+@keyframes ateflo-caret { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+.ateflo-caret { animation: ateflo-caret 0.9s step-end infinite; }
 @keyframes ateflo-dropdown {
   from { opacity: 0; transform: translateY(-6px) scaleY(0.97); }
   to   { opacity: 1; transform: translateY(0) scaleY(1); }

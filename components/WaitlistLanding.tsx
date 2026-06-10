@@ -4,6 +4,7 @@ import ServiceIntro from "@/components/ServiceIntro";
 import SiteFooter from "@/components/SiteFooter";
 import LandingIntro from "@/components/LandingIntro";
 import WaitlistForm from "@/components/WaitlistForm";
+import ProductShowcase from "@/components/ProductShowcase";
 
 const WALLS = [
   { t: "방향", q: "“이거 맞게 하는 걸까? 헛수고면 어쩌지.”", d: "뭘 써야 할지 모른 채 시간만 흘러요." },
@@ -67,6 +68,9 @@ export default function WaitlistLanding() {
           <p className="mt-10 text-center text-base font-semibold tracking-tight">그 벽, AteFlo가 넘게 해드려요.</p>
         </div>
       </section>
+
+      {/* 실제 화면 목업 — 무엇을 하는 서비스인지 한눈에 */}
+      <ProductShowcase />
 
       {/* 기능 쇼케이스 (재활용) */}
       <ServiceIntro waitlist />
