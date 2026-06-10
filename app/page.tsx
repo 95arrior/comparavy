@@ -11,6 +11,8 @@ import Brand from "@/components/Brand";
 import LandingNav from "@/components/LandingNav";
 import ServiceIntro from "@/components/ServiceIntro";
 import LandingIntro from "@/components/LandingIntro";
+import WaitlistLanding from "@/components/WaitlistLanding";
+import ConstructionScreen from "@/components/ConstructionScreen";
 import SiteFooter from "@/components/SiteFooter";
 import DashboardClient from "@/components/dashboard/DashboardClient";
 import type { Article } from "@/components/dashboard/types";
@@ -31,7 +33,14 @@ export default async function Home() {
   }
 
   // 로그인하면 홈이 곧 작업공간 — '대시보드로 이동'하는 뎁스를 없앤다
+  const prelaunch = process.env.PRELAUNCH === "true";
+
   if (user && supabase) {
+    const isAdmin = isAdminEmail(user.email);
+    // 출시 전 잠금: 관리자가 아니면 앱 대신 '공사중' 화면 (결제·생성 도달 차단)
+    if (prelaunch && !isAdmin) {
+      return <ConstructionScreen email={user.email ?? ""} />;
+    }
     const row = await ensureUserRow(supabase, user.id, user.email);
     const { data: articles } = await supabase
       .from("articles")
@@ -45,7 +54,6 @@ export default async function Home() {
       .maybeSingle();
     // 예약 글이 WP에서 이미 발행됐으면 상태를 동기화 (예약됨 칩이 잘못 남는 문제 방지)
     await syncScheduledStatuses(articles, conn);
-    const isAdmin = isAdminEmail(user.email);
     const adminStats = isAdmin ? await getAdminStats() : null;
     return (
       <DashboardClient
@@ -63,6 +71,11 @@ export default async function Home() {
         adminStats={adminStats}
       />
     );
+  }
+
+  // 출시 전 잠금: 비로그인 방문자는 사전 등록(웨이트리스트) 랜딩만
+  if (prelaunch) {
+    return <WaitlistLanding />;
   }
 
   // 비로그인 → 마케팅 랜딩

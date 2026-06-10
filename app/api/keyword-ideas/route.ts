@@ -4,6 +4,7 @@ import { createSupabaseServerClient, createSupabaseAdminClient, hasSupabaseEnv }
 import { checkRateLimit } from "@/lib/rateLimit";
 import { logUsage } from "@/lib/usageLog";
 import { ensureUserRow, rolloverIfNeeded } from "@/lib/userPlan";
+import { isAdminEmail } from "@/lib/adminStats";
 
 /**
  * 분야/주제를 받아 '바로 글로 쓸 만한' 한국어 블로그 글감 키워드를 추천한다. (로그인 사용자, haiku)
@@ -18,6 +19,11 @@ export async function POST(request: Request) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "로그인이 필요해요." }, { status: 401 });
+
+  // 출시 전 잠금: 관리자 외 차단
+  if (process.env.PRELAUNCH === "true" && !isAdminEmail(user.email)) {
+    return NextResponse.json({ error: "아직 오픈 전이에요." }, { status: 403 });
+  }
 
   // 버스트(연타) 방지
   const rlBurst = await checkRateLimit(supabase, user.id, "keyword_ideas", 5, 300);

@@ -8,6 +8,7 @@ import { isDisposableEmail } from "@/lib/disposableEmail";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { normalizeKeyword, pickVariant, simhash } from "@/lib/diversity";
 import { looksLikeGarbageKeyword, isMeaningfulKeyword } from "@/lib/keywordGuard";
+import { isAdminEmail } from "@/lib/adminStats";
 import { logUsage } from "@/lib/usageLog";
 
 export const maxDuration = 300;
@@ -24,6 +25,11 @@ export async function POST(request: Request) {
 
   if (!user) {
     return NextResponse.json({ error: "로그인이 필요해요." }, { status: 401 });
+  }
+
+  // 출시 전 잠금: 관리자 외 생성 차단 (직접 호출로 비용 발생 방지)
+  if (process.env.PRELAUNCH === "true" && !isAdminEmail(user.email)) {
+    return NextResponse.json({ error: "아직 오픈 전이에요. 사전 등록하면 가장 먼저 알려드릴게요." }, { status: 403 });
   }
 
   // 어뷰징 방어 ① 일회용 이메일 차단 (대량 무료계정 방지)

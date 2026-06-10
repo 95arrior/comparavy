@@ -205,7 +205,7 @@ function MobilePublish() {
   );
 }
 
-export default function ServiceIntro({ loggedIn = false, currentPlan = "free" }: { loggedIn?: boolean; currentPlan?: PlanKey }) {
+export default function ServiceIntro({ loggedIn = false, currentPlan = "free", waitlist = false }: { loggedIn?: boolean; currentPlan?: PlanKey; waitlist?: boolean }) {
   return (
     <>
       <Section
@@ -265,11 +265,22 @@ export default function ServiceIntro({ loggedIn = false, currentPlan = "free" }:
         <div className="mx-auto max-w-5xl px-6 py-24">
           <Reveal>
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">요금</h2>
-            <p className="mt-3 text-neutral-500">외주 글 한 편 값이면 한 달 30편. 무료 3편으로 먼저 확인하고 정하세요.</p>
+            <p className="mt-3 text-neutral-500">
+              {waitlist ? "외주 글 한 편 값이면 한 달 30편. 곧 만나요." : "외주 글 한 편 값이면 한 달 30편. 무료 3편으로 먼저 확인하고 정하세요."}
+            </p>
           </Reveal>
-          <Reveal delay={120} className="mt-12">
-            <PricingCards loggedIn={loggedIn} currentPlan={currentPlan} />
-          </Reveal>
+          {waitlist ? (
+            <Reveal delay={120} className="mt-8">
+              <div className="rounded-2xl border-2 bg-white p-6 text-center shadow-sm" style={{ borderColor: BRAND }}>
+                <p className="text-2xl font-bold tracking-tight">월 ₩29,900 <span className="text-base font-medium text-neutral-400">/ 30편</span></p>
+                <p className="mt-2 text-sm text-neutral-500">아직 오픈 전이에요. 위에서 사전 등록하면 가장 먼저 알려드릴게요.</p>
+              </div>
+            </Reveal>
+          ) : (
+            <Reveal delay={120} className="mt-12">
+              <PricingCards loggedIn={loggedIn} currentPlan={currentPlan} />
+            </Reveal>
+          )}
         </div>
       </section>
     </>
