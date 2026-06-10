@@ -464,7 +464,7 @@ export default function ArticleModal({
                 </p>
                 <Link
                   href="/pricing"
-                  className="ateflo-rainbow mt-4 inline-block rounded-full px-6 py-2.5 text-sm font-medium text-white transition"
+                  className="ateflo-rainbow mt-4 inline-block rounded-lg px-6 py-2.5 text-sm font-medium text-white transition"
                 >
                   프로 업그레이드하고 전체보기 →
                 </Link>
@@ -512,7 +512,7 @@ export default function ArticleModal({
           <span className="truncate text-xs text-neutral-400">키워드 · {article.keyword}</span>
           <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight sm:text-3xl">{article.title}</h1>
 
-          <div className="mt-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-xs text-neutral-500">
+          <div className="mt-4 rounded-xl border border-neutral-200 bg-white px-4 py-3 text-xs text-neutral-500">
             <p><strong className="text-neutral-700">메타 제목:</strong> {article.meta_title}</p>
             <p className="mt-1"><strong className="text-neutral-700">메타 설명:</strong> {article.meta_description}</p>
           </div>
@@ -524,7 +524,7 @@ export default function ArticleModal({
             </p>
             <Link
               href="/pricing"
-              className="ateflo-rainbow shrink-0 rounded-full px-4 py-2 text-sm font-medium text-white transition"
+              className="ateflo-rainbow shrink-0 rounded-lg px-4 py-2 text-sm font-medium text-white transition"
             >
               프로 업그레이드 →
             </Link>
@@ -643,7 +643,7 @@ export default function ArticleModal({
       {/* 자동저장 표시 — 화면에 고정되어 스크롤을 따라다님(현재 보는 위치 우하단에 항상 보임) */}
       {(autoSavedAt || dirty || saveFailed) && (
         <div
-          className={`fixed bottom-5 right-5 z-40 rounded-full px-3.5 py-1.5 text-xs font-medium shadow-md backdrop-blur transition ${
+          className={`fixed bottom-5 right-5 z-40 rounded-lg px-3.5 py-1.5 text-xs font-medium shadow-md backdrop-blur transition ${
             saveFailed
               ? "bg-red-600/90 text-white"
               : dirty
@@ -687,7 +687,7 @@ export default function ArticleModal({
               지금 쓴 이 글을 프로로 업그레이드하면 <b>버튼 하나로 워드프레스에 발행</b>돼요. 제목·메타·FAQ까지 자동으로요. 복붙은 이제 그만.
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-3">
-              <Link href="/pricing" className="ateflo-rainbow rounded-full px-5 py-2 text-sm font-medium text-white transition">
+              <Link href="/pricing" className="ateflo-rainbow rounded-lg px-5 py-2 text-sm font-medium text-white transition">
                 프로 업그레이드 →
               </Link>
               <span className="text-xs text-neutral-400">{formatKRW(PLANS.pro.price)}/월 · 언제든 해지</span>
@@ -696,7 +696,7 @@ export default function ArticleModal({
           </div>
         )}
 
-        <div className="mt-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-xs text-neutral-500">
+        <div className="mt-4 rounded-xl border border-neutral-200 bg-white px-4 py-3 text-xs text-neutral-500">
           <p><strong className="text-neutral-700">메타 제목:</strong> {article.meta_title}</p>
           <p className="mt-1"><strong className="text-neutral-700">메타 설명:</strong> {article.meta_description}</p>
         </div>
@@ -970,7 +970,7 @@ export default function ArticleModal({
           );
         })()}
 
-        <div className="mt-5 flex items-start gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-2.5 text-xs leading-relaxed text-neutral-500">
+        <div className="mt-5 flex items-start gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-xs leading-relaxed text-neutral-500">
           <span aria-hidden className="mt-px">💡</span>
           <p>
             여기서는 <span className="font-medium text-neutral-700">글의 구조와 내용</span>을 다듬는 곳이에요. 제목·소제목·목록·이미지 배치는 그대로 발행돼요.
@@ -993,7 +993,7 @@ export default function ArticleModal({
         </div>
 
         {article.write_note && (
-          <div className="mt-6 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3">
+          <div className="mt-6 rounded-xl border border-neutral-200 bg-white px-4 py-3">
             <p className="text-xs font-medium text-neutral-500">이 글, 이렇게 썼어요</p>
             <p className="mt-1 text-sm leading-relaxed text-neutral-600">{article.write_note}</p>
           </div>

@@ -131,7 +131,7 @@ export default function ArticleList({
             <button
               key={c.key}
               onClick={() => setStatus(c.key)}
-              className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
                 status === c.key ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
               }`}
             >
@@ -196,7 +196,7 @@ export default function ArticleList({
                   {a.locked ? (
                     <span className="shrink-0 whitespace-nowrap rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">🔒 미리보기</span>
                   ) : (
-                    <span className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLE[a.status]}`}>
+                    <span className={`shrink-0 whitespace-nowrap rounded-lg px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLE[a.status]}`}>
                       {STATUS_LABEL[a.status]}
                     </span>
                   )}

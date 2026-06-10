@@ -207,7 +207,7 @@ export default function WpGuideView({ onBack, onGoConnect }: { onBack: () => voi
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <h2 className="text-lg font-semibold tracking-tight text-neutral-900">{step.title}</h2>
-                      <span className="rounded-full px-2 py-0.5 text-xs font-medium text-white" style={{ background: BRAND }}>👉 지금 할 차례</span>
+                      <span className="rounded-lg px-2 py-0.5 text-xs font-medium text-white" style={{ background: BRAND }}>👉 지금 할 차례</span>
                     </div>
                     <ul className="mt-3 space-y-2.5">
                       {step.lines.map((line, j) => (
@@ -225,7 +225,7 @@ export default function WpGuideView({ onBack, onGoConnect }: { onBack: () => voi
                     )}
                     <button
                       onClick={() => toggle(i)}
-                      className="mt-5 rounded-full px-5 py-2.5 text-sm font-medium text-white transition"
+                      className="mt-5 rounded-lg px-5 py-2.5 text-sm font-medium text-white transition"
                       style={{ background: BRAND }}
                     >
                       이 단계 완료했어요 →
@@ -241,7 +241,7 @@ export default function WpGuideView({ onBack, onGoConnect }: { onBack: () => voi
           <div className="ateflo-step-in mt-6 rounded-2xl border p-6 text-center" style={{ borderColor: BRAND, background: `${BRAND}0d` }}>
             <p className="text-base font-semibold tracking-tight">다 하셨어요! 🎉 이제 연결만 하면 끝이에요</p>
             <p className="mt-1.5 text-sm text-neutral-500">연결 화면에서 사이트 주소·사용자명·앱 비밀번호를 붙여넣으세요.</p>
-            <button onClick={onGoConnect} className="mt-5 inline-block rounded-full px-6 py-3 text-sm font-medium text-white transition" style={{ background: BRAND }}>
+            <button onClick={onGoConnect} className="mt-5 inline-block rounded-lg px-6 py-3 text-sm font-medium text-white transition" style={{ background: BRAND }}>
               워드프레스 연결하러 가기 →
             </button>
           </div>

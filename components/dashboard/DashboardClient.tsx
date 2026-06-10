@@ -250,7 +250,7 @@ export default function DashboardClient(props: DashboardProps) {
   };
 
   return (
-    <div className="flex min-h-screen bg-neutral-50 text-neutral-900 antialiased">
+    <div className="flex min-h-screen bg-[#f2f4f6] text-neutral-900 antialiased">
       {/* 모바일: 사이드바 열렸을 때 뒤 어둡게 (탭하면 닫힘) */}
       {navOpen && <div onClick={() => setNavOpen(false)} className="fixed inset-0 z-40 bg-black/30 md:hidden" />}
 
@@ -322,7 +322,7 @@ export default function DashboardClient(props: DashboardProps) {
               {articles.length > 5 && (
                 <button
                   onClick={() => goTab("articles")}
-                  className="mt-3 self-center rounded-full px-4 py-1.5 text-center text-xs font-medium text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-600"
+                  className="mt-3 self-center rounded-lg px-4 py-1.5 text-center text-xs font-medium text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-600"
                 >
                   더보기 ({articles.length})
                 </button>

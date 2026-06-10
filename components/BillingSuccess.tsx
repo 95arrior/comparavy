@@ -63,7 +63,7 @@ export default function BillingSuccess({
           <ProCelebration />
           <button
             onClick={() => router.push("/")}
-            className="ateflo-rainbow mt-8 rounded-full px-6 py-2.5 text-sm font-medium text-white transition"
+            className="ateflo-rainbow mt-8 rounded-lg px-6 py-2.5 text-sm font-medium text-white transition"
           >
             바로 시작하기 →
           </button>

@@ -119,7 +119,7 @@ export default function PricingClient({
         <div className="flex flex-col bg-white p-8">
           <div className="flex items-baseline justify-between">
             <h3 className="text-lg font-medium tracking-tight">{PLANS.pro.name}</h3>
-            <span className="rounded-full px-2.5 py-0.5 text-xs font-medium" style={{ background: "#3f91ff1a", color: "#3f91ff" }}>가장 인기</span>
+            <span className="rounded-lg px-2.5 py-0.5 text-xs font-medium" style={{ background: "#3f91ff1a", color: "#3f91ff" }}>가장 인기</span>
           </div>
           <p className="mt-3">
             <span className="text-4xl font-semibold tracking-tight">{formatKRW(PLANS.pro.price)}</span>
