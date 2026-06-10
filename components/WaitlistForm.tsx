@@ -19,11 +19,19 @@ export default function WaitlistForm({ source = "landing", autoFocus = false }: 
     }
     setErr(null);
     setState("loading");
+    // 채널 추적: URL ?src= 값을 출처로(없으면 폼 위치). 예: ?src=insta, ?src=ad
+    let finalSource = source;
+    try {
+      const src = new URLSearchParams(window.location.search).get("src");
+      if (src) finalSource = src.replace(/[^a-zA-Z0-9가-힣_-]/g, "").slice(0, 40) || source;
+    } catch {
+      // 무시
+    }
     try {
       const res = await fetch("/api/waitlist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: v, source }),
+        body: JSON.stringify({ email: v, source: finalSource }),
       });
       if (res.ok) {
         const d = await res.json().catch(() => ({}));
