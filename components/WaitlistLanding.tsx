@@ -5,6 +5,7 @@ import SiteFooter from "@/components/SiteFooter";
 import LandingIntro from "@/components/LandingIntro";
 import WaitlistForm from "@/components/WaitlistForm";
 import ProductShowcase from "@/components/ProductShowcase";
+import FeatureGrid from "@/components/FeatureGrid";
 
 const WALLS = [
   { t: "방향", q: "“이거 맞게 하는 걸까? 헛수고면 어쩌지.”", d: "뭘 써야 할지 모른 채 시간만 흘러요." },
@@ -69,6 +70,9 @@ export default function WaitlistLanding() {
 
       {/* 실제 화면 목업 — 무엇을 하는 서비스인지 한눈에 */}
       <ProductShowcase />
+
+      {/* 이런 것까지 자동 — 기능 breadth를 한눈에 */}
+      <FeatureGrid />
 
       {/* 기능 쇼케이스 (재활용) */}
       <ServiceIntro waitlist />
