@@ -717,7 +717,7 @@ export default function DashboardClient(props: DashboardProps) {
                   </div>
                 )}
                 {calView && articles.length > 0 ? (
-                  <ContentCalendar articles={articles} onOpen={setSelected} />
+                  <ContentCalendar articles={articles} onOpen={setSelected} onGoGenerate={() => goTab("generate")} />
                 ) : (
                   <ArticleList
                     articles={articles}

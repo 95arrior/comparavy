@@ -16,9 +16,11 @@ function dayKey(d: Date): string {
 export default function ContentCalendar({
   articles,
   onOpen,
+  onGoGenerate,
 }: {
   articles: Article[];
   onOpen: (a: Article) => void;
+  onGoGenerate?: () => void;
 }) {
   const [cursor, setCursor] = useState(() => {
     const d = new Date();
@@ -56,7 +58,45 @@ export default function ContentCalendar({
 
   const scheduledCount = articles.filter((a) => a.status === "future").length;
 
+  // 꾸준함 요약 — 이번 달 발행 수 / 마지막 발행 후 경과일
+  const dateOf = (a: Article) => a.publish_at ?? (a.status === "published" ? a.created_at : null);
+  const published = articles.filter((a) => a.status === "published" && dateOf(a));
+  const monthPublished = published.filter((a) => {
+    const d = new Date(dateOf(a)!);
+    return d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth();
+  }).length;
+  const lastPublishMs = published.length ? Math.max(...published.map((a) => new Date(dateOf(a)!).getTime())) : 0;
+  const daysSinceLast = lastPublishMs ? Math.floor((Date.now() - lastPublishMs) / 86400000) : -1;
+  const needsNudge = daysSinceLast === -1 || daysSinceLast >= 7;
+  const nudgeMsg = daysSinceLast === -1 ? "아직 발행한 글이 없어요" : `마지막 발행 후 ${daysSinceLast}일째예요`;
+
   return (
+    <>
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-neutral-100 bg-white p-4 shadow-sm sm:px-5">
+      <div className="flex items-center gap-6">
+        <div>
+          <p className="text-xs text-neutral-400">이번 달 발행</p>
+          <p className="mt-0.5 text-xl font-bold tracking-tight">{monthPublished}<span className="ml-0.5 text-sm font-medium text-neutral-400">편</span></p>
+        </div>
+        <div className="h-8 w-px bg-neutral-100" />
+        <div>
+          <p className="text-xs text-neutral-400">예약 대기</p>
+          <p className="mt-0.5 text-xl font-bold tracking-tight">{scheduledCount}<span className="ml-0.5 text-sm font-medium text-neutral-400">편</span></p>
+        </div>
+      </div>
+      {needsNudge ? (
+        <div className="flex items-center gap-3">
+          <p className="text-xs text-neutral-500">{nudgeMsg}</p>
+          {onGoGenerate && (
+            <button onClick={onGoGenerate} className="rounded-lg bg-neutral-900 px-3.5 py-2 text-xs font-semibold text-white transition active:scale-95 hover:bg-neutral-800">
+              새 글 쓰기
+            </button>
+          )}
+        </div>
+      ) : (
+        <p className="text-xs font-medium text-emerald-600">꾸준히 가고 있어요</p>
+      )}
+    </div>
     <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-4 sm:p-6">
       {/* 헤더 — 월 이동 */}
       <div className="flex items-center justify-between">
@@ -134,5 +174,6 @@ export default function ContentCalendar({
         })}
       </div>
     </div>
+    </>
   );
 }
