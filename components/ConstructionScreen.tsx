@@ -1,5 +1,6 @@
 import Brand from "@/components/Brand";
 import WaitlistForm from "@/components/WaitlistForm";
+import LogoutButton from "@/components/LogoutButton";
 
 /** 출시 전, 관리자가 아닌 로그인 사용자에게 보이는 '공사중' 화면. */
 export default function ConstructionScreen({ email }: { email: string }) {
@@ -14,7 +15,9 @@ export default function ConstructionScreen({ email }: { email: string }) {
       <div className="mt-8 w-full max-w-md">
         <WaitlistForm source="construction" />
       </div>
-      <p className="mt-8 text-xs text-neutral-400">{email} (으)로 로그인됨</p>
+      <p className="mt-8 text-xs text-neutral-400">
+        {email} (으)로 로그인됨 · <LogoutButton className="underline transition hover:text-neutral-600" />
+      </p>
     </div>
   );
 }
