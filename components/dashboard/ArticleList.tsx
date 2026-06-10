@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { Article } from "./types";
 import CenterToast from "./CenterToast";
+import Segmented from "./Segmented";
 
 const STATUS_LABEL: Record<Article["status"], string> = {
   draft: "초안",
@@ -166,20 +167,11 @@ export default function ArticleList({
 
       {/* 상태 필터 + 정렬 */}
       <div className="mt-3 flex items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-1.5">
-          {statusChips.map((c) => (
-            <button
-              key={c.key}
-              onClick={() => setStatus(c.key)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-                status === c.key ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
-              }`}
-            >
-              {c.label}
-              {counts[c.key] > 0 && <span className={status === c.key ? "ml-1 text-white/60" : "ml-1 text-neutral-400"}>{counts[c.key]}</span>}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          options={statusChips.map((c) => ({ value: c.key, label: c.label, count: counts[c.key] }))}
+          value={status}
+          onChange={setStatus}
+        />
 
         <div className="flex shrink-0 items-center gap-2">
           {wpConnected && (

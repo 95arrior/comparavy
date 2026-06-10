@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { PLANS } from "@/lib/plans";
 import type { Article, DashboardProps } from "./types";
 import ArticleList from "./ArticleList";
 import ArticleModal from "./ArticleModal";
 import ContentCalendar from "./ContentCalendar";
+import Segmented from "./Segmented";
 import CenterToast from "./CenterToast";
 import WritingView, { type GenParams } from "./WritingView";
 import WordPressPanel from "./WordPressPanel";
@@ -85,6 +86,37 @@ export default function DashboardClient(props: DashboardProps) {
     const t = setTimeout(() => setNotice(null), 2400);
     return () => clearTimeout(t);
   }, [notice]);
+
+  // 브라우저 뒤로가기/앞으로가기를 '앱 내부 이동'으로 — 탭·글·하위페이지 상태를 히스토리에 동기화.
+  // → 글을 보다 뒤로가기를 누르면 사이트 밖으로 튕기지 않고 직전 화면으로 돌아간다.
+  const skipPushRef = useRef(false);
+  useEffect(() => {
+    if (skipPushRef.current) {
+      skipPushRef.current = false; // popstate로 인한 변경이면 새 히스토리를 쌓지 않음
+      return;
+    }
+    window.history.pushState(
+      { ateflo: true, tab, selectedId: selected?.id ?? null, page, gen: !!genParams },
+      "",
+    );
+  }, [tab, selected, page, genParams]);
+
+  useEffect(() => {
+    const onPop = (e: PopStateEvent) => {
+      const s = e.state as { ateflo?: boolean; tab?: Tab; selectedId?: string | null; page?: typeof page; gen?: boolean } | null;
+      if (s && s.ateflo) {
+        skipPushRef.current = true;
+        setTab(s.tab ?? "generate");
+        setSelected(s.selectedId ? articles.find((a) => a.id === s.selectedId) ?? null : null);
+        setPage(s.page ?? null);
+        if (!s.gen) setGenParams(null);
+        setNavOpen(false);
+      }
+      // ateflo 상태가 아니면(앱 진입 이전) 브라우저가 정상적으로 사이트를 벗어남
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [articles]);
 
   // 상단 토스트를 '콘텐츠 영역' 기준 중앙에 띄우기 위한 보정값.
   // 데스크톱은 좌측 사이드바(펼침 256 / 접힘 56)가 레이아웃 폭을 차지하므로 그 절반만큼 오른쪽으로 민다.
@@ -625,19 +657,12 @@ export default function DashboardClient(props: DashboardProps) {
             {tab === "articles" && (
               <>
                 {articles.length > 0 && (
-                  <div className="mb-4 inline-flex rounded-xl border border-neutral-200 bg-white p-1">
-                    <button
-                      onClick={() => setCalView(false)}
-                      className={`rounded-lg px-3.5 py-1.5 text-sm font-medium transition ${!calView ? "bg-neutral-900 text-white" : "text-neutral-500 hover:text-neutral-800"}`}
-                    >
-                      목록
-                    </button>
-                    <button
-                      onClick={() => setCalView(true)}
-                      className={`rounded-lg px-3.5 py-1.5 text-sm font-medium transition ${calView ? "bg-neutral-900 text-white" : "text-neutral-500 hover:text-neutral-800"}`}
-                    >
-                      캘린더
-                    </button>
+                  <div className="mb-4">
+                    <Segmented
+                      options={[{ value: "list", label: "목록" }, { value: "calendar", label: "캘린더" }]}
+                      value={calView ? "calendar" : "list"}
+                      onChange={(v) => setCalView(v === "calendar")}
+                    />
                   </div>
                 )}
                 {calView && articles.length > 0 ? (
