@@ -19,6 +19,8 @@ export interface UserRow {
   sub_status: string | null;
   next_billing_at: string | null;
   current_period_end: string | null;
+  /** 정기결제 실패 재시도(dunning) 횟수 — 성공/강등 시 0으로 초기화 */
+  billing_retries?: number;
   /** 무료 미리보기(티저)를 이미 만들었는지 — 삭제·만료돼도 유지(재생성 차단) */
   teaser_used?: boolean;
   /** 글감 추천 사용량 (글 한도×3 까지). 프로는 결제주기마다 리셋, 무료는 평생 누적 */

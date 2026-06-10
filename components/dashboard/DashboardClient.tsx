@@ -484,6 +484,29 @@ export default function DashboardClient(props: DashboardProps) {
 
         <CenterToast message={notice} />
 
+        {/* 결제 실패(유예 중) 배너 — 즉시 자르지 않고 카드 재등록을 유도 */}
+        {!page && !selected && !genParams && props.subStatus === "past_due" && (
+          <div className="px-4 pt-4 sm:px-6">
+            <div className="mx-auto flex max-w-5xl items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3.5 sm:px-5">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e11d48" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 shrink-0">
+                <rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" />
+              </svg>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-rose-900">결제에 실패했어요</p>
+                <p className="mt-0.5 text-xs leading-relaxed text-rose-700">
+                  카드를 확인해 주세요. 며칠간 다시 시도하고, 그동안은 만든 글 열람·발행은 그대로 쓸 수 있어요. 계속 실패하면 무료로 전환돼요.
+                </p>
+              </div>
+              <a
+                href="/pricing"
+                className="shrink-0 rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-rose-700"
+              >
+                카드 다시 등록
+              </a>
+            </div>
+          </div>
+        )}
+
         {/* 워드프레스 연결 만료 배너 — 발행이 조용히 실패하기 전에 재연결을 유도 */}
         {!page && !selected && !genParams && wpExpired && (
           <div className="px-4 pt-4 sm:px-6">
@@ -619,7 +642,7 @@ export default function DashboardClient(props: DashboardProps) {
                     <dt className="text-neutral-500">{props.plan === "pro" ? "이번 달 생성" : "평생 생성"}</dt>
                     <dd>{articlesUsed} / {props.articlesLimit}편 <span className="text-neutral-400">(남은 {Math.max(0, props.articlesLimit - articlesUsed)}편)</span></dd>
                   </div>
-                  {props.plan === "pro" && !subCanceled && props.nextBillingAt && (
+                  {props.plan === "pro" && !subCanceled && props.subStatus !== "past_due" && props.nextBillingAt && (
                     <div className="flex justify-between gap-4">
                       <dt className="text-neutral-500">다음 결제</dt>
                       <dd>
@@ -649,6 +672,17 @@ export default function DashboardClient(props: DashboardProps) {
                     로그아웃
                   </button>
                 </div>
+
+                {props.plan === "pro" && props.subStatus === "past_due" && (
+                  <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">
+                    <p className="text-sm leading-relaxed text-rose-800">
+                      결제에 실패해 <b className="text-rose-900">재시도 중</b>이에요. 카드를 다시 등록하면 바로 정상으로 돌아오고, 새 글 30편도 다시 채워져요. 그동안 새 글 생성은 잠시 멈춰 있어요.
+                    </p>
+                    <a href="/pricing" className="mt-3 inline-block rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700">
+                      카드 다시 등록
+                    </a>
+                  </div>
+                )}
 
                 {props.plan === "pro" && subCanceled && (
                   <div className="mt-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3">

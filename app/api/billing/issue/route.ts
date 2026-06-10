@@ -52,6 +52,7 @@ export async function POST(request: Request) {
       current_period_end: next.toISOString(),
       articles_used: 0,
       period_start: now.toISOString(),
+      billing_retries: 0,
     });
 
     return NextResponse.json({ ok: true });
