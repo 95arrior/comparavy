@@ -220,6 +220,24 @@ function SocialView({ stats }: { stats: AdminStats }) {
   const s = stats.social;
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [topic, setTopic] = useState("");
+  const [genBusy, setGenBusy] = useState(false);
+
+  async function generate() {
+    if (!topic.trim() || genBusy) return;
+    setGenBusy(true);
+    setMsg(null);
+    try {
+      const r = await fetch("/api/social/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ topic: topic.trim() }) });
+      const d = await r.json().catch(() => ({}));
+      if (r.ok) { setMsg(`카드뉴스 ${d.slides}장 생성! 보관함에 담았어요`); setTopic(""); router.refresh(); }
+      else setMsg(d.error ?? "생성에 실패했어요");
+    } catch {
+      setMsg("오류가 났어요");
+    } finally {
+      setGenBusy(false);
+    }
+  }
 
   async function call(payload: Record<string, unknown>, okMsg?: string) {
     if (busy) return;
@@ -288,6 +306,29 @@ function SocialView({ stats }: { stats: AdminStats }) {
               {msg && <span className="ml-2 text-neutral-500">· {msg}</span>}
             </span>
           </div>
+        </div>
+      </Section>
+
+      {/* 카드뉴스 생성 */}
+      <Section title="카드뉴스 생성" desc="주제만 넣으면 클로드가 카드뉴스를 만들어 보관함에 담아요.">
+        <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-5">
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") generate(); }}
+              placeholder="주제 (예: 블로그 글감 찾는 법, 워드프레스 첫 세팅)"
+              className="min-w-0 flex-1 rounded-xl border border-neutral-300 px-3.5 py-2.5 text-sm outline-none transition focus:border-neutral-900"
+            />
+            <button
+              onClick={generate}
+              disabled={!topic.trim() || genBusy}
+              className="shrink-0 rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white transition active:scale-95 hover:bg-neutral-800 disabled:opacity-40"
+            >
+              {genBusy ? "생성 중…" : "생성"}
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-neutral-400">생성하면 슬라이드 이미지가 자동으로 만들어져 보관함에 쌓여요.</p>
         </div>
       </Section>
 
