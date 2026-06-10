@@ -8,7 +8,8 @@
     "start": "next start",
     "check:generation": "node --env-file=.env.local --import tsx scripts/verifyGeneration.ts",
     "ig:verify": "node --env-file=.env.local --import tsx scripts/ig-publish.ts verify",
-    "ig:publish": "node --env-file=.env.local --import tsx scripts/ig-publish.ts"
+    "ig:publish": "node --env-file=.env.local --import tsx scripts/ig-publish.ts",
+    "card:gen": "node --env-file=.env.local --import tsx scripts/card-gen.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",
@@ -28,6 +29,7 @@
     "@tiptap/starter-kit": "^3.26.0",
     "@tosspayments/tosspayments-sdk": "^2.7.0",
     "next": "^16.2.6",
+    "puppeteer": "^25.1.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6"
   },
