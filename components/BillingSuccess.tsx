@@ -24,7 +24,7 @@ export default function BillingSuccess({
 
     if (!authKey || !customerKey) {
       setState("error");
-      setMessage("결제 인증 정보가 올바르지 않습니다.");
+      setMessage("결제 인증 정보가 올바르지 않아요.");
       return;
     }
 
@@ -38,14 +38,14 @@ export default function BillingSuccess({
         const data = await res.json();
         if (!res.ok) {
           setState("error");
-          setMessage(data.error ?? "결제 처리에 실패했습니다.");
+          setMessage(data.error ?? "결제하지 못했어요. 다시 시도해 주세요.");
           return;
         }
         setState("done");
         setTimeout(() => router.push("/"), 4200); // 축하 애니메이션을 다 보여준 뒤 이동
       } catch {
         setState("error");
-        setMessage("네트워크 오류가 발생했습니다.");
+        setMessage("네트워크 문제가 생겼어요. 잠시 후 다시 시도해 주세요.");
       }
     })();
   }, [authKey, customerKey, router]);

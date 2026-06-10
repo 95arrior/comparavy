@@ -6,7 +6,7 @@ import { publishPost, insertInternalLinks } from "@/lib/wordpress";
 
 export async function POST(request: Request) {
   if (!hasSupabaseEnv()) {
-    return NextResponse.json({ error: "서버 설정이 완료되지 않았습니다." }, { status: 500 });
+    return NextResponse.json({ error: "서버 설정이 아직이에요. 잠시 후 다시 시도해 주세요." }, { status: 500 });
   }
 
   const supabase = await createSupabaseServerClient();
@@ -14,14 +14,14 @@ export async function POST(request: Request) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    return NextResponse.json({ error: "로그인이 필요해요." }, { status: 401 });
   }
 
   // 플랜 게이트: 워드프레스 자동발행은 프로 전용 (무료는 생성·복사만)
   const planRow = await ensureUserRow(supabase, user.id);
   if (!PLANS[planRow.plan].wordpress) {
     return NextResponse.json(
-      { error: "워드프레스 자동발행은 프로 플랜 기능입니다. 프로로 업그레이드하면 원클릭으로 발행할 수 있어요.", upgrade: true },
+      { error: "워드프레스 자동발행은 프로 플랜 기능이에요. 프로로 업그레이드하면 원클릭으로 발행할 수 있어요.", upgrade: true },
       { status: 403 },
     );
   }
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     .eq("user_id", user.id)
     .maybeSingle();
   if (!article) {
-    return NextResponse.json({ error: "글을 찾을 수 없습니다." }, { status: 404 });
+    return NextResponse.json({ error: "글을 찾지 못했어요." }, { status: 404 });
   }
   // 잠금(미리보기) 글은 발행 불가 — 방어
   if (article.locked) {
@@ -119,7 +119,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true, link: result.link, postId: result.id });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "발행 중 오류가 발생했습니다.";
+    const message = err instanceof Error ? err.message : "발행 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.";
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }

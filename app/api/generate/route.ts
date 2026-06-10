@@ -14,7 +14,7 @@ export const maxDuration = 300;
 
 export async function POST(request: Request) {
   if (!hasSupabaseEnv()) {
-    return NextResponse.json({ error: "서버 설정이 완료되지 않았습니다." }, { status: 500 });
+    return NextResponse.json({ error: "서버 설정이 아직이에요. 잠시 후 다시 시도해 주세요." }, { status: 500 });
   }
 
   const supabase = await createSupabaseServerClient();
@@ -23,13 +23,13 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    return NextResponse.json({ error: "로그인이 필요해요." }, { status: 401 });
   }
 
   // 어뷰징 방어 ① 일회용 이메일 차단 (대량 무료계정 방지)
   if (user.email && isDisposableEmail(user.email)) {
     return NextResponse.json(
-      { error: "일회용 이메일 주소로는 이용할 수 없습니다. 사용 중인 이메일로 가입해 주세요." },
+      { error: "일회용 이메일로는 이용하기 어려워요. 평소 쓰는 이메일로 가입해 주세요." },
       { status: 403 },
     );
   }
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "잘못된 요청입니다." }, { status: 400 });
+    return NextResponse.json({ error: "요청이 올바르지 않아요." }, { status: 400 });
   }
 
   const keyword = (body.keyword ?? "").trim();
@@ -89,7 +89,7 @@ export async function POST(request: Request) {
   if (used >= row.articles_limit) {
     if (row.plan !== "free") {
       return NextResponse.json(
-        { error: "이번 달 생성 한도를 모두 사용했습니다." },
+        { error: "이번 달 생성 한도를 다 썼어요." },
         { status: 403 },
       );
     }
@@ -222,7 +222,7 @@ export async function POST(request: Request) {
 
         send({ type: "done", article: saved });
       } catch (err) {
-        const message = err instanceof Error ? err.message : "글 생성 중 오류가 발생했습니다.";
+        const message = err instanceof Error ? err.message : "글을 만드는 중 문제가 생겼어요. 다시 시도해 주세요.";
         send({ type: "error", error: message });
       } finally {
         try {

@@ -6,13 +6,13 @@ import { findOrCreateTerm } from "@/lib/wordpress";
 /** 연결된 워드프레스의 기존 카테고리 목록을 돌려준다 (발행 시 선택용). */
 export async function GET() {
   if (!hasSupabaseEnv()) {
-    return NextResponse.json({ error: "서버 설정이 완료되지 않았습니다." }, { status: 500 });
+    return NextResponse.json({ error: "서버 설정이 아직이에요. 잠시 후 다시 시도해 주세요." }, { status: 500 });
   }
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "로그인이 필요해요." }, { status: 401 });
 
   const { data: conn } = await supabase
     .from("wordpress_connections")
@@ -42,13 +42,13 @@ export async function GET() {
 /** 카테고리를 워드프레스에 '지금' 생성한다(또는 같은 이름이 있으면 그걸 반환). 미리 분류를 만들어 두기 위함. (프로 전용) */
 export async function POST(request: Request) {
   if (!hasSupabaseEnv()) {
-    return NextResponse.json({ error: "서버 설정이 완료되지 않았습니다." }, { status: 500 });
+    return NextResponse.json({ error: "서버 설정이 아직이에요. 잠시 후 다시 시도해 주세요." }, { status: 500 });
   }
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "로그인이 필요해요." }, { status: 401 });
 
   const planRow = await ensureUserRow(supabase, user.id);
   if (planRow.plan !== "pro") {
@@ -84,13 +84,13 @@ export async function POST(request: Request) {
  */
 export async function DELETE(request: Request) {
   if (!hasSupabaseEnv()) {
-    return NextResponse.json({ error: "서버 설정이 완료되지 않았습니다." }, { status: 500 });
+    return NextResponse.json({ error: "서버 설정이 아직이에요. 잠시 후 다시 시도해 주세요." }, { status: 500 });
   }
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "로그인이 필요해요." }, { status: 401 });
 
   const planRow = await ensureUserRow(supabase, user.id);
   if (planRow.plan !== "pro") {
@@ -100,7 +100,7 @@ export async function DELETE(request: Request) {
   const body = await request.json().catch(() => ({}));
   const id = Number(body.id);
   const reassignToId = body.reassignToId ? Number(body.reassignToId) : null;
-  if (!id) return NextResponse.json({ error: "삭제할 카테고리가 올바르지 않습니다." }, { status: 400 });
+  if (!id) return NextResponse.json({ error: "삭제할 카테고리가 올바르지 않아요." }, { status: 400 });
 
   const { data: conn } = await supabase
     .from("wordpress_connections")

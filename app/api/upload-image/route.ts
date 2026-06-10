@@ -12,14 +12,14 @@ const MAX_BYTES = 8 * 1024 * 1024; // 8MB
  */
 export async function POST(request: Request) {
   if (!hasSupabaseEnv()) {
-    return NextResponse.json({ error: "서버 설정이 완료되지 않았습니다." }, { status: 500 });
+    return NextResponse.json({ error: "서버 설정이 아직이에요. 잠시 후 다시 시도해 주세요." }, { status: 500 });
   }
 
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "로그인이 필요해요." }, { status: 401 });
 
   // 이미지 삽입(편집)은 프로 전용
   const planRow = await ensureUserRow(supabase, user.id);
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const dataUri = typeof body.dataUri === "string" ? body.dataUri : "";
   if (!dataUri.startsWith("data:")) {
-    return NextResponse.json({ error: "이미지 데이터가 올바르지 않습니다." }, { status: 400 });
+    return NextResponse.json({ error: "이미지 데이터가 올바르지 않아요." }, { status: 400 });
   }
 
   const comma = dataUri.indexOf(",");

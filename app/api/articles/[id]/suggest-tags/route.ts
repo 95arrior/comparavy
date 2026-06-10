@@ -11,14 +11,14 @@ import { checkRateLimit } from "@/lib/rateLimit";
  */
 export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!hasSupabaseEnv()) {
-    return NextResponse.json({ error: "서버 설정이 완료되지 않았습니다." }, { status: 500 });
+    return NextResponse.json({ error: "서버 설정이 아직이에요. 잠시 후 다시 시도해 주세요." }, { status: 500 });
   }
   const { id } = await params;
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "로그인이 필요해요." }, { status: 401 });
 
   const planRow = await ensureUserRow(supabase, user.id);
   if (planRow.plan !== "pro") {
@@ -40,10 +40,10 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     .eq("id", id)
     .eq("user_id", user.id)
     .maybeSingle();
-  if (!article) return NextResponse.json({ error: "글을 찾을 수 없습니다." }, { status: 404 });
+  if (!article) return NextResponse.json({ error: "글을 찾지 못했어요." }, { status: 404 });
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return NextResponse.json({ error: "AI 설정이 완료되지 않았습니다." }, { status: 500 });
+  if (!apiKey) return NextResponse.json({ error: "AI 설정이 아직이에요." }, { status: 500 });
 
   const plain = (article.body_html ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 2500);
 

@@ -11,13 +11,13 @@ import { ensureUserRow, rolloverIfNeeded } from "@/lib/userPlan";
  */
 export async function POST(request: Request) {
   if (!hasSupabaseEnv()) {
-    return NextResponse.json({ error: "서버 설정이 완료되지 않았습니다." }, { status: 500 });
+    return NextResponse.json({ error: "서버 설정이 아직이에요. 잠시 후 다시 시도해 주세요." }, { status: 500 });
   }
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "로그인이 필요해요." }, { status: 401 });
 
   // 버스트(연타) 방지
   const rlBurst = await checkRateLimit(supabase, user.id, "keyword_ideas", 5, 300);
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
   if (!topic) return NextResponse.json({ error: "분야나 주제를 입력해 주세요." }, { status: 400 });
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return NextResponse.json({ error: "AI 설정이 완료되지 않았습니다." }, { status: 500 });
+  if (!apiKey) return NextResponse.json({ error: "AI 설정이 아직이에요." }, { status: 500 });
 
   try {
     const client = new Anthropic({ apiKey });

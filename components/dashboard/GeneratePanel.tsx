@@ -111,7 +111,7 @@ export default function GeneratePanel({
             value={angle}
             onChange={(e) => setAngle(e.target.value)}
             rows={2}
-            placeholder="예: 직접 키워본 경험을 바탕으로 한 현실적인 조언 (길게 써도 됩니다)"
+            placeholder="예: 직접 키워본 경험을 바탕으로 한 현실적인 조언 (길게 써도 돼요)"
             className="mt-2 w-full resize-y rounded-xl border border-neutral-300 px-4 py-3 text-sm leading-relaxed outline-none transition focus:border-neutral-900"
           />
         </div>

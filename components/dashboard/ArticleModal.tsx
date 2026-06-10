@@ -558,18 +558,18 @@ export default function ArticleModal({
           <button onClick={onClose} className="flex items-center gap-1.5 text-sm text-neutral-500 transition hover:text-neutral-900">
             <span className="text-base leading-none">←</span> 목록으로
           </button>
-          <div className="relative flex shrink-0 items-center gap-2">
+          <div className="relative flex shrink-0 items-center gap-1.5">
             <button
               onClick={copyBody}
               title="복사"
-              className="rounded-xl border border-neutral-300 px-4 py-1.5 text-sm font-medium transition hover:border-neutral-900"
+              className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium transition hover:border-neutral-900"
             >
               {copied ? "복사됨 ✓" : "복사"}
             </button>
             <button
               onClick={save}
               disabled={saving}
-              className="rounded-xl border border-neutral-300 px-4 py-1.5 text-sm font-medium transition hover:border-neutral-900 disabled:opacity-40"
+              className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium transition hover:border-neutral-900 disabled:opacity-40"
             >
               {saving ? "저장 중…" : "저장"}
             </button>
@@ -578,7 +578,7 @@ export default function ArticleModal({
                 onClick={() => setScheduleOpen((o) => !o)}
                 disabled={publishing}
                 title="예약 발행"
-                className={`flex h-8 w-8 items-center justify-center rounded-xl border transition disabled:opacity-50 ${scheduleOpen ? "border-neutral-900 bg-neutral-900 text-white" : "border-neutral-300 text-neutral-600 hover:border-neutral-900"}`}
+                className={`flex h-8 w-8 items-center justify-center rounded-lg border transition disabled:opacity-50 ${scheduleOpen ? "border-neutral-900 bg-neutral-900 text-white" : "border-neutral-300 text-neutral-600 hover:border-neutral-900"}`}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
               </button>
@@ -586,7 +586,7 @@ export default function ArticleModal({
             <button
               onClick={() => (canPublish ? publish("publish") : setShowUpsell(true))}
               disabled={publishing}
-              className="rounded-xl bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
+              className="rounded-lg bg-neutral-900 px-3.5 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
             >
               {publishing
                 ? article.wp_post_id

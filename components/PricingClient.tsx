@@ -41,7 +41,7 @@ export default function PricingClient({
     if (!agreeOrder || !agreeRecurring || !customerKey) return;
     const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
     if (!clientKey) {
-      setError("결제 설정이 완료되지 않았습니다.");
+      setError("결제 설정이 아직이에요.");
       return;
     }
     setLoading(true);
@@ -56,7 +56,7 @@ export default function PricingClient({
       });
       // 성공 시 successUrl로 리다이렉트된다.
     } catch {
-      setError("결제 인증을 시작하지 못했습니다.");
+      setError("결제 인증을 시작하지 못했어요.");
       setLoading(false);
     }
   }

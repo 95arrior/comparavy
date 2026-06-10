@@ -6,7 +6,7 @@ import { createSupabaseServerClient, createSupabaseAdminClient, hasSupabaseEnv }
  */
 export async function POST() {
   if (!hasSupabaseEnv()) {
-    return NextResponse.json({ error: "서버 설정이 완료되지 않았습니다." }, { status: 500 });
+    return NextResponse.json({ error: "서버 설정이 아직이에요. 잠시 후 다시 시도해 주세요." }, { status: 500 });
   }
 
   const supabase = await createSupabaseServerClient();
@@ -14,7 +14,7 @@ export async function POST() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    return NextResponse.json({ error: "로그인이 필요해요." }, { status: 401 });
   }
 
   // 쓰기는 서비스롤로 — 유저 권한(RLS)으로 users update가 막혀 해지가 반영 안 되던 문제 방지

@@ -8,7 +8,7 @@ import { emailHash } from "@/lib/userPlan";
  */
 export async function POST() {
   if (!hasSupabaseEnv()) {
-    return NextResponse.json({ error: "서버 설정이 완료되지 않았습니다." }, { status: 500 });
+    return NextResponse.json({ error: "서버 설정이 아직이에요. 잠시 후 다시 시도해 주세요." }, { status: 500 });
   }
 
   const supabase = await createSupabaseServerClient();
@@ -16,7 +16,7 @@ export async function POST() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    return NextResponse.json({ error: "로그인이 필요해요." }, { status: 401 });
   }
 
   const admin = createSupabaseAdminClient();
@@ -42,7 +42,7 @@ export async function POST() {
   // 인증 계정 삭제
   const { error } = await admin.auth.admin.deleteUser(uid);
   if (error) {
-    return NextResponse.json({ error: "계정 삭제에 실패했습니다." }, { status: 500 });
+    return NextResponse.json({ error: "계정을 삭제하지 못했어요. 다시 시도해 주세요." }, { status: 500 });
   }
 
   // 현재 세션 정리

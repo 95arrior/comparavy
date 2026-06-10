@@ -235,7 +235,7 @@ export default function DashboardClient(props: DashboardProps) {
         key={k}
         onClick={() => goTab(k)}
         className={`group relative flex h-9 items-center rounded-lg text-sm transition ${navOpen ? "w-full" : "w-9"} ${
-          active ? "bg-neutral-100 font-medium text-neutral-900" : "text-neutral-600 hover:bg-neutral-50"
+          active ? "bg-[#3f91ff]/10 font-semibold text-[#2f7fe6]" : "text-neutral-600 hover:bg-neutral-100"
         }`}
       >
         <span className="flex h-9 w-9 shrink-0 items-center justify-center">{icon}</span>

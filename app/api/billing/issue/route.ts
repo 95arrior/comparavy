@@ -8,7 +8,7 @@ const PERIOD_DAYS = 30;
 
 export async function POST(request: Request) {
   if (!hasSupabaseEnv()) {
-    return NextResponse.json({ error: "서버 설정이 완료되지 않았습니다." }, { status: 500 });
+    return NextResponse.json({ error: "서버 설정이 아직이에요. 잠시 후 다시 시도해 주세요." }, { status: 500 });
   }
 
   const supabase = await createSupabaseServerClient();
@@ -16,14 +16,14 @@ export async function POST(request: Request) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    return NextResponse.json({ error: "로그인이 필요해요." }, { status: 401 });
   }
 
   const body = await request.json().catch(() => ({}));
   const authKey = (body.authKey ?? "").trim();
   const customerKey = (body.customerKey ?? "").trim();
   if (!authKey || !customerKey) {
-    return NextResponse.json({ error: "결제 인증 정보가 올바르지 않습니다." }, { status: 400 });
+    return NextResponse.json({ error: "결제 인증 정보가 올바르지 않아요." }, { status: 400 });
   }
 
   await ensureUserRow(supabase, user.id);
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "결제에 실패했습니다.";
+    const message = err instanceof Error ? err.message : "결제하지 못했어요. 다시 시도해 주세요.";
     return NextResponse.json({ error: message }, { status: 402 });
   }
 }

@@ -4,13 +4,13 @@ import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-serve
 /** 연결된 워드프레스의 기존 태그 목록(많이 쓰인 순)을 돌려준다 — 재사용 유도(SEO). */
 export async function GET() {
   if (!hasSupabaseEnv()) {
-    return NextResponse.json({ error: "서버 설정이 완료되지 않았습니다." }, { status: 500 });
+    return NextResponse.json({ error: "서버 설정이 아직이에요. 잠시 후 다시 시도해 주세요." }, { status: 500 });
   }
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "로그인이 필요해요." }, { status: 401 });
 
   const { data: conn } = await supabase
     .from("wordpress_connections")

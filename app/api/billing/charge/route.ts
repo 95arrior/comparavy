@@ -20,7 +20,7 @@ function authorized(request: Request): boolean {
 
 async function runCharge() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return NextResponse.json({ error: "서버 설정이 완료되지 않았습니다." }, { status: 500 });
+    return NextResponse.json({ error: "서버 설정이 아직이에요. 잠시 후 다시 시도해 주세요." }, { status: 500 });
   }
 
   const supabase = createSupabaseAdminClient();
@@ -72,11 +72,11 @@ async function runCharge() {
 }
 
 export async function GET(request: Request) {
-  if (!authorized(request)) return NextResponse.json({ error: "권한이 없습니다." }, { status: 401 });
+  if (!authorized(request)) return NextResponse.json({ error: "권한이 없어요." }, { status: 401 });
   return runCharge();
 }
 
 export async function POST(request: Request) {
-  if (!authorized(request)) return NextResponse.json({ error: "권한이 없습니다." }, { status: 401 });
+  if (!authorized(request)) return NextResponse.json({ error: "권한이 없어요." }, { status: 401 });
   return runCharge();
 }

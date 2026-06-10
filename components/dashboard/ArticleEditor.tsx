@@ -268,7 +268,7 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
       });
       const data = await res.json();
       if (!res.ok) {
-        alert(data.error ?? "이미지 업로드에 실패했어요.");
+        alert(data.error ?? "이미지를 올리지 못했어요. 다시 시도해 주세요.");
         return null;
       }
       return data.url as string;
@@ -316,7 +316,7 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
 
   return (
     <div className="rounded-xl border border-neutral-200 bg-white">
-      {uploading && <CenterToast>이미지 업로드 중…</CenterToast>}
+      {uploading && <CenterToast>이미지를 올리고 있어요…</CenterToast>}
       <div className={`sticky ${toolbarOffset} z-20 border-b border-neutral-200 bg-white shadow-md`}>
         <div className="flex flex-wrap items-center gap-0.5 px-3 py-2">
           <Btn title="실행취소 (Ctrl+Z)" disabled={!editor.can().undo()} onClick={() => editor.chain().focus().undo().run()}><IconUndo /></Btn>
