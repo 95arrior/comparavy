@@ -247,15 +247,35 @@ function SocialView({ stats }: { stats: AdminStats }) {
   slots.sort((a, b) => a - b);
   const scheduleText = slots.map(hourLabel).join(" · ");
 
+  const daysLeft = perDay > 0 ? Math.floor(s.queueCount / perDay) : 0;
+  const lowStock = s.autoEnabled && s.queueCount < perDay * 3; // 3일치 미만이면 경고
+
   return (
     <>
+      {/* 인스타 바로가기 */}
+      <div className="mb-3 flex justify-end">
+        <a
+          href="https://instagram.com/ateflo.official"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-neutral-900 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 active:scale-95"
+        >
+          인스타그램 열기 ↗
+        </a>
+      </div>
+
       {/* 숫자 요약 */}
-      <Section title="SNS 발행 현황" desc="클로드가 만든 카드뉴스가 보관함에 쌓이고, 주기마다 자동 게시돼요.">
+      <Section title="SNS 발행 현황" desc="클로드가 만든 카드뉴스가 보관함에 쌓이고, 정한 시각마다 자동 게시돼요.">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-          <Stat label="발행 대기" value={`${s.queueCount}개`} accent />
+          <Stat label="발행 대기" value={`${s.queueCount}개`} accent hint={s.autoEnabled ? `약 ${daysLeft}일치` : undefined} />
           <Stat label="발행 완료" value={`${s.publishedCount}개`} />
           <Stat label="자동 발행" value={s.autoEnabled ? "켜짐" : "꺼짐"} hint={s.autoEnabled ? `하루 ${perDay}개` : "지금은 멈춤"} />
         </div>
+        {lowStock && (
+          <p className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            대기열이 얼마 안 남았어요{daysLeft <= 0 ? " (곧 끊겨요)" : ` (약 ${daysLeft}일치)`}. 터미널에서 <code className="rounded bg-amber-100 px-1.5 py-0.5 font-mono text-[13px]">npm run card:gen:bulk -- 20</code> 으로 더 채워두세요.
+          </p>
+        )}
       </Section>
 
       {/* 자동 발행 제어 */}
@@ -351,8 +371,8 @@ export default function AdminDashboard({ stats }: { stats?: AdminStats | null })
         <Segmented
           options={[
             { value: "stats", label: "분석" },
-            { value: "waitlist", label: "대기자", count: stats.waitlistCount ?? 0 },
-            { value: "social", label: "SNS", count: stats.social?.queueCount ?? 0 },
+            { value: "social", label: "SNS" },
+            { value: "waitlist", label: "대기자" },
           ]}
           value={view}
           onChange={setView}
