@@ -30,15 +30,42 @@ export default function ArticleList({
   articles,
   onOpen,
   onGoGenerate,
+  onUpdated,
 }: {
   articles: Article[];
   onOpen: (article: Article) => void;
   onGoGenerate: () => void;
+  onUpdated?: (a: Article) => void;
 }) {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
   const [sort, setSort] = useState<Sort>("new");
   const [sortOpen, setSortOpen] = useState(false);
+  const [confirmUnpub, setConfirmUnpub] = useState<Article | null>(null);
+  const [unpubBusy, setUnpubBusy] = useState(false);
+
+  async function doUnpublish() {
+    if (!confirmUnpub || unpubBusy) return;
+    setUnpubBusy(true);
+    try {
+      const res = await fetch("/api/wordpress/unpublish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ articleId: confirmUnpub.id }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        onUpdated?.({ ...confirmUnpub, status: "draft" });
+        setConfirmUnpub(null);
+      } else {
+        alert(data.error ?? "글을 내리지 못했어요. 다시 시도해 주세요.");
+      }
+    } catch {
+      alert("글을 내리지 못했어요. 다시 시도해 주세요.");
+    } finally {
+      setUnpubBusy(false);
+    }
+  }
 
   // 상태별 개수 (필터 칩에 표시)
   const counts = useMemo(() => {
@@ -174,9 +201,47 @@ export default function ArticleList({
                   {(a.char_count ?? 0).toLocaleString()}자 · {new Date(a.created_at).toLocaleDateString("ko-KR")}
                 </p>
               </button>
-              <span className="shrink-0 text-sm text-neutral-300">→</span>
+              {(a.status === "published" || a.status === "future") && !a.locked ? (
+                <button
+                  onClick={() => setConfirmUnpub(a)}
+                  className="shrink-0 rounded-lg border border-neutral-200 px-2.5 py-1.5 text-xs font-medium text-neutral-500 transition hover:border-red-300 hover:text-red-600"
+                >
+                  내리기
+                </button>
+              ) : (
+                <span className="shrink-0 text-sm text-neutral-300">→</span>
+              )}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* 글 내리기 확인 */}
+      {confirmUnpub && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30 px-6" onClick={() => !unpubBusy && setConfirmUnpub(null)}>
+          <div className="ateflo-fade-in w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <p className="text-base font-semibold">정말로 글을 내리시겠어요?</p>
+            <p className="mt-2 text-sm leading-relaxed text-neutral-500">
+              워드프레스에서 비공개로 바뀌고 ‘초안’이 돼요. 글은 지워지지 않아서 언제든 다시 발행할 수 있어요.
+            </p>
+            <p className="mt-3 truncate text-sm font-medium text-neutral-800">“{confirmUnpub.title}”</p>
+            <div className="mt-5 flex gap-2">
+              <button
+                onClick={doUnpublish}
+                disabled={unpubBusy}
+                className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-50"
+              >
+                {unpubBusy ? "내리는 중…" : "내리기"}
+              </button>
+              <button
+                onClick={() => setConfirmUnpub(null)}
+                disabled={unpubBusy}
+                className="rounded-xl border border-neutral-300 px-4 py-2.5 text-sm transition hover:border-neutral-900 disabled:opacity-50"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

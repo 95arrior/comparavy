@@ -244,7 +244,7 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
   }
   function restoreOriginal() {
     if (!originalHtml) return;
-    if (!window.confirm("지금 내용을 버리고 AI가 처음 쓴 글로 되돌릴까요?")) return;
+    if (!window.confirm("지금까지 수정한 내용이 모두 사라지고, AI가 처음 쓴 글로 되돌아가요. 계속할까요?")) return;
     editor!.commands.setContent(originalHtml);
     onChange(originalHtml);
   }

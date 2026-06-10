@@ -474,7 +474,7 @@ export default function DashboardClient(props: DashboardProps) {
             )}
 
             {tab === "articles" && (
-              <ArticleList articles={articles} onOpen={setSelected} onGoGenerate={() => goTab("generate")} />
+              <ArticleList articles={articles} onOpen={setSelected} onGoGenerate={() => goTab("generate")} onUpdated={onUpdated} />
             )}
             {tab === "wordpress" && (
               <WordPressPanel siteUrl={wpSiteUrl} onConnected={setWpSiteUrl} onDisconnected={() => setWpSiteUrl(null)} onOpenGuide={openGuide} />

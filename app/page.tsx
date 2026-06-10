@@ -4,6 +4,7 @@ import { SITE_NAME, SITE_DESCRIPTION } from "@/lib/site";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { ensureUserRow } from "@/lib/userPlan";
 import { isAdminEmail, getAdminStats } from "@/lib/adminStats";
+import { syncScheduledStatuses } from "@/lib/syncScheduled";
 import HeroInput from "@/components/HeroInput";
 import DemoStream from "@/components/DemoStream";
 import Brand from "@/components/Brand";
@@ -38,9 +39,11 @@ export default async function Home() {
       .order("created_at", { ascending: false });
     const { data: conn } = await supabase
       .from("wordpress_connections")
-      .select("site_url")
+      .select("site_url, username, app_password")
       .eq("user_id", user.id)
       .maybeSingle();
+    // 예약 글이 WP에서 이미 발행됐으면 상태를 동기화 (예약됨 칩이 잘못 남는 문제 방지)
+    await syncScheduledStatuses(articles, conn);
     const isAdmin = isAdminEmail(user.email);
     const adminStats = isAdmin ? await getAdminStats() : null;
     return (
