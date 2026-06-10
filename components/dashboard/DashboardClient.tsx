@@ -434,7 +434,18 @@ export default function DashboardClient(props: DashboardProps) {
                 </div>
               ) : (
                 <>
-                  <div className="mt-10"><HeroInput loggedIn pro={props.plan === "pro"} onStart={setGenParams} /></div>
+                  <div className="mt-8 flex justify-center">
+                    <button
+                      onClick={() => goTab("account")}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-3.5 py-1.5 text-xs font-medium text-neutral-600 transition hover:bg-neutral-200"
+                      title="사용량 자세히 보기"
+                    >
+                      {props.plan === "pro" ? "이번 달" : "평생"} 남은 생성
+                      <b className="text-neutral-900">{Math.max(0, props.articlesLimit - articlesUsed)}편</b>
+                      <span className="text-neutral-400">/ {props.articlesLimit}</span>
+                    </button>
+                  </div>
+                  <div className="mt-6"><HeroInput loggedIn pro={props.plan === "pro"} onStart={setGenParams} /></div>
                   <div className="mt-12"><DemoStream /></div>
                 </>
               )}

@@ -145,10 +145,11 @@ export async function POST(request: Request) {
           (u) => { void logUsage({ userId: user.id, model: u.model, kind: "generate", inputTokens: u.inputTokens, outputTokens: u.outputTokens }); },
         );
 
-        // 길이 검증 (목표 글자수의 절반 미만이면 너무 짧음)
+        // 길이 검증: 목표의 40% 미만이면 명백히 잘린/실패한 글로 보고 막는다.
+        // (품질 우선·억지로 안 채움 지침과 충돌하지 않게 0.5→0.4로 완화 → 좋은 짧은 글 오반려·토큰 낭비 감소)
         const charCount = countKoreanChars(article.body_html);
-        if (charCount < maxWords * 0.5) {
-          send({ type: "error", error: "생성된 글이 너무 짧습니다. 다시 시도해 주세요." });
+        if (charCount < maxWords * 0.4) {
+          send({ type: "error", error: "생성이 중간에 끊긴 것 같아요. 한 번만 다시 시도해 주세요. (횟수는 차감되지 않아요)" });
           return;
         }
 
