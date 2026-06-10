@@ -17,11 +17,17 @@ function Frame({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function Bar({ w, c = "bg-neutral-200" }: { w: string; c?: string }) {
-  return <div className={`h-2 rounded-full ${c}`} style={{ width: w }} />;
+function Bar({ w, c = "bg-neutral-200", delay }: { w: string; c?: string; delay?: number }) {
+  const animated = delay !== undefined;
+  return (
+    <div
+      className={`h-2 rounded-full ${c} ${animated ? "ateflo-type" : ""}`}
+      style={{ width: w, animationDelay: animated ? `${delay}s` : undefined }}
+    />
+  );
 }
 
-// 1. 글 생성
+// 1. 글 생성 — 줄이 왼쪽부터 차오르며 써지는 루프
 function MockGenerate() {
   return (
     <div>
@@ -30,11 +36,11 @@ function MockGenerate() {
         <span className="rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white">글 생성</span>
       </div>
       <div className="mt-4 space-y-2.5">
-        <Bar w="85%" c="bg-neutral-800" />
-        <Bar w="100%" />
-        <Bar w="95%" />
+        <Bar w="85%" c="bg-neutral-800" delay={0} />
+        <Bar w="100%" delay={0.4} />
+        <Bar w="95%" delay={0.8} />
         <div className="flex items-center gap-1">
-          <Bar w="60%" />
+          <Bar w="60%" delay={1.2} />
           <span className="ateflo-caret inline-block h-3.5 w-0.5 bg-[#3f91ff]" />
         </div>
       </div>
@@ -55,7 +61,7 @@ function MockEdit() {
       <div className="mt-4 space-y-2.5">
         <div className="h-3 w-3/5 rounded bg-neutral-800" />
         <Bar w="100%" />
-        <div className="rounded-md bg-[#3f91ff]/10 px-1.5 py-1"><Bar w="70%" c="bg-[#3f91ff]/50" /></div>
+        <div className="ateflo-edit-pulse rounded-md bg-[#3f91ff]/10 px-1.5 py-1"><Bar w="70%" c="bg-[#3f91ff]/50" /></div>
         <Bar w="90%" />
       </div>
       <p className="mt-4 text-center text-xs font-medium text-[#3f91ff]">마음에 들게 직접 손질해요</p>
@@ -67,7 +73,7 @@ function MockEdit() {
 function MockPublish() {
   return (
     <div className="text-center">
-      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full text-white" style={{ background: BRAND }}>
+      <div className="ateflo-pop-loop mx-auto flex h-12 w-12 items-center justify-center rounded-full text-white" style={{ background: BRAND }}>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
       </div>
       <p className="mt-3 text-sm font-semibold">워드프레스에 올렸어요</p>
@@ -88,10 +94,10 @@ function MockArticles() {
   return (
     <div>
       <div className="space-y-2">
-        {rows.map((r) => (
+        {rows.map((r, i) => (
           <div key={r.t} className="flex items-center justify-between gap-2 rounded-xl border border-neutral-100 px-3 py-2.5">
             <span className="min-w-0 flex-1 truncate text-xs text-neutral-700">{r.t}</span>
-            <span className={`shrink-0 rounded-md px-2 py-0.5 text-[10px] font-medium ${r.c}`}>{r.s}</span>
+            <span className={`ateflo-pop-loop shrink-0 rounded-md px-2 py-0.5 text-[10px] font-medium ${r.c}`} style={{ animationDelay: `${i * 0.35}s` }}>{r.s}</span>
           </div>
         ))}
       </div>
