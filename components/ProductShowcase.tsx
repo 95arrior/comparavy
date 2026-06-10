@@ -21,18 +21,18 @@ function Bar({ w, c = "bg-neutral-200", delay }: { w: string; c?: string; delay?
   const animated = delay !== undefined;
   return (
     <div
-      className={`h-2 rounded-full ${c} ${animated ? "mock-fade-line" : ""}`}
+      className={`h-2 rounded-full ${c} ${animated ? "mock-gen-bar" : ""}`}
       style={{ width: w, animationDelay: animated ? `${delay}s` : undefined }}
     />
   );
 }
 
-// 마우스 커서 + 클릭 링 (버튼 위에 올려두고 '톡' 누르는 연출)
-function Cursor({ className = "" }: { className?: string }) {
+// 마우스 커서 + 클릭 링 (버튼 위에서 '톡' 누르는 연출). gen=초반 클릭, 기본=후반 클릭
+function Cursor({ className = "", gen = false }: { className?: string; gen?: boolean }) {
   return (
     <span className={`pointer-events-none absolute z-10 ${className}`}>
-      <span className="mock-ring absolute -left-2 -top-2 h-7 w-7 rounded-full bg-[#3f91ff]/30" />
-      <svg className="mock-tap relative drop-shadow" width="18" height="18" viewBox="0 0 24 24">
+      <span className={`absolute -left-2 -top-2 h-7 w-7 rounded-full bg-[#3f91ff]/30 ${gen ? "mock-gen-ring" : "mock-ring"}`} />
+      <svg className={`relative drop-shadow ${gen ? "mock-gen-tap" : "mock-tap"}`} width="18" height="18" viewBox="0 0 24 24">
         <path d="M5 3l6 16 2-6 6-2z" fill="#191F28" stroke="#fff" strokeWidth="1.3" strokeLinejoin="round" />
       </svg>
     </span>
@@ -43,24 +43,24 @@ const ImgIcon = ({ s = 16 }: { s?: number }) => (
   <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="8.5" cy="9.5" r="1.5" /><path d="M21 16l-5-5L5 20" /></svg>
 );
 
-// 1. 글 생성 — 제목이 한 자씩 써지고 본문이 페이드로 나타남
+// 1. 글 생성 — 커서가 '글 생성'을 누르면 줄이 쭈루룩 생겼다 사라짐(루프)
 function MockGenerate() {
   return (
     <div>
       <div className="flex items-center gap-2 rounded-xl border border-neutral-200 px-3 py-2.5">
         <span className="flex-1 text-sm text-neutral-700">강아지 분리불안 해결 방법</span>
-        <span className="rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white">글 생성</span>
+        <span className="relative rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white">
+          글 생성
+          <Cursor gen className="-bottom-2 right-1" />
+        </span>
       </div>
-      <div className="mt-4">
-        <span className="mock-type-title text-sm font-semibold text-neutral-900">분리불안, 이렇게 해결하세요</span>
-        <span className="ateflo-caret ml-0.5 inline-block h-3.5 w-0.5 translate-y-0.5 bg-[#3f91ff]" />
+      <div className="mt-4 space-y-2.5">
+        <Bar w="100%" delay={0.15} />
+        <Bar w="95%" delay={0.4} />
+        <Bar w="88%" delay={0.65} />
+        <Bar w="60%" delay={0.9} />
       </div>
-      <div className="mt-3 space-y-2.5">
-        <Bar w="100%" delay={0.2} />
-        <Bar w="95%" delay={0.5} />
-        <Bar w="70%" delay={0.8} />
-      </div>
-      <p className="mt-4 text-center text-xs font-medium text-[#3f91ff]">키워드 하나로, 글이 써져요</p>
+      <p className="mt-5 text-center text-xs font-medium text-[#3f91ff]">키워드 하나로, 글이 써져요</p>
     </div>
   );
 }
@@ -96,44 +96,51 @@ function MockEdit() {
   );
 }
 
-// 3. 워드프레스 발행 — 커서가 발행 버튼을 누르면 원형 체크
+// 3. 워드프레스 발행 — 글 미리보기 위, 발행 버튼은 아래. 버튼 클릭 시 원형 체크
 function MockPublish() {
   return (
-    <div className="text-center">
-      <div className="relative inline-block">
-        <span className="block rounded-xl px-5 py-2.5 text-sm font-semibold text-white" style={{ background: BRAND }}>워드프레스에 발행</span>
-        <Cursor className="-bottom-1.5 right-3" />
-      </div>
-      <div className="mock-reveal mt-5">
-        <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full text-white" style={{ background: "#2fd07a" }}>
+    <div>
+      {/* 위: 발행 결과(클릭 후 떠오름) */}
+      <div className="mock-reveal flex flex-col items-center py-2 text-center">
+        <div className="flex h-11 w-11 items-center justify-center rounded-full text-white" style={{ background: "#2fd07a" }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
         </div>
         <p className="mt-2.5 text-sm font-semibold">올렸어요</p>
         <p className="mt-0.5 text-xs text-neutral-400">myblog.com/dog-anxiety</p>
+      </div>
+      {/* 아래: 발행 버튼 + 커서 */}
+      <div className="relative mt-3">
+        <span className="block rounded-xl py-2.5 text-center text-sm font-semibold text-white" style={{ background: BRAND }}>워드프레스에 발행</span>
+        <Cursor className="-bottom-2 right-6" />
       </div>
       <p className="mt-4 text-center text-xs font-medium text-[#3f91ff]">버튼 하나로 발행돼요</p>
     </div>
   );
 }
 
-// 4. 내 글 관리 — 정적(반복 없음)
+// 4. 내 글 관리 — 예약했던 글이 시간 되면 '예약됨 → 발행됨'으로 자동 전환(루프)
 function MockArticles() {
-  const rows = [
-    { t: "강아지 분리불안 해결 방법", s: "발행됨", c: "bg-emerald-600 text-white" },
-    { t: "노령견 사료 고르는 기준", s: "예약됨", c: "bg-[#3f91ff]/10 text-[#2f7fe6]" },
-    { t: "강아지 슬개골 초기 증상", s: "초안", c: "bg-neutral-100 text-neutral-500" },
-  ];
   return (
     <div>
       <div className="space-y-2">
-        {rows.map((r) => (
-          <div key={r.t} className="flex items-center justify-between gap-2 rounded-xl border border-neutral-100 px-3 py-2.5">
-            <span className="min-w-0 flex-1 truncate text-xs text-neutral-700">{r.t}</span>
-            <span className={`shrink-0 rounded-md px-2 py-0.5 text-[10px] font-medium ${r.c}`}>{r.s}</span>
-          </div>
-        ))}
+        <div className="flex items-center justify-between gap-2 rounded-xl border border-neutral-100 px-3 py-2.5">
+          <span className="min-w-0 flex-1 truncate text-xs text-neutral-700">강아지 분리불안 해결 방법</span>
+          <span className="shrink-0 rounded-md bg-emerald-600 px-2 py-0.5 text-[10px] font-medium text-white">발행됨</span>
+        </div>
+        {/* 예약됨 → 발행됨 자동 전환 */}
+        <div className="flex items-center justify-between gap-2 rounded-xl border border-neutral-100 px-3 py-2.5">
+          <span className="min-w-0 flex-1 truncate text-xs text-neutral-700">노령견 사료 고르는 기준</span>
+          <span className="relative inline-flex h-[18px] w-[44px] shrink-0 items-center justify-center">
+            <span className="mock-chip-sched absolute inset-0 flex items-center justify-center rounded-md bg-[#3f91ff]/10 text-[10px] font-medium text-[#2f7fe6]">예약됨</span>
+            <span className="mock-chip-pub absolute inset-0 flex items-center justify-center rounded-md bg-emerald-600 text-[10px] font-medium text-white">발행됨</span>
+          </span>
+        </div>
+        <div className="flex items-center justify-between gap-2 rounded-xl border border-neutral-100 px-3 py-2.5">
+          <span className="min-w-0 flex-1 truncate text-xs text-neutral-700">강아지 슬개골 초기 증상</span>
+          <span className="shrink-0 rounded-md bg-neutral-100 px-2 py-0.5 text-[10px] font-medium text-neutral-500">초안</span>
+        </div>
       </div>
-      <p className="mt-4 text-center text-xs font-medium text-[#3f91ff]">발행·예약을 한눈에</p>
+      <p className="mt-4 text-center text-xs font-medium text-[#3f91ff]">예약한 글이 시간 되면 알아서 발행돼요</p>
     </div>
   );
 }
