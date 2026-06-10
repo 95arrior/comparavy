@@ -521,7 +521,7 @@ export default function DashboardClient(props: DashboardProps) {
         {/* 내 정보 (사용자) */}
         <button
           onClick={() => goTab("account")}
-          className={`group relative flex items-center rounded-lg transition hover:bg-neutral-50 ${navOpen ? "h-12 w-full" : "h-9 w-9"} ${
+          className={`group relative flex h-12 items-center rounded-lg transition hover:bg-neutral-50 ${navOpen ? "w-full" : "w-9"} ${
             tab === "account" && !selected && !genParams ? "bg-neutral-100" : ""
           }`}
         >
