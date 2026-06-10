@@ -42,6 +42,15 @@ export type AdminStats = {
   /** 사전 등록(웨이트리스트) 총원 + 목록(최신순) */
   waitlistCount: number | null;
   waitlist: { email: string; created_at: string; source: string | null }[];
+  /** SNS 자동 발행 — 설정 + 대기열 */
+  social: {
+    autoEnabled: boolean;
+    intervalHours: number;
+    lastPublishedAt: string | null;
+    queueCount: number;
+    publishedCount: number;
+    posts: { id: string; type: string; caption: string; status: string; mediaUrls: string[]; created_at: string; error: string | null }[];
+  } | null;
 };
 
 // 글 1편당 추정 생성비(원). 토큰 미집계라 대략치 — 실제 집계 붙기 전 모니터링용.
@@ -215,5 +224,31 @@ export async function getAdminStats(): Promise<AdminStats> {
     waitlist = [];
   }
 
-  return { usersTotal, usersToday, proUsers, freeUsers, articlesTotal, articlesToday, publishedArticles, lockedArticles, wpConnections, mrr, conversion, articlesPerUser, wpConnectRate, publishRate, estCostKrw, costTotalKrw, costTodayKrw, costByKind, usersWithArticles, usersWithPublished, dailyUsers, dailyArticles, recentUsers, recentArticles, waitlistCount, waitlist };
+  // SNS 자동 발행 — 설정 + 대기열 (테이블 없으면 null)
+  let social: AdminStats["social"] = null;
+  try {
+    const { data: s } = await admin.from("social_settings").select("*").eq("id", 1).maybeSingle();
+    const { data: posts } = await admin
+      .from("social_posts")
+      .select("id,type,caption,status,media_urls,created_at,error")
+      .order("created_at", { ascending: false })
+      .limit(60);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const list = (posts ?? []).map((p: any) => ({
+      id: p.id, type: p.type, caption: p.caption ?? "", status: p.status,
+      mediaUrls: Array.isArray(p.media_urls) ? p.media_urls : [], created_at: p.created_at ?? "", error: p.error ?? null,
+    }));
+    social = {
+      autoEnabled: !!s?.auto_enabled,
+      intervalHours: s?.interval_hours ?? 24,
+      lastPublishedAt: s?.last_published_at ?? null,
+      queueCount: list.filter((p) => p.status === "queued").length,
+      publishedCount: list.filter((p) => p.status === "published").length,
+      posts: list,
+    };
+  } catch {
+    social = null;
+  }
+
+  return { usersTotal, usersToday, proUsers, freeUsers, articlesTotal, articlesToday, publishedArticles, lockedArticles, wpConnections, mrr, conversion, articlesPerUser, wpConnectRate, publishRate, estCostKrw, costTotalKrw, costTodayKrw, costByKind, usersWithArticles, usersWithPublished, dailyUsers, dailyArticles, recentUsers, recentArticles, waitlistCount, waitlist, social };
 }

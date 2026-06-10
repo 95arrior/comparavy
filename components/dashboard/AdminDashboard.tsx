@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import type { AdminStats } from "@/lib/adminStats";
 import Segmented from "./Segmented";
 
@@ -211,8 +212,130 @@ function WaitlistView({ stats }: { stats: AdminStats }) {
   );
 }
 
+const SOC_TYPE_KO: Record<string, string> = { image: "이미지", reel: "릴스", carousel: "카드뉴스" };
+const SOC_STATUS: Record<string, string> = { queued: "대기", published: "발행됨", failed: "실패" };
+
+function SocialView({ stats }: { stats: AdminStats }) {
+  const router = useRouter();
+  const s = stats.social;
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [type, setType] = useState("image");
+  const [urls, setUrls] = useState("");
+  const [caption, setCaption] = useState("");
+
+  async function call(payload: Record<string, unknown>, okMsg?: string) {
+    if (busy) return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      const r = await fetch("/api/social", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      const d = await r.json().catch(() => ({}));
+      if (r.ok) { setMsg(okMsg ?? "완료"); router.refresh(); }
+      else setMsg(d.error ?? "실패했어요");
+    } catch {
+      setMsg("오류가 났어요");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!s) return <Section title="SNS 발행"><p className="text-sm text-neutral-400">설정을 불러오지 못했어요. (마이그레이션 0017 실행 필요)</p></Section>;
+
+  const nextAt = s.lastPublishedAt ? new Date(new Date(s.lastPublishedAt).getTime() + s.intervalHours * 3600000) : null;
+
+  return (
+    <>
+      {/* 자동 발행 제어 */}
+      <Section title="자동 발행" desc="대기열에 쌓아두면 정해둔 주기마다 인스타에 자동 게시돼요.">
+        <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className={`inline-block h-2.5 w-2.5 rounded-full ${s.autoEnabled ? "bg-emerald-500" : "bg-neutral-300"}`} />
+              <span className="text-sm font-semibold">{s.autoEnabled ? "자동 발행 켜짐" : "자동 발행 꺼짐"}</span>
+            </div>
+            <button
+              onClick={() => call({ action: "settings", autoEnabled: !s.autoEnabled }, s.autoEnabled ? "중지했어요" : "시작했어요")}
+              disabled={busy}
+              className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition active:scale-95 disabled:opacity-50 ${s.autoEnabled ? "bg-red-600 hover:bg-red-700" : "bg-neutral-900 hover:bg-neutral-800"}`}
+            >
+              {s.autoEnabled ? "종료" : "시작"}
+            </button>
+          </div>
+          <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
+            <label className="flex items-center gap-2 text-neutral-500">
+              발행 주기
+              <select
+                value={s.intervalHours}
+                onChange={(e) => call({ action: "settings", intervalHours: Number(e.target.value) }, "주기 변경됨")}
+                disabled={busy}
+                className="rounded-lg border border-neutral-300 px-2.5 py-1.5 text-sm outline-none"
+              >
+                <option value={6}>6시간마다</option>
+                <option value={12}>12시간마다</option>
+                <option value={24}>하루 1회</option>
+                <option value={48}>이틀 1회</option>
+              </select>
+            </label>
+            <span className="text-neutral-400">
+              대기 <b className="text-neutral-700">{s.queueCount}</b> · 발행 <b className="text-neutral-700">{s.publishedCount}</b>
+              {nextAt && s.autoEnabled && <> · 다음 발행 ~{nextAt.toLocaleString("ko-KR", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}</>}
+            </span>
+          </div>
+        </div>
+      </Section>
+
+      {/* 대기열에 추가 */}
+      <Section title="대기열에 추가" desc="미디어는 인스타가 가져갈 공개 URL이어야 해요. 캐러셀은 URL을 줄바꿈으로 여러 개.">
+        <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-5">
+          <div className="flex flex-wrap items-center gap-2">
+            {(["image", "reel", "carousel"] as const).map((t) => (
+              <button key={t} onClick={() => setType(t)} className={`rounded-lg px-3 py-1.5 text-xs font-medium transition active:scale-95 ${type === t ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"}`}>
+                {SOC_TYPE_KO[t]}
+              </button>
+            ))}
+          </div>
+          <textarea value={urls} onChange={(e) => setUrls(e.target.value)} rows={type === "carousel" ? 3 : 1} placeholder="미디어 공개 URL (캐러셀은 줄바꿈으로 여러 개)" className="mt-3 w-full rounded-xl border border-neutral-300 px-3.5 py-2.5 text-sm outline-none transition focus:border-neutral-900" />
+          <textarea value={caption} onChange={(e) => setCaption(e.target.value)} rows={3} placeholder="캡션 (해시태그 포함)" className="mt-2 w-full rounded-xl border border-neutral-300 px-3.5 py-2.5 text-sm outline-none transition focus:border-neutral-900" />
+          <button
+            onClick={() => { const list = urls.split("\n").map((u) => u.trim()).filter(Boolean); call({ action: "add", type, mediaUrls: list, caption }, "대기열에 추가했어요"); setUrls(""); setCaption(""); }}
+            disabled={busy}
+            className="mt-3 rounded-lg bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition active:scale-95 hover:bg-neutral-800 disabled:opacity-50"
+          >
+            대기열에 추가
+          </button>
+          {msg && <span className="ml-3 text-xs text-neutral-500">{msg}</span>}
+        </div>
+      </Section>
+
+      {/* 대기열 목록 */}
+      <Section title="발행 대기열">
+        <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-4 sm:p-5">
+          <ul className="divide-y divide-neutral-100">
+            {s.posts.length === 0 ? (
+              <li className="py-3 text-sm text-neutral-400">아직 없어요</li>
+            ) : (
+              s.posts.map((p) => (
+                <li key={p.id} className="flex items-center gap-3 py-3">
+                  <span className="shrink-0 rounded-md bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-500">{SOC_TYPE_KO[p.type] ?? p.type}</span>
+                  <span className="min-w-0 flex-1 truncate text-sm text-neutral-700">{p.caption || "(캡션 없음)"}{p.error && <span className="ml-1 text-xs text-red-500">· {p.error}</span>}</span>
+                  <span className={`shrink-0 rounded-md px-2 py-0.5 text-[11px] font-medium ${p.status === "published" ? "bg-emerald-600 text-white" : p.status === "failed" ? "bg-red-100 text-red-600" : "bg-[#3f91ff]/10 text-[#2f7fe6]"}`}>{SOC_STATUS[p.status] ?? p.status}</span>
+                  {p.status !== "published" && (
+                    <button onClick={() => call({ action: "publishNow", id: p.id }, "발행했어요")} disabled={busy} className="shrink-0 text-xs font-medium text-neutral-500 transition hover:text-neutral-900 disabled:opacity-50">지금 발행</button>
+                  )}
+                  <button onClick={() => call({ action: "delete", id: p.id }, "삭제했어요")} disabled={busy} className="shrink-0 text-xs text-neutral-400 transition hover:text-red-500 disabled:opacity-50">삭제</button>
+                </li>
+              ))
+            )}
+          </ul>
+        </div>
+      </Section>
+    </>
+  );
+}
+
 export default function AdminDashboard({ stats }: { stats?: AdminStats | null }) {
-  const [view, setView] = useState<"stats" | "waitlist">("stats");
+  const [view, setView] = useState<"stats" | "waitlist" | "social">("stats");
   if (!stats) return <p className="text-sm text-neutral-500">통계를 불러오지 못했어요.</p>;
 
   return (
@@ -225,13 +348,16 @@ export default function AdminDashboard({ stats }: { stats?: AdminStats | null })
           options={[
             { value: "stats", label: "분석" },
             { value: "waitlist", label: "대기자", count: stats.waitlistCount ?? 0 },
+            { value: "social", label: "SNS", count: stats.social?.queueCount ?? 0 },
           ]}
           value={view}
           onChange={setView}
         />
       </div>
 
-      {view === "waitlist" ? (
+      {view === "social" ? (
+        <SocialView stats={stats} />
+      ) : view === "waitlist" ? (
         <WaitlistView stats={stats} />
       ) : (
         <>
