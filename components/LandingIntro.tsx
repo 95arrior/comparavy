@@ -1,18 +1,24 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 const COLORS = ["#3f91ff", "#ffd23a", "#ff4d6d", "#2fd07a", "#b06bff"];
 
+type Piece = { key: number; dx: number; dy: number; rot: number; color: string; delay: number; round: boolean };
+
 /**
- * 첫 접속 인트로 — 시그니처 모션(파란 로고 팝 → 무지개로 회전 등장 + 폭죽)을 로딩처럼 보여준 뒤
- * 부드럽게 사라지며 랜딩이 드러난다. 세션당 1회만 재생(매 이동마다 X).
+ * 첫 페인트부터 화면을 덮는 인트로(깜빡임 0) — 시그니처 모션(파란 로고 팝 → 무지개 회전 등장 + 폭죽)을
+ * 보여준 뒤 부드럽게 사라지며 랜딩이 드러난다. 새로고침·재방문마다 매번 재생.
+ *
+ * phase 기본값을 "playing"으로 둬 SSR HTML에 오버레이가 포함됨 → 콘텐츠가 먼저 보이는 깜빡임 없음.
+ * 폭죽(랜덤)은 마운트 후 생성해 hydration 불일치를 피한다(로고/배경은 결정적이라 SSR 안전).
  */
 export default function LandingIntro() {
-  const [phase, setPhase] = useState<"idle" | "playing" | "leaving" | "done">("idle");
+  const [phase, setPhase] = useState<"playing" | "leaving" | "done">("playing");
+  const [pieces, setPieces] = useState<Piece[]>([]);
 
-  const pieces = useMemo(
-    () =>
+  useEffect(() => {
+    setPieces(
       Array.from({ length: 36 }).map((_, i) => {
         const angle = Math.random() * Math.PI * 2;
         const dist = 150 + Math.random() * 220;
@@ -26,20 +32,7 @@ export default function LandingIntro() {
           round: i % 2 === 0,
         };
       }),
-    [],
-  );
-
-  useEffect(() => {
-    try {
-      if (sessionStorage.getItem("ateflo_intro_seen")) {
-        setPhase("done");
-        return;
-      }
-      sessionStorage.setItem("ateflo_intro_seen", "1");
-    } catch {
-      // 무시
-    }
-    setPhase("playing");
+    );
     const t1 = setTimeout(() => setPhase("leaving"), 2150);
     const t2 = setTimeout(() => setPhase("done"), 2650);
     return () => {
@@ -48,7 +41,7 @@ export default function LandingIntro() {
     };
   }, []);
 
-  if (phase === "idle" || phase === "done") return null;
+  if (phase === "done") return null;
 
   return (
     <div
