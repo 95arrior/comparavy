@@ -69,13 +69,13 @@ export default function GeneratePanel({
           <div className="mt-3 flex flex-wrap gap-2">
             <button
               onClick={onOpenLocked}
-              className="rounded-full border border-amber-300 bg-white px-4 py-1.5 text-sm font-medium text-amber-900 transition hover:bg-amber-100"
+              className="rounded-xl border border-amber-300 bg-white px-4 py-1.5 text-sm font-medium text-amber-900 transition hover:bg-amber-100"
             >
               미리보기 글 보기
             </button>
             <Link
               href="/pricing"
-              className="rounded-full bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700"
+              className="rounded-xl bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700"
             >
               프로로 업그레이드
             </Link>
@@ -156,7 +156,7 @@ export default function GeneratePanel({
         <button
           type="submit"
           disabled={outOfQuota && !teaserMode}
-          className="w-full rounded-full bg-neutral-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
+          className="w-full rounded-xl bg-neutral-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
         >
           {blocked
             ? "프로로 업그레이드하면 계속 쓸 수 있어요"

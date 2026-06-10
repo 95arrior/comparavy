@@ -9,7 +9,7 @@ export const WP_GUIDE_STEP_COUNT = 5;
 // 검색창 목업
 function SearchMock() {
   return (
-    <div className="mt-4 flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-4 py-2.5 text-sm shadow-sm">
+    <div className="mt-4 flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm shadow-sm">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-neutral-400"><circle cx="11" cy="11" r="7" /><path d="M21 21l-3.5-3.5" /></svg>
       <span className="text-neutral-700">워드프레스 호스팅 추천</span>
     </div>

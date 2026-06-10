@@ -94,7 +94,7 @@ export default function HeroInput({ loggedIn, onStart, pro = false }: { loggedIn
   }
 
   const chipCls = (on: boolean) =>
-    `flex items-center gap-1 whitespace-nowrap rounded-full border px-2 py-1 text-[11px] transition sm:gap-1.5 sm:px-2.5 sm:text-xs ${
+    `flex items-center gap-1 whitespace-nowrap rounded-xl border px-2 py-1 text-[11px] transition sm:gap-1.5 sm:px-2.5 sm:text-xs ${
       on
         ? "border-neutral-900 bg-neutral-900 font-medium text-white"
         : "border-neutral-200 text-neutral-500 hover:border-neutral-400 hover:text-neutral-700"
@@ -105,7 +105,7 @@ export default function HeroInput({ loggedIn, onStart, pro = false }: { loggedIn
       <div>
         <form
           onSubmit={go}
-          className={`relative flex w-full items-center gap-2 rounded-full bg-white p-2 shadow-sm transition ${
+          className={`relative flex w-full items-center gap-2 rounded-2xl bg-white p-2 shadow-sm transition ${
             err ? "border border-red-400 focus-within:border-red-500" : pro ? "ateflo-rainbow-spin" : "border border-neutral-300 focus-within:border-neutral-900"
           }`}
         >
@@ -122,7 +122,7 @@ export default function HeroInput({ loggedIn, onStart, pro = false }: { loggedIn
         <button
           type="submit"
           disabled={loading}
-          className={`shrink-0 rounded-full px-6 py-2.5 text-sm font-medium text-white transition ${
+          className={`shrink-0 rounded-xl px-6 py-2.5 text-sm font-medium text-white transition ${
             loading ? "ateflo-rainbow" : "bg-neutral-900 hover:bg-neutral-700"
           }`}
         >
@@ -163,7 +163,7 @@ export default function HeroInput({ loggedIn, onStart, pro = false }: { loggedIn
             <button
               type="button"
               onClick={() => setIdeaOpen(true)}
-              className="mx-auto flex items-center gap-1.5 rounded-full border border-neutral-200 px-3.5 py-1.5 text-xs font-medium text-neutral-500 transition hover:border-neutral-400 hover:text-neutral-800"
+              className="mx-auto flex items-center gap-1.5 rounded-xl border border-neutral-200 px-3.5 py-1.5 text-xs font-medium text-neutral-500 transition hover:border-neutral-400 hover:text-neutral-800"
             >
               💡 뭘 쓸지 모르겠어요? 글감 추천받기
             </button>
@@ -205,7 +205,7 @@ export default function HeroInput({ loggedIn, onStart, pro = false }: { loggedIn
                           inputRef.current?.focus();
                           inputRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
                         }}
-                        className="ateflo-chip-in rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-xs text-neutral-700 transition hover:border-neutral-900 hover:bg-white"
+                        className="ateflo-chip-in rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-xs text-neutral-700 transition hover:border-neutral-900 hover:bg-white"
                       >
                         {idea}
                       </button>

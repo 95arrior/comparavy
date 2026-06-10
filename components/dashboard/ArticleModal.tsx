@@ -437,7 +437,7 @@ export default function ArticleModal({
             <button onClick={onClose} className="flex items-center gap-1.5 text-sm text-neutral-500 transition hover:text-neutral-900">
               <span className="text-base leading-none">←</span> 목록으로
             </button>
-            <Link href="/pricing" className="rounded-full bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700">
+            <Link href="/pricing" className="rounded-xl bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700">
               프로로 잠금 해제
             </Link>
           </div>
@@ -494,13 +494,13 @@ export default function ArticleModal({
                   copyBody();
                   setToast("복사했어요. 블로그에 붙여넣어 보세요.");
                 }}
-                className="rounded-full border border-neutral-300 px-4 py-1.5 text-sm font-medium transition hover:border-neutral-900"
+                className="rounded-xl border border-neutral-300 px-4 py-1.5 text-sm font-medium transition hover:border-neutral-900"
               >
                 {copied ? "복사됨 ✓" : "복사"}
               </button>
               <Link
                 href="/pricing"
-                className="rounded-full bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700"
+                className="rounded-xl bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700"
               >
                 프로로 편집하기
               </Link>
@@ -562,14 +562,14 @@ export default function ArticleModal({
             <button
               onClick={copyBody}
               title="복사"
-              className="rounded-full border border-neutral-300 px-4 py-1.5 text-sm font-medium transition hover:border-neutral-900"
+              className="rounded-xl border border-neutral-300 px-4 py-1.5 text-sm font-medium transition hover:border-neutral-900"
             >
               {copied ? "복사됨 ✓" : "복사"}
             </button>
             <button
               onClick={save}
               disabled={saving}
-              className="rounded-full border border-neutral-300 px-4 py-1.5 text-sm font-medium transition hover:border-neutral-900 disabled:opacity-40"
+              className="rounded-xl border border-neutral-300 px-4 py-1.5 text-sm font-medium transition hover:border-neutral-900 disabled:opacity-40"
             >
               {saving ? "저장 중…" : "저장"}
             </button>
@@ -578,7 +578,7 @@ export default function ArticleModal({
                 onClick={() => setScheduleOpen((o) => !o)}
                 disabled={publishing}
                 title="예약 발행"
-                className={`flex h-8 w-8 items-center justify-center rounded-full border transition disabled:opacity-50 ${scheduleOpen ? "border-neutral-900 bg-neutral-900 text-white" : "border-neutral-300 text-neutral-600 hover:border-neutral-900"}`}
+                className={`flex h-8 w-8 items-center justify-center rounded-xl border transition disabled:opacity-50 ${scheduleOpen ? "border-neutral-900 bg-neutral-900 text-white" : "border-neutral-300 text-neutral-600 hover:border-neutral-900"}`}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
               </button>
@@ -586,7 +586,7 @@ export default function ArticleModal({
             <button
               onClick={() => (canPublish ? publish("publish") : setShowUpsell(true))}
               disabled={publishing}
-              className="rounded-full bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
+              className="rounded-xl bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
             >
               {publishing
                 ? article.wp_post_id
@@ -882,7 +882,7 @@ export default function ArticleModal({
                   <button
                     onClick={suggestTags}
                     disabled={suggesting || aiUsed || tags.length >= 8}
-                    className="flex items-center gap-1 rounded-full border border-neutral-300 px-3 py-1.5 text-xs font-medium transition hover:border-neutral-900 disabled:border-neutral-200 disabled:text-neutral-300"
+                    className="flex items-center gap-1 rounded-xl border border-neutral-300 px-3 py-1.5 text-xs font-medium transition hover:border-neutral-900 disabled:border-neutral-200 disabled:text-neutral-300"
                   >
                     {suggesting ? "분석 중…" : aiUsed ? "✓ 추천 완료" : "✨ AI 태그 추천"}
                   </button>
@@ -894,7 +894,7 @@ export default function ArticleModal({
                     <span className="px-1 text-sm text-neutral-400">아래 추천에서 골라 담아주세요</span>
                   ) : (
                     tags.map((t) => (
-                      <span key={t} className="ateflo-chip-in inline-flex items-center gap-1 rounded-full bg-neutral-900 py-1 pl-2.5 pr-1.5 text-xs font-medium text-white">
+                      <span key={t} className="ateflo-chip-in inline-flex items-center gap-1 rounded-xl bg-neutral-900 py-1 pl-2.5 pr-1.5 text-xs font-medium text-white">
                         {t}
                         <button onClick={() => setTags((prev) => prev.filter((x) => x !== t))} className="flex h-4 w-4 items-center justify-center rounded-full text-white/60 transition hover:bg-white/20 hover:text-white" aria-label="태그 삭제">×</button>
                       </span>
@@ -916,7 +916,7 @@ export default function ArticleModal({
                           <button
                             key={t}
                             onClick={() => setTags((prev) => (prev.length >= 8 || prev.includes(t) ? prev : [...prev, t]))}
-                            className={`ateflo-chip-in rounded-full border px-2.5 py-1 text-xs transition ${
+                            className={`ateflo-chip-in rounded-xl border px-2.5 py-1 text-xs transition ${
                               fromAi
                                 ? "border-neutral-900/15 bg-neutral-900/[0.04] font-medium text-neutral-800 hover:border-neutral-900"
                                 : "border-dashed border-neutral-300 text-neutral-500 hover:border-neutral-900 hover:text-neutral-900"
@@ -1015,7 +1015,7 @@ export default function ArticleModal({
                     {added ? (
                       <button
                         onClick={() => removeFaqItem(i)}
-                        className="shrink-0 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-medium text-red-600 transition hover:border-red-400"
+                        className="shrink-0 rounded-xl border border-red-200 bg-red-50 px-3 py-1 text-xs font-medium text-red-600 transition hover:border-red-400"
                         title="이 질문을 본문에서 제거"
                       >
                         － 제거
@@ -1023,7 +1023,7 @@ export default function ArticleModal({
                     ) : (
                       <button
                         onClick={() => addFaqItem(i)}
-                        className="shrink-0 rounded-full border border-neutral-300 px-3 py-1 text-xs font-medium transition hover:border-neutral-900"
+                        className="shrink-0 rounded-xl border border-neutral-300 px-3 py-1 text-xs font-medium transition hover:border-neutral-900"
                         title="이 질문을 글 본문 맨 아래에 추가"
                       >
                         ＋ 추가

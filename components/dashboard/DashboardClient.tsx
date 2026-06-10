@@ -428,8 +428,8 @@ export default function DashboardClient(props: DashboardProps) {
                   <p className="mt-1 text-sm leading-relaxed text-amber-800">끝까지 보고 발행하려면, 그리고 글을 더 만들려면 프로로 업그레이드하세요.</p>
                   <p className="mt-3 truncate text-sm font-medium text-neutral-900">“{lockedArticle.title}”</p>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <button onClick={() => setSelected(lockedArticle)} className="rounded-full border border-amber-300 bg-white px-4 py-1.5 text-sm font-medium text-amber-900 transition hover:bg-amber-100">미리보기 글 보기</button>
-                    <Link href="/pricing" className="rounded-full bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700">프로로 업그레이드</Link>
+                    <button onClick={() => setSelected(lockedArticle)} className="rounded-xl border border-amber-300 bg-white px-4 py-1.5 text-sm font-medium text-amber-900 transition hover:bg-amber-100">미리보기 글 보기</button>
+                    <Link href="/pricing" className="rounded-xl bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700">프로로 업그레이드</Link>
                   </div>
                 </div>
               ) : (
@@ -505,7 +505,7 @@ export default function DashboardClient(props: DashboardProps) {
                   </p>
                 )}
                 <div className="mt-6">
-                  <button onClick={signOut} className="rounded-full border border-neutral-300 px-4 py-2 text-sm font-medium transition hover:border-neutral-900">
+                  <button onClick={signOut} className="rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium transition hover:border-neutral-900">
                     로그아웃
                   </button>
                 </div>
@@ -540,7 +540,7 @@ export default function DashboardClient(props: DashboardProps) {
                         <button onClick={deleteAccount} disabled={busy} className="rounded-full bg-red-600 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-50">
                           {busy ? "탈퇴 처리 중…" : "탈퇴하기"}
                         </button>
-                        <button onClick={() => setConfirmDelete(false)} disabled={busy} className="rounded-full border border-neutral-300 px-4 py-1.5 text-sm font-medium transition hover:border-neutral-900">
+                        <button onClick={() => setConfirmDelete(false)} disabled={busy} className="rounded-xl border border-neutral-300 px-4 py-1.5 text-sm font-medium transition hover:border-neutral-900">
                           취소
                         </button>
                       </div>

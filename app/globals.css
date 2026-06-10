@@ -1,8 +1,16 @@
 @import "tailwindcss";
 
+/* 블랙 통일 — 토스 잉크(쿨 다크 슬레이트). bg/text/border-neutral-900 전부 이 색으로.
+   호버가 같은 계열로 밝아지도록 800·700도 쿨톤으로 맞춤. */
+@theme {
+  --color-neutral-900: #191f28;
+  --color-neutral-800: #2a3038;
+  --color-neutral-700: #3c434d;
+}
+
 :root {
   --background: #ffffff;
-  --foreground: #1a1a1a;
+  --foreground: #191f28;
 }
 
 * {

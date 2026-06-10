@@ -154,7 +154,7 @@ function CostBreakdown({ stats }: { stats: AdminStats }) {
                   <span className="text-neutral-500">{won(k.krw)}</span>
                 </div>
                 <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-neutral-100">
-                  <div className="h-full rounded-full bg-neutral-900" style={{ width: `${Math.max(3, (k.krw / max) * 100)}%` }} />
+                  <div className="h-full rounded-xl bg-neutral-900" style={{ width: `${Math.max(3, (k.krw / max) * 100)}%` }} />
                 </div>
               </div>
             ))

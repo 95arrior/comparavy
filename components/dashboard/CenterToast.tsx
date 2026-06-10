@@ -14,7 +14,7 @@ export default function CenterToast({ children }: { children: React.ReactNode })
   if (!mounted) return null;
   return createPortal(
     <div className="pointer-events-none fixed left-1/2 top-5 z-[100] -translate-x-1/2">
-      <div className="ateflo-fade-in rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white shadow-lg">
+      <div className="ateflo-fade-in rounded-xl bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white shadow-lg">
         {children}
       </div>
     </div>,

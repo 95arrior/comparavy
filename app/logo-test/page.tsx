@@ -23,15 +23,15 @@ export default function LogoTest() {
       <div className="flex flex-col items-center gap-3">
         <span className="text-sm text-neutral-500">하단 인디케이터 (웹 클로드식)</span>
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2 rounded-full border border-neutral-200 bg-white/90 px-3 py-1.5 shadow-sm">
+          <div className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-white/90 px-3 py-1.5 shadow-sm">
             <AteFloLogo animated={false} size={22} />
             <span className="text-xs text-neutral-400">대기 (정지)</span>
           </div>
-          <div className="flex items-center gap-2 rounded-full border border-neutral-200 bg-white/90 px-3 py-1.5 shadow-sm">
+          <div className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-white/90 px-3 py-1.5 shadow-sm">
             <AteFloLogo animated size={22} />
             <span className="text-xs font-medium text-neutral-500">작성 중… (무료)</span>
           </div>
-          <div className="flex items-center gap-2 rounded-full border border-neutral-200 bg-white/90 px-3 py-1.5 shadow-sm">
+          <div className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-white/90 px-3 py-1.5 shadow-sm">
             <AteFloLogo pro animated size={22} />
             <span className="text-xs font-medium text-neutral-500">작성 중… (프로)</span>
           </div>

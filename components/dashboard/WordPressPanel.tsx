@@ -85,7 +85,7 @@ export default function WordPressPanel({
         <p className="mt-4 text-sm text-neutral-500">이제 글 목록에서 글을 열어 바로 발행할 수 있어요.</p>
         <button
           onClick={disconnect}
-          className="mt-6 rounded-full border border-neutral-300 px-5 py-2.5 text-sm font-medium transition hover:border-red-400 hover:text-red-600"
+          className="mt-6 rounded-xl border border-neutral-300 px-5 py-2.5 text-sm font-medium transition hover:border-red-400 hover:text-red-600"
         >
           연결 해제
         </button>
@@ -170,7 +170,7 @@ export default function WordPressPanel({
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-full bg-neutral-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
+          className="w-full rounded-xl bg-neutral-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
         >
           {loading ? "연결 확인 중…" : "사이트 연결하기"}
         </button>

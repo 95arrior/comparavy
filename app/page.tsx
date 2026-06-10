@@ -74,7 +74,7 @@ export default async function Home() {
           </div>
           <div className="flex items-center gap-5">
             {!user && <Link href="/login" className="hidden text-sm text-neutral-500 transition hover:text-neutral-900 sm:block">로그인</Link>}
-            <Link href={ctaHref} className="rounded-full bg-neutral-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-neutral-700">
+            <Link href={ctaHref} className="rounded-xl bg-neutral-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-neutral-700">
               {ctaLabel}
             </Link>
           </div>
@@ -111,7 +111,7 @@ export default async function Home() {
           <p className="mx-auto mt-5 max-w-xl text-neutral-500">
             키워드 하나만 넣어보면 알 수 있어요.
           </p>
-          <Link href={ctaHref} className="mt-10 inline-block rounded-full bg-neutral-900 px-8 py-4 text-sm font-medium text-white transition hover:bg-neutral-700">
+          <Link href={ctaHref} className="mt-10 inline-block rounded-xl bg-neutral-900 px-8 py-4 text-sm font-medium text-white transition hover:bg-neutral-700">
             {ctaLabel}
           </Link>
         </div>

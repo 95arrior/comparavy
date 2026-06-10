@@ -241,7 +241,7 @@ export default function WritingView({
           <div className="rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
             {error}
             <div className="mt-3">
-              <button onClick={onExit} className="rounded-full border border-red-300 px-4 py-1.5 text-sm font-medium text-red-700 transition hover:bg-red-100">
+              <button onClick={onExit} className="rounded-xl border border-red-300 px-4 py-1.5 text-sm font-medium text-red-700 transition hover:bg-red-100">
                 돌아가기
               </button>
             </div>

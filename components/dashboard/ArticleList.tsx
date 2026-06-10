@@ -71,7 +71,7 @@ export default function ArticleList({
         <p className="text-sm text-neutral-500">아직 만든 글이 없어요.</p>
         <button
           onClick={onGoGenerate}
-          className="mt-4 rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700"
+          className="mt-4 rounded-xl bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700"
         >
           첫 글 생성하기
         </button>
@@ -145,7 +145,7 @@ export default function ArticleList({
           <button
             onClick={exportAll}
             title="내 글 전체를 HTML 파일로 저장"
-            className="hidden items-center gap-1.5 rounded-full border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-neutral-900 sm:flex"
+            className="hidden items-center gap-1.5 rounded-xl border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-neutral-900 sm:flex"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" /></svg>
             내보내기
@@ -153,7 +153,7 @@ export default function ArticleList({
           <div className="relative">
           <button
             onClick={() => setSortOpen((o) => !o)}
-            className="flex items-center gap-1.5 rounded-full border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-neutral-900"
+            className="flex items-center gap-1.5 rounded-xl border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-neutral-900"
           >
             {SORT_LABEL[sort]}
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`text-neutral-400 transition-transform ${sortOpen ? "rotate-180" : ""}`}><path d="m6 9 6 6 6-6" /></svg>

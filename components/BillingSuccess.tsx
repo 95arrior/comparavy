@@ -75,7 +75,7 @@ export default function BillingSuccess({
           <p className="mt-2 text-sm text-neutral-500">{message}</p>
           <button
             onClick={() => router.push("/pricing")}
-            className="mt-6 rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700"
+            className="mt-6 rounded-xl bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700"
           >
             요금제로 돌아가기
           </button>

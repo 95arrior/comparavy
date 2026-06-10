@@ -25,7 +25,7 @@ function CurrentBtn({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="group relative mt-8 rounded-full border border-neutral-300 px-5 py-2.5 text-sm font-medium text-neutral-900 transition hover:border-neutral-900"
+      className="group relative mt-8 rounded-xl border border-neutral-300 px-5 py-2.5 text-sm font-medium text-neutral-900 transition hover:border-neutral-900"
     >
       <span className="invisible">현재 이용 중</span>
       <span className="absolute inset-0 flex items-center justify-center transition-opacity duration-200 group-hover:opacity-0">현재 이용 중</span>
@@ -54,7 +54,7 @@ export default function PricingCards({ loggedIn, currentPlan }: { loggedIn: bool
             ) : (
               <button
                 onClick={() => router.push(loggedIn ? "/" : "/login")}
-                className="mt-8 rounded-full border border-neutral-300 px-5 py-2.5 text-sm font-medium text-neutral-900 transition hover:border-neutral-900"
+                className="mt-8 rounded-xl border border-neutral-300 px-5 py-2.5 text-sm font-medium text-neutral-900 transition hover:border-neutral-900"
               >
                 무료로 시작
               </button>
@@ -62,7 +62,7 @@ export default function PricingCards({ loggedIn, currentPlan }: { loggedIn: bool
         </div>
         {isPro && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="rounded-full bg-neutral-900/85 px-4 py-1.5 text-sm font-medium text-white">프로 이용 중</span>
+            <span className="rounded-xl bg-neutral-900/85 px-4 py-1.5 text-sm font-medium text-white">프로 이용 중</span>
           </div>
         )}
       </div>
@@ -83,7 +83,7 @@ export default function PricingCards({ loggedIn, currentPlan }: { loggedIn: bool
         ) : (
           <button
             onClick={() => router.push(loggedIn ? "/pricing" : "/login")}
-            className="mt-8 rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700"
+            className="mt-8 rounded-xl bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700"
           >
             {loggedIn ? "프로 구독하기" : "프로 선택"}
           </button>
