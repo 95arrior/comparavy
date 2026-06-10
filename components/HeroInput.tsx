@@ -105,8 +105,12 @@ export default function HeroInput({ loggedIn, onStart, pro = false }: { loggedIn
       <div>
         <form
           onSubmit={go}
-          className={`relative flex w-full items-center gap-2 rounded-2xl bg-white p-2 shadow-sm transition ${
-            err ? "border border-red-400 focus-within:border-red-500" : pro ? "ateflo-rainbow-spin" : "border border-neutral-300 focus-within:border-neutral-900"
+          className={`relative flex w-full items-center gap-2 rounded-2xl bg-white p-2 shadow-sm transition-all duration-200 ${
+            err
+              ? "border border-red-400 focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-500/10"
+              : pro
+              ? "ateflo-rainbow-spin"
+              : "border border-neutral-300 focus-within:border-neutral-900 focus-within:ring-4 focus-within:ring-neutral-900/5"
           }`}
         >
         <input
@@ -169,9 +173,12 @@ export default function HeroInput({ loggedIn, onStart, pro = false }: { loggedIn
               뭘 쓸지 모르겠어요? 글감 추천받기
             </button>
           ) : (
-            <div className="ateflo-fade-in rounded-2xl border border-neutral-200 bg-white p-4">
+            <div className="ateflo-dropdown rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium">글감 추천</p>
+                <p className="flex items-center gap-1.5 text-sm font-semibold">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3f91ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.7 10.7c.5.4.7.9.7 1.3v.5h6v-.5c0-.4.2-.9.7-1.3A6 6 0 0 0 12 3Z" /></svg>
+                  글감 추천
+                </p>
                 <button type="button" onClick={() => setIdeaOpen(false)} className="text-xs text-neutral-400 transition hover:text-neutral-700">닫기</button>
               </div>
               <div className="mt-2.5 flex items-center gap-2">
@@ -180,7 +187,7 @@ export default function HeroInput({ loggedIn, onStart, pro = false }: { loggedIn
                   onChange={(e) => setTopic(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); fetchIdeas(); } }}
                   placeholder="어떤 분야예요? (예: 강아지, 재테크, 다이어트)"
-                  className="min-w-0 flex-1 rounded-xl border border-neutral-300 px-3.5 py-2.5 text-sm outline-none transition focus:border-neutral-900"
+                  className="min-w-0 flex-1 rounded-xl border border-neutral-300 px-3.5 py-2.5 text-sm outline-none transition-all duration-200 focus:border-neutral-900 focus:ring-4 focus:ring-neutral-900/5"
                 />
                 <button
                   type="button"
@@ -188,18 +195,28 @@ export default function HeroInput({ loggedIn, onStart, pro = false }: { loggedIn
                   disabled={!topic.trim() || ideaLoading}
                   className="shrink-0 rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition active:scale-95 hover:bg-neutral-700 disabled:opacity-40"
                 >
-                  {ideaLoading ? "추천 중…" : "추천받기"}
+                  추천받기
                 </button>
               </div>
+
+              {/* 로딩 — 스켈레톤 칩 (결과 자리를 미리 잡아 레이아웃 흔들림 방지) */}
+              {ideaLoading && ideas.length === 0 && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {[96, 128, 80, 112, 88, 104, 72].map((w, i) => (
+                    <div key={i} className="h-[30px] animate-pulse rounded-xl bg-neutral-100" style={{ width: w, animationDelay: `${i * 80}ms` }} />
+                  ))}
+                </div>
+              )}
 
               {ideas.length > 0 && (
                 <div className="mt-3">
                   <p className="text-xs text-neutral-400">마음에 드는 글감을 누르면 위 칸에 채워져요</p>
                   <div className="mt-2 flex flex-wrap gap-1.5">
-                    {ideas.map((idea) => (
+                    {ideas.map((idea, i) => (
                       <button
                         key={idea}
                         type="button"
+                        style={{ animationDelay: `${i * 45}ms` }}
                         onClick={() => {
                           setKeyword(idea);
                           if (err) setErr(false);
