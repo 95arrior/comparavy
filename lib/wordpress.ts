@@ -7,6 +7,14 @@ export interface WordPressCredentials {
   appPassword: string;
 }
 
+/** 워드프레스 인증 실패(401/403) — 앱 비밀번호 만료·삭제 등. UI에서 '재연결 안내'로 분기하기 위함. */
+export class WpAuthError extends Error {
+  constructor(message = "워드프레스 인증에 실패했어요.") {
+    super(message);
+    this.name = "WpAuthError";
+  }
+}
+
 function normalizeSiteUrl(siteUrl: string): string {
   return siteUrl.trim().replace(/\/+$/, "");
 }
@@ -373,6 +381,8 @@ export async function publishPost(input: PublishInput): Promise<PublishResult> {
     } catch {
       // ignore
     }
+    // 인증 실패는 별도 구분 → 라우트에서 '재연결' 안내로 분기
+    if (res.status === 401 || res.status === 403) throw new WpAuthError(message);
     throw new Error(message);
   }
 

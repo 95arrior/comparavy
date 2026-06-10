@@ -420,8 +420,14 @@ export default function ArticleModal({
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "발행하지 못했어요. 잠시 후 다시 시도해 주세요.");
-        setToast("발행하지 못했어요");
+        if (data.reconnect) {
+          // 워드프레스 연결 만료 → 재연결 안내
+          setError("워드프레스 연결이 만료됐어요. 워드프레스 탭에서 다시 연결한 뒤 발행해 주세요.");
+          setToast("연결이 만료됐어요");
+        } else {
+          setError(data.error ?? "발행하지 못했어요. 잠시 후 다시 시도해 주세요.");
+          setToast("발행하지 못했어요");
+        }
         return;
       }
       onUpdated({

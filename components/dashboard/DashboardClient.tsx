@@ -54,6 +54,25 @@ export default function DashboardClient(props: DashboardProps) {
   // 워드프레스 카테고리·태그를 미리 불러둔다 → 글 편집 모달에서 드롭다운이 즉시 뜨도록(매번 새로 가져오는 1초 지연 제거)
   const [wpCategories, setWpCategories] = useState<{ id: number; name: string; count?: number }[]>([]);
   const [wpTags, setWpTags] = useState<string[]>([]);
+  const [wpExpired, setWpExpired] = useState(false);
+
+  // 워드프레스 연결 유효성 점검 — 앱 비밀번호 만료·삭제·사이트 다운 시 배너로 재연결을 유도한다.
+  useEffect(() => {
+    if (!wpSiteUrl || props.plan !== "pro") {
+      setWpExpired(false);
+      return;
+    }
+    let alive = true;
+    fetch("/api/wordpress/status")
+      .then((r) => r.json())
+      .then((d) => {
+        if (alive) setWpExpired(d?.connected === true && d?.valid === false);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [wpSiteUrl, props.plan]);
   useEffect(() => {
     if (!wpSiteUrl || props.plan !== "pro") return;
     let alive = true;
@@ -410,6 +429,29 @@ export default function DashboardClient(props: DashboardProps) {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 8h16M4 15h9" /></svg>
             </button>
             <Brand pro={props.plan === "pro"} />
+          </div>
+        )}
+
+        {/* 워드프레스 연결 만료 배너 — 발행이 조용히 실패하기 전에 재연결을 유도 */}
+        {!page && !selected && !genParams && wpExpired && (
+          <div className="px-4 pt-4 sm:px-6">
+            <div className="mx-auto flex max-w-5xl items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3.5 sm:px-5">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 shrink-0">
+                <path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+              </svg>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-amber-900">워드프레스 연결이 만료됐어요</p>
+                <p className="mt-0.5 text-xs leading-relaxed text-amber-700">
+                  앱 비밀번호가 바뀌었거나 만료된 것 같아요. 다시 연결해야 발행할 수 있어요.
+                </p>
+              </div>
+              <button
+                onClick={() => goTab("wordpress")}
+                className="shrink-0 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-600"
+              >
+                다시 연결
+              </button>
+            </div>
           </div>
         )}
 

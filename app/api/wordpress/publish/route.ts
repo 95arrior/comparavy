@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { ensureUserRow } from "@/lib/userPlan";
 import { PLANS } from "@/lib/plans";
-import { publishPost, insertInternalLinks } from "@/lib/wordpress";
+import { publishPost, insertInternalLinks, WpAuthError } from "@/lib/wordpress";
 import { decryptSecret } from "@/lib/crypto";
 
 export async function POST(request: Request) {
@@ -120,6 +120,13 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true, link: result.link, postId: result.id });
   } catch (err) {
+    // 인증 만료 → 재연결 안내로 분기
+    if (err instanceof WpAuthError) {
+      return NextResponse.json(
+        { error: "워드프레스 연결이 만료됐어요. 워드프레스 탭에서 다시 연결해 주세요.", reconnect: true },
+        { status: 409 },
+      );
+    }
     const message = err instanceof Error ? err.message : "발행 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.";
     return NextResponse.json({ error: message }, { status: 502 });
   }
