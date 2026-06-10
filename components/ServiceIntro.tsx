@@ -110,7 +110,7 @@ function CostCompare() {
       </div>
       <div className="flex items-center justify-center text-neutral-300">↓</div>
       <div className="rounded-2xl border-2 bg-white p-5 shadow-sm" style={{ borderColor: BRAND }}>
-        <p className="text-sm font-medium" style={{ color: BRAND }}>AteFlo 프로</p>
+        <p className="text-sm font-medium" style={{ color: BRAND }}>에이트플로 프로</p>
         <p className="mt-1 text-2xl font-bold tracking-tight">
           월 ₩29,900 <span className="text-base font-medium text-neutral-400">/ 30편</span>
         </p>

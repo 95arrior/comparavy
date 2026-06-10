@@ -56,10 +56,10 @@ export default function CalendarShowcase() {
         <Reveal>
           <p className="flex items-center gap-1.5 text-sm font-semibold tracking-tight" style={{ color: BRAND }}>예약 발행</p>
           <h2 className="mt-4 text-3xl font-bold leading-[1.22] tracking-tight sm:text-[2.5rem] sm:leading-[1.18]">
-            업로드 스케줄,<br />캘린더로 관리하세요.
+            미리 써두면,<br />알아서 올라가요.
           </h2>
           <p className="mt-5 max-w-md text-base leading-relaxed text-neutral-500">
-            글을 미리 써두고 캘린더에 예약해두면, 정해둔 날·시간에 알아서 올라가요. 매일 붙잡고 있지 않아도 블로그가 꾸준히 채워져요.
+            매일 붙잡고 있지 않아도, 블로그가 꾸준히 채워져요.
           </p>
         </Reveal>
         <Reveal delay={120}>

@@ -22,6 +22,9 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: "Pretendard Variable", Pretendard, "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  /* 한국어는 어절(띄어쓰기) 단위로 줄바꿈 — 단어 중간에서 어색하게 끊기는 것 방지 */
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .font-pretendard {

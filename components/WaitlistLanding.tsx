@@ -4,6 +4,7 @@ import ServiceIntro from "@/components/ServiceIntro";
 import SiteFooter from "@/components/SiteFooter";
 import LandingIntro from "@/components/LandingIntro";
 import WaitlistForm from "@/components/WaitlistForm";
+import Reveal from "@/components/Reveal";
 import ProductShowcase from "@/components/ProductShowcase";
 import CalendarShowcase from "@/components/CalendarShowcase";
 import FeatureGrid from "@/components/FeatureGrid";
@@ -31,7 +32,7 @@ export default function WaitlistLanding() {
       <section className="hero-aurora relative overflow-hidden">
         <div className="relative z-10 mx-auto max-w-3xl px-6 pb-24 pt-24 text-center sm:pt-28">
           <p className="mono-rise inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs font-medium text-neutral-500">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#3f91ff]" /> 곧 오픈 · 사전 등록 받는 중
+            <span className="h-1.5 w-1.5 rounded-full bg-[#3f91ff]" /> 곧 오픈 · 신청 받는 중
           </p>
           <h1 className="font-pretendard mono-rise mono-d1 mt-5 whitespace-nowrap text-[1.7rem] font-bold leading-[1.15] tracking-tight sm:whitespace-normal sm:text-6xl">
             글쓰기, 키워드 하나면 끝
@@ -52,20 +53,26 @@ export default function WaitlistLanding() {
       {/* 공감 — 속마음 + 3개의 벽 */}
       <section className="border-t border-neutral-200/70 bg-neutral-50">
         <div className="mx-auto max-w-5xl px-6 py-24 sm:py-28">
-          <p className="text-center text-xl font-bold leading-snug tracking-tight sm:text-2xl">
-            “블로그로 돈 번다더니…<br />글 한 편 쓰는 것부터 막막하네.”
-          </p>
-          <p className="mt-4 text-center text-sm text-neutral-500">블로그 수익화의 진짜 적은 ‘글솜씨’가 아니라 이 세 가지예요.</p>
+          <Reveal>
+            <p className="text-center text-xl font-bold leading-snug tracking-tight sm:text-2xl">
+              “블로그로 돈 번다더니…<br />글 한 편 쓰는 것부터 막막하네.”
+            </p>
+            <p className="mt-4 text-center text-sm text-neutral-500">블로그 수익화의 진짜 적은 ‘글솜씨’가 아니라 이 세 가지예요.</p>
+          </Reveal>
           <div className="mt-12 grid gap-4 sm:grid-cols-3">
-            {WALLS.map((w) => (
-              <div key={w.t} className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
-                <span className="rounded-lg bg-neutral-900/5 px-2.5 py-1 text-xs font-semibold text-neutral-600">{w.t}</span>
-                <p className="mt-4 text-base font-semibold leading-snug tracking-tight">{w.q}</p>
-                <p className="mt-2 text-sm leading-relaxed text-neutral-500">{w.d}</p>
-              </div>
+            {WALLS.map((w, i) => (
+              <Reveal key={w.t} delay={i * 90}>
+                <div className="h-full rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+                  <span className="rounded-lg bg-neutral-900/5 px-2.5 py-1 text-xs font-semibold text-neutral-600">{w.t}</span>
+                  <p className="mt-4 text-base font-semibold leading-snug tracking-tight">{w.q}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-neutral-500">{w.d}</p>
+                </div>
+              </Reveal>
             ))}
           </div>
-          <p className="mt-10 text-center text-base font-semibold tracking-tight">그 벽, AteFlo가 넘게 해드려요.</p>
+          <Reveal delay={120}>
+            <p className="mt-10 text-center text-base font-semibold tracking-tight">그 벽, 에이트플로가 넘게 해드려요.</p>
+          </Reveal>
         </div>
       </section>
 
@@ -84,24 +91,28 @@ export default function WaitlistLanding() {
       {/* 정직 — 과장 없이 */}
       <section className="border-t border-neutral-200/70">
         <div className="mx-auto max-w-2xl px-6 py-24 text-center">
-          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">솔직하게 말할게요</h2>
-          <p className="mt-5 text-base leading-relaxed text-neutral-500">
-            방문자 수는 약속하지 않아요. 그건 시간과 꾸준함, 구글에 달린 거니까요.<br />
-            대신 <b className="text-neutral-800">좋은 글을 빠르고 꾸준히 쌓게</b> 해드려요. 성공 확률을 높이는 도구예요.
-          </p>
+          <Reveal>
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">솔직하게 말할게요</h2>
+            <p className="mt-5 text-base leading-relaxed text-neutral-500">
+              방문자 수는 약속하지 않아요. 그건 시간과 꾸준함, 구글에 달린 거니까요.<br />
+              대신 <b className="text-neutral-800">좋은 글을 빠르고 꾸준히 쌓게</b> 해드려요. 나머지는 당신이 만들어가는 거예요.
+            </p>
+          </Reveal>
         </div>
       </section>
 
       {/* 마지막 CTA */}
       <section className="border-t border-neutral-200/70 bg-neutral-50">
         <div className="mx-auto max-w-5xl px-6 py-28 text-center">
-          <h2 className="mx-auto max-w-2xl text-3xl font-bold leading-tight tracking-tight sm:text-5xl">
-            가장 먼저,<br />써보실 분을 찾아요.
-          </h2>
-          <p className="mx-auto mt-5 max-w-xl text-neutral-500">오픈하면 메일로 가장 먼저 초대해드릴게요.</p>
-          <div className="mt-10">
-            <WaitlistForm source="bottom" />
-          </div>
+          <Reveal>
+            <h2 className="mx-auto max-w-2xl text-3xl font-bold leading-tight tracking-tight sm:text-5xl">
+              가장 먼저,<br />써보실 분을 찾아요.
+            </h2>
+            <p className="mx-auto mt-5 max-w-xl text-neutral-500">오픈하면 메일로 가장 먼저 초대해드릴게요.</p>
+            <div className="mt-10">
+              <WaitlistForm source="bottom" />
+            </div>
+          </Reveal>
         </div>
       </section>
 

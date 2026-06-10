@@ -43,7 +43,7 @@ export default function WaitlistForm({ source = "landing", autoFocus = false }: 
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
         </span>
         <div>
-          <p className="text-sm font-semibold text-emerald-800">사전 등록 완료!</p>
+          <p className="text-sm font-semibold text-emerald-800">신청 완료!</p>
           <p className="text-xs text-emerald-700">오픈하면 가장 먼저 메일로 알려드릴게요.</p>
         </div>
       </div>
@@ -67,13 +67,13 @@ export default function WaitlistForm({ source = "landing", autoFocus = false }: 
           disabled={state === "loading"}
           className="shrink-0 rounded-xl bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white transition active:scale-95 hover:bg-neutral-700 disabled:opacity-50"
         >
-          {state === "loading" ? "등록 중…" : "사전 등록"}
+          {state === "loading" ? "신청 중…" : "신청하기"}
         </button>
       </div>
       {err ? (
         <p className="mt-2 pl-2 text-left text-xs text-red-500">{err}</p>
       ) : (
-        <p className="mt-2.5 text-center text-xs text-neutral-400">오픈하면 가장 먼저 초대해드려요 · 스팸 없어요</p>
+        <p className="mt-2.5 text-center text-xs text-neutral-400">오픈하면 가장 먼저 초대해드릴게요 · 스팸 없어요</p>
       )}
     </form>
   );

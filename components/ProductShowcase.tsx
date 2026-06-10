@@ -160,7 +160,7 @@ export default function ProductShowcase() {
           <p className="text-center text-sm font-semibold tracking-tight" style={{ color: BRAND }}>실제 화면</p>
           <h2 className="mt-3 text-center text-3xl font-bold leading-[1.2] tracking-tight sm:text-4xl">말보다, 직접 보세요</h2>
           <p className="mx-auto mt-4 max-w-md text-center text-base leading-relaxed text-neutral-500">
-            키워드 입력부터 워드프레스 발행까지, 이 안에서 다 끝나요.
+            키워드부터 발행까지, 여기서 다 끝나요.
           </p>
         </Reveal>
         <div className="mt-12 grid gap-4 sm:grid-cols-2">
