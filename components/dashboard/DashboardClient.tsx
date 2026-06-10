@@ -57,6 +57,7 @@ export default function DashboardClient(props: DashboardProps) {
   const [wpTags, setWpTags] = useState<string[]>([]);
   const [wpExpired, setWpExpired] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [confirmCancel, setConfirmCancel] = useState(false);
 
   // 워드프레스 연결 유효성 점검 — 앱 비밀번호 만료·삭제·사이트 다운 시 배너로 재연결을 유도한다.
   useEffect(() => {
@@ -162,9 +163,27 @@ export default function DashboardClient(props: DashboardProps) {
       const res = await fetch("/api/billing/cancel", { method: "POST" });
       if (res.ok) {
         setSubCanceled(true);
+        setConfirmCancel(false);
         setNotice("구독 해지를 예약했어요");
       } else {
         setNotice("해지 처리에 실패했어요. 잠시 후 다시 시도해 주세요.");
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // 구독 해지 취소(되돌리기) — 남은 기간이 있으면 자동결제를 다시 켠다
+  async function resumeSubscription() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const res = await fetch("/api/billing/resume", { method: "POST" });
+      if (res.ok) {
+        setSubCanceled(false);
+        setNotice("구독을 다시 이어가요");
+      } else {
+        setNotice("처리에 실패했어요. 잠시 후 다시 시도해 주세요.");
       }
     } finally {
       setBusy(false);
@@ -614,23 +633,54 @@ export default function DashboardClient(props: DashboardProps) {
                 </div>
 
                 {props.plan === "pro" && subCanceled && (
-                  <p className="mt-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-600">
-                    구독 해지를 예약했어요.{" "}
-                    {props.currentPeriodEnd ? (
-                      <><b className="text-neutral-800">{new Date(props.currentPeriodEnd).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}까지</b> 그대로 쓰실 수 있고,</>
-                    ) : (
-                      <>남은 이용 기간까지는 그대로 쓰실 수 있고,</>
-                    )}{" "}
-                    다음 결제는 진행되지 않아요.
-                  </p>
+                  <div className="mt-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3">
+                    <p className="text-sm leading-relaxed text-neutral-600">
+                      구독 해지를 예약했어요.{" "}
+                      {props.currentPeriodEnd ? (
+                        <><b className="text-neutral-800">{new Date(props.currentPeriodEnd).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}까지</b> 그대로 쓰실 수 있고,</>
+                      ) : (
+                        <>남은 이용 기간까지는 그대로 쓰실 수 있고,</>
+                      )}{" "}
+                      다음 결제는 진행되지 않아요.
+                    </p>
+                    <button
+                      onClick={resumeSubscription}
+                      disabled={busy}
+                      className="mt-3 rounded-lg bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:opacity-50"
+                    >
+                      {busy ? "처리 중…" : "해지 취소하고 계속 이용"}
+                    </button>
+                  </div>
                 )}
 
                 {/* 계정 관리 — 눈에 띄지 않게(작은 텍스트), 단 접근은 가능하게 */}
                 <div className="mt-10 flex flex-col items-start gap-2 border-t border-neutral-100 pt-5 text-xs">
                   {props.plan === "pro" && !subCanceled && (
-                    <button onClick={cancelSubscription} disabled={busy} className="text-neutral-400 transition hover:text-neutral-600 disabled:opacity-50">
-                      구독 해지
-                    </button>
+                    !confirmCancel ? (
+                      <button onClick={() => setConfirmCancel(true)} className="text-neutral-400 transition hover:text-neutral-600">
+                        구독 해지
+                      </button>
+                    ) : (
+                      <div className="w-full rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+                        <p className="text-sm font-medium text-neutral-900">구독을 해지할까요?</p>
+                        <p className="mt-1 text-sm leading-relaxed text-neutral-600">
+                          {props.currentPeriodEnd ? (
+                            <><b className="text-neutral-800">{new Date(props.currentPeriodEnd).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}까지</b>는 그대로 쓰실 수 있어요.</>
+                          ) : (
+                            <>남은 이용 기간까지는 그대로 쓰실 수 있어요.</>
+                          )}{" "}
+                          다음 결제만 진행되지 않고, 언제든 다시 켤 수 있어요.
+                        </p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <button onClick={cancelSubscription} disabled={busy} className="rounded-lg bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:opacity-50">
+                            {busy ? "처리 중…" : "해지하기"}
+                          </button>
+                          <button onClick={() => setConfirmCancel(false)} disabled={busy} className="rounded-lg border border-neutral-300 px-4 py-1.5 text-sm font-medium transition hover:border-neutral-900">
+                            그대로 둘게요
+                          </button>
+                        </div>
+                      </div>
+                    )
                   )}
                   {!confirmDelete ? (
                     <button onClick={() => setConfirmDelete(true)} className="text-neutral-400 transition hover:text-red-500">
@@ -646,7 +696,7 @@ export default function DashboardClient(props: DashboardProps) {
                         이미 결제한 이용권은 환불되지 않으며, 환불은 <a href="/refund" target="_blank" className="underline">환불 정책</a>을 따라요.
                       </p>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        <button onClick={deleteAccount} disabled={busy} className="rounded-full bg-red-600 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-50">
+                        <button onClick={deleteAccount} disabled={busy} className="rounded-lg bg-red-600 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-50">
                           {busy ? "탈퇴 처리 중…" : "탈퇴하기"}
                         </button>
                         <button onClick={() => setConfirmDelete(false)} disabled={busy} className="rounded-xl border border-neutral-300 px-4 py-1.5 text-sm font-medium transition hover:border-neutral-900">
