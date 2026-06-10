@@ -163,6 +163,12 @@ html {
   100% { transform: scale(1); }
 }
 .ateflo-pop { animation: ateflo-pop 0.26s cubic-bezier(0.34, 1.4, 0.64, 1); }
+/* 인트로 워드마크 — 로고 등장 뒤 살짝 떠오름 */
+@keyframes ateflo-intro-word {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.ateflo-intro-word { animation: ateflo-intro-word 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.95s both; }
 @keyframes ateflo-dropdown {
   from { opacity: 0; transform: translateY(-6px) scaleY(0.97); }
   to   { opacity: 1; transform: translateY(0) scaleY(1); }
