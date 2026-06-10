@@ -32,7 +32,7 @@ body{font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;ba
 .wrap{position:relative;z-index:1;height:100%;padding:100px 96px;display:flex;flex-direction:column;justify-content:space-between;}
 .top{display:flex;flex-direction:column;gap:38px;}
 .pill{align-self:flex-start;background:${ACCENT};color:${INK};font-weight:800;font-size:36px;line-height:1;padding:14px 26px;border-radius:999px;}
-.mark{font-size:32px;font-weight:700;letter-spacing:-.01em;opacity:.92;}
+.mark{display:flex;align-items:center;gap:14px;font-size:34px;font-weight:700;letter-spacing:-.01em;opacity:.96;}
 .title{font-weight:800;line-height:1.14;letter-spacing:-.025em;font-size:${isCover ? "94px" : "80px"};word-break:keep-all;}
 .bottom{display:flex;flex-direction:column;}
 .body{font-weight:500;font-size:42px;line-height:1.45;opacity:.85;word-break:keep-all;}
@@ -42,7 +42,7 @@ body{font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;ba
 <div class="glow"></div><div class="grain"></div>
 <div class="wrap">
   <div class="top">
-    ${isCover ? `<div class="mark">● 에이트플로</div>` : `<span class="pill">${num}</span>`}
+    ${isCover ? `<div class="mark"><svg width="40" height="40" viewBox="0 0 32 32"><path fill="#fff" d="M16 16 L28.99 8.5 A15 15 0 1 0 28.99 23.5 Z"/></svg>에이트플로</div>` : `<span class="pill">${num}</span>`}
     <div class="title">${esc(slide.title)}</div>
   </div>
   <div class="bottom">
