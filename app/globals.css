@@ -182,18 +182,18 @@ html {
 
 /* 스크롤 유도 — 원형(아래 화살표)이 핑퐁하며 가로로 늘어나 문구가 펼쳐짐 → 미세 바운스 계속 */
 @keyframes ateflo-scrollpill {
-  0%   { width: 36px; }
-  52%  { width: 218px; }   /* 쭉 늘어남(오버슈트) */
-  70%  { width: 188px; }   /* 핑 */
-  85%  { width: 202px; }   /* 퐁 */
-  100% { width: 196px; }   /* 안착 */
+  0%   { width: 40px; }
+  52%  { width: 206px; }   /* 쭉 늘어남(오버슈트) */
+  70%  { width: 176px; }   /* 핑 */
+  85%  { width: 190px; }   /* 퐁 */
+  100% { width: 184px; }   /* 안착 */
 }
 @keyframes ateflo-scrollbob {
   0%, 100% { transform: translateY(0); }
   50%      { transform: translateY(3px); }
 }
 .ateflo-scrollpill {
-  width: 196px;
+  width: 184px;
   animation: ateflo-scrollpill 1.05s cubic-bezier(0.34, 1.3, 0.64, 1) both,
              ateflo-scrollbob 1.7s ease-in-out 1.15s infinite;
 }
