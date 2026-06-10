@@ -18,9 +18,14 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
 
-  const rl = await checkRateLimit(supabase, user.id, "keyword_ideas", 15, 300);
-  if (!rl.ok) {
-    return NextResponse.json({ error: `추천이 너무 잦아요. ${rl.retryAfterSec ?? 60}초 후 다시 시도해 주세요.` }, { status: 429 });
+  // 버스트(연타) 방지 + 하루 한도 (글감 추천은 무료도 쓰므로 비용 누수 차단)
+  const rlBurst = await checkRateLimit(supabase, user.id, "keyword_ideas", 5, 300);
+  if (!rlBurst.ok) {
+    return NextResponse.json({ error: `추천이 너무 잦아요. ${rlBurst.retryAfterSec ?? 60}초 후 다시 시도해 주세요.` }, { status: 429 });
+  }
+  const rlDay = await checkRateLimit(supabase, user.id, "keyword_ideas_day", 10, 86400);
+  if (!rlDay.ok) {
+    return NextResponse.json({ error: "오늘 글감 추천 횟수를 다 썼어요. 내일 다시 이용해 주세요." }, { status: 429 });
   }
 
   const body = await request.json().catch(() => ({}));

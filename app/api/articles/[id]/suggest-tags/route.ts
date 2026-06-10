@@ -29,6 +29,10 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   if (!rl.ok) {
     return NextResponse.json({ error: `추천이 너무 잦아요. ${rl.retryAfterSec ?? 60}초 후 다시 시도해 주세요.` }, { status: 429 });
   }
+  const rlDay = await checkRateLimit(supabase, user.id, "tag_suggest_day", 60, 86400);
+  if (!rlDay.ok) {
+    return NextResponse.json({ error: "오늘 태그 추천 횟수를 다 썼어요. 내일 다시 이용해 주세요." }, { status: 429 });
+  }
 
   const { data: article } = await supabase
     .from("articles")

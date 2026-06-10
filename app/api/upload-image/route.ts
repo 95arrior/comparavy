@@ -35,6 +35,10 @@ export async function POST(request: Request) {
   if (!rl.ok) {
     return NextResponse.json({ error: `업로드가 너무 잦아요. ${rl.retryAfterSec ?? 60}초 후 다시 시도해 주세요.` }, { status: 429 });
   }
+  const rlDay = await checkRateLimit(supabase, user.id, "upload_image_day", 150, 86400);
+  if (!rlDay.ok) {
+    return NextResponse.json({ error: "오늘 이미지 업로드 한도를 다 썼어요. 내일 다시 이용해 주세요." }, { status: 429 });
+  }
 
   const body = await request.json().catch(() => ({}));
   const dataUri = typeof body.dataUri === "string" ? body.dataUri : "";
