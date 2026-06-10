@@ -325,7 +325,7 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
   );
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
+    <div className="rounded-xl border border-neutral-200 bg-white">
       <CenterToast message={uploading ? "이미지를 올리고 있어요…" : errToast} />
 
       {confirmRestore && (
