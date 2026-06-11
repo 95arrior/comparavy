@@ -372,7 +372,7 @@ function SocialView({ stats }: { stats: AdminStats }) {
                 disabled={busy}
                 className="rounded-lg border border-neutral-300 px-2.5 py-1.5 text-sm outline-none"
               >
-                {[7, 8, 9, 10, 11, 12, 13, 17, 18, 19, 20, 21, 22].map((h) => <option key={h} value={h}>{hourLabel(h)}</option>)}
+                {Array.from({ length: 17 }, (_, i) => i + 6).map((h) => <option key={h} value={h}>{hourLabel(h)}</option>)}
               </select>
             </label>
           </div>
