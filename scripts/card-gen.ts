@@ -55,7 +55,12 @@ async function main() {
   }
 
   console.log("④ 보관함에 적재…");
-  const { error } = await admin.from("social_posts").insert({ type: "carousel", media_urls: urls, caption: card.caption, topic, threads_text: card.threadsText });
+  const row = { type: "carousel", media_urls: urls, caption: card.caption, topic, threads_text: card.threadsText };
+  let { error } = await admin.from("social_posts").insert(row);
+  if (error && /threads_text/.test(error.message)) {
+    const { threads_text, ...rest } = row; void threads_text;
+    ({ error } = await admin.from("social_posts").insert(rest));
+  }
   if (error) throw new Error("보관함 저장 실패: " + error.message);
 
   console.log(`\n✅ 완료! 카드뉴스 ${urls.length}장 보관함에 담겼어요.`);
