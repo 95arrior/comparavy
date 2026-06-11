@@ -83,7 +83,8 @@ export async function generateCardNews(topic: string, angleLabel = "", opts: Gen
           '  - point: {"type":"point","title":"...","points":["핵심1","핵심2","핵심3"]} (2~3개)\n' +
           '  - mockup: {"type":"mockup","title":"...","body":"...","mockup":"generate|publish|calendar|edit"} (제품 화면 예시 — 우리 서비스 보여줄 때만)\n' +
           "규칙:\n" +
-          "① 1장=text 후크 표지(3초 안에 멈추게 하는 한 줄 — 길게 설명 말고 짧고 강하게). 5장=text 마무리(저장·팔로우 유도, 서비스 홍보 문구 금지). 2~4장은 내용에 맞게 stat·point·text를 섞어 변화있게(목업은 쓰지 않음).\n" +
+          "① 1장=text 후크 표지. 표지 제목은 3초 안에 읽히게 아주 짧고 굵게(공백 빼고 16자 이내, 1~2줄). 길게 쓰면 글씨가 작아져서 안 된다 — 핵심만 쳐내라. 5장=text 마무리(저장·팔로우 유도, 서비스 홍보 문구 금지). 2~4장은 내용에 맞게 stat·point·text를 섞어 변화있게(목업은 쓰지 않음).\n" +
+          "⑦ '막 찍어낸' 느낌 금지. 각 카드는 그 주제만의 구체적인 알맹이(실제 수치 기준·실전 팁·구체 예시)를 담는다. 뻔한 일반론·다른 카드와 비슷한 재탕·빈 말 금지. 한 장 한 장 따로 공들인 것처럼.\n" +
           "② title 짧고 강하게. body 1~2줄. points는 각 12자 내외.\n" +
           "②-1 제목은 의미 단위로 줄바꿈(\\n)해서 자연스럽게 끊는다. 한 단어·한 글자만 다음 줄로 떨어뜨리지 말 것(예: '제휴마케/팅' 금지). 표지 제목은 3줄 이내.\n" +
           "⑥ 카드마다 후크·표현·소재를 다르게 한다. 매번 '월 100만원' 같은 똑같은 수익 후크를 반복하지 말 것. 모든 장이 돈 얘기일 필요 없다(실전 팁·공감·유머·반전도 섞기).\n" +
@@ -140,9 +141,10 @@ export function assessCard(card: CardNews): { ok: boolean; reasons: string[] } {
   const slides = card.slides;
   if (slides.length < 4) reasons.push("슬라이드 4장 미만");
 
-  // 표지 제목 길이
-  const cover = slides[0]?.title?.trim() ?? "";
+  // 표지 제목 길이 — 너무 짧아도, 너무 길어도(글씨 작아짐) 거른다
+  const cover = (slides[0]?.title ?? "").replace(/\s|\n/g, "");
   if (cover.length < 4) reasons.push("표지 제목이 너무 짧음");
+  if (cover.length > 22) reasons.push("표지 제목이 너무 김(3초 후크용으로 짧게)");
 
   // 제목 중복
   const titles = slides.map((s) => s.title.replace(/\s+/g, "").toLowerCase());

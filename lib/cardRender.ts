@@ -72,9 +72,9 @@ function slideHtml(slide: CardSlide, index: number, total: number): string {
   const num = String(index + 1).padStart(2, "0");
   const totalStr = String(total).padStart(2, "0");
   const glow = isCover ? "radial-gradient(circle, rgba(255,255,255,0.55), transparent 68%)" : "radial-gradient(circle, rgba(63,145,255,0.85), transparent 68%)";
-  // 제목 길이에 맞춰 크기 조절(긴 제목이 표지를 꽉 채워 어색하게 줄바꿈되는 것 방지)
+  // 제목 길이에 맞춰 크기 조절 — 표지는 크게 유지(짧은 후크 전제). 길어도 floor를 높게.
   const tlen = [...slide.title.replace(/\n/g, "")].length;
-  const titleSize = isCover ? (tlen <= 14 ? 92 : tlen <= 22 ? 76 : 62) : slide.type === "stat" ? 52 : tlen <= 16 ? 76 : 62;
+  const titleSize = isCover ? (tlen <= 12 ? 104 : tlen <= 18 ? 92 : tlen <= 24 ? 80 : 72) : slide.type === "stat" ? 50 : tlen <= 16 ? 74 : 62;
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
 <style>

@@ -134,16 +134,19 @@ function Funnel({ stats }: { stats: AdminStats }) {
 
 function SelectField({ label, value, onChange, options, disabled }: { label: string; value: number; onChange: (v: number) => void; options: { value: number; label: string }[]; disabled?: boolean }) {
   return (
-    <label className="flex flex-col gap-1 rounded-xl border border-neutral-200 px-3 py-2.5 transition focus-within:border-neutral-400">
-      <span className="text-xs text-neutral-400">{label}</span>
-      <select
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        disabled={disabled}
-        className="-ml-0.5 bg-transparent text-sm font-semibold text-neutral-900 outline-none disabled:opacity-50"
-      >
-        {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-      </select>
+    <label className="block rounded-xl border border-neutral-200 px-3 py-2 transition focus-within:border-neutral-400">
+      <span className="mb-0.5 block text-xs text-neutral-400">{label}</span>
+      <div className="relative">
+        <select
+          value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          disabled={disabled}
+          className="w-full cursor-pointer appearance-none bg-transparent pr-6 text-sm font-semibold text-neutral-900 outline-none disabled:opacity-50"
+        >
+          {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+        <span className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-[10px] text-neutral-400">▼</span>
+      </div>
     </label>
   );
 }
