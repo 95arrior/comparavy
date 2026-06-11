@@ -211,12 +211,17 @@ const PANELS = [
 export default function ProductShowcase() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const chipsRef = useRef<HTMLDivElement>(null);
   const chipRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [active, setActive] = useState(0);
 
-  // 활성 칩이 칩줄에서 가려져 있으면 보이도록 스크롤(초점 맞춤)
+  // 활성 칩이 칩줄에서 가려져 있으면 칩줄을 직접 스크롤해 가운데로(페이지 영향 없이)
   useEffect(() => {
-    chipRefs.current[active]?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    const chip = chipRefs.current[active];
+    const row = chipsRef.current;
+    if (!chip || !row) return;
+    const target = chip.offsetLeft - (row.clientWidth - chip.offsetWidth) / 2;
+    row.scrollTo({ left: Math.max(0, target), behavior: "smooth" });
   }, [active]);
 
   function onScroll() {
@@ -252,7 +257,7 @@ export default function ProductShowcase() {
         </Reveal>
 
         {/* 칩(탭) — 클릭하면 해당 카드로, 슬라이드하면 같이 바뀜 */}
-        <div className="no-scrollbar mt-8 flex gap-2 overflow-x-auto sm:mt-10 sm:justify-center">
+        <div ref={chipsRef} className="no-scrollbar mt-8 flex gap-2 overflow-x-auto sm:mt-10 sm:justify-center">
           {PANELS.map((p, i) => (
             <button
               key={p.label}
