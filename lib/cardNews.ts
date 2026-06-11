@@ -101,7 +101,7 @@ export async function generateCardNews(topic: string, angleLabel = "", opts: Gen
           "①-1 표지 후크는 매번 완전히 다른 형식으로 만든다. 질문형·반전·숫자·대조·유머·호기심 자극 등 다양하게 섞고, '글 열심히 썼는데~', '~했는데 왜~', '~했던 나' 같은 똑같은 패턴을 반복하지 마라(이거 절대 금지). 재미있게 비틀어도 좋다. 다른 카드 표지와 첫 단어·구조가 겹치면 안 된다.\n" +
           "⑦ '막 찍어낸' 느낌 금지. 각 카드는 그 주제만의 구체적인 알맹이(실전 팁·구체 예시)를 담는다. 뻔한 일반론·다른 카드와 비슷한 재탕·빈 말 금지. 한 장 한 장 따로 공들인 것처럼.\n" +
           "⑧ 본문 슬라이드(2~4장)에만 내용을 돕는 아이콘 1개를 \"icon\"으로 넣는다(표지·마무리엔 icon 넣지 마라). 값(택1): chart, idea, write, search, money, check, warn, clock, target, book, people, tag.\n" +
-          "⑨ 특정 AI 도구·서비스(ChatGPT, Gemini, Claude, Perplexity 등) 소식 카드면 표지 슬라이드에 \"brand\"로 그 도구의 Simple Icons 슬러그를 넣어라(예: openai, googlegemini, anthropic, perplexity). 그러면 표지에 실제 로고가 들어간다. 일반 카드는 brand를 비운다.\n" +
+          "⑨ 특정 AI 도구·서비스 소식 카드면 표지 슬라이드에 \"brand\"로 그 도구 이름을 넣어라(예: ChatGPT, Gemini, Claude, Perplexity). 그러면 표지에 그 이름이 깔끔한 배지로 들어간다(18자 이내). 일반 카드는 brand를 비운다.\n" +
           "② title 짧고 강하게. body 1~2줄. points는 각 12자 내외.\n" +
           "②-1 제목은 의미 단위로 줄바꿈(\\n)해서 자연스럽게 끊는다. 한 단어·한 글자만 다음 줄로 떨어뜨리지 말 것(예: '제휴마케/팅' 금지). 표지 제목은 3줄 이내.\n" +
           "⑥ 카드마다 후크·표현·소재를 다르게 한다. 매번 '월 100만원' 같은 똑같은 수익 후크를 반복하지 말 것. 모든 장이 돈 얘기일 필요 없다(실전 팁·공감·유머·반전도 섞기).\n" +
@@ -155,7 +155,7 @@ export async function generateCardNews(topic: string, angleLabel = "", opts: Gen
           points: Array.isArray(s.points) ? s.points.filter((p: unknown) => typeof p === "string").slice(0, 3).map((p: string) => p.slice(0, 28)) : undefined,
           mockup: mockups.includes(s.mockup) ? s.mockup : undefined,
           icon: ICON_NAMES.includes(s.icon) ? s.icon : undefined,
-          brand: typeof s.brand === "string" ? s.brand.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 24) || undefined : undefined,
+          brand: typeof s.brand === "string" ? s.brand.replace(/[^A-Za-z0-9 .+-]/g, "").trim().slice(0, 18) || undefined : undefined,
         }))
     : [];
   if (!slides.length) throw new Error("슬라이드가 비어 있어요.");

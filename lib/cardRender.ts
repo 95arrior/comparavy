@@ -76,8 +76,8 @@ function mockup(kind: string): string {
 function midHtml(slide: CardSlide, isCover: boolean): string {
   if (slide.type === "text") {
     if (isCover) {
-      // 표지엔 아이콘 없음. 단, AI 도구 소식이면 그 자리에 실제 로고(Simple Icons).
-      if (slide.brand) return `<div class="iconwrap"><img src="https://cdn.simpleicons.org/${slide.brand}/ffffff" width="148" height="148" alt="" style="opacity:.95"/></div>`;
+      // 표지엔 아이콘 없음. 단, AI 도구 소식이면 도구 이름을 깔끔한 칩으로(외부 로고는 상표 이슈로 신뢰도 낮아 텍스트 칩 사용).
+      if (slide.brand) return `<div class="iconwrap"><span class="brandchip">${esc(slide.brand)}</span></div>`;
       return "";
     }
     // 본문 텍스트 슬라이드는 비어 보이니 라인 아이콘으로 이해를 돕는다
@@ -123,6 +123,7 @@ body{font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;ba
 .pill{align-self:flex-start;background:${ACCENT};color:${INK};font-weight:800;font-size:36px;line-height:1;padding:14px 26px;border-radius:999px;}
 .title{font-weight:800;line-height:1.14;letter-spacing:-.025em;font-size:${titleSize}px;word-break:keep-all;}
 .title.cover{min-height:330px;}
+.brandchip{display:inline-block;border:3px solid rgba(255,255,255,.85);color:#fff;font-size:52px;font-weight:800;letter-spacing:-.01em;padding:18px 40px;border-radius:999px;}
 .mid{flex:1;display:flex;align-items:center;justify-content:center;}
 .bottom{display:flex;flex-direction:column;}
 .body{font-weight:500;font-size:42px;line-height:1.45;opacity:.85;word-break:keep-all;}
