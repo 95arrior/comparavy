@@ -256,6 +256,12 @@ html {
 @keyframes mock-chip-pub { 0%, 45% { opacity: 0; transform: scale(0.85); } 55% { opacity: 1; transform: scale(1.12); } 64%, 100% { opacity: 1; transform: scale(1); } }
 .mock-chip-sched { animation: mock-chip-sched 4s ease-in-out infinite; }
 .mock-chip-pub { animation: mock-chip-pub 4s cubic-bezier(0.34, 1.4, 0.64, 1) infinite; }
+
+/* 버튼이 '톡' 눌리는 애니 (커서 대신). gen=초반 클릭, 기본=후반 클릭 */
+@keyframes mock-gen-press { 0%, 3% { transform: scale(1); } 6% { transform: scale(0.93); } 12% { transform: scale(1); } 100% { transform: scale(1); } }
+.mock-gen-press { animation: mock-gen-press 4s ease-in-out infinite; transform-origin: center; }
+@keyframes mock-press { 0%, 52% { transform: scale(1); } 58% { transform: scale(0.93); } 64% { transform: scale(1); } 100% { transform: scale(1); } }
+.mock-press { animation: mock-press 4s ease-in-out infinite; transform-origin: center; }
 @keyframes ateflo-dropdown {
   from { opacity: 0; transform: translateY(-6px) scaleY(0.97); }
   to   { opacity: 1; transform: translateY(0) scaleY(1); }

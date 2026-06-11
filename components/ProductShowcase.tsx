@@ -1,16 +1,18 @@
+"use client";
+
+import { useRef, useState } from "react";
 import Reveal from "@/components/Reveal";
 
 const BRAND = "#3182F6";
 
-/** 앱 화면처럼 보이는 프레임(상단 점 3개 + 라벨). */
-function Frame({ label, children }: { label: string; children: React.ReactNode }) {
+/** 앱 화면처럼 보이는 프레임(상단 점 3개). 제목은 위 칩이 담당. */
+function Frame({ children }: { children: React.ReactNode }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
       <div className="flex items-center gap-1.5 border-b border-neutral-100 bg-neutral-50/60 px-4 py-2.5">
         <span className="h-2.5 w-2.5 rounded-full bg-neutral-200" />
         <span className="h-2.5 w-2.5 rounded-full bg-neutral-200" />
         <span className="h-2.5 w-2.5 rounded-full bg-neutral-200" />
-        <span className="ml-2 text-xs font-medium text-neutral-400">{label}</span>
       </div>
       <div className="flex h-[256px] flex-col p-5">{children}</div>
     </div>
@@ -27,18 +29,6 @@ function Bar({ w, c = "bg-neutral-200", delay }: { w: string; c?: string; delay?
   );
 }
 
-// 마우스 커서 + 클릭 링 (버튼 위에서 '톡' 누르는 연출). gen=초반 클릭, 기본=후반 클릭
-function Cursor({ className = "", gen = false }: { className?: string; gen?: boolean }) {
-  return (
-    <span className={`pointer-events-none absolute z-10 ${className}`}>
-      <span className={`absolute -left-2 -top-2 h-7 w-7 rounded-full bg-[#3f91ff]/30 ${gen ? "mock-gen-ring" : "mock-ring"}`} />
-      <svg className={`relative drop-shadow ${gen ? "mock-gen-tap" : "mock-tap"}`} width="18" height="18" viewBox="0 0 24 24">
-        <path d="M5 3l6 16 2-6 6-2z" fill="#191F28" stroke="#fff" strokeWidth="1.3" strokeLinejoin="round" />
-      </svg>
-    </span>
-  );
-}
-
 const ImgIcon = ({ s = 16 }: { s?: number }) => (
   <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="8.5" cy="9.5" r="1.5" /><path d="M21 16l-5-5L5 20" /></svg>
 );
@@ -49,10 +39,7 @@ function MockGenerate() {
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 rounded-xl border border-neutral-200 px-3 py-2.5">
         <span className="flex-1 text-sm text-neutral-700">강아지 분리불안 해결 방법</span>
-        <span className="relative rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white">
-          글 생성
-          <Cursor gen className="-bottom-2 right-1" />
-        </span>
+        <span className="mock-gen-press inline-block rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white">글 생성</span>
       </div>
       <div className="mt-4 space-y-2.5">
         <Bar w="100%" delay={0.15} />
@@ -80,13 +67,10 @@ function MockEdit() {
         <Bar w="100%" />
         <Bar w="88%" />
       </div>
-      {/* 이미지 추가 버튼 + 커서 */}
-      <div className="relative mt-3 inline-block">
-        <span className="flex items-center gap-1.5 rounded-lg border border-dashed border-neutral-300 px-2.5 py-1.5 text-[11px] font-medium text-neutral-500">
-          <ImgIcon s={13} /> 이미지 추가
-        </span>
-        <Cursor className="-bottom-1 right-1" />
-      </div>
+      {/* 이미지 추가 버튼(눌리는 애니) */}
+      <span className="mock-press mt-3 inline-flex items-center gap-1.5 rounded-lg border border-dashed border-neutral-300 px-2.5 py-1.5 text-[11px] font-medium text-neutral-500">
+        <ImgIcon s={13} /> 이미지 추가
+      </span>
       {/* 들어오는 이미지 (클릭 후 떠오름) */}
       <div className="mock-reveal-img mt-3 flex h-14 items-center justify-center rounded-lg bg-neutral-100 text-neutral-300">
         <ImgIcon s={26} />
@@ -108,11 +92,8 @@ function MockPublish() {
         <p className="mt-2.5 text-sm font-semibold">올렸어요</p>
         <p className="mt-0.5 text-xs text-neutral-400">myblog.com/dog-anxiety</p>
       </div>
-      {/* 아래: 발행 버튼 + 커서 */}
-      <div className="relative mt-3">
-        <span className="block rounded-xl py-2.5 text-center text-sm font-semibold text-white" style={{ background: BRAND }}>워드프레스에 발행</span>
-        <Cursor className="-bottom-2 right-6" />
-      </div>
+      {/* 아래: 발행 버튼(눌리는 애니) */}
+      <span className="mock-press mt-3 block rounded-xl py-2.5 text-center text-sm font-semibold text-white" style={{ background: BRAND }}>워드프레스에 발행</span>
       <p className="mt-auto pt-4 text-center text-xs font-medium text-[#3f91ff]">버튼 하나로 발행돼요</p>
     </div>
   );
@@ -200,10 +181,7 @@ function MockMobile() {
           <span className="absolute left-1/2 top-1.5 h-1 w-7 -translate-x-1/2 rounded-full bg-neutral-200" />
           <p className="text-[8px] font-medium text-neutral-400">키워드</p>
           <div className="mt-1 rounded-md bg-neutral-50 px-1.5 py-1.5 text-[9px] font-medium text-neutral-700">강아지 분리불안</div>
-          <div className="relative mt-2">
-            <span className="block rounded-md py-1.5 text-center text-[9px] font-semibold text-white" style={{ background: BRAND }}>워드프레스에 발행</span>
-            <Cursor className="-bottom-1.5 right-1" />
-          </div>
+          <span className="mock-press mt-2 block rounded-md py-1.5 text-center text-[9px] font-semibold text-white" style={{ background: BRAND }}>워드프레스에 발행</span>
           {/* 게시 완료 (클릭 후 떠오름) */}
           <div className="mock-reveal mt-2 flex items-center gap-1.5 rounded-md bg-emerald-50 px-1.5 py-1.5">
             <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
@@ -231,6 +209,31 @@ const PANELS = [
 ];
 
 export default function ProductShowcase() {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [active, setActive] = useState(0);
+
+  function onScroll() {
+    const c = scrollRef.current;
+    if (!c) return;
+    const center = c.scrollLeft + c.clientWidth / 2;
+    let best = 0;
+    let bestDist = Infinity;
+    itemRefs.current.forEach((el, i) => {
+      if (!el) return;
+      const dist = Math.abs(el.offsetLeft + el.offsetWidth / 2 - center);
+      if (dist < bestDist) { bestDist = dist; best = i; }
+    });
+    setActive((prev) => (prev === best ? prev : best));
+  }
+
+  function jump(i: number) {
+    const el = itemRefs.current[i];
+    const c = scrollRef.current;
+    if (!el || !c) return;
+    c.scrollTo({ left: el.offsetLeft - (c.clientWidth - el.offsetWidth) / 2, behavior: "smooth" });
+  }
+
   return (
     <section className="border-t border-neutral-200/70">
       <div className="mx-auto max-w-5xl px-5 py-12 sm:px-6 sm:py-28">
@@ -242,34 +245,45 @@ export default function ProductShowcase() {
           </p>
         </Reveal>
 
-        {/* 데스크탑: 2×2 그리드 */}
-        <div className="mt-12 hidden gap-4 sm:grid sm:grid-cols-2">
+        {/* 칩(탭) — 클릭하면 해당 카드로, 슬라이드하면 같이 바뀜 */}
+        <div className="no-scrollbar mt-8 flex gap-2 overflow-x-auto sm:mt-10 sm:justify-center">
           {PANELS.map((p, i) => (
-            <Reveal key={p.label} delay={i * 80}>
-              <Frame label={p.label}>{p.node}</Frame>
-            </Reveal>
+            <button
+              key={p.label}
+              type="button"
+              onClick={() => jump(i)}
+              className={`min-h-[40px] shrink-0 rounded-full px-4 text-sm font-semibold transition active:scale-[0.97] ${active === i ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-500 hover:bg-neutral-200"}`}
+            >
+              {p.label}
+            </button>
           ))}
         </div>
 
-        {/* 모바일: 옆으로 스와이프(터치 스크롤·스냅) */}
-        <div className="no-scrollbar -mx-5 mt-8 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 sm:hidden">
-          {PANELS.map((p) => (
-            <div key={p.label} className="w-[86%] shrink-0 snap-center">
-              <Frame label={p.label}>{p.node}</Frame>
+        {/* 슬라이드 캐러셀 (좌우로 밀거나 위 칩 클릭) */}
+        <div
+          ref={scrollRef}
+          onScroll={onScroll}
+          className="no-scrollbar -mx-5 mt-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 sm:mx-0 sm:px-0"
+        >
+          {PANELS.map((p, i) => (
+            <div
+              key={p.label}
+              ref={(el) => { itemRefs.current[i] = el; }}
+              className="w-[86%] shrink-0 snap-center sm:w-[calc(50%-0.5rem)]"
+            >
+              <Frame>{p.node}</Frame>
             </div>
           ))}
         </div>
-        <div className="mt-3 flex items-center justify-center gap-2 text-neutral-400 sm:hidden">
-          <span className="text-sm">‹</span>
+        <div className="mt-3 flex items-center justify-center gap-1.5 text-neutral-400">
           <span className="swipe-hint inline-flex text-neutral-500">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11" />
               <path d="M12 11V4.5a1.5 1.5 0 0 1 3 0V11" />
               <path d="M15 11V7a1.5 1.5 0 0 1 3 0v6a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-3l-2-3.2a1.5 1.5 0 0 1 2.4-1.7L9 13" />
             </svg>
           </span>
-          <span className="text-sm">›</span>
-          <span className="ml-1 text-xs">밀어보기</span>
+          <span className="text-xs">밀거나 위 탭을 눌러요</span>
         </div>
       </div>
     </section>

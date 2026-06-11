@@ -189,15 +189,9 @@ function MobilePublish() {
         <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-neutral-200" />
         <p className="text-[11px] font-medium text-neutral-400">키워드</p>
         <div className="mt-1.5 rounded-xl bg-neutral-50 px-3 py-2.5 text-[13px] font-medium text-neutral-700">강아지 분리불안</div>
-        <div className="relative mt-3">
-          <span className="block w-full rounded-xl py-2.5 text-center text-[13px] font-semibold text-white" style={{ background: BRAND }}>
-            워드프레스에 발행
-          </span>
-          <span className="pointer-events-none absolute -bottom-2 right-6 z-10">
-            <span className="absolute -left-2 -top-2 h-7 w-7 rounded-full bg-[#3182F6]/30 mock-ring" />
-            <svg className="relative drop-shadow mock-tap" width="18" height="18" viewBox="0 0 24 24"><path d="M5 3l6 16 2-6 6-2z" fill="#191F28" stroke="#fff" strokeWidth="1.3" strokeLinejoin="round" /></svg>
-          </span>
-        </div>
+        <span className="mock-press mt-3 block w-full rounded-xl py-2.5 text-center text-[13px] font-semibold text-white" style={{ background: BRAND }}>
+          워드프레스에 발행
+        </span>
         <div className="mock-reveal mt-3 flex items-center gap-2.5 rounded-xl bg-emerald-50 px-3 py-2.5">
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
             <Check size={15} />
