@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import Link from "next/link";
-import { SITE_NAME, SITE_DESCRIPTION } from "@/lib/site";
+import { SITE_NAME, SITE_DESCRIPTION, SITE_URL } from "@/lib/site";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { ensureUserRow } from "@/lib/userPlan";
 import { isAdminEmail, getAdminStats } from "@/lib/adminStats";
@@ -21,6 +21,8 @@ import type { Article } from "@/components/dashboard/types";
 export const metadata: Metadata = {
   title: { absolute: `${SITE_NAME} — 블로그 글쓰기, 키워드 하나면 끝` },
   description: SITE_DESCRIPTION,
+  // ?src= 광고 추적 파라미터 변형들이 전부 깨끗한 홈 URL로 모이게(중복 색인 방지)
+  alternates: { canonical: SITE_URL },
 };
 
 export const dynamic = "force-dynamic";

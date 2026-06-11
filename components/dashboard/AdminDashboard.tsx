@@ -395,6 +395,10 @@ function SocialView({ stats }: { stats: AdminStats }) {
     const ok = await send(payload); if (!ok) setCfg(prev); setBusy(false);
   }
   async function removePost(p: SP) {
+    const confirmMsg = p.status === "published"
+      ? "이 발행 완료 기록을 삭제할까요?\n인스타 게시물은 그대로 남고, 여기 기록만 사라져요."
+      : "이 발행 대기 카드를 삭제할까요?";
+    if (!window.confirm(confirmMsg)) return;
     const prev = posts; setPosts(posts.filter((x) => x.id !== p.id)); setMsg(p.status === "published" ? "기록 삭제됨" : "삭제됨"); setBusy(true);
     const ok = await send({ action: "delete", id: p.id }); if (!ok) setPosts(prev); setBusy(false);
   }

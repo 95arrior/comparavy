@@ -58,6 +58,7 @@ export default function RootLayout({
               name: SITE_NAME,
               alternateName: "에이트플로",
               url: SITE_URL,
+              logo: `${SITE_URL}/apple-icon.png`,
             }),
           }}
         />
