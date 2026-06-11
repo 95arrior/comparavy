@@ -47,7 +47,8 @@ export interface GenerateOpts {
 }
 
 export async function generateCardNews(topic: string, angleLabel = "", opts: GenerateOpts = {}): Promise<CardNews> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  // SNS 전용 키가 있으면 그걸로(예산·한도 분리), 없으면 메인 키로 폴백.
+  const apiKey = process.env.ANTHROPIC_SOCIAL_API_KEY || process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("AI 설정이 아직이에요.");
   const year = new Date(Date.now() + 9 * 60 * 60 * 1000).getUTCFullYear();
   const client = new Anthropic({ apiKey });
