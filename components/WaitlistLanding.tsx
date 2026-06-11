@@ -22,7 +22,15 @@ const DIFFS = [
   { t: "워드프레스까지 한 번에", d: "복붙 없이, 버튼 하나로 바로 올라가요." },
 ];
 
-const PLAN_FEATURES = ["워드프레스 1클릭 발행", "SEO 자동 최적화 (제목·메타·FAQ)", "매번 다른 구조", "AI 말투 제거"];
+const PLAN_FEATURES = [
+  "워드프레스 1클릭 발행 · 예약 발행",
+  "SEO 자동 최적화 (제목·메타·FAQ·내부링크)",
+  "글 유형·톤 선택 (하우투·리스트·비교·트렌드)",
+  "매번 다른 구조로 생성",
+  "AI 말투·번역투 제거",
+  "키워드 아이디어 추천",
+  "태그·카테고리 자동 정리",
+];
 
 /** 출시 전 사전 등록(웨이트리스트) 랜딩. 페인 인식 후크 → 공감 → 차별점 → 증명 → 신청(끝 1곳). */
 export default function WaitlistLanding({ introSeen = false }: { introSeen?: boolean }) {
@@ -60,7 +68,7 @@ export default function WaitlistLanding({ introSeen = false }: { introSeen?: boo
             className="mono-rise mono-d2 mx-auto mt-5 max-w-lg text-neutral-500"
             style={{ fontSize: "clamp(15px, 4vw, 18px)", lineHeight: 1.6 }}
           >
-            키워드 하나면 <b style={{ color: ACCENT }}>검색에 걸리는 글</b>이 써져요. 다듬고, 워드프레스 발행까지 한 곳에서.
+            키워드 하나면 <b style={{ color: ACCENT }}>검색에 걸리는 글</b>이 써져요.<br />다듬고, 워드프레스 발행까지 한 곳에서.
           </p>
           <div className="mono-rise mono-d3 mt-10">
             <DemoStream />
@@ -144,6 +152,7 @@ export default function WaitlistLanding({ introSeen = false }: { introSeen?: boo
                   </li>
                 ))}
               </ul>
+              <p className="mt-4 border-t border-neutral-100 pt-3 text-xs text-neutral-400">워드프레스 블로거에 맞춘 기능, 계속 늘어나요.</p>
             </div>
           </Reveal>
           <Reveal delay={100}>

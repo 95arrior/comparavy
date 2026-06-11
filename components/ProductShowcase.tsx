@@ -1,6 +1,3 @@
-"use client";
-
-import { useState } from "react";
 import Reveal from "@/components/Reveal";
 
 const BRAND = "#3182F6";
@@ -15,7 +12,7 @@ function Frame({ label, children }: { label: string; children: React.ReactNode }
         <span className="h-2.5 w-2.5 rounded-full bg-neutral-200" />
         <span className="ml-2 text-xs font-medium text-neutral-400">{label}</span>
       </div>
-      <div className="flex h-[256px] flex-col justify-center p-5">{children}</div>
+      <div className="flex h-[256px] flex-col p-5 [&>p:last-child]:mt-auto [&>p:last-child]:pt-4">{children}</div>
     </div>
   );
 }
@@ -156,7 +153,6 @@ const PANELS = [
 ];
 
 export default function ProductShowcase() {
-  const [tab, setTab] = useState(0);
   return (
     <section className="border-t border-neutral-200/70">
       <div className="mx-auto max-w-5xl px-5 py-12 sm:px-6 sm:py-28">
@@ -177,24 +173,15 @@ export default function ProductShowcase() {
           ))}
         </div>
 
-        {/* 모바일: 탭 전환(세로로 길어지지 않게) */}
-        <div className="mt-8 sm:hidden">
-          <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-            {PANELS.map((p, i) => (
-              <button
-                key={p.label}
-                type="button"
-                onClick={() => setTab(i)}
-                className={`min-h-[44px] shrink-0 rounded-full px-4 text-sm font-semibold transition active:scale-[0.97] ${tab === i ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-500"}`}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-          <div className="mt-4">
-            <Frame label={PANELS[tab].label}>{PANELS[tab].node}</Frame>
-          </div>
+        {/* 모바일: 옆으로 스와이프(터치 스크롤·스냅) */}
+        <div className="no-scrollbar -mx-5 mt-8 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 sm:hidden">
+          {PANELS.map((p) => (
+            <div key={p.label} className="w-[86%] shrink-0 snap-center">
+              <Frame label={p.label}>{p.node}</Frame>
+            </div>
+          ))}
         </div>
+        <p className="mt-3 text-center text-xs text-neutral-400 sm:hidden">← 옆으로 밀어보세요 →</p>
       </div>
     </section>
   );
