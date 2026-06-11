@@ -13,9 +13,12 @@ import { createSupabaseAdminClient } from "../lib/supabase-server";
 
 const BUCKET = "social-cards";
 
+// 초반엔 홍보(promo) 앵글 제외 — 순수 도움·이득·유머 위주
+const ROTATION = ANGLES.filter((a) => !a.promo);
+
 async function buildOne(admin: ReturnType<typeof createSupabaseAdminClient>, seq: number, avoid: string[]) {
   // 앵글을 순환시켜 골고루 섞는다
-  const a = ANGLES[seq % ANGLES.length];
+  const a = ROTATION[seq % ROTATION.length];
   const opts = { avoidTopics: avoid, useWebSearch: a.web, model: a.web ? "claude-sonnet-4-6" : undefined };
 
   // 품질 게이트 — 미달이면 1회 재생성, 그래도 안 되면 스킵
