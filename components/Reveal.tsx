@@ -34,8 +34,8 @@ export default function Reveal({
   return (
     <div
       ref={ref}
-      style={{ transitionDelay: `${delay}ms` }}
-      className={`transition-all duration-[600ms] ease-out ${shown ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"} ${className}`}
+      style={{ transitionDelay: `${delay}ms`, transitionTimingFunction: "cubic-bezier(0.25, 0.1, 0.25, 1)" }}
+      className={`transition-all duration-[400ms] ${shown ? "translate-y-0 opacity-100" : "translate-y-5 opacity-0"} ${className}`}
     >
       {children}
     </div>

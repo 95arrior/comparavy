@@ -1,6 +1,9 @@
+"use client";
+
+import { useState } from "react";
 import Reveal from "@/components/Reveal";
 
-const BRAND = "#3f91ff";
+const BRAND = "#3182F6";
 
 /** 앱 화면처럼 보이는 프레임(상단 점 3개 + 라벨). */
 function Frame({ label, children }: { label: string; children: React.ReactNode }) {
@@ -153,22 +156,44 @@ const PANELS = [
 ];
 
 export default function ProductShowcase() {
+  const [tab, setTab] = useState(0);
   return (
     <section className="border-t border-neutral-200/70">
-      <div className="mx-auto max-w-5xl px-6 py-24 sm:py-28">
+      <div className="mx-auto max-w-5xl px-5 py-12 sm:px-6 sm:py-28">
         <Reveal>
           <p className="text-center text-sm font-semibold tracking-tight" style={{ color: BRAND }}>실제 화면</p>
-          <h2 className="mt-3 text-center text-3xl font-bold leading-[1.2] tracking-tight sm:text-4xl">말보다, 직접 보세요</h2>
-          <p className="mx-auto mt-4 max-w-md text-center text-base leading-relaxed text-neutral-500">
+          <h2 className="mt-3 text-center font-bold tracking-tight" style={{ fontSize: "clamp(24px, 5vw, 40px)", lineHeight: 1.3 }}>말보다, 직접 보세요</h2>
+          <p className="mx-auto mt-4 max-w-md text-center text-base text-neutral-500" style={{ lineHeight: 1.6 }}>
             키워드부터 발행까지, 여기서 다 끝나요.
           </p>
         </Reveal>
-        <div className="mt-12 grid gap-4 sm:grid-cols-2">
+
+        {/* 데스크탑: 2×2 그리드 */}
+        <div className="mt-12 hidden gap-4 sm:grid sm:grid-cols-2">
           {PANELS.map((p, i) => (
             <Reveal key={p.label} delay={i * 80}>
               <Frame label={p.label}>{p.node}</Frame>
             </Reveal>
           ))}
+        </div>
+
+        {/* 모바일: 탭 전환(세로로 길어지지 않게) */}
+        <div className="mt-8 sm:hidden">
+          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+            {PANELS.map((p, i) => (
+              <button
+                key={p.label}
+                type="button"
+                onClick={() => setTab(i)}
+                className={`min-h-[44px] shrink-0 rounded-full px-4 text-sm font-semibold transition active:scale-[0.97] ${tab === i ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-500"}`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+          <div className="mt-4">
+            <Frame label={PANELS[tab].label}>{PANELS[tab].node}</Frame>
+          </div>
         </div>
       </div>
     </section>

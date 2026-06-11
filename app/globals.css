@@ -220,6 +220,10 @@ html {
 @keyframes ateflo-edit-pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
 .ateflo-edit-pulse { animation: ateflo-edit-pulse 2s ease-in-out infinite; }
 
+/* 헤더 '사전 신청' 버튼 옆 파란 점 깜빡임 */
+@keyframes dot-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.7); } }
+.dot-pulse { animation: dot-pulse 1.5s ease-in-out infinite; }
+
 /* 글 생성: 커서가 '글 생성' 클릭(초반) → 짝대기(줄)가 쭈루룩 생겼다 사라짐 (5s) */
 @keyframes mock-gen-tap { 0% { transform: scale(1); } 5% { transform: scale(0.8); } 11% { transform: scale(1); } 100% { transform: scale(1); } }
 .mock-gen-tap { animation: mock-gen-tap 5s ease-in-out infinite; }
