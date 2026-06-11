@@ -375,11 +375,11 @@ function SocialView({ stats }: { stats: AdminStats }) {
   // 낙관적 로컬 상태 — 버튼 누르는 즉시 화면 반영(무거운 전체 새로고침을 기다리지 않음)
   type SP = NonNullable<AdminStats["social"]>["posts"][number];
   const [posts, setPosts] = useState<SP[]>(s?.posts ?? []);
-  const [cfg, setCfg] = useState({ autoEnabled: !!s?.autoEnabled, perDay: s?.postsPerDay ?? 2, gap: clampGap(s?.intervalHours ?? 12), postingHour: s?.postingHour ?? 9 });
+  const [cfg, setCfg] = useState({ autoEnabled: !!s?.autoEnabled, perDay: s?.postsPerDay ?? 2, gap: clampGap(s?.intervalHours ?? 12), postingHour: s?.postingHour ?? 9, threadsEnabled: !!s?.threadsEnabled });
   useEffect(() => {
     if (!s) return;
     setPosts(s.posts);
-    setCfg({ autoEnabled: !!s.autoEnabled, perDay: s.postsPerDay ?? 2, gap: clampGap(s.intervalHours ?? 12), postingHour: s.postingHour ?? 9 });
+    setCfg({ autoEnabled: !!s.autoEnabled, perDay: s.postsPerDay ?? 2, gap: clampGap(s.intervalHours ?? 12), postingHour: s.postingHour ?? 9, threadsEnabled: !!s.threadsEnabled });
   }, [s]);
 
   async function send(payload: Record<string, unknown>): Promise<boolean> {
@@ -408,7 +408,7 @@ function SocialView({ stats }: { stats: AdminStats }) {
   if (!s) return <Section title="SNS 발행"><p className="text-sm text-neutral-400">설정을 불러오지 못했어요. (마이그레이션 0017 실행 필요)</p></Section>;
 
   const hourLabel = (h: number) => (h === 0 ? "오전 12시" : h < 12 ? `오전 ${h}시` : h === 12 ? "오후 12시" : `오후 ${h - 12}시`);
-  const { perDay, gap, postingHour, autoEnabled } = cfg;
+  const { perDay, gap, postingHour, autoEnabled, threadsEnabled } = cfg;
   const scheduleText = slotHours(postingHour, perDay, gap).map(hourLabel).join(" · ");
 
   const queued = posts.filter((p) => p.status === "queued");
@@ -440,9 +440,18 @@ function SocialView({ stats }: { stats: AdminStats }) {
             <SelectField label="발행 간격" value={gap} disabled={busy} onChange={(v) => changeCfg({ gap: clampGap(v) }, { action: "settings", intervalHours: v }, "간격 변경됨")} options={[4, 6, 8, 12].map((h) => ({ value: h, label: `${h}시간 간격` }))} />
             <SelectField label="시작 시각" value={postingHour} disabled={busy} onChange={(v) => changeCfg({ postingHour: v }, { action: "settings", postingHour: v }, "시각 변경됨")} options={Array.from({ length: 17 }, (_, i) => i + 6).map((h) => ({ value: h, label: hourLabel(h) }))} />
           </div>
-          <div className="mx-5 mb-5 rounded-xl bg-neutral-50 px-4 py-3 text-sm text-neutral-700">
+          <div className="mx-5 mt-1 rounded-xl bg-neutral-50 px-4 py-3 text-sm text-neutral-700">
             {autoEnabled ? <>매일 <b className="text-neutral-900">{scheduleText}</b> (한국시간)에 발행돼요</> : <>‘시작’을 누르면 <b className="text-neutral-900">{scheduleText}</b>에 맞춰 발행돼요</>}
             {msg && <span className="ml-2 text-neutral-400">· {msg}</span>}
+          </div>
+          {/* 스레드 교차발행 */}
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-neutral-100 px-5 py-3 text-sm">
+            <span className="text-neutral-500">스레드 {s.threadsConnected ? <b className="text-emerald-600">연결됨</b> : "미연결"}</span>
+            {s.threadsConnected ? (
+              <button onClick={() => changeCfg({ threadsEnabled: !threadsEnabled }, { action: "settings", threadsEnabled: !threadsEnabled }, threadsEnabled ? "스레드 교차발행 껐어요" : "스레드 교차발행 켰어요")} disabled={busy} className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition active:scale-95 disabled:opacity-50 ${threadsEnabled ? "bg-neutral-900 text-white" : "border border-neutral-300 text-neutral-600"}`}>{threadsEnabled ? "카드 발행 시 스레드도 ✓" : "스레드 교차발행 켜기"}</button>
+            ) : (
+              <a href="/api/threads/connect" className="rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-neutral-800">스레드 연결 ↗</a>
+            )}
           </div>
         </div>
       </Section>

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient, createSupabaseAdminClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { isAdminEmail } from "@/lib/adminStats";
-import { publishSocialPost } from "@/lib/socialPublish";
+import { publishSocialPost, crosspostThreads } from "@/lib/socialPublish";
 
 export const maxDuration = 300;
 
@@ -34,6 +34,7 @@ export async function POST(request: Request) {
     if (typeof body.intervalHours === "number" && body.intervalHours > 0) patch.interval_hours = Math.min(720, Math.round(body.intervalHours));
     if (typeof body.postsPerDay === "number" && body.postsPerDay >= 1 && body.postsPerDay <= 5) patch.posts_per_day = Math.round(body.postsPerDay);
     if (typeof body.postingHour === "number" && body.postingHour >= 0 && body.postingHour <= 23) patch.posting_hour = Math.round(body.postingHour);
+    if (typeof body.threadsEnabled === "boolean") patch.threads_enabled = body.threadsEnabled;
     if (Object.keys(patch).length) await admin.from("social_settings").update(patch).eq("id", 1);
     return NextResponse.json({ ok: true });
   }
@@ -51,6 +52,7 @@ export async function POST(request: Request) {
     if (r.ok) {
       await admin.from("social_posts").update({ status: "published", ig_media_id: r.mediaId, published_at: new Date().toISOString(), error: null }).eq("id", post.id);
       await admin.from("social_settings").update({ last_published_at: new Date().toISOString() }).eq("id", 1);
+      await crosspostThreads(post); // 스레드 교차발행(켜져 있으면)
       return NextResponse.json({ ok: true });
     }
     await admin.from("social_posts").update({ status: "failed", error: r.error }).eq("id", post.id);

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase-server";
-import { publishSocialPost } from "@/lib/socialPublish";
+import { publishSocialPost, crosspostThreads } from "@/lib/socialPublish";
 import { slotHours, minGapHours } from "@/lib/socialSchedule";
 
 export const maxDuration = 300;
@@ -49,6 +49,7 @@ async function run() {
   if (r.ok) {
     await admin.from("social_posts").update({ status: "published", ig_media_id: r.mediaId, published_at: new Date().toISOString(), error: null }).eq("id", post.id);
     await admin.from("social_settings").update({ last_published_at: new Date().toISOString() }).eq("id", 1);
+    await crosspostThreads(post); // 스레드 켜져 있으면 교차발행(실패 무해)
     return NextResponse.json({ ok: true, published: post.id });
   }
   // 실패: 3회까지 다음 슬롯에 자동 재시도(queued 유지), 그 이상이면 failed 확정

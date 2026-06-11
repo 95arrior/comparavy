@@ -56,6 +56,8 @@ export type AdminStats = {
     postingHour: number;
     lastPublishedAt: string | null;
     tokenExpiresAt: string | null;
+    threadsConnected: boolean;
+    threadsEnabled: boolean;
     queueCount: number;
     publishedCount: number;
     failedCount: number;
@@ -271,6 +273,8 @@ export async function getAdminStats(): Promise<AdminStats> {
       postingHour: s?.posting_hour ?? 9,
       lastPublishedAt: s?.last_published_at ?? null,
       tokenExpiresAt: s?.ig_token_expires_at ?? null,
+      threadsConnected: !!s?.threads_user_id,
+      threadsEnabled: !!s?.threads_enabled,
       queueCount: list.filter((p) => p.status === "queued").length,
       publishedCount: list.filter((p) => p.status === "published").length,
       failedCount: list.filter((p) => p.status === "failed").length,
