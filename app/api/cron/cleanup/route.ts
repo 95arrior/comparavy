@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase-server";
+import { costKrw, USD_TO_KRW } from "@/lib/usageLog";
+import { sendAdminEmail } from "@/lib/notify";
 
 // 가벼운 housekeeping. 스케줄러(cron)가 호출.
 // 인증: Vercel Cron은 GET + `Authorization: Bearer <CRON_SECRET>`. 수동 호출은 x-cron-secret 헤더도 허용.
@@ -45,6 +47,42 @@ async function cleanupSocial(supabase: ReturnType<typeof createSupabaseAdminClie
   }
 }
 
+// 월 예산 80% 도달 시 관리자 이메일 알림 (이메일 설정돼 있을 때만, 달마다 1회).
+async function budgetAlert(supabase: ReturnType<typeof createSupabaseAdminClient>): Promise<boolean> {
+  try {
+    const KST = 9 * 3600000;
+    const kstNow = new Date(Date.now() + KST);
+    const month = `${kstNow.getUTCFullYear()}-${String(kstNow.getUTCMonth() + 1).padStart(2, "0")}`;
+    const monthIso = new Date(Date.UTC(kstNow.getUTCFullYear(), kstNow.getUTCMonth(), 1) - KST).toISOString();
+    const budget = (Number(process.env.AI_MONTHLY_BUDGET_USD) || 500) * USD_TO_KRW;
+    const { data: usage } = await supabase
+      .from("usage_log")
+      .select("model,input_tokens,output_tokens")
+      .gte("created_at", monthIso)
+      .limit(50000);
+    let cost = 0;
+    for (const u of (usage ?? []) as { model: string; input_tokens: number; output_tokens: number }[]) {
+      cost += costKrw(u.model, u.input_tokens || 0, u.output_tokens || 0);
+    }
+    const pct = budget > 0 ? (cost / budget) * 100 : 0;
+    if (pct < 80) return false;
+
+    const { data: h } = await supabase.from("ai_health").select("budget_alert_month").eq("id", 1).maybeSingle();
+    if (h?.budget_alert_month === month) return false; // 이번 달 이미 보냄
+
+    const sent = await sendAdminEmail(
+      `[ateflo] API 예산 ${Math.round(pct)}% 사용`,
+      `이번 달 API 비용이 약 ₩${Math.round(cost).toLocaleString()} (월 한도 ₩${Math.round(budget).toLocaleString()}의 ${Math.round(pct)}%)에 도달했어요.\n\n` +
+        `Anthropic 콘솔에서 사용량을 확인하고, 필요하면 월 지출 한도를 올리거나 크레딧을 충전하세요.\n` +
+        `https://console.anthropic.com/settings/billing`,
+    );
+    if (sent) await supabase.from("ai_health").update({ budget_alert_month: month }).eq("id", 1);
+    return sent;
+  } catch {
+    return false;
+  }
+}
+
 async function runCleanup() {
   const supabase = createSupabaseAdminClient();
   // 7일 이상 지난 rate_limit 행 정리 (다음 요청 시 어차피 새 윈도우로 리셋되므로 안전)
@@ -55,12 +93,13 @@ async function runCleanup() {
     .lt("window_start", cutoff);
 
   const social = await cleanupSocial(supabase);
+  const budgetAlerted = await budgetAlert(supabase);
 
   if (error) {
     // rate_limits 정리 실패해도 무해 — 그냥 ok
-    return NextResponse.json({ ok: true, cleaned: 0, social });
+    return NextResponse.json({ ok: true, cleaned: 0, social, budgetAlerted });
   }
-  return NextResponse.json({ ok: true, cleaned: count ?? 0, social });
+  return NextResponse.json({ ok: true, cleaned: count ?? 0, social, budgetAlerted });
 }
 
 export async function GET(request: Request) {

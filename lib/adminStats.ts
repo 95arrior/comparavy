@@ -1,6 +1,6 @@
 import { createSupabaseAdminClient } from "./supabase-server";
 import { PLANS } from "./plans";
-import { costKrw } from "./usageLog";
+import { costKrw, USD_TO_KRW } from "./usageLog";
 
 export type AdminStats = {
   usersTotal: number | null;
@@ -26,6 +26,12 @@ export type AdminStats = {
   estCostKrw: number | null;
   /** 실제 토큰 기반 누적 비용(원) — usage_log 집계. null이면 집계 전 */
   costTotalKrw: number | null;
+  /** 이번 달(KST) 실제 API 비용(원) */
+  monthlyCostKrw: number | null;
+  /** 월 예산(원) — Anthropic 월 지출 한도 기준(AI_MONTHLY_BUDGET_USD, 기본 $500) */
+  budgetKrw: number;
+  /** 글 1편 평균 실제 비용(원) — usage_log의 generate 평균, 없으면 추정치 */
+  avgArticleCostKrw: number;
   /** 실제 토큰 기반 오늘 비용(원) */
   costTodayKrw: number | null;
   /** 종류별 비용 분해 (generate/tag_suggest/keyword_ideas …) */
@@ -139,9 +145,16 @@ export async function getAdminStats(): Promise<AdminStats> {
   const dailyUsers = bucket(uRows.data as { created_at: string }[] | null);
   const dailyArticles = bucket(aRows.data as { created_at: string }[] | null);
 
+  // 이번 달(KST) 시작 시각 — 월 비용 집계용
+  const kstNow = new Date(Date.now() + KST);
+  const monthIso = new Date(Date.UTC(kstNow.getUTCFullYear(), kstNow.getUTCMonth(), 1) - KST).toISOString();
+  const budgetKrw = Math.round((Number(process.env.AI_MONTHLY_BUDGET_USD) || 500) * USD_TO_KRW);
+
   // 실제 토큰 기반 비용 (usage_log). 테이블/로그 없으면 null → 추정치로 표시
   let costTotalKrw: number | null = null;
   let costTodayKrw: number | null = null;
+  let monthlyCostKrw: number | null = null;
+  let avgArticleCostKrw = EST_COST_PER_ARTICLE_KRW;
   let costByKind: { kind: string; krw: number }[] = [];
   try {
     const { data: usage, error } = await admin
@@ -151,15 +164,22 @@ export async function getAdminStats(): Promise<AdminStats> {
     if (!error && usage) {
       let total = 0;
       let today = 0;
+      let month = 0;
+      let genCost = 0;
+      let genCount = 0;
       const kindMap: Record<string, number> = {};
       for (const u of usage as { model: string; kind: string; input_tokens: number; output_tokens: number; created_at: string }[]) {
         const c = costKrw(u.model, u.input_tokens || 0, u.output_tokens || 0);
         total += c;
         if (u.created_at >= todayIso) today += c;
+        if (u.created_at >= monthIso) month += c;
+        if (u.kind === "generate") { genCost += c; genCount++; }
         kindMap[u.kind] = (kindMap[u.kind] || 0) + c;
       }
       costTotalKrw = Math.round(total);
       costTodayKrw = Math.round(today);
+      monthlyCostKrw = Math.round(month);
+      if (genCount > 0) avgArticleCostKrw = Math.max(1, Math.round(genCost / genCount));
       costByKind = Object.entries(kindMap).map(([kind, krw]) => ({ kind, krw: Math.round(krw) })).sort((a, b) => b.krw - a.krw);
     }
   } catch {
@@ -268,5 +288,5 @@ export async function getAdminStats(): Promise<AdminStats> {
     ai = null;
   }
 
-  return { usersTotal, usersToday, proUsers, freeUsers, articlesTotal, articlesToday, publishedArticles, lockedArticles, wpConnections, mrr, conversion, articlesPerUser, wpConnectRate, publishRate, estCostKrw, costTotalKrw, costTodayKrw, costByKind, usersWithArticles, usersWithPublished, dailyUsers, dailyArticles, recentUsers, recentArticles, waitlistCount, waitlist, social, ai };
+  return { usersTotal, usersToday, proUsers, freeUsers, articlesTotal, articlesToday, publishedArticles, lockedArticles, wpConnections, mrr, conversion, articlesPerUser, wpConnectRate, publishRate, estCostKrw, costTotalKrw, monthlyCostKrw, budgetKrw, avgArticleCostKrw, costTodayKrw, costByKind, usersWithArticles, usersWithPublished, dailyUsers, dailyArticles, recentUsers, recentArticles, waitlistCount, waitlist, social, ai };
 }

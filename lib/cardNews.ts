@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { logUsage } from "./usageLog";
 
 export type SlideType = "text" | "stat" | "point" | "mockup";
 export type MockupKind = "generate" | "publish" | "calendar" | "edit";
@@ -93,6 +94,9 @@ export async function generateCardNews(topic: string, angleLabel = "", opts: Gen
       },
     ],
   });
+  // 비용 추적 — 카드 생성도 usage_log에 기록(대시보드 월 비용 정확도)
+  void logUsage({ model: opts.model || "claude-haiku-4-5", kind: "card", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
+
   // 웹 검색 시 content에 tool_result 블록이 섞이므로 마지막 text 블록을 쓴다
   const texts = res.content.filter((b) => b.type === "text");
   const raw = texts.length ? (texts[texts.length - 1] as { text: string }).text : "";

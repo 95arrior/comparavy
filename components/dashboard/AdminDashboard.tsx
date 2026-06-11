@@ -132,6 +132,52 @@ function Funnel({ stats }: { stats: AdminStats }) {
   );
 }
 
+const BILLING_URL = "https://console.anthropic.com/settings/billing";
+
+function BudgetWidget({ stats }: { stats: AdminStats }) {
+  const month = stats.monthlyCostKrw ?? 0;
+  const budget = stats.budgetKrw;
+  const pct = budget > 0 ? Math.min(100, Math.round((month / budget) * 100)) : 0;
+  const remain = Math.max(0, budget - month);
+  const avg = Math.max(1, stats.avgArticleCostKrw);
+  const articlesLeft = Math.floor(remain / avg);
+  const freePeople = Math.floor(articlesLeft / 3); // 무료 3편/명
+  const proPeople = Math.floor(articlesLeft / 30); // 프로 30편/명
+  const warn = pct >= 80;
+  const barColor = pct >= 90 ? "bg-red-500" : pct >= 80 ? "bg-amber-500" : "bg-neutral-900";
+
+  return (
+    <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-5">
+      <div className="flex items-end justify-between">
+        <div>
+          <p className="text-sm text-neutral-500">이번 달 사용 (추정)</p>
+          <p className="mt-0.5 text-2xl font-bold tracking-tight">{won(month)} <span className="text-sm font-medium text-neutral-400">/ {won(budget)} 한도</span></p>
+        </div>
+        <a href={BILLING_URL} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-semibold text-neutral-700 transition hover:bg-neutral-50">콘솔에서 확인 ↗</a>
+      </div>
+      <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-neutral-100">
+        <div className={`h-full rounded-full ${barColor}`} style={{ width: `${Math.max(2, pct)}%` }} />
+      </div>
+      <p className="mt-2 text-xs text-neutral-400">{pct}% 사용 · 남은 예산 {won(remain)}</p>
+
+      <div className="mt-4 rounded-xl bg-neutral-50 px-4 py-3 text-sm text-neutral-700">
+        남은 예산으로 글 <b className="text-neutral-900">약 {articlesLeft.toLocaleString()}편</b> 더 생성 가능
+        <span className="text-neutral-400"> (≈ 무료 {freePeople.toLocaleString()}명 · 프로 {proPeople.toLocaleString()}명분, 글 1편 평균 {won(avg)} 기준)</span>
+      </div>
+
+      {warn ? (
+        <p className="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+          <b>예산의 {pct}%를 썼어요.</b> <a href={BILLING_URL} target="_blank" rel="noopener noreferrer" className="underline">Anthropic 콘솔</a>에서 사용량을 확인하고, 필요하면 <b>월 지출 한도를 올리거나 크레딧을 충전</b>하세요. (자동 리로드가 켜져 있으면 잔액은 자동 충전되지만, 월 한도에 닿으면 멈춰요)
+        </p>
+      ) : (
+        <p className="mt-3 text-xs text-neutral-400">
+          사용량은 사용자 수에 비례해 늘어요. 자동 리로드가 켜져 있어 잔액은 자동 충전돼요. 정확한 잔액·청구는 콘솔 기준이고, 위 숫자는 우리 앱이 기록한 추정치예요.
+        </p>
+      )}
+    </div>
+  );
+}
+
 function CostBreakdown({ stats }: { stats: AdminStats }) {
   if (stats.costTotalKrw === null) {
     return (
@@ -435,6 +481,11 @@ export default function AdminDashboard({ stats }: { stats?: AdminStats | null })
           <Stat label="워드프레스 연결률" value={stats.wpConnectRate === null ? "—" : `${stats.wpConnectRate}%`} hint={stats.wpConnections !== null ? `${stats.wpConnections}곳` : undefined} />
           <Stat label="발행률" value={stats.publishRate === null ? "—" : `${stats.publishRate}%`} hint={stats.publishedArticles !== null ? `발행 ${stats.publishedArticles}/${stats.articlesTotal}` : undefined} />
         </div>
+      </Section>
+
+      {/* 크레딧·예산 현황 */}
+      <Section title="크레딧·예산 현황" desc="이번 달 API 비용과 남은 여력. 한도 근접 시 콘솔에서 확인 후 충전·한도조정 하면 돼요.">
+        <BudgetWidget stats={stats} />
       </Section>
 
       {/* API 비용 */}
