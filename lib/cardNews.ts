@@ -134,7 +134,7 @@ export async function generateCardNews(topic: string, angleLabel = "", opts: Gen
   // 웹 검색 시 content에 tool_result 블록이 섞임 → text 블록들에서 JSON 추출(마지막 → 전체 순으로 시도)
   const texts = res.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text);
   const candidates = [texts[texts.length - 1] ?? "", texts.join("\n")];
-  let parsed: { slides?: unknown; caption?: unknown } | null = null;
+  let parsed: { slides?: unknown; caption?: unknown; threadsText?: unknown } | null = null;
   for (const c of candidates) {
     const m = c.match(/\{[\s\S]*\}/);
     if (!m) continue;

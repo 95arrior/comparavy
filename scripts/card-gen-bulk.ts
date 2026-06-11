@@ -50,10 +50,24 @@ async function buildOne(admin: ReturnType<typeof createSupabaseAdminClient>, seq
 }
 
 async function main() {
-  const n = Math.max(1, Math.min(50, Number(process.argv[2]) || 10));
-  console.log(`🗂  카드뉴스 ${n}세트 벌크 생성 시작 (haiku · 유머는 sonnet+웹검색 · 품질 게이트 ON)`);
+  const args = process.argv.slice(2);
   const admin = createSupabaseAdminClient();
   await admin.storage.createBucket(BUCKET, { public: true }).catch(() => {});
+
+  // --target N : 대기열을 N개까지 "채우기"(이미 있는 만큼 빼고 부족분만 생성). 삭제로 줄어든 만큼 자동 보충.
+  // N (숫자만)  : 그냥 N개 생성.
+  let n: number;
+  const ti = args.indexOf("--target");
+  if (ti !== -1) {
+    const target = Math.max(1, Math.min(50, Number(args[ti + 1]) || 14));
+    const { count } = await admin.from("social_posts").select("id", { count: "exact", head: true }).eq("status", "queued");
+    n = Math.max(0, target - (count ?? 0));
+    console.log(`🎯 목표 ${target}개 · 현재 대기 ${count ?? 0}개 → ${n}개 보충 생성`);
+    if (n === 0) { console.log("이미 목표만큼 차 있어요. 생성 안 함."); return; }
+  } else {
+    n = Math.max(1, Math.min(50, Number(args[0]) || 10));
+    console.log(`🗂  카드뉴스 ${n}세트 벌크 생성 시작`);
+  }
 
   // 최근 올린 주제 — 중복 회피용
   const { data: recent } = await admin.from("social_posts").select("topic").order("created_at", { ascending: false }).limit(20);
