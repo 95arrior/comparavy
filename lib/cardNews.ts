@@ -84,7 +84,7 @@ export async function generateCardNews(topic: string, angleLabel = "", opts: Gen
           "톤: 순수하게 도움·이득·재미를 주는 콘텐츠. 서비스 홍보·판매·가입 권유 문구는 절대 넣지 않는다(지금은 신뢰·팔로우부터 쌓는 단계). 제품 목업도 쓰지 않는다.\n" +
           "각 슬라이드에 type을 정해 레이아웃을 다양하게:\n" +
           '  - text: {"type":"text","title":"...","body":"..."} (후크 표지·설명·CTA)\n' +
-          '  - stat: {"type":"stat","title":"짧은 한 줄","stat":"3가지","statLabel":"숫자 설명"} (임팩트 숫자/짧은 지표만 — 7자 이내. 지어낸 통계·정밀 수치 금지(④ 참고), 단계·개수·일반 상식 수준의 숫자나 짧은 핵심어 위주. 긴 단어·개념은 point/text로)\n' +
+          '  - stat: {"type":"stat","title":"짧은 한 줄","stat":"3가지","statLabel":"숫자 설명"} (임팩트 숫자/짧은 지표만 — 반드시 8자 이내(숫자·단계·개수 등). 긴 문장·개념을 stat에 넣지 말 것(두 줄로 깨짐) — 그런 건 point/text로)\n' +
           '  - point: {"type":"point","title":"...","points":["핵심1","핵심2","핵심3"]} (2~3개)\n' +
           '  - mockup: {"type":"mockup","title":"...","body":"...","mockup":"generate|publish|calendar|edit"} (제품 화면 예시 — 우리 서비스 보여줄 때만)\n' +
           "규칙:\n" +
@@ -95,7 +95,7 @@ export async function generateCardNews(topic: string, angleLabel = "", opts: Gen
           "②-1 제목은 의미 단위로 줄바꿈(\\n)해서 자연스럽게 끊는다. 한 단어·한 글자만 다음 줄로 떨어뜨리지 말 것(예: '제휴마케/팅' 금지). 표지 제목은 3줄 이내.\n" +
           "⑥ 카드마다 후크·표현·소재를 다르게 한다. 매번 '월 100만원' 같은 똑같은 수익 후크를 반복하지 말 것. 모든 장이 돈 얘기일 필요 없다(실전 팁·공감·유머·반전도 섞기).\n" +
           "③ 토스처럼 간결·해요체. 슬라이드 텍스트엔 이모지 절대 금지. AI 말투·em dash(—) 금지.\n" +
-          "④ 정직이 최우선. 수익·방문자·상위노출 '보장' 금지, 과장 금지. 특히 지어낸 통계·정밀 수치를 사실처럼 쓰지 말 것(예: '조회수 10배', '글 30~50개면 승인', '월 20~40만원' 같은 검증 안 된 단정 금지). 숫자가 꼭 필요하면 널리 통용되는 상식 수준만, 그것도 '보통', '개인차 있어요', '~인 경우가 많아요'처럼 단정을 피한다. 없는 후기·사례·1인칭 경험·인용도 만들지 않는다.\n" +
+          "④ 정직하게. 수익·방문자·상위노출 '보장' 금지, 과한 과장·100% 단정 금지. 자연스러운 수치·후크는 써도 되지만 허위로 단정하진 않는다(애매하면 '보통', '개인차 있어요' 정도로). 없는 후기·1인칭 경험은 만들지 않는다.\n" +
           `⑤ 연도 필요하면 올해(${year}년).\n` +
           "caption: 인스타 피드글. 한 덩어리로 붙이지 말고 읽기 좋게 줄바꿈(\\n)으로 문단을 나눈다. 구성:\n" +
           "  · 1줄: 스크롤 멈추는 후크(공감되는 한 줄).\n" +
@@ -151,7 +151,7 @@ export function assessCard(card: CardNews): { ok: boolean; reasons: string[] } {
   // 표지 제목 길이 — 너무 짧아도, 너무 길어도(글씨 작아짐) 거른다
   const cover = (slides[0]?.title ?? "").replace(/\s|\n/g, "");
   if (cover.length < 4) reasons.push("표지 제목이 너무 짧음");
-  if (cover.length > 22) reasons.push("표지 제목이 너무 김(3초 후크용으로 짧게)");
+  if (cover.length > 18) reasons.push("표지 제목이 너무 김(고정 크기라 18자 이내로 짧게)");
 
   // 제목 중복
   const titles = slides.map((s) => s.title.replace(/\s+/g, "").toLowerCase());
@@ -160,6 +160,7 @@ export function assessCard(card: CardNews): { ok: boolean; reasons: string[] } {
   // 타입별 필수 데이터
   for (const s of slides) {
     if (s.type === "stat" && !s.stat) reasons.push("stat 슬라이드에 숫자 없음");
+    if (s.type === "stat" && s.stat && [...s.stat].length > 8) reasons.push("stat이 너무 김(짧은 지표만 — 두 줄로 깨짐)");
     if (s.type === "point" && (!s.points || s.points.length < 2)) reasons.push("point 슬라이드 항목 부족");
     if (s.type === "mockup" && !s.mockup) reasons.push("mockup 종류 없음");
   }
@@ -174,9 +175,8 @@ export function assessCard(card: CardNews): { ok: boolean; reasons: string[] } {
   const slidesText = slides.map((s) => `${s.title} ${s.body ?? ""} ${s.stat ?? ""} ${s.statLabel ?? ""} ${(s.points ?? []).join(" ")}`).join(" ");
   const all = slidesText + " " + cap;
   if (/[—–]/.test(all)) reasons.push("em dash 사용");
-  if (/(보장|무조건|확실히 1위|상위노출 보장)/.test(all)) reasons.push("과장·보장 표현");
-  // 검증 안 된 정밀 통계 단정 차단(정직) — 배수·퍼센트·수익액
-  if (/\d+\s*배/.test(slidesText) || /\d+\s*%/.test(slidesText) || /\d+\s*만\s*원/.test(slidesText)) reasons.push("검증 안 된 수치 단정(N배·N%·N만원)");
+  // 오바(허위 보장)만 차단 — 자연스러운 수치·표현은 허용
+  if (/(보장|무조건 1위|상위노출 보장|100% )/.test(all)) reasons.push("과장·보장 표현");
 
   return { ok: reasons.length === 0, reasons };
 }
