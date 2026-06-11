@@ -14,8 +14,8 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${SITE_NAME} — 블로그 글쓰기, 키워드 하나면 끝`,
-    template: `%s | ${SITE_NAME}`,
+    default: `에이트플로(${SITE_NAME}) — 블로그 글쓰기, 키워드 하나면 끝`,
+    template: `%s | 에이트플로`,
   },
   description: SITE_DESCRIPTION,
   keywords: ["에이트플로", "AteFlo", "워드프레스 AI 글쓰기", "한국어 SEO 글", "AI 블로그 자동 발행", "블로그 글 자동 생성"],
