@@ -21,15 +21,16 @@ async function run() {
   const { data: settings } = await admin.from("social_settings").select("*").eq("id", 1).maybeSingle();
   if (!settings?.auto_enabled) return NextResponse.json({ ok: true, skipped: "disabled" });
 
-  // 하루 발행 수만큼 시작 시각 ~ 저녁 상한 안에서 고르게 분산 (새벽 발행 방지)
+  // 시작 시각부터 발행 간격마다 하루 발행 수만큼
   const perDay = Math.max(1, Math.min(5, settings.posts_per_day ?? 2));
   const startHour = settings.posting_hour ?? 9;
+  const gapHours = settings.interval_hours ?? 12;
   const kstHour = new Date(Date.now() + 9 * 3600000).getUTCHours();
-  const slots = slotHours(startHour, perDay);
+  const slots = slotHours(startHour, perDay, gapHours);
   if (!slots.includes(kstHour)) return NextResponse.json({ ok: true, skipped: "not_slot" });
 
   // 같은 슬롯에서 중복 발행 방지 (cron이 시간당 1회 돌지만 안전장치)
-  const gap = minGapHours(startHour, perDay);
+  const gap = minGapHours(gapHours);
   if (settings.last_published_at && Date.now() - new Date(settings.last_published_at).getTime() < (gap - 1) * 3600000) {
     return NextResponse.json({ ok: true, skipped: "recently" });
   }

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { AdminStats } from "@/lib/adminStats";
 import Segmented from "./Segmented";
-import { slotHours } from "@/lib/socialSchedule";
+import { slotHours, clampGap } from "@/lib/socialSchedule";
 
 const BRAND = "#3f91ff";
 const STATUS_KO: Record<string, string> = { draft: "초안", published: "발행됨", future: "예약됨" };
@@ -126,6 +126,67 @@ function Funnel({ stats }: { stats: AdminStats }) {
         <div className="mt-4 rounded-xl bg-amber-50 px-3.5 py-2.5 text-xs leading-relaxed text-amber-700">
           ⚠ 가장 큰 이탈: <b>{steps[worst - 1].label} → {steps[worst].label}</b> ({Math.round(worstDrop * 100)}% 이탈).
           이 구간을 개선하면 효과가 가장 커요.
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SelectField({ label, value, onChange, options, disabled }: { label: string; value: number; onChange: (v: number) => void; options: { value: number; label: string }[]; disabled?: boolean }) {
+  return (
+    <label className="flex flex-col gap-1 rounded-xl border border-neutral-200 px-3 py-2.5 transition focus-within:border-neutral-400">
+      <span className="text-xs text-neutral-400">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        disabled={disabled}
+        className="-ml-0.5 bg-transparent text-sm font-semibold text-neutral-900 outline-none disabled:opacity-50"
+      >
+        {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
+    </label>
+  );
+}
+
+function LimitGuide() {
+  const [open, setOpen] = useState(false);
+  const rows = [
+    ["~100명", "약 8.5만원", "$500 유지", "지금 그대로"],
+    ["~1,000명", "약 85만원", "$1,500~2,500", "유료 ~100명 · MRR ~300만원"],
+    ["~10,000명", "약 855만원", "$10,000~15,000", "유료 ~1,000명 · MRR ~3천만원"],
+  ];
+  return (
+    <div className="mt-3">
+      <button
+        onClick={() => setOpen(!open)}
+        className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-semibold text-neutral-700 transition hover:bg-neutral-50"
+      >
+        💡 한도 상향 가이드 {open ? "▲" : "▼"}
+      </button>
+      {open && (
+        <div className="mt-3 overflow-x-auto rounded-xl border border-neutral-200">
+          <table className="w-full min-w-[480px] text-sm">
+            <thead className="bg-neutral-50 text-neutral-500">
+              <tr>
+                {["사용자", "예상 월 비용", "추천 한도", "올리는 시점"].map((h) => (
+                  <th key={h} className="px-3 py-2 text-left font-medium">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-neutral-100">
+              {rows.map((r) => (
+                <tr key={r[0]}>
+                  <td className="px-3 py-2 font-semibold text-neutral-800">{r[0]}</td>
+                  <td className="px-3 py-2 text-neutral-600">{r[1]}</td>
+                  <td className="px-3 py-2 text-neutral-600">{r[2]}</td>
+                  <td className="px-3 py-2 text-neutral-500">{r[3]}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="px-3 py-2 text-xs text-neutral-400">
+            기준: 글 1편 ≈ 150원, 유료 전환 ~10%. <b className="text-neutral-500">예산 알림이 70~80% 뜨면 다음 단계로</b> 올리세요. 무료 사용자는 매출 0이라 순비용이니 폭증 시 주의(무료 3편 캡이 방패).
+          </p>
         </div>
       )}
     </div>
@@ -288,7 +349,8 @@ function SocialView({ stats }: { stats: AdminStats }) {
 
   const hourLabel = (h: number) => (h === 0 ? "오전 12시" : h < 12 ? `오전 ${h}시` : h === 12 ? "오후 12시" : `오후 ${h - 12}시`);
   const perDay = s.postsPerDay ?? 2;
-  const scheduleText = slotHours(s.postingHour, perDay).map(hourLabel).join(" · ");
+  const gap = clampGap(s.intervalHours ?? 12);
+  const scheduleText = slotHours(s.postingHour, perDay, gap).map(hourLabel).join(" · ");
 
   const daysLeft = perDay > 0 ? Math.floor(s.queueCount / perDay) : 0;
   const lowStock = s.autoEnabled && s.queueCount < perDay * 3; // 3일치 미만이면 경고
@@ -297,8 +359,12 @@ function SocialView({ stats }: { stats: AdminStats }) {
 
   return (
     <>
-      {/* 인스타 바로가기 */}
-      <div className="mb-3 flex justify-end">
+      {/* 헤더 */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 className="text-base font-semibold tracking-tight">SNS 자동 발행</h3>
+          <p className="mt-0.5 text-sm text-neutral-500">보관함 카드뉴스를 정한 시각에 인스타로 자동 게시해요</p>
+        </div>
         <a
           href="https://instagram.com/ateflo.official"
           target="_blank"
@@ -309,79 +375,56 @@ function SocialView({ stats }: { stats: AdminStats }) {
         </a>
       </div>
 
-      {/* 숫자 요약 */}
-      <Section title="SNS 발행 현황" desc="클로드가 만든 카드뉴스가 보관함에 쌓이고, 정한 시각마다 자동 게시돼요.">
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-          <Stat label="발행 대기" value={`${s.queueCount}개`} accent hint={s.autoEnabled ? `약 ${daysLeft}일치` : undefined} />
-          <Stat label="발행 완료" value={`${s.publishedCount}개`} />
-          <Stat label="자동 발행" value={s.autoEnabled ? "켜짐" : "꺼짐"} hint={s.autoEnabled ? `하루 ${perDay}개` : "지금은 멈춤"} />
+      {/* 메인 컨트롤 카드 */}
+      <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm">
+        <div className="flex items-center justify-between gap-3 border-b border-neutral-100 p-5">
+          <div className="flex items-center gap-2.5">
+            <span className={`inline-block h-2.5 w-2.5 rounded-full ${s.autoEnabled ? "bg-emerald-500" : "bg-neutral-300"}`} />
+            <span className="text-sm font-semibold">{s.autoEnabled ? "자동 발행 켜짐" : "자동 발행 꺼짐"}</span>
+          </div>
+          <button
+            onClick={() => call({ action: "settings", autoEnabled: !s.autoEnabled }, s.autoEnabled ? "중지했어요" : "시작했어요")}
+            disabled={busy}
+            className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition active:scale-95 disabled:opacity-50 ${s.autoEnabled ? "bg-red-600 hover:bg-red-700" : "bg-neutral-900 hover:bg-neutral-800"}`}
+          >
+            {s.autoEnabled ? "종료" : "시작"}
+          </button>
         </div>
-        {lowStock && (
-          <p className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            대기열이 얼마 안 남았어요{daysLeft <= 0 ? " (곧 끊겨요)" : ` (약 ${daysLeft}일치)`}. 터미널에서 <code className="rounded bg-amber-100 px-1.5 py-0.5 font-mono text-[13px]">npm run card:gen:bulk -- 20</code> 으로 더 채워두세요.
-          </p>
-        )}
-        {s.failedCount > 0 && (
-          <p className="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
-            발행 실패 <b>{s.failedCount}건</b> (3회 재시도 후 멈춤). 아래 보관함에서 원인을 확인하고 ‘지금 발행’으로 재시도하세요.
-          </p>
-        )}
-        {tokenWarn && (
-          <p className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            인스타 토큰이 <b>{tokenDays! <= 0 ? "만료됐어요" : `${tokenDays}일 뒤 만료`}</b>. 자동 갱신(주 1회)이 도는지 확인하고, 안 되면 토큰을 다시 발급해 주세요.
-          </p>
-        )}
-        {tokenDays !== null && !tokenWarn && (
-          <p className="mt-2 text-xs text-neutral-400">인스타 토큰 약 {tokenDays}일 남음 (자동 갱신 중)</p>
-        )}
-      </Section>
+        <div className="grid gap-3 p-5 sm:grid-cols-3">
+          <SelectField label="하루 발행 수" value={perDay} disabled={busy} onChange={(v) => call({ action: "settings", postsPerDay: v }, "발행 수 변경됨")} options={[1, 2, 3, 4, 5].map((n) => ({ value: n, label: `${n}개` }))} />
+          <SelectField label="발행 간격" value={gap} disabled={busy} onChange={(v) => call({ action: "settings", intervalHours: v }, "간격 변경됨")} options={[4, 6, 8, 12].map((h) => ({ value: h, label: `${h}시간 간격` }))} />
+          <SelectField label="시작 시각" value={s.postingHour} disabled={busy} onChange={(v) => call({ action: "settings", postingHour: v }, "시각 변경됨")} options={Array.from({ length: 17 }, (_, i) => i + 6).map((h) => ({ value: h, label: hourLabel(h) }))} />
+        </div>
+        <div className="mx-5 mb-5 rounded-xl bg-neutral-50 px-4 py-3 text-sm text-neutral-700">
+          {s.autoEnabled ? <>매일 <b className="text-neutral-900">{scheduleText}</b> (한국시간)에 발행돼요</> : <>‘시작’을 누르면 <b className="text-neutral-900">{scheduleText}</b>에 맞춰 발행돼요</>}
+          {msg && <span className="ml-2 text-neutral-400">· {msg}</span>}
+        </div>
+      </div>
 
-      {/* 자동 발행 제어 */}
-      <Section title="자동 발행" desc="보관함에 쌓인 글을 하루 발행 수만큼 시간 간격을 두고 인스타에 자동 게시해요.">
-        <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <span className={`inline-block h-2.5 w-2.5 rounded-full ${s.autoEnabled ? "bg-emerald-500" : "bg-neutral-300"}`} />
-              <span className="text-sm font-semibold">{s.autoEnabled ? "자동 발행 켜짐" : "자동 발행 꺼짐"}</span>
-            </div>
-            <button
-              onClick={() => call({ action: "settings", autoEnabled: !s.autoEnabled }, s.autoEnabled ? "중지했어요" : "시작했어요")}
-              disabled={busy}
-              className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition active:scale-95 disabled:opacity-50 ${s.autoEnabled ? "bg-red-600 hover:bg-red-700" : "bg-neutral-900 hover:bg-neutral-800"}`}
-            >
-              {s.autoEnabled ? "종료" : "시작"}
-            </button>
-          </div>
-          <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
-            <label className="flex items-center gap-2 text-neutral-500">
-              하루 발행 수
-              <select
-                value={perDay}
-                onChange={(e) => call({ action: "settings", postsPerDay: Number(e.target.value) }, "발행 수 변경됨")}
-                disabled={busy}
-                className="rounded-lg border border-neutral-300 px-2.5 py-1.5 text-sm outline-none"
-              >
-                {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>하루 {n}개</option>)}
-              </select>
-            </label>
-            <label className="flex items-center gap-2 text-neutral-500">
-              시작 시각
-              <select
-                value={s.postingHour}
-                onChange={(e) => call({ action: "settings", postingHour: Number(e.target.value) }, "시각 변경됨")}
-                disabled={busy}
-                className="rounded-lg border border-neutral-300 px-2.5 py-1.5 text-sm outline-none"
-              >
-                {Array.from({ length: 17 }, (_, i) => i + 6).map((h) => <option key={h} value={h}>{hourLabel(h)}</option>)}
-              </select>
-            </label>
-          </div>
-          <p className="mt-3 text-sm text-neutral-500">
-            {s.autoEnabled ? <>매일 <b className="text-neutral-800">{scheduleText}</b>(한국시간)에 자동 발행돼요</> : "‘시작’을 누르면 정해둔 시각에 맞춰 자동 발행돼요"}
-            {msg && <span className="ml-2 text-neutral-400">· {msg}</span>}
-          </p>
-        </div>
-      </Section>
+      {/* 현황 */}
+      <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Stat label="발행 대기" value={`${s.queueCount}개`} accent hint={s.autoEnabled ? `약 ${daysLeft}일치` : undefined} />
+        <Stat label="발행 완료" value={`${s.publishedCount}개`} />
+        <Stat label="발행 실패" value={`${s.failedCount}개`} hint={s.failedCount > 0 ? "확인 필요" : undefined} />
+        <Stat label="인스타 토큰" value={tokenDays !== null ? `${Math.max(0, tokenDays)}일` : "—"} hint={tokenDays !== null ? "자동 갱신 중" : "갱신 후 표시"} />
+      </div>
+
+      {/* 경고 */}
+      {lowStock && (
+        <p className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          대기열이 얼마 안 남았어요{daysLeft <= 0 ? " (곧 끊겨요)" : ` (약 ${daysLeft}일치)`}. 터미널에서 <code className="rounded bg-amber-100 px-1.5 py-0.5 font-mono text-[13px]">npm run card:gen:bulk -- 20</code> 으로 더 채워두세요.
+        </p>
+      )}
+      {s.failedCount > 0 && (
+        <p className="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+          발행 실패 <b>{s.failedCount}건</b> (3회 재시도 후 멈춤). 아래 보관함에서 ‘지금 발행’으로 재시도하세요.
+        </p>
+      )}
+      {tokenWarn && (
+        <p className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          인스타 토큰이 <b>{tokenDays! <= 0 ? "만료됐어요" : `${tokenDays}일 뒤 만료`}</b>. 자동 갱신(주 1회)이 도는지 확인하고, 안 되면 다시 발급해 주세요.
+        </p>
+      )}
 
       {/* 보관함 목록 */}
       <Section title="보관함" desc="카드뉴스는 로컬에서 `npm run card:gen:bulk -- 20` 으로 한 번에 여러 개 만들어 쌓아둬요. 오래된 것부터 자동 발행돼요. (발행된 글은 인스타 API로 못 지움 · 인스타 앱에서 직접 삭제)">
@@ -486,6 +529,7 @@ export default function AdminDashboard({ stats }: { stats?: AdminStats | null })
       {/* 크레딧·예산 현황 */}
       <Section title="크레딧·예산 현황" desc="이번 달 API 비용과 남은 여력. 한도 근접 시 콘솔에서 확인 후 충전·한도조정 하면 돼요.">
         <BudgetWidget stats={stats} />
+        <LimitGuide />
       </Section>
 
       {/* API 비용 */}
