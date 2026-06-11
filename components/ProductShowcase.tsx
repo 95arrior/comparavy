@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import Reveal from "@/components/Reveal";
 
 const BRAND = "#3182F6";
@@ -211,7 +211,13 @@ const PANELS = [
 export default function ProductShowcase() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const chipRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [active, setActive] = useState(0);
+
+  // 활성 칩이 칩줄에서 가려져 있으면 보이도록 스크롤(초점 맞춤)
+  useEffect(() => {
+    chipRefs.current[active]?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }, [active]);
 
   function onScroll() {
     const c = scrollRef.current;
@@ -251,6 +257,7 @@ export default function ProductShowcase() {
             <button
               key={p.label}
               type="button"
+              ref={(el) => { chipRefs.current[i] = el; }}
               onClick={() => jump(i)}
               className={`min-h-[40px] shrink-0 rounded-full px-4 text-sm font-semibold transition active:scale-[0.97] ${active === i ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-500 hover:bg-neutral-200"}`}
             >
