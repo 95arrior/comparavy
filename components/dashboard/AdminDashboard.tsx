@@ -171,7 +171,7 @@ function BudgetWidget({ stats }: { stats: AdminStats }) {
         </p>
       ) : (
         <p className="mt-3 text-xs text-neutral-400">
-          사용량은 사용자 수에 비례해 늘어요. 자동 리로드가 켜져 있어 잔액은 자동 충전돼요. 정확한 잔액·청구는 콘솔 기준이고, 위 숫자는 우리 앱이 기록한 추정치예요.
+          이 화면은 ‘쓴 금액 vs 월 한도’예요 — <b className="text-neutral-500">크레딧을 충전해도 따로 알릴 필요 없이</b> 새로고침하면 자동 갱신되고, 매달 초 0으로 리셋돼요. 자동 리로드가 켜져 있어 잔액은 자동 충전돼요. 단, 콘솔에서 <b className="text-neutral-500">월 한도 자체를 바꾸면</b> 설정값(AI_MONTHLY_BUDGET_USD)만 맞춰주세요. 위 금액은 우리 앱 기록 기준 추정치, 정확한 청구는 콘솔이 기준이에요.
         </p>
       )}
     </div>
