@@ -171,9 +171,12 @@ export function assessCard(card: CardNews): { ok: boolean; reasons: string[] } {
   if (hashtags < 4) reasons.push("해시태그 4개 미만");
 
   // 금지: em dash, 과장/보장 표현
-  const all = slides.map((s) => `${s.title} ${s.body ?? ""} ${(s.points ?? []).join(" ")}`).join(" ") + " " + cap;
+  const slidesText = slides.map((s) => `${s.title} ${s.body ?? ""} ${s.stat ?? ""} ${s.statLabel ?? ""} ${(s.points ?? []).join(" ")}`).join(" ");
+  const all = slidesText + " " + cap;
   if (/[—–]/.test(all)) reasons.push("em dash 사용");
   if (/(보장|무조건|확실히 1위|상위노출 보장)/.test(all)) reasons.push("과장·보장 표현");
+  // 검증 안 된 정밀 통계 단정 차단(정직) — 배수·퍼센트·수익액
+  if (/\d+\s*배/.test(slidesText) || /\d+\s*%/.test(slidesText) || /\d+\s*만\s*원/.test(slidesText)) reasons.push("검증 안 된 수치 단정(N배·N%·N만원)");
 
   return { ok: reasons.length === 0, reasons };
 }
