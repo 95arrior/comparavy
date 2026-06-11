@@ -84,7 +84,7 @@ export async function generateCardNews(topic: string, angleLabel = "", opts: Gen
           "톤: 순수하게 도움·이득·재미를 주는 콘텐츠. 서비스 홍보·판매·가입 권유 문구는 절대 넣지 않는다(지금은 신뢰·팔로우부터 쌓는 단계). 제품 목업도 쓰지 않는다.\n" +
           "각 슬라이드에 type을 정해 레이아웃을 다양하게:\n" +
           '  - text: {"type":"text","title":"...","body":"..."} (후크 표지·설명·CTA)\n' +
-          '  - stat: {"type":"stat","title":"짧은 한 줄","stat":"3가지","statLabel":"숫자 설명"} (임팩트 숫자/짧은 지표만 — 반드시 8자 이내(숫자·단계·개수 등). 긴 문장·개념을 stat에 넣지 말 것(두 줄로 깨짐) — 그런 건 point/text로)\n' +
+          '  - stat: {"type":"stat","title":"짧은 한 줄","stat":"3가지","statLabel":"숫자 설명"} (진짜 짧은 숫자·지표가 있을 때만 — 8자 이내 권장(숫자·단계·개수). 애매하거나 길면 stat 쓰지 말고 point나 text로. 긴 문장을 stat에 넣으면 안 됨)\n' +
           '  - point: {"type":"point","title":"...","points":["핵심1","핵심2","핵심3"]} (2~3개)\n' +
           '  - mockup: {"type":"mockup","title":"...","body":"...","mockup":"generate|publish|calendar|edit"} (제품 화면 예시 — 우리 서비스 보여줄 때만)\n' +
           "규칙:\n" +
@@ -151,7 +151,7 @@ export function assessCard(card: CardNews): { ok: boolean; reasons: string[] } {
   // 표지 제목 길이 — 너무 짧아도, 너무 길어도(글씨 작아짐) 거른다
   const cover = (slides[0]?.title ?? "").replace(/\s|\n/g, "");
   if (cover.length < 4) reasons.push("표지 제목이 너무 짧음");
-  if (cover.length > 18) reasons.push("표지 제목이 너무 김(고정 크기라 18자 이내로 짧게)");
+  if (cover.length > 20) reasons.push("표지 제목이 너무 김(고정 크기라 20자 이내로)");
 
   // 제목 중복
   const titles = slides.map((s) => s.title.replace(/\s+/g, "").toLowerCase());
@@ -160,7 +160,7 @@ export function assessCard(card: CardNews): { ok: boolean; reasons: string[] } {
   // 타입별 필수 데이터
   for (const s of slides) {
     if (s.type === "stat" && !s.stat) reasons.push("stat 슬라이드에 숫자 없음");
-    if (s.type === "stat" && s.stat && [...s.stat].length > 8) reasons.push("stat이 너무 김(짧은 지표만 — 두 줄로 깨짐)");
+    if (s.type === "stat" && s.stat && [...s.stat].length > 12) reasons.push("stat이 너무 김(12자 이내)");
     if (s.type === "point" && (!s.points || s.points.length < 2)) reasons.push("point 슬라이드 항목 부족");
     if (s.type === "mockup" && !s.mockup) reasons.push("mockup 종류 없음");
   }

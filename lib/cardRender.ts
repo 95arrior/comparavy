@@ -83,7 +83,7 @@ function midHtml(slide: CardSlide, isCover: boolean): string {
   if (slide.type === "stat" && slide.stat) {
     // 글자 수에 맞춰 폰트 크기 조절 — 긴 텍스트가 단어 중간에서 잘리지 않게
     const len = [...slide.stat].length;
-    const size = len <= 3 ? 200 : len <= 4 ? 168 : len <= 5 ? 138 : len <= 6 ? 116 : len <= 8 ? 92 : 70;
+    const size = len <= 3 ? 200 : len <= 4 ? 168 : len <= 5 ? 138 : len <= 6 ? 116 : len <= 8 ? 92 : len <= 10 ? 76 : 60;
     return `<div class="statwrap"><div class="stat" style="font-size:${size}px">${esc(slide.stat)}</div>${slide.statLabel ? `<div class="statlabel">${esc(slide.statLabel)}</div>` : ""}</div>`;
   }
   if (slide.type === "point" && slide.points?.length) {
@@ -117,6 +117,7 @@ body{font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;ba
 .mark{display:flex;align-items:center;gap:14px;font-size:34px;font-weight:700;letter-spacing:-.01em;opacity:.96;}
 .pill{align-self:flex-start;background:${ACCENT};color:${INK};font-weight:800;font-size:36px;line-height:1;padding:14px 26px;border-radius:999px;}
 .title{font-weight:800;line-height:1.14;letter-spacing:-.025em;font-size:${titleSize}px;word-break:keep-all;}
+.title.cover{min-height:330px;}
 .mid{flex:1;display:flex;align-items:center;justify-content:center;}
 .bottom{display:flex;flex-direction:column;}
 .body{font-weight:500;font-size:42px;line-height:1.45;opacity:.85;word-break:keep-all;}
@@ -149,8 +150,8 @@ body{font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;ba
 <div class="glow"></div><div class="grain"></div>
 <div class="wrap">
   <div class="top">
-    ${isCover ? `<div class="mark"><svg width="40" height="40" viewBox="0 0 32 32"><path fill="#fff" d="M16 16 L28.99 8.5 A15 15 0 1 0 28.99 23.5 Z"/></svg>에이트플로</div>` : `<span class="pill">${num}</span>`}
-    <div class="title">${esc(slide.title)}</div>
+    ${isCover ? "" : `<span class="pill">${num}</span>`}
+    <div class="title${isCover ? " cover" : ""}">${esc(slide.title)}</div>
   </div>
   <div class="mid">${midHtml(slide, isCover)}</div>
   <div class="bottom">

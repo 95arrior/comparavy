@@ -21,10 +21,10 @@ async function buildOne(admin: ReturnType<typeof createSupabaseAdminClient>, seq
   const a = ROTATION[seq % ROTATION.length];
   const opts = { avoidTopics: avoid, useWebSearch: a.web, model: a.web ? "claude-sonnet-4-6" : undefined };
 
-  // 품질 게이트 — 미달이면 1회 재생성, 그래도 안 되면 스킵
+  // 품질 게이트 — 최대 3회 재생성, 그래도 안 되면 스킵
   let card = await generateCardNews(a.seed, a.label, opts);
   let check = assessCard(card);
-  if (!check.ok) {
+  for (let t = 0; t < 2 && !check.ok; t++) {
     card = await generateCardNews(a.seed, a.label, opts);
     check = assessCard(card);
   }

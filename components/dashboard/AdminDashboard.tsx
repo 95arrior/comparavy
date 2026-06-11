@@ -449,7 +449,8 @@ function SocialView({ stats }: { stats: AdminStats }) {
               <ul className="divide-y divide-neutral-100">
                 {listFor.map((p) => (
                   <li key={p.id} className="py-4 first:pt-0 last:pb-0">
-                    {p.mediaUrls.length > 0 && (
+                    {/* 발행 완료는 글로만(썸네일 생략 — 계속 쌓여서 부담) */}
+                    {openList !== "published" && p.mediaUrls.length > 0 && (
                       <div className="flex gap-2 overflow-x-auto pb-1">
                         {p.mediaUrls.map((u, i) => (
                           <button key={i} type="button" onClick={() => setViewer({ urls: p.mediaUrls, i })} className="group relative shrink-0">
@@ -460,7 +461,7 @@ function SocialView({ stats }: { stats: AdminStats }) {
                         ))}
                       </div>
                     )}
-                    <div className="mt-2.5 flex items-center gap-2">
+                    <div className={`flex items-center gap-2 ${openList !== "published" ? "mt-2.5" : ""}`}>
                       <span className="min-w-0 flex-1 truncate text-sm text-neutral-600">{(p.caption || "(캡션 없음)").split("\n")[0]}{p.error && <span className="ml-1 text-xs text-red-500">· {p.error}</span>}</span>
                       {p.status !== "published" && (
                         <button onClick={() => call({ action: "publishNow", id: p.id }, "발행했어요")} disabled={busy} className="shrink-0 rounded-md bg-neutral-900 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-neutral-800 active:scale-95 disabled:opacity-50">지금 발행</button>
@@ -488,7 +489,15 @@ function SocialView({ stats }: { stats: AdminStats }) {
 }
 
 export default function AdminDashboard({ stats }: { stats?: AdminStats | null }) {
-  const [view, setView] = useState<"stats" | "waitlist" | "social">("stats");
+  const [view, setViewState] = useState<"stats" | "waitlist" | "social">("stats");
+  useEffect(() => {
+    const v = localStorage.getItem("admin_tab");
+    if (v === "stats" || v === "social" || v === "waitlist") setViewState(v);
+  }, []);
+  const setView = (v: "stats" | "waitlist" | "social") => {
+    setViewState(v);
+    try { localStorage.setItem("admin_tab", v); } catch {}
+  };
   if (!stats) return <p className="text-sm text-neutral-500">통계를 불러오지 못했어요.</p>;
 
   return (
