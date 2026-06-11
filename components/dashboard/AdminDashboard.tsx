@@ -324,7 +324,7 @@ function WaitlistView({ stats }: { stats: AdminStats }) {
 }
 
 const SOC_TYPE_KO: Record<string, string> = { image: "이미지", reel: "릴스", carousel: "카드뉴스" };
-const SOC_STATUS: Record<string, string> = { queued: "대기", published: "발행됨", failed: "실패" };
+const SOC_STATUS: Record<string, string> = { draft: "초안", queued: "대기", published: "발행됨", failed: "실패" };
 
 function SocialView({ stats }: { stats: AdminStats }) {
   const router = useRouter();
@@ -429,33 +429,47 @@ function SocialView({ stats }: { stats: AdminStats }) {
         </p>
       )}
 
-      {/* 보관함 목록 */}
-      <Section title="보관함" desc="카드뉴스는 로컬에서 `npm run card:gen:bulk -- 20` 으로 한 번에 여러 개 만들어 쌓아둬요. 오래된 것부터 자동 발행돼요. (발행된 글은 인스타 API로 못 지움 · 인스타 앱에서 직접 삭제)">
+      {/* 보관함 목록 — 썸네일 미리보기 */}
+      <Section title="보관함" desc="카드 썸네일을 눌러 크게 보고, ‘발행’ 또는 ‘삭제’하세요. 초안은 자동발행 안 되고, 대기는 정한 시각에 자동 발행돼요. (발행된 글은 인스타 API로 못 지움 · 인스타 앱에서 직접 삭제)">
         <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-4 sm:p-5">
-          <ul className="divide-y divide-neutral-100">
-            {s.posts.length === 0 ? (
-              <li className="py-3 text-sm text-neutral-400">아직 없어요</li>
-            ) : (
-              s.posts.map((p) => (
-                <li key={p.id} className="flex items-center gap-3 py-3">
-                  <span className="shrink-0 rounded-md bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-500">{SOC_TYPE_KO[p.type] ?? p.type}</span>
-                  <span className="min-w-0 flex-1 truncate text-sm text-neutral-700">{p.caption || "(캡션 없음)"}{p.error && <span className="ml-1 text-xs text-red-500">· {p.error}</span>}</span>
-                  <span className={`shrink-0 rounded-md px-2 py-0.5 text-[11px] font-medium ${p.status === "published" ? "bg-emerald-600 text-white" : p.status === "failed" ? "bg-red-100 text-red-600" : "bg-[#3f91ff]/10 text-[#2f7fe6]"}`}>{SOC_STATUS[p.status] ?? p.status}</span>
-                  {p.status !== "published" && (
-                    <button onClick={() => call({ action: "publishNow", id: p.id }, "발행했어요")} disabled={busy} className="shrink-0 text-xs font-medium text-neutral-500 transition hover:text-neutral-900 disabled:opacity-50">지금 발행</button>
+          {s.posts.length === 0 ? (
+            <p className="py-3 text-sm text-neutral-400">아직 없어요. 터미널에서 <code className="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-[13px]">npm run card:gen:bulk -- 14</code> 로 만들어요.</p>
+          ) : (
+            <ul className="divide-y divide-neutral-100">
+              {s.posts.map((p) => (
+                <li key={p.id} className="py-4 first:pt-0 last:pb-0">
+                  {/* 썸네일 스트립 */}
+                  {p.mediaUrls.length > 0 && (
+                    <div className="flex gap-2 overflow-x-auto pb-1">
+                      {p.mediaUrls.map((u, i) => (
+                        <a key={i} href={u} target="_blank" rel="noopener noreferrer" className="group relative shrink-0">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={u} alt={`슬라이드 ${i + 1}`} loading="lazy" className="h-28 w-[90px] rounded-lg border border-neutral-200 object-cover transition group-hover:opacity-80" />
+                          {i === 0 && <span className="absolute left-1 top-1 rounded bg-black/55 px-1 py-0.5 text-[9px] font-medium text-white">표지</span>}
+                        </a>
+                      ))}
+                    </div>
                   )}
-                  <button
-                    onClick={() => call({ action: "delete", id: p.id }, p.status === "published" ? "기록만 삭제됐어요 (인스타는 앱에서 삭제)" : "삭제했어요")}
-                    disabled={busy}
-                    title={p.status === "published" ? "기록만 삭제돼요. 인스타 게시물은 인스타 앱에서 직접 삭제하세요." : "대기열에서 삭제"}
-                    className="shrink-0 text-xs text-neutral-400 transition hover:text-red-500 disabled:opacity-50"
-                  >
-                    {p.status === "published" ? "기록 삭제" : "삭제"}
-                  </button>
+                  {/* 메타 + 액션 */}
+                  <div className="mt-2.5 flex items-center gap-2">
+                    <span className={`shrink-0 rounded-md px-2 py-0.5 text-[11px] font-medium ${p.status === "published" ? "bg-emerald-600 text-white" : p.status === "failed" ? "bg-red-100 text-red-600" : p.status === "draft" ? "bg-amber-100 text-amber-700" : "bg-[#3f91ff]/10 text-[#2f7fe6]"}`}>{SOC_STATUS[p.status] ?? p.status}</span>
+                    <span className="min-w-0 flex-1 truncate text-sm text-neutral-600">{(p.caption || "(캡션 없음)").split("\n")[0]}{p.error && <span className="ml-1 text-xs text-red-500">· {p.error}</span>}</span>
+                    {p.status !== "published" && (
+                      <button onClick={() => call({ action: "publishNow", id: p.id }, "발행했어요")} disabled={busy} className="shrink-0 rounded-md bg-neutral-900 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-neutral-800 active:scale-95 disabled:opacity-50">발행</button>
+                    )}
+                    <button
+                      onClick={() => call({ action: "delete", id: p.id }, p.status === "published" ? "기록만 삭제됐어요 (인스타는 앱에서 삭제)" : "삭제했어요")}
+                      disabled={busy}
+                      title={p.status === "published" ? "기록만 삭제돼요. 인스타 게시물은 인스타 앱에서 직접 삭제하세요." : "삭제"}
+                      className="shrink-0 text-xs text-neutral-400 transition hover:text-red-500 disabled:opacity-50"
+                    >
+                      {p.status === "published" ? "기록 삭제" : "삭제"}
+                    </button>
+                  </div>
                 </li>
-              ))
-            )}
-          </ul>
+              ))}
+            </ul>
+          )}
         </div>
       </Section>
     </>
