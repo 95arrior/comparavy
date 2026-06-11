@@ -44,7 +44,7 @@ async function buildOne(admin: ReturnType<typeof createSupabaseAdminClient>, seq
     if (error) throw new Error("업로드 실패: " + error.message);
     urls.push(admin.storage.from(BUCKET).getPublicUrl(path).data.publicUrl);
   }
-  const { error } = await admin.from("social_posts").insert({ type: "carousel", media_urls: urls, caption: card.caption, topic: a.seed });
+  const { error } = await admin.from("social_posts").insert({ type: "carousel", media_urls: urls, caption: card.caption, topic: a.seed, threads_text: card.threadsText });
   if (error) throw new Error("보관함 저장 실패: " + error.message);
   return { skipped: false as const, label: a.label, title: card.slides[0]?.title ?? "" };
 }

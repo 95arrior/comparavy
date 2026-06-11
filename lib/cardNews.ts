@@ -23,7 +23,8 @@ export interface CardNews {
   topic: string;
   angle: string;
   slides: CardSlide[];
-  caption: string;
+  caption: string; // 인스타 캡션(해시태그 포함)
+  threadsText: string; // 스레드 전용 글(글 중심·더 알참·해시태그 X)
 }
 
 export interface Angle {
@@ -114,7 +115,8 @@ export async function generateCardNews(topic: string, angleLabel = "", opts: Gen
           "  · 빈 줄 후 1줄: 가벼운 CTA(‘저장해두세요’·‘팔로우하면 도움돼요’ 위주). 서비스 홍보·가입·판매 문구는 넣지 않는다.\n" +
           "  · 빈 줄 후 마지막 줄에 해시태그 6~8개를 모아서.\n" +
           "  해시태그는 매번 똑같이 쓰지 말고 주제에 맞는 특화 태그를 섞어 다양하게. 문단 사이는 빈 줄(\\n\\n)로 띄운다. 캡션 이모지는 0~2개만, 줄 끝에 자연스럽게.\n" +
-          'JSON만(줄바꿈은 \\n으로 이스케이프): {"slides":[ ... ],"caption":"..."}',
+          "threadsText: 스레드(Threads)용 글(인스타 캡션과 별개로, 더 알차게). 스레드는 글 중심이라 그 자체로 읽을 가치가 있어야 한다. 구성: 후크 한 줄 → 빈 줄 → 구체적이고 유익한 알맹이(카드 내용을 더 풀어 실전 팁·인사이트 2~4줄) → 빈 줄 → 가벼운 마무리(저장·팔로우나 생각 유도). 해시태그는 스레드에서 안 먹으니 넣지 마라(0개). 이모지 0~1개. 480자 이내. 대화하듯 자연스럽게, 줄바꿈으로 읽기 좋게.\n" +
+          'JSON만(줄바꿈은 \\n으로 이스케이프): {"slides":[ ... ],"caption":"...","threadsText":"..."}',
       },
     ],
   };
@@ -160,7 +162,8 @@ export async function generateCardNews(topic: string, angleLabel = "", opts: Gen
     : [];
   if (!slides.length) throw new Error("슬라이드가 비어 있어요.");
   const caption = typeof parsed.caption === "string" ? parsed.caption.slice(0, 2000) : topic;
-  return { topic, angle: angleLabel, slides, caption };
+  const threadsText = typeof parsed.threadsText === "string" ? parsed.threadsText.slice(0, 490) : "";
+  return { topic, angle: angleLabel, slides, caption, threadsText };
 }
 
 /**

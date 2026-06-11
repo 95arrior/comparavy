@@ -3,15 +3,20 @@ import { createSupabaseAdminClient } from "./supabase-server";
 import { decryptSecret } from "./crypto";
 import { publishThreads, type ThreadsCreds } from "./threads";
 
-/** 카드 1건을 스레드에도 교차발행(B: 캡션 텍스트 + 표지 1장). 켜져 있을 때만, 실패해도 무해. */
-export async function crosspostThreads(post: { caption: string; media_urls: unknown }): Promise<{ ok: boolean; id?: string; error?: string }> {
+/** 캡션에서 해시태그 줄/토큰을 제거(스레드는 해시태그가 안 먹음). */
+function stripHashtags(s: string): string {
+  return s.replace(/#[^\s#]+/g, "").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+/** 카드 1건을 스레드에 교차발행 — 글만(이미지 X), 스레드 전용 글 우선. 켜져 있을 때만, 실패해도 무해. */
+export async function crosspostThreads(post: { caption: string; threads_text?: string | null; media_urls?: unknown }): Promise<{ ok: boolean; id?: string; error?: string }> {
   try {
     const admin = createSupabaseAdminClient();
     const { data } = await admin.from("social_settings").select("threads_enabled,threads_user_id,threads_access_token").eq("id", 1).maybeSingle();
     if (!data?.threads_enabled || !data.threads_user_id || !data.threads_access_token) return { ok: false, error: "스레드 미연결/꺼짐" };
     const creds: ThreadsCreds = { userId: data.threads_user_id, token: decryptSecret(data.threads_access_token) };
-    const urls = Array.isArray(post.media_urls) ? (post.media_urls as string[]) : [];
-    const id = await publishThreads(creds, (post.caption || "").slice(0, 480), urls[0]);
+    const text = (post.threads_text && post.threads_text.trim()) || stripHashtags(post.caption || "");
+    const id = await publishThreads(creds, text.slice(0, 490)); // 이미지 없이 글만
     return { ok: true, id };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "스레드 발행 실패" };
