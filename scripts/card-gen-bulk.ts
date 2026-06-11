@@ -19,7 +19,7 @@ const ROTATION = ANGLES.filter((a) => !a.promo);
 async function buildOne(admin: ReturnType<typeof createSupabaseAdminClient>, seq: number, avoid: string[]) {
   // 앵글을 순환시켜 골고루 섞는다
   const a = ROTATION[seq % ROTATION.length];
-  const opts = { avoidTopics: avoid, useWebSearch: a.web, model: a.web ? "claude-sonnet-4-6" : undefined };
+  const opts = { avoidTopics: avoid }; // 기본: 웹검색+sonnet (실제 데이터 근거)
 
   // 품질 게이트 — 최대 3회 재생성, 그래도 안 되면 스킵
   let card = await generateCardNews(a.seed, a.label, opts);

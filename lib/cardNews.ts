@@ -62,21 +62,28 @@ export async function generateCardNews(topic: string, angleLabel = "", opts: Gen
   const year = new Date(Date.now() + 9 * 60 * 60 * 1000).getUTCFullYear();
   const client = new Anthropic({ apiKey });
 
+  const useWeb = opts.useWebSearch ?? true; // 기본: 항상 웹 검색으로 실제 데이터 근거
+  const isHumor = angleLabel.includes("유머");
   const avoid = (opts.avoidTopics ?? []).filter(Boolean).slice(0, 15);
-  const humorBlock = opts.useWebSearch
-    ? "이 카드는 ‘공감 유머’다. 웹 검색으로 최근 한 달 이내 한국에서 실제 유행 중인 밈·말투·트렌드를 찾아보고, 지금도 확실히 통하고 블로그·워드프레스 운영자 정서에 자연스럽게 맞을 때만 살짝 차용한다. 한참 지난 밈·억지 밈·맥락 안 맞는 밈은 절대 쓰지 말고, 그럴 땐 유행 안 타는 담백한 공감 유머로 간다. 비하·정치·논란·저질 소재 금지. 그래도 우리 타깃(블로거)이 ‘이거 내 얘기네’ 하고 웃을 포인트를 노린다.\n"
+  const groundBlock = useWeb
+    ? "먼저 웹 검색으로 이 주제의 최신·실제 정보(구체적인 방법·단계, 통용되는 사실, 최근 바뀐 점, 실제 사례)를 찾아본다. 그 근거 위에서만 카드를 쓴다. 검색으로 확인되지 않은 수치·사실·고유명사는 단정하지 말고 지어내지 않는다. 누구나 아는 뻔한 일반론 대신, 검색에서 얻은 진짜 쓸모있는 구체적 알맹이를 담는다.\n"
+    : "";
+  const humorBlock = isHumor
+    ? "이 카드는 ‘공감 유머’다. 최근 한 달 내 유행하는 밈·말투가 지금도 통하고 블로거 정서에 자연스러우면 살짝 차용(억지·지난 밈·비하·정치·논란 금지). 타깃(블로거)이 ‘이거 내 얘기네’ 하고 웃을 포인트를 노린다.\n"
     : "";
   const avoidBlock = avoid.length ? `최근 다음 주제·표현은 이미 올렸으니 겹치지 말고 새로운 각도로: ${avoid.join(" / ")}.\n` : "";
 
-  const res = await client.messages.create({
-    model: opts.model || "claude-haiku-4-5",
-    max_tokens: opts.useWebSearch ? 2200 : 1300,
-    ...(opts.useWebSearch ? { tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 3 }] } : {}),
+  const model = opts.model || "claude-sonnet-4-6";
+  const params: Anthropic.MessageCreateParamsNonStreaming = {
+    model,
+    max_tokens: useWeb ? 3200 : 1300,
+    ...(useWeb ? { tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 2 }] } : {}),
     messages: [
       {
         role: "user",
         content:
           `‘${topic}’ 주제로 인스타 카드뉴스(5장)를 만들어줘.\n` +
+          groundBlock +
           humorBlock +
           avoidBlock +
           "타깃: 블로그·워드프레스로 부업·수익을 만들고 싶은 사람(초보~중수). 부업·N잡·애드센스 관심.\n" +
@@ -106,9 +113,17 @@ export async function generateCardNews(topic: string, angleLabel = "", opts: Gen
           'JSON만(줄바꿈은 \\n으로 이스케이프): {"slides":[ ... ],"caption":"..."}',
       },
     ],
-  });
+  };
+  let res = await client.messages.create(params);
+  // 웹 검색이 길어지면 stop_reason=pause_turn으로 끊김 → 이어받아 완료
+  const convo: Anthropic.MessageParam[] = [...params.messages];
+  let guard = 0;
+  while (res.stop_reason === "pause_turn" && guard++ < 4) {
+    convo.push({ role: "assistant", content: res.content });
+    res = await client.messages.create({ ...params, messages: convo });
+  }
   // 비용 추적 — 카드 생성도 usage_log에 기록(대시보드 월 비용 정확도)
-  void logUsage({ model: opts.model || "claude-haiku-4-5", kind: "card", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
+  void logUsage({ model, kind: "card", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
 
   // 웹 검색 시 content에 tool_result 블록이 섞이므로 마지막 text 블록을 쓴다
   const texts = res.content.filter((b) => b.type === "text");

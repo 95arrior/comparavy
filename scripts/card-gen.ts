@@ -26,11 +26,11 @@ async function main() {
 
   console.log("① 카피 생성 중…");
   // 품질 게이트 — 통과 못 하면 1회 재생성, 그래도 안 되면 중단(쓰레기 안 올림)
-  let card = await generateCardNews(topic, angleLabel, { useWebSearch: angle?.web, model: angle?.web ? "claude-sonnet-4-6" : undefined });
+  let card = await generateCardNews(topic, angleLabel);
   let check = assessCard(card);
   if (!check.ok) {
     console.log(`  ↻ 품질 미달(${check.reasons.join(", ")}) → 재생성`);
-    card = await generateCardNews(topic, angleLabel, { useWebSearch: angle?.web, model: angle?.web ? "claude-sonnet-4-6" : undefined });
+    card = await generateCardNews(topic, angleLabel);
     check = assessCard(card);
   }
   if (!check.ok) {
