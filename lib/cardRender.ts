@@ -5,13 +5,6 @@ const INK = "#191F28";
 const BLUE = "#3f91ff";
 const ACCENT = "#ffd23a";
 
-// 표지 배경색 팔레트 — 카드마다 달라 한눈에 구별됨(전부 흰 글씨 가독성 OK)
-const COVER_BG = ["#3f91ff", "#6366f1", "#0ea5a5", "#8b5cf6", "#ef4f6b", "#1f9d6b", "#e0792a", "#38507f"];
-function hashStr(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
 
 const GRAIN =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E";
@@ -82,11 +75,15 @@ function mockup(kind: string): string {
 
 function midHtml(slide: CardSlide, isCover: boolean): string {
   if (slide.type === "text") {
-    // 텍스트 슬라이드(표지·설명·마무리)는 비어 보이니 주제 아이콘으로 이해를 돕는다
-    const name = slide.icon && ICONS[slide.icon] ? slide.icon : isCover ? "idea" : "";
+    if (isCover) {
+      // 표지엔 아이콘 없음. 단, AI 도구 소식이면 그 자리에 실제 로고(Simple Icons).
+      if (slide.brand) return `<div class="iconwrap"><img src="https://cdn.simpleicons.org/${slide.brand}/ffffff" width="148" height="148" alt="" style="opacity:.95"/></div>`;
+      return "";
+    }
+    // 본문 텍스트 슬라이드는 비어 보이니 라인 아이콘으로 이해를 돕는다
+    const name = slide.icon && ICONS[slide.icon] ? slide.icon : "";
     if (!name) return "";
-    const color = isCover ? "rgba(255,255,255,0.92)" : "#5aa2ff";
-    return `<div class="iconwrap">${iconSvg(name, isCover ? 168 : 124, color)}</div>`;
+    return `<div class="iconwrap">${iconSvg(name, 124, "#5aa2ff")}</div>`;
   }
   if (slide.type === "stat" && slide.stat) {
     // 글자 수에 맞춰 폰트 크기 조절 — 긴 텍스트가 단어 중간에서 잘리지 않게
@@ -105,7 +102,7 @@ function midHtml(slide: CardSlide, isCover: boolean): string {
 
 function slideHtml(slide: CardSlide, index: number, total: number): string {
   const isCover = index === 0;
-  const bg = isCover ? COVER_BG[hashStr(slide.title) % COVER_BG.length] : INK;
+  const bg = isCover ? BLUE : INK;
   const num = String(index + 1).padStart(2, "0");
   const totalStr = String(total).padStart(2, "0");
   const glow = isCover ? "radial-gradient(circle, rgba(255,255,255,0.55), transparent 68%)" : "radial-gradient(circle, rgba(63,145,255,0.85), transparent 68%)";

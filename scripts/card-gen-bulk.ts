@@ -15,11 +15,16 @@ const BUCKET = "social-cards";
 
 // 초반엔 홍보(promo) 앵글 제외 — 순수 도움·이득·유머 위주
 const ROTATION = ANGLES.filter((a) => !a.promo);
+type Angle = (typeof ROTATION)[number];
 
-async function buildOne(admin: ReturnType<typeof createSupabaseAdminClient>, seq: number, avoid: string[]) {
-  // 앵글을 순환시켜 골고루 섞는다
-  const a = ROTATION[seq % ROTATION.length];
-  const opts = { avoidTopics: avoid }; // 기본: 웹검색+sonnet (실제 데이터 근거)
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+
+async function buildOne(admin: ReturnType<typeof createSupabaseAdminClient>, seq: number, a: Angle, avoid: string[]) {
+  const opts = { avoidTopics: avoid, useWebSearch: a.web }; // 최신성 앵글(AI소식·유머)만 웹검색
 
   // 품질 게이트 — 최대 3회 재생성, 그래도 안 되면 스킵
   let card = await generateCardNews(a.seed, a.label, opts);
@@ -54,15 +59,20 @@ async function main() {
   const { data: recent } = await admin.from("social_posts").select("topic").order("created_at", { ascending: false }).limit(20);
   const avoid: string[] = (recent ?? []).map((r: { topic: string | null }) => r.topic).filter((t): t is string => !!t);
 
+  // 앵글 순서 셔플(주제 골고루 섞이게)
+  let bag = shuffle(ROTATION);
   let ok = 0;
   for (let i = 0; i < n; i++) {
+    if (i % ROTATION.length === 0 && i > 0) bag = shuffle(ROTATION); // 한 바퀴마다 다시 셔플
+    const a = bag[i % ROTATION.length];
     try {
-      const r = await buildOne(admin, i, avoid);
+      const r = await buildOne(admin, i, a, avoid);
       if (r.skipped) {
         console.log(`  ⏭  ${i + 1}/${n} [${r.label}] 품질 미달로 스킵 (${r.reasons.join(", ")})`);
         continue;
       }
       ok++;
+      if (r.title) avoid.push(r.title.replace(/\n/g, " ")); // 이미 쓴 표지 후크 → 다음 카드에서 회피
       console.log(`  ✅ ${i + 1}/${n} [${r.label}] ${r.title.replace(/\n/g, " ")}`);
     } catch (e) {
       console.log(`  ⚠️  ${i + 1}/${n} 실패: ${e instanceof Error ? e.message : e}`);
