@@ -76,7 +76,7 @@ export async function generateCardNews(topic: string, angleLabel = "", opts: Gen
   const model = opts.model || "claude-sonnet-4-6";
   const params: Anthropic.MessageCreateParamsNonStreaming = {
     model,
-    max_tokens: useWeb ? 4096 : 1300,
+    max_tokens: useWeb ? 6000 : 1300,
     ...(useWeb ? { tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 2 }] } : {}),
     messages: [
       {
