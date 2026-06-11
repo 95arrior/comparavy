@@ -59,7 +59,7 @@ export type AdminStats = {
     queueCount: number;
     publishedCount: number;
     failedCount: number;
-    posts: { id: string; type: string; caption: string; status: string; mediaUrls: string[]; created_at: string; error: string | null }[];
+    posts: { id: string; type: string; caption: string; status: string; mediaUrls: string[]; created_at: string; published_at: string | null; error: string | null }[];
   } | null;
   /** 클로드(생성) 헬스 — 크레딧 소진 등으로 글·카드 생성이 멈췄는지 */
   ai: { ok: boolean; lastError: string | null; updatedAt: string | null } | null;
@@ -256,13 +256,13 @@ export async function getAdminStats(): Promise<AdminStats> {
     const { data: s } = await admin.from("social_settings").select("*").eq("id", 1).maybeSingle();
     const { data: posts } = await admin
       .from("social_posts")
-      .select("id,type,caption,status,media_urls,created_at,error")
+      .select("id,type,caption,status,media_urls,created_at,published_at,error")
       .order("created_at", { ascending: false })
       .limit(60);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const list = (posts ?? []).map((p: any) => ({
       id: p.id, type: p.type, caption: p.caption ?? "", status: p.status,
-      mediaUrls: Array.isArray(p.media_urls) ? p.media_urls : [], created_at: p.created_at ?? "", error: p.error ?? null,
+      mediaUrls: Array.isArray(p.media_urls) ? p.media_urls : [], created_at: p.created_at ?? "", published_at: p.published_at ?? null, error: p.error ?? null,
     }));
     social = {
       autoEnabled: !!s?.auto_enabled,

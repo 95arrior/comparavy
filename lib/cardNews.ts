@@ -76,7 +76,7 @@ export async function generateCardNews(topic: string, angleLabel = "", opts: Gen
   const model = opts.model || "claude-sonnet-4-6";
   const params: Anthropic.MessageCreateParamsNonStreaming = {
     model,
-    max_tokens: useWeb ? 3200 : 1300,
+    max_tokens: useWeb ? 4096 : 1300,
     ...(useWeb ? { tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 2 }] } : {}),
     messages: [
       {
@@ -125,12 +125,16 @@ export async function generateCardNews(topic: string, angleLabel = "", opts: Gen
   // 비용 추적 — 카드 생성도 usage_log에 기록(대시보드 월 비용 정확도)
   void logUsage({ model, kind: "card", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
 
-  // 웹 검색 시 content에 tool_result 블록이 섞이므로 마지막 text 블록을 쓴다
-  const texts = res.content.filter((b) => b.type === "text");
-  const raw = texts.length ? (texts[texts.length - 1] as { text: string }).text : "";
-  const match = raw.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error("카드뉴스 생성 결과를 해석하지 못했어요.");
-  const parsed = JSON.parse(match[0]);
+  // 웹 검색 시 content에 tool_result 블록이 섞임 → text 블록들에서 JSON 추출(마지막 → 전체 순으로 시도)
+  const texts = res.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text);
+  const candidates = [texts[texts.length - 1] ?? "", texts.join("\n")];
+  let parsed: { slides?: unknown; caption?: unknown } | null = null;
+  for (const c of candidates) {
+    const m = c.match(/\{[\s\S]*\}/);
+    if (!m) continue;
+    try { parsed = JSON.parse(m[0]); break; } catch {}
+  }
+  if (!parsed) throw new Error("카드뉴스 생성 결과를 해석하지 못했어요.");
   const types: SlideType[] = ["text", "stat", "point", "mockup"];
   const mockups: MockupKind[] = ["generate", "publish", "calendar", "edit"];
   const slides: CardSlide[] = Array.isArray(parsed.slides)

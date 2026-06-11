@@ -372,35 +372,50 @@ function SocialView({ stats }: { stats: AdminStats }) {
   const [msg, setMsg] = useState<string | null>(null);
   const [openList, setOpenList] = useState<null | "queued" | "published" | "failed">(null);
   const [viewer, setViewer] = useState<{ urls: string[]; i: number } | null>(null);
+  // 낙관적 로컬 상태 — 버튼 누르는 즉시 화면 반영(무거운 전체 새로고침을 기다리지 않음)
+  type SP = NonNullable<AdminStats["social"]>["posts"][number];
+  const [posts, setPosts] = useState<SP[]>(s?.posts ?? []);
+  const [cfg, setCfg] = useState({ autoEnabled: !!s?.autoEnabled, perDay: s?.postsPerDay ?? 2, gap: clampGap(s?.intervalHours ?? 12), postingHour: s?.postingHour ?? 9 });
+  useEffect(() => {
+    if (!s) return;
+    setPosts(s.posts);
+    setCfg({ autoEnabled: !!s.autoEnabled, perDay: s.postsPerDay ?? 2, gap: clampGap(s.intervalHours ?? 12), postingHour: s.postingHour ?? 9 });
+  }, [s]);
 
-  async function call(payload: Record<string, unknown>, okMsg?: string) {
-    if (busy) return;
-    setBusy(true);
-    setMsg(null);
+  async function send(payload: Record<string, unknown>): Promise<boolean> {
     try {
       const r = await fetch("/api/social", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-      const d = await r.json().catch(() => ({}));
-      if (r.ok) { setMsg(okMsg ?? "완료"); router.refresh(); }
-      else setMsg(d.error ?? "실패했어요");
-    } catch {
-      setMsg("오류가 났어요");
-    } finally {
-      setBusy(false);
-    }
+      if (!r.ok) { const d = await r.json().catch(() => ({})); setMsg(d.error ?? "실패했어요"); return false; }
+      router.refresh(); // 백그라운드 동기화 (UI는 이미 낙관적으로 반영됨)
+      return true;
+    } catch { setMsg("오류가 났어요"); return false; }
+  }
+  async function changeCfg(patch: Partial<typeof cfg>, payload: Record<string, unknown>, okMsg: string) {
+    const prev = cfg; setCfg({ ...cfg, ...patch }); setMsg(okMsg); setBusy(true);
+    const ok = await send(payload); if (!ok) setCfg(prev); setBusy(false);
+  }
+  async function removePost(p: SP) {
+    const prev = posts; setPosts(posts.filter((x) => x.id !== p.id)); setMsg(p.status === "published" ? "기록 삭제됨" : "삭제됨"); setBusy(true);
+    const ok = await send({ action: "delete", id: p.id }); if (!ok) setPosts(prev); setBusy(false);
+  }
+  async function publishPost(p: SP) {
+    const prev = posts;
+    setPosts(posts.map((x) => (x.id === p.id ? { ...x, status: "published", published_at: new Date().toISOString(), error: null } : x)));
+    setMsg("발행했어요"); setBusy(true);
+    const ok = await send({ action: "publishNow", id: p.id }); if (!ok) setPosts(prev); setBusy(false);
   }
 
   if (!s) return <Section title="SNS 발행"><p className="text-sm text-neutral-400">설정을 불러오지 못했어요. (마이그레이션 0017 실행 필요)</p></Section>;
 
   const hourLabel = (h: number) => (h === 0 ? "오전 12시" : h < 12 ? `오전 ${h}시` : h === 12 ? "오후 12시" : `오후 ${h - 12}시`);
-  const perDay = s.postsPerDay ?? 2;
-  const gap = clampGap(s.intervalHours ?? 12);
-  const scheduleText = slotHours(s.postingHour, perDay, gap).map(hourLabel).join(" · ");
+  const { perDay, gap, postingHour, autoEnabled } = cfg;
+  const scheduleText = slotHours(postingHour, perDay, gap).map(hourLabel).join(" · ");
 
-  const queued = s.posts.filter((p) => p.status === "queued");
-  const published = s.posts.filter((p) => p.status === "published");
-  const failed = s.posts.filter((p) => p.status === "failed");
+  const queued = posts.filter((p) => p.status === "queued");
+  const published = posts.filter((p) => p.status === "published");
+  const failed = posts.filter((p) => p.status === "failed");
   const daysLeft = perDay > 0 ? Math.floor(queued.length / perDay) : 0;
-  const lowStock = s.autoEnabled && queued.length < perDay * 3; // 3일치 미만이면 경고
+  const lowStock = autoEnabled && queued.length < perDay * 3; // 3일치 미만이면 경고
   const tokenDays = s.tokenExpiresAt ? Math.floor((new Date(s.tokenExpiresAt).getTime() - Date.now()) / 86400000) : null;
   const tokenWarn = tokenDays !== null && tokenDays < 14; // 자동 갱신이 도는데도 14일 미만이면 점검 필요
   const listFor = openList === "queued" ? queued : openList === "published" ? published : openList === "failed" ? failed : [];
@@ -412,21 +427,21 @@ function SocialView({ stats }: { stats: AdminStats }) {
         <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-100 p-5">
             <div className="flex items-center gap-2.5">
-              <span className={`inline-block h-2.5 w-2.5 rounded-full ${s.autoEnabled ? "bg-emerald-500" : "bg-neutral-300"}`} />
-              <span className="text-sm font-semibold">{s.autoEnabled ? "자동 발행 켜짐" : "자동 발행 꺼짐"}</span>
+              <span className={`inline-block h-2.5 w-2.5 rounded-full ${autoEnabled ? "bg-emerald-500" : "bg-neutral-300"}`} />
+              <span className="text-sm font-semibold">{autoEnabled ? "자동 발행 켜짐" : "자동 발행 꺼짐"}</span>
             </div>
             <div className="flex items-center gap-2">
               <a href="https://instagram.com/ateflo.official" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-lg border border-neutral-200 px-3 py-2 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50">인스타그램 ↗</a>
-              <button onClick={() => call({ action: "settings", autoEnabled: !s.autoEnabled }, s.autoEnabled ? "중지했어요" : "시작했어요")} disabled={busy} className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition active:scale-95 disabled:opacity-50 ${s.autoEnabled ? "bg-red-600 hover:bg-red-700" : "bg-neutral-900 hover:bg-neutral-800"}`}>{s.autoEnabled ? "종료" : "시작"}</button>
+              <button onClick={() => changeCfg({ autoEnabled: !autoEnabled }, { action: "settings", autoEnabled: !autoEnabled }, autoEnabled ? "중지했어요" : "시작했어요")} disabled={busy} className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition active:scale-95 disabled:opacity-50 ${autoEnabled ? "bg-red-600 hover:bg-red-700" : "bg-neutral-900 hover:bg-neutral-800"}`}>{autoEnabled ? "종료" : "시작"}</button>
             </div>
           </div>
           <div className="grid gap-3 p-5 sm:grid-cols-3">
-            <SelectField label="하루 발행 수" value={perDay} disabled={busy} onChange={(v) => call({ action: "settings", postsPerDay: v }, "발행 수 변경됨")} options={[1, 2, 3, 4, 5].map((n) => ({ value: n, label: `${n}개` }))} />
-            <SelectField label="발행 간격" value={gap} disabled={busy} onChange={(v) => call({ action: "settings", intervalHours: v }, "간격 변경됨")} options={[4, 6, 8, 12].map((h) => ({ value: h, label: `${h}시간 간격` }))} />
-            <SelectField label="시작 시각" value={s.postingHour} disabled={busy} onChange={(v) => call({ action: "settings", postingHour: v }, "시각 변경됨")} options={Array.from({ length: 17 }, (_, i) => i + 6).map((h) => ({ value: h, label: hourLabel(h) }))} />
+            <SelectField label="하루 발행 수" value={perDay} disabled={busy} onChange={(v) => changeCfg({ perDay: v }, { action: "settings", postsPerDay: v }, "발행 수 변경됨")} options={[1, 2, 3, 4, 5].map((n) => ({ value: n, label: `${n}개` }))} />
+            <SelectField label="발행 간격" value={gap} disabled={busy} onChange={(v) => changeCfg({ gap: clampGap(v) }, { action: "settings", intervalHours: v }, "간격 변경됨")} options={[4, 6, 8, 12].map((h) => ({ value: h, label: `${h}시간 간격` }))} />
+            <SelectField label="시작 시각" value={postingHour} disabled={busy} onChange={(v) => changeCfg({ postingHour: v }, { action: "settings", postingHour: v }, "시각 변경됨")} options={Array.from({ length: 17 }, (_, i) => i + 6).map((h) => ({ value: h, label: hourLabel(h) }))} />
           </div>
           <div className="mx-5 mb-5 rounded-xl bg-neutral-50 px-4 py-3 text-sm text-neutral-700">
-            {s.autoEnabled ? <>매일 <b className="text-neutral-900">{scheduleText}</b> (한국시간)에 발행돼요</> : <>‘시작’을 누르면 <b className="text-neutral-900">{scheduleText}</b>에 맞춰 발행돼요</>}
+            {autoEnabled ? <>매일 <b className="text-neutral-900">{scheduleText}</b> (한국시간)에 발행돼요</> : <>‘시작’을 누르면 <b className="text-neutral-900">{scheduleText}</b>에 맞춰 발행돼요</>}
             {msg && <span className="ml-2 text-neutral-400">· {msg}</span>}
           </div>
         </div>
@@ -463,10 +478,11 @@ function SocialView({ stats }: { stats: AdminStats }) {
                     )}
                     <div className={`flex items-center gap-2 ${openList !== "published" ? "mt-2.5" : ""}`}>
                       <span className="min-w-0 flex-1 truncate text-sm text-neutral-600">{(p.caption || "(캡션 없음)").split("\n")[0]}{p.error && <span className="ml-1 text-xs text-red-500">· {p.error}</span>}</span>
+                      {p.status === "published" && p.published_at && <span className="shrink-0 text-xs text-neutral-400">{fmtDate(p.published_at)} 발행</span>}
                       {p.status !== "published" && (
-                        <button onClick={() => call({ action: "publishNow", id: p.id }, "발행했어요")} disabled={busy} className="shrink-0 rounded-md bg-neutral-900 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-neutral-800 active:scale-95 disabled:opacity-50">지금 발행</button>
+                        <button onClick={() => publishPost(p)} disabled={busy} className="shrink-0 rounded-md bg-neutral-900 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-neutral-800 active:scale-95 disabled:opacity-50">지금 발행</button>
                       )}
-                      <button onClick={() => call({ action: "delete", id: p.id }, p.status === "published" ? "기록만 삭제됐어요 (인스타는 앱에서 삭제)" : "삭제했어요")} disabled={busy} title={p.status === "published" ? "기록만 삭제돼요. 인스타 게시물은 인스타 앱에서 직접 삭제하세요." : "삭제"} className="shrink-0 text-xs text-neutral-400 transition hover:text-red-500 disabled:opacity-50">{p.status === "published" ? "기록 삭제" : "삭제"}</button>
+                      <button onClick={() => removePost(p)} disabled={busy} title={p.status === "published" ? "기록만 삭제돼요. 인스타 게시물은 인스타 앱에서 직접 삭제하세요." : "삭제"} className="shrink-0 text-xs text-neutral-400 transition hover:text-red-500 disabled:opacity-50">{p.status === "published" ? "기록 삭제" : "삭제"}</button>
                     </div>
                   </li>
                 ))}
