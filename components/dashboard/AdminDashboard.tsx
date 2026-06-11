@@ -50,6 +50,19 @@ function Stat({ label, value, accent = false, hint }: { label: string; value: st
   );
 }
 
+function StatButton({ label, value, hint, accent = false, active = false, onClick }: { label: string; value: string; hint?: string; accent?: boolean; active?: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`min-w-0 rounded-2xl border p-4 text-left transition hover:border-neutral-400 sm:p-5 ${active ? "border-neutral-900 ring-1 ring-neutral-900" : accent ? "border-[#3f91ff]/30 bg-[#3f91ff]/5" : "border-neutral-200 bg-white"}`}
+    >
+      <p className="truncate text-xs font-medium text-neutral-400">{label}</p>
+      <p className="mt-1 truncate text-2xl font-semibold tracking-tight sm:text-[28px]" style={accent && !active ? { color: BRAND } : undefined}>{value}</p>
+      <p className="mt-1 truncate text-[11px] text-neutral-400">{hint ?? (active ? "닫기 ▲" : "눌러서 목록 ▼")}</p>
+    </button>
+  );
+}
+
 function MiniBars({ title, data, color, suffix = "" }: { title: string; data: { date: string; count: number }[]; color: string; suffix?: string }) {
   const max = Math.max(1, ...data.map((d) => d.count));
   const total = data.reduce((s, d) => s + d.count, 0);
@@ -323,14 +336,13 @@ function WaitlistView({ stats }: { stats: AdminStats }) {
   );
 }
 
-const SOC_TYPE_KO: Record<string, string> = { image: "이미지", reel: "릴스", carousel: "카드뉴스" };
-const SOC_STATUS: Record<string, string> = { draft: "초안", queued: "대기", published: "발행됨", failed: "실패" };
 
 function SocialView({ stats }: { stats: AdminStats }) {
   const router = useRouter();
   const s = stats.social;
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [openList, setOpenList] = useState<null | "queued" | "published" | "failed">(null);
 
   async function call(payload: Record<string, unknown>, okMsg?: string) {
     if (busy) return;
@@ -355,122 +367,90 @@ function SocialView({ stats }: { stats: AdminStats }) {
   const gap = clampGap(s.intervalHours ?? 12);
   const scheduleText = slotHours(s.postingHour, perDay, gap).map(hourLabel).join(" · ");
 
-  const daysLeft = perDay > 0 ? Math.floor(s.queueCount / perDay) : 0;
-  const lowStock = s.autoEnabled && s.queueCount < perDay * 3; // 3일치 미만이면 경고
+  const queued = s.posts.filter((p) => p.status === "queued");
+  const published = s.posts.filter((p) => p.status === "published");
+  const failed = s.posts.filter((p) => p.status === "failed");
+  const daysLeft = perDay > 0 ? Math.floor(queued.length / perDay) : 0;
+  const lowStock = s.autoEnabled && queued.length < perDay * 3; // 3일치 미만이면 경고
   const tokenDays = s.tokenExpiresAt ? Math.floor((new Date(s.tokenExpiresAt).getTime() - Date.now()) / 86400000) : null;
   const tokenWarn = tokenDays !== null && tokenDays < 14; // 자동 갱신이 도는데도 14일 미만이면 점검 필요
+  const listFor = openList === "queued" ? queued : openList === "published" ? published : openList === "failed" ? failed : [];
 
   return (
     <>
-      {/* 헤더 */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h3 className="text-base font-semibold tracking-tight">SNS 자동 발행</h3>
-          <p className="mt-0.5 text-sm text-neutral-500">보관함 카드뉴스를 정한 시각에 인스타로 자동 게시해요</p>
-        </div>
-        <a
-          href="https://instagram.com/ateflo.official"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-neutral-900 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 active:scale-95"
-        >
-          인스타그램 열기 ↗
-        </a>
-      </div>
-
-      {/* 메인 컨트롤 카드 */}
-      <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm">
-        <div className="flex items-center justify-between gap-3 border-b border-neutral-100 p-5">
-          <div className="flex items-center gap-2.5">
-            <span className={`inline-block h-2.5 w-2.5 rounded-full ${s.autoEnabled ? "bg-emerald-500" : "bg-neutral-300"}`} />
-            <span className="text-sm font-semibold">{s.autoEnabled ? "자동 발행 켜짐" : "자동 발행 꺼짐"}</span>
+      {/* 자동 발행 설정 */}
+      <Section title="자동 발행" desc="대기 중인 카드를 정한 시각·간격으로 인스타에 자동 게시해요.">
+        <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-100 p-5">
+            <div className="flex items-center gap-2.5">
+              <span className={`inline-block h-2.5 w-2.5 rounded-full ${s.autoEnabled ? "bg-emerald-500" : "bg-neutral-300"}`} />
+              <span className="text-sm font-semibold">{s.autoEnabled ? "자동 발행 켜짐" : "자동 발행 꺼짐"}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <a href="https://instagram.com/ateflo.official" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-lg border border-neutral-200 px-3 py-2 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50">인스타그램 ↗</a>
+              <button onClick={() => call({ action: "settings", autoEnabled: !s.autoEnabled }, s.autoEnabled ? "중지했어요" : "시작했어요")} disabled={busy} className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition active:scale-95 disabled:opacity-50 ${s.autoEnabled ? "bg-red-600 hover:bg-red-700" : "bg-neutral-900 hover:bg-neutral-800"}`}>{s.autoEnabled ? "종료" : "시작"}</button>
+            </div>
           </div>
-          <button
-            onClick={() => call({ action: "settings", autoEnabled: !s.autoEnabled }, s.autoEnabled ? "중지했어요" : "시작했어요")}
-            disabled={busy}
-            className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition active:scale-95 disabled:opacity-50 ${s.autoEnabled ? "bg-red-600 hover:bg-red-700" : "bg-neutral-900 hover:bg-neutral-800"}`}
-          >
-            {s.autoEnabled ? "종료" : "시작"}
-          </button>
+          <div className="grid gap-3 p-5 sm:grid-cols-3">
+            <SelectField label="하루 발행 수" value={perDay} disabled={busy} onChange={(v) => call({ action: "settings", postsPerDay: v }, "발행 수 변경됨")} options={[1, 2, 3, 4, 5].map((n) => ({ value: n, label: `${n}개` }))} />
+            <SelectField label="발행 간격" value={gap} disabled={busy} onChange={(v) => call({ action: "settings", intervalHours: v }, "간격 변경됨")} options={[4, 6, 8, 12].map((h) => ({ value: h, label: `${h}시간 간격` }))} />
+            <SelectField label="시작 시각" value={s.postingHour} disabled={busy} onChange={(v) => call({ action: "settings", postingHour: v }, "시각 변경됨")} options={Array.from({ length: 17 }, (_, i) => i + 6).map((h) => ({ value: h, label: hourLabel(h) }))} />
+          </div>
+          <div className="mx-5 mb-5 rounded-xl bg-neutral-50 px-4 py-3 text-sm text-neutral-700">
+            {s.autoEnabled ? <>매일 <b className="text-neutral-900">{scheduleText}</b> (한국시간)에 발행돼요</> : <>‘시작’을 누르면 <b className="text-neutral-900">{scheduleText}</b>에 맞춰 발행돼요</>}
+            {msg && <span className="ml-2 text-neutral-400">· {msg}</span>}
+          </div>
         </div>
-        <div className="grid gap-3 p-5 sm:grid-cols-3">
-          <SelectField label="하루 발행 수" value={perDay} disabled={busy} onChange={(v) => call({ action: "settings", postsPerDay: v }, "발행 수 변경됨")} options={[1, 2, 3, 4, 5].map((n) => ({ value: n, label: `${n}개` }))} />
-          <SelectField label="발행 간격" value={gap} disabled={busy} onChange={(v) => call({ action: "settings", intervalHours: v }, "간격 변경됨")} options={[4, 6, 8, 12].map((h) => ({ value: h, label: `${h}시간 간격` }))} />
-          <SelectField label="시작 시각" value={s.postingHour} disabled={busy} onChange={(v) => call({ action: "settings", postingHour: v }, "시각 변경됨")} options={Array.from({ length: 17 }, (_, i) => i + 6).map((h) => ({ value: h, label: hourLabel(h) }))} />
+      </Section>
+
+      {/* 발행 현황 — 카드 클릭 시 목록 펼침 */}
+      <Section title="발행 현황" desc="카드를 눌러 목록을 펼치고, 썸네일 확인 후 발행·삭제하세요.">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <StatButton label="발행 대기" value={`${queued.length}개`} accent active={openList === "queued"} onClick={() => setOpenList(openList === "queued" ? null : "queued")} hint={openList === "queued" ? "닫기 ▲" : s.autoEnabled ? `약 ${daysLeft}일치 · 목록 ▼` : "눌러서 목록 ▼"} />
+          <StatButton label="발행 완료" value={`${published.length}개`} active={openList === "published"} onClick={() => setOpenList(openList === "published" ? null : "published")} hint={openList === "published" ? "닫기 ▲" : "눌러서 목록 ▼"} />
+          <StatButton label="발행 실패" value={`${failed.length}개`} active={openList === "failed"} onClick={() => setOpenList(openList === "failed" ? null : "failed")} hint={openList === "failed" ? "닫기 ▲" : failed.length > 0 ? "확인 필요 ▼" : "목록 ▼"} />
+          <Stat label="인스타 토큰" value={tokenDays !== null ? `${Math.max(0, tokenDays)}일` : "—"} hint={tokenDays !== null ? "자동 갱신 중" : "갱신 후 표시"} />
         </div>
-        <div className="mx-5 mb-5 rounded-xl bg-neutral-50 px-4 py-3 text-sm text-neutral-700">
-          {s.autoEnabled ? <>매일 <b className="text-neutral-900">{scheduleText}</b> (한국시간)에 발행돼요</> : <>‘시작’을 누르면 <b className="text-neutral-900">{scheduleText}</b>에 맞춰 발행돼요</>}
-          {msg && <span className="ml-2 text-neutral-400">· {msg}</span>}
-        </div>
-      </div>
 
-      {/* 현황 */}
-      <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="발행 대기" value={`${s.queueCount}개`} accent hint={s.autoEnabled ? `약 ${daysLeft}일치` : undefined} />
-        <Stat label="발행 완료" value={`${s.publishedCount}개`} />
-        <Stat label="발행 실패" value={`${s.failedCount}개`} hint={s.failedCount > 0 ? "확인 필요" : undefined} />
-        <Stat label="인스타 토큰" value={tokenDays !== null ? `${Math.max(0, tokenDays)}일` : "—"} hint={tokenDays !== null ? "자동 갱신 중" : "갱신 후 표시"} />
-      </div>
-
-      {/* 경고 */}
-      {lowStock && (
-        <p className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          대기열이 얼마 안 남았어요{daysLeft <= 0 ? " (곧 끊겨요)" : ` (약 ${daysLeft}일치)`}. 터미널에서 <code className="rounded bg-amber-100 px-1.5 py-0.5 font-mono text-[13px]">npm run card:gen:bulk -- 20</code> 으로 더 채워두세요.
-        </p>
-      )}
-      {s.failedCount > 0 && (
-        <p className="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
-          발행 실패 <b>{s.failedCount}건</b> (3회 재시도 후 멈춤). 아래 보관함에서 ‘지금 발행’으로 재시도하세요.
-        </p>
-      )}
-      {tokenWarn && (
-        <p className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          인스타 토큰이 <b>{tokenDays! <= 0 ? "만료됐어요" : `${tokenDays}일 뒤 만료`}</b>. 자동 갱신(주 1회)이 도는지 확인하고, 안 되면 다시 발급해 주세요.
-        </p>
-      )}
-
-      {/* 보관함 목록 — 썸네일 미리보기 */}
-      <Section title="보관함" desc="카드 썸네일을 눌러 크게 보고, ‘발행’ 또는 ‘삭제’하세요. 초안은 자동발행 안 되고, 대기는 정한 시각에 자동 발행돼요. (발행된 글은 인스타 API로 못 지움 · 인스타 앱에서 직접 삭제)">
-        <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-4 sm:p-5">
-          {s.posts.length === 0 ? (
-            <p className="py-3 text-sm text-neutral-400">아직 없어요. 터미널에서 <code className="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-[13px]">npm run card:gen:bulk -- 14</code> 로 만들어요.</p>
-          ) : (
-            <ul className="divide-y divide-neutral-100">
-              {s.posts.map((p) => (
-                <li key={p.id} className="py-4 first:pt-0 last:pb-0">
-                  {/* 썸네일 스트립 */}
-                  {p.mediaUrls.length > 0 && (
-                    <div className="flex gap-2 overflow-x-auto pb-1">
-                      {p.mediaUrls.map((u, i) => (
-                        <a key={i} href={u} target="_blank" rel="noopener noreferrer" className="group relative shrink-0">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={u} alt={`슬라이드 ${i + 1}`} loading="lazy" className="h-28 w-[90px] rounded-lg border border-neutral-200 object-cover transition group-hover:opacity-80" />
-                          {i === 0 && <span className="absolute left-1 top-1 rounded bg-black/55 px-1 py-0.5 text-[9px] font-medium text-white">표지</span>}
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                  {/* 메타 + 액션 */}
-                  <div className="mt-2.5 flex items-center gap-2">
-                    <span className={`shrink-0 rounded-md px-2 py-0.5 text-[11px] font-medium ${p.status === "published" ? "bg-emerald-600 text-white" : p.status === "failed" ? "bg-red-100 text-red-600" : p.status === "draft" ? "bg-amber-100 text-amber-700" : "bg-[#3f91ff]/10 text-[#2f7fe6]"}`}>{SOC_STATUS[p.status] ?? p.status}</span>
-                    <span className="min-w-0 flex-1 truncate text-sm text-neutral-600">{(p.caption || "(캡션 없음)").split("\n")[0]}{p.error && <span className="ml-1 text-xs text-red-500">· {p.error}</span>}</span>
-                    {p.status !== "published" && (
-                      <button onClick={() => call({ action: "publishNow", id: p.id }, "발행했어요")} disabled={busy} className="shrink-0 rounded-md bg-neutral-900 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-neutral-800 active:scale-95 disabled:opacity-50">발행</button>
+        {openList && (
+          <div className="mt-3 rounded-2xl border border-neutral-100 bg-white shadow-sm p-4 sm:p-5">
+            {listFor.length === 0 ? (
+              <p className="py-2 text-sm text-neutral-400">{openList === "queued" ? <>대기 중인 카드가 없어요. 터미널에서 <code className="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-[13px]">npm run card:gen:bulk -- 14</code> 로 채워요.</> : "없어요"}</p>
+            ) : (
+              <ul className="divide-y divide-neutral-100">
+                {listFor.map((p) => (
+                  <li key={p.id} className="py-4 first:pt-0 last:pb-0">
+                    {p.mediaUrls.length > 0 && (
+                      <div className="flex gap-2 overflow-x-auto pb-1">
+                        {p.mediaUrls.map((u, i) => (
+                          <a key={i} href={u} target="_blank" rel="noopener noreferrer" className="group relative shrink-0">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={u} alt={`슬라이드 ${i + 1}`} loading="lazy" className="h-28 w-[90px] rounded-lg border border-neutral-200 object-cover transition group-hover:opacity-80" />
+                            {i === 0 && <span className="absolute left-1 top-1 rounded bg-black/55 px-1 py-0.5 text-[9px] font-medium text-white">표지</span>}
+                          </a>
+                        ))}
+                      </div>
                     )}
-                    <button
-                      onClick={() => call({ action: "delete", id: p.id }, p.status === "published" ? "기록만 삭제됐어요 (인스타는 앱에서 삭제)" : "삭제했어요")}
-                      disabled={busy}
-                      title={p.status === "published" ? "기록만 삭제돼요. 인스타 게시물은 인스타 앱에서 직접 삭제하세요." : "삭제"}
-                      className="shrink-0 text-xs text-neutral-400 transition hover:text-red-500 disabled:opacity-50"
-                    >
-                      {p.status === "published" ? "기록 삭제" : "삭제"}
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+                    <div className="mt-2.5 flex items-center gap-2">
+                      <span className="min-w-0 flex-1 truncate text-sm text-neutral-600">{(p.caption || "(캡션 없음)").split("\n")[0]}{p.error && <span className="ml-1 text-xs text-red-500">· {p.error}</span>}</span>
+                      {p.status !== "published" && (
+                        <button onClick={() => call({ action: "publishNow", id: p.id }, "발행했어요")} disabled={busy} className="shrink-0 rounded-md bg-neutral-900 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-neutral-800 active:scale-95 disabled:opacity-50">지금 발행</button>
+                      )}
+                      <button onClick={() => call({ action: "delete", id: p.id }, p.status === "published" ? "기록만 삭제됐어요 (인스타는 앱에서 삭제)" : "삭제했어요")} disabled={busy} title={p.status === "published" ? "기록만 삭제돼요. 인스타 게시물은 인스타 앱에서 직접 삭제하세요." : "삭제"} className="shrink-0 text-xs text-neutral-400 transition hover:text-red-500 disabled:opacity-50">{p.status === "published" ? "기록 삭제" : "삭제"}</button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+
+        {lowStock && (
+          <p className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">대기열이 얼마 안 남았어요{daysLeft <= 0 ? " (곧 끊겨요)" : ` (약 ${daysLeft}일치)`}. 터미널에서 <code className="rounded bg-amber-100 px-1.5 py-0.5 font-mono text-[13px]">npm run card:gen:bulk -- 14</code> 으로 더 채워두세요.</p>
+        )}
+        {tokenWarn && (
+          <p className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">인스타 토큰이 <b>{tokenDays! <= 0 ? "만료됐어요" : `${tokenDays}일 뒤 만료`}</b>. 자동 갱신(주 1회)이 도는지 확인하고, 안 되면 다시 발급해 주세요.</p>
+        )}
       </Section>
     </>
   );
