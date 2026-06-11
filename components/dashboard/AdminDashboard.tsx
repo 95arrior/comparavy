@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { AdminStats } from "@/lib/adminStats";
 import Segmented from "./Segmented";
@@ -46,6 +46,34 @@ function Stat({ label, value, accent = false, hint }: { label: string; value: st
       <p className="truncate text-xs font-medium text-neutral-400">{label}</p>
       <p className="mt-1 truncate text-2xl font-semibold tracking-tight sm:text-[28px]" style={accent ? { color: BRAND } : undefined}>{value}</p>
       {hint && <p className="mt-1 truncate text-[11px] text-neutral-400">{hint}</p>}
+    </div>
+  );
+}
+
+function Lightbox({ urls, index, onIndex, onClose }: { urls: string[]; index: number; onIndex: (i: number) => void; onClose: () => void }) {
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      else if (e.key === "ArrowRight") onIndex(Math.min(urls.length - 1, index + 1));
+      else if (e.key === "ArrowLeft") onIndex(Math.max(0, index - 1));
+    };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [index, urls.length, onIndex, onClose]);
+
+  const go = (e: React.MouseEvent, i: number) => { e.stopPropagation(); onIndex(i); };
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={onClose}>
+      <button onClick={onClose} className="absolute right-5 top-5 text-2xl text-white/80 transition hover:text-white">✕</button>
+      {index > 0 && (
+        <button onClick={(e) => go(e, index - 1)} className="absolute left-3 sm:left-8 flex h-12 w-12 items-center justify-center rounded-full bg-white/15 text-2xl text-white transition hover:bg-white/30">‹</button>
+      )}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={urls[index]} alt={`슬라이드 ${index + 1}`} onClick={(e) => e.stopPropagation()} className="max-h-[86vh] max-w-[92vw] rounded-2xl shadow-2xl" />
+      {index < urls.length - 1 && (
+        <button onClick={(e) => go(e, index + 1)} className="absolute right-3 sm:right-8 flex h-12 w-12 items-center justify-center rounded-full bg-white/15 text-2xl text-white transition hover:bg-white/30">›</button>
+      )}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-sm font-medium text-white">{index + 1} / {urls.length}</div>
     </div>
   );
 }
@@ -343,6 +371,7 @@ function SocialView({ stats }: { stats: AdminStats }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [openList, setOpenList] = useState<null | "queued" | "published" | "failed">(null);
+  const [viewer, setViewer] = useState<{ urls: string[]; i: number } | null>(null);
 
   async function call(payload: Record<string, unknown>, okMsg?: string) {
     if (busy) return;
@@ -423,11 +452,11 @@ function SocialView({ stats }: { stats: AdminStats }) {
                     {p.mediaUrls.length > 0 && (
                       <div className="flex gap-2 overflow-x-auto pb-1">
                         {p.mediaUrls.map((u, i) => (
-                          <a key={i} href={u} target="_blank" rel="noopener noreferrer" className="group relative shrink-0">
+                          <button key={i} type="button" onClick={() => setViewer({ urls: p.mediaUrls, i })} className="group relative shrink-0">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={u} alt={`슬라이드 ${i + 1}`} loading="lazy" className="h-28 w-[90px] rounded-lg border border-neutral-200 object-cover transition group-hover:opacity-80" />
                             {i === 0 && <span className="absolute left-1 top-1 rounded bg-black/55 px-1 py-0.5 text-[9px] font-medium text-white">표지</span>}
-                          </a>
+                          </button>
                         ))}
                       </div>
                     )}
@@ -452,6 +481,8 @@ function SocialView({ stats }: { stats: AdminStats }) {
           <p className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">인스타 토큰이 <b>{tokenDays! <= 0 ? "만료됐어요" : `${tokenDays}일 뒤 만료`}</b>. 자동 갱신(주 1회)이 도는지 확인하고, 안 되면 다시 발급해 주세요.</p>
         )}
       </Section>
+
+      {viewer && <Lightbox urls={viewer.urls} index={viewer.i} onIndex={(i) => setViewer({ urls: viewer.urls, i })} onClose={() => setViewer(null)} />}
     </>
   );
 }
