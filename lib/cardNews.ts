@@ -43,6 +43,7 @@ export const ANGLES: Angle[] = [
   { key: "wordpress", label: "워드프레스 깨알지식", seed: "워드프레스 초보가 모르면 손해 보는 깨알 지식" },
   { key: "beginner", label: "초보 입문", seed: "블로그 처음 시작하는 사람을 위한 기본기 하나" },
   { key: "humor", label: "공감 유머", seed: "블로그·워드프레스 운영자라면 공감할 현실 유머", web: true },
+  { key: "ainews", label: "최신 AI 소식", seed: "블로그·콘텐츠 만드는 사람에게 쓸모있는 최근 AI 소식이나 도구 하나", web: true },
   { key: "service", label: "에이트플로 강점", seed: "키워드 하나로 블로그 글이 완성되는 경험", promo: true },
 ];
 

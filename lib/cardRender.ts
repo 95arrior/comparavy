@@ -5,6 +5,14 @@ const INK = "#191F28";
 const BLUE = "#3f91ff";
 const ACCENT = "#ffd23a";
 
+// 표지 배경색 팔레트 — 카드마다 달라 한눈에 구별됨(전부 흰 글씨 가독성 OK)
+const COVER_BG = ["#3f91ff", "#6366f1", "#0ea5a5", "#8b5cf6", "#ef4f6b", "#1f9d6b", "#e0792a", "#38507f"];
+function hashStr(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
 const GRAIN =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E";
 
@@ -97,7 +105,7 @@ function midHtml(slide: CardSlide, isCover: boolean): string {
 
 function slideHtml(slide: CardSlide, index: number, total: number): string {
   const isCover = index === 0;
-  const bg = isCover ? BLUE : INK;
+  const bg = isCover ? COVER_BG[hashStr(slide.title) % COVER_BG.length] : INK;
   const num = String(index + 1).padStart(2, "0");
   const totalStr = String(total).padStart(2, "0");
   const glow = isCover ? "radial-gradient(circle, rgba(255,255,255,0.55), transparent 68%)" : "radial-gradient(circle, rgba(63,145,255,0.85), transparent 68%)";
