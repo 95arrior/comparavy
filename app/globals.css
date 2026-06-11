@@ -228,6 +228,10 @@ html {
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
+/* 스와이프 안내 손가락 — 좌우로 살짝 움직임 */
+@keyframes swipe-hint { 0%, 100% { transform: translateX(9px); } 50% { transform: translateX(-9px); } }
+.swipe-hint { animation: swipe-hint 1.6s ease-in-out infinite; }
+
 /* 글 생성: 커서가 '글 생성' 클릭(초반) → 짝대기(줄)가 쭈루룩 생겼다 사라짐 (5s) */
 @keyframes mock-gen-tap { 0% { transform: scale(1); } 5% { transform: scale(0.8); } 11% { transform: scale(1); } 100% { transform: scale(1); } }
 .mock-gen-tap { animation: mock-gen-tap 4s ease-in-out infinite; }

@@ -12,7 +12,7 @@ function Frame({ label, children }: { label: string; children: React.ReactNode }
         <span className="h-2.5 w-2.5 rounded-full bg-neutral-200" />
         <span className="ml-2 text-xs font-medium text-neutral-400">{label}</span>
       </div>
-      <div className="flex h-[256px] flex-col p-5 [&>p:last-child]:mt-auto [&>p:last-child]:pt-4">{children}</div>
+      <div className="flex h-[256px] flex-col p-5">{children}</div>
     </div>
   );
 }
@@ -46,7 +46,7 @@ const ImgIcon = ({ s = 16 }: { s?: number }) => (
 // 1. 글 생성 — 커서가 '글 생성'을 누르면 줄이 쭈루룩 생겼다 사라짐(루프)
 function MockGenerate() {
   return (
-    <div>
+    <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 rounded-xl border border-neutral-200 px-3 py-2.5">
         <span className="flex-1 text-sm text-neutral-700">강아지 분리불안 해결 방법</span>
         <span className="relative rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white">
@@ -60,7 +60,7 @@ function MockGenerate() {
         <Bar w="88%" delay={0.65} />
         <Bar w="60%" delay={0.9} />
       </div>
-      <p className="mt-5 text-center text-xs font-medium text-[#3f91ff]">키워드 하나로, 글이 써져요</p>
+      <p className="mt-auto pt-4 text-center text-xs font-medium text-[#3f91ff]">키워드 하나로, 글이 써져요</p>
     </div>
   );
 }
@@ -68,7 +68,7 @@ function MockGenerate() {
 // 2. 글 편집 — 커서가 '이미지 추가'를 누르면 이미지가 들어옴
 function MockEdit() {
   return (
-    <div>
+    <div className="flex h-full flex-col">
       <div className="flex items-center gap-1.5 rounded-lg border border-neutral-200 px-2 py-1.5 text-neutral-400">
         {["B", "H", "≡"].map((t) => (
           <span key={t} className="flex h-6 w-6 items-center justify-center rounded text-[11px] font-bold">{t}</span>
@@ -91,7 +91,7 @@ function MockEdit() {
       <div className="mock-reveal-img mt-3 flex h-14 items-center justify-center rounded-lg bg-neutral-100 text-neutral-300">
         <ImgIcon s={26} />
       </div>
-      <p className="mt-3 text-center text-xs font-medium text-[#3f91ff]">이미지 넣고 직접 손질해요</p>
+      <p className="mt-auto pt-4 text-center text-xs font-medium text-[#3f91ff]">이미지 넣고 직접 손질해요</p>
     </div>
   );
 }
@@ -99,7 +99,7 @@ function MockEdit() {
 // 3. 워드프레스 발행 — 글 미리보기 위, 발행 버튼은 아래. 버튼 클릭 시 원형 체크
 function MockPublish() {
   return (
-    <div>
+    <div className="flex h-full flex-col">
       {/* 위: 발행 결과(클릭 후 떠오름) */}
       <div className="mock-reveal flex flex-col items-center py-2 text-center">
         <div className="flex h-11 w-11 items-center justify-center rounded-full text-white" style={{ background: "#2fd07a" }}>
@@ -113,7 +113,7 @@ function MockPublish() {
         <span className="block rounded-xl py-2.5 text-center text-sm font-semibold text-white" style={{ background: BRAND }}>워드프레스에 발행</span>
         <Cursor className="-bottom-2 right-6" />
       </div>
-      <p className="mt-4 text-center text-xs font-medium text-[#3f91ff]">버튼 하나로 발행돼요</p>
+      <p className="mt-auto pt-4 text-center text-xs font-medium text-[#3f91ff]">버튼 하나로 발행돼요</p>
     </div>
   );
 }
@@ -121,7 +121,7 @@ function MockPublish() {
 // 4. 내 글 관리 — 예약했던 글이 시간 되면 '예약됨 → 발행됨'으로 자동 전환(루프)
 function MockArticles() {
   return (
-    <div>
+    <div className="flex h-full flex-col">
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-2 rounded-xl border border-neutral-100 px-3 py-2.5">
           <span className="min-w-0 flex-1 truncate text-xs text-neutral-700">강아지 분리불안 해결 방법</span>
@@ -140,7 +140,69 @@ function MockArticles() {
           <span className="shrink-0 rounded-md bg-neutral-100 px-2 py-0.5 text-[10px] font-medium text-neutral-500">초안</span>
         </div>
       </div>
-      <p className="mt-4 text-center text-xs font-medium text-[#3f91ff]">예약한 글이 시간 되면 알아서 발행돼요</p>
+      <p className="mt-auto pt-4 text-center text-xs font-medium text-[#3f91ff]">예약한 글이 시간 되면 알아서 발행돼요</p>
+    </div>
+  );
+}
+
+// 5. 발행 캘린더 — 예약·발행이 달력에 찍힘
+function MockCalendar() {
+  const cells: (number | null)[] = [...Array(5).fill(null), ...Array.from({ length: 30 }, (_, i) => i + 1)];
+  while (cells.length % 7 !== 0) cells.push(null);
+  const PUB = [2, 5, 9];
+  const SCH = [12, 16, 19, 23];
+  const TODAY = 10;
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-bold tracking-tight">6월</p>
+        <div className="flex gap-2 text-[10px] text-neutral-400">
+          <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full" style={{ background: BRAND }} />예약</span>
+          <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />발행</span>
+        </div>
+      </div>
+      <div className="mt-2 grid grid-cols-7">
+        {["일", "월", "화", "수", "목", "금", "토"].map((w) => (
+          <div key={w} className="pb-1 text-center text-[9px] text-neutral-300">{w}</div>
+        ))}
+        {cells.map((d, i) =>
+          d === null ? (
+            <div key={`e${i}`} className="h-[26px]" />
+          ) : (
+            <div key={d} className="flex h-[26px] flex-col items-center">
+              <span className={`flex h-[18px] w-[18px] items-center justify-center rounded-full text-[10px] ${d === TODAY ? "bg-neutral-900 font-bold text-white" : "text-neutral-500"}`}>{d}</span>
+              {(PUB.includes(d) || SCH.includes(d)) && <span className={`mt-0.5 h-1 w-3/5 rounded-full ${PUB.includes(d) ? "bg-emerald-500" : ""}`} style={SCH.includes(d) ? { background: BRAND } : undefined} />}
+            </div>
+          ),
+        )}
+      </div>
+      <p className="mt-auto pt-3 text-center text-xs font-medium" style={{ color: BRAND }}>예약해두면 알아서 발행돼요</p>
+    </div>
+  );
+}
+
+// 6. 어디서든 — 폰으로도, 공간·시간 제약 없이
+function MockMobile() {
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex flex-1 items-center justify-center">
+        <div className="relative w-[112px] rounded-[1.5rem] border-[3px] border-neutral-800 bg-white p-2 shadow-md">
+          <span className="absolute left-1/2 top-1.5 h-1 w-8 -translate-x-1/2 rounded-full bg-neutral-200" />
+          <div className="mt-4 space-y-1.5">
+            <div className="flex items-center justify-between rounded-md border border-neutral-200 px-1.5 py-1">
+              <span className="text-[8px] text-neutral-500">강아지 분리불안</span>
+              <span className="rounded bg-neutral-900 px-1 py-0.5 text-[7px] text-white">생성</span>
+            </div>
+            <Bar w="100%" />
+            <Bar w="80%" />
+            <div className="flex items-center justify-between rounded-md border border-neutral-100 px-1.5 py-1">
+              <span className="text-[8px] text-neutral-400">발행 완료</span>
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <p className="mt-auto pt-3 text-center text-xs font-medium" style={{ color: BRAND }}>폰으로도, 어디서든 써요</p>
     </div>
   );
 }
@@ -150,6 +212,8 @@ const PANELS = [
   { label: "글 편집", node: <MockEdit /> },
   { label: "워드프레스 발행", node: <MockPublish /> },
   { label: "내 글 관리", node: <MockArticles /> },
+  { label: "발행 캘린더", node: <MockCalendar /> },
+  { label: "어디서든", node: <MockMobile /> },
 ];
 
 export default function ProductShowcase() {
@@ -181,7 +245,18 @@ export default function ProductShowcase() {
             </div>
           ))}
         </div>
-        <p className="mt-3 text-center text-xs text-neutral-400 sm:hidden">← 옆으로 밀어보세요 →</p>
+        <div className="mt-3 flex items-center justify-center gap-2 text-neutral-400 sm:hidden">
+          <span className="text-sm">‹</span>
+          <span className="swipe-hint inline-flex text-neutral-500">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11" />
+              <path d="M12 11V4.5a1.5 1.5 0 0 1 3 0V11" />
+              <path d="M15 11V7a1.5 1.5 0 0 1 3 0v6a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-3l-2-3.2a1.5 1.5 0 0 1 2.4-1.7L9 13" />
+            </svg>
+          </span>
+          <span className="text-sm">›</span>
+          <span className="ml-1 text-xs">밀어보기</span>
+        </div>
       </div>
     </section>
   );
