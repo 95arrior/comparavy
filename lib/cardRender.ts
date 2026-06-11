@@ -52,7 +52,10 @@ function mockup(kind: string): string {
 
 function midHtml(slide: CardSlide): string {
   if (slide.type === "stat" && slide.stat) {
-    return `<div class="statwrap"><div class="stat">${esc(slide.stat)}</div>${slide.statLabel ? `<div class="statlabel">${esc(slide.statLabel)}</div>` : ""}</div>`;
+    // 글자 수에 맞춰 폰트 크기 조절 — 긴 텍스트가 단어 중간에서 잘리지 않게
+    const len = [...slide.stat].length;
+    const size = len <= 3 ? 200 : len <= 4 ? 168 : len <= 5 ? 138 : len <= 6 ? 116 : len <= 8 ? 92 : 70;
+    return `<div class="statwrap"><div class="stat" style="font-size:${size}px">${esc(slide.stat)}</div>${slide.statLabel ? `<div class="statlabel">${esc(slide.statLabel)}</div>` : ""}</div>`;
   }
   if (slide.type === "point" && slide.points?.length) {
     return `<div class="points">${slide.points.map((p) => `<div class="point"><span class="pc">✓</span>${esc(p)}</div>`).join("")}</div>`;
@@ -69,7 +72,9 @@ function slideHtml(slide: CardSlide, index: number, total: number): string {
   const num = String(index + 1).padStart(2, "0");
   const totalStr = String(total).padStart(2, "0");
   const glow = isCover ? "radial-gradient(circle, rgba(255,255,255,0.55), transparent 68%)" : "radial-gradient(circle, rgba(63,145,255,0.85), transparent 68%)";
-  const titleSize = isCover ? 94 : slide.type === "stat" ? 56 : 78;
+  // 제목 길이에 맞춰 크기 조절(긴 제목이 표지를 꽉 채워 어색하게 줄바꿈되는 것 방지)
+  const tlen = [...slide.title.replace(/\n/g, "")].length;
+  const titleSize = isCover ? (tlen <= 14 ? 92 : tlen <= 22 ? 76 : 62) : slide.type === "stat" ? 52 : tlen <= 16 ? 76 : 62;
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
 <style>
@@ -89,7 +94,7 @@ body{font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;ba
 .foot{margin-top:44px;display:flex;justify-content:space-between;font-size:27px;font-weight:600;opacity:.5;}
 /* stat */
 .statwrap{text-align:center;}
-.stat{font-weight:800;font-size:220px;line-height:1;letter-spacing:-.04em;color:${ACCENT};}
+.stat{font-weight:800;font-size:220px;line-height:1.04;letter-spacing:-.04em;color:${ACCENT};word-break:keep-all;}
 .statlabel{margin-top:24px;font-size:40px;font-weight:600;opacity:.85;}
 /* point */
 .points{width:100%;display:flex;flex-direction:column;gap:24px;}
