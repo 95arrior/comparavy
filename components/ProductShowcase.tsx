@@ -145,7 +145,7 @@ function MockArticles() {
   );
 }
 
-// 5. 발행 캘린더 — 예약·발행이 달력에 찍힘
+// 5. 발행 캘린더 — 달력 + 예약 글이 시간 되면 '예약됨 → 발행됨'으로 자동 전환(텍스트로)
 function MockCalendar() {
   const cells: (number | null)[] = [...Array(5).fill(null), ...Array.from({ length: 30 }, (_, i) => i + 1)];
   while (cells.length % 7 !== 0) cells.push(null);
@@ -161,43 +161,57 @@ function MockCalendar() {
           <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />발행</span>
         </div>
       </div>
-      <div className="mt-2 grid grid-cols-7">
+      <div className="mt-1.5 grid grid-cols-7">
         {["일", "월", "화", "수", "목", "금", "토"].map((w) => (
-          <div key={w} className="pb-1 text-center text-[9px] text-neutral-300">{w}</div>
+          <div key={w} className="pb-0.5 text-center text-[9px] text-neutral-300">{w}</div>
         ))}
         {cells.map((d, i) =>
           d === null ? (
-            <div key={`e${i}`} className="h-[26px]" />
+            <div key={`e${i}`} className="h-[20px]" />
           ) : (
-            <div key={d} className="flex h-[26px] flex-col items-center">
-              <span className={`flex h-[18px] w-[18px] items-center justify-center rounded-full text-[10px] ${d === TODAY ? "bg-neutral-900 font-bold text-white" : "text-neutral-500"}`}>{d}</span>
+            <div key={d} className="flex h-[20px] flex-col items-center">
+              <span className={`flex h-[15px] w-[15px] items-center justify-center rounded-full text-[9px] ${d === TODAY ? "bg-neutral-900 font-bold text-white" : "text-neutral-500"}`}>{d}</span>
               {(PUB.includes(d) || SCH.includes(d)) && <span className={`mt-0.5 h-1 w-3/5 rounded-full ${PUB.includes(d) ? "bg-emerald-500" : ""}`} style={SCH.includes(d) ? { background: BRAND } : undefined} />}
             </div>
           ),
         )}
       </div>
-      <p className="mt-auto pt-3 text-center text-xs font-medium" style={{ color: BRAND }}>예약해두면 알아서 발행돼요</p>
+      {/* 예약 글이 시간 되면 발행 (실제 글 제목 + 상태 전환) */}
+      <div className="mt-auto">
+        <div className="flex items-center justify-between gap-1.5 rounded-lg border border-neutral-100 px-2.5 py-1.5">
+          <span className="min-w-0 flex-1 truncate text-[11px] text-neutral-600">강아지 분리불안 해결법</span>
+          <span className="relative inline-flex h-[16px] w-[38px] shrink-0 items-center justify-center">
+            <span className="mock-chip-sched absolute inset-0 flex items-center justify-center rounded text-[9px] font-medium" style={{ background: `${BRAND}1a`, color: BRAND }}>예약됨</span>
+            <span className="mock-chip-pub absolute inset-0 flex items-center justify-center rounded bg-emerald-600 text-[9px] font-medium text-white">발행됨</span>
+          </span>
+        </div>
+        <p className="pt-3 text-center text-xs font-medium" style={{ color: BRAND }}>예약해두면 알아서 발행돼요</p>
+      </div>
     </div>
   );
 }
 
-// 6. 어디서든 — 폰으로도, 공간·시간 제약 없이
+// 6. 어디서든 — 실제 폰 비율 + 발행 애니메이션(커서 탭 → 게시 완료 떠오름)
 function MockMobile() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex flex-1 items-center justify-center">
-        <div className="relative w-[112px] rounded-[1.5rem] border-[3px] border-neutral-800 bg-white p-2 shadow-md">
-          <span className="absolute left-1/2 top-1.5 h-1 w-8 -translate-x-1/2 rounded-full bg-neutral-200" />
-          <div className="mt-4 space-y-1.5">
-            <div className="flex items-center justify-between rounded-md border border-neutral-200 px-1.5 py-1">
-              <span className="text-[8px] text-neutral-500">강아지 분리불안</span>
-              <span className="rounded bg-neutral-900 px-1 py-0.5 text-[7px] text-white">생성</span>
-            </div>
-            <Bar w="100%" />
-            <Bar w="80%" />
-            <div className="flex items-center justify-between rounded-md border border-neutral-100 px-1.5 py-1">
-              <span className="text-[8px] text-neutral-400">발행 완료</span>
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+        <div className="relative w-[104px] rounded-[1.4rem] border-[4px] border-neutral-900 bg-white px-2 pb-3 pt-3.5 shadow-lg">
+          <span className="absolute left-1/2 top-1.5 h-1 w-7 -translate-x-1/2 rounded-full bg-neutral-200" />
+          <p className="text-[8px] font-medium text-neutral-400">키워드</p>
+          <div className="mt-1 rounded-md bg-neutral-50 px-1.5 py-1.5 text-[9px] font-medium text-neutral-700">강아지 분리불안</div>
+          <div className="relative mt-2">
+            <span className="block rounded-md py-1.5 text-center text-[9px] font-semibold text-white" style={{ background: BRAND }}>워드프레스에 발행</span>
+            <Cursor className="-bottom-1.5 right-1" />
+          </div>
+          {/* 게시 완료 (클릭 후 떠오름) */}
+          <div className="mock-reveal mt-2 flex items-center gap-1.5 rounded-md bg-emerald-50 px-1.5 py-1.5">
+            <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
+            </span>
+            <div className="leading-tight">
+              <p className="text-[9px] font-semibold text-emerald-700">게시 완료</p>
+              <p className="text-[7px] text-emerald-600/80">지하철에서 1분 만에</p>
             </div>
           </div>
         </div>
@@ -221,7 +235,7 @@ export default function ProductShowcase() {
     <section className="border-t border-neutral-200/70">
       <div className="mx-auto max-w-5xl px-5 py-12 sm:px-6 sm:py-28">
         <Reveal>
-          <p className="text-center text-sm font-semibold tracking-tight" style={{ color: BRAND }}>실제 화면</p>
+          <p className="text-center text-sm font-semibold tracking-tight" style={{ color: BRAND }}>이렇게 써요</p>
           <h2 className="mt-3 text-center font-bold tracking-tight" style={{ fontSize: "clamp(24px, 5vw, 40px)", lineHeight: 1.3 }}>말보다, 직접 보세요</h2>
           <p className="mx-auto mt-4 max-w-md text-center text-base text-neutral-500" style={{ lineHeight: 1.6 }}>
             키워드부터 발행까지, 여기서 다 끝나요.
