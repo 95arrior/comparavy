@@ -84,8 +84,8 @@ export default function WaitlistLanding({ introSeen = false }: { introSeen?: boo
               <Reveal key={w.t} delay={i * 80}>
                 <div className="h-full rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6">
                   <span className="rounded-lg bg-neutral-900/5 px-2.5 py-1 text-xs font-semibold text-neutral-600">{w.t}</span>
-                  <p className="mt-3 font-semibold tracking-tight" style={{ fontSize: "clamp(16px, 4.4vw, 18px)", lineHeight: 1.4 }}>{w.q}</p>
-                  <p className="mt-2 text-neutral-500" style={{ fontSize: "14px", lineHeight: 1.6 }}>{w.d}</p>
+                  <p className="mt-3 font-semibold tracking-tight" style={{ fontSize: "clamp(16px, 4.4vw, 18px)", lineHeight: 1.4, wordBreak: "keep-all" }}>{w.q}</p>
+                  <p className="mt-2 text-neutral-500" style={{ fontSize: "14px", lineHeight: 1.6, wordBreak: "keep-all" }}>{w.d}</p>
                 </div>
               </Reveal>
             ))}
@@ -108,8 +108,9 @@ export default function WaitlistLanding({ introSeen = false }: { introSeen?: boo
             {DIFFS.map((d, i) => (
               <Reveal key={d.t} delay={i * 80}>
                 <div className="h-full rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6">
-                  <p className="font-bold tracking-tight" style={{ fontSize: "clamp(17px, 4.6vw, 19px)", lineHeight: 1.35, color: ACCENT }}>{d.t}</p>
-                  <p className="mt-2.5 text-neutral-600" style={{ fontSize: "15px", lineHeight: 1.6 }}>{d.d}</p>
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-sm font-bold text-white" style={{ background: ACCENT }}>{i + 1}</span>
+                  <p className="mt-4 font-bold tracking-tight text-neutral-900" style={{ fontSize: "clamp(17px, 4.6vw, 19px)", lineHeight: 1.35, wordBreak: "keep-all" }}>{d.t}</p>
+                  <p className="mt-2 text-neutral-500" style={{ fontSize: "15px", lineHeight: 1.6, wordBreak: "keep-all" }}>{d.d}</p>
                 </div>
               </Reveal>
             ))}

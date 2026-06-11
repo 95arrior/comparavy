@@ -179,7 +179,7 @@ export default function ProductShowcase() {
 
         {/* 모바일: 탭 전환(세로로 길어지지 않게) */}
         <div className="mt-8 sm:hidden">
-          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+          <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
             {PANELS.map((p, i) => (
               <button
                 key={p.label}
