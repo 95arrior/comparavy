@@ -4,6 +4,10 @@ import { logUsage } from "./usageLog";
 export type SlideType = "text" | "stat" | "point" | "mockup";
 export type MockupKind = "generate" | "publish" | "calendar" | "edit";
 
+// 카드에 쓸 수 있는 아이콘(내용 이해를 돕는 심플 그래픽). 렌더러(cardRender)와 동일하게 유지.
+export const ICON_NAMES = ["chart", "idea", "write", "search", "money", "check", "warn", "clock", "target", "book", "people", "tag"] as const;
+export type IconName = (typeof ICON_NAMES)[number];
+
 export interface CardSlide {
   type: SlideType;
   title: string;
@@ -12,6 +16,7 @@ export interface CardSlide {
   statLabel?: string; // 숫자 밑 설명 (stat)
   points?: string[]; // 포인트 2~3개 (point)
   mockup?: MockupKind; // 제품 화면 종류 (mockup)
+  icon?: IconName; // 내용을 돕는 아이콘
 }
 export interface CardNews {
   topic: string;
@@ -84,7 +89,8 @@ export async function generateCardNews(topic: string, angleLabel = "", opts: Gen
           '  - mockup: {"type":"mockup","title":"...","body":"...","mockup":"generate|publish|calendar|edit"} (제품 화면 예시 — 우리 서비스 보여줄 때만)\n' +
           "규칙:\n" +
           "① 1장=text 후크 표지. 표지 제목은 3초 안에 읽히게 아주 짧고 굵게(공백 빼고 16자 이내, 1~2줄). 길게 쓰면 글씨가 작아져서 안 된다 — 핵심만 쳐내라. 5장=text 마무리(저장·팔로우 유도, 서비스 홍보 문구 금지). 2~4장은 내용에 맞게 stat·point·text를 섞어 변화있게(목업은 쓰지 않음).\n" +
-          "⑦ '막 찍어낸' 느낌 금지. 각 카드는 그 주제만의 구체적인 알맹이(실제 수치 기준·실전 팁·구체 예시)를 담는다. 뻔한 일반론·다른 카드와 비슷한 재탕·빈 말 금지. 한 장 한 장 따로 공들인 것처럼.\n" +
+          "⑦ '막 찍어낸' 느낌 금지. 각 카드는 그 주제만의 구체적인 알맹이(실전 팁·구체 예시)를 담는다. 뻔한 일반론·다른 카드와 비슷한 재탕·빈 말 금지. 한 장 한 장 따로 공들인 것처럼.\n" +
+          "⑧ 각 슬라이드에 내용을 돕는 아이콘 1개를 \"icon\"으로 넣는다. 값(택1): chart(성장·조회수), idea(아이디어·팁), write(글쓰기·작성), search(검색·키워드), money(수익·돈), check(체크·완료·정답), warn(주의·실수), clock(시간·꾸준함), target(목표·핵심), book(콘텐츠·정리), people(방문자·독자), tag(태그·카테고리). 슬라이드 내용과 가장 잘 맞는 것으로.\n" +
           "② title 짧고 강하게. body 1~2줄. points는 각 12자 내외.\n" +
           "②-1 제목은 의미 단위로 줄바꿈(\\n)해서 자연스럽게 끊는다. 한 단어·한 글자만 다음 줄로 떨어뜨리지 말 것(예: '제휴마케/팅' 금지). 표지 제목은 3줄 이내.\n" +
           "⑥ 카드마다 후크·표현·소재를 다르게 한다. 매번 '월 100만원' 같은 똑같은 수익 후크를 반복하지 말 것. 모든 장이 돈 얘기일 필요 없다(실전 팁·공감·유머·반전도 섞기).\n" +
@@ -125,6 +131,7 @@ export async function generateCardNews(topic: string, angleLabel = "", opts: Gen
           statLabel: s.statLabel ? String(s.statLabel).slice(0, 40) : undefined,
           points: Array.isArray(s.points) ? s.points.filter((p: unknown) => typeof p === "string").slice(0, 3).map((p: string) => p.slice(0, 28)) : undefined,
           mockup: mockups.includes(s.mockup) ? s.mockup : undefined,
+          icon: ICON_NAMES.includes(s.icon) ? s.icon : undefined,
         }))
     : [];
   if (!slides.length) throw new Error("슬라이드가 비어 있어요.");
