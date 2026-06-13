@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { QUESTIONS, computeResult, rangeLabel, type Answers, type DiagnosisResult } from "@/lib/diagnosis";
+import { questionsFor, computeResult, rangeLabel, type Answers, type DiagnosisResult, type Question } from "@/lib/diagnosis";
 
 const ACCENT = "#3182F6";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -34,12 +34,13 @@ export default function Diagnosis() {
   const [result, setResult] = useState<DiagnosisResult | null>(null);
   const topRef = useRef<HTMLDivElement>(null);
 
-  const q = QUESTIONS[idx];
+  const questions = questionsFor(answers.q1);
+  const q = questions[idx];
 
   function pick(optionId: string) {
     const next: Answers = { ...answers, [q.key]: optionId };
     setAnswers(next);
-    if (idx < QUESTIONS.length - 1) {
+    if (idx < questions.length - 1) {
       setIdx(idx + 1);
     } else {
       setPhase("calc");
@@ -60,7 +61,7 @@ export default function Diagnosis() {
 
   return (
     <div ref={topRef} className="mx-auto w-full max-w-xl scroll-mt-24">
-      {phase === "quiz" && <Quiz q={q} idx={idx} selected={answers[q.key]} onPick={pick} onBack={idx > 0 ? () => setIdx(idx - 1) : undefined} />}
+      {phase === "quiz" && <Quiz q={q} idx={idx} total={questions.length} selected={answers[q.key]} onPick={pick} onBack={idx > 0 ? () => setIdx(idx - 1) : undefined} />}
       {phase === "calc" && <Calculating />}
       {phase === "result" && result && <Result result={result} answers={answers} onRestart={restart} />}
     </div>
@@ -71,17 +72,18 @@ export default function Diagnosis() {
 function Quiz({
   q,
   idx,
+  total,
   selected,
   onPick,
   onBack,
 }: {
-  q: (typeof QUESTIONS)[number];
+  q: Question;
   idx: number;
+  total: number;
   selected?: string;
   onPick: (id: string) => void;
   onBack?: () => void;
 }) {
-  const total = QUESTIONS.length;
   const cols = q.options.length === 3 ? "grid-cols-1" : "grid-cols-2";
   return (
     <div key={idx} className="ateflo-pop rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm sm:p-8">
@@ -127,13 +129,13 @@ function Quiz({
 function Calculating() {
   const [flick, setFlick] = useState(0);
   useEffect(() => {
-    const t = window.setInterval(() => setFlick(Math.floor(Math.random() * 90) + 10), 80);
+    const t = window.setInterval(() => setFlick(Math.floor(Math.random() * 200) + 10), 80);
     return () => window.clearInterval(t);
   }, []);
   return (
     <div className="ateflo-pop rounded-3xl border border-neutral-200 bg-white p-10 text-center shadow-sm">
       <p className="text-sm font-medium text-neutral-500">예상 수익 계산 중…</p>
-      <p className="mt-4 font-bold tracking-tight tabular-nums" style={{ fontSize: "clamp(36px, 11vw, 56px)", color: ACCENT, lineHeight: 1 }}>
+      <p className="mt-4 font-bold tracking-tight tabular-nums" style={{ fontSize: "clamp(34px, 10vw, 52px)", color: ACCENT, lineHeight: 1 }}>
         월 {flick}만원
       </p>
       <div className="mx-auto mt-6 flex justify-center gap-1.5">
@@ -155,18 +157,17 @@ function Result({ result, answers, onRestart }: { result: DiagnosisResult; answe
     return () => window.clearTimeout(t);
   }, []);
 
-  const wpLo = Math.round(result.wordpress[0] * p);
-  const wpHi = Math.round(result.wordpress[1] * p);
-  const maxHi = Math.max(result.wordpress[1], result.naver[1]) || 1;
-  const naverW = shown ? (result.naver[1] / maxHi) * 100 : 0;
-  const wpW = shown ? (result.wordpress[1] / maxHi) * 100 : 0;
+  const startLo = Math.round(result.start[0] * p);
+  const startHi = Math.round(result.start[1] * p);
+  const ceilLo = Math.round(result.ceiling[0] * p);
+  const ceilHi = Math.round(result.ceiling[1] * p);
 
-  // 등장 stagger 유틸
+  const maxHi = result.ceiling[1] || 1;
+  const naverW = shown ? Math.max(6, (result.naver[1] / maxHi) * 100) : 0;
+  const wpW = shown ? 100 : 0;
+
   const rise = (delay: number) =>
-    ({
-      transitionDelay: `${delay}ms`,
-      transitionTimingFunction: "cubic-bezier(0.25, 0.1, 0.25, 1)",
-    }) as React.CSSProperties;
+    ({ transitionDelay: `${delay}ms`, transitionTimingFunction: "cubic-bezier(0.25, 0.1, 0.25, 1)" }) as React.CSSProperties;
   const riseCls = `transition-all duration-[400ms] ${shown ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"}`;
 
   return (
@@ -178,34 +179,40 @@ function Result({ result, answers, onRestart }: { result: DiagnosisResult; answe
         </span>
       </div>
 
-      {/* 카운트업 — 워드프레스로 가능한 월 수익(범위) */}
+      {/* 두 숫자 — 시작 / 꾸준히(천장) */}
       <div className={`mt-5 text-center ${riseCls}`} style={rise(80)}>
-        <p className="text-sm text-neutral-500">워드프레스로 가능한 월 수익</p>
-        <p className="mt-1.5 font-bold tracking-tight tabular-nums" style={{ fontSize: "clamp(34px, 10vw, 52px)", color: ACCENT, lineHeight: 1.05 }}>
-          월 {wpLo}~{wpHi}<span style={{ fontSize: "0.5em" }}>만원</span>
+        <p className="text-sm text-neutral-500 tabular-nums">
+          시작 예상 · 월 {startLo}~{startHi}만원
+        </p>
+        <p className="mt-2 text-sm font-semibold text-neutral-600">꾸준히 하면</p>
+        <p className="mt-0.5 font-bold tracking-tight tabular-nums" style={{ fontSize: "clamp(30px, 9vw, 50px)", color: ACCENT, lineHeight: 1.05, wordBreak: "keep-all" }}>
+          월 {ceilLo}~{ceilHi}<span style={{ fontSize: "0.5em" }}>만원+</span>
         </p>
       </div>
 
       {/* 네이버 vs 워드프레스 막대 */}
       <div className={`mt-6 space-y-3 ${riseCls}`} style={rise(160)}>
         <BarRow label="네이버" value={rangeLabel(result.naver)} width={naverW} color="#9ca3af" />
-        <BarRow label="워드프레스" value={rangeLabel(result.wordpress)} width={wpW} color={ACCENT} emphasize />
+        <BarRow label="워드프레스" value={`잠재 ${result.ceiling[1]}만원+`} width={wpW} color={ACCENT} emphasize />
       </div>
 
       {/* 유형 코멘트 */}
       <p className={`mt-5 text-center font-medium text-neutral-700 ${riseCls}`} style={{ ...rise(240), fontSize: "clamp(15px, 4vw, 17px)", wordBreak: "keep-all" }}>
         {result.comment}
       </p>
-      <p className={`mt-2 text-center text-xs text-neutral-400 ${riseCls}`} style={rise(280)}>
+      <p className={`mt-2 text-center text-neutral-500 ${riseCls}`} style={{ ...rise(280), fontSize: "clamp(13px, 3.6vw, 15px)", lineHeight: 1.6, wordBreak: "keep-all" }}>
+        차이는 글솜씨가 아니라 꾸준함이에요.<br />그 꾸준함을 AteFlo가 만들어요.
+      </p>
+      <p className={`mt-2 text-center text-xs text-neutral-400 ${riseCls}`} style={rise(320)}>
         {result.disclaimer}
       </p>
 
       {/* 사전신청 */}
-      <div className={`mt-7 border-t border-neutral-100 pt-6 ${riseCls}`} style={rise(360)}>
+      <div className={`mt-7 border-t border-neutral-100 pt-6 ${riseCls}`} style={rise(400)}>
         <p className="text-center font-bold tracking-tight text-neutral-900" style={{ fontSize: "clamp(16px, 4.4vw, 19px)", lineHeight: 1.4, wordBreak: "keep-all" }}>
-          이 수익, 워드프레스로 시작할 수 있어요.
+          이 가능성, 워드프레스로 시작하세요.
         </p>
-        <p className="mt-1.5 text-center text-sm text-neutral-500">오픈하면 가장 먼저 알려드릴게요.</p>
+        <p className="mt-1.5 text-center text-sm text-neutral-500">오픈하면 가장 먼저 알려드려요.</p>
         <div className="mt-4">
           <SignupInline answers={answers} result={result} onRestart={onRestart} />
         </div>
@@ -256,7 +263,7 @@ function SignupInline({ answers, result, onRestart }: { answers: Answers; result
     } catch {
       // 무시
     }
-    const diagnosis = { ...answers, type: result.typeId, naver: result.naver, wordpress: result.wordpress };
+    const diagnosis = { ...answers, type: result.typeId, start: result.start, ceiling: result.ceiling, naver: result.naver };
     try {
       const res = await fetch("/api/waitlist", {
         method: "POST",
@@ -345,7 +352,7 @@ function SignupInline({ answers, result, onRestart }: { answers: Answers; result
       ) : (
         <p className="mt-2.5 text-center text-xs leading-relaxed text-neutral-400">
           사전 신청 무료 · 결제 정보 안 받아요<br />
-          신청 시 출시 알림을 위한 <a href="/privacy" target="_blank" className="underline hover:text-neutral-600">개인정보 수집·이용</a>에 동의해요.
+          신청 시 출시 알림·서비스 개선을 위한 개인정보(이메일, 진단 응답) <a href="/privacy" target="_blank" className="underline hover:text-neutral-600">수집·이용</a>에 동의해요.
         </p>
       )}
     </form>

@@ -33,23 +33,24 @@ const ImgIcon = ({ s = 16 }: { s?: number }) => (
   <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="8.5" cy="9.5" r="1.5" /><path d="M21 16l-5-5L5 20" /></svg>
 );
 
-// 0. 블로그 만들기 — 이름 입력 → '만들기' 누르면 '완성!'이 떠오름(루프)
+// 0. 블로그 만들기 — 이름 입력 → '만들기' 누르면 '완성!'이 떠오름(루프). 다른 카드와 동일 구조(완성 위/입력·버튼 아래)
 function MockCreateBlog() {
   return (
     <div className="flex h-full flex-col">
-      <p className="text-xs font-medium text-neutral-400">블로그 이름</p>
-      <div className="mt-1.5 flex items-center gap-2 rounded-xl border border-neutral-200 px-3 py-2.5">
-        <span className="flex-1 text-sm text-neutral-700">강아지 일상 블로그</span>
-      </div>
-      <span className="mock-press mt-3 block rounded-xl py-2.5 text-center text-sm font-semibold text-white" style={{ background: BRAND }}>블로그 만들기</span>
-      {/* 완성 (클릭 후 떠오름) */}
-      <div className="mock-reveal mt-3 flex flex-col items-center py-1 text-center">
+      {/* 위: 완성 결과(클릭 후 떠오름) */}
+      <div className="mock-reveal flex flex-col items-center py-2 text-center">
         <div className="flex h-11 w-11 items-center justify-center rounded-full text-white" style={{ background: "#2fd07a" }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
         </div>
-        <p className="mt-2 text-sm font-semibold">완성!</p>
-        <p className="mt-0.5 text-xs text-neutral-400">myblog.com</p>
+        <p className="mt-2.5 text-sm font-semibold">완성!</p>
+        <p className="mt-0.5 text-xs text-neutral-400">우리집댕댕이.com</p>
       </div>
+      {/* 아래: 블로그 이름 입력 + 만들기 버튼(눌림) */}
+      <p className="mt-4 text-xs font-medium text-neutral-400">블로그 이름</p>
+      <div className="mt-1.5 flex items-center gap-2 rounded-xl border border-neutral-200 px-3 py-2.5">
+        <span className="min-w-0 flex-1 truncate text-sm text-neutral-700">우리집 댕댕이 일지</span>
+      </div>
+      <span className="mock-press mt-2.5 block rounded-xl py-2.5 text-center text-sm font-semibold text-white" style={{ background: BRAND }}>블로그 만들기</span>
       <p className="mt-auto pt-4 text-center text-xs font-medium text-[#3f91ff]">이름만 정하면, 블로그가 생겨요</p>
     </div>
   );
@@ -60,8 +61,8 @@ function MockGenerate() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 rounded-xl border border-neutral-200 px-3 py-2.5">
-        <span className="flex-1 text-sm text-neutral-700">강아지 분리불안 해결 방법</span>
-        <span className="mock-gen-press inline-block rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white">글 생성</span>
+        <span className="min-w-0 flex-1 truncate text-sm text-neutral-700">강아지가 슬리퍼만 물어뜯는 이유 🐶</span>
+        <span className="mock-gen-press inline-block shrink-0 rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white">글 생성</span>
       </div>
       <div className="mt-4 space-y-2.5">
         <Bar w="100%" delay={0.15} />
@@ -85,7 +86,7 @@ function MockEdit() {
         <span className="flex h-6 w-6 items-center justify-center rounded"><ImgIcon s={13} /></span>
       </div>
       <div className="mt-3 space-y-2">
-        <div className="h-2.5 w-3/5 rounded bg-neutral-800" />
+        <p className="truncate text-[13px] font-bold text-neutral-800">강아지가 슬리퍼만 물어뜯는 이유 🐶</p>
         <Bar w="100%" />
         <Bar w="88%" />
       </div>
@@ -112,7 +113,7 @@ function MockPublish() {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
         </div>
         <p className="mt-2.5 text-sm font-semibold">올렸어요</p>
-        <p className="mt-0.5 text-xs text-neutral-400">myblog.com/dog-anxiety</p>
+        <p className="mt-0.5 text-xs text-neutral-400">우리집댕댕이.com/슬리퍼</p>
       </div>
       {/* 아래: 발행 버튼(눌리는 애니) */}
       <span className="mock-press mt-3 block rounded-xl py-2.5 text-center text-sm font-semibold text-white" style={{ background: BRAND }}>워드프레스에 발행</span>
@@ -127,19 +128,19 @@ function MockArticles() {
     <div className="flex h-full flex-col">
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-2 rounded-xl border border-neutral-100 px-3 py-2.5">
-          <span className="min-w-0 flex-1 truncate text-xs text-neutral-700">강아지 분리불안 해결 방법</span>
+          <span className="min-w-0 flex-1 truncate text-xs text-neutral-700">슬리퍼 물어뜯는 이유</span>
           <span className="shrink-0 rounded-md bg-emerald-600 px-2 py-0.5 text-[10px] font-medium text-white">발행됨</span>
         </div>
         {/* 예약됨 → 발행됨 자동 전환 */}
         <div className="flex items-center justify-between gap-2 rounded-xl border border-neutral-100 px-3 py-2.5">
-          <span className="min-w-0 flex-1 truncate text-xs text-neutral-700">노령견 사료 고르는 기준</span>
+          <span className="min-w-0 flex-1 truncate text-xs text-neutral-700">산책 거부하는 댕댕이 설득법</span>
           <span className="relative inline-flex h-[18px] w-[44px] shrink-0 items-center justify-center">
             <span className="mock-chip-sched absolute inset-0 flex items-center justify-center rounded-md bg-[#3f91ff]/10 text-[10px] font-medium text-[#2f7fe6]">예약됨</span>
             <span className="mock-chip-pub absolute inset-0 flex items-center justify-center rounded-md bg-emerald-600 text-[10px] font-medium text-white">발행됨</span>
           </span>
         </div>
         <div className="flex items-center justify-between gap-2 rounded-xl border border-neutral-100 px-3 py-2.5">
-          <span className="min-w-0 flex-1 truncate text-xs text-neutral-700">강아지 슬개골 초기 증상</span>
+          <span className="min-w-0 flex-1 truncate text-xs text-neutral-700">사료 안 먹을 때 꿀팁</span>
           <span className="shrink-0 rounded-md bg-neutral-100 px-2 py-0.5 text-[10px] font-medium text-neutral-500">초안</span>
         </div>
       </div>
@@ -182,7 +183,7 @@ function MockCalendar() {
       {/* 예약 글이 시간 되면 발행 (실제 글 제목 + 상태 전환) */}
       <div className="mt-auto">
         <div className="flex items-center justify-between gap-1.5 rounded-lg border border-neutral-100 px-2.5 py-1.5">
-          <span className="min-w-0 flex-1 truncate text-[11px] text-neutral-600">강아지 분리불안 해결법</span>
+          <span className="min-w-0 flex-1 truncate text-[11px] text-neutral-600">슬리퍼 물어뜯는 이유</span>
           <span className="relative inline-flex h-[16px] w-[38px] shrink-0 items-center justify-center">
             <span className="mock-chip-sched absolute inset-0 flex items-center justify-center rounded text-[9px] font-medium" style={{ background: `${BRAND}1a`, color: BRAND }}>예약됨</span>
             <span className="mock-chip-pub absolute inset-0 flex items-center justify-center rounded bg-emerald-600 text-[9px] font-medium text-white">발행됨</span>
@@ -202,7 +203,7 @@ function MockMobile() {
         <div className="relative w-[104px] rounded-[1.4rem] border-[4px] border-neutral-900 bg-white px-2 pb-3 pt-3.5 shadow-lg">
           <span className="absolute left-1/2 top-1.5 h-1 w-7 -translate-x-1/2 rounded-full bg-neutral-200" />
           <p className="text-[8px] font-medium text-neutral-400">키워드</p>
-          <div className="mt-1 rounded-md bg-neutral-50 px-1.5 py-1.5 text-[9px] font-medium text-neutral-700">강아지 분리불안</div>
+          <div className="mt-1 rounded-md bg-neutral-50 px-1.5 py-1.5 text-[9px] font-medium text-neutral-700">강아지 슬리퍼</div>
           <span className="mock-press mt-2 block rounded-md py-1.5 text-center text-[9px] font-semibold text-white" style={{ background: BRAND }}>워드프레스에 발행</span>
           {/* 게시 완료 (클릭 후 떠오름) */}
           <div className="mock-reveal mt-2 flex items-center gap-1.5 rounded-md bg-emerald-50 px-1.5 py-1.5">
