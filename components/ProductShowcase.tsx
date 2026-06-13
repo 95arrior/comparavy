@@ -33,6 +33,28 @@ const ImgIcon = ({ s = 16 }: { s?: number }) => (
   <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="8.5" cy="9.5" r="1.5" /><path d="M21 16l-5-5L5 20" /></svg>
 );
 
+// 0. 블로그 만들기 — 이름 입력 → '만들기' 누르면 '완성!'이 떠오름(루프)
+function MockCreateBlog() {
+  return (
+    <div className="flex h-full flex-col">
+      <p className="text-xs font-medium text-neutral-400">블로그 이름</p>
+      <div className="mt-1.5 flex items-center gap-2 rounded-xl border border-neutral-200 px-3 py-2.5">
+        <span className="flex-1 text-sm text-neutral-700">강아지 일상 블로그</span>
+      </div>
+      <span className="mock-press mt-3 block rounded-xl py-2.5 text-center text-sm font-semibold text-white" style={{ background: BRAND }}>블로그 만들기</span>
+      {/* 완성 (클릭 후 떠오름) */}
+      <div className="mock-reveal mt-3 flex flex-col items-center py-1 text-center">
+        <div className="flex h-11 w-11 items-center justify-center rounded-full text-white" style={{ background: "#2fd07a" }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
+        </div>
+        <p className="mt-2 text-sm font-semibold">완성!</p>
+        <p className="mt-0.5 text-xs text-neutral-400">myblog.com</p>
+      </div>
+      <p className="mt-auto pt-4 text-center text-xs font-medium text-[#3f91ff]">이름만 정하면, 블로그가 생겨요</p>
+    </div>
+  );
+}
+
 // 1. 글 생성 — 커서가 '글 생성'을 누르면 줄이 쭈루룩 생겼다 사라짐(루프)
 function MockGenerate() {
   return (
@@ -200,6 +222,7 @@ function MockMobile() {
 }
 
 const PANELS = [
+  { label: "블로그 만들기", node: <MockCreateBlog /> },
   { label: "글 생성", node: <MockGenerate /> },
   { label: "글 편집", node: <MockEdit /> },
   { label: "워드프레스 발행", node: <MockPublish /> },
