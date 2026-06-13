@@ -1,69 +1,70 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import RouteScrollManager from "@/components/RouteScrollManager";
-import SiteFooter from "@/components/SiteFooter";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
-const DEFAULT_TITLE = "AteFlo | 내 상황에 맞는 AI 실행 패키지";
-const WEBSITE_JSON_LD = {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  name: SITE_NAME,
-  url: SITE_URL,
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: DEFAULT_TITLE,
-    template: `%s | ${SITE_NAME}`,
+    default: `에이트플로(${SITE_NAME}) — 블로그 글쓰기, 키워드 하나면 끝`,
+    template: `%s | 에이트플로`,
   },
   description: SITE_DESCRIPTION,
+  keywords: ["에이트플로", "AteFlo", "워드프레스 AI 글쓰기", "한국어 SEO 글", "AI 블로그 자동 발행", "블로그 글 자동 생성"],
   openGraph: {
-    title: DEFAULT_TITLE,
-    description: SITE_DESCRIPTION,
+    title: "에이트플로",
+    description: "글쓰기, 키워드 하나면 끝",
     url: SITE_URL,
     siteName: SITE_NAME,
+    locale: "ko_KR",
     type: "website",
+    images: [{ url: "/og.jpg", width: 1672, height: 941, alt: "에이트플로 AteFlo" }],
   },
   twitter: {
-    card: "summary",
-    title: DEFAULT_TITLE,
-    description: SITE_DESCRIPTION,
-  },
-  alternates: {
-    canonical: "/",
-  },
-  icons: {
-    icon: [
-      { url: "/favicon.ico", sizes: "32x32" },
-      { url: "/favicon-48x48.png", sizes: "48x48", type: "image/png" },
-      { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
-    ],
-    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
-  },
-  verification: {
-    google: "3vjt4EUdAHqSiMyGG-6rrR9uq0XfQEbV5ANIBlxAj6s",
+    card: "summary_large_image",
+    title: "에이트플로",
+    description: "글쓰기, 키워드 하나면 끝",
+    images: ["/og.jpg"],
   },
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="ko">
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css"
+        />
+      </head>
       <body>
+        {/* 구조화 데이터 — 구글이 브랜드의 한글명(에이트플로)을 인식하도록 */}
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(WEBSITE_JSON_LD) }}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: SITE_NAME,
+              alternateName: "에이트플로",
+              url: SITE_URL,
+              logo: `${SITE_URL}/apple-icon.png`,
+            }),
+          }}
         />
         <RouteScrollManager />
         <GoogleAnalytics />
         {children}
-        <SiteFooter />
       </body>
     </html>
   );

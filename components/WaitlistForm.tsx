@@ -1,0 +1,95 @@
+"use client";
+
+import { useState } from "react";
+
+/** 사전 등록 이메일 폼. 등록되면 체크 + 메시지로 전환(톡 등장). */
+export default function WaitlistForm({ source = "landing", autoFocus = false }: { source?: string; autoFocus?: boolean }) {
+  const [email, setEmail] = useState("");
+  const [state, setState] = useState<"idle" | "loading" | "done">("idle");
+  const [already, setAlready] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (state === "loading") return;
+    const v = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) {
+      setErr("이메일 주소를 다시 확인해 주세요.");
+      return;
+    }
+    setErr(null);
+    setState("loading");
+    // 채널 추적: URL ?src= 값을 출처로(없으면 폼 위치). 예: ?src=insta, ?src=ad
+    let finalSource = source;
+    try {
+      const src = new URLSearchParams(window.location.search).get("src");
+      if (src) finalSource = src.replace(/[^a-zA-Z0-9가-힣_-]/g, "").slice(0, 40) || source;
+    } catch {
+      // 무시
+    }
+    try {
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: v, source: finalSource }),
+      });
+      if (res.ok) {
+        const d = await res.json().catch(() => ({}));
+        setAlready(d.already === true);
+        setState("done");
+      } else {
+        const d = await res.json().catch(() => ({}));
+        setErr(d.error ?? "등록에 실패했어요. 잠시 후 다시 시도해 주세요.");
+        setState("idle");
+      }
+    } catch {
+      setErr("등록에 실패했어요. 잠시 후 다시 시도해 주세요.");
+      setState("idle");
+    }
+  }
+
+  if (state === "done") {
+    return (
+      <div className="ateflo-pop mx-auto flex max-w-md items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-left">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
+        </span>
+        <div>
+          <p className="text-sm font-semibold text-emerald-800">{already ? "이미 신청하셨어요!" : "신청 완료!"}</p>
+          <p className="text-xs text-emerald-700">{already ? "오픈하면 잊지 않고 가장 먼저 알려드릴게요." : "오픈하면 가장 먼저 메일로 알려드릴게요."}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={submit} className="mx-auto w-full max-w-md">
+      <div className="flex w-full items-center gap-2 rounded-2xl border border-neutral-300 bg-white p-2 shadow-sm transition-all duration-200 focus-within:border-neutral-900 focus-within:ring-4 focus-within:ring-neutral-900/5">
+        <input
+          type="email"
+          autoFocus={autoFocus}
+          value={email}
+          onChange={(e) => { setEmail(e.target.value); if (err) setErr(null); }}
+          placeholder="이메일 주소"
+          inputMode="email"
+          className="min-w-0 flex-1 bg-transparent px-4 py-2.5 text-sm outline-none"
+        />
+        <button
+          type="submit"
+          disabled={state === "loading"}
+          className="shrink-0 rounded-xl bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white transition active:scale-95 hover:bg-neutral-700 disabled:opacity-50"
+        >
+          {state === "loading" ? "신청 중…" : "신청하기"}
+        </button>
+      </div>
+      {err ? (
+        <p className="mt-2 pl-2 text-left text-xs text-red-500">{err}</p>
+      ) : (
+        <p className="mt-2.5 text-center text-xs leading-relaxed text-neutral-400">
+          오픈하면 가장 먼저 초대해드릴게요 · 스팸 없어요<br />
+          신청 시 출시 알림을 위한 <a href="/privacy" target="_blank" className="underline hover:text-neutral-600">개인정보 수집·이용</a>에 동의해요.
+        </p>
+      )}
+    </form>
+  );
+}
