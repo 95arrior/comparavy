@@ -38,20 +38,19 @@ function MockCreateBlog() {
   return (
     <div className="flex h-full flex-col">
       {/* 위: 완성 결과(클릭 후 떠오름) */}
-      <div className="mock-reveal flex flex-col items-center py-2 text-center">
-        <div className="flex h-11 w-11 items-center justify-center rounded-full text-white" style={{ background: "#2fd07a" }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
+      <div className="mock-reveal flex flex-col items-center py-1 text-center">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full text-white" style={{ background: "#2fd07a" }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
         </div>
-        <p className="mt-2.5 text-sm font-semibold">완성!</p>
+        <p className="mt-2 text-sm font-semibold">완성!</p>
         <p className="mt-0.5 text-xs text-neutral-400">우리집댕댕이.com</p>
       </div>
       {/* 아래: 블로그 이름 입력 + 만들기 버튼(눌림) */}
-      <p className="mt-4 text-xs font-medium text-neutral-400">블로그 이름</p>
-      <div className="mt-1.5 flex items-center gap-2 rounded-xl border border-neutral-200 px-3 py-2.5">
+      <div className="mt-3 flex items-center gap-2 rounded-xl border border-neutral-200 px-3 py-2.5">
         <span className="min-w-0 flex-1 truncate text-sm text-neutral-700">우리집 댕댕이 일지</span>
       </div>
       <span className="mock-press mt-2.5 block rounded-xl py-2.5 text-center text-sm font-semibold text-white" style={{ background: BRAND }}>블로그 만들기</span>
-      <p className="mt-auto pt-4 text-center text-xs font-medium text-[#3f91ff]">이름만 정하면, 블로그가 생겨요</p>
+      <p className="mt-auto pt-3 text-center text-xs font-medium text-[#3f91ff]">이름만 정하면, 블로그가 생겨요</p>
     </div>
   );
 }
