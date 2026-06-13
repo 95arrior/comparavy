@@ -375,6 +375,10 @@ function SocialView({ stats }: { stats: AdminStats }) {
   // 낙관적 로컬 상태 — 버튼 누르는 즉시 화면 반영(무거운 전체 새로고침을 기다리지 않음)
   type SP = NonNullable<AdminStats["social"]>["posts"][number];
   const [posts, setPosts] = useState<SP[]>(s?.posts ?? []);
+  // 인스타 토큰 재연결 폼(만료/차단 시 재배포 없이 새 토큰 교체)
+  const [showConnect, setShowConnect] = useState(false);
+  const [igToken, setIgToken] = useState("");
+  const [igUserId, setIgUserId] = useState("");
   const [cfg, setCfg] = useState({ autoEnabled: !!s?.autoEnabled, perDay: s?.postsPerDay ?? 2, gap: clampGap(s?.intervalHours ?? 12), postingHour: s?.postingHour ?? 9, threadsEnabled: !!s?.threadsEnabled });
   useEffect(() => {
     if (!s) return;
@@ -407,6 +411,19 @@ function SocialView({ stats }: { stats: AdminStats }) {
     setPosts(posts.map((x) => (x.id === p.id ? { ...x, status: "published", published_at: new Date().toISOString(), error: null } : x)));
     setMsg("발행했어요"); setBusy(true);
     const ok = await send({ action: "publishNow", id: p.id }); if (!ok) setPosts(prev); setBusy(false);
+  }
+  async function connectIg() {
+    if (!igToken.trim()) { setMsg("토큰을 입력해 주세요"); return; }
+    setBusy(true); setMsg("인스타 토큰 확인 중…");
+    try {
+      const r = await fetch("/api/social", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "connectIg", token: igToken.trim(), igUserId: igUserId.trim() || undefined }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) { setMsg(d.error ?? "연결 실패"); setBusy(false); return; }
+      setMsg(`연결됐어요${d.username ? ` (@${d.username})` : ""}`);
+      setIgToken(""); setShowConnect(false);
+      router.refresh();
+    } catch { setMsg("오류가 났어요"); }
+    setBusy(false);
   }
 
   if (!s) return <Section title="SNS 발행"><p className="text-sm text-neutral-400">설정을 불러오지 못했어요. (마이그레이션 0017 실행 필요)</p></Section>;
@@ -508,8 +525,27 @@ function SocialView({ stats }: { stats: AdminStats }) {
           <p className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">대기열이 얼마 안 남았어요{daysLeft <= 0 ? " (곧 끊겨요)" : ` (약 ${daysLeft}일치)`}. 터미널에서 <code className="rounded bg-amber-100 px-1.5 py-0.5 font-mono text-[13px]">npm run card:gen:bulk -- 14</code> 으로 더 채워두세요.</p>
         )}
         {tokenWarn && (
-          <p className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">인스타 토큰이 <b>{tokenDays! <= 0 ? "만료됐어요" : `${tokenDays}일 뒤 만료`}</b>. 자동 갱신(주 1회)이 도는지 확인하고, 안 되면 다시 발급해 주세요.</p>
+          <p className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">인스타 토큰이 <b>{tokenDays! <= 0 ? "만료됐어요" : `${tokenDays}일 뒤 만료`}</b>. 자동 갱신(주 1회)이 도는지 확인하고, 안 되면 아래에서 새 토큰으로 재연결하세요.</p>
         )}
+
+        {/* 인스타 토큰 재연결 — 만료/차단 시 재배포 없이 새 토큰을 붙여넣어 복구 */}
+        <div className="mt-3 rounded-xl border border-neutral-100 bg-white p-4 shadow-sm">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm font-semibold text-neutral-700">인스타 토큰 재연결</span>
+            <button onClick={() => setShowConnect((v) => !v)} className="text-xs font-semibold text-neutral-500 transition hover:text-neutral-800">{showConnect ? "접기 ▲" : "열기 ▼"}</button>
+          </div>
+          {showConnect && (
+            <div className="mt-3 space-y-2">
+              <p className="text-xs leading-relaxed text-neutral-500">Meta에서 발급한 <b>인스타 장기 액세스 토큰</b>을 붙여넣으세요. 검증 후 암호화해 저장하고, 매주 자동 갱신해요. (계정 ID는 서버 설정값을 쓰려면 비워두세요.)</p>
+              <input value={igToken} onChange={(e) => setIgToken(e.target.value)} placeholder="장기 액세스 토큰 붙여넣기" autoComplete="off" className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:border-neutral-400 focus:outline-none" />
+              <input value={igUserId} onChange={(e) => setIgUserId(e.target.value)} placeholder="인스타 계정 ID (선택 — 비우면 서버 설정 사용)" autoComplete="off" className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:border-neutral-400 focus:outline-none" />
+              <div className="flex items-center gap-2">
+                <button onClick={connectIg} disabled={busy || !igToken.trim()} className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 active:scale-95 disabled:opacity-50">검증 후 연결</button>
+                {msg && <span className="text-xs text-neutral-400">{msg}</span>}
+              </div>
+            </div>
+          )}
+        </div>
       </Section>
 
       {viewer && <Lightbox urls={viewer.urls} index={viewer.i} onIndex={(i) => setViewer({ urls: viewer.urls, i })} onClose={() => setViewer(null)} />}

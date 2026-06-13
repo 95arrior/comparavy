@@ -2,10 +2,12 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient, createSupabaseAdminClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { isAdminEmail } from "@/lib/adminStats";
 import { publishSocialPost, crosspostThreads } from "@/lib/socialPublish";
+import { verifyIg, refreshIgToken } from "@/lib/instagram";
+import { encryptSecret } from "@/lib/crypto";
 
 export const maxDuration = 300;
 
-/** 관리자 전용 — SNS 대기열 관리: add | settings | publishNow | delete */
+/** 관리자 전용 — SNS 대기열 관리: add | settings | publishNow | delete | connectIg */
 export async function POST(request: Request) {
   if (!hasSupabaseEnv()) return NextResponse.json({ error: "서버 설정이 아직이에요." }, { status: 500 });
   const supabase = await createSupabaseServerClient();
@@ -57,6 +59,40 @@ export async function POST(request: Request) {
     }
     await admin.from("social_posts").update({ status: "failed", error: r.error }).eq("id", post.id);
     return NextResponse.json({ error: r.error }, { status: 502 });
+  }
+
+  // 인스타 토큰 재연결 — Meta에서 발급받은 장기 토큰을 붙여넣어 검증 후 DB에 암호화 저장한다.
+  // (앱 내 OAuth 플로우가 없어, 만료/차단 시 재배포 없이 여기서 토큰만 교체해 복구한다.)
+  if (action === "connectIg") {
+    const token = typeof body.token === "string" ? body.token.trim() : "";
+    if (!token) return NextResponse.json({ error: "토큰을 입력해 주세요." }, { status: 400 });
+    // 계정 ID는 입력값 우선, 없으면 환경변수(IG_USER_ID). 둘 다 없으면 검증 불가.
+    const igUserId = (typeof body.igUserId === "string" && body.igUserId.trim()) || process.env.IG_USER_ID || "";
+    if (!igUserId) return NextResponse.json({ error: "인스타 계정 ID(IG_USER_ID)가 없어요. 계정 ID를 함께 입력하거나 환경변수를 설정해 주세요." }, { status: 400 });
+
+    // 토큰이 실제로 동작하는지 먼저 확인(계정명 조회).
+    const v = await verifyIg({ igUserId, token });
+    if (!v.ok) return NextResponse.json({ error: `토큰 검증 실패: ${v.error}` }, { status: 502 });
+
+    // 가능하면 즉시 장기 토큰으로 연장해 실제 만료시각을 확보(인스타 로그인 토큰만 지원).
+    // 페이스북 로그인 토큰 등 연장이 안 되는 경우엔 그대로 저장하고 기본 60일로 둔다.
+    let finalToken = token;
+    let expiresInSec = 60 * 24 * 3600;
+    try {
+      const r = await refreshIgToken(token);
+      finalToken = r.token;
+      expiresInSec = r.expiresInSec;
+    } catch {
+      // 연장 불가 토큰 — 검증은 통과했으므로 그대로 저장.
+    }
+
+    const { error } = await admin.from("social_settings").update({
+      ig_access_token: encryptSecret(finalToken),
+      ig_token_expires_at: new Date(Date.now() + expiresInSec * 1000).toISOString(),
+      ig_token_refreshed_at: new Date().toISOString(),
+    }).eq("id", 1);
+    if (error) return NextResponse.json({ error: error.message }, { status: 502 });
+    return NextResponse.json({ ok: true, username: v.username, expiresInDays: Math.round(expiresInSec / 86400) });
   }
 
   return NextResponse.json({ error: "알 수 없는 동작" }, { status: 400 });
