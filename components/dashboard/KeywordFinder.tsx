@@ -1,17 +1,12 @@
 "use client";
 
-import { useState } from "react";
-
-// API 응답 형태 (서버 lib/goldenKeyword.ts의 GoldenKeyword와 동일 — 서버 모듈을 클라에 import하지 않으려 별도 선언)
-interface GoldenKeyword {
-  keyword: string;
-  monthlyMobileQcCnt: number;
-  compIdx: string; // 낮음 / 중간
-  highVolume: boolean;
-  estimated?: boolean; // 핵심 기준 추정 검색량(자연 질문형)
-}
+import { useEffect, useState } from "react";
+import type { KeywordResult, KeywordStatus } from "./types";
 
 const BRAND = "#3f91ff";
+
+// 검색은 단일 POST(네이버→AI→재검증)라 단계 이벤트가 없어, 로딩 동안 안내 메시지를 순환시킨다(멈춘 듯 안 보이게).
+const STAGES = ["네이버 연관어 분석 중…", "AI로 검색 의도 재구성 중…", "황금 키워드 선별 중…"];
 
 function compLabel(compIdx: string): string {
   if (compIdx === "낮음") return "경쟁 낮음";
@@ -20,43 +15,49 @@ function compLabel(compIdx: string): string {
 }
 
 /**
- * 황금 키워드 발굴 + 선택→예약 큐 담기(2단계-A).
- * 주제 입력 → /api/keywords/discover → 키워드 리스트. 여러 개 선택해 '큐에 담기'(onQueue)로 넘긴다.
- * 첫 글 생성·큐 저장은 부모(DashboardClient)가 처리.
+ * 황금 키워드 발굴 (controlled). 검색 state는 부모(DashboardClient)가 보유 →
+ * 탭 이동/새로고침에도 결과 유지. 여기선 표시 + 선택→큐 담기 + 단계 로딩/에러/빈결과 처리.
  */
-export default function KeywordFinder({ onQueue }: { onQueue: (keywords: string[]) => Promise<boolean> }) {
-  const [topic, setTopic] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [results, setResults] = useState<GoldenKeyword[] | null>(null);
+export default function KeywordFinder({
+  topic,
+  onTopicChange,
+  status,
+  results,
+  error,
+  searchedTopic,
+  onSearch,
+  onCancel,
+  onQueue,
+  welcomeTopic,
+  onDismissWelcome,
+}: {
+  topic: string;
+  onTopicChange: (t: string) => void;
+  status: KeywordStatus;
+  results: KeywordResult[] | null;
+  error: string | null;
+  searchedTopic: string | null;
+  onSearch: (topic: string) => void;
+  onCancel: () => void;
+  onQueue: (keywords: string[]) => Promise<boolean>;
+  welcomeTopic?: string | null;
+  onDismissWelcome?: () => void;
+}) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [queuing, setQueuing] = useState(false);
+  const [stage, setStage] = useState(0);
 
-  async function run() {
-    const t = topic.trim();
-    if (!t || loading) return;
-    setLoading(true);
-    setError(null);
-    setResults(null);
-    setSelected(new Set());
-    try {
-      const res = await fetch("/api/keywords/discover", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic: t }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data?.error ?? "추천을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.");
-        return;
-      }
-      setResults(Array.isArray(data.keywords) ? data.keywords : []);
-    } catch {
-      setError("네트워크 오류예요. 잠시 후 다시 시도해 주세요.");
-    } finally {
-      setLoading(false);
-    }
-  }
+  const loading = status === "loading";
+
+  // 로딩 동안 단계 메시지 순환
+  useEffect(() => {
+    if (!loading) { setStage(0); return; }
+    const t = setInterval(() => setStage((s) => (s + 1) % STAGES.length), 1800);
+    return () => clearInterval(t);
+  }, [loading]);
+
+  // 결과가 바뀌면(새 검색) 선택 초기화
+  useEffect(() => { setSelected(new Set()); }, [searchedTopic]);
 
   function toggle(keyword: string) {
     setSelected((prev) => {
@@ -71,7 +72,6 @@ export default function KeywordFinder({ onQueue }: { onQueue: (keywords: string[
     if (selected.size === 0 || queuing) return;
     setQueuing(true);
     try {
-      // 보이는 순서(좋은 순)대로 큐에 담기
       const ordered = (results ?? []).map((k) => k.keyword).filter((k) => selected.has(k));
       const ok = await onQueue(ordered);
       if (ok) setSelected(new Set());
@@ -82,6 +82,19 @@ export default function KeywordFinder({ onQueue }: { onQueue: (keywords: string[
 
   return (
     <div className="mx-auto max-w-2xl pb-24">
+      {/* 온보딩 직후 환영 배너 */}
+      {welcomeTopic && (
+        <div className="mb-6 flex items-center gap-3 rounded-2xl border border-[#3f91ff]/30 bg-[#3f91ff]/5 px-5 py-4">
+          <span className="text-lg">🎉</span>
+          <p className="min-w-0 flex-1 text-sm font-medium text-neutral-800">
+            <b className="text-[#2f7fe6]">{welcomeTopic}</b> 블로그가 만들어졌어요! 황금 키워드를 찾아볼까요?
+          </p>
+          {onDismissWelcome && (
+            <button onClick={onDismissWelcome} aria-label="닫기" className="shrink-0 text-neutral-400 transition hover:text-neutral-700">✕</button>
+          )}
+        </div>
+      )}
+
       <div className="text-center">
         <h1 className="font-pretendard text-2xl font-bold tracking-tight sm:text-3xl">키워드 발굴</h1>
         <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-neutral-500">
@@ -94,15 +107,15 @@ export default function KeywordFinder({ onQueue }: { onQueue: (keywords: string[
       <div className="mt-8 flex gap-2">
         <input
           value={topic}
-          onChange={(e) => setTopic(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") run(); }}
+          onChange={(e) => onTopicChange(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter" && !loading) onSearch(topic); }}
           placeholder="주제 키워드 (예: 강아지, 재테크, 캠핑)"
           maxLength={60}
           disabled={loading}
           className="min-w-0 flex-1 rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-neutral-400 focus:border-[#3f91ff] focus:ring-2 focus:ring-[#3f91ff]/20 disabled:opacity-60"
         />
         <button
-          onClick={run}
+          onClick={() => onSearch(topic)}
           disabled={loading || !topic.trim()}
           className="shrink-0 rounded-xl px-5 py-3 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-40"
           style={{ backgroundColor: BRAND }}
@@ -111,27 +124,42 @@ export default function KeywordFinder({ onQueue }: { onQueue: (keywords: string[
         </button>
       </div>
 
+      {/* 로딩 — 단계 메시지 순환 + 취소 */}
       {loading && (
         <div className="mt-10 flex flex-col items-center gap-3 text-center">
           <span className="h-6 w-6 animate-spin rounded-full border-2 border-[#3f91ff]/30 border-t-[#3f91ff]" />
-          <p className="text-sm text-neutral-500">네이버 검색 데이터를 분석하고 있어요…</p>
+          <p className="text-sm font-medium text-neutral-600">{STAGES[stage]}</p>
+          <p className="text-xs text-neutral-400">몇 초 걸려요. 다른 탭으로 이동해도 계속 진행돼요.</p>
+          <button onClick={onCancel} className="mt-1 rounded-lg px-3 py-1.5 text-xs font-medium text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-700">취소</button>
         </div>
       )}
 
-      {error && !loading && (
-        <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{error}</div>
+      {/* 에러 — 다시 시도 */}
+      {status === "error" && (
+        <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800">
+          <p>{error ?? "검색에 실패했어요."}</p>
+          <button
+            onClick={() => onSearch(searchedTopic || topic)}
+            className="mt-3 rounded-lg bg-amber-500 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-600"
+          >
+            다시 시도
+          </button>
+        </div>
       )}
 
-      {results && results.length === 0 && !loading && (
+      {/* 빈 결과 */}
+      {status === "done" && results && results.length === 0 && (
         <div className="mt-10 text-center text-sm text-neutral-500">
-          조건에 맞는 키워드를 못 찾았어요. 조금 더 넓은 주제로 다시 시도해 보세요.
+          ‘{searchedTopic}’로는 조건에 맞는 키워드를 못 찾았어요.<br />조금 더 넓은 주제로 다시 시도해 보세요.
         </div>
       )}
 
       {/* 결과 리스트 (클릭=선택) */}
-      {results && results.length > 0 && !loading && (
+      {status === "done" && results && results.length > 0 && (
         <div className="mt-8">
-          <p className="mb-3 px-1 text-xs font-medium text-neutral-400">추천 키워드 {results.length}개 · 좋은 순 · 담을 키워드를 누르세요</p>
+          <p className="mb-3 px-1 text-xs font-medium text-neutral-400">
+            ‘{searchedTopic}’ 추천 {results.length}개 · 좋은 순 · 담을 키워드를 누르세요
+          </p>
           <ul className="divide-y divide-neutral-100 overflow-hidden rounded-2xl border border-neutral-100 bg-white shadow-sm">
             {results.map((k) => {
               const on = selected.has(k.keyword);
@@ -141,12 +169,7 @@ export default function KeywordFinder({ onQueue }: { onQueue: (keywords: string[
                     onClick={() => toggle(k.keyword)}
                     className={`flex w-full items-center gap-3 px-4 py-3.5 text-left transition ${on ? "bg-[#3f91ff]/5" : "hover:bg-neutral-50"}`}
                   >
-                    {/* 체크박스 */}
-                    <span
-                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition ${
-                        on ? "border-[#3f91ff] bg-[#3f91ff] text-white" : "border-neutral-300 text-transparent"
-                      }`}
-                    >
+                    <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition ${on ? "border-[#3f91ff] bg-[#3f91ff] text-white" : "border-neutral-300 text-transparent"}`}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
                     </span>
                     <div className="min-w-0 flex-1">
@@ -170,17 +193,12 @@ export default function KeywordFinder({ onQueue }: { onQueue: (keywords: string[
         </div>
       )}
 
-      {/* 하단 액션바 — 선택이 있으면 뜸 */}
+      {/* 하단 액션바 */}
       {selected.size > 0 && (
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-neutral-200 bg-white/95 px-4 py-3 backdrop-blur">
           <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
             <p className="text-sm text-neutral-600"><b className="text-neutral-900">{selected.size}개</b> 선택됨</p>
-            <button
-              onClick={queue}
-              disabled={queuing}
-              className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition disabled:opacity-50"
-              style={{ backgroundColor: BRAND }}
-            >
+            <button onClick={queue} disabled={queuing} className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition disabled:opacity-50" style={{ backgroundColor: BRAND }}>
               {queuing ? "담는 중…" : "발행 큐에 담기 →"}
             </button>
           </div>

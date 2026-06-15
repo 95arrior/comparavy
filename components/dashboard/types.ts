@@ -33,6 +33,17 @@ export interface Article {
   created_at: string;
 }
 
+/** 키워드 발굴 결과 한 건 (서버 lib/goldenKeyword.ts의 GoldenKeyword와 동일 — 클라 번들에 서버 모듈 안 끌리게 별도 선언) */
+export interface KeywordResult {
+  keyword: string;
+  monthlyMobileQcCnt: number;
+  compIdx: string; // 낮음 / 중간
+  highVolume: boolean;
+  estimated?: boolean;
+}
+
+export type KeywordStatus = "idle" | "loading" | "done" | "error";
+
 export interface DashboardProps {
   email: string;
   plan: PlanKey;

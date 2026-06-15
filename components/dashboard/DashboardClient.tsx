@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { PLANS } from "@/lib/plans";
-import type { Article, DashboardProps } from "./types";
+import type { Article, DashboardProps, KeywordResult, KeywordStatus } from "./types";
 import ArticleList from "./ArticleList";
 import ArticleModal from "./ArticleModal";
 import ContentCalendar from "./ContentCalendar";
@@ -74,6 +74,16 @@ export default function DashboardClient(props: DashboardProps) {
   const [blogProfile, setBlogProfile] = useState<BlogProfile | null>(null);
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const pendingQueueId = useRef<string | null>(null); // 첫 글 생성 완료 시 연결할 큐 항목
+  // 키워드 발굴 검색 state (KeywordFinder에서 리프트 — 탭 이동/새로고침에도 유지)
+  const [kwTopic, setKwTopic] = useState("");
+  const [kwStatus, setKwStatus] = useState<KeywordStatus>("idle");
+  const [kwResults, setKwResults] = useState<KeywordResult[] | null>(null);
+  const [kwError, setKwError] = useState<string | null>(null);
+  const [kwSearchedTopic, setKwSearchedTopic] = useState<string | null>(null);
+  const [welcomeBlog, setWelcomeBlog] = useState<string | null>(null);
+  const kwAbort = useRef<AbortController | null>(null);
+  const [searchHydrated, setSearchHydrated] = useState(false); // 마지막검색 복원 완료 여부(자동검색 타이밍 게이트)
+  const autoSearched = useRef(false);
   // 백그라운드에서 생성 중인 글(도중 이탈 후 복귀 시 메인에 '생성 중' 카드로 표시)
   const generatingArticle = articles.find((a) => a.status === "generating") ?? null;
   const doneArticle = doneId ? articles.find((a) => a.id === doneId) ?? null : null;
@@ -302,24 +312,91 @@ export default function DashboardClient(props: DashboardProps) {
     }
   }
 
-  // 2단계-A: 블로그 프로필·큐 로드 (마운트 1회)
+  // 2단계-A: 블로그 프로필·큐·마지막 검색 로드 (마운트 1회 — 새로고침/재접속에도 복원)
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
-        const [pRes, qRes] = await Promise.all([
+        const [pRes, qRes, sRes] = await Promise.all([
           fetch("/api/blog-profile").then((r) => r.json()).catch(() => ({})),
           fetch("/api/keyword-queue").then((r) => r.json()).catch(() => ({})),
+          fetch("/api/keyword-searches").then((r) => r.json()).catch(() => ({})),
         ]);
         if (!alive) return;
         if (pRes?.profile) setBlogProfile(pRes.profile as BlogProfile);
         if (Array.isArray(qRes?.queue)) setQueue(qRes.queue as QueueItem[]);
+        // 마지막 검색 결과 복원
+        const search = sRes?.search;
+        if (search && Array.isArray(search.results)) {
+          setKwResults(search.results as KeywordResult[]);
+          setKwSearchedTopic(search.topic ?? null);
+          setKwTopic(search.topic ?? "");
+          setKwStatus("done");
+        }
       } catch {
         // 무시 (없으면 빈 상태)
+      } finally {
+        if (alive) setSearchHydrated(true);
       }
     })();
-    return () => { alive = false; };
+    return () => { alive = false; kwAbort.current?.abort(); };
   }, []);
+
+  // 키워드 검색 실행 (DashboardClient 소유 → 탭 이동에도 계속 진행). 완료 결과는 DB에 영속화.
+  async function runKeywordSearch(rawTopic: string) {
+    const t = rawTopic.trim();
+    if (!t) return;
+    kwAbort.current?.abort();
+    const ctrl = new AbortController();
+    kwAbort.current = ctrl;
+    setKwStatus("loading");
+    setKwError(null);
+    setKwResults(null);
+    setKwSearchedTopic(null);
+    try {
+      const res = await fetch("/api/keywords/discover", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic: t }),
+        signal: ctrl.signal,
+      });
+      const data = await res.json();
+      if (ctrl.signal.aborted) return;
+      if (!res.ok) { setKwError(data?.error ?? "추천을 불러오지 못했어요. 잠시 후 다시 시도해 주세요."); setKwStatus("error"); return; }
+      const kws: KeywordResult[] = Array.isArray(data.keywords) ? data.keywords : [];
+      setKwResults(kws);
+      setKwSearchedTopic(t);
+      setKwStatus("done");
+      // 영속화 (실패해도 화면엔 영향 없음)
+      fetch("/api/keyword-searches", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic: t, results: kws }),
+      }).catch(() => {});
+    } catch (err) {
+      if (ctrl.signal.aborted || (err as { name?: string })?.name === "AbortError") return; // 취소 — 조용히
+      setKwError("네트워크 오류예요. 잠시 후 다시 시도해 주세요.");
+      setKwStatus("error");
+    }
+  }
+
+  function cancelKeywordSearch() {
+    kwAbort.current?.abort();
+    kwAbort.current = null;
+    setKwStatus(kwResults && kwResults.length > 0 ? "done" : "idle");
+  }
+
+  // A-2: 키워드 탭에 들어오면 블로그 주제로 자동 검색(직전 결과 없을 때 1회). 재검색 낭비 방지.
+  useEffect(() => {
+    if (tab !== "keywords") return;
+    if (!searchHydrated || autoSearched.current) return;
+    if (blogProfile && !kwResults && kwStatus === "idle") {
+      autoSearched.current = true;
+      setKwTopic(blogProfile.topic);
+      runKeywordSearch(blogProfile.topic);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, blogProfile, kwResults, kwStatus, searchHydrated]);
 
   // 키워드 선택 → 큐에 담고 첫 1개 즉시 생성. 프로필 없으면 설정으로 유도.
   async function handleQueue(keywords: string[]): Promise<boolean> {
@@ -835,7 +912,21 @@ export default function DashboardClient(props: DashboardProps) {
                 )}
               </>
             )}
-            {tab === "keywords" && <KeywordFinder onQueue={handleQueue} />}
+            {tab === "keywords" && (
+              <KeywordFinder
+                topic={kwTopic}
+                onTopicChange={setKwTopic}
+                status={kwStatus}
+                results={kwResults}
+                error={kwError}
+                searchedTopic={kwSearchedTopic}
+                onSearch={runKeywordSearch}
+                onCancel={cancelKeywordSearch}
+                onQueue={handleQueue}
+                welcomeTopic={welcomeBlog}
+                onDismissWelcome={() => setWelcomeBlog(null)}
+              />
+            )}
             {tab === "queue" && (
               <KeywordQueue
                 queue={queue}
@@ -847,7 +938,20 @@ export default function DashboardClient(props: DashboardProps) {
             {tab === "blog" && (
               <BlogSetup
                 initial={blogProfile}
-                onSaved={(p) => { setBlogProfile(p); setNotice("블로그 설정을 저장했어요."); }}
+                onSaved={(p) => {
+                  const isNew = !blogProfile;
+                  setBlogProfile(p);
+                  if (isNew) {
+                    // A-1: 온보딩 완료 → 바로 키워드 발굴로 연결 + 그 주제 자동 검색 + 환영 배너
+                    setWelcomeBlog(p.topic);
+                    setKwTopic(p.topic);
+                    autoSearched.current = true; // 여기서 직접 검색하므로 자동검색 effect 중복 방지
+                    goTab("keywords");
+                    runKeywordSearch(p.topic);
+                  } else {
+                    setNotice("블로그 설정을 저장했어요.");
+                  }
+                }}
               />
             )}
             {tab === "wordpress" && (
