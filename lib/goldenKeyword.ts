@@ -100,28 +100,29 @@ export async function reconstructKeywords(topic: string, seeds: string[]): Promi
     const client = new Anthropic({ apiKey });
     const res = await client.messages.create({
       model: "claude-haiku-4-5",
-      max_tokens: 1200,
+      max_tokens: 1600,
       messages: [
         {
           role: "user",
           content:
             `'${topic}' 주제로 한국어 블로그 글을 쓰려고 해. 아래는 네이버 연관 검색어(단어 위주)야.\n` +
-            `이 단어들을 재료 삼아, **사람들이 실제로 검색할 만한 정보형 롱테일 키워드(구)** 35~40개를 만들어줘.\n\n` +
+            `이 단어들을 재료 삼아, **사람들이 실제로 검색할 만한 정보형 롱테일 키워드(구)** 40~45개를 만들어줘.\n\n` +
             `규칙:\n` +
             `- 2~3단어로 된 '구' 형태. 단일 명사 한 단어(예: "사료","명견")만 있는 건 금지.\n` +
-            `- **각도를 고르게 분산**할 것. 한 각도(예: "OO 수명", "OO 종류")에 몰리지 말고 아래를 골고루:\n` +
-            `  · 증상/질병(예: "강아지 설사 원인", "강아지 슬개골 탈구")\n` +
-            `  · 관리/돌봄(예: "강아지 양치 방법", "강아지 목욕 주기")\n` +
-            `  · 먹이/사료(예: "강아지 사료 추천", "강아지 사료 안 먹을 때")\n` +
-            `  · 행동/훈련(예: "강아지 분리불안 해결", "강아지 배변 훈련")\n` +
-            `  · 특징/비교(예: "소형견 종류", "푸들 수명") — 단, 이 각도는 전체의 1/4 이하로만.\n` +
-            `- 같은 끝말(예: "…수명","…종류")이 5개 넘게 반복되지 않게.\n` +
+            `- **각도를 골고루 펼쳐라(가장 중요).** 아래 각 묶음에서 비슷한 개수씩:\n` +
+            `  · 건강/증상/질병: 설사·구토·피부병·슬개골·심장사상충·예방접종 …\n` +
+            `  · 먹이/사료/간식: 사료 추천·안 먹을 때·양 조절·수제 간식 …\n` +
+            `  · 행동/훈련: 분리불안·배변 훈련·짖음·물어뜯기·사회화 …\n` +
+            `  · 미용/관리: 목욕 주기·양치·발톱·털 관리·귀 청소 …\n` +
+            `  · 입양/돌봄/생활: 입양 준비·실내 온도·산책·여름 더위 …\n` +
+            `  · 특징/품종/수명: — 이 묶음은 **전체의 1/5 이하**로만. "OO 수명"은 최대 2개.\n` +
+            `- 같은 끝말(예: "…수명","…종류","…방법")이 3개 넘게 반복되지 않게.\n` +
             `- 정보형만(추천·방법·증상·원인·효과·비교·주의점 등). 거래형 금지(분양·가격·최저가·중고·구매·예약).\n` +
             `- 주제 '${topic}'와 관련된 것만. 무관한 재료 단어는 버려.\n` +
             `- 4단어 이상으로 너무 길게 만들지 마(실제 검색량이 잡히는 2~3단어 위주). 연도(2024 등) 넣지 마.\n\n` +
             `재료 단어: ${seeds.join(", ")}\n\n` +
             `출력: JSON 문자열 배열만. 설명·번호 없이.\n` +
-            `예: ["강아지 사료 추천","강아지 분리불안 증상","강아지 설사 원인","강아지 양치 방법"]`,
+            `예: ["강아지 설사 원인","강아지 사료 안 먹을 때","강아지 분리불안 해결","강아지 양치 방법","강아지 여름 더위"]`,
         },
       ],
     });
@@ -144,7 +145,7 @@ export async function reconstructKeywords(topic: string, seeds: string[]): Promi
         }
       }
     }
-    return { phrases: phrases.slice(0, 40), usage, usedAi: true };
+    return { phrases: phrases.slice(0, 45), usage, usedAi: true };
   } catch {
     return { phrases: [], usage: null, usedAi: false };
   }
@@ -218,10 +219,16 @@ export function scoreValidated(
       score: goldenScore(stat) * (estimated ? 0.9 : 1), // 정확검증을 살짝 우대
     });
   }
-  cands.sort((a, b) => b.score - a.score);
+  // 정렬: 경쟁 '낮음'을 상위로(신규 블로그 우대) → 같은 등급 안에서 황금 점수순
+  cands.sort((a, b) => {
+    const ta = COMP_TIER[a.g.compIdx] ?? 9;
+    const tb = COMP_TIER[b.g.compIdx] ?? 9;
+    if (ta !== tb) return ta - tb; // 낮음(0)이 보통(1)보다 위
+    return b.score - a.score;
+  });
 
   // 다양성 캡: 같은 끝말(예: "…수명","…종류")이 화면을 도배하지 않게 끝말당 최대 N개
-  const MAX_PER_TAIL = 3;
+  const MAX_PER_TAIL = 2;
   const tailCount = new Map<string, number>();
   const picked: GoldenKeyword[] = [];
   const overflow: GoldenKeyword[] = [];

@@ -94,10 +94,11 @@ export async function POST(request: Request) {
       const extra = await fetchKeywordStats(missing);
       for (const [k, v] of extra) if (!pool.has(k)) pool.set(k, v);
     }
-    keywords = scoreValidated(phrases, pool, 300, 500, RESULT_LIMIT);
-    // 회복: 너무 적으면 문턱을 낮춰 더 살린다
-    if (keywords.length < 15) {
-      keywords = scoreValidated(phrases, pool, 150, 300, RESULT_LIMIT);
+    // 신규 블로그 전략: 검색량 작아도(월 180~) 경쟁 낮은 틈새를 포착 → 하한을 낮게
+    keywords = scoreValidated(phrases, pool, 180, 250, RESULT_LIMIT);
+    // 회복: 20개 미만이면 문턱을 더 낮춰(120/180) 살린다
+    if (keywords.length < 20) {
+      keywords = scoreValidated(phrases, pool, 120, 180, RESULT_LIMIT);
     }
   }
 

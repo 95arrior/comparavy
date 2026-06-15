@@ -36,8 +36,8 @@ async function discover(topic: string) {
       for (const [k, v] of extra) if (!pool.has(k)) pool.set(k, v);
     }
     pooled = pool.size;
-    keywords = scoreValidated(phrases, pool, 300, 500, RESULT_LIMIT);
-    if (keywords.length < 15) keywords = scoreValidated(phrases, pool, 150, 300, RESULT_LIMIT);
+    keywords = scoreValidated(phrases, pool, 180, 250, RESULT_LIMIT);
+    if (keywords.length < 20) keywords = scoreValidated(phrases, pool, 120, 180, RESULT_LIMIT);
   }
   let fellBack = false;
   if (!usedAi && keywords.length < RESULT_LIMIT) {
