@@ -1,6 +1,6 @@
 "use client";
 
-import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import type { TrendPoint, TrendItem } from "@/lib/naverDatalab";
 
 const COLORS = ["#3f91ff", "#22c55e", "#f59e0b", "#a855f7", "#ef4444"];
@@ -25,21 +25,23 @@ export default function TrendChart({ series, items }: { series: TrendPoint[]; it
 
       <div className="h-44 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={series} margin={{ top: 6, right: 8, left: 0, bottom: 0 }}>
+          <LineChart data={series} margin={{ top: 6, right: 10, left: 0, bottom: 0 }}>
             <XAxis
               dataKey="period"
               tick={{ fontSize: 11, fill: "#9ca3af" }}
               tickFormatter={(v: string) => { const m = String(v).split("-")[1]; return m ? `${Number(m)}월` : v; }}
-              interval="preserveStartEnd"
+              interval={1}
+              minTickGap={8}
               axisLine={false}
               tickLine={false}
             />
+            <YAxis hide domain={[0, "dataMax"]} />
             <Tooltip
               contentStyle={{ borderRadius: 12, border: "1px solid #eee", fontSize: 12 }}
               labelFormatter={(v) => { const [y, m] = String(v).split("-"); return `${y}.${Number(m)}월`; }}
             />
             {keys.map((k, i) => (
-              <Line key={k} type="monotone" dataKey={k} stroke={COLORS[i % COLORS.length]} strokeWidth={2.2} dot={false} isAnimationActive />
+              <Line key={k} name={k} type="monotone" dataKey={k} stroke={COLORS[i % COLORS.length]} strokeWidth={2.2} dot={false} connectNulls isAnimationActive />
             ))}
           </LineChart>
         </ResponsiveContainer>

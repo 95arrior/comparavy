@@ -69,15 +69,22 @@ export async function GET(request: Request) {
     if (cached?.keywords) keywords = cached.keywords as SpotKeyword[]; // 실패 시 직전 캐시 유지
   }
 
-  // 3) 트렌드(데이터랩) — 상위 5개
+  // 3) 트렌드(데이터랩): 롱테일은 추이가 0으로 잡혀 안 보임 → 짧은 '핵심어'(2단어 머리)로 조회.
+  // 주제(대분류/세부) + 주목 키워드의 머리어 중복 제거 상위 5개.
   let trend: TrendResult | null = null;
+  const head = (s: string) => s.trim().split(/\s+/).slice(0, 2).join(" ");
+  const trendTerms = Array.from(new Set([topic, ...keywords.map((k) => head(k.keyword))])).filter(Boolean).slice(0, 5);
   try {
-    if (hasDatalabEnv() && keywords.length) {
-      trend = await fetchTrend(keywords.slice(0, 5).map((k) => k.keyword));
+    if (hasDatalabEnv() && trendTerms.length) {
+      trend = await fetchTrend(trendTerms);
+      console.log(`[lab/insights] datalab "${cacheKey}" terms=${JSON.stringify(trendTerms)} series=${trend.series.length} items=${trend.items.length}`);
       const rising = new Set(trend.items.filter((i) => i.rising).map((i) => i.keyword));
-      keywords = keywords.map((k) => ({ ...k, rising: rising.has(k.keyword) }));
+      keywords = keywords.map((k) => ({ ...k, rising: rising.has(head(k.keyword)) }));
+    } else {
+      console.log(`[lab/insights] datalab skipped — hasDatalabEnv=${hasDatalabEnv()} terms=${trendTerms.length}`);
     }
-  } catch {
+  } catch (e) {
+    console.warn(`[lab/insights] datalab error: ${e instanceof Error ? e.message : String(e)}`);
     trend = (cached?.trend as TrendResult) ?? null;
   }
 

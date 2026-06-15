@@ -38,8 +38,11 @@ export async function discoverGolden(topic: string, limit: number): Promise<Disc
       const extra = await fetchKeywordStats(missing);
       for (const [k, v] of extra) if (!pool.has(k)) pool.set(k, v);
     }
-    keywords = scoreValidated(phrases, pool, 180, 250, limit);
-    if (keywords.length < limit) keywords = scoreValidated(phrases, pool, 120, 180, limit);
+    // 검색량 하한을 단계적으로 낮춰 개수 확보(정보형·경쟁필터는 유지, 검색량만 완화)
+    for (const [minM, headM] of [[180, 250], [120, 180], [80, 120], [50, 80]] as const) {
+      keywords = scoreValidated(phrases, pool, minM, headM, limit);
+      if (keywords.length >= limit) break;
+    }
   }
 
   // 폴백: AI 미작동(키 없음/오류)일 때만 정제 시드로 최소 보충

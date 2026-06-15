@@ -437,6 +437,16 @@ export default function DashboardClient(props: DashboardProps) {
     } catch { /* 무시 */ }
   }
 
+  // 블로그 저장(신규/수정) → 연구소(메인)로. 신규면 환영.
+  function onProfileSaved(p: BlogProfile) {
+    const isNew = !blogProfile;
+    setBlogProfile(p);
+    setKwTopic(p.topic);
+    autoSearched.current = false; // 새 주제면 키워드 탭 진입 시 자동검색 다시
+    setNotice(isNew ? `${p.blog_name || p.topic} 연구소가 만들어졌어요 🎉` : "블로그 설정을 저장했어요");
+    goTab("generate"); // 연구소 홈
+  }
+
   function onGenerated(article: Article) {
     setArticles((prev) => [article, ...prev]);
     if (!article.locked) setArticlesUsed((n) => n + 1); // 티저(미리보기)는 사용량에 미포함
@@ -805,82 +815,25 @@ export default function DashboardClient(props: DashboardProps) {
           />
         )}
 
-        {/* 블로그 없음(또는 무료 잠금) = 기존 진입 화면 */}
-        {!page && !selected && !genParams && tab === "generate" && !(blogProfile && !blocked) && (
+        {/* 메인: 블로그 없으면 바로 온보딩(블로그 만들기) */}
+        {!page && !selected && !genParams && tab === "generate" && !blogProfile && (
           <div className="ateflo-page-in">
-            <section className="mx-auto max-w-3xl px-6 pb-20 pt-16 text-center sm:pt-24">
-              <p className="text-sm font-medium tracking-tight text-neutral-400">워드프레스 블로그 자동 운영</p>
-              <h1 className="font-pretendard mt-5 whitespace-nowrap text-[1.65rem] font-bold leading-[1.15] tracking-tight sm:whitespace-normal sm:text-6xl">블로그, 키워드만 고르면 끝</h1>
-              <p className="mx-auto mt-6 max-w-md text-sm leading-relaxed text-neutral-500 sm:text-base">
-                글 한 편이 아니라, 블로그를 굴립니다.<br />키워드만 고르면 매일 글이 쌓여요.
-              </p>
-              {blocked && lockedArticle ? (
-                <div className="mx-auto mt-10 max-w-xl rounded-2xl border border-amber-200 bg-amber-50 p-6 text-left">
-                  <p className="text-sm font-medium text-amber-900">무료 미리보기를 만들었어요 🔒</p>
-                  <p className="mt-1 text-sm leading-relaxed text-amber-800">끝까지 보고 발행하려면, 그리고 글을 더 만들려면 프로로 업그레이드하세요.</p>
-                  <p className="mt-3 truncate text-sm font-medium text-neutral-900">“{lockedArticle.title}”</p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <button onClick={() => setSelected(lockedArticle)} className="rounded-xl border border-amber-300 bg-white px-4 py-1.5 text-sm font-medium text-amber-900 transition hover:bg-amber-100">미리보기 글 보기</button>
-                    <Link href="/pricing" className="rounded-xl bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700">프로로 업그레이드</Link>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className="mt-8 flex justify-center">
-                    <button
-                      onClick={() => goTab("account")}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-3.5 py-1.5 text-xs font-medium text-neutral-600 transition hover:bg-neutral-200"
-                      title="사용량 자세히 보기"
-                    >
-                      {props.plan === "pro" ? "이번 달" : "평생"} 남은 생성
-                      <b className="text-neutral-900">{Math.max(0, props.articlesLimit - articlesUsed)}편</b>
-                      <span className="text-neutral-400">/ {props.articlesLimit}</span>
-                    </button>
-                  </div>
-                  {generatingArticle ? (
-                    <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-[#3f91ff]/30 bg-[#3f91ff]/5 p-8 text-left">
-                      <div className="flex items-center gap-3">
-                        <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#3f91ff]/30 border-t-[#3f91ff]" />
-                        <p className="text-sm font-semibold text-[#2f7fe6]">글을 만들고 있어요…</p>
-                      </div>
-                      <p className="mt-2.5 text-sm leading-relaxed text-neutral-600">
-                        ‘<b className="text-neutral-900">{generatingArticle.keyword}</b>’ · 다 되면 여기서 알려드려요. 창은 닫아도 괜찮아요.
-                      </p>
-                    </div>
-                  ) : doneArticle ? (
-                    <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-emerald-200 bg-emerald-50 p-8 text-left">
-                      <p className="text-sm font-semibold text-emerald-700">글이 완성됐어요 🎉</p>
-                      <p className="mt-2 truncate text-sm font-medium text-neutral-900">“{doneArticle.title}”</p>
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        <button onClick={() => { const a = doneArticle; setDoneId(null); setSelected(a); }} className="rounded-xl bg-neutral-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-neutral-700">보러 가기</button>
-                        <button onClick={() => setDoneId(null)} className="rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-600 transition hover:border-neutral-900">새 글 쓰기</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      {/* 메인 진입점 = '블로그 굴리기'. (직접 키워드 글쓰기 입력은 숨김 — HeroInput은 보조용으로 보존) */}
-                      <div className="mt-8 flex justify-center">
-                        {blogProfile ? (
-                          <button onClick={() => goTab("keywords")} className="rounded-xl bg-[#3f91ff] px-7 py-3.5 text-sm font-semibold text-white transition hover:opacity-90">
-                            키워드 골라 발행 큐 채우기 →
-                          </button>
-                        ) : (
-                          <button onClick={() => goTab("blog")} className="rounded-xl bg-[#3f91ff] px-7 py-3.5 text-sm font-semibold text-white transition hover:opacity-90">
-                            블로그 만들기 →
-                          </button>
-                        )}
-                      </div>
-                      {blogProfile && (
-                        <p className="mt-3 text-xs text-neutral-400">내 블로그 · <b className="text-neutral-600">{blogProfile.topic}</b></p>
-                      )}
-                      <div className="mt-12"><DemoStream /></div>
-                    </>
-                  )}
-                </>
-              )}
-            </section>
-            <ServiceIntro loggedIn currentPlan={props.plan} />
-            <SiteFooter pro={props.plan === "pro"} />
+            <BlogSetup initial={null} onSaved={onProfileSaved} />
+          </div>
+        )}
+
+        {/* 무료 잠금(블로그 있고 한도 초과) = 업그레이드 안내 */}
+        {!page && !selected && !genParams && tab === "generate" && blogProfile && blocked && (
+          <div className="ateflo-page-in mx-auto max-w-xl px-6 py-16">
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-left">
+              <p className="text-sm font-medium text-amber-900">무료 미리보기를 만들었어요 🔒</p>
+              <p className="mt-1 text-sm leading-relaxed text-amber-800">계속 만들고 발행하려면 프로로 업그레이드하세요.</p>
+              {lockedArticle && <p className="mt-3 truncate text-sm font-medium text-neutral-900">“{lockedArticle.title}”</p>}
+              <div className="mt-3 flex flex-wrap gap-2">
+                {lockedArticle && <button onClick={() => setSelected(lockedArticle)} className="rounded-xl border border-amber-300 bg-white px-4 py-1.5 text-sm font-medium text-amber-900 transition hover:bg-amber-100">미리보기 글 보기</button>}
+                <Link href="/pricing" className="rounded-xl bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700">프로로 업그레이드</Link>
+              </div>
+            </div>
           </div>
         )}
 
@@ -950,22 +903,7 @@ export default function DashboardClient(props: DashboardProps) {
               />
             )}
             {tab === "blog" && (
-              <BlogSetup
-                initial={blogProfile}
-                onSaved={(p) => {
-                  // 저장하면 항상 연구소(키워드 발굴) 화면으로 이동 + 환영 배너 (멈춤 버그 방지)
-                  const isNew = !blogProfile;
-                  const topicChanged = blogProfile?.topic !== p.topic;
-                  setBlogProfile(p);
-                  setWelcomeBlog(p.blog_name || p.topic);
-                  setKwTopic(p.topic);
-                  goTab("keywords");
-                  if (isNew || topicChanged) {
-                    autoSearched.current = true; // 여기서 직접 검색하므로 자동검색 effect 중복 방지
-                    runKeywordSearch(p.topic); // 새 블로그/주제 변경이면 그 주제로 검색
-                  }
-                }}
-              />
+              <BlogSetup initial={blogProfile} onSaved={onProfileSaved} />
             )}
             {tab === "wordpress" && (
               <WordPressPanel siteUrl={wpSiteUrl} onConnected={setWpSiteUrl} onDisconnected={() => setWpSiteUrl(null)} onOpenGuide={openGuide} onOpenSitemapGuide={openSitemapGuide} />
