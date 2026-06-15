@@ -11,6 +11,7 @@ import Segmented from "./Segmented";
 import CenterToast from "./CenterToast";
 import WritingView, { type GenParams } from "./WritingView";
 import WordPressPanel from "./WordPressPanel";
+import KeywordFinder from "./KeywordFinder";
 import AteFloLogo from "@/components/AteFloLogo";
 import Brand from "@/components/Brand";
 import AdminDashboard from "./AdminDashboard";
@@ -24,7 +25,7 @@ import ServiceIntro from "@/components/ServiceIntro";
 import SiteFooter from "@/components/SiteFooter";
 import Link from "next/link";
 
-type Tab = "generate" | "articles" | "wordpress" | "account" | "admin";
+type Tab = "generate" | "keywords" | "articles" | "wordpress" | "account" | "admin";
 
 function Svg({ children }: { children: React.ReactNode }) {
   return (
@@ -35,6 +36,7 @@ function Svg({ children }: { children: React.ReactNode }) {
 }
 const ICON: Record<string, React.ReactNode> = {
   generate: <Svg><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" /></Svg>,
+  keywords: <Svg><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></Svg>,
   articles: <Svg><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M9 13h6M9 17h5" /></Svg>,
   wordpress: <Svg><circle cx="12" cy="12" r="9" /><path d="M6.5 9.5l2.3 5.5 3.2-4.5 3.2 4.5 2.3-5.5" /></Svg>,
   account: <Svg><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></Svg>,
@@ -320,6 +322,7 @@ export default function DashboardClient(props: DashboardProps) {
 
   const navItems: { key: Tab; label: string }[] = [
     { key: "generate", label: "새 글" },
+    { key: "keywords", label: "키워드 발굴" },
     { key: "articles", label: (() => { const n = articles.filter((a) => a.status !== "generating").length; return n ? `내 글 (${n})` : "내 글"; })() },
     { key: "wordpress", label: "워드프레스" },
     ...(props.isAdmin ? [{ key: "admin" as Tab, label: "관리" }] : []),
@@ -700,7 +703,7 @@ export default function DashboardClient(props: DashboardProps) {
 
         {!page && !selected && !genParams && tab !== "generate" && (
           <main key={tab} className="ateflo-page-in mx-auto max-w-5xl px-6 py-10">
-            {tab !== "account" && tab !== "admin" && !allDone && nextStep && (
+            {tab !== "account" && tab !== "admin" && tab !== "keywords" && !allDone && nextStep && (
               <div className="mb-6 flex flex-wrap items-center gap-4 rounded-2xl border border-[#3f91ff]/30 bg-[#3f91ff]/5 px-5 py-4">
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-semibold text-[#3f91ff]">다음 단계 · {steps.filter((s) => s.done).length + 1} / {steps.length}</p>
@@ -739,6 +742,7 @@ export default function DashboardClient(props: DashboardProps) {
                 )}
               </>
             )}
+            {tab === "keywords" && <KeywordFinder />}
             {tab === "wordpress" && (
               <WordPressPanel siteUrl={wpSiteUrl} onConnected={setWpSiteUrl} onDisconnected={() => setWpSiteUrl(null)} onOpenGuide={openGuide} onOpenSitemapGuide={openSitemapGuide} />
             )}
