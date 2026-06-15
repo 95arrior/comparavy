@@ -23,7 +23,6 @@ import NewsView from "./NewsView";
 import WpGuideView from "./WpGuideView";
 import SitemapGuideView from "./SitemapGuideView";
 import { LATEST_ANNOUNCEMENT_ID } from "@/lib/announcements";
-import HeroInput from "@/components/HeroInput";
 import DemoStream from "@/components/DemoStream";
 import ServiceIntro from "@/components/ServiceIntro";
 import SiteFooter from "@/components/SiteFooter";
@@ -720,10 +719,10 @@ export default function DashboardClient(props: DashboardProps) {
         {!page && !selected && !genParams && tab === "generate" && (
           <div className="ateflo-page-in">
             <section className="mx-auto max-w-3xl px-6 pb-20 pt-16 text-center sm:pt-24">
-              <p className="text-sm font-medium tracking-tight text-neutral-400">워드프레스 블로그를 위한 AI 글쓰기</p>
-              <h1 className="font-pretendard mt-5 whitespace-nowrap text-[1.65rem] font-bold leading-[1.15] tracking-tight sm:whitespace-normal sm:text-6xl">글쓰기, 키워드 하나면 끝</h1>
+              <p className="text-sm font-medium tracking-tight text-neutral-400">워드프레스 블로그 자동 운영</p>
+              <h1 className="font-pretendard mt-5 whitespace-nowrap text-[1.65rem] font-bold leading-[1.15] tracking-tight sm:whitespace-normal sm:text-6xl">블로그, 키워드만 고르면 끝</h1>
               <p className="mx-auto mt-6 max-w-md text-sm leading-relaxed text-neutral-500 sm:text-base">
-                어떤 구조로, 어떤 흐름으로 글을 써야 좋은 글이 되는지.<br />우리는 그 답을 알고, 키워드 하나로 글을 씁니다.
+                글 한 편이 아니라, 블로그를 굴립니다.<br />키워드만 고르면 매일 글이 쌓여요.
               </p>
               {blocked && lockedArticle ? (
                 <div className="mx-auto mt-10 max-w-xl rounded-2xl border border-amber-200 bg-amber-50 p-6 text-left">
@@ -769,7 +768,21 @@ export default function DashboardClient(props: DashboardProps) {
                     </div>
                   ) : (
                     <>
-                      <div className="mt-6"><HeroInput loggedIn pro={props.plan === "pro"} onStart={setGenParams} /></div>
+                      {/* 메인 진입점 = '블로그 굴리기'. (직접 키워드 글쓰기 입력은 숨김 — HeroInput은 보조용으로 보존) */}
+                      <div className="mt-8 flex justify-center">
+                        {blogProfile ? (
+                          <button onClick={() => goTab("keywords")} className="rounded-xl bg-[#3f91ff] px-7 py-3.5 text-sm font-semibold text-white transition hover:opacity-90">
+                            키워드 골라 발행 큐 채우기 →
+                          </button>
+                        ) : (
+                          <button onClick={() => goTab("blog")} className="rounded-xl bg-[#3f91ff] px-7 py-3.5 text-sm font-semibold text-white transition hover:opacity-90">
+                            블로그 만들기 →
+                          </button>
+                        )}
+                      </div>
+                      {blogProfile && (
+                        <p className="mt-3 text-xs text-neutral-400">내 블로그 · <b className="text-neutral-600">{blogProfile.topic}</b></p>
+                      )}
                       <div className="mt-12"><DemoStream /></div>
                     </>
                   )}
