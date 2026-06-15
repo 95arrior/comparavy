@@ -14,6 +14,7 @@ import WordPressPanel from "./WordPressPanel";
 import KeywordFinder from "./KeywordFinder";
 import KeywordQueue from "./KeywordQueue";
 import BlogSetup from "./BlogSetup";
+import ResearchLab from "./ResearchLab";
 import { toEngineType, type BlogProfile } from "@/lib/blogProfile";
 import type { QueueItem } from "@/lib/keywordQueue";
 import AteFloLogo from "@/components/AteFloLogo";
@@ -38,7 +39,7 @@ function Svg({ children }: { children: React.ReactNode }) {
   );
 }
 const ICON: Record<string, React.ReactNode> = {
-  generate: <Svg><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" /></Svg>,
+  generate: <Svg><path d="M9 3h6M10 3v5l-4.5 8a2 2 0 0 0 1.8 3h9.4a2 2 0 0 0 1.8-3L14 8V3" /><path d="M7.5 14h9" /></Svg>,
   keywords: <Svg><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></Svg>,
   queue: <Svg><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 9h18M8 2v4M16 2v4" /></Svg>,
   blog: <Svg><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" /></Svg>,
@@ -475,7 +476,7 @@ export default function DashboardClient(props: DashboardProps) {
     : null;
 
   const navItems: { key: Tab; label: string }[] = [
-    { key: "generate", label: "새 글" },
+    { key: "generate", label: "연구소" },
     { key: "keywords", label: "키워드 발굴" },
     { key: "queue", label: (() => { const n = queue.filter((q) => q.status !== "done").length; return n ? `발행 계획 (${n})` : "발행 계획"; })() },
     { key: "articles", label: (() => { const n = articles.filter((a) => a.status !== "generating").length; return n ? `내 글 (${n})` : "내 글"; })() },
@@ -792,8 +793,19 @@ export default function DashboardClient(props: DashboardProps) {
           />
         )}
 
-        {/* 새 글 = 메인 화면 (중앙 입력 + 데모 + 스크롤 시 서비스 소개) */}
-        {!page && !selected && !genParams && tab === "generate" && (
+        {/* 연구소 홈 = 블로그가 있으면 내 작전 본부 (현황 + 기존 기능 연결) */}
+        {!page && !selected && !genParams && tab === "generate" && blogProfile && !blocked && (
+          <ResearchLab
+            profile={blogProfile}
+            displayName={displayName}
+            articles={articles}
+            queue={queue}
+            onNavigate={(t) => goTab(t)}
+          />
+        )}
+
+        {/* 블로그 없음(또는 무료 잠금) = 기존 진입 화면 */}
+        {!page && !selected && !genParams && tab === "generate" && !(blogProfile && !blocked) && (
           <div className="ateflo-page-in">
             <section className="mx-auto max-w-3xl px-6 pb-20 pt-16 text-center sm:pt-24">
               <p className="text-sm font-medium tracking-tight text-neutral-400">워드프레스 블로그 자동 운영</p>
