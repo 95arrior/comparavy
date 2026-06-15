@@ -914,6 +914,7 @@ export default function DashboardClient(props: DashboardProps) {
             )}
             {tab === "keywords" && (
               <KeywordFinder
+                blogName={blogProfile?.blog_name ?? null}
                 topic={kwTopic}
                 onTopicChange={setKwTopic}
                 status={kwStatus}
@@ -943,7 +944,7 @@ export default function DashboardClient(props: DashboardProps) {
                   const isNew = !blogProfile;
                   const topicChanged = blogProfile?.topic !== p.topic;
                   setBlogProfile(p);
-                  setWelcomeBlog(p.topic);
+                  setWelcomeBlog(p.blog_name || p.topic);
                   setKwTopic(p.topic);
                   goTab("keywords");
                   if (isNew || topicChanged) {

@@ -19,6 +19,7 @@ function compLabel(compIdx: string): string {
  * 탭 이동/새로고침에도 결과 유지. 여기선 표시 + 선택→큐 담기 + 단계 로딩/에러/빈결과 처리.
  */
 export default function KeywordFinder({
+  blogName,
   topic,
   onTopicChange,
   status,
@@ -31,6 +32,7 @@ export default function KeywordFinder({
   welcomeTopic,
   onDismissWelcome,
 }: {
+  blogName?: string | null;
   topic: string;
   onTopicChange: (t: string) => void;
   status: KeywordStatus;
@@ -87,7 +89,7 @@ export default function KeywordFinder({
         <div className="mb-6 flex items-center gap-3 rounded-2xl border border-[#3f91ff]/30 bg-[#3f91ff]/5 px-5 py-4">
           <span className="text-lg">🎉</span>
           <p className="min-w-0 flex-1 text-sm font-medium text-neutral-800">
-            <b className="text-[#2f7fe6]">{welcomeTopic}</b> 블로그 연구소가 만들어졌어요! 황금 키워드를 찾아볼까요?
+            <b className="text-[#2f7fe6]">{welcomeTopic}</b> 연구소가 만들어졌어요! 황금 키워드를 찾아볼까요?
           </p>
           {onDismissWelcome && (
             <button onClick={onDismissWelcome} aria-label="닫기" className="shrink-0 text-neutral-400 transition hover:text-neutral-700">✕</button>
@@ -96,6 +98,9 @@ export default function KeywordFinder({
       )}
 
       <div className="text-center">
+        {blogName && (
+          <p className="mb-1 text-xs font-semibold tracking-tight text-[#3f91ff]">📓 {blogName} 연구소</p>
+        )}
         <h1 className="font-pretendard text-2xl font-bold tracking-tight sm:text-3xl">키워드 발굴</h1>
         <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-neutral-500">
           검색은 되는데 경쟁은 낮은 ‘황금 키워드’를 찾고,

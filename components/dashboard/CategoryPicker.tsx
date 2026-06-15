@@ -11,17 +11,19 @@ export default function CategoryPicker({
   value,
   onSelect,
   autoFocus,
+  topOnly,
 }: {
   value: string;
   onSelect: (v: string) => void;
   autoFocus?: boolean;
+  topOnly?: boolean;
 }) {
   const [query, setQuery] = useState(value);
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
   const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const suggestions = useMemo(() => searchCategories(query), [query]);
+  const suggestions = useMemo(() => searchCategories(query, { topOnly }), [query, topOnly]);
   const confirmed = value !== "" && query.trim() === value;
 
   function pick(v: string) {

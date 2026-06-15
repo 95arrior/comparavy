@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { isAdminEmail } from "@/lib/adminStats";
 import { isTone, isType, isPublishMode } from "@/lib/blogProfile";
+import { isTopCategory } from "@/lib/categories";
 
 /**
  * 블로그 프로필 — 온보딩 1회 저장(유저당 1행). 이후 모든 글이 이 설정을 따른다.
@@ -39,11 +40,16 @@ export async function POST(request: Request) {
   const article_type = isType(body.article_type) ? body.article_type : "info";
   const publish_mode = isPublishMode(body.publish_mode) ? body.publish_mode : "manual";
   const target = (typeof body.target === "string" ? body.target : "").trim().slice(0, 80) || null;
+  // 대분류 (없으면 topic을 대분류로 가정 — 레거시 호환)
+  const category = (typeof body.category === "string" && isTopCategory(body.category)) ? body.category : (isTopCategory(topic) ? topic : null);
+  // 블로그 이름: 비우면 "{대분류} 블로그" 기본값
+  const rawName = (typeof body.blog_name === "string" ? body.blog_name : "").trim().slice(0, 60);
+  const blog_name = rawName || `${category ?? topic} 블로그`;
 
   const { data, error } = await supabase
     .from("blog_profiles")
     .upsert(
-      { user_id: user.id, topic, tone, article_type, target, publish_mode, updated_at: new Date().toISOString() },
+      { user_id: user.id, topic, category, blog_name, tone, article_type, target, publish_mode, updated_at: new Date().toISOString() },
       { onConflict: "user_id" },
     )
     .select("*")
