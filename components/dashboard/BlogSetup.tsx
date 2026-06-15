@@ -71,10 +71,6 @@ export default function BlogSetup({
     `rounded-xl border px-4 py-3 text-sm font-medium transition ${
       on ? "border-[#3f91ff] bg-[#3f91ff]/5 text-[#2f7fe6]" : "border-neutral-200 text-neutral-600 hover:border-neutral-300"
     }`;
-  const smallChip = (on: boolean) =>
-    `rounded-lg border px-3 py-2 text-sm font-medium transition ${
-      on ? "border-[#3f91ff] bg-[#3f91ff]/5 text-[#2f7fe6]" : "border-neutral-200 text-neutral-600 hover:border-neutral-300"
-    }`;
   const inputCls =
     "mt-4 w-full rounded-xl border border-neutral-200 px-4 py-3.5 text-base outline-none transition focus:border-[#3f91ff] focus:ring-2 focus:ring-[#3f91ff]/20";
 
@@ -111,19 +107,30 @@ export default function BlogSetup({
           <div>
             <h2 className="text-xl font-bold tracking-tight">어떤 블로그인가요?</h2>
             <p className="mt-2 text-sm text-neutral-500">카테고리를 고르고, 세부 분류로 좁혀요. <b>좁힐수록 경쟁이 낮아</b> 유리해요.</p>
-            <CategoryPicker value={category} onSelect={(c) => { setCategory(c); setSub(""); }} autoFocus topOnly />
+            <CategoryPicker value={category} onSelect={(c) => { setCategory(c); setSub(""); }} topOnly />
             {isTopCategory(category) && (
               <div className="mt-4">
                 <p className="mb-2 text-xs font-medium text-neutral-400">세부 분류</p>
-                <div className="flex flex-wrap gap-2">
-                  {subsOf(category).map((s) => (
-                    <button key={s} type="button" onClick={() => setSub(s)} className={smallChip(sub === s)}>
-                      {s === ALL_SUB ? "전체" : s}
-                    </button>
-                  ))}
+                <div className="relative">
+                  <select
+                    value={sub}
+                    onChange={(e) => setSub(e.target.value)}
+                    className="w-full appearance-none rounded-xl border border-neutral-200 bg-white px-4 py-3.5 pr-10 text-base text-neutral-800 outline-none transition focus:border-[#3f91ff] focus:ring-2 focus:ring-[#3f91ff]/20"
+                  >
+                    <option value="" disabled>세부 분류를 선택하세요</option>
+                    {subsOf(category).map((s) => (
+                      <option key={s} value={s}>{s === ALL_SUB ? `${category} 전체` : s}</option>
+                    ))}
+                  </select>
+                  <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+                  </span>
                 </div>
+                {sub === ALL_SUB && (
+                  <p className="mt-2 text-xs text-neutral-400">‘<b className="text-neutral-600">{category}</b>’ 전반으로 키워드를 발굴해요.</p>
+                )}
                 {sub && sub !== ALL_SUB && (
-                  <p className="mt-3 text-xs text-neutral-400">‘<b className="text-neutral-600">{sub}</b>’ 범위로 키워드를 발굴해요.</p>
+                  <p className="mt-2 text-xs text-neutral-400">‘<b className="text-neutral-600">{sub}</b>’ 범위로 키워드를 발굴해요.</p>
                 )}
               </div>
             )}
