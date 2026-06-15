@@ -224,6 +224,11 @@ html {
 @keyframes dot-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.7); } }
 .dot-pulse { animation: dot-pulse 1.5s ease-in-out infinite; }
 
+/* 히어로 '블로그 만들기' 버튼 — 시선 끄는 부드러운 링 펄스 */
+@keyframes cta-pulse { 0% { box-shadow: 0 0 0 0 rgba(49, 130, 246, 0.45); } 70% { box-shadow: 0 0 0 14px rgba(49, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(49, 130, 246, 0); } }
+.cta-pulse { animation: cta-pulse 2.2s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) { .cta-pulse { animation: none; } }
+
 /* 가로 스크롤 영역 스크롤바 숨김(모바일 탭 칩 등) */
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }

@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "check:generation": "node --env-file=.env.local --import tsx scripts/verifyGeneration.ts",
+    "naver:test": "node --env-file=.env --import tsx scripts/naver-keyword-test.ts",
     "ig:verify": "node --env-file=.env.local --import tsx scripts/ig-publish.ts verify",
     "ig:publish": "node --env-file=.env.local --import tsx scripts/ig-publish.ts",
     "card:gen": "node --env-file=.env.local --import tsx scripts/card-gen.ts",

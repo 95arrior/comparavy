@@ -4,7 +4,7 @@ import LandingIntro from "@/components/LandingIntro";
 import WaitlistForm from "@/components/WaitlistForm";
 import Reveal from "@/components/Reveal";
 import ProductShowcase from "@/components/ProductShowcase";
-import Diagnosis from "@/components/Diagnosis";
+import HeroProduct from "@/components/HeroProduct";
 
 const ACCENT = "#3182F6";
 
@@ -48,45 +48,8 @@ export default function WaitlistLanding({ introSeen = false }: { introSeen?: boo
         </div>
       </header>
 
-      {/* ① 히어로 — 진단 입구 */}
-      <section className="hero-aurora relative overflow-hidden">
-        <div className="relative z-10 mx-auto max-w-3xl px-5 pb-14 pt-16 text-center sm:px-6 sm:pb-20 sm:pt-24">
-          <p className="mono-rise inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs font-medium text-neutral-500">
-            <span className="h-1.5 w-1.5 rounded-full" style={{ background: ACCENT }} /> 곧 오픈 · 30초 무료 진단
-          </p>
-          <h1
-            className="font-pretendard mono-rise mono-d1 mt-5 font-bold tracking-tight"
-            style={{ fontSize: "clamp(26px, 6.6vw, 52px)", lineHeight: 1.3, wordBreak: "keep-all" }}
-          >
-            내 블로그,<br />월 얼마까지 가능할까?
-          </h1>
-          <p
-            className="mono-rise mono-d2 mx-auto mt-5 max-w-md text-neutral-500"
-            style={{ fontSize: "clamp(15px, 4vw, 18px)", lineHeight: 1.6, wordBreak: "keep-all" }}
-          >
-            30초 진단하면, 네이버와 워드프레스<br />수익 차이를 알려드려요.
-          </p>
-          <div className="mono-rise mono-d3 mt-9 flex flex-col items-center gap-4">
-            <a
-              href="#diagnosis"
-              className="inline-flex min-h-[56px] items-center justify-center rounded-2xl px-9 text-base font-bold text-white shadow-sm transition active:scale-[0.97]"
-              style={{ background: ACCENT }}
-            >
-              무료로 진단하기
-            </a>
-            <a href="#more" className="text-sm text-neutral-400 transition hover:text-neutral-600">
-              제품 먼저 둘러볼게요 ↓
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* ②③ 진단 시뮬레이터 + 결과·신청 */}
-      <section id="diagnosis" className="scroll-mt-16 border-t border-neutral-200/70 bg-neutral-50">
-        <div className="mx-auto max-w-5xl px-5 py-12 sm:px-6 sm:py-20">
-          <Diagnosis />
-        </div>
-      </section>
+      {/* ① 히어로 — 토스식, 진짜 제품을 바로 보여줌(키워드→글→발행) */}
+      <HeroProduct />
 
       {/* ④ 페인 포인트 — 공감 (둘러보기 도착점) */}
       <section id="more" className="scroll-mt-16 border-t border-neutral-200/70">
