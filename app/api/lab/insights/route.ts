@@ -39,7 +39,8 @@ export async function GET(request: Request) {
   if (!isTopCategory(category)) return NextResponse.json({ error: "카테고리가 올바르지 않아요." }, { status: 400 });
   const sub = subRaw && subRaw !== "전체" ? subRaw : null;
   const topic = sub ?? category; // 검색어
-  const cacheKey = `${category}|${sub ?? "전체"}`;
+  const CACHE_V = "v2"; // 로직 바뀌면 올려서 옛 캐시 자동 폐기
+  const cacheKey = `${category}|${sub ?? "전체"}|${CACHE_V}`;
 
   const admin = createSupabaseAdminClient();
 

@@ -58,12 +58,16 @@ export async function fetchTrend(keywords: string[]): Promise<TrendResult> {
   const json = JSON.parse(text) as { results?: { title: string; data: { period: string; ratio: number }[] }[] };
   const results = json.results ?? [];
 
-  // 차트 시계열: period 기준으로 키워드별 ratio 병합
+  // 차트 시계열: 키워드마다 절대 검색량 차이가 커서(부동산 100 vs 전세 3) 작은 선이 안 보임 →
+  // 키워드별로 자기 최댓값 기준 0~100 정규화해 모든 선이 추이 곡선으로 보이게 한다.
+  const maxOf = new Map<string, number>();
+  for (const r of results) maxOf.set(r.title, Math.max(1, ...r.data.map((d) => d.ratio)));
   const byPeriod = new Map<string, TrendPoint>();
   for (const r of results) {
+    const mx = maxOf.get(r.title) ?? 1;
     for (const d of r.data) {
       const row = byPeriod.get(d.period) ?? { period: d.period };
-      row[r.title] = Math.round(d.ratio);
+      row[r.title] = Math.round((d.ratio / mx) * 100);
       byPeriod.set(d.period, row);
     }
   }
