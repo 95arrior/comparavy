@@ -42,9 +42,14 @@ export function isTopCategory(name: string): boolean {
 }
 
 export interface CategorySuggestion {
-  value: string;
-  label: string;
-  parent?: string;
+  value: string; // 선택 시 저장될 검색어(세부명, 또는 '전체'면 대분류명)
+  label: string; // "재테크 전체" 또는 "재테크 › 주식"
+  category: string; // 대분류
+}
+
+/** (대분류, 검색어) → 표시 라벨. 편집 시 입력칸 초기값용. */
+export function labelFor(category: string, topic: string): string {
+  return topic === category ? `${category} 전체` : `${category} › ${topic}`;
 }
 
 function norm(s: string): string {
@@ -69,37 +74,31 @@ function levenshtein(a: string, b: string): number {
   return dp[m];
 }
 
-interface Entry { value: string; label: string; parent?: string; keys: string[] }
+interface Entry { value: string; label: string; category: string; isAll: boolean; keys: string[] }
 
-function buildEntries(topOnly: boolean): Entry[] {
+// 통합 인덱스: 각 대분류의 "전체" + 세부를 한 목록에 (한 칸 자동완성용)
+const ENTRIES: Entry[] = (() => {
   const out: Entry[] = [];
   for (const c of CATEGORIES) {
-    out.push({ value: c.name, label: c.name, keys: [norm(c.name)] });
-    if (!topOnly) {
-      for (const s of c.subs) {
-        out.push({ value: s, label: `${c.name} › ${s}`, parent: c.name, keys: [norm(s), norm(c.name + s)] });
-      }
+    out.push({ value: c.name, label: `${c.name} 전체`, category: c.name, isAll: true, keys: [norm(c.name)] });
+    for (const s of c.subs) {
+      out.push({ value: s, label: `${c.name} › ${s}`, category: c.name, isAll: false, keys: [norm(s), norm(c.name + s)] });
     }
   }
   return out;
-}
-
-const ENTRIES_TOP = buildEntries(true);
-const ENTRIES_ALL = buildEntries(false);
+})();
+const OVERVIEW = ENTRIES.filter((e) => e.isAll); // 빈 입력 시 대분류 '전체' 개요
 
 /**
- * 카테고리 자동완성: 접두/부분일치 우선, 없으면 오타 보정(거리 ≤2) 유사어 제안.
- * topOnly=true면 대분류만(세부는 칩으로 고름).
+ * 통합 자동완성: 한 목록에 "재테크 전체 / 재테크 › 주식 …". 접두/부분일치 우선, 오타 보정(거리 ≤2).
  */
-export function searchCategories(query: string, opts?: { topOnly?: boolean; limit?: number }): CategorySuggestion[] {
-  const topOnly = opts?.topOnly ?? false;
-  const limit = opts?.limit ?? 8;
-  const entries = topOnly ? ENTRIES_TOP : ENTRIES_ALL;
+export function searchCategories(query: string, opts?: { limit?: number }): CategorySuggestion[] {
+  const limit = opts?.limit ?? 10;
   const q = norm(query);
-  if (!q) return entries.slice(0, limit).map((e) => ({ value: e.value, label: e.label, parent: e.parent }));
+  if (!q) return OVERVIEW.slice(0, limit).map((e) => ({ value: e.value, label: e.label, category: e.category }));
 
   const scored: { e: Entry; score: number }[] = [];
-  for (const e of entries) {
+  for (const e of ENTRIES) {
     let best = Infinity;
     for (const k of e.keys) {
       if (k.startsWith(q)) best = Math.min(best, 0);
@@ -109,14 +108,14 @@ export function searchCategories(query: string, opts?: { topOnly?: boolean; limi
         if (d <= 2 && Math.abs(k.length - q.length) <= 2) best = Math.min(best, 2 + d);
       }
     }
-    if (best < Infinity) scored.push({ e, score: best + (e.parent ? 0 : -0.3) });
+    if (best < Infinity) scored.push({ e, score: best + (e.isAll ? -0.3 : 0) }); // '전체'를 약간 우대
   }
   scored.sort((a, b) => a.score - b.score || a.e.label.length - b.e.label.length);
-  return scored.slice(0, limit).map(({ e }) => ({ value: e.value, label: e.label, parent: e.parent }));
+  return scored.slice(0, limit).map(({ e }) => ({ value: e.value, label: e.label, category: e.category }));
 }
 
 /** 목록(대분류·세부) 어디든 있는 값인지. */
 export function isValidCategory(value: string): boolean {
   const v = norm(value);
-  return ENTRIES_ALL.some((e) => norm(e.value) === v);
+  return ENTRIES.some((e) => norm(e.value) === v);
 }

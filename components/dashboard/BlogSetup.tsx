@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { TONE_CHOICES, TYPE_CHOICES, type BlogProfile } from "@/lib/blogProfile";
-import { isTopCategory, subsOf, ALL_SUB } from "@/lib/categories";
+import { isTopCategory, labelFor, ALL_SUB } from "@/lib/categories";
 import CategoryPicker from "./CategoryPicker";
 
 const BRAND = "#3f91ff";
@@ -34,6 +34,7 @@ export default function BlogSetup({
   const last = STEPS.length - 1;
 
   const topic = sub === ALL_SUB ? category : sub; // 키워드 발굴 검색어
+  const initialLabel = initial?.topic ? labelFor(initial.category ?? (isTopCategory(initial.topic) ? initial.topic : ""), initial.topic) : undefined;
   const defaultName = category ? `${category} 블로그` : "";
   const canNext = step === 0 ? isTopCategory(category) && sub !== "" : true;
 
@@ -106,33 +107,14 @@ export default function BlogSetup({
         {step === 0 && (
           <div>
             <h2 className="text-xl font-bold tracking-tight">어떤 블로그인가요?</h2>
-            <p className="mt-2 text-sm text-neutral-500">카테고리를 고르고, 세부 분류로 좁혀요. <b>좁힐수록 경쟁이 낮아</b> 유리해요.</p>
-            <CategoryPicker value={category} onSelect={(c) => { setCategory(c); setSub(""); }} topOnly />
-            {isTopCategory(category) && (
-              <div className="mt-4">
-                <p className="mb-2 text-xs font-medium text-neutral-400">세부 분류</p>
-                <div className="relative">
-                  <select
-                    value={sub}
-                    onChange={(e) => setSub(e.target.value)}
-                    className="w-full appearance-none rounded-xl border border-neutral-200 bg-white px-4 py-3.5 pr-10 text-base text-neutral-800 outline-none transition focus:border-[#3f91ff] focus:ring-2 focus:ring-[#3f91ff]/20"
-                  >
-                    <option value="" disabled>세부 분류를 선택하세요</option>
-                    {subsOf(category).map((s) => (
-                      <option key={s} value={s}>{s === ALL_SUB ? `${category} 전체` : s}</option>
-                    ))}
-                  </select>
-                  <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
-                  </span>
-                </div>
-                {sub === ALL_SUB && (
-                  <p className="mt-2 text-xs text-neutral-400">‘<b className="text-neutral-600">{category}</b>’ 전반으로 키워드를 발굴해요.</p>
-                )}
-                {sub && sub !== ALL_SUB && (
-                  <p className="mt-2 text-xs text-neutral-400">‘<b className="text-neutral-600">{sub}</b>’ 범위로 키워드를 발굴해요.</p>
-                )}
-              </div>
+            <p className="mt-2 text-sm text-neutral-500">한 칸에서 대분류·세부를 같이 골라요. <b>좁힐수록 경쟁이 낮아</b> 유리해요.</p>
+            <CategoryPicker
+              value={topic}
+              initialLabel={initialLabel}
+              onSelect={(s) => { setCategory(s.category); setSub(s.value === s.category ? ALL_SUB : s.value); }}
+            />
+            {topic && (
+              <p className="mt-2 text-xs text-neutral-400">‘<b className="text-neutral-600">{sub === ALL_SUB ? `${category} 전체` : sub}</b>’ 범위로 키워드를 발굴해요.</p>
             )}
           </div>
         )}
