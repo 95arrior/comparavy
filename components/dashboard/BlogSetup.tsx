@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { TONE_CHOICES, TYPE_CHOICES, type BlogProfile } from "@/lib/blogProfile";
+import { isValidCategory } from "@/lib/categories";
+import CategoryPicker from "./CategoryPicker";
 
 const BRAND = "#3f91ff";
 const STEPS = ["주제", "문체", "유형", "타겟", "발행"] as const;
@@ -28,10 +30,10 @@ export default function BlogSetup({
   const isEdit = !!initial;
   const last = STEPS.length - 1;
 
-  const canNext = step === 0 ? topic.trim().length > 0 : true;
+  const canNext = step === 0 ? isValidCategory(topic) : true;
 
   function next() {
-    if (!canNext) { setError("주제를 입력해 주세요."); return; }
+    if (!canNext) { setError("목록에서 카테고리를 골라주세요."); return; }
     setError(null);
     if (step < last) setStep(step + 1);
   }
@@ -99,8 +101,9 @@ export default function BlogSetup({
         {step === 0 && (
           <div>
             <h2 className="text-xl font-bold tracking-tight">어떤 블로그인가요?</h2>
-            <p className="mt-2 text-sm text-neutral-500">블로그의 주제·분야를 한 단어로 정해요. 이후 모든 글이 이 주제로 써져요.</p>
-            <input value={topic} onChange={(e) => setTopic(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") next(); }} placeholder="예: 강아지, 재테크, 다이어트" maxLength={60} autoFocus className={inputCls} />
+            <p className="mt-2 text-sm text-neutral-500">카테고리를 검색해 골라요. 이후 모든 글이 이 주제로 써져요.</p>
+            <CategoryPicker value={topic} onSelect={setTopic} autoFocus />
+            <p className="mt-2 text-xs text-neutral-400">목록에서 선택해야 해요. 오타로 엉뚱한 검색이 되는 걸 막기 위해서예요.</p>
           </div>
         )}
         {step === 1 && (

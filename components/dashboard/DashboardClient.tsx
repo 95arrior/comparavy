@@ -939,17 +939,16 @@ export default function DashboardClient(props: DashboardProps) {
               <BlogSetup
                 initial={blogProfile}
                 onSaved={(p) => {
+                  // 저장하면 항상 연구소(키워드 발굴) 화면으로 이동 + 환영 배너 (멈춤 버그 방지)
                   const isNew = !blogProfile;
+                  const topicChanged = blogProfile?.topic !== p.topic;
                   setBlogProfile(p);
-                  if (isNew) {
-                    // A-1: 온보딩 완료 → 바로 키워드 발굴로 연결 + 그 주제 자동 검색 + 환영 배너
-                    setWelcomeBlog(p.topic);
-                    setKwTopic(p.topic);
+                  setWelcomeBlog(p.topic);
+                  setKwTopic(p.topic);
+                  goTab("keywords");
+                  if (isNew || topicChanged) {
                     autoSearched.current = true; // 여기서 직접 검색하므로 자동검색 effect 중복 방지
-                    goTab("keywords");
-                    runKeywordSearch(p.topic);
-                  } else {
-                    setNotice("블로그 설정을 저장했어요.");
+                    runKeywordSearch(p.topic); // 새 블로그/주제 변경이면 그 주제로 검색
                   }
                 }}
               />

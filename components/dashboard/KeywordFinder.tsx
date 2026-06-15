@@ -87,7 +87,7 @@ export default function KeywordFinder({
         <div className="mb-6 flex items-center gap-3 rounded-2xl border border-[#3f91ff]/30 bg-[#3f91ff]/5 px-5 py-4">
           <span className="text-lg">🎉</span>
           <p className="min-w-0 flex-1 text-sm font-medium text-neutral-800">
-            <b className="text-[#2f7fe6]">{welcomeTopic}</b> 블로그가 만들어졌어요! 황금 키워드를 찾아볼까요?
+            <b className="text-[#2f7fe6]">{welcomeTopic}</b> 블로그 연구소가 만들어졌어요! 황금 키워드를 찾아볼까요?
           </p>
           {onDismissWelcome && (
             <button onClick={onDismissWelcome} aria-label="닫기" className="shrink-0 text-neutral-400 transition hover:text-neutral-700">✕</button>
