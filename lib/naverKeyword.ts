@@ -92,3 +92,67 @@ export async function fetchRelatedKeywords(hintKeyword: string): Promise<NaverKe
   const json = JSON.parse(text) as { keywordList?: NaverKeyword[] };
   return json.keywordList ?? [];
 }
+
+/** 정규화 키(공백 제거 + 소문자) — 네이버 relKeyword와 AI 생성 구를 대조할 때 쓴다. */
+export function normalizeKey(s: string): string {
+  return s.replace(/\s+/g, "").toLowerCase();
+}
+
+export interface KeywordStat {
+  mobile: number; // 월 모바일 검색수(파싱된 숫자)
+  pc: number;
+  compIdx: string; // 낮음/중간/높음
+  adDepth: number; // 월평균 노출 광고수
+}
+
+function toStat(k: NaverKeyword): KeywordStat {
+  return {
+    mobile: parseCount(k.monthlyMobileQcCnt),
+    pc: parseCount(k.monthlyPcQcCnt),
+    compIdx: String(k.compIdx ?? ""),
+    adDepth: typeof k.plAvgDepth === "number" ? k.plAvgDepth : parseCount(k.plAvgDepth as never),
+  };
+}
+
+/** NaverKeyword[] → 정규화 키 통계 풀. (1단계 연관키워드에 이미 검색량이 있어 무료 재검증에 쓴다) */
+export function buildStatsPool(list: NaverKeyword[]): Map<string, KeywordStat> {
+  const pool = new Map<string, KeywordStat>();
+  for (const k of list) {
+    const key = normalizeKey(String(k.relKeyword ?? ""));
+    if (key && !pool.has(key)) pool.set(key, toStat(k));
+  }
+  return pool;
+}
+
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+/**
+ * 여러 키워드의 '실제' 검색량·경쟁도를 네이버로 재조회한다 (B 구조의 재검증 단계).
+ * keywordstool은 hintKeywords 최대 5개 → 5개씩 배치 호출(공백 제거는 fetchRelatedKeywords가 처리),
+ * 반환된 keywordList를 정규화 키로 풀에 모은다. AI가 만든 구의 진짜 검색량을 확인해 '가짜'를 거르는 용도.
+ */
+export async function fetchKeywordStats(phrases: string[], maxBatches = 6): Promise<Map<string, KeywordStat>> {
+  const pool = new Map<string, KeywordStat>();
+  const uniq = Array.from(new Set(phrases.map((p) => p.trim()).filter(Boolean)));
+  if (uniq.length === 0 || !hasNaverAdEnv()) return pool;
+
+  // 5개씩 배치, 호출 수 상한(maxBatches) — 네이버 rate limit(429) 방어
+  const batches: string[][] = [];
+  for (let i = 0; i < uniq.length && batches.length < maxBatches; i += 5) batches.push(uniq.slice(i, i + 5));
+
+  // 순차 호출 + 짧은 간격 — 네이버 keywordstool은 동시/연타에 429를 잘 낸다
+  for (let b = 0; b < batches.length; b++) {
+    let list: NaverKeyword[] = [];
+    try {
+      list = await fetchRelatedKeywords(batches[b].join(","));
+    } catch {
+      list = [];
+    }
+    for (const k of list) {
+      const key = normalizeKey(String(k.relKeyword ?? ""));
+      if (key && !pool.has(key)) pool.set(key, toStat(k));
+    }
+    if (b < batches.length - 1) await sleep(250);
+  }
+  return pool;
+}

@@ -8,6 +8,7 @@ interface GoldenKeyword {
   monthlyMobileQcCnt: number;
   compIdx: string; // 낮음 / 중간
   highVolume: boolean;
+  estimated?: boolean; // 핵심 기준 추정 검색량(자연 질문형)
 }
 
 const BRAND = "#3f91ff";
@@ -115,7 +116,10 @@ export default function KeywordFinder() {
                 <span className="w-5 shrink-0 text-center text-sm font-semibold text-neutral-300">{i + 1}</span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-neutral-900">{k.keyword}</p>
-                  <p className="mt-0.5 text-xs text-neutral-400">월 {k.monthlyMobileQcCnt.toLocaleString("ko-KR")}회 검색 (모바일)</p>
+                  <p className="mt-0.5 text-xs text-neutral-400">
+                    월 {k.estimated ? "~" : ""}{k.monthlyMobileQcCnt.toLocaleString("ko-KR")}회 검색 (모바일)
+                    {k.estimated && <span className="text-neutral-300"> · 추정</span>}
+                  </p>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1">
                   <span
