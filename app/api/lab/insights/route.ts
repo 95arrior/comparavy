@@ -2,16 +2,23 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient, createSupabaseAdminClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { isAdminEmail } from "@/lib/adminStats";
 import { isTopCategory } from "@/lib/categories";
-import { fetchRelatedKeywords, hasNaverAdEnv } from "@/lib/naverKeyword";
-import { filterAndScore } from "@/lib/goldenKeyword";
+import { hasNaverAdEnv } from "@/lib/naverKeyword";
+import { discoverGolden } from "@/lib/goldenDiscover";
 import { fetchTrend, hasDatalabEnv, type TrendResult } from "@/lib/naverDatalab";
+import { logUsage } from "@/lib/usageLog";
 
 export const maxDuration = 60;
 
 const TTL_MS = 24 * 60 * 60 * 1000; // 24h 캐시
 const SPOTLIGHT_N = 8;
 
-interface SpotKeyword { keyword: string; mobile: number; compIdx: string; rising?: boolean }
+interface SpotKeyword { keyword: string; mobile: number; compIdx: string; estimated?: boolean; rising?: boolean }
+
+// 데이터 기준 시점 (예: 2026-06)
+function asOfLabel(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
 
 /**
  * 연구소 인사이트 — 카테고리별 공용 캐시(24h). 주목 키워드(검색광고) + 트렌드(데이터랩).
@@ -36,28 +43,30 @@ export async function GET(request: Request) {
 
   const admin = createSupabaseAdminClient();
 
+  const asOf = asOfLabel();
+
   // 1) 캐시 확인
   const { data: cached } = await admin.from("category_insights").select("*").eq("cache_key", cacheKey).maybeSingle();
   if (cached && Date.now() - new Date(cached.updated_at).getTime() < TTL_MS) {
-    return NextResponse.json({ keywords: cached.keywords ?? [], trend: cached.trend ?? null, cached: true });
+    return NextResponse.json({ keywords: cached.keywords ?? [], trend: cached.trend ?? null, asOf: cached.as_of ?? asOf, cached: true });
   }
 
-  // 2) 갱신 — 주목 키워드(검색광고)
+  // 2) 갱신 — 주목 키워드 (키워드 발굴과 동일 B구조: AI 재구성→정보형 필터→재검증)
   let keywords: SpotKeyword[] = [];
   try {
     if (hasNaverAdEnv()) {
-      const related = await fetchRelatedKeywords(topic);
-      const scored = filterAndScore(related);
-      // 경쟁 낮음 우대 + 검색량 — 상위 N
-      scored.sort((a, b) => {
-        const t = (x: string) => (x === "낮음" ? 0 : 1);
-        return t(a.compIdx) - t(b.compIdx) || b.monthlyMobileQcCnt - a.monthlyMobileQcCnt;
+      const r = await discoverGolden(topic, SPOTLIGHT_N);
+      if (r.usage) void logUsage({ userId: user.id, model: "claude-haiku-4-5", kind: "lab_insights", inputTokens: r.usage.inputTokens, outputTokens: r.usage.outputTokens });
+      keywords = r.keywords.map((k) => {
+        // 점검: 대형 검색량인데 '낮음'이면 raw 로깅(데이터 신뢰성 확인용)
+        if (k.monthlyMobileQcCnt > 10000 && k.compIdx === "낮음") {
+          console.warn(`[lab/insights] 의심 경쟁도: "${k.keyword}" mobile=${k.monthlyMobileQcCnt} compIdx=낮음 estimated=${k.estimated}`);
+        }
+        return { keyword: k.keyword, mobile: k.monthlyMobileQcCnt, compIdx: k.compIdx, estimated: k.estimated };
       });
-      keywords = scored.slice(0, SPOTLIGHT_N).map((s) => ({ keyword: s.keyword, mobile: s.monthlyMobileQcCnt, compIdx: s.compIdx }));
     }
   } catch {
-    // 검색광고 실패 → 직전 캐시라도 있으면 그 키워드 유지
-    if (cached?.keywords) keywords = cached.keywords as SpotKeyword[];
+    if (cached?.keywords) keywords = cached.keywords as SpotKeyword[]; // 실패 시 직전 캐시 유지
   }
 
   // 3) 트렌드(데이터랩) — 상위 5개
@@ -75,9 +84,9 @@ export async function GET(request: Request) {
   // 4) 캐시 저장 (실패 무시)
   try {
     await admin.from("category_insights").upsert({
-      cache_key: cacheKey, category, sub, keywords, trend, updated_at: new Date().toISOString(),
+      cache_key: cacheKey, category, sub, keywords, trend, as_of: asOf, updated_at: new Date().toISOString(),
     }, { onConflict: "cache_key" });
   } catch { /* 무시 */ }
 
-  return NextResponse.json({ keywords, trend, cached: false });
+  return NextResponse.json({ keywords, trend, asOf, cached: false });
 }

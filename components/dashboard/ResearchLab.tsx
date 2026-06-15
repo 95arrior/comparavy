@@ -12,8 +12,15 @@ import { upcomingEvents } from "@/lib/seasonalEvents";
 
 const BRAND = "#3f91ff";
 
-interface SpotKeyword { keyword: string; mobile: number; compIdx: string; rising?: boolean }
-interface Insights { keywords: SpotKeyword[]; trend: { series: TrendPoint[]; items: TrendItem[] } | null }
+interface SpotKeyword { keyword: string; mobile: number; compIdx: string; estimated?: boolean; rising?: boolean }
+interface Insights { keywords: SpotKeyword[]; trend: { series: TrendPoint[]; items: TrendItem[] } | null; asOf: string | null }
+
+// "2026-06" → "2026년 6월 기준"
+function asOfText(asOf: string | null): string {
+  if (!asOf) return "";
+  const [y, m] = asOf.split("-");
+  return m ? `${y}년 ${Number(m)}월 기준` : "";
+}
 
 function thisMonthCount(articles: Article[]): number {
   const now = new Date(); const y = now.getFullYear(), m = now.getMonth();
@@ -88,14 +95,15 @@ export default function ResearchLab({
     const subParam = sub ?? "전체";
     fetch(`/api/lab/insights?category=${encodeURIComponent(category)}&sub=${encodeURIComponent(subParam)}`)
       .then((r) => r.json())
-      .then((d) => { if (alive) setInsights({ keywords: Array.isArray(d.keywords) ? d.keywords : [], trend: d.trend ?? null }); })
-      .catch(() => { if (alive) setInsights({ keywords: [], trend: null }); })
+      .then((d) => { if (alive) setInsights({ keywords: Array.isArray(d.keywords) ? d.keywords : [], trend: d.trend ?? null, asOf: d.asOf ?? null }); })
+      .catch(() => { if (alive) setInsights({ keywords: [], trend: null, asOf: null }); })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
   }, [category, sub]);
 
   const keywords = insights?.keywords ?? [];
   const trend = insights?.trend ?? null;
+  const asOf = asOfText(insights?.asOf ?? null);
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="mx-auto max-w-3xl px-5 pb-24 pt-8 sm:pt-12">
@@ -126,7 +134,7 @@ export default function ResearchLab({
       </motion.div>
 
       {/* 🔥 지금 주목할 키워드 */}
-      <SectionTitle>🔥 지금 주목할 키워드 <span className="font-normal text-neutral-400">· {sub ?? category}</span></SectionTitle>
+      <SectionTitle>🔥 지금 주목할 키워드 <span className="font-normal text-neutral-400">· {sub ?? category}{asOf ? ` · ${asOf}` : ""}</span></SectionTitle>
       {loading ? (
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
           {[0, 1, 2, 3].map((i) => <div key={i} className="h-[68px] animate-pulse rounded-2xl bg-neutral-100" />)}
@@ -140,7 +148,7 @@ export default function ResearchLab({
                 <p className="flex items-center gap-1.5 truncate text-sm font-semibold text-neutral-900">
                   {k.keyword}{k.rising && <span title="검색 급상승">🔥</span>}
                 </p>
-                <p className="mt-0.5 text-xs text-neutral-400">월 {k.mobile.toLocaleString("ko-KR")}회 · 경쟁 {k.compIdx}</p>
+                <p className="mt-0.5 text-xs text-neutral-400">월 {k.estimated ? "~" : ""}{k.mobile.toLocaleString("ko-KR")}회 (모바일) · 경쟁 {k.compIdx}</p>
               </div>
               <span className="shrink-0 rounded-lg bg-[#3f91ff]/10 px-2.5 py-1 text-[11px] font-bold text-[#2f7fe6]">글감으로 →</span>
             </motion.button>
@@ -151,7 +159,7 @@ export default function ResearchLab({
       )}
 
       {/* 📈 트렌드 추이 */}
-      <SectionTitle>📈 트렌드 추이 <span className="font-normal text-neutral-400">· 최근 12개월</span></SectionTitle>
+      <SectionTitle>📈 트렌드 추이 <span className="font-normal text-neutral-400">· 최근 12개월{asOf ? ` · ${asOf}` : ""}</span></SectionTitle>
       {loading ? (
         <div className="h-44 animate-pulse rounded-2xl bg-neutral-100" />
       ) : trend && trend.series.length > 0 ? (
