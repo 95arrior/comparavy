@@ -801,6 +801,7 @@ export default function DashboardClient(props: DashboardProps) {
             articles={articles}
             queue={queue}
             onNavigate={(t) => goTab(t)}
+            onQueueKeyword={(kw) => { void handleQueue([kw]); }}
           />
         )}
 
