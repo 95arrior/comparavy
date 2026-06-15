@@ -12,6 +12,10 @@ import CenterToast from "./CenterToast";
 import WritingView, { type GenParams } from "./WritingView";
 import WordPressPanel from "./WordPressPanel";
 import KeywordFinder from "./KeywordFinder";
+import KeywordQueue from "./KeywordQueue";
+import BlogSetup from "./BlogSetup";
+import { toEngineType, type BlogProfile } from "@/lib/blogProfile";
+import type { QueueItem } from "@/lib/keywordQueue";
 import AteFloLogo from "@/components/AteFloLogo";
 import Brand from "@/components/Brand";
 import AdminDashboard from "./AdminDashboard";
@@ -25,7 +29,7 @@ import ServiceIntro from "@/components/ServiceIntro";
 import SiteFooter from "@/components/SiteFooter";
 import Link from "next/link";
 
-type Tab = "generate" | "keywords" | "articles" | "wordpress" | "account" | "admin";
+type Tab = "generate" | "keywords" | "queue" | "blog" | "articles" | "wordpress" | "account" | "admin";
 
 function Svg({ children }: { children: React.ReactNode }) {
   return (
@@ -37,6 +41,8 @@ function Svg({ children }: { children: React.ReactNode }) {
 const ICON: Record<string, React.ReactNode> = {
   generate: <Svg><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" /></Svg>,
   keywords: <Svg><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></Svg>,
+  queue: <Svg><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 9h18M8 2v4M16 2v4" /></Svg>,
+  blog: <Svg><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" /></Svg>,
   articles: <Svg><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M9 13h6M9 17h5" /></Svg>,
   wordpress: <Svg><circle cx="12" cy="12" r="9" /><path d="M6.5 9.5l2.3 5.5 3.2-4.5 3.2 4.5 2.3-5.5" /></Svg>,
   account: <Svg><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></Svg>,
@@ -65,6 +71,10 @@ export default function DashboardClient(props: DashboardProps) {
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [calView, setCalView] = useState(false); // 내 글: 목록 ↔ 캘린더
   const [doneId, setDoneId] = useState<string | null>(null); // 백그라운드 생성 완료 → '보러가기'로 안내
+  // 2단계-A: 블로그 프로필 + 키워드 예약 큐
+  const [blogProfile, setBlogProfile] = useState<BlogProfile | null>(null);
+  const [queue, setQueue] = useState<QueueItem[]>([]);
+  const pendingQueueId = useRef<string | null>(null); // 첫 글 생성 완료 시 연결할 큐 항목
   // 백그라운드에서 생성 중인 글(도중 이탈 후 복귀 시 메인에 '생성 중' 카드로 표시)
   const generatingArticle = articles.find((a) => a.status === "generating") ?? null;
   const doneArticle = doneId ? articles.find((a) => a.id === doneId) ?? null : null;
@@ -293,9 +303,77 @@ export default function DashboardClient(props: DashboardProps) {
     }
   }
 
+  // 2단계-A: 블로그 프로필·큐 로드 (마운트 1회)
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const [pRes, qRes] = await Promise.all([
+          fetch("/api/blog-profile").then((r) => r.json()).catch(() => ({})),
+          fetch("/api/keyword-queue").then((r) => r.json()).catch(() => ({})),
+        ]);
+        if (!alive) return;
+        if (pRes?.profile) setBlogProfile(pRes.profile as BlogProfile);
+        if (Array.isArray(qRes?.queue)) setQueue(qRes.queue as QueueItem[]);
+      } catch {
+        // 무시 (없으면 빈 상태)
+      }
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  // 키워드 선택 → 큐에 담고 첫 1개 즉시 생성. 프로필 없으면 설정으로 유도.
+  async function handleQueue(keywords: string[]): Promise<boolean> {
+    if (!blogProfile) {
+      setNotice("먼저 ‘블로그 설정’을 완료해 주세요.");
+      goTab("blog");
+      return false;
+    }
+    try {
+      const res = await fetch("/api/keyword-queue", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keywords }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setNotice(data?.error ?? "큐에 담지 못했어요."); return false; }
+      const queued: QueueItem[] = Array.isArray(data.queued) ? data.queued : [];
+      setQueue((prev) => [...prev, ...queued]);
+      // 첫 1개 즉시 생성 (프로필 문체/유형 적용) → 기존 WritingView(SSE)
+      const first = queued[0];
+      if (first) {
+        pendingQueueId.current = first.id;
+        setSelected(null);
+        setGenParams({ keyword: first.keyword, angle: "", type: toEngineType(blogProfile.article_type), tone: blogProfile.tone });
+      }
+      return true;
+    } catch {
+      setNotice("네트워크 오류예요. 잠시 후 다시 시도해 주세요.");
+      return false;
+    }
+  }
+
+  async function handleDeleteQueue(id: string) {
+    setQueue((prev) => prev.filter((q) => q.id !== id));
+    try {
+      await fetch("/api/keyword-queue", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
+    } catch { /* 무시 */ }
+  }
+
   function onGenerated(article: Article) {
     setArticles((prev) => [article, ...prev]);
     if (!article.locked) setArticlesUsed((n) => n + 1); // 티저(미리보기)는 사용량에 미포함
+    // 큐에서 시작한 생성이면 그 항목을 완료 처리 + 글 연결
+    const qid = pendingQueueId.current;
+    if (qid) {
+      pendingQueueId.current = null;
+      setQueue((prev) => prev.map((q) => (q.id === qid ? { ...q, status: "done", article_id: article.id } : q)));
+      fetch(`/api/keyword-queue/${qid}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "done", article_id: article.id }),
+      }).catch(() => {});
+    }
     setTab("articles");
     setSelected(article);
   }
@@ -323,8 +401,10 @@ export default function DashboardClient(props: DashboardProps) {
   const navItems: { key: Tab; label: string }[] = [
     { key: "generate", label: "새 글" },
     { key: "keywords", label: "키워드 발굴" },
+    { key: "queue", label: (() => { const n = queue.filter((q) => q.status !== "done").length; return n ? `발행 계획 (${n})` : "발행 계획"; })() },
     { key: "articles", label: (() => { const n = articles.filter((a) => a.status !== "generating").length; return n ? `내 글 (${n})` : "내 글"; })() },
     { key: "wordpress", label: "워드프레스" },
+    { key: "blog", label: "블로그 설정" },
     ...(props.isAdmin ? [{ key: "admin" as Tab, label: "관리" }] : []),
   ];
 
@@ -703,7 +783,7 @@ export default function DashboardClient(props: DashboardProps) {
 
         {!page && !selected && !genParams && tab !== "generate" && (
           <main key={tab} className="ateflo-page-in mx-auto max-w-5xl px-6 py-10">
-            {tab !== "account" && tab !== "admin" && tab !== "keywords" && !allDone && nextStep && (
+            {tab !== "account" && tab !== "admin" && tab !== "keywords" && tab !== "queue" && tab !== "blog" && !allDone && nextStep && (
               <div className="mb-6 flex flex-wrap items-center gap-4 rounded-2xl border border-[#3f91ff]/30 bg-[#3f91ff]/5 px-5 py-4">
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-semibold text-[#3f91ff]">다음 단계 · {steps.filter((s) => s.done).length + 1} / {steps.length}</p>
@@ -742,7 +822,21 @@ export default function DashboardClient(props: DashboardProps) {
                 )}
               </>
             )}
-            {tab === "keywords" && <KeywordFinder />}
+            {tab === "keywords" && <KeywordFinder onQueue={handleQueue} />}
+            {tab === "queue" && (
+              <KeywordQueue
+                queue={queue}
+                onDelete={handleDeleteQueue}
+                onOpenArticle={(id) => { const a = articles.find((x) => x.id === id); if (a) setSelected(a); else goTab("articles"); }}
+                onGoFind={() => goTab("keywords")}
+              />
+            )}
+            {tab === "blog" && (
+              <BlogSetup
+                initial={blogProfile}
+                onSaved={(p) => { setBlogProfile(p); setNotice("블로그 설정을 저장했어요."); }}
+              />
+            )}
             {tab === "wordpress" && (
               <WordPressPanel siteUrl={wpSiteUrl} onConnected={setWpSiteUrl} onDisconnected={() => setWpSiteUrl(null)} onOpenGuide={openGuide} onOpenSitemapGuide={openSitemapGuide} />
             )}
