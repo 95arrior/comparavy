@@ -484,54 +484,105 @@ function BuilderDemo() {
 
 const WILLING = [{ k: "yes", label: "네, 바로 충전할래요" }, { k: "maybe", label: "무료부터 써볼래요" }, { k: "pricey", label: "가격이 부담돼요" }];
 
-// 2섹션 비교 — 실제 화면 2종 (ChatGPT 채팅 vs AteFlo 작성)
-function CompareDoc({ kind }: { kind: "gpt" | "ateflo" }) {
-  if (kind === "gpt") {
-    return (
-      <div className="flex h-full flex-col rounded-3xl border border-neutral-200 bg-neutral-50 p-4 sm:p-5">
-        {/* ChatGPT 채팅 화면 */}
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white">
-          <div className="flex items-center gap-2 border-b border-neutral-100 px-4 py-2.5">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#10a37f] text-white"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9" /></svg></span>
-            <span className="text-[12px] font-semibold text-neutral-500">ChatGPT</span>
+// 타사 AI — 끝없이 길어지는 대화(찐 채팅 화면, 애니메이션)
+function AiMsg() {
+  return (
+    <div className="rounded-2xl rounded-bl-md bg-neutral-50 px-3 py-2.5">
+      <div className="h-2 w-2/5 rounded bg-neutral-300" />
+      <div className="mt-2 space-y-1.5">{[100, 96, 99, 92, 97].map((w, i) => <div key={i} className="h-1.5 rounded-full bg-neutral-200" style={{ width: `${w}%` }} />)}</div>
+    </div>
+  );
+}
+function RivalChat() {
+  const TURNS: { who: "u" | "a"; t?: string }[] = [
+    { who: "u", t: "전세사기 예방법으로 블로그 SEO 글 써줘" }, { who: "a" },
+    { who: "u", t: "도입부 더 길게 써줘" }, { who: "a" },
+    { who: "u", t: "표도 하나 넣어줘" }, { who: "a" },
+    { who: "u", t: "너무 AI 같아, 자연스럽게 다시" }, { who: "a" },
+  ];
+  const [n, setN] = useState(1);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const t: ReturnType<typeof setTimeout>[] = [];
+    const run = () => { setN(1); for (let i = 2; i <= TURNS.length; i++) t.push(setTimeout(() => setN(i), (i - 1) * 1300)); t.push(setTimeout(run, TURNS.length * 1300 + 1800)); };
+    run(); return () => t.forEach(clearTimeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => { const el = ref.current; if (el) el.scrollTop = el.scrollHeight; }, [n]);
+  return (
+    <div className="flex h-full flex-col rounded-3xl border border-neutral-200 bg-neutral-50 p-4 sm:p-5">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white">
+        <div className="flex items-center gap-2 border-b border-neutral-100 px-4 py-2.5">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-neutral-300 text-[10px] text-white">AI</span>
+          <span className="text-[12px] font-semibold text-neutral-500">타사 AI · 대화</span>
+        </div>
+        <div className="flex min-h-0 flex-1">
+          {/* 얇은 사이드바(채팅 히스토리) */}
+          <div className="hidden w-16 shrink-0 flex-col gap-2 border-r border-neutral-100 p-2.5 sm:flex">
+            <div className="rounded-md bg-neutral-100 px-2 py-1.5 text-[9px] font-semibold text-neutral-400">＋ 새 채팅</div>
+            {[80, 64, 72, 56, 68].map((w, i) => <div key={i} className="h-1.5 rounded-full bg-neutral-150 bg-neutral-100" style={{ width: `${w}%` }} />)}
           </div>
-          <div className="flex flex-1 flex-col gap-2.5 p-4">
-            <div className="max-w-[82%] self-end rounded-2xl rounded-br-md bg-neutral-100 px-3 py-2 text-[11.5px] text-neutral-700">전세 사기 예방법으로 블로그 글 써줘</div>
-            <div className="rounded-2xl rounded-bl-md bg-neutral-50 px-3 py-2.5">
-              <div className="space-y-1.5">{[100, 97, 99, 94, 98, 92, 96, 90].map((w, i) => <div key={i} className="h-1.5 rounded-full bg-neutral-200" style={{ width: `${w}%` }} />)}</div>
-              <div className="mt-2.5 inline-flex items-center gap-1 rounded-md border border-neutral-200 px-2 py-1 text-[10px] text-neutral-400"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V5a2 2 0 0 1 2-2h10" /></svg>복사</div>
-            </div>
+          <div ref={ref} className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-3">
+            {TURNS.slice(0, n).map((m, i) => (
+              <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className={m.who === "u" ? "max-w-[85%] self-end" : ""}>
+                {m.who === "u" ? <div className="rounded-2xl rounded-br-md bg-neutral-900 px-3 py-2 text-[11px] text-white">{m.t}</div> : <AiMsg />}
+              </motion.div>
+            ))}
           </div>
         </div>
-        <ul className="mt-4 space-y-1.5 text-[12.5px] text-neutral-400">
-          {["채팅창에 답만 뱉고 끝", "복붙해서 직접 옮겨야 함", "소제목·FAQ 구조 없음", "발행·SEO는 알아서"].map((x) => <li key={x} className="flex items-center gap-2"><span className="text-rose-400">✕</span>{x}</li>)}
-        </ul>
       </div>
-    );
-  }
+      <ul className="mt-4 space-y-1.5 text-[12.5px] text-neutral-400">
+        {["계속 고쳐 달라 — 끝이 없음", "복붙해서 직접 옮겨야 함", "발행·SEO는 알아서", "매번 프롬프트 고민"].map((x) => <li key={x} className="flex items-center gap-2"><span className="text-rose-400">✕</span>{x}</li>)}
+      </ul>
+    </div>
+  );
+}
+
+// AteFlo — 추천 키워드 버튼 한 번 → 글 → 발행 (쉬워 보이게, 애니메이션)
+function AteFloGen() {
+  const KW = ["전세 사기 예방법", "1억으로 갭투자", "청약 가점 계산기"];
+  const [p, setP] = useState(0); // 0추천 1클릭 2글 3발행
+  useEffect(() => {
+    const t: ReturnType<typeof setTimeout>[] = [];
+    const run = () => { setP(0); t.push(setTimeout(() => setP(1), 1100)); t.push(setTimeout(() => setP(2), 1900)); t.push(setTimeout(() => setP(3), 3300)); t.push(setTimeout(run, 5200)); };
+    run(); return () => t.forEach(clearTimeout);
+  }, []);
   return (
     <div className="flex h-full flex-col rounded-3xl border-2 border-[#3f91ff]/30 bg-[#3f91ff]/[0.04] p-4 shadow-sm sm:p-5">
-      {/* AteFlo 작성 화면 */}
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white">
         <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-2.5">
           <div className="flex items-center gap-2"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#3f91ff] text-white"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg></span><span className="text-[12px] font-semibold text-neutral-600">AteFlo · 글쓰기</span></div>
           <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600">검색 노출 설계</span>
         </div>
-        <div className="flex flex-1 flex-col p-4">
-          <div className="flex items-center gap-2 rounded-xl border border-neutral-200 px-2.5 py-2"><span className="flex-1 truncate text-[11.5px] text-neutral-700">전세 사기 예방법</span><span className="rounded-md bg-[#3f91ff] px-2 py-1 text-[10px] font-bold text-white">생성</span></div>
-          <p className="mt-3 text-[12.5px] font-extrabold text-neutral-900">전세 사기 예방법 5가지</p>
-          <div className="mt-2 space-y-1.5">
-            <p className="text-[10.5px] font-bold text-[#2f7fe6]">## 등기부등본부터 확인하기</p>
-            <div className="h-1.5 w-full rounded-full bg-neutral-200" /><div className="h-1.5 w-[92%] rounded-full bg-neutral-200" />
-            <p className="text-[10.5px] font-bold text-[#2f7fe6]">## 전입신고·확정일자 받기</p>
-            <div className="h-1.5 w-[96%] rounded-full bg-neutral-200" />
-            <p className="text-[10.5px] font-bold text-[#2f7fe6]">❓ 자주 묻는 질문<span className="ml-0.5 inline-block h-3 w-0.5 animate-pulse bg-[#3f91ff] align-middle" /></p>
+        <div className="flex min-h-0 flex-1 flex-col p-4">
+          <p className="text-[11px] font-bold text-neutral-500">🔥 추천 키워드 — 누르기만 하면 끝</p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {KW.map((k, i) => (
+              <span key={k} className={`rounded-full border px-3 py-1.5 text-[11.5px] font-medium transition ${i === 0 && p >= 1 ? "border-[#3f91ff] bg-[#3f91ff] text-white shadow-[0_0_16px_rgba(63,145,255,0.5)]" : "border-neutral-200 text-neutral-600"}`}>{k}{i === 0 && p === 1 && " 👆"}</span>
+            ))}
           </div>
-          <div className="mt-auto flex items-center gap-2 rounded-lg bg-emerald-50 px-2.5 py-1.5"><span className="text-emerald-600">✓</span><span className="text-[11px] font-semibold text-emerald-700">워드프레스에 발행됨</span></div>
+          <div className="mt-3 min-h-0 flex-1">
+            <AnimatePresence mode="wait">
+              {p < 2 ? (
+                <motion.p key="hint" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pt-6 text-center text-[11px] text-neutral-300">키워드 하나 누르면 글이 나와요</motion.p>
+              ) : (
+                <motion.div key="art" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="flex h-full flex-col">
+                  <p className="text-[12.5px] font-extrabold text-neutral-900">전세 사기 예방법 5가지</p>
+                  <div className="mt-2 space-y-1.5">
+                    <p className="text-[10.5px] font-bold text-[#2f7fe6]">## 등기부등본부터 확인하기</p>
+                    <div className="h-1.5 w-full rounded-full bg-neutral-200" /><div className="h-1.5 w-[92%] rounded-full bg-neutral-200" />
+                    <p className="text-[10.5px] font-bold text-[#2f7fe6]">## 전입신고·확정일자 받기</p>
+                    <div className="h-1.5 w-[96%] rounded-full bg-neutral-200" />
+                  </div>
+                  {p >= 3 && <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="mt-auto flex items-center gap-2 rounded-lg bg-emerald-50 px-2.5 py-1.5"><span className="text-emerald-600">✓</span><span className="text-[11px] font-semibold text-emerald-700">워드프레스에 발행됨</span></motion.div>}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
       <ul className="mt-4 space-y-1.5 text-[12.5px] text-neutral-600">
-        {["검색 의도에 맞춘 구조(소제목·FAQ)", "사람이 쓴 듯한 문체", "분야 데이터(키워드·트렌드) 기반", "워드프레스에 그대로 자동 발행"].map((x) => <li key={x} className="flex items-center gap-2"><span className="text-emerald-500">✓</span>{x}</li>)}
+        {["추천 키워드 클릭 한 번", "검색 구조(소제목·FAQ) 자동", "프롬프트·복붙 필요 없음", "워드프레스에 바로 발행"].map((x) => <li key={x} className="flex items-center gap-2"><span className="text-emerald-500">✓</span>{x}</li>)}
       </ul>
     </div>
   );
@@ -593,28 +644,28 @@ export default function StartLanding() {
         <section className="relative bg-white py-24 sm:py-28">
           <div className="mx-auto max-w-5xl px-6">
             <div className="text-center">
-              <Reveal><p className="text-xs font-bold uppercase tracking-[0.2em] text-[#3f91ff]">그냥 GPT로 쓰면 되지 않나요?</p></Reveal>
+              <Reveal><p className="text-xs font-bold uppercase tracking-[0.2em] text-[#3f91ff]">그냥 AI로 쓰면 되지 않나요?</p></Reveal>
               <Reveal delay={60}><h2 className="font-pretendard mt-4 text-[1.9rem] font-extrabold leading-[1.18] tracking-tight sm:text-5xl" style={{ wordBreak: "keep-all" }}>쓰는 건 누구나.<br /><span className="text-[#3f91ff]">검색에 걸리게 쓰는 건 다릅니다.</span></h2></Reveal>
-              <Reveal delay={110}><p className="mx-auto mt-4 max-w-lg text-[14px] leading-relaxed text-neutral-500" style={{ wordBreak: "keep-all" }}>GPT는 ‘답’을 써줘요. 그런데 그 글은 검색에 잡히지도, 블로그에 발행되지도 않죠.</p></Reveal>
+              <Reveal delay={110}><p className="mx-auto mt-4 max-w-lg text-[14px] leading-relaxed text-neutral-500" style={{ wordBreak: "keep-all" }}>AI한테 시키면 답은 나와요. 그런데 고치고 또 고치고… 복붙해서 발행하는 건 결국 내 몫이죠.</p></Reveal>
             </div>
-            {/* 데스크톱: 양쪽 비교 */}
-            <Reveal delay={80}><div className="mt-12 hidden gap-5 sm:grid sm:grid-cols-2"><CompareDoc kind="gpt" /><CompareDoc kind="ateflo" /></div></Reveal>
+            {/* 데스크톱: 양쪽 비교(애니메이션) */}
+            <Reveal delay={80}><div className="mt-12 hidden gap-5 sm:grid sm:grid-cols-2"><RivalChat /><AteFloGen /></div></Reveal>
             {/* 모바일: 세로 나열 X → 토글로 전환 비교 */}
             <div className="mt-10 sm:hidden">
               <div className="mx-auto flex max-w-[280px] rounded-full border border-neutral-200 bg-neutral-50 p-1">
-                {([["gpt", "그냥 AI 글"], ["ateflo", "AteFlo 글"]] as const).map(([k, l]) => (
+                {([["gpt", "타사 AI"], ["ateflo", "AteFlo"]] as const).map(([k, l]) => (
                   <button key={k} onClick={() => setView(k)} className={`flex-1 rounded-full px-3 py-2 text-[13px] font-semibold transition active:scale-95 ${view === k ? (k === "ateflo" ? "bg-[#3f91ff] text-white" : "bg-neutral-900 text-white") : "text-neutral-500"}`}>{l}</button>
                 ))}
               </div>
               <div className="mt-4">
                 <AnimatePresence mode="wait">
                   <motion.div key={view} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.25 }}>
-                    <CompareDoc kind={view} />
+                    {view === "gpt" ? <RivalChat /> : <AteFloGen />}
                   </motion.div>
                 </AnimatePresence>
               </div>
             </div>
-            <Reveal delay={140}><p className="mt-10 text-center text-[15px] font-semibold leading-relaxed text-neutral-700" style={{ wordBreak: "keep-all" }}>GPT는 답을 쓰고, <span className="text-[#2f7fe6]">AteFlo는 검색에 걸리도록 설계된 글을 발행</span>합니다.</p></Reveal>
+            <Reveal delay={140}><p className="mt-10 text-center text-[15px] font-semibold leading-relaxed text-neutral-700" style={{ wordBreak: "keep-all" }}>AI는 답을 쓰고, <span className="text-[#2f7fe6]">AteFlo는 버튼 한 번으로 검색에 걸리도록 설계된 글을 발행</span>합니다.</p></Reveal>
           </div>
         </section>
 
