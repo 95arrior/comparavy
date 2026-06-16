@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform, type TargetAndTransition } from "framer-motion";
 import { ReactLenis } from "lenis/react";
 import Brand from "@/components/Brand";
 import SiteFooter from "@/components/SiteFooter";
@@ -274,6 +274,141 @@ function ParallaxMock({ children }: { children: React.ReactNode }) {
   return <motion.div ref={ref} style={{ y }} className="flex justify-center">{children}</motion.div>;
 }
 
+/* ════ 비비드 오로라 (계속 움직임) ════ */
+function VibrantAurora() {
+  const blob = (cls: string, anim: TargetAndTransition, dur: number) => (
+    <motion.div animate={anim} transition={{ duration: dur, repeat: Infinity, ease: "easeInOut" }} className={`absolute rounded-full blur-[110px] ${cls}`} />
+  );
+  return (
+    <div className="absolute inset-0 z-0 overflow-hidden" style={{ background: "radial-gradient(120% 90% at 50% 25%, #241a5e 0%, #120e2e 55%, #0a0b16 100%)" }}>
+      {blob("left-[6%] top-[12%] h-[36rem] w-[36rem] bg-[#3b6cff]/55", { x: [0, 130, 0], y: [0, -60, 0], scale: [1, 1.15, 1] }, 17)}
+      {blob("right-[4%] top-[20%] h-[34rem] w-[34rem] bg-[#a23bff]/55", { x: [0, -120, 0], y: [0, 80, 0], scale: [1.1, 1, 1.1] }, 21)}
+      {blob("left-1/2 top-[2%] h-[32rem] w-[32rem] -translate-x-1/2 bg-[#e23bce]/45", { x: [0, 90, 0], y: [0, -40, 0] }, 15)}
+      {blob("left-[28%] bottom-[2%] h-[30rem] w-[30rem] bg-[#22b8ff]/50", { x: [0, -80, 0], y: [0, 50, 0], scale: [1, 1.2, 1] }, 19)}
+      <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-b from-transparent to-[#0a0b16]" />
+    </div>
+  );
+}
+
+/* ════ AI 빌더 데모 (다크 글래스 윈도우) ════ */
+function ArrowUp() { return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>; }
+function BuilderDemo() {
+  const CATS = ["주식", "절약", "연금", "대출", "부동산"];
+  const KW = [{ k: "전세 사기 예방법", v: "1.2만", hot: true }, { k: "1억으로 갭투자", v: "8,400" }, { k: "청약 가점 계산기", v: "6,100" }, { k: "전입신고 하는 법", v: "5,200" }];
+  const [p, setP] = useState(0); // 0타이핑 1리스트 2선택 3생성완료 4데이터 5클릭 6글발행
+  const [typed, setTyped] = useState("");
+  useEffect(() => {
+    const t: ReturnType<typeof setTimeout>[] = [];
+    const run = () => {
+      setP(0); setTyped("");
+      const q = "재테크 블로그 만들기";
+      q.split("").forEach((_, i) => t.push(setTimeout(() => setTyped(q.slice(0, i + 1)), 450 + i * 65)));
+      t.push(setTimeout(() => setP(1), 2150));
+      t.push(setTimeout(() => setP(2), 3450));
+      t.push(setTimeout(() => setP(3), 4250));
+      t.push(setTimeout(() => setP(4), 6100));
+      t.push(setTimeout(() => setP(5), 7700));
+      t.push(setTimeout(() => setP(6), 8600));
+      t.push(setTimeout(run, 13200));
+    };
+    run();
+    return () => t.forEach(clearTimeout);
+  }, []);
+  const group = p <= 2 ? "in" : p === 3 ? "created" : p <= 5 ? "data" : "write";
+  return (
+    <div className="relative w-full max-w-2xl">
+      <div className="pointer-events-none absolute -inset-12 -z-10 rounded-[3.5rem] bg-[#6a4bff]/35 blur-[90px]" />
+      <div className="overflow-hidden rounded-2xl border border-white/12 bg-[#0c0e16]/85 shadow-[0_50px_130px_-30px_rgba(0,0,0,0.75)] backdrop-blur-xl">
+        <div className="flex items-center justify-between border-b border-white/8 px-4 py-3">
+          <div className="flex items-center gap-2 text-[12px] font-medium text-white/55">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-[#5a8bff] to-[#a23bff] text-white"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg></span>
+            ateflo · 미리보기
+          </div>
+          <span className="text-[11px] text-white/30">Desktop · 1200</span>
+        </div>
+        <div className="relative h-[400px] p-6">
+          <AnimatePresence mode="wait">
+            {group === "in" && (
+              <motion.div key="in" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
+                <p className="text-[12px] font-medium text-white/40">무엇을 만들까요?</p>
+                <div className="relative mt-3">
+                  <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-cyan-400 via-[#5a8bff] to-[#a23bff] opacity-70 blur-[5px]" />
+                  <div className="relative flex items-center gap-3 rounded-2xl border border-white/15 bg-[#11131d] px-4 py-3.5">
+                    <span className="min-w-0 flex-1 text-[14px] text-white">{typed}{p === 0 && <span className="ml-px inline-block h-4 w-0.5 animate-pulse bg-cyan-300 align-middle" />}</span>
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/12 text-white"><ArrowUp /></span>
+                  </div>
+                </div>
+                {p >= 1 && (
+                  <div className="mt-3 space-y-1.5">
+                    {CATS.map((c, i) => (
+                      <motion.div key={c} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.07 }} className={`flex items-center justify-between rounded-xl border px-3.5 py-2.5 text-[13px] transition ${c === "부동산" && p === 2 ? "border-[#6a8bff] bg-[#6a8bff]/15 text-white" : "border-white/8 bg-white/[0.03] text-white/70"}`}>
+                        <span>재테크 <span className="text-white/30">›</span> {c}</span>
+                        {c === "부동산" && p === 2 && <span className="rounded bg-[#5a8bff] px-1.5 py-0.5 text-[10px] font-bold text-white">선택 ›</span>}
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            )}
+            {group === "created" && (
+              <motion.div key="cr" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, scale: 0.97 }} transition={{ duration: 0.3 }} className="flex h-full flex-col items-center justify-center text-center">
+                <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 260, damping: 16 }} className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#5a8bff] to-[#a23bff] text-white shadow-[0_0_40px_rgba(106,107,255,0.6)]"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg></motion.span>
+                <p className="mt-5 text-[18px] font-bold text-white">부동산 블로그가 만들어졌습니다!</p>
+                <p className="mt-1.5 text-[12px] text-white/45">우리집부동산.com · 워드프레스 개설 완료</p>
+                <div className="mt-5 w-full max-w-sm space-y-1.5 rounded-xl border border-white/8 bg-white/[0.03] p-3 text-left">
+                  {["홈 · 소개 · 문의 페이지", "검색 최적화 기본 설정", "애드센스 준비 체크리스트"].map((x) => (
+                    <p key={x} className="flex items-center gap-2 text-[11.5px] text-white/55"><span className="text-emerald-400">✓</span>{x}</p>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+            {group === "data" && (
+              <motion.div key="dt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, scale: 0.98 }} transition={{ duration: 0.25 }}>
+                <p className="text-[12px] font-bold text-white/80">📊 부동산 키워드 분석</p>
+                <div className="mt-3 flex gap-3">
+                  <div className="flex w-1/2 flex-col gap-1.5">
+                    {KW.map((r, i) => (
+                      <motion.div key={r.k} initial={{ opacity: 0, y: 10, scale: 0.94 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ delay: i * 0.07, type: "spring", stiffness: 320, damping: 22 }} className={`rounded-lg border px-2.5 py-1.5 transition ${i === 0 && p === 5 ? "border-[#6a8bff] bg-[#6a8bff]/15" : "border-white/8 bg-white/[0.03]"}`}>
+                        <p className="flex items-center gap-1 truncate text-[11.5px] font-medium text-white/85">{r.k}{r.hot && " 🔥"}{i === 0 && p === 5 && <span className="ml-auto shrink-0 rounded bg-[#5a8bff] px-1.5 py-0.5 text-[9px] font-bold text-white">글 생성 ›</span>}</p>
+                        <p className="text-[9px] text-white/35">월 {r.v} · 경쟁 낮음</p>
+                      </motion.div>
+                    ))}
+                  </div>
+                  <div className="flex w-1/2 flex-col">
+                    <div className="flex flex-1 items-end gap-1.5 rounded-lg border border-white/8 bg-white/[0.03] p-2.5">
+                      {[34, 42, 38, 55, 66, 82, 95].map((h, i) => <motion.div key={i} initial={{ height: 0 }} animate={{ height: `${h}%` }} transition={{ delay: 0.25 + i * 0.06 }} className="flex-1 rounded-t" style={{ background: i >= 5 ? "linear-gradient(to top,#5a8bff,#22d3ee)" : "rgba(120,150,255,0.3)" }} />)}
+                    </div>
+                    <p className="mt-2 text-[10px] font-medium text-cyan-300">▲ 검색 상승세</p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+            {group === "write" && (
+              <motion.div key="wr" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="flex h-full flex-col">
+                <p className="text-[12px] font-bold text-white/80">✍️ AI가 글을 쓰는 중…</p>
+                <div className="mt-3 rounded-xl border border-white/8 bg-white/[0.03] p-3.5">
+                  <p className="text-[12.5px] font-extrabold text-white">전세 사기, 이렇게 100% 막으세요</p>
+                  <div className="mt-2.5 space-y-1.5">
+                    <div className="mock-gen-bar h-2 rounded-full bg-white/15" style={{ width: "100%", animationDelay: ".1s" }} />
+                    <div className="mock-gen-bar h-2 rounded-full bg-white/15" style={{ width: "94%", animationDelay: ".3s" }} />
+                    <div className="mock-gen-bar h-2 rounded-full bg-white/15" style={{ width: "97%", animationDelay: ".5s" }} />
+                    <div className="mock-gen-bar h-2 w-1/3 rounded bg-white/25" style={{ animationDelay: ".6s" }} />
+                    <div className="mock-gen-bar h-2 rounded-full bg-white/15" style={{ width: "90%", animationDelay: ".7s" }} />
+                  </div>
+                </div>
+                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1 }} className="mt-auto flex items-center gap-2.5 rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-3.5 py-2.5">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg></span>
+                  <p className="text-[12.5px] font-bold text-emerald-300">블로그에 발행 완료 🎉</p>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const WILLING = [{ k: "yes", label: "네, 바로 충전할래요" }, { k: "maybe", label: "무료부터 써볼래요" }, { k: "pricey", label: "가격이 부담돼요" }];
 
 export default function StartLanding() {
@@ -299,18 +434,16 @@ export default function StartLanding() {
           </div>
         </header>
 
-        {/* 히어로 */}
-        <section ref={heroRef} className="relative isolate flex min-h-screen flex-col items-center justify-center overflow-hidden px-6 pt-24">
-          <MovingAurora />
-          <LoadRipple />
-          <motion.div style={{ y: heroTextY, opacity: heroFade }} className="relative z-10 mx-auto max-w-3xl text-center">
-            <p className="mono-rise inline-flex items-center gap-1.5 rounded-full border border-[#3f91ff]/20 bg-white/70 px-3 py-1 text-xs font-semibold text-[#2f7fe6] backdrop-blur"><span className="h-1.5 w-1.5 rounded-full bg-[#3f91ff]" /> 곧 오픈 · 사전신청 받는 중</p>
-            <h1 className="font-pretendard mono-rise mono-d1 mt-5 text-[2.4rem] font-extrabold leading-[1.1] tracking-tight sm:text-7xl" style={{ wordBreak: "keep-all" }}>수익형 블로그,<br /><span className="text-[#3f91ff]">가장 쉽게 시작하세요.</span></h1>
-            <p className="mono-rise mono-d2 mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-neutral-500 sm:text-lg" style={{ wordBreak: "keep-all" }}>분야만 고르면, 키워드부터 글·발행까지 한 번에.</p>
-            <div className="mono-rise mono-d4 mt-6"><button onClick={toSignup} className="rounded-2xl bg-[#3f91ff] px-7 py-3.5 text-sm font-bold text-white shadow-[0_14px_34px_-10px_rgba(63,145,255,0.7)] transition hover:-translate-y-0.5 hover:opacity-90 active:scale-95">사전신청하고 보너스 크레딧 받기</button><p className="mt-3 text-xs text-neutral-400">무료 3편으로 시작 · 월 구독 아님</p></div>
+        {/* 히어로 — 비비드 무빙 오로라 + AI 빌더 데모(다크 글래스) */}
+        <section ref={heroRef} className="relative isolate flex min-h-screen flex-col items-center justify-center overflow-hidden px-6 pt-24 text-center">
+          <VibrantAurora />
+          <motion.div style={{ y: heroTextY, opacity: heroFade }} className="relative z-10 mx-auto max-w-3xl">
+            <p className="mono-rise inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white/90 backdrop-blur"><span className="h-1.5 w-1.5 rounded-full bg-cyan-300" /> 곧 오픈 · 사전신청 받는 중</p>
+            <h1 className="font-pretendard mono-rise mono-d1 mt-5 text-[2.4rem] font-extrabold leading-[1.1] tracking-tight text-white sm:text-7xl" style={{ wordBreak: "keep-all" }}>수익형 블로그,<br /><span className="bg-gradient-to-r from-cyan-300 to-[#8ab4ff] bg-clip-text text-transparent">가장 쉽게 시작하세요.</span></h1>
+            <p className="mono-rise mono-d2 mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-white/65 sm:text-lg" style={{ wordBreak: "keep-all" }}>분야만 고르면, 키워드부터 글·발행까지 한 번에.</p>
+            <div className="mono-rise mono-d4 mt-6"><button onClick={toSignup} className="rounded-2xl bg-white px-7 py-3.5 text-sm font-bold text-[#0c0e16] shadow-[0_14px_40px_-10px_rgba(255,255,255,0.4)] transition hover:-translate-y-0.5 active:scale-95">사전신청하고 보너스 크레딧 받기</button><p className="mt-3 text-xs text-white/40">무료 3편으로 시작 · 월 구독 아님</p></div>
           </motion.div>
-          {/* 창 없이 열린 무대 — UI가 배경 위에 그대로 떠 있게 */}
-          <motion.div style={{ y: heroMockY }} className="relative z-10 mt-8 h-[440px] w-full max-w-2xl"><CategoryDemo /></motion.div>
+          <motion.div style={{ y: heroMockY }} className="relative z-10 mt-9 w-full max-w-2xl"><BuilderDemo /></motion.div>
         </section>
 
         {/* 키워드 마퀴 */}
