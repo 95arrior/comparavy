@@ -29,7 +29,9 @@ import ServiceIntro from "@/components/ServiceIntro";
 import SiteFooter from "@/components/SiteFooter";
 import Link from "next/link";
 
-type Tab = "generate" | "keywords" | "queue" | "blog" | "articles" | "wordpress" | "account" | "admin";
+// 사이드바 레벨 탭(연구소 중심으로 일원화). 키워드/발행계획/내글은 '연구소' 안 내부 뷰로 이동.
+type Tab = "lab" | "wordpress" | "account" | "admin";
+type LabView = "home" | "keywords" | "queue" | "articles";
 
 function Svg({ children }: { children: React.ReactNode }) {
   return (
@@ -40,6 +42,7 @@ function Svg({ children }: { children: React.ReactNode }) {
 }
 const ICON: Record<string, React.ReactNode> = {
   generate: <Svg><path d="M9 3h6M10 3v5l-4.5 8a2 2 0 0 0 1.8 3h9.4a2 2 0 0 0 1.8-3L14 8V3" /><path d="M7.5 14h9" /></Svg>,
+  lab: <Svg><path d="M9 3h6M10 3v5l-4.5 8a2 2 0 0 0 1.8 3h9.4a2 2 0 0 0 1.8-3L14 8V3" /><path d="M7.5 14h9" /></Svg>,
   keywords: <Svg><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></Svg>,
   queue: <Svg><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 9h18M8 2v4M16 2v4" /></Svg>,
   blog: <Svg><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" /></Svg>,
@@ -51,7 +54,8 @@ const ICON: Record<string, React.ReactNode> = {
 };
 
 export default function DashboardClient(props: DashboardProps) {
-  const [tab, setTab] = useState<Tab>("generate");
+  const [tab, setTab] = useState<Tab>("lab");
+  const [labView, setLabView] = useState<LabView>("home");
   const [navOpen, setNavOpen] = useState(false);
   const [articles, setArticles] = useState<Article[]>(props.initialArticles);
   const [articlesUsed, setArticlesUsed] = useState(props.articlesUsed);
@@ -147,17 +151,18 @@ export default function DashboardClient(props: DashboardProps) {
       return;
     }
     window.history.pushState(
-      { ateflo: true, tab, selectedId: selected?.id ?? null, page, gen: !!genParams },
+      { ateflo: true, tab, labView, selectedId: selected?.id ?? null, page, gen: !!genParams },
       "",
     );
-  }, [tab, selected, page, genParams]);
+  }, [tab, labView, selected, page, genParams]);
 
   useEffect(() => {
     const onPop = (e: PopStateEvent) => {
-      const s = e.state as { ateflo?: boolean; tab?: Tab; selectedId?: string | null; page?: typeof page; gen?: boolean } | null;
+      const s = e.state as { ateflo?: boolean; tab?: Tab; labView?: LabView; selectedId?: string | null; page?: typeof page; gen?: boolean } | null;
       if (s && s.ateflo) {
         skipPushRef.current = true;
-        setTab(s.tab ?? "generate");
+        setTab(s.tab ?? "lab");
+        setLabView(s.labView ?? "home");
         setSelected(s.selectedId ? articles.find((a) => a.id === s.selectedId) ?? null : null);
         setPage(s.page ?? null);
         if (!s.gen) setGenParams(null);
@@ -240,7 +245,7 @@ export default function DashboardClient(props: DashboardProps) {
       const overLimit = props.plan !== "pro" && props.articlesUsed >= props.articlesLimit;
       const hasTeaser = props.initialArticles.some((a) => a.locked);
       if (overLimit && hasTeaser) {
-        setTab("generate");
+        setTab("lab");
         return;
       }
       setGenParams({ keyword: g.keyword, angle: "", type: g.type ?? "howto", tone: g.tone ?? "friendly" });
@@ -387,9 +392,9 @@ export default function DashboardClient(props: DashboardProps) {
     setKwStatus(kwResults && kwResults.length > 0 ? "done" : "idle");
   }
 
-  // A-2: 키워드 탭에 들어오면 블로그 주제로 자동 검색(직전 결과 없을 때 1회). 재검색 낭비 방지.
+  // A-2: 연구소 '키워드 발굴' 뷰에 들어오면 블로그 주제로 자동 검색(직전 결과 없을 때 1회). 재검색 낭비 방지.
   useEffect(() => {
-    if (tab !== "keywords") return;
+    if (tab !== "lab" || labView !== "keywords") return;
     if (!searchHydrated || autoSearched.current) return;
     if (blogProfile && !kwResults && kwStatus === "idle") {
       autoSearched.current = true;
@@ -397,13 +402,13 @@ export default function DashboardClient(props: DashboardProps) {
       runKeywordSearch(blogProfile.topic);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, blogProfile, kwResults, kwStatus, searchHydrated]);
+  }, [tab, labView, blogProfile, kwResults, kwStatus, searchHydrated]);
 
   // 키워드 선택 → 큐에 담고 첫 1개 즉시 생성. 프로필 없으면 설정으로 유도.
   async function handleQueue(keywords: string[]): Promise<boolean> {
     if (!blogProfile) {
-      setNotice("먼저 ‘블로그 설정’을 완료해 주세요.");
-      goTab("blog");
+      setNotice("먼저 ‘내 정보 › 블로그 설정’을 완료해 주세요.");
+      goTab("account");
       return false;
     }
     try {
@@ -444,7 +449,7 @@ export default function DashboardClient(props: DashboardProps) {
     setKwTopic(p.topic);
     autoSearched.current = false; // 새 주제면 키워드 탭 진입 시 자동검색 다시
     setNotice(isNew ? `${p.blog_name || p.topic} 연구소가 만들어졌어요 🎉` : "블로그 설정을 저장했어요");
-    goTab("generate"); // 연구소 홈
+    goTab("lab"); // 연구소 홈으로
   }
 
   function onGenerated(article: Article) {
@@ -461,7 +466,8 @@ export default function DashboardClient(props: DashboardProps) {
         body: JSON.stringify({ status: "done", article_id: article.id }),
       }).catch(() => {});
     }
-    setTab("articles");
+    setTab("lab");
+    setLabView("articles");
     setSelected(article);
   }
 
@@ -477,22 +483,31 @@ export default function DashboardClient(props: DashboardProps) {
   ];
   const allDone = steps.every((s) => s.done);
 
-  const nextStep: { tab: Tab; msg: string } | null = !steps[0].done
-    ? { tab: "generate", msg: "키워드 하나만 입력하면 첫 글이 만들어져요. 아래에서 바로 시작해보세요!" }
+  // 연구소 내부 탭 배지용 카운트
+  const queuedCount = queue.filter((q) => q.status !== "done").length;
+  const articleCount = articles.filter((a) => a.status !== "generating").length;
+
+  const nextStep: { go: () => void; msg: string; label: string } | null = !steps[0].done
+    ? { go: () => goLabView("home"), msg: "키워드 하나만 고르면 첫 글이 만들어져요. 연구소 홈에서 바로 시작해보세요!", label: "연구소 홈으로 →" }
     : !steps[1].done
-    ? { tab: "wordpress", msg: "첫 글 완성! 이제 ‘워드프레스’ 메뉴에서 내 블로그를 연결해 주세요." }
+    ? { go: () => goTab("wordpress"), msg: "첫 글 완성! 이제 ‘워드프레스’에서 내 블로그를 연결해 주세요.", label: "바로 가기 →" }
     : !steps[2].done
-    ? { tab: "articles", msg: "사이트 연결 완료! ‘내 글’에서 글을 열고 ‘워드프레스에 발행’을 누르면 끝이에요." }
+    ? { go: () => goLabView("articles"), msg: "사이트 연결 완료! ‘내 글’에서 글을 열고 ‘워드프레스에 발행’을 누르면 끝이에요.", label: "바로 가기 →" }
     : null;
 
+  // 사이드바 = 연구소 중심으로 일원화 (키워드/발행계획/내글/블로그설정은 사이드바에서 제거)
   const navItems: { key: Tab; label: string }[] = [
-    { key: "generate", label: "연구소" },
-    { key: "keywords", label: "키워드 발굴" },
-    { key: "queue", label: (() => { const n = queue.filter((q) => q.status !== "done").length; return n ? `발행 계획 (${n})` : "발행 계획"; })() },
-    { key: "articles", label: (() => { const n = articles.filter((a) => a.status !== "generating").length; return n ? `내 글 (${n})` : "내 글"; })() },
+    { key: "lab", label: "연구소" },
     { key: "wordpress", label: "워드프레스" },
-    { key: "blog", label: "블로그 설정" },
     ...(props.isAdmin ? [{ key: "admin" as Tab, label: "관리" }] : []),
+  ];
+
+  // 연구소 내부 탭 (사이드바 대신 연구소 화면 안에서 도구 이동)
+  const labTabs: { v: LabView; label: string }[] = [
+    { v: "home", label: "연구소 홈" },
+    { v: "keywords", label: "키워드 발굴" },
+    { v: "queue", label: queuedCount ? `발행 계획 ${queuedCount}` : "발행 계획" },
+    { v: "articles", label: articleCount ? `내 글 ${articleCount}` : "내 글" },
   ];
 
   const displayName = props.email.split("@")[0] || props.email;
@@ -557,7 +572,7 @@ export default function DashboardClient(props: DashboardProps) {
   // selected는 '객체'가 아니라 'id'로 의존 → 자동저장으로 글 내용이 갱신될 때는 스크롤이 튀지 않음.
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [tab, page, selected?.id, genParams]);
+  }, [tab, labView, page, selected?.id, genParams]);
 
   function goTab(k: Tab) {
     if (genParams) return; // 글 생성 중엔 실수로 이동 못 하게 (취소는 작성화면의 버튼으로만)
@@ -565,6 +580,18 @@ export default function DashboardClient(props: DashboardProps) {
     setGenParams(null);
     setPage(null);
     setTab(k);
+    if (k === "lab") setLabView("home"); // 사이드바 '연구소' 클릭 = 항상 홈부터
+    closeOnMobile();
+  }
+
+  // 연구소 내부 탭 이동 (사이드바를 거치지 않고 연구소 화면 안에서 도구 전환)
+  function goLabView(v: LabView) {
+    if (genParams) return;
+    setSelected(null);
+    setGenParams(null);
+    setPage(null);
+    setTab("lab");
+    setLabView(v);
     closeOnMobile();
   }
 
@@ -589,6 +616,22 @@ export default function DashboardClient(props: DashboardProps) {
     );
   };
 
+  // 온보딩 다음단계 안내 배너 (연구소 내부 뷰·워드프레스에서 공통 사용)
+  const nextStepBanner = !allDone && nextStep ? (
+    <div className="mb-6 flex flex-wrap items-center gap-4 rounded-2xl border border-[#3f91ff]/30 bg-[#3f91ff]/5 px-5 py-4">
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-semibold text-[#3f91ff]">다음 단계 · {steps.filter((s) => s.done).length + 1} / {steps.length}</p>
+        <p className="mt-1 text-sm font-medium text-neutral-900">{nextStep.msg}</p>
+      </div>
+      <button
+        onClick={nextStep.go}
+        className="shrink-0 rounded-xl bg-[#3f91ff] px-5 py-2 text-sm font-medium text-white transition hover:opacity-90"
+      >
+        {nextStep.label}
+      </button>
+    </div>
+  ) : null;
+
   return (
     <div className="flex min-h-screen bg-[#f2f4f6] text-neutral-900 antialiased">
       {/* 모바일: 사이드바 열렸을 때 뒤 어둡게 (탭하면 닫힘) */}
@@ -606,7 +649,7 @@ export default function DashboardClient(props: DashboardProps) {
             <>
               {/* 로고 + 브랜드 = 한 덩어리, 클릭 시 메인으로 (메인이면 그대로) */}
               <button
-                onClick={() => goTab("generate")}
+                onClick={() => goTab("lab")}
                 aria-label="메인으로"
                 className="flex h-9 min-w-0 flex-1 items-center rounded-lg pl-[7px] transition hover:bg-neutral-50"
               >
@@ -662,7 +705,7 @@ export default function DashboardClient(props: DashboardProps) {
               ))}
               {articles.length > 5 && (
                 <button
-                  onClick={() => goTab("articles")}
+                  onClick={() => goLabView("articles")}
                   className="mt-3 self-center rounded-lg px-4 py-1.5 text-center text-xs font-medium text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-600"
                 >
                   더보기 ({articles.length})
@@ -803,59 +846,98 @@ export default function DashboardClient(props: DashboardProps) {
           />
         )}
 
-        {/* 연구소 홈 = 블로그가 있으면 내 작전 본부 (현황 + 기존 기능 연결) */}
-        {!page && !selected && !genParams && tab === "generate" && blogProfile && !blocked && (
-          <ResearchLab
-            profile={blogProfile}
-            displayName={displayName}
-            articles={articles}
-            queue={queue}
-            onNavigate={(t) => goTab(t)}
-            onQueueKeyword={(kw) => { void handleQueue([kw]); }}
-          />
-        )}
-
-        {/* 메인: 블로그 없으면 바로 온보딩(블로그 만들기) */}
-        {!page && !selected && !genParams && tab === "generate" && !blogProfile && (
+        {/* ── 연구소 (사이드바 '연구소') : 블로그 없으면 온보딩, 있으면 내부 탭으로 도구 전환 ── */}
+        {!page && !selected && !genParams && tab === "lab" && !blogProfile && (
           <div className="ateflo-page-in">
             <BlogSetup initial={null} onSaved={onProfileSaved} />
           </div>
         )}
 
-        {/* 무료 잠금(블로그 있고 한도 초과) = 업그레이드 안내 */}
-        {!page && !selected && !genParams && tab === "generate" && blogProfile && blocked && (
-          <div className="ateflo-page-in mx-auto max-w-xl px-6 py-16">
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-left">
-              <p className="text-sm font-medium text-amber-900">무료 미리보기를 만들었어요 🔒</p>
-              <p className="mt-1 text-sm leading-relaxed text-amber-800">계속 만들고 발행하려면 프로로 업그레이드하세요.</p>
-              {lockedArticle && <p className="mt-3 truncate text-sm font-medium text-neutral-900">“{lockedArticle.title}”</p>}
-              <div className="mt-3 flex flex-wrap gap-2">
-                {lockedArticle && <button onClick={() => setSelected(lockedArticle)} className="rounded-xl border border-amber-300 bg-white px-4 py-1.5 text-sm font-medium text-amber-900 transition hover:bg-amber-100">미리보기 글 보기</button>}
-                <Link href="/pricing" className="rounded-xl bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700">프로로 업그레이드</Link>
+        {!page && !selected && !genParams && tab === "lab" && blogProfile && (
+          <div className="ateflo-page-in">
+            {/* 연구소 내부 탭 — 사이드바 대신 여기서 도구 이동(몰입 유지) */}
+            <div className="sticky top-0 z-20 border-b border-neutral-200 bg-white/90 backdrop-blur">
+              <div className="mx-auto flex max-w-3xl gap-1 overflow-x-auto px-4 py-2 sm:px-5">
+                {labTabs.map((lt) => {
+                  const on = labView === lt.v;
+                  return (
+                    <button
+                      key={lt.v}
+                      onClick={() => goLabView(lt.v)}
+                      className={`shrink-0 rounded-lg px-3.5 py-1.5 text-sm font-medium transition ${
+                        on ? "bg-[#3f91ff]/10 text-[#2f7fe6]" : "text-neutral-500 hover:bg-neutral-100"
+                      }`}
+                    >
+                      {lt.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
-          </div>
-        )}
 
-        {!page && !selected && !genParams && tab !== "generate" && (
-          <main key={tab} className="ateflo-page-in mx-auto max-w-5xl px-6 py-10">
-            {tab !== "account" && tab !== "admin" && tab !== "keywords" && tab !== "queue" && tab !== "blog" && !allDone && nextStep && (
-              <div className="mb-6 flex flex-wrap items-center gap-4 rounded-2xl border border-[#3f91ff]/30 bg-[#3f91ff]/5 px-5 py-4">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-[#3f91ff]">다음 단계 · {steps.filter((s) => s.done).length + 1} / {steps.length}</p>
-                  <p className="mt-1 text-sm font-medium text-neutral-900">{nextStep.msg}</p>
+            {/* 연구소 홈 = 내 작전 본부 (현황 + 도구 연결) / 무료 한도 초과 시 업그레이드 안내 */}
+            {labView === "home" && !blocked && (
+              <ResearchLab
+                profile={blogProfile}
+                displayName={displayName}
+                articles={articles}
+                queue={queue}
+                onNavigate={(t) => goLabView(t)}
+                onQueueKeyword={(kw) => { void handleQueue([kw]); }}
+              />
+            )}
+            {labView === "home" && blocked && (
+              <div className="mx-auto max-w-xl px-6 py-16">
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-left">
+                  <p className="text-sm font-medium text-amber-900">무료 미리보기를 만들었어요 🔒</p>
+                  <p className="mt-1 text-sm leading-relaxed text-amber-800">계속 만들고 발행하려면 프로로 업그레이드하세요.</p>
+                  {lockedArticle && <p className="mt-3 truncate text-sm font-medium text-neutral-900">“{lockedArticle.title}”</p>}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {lockedArticle && <button onClick={() => setSelected(lockedArticle)} className="rounded-xl border border-amber-300 bg-white px-4 py-1.5 text-sm font-medium text-amber-900 transition hover:bg-amber-100">미리보기 글 보기</button>}
+                    <Link href="/pricing" className="rounded-xl bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700">프로로 업그레이드</Link>
+                  </div>
                 </div>
-                <button
-                  onClick={() => goTab(nextStep.tab)}
-                  className="shrink-0 rounded-xl bg-[#3f91ff] px-5 py-2 text-sm font-medium text-white transition hover:opacity-90"
-                >
-                  {nextStep.tab === "generate" ? "새 글 쓰러 가기 →" : "바로 가기 →"}
-                </button>
               </div>
             )}
 
-            {tab === "articles" && (
-              <>
+            {/* 키워드 발굴 */}
+            {labView === "keywords" && (
+              <main className="mx-auto max-w-5xl px-6 py-10">
+                {nextStepBanner}
+                <KeywordFinder
+                  blogName={blogProfile?.blog_name ?? null}
+                  topic={kwTopic}
+                  onTopicChange={setKwTopic}
+                  status={kwStatus}
+                  results={kwResults}
+                  error={kwError}
+                  searchedTopic={kwSearchedTopic}
+                  onSearch={runKeywordSearch}
+                  onCancel={cancelKeywordSearch}
+                  onQueue={handleQueue}
+                  welcomeTopic={welcomeBlog}
+                  onDismissWelcome={() => setWelcomeBlog(null)}
+                />
+              </main>
+            )}
+
+            {/* 발행 계획 */}
+            {labView === "queue" && (
+              <main className="mx-auto max-w-5xl px-6 py-10">
+                {nextStepBanner}
+                <KeywordQueue
+                  queue={queue}
+                  onDelete={handleDeleteQueue}
+                  onOpenArticle={(id) => { const a = articles.find((x) => x.id === id); if (a) setSelected(a); else goLabView("articles"); }}
+                  onGoFind={() => goLabView("keywords")}
+                />
+              </main>
+            )}
+
+            {/* 내 글 */}
+            {labView === "articles" && (
+              <main className="mx-auto max-w-5xl px-6 py-10">
+                {nextStepBanner}
                 {articles.length > 0 && (
                   <div className="mb-4">
                     <Segmented
@@ -866,50 +948,40 @@ export default function DashboardClient(props: DashboardProps) {
                   </div>
                 )}
                 {calView && articles.length > 0 ? (
-                  <ContentCalendar articles={articles} onOpen={setSelected} onGoGenerate={() => goTab("generate")} />
+                  <ContentCalendar articles={articles} onOpen={setSelected} onGoGenerate={() => goLabView("home")} />
                 ) : (
                   <ArticleList
                     articles={articles}
                     onOpen={setSelected}
-                    onGoGenerate={() => goTab("generate")}
+                    onGoGenerate={() => goLabView("home")}
                     onUpdated={(updated) => setArticles((prev) => prev.map((a) => (a.id === updated.id ? updated : a)))}
                     wpConnected={Boolean(wpSiteUrl)}
                   />
                 )}
-              </>
+              </main>
             )}
-            {tab === "keywords" && (
-              <KeywordFinder
-                blogName={blogProfile?.blog_name ?? null}
-                topic={kwTopic}
-                onTopicChange={setKwTopic}
-                status={kwStatus}
-                results={kwResults}
-                error={kwError}
-                searchedTopic={kwSearchedTopic}
-                onSearch={runKeywordSearch}
-                onCancel={cancelKeywordSearch}
-                onQueue={handleQueue}
-                welcomeTopic={welcomeBlog}
-                onDismissWelcome={() => setWelcomeBlog(null)}
-              />
-            )}
-            {tab === "queue" && (
-              <KeywordQueue
-                queue={queue}
-                onDelete={handleDeleteQueue}
-                onOpenArticle={(id) => { const a = articles.find((x) => x.id === id); if (a) setSelected(a); else goTab("articles"); }}
-                onGoFind={() => goTab("keywords")}
-              />
-            )}
-            {tab === "blog" && (
-              <BlogSetup initial={blogProfile} onSaved={onProfileSaved} />
-            )}
-            {tab === "wordpress" && (
-              <WordPressPanel siteUrl={wpSiteUrl} onConnected={setWpSiteUrl} onDisconnected={() => setWpSiteUrl(null)} onOpenGuide={openGuide} onOpenSitemapGuide={openSitemapGuide} />
-            )}
-            {tab === "account" && (
-              <div className="mx-auto max-w-xl rounded-2xl border border-neutral-100 bg-white shadow-sm p-6 sm:p-8">
+          </div>
+        )}
+
+        {/* ── 워드프레스 ── */}
+        {!page && !selected && !genParams && tab === "wordpress" && (
+          <main className="ateflo-page-in mx-auto max-w-5xl px-6 py-10">
+            {nextStepBanner}
+            <WordPressPanel siteUrl={wpSiteUrl} onConnected={setWpSiteUrl} onDisconnected={() => setWpSiteUrl(null)} onOpenGuide={openGuide} onOpenSitemapGuide={openSitemapGuide} />
+          </main>
+        )}
+
+        {/* ── 관리(관리자만) ── */}
+        {!page && !selected && !genParams && tab === "admin" && props.isAdmin && (
+          <main className="ateflo-page-in mx-auto max-w-5xl px-6 py-10">
+            <AdminDashboard stats={props.adminStats} />
+          </main>
+        )}
+
+        {/* ── 내 정보 (+ 블로그 설정 통합) ── */}
+        {!page && !selected && !genParams && tab === "account" && (
+          <main className="ateflo-page-in mx-auto max-w-5xl px-6 py-10">
+            <div className="mx-auto max-w-xl rounded-2xl border border-neutral-100 bg-white shadow-sm p-6 sm:p-8">
                 <h2 className="text-lg font-semibold tracking-tight">내 정보</h2>
                 <dl className="mt-5 space-y-3 text-sm">
                   <div className="flex justify-between gap-4"><dt className="text-neutral-500">이메일</dt><dd className="truncate">{props.email}</dd></div>
@@ -1034,9 +1106,16 @@ export default function DashboardClient(props: DashboardProps) {
                     </div>
                   )}
                 </div>
+            </div>
+
+            {/* 블로그 설정 — 사이드바에서 빼고 내 정보로 통합 (주제·이름·문체·유형 수정) */}
+            {blogProfile && (
+              <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-neutral-100 bg-white shadow-sm p-6 sm:p-8">
+                <h2 className="text-lg font-semibold tracking-tight">블로그 설정</h2>
+                <p className="mt-1 text-sm leading-relaxed text-neutral-500">주제·이름·문체·유형을 바꿀 수 있어요. 저장하면 연구소로 돌아가요.</p>
+                <BlogSetup initial={blogProfile} onSaved={onProfileSaved} />
               </div>
             )}
-            {tab === "admin" && props.isAdmin && <AdminDashboard stats={props.adminStats} />}
           </main>
         )}
       </div>
