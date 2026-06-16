@@ -169,9 +169,78 @@ function SceneEarn() {
   );
 }
 
+// 자동재생 카테고리 검색 데모 — 재테크 입력 → 하위분류 쭈루룩 → 부동산 선택 → 부동산 데이터 뽜바박 (루프)
+function CategoryDemo() {
+  const SUBS = ["전체", "주식", "절약", "연금", "대출", "부동산"];
+  const RESULTS = [{ k: "전세 사기 예방법", v: "1.2만", hot: true }, { k: "1억으로 갭투자", v: "8,400" }, { k: "청약 가점 계산기", v: "6,100" }, { k: "전입신고 하는 법", v: "5,200" }];
+  const [phase, setPhase] = useState(0); // 0 타이핑 · 1 드롭다운 · 2 부동산선택 · 3 결과
+  const [typed, setTyped] = useState("");
+  useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const run = () => {
+      setPhase(0); setTyped("");
+      "재테크".split("").forEach((_, i) => timers.push(setTimeout(() => setTyped("재테크".slice(0, i + 1)), 350 + i * 190)));
+      timers.push(setTimeout(() => setPhase(1), 1250));
+      timers.push(setTimeout(() => setPhase(2), 2500));
+      timers.push(setTimeout(() => setPhase(3), 3250));
+      timers.push(setTimeout(run, 7000));
+    };
+    run();
+    return () => timers.forEach(clearTimeout);
+  }, []);
+  return (
+    <div className="flex h-full flex-col p-6">
+      <p className="text-[13px] font-bold text-neutral-800">어떤 블로그인가요?</p>
+      <p className="mt-1 text-[11px] text-neutral-400">한 칸에서 분야를 고르면, 데이터가 쫙 펼쳐져요</p>
+      <div className="relative mt-3">
+        <div className={`flex items-center rounded-xl border px-3 py-2.5 transition ${phase < 3 ? "border-[#3f91ff] ring-2 ring-[#3f91ff]/15" : "border-neutral-200"}`}>
+          <span className="text-[13px] text-neutral-800">{phase < 3 ? typed : "재테크 › 부동산"}</span>
+          {phase === 0 && <span className="ml-px inline-block h-4 w-0.5 animate-pulse bg-neutral-700" />}
+        </div>
+        <AnimatePresence>
+          {(phase === 1 || phase === 2) && (
+            <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.2 }} className="absolute inset-x-0 top-full z-10 mt-1.5 overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-[0_12px_30px_-10px_rgba(20,40,80,0.3)]">
+              {SUBS.map((s, i) => (
+                <motion.div key={s} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }} className={`px-3 py-2 text-[12.5px] ${s === "부동산" && phase === 2 ? "bg-[#3f91ff]/10 font-semibold text-[#2f7fe6]" : "text-neutral-600"}`}>
+                  {s === "전체" ? <><b className="text-neutral-800">재테크</b> <span className="text-neutral-400">전체</span></> : <>재테크 <span className="text-neutral-300">›</span> {s}</>}
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+      <div className="mt-3 min-h-0 flex-1">
+        <AnimatePresence>
+          {phase === 3 && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex h-full gap-3">
+              <div className="flex w-1/2 flex-col">
+                <p className="text-[11px] font-bold text-neutral-700">🔥 부동산 키워드</p>
+                <div className="mt-1.5 space-y-1">
+                  {RESULTS.map((r, i) => (
+                    <motion.div key={r.k} initial={{ opacity: 0, y: 10, scale: 0.94 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ delay: i * 0.08, type: "spring", stiffness: 320, damping: 22 }} className="rounded-lg border border-neutral-100 bg-neutral-50/70 px-2 py-1">
+                      <p className="truncate text-[11px] font-medium text-neutral-700">{r.k}{r.hot && " 🔥"}</p>
+                      <p className="text-[9px] text-neutral-400">월 {r.v}</p>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+              <div className="flex w-1/2 flex-col">
+                <p className="text-[11px] font-bold text-neutral-700">📈 트렌드</p>
+                <div className="mt-1.5 flex flex-1 items-end gap-1 rounded-lg border border-neutral-100 bg-neutral-50/70 p-2">
+                  {[34, 42, 38, 55, 66, 82].map((h, i) => <motion.div key={i} initial={{ height: 0 }} animate={{ height: `${h}%` }} transition={{ delay: 0.3 + i * 0.07 }} className="flex-1 rounded-t" style={{ background: i === 5 ? ACCENT : "rgba(63,145,255,0.25)" }} />)}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
+
 const STEPS = [
   { no: "01", tag: "개설", title: <>버튼 한 번에,<br />블로그 개설.</>, before: "호스팅·설치 1주일", after: "클릭 한 번", nav: 0, url: "ateflo.com/new", Screen: SceneOpen },
-  { no: "02", tag: "데이터", title: <>뭘 쓸지,<br />데이터가 알려줘요.</>, before: "감으로 고르기", after: "뜨는 키워드가 눈앞에", nav: 0, url: "ateflo.com/lab", Screen: SceneData },
+  { no: "02", tag: "데이터", title: <>뭘 쓸지,<br />데이터가 알려줘요.</>, before: "감으로 고르기", after: "뜨는 키워드가 눈앞에", nav: 0, url: "ateflo.com/lab", Screen: CategoryDemo },
   { no: "03", tag: "글쓰기", title: <>키워드 하나,<br />칼럼급 글.</>, before: "한 편에 5시간", after: "1분", nav: 1, url: "ateflo.com/write", Screen: SceneWrite },
   { no: "04", tag: "수익화", title: <>글이 쌓이고,<br />수익으로.</>, before: "검색에 안 잡힘", after: "검색 유입 ↑", nav: 3, url: "ateflo.com/insight", Screen: SceneEarn },
 ];
@@ -234,7 +303,7 @@ export default function StartLanding() {
             <p className="mono-rise mono-d2 mx-auto mt-7 max-w-md text-[15px] leading-relaxed text-neutral-500 sm:text-lg" style={{ wordBreak: "keep-all" }}>개설부터 글쓰기, 애드센스 승인, 수익화까지 — 한 흐름으로.</p>
             <div className="mono-rise mono-d4 mt-9"><button onClick={toSignup} className="rounded-2xl bg-[#3f91ff] px-7 py-3.5 text-sm font-bold text-white shadow-[0_14px_34px_-10px_rgba(63,145,255,0.7)] transition hover:-translate-y-0.5 hover:opacity-90 active:scale-95">사전신청하고 보너스 크레딧 받기</button><p className="mt-3 text-xs text-neutral-400">무료 3편으로 시작 · 월 구독 아님</p></div>
           </motion.div>
-          <motion.div style={{ y: heroMockY }} className="relative z-10 mt-14"><BrowserMock activeNav={1} url="ateflo.com/write"><SceneWrite /></BrowserMock></motion.div>
+          <motion.div style={{ y: heroMockY }} className="relative z-10 mt-14"><BrowserMock activeNav={0} url="ateflo.com/lab"><CategoryDemo /></BrowserMock></motion.div>
         </section>
 
         {/* 키워드 마퀴 */}
