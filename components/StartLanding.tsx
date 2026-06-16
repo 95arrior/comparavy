@@ -84,29 +84,13 @@ function LoadRipple() {
 }
 
 /* ════ 고품질 목업 (브라우저 윈도우 + 앱 UI) ════ */
-function NavIcon({ d, on }: { d: string; on?: boolean }) {
-  return (
-    <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${on ? "bg-[#3f91ff]/12 text-[#2f7fe6]" : "text-neutral-300"}`}>
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={d} /></svg>
-    </span>
-  );
-}
-const NAV = ["M9 3h6M10 3v5l-4.5 8a2 2 0 0 0 1.8 3h9.4a2 2 0 0 0 1.8-3L14 8V3", "M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z M14 3v5h5", "M3 12h18M3 6h18M3 18h18", "M4 17l5-5 3 3 7-8"];
-function BrowserMock({ activeNav = 0, url = "ateflo.com", children }: { activeNav?: number; url?: string; children: React.ReactNode }) {
+// 프레임리스 패널 — 브라우저 창(점·URL·사이드바) 없이 깔끔한 큰 화면 (스텝용)
+function Panel({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative w-full max-w-xl">
-      <div className="pointer-events-none absolute -inset-8 -z-10 rounded-[3rem] bg-[#3f91ff]/15 blur-[70px]" />
-      <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-[0_40px_90px_-30px_rgba(20,40,80,0.45)]">
-        <div className="flex items-center gap-2 border-b border-neutral-100 bg-neutral-50/80 px-4 py-3">
-          <span className="flex gap-1.5"><span className="h-3 w-3 rounded-full bg-[#ff5f57]" /><span className="h-3 w-3 rounded-full bg-[#febc2e]" /><span className="h-3 w-3 rounded-full bg-[#28c840]" /></span>
-          <div className="ml-2 flex flex-1 items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-[11px] text-neutral-400 ring-1 ring-neutral-100">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M7 11V7a5 5 0 0 1 10 0v4" /><rect x="4" y="11" width="16" height="9" rx="2" /></svg>{url}
-          </div>
-        </div>
-        <div className="flex h-[330px]">
-          <div className="flex w-12 flex-col items-center gap-2 border-r border-neutral-100 bg-neutral-50/50 py-3">{NAV.map((d, i) => <NavIcon key={i} d={d} on={i === activeNav} />)}</div>
-          <div className="min-w-0 flex-1 overflow-hidden">{children}</div>
-        </div>
+      <div className="pointer-events-none absolute -inset-10 -z-10 rounded-[3rem] bg-[#3f91ff]/18 blur-[80px]" />
+      <div className="h-[380px] overflow-hidden rounded-[2rem] border border-neutral-200/70 bg-white shadow-[0_50px_100px_-35px_rgba(20,40,80,0.45)]">
+        {children}
       </div>
     </div>
   );
@@ -193,7 +177,7 @@ function CategoryDemo() {
       <p className="text-[13px] font-bold text-neutral-800">어떤 블로그인가요?</p>
       <p className="mt-1 text-[11px] text-neutral-400">한 칸에서 분야를 고르면, 데이터가 쫙 펼쳐져요</p>
       <div className="relative mt-3">
-        <div className={`flex items-center rounded-xl border px-3 py-2.5 transition ${phase < 3 ? "border-[#3f91ff] ring-2 ring-[#3f91ff]/15" : "border-neutral-200"}`}>
+        <div className={`flex items-center rounded-xl border bg-white px-3.5 py-3 shadow-sm transition ${phase < 3 ? "border-[#3f91ff] ring-2 ring-[#3f91ff]/15" : "border-neutral-200"}`}>
           <span className="text-[13px] text-neutral-800">{phase < 3 ? typed : "재테크 › 부동산"}</span>
           {phase === 0 && <span className="ml-px inline-block h-4 w-0.5 animate-pulse bg-neutral-700" />}
         </div>
@@ -303,7 +287,8 @@ export default function StartLanding() {
             <p className="mono-rise mono-d2 mx-auto mt-7 max-w-md text-[15px] leading-relaxed text-neutral-500 sm:text-lg" style={{ wordBreak: "keep-all" }}>개설부터 글쓰기, 애드센스 승인, 수익화까지 — 한 흐름으로.</p>
             <div className="mono-rise mono-d4 mt-9"><button onClick={toSignup} className="rounded-2xl bg-[#3f91ff] px-7 py-3.5 text-sm font-bold text-white shadow-[0_14px_34px_-10px_rgba(63,145,255,0.7)] transition hover:-translate-y-0.5 hover:opacity-90 active:scale-95">사전신청하고 보너스 크레딧 받기</button><p className="mt-3 text-xs text-neutral-400">무료 3편으로 시작 · 월 구독 아님</p></div>
           </motion.div>
-          <motion.div style={{ y: heroMockY }} className="relative z-10 mt-14"><BrowserMock activeNav={0} url="ateflo.com/lab"><CategoryDemo /></BrowserMock></motion.div>
+          {/* 창 없이 열린 무대 — UI가 배경 위에 그대로 떠 있게 */}
+          <motion.div style={{ y: heroMockY }} className="relative z-10 mt-14 h-[460px] w-full max-w-2xl"><CategoryDemo /></motion.div>
         </section>
 
         {/* 키워드 마퀴 */}
@@ -339,7 +324,7 @@ export default function StartLanding() {
                 <Reveal delay={60}><h3 className="font-pretendard mt-3 text-[2rem] font-extrabold leading-[1.14] tracking-tight sm:text-5xl" style={{ wordBreak: "keep-all" }}>{s.title}</h3></Reveal>
                 <Reveal delay={120}><div className="mt-6"><BeforeAfter before={s.before} after={s.after} /></div></Reveal>
               </div>
-              <ParallaxMock><BrowserMock activeNav={s.nav} url={s.url}><s.Screen /></BrowserMock></ParallaxMock>
+              <ParallaxMock><Panel><s.Screen /></Panel></ParallaxMock>
             </div>
           </Chapter>
         ))}
