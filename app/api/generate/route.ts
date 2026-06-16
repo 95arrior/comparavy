@@ -12,6 +12,7 @@ import { isAdminEmail } from "@/lib/adminStats";
 import { logUsage } from "@/lib/usageLog";
 import { recordAiResult } from "@/lib/aiHealth";
 import { VERTICAL_DEFAULTS } from "@/lib/blogProfile";
+import { buildBusinessBox } from "@/lib/businessBox";
 
 export const maxDuration = 300;
 
@@ -120,8 +121,12 @@ export async function POST(request: Request) {
   // 티저(4번째 잠금 글)는 프로 품질(5000자)로 생성한다 — 결제해서 풀면 진짜 5000자 글을 얻어
   // "그럴 거면 결제하고 5000자짜리 했지" 후회를 없앤다. (티저는 이메일당 평생 1회라 비용 통제됨)
   const maxWords = teaser ? PLANS.pro.maxWords : PLANS[row.plan].maxWords;
-  // 업종(vertical) — 프로필에서 1회 조회(없으면 general). 시스템 프롬프트 분기 + tone/type 폴백에 사용.
-  const { data: profileRow } = await supabase.from("blog_profiles").select("vertical").eq("user_id", user.id).maybeSingle();
+  // 업종(vertical) + 업체 정보 — 프로필에서 1회 조회(없으면 general/미입력). 프롬프트 분기 + 글 하단 NAP 박스에 사용.
+  const { data: profileRow } = await supabase
+    .from("blog_profiles")
+    .select("vertical,biz_name,biz_address,biz_phone,biz_hours")
+    .eq("user_id", user.id)
+    .maybeSingle();
   const vertical = profileRow?.vertical ?? "general";
   // tone/type은 '명시적으로 보낸 값 우선', 없을 때만 업종 기본값 폴백(general은 매핑 없음=현행 howto/friendly).
   const vDef = VERTICAL_DEFAULTS[vertical];
@@ -193,6 +198,11 @@ export async function POST(request: Request) {
           return;
         }
 
+        // 업체 정보 NAP 박스를 글 하단에 자동 삽입(데이터 있을 때만, 글자수 검증 이후 — 검증은 원본 기준).
+        // simhash(근접중복)는 박스 제외한 본문 기준(박스가 전 글 공통이라 유사도 오판 방지).
+        const businessBox = buildBusinessBox({ name: profileRow?.biz_name, address: profileRow?.biz_address, phone: profileRow?.biz_phone, hours: profileRow?.biz_hours });
+        const finalBody = article.body_html + businessBox;
+
         // 저장 + 사용량 증가
         const insertPayload: Record<string, unknown> = {
           user_id: user.id,
@@ -200,11 +210,11 @@ export async function POST(request: Request) {
           title: article.title,
           meta_title: article.meta_title,
           meta_description: article.meta_description,
-          body_html: article.body_html,
+          body_html: finalBody,
           faq: article.faq,
           char_count: charCount,
-          simhash: simhash(article.body_html), // 근접 중복 모니터링용 (재생성 안 함)
-          original_html: article.body_html, // AI 원본 복구용 (수정해도 보존)
+          simhash: simhash(article.body_html), // 근접 중복 모니터링용 (박스 제외 본문 기준, 재생성 안 함)
+          original_html: finalBody, // 원본 복구용 (박스 포함 = 처음 받은 상태)
           status: "draft",
           write_note: article.write_note || null, // 글쓴이용 메모 (마이그레이션 0007)
           tags: article.tags ?? [], // 워드프레스 태그 (마이그레이션: articles.tags jsonb)

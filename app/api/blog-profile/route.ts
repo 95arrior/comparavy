@@ -40,6 +40,12 @@ export async function POST(request: Request) {
   const article_type = isType(body.article_type) ? body.article_type : "info";
   const publish_mode = isPublishMode(body.publish_mode) ? body.publish_mode : "manual";
   const vertical = isVertical(body.vertical) ? body.vertical : "general";
+  // 업체 정보(선택) — 있는 것만 저장, 빈 값은 null
+  const bizField = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "") || null;
+  const biz_name = bizField(body.biz_name, 80);
+  const biz_address = bizField(body.biz_address, 200);
+  const biz_phone = bizField(body.biz_phone, 40);
+  const biz_hours = bizField(body.biz_hours, 120);
   const target = (typeof body.target === "string" ? body.target : "").trim().slice(0, 80) || null;
   // 대분류 (없으면 topic을 대분류로 가정 — 레거시 호환)
   const category = (typeof body.category === "string" && isTopCategory(body.category)) ? body.category : (isTopCategory(topic) ? topic : null);
@@ -50,7 +56,7 @@ export async function POST(request: Request) {
   const { data, error } = await supabase
     .from("blog_profiles")
     .upsert(
-      { user_id: user.id, topic, category, blog_name, tone, article_type, target, publish_mode, vertical, updated_at: new Date().toISOString() },
+      { user_id: user.id, topic, category, blog_name, tone, article_type, target, publish_mode, vertical, biz_name, biz_address, biz_phone, biz_hours, updated_at: new Date().toISOString() },
       { onConflict: "user_id" },
     )
     .select("*")

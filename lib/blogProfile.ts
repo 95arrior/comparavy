@@ -10,6 +10,11 @@ export interface BlogProfile {
   target: string | null;
   publish_mode: string; // 'manual' | 'auto'
   vertical: string; // 업종 — medical | academy | professional | b2b | general (기본값)
+  // 업체 정보(선택) — 입력 시 글 하단 NAP 박스로 자동 삽입(PIVOT 6). 비면 미삽입.
+  biz_name: string | null;
+  biz_address: string | null;
+  biz_phone: string | null;
+  biz_hours: string | null;
 }
 
 /** 문체 선택지 (label=화면, value=생성엔진 tone 키) */
