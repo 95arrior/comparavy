@@ -486,22 +486,31 @@ const WILLING = [{ k: "yes", label: "네, 바로 충전할래요" }, { k: "maybe
 
 export default function StartLanding() {
   const [willing, setWilling] = useState<string | null>(null);
+  const [scrolled, setScrolled] = useState(false); // 헤더: 맨 위=투명, 스크롤 시 흰 바
   const signupRef = useRef<HTMLDivElement>(null);
   const toSignup = () => signupRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // 히어로 패럴랙스
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress: hp } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const heroMockY = useTransform(hp, [0, 1], [0, 140]);
-  const heroTextY = useTransform(hp, [0, 1], [0, -80]);
-  const heroFade = useTransform(hp, [0, 0.8], [1, 0]);
+  const heroMockY = useTransform(hp, [0, 1], [0, 80]);
+  const heroTextY = useTransform(hp, [0, 1], [0, -60]);
+  const heroFade = useTransform(hp, [0, 0.85], [1, 0]);
 
   return (
     <ReactLenis root options={{ lerp: 0.09, smoothWheel: true }}>
       <div className="min-h-screen bg-white text-neutral-900 antialiased">
-        <header className="fixed inset-x-0 top-0 z-50 border-b border-neutral-200/40 bg-white/70 backdrop-blur">
+        <header className={`fixed inset-x-0 top-0 z-50 border-b transition-colors duration-300 ${scrolled ? "border-neutral-200/40 bg-white/70 backdrop-blur" : "border-transparent bg-transparent"}`}>
           <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3.5">
-            <Brand />
+            {/* 맨 위(다크 히어로)에선 흰 로고, 스크롤 시 기본(다크) 로고 */}
+            <span className={scrolled ? "" : "[&_span]:text-white"}><Brand /></span>
             <button onClick={toSignup} className="rounded-xl bg-[#3f91ff] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 active:scale-95">사전신청</button>
           </div>
         </header>
@@ -509,13 +518,13 @@ export default function StartLanding() {
         {/* 히어로 — 비비드 무빙 오로라 + AI 빌더 데모(다크 글래스) */}
         <section ref={heroRef} className="relative isolate flex min-h-screen flex-col items-center justify-center overflow-hidden px-6 pt-24 text-center">
           <VibrantAurora />
-          <motion.div style={{ y: heroTextY, opacity: heroFade }} className="relative z-10 mx-auto max-w-3xl">
+          <motion.div style={{ y: heroTextY, opacity: heroFade, willChange: "transform, opacity" }} className="relative z-10 mx-auto max-w-3xl">
             <p className="mono-rise inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white/90 backdrop-blur"><span className="h-1.5 w-1.5 rounded-full bg-cyan-300" /> 곧 오픈 · 사전신청 받는 중</p>
             <h1 className="font-pretendard mono-rise mono-d1 mt-5 text-[2.4rem] font-extrabold leading-[1.1] tracking-tight text-white sm:text-7xl" style={{ wordBreak: "keep-all" }}>수익형 블로그,<br /><span className="bg-gradient-to-r from-cyan-300 to-[#8ab4ff] bg-clip-text text-transparent">가장 쉽게 시작하세요.</span></h1>
             <p className="mono-rise mono-d2 mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-white/65 sm:text-lg" style={{ wordBreak: "keep-all" }}>분야만 고르면, 키워드부터 글·발행까지 한 번에.</p>
             <div className="mono-rise mono-d4 mt-6"><button onClick={toSignup} className="rounded-2xl bg-white px-7 py-3.5 text-sm font-bold text-[#0c0e16] shadow-[0_14px_40px_-10px_rgba(255,255,255,0.4)] transition hover:-translate-y-0.5 active:scale-95">사전신청하고 보너스 크레딧 받기</button><p className="mt-3 text-xs text-white/40">무료 3편으로 시작 · 월 구독 아님</p></div>
           </motion.div>
-          <motion.div style={{ y: heroMockY }} className="relative z-10 mt-9 w-full max-w-2xl"><BuilderDemo /></motion.div>
+          <motion.div style={{ y: heroMockY, willChange: "transform" }} className="relative z-10 mt-9 w-full max-w-2xl"><BuilderDemo /></motion.div>
         </section>
 
         {/* 마퀴 — 분야(니치): 어떤 분야든 된다 */}
