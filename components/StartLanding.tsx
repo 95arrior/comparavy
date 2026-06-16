@@ -527,13 +527,64 @@ export default function StartLanding() {
           <motion.div style={{ y: heroMockY, willChange: "transform" }} className="relative z-10 mt-9 w-full max-w-2xl"><BuilderDemo /></motion.div>
         </section>
 
-        {/* 마퀴 — 분야(니치): 어떤 분야든 된다 */}
-        <div className="overflow-hidden border-y border-neutral-100 bg-white py-6">
-          <p className="mb-4 text-center text-xs font-semibold tracking-wide text-neutral-400">어떤 분야든, 블로그가 돼요</p>
+        {/* 마퀴 — 분야(니치): 어떤 분야든 된다 (다크) */}
+        <div className="overflow-hidden border-y border-white/8 bg-[#07080f] py-6">
+          <p className="mb-4 text-center text-xs font-semibold tracking-wide text-white/40">어떤 분야든, 블로그가 돼요</p>
           <motion.div className="flex w-max gap-2.5 whitespace-nowrap" style={{ willChange: "transform" }} animate={{ x: ["0%", "-50%"] }} transition={{ duration: 32, repeat: Infinity, ease: "linear" }}>
-            {[...MARQUEE, ...MARQUEE].map((k, i) => <span key={i} className="flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-600"><span>{k.e}</span>{k.t}</span>)}
+            {[...MARQUEE, ...MARQUEE].map((k, i) => <span key={i} className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-medium text-white/70"><span>{k.e}</span>{k.t}</span>)}
           </motion.div>
         </div>
+
+        {/* 2섹션 — 'GPT로 쓰면 되지' 부수기 + 글 차별화(목업 비교) */}
+        <section className="relative isolate overflow-hidden bg-[#07080f] py-24 sm:py-28">
+          <div className="pointer-events-none absolute left-1/2 top-0 h-[40rem] w-[40rem] -translate-x-1/2 rounded-full bg-[#3b82f6]/12 blur-[150px]" />
+          <div className="relative z-10 mx-auto max-w-5xl px-6">
+            <div className="text-center">
+              <Reveal><p className="text-xs font-bold uppercase tracking-[0.2em] text-[#7db8ff]">그냥 GPT로 쓰면 되지 않나요?</p></Reveal>
+              <Reveal delay={60}><h2 className="font-pretendard mt-4 text-[1.9rem] font-extrabold leading-[1.18] tracking-tight text-white sm:text-5xl" style={{ wordBreak: "keep-all" }}>쓰는 건 누구나.<br /><span className="bg-gradient-to-r from-cyan-300 to-[#8ab4ff] bg-clip-text text-transparent">검색에 걸리게 쓰는 건 다릅니다.</span></h2></Reveal>
+              <Reveal delay={110}><p className="mx-auto mt-4 max-w-lg text-[14px] leading-relaxed text-white/55" style={{ wordBreak: "keep-all" }}>GPT는 ‘답’을 써줘요. 그런데 그 글은 검색에 잡히지도, 블로그에 발행되지도 않죠.</p></Reveal>
+            </div>
+            <div className="mt-12 grid gap-5 sm:grid-cols-2">
+              {/* 그냥 AI 글 */}
+              <Reveal>
+                <div className="h-full rounded-3xl border border-white/8 bg-white/[0.02] p-5">
+                  <span className="rounded-full bg-white/8 px-2.5 py-1 text-[11px] font-semibold text-white/40">그냥 AI 글</span>
+                  <div className="mt-3 rounded-2xl border border-white/6 bg-[#0c0e16] p-4">
+                    <div className="h-3 w-2/3 rounded bg-white/15" />
+                    <div className="mt-3 space-y-2">{[100, 96, 98, 94, 97, 92, 88].map((w, i) => <div key={i} className="h-2 rounded-full bg-white/8" style={{ width: `${w}%` }} />)}</div>
+                  </div>
+                  <ul className="mt-4 space-y-1.5 text-[12.5px] text-white/45">
+                    {["검색 의도 무시 — 그냥 줄글", "소제목·FAQ 구조 없음", "복붙하면 서식 깨짐", "‘AI가 쓴 티’ → 구글이 거름"].map((x) => <li key={x} className="flex items-center gap-2"><span className="text-rose-400/70">✕</span>{x}</li>)}
+                  </ul>
+                </div>
+              </Reveal>
+              {/* AteFlo 글 */}
+              <Reveal delay={80}>
+                <div className="h-full rounded-3xl border-2 border-[#3f91ff]/30 bg-[#3f91ff]/[0.06] p-5 shadow-[0_30px_80px_-30px_rgba(63,145,255,0.5)]">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-[#3f91ff] px-2.5 py-1 text-[11px] font-bold text-white">AteFlo 글</span>
+                    <span className="rounded-full bg-emerald-400/15 px-2 py-0.5 text-[10px] font-bold text-emerald-300">검색 노출 설계</span>
+                  </div>
+                  <div className="mt-3 rounded-2xl border border-white/8 bg-[#0c0e16] p-4">
+                    <p className="text-[12.5px] font-extrabold text-white">전세 사기 예방법 5가지</p>
+                    <div className="mt-2.5 space-y-2">
+                      <p className="text-[10.5px] font-bold text-[#8ab4ff]">## 등기부등본부터 확인하기</p>
+                      <div className="h-2 w-full rounded-full bg-white/12" /><div className="h-2 w-[92%] rounded-full bg-white/12" />
+                      <p className="text-[10.5px] font-bold text-[#8ab4ff]">## 전입신고·확정일자 받기</p>
+                      <div className="h-2 w-[97%] rounded-full bg-white/12" />
+                      <p className="text-[10.5px] font-bold text-[#8ab4ff]">❓ 자주 묻는 질문</p>
+                      <div className="h-2 w-[85%] rounded-full bg-white/12" />
+                    </div>
+                  </div>
+                  <ul className="mt-4 space-y-1.5 text-[12.5px] text-white/75">
+                    {["검색 의도에 맞춘 구조(소제목·FAQ)", "사람이 쓴 듯한 문체", "분야 데이터(키워드·트렌드) 기반", "워드프레스에 그대로 자동 발행"].map((x) => <li key={x} className="flex items-center gap-2"><span className="text-emerald-400">✓</span>{x}</li>)}
+                  </ul>
+                </div>
+              </Reveal>
+            </div>
+            <Reveal delay={140}><p className="mt-10 text-center text-[15px] font-semibold leading-relaxed text-white/80" style={{ wordBreak: "keep-all" }}>GPT는 답을 쓰고, <span className="text-[#7db8ff]">AteFlo는 검색에 걸리도록 설계된 글을 발행</span>합니다.</p></Reveal>
+          </div>
+        </section>
 
         {/* 공감 */}
         <Chapter tint>
