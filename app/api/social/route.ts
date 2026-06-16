@@ -54,8 +54,8 @@ export async function POST(request: Request) {
     if (r.ok) {
       await admin.from("social_posts").update({ status: "published", ig_media_id: r.mediaId, published_at: new Date().toISOString(), error: null }).eq("id", post.id);
       await admin.from("social_settings").update({ last_published_at: new Date().toISOString() }).eq("id", 1);
-      await crosspostThreads(post); // 스레드 교차발행(켜져 있으면)
-      return NextResponse.json({ ok: true });
+      const threads = await crosspostThreads(post); // 스레드 교차발행(켜져 있으면) — 결과를 돌려줘 실패가 묻히지 않게
+      return NextResponse.json({ ok: true, threads });
     }
     await admin.from("social_posts").update({ status: "failed", error: r.error }).eq("id", post.id);
     return NextResponse.json({ error: r.error }, { status: 502 });

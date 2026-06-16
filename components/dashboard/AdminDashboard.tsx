@@ -370,6 +370,16 @@ function SocialView({ stats }: { stats: AdminStats }) {
   const s = stats.social;
   const [busy, setBusy] = useState(false);
   const [publishingId, setPublishingId] = useState<string | null>(null); // 발행 진행 중인 카드(인스타 인코딩 대기로 1~5분 걸림 → 멈춘 것처럼 보이지 않게)
+
+  // 인스타 발행 후 스레드 교차발행 결과를 한 줄로 — 실패가 묻히지 않게 토스트에 그대로 노출.
+  type ThreadsResult = { ok?: boolean; error?: string } | undefined;
+  function threadsNote(t: ThreadsResult): string {
+    if (!t) return "발행했어요 ✓";
+    if (t.ok) return "발행했어요 ✓ (스레드도 올라감)";
+    if (t.error === "스레드 미연결/꺼짐") return "발행했어요 ✓ · 스레드 교차발행은 꺼져 있어요";
+    return `발행했어요 ✓ · ⚠️ 스레드 실패: ${t.error ?? ""}`;
+  }
+  const threadsFailed = (t: ThreadsResult) => !!t && !t.ok && t.error !== "스레드 미연결/꺼짐";
   const [msg, setMsg] = useState<string | null>(null);
   const [openList, setOpenList] = useState<null | "queued" | "published" | "failed">(null);
   const [viewer, setViewer] = useState<{ urls: string[]; i: number } | null>(null);
@@ -412,10 +422,18 @@ function SocialView({ stats }: { stats: AdminStats }) {
     setPublishingId(p.id);
     setMsg("발행 중이에요… 1~2분 걸릴 수 있어요 (창을 닫지 마세요)");
     setBusy(true);
-    const ok = await send({ action: "publishNow", id: p.id });
-    if (ok) {
-      setPosts((cur) => cur.map((x) => (x.id === p.id ? { ...x, status: "published", published_at: new Date().toISOString(), error: null } : x)));
-      setMsg("발행했어요 ✓");
+    try {
+      const r = await fetch("/api/social", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "publishNow", id: p.id }) });
+      const d = await r.json().catch(() => ({}));
+      if (r.ok) {
+        setPosts((cur) => cur.map((x) => (x.id === p.id ? { ...x, status: "published", published_at: new Date().toISOString(), error: null } : x)));
+        setMsg(threadsNote(d.threads)); // 스레드 교차발행 성공/실패까지 보여줌
+        router.refresh();
+      } else {
+        setMsg(d.error ?? "발행 실패");
+      }
+    } catch {
+      setMsg("오류가 났어요");
     }
     setPublishingId(null);
     setBusy(false);
@@ -429,18 +447,20 @@ function SocialView({ stats }: { stats: AdminStats }) {
     setBusy(true);
     let done = 0;
     let fail = 0;
+    let threadsFail = 0;
     for (let i = 0; i < targets.length; i++) {
       const p = targets[i];
       setPublishingId(p.id);
       setMsg(`발행 중… ${i + 1}/${targets.length} (개당 1~2분, 창 닫지 마세요)`);
       try {
         const r = await fetch("/api/social", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "publishNow", id: p.id }) });
+        const d = await r.json().catch(() => ({}));
         if (r.ok) {
           done++;
+          if (threadsFailed(d.threads)) threadsFail++;
           setPosts((cur) => cur.map((x) => (x.id === p.id ? { ...x, status: "published", published_at: new Date().toISOString(), error: null } : x)));
         } else {
           fail++;
-          const d = await r.json().catch(() => ({}));
           setPosts((cur) => cur.map((x) => (x.id === p.id ? { ...x, error: d.error ?? "실패" } : x)));
         }
       } catch {
@@ -449,7 +469,8 @@ function SocialView({ stats }: { stats: AdminStats }) {
     }
     setPublishingId(null);
     setBusy(false);
-    setMsg(fail === 0 ? `${done}개 모두 발행했어요 ✓` : `${done}개 발행 · ${fail}개 실패`);
+    const base = fail === 0 ? `${done}개 모두 발행했어요 ✓` : `${done}개 발행 · ${fail}개 실패`;
+    setMsg(threadsFail > 0 ? `${base} · ⚠️ 스레드 ${threadsFail}개 실패` : base);
     router.refresh();
   }
   async function connectIg() {
