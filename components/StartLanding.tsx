@@ -486,6 +486,74 @@ const WILLING = [{ k: "yes", label: "네, 바로 충전할래요" }, { k: "maybe
 
 // 타사 AI — 끝없이 길어지는 대화(찐 채팅 화면, 애니메이션)
 // 윈도우 크롬(맥 신호등 + 타이틀)
+// 끝없이 타이핑되는 효과 — 한 글자씩 부드럽게, 다 치면 잠깐 멈췄다 반복
+function useTypewriter(text: string, { speed = 32, startDelay = 600, holdMs = 1700 }: { speed?: number; startDelay?: number; holdMs?: number } = {}) {
+  const [out, setOut] = useState("");
+  useEffect(() => {
+    let i = 0, cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const tick = () => {
+      if (cancelled) return;
+      if (i <= text.length) { setOut(text.slice(0, i)); i += 1; timer = setTimeout(tick, speed); }
+      else timer = setTimeout(() => { i = 0; tick(); }, holdMs);
+    };
+    timer = setTimeout(tick, startDelay);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [text, speed, startDelay, holdMs]);
+  return out;
+}
+
+// 여러 문구를 돌아가며 타이핑 — "계속 고쳐 달라고 하는" 끝없는 요청 연출
+const RIVAL_PROMPTS = ["도입부 더 길게 써줘…", "표도 하나 넣어줘…", "어색한 문장 자연스럽게 고쳐줘…", "메타설명도 만들어줘…", "복사해서 워드프레스에 붙여넣기…"];
+function useTypewriterCycle(phrases: string[], { speed = 50, holdMs = 1100 }: { speed?: number; holdMs?: number } = {}) {
+  const [out, setOut] = useState("");
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    const text = phrases[idx];
+    let i = 0, cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const tick = () => {
+      if (cancelled) return;
+      if (i <= text.length) { setOut(text.slice(0, i)); i += 1; timer = setTimeout(tick, speed); }
+      else timer = setTimeout(() => { if (!cancelled) setIdx((p) => (p + 1) % phrases.length); }, holdMs);
+    };
+    timer = setTimeout(tick, 350);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [idx, phrases, speed, holdMs]);
+  return out;
+}
+
+// macOS 데스크탑 — 실제 월페이퍼 + 상단 메뉴바 위에 앱 창이 떠 있는 느낌
+function DesktopFrame({ appName, menus, children }: { appName: string; menus: string[]; children: React.ReactNode }) {
+  return (
+    <div className="relative overflow-hidden rounded-[20px] shadow-[0_34px_90px_-32px_rgba(15,25,65,0.55)]">
+      {/* 월페이퍼 */}
+      <div className="absolute inset-0" style={{ background: "linear-gradient(160deg,#0b1f55 0%,#19408f 45%,#2b73b8 100%)" }} />
+      <div className="absolute inset-0" style={{ background: "radial-gradient(140% 120% at 78% -12%, rgba(120,220,255,0.55), transparent 52%), radial-gradient(120% 130% at -12% 112%, rgba(255,150,120,0.42), transparent 55%), radial-gradient(110% 110% at 112% 115%, rgba(190,120,255,0.45), transparent 55%)" }} />
+      <div className="absolute -left-1/4 top-1/4 h-[120%] w-[150%] -rotate-12 opacity-40 blur-3xl" style={{ background: "conic-gradient(from 200deg at 50% 50%, transparent, rgba(150,210,255,0.65), transparent 38%)" }} />
+      {/* 메뉴바 */}
+      <div className="relative z-10 flex items-center justify-between bg-black/10 px-3.5 py-1 text-[9.5px] font-medium text-white/90 backdrop-blur-md">
+        <div className="flex items-center gap-3">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" className="opacity-95"><path d="M17.05 12.04c-.03-2.6 2.13-3.85 2.22-3.91-1.21-1.77-3.09-2.01-3.76-2.04-1.6-.16-3.12.94-3.93.94-.81 0-2.06-.92-3.39-.89-1.74.03-3.35 1.01-4.25 2.57-1.81 3.14-.46 7.79 1.3 10.34.86 1.25 1.88 2.65 3.22 2.6 1.29-.05 1.78-.83 3.34-.83 1.55 0 2 .83 3.37.81 1.39-.03 2.27-1.27 3.12-2.53.98-1.45 1.39-2.85 1.41-2.92-.03-.01-2.71-1.04-2.74-4.12zM14.6 4.81c.71-.86 1.19-2.06 1.06-3.25-1.02.04-2.26.68-2.99 1.54-.66.76-1.23 1.98-1.08 3.15 1.14.09 2.3-.58 3.01-1.44z" /></svg>
+          <span className="font-semibold">{appName}</span>
+          {menus.map((m) => <span key={m} className="hidden text-white/65 sm:inline">{m}</span>)}
+        </div>
+        <div className="flex items-center gap-2.5 text-white/85">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 18a1.6 1.6 0 100 3.2A1.6 1.6 0 0012 18zM5.5 11.5a9 9 0 0113 0l-1.6 1.6a6.7 6.7 0 00-9.8 0zM2.5 8.5a13.2 13.2 0 0119 0l-1.6 1.6a11 11 0 00-15.8 0z" /></svg>
+          <svg width="20" height="13" viewBox="0 0 28 14" fill="none"><rect x="0.7" y="0.7" width="23" height="12.6" rx="3" stroke="currentColor" strokeOpacity="0.55" /><rect x="2.4" y="2.4" width="16" height="9.2" rx="1.6" fill="currentColor" /><rect x="25" y="4.5" width="2" height="5" rx="1" fill="currentColor" fillOpacity="0.55" /></svg>
+          <span>오후 2:14</span>
+        </div>
+      </div>
+      {/* 창 */}
+      <div className="relative z-10 px-4 pb-7 pt-3 sm:px-9 sm:pb-9 sm:pt-5">
+        <motion.div animate={{ y: [0, -7, 0] }} transition={{ duration: 6.5, repeat: Infinity, ease: "easeInOut" }}>
+          {children}
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
 function WinBar({ title, dark = false }: { title: string; dark?: boolean }) {
   return (
     <div className={`flex items-center gap-2 border-b px-3.5 py-2.5 ${dark ? "border-white/8" : "border-neutral-100"}`}>
@@ -497,11 +565,12 @@ function WinBar({ title, dark = false }: { title: string; dark?: boolean }) {
 
 // 타사 AI — 실제 채팅 앱 스크린샷처럼 (사이드바 + 진짜 대화)
 function RivalChat() {
+  const typed = useTypewriterCycle(RIVAL_PROMPTS);
   return (
-    <div className="rounded-2xl bg-gradient-to-br from-[#e6e8ef] via-[#eef0f5] to-[#f6f7fa] p-3 sm:p-5">
-      <div className="overflow-hidden rounded-xl border border-black/10 bg-white shadow-[0_30px_70px_-22px_rgba(30,35,50,0.4)]">
+    <DesktopFrame appName="AI 어시스턴트" menus={["파일", "편집", "보기", "도움말"]}>
+      <div className="overflow-hidden rounded-xl border border-black/10 bg-white shadow-[0_30px_70px_-22px_rgba(10,20,45,0.55)]">
         <WinBar title="AI 어시스턴트" />
-        <div className="flex h-[300px]">
+        <div className="flex h-[284px]">
           <div className="hidden w-[36%] shrink-0 flex-col border-r border-neutral-100 bg-neutral-50/70 p-2.5 sm:flex">
             <div className="rounded-md border border-neutral-200 bg-white px-2 py-1.5 text-center text-[10px] font-medium text-neutral-500">＋ 새 대화</div>
             <div className="mt-2 space-y-0.5">
@@ -517,20 +586,30 @@ function RivalChat() {
             <div className="flex w-fit items-center gap-1.5 self-start rounded-2xl rounded-bl-md bg-neutral-100 px-3 py-2.5">{[0, 1, 2].map((j) => <span key={j} className="h-1.5 w-1.5 animate-bounce rounded-full bg-neutral-400" style={{ animationDelay: `${j * 0.15}s` }} />)}</div>
           </div>
         </div>
-        <div className="border-t border-neutral-100 px-3.5 py-2 text-[10px] text-neutral-400">답변 복사 후 워드프레스에 직접 붙여넣기…</div>
+        {/* 입력창 — 계속 새 요청을 타이핑하는 연출(끝이 없음) */}
+        <div className="flex items-center gap-2 border-t border-neutral-100 px-3 py-2">
+          <div className="flex min-w-0 flex-1 items-center rounded-lg bg-neutral-100 px-3 py-1.5 text-[10.5px] text-neutral-500">
+            <span className="truncate">{typed}</span>
+            <span className="ml-px inline-block h-3 w-px shrink-0 animate-pulse bg-neutral-500 align-middle" />
+          </div>
+          <span className="shrink-0 rounded-lg bg-neutral-900 px-2.5 py-1.5 text-[10px] font-medium text-white">전송</span>
+        </div>
       </div>
-    </div>
+    </DesktopFrame>
   );
 }
 
 // AteFlo — 실제 글쓰기 앱 스크린샷처럼 (글 목록 + 진짜 본문 + SEO 상태바)
+const ATE_LAST = "잔금 당일 신청해 대항력과 우선변제권을 함께 확보하세요. 하루만 늦어도 보증금을 지킬 순위가 밀릴 수 있습니다.";
 function AteFloGen() {
   const POSTS: [string, string][] = [["전세 사기 예방법 5가지", "발행"], ["1억으로 시작하는 갭투자", "발행"], ["청약 가점 계산법 총정리", "발행"], ["전입신고·확정일자 받는 법", "초안"], ["오피스텔 투자 체크리스트", "초안"]];
+  const body = useTypewriter(ATE_LAST, { speed: 28, startDelay: 800, holdMs: 1900 });
+  const done = body.length === ATE_LAST.length;
   return (
-    <div className="rounded-2xl bg-gradient-to-br from-[#c3d2ff] via-[#dce6ff] to-[#cfe0ff] p-3 sm:p-5">
-      <div className="overflow-hidden rounded-xl border border-black/10 bg-[#0b0d15] shadow-[0_30px_70px_-22px_rgba(30,50,110,0.55)]">
+    <DesktopFrame appName="AteFlo" menus={["파일", "편집", "글", "발행"]}>
+      <div className="overflow-hidden rounded-xl border border-white/10 bg-[#0b0d15] shadow-[0_30px_70px_-22px_rgba(10,25,75,0.6)]">
         <WinBar title="AteFlo — 글쓰기" dark />
-        <div className="flex h-[300px]">
+        <div className="flex h-[284px]">
           <div className="hidden w-[38%] shrink-0 flex-col border-r border-white/8 p-2.5 sm:flex">
             <p className="px-1.5 text-[9.5px] font-semibold uppercase tracking-wide text-white/30">내 글</p>
             <div className="mt-1.5 space-y-0.5">
@@ -550,16 +629,16 @@ function AteFloGen() {
               <p className="font-bold text-[#8ab4ff]">1. 등기부등본 확인하기</p>
               <p>소유자와 임대인이 같은지, 신탁 등기는 없는지 대조합니다.</p>
               <p className="font-bold text-[#8ab4ff]">2. 전입신고·확정일자</p>
-              <p>잔금 당일 신청해 대항력과 우선변제권을 함께 확보해요.<span className="ml-px inline-block h-3 w-0.5 animate-pulse bg-[#6a8bff] align-middle" /></p>
+              <p>{body}<span className="ml-px inline-block h-3 w-0.5 animate-pulse bg-[#6a8bff] align-middle" /></p>
             </div>
           </div>
         </div>
         <div className="flex items-center justify-between border-t border-white/8 px-3.5 py-2 text-[9.5px]">
           <span className="text-white/35">키워드·메타설명·검색의도 <span className="text-emerald-400">✓ 자동 최적화</span></span>
-          <span className="rounded bg-emerald-500/15 px-2 py-0.5 font-semibold text-emerald-300">워드프레스 발행됨</span>
+          <span className={`rounded px-2 py-0.5 font-semibold transition-colors duration-500 ${done ? "bg-emerald-500/20 text-emerald-300" : "bg-white/8 text-white/45"}`}>{done ? "워드프레스 발행됨" : "작성 중…"}</span>
         </div>
       </div>
-    </div>
+    </DesktopFrame>
   );
 }
 
