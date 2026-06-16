@@ -491,7 +491,7 @@ function RivalChat() {
       <div className="flex h-[300px] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white">
         <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-2.5">
           <div className="flex items-center gap-2"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-neutral-300 text-[10px] text-white">AI</span><span className="text-[12px] font-semibold text-neutral-500">타사 AI · 대화</span></div>
-          <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-400">🔁 4번째 수정</span>
+          <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-semibold text-neutral-400">수정 4회째</span>
         </div>
         <div className="flex min-h-0 flex-1">
           <div className="hidden w-14 shrink-0 flex-col gap-2 border-r border-neutral-100 p-2.5 sm:flex">
@@ -534,11 +534,11 @@ function AteFloGen() {
           <AnimatePresence mode="wait">
             {p < 2 ? (
               <motion.div key="kw" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}>
-                <p className="text-[11px] font-bold text-white/60">🔥 추천 키워드 — 누르면 끝</p>
+                <p className="text-[11px] font-semibold text-white/55">추천 키워드</p>
                 <div className="mt-2 space-y-1.5">
                   {KW.map((r, i) => (
                     <div key={r.k} className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 transition-colors duration-300 ${i === 0 && p === 1 ? "border-[#6a8bff] bg-[#6a8bff]/15" : "border-white/8 bg-white/[0.03]"}`}>
-                      <span className="min-w-0 flex-1 truncate text-[11.5px] font-medium text-white/85">{r.k}{r.hot ? " 🔥" : ""}</span>
+                      <span className="min-w-0 flex-1 truncate text-[11.5px] font-medium text-white/85">{r.k}</span>
                       <span className="shrink-0 text-[9px] text-white/35">월 {r.v}</span>
                       <span className={`shrink-0 rounded px-1.5 py-0.5 text-[8px] font-bold ${r.c === "낮음" ? "bg-emerald-400/15 text-emerald-300" : "bg-amber-400/15 text-amber-300"}`}>{r.c}</span>
                     </div>
@@ -571,10 +571,29 @@ function AteFloGen() {
   );
 }
 
+// 교차 행 — 설명 + 목업을 한 행에. from 방향에서 슬라이드 인.
+function FeatureRow({ from, label, title, body, children }: { from: "left" | "right"; label: string; title: React.ReactNode; body: string; children: React.ReactNode }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: from === "left" ? -48 : 48 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      viewport={{ once: true, margin: "-12%" }}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      className={`grid items-center gap-8 sm:grid-cols-2 sm:gap-14 ${from === "right" ? "sm:[&>*:first-child]:order-2" : ""}`}
+    >
+      <div className="text-center sm:text-left">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#3f91ff]">{label}</p>
+        <h3 className="font-pretendard mt-3 text-[1.6rem] font-extrabold leading-[1.18] tracking-tight sm:text-[2.1rem]" style={{ wordBreak: "keep-all" }}>{title}</h3>
+        <p className="mx-auto mt-3 max-w-md text-[14px] leading-relaxed text-neutral-500 sm:mx-0 sm:text-[15px]" style={{ wordBreak: "keep-all" }}>{body}</p>
+      </div>
+      <div>{children}</div>
+    </motion.div>
+  );
+}
+
 export default function StartLanding() {
   const [willing, setWilling] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false); // 헤더: 맨 위=투명, 스크롤 시 흰 바
-  const [view, setView] = useState<"gpt" | "ateflo">("ateflo"); // 2섹션 모바일 비교 토글
   const signupRef = useRef<HTMLDivElement>(null);
   const toSignup = () => signupRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
 
@@ -631,24 +650,16 @@ export default function StartLanding() {
               <Reveal delay={60}><h2 className="font-pretendard mt-4 text-[1.9rem] font-extrabold leading-[1.18] tracking-tight sm:text-5xl" style={{ wordBreak: "keep-all" }}>쓰는 건 누구나.<br /><span className="text-[#3f91ff]">검색에 걸리게 쓰는 건 다릅니다.</span></h2></Reveal>
               <Reveal delay={110}><p className="mx-auto mt-4 max-w-lg text-[14px] leading-relaxed text-neutral-500" style={{ wordBreak: "keep-all" }}>AI한테 시키면 답은 나와요. 그런데 고치고 또 고치고… 복붙해서 발행하는 건 결국 내 몫이죠.</p></Reveal>
             </div>
-            {/* 데스크톱: 양쪽 비교(애니메이션) */}
-            <Reveal delay={80}><div className="mt-12 hidden gap-5 sm:grid sm:grid-cols-2"><RivalChat /><AteFloGen /></div></Reveal>
-            {/* 모바일: 세로 나열 X → 토글로 전환 비교 */}
-            <div className="mt-10 sm:hidden">
-              <div className="mx-auto flex max-w-[280px] rounded-full border border-neutral-200 bg-neutral-50 p-1">
-                {([["gpt", "타사 AI"], ["ateflo", "AteFlo"]] as const).map(([k, l]) => (
-                  <button key={k} onClick={() => setView(k)} className={`flex-1 rounded-full px-3 py-2 text-[13px] font-semibold transition active:scale-95 ${view === k ? (k === "ateflo" ? "bg-[#3f91ff] text-white" : "bg-neutral-900 text-white") : "text-neutral-500"}`}>{l}</button>
-                ))}
-              </div>
-              <div className="mt-4">
-                <AnimatePresence mode="wait">
-                  <motion.div key={view} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.25 }}>
-                    {view === "gpt" ? <RivalChat /> : <AteFloGen />}
-                  </motion.div>
-                </AnimatePresence>
-              </div>
+            {/* 교차 행 — 설명+목업, 좌→우 번갈아 슬라이드 인 */}
+            <div className="mt-16 flex flex-col gap-20 sm:mt-20 sm:gap-28">
+              <FeatureRow from="left" label="다른 AI로 쓰면" title={<>답은 나와도,<br />끝이 없습니다</>} body="더 길게, 표도 넣고, 자연스럽게… 고치고 또 고쳐요. 복붙해서 발행하는 것도 결국 내 몫이고요.">
+                <RivalChat />
+              </FeatureRow>
+              <FeatureRow from="right" label="AteFlo는" title={<>키워드 선택 한 번,<br />발행까지</>} body="검색 의도에 맞춘 구조로 글을 완성하고, 워드프레스에 바로 발행해요. 프롬프트도, 복붙도 없습니다.">
+                <AteFloGen />
+              </FeatureRow>
             </div>
-            <Reveal delay={140}><p className="mt-10 text-center text-[15px] font-semibold leading-relaxed text-neutral-700" style={{ wordBreak: "keep-all" }}>AI는 답을 쓰고, <span className="text-[#2f7fe6]">AteFlo는 버튼 한 번으로 검색에 걸리도록 설계된 글을 발행</span>합니다.</p></Reveal>
+            <Reveal delay={120}><p className="mt-20 text-center text-[15px] font-semibold leading-relaxed text-neutral-700" style={{ wordBreak: "keep-all" }}>AI는 답을 쓰고, <span className="text-[#2f7fe6]">AteFlo는 검색에 걸리도록 설계된 글을 발행</span>합니다.</p></Reveal>
           </div>
         </section>
 
