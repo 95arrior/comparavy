@@ -251,7 +251,8 @@ const STEPS = [
   { no: "04", tag: "수익화", title: <>글이 쌓이고,<br />수익으로.</>, before: "검색에 안 잡힘", after: "검색 유입 ↑", nav: 3, url: "ateflo.com/insight", Screen: SceneEarn },
 ];
 
-const MARQUEE = ["전세 사기 예방법", "1억으로 갭투자", "강아지 분리불안 해결", "제주 3박4일 코스", "연말정산 환급 받기", "초보 주식 시작법", "다이어트 식단표", "노션 템플릿 추천"];
+// 1섹션 아래 마퀴 = AI가 써낸 글 제목들(품질·분야 다양성 증명)
+const MARQUEE = ["전세 사기 100% 막는 법", "1억으로 시작하는 갭투자", "강아지 분리불안 해결 7가지", "제주 3박4일 완벽 코스", "연말정산 13월의 월급 만들기", "초보 주식 첫 매수 가이드", "일주일 다이어트 식단표", "원룸 인테리어 비포·애프터", "캠핑 초보 장비 체크리스트", "아이랑 가볼 만한 실내 명소"];
 
 function Chapter({ tint = false, children }: { tint?: boolean; children: React.ReactNode }) {
   return <section className={`flex min-h-[88vh] flex-col items-center justify-center px-6 py-20 ${tint ? "bg-[#f3f7ff]" : "bg-white"}`}><div className="mx-auto w-full max-w-5xl">{children}</div></section>;
@@ -414,8 +415,8 @@ function BuilderDemo() {
               </motion.div>
             )}
             {group === "write" && (
-              <motion.div key="wr" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="flex h-full flex-col">
-                <p className="text-[12px] font-bold text-white/80">✍️ ‘전세 사기 예방법’ 글 작성 중…</p>
+              <motion.div key="wr" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="relative flex h-full flex-col">
+                <p className="text-[12px] font-bold text-white/80">{art.length >= BODY.length ? "✅ ‘전세 사기 예방법’ 발행 완료" : "✍️ ‘전세 사기 예방법’ 글 작성 중…"}</p>
                 <div className="mt-2.5 flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/8 bg-white/[0.03] p-4">
                   <p className="text-[13.5px] font-extrabold text-white">전세 사기, 이렇게 막으세요</p>
                   {/* 상단 고정(초반 또렷) + 하단만 페이드 → '아래로 계속 써졌다' 표현 */}
@@ -423,12 +424,16 @@ function BuilderDemo() {
                     <p className="whitespace-pre-line text-[11.5px] leading-[1.7] text-white/65">{art}<span className="ml-px inline-block h-3 w-0.5 animate-pulse bg-cyan-300 align-middle" /></p>
                   </div>
                 </div>
-                {art.length >= BODY.length && (
-                  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-2.5 flex items-center gap-2.5 rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-3.5 py-2.5">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg></span>
-                    <p className="text-[12.5px] font-bold text-emerald-300">블로그에 발행 완료 🎉</p>
-                  </motion.div>
-                )}
+                {/* 발행 완료 = 상단 플로팅 토스트(실제 앱처럼) */}
+                <AnimatePresence>
+                  {art.length >= BODY.length && (
+                    <motion.div initial={{ opacity: 0, y: -12, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0 }} transition={{ type: "spring", stiffness: 300, damping: 22 }} className="absolute left-1/2 top-9 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full border border-emerald-400/30 bg-[#0c2018]/90 px-4 py-2 shadow-[0_10px_34px_-8px_rgba(16,185,129,0.55)] backdrop-blur">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg></span>
+                      <span className="text-[12px] font-bold text-emerald-300">워드프레스에 발행됐어요</span>
+                      <span className="text-[11px] text-white/40">· 보러가기 ↗</span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
             )}
           </AnimatePresence>
@@ -475,10 +480,10 @@ export default function StartLanding() {
           <motion.div style={{ y: heroMockY }} className="relative z-10 mt-9 w-full max-w-2xl"><BuilderDemo /></motion.div>
         </section>
 
-        {/* 키워드 마퀴 */}
+        {/* 마퀴 — AI가 써낸 글 제목들 */}
         <div className="overflow-hidden border-y border-neutral-100 bg-white py-5">
-          <motion.div className="flex w-max gap-3 whitespace-nowrap" animate={{ x: ["0%", "-50%"] }} transition={{ duration: 24, repeat: Infinity, ease: "linear" }}>
-            {[...MARQUEE, ...MARQUEE].map((k, i) => <span key={i} className="rounded-full border border-neutral-200 px-4 py-2 text-sm text-neutral-500">{k}</span>)}
+          <motion.div className="flex w-max gap-3 whitespace-nowrap" style={{ willChange: "transform" }} animate={{ x: ["0%", "-50%"] }} transition={{ duration: 30, repeat: Infinity, ease: "linear" }}>
+            {[...MARQUEE, ...MARQUEE].map((k, i) => <span key={i} className="flex items-center gap-1.5 rounded-full border border-neutral-200 px-4 py-2 text-sm text-neutral-500"><span className="text-[#3f91ff]">✍️</span>{k}</span>)}
           </motion.div>
         </div>
 
