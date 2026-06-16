@@ -485,30 +485,7 @@ function BuilderDemo() {
 const WILLING = [{ k: "yes", label: "네, 바로 충전할래요" }, { k: "maybe", label: "무료부터 써볼래요" }, { k: "pricey", label: "가격이 부담돼요" }];
 
 // 타사 AI — 끝없이 길어지는 대화(찐 채팅 화면, 애니메이션)
-function AiMsg() {
-  return (
-    <div className="max-w-[90%] rounded-2xl rounded-bl-md bg-neutral-100 px-3.5 py-3">
-      <div className="space-y-2">
-        <div className="h-1.5 w-full rounded-full bg-neutral-200" />
-        <div className="h-1.5 w-full rounded-full bg-neutral-200" />
-        <div className="h-1.5 w-[88%] rounded-full bg-neutral-200" />
-        <div className="h-1.5 w-[64%] rounded-full bg-neutral-200" />
-      </div>
-    </div>
-  );
-}
 function RivalChat() {
-  const TURNS: { who: "u" | "a" | "typing"; t?: string }[] = [
-    { who: "u", t: "전세사기 예방법 블로그 SEO 글 써줘" }, { who: "a" },
-    { who: "u", t: "도입부 더 길게, 표도 넣어줘" }, { who: "typing" },
-  ];
-  const [n, setN] = useState(1);
-  useEffect(() => {
-    const t: ReturnType<typeof setTimeout>[] = [];
-    const run = () => { setN(1); for (let i = 2; i <= TURNS.length; i++) t.push(setTimeout(() => setN(i), (i - 1) * 1300)); t.push(setTimeout(run, TURNS.length * 1300 + 2000)); };
-    run(); return () => t.forEach(clearTimeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
   return (
     <div className="flex flex-col rounded-3xl border border-neutral-200 bg-neutral-50 p-4 sm:p-5">
       <div className="flex h-[300px] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white">
@@ -521,15 +498,14 @@ function RivalChat() {
             <div className="flex h-6 items-center justify-center rounded-md bg-neutral-100 text-[13px] text-neutral-400">＋</div>
             {[80, 64, 72, 56].map((w, i) => <div key={i} className="h-1.5 rounded-full bg-neutral-100" style={{ width: `${w}%` }} />)}
           </div>
-          {/* 고정 프레임 안에서 메시지가 흐름(아래 정렬+오버플로 숨김) → 안 늘어나고 움직임 */}
+          {/* 고정 대화 — 진짜 답변 텍스트 + 타이핑(끊김 없이) */}
           <div className="flex min-h-0 flex-1 flex-col justify-end gap-2 overflow-hidden p-3">
-            {TURNS.slice(0, n).map((m, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className={m.who === "u" ? "max-w-[85%] self-end" : "self-start"}>
-                {m.who === "u" ? <div className="rounded-2xl rounded-br-md bg-neutral-900 px-3 py-2 text-[11px] text-white">{m.t}</div>
-                  : m.who === "typing" ? <div className="flex items-center gap-1.5 rounded-2xl rounded-bl-md bg-neutral-50 px-3 py-2.5">{[0, 1, 2].map((j) => <span key={j} className="h-1.5 w-1.5 animate-pulse rounded-full bg-neutral-400" style={{ animationDelay: `${j * 0.2}s` }} />)}</div>
-                    : <AiMsg />}
-              </motion.div>
-            ))}
+            <div className="max-w-[85%] self-end rounded-2xl rounded-br-md bg-neutral-900 px-3 py-2 text-[11px] text-white">전세사기 예방법 블로그 SEO 글 써줘</div>
+            <div className="max-w-[92%] self-start rounded-2xl rounded-bl-md bg-neutral-100 px-3.5 py-2.5 text-[11px] leading-relaxed text-neutral-500">전세사기 예방 SEO 글로 정리했어요. 핵심 키워드는 ‘전세사기 예방법·전세보증보험·등기부등본 확인’ 중심으로 잡았습니다.</div>
+            <div className="max-w-[85%] self-end rounded-2xl rounded-br-md bg-neutral-900 px-3 py-2 text-[11px] text-white">도입부 더 길게, 표도 넣어줘</div>
+            <div className="flex items-center gap-1.5 self-start rounded-2xl rounded-bl-md bg-neutral-100 px-3.5 py-3">
+              {[0, 1, 2].map((j) => <span key={j} className="h-1.5 w-1.5 animate-bounce rounded-full bg-neutral-400" style={{ animationDelay: `${j * 0.15}s` }} />)}
+            </div>
           </div>
         </div>
       </div>
