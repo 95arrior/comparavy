@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 
-/** 사전 등록 이메일 폼. 등록되면 체크 + 메시지로 전환(톡 등장). */
-export default function WaitlistForm({ source = "landing", autoFocus = false }: { source?: string; autoFocus?: boolean }) {
+/** 사전 등록 이메일 폼. 등록되면 체크 + 메시지로 전환(톡 등장). extra=함께 저장할 검증 데이터(예: 막힌 단계). */
+export default function WaitlistForm({ source = "landing", autoFocus = false, extra }: { source?: string; autoFocus?: boolean; extra?: Record<string, unknown> }) {
   const [email, setEmail] = useState("");
   const [state, setState] = useState<"idle" | "loading" | "done">("idle");
   const [already, setAlready] = useState(false);
@@ -31,7 +31,7 @@ export default function WaitlistForm({ source = "landing", autoFocus = false }: 
       const res = await fetch("/api/waitlist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: v, source: finalSource }),
+        body: JSON.stringify({ email: v, source: finalSource, ...(extra && Object.keys(extra).length ? { diagnosis: extra } : {}) }),
       });
       if (res.ok) {
         const d = await res.json().catch(() => ({}));

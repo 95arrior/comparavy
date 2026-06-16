@@ -13,6 +13,7 @@ import LandingNav from "@/components/LandingNav";
 import ServiceIntro from "@/components/ServiceIntro";
 import LandingIntro from "@/components/LandingIntro";
 import WaitlistLanding from "@/components/WaitlistLanding";
+import CreditLanding from "@/components/CreditLanding";
 import ConstructionScreen from "@/components/ConstructionScreen";
 import SiteFooter from "@/components/SiteFooter";
 import DashboardClient from "@/components/dashboard/DashboardClient";
@@ -79,9 +80,10 @@ export default async function Home() {
     );
   }
 
-  // 출시 전 잠금: 비로그인 방문자는 사전 등록(웨이트리스트) 랜딩만
+  // 출시 전 잠금: 비로그인 방문자는 검증 랜딩(크레딧 방향) — 수요 확인용 사전 등록.
+  // (이전 WaitlistLanding은 보존 — 롤백 시 이 줄만 되돌리면 됨)
   if (prelaunch) {
-    return <WaitlistLanding introSeen={introSeen} />;
+    return <CreditLanding introSeen={introSeen} />;
   }
 
   // 비로그인 → 마케팅 랜딩
