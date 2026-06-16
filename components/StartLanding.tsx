@@ -276,17 +276,17 @@ function ParallaxMock({ children }: { children: React.ReactNode }) {
 
 /* ════ 비비드 오로라 (계속 움직임) ════ */
 function VibrantAurora() {
+  // 부드럽게: scale 애니 제거(blur 재래스터로 인한 끊김 방지) + 작은 이동범위 + 느린 주기 + GPU 합성
   const blob = (cls: string, anim: TargetAndTransition, dur: number) => (
-    <motion.div animate={anim} transition={{ duration: dur, repeat: Infinity, ease: "easeInOut" }} className={`absolute rounded-full blur-[100px] ${cls}`} />
+    <motion.div animate={anim} transition={{ duration: dur, repeat: Infinity, ease: "easeInOut" }} style={{ willChange: "transform" }} className={`absolute rounded-full blur-[90px] ${cls}`} />
   );
   return (
     <div className="absolute inset-0 z-0 overflow-hidden bg-[#05060c]">
-      {/* 에메랄드·틸·블루·퍼플 빛이 막 요동치게 (4지점 키프레임 + 스케일 변동) */}
-      {blob("left-[12%] bottom-[6%] h-[34rem] w-[34rem] bg-[#10b981]/55", { x: [0, 160, -40, 0], y: [0, -80, 40, 0], scale: [1, 1.25, 0.95, 1] }, 13)}
-      {blob("right-[8%] bottom-[14%] h-[32rem] w-[32rem] bg-[#22d3ee]/55", { x: [0, -150, 60, 0], y: [0, 60, -60, 0], scale: [1.1, 0.9, 1.2, 1.1] }, 15)}
-      {blob("left-1/2 top-[28%] h-[30rem] w-[30rem] -translate-x-1/2 bg-[#3b82f6]/50", { x: [0, 110, -90, 0], y: [0, -60, 70, 0], scale: [1, 1.15, 1, 1] }, 12)}
-      {blob("right-[24%] top-[16%] h-[28rem] w-[28rem] bg-[#8b5cf6]/45", { x: [0, -100, 80, 0], y: [0, 80, -50, 0], scale: [1, 1.2, 1, 1] }, 16)}
-      {blob("left-[22%] top-[42%] h-[24rem] w-[24rem] bg-[#2dd4bf]/40", { x: [0, 130, -30, 0], y: [0, -50, 30, 0] }, 11)}
+      {blob("left-[14%] bottom-[8%] h-[32rem] w-[32rem] bg-[#10b981]/50", { x: [0, 70, 0], y: [0, -45, 0] }, 22)}
+      {blob("right-[10%] bottom-[16%] h-[30rem] w-[30rem] bg-[#22d3ee]/50", { x: [0, -60, 0], y: [0, 40, 0] }, 26)}
+      {blob("left-1/2 top-[26%] h-[28rem] w-[28rem] -translate-x-1/2 bg-[#3b82f6]/45", { x: [0, 55, 0], y: [0, -35, 0] }, 20)}
+      {blob("right-[26%] top-[14%] h-[26rem] w-[26rem] bg-[#8b5cf6]/40", { x: [0, -50, 0], y: [0, 45, 0] }, 24)}
+      {blob("left-[24%] top-[44%] h-[22rem] w-[22rem] bg-[#2dd4bf]/35", { x: [0, 60, 0], y: [0, -30, 0] }, 19)}
       <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[#05060c] to-transparent" />
       <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-b from-transparent to-[#05060c]" />
     </div>
@@ -301,12 +301,12 @@ function BuilderDemo() {
   const [p, setP] = useState(0); // 0타이핑 1리스트 2선택 3생성완료 4데이터 5클릭 6글발행
   const [typed, setTyped] = useState("");
   const [art, setArt] = useState(""); // 실제 글 타이핑
-  const BODY = "전세 계약 전, 등기부등본부터 확인하세요. ‘을구’에 근저당이 과도하게 잡혀 있다면 보증금을 떼일 위험이 큽니다.\n\n잔금 치르는 날, 전입신고와 확정일자를 같은 날 신청하면 대항력이 생깁니다. 여기에 전세보증보험까지 가입하면, 집주인이 보증금을 돌려주지 못해도 안전하게 돌려받을 수 있어요.";
-  // 글 작성 단계(p=6)에서 실제 본문을 타이핑
+  const BODY = "전세 계약 전, 등기부등본부터 확인하세요. ‘을구’에 근저당이 과도하게 잡혀 있다면 보증금을 떼일 위험이 큽니다. 시세 대비 전세가율이 80%를 넘는 매물이라면 특히 신중해야 해요.\n\n계약할 땐 등기부상 소유자와 임대인이 같은 사람인지, 신탁 등기가 걸려 있진 않은지 꼭 대조하세요. 잔금 치르는 날엔 전입신고와 확정일자를 같은 날 신청해 대항력과 우선변제권을 함께 확보합니다.\n\n여기에 전세보증보험까지 가입하면, 집주인이 보증금을 돌려주지 못해도 보증기관에서 안전하게 돌려받을 수 있어요.";
+  // 글 작성 단계(p=6)에서 실제 본문을 한 글자씩 부드럽게 타이핑
   useEffect(() => {
     if (p !== 6) { setArt(""); return; }
     let i = 0;
-    const id = setInterval(() => { i += 2; setArt(BODY.slice(0, i)); if (i >= BODY.length) clearInterval(id); }, 32);
+    const id = setInterval(() => { i += 1; setArt(BODY.slice(0, i)); if (i >= BODY.length) clearInterval(id); }, 26);
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [p]);
@@ -322,7 +322,7 @@ function BuilderDemo() {
       t.push(setTimeout(() => setP(4), 6100));
       t.push(setTimeout(() => setP(5), 7700));
       t.push(setTimeout(() => setP(6), 8600));
-      t.push(setTimeout(run, 15500));
+      t.push(setTimeout(run, 18500));
     };
     run();
     return () => t.forEach(clearTimeout);
@@ -392,7 +392,7 @@ function BuilderDemo() {
                 <div className="mt-2.5 flex gap-2.5">
                   <div className="flex w-3/5 flex-col gap-1">
                     {KW.map((r, i) => (
-                      <motion.div key={r.k} initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ delay: i * 0.06, type: "spring", stiffness: 320, damping: 22 }} className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 transition ${i === 0 && p === 5 ? "border-[#6a8bff] bg-[#6a8bff]/15" : "border-white/8 bg-white/[0.03]"}`}>
+                      <motion.div key={r.k} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06, duration: 0.42, ease: [0.22, 1, 0.36, 1] }} className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 transition ${i === 0 && p === 5 ? "border-[#6a8bff] bg-[#6a8bff]/15" : "border-white/8 bg-white/[0.03]"}`}>
                         <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-white/85">{r.k}{r.hot && " 🔥"}</span>
                         {i === 0 && p === 5 ? <span className="shrink-0 rounded bg-[#5a8bff] px-1.5 py-0.5 text-[9px] font-bold text-white">글 생성 ›</span> : <><span className="shrink-0 text-[9px] text-white/35">월 {r.v}</span><span className={`shrink-0 rounded px-1.5 py-0.5 text-[8px] font-bold ${r.c === "낮음" ? "bg-emerald-400/15 text-emerald-300" : "bg-amber-400/15 text-amber-300"}`}>{r.c}</span></>}
                       </motion.div>
