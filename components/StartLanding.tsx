@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect } from "react";
 import { motion, AnimatePresence, useScroll, useTransform, type TargetAndTransition } from "framer-motion";
 import { ReactLenis } from "lenis/react";
+import dynamic from "next/dynamic";
 import Brand from "@/components/Brand";
 import SiteFooter from "@/components/SiteFooter";
 import WaitlistForm from "@/components/WaitlistForm";
@@ -10,6 +11,12 @@ import Reveal from "@/components/Reveal";
 import CountUp from "@/components/CountUp";
 
 const ACCENT = "#3f91ff";
+
+// 3D 인트로는 클라이언트 전용(three) — SSR 끄고 로드 전엔 어두운 화면
+const PacmanIntro3D = dynamic(() => import("@/components/PacmanIntro3D"), {
+  ssr: false,
+  loading: () => <div className="fixed inset-0 z-[100] bg-[#050609]" />,
+});
 
 /* ════ 시네마틱 인트로 — 거대한 크롬 팩맨이 어둠 속에서 빛 스윕으로 드러남 ════ */
 function PacmanIntro() {
@@ -498,7 +505,7 @@ export default function StartLanding() {
 
   return (
     <ReactLenis root options={{ lerp: 0.09, smoothWheel: true }}>
-      <PacmanIntro />
+      <PacmanIntro3D />
       <div className="min-h-screen bg-white text-neutral-900 antialiased">
         <header className="fixed inset-x-0 top-0 z-50 border-b border-neutral-200/40 bg-white/70 backdrop-blur">
           <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3.5">
