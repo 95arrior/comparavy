@@ -8,6 +8,7 @@ import SiteFooter from "@/components/SiteFooter";
 import WaitlistForm from "@/components/WaitlistForm";
 import Reveal from "@/components/Reveal";
 import CountUp from "@/components/CountUp";
+import AteFloLogo from "@/components/AteFloLogo";
 
 const ACCENT = "#3f91ff";
 
@@ -332,150 +333,261 @@ function VibrantAurora() {
 
 /* ════ AI 빌더 데모 (다크 글래스 윈도우) ════ */
 function ArrowUp() { return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>; }
+// 히어로 데모 — 사이드바가 있는 앱 윈도우 안에서 자체 연출(실제 화면 복사 아님, 비즈니스 톤).
+// 흐름: 분야 선택 → 트렌드·키워드 분석(자비스풍) → SEO 최적화 글 생성 → 워드프레스 원클릭 발행 → 스케줄 현황.
+function CheckSvg({ size = 14 }: { size?: number }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>;
+}
+const HERO_SUBS = ["전체", "주식", "절약", "연금", "대출", "부동산"];
+// 키워드 기회 — 월 검색수 v · 경쟁도 c · 현재 이 키워드를 쓰는 인원 u · 추세 up
+const HERO_KW = [
+  { k: "전세 사기 예방법", v: "12,400", c: "낮음", u: 3, up: "38%" },
+  { k: "1억으로 갭투자", v: "8,400", c: "낮음", u: 5, up: "21%" },
+  { k: "오피스텔 투자 단점", v: "6,900", c: "낮음", u: 4, up: "17%" },
+  { k: "청약 가점 계산기", v: "6,100", c: "보통", u: 9, up: "12%" },
+  { k: "전입신고 하는 법", v: "5,200", c: "낮음", u: 2, up: "9%" },
+  { k: "재건축 안전진단 절차", v: "3,100", c: "보통", u: 11, up: "6%" },
+  { k: "상가 권리금 세금", v: "2,400", c: "낮음", u: 1, up: "14%" },
+];
+const HERO_LIVE = ["분양가상한제 폐지", "오피스텔 규제 완화", "청약통장 해지", "전세보증보험 한도", "재건축 초과이익", "디딤돌 대출 조건", "경매 명도 절차", "상생임대인 혜택"];
+const HERO_OPT = ["검색 의도 분석", "FAQ 구조화 스키마", "한국 구글 SEO 구조", "AI 말투 제거"];
+const HERO_TREND = [38, 44, 41, 50, 47, 56, 62, 58, 70, 76, 84, 95]; // 최근 12주 검색 관심도
+const HERO_CAL: Record<number, "발행됨" | "예약"> = { 2: "발행됨", 4: "발행됨", 6: "발행됨", 9: "발행됨", 11: "예약", 13: "예약", 16: "예약", 18: "예약" };
+const HERO_NEW_DAY = 18; // 방금 예약한 글
+const HERO_BODY = "전세 계약 전, 등기부등본의 ‘을구’부터 확인하세요. 근저당이 과도하게 잡혀 있다면 보증금을 떼일 위험이 큽니다.\n\n잔금 치르는 날엔 전입신고와 확정일자를 같은 날 신청해 대항력과 우선변제권을 함께 확보하세요. 하루만 늦어도 보증금을 지킬 순위가 밀릴 수 있어요.";
+function RailIcon({ active, children }: { active?: boolean; children: React.ReactNode }) {
+  return (
+    <span className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${active ? "bg-[#3f91ff]/15 text-[#8ab4ff]" : "text-white/35"}`}>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{children}</svg>
+    </span>
+  );
+}
 function BuilderDemo() {
-  const CATS = ["주식", "부동산", "절약", "연금", "대출"];
-  const KW = [{ k: "전세 사기 예방법", v: "1.2만", c: "낮음", hot: true }, { k: "1억으로 갭투자", v: "8,400", c: "낮음" }, { k: "청약 가점 계산기", v: "6,100", c: "보통" }, { k: "전입신고 하는 법", v: "5,200", c: "낮음" }, { k: "오피스텔 투자 단점", v: "3,900", c: "낮음" }];
-  const [p, setP] = useState(0); // 0타이핑 1리스트 2선택 3생성완료 4데이터 5클릭 6글발행
+  const [p, setP] = useState(0); // 0타이핑 1드롭다운 2선택 3분석 4키워드선택 5글작성 6발행 7예약 8캘린더
   const [typed, setTyped] = useState("");
-  const [art, setArt] = useState(""); // 실제 글 타이핑
-  const BODY = "전세 계약 전, 등기부등본부터 확인하세요. ‘을구’에 근저당이 과도하게 잡혀 있다면 보증금을 떼일 위험이 큽니다. 시세 대비 전세가율이 80%를 넘는 매물이라면 특히 신중해야 해요.\n\n계약할 땐 등기부상 소유자와 임대인이 같은 사람인지, 신탁 등기가 걸려 있진 않은지 꼭 대조하세요. 잔금 치르는 날엔 전입신고와 확정일자를 같은 날 신청해 대항력과 우선변제권을 함께 확보합니다.\n\n여기에 전세보증보험까지 가입하면, 집주인이 보증금을 돌려주지 못해도 보증기관에서 안전하게 돌려받을 수 있어요.";
-  // 글 작성 단계(p=6)에서 실제 본문을 한 글자씩 부드럽게 타이핑
+  const [art, setArt] = useState("");
+  const [optStep, setOptStep] = useState(0);
+  // 글 작성 단계: 본문을 한 글자씩 타이핑
   useEffect(() => {
-    if (p !== 6) { setArt(""); return; }
+    if (p !== 5) { setArt(""); return; }
     let i = 0;
-    const id = setInterval(() => { i += 1; setArt(BODY.slice(0, i)); if (i >= BODY.length) clearInterval(id); }, 26);
+    const id = setInterval(() => { i += 1; setArt(HERO_BODY.slice(0, i)); if (i >= HERO_BODY.length) clearInterval(id); }, 22);
     return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [p]);
   useEffect(() => {
     const t: ReturnType<typeof setTimeout>[] = [];
+    let cancelled = false;
+    const at = (fn: () => void, ms: number) => t.push(setTimeout(() => { if (!cancelled) fn(); }, ms));
     const run = () => {
-      setP(0); setTyped("");
-      const q = "재테크 블로그 만들기";
-      q.split("").forEach((_, i) => t.push(setTimeout(() => setTyped(q.slice(0, i + 1)), 450 + i * 65)));
-      t.push(setTimeout(() => setP(1), 2150));
-      t.push(setTimeout(() => setP(2), 3450));
-      t.push(setTimeout(() => setP(3), 4250));
-      t.push(setTimeout(() => setP(4), 6100));
-      t.push(setTimeout(() => setP(5), 7700));
-      t.push(setTimeout(() => setP(6), 8600));
-      t.push(setTimeout(run, 18500));
+      setP(0); setTyped(""); setArt(""); setOptStep(0);
+      "재테크".split("").forEach((_, i) => at(() => setTyped("재테크".slice(0, i + 1)), 400 + i * 200));
+      at(() => setP(1), 1300); // 연관 검색 드롭다운
+      at(() => setP(2), 2400); // 부동산 선택
+      at(() => setP(3), 3300); // 트렌드 분석 대시보드
+      at(() => setP(4), 5600); // 키워드 선택
+      at(() => setP(5), 6600); // 최적화 글 생성
+      [1, 2, 3, 4].forEach((n) => at(() => setOptStep(n), 7400 + (n - 1) * 700));
+      at(() => setP(6), 11400); // 발행 옵션(즉시/예약)
+      at(() => setP(7), 13000); // 발행 예약 선택
+      at(() => setP(8), 14400); // 캘린더로 전환
+      at(run, 19800);
     };
     run();
-    return () => t.forEach(clearTimeout);
+    return () => { cancelled = true; t.forEach(clearTimeout); };
   }, []);
-  const group = p <= 2 ? "in" : p === 3 ? "created" : p <= 5 ? "data" : "write";
+  const scene = p <= 2 ? "pick" : p <= 4 ? "analyze" : p === 5 ? "write" : p <= 7 ? "publish" : "calendar";
+  const rail = p <= 5 ? "lab" : p <= 7 ? "wp" : "sched";
+  // 트렌드 그래프 좌표(0~100 x, 0~30 y)
+  const N = HERO_TREND.length;
+  const linePts = HERO_TREND.map((v, i) => `${((i / (N - 1)) * 100).toFixed(1)},${(30 - (v / 100) * 26).toFixed(1)}`).join(" ");
+  const areaPts = `0,30 ${linePts} 100,30`;
+  // 캘린더 셀(6월, 1일=월요일 → 일요일 시작 오프셋 1)
+  const cells = Array.from({ length: 35 }, (_, i) => { const d = i - 1 + 1; return d >= 1 && d <= 30 ? d : null; });
   return (
-    <div className="relative w-full max-w-2xl">
-      <div className="pointer-events-none absolute -inset-12 -z-10 rounded-[3.5rem] bg-[#6a4bff]/35 blur-[90px]" />
-      <div className="overflow-hidden rounded-2xl border border-white/12 bg-[#0c0e16]/85 shadow-[0_50px_130px_-30px_rgba(0,0,0,0.75)] backdrop-blur-xl">
-        <div className="flex items-center justify-between border-b border-white/8 px-4 py-3">
-          <div className="flex items-center gap-2 text-[12px] font-medium text-white/55">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-[#5a8bff] to-[#a23bff] text-white"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg></span>
-            ateflo · 미리보기
+    <div className="relative w-full max-w-3xl">
+      <div className="pointer-events-none absolute -inset-12 -z-10 rounded-[3.5rem] bg-[#3f91ff]/22 blur-[90px]" />
+      <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0b0d15] shadow-[0_50px_130px_-30px_rgba(0,0,0,0.8)]">
+        <WinBar title="ateflo.com · 연구소" dark />
+        <div className="flex h-[440px] bg-[#0b0d15]">
+          {/* 좌측 아이콘 레일 — 연구소 / 워드프레스 / 스케줄 */}
+          <div className="flex w-[56px] shrink-0 flex-col items-center gap-1 border-r border-white/8 bg-[#0b0d15] py-3">
+            <span className="mb-2"><AteFloLogo size={22} animated={false} /></span>
+            <RailIcon active={rail === "lab"}><path d="M9 3h6M10 3v5l-4.5 8a2 2 0 0 0 1.8 3h9.4a2 2 0 0 0 1.8-3L14 8V3" /><path d="M7.5 14h9" /></RailIcon>
+            <RailIcon active={rail === "wp"}><circle cx="12" cy="12" r="9" /><path d="M6.5 9.5l2.3 5.5 3.2-4.5 3.2 4.5 2.3-5.5" /></RailIcon>
+            <RailIcon active={rail === "sched"}><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 9h18M8 2v4M16 2v4" /></RailIcon>
+            <span className="mt-auto flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-[11px] font-medium text-white/80">재</span>
           </div>
-          <span className="text-[11px] text-white/30">Desktop · 1200</span>
-        </div>
-        <div className="relative h-[400px] p-6">
-          <AnimatePresence mode="wait">
-            {group === "in" && (
-              <motion.div key="in" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
-                <p className="text-[12px] font-medium text-white/40">무엇을 만들까요?</p>
-                <div className="relative mt-3">
-                  <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-cyan-400 via-[#5a8bff] to-[#a23bff] opacity-70 blur-[5px]" />
-                  <div className="relative flex items-center gap-3 rounded-2xl border border-white/15 bg-[#11131d] px-4 py-3.5">
-                    <span className="min-w-0 flex-1 text-[14px] text-white">{typed}{p === 0 && <span className="ml-px inline-block h-4 w-0.5 animate-pulse bg-cyan-300 align-middle" />}</span>
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/12 text-white"><ArrowUp /></span>
-                  </div>
-                </div>
-                {p >= 1 && (
-                  <div className="mt-3 space-y-1.5">
-                    {CATS.map((c, i) => (
-                      <motion.div key={c} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.07, duration: 0.4, ease: [0.22, 1, 0.36, 1] }} className={`relative flex items-center rounded-xl border px-3.5 py-2.5 text-[13px] transition-colors duration-300 ${c === "부동산" && p === 2 ? "border-[#6a8bff] bg-[#6a8bff]/15 text-white" : "border-white/8 bg-white/[0.03] text-white/70"}`}>
-                        <span>재테크 <span className="text-white/30">›</span> {c}</span>
-                        {c === "부동산" && <span className={`absolute right-3.5 rounded bg-[#5a8bff] px-1.5 py-0.5 text-[10px] font-bold text-white transition-opacity duration-300 ${p === 2 ? "opacity-100" : "opacity-0"}`}>선택 ›</span>}
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </motion.div>
-            )}
-            {group === "created" && (
-              <motion.div key="cr" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, scale: 0.97 }} transition={{ duration: 0.3 }} className="flex h-full flex-col items-center justify-center text-center">
-                <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 260, damping: 16 }} className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#5a8bff] to-[#a23bff] text-white shadow-[0_0_40px_rgba(106,107,255,0.6)]"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg></motion.span>
-                <p className="mt-5 text-[18px] font-bold text-white">부동산 블로그가 만들어졌습니다!</p>
-                <p className="mt-1.5 text-[12px] text-white/45">우리집부동산.com · 워드프레스 개설 완료</p>
-                <div className="mt-5 w-full max-w-sm space-y-1.5 rounded-xl border border-white/8 bg-white/[0.03] p-3 text-left">
-                  {["홈 · 소개 · 문의 페이지", "검색 최적화 기본 설정", "애드센스 준비 체크리스트"].map((x) => (
-                    <p key={x} className="flex items-center gap-2 text-[11.5px] text-white/55"><span className="text-emerald-400">✓</span>{x}</p>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-            {group === "data" && (
-              <motion.div key="dt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, scale: 0.98 }} transition={{ duration: 0.25 }}>
-                <div className="flex items-center justify-between">
-                  <p className="text-[12px] font-bold text-white/80">📊 부동산 키워드 분석</p>
-                  <span className="rounded-full bg-white/8 px-2 py-0.5 text-[10px] text-white/45">1,240개 분석 완료</span>
-                </div>
-                <div className="mt-2.5 grid grid-cols-3 gap-2">
-                  {([["황금 키워드", "12개", "text-emerald-300"], ["평균 경쟁도", "낮음", "text-cyan-300"], ["예상 월 유입", "8.4K", "text-[#8ab4ff]"]] as const).map(([l, v, c]) => (
-                    <div key={l} className="rounded-lg border border-white/8 bg-white/[0.03] px-2.5 py-1.5">
-                      <p className="text-[9px] text-white/40">{l}</p>
-                      <p className={`text-[14px] font-extrabold ${c}`}>{v}</p>
+          {/* 메인 */}
+          <div className="relative min-w-0 flex-1 overflow-hidden text-white">
+            <AnimatePresence mode="wait">
+              {scene === "pick" && (
+                <motion.div key="pick" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.28 }} className="flex h-full flex-col p-6">
+                  <p className="text-[13px] font-bold text-white">어떤 분야를 분석할까요?</p>
+                  <p className="mt-1 text-[11px] text-white/40">분야만 고르면 트렌드·키워드를 한눈에</p>
+                  <div className="relative mt-3">
+                    <div className={`flex items-center gap-2.5 rounded-xl border px-3.5 py-3 transition ${p < 3 ? "border-[#3f91ff]/60 bg-white/[0.05]" : "border-white/10 bg-white/[0.03]"}`}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-white/30"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
+                      <span className="min-w-0 flex-1 truncate text-left text-[13px] text-white/90">{p < 2 ? typed : "재테크 › 부동산"}{p === 0 && <span className="ml-px inline-block h-4 w-0.5 animate-pulse bg-[#8ab4ff] align-middle" />}</span>
                     </div>
-                  ))}
-                </div>
-                <div className="mt-2.5 flex gap-2.5">
-                  <div className="flex w-3/5 flex-col gap-1">
-                    {KW.map((r, i) => (
-                      <motion.div key={r.k} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06, duration: 0.42, ease: [0.22, 1, 0.36, 1] }} className={`relative flex items-center gap-2 rounded-lg border px-2.5 py-1.5 transition-colors duration-300 ${i === 0 && p === 5 ? "border-[#6a8bff] bg-[#6a8bff]/15" : "border-white/8 bg-white/[0.03]"}`}>
-                        <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-white/85">{r.k}{r.hot && " 🔥"}</span>
-                        {/* 자리 고정 — 지표↔'글 생성' 크로스페이드(폭 변동 없이) */}
-                        <span className={`flex shrink-0 items-center gap-1.5 transition-opacity duration-300 ${i === 0 && p === 5 ? "opacity-0" : "opacity-100"}`}>
-                          <span className="text-[9px] text-white/35">월 {r.v}</span>
-                          <span className={`rounded px-1.5 py-0.5 text-[8px] font-bold ${r.c === "낮음" ? "bg-emerald-400/15 text-emerald-300" : "bg-amber-400/15 text-amber-300"}`}>{r.c}</span>
-                        </span>
-                        {i === 0 && <span className={`absolute right-2.5 shrink-0 rounded bg-[#5a8bff] px-1.5 py-0.5 text-[9px] font-bold text-white transition-opacity duration-300 ${p === 5 ? "opacity-100" : "opacity-0"}`}>글 생성 ›</span>}
-                      </motion.div>
-                    ))}
+                    <AnimatePresence>
+                      {(p === 1 || p === 2) && (
+                        <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.2 }} className="absolute inset-x-0 top-full z-20 mt-1.5 overflow-hidden rounded-xl border border-white/10 bg-[#161922] shadow-[0_18px_40px_-12px_rgba(0,0,0,0.6)]">
+                          {HERO_SUBS.map((s, i) => (
+                            <motion.div key={s} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }} className={`px-3.5 py-2.5 text-left text-[12.5px] ${s === "부동산" && p === 2 ? "bg-[#3f91ff]/15 font-semibold text-[#8ab4ff]" : "text-white/55"}`}>
+                              {s === "전체" ? <><b className="text-white/85">재테크</b> <span className="text-white/35">전체</span></> : <>재테크 <span className="text-white/30">›</span> {s}</>}
+                            </motion.div>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
-                  <div className="flex w-2/5 flex-col gap-2">
-                    <div className="flex flex-1 items-end gap-1 rounded-lg border border-white/8 bg-white/[0.03] p-2">
-                      {[34, 42, 38, 55, 66, 82, 95].map((h, i) => <motion.div key={i} initial={{ height: 0 }} animate={{ height: `${h}%` }} transition={{ delay: 0.25 + i * 0.06 }} className="flex-1 rounded-t" style={{ background: i >= 5 ? "linear-gradient(to top,#22d3ee,#10b981)" : "rgba(120,150,255,0.28)" }} />)}
+                </motion.div>
+              )}
+              {scene === "analyze" && (
+                <motion.div key="an" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, scale: 0.99 }} transition={{ duration: 0.28 }} className="flex h-full flex-col p-4">
+                  <div className="flex items-center gap-2">
+                    <p className="text-[13px] font-bold text-white">부동산 트렌드 분석</p>
+                    <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[9.5px] font-semibold text-emerald-300"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />실시간</span>
+                    <span className="ml-auto flex gap-1.5 text-[9.5px]">
+                      <span className="rounded-md bg-white/[0.04] px-2 py-0.5 text-white/55">선점 가능 <b className="text-[#8ab4ff]">18</b></span>
+                      <span className="rounded-md bg-white/[0.04] px-2 py-0.5 text-white/55">급상승 <b className="text-emerald-300">12</b></span>
+                    </span>
+                  </div>
+                  <div className="mt-2.5 flex min-h-0 flex-1 gap-2.5">
+                    {/* 키워드 기회 테이블 */}
+                    <div className="flex w-[60%] flex-col rounded-xl border border-white/8 bg-white/[0.03] p-2.5">
+                      <p className="px-1 text-[10.5px] font-bold text-white/70">키워드 기회 <span className="font-normal text-white/30">· 좋은 순</span></p>
+                      <div className="mt-1.5 grid grid-cols-[1fr_auto_auto_auto] items-center gap-x-2 px-1 text-[8.5px] font-medium text-white/30">
+                        <span>키워드</span><span className="text-right">월 검색</span><span className="text-center">경쟁</span><span className="text-right">사용중</span>
+                      </div>
+                      <div className="mt-1 space-y-0.5 overflow-hidden">
+                        {HERO_KW.map((r, i) => (
+                          <motion.div key={r.k} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }} className={`relative grid grid-cols-[1fr_auto_auto_auto] items-center gap-x-2 rounded-md px-1 py-1 transition-colors ${i === 0 && p === 4 ? "bg-[#3f91ff]/12 ring-1 ring-[#3f91ff]/30" : ""}`}>
+                            <span className="flex min-w-0 items-center gap-1.5">
+                              <span className="truncate text-[10.5px] font-medium text-white/85">{r.k}</span>
+                              <span className="shrink-0 text-[8px] text-emerald-400">▲{r.up}</span>
+                            </span>
+                            <span className="text-right text-[9.5px] tabular-nums text-white/60">{r.v}</span>
+                            <span className="flex justify-center"><span className={`rounded px-1 py-0.5 text-[8px] font-semibold ${r.c === "낮음" ? "bg-emerald-400/15 text-emerald-300" : "bg-amber-400/15 text-amber-300"}`}>{r.c}</span></span>
+                            <span className={`text-right text-[9px] font-semibold tabular-nums ${r.u <= 4 ? "text-emerald-300" : r.u <= 9 ? "text-white/50" : "text-amber-300"}`}>{r.u}명</span>
+                            {i === 0 && <span className={`absolute right-1 rounded bg-[#3f91ff] px-1.5 py-0.5 text-[8.5px] font-bold text-white transition-opacity ${p === 4 ? "opacity-100" : "opacity-0"}`}>글 생성 →</span>}
+                          </motion.div>
+                        ))}
+                      </div>
                     </div>
-                    <div className="rounded-lg bg-emerald-400/10 px-2.5 py-1.5 text-[10px] font-medium text-emerald-300">🌱 봄 이사철 D-12 · 선점</div>
-                    <div className="rounded-lg bg-cyan-400/10 px-2.5 py-1.5 text-[10px] font-medium text-cyan-300">▲ 검색 상승세 +38%</div>
+                    {/* 우측: 검색 관심도 그래프 + 실시간 인기 검색어 */}
+                    <div className="flex w-[40%] flex-col gap-2.5">
+                      <div className="rounded-xl border border-white/8 bg-white/[0.03] p-2.5">
+                        <div className="flex items-center justify-between">
+                          <p className="text-[9.5px] font-bold text-white/70">검색 관심도</p>
+                          <span className="text-[8.5px] font-semibold text-emerald-300">▲ 32% 지난달</span>
+                        </div>
+                        <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="mt-1.5 h-9 w-full">
+                          <defs><linearGradient id="hgrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#3f91ff" stopOpacity="0.4" /><stop offset="1" stopColor="#3f91ff" stopOpacity="0" /></linearGradient></defs>
+                          <motion.polygon initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }} points={areaPts} fill="url(#hgrad)" />
+                          <motion.polyline initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.9, ease: "easeOut" }} points={linePts} fill="none" stroke="#8ab4ff" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+                        </svg>
+                      </div>
+                      <div className="flex min-h-0 flex-1 flex-col rounded-xl border border-white/8 bg-white/[0.03] p-2.5">
+                        <p className="text-[9.5px] font-bold text-white/70">실시간 인기 검색어</p>
+                        <div className="mt-1 space-y-1 overflow-hidden">
+                          {HERO_LIVE.map((s, i) => (
+                            <motion.div key={s} initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 + i * 0.06 }} className="flex items-center gap-1.5">
+                              <span className={`w-2.5 shrink-0 text-[9px] font-bold ${i < 3 ? "text-[#8ab4ff]" : "text-white/25"}`}>{i + 1}</span>
+                              <span className="min-w-0 flex-1 truncate text-[9.5px] text-white/55">{s}</span>
+                              <span className={`text-[7px] ${i % 4 === 3 ? "text-rose-400" : "text-emerald-400"}`}>{i % 4 === 3 ? "▼" : "▲"}</span>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            )}
-            {group === "write" && (
-              <motion.div key="wr" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="relative flex h-full flex-col">
-                <p className="text-[12px] font-bold text-white/80">{art.length >= BODY.length ? "✅ ‘전세 사기 예방법’ 발행 완료" : "✍️ ‘전세 사기 예방법’ 글 작성 중…"}</p>
-                <div className="mt-2.5 flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/8 bg-white/[0.03] p-4">
-                  <p className="text-[13.5px] font-extrabold text-white">전세 사기, 이렇게 막으세요</p>
-                  {/* 상단 고정(초반 또렷) + 하단만 페이드 → '아래로 계속 써졌다' 표현 */}
-                  <div className="relative mt-2 h-[150px] overflow-hidden" style={{ maskImage: "linear-gradient(to bottom, #000 58%, transparent)", WebkitMaskImage: "linear-gradient(to bottom, #000 58%, transparent)" }}>
-                    <p className="whitespace-pre-line text-[11.5px] leading-[1.7] text-white/65">{art}<span className="ml-px inline-block h-3 w-0.5 animate-pulse bg-cyan-300 align-middle" /></p>
+                </motion.div>
+              )}
+              {scene === "write" && (
+                <motion.div key="wr" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.28 }} className="flex h-full flex-col">
+                  <div className="border-b border-white/8 px-5 py-2.5 text-[11.5px] text-white/45"><b className="font-semibold text-white/70">전세 사기 예방법</b> · 최적화 글 생성 중</div>
+                  <div className="flex min-h-0 flex-1">
+                    <div className="relative min-w-0 flex-1 overflow-hidden border-r border-white/8 px-5 py-4">
+                      <p className="text-[15px] font-extrabold tracking-tight text-white">전세 사기, 이렇게 막으세요</p>
+                      <div className="relative mt-2 h-[200px] overflow-hidden" style={{ maskImage: "linear-gradient(to bottom, #000 58%, transparent)", WebkitMaskImage: "linear-gradient(to bottom, #000 58%, transparent)" }}>
+                        <p className="whitespace-pre-line text-left text-[11.5px] leading-[1.8] text-white/65">{art}<AteFloLogo size={13} className="ml-1 inline-block translate-y-[2px]" /></p>
+                      </div>
+                    </div>
+                    <div className="w-[34%] shrink-0 px-3 py-4">
+                      <p className="text-[10px] font-bold text-white/55">SEO 최적화</p>
+                      <div className="mt-2 space-y-1.5">
+                        {HERO_OPT.map((o, i) => {
+                          const done = optStep > i;
+                          return (
+                            <div key={o} className="flex items-center gap-1.5">
+                              <span className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full transition ${done ? "bg-emerald-500 text-white" : "border border-white/15 text-transparent"}`}><CheckSvg size={8} /></span>
+                              <span className={`text-[9.5px] transition-colors ${done ? "text-white/65" : "text-white/25"}`}>{o}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
-                </div>
-                {/* 발행 완료 = 뒤 글을 블러로 죽이고 가운데 카드로 시선 집중 */}
-                <AnimatePresence>
-                  {art.length >= BODY.length && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }} className="absolute inset-0 z-10 flex items-center justify-center" style={{ backdropFilter: "blur(7px)", WebkitBackdropFilter: "blur(7px)" }}>
-                      <div className="absolute inset-0 bg-[#0a0c14]/60" />
-                      <motion.div initial={{ scale: 0.9, y: 10 }} animate={{ scale: 1, y: 0 }} transition={{ type: "spring", stiffness: 280, damping: 20 }} className="relative flex flex-col items-center rounded-2xl border border-emerald-400/25 bg-[#0c1a16]/80 px-7 py-6 text-center shadow-[0_24px_70px_-12px_rgba(16,185,129,0.5)]">
-                        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 text-white shadow-[0_0_34px_rgba(16,185,129,0.65)]"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg></span>
-                        <p className="mt-3 text-[15px] font-bold text-white">워드프레스에 발행됐어요</p>
-                        <p className="mt-1 text-[11px] text-white/45">우리집부동산.com/전세-사기-예방법 · 보러가기 ↗</p>
-                      </motion.div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                </motion.div>
+              )}
+              {scene === "publish" && (
+                <motion.div key="pub" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, scale: 0.97 }} transition={{ duration: 0.3 }} className="flex h-full flex-col items-center justify-center p-6">
+                  <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", stiffness: 240, damping: 20 }} className="w-full max-w-sm rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+                    <div className="flex items-center gap-2.5">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/8 text-white/55"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M6.5 9.5l2.3 5.5 3.2-4.5 3.2 4.5 2.3-5.5" /></svg></span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[12.5px] font-bold text-white">우리집부동산.com</p>
+                        <p className="flex items-center gap-1 text-[10px] text-emerald-300"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />워드프레스 연결됨</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 rounded-xl border border-white/8 bg-white/[0.02] px-3 py-2.5">
+                      <p className="truncate text-[11.5px] font-semibold text-white/90">전세 사기, 이렇게 막으세요</p>
+                      <p className="mt-0.5 text-[9.5px] text-white/35">SEO·FAQ 스키마 최적화 완료 · 발행 준비됨</p>
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <button className={`rounded-xl border py-2.5 text-[12px] font-semibold transition-colors ${p === 7 ? "border-white/10 bg-white/[0.03] text-white/35" : "border-white/10 bg-white/[0.04] text-white/70"}`}>즉시 발행</button>
+                      <button className={`flex items-center justify-center gap-1.5 rounded-xl border py-2.5 text-[12px] font-semibold transition-colors ${p === 7 ? "border-[#3f91ff] bg-[#3f91ff] text-white" : "border-white/15 bg-white/[0.04] text-white/85"}`}>
+                        {p === 7 ? <><CheckSvg size={13} /> 예약 완료</> : "발행 예약"}
+                      </button>
+                    </div>
+                  </motion.div>
+                  <p className="mt-3 text-[10.5px] text-white/35">{p === 7 ? "캘린더에 추가했어요" : "즉시 발행하거나, 원하는 날짜에 예약하세요"}</p>
+                </motion.div>
+              )}
+              {scene === "calendar" && (
+                <motion.div key="cal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.28 }} className="flex h-full flex-col p-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[13px] font-bold text-white">발행 캘린더</p>
+                    <span className="text-[10.5px] text-white/40">2026년 6월</span>
+                  </div>
+                  <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mt-2.5 flex items-center gap-2 rounded-xl border border-[#3f91ff]/30 bg-[#3f91ff]/10 px-3 py-2">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#3f91ff] text-white"><CheckSvg size={11} /></span>
+                    <p className="text-[11px] text-white/80"><b className="text-[#8ab4ff]">18일(수)</b> · ‘전세 사기 예방법’ 발행 예약 완료</p>
+                  </motion.div>
+                  <div className="mt-2.5 grid grid-cols-7 gap-1 text-center text-[8.5px] font-medium text-white/30">
+                    {["일", "월", "화", "수", "목", "금", "토"].map((w) => <span key={w}>{w}</span>)}
+                  </div>
+                  <div className="mt-1 grid flex-1 grid-cols-7 gap-1">
+                    {cells.map((d, i) => {
+                      const status = d ? HERO_CAL[d] : undefined;
+                      const isNew = d === HERO_NEW_DAY;
+                      return (
+                        <div key={i} className={`flex flex-col items-center rounded-md border p-1 ${isNew ? "border-[#3f91ff] bg-[#3f91ff]/15" : status ? "border-white/8 bg-white/[0.03]" : "border-transparent"}`}>
+                          <span className={`text-[8.5px] ${d ? "text-white/45" : "text-transparent"}`}>{d ?? 0}</span>
+                          {status && <span className={`mt-auto h-1.5 w-1.5 rounded-full ${status === "발행됨" ? "bg-emerald-400" : "bg-[#8ab4ff]"}`} />}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-2 flex items-center justify-center gap-3 text-[9px] text-white/40">
+                    <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />발행됨</span>
+                    <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-[#8ab4ff]" />예약</span>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
     </div>
@@ -484,103 +596,12 @@ function BuilderDemo() {
 
 const WILLING = [{ k: "yes", label: "네, 바로 충전할래요" }, { k: "maybe", label: "무료부터 써볼래요" }, { k: "pricey", label: "가격이 부담돼요" }];
 
-// 타사 AI — 끝없이 길어지는 대화(찐 채팅 화면, 애니메이션)
-// 윈도우 크롬(맥 신호등 + 타이틀)
-// 끝없이 타이핑되는 효과 — 한 글자씩 부드럽게, 다 치면 잠깐 멈췄다 반복
-function useTypewriter(text: string, { speed = 32, startDelay = 600, holdMs = 1700 }: { speed?: number; startDelay?: number; holdMs?: number } = {}) {
-  const [out, setOut] = useState("");
-  useEffect(() => {
-    let i = 0, cancelled = false;
-    let timer: ReturnType<typeof setTimeout>;
-    const tick = () => {
-      if (cancelled) return;
-      if (i <= text.length) { setOut(text.slice(0, i)); i += 1; timer = setTimeout(tick, speed); }
-      else timer = setTimeout(() => { i = 0; tick(); }, holdMs);
-    };
-    timer = setTimeout(tick, startDelay);
-    return () => { cancelled = true; clearTimeout(timer); };
-  }, [text, speed, startDelay, holdMs]);
-  return out;
-}
-
-// 여러 문구를 돌아가며 타이핑 — "계속 고쳐 달라고 하는" 끝없는 요청 연출
-const RIVAL_PROMPTS = ["도입부 더 길게 써줘…", "표도 하나 넣어줘…", "어색한 문장 자연스럽게 고쳐줘…", "메타설명도 만들어줘…", "복사해서 워드프레스에 붙여넣기…"];
-function useTypewriterCycle(phrases: string[], { speed = 50, holdMs = 1100 }: { speed?: number; holdMs?: number } = {}) {
-  const [out, setOut] = useState("");
-  const [idx, setIdx] = useState(0);
-  useEffect(() => {
-    const text = phrases[idx];
-    let i = 0, cancelled = false;
-    let timer: ReturnType<typeof setTimeout>;
-    const tick = () => {
-      if (cancelled) return;
-      if (i <= text.length) { setOut(text.slice(0, i)); i += 1; timer = setTimeout(tick, speed); }
-      else timer = setTimeout(() => { if (!cancelled) setIdx((p) => (p + 1) % phrases.length); }, holdMs);
-    };
-    timer = setTimeout(tick, 350);
-    return () => { cancelled = true; clearTimeout(timer); };
-  }, [idx, phrases, speed, holdMs]);
-  return out;
-}
-
-// 타이핑되는 한 줄(텍스트+커서). 훅을 자식이 소유해 부모 창은 리렌더되지 않음(성능).
-function TypedLine({ text, dark = false, opts }: { text: string; dark?: boolean; opts?: Parameters<typeof useTypewriter>[1] }) {
-  const out = useTypewriter(text, opts);
-  return <>{out}<span className={`ml-px inline-block h-3 w-px shrink-0 animate-pulse align-middle ${dark ? "bg-[#6a8bff] w-0.5" : "bg-neutral-500"}`} /></>;
-}
-
-// 타사 AI 입력창 — 끝없는 수정 요청을 계속 타이핑(자식이 훅 소유).
-function RivalInput() {
-  const typed = useTypewriterCycle(RIVAL_PROMPTS);
-  return (
-    <div className="flex items-center gap-2 border-t border-neutral-100 px-3 py-2">
-      <div className="flex min-w-0 flex-1 items-center rounded-lg bg-neutral-100 px-3 py-1.5 text-[10.5px] text-neutral-500">
-        <span className="truncate">{typed}</span>
-        <span className="ml-px inline-block h-3 w-px shrink-0 animate-pulse bg-neutral-500 align-middle" />
-      </div>
-      <span className="shrink-0 rounded-lg bg-neutral-900 px-2.5 py-1.5 text-[10px] font-medium text-white">전송</span>
-    </div>
-  );
-}
-
-// macOS 데스크탑 — 실제 월페이퍼 + 상단 메뉴바(1:1) 위에 앱 창이 떠 있는 느낌.
-// 성능: blur 필터·backdrop-filter 없이 정적 그라데이션만(스크롤 중 재합성 비용 제거).
-function MenuBar({ appName, menus }: { appName: string; menus: string[] }) {
-  return (
-    <div className="relative z-10 flex h-[26px] items-center justify-between bg-black/25 px-3 text-[11px] leading-none text-white">
-      <div className="flex items-center gap-3.5">
-        <svg width="12" height="14" viewBox="0 0 16 19" fill="currentColor" className="-mt-px"><path d="M13.5 14.7c-.24.55-.52 1.06-.85 1.53-.45.64-.81 1.08-1.09 1.33-.43.4-.9.6-1.4.62-.36 0-.79-.1-1.29-.31-.5-.21-.96-.31-1.38-.31-.44 0-.91.1-1.42.31-.51.21-.92.32-1.24.33-.48.02-.96-.19-1.43-.63-.3-.27-.68-.73-1.13-1.38-.48-.69-.88-1.5-1.19-2.42C.41 12.78.2 11.78.2 10.81c0-1.11.24-2.07.72-2.87a4.23 4.23 0 011.5-1.53 4.04 4.04 0 012.04-.58c.38 0 .88.12 1.5.35.62.23 1.02.35 1.19.35.13 0 .57-.14 1.32-.41.71-.25 1.31-.36 1.8-.32 1.33.11 2.33.63 2.99 1.58-1.19.72-1.78 1.73-1.77 3.02.01 1.01.38 1.85 1.1 2.51.33.31.69.55 1.1.72-.09.26-.18.5-.28.74zM10.6 1.7c0 .83-.3 1.6-.9 2.32-.73.85-1.6 1.34-2.55 1.27a2.56 2.56 0 01-.02-.31c0-.79.35-1.64 1-2.36.32-.36.73-.66 1.23-.9.49-.24.96-.37 1.4-.39.02.13.04.26.04.37z" /></svg>
-        <span className="font-semibold">{appName}</span>
-        {menus.map((m) => <span key={m} className="hidden font-normal text-white/95 sm:inline">{m}</span>)}
-      </div>
-      <div className="flex items-center gap-3 text-white">
-        {/* 배터리 % */}
-        <span className="hidden font-normal text-white/95 sm:inline">98%</span>
-        <svg width="22" height="11" viewBox="0 0 26 12" fill="none"><rect x="0.6" y="0.6" width="21.8" height="10.8" rx="3" stroke="white" strokeOpacity="0.55" /><rect x="2" y="2" width="16.5" height="8" rx="1.6" fill="white" /><path d="M24 4.3c.9.3 1.3 1 1.3 1.7s-.4 1.4-1.3 1.7z" fill="white" fillOpacity="0.55" /></svg>
-        {/* wifi */}
-        <svg width="15" height="11" viewBox="0 0 20 15" fill="none" stroke="white" strokeWidth="1.6" strokeLinecap="round"><path d="M2 5.4a11 11 0 0116 0" /><path d="M4.8 8.1a7 7 0 0110.4 0" /><path d="M7.6 10.8a3 3 0 014.8 0" /><circle cx="10" cy="13" r="0.4" fill="white" stroke="none" /></svg>
-        {/* spotlight */}
-        <svg width="13" height="13" viewBox="0 0 18 18" fill="none" stroke="white" strokeWidth="1.7" strokeLinecap="round" className="hidden sm:block"><circle cx="7.4" cy="7.4" r="5" /><path d="M11.3 11.3 16 16" /></svg>
-        {/* control center */}
-        <svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="white" strokeWidth="1.4" className="hidden sm:block"><rect x="1.6" y="3" width="14.8" height="4.4" rx="2.2" /><rect x="1.6" y="10.6" width="14.8" height="4.4" rx="2.2" /><circle cx="12" cy="5.2" r="1.4" fill="white" /><circle cx="6" cy="12.8" r="1.4" fill="white" /></svg>
-        <span className="font-normal text-white/95">6월 16일 (화) 오후 2:14</span>
-      </div>
-    </div>
-  );
-}
-
-function DesktopFrame({ appName, menus, children }: { appName: string; menus: string[]; children: React.ReactNode }) {
+// 맥 데스크탑 월페이퍼 위에 앱 창. 상단 메뉴바(네비)는 없음. 떠다니는 모션도 없음(정적).
+function DeskFrame({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative overflow-hidden rounded-[20px] shadow-[0_34px_90px_-32px_rgba(15,25,65,0.55)]">
-      {/* 월페이퍼 — 정적 그라데이션만(필터 없음) */}
       <div className="absolute inset-0" style={{ background: "radial-gradient(120% 110% at 80% -10%, #5fb6ff 0%, transparent 48%), radial-gradient(120% 120% at -10% 110%, #ff9d7a 0%, transparent 50%), radial-gradient(110% 110% at 110% 110%, #a06bff 0%, transparent 52%), linear-gradient(160deg,#0a2363 0%,#163b86 50%,#1e57a8 100%)" }} />
-      <MenuBar appName={appName} menus={menus} />
-      {/* 창 — transform만 사용, 자체 합성 레이어로 분리해 월페이퍼 재페인트 방지 */}
-      <div className="relative z-10 px-4 pb-7 pt-3 sm:px-9 sm:pb-9 sm:pt-5">
-        <motion.div animate={{ y: [0, -6, 0] }} transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }} style={{ willChange: "transform" }} className="transform-gpu">
-          {children}
-        </motion.div>
-      </div>
+      <div className="relative z-10 p-5 sm:p-9">{children}</div>
     </div>
   );
 }
@@ -594,73 +615,229 @@ function WinBar({ title, dark = false }: { title: string; dark?: boolean }) {
   );
 }
 
-// 타사 AI — 실제 채팅 앱 스크린샷처럼 (사이드바 + 진짜 대화)
+// 타사 AI — 처음부터 자동 재생되는 무한 대화. 계속 "고쳐줘"가 이어져 끝이 안 남.
+const RIVAL_TURNS: { role: "user" | "ai"; text: string }[] = [
+  { role: "user", text: "전세사기 예방법으로 블로그 SEO 글 써줘" },
+  { role: "ai", text: "전세사기 예방 SEO 글로 정리했어요. ‘전세사기 예방법·전세보증보험·등기부등본 확인’을 핵심 키워드로 잡았습니다." },
+  { role: "user", text: "도입부 더 길게, 표도 하나 넣어줘" },
+  { role: "ai", text: "도입부에 공감 문단을 더하고, 보증금 보호 방법 비교표를 넣었어요." },
+  { role: "user", text: "어색한 문장 자연스럽게 고쳐줘" },
+  { role: "ai", text: "문장을 다듬고 톤을 통일했어요. 다시 확인해 보세요." },
+  { role: "user", text: "제목이랑 메타설명도 만들어줘" },
+  { role: "ai", text: "제목 후보 5개와 메타설명을 만들었어요. 마음에 드는 걸 골라 주세요." },
+  { role: "user", text: "이제 이걸 워드프레스엔 어떻게 올려…?" },
+];
 function RivalChat() {
+  const [shown, setShown] = useState(0); // 보여준 메시지 수
+  const [typing, setTyping] = useState(false); // AI 입력 중(점 3개)
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const t: ReturnType<typeof setTimeout>[] = [];
+    let cancelled = false;
+    const run = () => {
+      setShown(0); setTyping(false);
+      let d = 700;
+      RIVAL_TURNS.forEach((turn, i) => {
+        if (turn.role === "ai") {
+          t.push(setTimeout(() => { if (!cancelled) setTyping(true); }, d));
+          d += 1050;
+          t.push(setTimeout(() => { if (!cancelled) { setTyping(false); setShown(i + 1); } }, d));
+          d += 1450;
+        } else {
+          t.push(setTimeout(() => { if (!cancelled) setShown(i + 1); }, d));
+          d += 1250;
+        }
+      });
+      t.push(setTimeout(() => { if (!cancelled) run(); }, d + 2400));
+    };
+    run();
+    return () => { cancelled = true; t.forEach(clearTimeout); };
+  }, []);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [shown, typing]);
   return (
-    <DesktopFrame appName="AI 어시스턴트" menus={["파일", "편집", "보기", "윈도우", "도움말"]}>
+    <DeskFrame>
       <div className="overflow-hidden rounded-xl border border-black/10 bg-white shadow-[0_30px_70px_-22px_rgba(10,20,45,0.55)]">
         <WinBar title="AI 어시스턴트" />
-        <div className="flex h-[284px]">
-          <div className="hidden w-[36%] shrink-0 flex-col border-r border-neutral-100 bg-neutral-50/70 p-2.5 sm:flex">
+        <div className="flex h-[300px]">
+          <div className="hidden w-[34%] shrink-0 flex-col border-r border-neutral-100 bg-neutral-50/70 p-2.5 sm:flex">
             <div className="rounded-md border border-neutral-200 bg-white px-2 py-1.5 text-center text-[10px] font-medium text-neutral-500">＋ 새 대화</div>
             <div className="mt-2 space-y-0.5">
-              {["전세사기 예방법 블로그", "갭투자 글 초안", "청약 글 다시 써줘", "블로그 제목 30개", "메타설명 작성"].map((t, i) => (
-                <div key={t} className={`truncate rounded-md px-2 py-1.5 text-[10.5px] ${i === 0 ? "bg-neutral-200/70 text-neutral-700" : "text-neutral-400"}`}>{t}</div>
+              {["전세사기 예방법 블로그", "갭투자 글 초안", "청약 글 다시 써줘", "블로그 제목 30개", "메타설명 작성"].map((tt, i) => (
+                <div key={tt} className={`truncate rounded-md px-2 py-1.5 text-[10.5px] ${i === 0 ? "bg-neutral-200/70 text-neutral-700" : "text-neutral-400"}`}>{tt}</div>
               ))}
             </div>
           </div>
-          <div className="flex min-w-0 flex-1 flex-col justify-end gap-2 p-3.5">
-            <div className="max-w-[88%] self-end rounded-2xl rounded-br-md bg-neutral-900 px-3 py-2 text-[11px] leading-relaxed text-white">전세사기 예방법으로 블로그 SEO 글 써줘</div>
-            <div className="max-w-[94%] self-start rounded-2xl rounded-bl-md bg-neutral-100 px-3 py-2.5 text-[11px] leading-relaxed text-neutral-500">전세사기 예방을 위한 SEO 글로 정리했습니다. 핵심 키워드는 ‘전세사기 예방법·전세보증보험·등기부등본 확인’ 중심으로 잡았어요. 도입부와 본문 구조는 아래와 같이…</div>
-            <div className="max-w-[88%] self-end rounded-2xl rounded-br-md bg-neutral-900 px-3 py-2 text-[11px] leading-relaxed text-white">도입부 더 길게, 표도 넣어줘</div>
-            <div className="flex w-fit items-center gap-1.5 self-start rounded-2xl rounded-bl-md bg-neutral-100 px-3 py-2.5">{[0, 1, 2].map((j) => <span key={j} className="h-1.5 w-1.5 animate-bounce rounded-full bg-neutral-400" style={{ animationDelay: `${j * 0.15}s` }} />)}</div>
+          <div ref={scrollRef} className="flex min-w-0 flex-1 flex-col gap-2 overflow-y-auto p-3.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {RIVAL_TURNS.slice(0, shown).map((m, i) => (
+              <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                className={m.role === "user"
+                  ? "max-w-[88%] shrink-0 self-end rounded-2xl rounded-br-md bg-neutral-900 px-3 py-2 text-[11px] leading-relaxed text-white"
+                  : "max-w-[94%] shrink-0 self-start rounded-2xl rounded-bl-md bg-neutral-100 px-3 py-2.5 text-[11px] leading-relaxed text-neutral-500"}>
+                {m.text}
+              </motion.div>
+            ))}
+            {typing && (
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} className="flex w-fit shrink-0 items-center gap-1.5 self-start rounded-2xl rounded-bl-md bg-neutral-100 px-3 py-2.5">
+                {[0, 1, 2].map((j) => <span key={j} className="h-1.5 w-1.5 animate-bounce rounded-full bg-neutral-400" style={{ animationDelay: `${j * 0.15}s` }} />)}
+              </motion.div>
+            )}
           </div>
         </div>
-        {/* 입력창 — 계속 새 요청을 타이핑하는 연출(끝이 없음) */}
-        <RivalInput />
+        {/* 입력창 — 끝없이 또 고쳐달라고 하게 되는 연출 */}
+        <div className="flex items-center gap-2 border-t border-neutral-100 px-3 py-2">
+          <div className="flex min-w-0 flex-1 items-center rounded-lg bg-neutral-100 px-3 py-1.5 text-[10.5px] text-neutral-400">
+            <span className="truncate">또 고칠 게 있으면 말씀하세요…</span>
+          </div>
+          <span className="shrink-0 rounded-lg bg-neutral-900 px-2.5 py-1.5 text-[10px] font-medium text-white">전송</span>
+        </div>
       </div>
-    </DesktopFrame>
+    </DeskFrame>
   );
 }
 
-// AteFlo — 실제 글쓰기 앱 스크린샷처럼 (글 목록 + 진짜 본문 + SEO 상태바)
-const ATE_LAST = "잔금 당일 신청해 대항력과 우선변제권을 함께 확보하세요. 하루만 늦어도 보증금을 지킬 순위가 밀릴 수 있습니다.";
+// AteFlo — "재테크" 타이핑 → 하위분류 드롭다운 → 분석 탭에서 키워드 선택 → 글 자동 작성·발행 (무한 루프)
+const ATE_SUBS = ["전체", "주식", "절약", "연금", "대출", "부동산"];
+const ATE_KWS = [
+  { k: "전세 사기 예방법", v: "1.2만", c: "낮음", hot: true },
+  { k: "1억으로 갭투자", v: "8,400", c: "낮음" },
+  { k: "청약 가점 계산기", v: "6,100", c: "보통" },
+  { k: "전입신고 하는 법", v: "5,200", c: "낮음" },
+];
+const ATE_BODY = "전세 계약 전, 등기부등본의 ‘을구’부터 확인하세요. 근저당이 과도하게 잡혀 있다면 보증금을 떼일 위험이 큽니다.\n\n잔금 치르는 날엔 전입신고와 확정일자를 같은 날 신청해 대항력과 우선변제권을 함께 확보하세요. 하루만 늦어도 보증금을 지킬 순위가 밀릴 수 있습니다.\n\n전세보증보험까지 가입하면, 집주인이 보증금을 못 돌려줘도 보증기관에서 안전하게 돌려받을 수 있어요.";
 function AteFloGen() {
-  const POSTS: [string, string][] = [["전세 사기 예방법 5가지", "발행"], ["1억으로 시작하는 갭투자", "발행"], ["청약 가점 계산법 총정리", "발행"], ["전입신고·확정일자 받는 법", "초안"], ["오피스텔 투자 체크리스트", "초안"]];
+  const [phase, setPhase] = useState(0); // 0타이핑 1드롭다운 2부동산선택 3분석탭 4키워드클릭 5글작성 6발행
+  const [typed, setTyped] = useState("");
+  const [art, setArt] = useState("");
+  // 글 작성 단계에서 본문을 한 글자씩 타이핑
+  useEffect(() => {
+    if (phase < 5) { setArt(""); return; }
+    let i = 0;
+    const id = setInterval(() => { i += 1; setArt(ATE_BODY.slice(0, i)); if (i >= ATE_BODY.length) clearInterval(id); }, 22);
+    return () => clearInterval(id);
+  }, [phase]);
+  useEffect(() => {
+    const t: ReturnType<typeof setTimeout>[] = [];
+    let cancelled = false;
+    const run = () => {
+      setPhase(0); setTyped("");
+      "재테크".split("").forEach((_, i) => t.push(setTimeout(() => { if (!cancelled) setTyped("재테크".slice(0, i + 1)); }, 450 + i * 200)));
+      t.push(setTimeout(() => { if (!cancelled) setPhase(1); }, 1350)); // 하위분류 드롭다운
+      t.push(setTimeout(() => { if (!cancelled) setPhase(2); }, 2500)); // 부동산 하이라이트
+      t.push(setTimeout(() => { if (!cancelled) setPhase(3); }, 3300)); // 분석 탭
+      t.push(setTimeout(() => { if (!cancelled) setPhase(4); }, 5000)); // 키워드 클릭
+      t.push(setTimeout(() => { if (!cancelled) setPhase(5); }, 5900)); // 글 작성 시작
+      t.push(setTimeout(() => { if (!cancelled) setPhase(6); }, 10500)); // 발행 완료
+      t.push(setTimeout(() => { if (!cancelled) run(); }, 14500));
+    };
+    run();
+    return () => { cancelled = true; t.forEach(clearTimeout); };
+  }, []);
+  const bar = phase < 3 ? typed : phase < 5 ? "재테크 › 부동산" : "전세 사기 예방법";
+  const label = phase < 3 ? "어떤 블로그예요?" : phase < 5 ? "부동산 키워드 분석" : art.length >= ATE_BODY.length ? "‘전세 사기 예방법’ 발행 완료" : "‘전세 사기 예방법’ 글 작성 중…";
   return (
-    <DesktopFrame appName="AteFlo" menus={["파일", "편집", "글", "발행"]}>
+    <DeskFrame>
       <div className="overflow-hidden rounded-xl border border-white/10 bg-[#0b0d15] shadow-[0_30px_70px_-22px_rgba(10,25,75,0.6)]">
         <WinBar title="AteFlo — 글쓰기" dark />
-        <div className="flex h-[284px]">
-          <div className="hidden w-[38%] shrink-0 flex-col border-r border-white/8 p-2.5 sm:flex">
-            <p className="px-1.5 text-[9.5px] font-semibold uppercase tracking-wide text-white/30">내 글</p>
-            <div className="mt-1.5 space-y-0.5">
-              {POSTS.map(([t, s], i) => (
-                <div key={t} className={`flex items-center gap-1.5 rounded-md px-2 py-1.5 ${i === 0 ? "bg-white/8" : ""}`}>
-                  <span className={`min-w-0 flex-1 truncate text-[10.5px] ${i === 0 ? "text-white" : "text-white/50"}`}>{t}</span>
-                  <span className={`shrink-0 text-[8px] font-semibold ${s === "발행" ? "text-emerald-400" : "text-white/30"}`}>{s}</span>
-                </div>
-              ))}
+        <div className="flex h-[340px] flex-col p-4">
+          <p className="text-[12px] font-bold text-white/85">{label}</p>
+          {/* 검색 입력 + 하위분류 드롭다운 */}
+          <div className="relative mt-2.5">
+            <div className={`flex items-center gap-2 rounded-xl border bg-white/[0.04] px-3.5 py-2.5 transition-colors ${phase < 3 ? "border-[#6a8bff] ring-2 ring-[#6a8bff]/15" : "border-white/10"}`}>
+              {phase >= 5 && <span className="shrink-0 rounded bg-[#6a8bff]/20 px-1.5 py-0.5 text-[9px] font-bold text-[#8ab4ff]">생성중</span>}
+              <span className="min-w-0 flex-1 truncate text-[12.5px] text-white/85">{bar}</span>
+              {phase === 0 && <span className="inline-block h-4 w-0.5 animate-pulse bg-cyan-300" />}
             </div>
+            <AnimatePresence>
+              {(phase === 1 || phase === 2) && (
+                <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.2 }} className="absolute inset-x-0 top-full z-20 mt-1.5 overflow-hidden rounded-xl border border-white/10 bg-[#161922] shadow-[0_18px_40px_-12px_rgba(0,0,0,0.6)]">
+                  {ATE_SUBS.map((s, i) => (
+                    <motion.div key={s} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }} className={`px-3 py-2 text-[12px] ${s === "부동산" && phase === 2 ? "bg-[#6a8bff]/15 font-semibold text-[#8ab4ff]" : "text-white/60"}`}>
+                      {s === "전체" ? <><b className="text-white/85">재테크</b> <span className="text-white/35">전체</span></> : <>재테크 <span className="text-white/30">›</span> {s}</>}
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-          <div className="min-w-0 flex-1 overflow-hidden p-4">
-            <p className="text-[9.5px] text-white/30">재테크 › 부동산 · SEO 점수 92</p>
-            <p className="mt-1 text-[15px] font-extrabold leading-snug text-white">전세 사기 예방법 5가지</p>
-            <div className="mt-2.5 space-y-2 text-[10.5px] leading-relaxed text-white/55">
-              <p>전세 계약 전, 등기부등본의 ‘을구’부터 확인하세요. 근저당이 과도하면 보증금을 떼일 위험이 큽니다.</p>
-              <p className="font-bold text-[#8ab4ff]">1. 등기부등본 확인하기</p>
-              <p>소유자와 임대인이 같은지, 신탁 등기는 없는지 대조합니다.</p>
-              <p className="font-bold text-[#8ab4ff]">2. 전입신고·확정일자</p>
-              <p><TypedLine text={ATE_LAST} dark opts={{ speed: 28, startDelay: 800, holdMs: 1900 }} /></p>
-            </div>
+          {/* 분석 탭 / 글작성 */}
+          <div className="relative mt-3 min-h-0 flex-1 overflow-hidden">
+            <AnimatePresence mode="wait">
+              {phase >= 3 && phase < 5 && (
+                <motion.div key="an" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, scale: 0.98 }} transition={{ duration: 0.25 }} className="flex h-full flex-col">
+                  {/* 탭 헤더 */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="rounded-md bg-[#6a8bff]/15 px-2 py-1 text-[10px] font-bold text-[#8ab4ff]">키워드 분석</span>
+                    <span className="rounded-md px-2 py-1 text-[10px] text-white/30">트렌드</span>
+                    <span className="rounded-md px-2 py-1 text-[10px] text-white/30">경쟁사</span>
+                    <span className="ml-auto rounded-full bg-white/8 px-2 py-0.5 text-[9px] text-white/45">1,240개 분석 완료</span>
+                  </div>
+                  {/* 지표 카드 */}
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    {([["황금 키워드", "12개", "text-emerald-300"], ["평균 경쟁도", "낮음", "text-cyan-300"], ["예상 월 유입", "8.4K", "text-[#8ab4ff]"]] as const).map(([l, v, c]) => (
+                      <div key={l} className="rounded-lg border border-white/8 bg-white/[0.03] px-2.5 py-1.5">
+                        <p className="text-[9px] text-white/40">{l}</p>
+                        <p className={`text-[13px] font-extrabold ${c}`}>{v}</p>
+                      </div>
+                    ))}
+                  </div>
+                  {/* 키워드 표 + 트렌드 */}
+                  <div className="mt-2 flex min-h-0 flex-1 gap-2.5">
+                    <div className="flex w-3/5 flex-col gap-1">
+                      {ATE_KWS.map((r, i) => (
+                        <motion.div key={r.k} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07, duration: 0.4, ease: [0.22, 1, 0.36, 1] }} className={`relative flex items-center gap-2 rounded-lg border px-2.5 py-1.5 transition-colors duration-300 ${i === 0 && phase === 4 ? "border-[#6a8bff] bg-[#6a8bff]/15" : "border-white/8 bg-white/[0.03]"}`}>
+                          <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-white/85">{r.k}{r.hot && " 🔥"}</span>
+                          <span className={`flex shrink-0 items-center gap-1.5 transition-opacity duration-300 ${i === 0 && phase === 4 ? "opacity-0" : "opacity-100"}`}>
+                            <span className="text-[9px] text-white/35">월 {r.v}</span>
+                            <span className={`rounded px-1.5 py-0.5 text-[8px] font-bold ${r.c === "낮음" ? "bg-emerald-400/15 text-emerald-300" : "bg-amber-400/15 text-amber-300"}`}>{r.c}</span>
+                          </span>
+                          {i === 0 && <span className={`absolute right-2.5 shrink-0 rounded bg-[#5a8bff] px-1.5 py-0.5 text-[9px] font-bold text-white transition-opacity duration-300 ${phase === 4 ? "opacity-100" : "opacity-0"}`}>글 생성 ›</span>}
+                        </motion.div>
+                      ))}
+                    </div>
+                    <div className="flex w-2/5 flex-col gap-2">
+                      <div className="flex flex-1 items-end gap-1 rounded-lg border border-white/8 bg-white/[0.03] p-2">
+                        {[34, 42, 38, 55, 66, 82, 95].map((h, i) => <motion.div key={i} initial={{ height: 0 }} animate={{ height: `${h}%` }} transition={{ delay: 0.25 + i * 0.06 }} className="flex-1 rounded-t" style={{ background: i >= 5 ? "linear-gradient(to top,#22d3ee,#10b981)" : "rgba(120,150,255,0.28)" }} />)}
+                      </div>
+                      <div className="rounded-lg bg-emerald-400/10 px-2 py-1.5 text-[9.5px] font-medium text-emerald-300">🌱 봄 이사철 D-12 · 선점</div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+              {phase >= 5 && (
+                <motion.div key="wr" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="relative flex h-full flex-col">
+                  <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/8 bg-white/[0.03] p-3.5">
+                    <p className="text-[13px] font-extrabold text-white">전세 사기, 이렇게 막으세요</p>
+                    <div className="relative mt-2 flex-1 overflow-hidden" style={{ maskImage: "linear-gradient(to bottom, #000 60%, transparent)", WebkitMaskImage: "linear-gradient(to bottom, #000 60%, transparent)" }}>
+                      <p className="whitespace-pre-line text-[11px] leading-[1.7] text-white/65">{art}<span className="ml-px inline-block h-3 w-0.5 animate-pulse bg-cyan-300 align-middle" /></p>
+                    </div>
+                  </div>
+                  <AnimatePresence>
+                    {phase === 6 && (
+                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 z-10 flex items-center justify-center" style={{ backdropFilter: "blur(7px)", WebkitBackdropFilter: "blur(7px)" }}>
+                        <div className="absolute inset-0 bg-[#0a0c14]/55" />
+                        <motion.div initial={{ scale: 0.9, y: 10 }} animate={{ scale: 1, y: 0 }} transition={{ type: "spring", stiffness: 280, damping: 20 }} className="relative flex flex-col items-center rounded-2xl border border-emerald-400/25 bg-[#0c1a16]/80 px-6 py-5 text-center shadow-[0_24px_70px_-12px_rgba(16,185,129,0.5)]">
+                          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 text-white shadow-[0_0_34px_rgba(16,185,129,0.65)]"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg></span>
+                          <p className="mt-2.5 text-[14px] font-bold text-white">워드프레스에 발행됐어요</p>
+                          <p className="mt-1 text-[10.5px] text-white/45">우리집부동산.com/전세-사기-예방법 ↗</p>
+                        </motion.div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-        </div>
-        <div className="flex items-center justify-between border-t border-white/8 px-3.5 py-2 text-[9.5px]">
-          <span className="text-white/35">키워드·메타설명·검색의도 <span className="text-emerald-400">✓ 자동 최적화</span></span>
-          <span className="rounded bg-emerald-500/20 px-2 py-0.5 font-semibold text-emerald-300">워드프레스 발행됨</span>
+          {/* 상태바 */}
+          <div className="mt-3 flex items-center justify-between border-t border-white/8 pt-2.5 text-[9.5px]">
+            <span className="text-white/35">키워드·메타설명·검색의도 <span className="text-emerald-400">✓ 자동 최적화</span></span>
+            <span className={`rounded px-2 py-0.5 font-semibold transition-colors ${phase === 6 ? "bg-emerald-500/20 text-emerald-300" : "bg-white/8 text-white/40"}`}>{phase === 6 ? "워드프레스 발행됨" : "분석 중"}</span>
+          </div>
         </div>
       </div>
-    </DesktopFrame>
+    </DeskFrame>
   );
 }
 
@@ -721,10 +898,10 @@ export default function StartLanding() {
           <motion.div style={{ y: heroTextY, opacity: heroFade, willChange: "transform, opacity" }} className="relative z-10 mx-auto max-w-3xl">
             <p className="mono-rise inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white/90 backdrop-blur"><span className="h-1.5 w-1.5 rounded-full bg-cyan-300" /> 곧 오픈 · 사전신청 받는 중</p>
             <h1 className="font-pretendard mono-rise mono-d1 mt-5 text-[2.4rem] font-extrabold leading-[1.1] tracking-tight text-white sm:text-7xl" style={{ wordBreak: "keep-all" }}>수익형 블로그,<br /><span className="bg-gradient-to-r from-cyan-300 to-[#8ab4ff] bg-clip-text text-transparent">가장 쉽게 시작하세요.</span></h1>
-            <p className="mono-rise mono-d2 mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-white/65 sm:text-lg" style={{ wordBreak: "keep-all" }}>분야만 고르면, 키워드부터 글·발행까지 한 번에.</p>
+            <p className="mono-rise mono-d2 mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-white/65 sm:text-lg" style={{ wordBreak: "keep-all" }}>분야만 고르면, 키워드 분석부터 글·발행까지 한 번에.</p>
             <div className="mono-rise mono-d4 mt-6"><button onClick={toSignup} className="rounded-2xl bg-white px-7 py-3.5 text-sm font-bold text-[#0c0e16] shadow-[0_14px_40px_-10px_rgba(255,255,255,0.4)] transition hover:-translate-y-0.5 active:scale-95">사전신청하고 보너스 크레딧 받기</button><p className="mt-3 text-xs text-white/40">무료 3편으로 시작 · 월 구독 아님</p></div>
           </motion.div>
-          <motion.div style={{ y: heroMockY, willChange: "transform" }} className="relative z-10 mt-9 w-full max-w-2xl"><BuilderDemo /></motion.div>
+          <motion.div style={{ y: heroMockY, willChange: "transform" }} className="relative z-10 mt-9 w-full max-w-3xl"><BuilderDemo /></motion.div>
         </section>
 
         {/* 마퀴 — 분야(니치): 어떤 분야든 된다 (화이트) */}
@@ -748,7 +925,7 @@ export default function StartLanding() {
               <FeatureRow from="left" label="다른 AI로 쓰면" title={<>답은 나와도,<br />끝이 없습니다</>} body="더 길게, 표도 넣고, 자연스럽게… 고치고 또 고쳐요. 복붙해서 발행하는 것도 결국 내 몫이고요.">
                 <RivalChat />
               </FeatureRow>
-              <FeatureRow from="right" label="AteFlo는" title={<>키워드 선택 한 번,<br />발행까지</>} body="검색 의도에 맞춘 구조로 글을 완성하고, 워드프레스에 바로 발행해요. 프롬프트도, 복붙도 없습니다.">
+              <FeatureRow from="right" label="AteFlo는" title={<>키워드 선택 한 번,<br />발행까지</>} body="분야 고르고 추천 키워드만 누르면, 검색 구조에 맞춘 글이 완성돼 워드프레스에 바로 발행돼요. 프롬프트도, 복붙도 없습니다.">
                 <AteFloGen />
               </FeatureRow>
             </div>
