@@ -487,9 +487,13 @@ const WILLING = [{ k: "yes", label: "네, 바로 충전할래요" }, { k: "maybe
 // 타사 AI — 끝없이 길어지는 대화(찐 채팅 화면, 애니메이션)
 function AiMsg() {
   return (
-    <div className="rounded-2xl rounded-bl-md bg-neutral-50 px-3 py-2.5">
-      <div className="h-2 w-2/5 rounded bg-neutral-300" />
-      <div className="mt-2 space-y-1.5">{[100, 96, 99, 92, 97].map((w, i) => <div key={i} className="h-1.5 rounded-full bg-neutral-200" style={{ width: `${w}%` }} />)}</div>
+    <div className="max-w-[90%] rounded-2xl rounded-bl-md bg-neutral-100 px-3.5 py-3">
+      <div className="space-y-2">
+        <div className="h-1.5 w-full rounded-full bg-neutral-200" />
+        <div className="h-1.5 w-full rounded-full bg-neutral-200" />
+        <div className="h-1.5 w-[88%] rounded-full bg-neutral-200" />
+        <div className="h-1.5 w-[64%] rounded-full bg-neutral-200" />
+      </div>
     </div>
   );
 }
@@ -537,10 +541,10 @@ function RivalChat() {
 // AteFlo — 추천 키워드 버튼 한 번 → 글 → 발행 (쉬워 보이게, 애니메이션)
 function AteFloGen() {
   const KW = [{ k: "전세 사기 예방법", v: "1.2만", c: "낮음", hot: true }, { k: "1억으로 갭투자", v: "8,400", c: "낮음" }, { k: "청약 가점 계산기", v: "6,100", c: "보통" }, { k: "전입신고 하는 법", v: "5,200", c: "낮음" }];
-  const [p, setP] = useState(0); // 0목록 1선택 2글 3발행
+  const [p, setP] = useState(0); // 0목록 1선택 2로딩 3완성
   useEffect(() => {
     const t: ReturnType<typeof setTimeout>[] = [];
-    const run = () => { setP(0); t.push(setTimeout(() => setP(1), 1300)); t.push(setTimeout(() => setP(2), 2100)); t.push(setTimeout(() => setP(3), 3500)); t.push(setTimeout(run, 5600)); };
+    const run = () => { setP(0); t.push(setTimeout(() => setP(1), 1300)); t.push(setTimeout(() => setP(2), 2100)); t.push(setTimeout(() => setP(3), 3500)); t.push(setTimeout(run, 6000)); };
     run(); return () => t.forEach(clearTimeout);
   }, []);
   return (
@@ -565,8 +569,14 @@ function AteFloGen() {
                   ))}
                 </div>
               </motion.div>
+            ) : p === 2 ? (
+              <motion.div key="load" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }} className="flex h-full flex-col items-center justify-center gap-3">
+                <span className="h-9 w-9 animate-spin rounded-full border-2 border-white/15 border-t-[#6a8bff]" />
+                <p className="text-[12.5px] font-semibold text-white/80">SEO 최적화 글 작성 중…</p>
+                <div className="h-1 w-40 overflow-hidden rounded-full bg-white/10"><motion.div initial={{ width: "10%" }} animate={{ width: "92%" }} transition={{ duration: 1.3, ease: "easeOut" }} className="h-full rounded-full bg-[#6a8bff]" /></div>
+              </motion.div>
             ) : (
-              <motion.div key="art" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="flex h-full flex-col">
+              <motion.div key="art" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="flex h-full flex-col">
                 <p className="text-[12.5px] font-extrabold text-white">전세 사기 예방법 5가지</p>
                 <div className="mt-2 space-y-1.5">
                   <p className="text-[10.5px] font-bold text-[#8ab4ff]">## 등기부등본부터 확인하기</p>
@@ -574,7 +584,7 @@ function AteFloGen() {
                   <p className="text-[10.5px] font-bold text-[#8ab4ff]">## 전입신고·확정일자 받기</p>
                   <div className="h-1.5 w-[96%] rounded-full bg-white/12" />
                 </div>
-                {p >= 3 && <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="mt-auto flex items-center gap-2 rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1.5"><span className="text-emerald-400">✓</span><span className="text-[11px] font-semibold text-emerald-300">워드프레스에 발행됨</span></motion.div>}
+                <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="mt-auto flex items-center gap-2 rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1.5"><span className="text-emerald-400">✓</span><span className="text-[11px] font-semibold text-emerald-300">워드프레스에 발행됨</span></motion.div>
               </motion.div>
             )}
           </AnimatePresence>
