@@ -11,6 +11,37 @@ import CountUp from "@/components/CountUp";
 
 const ACCENT = "#3f91ff";
 
+/* ════ 시네마틱 인트로 — 거대한 크롬 팩맨이 어둠 속에서 빛 스윕으로 드러남 ════ */
+function PacmanIntro() {
+  const [done, setDone] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setDone(true), 2900); return () => clearTimeout(t); }, []);
+  return (
+    <AnimatePresence>
+      {!done && (
+        <motion.div exit={{ opacity: 0 }} transition={{ duration: 0.7, ease: "easeInOut" }} className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-[#050609]">
+          <div className="pointer-events-none absolute left-1/2 top-1/2 h-[80vmin] w-[80vmin] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#16203a]/60 blur-[130px]" />
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.3, ease: [0.22, 1, 0.36, 1] }} className="relative">
+            <svg viewBox="0 0 200 200" className="aspect-square w-[72vmin] max-w-[560px] drop-shadow-[0_0_70px_rgba(150,175,210,0.22)]">
+              <defs>
+                <linearGradient id="pac-chrome" gradientUnits="userSpaceOnUse" x1="20" y1="20" x2="180" y2="180">
+                  <stop offset="0.28" stopColor="#2a2d35" />
+                  <stop offset="0.45" stopColor="#aab0bd" />
+                  <stop offset="0.5" stopColor="#f5f8fd" />
+                  <stop offset="0.55" stopColor="#aab0bd" />
+                  <stop offset="0.72" stopColor="#2a2d35" />
+                  <animateTransform attributeName="gradientTransform" type="translate" values="-240 -240; 240 240; -240 -240" dur="3.6s" repeatCount="indefinite" />
+                </linearGradient>
+              </defs>
+              {/* 입 벌린 팩맨(오른쪽) */}
+              <path d="M100 100 L186 64 A94 94 0 1 0 186 136 Z" fill="url(#pac-chrome)" />
+            </svg>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 /* ════ 프리로더 (0→100%) ════ */
 function Preloader() {
   const [pct, setPct] = useState(0);
@@ -297,7 +328,7 @@ function VibrantAurora() {
 /* ════ AI 빌더 데모 (다크 글래스 윈도우) ════ */
 function ArrowUp() { return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>; }
 function BuilderDemo() {
-  const CATS = ["주식", "절약", "연금", "대출", "부동산"];
+  const CATS = ["주식", "부동산", "절약", "연금", "대출"];
   const KW = [{ k: "전세 사기 예방법", v: "1.2만", c: "낮음", hot: true }, { k: "1억으로 갭투자", v: "8,400", c: "낮음" }, { k: "청약 가점 계산기", v: "6,100", c: "보통" }, { k: "전입신고 하는 법", v: "5,200", c: "낮음" }, { k: "오피스텔 투자 단점", v: "3,900", c: "낮음" }];
   const [p, setP] = useState(0); // 0타이핑 1리스트 2선택 3생성완료 4데이터 5클릭 6글발행
   const [typed, setTyped] = useState("");
@@ -424,13 +455,16 @@ function BuilderDemo() {
                     <p className="whitespace-pre-line text-[11.5px] leading-[1.7] text-white/65">{art}<span className="ml-px inline-block h-3 w-0.5 animate-pulse bg-cyan-300 align-middle" /></p>
                   </div>
                 </div>
-                {/* 발행 완료 = 상단 플로팅 토스트(실제 앱처럼) */}
+                {/* 발행 완료 = 뒤 글을 블러로 죽이고 가운데 카드로 시선 집중 */}
                 <AnimatePresence>
                   {art.length >= BODY.length && (
-                    <motion.div initial={{ opacity: 0, y: -12, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0 }} transition={{ type: "spring", stiffness: 300, damping: 22 }} className="absolute left-1/2 top-9 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full border border-emerald-400/30 bg-[#0c2018]/90 px-4 py-2 shadow-[0_10px_34px_-8px_rgba(16,185,129,0.55)] backdrop-blur">
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg></span>
-                      <span className="text-[12px] font-bold text-emerald-300">워드프레스에 발행됐어요</span>
-                      <span className="text-[11px] text-white/40">· 보러가기 ↗</span>
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }} className="absolute inset-0 z-10 flex items-center justify-center" style={{ backdropFilter: "blur(7px)", WebkitBackdropFilter: "blur(7px)" }}>
+                      <div className="absolute inset-0 bg-[#0a0c14]/60" />
+                      <motion.div initial={{ scale: 0.9, y: 10 }} animate={{ scale: 1, y: 0 }} transition={{ type: "spring", stiffness: 280, damping: 20 }} className="relative flex flex-col items-center rounded-2xl border border-emerald-400/25 bg-[#0c1a16]/80 px-7 py-6 text-center shadow-[0_24px_70px_-12px_rgba(16,185,129,0.5)]">
+                        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 text-white shadow-[0_0_34px_rgba(16,185,129,0.65)]"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg></span>
+                        <p className="mt-3 text-[15px] font-bold text-white">워드프레스에 발행됐어요</p>
+                        <p className="mt-1 text-[11px] text-white/45">우리집부동산.com/전세-사기-예방법 · 보러가기 ↗</p>
+                      </motion.div>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -459,7 +493,7 @@ export default function StartLanding() {
 
   return (
     <ReactLenis root options={{ lerp: 0.09, smoothWheel: true }}>
-      <Preloader />
+      <PacmanIntro />
       <div className="min-h-screen bg-white text-neutral-900 antialiased">
         <header className="fixed inset-x-0 top-0 z-50 border-b border-neutral-200/40 bg-white/70 backdrop-blur">
           <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3.5">
