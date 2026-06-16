@@ -153,33 +153,37 @@ function SceneEarn() {
   );
 }
 
-// 자동재생 카테고리 검색 데모 — 재테크 입력 → 하위분류 쭈루룩 → 부동산 선택 → 부동산 데이터 뽜바박 (루프)
+// 자동재생 데모 — 재테크 입력 → 하위분류 → 부동산 → 키워드 쫙 → 키워드 클릭 → 글 작성·발행 (루프)
 function CategoryDemo() {
   const SUBS = ["전체", "주식", "절약", "연금", "대출", "부동산"];
-  const RESULTS = [{ k: "전세 사기 예방법", v: "1.2만", hot: true }, { k: "1억으로 갭투자", v: "8,400" }, { k: "청약 가점 계산기", v: "6,100" }, { k: "전입신고 하는 법", v: "5,200" }];
-  const [phase, setPhase] = useState(0); // 0 타이핑 · 1 드롭다운 · 2 부동산선택 · 3 결과
+  const KW = [{ k: "전세 사기 예방법", v: "1.2만", hot: true }, { k: "1억으로 갭투자", v: "8,400" }, { k: "청약 가점 계산기", v: "6,100" }, { k: "전입신고 하는 법", v: "5,200" }];
+  const [phase, setPhase] = useState(0); // 0타이핑 1드롭다운 2선택 3키워드 4클릭 5글작성
   const [typed, setTyped] = useState("");
   useEffect(() => {
-    const timers: ReturnType<typeof setTimeout>[] = [];
+    const t: ReturnType<typeof setTimeout>[] = [];
     const run = () => {
       setPhase(0); setTyped("");
-      "재테크".split("").forEach((_, i) => timers.push(setTimeout(() => setTyped("재테크".slice(0, i + 1)), 350 + i * 190)));
-      timers.push(setTimeout(() => setPhase(1), 1250));
-      timers.push(setTimeout(() => setPhase(2), 2500));
-      timers.push(setTimeout(() => setPhase(3), 3250));
-      timers.push(setTimeout(run, 7000));
+      "재테크".split("").forEach((_, i) => t.push(setTimeout(() => setTyped("재테크".slice(0, i + 1)), 350 + i * 190)));
+      t.push(setTimeout(() => setPhase(1), 1250));
+      t.push(setTimeout(() => setPhase(2), 2450));
+      t.push(setTimeout(() => setPhase(3), 3200));
+      t.push(setTimeout(() => setPhase(4), 4700));
+      t.push(setTimeout(() => setPhase(5), 5600));
+      t.push(setTimeout(run, 10500));
     };
     run();
-    return () => timers.forEach(clearTimeout);
+    return () => t.forEach(clearTimeout);
   }, []);
+  const bar = phase < 3 ? typed : phase < 5 ? "재테크 › 부동산" : "전세 사기 예방법";
   return (
     <div className="flex h-full flex-col p-6">
-      <p className="text-[13px] font-bold text-neutral-800">어떤 블로그인가요?</p>
-      <p className="mt-1 text-[11px] text-neutral-400">한 칸에서 분야를 고르면, 데이터가 쫙 펼쳐져요</p>
+      <p className="text-[13px] font-bold text-neutral-800">{phase < 5 ? "어떤 블로그인가요?" : "AI가 글을 쓰고 있어요"}</p>
+      <p className="mt-1 text-[11px] text-neutral-400">{phase < 5 ? "분야만 고르면, 키워드가 쫙 펼쳐져요" : "키워드 하나 누르면 칼럼급 글로"}</p>
       <div className="relative mt-3">
-        <div className={`flex items-center rounded-xl border bg-white px-3.5 py-3 shadow-sm transition ${phase < 3 ? "border-[#3f91ff] ring-2 ring-[#3f91ff]/15" : "border-neutral-200"}`}>
-          <span className="text-[13px] text-neutral-800">{phase < 3 ? typed : "재테크 › 부동산"}</span>
-          {phase === 0 && <span className="ml-px inline-block h-4 w-0.5 animate-pulse bg-neutral-700" />}
+        <div className={`flex items-center gap-2 rounded-xl border bg-white px-3.5 py-3 shadow-sm transition ${phase < 3 ? "border-[#3f91ff] ring-2 ring-[#3f91ff]/15" : "border-neutral-200"}`}>
+          {phase >= 5 && <span className="shrink-0 rounded-md bg-[#3f91ff]/10 px-1.5 py-0.5 text-[10px] font-bold text-[#2f7fe6]">생성중</span>}
+          <span className="min-w-0 flex-1 truncate text-[13px] text-neutral-800">{bar}</span>
+          {phase === 0 && <span className="inline-block h-4 w-0.5 animate-pulse bg-neutral-700" />}
         </div>
         <AnimatePresence>
           {(phase === 1 || phase === 2) && (
@@ -193,16 +197,16 @@ function CategoryDemo() {
           )}
         </AnimatePresence>
       </div>
-      <div className="mt-3 min-h-0 flex-1">
-        <AnimatePresence>
-          {phase === 3 && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex h-full gap-3">
+      <div className="relative mt-3 min-h-0 flex-1">
+        <AnimatePresence mode="wait">
+          {phase >= 3 && phase < 5 && (
+            <motion.div key="kw" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, scale: 0.98 }} transition={{ duration: 0.25 }} className="flex h-full gap-3">
               <div className="flex w-1/2 flex-col">
                 <p className="text-[11px] font-bold text-neutral-700">🔥 부동산 키워드</p>
-                <div className="mt-1.5 space-y-1">
-                  {RESULTS.map((r, i) => (
-                    <motion.div key={r.k} initial={{ opacity: 0, y: 10, scale: 0.94 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ delay: i * 0.08, type: "spring", stiffness: 320, damping: 22 }} className="rounded-lg border border-neutral-100 bg-neutral-50/70 px-2 py-1">
-                      <p className="truncate text-[11px] font-medium text-neutral-700">{r.k}{r.hot && " 🔥"}</p>
+                <div className="mt-1.5 space-y-1.5">
+                  {KW.map((r, i) => (
+                    <motion.div key={r.k} initial={{ opacity: 0, y: 10, scale: 0.94 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ delay: i * 0.07, type: "spring", stiffness: 320, damping: 22 }} className={`rounded-lg border px-2 py-1.5 transition ${i === 0 && phase === 4 ? "border-[#3f91ff] bg-[#3f91ff]/8 ring-2 ring-[#3f91ff]/25" : "border-neutral-100 bg-neutral-50/70"}`}>
+                      <p className="flex items-center gap-1 truncate text-[11px] font-medium text-neutral-700">{r.k}{r.hot && " 🔥"}{i === 0 && phase === 4 && <span className="ml-auto shrink-0 rounded bg-[#3f91ff] px-1.5 py-0.5 text-[9px] font-bold text-white">글 생성 ›</span>}</p>
                       <p className="text-[9px] text-neutral-400">월 {r.v}</p>
                     </motion.div>
                   ))}
@@ -211,8 +215,26 @@ function CategoryDemo() {
               <div className="flex w-1/2 flex-col">
                 <p className="text-[11px] font-bold text-neutral-700">📈 트렌드</p>
                 <div className="mt-1.5 flex flex-1 items-end gap-1 rounded-lg border border-neutral-100 bg-neutral-50/70 p-2">
-                  {[34, 42, 38, 55, 66, 82].map((h, i) => <motion.div key={i} initial={{ height: 0 }} animate={{ height: `${h}%` }} transition={{ delay: 0.3 + i * 0.07 }} className="flex-1 rounded-t" style={{ background: i === 5 ? ACCENT : "rgba(63,145,255,0.25)" }} />)}
+                  {[34, 42, 38, 55, 66, 82].map((h, i) => <motion.div key={i} initial={{ height: 0 }} animate={{ height: `${h}%` }} transition={{ delay: 0.25 + i * 0.06 }} className="flex-1 rounded-t" style={{ background: i === 5 ? ACCENT : "rgba(63,145,255,0.25)" }} />)}
                 </div>
+              </div>
+            </motion.div>
+          )}
+          {phase >= 5 && (
+            <motion.div key="wr" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="flex h-full flex-col">
+              <div className="rounded-xl border border-neutral-200 bg-white p-3">
+                <p className="text-[12px] font-extrabold text-neutral-900">전세 사기, 이렇게 100% 막으세요</p>
+                <div className="mt-2 space-y-1.5">
+                  <div className="mock-gen-bar h-2 rounded-full bg-neutral-200" style={{ width: "100%", animationDelay: ".1s" }} />
+                  <div className="mock-gen-bar h-2 rounded-full bg-neutral-200" style={{ width: "94%", animationDelay: ".3s" }} />
+                  <div className="mock-gen-bar h-2 rounded-full bg-neutral-200" style={{ width: "97%", animationDelay: ".5s" }} />
+                  <div className="mock-gen-bar h-2 w-1/3 rounded bg-neutral-300" style={{ animationDelay: ".6s" }} />
+                  <div className="mock-gen-bar h-2 rounded-full bg-neutral-200" style={{ width: "90%", animationDelay: ".7s" }} />
+                </div>
+              </div>
+              <div className="mt-auto flex items-center gap-2.5 rounded-xl bg-emerald-50 px-3 py-2.5">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg></span>
+                <p className="text-[12px] font-bold text-emerald-800">블로그에 발행 완료</p>
               </div>
             </motion.div>
           )}
@@ -283,12 +305,12 @@ export default function StartLanding() {
           <LoadRipple />
           <motion.div style={{ y: heroTextY, opacity: heroFade }} className="relative z-10 mx-auto max-w-3xl text-center">
             <p className="mono-rise inline-flex items-center gap-1.5 rounded-full border border-[#3f91ff]/20 bg-white/70 px-3 py-1 text-xs font-semibold text-[#2f7fe6] backdrop-blur"><span className="h-1.5 w-1.5 rounded-full bg-[#3f91ff]" /> 곧 오픈 · 사전신청 받는 중</p>
-            <h1 className="font-pretendard mono-rise mono-d1 mt-6 text-[2.4rem] font-extrabold leading-[1.12] tracking-tight sm:text-7xl" style={{ wordBreak: "keep-all" }}>분야만 고르면,<br /><span className="text-[#3f91ff]">돈 버는 블로그가 시작돼요.</span></h1>
-            <p className="mono-rise mono-d2 mx-auto mt-7 max-w-md text-[15px] leading-relaxed text-neutral-500 sm:text-lg" style={{ wordBreak: "keep-all" }}>개설부터 글쓰기, 애드센스 승인, 수익화까지 — 한 흐름으로.</p>
-            <div className="mono-rise mono-d4 mt-9"><button onClick={toSignup} className="rounded-2xl bg-[#3f91ff] px-7 py-3.5 text-sm font-bold text-white shadow-[0_14px_34px_-10px_rgba(63,145,255,0.7)] transition hover:-translate-y-0.5 hover:opacity-90 active:scale-95">사전신청하고 보너스 크레딧 받기</button><p className="mt-3 text-xs text-neutral-400">무료 3편으로 시작 · 월 구독 아님</p></div>
+            <h1 className="font-pretendard mono-rise mono-d1 mt-5 text-[2.4rem] font-extrabold leading-[1.1] tracking-tight sm:text-7xl" style={{ wordBreak: "keep-all" }}>수익형 블로그,<br /><span className="text-[#3f91ff]">가장 쉽게 시작하세요.</span></h1>
+            <p className="mono-rise mono-d2 mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-neutral-500 sm:text-lg" style={{ wordBreak: "keep-all" }}>분야만 고르면, 키워드부터 글·발행까지 한 번에.</p>
+            <div className="mono-rise mono-d4 mt-6"><button onClick={toSignup} className="rounded-2xl bg-[#3f91ff] px-7 py-3.5 text-sm font-bold text-white shadow-[0_14px_34px_-10px_rgba(63,145,255,0.7)] transition hover:-translate-y-0.5 hover:opacity-90 active:scale-95">사전신청하고 보너스 크레딧 받기</button><p className="mt-3 text-xs text-neutral-400">무료 3편으로 시작 · 월 구독 아님</p></div>
           </motion.div>
           {/* 창 없이 열린 무대 — UI가 배경 위에 그대로 떠 있게 */}
-          <motion.div style={{ y: heroMockY }} className="relative z-10 mt-14 h-[460px] w-full max-w-2xl"><CategoryDemo /></motion.div>
+          <motion.div style={{ y: heroMockY }} className="relative z-10 mt-8 h-[440px] w-full max-w-2xl"><CategoryDemo /></motion.div>
         </section>
 
         {/* 키워드 마퀴 */}
