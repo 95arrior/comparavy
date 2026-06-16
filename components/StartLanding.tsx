@@ -156,7 +156,7 @@ function SceneEarn() {
 // 자동재생 데모 — 재테크 입력 → 하위분류 → 부동산 → 키워드 쫙 → 키워드 클릭 → 글 작성·발행 (루프)
 function CategoryDemo() {
   const SUBS = ["전체", "주식", "절약", "연금", "대출", "부동산"];
-  const KW = [{ k: "전세 사기 예방법", v: "1.2만", hot: true }, { k: "1억으로 갭투자", v: "8,400" }, { k: "청약 가점 계산기", v: "6,100" }, { k: "전입신고 하는 법", v: "5,200" }];
+  const KW = [{ k: "전세 사기 예방법", v: "1.2만", c: "낮음", hot: true }, { k: "1억으로 갭투자", v: "8,400", c: "낮음" }, { k: "청약 가점 계산기", v: "6,100", c: "보통" }, { k: "전입신고 하는 법", v: "5,200", c: "낮음" }, { k: "오피스텔 투자 단점", v: "3,900", c: "낮음" }];
   const [phase, setPhase] = useState(0); // 0타이핑 1드롭다운 2선택 3키워드 4클릭 5글작성
   const [typed, setTyped] = useState("");
   useEffect(() => {
@@ -277,15 +277,18 @@ function ParallaxMock({ children }: { children: React.ReactNode }) {
 /* ════ 비비드 오로라 (계속 움직임) ════ */
 function VibrantAurora() {
   const blob = (cls: string, anim: TargetAndTransition, dur: number) => (
-    <motion.div animate={anim} transition={{ duration: dur, repeat: Infinity, ease: "easeInOut" }} className={`absolute rounded-full blur-[110px] ${cls}`} />
+    <motion.div animate={anim} transition={{ duration: dur, repeat: Infinity, ease: "easeInOut" }} className={`absolute rounded-full blur-[100px] ${cls}`} />
   );
   return (
-    <div className="absolute inset-0 z-0 overflow-hidden" style={{ background: "radial-gradient(120% 90% at 50% 25%, #241a5e 0%, #120e2e 55%, #0a0b16 100%)" }}>
-      {blob("left-[6%] top-[12%] h-[36rem] w-[36rem] bg-[#3b6cff]/55", { x: [0, 130, 0], y: [0, -60, 0], scale: [1, 1.15, 1] }, 17)}
-      {blob("right-[4%] top-[20%] h-[34rem] w-[34rem] bg-[#a23bff]/55", { x: [0, -120, 0], y: [0, 80, 0], scale: [1.1, 1, 1.1] }, 21)}
-      {blob("left-1/2 top-[2%] h-[32rem] w-[32rem] -translate-x-1/2 bg-[#e23bce]/45", { x: [0, 90, 0], y: [0, -40, 0] }, 15)}
-      {blob("left-[28%] bottom-[2%] h-[30rem] w-[30rem] bg-[#22b8ff]/50", { x: [0, -80, 0], y: [0, 50, 0], scale: [1, 1.2, 1] }, 19)}
-      <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-b from-transparent to-[#0a0b16]" />
+    <div className="absolute inset-0 z-0 overflow-hidden bg-[#05060c]">
+      {/* 에메랄드·틸·블루·퍼플 빛이 막 요동치게 (4지점 키프레임 + 스케일 변동) */}
+      {blob("left-[12%] bottom-[6%] h-[34rem] w-[34rem] bg-[#10b981]/55", { x: [0, 160, -40, 0], y: [0, -80, 40, 0], scale: [1, 1.25, 0.95, 1] }, 13)}
+      {blob("right-[8%] bottom-[14%] h-[32rem] w-[32rem] bg-[#22d3ee]/55", { x: [0, -150, 60, 0], y: [0, 60, -60, 0], scale: [1.1, 0.9, 1.2, 1.1] }, 15)}
+      {blob("left-1/2 top-[28%] h-[30rem] w-[30rem] -translate-x-1/2 bg-[#3b82f6]/50", { x: [0, 110, -90, 0], y: [0, -60, 70, 0], scale: [1, 1.15, 1, 1] }, 12)}
+      {blob("right-[24%] top-[16%] h-[28rem] w-[28rem] bg-[#8b5cf6]/45", { x: [0, -100, 80, 0], y: [0, 80, -50, 0], scale: [1, 1.2, 1, 1] }, 16)}
+      {blob("left-[22%] top-[42%] h-[24rem] w-[24rem] bg-[#2dd4bf]/40", { x: [0, 130, -30, 0], y: [0, -50, 30, 0] }, 11)}
+      <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[#05060c] to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-b from-transparent to-[#05060c]" />
     </div>
   );
 }
@@ -294,9 +297,19 @@ function VibrantAurora() {
 function ArrowUp() { return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>; }
 function BuilderDemo() {
   const CATS = ["주식", "절약", "연금", "대출", "부동산"];
-  const KW = [{ k: "전세 사기 예방법", v: "1.2만", hot: true }, { k: "1억으로 갭투자", v: "8,400" }, { k: "청약 가점 계산기", v: "6,100" }, { k: "전입신고 하는 법", v: "5,200" }];
+  const KW = [{ k: "전세 사기 예방법", v: "1.2만", c: "낮음", hot: true }, { k: "1억으로 갭투자", v: "8,400", c: "낮음" }, { k: "청약 가점 계산기", v: "6,100", c: "보통" }, { k: "전입신고 하는 법", v: "5,200", c: "낮음" }, { k: "오피스텔 투자 단점", v: "3,900", c: "낮음" }];
   const [p, setP] = useState(0); // 0타이핑 1리스트 2선택 3생성완료 4데이터 5클릭 6글발행
   const [typed, setTyped] = useState("");
+  const [art, setArt] = useState(""); // 실제 글 타이핑
+  const BODY = "전세 계약 전, 등기부등본부터 확인하세요. ‘을구’에 근저당이 과도하게 잡혀 있다면 보증금을 떼일 위험이 큽니다.\n\n잔금 치르는 날, 전입신고와 확정일자를 같은 날 신청하면 대항력이 생깁니다. 여기에 전세보증보험까지 가입하면, 집주인이 보증금을 돌려주지 못해도 안전하게 돌려받을 수 있어요.";
+  // 글 작성 단계(p=6)에서 실제 본문을 타이핑
+  useEffect(() => {
+    if (p !== 6) { setArt(""); return; }
+    let i = 0;
+    const id = setInterval(() => { i += 2; setArt(BODY.slice(0, i)); if (i >= BODY.length) clearInterval(id); }, 32);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [p]);
   useEffect(() => {
     const t: ReturnType<typeof setTimeout>[] = [];
     const run = () => {
@@ -309,7 +322,7 @@ function BuilderDemo() {
       t.push(setTimeout(() => setP(4), 6100));
       t.push(setTimeout(() => setP(5), 7700));
       t.push(setTimeout(() => setP(6), 8600));
-      t.push(setTimeout(run, 13200));
+      t.push(setTimeout(run, 15500));
     };
     run();
     return () => t.forEach(clearTimeout);
@@ -364,42 +377,50 @@ function BuilderDemo() {
             )}
             {group === "data" && (
               <motion.div key="dt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, scale: 0.98 }} transition={{ duration: 0.25 }}>
-                <p className="text-[12px] font-bold text-white/80">📊 부동산 키워드 분석</p>
-                <div className="mt-3 flex gap-3">
-                  <div className="flex w-1/2 flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <p className="text-[12px] font-bold text-white/80">📊 부동산 키워드 분석</p>
+                  <span className="rounded-full bg-white/8 px-2 py-0.5 text-[10px] text-white/45">1,240개 분석 완료</span>
+                </div>
+                <div className="mt-2.5 grid grid-cols-3 gap-2">
+                  {([["황금 키워드", "12개", "text-emerald-300"], ["평균 경쟁도", "낮음", "text-cyan-300"], ["예상 월 유입", "8.4K", "text-[#8ab4ff]"]] as const).map(([l, v, c]) => (
+                    <div key={l} className="rounded-lg border border-white/8 bg-white/[0.03] px-2.5 py-1.5">
+                      <p className="text-[9px] text-white/40">{l}</p>
+                      <p className={`text-[14px] font-extrabold ${c}`}>{v}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-2.5 flex gap-2.5">
+                  <div className="flex w-3/5 flex-col gap-1">
                     {KW.map((r, i) => (
-                      <motion.div key={r.k} initial={{ opacity: 0, y: 10, scale: 0.94 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ delay: i * 0.07, type: "spring", stiffness: 320, damping: 22 }} className={`rounded-lg border px-2.5 py-1.5 transition ${i === 0 && p === 5 ? "border-[#6a8bff] bg-[#6a8bff]/15" : "border-white/8 bg-white/[0.03]"}`}>
-                        <p className="flex items-center gap-1 truncate text-[11.5px] font-medium text-white/85">{r.k}{r.hot && " 🔥"}{i === 0 && p === 5 && <span className="ml-auto shrink-0 rounded bg-[#5a8bff] px-1.5 py-0.5 text-[9px] font-bold text-white">글 생성 ›</span>}</p>
-                        <p className="text-[9px] text-white/35">월 {r.v} · 경쟁 낮음</p>
+                      <motion.div key={r.k} initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ delay: i * 0.06, type: "spring", stiffness: 320, damping: 22 }} className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 transition ${i === 0 && p === 5 ? "border-[#6a8bff] bg-[#6a8bff]/15" : "border-white/8 bg-white/[0.03]"}`}>
+                        <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-white/85">{r.k}{r.hot && " 🔥"}</span>
+                        {i === 0 && p === 5 ? <span className="shrink-0 rounded bg-[#5a8bff] px-1.5 py-0.5 text-[9px] font-bold text-white">글 생성 ›</span> : <><span className="shrink-0 text-[9px] text-white/35">월 {r.v}</span><span className={`shrink-0 rounded px-1.5 py-0.5 text-[8px] font-bold ${r.c === "낮음" ? "bg-emerald-400/15 text-emerald-300" : "bg-amber-400/15 text-amber-300"}`}>{r.c}</span></>}
                       </motion.div>
                     ))}
                   </div>
-                  <div className="flex w-1/2 flex-col">
-                    <div className="flex flex-1 items-end gap-1.5 rounded-lg border border-white/8 bg-white/[0.03] p-2.5">
-                      {[34, 42, 38, 55, 66, 82, 95].map((h, i) => <motion.div key={i} initial={{ height: 0 }} animate={{ height: `${h}%` }} transition={{ delay: 0.25 + i * 0.06 }} className="flex-1 rounded-t" style={{ background: i >= 5 ? "linear-gradient(to top,#5a8bff,#22d3ee)" : "rgba(120,150,255,0.3)" }} />)}
+                  <div className="flex w-2/5 flex-col gap-2">
+                    <div className="flex flex-1 items-end gap-1 rounded-lg border border-white/8 bg-white/[0.03] p-2">
+                      {[34, 42, 38, 55, 66, 82, 95].map((h, i) => <motion.div key={i} initial={{ height: 0 }} animate={{ height: `${h}%` }} transition={{ delay: 0.25 + i * 0.06 }} className="flex-1 rounded-t" style={{ background: i >= 5 ? "linear-gradient(to top,#22d3ee,#10b981)" : "rgba(120,150,255,0.28)" }} />)}
                     </div>
-                    <p className="mt-2 text-[10px] font-medium text-cyan-300">▲ 검색 상승세</p>
+                    <div className="rounded-lg bg-emerald-400/10 px-2.5 py-1.5 text-[10px] font-medium text-emerald-300">🌱 봄 이사철 D-12 · 선점</div>
+                    <div className="rounded-lg bg-cyan-400/10 px-2.5 py-1.5 text-[10px] font-medium text-cyan-300">▲ 검색 상승세 +38%</div>
                   </div>
                 </div>
               </motion.div>
             )}
             {group === "write" && (
               <motion.div key="wr" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="flex h-full flex-col">
-                <p className="text-[12px] font-bold text-white/80">✍️ AI가 글을 쓰는 중…</p>
-                <div className="mt-3 rounded-xl border border-white/8 bg-white/[0.03] p-3.5">
-                  <p className="text-[12.5px] font-extrabold text-white">전세 사기, 이렇게 100% 막으세요</p>
-                  <div className="mt-2.5 space-y-1.5">
-                    <div className="mock-gen-bar h-2 rounded-full bg-white/15" style={{ width: "100%", animationDelay: ".1s" }} />
-                    <div className="mock-gen-bar h-2 rounded-full bg-white/15" style={{ width: "94%", animationDelay: ".3s" }} />
-                    <div className="mock-gen-bar h-2 rounded-full bg-white/15" style={{ width: "97%", animationDelay: ".5s" }} />
-                    <div className="mock-gen-bar h-2 w-1/3 rounded bg-white/25" style={{ animationDelay: ".6s" }} />
-                    <div className="mock-gen-bar h-2 rounded-full bg-white/15" style={{ width: "90%", animationDelay: ".7s" }} />
-                  </div>
+                <p className="text-[12px] font-bold text-white/80">✍️ ‘전세 사기 예방법’ 글 작성 중…</p>
+                <div className="mt-2.5 min-h-0 flex-1 overflow-hidden rounded-xl border border-white/8 bg-white/[0.03] p-4">
+                  <p className="text-[13.5px] font-extrabold text-white">전세 사기, 이렇게 막으세요</p>
+                  <p className="mt-2 whitespace-pre-line text-[11.5px] leading-[1.7] text-white/65">{art}<span className="ml-px inline-block h-3 w-0.5 animate-pulse bg-cyan-300 align-middle" /></p>
                 </div>
-                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1 }} className="mt-auto flex items-center gap-2.5 rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-3.5 py-2.5">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg></span>
-                  <p className="text-[12.5px] font-bold text-emerald-300">블로그에 발행 완료 🎉</p>
-                </motion.div>
+                {art.length >= BODY.length && (
+                  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-2.5 flex items-center gap-2.5 rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-3.5 py-2.5">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg></span>
+                    <p className="text-[12.5px] font-bold text-emerald-300">블로그에 발행 완료 🎉</p>
+                  </motion.div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
