@@ -485,88 +485,80 @@ function BuilderDemo() {
 const WILLING = [{ k: "yes", label: "네, 바로 충전할래요" }, { k: "maybe", label: "무료부터 써볼래요" }, { k: "pricey", label: "가격이 부담돼요" }];
 
 // 타사 AI — 끝없이 길어지는 대화(찐 채팅 화면, 애니메이션)
-function RivalChat() {
+// 윈도우 크롬(맥 신호등 + 타이틀)
+function WinBar({ title, dark = false }: { title: string; dark?: boolean }) {
   return (
-    <div className="flex flex-col rounded-3xl border border-neutral-200 bg-neutral-50 p-4 sm:p-5">
-      <div className="flex h-[300px] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white">
-        <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-2.5">
-          <div className="flex items-center gap-2"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-neutral-300 text-[10px] text-white">AI</span><span className="text-[12px] font-semibold text-neutral-500">타사 AI · 대화</span></div>
-          <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-semibold text-neutral-400">수정 4회째</span>
-        </div>
-        <div className="flex min-h-0 flex-1">
-          <div className="hidden w-14 shrink-0 flex-col gap-2 border-r border-neutral-100 p-2.5 sm:flex">
-            <div className="flex h-6 items-center justify-center rounded-md bg-neutral-100 text-[13px] text-neutral-400">＋</div>
-            {[80, 64, 72, 56].map((w, i) => <div key={i} className="h-1.5 rounded-full bg-neutral-100" style={{ width: `${w}%` }} />)}
-          </div>
-          {/* 고정 대화 — 진짜 답변 텍스트 + 타이핑(끊김 없이) */}
-          <div className="flex min-h-0 flex-1 flex-col justify-end gap-2 overflow-hidden p-3">
-            <div className="max-w-[85%] self-end rounded-2xl rounded-br-md bg-neutral-900 px-3 py-2 text-[11px] text-white">전세사기 예방법 블로그 SEO 글 써줘</div>
-            <div className="max-w-[92%] self-start rounded-2xl rounded-bl-md bg-neutral-100 px-3.5 py-2.5 text-[11px] leading-relaxed text-neutral-500">전세사기 예방 SEO 글로 정리했어요. 핵심 키워드는 ‘전세사기 예방법·전세보증보험·등기부등본 확인’ 중심으로 잡았습니다.</div>
-            <div className="max-w-[85%] self-end rounded-2xl rounded-br-md bg-neutral-900 px-3 py-2 text-[11px] text-white">도입부 더 길게, 표도 넣어줘</div>
-            <div className="flex items-center gap-1.5 self-start rounded-2xl rounded-bl-md bg-neutral-100 px-3.5 py-3">
-              {[0, 1, 2].map((j) => <span key={j} className="h-1.5 w-1.5 animate-bounce rounded-full bg-neutral-400" style={{ animationDelay: `${j * 0.15}s` }} />)}
-            </div>
-          </div>
-        </div>
-      </div>
-      <p className="mt-3 text-center text-[13px] font-semibold text-neutral-400">끝없이 고치고, <span className="text-neutral-600">복붙·발행은 결국 내 몫</span></p>
+    <div className={`flex items-center gap-2 border-b px-3.5 py-2.5 ${dark ? "border-white/8" : "border-neutral-100"}`}>
+      <span className="flex gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" /><span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" /><span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" /></span>
+      <span className={`mx-auto pr-10 text-[11px] font-medium ${dark ? "text-white/45" : "text-neutral-400"}`}>{title}</span>
     </div>
   );
 }
 
-// AteFlo — 추천 키워드 버튼 한 번 → 글 → 발행 (쉬워 보이게, 애니메이션)
-function AteFloGen() {
-  const KW = [{ k: "전세 사기 예방법", v: "1.2만", c: "낮음", hot: true }, { k: "1억으로 갭투자", v: "8,400", c: "낮음" }, { k: "청약 가점 계산기", v: "6,100", c: "보통" }, { k: "전입신고 하는 법", v: "5,200", c: "낮음" }];
-  const [p, setP] = useState(0); // 0목록 1선택 2로딩 3완성
-  useEffect(() => {
-    const t: ReturnType<typeof setTimeout>[] = [];
-    const run = () => { setP(0); t.push(setTimeout(() => setP(1), 1300)); t.push(setTimeout(() => setP(2), 2100)); t.push(setTimeout(() => setP(3), 3500)); t.push(setTimeout(run, 6000)); };
-    run(); return () => t.forEach(clearTimeout);
-  }, []);
+// 타사 AI — 실제 채팅 앱 스크린샷처럼 (사이드바 + 진짜 대화)
+function RivalChat() {
   return (
-    <div className="flex flex-col rounded-3xl border-2 border-[#3f91ff]/30 bg-[#3f91ff]/[0.05] p-4 shadow-sm sm:p-5">
-      <div className="flex h-[300px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0c0e16]">
-        <div className="flex items-center justify-between border-b border-white/8 px-4 py-2.5">
-          <div className="flex items-center gap-2"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#3f91ff] text-white"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg></span><span className="text-[12px] font-semibold text-white/70">AteFlo · 글쓰기</span></div>
-          <span className="rounded-full bg-emerald-400/15 px-2 py-0.5 text-[10px] font-bold text-emerald-300">검색 노출 설계</span>
+    <div className="rounded-2xl bg-gradient-to-br from-[#e6e8ef] via-[#eef0f5] to-[#f6f7fa] p-3 sm:p-5">
+      <div className="overflow-hidden rounded-xl border border-black/10 bg-white shadow-[0_30px_70px_-22px_rgba(30,35,50,0.4)]">
+        <WinBar title="AI 어시스턴트" />
+        <div className="flex h-[300px]">
+          <div className="hidden w-[36%] shrink-0 flex-col border-r border-neutral-100 bg-neutral-50/70 p-2.5 sm:flex">
+            <div className="rounded-md border border-neutral-200 bg-white px-2 py-1.5 text-center text-[10px] font-medium text-neutral-500">＋ 새 대화</div>
+            <div className="mt-2 space-y-0.5">
+              {["전세사기 예방법 블로그", "갭투자 글 초안", "청약 글 다시 써줘", "블로그 제목 30개", "메타설명 작성"].map((t, i) => (
+                <div key={t} className={`truncate rounded-md px-2 py-1.5 text-[10.5px] ${i === 0 ? "bg-neutral-200/70 text-neutral-700" : "text-neutral-400"}`}>{t}</div>
+              ))}
+            </div>
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col justify-end gap-2 p-3.5">
+            <div className="max-w-[88%] self-end rounded-2xl rounded-br-md bg-neutral-900 px-3 py-2 text-[11px] leading-relaxed text-white">전세사기 예방법으로 블로그 SEO 글 써줘</div>
+            <div className="max-w-[94%] self-start rounded-2xl rounded-bl-md bg-neutral-100 px-3 py-2.5 text-[11px] leading-relaxed text-neutral-500">전세사기 예방을 위한 SEO 글로 정리했습니다. 핵심 키워드는 ‘전세사기 예방법·전세보증보험·등기부등본 확인’ 중심으로 잡았어요. 도입부와 본문 구조는 아래와 같이…</div>
+            <div className="max-w-[88%] self-end rounded-2xl rounded-br-md bg-neutral-900 px-3 py-2 text-[11px] leading-relaxed text-white">도입부 더 길게, 표도 넣어줘</div>
+            <div className="flex w-fit items-center gap-1.5 self-start rounded-2xl rounded-bl-md bg-neutral-100 px-3 py-2.5">{[0, 1, 2].map((j) => <span key={j} className="h-1.5 w-1.5 animate-bounce rounded-full bg-neutral-400" style={{ animationDelay: `${j * 0.15}s` }} />)}</div>
+          </div>
         </div>
-        <div className="flex min-h-0 flex-1 flex-col p-4">
-          <AnimatePresence mode="wait">
-            {p < 2 ? (
-              <motion.div key="kw" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}>
-                <p className="text-[11px] font-semibold text-white/55">추천 키워드</p>
-                <div className="mt-2 space-y-1.5">
-                  {KW.map((r, i) => (
-                    <div key={r.k} className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 transition-colors duration-300 ${i === 0 && p === 1 ? "border-[#6a8bff] bg-[#6a8bff]/15" : "border-white/8 bg-white/[0.03]"}`}>
-                      <span className="min-w-0 flex-1 truncate text-[11.5px] font-medium text-white/85">{r.k}</span>
-                      <span className="shrink-0 text-[9px] text-white/35">월 {r.v}</span>
-                      <span className={`shrink-0 rounded px-1.5 py-0.5 text-[8px] font-bold ${r.c === "낮음" ? "bg-emerald-400/15 text-emerald-300" : "bg-amber-400/15 text-amber-300"}`}>{r.c}</span>
-                    </div>
-                  ))}
+        <div className="border-t border-neutral-100 px-3.5 py-2 text-[10px] text-neutral-400">답변 복사 후 워드프레스에 직접 붙여넣기…</div>
+      </div>
+    </div>
+  );
+}
+
+// AteFlo — 실제 글쓰기 앱 스크린샷처럼 (글 목록 + 진짜 본문 + SEO 상태바)
+function AteFloGen() {
+  const POSTS: [string, string][] = [["전세 사기 예방법 5가지", "발행"], ["1억으로 시작하는 갭투자", "발행"], ["청약 가점 계산법 총정리", "발행"], ["전입신고·확정일자 받는 법", "초안"], ["오피스텔 투자 체크리스트", "초안"]];
+  return (
+    <div className="rounded-2xl bg-gradient-to-br from-[#c3d2ff] via-[#dce6ff] to-[#cfe0ff] p-3 sm:p-5">
+      <div className="overflow-hidden rounded-xl border border-black/10 bg-[#0b0d15] shadow-[0_30px_70px_-22px_rgba(30,50,110,0.55)]">
+        <WinBar title="AteFlo — 글쓰기" dark />
+        <div className="flex h-[300px]">
+          <div className="hidden w-[38%] shrink-0 flex-col border-r border-white/8 p-2.5 sm:flex">
+            <p className="px-1.5 text-[9.5px] font-semibold uppercase tracking-wide text-white/30">내 글</p>
+            <div className="mt-1.5 space-y-0.5">
+              {POSTS.map(([t, s], i) => (
+                <div key={t} className={`flex items-center gap-1.5 rounded-md px-2 py-1.5 ${i === 0 ? "bg-white/8" : ""}`}>
+                  <span className={`min-w-0 flex-1 truncate text-[10.5px] ${i === 0 ? "text-white" : "text-white/50"}`}>{t}</span>
+                  <span className={`shrink-0 text-[8px] font-semibold ${s === "발행" ? "text-emerald-400" : "text-white/30"}`}>{s}</span>
                 </div>
-              </motion.div>
-            ) : p === 2 ? (
-              <motion.div key="load" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }} className="flex h-full flex-col items-center justify-center gap-3">
-                <span className="h-9 w-9 animate-spin rounded-full border-2 border-white/15 border-t-[#6a8bff]" />
-                <p className="text-[12.5px] font-semibold text-white/80">SEO 최적화 글 작성 중…</p>
-                <div className="h-1 w-40 overflow-hidden rounded-full bg-white/10"><motion.div initial={{ width: "10%" }} animate={{ width: "92%" }} transition={{ duration: 1.3, ease: "easeOut" }} className="h-full rounded-full bg-[#6a8bff]" /></div>
-              </motion.div>
-            ) : (
-              <motion.div key="art" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="flex h-full flex-col">
-                <p className="text-[12.5px] font-extrabold text-white">전세 사기 예방법 5가지</p>
-                <div className="mt-2 space-y-1.5">
-                  <p className="text-[10.5px] font-bold text-[#8ab4ff]">## 등기부등본부터 확인하기</p>
-                  <div className="h-1.5 w-full rounded-full bg-white/12" /><div className="h-1.5 w-[92%] rounded-full bg-white/12" />
-                  <p className="text-[10.5px] font-bold text-[#8ab4ff]">## 전입신고·확정일자 받기</p>
-                  <div className="h-1.5 w-[96%] rounded-full bg-white/12" />
-                </div>
-                <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="mt-auto flex items-center gap-2 rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1.5"><span className="text-emerald-400">✓</span><span className="text-[11px] font-semibold text-emerald-300">워드프레스에 발행됨</span></motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              ))}
+            </div>
+          </div>
+          <div className="min-w-0 flex-1 overflow-hidden p-4">
+            <p className="text-[9.5px] text-white/30">재테크 › 부동산 · SEO 점수 92</p>
+            <p className="mt-1 text-[15px] font-extrabold leading-snug text-white">전세 사기 예방법 5가지</p>
+            <div className="mt-2.5 space-y-2 text-[10.5px] leading-relaxed text-white/55">
+              <p>전세 계약 전, 등기부등본의 ‘을구’부터 확인하세요. 근저당이 과도하면 보증금을 떼일 위험이 큽니다.</p>
+              <p className="font-bold text-[#8ab4ff]">1. 등기부등본 확인하기</p>
+              <p>소유자와 임대인이 같은지, 신탁 등기는 없는지 대조합니다.</p>
+              <p className="font-bold text-[#8ab4ff]">2. 전입신고·확정일자</p>
+              <p>잔금 당일 신청해 대항력과 우선변제권을 함께 확보해요.<span className="ml-px inline-block h-3 w-0.5 animate-pulse bg-[#6a8bff] align-middle" /></p>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center justify-between border-t border-white/8 px-3.5 py-2 text-[9.5px]">
+          <span className="text-white/35">키워드·메타설명·검색의도 <span className="text-emerald-400">✓ 자동 최적화</span></span>
+          <span className="rounded bg-emerald-500/15 px-2 py-0.5 font-semibold text-emerald-300">워드프레스 발행됨</span>
         </div>
       </div>
-      <p className="mt-3 text-center text-[13px] font-semibold text-neutral-500">추천 키워드 선택 한 번 → <span className="text-[#2f7fe6]">검색 구조로 바로 발행</span></p>
     </div>
   );
 }
