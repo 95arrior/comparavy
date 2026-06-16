@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { isAdminEmail } from "@/lib/adminStats";
-import { isTone, isType, isPublishMode } from "@/lib/blogProfile";
+import { isTone, isType, isPublishMode, isVertical } from "@/lib/blogProfile";
 import { isTopCategory } from "@/lib/categories";
 
 /**
@@ -39,6 +39,7 @@ export async function POST(request: Request) {
   const tone = isTone(body.tone) ? body.tone : "friendly";
   const article_type = isType(body.article_type) ? body.article_type : "info";
   const publish_mode = isPublishMode(body.publish_mode) ? body.publish_mode : "manual";
+  const vertical = isVertical(body.vertical) ? body.vertical : "general";
   const target = (typeof body.target === "string" ? body.target : "").trim().slice(0, 80) || null;
   // 대분류 (없으면 topic을 대분류로 가정 — 레거시 호환)
   const category = (typeof body.category === "string" && isTopCategory(body.category)) ? body.category : (isTopCategory(topic) ? topic : null);
@@ -49,7 +50,7 @@ export async function POST(request: Request) {
   const { data, error } = await supabase
     .from("blog_profiles")
     .upsert(
-      { user_id: user.id, topic, category, blog_name, tone, article_type, target, publish_mode, updated_at: new Date().toISOString() },
+      { user_id: user.id, topic, category, blog_name, tone, article_type, target, publish_mode, vertical, updated_at: new Date().toISOString() },
       { onConflict: "user_id" },
     )
     .select("*")

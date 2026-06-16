@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { TONE_CHOICES, TYPE_CHOICES, type BlogProfile } from "@/lib/blogProfile";
+import { TONE_CHOICES, TYPE_CHOICES, VERTICAL_CHOICES, type BlogProfile } from "@/lib/blogProfile";
 import { isTopCategory, labelFor, ALL_SUB } from "@/lib/categories";
 import CategoryPicker from "./CategoryPicker";
 
@@ -27,6 +27,7 @@ export default function BlogSetup({
   const [blogName, setBlogName] = useState(initial?.blog_name ?? "");
   const [tone, setTone] = useState(initial?.tone ?? "friendly");
   const [articleType, setArticleType] = useState(initial?.article_type ?? "info");
+  const [vertical, setVertical] = useState(initial?.vertical ?? "general");
   const [target, setTarget] = useState(initial?.target ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +56,7 @@ export default function BlogSetup({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           topic, category, blog_name: blogName.trim(),
-          tone, article_type: articleType, target: target.trim(), publish_mode: "manual",
+          tone, article_type: articleType, target: target.trim(), publish_mode: "manual", vertical,
         }),
       });
       const data = await res.json();
@@ -116,6 +117,20 @@ export default function BlogSetup({
             {topic && (
               <p className="mt-2 text-xs text-neutral-400">‘<b className="text-neutral-600">{sub === ALL_SUB ? `${category} 전체` : sub}</b>’ 범위로 키워드를 발굴해요.</p>
             )}
+            <div className="mt-6">
+              <label htmlFor="vertical-select" className="text-sm font-bold tracking-tight">업종 <span className="text-xs font-normal text-neutral-400">(선택)</span></label>
+              <p className="mt-1 text-sm text-neutral-500">업종을 고르면 그 맥락에 맞춰 글을 써요. 기본은 ‘기타·일반’이에요.</p>
+              <select
+                id="vertical-select"
+                value={vertical}
+                onChange={(e) => setVertical(e.target.value)}
+                className="mt-3 w-full rounded-xl border border-neutral-200 bg-white px-4 py-3.5 text-base outline-none transition focus:border-[#3f91ff] focus:ring-2 focus:ring-[#3f91ff]/20"
+              >
+                {VERTICAL_CHOICES.map((v) => (
+                  <option key={v.value} value={v.value}>{v.label}</option>
+                ))}
+              </select>
+            </div>
           </div>
         )}
         {step === 1 && (

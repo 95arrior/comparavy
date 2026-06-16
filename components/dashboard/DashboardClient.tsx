@@ -426,7 +426,7 @@ export default function DashboardClient(props: DashboardProps) {
       if (first) {
         pendingQueueId.current = first.id;
         setSelected(null);
-        setGenParams({ keyword: first.keyword, angle: "", type: toEngineType(blogProfile.article_type), tone: blogProfile.tone });
+        setGenParams({ keyword: first.keyword, angle: "", type: toEngineType(blogProfile.article_type, blogProfile.vertical), tone: blogProfile.tone });
       }
       return true;
     } catch {
@@ -616,19 +616,55 @@ export default function DashboardClient(props: DashboardProps) {
     );
   };
 
-  // 온보딩 다음단계 안내 배너 (연구소 내부 뷰·워드프레스에서 공통 사용)
+  // 온보딩 진척 배너 (연구소 내부 뷰·워드프레스에서 공통 사용)
+  // 가입 직후 빈 화면을 막기 위해 3단계 진행(완료/진행 중/대기)을 한눈에 보여주고, 다음 할 일을 강조한다.
+  const doneCount = steps.filter((s) => s.done).length;
+  const firstUndone = steps.findIndex((s) => !s.done);
   const nextStepBanner = !allDone && nextStep ? (
-    <div className="mb-6 flex flex-wrap items-center gap-4 rounded-2xl border border-[#3f91ff]/30 bg-[#3f91ff]/5 px-5 py-4">
-      <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold text-[#3f91ff]">다음 단계 · {steps.filter((s) => s.done).length + 1} / {steps.length}</p>
-        <p className="mt-1 text-sm font-medium text-neutral-900">{nextStep.msg}</p>
+    <div className="mb-6 rounded-2xl border border-[#3f91ff]/30 bg-[#3f91ff]/5 px-5 py-4">
+      <p className="text-xs font-bold tracking-tight text-[#3f91ff]">시작하기 · {doneCount}/{steps.length} 완료</p>
+      {/* 3단계 진행 스트립 */}
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        {steps.map((s, i) => {
+          const current = i === firstUndone;
+          return (
+            <div
+              key={s.label}
+              className={`flex min-w-0 flex-col gap-1 rounded-xl border px-3 py-2.5 transition ${
+                s.done
+                  ? "border-emerald-200 bg-emerald-50/70"
+                  : current
+                    ? "border-[#3f91ff] bg-white shadow-sm"
+                    : "border-neutral-200 bg-white/50"
+              }`}
+            >
+              <span className="flex items-center gap-1.5">
+                {s.done ? (
+                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
+                  </span>
+                ) : current ? (
+                  <span className="flex h-4 w-4 shrink-0 items-center justify-center"><span className="h-2 w-2 animate-pulse rounded-full bg-[#3f91ff]" /></span>
+                ) : (
+                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-neutral-300 text-[9px] font-bold text-neutral-400">{i + 1}</span>
+                )}
+                <span className={`text-[10px] font-bold ${s.done ? "text-emerald-600" : current ? "text-[#3f91ff]" : "text-neutral-400"}`}>{s.done ? "완료" : current ? "진행 중" : "대기"}</span>
+              </span>
+              <span className={`truncate text-[12px] font-medium ${s.done ? "text-neutral-400 line-through decoration-neutral-300" : current ? "text-neutral-900" : "text-neutral-500"}`}>{s.label}</span>
+            </div>
+          );
+        })}
       </div>
-      <button
-        onClick={nextStep.go}
-        className="shrink-0 rounded-xl bg-[#3f91ff] px-5 py-2 text-sm font-medium text-white transition hover:opacity-90"
-      >
-        {nextStep.label}
-      </button>
+      {/* 다음 할 일 강조 */}
+      <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-[#3f91ff]/15 pt-3">
+        <p className="min-w-0 flex-1 text-sm font-medium text-neutral-900">{nextStep.msg}</p>
+        <button
+          onClick={nextStep.go}
+          className="shrink-0 rounded-xl bg-[#3f91ff] px-5 py-2 text-sm font-medium text-white transition hover:opacity-90 active:scale-95"
+        >
+          {nextStep.label}
+        </button>
+      </div>
     </div>
   ) : null;
 
@@ -826,6 +862,7 @@ export default function DashboardClient(props: DashboardProps) {
             canEdit={props.plan === "pro"}
             wpCategories={wpCategories}
             wpTags={wpTags}
+            vertical={blogProfile?.vertical ?? "general"}
             onCategoryCreated={(c) => setWpCategories((prev) => (prev.some((x) => x.name === c.name) ? prev : [c, ...prev]))}
             onCategoryDeleted={(id) => setWpCategories((prev) => prev.filter((x) => x.id !== id))}
             onClose={() => setSelected(null)}

@@ -9,6 +9,7 @@ export interface BlogProfile {
   article_type: string; // 'info' | 'guide' (의미값)
   target: string | null;
   publish_mode: string; // 'manual' | 'auto'
+  vertical: string; // 업종 — medical | academy | professional | b2b | general (기본값)
 }
 
 /** 문체 선택지 (label=화면, value=생성엔진 tone 키) */
@@ -30,15 +31,43 @@ export const PUBLISH_CHOICES = [
   { value: "auto", label: "완전 자동", hint: "생성되면 바로 발행" },
 ] as const;
 
+/** 업종(vertical) 선택지 (label=화면, value=DB 저장값). 기본값 general. */
+export const VERTICAL_CHOICES = [
+  { value: "medical", label: "병의원" },
+  { value: "academy", label: "학원·교습소" },
+  { value: "professional", label: "전문직(법무·세무·노무)" },
+  { value: "b2b", label: "B2B 서비스" },
+  { value: "general", label: "기타·일반" },
+] as const;
+
 const TONE_VALUES = new Set(TONE_CHOICES.map((c) => c.value));
 const TYPE_VALUES = new Set(TYPE_CHOICES.map((c) => c.value));
 const PUBLISH_VALUES = new Set(PUBLISH_CHOICES.map((c) => c.value));
+const VERTICAL_VALUES = new Set(VERTICAL_CHOICES.map((c) => c.value));
 
 export function isTone(v: unknown): boolean { return typeof v === "string" && TONE_VALUES.has(v as never); }
 export function isType(v: unknown): boolean { return typeof v === "string" && TYPE_VALUES.has(v as never); }
 export function isPublishMode(v: unknown): boolean { return typeof v === "string" && PUBLISH_VALUES.has(v as never); }
+export function isVertical(v: unknown): boolean { return typeof v === "string" && VERTICAL_VALUES.has(v as never); }
 
-/** 프로필 유형(info/guide) → 생성엔진 type 키. (현재 둘 다 howto 구조; 2-C에서 세분 예정) */
-export function toEngineType(articleType: string): string {
+/**
+ * 업종별 기본 톤·유형 (ARTICLE_TYPES/TONES 키 재활용).
+ * 생성 시 요청에 tone/type이 '없을 때만' 폴백으로 적용된다(사용자 명시값 우선).
+ * general은 매핑 없음 → 현행 동작 100% 유지.
+ */
+export const VERTICAL_DEFAULTS: Record<string, { tone: string; type: string }> = {
+  medical: { tone: "professional", type: "howto" },
+  academy: { tone: "friendly", type: "howto" },
+  professional: { tone: "professional", type: "howto" },
+  b2b: { tone: "professional", type: "comparison" },
+};
+
+/**
+ * 프로필 유형(info/guide) → 생성엔진 type 키. vertical을 고려한다.
+ * - b2b → comparison, 그 외 전문업종 → howto (VERTICAL_DEFAULTS.type)
+ * - general/미지정 → 현행 그대로(howto)
+ */
+export function toEngineType(articleType: string, vertical?: string): string {
+  if (vertical && VERTICAL_DEFAULTS[vertical]) return VERTICAL_DEFAULTS[vertical].type;
   return articleType === "guide" ? "howto" : "howto";
 }

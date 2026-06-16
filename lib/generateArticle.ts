@@ -107,7 +107,7 @@ export async function generateArticle(
   const res = await client.messages.create({
     model,
     max_tokens: maxTokens,
-    system: buildSystemPrompt(),
+    system: buildSystemPrompt(input.vertical),
     tools: [SAVE_TOOL],
     tool_choice: { type: "tool", name: "save_article" },
     messages: [{ role: "user", content: buildUserPrompt(input) }],
@@ -191,7 +191,7 @@ export async function streamArticle(
   const stream = client.messages.stream({
     model,
     max_tokens: maxTokens,
-    system: buildSystemPrompt(),
+    system: buildSystemPrompt(input.vertical),
     tools: [SAVE_TOOL],
     tool_choice: { type: "tool", name: "save_article" },
     messages: [{ role: "user", content: buildUserPrompt(input) }],

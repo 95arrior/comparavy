@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import SearchConsoleConnect from "./SearchConsoleConnect";
 
 const GUIDE_STEPS = [
   "워드프레스 관리자(wp-admin)에 로그인해요.",
@@ -109,6 +110,9 @@ export default function WordPressPanel({
             </span>
           </button>
         )}
+
+        {/* 구글 서치콘솔 연결 + 사이트 선택 (5-1) */}
+        <SearchConsoleConnect />
       </div>
     );
   }

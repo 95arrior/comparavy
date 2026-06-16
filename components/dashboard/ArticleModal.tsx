@@ -6,6 +6,7 @@ import ArticleEditor, { type ArticleEditorHandle } from "./ArticleEditor";
 import CenterToast from "./CenterToast";
 import ScheduleCalendar from "./ScheduleCalendar";
 import { PLANS, formatKRW } from "@/lib/plans";
+import { scanCompliance, applySuggestion } from "@/lib/complianceFilter";
 import type { Article } from "./types";
 
 export default function ArticleModal({
@@ -15,6 +16,7 @@ export default function ArticleModal({
   canEdit,
   wpCategories,
   wpTags,
+  vertical,
   onCategoryCreated,
   onCategoryDeleted,
   onClose,
@@ -25,6 +27,8 @@ export default function ArticleModal({
   canPublish?: boolean;
   /** 편집(수정·이미지 삽입)은 프로 전용. 무료는 읽기전용 + 복사만. */
   canEdit?: boolean;
+  /** 블로그 업종 — 발행 전 광고규제 표현 검사에 사용(없으면 general). */
+  vertical?: string;
   /** 미리 불러온 워드프레스 카테고리·태그 (드롭다운 즉시 표시용) */
   wpCategories?: { id: number; name: string; count?: number }[];
   wpTags?: string[];
@@ -340,6 +344,26 @@ export default function ArticleModal({
     return editorRef.current?.getHTML() ?? bodyHtml;
   }
 
+  // 발행 전 광고규제 표현 검사(업종별). 자동 차단이 아니라 경고 + 대안 제시 → 사용자가 판단.
+  const compliance = useMemo(() => {
+    const v = vertical ?? "general";
+    const inTitle = scanCompliance(title, v).map((x) => ({ ...x, field: "title" as const }));
+    const inBody = scanCompliance(bodyHtml, v).map((x) => ({ ...x, field: "body" as const }));
+    return [...inTitle, ...inBody].sort((a, b) => (a.severity === b.severity ? 0 : a.severity === "high" ? -1 : 1));
+  }, [title, bodyHtml, vertical]);
+
+  // '바꾸기' — 위반 표현을 대체 표현으로 치환(본문은 에디터에도 반영).
+  function fixViolation(v: (typeof compliance)[number]) {
+    if (!v.suggestion) return;
+    if (v.field === "title") {
+      setTitle((t) => applySuggestion(t, v.matched, v.suggestion!));
+    } else {
+      const next = applySuggestion(currentBody(), v.matched, v.suggestion!);
+      setBodyHtml(next);
+      editorRef.current?.setHTML(next);
+    }
+  }
+
   const pad2 = (n: number) => String(n).padStart(2, "0");
   const toLocalInput = (d: Date) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
   // 예약 최소 시각(지금)
@@ -391,6 +415,14 @@ export default function ArticleModal({
     if (!wpConnected) {
       setError("먼저 워드프레스 탭에서 사이트를 연결해 주세요.");
       return;
+    }
+    // 실제 발행(즉시·예약) 전, 광고규제 위반 소지가 있으면 한 번 더 확인(막진 않고 사용자 판단).
+    if ((status === "publish" || status === "future") && compliance.length > 0) {
+      const high = compliance.filter((c) => c.severity === "high").length;
+      const ok = window.confirm(
+        `광고 규제 위반 소지 ${compliance.length}건${high ? ` (높음 ${high}건)` : ""}이 있어요.\n표현에 따라 법적 책임이 생길 수 있어요. 확인했고 그대로 발행할까요?`,
+      );
+      if (!ok) return;
     }
     const isRepublish = Boolean(article.wp_post_id);
     setPublishing(true);
@@ -736,6 +768,32 @@ export default function ArticleModal({
                 <a href={article.wp_link} target="_blank" rel="noreferrer" className="underline">글 보기</a>
               </>
             )}
+          </div>
+        )}
+
+        {compliance.length > 0 && (
+          <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50/70 p-4">
+            <div className="flex items-center gap-2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-600"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" /><path d="M12 9v4M12 17h.01" /></svg>
+              <p className="text-sm font-bold text-amber-900">광고 규제 표현 검토 {compliance.length}건</p>
+            </div>
+            <p className="mt-1 text-xs leading-relaxed text-amber-700">발행 전 확인하세요. 막진 않지만, 표현에 따라 법적 책임이 생길 수 있어요.</p>
+            <ul className="mt-3 space-y-2">
+              {compliance.map((v, i) => (
+                <li key={i} className={`rounded-lg border bg-white px-3 py-2.5 ${v.severity === "high" ? "border-red-200" : "border-amber-200"}`}>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold ${v.severity === "high" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-800"}`}>{v.severity === "high" ? "높음" : "주의"}</span>
+                    <span className="text-sm font-semibold text-neutral-900">‘{v.matched}’{v.count > 1 ? ` ×${v.count}` : ""}</span>
+                    <span className="text-[11px] text-neutral-400">{v.field === "title" ? "제목" : "본문"} · {v.law}</span>
+                    {v.suggestion && canEdit && (
+                      <button onClick={() => fixViolation(v)} className="ml-auto shrink-0 rounded-lg bg-neutral-900 px-2.5 py-1 text-xs font-medium text-white transition hover:bg-neutral-700">‘{v.suggestion}’로 바꾸기</button>
+                    )}
+                  </div>
+                  <p className="mt-1 text-xs leading-relaxed text-neutral-600">{v.reason}</p>
+                  {v.note && <p className="mt-0.5 text-[11px] text-neutral-400">{v.note}</p>}
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 
