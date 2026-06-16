@@ -15,6 +15,7 @@ import KeywordFinder from "./KeywordFinder";
 import KeywordQueue from "./KeywordQueue";
 import BlogSetup from "./BlogSetup";
 import ResearchLab from "./ResearchLab";
+import SearchPerformance from "./SearchPerformance";
 import { toEngineType, type BlogProfile } from "@/lib/blogProfile";
 import type { QueueItem } from "@/lib/keywordQueue";
 import AteFloLogo from "@/components/AteFloLogo";
@@ -914,14 +915,19 @@ export default function DashboardClient(props: DashboardProps) {
 
             {/* 연구소 홈 = 내 작전 본부 (현황 + 도구 연결) / 무료 한도 초과 시 업그레이드 안내 */}
             {labView === "home" && !blocked && (
-              <ResearchLab
-                profile={blogProfile}
-                displayName={displayName}
-                articles={articles}
-                queue={queue}
-                onNavigate={(t) => goLabView(t)}
-                onQueueKeyword={(kw) => { void handleQueue([kw]); }}
-              />
+              <>
+                <div className="mx-auto max-w-5xl px-6 pt-8">
+                  <SearchPerformance onGoConnect={() => goTab("wordpress")} />
+                </div>
+                <ResearchLab
+                  profile={blogProfile}
+                  displayName={displayName}
+                  articles={articles}
+                  queue={queue}
+                  onNavigate={(t) => goLabView(t)}
+                  onQueueKeyword={(kw) => { void handleQueue([kw]); }}
+                />
+              </>
             )}
             {labView === "home" && blocked && (
               <div className="mx-auto max-w-xl px-6 py-16">
