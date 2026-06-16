@@ -16,8 +16,6 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",
-    "@react-three/drei": "^10.7.7",
-    "@react-three/fiber": "^9.6.1",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.107.0",
     "@tiptap/extension-image": "^3.26.0",
@@ -39,8 +37,7 @@
     "puppeteer": "^25.1.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "recharts": "^3.8.1",
-    "three": "^0.184.0"
+    "recharts": "^3.8.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.0",
