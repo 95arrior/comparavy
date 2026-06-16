@@ -282,8 +282,13 @@ const STEPS = [
   { no: "04", tag: "수익화", title: <>글이 쌓이고,<br />수익으로.</>, before: "검색에 안 잡힘", after: "검색 유입 ↑", nav: 3, url: "ateflo.com/insight", Screen: SceneEarn },
 ];
 
-// 1섹션 아래 마퀴 = AI가 써낸 글 제목들(품질·분야 다양성 증명)
-const MARQUEE = ["전세 사기 100% 막는 법", "1억으로 시작하는 갭투자", "강아지 분리불안 해결 7가지", "제주 3박4일 완벽 코스", "연말정산 13월의 월급 만들기", "초보 주식 첫 매수 가이드", "일주일 다이어트 식단표", "원룸 인테리어 비포·애프터", "캠핑 초보 장비 체크리스트", "아이랑 가볼 만한 실내 명소"];
+// 1섹션 아래 마퀴 = 분야(니치) — '어떤 분야든 된다'
+const MARQUEE = [
+  { e: "🏠", t: "부동산" }, { e: "💰", t: "재테크" }, { e: "📈", t: "주식" }, { e: "🐶", t: "강아지" },
+  { e: "✈️", t: "여행" }, { e: "🍳", t: "요리" }, { e: "👶", t: "육아" }, { e: "💪", t: "운동" },
+  { e: "💄", t: "뷰티" }, { e: "💻", t: "IT·테크" }, { e: "🏕️", t: "캠핑" }, { e: "🪴", t: "인테리어" },
+  { e: "🎮", t: "게임" }, { e: "📚", t: "자기계발" },
+];
 
 function Chapter({ tint = false, children }: { tint?: boolean; children: React.ReactNode }) {
   return <section className={`flex min-h-[88vh] flex-col items-center justify-center px-6 py-20 ${tint ? "bg-[#f3f7ff]" : "bg-white"}`}><div className="mx-auto w-full max-w-5xl">{children}</div></section>;
@@ -514,10 +519,11 @@ export default function StartLanding() {
           <motion.div style={{ y: heroMockY }} className="relative z-10 mt-9 w-full max-w-2xl"><BuilderDemo /></motion.div>
         </section>
 
-        {/* 마퀴 — AI가 써낸 글 제목들 */}
-        <div className="overflow-hidden border-y border-neutral-100 bg-white py-5">
-          <motion.div className="flex w-max gap-3 whitespace-nowrap" style={{ willChange: "transform" }} animate={{ x: ["0%", "-50%"] }} transition={{ duration: 30, repeat: Infinity, ease: "linear" }}>
-            {[...MARQUEE, ...MARQUEE].map((k, i) => <span key={i} className="flex items-center gap-1.5 rounded-full border border-neutral-200 px-4 py-2 text-sm text-neutral-500"><span className="text-[#3f91ff]">✍️</span>{k}</span>)}
+        {/* 마퀴 — 분야(니치): 어떤 분야든 된다 */}
+        <div className="overflow-hidden border-y border-neutral-100 bg-white py-6">
+          <p className="mb-4 text-center text-xs font-semibold tracking-wide text-neutral-400">어떤 분야든, 블로그가 돼요</p>
+          <motion.div className="flex w-max gap-2.5 whitespace-nowrap" style={{ willChange: "transform" }} animate={{ x: ["0%", "-50%"] }} transition={{ duration: 32, repeat: Infinity, ease: "linear" }}>
+            {[...MARQUEE, ...MARQUEE].map((k, i) => <span key={i} className="flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-600"><span>{k.e}</span>{k.t}</span>)}
           </motion.div>
         </div>
 
