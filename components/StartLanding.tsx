@@ -484,35 +484,51 @@ function BuilderDemo() {
 
 const WILLING = [{ k: "yes", label: "네, 바로 충전할래요" }, { k: "maybe", label: "무료부터 써볼래요" }, { k: "pricey", label: "가격이 부담돼요" }];
 
-// 2섹션 비교 카드 (그냥 AI 글 vs AteFlo 글)
+// 2섹션 비교 — 실제 화면 2종 (ChatGPT 채팅 vs AteFlo 작성)
 function CompareDoc({ kind }: { kind: "gpt" | "ateflo" }) {
   if (kind === "gpt") {
     return (
-      <div className="flex h-full flex-col rounded-3xl border border-neutral-200 bg-neutral-50 p-5">
-        <div className="flex items-center gap-2"><span className="flex h-6 w-6 items-center justify-center rounded-md bg-neutral-200 text-[12px]">🤖</span><span className="text-[12px] font-semibold text-neutral-400">그냥 AI 글</span></div>
-        <div className="mt-3 rounded-2xl border border-neutral-200 bg-white p-4">
-          <div className="space-y-2">{[100, 98, 96, 99, 94, 97, 92, 95, 90].map((w, i) => <div key={i} className="h-2 rounded-full bg-neutral-200" style={{ width: `${w}%` }} />)}</div>
+      <div className="flex h-full flex-col rounded-3xl border border-neutral-200 bg-neutral-50 p-4 sm:p-5">
+        {/* ChatGPT 채팅 화면 */}
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white">
+          <div className="flex items-center gap-2 border-b border-neutral-100 px-4 py-2.5">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#10a37f] text-white"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9" /></svg></span>
+            <span className="text-[12px] font-semibold text-neutral-500">ChatGPT</span>
+          </div>
+          <div className="flex flex-1 flex-col gap-2.5 p-4">
+            <div className="max-w-[82%] self-end rounded-2xl rounded-br-md bg-neutral-100 px-3 py-2 text-[11.5px] text-neutral-700">전세 사기 예방법으로 블로그 글 써줘</div>
+            <div className="rounded-2xl rounded-bl-md bg-neutral-50 px-3 py-2.5">
+              <div className="space-y-1.5">{[100, 97, 99, 94, 98, 92, 96, 90].map((w, i) => <div key={i} className="h-1.5 rounded-full bg-neutral-200" style={{ width: `${w}%` }} />)}</div>
+              <div className="mt-2.5 inline-flex items-center gap-1 rounded-md border border-neutral-200 px-2 py-1 text-[10px] text-neutral-400"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V5a2 2 0 0 1 2-2h10" /></svg>복사</div>
+            </div>
+          </div>
         </div>
         <ul className="mt-4 space-y-1.5 text-[12.5px] text-neutral-400">
-          {["검색 의도 무시 — 그냥 줄글", "소제목·FAQ 구조 없음", "복붙하면 서식 깨짐", "‘AI가 쓴 티’ → 구글이 거름"].map((x) => <li key={x} className="flex items-center gap-2"><span className="text-rose-400">✕</span>{x}</li>)}
+          {["채팅창에 답만 뱉고 끝", "복붙해서 직접 옮겨야 함", "소제목·FAQ 구조 없음", "발행·SEO는 알아서"].map((x) => <li key={x} className="flex items-center gap-2"><span className="text-rose-400">✕</span>{x}</li>)}
         </ul>
       </div>
     );
   }
   return (
-    <div className="flex h-full flex-col rounded-3xl border-2 border-[#3f91ff]/30 bg-[#3f91ff]/[0.04] p-5 shadow-sm">
-      <div className="flex flex-wrap items-center gap-2"><span className="rounded-md bg-[#3f91ff] px-2 py-1 text-[11px] font-bold text-white">AteFlo 글</span><span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600">검색 노출 설계</span></div>
-      <div className="mt-3 rounded-2xl border border-neutral-200 bg-white p-4">
-        <p className="text-[13px] font-extrabold text-neutral-900">전세 사기 예방법 5가지</p>
-        <div className="mt-2.5 space-y-2">
-          <p className="text-[11px] font-bold text-[#2f7fe6]">## 등기부등본부터 확인하기</p>
-          <div className="h-2 w-full rounded-full bg-neutral-200" /><div className="h-2 w-[92%] rounded-full bg-neutral-200" />
-          <p className="text-[11px] font-bold text-[#2f7fe6]">## 전입신고·확정일자 받기</p>
-          <div className="h-2 w-[97%] rounded-full bg-neutral-200" />
-          <p className="text-[11px] font-bold text-[#2f7fe6]">❓ 자주 묻는 질문</p>
-          <div className="h-2 w-[85%] rounded-full bg-neutral-200" />
+    <div className="flex h-full flex-col rounded-3xl border-2 border-[#3f91ff]/30 bg-[#3f91ff]/[0.04] p-4 shadow-sm sm:p-5">
+      {/* AteFlo 작성 화면 */}
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white">
+        <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-2.5">
+          <div className="flex items-center gap-2"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#3f91ff] text-white"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg></span><span className="text-[12px] font-semibold text-neutral-600">AteFlo · 글쓰기</span></div>
+          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600">검색 노출 설계</span>
         </div>
-        <div className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-50 px-2.5 py-1.5"><span className="text-emerald-600">✓</span><span className="text-[11px] font-semibold text-emerald-700">워드프레스에 발행됨</span></div>
+        <div className="flex flex-1 flex-col p-4">
+          <div className="flex items-center gap-2 rounded-xl border border-neutral-200 px-2.5 py-2"><span className="flex-1 truncate text-[11.5px] text-neutral-700">전세 사기 예방법</span><span className="rounded-md bg-[#3f91ff] px-2 py-1 text-[10px] font-bold text-white">생성</span></div>
+          <p className="mt-3 text-[12.5px] font-extrabold text-neutral-900">전세 사기 예방법 5가지</p>
+          <div className="mt-2 space-y-1.5">
+            <p className="text-[10.5px] font-bold text-[#2f7fe6]">## 등기부등본부터 확인하기</p>
+            <div className="h-1.5 w-full rounded-full bg-neutral-200" /><div className="h-1.5 w-[92%] rounded-full bg-neutral-200" />
+            <p className="text-[10.5px] font-bold text-[#2f7fe6]">## 전입신고·확정일자 받기</p>
+            <div className="h-1.5 w-[96%] rounded-full bg-neutral-200" />
+            <p className="text-[10.5px] font-bold text-[#2f7fe6]">❓ 자주 묻는 질문<span className="ml-0.5 inline-block h-3 w-0.5 animate-pulse bg-[#3f91ff] align-middle" /></p>
+          </div>
+          <div className="mt-auto flex items-center gap-2 rounded-lg bg-emerald-50 px-2.5 py-1.5"><span className="text-emerald-600">✓</span><span className="text-[11px] font-semibold text-emerald-700">워드프레스에 발행됨</span></div>
+        </div>
       </div>
       <ul className="mt-4 space-y-1.5 text-[12.5px] text-neutral-600">
         {["검색 의도에 맞춘 구조(소제목·FAQ)", "사람이 쓴 듯한 문체", "분야 데이터(키워드·트렌드) 기반", "워드프레스에 그대로 자동 발행"].map((x) => <li key={x} className="flex items-center gap-2"><span className="text-emerald-500">✓</span>{x}</li>)}
