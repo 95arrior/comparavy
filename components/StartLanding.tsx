@@ -301,7 +301,6 @@ function BuilderDemo() {
   const [p, setP] = useState(0); // 0타이핑 1리스트 2선택 3생성완료 4데이터 5클릭 6글발행
   const [typed, setTyped] = useState("");
   const [art, setArt] = useState(""); // 실제 글 타이핑
-  const artRef = useRef<HTMLDivElement>(null);
   const BODY = "전세 계약 전, 등기부등본부터 확인하세요. ‘을구’에 근저당이 과도하게 잡혀 있다면 보증금을 떼일 위험이 큽니다. 시세 대비 전세가율이 80%를 넘는 매물이라면 특히 신중해야 해요.\n\n계약할 땐 등기부상 소유자와 임대인이 같은 사람인지, 신탁 등기가 걸려 있진 않은지 꼭 대조하세요. 잔금 치르는 날엔 전입신고와 확정일자를 같은 날 신청해 대항력과 우선변제권을 함께 확보합니다.\n\n여기에 전세보증보험까지 가입하면, 집주인이 보증금을 돌려주지 못해도 보증기관에서 안전하게 돌려받을 수 있어요.";
   // 글 작성 단계(p=6)에서 실제 본문을 한 글자씩 부드럽게 타이핑
   useEffect(() => {
@@ -311,8 +310,6 @@ function BuilderDemo() {
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [p]);
-  // 타이핑 따라 자동 스크롤(최신 줄이 보이게)
-  useEffect(() => { const el = artRef.current; if (el) el.scrollTop = el.scrollHeight; }, [art]);
   useEffect(() => {
     const t: ReturnType<typeof setTimeout>[] = [];
     const run = () => {
@@ -421,8 +418,8 @@ function BuilderDemo() {
                 <p className="text-[12px] font-bold text-white/80">✍️ ‘전세 사기 예방법’ 글 작성 중…</p>
                 <div className="mt-2.5 flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/8 bg-white/[0.03] p-4">
                   <p className="text-[13.5px] font-extrabold text-white">전세 사기, 이렇게 막으세요</p>
-                  {/* 고정 높이 + 자동 스크롤 + 위아래 페이드 → 계속 써지는 텔레프롬프터 느낌 */}
-                  <div ref={artRef} className="relative mt-2 h-[150px] overflow-hidden" style={{ maskImage: "linear-gradient(to bottom, transparent, #000 16%, #000 80%, transparent)", WebkitMaskImage: "linear-gradient(to bottom, transparent, #000 16%, #000 80%, transparent)" }}>
+                  {/* 상단 고정(초반 또렷) + 하단만 페이드 → '아래로 계속 써졌다' 표현 */}
+                  <div className="relative mt-2 h-[150px] overflow-hidden" style={{ maskImage: "linear-gradient(to bottom, #000 58%, transparent)", WebkitMaskImage: "linear-gradient(to bottom, #000 58%, transparent)" }}>
                     <p className="whitespace-pre-line text-[11.5px] leading-[1.7] text-white/65">{art}<span className="ml-px inline-block h-3 w-0.5 animate-pulse bg-cyan-300 align-middle" /></p>
                   </div>
                 </div>
