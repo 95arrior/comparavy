@@ -299,7 +299,7 @@ export default function StartLanding() {
           <LoadRipple />
           <motion.div style={{ y: heroTextY, opacity: heroFade }} className="relative z-10 mx-auto max-w-3xl text-center">
             <p className="mono-rise inline-flex items-center gap-1.5 rounded-full border border-[#3f91ff]/20 bg-white/70 px-3 py-1 text-xs font-semibold text-[#2f7fe6] backdrop-blur"><span className="h-1.5 w-1.5 rounded-full bg-[#3f91ff]" /> 곧 오픈 · 사전신청 받는 중</p>
-            <h1 className="font-pretendard mono-rise mono-d1 mt-6 text-[2.4rem] font-extrabold leading-[1.12] tracking-tight sm:text-7xl" style={{ wordBreak: "keep-all" }}>워드프레스 수익화,<br /><span className="text-[#3f91ff]">이제 막히지 않아요.</span></h1>
+            <h1 className="font-pretendard mono-rise mono-d1 mt-6 text-[2.4rem] font-extrabold leading-[1.12] tracking-tight sm:text-7xl" style={{ wordBreak: "keep-all" }}>분야만 고르면,<br /><span className="text-[#3f91ff]">돈 버는 블로그가 시작돼요.</span></h1>
             <p className="mono-rise mono-d2 mx-auto mt-7 max-w-md text-[15px] leading-relaxed text-neutral-500 sm:text-lg" style={{ wordBreak: "keep-all" }}>개설부터 글쓰기, 애드센스 승인, 수익화까지 — 한 흐름으로.</p>
             <div className="mono-rise mono-d4 mt-9"><button onClick={toSignup} className="rounded-2xl bg-[#3f91ff] px-7 py-3.5 text-sm font-bold text-white shadow-[0_14px_34px_-10px_rgba(63,145,255,0.7)] transition hover:-translate-y-0.5 hover:opacity-90 active:scale-95">사전신청하고 보너스 크레딧 받기</button><p className="mt-3 text-xs text-neutral-400">무료 3편으로 시작 · 월 구독 아님</p></div>
           </motion.div>
