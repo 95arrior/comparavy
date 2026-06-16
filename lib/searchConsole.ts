@@ -128,3 +128,30 @@ export async function gscListSites(accessToken: string): Promise<GscSite[]> {
   const entries: GscSite[] = Array.isArray(d.siteEntry) ? d.siteEntry : [];
   return entries.filter((s) => s.permissionLevel && s.permissionLevel !== "siteUnverifiedUser");
 }
+
+export interface GscRow {
+  keys?: string[];
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  position: number;
+}
+
+/** 검색분석 쿼리(searchanalytics.query). siteUrl은 인코딩 처리. 실패 시 error 반환. */
+export async function gscSearchAnalytics(
+  accessToken: string,
+  siteUrl: string,
+  body: Record<string, unknown>,
+): Promise<{ rows: GscRow[]; error?: string }> {
+  const r = await fetch(`${GSC_API}/sites/${encodeURIComponent(siteUrl)}/searchAnalytics/query`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) {
+    const d = await r.json().catch(() => ({}));
+    return { rows: [], error: d?.error?.message || `검색분석 호출 실패 (${r.status})` };
+  }
+  const d = await r.json().catch(() => ({}));
+  return { rows: Array.isArray(d.rows) ? d.rows : [] };
+}
