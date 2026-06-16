@@ -494,46 +494,30 @@ function AiMsg() {
   );
 }
 function RivalChat() {
-  const TURNS: { who: "u" | "a"; t?: string }[] = [
-    { who: "u", t: "전세사기 예방법으로 블로그 SEO 글 써줘" }, { who: "a" },
-    { who: "u", t: "도입부 더 길게 써줘" }, { who: "a" },
-    { who: "u", t: "표도 하나 넣어줘" }, { who: "a" },
-    { who: "u", t: "너무 AI 같아, 자연스럽게 다시" }, { who: "a" },
-  ];
-  const [n, setN] = useState(1);
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const t: ReturnType<typeof setTimeout>[] = [];
-    const run = () => { setN(1); for (let i = 2; i <= TURNS.length; i++) t.push(setTimeout(() => setN(i), (i - 1) * 1300)); t.push(setTimeout(run, TURNS.length * 1300 + 1800)); };
-    run(); return () => t.forEach(clearTimeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  useEffect(() => { const el = ref.current; if (el) el.scrollTop = el.scrollHeight; }, [n]);
   return (
-    <div className="flex h-full flex-col rounded-3xl border border-neutral-200 bg-neutral-50 p-4 sm:p-5">
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white">
-        <div className="flex items-center gap-2 border-b border-neutral-100 px-4 py-2.5">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-neutral-300 text-[10px] text-white">AI</span>
-          <span className="text-[12px] font-semibold text-neutral-500">타사 AI · 대화</span>
+    <div className="flex flex-col rounded-3xl border border-neutral-200 bg-neutral-50 p-4 sm:p-5">
+      <div className="flex h-[300px] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white">
+        <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-2.5">
+          <div className="flex items-center gap-2"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-neutral-300 text-[10px] text-white">AI</span><span className="text-[12px] font-semibold text-neutral-500">타사 AI · 대화</span></div>
+          <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-400">🔁 4번째 수정 중</span>
         </div>
         <div className="flex min-h-0 flex-1">
-          {/* 얇은 사이드바(채팅 히스토리) */}
-          <div className="hidden w-16 shrink-0 flex-col gap-2 border-r border-neutral-100 p-2.5 sm:flex">
+          <div className="hidden w-14 shrink-0 flex-col gap-2 border-r border-neutral-100 p-2.5 sm:flex">
             <div className="rounded-md bg-neutral-100 px-2 py-1.5 text-[9px] font-semibold text-neutral-400">＋ 새 채팅</div>
-            {[80, 64, 72, 56, 68].map((w, i) => <div key={i} className="h-1.5 rounded-full bg-neutral-150 bg-neutral-100" style={{ width: `${w}%` }} />)}
+            {[80, 64, 72, 56].map((w, i) => <div key={i} className="h-1.5 rounded-full bg-neutral-100" style={{ width: `${w}%` }} />)}
           </div>
-          <div ref={ref} className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-3">
-            {TURNS.slice(0, n).map((m, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className={m.who === "u" ? "max-w-[85%] self-end" : ""}>
-                {m.who === "u" ? <div className="rounded-2xl rounded-br-md bg-neutral-900 px-3 py-2 text-[11px] text-white">{m.t}</div> : <AiMsg />}
-              </motion.div>
-            ))}
+          {/* 고정 대화 — 늘어나지 않음. 마지막에 타이핑(…)으로 '끝없음'만 암시 */}
+          <div className="flex min-h-0 flex-1 flex-col justify-end gap-2 overflow-hidden p-3">
+            <div className="max-w-[85%] self-end rounded-2xl rounded-br-md bg-neutral-900 px-3 py-2 text-[11px] text-white">전세사기 예방법 블로그 SEO 글 써줘</div>
+            <AiMsg />
+            <div className="max-w-[85%] self-end rounded-2xl rounded-br-md bg-neutral-900 px-3 py-2 text-[11px] text-white">도입부 더 길게, 표도 넣어줘</div>
+            <div className="flex items-center gap-1.5 self-start rounded-2xl rounded-bl-md bg-neutral-50 px-3 py-2.5">
+              {[0, 1, 2].map((i) => <span key={i} className="h-1.5 w-1.5 animate-pulse rounded-full bg-neutral-400" style={{ animationDelay: `${i * 0.2}s` }} />)}
+            </div>
           </div>
         </div>
       </div>
-      <ul className="mt-4 space-y-1.5 text-[12.5px] text-neutral-400">
-        {["계속 고쳐 달라 — 끝이 없음", "복붙해서 직접 옮겨야 함", "발행·SEO는 알아서", "매번 프롬프트 고민"].map((x) => <li key={x} className="flex items-center gap-2"><span className="text-rose-400">✕</span>{x}</li>)}
-      </ul>
+      <p className="mt-3 text-center text-[13px] font-semibold text-neutral-400">끝없이 고치고, <span className="text-neutral-600">복붙·발행은 결국 내 몫</span></p>
     </div>
   );
 }
@@ -548,8 +532,8 @@ function AteFloGen() {
     run(); return () => t.forEach(clearTimeout);
   }, []);
   return (
-    <div className="flex h-full flex-col rounded-3xl border-2 border-[#3f91ff]/30 bg-[#3f91ff]/[0.04] p-4 shadow-sm sm:p-5">
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white">
+    <div className="flex flex-col rounded-3xl border-2 border-[#3f91ff]/30 bg-[#3f91ff]/[0.04] p-4 shadow-sm sm:p-5">
+      <div className="flex h-[300px] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white">
         <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-2.5">
           <div className="flex items-center gap-2"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#3f91ff] text-white"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg></span><span className="text-[12px] font-semibold text-neutral-600">AteFlo · 글쓰기</span></div>
           <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600">검색 노출 설계</span>
@@ -581,9 +565,7 @@ function AteFloGen() {
           </div>
         </div>
       </div>
-      <ul className="mt-4 space-y-1.5 text-[12.5px] text-neutral-600">
-        {["추천 키워드 클릭 한 번", "검색 구조(소제목·FAQ) 자동", "프롬프트·복붙 필요 없음", "워드프레스에 바로 발행"].map((x) => <li key={x} className="flex items-center gap-2"><span className="text-emerald-500">✓</span>{x}</li>)}
-      </ul>
+      <p className="mt-3 text-center text-[13px] font-semibold text-neutral-500">버튼 한 번 → <span className="text-[#2f7fe6]">검색 구조로 바로 발행</span></p>
     </div>
   );
 }
