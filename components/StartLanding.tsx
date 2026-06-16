@@ -494,26 +494,38 @@ function AiMsg() {
   );
 }
 function RivalChat() {
+  const TURNS: { who: "u" | "a" | "typing"; t?: string }[] = [
+    { who: "u", t: "전세사기 예방법 블로그 SEO 글 써줘" }, { who: "a" },
+    { who: "u", t: "도입부 더 길게, 표도 넣어줘" }, { who: "typing" },
+  ];
+  const [n, setN] = useState(1);
+  useEffect(() => {
+    const t: ReturnType<typeof setTimeout>[] = [];
+    const run = () => { setN(1); for (let i = 2; i <= TURNS.length; i++) t.push(setTimeout(() => setN(i), (i - 1) * 1300)); t.push(setTimeout(run, TURNS.length * 1300 + 2000)); };
+    run(); return () => t.forEach(clearTimeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <div className="flex flex-col rounded-3xl border border-neutral-200 bg-neutral-50 p-4 sm:p-5">
       <div className="flex h-[300px] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white">
         <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-2.5">
           <div className="flex items-center gap-2"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-neutral-300 text-[10px] text-white">AI</span><span className="text-[12px] font-semibold text-neutral-500">타사 AI · 대화</span></div>
-          <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-400">🔁 4번째 수정 중</span>
+          <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-400">🔁 4번째 수정</span>
         </div>
         <div className="flex min-h-0 flex-1">
           <div className="hidden w-14 shrink-0 flex-col gap-2 border-r border-neutral-100 p-2.5 sm:flex">
-            <div className="rounded-md bg-neutral-100 px-2 py-1.5 text-[9px] font-semibold text-neutral-400">＋ 새 채팅</div>
+            <div className="flex h-6 items-center justify-center rounded-md bg-neutral-100 text-[13px] text-neutral-400">＋</div>
             {[80, 64, 72, 56].map((w, i) => <div key={i} className="h-1.5 rounded-full bg-neutral-100" style={{ width: `${w}%` }} />)}
           </div>
-          {/* 고정 대화 — 늘어나지 않음. 마지막에 타이핑(…)으로 '끝없음'만 암시 */}
+          {/* 고정 프레임 안에서 메시지가 흐름(아래 정렬+오버플로 숨김) → 안 늘어나고 움직임 */}
           <div className="flex min-h-0 flex-1 flex-col justify-end gap-2 overflow-hidden p-3">
-            <div className="max-w-[85%] self-end rounded-2xl rounded-br-md bg-neutral-900 px-3 py-2 text-[11px] text-white">전세사기 예방법 블로그 SEO 글 써줘</div>
-            <AiMsg />
-            <div className="max-w-[85%] self-end rounded-2xl rounded-br-md bg-neutral-900 px-3 py-2 text-[11px] text-white">도입부 더 길게, 표도 넣어줘</div>
-            <div className="flex items-center gap-1.5 self-start rounded-2xl rounded-bl-md bg-neutral-50 px-3 py-2.5">
-              {[0, 1, 2].map((i) => <span key={i} className="h-1.5 w-1.5 animate-pulse rounded-full bg-neutral-400" style={{ animationDelay: `${i * 0.2}s` }} />)}
-            </div>
+            {TURNS.slice(0, n).map((m, i) => (
+              <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className={m.who === "u" ? "max-w-[85%] self-end" : "self-start"}>
+                {m.who === "u" ? <div className="rounded-2xl rounded-br-md bg-neutral-900 px-3 py-2 text-[11px] text-white">{m.t}</div>
+                  : m.who === "typing" ? <div className="flex items-center gap-1.5 rounded-2xl rounded-bl-md bg-neutral-50 px-3 py-2.5">{[0, 1, 2].map((j) => <span key={j} className="h-1.5 w-1.5 animate-pulse rounded-full bg-neutral-400" style={{ animationDelay: `${j * 0.2}s` }} />)}</div>
+                    : <AiMsg />}
+              </motion.div>
+            ))}
           </div>
         </div>
       </div>
@@ -524,48 +536,51 @@ function RivalChat() {
 
 // AteFlo — 추천 키워드 버튼 한 번 → 글 → 발행 (쉬워 보이게, 애니메이션)
 function AteFloGen() {
-  const KW = ["전세 사기 예방법", "1억으로 갭투자", "청약 가점 계산기"];
-  const [p, setP] = useState(0); // 0추천 1클릭 2글 3발행
+  const KW = [{ k: "전세 사기 예방법", v: "1.2만", c: "낮음", hot: true }, { k: "1억으로 갭투자", v: "8,400", c: "낮음" }, { k: "청약 가점 계산기", v: "6,100", c: "보통" }, { k: "전입신고 하는 법", v: "5,200", c: "낮음" }];
+  const [p, setP] = useState(0); // 0목록 1선택 2글 3발행
   useEffect(() => {
     const t: ReturnType<typeof setTimeout>[] = [];
-    const run = () => { setP(0); t.push(setTimeout(() => setP(1), 1100)); t.push(setTimeout(() => setP(2), 1900)); t.push(setTimeout(() => setP(3), 3300)); t.push(setTimeout(run, 5200)); };
+    const run = () => { setP(0); t.push(setTimeout(() => setP(1), 1300)); t.push(setTimeout(() => setP(2), 2100)); t.push(setTimeout(() => setP(3), 3500)); t.push(setTimeout(run, 5600)); };
     run(); return () => t.forEach(clearTimeout);
   }, []);
   return (
-    <div className="flex flex-col rounded-3xl border-2 border-[#3f91ff]/30 bg-[#3f91ff]/[0.04] p-4 shadow-sm sm:p-5">
-      <div className="flex h-[300px] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white">
-        <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-2.5">
-          <div className="flex items-center gap-2"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#3f91ff] text-white"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg></span><span className="text-[12px] font-semibold text-neutral-600">AteFlo · 글쓰기</span></div>
-          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600">검색 노출 설계</span>
+    <div className="flex flex-col rounded-3xl border-2 border-[#3f91ff]/30 bg-[#3f91ff]/[0.05] p-4 shadow-sm sm:p-5">
+      <div className="flex h-[300px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0c0e16]">
+        <div className="flex items-center justify-between border-b border-white/8 px-4 py-2.5">
+          <div className="flex items-center gap-2"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#3f91ff] text-white"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg></span><span className="text-[12px] font-semibold text-white/70">AteFlo · 글쓰기</span></div>
+          <span className="rounded-full bg-emerald-400/15 px-2 py-0.5 text-[10px] font-bold text-emerald-300">검색 노출 설계</span>
         </div>
         <div className="flex min-h-0 flex-1 flex-col p-4">
-          <p className="text-[11px] font-bold text-neutral-500">🔥 추천 키워드 — 누르기만 하면 끝</p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {KW.map((k, i) => (
-              <span key={k} className={`rounded-full border px-3 py-1.5 text-[11.5px] font-medium transition ${i === 0 && p >= 1 ? "border-[#3f91ff] bg-[#3f91ff] text-white shadow-[0_0_16px_rgba(63,145,255,0.5)]" : "border-neutral-200 text-neutral-600"}`}>{k}{i === 0 && p === 1 && " 👆"}</span>
-            ))}
-          </div>
-          <div className="mt-3 min-h-0 flex-1">
-            <AnimatePresence mode="wait">
-              {p < 2 ? (
-                <motion.p key="hint" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pt-6 text-center text-[11px] text-neutral-300">키워드 하나 누르면 글이 나와요</motion.p>
-              ) : (
-                <motion.div key="art" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="flex h-full flex-col">
-                  <p className="text-[12.5px] font-extrabold text-neutral-900">전세 사기 예방법 5가지</p>
-                  <div className="mt-2 space-y-1.5">
-                    <p className="text-[10.5px] font-bold text-[#2f7fe6]">## 등기부등본부터 확인하기</p>
-                    <div className="h-1.5 w-full rounded-full bg-neutral-200" /><div className="h-1.5 w-[92%] rounded-full bg-neutral-200" />
-                    <p className="text-[10.5px] font-bold text-[#2f7fe6]">## 전입신고·확정일자 받기</p>
-                    <div className="h-1.5 w-[96%] rounded-full bg-neutral-200" />
-                  </div>
-                  {p >= 3 && <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="mt-auto flex items-center gap-2 rounded-lg bg-emerald-50 px-2.5 py-1.5"><span className="text-emerald-600">✓</span><span className="text-[11px] font-semibold text-emerald-700">워드프레스에 발행됨</span></motion.div>}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          <AnimatePresence mode="wait">
+            {p < 2 ? (
+              <motion.div key="kw" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}>
+                <p className="text-[11px] font-bold text-white/60">🔥 추천 키워드 — 누르면 끝</p>
+                <div className="mt-2 space-y-1.5">
+                  {KW.map((r, i) => (
+                    <div key={r.k} className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 transition-colors duration-300 ${i === 0 && p === 1 ? "border-[#6a8bff] bg-[#6a8bff]/15" : "border-white/8 bg-white/[0.03]"}`}>
+                      <span className="min-w-0 flex-1 truncate text-[11.5px] font-medium text-white/85">{r.k}{r.hot ? " 🔥" : ""}</span>
+                      <span className="shrink-0 text-[9px] text-white/35">월 {r.v}</span>
+                      <span className={`shrink-0 rounded px-1.5 py-0.5 text-[8px] font-bold ${r.c === "낮음" ? "bg-emerald-400/15 text-emerald-300" : "bg-amber-400/15 text-amber-300"}`}>{r.c}</span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div key="art" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="flex h-full flex-col">
+                <p className="text-[12.5px] font-extrabold text-white">전세 사기 예방법 5가지</p>
+                <div className="mt-2 space-y-1.5">
+                  <p className="text-[10.5px] font-bold text-[#8ab4ff]">## 등기부등본부터 확인하기</p>
+                  <div className="h-1.5 w-full rounded-full bg-white/12" /><div className="h-1.5 w-[92%] rounded-full bg-white/12" />
+                  <p className="text-[10.5px] font-bold text-[#8ab4ff]">## 전입신고·확정일자 받기</p>
+                  <div className="h-1.5 w-[96%] rounded-full bg-white/12" />
+                </div>
+                {p >= 3 && <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="mt-auto flex items-center gap-2 rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1.5"><span className="text-emerald-400">✓</span><span className="text-[11px] font-semibold text-emerald-300">워드프레스에 발행됨</span></motion.div>}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
-      <p className="mt-3 text-center text-[13px] font-semibold text-neutral-500">버튼 한 번 → <span className="text-[#2f7fe6]">검색 구조로 바로 발행</span></p>
+      <p className="mt-3 text-center text-[13px] font-semibold text-neutral-500">추천 키워드 선택 한 번 → <span className="text-[#2f7fe6]">검색 구조로 바로 발행</span></p>
     </div>
   );
 }
