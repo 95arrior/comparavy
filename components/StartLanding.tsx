@@ -392,9 +392,14 @@ function BuilderDemo() {
                 <div className="mt-2.5 flex gap-2.5">
                   <div className="flex w-3/5 flex-col gap-1">
                     {KW.map((r, i) => (
-                      <motion.div key={r.k} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06, duration: 0.42, ease: [0.22, 1, 0.36, 1] }} className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 transition ${i === 0 && p === 5 ? "border-[#6a8bff] bg-[#6a8bff]/15" : "border-white/8 bg-white/[0.03]"}`}>
+                      <motion.div key={r.k} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06, duration: 0.42, ease: [0.22, 1, 0.36, 1] }} className={`relative flex items-center gap-2 rounded-lg border px-2.5 py-1.5 transition-colors duration-300 ${i === 0 && p === 5 ? "border-[#6a8bff] bg-[#6a8bff]/15" : "border-white/8 bg-white/[0.03]"}`}>
                         <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-white/85">{r.k}{r.hot && " 🔥"}</span>
-                        {i === 0 && p === 5 ? <span className="shrink-0 rounded bg-[#5a8bff] px-1.5 py-0.5 text-[9px] font-bold text-white">글 생성 ›</span> : <><span className="shrink-0 text-[9px] text-white/35">월 {r.v}</span><span className={`shrink-0 rounded px-1.5 py-0.5 text-[8px] font-bold ${r.c === "낮음" ? "bg-emerald-400/15 text-emerald-300" : "bg-amber-400/15 text-amber-300"}`}>{r.c}</span></>}
+                        {/* 자리 고정 — 지표↔'글 생성' 크로스페이드(폭 변동 없이) */}
+                        <span className={`flex shrink-0 items-center gap-1.5 transition-opacity duration-300 ${i === 0 && p === 5 ? "opacity-0" : "opacity-100"}`}>
+                          <span className="text-[9px] text-white/35">월 {r.v}</span>
+                          <span className={`rounded px-1.5 py-0.5 text-[8px] font-bold ${r.c === "낮음" ? "bg-emerald-400/15 text-emerald-300" : "bg-amber-400/15 text-amber-300"}`}>{r.c}</span>
+                        </span>
+                        {i === 0 && <span className={`absolute right-2.5 shrink-0 rounded bg-[#5a8bff] px-1.5 py-0.5 text-[9px] font-bold text-white transition-opacity duration-300 ${p === 5 ? "opacity-100" : "opacity-0"}`}>글 생성 ›</span>}
                       </motion.div>
                     ))}
                   </div>
@@ -411,9 +416,12 @@ function BuilderDemo() {
             {group === "write" && (
               <motion.div key="wr" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="flex h-full flex-col">
                 <p className="text-[12px] font-bold text-white/80">✍️ ‘전세 사기 예방법’ 글 작성 중…</p>
-                <div className="mt-2.5 min-h-0 flex-1 overflow-hidden rounded-xl border border-white/8 bg-white/[0.03] p-4">
+                <div className="mt-2.5 flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/8 bg-white/[0.03] p-4">
                   <p className="text-[13.5px] font-extrabold text-white">전세 사기, 이렇게 막으세요</p>
-                  <p className="mt-2 whitespace-pre-line text-[11.5px] leading-[1.7] text-white/65">{art}<span className="ml-px inline-block h-3 w-0.5 animate-pulse bg-cyan-300 align-middle" /></p>
+                  {/* 하단 페이드 마스크 — 글이 계속 써지는 듯한 느낌(끊김 없이) */}
+                  <div className="relative mt-2 min-h-0 flex-1 overflow-hidden" style={{ maskImage: "linear-gradient(to bottom, #000 68%, transparent)", WebkitMaskImage: "linear-gradient(to bottom, #000 68%, transparent)" }}>
+                    <p className="whitespace-pre-line text-[11.5px] leading-[1.7] text-white/65">{art}<span className="ml-px inline-block h-3 w-0.5 animate-pulse bg-cyan-300 align-middle" /></p>
+                  </div>
                 </div>
                 {art.length >= BODY.length && (
                   <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-2.5 flex items-center gap-2.5 rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-3.5 py-2.5">
