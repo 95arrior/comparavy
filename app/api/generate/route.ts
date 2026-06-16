@@ -124,7 +124,7 @@ export async function POST(request: Request) {
   // 업종(vertical) + 업체 정보 — 프로필에서 1회 조회(없으면 general/미입력). 프롬프트 분기 + 글 하단 NAP 박스에 사용.
   const { data: profileRow } = await supabase
     .from("blog_profiles")
-    .select("vertical,biz_name,biz_address,biz_phone,biz_hours")
+    .select("vertical,biz_name,biz_address,biz_phone,biz_hours,biz_hours_json")
     .eq("user_id", user.id)
     .maybeSingle();
   const vertical = profileRow?.vertical ?? "general";
@@ -200,7 +200,7 @@ export async function POST(request: Request) {
 
         // 업체 정보 NAP 박스를 글 하단에 자동 삽입(데이터 있을 때만, 글자수 검증 이후 — 검증은 원본 기준).
         // simhash(근접중복)는 박스 제외한 본문 기준(박스가 전 글 공통이라 유사도 오판 방지).
-        const businessBox = buildBusinessBox({ name: profileRow?.biz_name, address: profileRow?.biz_address, phone: profileRow?.biz_phone, hours: profileRow?.biz_hours });
+        const businessBox = buildBusinessBox({ name: profileRow?.biz_name, address: profileRow?.biz_address, phone: profileRow?.biz_phone, hours: profileRow?.biz_hours, hoursJson: profileRow?.biz_hours_json });
         const finalBody = article.body_html + businessBox;
 
         // 저장 + 사용량 증가

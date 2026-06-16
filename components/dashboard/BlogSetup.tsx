@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { TONE_CHOICES, TYPE_CHOICES, VERTICAL_CHOICES, type BlogProfile } from "@/lib/blogProfile";
+import { TONE_CHOICES, TYPE_CHOICES, VERTICAL_CHOICES, type BlogProfile, type WeeklyHours } from "@/lib/blogProfile";
 import { isTopCategory, labelFor, ALL_SUB } from "@/lib/categories";
 import CategoryPicker from "./CategoryPicker";
+import HoursEditor from "./HoursEditor";
 
 const BRAND = "#3f91ff";
-const STEPS = ["카테고리", "이름", "문체", "유형", "타겟", "업체", "발행"] as const;
+const STEPS = ["카테고리", "이름", "문체", "유형", "업체", "발행"] as const;
 
 /**
  * 블로그 설정 — 단계별 온보딩. ①카테고리(대분류+세부) ②이름 ③문체 ④유형 ⑤타겟 ⑥발행안내.
@@ -28,11 +29,12 @@ export default function BlogSetup({
   const [tone, setTone] = useState(initial?.tone ?? "friendly");
   const [articleType, setArticleType] = useState(initial?.article_type ?? "info");
   const [vertical, setVertical] = useState(initial?.vertical ?? "general");
-  const [target, setTarget] = useState(initial?.target ?? "");
+  const [target] = useState(initial?.target ?? ""); // 단계 제거됨 — 값 보존만(레거시, 생성 미사용)
   const [bizName, setBizName] = useState(initial?.biz_name ?? "");
   const [bizAddress, setBizAddress] = useState(initial?.biz_address ?? "");
   const [bizPhone, setBizPhone] = useState(initial?.biz_phone ?? "");
-  const [bizHours, setBizHours] = useState(initial?.biz_hours ?? "");
+  const [bizHours] = useState(initial?.biz_hours ?? ""); // 레거시 텍스트 보존(입력은 구조화로 교체)
+  const [hours, setHours] = useState<WeeklyHours>(initial?.biz_hours_json ?? {});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isEdit = !!initial;
@@ -61,7 +63,7 @@ export default function BlogSetup({
         body: JSON.stringify({
           topic, category, blog_name: blogName.trim(),
           tone, article_type: articleType, target: target.trim(), publish_mode: "manual", vertical,
-          biz_name: bizName.trim(), biz_address: bizAddress.trim(), biz_phone: bizPhone.trim(), biz_hours: bizHours.trim(),
+          biz_name: bizName.trim(), biz_address: bizAddress.trim(), biz_phone: bizPhone.trim(), biz_hours: bizHours.trim(), biz_hours_json: hours,
         }),
       });
       const data = await res.json();
@@ -170,23 +172,17 @@ export default function BlogSetup({
         )}
         {step === 4 && (
           <div>
-            <h2 className="text-xl font-bold tracking-tight">누가 읽을 글인가요? <span className="text-sm font-normal text-neutral-400">(선택)</span></h2>
-            <p className="mt-2 text-sm text-neutral-500">타겟 독자를 적으면 눈높이에 맞춰 써요. 비워도 괜찮아요.</p>
-            <input value={target} onChange={(e) => setTarget(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") next(); }} placeholder="예: 초보 견주" maxLength={80} className={inputCls} />
-          </div>
-        )}
-        {step === 5 && (
-          <div>
             <h2 className="text-xl font-bold tracking-tight">업체 정보 <span className="text-sm font-normal text-neutral-400">(선택)</span></h2>
             <p className="mt-2 text-sm text-neutral-500">입력하면 글 하단에 깔끔한 안내 박스로 자동으로 들어가요. 비워도 괜찮아요.</p>
             <input value={bizName} onChange={(e) => setBizName(e.target.value)} placeholder="상호명 (예: 우리동네치과의원)" maxLength={80} className={inputCls} />
             <input value={bizAddress} onChange={(e) => setBizAddress(e.target.value)} placeholder="주소 (예: 서울 강남구 …)" maxLength={200} className={inputCls} />
             <input value={bizPhone} onChange={(e) => setBizPhone(e.target.value)} placeholder="전화번호 (예: 02-000-0000)" maxLength={40} className={inputCls} />
-            <input value={bizHours} onChange={(e) => setBizHours(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") next(); }} placeholder="영업시간 (예: 평일 09:00~18:00)" maxLength={120} className={inputCls} />
-            <p className="mt-2 text-xs leading-relaxed text-neutral-400">입력한 항목만 표시돼요. 모든 글에 같은 정보가 들어가 검색(로컬 SEO)에 도움이 돼요.</p>
+            <p className="mt-4 text-sm font-medium text-neutral-700">영업시간</p>
+            <HoursEditor value={hours} onChange={setHours} />
+            <p className="mt-3 text-xs leading-relaxed text-neutral-400">입력한 항목만 표시돼요. 모든 글에 같은 정보가 들어가 검색(로컬 SEO)에 도움이 돼요.</p>
           </div>
         )}
-        {step === 6 && (
+        {step === 5 && (
           <div>
             <h2 className="text-xl font-bold tracking-tight">발행은 이렇게 돼요</h2>
             <div className="mt-5 rounded-2xl border border-[#3f91ff]/20 bg-[#3f91ff]/5 p-5">

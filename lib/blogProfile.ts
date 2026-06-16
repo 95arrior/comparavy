@@ -14,8 +14,22 @@ export interface BlogProfile {
   biz_name: string | null;
   biz_address: string | null;
   biz_phone: string | null;
-  biz_hours: string | null;
+  biz_hours: string | null; // 레거시 자유입력(fallback)
+  biz_hours_json: WeeklyHours | null; // 요일별 구조화 영업시간(우선)
 }
+
+// 요일별 영업시간 구조
+export const DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
+export type DayKey = (typeof DAY_KEYS)[number];
+export const DAY_LABELS: Record<DayKey, string> = { mon: "월", tue: "화", wed: "수", thu: "목", fri: "금", sat: "토", sun: "일" };
+export interface DayHours {
+  closed?: boolean; // 휴무
+  open?: string; // "HH:MM"
+  close?: string; // "HH:MM"
+  breakStart?: string; // 점심 시작(옵션)
+  breakEnd?: string; // 점심 종료(옵션)
+}
+export type WeeklyHours = Partial<Record<DayKey, DayHours>>;
 
 /** 문체 선택지 (label=화면, value=생성엔진 tone 키) */
 export const TONE_CHOICES = [

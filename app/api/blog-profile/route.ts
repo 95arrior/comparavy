@@ -1,8 +1,34 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { isAdminEmail } from "@/lib/adminStats";
-import { isTone, isType, isPublishMode, isVertical } from "@/lib/blogProfile";
+import { isTone, isType, isPublishMode, isVertical, DAY_KEYS, type WeeklyHours, type DayHours } from "@/lib/blogProfile";
 import { isTopCategory } from "@/lib/categories";
+
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+// 클라 입력을 그대로 믿지 않고 정규화: 알려진 요일 키만, 시간은 HH:MM, closed는 boolean.
+function sanitizeHours(v: unknown): WeeklyHours | null {
+  if (!v || typeof v !== "object") return null;
+  const src = v as Record<string, unknown>;
+  const out: WeeklyHours = {};
+  let any = false;
+  for (const day of DAY_KEYS) {
+    const d = src[day];
+    if (!d || typeof d !== "object") continue;
+    const o = d as Record<string, unknown>;
+    if (o.closed === true) { out[day] = { closed: true }; any = true; continue; }
+    const open = typeof o.open === "string" && TIME_RE.test(o.open) ? o.open : undefined;
+    const close = typeof o.close === "string" && TIME_RE.test(o.close) ? o.close : undefined;
+    if (open && close) {
+      const dh: DayHours = { open, close };
+      const bs = typeof o.breakStart === "string" && TIME_RE.test(o.breakStart) ? o.breakStart : undefined;
+      const be = typeof o.breakEnd === "string" && TIME_RE.test(o.breakEnd) ? o.breakEnd : undefined;
+      if (bs && be) { dh.breakStart = bs; dh.breakEnd = be; }
+      out[day] = dh;
+      any = true;
+    }
+  }
+  return any ? out : null;
+}
 
 /**
  * 블로그 프로필 — 온보딩 1회 저장(유저당 1행). 이후 모든 글이 이 설정을 따른다.
@@ -45,7 +71,8 @@ export async function POST(request: Request) {
   const biz_name = bizField(body.biz_name, 80);
   const biz_address = bizField(body.biz_address, 200);
   const biz_phone = bizField(body.biz_phone, 40);
-  const biz_hours = bizField(body.biz_hours, 120);
+  const biz_hours = bizField(body.biz_hours, 120); // 레거시 자유입력(fallback)
+  const biz_hours_json = sanitizeHours(body.biz_hours_json); // 요일별 구조화(우선)
   const target = (typeof body.target === "string" ? body.target : "").trim().slice(0, 80) || null;
   // 대분류 (없으면 topic을 대분류로 가정 — 레거시 호환)
   const category = (typeof body.category === "string" && isTopCategory(body.category)) ? body.category : (isTopCategory(topic) ? topic : null);
@@ -56,7 +83,7 @@ export async function POST(request: Request) {
   const { data, error } = await supabase
     .from("blog_profiles")
     .upsert(
-      { user_id: user.id, topic, category, blog_name, tone, article_type, target, publish_mode, vertical, biz_name, biz_address, biz_phone, biz_hours, updated_at: new Date().toISOString() },
+      { user_id: user.id, topic, category, blog_name, tone, article_type, target, publish_mode, vertical, biz_name, biz_address, biz_phone, biz_hours, biz_hours_json, updated_at: new Date().toISOString() },
       { onConflict: "user_id" },
     )
     .select("*")
