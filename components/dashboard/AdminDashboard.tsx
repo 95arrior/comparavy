@@ -369,6 +369,7 @@ function SocialView({ stats }: { stats: AdminStats }) {
   const router = useRouter();
   const s = stats.social;
   const [busy, setBusy] = useState(false);
+  const [publishingId, setPublishingId] = useState<string | null>(null); // 발행 진행 중인 카드(인스타 인코딩 대기로 1~5분 걸림 → 멈춘 것처럼 보이지 않게)
   const [msg, setMsg] = useState<string | null>(null);
   const [openList, setOpenList] = useState<null | "queued" | "published" | "failed">(null);
   const [viewer, setViewer] = useState<{ urls: string[]; i: number } | null>(null);
@@ -407,10 +408,17 @@ function SocialView({ stats }: { stats: AdminStats }) {
     const ok = await send({ action: "delete", id: p.id }); if (!ok) setPosts(prev); setBusy(false);
   }
   async function publishPost(p: SP) {
-    const prev = posts;
-    setPosts(posts.map((x) => (x.id === p.id ? { ...x, status: "published", published_at: new Date().toISOString(), error: null } : x)));
-    setMsg("발행했어요"); setBusy(true);
-    const ok = await send({ action: "publishNow", id: p.id }); if (!ok) setPosts(prev); setBusy(false);
+    // 인스타 발행은 인코딩 대기로 1~5분 걸리는 동기 작업 → '발행 중' 상태를 명확히 보여줘 멈춘 것처럼 보이지 않게.
+    setPublishingId(p.id);
+    setMsg("발행 중이에요… 1~2분 걸릴 수 있어요 (창을 닫지 마세요)");
+    setBusy(true);
+    const ok = await send({ action: "publishNow", id: p.id });
+    if (ok) {
+      setPosts((cur) => cur.map((x) => (x.id === p.id ? { ...x, status: "published", published_at: new Date().toISOString(), error: null } : x)));
+      setMsg("발행했어요 ✓");
+    }
+    setPublishingId(null);
+    setBusy(false);
   }
   async function connectIg() {
     if (!igToken.trim()) { setMsg("토큰을 입력해 주세요"); return; }
@@ -510,7 +518,7 @@ function SocialView({ stats }: { stats: AdminStats }) {
                       <span className="min-w-0 flex-1 truncate text-sm text-neutral-600">{(p.caption || "(캡션 없음)").split("\n")[0]}{p.error && <span className="ml-1 text-xs text-red-500">· {p.error}</span>}</span>
                       {p.status === "published" && p.published_at && <span className="shrink-0 text-xs text-neutral-400">{fmtDate(p.published_at)} 발행</span>}
                       {p.status !== "published" && (
-                        <button onClick={() => publishPost(p)} disabled={busy} className="shrink-0 rounded-md bg-neutral-900 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-neutral-800 active:scale-95 disabled:opacity-50">지금 발행</button>
+                        <button onClick={() => publishPost(p)} disabled={busy} className="shrink-0 rounded-md bg-neutral-900 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-neutral-800 active:scale-95 disabled:opacity-50">{publishingId === p.id ? "발행 중…" : "지금 발행"}</button>
                       )}
                       <button onClick={() => removePost(p)} disabled={busy} title={p.status === "published" ? "기록만 삭제돼요. 인스타 게시물은 인스타 앱에서 직접 삭제하세요." : "삭제"} className="shrink-0 text-xs text-neutral-400 transition hover:text-red-500 disabled:opacity-50">{p.status === "published" ? "기록 삭제" : "삭제"}</button>
                     </div>
