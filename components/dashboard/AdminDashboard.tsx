@@ -420,6 +420,38 @@ function SocialView({ stats }: { stats: AdminStats }) {
     setPublishingId(null);
     setBusy(false);
   }
+  // 밀린 대기 카드를 한 번에 — 순차로 발행하며 진행률 표시(개당 인코딩 대기로 1~2분).
+  // 인스타 동시 발행은 충돌·레이트리밋 위험이 있어 일부러 하나씩 끝내고 다음으로 넘어간다.
+  async function publishAllQueued() {
+    const targets = posts.filter((x) => x.status === "queued");
+    if (targets.length === 0) return;
+    if (!window.confirm(`대기 중 ${targets.length}개를 모두 발행할까요?\n인스타·스레드에 실제로 올라가요. 하나씩 순서대로(개당 1~2분) 발행되니 창을 닫지 마세요.`)) return;
+    setBusy(true);
+    let done = 0;
+    let fail = 0;
+    for (let i = 0; i < targets.length; i++) {
+      const p = targets[i];
+      setPublishingId(p.id);
+      setMsg(`발행 중… ${i + 1}/${targets.length} (개당 1~2분, 창 닫지 마세요)`);
+      try {
+        const r = await fetch("/api/social", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "publishNow", id: p.id }) });
+        if (r.ok) {
+          done++;
+          setPosts((cur) => cur.map((x) => (x.id === p.id ? { ...x, status: "published", published_at: new Date().toISOString(), error: null } : x)));
+        } else {
+          fail++;
+          const d = await r.json().catch(() => ({}));
+          setPosts((cur) => cur.map((x) => (x.id === p.id ? { ...x, error: d.error ?? "실패" } : x)));
+        }
+      } catch {
+        fail++;
+      }
+    }
+    setPublishingId(null);
+    setBusy(false);
+    setMsg(fail === 0 ? `${done}개 모두 발행했어요 ✓` : `${done}개 발행 · ${fail}개 실패`);
+    router.refresh();
+  }
   async function connectIg() {
     if (!igToken.trim()) { setMsg("토큰을 입력해 주세요"); return; }
     setBusy(true); setMsg("인스타 토큰 확인 중…");
@@ -496,6 +528,12 @@ function SocialView({ stats }: { stats: AdminStats }) {
 
         {openList && (
           <div className="mt-3 rounded-2xl border border-neutral-100 bg-white shadow-sm p-4 sm:p-5">
+            {openList === "queued" && queued.length > 0 && (
+              <div className="mb-3 flex items-center justify-between gap-2 border-b border-neutral-100 pb-3">
+                <span className="text-sm text-neutral-500">대기 <b className="text-neutral-900">{queued.length}개</b> · 하나씩 순서대로 발행돼요</span>
+                <button onClick={publishAllQueued} disabled={busy} className="shrink-0 rounded-lg bg-[#3f91ff] px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90 active:scale-95 disabled:opacity-50">{busy && publishingId ? "발행 중…" : `밀린 ${queued.length}개 모두 발행`}</button>
+              </div>
+            )}
             {listFor.length === 0 ? (
               <p className="py-2 text-sm text-neutral-400">{openList === "queued" ? <>대기 중인 카드가 없어요. 터미널에서 <code className="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-[13px]">npm run card:gen:bulk -- 14</code> 로 채워요.</> : "없어요"}</p>
             ) : (
