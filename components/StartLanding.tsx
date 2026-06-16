@@ -523,30 +523,61 @@ function useTypewriterCycle(phrases: string[], { speed = 50, holdMs = 1100 }: { 
   return out;
 }
 
-// macOS 데스크탑 — 실제 월페이퍼 + 상단 메뉴바 위에 앱 창이 떠 있는 느낌
+// 타이핑되는 한 줄(텍스트+커서). 훅을 자식이 소유해 부모 창은 리렌더되지 않음(성능).
+function TypedLine({ text, dark = false, opts }: { text: string; dark?: boolean; opts?: Parameters<typeof useTypewriter>[1] }) {
+  const out = useTypewriter(text, opts);
+  return <>{out}<span className={`ml-px inline-block h-3 w-px shrink-0 animate-pulse align-middle ${dark ? "bg-[#6a8bff] w-0.5" : "bg-neutral-500"}`} /></>;
+}
+
+// 타사 AI 입력창 — 끝없는 수정 요청을 계속 타이핑(자식이 훅 소유).
+function RivalInput() {
+  const typed = useTypewriterCycle(RIVAL_PROMPTS);
+  return (
+    <div className="flex items-center gap-2 border-t border-neutral-100 px-3 py-2">
+      <div className="flex min-w-0 flex-1 items-center rounded-lg bg-neutral-100 px-3 py-1.5 text-[10.5px] text-neutral-500">
+        <span className="truncate">{typed}</span>
+        <span className="ml-px inline-block h-3 w-px shrink-0 animate-pulse bg-neutral-500 align-middle" />
+      </div>
+      <span className="shrink-0 rounded-lg bg-neutral-900 px-2.5 py-1.5 text-[10px] font-medium text-white">전송</span>
+    </div>
+  );
+}
+
+// macOS 데스크탑 — 실제 월페이퍼 + 상단 메뉴바(1:1) 위에 앱 창이 떠 있는 느낌.
+// 성능: blur 필터·backdrop-filter 없이 정적 그라데이션만(스크롤 중 재합성 비용 제거).
+function MenuBar({ appName, menus }: { appName: string; menus: string[] }) {
+  return (
+    <div className="relative z-10 flex h-[26px] items-center justify-between bg-black/25 px-3 text-[11px] leading-none text-white">
+      <div className="flex items-center gap-3.5">
+        <svg width="12" height="14" viewBox="0 0 16 19" fill="currentColor" className="-mt-px"><path d="M13.5 14.7c-.24.55-.52 1.06-.85 1.53-.45.64-.81 1.08-1.09 1.33-.43.4-.9.6-1.4.62-.36 0-.79-.1-1.29-.31-.5-.21-.96-.31-1.38-.31-.44 0-.91.1-1.42.31-.51.21-.92.32-1.24.33-.48.02-.96-.19-1.43-.63-.3-.27-.68-.73-1.13-1.38-.48-.69-.88-1.5-1.19-2.42C.41 12.78.2 11.78.2 10.81c0-1.11.24-2.07.72-2.87a4.23 4.23 0 011.5-1.53 4.04 4.04 0 012.04-.58c.38 0 .88.12 1.5.35.62.23 1.02.35 1.19.35.13 0 .57-.14 1.32-.41.71-.25 1.31-.36 1.8-.32 1.33.11 2.33.63 2.99 1.58-1.19.72-1.78 1.73-1.77 3.02.01 1.01.38 1.85 1.1 2.51.33.31.69.55 1.1.72-.09.26-.18.5-.28.74zM10.6 1.7c0 .83-.3 1.6-.9 2.32-.73.85-1.6 1.34-2.55 1.27a2.56 2.56 0 01-.02-.31c0-.79.35-1.64 1-2.36.32-.36.73-.66 1.23-.9.49-.24.96-.37 1.4-.39.02.13.04.26.04.37z" /></svg>
+        <span className="font-semibold">{appName}</span>
+        {menus.map((m) => <span key={m} className="hidden font-normal text-white/95 sm:inline">{m}</span>)}
+      </div>
+      <div className="flex items-center gap-3 text-white">
+        {/* 배터리 % */}
+        <span className="hidden font-normal text-white/95 sm:inline">98%</span>
+        <svg width="22" height="11" viewBox="0 0 26 12" fill="none"><rect x="0.6" y="0.6" width="21.8" height="10.8" rx="3" stroke="white" strokeOpacity="0.55" /><rect x="2" y="2" width="16.5" height="8" rx="1.6" fill="white" /><path d="M24 4.3c.9.3 1.3 1 1.3 1.7s-.4 1.4-1.3 1.7z" fill="white" fillOpacity="0.55" /></svg>
+        {/* wifi */}
+        <svg width="15" height="11" viewBox="0 0 20 15" fill="none" stroke="white" strokeWidth="1.6" strokeLinecap="round"><path d="M2 5.4a11 11 0 0116 0" /><path d="M4.8 8.1a7 7 0 0110.4 0" /><path d="M7.6 10.8a3 3 0 014.8 0" /><circle cx="10" cy="13" r="0.4" fill="white" stroke="none" /></svg>
+        {/* spotlight */}
+        <svg width="13" height="13" viewBox="0 0 18 18" fill="none" stroke="white" strokeWidth="1.7" strokeLinecap="round" className="hidden sm:block"><circle cx="7.4" cy="7.4" r="5" /><path d="M11.3 11.3 16 16" /></svg>
+        {/* control center */}
+        <svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="white" strokeWidth="1.4" className="hidden sm:block"><rect x="1.6" y="3" width="14.8" height="4.4" rx="2.2" /><rect x="1.6" y="10.6" width="14.8" height="4.4" rx="2.2" /><circle cx="12" cy="5.2" r="1.4" fill="white" /><circle cx="6" cy="12.8" r="1.4" fill="white" /></svg>
+        <span className="font-normal text-white/95">6월 16일 (화) 오후 2:14</span>
+      </div>
+    </div>
+  );
+}
+
 function DesktopFrame({ appName, menus, children }: { appName: string; menus: string[]; children: React.ReactNode }) {
   return (
     <div className="relative overflow-hidden rounded-[20px] shadow-[0_34px_90px_-32px_rgba(15,25,65,0.55)]">
-      {/* 월페이퍼 */}
-      <div className="absolute inset-0" style={{ background: "linear-gradient(160deg,#0b1f55 0%,#19408f 45%,#2b73b8 100%)" }} />
-      <div className="absolute inset-0" style={{ background: "radial-gradient(140% 120% at 78% -12%, rgba(120,220,255,0.55), transparent 52%), radial-gradient(120% 130% at -12% 112%, rgba(255,150,120,0.42), transparent 55%), radial-gradient(110% 110% at 112% 115%, rgba(190,120,255,0.45), transparent 55%)" }} />
-      <div className="absolute -left-1/4 top-1/4 h-[120%] w-[150%] -rotate-12 opacity-40 blur-3xl" style={{ background: "conic-gradient(from 200deg at 50% 50%, transparent, rgba(150,210,255,0.65), transparent 38%)" }} />
-      {/* 메뉴바 */}
-      <div className="relative z-10 flex items-center justify-between bg-black/10 px-3.5 py-1 text-[9.5px] font-medium text-white/90 backdrop-blur-md">
-        <div className="flex items-center gap-3">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" className="opacity-95"><path d="M17.05 12.04c-.03-2.6 2.13-3.85 2.22-3.91-1.21-1.77-3.09-2.01-3.76-2.04-1.6-.16-3.12.94-3.93.94-.81 0-2.06-.92-3.39-.89-1.74.03-3.35 1.01-4.25 2.57-1.81 3.14-.46 7.79 1.3 10.34.86 1.25 1.88 2.65 3.22 2.6 1.29-.05 1.78-.83 3.34-.83 1.55 0 2 .83 3.37.81 1.39-.03 2.27-1.27 3.12-2.53.98-1.45 1.39-2.85 1.41-2.92-.03-.01-2.71-1.04-2.74-4.12zM14.6 4.81c.71-.86 1.19-2.06 1.06-3.25-1.02.04-2.26.68-2.99 1.54-.66.76-1.23 1.98-1.08 3.15 1.14.09 2.3-.58 3.01-1.44z" /></svg>
-          <span className="font-semibold">{appName}</span>
-          {menus.map((m) => <span key={m} className="hidden text-white/65 sm:inline">{m}</span>)}
-        </div>
-        <div className="flex items-center gap-2.5 text-white/85">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 18a1.6 1.6 0 100 3.2A1.6 1.6 0 0012 18zM5.5 11.5a9 9 0 0113 0l-1.6 1.6a6.7 6.7 0 00-9.8 0zM2.5 8.5a13.2 13.2 0 0119 0l-1.6 1.6a11 11 0 00-15.8 0z" /></svg>
-          <svg width="20" height="13" viewBox="0 0 28 14" fill="none"><rect x="0.7" y="0.7" width="23" height="12.6" rx="3" stroke="currentColor" strokeOpacity="0.55" /><rect x="2.4" y="2.4" width="16" height="9.2" rx="1.6" fill="currentColor" /><rect x="25" y="4.5" width="2" height="5" rx="1" fill="currentColor" fillOpacity="0.55" /></svg>
-          <span>오후 2:14</span>
-        </div>
-      </div>
-      {/* 창 */}
+      {/* 월페이퍼 — 정적 그라데이션만(필터 없음) */}
+      <div className="absolute inset-0" style={{ background: "radial-gradient(120% 110% at 80% -10%, #5fb6ff 0%, transparent 48%), radial-gradient(120% 120% at -10% 110%, #ff9d7a 0%, transparent 50%), radial-gradient(110% 110% at 110% 110%, #a06bff 0%, transparent 52%), linear-gradient(160deg,#0a2363 0%,#163b86 50%,#1e57a8 100%)" }} />
+      <MenuBar appName={appName} menus={menus} />
+      {/* 창 — transform만 사용, 자체 합성 레이어로 분리해 월페이퍼 재페인트 방지 */}
       <div className="relative z-10 px-4 pb-7 pt-3 sm:px-9 sm:pb-9 sm:pt-5">
-        <motion.div animate={{ y: [0, -7, 0] }} transition={{ duration: 6.5, repeat: Infinity, ease: "easeInOut" }}>
+        <motion.div animate={{ y: [0, -6, 0] }} transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }} style={{ willChange: "transform" }} className="transform-gpu">
           {children}
         </motion.div>
       </div>
@@ -565,9 +596,8 @@ function WinBar({ title, dark = false }: { title: string; dark?: boolean }) {
 
 // 타사 AI — 실제 채팅 앱 스크린샷처럼 (사이드바 + 진짜 대화)
 function RivalChat() {
-  const typed = useTypewriterCycle(RIVAL_PROMPTS);
   return (
-    <DesktopFrame appName="AI 어시스턴트" menus={["파일", "편집", "보기", "도움말"]}>
+    <DesktopFrame appName="AI 어시스턴트" menus={["파일", "편집", "보기", "윈도우", "도움말"]}>
       <div className="overflow-hidden rounded-xl border border-black/10 bg-white shadow-[0_30px_70px_-22px_rgba(10,20,45,0.55)]">
         <WinBar title="AI 어시스턴트" />
         <div className="flex h-[284px]">
@@ -587,13 +617,7 @@ function RivalChat() {
           </div>
         </div>
         {/* 입력창 — 계속 새 요청을 타이핑하는 연출(끝이 없음) */}
-        <div className="flex items-center gap-2 border-t border-neutral-100 px-3 py-2">
-          <div className="flex min-w-0 flex-1 items-center rounded-lg bg-neutral-100 px-3 py-1.5 text-[10.5px] text-neutral-500">
-            <span className="truncate">{typed}</span>
-            <span className="ml-px inline-block h-3 w-px shrink-0 animate-pulse bg-neutral-500 align-middle" />
-          </div>
-          <span className="shrink-0 rounded-lg bg-neutral-900 px-2.5 py-1.5 text-[10px] font-medium text-white">전송</span>
-        </div>
+        <RivalInput />
       </div>
     </DesktopFrame>
   );
@@ -603,8 +627,6 @@ function RivalChat() {
 const ATE_LAST = "잔금 당일 신청해 대항력과 우선변제권을 함께 확보하세요. 하루만 늦어도 보증금을 지킬 순위가 밀릴 수 있습니다.";
 function AteFloGen() {
   const POSTS: [string, string][] = [["전세 사기 예방법 5가지", "발행"], ["1억으로 시작하는 갭투자", "발행"], ["청약 가점 계산법 총정리", "발행"], ["전입신고·확정일자 받는 법", "초안"], ["오피스텔 투자 체크리스트", "초안"]];
-  const body = useTypewriter(ATE_LAST, { speed: 28, startDelay: 800, holdMs: 1900 });
-  const done = body.length === ATE_LAST.length;
   return (
     <DesktopFrame appName="AteFlo" menus={["파일", "편집", "글", "발행"]}>
       <div className="overflow-hidden rounded-xl border border-white/10 bg-[#0b0d15] shadow-[0_30px_70px_-22px_rgba(10,25,75,0.6)]">
@@ -629,13 +651,13 @@ function AteFloGen() {
               <p className="font-bold text-[#8ab4ff]">1. 등기부등본 확인하기</p>
               <p>소유자와 임대인이 같은지, 신탁 등기는 없는지 대조합니다.</p>
               <p className="font-bold text-[#8ab4ff]">2. 전입신고·확정일자</p>
-              <p>{body}<span className="ml-px inline-block h-3 w-0.5 animate-pulse bg-[#6a8bff] align-middle" /></p>
+              <p><TypedLine text={ATE_LAST} dark opts={{ speed: 28, startDelay: 800, holdMs: 1900 }} /></p>
             </div>
           </div>
         </div>
         <div className="flex items-center justify-between border-t border-white/8 px-3.5 py-2 text-[9.5px]">
           <span className="text-white/35">키워드·메타설명·검색의도 <span className="text-emerald-400">✓ 자동 최적화</span></span>
-          <span className={`rounded px-2 py-0.5 font-semibold transition-colors duration-500 ${done ? "bg-emerald-500/20 text-emerald-300" : "bg-white/8 text-white/45"}`}>{done ? "워드프레스 발행됨" : "작성 중…"}</span>
+          <span className="rounded bg-emerald-500/20 px-2 py-0.5 font-semibold text-emerald-300">워드프레스 발행됨</span>
         </div>
       </div>
     </DesktopFrame>
