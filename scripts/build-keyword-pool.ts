@@ -1,64 +1,42 @@
 /**
- * 키워드 풀 적재 (Stage 1) — 업종 시드로 네이버 발굴 → keyword_pool 에 업종별 적재.
+ * 키워드 풀 적재 (CLI) — (업종·세부)별 시드로 네이버 발굴 → keyword_pool 적재.
+ * 실제 적재 로직은 lib/keywordPool.buildPoolForSub 공유(관리자 라우트와 동일).
  *
  * 실행:
- *   npm run pool:build            # VERTICAL_SEEDS 전 업종
- *   npm run pool:build medical    # 특정 업종만
+ *   npm run pool:build                  # 전체 (비용 큼 — 권장 X)
+ *   npm run pool:build medical          # 업종 하나(전 세부)
+ *   npm run pool:build medical 치과      # 업종+세부 하나 (테스트·비용통제 권장)
  *
  * 필요 env (.env.local): NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
- *   네이버 SearchAd 키(발굴), ANTHROPIC_API_KEY(AI 재구성). 비용 통제를 위해 수동 실행만(cron X).
+ *   네이버 SearchAd(ACCESS_LICENSE/SECRET_KEY/CUSTOMER_ID), ANTHROPIC_API_KEY.
  */
-import { createSupabaseAdminClient } from "../lib/supabase-server";
-import { discoverKeywords } from "../lib/keywordDiscovery";
-import { VERTICAL_SEEDS } from "../lib/keywordSeeds";
-
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+import { buildPoolForSub } from "../lib/keywordPool";
+import { VERTICAL_SUBS } from "../lib/verticalSubs";
 
 async function run() {
-  const arg = process.argv[2];
-  const verticals = arg ? [arg] : Object.keys(VERTICAL_SEEDS);
-  const admin = createSupabaseAdminClient();
+  const [vArg, sArg] = process.argv.slice(2);
+  const verticals = vArg ? [vArg] : Object.keys(VERTICAL_SUBS);
 
-  let totalInserted = 0;
+  let total = 0;
   for (const vertical of verticals) {
-    const seeds = VERTICAL_SEEDS[vertical] ?? [];
-    if (seeds.length === 0) {
-      console.log(`[${vertical}] 시드 없음 — 건너뜀 (lib/keywordSeeds.ts 채우기)`);
+    const subs = sArg ? [sArg] : (VERTICAL_SUBS[vertical] ?? []);
+    if (subs.length === 0) {
+      console.log(`[${vertical}] 세부 없음 — 건너뜀`);
       continue;
     }
-    console.log(`\n=== [${vertical}] 시드 ${seeds.length}개 ===`);
-    for (const seed of seeds) {
+    console.log(`\n=== [${vertical}] 세부 ${subs.length}개 ===`);
+    for (const sub of subs) {
       try {
-        const { keywords } = await discoverKeywords(seed);
-        if (keywords.length === 0) {
-          console.log(`  '${seed}' → 0개`);
-          continue;
-        }
-        const rows = keywords.map((k) => ({
-          vertical,
-          keyword: k.keyword,
-          monthly_searches: k.monthlyMobileQcCnt,
-          competition: k.compIdx,
-          estimated: k.estimated,
-          seed,
-          source: "naver",
-          updated_at: new Date().toISOString(),
-        }));
-        // unique(vertical,keyword) → 중복은 갱신(times_assigned·created_at은 payload에 없어 보존)
-        const { error } = await admin.from("keyword_pool").upsert(rows, { onConflict: "vertical,keyword" });
-        if (error) console.log(`  '${seed}' → ${keywords.length}개 (저장 실패: ${error.message})`);
-        else {
-          totalInserted += rows.length;
-          console.log(`  '${seed}' → ${keywords.length}개 적재`);
-        }
-        await sleep(1500); // 네이버 rate limit 여유
+        const r = await buildPoolForSub(vertical, sub);
+        total += r.inserted;
+        const fails = r.perSeed.filter((p) => p.error).length;
+        console.log(`  [${sub}] → ${r.inserted}개 적재 (${(r.durationMs / 1000).toFixed(1)}s${fails ? `, 시드실패 ${fails}` : ""})`);
       } catch (e) {
-        console.error(`  '${seed}' 실패: ${e instanceof Error ? e.message : String(e)}`);
-        await sleep(1500);
+        console.error(`  [${sub}] 실패: ${e instanceof Error ? e.message : String(e)}`);
       }
     }
   }
-  console.log(`\n완료. 적재(upsert) 시도 ${totalInserted}건.`);
+  console.log(`\n완료. 적재(upsert) ${total}건.`);
 }
 
 run().then(() => process.exit(0)).catch((e) => { console.error(e); process.exit(1); });
