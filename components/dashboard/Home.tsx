@@ -1,8 +1,11 @@
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
 import SearchPerformance from "./SearchPerformance";
 import ArticleList from "./ArticleList";
 import type { Article } from "./types";
+
+interface Topic { keyword: string; title: string; demandLabel: string }
 
 // 토스식 메인 홈 — '연구소' 컨셉/탭 제거. [미니 진척] → [성과] → [글감 자리+새 글 쓰기] → [내 글].
 // 미니 진척 배너는 3단계 완료되면 자동으로 사라진다(새 유저만 가이드).
@@ -13,6 +16,7 @@ export default function Home({
   articles,
   wpConnected,
   onWrite,
+  onWriteKeyword,
   onSelect,
   onUpdated,
   onAllArticles,
@@ -23,11 +27,31 @@ export default function Home({
   articles: Article[];
   wpConnected: boolean;
   onWrite: () => void;
+  onWriteKeyword: (keyword: string, title: string) => void;
   onSelect: (a: Article) => void;
   onUpdated: (a: Article) => void;
   onAllArticles: () => void;
   onGoConnect: () => void;
 }) {
+  const [topics, setTopics] = useState<Topic[]>([]);
+  const [topicsLoading, setTopicsLoading] = useState(true);
+
+  const loadTopics = useCallback(async () => {
+    setTopicsLoading(true);
+    try {
+      const res = await fetch("/api/topics");
+      const data = await res.json();
+      setTopics(Array.isArray(data.topics) ? data.topics : []);
+    } catch {
+      setTopics([]);
+    } finally {
+      setTopicsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadTopics();
+  }, [loadTopics]);
   const visible = articles.filter((a) => a.status !== "generating");
   const hasArticles = visible.length > 0;
   const hasPublished = visible.some((a) => a.status === "published");
@@ -69,12 +93,53 @@ export default function Home({
         <SearchPerformance onGoConnect={onGoConnect} />
       </div>
 
-      {/* 글감 추천 자리 + 새 글 쓰기 */}
+      {/* 글감 추천 카드 3개 + 새 글 쓰기(보조) */}
       <div className="mt-4 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-        <p className="text-[15px] font-semibold text-neutral-900">오늘 글 한 편 어때요?</p>
-        <p className="mt-1 text-xs text-neutral-500">곧 여기서 오늘 쓸 글감을 추천해드릴게요.</p>
-        <button onClick={onWrite} className="mt-4 w-full rounded-xl bg-[#3f91ff] py-3.5 text-[15px] font-semibold text-white transition hover:opacity-90 active:scale-[0.99]">
-          ✍️ 새 글 쓰기
+        <div className="flex items-center justify-between">
+          <p className="text-[15px] font-semibold text-neutral-900">오늘 글 한 편 어때요?</p>
+          <button
+            onClick={loadTopics}
+            disabled={topicsLoading}
+            className="text-xs font-medium text-[#3f91ff] transition hover:underline disabled:opacity-40"
+          >
+            다른 주제 보기
+          </button>
+        </div>
+
+        {/* 카드 영역 — 로딩 시 스켈레톤(높이 고정, 레이아웃 시프트 방지) */}
+        <div className="mt-3 space-y-2">
+          {topicsLoading ? (
+            [0, 1, 2].map((i) => <div key={i} className="h-[62px] animate-pulse rounded-xl bg-neutral-100" />)
+          ) : topics.length > 0 ? (
+            topics.map((t) => (
+              <div
+                key={t.keyword}
+                className="flex items-center justify-between gap-3 rounded-xl border border-neutral-200 bg-white px-4 py-3"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-neutral-900">{t.title}</p>
+                  <p className="mt-0.5 text-xs text-neutral-500">{t.demandLabel}</p>
+                </div>
+                <button
+                  onClick={() => onWriteKeyword(t.keyword, t.title)}
+                  className="shrink-0 rounded-lg bg-[#3f91ff]/10 px-3 py-2 text-xs font-semibold text-[#3f91ff] transition hover:bg-[#3f91ff]/15 active:scale-95"
+                >
+                  이걸로 쓰기
+                </button>
+              </div>
+            ))
+          ) : (
+            <p className="py-3 text-xs text-neutral-400">
+              아직 추천할 글감이 없어요. 아래에서 직접 골라 써보세요.
+            </p>
+          )}
+        </div>
+
+        <button
+          onClick={onWrite}
+          className="mt-3 w-full rounded-xl border border-neutral-200 bg-white py-3 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50 active:scale-[0.99]"
+        >
+          ✍️ 직접 골라서 쓰기
         </button>
       </div>
 

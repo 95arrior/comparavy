@@ -880,6 +880,22 @@ export default function DashboardClient(props: DashboardProps) {
                 articles={articles}
                 wpConnected={Boolean(wpSiteUrl)}
                 onWrite={() => goLabView("keywords")}
+                onWriteKeyword={(keyword, title) => {
+                  // 글감 카드 [이걸로 쓰기] → 기존 생성 흐름. 제목을 angle로 넘겨 '본 글감=나오는 글'.
+                  const overLimit = props.plan !== "pro" && articlesUsed >= props.articlesLimit;
+                  const hasTeaser = props.initialArticles.some((a) => a.locked);
+                  if (overLimit && hasTeaser) {
+                    goLabView("keywords");
+                    return;
+                  }
+                  setSelected(null);
+                  setGenParams({
+                    keyword,
+                    angle: title,
+                    type: toEngineType(blogProfile.article_type, blogProfile.vertical),
+                    tone: blogProfile.tone,
+                  });
+                }}
                 onSelect={setSelected}
                 onUpdated={(u) => setArticles((prev) => prev.map((a) => (a.id === u.id ? u : a)))}
                 onAllArticles={() => goLabView("articles")}
