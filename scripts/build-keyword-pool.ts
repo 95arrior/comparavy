@@ -8,7 +8,7 @@
  *   npm run pool:build medical 치과      # 업종+세부 하나 (테스트·비용통제 권장)
  *
  * 필요 env (.env.local): NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
- *   네이버 SearchAd(ACCESS_LICENSE/SECRET_KEY/CUSTOMER_ID), ANTHROPIC_API_KEY.
+ *   네이버 SearchAd(ACCESS_LICENSE/SECRET_KEY/CUSTOMER_ID). (풀 수집은 AI 미사용)
  */
 import { buildPoolForSub } from "../lib/keywordPool";
 import { VERTICAL_SUBS } from "../lib/verticalSubs";

@@ -1,9 +1,9 @@
-// 키워드 풀 적재 코어 — (vertical, sub) 하나를 시드로 발굴해 keyword_pool에 적재.
+// 키워드 풀 적재 코어 — (vertical, sub) 하나를 시드로 수집해 keyword_pool에 적재.
+// collectPoolKeywords(원본 연관키워드, AI 없음)를 사용 — 핵심 키워드 보존 + 풍부함.
 // 스크립트(scripts/build-keyword-pool)와 관리자 라우트(/api/admin/build-pool)가 공유한다(중복 제거).
 import { createSupabaseAdminClient } from "./supabase-server";
-import { discoverKeywords } from "./keywordDiscovery";
+import { collectPoolKeywords, type PoolKeyword } from "./poolCollect";
 import { VERTICAL_SEEDS } from "./keywordSeeds";
-import type { GoldenKeyword } from "./goldenKeyword";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -25,11 +25,13 @@ export async function buildPoolForSub(vertical: string, sub: string, opts?: { sl
   const seeds = [sub, ...(VERTICAL_SEEDS[vertical]?.[sub] ?? [])]; // sub 라벨 자동 포함
   const sleepMs = opts?.sleepMs ?? 1500; // 네이버 rate limit 여유
 
-  const collected = new Map<string, { k: GoldenKeyword; seed: string }>(); // (vertical,sub) 내 dedupe
+  // (vertical,sub) 내 dedupe. 키는 unique(vertical,sub,keyword)와 동일하게 '원본 키워드'로
+  // — 같은 배치에 동일 keyword가 두 번 들어가면 upsert가 충돌하므로 정확 키로 합친다.
+  const collected = new Map<string, { k: PoolKeyword; seed: string }>();
   const perSeed: { seed: string; found: number; error?: string }[] = [];
   for (const seed of seeds) {
     try {
-      const { keywords } = await discoverKeywords(seed);
+      const keywords = await collectPoolKeywords(seed);
       for (const k of keywords) if (!collected.has(k.keyword)) collected.set(k.keyword, { k, seed });
       perSeed.push({ seed, found: keywords.length });
     } catch (e) {
@@ -43,10 +45,10 @@ export async function buildPoolForSub(vertical: string, sub: string, opts?: { sl
     const rows = [...collected.values()].map(({ k, seed }) => ({
       vertical,
       sub,
-      keyword: k.keyword,
+      keyword: k.keyword, // 원본 키워드(글감형 변환은 추천 단계에서)
       monthly_searches: k.monthlyMobileQcCnt,
-      competition: k.compIdx,
-      estimated: k.estimated,
+      competition: k.compIdx, // 낮음/중간/높음 그대로
+      estimated: false, // 네이버 정확 검색량
       seed,
       source: "naver",
       updated_at: new Date().toISOString(),
