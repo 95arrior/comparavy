@@ -1,12 +1,14 @@
-// 업체 정보 NAP 카드 — kses-safe HTML.
-// ateflo는 호스팅을 하지 않고 "고객마다 다른 워드프레스"에 발행한다. 상당수 사이트가
-// unfiltered_html을 차단(DISALLOW_UNFILTERED_HTML·보안플러그인·멀티사이트)하므로,
-// 카드는 권한에 의존하지 않고 wp_kses_post(safecss_filter_attr) 화이트리스트만 사용한다.
+// 업체 정보 NAP 카드 — 워드프레스 "검증된 생존 구조"로 작성.
 //
-// 사용 가능(살아남음): background, border(+방향/-radius), padding(+방향), color,
-//   text-align, margin(+방향), font-size, font-weight, line-height, text-decoration
-// 금지(kses가 제거함): display(flex 포함), box-shadow, box-sizing, <svg>, 이모지
-//   → 레이아웃은 block/inline 흐름 배치로, 아이콘은 텍스트 라벨로 대체.
+// 배경(중요): 일부 사이트의 콘텐츠 정리 필터가 "클래스 없이 인라인 텍스트만 든 <div style>"를
+//   <p><strong>으로 변환해 카드를 뭉갠다. 반면 우리 목차 <div class="ateflo-toc" style="...">는
+//   인라인 스타일째 멀쩡히 살아남는다(같은 글 내 실측 확인). 차이는 ① div에 class가 있고
+//   ② 자식이 블록 요소(<p>/<ul>/<li>)라는 것. 특히 <p style="font-weight:700">는 변환되지 않고 보존됨.
+//   → 박스도 목차와 동일 패턴(div+class + <p> 블록 자식 + 인라인 안전 스타일)으로 만든다.
+//
+// 사용 속성: background, border(+radius), padding(+top), margin, color, font-size,
+//   font-weight, text-align, text-decoration — 전부 safecss 화이트리스트(목차가 쓰는 것들).
+//   금지: display/flex/box-shadow/box-sizing/<svg>/이모지, 그리고 인라인 텍스트를 직접 든 <div>.
 import { DAY_KEYS, DAY_LABELS, type WeeklyHours, type DayKey } from "./blogProfile";
 
 export interface BusinessInfo {
@@ -93,17 +95,22 @@ function hoursLines(h: WeeklyHours): HourLine[] {
   return out;
 }
 
-// 항목 한 줄: 라벨 + 값(둘 다 block). first가 아니면 윗 구분선. (kses-safe 속성만)
-function row(label: string, valueHtml: string, first: boolean): string {
-  const sep = first
-    ? "margin-top:18px;"
-    : "margin-top:16px;padding-top:16px;border-top:1px solid #F4F5F7;";
-  return (
-    `<div style="${sep}">` +
-    `<div style="font-size:11px;font-weight:600;color:#ADB2BA;margin-bottom:4px;">${label}</div>` +
-    `<div style="font-size:14.5px;font-weight:600;color:#1A1D21;line-height:1.5;">${valueHtml}</div>` +
-    `</div>`
-  );
+// 항목 한 줄 = 라벨 <p> + 값 <p>(여럿 가능, note는 작은 회색 <p>). first가 아니면 라벨에 윗 구분선.
+// 모두 블록 <p> + 인라인 스타일 → 목차와 동일한 '생존 구조'.
+function itemBlock(label: string, entries: HourLine[], first: boolean): string {
+  const labelStyle = first
+    ? "margin:18px 0 6px;font-size:11px;font-weight:600;color:#ADB2BA"
+    : "margin:16px 0 6px;padding-top:16px;border-top:1px solid #F4F5F7;font-size:11px;font-weight:600;color:#ADB2BA";
+  let html = `<p style="${labelStyle}">${esc(label)}</p>`;
+  entries.forEach((e, i) => {
+    const vStyle =
+      (i === 0 ? "margin:0;" : "margin:8px 0 0;") + "font-size:14.5px;font-weight:600;color:#1A1D21";
+    html += `<p style="${vStyle}">${esc(e.main)}</p>`;
+    if (e.note) {
+      html += `<p style="margin:2px 0 0;font-size:12.5px;font-weight:500;color:#8A909A">${esc(e.note)}</p>`;
+    }
+  });
+  return html;
 }
 
 export function buildBusinessBox(b: BusinessInfo): string {
@@ -115,49 +122,37 @@ export function buildBusinessBox(b: BusinessInfo): string {
   const lines = b.hoursJson ? hoursLines(b.hoursJson) : [];
 
   // 항목(주소/전화/영업시간) — 순서대로, 첫 항목만 구분선 없음.
-  const items: Array<{ label: string; value: string }> = [];
-  if (address) items.push({ label: "주소", value: esc(address) });
-  if (phone) items.push({ label: "전화", value: esc(phone) });
-  if (lines.length) {
-    const html = lines
-      .map((e, i) => {
-        const noteHtml = e.note
-          ? `<div style="font-size:12.5px;font-weight:500;color:#8A909A;margin-top:2px;">${esc(e.note)}</div>`
-          : "";
-        return `<div style="${i === 0 ? "" : "margin-top:8px;"}">${esc(e.main)}${noteHtml}</div>`;
-      })
-      .join("");
-    items.push({ label: "영업시간", value: html });
-  } else if (hoursText) {
-    items.push({ label: "영업시간", value: esc(hoursText) });
-  }
+  const items: Array<{ label: string; entries: HourLine[] }> = [];
+  if (address) items.push({ label: "주소", entries: [{ main: address, note: "" }] });
+  if (phone) items.push({ label: "전화", entries: [{ main: phone, note: "" }] });
+  if (lines.length) items.push({ label: "영업시간", entries: lines });
+  else if (hoursText) items.push({ label: "영업시간", entries: [{ main: hoursText, note: "" }] });
 
   // 상호도 없고 항목도 없으면 카드 자체를 만들지 않음(graceful).
   if (!name && items.length === 0) return "";
 
   const heading = name ? esc(name) : "업체 안내";
-  const subHtml = subtitle
-    ? `<div style="font-size:12.5px;font-weight:500;color:#9CA3AF;margin-top:4px;">${esc(subtitle)}</div>`
+  const headingP = `<p style="margin:0;font-size:19px;font-weight:700;color:#111316">${heading}</p>`;
+  const subP = subtitle
+    ? `<p style="margin:4px 0 0;font-size:12.5px;font-weight:500;color:#9CA3AF">${esc(subtitle)}</p>`
     : "";
 
-  const rowsHtml = items.map((it, i) => row(it.label, it.value, i === 0)).join("");
+  const itemsHtml = items.map((it, i) => itemBlock(it.label, it.entries, i === 0)).join("");
 
-  // 하단 CTA — 전화가 있을 때만. 연회색 알약 버튼(inline <a> + 부모 text-align:center).
-  // display 속성을 못 쓰므로 풀폭 대신 가운데 정렬된 알약형으로 간다(kses-safe).
+  // 하단 CTA — 전화가 있을 때만. 알약 스타일은 <p>에 싣고(목차처럼 보존됨), <a>는 색/굵기만.
+  // display 불가라 <a>를 풀폭 블록으로 못 만들어, <p> 자체를 가운데정렬 알약으로 쓴다.
   const telHref = phone.replace(/[^0-9+]/g, "");
   const cta = phone
-    ? `<div style="text-align:center;margin-top:22px;">` +
-      `<a href="tel:${esc(telHref)}" style="background:#F2F4F6;border:1px solid #E2E6EA;border-radius:12px;` +
-      `padding:13px 22px;color:#16181D;font-size:14.5px;font-weight:600;text-decoration:none;">전화 문의하기</a>` +
-      `</div>`
+    ? `<p style="margin:22px 0 0;background:#F2F4F6;border:1px solid #E2E6EA;border-radius:12px;padding:13px;text-align:center">` +
+      `<a href="tel:${esc(telHref)}" style="color:#16181D;font-size:14.5px;font-weight:600;text-decoration:none">전화 문의하기</a>` +
+      `</p>`
     : "";
 
   return (
-    `\n<div style="background:#FFFFFF;border:1px solid #E5E8EB;border-radius:18px;padding:24px;` +
-    `margin:32px 0;color:#4e5968;line-height:1.6;">` +
-    `<div style="font-size:19px;font-weight:700;color:#111316;line-height:1.3;">${heading}</div>` +
-    subHtml +
-    rowsHtml +
+    `\n<div class="ateflo-bizcard" style="background:#FFFFFF;border:1px solid #E5E8EB;border-radius:18px;padding:24px;margin:32px 0">` +
+    headingP +
+    subP +
+    itemsHtml +
     cta +
     `</div>`
   );
