@@ -1,5 +1,8 @@
 "use client";
 
+// ⚠️ DEPRECATED — 미사용. 메인 홈은 Home.tsx로 대체됨(2026-06 토스식 개편, '연구소' 컨셉 제거).
+// 어디서도 import하지 않음. 정리 단계에서 BlogSetup과 함께 삭제 예정(지금은 참고용 보존).
+
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import CountUp from "@/components/CountUp";
