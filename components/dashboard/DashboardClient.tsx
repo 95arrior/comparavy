@@ -13,8 +13,8 @@ import WritingView, { type GenParams } from "./WritingView";
 import WordPressPanel from "./WordPressPanel";
 import KeywordFinder from "./KeywordFinder";
 import KeywordQueue from "./KeywordQueue";
-import BlogSetup from "./BlogSetup";
 import Onboarding from "./Onboarding";
+import ProfileSettings from "./ProfileSettings";
 import ResearchLab from "./ResearchLab";
 import SearchPerformance from "./SearchPerformance";
 import { toEngineType, type BlogProfile } from "@/lib/blogProfile";
@@ -1143,12 +1143,12 @@ export default function DashboardClient(props: DashboardProps) {
                 </div>
             </div>
 
-            {/* 블로그 설정 — 사이드바에서 빼고 내 정보로 통합 (주제·이름·문체·유형 수정) */}
+            {/* 블로그 설정 — 한 화면 설정형(업종·이름·업체정보). 내 정보로 통합 */}
             {blogProfile && (
               <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-neutral-100 bg-white shadow-sm p-6 sm:p-8">
                 <h2 className="text-lg font-semibold tracking-tight">블로그 설정</h2>
-                <p className="mt-1 text-sm leading-relaxed text-neutral-500">주제·이름·문체·유형을 바꿀 수 있어요. 저장하면 연구소로 돌아가요.</p>
-                <BlogSetup initial={blogProfile} onSaved={onProfileSaved} />
+                <p className="mt-1 text-sm leading-relaxed text-neutral-500">업종·이름·업체 정보를 바꿀 수 있어요. 저장하면 연구소로 돌아가요.</p>
+                <ProfileSettings profile={blogProfile} onSaved={onProfileSaved} />
               </div>
             )}
           </main>

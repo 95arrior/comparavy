@@ -1,5 +1,8 @@
 "use client";
 
+// ⚠️ DEPRECATED — 미사용. 온보딩=Onboarding.tsx, 편집=ProfileSettings.tsx로 대체됨(2026-06 토스식 개편).
+// 어디서도 import하지 않음. 정리 단계에서 삭제 예정(지금은 참고용 보존).
+
 import { useState } from "react";
 import { TONE_CHOICES, TYPE_CHOICES, VERTICAL_CHOICES, type BlogProfile, type WeeklyHours } from "@/lib/blogProfile";
 import { isTopCategory, labelFor, ALL_SUB } from "@/lib/categories";
