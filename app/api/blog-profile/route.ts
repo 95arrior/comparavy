@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { isAdminEmail } from "@/lib/adminStats";
-import { isTone, isType, isPublishMode, isVertical, DAY_KEYS, type WeeklyHours, type DayHours } from "@/lib/blogProfile";
+import { isTone, isType, isPublishMode, isVertical, VERTICAL_DEFAULTS, VERTICAL_TOPIC, DAY_KEYS, type WeeklyHours, type DayHours } from "@/lib/blogProfile";
 import { isTopCategory } from "@/lib/categories";
 
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -59,13 +59,15 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => ({}));
-  const topic = (typeof body.topic === "string" ? body.topic : "").trim().slice(0, 60);
-  if (!topic) return NextResponse.json({ error: "블로그 주제를 입력해 주세요. (예: 강아지)" }, { status: 400 });
+  const vertical = isVertical(body.vertical) ? body.vertical : "general";
+  // 토스식 온보딩은 카테고리(topic)를 안 받음 → 비면 업종 라벨로 채워 NOT NULL 안전. (편집은 topic을 보내므로 그 값 우선)
+  const rawTopic = (typeof body.topic === "string" ? body.topic : "").trim().slice(0, 60);
+  const topic = rawTopic || VERTICAL_TOPIC[vertical] || "생활정보";
 
-  const tone = isTone(body.tone) ? body.tone : "friendly";
+  // 문체 단계가 없으면 업종 기본 톤 사용(보낸 값 있으면 그것 우선 — 기존 편집 호환).
+  const tone = isTone(body.tone) ? body.tone : (VERTICAL_DEFAULTS[vertical]?.tone ?? "friendly");
   const article_type = isType(body.article_type) ? body.article_type : "info";
   const publish_mode = isPublishMode(body.publish_mode) ? body.publish_mode : "manual";
-  const vertical = isVertical(body.vertical) ? body.vertical : "general";
   // 업체 정보(선택) — 있는 것만 저장, 빈 값은 null
   const bizField = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "") || null;
   const biz_name = bizField(body.biz_name, 80);

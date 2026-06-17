@@ -14,6 +14,7 @@ import WordPressPanel from "./WordPressPanel";
 import KeywordFinder from "./KeywordFinder";
 import KeywordQueue from "./KeywordQueue";
 import BlogSetup from "./BlogSetup";
+import Onboarding from "./Onboarding";
 import ResearchLab from "./ResearchLab";
 import SearchPerformance from "./SearchPerformance";
 import { toEngineType, type BlogProfile } from "@/lib/blogProfile";
@@ -393,17 +394,8 @@ export default function DashboardClient(props: DashboardProps) {
     setKwStatus(kwResults && kwResults.length > 0 ? "done" : "idle");
   }
 
-  // A-2: 연구소 '키워드 발굴' 뷰에 들어오면 블로그 주제로 자동 검색(직전 결과 없을 때 1회). 재검색 낭비 방지.
-  useEffect(() => {
-    if (tab !== "lab" || labView !== "keywords") return;
-    if (!searchHydrated || autoSearched.current) return;
-    if (blogProfile && !kwResults && kwStatus === "idle") {
-      autoSearched.current = true;
-      setKwTopic(blogProfile.topic);
-      runKeywordSearch(blogProfile.topic);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, labView, blogProfile, kwResults, kwStatus, searchHydrated]);
+  // Stage 3: 키워드 발굴 자동검색 제거. topic이 업종 라벨('건강' 등)로 바뀌어 자동검색이 노이즈가 됨 →
+  // 사장이 키워드를 직접 입력하는 방식으로. (이 자리는 추후 '글감 추천'으로 대체 예정)
 
   // 키워드 선택 → 큐에 담고 첫 1개 즉시 생성. 프로필 없으면 설정으로 유도.
   async function handleQueue(keywords: string[]): Promise<boolean> {
@@ -887,7 +879,7 @@ export default function DashboardClient(props: DashboardProps) {
         {/* ── 연구소 (사이드바 '연구소') : 블로그 없으면 온보딩, 있으면 내부 탭으로 도구 전환 ── */}
         {!page && !selected && !genParams && tab === "lab" && !blogProfile && (
           <div className="ateflo-page-in">
-            <BlogSetup initial={null} onSaved={onProfileSaved} />
+            <Onboarding onSaved={onProfileSaved} />
           </div>
         )}
 

@@ -12,6 +12,9 @@ import { upcomingEvents } from "@/lib/seasonalEvents";
 
 const BRAND = "#3f91ff";
 
+// Stage 3: 주목 키워드·트렌드(category_insights)는 숨김(삭제 아님 — 추후 '글감 추천'으로 대체). true로 바꾸면 다시 노출.
+const SHOW_INSIGHTS = false;
+
 interface SpotKeyword { keyword: string; mobile: number; compIdx: string; estimated?: boolean; rising?: boolean }
 interface Insights { keywords: SpotKeyword[]; trend: { series: TrendPoint[]; items: TrendItem[] } | null; asOf: string | null }
 
@@ -90,6 +93,7 @@ export default function ResearchLab({
   const [insights, setInsights] = useState<Insights | null>(null);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
+    if (!SHOW_INSIGHTS) { setLoading(false); return; } // 숨김 상태면 insights API 호출 안 함
     let alive = true;
     setLoading(true);
     const subParam = sub ?? "전체";
@@ -133,7 +137,8 @@ export default function ResearchLab({
         )}
       </motion.div>
 
-      {/* 🔥 지금 주목할 키워드 */}
+      {/* 🔥 지금 주목할 키워드 + 📈 트렌드 — Stage 3: 숨김(글감 추천으로 대체 예정) */}
+      {SHOW_INSIGHTS && (<>
       <SectionTitle>🔥 지금 주목할 키워드 <span className="font-normal text-neutral-400">· {sub ?? category}{asOf ? ` · ${asOf}` : ""}</span></SectionTitle>
       {loading ? (
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
@@ -169,6 +174,7 @@ export default function ResearchLab({
       ) : (
         <p className="rounded-2xl border border-neutral-100 bg-white p-4 text-sm text-neutral-400">트렌드 데이터 준비 중이에요.</p>
       )}
+      </>)}
 
       {/* 📅 시즌·이벤트 */}
       {events.length > 0 && (

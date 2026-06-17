@@ -82,6 +82,17 @@ export const VERTICAL_DEFAULTS: Record<string, { tone: string; type: string }> =
 };
 
 /**
+ * 업종별 기본 topic 라벨. 토스식 온보딩은 카테고리를 안 받으므로, topic(NOT NULL)을 이 라벨로 자동 채운다.
+ * 키워드 자동검색은 Stage 3에서 제거되어 라벨은 기본값·표시용 의미만.
+ */
+export const VERTICAL_TOPIC: Record<string, string> = {
+  medical: "건강",
+  academy: "교육",
+  professional: "세무·법률",
+  general: "생활정보",
+};
+
+/**
  * 프로필 유형(info/guide) → 생성엔진 type 키. vertical을 고려한다.
  * - b2b → comparison, 그 외 전문업종 → howto (VERTICAL_DEFAULTS.type)
  * - general/미지정 → 현행 그대로(howto)
