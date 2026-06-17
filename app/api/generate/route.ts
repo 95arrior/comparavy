@@ -257,6 +257,14 @@ export async function POST(request: Request) {
           await adminDb.from("users").update({ teaser_used: true }).eq("id", user.id);
         }
 
+        // Stage 2-B: 이 키워드로 실제 글을 썼다 → 풀 분산 카운터 +1 (best-effort, 실패해도 생성 무관).
+        // 풀에 없는 키워드(직접발굴 등)면 매칭 0건으로 자연히 무시된다.
+        try {
+          await adminDb.rpc("increment_keyword_assigned", { p_vertical: vertical, p_keyword: keyword });
+        } catch {
+          // 분산 카운터 실패는 글 생성에 영향 없음
+        }
+
         // 다양성 원장 기록 → 다음 생성 때 이 구조를 피한다
         await supabase
           .from("article_patterns")
