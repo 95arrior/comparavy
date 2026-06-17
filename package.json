@@ -12,7 +12,8 @@
     "ig:verify": "node --env-file=.env.local --import tsx scripts/ig-publish.ts verify",
     "ig:publish": "node --env-file=.env.local --import tsx scripts/ig-publish.ts",
     "card:gen": "node --env-file=.env.local --import tsx scripts/card-gen.ts",
-    "card:gen:bulk": "node --env-file=.env.local --import tsx scripts/card-gen-bulk.ts"
+    "card:gen:bulk": "node --env-file=.env.local --import tsx scripts/card-gen-bulk.ts",
+    "pool:build": "node --env-file=.env.local --import tsx scripts/build-keyword-pool.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",

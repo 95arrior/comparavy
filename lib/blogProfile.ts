@@ -10,6 +10,7 @@ export interface BlogProfile {
   target: string | null;
   publish_mode: string; // 'manual' | 'auto'
   vertical: string; // 업종 — medical | academy | professional | b2b | general (기본값)
+  sub_category: string | null; // 세부 분류(치과/영어/세무사/카페 등 · 직접입력 자유텍스트 포함)
   // 업체 정보(선택) — 입력 시 글 하단 NAP 박스로 자동 삽입(PIVOT 6). 비면 미삽입.
   biz_name: string | null;
   biz_address: string | null;

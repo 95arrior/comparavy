@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import HoursEditor from "./HoursEditor";
+import { VERTICAL_SUBS } from "@/lib/verticalSubs";
 import type { BlogProfile, WeeklyHours } from "@/lib/blogProfile";
 
 // 토스식 온보딩 — 한 화면에 하나씩, 진행 표시, 사람 말투. 업종(vertical)만 고르면 나머지는 백엔드가 채움(Stage 1).
@@ -14,17 +15,21 @@ const VERTS = [
   { v: "general", label: "그 외 업종", desc: "가게·서비스 등 무엇이든", icon: <><path d="M4 9h16l-1 11H5L4 9z" /><path d="M9 9V6a3 3 0 0 1 6 0v3" /></> },
 ] as const;
 
-const REASSURE: Record<string, string> = {
-  medical: "환자분들이 검색하는 글을 써드릴게요. 의료광고 규제도 알아서 지켜드려요.",
-  academy: "학부모·학생이 검색하는 글을 써드릴게요. 신뢰할 만한 정보로요.",
-  professional: "의뢰인이 검색하는 글을 써드릴게요. 법적으로 안전하게요.",
-  general: "손님이 검색할 만한 글을 써드릴게요.",
+// 안심 한 줄(이름 화면 상단에 녹임): "{세부} 블로그, {문구}"
+const REASSURE_SHORT: Record<string, string> = {
+  medical: "환자분들이 검색하는 글로 써드릴게요",
+  academy: "학부모·학생이 검색하는 글로 써드릴게요",
+  professional: "의뢰인이 검색하는 글로 써드릴게요",
+  general: "손님이 검색할 만한 글로 써드릴게요",
 };
 const VLABEL: Record<string, string> = Object.fromEntries(VERTS.map((x) => [x.v, x.label]));
 
 export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => void }) {
   const [screen, setScreen] = useState(1);
   const [vertical, setVertical] = useState("");
+  const [sub, setSub] = useState("");
+  const [customMode, setCustomMode] = useState(false);
+  const [customSub, setCustomSub] = useState("");
   const [blogName, setBlogName] = useState("");
   const [bizName, setBizName] = useState("");
   const [bizAddress, setBizAddress] = useState("");
@@ -39,7 +44,14 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
 
   function pick(v: string) {
     setVertical(v);
+    setSub("");
+    setCustomMode(false);
+    setCustomSub("");
     setScreen(2);
+  }
+  function pickSub(s: string) {
+    setSub(s);
+    setScreen(3);
   }
 
   // 화면4에서 '계속'·'나중에 할게요' 둘 다 저장(업체정보만 빈 값, vertical·이름은 항상 저장).
@@ -53,6 +65,7 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           vertical,
+          sub_category: sub,
           blog_name: blogName.trim(),
           biz_name: bizName.trim(),
           biz_address: bizAddress.trim(),
@@ -118,18 +131,31 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
           </div>
         )}
 
-        {/* 2) 확인 + 안심 */}
+        {/* 2) 세부 분류 — 누르면 바로 다음. 목록에 없으면 직접 입력 */}
         {screen === 2 && (
           <div>
-            <h2 className="font-pretendard text-2xl font-bold tracking-tight">{VLABEL[vertical]} 블로그,<br />이렇게 써드릴게요</h2>
-            <p className="mt-4 text-[15px] leading-relaxed text-neutral-600">{REASSURE[vertical]}</p>
-            <button onClick={() => setScreen(3)} className={`mt-8 ${primaryBtn}`}>계속</button>
+            <h2 className="font-pretendard text-2xl font-bold tracking-tight">{VLABEL[vertical]} 중<br />어떤 분야세요?</h2>
+            <p className="mt-2 text-sm text-neutral-500">분야에 딱 맞는 키워드로 써드릴게요.</p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {(VERTICAL_SUBS[vertical] ?? []).map((s) => (
+                <button key={s} onClick={() => pickSub(s)} className="rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm font-medium text-neutral-700 transition hover:border-[#3f91ff] hover:bg-[#3f91ff]/[0.03] active:scale-95">{s}</button>
+              ))}
+            </div>
+            {!customMode ? (
+              <button onClick={() => setCustomMode(true)} className="mt-4 text-sm font-medium text-[#3f91ff] transition hover:underline">＋ 직접 입력하기</button>
+            ) : (
+              <div className="mt-4">
+                <input value={customSub} onChange={(e) => setCustomSub(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && customSub.trim()) pickSub(customSub.trim()); }} placeholder="예: 통증의학과" maxLength={40} className={inputCls} autoFocus />
+                <button onClick={() => customSub.trim() && pickSub(customSub.trim())} disabled={!customSub.trim()} className={`mt-3 ${primaryBtn}`}>계속</button>
+              </div>
+            )}
           </div>
         )}
 
-        {/* 3) 블로그 이름 */}
+        {/* 3) 블로그 이름 (+ 안심 한 줄) */}
         {screen === 3 && (
           <div>
+            <p className="mb-4 rounded-xl bg-[#3f91ff]/[0.06] px-3.5 py-2.5 text-[13px] font-medium text-[#2f7fe6]">{sub} 블로그, {REASSURE_SHORT[vertical]}</p>
             <h2 className="font-pretendard text-2xl font-bold tracking-tight">블로그 이름을 정해볼까요?</h2>
             <p className="mt-2 text-sm text-neutral-500">나중에 바꿀 수 있어요.</p>
             <input value={blogName} onChange={(e) => setBlogName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") setScreen(4); }} placeholder="예: 우리동네치과 건강이야기" maxLength={60} className={`mt-5 ${inputCls}`} autoFocus />

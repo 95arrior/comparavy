@@ -70,6 +70,7 @@ export async function POST(request: Request) {
   const publish_mode = isPublishMode(body.publish_mode) ? body.publish_mode : "manual";
   // 업체 정보(선택) — 있는 것만 저장, 빈 값은 null
   const bizField = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "") || null;
+  const sub_category = (typeof body.sub_category === "string" ? body.sub_category : "").trim().slice(0, 40) || null;
   const biz_name = bizField(body.biz_name, 80);
   const biz_address = bizField(body.biz_address, 200);
   const biz_phone = bizField(body.biz_phone, 40);
@@ -85,7 +86,7 @@ export async function POST(request: Request) {
   const { data, error } = await supabase
     .from("blog_profiles")
     .upsert(
-      { user_id: user.id, topic, category, blog_name, tone, article_type, target, publish_mode, vertical, biz_name, biz_address, biz_phone, biz_hours, biz_hours_json, updated_at: new Date().toISOString() },
+      { user_id: user.id, topic, category, blog_name, tone, article_type, target, publish_mode, vertical, sub_category, biz_name, biz_address, biz_phone, biz_hours, biz_hours_json, updated_at: new Date().toISOString() },
       { onConflict: "user_id" },
     )
     .select("*")

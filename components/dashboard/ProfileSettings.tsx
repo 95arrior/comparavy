@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import HoursEditor from "./HoursEditor";
+import { VERTICAL_SUBS } from "@/lib/verticalSubs";
 import type { BlogProfile, WeeklyHours } from "@/lib/blogProfile";
 
 // 블로그 설정 편집 — 한 화면 설정형(스테퍼 X). 업종·이름·업체정보(영업시간)만 바로 고친다.
@@ -20,6 +21,7 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
     const v = profile.vertical;
     return v && ["medical", "academy", "professional", "general"].includes(v) ? v : "general";
   });
+  const [sub, setSub] = useState(profile.sub_category ?? "");
   const [blogName, setBlogName] = useState(profile.blog_name ?? "");
   const [bizName, setBizName] = useState(profile.biz_name ?? "");
   const [bizAddress, setBizAddress] = useState(profile.biz_address ?? "");
@@ -29,6 +31,14 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
   const [error, setError] = useState<string | null>(null);
 
   const inputCls = "w-full rounded-xl border border-neutral-200 px-4 py-3 text-sm outline-none transition focus:border-[#3f91ff] focus:ring-2 focus:ring-[#3f91ff]/20";
+
+  // 업종 바꾸면 세부가 새 업종 목록에 없을 때 초기화(직접입력 값 포함)
+  function chooseVertical(v: string) {
+    setVertical(v);
+    if (sub && !(VERTICAL_SUBS[v] ?? []).includes(sub)) setSub("");
+  }
+  const subOptions = VERTICAL_SUBS[vertical] ?? [];
+  const isCustomSub = sub.trim() !== "" && !subOptions.includes(sub);
 
   async function save() {
     if (saving) return;
@@ -40,6 +50,7 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           vertical,
+          sub_category: sub.trim(),
           blog_name: blogName.trim(),
           biz_name: bizName.trim(),
           biz_address: bizAddress.trim(),
@@ -73,13 +84,38 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
             <button
               key={x.v}
               type="button"
-              onClick={() => setVertical(x.v)}
+              onClick={() => chooseVertical(x.v)}
               className={`rounded-xl border px-3 py-3 text-sm font-medium transition ${vertical === x.v ? "border-[#3f91ff] bg-[#3f91ff]/5 text-[#2f7fe6]" : "border-neutral-200 text-neutral-600 hover:border-neutral-300"}`}
             >
               {x.label}
             </button>
           ))}
         </div>
+      </div>
+
+      {/* 세부 분류 */}
+      <div>
+        <label className="text-sm font-bold tracking-tight">세부 분류</label>
+        <p className="mt-1 text-xs text-neutral-500">분야에 맞는 키워드를 추천하는 데 써요.</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {subOptions.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setSub(s)}
+              className={`rounded-xl border px-3 py-2 text-sm font-medium transition ${sub === s ? "border-[#3f91ff] bg-[#3f91ff]/5 text-[#2f7fe6]" : "border-neutral-200 text-neutral-600 hover:border-neutral-300"}`}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+        <input
+          value={isCustomSub ? sub : ""}
+          onChange={(e) => setSub(e.target.value)}
+          placeholder="목록에 없으면 직접 입력 (예: 통증의학과)"
+          maxLength={40}
+          className={`mt-2 ${inputCls}`}
+        />
       </div>
 
       {/* 블로그 이름 */}
