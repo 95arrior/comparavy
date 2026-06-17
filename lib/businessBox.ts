@@ -139,7 +139,7 @@ export function buildBusinessBox(b: BusinessInfo): string {
 
   const itemsHtml = items.map((it, i) => itemBlock(it.label, it.entries, i === 0)).join("");
 
-  // 하단 CTA — 전화가 있을 때만. 알약 스타일은 <p>에 싣고(목차처럼 보존됨), <a>는 색/굵기만.
+  // 하단 CTA — 전화가 있을 때만. 알약 스타일은 <p>에 싣고, <a>는 색/굵기만.
   // display 불가라 <a>를 풀폭 블록으로 못 만들어, <p> 자체를 가운데정렬 알약으로 쓴다.
   const telHref = phone.replace(/[^0-9+]/g, "");
   const cta = phone
@@ -148,12 +148,16 @@ export function buildBusinessBox(b: BusinessInfo): string {
       `</p>`
     : "";
 
-  return (
-    `\n<div class="ateflo-bizcard" style="background:#FFFFFF;border:1px solid #E5E8EB;border-radius:18px;padding:24px;margin:32px 0">` +
+  const card =
+    `<div class="ateflo-bizcard" style="background:#FFFFFF;border:1px solid #E5E8EB;border-radius:18px;padding:24px;margin:32px 0">` +
     headingP +
     subP +
     itemsHtml +
     cta +
-    `</div>`
-  );
+    `</div>`;
+
+  // ★ Custom HTML 블록으로 감싼다. 일부 사이트가 본문을 Gutenberg 블록으로 정규화하면서
+  //   인라인 스타일 div를 <p><strong>으로 뭉개는데(실측 확인), wp:html 블록은 그 정규화를
+  //   건너뛰고 내부 HTML을 '원본 그대로' 렌더한다(사용자 정의 HTML 블록과 동일). 권한·테마 무관.
+  return `\n<!-- wp:html -->\n${card}\n<!-- /wp:html -->\n`;
 }
