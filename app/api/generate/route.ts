@@ -199,10 +199,13 @@ export async function POST(request: Request) {
           (u) => { void logUsage({ userId: user.id, model: u.model, kind: "generate", inputTokens: u.inputTokens, outputTokens: u.outputTokens }); },
         );
 
-        // 길이 검증: 목표의 40% 미만이면 명백히 잘린/실패한 글로 보고 막는다.
-        // (품질 우선·억지로 안 채움 지침과 충돌하지 않게 0.5→0.4로 완화 → 좋은 짧은 글 오반려·토큰 낭비 감소)
+        // 길이 검증: '실제 목표 분량(적정선 캡 3,500)'의 40% 미만이면 명백히 잘린/실패한 글로 보고 막는다.
+        // ★maxWords(플랜 상한 5000)가 아니라 프롬프트가 쓰는 캡(min(maxWords,3500))을 기준으로 한다.
+        //   안 그러면 '간결하게' 지침으로 적정 길이(2,500~3,500) 글을 써도 5000*0.4=2,000 floor에 걸려
+        //   좋은 글감이 '분량 부족'으로 오반려된다(길이 조절 a3fcf9b과의 충돌 해소).
+        const minChars = Math.round(Math.min(maxWords, 3500) * 0.4); // Pro 1,400 / Free 600
         const charCount = countKoreanChars(article.body_html);
-        if (charCount < maxWords * 0.4) {
+        if (charCount < minChars) {
           if (genId) await supabase.from("articles").delete().eq("id", genId); // 자리표시 행 정리
           send({
             type: "error",
