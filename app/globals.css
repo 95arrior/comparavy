@@ -244,6 +244,10 @@ html {
 @keyframes ateflo-dots { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
 .ateflo-dots { animation: ateflo-dots 1.3s ease-in-out infinite; letter-spacing: 1px; }
 
+/* 부드럽게 떠오르며 등장(이미지·업체 박스) — 뚝 끊김 없이 */
+@keyframes ateflo-soft-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+.ateflo-soft-in { animation: ateflo-soft-in 0.62s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
 /* 데모 카드 스크롤바 숨김(스크롤은 되되 바는 안 보이게) */
 .ateflo-demo-scroll { scrollbar-width: none; -ms-overflow-style: none; }
 .ateflo-demo-scroll::-webkit-scrollbar { display: none; width: 0; height: 0; }

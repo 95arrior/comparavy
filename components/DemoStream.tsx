@@ -31,6 +31,7 @@ export default function DemoStream() {
   const [showBox, setShowBox] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [status, setStatus] = useState<"thinking" | "writing" | "image" | "done">("thinking");
+  const [pad, setPad] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -63,7 +64,7 @@ export default function DemoStream() {
     }
     async function run() {
       while (!cancelled) {
-        setTyped([]); setImgStage("none"); setShowBox(false); setStatus("thinking");
+        setTyped([]); setImgStage("none"); setShowBox(false); setStatus("thinking"); setPad(false);
         if (scrollRef.current) scrollRef.current.scrollTop = 0;
         await sleep(900);
         for (let idx = 0; idx < BLOCKS.length && !cancelled; idx++) {
@@ -79,13 +80,15 @@ export default function DemoStream() {
           }
         }
         if (cancelled) return;
-        // ★ 글 다 쓰면 → 쓰윽 부드럽게 스크롤 올리며 업체 박스+지도 싹 붙음
-        await sleep(450);
-        setShowBox(true);
-        await sleep(170);             // 박스/지도 렌더 대기(렌더 전 스크롤하면 못 내려감)
-        if (cancelled) return;
         setStatus("done");
-        slowScroll();
+        // ★ 글 다 쓰면 → 하단 빈칸을 잠깐 보여주며 쓰윽 스크롤 → 그 자리에 박스+지도 부드럽게
+        await sleep(400);
+        setPad(true);                 // 하단 빈 공간
+        await sleep(60); slowScroll(); // 빈칸 보이게 스크롤
+        await sleep(750);             // 빈칸 잠깐 보여줌
+        if (cancelled) return;
+        setShowBox(true); setPad(false); // 빈칸 자리에 박스/지도 등장(soft-in)
+        await sleep(180); slowScroll(); // 박스/지도까지 부드럽게
         await sleep(4400);
       }
     }
@@ -137,7 +140,7 @@ export default function DemoStream() {
                 );
               // shown — 실제 이미지 삽입
               return (
-                <div key={idx} className="ateflo-box-in mt-3 overflow-hidden rounded-xl border border-neutral-100 bg-neutral-50">
+                <div key={idx} className="ateflo-soft-in mt-3 overflow-hidden rounded-xl border border-neutral-100 bg-neutral-50">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src="/demo-class.png" alt="영어 수업 일러스트" className="mx-auto block max-h-[170px] w-full object-cover object-center" />
                 </div>
@@ -151,9 +154,12 @@ export default function DemoStream() {
             return <p key={idx} className="mt-2 text-[13px] leading-relaxed text-neutral-600">{text}{isActive(idx) && cursor}</p>;
           })}
 
-          {/* 업체 정보 박스 — 글 끝 1.5초 뒤 자동 등장 */}
+          {/* 빈칸 — 글 다 쓰고 박스 나오기 전, 잠깐 보여줄 공간 */}
+          {pad && <div className="h-28" />}
+
+          {/* 업체 정보 박스 — 빈칸 보여준 뒤 부드럽게 등장 */}
           {showBox && (
-            <div className="ateflo-box-in mt-4 rounded-xl border border-[#E5E8EB] p-4">
+            <div className="ateflo-soft-in mt-4 rounded-xl border border-[#E5E8EB] p-4">
               <p className="text-[15px] font-bold text-neutral-900">에이트플로 영어학원</p>
               <p className="mt-0.5 text-xs text-neutral-400">영어학원 · 초등~중등</p>
               <div className="mt-3 space-y-1.5 text-[13px] text-neutral-700">
