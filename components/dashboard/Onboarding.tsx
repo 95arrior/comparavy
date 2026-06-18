@@ -3,6 +3,7 @@
 import { useState } from "react";
 import HoursEditor from "./HoursEditor";
 import { VERTICAL_SUBS } from "@/lib/verticalSubs";
+import { ACADEMY_AUDIENCES, AUDIENCE_ALL } from "@/lib/audience";
 import type { BlogProfile, WeeklyHours } from "@/lib/blogProfile";
 
 // 토스식 온보딩 — 한 화면에 하나씩, 진행 표시, 사람 말투. 업종(vertical)만 고르면 나머지는 백엔드가 채움(Stage 1).
@@ -35,7 +36,14 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
   const [bizAddress, setBizAddress] = useState("");
   const [bizPhone, setBizPhone] = useState("");
   const [bizStrength, setBizStrength] = useState("");
+  const [audience, setAudience] = useState<string[]>([]);
   const [hours, setHours] = useState<WeeklyHours>({});
+  // 대상 토글: '전체'는 단독 선택(다른 것 해제), 특정 대상 고르면 '전체' 해제.
+  const toggleAud = (v: string) =>
+    setAudience((prev) =>
+      v === AUDIENCE_ALL
+        ? (prev.includes(AUDIENCE_ALL) ? [] : [AUDIENCE_ALL])
+        : (() => { const n = prev.filter((x) => x !== AUDIENCE_ALL); return n.includes(v) ? n.filter((x) => x !== v) : [...n, v]; })());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedProfile, setSavedProfile] = useState<BlogProfile | null>(null);
@@ -72,6 +80,7 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
           biz_address: bizAddress.trim(),
           biz_phone: bizPhone.trim(),
           biz_strength: bizStrength.trim(),
+          audience,
           biz_hours_json: hours,
           publish_mode: "manual",
           // topic/tone/article_type 안 보냄 → 라우트가 vertical로 자동 설정(Stage 1)
@@ -170,6 +179,20 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
           <div>
             <h2 className="font-pretendard text-2xl font-bold tracking-tight">마지막이에요.<br />업체 정보 넣어둘까요?</h2>
             <p className="mt-2 text-sm text-neutral-500">글 맨 아래에 자동으로 들어가요. 지금 안 해도 돼요.</p>
+            {vertical === "academy" && (
+              <div className="mt-5">
+                <p className="text-sm font-medium text-neutral-700">누구를 주로 가르치세요? <span className="text-xs font-normal text-neutral-400">(여러 개 선택 가능)</span></p>
+                <p className="mt-1 text-xs text-neutral-500">고른 대상이 검색할 만한 글감만 추천해 드려요.</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {ACADEMY_AUDIENCES.map((a) => (
+                    <button key={a.value} type="button" onClick={() => toggleAud(a.value)}
+                      className={`rounded-full border px-3.5 py-1.5 text-sm transition ${audience.includes(a.value) ? "border-[#3f91ff] bg-[#3f91ff]/10 font-semibold text-[#3f91ff]" : "border-neutral-200 text-neutral-600 hover:border-neutral-300"}`}>
+                      {a.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <input value={bizName} onChange={(e) => setBizName(e.target.value)} placeholder="상호명 (예: 우리동네치과의원)" maxLength={80} className={`mt-4 ${inputCls}`} />
             <input value={bizAddress} onChange={(e) => setBizAddress(e.target.value)} placeholder="주소 (예: 서울 강남구 …)" maxLength={200} className={`mt-3 ${inputCls}`} />
             <input value={bizPhone} onChange={(e) => setBizPhone(e.target.value)} placeholder="전화번호 (예: 02-000-0000)" maxLength={40} className={`mt-3 ${inputCls}`} />

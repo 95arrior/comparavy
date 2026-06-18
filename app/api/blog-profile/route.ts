@@ -3,6 +3,7 @@ import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-serve
 import { isAdminEmail } from "@/lib/adminStats";
 import { isTone, isType, isPublishMode, isVertical, VERTICAL_DEFAULTS, VERTICAL_TOPIC, DAY_KEYS, type WeeklyHours, type DayHours } from "@/lib/blogProfile";
 import { isTopCategory } from "@/lib/categories";
+import { AUDIENCE_VALUES } from "@/lib/audience";
 
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 // 클라 입력을 그대로 믿지 않고 정규화: 알려진 요일 키만, 시간은 HH:MM, closed는 boolean.
@@ -77,6 +78,10 @@ export async function POST(request: Request) {
   const biz_hours = bizField(body.biz_hours, 120); // 레거시 자유입력(fallback)
   const biz_hours_json = sanitizeHours(body.biz_hours_json); // 요일별 구조화(우선)
   const biz_strength = bizField(body.biz_strength, 200); // 강점·특징(선택) — 글 마무리 업장 연결용
+  // 대상(다중) — 화이트리스트 값만, 최대 5개. 글감을 이 대상으로 거른다.
+  const audience = Array.isArray(body.audience)
+    ? Array.from(new Set(body.audience.filter((a: unknown): a is string => typeof a === "string" && AUDIENCE_VALUES.has(a)))).slice(0, 5)
+    : [];
   const target = (typeof body.target === "string" ? body.target : "").trim().slice(0, 80) || null;
   // 대분류 (없으면 topic을 대분류로 가정 — 레거시 호환)
   const category = (typeof body.category === "string" && isTopCategory(body.category)) ? body.category : (isTopCategory(topic) ? topic : null);
@@ -87,7 +92,7 @@ export async function POST(request: Request) {
   const { data, error } = await supabase
     .from("blog_profiles")
     .upsert(
-      { user_id: user.id, topic, category, blog_name, tone, article_type, target, publish_mode, vertical, sub_category, biz_name, biz_address, biz_phone, biz_hours, biz_hours_json, biz_strength, updated_at: new Date().toISOString() },
+      { user_id: user.id, topic, category, blog_name, tone, article_type, target, publish_mode, vertical, sub_category, biz_name, biz_address, biz_phone, biz_hours, biz_hours_json, biz_strength, audience, updated_at: new Date().toISOString() },
       { onConflict: "user_id" },
     )
     .select("*")

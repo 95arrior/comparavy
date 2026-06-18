@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
 import { keywordsToTitles } from "@/lib/topicTitles";
 import { normalizeKeyword } from "@/lib/diversity";
+import { audienceOf, AUDIENCE_ALL } from "@/lib/audience";
 
 // 사장의 blog_profile(vertical + sub_category)로 keyword_pool에서 글감 3개를 뽑는다.
 // Stage 2-B 분산: ① least-used 우선(times_assigned asc) ② 본인이 이미 쓴 키워드 제외 ③ 그 안 랜덤.
@@ -10,7 +11,7 @@ export const dynamic = "force-dynamic";
 const PICK = 3;
 const WINDOW = 150; // least-used 윈도우 크기 — 이 안에서 랜덤(반복 많으면 키우고, 마이너 자주 뜨면 줄임)
 
-interface PoolRow { keyword: string; monthly_searches: number | null; competition: string | null }
+interface PoolRow { keyword: string; monthly_searches: number | null; competition: string | null; audience: string | null }
 
 // 검색량 → 사장이 이해하는 쉬운 말(숫자 노출 X). 숫자 의미 모르는 초보용.
 function demandLabel(searches: number | null): string {
@@ -29,6 +30,32 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+// 고른 대상(specific)별로 골고루 번갈아 n개 뽑는다. 대상 마커 없는 '중립' 키워드는 모자랄 때 채움.
+// 대상이 0~1개면(또는 비활성) 그냥 랜덤.
+function pickBalanced(rows: PoolRow[], auds: string[], n: number): PoolRow[] {
+  const specific = auds.filter((a) => a !== AUDIENCE_ALL);
+  if (specific.length <= 1) return shuffle(rows).slice(0, n);
+  const buckets = new Map<string, PoolRow[]>(specific.map((a) => [a, []]));
+  const neutral: PoolRow[] = [];
+  for (const r of shuffle(rows)) {
+    const a = r.audience ?? audienceOf(r.keyword);
+    if (a && buckets.has(a)) buckets.get(a)!.push(r);
+    else neutral.push(r);
+  }
+  const out: PoolRow[] = [];
+  let progress = true;
+  while (out.length < n && progress) {
+    progress = false;
+    for (const a of specific) {
+      if (out.length >= n) break;
+      const b = buckets.get(a)!;
+      if (b.length) { out.push(b.shift()!); progress = true; }
+    }
+  }
+  for (const r of neutral) { if (out.length >= n) break; out.push(r); } // 모자라면 중립으로 채움
+  return out.slice(0, n);
+}
+
 export async function GET() {
   // 인증·프로필은 유저 클라이언트(RLS) — 본인 확인 + 본인 프로필만 읽음.
   const supabase = await createSupabaseServerClient();
@@ -37,13 +64,24 @@ export async function GET() {
 
   const { data: profile } = await supabase
     .from("blog_profiles")
-    .select("vertical, sub_category")
+    .select("vertical, sub_category, audience")
     .eq("user_id", user.id)
     .maybeSingle();
 
   const vertical = profile?.vertical;
   const sub = profile?.sub_category;
   if (!vertical) return NextResponse.json({ topics: [] }); // 온보딩 전
+
+  // 대상(audience) 필터 — 사장이 고른 대상만. 빈 배열이거나 '전체' 포함이면 필터 없음(현행 동작).
+  const audSel: string[] = Array.isArray(profile?.audience) ? (profile!.audience as string[]) : [];
+  const audActive = audSel.length > 0 && !audSel.includes(AUDIENCE_ALL);
+  // 풀에 분류값(audience)이 있으면 그걸 쓰고, 없으면(stage 1) 키워드 텍스트 휴리스틱으로 판정.
+  // 중립(어느 대상 마커도 없음)은 통과시킨다(과도 차단 방지). 선택한 대상에 속하지 않는 것만 제외.
+  const audMatch = (kw: string, poolAud: string | null): boolean => {
+    if (!audActive) return true;
+    const a = poolAud ?? audienceOf(kw);
+    return a === null || audSel.includes(a);
+  };
 
   // 본인이 이미 쓴 키워드(정규화 집합) — 제외용. articles는 owner RLS라 유저 클라로 본인 것만.
   const { data: mine } = await supabase.from("articles").select("keyword").eq("user_id", user.id);
@@ -56,7 +94,7 @@ export async function GET() {
   // least-used 우선 윈도우(times_assigned asc → 균등 분산). 본인이 쓴 건 제외 후 남은 것만.
   // 적정범위 = 월 500~5,000 (경쟁 과열·초저검색 회피). sub 없거나 부족하면 단계적으로 넓힌다.
   async function fetchPool(useSub: boolean, ranged: boolean): Promise<PoolRow[]> {
-    let q = pool.from("keyword_pool").select("keyword, monthly_searches, competition").eq("vertical", vertical);
+    let q = pool.from("keyword_pool").select("keyword, monthly_searches, competition, audience").eq("vertical", vertical);
     if (useSub && sub) q = q.eq("sub", sub);
     if (ranged) q = q.gte("monthly_searches", 500).lte("monthly_searches", 5000);
     const { data } = await q
@@ -64,12 +102,14 @@ export async function GET() {
       .order("monthly_searches", { ascending: false })
       .limit(WINDOW);
     const rows = (data ?? []) as PoolRow[];
-    return rows.filter((r) => !usedSet.has(normalizeKeyword(r.keyword))); // 본인 작성분 제외
+    // 본인 작성분 제외 + 고른 대상(audience)만 통과
+    return rows.filter((r) => !usedSet.has(normalizeKeyword(r.keyword)) && audMatch(r.keyword, r.audience));
   }
 
-  // 단계적 폴백: (sub+적정범위) → (sub+전체) → (vertical+적정범위) → (vertical+전체). 항상 3개 나오게.
+  // 단계적 폴백: (sub+적정범위) → (sub+전체) → (vertical+적정범위) → (vertical+전체).
+  // ★대상 선택 시: vertical 전체로 넓히지 않는다(엉뚱한 글감 누출 방지). sub 안에서만 + 대상 필터.
   const steps: [boolean, boolean][] = sub
-    ? [[true, true], [true, false], [false, true], [false, false]]
+    ? (audActive ? [[true, true], [true, false]] : [[true, true], [true, false], [false, true], [false, false]])
     : [[false, true], [false, false]];
   let rows: PoolRow[] = [];
   for (const [useSub, ranged] of steps) {
@@ -78,7 +118,8 @@ export async function GET() {
   }
   if (rows.length === 0) return NextResponse.json({ topics: [] });
 
-  const picked = shuffle(rows).slice(0, PICK);
+  // 여러 대상을 고르면 대상별로 골고루 번갈아 뽑는다(한 대상에 쏠리지 않게).
+  const picked = pickBalanced(rows, audActive ? audSel : [], PICK);
   const titles = await keywordsToTitles(picked.map((r) => r.keyword));
 
   const topics = picked.map((r, i) => ({

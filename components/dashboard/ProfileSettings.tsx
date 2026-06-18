@@ -3,6 +3,7 @@
 import { useState } from "react";
 import HoursEditor from "./HoursEditor";
 import { VERTICAL_SUBS } from "@/lib/verticalSubs";
+import { ACADEMY_AUDIENCES, AUDIENCE_ALL } from "@/lib/audience";
 import type { BlogProfile, WeeklyHours } from "@/lib/blogProfile";
 
 // 블로그 설정 편집 — 한 화면 설정형(스테퍼 X). 업종·이름·업체정보(영업시간)만 바로 고친다.
@@ -27,7 +28,13 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
   const [bizAddress, setBizAddress] = useState(profile.biz_address ?? "");
   const [bizPhone, setBizPhone] = useState(profile.biz_phone ?? "");
   const [bizStrength, setBizStrength] = useState(profile.biz_strength ?? "");
+  const [audience, setAudience] = useState<string[]>(profile.audience ?? []);
   const [hours, setHours] = useState<WeeklyHours>(profile.biz_hours_json ?? {});
+  const toggleAud = (v: string) =>
+    setAudience((prev) =>
+      v === AUDIENCE_ALL
+        ? (prev.includes(AUDIENCE_ALL) ? [] : [AUDIENCE_ALL])
+        : (() => { const n = prev.filter((x) => x !== AUDIENCE_ALL); return n.includes(v) ? n.filter((x) => x !== v) : [...n, v]; })());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,6 +64,7 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
           biz_address: bizAddress.trim(),
           biz_phone: bizPhone.trim(),
           biz_strength: bizStrength.trim(),
+          audience,
           biz_hours_json: hours,
           publish_mode: profile.publish_mode ?? "manual",
           // topic/tone/article_type 안 보냄 → 라우트가 vertical로 자동 설정(정규화)
@@ -125,6 +133,22 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
         <label className="text-sm font-bold tracking-tight">블로그 이름</label>
         <input value={blogName} onChange={(e) => setBlogName(e.target.value)} placeholder="예: 우리동네치과 건강이야기" maxLength={60} className={`mt-3 ${inputCls}`} />
       </div>
+
+      {/* 대상(누구를 가르치나) — academy만 */}
+      {vertical === "academy" && (
+        <div>
+          <label className="text-sm font-bold tracking-tight">누구를 주로 가르치세요? <span className="text-xs font-normal text-neutral-400">(여러 개 선택 가능)</span></label>
+          <p className="mt-1 text-xs text-neutral-500">고른 대상이 검색할 만한 글감만 추천해 드려요. ‘전체’면 모든 대상에서 뽑아요.</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {ACADEMY_AUDIENCES.map((a) => (
+              <button key={a.value} type="button" onClick={() => toggleAud(a.value)}
+                className={`rounded-full border px-3.5 py-1.5 text-sm transition ${audience.includes(a.value) ? "border-[#3f91ff] bg-[#3f91ff]/10 font-semibold text-[#3f91ff]" : "border-neutral-200 text-neutral-600 hover:border-neutral-300"}`}>
+                {a.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 업체 정보 */}
       <div>
