@@ -25,12 +25,18 @@ export default function Hero() {
         {/* 카피 */}
         <Reveal className="text-center lg:text-left">
           <p className="text-sm font-semibold tracking-tight text-[#1D75F7]">워드프레스 블로그 글쓰기</p>
-          <h1 className="font-pretendard mt-4 text-[2rem] font-bold leading-[1.16] tracking-tight sm:text-5xl lg:text-[3.3rem] lg:leading-[1.12]">
-            사장님은 키워드만,<br />글은 저희가 씁니다.
+          <h1
+            className="font-pretendard mt-3 whitespace-nowrap font-bold leading-[1.12] tracking-tight"
+            style={{ fontSize: "clamp(22px, 7.4vw, 56px)" }}
+          >
+            똑똑한 사장님들의 선택
           </h1>
           <p className="mx-auto mt-5 max-w-md text-[15px] leading-relaxed text-neutral-500 sm:text-lg lg:mx-0">
-            검색에 걸리도록 설계된 글을, 키워드 하나로.<br className="hidden sm:block" />
-            블로그에 쏟던 시간을 본업에 쓰세요.
+            버튼 몇 번이면, 손님 부르는 글이 뚝딱 나와요
+            <span className="ml-1 inline-flex align-middle">
+              <span className="ateflo-holo ateflo-twinkle text-[0.9em] leading-none">✦</span>
+              <span className="ateflo-holo ateflo-twinkle text-[0.7em] leading-none" style={{ animationDelay: "0.55s" }}>✦</span>
+            </span>
           </p>
 
           <div id="signup" className="mt-9 scroll-mt-24 lg:max-w-md">

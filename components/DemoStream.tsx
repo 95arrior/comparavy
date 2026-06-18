@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // 홈 데모: 키워드 → 검색되는 정보 글 → 자연스러운 가게 연결 → 업체 정보 박스(NAP+지도)까지
 // 한 번에 보여주는 '결정적 장면'. API 호출 0(정적 연출), 자동 루프. 예시 업체=에이트플로 영어학원(가상).
@@ -27,6 +27,7 @@ function MapPin() {
 export default function DemoStream() {
   const [n, setN] = useState(0);
   const [showBox, setShowBox] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const total = ARTICLE.reduce((s, b) => s + b.text.length, 0);
 
@@ -57,6 +58,12 @@ export default function DemoStream() {
     return () => { cancelled = true; clearTimeout(t); };
   }, [total]);
 
+  // 내용이 늘면 카드 안에서 바닥까지 따라 스크롤 — 글이 써지며 위로 올라가고, 박스·지도는 부드럽게 스크롤되어 등장.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: showBox ? "smooth" : "auto" });
+  }, [n, showBox]);
+
   let remaining = n;
   const rendered = ARTICLE.map((b, idx) => {
     const shown = Math.max(0, Math.min(b.text.length, remaining));
@@ -70,7 +77,7 @@ export default function DemoStream() {
     <div className="mx-auto w-full max-w-xl text-left">
       <div className="mb-2 text-xs font-medium text-neutral-400">키워드 “초등 영어” 하나로, 이렇게 써져요</div>
 
-      <div className="min-h-[460px] rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6">
+      <div ref={scrollRef} className="ateflo-demo-scroll h-[440px] overflow-y-auto rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6">
         {rendered.length === 0 && <p className="text-sm text-neutral-300">글을 구상하고 있어요…</p>}
 
         {rendered.map((b) => {
@@ -101,7 +108,7 @@ export default function DemoStream() {
 
             {/* 지도 핀 (NAP 좌표 시각화) */}
             <div
-              className="ateflo-rise relative mt-3 flex h-24 items-center justify-center overflow-hidden rounded-lg border border-neutral-100"
+              className="relative mt-3 flex h-24 items-center justify-center overflow-hidden rounded-lg border border-neutral-100"
               style={{
                 backgroundColor: "#f3f6fb",
                 backgroundImage:

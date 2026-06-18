@@ -228,6 +228,23 @@ html {
 }
 .ateflo-rise { animation: ateflo-rise 0.75s 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
+/* AI 반짝이 — 부드러운 홀로그램/오로라(블루 포인트, 7색 무지개 X)가 흐르듯 + 트윙클 */
+@keyframes ateflo-holo { 0% { background-position: 0% 50%; } 100% { background-position: 220% 50%; } }
+.ateflo-holo {
+  background-image: linear-gradient(100deg, #1D75F7, #6ea8ff, #b69cff, #5fd6e6, #1D75F7);
+  background-size: 220% 100%;
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+  animation: ateflo-holo 3.6s ease-in-out infinite;
+}
+@keyframes ateflo-twinkle { 0%, 100% { transform: scale(1); opacity: 0.85; } 50% { transform: scale(1.28); opacity: 1; } }
+.ateflo-twinkle { display: inline-block; animation: ateflo-twinkle 1.9s ease-in-out infinite; }
+
+/* 데모 카드 스크롤바(은은하게 보이게) */
+.ateflo-demo-scroll { scrollbar-width: thin; scrollbar-color: rgba(29, 117, 247, 0.35) transparent; }
+.ateflo-demo-scroll::-webkit-scrollbar { width: 6px; }
+.ateflo-demo-scroll::-webkit-scrollbar-thumb { background: rgba(29, 117, 247, 0.32); border-radius: 9999px; }
+
 /* ── AteFlo 로딩 화면 (AI/토스 감성) — 숨쉬는 로고 + 레이더 펄스 링 + 궤도 파티클 + 스윕 바 ── */
 @keyframes ateflo-load-mark {
   0%, 100% { transform: scale(1) translateY(0); }
