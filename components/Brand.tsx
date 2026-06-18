@@ -1,15 +1,16 @@
-import AteFloLogo from "./AteFloLogo";
 import { SITE_NAME } from "@/lib/site";
-import { Ubuntu } from "next/font/google";
 
-const ubuntu = Ubuntu({ subsets: ["latin"], weight: "700", display: "swap" });
-
-// 사이드바와 동일한 브랜드 표기 — 로고 + Ubuntu 볼드 "AteFlo". 기본은 무료(파랑) 로고.
-export default function Brand({ pro = false, size = 22 }: { pro?: boolean; size?: number }) {
+// 새 로고 — 마크+워드마크 일체형 가로 이미지. (기존 마크+Ubuntu 텍스트 조합 대체)
+// pro 프롭은 호환용으로만 남기고 무시한다(새 로고는 단일).
+export default function Brand({ size = 24 }: { pro?: boolean; size?: number }) {
   return (
-    <span className="flex items-center gap-1.5">
-      <AteFloLogo size={size} pro={pro} className="shrink-0" />
-      <span className={`${ubuntu.className} text-lg font-bold leading-none tracking-tight text-neutral-900`}>{SITE_NAME}</span>
-    </span>
+    /* eslint-disable-next-line @next/next/no-img-element */
+    <img
+      src="/ateflo-logo.png"
+      alt={SITE_NAME}
+      height={size}
+      className="block w-auto"
+      style={{ height: size, width: "auto" }}
+    />
   );
 }

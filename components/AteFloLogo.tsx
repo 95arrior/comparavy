@@ -1,8 +1,6 @@
-// AteFlo 로고 = 입(웨지)이 달린 원. 생성/로딩 중에 입을 벌렸다 씹었다(88%↔100%) 반복.
-// 무료: #3f91ff 단색 / 프로: 무지개색이 요동(hue 회전).
+// AteFlo 마크 — 새 로고(정적 이미지). 기존 무지개/씹는 애니메이션 제거.
+// pro·animated 프롭은 호환용으로만 남기고 무시한다(새 로고는 단일·정적).
 export default function AteFloLogo({
-  pro = false,
-  animated = true,
   size = 20,
   className = "",
 }: {
@@ -11,15 +9,15 @@ export default function AteFloLogo({
   size?: number;
   className?: string;
 }) {
-  const cls = [
-    "ateflo-logo",
-    animated && "ateflo-logo--anim",
-    animated && pro && "ateflo-logo--pro",
-    className,
-  ]
-    .filter(Boolean)
-    .join(" ");
   return (
-    <span className={cls} style={{ width: size, height: size }} role="img" aria-label="AteFlo" />
+    /* eslint-disable-next-line @next/next/no-img-element */
+    <img
+      src="/ateflo-mark.png"
+      alt="AteFlo"
+      width={size}
+      height={size}
+      className={className}
+      style={{ width: size, height: size, objectFit: "contain" }}
+    />
   );
 }
