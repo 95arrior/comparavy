@@ -32,7 +32,8 @@ export default function Hero() {
             똑똑한 사장님들의 선택
           </h1>
           <p className="mx-auto mt-5 max-w-md text-[15px] leading-relaxed text-neutral-500 sm:text-lg lg:mx-0">
-            버튼 몇 번이면, 손님 부르는 글이 뚝딱 나와요
+            24시간 일하는 직원이 필요하신가요?<br />
+            좋은 글로 사장님이 자는 사이, 블로그로 손님들을 모아봐요
             <span className="ml-1 inline-flex align-middle">
               <span className="ateflo-holo ateflo-twinkle text-[0.9em] leading-none">✦</span>
               <span className="ateflo-holo ateflo-twinkle text-[0.7em] leading-none" style={{ animationDelay: "0.55s" }}>✦</span>
