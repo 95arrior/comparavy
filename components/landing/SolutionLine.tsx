@@ -41,11 +41,11 @@ export default function SolutionLine() {
           </span>
         ))}
         <span
-          className={`ml-2 inline-flex translate-y-[0.06em] align-middle ${go ? "ateflo-domino" : "opacity-0"}`}
+          className={`ml-1 inline-flex align-middle ${go ? "ateflo-domino" : "opacity-0"}`}
           style={go ? { animationDelay: `${starDelay}s` } : undefined}
         >
-          <span className="ateflo-holo ateflo-twinkle text-[0.5em] leading-none">✦</span>
-          <span className="ateflo-holo ateflo-twinkle text-[0.38em] leading-none" style={{ animationDelay: "0.55s" }}>✦</span>
+          <span className="ateflo-holo ateflo-twinkle text-[0.9em] leading-none">✦</span>
+          <span className="ateflo-holo ateflo-twinkle text-[0.7em] leading-none" style={{ animationDelay: "0.55s" }}>✦</span>
         </span>
       </p>
       <p
