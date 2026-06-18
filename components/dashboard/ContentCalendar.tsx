@@ -127,14 +127,14 @@ export default function ContentCalendar({
 
       {/* 범례 */}
       <div className="mt-3 flex items-center gap-4 text-xs text-neutral-500">
-        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#3f91ff]" /> 예약됨 {scheduledCount > 0 && `(${scheduledCount})`}</span>
+        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#1D75F7]" /> 예약됨 {scheduledCount > 0 && `(${scheduledCount})`}</span>
         <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-500" /> 발행됨</span>
       </div>
 
       {/* 요일 헤더 */}
       <div className="mt-4 grid grid-cols-7 gap-px">
         {WEEKDAYS.map((w, i) => (
-          <div key={w} className={`pb-2 text-center text-xs font-medium ${i === 0 ? "text-rose-400" : i === 6 ? "text-[#3f91ff]" : "text-neutral-400"}`}>
+          <div key={w} className={`pb-2 text-center text-xs font-medium ${i === 0 ? "text-rose-400" : i === 6 ? "text-[#1D75F7]" : "text-neutral-400"}`}>
             {w}
           </div>
         ))}
@@ -158,7 +158,7 @@ export default function ContentCalendar({
                     title={a.title}
                     className={`block w-full truncate rounded px-1.5 py-1 text-left text-[11px] font-medium leading-tight transition ${
                       a.status === "future"
-                        ? "bg-[#3f91ff]/10 text-[#2f7fe6] hover:bg-[#3f91ff]/20"
+                        ? "bg-[#1D75F7]/10 text-[#2f7fe6] hover:bg-[#1D75F7]/20"
                         : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
                     }`}
                   >

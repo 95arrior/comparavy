@@ -2,7 +2,7 @@ import puppeteer from "puppeteer";
 import type { CardSlide } from "./cardNews";
 
 const INK = "#191F28";
-const BLUE = "#3f91ff";
+const BLUE = "#1D75F7";
 const ACCENT = "#ffd23a";
 
 

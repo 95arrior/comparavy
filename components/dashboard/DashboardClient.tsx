@@ -583,7 +583,7 @@ export default function DashboardClient(props: DashboardProps) {
         key={k}
         onClick={() => goTab(k)}
         className={`group relative flex h-9 items-center rounded-lg text-sm transition ${navOpen ? "w-full" : "w-9"} ${
-          active ? "bg-[#3f91ff]/10 font-semibold text-[#2f7fe6]" : "text-neutral-600 hover:bg-neutral-100"
+          active ? "bg-[#1D75F7]/10 font-semibold text-[#2f7fe6]" : "text-neutral-600 hover:bg-neutral-100"
         }`}
       >
         <span className="flex h-9 w-9 shrink-0 items-center justify-center">{icon}</span>
@@ -602,8 +602,8 @@ export default function DashboardClient(props: DashboardProps) {
   const doneCount = steps.filter((s) => s.done).length;
   const firstUndone = steps.findIndex((s) => !s.done);
   const nextStepBanner = !allDone && nextStep ? (
-    <div className="mb-6 rounded-2xl border border-[#3f91ff]/30 bg-[#3f91ff]/5 px-5 py-4">
-      <p className="text-xs font-bold tracking-tight text-[#3f91ff]">시작하기 · {doneCount}/{steps.length} 완료</p>
+    <div className="mb-6 rounded-2xl border border-[#1D75F7]/30 bg-[#1D75F7]/5 px-5 py-4">
+      <p className="text-xs font-bold tracking-tight text-[#1D75F7]">시작하기 · {doneCount}/{steps.length} 완료</p>
       {/* 3단계 진행 스트립 */}
       <div className="mt-3 grid grid-cols-3 gap-2">
         {steps.map((s, i) => {
@@ -615,7 +615,7 @@ export default function DashboardClient(props: DashboardProps) {
                 s.done
                   ? "border-emerald-200 bg-emerald-50/70"
                   : current
-                    ? "border-[#3f91ff] bg-white shadow-sm"
+                    ? "border-[#1D75F7] bg-white shadow-sm"
                     : "border-neutral-200 bg-white/50"
               }`}
             >
@@ -625,11 +625,11 @@ export default function DashboardClient(props: DashboardProps) {
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
                   </span>
                 ) : current ? (
-                  <span className="flex h-4 w-4 shrink-0 items-center justify-center"><span className="h-2 w-2 animate-pulse rounded-full bg-[#3f91ff]" /></span>
+                  <span className="flex h-4 w-4 shrink-0 items-center justify-center"><span className="h-2 w-2 animate-pulse rounded-full bg-[#1D75F7]" /></span>
                 ) : (
                   <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-neutral-300 text-[9px] font-bold text-neutral-400">{i + 1}</span>
                 )}
-                <span className={`text-[10px] font-bold ${s.done ? "text-emerald-600" : current ? "text-[#3f91ff]" : "text-neutral-400"}`}>{s.done ? "완료" : current ? "진행 중" : "대기"}</span>
+                <span className={`text-[10px] font-bold ${s.done ? "text-emerald-600" : current ? "text-[#1D75F7]" : "text-neutral-400"}`}>{s.done ? "완료" : current ? "진행 중" : "대기"}</span>
               </span>
               <span className={`truncate text-[12px] font-medium ${s.done ? "text-neutral-400 line-through decoration-neutral-300" : current ? "text-neutral-900" : "text-neutral-500"}`}>{s.label}</span>
             </div>
@@ -637,11 +637,11 @@ export default function DashboardClient(props: DashboardProps) {
         })}
       </div>
       {/* 다음 할 일 강조 */}
-      <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-[#3f91ff]/15 pt-3">
+      <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-[#1D75F7]/15 pt-3">
         <p className="min-w-0 flex-1 text-sm font-medium text-neutral-900">{nextStep.msg}</p>
         <button
           onClick={nextStep.go}
-          className="shrink-0 rounded-xl bg-[#3f91ff] px-5 py-2 text-sm font-medium text-white transition hover:opacity-90 active:scale-95"
+          className="shrink-0 rounded-xl bg-[#1D75F7] px-5 py-2 text-sm font-medium text-white transition hover:opacity-90 active:scale-95"
         >
           {nextStep.label}
         </button>
@@ -741,7 +741,7 @@ export default function DashboardClient(props: DashboardProps) {
         >
           <span className="relative flex h-9 w-9 shrink-0 items-center justify-center">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>
-            {unreadNews && <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#3f91ff] ring-2 ring-white" />}
+            {unreadNews && <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#1D75F7] ring-2 ring-white" />}
           </span>
           {navOpen && <span className="truncate pr-2">공지</span>}
           {!navOpen && (
@@ -868,7 +868,7 @@ export default function DashboardClient(props: DashboardProps) {
         {/* 프로필 로딩 중 — 온보딩/메인 깜빡임 방지 가드 (로딩 끝나기 전엔 둘 다 안 보여줌) */}
         {!page && !selected && !genParams && tab === "lab" && !profileLoaded && (
           <div className="flex min-h-[300px] items-center justify-center">
-            <span className="h-7 w-7 animate-spin rounded-full border-2 border-neutral-200 border-t-[#3f91ff]" />
+            <span className="h-7 w-7 animate-spin rounded-full border-2 border-neutral-200 border-t-[#1D75F7]" />
           </div>
         )}
 

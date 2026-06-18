@@ -798,7 +798,7 @@ export default function ArticleModal({
         )}
 
         {showUpsell && !canPublish && (
-          <div className="mt-4 rounded-2xl border border-[#3f91ff]/30 bg-[#3f91ff]/5 p-5">
+          <div className="mt-4 rounded-2xl border border-[#1D75F7]/30 bg-[#1D75F7]/5 p-5">
             <p className="text-base font-semibold tracking-tight">이 글, 워드프레스에 바로 올리고 싶으세요? 🚀</p>
             <p className="mt-1.5 text-sm leading-relaxed text-neutral-600">
               지금 쓴 이 글을 프로로 업그레이드하면 <b>버튼 하나로 워드프레스에 발행</b>돼요. 제목·메타·FAQ까지 자동으로요. 복붙은 이제 그만.

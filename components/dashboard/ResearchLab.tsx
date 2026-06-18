@@ -13,7 +13,7 @@ import type { BlogProfile } from "@/lib/blogProfile";
 import type { TrendPoint, TrendItem } from "@/lib/naverDatalab";
 import { upcomingEvents } from "@/lib/seasonalEvents";
 
-const BRAND = "#3f91ff";
+const BRAND = "#1D75F7";
 
 // Stage 3: 주목 키워드·트렌드(category_insights)는 숨김(삭제 아님 — 추후 '글감 추천'으로 대체). true로 바꾸면 다시 노출.
 const SHOW_INSIGHTS = false;
@@ -56,7 +56,7 @@ function Stat({ label, value, unit, accent, raw }: { label: string; value?: numb
         <p className="mt-1.5 text-3xl font-bold tracking-tight text-neutral-900">{raw}</p>
       ) : (
         <p className="mt-1.5 flex items-baseline gap-1">
-          <CountUp to={value ?? 0} className={`text-3xl font-bold tracking-tight ${accent ? "text-[#3f91ff]" : "text-neutral-900"}`} />
+          <CountUp to={value ?? 0} className={`text-3xl font-bold tracking-tight ${accent ? "text-[#1D75F7]" : "text-neutral-900"}`} />
           <span className="text-sm font-medium text-neutral-400">{unit}</span>
         </p>
       )}
@@ -151,14 +151,14 @@ export default function ResearchLab({
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
           {keywords.map((k) => (
             <motion.button key={k.keyword} variants={item} whileTap={{ scale: 0.97 }} onClick={() => onQueueKeyword(k.keyword)}
-              className="ateflo-surface flex items-center gap-3 rounded-2xl border border-neutral-100 bg-white p-4 text-left transition hover:border-[#3f91ff]/40">
+              className="ateflo-surface flex items-center gap-3 rounded-2xl border border-neutral-100 bg-white p-4 text-left transition hover:border-[#1D75F7]/40">
               <div className="min-w-0 flex-1">
                 <p className="flex items-center gap-1.5 truncate text-sm font-semibold text-neutral-900">
                   {k.keyword}{k.rising && <span title="검색 급상승">🔥</span>}
                 </p>
                 <p className="mt-0.5 text-xs text-neutral-400">월 {k.estimated ? "~" : ""}{k.mobile.toLocaleString("ko-KR")}회 (모바일) · 경쟁 {k.compIdx}</p>
               </div>
-              <span className="shrink-0 rounded-lg bg-[#3f91ff]/10 px-2.5 py-1 text-[11px] font-bold text-[#2f7fe6]">글감으로 →</span>
+              <span className="shrink-0 rounded-lg bg-[#1D75F7]/10 px-2.5 py-1 text-[11px] font-bold text-[#2f7fe6]">글감으로 →</span>
             </motion.button>
           ))}
         </div>
@@ -209,11 +209,11 @@ export default function ResearchLab({
           { k: "articles", t: "내 글", d: "발행된 글 보기", b: articleCount ? `${articleCount}` : undefined },
         ] as const).map((s) => (
           <motion.button key={s.k} variants={item} whileTap={{ scale: 0.975 }} onClick={() => onNavigate(s.k)}
-            className="ateflo-surface flex w-full items-center gap-4 rounded-2xl border border-neutral-100 bg-white p-4 text-left transition hover:border-[#3f91ff]/40 sm:flex-col sm:items-start sm:gap-3 sm:p-5">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#3f91ff]/10 text-[#2f7fe6]">{TOOL_ICONS[s.k]}</span>
+            className="ateflo-surface flex w-full items-center gap-4 rounded-2xl border border-neutral-100 bg-white p-4 text-left transition hover:border-[#1D75F7]/40 sm:flex-col sm:items-start sm:gap-3 sm:p-5">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#1D75F7]/10 text-[#2f7fe6]">{TOOL_ICONS[s.k]}</span>
             <span className="min-w-0 flex-1">
               <span className="flex items-center gap-2"><span className="text-sm font-semibold text-neutral-900">{s.t}</span>
-                {s.b && <span className="rounded-full bg-[#3f91ff]/10 px-2 py-0.5 text-[11px] font-bold text-[#2f7fe6]">{s.b}</span>}</span>
+                {s.b && <span className="rounded-full bg-[#1D75F7]/10 px-2 py-0.5 text-[11px] font-bold text-[#2f7fe6]">{s.b}</span>}</span>
               <span className="mt-0.5 block text-xs text-neutral-400">{s.d}</span>
             </span>
             <span className="shrink-0 text-neutral-300 sm:hidden"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg></span>

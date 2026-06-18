@@ -176,7 +176,7 @@ export default function HeroInput({ loggedIn, onStart, pro = false }: { loggedIn
             <div className="ateflo-dropdown rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
               <div className="flex items-center justify-between">
                 <p className="flex items-center gap-1.5 text-sm font-semibold">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3f91ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.7 10.7c.5.4.7.9.7 1.3v.5h6v-.5c0-.4.2-.9.7-1.3A6 6 0 0 0 12 3Z" /></svg>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1D75F7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.7 10.7c.5.4.7.9.7 1.3v.5h6v-.5c0-.4.2-.9.7-1.3A6 6 0 0 0 12 3Z" /></svg>
                   글감 추천
                 </p>
                 <button type="button" onClick={() => setIdeaOpen(false)} className="text-xs text-neutral-400 transition hover:text-neutral-700">닫기</button>

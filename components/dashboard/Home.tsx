@@ -73,14 +73,14 @@ export default function Home({
 
       {/* 미니 진척 — 3단계 완료 시 자동 숨김 */}
       {!allDone && (
-        <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl border border-[#3f91ff]/25 bg-[#3f91ff]/[0.04] px-4 py-2.5">
-          <span className="shrink-0 text-xs font-bold text-[#3f91ff]">시작하기 {doneCount}/3</span>
+        <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl border border-[#1D75F7]/25 bg-[#1D75F7]/[0.04] px-4 py-2.5">
+          <span className="shrink-0 text-xs font-bold text-[#1D75F7]">시작하기 {doneCount}/3</span>
           {steps.map((s, i) => (
             <button key={s.label} onClick={s.go} className="flex items-center gap-1 text-xs transition active:scale-95">
               {s.done ? (
                 <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500 text-white"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg></span>
               ) : (
-                <span className={`flex h-3.5 w-3.5 items-center justify-center rounded-full text-[9px] font-bold ${i === firstUndone ? "bg-[#3f91ff] text-white" : "border border-neutral-300 text-neutral-400"}`}>{i + 1}</span>
+                <span className={`flex h-3.5 w-3.5 items-center justify-center rounded-full text-[9px] font-bold ${i === firstUndone ? "bg-[#1D75F7] text-white" : "border border-neutral-300 text-neutral-400"}`}>{i + 1}</span>
               )}
               <span className={`font-medium ${s.done ? "text-neutral-400 line-through decoration-neutral-300" : i === firstUndone ? "text-neutral-800" : "text-neutral-400"}`}>{s.label}</span>
             </button>
@@ -100,7 +100,7 @@ export default function Home({
           <button
             onClick={loadTopics}
             disabled={topicsLoading}
-            className="text-xs font-medium text-[#3f91ff] transition hover:underline disabled:opacity-40"
+            className="text-xs font-medium text-[#1D75F7] transition hover:underline disabled:opacity-40"
           >
             다른 주제 보기
           </button>
@@ -122,7 +122,7 @@ export default function Home({
                 </div>
                 <button
                   onClick={() => onWriteKeyword(t.keyword, t.title)}
-                  className="shrink-0 rounded-lg bg-[#3f91ff]/10 px-3 py-2 text-xs font-semibold text-[#3f91ff] transition hover:bg-[#3f91ff]/15 active:scale-95"
+                  className="shrink-0 rounded-lg bg-[#1D75F7]/10 px-3 py-2 text-xs font-semibold text-[#1D75F7] transition hover:bg-[#1D75F7]/15 active:scale-95"
                 >
                   이걸로 쓰기
                 </button>
@@ -148,7 +148,7 @@ export default function Home({
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-base font-semibold tracking-tight text-neutral-900">내 글</h2>
           {visible.length > 5 && (
-            <button onClick={onAllArticles} className="text-xs font-medium text-[#3f91ff] transition hover:underline">전체 보기 →</button>
+            <button onClick={onAllArticles} className="text-xs font-medium text-[#1D75F7] transition hover:underline">전체 보기 →</button>
           )}
         </div>
         {hasArticles ? (

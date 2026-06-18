@@ -3,7 +3,7 @@ import PricingCards from "@/components/PricingCards";
 import CountUp from "@/components/CountUp";
 import type { PlanKey } from "@/lib/plans";
 
-const BRAND = "#3f91ff";
+const BRAND = "#1D75F7";
 
 // 로고 마크(파비콘과 동일한 입 벌린 원) — 작게 써도 안 깨지는 인라인 SVG
 function LogoMark({ size = 16 }: { size?: number }) {

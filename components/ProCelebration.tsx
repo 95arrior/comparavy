@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 
-const COLORS = ["#3f91ff", "#ffd23a", "#ff4d6d", "#2fd07a", "#b06bff"];
+const COLORS = ["#1D75F7", "#ffd23a", "#ff4d6d", "#2fd07a", "#b06bff"];
 
 export default function ProCelebration() {
   // 폭죽 조각 — 무지개 로고가 터지며 등장하는 타이밍(약 0.8s)에 맞춰 발사

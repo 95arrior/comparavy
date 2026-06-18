@@ -43,7 +43,7 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const inputCls = "w-full rounded-xl border border-neutral-200 px-4 py-3 text-sm outline-none transition focus:border-[#3f91ff] focus:ring-2 focus:ring-[#3f91ff]/20";
+  const inputCls = "w-full rounded-xl border border-neutral-200 px-4 py-3 text-sm outline-none transition focus:border-[#1D75F7] focus:ring-2 focus:ring-[#1D75F7]/20";
 
   // 업종 바꾸면 세부가 새 업종 목록에 없을 때 초기화(직접입력 값 포함)
   function chooseVertical(v: string) {
@@ -103,7 +103,7 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
               key={x.v}
               type="button"
               onClick={() => chooseVertical(x.v)}
-              className={`rounded-xl border px-3 py-3 text-sm font-medium transition ${vertical === x.v ? "border-[#3f91ff] bg-[#3f91ff]/5 text-[#2f7fe6]" : "border-neutral-200 text-neutral-600 hover:border-neutral-300"}`}
+              className={`rounded-xl border px-3 py-3 text-sm font-medium transition ${vertical === x.v ? "border-[#1D75F7] bg-[#1D75F7]/5 text-[#2f7fe6]" : "border-neutral-200 text-neutral-600 hover:border-neutral-300"}`}
             >
               {x.label}
             </button>
@@ -121,7 +121,7 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
               key={s}
               type="button"
               onClick={() => setSub(s)}
-              className={`rounded-xl border px-3 py-2 text-sm font-medium transition ${sub === s ? "border-[#3f91ff] bg-[#3f91ff]/5 text-[#2f7fe6]" : "border-neutral-200 text-neutral-600 hover:border-neutral-300"}`}
+              className={`rounded-xl border px-3 py-2 text-sm font-medium transition ${sub === s ? "border-[#1D75F7] bg-[#1D75F7]/5 text-[#2f7fe6]" : "border-neutral-200 text-neutral-600 hover:border-neutral-300"}`}
             >
               {s}
             </button>
@@ -150,7 +150,7 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
           <div className="mt-2 flex flex-wrap gap-2">
             {ACADEMY_AUDIENCES.map((a) => (
               <button key={a.value} type="button" onClick={() => toggleAud(a.value)}
-                className={`rounded-full border px-3.5 py-1.5 text-sm transition ${audience.includes(a.value) ? "border-[#3f91ff] bg-[#3f91ff]/10 font-semibold text-[#3f91ff]" : "border-neutral-200 text-neutral-600 hover:border-neutral-300"}`}>
+                className={`rounded-full border px-3.5 py-1.5 text-sm transition ${audience.includes(a.value) ? "border-[#1D75F7] bg-[#1D75F7]/10 font-semibold text-[#1D75F7]" : "border-neutral-200 text-neutral-600 hover:border-neutral-300"}`}>
                 {a.label}
               </button>
             ))}
@@ -172,7 +172,7 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
             inputCls={inputCls}
           />
         </div>
-        <input value={bizPhone} onChange={(e) => setBizPhone(e.target.value)} onBlur={() => setBizPhone(formatKoreanPhone(bizPhone))} inputMode="numeric" placeholder="01012345678" maxLength={40} className={`mt-2 ${inputCls}`} />
+        <input value={bizPhone} onChange={(e) => setBizPhone(e.target.value)} onBlur={() => setBizPhone(formatKoreanPhone(bizPhone))} inputMode="numeric" placeholder="‘-’ 없이 입력해주세요" maxLength={40} className={`mt-2 ${inputCls}`} />
         <p className="mt-1 text-xs text-neutral-500">숫자만 입력하면 자동으로 정리돼요.</p>
         <input value={bizStrength} onChange={(e) => setBizStrength(e.target.value)} placeholder="우리 강점·특징 (예: 입시 영어 전문, 원장 직강, 주말 진료)" maxLength={200} className={`mt-2 ${inputCls}`} />
         <p className="mt-1 text-xs leading-relaxed text-neutral-500">과장 표현(1위·최고·100%·보장 등)은 광고법 위반이라 피해주세요. 실제 특징을 사실대로 적으면 글 마무리에 자연스럽게 녹여 드려요.</p>
@@ -182,7 +182,7 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
 
       {error && <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{error}</div>}
 
-      <button onClick={save} disabled={saving} className="w-full rounded-xl bg-[#3f91ff] py-3 text-sm font-semibold text-white transition hover:opacity-90 active:scale-[0.99] disabled:opacity-50">
+      <button onClick={save} disabled={saving} className="w-full rounded-xl bg-[#1D75F7] py-3 text-sm font-semibold text-white transition hover:opacity-90 active:scale-[0.99] disabled:opacity-50">
         {saving ? "저장 중…" : "저장"}
       </button>
     </div>

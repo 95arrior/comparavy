@@ -3,7 +3,7 @@
 import Reveal from "@/components/Reveal";
 import { ANNOUNCEMENTS } from "@/lib/announcements";
 
-const BRAND = "#3f91ff";
+const BRAND = "#1D75F7";
 // 페이지 슬라이드(약 0.35s)가 끝난 뒤 박스가 올라오도록 등장 지연
 const BASE_DELAY = 420;
 

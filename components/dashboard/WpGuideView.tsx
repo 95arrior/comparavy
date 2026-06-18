@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 
-const BRAND = "#3f91ff";
+const BRAND = "#1D75F7";
 const STORAGE_KEY = "ateflo_wp_guide_progress";
 export const WP_GUIDE_STEP_COUNT = 5;
 

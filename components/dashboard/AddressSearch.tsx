@@ -105,12 +105,12 @@ export default function AddressSearch({
       {/* 주소 표시 + 검색 토글 */}
       <button type="button" onClick={() => setOpen((v) => !v)} className={`${inputCls} flex items-center justify-between text-left`}>
         {address ? <span className="text-neutral-900">{address}</span> : <span className="text-neutral-400">주소 검색 (눌러서 도로명으로 찾기)</span>}
-        <span className="ml-2 shrink-0 text-sm font-medium text-[#3f91ff]">{open ? "닫기" : address ? "변경" : "검색"}</span>
+        <span className="ml-2 shrink-0 text-sm font-medium text-[#1D75F7]">{open ? "닫기" : address ? "변경" : "검색"}</span>
       </button>
 
       {/* 인라인 검색 영역 (펼침) */}
       {open && (
-        <div className="overflow-hidden rounded-xl border border-neutral-200">
+        <div className="ateflo-reveal overflow-hidden rounded-xl border border-neutral-200">
           <div ref={boxRef} style={{ width: "100%", height: 420 }} />
         </div>
       )}

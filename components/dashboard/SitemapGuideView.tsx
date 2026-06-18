@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 
-const BRAND = "#3f91ff";
+const BRAND = "#1D75F7";
 const STORAGE_KEY = "ateflo_sitemap_guide_progress";
 
 type Step = { title: string; lines: string[]; tip?: string };

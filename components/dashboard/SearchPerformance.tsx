@@ -15,7 +15,7 @@ const PERIODS = [
   { label: "90일", days: 90 },
   { label: "1년", days: 365 },
 ];
-const ACCENT = "#3f91ff";
+const ACCENT = "#1D75F7";
 
 function fmtDate(v: string): string {
   const [, m, d] = String(v).split("-");
@@ -100,7 +100,7 @@ export default function SearchPerformance({ onGoConnect }: { onGoConnect?: () =>
         {onGoConnect && (
           <button
             onClick={onGoConnect}
-            className="mt-3 rounded-xl bg-[#3f91ff] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 active:scale-95"
+            className="mt-3 rounded-xl bg-[#1D75F7] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 active:scale-95"
           >
             워드프레스 탭에서 연결하기 →
           </button>

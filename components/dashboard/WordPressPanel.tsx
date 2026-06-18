@@ -101,7 +101,7 @@ export default function WordPressPanel({
             onClick={onOpenSitemapGuide}
             className="flex w-full items-center gap-3 rounded-2xl border border-neutral-100 bg-white p-5 text-left shadow-sm transition active:scale-[0.99] hover:border-neutral-300"
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#3f91ff]/10 text-[#3f91ff]">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1D75F7]/10 text-[#1D75F7]">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7" /><path d="M21 21l-3.5-3.5M8 11h6M11 8v6" /></svg>
             </span>
             <span className="min-w-0 flex-1">
@@ -129,7 +129,7 @@ export default function WordPressPanel({
         <button
           type="button"
           onClick={onOpenGuide}
-          className="mt-5 flex w-full items-center justify-between gap-3 rounded-xl border border-[#3f91ff]/30 bg-[#3f91ff]/5 px-4 py-3.5 text-left transition hover:bg-[#3f91ff]/10"
+          className="mt-5 flex w-full items-center justify-between gap-3 rounded-xl border border-[#1D75F7]/30 bg-[#1D75F7]/5 px-4 py-3.5 text-left transition hover:bg-[#1D75F7]/10"
         >
           <span>
             <span className="block text-sm font-medium text-neutral-900">
@@ -139,7 +139,7 @@ export default function WordPressPanel({
               {guideInProgress ? `시작 가이드 ${guideDone}/${guideTotal}단계 완료` : "처음이어도 5분이면 끝, 따라하기 가이드"}
             </span>
           </span>
-          <span className="shrink-0 text-lg" style={{ color: "#3f91ff" }}>→</span>
+          <span className="shrink-0 text-lg" style={{ color: "#1D75F7" }}>→</span>
         </button>
       )}
 

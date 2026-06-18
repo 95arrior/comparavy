@@ -50,7 +50,7 @@ function MockCreateBlog() {
         <span className="min-w-0 flex-1 truncate text-sm text-neutral-700">우리집 댕댕이 일지</span>
       </div>
       <span className="mock-press mt-2.5 block rounded-xl py-2.5 text-center text-sm font-semibold text-white" style={{ background: BRAND }}>블로그 만들기</span>
-      <p className="mt-auto pt-3 text-center text-xs font-medium text-[#3f91ff]">이름만 정하면, 블로그가 생겨요</p>
+      <p className="mt-auto pt-3 text-center text-xs font-medium text-[#1D75F7]">이름만 정하면, 블로그가 생겨요</p>
     </div>
   );
 }
@@ -69,7 +69,7 @@ function MockGenerate() {
         <Bar w="88%" delay={0.65} />
         <Bar w="60%" delay={0.9} />
       </div>
-      <p className="mt-auto pt-4 text-center text-xs font-medium text-[#3f91ff]">키워드 하나로, 글이 써져요</p>
+      <p className="mt-auto pt-4 text-center text-xs font-medium text-[#1D75F7]">키워드 하나로, 글이 써져요</p>
     </div>
   );
 }
@@ -97,7 +97,7 @@ function MockEdit() {
       <div className="mock-reveal-img mt-3 flex h-14 items-center justify-center rounded-lg bg-neutral-100 text-neutral-300">
         <ImgIcon s={26} />
       </div>
-      <p className="mt-auto pt-4 text-center text-xs font-medium text-[#3f91ff]">이미지 넣고 직접 손질해요</p>
+      <p className="mt-auto pt-4 text-center text-xs font-medium text-[#1D75F7]">이미지 넣고 직접 손질해요</p>
     </div>
   );
 }
@@ -116,7 +116,7 @@ function MockPublish() {
       </div>
       {/* 아래: 발행 버튼(눌리는 애니) */}
       <span className="mock-press mt-3 block rounded-xl py-2.5 text-center text-sm font-semibold text-white" style={{ background: BRAND }}>워드프레스에 발행</span>
-      <p className="mt-auto pt-4 text-center text-xs font-medium text-[#3f91ff]">버튼 하나로 발행돼요</p>
+      <p className="mt-auto pt-4 text-center text-xs font-medium text-[#1D75F7]">버튼 하나로 발행돼요</p>
     </div>
   );
 }
@@ -134,7 +134,7 @@ function MockArticles() {
         <div className="flex items-center justify-between gap-2 rounded-xl border border-neutral-100 px-3 py-2.5">
           <span className="min-w-0 flex-1 truncate text-xs text-neutral-700">산책 거부하는 댕댕이 설득법</span>
           <span className="relative inline-flex h-[18px] w-[44px] shrink-0 items-center justify-center">
-            <span className="mock-chip-sched absolute inset-0 flex items-center justify-center rounded-md bg-[#3f91ff]/10 text-[10px] font-medium text-[#2f7fe6]">예약됨</span>
+            <span className="mock-chip-sched absolute inset-0 flex items-center justify-center rounded-md bg-[#1D75F7]/10 text-[10px] font-medium text-[#2f7fe6]">예약됨</span>
             <span className="mock-chip-pub absolute inset-0 flex items-center justify-center rounded-md bg-emerald-600 text-[10px] font-medium text-white">발행됨</span>
           </span>
         </div>
@@ -143,7 +143,7 @@ function MockArticles() {
           <span className="shrink-0 rounded-md bg-neutral-100 px-2 py-0.5 text-[10px] font-medium text-neutral-500">초안</span>
         </div>
       </div>
-      <p className="mt-auto pt-4 text-center text-xs font-medium text-[#3f91ff]">예약한 글이 시간 되면 알아서 발행돼요</p>
+      <p className="mt-auto pt-4 text-center text-xs font-medium text-[#1D75F7]">예약한 글이 시간 되면 알아서 발행돼요</p>
     </div>
   );
 }

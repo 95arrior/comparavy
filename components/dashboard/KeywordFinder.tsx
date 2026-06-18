@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { KeywordResult, KeywordStatus } from "./types";
 
-const BRAND = "#3f91ff";
+const BRAND = "#1D75F7";
 
 // 검색은 단일 POST(네이버→AI→재검증)라 단계 이벤트가 없어, 로딩 동안 안내 메시지를 순환시킨다(멈춘 듯 안 보이게).
 const STAGES = ["네이버 연관어 분석 중…", "AI로 검색 의도 재구성 중…", "황금 키워드 선별 중…"];
@@ -86,7 +86,7 @@ export default function KeywordFinder({
     <div className="mx-auto max-w-2xl pb-24">
       {/* 온보딩 직후 환영 배너 */}
       {welcomeTopic && (
-        <div className="mb-6 flex items-center gap-3 rounded-2xl border border-[#3f91ff]/30 bg-[#3f91ff]/5 px-5 py-4">
+        <div className="mb-6 flex items-center gap-3 rounded-2xl border border-[#1D75F7]/30 bg-[#1D75F7]/5 px-5 py-4">
           <span className="text-lg">🎉</span>
           <p className="min-w-0 flex-1 text-sm font-medium text-neutral-800">
             <b className="text-[#2f7fe6]">{welcomeTopic}</b> 연구소가 만들어졌어요! 황금 키워드를 찾아볼까요?
@@ -99,7 +99,7 @@ export default function KeywordFinder({
 
       <div className="text-center">
         {blogName && (
-          <p className="mb-1 text-xs font-semibold tracking-tight text-[#3f91ff]">📓 {blogName} 연구소</p>
+          <p className="mb-1 text-xs font-semibold tracking-tight text-[#1D75F7]">📓 {blogName} 연구소</p>
         )}
         <h1 className="font-pretendard text-2xl font-bold tracking-tight sm:text-3xl">키워드 발굴</h1>
         <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-neutral-500">
@@ -117,7 +117,7 @@ export default function KeywordFinder({
           placeholder="주제 키워드 (예: 강아지, 재테크, 캠핑)"
           maxLength={60}
           disabled={loading}
-          className="min-w-0 flex-1 rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-neutral-400 focus:border-[#3f91ff] focus:ring-2 focus:ring-[#3f91ff]/20 disabled:opacity-60"
+          className="min-w-0 flex-1 rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-neutral-400 focus:border-[#1D75F7] focus:ring-2 focus:ring-[#1D75F7]/20 disabled:opacity-60"
         />
         <button
           onClick={() => onSearch(topic)}
@@ -132,7 +132,7 @@ export default function KeywordFinder({
       {/* 로딩 — 단계 메시지 순환 + 취소 */}
       {loading && (
         <div className="mt-10 flex flex-col items-center gap-3 text-center">
-          <span className="h-6 w-6 animate-spin rounded-full border-2 border-[#3f91ff]/30 border-t-[#3f91ff]" />
+          <span className="h-6 w-6 animate-spin rounded-full border-2 border-[#1D75F7]/30 border-t-[#1D75F7]" />
           <p className="text-sm font-medium text-neutral-600">{STAGES[stage]}</p>
           <p className="text-xs text-neutral-400">몇 초 걸려요. 다른 탭으로 이동해도 계속 진행돼요.</p>
           <button onClick={onCancel} className="mt-1 rounded-lg px-3 py-1.5 text-xs font-medium text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-700">취소</button>
@@ -172,9 +172,9 @@ export default function KeywordFinder({
                 <li key={k.keyword}>
                   <button
                     onClick={() => toggle(k.keyword)}
-                    className={`flex w-full items-center gap-3 px-4 py-3.5 text-left transition ${on ? "bg-[#3f91ff]/5" : "hover:bg-neutral-50"}`}
+                    className={`flex w-full items-center gap-3 px-4 py-3.5 text-left transition ${on ? "bg-[#1D75F7]/5" : "hover:bg-neutral-50"}`}
                   >
-                    <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition ${on ? "border-[#3f91ff] bg-[#3f91ff] text-white" : "border-neutral-300 text-transparent"}`}>
+                    <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition ${on ? "border-[#1D75F7] bg-[#1D75F7] text-white" : "border-neutral-300 text-transparent"}`}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
                     </span>
                     <div className="min-w-0 flex-1">

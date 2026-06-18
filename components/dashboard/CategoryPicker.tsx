@@ -55,10 +55,10 @@ export default function CategoryPicker({
           }}
           placeholder="카테고리 검색 (예: 재테크, 주식)"
           maxLength={30}
-          className="w-full rounded-xl border border-neutral-200 px-4 py-3.5 pr-10 text-base outline-none transition focus:border-[#3f91ff] focus:ring-2 focus:ring-[#3f91ff]/20"
+          className="w-full rounded-xl border border-neutral-200 px-4 py-3.5 pr-10 text-base outline-none transition focus:border-[#1D75F7] focus:ring-2 focus:ring-[#1D75F7]/20"
         />
         {confirmed && (
-          <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[#3f91ff]">
+          <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[#1D75F7]">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
           </span>
         )}
@@ -77,7 +77,7 @@ export default function CategoryPicker({
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => pick(s)}
                       onMouseEnter={() => setHighlight(i)}
-                      className={`flex w-full items-center px-4 py-2.5 text-left text-sm transition ${i === highlight ? "bg-[#3f91ff]/5 text-[#2f7fe6]" : "text-neutral-700 hover:bg-neutral-50"}`}
+                      className={`flex w-full items-center px-4 py-2.5 text-left text-sm transition ${i === highlight ? "bg-[#1D75F7]/5 text-[#2f7fe6]" : "text-neutral-700 hover:bg-neutral-50"}`}
                     >
                       {isAll ? (
                         <span className="font-semibold">{s.category} <span className="font-normal text-neutral-400">전체</span></span>

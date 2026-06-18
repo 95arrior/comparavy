@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { PLANS, formatKRW, PLAN_FEATURES, type PlanKey } from "@/lib/plans";
 
-const BRAND = "#3f91ff";
+const BRAND = "#1D75F7";
 
 function Features({ plan }: { plan: PlanKey }) {
   return (

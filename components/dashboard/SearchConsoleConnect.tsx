@@ -80,7 +80,7 @@ export default function SearchConsoleConnect() {
   return (
     <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-6 sm:p-8">
       <div className="flex items-center gap-2">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#3f91ff]/10 text-[#3f91ff]">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#1D75F7]/10 text-[#1D75F7]">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7" /><path d="M21 21l-3.5-3.5" /></svg>
         </span>
         <div>
@@ -95,7 +95,7 @@ export default function SearchConsoleConnect() {
       {!status.connected ? (
         <a
           href="/api/searchconsole/connect"
-          className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#3f91ff] px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90 active:scale-95"
+          className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#1D75F7] px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90 active:scale-95"
         >
           구글 계정으로 연결하기
         </a>
@@ -118,7 +118,7 @@ export default function SearchConsoleConnect() {
                 <select
                   value={selected}
                   onChange={(e) => setSelected(e.target.value)}
-                  className="min-w-0 flex-1 rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#3f91ff] focus:ring-2 focus:ring-[#3f91ff]/20"
+                  className="min-w-0 flex-1 rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#1D75F7] focus:ring-2 focus:ring-[#1D75F7]/20"
                 >
                   <option value="">사이트를 선택하세요</option>
                   {sites.map((s) => (
@@ -128,7 +128,7 @@ export default function SearchConsoleConnect() {
                 <button
                   onClick={saveSite}
                   disabled={!selected || busy || selected === status.selectedSite}
-                  className="shrink-0 rounded-xl bg-[#3f91ff] px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-40"
+                  className="shrink-0 rounded-xl bg-[#1D75F7] px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-40"
                 >
                   {selected === status.selectedSite ? "저장됨" : busy ? "저장 중…" : "저장"}
                 </button>

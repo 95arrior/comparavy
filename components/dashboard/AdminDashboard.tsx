@@ -6,7 +6,7 @@ import type { AdminStats } from "@/lib/adminStats";
 import Segmented from "./Segmented";
 import { slotHours, clampGap } from "@/lib/socialSchedule";
 
-const BRAND = "#3f91ff";
+const BRAND = "#1D75F7";
 const STATUS_KO: Record<string, string> = { draft: "초안", published: "발행됨", future: "예약됨" };
 const KIND_KO: Record<string, string> = {
   generate: "글 생성",
@@ -42,7 +42,7 @@ function Section({ title, desc, children }: { title: string; desc?: string; chil
 
 function Stat({ label, value, accent = false, hint }: { label: string; value: string; accent?: boolean; hint?: string }) {
   return (
-    <div className={`min-w-0 rounded-2xl border p-4 sm:p-5 ${accent ? "border-[#3f91ff]/30 bg-[#3f91ff]/5" : "border-neutral-200 bg-white"}`}>
+    <div className={`min-w-0 rounded-2xl border p-4 sm:p-5 ${accent ? "border-[#1D75F7]/30 bg-[#1D75F7]/5" : "border-neutral-200 bg-white"}`}>
       <p className="truncate text-xs font-medium text-neutral-400">{label}</p>
       <p className="mt-1 truncate text-2xl font-semibold tracking-tight sm:text-[28px]" style={accent ? { color: BRAND } : undefined}>{value}</p>
       {hint && <p className="mt-1 truncate text-[11px] text-neutral-400">{hint}</p>}
@@ -82,7 +82,7 @@ function StatButton({ label, value, hint, accent = false, active = false, onClic
   return (
     <button
       onClick={onClick}
-      className={`min-w-0 rounded-2xl border p-4 text-left transition hover:border-neutral-400 sm:p-5 ${active ? "border-neutral-900 ring-1 ring-neutral-900" : accent ? "border-[#3f91ff]/30 bg-[#3f91ff]/5" : "border-neutral-200 bg-white"}`}
+      className={`min-w-0 rounded-2xl border p-4 text-left transition hover:border-neutral-400 sm:p-5 ${active ? "border-neutral-900 ring-1 ring-neutral-900" : accent ? "border-[#1D75F7]/30 bg-[#1D75F7]/5" : "border-neutral-200 bg-white"}`}
     >
       <p className="truncate text-xs font-medium text-neutral-400">{label}</p>
       <p className="mt-1 truncate text-2xl font-semibold tracking-tight sm:text-[28px]" style={accent && !active ? { color: BRAND } : undefined}>{value}</p>
@@ -552,7 +552,7 @@ function SocialView({ stats }: { stats: AdminStats }) {
             {openList === "queued" && queued.length > 0 && (
               <div className="mb-3 flex items-center justify-between gap-2 border-b border-neutral-100 pb-3">
                 <span className="text-sm text-neutral-500">대기 <b className="text-neutral-900">{queued.length}개</b> · 하나씩 순서대로 발행돼요</span>
-                <button onClick={publishAllQueued} disabled={busy} className="shrink-0 rounded-lg bg-[#3f91ff] px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90 active:scale-95 disabled:opacity-50">{busy && publishingId ? "발행 중…" : `밀린 ${queued.length}개 모두 발행`}</button>
+                <button onClick={publishAllQueued} disabled={busy} className="shrink-0 rounded-lg bg-[#1D75F7] px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90 active:scale-95 disabled:opacity-50">{busy && publishingId ? "발행 중…" : `밀린 ${queued.length}개 모두 발행`}</button>
               </div>
             )}
             {listFor.length === 0 ? (

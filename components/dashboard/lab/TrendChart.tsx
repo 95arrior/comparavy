@@ -3,7 +3,7 @@
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import type { TrendPoint, TrendItem } from "@/lib/naverDatalab";
 
-const COLORS = ["#3f91ff", "#22c55e", "#f59e0b", "#a855f7", "#ef4444"];
+const COLORS = ["#1D75F7", "#22c55e", "#f59e0b", "#a855f7", "#ef4444"];
 
 /** 데이터랩 검색 추이 라인차트(최근 12개월). 키워드별 상승/하락 칩 + 라인. */
 export default function TrendChart({ series, items }: { series: TrendPoint[]; items: TrendItem[] }) {

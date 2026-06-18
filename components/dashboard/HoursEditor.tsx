@@ -4,31 +4,60 @@ import { useState, useEffect, useRef } from "react";
 import { DAY_KEYS, DAY_LABELS, type DayKey, type WeeklyHours } from "@/lib/blogProfile";
 
 // 영업시간 입력 — "유형 먼저 → 맞는 것만". 출력은 WeeklyHours(기존 호환).
-//   매일같음 / 평일·주말 / 요일마다 / 24시간. 시간은 드롭다운(30분, 오전·오후), 쉬는 날은 칩, 점심 옵션.
+//   시·분 커스텀 드롭다운(항상 아래로 펼침, 분 5분 단위), 쉬는 날 칩, 점심 옵션.
 
 type Mode = "" | "daily" | "weekday" | "custom" | "247";
 const WEEKDAYS: DayKey[] = ["mon", "tue", "wed", "thu", "fri"];
 const WEEKEND: DayKey[] = ["sat", "sun"];
 
-// 30분 단위 시간 목록
-const TIMES: string[] = [];
-for (let h = 0; h < 24; h++) for (const m of [0, 30]) TIMES.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
-const END_TIMES = [...TIMES, "24:00"];
-
-function timeLabel(t: string): string {
-  if (t === "24:00") return "자정(24:00)";
-  const [h, m] = t.split(":").map(Number);
+const HOURS = Array.from({ length: 24 }, (_, h) => h);
+const MINS = Array.from({ length: 12 }, (_, i) => i * 5); // 0,5,...,55
+function hourLabel(h: number): string {
   const ap = h < 12 ? "오전" : "오후";
   let hh = h % 12; if (hh === 0) hh = 12;
-  return `${ap} ${hh}:${String(m).padStart(2, "0")}`;
+  return `${ap} ${hh}시`;
 }
 
-const selCls = "rounded-lg border border-neutral-200 bg-white px-2.5 py-2 text-sm outline-none focus:border-[#3f91ff]";
-function TimeSelect({ value, onChange, end }: { value: string; onChange: (v: string) => void; end?: boolean }) {
+// 커스텀 드롭다운 — 항상 '아래로'(top-full) 펼침. 바깥 클릭 시 닫힘.
+function Picker({ label, value, options, onChange }: { label: string; value: string; options: { value: string; label: string }[]; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [open]);
   return (
-    <select value={value} onChange={(e) => onChange(e.target.value)} className={selCls}>
-      {(end ? END_TIMES : TIMES).map((t) => <option key={t} value={t}>{timeLabel(t)}</option>)}
-    </select>
+    <div ref={ref} className="relative">
+      <button type="button" onClick={() => setOpen((v) => !v)} className="flex items-center gap-1 rounded-lg border border-neutral-200 bg-white px-2.5 py-2 text-sm text-neutral-800 transition hover:border-neutral-300">
+        {label}<span className="text-[10px] text-neutral-400">▾</span>
+      </button>
+      {open && (
+        <ul className="ateflo-reveal absolute left-0 top-full z-30 mt-1 max-h-52 w-full min-w-[88px] overflow-y-auto rounded-xl border border-neutral-200 bg-white py-1 shadow-lg">
+          {options.map((o) => (
+            <li key={o.value}>
+              <button type="button" onClick={() => { onChange(o.value); setOpen(false); }}
+                className={`block w-full px-3 py-2 text-left text-sm transition ${o.value === value ? "bg-[#1D75F7]/10 font-semibold text-[#1D75F7]" : "text-neutral-700 hover:bg-neutral-50"}`}>
+                {o.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+// 시·분 두 드롭다운. value="HH:MM". (end prop은 호환용으로 받되 무시)
+function TimeSelect({ value, onChange }: { value: string; onChange: (v: string) => void; end?: boolean }) {
+  const [hs, ms] = (value || "09:00").split(":");
+  const h = Number(hs), m = Number(ms);
+  return (
+    <div className="flex items-center gap-1.5">
+      <Picker label={hourLabel(h)} value={String(h)} options={HOURS.map((x) => ({ value: String(x), label: hourLabel(x) }))} onChange={(v) => onChange(`${String(Number(v)).padStart(2, "0")}:${ms}`)} />
+      <Picker label={`${ms}분`} value={String(m)} options={MINS.map((x) => ({ value: String(x), label: `${String(x).padStart(2, "0")}분` }))} onChange={(v) => onChange(`${hs}:${String(Number(v)).padStart(2, "0")}`)} />
+    </div>
   );
 }
 
@@ -89,7 +118,7 @@ export default function HoursEditor({ value, onChange }: { value: WeeklyHours; o
   }, [mode, dStart, dEnd, closed, wdStart, wdEnd, weStart, weEnd, weClosed, cust, breakOn, brStart, brEnd]);
 
   const chip = (active: boolean) =>
-    `rounded-full border px-3 py-1.5 text-sm transition ${active ? "border-[#3f91ff] bg-[#3f91ff]/10 font-semibold text-[#3f91ff]" : "border-neutral-200 text-neutral-600 hover:border-neutral-300"}`;
+    `rounded-full border px-3 py-1.5 text-sm transition ${active ? "border-[#1D75F7] bg-[#1D75F7]/10 font-semibold text-[#1D75F7]" : "border-neutral-200 text-neutral-600 hover:border-neutral-300"}`;
 
   return (
     <div>
@@ -101,7 +130,7 @@ export default function HoursEditor({ value, onChange }: { value: WeeklyHours; o
       </div>
 
       {mode === "daily" && (
-        <div className="mt-4 space-y-3">
+        <div className="mt-4 space-y-3 ateflo-reveal">
           <div className="flex items-center gap-2">
             <TimeSelect value={dStart} onChange={setDStart} />
             <span className="text-sm text-neutral-400">~</span>
@@ -119,7 +148,7 @@ export default function HoursEditor({ value, onChange }: { value: WeeklyHours; o
       )}
 
       {mode === "weekday" && (
-        <div className="mt-4 space-y-3">
+        <div className="mt-4 space-y-3 ateflo-reveal">
           <div>
             <p className="mb-1.5 text-xs text-neutral-500">평일 (월~금)</p>
             <div className="flex items-center gap-2">
@@ -131,7 +160,7 @@ export default function HoursEditor({ value, onChange }: { value: WeeklyHours; o
           <div>
             <div className="mb-1.5 flex items-center gap-2">
               <p className="text-xs text-neutral-500">주말 (토·일)</p>
-              <button type="button" onClick={() => setWeClosed((v) => !v)} className={`text-xs font-medium ${weClosed ? "text-[#3f91ff]" : "text-neutral-400"}`}>{weClosed ? "✓ 휴무" : "휴무로"}</button>
+              <button type="button" onClick={() => setWeClosed((v) => !v)} className={`text-xs font-medium ${weClosed ? "text-[#1D75F7]" : "text-neutral-400"}`}>{weClosed ? "✓ 휴무" : "휴무로"}</button>
             </div>
             {!weClosed && (
               <div className="flex items-center gap-2">
@@ -145,7 +174,7 @@ export default function HoursEditor({ value, onChange }: { value: WeeklyHours; o
       )}
 
       {mode === "custom" && (
-        <div className="mt-4 space-y-2">
+        <div className="mt-4 space-y-2 ateflo-reveal">
           {DAY_KEYS.map((d) => (
             <div key={d} className="flex items-center gap-2">
               <span className="w-5 text-sm font-medium text-neutral-700">{DAY_LABELS[d]}</span>
@@ -166,7 +195,7 @@ export default function HoursEditor({ value, onChange }: { value: WeeklyHours; o
 
       {mode !== "" && mode !== "247" && (
         <div className="mt-4 border-t border-neutral-100 pt-3">
-          <button type="button" onClick={() => setBreakOn((v) => !v)} className={`text-sm font-medium ${breakOn ? "text-[#3f91ff]" : "text-neutral-500"}`}>
+          <button type="button" onClick={() => setBreakOn((v) => !v)} className={`text-sm font-medium ${breakOn ? "text-[#1D75F7]" : "text-neutral-500"}`}>
             {breakOn ? "✓ 점심시간 있어요" : "＋ 점심시간 있어요"}
           </button>
           {breakOn && (

@@ -4,7 +4,7 @@ import type { QueueItem } from "@/lib/keywordQueue";
 
 const STATUS: Record<string, { label: string; cls: string }> = {
   queued: { label: "대기", cls: "bg-neutral-100 text-neutral-500" },
-  generating: { label: "생성 중", cls: "bg-[#3f91ff]/10 text-[#2f7fe6]" },
+  generating: { label: "생성 중", cls: "bg-[#1D75F7]/10 text-[#2f7fe6]" },
   done: { label: "완료", cls: "bg-emerald-50 text-emerald-600" },
   failed: { label: "실패", cls: "bg-amber-50 text-amber-600" },
 };
@@ -35,7 +35,7 @@ export default function KeywordQueue({
         <button
           onClick={onGoFind}
           className="mt-6 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition"
-          style={{ backgroundColor: "#3f91ff" }}
+          style={{ backgroundColor: "#1D75F7" }}
         >
           키워드 발굴하러 가기 →
         </button>
