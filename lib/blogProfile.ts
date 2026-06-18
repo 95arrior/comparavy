@@ -17,6 +17,7 @@ export interface BlogProfile {
   biz_phone: string | null;
   biz_hours: string | null; // 레거시 자유입력(fallback)
   biz_hours_json: WeeklyHours | null; // 요일별 구조화 영업시간(우선)
+  biz_strength: string | null; // 강점·특징(선택) — 글 마무리 업장 연결에만 사용, 과장은 생성 단계서 순화
 }
 
 // 요일별 영업시간 구조

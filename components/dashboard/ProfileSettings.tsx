@@ -26,6 +26,7 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
   const [bizName, setBizName] = useState(profile.biz_name ?? "");
   const [bizAddress, setBizAddress] = useState(profile.biz_address ?? "");
   const [bizPhone, setBizPhone] = useState(profile.biz_phone ?? "");
+  const [bizStrength, setBizStrength] = useState(profile.biz_strength ?? "");
   const [hours, setHours] = useState<WeeklyHours>(profile.biz_hours_json ?? {});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,6 +56,7 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
           biz_name: bizName.trim(),
           biz_address: bizAddress.trim(),
           biz_phone: bizPhone.trim(),
+          biz_strength: bizStrength.trim(),
           biz_hours_json: hours,
           publish_mode: profile.publish_mode ?? "manual",
           // topic/tone/article_type 안 보냄 → 라우트가 vertical로 자동 설정(정규화)
@@ -131,6 +133,8 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
         <input value={bizName} onChange={(e) => setBizName(e.target.value)} placeholder="상호명 (예: 우리동네치과의원)" maxLength={80} className={`mt-3 ${inputCls}`} />
         <input value={bizAddress} onChange={(e) => setBizAddress(e.target.value)} placeholder="주소 (예: 서울 강남구 …)" maxLength={200} className={`mt-2 ${inputCls}`} />
         <input value={bizPhone} onChange={(e) => setBizPhone(e.target.value)} placeholder="전화번호 (예: 02-000-0000)" maxLength={40} className={`mt-2 ${inputCls}`} />
+        <input value={bizStrength} onChange={(e) => setBizStrength(e.target.value)} placeholder="우리 강점·특징 (예: 입시 영어 전문, 원장 직강, 주말 진료)" maxLength={200} className={`mt-2 ${inputCls}`} />
+        <p className="mt-1 text-xs leading-relaxed text-neutral-500">과장 표현(1위·최고·100%·보장 등)은 광고법 위반이라 피해주세요. 실제 특징을 사실대로 적으면 글 마무리에 자연스럽게 녹여 드려요.</p>
         <p className="mt-4 text-sm font-medium text-neutral-700">영업시간</p>
         <HoursEditor value={hours} onChange={setHours} />
       </div>

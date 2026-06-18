@@ -124,7 +124,7 @@ export async function POST(request: Request) {
   // 업종(vertical) + 업체 정보 — 프로필에서 1회 조회(없으면 general/미입력). 프롬프트 분기 + 글 하단 NAP 박스에 사용.
   const { data: profileRow } = await supabase
     .from("blog_profiles")
-    .select("vertical,biz_name,biz_address,biz_phone,biz_hours,biz_hours_json")
+    .select("vertical,biz_name,biz_address,biz_phone,biz_hours,biz_hours_json,biz_strength")
     .eq("user_id", user.id)
     .maybeSingle();
   const vertical = profileRow?.vertical ?? "general";
@@ -179,7 +179,7 @@ export async function POST(request: Request) {
         }
 
         const article = await streamArticle(
-          { keyword, angle: body.angle, type, tone, maxWords, variantInstruction: variant.instruction, vertical },
+          { keyword, angle: body.angle, type, tone, maxWords, variantInstruction: variant.instruction, vertical, bizName: profileRow?.biz_name, bizStrength: profileRow?.biz_strength },
           (bodyHtml) => send({ type: "body", html: bodyHtml }),
           (title) => send({ type: "title", title }),
           (u) => { void logUsage({ userId: user.id, model: u.model, kind: "generate", inputTokens: u.inputTokens, outputTokens: u.outputTokens }); },

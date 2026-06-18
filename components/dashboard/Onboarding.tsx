@@ -34,6 +34,7 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
   const [bizName, setBizName] = useState("");
   const [bizAddress, setBizAddress] = useState("");
   const [bizPhone, setBizPhone] = useState("");
+  const [bizStrength, setBizStrength] = useState("");
   const [hours, setHours] = useState<WeeklyHours>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +71,7 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
           biz_name: bizName.trim(),
           biz_address: bizAddress.trim(),
           biz_phone: bizPhone.trim(),
+          biz_strength: bizStrength.trim(),
           biz_hours_json: hours,
           publish_mode: "manual",
           // topic/tone/article_type 안 보냄 → 라우트가 vertical로 자동 설정(Stage 1)
@@ -171,6 +173,8 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
             <input value={bizName} onChange={(e) => setBizName(e.target.value)} placeholder="상호명 (예: 우리동네치과의원)" maxLength={80} className={`mt-4 ${inputCls}`} />
             <input value={bizAddress} onChange={(e) => setBizAddress(e.target.value)} placeholder="주소 (예: 서울 강남구 …)" maxLength={200} className={`mt-3 ${inputCls}`} />
             <input value={bizPhone} onChange={(e) => setBizPhone(e.target.value)} placeholder="전화번호 (예: 02-000-0000)" maxLength={40} className={`mt-3 ${inputCls}`} />
+            <input value={bizStrength} onChange={(e) => setBizStrength(e.target.value)} placeholder="우리 강점·특징 (예: 입시 영어 전문, 원장 직강, 주말 진료)" maxLength={200} className={`mt-3 ${inputCls}`} />
+            <p className="mt-2 text-xs leading-relaxed text-neutral-500">과장 표현(1위·최고·100%·보장 등)은 광고법 위반이라 피해주세요. 실제 특징을 사실대로 적어주시면 글 마무리에 자연스럽게 녹여 드려요.</p>
             <p className="mt-4 text-sm font-medium text-neutral-700">영업시간</p>
             <HoursEditor value={hours} onChange={setHours} />
             {error && <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{error}</div>}

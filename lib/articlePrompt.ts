@@ -82,6 +82,10 @@ export interface ArticlePromptInput {
   variantInstruction?: string;
   /** 업종 — medical | academy | professional | b2b | general(또는 미지정=현행). 전문업종일 때만 추가 지침 주입. */
   vertical?: string;
+  /** 업장명(선택) — 글 마무리에서 자연스럽게 연결할 때만 사용. */
+  bizName?: string | null;
+  /** 운영자가 입력한 강점·특징(선택) — 이 범위 안에서만 언급, 과장은 순화. */
+  bizStrength?: string | null;
 }
 
 // 공통 SEO 콘텐츠 원칙 (general 포함 모든 블로그에 주입). 홍보글이 아니라 '검색 사용자가 궁금해하는 정보글'.
@@ -182,6 +186,14 @@ export function buildUserPrompt(input: ArticlePromptInput): string {
   const toneInstruction = TONE_INSTRUCTIONS[input.tone] ?? "";
   const toneEnding = TONE_ENDINGS[input.tone] ?? TONE_ENDINGS.friendly;
 
+  // 홍보 녹이기: 업장명이 있으면 마무리에서 자연스럽게 연결(강점은 있을 때만, 과장 금지·없는 강점 금지).
+  // 업장명이 없으면 특정 업체를 지목하지 않고 일반 전문가 안내로.
+  const bizName = (input.bizName ?? "").trim();
+  const bizStrength = (input.bizStrength ?? "").trim();
+  const bizLink = bizName
+    ? `업장 연결(홍보 녹이기): 글 마무리에서 정보 흐름에 맞춰 운영 업장 '${bizName}'으로 자연스럽게 1~2문장만 연결한다.${bizStrength ? ` 운영자가 밝힌 강점·특징은 '${bizStrength}' — 딱 이 범위 안에서만 언급한다.` : ""} 반드시 지킨다: ① 운영자가 입력한 강점만 쓰고, 없는 강점·경력·실적·수치를 지어내지 않는다. ② 강점에 과장 표현(최고·1위·100%·보장·유일 등)이 섞여 있어도 그대로 옮기지 말고 사실적으로 순화한다. ③ '최고/1위/보장/완벽' 같은 광고·단정 표현은 절대 쓰지 않는다. ④ 노골적 호객('지금 예약/전화 주세요') 대신 '~가 필요하면 ○○의 도움을 받아 보는 것도 방법'처럼 정보·조언 형태로. 글 전체를 업체 소개로 만들지 않는다.`
+    : `업장 연결: 마무리에서 특정 업체를 지목하지 말고, '전문가의 도움·상담을 받아 보는 것도 방법'이라는 정보·조언 형태로만 부드럽게 안내한다(과장·호객 금지).`;
+
   return [
     `핵심 키워드: ${input.keyword}`,
     input.angle ? `글의 관점/각도: ${input.angle}` : "",
@@ -204,6 +216,7 @@ export function buildUserPrompt(input: ArticlePromptInput): string {
     toneEnding,
     "추천·비교·구매 의도면: 기준만 나열하고 끝내지 말고, 마지막에 '이런 사람은 이거' 식으로 분명히 골라준다. 망설이는 표현 금지.",
     "마무리: '결국', '종합하면', '위의 기준을 종합해' 같은 AI 정리 투로 시작하지 않는다. '큰 차이는 없다', '정답은 없다' 같은 김빠지는 겸손체로 끝내지 말고, 독자가 확신과 다음 행동을 갖고 떠나게 끝낸다.",
+    bizLink,
     "FAQ: 이 키워드로 검색한 사람이 본문을 읽고도 추가로 궁금해할 질문만 고른다. 답은 '~하면 좋아요', '~하세요'처럼 구체적이고 바로 실행할 수 있게 쓴다. 본문에서 이미 답한 뻔한 질문이나 형식적으로 채운 질문은 넣지 않는다. 진짜 쓸 만한 질문이 3개뿐이면 3개만 쓰고, 억지로 5개를 채우지 않는다.",
     "도입을 '오늘은', '~에 대해 알아보겠습니다' 같은 표현으로 시작하지 말 것.",
     "본문에 글 제목과 똑같은 소제목을 다시 넣지 말 것 (제목은 별도로 표시됨). <h1>은 절대 쓰지 말 것.",
