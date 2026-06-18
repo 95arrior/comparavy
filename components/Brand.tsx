@@ -9,7 +9,7 @@ export default function Brand({ size = 22, light = false }: { pro?: boolean; siz
       src={light ? "/ateflo-logo-white.png" : "/ateflo-logo.png"}
       alt={SITE_NAME}
       height={size}
-      className="block w-auto max-w-full self-start shrink-0"
+      className="block w-auto max-w-full shrink-0"
       style={{ height: size, width: "auto", maxWidth: "100%" }}
     />
   );
