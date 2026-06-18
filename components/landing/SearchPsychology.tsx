@@ -30,10 +30,10 @@ const ROW3: Kw[] = [
 function Chip({ item }: { item: Kw }) {
   return item.golden ? (
     <span className="ateflo-chip-aurora mx-1.5 inline-flex shrink-0 items-center whitespace-nowrap rounded-full py-2 pl-3 pr-4 text-sm font-semibold text-[#3f3a6b] shadow-sm ring-1 ring-white/50">
-      {/* 금괴 — 황금 글감 표시 */}
-      <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden className="mr-1.5 shrink-0">
-        <path d="M5 16.5 8 9.5h8l3 7z" fill="#e6a91e" stroke="#b8810f" strokeWidth="1.1" strokeLinejoin="round" />
-        <path d="M8 9.5 9.2 6h5.6L16 9.5z" fill="#f4ce6a" stroke="#b8810f" strokeWidth="1.1" strokeLinejoin="round" />
+      {/* 불꽃 — 황금(핫) 글감 표시 */}
+      <svg width="14" height="15" viewBox="0 0 24 24" aria-hidden className="mr-1.5 shrink-0">
+        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z" fill="#ff7a1a" />
+        <path d="M12 20a3.5 3.5 0 0 0 1.5-6.7c-.6 1-1.5 1.4-1.5 1.4s-1.8-1-1.8-2.7c-1 .9-1.7 2-1.7 3.5A3.5 3.5 0 0 0 12 20z" fill="#ffd23e" />
       </svg>
       {item.t}
     </span>
@@ -94,7 +94,7 @@ export default function SearchPsychology() {
     <section ref={ref} className="overflow-x-hidden bg-neutral-50/60 py-24 sm:py-32">
       <div className="mx-auto max-w-2xl px-6 text-center">
         <h2 className="font-pretendard text-2xl font-bold tracking-tight sm:text-[1.75rem]">
-          손님이 무엇을, 왜 검색하는지부터 찾아요
+          손님이 <span className="text-[#1D75F7]">무엇을, 왜</span> 검색하는지부터 찾아요
         </h2>
         <p className="mx-auto mt-3 max-w-md text-[15px] leading-relaxed text-neutral-500 sm:text-base">
           검색 심리로, 손님이 진짜 찾는 글감을 뽑아드려요
