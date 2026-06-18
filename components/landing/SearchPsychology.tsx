@@ -24,27 +24,15 @@ const ROW3: Kw[] = [
   { t: "어린이 치과 시기" }, { t: "강남 치과", golden: true }, { t: "임플란트 종류" }, { t: "사랑니 꼭 빼야 하나" }, { t: "신경치료 통증" },
 ];
 
-// AI 별 — 작은 별 + 큰 별이 살짝 겹쳐(포개져) 입체적으로, 은은한 트윙클. 색은 칩 글자색 상속.
-function Stars() {
-  return (
-    <span className="relative ml-1.5 inline-flex items-center leading-none">
-      <span className="ateflo-twinkle-soft text-[0.62em]">✦</span>
-      <span className="ateflo-twinkle-soft -ml-[0.22em] text-[0.95em]" style={{ animationDelay: "0.5s" }}>✦</span>
-    </span>
-  );
-}
-
+// 기본 칩 = 단색 그레이(차분). 황금 키워드 = 옅은 오로라가 일렁이는 칩(별 없음, 깔끔).
 function Chip({ item }: { item: Kw }) {
-  return (
-    <span
-      className={`mx-1.5 inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-4 py-2 text-sm ${
-        item.golden
-          ? "bg-gradient-to-b from-[#fcd968] to-[#e3a522] font-semibold text-[#5a3c00] shadow-[0_6px_18px_-6px_rgba(227,165,34,0.65)]"
-          : "bg-gradient-to-b from-[#2a66ea] to-[#1640a6] font-medium text-white shadow-[0_6px_16px_-6px_rgba(22,64,166,0.55)]"
-      }`}
-    >
+  return item.golden ? (
+    <span className="ateflo-chip-aurora mx-1.5 inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-[#3f3a6b] shadow-sm ring-1 ring-white/50">
       {item.t}
-      <Stars />
+    </span>
+  ) : (
+    <span className="mx-1.5 inline-flex shrink-0 items-center whitespace-nowrap rounded-full bg-neutral-100 px-4 py-2 text-sm font-medium text-neutral-500 ring-1 ring-black/[0.03]">
+      {item.t}
     </span>
   );
 }

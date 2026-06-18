@@ -257,6 +257,14 @@ html {
 @keyframes ateflo-twinkle-soft { 0%, 100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.08); } }
 .ateflo-twinkle-soft { display: inline-block; animation: ateflo-twinkle-soft 2.6s ease-in-out infinite; }
 
+/* 칩 배경 오로라 — 옅은 파스텔(블루·퍼플·핑크·민트)이 일렁이며 요동 */
+@keyframes ateflo-chip-aurora { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+.ateflo-chip-aurora {
+  background-image: linear-gradient(110deg, #dbe9ff, #e8ddff, #ffe1f1, #d9f5ec, #dbe9ff);
+  background-size: 300% 100%;
+  animation: ateflo-chip-aurora 5s ease-in-out infinite;
+}
+
 /* 매직봉 — 살짝 흔들리며 반짝(글로우) */
 @keyframes ateflo-wand {
   0%, 100% { transform: rotate(0deg) scale(1); filter: drop-shadow(0 0 2px rgba(29, 117, 247, 0.35)); }
