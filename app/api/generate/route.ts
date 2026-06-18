@@ -8,6 +8,7 @@ import { isDisposableEmail } from "@/lib/disposableEmail";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { normalizeKeyword, pickVariant, simhash } from "@/lib/diversity";
 import { looksLikeGarbageKeyword, isMeaningfulKeyword } from "@/lib/keywordGuard";
+import { explicitAudienceOf, AUDIENCE_ALL } from "@/lib/audience";
 import { isAdminEmail } from "@/lib/adminStats";
 import { logUsage } from "@/lib/usageLog";
 import { recordAiResult } from "@/lib/aiHealth";
@@ -124,7 +125,7 @@ export async function POST(request: Request) {
   // 업종(vertical) + 업체 정보 — 프로필에서 1회 조회(없으면 general/미입력). 프롬프트 분기 + 글 하단 NAP 박스에 사용.
   const { data: profileRow } = await supabase
     .from("blog_profiles")
-    .select("vertical,biz_name,biz_address,biz_phone,biz_hours,biz_hours_json,biz_strength")
+    .select("vertical,biz_name,biz_address,biz_phone,biz_hours,biz_hours_json,biz_strength,audience")
     .eq("user_id", user.id)
     .maybeSingle();
   const vertical = profileRow?.vertical ?? "general";
@@ -132,6 +133,19 @@ export async function POST(request: Request) {
   const vDef = VERTICAL_DEFAULTS[vertical];
   const type = body.type ?? vDef?.type ?? "howto";
   const tone = body.tone ?? vDef?.tone ?? "friendly";
+
+  // 약한 audience 가드(버그2): 직접 입력해도 '설정한 대상과 명백히 동떨어진'(반대 연령어가 박힌) 글감만 막는다.
+  // 명시적 연령어(성인/유아/초등/중고등)만 검사 → 도메인어(토익 등)·중립어는 통과(사장이 일부러 넣은 걸 과잉 차단 안 함).
+  const audSel: string[] = Array.isArray(profileRow?.audience) ? (profileRow!.audience as string[]) : [];
+  if (audSel.length > 0 && !audSel.includes(AUDIENCE_ALL)) {
+    const ka = explicitAudienceOf(keyword);
+    if (ka && !audSel.includes(ka)) {
+      return NextResponse.json(
+        { error: `이 글감은 설정하신 대상(${audSel.join("·")})과 거리가 있어 보여요. 프로필에서 가르치는 대상을 바꾸거나, 대상에 맞는 글감으로 다시 시도해 주세요.` },
+        { status: 400 },
+      );
+    }
+  }
 
   // P1-C 다양성: 이미 쓴 구조를 피해 새 구조를 고른다 (생성 전, 모델 호출 0 추가).
   const keywordNorm = normalizeKeyword(keyword);
