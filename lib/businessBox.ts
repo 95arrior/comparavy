@@ -95,22 +95,6 @@ function hoursLines(h: WeeklyHours): HourLine[] {
   return out;
 }
 
-// 값 <p>(크고 진하게). 위계의 '값' 쪽.
-function valueP(text: string): string {
-  return `<p style="margin:3px 0 0;font-size:15px;font-weight:600;color:#1A1D21">${esc(text)}</p>`;
-}
-
-// 리스트 한 줄: 라벨 <p>(작고 회색) + 값. first가 아니면 윗 구분선 + 간격.
-function liRow(label: string, valueHtml: string, first: boolean): string {
-  const liStyle = `margin:${first ? "0" : "12px 0 0"};padding:13px 0 0;border-top:1px solid #F1F3F5`;
-  return (
-    `<li style="${liStyle}">` +
-    `<p style="margin:0;font-size:12px;font-weight:600;color:#A0A6AE">${esc(label)}</p>` +
-    valueHtml +
-    `</li>`
-  );
-}
-
 export function buildBusinessBox(b: BusinessInfo): string {
   const name = (b.name ?? "").trim();
   const address = (b.address ?? "").trim();
@@ -124,39 +108,35 @@ export function buildBusinessBox(b: BusinessInfo): string {
     ? lines.map((l) => (l.note ? `${l.main} (${l.note})` : l.main)).join(" · ")
     : hoursText;
 
-  // 전화 값 = tel: 버튼(<a>에 background+padding+border-radius로 강조 → 전환 유도).
+  // 항목 = "굵은 라벨: 값" 한 줄. 전화 값은 tel: 링크(탭하면 전화).
   const telHref = phone.replace(/[^0-9+]/g, "");
-  const phoneBtn =
-    `<p style="margin:7px 0 0">` +
-    `<a href="tel:${esc(telHref)}" style="background:#F2F4F6;border:1px solid #E2E6EA;border-radius:10px;` +
-    `padding:9px 16px;color:#16181D;font-size:15px;font-weight:700;text-decoration:none">${esc(phone)}</a>` +
-    `</p>`;
-
-  // 항목(주소/전화/영업시간) — 있는 것만.
-  const rows: Array<{ label: string; value: string }> = [];
-  if (address) rows.push({ label: "주소", value: valueP(address) });
-  if (phone) rows.push({ label: "전화", value: phoneBtn });
-  if (hoursStr) rows.push({ label: "영업시간", value: valueP(hoursStr) });
+  const lis: string[] = [];
+  if (address) lis.push(`<strong>주소:</strong> ${esc(address)}`);
+  if (phone) lis.push(`<strong>전화:</strong> <a href="tel:${esc(telHref)}">${esc(phone)}</a>`);
+  if (hoursStr) lis.push(`<strong>영업시간:</strong> ${esc(hoursStr)}`);
 
   // 상호도 없고 항목도 없으면 카드 자체를 만들지 않음(graceful).
-  if (!name && rows.length === 0) return "";
+  if (!name && lis.length === 0) return "";
 
   const heading = name ? esc(name) : "업체 안내";
 
   // ★ 구조: 목차(ateflo-toc) div와 '동일 패턴' — div+class + 블록 요소(<p>/<ul>/<li>).
   //   이 사이트의 콘텐츠 변환이 본문에서 목차 div만은 원본 그대로 보존(실측 확인)하므로
-  //   같은 구조 유지. 그 안에서 안전 속성만으로 위계·구분선·버튼을 입힌다.
+  //   같은 구조 유지. 안전 속성만(border, border-radius, padding, margin, font-*, color).
   let head = `<p style="margin:0;font-size:19px;font-weight:700;color:#16181D">${heading}</p>`;
   if (subtitle) head += `<p style="margin:3px 0 0;font-size:13px;color:#9CA3AF">${esc(subtitle)}</p>`;
 
-  const ul = rows.length
-    ? `<ul style="list-style:none;margin:14px 0 0;padding:0">` +
-      rows.map((r, i) => liRow(r.label, r.value, i === 0)).join("") +
+  // 글머리표는 목차처럼 유지. 항목 간격은 li margin으로 정돈(마지막은 0).
+  const ul = lis.length
+    ? `<ul style="margin:12px 0 0;padding-left:1.2em;color:#3A3F47">` +
+      lis
+        .map((c, i) => `<li style="margin:0 0 ${i === lis.length - 1 ? "0" : "6px"}">${c}</li>`)
+        .join("") +
       `</ul>`
     : "";
 
   return (
-    `\n<div class="ateflo-bizcard" style="background:#FFFFFF;border:1px solid #ECEEF1;border-radius:16px;padding:20px 22px;margin:32px 0">` +
+    `\n<div class="ateflo-bizcard" style="border:1px solid #ECEEF1;border-radius:14px;padding:16px 20px;margin:32px 0">` +
     head +
     ul +
     `</div>`
