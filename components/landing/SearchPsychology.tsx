@@ -29,7 +29,12 @@ const ROW3: Kw[] = [
 
 function Chip({ item }: { item: Kw }) {
   return item.golden ? (
-    <span className="ateflo-chip-aurora mx-1.5 inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-[#3f3a6b] shadow-sm ring-1 ring-white/50">
+    <span className="ateflo-chip-aurora mx-1.5 inline-flex shrink-0 items-center whitespace-nowrap rounded-full py-2 pl-3 pr-4 text-sm font-semibold text-[#3f3a6b] shadow-sm ring-1 ring-white/50">
+      {/* 금괴 — 황금 글감 표시 */}
+      <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden className="mr-1.5 shrink-0">
+        <path d="M5 16.5 8 9.5h8l3 7z" fill="#e6a91e" stroke="#b8810f" strokeWidth="1.1" strokeLinejoin="round" />
+        <path d="M8 9.5 9.2 6h5.6L16 9.5z" fill="#f4ce6a" stroke="#b8810f" strokeWidth="1.1" strokeLinejoin="round" />
+      </svg>
       {item.t}
     </span>
   ) : (
