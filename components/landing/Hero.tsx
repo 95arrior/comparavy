@@ -25,7 +25,7 @@ export default function Hero() {
       {/* 헤더 — 로고 확실히 상단 */}
       <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 sm:px-8 sm:py-6">
         <Brand size={24} />
-        <button onClick={toForm} className="rounded-full bg-[#1D75F7] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 active:scale-95">
+        <button onClick={toForm} className="hidden rounded-full bg-[#1D75F7] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 active:scale-95 sm:block">
           사전신청
         </button>
       </header>
