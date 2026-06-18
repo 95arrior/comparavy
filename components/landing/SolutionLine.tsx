@@ -26,7 +26,7 @@ export default function SolutionLine() {
     return () => io.disconnect();
   }, []);
 
-  const starDelay = WORDS.length * 0.14 + 0.1;
+  const starDelay = WORDS.length * 0.22 + 0.15;
 
   return (
     <div ref={ref} className="mt-16 sm:mt-20">
@@ -35,7 +35,7 @@ export default function SolutionLine() {
           <span
             key={i}
             className={`${i < WORDS.length - 1 ? "mr-[0.26em]" : ""} ${go ? "ateflo-domino" : "inline-block opacity-0"}`}
-            style={go ? { animationDelay: `${i * 0.14}s` } : undefined}
+            style={go ? { animationDelay: `${i * 0.22}s` } : undefined}
           >
             {w.aurora ? <span className="ateflo-aurora">{w.t}</span> : w.t}
           </span>

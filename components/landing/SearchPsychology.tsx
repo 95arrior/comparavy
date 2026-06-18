@@ -93,16 +93,18 @@ export default function SearchPsychology() {
         </p>
       </div>
 
-      {/* 업종 카테고리 (아이콘 + 텍스트) */}
-      <div className={`mx-auto mt-12 flex max-w-2xl flex-wrap justify-center gap-2.5 px-6 transition-opacity duration-500 ${showCats ? "opacity-100" : "opacity-0"}`}>
-        {CATS.map((c) => {
+      {/* 업종 카테고리 (아이콘 + 텍스트) — 가운데에서 양쪽으로 펼쳐지며 등장, 선택 시 무지개 테두리 한 바퀴 */}
+      <div className="mx-auto mt-12 flex max-w-2xl flex-wrap justify-center gap-2.5 px-6">
+        {CATS.map((c, idx) => {
           const on = selected === c.v;
+          const dist = Math.abs(idx - (CATS.length - 1) / 2); // 중앙에서의 거리(펼침 스태거)
           return (
             <span
               key={c.v}
-              className={`inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition-all duration-300 ${
-                on ? "scale-105 border-[#1D75F7] bg-[#1D75F7] text-white shadow-[0_8px_20px_-6px_rgba(29,117,247,0.45)]" : "border-neutral-200 bg-white text-neutral-500"
+              className={`relative inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition-colors duration-300 ${showCats ? "ateflo-cat-pop" : "opacity-0"} ${
+                on ? "ateflo-ring-sweep border-[#1D75F7] bg-[#1D75F7] text-white shadow-[0_8px_20px_-6px_rgba(29,117,247,0.45)]" : "border-neutral-200 bg-white text-neutral-500"
               }`}
+              style={showCats ? { animationDelay: `${dist * 90}ms` } : undefined}
             >
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{c.icon}</svg>
               {c.label}

@@ -265,6 +265,23 @@ html {
   animation: ateflo-chip-aurora 5s ease-in-out infinite;
 }
 
+/* 카테고리 칩 등장 — 가운데에서 바깥으로 펼쳐지는 느낌(스태거) */
+@keyframes ateflo-cat-pop { 0% { opacity: 0; transform: scale(0.55); } 100% { opacity: 1; transform: scale(1); } }
+.ateflo-cat-pop { animation: ateflo-cat-pop 0.5s cubic-bezier(0.34, 1.4, 0.64, 1) both; }
+
+/* 선택 시 무지개(오로라) 테두리가 한 바퀴 싹 도는 sweep */
+@property --ateflo-ang { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@keyframes ateflo-ring-sweep-kf { from { --ateflo-ang: 0deg; } to { --ateflo-ang: 360deg; } }
+.ateflo-ring-sweep::before {
+  content: "";
+  position: absolute; inset: -2px; border-radius: 9999px; padding: 2px;
+  background: conic-gradient(from var(--ateflo-ang), transparent 0deg, #1D75F7 50deg, #7c5cff 130deg, #00c2d6 210deg, #ff7ad9 290deg, transparent 360deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: ateflo-ring-sweep-kf 0.95s linear 1;
+  pointer-events: none;
+}
+
 /* 매직봉 — 살짝 흔들리며 반짝(글로우) */
 @keyframes ateflo-wand {
   0%, 100% { transform: rotate(0deg) scale(1); filter: drop-shadow(0 0 2px rgba(29, 117, 247, 0.35)); }
@@ -285,7 +302,7 @@ html {
   0% { opacity: 0; transform: translateY(10px) scale(0.94); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
-.ateflo-domino { display: inline-block; animation: ateflo-domino 0.48s cubic-bezier(0.34, 1.28, 0.64, 1) both; }
+.ateflo-domino { display: inline-block; animation: ateflo-domino 0.62s cubic-bezier(0.34, 1.28, 0.64, 1) both; }
 
 /* 끝에 AI 로고 빛나며 등장 */
 @keyframes ateflo-logo-glow {
