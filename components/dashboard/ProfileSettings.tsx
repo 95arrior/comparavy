@@ -5,6 +5,7 @@ import HoursEditor from "./HoursEditor";
 import AddressSearch from "./AddressSearch";
 import { VERTICAL_SUBS } from "@/lib/verticalSubs";
 import { ACADEMY_AUDIENCES, AUDIENCE_ALL } from "@/lib/audience";
+import { formatKoreanPhone } from "@/lib/businessBox";
 import type { BlogProfile, WeeklyHours } from "@/lib/blogProfile";
 
 // 블로그 설정 편집 — 한 화면 설정형(스테퍼 X). 업종·이름·업체정보(영업시간)만 바로 고친다.
@@ -171,7 +172,8 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
             inputCls={inputCls}
           />
         </div>
-        <input value={bizPhone} onChange={(e) => setBizPhone(e.target.value)} placeholder="전화번호 (예: 02-000-0000)" maxLength={40} className={`mt-2 ${inputCls}`} />
+        <input value={bizPhone} onChange={(e) => setBizPhone(e.target.value)} onBlur={() => setBizPhone(formatKoreanPhone(bizPhone))} inputMode="numeric" placeholder="01012345678" maxLength={40} className={`mt-2 ${inputCls}`} />
+        <p className="mt-1 text-xs text-neutral-500">숫자만 입력하면 자동으로 정리돼요.</p>
         <input value={bizStrength} onChange={(e) => setBizStrength(e.target.value)} placeholder="우리 강점·특징 (예: 입시 영어 전문, 원장 직강, 주말 진료)" maxLength={200} className={`mt-2 ${inputCls}`} />
         <p className="mt-1 text-xs leading-relaxed text-neutral-500">과장 표현(1위·최고·100%·보장 등)은 광고법 위반이라 피해주세요. 실제 특징을 사실대로 적으면 글 마무리에 자연스럽게 녹여 드려요.</p>
         <p className="mt-4 text-sm font-medium text-neutral-700">영업시간</p>

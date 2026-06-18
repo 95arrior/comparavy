@@ -18,15 +18,9 @@ const VERTS = [
   { v: "general", label: "그 외 업종", desc: "가게·서비스 등 무엇이든", icon: <><path d="M4 9h16l-1 11H5L4 9z" /><path d="M9 9V6a3 3 0 0 1 6 0v3" /></> },
 ] as const;
 
-const REASSURE_SHORT: Record<string, string> = {
-  medical: "환자분들이 검색하는 글로 써드릴게요",
-  academy: "학부모·학생이 검색하는 글로 써드릴게요",
-  professional: "의뢰인이 검색하는 글로 써드릴게요",
-  general: "손님이 검색할 만한 글로 써드릴게요",
-};
 const VLABEL: Record<string, string> = Object.fromEntries(VERTS.map((x) => [x.v, x.label]));
 
-type Step = "vertical" | "sub" | "blogName" | "audience" | "biz" | "hours" | "strength" | "review" | "done";
+type Step = "vertical" | "sub" | "audience" | "biz" | "hours" | "strength" | "review" | "done";
 
 export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => void }) {
   const [step, setStep] = useState<Step>("vertical");
@@ -35,7 +29,6 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
   const [sub, setSub] = useState("");
   const [customMode, setCustomMode] = useState(false);
   const [customSub, setCustomSub] = useState("");
-  const [blogName, setBlogName] = useState("");
   const [bizName, setBizName] = useState("");
   const [bizAddress, setBizAddress] = useState("");
   const [bizDetail, setBizDetail] = useState("");
@@ -60,7 +53,7 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
   const skipBtn = "mt-2 w-full py-2 text-sm font-medium text-neutral-400 transition hover:text-neutral-600 disabled:opacity-50";
 
   // 화면 순서 — audience는 academy만. done 제외하고 진행 점 표시.
-  const order: Step[] = ["vertical", "sub", "blogName", ...(vertical === "academy" ? (["audience"] as Step[]) : []), "biz", "hours", "strength", "review", "done"];
+  const order: Step[] = ["vertical", "sub", ...(vertical === "academy" ? (["audience"] as Step[]) : []), "biz", "hours", "strength", "review", "done"];
   const idx = order.indexOf(step);
   const goNext = () => { setDir("fwd"); setStep(order[Math.min(idx + 1, order.length - 1)]); };
   const goBack = () => { setDir("back"); setStep(order[Math.max(idx - 1, 0)]); };
@@ -69,7 +62,7 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
     setVertical(v); setSub(""); setCustomMode(false); setCustomSub("");
     setDir("fwd"); setStep("sub");
   }
-  function pickSub(s: string) { setSub(s); setDir("fwd"); setStep("blogName"); }
+  function pickSub(s: string) { setSub(s); setDir("fwd"); setStep(vertical === "academy" ? "audience" : "biz"); }
 
   async function save() {
     if (saving || !vertical) return;
@@ -79,7 +72,7 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          vertical, sub_category: sub, blog_name: blogName.trim(),
+          vertical, sub_category: sub, blog_name: bizName.trim() || (sub ? `${sub} 블로그` : ""),
           biz_name: bizName.trim(), biz_address: bizAddress.trim(), biz_detail_address: bizDetail.trim(),
           biz_lat: bizLat, biz_lng: bizLng, biz_phone: bizPhone.trim(), biz_strength: bizStrength.trim(),
           audience, biz_hours_json: hours, publish_mode: "manual",
@@ -157,18 +150,7 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
           </div>
         )}
 
-        {/* 3) 블로그 이름 */}
-        {step === "blogName" && (
-          <div>
-            <p className="mb-4 rounded-xl bg-[#3f91ff]/[0.06] px-3.5 py-2.5 text-[13px] font-medium text-[#2f7fe6]">{sub} 블로그, {REASSURE_SHORT[vertical]}</p>
-            <h2 className="font-pretendard text-2xl font-bold tracking-tight">블로그 이름을 정해볼까요?</h2>
-            <p className="mt-2 text-sm text-neutral-500">나중에 바꿀 수 있어요.</p>
-            <input value={blogName} onChange={(e) => setBlogName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") goNext(); }} placeholder="예: 우리동네치과 건강이야기" maxLength={60} className={`mt-5 ${inputCls}`} autoFocus />
-            <button onClick={goNext} className={`mt-8 ${primaryBtn}`}>계속</button>
-          </div>
-        )}
-
-        {/* 4) 대상 (academy만) */}
+        {/* 대상 (academy만) */}
         {step === "audience" && (
           <div>
             <h2 className="font-pretendard text-2xl font-bold tracking-tight">누구를 주로<br />가르치세요?</h2>
@@ -194,8 +176,8 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
             <div className="mt-3">
               <AddressSearch address={bizAddress} detail={bizDetail} onPick={(r) => { setBizAddress(r.address); setBizLat(r.lat); setBizLng(r.lng); }} onDetailChange={setBizDetail} inputCls={inputCls} />
             </div>
-            <input value={bizPhone} onChange={(e) => setBizPhone(e.target.value)} onBlur={() => setBizPhone(formatKoreanPhone(bizPhone))} placeholder="전화번호 (예: 010-1234-5678)" maxLength={40} className={`mt-3 ${inputCls}`} />
-            <p className="mt-2 text-xs text-neutral-500">휴대폰·매장 어떤 번호든 괜찮아요. 입력하면 자동으로 정리해 드려요.</p>
+            <input value={bizPhone} onChange={(e) => setBizPhone(e.target.value)} onBlur={() => setBizPhone(formatKoreanPhone(bizPhone))} inputMode="numeric" placeholder="01012345678" maxLength={40} className={`mt-3 ${inputCls}`} />
+            <p className="mt-2 text-xs text-neutral-500">숫자만 입력하면 자동으로 정리돼요. 휴대폰·매장 어떤 번호든 괜찮아요.</p>
             <button onClick={goNext} className={`mt-7 ${primaryBtn}`}>계속</button>
           </div>
         )}
@@ -231,7 +213,7 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
             <dl className="mt-5 divide-y divide-neutral-100 rounded-2xl border border-neutral-200">
               {[
                 ["업종", `${VLABEL[vertical] ?? vertical}${sub ? ` · ${sub}` : ""}`],
-                ["블로그 이름", blogName.trim() || "(자동 생성)"],
+                ["블로그 이름", bizName.trim() || (sub ? `${sub} 블로그` : "(자동 생성)")],
                 ...(vertical === "academy" ? [["대상", audience.length ? audience.join(", ") : "(미설정)"] as [string, string]] : []),
                 ["상호", bizName.trim() || "(미입력)"],
                 ["주소", [bizAddress, bizDetail].filter(Boolean).join(" ").trim() || "(미입력)"],
