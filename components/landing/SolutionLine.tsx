@@ -17,10 +17,10 @@ export default function SolutionLine() {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    // 화면에 들어오면 바로 작동 (다른 스크롤 등장 애니와 동일 타이밍)
+    // 스크롤이 화면 중앙 띠에 왔을 때 작동
     const io = new IntersectionObserver(
       ([e]) => { if (e.isIntersecting) { setGo(true); io.disconnect(); } },
-      { threshold: 0.15, rootMargin: "0px 0px -10% 0px" },
+      { rootMargin: "-40% 0px -40% 0px", threshold: 0 },
     );
     io.observe(el);
     return () => io.disconnect();

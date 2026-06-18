@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 // [3] 검색 심리 — 자동 시연: 카테고리(업종) 선택 → 추천 글감 칩이 펼쳐지며 3줄로 흐름(loop).
 // 검색 엔진 오해 방지를 위해 검색창/타이핑 없음. 우리는 '글감'을 추천하는 서비스.
 
-type Phase = "idle" | "category" | "results";
+type Phase = "idle" | "spread" | "select" | "collapse" | "results";
 type Kw = { t: string; golden?: boolean };
 
 // 실제 업종 카테고리(온보딩과 동일) + 숨고st 아이콘
@@ -67,12 +67,14 @@ export default function SearchPsychology() {
     async function runLoop() {
       if (running) return;
       running = true;
-      // 카테고리 등장 → 병의원 선택 → 글감 칩 펼쳐짐 → 반복
+      // 펼침 → 병의원 선택(샤인) → 나머지 중앙으로 모이며 사라짐(병의원만) → 글감 칩 → 반복
       while (!cancelled) {
-        setSelected(null); setPhase("category");
-        await sleep(950); if (cancelled) return;
-        setSelected("medical"); await sleep(900); if (cancelled) return;
-        setPhase("results"); await sleep(7000); if (cancelled) return;
+        setSelected(null); setPhase("idle");
+        await sleep(90); if (cancelled) return;
+        setPhase("spread"); await sleep(1150); if (cancelled) return;
+        setSelected("medical"); setPhase("select"); await sleep(1150); if (cancelled) return;
+        setPhase("collapse"); await sleep(950); if (cancelled) return;
+        setPhase("results"); await sleep(6500); if (cancelled) return;
       }
     }
     const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) runLoop(); }, { threshold: 0.12 });
@@ -80,7 +82,8 @@ export default function SearchPsychology() {
     return () => { cancelled = true; io.disconnect(); };
   }, []);
 
-  const showCats = phase !== "idle";
+  const shown = phase !== "idle";
+  const collapsed = phase === "collapse" || phase === "results";
 
   return (
     <section ref={ref} className="overflow-x-hidden bg-neutral-50/60 py-24 sm:py-32">
@@ -93,18 +96,30 @@ export default function SearchPsychology() {
         </p>
       </div>
 
-      {/* 업종 카테고리 (아이콘 + 텍스트) — 가운데에서 양쪽으로 펼쳐지며 등장, 선택 시 무지개 테두리 한 바퀴 */}
-      <div className="mx-auto mt-12 flex max-w-2xl flex-wrap justify-center gap-2.5 px-6">
+      {/* 업종 카테고리 — 가운데에서 양쪽으로 펼쳐짐 → 병의원 선택(샤인) → 나머지 중앙으로 모이며 사라짐 */}
+      <div className="mx-auto mt-12 flex max-w-2xl flex-wrap justify-center px-6">
         {CATS.map((c, idx) => {
+          const center = (CATS.length - 1) / 2;
+          const offset = (center - idx) * 30; // 펼침 전: 중앙 쪽으로 모여 있음
           const on = selected === c.v;
-          const dist = Math.abs(idx - (CATS.length - 1) / 2); // 중앙에서의 거리(펼침 스태거)
+          const sel = on && (phase === "select" || phase === "collapse" || phase === "results");
+          const gone = collapsed && !on; // 비선택은 모이며 사라짐
           return (
             <span
               key={c.v}
-              className={`relative inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition-colors duration-300 ${showCats ? "ateflo-cat-pop" : "opacity-0"} ${
-                on ? "ateflo-ring-sweep border-[#1D75F7] bg-[#1D75F7] text-white shadow-[0_8px_20px_-6px_rgba(29,117,247,0.45)]" : "border-neutral-200 bg-white text-neutral-500"
-              }`}
-              style={showCats ? { animationDelay: `${dist * 90}ms` } : undefined}
+              className={`relative mx-1.5 inline-flex items-center gap-2 overflow-hidden whitespace-nowrap rounded-full border px-4 py-2.5 text-sm font-medium transition-all duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                sel ? "border-[#1D75F7] bg-[#1D75F7] text-white shadow-[0_8px_20px_-6px_rgba(29,117,247,0.45)]" : "border-neutral-200 bg-white text-neutral-500"
+              } ${on && phase === "select" ? "ateflo-shine" : ""}`}
+              style={{
+                transitionDelay: phase === "spread" ? `${Math.abs(center - idx) * 70}ms` : "0ms",
+                transform: shown ? "translateX(0) scale(1)" : `translateX(${offset}px) scale(0.7)`,
+                opacity: shown && !gone ? 1 : 0,
+                maxWidth: gone ? 0 : 260,
+                marginLeft: gone ? 0 : undefined,
+                marginRight: gone ? 0 : undefined,
+                paddingLeft: gone ? 0 : undefined,
+                paddingRight: gone ? 0 : undefined,
+              }}
             >
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{c.icon}</svg>
               {c.label}

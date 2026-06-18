@@ -282,6 +282,16 @@ html {
   pointer-events: none;
 }
 
+/* 선택 시 빛이 왼쪽→오른쪽으로 한 번 스쳐 지나가는 샤인 */
+@keyframes ateflo-shine-kf { from { transform: translateX(-130%); } to { transform: translateX(240%); } }
+.ateflo-shine::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.55) 50%, transparent 65%);
+  animation: ateflo-shine-kf 0.9s ease-out 1;
+  pointer-events: none;
+}
+
 /* 매직봉 — 살짝 흔들리며 반짝(글로우) */
 @keyframes ateflo-wand {
   0%, 100% { transform: rotate(0deg) scale(1); filter: drop-shadow(0 0 2px rgba(29, 117, 247, 0.35)); }
