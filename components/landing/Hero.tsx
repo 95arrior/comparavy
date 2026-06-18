@@ -36,7 +36,7 @@ export default function Hero() {
         <Reveal className="text-center lg:text-left">
           <p className="text-sm font-semibold tracking-tight text-[#1D75F7]">워드프레스 블로그 글쓰기</p>
           <h1 className="font-pretendard mt-3 text-[clamp(36px,11.5vw,58px)] font-bold leading-[1.12] tracking-tight sm:whitespace-nowrap sm:text-[clamp(22px,7.4vw,56px)]">
-            똑똑한<br className="sm:hidden" />사장님들의 선택
+            똑똑한 <br className="sm:hidden" />사장님들의 선택
           </h1>
           <p className="mx-auto mt-5 max-w-md text-[15px] leading-relaxed text-neutral-500 sm:text-lg lg:mx-0">
             24시간 일하는 직원이 필요하신가요?<br />
