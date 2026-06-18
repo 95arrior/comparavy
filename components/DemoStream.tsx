@@ -89,7 +89,7 @@ export default function DemoStream() {
 
         {/* 업체 정보 박스 — 글 끝나면 자동으로 딸려 나옴 (실제 발행물에 들어가는 NAP 카드) */}
         {showBox && (
-          <div className="ateflo-reveal mt-4 rounded-xl border border-[#E5E8EB] p-4">
+          <div className="ateflo-box-in mt-4 rounded-xl border border-[#E5E8EB] p-4">
             <p className="text-[15px] font-bold text-neutral-900">에이트플로 영어학원</p>
             <p className="mt-0.5 text-xs text-neutral-400">영어학원 · 초등~중등</p>
 

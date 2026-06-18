@@ -214,12 +214,19 @@ html {
   to   { opacity: 1; transform: translateY(0); }
 }
 .ateflo-reveal { animation: ateflo-reveal 0.26s cubic-bezier(0.22, 1, 0.36, 1) both; }
-/* 아래에서 위로 스윽 (지도 등) */
+/* 박스(겉)는 먼저 살짝 부드럽게 자리잡음 */
+@keyframes ateflo-box-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.ateflo-box-in { transform-origin: top; animation: ateflo-box-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* 지도는 박스가 자리잡은 뒤(0.5s 딜레이) 아래에서 위로 천천히·부드럽게 */
 @keyframes ateflo-rise {
-  from { opacity: 0; transform: translateY(18px); }
+  from { opacity: 0; transform: translateY(24px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.ateflo-rise { animation: ateflo-rise 0.5s 0.18s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.ateflo-rise { animation: ateflo-rise 0.75s 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ── AteFlo 로딩 화면 (AI/토스 감성) — 숨쉬는 로고 + 레이더 펄스 링 + 궤도 파티클 + 스윕 바 ── */
 @keyframes ateflo-load-mark {
