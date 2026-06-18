@@ -19,11 +19,15 @@ const CONCERNS: { text: string; icon: React.ReactNode }[] = [
 
 export default function Problem() {
   return (
-    <section className="mx-auto max-w-2xl px-6 pb-28 pt-14 text-center sm:pb-32 sm:pt-16">
-      <Reveal>
-        <h2 className="font-pretendard text-2xl font-bold tracking-tight sm:text-[1.75rem]">
-          블로그, 해야 하는 건 알죠.
-        </h2>
+    <section className="mx-auto max-w-2xl px-6 pb-28 pt-6 text-center sm:pb-32 sm:pt-8">
+      <Reveal className="flex justify-center">
+        <div className="relative inline-block rounded-[1.6rem] bg-white px-7 py-4 shadow-[0_16px_36px_-14px_rgba(0,0,0,0.2)] ring-1 ring-neutral-100">
+          <h2 className="font-pretendard text-2xl font-bold tracking-tight sm:text-[1.75rem]">
+            블로그, 해야 하는 건 알죠.
+          </h2>
+          {/* 말풍선 꼬리 */}
+          <span className="absolute -bottom-2 left-1/2 h-4 w-4 -translate-x-1/2 rotate-45 rounded-[3px] bg-white shadow-[0_8px_10px_-6px_rgba(0,0,0,0.12)]" />
+        </div>
       </Reveal>
 
       <div className="mx-auto mt-12 max-w-md space-y-3 text-left sm:mt-14">
