@@ -237,6 +237,20 @@ html {
   -webkit-text-fill-color: transparent; color: transparent;
   animation: ateflo-holo 3.6s ease-in-out infinite;
 }
+
+/* 텍스트 내부 오로라 — 색이 좌우로 일렁이며 요동(쿨톤: 블루·시안·바이올렛·퍼플) */
+@keyframes ateflo-aurora {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.ateflo-aurora {
+  background-image: linear-gradient(110deg, #1D75F7, #7c5cff, #00c2d6, #4f9bff, #b06cff, #1D75F7);
+  background-size: 300% 100%;
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+  animation: ateflo-aurora 4s ease-in-out infinite;
+}
 @keyframes ateflo-twinkle { 0%, 100% { transform: scale(1); opacity: 0.85; } 50% { transform: scale(1.28); opacity: 1; } }
 .ateflo-twinkle { display: inline-block; animation: ateflo-twinkle 1.9s ease-in-out infinite; }
 
