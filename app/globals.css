@@ -264,6 +264,13 @@ html {
 }
 .ateflo-logo-glow { animation: ateflo-logo-glow 0.72s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
 
+/* 마퀴(칩이 양방향으로 끝없이 흐름) — 콘텐츠 2배 복제 + translateX 50% */
+@keyframes ateflo-marquee-left { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes ateflo-marquee-right { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+.ateflo-mq { display: flex; width: max-content; will-change: transform; }
+.ateflo-mq-left { animation: ateflo-marquee-left linear infinite; }
+.ateflo-mq-right { animation: ateflo-marquee-right linear infinite; }
+
 /* 데모 카드 스크롤바 숨김(스크롤은 되되 바는 안 보이게) */
 .ateflo-demo-scroll { scrollbar-width: none; -ms-overflow-style: none; }
 .ateflo-demo-scroll::-webkit-scrollbar { display: none; width: 0; height: 0; }
