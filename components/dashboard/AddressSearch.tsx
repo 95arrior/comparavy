@@ -61,6 +61,14 @@ export default function AddressSearch({
   const onPickRef = useRef(onPick);
   useEffect(() => { onPickRef.current = onPick; });
 
+  // 상세주소 자동 포커스: 주소가 '빈값 → 채워짐'으로 바뀔 때(=검색 직후)만. 편집화면 진입(이미 채워짐)엔 포커스 안 함.
+  const detailRef = useRef<HTMLInputElement>(null);
+  const prevAddr = useRef(address);
+  useEffect(() => {
+    if (!prevAddr.current && address) detailRef.current?.focus();
+    prevAddr.current = address;
+  }, [address]);
+
   // open이 true가 되면 그 자리에 다음 검색 UI를 embed. 인라인이라 팝업 차단 무관.
   useEffect(() => {
     if (!open || !boxRef.current) return;
@@ -109,14 +117,17 @@ export default function AddressSearch({
 
       {err && <p className="text-xs text-amber-600">{err}</p>}
 
-      <input
-        value={detail}
-        onChange={(e) => onDetailChange(e.target.value)}
-        placeholder={address ? "상세주소 (동·호수 등)" : "주소를 먼저 검색해 주세요"}
-        maxLength={100}
-        disabled={!address}
-        className={`${inputCls} disabled:bg-neutral-50 disabled:text-neutral-400`}
-      />
+      {/* 상세주소 — 주소 선택 후에만 스르륵 나타남(ateflo-fade-in) + 자동 포커스 */}
+      {address && (
+        <input
+          ref={detailRef}
+          value={detail}
+          onChange={(e) => onDetailChange(e.target.value)}
+          placeholder="상세주소 (동·호수 등)"
+          maxLength={100}
+          className={`${inputCls} ateflo-fade-in`}
+        />
+      )}
     </div>
   );
 }

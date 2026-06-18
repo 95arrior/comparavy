@@ -75,6 +75,21 @@ html {
   animation: ateflo-step-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 
+/* 토스식 단계 전환 — 앞으로 갈 땐 오른쪽에서, 뒤로 갈 땐 왼쪽에서 부드럽게 슬라이드 */
+@keyframes ateflo-slide-fwd {
+  from { opacity: 0; transform: translateX(28px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes ateflo-slide-back {
+  from { opacity: 0; transform: translateX(-28px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.ateflo-slide-fwd { animation: ateflo-slide-fwd 0.32s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+.ateflo-slide-back { animation: ateflo-slide-back 0.32s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+@media (prefers-reduced-motion: reduce) {
+  .ateflo-slide-fwd, .ateflo-slide-back { animation: ateflo-step-in 0.2s ease-out backwards; }
+}
+
 /* 가이드: 단계 박스가 아래에서 위로 올라오며 등장 */
 @keyframes ateflo-step-in {
   from { opacity: 0; transform: translateY(20px); }

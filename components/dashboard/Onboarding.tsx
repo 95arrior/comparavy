@@ -28,6 +28,7 @@ const VLABEL: Record<string, string> = Object.fromEntries(VERTS.map((x) => [x.v,
 
 export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => void }) {
   const [screen, setScreen] = useState(1);
+  const [dir, setDir] = useState<"fwd" | "back">("fwd"); // 전환 방향(앞=오른쪽에서, 뒤=왼쪽에서)
   const [vertical, setVertical] = useState("");
   const [sub, setSub] = useState("");
   const [customMode, setCustomMode] = useState(false);
@@ -60,12 +61,16 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
     setSub("");
     setCustomMode(false);
     setCustomSub("");
+    setDir("fwd");
     setScreen(2);
   }
   function pickSub(s: string) {
     setSub(s);
+    setDir("fwd");
     setScreen(3);
   }
+  const goBack = () => { setDir("back"); setScreen(screen - 1); };
+  const goNext = (n: number) => { setDir("fwd"); setScreen(n); };
 
   // 화면4에서 '계속'·'나중에 할게요' 둘 다 저장(업체정보만 빈 값, vertical·이름은 항상 저장).
   async function save() {
@@ -99,6 +104,7 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
         return;
       }
       setSavedProfile(data.profile as BlogProfile);
+      setDir("fwd");
       setScreen(5);
     } catch {
       setError("네트워크 오류예요. 잠시 후 다시 시도해 주세요.");
@@ -118,12 +124,12 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
 
       {/* 뒤로가기 (2~4) */}
       {screen > 1 && screen < 5 && (
-        <button onClick={() => setScreen(screen - 1)} className="mb-3 -ml-1 flex items-center gap-1 text-sm text-neutral-400 transition hover:text-neutral-700">
+        <button onClick={goBack} className="mb-3 -ml-1 flex items-center gap-1 text-sm text-neutral-400 transition hover:text-neutral-700">
           <span className="text-base leading-none">←</span> 뒤로
         </button>
       )}
 
-      <div key={screen} className="ateflo-step-in min-h-[300px]">
+      <div key={screen} className={`min-h-[300px] ${dir === "back" ? "ateflo-slide-back" : "ateflo-slide-fwd"}`}>
         {/* 1) 업종 선택 — 누르면 바로 다음 */}
         {screen === 1 && (
           <div>
@@ -176,8 +182,8 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
             <p className="mb-4 rounded-xl bg-[#3f91ff]/[0.06] px-3.5 py-2.5 text-[13px] font-medium text-[#2f7fe6]">{sub} 블로그, {REASSURE_SHORT[vertical]}</p>
             <h2 className="font-pretendard text-2xl font-bold tracking-tight">블로그 이름을 정해볼까요?</h2>
             <p className="mt-2 text-sm text-neutral-500">나중에 바꿀 수 있어요.</p>
-            <input value={blogName} onChange={(e) => setBlogName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") setScreen(4); }} placeholder="예: 우리동네치과 건강이야기" maxLength={60} className={`mt-5 ${inputCls}`} autoFocus />
-            <button onClick={() => setScreen(4)} className={`mt-8 ${primaryBtn}`}>계속</button>
+            <input value={blogName} onChange={(e) => setBlogName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") goNext(4); }} placeholder="예: 우리동네치과 건강이야기" maxLength={60} className={`mt-5 ${inputCls}`} autoFocus />
+            <button onClick={() => goNext(4)} className={`mt-8 ${primaryBtn}`}>계속</button>
           </div>
         )}
 
