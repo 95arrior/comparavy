@@ -37,7 +37,7 @@ export default function SolutionLine() {
             className={`${i < WORDS.length - 1 ? "mr-[0.26em]" : ""} ${go ? "ateflo-domino" : "inline-block opacity-0"}`}
             style={go ? { animationDelay: `${i * 0.22}s` } : undefined}
           >
-            {w.aurora ? <span className="ateflo-aurora">{w.t}</span> : w.t}
+            {w.aurora ? <span className="ateflo-aurora font-black">{w.t}</span> : w.t}
           </span>
         ))}
       </p>
