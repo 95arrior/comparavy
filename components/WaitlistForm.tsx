@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 /** 사전 등록 이메일 폼. 등록되면 체크 + 메시지로 전환(톡 등장). extra=함께 저장할 검증 데이터(예: 막힌 단계). */
-export default function WaitlistForm({ source = "landing", autoFocus = false, extra }: { source?: string; autoFocus?: boolean; extra?: Record<string, unknown> }) {
+export default function WaitlistForm({ source = "landing", autoFocus = false, extra, inputId }: { source?: string; autoFocus?: boolean; extra?: Record<string, unknown>; inputId?: string }) {
   const [email, setEmail] = useState("");
   const [state, setState] = useState<"idle" | "loading" | "done">("idle");
   const [already, setAlready] = useState(false);
@@ -66,6 +66,7 @@ export default function WaitlistForm({ source = "landing", autoFocus = false, ex
     <form onSubmit={submit} className="mx-auto w-full max-w-md">
       <div className="flex w-full items-center gap-2 rounded-2xl border border-neutral-300 bg-white p-2 shadow-sm transition-all duration-200 focus-within:border-neutral-900 focus-within:ring-4 focus-within:ring-neutral-900/5">
         <input
+          id={inputId}
           type="email"
           autoFocus={autoFocus}
           value={email}

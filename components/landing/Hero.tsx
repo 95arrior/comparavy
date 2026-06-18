@@ -8,7 +8,17 @@ import Reveal from "@/components/Reveal";
 // 새 랜딩 — 히어로 섹션(1단계). 토스식: 절제된 모션·충분한 여백·#1D75F7·Pretendard.
 // 진짜 제품(DemoStream)을 비주얼로. 데스크탑 2열 / 모바일 스택 + 하단 고정 CTA.
 export default function Hero() {
-  const toForm = () => document.getElementById("signup")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  // 버튼 클릭 → 신청 인풋에 포커스(모바일 키보드까지) + 부드럽게 스크롤.
+  // iOS는 키보드가 뜨려면 클릭 제스처 안에서 동기적으로 focus 해야 함.
+  const toForm = () => {
+    const input = document.getElementById("hero-email") as HTMLInputElement | null;
+    if (input) {
+      input.focus({ preventScroll: true });
+      input.scrollIntoView({ behavior: "smooth", block: "center" });
+    } else {
+      document.getElementById("signup")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
 
   return (
     <div className="min-h-[100dvh] overflow-x-hidden bg-white text-neutral-900 antialiased">
@@ -23,9 +33,9 @@ export default function Hero() {
       {/* 히어로 */}
       <section className="mx-auto grid max-w-6xl gap-12 overflow-x-hidden px-5 pb-40 pt-8 sm:px-8 sm:pb-20 sm:pt-16 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:gap-16 lg:pb-24 lg:pt-20">
         {/* 카피 (모바일: 제목·부제·신청폼) */}
-        <Reveal className="min-w-0 text-center lg:text-left">
+        <Reveal className="text-center lg:text-left">
           <p className="text-sm font-semibold tracking-tight text-[#1D75F7]">워드프레스 블로그 글쓰기</p>
-          <h1 className="font-pretendard mt-3 text-[clamp(30px,9vw,46px)] font-bold leading-[1.14] tracking-tight sm:whitespace-nowrap sm:text-[clamp(22px,7.4vw,56px)]">
+          <h1 className="font-pretendard mt-3 text-[clamp(36px,11.5vw,58px)] font-bold leading-[1.12] tracking-tight sm:whitespace-nowrap sm:text-[clamp(22px,7.4vw,56px)]">
             똑똑한<br className="sm:hidden" />사장님들의 선택
           </h1>
           <p className="mx-auto mt-5 max-w-md text-[15px] leading-relaxed text-neutral-500 sm:text-lg lg:mx-0">
@@ -38,7 +48,7 @@ export default function Hero() {
           </p>
 
           <div id="signup" className="mt-9 scroll-mt-24 lg:max-w-md">
-            <WaitlistForm source="hero" />
+            <WaitlistForm source="hero" inputId="hero-email" />
           </div>
         </Reveal>
 
