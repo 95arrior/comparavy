@@ -39,8 +39,9 @@ function Marquee({ items, dir, speed }: { items: string[]; dir: "left" | "right"
       className="overflow-hidden"
       style={{ maskImage: "linear-gradient(to right, transparent, #000 7%, #000 93%, transparent)", WebkitMaskImage: "linear-gradient(to right, transparent, #000 7%, #000 93%, transparent)" }}
     >
+      {/* 4배 복제 → 반복 단위(2세트)가 화면 너비보다 넓어 -50% 지점에 빈 공간이 안 생김 = 끊김 없음 */}
       <div className={`ateflo-mq ${dir === "left" ? "ateflo-mq-left" : "ateflo-mq-right"}`} style={{ animationDuration: `${speed}s` }}>
-        {[...items, ...items].map((t, i) => <Chip key={i} text={t} />)}
+        {[...items, ...items, ...items, ...items].map((t, i) => <Chip key={i} text={t} />)}
       </div>
     </div>
   );
