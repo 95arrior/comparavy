@@ -6,7 +6,7 @@ export default function Brand({ size = 22, light = false }: { pro?: boolean; siz
   return (
     /* eslint-disable-next-line @next/next/no-img-element */
     <img
-      src={light ? "/ateflo-logo-white.png" : "/ateflo-logo.png"}
+      src={light ? "/ateflo-logo-white.png?v=2" : "/ateflo-logo.png?v=2"}
       alt={SITE_NAME}
       height={size}
       className="block w-auto max-w-full shrink-0"

@@ -12,7 +12,7 @@ export default function AteFloLogo({
   return (
     /* eslint-disable-next-line @next/next/no-img-element */
     <img
-      src="/ateflo-mark.png"
+      src="/ateflo-mark.png?v=2"
       alt="AteFlo"
       width={size}
       height={size}

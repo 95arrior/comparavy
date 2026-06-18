@@ -47,7 +47,7 @@ export default function ProCelebration() {
 
         {/* 새 로고 마크(정적, 팝 등장) */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/ateflo-mark.png" alt="AteFlo" width={92} height={92} className="ateflo-pop relative" style={{ width: 92, height: 92, objectFit: "contain" }} />
+        <img src="/ateflo-mark.png?v=2" alt="AteFlo" width={92} height={92} className="ateflo-pop relative" style={{ width: 92, height: 92, objectFit: "contain" }} />
       </div>
 
       <h1 className="mt-7 text-2xl font-bold tracking-tight">프로 멤버십 시작! 🎉</h1>
