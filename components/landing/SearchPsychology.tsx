@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 // [3] 검색 심리 — 자동 시연: 카테고리(업종) 선택 → 추천 글감 칩이 펼쳐지며 3줄로 흐름(loop).
 // 검색 엔진 오해 방지를 위해 검색창/타이핑 없음. 우리는 '글감'을 추천하는 서비스.
 
-type Phase = "idle" | "spread" | "select" | "collapse" | "results";
+type Phase = "idle" | "spread" | "select" | "collapse" | "sub" | "strength" | "results";
 type Kw = { t: string; golden?: boolean };
 
 // 실제 업종 카테고리(온보딩과 동일) + 숨고st 아이콘
@@ -64,26 +64,26 @@ export default function SearchPsychology() {
     let cancelled = false;
     let running = false;
     const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
-    async function runLoop() {
+    async function run() {
       if (running) return;
       running = true;
-      // 펼침 → 병의원 선택(샤인) → 나머지 중앙으로 모이며 사라짐(병의원만) → 글감 칩 → 반복
-      while (!cancelled) {
-        setSelected(null); setPhase("idle");
-        await sleep(90); if (cancelled) return;
-        setPhase("spread"); await sleep(1150); if (cancelled) return;
-        setSelected("medical"); setPhase("select"); await sleep(1150); if (cancelled) return;
-        setPhase("collapse"); await sleep(950); if (cancelled) return;
-        setPhase("results"); await sleep(6500); if (cancelled) return;
-      }
+      // 펼침 → 병의원 선택(클릭+샤인) → 나머지 모이며 사라짐 → 치과 → 강점 → 글감(유지, 반복 X)
+      setPhase("spread"); await sleep(1150); if (cancelled) return;
+      setSelected("medical"); setPhase("select"); await sleep(1050); if (cancelled) return;
+      setPhase("collapse"); await sleep(900); if (cancelled) return;
+      setPhase("sub"); await sleep(850); if (cancelled) return;
+      setPhase("strength"); await sleep(1150); if (cancelled) return;
+      setPhase("results"); // 그대로 유지(마퀴는 CSS로 계속 흐름)
     }
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) runLoop(); }, { threshold: 0.12 });
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) run(); }, { threshold: 0.12 });
     io.observe(el);
     return () => { cancelled = true; io.disconnect(); };
   }, []);
 
   const shown = phase !== "idle";
-  const collapsed = phase === "collapse" || phase === "results";
+  const collapsed = phase === "collapse" || phase === "sub" || phase === "strength" || phase === "results";
+  const showSub = phase === "sub" || phase === "strength" || phase === "results";
+  const showStrength = phase === "strength" || phase === "results";
 
   return (
     <section ref={ref} className="overflow-x-hidden bg-neutral-50/60 py-24 sm:py-32">
@@ -109,7 +109,7 @@ export default function SearchPsychology() {
               key={c.v}
               className={`relative mx-1.5 inline-flex items-center gap-2 overflow-hidden whitespace-nowrap rounded-full border px-4 py-2.5 text-sm font-medium transition-all duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
                 sel ? "border-[#1D75F7] bg-[#1D75F7] text-white shadow-[0_8px_20px_-6px_rgba(29,117,247,0.45)]" : "border-neutral-200 bg-white text-neutral-500"
-              } ${on && phase === "select" ? "ateflo-shine" : ""}`}
+              } ${on && phase === "select" ? "ateflo-shine ateflo-tap" : ""}`}
               style={{
                 transitionDelay: phase === "spread" ? `${Math.abs(center - idx) * 70}ms` : "0ms",
                 transform: shown ? "translateX(0) scale(1)" : `translateX(${offset}px) scale(0.7)`,
@@ -128,8 +128,14 @@ export default function SearchPsychology() {
         })}
       </div>
 
-      {/* 추천 글감 — 칩이 펼쳐지며 3줄로 흐름 */}
-      <div className={`mt-12 space-y-3 transition-all duration-700 ${phase === "results" ? "scale-100 opacity-100" : "scale-95 opacity-0"}`}>
+      {/* 세부(치과) + 강점(임플란트 맛집) — 병의원만 남은 뒤 순차 등장 */}
+      <div className="mx-auto mt-4 flex max-w-2xl flex-wrap items-center justify-center gap-2 px-6 text-sm">
+        <span className={`rounded-full bg-[#1D75F7]/10 px-3 py-1 font-medium text-[#1D75F7] transition-all duration-500 ${showSub ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-1 opacity-0"}`}>치과</span>
+        <span className={`text-neutral-400 transition-all duration-500 ${showStrength ? "opacity-100" : "opacity-0"}`}>강점 <b className="font-semibold text-neutral-700">‘임플란트 맛집’</b></span>
+      </div>
+
+      {/* 추천 글감 — 3줄로 흐름(등장 후 그대로 유지) */}
+      <div className={`mt-10 space-y-3 transition-opacity duration-700 ${phase === "results" ? "opacity-100" : "pointer-events-none opacity-0"}`}>
         <Marquee items={ROW1} dir="right" speed={40} />
         <Marquee items={ROW2} dir="left" speed={36} />
         <Marquee items={ROW3} dir="right" speed={44} />
