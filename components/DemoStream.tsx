@@ -35,8 +35,23 @@ export default function DemoStream() {
 
   useEffect(() => {
     let cancelled = false;
+    let raf = 0;
     const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
     const follow = () => { const el = scrollRef.current; if (el) el.scrollTop = el.scrollHeight; };
+    const slowScroll = () => {
+      const el = scrollRef.current; if (!el) return;
+      const start = el.scrollTop, dist = (el.scrollHeight - el.clientHeight) - start;
+      if (dist <= 0) return;
+      let t0 = 0;
+      const step = (t: number) => {
+        if (cancelled) return;
+        if (!t0) t0 = t;
+        const p = Math.min(1, (t - t0) / 950);
+        el.scrollTop = start + dist * (1 - Math.pow(1 - p, 3)); // easeOutCubic
+        if (p < 1) raf = requestAnimationFrame(step);
+      };
+      raf = requestAnimationFrame(step);
+    };
     async function typeBlock(idx: number, text: string, onProgress?: (i: number, len: number) => void) {
       for (let i = 1; i <= text.length; i++) {
         if (cancelled) return;
@@ -57,24 +72,25 @@ export default function DemoStream() {
             setStatus("image");
             setImgStage("btn"); follow(); await sleep(700);     // 이미지 추가 버튼 등장
             setImgStage("shown"); await sleep(40); follow(); await sleep(700); // 클릭 → 이미지 삽입
-          } else if (b.tag === "promo") {
-            setStatus("writing");
-            // ★ 마지막 글(가게 연결)을 '쓰는 도중'에 업체 박스+지도가 같이 올라옴 (끝에 따로 X)
-            await typeBlock(idx, b.text!, (i, len) => { if (i === Math.floor(len * 0.3)) setShowBox(true); });
           } else {
             setStatus("writing");
-            await typeBlock(idx, b.text!);
+            await typeBlock(idx, b.text!);   // 타이핑하며 천천히 따라 올라감
             await sleep(b.tag === "title" ? 240 : b.tag === "h3" ? 180 : 120);
           }
         }
         if (cancelled) return;
+        // ★ 글 다 쓰면 → 쓰윽 부드럽게 스크롤 올리며 업체 박스+지도 싹 붙음
+        await sleep(450);
+        setShowBox(true);
+        await sleep(170);             // 박스/지도 렌더 대기(렌더 전 스크롤하면 못 내려감)
+        if (cancelled) return;
         setStatus("done");
-        follow();
+        slowScroll();
         await sleep(4400);
       }
     }
     run();
-    return () => { cancelled = true; };
+    return () => { cancelled = true; cancelAnimationFrame(raf); };
   }, []);
 
   const cursor = <span className="ml-0.5 inline-block animate-pulse text-neutral-400">▍</span>;
@@ -123,7 +139,7 @@ export default function DemoStream() {
               return (
                 <div key={idx} className="ateflo-box-in mt-3 overflow-hidden rounded-xl border border-neutral-100 bg-neutral-50">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/demo-class.png" alt="영어 수업 일러스트" className="block w-full" />
+                  <img src="/demo-class.png" alt="영어 수업 일러스트" className="mx-auto block max-h-[170px] w-full object-cover object-center" />
                 </div>
               );
             }
