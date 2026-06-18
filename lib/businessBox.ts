@@ -24,6 +24,33 @@ function esc(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+// 한국 전화번호 자동 하이픈. 이미 하이픈이 있으면 원본 유지, 인식 못 하면 원본 그대로(graceful).
+// 핵심: 02(서울)만 지역번호 2자리, 나머지는 3자리. 국번 3/4자리는 전체 자릿수로 판단.
+export function formatKoreanPhone(raw: string): string {
+  const s = raw.trim();
+  if (!s || s.includes("-")) return s; // 이미 포맷됐거나(사장이 하이픈 입력) 빈 값
+  const n = s.replace(/\D/g, "");
+
+  // 대표번호(1588/1577/1899 등) — 8자리, 0으로 시작 안 함 → 4-4
+  if (n.length === 8 && n[0] !== "0") return `${n.slice(0, 4)}-${n.slice(4)}`;
+
+  // 서울 02 — 지역번호 2자리
+  if (n.startsWith("02")) {
+    if (n.length === 10) return `${n.slice(0, 2)}-${n.slice(2, 6)}-${n.slice(6)}`; // 2-4-4
+    if (n.length === 9) return `${n.slice(0, 2)}-${n.slice(2, 5)}-${n.slice(5)}`; // 2-3-4
+    return s; // 자릿수 이상 → 원본
+  }
+
+  // 그 외 0으로 시작(휴대폰 010·070·지역 031 등) — 국번 3자리
+  if (n.startsWith("0")) {
+    if (n.length === 11) return `${n.slice(0, 3)}-${n.slice(3, 7)}-${n.slice(7)}`; // 3-4-4
+    if (n.length === 10) return `${n.slice(0, 3)}-${n.slice(3, 6)}-${n.slice(6)}`; // 3-3-4
+    return s; // 자릿수 이상 → 원본
+  }
+
+  return s; // 인식 불가 → 원본 그대로
+}
+
 const WEEKDAYS: DayKey[] = ["mon", "tue", "wed", "thu", "fri"];
 const WEEKEND: DayKey[] = ["sat", "sun"];
 
@@ -108,11 +135,12 @@ export function buildBusinessBox(b: BusinessInfo): string {
     ? lines.map((l) => (l.note ? `${l.main} (${l.note})` : l.main)).join(" · ")
     : hoursText;
 
-  // 항목 = "굵은 라벨: 값" 한 줄. 전화 값은 tel: 링크(탭하면 전화).
+  // 항목 = "굵은 라벨: 값" 한 줄. 전화는 자동 하이픈 + tel: 링크(탭하면 전화).
   const telHref = phone.replace(/[^0-9+]/g, "");
+  const phoneDisplay = formatKoreanPhone(phone);
   const lis: string[] = [];
   if (address) lis.push(`<strong>주소:</strong> ${esc(address)}`);
-  if (phone) lis.push(`<strong>전화:</strong> <a href="tel:${esc(telHref)}">${esc(phone)}</a>`);
+  if (phone) lis.push(`<strong>전화:</strong> <a href="tel:${esc(telHref)}">${esc(phoneDisplay)}</a>`);
   if (hoursStr) lis.push(`<strong>영업시간:</strong> ${esc(hoursStr)}`);
 
   // 상호도 없고 항목도 없으면 카드 자체를 만들지 않음(graceful).
