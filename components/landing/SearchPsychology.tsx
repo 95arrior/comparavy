@@ -80,7 +80,8 @@ export default function SearchPsychology() {
       setPhase("strength"); await sleep(1150); if (cancelled) return;
       setPhase("results"); // 그대로 유지(마퀴는 CSS로 계속 흐름)
     }
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) run(); }, { threshold: 0.12 });
+    // 섹션이 화면 중앙 띠에 오면 시퀀스 시작
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) run(); }, { rootMargin: "-40% 0px -40% 0px", threshold: 0 });
     io.observe(el);
     return () => { cancelled = true; io.disconnect(); };
   }, []);
