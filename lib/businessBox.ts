@@ -95,24 +95,6 @@ function hoursLines(h: WeeklyHours): HourLine[] {
   return out;
 }
 
-// 항목 한 줄 = 라벨 <p> + 값 <p>(여럿 가능, note는 작은 회색 <p>). first가 아니면 라벨에 윗 구분선.
-// 모두 블록 <p> + 인라인 스타일 → 목차와 동일한 '생존 구조'.
-function itemBlock(label: string, entries: HourLine[], first: boolean): string {
-  const labelStyle = first
-    ? "margin:18px 0 6px;font-size:11px;font-weight:600;color:#ADB2BA"
-    : "margin:16px 0 6px;padding-top:16px;border-top:1px solid #F4F5F7;font-size:11px;font-weight:600;color:#ADB2BA";
-  let html = `<p style="${labelStyle}">${esc(label)}</p>`;
-  entries.forEach((e, i) => {
-    const vStyle =
-      (i === 0 ? "margin:0;" : "margin:8px 0 0;") + "font-size:14.5px;font-weight:600;color:#1A1D21";
-    html += `<p style="${vStyle}">${esc(e.main)}</p>`;
-    if (e.note) {
-      html += `<p style="margin:2px 0 0;font-size:12.5px;font-weight:500;color:#8A909A">${esc(e.note)}</p>`;
-    }
-  });
-  return html;
-}
-
 export function buildBusinessBox(b: BusinessInfo): string {
   const name = (b.name ?? "").trim();
   const address = (b.address ?? "").trim();
@@ -121,43 +103,41 @@ export function buildBusinessBox(b: BusinessInfo): string {
   const subtitle = (b.subtitle ?? "").trim();
   const lines = b.hoursJson ? hoursLines(b.hoursJson) : [];
 
-  // 항목(주소/전화/영업시간) — 순서대로, 첫 항목만 구분선 없음.
-  const items: Array<{ label: string; entries: HourLine[] }> = [];
-  if (address) items.push({ label: "주소", entries: [{ main: address, note: "" }] });
-  if (phone) items.push({ label: "전화", entries: [{ main: phone, note: "" }] });
-  if (lines.length) items.push({ label: "영업시간", entries: lines });
-  else if (hoursText) items.push({ label: "영업시간", entries: [{ main: hoursText, note: "" }] });
+  // 영업시간 → 한 줄로 압축(평일/주말 묶기 유지, 점심은 괄호, 라인은 ' · '로 연결).
+  const hoursStr = lines.length
+    ? lines.map((l) => (l.note ? `${l.main} (${l.note})` : l.main)).join(" · ")
+    : hoursText;
+
+  // 리스트 항목(주소/전화/영업시간). 라벨은 <strong>(안전 태그). 전화는 tel: 링크.
+  const telHref = phone.replace(/[^0-9+]/g, "");
+  const lis: string[] = [];
+  if (address) lis.push(`<strong>주소</strong> ${esc(address)}`);
+  if (phone) lis.push(`<strong>전화</strong> <a href="tel:${esc(telHref)}">${esc(phone)}</a>`);
+  if (hoursStr) lis.push(`<strong>영업시간</strong> ${esc(hoursStr)}`);
 
   // 상호도 없고 항목도 없으면 카드 자체를 만들지 않음(graceful).
-  if (!name && items.length === 0) return "";
+  if (!name && lis.length === 0) return "";
 
   const heading = name ? esc(name) : "업체 안내";
-  const headingP = `<p style="margin:0;font-size:19px;font-weight:700;color:#111316">${heading}</p>`;
-  const subP = subtitle
-    ? `<p style="margin:4px 0 0;font-size:12.5px;font-weight:500;color:#9CA3AF">${esc(subtitle)}</p>`
+
+  // ★ 구조: 목차(ateflo-toc) div와 '동일 패턴' — div+class + 굵은 상호 <p> + <ul>/<li>.
+  //   이 사이트의 콘텐츠 정리 변환이 본문에서 목차 div만은 원본 그대로 보존(실측 확인)하므로,
+  //   같은 구조로 만들어 박스도 깨지지 않게 한다. 모두 인라인 안전 스타일.
+  let head = `<p style="margin:0 0 ${subtitle ? "2px" : "8px"};font-weight:700">${heading}</p>`;
+  if (subtitle) head += `<p style="margin:0 0 8px;color:#888888">${esc(subtitle)}</p>`;
+
+  const ul = lis.length
+    ? `<ul style="margin:0;padding-left:1.1em">` +
+      lis
+        .map((c, i) => `<li style="margin:0 0 ${i === lis.length - 1 ? "0" : "5px"}">${c}</li>`)
+        .join("") +
+      `</ul>`
     : "";
 
-  const itemsHtml = items.map((it, i) => itemBlock(it.label, it.entries, i === 0)).join("");
-
-  // 하단 CTA — 전화가 있을 때만. 알약 스타일은 <p>에 싣고, <a>는 색/굵기만.
-  // display 불가라 <a>를 풀폭 블록으로 못 만들어, <p> 자체를 가운데정렬 알약으로 쓴다.
-  const telHref = phone.replace(/[^0-9+]/g, "");
-  const cta = phone
-    ? `<p style="margin:22px 0 0;background:#F2F4F6;border:1px solid #E2E6EA;border-radius:12px;padding:13px;text-align:center">` +
-      `<a href="tel:${esc(telHref)}" style="color:#16181D;font-size:14.5px;font-weight:600;text-decoration:none">전화 문의하기</a>` +
-      `</p>`
-    : "";
-
-  const card =
-    `<div class="ateflo-bizcard" style="background:#FFFFFF;border:1px solid #E5E8EB;border-radius:18px;padding:24px;margin:32px 0">` +
-    headingP +
-    subP +
-    itemsHtml +
-    cta +
-    `</div>`;
-
-  // ★ Custom HTML 블록으로 감싼다. 일부 사이트가 본문을 Gutenberg 블록으로 정규화하면서
-  //   인라인 스타일 div를 <p><strong>으로 뭉개는데(실측 확인), wp:html 블록은 그 정규화를
-  //   건너뛰고 내부 HTML을 '원본 그대로' 렌더한다(사용자 정의 HTML 블록과 동일). 권한·테마 무관.
-  return `\n<!-- wp:html -->\n${card}\n<!-- /wp:html -->\n`;
+  return (
+    `\n<div class="ateflo-bizcard" style="border:1px solid #E5E8EB;border-radius:14px;padding:16px 18px;margin:32px 0">` +
+    head +
+    ul +
+    `</div>`
+  );
 }
