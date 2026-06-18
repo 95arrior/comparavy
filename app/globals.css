@@ -248,13 +248,12 @@ html {
 @keyframes ateflo-soft-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
 .ateflo-soft-in { animation: ateflo-soft-in 0.62s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
-/* 도미노 팝(단어가 하나씩 튀며 등장) */
+/* 도미노 팝(단어가 하나씩 살짝 튀며 부드럽게 등장) */
 @keyframes ateflo-domino {
-  0% { opacity: 0; transform: translateY(16px) scale(0.8); }
-  60% { opacity: 1; transform: translateY(-4px) scale(1.08); }
+  0% { opacity: 0; transform: translateY(10px) scale(0.94); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
-.ateflo-domino { display: inline-block; animation: ateflo-domino 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.ateflo-domino { display: inline-block; animation: ateflo-domino 0.48s cubic-bezier(0.34, 1.28, 0.64, 1) both; }
 
 /* 끝에 AI 로고 빛나며 등장 */
 @keyframes ateflo-logo-glow {

@@ -34,19 +34,18 @@ export default function SolutionLine() {
         {WORDS.map((w, i) => (
           <span
             key={i}
-            className={`${w.c} ${go ? "ateflo-domino" : "inline-block opacity-0"}`}
+            className={`${w.c} ${i < WORDS.length - 1 ? "mr-[0.26em]" : ""} ${go ? "ateflo-domino" : "inline-block opacity-0"}`}
             style={go ? { animationDelay: `${i * 0.14}s` } : undefined}
           >
             {w.t}
-            {i < WORDS.length - 1 ? " " : ""}
           </span>
         ))}
         <span
-          className={`ml-1.5 inline-flex align-middle ${go ? "ateflo-domino" : "opacity-0"}`}
+          className={`ml-2 inline-flex translate-y-[0.06em] align-middle ${go ? "ateflo-domino" : "opacity-0"}`}
           style={go ? { animationDelay: `${starDelay}s` } : undefined}
         >
-          <span className="ateflo-holo ateflo-twinkle text-[0.55em] leading-none">✦</span>
-          <span className="ateflo-holo ateflo-twinkle text-[0.42em] leading-none" style={{ animationDelay: "0.55s" }}>✦</span>
+          <span className="ateflo-holo ateflo-twinkle text-[0.5em] leading-none">✦</span>
+          <span className="ateflo-holo ateflo-twinkle text-[0.38em] leading-none" style={{ animationDelay: "0.55s" }}>✦</span>
         </span>
       </p>
       <p
