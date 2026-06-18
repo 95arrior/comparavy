@@ -11,29 +11,45 @@ const QUERY = "손님이 무엇을, 왜 검색하는지부터 찾아요";
 const CATS = ["카페", "병원", "학원", "미용실"];
 
 // 병원 + 지역 기반 정보성 키워드 (의료법: 1위/최고/보장 표현 X)
-const ROW1 = ["임플란트 가격", "청주 임플란트", "사랑니 발치 후 주의사항", "스케일링 주기", "충치 초기 증상"];
-const ROW2 = ["청주 치과 추천", "치아 미백 방법", "용암동 치과", "교정 치료 기간", "잇몸 붓는 이유"];
-const ROW3 = ["어린이 치과 시기", "청주 치과", "임플란트 종류", "사랑니 꼭 빼야 하나", "신경치료 통증"];
+type Kw = { t: string; golden?: boolean };
 
-function Stars({ sm }: { sm?: boolean }) {
+// 병원 + 강남(지역) 정보성 키워드. golden = 강남 지역 기반(금빛). (의료법: 1위/최고/보장 X)
+const ROW1: Kw[] = [
+  { t: "임플란트 가격" }, { t: "강남 임플란트", golden: true }, { t: "사랑니 발치 후 주의사항" }, { t: "스케일링 주기" }, { t: "충치 초기 증상" },
+];
+const ROW2: Kw[] = [
+  { t: "강남 치과 추천", golden: true }, { t: "치아 미백 방법" }, { t: "강남역 치과", golden: true }, { t: "교정 치료 기간" }, { t: "잇몸 붓는 이유" },
+];
+const ROW3: Kw[] = [
+  { t: "어린이 치과 시기" }, { t: "강남 치과", golden: true }, { t: "임플란트 종류" }, { t: "사랑니 꼭 빼야 하나" }, { t: "신경치료 통증" },
+];
+
+// AI 별 — 작은 별 + 큰 별이 살짝 겹쳐(포개져) 입체적으로, 은은한 트윙클. 색은 칩 글자색 상속.
+function Stars() {
   return (
-    <span className="ml-1 inline-flex shrink-0">
-      <span className={`ateflo-holo ateflo-twinkle leading-none ${sm ? "text-[0.7em]" : "text-[0.75em]"}`}>✦</span>
-      <span className={`ateflo-holo ateflo-twinkle leading-none ${sm ? "text-[0.55em]" : "text-[0.58em]"}`} style={{ animationDelay: "0.5s" }}>✦</span>
+    <span className="relative ml-1.5 inline-flex items-center leading-none">
+      <span className="ateflo-twinkle-soft text-[0.62em]">✦</span>
+      <span className="ateflo-twinkle-soft -ml-[0.22em] text-[0.95em]" style={{ animationDelay: "0.5s" }}>✦</span>
     </span>
   );
 }
 
-function Chip({ text }: { text: string }) {
+function Chip({ item }: { item: Kw }) {
   return (
-    <span className="mx-1.5 inline-flex shrink-0 items-center whitespace-nowrap rounded-full border border-[#1D75F7]/15 bg-[#1D75F7]/[0.05] px-4 py-2 text-sm font-medium text-[#1D75F7]">
-      {text}
+    <span
+      className={`mx-1.5 inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-4 py-2 text-sm ${
+        item.golden
+          ? "bg-gradient-to-b from-[#fcd968] to-[#e3a522] font-semibold text-[#5a3c00] shadow-[0_6px_18px_-6px_rgba(227,165,34,0.65)]"
+          : "bg-gradient-to-b from-[#2a66ea] to-[#1640a6] font-medium text-white shadow-[0_6px_16px_-6px_rgba(22,64,166,0.55)]"
+      }`}
+    >
+      {item.t}
       <Stars />
     </span>
   );
 }
 
-function Marquee({ items, dir, speed }: { items: string[]; dir: "left" | "right"; speed: number }) {
+function Marquee({ items, dir, speed }: { items: Kw[]; dir: "left" | "right"; speed: number }) {
   return (
     <div
       className="overflow-hidden"
@@ -41,7 +57,7 @@ function Marquee({ items, dir, speed }: { items: string[]; dir: "left" | "right"
     >
       {/* 4배 복제 → 반복 단위(2세트)가 화면 너비보다 넓어 -50% 지점에 빈 공간이 안 생김 = 끊김 없음 */}
       <div className={`ateflo-mq ${dir === "left" ? "ateflo-mq-left" : "ateflo-mq-right"}`} style={{ animationDuration: `${speed}s` }}>
-        {[...items, ...items, ...items, ...items].map((t, i) => <Chip key={i} text={t} />)}
+        {[...items, ...items, ...items, ...items].map((it, i) => <Chip key={i} item={it} />)}
       </div>
     </div>
   );
