@@ -7,7 +7,7 @@ export default function SiteFooter({ pro = false }: { pro?: boolean }) {
     <footer className="border-t border-neutral-200/70">
       <div className="mx-auto flex max-w-5xl flex-col gap-4 px-6 py-10 text-sm text-neutral-500 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-1.5">
-          <Brand pro={pro} />
+          <Brand pro={pro} size={18} />
           <p className="text-xs leading-relaxed text-neutral-400">
             에이트플로(AteFlo) — 키워드 하나로 검색에 걸리는 워드프레스 글을 써주는 AI 글쓰기 서비스
           </p>
