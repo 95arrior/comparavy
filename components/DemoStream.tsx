@@ -124,7 +124,7 @@ export default function DemoStream() {
         <div
           ref={scrollRef}
           onScroll={(e) => setScrolled((e.target as HTMLDivElement).scrollTop > 6)}
-          className="ateflo-demo-scroll h-[360px] overflow-y-auto rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6"
+          className="ateflo-demo-scroll h-[50vh] min-h-[300px] overflow-y-auto rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm sm:h-[380px] sm:p-6"
         >
           {typed.length === 0 && imgStage === "none" && <p className="text-sm text-neutral-300">글을 구상하고 있어요…</p>}
 
@@ -163,8 +163,8 @@ export default function DemoStream() {
               <p className="text-[15px] font-bold text-neutral-900">에이트플로 영어학원</p>
               <p className="mt-0.5 text-xs text-neutral-400">영어학원 · 초등~중등</p>
               <div className="mt-3 space-y-1.5 text-[13px] text-neutral-700">
-                <p><span className="font-semibold">주소</span> 서울 강남구 테헤란로 123</p>
-                <p><span className="font-semibold">전화</span> <span className="text-[#1D75F7]">02-1234-5678</span></p>
+                <p><span className="font-semibold">주소</span> 서울 강남구 역삼동 000-00</p>
+                <p><span className="font-semibold">전화</span> <span className="text-[#1D75F7]">070-8983-9559</span></p>
                 <p><span className="font-semibold">영업시간</span> 평일 14:00–22:00 · 주말 휴무</p>
               </div>
               <div
@@ -192,7 +192,7 @@ export default function DemoStream() {
       </div>
 
       <p className="mt-2.5 text-center text-xs leading-relaxed text-neutral-400">
-        정보 글이 끝에서 자연스럽게 <span className="font-medium text-neutral-500">내 가게로 연결</span>되고, <span className="font-medium text-neutral-500">업체 정보·지도</span>까지 자동으로 붙어요
+        정보 글에서 자연스럽게 <span className="font-medium text-neutral-500">가게 홍보글로 연결</span>. <span className="font-medium text-neutral-500">업체 정보·지도</span>까지 자동으로 붙어요
       </p>
     </div>
   );

@@ -22,14 +22,11 @@ export default function Hero() {
 
       {/* 히어로 */}
       <section className="mx-auto grid max-w-6xl gap-12 px-5 pb-32 pt-8 sm:px-8 sm:pt-16 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:gap-16 lg:pb-24 lg:pt-20">
-        {/* 카피 */}
-        <Reveal className="text-center lg:text-left">
+        {/* 카피 — 모바일에선 데모 아래로(order-2) */}
+        <Reveal className="order-2 text-center lg:order-1 lg:text-left">
           <p className="text-sm font-semibold tracking-tight text-[#1D75F7]">워드프레스 블로그 글쓰기</p>
-          <h1
-            className="font-pretendard mt-3 whitespace-nowrap font-bold leading-[1.12] tracking-tight"
-            style={{ fontSize: "clamp(22px, 7.4vw, 56px)" }}
-          >
-            똑똑한 사장님들의 선택
+          <h1 className="font-pretendard mt-3 text-[clamp(30px,9vw,46px)] font-bold leading-[1.14] tracking-tight sm:whitespace-nowrap sm:text-[clamp(22px,7.4vw,56px)]">
+            똑똑한<br className="sm:hidden" />사장님들의 선택
           </h1>
           <p className="mx-auto mt-5 max-w-md text-[15px] leading-relaxed text-neutral-500 sm:text-lg lg:mx-0">
             24시간 일하는 직원이 필요하신가요?<br />
@@ -45,8 +42,8 @@ export default function Hero() {
           </div>
         </Reveal>
 
-        {/* 진짜 제품 데모 */}
-        <Reveal delay={120} className="lg:pl-4">
+        {/* 진짜 제품 데모 — 모바일에선 맨 먼저(order-1) */}
+        <Reveal delay={120} className="order-1 lg:order-2 lg:pl-4">
           <DemoStream />
         </Reveal>
       </section>
