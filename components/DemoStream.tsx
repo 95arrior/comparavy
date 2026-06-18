@@ -76,7 +76,10 @@ export default function DemoStream() {
         }
         if (cancelled) return;
         await sleep(1500);            // 글(마무리) 다 써진 뒤 1.5초
-        setShowBox(true); slowScroll(); // 업체 박스 + 지도 천천히
+        setShowBox(true);             // 업체 박스 + 지도 등장
+        await sleep(160);             // DOM 렌더 대기(렌더 전 스크롤하면 지도까지 못 내려감)
+        if (cancelled) return;
+        slowScroll();                 // 현재(글 바닥) → 지도까지 천천히 스크롤
         await sleep(4600);
       }
     }
@@ -95,7 +98,7 @@ export default function DemoStream() {
         <div
           ref={scrollRef}
           onScroll={(e) => setScrolled((e.target as HTMLDivElement).scrollTop > 6)}
-          className="ateflo-demo-scroll h-[440px] overflow-y-auto rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6"
+          className="ateflo-demo-scroll h-[360px] overflow-y-auto rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6"
         >
           {typed.length === 0 && imgStage === "none" && <p className="text-sm text-neutral-300">글을 구상하고 있어요…</p>}
 
