@@ -1,4 +1,5 @@
 import Reveal from "@/components/Reveal";
+import SolutionLine from "@/components/landing/SolutionLine";
 
 // [2] 문제 공감 — 토스톤: 짧은 호흡·여백. 고민 3개(공감) → "그래서 다 해드려요"(전환).
 const CONCERNS: { text: string; icon: React.ReactNode }[] = [
@@ -38,16 +39,7 @@ export default function Problem() {
         ))}
       </div>
 
-      <Reveal delay={520}>
-        <div className="mt-16 sm:mt-20">
-          <p className="font-pretendard text-[1.7rem] font-bold leading-snug tracking-tight sm:text-[2rem]">
-            그래서 <span className="text-[#1D75F7]">다 해드려요.</span>
-          </p>
-          <p className="mt-3 text-[15px] leading-relaxed text-neutral-500 sm:text-lg">
-            오래가는 블로그 운영, 곁에서 도울게요.
-          </p>
-        </div>
-      </Reveal>
+      <SolutionLine />
     </section>
   );
 }
