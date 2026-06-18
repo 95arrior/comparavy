@@ -57,28 +57,28 @@ export default function SearchPsychology() {
     const el = ref.current;
     if (!el) return;
     let cancelled = false;
-    let started = false;
+    let running = false;
     const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
-    const io = new IntersectionObserver(
-      async ([e]) => {
-        if (!e.isIntersecting || started) return;
-        started = true;
-        io.disconnect();
-        setPhase("category"); await sleep(950);
-        if (cancelled) return;
-        setSelected(true); await sleep(800);
-        if (cancelled) return;
-        setPhase("expand"); await sleep(720);
-        if (cancelled) return;
+    async function runLoop() {
+      if (running) return;
+      running = true;
+      // 타이핑 → 검색 → 칩 흐름 → 반복
+      while (!cancelled) {
+        setSelected(false); setTyped(""); setPressed(false); setPhase("category");
+        await sleep(900); if (cancelled) return;
+        setSelected(true); await sleep(800); if (cancelled) return;
+        setPhase("expand"); await sleep(720); if (cancelled) return;
         setPhase("typing");
         for (let i = 1; i <= QUERY.length; i++) { if (cancelled) return; setTyped(QUERY.slice(0, i)); await sleep(46); }
-        await sleep(420);
-        if (cancelled) return;
-        setPressed(true); setPhase("search"); await sleep(560);
-        if (cancelled) return;
+        await sleep(420); if (cancelled) return;
+        setPressed(true); setPhase("search"); await sleep(560); if (cancelled) return;
         setPhase("results");
-      },
-      { rootMargin: "-20% 0px -20% 0px", threshold: 0 },
+        await sleep(6500); if (cancelled) return; // 칩 흐르는 모습 충분히 보여준 뒤 다시
+      }
+    }
+    const io = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) runLoop(); },
+      { threshold: 0.12 },
     );
     io.observe(el);
     return () => { cancelled = true; io.disconnect(); };

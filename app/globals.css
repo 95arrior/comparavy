@@ -240,6 +240,13 @@ html {
 @keyframes ateflo-twinkle { 0%, 100% { transform: scale(1); opacity: 0.85; } 50% { transform: scale(1.28); opacity: 1; } }
 .ateflo-twinkle { display: inline-block; animation: ateflo-twinkle 1.9s ease-in-out infinite; }
 
+/* 매직봉 — 살짝 흔들리며 반짝(글로우) */
+@keyframes ateflo-wand {
+  0%, 100% { transform: rotate(0deg) scale(1); filter: drop-shadow(0 0 2px rgba(29, 117, 247, 0.35)); }
+  50% { transform: rotate(-9deg) scale(1.08); filter: drop-shadow(0 0 9px rgba(29, 117, 247, 0.7)); }
+}
+.ateflo-wand { transform-origin: bottom left; animation: ateflo-wand 2.2s ease-in-out infinite; }
+
 /* "···" 생각/작성 중 점 — 은은히 점멸 */
 @keyframes ateflo-dots { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
 .ateflo-dots { animation: ateflo-dots 1.3s ease-in-out infinite; letter-spacing: 1px; }
@@ -267,8 +274,9 @@ html {
 @keyframes ateflo-marquee-left { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @keyframes ateflo-marquee-right { from { transform: translateX(-50%); } to { transform: translateX(0); } }
 .ateflo-mq { display: flex; width: max-content; will-change: transform; }
-.ateflo-mq-left { animation: ateflo-marquee-left linear infinite; }
-.ateflo-mq-right { animation: ateflo-marquee-right linear infinite; }
+/* duration은 인라인 style로 지정 → 단축속성 대신 longhand로 둬야 인라인이 안 묻힘 */
+.ateflo-mq-left { animation-name: ateflo-marquee-left; animation-timing-function: linear; animation-iteration-count: infinite; }
+.ateflo-mq-right { animation-name: ateflo-marquee-right; animation-timing-function: linear; animation-iteration-count: infinite; }
 
 /* 데모 카드 스크롤바 숨김(스크롤은 되되 바는 안 보이게) */
 .ateflo-demo-scroll { scrollbar-width: none; -ms-overflow-style: none; }
