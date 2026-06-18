@@ -89,6 +89,7 @@ export default function DashboardClient(props: DashboardProps) {
   const [welcomeBlog, setWelcomeBlog] = useState<string | null>(null);
   const kwAbort = useRef<AbortController | null>(null);
   const [searchHydrated, setSearchHydrated] = useState(false); // 마지막검색 복원 완료 여부(자동검색 타이밍 게이트)
+  const [profileLoaded, setProfileLoaded] = useState(false); // 프로필 fetch 완료 여부 — 온보딩/메인 깜빡임 방지 가드
   const autoSearched = useRef(false);
   // 백그라운드에서 생성 중인 글(도중 이탈 후 복귀 시 메인에 '생성 중' 카드로 표시)
   const generatingArticle = articles.find((a) => a.status === "generating") ?? null;
@@ -343,7 +344,7 @@ export default function DashboardClient(props: DashboardProps) {
       } catch {
         // 무시 (없으면 빈 상태)
       } finally {
-        if (alive) setSearchHydrated(true);
+        if (alive) { setSearchHydrated(true); setProfileLoaded(true); }
       }
     })();
     return () => { alive = false; kwAbort.current?.abort(); };
@@ -864,7 +865,14 @@ export default function DashboardClient(props: DashboardProps) {
         )}
 
         {/* ── 연구소 (사이드바 '연구소') : 블로그 없으면 온보딩, 있으면 내부 탭으로 도구 전환 ── */}
-        {!page && !selected && !genParams && tab === "lab" && !blogProfile && (
+        {/* 프로필 로딩 중 — 온보딩/메인 깜빡임 방지 가드 (로딩 끝나기 전엔 둘 다 안 보여줌) */}
+        {!page && !selected && !genParams && tab === "lab" && !profileLoaded && (
+          <div className="flex min-h-[300px] items-center justify-center">
+            <span className="h-7 w-7 animate-spin rounded-full border-2 border-neutral-200 border-t-[#3f91ff]" />
+          </div>
+        )}
+
+        {!page && !selected && !genParams && tab === "lab" && profileLoaded && !blogProfile && (
           <div className="ateflo-page-in">
             <Onboarding onSaved={onProfileSaved} />
           </div>
