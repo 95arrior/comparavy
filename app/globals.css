@@ -214,6 +214,38 @@ html {
   to   { opacity: 1; transform: translateY(0); }
 }
 .ateflo-reveal { animation: ateflo-reveal 0.26s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* ── AteFlo 로딩 화면 (AI/토스 감성) — 숨쉬는 로고 + 레이더 펄스 링 + 궤도 파티클 + 스윕 바 ── */
+@keyframes ateflo-load-mark {
+  0%, 100% { transform: scale(1) translateY(0); }
+  50%      { transform: scale(1.09) translateY(-3px); }
+}
+.ateflo-load-mark { animation: ateflo-load-mark 1.6s cubic-bezier(0.45, 0, 0.55, 1) infinite; filter: drop-shadow(0 8px 18px rgba(29, 117, 247, 0.4)); }
+
+@keyframes ateflo-load-ring {
+  0%   { transform: scale(0.55); opacity: 0.55; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+.ateflo-load-ring { position: absolute; inset: 0; border-radius: 9999px; border: 2px solid rgba(29, 117, 247, 0.55); animation: ateflo-load-ring 1.9s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
+
+@keyframes ateflo-load-glow {
+  0%, 100% { opacity: 0.3; transform: scale(0.85); }
+  50%      { opacity: 0.55; transform: scale(1.12); }
+}
+.ateflo-load-glow { position: absolute; inset: 8px; border-radius: 9999px; background: radial-gradient(circle, rgba(29, 117, 247, 0.4), transparent 68%); filter: blur(10px); animation: ateflo-load-glow 1.6s ease-in-out infinite; }
+
+@keyframes ateflo-load-orbit { to { transform: rotate(360deg); } }
+.ateflo-load-orbit { position: absolute; inset: 0; animation: ateflo-load-orbit 2.8s linear infinite; }
+.ateflo-load-orbit i { position: absolute; top: 50%; left: 50%; height: 7px; width: 7px; margin: -3.5px; border-radius: 9999px; background: #1D75F7; }
+.ateflo-load-orbit i:nth-child(1) { transform: rotate(0deg) translateY(-58px); opacity: 1; }
+.ateflo-load-orbit i:nth-child(2) { transform: rotate(120deg) translateY(-58px); opacity: 0.6; }
+.ateflo-load-orbit i:nth-child(3) { transform: rotate(240deg) translateY(-58px); opacity: 0.3; }
+
+@keyframes ateflo-load-bar { 0% { transform: translateX(-120%); } 100% { transform: translateX(320%); } }
+.ateflo-load-bar { display: block; height: 100%; width: 36%; border-radius: 9999px; background: linear-gradient(90deg, transparent, #1D75F7, transparent); animation: ateflo-load-bar 1.15s ease-in-out infinite; }
+
+@keyframes ateflo-load-fadein { from { opacity: 0; } to { opacity: 1; } }
+.ateflo-load-screen { animation: ateflo-load-fadein 0.2s ease-out both; }
 /* 인트로 워드마크 — 로고 등장 뒤 살짝 떠오름 */
 @keyframes ateflo-intro-word {
   from { opacity: 0; transform: translateY(8px); }

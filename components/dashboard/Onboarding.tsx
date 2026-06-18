@@ -6,6 +6,7 @@ import AddressSearch from "./AddressSearch";
 import { VERTICAL_SUBS } from "@/lib/verticalSubs";
 import { ACADEMY_AUDIENCES, AUDIENCE_ALL } from "@/lib/audience";
 import { formatKoreanPhone } from "@/lib/businessBox";
+import LoadingScreen from "@/components/LoadingScreen";
 import type { BlogProfile, WeeklyHours } from "@/lib/blogProfile";
 
 // 토스식 온보딩 — 한 화면 = 한 질문. 옆으로 쓱 전환 + 핵심칸 자동 포커스. 인증 대신 '확인' 화면으로 오타 방지.
@@ -262,6 +263,7 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
           <div className="mx-auto max-w-md">{footer}</div>
         </div>
       )}
+      {saving && <LoadingScreen label="블로그를 준비하고 있어요" />}
     </div>
   );
 }

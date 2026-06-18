@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import AteFloLogo from "@/components/AteFloLogo";
+import LoadingScreen from "@/components/LoadingScreen";
 import type { Article } from "./types";
 
 // HTML을 태그/문자 단위로 쪼갠다(타이핑 시 태그가 잘리지 않게)
@@ -221,6 +222,8 @@ export default function WritingView({
 
   return (
     <>
+      {/* 생성 대기(아직 본문 없음) — 로딩 페이지. 글이 써지기 시작하면 아래 스트리밍 미리보기로 전환 */}
+      {(phase === "waiting" || phase === "thinking") && !preview && <LoadingScreen label="글을 짓고 있어요" />}
       <div className="sticky top-0 z-30 border-b border-neutral-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-6 py-3">
           {phase === "error" ? (
@@ -265,15 +268,7 @@ export default function WritingView({
         <div ref={endRef} className="scroll-mb-40" />
       </div>
 
-      {phase === "done" && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-white/70 backdrop-blur-sm">
-          <div className="flex flex-col items-center gap-3 rounded-2xl border border-neutral-100 bg-white shadow-sm px-10 py-7 shadow-xl">
-            <AteFloLogo pro={pro} animated size={30} />
-            <p className="text-sm font-medium text-neutral-800">워드프레스 형식으로 정리하고 있어요…</p>
-            <p className="text-xs text-neutral-400">제목·소제목·메타 정보를 다듬는 중</p>
-          </div>
-        </div>
-      )}
+      {phase === "done" && <LoadingScreen label="워드프레스 형식으로 정리하고 있어요" />}
     </>
   );
 }

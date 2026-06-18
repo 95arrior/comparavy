@@ -7,6 +7,7 @@ import CenterToast from "./CenterToast";
 import ScheduleCalendar from "./ScheduleCalendar";
 import { PLANS, formatKRW } from "@/lib/plans";
 import { scanCompliance, applySuggestion } from "@/lib/complianceFilter";
+import LoadingScreen from "@/components/LoadingScreen";
 import type { Article } from "./types";
 
 export default function ArticleModal({
@@ -626,6 +627,7 @@ export default function ArticleModal({
 
   return (
     <>
+      {publishing && <LoadingScreen label="워드프레스에 발행하고 있어요" />}
       {/* 상단 액션바 — 스크롤해도 따라옴 */}
       <div className="sticky top-0 z-30 border-b border-neutral-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-6 py-3">

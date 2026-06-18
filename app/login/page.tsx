@@ -4,18 +4,22 @@ import { useState } from "react";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import Brand from "@/components/Brand";
+import LoadingScreen from "@/components/LoadingScreen";
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   async function signInWithGoogle() {
     setError(null);
+    setLoading(true);
     const supabase = createSupabaseBrowserClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
-    if (error) setError("구글 로그인을 시작하지 못했어요. 잠시 후 다시 시도해 주세요.");
+    // 성공이면 곧바로 구글로 리다이렉트되므로 로딩 화면 유지. 실패만 해제.
+    if (error) { setError("구글 로그인을 시작하지 못했어요. 잠시 후 다시 시도해 주세요."); setLoading(false); }
   }
 
   return (
@@ -29,7 +33,8 @@ export default function LoginPage() {
 
         <button
           onClick={signInWithGoogle}
-          className="mt-8 flex w-full items-center justify-center gap-2.5 rounded-xl border border-neutral-300 px-5 py-3 text-sm font-medium transition hover:border-neutral-900"
+          disabled={loading}
+          className="mt-8 flex w-full items-center justify-center gap-2.5 rounded-xl border border-neutral-300 px-5 py-3 text-sm font-medium transition hover:border-neutral-900 disabled:opacity-60"
         >
           <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
             <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
@@ -47,6 +52,7 @@ export default function LoginPage() {
           <Link href="/privacy" className="underline">개인정보처리방침</Link>에 동의하는 것으로 간주됩니다.
         </p>
       </div>
+      {loading && <LoadingScreen label="안전하게 연결하고 있어요" />}
     </div>
   );
 }
