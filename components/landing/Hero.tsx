@@ -21,9 +21,9 @@ export default function Hero() {
       </header>
 
       {/* 히어로 */}
-      <section className="mx-auto grid max-w-6xl gap-12 px-5 pb-32 pt-8 sm:px-8 sm:pt-16 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:gap-16 lg:pb-24 lg:pt-20">
-        {/* 카피 — 모바일에선 데모 아래로(order-2) */}
-        <Reveal className="order-2 text-center lg:order-1 lg:text-left">
+      <section className="mx-auto grid max-w-6xl gap-12 overflow-x-hidden px-5 pb-40 pt-8 sm:px-8 sm:pb-20 sm:pt-16 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:gap-16 lg:pb-24 lg:pt-20">
+        {/* 카피 (모바일: 제목·부제·신청폼) */}
+        <Reveal className="min-w-0 text-center lg:text-left">
           <p className="text-sm font-semibold tracking-tight text-[#1D75F7]">워드프레스 블로그 글쓰기</p>
           <h1 className="font-pretendard mt-3 text-[clamp(30px,9vw,46px)] font-bold leading-[1.14] tracking-tight sm:whitespace-nowrap sm:text-[clamp(22px,7.4vw,56px)]">
             똑똑한<br className="sm:hidden" />사장님들의 선택
@@ -42,14 +42,17 @@ export default function Hero() {
           </div>
         </Reveal>
 
-        {/* 진짜 제품 데모 — 모바일에선 맨 먼저(order-1) */}
-        <Reveal delay={120} className="order-1 lg:order-2 lg:pl-4">
+        {/* 진짜 제품 데모 — 모바일에선 신청폼 아래에 */}
+        <Reveal delay={120} className="min-w-0 lg:pl-4">
           <DemoStream />
         </Reveal>
       </section>
 
-      {/* 모바일 하단 고정 CTA (앱 느낌) */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-neutral-100 bg-white/95 px-4 py-3 backdrop-blur sm:hidden">
+      {/* 모바일 하단 고정 CTA (앱 느낌) — 아이폰 홈 인디케이터(safe-area)만큼 위로 */}
+      <div
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-neutral-100 bg-white/95 px-4 pt-3 backdrop-blur sm:hidden"
+        style={{ paddingBottom: "calc(0.9rem + env(safe-area-inset-bottom))" }}
+      >
         <button onClick={toForm} className="w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-semibold text-white transition active:scale-[0.99]">
           무료로 사전신청하기
         </button>

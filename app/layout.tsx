@@ -9,6 +9,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: "cover", // iPhone safe-area(env(safe-area-inset-*)) 적용
 };
 
 export const metadata: Metadata = {
