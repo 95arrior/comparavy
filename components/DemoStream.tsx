@@ -101,7 +101,7 @@ export default function DemoStream() {
 
             {/* 지도 핀 (NAP 좌표 시각화) */}
             <div
-              className="relative mt-3 flex h-24 items-center justify-center overflow-hidden rounded-lg border border-neutral-100"
+              className="ateflo-rise relative mt-3 flex h-24 items-center justify-center overflow-hidden rounded-lg border border-neutral-100"
               style={{
                 backgroundColor: "#f3f6fb",
                 backgroundImage:
