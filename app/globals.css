@@ -240,10 +240,9 @@ html {
 @keyframes ateflo-twinkle { 0%, 100% { transform: scale(1); opacity: 0.85; } 50% { transform: scale(1.28); opacity: 1; } }
 .ateflo-twinkle { display: inline-block; animation: ateflo-twinkle 1.9s ease-in-out infinite; }
 
-/* 데모 카드 스크롤바(은은하게 보이게) */
-.ateflo-demo-scroll { scrollbar-width: thin; scrollbar-color: rgba(29, 117, 247, 0.35) transparent; }
-.ateflo-demo-scroll::-webkit-scrollbar { width: 6px; }
-.ateflo-demo-scroll::-webkit-scrollbar-thumb { background: rgba(29, 117, 247, 0.32); border-radius: 9999px; }
+/* 데모 카드 스크롤바 숨김(스크롤은 되되 바는 안 보이게) */
+.ateflo-demo-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+.ateflo-demo-scroll::-webkit-scrollbar { display: none; width: 0; height: 0; }
 
 /* ── AteFlo 로딩 화면 (AI/토스 감성) — 숨쉬는 로고 + 레이더 펄스 링 + 궤도 파티클 + 스윕 바 ── */
 @keyframes ateflo-load-mark {

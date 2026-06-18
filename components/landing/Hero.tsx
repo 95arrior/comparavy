@@ -11,7 +11,7 @@ export default function Hero() {
   const toForm = () => document.getElementById("signup")?.scrollIntoView({ behavior: "smooth", block: "center" });
 
   return (
-    <div className="min-h-[100dvh] bg-white text-neutral-900 antialiased">
+    <div className="min-h-[100dvh] overflow-x-hidden bg-white text-neutral-900 antialiased">
       {/* 헤더 — 로고 확실히 상단 */}
       <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 sm:px-8 sm:py-6">
         <Brand size={24} />

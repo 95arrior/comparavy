@@ -58,10 +58,26 @@ export default function DemoStream() {
     return () => { cancelled = true; clearTimeout(t); };
   }, [total]);
 
-  // 내용이 늘면 카드 안에서 바닥까지 따라 스크롤 — 글이 써지며 위로 올라가고, 박스·지도는 부드럽게 스크롤되어 등장.
+  // 내용이 늘면 카드 안에서 바닥까지 따라감.
+  // 타이핑 중: 즉시 따라가기(작은 증가라 부드럽게 보임). 박스·지도 등장: 1.4s 느린 ease로 천천히.
   useEffect(() => {
     const el = scrollRef.current;
-    if (el) el.scrollTo({ top: el.scrollHeight, behavior: showBox ? "smooth" : "auto" });
+    if (!el) return;
+    if (!showBox) { el.scrollTop = el.scrollHeight; return; }
+    const start = el.scrollTop;
+    const end = el.scrollHeight - el.clientHeight;
+    const dist = end - start;
+    if (dist <= 0) return;
+    let raf = 0; let t0 = 0;
+    const dur = 1400;
+    const step = (t: number) => {
+      if (!t0) t0 = t;
+      const p = Math.min(1, (t - t0) / dur);
+      el.scrollTop = start + dist * (1 - Math.pow(1 - p, 3)); // easeOutCubic
+      if (p < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
   }, [n, showBox]);
 
   let remaining = n;
