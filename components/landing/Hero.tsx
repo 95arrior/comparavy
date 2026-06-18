@@ -31,7 +31,7 @@ export default function Hero() {
       </header>
 
       {/* 히어로 */}
-      <section className="mx-auto grid max-w-6xl gap-12 overflow-x-hidden px-5 pb-40 pt-8 sm:px-8 sm:pb-20 sm:pt-16 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:gap-16 lg:pb-24 lg:pt-20">
+      <section className="mx-auto grid max-w-6xl gap-12 overflow-x-hidden px-5 pb-12 pt-8 sm:px-8 sm:pb-16 sm:pt-16 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:gap-16 lg:pb-24 lg:pt-20">
         {/* 카피 (모바일: 제목·부제·신청폼) */}
         <Reveal className="text-center lg:text-left">
           <p className="text-sm font-semibold tracking-tight text-[#1D75F7]">워드프레스 블로그 글쓰기</p>

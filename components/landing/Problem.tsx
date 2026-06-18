@@ -18,7 +18,7 @@ const CONCERNS: { text: string; icon: React.ReactNode }[] = [
 
 export default function Problem() {
   return (
-    <section className="mx-auto max-w-2xl px-6 py-24 text-center sm:py-32">
+    <section className="mx-auto max-w-2xl px-6 pb-28 pt-14 text-center sm:pb-32 sm:pt-16">
       <Reveal>
         <h2 className="font-pretendard text-2xl font-bold tracking-tight sm:text-[1.75rem]">
           블로그, 해야 하는 건 알죠.
