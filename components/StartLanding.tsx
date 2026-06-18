@@ -887,7 +887,7 @@ export default function StartLanding() {
         <header className={`fixed inset-x-0 top-0 z-50 border-b transition-colors duration-300 ${scrolled ? "border-neutral-200/40 bg-white/70 backdrop-blur" : "border-transparent bg-transparent"}`}>
           <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3.5">
             {/* 맨 위(다크 히어로)에선 흰 로고, 스크롤 시 기본(다크) 로고 */}
-            <span className={scrolled ? "" : "[&_span]:text-white"}><Brand /></span>
+            <Brand light={!scrolled} />
             <button onClick={toSignup} className="rounded-xl bg-[#3f91ff] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 active:scale-95">사전신청</button>
           </div>
         </header>
