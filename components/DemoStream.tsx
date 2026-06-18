@@ -51,7 +51,7 @@ export default function DemoStream() {
             setN(0);
             t = setTimeout(() => { if (!cancelled) { i = 0; tick(); } }, 450);
           }, 4600);
-        }, 650);
+        }, 280);
       }
     };
     t = setTimeout(tick, 500);
@@ -69,7 +69,7 @@ export default function DemoStream() {
     const dist = end - start;
     if (dist <= 0) return;
     let raf = 0; let t0 = 0;
-    const dur = 1400;
+    const dur = 850;
     const step = (t: number) => {
       if (!t0) t0 = t;
       const p = Math.min(1, (t - t0) / dur);
@@ -93,6 +93,7 @@ export default function DemoStream() {
     <div className="mx-auto w-full max-w-xl text-left">
       <div className="mb-2 text-xs font-medium text-neutral-400">키워드 “초등 영어” 하나로, 이렇게 써져요</div>
 
+      <div className="relative">
       <div ref={scrollRef} className="ateflo-demo-scroll h-[440px] overflow-y-auto rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6">
         {rendered.length === 0 && <p className="text-sm text-neutral-300">글을 구상하고 있어요…</p>}
 
@@ -141,6 +142,9 @@ export default function DemoStream() {
             </div>
           </div>
         )}
+      </div>
+      {/* 상단 페이드 — 스크롤되며 위로 사라지는 느낌(블러처럼) */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-12 rounded-t-2xl bg-gradient-to-b from-white via-white/80 to-transparent" />
       </div>
 
       <p className="mt-2.5 text-center text-xs leading-relaxed text-neutral-400">
