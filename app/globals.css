@@ -240,6 +240,10 @@ html {
 @keyframes ateflo-twinkle { 0%, 100% { transform: scale(1); opacity: 0.85; } 50% { transform: scale(1.28); opacity: 1; } }
 .ateflo-twinkle { display: inline-block; animation: ateflo-twinkle 1.9s ease-in-out infinite; }
 
+/* "···" 생각/작성 중 점 — 은은히 점멸 */
+@keyframes ateflo-dots { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+.ateflo-dots { animation: ateflo-dots 1.3s ease-in-out infinite; letter-spacing: 1px; }
+
 /* 데모 카드 스크롤바 숨김(스크롤은 되되 바는 안 보이게) */
 .ateflo-demo-scroll { scrollbar-width: none; -ms-overflow-style: none; }
 .ateflo-demo-scroll::-webkit-scrollbar { display: none; width: 0; height: 0; }

@@ -30,61 +30,51 @@ export default function DemoStream() {
   const [imgStage, setImgStage] = useState<"none" | "btn" | "shown">("none");
   const [showBox, setShowBox] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [status, setStatus] = useState<"thinking" | "writing" | "image" | "done">("thinking");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
-    let raf = 0;
     const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
     const follow = () => { const el = scrollRef.current; if (el) el.scrollTop = el.scrollHeight; };
-    const slowScroll = () => {
-      const el = scrollRef.current; if (!el) return;
-      const start = el.scrollTop, end = el.scrollHeight - el.clientHeight, dist = end - start;
-      if (dist <= 0) return;
-      let t0 = 0;
-      const step = (t: number) => {
-        if (cancelled) return;
-        if (!t0) t0 = t;
-        const p = Math.min(1, (t - t0) / 850);
-        el.scrollTop = start + dist * (1 - Math.pow(1 - p, 3));
-        if (p < 1) raf = requestAnimationFrame(step);
-      };
-      raf = requestAnimationFrame(step);
-    };
-    async function typeBlock(idx: number, text: string) {
+    async function typeBlock(idx: number, text: string, onProgress?: (i: number, len: number) => void) {
       for (let i = 1; i <= text.length; i++) {
         if (cancelled) return;
         setTyped((p) => { const c = [...p]; c[idx] = text.slice(0, i); return c; });
         follow();
+        onProgress?.(i, text.length);
         await sleep(22);
       }
     }
     async function run() {
       while (!cancelled) {
-        setTyped([]); setImgStage("none"); setShowBox(false);
+        setTyped([]); setImgStage("none"); setShowBox(false); setStatus("thinking");
         if (scrollRef.current) scrollRef.current.scrollTop = 0;
-        await sleep(500);
+        await sleep(900);
         for (let idx = 0; idx < BLOCKS.length && !cancelled; idx++) {
           const b = BLOCKS[idx];
           if (b.tag === "image") {
+            setStatus("image");
             setImgStage("btn"); follow(); await sleep(700);     // 이미지 추가 버튼 등장
-            setImgStage("shown"); await sleep(40); follow(); await sleep(550); // 클릭 → 이미지 삽입
+            setImgStage("shown"); await sleep(40); follow(); await sleep(700); // 클릭 → 이미지 삽입
+          } else if (b.tag === "promo") {
+            setStatus("writing");
+            // ★ 마지막 글(가게 연결)을 '쓰는 도중'에 업체 박스+지도가 같이 올라옴 (끝에 따로 X)
+            await typeBlock(idx, b.text!, (i, len) => { if (i === Math.floor(len * 0.3)) setShowBox(true); });
           } else {
+            setStatus("writing");
             await typeBlock(idx, b.text!);
             await sleep(b.tag === "title" ? 240 : b.tag === "h3" ? 180 : 120);
           }
         }
         if (cancelled) return;
-        await sleep(1500);            // 글(마무리) 다 써진 뒤 1.5초
-        setShowBox(true);             // 업체 박스 + 지도 등장
-        await sleep(160);             // DOM 렌더 대기(렌더 전 스크롤하면 지도까지 못 내려감)
-        if (cancelled) return;
-        slowScroll();                 // 현재(글 바닥) → 지도까지 천천히 스크롤
-        await sleep(4600);
+        setStatus("done");
+        follow();
+        await sleep(4400);
       }
     }
     run();
-    return () => { cancelled = true; cancelAnimationFrame(raf); };
+    return () => { cancelled = true; };
   }, []);
 
   const cursor = <span className="ml-0.5 inline-block animate-pulse text-neutral-400">▍</span>;
@@ -92,7 +82,24 @@ export default function DemoStream() {
 
   return (
     <div className="mx-auto w-full max-w-xl text-left">
-      <div className="mb-2 text-xs font-medium text-neutral-400">키워드 “초등 영어” 하나로, 이렇게 써져요</div>
+      {/* 상태 표시 — 우리 로고 + "생각/글쓰는 중" (GPT·클로드처럼) */}
+      <div className="mb-2 flex items-center gap-2 text-xs font-medium text-neutral-500">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/ateflo-mark.png?v=2"
+          alt=""
+          aria-hidden
+          className="h-4 w-4 shrink-0"
+          style={status === "done" ? undefined : { animation: "ateflo-load-mark 1.5s ease-in-out infinite" }}
+        />
+        <span>
+          {status === "thinking" && "키워드 “초등 영어”를 보고 생각하고 있어요"}
+          {status === "writing" && "글을 쓰고 있어요"}
+          {status === "image" && "어울리는 이미지를 넣고 있어요"}
+          {status === "done" && "완성됐어요 · 이렇게 써져요"}
+        </span>
+        {status !== "done" && <span className="ateflo-dots text-neutral-400">···</span>}
+      </div>
 
       <div className="relative">
         <div
@@ -112,17 +119,11 @@ export default function DemoStream() {
                     이미지 추가
                   </button>
                 );
-              // shown — 샘플 이미지 삽입(파닉스 카드 일러스트)
+              // shown — 실제 이미지 삽입
               return (
-                <div key={idx} className="ateflo-box-in mt-3 overflow-hidden rounded-xl border border-neutral-100 bg-gradient-to-br from-[#1D75F7]/[0.07] to-[#b69cff]/[0.07] p-4">
-                  <div className="flex items-center justify-center gap-2">
-                    {["cat", "cap", "can"].map((w) => (
-                      <span key={w} className="rounded-lg bg-white px-3 py-2 text-sm font-bold text-neutral-800 shadow-sm">
-                        <span className="text-[#1D75F7]">c</span>{w.slice(1)}
-                      </span>
-                    ))}
-                  </div>
-                  <p className="mt-2.5 text-center text-[11px] text-neutral-400">같은 소리로 시작하는 단어 묶어 읽기</p>
+                <div key={idx} className="ateflo-box-in mt-3 overflow-hidden rounded-xl border border-neutral-100 bg-neutral-50">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/demo-class.png" alt="영어 수업 일러스트" className="block w-full" />
                 </div>
               );
             }
