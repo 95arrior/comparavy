@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import HoursEditor from "./HoursEditor";
+import AddressSearch from "./AddressSearch";
 import { VERTICAL_SUBS } from "@/lib/verticalSubs";
 import { ACADEMY_AUDIENCES, AUDIENCE_ALL } from "@/lib/audience";
 import type { BlogProfile, WeeklyHours } from "@/lib/blogProfile";
@@ -26,6 +27,9 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
   const [blogName, setBlogName] = useState(profile.blog_name ?? "");
   const [bizName, setBizName] = useState(profile.biz_name ?? "");
   const [bizAddress, setBizAddress] = useState(profile.biz_address ?? "");
+  const [bizDetail, setBizDetail] = useState(profile.biz_detail_address ?? "");
+  const [bizLat, setBizLat] = useState<number | null>(profile.biz_lat ?? null);
+  const [bizLng, setBizLng] = useState<number | null>(profile.biz_lng ?? null);
   const [bizPhone, setBizPhone] = useState(profile.biz_phone ?? "");
   const [bizStrength, setBizStrength] = useState(profile.biz_strength ?? "");
   const [audience, setAudience] = useState<string[]>(profile.audience ?? []);
@@ -62,6 +66,9 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
           blog_name: blogName.trim(),
           biz_name: bizName.trim(),
           biz_address: bizAddress.trim(),
+          biz_detail_address: bizDetail.trim(),
+          biz_lat: bizLat,
+          biz_lng: bizLng,
           biz_phone: bizPhone.trim(),
           biz_strength: bizStrength.trim(),
           audience,
@@ -155,7 +162,15 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
         <label className="text-sm font-bold tracking-tight">업체 정보 <span className="text-xs font-normal text-neutral-400">(선택)</span></label>
         <p className="mt-1 text-xs text-neutral-500">입력하면 글 맨 아래에 자동으로 들어가요.</p>
         <input value={bizName} onChange={(e) => setBizName(e.target.value)} placeholder="상호명 (예: 우리동네치과의원)" maxLength={80} className={`mt-3 ${inputCls}`} />
-        <input value={bizAddress} onChange={(e) => setBizAddress(e.target.value)} placeholder="주소 (예: 서울 강남구 …)" maxLength={200} className={`mt-2 ${inputCls}`} />
+        <div className="mt-2">
+          <AddressSearch
+            address={bizAddress}
+            detail={bizDetail}
+            onPick={(r) => { setBizAddress(r.address); setBizLat(r.lat); setBizLng(r.lng); }}
+            onDetailChange={setBizDetail}
+            inputCls={inputCls}
+          />
+        </div>
         <input value={bizPhone} onChange={(e) => setBizPhone(e.target.value)} placeholder="전화번호 (예: 02-000-0000)" maxLength={40} className={`mt-2 ${inputCls}`} />
         <input value={bizStrength} onChange={(e) => setBizStrength(e.target.value)} placeholder="우리 강점·특징 (예: 입시 영어 전문, 원장 직강, 주말 진료)" maxLength={200} className={`mt-2 ${inputCls}`} />
         <p className="mt-1 text-xs leading-relaxed text-neutral-500">과장 표현(1위·최고·100%·보장 등)은 광고법 위반이라 피해주세요. 실제 특징을 사실대로 적으면 글 마무리에 자연스럽게 녹여 드려요.</p>

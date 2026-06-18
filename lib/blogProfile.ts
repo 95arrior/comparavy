@@ -19,6 +19,9 @@ export interface BlogProfile {
   biz_hours_json: WeeklyHours | null; // 요일별 구조화 영업시간(우선)
   biz_strength: string | null; // 강점·특징(선택) — 글 마무리 업장 연결에만 사용, 과장은 생성 단계서 순화
   audience: string[]; // 대상(다중) — academy: 유아/초등/중고등/성인/전체. 글감을 이 대상으로 거른다. 빈 배열 또는 '전체'면 필터 없음
+  biz_detail_address: string | null; // 상세주소(동·호수 등) — 도로명(biz_address)과 분리 입력
+  biz_lat: number | null; // 위도 — 카카오 지오코딩으로 도로명→좌표 변환 저장(지도 핀용)
+  biz_lng: number | null; // 경도
 }
 
 // 요일별 영업시간 구조

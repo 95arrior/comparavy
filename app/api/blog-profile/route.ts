@@ -82,6 +82,12 @@ export async function POST(request: Request) {
   const audience = Array.isArray(body.audience)
     ? Array.from(new Set(body.audience.filter((a: unknown): a is string => typeof a === "string" && AUDIENCE_VALUES.has(a)))).slice(0, 5)
     : [];
+  const biz_detail_address = bizField(body.biz_detail_address, 100); // 상세주소(동·호수 등)
+  // 좌표 — 한국 영역(대략 위도 33~39, 경도 124~132) 안의 유한 숫자만 저장, 아니면 null.
+  const numOrNull = (v: unknown, lo: number, hi: number): number | null =>
+    typeof v === "number" && Number.isFinite(v) && v >= lo && v <= hi ? v : null;
+  const biz_lat = numOrNull(body.biz_lat, 33, 39);
+  const biz_lng = numOrNull(body.biz_lng, 124, 132);
   const target = (typeof body.target === "string" ? body.target : "").trim().slice(0, 80) || null;
   // 대분류 (없으면 topic을 대분류로 가정 — 레거시 호환)
   const category = (typeof body.category === "string" && isTopCategory(body.category)) ? body.category : (isTopCategory(topic) ? topic : null);
@@ -92,7 +98,7 @@ export async function POST(request: Request) {
   const { data, error } = await supabase
     .from("blog_profiles")
     .upsert(
-      { user_id: user.id, topic, category, blog_name, tone, article_type, target, publish_mode, vertical, sub_category, biz_name, biz_address, biz_phone, biz_hours, biz_hours_json, biz_strength, audience, updated_at: new Date().toISOString() },
+      { user_id: user.id, topic, category, blog_name, tone, article_type, target, publish_mode, vertical, sub_category, biz_name, biz_address, biz_detail_address, biz_lat, biz_lng, biz_phone, biz_hours, biz_hours_json, biz_strength, audience, updated_at: new Date().toISOString() },
       { onConflict: "user_id" },
     )
     .select("*")
