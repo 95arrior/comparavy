@@ -1,122 +1,127 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import AteFloLogo from "@/components/AteFloLogo";
 
-// 홈 데모: 우리 실제 생성 톤의 글이 한 글자씩 써지는 모습 (정적, API 호출 0). 여러 글을 번갈아.
-type Block = { tag: "title" | "h3" | "p"; text: string };
+// 홈 데모: 키워드 → 검색되는 정보 글 → 자연스러운 가게 연결 → 업체 정보 박스(NAP+지도)까지
+// 한 번에 보여주는 '결정적 장면'. API 호출 0(정적 연출), 자동 루프. 예시 업체=에이트플로 영어학원(가상).
 
-const ARTICLES: Block[][] = [
-  [
-    { tag: "title", text: "강아지 분리불안 해결 방법: 따라 하면 끝나는 단계별 훈련" },
-    { tag: "p", text: "주인이 신발만 신어도 짖고, 문이 닫히면 하울링이 시작된다면 분리불안일 수 있습니다. 핵심은 '혼자 있어도 괜찮다'는 경험을 작은 단위로 쌓는 것입니다." },
-    { tag: "h3", text: "1단계: 외출 신호부터 무뎌지게 만들기" },
-    { tag: "p", text: "강아지는 열쇠 소리, 외투 걸치기 같은 신호를 외출과 연결해 미리 불안해집니다. 외출 생각이 없을 때 열쇠를 집었다 그냥 내려놓아 보세요." },
-  ],
-  [
-    { tag: "title", text: "초보 블로그 애드센스 승인, 한 번에 받는 글쓰기 전략" },
-    { tag: "p", text: "애드센스 거절 메일을 받았다면 대부분 '콘텐츠 가치 부족'입니다. 글 수보다 중요한 건 한 편이 검색 의도를 끝까지 채우느냐예요." },
-    { tag: "h3", text: "승인 전에 꼭 채워야 할 3가지" },
-    { tag: "p", text: "충분한 분량(1,500자 이상), 직접 정리한 정보, 그리고 개인정보처리방침·문의 페이지. 이 세 가지가 없으면 승인이 어렵습니다." },
-  ],
-  [
-    { tag: "title", text: "직장인 점심 도시락, 살 안 찌게 싸는 현실 꿀팁" },
-    { tag: "p", text: "매일 사 먹는 점심을 도시락으로 바꾸면 돈도 살도 잡힙니다. 관건은 '준비가 귀찮지 않게' 만드는 것이에요." },
-    { tag: "h3", text: "전날 밤 5분이면 끝나는 준비" },
-    { tag: "p", text: "단백질(닭가슴살·계란), 채소, 잡곡밥을 한 칸씩 나눠 담으세요. 소스는 따로 챙겨 눅눅해지는 걸 막습니다." },
-  ],
+type Block = { tag: "title" | "h3" | "p" | "promo"; text: string };
+
+const ARTICLE: Block[] = [
+  { tag: "title", text: "초등 영어, 파닉스부터 시작해야 하는 이유" },
+  { tag: "p", text: "알파벳은 외웠는데 단어를 못 읽는다면, 소리 규칙(파닉스)을 건너뛴 경우가 많아요. 읽기의 토대가 흔들리면 그 위에 단어를 아무리 쌓아도 무너집니다." },
+  { tag: "h3", text: "집에서 파닉스, 이렇게 시작하세요" },
+  { tag: "p", text: "하루 10분, 같은 소리로 시작하는 단어를 묶어 읽어 보세요. 'cat·cap·can'처럼요. 완벽한 발음보다 '소리와 글자를 연결하는 경험'이 먼저예요." },
+  { tag: "promo", text: "다만 아이마다 막히는 지점이 달라, 혼자선 어디서 헷갈리는지 찾기 어려울 수 있어요. 기초를 단계별로 잡아줄 곳이 필요하다면 에이트플로 영어학원처럼 파닉스부터 차근차근 봐주는 학원의 도움을 받아 보는 것도 방법이에요." },
 ];
 
+function MapPin() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="#1D75F7" stroke="#fff" strokeWidth="1.4">
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+      <circle cx="12" cy="10" r="3" fill="#fff" stroke="none" />
+    </svg>
+  );
+}
+
 export default function DemoStream() {
-  const [ai, setAi] = useState(0);
   const [n, setN] = useState(0);
-  const [show, setShow] = useState(true);
-  const blocks = ARTICLES[ai];
+  const [showBox, setShowBox] = useState(false);
+
+  const total = ARTICLE.reduce((s, b) => s + b.text.length, 0);
 
   useEffect(() => {
     let cancelled = false;
-    let timer: ReturnType<typeof setTimeout>;
-    const total = ARTICLES[ai].reduce((s, b) => s + b.text.length, 0);
+    let t: ReturnType<typeof setTimeout>;
     let i = 0;
     const tick = () => {
       if (cancelled) return;
       i += 1;
       setN(i);
       if (i < total) {
-        timer = setTimeout(tick, 28);
+        t = setTimeout(tick, 24);
       } else {
-        // 다 쓰면 잠깐 멈췄다가 → 페이드아웃 → 다음 글로 교체 (겹침 방지: cancelled 가드)
-        timer = setTimeout(() => {
+        t = setTimeout(() => {
           if (cancelled) return;
-          setShow(false);
-          timer = setTimeout(() => {
+          setShowBox(true); // 글 완성 → 업체 박스 등장
+          t = setTimeout(() => {
             if (cancelled) return;
+            setShowBox(false);
             setN(0);
-            setAi((a) => (a + 1) % ARTICLES.length);
-            setShow(true);
-          }, 450);
-        }, 2200);
+            t = setTimeout(() => { if (!cancelled) { i = 0; tick(); } }, 450);
+          }, 4600);
+        }, 650);
       }
     };
-    timer = setTimeout(tick, 500);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [ai]);
+    t = setTimeout(tick, 500);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [total]);
 
-  const total = blocks.reduce((s, b) => s + b.text.length, 0);
   let remaining = n;
-  const rendered = blocks
-    .map((b, idx) => {
-      const shown = Math.max(0, Math.min(b.text.length, remaining));
-      remaining -= b.text.length;
-      return { idx, tag: b.tag, text: b.text.slice(0, shown), active: shown > 0 && shown < b.text.length, started: shown > 0 };
-    })
-    .filter((b) => b.started);
+  const rendered = ARTICLE.map((b, idx) => {
+    const shown = Math.max(0, Math.min(b.text.length, remaining));
+    remaining -= b.text.length;
+    return { idx, tag: b.tag, text: b.text.slice(0, shown), active: shown > 0 && shown < b.text.length, started: shown > 0 };
+  }).filter((b) => b.started);
 
   const cursor = <span className="ml-0.5 inline-block animate-pulse text-neutral-400">▍</span>;
 
   return (
     <div className="mx-auto w-full max-w-xl text-left">
-      <div className="mb-2 text-xs font-medium text-neutral-400">키워드 하나로, 이렇게 써져요</div>
-      <div className="h-80 overflow-hidden rounded-xl border border-neutral-200 bg-white p-5 [mask-image:linear-gradient(to_bottom,#000_80%,transparent)]">
-        <div key={ai} className={`transition-opacity duration-500 ${show ? "opacity-100" : "opacity-0"}`}>
+      <div className="mb-2 text-xs font-medium text-neutral-400">키워드 “초등 영어” 하나로, 이렇게 써져요</div>
+
+      <div className="min-h-[460px] rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6">
         {rendered.length === 0 && <p className="text-sm text-neutral-300">글을 구상하고 있어요…</p>}
+
         {rendered.map((b) => {
-          if (b.tag === "title") {
+          if (b.tag === "title")
+            return <p key={b.idx} className="text-[15px] font-bold leading-snug text-neutral-900 sm:text-base">{b.text}{b.active && cursor}</p>;
+          if (b.tag === "h3")
+            return <h3 key={b.idx} className="mt-4 text-sm font-semibold text-neutral-900">{b.text}{b.active && cursor}</h3>;
+          if (b.tag === "promo")
             return (
-              <p key={b.idx} className="text-base font-semibold leading-snug text-neutral-900">
-                {b.text}
-                {b.active && cursor}
+              <p key={b.idx} className="mt-3 rounded-lg bg-[#1D75F7]/[0.06] px-3 py-2.5 text-[13px] leading-relaxed text-neutral-700">
+                {b.text}{b.active && cursor}
               </p>
             );
-          }
-          if (b.tag === "h3") {
-            return (
-              <h3 key={b.idx} className="mt-4 text-sm font-semibold text-neutral-900">
-                {b.text}
-                {b.active && cursor}
-              </h3>
-            );
-          }
-          return (
-            <p key={b.idx} className="mt-2 text-sm leading-relaxed text-neutral-600">
-              {b.text}
-              {b.active && cursor}
-            </p>
-          );
+          return <p key={b.idx} className="mt-2 text-[13px] leading-relaxed text-neutral-600">{b.text}{b.active && cursor}</p>;
         })}
-        {rendered.length > 0 && n >= total && (
-          <p className="mt-3 text-sm text-neutral-300">⋯ 소제목을 이어가며 끝까지</p>
+
+        {/* 업체 정보 박스 — 글 끝나면 자동으로 딸려 나옴 (실제 발행물에 들어가는 NAP 카드) */}
+        {showBox && (
+          <div className="ateflo-reveal mt-4 rounded-xl border border-[#E5E8EB] p-4">
+            <p className="text-[15px] font-bold text-neutral-900">에이트플로 영어학원</p>
+            <p className="mt-0.5 text-xs text-neutral-400">영어학원 · 초등~중등</p>
+
+            <div className="mt-3 space-y-1.5 text-[13px] text-neutral-700">
+              <p><span className="font-semibold">주소</span> 서울 강남구 테헤란로 123</p>
+              <p><span className="font-semibold">전화</span> <span className="text-[#1D75F7]">02-1234-5678</span></p>
+              <p><span className="font-semibold">영업시간</span> 평일 14:00–22:00 · 주말 휴무</p>
+            </div>
+
+            {/* 지도 핀 (NAP 좌표 시각화) */}
+            <div
+              className="relative mt-3 flex h-24 items-center justify-center overflow-hidden rounded-lg border border-neutral-100"
+              style={{
+                backgroundColor: "#f3f6fb",
+                backgroundImage:
+                  "linear-gradient(0deg, rgba(29,117,247,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(29,117,247,0.06) 1px, transparent 1px), linear-gradient(120deg, rgba(29,117,247,0.10) 0 8px, transparent 8px 60px)",
+                backgroundSize: "26px 26px, 26px 26px, 200px 200px",
+              }}
+            >
+              <span className="ateflo-load-mark flex flex-col items-center" style={{ animation: "ateflo-load-mark 1.8s ease-in-out infinite" }}>
+                <MapPin />
+              </span>
+              <span className="absolute bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-white/90 px-2 py-0.5 text-[10px] font-medium text-neutral-600 shadow-sm">
+                에이트플로 영어학원
+              </span>
+            </div>
+          </div>
         )}
-        <div className="mt-3">
-          <AteFloLogo animated={n < total} size={22} />
-        </div>
-        </div>
       </div>
-      <p className="mt-2 text-center text-xs text-neutral-400">
-        위는 일부 미리보기예요 · 실제 글은 소제목 여러 개로 길게 써드려요
+
+      <p className="mt-2.5 text-center text-xs leading-relaxed text-neutral-400">
+        정보 글이 끝에서 자연스럽게 <span className="font-medium text-neutral-500">내 가게로 연결</span>되고, <span className="font-medium text-neutral-500">업체 정보·지도</span>까지 자동으로 붙어요
       </p>
     </div>
   );
