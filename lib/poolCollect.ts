@@ -7,6 +7,7 @@
 //   · '가격·비용·예약' 등 전환 의도 키워드는 보존(좋은 글감)
 // 글감형(질문 제목) 변환은 추천(표시) 단계에서 — 풀엔 원본만 저장(검색량·중복추적 정확).
 import { fetchRelatedKeywords, parseCount, normalizeKey } from "./naverKeyword";
+import { isUnsafeKeyword } from "./keywordSafety";
 
 const MIN_MOBILE = 50; // 풀 하한(틈새 발굴 100보다 낮춤 — 롱테일 풍부하게). 30 이하는 잡음이라 50 균형.
 
@@ -52,6 +53,7 @@ export async function collectPoolKeywords(seed: string): Promise<PoolKeyword[]> 
     const mobile = parseCount(k.monthlyMobileQcCnt);
     if (mobile < MIN_MOBILE) continue;
     if (isJunk(keyword)) continue;
+    if (isUnsafeKeyword(keyword)) continue; // 타사 업체명·인물명·브랜드 차단(법적)
     seen.add(key);
     out.push({ keyword, monthlyMobileQcCnt: mobile, compIdx: String(k.compIdx ?? "") });
   }

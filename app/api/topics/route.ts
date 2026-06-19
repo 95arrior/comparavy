@@ -3,6 +3,7 @@ import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/sup
 import { keywordsToTitles } from "@/lib/topicTitles";
 import { normalizeKeyword } from "@/lib/diversity";
 import { audienceOf, AUDIENCE_ALL } from "@/lib/audience";
+import { isUnsafeKeyword } from "@/lib/keywordSafety";
 
 // 사장의 blog_profile(vertical + sub_category)로 keyword_pool에서 글감 3개를 뽑는다.
 // Stage 2-B 분산: ① least-used 우선(times_assigned asc) ② 본인이 이미 쓴 키워드 제외 ③ 그 안 랜덤.
@@ -103,7 +104,7 @@ export async function GET() {
       .limit(WINDOW);
     const rows = (data ?? []) as PoolRow[];
     // 본인 작성분 제외 + 고른 대상(audience)만 통과
-    return rows.filter((r) => !usedSet.has(normalizeKeyword(r.keyword)) && audMatch(r.keyword, r.audience));
+    return rows.filter((r) => !usedSet.has(normalizeKeyword(r.keyword)) && !isUnsafeKeyword(r.keyword) && audMatch(r.keyword, r.audience));
   }
 
   // 단계적 폴백: (sub+적정범위) → (sub+전체) → (vertical+적정범위) → (vertical+전체).
