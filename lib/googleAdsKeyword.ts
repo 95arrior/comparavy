@@ -59,7 +59,7 @@ type IdeaResult = { text?: string; keywordIdeaMetrics?: { avgMonthlySearches?: s
  * 시드의 구글 키워드 아이디어를 거둔다 → PoolKeyword[](keyword, 월검색량, 경쟁도).
  * 네이버 collectPoolKeywords와 호환되는 출력. (안전필터·정크필터는 호출 측에서 그대로 적용)
  */
-async function callOnce(version: string, seed: string, token: string): Promise<{ status: number; text: string }> {
+async function callOnce(version: string, seed: string, token: string, loginId: string): Promise<{ status: number; text: string }> {
   const customerId = digits(process.env.GOOGLE_ADS_CUSTOMER_ID);
   const url = `https://googleads.googleapis.com/${version}/customers/${customerId}:generateKeywordIdeas`;
   const res = await fetch(url, {
@@ -67,7 +67,7 @@ async function callOnce(version: string, seed: string, token: string): Promise<{
     headers: {
       Authorization: `Bearer ${token}`,
       "developer-token": process.env.GOOGLE_ADS_DEVELOPER_TOKEN!,
-      "login-customer-id": digits(process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID),
+      "login-customer-id": loginId,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -89,12 +89,19 @@ export async function fetchGoogleKeywordIdeas(seed: string): Promise<PoolKeyword
     ? [resolvedVersion]
     : VERSION_CANDIDATES;
 
+  const customerId = digits(process.env.GOOGLE_ADS_CUSTOMER_ID);
+  const loginEnv = digits(process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID) || customerId;
+
   let last = "";
   let chosen = "";
   let body: { status: number; text: string } | null = null;
   for (const v of versions) {
-    const r = await callOnce(v, seed, token);
+    let r = await callOnce(v, seed, token, loginEnv);
     if (r.status === 404) { last = `v=${v} 404`; continue; } // 버전 불일치 → 다음 후보
+    // 매니저 login으로 권한 거부면, 계정 직접 접근(login=계정 자신)으로 1회 폴백
+    if (r.status === 403 && /USER_PERMISSION_DENIED/.test(r.text) && loginEnv !== customerId) {
+      r = await callOnce(v, seed, token, customerId);
+    }
     body = r; chosen = v; break; // 404 외(성공/실제오류) → 이 버전이 유효
   }
   if (!body) throw new Error(`구글 애즈: 사용 가능한 API 버전을 못 찾음(${last}). GOOGLE_ADS_API_VERSION을 지정하세요.`);
