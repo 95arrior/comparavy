@@ -264,6 +264,17 @@ html {
   -webkit-text-fill-color: transparent; color: transparent;
   animation: ateflo-aurora-sweep 5s ease-in-out infinite;
 }
+
+/* 글자 통통 튀기 — 한 번 튀고 5초 대기 후 반복(글자별 딜레이로 순서대로) */
+@keyframes ateflo-bounce {
+  0% { transform: translateY(0); }
+  5% { transform: translateY(-34%); }
+  10% { transform: translateY(0); }
+  14% { transform: translateY(-12%); }
+  18% { transform: translateY(0); }
+  100% { transform: translateY(0); }
+}
+.ateflo-bounce { display: inline-block; animation: ateflo-bounce 5s ease infinite; }
 @keyframes ateflo-twinkle { 0%, 100% { transform: scale(1); opacity: 0.85; } 50% { transform: scale(1.28); opacity: 1; } }
 .ateflo-twinkle { display: inline-block; animation: ateflo-twinkle 1.9s ease-in-out infinite; }
 /* 은은한 트윙클(칩 별용 — 과하지 않게) */
@@ -350,7 +361,7 @@ html {
 
 /* 움직임 최소화 선호 시: 연속/장식 애니 정지(정적 표시) */
 @media (prefers-reduced-motion: reduce) {
-  .ateflo-mq-left, .ateflo-mq-right, .ateflo-chip-aurora, .ateflo-aurora, .ateflo-aurora-sweep, .ateflo-holo, .ateflo-twinkle, .ateflo-twinkle-soft, .ateflo-wand,
+  .ateflo-mq-left, .ateflo-mq-right, .ateflo-chip-aurora, .ateflo-aurora, .ateflo-aurora-sweep, .ateflo-bounce, .ateflo-holo, .ateflo-twinkle, .ateflo-twinkle-soft, .ateflo-wand,
   .ateflo-load-mark, .ateflo-load-ring, .ateflo-load-glow, .ateflo-load-orbit, .ateflo-load-bar {
     animation: none !important;
   }

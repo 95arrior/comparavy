@@ -27,7 +27,10 @@ export default function Hero() {
         <Reveal className="text-center lg:text-left">
           <p className="text-sm font-semibold tracking-tight text-[#1D75F7]">검색되는 블로그</p>
           <h1 className="font-pretendard mt-3 whitespace-nowrap text-[clamp(21px,6.7vw,52px)] font-bold leading-[1.14] tracking-tight">
-            자는 사이에 손님이 <span className="ateflo-aurora-sweep font-extrabold">쌓여요</span>
+            자는 사이에 손님이{" "}
+            <span className="ateflo-bounce">쌓</span>
+            <span className="ateflo-bounce" style={{ animationDelay: "0.15s" }}>여</span>
+            <span className="ateflo-bounce" style={{ animationDelay: "0.3s" }}>요</span>
           </h1>
           <p className="mx-auto mt-5 max-w-md text-[15px] leading-relaxed text-neutral-500 sm:text-lg lg:mx-0">
             검색되는 글 한 편이, 손님을 데려와요.<br />
