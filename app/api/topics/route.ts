@@ -94,10 +94,9 @@ export async function GET() {
 
   // least-used 우선 윈도우(times_assigned asc → 균등 분산). 본인이 쓴 건 제외 후 남은 것만.
   // 적정범위 = 월 500~5,000 (경쟁 과열·초저검색 회피). sub 없거나 부족하면 단계적으로 넓힌다.
-  async function fetchPool(useSub: boolean, ranged: boolean, lowComp: boolean): Promise<PoolRow[]> {
+  async function fetchPool(useSub: boolean, ranged: boolean): Promise<PoolRow[]> {
     let q = pool.from("keyword_pool").select("keyword, monthly_searches, competition, audience").eq("vertical", vertical);
     if (useSub && sub) q = q.eq("sub", sub);
-    if (lowComp) q = q.eq("competition", "낮음"); // ★싹 키워드(경쟁 낮음) 우선 — 신규 블로그가 실제 선점·검색 가능한 글감
     if (ranged) q = q.gte("monthly_searches", 500).lte("monthly_searches", 5000);
     const { data } = await q
       .order("times_assigned", { ascending: true }) // 덜 쓰인 것 먼저(기존 인덱스 활용)
@@ -108,29 +107,49 @@ export async function GET() {
     return rows.filter((r) => !usedSet.has(normalizeKeyword(r.keyword)) && !isUnsafeKeyword(r.keyword) && audMatch(r.keyword, r.audience));
   }
 
-  // 단계적 폴백: 싹 키워드(경쟁 낮음) 우선 → 부족하면 경쟁 전체로 넓힘.
-  // [useSub, ranged, lowComp]. ★대상 선택 시: sub 안에서만(엉뚱한 글감 누출 방지).
-  const steps: [boolean, boolean, boolean][] = sub
-    ? audActive
-      ? [[true, true, true], [true, false, true], [true, true, false], [true, false, false]]
-      : [[true, true, true], [true, false, true], [true, true, false], [true, false, false], [false, true, false], [false, false, false]]
-    : [[false, true, true], [false, false, true], [false, true, false], [false, false, false]];
+  // 단계적 폴백: (sub+적정범위) → (sub+전체) → (vertical+적정범위) → (vertical+전체).
+  const steps: [boolean, boolean][] = sub
+    ? (audActive ? [[true, true], [true, false]] : [[true, true], [true, false], [false, true], [false, false]])
+    : [[false, true], [false, false]];
   let rows: PoolRow[] = [];
-  for (const [useSub, ranged, lowComp] of steps) {
-    rows = await fetchPool(useSub, ranged, lowComp);
+  for (const [useSub, ranged] of steps) {
+    rows = await fetchPool(useSub, ranged);
     if (rows.length >= PICK) break;
   }
   if (rows.length === 0) return NextResponse.json({ topics: [] });
 
-  // 여러 대상을 고르면 대상별로 골고루 번갈아 뽑는다(한 대상에 쏠리지 않게).
-  const picked = pickBalanced(rows, audActive ? audSel : [], PICK);
-  const titles = await keywordsToTitles(picked.map((r) => r.keyword));
+  // ── 경쟁도 티어 ──
+  // 낮음 = 싹 키워드(전설·희귀: 가끔 랜덤 1개), 중간 = 일반(선점 가능·기본), 높음 = 빅키워드(최악·마지막 수단)
+  const comp = (r: PoolRow) => (r.competition ?? "").trim();
+  const low = rows.filter((r) => comp(r) === "낮음");
+  const mid = rows.filter((r) => comp(r) === "중간");
+  const high = rows.filter((r) => comp(r) === "높음");
 
+  // 일반 슬롯은 '중간' 위주(대상 균형 적용). 높음은 끝까지 안 차면만.
+  const general = pickBalanced(mid, audActive ? audSel : [], PICK + 1);
+
+  const result: PoolRow[] = [];
+  // ★전설 포켓몬: 매번 X — 이번 추천에 ~28% 확률로 싹(낮음) 1개만 무작위 등장.
+  if (low.length > 0 && Math.random() < 0.28) {
+    result.push(low[Math.floor(Math.random() * low.length)]);
+  }
+  const add = (arr: PoolRow[]) => {
+    for (const r of arr) {
+      if (result.length >= PICK) break;
+      if (!result.some((x) => x.keyword === r.keyword)) result.push(r);
+    }
+  };
+  add(general); // 일반(중간)
+  add(low);     // 중간 부족하면 싹으로 채움(싹이 차선)
+  add(high);    // 그래도 모자라면 빅키워드(마지막 수단)
+  const picked = result.slice(0, PICK);
+
+  const titles = await keywordsToTitles(picked.map((r) => r.keyword));
   const topics = picked.map((r, i) => ({
     keyword: r.keyword,
     title: titles[i],
     demandLabel: demandLabel(r.monthly_searches),
-    ssak: (r.competition ?? "").trim() === "낮음", // 경쟁 낮음 = 싹 키워드(선점 유리)
+    ssak: comp(r) === "낮음", // 싹 키워드(전설)
   }));
   return NextResponse.json({ topics });
 }
