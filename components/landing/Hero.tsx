@@ -34,13 +34,13 @@ export default function Hero() {
       <section className="mx-auto grid max-w-6xl gap-12 overflow-x-hidden px-5 pb-12 pt-8 sm:px-8 sm:pb-16 sm:pt-16 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:gap-16 lg:pb-24 lg:pt-20">
         {/* 카피 (모바일: 제목·부제·신청폼) */}
         <Reveal className="text-center lg:text-left">
-          <p className="text-sm font-semibold tracking-tight text-[#1D75F7]">워드프레스 블로그 글쓰기</p>
-          <h1 className="font-pretendard mt-3 text-[clamp(36px,11.5vw,58px)] font-bold leading-[1.12] tracking-tight sm:whitespace-nowrap sm:text-[clamp(22px,7.4vw,56px)]">
-            똑똑한 <br className="sm:hidden" />사장님들의 선택
+          <p className="text-sm font-semibold tracking-tight text-[#1D75F7]">검색되는 블로그</p>
+          <h1 className="font-pretendard mt-3 text-[clamp(28px,7vw,46px)] font-bold leading-[1.2] tracking-tight">
+            자는 사이에도, 블로그가 손님을 모아요
           </h1>
           <p className="mx-auto mt-5 max-w-md text-[15px] leading-relaxed text-neutral-500 sm:text-lg lg:mx-0">
-            24시간 일하는 직원이 필요하신가요?<br />
-            좋은 글로 사장님이 자는 사이, 블로그로 손님들을 모아봐요
+            좋은 글이 검색되고, 검색이 손님이 돼요.<br />
+            사장님은 키워드만 고르면 돼요.
             <span className="ml-1 inline-flex align-middle">
               <span className="ateflo-holo ateflo-twinkle text-[0.9em] leading-none">✦</span>
               <span className="ateflo-holo ateflo-twinkle text-[0.7em] leading-none" style={{ animationDelay: "0.55s" }}>✦</span>
