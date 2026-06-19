@@ -34,7 +34,9 @@ const LANDING_JSONLD = {
 // 새 랜딩(단일) — 헤더 + 히어로 + 문제공감 + 검색심리 + 카톡알림 + 신뢰 + 푸터.
 export default function NewLanding() {
   return (
-    <div className="overflow-x-hidden bg-white text-neutral-900 antialiased">
+    // ★ root에 overflow-x-hidden 두지 않음 — 그러면 스크롤 컨테이너가 되어 sticky 헤더가 깨짐.
+    //   가로 넘침은 각 섹션이 자체적으로 overflow-x-hidden 처리함.
+    <div className="bg-white text-neutral-900 antialiased">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(LANDING_JSONLD).replace(/</g, "\\u003c") }} />
       <LandingHeader />
       <Hero />
