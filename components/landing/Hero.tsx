@@ -26,7 +26,7 @@ export default function Hero() {
         {/* 카피 (모바일: 제목·부제·신청폼) */}
         <Reveal className="text-center lg:text-left">
           <p className="text-sm font-semibold tracking-tight text-[#1D75F7]">검색되는 블로그</p>
-          <h1 className="font-pretendard mt-3 whitespace-nowrap text-[clamp(24px,7.4vw,54px)] font-bold leading-[1.14] tracking-tight">
+          <h1 className="font-pretendard mt-3 whitespace-nowrap text-[clamp(21px,6.7vw,52px)] font-bold leading-[1.14] tracking-tight">
             자는 사이에도 손님이 와요
           </h1>
           <p className="mx-auto mt-5 max-w-md text-[15px] leading-relaxed text-neutral-500 sm:text-lg lg:mx-0">
