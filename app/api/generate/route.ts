@@ -7,7 +7,7 @@ import { countKoreanChars } from "@/lib/humanizer";
 import { isDisposableEmail } from "@/lib/disposableEmail";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { normalizeKeyword, pickVariant, simhash } from "@/lib/diversity";
-import { looksLikeGarbageKeyword, isMeaningfulKeyword } from "@/lib/keywordGuard";
+import { looksLikeGarbageKeyword } from "@/lib/keywordGuard";
 import { isUnsafeKeyword } from "@/lib/keywordSafety";
 import { explicitAudienceOf, AUDIENCE_ALL } from "@/lib/audience";
 import { isAdminEmail } from "@/lib/adminStats";
@@ -72,9 +72,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "검색할 만한 키워드를 입력해 주세요. (예: 강아지 분리불안)" }, { status: 400 });
   }
   // 2차(싼 모델): 'asdfqwer'·무작위 음절·의미 없는 문장 등 규칙을 통과한 무의미 입력 차단
-  if (!(await isMeaningfulKeyword(keyword))) {
-    return NextResponse.json({ error: "글로 쓸 만한 주제를 입력해 주세요. (예: 강아지 분리불안 해결 방법)" }, { status: 400 });
-  }
+  // (AI 의미판별 게이트 제거 — 추천 글감/실제 주제를 가끔 잘못 막던 false-positive 방지.
+  //  난타·자모만 같은 명백한 쓰레기는 위 looksLikeGarbageKeyword(규칙)로 확정 차단.)
   // 타사 업체명·인물명·브랜드는 글감으로 금지(상표권·명예훼손·비교광고 위험)
   if (isUnsafeKeyword(keyword)) {
     return NextResponse.json({ error: "특정 업체명·브랜드는 글감으로 쓸 수 없어요. (상표권·명예훼손 위험) 일반 주제로 입력해 주세요." }, { status: 400 });
