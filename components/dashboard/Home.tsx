@@ -59,30 +59,17 @@ export default function Home({
   const publishedCount = visible.filter((a) => a.status === "published").length;
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-8 sm:py-10">
+    <main className="mx-auto max-w-5xl px-5 py-8 sm:px-6 sm:py-10">
       {/* 헤더 */}
       <p className="text-sm text-neutral-400">{displayName}님, 안녕하세요</p>
       <h1 className="font-pretendard mt-1 text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">{blogName}</h1>
 
-      {/* 모멘텀 — 쌓이는 게 보이게(잔디 + 누적/연속) */}
-      <div className="mt-5">
-        <Momentum articles={visible} />
-      </div>
-
-      {/* 수익화 여정 로드맵 */}
-      <div className="mt-4">
-        <JourneyRoadmap publishedCount={publishedCount} wpConnected={wpConnected} onWrite={onWrite} onGoConnect={onGoConnect} />
-      </div>
-
-      {/* 성과 */}
-      <div className="mt-4">
-        <SearchPerformance onGoConnect={onGoConnect} />
-      </div>
-
-      {/* 글감 추천 카드 3개 + 새 글 쓰기(보조) */}
-      <div className="mt-4 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
+      {/* 벤토 — 글감(메인, 좌 2칸) + 모멘텀/여정(우). 모바일은 글감 먼저 */}
+      <div className="mt-6 grid items-start gap-4 lg:grid-cols-3">
+        {/* 글감 추천 — 메인 hero */}
+        <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm lg:col-span-2">
         <div className="flex items-center justify-between">
-          <p className="text-[15px] font-semibold text-neutral-900">오늘 글 한 편 어때요?</p>
+          <p className="text-[17px] font-bold text-neutral-900">오늘 뭐 쓸까요?</p>
           <button
             onClick={loadTopics}
             disabled={topicsLoading}
@@ -139,6 +126,18 @@ export default function Home({
             보라색은 <b className="font-semibold text-[#8b5cf6]">싹 키워드</b> — 아직 경쟁이 적어 먼저 쓰면 유리해요.
           </p>
         )}
+        </div>
+
+        {/* 우측: 모멘텀 + 수익화 여정 */}
+        <div className="space-y-4">
+          <Momentum articles={visible} />
+          <JourneyRoadmap publishedCount={publishedCount} wpConnected={wpConnected} onWrite={onWrite} onGoConnect={onGoConnect} />
+        </div>
+      </div>
+
+      {/* 성과 — 가로 전체 */}
+      <div className="mt-4">
+        <SearchPerformance onGoConnect={onGoConnect} />
       </div>
 
       {/* 내 글 (최근 5개 + 전체 보기) */}
