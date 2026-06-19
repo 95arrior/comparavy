@@ -18,23 +18,18 @@ const CATS: { v: string; label: string; icon: React.ReactNode }[] = [
 
 // 병의원(치과) 글감 = 글 주제/제목. golden = 강남 지역 기반 글감(오로라). (의료법: 1위/최고/보장 X)
 const ROW1: Kw[] = [
-  { t: "임플란트 가격, 왜 병원마다 다를까?" }, { t: "강남에서 임플란트 알아보는 법", golden: true }, { t: "사랑니 꼭 빼야 할까?" }, { t: "스케일링 주기, 얼마나 자주?" },
+  { t: "임플란트 가격, 왜 병원마다 다를까?" }, { t: "임플란트 몇 개월 걸려요", golden: true }, { t: "사랑니 꼭 빼야 할까?" }, { t: "스케일링 주기, 얼마나 자주?" },
 ];
 const ROW2: Kw[] = [
-  { t: "강남 치과 고를 때 체크리스트", golden: true }, { t: "집에서 치아 미백, 괜찮을까" }, { t: "강남역 직장인 점심 스케일링", golden: true }, { t: "교정 기간 평균 얼마나 걸릴까" },
+  { t: "강남 치과 예약 전 알아두면 좋은 것", golden: true }, { t: "집에서 치아 미백, 괜찮을까" }, { t: "사랑니 발치 후 얼마나 붓나요", golden: true }, { t: "교정 기간 평균 얼마나 걸릴까" },
 ];
 const ROW3: Kw[] = [
-  { t: "어린이 첫 치과 방문, 언제가 좋을까" }, { t: "강남 치과 비용 미리 알아두기", golden: true }, { t: "충치 초기 증상 셀프 체크법" }, { t: "신경치료, 많이 아플까?" },
+  { t: "어린이 첫 치과 방문, 언제가 좋을까" }, { t: "스케일링 너무 무서운데 안 아픈가요", golden: true }, { t: "충치 초기 증상 셀프 체크법" }, { t: "신경치료, 많이 아플까?" },
 ];
 
 function Chip({ item }: { item: Kw }) {
   return item.golden ? (
-    <span className="ateflo-chip-aurora mx-1.5 inline-flex shrink-0 items-center whitespace-nowrap rounded-full py-2 pl-3 pr-4 text-sm font-semibold text-[#3f3a6b] shadow-sm ring-1 ring-white/50">
-      {/* 불꽃 — 황금(핫) 글감 표시 */}
-      <svg width="14" height="15" viewBox="0 0 24 24" aria-hidden className="mr-1.5 shrink-0">
-        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z" fill="#ff7a1a" />
-        <path d="M12 20a3.5 3.5 0 0 0 1.5-6.7c-.6 1-1.5 1.4-1.5 1.4s-1.8-1-1.8-2.7c-1 .9-1.7 2-1.7 3.5A3.5 3.5 0 0 0 12 20z" fill="#ffd23e" />
-      </svg>
+    <span className="ateflo-gold-chip mx-1.5 inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-4 py-2 text-sm">
       {item.t}
     </span>
   ) : (
