@@ -39,20 +39,20 @@ export default function FinalHook() {
     <section ref={ref} className="overflow-x-hidden bg-[#f6f8fc] py-24 sm:py-32">
       <div className="mx-auto max-w-xl px-5 text-center sm:px-6">
         <p style={st(0)} className="text-[13px] leading-relaxed text-neutral-400">
-          직접 해봤다면 아실 거예요. 3일 못 가 멈추는 이유는, 뭘 쓸지 몰라서예요.
+          검색 상위는 먼저 쌓은 사람이 가져가요. 늦을수록 따라잡기 어렵고요.
         </p>
 
         <h2 style={st(1)} className="font-pretendard mt-5 text-[clamp(26px,7vw,40px)] font-bold leading-[1.2] tracking-tight">
-          이번엔, 안 멈춰요<br />사장님은 키워드만 고르면 돼요
+          먼저 쌓은 사람이,<br />검색을 가져가요
         </h2>
 
         <p style={st(2)} className="mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-neutral-500 sm:text-base">
-          글감은 매일 오고, 검색은 알아서 되고, 손님은 자는 사이에 와요.
+          매일 글감이 오고, 글은 검색에 쌓이고, 그게 사장님만의 자산이 돼요.
         </p>
 
         <p style={st(3)} className="mx-auto mt-8 max-w-md text-[14px] leading-relaxed text-neutral-500">
-          대행사 한 달 값이면, 에이트플로는 일 년을 함께해요.<br />
-          <span className="text-neutral-400">정확한 가격은 사전신청자에게 가장 먼저, 더 좋은 조건으로.</span>
+          대행사 한 달 비용이면, 에이트플로는 일 년.<br />
+          <span className="text-neutral-400">사전신청자에겐 가장 먼저, 가장 좋은 조건으로 열어드려요.</span>
         </p>
 
         <div style={st(4)} className="mx-auto mt-9 max-w-md">
