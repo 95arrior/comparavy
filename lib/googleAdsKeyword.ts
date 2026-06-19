@@ -80,9 +80,9 @@ async function callOnce(version: string, seed: string, token: string, loginId: s
   return { status: res.status, text: await res.text() };
 }
 
-export async function fetchGoogleKeywordIdeas(seed: string): Promise<PoolKeyword[]> {
+// 원본 응답 1회 획득(버전 자동탐지 + login 폴백). status/text/version/login 반환.
+async function fetchRawBody(seed: string): Promise<{ status: number; text: string; version: string; loginUsed: string }> {
   const token = await getAccessToken();
-  // env 고정 > 이미 찾은 버전 > 후보 전체 시도
   const versions = process.env.GOOGLE_ADS_API_VERSION
     ? [process.env.GOOGLE_ADS_API_VERSION]
     : resolvedVersion
@@ -93,22 +93,25 @@ export async function fetchGoogleKeywordIdeas(seed: string): Promise<PoolKeyword
   const loginEnv = digits(process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID) || customerId;
 
   let last = "";
-  let chosen = "";
-  let body: { status: number; text: string } | null = null;
   for (const v of versions) {
+    let loginUsed = loginEnv;
     let r = await callOnce(v, seed, token, loginEnv);
-    if (r.status === 404) { last = `v=${v} 404`; continue; } // 버전 불일치 → 다음 후보
-    // 매니저 login으로 권한 거부면, 계정 직접 접근(login=계정 자신)으로 1회 폴백
+    if (r.status === 404) { last = `v=${v} 404`; continue; }
     if (r.status === 403 && /USER_PERMISSION_DENIED/.test(r.text) && loginEnv !== customerId) {
+      loginUsed = customerId;
       r = await callOnce(v, seed, token, customerId);
     }
-    body = r; chosen = v; break; // 404 외(성공/실제오류) → 이 버전이 유효
+    if (!process.env.GOOGLE_ADS_API_VERSION && r.status >= 200 && r.status < 300) resolvedVersion = v;
+    return { status: r.status, text: r.text, version: v, loginUsed };
   }
-  if (!body) throw new Error(`구글 애즈: 사용 가능한 API 버전을 못 찾음(${last}). GOOGLE_ADS_API_VERSION을 지정하세요.`);
+  throw new Error(`구글 애즈: 사용 가능한 API 버전을 못 찾음(${last}).`);
+}
+
+export async function fetchGoogleKeywordIdeas(seed: string): Promise<PoolKeyword[]> {
+  const body = await fetchRawBody(seed);
   if (body.status < 200 || body.status >= 300) {
-    throw new Error(`구글 애즈 키워드 호출 실패(${body.status}, ${chosen}): ${body.text.slice(0, 600)}`);
+    throw new Error(`구글 애즈 키워드 호출 실패(${body.status}, ${body.version}): ${body.text.slice(0, 600)}`);
   }
-  if (!process.env.GOOGLE_ADS_API_VERSION) resolvedVersion = chosen; // 성공 버전 캐시
   const json = JSON.parse(body.text) as { results?: IdeaResult[] };
   const out: PoolKeyword[] = [];
   for (const r of json.results ?? []) {
@@ -120,4 +123,22 @@ export async function fetchGoogleKeywordIdeas(seed: string): Promise<PoolKeyword
   }
   out.sort((a, b) => b.monthlyMobileQcCnt - a.monthlyMobileQcCnt);
   return out;
+}
+
+// 디버그용 — 구글 원본 응답을 그대로(요약) 반환.
+export async function fetchGoogleIdeasDebug(seed: string): Promise<unknown> {
+  const body = await fetchRawBody(seed);
+  let parsed: unknown = body.text;
+  try { parsed = JSON.parse(body.text); } catch { /* keep text */ }
+  const totalSize = (parsed as { totalSize?: unknown })?.totalSize;
+  const results = (parsed as { results?: unknown[] })?.results;
+  return {
+    version: body.version,
+    loginUsed: body.loginUsed,
+    customerId: digits(process.env.GOOGLE_ADS_CUSTOMER_ID),
+    httpStatus: body.status,
+    totalSize: totalSize ?? null,
+    resultCount: Array.isArray(results) ? results.length : null,
+    raw: parsed,
+  };
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { isAdminEmail } from "@/lib/adminStats";
-import { googleAdsConfigured, fetchGoogleKeywordIdeas } from "@/lib/googleAdsKeyword";
+import { googleAdsConfigured, fetchGoogleKeywordIdeas, fetchGoogleIdeasDebug } from "@/lib/googleAdsKeyword";
 
 // 관리자 전용 — 구글 애즈 자격증명/호출 점검. ?seed=임플란트
 export const maxDuration = 60;
@@ -16,7 +16,12 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: false, error: "구글 애즈 env 6개가 다 안 들어갔어요(또는 빈 값)." }, { status: 400 });
   }
 
-  const seed = new URL(req.url).searchParams.get("seed") || "임플란트";
+  const sp = new URL(req.url).searchParams;
+  const seed = sp.get("seed") || "임플란트";
+  if (sp.get("debug")) {
+    try { return NextResponse.json({ ok: true, debug: await fetchGoogleIdeasDebug(seed) }); }
+    catch (e) { return NextResponse.json({ ok: false, error: e instanceof Error ? e.message : String(e) }, { status: 500 }); }
+  }
   try {
     const list = await fetchGoogleKeywordIdeas(seed);
     return NextResponse.json({
