@@ -94,9 +94,10 @@ export async function GET() {
 
   // least-used 우선 윈도우(times_assigned asc → 균등 분산). 본인이 쓴 건 제외 후 남은 것만.
   // 적정범위 = 월 500~5,000 (경쟁 과열·초저검색 회피). sub 없거나 부족하면 단계적으로 넓힌다.
-  async function fetchPool(useSub: boolean, ranged: boolean): Promise<PoolRow[]> {
+  async function fetchPool(useSub: boolean, ranged: boolean, lowComp: boolean): Promise<PoolRow[]> {
     let q = pool.from("keyword_pool").select("keyword, monthly_searches, competition, audience").eq("vertical", vertical);
     if (useSub && sub) q = q.eq("sub", sub);
+    if (lowComp) q = q.eq("competition", "낮음"); // ★싹 키워드(경쟁 낮음) 우선 — 신규 블로그가 실제 선점·검색 가능한 글감
     if (ranged) q = q.gte("monthly_searches", 500).lte("monthly_searches", 5000);
     const { data } = await q
       .order("times_assigned", { ascending: true }) // 덜 쓰인 것 먼저(기존 인덱스 활용)
@@ -107,14 +108,16 @@ export async function GET() {
     return rows.filter((r) => !usedSet.has(normalizeKeyword(r.keyword)) && !isUnsafeKeyword(r.keyword) && audMatch(r.keyword, r.audience));
   }
 
-  // 단계적 폴백: (sub+적정범위) → (sub+전체) → (vertical+적정범위) → (vertical+전체).
-  // ★대상 선택 시: vertical 전체로 넓히지 않는다(엉뚱한 글감 누출 방지). sub 안에서만 + 대상 필터.
-  const steps: [boolean, boolean][] = sub
-    ? (audActive ? [[true, true], [true, false]] : [[true, true], [true, false], [false, true], [false, false]])
-    : [[false, true], [false, false]];
+  // 단계적 폴백: 싹 키워드(경쟁 낮음) 우선 → 부족하면 경쟁 전체로 넓힘.
+  // [useSub, ranged, lowComp]. ★대상 선택 시: sub 안에서만(엉뚱한 글감 누출 방지).
+  const steps: [boolean, boolean, boolean][] = sub
+    ? audActive
+      ? [[true, true, true], [true, false, true], [true, true, false], [true, false, false]]
+      : [[true, true, true], [true, false, true], [true, true, false], [true, false, false], [false, true, false], [false, false, false]]
+    : [[false, true, true], [false, false, true], [false, true, false], [false, false, false]];
   let rows: PoolRow[] = [];
-  for (const [useSub, ranged] of steps) {
-    rows = await fetchPool(useSub, ranged);
+  for (const [useSub, ranged, lowComp] of steps) {
+    rows = await fetchPool(useSub, ranged, lowComp);
     if (rows.length >= PICK) break;
   }
   if (rows.length === 0) return NextResponse.json({ topics: [] });
