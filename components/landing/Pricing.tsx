@@ -39,16 +39,11 @@ export default function Pricing() {
           </div>
         </Reveal>
 
-        {/* 가격 */}
+        {/* CTA */}
         <Reveal delay={200}>
-          <p className="mt-12 text-2xl font-bold tracking-tight text-neutral-900">
-            월 79,000원 <span className="text-xl font-medium text-neutral-400">· 하루 2,600원</span>
-          </p>
-          <p className="mt-2 text-sm text-neutral-500">손님 한 명 값도 안 돼요.</p>
-
           <button
             onClick={toForm}
-            className="mt-8 rounded-xl bg-[#1D75F7] px-8 py-3.5 text-[15px] font-semibold text-white shadow-[0_10px_28px_-10px_rgba(29,117,247,0.5)] transition hover:opacity-90 active:scale-[0.98]"
+            className="mt-12 rounded-xl bg-[#1D75F7] px-8 py-3.5 text-[15px] font-semibold text-white shadow-[0_10px_28px_-10px_rgba(29,117,247,0.5)] transition hover:opacity-90 active:scale-[0.98]"
           >
             사전신청
           </button>
