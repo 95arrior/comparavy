@@ -141,6 +141,12 @@ export default function SearchPsychology() {
         <Marquee items={ROW2} dir="left" speed={36} />
         <Marquee items={ROW3} dir="right" speed={44} />
       </div>
+
+      {/* 싹 키워드 안내 */}
+      <p className={`mx-auto mt-7 max-w-md px-6 text-center text-[13px] leading-relaxed text-neutral-400 transition-opacity duration-700 ${phase === "results" ? "opacity-100" : "opacity-0"}`}>
+        보라색으로 빛나는 건 <b className="font-semibold text-[#8b5cf6]">‘싹 키워드’</b>예요.<br className="hidden sm:block" />
+        아직 경쟁이 적어서, 먼저 쓰면 유리해요.
+      </p>
     </section>
   );
 }
