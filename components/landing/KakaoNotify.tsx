@@ -2,8 +2,8 @@ import Reveal from "@/components/Reveal";
 
 // [4] 카카오톡 알림 — 가볍게: 프레임 없이 알림 카드만(토스st). 부가 기능이라 산뜻하게.
 const MESSAGES = [
-  "오늘 블로그 쓸 시간이에요! 버튼 몇 번이면 발행 끝",
-  "어제 글을 안 쓰셨어요. 지금 발행해요",
+  "오늘 글감 3개 도착했어요. 확인해보세요",
+  "어제 글을 안 쓰셨어요. 지금 5분이면 돼요",
 ];
 
 // 카카오톡 미니 로고(노란 사각 + 갈색 말풍선)
@@ -53,13 +53,13 @@ export default function KakaoNotify() {
 
         {/* 카피 */}
         <Reveal className="text-center lg:text-left">
-          <p className="text-sm font-semibold tracking-tight text-[#1D75F7]">카카오톡 알림</p>
+          <p className="text-sm font-semibold tracking-tight text-[#1D75F7]">매일 오전, 카톡으로</p>
           <h2 className="font-pretendard mt-3 text-3xl font-bold leading-[1.2] tracking-tight sm:text-[2.5rem] sm:leading-[1.18]">
-            쓸 시간을,<br />카톡으로 알려드려요
+            오늘은 어떤 글감이 왔을까
           </h2>
           <p className="mx-auto mt-5 max-w-md text-[15px] leading-relaxed text-neutral-500 sm:text-lg lg:mx-0">
-            매일 챙기기 어려운 블로그,<br className="hidden sm:block" />
-            카톡으로 콕 알려드려요.
+            매일 새 글감을 분석해서 보내드려요.<br className="hidden sm:block" />
+            놓치기 전에 카톡으로 콕 알려드려요.
           </p>
         </Reveal>
       </div>
