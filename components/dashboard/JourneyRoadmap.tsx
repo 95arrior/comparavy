@@ -13,10 +13,10 @@ export default function JourneyRoadmap({
   onGoConnect: () => void;
 }) {
   const ms = [
-    { label: "블로그 연결", done: wpConnected, hint: "워드프레스를 연결하세요", go: onGoConnect },
-    { label: "첫 발행", done: publishedCount >= 1, hint: "첫 글을 발행해요", go: onWrite },
-    { label: "글 15편", done: publishedCount >= 15, hint: `애드센스 신청에 도전 (${Math.min(publishedCount, 15)}/15)`, go: onWrite },
-    { label: "수익화 준비", done: publishedCount >= 30, hint: `꾸준히 30편까지 (${Math.min(publishedCount, 30)}/30)`, go: onWrite },
+    { label: "블로그 연결", done: wpConnected, hint: "블로그부터 연결해요", go: onGoConnect },
+    { label: "첫 발행", done: publishedCount >= 1, hint: "첫 글 올려봐요", go: onWrite },
+    { label: "글 15편", done: publishedCount >= 15, hint: `애드센스 신청해봐요 (${Math.min(publishedCount, 15)}/15)`, go: onWrite },
+    { label: "수익화 준비", done: publishedCount >= 30, hint: `꾸준히 쌓아요 (${Math.min(publishedCount, 30)}/30)`, go: onWrite },
   ];
   const doneN = ms.filter((m) => m.done).length;
   const pct = (doneN / ms.length) * 100;

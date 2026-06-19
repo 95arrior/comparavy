@@ -17,8 +17,8 @@ interface PoolRow { keyword: string; monthly_searches: number | null; competitio
 // 검색량 → 사장이 이해하는 쉬운 말(숫자 노출 X). 숫자 의미 모르는 초보용.
 function demandLabel(searches: number | null): string {
   const n = searches ?? 0;
-  if (n >= 3000) return "🔥 많이 검색돼요";
-  if (n >= 800) return "꾸준히 찾는 주제";
+  if (n >= 3000) return "손님이 많이 찾아요";
+  if (n >= 800) return "꾸준히 찾는 주제예요";
   return "지금 쓰기 좋아요";
 }
 

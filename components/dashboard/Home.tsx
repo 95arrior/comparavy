@@ -113,7 +113,7 @@ export default function Home({
             {featured.title}
           </p>
           <p className={`mt-1.5 text-sm ${featured.ssak ? "font-medium text-[#7c3aed]" : "text-neutral-500"}`}>
-            {featured.ssak ? "아직 경쟁이 적어요 · 먼저 쓰면 선점해요" : "꾸준히 검색되는 주제예요"}
+            {featured.ssak ? "남들은 아직 안 썼어요. 먼저 쓰면 손님이 먼저 와요." : "손님이 자주 찾는 주제예요."}
           </p>
           <div className="mt-6 flex items-center gap-4">
             <button
