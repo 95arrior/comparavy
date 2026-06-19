@@ -68,6 +68,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "먼저 워드프레스 사이트를 연결해 주세요." }, { status: 400 });
   }
 
+  // 블로그/브랜드 이름 (구조화데이터 author·publisher)
+  const { data: profile } = await supabase
+    .from("blog_profiles")
+    .select("blog_name, biz_name")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const siteName = (profile?.blog_name || profile?.biz_name || "").trim() || undefined;
+
   // 내부 링크 자동: 내가 이미 발행한 다른 글들의 키워드를 본문에서 찾아 그 글로 링크
   let contentHtml = article.body_html as string;
   if (addInternalLinks) {
@@ -94,6 +102,8 @@ export async function POST(request: Request) {
       title: article.title,
       contentHtml,
       metaDescription: article.meta_description ?? undefined,
+      metaTitle: article.meta_title ?? undefined,
+      siteName,
       faq: Array.isArray(article.faq) ? article.faq : undefined,
       slug: article.keyword
         ? article.keyword.trim().toLowerCase().replace(/\s+/g, "-")

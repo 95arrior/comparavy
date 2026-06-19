@@ -53,6 +53,10 @@ export interface PublishInput extends WordPressCredentials {
   date?: string;
   /** SEO 메타 설명 (excerpt로 전달 → SEO 플러그인/검색 스니펫) */
   metaDescription?: string;
+  /** SEO 메타 제목 (Rank Math/Yoast 메타 필드로 전달 → 검색결과 제목 최적화) */
+  metaTitle?: string;
+  /** 사이트/블로그 이름 (구조화데이터 author·publisher) */
+  siteName?: string;
   /** FAQ → FAQPage 구조화 데이터(JSON-LD)로 변환해 리치 결과 노출 */
   faq?: { question: string; answer: string }[];
   /** SEO 친화적 슬러그(URL) */
@@ -153,17 +157,23 @@ export function insertInternalLinks(html: string, candidates: { phrase: string; 
 
 /** Article 구조화 데이터(JSON-LD). FAQ는 본문 마이크로데이터로 따로 넣는다(아래 renderFaqSection). */
 function buildStructuredData(input: PublishInput): string {
-  return (
-    "\n" +
-    jsonLd({
-      "@context": "https://schema.org",
-      "@type": "Article",
-      headline: input.title,
-      description: input.metaDescription ?? "",
-      inLanguage: "ko-KR",
-      datePublished: new Date().toISOString(),
-    })
-  );
+  const nowIso = new Date().toISOString();
+  const site = (input.siteName ?? "").trim();
+  const data: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: input.title,
+    description: input.metaDescription ?? "",
+    inLanguage: "ko-KR",
+    datePublished: nowIso,
+    dateModified: nowIso,
+  };
+  // author·publisher(블로그) — 신뢰도·E-E-A-T 신호
+  if (site) {
+    data.author = { "@type": "Organization", name: site };
+    data.publisher = { "@type": "Organization", name: site };
+  }
+  return "\n" + jsonLd(data);
 }
 
 /**
@@ -327,6 +337,17 @@ export async function publishPost(input: PublishInput): Promise<PublishResult> {
   };
   if (input.metaDescription) body.excerpt = input.metaDescription;
   if (input.slug) body.slug = input.slug;
+
+  // SEO 메타(제목·설명)를 Rank Math/Yoast 메타 필드로 전달 → 검색결과 제목/스니펫 최적화.
+  // 해당 플러그인이 REST 메타를 노출 안 하면 WP가 조용히 무시(무해).
+  const seoTitle = input.metaTitle?.trim();
+  const seoDesc = input.metaDescription?.trim();
+  if (seoTitle || seoDesc) {
+    body.meta = {
+      ...(seoTitle ? { rank_math_title: seoTitle, _yoast_wpseo_title: seoTitle } : {}),
+      ...(seoDesc ? { rank_math_description: seoDesc, _yoast_wpseo_metadesc: seoDesc } : {}),
+    };
+  }
 
   // 카테고리: 지정되면 찾거나 생성해 연결 (미지정 시 '미분류'로 올라가 SEO 불리)
   if (input.categoryName) {
