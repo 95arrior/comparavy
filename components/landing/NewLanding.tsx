@@ -2,8 +2,7 @@ import LandingHeader from "./LandingHeader";
 import Hero from "./Hero";
 import Problem from "./Problem";
 import SearchPsychology from "./SearchPsychology";
-import KakaoNotify from "./KakaoNotify";
-import Trust from "./Trust";
+import FinalHook from "./FinalHook";
 import SiteFooter from "@/components/SiteFooter";
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from "@/lib/site";
 
@@ -41,8 +40,7 @@ export default function NewLanding() {
       <Hero />
       <Problem />
       <SearchPsychology />
-      <KakaoNotify />
-      <Trust />
+      <FinalHook />
       {/* 모바일 하단 고정 CTA가 푸터를 가리지 않게 여백 */}
       <div className="pb-24 sm:pb-0">
         <SiteFooter />

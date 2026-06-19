@@ -251,6 +251,19 @@ html {
   -webkit-text-fill-color: transparent; color: transparent;
   animation: ateflo-aurora 4s ease-in-out infinite;
 }
+
+/* 오로라 텍스트 + 5초마다 빛 한 줄 sweep(왼→오, 1.2s). background-position만 이동(리플로우 X) */
+@keyframes ateflo-aurora-sweep {
+  0%, 76% { background-position: 0% 50%; }
+  100% { background-position: -200% 50%; }
+}
+.ateflo-aurora-sweep {
+  background-image: linear-gradient(110deg, #1D75F7 0%, #7c5cff 30%, #ff7ad9 50%, #7c5cff 70%, #1D75F7 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+  animation: ateflo-aurora-sweep 5s ease-in-out infinite;
+}
 @keyframes ateflo-twinkle { 0%, 100% { transform: scale(1); opacity: 0.85; } 50% { transform: scale(1.28); opacity: 1; } }
 .ateflo-twinkle { display: inline-block; animation: ateflo-twinkle 1.9s ease-in-out infinite; }
 /* 은은한 트윙클(칩 별용 — 과하지 않게) */
@@ -337,10 +350,11 @@ html {
 
 /* 움직임 최소화 선호 시: 연속/장식 애니 정지(정적 표시) */
 @media (prefers-reduced-motion: reduce) {
-  .ateflo-mq-left, .ateflo-mq-right, .ateflo-chip-aurora, .ateflo-aurora, .ateflo-holo, .ateflo-twinkle, .ateflo-twinkle-soft, .ateflo-wand,
+  .ateflo-mq-left, .ateflo-mq-right, .ateflo-chip-aurora, .ateflo-aurora, .ateflo-aurora-sweep, .ateflo-holo, .ateflo-twinkle, .ateflo-twinkle-soft, .ateflo-wand,
   .ateflo-load-mark, .ateflo-load-ring, .ateflo-load-glow, .ateflo-load-orbit, .ateflo-load-bar {
     animation: none !important;
   }
+  .ateflo-aurora-sweep { background-position: 0% 50% !important; }
 }
 
 /* 데모 카드 스크롤바 숨김(스크롤은 되되 바는 안 보이게) */

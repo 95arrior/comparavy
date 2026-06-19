@@ -68,8 +68,9 @@ export default function SearchPsychology() {
     async function run() {
       if (running) return;
       running = true;
-      // reduced-motion: 애니 없이 최종 상태(병의원 선택 + 글감)만 정적으로
-      if (reduce) { setSelected("medical"); setPhase("results"); return; }
+      // reduced-motion 또는 작은 모바일: 펼침/축소(레이아웃 점프) 생략 → 최종 상태만 정적으로
+      const compact = reduce || window.matchMedia("(max-width: 639px)").matches;
+      if (compact) { setSelected("medical"); setPhase("results"); return; }
       // 펼침 → 병의원 선택(클릭+샤인) → 나머지 모이며 사라짐 → 치과 → 강점 → 글감(유지, 반복 X)
       setPhase("spread"); await sleep(1150); if (cancelled) return;
       setSelected("medical"); setPhase("select"); await sleep(1050); if (cancelled) return;
@@ -100,8 +101,16 @@ export default function SearchPsychology() {
         </p>
       </div>
 
-      {/* 업종 카테고리 — 가운데에서 양쪽으로 펼쳐짐 → 병의원 선택(샤인) → 나머지 중앙으로 모이며 사라짐 */}
-      <div className="mx-auto mt-12 flex max-w-2xl flex-wrap justify-center px-6">
+      {/* 모바일: 펼침/축소 연출 생략(레이아웃 점프·렉 방지) → 병의원만 정적 표시 */}
+      <div className="mt-12 flex justify-center px-6 sm:hidden">
+        <span className="inline-flex items-center gap-2 rounded-full border border-[#1D75F7] bg-[#1D75F7] px-4 py-2.5 text-sm font-medium text-white shadow-[0_8px_20px_-6px_rgba(29,117,247,0.45)]">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{CATS[0].icon}</svg>
+          {CATS[0].label}
+        </span>
+      </div>
+
+      {/* 데스크탑: 가운데에서 양쪽으로 펼쳐짐 → 병의원 선택(샤인) → 나머지 모이며 사라짐 */}
+      <div className="mx-auto mt-12 hidden max-w-2xl flex-wrap justify-center px-6 sm:flex">
         {CATS.map((c, idx) => {
           const center = (CATS.length - 1) / 2;
           const offset = (center - idx) * 30; // 펼침 전: 중앙 쪽으로 모여 있음
