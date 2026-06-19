@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import SearchPerformance from "./SearchPerformance";
 import ArticleList from "./ArticleList";
-import Momentum from "./Momentum";
 import JourneyRoadmap from "./JourneyRoadmap";
 import type { Article } from "./types";
 
@@ -37,13 +36,18 @@ export default function Home({
 }) {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [topicsLoading, setTopicsLoading] = useState(true);
+  const [featuredIdx, setFeaturedIdx] = useState(0);
 
   const loadTopics = useCallback(async () => {
     setTopicsLoading(true);
     try {
       const res = await fetch("/api/topics");
       const data = await res.json();
-      setTopics(Array.isArray(data.topics) ? data.topics : []);
+      const list: Topic[] = Array.isArray(data.topics) ? data.topics : [];
+      setTopics(list);
+      // 전설(싹 키워드)이 있으면 그걸 먼저 보여준다
+      const sIdx = list.findIndex((t) => t.ssak);
+      setFeaturedIdx(sIdx >= 0 ? sIdx : 0);
     } catch {
       setTopics([]);
     } finally {
@@ -54,88 +58,99 @@ export default function Home({
   useEffect(() => {
     loadTopics();
   }, [loadTopics]);
+
   const visible = articles.filter((a) => a.status !== "generating");
   const hasArticles = visible.length > 0;
   const publishedCount = visible.filter((a) => a.status === "published").length;
+  const featured = topics[featuredIdx];
+  const nextFeatured = () => {
+    if (featuredIdx + 1 < topics.length) setFeaturedIdx(featuredIdx + 1);
+    else loadTopics(); // 다 봤으면 새로 받기
+  };
+
+  // 모멘텀 — 한 줄 요약(총·연속·이번 주)
+  const dayKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  const days = new Set(visible.filter((a) => a.created_at).map((a) => dayKey(new Date(a.created_at))));
+  const total = visible.length;
+  const now = new Date();
+  const monday = new Date(now);
+  monday.setHours(0, 0, 0, 0);
+  monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+  const weekCount = visible.filter((a) => a.created_at && new Date(a.created_at) >= monday).length;
+  let streak = 0;
+  const cur = new Date(now);
+  if (!days.has(dayKey(cur))) cur.setDate(cur.getDate() - 1);
+  while (days.has(dayKey(cur))) { streak++; cur.setDate(cur.getDate() - 1); }
+  const weekPct = Math.min(weekCount / 3, 1) * 100;
 
   return (
-    <main className="mx-auto max-w-5xl px-5 py-8 sm:px-6 sm:py-10">
-      {/* 헤더 */}
-      <p className="text-sm text-neutral-400">{displayName}님, 안녕하세요</p>
-      <h1 className="font-pretendard mt-1 text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">{blogName}</h1>
-
-      {/* 벤토 — 글감(메인, 좌 2칸) + 모멘텀/여정(우). 모바일은 글감 먼저 */}
-      <div className="mt-6 grid items-start gap-4 lg:grid-cols-3">
-        {/* 글감 추천 — 메인 hero */}
-        <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm lg:col-span-2">
-        <div className="flex items-center justify-between">
-          <p className="text-[17px] font-bold text-neutral-900">오늘 뭐 쓸까요?</p>
-          <button
-            onClick={loadTopics}
-            disabled={topicsLoading}
-            className="text-xs font-medium text-[#1D75F7] transition hover:underline disabled:opacity-40"
-          >
-            다른 주제 보기
-          </button>
-        </div>
-
-        {/* 카드 영역 — 로딩 시 스켈레톤(높이 고정, 레이아웃 시프트 방지) */}
-        <div className="mt-3 space-y-2">
-          {topicsLoading ? (
-            [0, 1, 2].map((i) => <div key={i} className="h-[62px] animate-pulse rounded-xl bg-neutral-100" />)
-          ) : topics.length > 0 ? (
-            topics.map((t) =>
-              t.ssak ? (
-                // 싹 키워드 — 옅은 파스텔 오로라(일렁임) + 보라 배지
-                <div key={t.keyword} className="ateflo-chip-aurora flex items-center justify-between gap-3 rounded-xl px-4 py-3 shadow-sm ring-1 ring-white/60">
-                  <div className="min-w-0">
-                    <span className="mb-1 inline-block rounded-full bg-white/75 px-2 py-0.5 text-[10px] font-bold text-[#7c3aed]">싹 키워드</span>
-                    <p className="truncate text-sm font-semibold text-[#3f3a6b]">{t.title}</p>
-                    <p className="mt-0.5 text-[11px] font-medium text-[#7c3aed]">경쟁 적어요 · 먼저 쓰면 유리</p>
-                  </div>
-                  <button
-                    onClick={() => onWriteKeyword(t.keyword, t.title)}
-                    className="shrink-0 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-[#7c3aed] shadow-sm transition hover:opacity-90 active:scale-95"
-                  >
-                    이걸로 쓰기
-                  </button>
-                </div>
-              ) : (
-                // 일반 글감 — 연그레이
-                <div key={t.keyword} className="flex items-center justify-between gap-3 rounded-xl bg-neutral-100 px-4 py-3 ring-1 ring-black/[0.03]">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-neutral-800">{t.title}</p>
-                    <p className="mt-0.5 text-xs text-neutral-500">{t.demandLabel}</p>
-                  </div>
-                  <button
-                    onClick={() => onWriteKeyword(t.keyword, t.title)}
-                    className="shrink-0 rounded-lg bg-[#1D75F7]/10 px-3 py-2 text-xs font-semibold text-[#1D75F7] transition hover:bg-[#1D75F7]/15 active:scale-95"
-                  >
-                    이걸로 쓰기
-                  </button>
-                </div>
-              ),
-            )
-          ) : (
-            <p className="py-3 text-xs text-neutral-400">아직 추천할 글감이 없어요. ‘다른 주제 보기’를 눌러보세요.</p>
-          )}
-        </div>
-
-        {topics.some((t) => t.ssak) && (
-          <p className="mt-3 text-[11px] leading-relaxed text-neutral-400">
-            보라색은 <b className="font-semibold text-[#8b5cf6]">싹 키워드</b> — 아직 경쟁이 적어 먼저 쓰면 유리해요.
-          </p>
+    <main className="mx-auto max-w-2xl px-6 py-12 sm:py-16">
+      {/* 헤더 — 절제 */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-neutral-400">{displayName}님</p>
+        {!wpConnected && (
+          <button onClick={onGoConnect} className="text-xs font-medium text-[#1D75F7] transition hover:underline">워드프레스 연결 →</button>
         )}
-        </div>
+      </div>
 
-        {/* 우측: 모멘텀 + 수익화 여정 */}
-        <div className="space-y-4">
-          <Momentum articles={visible} />
-          <JourneyRoadmap publishedCount={publishedCount} wpConnected={wpConnected} onWrite={onWrite} onGoConnect={onGoConnect} />
+      {/* HERO — 큰 한 문장 */}
+      <h1 className="font-pretendard mt-5 text-[28px] font-bold leading-[1.2] tracking-tight text-neutral-900 sm:text-[34px]">
+        오늘, 한 편이면 돼요
+      </h1>
+      <p className="mt-2 text-[15px] text-neutral-400">{blogName}</p>
+
+      {/* 딱 하나 크게 — 오늘의 글감 */}
+      {topicsLoading ? (
+        <div className="mt-8 h-[168px] animate-pulse rounded-3xl bg-neutral-100" />
+      ) : featured ? (
+        <div className={`mt-8 rounded-3xl p-7 ${featured.ssak ? "ateflo-chip-aurora ring-1 ring-white/60" : "border border-neutral-200 bg-white shadow-[0_10px_30px_-14px_rgba(20,40,90,0.15)]"}`}>
+          {featured.ssak ? (
+            <span className="inline-block rounded-full bg-white/75 px-2.5 py-1 text-[11px] font-bold text-[#7c3aed]">싹 키워드 · 지금이 기회</span>
+          ) : (
+            <span className="text-xs font-semibold text-[#1D75F7]">{featured.demandLabel}</span>
+          )}
+          <p className={`font-pretendard mt-3 text-[22px] font-bold leading-snug tracking-tight ${featured.ssak ? "text-[#3f3a6b]" : "text-neutral-900"}`}>
+            {featured.title}
+          </p>
+          <p className={`mt-1.5 text-sm ${featured.ssak ? "font-medium text-[#7c3aed]" : "text-neutral-500"}`}>
+            {featured.ssak ? "아직 경쟁이 적어요 · 먼저 쓰면 선점해요" : "꾸준히 검색되는 주제예요"}
+          </p>
+          <div className="mt-6 flex items-center gap-4">
+            <button
+              onClick={() => onWriteKeyword(featured.keyword, featured.title)}
+              className={`rounded-xl px-6 py-3 text-sm font-bold shadow-sm transition active:scale-[0.98] ${featured.ssak ? "bg-white text-[#7c3aed] hover:opacity-90" : "bg-[#1D75F7] text-white hover:opacity-90"}`}
+            >
+              이 글 쓰기
+            </button>
+            <button onClick={nextFeatured} className="text-sm font-medium text-neutral-500 transition hover:text-neutral-800">다른 글감 →</button>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-8 rounded-3xl border border-dashed border-neutral-200 p-8 text-center text-sm text-neutral-400">
+          아직 추천할 글감이 없어요. <button onClick={loadTopics} className="font-medium text-[#1D75F7]">다시 받기</button>
+        </div>
+      )}
+
+      {/* 한 줄 모멘텀 + 주간 진척 */}
+      <div className="mt-7 border-t border-neutral-100 pt-5">
+        <div className="flex items-center justify-between text-sm">
+          <p className="text-neutral-500">
+            총 <b className="text-neutral-800">{total}편</b>
+            {streak > 0 && <> · <span className="font-semibold text-orange-500">{streak}일 연속</span></>}
+          </p>
+          <p className="text-neutral-400">이번 주 {weekCount}/3편</p>
+        </div>
+        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-neutral-100">
+          <div className="h-full rounded-full bg-[#1D75F7] transition-all duration-500" style={{ width: `${weekPct}%` }} />
         </div>
       </div>
 
-      {/* 성과 — 가로 전체 */}
+      {/* 수익화 여정 */}
+      <div className="mt-6">
+        <JourneyRoadmap publishedCount={publishedCount} wpConnected={wpConnected} onWrite={onWrite} onGoConnect={onGoConnect} />
+      </div>
+
+      {/* 성과 */}
       <div className="mt-4">
         <SearchPerformance onGoConnect={onGoConnect} />
       </div>
