@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import SearchPerformance from "./SearchPerformance";
 import ArticleList from "./ArticleList";
+import Momentum from "./Momentum";
+import JourneyRoadmap from "./JourneyRoadmap";
 import type { Article } from "./types";
 
 interface Topic { keyword: string; title: string; demandLabel: string; ssak?: boolean }
@@ -54,16 +56,7 @@ export default function Home({
   }, [loadTopics]);
   const visible = articles.filter((a) => a.status !== "generating");
   const hasArticles = visible.length > 0;
-  const hasPublished = visible.some((a) => a.status === "published");
-
-  const steps = [
-    { label: "첫 글 쓰기", done: hasArticles, go: onWrite },
-    { label: "워드프레스 연결", done: wpConnected, go: onGoConnect },
-    { label: "발행", done: hasPublished, go: onAllArticles },
-  ];
-  const doneCount = steps.filter((s) => s.done).length;
-  const allDone = doneCount === steps.length;
-  const firstUndone = steps.findIndex((s) => !s.done);
+  const publishedCount = visible.filter((a) => a.status === "published").length;
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-8 sm:py-10">
@@ -71,25 +64,18 @@ export default function Home({
       <p className="text-sm text-neutral-400">{displayName}님, 안녕하세요</p>
       <h1 className="font-pretendard mt-1 text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">{blogName}</h1>
 
-      {/* 미니 진척 — 3단계 완료 시 자동 숨김 */}
-      {!allDone && (
-        <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl border border-[#1D75F7]/25 bg-[#1D75F7]/[0.04] px-4 py-2.5">
-          <span className="shrink-0 text-xs font-bold text-[#1D75F7]">시작하기 {doneCount}/3</span>
-          {steps.map((s, i) => (
-            <button key={s.label} onClick={s.go} className="flex items-center gap-1 text-xs transition active:scale-95">
-              {s.done ? (
-                <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500 text-white"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg></span>
-              ) : (
-                <span className={`flex h-3.5 w-3.5 items-center justify-center rounded-full text-[9px] font-bold ${i === firstUndone ? "bg-[#1D75F7] text-white" : "border border-neutral-300 text-neutral-400"}`}>{i + 1}</span>
-              )}
-              <span className={`font-medium ${s.done ? "text-neutral-400 line-through decoration-neutral-300" : i === firstUndone ? "text-neutral-800" : "text-neutral-400"}`}>{s.label}</span>
-            </button>
-          ))}
-        </div>
-      )}
+      {/* 모멘텀 — 쌓이는 게 보이게(잔디 + 누적/연속) */}
+      <div className="mt-5">
+        <Momentum articles={visible} />
+      </div>
+
+      {/* 수익화 여정 로드맵 */}
+      <div className="mt-4">
+        <JourneyRoadmap publishedCount={publishedCount} wpConnected={wpConnected} onWrite={onWrite} onGoConnect={onGoConnect} />
+      </div>
 
       {/* 성과 */}
-      <div className="mt-5">
+      <div className="mt-4">
         <SearchPerformance onGoConnect={onGoConnect} />
       </div>
 
