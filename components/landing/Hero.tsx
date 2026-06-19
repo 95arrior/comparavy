@@ -23,10 +23,10 @@ export default function Hero() {
     <div className="overflow-x-hidden bg-white text-neutral-900 antialiased">
       {/* 히어로 */}
       <section className="mx-auto grid max-w-6xl gap-12 overflow-x-hidden px-5 pb-12 pt-8 sm:px-8 sm:pb-16 sm:pt-16 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:gap-16 lg:pb-24 lg:pt-20">
-        {/* 카피 (모바일: 제목·부제·신청폼) */}
-        <Reveal className="text-center lg:text-left">
+        {/* 카피 (모바일: 제목·부제·신청폼) — min-w-0: nowrap 제목이 그리드 칼럼을 화면보다 넓혀 쏠리는 것 방지 */}
+        <Reveal className="min-w-0 text-center lg:text-left">
           <p className="text-sm font-semibold tracking-tight text-[#1D75F7]">검색되는 블로그</p>
-          <h1 className="font-pretendard mt-3 whitespace-nowrap text-[clamp(21px,6.7vw,52px)] font-bold leading-[1.14] tracking-tight">
+          <h1 className="font-pretendard mt-3 whitespace-nowrap text-[clamp(20px,6.2vw,44px)] font-bold leading-[1.14] tracking-tight">
             자는 사이에 손님이{" "}
             <span className="ateflo-bounce">쌓</span>
             <span className="ateflo-bounce" style={{ animationDelay: "0.15s" }}>여</span>

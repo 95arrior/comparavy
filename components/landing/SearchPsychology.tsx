@@ -68,10 +68,9 @@ export default function SearchPsychology() {
     async function run() {
       if (running) return;
       running = true;
-      // reduced-motion 또는 작은 모바일: 펼침/축소(레이아웃 점프) 생략 → 최종 상태만 정적으로
-      const compact = reduce || window.matchMedia("(max-width: 639px)").matches;
-      if (compact) { setSelected("medical"); setPhase("results"); return; }
-      // 펼침 → 병의원 선택(클릭+샤인) → 나머지 모이며 사라짐 → 치과 → 강점 → 글감(유지, 반복 X)
+      // reduced-motion: 애니 없이 최종 상태만 정적으로
+      if (reduce) { setSelected("medical"); setPhase("results"); return; }
+      // 펼침 → 병의원 선택(클릭+샤인) → 나머지 흐려짐 → 치과 → 강점 → 글감 (opacity/transform만, 리플로우 X)
       setPhase("spread"); await sleep(1150); if (cancelled) return;
       setSelected("medical"); setPhase("select"); await sleep(1050); if (cancelled) return;
       setPhase("collapse"); await sleep(900); if (cancelled) return;
@@ -86,7 +85,6 @@ export default function SearchPsychology() {
   }, []);
 
   const shown = phase !== "idle";
-  const collapsed = phase === "collapse" || phase === "sub" || phase === "strength" || phase === "results";
   const showSub = phase === "sub" || phase === "strength" || phase === "results";
   const showStrength = phase === "strength" || phase === "results";
 
@@ -101,40 +99,26 @@ export default function SearchPsychology() {
         </p>
       </div>
 
-      {/* 모바일: 펼침/축소 연출 생략(레이아웃 점프·렉 방지) → 병의원만 정적 표시 */}
-      <div className="mt-12 flex justify-center px-6 sm:hidden">
-        <span className="inline-flex items-center gap-2 rounded-full border border-[#1D75F7] bg-[#1D75F7] px-4 py-2.5 text-sm font-medium text-white shadow-[0_8px_20px_-6px_rgba(29,117,247,0.45)]">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{CATS[0].icon}</svg>
-          {CATS[0].label}
-        </span>
-      </div>
-
-      {/* 데스크탑: 가운데에서 양쪽으로 펼쳐짐 → 병의원 선택(샤인) → 나머지 모이며 사라짐 */}
-      <div className="mx-auto mt-12 hidden max-w-2xl flex-wrap justify-center px-6 sm:flex">
+      {/* 업종 카테고리 (모바일·데스크탑 공통) — opacity/transform/색만 변경(리플로우 없음).
+          등장(scale+fade 스태거) → 병의원 선택(샤인) → 나머지 흐려짐(opacity/scale). 레이아웃 점프 없음. */}
+      <div className="mx-auto mt-12 flex max-w-2xl flex-wrap justify-center gap-2 px-5 sm:px-6">
         {CATS.map((c, idx) => {
-          const center = (CATS.length - 1) / 2;
-          const offset = (center - idx) * 30; // 펼침 전: 중앙 쪽으로 모여 있음
           const on = selected === c.v;
-          const sel = on && (phase === "select" || phase === "collapse" || phase === "results");
-          const gone = collapsed && !on; // 비선택은 모이며 사라짐
+          const sel = on && (phase === "select" || phase === "collapse" || phase === "sub" || phase === "strength" || phase === "results");
+          const dim = (phase === "collapse" || phase === "sub" || phase === "strength" || phase === "results") && !on;
           return (
             <span
               key={c.v}
-              className={`relative mx-1.5 inline-flex items-center gap-2 overflow-hidden whitespace-nowrap rounded-full border px-4 py-2.5 text-sm font-medium transition-all duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+              className={`relative inline-flex items-center gap-2 whitespace-nowrap rounded-full border px-3.5 py-2.5 text-[13px] font-medium transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] sm:px-4 sm:text-sm ${
                 sel ? "border-[#1D75F7] bg-[#1D75F7] text-white shadow-[0_8px_20px_-6px_rgba(29,117,247,0.45)]" : "border-neutral-200 bg-white text-neutral-500"
               } ${on && phase === "select" ? "ateflo-shine ateflo-tap" : ""}`}
               style={{
-                transitionDelay: phase === "spread" ? `${Math.abs(center - idx) * 70}ms` : "0ms",
-                transform: shown ? "translateX(0) scale(1)" : `translateX(${offset}px) scale(0.7)`,
-                opacity: shown && !gone ? 1 : 0,
-                maxWidth: gone ? 0 : 260,
-                marginLeft: gone ? 0 : undefined,
-                marginRight: gone ? 0 : undefined,
-                paddingLeft: gone ? 0 : undefined,
-                paddingRight: gone ? 0 : undefined,
+                transitionDelay: phase === "spread" ? `${idx * 70}ms` : "0ms",
+                opacity: !shown ? 0 : dim ? 0.35 : 1,
+                transform: !shown ? "scale(0.8)" : dim ? "scale(0.92)" : "scale(1)",
               }}
             >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{c.icon}</svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">{c.icon}</svg>
               {c.label}
             </span>
           );

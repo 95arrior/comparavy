@@ -268,13 +268,13 @@ html {
 /* 글자 통통 튀기 — 한 번 튀고 5초 대기 후 반복(글자별 딜레이로 순서대로) */
 @keyframes ateflo-bounce {
   0% { transform: translateY(0); }
-  5% { transform: translateY(-34%); }
-  10% { transform: translateY(0); }
-  14% { transform: translateY(-12%); }
-  18% { transform: translateY(0); }
+  3% { transform: translateY(-34%); }
+  6% { transform: translateY(0); }
+  8.5% { transform: translateY(-12%); }
+  11% { transform: translateY(0); }
   100% { transform: translateY(0); }
 }
-.ateflo-bounce { display: inline-block; animation: ateflo-bounce 5s ease infinite; }
+.ateflo-bounce { display: inline-block; animation: ateflo-bounce 10s ease infinite; }
 @keyframes ateflo-twinkle { 0%, 100% { transform: scale(1); opacity: 0.85; } 50% { transform: scale(1.28); opacity: 1; } }
 .ateflo-twinkle { display: inline-block; animation: ateflo-twinkle 1.9s ease-in-out infinite; }
 /* 은은한 트윙클(칩 별용 — 과하지 않게) */
