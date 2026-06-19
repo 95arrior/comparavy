@@ -71,15 +71,15 @@ export default function SearchPsychology() {
       // reduced-motion: 애니 없이 최종 상태만 정적으로
       if (reduce) { setSelected("medical"); setPhase("results"); return; }
       // 펼침 → 병의원 선택(클릭+샤인) → 나머지 흐려짐 → 치과 → 강점 → 글감 (opacity/transform만, 리플로우 X)
-      setPhase("spread"); await sleep(1150); if (cancelled) return;
-      setSelected("medical"); setPhase("select"); await sleep(1050); if (cancelled) return;
-      setPhase("collapse"); await sleep(900); if (cancelled) return;
-      setPhase("sub"); await sleep(850); if (cancelled) return;
-      setPhase("strength"); await sleep(1150); if (cancelled) return;
+      setPhase("spread"); await sleep(950); if (cancelled) return;
+      setSelected("medical"); setPhase("select"); await sleep(800); if (cancelled) return;
+      setPhase("collapse"); await sleep(520); if (cancelled) return;
+      setPhase("sub"); await sleep(460); if (cancelled) return;       // 치과 빠르게
+      setPhase("strength"); await sleep(640); if (cancelled) return;  // 강점 빠르게
       setPhase("results"); // 그대로 유지(마퀴는 CSS로 계속 흐름)
     }
-    // 섹션이 뷰포트 중앙쯤(35% 노출) 들어오면 시퀀스 시작
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) run(); }, { threshold: 0.35 });
+    // 섹션이 뷰포트 '중앙 띠'에 들어왔을 때 시작(모바일에서 너무 일찍 시작 방지)
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) run(); }, { rootMargin: "-35% 0px -35% 0px", threshold: 0 });
     io.observe(el);
     return () => { cancelled = true; io.disconnect(); };
   }, []);
@@ -127,8 +127,8 @@ export default function SearchPsychology() {
 
       {/* 세부(치과) + 강점(임플란트 맛집) — 병의원만 남은 뒤 순차 등장 */}
       <div className="mx-auto mt-4 flex max-w-2xl flex-wrap items-center justify-center gap-2 px-6 text-sm">
-        <span className={`rounded-full bg-[#1D75F7]/10 px-3 py-1 font-medium text-[#1D75F7] transition-all duration-500 ${showSub ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-1 opacity-0"}`}>치과</span>
-        <span className={`text-neutral-400 transition-all duration-500 ${showStrength ? "opacity-100" : "opacity-0"}`}>강점 <b className="font-semibold text-neutral-700">‘임플란트 맛집’</b></span>
+        <span className={`rounded-full bg-[#1D75F7]/10 px-3 py-1 font-medium text-[#1D75F7] transition-all duration-300 ${showSub ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-1 opacity-0"}`}>치과</span>
+        <span className={`text-neutral-400 transition-all duration-300 ${showStrength ? "opacity-100" : "opacity-0"}`}>강점 <b className="font-semibold text-neutral-700">‘임플란트 맛집’</b></span>
       </div>
 
       {/* 추천 글감 — 3줄로 흐름(등장 후 그대로 유지) */}
