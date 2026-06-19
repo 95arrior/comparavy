@@ -7,7 +7,9 @@
 
 import type { PoolKeyword } from "./poolCollect";
 
-const API_VERSION = process.env.GOOGLE_ADS_API_VERSION || "v18";
+// API 버전 — env로 고정하거나, 없으면 후보를 순서대로 시도해 되는 버전을 찾아 캐시(404=버전 불일치).
+const VERSION_CANDIDATES = ["v21", "v20", "v19", "v18", "v17"];
+let resolvedVersion: string | null = null;
 const KOREA_GEO = "geoTargetConstants/2410"; // 대한민국
 const KOREAN_LANG = "languageConstants/1012"; // 한국어
 
@@ -57,11 +59,9 @@ type IdeaResult = { text?: string; keywordIdeaMetrics?: { avgMonthlySearches?: s
  * 시드의 구글 키워드 아이디어를 거둔다 → PoolKeyword[](keyword, 월검색량, 경쟁도).
  * 네이버 collectPoolKeywords와 호환되는 출력. (안전필터·정크필터는 호출 측에서 그대로 적용)
  */
-export async function fetchGoogleKeywordIdeas(seed: string): Promise<PoolKeyword[]> {
-  const token = await getAccessToken();
+async function callOnce(version: string, seed: string, token: string): Promise<{ status: number; text: string }> {
   const customerId = digits(process.env.GOOGLE_ADS_CUSTOMER_ID);
-  const url = `https://googleads.googleapis.com/${API_VERSION}/customers/${customerId}:generateKeywordIdeas`;
-
+  const url = `https://googleads.googleapis.com/${version}/customers/${customerId}:generateKeywordIdeas`;
   const res = await fetch(url, {
     method: "POST",
     headers: {
@@ -77,12 +77,32 @@ export async function fetchGoogleKeywordIdeas(seed: string): Promise<PoolKeyword
       keywordSeed: { keywords: [seed] },
     }),
   });
+  return { status: res.status, text: await res.text() };
+}
 
-  const text = await res.text();
-  if (!res.ok) {
-    throw new Error(`구글 애즈 키워드 호출 실패(${res.status}): ${text.slice(0, 500)}`);
+export async function fetchGoogleKeywordIdeas(seed: string): Promise<PoolKeyword[]> {
+  const token = await getAccessToken();
+  // env 고정 > 이미 찾은 버전 > 후보 전체 시도
+  const versions = process.env.GOOGLE_ADS_API_VERSION
+    ? [process.env.GOOGLE_ADS_API_VERSION]
+    : resolvedVersion
+    ? [resolvedVersion]
+    : VERSION_CANDIDATES;
+
+  let last = "";
+  let chosen = "";
+  let body: { status: number; text: string } | null = null;
+  for (const v of versions) {
+    const r = await callOnce(v, seed, token);
+    if (r.status === 404) { last = `v=${v} 404`; continue; } // 버전 불일치 → 다음 후보
+    body = r; chosen = v; break; // 404 외(성공/실제오류) → 이 버전이 유효
   }
-  const json = JSON.parse(text) as { results?: IdeaResult[] };
+  if (!body) throw new Error(`구글 애즈: 사용 가능한 API 버전을 못 찾음(${last}). GOOGLE_ADS_API_VERSION을 지정하세요.`);
+  if (body.status < 200 || body.status >= 300) {
+    throw new Error(`구글 애즈 키워드 호출 실패(${body.status}, ${chosen}): ${body.text.slice(0, 600)}`);
+  }
+  if (!process.env.GOOGLE_ADS_API_VERSION) resolvedVersion = chosen; // 성공 버전 캐시
+  const json = JSON.parse(body.text) as { results?: IdeaResult[] };
   const out: PoolKeyword[] = [];
   for (const r of json.results ?? []) {
     const keyword = String(r.text ?? "").trim();
