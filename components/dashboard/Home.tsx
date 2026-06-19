@@ -5,7 +5,7 @@ import SearchPerformance from "./SearchPerformance";
 import ArticleList from "./ArticleList";
 import type { Article } from "./types";
 
-interface Topic { keyword: string; title: string; demandLabel: string }
+interface Topic { keyword: string; title: string; demandLabel: string; ssak?: boolean }
 
 // 토스식 메인 홈 — '연구소' 컨셉/탭 제거. [미니 진척] → [성과] → [글감 자리+새 글 쓰기] → [내 글].
 // 미니 진척 배너는 3단계 완료되면 자동으로 사라진다(새 유저만 가이드).
@@ -111,36 +111,48 @@ export default function Home({
           {topicsLoading ? (
             [0, 1, 2].map((i) => <div key={i} className="h-[62px] animate-pulse rounded-xl bg-neutral-100" />)
           ) : topics.length > 0 ? (
-            topics.map((t) => (
-              <div
-                key={t.keyword}
-                className="flex items-center justify-between gap-3 rounded-xl border border-neutral-200 bg-white px-4 py-3"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-neutral-900">{t.title}</p>
-                  <p className="mt-0.5 text-xs text-neutral-500">{t.demandLabel}</p>
+            topics.map((t) =>
+              t.ssak ? (
+                // 싹 키워드 — 옅은 파스텔 오로라(일렁임) + 보라 배지
+                <div key={t.keyword} className="ateflo-chip-aurora flex items-center justify-between gap-3 rounded-xl px-4 py-3 shadow-sm ring-1 ring-white/60">
+                  <div className="min-w-0">
+                    <span className="mb-1 inline-block rounded-full bg-white/75 px-2 py-0.5 text-[10px] font-bold text-[#7c3aed]">싹 키워드</span>
+                    <p className="truncate text-sm font-semibold text-[#3f3a6b]">{t.title}</p>
+                    <p className="mt-0.5 text-[11px] font-medium text-[#7c3aed]">경쟁 적어요 · 먼저 쓰면 유리</p>
+                  </div>
+                  <button
+                    onClick={() => onWriteKeyword(t.keyword, t.title)}
+                    className="shrink-0 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-[#7c3aed] shadow-sm transition hover:opacity-90 active:scale-95"
+                  >
+                    이걸로 쓰기
+                  </button>
                 </div>
-                <button
-                  onClick={() => onWriteKeyword(t.keyword, t.title)}
-                  className="shrink-0 rounded-lg bg-[#1D75F7]/10 px-3 py-2 text-xs font-semibold text-[#1D75F7] transition hover:bg-[#1D75F7]/15 active:scale-95"
-                >
-                  이걸로 쓰기
-                </button>
-              </div>
-            ))
+              ) : (
+                // 일반 글감 — 연그레이
+                <div key={t.keyword} className="flex items-center justify-between gap-3 rounded-xl bg-neutral-100 px-4 py-3 ring-1 ring-black/[0.03]">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-neutral-800">{t.title}</p>
+                    <p className="mt-0.5 text-xs text-neutral-500">{t.demandLabel}</p>
+                  </div>
+                  <button
+                    onClick={() => onWriteKeyword(t.keyword, t.title)}
+                    className="shrink-0 rounded-lg bg-[#1D75F7]/10 px-3 py-2 text-xs font-semibold text-[#1D75F7] transition hover:bg-[#1D75F7]/15 active:scale-95"
+                  >
+                    이걸로 쓰기
+                  </button>
+                </div>
+              ),
+            )
           ) : (
-            <p className="py-3 text-xs text-neutral-400">
-              아직 추천할 글감이 없어요. 아래에서 직접 골라 써보세요.
-            </p>
+            <p className="py-3 text-xs text-neutral-400">아직 추천할 글감이 없어요. ‘다른 주제 보기’를 눌러보세요.</p>
           )}
         </div>
 
-        <button
-          onClick={onWrite}
-          className="mt-3 w-full rounded-xl border border-neutral-200 bg-white py-3 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50 active:scale-[0.99]"
-        >
-          ✍️ 직접 골라서 쓰기
-        </button>
+        {topics.some((t) => t.ssak) && (
+          <p className="mt-3 text-[11px] leading-relaxed text-neutral-400">
+            보라색은 <b className="font-semibold text-[#8b5cf6]">싹 키워드</b> — 아직 경쟁이 적어 먼저 쓰면 유리해요.
+          </p>
+        )}
       </div>
 
       {/* 내 글 (최근 5개 + 전체 보기) */}

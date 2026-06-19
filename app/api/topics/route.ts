@@ -127,6 +127,7 @@ export async function GET() {
     keyword: r.keyword,
     title: titles[i],
     demandLabel: demandLabel(r.monthly_searches),
+    ssak: (r.competition ?? "").trim() === "낮음", // 경쟁 낮음 = 싹 키워드(선점 유리)
   }));
   return NextResponse.json({ topics });
 }
