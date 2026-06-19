@@ -1,6 +1,5 @@
 "use client";
 
-import Brand from "@/components/Brand";
 import DemoStream from "@/components/DemoStream";
 import WaitlistForm from "@/components/WaitlistForm";
 import Reveal from "@/components/Reveal";
@@ -21,15 +20,7 @@ export default function Hero() {
   };
 
   return (
-    <div className="min-h-[100dvh] overflow-x-hidden bg-white text-neutral-900 antialiased">
-      {/* 헤더 — 로고 확실히 상단 */}
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 sm:px-8 sm:py-6">
-        <Brand size={24} />
-        <button onClick={toForm} className="hidden rounded-full bg-[#1D75F7] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 active:scale-95 sm:block">
-          사전신청
-        </button>
-      </header>
-
+    <div className="overflow-x-hidden bg-white text-neutral-900 antialiased">
       {/* 히어로 */}
       <section className="mx-auto grid max-w-6xl gap-12 overflow-x-hidden px-5 pb-12 pt-8 sm:px-8 sm:pb-16 sm:pt-16 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:gap-16 lg:pb-24 lg:pt-20">
         {/* 카피 (모바일: 제목·부제·신청폼) */}

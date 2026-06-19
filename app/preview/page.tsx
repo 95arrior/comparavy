@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import LandingHeader from "@/components/landing/LandingHeader";
 import Hero from "@/components/landing/Hero";
 import Problem from "@/components/landing/Problem";
 import SearchPsychology from "@/components/landing/SearchPsychology";
@@ -10,6 +11,7 @@ export const metadata: Metadata = { title: "미리보기 — 새 랜딩", robots
 export default function PreviewPage() {
   return (
     <>
+      <LandingHeader />
       <Hero />
       <Problem />
       <SearchPsychology />

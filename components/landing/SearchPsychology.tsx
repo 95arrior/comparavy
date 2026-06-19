@@ -63,10 +63,13 @@ export default function SearchPsychology() {
     if (!el) return;
     let cancelled = false;
     let running = false;
+    const reduce = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
     async function run() {
       if (running) return;
       running = true;
+      // reduced-motion: 애니 없이 최종 상태(병의원 선택 + 글감)만 정적으로
+      if (reduce) { setSelected("medical"); setPhase("results"); return; }
       // 펼침 → 병의원 선택(클릭+샤인) → 나머지 모이며 사라짐 → 치과 → 강점 → 글감(유지, 반복 X)
       setPhase("spread"); await sleep(1150); if (cancelled) return;
       setSelected("medical"); setPhase("select"); await sleep(1050); if (cancelled) return;
@@ -75,8 +78,8 @@ export default function SearchPsychology() {
       setPhase("strength"); await sleep(1150); if (cancelled) return;
       setPhase("results"); // 그대로 유지(마퀴는 CSS로 계속 흐름)
     }
-    // 섹션이 화면 중앙 띠에 오면 시퀀스 시작
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) run(); }, { rootMargin: "-40% 0px -40% 0px", threshold: 0 });
+    // 섹션이 뷰포트 중앙쯤(35% 노출) 들어오면 시퀀스 시작
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) run(); }, { threshold: 0.35 });
     io.observe(el);
     return () => { cancelled = true; io.disconnect(); };
   }, []);
