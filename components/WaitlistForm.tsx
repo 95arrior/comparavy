@@ -63,7 +63,7 @@ export default function WaitlistForm({ source = "landing", autoFocus = false, ex
   }
 
   return (
-    <form onSubmit={submit} className="mx-auto w-full max-w-md">
+    <form onSubmit={submit} className="mx-auto w-full max-w-sm">
       <div className="flex w-full items-center gap-2 rounded-2xl border border-neutral-300 bg-white p-2 shadow-sm transition-all duration-200 focus-within:border-[#1D75F7] focus-within:ring-4 focus-within:ring-[#1D75F7]/10">
         <input
           id={inputId}

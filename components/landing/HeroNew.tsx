@@ -5,12 +5,12 @@ import WaitlistForm from "@/components/WaitlistForm";
 import Reveal from "@/components/Reveal";
 
 // 헤드라인 업종 룰렛 — 3초마다 위로 슬라이드(매장→병원→학원→카페). 2글자·포괄적.
-const ROLES = ["매장", "병원", "학원", "카페"];
+const ROLES = ["매장", "병원", "학원", "업체"];
 function RotatingWord() {
   const [i, setI] = useState(0);
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const t = setInterval(() => setI((p) => (p + 1) % ROLES.length), 3000);
+    const t = setInterval(() => setI((p) => (p + 1) % ROLES.length), 2000);
     return () => clearInterval(t);
   }, []);
   return (
@@ -64,16 +64,16 @@ export default function HeroNew() {
           </div>
         </Reveal>
 
-        {/* 하단 미리보기 이미지 — 투명 PNG, 더 크게+위로, 하단은 투명 페이드로 흘려보냄 */}
-        <Reveal delay={220} className="mt-6 w-full sm:mt-8">
+        {/* 하단 미리보기 이미지 — 투명 PNG, 크게(모바일 풀블리드) + 하단만 살짝 투명 흘림 */}
+        <Reveal delay={220} className="-mx-6 mt-12 sm:mx-0 sm:mt-14">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/hero.png"
             alt="에이트플로 미리보기"
             className="mx-auto w-full max-w-5xl"
             style={{
-              maskImage: "linear-gradient(to bottom, #000 40%, transparent 84%)",
-              WebkitMaskImage: "linear-gradient(to bottom, #000 40%, transparent 84%)",
+              maskImage: "linear-gradient(to bottom, #000 84%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(to bottom, #000 84%, transparent 100%)",
             }}
           />
         </Reveal>
