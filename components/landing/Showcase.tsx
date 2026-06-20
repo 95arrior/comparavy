@@ -28,35 +28,36 @@ export default function Showcase() {
     return () => io.disconnect();
   }, []);
 
-  // 게이트 — 선택 전엔 이 섹션에서 '아래로' 스크롤 차단(위로는 허용). 선택하면 해제.
+  // 게이트 — 선택 전엔 scrollY를 게이트 상단으로 '단단히 클램프'(아래로 절대 못 넘어감). 위로는 자유.
   useEffect(() => {
     if (sel !== null) return; // 선택되면 잠금 없음
     const el = gateRef.current;
     if (!el) return;
-    const blockingDown = (goingDown: boolean) => {
-      if (!goingDown) return false; // 위로는 항상 허용
-      const r = el.getBoundingClientRect();
-      return r.top <= 1 && r.bottom > 1; // 이 섹션이 화면 상단에 닿아 채우고 있을 때만
-    };
-    const pin = () => { if (el.getBoundingClientRect().top < -1) window.scrollTo({ top: el.offsetTop }); };
-    const onWheel = (e: WheelEvent) => { if (blockingDown(e.deltaY > 0)) { e.preventDefault(); pin(); } };
+    // 게이트 섹션의 문서상 절대 top(스크롤 무관 상수)
+    const gateTop = () => Math.round(el.getBoundingClientRect().top + window.scrollY);
+    // 아래로 넘어가면 즉시 게이트 top으로 고정(스냅) — 위(scrollY<gateTop)는 그대로 둠
+    const clamp = () => { const g = gateTop(); if (window.scrollY > g) window.scrollTo(0, g); };
+    const blockDown = (down: boolean) => down && window.scrollY >= gateTop() - 1;
+    const onWheel = (e: WheelEvent) => { if (blockDown(e.deltaY > 0)) { e.preventDefault(); clamp(); } };
     let startY = 0;
     const onTouchStart = (e: TouchEvent) => { startY = e.touches[0]?.clientY ?? 0; };
     const onTouchMove = (e: TouchEvent) => {
       const dy = startY - (e.touches[0]?.clientY ?? 0); // >0 = 아래로 스크롤
-      if (blockingDown(dy > 0)) { e.preventDefault(); pin(); }
+      if (blockDown(dy > 0)) { e.preventDefault(); clamp(); }
     };
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA")) return;
       const down = e.key === "ArrowDown" || e.key === "PageDown" || e.key === " " || e.key === "Spacebar";
-      if (blockingDown(down)) e.preventDefault();
+      if (blockDown(down)) e.preventDefault();
     };
+    window.addEventListener("scroll", clamp, { passive: true });
     window.addEventListener("wheel", onWheel, { passive: false });
     window.addEventListener("touchstart", onTouchStart, { passive: true });
     window.addEventListener("touchmove", onTouchMove, { passive: false });
     window.addEventListener("keydown", onKey);
     return () => {
+      window.removeEventListener("scroll", clamp);
       window.removeEventListener("wheel", onWheel);
       window.removeEventListener("touchstart", onTouchStart);
       window.removeEventListener("touchmove", onTouchMove);
