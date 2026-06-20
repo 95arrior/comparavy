@@ -5,10 +5,11 @@ import Reveal from "@/components/Reveal";
 
 // 2~3섹션 — [2] 업종 칩(크게, 처음 선택X, 중앙 도달 시 뽕뽕뽕 팝) → 고르면 [3] 그 업종 이미지+설명+글감.
 type Topic = { t: string; tag?: string };
-type Cat = { label: string; desc: string; img: string | null; topics: Topic[] };
+type Cat = { label: string; heading: string; desc: string; img: string | null; imgs?: string[]; topics: Topic[] };
 const CATS: Cat[] = [
   {
     label: "병원·약국",
+    heading: "병원·약국",
     desc: "다양한 병원·의원의 진료·치료 정보부터 환자가 찾는 궁금증까지, 검색이 잘 되는 전문 글을 작성할 수 있어요!",
     img: "/cat-medical.png",
     topics: [
@@ -19,21 +20,37 @@ const CATS: Cat[] = [
   },
   {
     label: "교육·학원",
+    heading: "교육·학원",
     desc: "학원·교습소의 수업·입시 정보를, 학부모와 학생이 검색하는 전문 글로 작성할 수 있어요!",
-    img: null,
-    topics: [{ t: "초등 영어, 몇 살부터 시작할까" }, { t: "중등 수학 선행, 꼭 필요할까" }, { t: "집에서 집중력 높이는 습관" }],
+    img: "/cat-academy.png",
+    topics: [
+      { t: "초등 영어, 몇 살부터 시작할까", tag: "영어" },
+      { t: "중등 수학 선행, 꼭 필요할까", tag: "수학" },
+      { t: "집에서 집중력 높이는 습관", tag: "학습법" },
+    ],
   },
   {
     label: "법률·세무",
-    desc: "법률·세무·노무 절차와 비용을, 의뢰인이 검색하는 신뢰감 있는 글로 작성할 수 있어요!",
-    img: null,
-    topics: [{ t: "종합소득세 신고, 처음이라면 이 순서" }, { t: "상속세 줄이는 기본 원칙" }, { t: "부당해고, 어떻게 대응할까" }],
+    heading: "법률·세무",
+    desc: "법률·세무·노무 절차와 비용을, 의뢰인이 검색하는 신뢰감 있는 전문 글로 작성할 수 있어요!",
+    img: "/cat-legal.png",
+    topics: [
+      { t: "종합소득세 신고, 처음이라면 이 순서", tag: "세무" },
+      { t: "상속, 미리 준비하면 뭐가 다를까", tag: "법률" },
+      { t: "부당해고, 어떻게 대응할까", tag: "노무" },
+    ],
   },
   {
     label: "기타",
+    heading: "그 외 다양한 업종",
     desc: "어떤 업종이든, 손님이 검색하는 주제로 검색이 잘 되는 전문 글을 작성할 수 있어요!",
     img: null,
-    topics: [{ t: "우리 가게가 검색에 안 뜨는 이유" }, { t: "단골 만드는 후기 관리법" }, { t: "블로그 글, 며칠에 한 번이 좋을까" }],
+    imgs: ["/cat-etc-1.png", "/cat-etc-2.png"],
+    topics: [
+      { t: "우리 가게가 검색에 안 뜨는 이유" },
+      { t: "단골 만드는 후기 관리법" },
+      { t: "블로그 글, 며칠에 한 번이 좋을까" },
+    ],
   },
 ];
 
@@ -156,7 +173,7 @@ export default function Showcase() {
             // 타이틀+설명+글감 패널(좌측). 데스크탑=이미지 위 좌측 오버레이, 모바일=사진 아래.
             const panel = (
               <div className="flex flex-col">
-                <h3 className="font-pretendard text-2xl font-bold tracking-tight text-neutral-900 sm:text-[30px]">{cat.label}</h3>
+                <h3 className="font-pretendard text-2xl font-bold tracking-tight text-neutral-900 sm:text-[30px]">{cat.heading}</h3>
                 <p className="mt-2.5 text-[13.5px] font-medium leading-relaxed text-neutral-600 sm:text-[15px]">{cat.desc}</p>
                 <div className="mt-5 space-y-2.5">
                   {cat.topics.map((tp) => (
@@ -173,6 +190,35 @@ export default function Showcase() {
                 </div>
               </div>
             );
+
+            // 기타 — 타이틀 '그 외 다양한 업종' + 사진 2장 가로 배치
+            if (cat.imgs) {
+              return (
+                <div key={sel} className="ateflo-soft-in mx-auto w-full max-w-4xl">
+                  <div className="text-center">
+                    <h3 className="font-pretendard text-2xl font-bold tracking-tight text-neutral-900 sm:text-[30px]">{cat.heading}</h3>
+                    <p className="mx-auto mt-3 max-w-lg text-[14px] font-medium leading-relaxed text-neutral-600 sm:text-[16px]">{cat.desc}</p>
+                  </div>
+                  <div className="mt-7 grid grid-cols-2 gap-3 sm:gap-5">
+                    {cat.imgs.map((src) => (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img key={src} src={src} alt={cat.heading} className="block w-full rounded-3xl shadow-[0_20px_50px_-20px_rgba(20,40,90,0.35)] ring-1 ring-black/5" />
+                    ))}
+                  </div>
+                  <div className="mx-auto mt-7 max-w-md space-y-2.5">
+                    {cat.topics.map((tp) => (
+                      <div
+                        key={tp.t}
+                        className="flex items-center justify-between gap-2.5 rounded-2xl bg-white px-4 py-3 text-left text-[13.5px] font-medium text-neutral-800 shadow-[0_6px_18px_-12px_rgba(20,40,90,0.35)] ring-1 ring-black/[0.04] sm:text-[14.5px]"
+                      >
+                        <span>{tp.t}</span>
+                        {tp.tag && <span className="shrink-0 rounded-full bg-[#1D75F7]/10 px-2.5 py-1 text-[11.5px] font-bold text-[#1D75F7]">{tp.tag}</span>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            }
 
             if (!cat.img) {
               return (
