@@ -4,7 +4,7 @@ import { keywordsToTitles } from "@/lib/topicTitles";
 import { normalizeKeyword } from "@/lib/diversity";
 import { audienceOf, AUDIENCE_ALL } from "@/lib/audience";
 import { isUnsafeKeyword } from "@/lib/keywordSafety";
-import { extractRegions, isLocalBusiness, buildLocalSeeds } from "@/lib/region";
+import { regionLevel, extractRegions, isLocalBusiness, buildLocalSeeds } from "@/lib/region";
 import { buildPoolForSub } from "@/lib/keywordPool";
 import { checkRateLimit } from "@/lib/rateLimit";
 
@@ -168,8 +168,9 @@ export async function GET() {
   // ── 지역 글감 ──
   // 지역형 사업장이면(주소 있음 + 전국형 아님) 사업장 동네 + 업종 글감을 앞에 섞는다.
   // 지역 키워드 = 경쟁 낮고 전환 높은 '동네 손님' 검색 → 본인이 이미 쓴 건 제외.
-  const regions = extractRegions(profile?.biz_address as string | null);
-  const local = isLocalBusiness(vertical, sub ?? null, regions);
+  const level = regionLevel(vertical, sub ?? null); // 업종별 지역 범위(동/구/광역)
+  const regions = extractRegions(profile?.biz_address as string | null, level);
+  const local = isLocalBusiness(level, regions);
   const localSeeds = local
     ? buildLocalSeeds(regions, vertical, sub ?? null).filter(
         (k) => !usedSet.has(normalizeKeyword(k)) && !isUnsafeKeyword(k),
