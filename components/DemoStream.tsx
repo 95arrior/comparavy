@@ -12,7 +12,7 @@ const BLOCKS: Block[] = [
   { tag: "p", text: "파닉스를 영어 단어 외우기로 시작하면 아이가 금방 지쳐요. 소리부터예요. 알파벳 이름(에이·비·씨)이 아니라 소리(아·브·크)를 먼저 들려주세요." },
   { tag: "image" },
   { tag: "p", text: "하루 10분이면 충분해요. 같은 소리로 시작하는 단어를 묶어서 읽어보세요. cat·cap·can처럼요. 완벽한 발음보다 '소리와 글자가 연결되는 경험'이 먼저예요." },
-  { tag: "promo", text: "다만 아이마다 막히는 지점이 달라요. 어떤 아이는 자음에서, 어떤 아이는 모음에서 헷갈리거든요. 혼자 잡기 어렵다면 이 시기를 옆에서 봐주는 곳의 도움을 받는 것도 방법이에요." },
+  { tag: "promo", text: "다만 아이마다 막히는 지점이 달라요. 자음에서 헷갈리는 아이도, 모음에서 멈추는 아이도 있거든요. 집에서 잡기 어렵다면 에이트플로 영어학원처럼 아이마다 막힌 지점을 봐주는 곳의 도움을 받는 것도 방법이에요." },
 ];
 
 function MapPin() {
@@ -154,8 +154,23 @@ export default function DemoStream() {
             if (!text) return null;
             if (b.tag === "title") return <p key={idx} className="text-[15px] font-bold leading-snug text-neutral-900 sm:text-base">{text}{isActive(idx) && cursor}</p>;
             if (b.tag === "h3") return <h3 key={idx} className="mt-4 text-sm font-semibold text-neutral-900">{text}{isActive(idx) && cursor}</h3>;
-            {/* 홍보 연결 — 별도 박스 X. 본문에 이어서 자연스럽게 + 살짝 확대·강조 */}
-            if (b.tag === "promo") return <p key={idx} className="mt-2 text-[15px] font-semibold leading-relaxed text-neutral-900">{text}{isActive(idx) && cursor}</p>;
+            {/* 홍보 연결 — 별도 박스 X. 본문에 이어지되 형광펜 하이라이트로 '여기서 연결'이 딱 보이게 */}
+            if (b.tag === "promo")
+              return (
+                <p key={idx} className="mt-2.5 text-[14.5px] font-medium leading-[1.95] text-neutral-900">
+                  <span
+                    style={{
+                      background: "linear-gradient(180deg, transparent 56%, rgba(29,117,247,0.22) 0)",
+                      boxDecorationBreak: "clone",
+                      WebkitBoxDecorationBreak: "clone",
+                      padding: "0 1px",
+                    }}
+                  >
+                    {text}
+                  </span>
+                  {isActive(idx) && cursor}
+                </p>
+              );
             return <p key={idx} className="mt-2 text-[13px] leading-relaxed text-neutral-600">{text}{isActive(idx) && cursor}</p>;
           })}
 
