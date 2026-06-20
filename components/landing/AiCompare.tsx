@@ -3,28 +3,22 @@
 import { useEffect, useRef, useState } from "react";
 import Brand from "@/components/Brand";
 
-// [차별화] "그냥 AI로 쓰면 되지 않나요?" — 경쟁사 실명 까기 X. AI도 잘하는 건 인정(정직),
-// 우리가 '추가로' 챙기는 걸로 차별화. 하이라이트 컬럼 + 체크 팝 + 스태거로 임팩트.
-const ROWS: { label: string; ai: boolean; us: true }[] = [
-  { label: "글 초안 쓰기", ai: true, us: true },
-  { label: "뭘 쓸지 — 검색되는 글감 추천", ai: false, us: true },
-  { label: "SEO·AEO 구조 (제목·메타·FAQ·내부링크)", ai: false, us: true },
-  { label: "의료·광고규정 가드 (과장·위법 차단)", ai: false, us: true },
-  { label: "내 가게 자연 연계 (정보·지도)", ai: false, us: true },
-  { label: "AI 말투 제거 + 워드프레스 바로 발행", ai: false, us: true },
-];
+// [차별화] "그냥 AI로 쓰면 되지 않나요?" — 경쟁사 실명 X. 두 카드 VS 대결로 대비를 세게.
+// 그냥 AI=흐릿·부족(✗), 에이트플로=파랑·글로우·승리(✓). 카드 슬라이드 + 체크 팝.
+const AI_ITEMS = ["뭘 쓸지 내가 고민", "SEO 구조 없음", "과장·규정 위험", "내 가게 연결 안 됨", "복붙·발행은 내 몫"];
+const US_ITEMS = ["검색되는 글감 자동", "SEO·AEO 구조 자동", "광고규정 가드", "내 가게 연계·지도", "워드프레스 바로 발행"];
 
-function Check({ blue }: { blue?: boolean }) {
+function Tick({ blue }: { blue?: boolean }) {
   return (
-    <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full ${blue ? "bg-[#1D75F7] text-white shadow-[0_4px_12px_-3px_rgba(29,117,247,0.6)]" : "bg-neutral-200 text-white"}`}>
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
+    <span className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${blue ? "bg-[#1D75F7] text-white shadow-[0_4px_10px_-2px_rgba(29,117,247,0.7)]" : "bg-neutral-200 text-white"}`}>
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
     </span>
   );
 }
-function Cross() {
+function Ex() {
   return (
-    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-neutral-100 text-neutral-300">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M6 6l12 12M18 6 6 18" /></svg>
+    <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-300">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round"><path d="M6 6l12 12M18 6 6 18" /></svg>
     </span>
   );
 }
@@ -40,33 +34,31 @@ export default function AiCompare() {
     if (r) { setShown(true); return; }
     const el = ref.current;
     if (!el) return;
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setShown(true); io.disconnect(); } }, { rootMargin: "0px 0px -22% 0px", threshold: 0 });
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setShown(true); io.disconnect(); } }, { rootMargin: "0px 0px -20% 0px", threshold: 0 });
     io.observe(el);
     return () => io.disconnect();
   }, []);
 
-  const rowStyle = (i: number) =>
+  const cardStyle = (dir: number) =>
     reduce ? undefined : {
-      transition: "opacity 0.5s cubic-bezier(0.16,1,0.3,1), transform 0.5s cubic-bezier(0.16,1,0.3,1)",
-      transitionDelay: `${i * 85}ms`,
+      transition: "opacity 0.6s cubic-bezier(0.16,1,0.3,1), transform 0.6s cubic-bezier(0.16,1,0.3,1)",
       opacity: shown ? 1 : 0,
-      transform: shown ? "none" : "translateY(12px)",
+      transform: shown ? "none" : `translateX(${dir * 18}px)`,
     };
   const popStyle = (i: number) =>
     reduce ? undefined : {
+      display: "inline-flex",
       transition: "transform 0.45s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s",
-      transitionDelay: `${i * 85 + 140}ms`,
-      transform: shown ? "scale(1)" : "scale(0.4)",
+      transitionDelay: `${260 + i * 90}ms`,
+      transform: shown ? "scale(1)" : "scale(0.3)",
       opacity: shown ? 1 : 0,
     };
-
-  const cols = "grid grid-cols-[1fr_60px_84px] items-center gap-1 sm:grid-cols-[1fr_120px_150px] sm:gap-2";
 
   return (
     <section ref={ref} className="overflow-x-hidden bg-white py-20 sm:py-28">
       <div className="mx-auto max-w-2xl px-6 text-center">
         <p className="text-sm font-semibold tracking-tight text-[#1D75F7]">그냥 AI로 쓰면 되지 않나요?</p>
-        <h2 className="font-pretendard mt-3 text-[clamp(24px,6.4vw,36px)] font-bold leading-[1.2] tracking-tight">
+        <h2 className="font-pretendard mt-3 text-[clamp(25px,6.6vw,38px)] font-bold leading-[1.2] tracking-tight">
           답은 나와요.<br />근데 검색엔 안 걸려요.
         </h2>
         <p className="mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-neutral-500 sm:text-base">
@@ -74,34 +66,47 @@ export default function AiCompare() {
         </p>
       </div>
 
-      <div className="mx-auto mt-10 max-w-2xl px-5 sm:px-6">
-        <div className="overflow-hidden rounded-2xl border border-neutral-200 shadow-[0_18px_44px_-26px_rgba(20,40,90,0.3)]">
-          {/* 헤더 행 — 박스 안에 두어 컬럼 정렬 보장 */}
-          <div className={`${cols} border-b border-neutral-100 px-3 py-2.5 sm:px-4`}>
-            <div />
-            <div className="text-center text-[12px] font-semibold text-neutral-400 sm:text-sm">그냥 AI</div>
-            <div className="flex items-center justify-center rounded-lg bg-[#1D75F7] py-2 shadow-[0_6px_16px_-6px_rgba(29,117,247,0.7)]">
-              <Brand light size={15} />
-            </div>
-          </div>
-          {/* 데이터 행 */}
-          {ROWS.map((r, i) => (
-            <div key={r.label} style={rowStyle(i)} className={`${cols} border-b border-neutral-100 px-3 py-3.5 last:border-b-0 sm:px-4`}>
-              <div className="pr-1 text-[12.5px] font-medium leading-snug text-neutral-700 sm:text-[15px]">{r.label}</div>
-              <div className="flex justify-center">{r.ai ? <Check /> : <Cross />}</div>
-              <div className="flex h-full items-center justify-center bg-[#1D75F7]/[0.05]">
-                <span style={popStyle(i)}><Check blue /></span>
-              </div>
-            </div>
-          ))}
+      <div className="relative mx-auto mt-11 grid max-w-2xl grid-cols-2 gap-3 px-5 sm:gap-6 sm:px-6">
+        {/* 그냥 AI — 흐릿·부족 */}
+        <div style={cardStyle(-1)} className="rounded-2xl border border-neutral-200 bg-neutral-50/70 p-4 sm:p-6">
+          <p className="text-center text-[13px] font-bold text-neutral-400 sm:text-base">그냥 AI</p>
+          <p className="mb-4 mt-1 text-center text-[11px] text-neutral-400 sm:text-xs">답만 주고 끝</p>
+          <ul className="space-y-2.5">
+            {AI_ITEMS.map((t) => (
+              <li key={t} className="flex items-start gap-2 text-[12px] leading-snug text-neutral-400 sm:text-[13.5px]">
+                <Ex />{t}
+              </li>
+            ))}
+          </ul>
         </div>
 
-        {/* 마무리 한 방 */}
-        <p className="mt-6 text-center text-[15px] leading-relaxed text-neutral-600 sm:text-base">
-          그냥 AI는 <span className="font-semibold text-neutral-800">답</span>까지예요.<br className="sm:hidden" />
-          복붙·수정·SEO·발행, 그 다음을 <span className="font-bold text-[#1D75F7]">전부</span> 에이트플로가 해요.
-        </p>
+        {/* 에이트플로 — 파랑·글로우·승리 */}
+        <div style={cardStyle(1)} className="relative rounded-2xl border-2 border-[#1D75F7] bg-white p-4 shadow-[0_24px_55px_-22px_rgba(29,117,247,0.5)] sm:-mt-2 sm:p-6 sm:pb-7">
+          {/* 상단 글로우 점 */}
+          <div className="pointer-events-none absolute -top-px left-1/2 h-px w-2/3 -translate-x-1/2 bg-gradient-to-r from-transparent via-[#1D75F7] to-transparent" />
+          <div className="mb-1 flex items-center justify-center">
+            <Brand size={17} />
+          </div>
+          <p className="mb-4 mt-1 text-center text-[11px] font-semibold text-[#1D75F7] sm:text-xs">검색에 걸리는 완성된 글</p>
+          <ul className="space-y-2.5">
+            {US_ITEMS.map((t, i) => (
+              <li key={t} className="flex items-start gap-2 text-[12px] font-medium leading-snug text-neutral-800 sm:text-[13.5px]">
+                <span style={popStyle(i)}><Tick blue /></span>{t}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* 가운데 VS */}
+        <span className="absolute left-1/2 top-1/2 z-10 flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-neutral-200 bg-white text-[11px] font-extrabold text-neutral-400 shadow-md sm:h-11 sm:w-11 sm:text-[13px]">
+          VS
+        </span>
       </div>
+
+      <p className="mx-auto mt-9 max-w-md px-6 text-center text-[15px] leading-relaxed text-neutral-600 sm:text-base">
+        그냥 AI는 <span className="font-semibold text-neutral-800">답</span>까지예요.<br className="sm:hidden" />
+        그 다음을 <span className="font-bold text-[#1D75F7]">전부</span> 에이트플로가 해요.
+      </p>
     </section>
   );
 }
