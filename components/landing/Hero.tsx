@@ -9,39 +9,36 @@ import Reveal from "@/components/Reveal";
 
 // 채널 칩 — 균일한 높이/패딩의 텍스트 칩(이미지 X). 각각 다르게 둥실 요동 + 파스텔 글로우(매직).
 // 색: 워드프레스=블루 · 네이버=그린 · 스레드=블랙(그레이).
-const FLOAT = ["ateflo-ch1", "ateflo-ch2", "ateflo-ch3"];
-// 로고 X(회색지대) → 칩 내부에 채널색 파스텔 오로라가 '물감 번지듯' 방랑. 이름은 한글.
-// 방울(radial) 3개가 제각각 경로로 떠다님 + 채널마다 속도/위상 달라 랜덤하게 보임.
-// 흰 텍스트가 잘 보이게: 베이스=각 색 중간톤, 방울=연한 색상(같은 색 계열). 물감 번지듯 방랑.
+// 칩은 고정, 내부 오로라만 3개 다 다르게 움직임(랜덤 번짐).
+// 밝은 파스텔이 여러 색 매끄럽게 섞인 오로라(동그란 형태 X). 채널별 dominant만 다름.
+// 워드프레스=블루 위주 · 네이버=그린 위주 · 스레드=전 파스텔 완전 혼합.
 const CHIPS = [
   {
-    label: "워드프레스", // 블루
-    bg: "radial-gradient(45% 60% at 25% 30%,#7cb0ff,transparent 60%),radial-gradient(50% 65% at 80% 65%,#5b9bff,transparent 62%),radial-gradient(42% 56% at 60% 92%,#4f8df0,transparent 58%)",
-    base: "#2f6fed", dur: 7, delay: 0,
+    label: "워드프레스", // 블루 dominant + 연노랑/하늘 섞임
+    bg: "radial-gradient(130% 150% at 12% 18%,#fdf3c4,transparent 72%),radial-gradient(150% 170% at 88% 82%,#8fc0ff,transparent 74%),radial-gradient(160% 180% at 55% 45%,#cbe6ff,transparent 78%)",
+    base: "#aed3ff", dur: 7, delay: 0,
   },
   {
-    label: "네이버", // 그린
-    bg: "radial-gradient(45% 60% at 22% 35%,#5fe0a3,transparent 60%),radial-gradient(50% 65% at 82% 60%,#2fcf8d,transparent 62%),radial-gradient(42% 56% at 58% 92%,#10b56a,transparent 58%)",
-    base: "#0aa15f", dur: 9, delay: -3,
+    label: "네이버", // 그린 dominant + 연노랑/민트 섞임
+    bg: "radial-gradient(130% 150% at 15% 22%,#fbf1c0,transparent 72%),radial-gradient(150% 170% at 85% 80%,#6fdca6,transparent 74%),radial-gradient(160% 180% at 58% 42%,#c2efd6,transparent 78%)",
+    base: "#aeecc6", dur: 9, delay: -3,
   },
   {
-    label: "스레드", // 블랙(슬레이트)
-    bg: "radial-gradient(45% 60% at 24% 32%,#aab4c2,transparent 60%),radial-gradient(50% 65% at 80% 64%,#8794a6,transparent 62%),radial-gradient(42% 56% at 60% 90%,#5b6776,transparent 58%)",
-    base: "#475569", dur: 8, delay: -5,
+    label: "스레드", // 전 파스텔 완전 혼합(dominant 없음)
+    bg: "radial-gradient(130% 150% at 14% 20%,#cfe2ff,transparent 72%),radial-gradient(150% 170% at 86% 78%,#c8f1da,transparent 74%),radial-gradient(160% 180% at 55% 50%,#ecd9ff,transparent 78%)",
+    base: "#fdeac9", dur: 8, delay: -5,
   },
 ];
 function ChannelChip({ i }: { i: number }) {
   const c = CHIPS[i];
+  // 칩 고정 — 내부 오로라(background-position)만 애니메이션. 칩마다 속도·위상 달라 랜덤하게.
   return (
-    // 둥실(transform)은 바깥, 오로라(background-position)는 안 — 애니메이션 충돌 방지
-    <div className={FLOAT[i]}>
-      <span
-        className="ateflo-chip-bloom inline-flex items-center whitespace-nowrap rounded-full px-4 py-2 text-[13px] font-bold text-white shadow-[0_4px_14px_-6px_rgba(20,40,90,0.3)] ring-1 ring-white/20 [text-shadow:0_1px_2px_rgba(0,0,0,0.22)] sm:text-sm"
-        style={{ backgroundImage: c.bg, backgroundColor: c.base, animationDuration: `${c.dur}s`, animationDelay: `${c.delay}s` }}
-      >
-        {c.label}
-      </span>
-    </div>
+    <span
+      className="ateflo-chip-bloom inline-flex items-center whitespace-nowrap rounded-full px-3.5 py-2 text-[13px] font-bold text-neutral-700 shadow-[0_4px_14px_-7px_rgba(20,40,90,0.3)] ring-1 ring-black/[0.05] sm:text-sm"
+      style={{ backgroundImage: c.bg, backgroundColor: c.base, animationDuration: `${c.dur}s`, animationDelay: `${c.delay}s` }}
+    >
+      {c.label}
+    </span>
   );
 }
 
@@ -69,7 +66,7 @@ export default function Hero() {
           </h1>
 
           {/* 3채널 칩 */}
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 lg:justify-start">
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 lg:justify-start">
             <ChannelChip i={0} />
             <ChannelChip i={1} />
             <ChannelChip i={2} />
