@@ -4,31 +4,37 @@ import { useEffect, useRef, useState } from "react";
 import Reveal from "@/components/Reveal";
 
 // 2~3섹션 — [2] 업종 칩(크게, 처음 선택X, 중앙 도달 시 뽕뽕뽕 팝) → 고르면 [3] 그 업종 이미지+설명+글감.
-type Cat = { label: string; desc: string; img: string | null; topics: string[] };
+type Topic = { t: string; tag?: string };
+type Cat = { label: string; desc: string; img: string | null; topics: Topic[] };
 const CATS: Cat[] = [
   {
     label: "병원·약국",
     desc: "다양한 병원·의원의 진료·치료 정보부터 환자가 찾는 궁금증까지, 검색이 잘 되는 전문 글을 작성할 수 있어요!",
     img: "/cat-medical.png",
-    topics: ["임플란트 가격, 왜 병원마다 다를까?", "스케일링 주기, 얼마나 자주 받을까", "사랑니 꼭 빼야 할까?"],
+    topics: [
+      { t: "임플란트, 왜 병원마다 가격이 다를까?", tag: "치과" },
+      { t: "물광주사, 효과 얼마나 갈까?", tag: "성형외과" },
+      { t: "다이어트 주사, 진짜 효과 있을까?", tag: "가정의학과" },
+      { t: "사랑니, 꼭 빼야 할까?", tag: "치과" },
+    ],
   },
   {
     label: "교육·학원",
     desc: "학원·교습소의 수업·입시 정보를, 학부모와 학생이 검색하는 전문 글로 작성할 수 있어요!",
     img: null,
-    topics: ["초등 영어, 몇 살부터 시작할까", "중등 수학 선행, 꼭 필요할까", "집에서 집중력 높이는 습관"],
+    topics: [{ t: "초등 영어, 몇 살부터 시작할까" }, { t: "중등 수학 선행, 꼭 필요할까" }, { t: "집에서 집중력 높이는 습관" }],
   },
   {
     label: "법률·세무",
     desc: "법률·세무·노무 절차와 비용을, 의뢰인이 검색하는 신뢰감 있는 글로 작성할 수 있어요!",
     img: null,
-    topics: ["종합소득세 신고, 처음이라면 이 순서", "상속세 줄이는 기본 원칙", "부당해고, 어떻게 대응할까"],
+    topics: [{ t: "종합소득세 신고, 처음이라면 이 순서" }, { t: "상속세 줄이는 기본 원칙" }, { t: "부당해고, 어떻게 대응할까" }],
   },
   {
     label: "기타",
     desc: "어떤 업종이든, 손님이 검색하는 주제로 검색이 잘 되는 전문 글을 작성할 수 있어요!",
     img: null,
-    topics: ["우리 가게가 검색에 안 뜨는 이유", "단골 만드는 후기 관리법", "블로그 글, 며칠에 한 번이 좋을까"],
+    topics: [{ t: "우리 가게가 검색에 안 뜨는 이유" }, { t: "단골 만드는 후기 관리법" }, { t: "블로그 글, 며칠에 한 번이 좋을까" }],
   },
 ];
 
@@ -132,34 +138,38 @@ export default function Showcase() {
       {/* [3] 선택 업종의 추천 글감 */}
       <section ref={topicsRef} className="flex min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-neutral-50/70 px-6 py-20">
         {cat ? (
-          <div key={sel} className="ateflo-soft-in mx-auto w-full max-w-4xl">
-            {/* 업종 이미지(가운데) + 좌측 타이틀·부제 오버레이 */}
-            {cat.img ? (
-              <div className="relative overflow-hidden rounded-3xl shadow-[0_20px_50px_-20px_rgba(20,40,90,0.35)] ring-1 ring-black/5">
+          <div
+            key={sel}
+            className="ateflo-soft-in relative mx-auto w-full max-w-2xl overflow-hidden rounded-3xl shadow-[0_24px_60px_-22px_rgba(20,40,90,0.4)] ring-1 ring-black/5"
+          >
+            {/* 배경 이미지(있으면) + 가독용 화이트 스크림 */}
+            {cat.img && (
+              <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={cat.img} alt={cat.label} className="block w-full" />
-                {/* 좌측 가독용 화이트 스크림 */}
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-white/92 via-white/55 to-transparent" />
-                <div className="absolute inset-y-0 left-0 flex max-w-[62%] flex-col justify-center px-6 text-left sm:px-12">
-                  <h3 className="font-pretendard text-xl font-bold tracking-tight text-neutral-900 sm:text-[34px]">{cat.label}</h3>
-                  <p className="mt-2 text-[13px] font-medium leading-snug text-neutral-600 sm:mt-4 sm:text-[17px] sm:leading-relaxed">{cat.desc}</p>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center">
-                <h3 className="font-pretendard text-2xl font-bold tracking-tight sm:text-4xl">{cat.label}</h3>
-                <p className="mx-auto mt-4 max-w-lg text-[15px] leading-relaxed text-neutral-500 sm:text-lg">{cat.desc}</p>
-              </div>
+                <img src={cat.img} alt={cat.label} className="absolute inset-0 h-full w-full object-cover" />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/94 via-white/82 to-white/68" />
+              </>
             )}
+            {!cat.img && <div className="absolute inset-0 bg-white" />}
 
-            {/* 추천 글감 */}
-            <div className="mx-auto mt-8 w-full max-w-md space-y-3">
-              <p className="text-center text-[13px] font-semibold text-[#1D75F7]">이런 글감을 추천해드려요</p>
-              {cat.topics.map((t) => (
-                <div key={t} className="rounded-2xl border border-neutral-200 bg-white px-5 py-4 text-left text-[15px] font-medium text-neutral-800 shadow-[0_6px_18px_-10px_rgba(20,40,90,0.3)]">
-                  {t}
-                </div>
-              ))}
+            {/* 내용 — 타이틀·설명(위) + 글감(아래, 우측 학과 칩) */}
+            <div className="relative p-6 sm:p-9">
+              <h3 className="font-pretendard text-2xl font-bold tracking-tight text-neutral-900 sm:text-[32px]">{cat.label}</h3>
+              <p className="mt-3 max-w-lg text-[14px] font-medium leading-relaxed text-neutral-600 sm:text-[16px]">{cat.desc}</p>
+
+              <div className="mt-6 space-y-2.5">
+                {cat.topics.map((tp) => (
+                  <div
+                    key={tp.t}
+                    className="flex items-center justify-between gap-3 rounded-2xl bg-white/95 px-4 py-3.5 shadow-[0_6px_18px_-12px_rgba(20,40,90,0.35)] ring-1 ring-black/[0.04] backdrop-blur-sm sm:px-5"
+                  >
+                    <span className="text-left text-[14px] font-medium text-neutral-800 sm:text-[15px]">{tp.t}</span>
+                    {tp.tag && (
+                      <span className="shrink-0 rounded-full bg-[#1D75F7]/10 px-3 py-1 text-[12px] font-bold text-[#1D75F7]">{tp.tag}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         ) : (
