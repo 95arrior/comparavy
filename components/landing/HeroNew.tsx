@@ -52,13 +52,14 @@ export default function HeroNew() {
           <p className="mt-3 text-xs text-neutral-400">오픈하면 가장 먼저 알려드릴게요 · 스팸 없어요</p>
         </Reveal>
 
-        {/* 하단 미리보기 이미지 — 오로라 위에 둥실(그림자) */}
-        <Reveal delay={220} className="mt-12 w-full sm:mt-14">
+        {/* 하단 미리보기 이미지 — 블랙 배경을 screen 블렌드로 날려 오로라 위에 자연스럽게 */}
+        <Reveal delay={220} className="mt-10 w-full sm:mt-12">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/hero.png"
             alt="에이트플로 미리보기"
-            className="mx-auto w-full max-w-2xl rounded-2xl shadow-[0_30px_70px_-25px_rgba(20,40,90,0.45)] ring-1 ring-black/[0.06]"
+            className="mx-auto w-full max-w-2xl"
+            style={{ mixBlendMode: "screen" }}
           />
         </Reveal>
       </section>
