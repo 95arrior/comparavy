@@ -11,7 +11,7 @@ const CATS: Cat[] = [
   {
     label: "병원·약국",
     heading: "병원·약국",
-    desc: "다양한 병원·의원의 진료·치료 정보부터 환자가 찾는 궁금증까지, 검색이 잘 되는 전문 글을 작성할 수 있어요!",
+    desc: "병원·의원의 진료·치료 정보를, 환자가 검색하는 전문 글로 써드려요.",
     img: "/cat-medical.png",
     topics: [
       { t: "임플란트, 왜 병원마다 가격이 다를까?", tag: "치과" },
@@ -22,7 +22,7 @@ const CATS: Cat[] = [
   {
     label: "교육·학원",
     heading: "교육·학원",
-    desc: "학원·교습소의 수업·입시 정보를, 학부모와 학생이 검색하는 전문 글로 작성할 수 있어요!",
+    desc: "학원·교습소 수업·입시 정보를, 학부모가 검색하는 전문 글로 써드려요.",
     img: "/cat-academy.png",
     dark: true, // 녹색 칠판 배경 → 흰 텍스트
     topics: [
@@ -34,7 +34,7 @@ const CATS: Cat[] = [
   {
     label: "법률·세무",
     heading: "법률·세무",
-    desc: "법률·세무·노무 절차와 비용을, 의뢰인이 검색하는 신뢰감 있는 전문 글로 작성할 수 있어요!",
+    desc: "법률·세무·노무 절차와 비용을, 의뢰인이 검색하는 전문 글로 써드려요.",
     img: "/cat-legal.png",
     topics: [
       { t: "종합소득세 신고, 처음이라면 이 순서", tag: "세무" },
@@ -85,7 +85,7 @@ function OverlayCard({ img, heading, desc, topics, dark, imgClass }: { img: stri
       {dark && <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/40 via-black/10 to-transparent to-55%" />}
       <div className="absolute inset-y-0 left-0 flex w-[58%] flex-col justify-center px-4 sm:px-8 lg:px-10">
         <h3 className={`font-pretendard text-[15px] font-bold leading-tight tracking-tight sm:text-2xl lg:text-[30px] ${dark ? "text-white" : "text-neutral-900"}`}>{heading}</h3>
-        <p className={`mt-1 text-[10.5px] font-medium leading-snug sm:mt-2.5 sm:text-[15px] sm:leading-relaxed ${dark ? "text-white/85" : "text-neutral-600"}`}>{desc}</p>
+        <p className={`mt-1 min-h-[2.2em] text-[10.5px] font-medium leading-snug sm:mt-2.5 sm:min-h-[3.1em] sm:text-[15px] sm:leading-relaxed ${dark ? "text-white/85" : "text-neutral-600"}`}>{desc}</p>
         <div className="mt-2 space-y-1.5 sm:mt-5 sm:space-y-2.5">
           {topics.map((tp) => (
             <div
