@@ -57,7 +57,7 @@ export default function FinalHook() {
         </div>
 
         <h2 style={st(1)} className="font-pretendard mx-auto mt-8 max-w-xl text-[clamp(28px,7.4vw,46px)] font-bold leading-[1.18] tracking-tight">
-          쌓이는 블로그는,<br />따라올 수 없어요
+          쌓이는 블로그는<br />아무도 못 따라와요
         </h2>
 
         <p style={st(2)} className="mx-auto mt-5 max-w-md text-[15px] leading-relaxed text-white/70 sm:text-lg">

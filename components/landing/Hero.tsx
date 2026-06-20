@@ -25,7 +25,7 @@ export default function Hero() {
       <section className="mx-auto grid max-w-6xl gap-12 overflow-x-hidden px-5 pb-12 pt-8 sm:px-8 sm:pb-16 sm:pt-16 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:gap-16 lg:pb-24 lg:pt-20">
         {/* 카피 (모바일: 제목·부제·신청폼) — min-w-0: nowrap 제목이 그리드 칼럼을 화면보다 넓혀 쏠리는 것 방지 */}
         <Reveal className="min-w-0 text-center lg:text-left">
-          <p className="text-sm font-semibold tracking-tight text-[#1D75F7]">검색되는 블로그</p>
+          <p className="text-sm font-semibold tracking-tight text-[#1D75F7]">블로그, 할 엄두가 안 나시죠?</p>
           <h1 className="font-pretendard mt-3 whitespace-nowrap text-[clamp(20px,6.2vw,44px)] font-bold leading-[1.14] tracking-tight">
             자는 사이에 손님이{" "}
             <span className="ateflo-bounce">쌓</span>
@@ -33,7 +33,7 @@ export default function Hero() {
             <span className="ateflo-bounce" style={{ animationDelay: "0.3s" }}>요</span>
           </h1>
           <p className="mx-auto mt-5 max-w-md text-[15px] leading-relaxed text-neutral-500 sm:text-lg lg:mx-0">
-            검색되는 글 한 편이, 손님을 데려와요.<br />
+            뭘 쓸지도, 쓸 시간도 막막하잖아요.<br />
             사장님은 키워드만 고르면 끝이에요.
             <span className="ml-1 inline-flex align-middle">
               <span className="ateflo-holo ateflo-twinkle text-[0.9em] leading-none">✦</span>
