@@ -10,11 +10,24 @@ import Reveal from "@/components/Reveal";
 // 채널 칩 — 균일한 높이/패딩의 텍스트 칩(이미지 X). 각각 다르게 둥실 요동 + 파스텔 글로우(매직).
 // 색: 워드프레스=블루 · 네이버=그린 · 스레드=블랙(그레이).
 const FLOAT = ["ateflo-ch1", "ateflo-ch2", "ateflo-ch3"];
-// 로고 X(회색지대) → 칩 내부에 채널색 파스텔 오로라가 요동(각각 다른 속도). 이름은 한글.
+// 로고 X(회색지대) → 칩 내부에 채널색 파스텔 오로라가 '물감 번지듯' 방랑. 이름은 한글.
+// 방울(radial) 3개가 제각각 경로로 떠다님 + 채널마다 속도/위상 달라 랜덤하게 보임.
 const CHIPS = [
-  { label: "워드프레스", grad: "linear-gradient(110deg,#e3edff,#c5dbff,#9fc2ff,#c5dbff,#e3edff)", dur: 3.6 }, // 파스텔 블루
-  { label: "네이버", grad: "linear-gradient(110deg,#dcfce7,#b7f0cf,#86e3b0,#b7f0cf,#dcfce7)", dur: 4.4 }, // 파스텔 그린
-  { label: "스레드", grad: "linear-gradient(110deg,#eceef1,#d3d8df,#b3bac4,#d3d8df,#eceef1)", dur: 4.0 }, // 파스텔 블랙(그레이)
+  {
+    label: "워드프레스", // 파스텔 블루
+    bg: "radial-gradient(45% 60% at 25% 30%,#93c5fd,transparent 60%),radial-gradient(50% 65% at 80% 65%,#bfdbfe,transparent 62%),radial-gradient(42% 56% at 60% 92%,#c7d2fe,transparent 58%)",
+    base: "#eef4ff", dur: 7, delay: 0,
+  },
+  {
+    label: "네이버", // 파스텔 그린
+    bg: "radial-gradient(45% 60% at 22% 35%,#6ee7b7,transparent 60%),radial-gradient(50% 65% at 82% 60%,#a7f3d0,transparent 62%),radial-gradient(42% 56% at 58% 92%,#99f6e4,transparent 58%)",
+    base: "#ecfdf3", dur: 9, delay: -3,
+  },
+  {
+    label: "스레드", // 파스텔 블랙(그레이)
+    bg: "radial-gradient(45% 60% at 24% 32%,#b8bfc9,transparent 60%),radial-gradient(50% 65% at 80% 64%,#d1d5db,transparent 62%),radial-gradient(42% 56% at 60% 90%,#cbd5e1,transparent 58%)",
+    base: "#f1f3f5", dur: 8, delay: -5,
+  },
 ];
 function ChannelChip({ i }: { i: number }) {
   const c = CHIPS[i];
@@ -22,8 +35,8 @@ function ChannelChip({ i }: { i: number }) {
     // 둥실(transform)은 바깥, 오로라(background-position)는 안 — 애니메이션 충돌 방지
     <div className={FLOAT[i]}>
       <span
-        className="ateflo-chip-sweep inline-flex items-center whitespace-nowrap rounded-full px-4 py-2 text-[13px] font-bold text-neutral-800 shadow-[0_4px_14px_-6px_rgba(20,40,90,0.25)] ring-1 ring-black/[0.06] sm:text-sm"
-        style={{ backgroundImage: c.grad, animationDuration: `${c.dur}s` }}
+        className="ateflo-chip-bloom inline-flex items-center whitespace-nowrap rounded-full px-4 py-2 text-[13px] font-bold text-neutral-800 shadow-[0_4px_14px_-6px_rgba(20,40,90,0.25)] ring-1 ring-black/[0.06] sm:text-sm"
+        style={{ backgroundImage: c.bg, backgroundColor: c.base, animationDuration: `${c.dur}s`, animationDelay: `${c.delay}s` }}
       >
         {c.label}
       </span>

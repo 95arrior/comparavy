@@ -287,9 +287,16 @@ html {
 .ateflo-ch2 { animation: ateflo-float2 4.4s ease-in-out -0.9s infinite; }
 .ateflo-ch3 { animation: ateflo-float3 4.1s ease-in-out -1.8s infinite; }
 .ateflo-chglow { animation: ateflo-chglow 4.2s ease-in-out infinite; }
-/* 칩 내부 오로라 — 채널색 파스텔이 좌우로 요동 */
-@keyframes ateflo-chip-sweep { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
-.ateflo-chip-sweep { background-size: 220% 100%; animation: ateflo-chip-sweep 4s ease-in-out infinite; }
+/* 칩 내부 오로라 — 물감 번지듯, 여러 방울(radial)이 제각각 경로로 방랑 */
+@keyframes ateflo-chip-bloom {
+  0%   { background-position: 0% 0%,    100% 100%, 50% 50%; }
+  20%  { background-position: 55% 20%,  60% 80%,   90% 30%; }
+  40%  { background-position: 100% 60%, 10% 40%,   25% 90%; }
+  60%  { background-position: 35% 100%, 85% 10%,   70% 45%; }
+  80%  { background-position: 20% 45%,  45% 65%,   10% 20%; }
+  100% { background-position: 0% 0%,    100% 100%, 50% 50%; }
+}
+.ateflo-chip-bloom { background-size: 200% 200%, 200% 200%, 200% 200%; animation: ateflo-chip-bloom 8s ease-in-out infinite; }
 @keyframes ateflo-twinkle { 0%, 100% { transform: scale(1); opacity: 0.85; } 50% { transform: scale(1.28); opacity: 1; } }
 .ateflo-twinkle { display: inline-block; animation: ateflo-twinkle 1.9s ease-in-out infinite; }
 /* 은은한 트윙클(칩 별용 — 과하지 않게) */
@@ -378,10 +385,10 @@ html {
 @media (prefers-reduced-motion: reduce) {
   .ateflo-mq-left, .ateflo-mq-right, .ateflo-chip-aurora, .ateflo-aurora, .ateflo-aurora-sweep, .ateflo-bounce, .ateflo-holo, .ateflo-twinkle, .ateflo-twinkle-soft, .ateflo-wand,
   .ateflo-load-mark, .ateflo-load-ring, .ateflo-load-glow, .ateflo-load-orbit, .ateflo-load-bar,
-  .ateflo-ch1, .ateflo-ch2, .ateflo-ch3, .ateflo-chglow, .ateflo-chip-sweep {
+  .ateflo-ch1, .ateflo-ch2, .ateflo-ch3, .ateflo-chglow, .ateflo-chip-bloom {
     animation: none !important;
   }
-  .ateflo-chip-sweep { background-position: 0% 50% !important; }
+  .ateflo-chip-bloom { background-position: 30% 40%, 70% 60%, 50% 50% !important; }
   .ateflo-aurora-sweep { background-position: 0% 50% !important; }
 }
 
