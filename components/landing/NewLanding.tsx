@@ -87,7 +87,7 @@ export default function NewLanding() {
       }
       goTo(i + 1);
     };
-    const up = () => { if (lock.current) return; goTo(idx.current - 1); };
+    const up = () => { if (lock.current || idx.current <= 0) return; goTo(idx.current - 1); };
 
     // 마지막 풀페이지 섹션(피날레) 아래 = 푸터 영역 → 풀페이지 해제(일반 스크롤)
     const lastIdx = () => pagesRef.current.length - 1;

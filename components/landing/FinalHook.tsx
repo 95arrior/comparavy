@@ -3,7 +3,17 @@
 import { useEffect, useRef, useState } from "react";
 import Brand from "@/components/Brand";
 
-// [피날레] 흰 랜딩 끝에서 톤을 확 바꾸는 다크 블루 풀블리드 마무리. 이메일 입력 X(헤더/하단 버튼이 있음) → CTA 버튼만.
+// 강점 — 정직선 안에서 우리가 진짜 하는 것들(과장 X)
+const STRENGTHS = [
+  "싹 키워드 선점",
+  "의료광고법까지 준수",
+  "우리 동네 키워드",
+  "검색 심리 분석",
+  "워드프레스·네이버·스레드",
+  "글감부터 완성 글까지",
+];
+
+// [피날레] 흰 랜딩 끝에서 톤을 확 바꾸는 다크 블루 풀블리드 마무리. 자랑(강점) + FOMO.
 function toForm() {
   const input = document.getElementById("hero-email") as HTMLInputElement | null;
   if (input) {
@@ -56,24 +66,34 @@ export default function FinalHook() {
           <Brand light size={26} />
         </div>
 
-        <h2 style={st(1)} className="font-pretendard mx-auto mt-8 max-w-xl text-[clamp(28px,7.4vw,46px)] font-bold leading-[1.18] tracking-tight">
-          쌓이는 블로그는<br />아무도 못 따라와요
+        <h2 style={st(1)} className="font-pretendard mx-auto mt-7 max-w-xl text-[clamp(28px,7.4vw,46px)] font-bold leading-[1.16] tracking-tight">
+          지금 안 쓰면,<br />경쟁자가 먼저 씁니다
         </h2>
 
-        <p style={st(2)} className="mx-auto mt-5 max-w-md text-[15px] leading-relaxed text-white/70 sm:text-lg">
-          키워드만 고르면, 글은 알아서 쌓여요.<br className="hidden sm:block" />
-          오래 쌓일수록, 사장님 자산이 돼요.
+        <p style={st(2)} className="mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-white/70 sm:text-lg">
+          블로그는 먼저 쌓는 사람이 가져가요.<br className="hidden sm:block" />
+          남들이 안 쓴 키워드를, 먼저 선점하세요.
         </p>
+
+        {/* 강점 — 우리가 여기까지 합니다 */}
+        <div style={st(3)} className="mx-auto mt-7 flex max-w-xl flex-wrap justify-center gap-2">
+          {STRENGTHS.map((s) => (
+            <span key={s} className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-2 text-[12.5px] font-semibold text-white/90 ring-1 ring-white/15 sm:text-[13.5px]">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7fc3ff" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><path d="M5 13l4 4L19 7" /></svg>
+              {s}
+            </span>
+          ))}
+        </div>
 
         <button
           onClick={toForm}
-          style={st(3)}
-          className="mt-10 rounded-full bg-white px-9 py-4 text-[16px] font-bold text-[#1D75F7] shadow-[0_18px_50px_-12px_rgba(0,0,0,0.5)] transition hover:opacity-90 active:scale-[0.98]"
+          style={st(4)}
+          className="mt-9 rounded-full bg-white px-9 py-4 text-[16px] font-bold text-[#1D75F7] shadow-[0_18px_50px_-12px_rgba(0,0,0,0.5)] transition hover:opacity-90 active:scale-[0.98]"
         >
           사전신청하고 먼저 시작하기
         </button>
 
-        <p style={st(4)} className="mt-4 text-[12px] text-white/45">
+        <p style={st(5)} className="mt-4 text-[12px] text-white/45">
           오픈하면 가장 먼저 알려드릴게요 · 스팸 없어요
         </p>
       </div>
