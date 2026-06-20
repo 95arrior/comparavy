@@ -94,21 +94,24 @@ function OverlayCard({ img, heading, desc, topics, dark, imgClass, wide }: { img
       <div className={`absolute inset-y-0 flex flex-col justify-center ${wide ? "inset-x-0 px-4 sm:px-6" : "left-0 w-[58%] px-4 sm:px-8 lg:px-10"}`}>
         <h3 className={`font-pretendard text-[15px] font-bold leading-tight tracking-tight sm:text-2xl lg:text-[30px] ${dark ? "text-white" : "text-neutral-900"}`}>{heading}</h3>
         <p className={`mt-1 min-h-[2.2em] text-[10.5px] font-medium leading-snug sm:mt-2.5 sm:min-h-[3.1em] sm:text-[15px] sm:leading-relaxed ${dark ? "text-white/85" : "text-neutral-600"}`}>{desc}</p>
-        <div className="mt-2 space-y-1.5 sm:mt-5 sm:space-y-2">
+        {/* w-fit 컨테이너 = 가장 긴 글감 기준 폭, 박스는 w-full로 모두 동일 사이즈(여백 최소) */}
+        <div className="mt-2 flex w-fit max-w-full flex-col gap-1.5 sm:mt-5 sm:gap-2">
           {topics.map((tp) => (
             <div
               key={tp.t}
-              className="w-full rounded-xl bg-white/95 px-2.5 py-1.5 shadow-[0_6px_18px_-12px_rgba(20,40,90,0.35)] ring-1 ring-black/[0.04] sm:rounded-2xl sm:px-3.5 sm:py-2.5"
+              className="flex w-full items-stretch gap-2 rounded-xl bg-white/95 px-2 py-1.5 shadow-[0_6px_18px_-12px_rgba(20,40,90,0.35)] ring-1 ring-black/[0.04] sm:rounded-2xl sm:px-2.5 sm:py-2"
             >
-              {/* 칩(앞) + 글감 텍스트 */}
-              <div className="flex items-center gap-1.5">
-                {tp.tag && (
-                  <span className="shrink-0 rounded-full bg-[#1D75F7]/10 px-1.5 py-0.5 text-[8px] font-bold text-[#1D75F7] sm:text-[10px]">{tp.tag}</span>
-                )}
+              {/* 업종 칩 — 두 줄 높이(stretch) + 가운데 정렬 */}
+              {tp.tag && (
+                <span className="flex shrink-0 items-center justify-center rounded-lg bg-[#1D75F7]/10 px-2 text-center text-[9px] font-bold leading-none text-[#1D75F7] sm:px-2.5 sm:text-[11px]">
+                  {tp.tag}
+                </span>
+              )}
+              {/* 글감 + 하단 부제(글감에 맞춰 정렬) */}
+              <div className="flex min-w-0 flex-col justify-center">
                 <span className="whitespace-nowrap text-left text-[10.5px] font-semibold leading-tight text-neutral-800 sm:text-[14.5px]">{tp.t}</span>
+                {tp.metaTone && <span className="mt-0.5 text-left text-[8.5px] font-medium leading-none text-neutral-400 sm:text-[11px]">{META[tp.metaTone]}</span>}
               </div>
-              {/* 하단 부제(그레이) */}
-              {tp.metaTone && <p className="mt-0.5 text-[8.5px] font-medium text-neutral-400 sm:text-[11px]">{META[tp.metaTone]}</p>}
             </div>
           ))}
         </div>
