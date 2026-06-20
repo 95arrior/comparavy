@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import DemoStream from "@/components/DemoStream";
 import WaitlistForm from "@/components/WaitlistForm";
 import Reveal from "@/components/Reveal";
@@ -7,40 +8,30 @@ import Reveal from "@/components/Reveal";
 // 새 랜딩 히어로 — 메인 포지셔닝: "키워드 하나 → 세 곳(워드프레스·네이버·스레드) 글이 한 번에".
 // 자영업자 결핍(채널마다 따로 쓰기 벅참) → WOW(3곳 한번에). 토스식 절제·여백·#1D75F7.
 
-// 채널 칩 — 균일한 높이/패딩의 텍스트 칩(이미지 X). 각각 다르게 둥실 요동 + 파스텔 글로우(매직).
-// 색: 워드프레스=블루 · 네이버=그린 · 스레드=블랙(그레이).
-// 칩은 고정, 내부 오로라만 3개 다 다르게 움직임(랜덤 번짐).
-// 밝은 파스텔이 여러 색 매끄럽게 섞인 오로라(동그란 형태 X). 채널별 dominant만 다름.
-// 워드프레스=블루 위주 · 네이버=그린 위주 · 스레드=전 파스텔 완전 혼합.
-// 칩 고정, 내부 오로라만 3개 다 다르게 번짐. 채널 중심색 dominant(흰 글씨 가독 위해 중간 파스텔).
-// 채널 중심색 dominant(진한 파스텔, 흰 글씨). 깃발 출렁임(바깥)+오로라 번짐(안), 칩마다 속도 달라 랜덤.
-const CHIPS = [
-  {
-    label: "워드프레스", // 블루 중심
-    bg: "radial-gradient(140% 160% at 15% 20%,#6aa6ff,transparent 74%),radial-gradient(150% 170% at 86% 80%,#2f78ea,transparent 76%),radial-gradient(160% 180% at 55% 46%,#8fbcf2,transparent 80%)",
-    base: "#3f86ec", dur: 7, flag: 4.2, delay: 0,
-  },
-  {
-    label: "네이버", // 그린 중심
-    bg: "radial-gradient(140% 160% at 18% 22%,#4cd190,transparent 74%),radial-gradient(150% 170% at 84% 78%,#089453,transparent 76%),radial-gradient(160% 180% at 56% 46%,#74d3a4,transparent 80%)",
-    base: "#0c9d5b", dur: 9, flag: 4.8, delay: -3,
-  },
-  {
-    label: "스레드", // 블랙 중심(슬레이트)
-    bg: "radial-gradient(140% 160% at 16% 20%,#7c8799,transparent 74%),radial-gradient(150% 170% at 86% 80%,#39414f,transparent 76%),radial-gradient(160% 180% at 55% 48%,#8b97ab,transparent 80%)",
-    base: "#454e5e", dur: 8, flag: 4.5, delay: -5,
-  },
+// 채널 = 실제 앱 로고(공식 PNG). 흰 박스 + 드롭섀도(앱스토어 스타일). 호버 시 한글 라벨 툴팁.
+// ★로고 PNG는 저작권상 직접 생성 불가 → public/에 공식 로고를 직접 넣어야 함. 없으면 폴백.
+const FLOAT = ["ateflo-ch1", "ateflo-ch2", "ateflo-ch3"];
+const APPS = [
+  { src: "/app-wordpress.png", label: "워드프레스" },
+  { src: "/app-naver.png", label: "네이버 블로그" },
+  { src: "/app-threads.png", label: "스레드" },
 ];
-function ChannelChip({ i }: { i: number }) {
-  const c = CHIPS[i];
-  // 바깥=깃발 출렁(transform), 안=오로라 번짐(background) — 분리해 충돌 방지
+function AppIcon({ i }: { i: number }) {
+  const [ok, setOk] = useState(true);
+  const a = APPS[i];
   return (
-    <div className="ateflo-flag" style={{ animationDuration: `${c.flag}s`, animationDelay: `${c.delay}s` }}>
-      <span
-        className="ateflo-chip-bloom inline-flex items-center whitespace-nowrap rounded-full px-3.5 py-2 text-[13px] font-bold text-white shadow-[0_4px_14px_-7px_rgba(20,40,90,0.3)] ring-1 ring-white/25 sm:text-sm"
-        style={{ backgroundImage: c.bg, backgroundColor: c.base, animationDuration: `${c.dur}s`, animationDelay: `${c.delay}s` }}
-      >
-        {c.label}
+    <div className={`${FLOAT[i]} group relative`}>
+      <div className="flex h-[52px] w-[52px] items-center justify-center overflow-hidden rounded-[14px] bg-white p-1.5 shadow-[0_8px_20px_-6px_rgba(20,40,90,0.3)] ring-1 ring-black/[0.06] sm:h-[58px] sm:w-[58px]">
+        {ok ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={a.src} alt={a.label} onError={() => setOk(false)} className="h-full w-full rounded-[10px] object-contain" />
+        ) : (
+          <span className="text-sm font-bold text-neutral-300">{a.label[0]}</span>
+        )}
+      </div>
+      {/* 호버 툴팁 — 한글 라벨 */}
+      <span className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100">
+        {a.label}
       </span>
     </div>
   );
@@ -70,10 +61,10 @@ export default function Hero() {
           </h1>
 
           {/* 3채널 칩 */}
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 lg:justify-start">
-            <ChannelChip i={0} />
-            <ChannelChip i={1} />
-            <ChannelChip i={2} />
+          <div className="mt-6 flex items-center justify-center gap-4 sm:gap-5 lg:justify-start">
+            <AppIcon i={0} />
+            <AppIcon i={1} />
+            <AppIcon i={2} />
           </div>
 
           <p className="mx-auto mt-6 max-w-md text-[15px] leading-relaxed text-neutral-500 sm:text-lg lg:mx-0">
