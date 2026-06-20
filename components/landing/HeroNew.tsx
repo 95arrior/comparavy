@@ -54,7 +54,7 @@ export default function HeroNew() {
         <Reveal>
           <p className="text-sm font-semibold tracking-tight text-[#1D75F7] sm:text-base">검색되는 블로그, 한 번에</p>
           <h1 className="font-pretendard mt-4 text-[clamp(32px,8vw,56px)] font-bold leading-[1.12] tracking-[-0.02em]">
-            똑똑한 <RotatingWord /> 블로그 마케팅
+            손님이 찾아오는 <RotatingWord /> 블로그
           </h1>
         </Reveal>
 

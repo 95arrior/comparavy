@@ -103,7 +103,7 @@ function OverlayCard({ img, heading, desc, topics, dark, imgClass, wide }: { img
             >
               {/* 업종 칩 — 좌상단에 걸치는 탭, 텍스트 중앙정렬 */}
               {tp.tag && (
-                <span className="absolute -left-2 -top-2.5 inline-flex items-center justify-center rounded-full bg-[#8fd3ff] px-2.5 py-1 text-[8.5px] font-bold leading-none text-[#0a4da0] shadow-sm sm:text-[10px]">{tp.tag}</span>
+                <span className="absolute -left-2 -top-2.5 inline-flex items-center justify-center rounded-full bg-[#E8F1FE] px-2.5 py-1 text-[8.5px] font-bold leading-none text-[#1D75F7] shadow-sm sm:text-[10px]">{tp.tag}</span>
               )}
               {/* 글감 */}
               <p className="whitespace-nowrap text-left text-[10.5px] font-semibold leading-tight text-neutral-800 sm:text-[14.5px]">{tp.t}</p>
