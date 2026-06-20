@@ -1,14 +1,30 @@
 "use client";
 
+import { useState } from "react";
 import DemoStream from "@/components/DemoStream";
 import WaitlistForm from "@/components/WaitlistForm";
 import Reveal from "@/components/Reveal";
 
-// 새 랜딩 — 히어로 섹션(1단계). 토스식: 절제된 모션·충분한 여백·#1D75F7·Pretendard.
-// 진짜 제품(DemoStream)을 비주얼로. 데스크탑 2열 / 모바일 스택 + 하단 고정 CTA.
+// 새 랜딩 히어로 — 메인 포지셔닝: "키워드 하나 → 세 곳(워드프레스·네이버·스레드) 글이 한 번에".
+// 자영업자 결핍(채널마다 따로 쓰기 벅참) → WOW(3곳 한번에). 토스식 절제·여백·#1D75F7.
+
+// 채널 배지 — 사장님이 만든 커스텀 아이콘(브랜드 로고 사칭 회피). 이미지 없으면 텍스트 폴백(안 깨짐).
+function ChannelBadge({ src, label }: { src: string; label: string }) {
+  const [ok, setOk] = useState(true);
+  return (
+    <div className="flex flex-col items-center gap-1.5">
+      {ok ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={src} alt={label} onError={() => setOk(false)} className="h-11 w-11 rounded-xl object-contain sm:h-12 sm:w-12" />
+      ) : (
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-neutral-100 text-sm font-bold text-neutral-400 sm:h-12 sm:w-12">{label[0]}</div>
+      )}
+      <span className="text-[12px] font-medium text-neutral-500">{label}</span>
+    </div>
+  );
+}
+
 export default function Hero() {
-  // 버튼 클릭 → 신청 인풋에 포커스(모바일 키보드까지) + 부드럽게 스크롤.
-  // iOS는 키보드가 뜨려면 클릭 제스처 안에서 동기적으로 focus 해야 함.
   const toForm = () => {
     const input = document.getElementById("hero-email") as HTMLInputElement | null;
     if (input) {
@@ -23,18 +39,24 @@ export default function Hero() {
     <div className="overflow-x-hidden bg-white text-neutral-900 antialiased">
       {/* 히어로 */}
       <section className="mx-auto grid max-w-6xl gap-12 overflow-x-hidden px-5 pb-12 pt-8 sm:px-8 sm:pb-16 sm:pt-16 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:gap-16 lg:pb-24 lg:pt-20">
-        {/* 카피 (모바일: 제목·부제·신청폼) — min-w-0: nowrap 제목이 그리드 칼럼을 화면보다 넓혀 쏠리는 것 방지 */}
+        {/* 카피 */}
         <Reveal className="min-w-0 text-center lg:text-left">
-          <p className="text-sm font-semibold tracking-tight text-[#1D75F7]">블로그, 할 엄두가 안 나시죠?</p>
-          <h1 className="font-pretendard mt-3 whitespace-nowrap text-[clamp(20px,6.2vw,44px)] font-bold leading-[1.14] tracking-tight">
-            자는 사이에 손님이{" "}
-            <span className="ateflo-bounce">쌓</span>
-            <span className="ateflo-bounce" style={{ animationDelay: "0.15s" }}>여</span>
-            <span className="ateflo-bounce" style={{ animationDelay: "0.3s" }}>요</span>
+          <p className="text-sm font-semibold tracking-tight text-[#1D75F7]">채널마다 글 따로 쓰기, 벅차죠?</p>
+          <h1 className="font-pretendard mt-3 text-[clamp(23px,6.6vw,42px)] font-bold leading-[1.18] tracking-tight">
+            키워드 하나면,<br />
+            세 곳 글이 <span className="text-[#1D75F7]">한 번에</span>
           </h1>
-          <p className="mx-auto mt-5 max-w-md text-[15px] leading-relaxed text-neutral-500 sm:text-lg lg:mx-0">
-            뭘 쓸지도, 쓸 시간도 막막하잖아요.<br />
-            사장님은 키워드만 고르면 끝이에요.
+
+          {/* 3채널 배지 */}
+          <div className="mt-5 flex items-center justify-center gap-5 sm:gap-7 lg:justify-start">
+            <ChannelBadge src="/channel-wordpress.png" label="워드프레스" />
+            <ChannelBadge src="/channel-naver.png" label="네이버" />
+            <ChannelBadge src="/channel-threads.png" label="스레드" />
+          </div>
+
+          <p className="mx-auto mt-6 max-w-md text-[15px] leading-relaxed text-neutral-500 sm:text-lg lg:mx-0">
+            사장님은 키워드만 고르면 끝.<br />
+            블로그도, 네이버도, 스레드도 맞춰서 뽑아드려요.
             <span className="ml-1 inline-flex align-middle">
               <span className="ateflo-holo ateflo-twinkle text-[0.9em] leading-none">✦</span>
               <span className="ateflo-holo ateflo-twinkle text-[0.7em] leading-none" style={{ animationDelay: "0.55s" }}>✦</span>
@@ -52,7 +74,7 @@ export default function Hero() {
         </Reveal>
       </section>
 
-      {/* 모바일 하단 고정 CTA (앱 느낌) — 아이폰 홈 인디케이터(safe-area)만큼 위로 */}
+      {/* 모바일 하단 고정 CTA */}
       <div
         className="fixed inset-x-0 bottom-0 z-40 border-t border-neutral-100 bg-white/95 px-4 pt-3 backdrop-blur sm:hidden"
         style={{ paddingBottom: "calc(0.9rem + env(safe-area-inset-bottom))" }}
