@@ -77,13 +77,13 @@ const CATS: Cat[] = [
 const ALL_IMGS = CATS.flatMap((c) => [c.img, ...(c.cards?.map((s) => s.img) ?? [])]).filter(Boolean) as string[];
 
 // 업종 카드 — 이미지 위 좌측에 헤딩·설명·글감 오버레이(모든 화면 동일). 어두운 이미지는 흰 텍스트.
-function OverlayCard({ img, heading, desc, topics, dark, imgClass }: { img: string; heading: string; desc: string; topics: Topic[]; dark?: boolean; imgClass?: string }) {
+function OverlayCard({ img, heading, desc, topics, dark, imgClass, wide }: { img: string; heading: string; desc: string; topics: Topic[]; dark?: boolean; imgClass?: string; wide?: boolean }) {
   return (
     <div className="relative overflow-hidden rounded-3xl shadow-[0_24px_60px_-22px_rgba(20,40,90,0.4)] ring-1 ring-black/5">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={img} alt={heading} className={`block w-full ${imgClass ?? ""}`} />
       {dark && <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/40 via-black/10 to-transparent to-55%" />}
-      <div className="absolute inset-y-0 left-0 flex w-[58%] flex-col justify-center px-4 sm:px-8 lg:px-10">
+      <div className={`absolute inset-y-0 flex flex-col justify-center ${wide ? "inset-x-0 px-4 sm:px-6" : "left-0 w-[58%] px-4 sm:px-8 lg:px-10"}`}>
         <h3 className={`font-pretendard text-[15px] font-bold leading-tight tracking-tight sm:text-2xl lg:text-[30px] ${dark ? "text-white" : "text-neutral-900"}`}>{heading}</h3>
         <p className={`mt-1 min-h-[2.2em] text-[10.5px] font-medium leading-snug sm:mt-2.5 sm:min-h-[3.1em] sm:text-[15px] sm:leading-relaxed ${dark ? "text-white/85" : "text-neutral-600"}`}>{desc}</p>
         <div className="mt-2 space-y-1.5 sm:mt-5 sm:space-y-2.5">
@@ -228,7 +228,7 @@ export default function Showcase() {
             // 기타 — 같은 오버레이 카드 2장을 웹에선 가로(모바일 1열)
             <div key={sel} className="ateflo-soft-in mx-auto grid w-full max-w-5xl grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
               {cat.cards.map((c) => (
-                <OverlayCard key={c.img} img={c.img} heading={c.heading} desc={c.desc} topics={c.topics} dark={c.dark ?? false} imgClass="h-[486.72px] object-cover object-top" />
+                <OverlayCard key={c.img} img={c.img} heading={c.heading} desc={c.desc} topics={c.topics} dark={c.dark ?? false} imgClass="h-[486.72px] object-cover object-top" wide />
               ))}
             </div>
           ) : cat.img ? (
