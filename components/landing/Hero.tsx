@@ -13,33 +13,36 @@ import Reveal from "@/components/Reveal";
 // 밝은 파스텔이 여러 색 매끄럽게 섞인 오로라(동그란 형태 X). 채널별 dominant만 다름.
 // 워드프레스=블루 위주 · 네이버=그린 위주 · 스레드=전 파스텔 완전 혼합.
 // 칩 고정, 내부 오로라만 3개 다 다르게 번짐. 채널 중심색 dominant(흰 글씨 가독 위해 중간 파스텔).
+// 채널 중심색 dominant(진한 파스텔, 흰 글씨). 깃발 출렁임(바깥)+오로라 번짐(안), 칩마다 속도 달라 랜덤.
 const CHIPS = [
   {
     label: "워드프레스", // 블루 중심
-    bg: "radial-gradient(140% 160% at 15% 20%,#84b6ff,transparent 74%),radial-gradient(150% 170% at 86% 80%,#3f86f0,transparent 76%),radial-gradient(160% 180% at 55% 46%,#a7c8f5,transparent 80%)",
-    base: "#4f93ef", dur: 7, delay: 0,
+    bg: "radial-gradient(140% 160% at 15% 20%,#6aa6ff,transparent 74%),radial-gradient(150% 170% at 86% 80%,#2f78ea,transparent 76%),radial-gradient(160% 180% at 55% 46%,#8fbcf2,transparent 80%)",
+    base: "#3f86ec", dur: 7, flag: 4.2, delay: 0,
   },
   {
     label: "네이버", // 그린 중심
-    bg: "radial-gradient(140% 160% at 18% 22%,#62d99c,transparent 74%),radial-gradient(150% 170% at 84% 78%,#0ca35d,transparent 76%),radial-gradient(160% 180% at 56% 46%,#8bdcb4,transparent 80%)",
-    base: "#16ad67", dur: 9, delay: -3,
+    bg: "radial-gradient(140% 160% at 18% 22%,#4cd190,transparent 74%),radial-gradient(150% 170% at 84% 78%,#089453,transparent 76%),radial-gradient(160% 180% at 56% 46%,#74d3a4,transparent 80%)",
+    base: "#0c9d5b", dur: 9, flag: 4.8, delay: -3,
   },
   {
-    label: "스레드", // 블랙 중심(소프트 슬레이트 파스텔)
-    bg: "radial-gradient(140% 160% at 16% 20%,#929cae,transparent 74%),radial-gradient(150% 170% at 86% 80%,#454e60,transparent 76%),radial-gradient(160% 180% at 55% 48%,#9aa6bf,transparent 80%)",
-    base: "#556074", dur: 8, delay: -5,
+    label: "스레드", // 블랙 중심(슬레이트)
+    bg: "radial-gradient(140% 160% at 16% 20%,#7c8799,transparent 74%),radial-gradient(150% 170% at 86% 80%,#39414f,transparent 76%),radial-gradient(160% 180% at 55% 48%,#8b97ab,transparent 80%)",
+    base: "#454e5e", dur: 8, flag: 4.5, delay: -5,
   },
 ];
 function ChannelChip({ i }: { i: number }) {
   const c = CHIPS[i];
-  // 칩 고정 — 내부 오로라(background-position)만 애니메이션. 칩마다 속도·위상 달라 랜덤하게.
+  // 바깥=깃발 출렁(transform), 안=오로라 번짐(background) — 분리해 충돌 방지
   return (
-    <span
-      className="ateflo-chip-bloom inline-flex items-center whitespace-nowrap rounded-full px-3.5 py-2 text-[13px] font-bold text-white shadow-[0_4px_14px_-7px_rgba(20,40,90,0.3)] ring-1 ring-white/25 [text-shadow:0_1px_2px_rgba(0,0,0,0.28)] sm:text-sm"
-      style={{ backgroundImage: c.bg, backgroundColor: c.base, animationDuration: `${c.dur}s`, animationDelay: `${c.delay}s` }}
-    >
-      {c.label}
-    </span>
+    <div className="ateflo-flag" style={{ animationDuration: `${c.flag}s`, animationDelay: `${c.delay}s` }}>
+      <span
+        className="ateflo-chip-bloom inline-flex items-center whitespace-nowrap rounded-full px-3.5 py-2 text-[13px] font-bold text-white shadow-[0_4px_14px_-7px_rgba(20,40,90,0.3)] ring-1 ring-white/25 sm:text-sm"
+        style={{ backgroundImage: c.bg, backgroundColor: c.base, animationDuration: `${c.dur}s`, animationDelay: `${c.delay}s` }}
+      >
+        {c.label}
+      </span>
+    </div>
   );
 }
 
