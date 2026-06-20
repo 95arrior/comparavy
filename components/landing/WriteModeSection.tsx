@@ -2,40 +2,77 @@
 
 import { useEffect, useRef, useState } from "react";
 
-// [글 모드 토글] 홍보/정보 선택 — 누구나 쓸 수 있다는 메시지 + 모드 선택을 한 화면에.
-// 왼쪽=홍보, 오른쪽=정보. 화면 중앙 도달 후 2초마다 자동 전환(수동 클릭도 가능). 토스식 짧은 카피.
+// [글 모드 토글] 홍보/정보 선택. 스크롤 가이드:
+//  - 토글 한 번(스크롤 아래 or 마우스 클릭) 하기 전엔 아래 스크롤 막음 → 아래로 = 토글 이동.
+//  - 한 번 움직인 뒤엔 스크롤 = 다음 섹션(일반 스크롤). 위로는 자유.
 export default function WriteModeSection() {
   const [info, setInfo] = useState(false); // false=홍보(왼쪽), true=정보(오른쪽)
+  const [toggledOnce, setToggledOnce] = useState(false);
   const [reduce, setReduce] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     setReduce(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   }, []);
 
-  // 화면에 한 번 들어오면 2초마다 계속 자동 토글(loop)
+  // 게이트 — 토글 한 번 하기 전까지 아래 스크롤 막고, 아래로 = 토글 이동
   useEffect(() => {
+    if (toggledOnce) return; // 이미 한 번 움직였으면 게이트 없음(일반 스크롤로 다음 섹션)
     const el = sectionRef.current;
     if (!el) return;
+    let frozen = false;
+    let armed = true;
+    let acted = false;
+    const freeze = () => {
+      if (frozen) return;
+      frozen = true;
+      window.scrollTo(0, Math.round(el.getBoundingClientRect().top + window.scrollY));
+      document.body.style.overflow = "hidden";
+      document.body.style.touchAction = "none";
+    };
+    const unfreeze = () => {
+      frozen = false;
+      armed = false;
+      document.body.style.overflow = "";
+      document.body.style.touchAction = "";
+    };
+    const doToggle = () => { if (acted) return; acted = true; setInfo(true); setToggledOnce(true); };
     const io = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) {
-          if (!timer.current) timer.current = setInterval(() => setInfo((v) => !v), 2000);
-          io.disconnect(); // 시작했으면 계속 돈다
-        }
-      },
-      { threshold: 0.35 },
+      ([e]) => { const r = e.intersectionRatio; if (armed && r > 0.85) freeze(); if (r < 0.5) armed = true; },
+      { threshold: [0, 0.25, 0.5, 0.75, 0.85, 1] },
     );
     io.observe(el);
-    return () => { io.disconnect(); if (timer.current) clearInterval(timer.current); };
-  }, []);
+    const onWheel = (e: WheelEvent) => { if (!frozen) return; if (e.deltaY > 0) doToggle(); else if (e.deltaY < 0) unfreeze(); };
+    let startY = 0;
+    const onTouchStart = (e: TouchEvent) => { startY = e.touches[0]?.clientY ?? 0; };
+    const onTouchMove = (e: TouchEvent) => {
+      if (!frozen) return;
+      const dy = (e.touches[0]?.clientY ?? 0) - startY;
+      if (dy > 8) unfreeze();
+      else if (dy < -8) doToggle();
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (!frozen) return;
+      if (e.key === "ArrowUp" || e.key === "PageUp" || e.key === "Home") unfreeze();
+      else if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === " ") doToggle();
+    };
+    window.addEventListener("wheel", onWheel, { passive: true });
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: true });
+    window.addEventListener("keydown", onKey);
+    return () => {
+      io.disconnect();
+      window.removeEventListener("wheel", onWheel);
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+      document.body.style.touchAction = "";
+    };
+  }, [toggledOnce]);
 
-  // 수동 클릭 — 즉시 전환 + 자동 타이머 리셋(바로 다시 안 튀게)
-  const toggle = () => {
-    setInfo((v) => !v);
-    if (timer.current) { clearInterval(timer.current); timer.current = setInterval(() => setInfo((v) => !v), 2000); }
-  };
+  // 수동 클릭 — 토글 이동 + '한 번 움직임' 충족
+  const toggle = () => { setInfo((v) => !v); setToggledOnce(true); };
 
   const headline = info ? "사장님이 아니어도 괜찮아요" : "블로그, 누구나 시작할 수 있어요";
   const handleTransition = reduce

@@ -170,12 +170,24 @@ export default function Showcase() {
     );
     io.observe(el);
 
-    // 위(↑) 의도면 풀어서 히어로로 갈 수 있게
-    const onWheel = (e: WheelEvent) => { if (frozen && e.deltaY < 0) unfreeze(); };
+    // 아래 → 병원·약국 자동선택 후 2초 뒤 글감으로 / 위 → 히어로
+    let acted = false;
+    const advance = () => topicsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const scrollSelect = () => { if (acted) return; acted = true; setSel(0); setTimeout(advance, 2000); };
+    const onWheel = (e: WheelEvent) => { if (!frozen) return; if (e.deltaY > 0) scrollSelect(); else if (e.deltaY < 0) unfreeze(); };
     let startY = 0;
     const onTouchStart = (e: TouchEvent) => { startY = e.touches[0]?.clientY ?? 0; };
-    const onTouchMove = (e: TouchEvent) => { if (frozen && (e.touches[0]?.clientY ?? 0) - startY > 0) unfreeze(); };
-    const onKey = (e: KeyboardEvent) => { if (frozen && (e.key === "ArrowUp" || e.key === "PageUp" || e.key === "Home")) unfreeze(); };
+    const onTouchMove = (e: TouchEvent) => {
+      if (!frozen) return;
+      const dy = (e.touches[0]?.clientY ?? 0) - startY;
+      if (dy > 8) unfreeze();
+      else if (dy < -8) scrollSelect();
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (!frozen) return;
+      if (e.key === "ArrowUp" || e.key === "PageUp" || e.key === "Home") unfreeze();
+      else if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === " ") scrollSelect();
+    };
     window.addEventListener("wheel", onWheel, { passive: true });
     window.addEventListener("touchstart", onTouchStart, { passive: true });
     window.addEventListener("touchmove", onTouchMove, { passive: true });
