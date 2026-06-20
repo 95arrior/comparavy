@@ -10,24 +10,22 @@ import Reveal from "@/components/Reveal";
 // 채널 칩 — 균일한 높이/패딩의 텍스트 칩(이미지 X). 각각 다르게 둥실 요동 + 파스텔 글로우(매직).
 // 색: 워드프레스=블루 · 네이버=그린 · 스레드=블랙(그레이).
 const FLOAT = ["ateflo-ch1", "ateflo-ch2", "ateflo-ch3"];
-// 로고 사용 금지(회색지대) → 채널 '특색=색'만 살리고 이름은 한글. 로고 모양 글자마크 없음.
+// 로고 X(회색지대) → 칩 내부에 채널색 파스텔 오로라가 요동(각각 다른 속도). 이름은 한글.
 const CHIPS = [
-  { label: "워드프레스", color: "#1D75F7", glow: "#5b9bff" },
-  { label: "네이버", color: "#03A256", glow: "#3ecf8e" },
-  { label: "스레드", color: "#111827", glow: "#9aa3b2" },
+  { label: "워드프레스", grad: "linear-gradient(110deg,#e3edff,#c5dbff,#9fc2ff,#c5dbff,#e3edff)", dur: 3.6 }, // 파스텔 블루
+  { label: "네이버", grad: "linear-gradient(110deg,#dcfce7,#b7f0cf,#86e3b0,#b7f0cf,#dcfce7)", dur: 4.4 }, // 파스텔 그린
+  { label: "스레드", grad: "linear-gradient(110deg,#eceef1,#d3d8df,#b3bac4,#d3d8df,#eceef1)", dur: 4.0 }, // 파스텔 블랙(그레이)
 ];
 function ChannelChip({ i }: { i: number }) {
   const c = CHIPS[i];
   return (
-    <div className="relative">
-      {/* 파스텔 글로우 — 칩 뒤에서 부드럽게 호흡 */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-        <div className="ateflo-chglow h-9 w-[96px] rounded-full blur-xl" style={{ background: c.glow, animationDelay: `${i * -1.3}s` }} />
-      </div>
-      {/* 칩 (둥실) — 흰 알약 + 채널색 점(로고 X) + 한글 이름 */}
-      <span className={`${FLOAT[i]} relative inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-neutral-200 bg-white py-2 pl-3 pr-4 shadow-[0_4px_14px_-6px_rgba(20,40,90,0.25)]`}>
-        <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: c.color }} />
-        <span className="text-[13px] font-semibold text-neutral-800 sm:text-sm">{c.label}</span>
+    // 둥실(transform)은 바깥, 오로라(background-position)는 안 — 애니메이션 충돌 방지
+    <div className={FLOAT[i]}>
+      <span
+        className="ateflo-chip-sweep inline-flex items-center whitespace-nowrap rounded-full px-4 py-2 text-[13px] font-bold text-neutral-800 shadow-[0_4px_14px_-6px_rgba(20,40,90,0.25)] ring-1 ring-black/[0.06] sm:text-sm"
+        style={{ backgroundImage: c.grad, animationDuration: `${c.dur}s` }}
+      >
+        {c.label}
       </span>
     </div>
   );
