@@ -55,20 +55,21 @@ export default function NewLanding() {
       return idx;
     };
 
-    const easeInOutCubic = (p: number) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
+    // easeOut — 즉시 움직이고 부드럽게 안착(딜레이·뚝 끊김 없음)
+    const easeOutQuart = (p: number) => 1 - Math.pow(1 - p, 4);
 
     const glideTo = (top: number) => {
       animating = true;
       const start = el.scrollTop;
       const dist = top - start;
-      const dur = 750;
+      const dur = 620;
       let t0 = 0;
       const step = (t: number) => {
         if (!t0) t0 = t;
         const p = Math.min(1, (t - t0) / dur);
-        el.scrollTop = start + dist * easeInOutCubic(p);
+        el.scrollTop = start + dist * easeOutQuart(p);
         if (p < 1) raf = requestAnimationFrame(step);
-        else setTimeout(() => { animating = false; }, 80); // 관성 폭주 방지 쿨다운
+        else setTimeout(() => { animating = false; }, 40); // 관성 폭주 방지 짧은 쿨다운
       };
       raf = requestAnimationFrame(step);
     };
