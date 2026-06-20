@@ -49,14 +49,16 @@ export default function WriteModeSection({ info, onToggle }: { info: boolean; on
         />
       </button>
 
-      {/* 하단 라벨 — 양쪽 고정, 선택된 쪽 진하게 */}
-      <div className="mt-7 flex w-full max-w-sm items-center justify-between gap-6 text-center">
-        <span className={`flex-1 text-[13px] font-semibold transition-colors duration-300 sm:text-sm ${!info ? "text-[#1D75F7]" : "text-neutral-400"}`}>
-          가게 홍보도 자연스럽게
-        </span>
-        <span className={`flex-1 text-[13px] font-semibold transition-colors duration-300 sm:text-sm ${info ? "text-[#1D75F7]" : "text-neutral-400"}`}>
-          정보 위주로 깔끔하게
-        </span>
+      {/* 하단 라벨 — 양쪽 고정(메인 + 대상 설명), 선택된 쪽 진하게 */}
+      <div className="mt-7 flex w-full max-w-sm items-start justify-between gap-6 text-center">
+        <div className="flex-1">
+          <p className={`text-[13px] font-semibold transition-colors duration-300 sm:text-sm ${!info ? "text-[#1D75F7]" : "text-neutral-400"}`}>가게 홍보도 자연스럽게</p>
+          <p className="mt-1 text-[11px] font-medium text-neutral-400">사장님용</p>
+        </div>
+        <div className="flex-1">
+          <p className={`text-[13px] font-semibold transition-colors duration-300 sm:text-sm ${info ? "text-[#1D75F7]" : "text-neutral-400"}`}>정보 위주로 깔끔하게</p>
+          <p className="mt-1 text-[11px] font-medium text-neutral-400">블로거용</p>
+        </div>
       </div>
     </section>
   );
