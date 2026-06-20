@@ -5,7 +5,7 @@ import Reveal from "@/components/Reveal";
 
 // 2~3섹션 — [2] 업종 칩(크게, 처음 선택X, 중앙 도달 시 뽕뽕뽕 팝) → 고르면 [3] 그 업종 이미지+설명+글감.
 type Topic = { t: string; tag?: string };
-type SubCard = { img: string; heading: string; desc: string; topics: Topic[] };
+type SubCard = { img: string; heading: string; desc: string; dark?: boolean; topics: Topic[] };
 type Cat = { label: string; heading: string; desc: string; img: string | null; cards?: SubCard[]; dark?: boolean; topics: Topic[] };
 const CATS: Cat[] = [
   {
@@ -75,6 +75,34 @@ const CATS: Cat[] = [
 
 // 모든 업종 이미지 — 미리 받아둬 선택 시 로딩 없이 즉시 표시
 const ALL_IMGS = CATS.flatMap((c) => [c.img, ...(c.cards?.map((s) => s.img) ?? [])]).filter(Boolean) as string[];
+
+// 업종 카드 — 이미지 위 좌측에 헤딩·설명·글감 오버레이(모든 화면 동일). 어두운 이미지는 흰 텍스트.
+function OverlayCard({ img, heading, desc, topics, dark }: { img: string; heading: string; desc: string; topics: Topic[]; dark?: boolean }) {
+  return (
+    <div className="relative overflow-hidden rounded-3xl shadow-[0_24px_60px_-22px_rgba(20,40,90,0.4)] ring-1 ring-black/5">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={img} alt={heading} className="block w-full" />
+      {dark && <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/40 via-black/10 to-transparent to-55%" />}
+      <div className="absolute inset-y-0 left-0 flex w-[58%] flex-col justify-center px-4 sm:px-8 lg:px-10">
+        <h3 className={`font-pretendard text-[15px] font-bold leading-tight tracking-tight sm:text-2xl lg:text-[30px] ${dark ? "text-white" : "text-neutral-900"}`}>{heading}</h3>
+        <p className={`mt-1 text-[10.5px] font-medium leading-snug sm:mt-2.5 sm:text-[15px] sm:leading-relaxed ${dark ? "text-white/85" : "text-neutral-600"}`}>{desc}</p>
+        <div className="mt-2 space-y-1.5 sm:mt-5 sm:space-y-2.5">
+          {topics.map((tp) => (
+            <div
+              key={tp.t}
+              className="flex items-center justify-between gap-1.5 rounded-lg bg-white/95 px-2.5 py-1.5 shadow-[0_6px_18px_-12px_rgba(20,40,90,0.35)] ring-1 ring-black/[0.04] sm:gap-2.5 sm:rounded-2xl sm:px-4 sm:py-3"
+            >
+              <span className="text-left text-[10px] font-medium leading-tight text-neutral-800 sm:text-[14.5px]">{tp.t}</span>
+              {tp.tag && (
+                <span className="shrink-0 rounded-full bg-[#1D75F7]/10 px-1.5 py-0.5 text-[8.5px] font-bold text-[#1D75F7] sm:px-2.5 sm:py-1 sm:text-[11.5px]">{tp.tag}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Showcase() {
   const [sel, setSel] = useState<number | null>(null); // 처음엔 아무것도 선택 안 함
@@ -196,84 +224,23 @@ export default function Showcase() {
       {/* [3] 선택 업종의 추천 글감 */}
       <section ref={topicsRef} className="flex min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-neutral-50/70 px-6 py-20">
         {cat ? (
-          (() => {
-            // 타이틀+설명+글감 패널. onDark=어두운 이미지 위(흰 텍스트). 데스크탑=오버레이, 모바일=흰 카드(항상 어두운 텍스트).
-            const makePanel = (onDark: boolean) => (
-              <div className="flex flex-col">
-                <h3 className={`font-pretendard text-2xl font-bold tracking-tight sm:text-[30px] ${onDark ? "text-white" : "text-neutral-900"}`}>{cat.heading}</h3>
-                <p className={`mt-2.5 text-[13.5px] font-medium leading-relaxed sm:text-[15px] ${onDark ? "text-white/85" : "text-neutral-600"}`}>{cat.desc}</p>
-                <div className="mt-5 space-y-2.5">
-                  {cat.topics.map((tp) => (
-                    <div
-                      key={tp.t}
-                      className="flex items-center justify-between gap-2.5 rounded-2xl bg-white/95 px-4 py-3 shadow-[0_6px_18px_-12px_rgba(20,40,90,0.35)] ring-1 ring-black/[0.04] backdrop-blur-sm"
-                    >
-                      <span className="text-left text-[13.5px] font-medium text-neutral-800 sm:text-[14.5px]">{tp.t}</span>
-                      {tp.tag && (
-                        <span className="shrink-0 rounded-full bg-[#1D75F7]/10 px-2.5 py-1 text-[11.5px] font-bold text-[#1D75F7]">{tp.tag}</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-
-            // 기타 — 세로 카드 2개(이미지 위 + 헤딩·설명·글감 아래) 가로 배치
-            if (cat.cards) {
-              return (
-                <div key={sel} className="ateflo-soft-in mx-auto grid w-full max-w-4xl grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
-                  {cat.cards.map((c) => (
-                    <div key={c.img} className="overflow-hidden rounded-3xl bg-white shadow-[0_20px_50px_-20px_rgba(20,40,90,0.35)] ring-1 ring-black/5">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={c.img} alt={c.heading} className="block aspect-[4/3] w-full object-cover" />
-                      <div className="p-5 sm:p-6">
-                        <h3 className="font-pretendard text-xl font-bold tracking-tight text-neutral-900 sm:text-2xl">{c.heading}</h3>
-                        <p className="mt-1.5 text-[13px] font-medium leading-relaxed text-neutral-500 sm:text-[14px]">{c.desc}</p>
-                        <div className="mt-4 space-y-2">
-                          {c.topics.map((tp) => (
-                            <div
-                              key={tp.t}
-                              className="flex items-center justify-between gap-2 rounded-xl bg-neutral-50 px-3.5 py-2.5 ring-1 ring-black/[0.04]"
-                            >
-                              <span className="text-left text-[13px] font-medium text-neutral-800">{tp.t}</span>
-                              {tp.tag && <span className="shrink-0 rounded-full bg-[#1D75F7]/10 px-2.5 py-1 text-[11px] font-bold text-[#1D75F7]">{tp.tag}</span>}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              );
-            }
-
-            if (!cat.img) {
-              return (
-                <div key={sel} className="ateflo-soft-in mx-auto w-full max-w-md rounded-3xl bg-white p-7 shadow-[0_24px_60px_-22px_rgba(20,40,90,0.4)] ring-1 ring-black/5 sm:p-9">
-                  {makePanel(false)}
-                </div>
-              );
-            }
-            return (
-              <div key={sel} className="ateflo-soft-in mx-auto w-full max-w-4xl">
-                {/* 데스크탑 — 인물(우측) 그대로, 좌측 여백에 패널 오버레이. 화이트 그라데이션 없음(어두운 이미지만 살짝 어둡게) */}
-                <div className="relative hidden overflow-hidden rounded-3xl shadow-[0_24px_60px_-22px_rgba(20,40,90,0.4)] ring-1 ring-black/5 sm:block">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={cat.img} alt={cat.label} className="block w-full" />
-                  {cat.dark && <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/35 via-black/10 to-transparent to-55%" />}
-                  <div className="absolute inset-y-0 left-0 flex w-[52%] flex-col justify-center px-7 lg:px-10">
-                    {makePanel(cat.dark ?? false)}
-                  </div>
-                </div>
-                {/* 모바일 — 사진(인물) 위, 내용 아래(흰 카드라 항상 어두운 텍스트) */}
-                <div className="overflow-hidden rounded-3xl bg-white shadow-[0_20px_50px_-20px_rgba(20,40,90,0.35)] ring-1 ring-black/5 sm:hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={cat.img} alt={cat.label} className="block w-full" />
-                  <div className="p-6">{makePanel(false)}</div>
-                </div>
-              </div>
-            );
-          })()
+          cat.cards ? (
+            // 기타 — 같은 오버레이 카드 2장을 세로로 배치
+            <div key={sel} className="ateflo-soft-in mx-auto w-full max-w-2xl space-y-4 sm:space-y-5">
+              {cat.cards.map((c) => (
+                <OverlayCard key={c.img} img={c.img} heading={c.heading} desc={c.desc} topics={c.topics} dark={c.dark ?? false} />
+              ))}
+            </div>
+          ) : cat.img ? (
+            <div key={sel} className="ateflo-soft-in mx-auto w-full max-w-4xl">
+              <OverlayCard img={cat.img} heading={cat.heading} desc={cat.desc} topics={cat.topics} dark={cat.dark ?? false} />
+            </div>
+          ) : (
+            <div key={sel} className="ateflo-soft-in mx-auto w-full max-w-md rounded-3xl bg-white p-7 text-center shadow-[0_24px_60px_-22px_rgba(20,40,90,0.4)] ring-1 ring-black/5">
+              <h3 className="font-pretendard text-2xl font-bold tracking-tight text-neutral-900">{cat.heading}</h3>
+              <p className="mt-3 text-[15px] leading-relaxed text-neutral-500">{cat.desc}</p>
+            </div>
+          )
         ) : (
           <p className="text-center text-[17px] font-medium text-neutral-300">위에서 업종을 골라보세요</p>
         )}
