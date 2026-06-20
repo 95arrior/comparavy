@@ -859,6 +859,7 @@ export default function DashboardClient(props: DashboardProps) {
             params={genParams}
             pro={props.plan === "pro"}
             isTeaser={props.plan !== "pro" && articlesUsed >= props.articlesLimit}
+            vertical={blogProfile.vertical}
             onDone={(article) => {
               setGenParams(null);
               onGenerated(article);

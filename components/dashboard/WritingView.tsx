@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import AteFloLogo from "@/components/AteFloLogo";
 import LoadingScreen from "@/components/LoadingScreen";
 import type { Article } from "./types";
@@ -30,12 +30,14 @@ export default function WritingView({
   params,
   pro,
   isTeaser,
+  vertical,
   onDone,
   onExit,
 }: {
   params: GenParams;
   pro: boolean;
   isTeaser: boolean;
+  vertical?: string;
   onDone: (article: Article) => void;
   onExit: () => void;
 }) {
@@ -66,6 +68,26 @@ export default function WritingView({
     : !bodyStarted
     ? "waiting"
     : "writing";
+
+  // [2] 준비 구간 단계 문구 — 토스식. 업종(3단계)·홍보/정보(4단계)로 분기, 폴백 안전.
+  const stepMsgs = useMemo(() => {
+    const reg =
+      vertical === "medical"
+        ? "안심하고 쓸 수 있게, 의료광고 규정을 살펴보고 있어요"
+        : vertical === "professional"
+        ? "안심하고 쓸 수 있게, 광고 규정을 살펴보고 있어요"
+        : vertical === "academy"
+        ? "안심하고 쓸 수 있게, 과장된 표현이 없는지 보고 있어요"
+        : "안심하고 쓸 수 있게, 관련 규정을 살펴보고 있어요";
+    const mode = params.promo ? "가게 이야기를 글에 자연스럽게 녹이고 있어요" : "술술 읽히게 다듬고 있어요";
+    return ["지금 뜨는 검색어를 살펴보고 있어요", "손님이 진짜 찾는 키워드를 고르고 있어요", reg, mode];
+  }, [vertical, params.promo]);
+  const [stepIdx, setStepIdx] = useState(0);
+  useEffect(() => {
+    if (phase !== "thinking") return;
+    const id = setInterval(() => setStepIdx((i) => Math.min(i + 1, stepMsgs.length - 1)), 1100);
+    return () => clearInterval(id);
+  }, [phase, stepMsgs.length]);
 
   useEffect(() => {
     startReveal(); // 타자기 루프 (StrictMode 재마운트 시 재시작됨)
@@ -128,9 +150,11 @@ export default function WritingView({
       // 티저는 제목 + 본문 ~3줄까지만 타이핑하고 멈춘다
       const capReached = isTeaser && visibleRef.current >= titleRef.current.length + TEASER_BODY_CHARS;
       if (shownRef.current < tokens.length && !capReached) {
-        // 사람이 타이핑하듯 한 틱에 글자 2개만. 태그(<...>)는 즉시 통과.
+        // 스트림보다 타이핑이 밀리면 빨리 따라잡고(체감 속도↑), 끝물엔 사람처럼 또박또박.
+        const remaining = tokens.length - shownRef.current;
+        const perTick = remaining > 240 ? 10 : remaining > 80 ? 5 : 2;
         let typed = 0;
-        while (shownRef.current < tokens.length && typed < 2) {
+        while (shownRef.current < tokens.length && typed < perTick) {
           const tok = tokens[shownRef.current];
           shownRef.current += 1;
           if (!tok.startsWith("<")) {
@@ -224,7 +248,7 @@ export default function WritingView({
   return (
     <>
       {/* 생성 대기(아직 본문 없음) — 로딩 페이지. 글이 써지기 시작하면 아래 스트리밍 미리보기로 전환 */}
-      {(phase === "waiting" || phase === "thinking") && !preview && <LoadingScreen label="글을 짓고 있어요" />}
+      {(phase === "waiting" || phase === "thinking") && !preview && <LoadingScreen label={stepMsgs[stepIdx]} />}
       <div className="sticky top-0 z-30 border-b border-neutral-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-6 py-3">
           {phase === "error" ? (

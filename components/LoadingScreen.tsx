@@ -19,7 +19,8 @@ export default function LoadingScreen({ label, fixed = true }: { label?: string;
         <span className="ateflo-load-bar" />
       </div>
 
-      {label && <p className="mt-4 text-sm font-medium text-neutral-500">{label}</p>}
+      {/* key={label} → 문구 바뀔 때마다 부드럽게 페이드 인 */}
+      {label && <p key={label} className="ateflo-soft-in mt-4 text-sm font-medium text-neutral-500">{label}</p>}
     </div>
   );
 }
