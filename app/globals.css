@@ -282,7 +282,7 @@ html {
 @keyframes ateflo-float1 { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-9px) rotate(2.2deg); } }
 @keyframes ateflo-float2 { 0%, 100% { transform: translateY(-3px) rotate(1.4deg); } 50% { transform: translateY(7px) rotate(-2.4deg); } }
 @keyframes ateflo-float3 { 0%, 100% { transform: translateY(0) rotate(-1.6deg); } 34% { transform: translateY(-7px) rotate(1.8deg); } 67% { transform: translateY(5px) rotate(0deg); } }
-@keyframes ateflo-chglow { 0%, 100% { opacity: 0.25; transform: translate(-50%, 0) scale(0.85); } 50% { opacity: 0.6; transform: translate(-50%, 0) scale(1.25); } }
+@keyframes ateflo-chglow { 0%, 100% { opacity: 0.25; transform: scale(0.82); } 50% { opacity: 0.6; transform: scale(1.25); } }
 .ateflo-ch1 { animation: ateflo-float1 3.6s ease-in-out infinite; }
 .ateflo-ch2 { animation: ateflo-float2 4.4s ease-in-out -0.9s infinite; }
 .ateflo-ch3 { animation: ateflo-float3 4.1s ease-in-out -1.8s infinite; }

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import DemoStream from "@/components/DemoStream";
 import WaitlistForm from "@/components/WaitlistForm";
 import Reveal from "@/components/Reveal";
@@ -8,27 +7,30 @@ import Reveal from "@/components/Reveal";
 // 새 랜딩 히어로 — 메인 포지셔닝: "키워드 하나 → 세 곳(워드프레스·네이버·스레드) 글이 한 번에".
 // 자영업자 결핍(채널마다 따로 쓰기 벅참) → WOW(3곳 한번에). 토스식 절제·여백·#1D75F7.
 
-// 채널 배지 — 커스텀 아이콘(브랜드 로고 사칭 회피). 각각 다르게 둥실 요동 + 오로라 글로우(매직).
+// 채널 칩 — 균일한 높이/패딩의 텍스트 칩(이미지 X). 각각 다르게 둥실 요동 + 파스텔 글로우(매직).
+// 색: 워드프레스=블루 · 네이버=그린 · 스레드=블랙(그레이).
 const FLOAT = ["ateflo-ch1", "ateflo-ch2", "ateflo-ch3"];
-const GLOW = ["#5b9bff", "#3ecf8e", "#9aa3b2"]; // 워드프레스=파스텔 블루 · 네이버=파스텔 그린 · 스레드=파스텔 블랙(소프트 그레이)
-function ChannelBadge({ src, label, i }: { src: string; label: string; i: number }) {
-  const [ok, setOk] = useState(true);
+const CHIPS = [
+  { label: "워드프레스", color: "#1D75F7", glow: "#5b9bff" },
+  { label: "네이버", color: "#03A256", glow: "#3ecf8e" },
+  { label: "스레드", color: "#374151", glow: "#9aa3b2" },
+];
+function ChannelChip({ i }: { i: number }) {
+  const c = CHIPS[i];
   return (
-    <div className="relative flex flex-col items-center gap-1.5">
-      {/* 오로라 글로우 — 이미지 뒤에서 부드럽게 호흡 */}
-      <div
-        className="ateflo-chglow pointer-events-none absolute left-1/2 top-1 h-10 w-10 rounded-full blur-xl sm:h-12 sm:w-12"
-        style={{ background: GLOW[i], animationDelay: `${i * -1.3}s` }}
-      />
-      <div className={FLOAT[i]}>
-        {ok ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={src} alt={label} onError={() => setOk(false)} className="relative h-11 w-11 rounded-xl object-contain sm:h-12 sm:w-12" />
-        ) : (
-          <div className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-neutral-100 text-sm font-bold text-neutral-400 sm:h-12 sm:w-12">{label[0]}</div>
-        )}
+    <div className="relative">
+      {/* 파스텔 글로우 — 칩 뒤에서 부드럽게 호흡 */}
+      <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+        <div className="ateflo-chglow h-8 w-[88px] rounded-full blur-xl" style={{ background: c.glow, animationDelay: `${i * -1.3}s` }} />
       </div>
-      <span className="text-[12px] font-medium text-neutral-500">{label}</span>
+      {/* 칩 (둥실) */}
+      <span
+        className={`${FLOAT[i]} relative inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-2 text-[13px] font-semibold sm:text-sm`}
+        style={{ color: c.color, borderColor: `${c.color}33`, backgroundColor: `${c.color}0d` }}
+      >
+        <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: c.color }} />
+        {c.label}
+      </span>
     </div>
   );
 }
@@ -56,11 +58,11 @@ export default function Hero() {
             세 곳 글이 <span className="text-[#1D75F7]">한 번에</span>
           </h1>
 
-          {/* 3채널 배지 */}
-          <div className="mt-5 flex items-center justify-center gap-5 sm:gap-7 lg:justify-start">
-            <ChannelBadge src="/channel-wordpress.png" label="워드프레스" i={0} />
-            <ChannelBadge src="/channel-naver.png" label="네이버" i={1} />
-            <ChannelBadge src="/channel-threads.png" label="스레드" i={2} />
+          {/* 3채널 칩 */}
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 lg:justify-start">
+            <ChannelChip i={0} />
+            <ChannelChip i={1} />
+            <ChannelChip i={2} />
           </div>
 
           <p className="mx-auto mt-6 max-w-md text-[15px] leading-relaxed text-neutral-500 sm:text-lg lg:mx-0">
