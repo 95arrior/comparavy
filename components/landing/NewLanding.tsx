@@ -31,35 +31,19 @@ export default function NewLanding() {
   const lock = useRef(false);
   const catRef = useRef<number | null>(null);
   const toggledRef = useRef(false);
+  const pagesRef = useRef<HTMLElement[]>([]);
+  const reduceRef = useRef(false);
 
-  const pages = () => Array.from(document.querySelectorAll<HTMLElement>("[data-page]"));
-
-  const animate = (top: number, after?: () => void) => {
-    const start = window.scrollY;
-    const dist = top - start;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const dur = reduce ? 0 : 640;
-    if (dur === 0) { window.scrollTo(0, top); after?.(); return; }
-    let t0 = 0;
-    const ease = (p: number) => 1 - Math.pow(1 - p, 3);
-    const step = (t: number) => {
-      if (!t0) t0 = t;
-      const p = Math.min(1, (t - t0) / dur);
-      window.scrollTo(0, start + dist * ease(p));
-      if (p < 1) requestAnimationFrame(step);
-      else after?.();
-    };
-    requestAnimationFrame(step);
-  };
-
+  // 네이티브 스무스 스크롤(GPU) — JS rAF보다 부드럽고 가벼움
   const goTo = (i: number) => {
-    const els = pages();
+    const els = pagesRef.current.length ? pagesRef.current : Array.from(document.querySelectorAll<HTMLElement>("[data-page]"));
     const clamped = Math.max(0, Math.min(els.length - 1, i));
     const t = els[clamped];
     if (!t) return;
     lock.current = true;
     idx.current = clamped;
-    animate(Math.round(t.getBoundingClientRect().top + window.scrollY), () => setTimeout(() => { lock.current = false; }, 90));
+    t.scrollIntoView({ behavior: reduceRef.current ? "auto" : "smooth", block: "start" });
+    setTimeout(() => { lock.current = false; }, reduceRef.current ? 60 : 700);
   };
 
   // 칩 클릭 — 바로 글감으로
@@ -68,10 +52,14 @@ export default function NewLanding() {
   const onToggle = () => { setInfo((v) => !v); toggledRef.current = true; };
 
   useEffect(() => {
-    // 로드 시 맨 위(히어로)부터 시작
+    // 로드 시 맨 위(히어로)부터 시작 + 페이지 캐싱
     if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual";
     window.scrollTo(0, 0);
     idx.current = 0;
+    pagesRef.current = Array.from(document.querySelectorAll<HTMLElement>("[data-page]"));
+    reduceRef.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const refresh = () => { pagesRef.current = Array.from(document.querySelectorAll<HTMLElement>("[data-page]")); };
+    window.addEventListener("resize", refresh);
 
     const down = () => {
       if (lock.current) return;
@@ -119,6 +107,7 @@ export default function NewLanding() {
       window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("touchend", onTouchEnd);
       window.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", refresh);
     };
   }, []);
 
