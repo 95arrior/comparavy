@@ -59,7 +59,7 @@ export default function DemoStream() {
         setTyped((p) => { const c = [...p]; c[idx] = text.slice(0, i); return c; });
         follow();
         onProgress?.(i, text.length);
-        await sleep(22);
+        await sleep(33);
       }
     }
     async function run() {
@@ -71,12 +71,12 @@ export default function DemoStream() {
           const b = BLOCKS[idx];
           if (b.tag === "image") {
             setStatus("image");
-            setImgStage("btn"); follow(); await sleep(700);     // 이미지 추가 버튼 등장
-            setImgStage("shown"); await sleep(40); follow(); await sleep(700); // 클릭 → 이미지 삽입
+            setImgStage("btn"); follow(); await sleep(1100);     // 이미지 추가 버튼 등장(직접 넣는 모습)
+            setImgStage("shown"); await sleep(40); follow(); await sleep(1000); // 클릭 → 이미지 삽입
           } else {
             setStatus("writing");
             await typeBlock(idx, b.text!);   // 타이핑하며 천천히 따라 올라감
-            await sleep(b.tag === "title" ? 240 : b.tag === "h3" ? 180 : 120);
+            await sleep(b.tag === "title" ? 450 : b.tag === "h3" ? 340 : 320);
           }
         }
         if (cancelled) return;
@@ -89,7 +89,7 @@ export default function DemoStream() {
         if (cancelled) return;
         setShowBox(true); setPad(false); // 빈칸 자리에 박스/지도 등장(soft-in)
         await sleep(180); slowScroll(); // 박스/지도까지 부드럽게
-        await sleep(4400);
+        await sleep(6500);              // 완성된 글 충분히 읽을 시간(루프 전 유지)
       }
     }
     run();
@@ -115,7 +115,7 @@ export default function DemoStream() {
           {status === "thinking" && "키워드 “초등 영어”를 보고 생각하고 있어요"}
           {status === "writing" && "글을 쓰고 있어요"}
           {status === "image" && "이미지는 원하는 걸 직접 넣어요"}
-          {status === "done" && "이렇게 써져요 · 실제 글은 더 길어요"}
+          {status === "done" && "이렇게 써져요 · SEO·AEO 최적화 장문으로"}
         </span>
         {status !== "done" && <span className="ateflo-dots text-neutral-400">···</span>}
       </div>
@@ -200,7 +200,7 @@ export default function DemoStream() {
 
       <p className="mt-2.5 text-center text-xs leading-relaxed text-neutral-400">
         정보 글이 자연스럽게 <span className="font-medium text-neutral-500">가게 홍보로 이어지고</span>, <span className="font-medium text-neutral-500">업체 정보·지도</span>까지 붙어요.<br />
-        이미지는 원하는 걸 직접 넣어요 · 실제 글은 더 깁니다
+        이미지는 원하는 걸 직접 넣어요 · 실제 글은 <span className="font-medium text-neutral-500">SEO·AEO 최적화 장문</span>으로 써져요
       </p>
     </div>
   );
