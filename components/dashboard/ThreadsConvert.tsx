@@ -4,9 +4,9 @@ import { useState } from "react";
 
 // 블로그 글 → 스레드용 변환. 스타일 3종 → 결과 편집·복사·스레드 작성창 열기.
 const STYLES: { key: string; label: string; desc: string }[] = [
-  { key: "list", label: "리스트형", desc: "‘○○ 3가지’처럼 번호로" },
-  { key: "question", label: "질문형", desc: "댓글 부르는 질문 던지기" },
-  { key: "twist", label: "의외성형", desc: "상식을 깨는 반전 한 줄" },
+  { key: "list", label: "3가지로 정리", desc: "핵심을 번호로 짧게" },
+  { key: "question", label: "질문 던지기", desc: "댓글이 달리게" },
+  { key: "twist", label: "반전 한 줄", desc: "예상을 깨는 첫 줄" },
 ];
 
 export default function ThreadsConvert({ articleId, onToast }: { articleId: string; onToast: (m: string) => void }) {
@@ -55,7 +55,7 @@ export default function ThreadsConvert({ articleId, onToast }: { articleId: stri
         </span>
         <p className="text-sm font-bold text-neutral-900">스레드에 올리기</p>
       </div>
-      <p className="mt-1 text-xs leading-relaxed text-neutral-500">이 글을 스레드용(짧게·후킹·대화 유도)으로 변환해요. 스타일을 고르세요.</p>
+      <p className="mt-1 text-xs leading-relaxed text-neutral-500">이 글을 스레드에 올리기 좋게, 짧고 눈에 띄게 바꿔드려요. 원하는 느낌을 골라보세요.</p>
 
       <div className="mt-3 flex flex-wrap gap-2">
         {STYLES.map((s) => (
@@ -68,7 +68,7 @@ export default function ThreadsConvert({ articleId, onToast }: { articleId: stri
               activeStyle === s.key ? "border-black bg-black text-white" : "border-neutral-300 text-neutral-700 hover:border-neutral-900"
             }`}
           >
-            {loading === s.key ? "변환 중…" : s.label}
+            {loading === s.key ? "만드는 중…" : s.label}
           </button>
         ))}
       </div>
@@ -96,7 +96,7 @@ export default function ThreadsConvert({ articleId, onToast }: { articleId: stri
             </div>
           </div>
           <p className="mt-2 text-[11px] leading-relaxed text-neutral-400">
-            사진·영상을 1개 넣으면 도달이 더 좋아요 (선택). 스레드에 올릴 때 직접 첨부하세요.
+            사진이나 영상을 1개 넣으면 더 많은 사람한테 보여요 (선택). 스레드에 올릴 때 직접 넣으세요.
           </p>
         </div>
       )}
