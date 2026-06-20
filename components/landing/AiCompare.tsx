@@ -10,14 +10,14 @@ const US_ITEMS = ["검색되는 글감 자동", "SEO·AEO 구조 자동", "광�
 
 function Tick({ blue }: { blue?: boolean }) {
   return (
-    <span className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${blue ? "bg-[#1D75F7] text-white shadow-[0_4px_10px_-2px_rgba(29,117,247,0.7)]" : "bg-neutral-200 text-white"}`}>
+    <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${blue ? "bg-[#1D75F7] text-white shadow-[0_4px_10px_-2px_rgba(29,117,247,0.7)]" : "bg-neutral-200 text-white"}`}>
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
     </span>
   );
 }
 function Ex() {
   return (
-    <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-300">
+    <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-300">
       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round"><path d="M6 6l12 12M18 6 6 18" /></svg>
     </span>
   );
@@ -48,9 +48,9 @@ export default function AiCompare() {
   const popStyle = (i: number) =>
     reduce ? undefined : {
       display: "inline-flex",
-      transition: "transform 0.45s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s",
-      transitionDelay: `${260 + i * 90}ms`,
-      transform: shown ? "scale(1)" : "scale(0.3)",
+      transition: "transform 0.5s cubic-bezier(0.34,1.8,0.64,1), opacity 0.25s",
+      transitionDelay: `${240 + i * 160}ms`,
+      transform: shown ? "scale(1)" : "scale(0.2)",
       opacity: shown ? 1 : 0,
     };
 
@@ -73,8 +73,8 @@ export default function AiCompare() {
           <p className="mb-4 mt-1 text-center text-[11px] text-neutral-400 sm:text-xs">답만 주고 끝</p>
           <ul className="space-y-2.5">
             {AI_ITEMS.map((t) => (
-              <li key={t} className="flex items-start gap-2 text-[12px] leading-snug text-neutral-400 sm:text-[13.5px]">
-                <Ex />{t}
+              <li key={t} className="flex items-center gap-2 text-[12px] leading-snug text-neutral-400 sm:text-[13.5px]">
+                <Ex /><span>{t}</span>
               </li>
             ))}
           </ul>
@@ -90,8 +90,14 @@ export default function AiCompare() {
           <p className="mb-4 mt-1 text-center text-[11px] font-semibold text-[#1D75F7] sm:text-xs">검색에 걸리는 완성된 글</p>
           <ul className="space-y-2.5">
             {US_ITEMS.map((t, i) => (
-              <li key={t} className="flex items-start gap-2 text-[12px] font-medium leading-snug text-neutral-800 sm:text-[13.5px]">
-                <span style={popStyle(i)}><Tick blue /></span>{t}
+              <li key={t} className="flex items-center gap-2 text-[12px] font-medium leading-snug text-neutral-800 sm:text-[13.5px]">
+                <span className="relative" style={popStyle(i)}>
+                  {!reduce && shown && (
+                    <span className="absolute inset-0 rounded-full bg-[#1D75F7]" style={{ animation: `ateflo-pop-ring 0.55s ease-out ${260 + i * 160}ms both` }} />
+                  )}
+                  <Tick blue />
+                </span>
+                <span>{t}</span>
               </li>
             ))}
           </ul>

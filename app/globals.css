@@ -275,6 +275,8 @@ html {
   100% { transform: translateY(0); }
 }
 .ateflo-bounce { display: inline-block; animation: ateflo-bounce 10s ease infinite; }
+/* 체크 팡! 링 버스트 (AiCompare 순차 등장) */
+@keyframes ateflo-pop-ring { 0% { transform: scale(0.5); opacity: 0.5; } 100% { transform: scale(2.4); opacity: 0; } }
 @keyframes ateflo-twinkle { 0%, 100% { transform: scale(1); opacity: 0.85; } 50% { transform: scale(1.28); opacity: 1; } }
 .ateflo-twinkle { display: inline-block; animation: ateflo-twinkle 1.9s ease-in-out infinite; }
 /* 은은한 트윙클(칩 별용 — 과하지 않게) */
