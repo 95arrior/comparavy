@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useRef } from "react";
 import LandingHeader from "./LandingHeader";
 import HeroNew from "./HeroNew";
 import Showcase from "./Showcase";
@@ -30,21 +33,90 @@ const LANDING_JSONLD = {
   ],
 };
 
-// 새 랜딩(단일) — 헤더 + 히어로 + 문제공감 + 검색심리 + 카톡알림 + 신뢰 + 푸터.
 export default function NewLanding() {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // 데스크탑: 휠 한 번 → 다음 섹션으로 '부드럽게 미끄러지듯'(easeInOutCubic) 이동. (모바일은 native 스크롤)
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (window.matchMedia("(pointer: coarse)").matches) return; // 터치(모바일)는 native
+
+    let animating = false;
+    let raf = 0;
+    const sectionsTop = () =>
+      Array.from(el.querySelectorAll<HTMLElement>("[data-snap]")).map((s) => s.offsetTop);
+
+    const currentIndex = (tops: number[]) => {
+      const mid = el.scrollTop + el.clientHeight / 2;
+      let idx = 0;
+      tops.forEach((t, i) => { if (t <= mid) idx = i; });
+      return idx;
+    };
+
+    const easeInOutCubic = (p: number) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
+
+    const glideTo = (top: number) => {
+      animating = true;
+      const start = el.scrollTop;
+      const dist = top - start;
+      const dur = 750;
+      let t0 = 0;
+      const step = (t: number) => {
+        if (!t0) t0 = t;
+        const p = Math.min(1, (t - t0) / dur);
+        el.scrollTop = start + dist * easeInOutCubic(p);
+        if (p < 1) raf = requestAnimationFrame(step);
+        else setTimeout(() => { animating = false; }, 80); // 관성 폭주 방지 쿨다운
+      };
+      raf = requestAnimationFrame(step);
+    };
+
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaY) < 3) return;
+      e.preventDefault();
+      if (animating) return;
+      const tops = sectionsTop();
+      const dir = e.deltaY > 0 ? 1 : -1;
+      const next = Math.max(0, Math.min(tops.length - 1, currentIndex(tops) + dir));
+      if (tops[next] !== undefined) glideTo(tops[next]);
+    };
+
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
+      const isDown = e.key === "ArrowDown" || e.key === "PageDown";
+      const isUp = e.key === "ArrowUp" || e.key === "PageUp";
+      if (!isDown && !isUp) return;
+      e.preventDefault();
+      if (animating) return;
+      const tops = sectionsTop();
+      const next = Math.max(0, Math.min(tops.length - 1, currentIndex(tops) + (isDown ? 1 : -1)));
+      if (tops[next] !== undefined) glideTo(tops[next]);
+    };
+
+    el.addEventListener("wheel", onWheel, { passive: false });
+    window.addEventListener("keydown", onKey);
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+      window.removeEventListener("keydown", onKey);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
   return (
-    // ★ root에 overflow-x-hidden 두지 않음 — 그러면 스크롤 컨테이너가 되어 sticky 헤더가 깨짐.
-    //   가로 넘침은 각 섹션이 자체적으로 overflow-x-hidden 처리함.
-    // 풀페이지 스크롤 — root가 스크롤 컨테이너(snap). 헤더는 fixed라 영향 없음.
-    // proximity = 가까울 때만 스냅(긴 섹션에서 안 갇힘).
-    <div className="h-[100dvh] select-none snap-y snap-mandatory overflow-x-hidden overflow-y-scroll scroll-smooth bg-white text-neutral-900 antialiased">
+    // 데스크탑=휠 글라이드(JS), 모바일=native 스크롤 + proximity 스냅(부드럽게).
+    <div
+      ref={scrollRef}
+      className="h-[100dvh] select-none snap-y snap-proximity overflow-x-hidden overflow-y-scroll scroll-smooth bg-white text-neutral-900 antialiased"
+    >
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(LANDING_JSONLD).replace(/</g, "\\u003c") }} />
       <LandingHeader />
-      {/* 풀페이지 — 섹션마다 화면 꽉(h-dvh) + 항상 스냅 → 한 번에 한 섹션씩 이동 */}
-      <div className="h-[100dvh] snap-start snap-always overflow-hidden"><HeroNew /></div>
-      <div className="h-[100dvh] snap-start snap-always overflow-hidden"><Showcase /></div>
-      <div className="h-[100dvh] snap-start snap-always overflow-hidden"><FinalHook /></div>
-      <div className="snap-start snap-always pb-24 sm:pb-0">
+      <div data-snap className="h-[100dvh] snap-start overflow-hidden"><HeroNew /></div>
+      <div data-snap className="h-[100dvh] snap-start overflow-hidden"><Showcase /></div>
+      <div data-snap className="h-[100dvh] snap-start overflow-hidden"><FinalHook /></div>
+      <div data-snap className="snap-start pb-24 sm:pb-0">
         <SiteFooter />
       </div>
     </div>
