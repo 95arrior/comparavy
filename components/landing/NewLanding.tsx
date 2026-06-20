@@ -89,20 +89,46 @@ export default function NewLanding() {
     };
     const up = () => { if (lock.current) return; goTo(idx.current - 1); };
 
-    const onWheel = (e: WheelEvent) => { e.preventDefault(); if (Math.abs(e.deltaY) < 4) return; e.deltaY > 0 ? down() : up(); };
+    // 마지막 풀페이지 섹션(피날레) 아래 = 푸터 영역 → 풀페이지 해제(일반 스크롤)
+    const lastIdx = () => pagesRef.current.length - 1;
+    const finaleTop = () => { const el = pagesRef.current[lastIdx()]; return el ? el.getBoundingClientRect().top + window.scrollY : Infinity; };
+    const inFooterZone = () => window.scrollY >= finaleTop() - 2;
+    const atFinaleTop = () => window.scrollY <= finaleTop() + 4;
+
+    const onWheel = (e: WheelEvent) => {
+      if (inFooterZone()) {
+        // 푸터 영역: 일반 스크롤. 단 피날레 최상단에서 위로 가면 풀페이지 재개
+        if (e.deltaY < 0 && atFinaleTop()) { e.preventDefault(); idx.current = lastIdx(); up(); }
+        return;
+      }
+      e.preventDefault();
+      if (Math.abs(e.deltaY) < 4) return;
+      e.deltaY > 0 ? down() : up();
+    };
     let startY = 0;
     const onTouchStart = (e: TouchEvent) => { startY = e.touches[0]?.clientY ?? 0; };
-    const onTouchMove = (e: TouchEvent) => { e.preventDefault(); };
+    const onTouchMove = (e: TouchEvent) => { if (!inFooterZone()) e.preventDefault(); };
     const onTouchEnd = (e: TouchEvent) => {
       const dy = startY - (e.changedTouches[0]?.clientY ?? 0);
       if (Math.abs(dy) < 30) return;
+      if (inFooterZone()) {
+        if (dy < 0 && atFinaleTop()) { idx.current = lastIdx(); up(); }
+        return;
+      }
       dy > 0 ? down() : up();
     };
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA")) return;
-      if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === " ") { e.preventDefault(); down(); }
-      else if (e.key === "ArrowUp" || e.key === "PageUp") { e.preventDefault(); up(); }
+      const isDown = e.key === "ArrowDown" || e.key === "PageDown" || e.key === " ";
+      const isUp = e.key === "ArrowUp" || e.key === "PageUp";
+      if (!isDown && !isUp) return;
+      if (inFooterZone()) {
+        if (isUp && atFinaleTop()) { e.preventDefault(); idx.current = lastIdx(); up(); }
+        return;
+      }
+      e.preventDefault();
+      isDown ? down() : up();
     };
 
     window.addEventListener("wheel", onWheel, { passive: false });
@@ -128,7 +154,7 @@ export default function NewLanding() {
       <Showcase sel={catSel} onSelect={onSelectCat} />
       <WriteModeSection info={info} onToggle={onToggle} />
       <FinalHook />
-      <div data-page className="pb-24 sm:pb-0">
+      <div className="pb-24 sm:pb-0">
         <SiteFooter />
       </div>
     </div>
