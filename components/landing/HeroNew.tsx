@@ -62,7 +62,6 @@ export default function HeroNew() {
           <div id="signup" className="mx-auto mt-11 max-w-md scroll-mt-24">
             <WaitlistForm source="hero" inputId="hero-email" />
           </div>
-          <p className="mt-3 text-xs text-neutral-400">오픈하면 가장 먼저 알려드릴게요 · 스팸 없어요</p>
         </Reveal>
 
         {/* 하단 미리보기 이미지 — 투명 PNG, 더 크게+위로, 하단은 투명 페이드로 흘려보냄 */}
