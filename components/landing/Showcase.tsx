@@ -19,7 +19,7 @@ const CATS: Cat[] = [
   {
     label: "병원·약국",
     heading: "병원·약국",
-    desc: "병원·의원의 진료·치료 정보를, 환자가 검색하는 전문 글로 써드려요.",
+    desc: "의료광고법에 어긋나지 않게, 환자가 찾는 글만 안전하게 써드려요.",
     img: "/cat-medical.png",
     topics: [
       { t: "오래된 아말감, 지금 바꿔야 할까?", tag: "치과", metaTone: "hot" },
@@ -30,7 +30,7 @@ const CATS: Cat[] = [
   {
     label: "교육·학원",
     heading: "교육·학원",
-    desc: "학원·교습소 수업·입시 정보를, 학부모가 검색하는 전문 글로 써드려요.",
+    desc: "우리 동·시 지역까지 잡아, 학부모가 검색하는 글로 써드려요.",
     img: "/cat-academy.png",
     dark: true, // 녹색 칠판 배경 → 흰 텍스트
     topics: [
@@ -42,7 +42,7 @@ const CATS: Cat[] = [
   {
     label: "법률·세무",
     heading: "법률·세무",
-    desc: "법률·세무·노무 절차와 비용을, 의뢰인이 검색하는 전문 글로 써드려요.",
+    desc: "의뢰인이 왜 검색했는지 짚어, 상담으로 이어지는 글로 써드려요.",
     img: "/cat-legal.png",
     topics: [
       { t: "1인 사업자도 기장 맡겨야 할까?", tag: "세무", metaTone: "hot" },
