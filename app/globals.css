@@ -277,6 +277,16 @@ html {
 .ateflo-bounce { display: inline-block; animation: ateflo-bounce 10s ease infinite; }
 /* 체크 팡! 링 버스트 (AiCompare 순차 등장) */
 @keyframes ateflo-pop-ring { 0% { transform: scale(0.5); opacity: 0.5; } 100% { transform: scale(2.4); opacity: 0; } }
+
+/* 채널 배지 — 각각 다르게 부드럽게 둥실(요동) + 오로라 글로우 호흡 (매직 느낌) */
+@keyframes ateflo-float1 { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-9px) rotate(2.2deg); } }
+@keyframes ateflo-float2 { 0%, 100% { transform: translateY(-3px) rotate(1.4deg); } 50% { transform: translateY(7px) rotate(-2.4deg); } }
+@keyframes ateflo-float3 { 0%, 100% { transform: translateY(0) rotate(-1.6deg); } 34% { transform: translateY(-7px) rotate(1.8deg); } 67% { transform: translateY(5px) rotate(0deg); } }
+@keyframes ateflo-chglow { 0%, 100% { opacity: 0.25; transform: translate(-50%, 0) scale(0.85); } 50% { opacity: 0.6; transform: translate(-50%, 0) scale(1.25); } }
+.ateflo-ch1 { animation: ateflo-float1 3.6s ease-in-out infinite; }
+.ateflo-ch2 { animation: ateflo-float2 4.4s ease-in-out -0.9s infinite; }
+.ateflo-ch3 { animation: ateflo-float3 4.1s ease-in-out -1.8s infinite; }
+.ateflo-chglow { animation: ateflo-chglow 4.2s ease-in-out infinite; }
 @keyframes ateflo-twinkle { 0%, 100% { transform: scale(1); opacity: 0.85; } 50% { transform: scale(1.28); opacity: 1; } }
 .ateflo-twinkle { display: inline-block; animation: ateflo-twinkle 1.9s ease-in-out infinite; }
 /* 은은한 트윙클(칩 별용 — 과하지 않게) */
@@ -364,7 +374,8 @@ html {
 /* 움직임 최소화 선호 시: 연속/장식 애니 정지(정적 표시) */
 @media (prefers-reduced-motion: reduce) {
   .ateflo-mq-left, .ateflo-mq-right, .ateflo-chip-aurora, .ateflo-aurora, .ateflo-aurora-sweep, .ateflo-bounce, .ateflo-holo, .ateflo-twinkle, .ateflo-twinkle-soft, .ateflo-wand,
-  .ateflo-load-mark, .ateflo-load-ring, .ateflo-load-glow, .ateflo-load-orbit, .ateflo-load-bar {
+  .ateflo-load-mark, .ateflo-load-ring, .ateflo-load-glow, .ateflo-load-orbit, .ateflo-load-bar,
+  .ateflo-ch1, .ateflo-ch2, .ateflo-ch3, .ateflo-chglow {
     animation: none !important;
   }
   .ateflo-aurora-sweep { background-position: 0% 50% !important; }

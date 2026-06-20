@@ -8,17 +8,26 @@ import Reveal from "@/components/Reveal";
 // 새 랜딩 히어로 — 메인 포지셔닝: "키워드 하나 → 세 곳(워드프레스·네이버·스레드) 글이 한 번에".
 // 자영업자 결핍(채널마다 따로 쓰기 벅참) → WOW(3곳 한번에). 토스식 절제·여백·#1D75F7.
 
-// 채널 배지 — 사장님이 만든 커스텀 아이콘(브랜드 로고 사칭 회피). 이미지 없으면 텍스트 폴백(안 깨짐).
-function ChannelBadge({ src, label }: { src: string; label: string }) {
+// 채널 배지 — 커스텀 아이콘(브랜드 로고 사칭 회피). 각각 다르게 둥실 요동 + 오로라 글로우(매직).
+const FLOAT = ["ateflo-ch1", "ateflo-ch2", "ateflo-ch3"];
+const GLOW = ["#1D75F7", "#8b5cf6", "#06b6d4"]; // 블루·바이올렛·시안(오로라 톤, 각각 다르게)
+function ChannelBadge({ src, label, i }: { src: string; label: string; i: number }) {
   const [ok, setOk] = useState(true);
   return (
-    <div className="flex flex-col items-center gap-1.5">
-      {ok ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={src} alt={label} onError={() => setOk(false)} className="h-11 w-11 rounded-xl object-contain sm:h-12 sm:w-12" />
-      ) : (
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-neutral-100 text-sm font-bold text-neutral-400 sm:h-12 sm:w-12">{label[0]}</div>
-      )}
+    <div className="relative flex flex-col items-center gap-1.5">
+      {/* 오로라 글로우 — 이미지 뒤에서 부드럽게 호흡 */}
+      <div
+        className="ateflo-chglow pointer-events-none absolute left-1/2 top-1 h-10 w-10 rounded-full blur-xl sm:h-12 sm:w-12"
+        style={{ background: GLOW[i], animationDelay: `${i * -1.3}s` }}
+      />
+      <div className={FLOAT[i]}>
+        {ok ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={src} alt={label} onError={() => setOk(false)} className="relative h-11 w-11 rounded-xl object-contain sm:h-12 sm:w-12" />
+        ) : (
+          <div className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-neutral-100 text-sm font-bold text-neutral-400 sm:h-12 sm:w-12">{label[0]}</div>
+        )}
+      </div>
       <span className="text-[12px] font-medium text-neutral-500">{label}</span>
     </div>
   );
@@ -49,9 +58,9 @@ export default function Hero() {
 
           {/* 3채널 배지 */}
           <div className="mt-5 flex items-center justify-center gap-5 sm:gap-7 lg:justify-start">
-            <ChannelBadge src="/channel-wordpress.png" label="워드프레스" />
-            <ChannelBadge src="/channel-naver.png" label="네이버" />
-            <ChannelBadge src="/channel-threads.png" label="스레드" />
+            <ChannelBadge src="/channel-wordpress.png" label="워드프레스" i={0} />
+            <ChannelBadge src="/channel-naver.png" label="네이버" i={1} />
+            <ChannelBadge src="/channel-threads.png" label="스레드" i={2} />
           </div>
 
           <p className="mx-auto mt-6 max-w-md text-[15px] leading-relaxed text-neutral-500 sm:text-lg lg:mx-0">
