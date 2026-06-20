@@ -108,10 +108,12 @@ function OverlayCard({ img, heading, desc, topics, dark, imgClass, wide }: { img
             return (
               <div
                 key={tp.t}
-                className={`relative w-full overflow-hidden rounded-2xl px-4 pb-2.5 pt-3.5 ring-1 sm:px-5 ${
-                  isSak ? "ateflo-chip-aurora shadow-[0_10px_28px_-8px_rgba(139,92,246,0.55)] ring-violet-300/70" : "bg-white/95 shadow-[0_6px_18px_-12px_rgba(20,40,90,0.35)] ring-black/[0.04]"
+                className={`relative w-full rounded-2xl px-4 pb-2.5 pt-3.5 ring-1 sm:px-5 ${
+                  isSak ? "shadow-[0_10px_28px_-8px_rgba(139,92,246,0.55)] ring-violet-300/70" : "bg-white/95 shadow-[0_6px_18px_-12px_rgba(20,40,90,0.35)] ring-black/[0.04]"
                 }`}
               >
+                {/* 싹 오로라 배경(안쪽 레이어 — 카드는 안 자름) */}
+                {isSak && <div className="ateflo-chip-aurora pointer-events-none absolute inset-0 rounded-2xl" />}
                 {/* 업종 탭(좌상단) */}
                 {tp.tag && (
                   <span className="absolute -left-2 -top-2.5 inline-flex items-center justify-center rounded-full bg-[#E8F1FE] px-2.5 py-1 text-[8.5px] font-bold leading-none text-[#1D75F7] shadow-sm sm:text-[10px]">{tp.tag}</span>
