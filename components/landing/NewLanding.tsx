@@ -162,7 +162,7 @@ export default function NewLanding() {
         <HeroNew />
         <Showcase sel={catSel} onSelect={onSelectCat} />
         <WriteModeSection info={info} onToggle={onToggle} />
-        <FinalHook />
+        <FinalHook onCTA={toForm} />
         <div className="pb-24 sm:pb-0">
           <SiteFooter />
         </div>

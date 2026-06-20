@@ -194,7 +194,7 @@ export default function Showcase({ sel, onSelect }: { sel: number | null; onSele
                   opacity: shown ? 1 : 0,
                 }}
                 className={`rounded-full px-8 py-5 text-lg font-bold active:scale-95 sm:px-10 sm:py-6 sm:text-xl ${
-                  on ? "bg-[#1D75F7] text-white shadow-[0_12px_28px_-8px_rgba(29,117,247,0.6)]" : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                  on ? "bg-[#1D75F7] text-white" : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
                 }`}
               >
                 {c.label}

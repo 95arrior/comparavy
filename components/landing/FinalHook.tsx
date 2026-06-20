@@ -14,17 +14,8 @@ const STRENGTHS = [
 ];
 
 // [피날레] 흰 랜딩 끝에서 톤을 확 바꾸는 다크 블루 풀블리드 마무리. 자랑(강점) + FOMO.
-function toForm() {
-  const input = document.getElementById("hero-email") as HTMLInputElement | null;
-  if (input) {
-    input.focus({ preventScroll: true });
-    input.scrollIntoView({ behavior: "smooth", block: "center" });
-  } else {
-    document.getElementById("signup")?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }
-}
-
-export default function FinalHook() {
+// CTA는 컨트롤러(NewLanding)의 goTo(0) 기반 onCTA를 받아 idx 동기화(스크롤 오류 방지).
+export default function FinalHook({ onCTA }: { onCTA: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const [shown, setShown] = useState(false);
   const [reduce, setReduce] = useState(false);
@@ -102,9 +93,9 @@ export default function FinalHook() {
         </div>
 
         <button
-          onClick={toForm}
+          onClick={onCTA}
           style={cardSt(STRENGTHS.length + 2)}
-          className="mt-9 rounded-full bg-white px-9 py-4 text-[16px] font-bold text-[#1D75F7] shadow-[0_18px_50px_-12px_rgba(0,0,0,0.5)] transition hover:opacity-90 active:scale-[0.98]"
+          className="mt-9 rounded-full bg-white px-9 py-4 text-[16px] font-bold text-[#1D75F7] shadow-[0_18px_50px_-12px_rgba(0,0,0,0.5)] transition-all duration-200 hover:-translate-y-0.5 hover:scale-[1.03] hover:bg-[#1D75F7] hover:text-white hover:shadow-[0_22px_60px_-12px_rgba(29,117,247,0.7)] active:scale-[0.98]"
         >
           사전신청하고 먼저 시작하기
         </button>
