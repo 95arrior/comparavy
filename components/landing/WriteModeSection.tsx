@@ -57,7 +57,7 @@ export default function WriteModeSection({ info, onToggle }: { info: boolean; on
         </div>
         <div className="flex-1">
           <p className={`text-[13px] font-semibold transition-colors duration-300 sm:text-sm ${info ? "text-[#1D75F7]" : "text-neutral-400"}`}>정보 위주로 깔끔하게</p>
-          <p className="mt-1 text-[11px] font-medium text-neutral-400">블로거용</p>
+          <p className="mt-1 text-[11px] font-medium text-neutral-400">취미·정보용</p>
         </div>
       </div>
     </section>

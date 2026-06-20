@@ -4,16 +4,17 @@ import { useEffect, useRef, useState } from "react";
 import Reveal from "@/components/Reveal";
 
 // 2~3섹션 — [2] 업종 칩(크게, 처음 선택X, 중앙 도달 시 뽕뽕뽕 팝) → 고르면 [3] 그 업종 이미지+설명+글감.
-type MetaTone = "hot" | "now" | "local";
-type Topic = { t: string; tag?: string; metaTone?: MetaTone };
+type Comp = "low" | "mid" | "high";
+type Topic = { t: string; tag?: string; vol: number; comp: Comp };
 type SubCard = { img: string; heading: string; desc: string; dark?: boolean; topics: Topic[] };
 
-// 글감 하단 부제(그레이) — 수요/유형 표시
-const META: Record<MetaTone, string> = {
-  hot: "손님이 많이 찾아요",
-  now: "지금 뜨는 키워드",
-  local: "우리 동네 키워드",
+// 경쟁도 — 점 색 + 라벨. 막대 기준 최대값.
+const COMP: Record<Comp, { label: string; dot: string }> = {
+  low: { label: "경쟁 낮음", dot: "bg-emerald-500" },
+  mid: { label: "경쟁 보통", dot: "bg-amber-500" },
+  high: { label: "경쟁 높음", dot: "bg-rose-500" },
 };
+const VOL_MAX = 3000;
 type Cat = { label: string; heading: string; desc: string; img: string | null; cards?: SubCard[]; dark?: boolean; topics: Topic[] };
 const CATS: Cat[] = [
   {
@@ -22,9 +23,9 @@ const CATS: Cat[] = [
     desc: "의료광고법에 어긋나지 않게, 환자가 찾는 글만 안전하게 써드려요.",
     img: "/cat-medical.png",
     topics: [
-      { t: "오래된 아말감, 지금 바꿔야 할까?", tag: "치과", metaTone: "hot" },
-      { t: "눈매교정, 풀리면 재수술 되나요?", tag: "성형외과", metaTone: "now" },
-      { t: "위고비 끊으면 다시 찐다는데?", tag: "가정의학과", metaTone: "hot" },
+      { t: "오래된 아말감, 지금 바꿔야 할까?", tag: "치과", vol: 880, comp: "low" },
+      { t: "눈매교정, 풀리면 재수술 되나요?", tag: "성형외과", vol: 1300, comp: "mid" },
+      { t: "위고비 끊으면 다시 찐다는데?", tag: "가정의학과", vol: 2400, comp: "mid" },
     ],
   },
   {
@@ -34,9 +35,9 @@ const CATS: Cat[] = [
     img: "/cat-academy.png",
     dark: true, // 녹색 칠판 배경 → 흰 텍스트
     topics: [
-      { t: "파닉스 뗐는데 왜 안 읽을까?", tag: "영어", metaTone: "hot" },
-      { t: "초6, 선행보다 복습이 먼저?", tag: "수학", metaTone: "now" },
-      { t: "잘하는 애들 노트, 뭐가 다를까?", tag: "학습법", metaTone: "hot" },
+      { t: "파닉스 뗐는데 왜 안 읽을까?", tag: "영어", vol: 720, comp: "low" },
+      { t: "초6, 선행보다 복습이 먼저?", tag: "수학", vol: 590, comp: "low" },
+      { t: "잘하는 애들 노트, 뭐가 다를까?", tag: "학습법", vol: 1100, comp: "mid" },
     ],
   },
   {
@@ -45,9 +46,9 @@ const CATS: Cat[] = [
     desc: "의뢰인이 왜 검색했는지 짚어, 상담으로 이어지는 글로 써드려요.",
     img: "/cat-legal.png",
     topics: [
-      { t: "1인 사업자도 기장 맡겨야 할까?", tag: "세무", metaTone: "hot" },
-      { t: "권리금 못 받으면 소송 되나요?", tag: "법률", metaTone: "now" },
-      { t: "알바 주휴수당, 무조건 줘야 하나?", tag: "노무", metaTone: "hot" },
+      { t: "1인 사업자도 기장 맡겨야 할까?", tag: "세무", vol: 480, comp: "low" },
+      { t: "권리금 못 받으면 소송 되나요?", tag: "법률", vol: 1600, comp: "mid" },
+      { t: "알바 주휴수당, 무조건 줘야 하나?", tag: "노무", vol: 2900, comp: "high" },
     ],
   },
   {
@@ -62,9 +63,9 @@ const CATS: Cat[] = [
         heading: "그 외 다양한 업종",
         desc: "어떤 업종이든 검색되는 글로.",
         topics: [
-          { t: "오래된 집, 어디부터 고쳐야 돈 아껴?", tag: "인테리어", metaTone: "local" },
-          { t: "줄눈 곰팡이, 덧방으로 가려도 돼?", tag: "타일", metaTone: "hot" },
-          { t: "판넬 결로, 단열 더하면 잡히나요?", tag: "판넬", metaTone: "now" },
+          { t: "오래된 집, 어디부터 고쳐야 돈 아껴?", tag: "인테리어", vol: 640, comp: "low" },
+          { t: "줄눈 곰팡이, 덧방으로 가려도 돼?", tag: "타일", vol: 1200, comp: "mid" },
+          { t: "판넬 결로, 단열 더하면 잡히나요?", tag: "판넬", vol: 380, comp: "low" },
         ],
       },
       {
@@ -72,9 +73,9 @@ const CATS: Cat[] = [
         heading: "모든 자영업자",
         desc: "동네 손님이 찾는 글까지.",
         topics: [
-          { t: "노견 미용, 마취 없이 가능한가요?", tag: "애견미용", metaTone: "local" },
-          { t: "장례식 화환, 당일 주문 되나요?", tag: "꽃집", metaTone: "hot" },
-          { t: "입주청소, 사다리차 따로 불러요?", tag: "청소업체", metaTone: "local" },
+          { t: "노견 미용, 마취 없이 가능한가요?", tag: "애견미용", vol: 520, comp: "low" },
+          { t: "장례식 화환, 당일 주문 되나요?", tag: "꽃집", vol: 1400, comp: "mid" },
+          { t: "입주청소, 사다리차 따로 불러요?", tag: "청소업체", vol: 2100, comp: "mid" },
         ],
       },
     ],
@@ -107,8 +108,17 @@ function OverlayCard({ img, heading, desc, topics, dark, imgClass, wide }: { img
               )}
               {/* 글감 */}
               <p className="whitespace-nowrap text-left text-[10.5px] font-semibold leading-tight text-neutral-800 sm:text-[14.5px]">{tp.t}</p>
-              {/* 메타(그레이) — 글감 바로 아래 좁게 */}
-              {tp.metaTone && <p className="mt-0.5 text-left text-[8.5px] font-medium leading-none text-neutral-400 sm:text-[11px]">{META[tp.metaTone]}</p>}
+              {/* 검색량 막대 + 수치 + 경쟁도 점 (실제 키워드 데이터 느낌) */}
+              <div className="mt-1.5 flex items-center gap-1.5">
+                <span className="h-1 w-12 overflow-hidden rounded-full bg-neutral-200 sm:w-16">
+                  <span className="block h-full rounded-full bg-[#1D75F7]" style={{ width: `${Math.min(100, Math.round((tp.vol / VOL_MAX) * 100))}%` }} />
+                </span>
+                <span className="whitespace-nowrap text-[8.5px] font-semibold text-neutral-500 sm:text-[10.5px]">月 {tp.vol.toLocaleString()}회</span>
+                <span className="flex items-center gap-0.5 whitespace-nowrap text-[8.5px] font-medium text-neutral-400 sm:text-[10.5px]">
+                  <span className={`inline-block h-1.5 w-1.5 rounded-full ${COMP[tp.comp].dot}`} />
+                  {COMP[tp.comp].label}
+                </span>
+              </div>
             </div>
           ))}
         </div>
