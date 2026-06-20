@@ -35,14 +35,16 @@ export default function NewLanding() {
   return (
     // ★ root에 overflow-x-hidden 두지 않음 — 그러면 스크롤 컨테이너가 되어 sticky 헤더가 깨짐.
     //   가로 넘침은 각 섹션이 자체적으로 overflow-x-hidden 처리함.
-    <div className="bg-white text-neutral-900 antialiased">
+    // 풀페이지 스크롤 — root가 스크롤 컨테이너(snap). 헤더는 fixed라 영향 없음.
+    // proximity = 가까울 때만 스냅(긴 섹션에서 안 갇힘).
+    <div className="h-[100dvh] snap-y snap-proximity overflow-x-hidden overflow-y-scroll scroll-smooth bg-white text-neutral-900 antialiased">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(LANDING_JSONLD).replace(/</g, "\\u003c") }} />
       <LandingHeader />
-      <HeroNew />
-      <Showcase />
-      <FinalHook />
+      <div className="snap-start"><HeroNew /></div>
+      <div className="snap-start"><Showcase /></div>
+      <div className="snap-start"><FinalHook /></div>
       {/* 모바일 하단 고정 CTA가 푸터를 가리지 않게 여백 */}
-      <div className="pb-24 sm:pb-0">
+      <div className="snap-start pb-24 sm:pb-0">
         <SiteFooter />
       </div>
     </div>

@@ -13,10 +13,10 @@ import type { BlogProfile, WeeklyHours } from "@/lib/blogProfile";
 // 편집은 ProfileSettings가 담당(분리). 이건 신규(initial=null) 전용.
 
 const VERTS = [
-  { v: "medical", label: "병의원", desc: "환자가 찾는 질환·치료 정보", icon: <path d="M12 7v10M7 12h10" /> },
-  { v: "academy", label: "학원·교습소", desc: "학부모·학생이 찾는 학습·입시", icon: <><path d="M3 6.5 12 3l9 3.5L12 10 3 6.5z" /><path d="M7 8.5V13c0 1.5 2.2 2.5 5 2.5s5-1 5-2.5V8.5" /></> },
-  { v: "professional", label: "법률·세무·노무", desc: "의뢰인이 찾는 절차·비용", icon: <><path d="M12 3v18M5 7h14M7 7l-3 6h6l-3-6zM17 7l-3 6h6l-3-6z" /></> },
-  { v: "general", label: "그 외 업종", desc: "가게·서비스 등 무엇이든", icon: <><path d="M4 9h16l-1 11H5L4 9z" /><path d="M9 9V6a3 3 0 0 1 6 0v3" /></> },
+  { v: "medical", label: "병원·약국", desc: "환자가 찾는 질환·치료 정보", icon: <path d="M12 7v10M7 12h10" /> },
+  { v: "academy", label: "교육·학원", desc: "학부모·학생이 찾는 학습·입시", icon: <><path d="M3 6.5 12 3l9 3.5L12 10 3 6.5z" /><path d="M7 8.5V13c0 1.5 2.2 2.5 5 2.5s5-1 5-2.5V8.5" /></> },
+  { v: "professional", label: "법률·세무", desc: "의뢰인이 찾는 절차·비용", icon: <><path d="M12 3v18M5 7h14M7 7l-3 6h6l-3-6zM17 7l-3 6h6l-3-6z" /></> },
+  { v: "general", label: "기타", desc: "가게·서비스 등 무엇이든", icon: <><path d="M4 9h16l-1 11H5L4 9z" /><path d="M9 9V6a3 3 0 0 1 6 0v3" /></> },
 ] as const;
 
 const VLABEL: Record<string, string> = Object.fromEntries(VERTS.map((x) => [x.v, x.label]));

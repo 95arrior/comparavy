@@ -58,8 +58,8 @@ export const PUBLISH_CHOICES = [
 
 /** 업종(vertical) 선택지 (label=화면, value=DB 저장값). 기본값 general. */
 export const VERTICAL_CHOICES = [
-  { value: "medical", label: "병의원" },
-  { value: "academy", label: "학원·교습소" },
+  { value: "medical", label: "병원·약국" },
+  { value: "academy", label: "교육·학원" },
   { value: "professional", label: "전문직(법무·세무·노무)" },
   { value: "b2b", label: "B2B 서비스" },
   { value: "general", label: "기타·일반" },

@@ -10,10 +10,10 @@ type Kw = { t: string; ssak?: boolean };
 
 // 실제 업종 카테고리(온보딩과 동일) + 숨고st 아이콘
 const CATS: { v: string; label: string; icon: React.ReactNode }[] = [
-  { v: "medical", label: "병의원", icon: <><circle cx="12" cy="12" r="9" /><path d="M12 8v8M8 12h8" /></> },
-  { v: "academy", label: "학원·교습소", icon: <><path d="M22 10 12 5 2 10l10 5 10-5z" /><path d="M6 12v5c0 1 2.7 2.5 6 2.5s6-1.5 6-2.5v-5" /></> },
-  { v: "professional", label: "법률·세무·노무", icon: <><path d="M12 3v18" /><path d="M5 7h14" /><path d="M5 7 2.6 13a3 3 0 0 0 4.8 0L5 7z" /><path d="M19 7l-2.4 6a3 3 0 0 0 4.8 0L19 7z" /><path d="M8 21h8" /></> },
-  { v: "general", label: "그 외 업종", icon: <><path d="M3 9l1.5-5h15L21 9" /><path d="M4 9v11h16V9" /><path d="M9 20v-6h6v6" /></> },
+  { v: "medical", label: "병원·약국", icon: <><circle cx="12" cy="12" r="9" /><path d="M12 8v8M8 12h8" /></> },
+  { v: "academy", label: "교육·학원", icon: <><path d="M22 10 12 5 2 10l10 5 10-5z" /><path d="M6 12v5c0 1 2.7 2.5 6 2.5s6-1.5 6-2.5v-5" /></> },
+  { v: "professional", label: "법률·세무", icon: <><path d="M12 3v18" /><path d="M5 7h14" /><path d="M5 7 2.6 13a3 3 0 0 0 4.8 0L5 7z" /><path d="M19 7l-2.4 6a3 3 0 0 0 4.8 0L19 7z" /><path d="M8 21h8" /></> },
+  { v: "general", label: "기타", icon: <><path d="M3 9l1.5-5h15L21 9" /><path d="M4 9v11h16V9" /><path d="M9 20v-6h6v6" /></> },
 ];
 
 // 병의원(치과) 글감 = 글 주제/제목. ssak = '싹 키워드'(파스텔 오로라). (의료법: 1위/최고/보장 X)

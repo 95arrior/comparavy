@@ -12,10 +12,10 @@ import type { BlogProfile, WeeklyHours } from "@/lib/blogProfile";
 // 카테고리/문체/유형은 제거(vertical이 자동 결정). 저장 시 라우트가 topic=업종라벨·tone=업종기본톤으로 정규화.
 
 const VERTS = [
-  { v: "medical", label: "병의원" },
-  { v: "academy", label: "학원·교습소" },
-  { v: "professional", label: "법률·세무·노무" },
-  { v: "general", label: "그 외 업종" },
+  { v: "medical", label: "병원·약국" },
+  { v: "academy", label: "교육·학원" },
+  { v: "professional", label: "법률·세무" },
+  { v: "general", label: "기타" },
 ];
 
 export default function ProfileSettings({ profile, onSaved }: { profile: BlogProfile; onSaved: (p: BlogProfile) => void }) {

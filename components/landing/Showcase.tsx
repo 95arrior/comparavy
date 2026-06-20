@@ -28,7 +28,7 @@ export default function Showcase() {
 
       {/* 글감 미리보기 */}
       <Reveal delay={120} className="mx-auto mt-14 max-w-md px-6">
-        <p className="text-center text-[13px] font-semibold text-[#1D75F7]">병의원 · 오늘의 글감</p>
+        <p className="text-center text-[13px] font-semibold text-[#1D75F7]">병원·약국 · 오늘의 글감</p>
         <div className="mt-3 space-y-2.5">
           {TOPICS.map((t) => (
             <div key={t} className="rounded-2xl border border-neutral-200 bg-white px-5 py-4 text-left text-[15px] font-medium text-neutral-800 shadow-[0_4px_14px_-8px_rgba(20,40,90,0.25)]">
