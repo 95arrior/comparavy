@@ -20,6 +20,8 @@ export const metadata: Metadata = {
   },
   description: SITE_DESCRIPTION,
   keywords: ["에이트플로", "AteFlo", "워드프레스 AI 글쓰기", "한국어 SEO 글", "AI 블로그 자동 발행", "블로그 글 자동 생성"],
+  // 네이버 서치어드바이저 사이트 소유확인
+  verification: { other: { "naver-site-verification": "da709303c197a62948b2ca78035db689574b8666" } },
   openGraph: {
     title: "에이트플로",
     description: "글쓰기, 키워드 하나면 끝",
