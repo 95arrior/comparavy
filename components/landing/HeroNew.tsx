@@ -49,7 +49,7 @@ export default function HeroNew() {
         </Reveal>
 
         <Reveal delay={140}>
-          <div id="signup" className="mx-auto mt-11 max-w-md px-3 scroll-mt-24 sm:px-0">
+          <div id="signup" className="mx-auto mt-11 w-[88%] max-w-md scroll-mt-24 sm:w-full">
             <WaitlistForm source="hero" inputId="hero-email" />
           </div>
         </Reveal>
