@@ -161,7 +161,7 @@ export default function Showcase() {
 
             if (!cat.img) {
               return (
-                <div key={sel} className="ateflo-soft-in mx-auto w-full max-w-md rounded-[2.25rem] bg-white p-7 shadow-[0_24px_60px_-22px_rgba(20,40,90,0.4)] ring-1 ring-black/5 sm:p-9">
+                <div key={sel} className="ateflo-soft-in mx-auto w-full max-w-md rounded-3xl bg-white p-7 shadow-[0_24px_60px_-22px_rgba(20,40,90,0.4)] ring-1 ring-black/5 sm:p-9">
                   {panel}
                 </div>
               );
@@ -169,7 +169,7 @@ export default function Showcase() {
             return (
               <div key={sel} className="ateflo-soft-in mx-auto w-full max-w-4xl">
                 {/* 데스크탑 — 인물(우측) 그대로, 좌측 여백에만 패널 오버레이 */}
-                <div className="relative hidden overflow-hidden rounded-[2.25rem] shadow-[0_24px_60px_-22px_rgba(20,40,90,0.4)] ring-1 ring-black/5 sm:block">
+                <div className="relative hidden overflow-hidden rounded-3xl shadow-[0_24px_60px_-22px_rgba(20,40,90,0.4)] ring-1 ring-black/5 sm:block">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={cat.img} alt={cat.label} className="block w-full" />
                   {/* 좌측만 화이트 그라데이션(우측 인물은 선명하게) */}
@@ -179,7 +179,7 @@ export default function Showcase() {
                   </div>
                 </div>
                 {/* 모바일 — 사진(인물) 위, 내용 아래 */}
-                <div className="overflow-hidden rounded-[2.25rem] bg-white shadow-[0_20px_50px_-20px_rgba(20,40,90,0.35)] ring-1 ring-black/5 sm:hidden">
+                <div className="overflow-hidden rounded-3xl bg-white shadow-[0_20px_50px_-20px_rgba(20,40,90,0.35)] ring-1 ring-black/5 sm:hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={cat.img} alt={cat.label} className="block w-full" />
                   <div className="p-6">{panel}</div>
