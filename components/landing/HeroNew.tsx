@@ -35,7 +35,7 @@ export default function HeroNew() {
   };
 
   return (
-    <div className="relative flex min-h-[100svh] flex-col overflow-hidden bg-white">
+    <div data-page className="relative flex min-h-[100svh] flex-col overflow-hidden bg-white">
       {/* 시네마틱 무빙 오로라 — 1섹션 전체를 덮음(풀스크린) */}
       <div
         className="ateflo-hero-aurora pointer-events-none absolute inset-0"
