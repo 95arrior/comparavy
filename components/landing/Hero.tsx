@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import DemoStream from "@/components/DemoStream";
 import WaitlistForm from "@/components/WaitlistForm";
 import Reveal from "@/components/Reveal";
@@ -8,30 +7,26 @@ import Reveal from "@/components/Reveal";
 // 새 랜딩 히어로 — 메인 포지셔닝: "키워드 하나 → 세 곳(워드프레스·네이버·스레드) 글이 한 번에".
 // 자영업자 결핍(채널마다 따로 쓰기 벅참) → WOW(3곳 한번에). 토스식 절제·여백·#1D75F7.
 
-// 채널 = 실제 앱 로고(공식 PNG). 흰 박스 + 드롭섀도(앱스토어 스타일). 호버 시 한글 라벨 툴팁.
-// ★로고 PNG는 저작권상 직접 생성 불가 → public/에 공식 로고를 직접 넣어야 함. 없으면 폴백.
-const FLOAT = ["ateflo-ch1", "ateflo-ch2", "ateflo-ch3"];
-const APPS = [
-  { src: "/app-wordpress.png", label: "워드프레스" },
-  { src: "/app-naver.png", label: "네이버 블로그" },
-  { src: "/app-threads.png", label: "스레드" },
+// 채널 = 텍스트 칩(브랜드 이름·색). 로고 마크 X(가장 안전). 영문 표기 + 호버 시 한글 툴팁.
+// 입체 깃발 출렁임(연속 loop), 칩마다 속도 달라 랜덤.
+const CHANNELS = [
+  { en: "WordPress", ko: "워드프레스", color: "#7159e8", flag: 4.2, delay: 0 }, // 보라
+  { en: "NAVER", ko: "네이버 블로그", color: "#03C75A", flag: 4.8, delay: -2 }, // 그린
+  { en: "Threads", ko: "스레드", color: "#0b0b0c", flag: 4.5, delay: -4 }, // 블랙
 ];
-function AppIcon({ i }: { i: number }) {
-  const [ok, setOk] = useState(true);
-  const a = APPS[i];
+function ChannelChip({ i }: { i: number }) {
+  const c = CHANNELS[i];
   return (
-    <div className={`${FLOAT[i]} group relative`}>
-      <div className="flex h-[52px] w-[52px] items-center justify-center overflow-hidden rounded-[14px] bg-white p-1.5 shadow-[0_8px_20px_-6px_rgba(20,40,90,0.3)] ring-1 ring-black/[0.06] sm:h-[58px] sm:w-[58px]">
-        {ok ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={a.src} alt={a.label} onError={() => setOk(false)} className="h-full w-full rounded-[10px] object-contain" />
-        ) : (
-          <span className="text-sm font-bold text-neutral-300">{a.label[0]}</span>
-        )}
-      </div>
-      {/* 호버 툴팁 — 한글 라벨 */}
+    <div className="ateflo-flag group relative" style={{ animationDuration: `${c.flag}s`, animationDelay: `${c.delay}s` }}>
+      <span
+        className="inline-flex items-center whitespace-nowrap rounded-full px-5 py-2.5 text-sm font-extrabold text-white shadow-[0_6px_18px_-7px_rgba(20,40,90,0.4)]"
+        style={{ backgroundColor: c.color }}
+      >
+        {c.en}
+      </span>
+      {/* 호버 툴팁 — 한글 */}
       <span className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100">
-        {a.label}
+        {c.ko}
       </span>
     </div>
   );
@@ -62,9 +57,9 @@ export default function Hero() {
 
           {/* 3채널 칩 */}
           <div className="mt-6 flex items-center justify-center gap-4 sm:gap-5 lg:justify-start">
-            <AppIcon i={0} />
-            <AppIcon i={1} />
-            <AppIcon i={2} />
+            <ChannelChip i={0} />
+            <ChannelChip i={1} />
+            <ChannelChip i={2} />
           </div>
 
           <p className="mx-auto mt-6 max-w-md text-[15px] leading-relaxed text-neutral-500 sm:text-lg lg:mx-0">
