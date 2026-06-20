@@ -108,16 +108,17 @@ export default function NewLanding() {
 
   return (
     // 데스크탑=휠 글라이드(JS), 모바일=native 스크롤 + proximity 스냅(부드럽게).
+    // 스택형 '덮기' 스크롤 — 각 섹션 sticky top-0, 뒤 섹션(높은 z)이 위로 올라와 앞 섹션을 덮음.
     <div
       ref={scrollRef}
-      className="h-[100dvh] select-none snap-y snap-proximity overflow-x-hidden overflow-y-scroll scroll-smooth bg-white text-neutral-900 antialiased"
+      className="h-[100dvh] select-none overflow-x-hidden overflow-y-scroll bg-white text-neutral-900 antialiased"
     >
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(LANDING_JSONLD).replace(/</g, "\\u003c") }} />
       <LandingHeader />
-      <div data-snap className="h-[100dvh] snap-start overflow-hidden"><HeroNew /></div>
-      <div data-snap className="h-[100dvh] snap-start overflow-hidden"><Showcase /></div>
-      <div data-snap className="h-[100dvh] snap-start overflow-hidden"><FinalHook /></div>
-      <div data-snap className="snap-start pb-24 sm:pb-0">
+      <div data-snap className="sticky top-0 z-10 h-[100dvh] overflow-hidden"><HeroNew /></div>
+      <div data-snap className="sticky top-0 z-20 h-[100dvh] overflow-hidden"><Showcase /></div>
+      <div data-snap className="sticky top-0 z-30 h-[100dvh] overflow-hidden"><FinalHook /></div>
+      <div data-snap className="relative z-40 pb-24 sm:pb-0">
         <SiteFooter />
       </div>
     </div>

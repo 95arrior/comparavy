@@ -64,16 +64,16 @@ export default function HeroNew() {
           </div>
         </Reveal>
 
-        {/* 하단 미리보기 이미지 — 더 내리고, 하단(신발)은 투명 흘림으로 가림. 모바일 풀블리드 */}
-        <Reveal delay={220} className="-mx-6 mt-16 sm:mx-0 sm:mt-20">
+        {/* 하단 캐릭터 이미지 — 더 크게+아래로 내려 무릎 밑(다리)부터 화면 밖으로 짤리게. 모바일 풀블리드 */}
+        <Reveal delay={220} className="-mx-6 -mb-[16vh] mt-12 sm:-mb-[18vh] sm:mx-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/hero.png"
             alt="에이트플로 미리보기"
-            className="mx-auto w-full max-w-5xl"
+            className="mx-auto w-full max-w-6xl"
             style={{
-              maskImage: "linear-gradient(to bottom, #000 54%, transparent 88%)",
-              WebkitMaskImage: "linear-gradient(to bottom, #000 54%, transparent 88%)",
+              maskImage: "linear-gradient(to bottom, #000 88%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(to bottom, #000 88%, transparent 100%)",
             }}
           />
         </Reveal>
