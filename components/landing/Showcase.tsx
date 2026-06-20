@@ -4,8 +4,16 @@ import { useEffect, useRef, useState } from "react";
 import Reveal from "@/components/Reveal";
 
 // 2~3섹션 — [2] 업종 칩(크게, 처음 선택X, 중앙 도달 시 뽕뽕뽕 팝) → 고르면 [3] 그 업종 이미지+설명+글감.
-type Topic = { t: string; tag?: string };
+type MetaTone = "hot" | "now" | "local";
+type Topic = { t: string; tag?: string; metaTone?: MetaTone };
 type SubCard = { img: string; heading: string; desc: string; dark?: boolean; topics: Topic[] };
+
+// 글감 옆 라벨 — 수요/유형 표시
+const META: Record<MetaTone, { text: string; cls: string }> = {
+  hot: { text: "손님이 많이 찾아요", cls: "bg-amber-100 text-amber-700" },
+  now: { text: "지금 뜨는 키워드", cls: "bg-violet-100 text-violet-700" },
+  local: { text: "우리 동네 키워드", cls: "bg-emerald-100 text-emerald-700" },
+};
 type Cat = { label: string; heading: string; desc: string; img: string | null; cards?: SubCard[]; dark?: boolean; topics: Topic[] };
 const CATS: Cat[] = [
   {
@@ -14,9 +22,9 @@ const CATS: Cat[] = [
     desc: "병원·의원의 진료·치료 정보를, 환자가 검색하는 전문 글로 써드려요.",
     img: "/cat-medical.png",
     topics: [
-      { t: "오래된 아말감, 지금 바꿔야 할까?", tag: "치과" },
-      { t: "눈매교정, 풀리면 재수술 되나요?", tag: "성형외과" },
-      { t: "위고비 끊으면 다시 찐다는데?", tag: "가정의학과" },
+      { t: "오래된 아말감, 지금 바꿔야 할까?", tag: "치과", metaTone: "hot" },
+      { t: "눈매교정, 풀리면 재수술 되나요?", tag: "성형외과", metaTone: "now" },
+      { t: "위고비 끊으면 다시 찐다는데?", tag: "가정의학과", metaTone: "hot" },
     ],
   },
   {
@@ -26,9 +34,9 @@ const CATS: Cat[] = [
     img: "/cat-academy.png",
     dark: true, // 녹색 칠판 배경 → 흰 텍스트
     topics: [
-      { t: "파닉스 뗐는데 왜 안 읽을까?", tag: "영어" },
-      { t: "초6, 선행보다 복습이 먼저?", tag: "수학" },
-      { t: "잘하는 애들 노트, 뭐가 다를까?", tag: "학습법" },
+      { t: "파닉스 뗐는데 왜 안 읽을까?", tag: "영어", metaTone: "hot" },
+      { t: "초6, 선행보다 복습이 먼저?", tag: "수학", metaTone: "now" },
+      { t: "잘하는 애들 노트, 뭐가 다를까?", tag: "학습법", metaTone: "hot" },
     ],
   },
   {
@@ -37,9 +45,9 @@ const CATS: Cat[] = [
     desc: "법률·세무·노무 절차와 비용을, 의뢰인이 검색하는 전문 글로 써드려요.",
     img: "/cat-legal.png",
     topics: [
-      { t: "1인 사업자도 기장 맡겨야 할까?", tag: "세무" },
-      { t: "권리금 못 받으면 소송 되나요?", tag: "법률" },
-      { t: "알바 주휴수당, 무조건 줘야 하나?", tag: "노무" },
+      { t: "1인 사업자도 기장 맡겨야 할까?", tag: "세무", metaTone: "hot" },
+      { t: "권리금 못 받으면 소송 되나요?", tag: "법률", metaTone: "now" },
+      { t: "알바 주휴수당, 무조건 줘야 하나?", tag: "노무", metaTone: "hot" },
     ],
   },
   {
@@ -54,9 +62,9 @@ const CATS: Cat[] = [
         heading: "그 외 다양한 업종",
         desc: "어떤 업종이든 검색되는 글로.",
         topics: [
-          { t: "오래된 집, 어디부터 고쳐야 돈 아껴?", tag: "인테리어" },
-          { t: "줄눈 곰팡이, 덧방으로 가려도 돼?", tag: "타일" },
-          { t: "판넬 결로, 단열 더하면 잡히나요?", tag: "판넬" },
+          { t: "오래된 집, 어디부터 고쳐야 돈 아껴?", tag: "인테리어", metaTone: "local" },
+          { t: "줄눈 곰팡이, 덧방으로 가려도 돼?", tag: "타일", metaTone: "hot" },
+          { t: "판넬 결로, 단열 더하면 잡히나요?", tag: "판넬", metaTone: "now" },
         ],
       },
       {
@@ -64,9 +72,9 @@ const CATS: Cat[] = [
         heading: "모든 자영업자",
         desc: "동네 손님이 찾는 글까지.",
         topics: [
-          { t: "노견 미용, 마취 없이 가능한가요?", tag: "애견미용" },
-          { t: "장례식 화환, 당일 주문 되나요?", tag: "꽃집" },
-          { t: "입주청소, 사다리차 따로 불러요?", tag: "청소업체" },
+          { t: "노견 미용, 마취 없이 가능한가요?", tag: "애견미용", metaTone: "local" },
+          { t: "장례식 화환, 당일 주문 되나요?", tag: "꽃집", metaTone: "hot" },
+          { t: "입주청소, 사다리차 따로 불러요?", tag: "청소업체", metaTone: "local" },
         ],
       },
     ],
@@ -86,16 +94,23 @@ function OverlayCard({ img, heading, desc, topics, dark, imgClass, wide }: { img
       <div className={`absolute inset-y-0 flex flex-col justify-center ${wide ? "inset-x-0 px-4 sm:px-6" : "left-0 w-[58%] px-4 sm:px-8 lg:px-10"}`}>
         <h3 className={`font-pretendard text-[15px] font-bold leading-tight tracking-tight sm:text-2xl lg:text-[30px] ${dark ? "text-white" : "text-neutral-900"}`}>{heading}</h3>
         <p className={`mt-1 min-h-[2.2em] text-[10.5px] font-medium leading-snug sm:mt-2.5 sm:min-h-[3.1em] sm:text-[15px] sm:leading-relaxed ${dark ? "text-white/85" : "text-neutral-600"}`}>{desc}</p>
-        <div className="mt-2 space-y-1.5 sm:mt-5 sm:space-y-2.5">
+        <div className="mt-2 flex flex-col items-start gap-1.5 sm:mt-5 sm:gap-2">
           {topics.map((tp) => (
             <div
               key={tp.t}
-              className="flex items-center justify-between gap-1.5 rounded-lg bg-white/95 px-2.5 py-1.5 shadow-[0_6px_18px_-12px_rgba(20,40,90,0.35)] ring-1 ring-black/[0.04] sm:gap-2.5 sm:rounded-2xl sm:px-4 sm:py-3"
+              className="w-fit max-w-full rounded-xl bg-white/95 px-2.5 py-1.5 shadow-[0_6px_18px_-12px_rgba(20,40,90,0.35)] ring-1 ring-black/[0.04] sm:rounded-2xl sm:px-3.5 sm:py-2.5"
             >
-              <span className="whitespace-nowrap text-left text-[10px] font-medium leading-tight text-neutral-800 sm:text-[14.5px]">{tp.t}</span>
-              {tp.tag && (
-                <span className="shrink-0 rounded-full bg-[#1D75F7]/10 px-1.5 py-0.5 text-[8.5px] font-bold text-[#1D75F7] sm:px-2.5 sm:py-1 sm:text-[11.5px]">{tp.tag}</span>
-              )}
+              {/* 작은 칩들(위): 업종 + 수요/유형 라벨 */}
+              <div className="flex flex-wrap items-center gap-1">
+                {tp.tag && (
+                  <span className="rounded-full bg-[#1D75F7]/10 px-1.5 py-0.5 text-[8px] font-bold text-[#1D75F7] sm:text-[10px]">{tp.tag}</span>
+                )}
+                {tp.metaTone && (
+                  <span className={`rounded-full px-1.5 py-0.5 text-[8px] font-bold sm:text-[10px] ${META[tp.metaTone].cls}`}>{META[tp.metaTone].text}</span>
+                )}
+              </div>
+              {/* 글감(아래) */}
+              <p className="mt-1 whitespace-nowrap text-left text-[10.5px] font-semibold leading-tight text-neutral-800 sm:text-[14.5px]">{tp.t}</p>
             </div>
           ))}
         </div>
