@@ -113,7 +113,7 @@ function OverlayCard({ img, heading, desc, topics, dark, imgClass, wide }: { img
                 <span className="h-1 w-12 overflow-hidden rounded-full bg-neutral-200 sm:w-16">
                   <span className="block h-full rounded-full bg-[#1D75F7]" style={{ width: `${Math.min(100, Math.round((tp.vol / VOL_MAX) * 100))}%` }} />
                 </span>
-                <span className="whitespace-nowrap text-[8.5px] font-semibold text-neutral-500 sm:text-[10.5px]">月 {tp.vol.toLocaleString()}회</span>
+                <span className="whitespace-nowrap text-[8.5px] font-semibold text-neutral-500 sm:text-[10.5px]">월 {tp.vol.toLocaleString()}회</span>
                 <span className="flex items-center gap-0.5 whitespace-nowrap text-[8.5px] font-medium text-neutral-400 sm:text-[10.5px]">
                   <span className={`inline-block h-1.5 w-1.5 rounded-full ${COMP[tp.comp].dot}`} />
                   {COMP[tp.comp].label}
