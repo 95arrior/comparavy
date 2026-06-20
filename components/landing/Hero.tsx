@@ -10,10 +10,11 @@ import Reveal from "@/components/Reveal";
 // 채널 칩 — 균일한 높이/패딩의 텍스트 칩(이미지 X). 각각 다르게 둥실 요동 + 파스텔 글로우(매직).
 // 색: 워드프레스=블루 · 네이버=그린 · 스레드=블랙(그레이).
 const FLOAT = ["ateflo-ch1", "ateflo-ch2", "ateflo-ch3"];
+// 로고 사용 금지(회색지대) → 채널 '특색=색'만 살리고 이름은 한글. 로고 모양 글자마크 없음.
 const CHIPS = [
   { label: "워드프레스", color: "#1D75F7", glow: "#5b9bff" },
   { label: "네이버", color: "#03A256", glow: "#3ecf8e" },
-  { label: "스레드", color: "#374151", glow: "#9aa3b2" },
+  { label: "스레드", color: "#111827", glow: "#9aa3b2" },
 ];
 function ChannelChip({ i }: { i: number }) {
   const c = CHIPS[i];
@@ -21,15 +22,12 @@ function ChannelChip({ i }: { i: number }) {
     <div className="relative">
       {/* 파스텔 글로우 — 칩 뒤에서 부드럽게 호흡 */}
       <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-        <div className="ateflo-chglow h-8 w-[88px] rounded-full blur-xl" style={{ background: c.glow, animationDelay: `${i * -1.3}s` }} />
+        <div className="ateflo-chglow h-9 w-[96px] rounded-full blur-xl" style={{ background: c.glow, animationDelay: `${i * -1.3}s` }} />
       </div>
-      {/* 칩 (둥실) */}
-      <span
-        className={`${FLOAT[i]} relative inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-2 text-[13px] font-semibold sm:text-sm`}
-        style={{ color: c.color, borderColor: `${c.color}33`, backgroundColor: `${c.color}0d` }}
-      >
-        <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: c.color }} />
-        {c.label}
+      {/* 칩 (둥실) — 흰 알약 + 채널색 점(로고 X) + 한글 이름 */}
+      <span className={`${FLOAT[i]} relative inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-neutral-200 bg-white py-2 pl-3 pr-4 shadow-[0_4px_14px_-6px_rgba(20,40,90,0.25)]`}>
+        <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: c.color }} />
+        <span className="text-[13px] font-semibold text-neutral-800 sm:text-sm">{c.label}</span>
       </span>
     </div>
   );
