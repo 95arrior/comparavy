@@ -1,6 +1,7 @@
 import LandingHeader from "./LandingHeader";
 import HeroNew from "./HeroNew";
 import Showcase from "./Showcase";
+import WriteModeSection from "./WriteModeSection";
 import FinalHook from "./FinalHook";
 import SiteFooter from "@/components/SiteFooter";
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from "@/lib/site";
@@ -40,6 +41,7 @@ export default function NewLanding() {
       <LandingHeader />
       <HeroNew />
       <Showcase />
+      <WriteModeSection />
       <FinalHook />
       <div className="pb-24 sm:pb-0">
         <SiteFooter />
