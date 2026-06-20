@@ -10,7 +10,7 @@ import Reveal from "@/components/Reveal";
 
 // 채널 배지 — 커스텀 아이콘(브랜드 로고 사칭 회피). 각각 다르게 둥실 요동 + 오로라 글로우(매직).
 const FLOAT = ["ateflo-ch1", "ateflo-ch2", "ateflo-ch3"];
-const GLOW = ["#1D75F7", "#8b5cf6", "#06b6d4"]; // 블루·바이올렛·시안(오로라 톤, 각각 다르게)
+const GLOW = ["#5b9bff", "#3ecf8e", "#9aa3b2"]; // 워드프레스=파스텔 블루 · 네이버=파스텔 그린 · 스레드=파스텔 블랙(소프트 그레이)
 function ChannelBadge({ src, label, i }: { src: string; label: string; i: number }) {
   const [ok, setOk] = useState(true);
   return (
