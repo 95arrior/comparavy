@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import WaitlistForm from "@/components/WaitlistForm";
 import Reveal from "@/components/Reveal";
 
-// 헤드라인 업종 룰렛 — 3초마다 위로 슬라이드(병원→학원→변호사→미용실). 우리 카테고리 대표.
-const ROLES = ["병원", "학원", "변호사", "미용실"];
+// 헤드라인 업종 룰렛 — 3초마다 위로 슬라이드(매장→병원→학원→카페). 2글자·포괄적.
+const ROLES = ["매장", "병원", "학원", "카페"];
 function RotatingWord() {
   const [i, setI] = useState(0);
   useEffect(() => {
@@ -14,7 +14,7 @@ function RotatingWord() {
     return () => clearInterval(t);
   }, []);
   return (
-    <span className="relative inline-block h-[1.1em] overflow-hidden align-bottom text-[#1D75F7]">
+    <span className="relative inline-block h-[1.1em] overflow-hidden align-bottom">
       <span key={i} className="ateflo-slot-up block leading-[1.1]">
         {ROLES[i]}
       </span>
@@ -58,10 +58,6 @@ export default function HeroNew() {
             <br />
             키워드 하나로 끝
           </h1>
-          <p className="mx-auto mt-6 max-w-xl text-[17px] leading-relaxed text-neutral-500 sm:text-xl">
-            워드프레스 · 네이버 · 스레드까지,
-            <br className="sm:hidden" /> 채널마다 딱 맞게.
-          </p>
         </Reveal>
 
         <Reveal delay={140}>
@@ -79,8 +75,8 @@ export default function HeroNew() {
             alt="에이트플로 미리보기"
             className="mx-auto w-full max-w-5xl"
             style={{
-              maskImage: "linear-gradient(to bottom, #000 66%, transparent 99%)",
-              WebkitMaskImage: "linear-gradient(to bottom, #000 66%, transparent 99%)",
+              maskImage: "linear-gradient(to bottom, #000 40%, transparent 84%)",
+              WebkitMaskImage: "linear-gradient(to bottom, #000 40%, transparent 84%)",
             }}
           />
         </Reveal>
