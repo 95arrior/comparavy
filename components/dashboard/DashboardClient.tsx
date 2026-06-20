@@ -10,6 +10,7 @@ import ContentCalendar from "./ContentCalendar";
 import Segmented from "./Segmented";
 import CenterToast from "./CenterToast";
 import WritingView, { type GenParams } from "./WritingView";
+import WriteTypeSheet from "./WriteTypeSheet";
 import WordPressPanel from "./WordPressPanel";
 import KeywordFinder from "./KeywordFinder";
 import KeywordQueue from "./KeywordQueue";
@@ -63,6 +64,8 @@ export default function DashboardClient(props: DashboardProps) {
   const [wpSiteUrl, setWpSiteUrl] = useState<string | null>(props.wpSiteUrl);
   const [selected, setSelected] = useState<Article | null>(null);
   const [genParams, setGenParams] = useState<GenParams | null>(null);
+  // 글 생성 직전 '정보성/홍보용' 선택 대기 (선택하면 genParams로 생성 시작)
+  const [pendingWrite, setPendingWrite] = useState<{ keyword: string; title: string } | null>(null);
   const [subCanceled, setSubCanceled] = useState(props.subStatus === "canceled");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -250,7 +253,7 @@ export default function DashboardClient(props: DashboardProps) {
         setTab("lab");
         return;
       }
-      setGenParams({ keyword: g.keyword, angle: "", type: g.type ?? "howto", tone: g.tone ?? "friendly" });
+      setGenParams({ keyword: g.keyword, angle: "", type: g.type ?? "howto", tone: g.tone ?? "friendly", promo: true });
     } catch {
       // 무시
     }
@@ -419,7 +422,7 @@ export default function DashboardClient(props: DashboardProps) {
       if (first) {
         pendingQueueId.current = first.id;
         setSelected(null);
-        setGenParams({ keyword: first.keyword, angle: "", type: toEngineType(blogProfile.article_type, blogProfile.vertical), tone: blogProfile.tone });
+        setGenParams({ keyword: first.keyword, angle: "", type: toEngineType(blogProfile.article_type, blogProfile.vertical), tone: blogProfile.tone, promo: true });
       }
       return true;
     } catch {
@@ -864,6 +867,26 @@ export default function DashboardClient(props: DashboardProps) {
           />
         )}
 
+        {/* 정보성/홍보용 선택 시트 — 글감 클릭 후, 생성 시작 전 */}
+        {pendingWrite && blogProfile && (
+          <WriteTypeSheet
+            title={pendingWrite.title}
+            hasBiz={Boolean(blogProfile.biz_name)}
+            onClose={() => setPendingWrite(null)}
+            onPick={(promo) => {
+              setSelected(null);
+              setGenParams({
+                keyword: pendingWrite.keyword,
+                angle: pendingWrite.title,
+                type: toEngineType(blogProfile.article_type, blogProfile.vertical),
+                tone: blogProfile.tone,
+                promo,
+              });
+              setPendingWrite(null);
+            }}
+          />
+        )}
+
         {/* ── 연구소 (사이드바 '연구소') : 블로그 없으면 온보딩, 있으면 내부 탭으로 도구 전환 ── */}
         {/* 프로필 로딩 중 — 온보딩/메인 깜빡임 방지 가드 (로딩 끝나기 전엔 둘 다 안 보여줌) */}
         {!page && !selected && !genParams && tab === "lab" && !profileLoaded && (
@@ -889,20 +912,14 @@ export default function DashboardClient(props: DashboardProps) {
                 wpConnected={Boolean(wpSiteUrl)}
                 onWrite={() => goLabView("keywords")}
                 onWriteKeyword={(keyword, title) => {
-                  // 글감 카드 [이걸로 쓰기] → 기존 생성 흐름. 제목을 angle로 넘겨 '본 글감=나오는 글'.
+                  // 글감 카드 [이 글 쓰기] → 정보성/홍보용 선택 시트를 먼저 띄운다(생성은 선택 후).
                   const overLimit = props.plan !== "pro" && articlesUsed >= props.articlesLimit;
                   const hasTeaser = props.initialArticles.some((a) => a.locked);
                   if (overLimit && hasTeaser) {
                     goLabView("keywords");
                     return;
                   }
-                  setSelected(null);
-                  setGenParams({
-                    keyword,
-                    angle: title,
-                    type: toEngineType(blogProfile.article_type, blogProfile.vertical),
-                    tone: blogProfile.tone,
-                  });
+                  setPendingWrite({ keyword, title });
                 }}
                 onSelect={setSelected}
                 onUpdated={(u) => setArticles((prev) => prev.map((a) => (a.id === u.id ? u : a)))}

@@ -59,6 +59,7 @@ export async function POST(request: Request) {
     angle?: string;
     type?: string;
     tone?: string;
+    promo?: boolean; // true=홍보용(업장 연결) | false=정보성(순수 정보). 기본 true(기존 동작)
   };
   try {
     body = await request.json();
@@ -137,6 +138,7 @@ export async function POST(request: Request) {
   const vDef = VERTICAL_DEFAULTS[vertical];
   const type = body.type ?? vDef?.type ?? "howto";
   const tone = body.tone ?? vDef?.tone ?? "friendly";
+  const promo = body.promo !== false; // 명시적 false만 정보성, 기본은 홍보용(기존 동작)
 
   // 약한 audience 가드(버그2): 직접 입력해도 '설정한 대상과 명백히 동떨어진'(반대 연령어가 박힌) 글감만 막는다.
   // 명시적 연령어(성인/유아/초등/중고등)만 검사 → 도메인어(토익 등)·중립어는 통과(사장이 일부러 넣은 걸 과잉 차단 안 함).
@@ -197,7 +199,7 @@ export async function POST(request: Request) {
         }
 
         const article = await streamArticle(
-          { keyword, angle: body.angle, type, tone, maxWords, variantInstruction: variant.instruction, vertical, bizName: profileRow?.biz_name, bizStrength: profileRow?.biz_strength },
+          { keyword, angle: body.angle, type, tone, maxWords, variantInstruction: variant.instruction, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null },
           (bodyHtml) => send({ type: "body", html: bodyHtml }),
           (title) => send({ type: "title", title }),
           (u) => { void logUsage({ userId: user.id, model: u.model, kind: "generate", inputTokens: u.inputTokens, outputTokens: u.outputTokens }); },
@@ -240,6 +242,7 @@ export async function POST(request: Request) {
           status: "draft",
           write_note: article.write_note || null, // 글쓴이용 메모 (마이그레이션 0007)
           tags: article.tags ?? [], // 워드프레스 태그 (마이그레이션: articles.tags jsonb)
+          article_type: promo ? "promo" : "info", // 홍보용/정보성 (마이그레이션 0040)
         };
         // 티저(잠금 미리보기)일 때만 locked 사용 → 마이그레이션(0006) 전에도 일반 생성은 정상 동작
         if (teaser) insertPayload.locked = true;
@@ -253,7 +256,7 @@ export async function POST(request: Request) {
         let { data: saved, error: saveError } = await writeArticle();
 
         // 아직 없는 선택 컬럼(write_note·tags 등)을 가리키는 오류면 그 컬럼만 빼고 재시도 → 마이그레이션 전에도 생성은 항상 동작
-        for (const col of ["tags", "write_note"]) {
+        for (const col of ["tags", "write_note", "article_type"]) {
           if (saveError && new RegExp(col, "i").test(saveError.message ?? "")) {
             delete insertPayload[col];
             ({ data: saved, error: saveError } = await writeArticle());

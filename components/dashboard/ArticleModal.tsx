@@ -1137,8 +1137,8 @@ export default function ArticleModal({
           />
         </div>
 
-        {/* 섹션 추가 추천 — 체류시간↑ (코어 글엔진 안 건드리고 발행 전 한 개씩 덧붙임) */}
-        {!article.locked && (
+        {/* 섹션 추가 추천 — 체류시간↑ (홍보용 글만. 정보성은 순수 정보라 추천 안 띄움) */}
+        {!article.locked && article.article_type !== "info" && (
           <SectionSuggest
             articleId={article.id}
             onInsert={(html) => editorRef.current?.appendContent(html)}

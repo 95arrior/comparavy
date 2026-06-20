@@ -21,6 +21,7 @@ export interface GenParams {
   angle: string;
   type: string;
   tone: string;
+  promo: boolean; // true=홍보용(업장 연결) | false=정보성(순수 정보)
 }
 
 // "글 생성하기" 직후 전환되는 전체 페이지 작성 화면. 편집화면과 같은 레이아웃에서
