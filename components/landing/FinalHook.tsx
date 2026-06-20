@@ -76,7 +76,7 @@ export default function FinalHook({ onCTA }: { onCTA: () => void }) {
 
         <p style={st(2)} className="mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-white/70 sm:text-lg">
           블로그는 먼저 쌓는 사람이 가져가요.<br className="hidden sm:block" />
-          늦을수록, 따라잡기 어려워요.
+          남들이 안 쓴 키워드를, 먼저 선점하세요.
         </p>
 
         {/* 강점 — 순차로 하나씩 등장하는 카드 */}
@@ -89,13 +89,13 @@ export default function FinalHook({ onCTA }: { onCTA: () => void }) {
           ))}
         </div>
         <div style={cardSt(STRENGTHS.length)} className="mx-auto mt-2 w-full max-w-lg rounded-xl bg-[#1D75F7]/20 px-3 py-2.5 text-center ring-1 ring-[#1D75F7]/30">
-          <span className="text-[12px] font-bold text-white sm:text-[13px]">자랑은 여기까지만 할게요</span>
+          <span className="text-[12px] font-bold text-white sm:text-[13px]">그리고, 셀 수 없이 많은 디테일이 더 있어요</span>
         </div>
 
         <button
           onClick={onCTA}
           style={cardSt(STRENGTHS.length + 2)}
-          className="mt-9 rounded-full bg-white px-9 py-4 text-[16px] font-bold text-[#1D75F7] shadow-[0_18px_50px_-12px_rgba(0,0,0,0.5)] transition-all duration-200 hover:-translate-y-0.5 hover:scale-[1.03] hover:bg-[#1D75F7] hover:text-white hover:shadow-[0_22px_60px_-12px_rgba(29,117,247,0.7)] active:scale-[0.98]"
+          className="mt-9 rounded-full bg-white px-9 py-4 text-[16px] font-bold text-[#1D75F7] shadow-[0_18px_50px_-12px_rgba(0,0,0,0.5)] transition-colors duration-200 hover:text-neutral-900 active:scale-[0.98]"
         >
           사전신청하고 먼저 시작하기
         </button>
