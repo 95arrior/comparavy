@@ -52,14 +52,17 @@ export default function HeroNew() {
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[42vh] bg-gradient-to-b from-transparent via-white/70 to-white" />
       <section className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col items-center justify-center px-6 py-24 text-center">
         <Reveal>
-          <p className="text-sm font-semibold tracking-tight text-[#1D75F7] sm:text-base">검색되는 글로</p>
+          <p className="flex items-center justify-center gap-2 text-sm font-semibold tracking-tight text-[#1D75F7] sm:text-base">
+            <span className="inline-flex items-center gap-0.5 rounded-full bg-[#1D75F7]/10 px-2.5 py-0.5 text-xs font-bold">AI ✦✦</span>
+            검색되는 글로
+          </p>
           <h1 className="font-pretendard mt-4 text-[clamp(32px,8vw,56px)] font-bold leading-[1.12] tracking-[-0.02em]">
             손님이 찾아오는 <RotatingWord /> 블로그
           </h1>
         </Reveal>
 
         <Reveal delay={140}>
-          <div id="signup" className="mx-auto mt-11 max-w-md scroll-mt-24">
+          <div id="signup" className="mx-auto mt-11 max-w-md px-3 scroll-mt-24 sm:px-0">
             <WaitlistForm source="hero" inputId="hero-email" />
           </div>
         </Reveal>
