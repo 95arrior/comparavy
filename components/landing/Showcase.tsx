@@ -15,6 +15,7 @@ export default function Showcase() {
   const [sel, setSel] = useState<number | null>(null); // 처음엔 아무것도 선택 안 함
   const [shown, setShown] = useState(false);
   const chipsRef = useRef<HTMLDivElement>(null);
+  const gateRef = useRef<HTMLElement>(null);
   const topicsRef = useRef<HTMLElement>(null);
 
   // 칩이 화면 중앙 띠에 들어오면 뽕뽕뽕 팝
@@ -27,6 +28,42 @@ export default function Showcase() {
     return () => io.disconnect();
   }, []);
 
+  // 게이트 — 선택 전엔 이 섹션에서 '아래로' 스크롤 차단(위로는 허용). 선택하면 해제.
+  useEffect(() => {
+    if (sel !== null) return; // 선택되면 잠금 없음
+    const el = gateRef.current;
+    if (!el) return;
+    const blockingDown = (goingDown: boolean) => {
+      if (!goingDown) return false; // 위로는 항상 허용
+      const r = el.getBoundingClientRect();
+      return r.top <= 1 && r.bottom > 1; // 이 섹션이 화면 상단에 닿아 채우고 있을 때만
+    };
+    const pin = () => { if (el.getBoundingClientRect().top < -1) window.scrollTo({ top: el.offsetTop }); };
+    const onWheel = (e: WheelEvent) => { if (blockingDown(e.deltaY > 0)) { e.preventDefault(); pin(); } };
+    let startY = 0;
+    const onTouchStart = (e: TouchEvent) => { startY = e.touches[0]?.clientY ?? 0; };
+    const onTouchMove = (e: TouchEvent) => {
+      const dy = startY - (e.touches[0]?.clientY ?? 0); // >0 = 아래로 스크롤
+      if (blockingDown(dy > 0)) { e.preventDefault(); pin(); }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA")) return;
+      const down = e.key === "ArrowDown" || e.key === "PageDown" || e.key === " " || e.key === "Spacebar";
+      if (blockingDown(down)) e.preventDefault();
+    };
+    window.addEventListener("wheel", onWheel, { passive: false });
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("wheel", onWheel);
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [sel]);
+
   const pick = (i: number) => {
     setSel(i);
     setTimeout(() => topicsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
@@ -35,8 +72,8 @@ export default function Showcase() {
 
   return (
     <>
-      {/* [2] 업종 선택 — 큰 칩만 */}
-      <section className="flex min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-white px-6 py-20">
+      {/* [2] 업종 선택 — 큰 칩만. 선택 전까지 아래 스크롤 게이트 */}
+      <section ref={gateRef} className="flex min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-white px-6 py-20">
         <Reveal className="text-center">
           <h2 className="font-pretendard text-[clamp(26px,6.4vw,44px)] font-bold leading-[1.18] tracking-[-0.02em]">
             어떤 업종에 종사하세요?
