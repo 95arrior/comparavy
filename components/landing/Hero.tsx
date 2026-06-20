@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import DemoStream from "@/components/DemoStream";
 import WaitlistForm from "@/components/WaitlistForm";
 import Reveal from "@/components/Reveal";
@@ -7,28 +8,56 @@ import Reveal from "@/components/Reveal";
 // 새 랜딩 히어로 — 메인 포지셔닝: "키워드 하나 → 세 곳(워드프레스·네이버·스레드) 글이 한 번에".
 // 자영업자 결핍(채널마다 따로 쓰기 벅참) → WOW(3곳 한번에). 토스식 절제·여백·#1D75F7.
 
-// 채널 = 텍스트 칩(브랜드 이름·색). 로고 마크 X(가장 안전). 영문 표기 + 호버 시 한글 툴팁.
-// 입체 깃발 출렁임(연속 loop), 칩마다 속도 달라 랜덤.
+// 채널 = 텍스트 칩(브랜드 이름·색). 로고 마크 X(가장 안전).
+// 자동 시퀀스: 워드프레스→네이버→스레드 하나씩 켜지고 나머진 디세이블 + 하단 부제로 특징 설명 → 마지막 다 켜짐.
 const CHANNELS = [
-  { en: "WordPress", ko: "워드프레스", color: "#7159e8", flag: 4.2, delay: 0 }, // 보라
-  { en: "NAVER", ko: "네이버 블로그", color: "#03C75A", flag: 4.8, delay: -2 }, // 그린
-  { en: "Threads", ko: "스레드", color: "#0b0b0c", flag: 4.5, delay: -4 }, // 블랙
+  { en: "WordPress", color: "#7159e8", feature: "구글 검색에 걸리는 SEO 장문으로 써드려요" },
+  { en: "NAVER", color: "#03C75A", feature: "네이버 블로그에 맞춰 깔끔하게 정리해요" },
+  { en: "Threads", color: "#0b0b0c", feature: "스레드에선 짧고 후킹되게 바꿔드려요" },
 ];
-function ChannelChip({ i }: { i: number }) {
-  const c = CHANNELS[i];
+const ALL_FEATURE = "키워드 하나면, 세 곳에 한 번에 올라가요";
+
+function ChannelShowcase() {
+  const [phase, setPhase] = useState(0); // 0·1·2=각 채널, 3=전체 켜짐
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setPhase(3);
+      return;
+    }
+    const durs = [1900, 1900, 1900, 2400];
+    let p = 0;
+    let to: ReturnType<typeof setTimeout>;
+    const tick = () => {
+      p = (p + 1) % 4;
+      setPhase(p);
+      to = setTimeout(tick, durs[p]);
+    };
+    to = setTimeout(tick, durs[0]);
+    return () => clearTimeout(to);
+  }, []);
+
+  const on = (i: number) => phase === 3 || phase === i;
+  const feature = phase === 3 ? ALL_FEATURE : CHANNELS[phase].feature;
+
   return (
-    <div className="ateflo-flag group relative" style={{ animationDuration: `${c.flag}s`, animationDelay: `${c.delay}s` }}>
-      <span
-        className="inline-flex items-center whitespace-nowrap rounded-full px-5 py-2.5 text-sm font-extrabold text-white shadow-[0_6px_18px_-7px_rgba(20,40,90,0.4)]"
-        style={{ backgroundColor: c.color }}
-      >
-        {c.en}
-      </span>
-      {/* 호버 툴팁 — 한글 */}
-      <span className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100">
-        {c.ko}
-      </span>
-    </div>
+    <>
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
+        {CHANNELS.map((c, i) => (
+          <span
+            key={c.en}
+            className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold transition-all duration-500 ${
+              on(i) ? "text-white shadow-[0_6px_18px_-7px_rgba(20,40,90,0.4)]" : "scale-95 bg-neutral-100 text-neutral-400"
+            }`}
+            style={on(i) ? { backgroundColor: c.color } : undefined}
+          >
+            {c.en}
+          </span>
+        ))}
+      </div>
+      <p key={feature} className="ateflo-soft-in mx-auto mt-4 h-6 max-w-md text-[15px] font-medium leading-relaxed text-neutral-600 sm:text-base lg:mx-0">
+        {feature}
+      </p>
+    </>
   );
 }
 
@@ -55,21 +84,8 @@ export default function Hero() {
             세 곳 글이 <span className="text-[#1D75F7]">한 번에</span>
           </h1>
 
-          {/* 3채널 칩 */}
-          <div className="mt-6 flex items-center justify-center gap-4 sm:gap-5 lg:justify-start">
-            <ChannelChip i={0} />
-            <ChannelChip i={1} />
-            <ChannelChip i={2} />
-          </div>
-
-          <p className="mx-auto mt-6 max-w-md text-[15px] leading-relaxed text-neutral-500 sm:text-lg lg:mx-0">
-            사장님은 키워드만 고르면 끝.<br />
-            블로그도, 네이버도, 스레드도 맞춰서 뽑아드려요.
-            <span className="ml-1 inline-flex align-middle">
-              <span className="ateflo-holo ateflo-twinkle text-[0.9em] leading-none">✦</span>
-              <span className="ateflo-holo ateflo-twinkle text-[0.7em] leading-none" style={{ animationDelay: "0.55s" }}>✦</span>
-            </span>
-          </p>
+          {/* 3채널 — 자동 시퀀스(하나씩 켜짐) + 하단 부제로 채널 특징 */}
+          <ChannelShowcase />
 
           <div id="signup" className="mt-9 scroll-mt-24 lg:max-w-md">
             <WaitlistForm source="hero" inputId="hero-email" />
