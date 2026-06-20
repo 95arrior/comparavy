@@ -12,21 +12,22 @@ import Reveal from "@/components/Reveal";
 // 칩은 고정, 내부 오로라만 3개 다 다르게 움직임(랜덤 번짐).
 // 밝은 파스텔이 여러 색 매끄럽게 섞인 오로라(동그란 형태 X). 채널별 dominant만 다름.
 // 워드프레스=블루 위주 · 네이버=그린 위주 · 스레드=전 파스텔 완전 혼합.
+// 칩 고정, 내부 오로라만 3개 다 다르게 번짐. 채널 중심색 dominant(흰 글씨 가독 위해 중간 파스텔).
 const CHIPS = [
   {
-    label: "워드프레스", // 블루 dominant + 연노랑/하늘 섞임
-    bg: "radial-gradient(130% 150% at 12% 18%,#fdf3c4,transparent 72%),radial-gradient(150% 170% at 88% 82%,#8fc0ff,transparent 74%),radial-gradient(160% 180% at 55% 45%,#cbe6ff,transparent 78%)",
-    base: "#aed3ff", dur: 7, delay: 0,
+    label: "워드프레스", // 블루 중심
+    bg: "radial-gradient(140% 160% at 15% 20%,#84b6ff,transparent 74%),radial-gradient(150% 170% at 86% 80%,#3f86f0,transparent 76%),radial-gradient(160% 180% at 55% 46%,#a7c8f5,transparent 80%)",
+    base: "#4f93ef", dur: 7, delay: 0,
   },
   {
-    label: "네이버", // 그린 dominant + 연노랑/민트 섞임
-    bg: "radial-gradient(130% 150% at 15% 22%,#fbf1c0,transparent 72%),radial-gradient(150% 170% at 85% 80%,#6fdca6,transparent 74%),radial-gradient(160% 180% at 58% 42%,#c2efd6,transparent 78%)",
-    base: "#aeecc6", dur: 9, delay: -3,
+    label: "네이버", // 그린 중심
+    bg: "radial-gradient(140% 160% at 18% 22%,#62d99c,transparent 74%),radial-gradient(150% 170% at 84% 78%,#0ca35d,transparent 76%),radial-gradient(160% 180% at 56% 46%,#8bdcb4,transparent 80%)",
+    base: "#16ad67", dur: 9, delay: -3,
   },
   {
-    label: "스레드", // 전 파스텔 완전 혼합(dominant 없음)
-    bg: "radial-gradient(130% 150% at 14% 20%,#cfe2ff,transparent 72%),radial-gradient(150% 170% at 86% 78%,#c8f1da,transparent 74%),radial-gradient(160% 180% at 55% 50%,#ecd9ff,transparent 78%)",
-    base: "#fdeac9", dur: 8, delay: -5,
+    label: "스레드", // 블랙 중심(소프트 슬레이트 파스텔)
+    bg: "radial-gradient(140% 160% at 16% 20%,#929cae,transparent 74%),radial-gradient(150% 170% at 86% 80%,#454e60,transparent 76%),radial-gradient(160% 180% at 55% 48%,#9aa6bf,transparent 80%)",
+    base: "#556074", dur: 8, delay: -5,
   },
 ];
 function ChannelChip({ i }: { i: number }) {
@@ -34,7 +35,7 @@ function ChannelChip({ i }: { i: number }) {
   // 칩 고정 — 내부 오로라(background-position)만 애니메이션. 칩마다 속도·위상 달라 랜덤하게.
   return (
     <span
-      className="ateflo-chip-bloom inline-flex items-center whitespace-nowrap rounded-full px-3.5 py-2 text-[13px] font-bold text-neutral-700 shadow-[0_4px_14px_-7px_rgba(20,40,90,0.3)] ring-1 ring-black/[0.05] sm:text-sm"
+      className="ateflo-chip-bloom inline-flex items-center whitespace-nowrap rounded-full px-3.5 py-2 text-[13px] font-bold text-white shadow-[0_4px_14px_-7px_rgba(20,40,90,0.3)] ring-1 ring-white/25 [text-shadow:0_1px_2px_rgba(0,0,0,0.28)] sm:text-sm"
       style={{ backgroundImage: c.bg, backgroundColor: c.base, animationDuration: `${c.dur}s`, animationDelay: `${c.delay}s` }}
     >
       {c.label}
