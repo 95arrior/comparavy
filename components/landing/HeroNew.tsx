@@ -31,7 +31,7 @@ export default function HeroNew() {
       />
       {/* 하단 화이트 페이드(길게) — 오로라가 다음 섹션으로 매끄럽게 녹아들게 */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[42vh] bg-gradient-to-b from-transparent via-white/70 to-white" />
-      <section className="relative mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center px-6 py-24 text-center">
+      <section className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col items-center justify-center px-6 py-24 text-center">
         <Reveal>
           <p className="text-sm font-semibold tracking-tight text-[#1D75F7] sm:text-base">검색되는 블로그, 한 번에</p>
           <h1 className="font-pretendard mt-4 text-[clamp(34px,8.4vw,62px)] font-bold leading-[1.1] tracking-[-0.02em]">
@@ -52,17 +52,16 @@ export default function HeroNew() {
           <p className="mt-3 text-xs text-neutral-400">오픈하면 가장 먼저 알려드릴게요 · 스팸 없어요</p>
         </Reveal>
 
-        {/* 하단 미리보기 이미지 — 블랙 배경을 screen 블렌드로 날림.
-            ★Reveal(transform)·섹션 z-10은 stacking context를 만들어 블렌드가 오로라까지 못 닿음 → 감싸지 않고 직접 렌더 */}
-        <div className="mt-10 w-full sm:mt-12">
+        {/* 하단 미리보기 이미지 — 투명 PNG, 크게 + 소프트 드롭섀도(모양 따라) */}
+        <Reveal delay={220} className="mt-12 w-full sm:mt-16">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/hero.png"
             alt="에이트플로 미리보기"
-            className="mx-auto w-full max-w-2xl"
-            style={{ mixBlendMode: "screen" }}
+            className="mx-auto w-full max-w-4xl"
+            style={{ filter: "drop-shadow(0 28px 50px rgba(20,40,90,0.22))" }}
           />
-        </div>
+        </Reveal>
       </section>
 
       {/* 모바일 하단 고정 CTA */}
