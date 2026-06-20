@@ -1,6 +1,3 @@
-"use client";
-
-import { useEffect, useRef } from "react";
 import LandingHeader from "./LandingHeader";
 import HeroNew from "./HeroNew";
 import Showcase from "./Showcase";
@@ -33,92 +30,18 @@ const LANDING_JSONLD = {
   ],
 };
 
+// 새 랜딩 — 일반 스크롤(윈도우 스크롤). 각 섹션이 화면을 꽉 채워 풀스크린 느낌.
+// ★root에 overflow-x-hidden·h-screen 두지 않음 — 그러면 root가 스크롤 컨테이너가 돼
+//  헤더의 window.scrollY 감지가 깨짐. 가로 넘침은 각 섹션이 자체 overflow-hidden 처리.
 export default function NewLanding() {
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  // 데스크탑: 휠 한 번 → 다음 섹션으로 '부드럽게 미끄러지듯'(easeInOutCubic) 이동. (모바일은 native 스크롤)
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    if (window.matchMedia("(pointer: coarse)").matches) return; // 터치(모바일)는 native
-
-    let animating = false;
-    let raf = 0;
-    const sectionsTop = () =>
-      Array.from(el.querySelectorAll<HTMLElement>("[data-snap]")).map((s) => s.offsetTop);
-
-    const currentIndex = (tops: number[]) => {
-      const mid = el.scrollTop + el.clientHeight / 2;
-      let idx = 0;
-      tops.forEach((t, i) => { if (t <= mid) idx = i; });
-      return idx;
-    };
-
-    // easeOut — 즉시 움직이고 부드럽게 안착(딜레이·뚝 끊김 없음)
-    const easeOutQuart = (p: number) => 1 - Math.pow(1 - p, 4);
-
-    const glideTo = (top: number) => {
-      animating = true;
-      const start = el.scrollTop;
-      const dist = top - start;
-      const dur = 620;
-      let t0 = 0;
-      const step = (t: number) => {
-        if (!t0) t0 = t;
-        const p = Math.min(1, (t - t0) / dur);
-        el.scrollTop = start + dist * easeOutQuart(p);
-        if (p < 1) raf = requestAnimationFrame(step);
-        else setTimeout(() => { animating = false; }, 40); // 관성 폭주 방지 짧은 쿨다운
-      };
-      raf = requestAnimationFrame(step);
-    };
-
-    const onWheel = (e: WheelEvent) => {
-      if (Math.abs(e.deltaY) < 3) return;
-      e.preventDefault();
-      if (animating) return;
-      const tops = sectionsTop();
-      const dir = e.deltaY > 0 ? 1 : -1;
-      const next = Math.max(0, Math.min(tops.length - 1, currentIndex(tops) + dir));
-      if (tops[next] !== undefined) glideTo(tops[next]);
-    };
-
-    const onKey = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
-      const isDown = e.key === "ArrowDown" || e.key === "PageDown";
-      const isUp = e.key === "ArrowUp" || e.key === "PageUp";
-      if (!isDown && !isUp) return;
-      e.preventDefault();
-      if (animating) return;
-      const tops = sectionsTop();
-      const next = Math.max(0, Math.min(tops.length - 1, currentIndex(tops) + (isDown ? 1 : -1)));
-      if (tops[next] !== undefined) glideTo(tops[next]);
-    };
-
-    el.addEventListener("wheel", onWheel, { passive: false });
-    window.addEventListener("keydown", onKey);
-    return () => {
-      el.removeEventListener("wheel", onWheel);
-      window.removeEventListener("keydown", onKey);
-      cancelAnimationFrame(raf);
-    };
-  }, []);
-
   return (
-    // 데스크탑=휠 글라이드(JS), 모바일=native 스크롤 + proximity 스냅(부드럽게).
-    // 스택형 '덮기' 스크롤 — 각 섹션 sticky top-0, 뒤 섹션(높은 z)이 위로 올라와 앞 섹션을 덮음.
-    <div
-      ref={scrollRef}
-      className="h-[100dvh] select-none overflow-x-hidden overflow-y-scroll bg-white text-neutral-900 antialiased"
-    >
+    <div className="select-none bg-white text-neutral-900 antialiased">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(LANDING_JSONLD).replace(/</g, "\\u003c") }} />
       <LandingHeader />
-      <div data-snap className="sticky top-0 z-10 h-[100dvh] overflow-hidden"><HeroNew /></div>
-      <div data-snap className="sticky top-0 z-20 h-[100dvh] overflow-hidden"><Showcase /></div>
-      <div data-snap className="sticky top-0 z-30 h-[100dvh] overflow-hidden"><FinalHook /></div>
-      <div data-snap className="relative z-40 pb-24 sm:pb-0">
+      <HeroNew />
+      <Showcase />
+      <FinalHook />
+      <div className="pb-24 sm:pb-0">
         <SiteFooter />
       </div>
     </div>

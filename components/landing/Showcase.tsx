@@ -12,7 +12,7 @@ const TOPICS = [
 
 export default function Showcase() {
   return (
-    <section className="flex h-full flex-col items-center justify-center overflow-hidden bg-white px-6 py-10">
+    <section className="flex min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-white px-6 py-16">
       <div className="mx-auto max-w-3xl text-center">
         <Reveal>
           <h2 className="font-pretendard text-[clamp(28px,6.6vw,46px)] font-bold leading-[1.16] tracking-[-0.02em]">
