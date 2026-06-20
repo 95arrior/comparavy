@@ -8,11 +8,11 @@ type MetaTone = "hot" | "now" | "local";
 type Topic = { t: string; tag?: string; metaTone?: MetaTone };
 type SubCard = { img: string; heading: string; desc: string; dark?: boolean; topics: Topic[] };
 
-// 글감 옆 라벨 — 수요/유형 표시
-const META: Record<MetaTone, { text: string; cls: string }> = {
-  hot: { text: "손님이 많이 찾아요", cls: "bg-amber-100 text-amber-700" },
-  now: { text: "지금 뜨는 키워드", cls: "bg-violet-100 text-violet-700" },
-  local: { text: "우리 동네 키워드", cls: "bg-emerald-100 text-emerald-700" },
+// 글감 하단 부제(그레이) — 수요/유형 표시
+const META: Record<MetaTone, string> = {
+  hot: "손님이 많이 찾아요",
+  now: "지금 뜨는 키워드",
+  local: "우리 동네 키워드",
 };
 type Cat = { label: string; heading: string; desc: string; img: string | null; cards?: SubCard[]; dark?: boolean; topics: Topic[] };
 const CATS: Cat[] = [
@@ -94,23 +94,21 @@ function OverlayCard({ img, heading, desc, topics, dark, imgClass, wide }: { img
       <div className={`absolute inset-y-0 flex flex-col justify-center ${wide ? "inset-x-0 px-4 sm:px-6" : "left-0 w-[58%] px-4 sm:px-8 lg:px-10"}`}>
         <h3 className={`font-pretendard text-[15px] font-bold leading-tight tracking-tight sm:text-2xl lg:text-[30px] ${dark ? "text-white" : "text-neutral-900"}`}>{heading}</h3>
         <p className={`mt-1 min-h-[2.2em] text-[10.5px] font-medium leading-snug sm:mt-2.5 sm:min-h-[3.1em] sm:text-[15px] sm:leading-relaxed ${dark ? "text-white/85" : "text-neutral-600"}`}>{desc}</p>
-        <div className="mt-2 flex flex-col items-start gap-1.5 sm:mt-5 sm:gap-2">
+        <div className="mt-2 space-y-1.5 sm:mt-5 sm:space-y-2">
           {topics.map((tp) => (
             <div
               key={tp.t}
-              className="w-fit max-w-full rounded-xl bg-white/95 px-2.5 py-1.5 shadow-[0_6px_18px_-12px_rgba(20,40,90,0.35)] ring-1 ring-black/[0.04] sm:rounded-2xl sm:px-3.5 sm:py-2.5"
+              className="w-full rounded-xl bg-white/95 px-2.5 py-1.5 shadow-[0_6px_18px_-12px_rgba(20,40,90,0.35)] ring-1 ring-black/[0.04] sm:rounded-2xl sm:px-3.5 sm:py-2.5"
             >
-              {/* 작은 칩들(위): 업종 + 수요/유형 라벨 */}
-              <div className="flex flex-wrap items-center gap-1">
+              {/* 칩(앞) + 글감 텍스트 */}
+              <div className="flex items-center gap-1.5">
                 {tp.tag && (
-                  <span className="rounded-full bg-[#1D75F7]/10 px-1.5 py-0.5 text-[8px] font-bold text-[#1D75F7] sm:text-[10px]">{tp.tag}</span>
+                  <span className="shrink-0 rounded-full bg-[#1D75F7]/10 px-1.5 py-0.5 text-[8px] font-bold text-[#1D75F7] sm:text-[10px]">{tp.tag}</span>
                 )}
-                {tp.metaTone && (
-                  <span className={`rounded-full px-1.5 py-0.5 text-[8px] font-bold sm:text-[10px] ${META[tp.metaTone].cls}`}>{META[tp.metaTone].text}</span>
-                )}
+                <span className="whitespace-nowrap text-left text-[10.5px] font-semibold leading-tight text-neutral-800 sm:text-[14.5px]">{tp.t}</span>
               </div>
-              {/* 글감(아래) */}
-              <p className="mt-1 whitespace-nowrap text-left text-[10.5px] font-semibold leading-tight text-neutral-800 sm:text-[14.5px]">{tp.t}</p>
+              {/* 하단 부제(그레이) */}
+              {tp.metaTone && <p className="mt-0.5 text-[8.5px] font-medium text-neutral-400 sm:text-[11px]">{META[tp.metaTone]}</p>}
             </div>
           ))}
         </div>
