@@ -33,17 +33,20 @@ export default function NewLanding() {
   const toggledRef = useRef(false);
   const pagesRef = useRef<HTMLElement[]>([]);
   const reduceRef = useRef(false);
+  const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // 네이티브 스무스 스크롤(GPU) — JS rAF보다 부드럽고 가벼움
+  // 네이티브 스무스 스크롤(GPU). 슬라이드 동안 무거운 배경 애니 일시정지(리페인트 렉 방지)
   const goTo = (i: number) => {
     const els = pagesRef.current.length ? pagesRef.current : Array.from(document.querySelectorAll<HTMLElement>("[data-page]"));
     const clamped = Math.max(0, Math.min(els.length - 1, i));
     const t = els[clamped];
     if (!t) return;
+    if (autoTimer.current) { clearTimeout(autoTimer.current); autoTimer.current = null; }
     lock.current = true;
     idx.current = clamped;
+    document.documentElement.classList.add("ateflo-sliding");
     t.scrollIntoView({ behavior: reduceRef.current ? "auto" : "smooth", block: "start" });
-    setTimeout(() => { lock.current = false; }, reduceRef.current ? 60 : 700);
+    setTimeout(() => { lock.current = false; document.documentElement.classList.remove("ateflo-sliding"); }, reduceRef.current ? 60 : 700);
   };
 
   // 칩 클릭 — 바로 글감으로
@@ -64,10 +67,11 @@ export default function NewLanding() {
     const down = () => {
       if (lock.current) return;
       const i = idx.current;
-      // 칩: 선택 전이면 병원·약국 자동선택 → 2초 뒤 글감
+      // 칩: 선택 전이면 병원·약국 자동선택. 2초 무반응이면 글감으로, 그 전에 한 번 더 스크롤하면 바로 이동
       if (i === CHIPS && catRef.current === null) {
-        setCatSel(0); catRef.current = 0; lock.current = true;
-        setTimeout(() => { lock.current = false; goTo(TOPICS); }, 2000);
+        setCatSel(0); catRef.current = 0;
+        lock.current = true; setTimeout(() => { lock.current = false; }, 450);
+        autoTimer.current = setTimeout(() => goTo(TOPICS), 2000);
         return;
       }
       // 토글: 한 번 안 움직였으면 토글만(이동 X)

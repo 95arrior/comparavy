@@ -311,6 +311,8 @@ html {
   66% { background-position: 80% 60%, 20% 40%, 25% 80%, 75% 30%; }
 }
 .ateflo-hero-aurora { background-size: 240% 240%; animation: ateflo-hero-aurora 13s ease-in-out infinite; }
+/* 풀페이지 슬라이드 중엔 무거운 배경 애니 멈춤(리페인트 렉 방지) */
+html.ateflo-sliding .ateflo-hero-aurora { animation-play-state: paused; }
 
 /* 이미지 드래그 잔상 방지(전역). 입력칸은 선택 가능 유지 */
 img { -webkit-user-drag: none; user-select: none; }
