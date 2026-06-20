@@ -16,8 +16,9 @@ const BLOCKS: Block[] = [
 ];
 
 function MapPin() {
+  // 카카오맵 스타일 빨강 마커
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="#1D75F7" stroke="#fff" strokeWidth="1.4">
+    <svg width="24" height="30" viewBox="0 0 24 24" fill="#EB4C3B" stroke="#fff" strokeWidth="1.4">
       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
       <circle cx="12" cy="10" r="3" fill="#fff" stroke="none" />
     </svg>
@@ -113,8 +114,8 @@ export default function DemoStream() {
         <span>
           {status === "thinking" && "키워드 “초등 영어”를 보고 생각하고 있어요"}
           {status === "writing" && "글을 쓰고 있어요"}
-          {status === "image" && "어울리는 이미지를 넣고 있어요"}
-          {status === "done" && "완성됐어요 · 이렇게 써져요"}
+          {status === "image" && "이미지는 원하는 걸 직접 넣어요"}
+          {status === "done" && "이렇게 써져요 · 실제 글은 더 길어요"}
         </span>
         {status !== "done" && <span className="ateflo-dots text-neutral-400">···</span>}
       </div>
@@ -132,10 +133,14 @@ export default function DemoStream() {
               if (imgStage === "none") return null;
               if (imgStage === "btn")
                 return (
-                  <button key={idx} className="ateflo-pop mt-3 flex items-center gap-1.5 rounded-lg border border-dashed border-[#1D75F7]/50 bg-[#1D75F7]/[0.04] px-3 py-2 text-[13px] font-medium text-[#1D75F7]">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" /></svg>
-                    이미지 추가
-                  </button>
+                  <div key={idx} className="ateflo-pop relative mt-3 inline-block">
+                    <button className="flex items-center gap-1.5 rounded-lg border border-dashed border-[#1D75F7]/50 bg-[#1D75F7]/[0.04] px-3 py-2 text-[13px] font-medium text-[#1D75F7]">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" /></svg>
+                      직접 이미지 넣기
+                    </button>
+                    {/* 클릭 커서 — '직접' 넣는다는 표현 */}
+                    <svg className="absolute -bottom-2 right-1 h-4 w-4 drop-shadow-sm" viewBox="0 0 24 24" fill="#1f2937" stroke="#fff" strokeWidth="1.2"><path d="M5 3l14.5 8.5-6.2 1.3-2.6 6L5 3z" /></svg>
+                  </div>
                 );
               // shown — 실제 이미지 삽입
               return (
@@ -149,7 +154,8 @@ export default function DemoStream() {
             if (!text) return null;
             if (b.tag === "title") return <p key={idx} className="text-[15px] font-bold leading-snug text-neutral-900 sm:text-base">{text}{isActive(idx) && cursor}</p>;
             if (b.tag === "h3") return <h3 key={idx} className="mt-4 text-sm font-semibold text-neutral-900">{text}{isActive(idx) && cursor}</h3>;
-            if (b.tag === "promo") return <p key={idx} className="mt-3 rounded-lg bg-[#1D75F7]/[0.06] px-3 py-2.5 text-[13px] leading-relaxed text-neutral-700">{text}{isActive(idx) && cursor}</p>;
+            {/* 홍보 연결 — 별도 박스 X. 본문에 이어서 자연스럽게 + 살짝 확대·강조 */}
+            if (b.tag === "promo") return <p key={idx} className="mt-2 text-[15px] font-semibold leading-relaxed text-neutral-900">{text}{isActive(idx) && cursor}</p>;
             return <p key={idx} className="mt-2 text-[13px] leading-relaxed text-neutral-600">{text}{isActive(idx) && cursor}</p>;
           })}
 
@@ -167,20 +173,22 @@ export default function DemoStream() {
                 <p><span className="font-semibold">영업시간</span> 평일 14:00–22:00 · 주말 휴무</p>
               </div>
               <div
-                className="relative mt-3 flex h-24 items-center justify-center overflow-hidden rounded-lg border border-neutral-100"
+                className="relative mt-3 flex h-24 items-center justify-center overflow-hidden rounded-lg border border-neutral-200"
                 style={{
-                  backgroundColor: "#f3f6fb",
+                  backgroundColor: "#e8ebed",
                   backgroundImage:
-                    "linear-gradient(0deg, rgba(29,117,247,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(29,117,247,0.06) 1px, transparent 1px), linear-gradient(120deg, rgba(29,117,247,0.10) 0 8px, transparent 8px 60px)",
-                  backgroundSize: "26px 26px, 26px 26px, 200px 200px",
+                    "linear-gradient(0deg, #fff 2px, transparent 2px), linear-gradient(90deg, #fff 2px, transparent 2px), linear-gradient(125deg, #fdf3c8 0 10px, transparent 10px 72px)",
+                  backgroundSize: "30px 30px, 30px 30px, 230px 230px",
                 }}
               >
                 <span className="flex flex-col items-center" style={{ animation: "ateflo-load-mark 1.8s ease-in-out infinite" }}>
                   <MapPin />
                 </span>
-                <span className="absolute bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-white/90 px-2 py-0.5 text-[10px] font-medium text-neutral-600 shadow-sm">
+                <span className="absolute bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-white/90 px-2 py-0.5 text-[10px] font-medium text-neutral-700 shadow-sm">
                   에이트플로 영어학원
                 </span>
+                {/* 카카오맵 표기 */}
+                <span className="absolute bottom-1.5 right-1.5 rounded bg-[#FEE500] px-1.5 py-0.5 text-[8px] font-bold text-[#3a1d1d]">카카오맵</span>
               </div>
             </div>
           )}
@@ -191,7 +199,8 @@ export default function DemoStream() {
       </div>
 
       <p className="mt-2.5 text-center text-xs leading-relaxed text-neutral-400">
-        정보 글에서 자연스럽게 <span className="font-medium text-neutral-500">가게 홍보글로 연결</span>. <span className="font-medium text-neutral-500">업체 정보·지도</span>까지 자동으로 붙어요
+        정보 글이 자연스럽게 <span className="font-medium text-neutral-500">가게 홍보로 이어지고</span>, <span className="font-medium text-neutral-500">업체 정보·지도</span>까지 붙어요.<br />
+        이미지는 원하는 걸 직접 넣어요 · 실제 글은 더 깁니다
       </p>
     </div>
   );
