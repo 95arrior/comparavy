@@ -225,8 +225,8 @@ export default function Showcase() {
       <section ref={topicsRef} className="flex min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-neutral-50/70 px-6 py-20">
         {cat ? (
           cat.cards ? (
-            // 기타 — 같은 오버레이 카드 2장을 세로로 배치
-            <div key={sel} className="ateflo-soft-in mx-auto w-full max-w-2xl space-y-4 sm:space-y-5">
+            // 기타 — 같은 오버레이 카드 2장을 웹에선 가로(모바일 1열)
+            <div key={sel} className="ateflo-soft-in mx-auto grid w-full max-w-5xl grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
               {cat.cards.map((c) => (
                 <OverlayCard key={c.img} img={c.img} heading={c.heading} desc={c.desc} topics={c.topics} dark={c.dark ?? false} />
               ))}
