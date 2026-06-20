@@ -16,8 +16,8 @@ export default function HeroNew() {
   };
 
   return (
-    <div className="relative overflow-hidden bg-white">
-      {/* 시네마틱 무빙 오로라 — 연파스텔(블루+옐로+민트)이 천천히 흐름(레퍼런스풍) */}
+    <div className="relative flex min-h-[100svh] flex-col overflow-hidden bg-white">
+      {/* 시네마틱 무빙 오로라 — 1섹션 전체를 덮음(풀스크린) */}
       <div
         className="ateflo-hero-aurora pointer-events-none absolute inset-0"
         style={{
@@ -31,7 +31,7 @@ export default function HeroNew() {
       />
       {/* 하단 화이트 페이드 — 다음 섹션과 자연 전환 */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-b from-transparent to-white" />
-      <section className="relative mx-auto max-w-3xl px-6 pb-24 pt-20 text-center sm:pb-32 sm:pt-28">
+      <section className="relative z-10 mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center px-6 py-24 text-center">
         <Reveal>
           <p className="text-sm font-semibold tracking-tight text-[#1D75F7] sm:text-base">검색되는 블로그, 한 번에</p>
           <h1 className="font-pretendard mt-4 text-[clamp(34px,8.4vw,62px)] font-bold leading-[1.1] tracking-[-0.02em]">

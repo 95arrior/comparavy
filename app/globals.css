@@ -310,7 +310,7 @@ html {
   33% { background-position: 45% 25%, 70% 55%, 85% 20%, 25% 75%; }
   66% { background-position: 80% 60%, 20% 40%, 25% 80%, 75% 30%; }
 }
-.ateflo-hero-aurora { background-size: 180% 180%; animation: ateflo-hero-aurora 20s ease-in-out infinite; }
+.ateflo-hero-aurora { background-size: 240% 240%; animation: ateflo-hero-aurora 13s ease-in-out infinite; }
 @keyframes ateflo-twinkle { 0%, 100% { transform: scale(1); opacity: 0.85; } 50% { transform: scale(1.28); opacity: 1; } }
 .ateflo-twinkle { display: inline-block; animation: ateflo-twinkle 1.9s ease-in-out infinite; }
 /* 은은한 트윙클(칩 별용 — 과하지 않게) */
