@@ -17,11 +17,20 @@ export default function HeroNew() {
 
   return (
     <div className="relative overflow-hidden bg-white">
-      {/* 시네마틱 — 상단 소프트 오로라 글로우 */}
+      {/* 시네마틱 무빙 오로라 — 연파스텔(블루+옐로+민트)이 천천히 흐름(레퍼런스풍) */}
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-[560px]"
-        style={{ background: "radial-gradient(58% 58% at 50% -8%, rgba(29,117,247,0.13), rgba(124,92,246,0.06) 45%, transparent 72%)" }}
+        className="ateflo-hero-aurora pointer-events-none absolute inset-0"
+        style={{
+          backgroundColor: "#c9e3ff",
+          backgroundImage:
+            "radial-gradient(60% 70% at 12% 16%,#fdf3bf,transparent 60%)," +
+            "radial-gradient(70% 80% at 86% 78%,#84c2ff,transparent 62%)," +
+            "radial-gradient(66% 76% at 58% 40%,#d6ecff,transparent 66%)," +
+            "radial-gradient(60% 70% at 28% 92%,#b8f0e2,transparent 60%)",
+        }}
       />
+      {/* 하단 화이트 페이드 — 다음 섹션과 자연 전환 */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-b from-transparent to-white" />
       <section className="relative mx-auto max-w-3xl px-6 pb-24 pt-20 text-center sm:pb-32 sm:pt-28">
         <Reveal>
           <p className="text-sm font-semibold tracking-tight text-[#1D75F7] sm:text-base">검색되는 블로그, 한 번에</p>
