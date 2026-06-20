@@ -94,22 +94,21 @@ function OverlayCard({ img, heading, desc, topics, dark, imgClass, wide }: { img
       <div className={`absolute inset-y-0 flex flex-col justify-center ${wide ? "inset-x-0 px-4 sm:px-6" : "left-0 w-[58%] px-4 sm:px-8 lg:px-10"}`}>
         <h3 className={`font-pretendard text-[15px] font-bold leading-tight tracking-tight sm:text-2xl lg:text-[30px] ${dark ? "text-white" : "text-neutral-900"}`}>{heading}</h3>
         <p className={`mt-1 min-h-[2.2em] text-[10.5px] font-medium leading-snug sm:mt-2.5 sm:min-h-[3.1em] sm:text-[15px] sm:leading-relaxed ${dark ? "text-white/85" : "text-neutral-600"}`}>{desc}</p>
-        {/* w-fit 컨테이너 = 가장 긴 글감 기준 폭, 박스 w-full로 모두 동일 사이즈 */}
-        <div className="mt-2 flex w-fit max-w-full flex-col gap-1.5 sm:mt-5 sm:gap-2">
+        {/* w-fit 컨테이너 = 가장 긴 글감 기준 폭, 박스 w-full로 동일 사이즈. 칩은 좌상단 탭 */}
+        <div className="mt-3 flex w-fit max-w-full flex-col gap-3 sm:mt-5 sm:gap-3.5">
           {topics.map((tp) => (
             <div
               key={tp.t}
-              className="w-full rounded-xl bg-white/95 px-4 py-2 shadow-[0_6px_18px_-12px_rgba(20,40,90,0.35)] ring-1 ring-black/[0.04] sm:rounded-2xl sm:px-5 sm:py-2.5"
+              className="relative w-full rounded-2xl bg-white/95 px-4 pb-2.5 pt-3.5 shadow-[0_6px_18px_-12px_rgba(20,40,90,0.35)] ring-1 ring-black/[0.04] sm:px-5"
             >
-              {/* 글감(위, 왼쪽 정렬 일관) */}
+              {/* 업종 칩 — 좌상단에 걸치는 탭, 텍스트 중앙정렬 */}
+              {tp.tag && (
+                <span className="absolute -top-2 left-3 inline-flex items-center justify-center rounded-full bg-[#1D75F7]/10 px-2.5 py-1 text-[8.5px] font-bold leading-none text-[#1D75F7] sm:text-[10px]">{tp.tag}</span>
+              )}
+              {/* 글감 */}
               <p className="whitespace-nowrap text-left text-[10.5px] font-semibold leading-tight text-neutral-800 sm:text-[14.5px]">{tp.t}</p>
-              {/* 아래 줄 — 좌측 정렬, 우리동네키워드(그레이) + 업종 칩이 같은 가로선에(세로 가운데) */}
-              <div className="mt-1.5 flex items-center gap-1.5">
-                {tp.metaTone && <span className="leading-none text-[8.5px] font-medium text-neutral-400 sm:text-[11px]">{META[tp.metaTone]}</span>}
-                {tp.tag && (
-                  <span className="inline-flex shrink-0 items-center rounded-full bg-[#1D75F7]/10 px-1.5 py-0.5 leading-none text-[8px] font-bold text-[#1D75F7] sm:text-[10px]">{tp.tag}</span>
-                )}
-              </div>
+              {/* 메타(그레이) — 글감 바로 아래 좁게 */}
+              {tp.metaTone && <p className="mt-0.5 text-left text-[8.5px] font-medium leading-none text-neutral-400 sm:text-[11px]">{META[tp.metaTone]}</p>}
             </div>
           ))}
         </div>
