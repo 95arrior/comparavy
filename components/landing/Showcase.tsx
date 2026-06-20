@@ -5,7 +5,8 @@ import Reveal from "@/components/Reveal";
 
 // 2~3섹션 — [2] 업종 칩(크게, 처음 선택X, 중앙 도달 시 뽕뽕뽕 팝) → 고르면 [3] 그 업종 이미지+설명+글감.
 type Topic = { t: string; tag?: string };
-type Cat = { label: string; heading: string; desc: string; img: string | null; imgs?: string[]; dark?: boolean; topics: Topic[] };
+type SubCard = { img: string; heading: string; desc: string; topics: Topic[] };
+type Cat = { label: string; heading: string; desc: string; img: string | null; cards?: SubCard[]; dark?: boolean; topics: Topic[] };
 const CATS: Cat[] = [
   {
     label: "병원·약국",
@@ -44,16 +45,36 @@ const CATS: Cat[] = [
   {
     label: "기타",
     heading: "그 외 다양한 업종",
-    desc: "어떤 업종이든, 손님이 검색하는 주제로 검색이 잘 되는 전문 글을 작성할 수 있어요!",
+    desc: "어떤 업종이든, 검색되는 글로 작성할 수 있어요!",
     img: null,
-    imgs: ["/cat-etc-1.png", "/cat-etc-2.png"],
-    topics: [
-      { t: "우리 가게가 검색에 안 뜨는 이유" },
-      { t: "단골 만드는 후기 관리법" },
-      { t: "블로그 글, 며칠에 한 번이 좋을까" },
+    topics: [],
+    cards: [
+      {
+        img: "/cat-etc-1.png",
+        heading: "그 외 다양한 업종",
+        desc: "어떤 업종이든 검색되는 글로.",
+        topics: [
+          { t: "작은 집도 넓어 보이는 배치", tag: "인테리어" },
+          { t: "욕실 타일, 곰팡이 덜 끼는 법", tag: "타일" },
+          { t: "샌드위치 판넬, 단열 잘 될까?", tag: "판넬" },
+        ],
+      },
+      {
+        img: "/cat-etc-2.png",
+        heading: "모든 자영업자",
+        desc: "동네 손님이 찾는 글까지.",
+        topics: [
+          { t: "첫 미용, 강아지 안 무서워하게", tag: "애견미용" },
+          { t: "기념일 꽃다발, 예약 꿀팁", tag: "꽃집" },
+          { t: "이사청소, 어디까지 해주나요", tag: "청소업체" },
+        ],
+      },
     ],
   },
 ];
+
+// 모든 업종 이미지 — 미리 받아둬 선택 시 로딩 없이 즉시 표시
+const ALL_IMGS = CATS.flatMap((c) => [c.img, ...(c.cards?.map((s) => s.img) ?? [])]).filter(Boolean) as string[];
 
 export default function Showcase() {
   const [sel, setSel] = useState<number | null>(null); // 처음엔 아무것도 선택 안 함
@@ -61,6 +82,11 @@ export default function Showcase() {
   const chipsRef = useRef<HTMLDivElement>(null);
   const gateRef = useRef<HTMLElement>(null);
   const topicsRef = useRef<HTMLElement>(null);
+
+  // 모든 업종 이미지 프리로드(즉시 표시)
+  useEffect(() => {
+    ALL_IMGS.forEach((src) => { const im = new window.Image(); im.src = src; });
+  }, []);
 
   // 칩이 화면 중앙 띠에 들어오면 뽕뽕뽕 팝
   useEffect(() => {
@@ -192,31 +218,31 @@ export default function Showcase() {
               </div>
             );
 
-            // 기타 — 타이틀 '그 외 다양한 업종' + 사진 2장 가로 배치
-            if (cat.imgs) {
+            // 기타 — 세로 카드 2개(이미지 위 + 헤딩·설명·글감 아래) 가로 배치
+            if (cat.cards) {
               return (
-                <div key={sel} className="ateflo-soft-in mx-auto w-full max-w-4xl">
-                  <div className="text-center">
-                    <h3 className="font-pretendard text-2xl font-bold tracking-tight text-neutral-900 sm:text-[30px]">{cat.heading}</h3>
-                    <p className="mx-auto mt-3 max-w-lg text-[14px] font-medium leading-relaxed text-neutral-600 sm:text-[16px]">{cat.desc}</p>
-                  </div>
-                  <div className="mt-7 grid grid-cols-2 gap-3 sm:gap-5">
-                    {cat.imgs.map((src) => (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img key={src} src={src} alt={cat.heading} className="block w-full rounded-3xl shadow-[0_20px_50px_-20px_rgba(20,40,90,0.35)] ring-1 ring-black/5" />
-                    ))}
-                  </div>
-                  <div className="mx-auto mt-7 max-w-md space-y-2.5">
-                    {cat.topics.map((tp) => (
-                      <div
-                        key={tp.t}
-                        className="flex items-center justify-between gap-2.5 rounded-2xl bg-white px-4 py-3 text-left text-[13.5px] font-medium text-neutral-800 shadow-[0_6px_18px_-12px_rgba(20,40,90,0.35)] ring-1 ring-black/[0.04] sm:text-[14.5px]"
-                      >
-                        <span>{tp.t}</span>
-                        {tp.tag && <span className="shrink-0 rounded-full bg-[#1D75F7]/10 px-2.5 py-1 text-[11.5px] font-bold text-[#1D75F7]">{tp.tag}</span>}
+                <div key={sel} className="ateflo-soft-in mx-auto grid w-full max-w-4xl grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
+                  {cat.cards.map((c) => (
+                    <div key={c.img} className="overflow-hidden rounded-3xl bg-white shadow-[0_20px_50px_-20px_rgba(20,40,90,0.35)] ring-1 ring-black/5">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={c.img} alt={c.heading} className="block aspect-[4/3] w-full object-cover" />
+                      <div className="p-5 sm:p-6">
+                        <h3 className="font-pretendard text-xl font-bold tracking-tight text-neutral-900 sm:text-2xl">{c.heading}</h3>
+                        <p className="mt-1.5 text-[13px] font-medium leading-relaxed text-neutral-500 sm:text-[14px]">{c.desc}</p>
+                        <div className="mt-4 space-y-2">
+                          {c.topics.map((tp) => (
+                            <div
+                              key={tp.t}
+                              className="flex items-center justify-between gap-2 rounded-xl bg-neutral-50 px-3.5 py-2.5 ring-1 ring-black/[0.04]"
+                            >
+                              <span className="text-left text-[13px] font-medium text-neutral-800">{tp.t}</span>
+                              {tp.tag && <span className="shrink-0 rounded-full bg-[#1D75F7]/10 px-2.5 py-1 text-[11px] font-bold text-[#1D75F7]">{tp.tag}</span>}
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </div>
               );
             }
