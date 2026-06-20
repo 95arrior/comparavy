@@ -1,7 +1,26 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import WaitlistForm from "@/components/WaitlistForm";
 import Reveal from "@/components/Reveal";
+
+// 헤드라인 업종 룰렛 — 3초마다 위로 슬라이드(병원→학원→변호사→미용실). 우리 카테고리 대표.
+const ROLES = ["병원", "학원", "변호사", "미용실"];
+function RotatingWord() {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const t = setInterval(() => setI((p) => (p + 1) % ROLES.length), 3000);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <span className="relative inline-block h-[1.1em] overflow-hidden align-bottom text-[#1D75F7]">
+      <span key={i} className="ateflo-slot-up block leading-[1.1]">
+        {ROLES[i]}
+      </span>
+    </span>
+  );
+}
 
 // 새 히어로 — 토스플레이스st: 크게·심플·시네마틱. 큰 한 문장 + 짧은 서브 + 사전신청. 군더더기 0.
 export default function HeroNew() {
@@ -35,9 +54,9 @@ export default function HeroNew() {
         <Reveal>
           <p className="text-sm font-semibold tracking-tight text-[#1D75F7] sm:text-base">검색되는 블로그, 한 번에</p>
           <h1 className="font-pretendard mt-4 text-[clamp(34px,8.4vw,62px)] font-bold leading-[1.1] tracking-[-0.02em]">
-            키워드 하나로,
+            똑똑한 <RotatingWord /> 블로그,
             <br />
-            검색되는 글이 나와요
+            키워드 하나로 끝
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-[17px] leading-relaxed text-neutral-500 sm:text-xl">
             워드프레스 · 네이버 · 스레드까지,
@@ -52,14 +71,17 @@ export default function HeroNew() {
           <p className="mt-3 text-xs text-neutral-400">오픈하면 가장 먼저 알려드릴게요 · 스팸 없어요</p>
         </Reveal>
 
-        {/* 하단 미리보기 이미지 — 투명 PNG, 크게 + 소프트 드롭섀도(모양 따라) */}
-        <Reveal delay={220} className="mt-12 w-full sm:mt-16">
+        {/* 하단 미리보기 이미지 — 투명 PNG, 더 크게+위로, 하단은 투명 페이드로 흘려보냄 */}
+        <Reveal delay={220} className="mt-6 w-full sm:mt-8">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/hero.png"
             alt="에이트플로 미리보기"
-            className="mx-auto w-full max-w-4xl"
-            style={{ filter: "drop-shadow(0 28px 50px rgba(20,40,90,0.22))" }}
+            className="mx-auto w-full max-w-5xl"
+            style={{
+              maskImage: "linear-gradient(to bottom, #000 66%, transparent 99%)",
+              WebkitMaskImage: "linear-gradient(to bottom, #000 66%, transparent 99%)",
+            }}
           />
         </Reveal>
       </section>
