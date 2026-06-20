@@ -5,6 +5,8 @@ import { normalizeKeyword } from "@/lib/diversity";
 import { audienceOf, AUDIENCE_ALL } from "@/lib/audience";
 import { isUnsafeKeyword } from "@/lib/keywordSafety";
 import { extractRegions, isLocalBusiness, buildLocalSeeds } from "@/lib/region";
+import { buildPoolForSub } from "@/lib/keywordPool";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 // 사장의 blog_profile(vertical + sub_category)로 keyword_pool에서 글감 3개를 뽑는다.
 // Stage 2-B 분산: ① least-used 우선(times_assigned asc) ② 본인이 이미 쓴 키워드 제외 ③ 그 안 랜덤.
@@ -117,6 +119,25 @@ export async function GET() {
     rows = await fetchPool(useSub, ranged);
     if (rows.length >= PICK) break;
   }
+
+  // ── 게으른 풀 채우기 ──
+  // 풀이 비면(커스텀·신규 세부업종) 그 sub를 시드로 '실데이터' 한 번 수집→저장→재조회.
+  // 이후 같은 업종은 풀에서 바로(무료·즉시). 남용 방지 레이트리밋.
+  if (rows.length === 0 && sub) {
+    const seedRl = await checkRateLimit(supabase, user.id, "pool_seed", 6, 600);
+    if (seedRl.ok) {
+      try {
+        await buildPoolForSub(vertical, sub, { sleepMs: 300 });
+      } catch {
+        /* 수집 실패해도 빈 결과로 진행 */
+      }
+      for (const [useSub, ranged] of steps) {
+        rows = await fetchPool(useSub, ranged);
+        if (rows.length >= PICK) break;
+      }
+    }
+  }
+
   if (rows.length === 0) return NextResponse.json({ topics: [] });
 
   // ── 경쟁도 티어 ──
