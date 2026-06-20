@@ -95,7 +95,7 @@ export default function SearchPsychology() {
           손님이 <span className="text-[#1D75F7]">무엇을, 왜</span> 검색하는지부터 찾아요
         </h2>
         <p className="mx-auto mt-3 max-w-md text-[15px] leading-relaxed text-neutral-500 sm:text-base">
-          검색 심리로, 손님이 진짜 찾는 글감을 뽑아드려요
+          사장님은 안 찾아도 돼요. 손님이 찾는 글감만 골라드려요.
         </p>
       </div>
 
@@ -141,7 +141,7 @@ export default function SearchPsychology() {
       {/* 싹 키워드 안내 */}
       <p className={`mx-auto mt-7 max-w-md px-6 text-center text-[13px] leading-relaxed text-neutral-400 transition-opacity duration-700 ${phase === "results" ? "opacity-100" : "opacity-0"}`}>
         보라색으로 빛나는 건 <b className="font-semibold text-[#8b5cf6]">‘싹 키워드’</b>예요.<br className="hidden sm:block" />
-        아직 경쟁이 적어서, 먼저 쓰면 유리해요.
+        아직 남들이 안 썼어요. 먼저 쓰면 손님이 먼저 와요.
       </p>
     </section>
   );

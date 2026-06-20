@@ -61,8 +61,8 @@ export default function FinalHook() {
         </h2>
 
         <p style={st(2)} className="mx-auto mt-5 max-w-md text-[15px] leading-relaxed text-white/70 sm:text-lg">
-          키워드만 고르면, 검색되는 글이 매일 쌓여요.<br className="hidden sm:block" />
-          오래 쌓일수록, 사장님만의 자산이 되고요.
+          키워드만 고르면, 글은 알아서 쌓여요.<br className="hidden sm:block" />
+          오래 쌓일수록, 사장님 자산이 돼요.
         </p>
 
         <button
