@@ -37,14 +37,14 @@ export default function NewLanding() {
     //   가로 넘침은 각 섹션이 자체적으로 overflow-x-hidden 처리함.
     // 풀페이지 스크롤 — root가 스크롤 컨테이너(snap). 헤더는 fixed라 영향 없음.
     // proximity = 가까울 때만 스냅(긴 섹션에서 안 갇힘).
-    <div className="h-[100dvh] snap-y snap-proximity overflow-x-hidden overflow-y-scroll scroll-smooth bg-white text-neutral-900 antialiased">
+    <div className="h-[100dvh] select-none snap-y snap-mandatory overflow-x-hidden overflow-y-scroll scroll-smooth bg-white text-neutral-900 antialiased">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(LANDING_JSONLD).replace(/</g, "\\u003c") }} />
       <LandingHeader />
-      <div className="snap-start"><HeroNew /></div>
-      <div className="snap-start"><Showcase /></div>
-      <div className="snap-start"><FinalHook /></div>
-      {/* 모바일 하단 고정 CTA가 푸터를 가리지 않게 여백 */}
-      <div className="snap-start pb-24 sm:pb-0">
+      {/* 풀페이지 — 섹션마다 화면 꽉(h-dvh) + 항상 스냅 → 한 번에 한 섹션씩 이동 */}
+      <div className="h-[100dvh] snap-start snap-always overflow-hidden"><HeroNew /></div>
+      <div className="h-[100dvh] snap-start snap-always overflow-hidden"><Showcase /></div>
+      <div className="h-[100dvh] snap-start snap-always overflow-hidden"><FinalHook /></div>
+      <div className="snap-start snap-always pb-24 sm:pb-0">
         <SiteFooter />
       </div>
     </div>

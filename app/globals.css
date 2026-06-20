@@ -312,6 +312,10 @@ html {
 }
 .ateflo-hero-aurora { background-size: 240% 240%; animation: ateflo-hero-aurora 13s ease-in-out infinite; }
 
+/* 이미지 드래그 잔상 방지(전역). 입력칸은 선택 가능 유지 */
+img { -webkit-user-drag: none; user-select: none; }
+input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-select: text; }
+
 /* 헤드라인 업종 룰렛 — 아래에서 위로 슬라이드 인 */
 @keyframes ateflo-slot-up { 0% { transform: translateY(112%); opacity: 0; } 55% { opacity: 1; } 100% { transform: translateY(0); opacity: 1; } }
 .ateflo-slot-up { animation: ateflo-slot-up 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
