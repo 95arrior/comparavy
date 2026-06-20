@@ -155,12 +155,12 @@ export default function Showcase({ sel, onSelect }: { sel: number | null; onSele
     ALL_IMGS.forEach((src) => { const im = new window.Image(); im.src = src; });
   }, []);
 
-  // 칩이 화면 중앙 띠에 들어오면 뽕뽕뽕 팝
+  // 칩이 화면 중앙 띠에 들어올 때마다 뽕뽕뽕 팝(나갈 땐 리셋 → 다시 슬라이드하면 재생)
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { setShown(true); return; }
     const el = chipsRef.current;
     if (!el) return;
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setShown(true); io.disconnect(); } }, { rootMargin: "-25% 0px -25% 0px", threshold: 0 });
+    const io = new IntersectionObserver(([e]) => setShown(e.isIntersecting), { rootMargin: "-20% 0px -20% 0px", threshold: 0 });
     io.observe(el);
     return () => io.disconnect();
   }, []);
