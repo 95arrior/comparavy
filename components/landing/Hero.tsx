@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import DemoStream from "@/components/DemoStream";
 import WaitlistForm from "@/components/WaitlistForm";
 import Reveal from "@/components/Reveal";
@@ -15,10 +15,17 @@ const CHANNELS = [
   { en: "NAVER", color: "#03C75A", feature: "네이버 블로그에 맞춰 깔끔하게 정리해요" },
   { en: "Threads", color: "#0b0b0c", feature: "스레드에선 짧고 후킹되게 바꿔드려요" },
 ];
-const ALL_FEATURE = "키워드 하나면, 세 곳에 한 번에 올라가요";
+const ALL_FEATURE = "키워드 하나면, 채널마다 딱 맞는 글 3개가 나와요";
 
 function ChannelShowcase() {
   const [phase, setPhase] = useState(0); // 0·1·2=각 채널, 3=전체 켜짐
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const c0 = useRef<HTMLSpanElement>(null);
+  const c1 = useRef<HTMLSpanElement>(null);
+  const c2 = useRef<HTMLSpanElement>(null);
+  const chipRefs = [c0, c1, c2];
+  const [pill, setPill] = useState({ left: 0, width: 0 });
+
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       setPhase(3);
@@ -36,19 +43,49 @@ function ChannelShowcase() {
     return () => clearTimeout(to);
   }, []);
 
-  const on = (i: number) => phase === 3 || phase === i;
-  const feature = phase === 3 ? ALL_FEATURE : CHANNELS[phase].feature;
+  // 활성 칩 위치로 슬라이딩 필 이동(띠용) — phase 3(전체)에선 숨김
+  const measure = useCallback(() => {
+    const el = chipRefs[Math.min(phase, 2)].current;
+    if (el) setPill({ left: el.offsetLeft, width: el.offsetWidth });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+  useEffect(() => { measure(); }, [measure]);
+  useEffect(() => {
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [measure]);
+
+  const isAll = phase === 3;
+  const feature = isAll ? ALL_FEATURE : CHANNELS[phase].feature;
+  const activeColor = CHANNELS[Math.min(phase, 2)].color;
 
   return (
     <>
-      <div className="mt-6 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
+      <div ref={wrapRef} className="relative mt-6 inline-flex gap-2">
+        {/* 슬라이딩 필 — 칩→칩으로 쓱(스프링/띠용) 이동 */}
+        <span
+          aria-hidden
+          className="absolute inset-y-0 rounded-full"
+          style={{
+            left: pill.left,
+            width: pill.width,
+            backgroundColor: activeColor,
+            opacity: isAll || pill.width === 0 ? 0 : 1,
+            boxShadow: "0 6px 18px -7px rgba(20,40,90,0.4)",
+            transition:
+              "left .5s cubic-bezier(0.34,1.55,0.6,1), width .5s cubic-bezier(0.34,1.55,0.6,1), background-color .35s ease, opacity .3s ease",
+          }}
+        />
         {CHANNELS.map((c, i) => (
           <span
             key={c.en}
-            className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold transition-all duration-500 ${
-              on(i) ? "text-white shadow-[0_6px_18px_-7px_rgba(20,40,90,0.4)]" : "scale-95 bg-neutral-100 text-neutral-400"
-            }`}
-            style={on(i) ? { backgroundColor: c.color } : undefined}
+            ref={chipRefs[i]}
+            className="relative z-10 whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold transition-colors duration-300"
+            style={{
+              backgroundColor: isAll ? c.color : phase === i ? "transparent" : "#f3f4f6",
+              color: isAll || phase === i ? "#fff" : "#9ca3af",
+              boxShadow: isAll ? "0 6px 18px -7px rgba(20,40,90,0.4)" : undefined,
+            }}
           >
             {c.en}
           </span>
