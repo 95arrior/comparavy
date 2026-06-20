@@ -85,7 +85,7 @@ export default function FinalHook() {
 
         <p style={st(2)} className="mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-white/70 sm:text-lg">
           블로그는 먼저 쌓는 사람이 가져가요.<br className="hidden sm:block" />
-          남들이 안 쓴 키워드를, 먼저 선점하세요.
+          늦을수록, 따라잡기 어려워요.
         </p>
 
         {/* 강점 — 순차로 하나씩 등장하는 카드 */}
@@ -98,7 +98,7 @@ export default function FinalHook() {
           ))}
         </div>
         <div style={cardSt(STRENGTHS.length)} className="mx-auto mt-2 w-full max-w-lg rounded-xl bg-[#1D75F7]/20 px-3 py-2.5 text-center ring-1 ring-[#1D75F7]/30">
-          <span className="text-[12px] font-bold text-white sm:text-[13px]">그리고, 셀 수 없이 많은 디테일이 더 있어요</span>
+          <span className="text-[12px] font-bold text-white sm:text-[13px]">자랑은 여기까지만 할게요</span>
         </div>
 
         <button
