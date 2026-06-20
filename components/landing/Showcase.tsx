@@ -103,32 +103,37 @@ function OverlayCard({ img, heading, desc, topics, dark, imgClass, wide }: { img
         <div className="mt-3 flex w-fit max-w-full flex-col gap-3 sm:mt-5 sm:gap-3.5">
           {topics.map((tp) => {
             const isSak = tp.comp === "low";
-            const score = sakScore(tp.vol, tp.comp);
-            const scoreColor = score >= 80 ? "text-emerald-600" : score >= 60 ? "text-[#1D75F7]" : "text-neutral-400";
+            const filled = Math.max(1, Math.min(5, Math.round(sakScore(tp.vol, tp.comp) / 20)));
+            const stars = "★".repeat(filled) + "☆".repeat(5 - filled);
             return (
               <div
                 key={tp.t}
-                className={`relative w-full rounded-2xl px-4 pb-2.5 pt-3.5 ring-1 sm:px-5 ${
-                  isSak ? "bg-white shadow-[0_10px_26px_-10px_rgba(139,92,246,0.5)] ring-violet-300/70" : "bg-white/95 shadow-[0_6px_18px_-12px_rgba(20,40,90,0.35)] ring-black/[0.04]"
+                className={`relative w-full overflow-hidden rounded-2xl px-4 pb-2.5 pt-3.5 ring-1 sm:px-5 ${
+                  isSak ? "ateflo-chip-aurora shadow-[0_10px_28px_-8px_rgba(139,92,246,0.55)] ring-violet-300/70" : "bg-white/95 shadow-[0_6px_18px_-12px_rgba(20,40,90,0.35)] ring-black/[0.04]"
                 }`}
               >
                 {/* 업종 탭(좌상단) */}
                 {tp.tag && (
                   <span className="absolute -left-2 -top-2.5 inline-flex items-center justify-center rounded-full bg-[#E8F1FE] px-2.5 py-1 text-[8.5px] font-bold leading-none text-[#1D75F7] shadow-sm sm:text-[10px]">{tp.tag}</span>
                 )}
-                {/* 싹 키워드 뱃지(우상단, 보라 글로우) */}
+                {/* 싹 키워드 뱃지(우상단) */}
                 {isSak && (
-                  <span className="absolute -right-1.5 -top-2.5 inline-flex items-center gap-0.5 rounded-full bg-violet-100 px-2 py-1 text-[8px] font-bold leading-none text-violet-600 ring-1 ring-violet-200 sm:text-[9.5px]">✦ 싹 키워드</span>
+                  <span className="absolute -right-1.5 -top-2.5 inline-flex items-center gap-0.5 rounded-full bg-violet-600 px-2 py-1 text-[8px] font-bold leading-none text-white shadow-sm sm:text-[9.5px]">✦ 싹 키워드</span>
                 )}
                 {/* 글감 */}
-                <p className="whitespace-nowrap text-left text-[10.5px] font-semibold leading-tight text-neutral-800 sm:text-[14.5px]">{tp.t}</p>
-                {/* 선점 점수(우리가 분석 끝냄) + 월 검색 + 감정 표현 */}
-                <div className="mt-1.5 flex items-center gap-1.5 whitespace-nowrap">
-                  <span className={`text-[9px] font-extrabold sm:text-[11px] ${scoreColor}`}>선점 {score}</span>
-                  <span className="text-neutral-300">·</span>
-                  <span className="text-[8.5px] font-semibold text-neutral-500 sm:text-[10.5px]">월 {tp.vol.toLocaleString()}회</span>
-                  <span className="text-neutral-300">·</span>
-                  <span className={`text-[8.5px] font-medium sm:text-[10.5px] ${isSak ? "text-violet-500" : "text-neutral-400"}`}>{EMOTION[tp.comp]}</span>
+                <p className="relative whitespace-nowrap text-left text-[10.5px] font-semibold leading-tight text-neutral-800 sm:text-[14.5px]">{tp.t}</p>
+                {/* 검색량(명확) + 선점 별점 + 감정 */}
+                <div className="relative mt-1.5 space-y-0.5">
+                  <div className="flex items-center gap-1 whitespace-nowrap text-[8.5px] font-semibold text-neutral-500 sm:text-[10.5px]">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" className="shrink-0 opacity-70"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4-4" /></svg>
+                    한 달 검색 {tp.vol.toLocaleString()}회
+                  </div>
+                  <div className="flex items-center gap-1 whitespace-nowrap text-[8.5px] sm:text-[10.5px]">
+                    <span className="font-medium text-neutral-500">선점 기회</span>
+                    <span className="font-bold tracking-[-1px] text-amber-500">{stars}</span>
+                    <span className="text-neutral-300">·</span>
+                    <span className={`font-semibold ${isSak ? "text-violet-700" : "text-neutral-400"}`}>{EMOTION[tp.comp]}</span>
+                  </div>
                 </div>
               </div>
             );
