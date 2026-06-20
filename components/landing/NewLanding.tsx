@@ -146,16 +146,35 @@ export default function NewLanding() {
     };
   }, []);
 
+  // 모바일 하단 CTA — 히어로로 가서 이메일 포커스
+  const toForm = () => {
+    goTo(0);
+    setTimeout(() => { (document.getElementById("hero-email") as HTMLInputElement | null)?.focus({ preventScroll: true }); }, 280);
+  };
+
   return (
-    <div className="select-none bg-white text-neutral-900 antialiased" style={{ opacity: dim ? 0.06 : 1, transition: "opacity 0.11s ease-in-out" }}>
+    <div className="select-none bg-white text-neutral-900 antialiased">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(LANDING_JSONLD).replace(/</g, "\\u003c") }} />
+      {/* nav — 깜빡 제외 */}
       <LandingHeader />
-      <HeroNew />
-      <Showcase sel={catSel} onSelect={onSelectCat} />
-      <WriteModeSection info={info} onToggle={onToggle} />
-      <FinalHook />
-      <div className="pb-24 sm:pb-0">
-        <SiteFooter />
+      {/* 섹션 콘텐츠만 깜빡(컷) */}
+      <div style={{ opacity: dim ? 0.06 : 1, transition: "opacity 0.11s ease-in-out" }}>
+        <HeroNew />
+        <Showcase sel={catSel} onSelect={onSelectCat} />
+        <WriteModeSection info={info} onToggle={onToggle} />
+        <FinalHook />
+        <div className="pb-24 sm:pb-0">
+          <SiteFooter />
+        </div>
+      </div>
+      {/* 모바일 하단 고정 CTA — 깜빡 제외 */}
+      <div
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-neutral-100 bg-white/95 px-4 pt-3 backdrop-blur sm:hidden"
+        style={{ paddingBottom: "calc(0.9rem + env(safe-area-inset-bottom))" }}
+      >
+        <button onClick={toForm} className="w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-semibold text-white transition active:scale-[0.99]">
+          무료로 사전신청하기
+        </button>
       </div>
     </div>
   );

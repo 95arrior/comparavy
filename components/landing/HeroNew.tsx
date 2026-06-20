@@ -24,16 +24,6 @@ function RotatingWord() {
 
 // 새 히어로 — 토스플레이스st: 크게·심플·시네마틱. 큰 한 문장 + 짧은 서브 + 사전신청. 군더더기 0.
 export default function HeroNew() {
-  const toForm = () => {
-    const input = document.getElementById("hero-email") as HTMLInputElement | null;
-    if (input) {
-      input.focus({ preventScroll: true });
-      input.scrollIntoView({ behavior: "smooth", block: "center" });
-    } else {
-      document.getElementById("signup")?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-  };
-
   return (
     <div data-page className="relative flex min-h-[100svh] flex-col overflow-hidden bg-white">
       {/* 시네마틱 무빙 오로라 — 1섹션 전체를 덮음(풀스크린) */}
@@ -78,16 +68,6 @@ export default function HeroNew() {
           />
         </Reveal>
       </section>
-
-      {/* 모바일 하단 고정 CTA */}
-      <div
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-neutral-100 bg-white/95 px-4 pt-3 backdrop-blur sm:hidden"
-        style={{ paddingBottom: "calc(0.9rem + env(safe-area-inset-bottom))" }}
-      >
-        <button onClick={toForm} className="w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-semibold text-white transition active:scale-[0.99]">
-          무료로 사전신청하기
-        </button>
-      </div>
     </div>
   );
 }
