@@ -15,7 +15,6 @@ const CATS: Cat[] = [
       { t: "임플란트, 왜 병원마다 가격이 다를까?", tag: "치과" },
       { t: "물광주사, 효과 얼마나 갈까?", tag: "성형외과" },
       { t: "다이어트 주사, 진짜 효과 있을까?", tag: "가정의학과" },
-      { t: "사랑니, 꼭 빼야 할까?", tag: "치과" },
     ],
   },
   {
@@ -138,40 +137,56 @@ export default function Showcase() {
       {/* [3] 선택 업종의 추천 글감 */}
       <section ref={topicsRef} className="flex min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-neutral-50/70 px-6 py-20">
         {cat ? (
-          <div
-            key={sel}
-            className="ateflo-soft-in relative mx-auto w-full max-w-2xl overflow-hidden rounded-3xl shadow-[0_24px_60px_-22px_rgba(20,40,90,0.4)] ring-1 ring-black/5"
-          >
-            {/* 배경 이미지(있으면) + 가독용 화이트 스크림 */}
-            {cat.img && (
-              <>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={cat.img} alt={cat.label} className="absolute inset-0 h-full w-full object-cover" />
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/94 via-white/82 to-white/68" />
-              </>
-            )}
-            {!cat.img && <div className="absolute inset-0 bg-white" />}
-
-            {/* 내용 — 타이틀·설명(위) + 글감(아래, 우측 학과 칩) */}
-            <div className="relative p-6 sm:p-9">
-              <h3 className="font-pretendard text-2xl font-bold tracking-tight text-neutral-900 sm:text-[32px]">{cat.label}</h3>
-              <p className="mt-3 max-w-lg text-[14px] font-medium leading-relaxed text-neutral-600 sm:text-[16px]">{cat.desc}</p>
-
-              <div className="mt-6 space-y-2.5">
-                {cat.topics.map((tp) => (
-                  <div
-                    key={tp.t}
-                    className="flex items-center justify-between gap-3 rounded-2xl bg-white/95 px-4 py-3.5 shadow-[0_6px_18px_-12px_rgba(20,40,90,0.35)] ring-1 ring-black/[0.04] backdrop-blur-sm sm:px-5"
-                  >
-                    <span className="text-left text-[14px] font-medium text-neutral-800 sm:text-[15px]">{tp.t}</span>
-                    {tp.tag && (
-                      <span className="shrink-0 rounded-full bg-[#1D75F7]/10 px-3 py-1 text-[12px] font-bold text-[#1D75F7]">{tp.tag}</span>
-                    )}
-                  </div>
-                ))}
+          (() => {
+            // 타이틀+설명+글감 패널(좌측). 데스크탑=이미지 위 좌측 오버레이, 모바일=사진 아래.
+            const panel = (
+              <div className="flex flex-col">
+                <h3 className="font-pretendard text-2xl font-bold tracking-tight text-neutral-900 sm:text-[30px]">{cat.label}</h3>
+                <p className="mt-2.5 text-[13.5px] font-medium leading-relaxed text-neutral-600 sm:text-[15px]">{cat.desc}</p>
+                <div className="mt-5 space-y-2.5">
+                  {cat.topics.map((tp) => (
+                    <div
+                      key={tp.t}
+                      className="flex items-center justify-between gap-2.5 rounded-2xl bg-white/95 px-4 py-3 shadow-[0_6px_18px_-12px_rgba(20,40,90,0.35)] ring-1 ring-black/[0.04] backdrop-blur-sm"
+                    >
+                      <span className="text-left text-[13.5px] font-medium text-neutral-800 sm:text-[14.5px]">{tp.t}</span>
+                      {tp.tag && (
+                        <span className="shrink-0 rounded-full bg-[#1D75F7]/10 px-2.5 py-1 text-[11.5px] font-bold text-[#1D75F7]">{tp.tag}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          </div>
+            );
+
+            if (!cat.img) {
+              return (
+                <div key={sel} className="ateflo-soft-in mx-auto w-full max-w-md rounded-3xl bg-white p-7 shadow-[0_24px_60px_-22px_rgba(20,40,90,0.4)] ring-1 ring-black/5 sm:p-9">
+                  {panel}
+                </div>
+              );
+            }
+            return (
+              <div key={sel} className="ateflo-soft-in mx-auto w-full max-w-4xl">
+                {/* 데스크탑 — 인물(우측) 그대로, 좌측 여백에만 패널 오버레이 */}
+                <div className="relative hidden overflow-hidden rounded-3xl shadow-[0_24px_60px_-22px_rgba(20,40,90,0.4)] ring-1 ring-black/5 sm:block">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={cat.img} alt={cat.label} className="block w-full" />
+                  {/* 좌측만 화이트 그라데이션(우측 인물은 선명하게) */}
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-white via-white/85 via-35% to-transparent to-60%" />
+                  <div className="absolute inset-y-0 left-0 flex w-[52%] flex-col justify-center px-7 lg:px-10">
+                    {panel}
+                  </div>
+                </div>
+                {/* 모바일 — 사진(인물) 위, 내용 아래 */}
+                <div className="overflow-hidden rounded-3xl bg-white shadow-[0_20px_50px_-20px_rgba(20,40,90,0.35)] ring-1 ring-black/5 sm:hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={cat.img} alt={cat.label} className="block w-full" />
+                  <div className="p-6">{panel}</div>
+                </div>
+              </div>
+            );
+          })()
         ) : (
           <p className="text-center text-[17px] font-medium text-neutral-300">위에서 업종을 골라보세요</p>
         )}
