@@ -14,15 +14,21 @@ export default function WriteModeSection() {
     setReduce(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   }, []);
 
-  // 화면 중앙에 들어오면 2초마다 자동 토글, 벗어나면 정지
+  // 화면에 한 번 들어오면 2초마다 계속 자동 토글(loop)
   useEffect(() => {
     const el = sectionRef.current;
     if (!el) return;
-    const start = () => { if (!timer.current) timer.current = setInterval(() => setInfo((v) => !v), 2000); };
-    const stop = () => { if (timer.current) { clearInterval(timer.current); timer.current = null; } };
-    const io = new IntersectionObserver(([e]) => (e.isIntersecting ? start() : stop()), { rootMargin: "-35% 0px -35% 0px", threshold: 0 });
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) {
+          if (!timer.current) timer.current = setInterval(() => setInfo((v) => !v), 2000);
+          io.disconnect(); // 시작했으면 계속 돈다
+        }
+      },
+      { threshold: 0.35 },
+    );
     io.observe(el);
-    return () => { io.disconnect(); stop(); };
+    return () => { io.disconnect(); if (timer.current) clearInterval(timer.current); };
   }, []);
 
   // 수동 클릭 — 즉시 전환 + 자동 타이머 리셋(바로 다시 안 튀게)
