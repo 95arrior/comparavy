@@ -1,9 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Reveal from "@/components/Reveal";
 
-// 2~3섹션 — [2] 업종 칩만 크게(우리 4분류) → 고르면 [3] 그 업종 글감 추천.
+// 2~3섹션 — [2] 업종 칩(크게, 처음 선택X, 중앙 도달 시 뽕뽕뽕 팝) → 고르면 [3] 그 업종 글감.
 const CATS: { label: string; topics: string[] }[] = [
   { label: "병원·약국", topics: ["임플란트 가격, 왜 병원마다 다를까?", "스케일링 주기, 얼마나 자주 받을까", "사랑니 꼭 빼야 할까?"] },
   { label: "교육·학원", topics: ["초등 영어, 몇 살부터 시작할까", "중등 수학 선행, 꼭 필요할까", "집에서 집중력 높이는 습관"] },
@@ -12,22 +12,33 @@ const CATS: { label: string; topics: string[] }[] = [
 ];
 
 export default function Showcase() {
-  const [sel, setSel] = useState(0);
+  const [sel, setSel] = useState<number | null>(null); // 처음엔 아무것도 선택 안 함
+  const [shown, setShown] = useState(false);
+  const chipsRef = useRef<HTMLDivElement>(null);
   const topicsRef = useRef<HTMLElement>(null);
-  const cat = CATS[sel];
+
+  // 칩이 화면 중앙 띠에 들어오면 뽕뽕뽕 팝
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { setShown(true); return; }
+    const el = chipsRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setShown(true); io.disconnect(); } }, { rootMargin: "-25% 0px -25% 0px", threshold: 0 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   const pick = (i: number) => {
     setSel(i);
-    // 고르면 글감 섹션으로 부드럽게 이동
     setTimeout(() => topicsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
   };
+  const cat = sel === null ? null : CATS[sel];
 
   return (
     <>
       {/* [2] 업종 선택 — 큰 칩만 */}
       <section className="flex min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-white px-6 py-20">
         <Reveal className="text-center">
-          <h2 className="font-pretendard text-[clamp(26px,6.2vw,42px)] font-bold leading-[1.18] tracking-[-0.02em]">
+          <h2 className="font-pretendard text-[clamp(26px,6.4vw,44px)] font-bold leading-[1.18] tracking-[-0.02em]">
             어떤 업종에 종사하세요?
           </h2>
           <p className="mx-auto mt-5 max-w-md text-[16px] leading-relaxed text-neutral-500 sm:text-lg">
@@ -35,40 +46,51 @@ export default function Showcase() {
           </p>
         </Reveal>
 
-        <Reveal delay={120} className="mx-auto mt-12 flex max-w-2xl flex-wrap justify-center gap-3">
+        <div ref={chipsRef} className="mx-auto mt-14 flex max-w-3xl flex-wrap justify-center gap-3 sm:gap-4">
           {CATS.map((c, i) => {
             const on = i === sel;
             return (
               <button
                 key={c.label}
                 onClick={() => pick(i)}
-                className={`rounded-full px-7 py-4 text-base font-bold transition-all duration-200 active:scale-95 sm:text-lg ${
-                  on ? "bg-[#1D75F7] text-white shadow-[0_10px_24px_-8px_rgba(29,117,247,0.6)]" : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                style={{
+                  transition: "transform 0.5s cubic-bezier(0.34,1.6,0.6,1), opacity 0.35s ease, background-color 0.2s, color 0.2s, box-shadow 0.2s",
+                  transitionDelay: shown ? `${i * 110}ms` : "0ms",
+                  transform: shown ? "scale(1)" : "scale(0.3)",
+                  opacity: shown ? 1 : 0,
+                }}
+                className={`rounded-full px-8 py-5 text-lg font-bold active:scale-95 sm:px-10 sm:py-6 sm:text-xl ${
+                  on ? "bg-[#1D75F7] text-white shadow-[0_12px_28px_-8px_rgba(29,117,247,0.6)]" : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
                 }`}
               >
                 {c.label}
               </button>
             );
           })}
-        </Reveal>
+        </div>
       </section>
 
       {/* [3] 선택 업종의 추천 글감 */}
-      <section ref={topicsRef} className="flex min-h-[100svh] scroll-mt-0 flex-col items-center justify-center overflow-hidden bg-neutral-50/70 px-6 py-20">
-        <Reveal className="text-center">
-          <span className="inline-block rounded-full bg-[#1D75F7]/10 px-3 py-1 text-[13px] font-bold text-[#1D75F7]">{cat.label}</span>
-          <h2 className="font-pretendard mt-4 text-[clamp(24px,5.6vw,38px)] font-bold leading-[1.2] tracking-[-0.02em]">
-            이런 글감을 추천해드려요
-          </h2>
-        </Reveal>
-
-        <div key={sel} className="ateflo-soft-in mx-auto mt-10 w-full max-w-md space-y-3">
-          {cat.topics.map((t) => (
-            <div key={t} className="rounded-2xl border border-neutral-200 bg-white px-5 py-4 text-left text-[15px] font-medium text-neutral-800 shadow-[0_6px_18px_-10px_rgba(20,40,90,0.3)]">
-              {t}
+      <section ref={topicsRef} className="flex min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-neutral-50/70 px-6 py-20">
+        {cat ? (
+          <>
+            <Reveal className="text-center">
+              <span className="inline-block rounded-full bg-[#1D75F7]/10 px-3 py-1 text-[13px] font-bold text-[#1D75F7]">{cat.label}</span>
+              <h2 className="font-pretendard mt-4 text-[clamp(24px,5.6vw,38px)] font-bold leading-[1.2] tracking-[-0.02em]">
+                이런 글감을 추천해드려요
+              </h2>
+            </Reveal>
+            <div key={sel} className="ateflo-soft-in mx-auto mt-10 w-full max-w-md space-y-3">
+              {cat.topics.map((t) => (
+                <div key={t} className="rounded-2xl border border-neutral-200 bg-white px-5 py-4 text-left text-[15px] font-medium text-neutral-800 shadow-[0_6px_18px_-10px_rgba(20,40,90,0.3)]">
+                  {t}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </>
+        ) : (
+          <p className="text-center text-[17px] font-medium text-neutral-300">위에서 업종을 골라보세요</p>
+        )}
       </section>
     </>
   );
