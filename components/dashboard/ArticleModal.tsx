@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect, useRef, useMemo } from "react";
 import ArticleEditor, { type ArticleEditorHandle } from "./ArticleEditor";
+import SectionSuggest from "./SectionSuggest";
 import CenterToast from "./CenterToast";
 import ScheduleCalendar from "./ScheduleCalendar";
 import { PLANS, formatKRW } from "@/lib/plans";
@@ -1135,6 +1136,15 @@ export default function ArticleModal({
             toolbarOffset="top-[57px]"
           />
         </div>
+
+        {/* 섹션 추가 추천 — 체류시간↑ (코어 글엔진 안 건드리고 발행 전 한 개씩 덧붙임) */}
+        {!article.locked && (
+          <SectionSuggest
+            articleId={article.id}
+            onInsert={(html) => editorRef.current?.appendContent(html)}
+            onToast={setToast}
+          />
+        )}
 
         {article.write_note && (
           <div className="mt-6 rounded-xl border border-neutral-200 bg-white px-4 py-3">
