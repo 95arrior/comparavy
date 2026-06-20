@@ -29,13 +29,13 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     locale: "ko_KR",
     type: "website",
-    images: [{ url: "/og.jpg?v=3", width: 1672, height: 941, alt: "에이트플로 AteFlo" }],
+    images: [{ url: "/og-v2.jpg", width: 1672, height: 941, alt: "에이트플로 AteFlo" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "에이트플로",
     description: "글쓰기, 키워드 하나면 끝",
-    images: ["/og.jpg?v=3"],
+    images: ["/og-v2.jpg"],
   },
 };
 
