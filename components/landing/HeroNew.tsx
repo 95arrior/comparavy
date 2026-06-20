@@ -53,10 +53,8 @@ export default function HeroNew() {
       <section className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col items-center justify-center px-6 py-24 text-center">
         <Reveal>
           <p className="text-sm font-semibold tracking-tight text-[#1D75F7] sm:text-base">검색되는 블로그, 한 번에</p>
-          <h1 className="font-pretendard mt-4 text-[clamp(34px,8.4vw,62px)] font-bold leading-[1.1] tracking-[-0.02em]">
-            똑똑한 <RotatingWord /> 블로그,
-            <br />
-            키워드 하나로 끝
+          <h1 className="font-pretendard mt-4 text-[clamp(30px,7.4vw,54px)] font-bold leading-[1.12] tracking-[-0.02em]">
+            <RotatingWord /> 블로그, 키워드 하나로 끝
           </h1>
         </Reveal>
 
