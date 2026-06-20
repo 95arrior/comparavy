@@ -12,7 +12,7 @@ const TOPICS = [
 
 export default function Showcase() {
   return (
-    <section className="overflow-hidden bg-neutral-50/70 py-24 sm:py-36">
+    <section className="overflow-hidden bg-white py-24 sm:py-36">
       <div className="mx-auto max-w-3xl px-6 text-center">
         <Reveal>
           <h2 className="font-pretendard text-[clamp(28px,6.6vw,46px)] font-bold leading-[1.16] tracking-[-0.02em]">

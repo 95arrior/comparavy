@@ -29,8 +29,8 @@ export default function HeroNew() {
             "radial-gradient(60% 70% at 28% 92%,#b8f0e2,transparent 60%)",
         }}
       />
-      {/* 하단 화이트 페이드 — 다음 섹션과 자연 전환 */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-b from-transparent to-white" />
+      {/* 하단 화이트 페이드(길게) — 오로라가 다음 섹션으로 매끄럽게 녹아들게 */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[42vh] bg-gradient-to-b from-transparent via-white/70 to-white" />
       <section className="relative z-10 mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center px-6 py-24 text-center">
         <Reveal>
           <p className="text-sm font-semibold tracking-tight text-[#1D75F7] sm:text-base">검색되는 블로그, 한 번에</p>
