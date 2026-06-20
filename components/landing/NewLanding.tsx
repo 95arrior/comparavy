@@ -34,8 +34,9 @@ export default function NewLanding() {
   const pagesRef = useRef<HTMLElement[]>([]);
   const reduceRef = useRef(false);
   const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [dim, setDim] = useState(false);
 
-  // 네이티브 스무스 스크롤(GPU). 슬라이드 동안 무거운 배경 애니 일시정지(리페인트 렉 방지)
+  // '깜빡 컷' — 슬라이드 대신 짧게 페이드아웃 → 그 순간 즉시 전환 → 페이드인. (슬라이드 렉이 안 보임)
   const goTo = (i: number) => {
     const els = pagesRef.current.length ? pagesRef.current : Array.from(document.querySelectorAll<HTMLElement>("[data-page]"));
     const clamped = Math.max(0, Math.min(els.length - 1, i));
@@ -44,9 +45,13 @@ export default function NewLanding() {
     if (autoTimer.current) { clearTimeout(autoTimer.current); autoTimer.current = null; }
     lock.current = true;
     idx.current = clamped;
-    document.documentElement.classList.add("ateflo-sliding");
-    t.scrollIntoView({ behavior: reduceRef.current ? "auto" : "smooth", block: "start" });
-    setTimeout(() => { lock.current = false; document.documentElement.classList.remove("ateflo-sliding"); }, reduceRef.current ? 60 : 700);
+    if (reduceRef.current) { t.scrollIntoView({ behavior: "auto", block: "start" }); lock.current = false; return; }
+    setDim(true);
+    setTimeout(() => {
+      t.scrollIntoView({ behavior: "auto", block: "start" }); // 깜빡인 순간 즉시 전환
+      setDim(false);
+      setTimeout(() => { lock.current = false; }, 110);
+    }, 110);
   };
 
   // 칩 클릭 — 바로 글감으로
@@ -116,7 +121,7 @@ export default function NewLanding() {
   }, []);
 
   return (
-    <div className="select-none bg-white text-neutral-900 antialiased">
+    <div className="select-none bg-white text-neutral-900 antialiased" style={{ opacity: dim ? 0.06 : 1, transition: "opacity 0.11s ease-in-out" }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(LANDING_JSONLD).replace(/</g, "\\u003c") }} />
       <LandingHeader />
       <HeroNew />
