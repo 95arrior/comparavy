@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useEffect, useRef, useMemo } from "react";
 import ArticleEditor, { type ArticleEditorHandle } from "./ArticleEditor";
 import SectionSuggest from "./SectionSuggest";
+import ThreadsConvert from "./ThreadsConvert";
 import CenterToast from "./CenterToast";
 import ScheduleCalendar from "./ScheduleCalendar";
 import { PLANS, formatKRW } from "@/lib/plans";
@@ -1145,6 +1146,9 @@ export default function ArticleModal({
             onToast={setToast}
           />
         )}
+
+        {/* 스레드 변환 — 블로그 글을 SNS(스레드)로 퍼뜨리기 */}
+        {!article.locked && <ThreadsConvert articleId={article.id} onToast={setToast} />}
 
         {article.write_note && (
           <div className="mt-6 rounded-xl border border-neutral-200 bg-white px-4 py-3">
