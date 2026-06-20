@@ -4,6 +4,7 @@ import { keywordsToTitles } from "@/lib/topicTitles";
 import { normalizeKeyword } from "@/lib/diversity";
 import { audienceOf, AUDIENCE_ALL } from "@/lib/audience";
 import { isUnsafeKeyword } from "@/lib/keywordSafety";
+import { extractRegions, isLocalBusiness, buildLocalSeeds } from "@/lib/region";
 
 // 사장의 blog_profile(vertical + sub_category)로 keyword_pool에서 글감 3개를 뽑는다.
 // Stage 2-B 분산: ① least-used 우선(times_assigned asc) ② 본인이 이미 쓴 키워드 제외 ③ 그 안 랜덤.
@@ -65,7 +66,7 @@ export async function GET() {
 
   const { data: profile } = await supabase
     .from("blog_profiles")
-    .select("vertical, sub_category, audience")
+    .select("vertical, sub_category, audience, biz_address")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -142,14 +143,39 @@ export async function GET() {
   add(general); // 일반(중간)
   add(low);     // 중간 부족하면 싹으로 채움(싹이 차선)
   add(high);    // 그래도 모자라면 빅키워드(마지막 수단)
-  const picked = result.slice(0, PICK);
 
-  const titles = await keywordsToTitles(picked.map((r) => r.keyword));
-  const topics = picked.map((r, i) => ({
-    keyword: r.keyword,
-    title: titles[i],
-    demandLabel: demandLabel(r.monthly_searches),
-    ssak: comp(r) === "낮음", // 싹 키워드(전설)
-  }));
+  // ── 지역 글감 ──
+  // 지역형 사업장이면(주소 있음 + 전국형 아님) 사업장 동네 + 업종 글감을 앞에 섞는다.
+  // 지역 키워드 = 경쟁 낮고 전환 높은 '동네 손님' 검색 → 본인이 이미 쓴 건 제외.
+  const regions = extractRegions(profile?.biz_address as string | null);
+  const local = isLocalBusiness(vertical, sub ?? null, regions);
+  const localSeeds = local
+    ? buildLocalSeeds(regions, vertical, sub ?? null).filter(
+        (k) => !usedSet.has(normalizeKeyword(k)) && !isUnsafeKeyword(k),
+      )
+    : [];
+
+  // 지역 글감은 앞에, 나머지는 일반 글감으로 PICK까지 채움
+  const pickedRows = result.slice(0, Math.max(0, PICK - localSeeds.length));
+  const allKeywords = [...localSeeds, ...pickedRows.map((r) => r.keyword)];
+  if (allKeywords.length === 0) return NextResponse.json({ topics: [] });
+  const titles = await keywordsToTitles(allKeywords);
+
+  const topics = [
+    ...localSeeds.map((k, i) => ({
+      keyword: k,
+      title: titles[i],
+      demandLabel: "우리 동네 손님이 찾는 검색",
+      ssak: false,
+      region: true,
+    })),
+    ...pickedRows.map((r, i) => ({
+      keyword: r.keyword,
+      title: titles[localSeeds.length + i],
+      demandLabel: demandLabel(r.monthly_searches),
+      ssak: comp(r) === "낮음", // 싹 키워드(전설)
+      region: false,
+    })),
+  ].slice(0, PICK);
   return NextResponse.json({ topics });
 }

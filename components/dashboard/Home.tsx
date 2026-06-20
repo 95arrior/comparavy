@@ -6,7 +6,7 @@ import ArticleList from "./ArticleList";
 import JourneyRoadmap from "./JourneyRoadmap";
 import type { Article } from "./types";
 
-interface Topic { keyword: string; title: string; demandLabel: string; ssak?: boolean }
+interface Topic { keyword: string; title: string; demandLabel: string; ssak?: boolean; region?: boolean }
 
 // 토스식 메인 홈 — '연구소' 컨셉/탭 제거. [미니 진척] → [성과] → [글감 자리+새 글 쓰기] → [내 글].
 // 미니 진척 배너는 3단계 완료되면 자동으로 사라진다(새 유저만 가이드).
@@ -45,9 +45,10 @@ export default function Home({
       const data = await res.json();
       const list: Topic[] = Array.isArray(data.topics) ? data.topics : [];
       setTopics(list);
-      // 전설(싹 키워드)이 있으면 그걸 먼저 보여준다
+      // 우리 동네(지역) 글감 우선 → 없으면 전설(싹 키워드) → 없으면 첫 번째
+      const rIdx = list.findIndex((t) => t.region);
       const sIdx = list.findIndex((t) => t.ssak);
-      setFeaturedIdx(sIdx >= 0 ? sIdx : 0);
+      setFeaturedIdx(rIdx >= 0 ? rIdx : sIdx >= 0 ? sIdx : 0);
     } catch {
       setTopics([]);
     } finally {
@@ -103,17 +104,28 @@ export default function Home({
       {topicsLoading ? (
         <div className="mt-8 h-[168px] animate-pulse rounded-3xl bg-neutral-100" />
       ) : featured ? (
-        <div className={`mt-8 rounded-3xl p-7 ${featured.ssak ? "ateflo-chip-aurora ring-1 ring-white/60" : "border border-neutral-200 bg-white shadow-[0_10px_30px_-14px_rgba(20,40,90,0.15)]"}`}>
+        <div className={`mt-8 rounded-3xl p-7 ${
+          featured.ssak ? "ateflo-chip-aurora ring-1 ring-white/60"
+          : featured.region ? "border border-[#1D75F7]/30 bg-[#1D75F7]/[0.035] shadow-[0_10px_30px_-14px_rgba(29,117,247,0.25)]"
+          : "border border-neutral-200 bg-white shadow-[0_10px_30px_-14px_rgba(20,40,90,0.15)]"
+        }`}>
           {featured.ssak ? (
             <span className="inline-block rounded-full bg-white/75 px-2.5 py-1 text-[11px] font-bold text-[#7c3aed]">싹 키워드 · 지금이 기회</span>
+          ) : featured.region ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#1D75F7]/10 px-2.5 py-1 text-[11px] font-bold text-[#1D75F7]">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z" /></svg>
+              우리 동네 키워드
+            </span>
           ) : (
             <span className="text-xs font-semibold text-[#1D75F7]">{featured.demandLabel}</span>
           )}
           <p className={`font-pretendard mt-3 text-[22px] font-bold leading-snug tracking-tight ${featured.ssak ? "text-[#3f3a6b]" : "text-neutral-900"}`}>
             {featured.title}
           </p>
-          <p className={`mt-1.5 text-sm ${featured.ssak ? "font-medium text-[#7c3aed]" : "text-neutral-500"}`}>
-            {featured.ssak ? "남들은 아직 안 썼어요. 먼저 쓰면 손님이 먼저 와요." : "손님이 자주 찾는 주제예요."}
+          <p className={`mt-1.5 text-sm ${featured.ssak ? "font-medium text-[#7c3aed]" : featured.region ? "font-medium text-[#1D75F7]" : "text-neutral-500"}`}>
+            {featured.ssak ? "남들은 아직 안 썼어요. 먼저 쓰면 손님이 먼저 와요."
+              : featured.region ? "우리 동네 손님이 바로 찾는 검색이에요."
+              : "손님이 자주 찾는 주제예요."}
           </p>
           <div className="mt-6 flex items-center gap-4">
             <button
