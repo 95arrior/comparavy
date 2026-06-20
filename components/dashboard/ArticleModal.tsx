@@ -5,6 +5,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import ArticleEditor, { type ArticleEditorHandle } from "./ArticleEditor";
 import SectionSuggest from "./SectionSuggest";
 import ThreadsConvert from "./ThreadsConvert";
+import NaverCopy from "./NaverCopy";
 import CenterToast from "./CenterToast";
 import ScheduleCalendar from "./ScheduleCalendar";
 import { PLANS, formatKRW } from "@/lib/plans";
@@ -1146,6 +1147,9 @@ export default function ArticleModal({
             onToast={setToast}
           />
         )}
+
+        {/* 네이버 블로그용 복사 */}
+        {!article.locked && <NaverCopy getHtml={currentBody} title={title} onToast={setToast} />}
 
         {/* 스레드 변환 — 블로그 글을 SNS(스레드)로 퍼뜨리기 */}
         {!article.locked && <ThreadsConvert articleId={article.id} onToast={setToast} />}
