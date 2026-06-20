@@ -54,40 +54,55 @@ export default function Showcase() {
     return () => io.disconnect();
   }, []);
 
-  // 게이트 — 선택 전엔 scrollY를 게이트 상단으로 '단단히 클램프'(아래로 절대 못 넘어감). 위로는 자유.
+  // 게이트 — 선택 전엔 이 섹션에서 스크롤을 '완전 freeze'(튕김 없음). 위로 가려 하면 풀어줌.
   useEffect(() => {
     if (sel !== null) return; // 선택되면 잠금 없음
     const el = gateRef.current;
     if (!el) return;
-    // 게이트 섹션의 문서상 절대 top(스크롤 무관 상수)
-    const gateTop = () => Math.round(el.getBoundingClientRect().top + window.scrollY);
-    // 아래로 넘어가면 즉시 게이트 top으로 고정(스냅) — 위(scrollY<gateTop)는 그대로 둠
-    const clamp = () => { const g = gateTop(); if (window.scrollY > g) window.scrollTo(0, g); };
-    const blockDown = (down: boolean) => down && window.scrollY >= gateTop() - 1;
-    const onWheel = (e: WheelEvent) => { if (blockDown(e.deltaY > 0)) { e.preventDefault(); clamp(); } };
+    let frozen = false;
+    let armed = true; // 위로 탈출 후엔 충분히 벗어나기 전까지 재freeze 안 함
+    const freeze = () => {
+      if (frozen) return;
+      frozen = true;
+      // 정확히 게이트 상단에 맞춘 뒤 잠금(스냅 1회 → 이후 미동 없음)
+      window.scrollTo(0, Math.round(el.getBoundingClientRect().top + window.scrollY));
+      document.body.style.overflow = "hidden";
+      document.body.style.touchAction = "none";
+    };
+    const unfreeze = () => {
+      frozen = false;
+      armed = false;
+      document.body.style.overflow = "";
+      document.body.style.touchAction = "";
+    };
+    const io = new IntersectionObserver(
+      ([e]) => {
+        const r = e.intersectionRatio;
+        if (armed && r > 0.85) freeze();
+        if (r < 0.5) armed = true; // 충분히 벗어나면 다시 무장
+      },
+      { threshold: [0, 0.25, 0.5, 0.75, 0.85, 1] },
+    );
+    io.observe(el);
+
+    // 위(↑) 의도면 풀어서 히어로로 갈 수 있게
+    const onWheel = (e: WheelEvent) => { if (frozen && e.deltaY < 0) unfreeze(); };
     let startY = 0;
     const onTouchStart = (e: TouchEvent) => { startY = e.touches[0]?.clientY ?? 0; };
-    const onTouchMove = (e: TouchEvent) => {
-      const dy = startY - (e.touches[0]?.clientY ?? 0); // >0 = 아래로 스크롤
-      if (blockDown(dy > 0)) { e.preventDefault(); clamp(); }
-    };
-    const onKey = (e: KeyboardEvent) => {
-      const t = e.target as HTMLElement;
-      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA")) return;
-      const down = e.key === "ArrowDown" || e.key === "PageDown" || e.key === " " || e.key === "Spacebar";
-      if (blockDown(down)) e.preventDefault();
-    };
-    window.addEventListener("scroll", clamp, { passive: true });
-    window.addEventListener("wheel", onWheel, { passive: false });
+    const onTouchMove = (e: TouchEvent) => { if (frozen && (e.touches[0]?.clientY ?? 0) - startY > 0) unfreeze(); };
+    const onKey = (e: KeyboardEvent) => { if (frozen && (e.key === "ArrowUp" || e.key === "PageUp" || e.key === "Home")) unfreeze(); };
+    window.addEventListener("wheel", onWheel, { passive: true });
     window.addEventListener("touchstart", onTouchStart, { passive: true });
-    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    window.addEventListener("touchmove", onTouchMove, { passive: true });
     window.addEventListener("keydown", onKey);
     return () => {
-      window.removeEventListener("scroll", clamp);
+      io.disconnect();
       window.removeEventListener("wheel", onWheel);
       window.removeEventListener("touchstart", onTouchStart);
       window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+      document.body.style.touchAction = "";
     };
   }, [sel]);
 
