@@ -103,11 +103,11 @@ function OverlayCard({ img, heading, desc, topics, dark, imgClass, wide }: { img
             >
               {/* 글감(위, 왼쪽 정렬 일관) */}
               <p className="whitespace-nowrap text-left text-[10.5px] font-semibold leading-tight text-neutral-800 sm:text-[14.5px]">{tp.t}</p>
-              {/* 아래 줄 — 우리동네키워드(그레이) + 업종 칩, 가로중앙·세로가운데 정렬 */}
-              <div className="mt-1.5 flex items-center justify-center gap-1.5">
-                {tp.metaTone && <span className="text-[8.5px] font-medium leading-none text-neutral-400 sm:text-[11px]">{META[tp.metaTone]}</span>}
+              {/* 아래 줄 — 좌측 정렬, 우리동네키워드(그레이) + 업종 칩이 같은 가로선에(세로 가운데) */}
+              <div className="mt-1.5 flex items-center gap-1.5">
+                {tp.metaTone && <span className="leading-none text-[8.5px] font-medium text-neutral-400 sm:text-[11px]">{META[tp.metaTone]}</span>}
                 {tp.tag && (
-                  <span className="shrink-0 rounded-full bg-[#1D75F7]/10 px-1.5 py-0.5 text-[8px] font-bold leading-none text-[#1D75F7] sm:text-[10px]">{tp.tag}</span>
+                  <span className="inline-flex shrink-0 items-center rounded-full bg-[#1D75F7]/10 px-1.5 py-0.5 leading-none text-[8px] font-bold text-[#1D75F7] sm:text-[10px]">{tp.tag}</span>
                 )}
               </div>
             </div>
