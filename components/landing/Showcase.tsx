@@ -90,7 +90,7 @@ const CATS: Cat[] = [
 const ALL_IMGS = CATS.flatMap((c) => [c.img, ...(c.cards?.map((s) => s.img) ?? [])]).filter(Boolean) as string[];
 
 // 업종 카드 — 이미지 위 좌측에 헤딩·설명·글감 오버레이(모든 화면 동일). 어두운 이미지는 흰 텍스트.
-function OverlayCard({ img, heading, desc, topics, dark, imgClass, wide }: { img: string; heading: string; desc: string; topics: Topic[]; dark?: boolean; imgClass?: string; wide?: boolean }) {
+function OverlayCard({ img, heading, desc, topics, dark, imgClass, wide, revealed = true }: { img: string; heading: string; desc: string; topics: Topic[]; dark?: boolean; imgClass?: string; wide?: boolean; revealed?: boolean }) {
   return (
     <div className="relative overflow-hidden rounded-3xl shadow-[0_24px_60px_-22px_rgba(20,40,90,0.4)] ring-1 ring-black/5">
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -101,13 +101,19 @@ function OverlayCard({ img, heading, desc, topics, dark, imgClass, wide }: { img
         <p className={`mt-1 min-h-[2.2em] text-[10.5px] font-medium leading-snug sm:mt-2.5 sm:min-h-[3.1em] sm:text-[15px] sm:leading-relaxed ${dark ? "text-white/85" : "text-neutral-600"}`}>{desc}</p>
         {/* w-fit 컨테이너 = 가장 긴 글감 기준 폭, 박스 w-full로 동일 사이즈. 칩은 좌상단 탭 */}
         <div className="mt-3 flex w-fit max-w-full flex-col gap-3 sm:mt-5 sm:gap-3.5">
-          {topics.map((tp) => {
+          {topics.map((tp, idx) => {
             const isSak = tp.comp === "low";
             const filled = Math.max(1, Math.min(5, Math.round(sakScore(tp.vol, tp.comp) / 20)));
             const stars = "★".repeat(filled) + "☆".repeat(5 - filled);
             return (
               <div
                 key={tp.t}
+                style={{
+                  transition: "opacity 0.45s ease, transform 0.45s cubic-bezier(0.34,1.45,0.6,1)",
+                  transitionDelay: revealed ? `${idx * 90}ms` : "0ms",
+                  opacity: revealed ? 1 : 0,
+                  transform: revealed ? "translateY(0) scale(1)" : "translateY(10px) scale(0.96)",
+                }}
                 className={`relative w-full rounded-2xl px-4 pb-2.5 pt-3.5 ring-1 sm:px-5 ${
                   isSak ? "shadow-[0_10px_28px_-8px_rgba(139,92,246,0.55)] ring-violet-300/70" : "bg-white/95 shadow-[0_6px_18px_-12px_rgba(20,40,90,0.35)] ring-black/[0.04]"
                 }`}
@@ -148,7 +154,9 @@ function OverlayCard({ img, heading, desc, topics, dark, imgClass, wide }: { img
 
 export default function Showcase({ sel, onSelect }: { sel: number | null; onSelect: (i: number) => void }) {
   const [shown, setShown] = useState(false);
+  const [topicsShown, setTopicsShown] = useState(false);
   const chipsRef = useRef<HTMLDivElement>(null);
+  const topicsSecRef = useRef<HTMLElement>(null);
 
   // 모든 업종 이미지 프리로드(즉시 표시)
   useEffect(() => {
@@ -161,6 +169,16 @@ export default function Showcase({ sel, onSelect }: { sel: number | null; onSele
     const el = chipsRef.current;
     if (!el) return;
     const io = new IntersectionObserver(([e]) => setShown(e.isIntersecting), { rootMargin: "-20% 0px -20% 0px", threshold: 0 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  // 글감 섹션 들어올 때마다 글감 박스 순차 등장(나갈 땐 리셋)
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { setTopicsShown(true); return; }
+    const el = topicsSecRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => setTopicsShown(e.isIntersecting), { rootMargin: "-20% 0px -20% 0px", threshold: 0 });
     io.observe(el);
     return () => io.disconnect();
   }, []);
@@ -205,18 +223,18 @@ export default function Showcase({ sel, onSelect }: { sel: number | null; onSele
       </section>
 
       {/* [3] 선택 업종의 추천 글감 */}
-      <section data-page className="flex min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-neutral-50/70 px-6 py-20">
+      <section ref={topicsSecRef} data-page className="flex min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-neutral-50/70 px-6 py-20">
         {cat ? (
           cat.cards ? (
             // 기타 — 같은 오버레이 카드 2장을 웹에선 가로(모바일 1열)
             <div key={sel} className="ateflo-soft-in mx-auto grid w-full max-w-5xl grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
               {cat.cards.map((c) => (
-                <OverlayCard key={c.img} img={c.img} heading={c.heading} desc={c.desc} topics={c.topics} dark={c.dark ?? false} imgClass="h-[486.72px] object-cover object-top" wide />
+                <OverlayCard key={c.img} img={c.img} heading={c.heading} desc={c.desc} topics={c.topics} dark={c.dark ?? false} imgClass="h-[486.72px] object-cover object-top" wide revealed={topicsShown} />
               ))}
             </div>
           ) : cat.img ? (
             <div key={sel} className="ateflo-soft-in mx-auto w-full max-w-4xl">
-              <OverlayCard img={cat.img} heading={cat.heading} desc={cat.desc} topics={cat.topics} dark={cat.dark ?? false} />
+              <OverlayCard img={cat.img} heading={cat.heading} desc={cat.desc} topics={cat.topics} dark={cat.dark ?? false} revealed={topicsShown} />
             </div>
           ) : (
             <div key={sel} className="ateflo-soft-in mx-auto w-full max-w-md rounded-3xl bg-white p-7 text-center shadow-[0_24px_60px_-22px_rgba(20,40,90,0.4)] ring-1 ring-black/5">
