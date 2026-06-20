@@ -95,7 +95,7 @@ export default function FinalHook({ onCTA }: { onCTA: () => void }) {
         <button
           onClick={onCTA}
           style={cardSt(STRENGTHS.length + 2)}
-          className="mt-9 rounded-full bg-white px-9 py-4 text-[16px] font-bold text-[#1D75F7] shadow-[0_18px_50px_-12px_rgba(0,0,0,0.5)] transition-colors duration-300 ease-out hover:text-neutral-900 active:scale-[0.98]"
+          className="mt-9 rounded-full bg-white px-9 py-4 text-[16px] font-bold text-[#1D75F7] shadow-[0_18px_50px_-12px_rgba(0,0,0,0.5)] transition-colors duration-300 ease-out hover:bg-neutral-100 active:scale-[0.98]"
         >
           사전신청하고 먼저 시작하기
         </button>
