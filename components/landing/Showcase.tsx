@@ -394,7 +394,7 @@ export default function Showcase({ sel, onSelect, detail, detailCard, onDetail, 
                 <div className="mx-auto w-full max-w-md rounded-3xl bg-white p-7 text-center shadow-[0_24px_60px_-22px_rgba(20,40,90,0.4)] ring-1 ring-black/5">
                   <h3 className="font-pretendard text-2xl font-bold tracking-tight text-neutral-900">{cat.heading}</h3>
                   <p className="mt-3 text-[15px] leading-relaxed text-neutral-500">{cat.desc}</p>
-                  <button onClick={onDetail} className="mt-5 inline-flex items-center gap-1 rounded-full bg-[#1D75F7] px-4 py-2.5 text-[13px] font-bold text-white active:scale-95">추천 글감 보기</button>
+                  <button onClick={() => onDetail()} className="mt-5 inline-flex items-center gap-1 rounded-full bg-[#1D75F7] px-4 py-2.5 text-[13px] font-bold text-white active:scale-95">추천 글감 보기</button>
                 </div>
               )
             ) : (
