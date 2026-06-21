@@ -6,6 +6,18 @@ export type RegionLevel = "dong" | "gu" | "wide";
 
 // 온라인/전국형(지역 무의미)
 const NON_LOCAL_SUBS = new Set(["쇼핑몰", "영상편집", "AI교육컨설팅"]);
+// 커스텀 sub(목록 밖)도 온라인/비대면 성격이면 지역 무의미 → wide. 키워드 신호로 판정.
+// (블로그·부업·n잡·온라인 판매·콘텐츠 등. 로컬 업종이 잘못 걸려도 '지역글감 안 붙음'뿐이라 안전)
+const ONLINE_HINTS = [
+  "블로그", "온라인", "쇼핑몰", "스마트스토어", "스토어", "이커머스", "전자상거래", "셀러",
+  "부업", "n잡", "엔잡", "재택", "투잡", "콘텐츠", "유튜브", "유튜버", "인스타", "릴스",
+  "마케팅", "수익", "애드센스", "구매대행", "위탁판매", "위탁", "무역", "디지털", "판매대행", "크리에이터",
+];
+function isOnlineSub(sub: string | null): boolean {
+  if (!sub) return false;
+  const s = sub.replace(/\s+/g, "");
+  return ONLINE_HINTS.some((h) => s.includes(h));
+}
 // 의료 중 고관여(멀리서도 옴) → 구. 나머지 의원은 동네밀착 → 동.
 const MEDICAL_GU = new Set(["성형외과", "피부과", "치과"]);
 // 학원 중 전국/온라인 성격 → 광역. 나머지(초중고 교육) → 동.
@@ -16,7 +28,7 @@ const GENERAL_GU = new Set(["인테리어", "부동산", "결혼웨딩", "이사
 /** 업종·서브 → 지역 범위 레벨. */
 export function regionLevel(vertical: string, sub: string | null): RegionLevel {
   if (vertical === "professional" || vertical === "b2b") return "wide"; // 법률·세무·노무 등 비대면
-  if (sub && NON_LOCAL_SUBS.has(sub)) return "wide";
+  if (sub && (NON_LOCAL_SUBS.has(sub) || isOnlineSub(sub))) return "wide"; // 온라인/블로그/부업 등(커스텀 포함)
   if (vertical === "medical") return sub && MEDICAL_GU.has(sub) ? "gu" : "dong";
   if (vertical === "academy") return sub && ACADEMY_WIDE.has(sub) ? "wide" : "dong";
   if (vertical === "general") return sub && GENERAL_GU.has(sub) ? "gu" : "dong";

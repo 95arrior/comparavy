@@ -6,7 +6,7 @@ import ArticleList from "./ArticleList";
 import JourneyRoadmap from "./JourneyRoadmap";
 import type { Article } from "./types";
 
-interface Topic { keyword: string; title: string; demandLabel: string; ssak?: boolean; region?: boolean }
+interface Topic { keyword: string; title: string; demandLabel: string; ssak?: boolean; region?: boolean; online?: boolean }
 
 // 토스식 메인 홈 — '연구소' 컨셉/탭 제거. [미니 진척] → [성과] → [글감 자리+새 글 쓰기] → [내 글].
 // 미니 진척 배너는 3단계 완료되면 자동으로 사라진다(새 유저만 가이드).
@@ -123,9 +123,10 @@ export default function Home({
             {featured.title}
           </p>
           <p className={`mt-1.5 text-sm ${featured.ssak ? "font-medium text-[#7c3aed]" : featured.region ? "font-medium text-[#1D75F7]" : "text-neutral-500"}`}>
-            {featured.ssak ? "남들은 아직 안 썼어요. 먼저 쓰면 손님이 먼저 와요."
+            {featured.ssak
+              ? featured.online ? "남들은 아직 안 썼어요. 먼저 쓰면 검색을 선점해요." : "남들은 아직 안 썼어요. 먼저 쓰면 손님이 먼저 와요."
               : featured.region ? "우리 동네 손님이 바로 찾는 검색이에요."
-              : "손님이 자주 찾는 주제예요."}
+              : featured.online ? "검색이 꾸준한 주제예요." : "손님이 자주 찾는 주제예요."}
           </p>
           <div className="mt-6 flex items-center gap-4">
             <button

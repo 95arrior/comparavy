@@ -17,9 +17,14 @@ const WINDOW = 150; // least-used 윈도우 크기 — 이 안에서 랜덤(반�
 
 interface PoolRow { keyword: string; monthly_searches: number | null; competition: string | null; audience: string | null }
 
-// 검색량 → 사장이 이해하는 쉬운 말(숫자 노출 X). 숫자 의미 모르는 초보용.
-function demandLabel(searches: number | null): string {
+// 검색량 → 사장이 이해하는 쉬운 말(숫자 노출 X). 온라인 업종은 '손님' 대신 '검색' 톤.
+function demandLabel(searches: number | null, online: boolean): string {
   const n = searches ?? 0;
+  if (online) {
+    if (n >= 3000) return "많이 검색되는 주제예요";
+    if (n >= 800) return "꾸준히 검색돼요";
+    return "지금 쓰기 좋아요";
+  }
   if (n >= 3000) return "손님이 많이 찾아요";
   if (n >= 800) return "꾸준히 찾는 주제예요";
   return "지금 쓰기 좋아요";
@@ -169,6 +174,7 @@ export async function GET() {
   // 지역형 사업장이면(주소 있음 + 전국형 아님) 사업장 동네 + 업종 글감을 앞에 섞는다.
   // 지역 키워드 = 경쟁 낮고 전환 높은 '동네 손님' 검색 → 본인이 이미 쓴 건 제외.
   const level = regionLevel(vertical, sub ?? null); // 업종별 지역 범위(동/구/광역)
+  const online = level === "wide"; // 비대면/온라인(블로그·부업 등) → '손님' 대신 '검색' 톤
   const regions = extractRegions(profile?.biz_address as string | null, level);
   const local = isLocalBusiness(level, regions);
   const localSeeds = local
@@ -190,13 +196,15 @@ export async function GET() {
       demandLabel: "우리 동네 손님이 찾는 검색",
       ssak: false,
       region: true,
+      online: false,
     })),
     ...pickedRows.map((r, i) => ({
       keyword: r.keyword,
       title: titles[localSeeds.length + i],
-      demandLabel: demandLabel(r.monthly_searches),
+      demandLabel: demandLabel(r.monthly_searches, online),
       ssak: comp(r) === "낮음", // 싹 키워드(전설)
       region: false,
+      online,
     })),
   ].slice(0, PICK);
   return NextResponse.json({ topics });
