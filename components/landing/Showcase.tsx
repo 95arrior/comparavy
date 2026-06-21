@@ -67,16 +67,6 @@ const CATS: Cat[] = [
     topics: [],
     cards: [
       {
-        img: "/cat-etc-1.png",
-        heading: "그 외 다양한 업종",
-        desc: "어떤 업종이든 검색되는 글로.",
-        topics: [
-          { t: "오래된 집, 어디부터 고쳐야 돈 아껴?", tag: "인테리어", vol: 640, comp: "low" },
-          { t: "줄눈 곰팡이, 덧방으로 가려도 돼?", tag: "타일", vol: 1200, comp: "mid" },
-          { t: "판넬 결로, 단열 더하면 잡히나요?", tag: "판넬", vol: 380, comp: "low" },
-        ],
-      },
-      {
         img: "/cat-etc-2.png",
         heading: "모든 자영업자",
         desc: "동네 손님이 찾는 글까지.",
@@ -84,6 +74,16 @@ const CATS: Cat[] = [
           { t: "노견 미용, 마취 없이 가능한가요?", tag: "애견미용", vol: 520, comp: "low" },
           { t: "장례식 화환, 당일 주문 되나요?", tag: "꽃집", vol: 1400, comp: "mid" },
           { t: "입주청소, 사다리차 따로 불러요?", tag: "청소업체", vol: 2100, comp: "mid" },
+        ],
+      },
+      {
+        img: "/cat-etc-1.png",
+        heading: "그 외 다양한 업종",
+        desc: "어떤 업종이든 검색되는 글로.",
+        topics: [
+          { t: "오래된 집, 어디부터 고쳐야 돈 아껴?", tag: "인테리어", vol: 640, comp: "low" },
+          { t: "줄눈 곰팡이, 덧방으로 가려도 돼?", tag: "타일", vol: 1200, comp: "mid" },
+          { t: "판넬 결로, 단열 더하면 잡히나요?", tag: "판넬", vol: 380, comp: "low" },
         ],
       },
     ],
@@ -95,11 +95,11 @@ const ALL_IMGS = CATS.flatMap((c) => [c.img, c.imgM, ...(c.cards?.map((s) => s.i
 
 // 업종 카드 — 이미지 위 좌측에 오버레이. mode=intro: 설명+'추천 글감 보기' 버튼만(인지부하↓).
 // mode=detail: '매일 이런 글감을 추천해드려요' + 글감 리스트. 어두운 이미지는 흰 텍스트.
-function OverlayCard({ img, heading, desc, topics, dark, imgClass, wide, revealed = true, mode = "detail", onDetail, flat }: { img: string; heading: string; desc: string; topics: Topic[]; dark?: boolean; imgClass?: string; wide?: boolean; revealed?: boolean; mode?: "intro" | "detail"; onDetail?: () => void; flat?: boolean }) {
+function OverlayCard({ img, heading, desc, topics, dark, imgClass, wide, revealed = true, mode = "detail", onDetail }: { img: string; heading: string; desc: string; topics: Topic[]; dark?: boolean; imgClass?: string; wide?: boolean; revealed?: boolean; mode?: "intro" | "detail"; onDetail?: () => void }) {
   const intro = mode === "intro";
   return (
-    // flat: 캐러셀(overflow 클립)에선 큰 그림자가 직선으로 잘려 사각형 잔해 → 잘려도 티 안 나는 중간 그림자
-    <div className={`relative overflow-hidden rounded-3xl ring-1 ring-black/5 ${flat ? "shadow-[0_16px_34px_-16px_rgba(20,40,90,0.42)]" : "shadow-[0_24px_60px_-22px_rgba(20,40,90,0.4)]"}`}>
+    // 그림자 없음 — 캐러셀(overflow 클립)에서 그림자가 잘려 범위가 보이므로 전 카드 제거(ring만)
+    <div className="relative overflow-hidden rounded-3xl ring-1 ring-black/5">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={img} alt={heading} className={`block w-full ${imgClass ?? ""}`} />
       {dark && <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/40 via-black/10 to-transparent to-55%" />}
@@ -197,16 +197,15 @@ function EtcCards({ cards, onDetail, onActive }: { cards: SubCard[]; onDetail: (
     <div className="ateflo-soft-in mx-auto w-full max-w-5xl">
       {/* 모바일 — 한 장씩 가로 스와이프 */}
       <div className="sm:hidden">
-        {/* pt-1 pb-8: 세로 그림자가 트랙에 안 잘리게(가로 패딩은 snap 어긋나서 X) */}
-        <div ref={trackRef} onScroll={onScroll} data-hscroll className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto pt-1 pb-8">
+        <div ref={trackRef} onScroll={onScroll} data-hscroll className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto">
           {cards.map((c, i) => (
             <div key={c.img} className="w-full shrink-0 snap-center px-1">
-              <OverlayCard img={c.img} heading={c.heading} desc={c.desc} topics={[]} mode="intro" onDetail={() => onDetail(i)} dark={c.dark ?? false} imgClass="h-[64svh] min-h-[420px] max-h-[486px] object-cover object-top" wide flat />
+              <OverlayCard img={c.img} heading={c.heading} desc={c.desc} topics={[]} mode="intro" onDetail={() => onDetail(i)} dark={c.dark ?? false} imgClass="h-[64svh] min-h-[420px] max-h-[486px] object-cover object-top" wide />
             </div>
           ))}
         </div>
         {/* 닷 — '넘길 수 있다'는 신호 + 현재 위치 */}
-        <div className="mt-1 flex justify-center gap-2">
+        <div className="mt-5 flex justify-center gap-2">
           {cards.map((c, i) => (
             <button
               key={c.img}
