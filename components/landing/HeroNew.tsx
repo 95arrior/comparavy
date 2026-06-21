@@ -5,7 +5,7 @@ import WaitlistForm from "@/components/WaitlistForm";
 import Reveal from "@/components/Reveal";
 
 // 헤드라인 업종 룰렛 — 3초마다 위로 슬라이드(매장→병원→학원→카페). 2글자·포괄적.
-const ROLES = ["매장", "병원", "학원", "업체"];
+const ROLES = ["매장", "병원", "학원", "업체", "개인"];
 function RotatingWord() {
   const [i, setI] = useState(0);
   useEffect(() => {

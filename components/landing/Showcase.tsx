@@ -98,8 +98,8 @@ const ALL_IMGS = CATS.flatMap((c) => [c.img, c.imgM, ...(c.cards?.map((s) => s.i
 function OverlayCard({ img, heading, desc, topics, dark, imgClass, wide, revealed = true, mode = "detail", onDetail }: { img: string; heading: string; desc: string; topics: Topic[]; dark?: boolean; imgClass?: string; wide?: boolean; revealed?: boolean; mode?: "intro" | "detail"; onDetail?: () => void }) {
   const intro = mode === "intro";
   return (
-    // 그림자 없음 — 캐러셀(overflow 클립)에서 그림자가 잘려 범위가 보이므로 전 카드 제거(ring만)
-    <div className="relative overflow-hidden rounded-3xl ring-1 ring-black/5">
+    // 그림자 없음(캐러셀 클립). intro면 카드 전체 클릭 → 글감으로(자세히 버튼 외 이미지도)
+    <div onClick={intro ? onDetail : undefined} className={`relative overflow-hidden rounded-3xl ring-1 ring-black/5 ${intro ? "cursor-pointer" : ""}`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={img} alt={heading} className={`block w-full ${imgClass ?? ""}`} />
       {dark && <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/40 via-black/10 to-transparent to-55%" />}
@@ -109,13 +109,12 @@ function OverlayCard({ img, heading, desc, topics, dark, imgClass, wide, reveale
         {intro ? (
           <>
             <p className={`mt-2 text-[12px] font-medium leading-snug sm:mt-2.5 sm:text-[15px] sm:leading-relaxed ${dark ? "text-white/85" : "text-neutral-600"}`}>{desc}</p>
-            <button
-              onClick={onDetail}
-              className={`mt-2.5 inline-flex w-fit items-center gap-0.5 text-[11px] font-semibold leading-none underline-offset-2 transition hover:underline active:opacity-60 sm:mt-3 sm:text-[13px] ${dark ? "text-white/85" : "text-neutral-500"}`}
+            <span
+              className={`mt-2.5 inline-flex w-fit items-center gap-0.5 text-[11px] font-semibold leading-none underline-offset-2 sm:mt-3 sm:text-[13px] ${dark ? "text-white/85" : "text-neutral-500"}`}
             >
               <span className="leading-none">자세히</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" className="relative top-px shrink-0"><path d="M9 6l6 6-6 6" /></svg>
-            </button>
+            </span>
           </>
         ) : (
           <>
