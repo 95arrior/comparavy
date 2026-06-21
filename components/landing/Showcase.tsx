@@ -19,13 +19,15 @@ const sakScore = (vol: number, comp: Comp) => {
   const c = comp === "low" ? 1 : comp === "mid" ? 0.55 : 0.25;
   return Math.round((c * 0.7 + Math.min(1, vol / 2500) * 0.3) * 100);
 };
-type Cat = { label: string; heading: string; desc: string; img: string | null; cards?: SubCard[]; dark?: boolean; topics: Topic[] };
+// img=웹(가로), imgM=모바일(기타와 동일한 세로 카드). imgM 있으면 모바일에서 그걸로.
+type Cat = { label: string; heading: string; desc: string; img: string | null; imgM?: string; cards?: SubCard[]; dark?: boolean; topics: Topic[] };
 const CATS: Cat[] = [
   {
     label: "병원·약국",
     heading: "병원·약국",
     desc: "의료광고법에 어긋나지 않게, 환자가 찾는 글만 안전하게 써드려요.",
     img: "/cat-medical.png",
+    imgM: "/cat-medical-m.png",
     topics: [
       { t: "오래된 아말감, 지금 바꿔야 할까?", tag: "치과", vol: 880, comp: "low" },
       { t: "눈매교정, 풀리면 재수술 되나요?", tag: "성형외과", vol: 1300, comp: "mid" },
@@ -37,6 +39,7 @@ const CATS: Cat[] = [
     heading: "교육·학원",
     desc: "우리 동·시 지역까지 잡아, 학부모가 검색하는 글로 써드려요.",
     img: "/cat-academy.png",
+    imgM: "/cat-academy-m.png",
     dark: true, // 녹색 칠판 배경 → 흰 텍스트
     topics: [
       { t: "파닉스 뗐는데 왜 안 읽을까?", tag: "영어", vol: 720, comp: "low" },
@@ -49,6 +52,7 @@ const CATS: Cat[] = [
     heading: "법률·세무",
     desc: "의뢰인이 왜 검색했는지 짚어, 상담으로 이어지는 글로 써드려요.",
     img: "/cat-legal.png",
+    imgM: "/cat-legal-m.png",
     topics: [
       { t: "1인 사업자도 기장 맡겨야 할까?", tag: "세무", vol: 480, comp: "low" },
       { t: "권리금 못 받으면 소송 되나요?", tag: "법률", vol: 1600, comp: "mid" },
@@ -87,21 +91,38 @@ const CATS: Cat[] = [
 ];
 
 // 모든 업종 이미지 — 미리 받아둬 선택 시 로딩 없이 즉시 표시
-const ALL_IMGS = CATS.flatMap((c) => [c.img, ...(c.cards?.map((s) => s.img) ?? [])]).filter(Boolean) as string[];
+const ALL_IMGS = CATS.flatMap((c) => [c.img, c.imgM, ...(c.cards?.map((s) => s.img) ?? [])]).filter(Boolean) as string[];
 
-// 업종 카드 — 이미지 위 좌측에 헤딩·설명·글감 오버레이(모든 화면 동일). 어두운 이미지는 흰 텍스트.
-function OverlayCard({ img, heading, desc, topics, dark, imgClass, wide, revealed = true }: { img: string; heading: string; desc: string; topics: Topic[]; dark?: boolean; imgClass?: string; wide?: boolean; revealed?: boolean }) {
+// 업종 카드 — 이미지 위 좌측에 오버레이. mode=intro: 설명+'추천 글감 보기' 버튼만(인지부하↓).
+// mode=detail: '매일 이런 글감을 추천해드려요' + 글감 리스트. 어두운 이미지는 흰 텍스트.
+function OverlayCard({ img, heading, desc, topics, dark, imgClass, wide, revealed = true, mode = "detail", onDetail, flat }: { img: string; heading: string; desc: string; topics: Topic[]; dark?: boolean; imgClass?: string; wide?: boolean; revealed?: boolean; mode?: "intro" | "detail"; onDetail?: () => void; flat?: boolean }) {
+  const intro = mode === "intro";
   return (
-    <div className="relative overflow-hidden rounded-3xl shadow-[0_24px_60px_-22px_rgba(20,40,90,0.4)] ring-1 ring-black/5">
+    // flat: 캐러셀(overflow 클립)에선 큰 그림자가 직선으로 잘려 사각형 잔해 → 잘려도 티 안 나는 중간 그림자
+    <div className={`relative overflow-hidden rounded-3xl ring-1 ring-black/5 ${flat ? "shadow-[0_16px_34px_-16px_rgba(20,40,90,0.42)]" : "shadow-[0_24px_60px_-22px_rgba(20,40,90,0.4)]"}`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={img} alt={heading} className={`block w-full ${imgClass ?? ""}`} />
       {dark && <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/40 via-black/10 to-transparent to-55%" />}
-      <div className={`absolute inset-y-0 flex flex-col justify-center ${wide ? "inset-x-0 px-4 sm:px-6" : "left-0 w-[58%] px-4 sm:px-8 lg:px-10"}`}>
-        <h3 className={`font-pretendard text-[15px] font-bold leading-tight tracking-tight sm:text-2xl lg:text-[30px] ${dark ? "text-white" : "text-neutral-900"}`}>{heading}</h3>
-        <p className={`mt-1 min-h-[2.2em] text-[10.5px] font-medium leading-snug sm:mt-2.5 sm:min-h-[3.1em] sm:text-[15px] sm:leading-relaxed ${dark ? "text-white/85" : "text-neutral-600"}`}>{desc}</p>
-        {/* w-fit 컨테이너 = 가장 긴 글감 기준 폭, 박스 w-full로 동일 사이즈. 칩은 좌상단 탭 */}
-        <div className="mt-3 flex w-fit max-w-full flex-col gap-3 sm:mt-5 sm:gap-3.5">
-          {topics.map((tp, idx) => {
+      <div className={`absolute inset-y-0 flex flex-col ${wide ? "inset-x-0 max-w-[66%] justify-start px-4 pt-7 sm:max-w-none sm:px-6 sm:pt-9" : "left-0 w-[58%] justify-center px-4 sm:px-8 lg:px-10"}`}>
+        <h3 className={`font-pretendard text-[17px] font-bold leading-tight tracking-tight sm:text-2xl lg:text-[30px] ${dark ? "text-white" : "text-neutral-900"}`}>{heading}</h3>
+
+        {intro ? (
+          <>
+            <p className={`mt-2 text-[12px] font-medium leading-snug sm:mt-2.5 sm:text-[15px] sm:leading-relaxed ${dark ? "text-white/85" : "text-neutral-600"}`}>{desc}</p>
+            <button
+              onClick={onDetail}
+              className={`mt-2.5 inline-flex w-fit items-center gap-0.5 text-[11px] font-semibold leading-none underline-offset-2 transition hover:underline active:opacity-60 sm:mt-3 sm:text-[13px] ${dark ? "text-white/85" : "text-neutral-500"}`}
+            >
+              <span className="leading-none">자세히</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" className="relative top-px shrink-0"><path d="M9 6l6 6-6 6" /></svg>
+            </button>
+          </>
+        ) : (
+          <>
+            <p className={`mt-1.5 text-[9px] font-bold uppercase tracking-wide sm:mt-2 sm:text-[11px] ${dark ? "text-white/80" : "text-[#1D75F7]"}`}>매일 이런 글감을 추천해드려요</p>
+            {/* w-fit 컨테이너 = 가장 긴 글감 기준 폭, 박스 w-full로 동일 사이즈. 칩은 좌상단 탭 */}
+            <div className="mt-2.5 flex w-fit max-w-full flex-col gap-3 sm:mt-3.5 sm:gap-3.5">
+              {topics.map((tp, idx) => {
             const isSak = tp.comp === "low";
             const filled = Math.max(1, Math.min(5, Math.round(sakScore(tp.vol, tp.comp) / 20)));
             const stars = "★".repeat(filled) + "☆".repeat(5 - filled);
@@ -115,7 +136,7 @@ function OverlayCard({ img, heading, desc, topics, dark, imgClass, wide, reveale
                   transform: revealed ? "translateY(0) scale(1)" : "translateY(10px) scale(0.96)",
                 }}
                 className={`relative w-full rounded-2xl px-4 pb-2.5 pt-3.5 ring-1 sm:px-5 ${
-                  isSak ? "shadow-[0_10px_28px_-8px_rgba(139,92,246,0.55)] ring-violet-300/70" : "bg-white/95 shadow-[0_6px_18px_-12px_rgba(20,40,90,0.35)] ring-black/[0.04]"
+                  isSak ? "shadow-[0_5px_14px_-9px_rgba(139,92,246,0.3)] ring-violet-300/70" : "bg-white/95 shadow-[0_6px_18px_-12px_rgba(20,40,90,0.35)] ring-black/[0.04]"
                 }`}
               >
                 {/* 싹 오로라 배경(안쪽 레이어 — 카드는 안 자름) */}
@@ -145,14 +166,130 @@ function OverlayCard({ img, heading, desc, topics, dark, imgClass, wide, reveale
                 </div>
               </div>
             );
-          })}
+              })}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// 기타 소개(A) — 카드 2장(그 외 다양한 업종 + 모든 자영업자)을 같이 노출.
+// 웹은 가로 2열, 모바일은 가로 스와이프(한 장씩) + 하단 닷. 각 카드에 '자세히'.
+function EtcCards({ cards, onDetail, onActive }: { cards: SubCard[]; onDetail: (i: number) => void; onActive: (i: number) => void }) {
+  const [active, setActive] = useState(0);
+  const trackRef = useRef<HTMLDivElement>(null);
+
+  const goTo = (i: number) => {
+    const el = trackRef.current;
+    if (el) el.scrollTo({ left: i * el.clientWidth, behavior: "smooth" });
+  };
+  const onScroll = () => {
+    const el = trackRef.current;
+    if (!el) return;
+    const a = Math.round(el.scrollLeft / el.clientWidth);
+    setActive(a);
+    onActive(a); // 스와이프로 글감 펼칠 때 어느 카드인지 부모가 알게
+  };
+
+  return (
+    <div className="ateflo-soft-in mx-auto w-full max-w-5xl">
+      {/* 모바일 — 한 장씩 가로 스와이프 */}
+      <div className="sm:hidden">
+        {/* pt-1 pb-8: 세로 그림자가 트랙에 안 잘리게(가로 패딩은 snap 어긋나서 X) */}
+        <div ref={trackRef} onScroll={onScroll} data-hscroll className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto pt-1 pb-8">
+          {cards.map((c, i) => (
+            <div key={c.img} className="w-full shrink-0 snap-center px-1">
+              <OverlayCard img={c.img} heading={c.heading} desc={c.desc} topics={[]} mode="intro" onDetail={() => onDetail(i)} dark={c.dark ?? false} imgClass="h-[64svh] min-h-[420px] max-h-[486px] object-cover object-top" wide flat />
+            </div>
+          ))}
+        </div>
+        {/* 닷 — '넘길 수 있다'는 신호 + 현재 위치 */}
+        <div className="mt-1 flex justify-center gap-2">
+          {cards.map((c, i) => (
+            <button
+              key={c.img}
+              onClick={() => goTo(i)}
+              aria-label={`${i + 1}번째 카드 보기`}
+              className={`h-2 rounded-full transition-all duration-300 ${i === active ? "w-6 bg-[#1D75F7]" : "w-2 bg-neutral-300"}`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* 웹 — 가로 2열 그대로 */}
+      <div className="hidden gap-5 sm:grid sm:grid-cols-2">
+        {cards.map((c, i) => (
+          <OverlayCard key={c.img} img={c.img} heading={c.heading} desc={c.desc} topics={[]} mode="intro" onDetail={() => onDetail(i)} dark={c.dark ?? false} imgClass="h-[486.72px] object-cover object-top" wide />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// 글감(B) — 이미지 없이 크게. 제약이 없어 글감 제목·지표를 키운다.
+function BigTopicCard({ tp, idx, revealed }: { tp: Topic; idx: number; revealed: boolean }) {
+  const isSak = tp.comp === "low";
+  const filled = Math.max(1, Math.min(5, Math.round(sakScore(tp.vol, tp.comp) / 20)));
+  const stars = "★".repeat(filled) + "☆".repeat(5 - filled);
+  return (
+    <div
+      style={{
+        transition: "opacity 0.5s ease, transform 0.5s cubic-bezier(0.34,1.45,0.6,1)",
+        transitionDelay: revealed ? `${idx * 90}ms` : "0ms",
+        opacity: revealed ? 1 : 0,
+        transform: revealed ? "translateY(0) scale(1)" : "translateY(12px) scale(0.97)",
+      }}
+      className={`relative overflow-hidden rounded-2xl px-5 py-4 ring-1 sm:px-6 sm:py-5 ${
+        isSak ? "shadow-[0_7px_18px_-12px_rgba(139,92,246,0.3)] ring-violet-300/70" : "bg-white shadow-[0_10px_30px_-16px_rgba(20,40,90,0.4)] ring-black/[0.05]"
+      }`}
+    >
+      {isSak && <div className="ateflo-chip-aurora pointer-events-none absolute inset-0 rounded-2xl" />}
+      <div className="relative">
+        <div className="mb-1.5 flex items-center gap-1.5">
+          {tp.tag && <span className="inline-flex items-center rounded-full bg-[#E8F1FE] px-2 py-0.5 text-[10px] font-bold leading-none text-[#1D75F7] sm:text-[11px]">{tp.tag}</span>}
+          {isSak && <span className="inline-flex items-center gap-0.5 rounded-full bg-violet-600 px-2 py-0.5 text-[9.5px] font-bold leading-none text-white sm:text-[10.5px]">✦ 싹 키워드</span>}
+        </div>
+        <p className="text-[15px] font-bold leading-snug text-neutral-900 sm:text-[18px]">{tp.t}</p>
+        <div className="mt-1.5 space-y-1 text-[11px] sm:text-[13px]">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1 font-semibold text-neutral-500">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" className="shrink-0 opacity-70"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4-4" /></svg>
+              한 달 검색 {tp.vol.toLocaleString()}회
+            </span>
+            <span className="text-neutral-300">·</span>
+            <span className="font-medium text-neutral-500">선점</span>
+            <span className="font-bold tracking-[-1px] text-amber-500">{stars}</span>
+          </div>
+          <p className={`font-semibold ${isSak ? "text-violet-700" : "text-neutral-400"}`}>{EMOTION[tp.comp]}</p>
         </div>
       </div>
     </div>
   );
 }
 
-export default function Showcase({ sel, onSelect }: { sel: number | null; onSelect: (i: number) => void }) {
+// 글감(B) — '매일 이런 글감을 추천드려요' + 큰 글감 카드 리스트(이미지 없음).
+function TopicList({ heading, topics, revealed }: { heading: string; topics: Topic[]; revealed: boolean }) {
+  return (
+    <div className="mx-auto w-full max-w-xl">
+      <h3 className="text-center font-pretendard text-[22px] font-bold tracking-tight text-neutral-900 sm:text-[28px]">매일 이런 글감을 추천드려요</h3>
+      <p className="mt-1.5 text-center text-[13px] font-semibold text-[#1D75F7] sm:text-[15px]">{heading}</p>
+      <div className="mt-7 flex flex-col gap-3 sm:mt-8 sm:gap-3.5">
+        {topics.map((tp, i) => (
+          <BigTopicCard key={tp.t} tp={tp} idx={i} revealed={revealed} />
+        ))}
+      </div>
+      {topics.some((t) => t.comp === "low") && (
+        <p className="mt-4 text-center text-[11px] leading-relaxed text-neutral-400 sm:text-[12px]">
+          <span className="font-bold text-violet-600">✦ 싹 키워드</span> = 아직 경쟁이 적어, 지금 선점하기 좋은 키워드예요
+        </p>
+      )}
+    </div>
+  );
+}
+
+export default function Showcase({ sel, onSelect, detail, detailCard, onDetail, onBack, onEtcActive }: { sel: number | null; onSelect: (i: number) => void; detail: boolean; detailCard: number; onDetail: (card?: number) => void; onBack: () => void; onEtcActive: (i: number) => void }) {
   const [shown, setShown] = useState(false);
   const [topicsShown, setTopicsShown] = useState(false);
   const chipsRef = useRef<HTMLDivElement>(null);
@@ -222,26 +359,53 @@ export default function Showcase({ sel, onSelect }: { sel: number | null; onSele
         </div>
       </section>
 
-      {/* [3] 선택 업종의 추천 글감 */}
-      <section ref={topicsSecRef} data-page className="flex min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-neutral-50/70 px-6 py-20">
+      {/* [3] 선택 업종 — 소개(A) → '추천 글감 보기' → 글감(B) */}
+      <section ref={topicsSecRef} data-page className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-neutral-50/70 px-6 pt-20 pb-28 sm:pb-20">
+        {/* 뒤로 — 글감(B)에서만(위로 스와이프해도 닫힘) */}
+        {cat && detail && (
+          <button
+            onClick={onBack}
+            className="absolute left-5 top-[calc(env(safe-area-inset-top)+1.25rem)] z-10 inline-flex items-center gap-1 rounded-full bg-white/90 px-3.5 py-2 text-[13px] font-bold text-neutral-700 shadow-sm ring-1 ring-black/5 backdrop-blur transition hover:bg-white active:scale-95 sm:left-8"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
+            뒤로
+          </button>
+        )}
         {cat ? (
-          cat.cards ? (
-            // 기타 — 같은 오버레이 카드 2장을 웹에선 가로(모바일 1열)
-            <div key={sel} className="ateflo-soft-in mx-auto grid w-full max-w-5xl grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
-              {cat.cards.map((c) => (
-                <OverlayCard key={c.img} img={c.img} heading={c.heading} desc={c.desc} topics={c.topics} dark={c.dark ?? false} imgClass="h-[486.72px] object-cover object-top" wide revealed={topicsShown} />
-              ))}
-            </div>
-          ) : cat.img ? (
-            <div key={sel} className="ateflo-soft-in mx-auto w-full max-w-4xl">
-              <OverlayCard img={cat.img} heading={cat.heading} desc={cat.desc} topics={cat.topics} dark={cat.dark ?? false} revealed={topicsShown} />
-            </div>
-          ) : (
-            <div key={sel} className="ateflo-soft-in mx-auto w-full max-w-md rounded-3xl bg-white p-7 text-center shadow-[0_24px_60px_-22px_rgba(20,40,90,0.4)] ring-1 ring-black/5">
-              <h3 className="font-pretendard text-2xl font-bold tracking-tight text-neutral-900">{cat.heading}</h3>
-              <p className="mt-3 text-[15px] leading-relaxed text-neutral-500">{cat.desc}</p>
-            </div>
-          )
+          <div key={`${sel}-${detail ? "d" : "i"}`} className="ateflo-soft-in mx-auto w-full">
+            {!detail ? (
+              // A 소개 — 이미지 + 설명 + '자세히'. 기타는 2장(그 외 다양한 업종 + 모든 자영업자) 같이.
+              cat.cards ? (
+                <EtcCards cards={cat.cards} onDetail={onDetail} onActive={onEtcActive} />
+              ) : cat.img ? (
+                <div className="mx-auto w-full max-w-4xl">
+                  {/* 모바일 — 기타와 동일한 세로 카드(-m 이미지) */}
+                  {cat.imgM && (
+                    <div className="sm:hidden">
+                      <OverlayCard img={cat.imgM} heading={cat.heading} desc={cat.desc} topics={[]} dark={cat.dark ?? false} mode="intro" onDetail={onDetail} imgClass="h-[64svh] min-h-[420px] max-h-[486px] object-cover object-top" wide />
+                    </div>
+                  )}
+                  {/* 웹 — 기존 가로 카드 */}
+                  <div className={cat.imgM ? "hidden sm:block" : ""}>
+                    <OverlayCard img={cat.img} heading={cat.heading} desc={cat.desc} topics={[]} dark={cat.dark ?? false} mode="intro" onDetail={onDetail} />
+                  </div>
+                </div>
+              ) : (
+                <div className="mx-auto w-full max-w-md rounded-3xl bg-white p-7 text-center shadow-[0_24px_60px_-22px_rgba(20,40,90,0.4)] ring-1 ring-black/5">
+                  <h3 className="font-pretendard text-2xl font-bold tracking-tight text-neutral-900">{cat.heading}</h3>
+                  <p className="mt-3 text-[15px] leading-relaxed text-neutral-500">{cat.desc}</p>
+                  <button onClick={onDetail} className="mt-5 inline-flex items-center gap-1 rounded-full bg-[#1D75F7] px-4 py-2.5 text-[13px] font-bold text-white active:scale-95">추천 글감 보기</button>
+                </div>
+              )
+            ) : (
+              // B 글감 — 큰 글감 카드 3개. 기타는 '자세히' 누른 그 카드의 글감만(합치지·캐러셀 없음).
+              cat.cards ? (
+                <TopicList heading={(cat.cards[detailCard] ?? cat.cards[0]).heading} topics={(cat.cards[detailCard] ?? cat.cards[0]).topics} revealed={topicsShown} />
+              ) : (
+                <TopicList heading={cat.heading} topics={cat.topics} revealed={topicsShown} />
+              )
+            )}
+          </div>
         ) : (
           <p className="text-center text-[17px] font-medium text-neutral-300">위에서 업종을 골라보세요</p>
         )}

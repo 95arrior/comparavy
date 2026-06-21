@@ -27,10 +27,14 @@ const TOGGLE = 3;
 export default function NewLanding() {
   const [catSel, setCatSel] = useState<number | null>(null);
   const [info, setInfo] = useState(false);
+  const [detail, setDetail] = useState(false); // 업종 글감(B) 펼침 여부
+  const [detailCard, setDetailCard] = useState(0); // 기타: '자세히' 누른 서브카드 인덱스
   const idx = useRef(0);
   const lock = useRef(false);
   const catRef = useRef<number | null>(null);
   const toggledRef = useRef(false);
+  const detailRef = useRef(false);
+  const etcActiveRef = useRef(0); // 기타 캐러셀 현재 카드(스와이프로 글감 펼칠 때 사용)
   const pagesRef = useRef<HTMLElement[]>([]);
   const reduceRef = useRef(false);
   const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -54,8 +58,10 @@ export default function NewLanding() {
     }, 110);
   };
 
-  // 칩 클릭 — 바로 글감으로
-  const onSelectCat = (i: number) => { setCatSel(i); catRef.current = i; goTo(TOPICS); };
+  // 칩 클릭 — 업종 소개(A)로. 글감 펼침·서브카드 리셋(항상 소개부터)
+  const onSelectCat = (i: number) => { setCatSel(i); catRef.current = i; setDetail(false); detailRef.current = false; etcActiveRef.current = 0; setDetailCard(0); goTo(TOPICS); };
+  const openDetail = (card = 0) => { setDetail(true); detailRef.current = true; setDetailCard(card); };
+  const closeDetail = () => { setDetail(false); detailRef.current = false; };
   // 토글 클릭 — 이동만(다음 스크롤이 다음 섹션)
   const onToggle = () => { setInfo((v) => !v); toggledRef.current = true; };
 
@@ -79,6 +85,9 @@ export default function NewLanding() {
         autoTimer.current = setTimeout(() => goTo(TOPICS), 2000);
         return;
       }
+      // 글감(B)은 '자세히' 버튼으로만 — 소개(A)에서 스와이프하면 다음 섹션(블로그 누구나)으로.
+      // 글감 보는 중 아래로 스와이프하면 소개로 리셋하며 다음 섹션으로.
+      if (i === TOPICS && detailRef.current) { setDetail(false); detailRef.current = false; }
       // 토글: 한 번 안 움직였으면 토글만(이동 X)
       if (i === TOGGLE && !toggledRef.current) {
         setInfo(true); toggledRef.current = true;
@@ -87,7 +96,16 @@ export default function NewLanding() {
       }
       goTo(i + 1);
     };
-    const up = () => { if (lock.current || idx.current <= 0) return; goTo(idx.current - 1); };
+    const up = () => {
+      if (lock.current || idx.current <= 0) return;
+      // 글감(B)에서 위로 → 소개(A)로 닫기(이전 섹션으로 안 감)
+      if (idx.current === TOPICS && detailRef.current) {
+        setDetail(false); detailRef.current = false;
+        lock.current = true; setTimeout(() => { lock.current = false; }, 450);
+        return;
+      }
+      goTo(idx.current - 1);
+    };
 
     // 마지막 풀페이지 섹션(피날레) 아래 = 푸터 영역 → 풀페이지 해제(일반 스크롤)
     const lastIdx = () => pagesRef.current.length - 1;
@@ -105,10 +123,29 @@ export default function NewLanding() {
       if (Math.abs(e.deltaY) < 4) return;
       e.deltaY > 0 ? down() : up();
     };
-    let startY = 0;
-    const onTouchStart = (e: TouchEvent) => { startY = e.touches[0]?.clientY ?? 0; };
-    const onTouchMove = (e: TouchEvent) => { if (!inFooterZone()) e.preventDefault(); };
+    let startY = 0, startX = 0, inHScroll = false, hScrollHoriz = false;
+    const onTouchStart = (e: TouchEvent) => {
+      const t = e.touches[0];
+      startY = t?.clientY ?? 0;
+      startX = t?.clientX ?? 0;
+      // 가로 캐러셀(data-hscroll) 안에서 시작한 터치인지
+      inHScroll = Boolean((e.target as HTMLElement)?.closest?.("[data-hscroll]"));
+      hScrollHoriz = false;
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (inFooterZone()) return;
+      // 캐러셀 안 '가로' 제스처면 네이티브 스크롤 허용(페이지 컨트롤러가 안 가로챔)
+      if (inHScroll && !hScrollHoriz) {
+        const t = e.touches[0];
+        const dx = Math.abs((t?.clientX ?? 0) - startX);
+        const dy = Math.abs((t?.clientY ?? 0) - startY);
+        if (dx > dy && dx > 6) hScrollHoriz = true;
+      }
+      if (inHScroll && hScrollHoriz) return;
+      e.preventDefault();
+    };
     const onTouchEnd = (e: TouchEvent) => {
+      if (inHScroll && hScrollHoriz) return; // 가로 스와이프는 페이지 이동 안 함
       const dy = startY - (e.changedTouches[0]?.clientY ?? 0);
       if (Math.abs(dy) < 30) return;
       if (inFooterZone()) {
@@ -146,10 +183,13 @@ export default function NewLanding() {
     };
   }, []);
 
-  // 모바일 하단 CTA — 히어로로 가서 이메일 포커스
+  // 사전신청 CTA — 히어로(맨 위)로 가서 이메일 포커스.
+  // 모바일 키보드는 '사용자 제스처 안에서 동기 focus'라야 떠서, goTo 전에 먼저 focus한다.
   const toForm = () => {
+    const el = document.getElementById("hero-email") as HTMLInputElement | null;
+    el?.focus({ preventScroll: true }); // 탭 제스처 컨텍스트 유지 → 모바일 키보드 올라옴
     goTo(0);
-    setTimeout(() => { (document.getElementById("hero-email") as HTMLInputElement | null)?.focus({ preventScroll: true }); }, 280);
+    setTimeout(() => el?.focus({ preventScroll: true }), 320); // 전환 후 포커스 재보장
   };
 
   return (
@@ -160,7 +200,7 @@ export default function NewLanding() {
       {/* 섹션 콘텐츠만 깜빡(컷) */}
       <div style={{ opacity: dim ? 0.06 : 1, transition: "opacity 0.11s ease-in-out" }}>
         <HeroNew />
-        <Showcase sel={catSel} onSelect={onSelectCat} />
+        <Showcase sel={catSel} onSelect={onSelectCat} detail={detail} detailCard={detailCard} onDetail={openDetail} onBack={closeDetail} onEtcActive={(i) => { etcActiveRef.current = i; }} />
         <WriteModeSection info={info} onToggle={onToggle} />
         <FinalHook onCTA={toForm} />
         <div className="pb-24 sm:pb-0">

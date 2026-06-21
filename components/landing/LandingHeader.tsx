@@ -34,7 +34,9 @@ export default function LandingHeader() {
       }`}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 sm:px-8 sm:py-5">
-        <Brand size={24} />
+        <a href="/" aria-label="에이트플로 홈" className="transition active:scale-95">
+          <Brand size={24} />
+        </a>
         <button
           onClick={toForm}
           className="hidden rounded-full bg-[#1D75F7] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 active:scale-95 sm:block"

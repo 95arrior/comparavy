@@ -70,17 +70,17 @@ export default function FinalHook({ onCTA }: { onCTA: () => void }) {
           <Brand light size={26} />
         </div>
 
-        <h2 style={st(1)} className="font-pretendard mx-auto mt-7 max-w-xl text-[clamp(28px,7.4vw,46px)] font-bold leading-[1.16] tracking-tight">
-          지금 안 쓰면,<br />경쟁자가 먼저 씁니다
+        {/* 섹션 오프너 — 내장 필터 수로 깊이를 한 방에(과장 아닌 실제 규칙 수) */}
+        <h2 style={st(1)} className="font-pretendard mx-auto mt-7 max-w-xl text-[clamp(22px,6vw,34px)] font-bold leading-[1.22] tracking-tight">
+          글 한 편에,<br className="sm:hidden" /> <span className="text-[#7fc3ff]">40개 필터</span>가 들어 있어요
         </h2>
-
-        <p style={st(2)} className="mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-white/70 sm:text-lg">
-          블로그는 먼저 쌓는 사람이 가져가요.<br className="hidden sm:block" />
-          남들이 안 쓴 키워드를, 먼저 선점하세요.
+        {/* so-what — 40개가 사용자에게 뭐가 좋은지 + 아래 그리드가 '그 예시'임을 연결 */}
+        <p style={st(2)} className="mx-auto mt-3.5 max-w-md text-[14px] font-medium leading-relaxed text-white/70 sm:text-[15px]">
+          당신이 일일이 못 따지는 것까지 <span className="font-bold text-white/90">알아서 다 걸러요</span> <span className="text-white/40">↓</span>
         </p>
 
-        {/* 강점 — 순차로 하나씩 등장하는 카드 */}
-        <div className="mx-auto mt-7 grid w-full max-w-lg grid-cols-2 gap-2">
+        {/* 강점 — 위 '40개'의 실제 예시(왜 보여주는지: 이게 그 필터들) */}
+        <div className="mx-auto mt-6 grid w-full max-w-lg grid-cols-2 gap-2">
           {STRENGTHS.map((s, i) => (
             <div key={s} style={cardSt(i)} className="flex items-center gap-2 rounded-xl bg-white/[0.08] px-3 py-2.5 text-left ring-1 ring-white/[0.12]">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7fc3ff" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><path d="M5 13l4 4L19 7" /></svg>
@@ -92,15 +92,22 @@ export default function FinalHook({ onCTA }: { onCTA: () => void }) {
           <span className="text-[12px] font-bold text-white sm:text-[13px]">그리고, 셀 수 없이 많은 디테일이 더 있어요</span>
         </div>
 
+        {/* 마무리 — 간결한 결론 */}
+        <p style={cardSt(STRENGTHS.length + 1)} className="mx-auto mt-7 max-w-md text-[18px] font-bold leading-snug sm:text-[21px]">
+          블로그 마케팅도, 수익형 블로그도<br />
+          <span className="text-[#7fc3ff]">이걸로 하면 돼요</span>
+        </p>
+
+        {/* 모바일은 하단 고정 '무료로 사전신청하기'가 있어 숨김 — 웹만 노출 */}
         <button
           onClick={onCTA}
           style={cardSt(STRENGTHS.length + 2)}
-          className="mt-9 rounded-full bg-white px-9 py-4 text-[16px] font-bold text-[#1D75F7] shadow-[0_18px_50px_-12px_rgba(0,0,0,0.5)] transition-colors duration-[500ms] ease-out hover:bg-[#cfe2ff] active:scale-[0.98]"
+          className="mt-9 hidden rounded-full bg-white px-9 py-4 text-[16px] font-bold text-[#1D75F7] shadow-[0_18px_50px_-12px_rgba(0,0,0,0.5)] transition-colors duration-[500ms] ease-out hover:bg-[#cfe2ff] active:scale-[0.98] sm:inline-block"
         >
           사전신청하고 먼저 시작하기
         </button>
 
-        <p style={cardSt(STRENGTHS.length + 3)} className="mt-4 text-[12px] text-white/45">
+        <p style={cardSt(STRENGTHS.length + 3)} className="mt-7 text-[12px] text-white/45 sm:mt-4">
           오픈하면 가장 먼저 알려드릴게요 · 스팸 없어요
         </p>
       </div>
