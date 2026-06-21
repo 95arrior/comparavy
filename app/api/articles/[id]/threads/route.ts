@@ -4,7 +4,7 @@ import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-serve
 import { ensureUserRow } from "@/lib/userPlan";
 import { checkRateLimit } from "@/lib/rateLimit";
 
-// 블로그 글 → 스레드(Threads) 최적화 게시물(<500자). 7원칙을 프롬프트로 박는다.
+// 블로그 글 → 스레드(Threads) 최적화 게시물(~120자, 짧을수록 잘 읽힘). 7원칙을 프롬프트로 박는다.
 // ★스레드 전략(사용자 정의): 첫문장 후킹+숫자 / 쪼개기·짧은 문장 / 대화 유발(질문) / 의외성 /
 //   간접 가치입증(거짓 없이) / 다짜고짜 홍보 금지 / 우리 글에서 파생.
 type Style = "list" | "question" | "twist";
@@ -63,7 +63,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const client = new Anthropic({ apiKey });
     const res = await client.messages.create({
       model: "claude-haiku-4-5",
-      max_tokens: 700,
+      max_tokens: 350,
       messages: [
         {
           role: "user",
@@ -73,8 +73,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
             `[${STYLE_RULE[style]}]\n\n` +
             `스레드 필수 규칙:\n` +
             `1) 첫 문장이 생명. 지루하면 바로 넘겨버린다. 추상·모호 금지, 숫자를 적극 활용해 시선을 잡아라.\n` +
-            `2) 전체 500자 미만(공백 포함, 가급적 350~480자).\n` +
-            `3) 줄넘김(빈 줄)을 자주, 문장은 짧게. 한 줄에 한 호흡 — 스캔만 해도 읽히게.\n` +
+            `2) ★길이가 핵심: 전체 120자 내외(공백 포함, 90~140자). 절대 150자를 넘기지 마라. 짧을수록 끝까지 읽힌다 — 군더더기·중복·부연 다 쳐내고 알맹이만.\n` +
+            `3) 2~4줄로 짧게 끊어라(빈 줄 1~2번). 한 줄에 한 호흡 — 스캔만 해도 읽히게.\n` +
             `4) 다짜고짜 홍보 금지. 잠재 고객에게 '도움되는 정보'로 신뢰를 쌓는다.\n` +
             `5) 마지막 줄은 대화를 부르는 한 마디(질문/공감 유도).\n` +
             `6) 과장·보장·최고·1위·100% 같은 단정 금지. 거짓 정보 금지.\n` +
