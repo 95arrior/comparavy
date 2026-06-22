@@ -40,8 +40,8 @@ export default function TopicCard({
       {isSak && <div className="ateflo-chip-aurora pointer-events-none absolute inset-0 rounded-2xl" />}
       <div className="relative">
         <div className="mb-1.5 flex items-center gap-1.5">
-          {tag && <span className="inline-flex items-center rounded-full bg-[#E8F1FE] px-2 py-0.5 text-[10px] font-bold leading-none text-[#1D75F7] sm:text-[11px]">{tag}</span>}
-          {isSak && <span className="inline-flex items-center gap-0.5 rounded-full bg-violet-600 px-2 py-0.5 text-[9.5px] font-bold leading-none text-white sm:text-[10.5px]">✦ 싹 키워드</span>}
+          {tag && <span className="inline-flex items-center rounded-full bg-[#E8F1FE] px-2 py-1 text-[10px] font-bold leading-none text-[#1D75F7] sm:text-[11px]">{tag}</span>}
+          {isSak && <span className="inline-flex items-center gap-0.5 rounded-full bg-violet-600 px-2 py-1 text-[9.5px] font-bold leading-none text-white sm:text-[10.5px]">✦ 싹 키워드</span>}
         </div>
         <p className="text-[15px] font-bold leading-snug text-neutral-900 sm:text-[18px]">{title}</p>
         <div className="mt-1.5 space-y-1 text-[11px] sm:text-[13px]">
