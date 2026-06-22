@@ -4,9 +4,11 @@ import { useState, useEffect, useCallback } from "react";
 import SearchPerformance from "./SearchPerformance";
 import ArticleList from "./ArticleList";
 import JourneyRoadmap from "./JourneyRoadmap";
+import TopicCard from "@/components/TopicCard";
+import type { Comp } from "@/lib/topicScore";
 import type { Article } from "./types";
 
-interface Topic { keyword: string; title: string; demandLabel: string; ssak?: boolean; region?: boolean; tone?: "local" | "online" | "hobby" }
+interface Topic { keyword: string; title: string; demandLabel: string; ssak?: boolean; region?: boolean; tone?: "local" | "online" | "hobby"; vol: number; comp: Comp }
 
 // 토스식 메인 홈 — '연구소' 컨셉/탭 제거. [미니 진척] → [성과] → [글감 자리+새 글 쓰기] → [내 글].
 // 미니 진척 배너는 3단계 완료되면 자동으로 사라진다(새 유저만 가이드).
@@ -36,19 +38,13 @@ export default function Home({
 }) {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [topicsLoading, setTopicsLoading] = useState(true);
-  const [featuredIdx, setFeaturedIdx] = useState(0);
 
   const loadTopics = useCallback(async () => {
     setTopicsLoading(true);
     try {
       const res = await fetch("/api/topics");
       const data = await res.json();
-      const list: Topic[] = Array.isArray(data.topics) ? data.topics : [];
-      setTopics(list);
-      // 우리 동네(지역) 글감 우선 → 없으면 전설(싹 키워드) → 없으면 첫 번째
-      const rIdx = list.findIndex((t) => t.region);
-      const sIdx = list.findIndex((t) => t.ssak);
-      setFeaturedIdx(rIdx >= 0 ? rIdx : sIdx >= 0 ? sIdx : 0);
+      setTopics(Array.isArray(data.topics) ? data.topics : []);
     } catch {
       setTopics([]);
     } finally {
@@ -63,11 +59,6 @@ export default function Home({
   const visible = articles.filter((a) => a.status !== "generating");
   const hasArticles = visible.length > 0;
   const publishedCount = visible.filter((a) => a.status === "published").length;
-  const featured = topics[featuredIdx];
-  const nextFeatured = () => {
-    if (featuredIdx + 1 < topics.length) setFeaturedIdx(featuredIdx + 1);
-    else loadTopics(); // 다 봤으면 새로 받기
-  };
 
   // 모멘텀 — 한 줄 요약(총·연속·이번 주)
   const dayKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
@@ -100,47 +91,37 @@ export default function Home({
       </h1>
       <p className="mt-2 text-[15px] text-neutral-400">{blogName}</p>
 
-      {/* 딱 하나 크게 — 오늘의 글감 */}
+      {/* 추천 글감 — 랜딩과 동일한 글감 박스(실데이터). 누르면 그 글 쓰기 */}
       {topicsLoading ? (
-        <div className="mt-8 h-[168px] animate-pulse rounded-3xl bg-neutral-100" />
-      ) : featured ? (
-        <div className={`mt-8 rounded-3xl p-7 ${
-          featured.ssak ? "ateflo-chip-aurora ring-1 ring-white/60"
-          : featured.region ? "border border-[#1D75F7]/30 bg-[#1D75F7]/[0.035] shadow-[0_10px_30px_-14px_rgba(29,117,247,0.25)]"
-          : "border border-neutral-200 bg-white shadow-[0_10px_30px_-14px_rgba(20,40,90,0.15)]"
-        }`}>
-          {featured.ssak ? (
-            <span className="inline-block rounded-full bg-white/75 px-2.5 py-1 text-[11px] font-bold text-[#7c3aed]">싹 키워드 · 지금이 기회</span>
-          ) : featured.region ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-[#1D75F7]/10 px-2.5 py-1 text-[11px] font-bold text-[#1D75F7]">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z" /></svg>
-              우리 동네 키워드
-            </span>
-          ) : (
-            <span className="text-xs font-semibold text-[#1D75F7]">{featured.demandLabel}</span>
-          )}
-          <p className={`font-pretendard mt-3 text-[22px] font-bold leading-snug tracking-tight ${featured.ssak ? "text-[#3f3a6b]" : "text-neutral-900"}`}>
-            {featured.title}
-          </p>
-          <p className={`mt-1.5 text-sm ${featured.ssak ? "font-medium text-[#7c3aed]" : featured.region ? "font-medium text-[#1D75F7]" : "text-neutral-500"}`}>
-            {featured.ssak
-              ? featured.tone === "online" ? "남들은 아직 안 썼어요. 먼저 쓰면 검색을 선점해요."
-                : featured.tone === "hobby" ? "아직 아무도 안 쓴 주제예요. 지금이 기회예요."
-                : "남들은 아직 안 썼어요. 먼저 쓰면 손님이 먼저 와요."
-              : featured.region ? "우리 동네 손님이 바로 찾는 검색이에요."
-              : featured.tone === "online" ? "검색이 꾸준한 주제예요."
-                : featured.tone === "hobby" ? "사람들이 꾸준히 찾는 주제예요."
-                : "손님이 자주 찾는 주제예요."}
-          </p>
-          <div className="mt-6 flex items-center gap-4">
-            <button
-              onClick={() => onWriteKeyword(featured.keyword, featured.title)}
-              className={`rounded-xl px-6 py-3 text-sm font-bold shadow-sm transition active:scale-[0.98] ${featured.ssak ? "bg-white text-[#7c3aed] hover:opacity-90" : "bg-[#1D75F7] text-white hover:opacity-90"}`}
-            >
-              이 글 쓰기
-            </button>
-            <button onClick={nextFeatured} className="text-sm font-medium text-neutral-500 transition hover:text-neutral-800">다른 글감 →</button>
+        <div className="mt-8 flex flex-col gap-3">
+          <div className="h-[112px] animate-pulse rounded-2xl bg-neutral-100" />
+          <div className="h-[112px] animate-pulse rounded-2xl bg-neutral-100" />
+          <div className="h-[112px] animate-pulse rounded-2xl bg-neutral-100" />
+        </div>
+      ) : topics.length > 0 ? (
+        <div className="mt-8">
+          <div className="flex flex-col gap-3">
+            {topics.map((t, i) =>
+              t.region ? (
+                // 지역 글감 — 검색량 데이터가 없어 '우리 동네' 카드로
+                <button
+                  key={t.keyword}
+                  onClick={() => onWriteKeyword(t.keyword, t.title)}
+                  className="rounded-2xl border border-[#1D75F7]/30 bg-[#1D75F7]/[0.035] px-5 py-4 text-left shadow-[0_10px_30px_-16px_rgba(29,117,247,0.25)] transition active:scale-[0.99] sm:px-6 sm:py-5"
+                >
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#1D75F7]/10 px-2 py-0.5 text-[10px] font-bold leading-none text-[#1D75F7] sm:text-[11px]">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z" /></svg>
+                    우리 동네 키워드
+                  </span>
+                  <p className="mt-1.5 text-[15px] font-bold leading-snug text-neutral-900 sm:text-[18px]">{t.title}</p>
+                  <p className="mt-1.5 inline-flex items-center gap-0.5 text-[12px] font-bold text-[#1D75F7] sm:text-[13px]">이 글 쓰기 ›</p>
+                </button>
+              ) : (
+                <TopicCard key={t.keyword} title={t.title} tag={t.keyword} vol={t.vol} comp={t.comp} idx={i} cta="이 글 쓰기" onClick={() => onWriteKeyword(t.keyword, t.title)} />
+              ),
+            )}
           </div>
+          <button onClick={loadTopics} className="mt-4 w-full rounded-xl border border-neutral-200 py-2.5 text-sm font-medium text-neutral-500 transition hover:bg-neutral-50 active:scale-[0.99]">다른 글감 받기 ↻</button>
         </div>
       ) : (
         <div className="mt-8 rounded-3xl border border-dashed border-neutral-200 p-8 text-center text-sm text-neutral-400">

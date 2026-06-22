@@ -6,6 +6,7 @@ import { audienceOf, AUDIENCE_ALL } from "@/lib/audience";
 import { isUnsafeKeyword } from "@/lib/keywordSafety";
 import { regionLevel, extractRegions, isLocalBusiness, buildLocalSeeds } from "@/lib/region";
 import { bloggerType, type BloggerType } from "@/lib/bloggerTypes";
+import { compFromLabel, type Comp } from "@/lib/topicScore";
 import { buildPoolForSub } from "@/lib/keywordPool";
 import { checkRateLimit } from "@/lib/rateLimit";
 
@@ -204,6 +205,8 @@ export async function GET() {
       ssak: false,
       region: true,
       tone: "local" as BloggerType,
+      vol: 0, // 지역 글감은 검색량 데이터 없음(카드 지표 대신 '우리 동네' 표시)
+      comp: "mid" as Comp,
     })),
     ...pickedRows.map((r, i) => ({
       keyword: r.keyword,
@@ -212,6 +215,8 @@ export async function GET() {
       ssak: comp(r) === "낮음", // 싹 키워드(전설)
       region: false,
       tone: type,
+      vol: r.monthly_searches ?? 0, // 한 달 검색 N회(실데이터)
+      comp: compFromLabel(r.competition), // 선점 별점·감정용
     })),
   ].slice(0, PICK);
   return NextResponse.json({ topics });

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Reveal from "@/components/Reveal";
+import TopicCard from "@/components/TopicCard";
 
 // 2~3섹션 — [2] 업종 칩(크게, 처음 선택X, 중앙 도달 시 뽕뽕뽕 팝) → 고르면 [3] 그 업종 이미지+설명+글감.
 type Comp = "low" | "mid" | "high";
@@ -226,48 +227,7 @@ function EtcCards({ cards, onDetail, onActive }: { cards: SubCard[]; onDetail: (
   );
 }
 
-// 글감(B) — 이미지 없이 크게. 제약이 없어 글감 제목·지표를 키운다.
-function BigTopicCard({ tp, idx, revealed }: { tp: Topic; idx: number; revealed: boolean }) {
-  const isSak = tp.comp === "low";
-  const filled = Math.max(1, Math.min(5, Math.round(sakScore(tp.vol, tp.comp) / 20)));
-  const stars = "★".repeat(filled) + "☆".repeat(5 - filled);
-  return (
-    <div
-      style={{
-        transition: "opacity 0.5s ease, transform 0.5s cubic-bezier(0.34,1.45,0.6,1)",
-        transitionDelay: revealed ? `${idx * 90}ms` : "0ms",
-        opacity: revealed ? 1 : 0,
-        transform: revealed ? "translateY(0) scale(1)" : "translateY(12px) scale(0.97)",
-      }}
-      className={`relative overflow-hidden rounded-2xl px-5 py-4 ring-1 sm:px-6 sm:py-5 ${
-        isSak ? "shadow-[0_7px_18px_-12px_rgba(139,92,246,0.3)] ring-violet-300/70" : "bg-white shadow-[0_10px_30px_-16px_rgba(20,40,90,0.4)] ring-black/[0.05]"
-      }`}
-    >
-      {isSak && <div className="ateflo-chip-aurora pointer-events-none absolute inset-0 rounded-2xl" />}
-      <div className="relative">
-        <div className="mb-1.5 flex items-center gap-1.5">
-          {tp.tag && <span className="inline-flex items-center rounded-full bg-[#E8F1FE] px-2 py-0.5 text-[10px] font-bold leading-none text-[#1D75F7] sm:text-[11px]">{tp.tag}</span>}
-          {isSak && <span className="inline-flex items-center gap-0.5 rounded-full bg-violet-600 px-2 py-0.5 text-[9.5px] font-bold leading-none text-white sm:text-[10.5px]">✦ 싹 키워드</span>}
-        </div>
-        <p className="text-[15px] font-bold leading-snug text-neutral-900 sm:text-[18px]">{tp.t}</p>
-        <div className="mt-1.5 space-y-1 text-[11px] sm:text-[13px]">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 font-semibold text-neutral-500">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" className="shrink-0 opacity-70"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4-4" /></svg>
-              한 달 검색 {tp.vol.toLocaleString()}회
-            </span>
-            <span className="text-neutral-300">·</span>
-            <span className="font-medium text-neutral-500">선점</span>
-            <span className="font-bold tracking-[-1px] text-amber-500">{stars}</span>
-          </div>
-          <p className={`font-semibold ${isSak ? "text-violet-700" : "text-neutral-400"}`}>{EMOTION[tp.comp]}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// 글감(B) — '매일 이런 글감을 추천드려요' + 큰 글감 카드 리스트(이미지 없음).
+// 글감(B) — '매일 이런 글감을 추천드려요' + 큰 글감 카드 리스트(공유 TopicCard, 이미지 없음).
 function TopicList({ heading, topics, revealed }: { heading: string; topics: Topic[]; revealed: boolean }) {
   return (
     <div className="mx-auto w-full max-w-xl">
@@ -275,7 +235,7 @@ function TopicList({ heading, topics, revealed }: { heading: string; topics: Top
       <p className="mt-1.5 text-center text-[13px] font-semibold text-[#1D75F7] sm:text-[15px]">{heading}</p>
       <div className="mt-7 flex flex-col gap-3 sm:mt-8 sm:gap-3.5">
         {topics.map((tp, i) => (
-          <BigTopicCard key={tp.t} tp={tp} idx={i} revealed={revealed} />
+          <TopicCard key={tp.t} title={tp.t} tag={tp.tag} vol={tp.vol} comp={tp.comp} idx={i} revealed={revealed} />
         ))}
       </div>
       {topics.some((t) => t.comp === "low") && (
