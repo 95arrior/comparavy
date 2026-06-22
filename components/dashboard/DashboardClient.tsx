@@ -15,7 +15,6 @@ import WordPressPanel from "./WordPressPanel";
 import KeywordFinder from "./KeywordFinder";
 import KeywordQueue from "./KeywordQueue";
 import Onboarding from "./Onboarding";
-import ProfileSettings from "./ProfileSettings";
 import Home from "./Home";
 import { toEngineType, type BlogProfile } from "@/lib/blogProfile";
 import { bloggerType } from "@/lib/bloggerTypes";
@@ -85,6 +84,7 @@ export default function DashboardClient(props: DashboardProps) {
   const [doneId, setDoneId] = useState<string | null>(null); // 백그라운드 생성 완료 → '보러가기'로 안내
   // 2단계-A: 블로그 프로필 + 키워드 예약 큐
   const [blogProfile, setBlogProfile] = useState<BlogProfile | null>(null);
+  const [reonboardPrev, setReonboardPrev] = useState<BlogProfile | null>(null); // 재설정(재온보딩) 전 프로필 — 취소 시 복귀
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const pendingQueueId = useRef<string | null>(null); // 첫 글 생성 완료 시 연결할 큐 항목
   // 키워드 발굴 검색 state (KeywordFinder에서 리프트 — 탭 이동/새로고침에도 유지)
@@ -444,6 +444,7 @@ export default function DashboardClient(props: DashboardProps) {
   function onProfileSaved(p: BlogProfile) {
     const isNew = !blogProfile;
     setBlogProfile(p);
+    setReonboardPrev(null); // 완료했으니 복귀용 프로필 비움
     setKwTopic(p.topic);
     autoSearched.current = false; // 새 주제면 키워드 탭 진입 시 자동검색 다시
     setNotice(isNew ? "블로그 준비 완료예요 🎉" : "설정을 저장했어요");
@@ -912,7 +913,7 @@ export default function DashboardClient(props: DashboardProps) {
 
         {!page && !selected && !genParams && tab === "lab" && profileLoaded && !blogProfile && (
           <div className="ateflo-page-in">
-            <Onboarding onSaved={onProfileSaved} />
+            <Onboarding onSaved={onProfileSaved} onCancel={reonboardPrev ? () => { setBlogProfile(reonboardPrev); setReonboardPrev(null); } : undefined} />
           </div>
         )}
 
@@ -1193,14 +1194,13 @@ export default function DashboardClient(props: DashboardProps) {
             {blogProfile && (
               <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-neutral-100 bg-white shadow-sm p-6 sm:p-8">
                 <h2 className="text-lg font-semibold tracking-tight">블로그 설정</h2>
-                <p className="mt-1 text-sm leading-relaxed text-neutral-500">업종·이름·업체 정보를 바꿀 수 있어요. 저장하면 홈으로 돌아가요.</p>
-                <ProfileSettings profile={blogProfile} onSaved={onProfileSaved} />
-                {/* 재설정 — 처음부터(온보딩) 다시 */}
+                <p className="mt-1 text-sm leading-relaxed text-neutral-500">업종·이름·정보를 바꾸려면 처음부터 다시 설정해요.</p>
+                {/* 재설정 — 온보딩부터 다시(취소 가능). 이전 프로필 저장해 취소 시 복귀 */}
                 <button
-                  onClick={() => { if (window.confirm("블로그 설정을 처음부터 다시 할까요? 온보딩부터 새로 진행해요.")) { setBlogProfile(null); goTab("lab"); } }}
-                  className="mt-4 w-full rounded-xl border border-neutral-200 py-2.5 text-sm font-medium text-neutral-500 transition hover:bg-neutral-50 active:scale-[0.99]"
+                  onClick={() => { if (window.confirm("블로그를 처음부터 다시 설정할까요?")) { setReonboardPrev(blogProfile); setBlogProfile(null); goTab("lab"); } }}
+                  className="mt-4 w-full rounded-xl bg-[#1D75F7] py-3 text-sm font-semibold text-white transition hover:opacity-90 active:scale-[0.99]"
                 >
-                  처음부터 다시 설정 (재설정)
+                  재설정
                 </button>
               </div>
             )}

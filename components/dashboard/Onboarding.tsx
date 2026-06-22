@@ -53,7 +53,7 @@ function isGarbageInput(raw: string): boolean {
   return false;
 }
 
-export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => void }) {
+export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogProfile) => void; onCancel?: () => void }) {
   const [step, setStep] = useState<Step>("type");
   const [bType, setBType] = useState<BloggerType>("local"); // local/online/hobby — vertical로 인코딩
   const [dir, setDir] = useState<"fwd" | "back">("fwd");
@@ -175,6 +175,13 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
     <div className="fixed left-0 top-0 z-50 flex h-[100dvh] w-full flex-col overflow-hidden bg-white">
       <div className="min-h-0 flex-1 overflow-hidden">
         <div className="mx-auto max-w-md px-6 pt-7 pb-4">
+      {/* 취소 — 설정에서 재진입(재온보딩)일 때만. 원래 설정으로 복귀 */}
+      {onCancel && step !== "done" && (
+        <div className="mb-2 flex justify-end">
+          <button onClick={onCancel} className="text-sm font-medium text-neutral-400 transition hover:text-neutral-700">취소</button>
+        </div>
+      )}
+
       {/* 진행 점 */}
       {step !== "done" && (
         <div className="mb-8 flex items-center justify-center gap-1.5">

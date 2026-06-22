@@ -199,7 +199,7 @@ export async function GET(req: Request) {
   // 노이즈(ok=false)·중복 제외로 빠질 것 대비해 '여유분(want)'까지 뽑아 무조건 PICK개 채운다.
   const rng = mulberry32(seedFrom(`${user.id}-${new Date().toISOString().slice(0, 10)}`));
   const need = Math.max(0, PICK - localSeeds.length);
-  const want = need + 4; // ok 필터 후에도 need개 채우게 여유
+  const want = need + 8; // ok(노이즈) 필터 후에도 need개 채우게 넉넉히(부족 카테고리 3개 보장)
   const general = pickBalanced(mid, audActive ? audSel : [], want + 1, rng);
   const candidates: PoolRow[] = [];
   if (low.length > 0 && rng() < 0.28) candidates.push(low[Math.floor(rng() * low.length)]); // 싹 1개 가끔

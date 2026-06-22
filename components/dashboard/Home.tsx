@@ -163,7 +163,11 @@ export default function Home({
           </div>
           <div className="mt-3 flex flex-col gap-3">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="h-[100px] animate-pulse rounded-2xl bg-neutral-100" style={{ animationDelay: `${i * 120}ms` }} />
+              <div key={i} className="rounded-2xl bg-white px-5 py-4 ring-1 ring-black/[0.05] sm:px-6 sm:py-5">
+                <div className="h-4 w-14 animate-pulse rounded-full bg-neutral-200" style={{ animationDelay: `${i * 120}ms` }} />
+                <div className="mt-2.5 h-5 w-3/4 animate-pulse rounded bg-neutral-200" style={{ animationDelay: `${i * 120 + 60}ms` }} />
+                <div className="mt-3 h-3.5 w-1/2 animate-pulse rounded bg-neutral-100" style={{ animationDelay: `${i * 120 + 120}ms` }} />
+              </div>
             ))}
           </div>
         </div>
