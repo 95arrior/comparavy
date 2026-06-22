@@ -1,6 +1,6 @@
 "use client";
 
-import { EMOTION, starsFor, type Comp } from "@/lib/topicScore";
+import { EMOTION, filledStars, type Comp } from "@/lib/topicScore";
 
 // 글감 박스 — 랜딩(Showcase)·앱(Home) 공용. 제목 + 한 달 검색 N회 + 선점 별점 + 감정 + 싹 비주얼.
 // onClick 주면 카드 전체 클릭(앱: 글쓰기), cta 주면 우하단에 작은 안내(예: '이 글 쓰기 ›').
@@ -24,6 +24,7 @@ export default function TopicCard({
   cta?: string;
 }) {
   const isSak = comp === "low";
+  const filled = filledStars(vol, comp);
   return (
     <div
       onClick={onClick}
@@ -52,7 +53,23 @@ export default function TopicCard({
             </span>
             <span className="text-neutral-300">·</span>
             <span className="font-medium text-neutral-500">선점</span>
-            <span className="font-bold tracking-[-1px] text-amber-500">{starsFor(vol, comp)}</span>
+            <span className="inline-flex font-bold tracking-[-1px]">
+              {Array.from({ length: 5 }).map((_, i) => {
+                const on = i < filled;
+                return (
+                  <span
+                    key={i}
+                    className={`inline-block ${on ? "text-amber-500" : "text-amber-500/25"}`}
+                    style={{
+                      animation: revealed ? `ateflo-star-pop 0.42s cubic-bezier(0.34,1.56,0.64,1) ${idx * 90 + 160 + i * 80}ms both` : undefined,
+                      opacity: revealed ? undefined : 0,
+                    }}
+                  >
+                    {on ? "★" : "☆"}
+                  </span>
+                );
+              })}
+            </span>
           </div>
           <p className={`font-semibold ${isSak ? "text-violet-700" : "text-neutral-400"}`}>{EMOTION[comp]}</p>
         </div>

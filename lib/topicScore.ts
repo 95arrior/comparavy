@@ -14,9 +14,13 @@ export const sakScore = (vol: number, comp: Comp): number => {
   return Math.round((c * 0.7 + Math.min(1, vol / 2500) * 0.3) * 100);
 };
 
+// 채워진 별 개수(1~5).
+export const filledStars = (vol: number, comp: Comp): number =>
+  Math.max(1, Math.min(5, Math.round(sakScore(vol, comp) / 20)));
+
 // 선점 별점(★/☆ 5칸) 문자열.
 export const starsFor = (vol: number, comp: Comp): string => {
-  const filled = Math.max(1, Math.min(5, Math.round(sakScore(vol, comp) / 20)));
+  const filled = filledStars(vol, comp);
   return "★".repeat(filled) + "☆".repeat(5 - filled);
 };
 

@@ -381,6 +381,8 @@ input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-sele
 /* 부드럽게 떠오르며 등장(이미지·업체 박스) — 뚝 끊김 없이 */
 @keyframes ateflo-soft-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
 .ateflo-soft-in { animation: ateflo-soft-in 0.62s cubic-bezier(0.22, 1, 0.36, 1) both; }
+/* 선점 별 등장 — 순서대로 팝(임팩트: 작게→오버슈트→정착) */
+@keyframes ateflo-star-pop { 0% { opacity: 0; transform: scale(0.2); } 55% { opacity: 1; transform: scale(1.5); } 100% { opacity: 1; transform: scale(1); } }
 
 /* 도미노 팝(단어가 하나씩 살짝 튀며 부드럽게 등장) */
 @keyframes ateflo-domino {

@@ -8,7 +8,7 @@ import TopicCard from "@/components/TopicCard";
 import type { Comp } from "@/lib/topicScore";
 import type { Article } from "./types";
 
-interface Topic { keyword: string; title: string; demandLabel: string; ssak?: boolean; region?: boolean; tone?: "local" | "online" | "hobby"; vol: number; comp: Comp }
+interface Topic { keyword: string; title: string; demandLabel: string; ssak?: boolean; region?: boolean; tone?: "local" | "online" | "hobby"; vol: number; comp: Comp; tag?: string }
 
 // 토스식 메인 홈 — '연구소' 컨셉/탭 제거. [미니 진척] → [성과] → [글감 자리+새 글 쓰기] → [내 글].
 // 미니 진척 배너는 3단계 완료되면 자동으로 사라진다(새 유저만 가이드).
@@ -117,7 +117,7 @@ export default function Home({
                   <p className="mt-1.5 inline-flex items-center gap-0.5 text-[12px] font-bold text-[#1D75F7] sm:text-[13px]">이 글 쓰기 ›</p>
                 </button>
               ) : (
-                <TopicCard key={t.keyword} title={t.title} tag={t.keyword} vol={t.vol} comp={t.comp} idx={i} cta="이 글 쓰기" onClick={() => onWriteKeyword(t.keyword, t.title)} />
+                <TopicCard key={t.keyword} title={t.title} tag={t.tag || undefined} vol={t.vol} comp={t.comp} idx={i} cta="이 글 쓰기" onClick={() => onWriteKeyword(t.keyword, t.title)} />
               ),
             )}
           </div>

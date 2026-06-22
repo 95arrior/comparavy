@@ -195,29 +195,34 @@ export async function GET() {
   const pickedRows = result.slice(0, Math.max(0, PICK - localSeeds.length));
   const allKeywords = [...localSeeds, ...pickedRows.map((r) => r.keyword)];
   if (allKeywords.length === 0) return NextResponse.json({ topics: [] });
-  const titles = await keywordsToTitles(allKeywords);
+  const titled = await keywordsToTitles(allKeywords); // {title, tag(카테고리칩), ok}
 
   const topics = [
     ...localSeeds.map((k, i) => ({
       keyword: k,
-      title: titles[i],
+      title: titled[i]?.title ?? k,
       demandLabel: "우리 동네 손님이 찾는 검색",
       ssak: false,
       region: true,
       tone: "local" as BloggerType,
       vol: 0, // 지역 글감은 검색량 데이터 없음(카드 지표 대신 '우리 동네' 표시)
       comp: "mid" as Comp,
+      tag: "", // 지역 카드는 '우리 동네 키워드' 칩 사용
     })),
-    ...pickedRows.map((r, i) => ({
-      keyword: r.keyword,
-      title: titles[localSeeds.length + i],
-      demandLabel: demandLabel(r.monthly_searches, type),
-      ssak: comp(r) === "낮음", // 싹 키워드(전설)
-      region: false,
-      tone: type,
-      vol: r.monthly_searches ?? 0, // 한 달 검색 N회(실데이터)
-      comp: compFromLabel(r.competition), // 선점 별점·감정용
-    })),
+    ...pickedRows
+      .map((r, i) => ({ r, t: titled[localSeeds.length + i] }))
+      .filter(({ t }) => t?.ok !== false) // 노이즈(스블 자네 등) 제외
+      .map(({ r, t }) => ({
+        keyword: r.keyword,
+        title: t?.title ?? r.keyword,
+        demandLabel: demandLabel(r.monthly_searches, type),
+        ssak: comp(r) === "낮음", // 싹 키워드(전설)
+        region: false,
+        tone: type,
+        vol: r.monthly_searches ?? 0, // 한 달 검색 N회(실데이터)
+        comp: compFromLabel(r.competition), // 선점 별점·감정용
+        tag: t?.tag ?? "", // 내용 카테고리 칩
+      })),
   ].slice(0, PICK);
   return NextResponse.json({ topics });
 }
