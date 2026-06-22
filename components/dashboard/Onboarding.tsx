@@ -4,6 +4,7 @@ import { useState } from "react";
 import HoursEditor from "./HoursEditor";
 import AddressSearch from "./AddressSearch";
 import { VERTICAL_SUBS } from "@/lib/verticalSubs";
+import { BLOGGER_TYPE_CARDS, categoriesFor, type BloggerType } from "@/lib/bloggerTypes";
 import { ACADEMY_AUDIENCES, AUDIENCE_ALL } from "@/lib/audience";
 import { formatKoreanPhone } from "@/lib/businessBox";
 import LoadingScreen from "@/components/LoadingScreen";
@@ -21,11 +22,23 @@ const VERTS = [
 
 const VLABEL: Record<string, string> = Object.fromEntries(VERTS.map((x) => [x.v, x.label]));
 
-type Step = "vertical" | "sub" | "audience" | "biz" | "hours" | "strength" | "review" | "done";
+type Step = "type" | "vertical" | "sub" | "audience" | "biz" | "hours" | "strength" | "review" | "done";
+
+// 직접입력 가비지 가드(클라 즉시판정 — 의존성 없는 순수버전). 자판난타·자모·의미없음 차단.
+function isGarbageInput(raw: string): boolean {
+  const k = (raw ?? "").trim();
+  const meaningful = k.match(/[가-힣a-zA-Z]/g) ?? [];
+  if (meaningful.length < 2) return true;
+  if (new Set(meaningful.map((c) => c.toLowerCase())).size < 2) return true;
+  if (/^[a-zA-Z\s]+$/.test(k) && !/[aeiou]/i.test(k)) return true;
+  return false;
+}
 
 export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => void }) {
-  const [step, setStep] = useState<Step>("vertical");
+  const [step, setStep] = useState<Step>("type");
+  const [bType, setBType] = useState<BloggerType>("local"); // local/online/hobby — vertical로 인코딩
   const [dir, setDir] = useState<"fwd" | "back">("fwd");
+  const [customErr, setCustomErr] = useState("");
   const [vertical, setVertical] = useState("");
   const [sub, setSub] = useState("");
   const [customMode, setCustomMode] = useState(false);
@@ -53,17 +66,40 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
   const primaryBtn = "w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-semibold text-white transition hover:opacity-90 active:scale-[0.99] disabled:opacity-50";
   const skipBtn = "mt-2 w-full py-2 text-sm font-medium text-neutral-400 transition hover:text-neutral-600 disabled:opacity-50";
 
-  // 화면 순서 — audience는 academy만. done 제외하고 진행 점 표시.
-  const order: Step[] = ["vertical", "sub", ...(vertical === "academy" ? (["audience"] as Step[]) : []), "biz", "hours", "strength", "review", "done"];
+  // 화면 순서 — local은 풀스텝, online/hobby는 주소·시간·강점 스킵. done 제외하고 진행 점 표시.
+  const isLocal = bType === "local";
+  const order: Step[] = isLocal
+    ? ["type", "vertical", "sub", ...(vertical === "academy" ? (["audience"] as Step[]) : []), "biz", "hours", "strength", "review", "done"]
+    : (["type", "sub", "review", "done"] as Step[]);
   const idx = order.indexOf(step);
   const goNext = () => { setDir("fwd"); setStep(order[Math.min(idx + 1, order.length - 1)]); };
   const goBack = () => { setDir("back"); setStep(order[Math.max(idx - 1, 0)]); };
 
+  // 유형 선택 — local은 업종 화면으로, online/hobby는 vertical 인코딩 후 바로 카테고리로
+  function pickType(t: BloggerType, v: string | null) {
+    setBType(t); setSub(""); setCustomMode(false); setCustomSub(""); setCustomErr(""); setDir("fwd");
+    if (t === "local") { setVertical(""); setStep("vertical"); }
+    else { setVertical(v!); setStep("sub"); }
+  }
   function pick(v: string) {
-    setVertical(v); setSub(""); setCustomMode(false); setCustomSub("");
+    setVertical(v); setSub(""); setCustomMode(false); setCustomSub(""); setCustomErr("");
     setDir("fwd"); setStep("sub");
   }
-  function pickSub(s: string) { setSub(s); setDir("fwd"); setStep(vertical === "academy" ? "audience" : "biz"); }
+  function pickSub(s: string) {
+    setSub(s); setDir("fwd");
+    setStep(!isLocal ? "review" : vertical === "academy" ? "audience" : "biz");
+  }
+  // 직접입력 제출 — 가비지면 막고(가드), 통과하면 진행
+  function submitCustom() {
+    const v = customSub.trim();
+    if (!v) return;
+    if (isGarbageInput(v)) { setCustomErr("그건 주제로 보기 어려워요. 다시 입력해 주세요."); return; }
+    setCustomErr(""); pickSub(v);
+  }
+
+  // sub 스텝 — local은 업종별 세부, online/hobby는 유형 카테고리
+  const subCats = isLocal ? (VERTICAL_SUBS[vertical] ?? []) : categoriesFor(bType);
+  const subHeading = isLocal ? `${VLABEL[vertical]} 중\n어떤 분야세요?` : bType === "online" ? "어떤 주제로\n수익 낼 거예요?" : "무슨 취미를\n기록하세요?";
 
   async function save() {
     if (saving || !vertical) return;
@@ -120,14 +156,30 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
       )}
 
       {/* 뒤로가기 (첫 화면·완료 제외) */}
-      {step !== "vertical" && step !== "done" && (
+      {step !== "type" && step !== "done" && (
         <button onClick={goBack} className="mb-3 -ml-1 flex items-center gap-1 text-sm text-neutral-400 transition hover:text-neutral-700">
           <span className="text-base leading-none">←</span> 뒤로
         </button>
       )}
 
       <div key={step} className={`min-h-[300px] ${dir === "back" ? "ateflo-slide-back" : "ateflo-slide-fwd"}`}>
-        {/* 1) 업종 */}
+        {/* 0) 유형 — 어떤 블로거인가 */}
+        {step === "type" && (
+          <div>
+            <h2 className="font-pretendard text-2xl font-bold tracking-tight">어떤 블로그를<br />운영하세요?</h2>
+            <p className="mt-2 text-sm text-neutral-500">유형에 맞춰 글감·글을 다르게 추천해드려요.</p>
+            <div className="mt-6 grid gap-2.5">
+              {BLOGGER_TYPE_CARDS.map((c) => (
+                <button key={c.type} onClick={() => pickType(c.type, c.vertical)} className="rounded-2xl border border-neutral-200 bg-white p-4 text-left transition hover:border-[#1D75F7] hover:bg-[#1D75F7]/[0.03] active:scale-[0.99]">
+                  <span className="block text-[15px] font-bold text-neutral-900">{c.label}</span>
+                  <span className="mt-0.5 block text-[13px] text-neutral-500">{c.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 1) 업종 (local 전용) */}
         {step === "vertical" && (
           <div>
             <h2 className="font-pretendard text-2xl font-bold tracking-tight">어떤 곳을 운영하세요?</h2>
@@ -151,10 +203,10 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
         {/* 2) 세부 분야 */}
         {step === "sub" && (
           <div>
-            <h2 className="font-pretendard text-2xl font-bold tracking-tight">{VLABEL[vertical]} 중<br />어떤 분야세요?</h2>
-            <p className="mt-2 text-sm text-neutral-500">분야에 딱 맞는 키워드로 써드릴게요.</p>
+            <h2 className="font-pretendard whitespace-pre-line text-2xl font-bold tracking-tight">{subHeading}</h2>
+            <p className="mt-2 text-sm text-neutral-500">{isLocal ? "분야에 딱 맞는 키워드로 써드릴게요." : "고른 주제의 검색되는 글감을 추천해드려요."}</p>
             <div className="mt-5 flex flex-wrap gap-2">
-              {(VERTICAL_SUBS[vertical] ?? []).map((s) => (
+              {subCats.map((s) => (
                 <button key={s} onClick={() => pickSub(s)} className="rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm font-medium text-neutral-700 transition hover:border-[#1D75F7] hover:bg-[#1D75F7]/[0.03] active:scale-95">{s}</button>
               ))}
             </div>
@@ -162,8 +214,9 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
               <button onClick={() => setCustomMode(true)} className="mt-4 text-sm font-medium text-[#1D75F7] transition hover:underline">＋ 직접 입력하기</button>
             ) : (
               <div className="mt-4">
-                <input value={customSub} onChange={(e) => setCustomSub(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && customSub.trim()) pickSub(customSub.trim()); }} placeholder="예: 통증의학과" maxLength={40} className={inputCls} autoFocus />
-                <button onClick={() => customSub.trim() && pickSub(customSub.trim())} disabled={!customSub.trim()} className={`mt-3 ${primaryBtn}`}>계속</button>
+                <input value={customSub} onChange={(e) => { setCustomSub(e.target.value); if (customErr) setCustomErr(""); }} onKeyDown={(e) => { if (e.key === "Enter") submitCustom(); }} placeholder={isLocal ? "예: 통증의학과" : "예: 캠핑, 주식 차트"} maxLength={40} className={inputCls} autoFocus />
+                {customErr && <p className="mt-2 text-xs font-medium text-amber-600">{customErr}</p>}
+                <button onClick={submitCustom} disabled={!customSub.trim()} className={`mt-3 ${primaryBtn}`}>계속</button>
               </div>
             )}
           </div>
@@ -224,16 +277,20 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
             <h2 className="font-pretendard text-2xl font-bold tracking-tight">이 정보가 맞나요?</h2>
             <p className="mt-2 text-sm text-neutral-500">맞으면 시작할게요. 틀린 게 있으면 수정할 수 있어요.</p>
             <dl className="mt-5 divide-y divide-neutral-100 rounded-2xl border border-neutral-200">
-              {[
-                ["업종", `${VLABEL[vertical] ?? vertical}${sub ? ` · ${sub}` : ""}`],
+              {([
+                ["분야", `${isLocal ? (VLABEL[vertical] ?? vertical) : bType === "online" ? "수익형 블로거" : "취미·기록"}${sub ? ` · ${sub}` : ""}`],
                 ["블로그 이름", bizName.trim() || (sub ? `${sub} 블로그` : "(자동 생성)")],
-                ...(vertical === "academy" ? [["대상", audience.length ? audience.join(", ") : "(미설정)"] as [string, string]] : []),
-                ["상호", bizName.trim() || "(미입력)"],
-                ["주소", [bizAddress, bizDetail].filter(Boolean).join(" ").trim() || "(미입력)"],
-                ["전화", bizPhone.trim() || "(미입력)"],
-                ["영업시간", hoursCount ? `${hoursCount}개 요일 설정` : "(미입력)"],
-                ["강점", bizStrength.trim() || "(미입력)"],
-              ].map(([k, v]) => (
+                ...(isLocal
+                  ? [
+                      ...(vertical === "academy" ? [["대상", audience.length ? audience.join(", ") : "(미설정)"]] : []),
+                      ["상호", bizName.trim() || "(미입력)"],
+                      ["주소", [bizAddress, bizDetail].filter(Boolean).join(" ").trim() || "(미입력)"],
+                      ["전화", bizPhone.trim() || "(미입력)"],
+                      ["영업시간", hoursCount ? `${hoursCount}개 요일 설정` : "(미입력)"],
+                      ["강점", bizStrength.trim() || "(미입력)"],
+                    ]
+                  : []),
+              ] as [string, string][]).map(([k, v]) => (
                 <div key={k} className="flex gap-3 px-4 py-3">
                   <dt className="w-16 shrink-0 text-[13px] font-medium text-neutral-400">{k}</dt>
                   <dd className="min-w-0 flex-1 break-words text-[14px] font-medium text-neutral-800">{v}</dd>

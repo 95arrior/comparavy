@@ -27,6 +27,7 @@ const GENERAL_GU = new Set(["인테리어", "부동산", "결혼웨딩", "이사
 
 /** 업종·서브 → 지역 범위 레벨. */
 export function regionLevel(vertical: string, sub: string | null): RegionLevel {
+  if (vertical === "online" || vertical === "hobby") return "wide"; // 수익형·취미 = 전국형(지역 무의미)
   if (vertical === "professional" || vertical === "b2b") return "wide"; // 법률·세무·노무 등 비대면
   if (sub && (NON_LOCAL_SUBS.has(sub) || isOnlineSub(sub))) return "wide"; // 온라인/블로그/부업 등(커스텀 포함)
   if (vertical === "medical") return sub && MEDICAL_GU.has(sub) ? "gu" : "dong";

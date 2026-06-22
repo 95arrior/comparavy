@@ -78,6 +78,8 @@ const RULES: Record<string, Rule[]> = {
   professional: PRO_RULES,
   b2b: GENERAL_RULES,
   general: GENERAL_RULES,
+  online: GENERAL_RULES, // 수익형 — 표시광고법(최상급 과장)만 가볍게
+  hobby: [], // 취미·기록 — 광고규제 대상 아님
 };
 
 function stripHtml(s: string): string {
