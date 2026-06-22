@@ -216,7 +216,7 @@ export async function GET(req: Request) {
   // ── 제목·카테고리·노이즈판별(여유분 한 번에) ──
   const allKeywords = [...localSeeds, ...candidates.map((r) => r.keyword)];
   if (allKeywords.length === 0) return NextResponse.json({ topics: [] });
-  const titled = await keywordsToTitles(allKeywords); // {title, tag, ok}
+  const titled = await keywordsToTitles(allKeywords, (sub || vertical) ?? undefined); // {title, tag, ok} — 업종 컨텍스트로 무관 키워드 제외
   const off = localSeeds.length;
 
   const topics = [
