@@ -81,7 +81,7 @@ async function callOnce(version: string, seed: string, token: string, loginId: s
 }
 
 // 원본 응답 1회 획득(버전 자동탐지 + login 폴백). status/text/version/login 반환.
-async function fetchRawBody(seed: string): Promise<{ status: number; text: string; version: string; loginUsed: string }> {
+async function fetchRawBody(seed: string): Promise<{ status: number; text: string; version: string; loginUsed: string; primary?: { login: string; status: number; text: string } }> {
   const token = await getAccessToken();
   const versions = process.env.GOOGLE_ADS_API_VERSION
     ? [process.env.GOOGLE_ADS_API_VERSION]
@@ -97,12 +97,13 @@ async function fetchRawBody(seed: string): Promise<{ status: number; text: strin
     let loginUsed = loginEnv;
     let r = await callOnce(v, seed, token, loginEnv);
     if (r.status === 404) { last = `v=${v} 404`; continue; }
+    const primary = { login: loginEnv, status: r.status, text: r.text }; // 1차(MCC) 시도 원문 보존
     if (r.status === 403 && /USER_PERMISSION_DENIED/.test(r.text) && loginEnv !== customerId) {
       loginUsed = customerId;
       r = await callOnce(v, seed, token, customerId);
     }
     if (!process.env.GOOGLE_ADS_API_VERSION && r.status >= 200 && r.status < 300) resolvedVersion = v;
-    return { status: r.status, text: r.text, version: v, loginUsed };
+    return { status: r.status, text: r.text, version: v, loginUsed, primary };
   }
   throw new Error(`구글 애즈: 사용 가능한 API 버전을 못 찾음(${last}).`);
 }
@@ -134,13 +135,22 @@ export async function fetchGoogleIdeasDebug(seed: string): Promise<unknown> {
   const results = (parsed as { results?: unknown[] })?.results;
   const loginEnv = digits(process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID);
   const customerId = digits(process.env.GOOGLE_ADS_CUSTOMER_ID);
+  // 1차(MCC) 시도 원문 — 403 등 진짜 에러가 여기 있음(폴백에 가려졌던 것)
+  const primary = body.primary;
+  let primaryRaw: unknown = primary?.text ?? null;
+  try { if (primary) primaryRaw = JSON.parse(primary.text); } catch { /* keep text */ }
+  const fellBack = Boolean(primary) && body.loginUsed !== primary!.login;
   return {
     version: body.version,
     loginEnv: loginEnv || "(미설정 → customerId로 폴백)", // 설정된 login-customer-id(=MCC여야 함)
-    loginUsed: body.loginUsed, // 실제 호출에 쓰인 login-customer-id
-    loginIsMcc: Boolean(loginEnv) && loginEnv !== customerId, // login이 하위계정과 다르면(=MCC면) true
+    loginUsed: body.loginUsed, // 실제 결과를 낸 호출의 login-customer-id
+    loginIsMcc: Boolean(loginEnv) && loginEnv !== customerId,
     customerId, // 대상 하위계정
-    httpStatus: body.status,
+    fellBackToSub: fellBack, // MCC 호출 실패로 하위계정 폴백했는지
+    primaryLogin: primary?.login ?? null, // 1차 시도 login(=MCC)
+    primaryStatus: primary?.status ?? null, // ★ MCC 호출 결과(403이면 권한/링크 문제)
+    primaryRaw: primaryRaw, // ★ MCC 호출 에러 원문(진짜 원인)
+    httpStatus: body.status, // 최종(폴백 포함) 상태
     totalSize: totalSize ?? null,
     resultCount: Array.isArray(results) ? results.length : null,
     raw: parsed,
