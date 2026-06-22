@@ -59,17 +59,18 @@ type IdeaResult = { text?: string; keywordIdeaMetrics?: { avgMonthlySearches?: s
  * 시드의 구글 키워드 아이디어를 거둔다 → PoolKeyword[](keyword, 월검색량, 경쟁도).
  * 네이버 collectPoolKeywords와 호환되는 출력. (안전필터·정크필터는 호출 측에서 그대로 적용)
  */
-async function callOnce(version: string, seed: string, token: string, loginId: string): Promise<{ status: number; text: string }> {
+async function callOnce(version: string, seed: string, token: string, loginId: string): Promise<{ status: number; text: string; headers: Record<string, string> }> {
   const customerId = digits(process.env.GOOGLE_ADS_CUSTOMER_ID);
   const url = `https://googleads.googleapis.com/${version}/customers/${customerId}:generateKeywordIdeas`;
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    "developer-token": process.env.GOOGLE_ADS_DEVELOPER_TOKEN!,
+    "login-customer-id": loginId,
+    "Content-Type": "application/json",
+  };
   const res = await fetch(url, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "developer-token": process.env.GOOGLE_ADS_DEVELOPER_TOKEN!,
-      "login-customer-id": loginId,
-      "Content-Type": "application/json",
-    },
+    headers,
     body: JSON.stringify({
       language: KOREAN_LANG,
       geoTargetConstants: [KOREA_GEO],
@@ -77,11 +78,11 @@ async function callOnce(version: string, seed: string, token: string, loginId: s
       keywordSeed: { keywords: [seed] },
     }),
   });
-  return { status: res.status, text: await res.text() };
+  return { status: res.status, text: await res.text(), headers };
 }
 
 // 원본 응답 1회 획득(버전 자동탐지 + login 폴백). status/text/version/login 반환.
-async function fetchRawBody(seed: string): Promise<{ status: number; text: string; version: string; loginUsed: string; primary?: { login: string; status: number; text: string } }> {
+async function fetchRawBody(seed: string): Promise<{ status: number; text: string; version: string; loginUsed: string; primary?: { login: string; status: number; text: string; headers: Record<string, string> } }> {
   const token = await getAccessToken();
   const versions = process.env.GOOGLE_ADS_API_VERSION
     ? [process.env.GOOGLE_ADS_API_VERSION]
@@ -97,7 +98,7 @@ async function fetchRawBody(seed: string): Promise<{ status: number; text: strin
     let loginUsed = loginEnv;
     let r = await callOnce(v, seed, token, loginEnv);
     if (r.status === 404) { last = `v=${v} 404`; continue; }
-    const primary = { login: loginEnv, status: r.status, text: r.text }; // 1차(MCC) 시도 원문 보존
+    const primary = { login: loginEnv, status: r.status, text: r.text, headers: r.headers }; // 1차(MCC) 시도 원문·헤더 보존
     if (r.status === 403 && /USER_PERMISSION_DENIED/.test(r.text) && loginEnv !== customerId) {
       loginUsed = customerId;
       r = await callOnce(v, seed, token, customerId);
@@ -140,7 +141,28 @@ export async function fetchGoogleIdeasDebug(seed: string): Promise<unknown> {
   let primaryRaw: unknown = primary?.text ?? null;
   try { if (primary) primaryRaw = JSON.parse(primary.text); } catch { /* keep text */ }
   const fellBack = Boolean(primary) && body.loginUsed !== primary!.login;
+  // (A) 이 토큰이 어느 구글 계정/클라이언트 것인지 — tokeninfo (403이 '다른 계정 토큰' 때문인지 판별)
+  let tokenAccount: unknown = null;
+  try {
+    const at = await getAccessToken();
+    const ti = (await (await fetch(`https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(at)}`)).json()) as Record<string, unknown>;
+    tokenAccount = {
+      email: ti.email ?? "(이메일 스코프 없어 미표시 — scope/aud로 판별)",
+      aud_clientId: ti.aud ?? ti.azp ?? null, // 우리 GOOGLE_ADS_CLIENT_ID와 같아야
+      scope: ti.scope ?? null,
+      sub: ti.sub ?? null,
+    };
+  } catch (e) { tokenAccount = { error: e instanceof Error ? e.message : String(e) }; }
+  // (B) 실제 전송된 헤더(민감값 마스킹) — login-customer-id 실림 확인
+  const ph = primary?.headers ?? {};
+  const sentHeaders = {
+    "login-customer-id": ph["login-customer-id"] ?? "(없음)",
+    "developer-token": ph["developer-token"] ? `set(${ph["developer-token"].length}자)` : "(없음)",
+    Authorization: ph.Authorization ? "Bearer ***" : "(없음)",
+  };
   return {
+    tokenAccount, // ★ (A) 토큰 계정/클라이언트
+    sentHeaders,  // ★ (B) 실제 전송 헤더
     version: body.version,
     loginEnv: loginEnv || "(미설정 → customerId로 폴백)", // 설정된 login-customer-id(=MCC여야 함)
     loginUsed: body.loginUsed, // 실제 결과를 낸 호출의 login-customer-id
