@@ -53,12 +53,12 @@ export default function WriteTypeSheet({
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1D75F7] text-white">
               <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11l18-5v12L3 14v-3z" /><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6" /></svg>
             </span>
-            <span className="min-w-0">
+            <span className="min-w-0 flex-1">
               <span className="flex items-center gap-1.5 text-[15px] font-bold text-neutral-900">
                 홍보용 <span className="rounded-full bg-[#1D75F7] px-1.5 py-0.5 text-[10px] font-bold text-white">추천</span>
               </span>
-              <span className="mt-0.5 block text-[13px] leading-snug text-neutral-500">
-                {hasBiz ? "정보 끝에 내 가게를 자연스럽게 연결해요" : "내 가게 정보를 먼저 등록하면 쓸 수 있어요"}
+              <span className="mt-0.5 block truncate text-[13px] text-neutral-500">
+                {hasBiz ? "글 끝에 내 가게를 자연스럽게" : "가게 정보를 먼저 등록하세요"}
               </span>
             </span>
             {picked === true && <Check />}
@@ -73,9 +73,9 @@ export default function WriteTypeSheet({
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-neutral-400 ring-1 ring-neutral-200">
               <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6M9 13h6M9 17h4" /></svg>
             </span>
-            <span className="min-w-0">
+            <span className="min-w-0 flex-1">
               <span className="block text-[15px] font-bold text-neutral-900">정보성</span>
-              <span className="mt-0.5 block text-[13px] leading-snug text-neutral-500">순수 정보글로 신뢰를 쌓아요</span>
+              <span className="mt-0.5 block truncate text-[13px] text-neutral-500">순수 정보로 신뢰를 쌓아요</span>
             </span>
             {picked === false && <Check />}
           </button>
