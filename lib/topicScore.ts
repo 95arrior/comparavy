@@ -2,9 +2,11 @@
 export type Comp = "low" | "mid" | "high";
 
 // 경쟁 상태 → 감정 표현(숫자 대신 빈자리 메타포).
+// 주의: 현재 comp는 네이버 '광고 경쟁'(compIdx) 기반 — 콘텐츠(블로그) 경쟁이 아님.
+// 그래서 "아무도 안 썼다"는 단정 대신 '기회' 톤으로. (검색 API 연동 후 블로그 total로 진짜 경쟁 반영 예정)
 export const EMOTION: Record<Comp, string> = {
-  low: "아직 아무도 안 썼어요",
-  mid: "지금 선점하기 좋아요",
+  low: "노려볼 만한 키워드예요",
+  mid: "해볼 만해요",
   high: "이미 많이들 써요",
 };
 
