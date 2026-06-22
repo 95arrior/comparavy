@@ -5,7 +5,7 @@ export type Comp = "low" | "mid" | "high";
 export const EMOTION: Record<Comp, string> = {
   low: "아직 아무도 안 썼어요",
   mid: "지금 선점하기 좋아요",
-  high: "이미 붐벼요",
+  high: "이미 많이들 써요",
 };
 
 // 선점 점수 — 경쟁 낮을수록·검색 많을수록 ↑(검색↔경쟁 갭이 핵심).

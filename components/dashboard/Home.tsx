@@ -160,9 +160,10 @@ export default function Home({
           <div className="flex select-none flex-col gap-3 blur-[2.5px]" aria-hidden>
             {[0, 1, 2].map((i) => (
               <div key={i} className="rounded-2xl bg-white px-5 py-4 ring-1 ring-black/[0.05] sm:px-6 sm:py-5">
-                <div className="h-4 w-14 rounded-full bg-neutral-200" />
-                <div className="mt-2.5 h-5 w-3/4 rounded bg-neutral-200" />
-                <div className="mt-3 h-3.5 w-1/2 rounded bg-neutral-100" />
+                <div className="h-[18px] w-12 rounded-full bg-neutral-200" />
+                <div className="mt-1.5 h-[22px] w-3/4 rounded bg-neutral-200" />
+                <div className="mt-1.5 h-3.5 w-2/3 rounded bg-neutral-100" />
+                <div className="mt-3 h-3.5 w-14 rounded bg-neutral-100" />
               </div>
             ))}
           </div>

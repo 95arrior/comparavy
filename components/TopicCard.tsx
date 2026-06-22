@@ -63,14 +63,17 @@ export default function TopicCard({
           {isSak && <span className="inline-flex items-center gap-0.5 rounded-full bg-violet-600 px-2 py-1 text-[9.5px] font-bold leading-none text-white sm:text-[10.5px]">✦ 싹 키워드</span>}
         </div>
         <p className="text-[15px] font-bold leading-snug text-neutral-900 sm:text-[18px]">{title}</p>
-        <div className="mt-1.5 space-y-1 text-[11px] sm:text-[13px]">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 font-semibold text-neutral-500">
+        <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px] sm:text-[13px]">
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-neutral-500">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" className="shrink-0 opacity-70"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4-4" /></svg>
-              한 달 검색 {vol.toLocaleString()}회
+              검색 {vol.toLocaleString()}회
             </span>
             <span className="text-neutral-300">·</span>
-            <span className="font-medium text-neutral-500">선점</span>
+            <span className={`truncate font-semibold ${isSak ? "text-violet-700" : "text-neutral-400"}`}>{EMOTION[comp]}</span>
+          </span>
+          <span className="flex shrink-0 items-center gap-1">
+            <span className="font-medium text-neutral-400">선점</span>
             <span className="inline-flex font-bold tracking-[-1px]">
               {Array.from({ length: 5 }).map((_, i) => {
                 const on = i < filled;
@@ -88,8 +91,7 @@ export default function TopicCard({
                 );
               })}
             </span>
-          </div>
-          <p className={`font-semibold ${isSak ? "text-violet-700" : "text-neutral-400"}`}>{EMOTION[comp]}</p>
+          </span>
         </div>
         {cta && (
           <p className={`mt-3 inline-flex items-center gap-0.5 text-[12px] font-bold sm:text-[13px] ${isSak ? "text-violet-700" : "text-[#1D75F7]"}`}>
