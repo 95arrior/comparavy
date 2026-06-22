@@ -38,10 +38,26 @@ function demandLabel(searches: number | null, type: BloggerType): string {
   return "지금 쓰기 좋아요";
 }
 
-function shuffle<T>(arr: T[]): T[] {
+// 하루 단위 고정 추천 — (userId+날짜) 시드로 그날은 새로고침해도 같은 3개.
+function seedFrom(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+function mulberry32(seed: number): () => number {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function shuffle<T>(arr: T[], rnd: () => number = Math.random): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rnd() * (i + 1));
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
@@ -49,12 +65,12 @@ function shuffle<T>(arr: T[]): T[] {
 
 // 고른 대상(specific)별로 골고루 번갈아 n개 뽑는다. 대상 마커 없는 '중립' 키워드는 모자랄 때 채움.
 // 대상이 0~1개면(또는 비활성) 그냥 랜덤.
-function pickBalanced(rows: PoolRow[], auds: string[], n: number): PoolRow[] {
+function pickBalanced(rows: PoolRow[], auds: string[], n: number, rnd: () => number = Math.random): PoolRow[] {
   const specific = auds.filter((a) => a !== AUDIENCE_ALL);
-  if (specific.length <= 1) return shuffle(rows).slice(0, n);
+  if (specific.length <= 1) return shuffle(rows, rnd).slice(0, n);
   const buckets = new Map<string, PoolRow[]>(specific.map((a) => [a, []]));
   const neutral: PoolRow[] = [];
-  for (const r of shuffle(rows)) {
+  for (const r of shuffle(rows, rnd)) {
     const a = r.audience ?? audienceOf(r.keyword);
     if (a && buckets.has(a)) buckets.get(a)!.push(r);
     else neutral.push(r);
@@ -154,34 +170,15 @@ export async function GET() {
   if (rows.length === 0) return NextResponse.json({ topics: [] });
 
   // ── 경쟁도 티어 ──
-  // 낮음 = 싹 키워드(전설·희귀: 가끔 랜덤 1개), 중간 = 일반(선점 가능·기본), 높음 = 빅키워드(최악·마지막 수단)
+  // 낮음 = 싹 키워드(전설·희귀), 중간 = 일반(기본), 높음 = 빅키워드(최후)
   const comp = (r: PoolRow) => (r.competition ?? "").trim();
   const low = rows.filter((r) => comp(r) === "낮음");
   const mid = rows.filter((r) => comp(r) === "중간");
   const high = rows.filter((r) => comp(r) === "높음");
 
-  // 일반 슬롯은 '중간' 위주(대상 균형 적용). 높음은 끝까지 안 차면만.
-  const general = pickBalanced(mid, audActive ? audSel : [], PICK + 1);
-
-  const result: PoolRow[] = [];
-  // ★전설 포켓몬: 매번 X — 이번 추천에 ~28% 확률로 싹(낮음) 1개만 무작위 등장.
-  if (low.length > 0 && Math.random() < 0.28) {
-    result.push(low[Math.floor(Math.random() * low.length)]);
-  }
-  const add = (arr: PoolRow[]) => {
-    for (const r of arr) {
-      if (result.length >= PICK) break;
-      if (!result.some((x) => x.keyword === r.keyword)) result.push(r);
-    }
-  };
-  add(general); // 일반(중간)
-  add(low);     // 중간 부족하면 싹으로 채움(싹이 차선)
-  add(high);    // 그래도 모자라면 빅키워드(마지막 수단)
-
-  // ── 지역 글감 ──
-  // 지역형 사업장이면(주소 있음 + 전국형 아님) 사업장 동네 + 업종 글감을 앞에 섞는다.
-  // 지역 키워드 = 경쟁 낮고 전환 높은 '동네 손님' 검색 → 본인이 이미 쓴 건 제외.
-  const level = regionLevel(vertical, sub ?? null); // 업종별 지역 범위(동/구/광역)
+  // ── 지역 글감(먼저 — 일반 후보 개수 계산에 필요) ──
+  // 지역형 사업장이면 동네+업종 글감을 앞에. 본인이 쓴 건 제외.
+  const level = regionLevel(vertical, sub ?? null);
   const type = bloggerType(vertical); // local/online/hobby → 카피 톤
   const regions = extractRegions(profile?.biz_address as string | null, level);
   const local = isLocalBusiness(level, regions);
@@ -191,13 +188,33 @@ export async function GET() {
       )
     : [];
 
-  // 지역 글감은 앞에, 나머지는 일반 글감으로 PICK까지 채움
-  const pickedRows = result.slice(0, Math.max(0, PICK - localSeeds.length));
-  const allKeywords = [...localSeeds, ...pickedRows.map((r) => r.keyword)];
+  // ── 일반 후보 ──
+  // 하루 고정 시드(userId+날짜): 그날은 새로고침해도 같은 추천.
+  // 노이즈(ok=false)·중복 제외로 빠질 것 대비해 '여유분(want)'까지 뽑아 무조건 PICK개 채운다.
+  const rng = mulberry32(seedFrom(`${user.id}-${new Date().toISOString().slice(0, 10)}`));
+  const need = Math.max(0, PICK - localSeeds.length);
+  const want = need + 4; // ok 필터 후에도 need개 채우게 여유
+  const general = pickBalanced(mid, audActive ? audSel : [], want + 1, rng);
+  const candidates: PoolRow[] = [];
+  if (low.length > 0 && rng() < 0.28) candidates.push(low[Math.floor(rng() * low.length)]); // 싹 1개 가끔
+  const add = (arr: PoolRow[]) => {
+    for (const r of arr) {
+      if (candidates.length >= want) break;
+      if (!candidates.some((x) => x.keyword === r.keyword)) candidates.push(r);
+    }
+  };
+  add(general); // 일반(중간)
+  add(low);     // 부족하면 싹
+  add(high);    // 그래도 모자라면 빅키워드
+
+  // ── 제목·카테고리·노이즈판별(여유분 한 번에) ──
+  const allKeywords = [...localSeeds, ...candidates.map((r) => r.keyword)];
   if (allKeywords.length === 0) return NextResponse.json({ topics: [] });
-  const titled = await keywordsToTitles(allKeywords); // {title, tag(카테고리칩), ok}
+  const titled = await keywordsToTitles(allKeywords); // {title, tag, ok}
+  const off = localSeeds.length;
 
   const topics = [
+    // 지역 글감(앞) — 항상 포함
     ...localSeeds.map((k, i) => ({
       keyword: k,
       title: titled[i]?.title ?? k,
@@ -205,23 +222,25 @@ export async function GET() {
       ssak: false,
       region: true,
       tone: "local" as BloggerType,
-      vol: 0, // 지역 글감은 검색량 데이터 없음(카드 지표 대신 '우리 동네' 표시)
+      vol: 0,
       comp: "mid" as Comp,
-      tag: "", // 지역 카드는 '우리 동네 키워드' 칩 사용
+      tag: "",
     })),
-    ...pickedRows
-      .map((r, i) => ({ r, t: titled[localSeeds.length + i] }))
-      .filter(({ t }) => t?.ok !== false) // 노이즈(스블 자네 등) 제외
+    // 일반 글감 — 노이즈(ok=false) 제외하고 need개까지(여유분에서 채움)
+    ...candidates
+      .map((r, i) => ({ r, t: titled[off + i] }))
+      .filter(({ t }) => t?.ok !== false)
+      .slice(0, need)
       .map(({ r, t }) => ({
         keyword: r.keyword,
         title: t?.title ?? r.keyword,
         demandLabel: demandLabel(r.monthly_searches, type),
-        ssak: comp(r) === "낮음", // 싹 키워드(전설)
+        ssak: comp(r) === "낮음",
         region: false,
         tone: type,
-        vol: r.monthly_searches ?? 0, // 한 달 검색 N회(실데이터)
-        comp: compFromLabel(r.competition), // 선점 별점·감정용
-        tag: t?.tag ?? "", // 내용 카테고리 칩
+        vol: r.monthly_searches ?? 0,
+        comp: compFromLabel(r.competition),
+        tag: t?.tag ?? "",
       })),
   ].slice(0, PICK);
   return NextResponse.json({ topics });

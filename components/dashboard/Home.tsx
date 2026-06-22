@@ -90,17 +90,21 @@ export default function Home({
   const weekPct = Math.min(weekCount / 3, 1) * 100;
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-12 sm:py-16">
+    <main className="mx-auto max-w-2xl px-6">
+      {/* 첫 화면 — 헤더 + (중앙) 오늘의 글감. 스크롤 없이 한눈에 */}
+      <section className="flex min-h-[100svh] flex-col">
       {/* 헤더 — 절제 */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pt-9">
         <p className="text-sm text-neutral-400">{displayName}님</p>
         {!wpConnected && (
           <button onClick={onGoConnect} className="text-xs font-medium text-[#1D75F7] transition hover:underline">워드프레스 연결 →</button>
         )}
       </div>
 
+      {/* 중앙 — 히어로 + 오늘의 글감 3개 */}
+      <div className="flex flex-1 flex-col justify-center py-6">
       {/* HERO — 큰 한 문장 */}
-      <h1 className="font-pretendard mt-5 text-[28px] font-bold leading-[1.2] tracking-tight text-neutral-900 sm:text-[34px]">
+      <h1 className="font-pretendard text-[28px] font-bold leading-[1.2] tracking-tight text-neutral-900 sm:text-[34px]">
         오늘, 한 편이면 돼요
       </h1>
       <p className="mt-2 text-[15px] text-neutral-400">{blogName}</p>
@@ -143,14 +147,17 @@ export default function Home({
               ),
             )}
           </div>
-          <button onClick={loadTopics} className="mt-4 w-full rounded-xl border border-neutral-200 py-2.5 text-sm font-medium text-neutral-500 transition hover:bg-neutral-50 active:scale-[0.99]">다른 글감 받기 ↻</button>
         </div>
       ) : (
         <div className="mt-3 rounded-3xl border border-dashed border-neutral-200 p-8 text-center text-sm text-neutral-400">
           아직 추천할 글감이 없어요. <button onClick={loadTopics} className="font-medium text-[#1D75F7]">다시 받기</button>
         </div>
       )}
+      </div>
+      </section>
 
+      {/* 이하 스크롤 — 진척·여정·성과·내 글 */}
+      <section className="pb-14">
       {/* 한 줄 모멘텀 + 주간 진척 */}
       <div className="mt-7 border-t border-neutral-100 pt-5">
         <div className="flex items-center justify-between text-sm">
@@ -198,6 +205,7 @@ export default function Home({
           </div>
         )}
       </div>
+      </section>
     </main>
   );
 }
