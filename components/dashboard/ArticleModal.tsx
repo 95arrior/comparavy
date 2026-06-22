@@ -4,8 +4,6 @@ import Link from "next/link";
 import { useState, useEffect, useRef, useMemo } from "react";
 import ArticleEditor, { type ArticleEditorHandle } from "./ArticleEditor";
 import SectionSuggest from "./SectionSuggest";
-import ThreadsConvert from "./ThreadsConvert";
-import NaverCopy from "./NaverCopy";
 import CenterToast from "./CenterToast";
 import ScheduleCalendar from "./ScheduleCalendar";
 import { PLANS, formatKRW } from "@/lib/plans";
@@ -646,34 +644,20 @@ export default function ArticleModal({
             <span className="text-base leading-none">←</span> 목록으로
           </button>
           <div className="relative flex shrink-0 items-center gap-1.5">
-            <button
-              onClick={copyBody}
-              title="복사"
-              className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium transition hover:border-neutral-900"
-            >
-              {copied ? "복사됨 ✓" : "복사"}
-            </button>
-            <button
-              onClick={save}
-              disabled={saving}
-              className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium transition hover:border-neutral-900 disabled:opacity-40"
-            >
-              {saving ? "저장 중…" : "저장"}
-            </button>
             {canPublish && (
               <button
                 onClick={() => setScheduleOpen((o) => !o)}
                 disabled={publishing}
                 title="예약 발행"
-                className={`flex h-8 w-8 items-center justify-center rounded-lg border transition disabled:opacity-50 ${scheduleOpen ? "border-neutral-900 bg-neutral-900 text-white" : "border-neutral-300 text-neutral-600 hover:border-neutral-900"}`}
+                className={`flex h-10 w-10 items-center justify-center rounded-xl border transition disabled:opacity-50 ${scheduleOpen ? "border-neutral-900 bg-neutral-900 text-white" : "border-neutral-300 text-neutral-600 hover:border-neutral-900"}`}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
               </button>
             )}
             <button
               onClick={openPublish}
               disabled={publishing}
-              className="rounded-lg bg-[#1D75F7] px-3.5 py-1.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
+              className="rounded-xl bg-[#1D75F7] px-5 py-2.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-95 disabled:opacity-50"
             >
               {publishing
                 ? article.wp_post_id
@@ -826,35 +810,7 @@ export default function ArticleModal({
           </div>
         )}
 
-        <div className="mt-4 space-y-3 rounded-xl border border-neutral-200 bg-white px-4 py-3.5">
-          <div>
-            <div className="flex items-center justify-between">
-              <label className="text-[11px] font-medium text-neutral-500">메타 제목 <span className="font-normal text-neutral-400">· 검색결과 제목</span></label>
-              <span className={`text-[10px] ${metaTitle.length > 60 ? "text-red-500" : "text-neutral-300"}`}>{metaTitle.length}/60</span>
-            </div>
-            <input
-              value={metaTitle}
-              onChange={(e) => setMetaTitle(e.target.value)}
-              maxLength={60}
-              placeholder="검색결과에 보일 제목"
-              className="mt-1 w-full rounded-lg border border-neutral-200 px-3 py-2 text-xs outline-none transition focus:border-neutral-900"
-            />
-          </div>
-          <div>
-            <div className="flex items-center justify-between">
-              <label className="text-[11px] font-medium text-neutral-500">메타 설명 <span className="font-normal text-neutral-400">· 검색결과 스니펫</span></label>
-              <span className={`text-[10px] ${metaDesc.length > 160 ? "text-red-500" : "text-neutral-300"}`}>{metaDesc.length}/160</span>
-            </div>
-            <textarea
-              value={metaDesc}
-              onChange={(e) => setMetaDesc(e.target.value)}
-              maxLength={160}
-              rows={2}
-              placeholder="검색결과에 보일 한두 문장 설명"
-              className="mt-1 w-full resize-none rounded-lg border border-neutral-200 px-3 py-2 text-xs leading-relaxed outline-none transition focus:border-neutral-900"
-            />
-          </div>
-        </div>
+        {/* 메타 제목·설명은 자동 생성·사용(검토 화면에서 숨김 — 필요 시 발행 시트 고급) */}
 
         {/* 발행 시트 — '발행하기' 누르면 슬라이드업. 카테고리·태그·옵션·발행 액션을 한 곳에 */}
         {wpConnected && publishSheetOpen && (() => {
@@ -1171,11 +1127,6 @@ export default function ArticleModal({
           />
         )}
 
-        {/* 네이버 블로그용 복사 */}
-        {!article.locked && <NaverCopy getHtml={currentBody} title={title} onToast={setToast} />}
-
-        {/* 스레드 변환 — 블로그 글을 SNS(스레드)로 퍼뜨리기 */}
-        {!article.locked && <ThreadsConvert articleId={article.id} onToast={setToast} />}
 
         {article.write_note && (
           <div className="mt-6 rounded-xl border border-neutral-200 bg-white px-4 py-3">
@@ -1184,42 +1135,7 @@ export default function ArticleModal({
           </div>
         )}
 
-        {article.faq.length > 0 && (
-          <div className="mt-6">
-            <p className="text-xs font-medium text-neutral-500">자주 묻는 질문</p>
-            <p className="mt-1 text-xs text-neutral-400">＋ 버튼으로 원하는 질문만 골라 글 맨 아래에 추가할 수 있어요. (추가한 질문은 ‘제거’로 다시 뺄 수 있어요)</p>
-            <ul className="mt-2 space-y-2">
-              {article.faq.map((f, i) => {
-                const added = faqInBody.has(f.question.trim());
-                return (
-                  <li key={i} className="flex items-start gap-3 rounded-xl border border-neutral-200 px-4 py-3 text-sm">
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium">{f.question}</p>
-                      <p className="mt-1 text-neutral-600">{f.answer}</p>
-                    </div>
-                    {added ? (
-                      <button
-                        onClick={() => removeFaqItem(i)}
-                        className="shrink-0 rounded-xl border border-red-200 bg-red-50 px-3 py-1 text-xs font-medium text-red-600 transition hover:border-red-400"
-                        title="이 질문을 본문에서 제거"
-                      >
-                        － 제거
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => addFaqItem(i)}
-                        className="shrink-0 rounded-xl border border-neutral-300 px-3 py-1 text-xs font-medium transition hover:border-neutral-900"
-                        title="이 질문을 글 본문 맨 아래에 추가"
-                      >
-                        ＋ 추가
-                      </button>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        )}
+        {/* 자주 묻는 질문(FAQ)은 발행 시 자동 포함(스키마 포함) → 편집화면에선 숨김 */}
 
         {/* 모바일 하단 고정 '발행하기' CTA — 검토 → 발행 다음단계 인도 */}
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-neutral-100 bg-white/95 px-4 pt-2.5 backdrop-blur md:hidden" style={{ paddingBottom: "calc(0.625rem + env(safe-area-inset-bottom))" }}>
