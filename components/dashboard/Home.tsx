@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import SearchPerformance from "./SearchPerformance";
 import ArticleList from "./ArticleList";
 import JourneyRoadmap from "./JourneyRoadmap";
@@ -47,18 +47,33 @@ export default function Home({
   const [loadStage, setLoadStage] = useState(0);
   const [swapping, setSwapping] = useState<string | null>(null); // 교체 중인 글감 keyword
 
-  // '이 글감 별로예요' → 지금 보이는 3개 제외하고 새 글감 1개로 그 카드만 교체
+  // 하루 3회 교체 + 교체한 글감은 그날 다시 안 나옴(기기에 기억 — 새로고침해도 유지)
+  const SWAP_LIMIT = 3;
+  const todayKey = `ateflo_dismissed_${new Date().toISOString().slice(0, 10)}`;
+  const [dismissed, setDismissed] = useState<string[]>(() => {
+    try { const raw = typeof window !== "undefined" ? localStorage.getItem(todayKey) : null; return raw ? JSON.parse(raw) : []; } catch { return []; }
+  });
+  const dismissedRef = useRef(dismissed);
+  dismissedRef.current = dismissed;
+  const swapLeft = Math.max(0, SWAP_LIMIT - dismissed.length);
+
+  // '이 글감 별로예요' → 보이는 3개 + 그날 교체분 제외하고 새 글감 1개로 그 카드만 교체
   const swapTopic = async (kw: string) => {
-    if (swapping) return;
+    if (swapping || swapLeft <= 0) return;
     setSwapping(kw);
     try {
-      const exclude = topics.map((t) => t.keyword).join(",");
+      const exclude = [...topics.map((t) => t.keyword), ...dismissed].join(",");
       const res = await fetch(`/api/topics?exclude=${encodeURIComponent(exclude)}`);
       const data = await res.json();
       const fresh: Topic[] = Array.isArray(data.topics) ? data.topics : [];
       const current = new Set(topics.map((t) => t.keyword));
       const repl = fresh.find((t) => !current.has(t.keyword));
-      if (repl) setTopics((prev) => prev.map((t) => (t.keyword === kw ? repl : t)));
+      if (repl) {
+        setTopics((prev) => prev.map((t) => (t.keyword === kw ? repl : t)));
+        const nd = [...dismissed, kw];
+        setDismissed(nd);
+        try { localStorage.setItem(todayKey, JSON.stringify(nd)); } catch { /* ignore */ }
+      }
     } catch { /* 유지 */ }
     finally { setSwapping(null); }
   };
@@ -73,7 +88,8 @@ export default function Home({
   const loadTopics = useCallback(async () => {
     setTopicsLoading(true);
     try {
-      const res = await fetch("/api/topics");
+      const ex = dismissedRef.current; // 그날 교체한 글감은 새로고침해도 제외
+      const res = await fetch(`/api/topics${ex.length ? `?exclude=${encodeURIComponent(ex.join(","))}` : ""}`);
       const data = await res.json();
       setTopics(Array.isArray(data.topics) ? data.topics : []);
     } catch {
@@ -160,10 +176,15 @@ export default function Home({
                   <p className="mt-1.5 inline-flex items-center gap-0.5 text-[12px] font-bold text-[#1D75F7] sm:text-[13px]">이 글 쓰기 ›</p>
                 </button>
               ) : (
-                <TopicCard key={t.keyword} title={t.title} tag={t.tag || undefined} vol={t.vol} comp={t.comp} idx={i} cta="이 글 쓰기" onClick={() => onWriteKeyword(t.keyword, t.title)} onDismiss={() => swapTopic(t.keyword)} dismissing={swapping === t.keyword} />
+                <TopicCard key={t.keyword} title={t.title} tag={t.tag || undefined} vol={t.vol} comp={t.comp} idx={i} cta="이 글 쓰기" onClick={() => onWriteKeyword(t.keyword, t.title)} onDismiss={swapLeft > 0 ? () => swapTopic(t.keyword) : undefined} dismissing={swapping === t.keyword} />
               ),
             )}
           </div>
+          {swapLeft <= 0 ? (
+            <p className="mt-3 text-center text-[12px] text-neutral-400">오늘 글감 교체는 다 썼어요 · 내일 새 글감이 와요</p>
+          ) : (
+            <p className="mt-3 text-center text-[12px] text-neutral-300">마음에 안 들면 카드의 ✕로 교체 (오늘 {swapLeft}회 남음)</p>
+          )}
         </div>
       ) : (
         <div className="mt-3 rounded-3xl border border-dashed border-neutral-200 p-8 text-center text-sm text-neutral-400">

@@ -874,6 +874,7 @@ export default function DashboardClient(props: DashboardProps) {
           <WriteTypeSheet
             title={pendingWrite.title}
             hasBiz={Boolean(blogProfile.biz_name)}
+            local={bloggerType(blogProfile.vertical) === "local"}
             onClose={() => setPendingWrite(null)}
             onPick={(promo) => {
               setSelected(null);

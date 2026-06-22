@@ -7,16 +7,18 @@ import { useEffect, useState } from "react";
 export default function WriteTypeSheet({
   title,
   hasBiz,
+  local,
   onPick,
   onClose,
 }: {
   title: string;
   hasBiz: boolean; // 업장 정보가 있을 때만 '홍보용'이 의미 있음
+  local: boolean; // 동네 사장님만 '홍보용' 노출(online/hobby는 정보성만)
   onPick: (promo: boolean) => void;
   onClose: () => void;
 }) {
-  // 업장 없으면(online/hobby) 홍보 불가 → 정보성 기본 선택. 그래도 '확인'은 눌러야 생성.
-  const [picked, setPicked] = useState<boolean | null>(hasBiz ? null : false);
+  // 동네 사장님은 선택형(null), online/hobby는 정보성만이라 미리 선택. 그래도 '확인'은 눌러야 생성.
+  const [picked, setPicked] = useState<boolean | null>(local ? null : false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -41,7 +43,8 @@ export default function WriteTypeSheet({
         <p className="mt-1 truncate text-[15px] font-bold text-neutral-900">{title}</p>
 
         <div className="mt-5 space-y-3">
-          {/* 홍보용 */}
+          {/* 홍보용 — 동네 사장님만 */}
+          {local && (
           <button
             onClick={() => hasBiz && setPicked(true)}
             disabled={!hasBiz}
@@ -60,18 +63,19 @@ export default function WriteTypeSheet({
             </span>
             {picked === true && <Check />}
           </button>
+          )}
 
-          {/* 정보성 */}
+          {/* 정보성 — 아이콘 흰 배경 */}
           <button
             onClick={() => setPicked(false)}
             className={`flex w-full items-center gap-3 rounded-2xl border-2 p-4 text-left transition active:scale-[0.99] ${picked === false ? "border-[#1D75F7] bg-[#1D75F7]/[0.07]" : "border-neutral-200 bg-white hover:border-neutral-300"}`}
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-500">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-neutral-400 ring-1 ring-neutral-200">
               <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6M9 13h6M9 17h4" /></svg>
             </span>
             <span className="min-w-0">
               <span className="block text-[15px] font-bold text-neutral-900">정보성</span>
-              <span className="mt-0.5 block text-[13px] leading-snug text-neutral-500">순수 정보글로 신뢰를 쌓아요 (가게 언급 없이)</span>
+              <span className="mt-0.5 block text-[13px] leading-snug text-neutral-500">순수 정보글로 신뢰를 쌓아요</span>
             </span>
             {picked === false && <Check />}
           </button>
