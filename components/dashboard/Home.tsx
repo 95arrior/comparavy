@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import TopicCard from "@/components/TopicCard";
 import type { Comp } from "@/lib/topicScore";
 import type { BloggerType } from "@/lib/bloggerTypes";
@@ -45,6 +45,20 @@ export default function Home({
   const [topicsLoading, setTopicsLoading] = useState(true);
   const [loadStage, setLoadStage] = useState(0);
   const [swapping, setSwapping] = useState<string | null>(null); // 교체 중인 글감 keyword
+  const [cluster, setCluster] = useState<string | null>(null); // '주제 이어가기' 활성 토픽(null=기본 다양)
+
+  // 사용자가 가장 많이 쓴 주제 토큰(2편 이상) → '주제 이어가기' 제안용
+  const mainTopic = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const a of articles) {
+      for (const tok of String(a.keyword ?? "").split(/\s+/)) {
+        if (tok.length >= 2) counts.set(tok, (counts.get(tok) ?? 0) + 1);
+      }
+    }
+    let best: string | null = null, bestN = 1;
+    for (const [tok, n] of counts) if (n > bestN) { best = tok; bestN = n; }
+    return best ? { token: best, count: bestN } : null;
+  }, [articles]);
 
   // 하루 3회 교체 + 교체한 글감은 그날 다시 안 나옴(기기에 기억 — 새로고침해도 유지)
   const SWAP_LIMIT = isAdmin ? Infinity : 3; // 관리자(테스트)는 무제한 교체
@@ -62,7 +76,9 @@ export default function Home({
     setSwapping(kw);
     try {
       const exclude = [...topics.map((t) => t.keyword), ...dismissed].join(",");
-      const res = await fetch(`/api/topics?exclude=${encodeURIComponent(exclude)}`);
+      const params = new URLSearchParams({ exclude });
+      if (cluster) params.set("cluster", cluster);
+      const res = await fetch(`/api/topics?${params.toString()}`);
       const data = await res.json();
       const fresh: Topic[] = Array.isArray(data.topics) ? data.topics : [];
       const current = new Set(topics.map((t) => t.keyword));
@@ -88,7 +104,11 @@ export default function Home({
     setTopicsLoading(true);
     try {
       const ex = dismissedRef.current; // 그날 교체한 글감은 새로고침해도 제외
-      const res = await fetch(`/api/topics${ex.length ? `?exclude=${encodeURIComponent(ex.join(","))}` : ""}`);
+      const params = new URLSearchParams();
+      if (ex.length) params.set("exclude", ex.join(","));
+      if (cluster) params.set("cluster", cluster);
+      const qs = params.toString();
+      const res = await fetch(`/api/topics${qs ? `?${qs}` : ""}`);
       const data = await res.json();
       setTopics(Array.isArray(data.topics) ? data.topics : []);
     } catch {
@@ -96,7 +116,7 @@ export default function Home({
     } finally {
       setTopicsLoading(false);
     }
-  }, []);
+  }, [cluster]);
 
   useEffect(() => {
     loadTopics();
@@ -123,7 +143,17 @@ export default function Home({
       <p className="mt-2 text-[15px] text-neutral-400">{blogName}</p>
 
       {/* 추천 글감 — 랜딩과 동일한 글감 박스(실데이터). 누르면 그 글 쓰기 */}
-      <h2 className="mt-8 text-[15px] font-bold tracking-tight text-neutral-900">오늘의 추천 글감</h2>
+      {cluster ? (
+        <div className="mt-8">
+          <button onClick={() => setCluster(null)} className="-ml-1 flex items-center gap-1 text-[13px] font-medium text-neutral-400 transition hover:text-neutral-700">
+            <span className="text-base leading-none">←</span> 다양한 글감으로
+          </button>
+          <h2 className="mt-2 text-[15px] font-bold tracking-tight text-neutral-900">‘{cluster}’ 이어가기</h2>
+          <p className="mt-1 text-[12px] leading-relaxed text-neutral-400">한 주제를 깊이 쓰면 그 분야 <b className="text-[#1D75F7]">검색 권위</b>가 생겨 상위에 유리해요</p>
+        </div>
+      ) : (
+        <h2 className="mt-8 text-[15px] font-bold tracking-tight text-neutral-900">오늘의 추천 글감</h2>
+      )}
       {topicsLoading ? (
         <div className="mt-3">
           {/* 진행 표시 — 멈춘 듯 안 보이게 순환 메시지(첫 카테고리는 수집이라 잠깐 걸림) */}
@@ -170,8 +200,21 @@ export default function Home({
         </div>
       ) : (
         <div className="mt-3 rounded-3xl border border-dashed border-neutral-200 p-8 text-center text-sm text-neutral-400">
-          아직 추천할 글감이 없어요. <button onClick={loadTopics} className="font-medium text-[#1D75F7]">다시 받기</button>
+          {cluster ? "이 주제로 더 쓸 글감이 없어요. " : "아직 추천할 글감이 없어요. "}
+          <button onClick={cluster ? () => setCluster(null) : loadTopics} className="font-medium text-[#1D75F7]">{cluster ? "다양한 글감으로" : "다시 받기"}</button>
         </div>
+      )}
+
+      {/* 주제 이어가기 — 기본 모드 + 쓴 주제 있을 때만(선택형 · 이유 안내) */}
+      {!cluster && !topicsLoading && mainTopic && (
+        <button
+          onClick={() => setCluster(mainTopic.token)}
+          className="mt-4 w-full rounded-2xl border border-[#1D75F7]/20 bg-[#1D75F7]/[0.04] p-4 text-left transition hover:bg-[#1D75F7]/[0.07] active:scale-[0.99]"
+        >
+          <p className="text-[14px] font-bold text-neutral-900">‘{mainTopic.token}’ 주제로 {mainTopic.count}편 쓰셨네요</p>
+          <p className="mt-1 text-[12.5px] leading-relaxed text-neutral-500">한 주제를 깊이 쓰면 그 분야 <b className="text-[#1D75F7]">검색 권위</b>가 생겨 상위에 유리해요.</p>
+          <p className="mt-2 inline-flex items-center gap-0.5 text-[13px] font-bold text-[#1D75F7]">‘{mainTopic.token}’ 글감 더 보기 ›</p>
+        </button>
       )}
       </div>
       </section>

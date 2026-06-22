@@ -122,6 +122,8 @@ export async function GET(req: Request) {
   // 카드별 교체('이 글감 별로예요') — 지금 보이는 글감들을 제외하고 새로 뽑는다.
   const exclude = (new URL(req.url).searchParams.get("exclude") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
   for (const e of exclude) usedSet.add(normalizeKeyword(e));
+  // 토픽 클러스터(주제 이어가기): 이 토큰이 든 키워드만 → 한 주제 깊이 파기. %_ 이스케이프.
+  const cluster = (new URL(req.url).searchParams.get("cluster") ?? "").trim().replace(/[%_]/g, "").slice(0, 24);
 
   // keyword_pool은 공용 풀(RLS 정책 없음 = 서버 전용). 서비스롤로 읽는다(category_insights와 동일 패턴).
   // 유저별 비밀이 아닌 공용 데이터이고, 조회 조건은 위에서 본인 확인된 프로필 값(vertical/sub)뿐이라 안전.
@@ -132,6 +134,7 @@ export async function GET(req: Request) {
   async function fetchPool(useSub: boolean, ranged: boolean): Promise<PoolRow[]> {
     let q = pool.from("keyword_pool").select("keyword, monthly_searches, competition, audience").eq("vertical", vertical);
     if (useSub && sub) q = q.eq("sub", sub);
+    if (cluster) q = q.ilike("keyword", `%${cluster}%`); // 클러스터: 이 토큰 든 키워드만
     if (ranged) q = q.gte("monthly_searches", 500).lte("monthly_searches", 5000);
     const { data } = await q
       .order("times_assigned", { ascending: true }) // 덜 쓰인 것 먼저(기존 인덱스 활용)
@@ -184,7 +187,7 @@ export async function GET(req: Request) {
   const level = regionLevel(vertical, sub ?? null);
   const type = bloggerType(vertical); // local/online/hobby → 카피 톤
   const regions = extractRegions(profile?.biz_address as string | null, level);
-  const local = isLocalBusiness(level, regions);
+  const local = isLocalBusiness(level, regions) && !cluster; // 클러스터 모드는 지역글감 제외(주제 깊이만)
   const localSeeds = local
     ? buildLocalSeeds(regions, vertical, sub ?? null).filter(
         (k) => !usedSet.has(normalizeKeyword(k)) && !isUnsafeKeyword(k),
