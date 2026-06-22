@@ -351,30 +351,8 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
           <Btn title="목록" active={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()}><IconList /></Btn>
           <Btn title="번호 목록" active={editor.isActive("orderedList")} onClick={() => editor.chain().focus().toggleOrderedList().run()}><IconOrderedList /></Btn>
           <span className="mx-1 h-5 w-px bg-neutral-200/80" />
-          <Btn title="왼쪽 정렬" active={editor.isActive({ textAlign: "left" })} onClick={() => editor.chain().focus().setTextAlign("left").run()}><IconAlignLeft /></Btn>
-          <Btn title="가운데 정렬" active={editor.isActive({ textAlign: "center" })} onClick={() => editor.chain().focus().setTextAlign("center").run()}><IconAlignCenter /></Btn>
-          <Btn title="오른쪽 정렬" active={editor.isActive({ textAlign: "right" })} onClick={() => editor.chain().focus().setTextAlign("right").run()}><IconAlignRight /></Btn>
-          <div className="relative ml-1">
-            <select
-              title="글자 크기"
-              value={(editor.getAttributes("textStyle").fontSize as string) ?? ""}
-              onChange={(e) => {
-                const v = e.target.value;
-                editor.chain().focus().setMark("textStyle", { fontSize: v || null }).run();
-              }}
-              className="h-8 cursor-pointer appearance-none rounded-md border border-neutral-200 bg-white pl-2.5 pr-6 text-xs font-medium text-neutral-600 outline-none transition hover:border-neutral-300 focus:border-neutral-900"
-            >
-              <option value="">본문 크기</option>
-              <option value="0.9rem">작게</option>
-              <option value="1.15rem">크게</option>
-              <option value="1.4rem">더 크게</option>
-            </select>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400"><path d="m6 9 6 6 6-6" /></svg>
-          </div>
-          <span className="mx-1 h-5 w-px bg-neutral-200/80" />
           <Btn title="링크 (텍스트를 드래그한 뒤 클릭)" active={editor.isActive("link")} onClick={openLink}><IconLink /></Btn>
           <Btn title="이미지" onClick={() => fileRef.current?.click()}><IconImage /></Btn>
-          <Btn title="표 (3×3)" onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}><IconTable /></Btn>
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickFile} />
           {originalHtml && (
             <button type="button" title="AI가 처음 쓴 글로 되돌리기" onClick={restoreOriginal} className="ml-auto flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-800 active:scale-95">
