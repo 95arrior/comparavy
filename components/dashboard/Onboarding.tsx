@@ -256,7 +256,6 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
                 placeholder="검색 또는 직접 입력 (예: 성형외과 · ㅅㅎ)"
                 maxLength={40}
                 className={`${inputCls} pl-10`}
-                autoFocus
               />
             </div>
             {customErr && <p className="mt-2 text-xs font-medium text-amber-600">{customErr}</p>}

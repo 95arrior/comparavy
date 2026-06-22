@@ -155,20 +155,23 @@ export default function Home({
         <h2 className="mt-8 text-[15px] font-bold tracking-tight text-neutral-900">오늘의 추천 글감</h2>
       )}
       {topicsLoading ? (
-        <div className="mt-3">
-          {/* 진행 표시 — 멈춘 듯 안 보이게 순환 메시지(첫 카테고리는 수집이라 잠깐 걸림) */}
-          <div className="flex items-center gap-3 rounded-2xl border border-neutral-100 bg-neutral-50/70 px-5 py-3.5">
-            <span className="h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-[#1D75F7]/25 border-t-[#1D75F7]" />
-            <p key={loadStage} className="ateflo-soft-in text-sm font-medium text-neutral-600">{LOAD_MSGS[loadStage]}</p>
-          </div>
-          <div className="mt-3 flex flex-col gap-3">
+        <div className="relative mt-3">
+          {/* 블러된 글감 스켈레톤 — 실제 카드와 '같은 자리' */}
+          <div className="flex select-none flex-col gap-3 blur-[2.5px]" aria-hidden>
             {[0, 1, 2].map((i) => (
               <div key={i} className="rounded-2xl bg-white px-5 py-4 ring-1 ring-black/[0.05] sm:px-6 sm:py-5">
-                <div className="h-4 w-14 animate-pulse rounded-full bg-neutral-200" style={{ animationDelay: `${i * 120}ms` }} />
-                <div className="mt-2.5 h-5 w-3/4 animate-pulse rounded bg-neutral-200" style={{ animationDelay: `${i * 120 + 60}ms` }} />
-                <div className="mt-3 h-3.5 w-1/2 animate-pulse rounded bg-neutral-100" style={{ animationDelay: `${i * 120 + 120}ms` }} />
+                <div className="h-4 w-14 rounded-full bg-neutral-200" />
+                <div className="mt-2.5 h-5 w-3/4 rounded bg-neutral-200" />
+                <div className="mt-3 h-3.5 w-1/2 rounded bg-neutral-100" />
               </div>
             ))}
+          </div>
+          {/* 돋보기로 '찾는 중' — 좌측 돋보기가 훑듯 움직임 */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="flex items-center gap-2.5 rounded-full bg-white/85 px-5 py-2.5 shadow-[0_6px_20px_-8px_rgba(20,40,90,0.3)] backdrop-blur-sm">
+              <svg className="ateflo-search-scan shrink-0 text-[#1D75F7]" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4-4" /></svg>
+              <p key={loadStage} className="ateflo-soft-in text-sm font-semibold text-neutral-700">{LOAD_MSGS[loadStage]}</p>
+            </div>
           </div>
         </div>
       ) : topics.length > 0 ? (
