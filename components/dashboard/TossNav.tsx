@@ -15,14 +15,14 @@ function Icon({ k, active }: { k: NavKey; active: boolean }) {
   if (k === "home") return <svg {...common}><path d="M3 10.5 12 3l9 7.5" /><path d="M5 9.5V20h14V9.5" /></svg>;
   if (k === "articles") return <svg {...common}><path d="M5 3h10l4 4v14H5z" /><path d="M15 3v4h4" /><path d="M9 12h6M9 16h6" /></svg>;
   if (k === "performance") return <svg {...common}><path d="M4 19V5" /><path d="M4 19h16" /><path d="M8 16l3.5-4 3 2.5L20 8" /></svg>;
-  return <svg {...common}><circle cx="5" cy="6" r="1.6" /><circle cx="5" cy="12" r="1.6" /><circle cx="5" cy="18" r="1.6" /><path d="M10 6h9M10 12h9M10 18h9" /></svg>;
+  return <svg {...common}><circle cx="12" cy="8" r="3.4" /><path d="M5.5 20a6.5 6.5 0 0 1 13 0" /></svg>;
 }
 
 const NAV: { key: NavKey; label: string }[] = [
   { key: "home", label: "홈" },
   { key: "articles", label: "내 글" },
   { key: "performance", label: "성과" },
-  { key: "more", label: "더보기" },
+  { key: "more", label: "내정보" },
 ];
 
 export default function TossNav({
@@ -59,7 +59,7 @@ export default function TossNav({
           <button
             onClick={() => onNav("more")}
             className="ml-auto flex h-9 w-9 items-center justify-center rounded-full bg-neutral-100 text-sm font-bold text-neutral-600 transition hover:bg-neutral-200"
-            aria-label="더보기"
+            aria-label="내정보"
           >
             {initial}
           </button>

@@ -997,7 +997,7 @@ export default function DashboardClient(props: DashboardProps) {
 
             {/* 내 글 */}
             {labView === "articles" && (
-              <main className="mx-auto max-w-5xl px-6 py-10">
+              <main className="ateflo-page-in mx-auto max-w-5xl px-6 py-10">
                 <button onClick={() => goLabView("home")} className="mb-4 -ml-1 flex items-center gap-1 text-sm text-neutral-400 transition hover:text-neutral-700"><span className="text-base leading-none">←</span> 홈</button>
                 {nextStepBanner}
                 {articles.length > 0 && (
@@ -1062,81 +1062,76 @@ export default function DashboardClient(props: DashboardProps) {
 
         {/* ── 내 정보 (+ 블로그 설정 통합) ── */}
         {!page && !selected && !genParams && tab === "account" && (
-          <main className="ateflo-page-in mx-auto max-w-5xl px-6 py-10">
-            <div className="mx-auto max-w-xl rounded-2xl border border-neutral-100 bg-white shadow-sm p-6 sm:p-8">
-                <h2 className="text-lg font-semibold tracking-tight">내 정보</h2>
-                <dl className="mt-5 space-y-3 text-sm">
-                  <div className="flex justify-between gap-4"><dt className="text-neutral-500">이메일</dt><dd className="truncate">{props.email}</dd></div>
-                  <div className="flex justify-between gap-4"><dt className="text-neutral-500">플랜</dt><dd className="font-medium">{PLANS[props.plan].name}</dd></div>
-                  <div className="flex justify-between gap-4">
-                    <dt className="text-neutral-500">{props.plan === "pro" ? "이번 달 생성" : "평생 생성"}</dt>
-                    <dd>{articlesUsed} / {props.articlesLimit}편 <span className="text-neutral-400">(남은 {Math.max(0, props.articlesLimit - articlesUsed)}편)</span></dd>
-                  </div>
-                  {props.plan === "pro" && !subCanceled && props.subStatus !== "past_due" && props.nextBillingAt && (
-                    <div className="flex justify-between gap-4">
-                      <dt className="text-neutral-500">다음 결제</dt>
-                      <dd>
-                        {new Date(props.nextBillingAt).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}
-                        <span className="text-neutral-400"> · ₩{PLANS.pro.price.toLocaleString("ko-KR")}/월</span>
-                      </dd>
-                    </div>
-                  )}
-                </dl>
-                {props.plan === "pro" ? (
-                  <p className="mt-3 rounded-xl bg-neutral-50 px-4 py-3 text-xs leading-relaxed text-neutral-600">
-                    매달 {props.articlesLimit}편을 새로 생성할 수 있어요. <b className="text-neutral-800">만든 글은 영구 보관되고, 발행은 무제한</b>이라 초안을 쟁여뒀다 언제든 올릴 수 있어요.
-                    <br />단, 이번 달에 안 쓴 <b className="text-neutral-800">생성 횟수</b>는 다음 달로 이월되지 않아요.
-                    {(() => {
-                      if (!props.periodStart) return null;
-                      const next = new Date(new Date(props.periodStart).getTime() + 30 * 24 * 60 * 60 * 1000);
-                      return <> · 다음 충전 {next.toLocaleDateString("ko-KR", { month: "long", day: "numeric" })}</>;
-                    })()}
-                  </p>
-                ) : (
-                  <p className="mt-3 rounded-xl bg-neutral-50 px-4 py-3 text-xs leading-relaxed text-neutral-500">
-                    무료는 <b>평생 {props.articlesLimit}편</b>이에요. (매달 초기화 없음) 더 쓰려면 프로로 업그레이드하세요.
-                  </p>
-                )}
-                <div className="mt-6">
-                  <button onClick={signOut} className="rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium transition hover:border-neutral-900">
-                    로그아웃
-                  </button>
-                </div>
+          <main className="ateflo-page-in mx-auto max-w-xl px-6 py-10">
+            <h1 className="font-pretendard text-[26px] font-bold tracking-tight text-neutral-900 sm:text-[30px]">내정보</h1>
 
-                {props.plan === "pro" && props.subStatus === "past_due" && (
-                  <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">
-                    <p className="text-sm leading-relaxed text-rose-800">
-                      결제 실패로 <b className="text-rose-900">재시도 중</b>이에요. 카드를 다시 등록하면 바로 정상으로 돌아와요. 그동안 새 글 생성은 멈춰 있어요.
-                    </p>
-                    <a href="/pricing" className="mt-3 inline-block rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700">
-                      카드 다시 등록
-                    </a>
-                  </div>
-                )}
+            {/* 프로필 헤더 */}
+            <div className="mt-6 flex items-center gap-3 rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-neutral-800 text-base font-bold text-white">{initial}</span>
+              <div className="min-w-0">
+                <p className="truncate text-[15px] font-bold text-neutral-900">{displayName}</p>
+                <p className="text-[13px] text-neutral-400">{PLANS[props.plan].name} · 생성 {articlesUsed}/{props.articlesLimit}편{props.plan !== "pro" ? " (평생)" : ""}</p>
+              </div>
+            </div>
 
-                {props.plan === "pro" && subCanceled && (
-                  <div className="mt-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3">
-                    <p className="text-sm leading-relaxed text-neutral-600">
-                      해지를 예약했어요.{" "}
-                      {props.currentPeriodEnd ? (
-                        <><b className="text-neutral-800">{new Date(props.currentPeriodEnd).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}까지</b> 쓸 수 있고,</>
-                      ) : (
-                        <>남은 기간까지 쓸 수 있고,</>
-                      )}{" "}
-                      다음 결제는 안 나가요.
-                    </p>
-                    <button
-                      onClick={resumeSubscription}
-                      disabled={busy}
-                      className="mt-3 rounded-lg bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:opacity-50"
-                    >
-                      {busy ? "처리 중…" : "해지 취소하고 계속 이용"}
-                    </button>
-                  </div>
-                )}
+            {/* 결제 경고 — 재시도 중 */}
+            {props.plan === "pro" && props.subStatus === "past_due" && (
+              <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3.5">
+                <p className="text-sm leading-relaxed text-rose-800">결제 실패로 <b className="text-rose-900">재시도 중</b>이에요. 카드를 다시 등록하면 바로 정상으로 돌아와요.</p>
+                <a href="/pricing" className="mt-3 inline-block rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700">카드 다시 등록</a>
+              </div>
+            )}
+            {/* 해지 예약 안내 */}
+            {props.plan === "pro" && subCanceled && (
+              <div className="mt-4 rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3.5">
+                <p className="text-sm leading-relaxed text-neutral-600">해지를 예약했어요.{" "}
+                  {props.currentPeriodEnd ? (<><b className="text-neutral-800">{new Date(props.currentPeriodEnd).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}까지</b> 쓸 수 있고,</>) : (<>남은 기간까지 쓸 수 있고,</>)}{" "}다음 결제는 안 나가요.</p>
+                <button onClick={resumeSubscription} disabled={busy} className="mt-3 rounded-lg bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:opacity-50">{busy ? "처리 중…" : "해지 취소하고 계속 이용"}</button>
+              </div>
+            )}
+
+            {/* 블로그 */}
+            <p className="mb-2 mt-7 px-1 text-[13px] font-semibold text-neutral-400">블로그</p>
+            <div className="divide-y divide-neutral-100 overflow-hidden rounded-2xl bg-white ring-1 ring-black/[0.04]">
+              <button onClick={() => goTab("wordpress")} className="flex w-full items-center gap-3 px-5 py-4 text-left transition active:bg-neutral-50">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#1D75F7]/10 text-[#1D75F7]"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5" /><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5" /></svg></span>
+                <span className="flex-1 text-[15px] font-medium text-neutral-800">워드프레스 연결</span>
+                <span className="text-[13px] text-neutral-400">{wpSiteUrl ? "연결됨" : "연결 안 됨"}</span>
+                <svg className="text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+              </button>
+              {blogProfile && (
+                <button onClick={() => { if (window.confirm("블로그를 처음부터 다시 설정할까요?")) { setReonboardPrev(blogProfile); setBlogProfile(null); goTab("lab"); } }} className="flex w-full items-center gap-3 px-5 py-4 text-left transition active:bg-neutral-50">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-500"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg></span>
+                  <span className="flex-1 text-[15px] font-medium text-neutral-800">블로그 설정·재설정</span>
+                  <svg className="text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+                </button>
+              )}
+            </div>
+
+            {/* 이용 */}
+            <p className="mb-2 mt-7 px-1 text-[13px] font-semibold text-neutral-400">이용</p>
+            <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-black/[0.04]">
+              <a href="/pricing" className="flex w-full items-center gap-3 px-5 py-4 text-left transition active:bg-neutral-50">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#1D75F7]/10 text-[#1D75F7]"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" /></svg></span>
+                <span className="flex-1 text-[15px] font-medium text-neutral-800">플랜·결제</span>
+                <span className="text-[13px] text-neutral-400">{props.plan === "pro" && props.nextBillingAt && !subCanceled ? `다음 결제 ${new Date(props.nextBillingAt).toLocaleDateString("ko-KR", { month: "long", day: "numeric" })}` : PLANS[props.plan].name}</span>
+                <svg className="text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+              </a>
+            </div>
+
+            {/* 계정 */}
+            <p className="mb-2 mt-7 px-1 text-[13px] font-semibold text-neutral-400">계정</p>
+            <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-black/[0.04]">
+              <button onClick={signOut} className="flex w-full items-center gap-3 px-5 py-4 text-left transition active:bg-neutral-50">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-500"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5M21 12H9" /></svg></span>
+                <span className="flex-1 text-[15px] font-medium text-neutral-800">로그아웃</span>
+                <svg className="text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+              </button>
+            </div>
+            <p className="mt-3 px-1 text-[12px] leading-relaxed text-neutral-400">{props.email}</p>
 
                 {/* 계정 관리 — 눈에 띄지 않게(작은 텍스트), 단 접근은 가능하게 */}
-                <div className="mt-10 flex flex-col items-start gap-2 border-t border-neutral-100 pt-5 text-xs">
+                <div className="mt-8 flex flex-col items-start gap-2 px-1 text-xs">
                   {props.plan === "pro" && !subCanceled && (
                     !confirmCancel ? (
                       <button onClick={() => setConfirmCancel(true)} className="text-neutral-400 transition hover:text-neutral-600">
@@ -1188,22 +1183,6 @@ export default function DashboardClient(props: DashboardProps) {
                     </div>
                   )}
                 </div>
-            </div>
-
-            {/* 블로그 설정 — 한 화면 설정형(업종·이름·업체정보). 내 정보로 통합 */}
-            {blogProfile && (
-              <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-neutral-100 bg-white shadow-sm p-6 sm:p-8">
-                <h2 className="text-lg font-semibold tracking-tight">블로그 설정</h2>
-                <p className="mt-1 text-sm leading-relaxed text-neutral-500">업종·이름·정보를 바꾸려면 처음부터 다시 설정해요.</p>
-                {/* 재설정 — 온보딩부터 다시(취소 가능). 이전 프로필 저장해 취소 시 복귀 */}
-                <button
-                  onClick={() => { if (window.confirm("블로그를 처음부터 다시 설정할까요?")) { setReonboardPrev(blogProfile); setBlogProfile(null); goTab("lab"); } }}
-                  className="mt-4 w-full rounded-xl bg-[#1D75F7] py-3 text-sm font-semibold text-white transition hover:opacity-90 active:scale-[0.99]"
-                >
-                  재설정
-                </button>
-              </div>
-            )}
           </main>
         )}
       </div>
