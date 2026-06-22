@@ -67,7 +67,7 @@ export default function TopicCard({
           <span className="flex min-w-0 items-center gap-1.5">
             <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-neutral-500">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" className="shrink-0 opacity-70"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4-4" /></svg>
-              검색 {vol.toLocaleString()}회
+월 검색 {vol.toLocaleString()}회
             </span>
             <span className="text-neutral-300">·</span>
             <span className={`truncate font-semibold ${isSak ? "text-violet-700" : "text-neutral-400"}`}>{EMOTION[comp]}</span>

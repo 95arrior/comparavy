@@ -217,7 +217,11 @@ export async function GET(req: Request) {
   // ── 제목·카테고리·노이즈판별(여유분 한 번에) ──
   const allKeywords = [...localSeeds, ...candidates.map((r) => r.keyword)];
   if (allKeywords.length === 0) return NextResponse.json({ topics: [] });
-  const titled = await keywordsToTitles(allKeywords, (sub || vertical) ?? undefined); // {title, tag, ok} — 업종 컨텍스트로 무관 키워드 제외
+  // 통합 맥락(분야·대상·사용자 지역) → AI가 브랜드·타지역·대상불일치·무관 키워드까지 한 번에 거름
+  const ctxParts = [`분야: ${sub || vertical}`];
+  if (audActive) ctxParts.push(`대상: ${audSel.filter((a) => a !== AUDIENCE_ALL).join("·")}`);
+  if (local && regions.length) ctxParts.push(`사용자 지역: ${regions.join("·")}`);
+  const titled = await keywordsToTitles(allKeywords, ctxParts.join(" / ")); // {title, tag, ok, fit}
   const off = localSeeds.length;
 
   // 화면에 뜰 일반 글감 행(노이즈 제외 + 업종 핵심 적합도 높은 순 + need개)
