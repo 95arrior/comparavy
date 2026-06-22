@@ -48,6 +48,7 @@ export default function ArticleModal({
   const [featured, setFeatured] = useState<string | null>(article.featured_image ?? null);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [publishSheetOpen, setPublishSheetOpen] = useState(false); // '발행하기' → 발행 설정 시트(슬라이드업)
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [autoSavedAt, setAutoSavedAt] = useState<string | null>(null);
@@ -628,6 +629,13 @@ export default function ArticleModal({
     );
   }
 
+  // '발행하기' 진입 — 한도 초과면 업셀, 미연결이면 기존 흐름(연결 안내), 그 외엔 발행 시트
+  const openPublish = () => {
+    if (!canPublish) { setShowUpsell(true); return; }
+    if (!wpConnected) { publish("publish"); return; }
+    setPublishSheetOpen(true);
+  };
+
   return (
     <>
       {publishing && <LoadingScreen label="워드프레스에 발행하고 있어요" />}
@@ -663,9 +671,9 @@ export default function ArticleModal({
               </button>
             )}
             <button
-              onClick={() => (canPublish ? publish("publish") : setShowUpsell(true))}
+              onClick={openPublish}
               disabled={publishing}
-              className="rounded-lg bg-neutral-900 px-3.5 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
+              className="rounded-lg bg-[#1D75F7] px-3.5 py-1.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
             >
               {publishing
                 ? article.wp_post_id
@@ -739,7 +747,7 @@ export default function ArticleModal({
       {/* 자동저장 표시 — 화면에 고정되어 스크롤을 따라다님(현재 보는 위치 우하단에 항상 보임) */}
       {(autoSavedAt || dirty || saveFailed) && (
         <div
-          className={`fixed bottom-5 right-5 z-40 rounded-lg px-3.5 py-1.5 text-xs font-medium shadow-md backdrop-blur transition ${
+          className={`fixed bottom-20 right-5 z-40 rounded-lg px-3.5 py-1.5 text-xs font-medium shadow-md backdrop-blur transition md:bottom-5 ${
             saveFailed
               ? "bg-red-600/90 text-white"
               : dirty
@@ -759,7 +767,7 @@ export default function ArticleModal({
         </div>
       )}
 
-      <div className="mx-auto max-w-3xl px-6 py-8">
+      <div className="mx-auto max-w-3xl px-6 pt-8 pb-28 md:pb-8">
         <div className="flex items-center justify-between gap-4">
           <span className="truncate text-xs text-neutral-400">키워드 · {article.keyword}</span>
         </div>
@@ -848,15 +856,20 @@ export default function ArticleModal({
           </div>
         </div>
 
-        {/* 발행 설정: 카테고리 · 태그 (SEO) */}
-        {wpConnected && (() => {
+        {/* 발행 시트 — '발행하기' 누르면 슬라이드업. 카테고리·태그·옵션·발행 액션을 한 곳에 */}
+        {wpConnected && publishSheetOpen && (() => {
           // 추천(눌러서 추가)은 한 곳으로 모은다: AI 추천 먼저, 그다음 이미 쓰던 태그. 이미 담긴 건 제외·중복 제거.
           const suggestions = Array.from(new Set([...aiSuggested, ...existingTags])).filter((t) => !tags.includes(t));
           // 드롭다운 옵션: WP에서 가져온 목록 + 현재 선택값(아직 WP에 없는 새 카테고리 포함) → 다시 열어도 안 사라짐
           return (
-            <div className="mt-4 rounded-2xl border border-neutral-100 bg-white shadow-sm p-5">
-              <p className="text-[15px] font-semibold tracking-tight">발행 설정</p>
-              <p className="mt-1 text-[13px] leading-relaxed text-neutral-400">카테고리와 태그를 정하면 검색에 더 잘 잡혀요.</p>
+            <div className="ateflo-backdrop-in fixed inset-0 z-[70] flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center sm:p-6" onClick={() => setPublishSheetOpen(false)}>
+              <div className="ateflo-sheet-up flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-white sm:rounded-3xl" onClick={(e) => e.stopPropagation()}>
+                <div className="flex shrink-0 items-center justify-between border-b border-neutral-100 px-5 py-3.5">
+                  <p className="text-[17px] font-bold tracking-tight text-neutral-900">발행</p>
+                  <button onClick={() => setPublishSheetOpen(false)} className="text-sm font-medium text-neutral-400 transition hover:text-neutral-700">닫기</button>
+                </div>
+                <div className="min-h-0 flex-1 overflow-y-auto p-5">
+                  <p className="text-[13px] leading-relaxed text-neutral-400">카테고리와 태그를 정하면 검색에 더 잘 잡혀요.</p>
 
               {/* 카테고리 */}
               <div className={`mt-5 ${catOpen ? "relative z-50" : ""}`}>
@@ -1113,6 +1126,16 @@ export default function ArticleModal({
                   </button>
                 </div>
               </div>
+                </div>
+                <div className="shrink-0 border-t border-neutral-100 p-4" style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}>
+                  <button onClick={() => { setPublishSheetOpen(false); publish("publish"); }} disabled={publishing} className="w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99] disabled:opacity-50">
+                    {article.wp_post_id ? "워드프레스에 재발행" : "워드프레스에 발행"}
+                  </button>
+                  <button onClick={() => { setPublishSheetOpen(false); publish("draft"); }} disabled={publishing} className="mt-2 w-full rounded-xl py-2.5 text-sm font-medium text-neutral-500 transition hover:bg-neutral-50 disabled:opacity-50">
+                    초안으로만 저장
+                  </button>
+                </div>
+              </div>
             </div>
           );
         })()}
@@ -1198,6 +1221,12 @@ export default function ArticleModal({
           </div>
         )}
 
+        {/* 모바일 하단 고정 '발행하기' CTA — 검토 → 발행 다음단계 인도 */}
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-neutral-100 bg-white/95 px-4 pt-2.5 backdrop-blur md:hidden" style={{ paddingBottom: "calc(0.625rem + env(safe-area-inset-bottom))" }}>
+          <button onClick={openPublish} disabled={publishing} className="w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-bold text-white transition active:scale-[0.99] disabled:opacity-50">
+            {article.wp_post_id ? "재발행하기" : "발행하기"}
+          </button>
+        </div>
       </div>
     </>
   );
