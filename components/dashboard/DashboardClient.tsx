@@ -18,6 +18,7 @@ import Onboarding from "./Onboarding";
 import ProfileSettings from "./ProfileSettings";
 import Home from "./Home";
 import { toEngineType, type BlogProfile } from "@/lib/blogProfile";
+import { bloggerType } from "@/lib/bloggerTypes";
 import type { QueueItem } from "@/lib/keywordQueue";
 import AteFloLogo from "@/components/AteFloLogo";
 import Brand from "@/components/Brand";
@@ -926,6 +927,7 @@ export default function DashboardClient(props: DashboardProps) {
                 onUpdated={(u) => setArticles((prev) => prev.map((a) => (a.id === u.id ? u : a)))}
                 onAllArticles={() => goLabView("articles")}
                 onGoConnect={() => goTab("wordpress")}
+                bloggerType={bloggerType(blogProfile.vertical)}
               />
             )}
             {labView === "home" && blocked && (

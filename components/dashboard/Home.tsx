@@ -6,9 +6,13 @@ import ArticleList from "./ArticleList";
 import JourneyRoadmap from "./JourneyRoadmap";
 import TopicCard from "@/components/TopicCard";
 import type { Comp } from "@/lib/topicScore";
+import type { BloggerType } from "@/lib/bloggerTypes";
 import type { Article } from "./types";
 
 interface Topic { keyword: string; title: string; demandLabel: string; ssak?: boolean; region?: boolean; tone?: "local" | "online" | "hobby"; vol: number; comp: Comp; tag?: string }
+
+// 글감 모으는 동안 순환 안내(멈춘 듯 안 보이게 — 첫 카테고리는 네이버 수집이라 잠깐 걸림)
+const LOAD_MSGS = ["검색되는 키워드를 찾는 중…", "경쟁 낮은 글감을 고르는 중…", "글감 제목을 다듬는 중…"];
 
 // 토스식 메인 홈 — '연구소' 컨셉/탭 제거. [미니 진척] → [성과] → [글감 자리+새 글 쓰기] → [내 글].
 // 미니 진척 배너는 3단계 완료되면 자동으로 사라진다(새 유저만 가이드).
@@ -24,6 +28,7 @@ export default function Home({
   onUpdated,
   onAllArticles,
   onGoConnect,
+  bloggerType,
 }: {
   displayName: string;
   blogName: string;
@@ -35,9 +40,18 @@ export default function Home({
   onUpdated: (a: Article) => void;
   onAllArticles: () => void;
   onGoConnect: () => void;
+  bloggerType: BloggerType;
 }) {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [topicsLoading, setTopicsLoading] = useState(true);
+  const [loadStage, setLoadStage] = useState(0);
+
+  // 로딩 동안 안내 메시지 순환
+  useEffect(() => {
+    if (!topicsLoading) { setLoadStage(0); return; }
+    const t = setInterval(() => setLoadStage((s) => (s + 1) % LOAD_MSGS.length), 1800);
+    return () => clearInterval(t);
+  }, [topicsLoading]);
 
   const loadTopics = useCallback(async () => {
     setTopicsLoading(true);
@@ -92,14 +106,22 @@ export default function Home({
       <p className="mt-2 text-[15px] text-neutral-400">{blogName}</p>
 
       {/* 추천 글감 — 랜딩과 동일한 글감 박스(실데이터). 누르면 그 글 쓰기 */}
+      <h2 className="mt-8 text-[15px] font-bold tracking-tight text-neutral-900">오늘의 추천 글감</h2>
       {topicsLoading ? (
-        <div className="mt-8 flex flex-col gap-3">
-          <div className="h-[112px] animate-pulse rounded-2xl bg-neutral-100" />
-          <div className="h-[112px] animate-pulse rounded-2xl bg-neutral-100" />
-          <div className="h-[112px] animate-pulse rounded-2xl bg-neutral-100" />
+        <div className="mt-3">
+          {/* 진행 표시 — 멈춘 듯 안 보이게 순환 메시지(첫 카테고리는 수집이라 잠깐 걸림) */}
+          <div className="flex items-center gap-3 rounded-2xl border border-neutral-100 bg-neutral-50/70 px-5 py-3.5">
+            <span className="h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-[#1D75F7]/25 border-t-[#1D75F7]" />
+            <p key={loadStage} className="ateflo-soft-in text-sm font-medium text-neutral-600">{LOAD_MSGS[loadStage]}</p>
+          </div>
+          <div className="mt-3 flex flex-col gap-3">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="h-[100px] animate-pulse rounded-2xl bg-neutral-100" style={{ animationDelay: `${i * 120}ms` }} />
+            ))}
+          </div>
         </div>
       ) : topics.length > 0 ? (
-        <div className="mt-8">
+        <div className="mt-3">
           <div className="flex flex-col gap-3">
             {topics.map((t, i) =>
               t.region ? (
@@ -124,7 +146,7 @@ export default function Home({
           <button onClick={loadTopics} className="mt-4 w-full rounded-xl border border-neutral-200 py-2.5 text-sm font-medium text-neutral-500 transition hover:bg-neutral-50 active:scale-[0.99]">다른 글감 받기 ↻</button>
         </div>
       ) : (
-        <div className="mt-8 rounded-3xl border border-dashed border-neutral-200 p-8 text-center text-sm text-neutral-400">
+        <div className="mt-3 rounded-3xl border border-dashed border-neutral-200 p-8 text-center text-sm text-neutral-400">
           아직 추천할 글감이 없어요. <button onClick={loadTopics} className="font-medium text-[#1D75F7]">다시 받기</button>
         </div>
       )}
@@ -145,7 +167,7 @@ export default function Home({
 
       {/* 수익화 여정 */}
       <div className="mt-6">
-        <JourneyRoadmap publishedCount={publishedCount} wpConnected={wpConnected} onWrite={onWrite} onGoConnect={onGoConnect} />
+        <JourneyRoadmap publishedCount={publishedCount} wpConnected={wpConnected} onWrite={onWrite} onGoConnect={onGoConnect} type={bloggerType} />
       </div>
 
       {/* 성과 */}
