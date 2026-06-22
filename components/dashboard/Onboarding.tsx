@@ -5,6 +5,7 @@ import HoursEditor from "./HoursEditor";
 import AddressSearch from "./AddressSearch";
 import { VERTICAL_SUBS } from "@/lib/verticalSubs";
 import { BLOGGER_TYPE_CARDS, categoriesFor, type BloggerType } from "@/lib/bloggerTypes";
+import { defaultBlogName } from "@/lib/blogName";
 import { ACADEMY_AUDIENCES, AUDIENCE_ALL } from "@/lib/audience";
 import { formatKoreanPhone } from "@/lib/businessBox";
 import LoadingScreen from "@/components/LoadingScreen";
@@ -109,7 +110,7 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          vertical, sub_category: sub, blog_name: bizName.trim() || (sub ? `${sub} 블로그` : ""),
+          vertical, sub_category: sub, blog_name: bizName.trim() || (sub ? defaultBlogName(sub) : ""),
           biz_name: bizName.trim(), biz_address: bizAddress.trim(), biz_detail_address: bizDetail.trim(),
           biz_lat: bizLat, biz_lng: bizLng, biz_phone: bizPhone.trim(), biz_strength: bizStrength.trim(),
           audience, biz_hours_json: hours, publish_mode: "manual",
@@ -281,7 +282,7 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
             <dl className="mt-5 divide-y divide-neutral-100 rounded-2xl border border-neutral-200">
               {([
                 ["분야", `${isLocal ? (VLABEL[vertical] ?? vertical) : bType === "online" ? "수익형 블로거" : "취미·기록"}${sub ? ` · ${sub}` : ""}`],
-                ["블로그 이름", bizName.trim() || (sub ? `${sub} 블로그` : "(자동 생성)")],
+                ["블로그 이름", bizName.trim() || (sub ? defaultBlogName(sub) : "(자동 생성)")],
                 ...(isLocal
                   ? [
                       ...(vertical === "academy" ? [["대상", audience.length ? audience.join(", ") : "(미설정)"]] : []),

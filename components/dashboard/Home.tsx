@@ -45,6 +45,23 @@ export default function Home({
   const [topics, setTopics] = useState<Topic[]>([]);
   const [topicsLoading, setTopicsLoading] = useState(true);
   const [loadStage, setLoadStage] = useState(0);
+  const [swapping, setSwapping] = useState<string | null>(null); // 교체 중인 글감 keyword
+
+  // '이 글감 별로예요' → 지금 보이는 3개 제외하고 새 글감 1개로 그 카드만 교체
+  const swapTopic = async (kw: string) => {
+    if (swapping) return;
+    setSwapping(kw);
+    try {
+      const exclude = topics.map((t) => t.keyword).join(",");
+      const res = await fetch(`/api/topics?exclude=${encodeURIComponent(exclude)}`);
+      const data = await res.json();
+      const fresh: Topic[] = Array.isArray(data.topics) ? data.topics : [];
+      const current = new Set(topics.map((t) => t.keyword));
+      const repl = fresh.find((t) => !current.has(t.keyword));
+      if (repl) setTopics((prev) => prev.map((t) => (t.keyword === kw ? repl : t)));
+    } catch { /* 유지 */ }
+    finally { setSwapping(null); }
+  };
 
   // 로딩 동안 안내 메시지 순환
   useEffect(() => {
@@ -143,7 +160,7 @@ export default function Home({
                   <p className="mt-1.5 inline-flex items-center gap-0.5 text-[12px] font-bold text-[#1D75F7] sm:text-[13px]">이 글 쓰기 ›</p>
                 </button>
               ) : (
-                <TopicCard key={t.keyword} title={t.title} tag={t.tag || undefined} vol={t.vol} comp={t.comp} idx={i} cta="이 글 쓰기" onClick={() => onWriteKeyword(t.keyword, t.title)} />
+                <TopicCard key={t.keyword} title={t.title} tag={t.tag || undefined} vol={t.vol} comp={t.comp} idx={i} cta="이 글 쓰기" onClick={() => onWriteKeyword(t.keyword, t.title)} onDismiss={() => swapTopic(t.keyword)} dismissing={swapping === t.keyword} />
               ),
             )}
           </div>

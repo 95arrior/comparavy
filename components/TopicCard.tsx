@@ -13,6 +13,8 @@ export default function TopicCard({
   revealed = true,
   onClick,
   cta,
+  onDismiss,
+  dismissing,
 }: {
   title: string;
   tag?: string | null;
@@ -22,6 +24,8 @@ export default function TopicCard({
   revealed?: boolean;
   onClick?: () => void;
   cta?: string;
+  onDismiss?: () => void; // '이 글감 별로예요' → 이 카드만 교체
+  dismissing?: boolean;
 }) {
   const isSak = comp === "low";
   const filled = filledStars(vol, comp);
@@ -39,6 +43,20 @@ export default function TopicCard({
       }`}
     >
       {isSak && <div className="ateflo-chip-aurora pointer-events-none absolute inset-0 rounded-2xl" />}
+      {onDismiss && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onDismiss(); }}
+          disabled={dismissing}
+          aria-label="이 글감 별로예요"
+          className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-neutral-100/90 text-neutral-400 transition hover:bg-neutral-200 hover:text-neutral-600 disabled:opacity-60"
+        >
+          {dismissing ? (
+            <span className="h-3 w-3 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-500" />
+          ) : (
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+          )}
+        </button>
+      )}
       <div className="relative">
         <div className="mb-1.5 flex items-center gap-1.5">
           {tag && <span className="inline-flex items-center rounded-full bg-[#E8F1FE] px-2 py-1 text-[10px] font-bold leading-none text-[#1D75F7] sm:text-[11px]">{tag}</span>}

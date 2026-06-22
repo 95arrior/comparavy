@@ -89,7 +89,7 @@ function pickBalanced(rows: PoolRow[], auds: string[], n: number, rnd: () => num
   return out.slice(0, n);
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   // 인증·프로필은 유저 클라이언트(RLS) — 본인 확인 + 본인 프로필만 읽음.
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -119,6 +119,9 @@ export async function GET() {
   // 본인이 이미 쓴 키워드(정규화 집합) — 제외용. articles는 owner RLS라 유저 클라로 본인 것만.
   const { data: mine } = await supabase.from("articles").select("keyword").eq("user_id", user.id);
   const usedSet = new Set((mine ?? []).map((a) => normalizeKeyword(String(a.keyword ?? ""))).filter(Boolean));
+  // 카드별 교체('이 글감 별로예요') — 지금 보이는 글감들을 제외하고 새로 뽑는다.
+  const exclude = (new URL(req.url).searchParams.get("exclude") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+  for (const e of exclude) usedSet.add(normalizeKeyword(e));
 
   // keyword_pool은 공용 풀(RLS 정책 없음 = 서버 전용). 서비스롤로 읽는다(category_insights와 동일 패턴).
   // 유저별 비밀이 아닌 공용 데이터이고, 조회 조건은 위에서 본인 확인된 프로필 값(vertical/sub)뿐이라 안전.

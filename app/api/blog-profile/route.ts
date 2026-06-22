@@ -4,6 +4,7 @@ import { isAdminEmail } from "@/lib/adminStats";
 import { isTone, isType, isPublishMode, isVertical, VERTICAL_DEFAULTS, VERTICAL_TOPIC, DAY_KEYS, type WeeklyHours, type DayHours } from "@/lib/blogProfile";
 import { isTopCategory } from "@/lib/categories";
 import { AUDIENCE_VALUES } from "@/lib/audience";
+import { defaultBlogName } from "@/lib/blogName";
 
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 // 클라 입력을 그대로 믿지 않고 정규화: 알려진 요일 키만, 시간은 HH:MM, closed는 boolean.
@@ -93,7 +94,7 @@ export async function POST(request: Request) {
   const category = (typeof body.category === "string" && isTopCategory(body.category)) ? body.category : (isTopCategory(topic) ? topic : null);
   // 블로그 이름: 비우면 "{대분류} 블로그" 기본값
   const rawName = (typeof body.blog_name === "string" ? body.blog_name : "").trim().slice(0, 60);
-  const blog_name = rawName || `${category ?? topic} 블로그`;
+  const blog_name = rawName || defaultBlogName(category ?? topic); // 자동 기본값만 '블로그 블로그' 중복 정리(입력은 보존)
 
   const { data, error } = await supabase
     .from("blog_profiles")
