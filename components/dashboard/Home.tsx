@@ -26,6 +26,7 @@ export default function Home({
   onAllArticles,
   onGoConnect,
   bloggerType,
+  isAdmin,
 }: {
   displayName: string;
   blogName: string;
@@ -38,6 +39,7 @@ export default function Home({
   onAllArticles: () => void;
   onGoConnect: () => void;
   bloggerType: BloggerType;
+  isAdmin?: boolean;
 }) {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [topicsLoading, setTopicsLoading] = useState(true);
@@ -45,7 +47,7 @@ export default function Home({
   const [swapping, setSwapping] = useState<string | null>(null); // 교체 중인 글감 keyword
 
   // 하루 3회 교체 + 교체한 글감은 그날 다시 안 나옴(기기에 기억 — 새로고침해도 유지)
-  const SWAP_LIMIT = 3;
+  const SWAP_LIMIT = isAdmin ? Infinity : 3; // 관리자(테스트)는 무제한 교체
   const todayKey = `ateflo_dismissed_${new Date().toISOString().slice(0, 10)}`;
   const [dismissed, setDismissed] = useState<string[]>(() => {
     try { const raw = typeof window !== "undefined" ? localStorage.getItem(todayKey) : null; return raw ? JSON.parse(raw) : []; } catch { return []; }
@@ -158,7 +160,9 @@ export default function Home({
               ),
             )}
           </div>
-          {swapLeft <= 0 ? (
+          {!isFinite(swapLeft) ? (
+            <p className="mt-3 text-center text-[12px] text-neutral-300">마음에 안 들면 카드의 ✕로 교체 (테스트 · 무제한)</p>
+          ) : swapLeft <= 0 ? (
             <p className="mt-3 text-center text-[12px] text-neutral-400">오늘 글감 교체는 다 썼어요 · 내일 새 글감이 와요</p>
           ) : (
             <p className="mt-3 text-center text-[12px] text-neutral-300">마음에 안 들면 카드의 ✕로 교체 (오늘 {swapLeft}회 남음)</p>

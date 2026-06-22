@@ -311,7 +311,7 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path className="ateflo-check-draw" d="M5 13l4 4L19 7" /></svg>
             </span>
             <h2 className="font-pretendard mt-6 text-2xl font-bold tracking-tight">다 됐어요! 🎉</h2>
-            <p className="mt-2.5 text-[15px] leading-relaxed text-neutral-600">이제 키워드 하나만 고르면<br />첫 글이 완성돼요.</p>
+            <p className="mt-2.5 text-[15px] leading-relaxed text-neutral-600">성공적인 블로그 운영,<br />지금부터 시작이에요.</p>
           </div>
         )}
         </div>

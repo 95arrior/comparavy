@@ -446,7 +446,7 @@ export default function DashboardClient(props: DashboardProps) {
     setBlogProfile(p);
     setKwTopic(p.topic);
     autoSearched.current = false; // 새 주제면 키워드 탭 진입 시 자동검색 다시
-    setNotice(isNew ? `${p.blog_name || p.topic} 블로그가 만들어졌어요 🎉` : "블로그 설정을 저장했어요");
+    setNotice(isNew ? "블로그 준비 완료예요 🎉" : "설정을 저장했어요");
     goTab("lab"); // 홈으로
   }
 
@@ -592,7 +592,7 @@ export default function DashboardClient(props: DashboardProps) {
     else if (k === "performance") goLabView("performance");
     else goTab("account"); // 더보기
   };
-  const showNav = !selected && !genParams && !page; // 편집·생성·풀페이지 화면엔 탭바 숨김
+  const showNav = !selected && !genParams && !page && !!blogProfile; // 온보딩·편집·생성·풀페이지엔 탭바 숨김
 
   const railBtn = (k: Tab, label: string, icon: React.ReactNode) => {
     const active = tab === k && !selected && !genParams;
@@ -941,6 +941,7 @@ export default function DashboardClient(props: DashboardProps) {
                 onAllArticles={() => goLabView("articles")}
                 onGoConnect={() => goTab("wordpress")}
                 bloggerType={bloggerType(blogProfile.vertical)}
+                isAdmin={props.isAdmin}
               />
             )}
             {labView === "home" && blocked && (
@@ -1194,6 +1195,13 @@ export default function DashboardClient(props: DashboardProps) {
                 <h2 className="text-lg font-semibold tracking-tight">블로그 설정</h2>
                 <p className="mt-1 text-sm leading-relaxed text-neutral-500">업종·이름·업체 정보를 바꿀 수 있어요. 저장하면 홈으로 돌아가요.</p>
                 <ProfileSettings profile={blogProfile} onSaved={onProfileSaved} />
+                {/* 재설정 — 처음부터(온보딩) 다시 */}
+                <button
+                  onClick={() => { if (window.confirm("블로그 설정을 처음부터 다시 할까요? 온보딩부터 새로 진행해요.")) { setBlogProfile(null); goTab("lab"); } }}
+                  className="mt-4 w-full rounded-xl border border-neutral-200 py-2.5 text-sm font-medium text-neutral-500 transition hover:bg-neutral-50 active:scale-[0.99]"
+                >
+                  처음부터 다시 설정 (재설정)
+                </button>
               </div>
             )}
           </main>
