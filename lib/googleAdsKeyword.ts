@@ -146,9 +146,12 @@ export async function fetchGoogleIdeasDebug(seed: string): Promise<unknown> {
   try {
     const at = await getAccessToken();
     const ti = (await (await fetch(`https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(at)}`)).json()) as Record<string, unknown>;
+    const tokAud = (ti.aud ?? ti.azp) as string | undefined;
     tokenAccount = {
       email: ti.email ?? "(이메일 스코프 없어 미표시 — scope/aud로 판별)",
-      aud_clientId: ti.aud ?? ti.azp ?? null, // 우리 GOOGLE_ADS_CLIENT_ID와 같아야
+      aud_clientId: tokAud ?? null, // 토큰을 발급한 OAuth client_id
+      clientIdMatchesEnv: Boolean(tokAud) && tokAud === process.env.GOOGLE_ADS_CLIENT_ID, // ★ 우리 GOOGLE_ADS_CLIENT_ID와 동일?
+      envClientIdTail: (process.env.GOOGLE_ADS_CLIENT_ID ?? "").slice(-30) || null, // 참고용 env client_id 꼬리
       scope: ti.scope ?? null,
       sub: ti.sub ?? null,
     };
