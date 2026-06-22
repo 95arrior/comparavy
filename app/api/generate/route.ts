@@ -15,6 +15,7 @@ import { logUsage } from "@/lib/usageLog";
 import { recordAiResult } from "@/lib/aiHealth";
 import { VERTICAL_DEFAULTS } from "@/lib/blogProfile";
 import { buildBusinessBox } from "@/lib/businessBox";
+import { bloggerType } from "@/lib/bloggerTypes";
 
 export const maxDuration = 300;
 
@@ -138,7 +139,8 @@ export async function POST(request: Request) {
   const vDef = VERTICAL_DEFAULTS[vertical];
   const type = body.type ?? vDef?.type ?? "howto";
   const tone = body.tone ?? vDef?.tone ?? "friendly";
-  const promo = body.promo !== false; // 명시적 false만 정보성, 기본은 홍보용(기존 동작)
+  // 홍보용 기본값 — local(동네 사장님)만 홍보(업장 연결), online/hobby는 업장 없어 정보성 기본.
+  const promo = body.promo ?? (bloggerType(vertical) === "local");
 
   // 약한 audience 가드(버그2): 직접 입력해도 '설정한 대상과 명백히 동떨어진'(반대 연령어가 박힌) 글감만 막는다.
   // 명시적 연령어(성인/유아/초등/중고등)만 검사 → 도메인어(토익 등)·중립어는 통과(사장이 일부러 넣은 걸 과잉 차단 안 함).

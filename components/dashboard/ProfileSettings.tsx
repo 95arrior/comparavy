@@ -4,6 +4,7 @@ import { useState } from "react";
 import HoursEditor from "./HoursEditor";
 import AddressSearch from "./AddressSearch";
 import { VERTICAL_SUBS } from "@/lib/verticalSubs";
+import { bloggerType, categoriesFor } from "@/lib/bloggerTypes";
 import { ACADEMY_AUDIENCES, AUDIENCE_ALL } from "@/lib/audience";
 import { formatKoreanPhone } from "@/lib/businessBox";
 import type { BlogProfile, WeeklyHours } from "@/lib/blogProfile";
@@ -19,9 +20,12 @@ const VERTS = [
 ];
 
 export default function ProfileSettings({ profile, onSaved }: { profile: BlogProfile; onSaved: (p: BlogProfile) => void }) {
-  // 기존 vertical이 b2b(또는 미지정)면 '그 외(general)'로 표시 — 저장하면 general로 통일
+  // 유형은 편집에서 전환 X(카테고리만 수정). online/hobby는 보존(리셋 금지).
+  const bType = bloggerType(profile.vertical);
+  const isLocal = bType === "local";
   const [vertical, setVertical] = useState(() => {
     const v = profile.vertical;
+    if (v === "online" || v === "hobby") return v;
     return v && ["medical", "academy", "professional", "general"].includes(v) ? v : "general";
   });
   const [sub, setSub] = useState(profile.sub_category ?? "");
@@ -50,7 +54,7 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
     setVertical(v);
     if (sub && !(VERTICAL_SUBS[v] ?? []).includes(sub)) setSub("");
   }
-  const subOptions = VERTICAL_SUBS[vertical] ?? [];
+  const subOptions = isLocal ? (VERTICAL_SUBS[vertical] ?? []) : categoriesFor(bType);
   const isCustomSub = sub.trim() !== "" && !subOptions.includes(sub);
 
   async function save() {
@@ -93,22 +97,28 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
 
   return (
     <div className="mt-6 space-y-6">
-      {/* 업종 */}
+      {/* 업종(local) / 유형(online·hobby — 읽기전용) */}
       <div>
-        <label className="text-sm font-bold tracking-tight">업종</label>
-        <p className="mt-1 text-xs text-neutral-500">업종에 맞춰 글의 톤·구조가 자동으로 정해져요.</p>
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          {VERTS.map((x) => (
-            <button
-              key={x.v}
-              type="button"
-              onClick={() => chooseVertical(x.v)}
-              className={`rounded-xl border px-3 py-3 text-sm font-medium transition ${vertical === x.v ? "border-[#1D75F7] bg-[#1D75F7]/5 text-[#2f7fe6]" : "border-neutral-200 text-neutral-600 hover:border-neutral-300"}`}
-            >
-              {x.label}
-            </button>
-          ))}
-        </div>
+        <label className="text-sm font-bold tracking-tight">{isLocal ? "업종" : "유형"}</label>
+        <p className="mt-1 text-xs text-neutral-500">{isLocal ? "업종에 맞춰 글의 톤·구조가 자동으로 정해져요." : "유형 변경은 새로 시작에서 가능해요. 여기선 카테고리만 바꿔요."}</p>
+        {isLocal ? (
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {VERTS.map((x) => (
+              <button
+                key={x.v}
+                type="button"
+                onClick={() => chooseVertical(x.v)}
+                className={`rounded-xl border px-3 py-3 text-sm font-medium transition ${vertical === x.v ? "border-[#1D75F7] bg-[#1D75F7]/5 text-[#2f7fe6]" : "border-neutral-200 text-neutral-600 hover:border-neutral-300"}`}
+              >
+                {x.label}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-3 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3 text-sm font-medium text-neutral-700">
+            {bType === "online" ? "수익형 블로거" : "취미·기록"}
+          </div>
+        )}
       </div>
 
       {/* 세부 분류 */}
@@ -158,7 +168,8 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
         </div>
       )}
 
-      {/* 업체 정보 */}
+      {/* 업체 정보 — local(동네 사장님)만. online/hobby는 주소·영업시간 없음 */}
+      {isLocal && (
       <div>
         <label className="text-sm font-bold tracking-tight">업체 정보 <span className="text-xs font-normal text-neutral-400">(선택)</span></label>
         <p className="mt-1 text-xs text-neutral-500">입력하면 글 맨 아래에 자동으로 들어가요.</p>
@@ -179,6 +190,7 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
         <p className="mt-4 text-sm font-medium text-neutral-700">영업시간</p>
         <HoursEditor value={hours} onChange={setHours} />
       </div>
+      )}
 
       {error && <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{error}</div>}
 
