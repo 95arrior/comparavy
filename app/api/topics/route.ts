@@ -157,9 +157,9 @@ export async function GET(req: Request) {
   }
 
   // ── 게으른 풀 채우기 ──
-  // 풀이 비면(커스텀·신규 세부업종) 그 sub를 시드로 '실데이터' 한 번 수집→저장→재조회.
-  // 이후 같은 업종은 풀에서 바로(무료·즉시). 남용 방지 레이트리밋.
-  if (rows.length === 0 && sub) {
+  // 풀이 비거나(신규) '3개도 못 채울 만큼 얇으면'(빈약 카테고리) AI 시드 확장으로 풀을 키운다.
+  // → 변동성·선점·3개 보장 확보. 이후 같은 업종은 풀에서 바로. 남용 방지 레이트리밋.
+  if (rows.length < PICK && sub) {
     const seedRl = await checkRateLimit(supabase, user.id, "pool_seed", 6, 600);
     if (seedRl.ok) {
       try {

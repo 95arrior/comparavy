@@ -4,6 +4,7 @@
 import { createSupabaseAdminClient } from "./supabase-server";
 import { collectPoolKeywords, type PoolKeyword } from "./poolCollect";
 import { VERTICAL_SEEDS } from "./keywordSeeds";
+import { expandSeeds } from "./aiSeeds";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -24,10 +25,13 @@ export async function buildPoolForSub(vertical: string, sub: string, opts?: { sl
   const admin = createSupabaseAdminClient();
   // local은 [sub 라벨 + 추가시드]. online/hobby는 라벨에 "·"가 있어 라벨 시드 제외, 시드맵만 사용.
   const extra = VERTICAL_SEEDS[vertical]?.[sub] ?? [];
-  const seeds = vertical === "online" || vertical === "hobby"
+  const baseSeeds = vertical === "online" || vertical === "hobby"
     ? (extra.length ? extra : [sub.replace(/·/g, " ").trim()])
     : [sub, ...extra];
-  const sleepMs = opts?.sleepMs ?? 700; // 시드당 네이버 1회(collectPoolKeywords)라 700ms로 충분. sub당 ~12초
+  // ★ AI 하위주제 시드로 확장 — 카테고리명 하나만으론 풀이 얕아 변동성·선점 부족 → 하위주제 다수 펼쳐 풀 대폭↑
+  const aiSeeds = await expandSeeds(sub, 15);
+  const seeds = [...new Set([...baseSeeds, ...aiSeeds].map((s) => s.trim()).filter(Boolean))];
+  const sleepMs = opts?.sleepMs ?? 700; // 시드당 네이버 1회(collectPoolKeywords). 시드 늘어 sub당 ~15~25초
 
   // (vertical,sub) 내 dedupe. 키는 unique(vertical,sub,keyword)와 동일하게 '원본 키워드'로
   // — 같은 배치에 동일 keyword가 두 번 들어가면 upsert가 충돌하므로 정확 키로 합친다.
