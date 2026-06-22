@@ -155,6 +155,18 @@ export function insertInternalLinks(html: string, candidates: { phrase: string; 
   return parts.join("");
 }
 
+/** SEO 슬러그 — 한글 키워드는 유지(URL 키워드 매칭에 유리) + URL 깨뜨리는 특수문자·과한 길이만 정리. */
+export function slugify(s: string): string {
+  return s
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s-]/gu, "") // 글자(한글·영문)·숫자·공백·하이픈만 남김
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+}
+
 /** Article 구조화 데이터(JSON-LD). FAQ는 본문 마이크로데이터로 따로 넣는다(아래 renderFaqSection). */
 function buildStructuredData(input: PublishInput): string {
   const nowIso = new Date().toISOString();
@@ -168,6 +180,9 @@ function buildStructuredData(input: PublishInput): string {
     datePublished: nowIso,
     dateModified: nowIso,
   };
+  // 섹션·키워드 — 주제 맥락 신호
+  if (input.categoryName) data.articleSection = input.categoryName;
+  if (input.tags?.length) data.keywords = input.tags.join(", ");
   // author·publisher(블로그) — 신뢰도·E-E-A-T 신호
   if (site) {
     data.author = { "@type": "Organization", name: site };

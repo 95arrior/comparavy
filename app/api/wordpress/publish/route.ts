@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { ensureUserRow } from "@/lib/userPlan";
 import { PLANS } from "@/lib/plans";
-import { publishPost, insertInternalLinks, WpAuthError } from "@/lib/wordpress";
+import { publishPost, insertInternalLinks, slugify, WpAuthError } from "@/lib/wordpress";
 import { decryptSecret } from "@/lib/crypto";
 
 export async function POST(request: Request) {
@@ -119,9 +119,7 @@ export async function POST(request: Request) {
       metaTitle: article.meta_title ?? undefined,
       siteName,
       faq: Array.isArray(article.faq) ? article.faq : undefined,
-      slug: article.keyword
-        ? article.keyword.trim().toLowerCase().replace(/\s+/g, "-")
-        : undefined,
+      slug: article.keyword ? (slugify(String(article.keyword)) || undefined) : undefined,
       featuredImage: article.featured_image ?? undefined,
       // 이미 발행한 글이면 그 워드프레스 글을 수정(재발행) → 중복 글 방지
       postId: article.wp_post_id ?? undefined,
