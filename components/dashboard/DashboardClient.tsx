@@ -19,6 +19,9 @@ import ProfileSettings from "./ProfileSettings";
 import Home from "./Home";
 import { toEngineType, type BlogProfile } from "@/lib/blogProfile";
 import { bloggerType } from "@/lib/bloggerTypes";
+import TossNav, { type NavKey } from "./TossNav";
+import JourneyRoadmap from "./JourneyRoadmap";
+import SearchPerformance from "./SearchPerformance";
 import type { QueueItem } from "@/lib/keywordQueue";
 import AteFloLogo from "@/components/AteFloLogo";
 import Brand from "@/components/Brand";
@@ -34,7 +37,7 @@ import Link from "next/link";
 
 // 사이드바 레벨 탭(연구소 중심으로 일원화). 키워드/발행계획/내글은 '연구소' 안 내부 뷰로 이동.
 type Tab = "lab" | "wordpress" | "account" | "admin";
-type LabView = "home" | "keywords" | "queue" | "articles";
+type LabView = "home" | "keywords" | "queue" | "articles" | "performance";
 
 function Svg({ children }: { children: React.ReactNode }) {
   return (
@@ -186,9 +189,7 @@ export default function DashboardClient(props: DashboardProps) {
   useEffect(() => {
     const root = document.documentElement;
     const apply = () => {
-      const desktop = window.matchMedia("(min-width: 768px)").matches;
-      const sidebar = navOpen ? 256 : 56;
-      root.style.setProperty("--toast-shift", desktop ? `${sidebar / 2}px` : "0px");
+      root.style.setProperty("--toast-shift", "0px"); // 사이드바 제거(TossNav)로 보정 불필요
     };
     apply();
     window.addEventListener("resize", apply);
@@ -580,6 +581,19 @@ export default function DashboardClient(props: DashboardProps) {
     closeOnMobile();
   }
 
+  // 토스 하단/상단 탭 ↔ 기존 tab/labView 매핑
+  const navKey: NavKey =
+    tab === "lab"
+      ? labView === "articles" ? "articles" : labView === "performance" ? "performance" : "home"
+      : "more"; // wordpress/account/admin → 더보기
+  const onNav = (k: NavKey) => {
+    if (k === "home") goTab("lab");
+    else if (k === "articles") goLabView("articles");
+    else if (k === "performance") goLabView("performance");
+    else goTab("account"); // 더보기
+  };
+  const showNav = !selected && !genParams && !page; // 편집·생성·풀페이지 화면엔 탭바 숨김
+
   const railBtn = (k: Tab, label: string, icon: React.ReactNode) => {
     const active = tab === k && !selected && !genParams;
     return (
@@ -659,11 +673,8 @@ export default function DashboardClient(props: DashboardProps) {
       {navOpen && <div onClick={() => setNavOpen(false)} className="fixed inset-0 z-40 bg-black/30 md:hidden" />}
 
       {/* 좌측 레일 — 데스크톱은 접힘/펼침 레일, 모바일은 햄버거로 여는 오버레이 */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 flex h-[100dvh] w-full flex-col border-r border-neutral-200 bg-white px-2 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-transform duration-200 ease-out md:sticky md:top-0 md:z-40 md:h-screen md:w-64 md:translate-x-0 md:shrink-0 md:transition-[width] ${
-          navOpen ? "translate-x-0 md:w-64" : "-translate-x-full md:w-[56px]"
-        }`}
-      >
+      {/* 구 사이드바 — TossNav로 대체, 무력화(추후 정리) */}
+      <aside className="hidden">
         {/* 상단: 로고(항상 같은 자리) + 브랜드명/닫기(펼침 시 페이드) */}
         <div className="mb-2 flex h-9 items-center gap-1">
           {navOpen ? (
@@ -776,10 +787,11 @@ export default function DashboardClient(props: DashboardProps) {
       </aside>
 
       {/* 메인 */}
-      <div className="min-w-0 flex-1">
+      {showNav && <TossNav active={navKey} onNav={onNav} initial={initial} />}
+      <div className={`min-w-0 flex-1 ${showNav ? "pb-[78px] md:pb-0 md:pt-16" : ""}`}>
         {/* 모바일 상단바 — 햄버거로 사이드바 열기 (편집·작성 화면엔 자체 상단바가 있어 숨김) */}
         {!selected && !genParams && !page && (
-          <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-neutral-200 bg-white/95 px-4 py-2.5 backdrop-blur md:hidden">
+          <div className="hidden">
             <button onClick={() => setNavOpen(true)} aria-label="메뉴 열기" className="flex h-9 w-9 items-center justify-center rounded-lg text-neutral-600 transition hover:bg-neutral-100">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 8h16M4 15h9" /></svg>
             </button>
@@ -1006,6 +1018,26 @@ export default function DashboardClient(props: DashboardProps) {
                     wpConnected={Boolean(wpSiteUrl)}
                   />
                 )}
+              </main>
+            )}
+
+            {/* 성과 — 검색 성과 + 수익화 여정 */}
+            {labView === "performance" && (
+              <main className="ateflo-page-in mx-auto max-w-2xl px-6 py-10">
+                <h1 className="font-pretendard text-[26px] font-bold tracking-tight text-neutral-900 sm:text-[30px]">성과</h1>
+                <p className="mt-1.5 text-[15px] text-neutral-400">{blogProfile.blog_name ?? "내 블로그"}</p>
+                <div className="mt-7">
+                  <JourneyRoadmap
+                    publishedCount={articles.filter((a) => a.status === "published").length}
+                    wpConnected={Boolean(wpSiteUrl)}
+                    onWrite={() => goLabView("home")}
+                    onGoConnect={() => goTab("wordpress")}
+                    type={bloggerType(blogProfile.vertical)}
+                  />
+                </div>
+                <div className="mt-4">
+                  <SearchPerformance onGoConnect={() => goTab("wordpress")} />
+                </div>
               </main>
             )}
           </div>
