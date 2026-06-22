@@ -156,7 +156,7 @@ export default function Home({
                   <p className="mt-1.5 inline-flex items-center gap-0.5 text-[12px] font-bold text-[#1D75F7] sm:text-[13px]">이 글 쓰기 ›</p>
                 </button>
               ) : (
-                <TopicCard key={t.keyword} title={t.title} tag={t.tag || undefined} vol={t.vol} comp={t.comp} idx={i} cta="이 글 쓰기" onClick={() => onWriteKeyword(t.keyword, t.title)} onDismiss={swapLeft > 0 ? () => swapTopic(t.keyword) : undefined} dismissing={swapping === t.keyword} />
+                <TopicCard key={t.keyword} title={t.title} tag={t.keyword} vol={t.vol} comp={t.comp} idx={i} cta="이 글 쓰기" onClick={() => onWriteKeyword(t.keyword, t.title)} onDismiss={swapLeft > 0 ? () => swapTopic(t.keyword) : undefined} dismissing={swapping === t.keyword} />
               ),
             )}
           </div>
