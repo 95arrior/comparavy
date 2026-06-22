@@ -15,6 +15,7 @@ export default function TopicCard({
   cta,
   onDismiss,
   dismissing,
+  region,
 }: {
   title: string;
   tag?: string | null;
@@ -26,6 +27,7 @@ export default function TopicCard({
   cta?: string;
   onDismiss?: () => void; // '이 글감 별로예요' → 이 카드만 교체
   dismissing?: boolean;
+  region?: boolean; // 우리 동네 키워드(검색량 없음) — 칩·메트릭을 지역형으로
 }) {
   const isSak = comp === "low";
   const filled = filledStars(vol, comp);
@@ -59,10 +61,25 @@ export default function TopicCard({
       )}
       <div className="relative">
         <div className="mb-1.5 flex items-center gap-1.5">
-          {tag && <span className="inline-flex items-center rounded-full bg-[#E8F1FE] px-2 py-1 text-[10px] font-bold leading-none text-[#1D75F7] sm:text-[11px]">{tag}</span>}
-          {isSak && <span className="inline-flex items-center gap-0.5 rounded-full bg-violet-600 px-2 py-1 text-[9.5px] font-bold leading-none text-white sm:text-[10.5px]">✦ 싹 키워드</span>}
+          {region ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#1D75F7]/10 px-2 py-1 text-[10px] font-bold leading-none text-[#1D75F7] sm:text-[11px]">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z" /></svg>
+              우리 동네 키워드
+            </span>
+          ) : (
+            <>
+              {tag && <span className="inline-flex items-center rounded-full bg-[#E8F1FE] px-2 py-1 text-[10px] font-bold leading-none text-[#1D75F7] sm:text-[11px]">{tag}</span>}
+              {isSak && <span className="inline-flex items-center gap-0.5 rounded-full bg-violet-600 px-2 py-1 text-[9.5px] font-bold leading-none text-white sm:text-[10.5px]">✦ 싹 키워드</span>}
+            </>
+          )}
         </div>
         <p className="text-[15px] font-bold leading-snug text-neutral-900 sm:text-[18px]">{title}</p>
+        {region ? (
+          <p className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-[#1D75F7] sm:text-[13px]">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="opacity-80"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z" /></svg>
+            우리 동네 손님이 찾는 검색
+          </p>
+        ) : (
         <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px] sm:text-[13px]">
           <span className="flex min-w-0 items-center gap-1.5">
             <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-neutral-500">
@@ -93,6 +110,7 @@ export default function TopicCard({
             </span>
           </span>
         </div>
+        )}
         {cta && (
           <p className={`mt-3 inline-flex items-center gap-0.5 text-[12px] font-bold sm:text-[13px] ${isSak ? "text-violet-700" : "text-[#1D75F7]"}`}>
             {cta}

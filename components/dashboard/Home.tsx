@@ -180,19 +180,8 @@ export default function Home({
           <div className="flex flex-col gap-3">
             {topics.map((t, i) =>
               t.region ? (
-                // 지역 글감 — 검색량 데이터가 없어 '우리 동네' 카드로
-                <button
-                  key={t.keyword}
-                  onClick={() => onWriteKeyword(t.keyword, t.title)}
-                  className="rounded-2xl border border-[#1D75F7]/30 bg-[#1D75F7]/[0.035] px-5 py-4 text-left shadow-[0_10px_30px_-16px_rgba(29,117,247,0.25)] transition active:scale-[0.99] sm:px-6 sm:py-5"
-                >
-                  <span className="inline-flex items-center gap-1 rounded-full bg-[#1D75F7]/10 px-2 py-0.5 text-[10px] font-bold leading-none text-[#1D75F7] sm:text-[11px]">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z" /></svg>
-                    우리 동네 키워드
-                  </span>
-                  <p className="mt-1.5 text-[15px] font-bold leading-snug text-neutral-900 sm:text-[18px]">{t.title}</p>
-                  <p className="mt-1.5 inline-flex items-center gap-0.5 text-[12px] font-bold text-[#1D75F7] sm:text-[13px]">이 글 쓰기 ›</p>
-                </button>
+                // 지역 글감 — TopicCard region 모드(같은 박스·높이) + ✕로 교체 가능
+                <TopicCard key={t.keyword} title={t.title} vol={t.vol} comp={t.comp} idx={i} cta="이 글 쓰기" region onClick={() => onWriteKeyword(t.keyword, t.title)} onDismiss={swapLeft > 0 ? () => swapTopic(t.keyword) : undefined} dismissing={swapping === t.keyword} />
               ) : (
                 <TopicCard key={t.keyword} title={t.title} tag={t.tag || undefined} vol={t.vol} comp={t.comp} idx={i} cta="이 글 쓰기" onClick={() => onWriteKeyword(t.keyword, t.title)} onDismiss={swapLeft > 0 ? () => swapTopic(t.keyword) : undefined} dismissing={swapping === t.keyword} />
               ),
