@@ -435,9 +435,11 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
               <button
                 type="button"
                 onClick={() => featRef.current?.click()}
-                className="flex items-center gap-2 rounded-lg border border-dashed border-neutral-300 px-3 py-2 text-sm text-neutral-400 transition hover:border-neutral-500 hover:text-neutral-600"
+                className="flex w-full flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-neutral-200 bg-neutral-50/60 py-8 text-center transition hover:border-[#1D75F7]/40 hover:bg-[#1D75F7]/[0.02]"
               >
-                <IconImage /> 대표 이미지 추가 <span className="text-neutral-300">(선택)</span>
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#1D75F7]/10 text-[#1D75F7]"><IconImage /></span>
+                <span className="mt-1 flex items-center gap-1.5 text-sm font-bold text-neutral-700">대표 이미지 추가 <span className="rounded-full bg-[#1D75F7] px-1.5 py-0.5 text-[10px] font-bold text-white">추천</span></span>
+                <span className="text-xs text-neutral-400">실사 사진을 넣으면 검색·공유에 좋아요 · 내 사진 업로드</span>
               </button>
             )}
             <input ref={featRef} type="file" accept="image/*" className="hidden" onChange={onPickFeatured} />
