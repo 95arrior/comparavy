@@ -6,7 +6,8 @@ import { audienceOf, AUDIENCE_ALL } from "@/lib/audience";
 import { isUnsafeKeyword } from "@/lib/keywordSafety";
 import { regionLevel, extractRegions, isLocalBusiness, buildLocalSeeds } from "@/lib/region";
 import { bloggerType, type BloggerType } from "@/lib/bloggerTypes";
-import { compFromLabel, type Comp } from "@/lib/topicScore";
+import { compFromLabel, compFromBlogTotal, type Comp } from "@/lib/topicScore";
+import { fetchBlogTotal } from "@/lib/naverBlogSearch";
 import { buildPoolForSub } from "@/lib/keywordPool";
 import { checkRateLimit } from "@/lib/rateLimit";
 
@@ -18,7 +19,7 @@ export const maxDuration = 60; // 신규 카테고리 첫 요청은 lazy-fill(�
 const PICK = 3;
 const WINDOW = 150; // least-used 윈도우 크기 — 이 안에서 랜덤(반복 많으면 키우고, 마이너 자주 뜨면 줄임)
 
-interface PoolRow { keyword: string; monthly_searches: number | null; competition: string | null; audience: string | null }
+interface PoolRow { keyword: string; monthly_searches: number | null; competition: string | null; audience: string | null; blog_total: number | null }
 
 // 검색량 → 쉬운 말(숫자 노출 X). 유형별 톤: local=손님 / online=검색 / hobby=찾는 주제.
 function demandLabel(searches: number | null, type: BloggerType): string {
@@ -132,7 +133,7 @@ export async function GET(req: Request) {
   // least-used 우선 윈도우(times_assigned asc → 균등 분산). 본인이 쓴 건 제외 후 남은 것만.
   // 적정범위 = 월 500~5,000 (경쟁 과열·초저검색 회피). sub 없거나 부족하면 단계적으로 넓힌다.
   async function fetchPool(useSub: boolean, ranged: boolean): Promise<PoolRow[]> {
-    let q = pool.from("keyword_pool").select("keyword, monthly_searches, competition, audience").eq("vertical", vertical);
+    let q = pool.from("keyword_pool").select("keyword, monthly_searches, competition, audience, blog_total").eq("vertical", vertical);
     if (useSub && sub) q = q.eq("sub", sub);
     if (cluster) q = q.ilike("keyword", `%${cluster}%`); // 클러스터: 이 토큰 든 키워드만
     if (ranged) q = q.gte("monthly_searches", 500).lte("monthly_searches", 5000);
@@ -219,6 +220,24 @@ export async function GET(req: Request) {
   const titled = await keywordsToTitles(allKeywords, (sub || vertical) ?? undefined); // {title, tag, ok} — 업종 컨텍스트로 무관 키워드 제외
   const off = localSeeds.length;
 
+  // 화면에 뜰 일반 글감 행(노이즈 제외 + need개)
+  const generalRows = candidates
+    .map((r, i) => ({ r, t: titled[off + i] }))
+    .filter(({ t }) => t?.ok !== false)
+    .slice(0, need);
+
+  // ── 진짜 콘텐츠 경쟁(blog_total) 채우기 ──
+  // 화면에 뜰 것만, 미수집(null)이면 네이버 블로그검색 1회 → 풀에 캐싱(전 유저 공용 → 유저수 무관).
+  await Promise.all(
+    generalRows.map(async ({ r }) => {
+      if (r.blog_total != null) return;
+      const total = await fetchBlogTotal(r.keyword);
+      if (total == null) return;
+      r.blog_total = total;
+      try { await pool.from("keyword_pool").update({ blog_total: total }).eq("keyword", r.keyword); } catch { /* 캐싱 실패해도 진행 */ }
+    }),
+  );
+
   const topics = [
     // 지역 글감(앞) — 항상 포함
     ...localSeeds.map((k, i) => ({
@@ -230,24 +249,25 @@ export async function GET(req: Request) {
       tone: "local" as BloggerType,
       vol: 0,
       comp: "mid" as Comp,
+      blogTotal: null as number | null,
       tag: "",
     })),
-    // 일반 글감 — 노이즈(ok=false) 제외하고 need개까지(여유분에서 채움)
-    ...candidates
-      .map((r, i) => ({ r, t: titled[off + i] }))
-      .filter(({ t }) => t?.ok !== false)
-      .slice(0, need)
-      .map(({ r, t }) => ({
+    // 일반 글감 — comp는 blog_total(진짜 콘텐츠 경쟁) 있으면 그걸로, 없으면 광고경쟁 폴백
+    ...generalRows.map(({ r, t }) => {
+      const realComp: Comp = r.blog_total != null ? compFromBlogTotal(r.blog_total) : compFromLabel(r.competition);
+      return {
         keyword: r.keyword,
         title: t?.title ?? r.keyword,
         demandLabel: demandLabel(r.monthly_searches, type),
-        ssak: comp(r) === "낮음",
+        ssak: realComp === "low",
         region: false,
         tone: type,
         vol: r.monthly_searches ?? 0,
-        comp: compFromLabel(r.competition),
+        comp: realComp,
+        blogTotal: r.blog_total ?? null,
         tag: t?.tag ?? "",
-      })),
+      };
+    }),
   ].slice(0, PICK);
   return NextResponse.json({ topics });
 }
