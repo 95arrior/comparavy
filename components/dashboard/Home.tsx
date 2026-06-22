@@ -1,9 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import SearchPerformance from "./SearchPerformance";
-import ArticleList from "./ArticleList";
-import JourneyRoadmap from "./JourneyRoadmap";
 import TopicCard from "@/components/TopicCard";
 import type { Comp } from "@/lib/topicScore";
 import type { BloggerType } from "@/lib/bloggerTypes";
@@ -103,29 +100,10 @@ export default function Home({
     loadTopics();
   }, [loadTopics]);
 
-  const visible = articles.filter((a) => a.status !== "generating");
-  const hasArticles = visible.length > 0;
-  const publishedCount = visible.filter((a) => a.status === "published").length;
-
-  // 모멘텀 — 한 줄 요약(총·연속·이번 주)
-  const dayKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-  const days = new Set(visible.filter((a) => a.created_at).map((a) => dayKey(new Date(a.created_at))));
-  const total = visible.length;
-  const now = new Date();
-  const monday = new Date(now);
-  monday.setHours(0, 0, 0, 0);
-  monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
-  const weekCount = visible.filter((a) => a.created_at && new Date(a.created_at) >= monday).length;
-  let streak = 0;
-  const cur = new Date(now);
-  if (!days.has(dayKey(cur))) cur.setDate(cur.getDate() - 1);
-  while (days.has(dayKey(cur))) { streak++; cur.setDate(cur.getDate() - 1); }
-  const weekPct = Math.min(weekCount / 3, 1) * 100;
-
   return (
     <main className="mx-auto max-w-2xl px-6">
-      {/* 첫 화면 — 헤더 + (중앙) 오늘의 글감. 스크롤 없이 한눈에 */}
-      <section className="flex min-h-[100svh] flex-col">
+      {/* 한 화면 — 헤더 + (중앙) 오늘의 글감. 탭바 높이 빼서 스크롤 없이 한눈에 중앙 */}
+      <section className="flex min-h-[calc(100svh-78px)] flex-col md:min-h-[calc(100svh-4rem)]">
       {/* 헤더 — 절제 */}
       <div className="flex items-center justify-between pt-9">
         <p className="text-sm text-neutral-400">{displayName}님</p>
@@ -194,56 +172,6 @@ export default function Home({
       </div>
       </section>
 
-      {/* 이하 스크롤 — 진척·여정·성과·내 글 */}
-      <section className="pb-14">
-      {/* 한 줄 모멘텀 + 주간 진척 */}
-      <div className="mt-7 border-t border-neutral-100 pt-5">
-        <div className="flex items-center justify-between text-sm">
-          <p className="text-neutral-500">
-            총 <b className="text-neutral-800">{total}편</b>
-            {streak > 0 && <> · <span className="font-semibold text-orange-500">{streak}일 연속</span></>}
-          </p>
-          <p className="text-neutral-400">이번 주 {weekCount}/3편</p>
-        </div>
-        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-neutral-100">
-          <div className="h-full rounded-full bg-[#1D75F7] transition-all duration-500" style={{ width: `${weekPct}%` }} />
-        </div>
-      </div>
-
-      {/* 수익화 여정 */}
-      <div className="mt-6">
-        <JourneyRoadmap publishedCount={publishedCount} wpConnected={wpConnected} onWrite={onWrite} onGoConnect={onGoConnect} type={bloggerType} />
-      </div>
-
-      {/* 성과 */}
-      <div className="mt-4">
-        <SearchPerformance onGoConnect={onGoConnect} />
-      </div>
-
-      {/* 내 글 (최근 5개 + 전체 보기) */}
-      <div className="mt-7">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-base font-semibold tracking-tight text-neutral-900">내 글</h2>
-          {visible.length > 5 && (
-            <button onClick={onAllArticles} className="text-xs font-medium text-[#1D75F7] transition hover:underline">전체 보기 →</button>
-          )}
-        </div>
-        {hasArticles ? (
-          <ArticleList
-            articles={visible.slice(0, 5)}
-            onOpen={onSelect}
-            onGoGenerate={onWrite}
-            onUpdated={onUpdated}
-            wpConnected={wpConnected}
-          />
-        ) : (
-          <div className="rounded-2xl border border-dashed border-neutral-200 bg-white p-8 text-center">
-            <p className="text-sm text-neutral-500">아직 쓴 글이 없어요.</p>
-            <p className="mt-1 text-xs text-neutral-400">위 ‘새 글 쓰기’로 첫 글을 만들어 보세요.</p>
-          </div>
-        )}
-      </div>
-      </section>
     </main>
   );
 }
