@@ -104,6 +104,18 @@ const COMMON_SEO_PRINCIPLES = [
   "- 구글이 '가치 있는 정보'라고 판단할 만한, 정보 중심의 글을 쓰는 것이 목표다.",
 ].join("\n");
 
+// YMYL(건강·돈·법률·안전) 통합 가드 — 모든 블로그에 주입(해당 주제일 때만 작동).
+// 특히 online(수익형)의 재테크·투자·대출 등 금융 주제는 전용 업종지침이 없어 이걸로 보완.
+const YMYL_GUARDRAIL = [
+  "",
+  "[YMYL — 건강·돈·법률·안전 주제일 땐 반드시]",
+  "- 글이 건강·의료, 돈·투자·세금·대출, 법률, 안전처럼 독자의 삶·재산에 직접 영향을 주는 주제라면 신중함을 최우선으로 한다.",
+  "- 투자·재테크·대출: 수익·원금을 보장하지 않는다. 원금 손실 등 리스크를 균형 있게 알리고 '투자 판단과 책임은 본인에게 있으며 필요하면 전문가와 상담'하라고 안내한다. 특정 종목·금융상품을 '사라/오른다'고 추천·단정하지 않는다.",
+  "- 건강·법률·세무: 개인 사안마다 다르므로 단정하지 말고, 정확한 건 의료진·전문가·공식 기관에서 확인하도록 권한다.",
+  "- 법령·제도·수치는 시점에 따라 바뀌니 '기준 시점'과 '공식 출처 확인'을 함께 적는다. 모르면 지어내지 않는다.",
+  "- 이 글이 특정인 맞춤 자문·진단·투자권유가 아니라 '일반적인 정보 제공'이라는 점이 자연스럽게 드러나게 한다.",
+].join("\n");
+
 // 업종별 시스템 지침 (general은 없음 → 현행 유지).
 const VERTICAL_SYSTEM: Record<string, string> = {
   medical: [
@@ -182,7 +194,7 @@ export function buildSystemPrompt(vertical?: string): string {
   ].join("\n");
   // 공통 SEO 원칙은 general·미지정 포함 '모든' 블로그에 적용한다(검색되는 홍보글 방지·정보 충실).
   // 업종별 지침(VERTICAL_SYSTEM)은 해당 업종에만 추가 — general은 특정 업종이 아니라 안 붙는다.
-  let out = base + "\n" + COMMON_SEO_PRINCIPLES;
+  let out = base + "\n" + COMMON_SEO_PRINCIPLES + "\n" + YMYL_GUARDRAIL;
   if (vertical && VERTICAL_SYSTEM[vertical]) out += "\n" + VERTICAL_SYSTEM[vertical];
   return out;
 }
