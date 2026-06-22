@@ -148,6 +148,8 @@ export async function fetchGoogleIdeasDebug(seed: string): Promise<unknown> {
     customerId, // 대상 하위계정
     fellBackToSub: fellBack, // MCC 호출 실패로 하위계정 폴백했는지
     primaryLogin: primary?.login ?? null, // 1차 시도 login(=MCC)
+    headerLoginCustomerIdSent: primary?.login ?? null, // ★ 실제 login-customer-id 헤더로 나간 값(헤더 전송 증거)
+    developerTokenPresent: Boolean(process.env.GOOGLE_ADS_DEVELOPER_TOKEN), // 개발자 토큰 헤더 존재
     primaryStatus: primary?.status ?? null, // ★ MCC 호출 결과(403이면 권한/링크 문제)
     primaryRaw: primaryRaw, // ★ MCC 호출 에러 원문(진짜 원인)
     httpStatus: body.status, // 최종(폴백 포함) 상태
