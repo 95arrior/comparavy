@@ -17,6 +17,7 @@ export interface TitledTopic {
   title: string; // 짧은 글감 제목(한 줄)
   tag: string;   // 내용 카테고리 칩(맛집·블로그·재테크 등). 분류 불가/노이즈면 ""
   ok: boolean;   // 의미 있는 주제면 true. 노이즈(스블 자네·블연플 등)면 false → 호출측에서 제외
+  fit: number;   // 업종 핵심 적합도 2(핵심)/1(관련)/0(주변). context 있을 때만 의미, 없으면 1
 }
 
 /**
@@ -27,7 +28,7 @@ export interface TitledTopic {
 export async function keywordsToTitles(keywords: string[], context?: string): Promise<TitledTopic[]> {
   if (keywords.length === 0) return [];
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  const fallback = (): TitledTopic[] => keywords.map((k, i) => ({ title: templateTitle(k, i), tag: "", ok: true }));
+  const fallback = (): TitledTopic[] => keywords.map((k, i) => ({ title: templateTitle(k, i), tag: "", ok: true, fit: 1 }));
   if (!apiKey) return fallback();
 
   try {
@@ -46,12 +47,15 @@ export async function keywordsToTitles(keywords: string[], context?: string): Pr
             "  ⚠ 키워드가 너무 막연/모호해서 '없는 말'을 안 붙이면 제목이 안 나오는 경우 → t는 비우고 ok=false. (절대 억지로 살 붙이지 마. 예: '블로그' 한 단어는 막연 → ok=false)\n" +
             "• c = 이 글이 어떤 분야인지 '2~4자 카테고리 한 단어'. 예: 맛집, 블로그, 재테크, 여행, 다이어트, 육아, 게임, 부동산, 인테리어, IT.\n" +
             "• ok = 키워드만으로 충실한 글감이 되면 true. 무의미·조각·약어('스블 자네','블연플'), 또는 막연해서 지어내야만 제목이 되는 경우 false.\n" +
-            "예) 강남 맛집 → {\"t\":\"강남 맛집, 어디가 진짜?\",\"c\":\"맛집\",\"ok\":true} (키워드 유지 + 가벼운 질문)\n" +
-            "예) ETF → {\"t\":\"ETF, 초보는 뭐부터?\",\"c\":\"재테크\",\"ok\":true}\n" +
-            "예) 지식인 → {\"t\":\"\",\"c\":\"\",\"ok\":false} (막연 → '경기도 지식인이 추천하는 것들'처럼 없는 말 붙이지 말고 제외)\n" +
-            "예) 스블 자네 → {\"t\":\"\",\"c\":\"\",\"ok\":false}\n\n" +
+            (context
+              ? `• f = 이 키워드가 '${context}'의 '핵심 업무·관심사'에 얼마나 중심인가: 2=핵심(그 분야 사람 대부분이 관심 갖는 주제), 1=관련은 되나 주변 업무, 0=거의 안 봄. 예: '감정평가사'면 '부동산 감정평가'=2(업무 대부분이 부동산), '기업가치 평가'=1.\n`
+              : "• f = 전부 1로 둬.\n") +
+            "예) 강남 맛집 → {\"t\":\"강남 맛집, 어디가 진짜?\",\"c\":\"맛집\",\"ok\":true,\"f\":2}\n" +
+            "예) ETF → {\"t\":\"ETF, 초보는 뭐부터?\",\"c\":\"재테크\",\"ok\":true,\"f\":2}\n" +
+            "예) 지식인 → {\"t\":\"\",\"c\":\"\",\"ok\":false,\"f\":0} (막연 → 없는 말 붙이지 말고 제외)\n" +
+            "예) 스블 자네 → {\"t\":\"\",\"c\":\"\",\"ok\":false,\"f\":0}\n\n" +
             `키워드: ${JSON.stringify(keywords)}\n\n` +
-            'JSON 배열로만 답해. 형식: [{"t":"...","c":"...","ok":true}, ...] (입력과 같은 순서·개수).',
+            'JSON 배열로만 답해. 형식: [{"t":"...","c":"...","ok":true,"f":2}, ...] (입력과 같은 순서·개수).',
         },
       ],
     });
@@ -59,11 +63,12 @@ export async function keywordsToTitles(keywords: string[], context?: string): Pr
     const m = text.match(/\[[\s\S]*\]/);
     const arr = m ? (JSON.parse(m[0]) as unknown[]) : [];
     return keywords.map((k, i) => {
-      const o = arr[i] as { t?: unknown; c?: unknown; ok?: unknown } | undefined;
+      const o = arr[i] as { t?: unknown; c?: unknown; ok?: unknown; f?: unknown } | undefined;
       const title = o && typeof o.t === "string" && o.t.trim() ? o.t.trim() : templateTitle(k, i);
       const tag = o && typeof o.c === "string" ? o.c.trim() : "";
       const ok = o ? o.ok !== false : true; // 명시적 false만 노이즈로 제외
-      return { title, tag, ok };
+      const fit = o && typeof o.f === "number" ? Math.max(0, Math.min(2, o.f)) : 1; // 업종 적합도
+      return { title, tag, ok, fit };
     });
   } catch {
     return fallback();

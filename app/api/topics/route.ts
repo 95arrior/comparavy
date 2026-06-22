@@ -220,10 +220,12 @@ export async function GET(req: Request) {
   const titled = await keywordsToTitles(allKeywords, (sub || vertical) ?? undefined); // {title, tag, ok} — 업종 컨텍스트로 무관 키워드 제외
   const off = localSeeds.length;
 
-  // 화면에 뜰 일반 글감 행(노이즈 제외 + need개)
+  // 화면에 뜰 일반 글감 행(노이즈 제외 + 업종 핵심 적합도 높은 순 + need개)
+  // fit: 감정평가사면 '부동산'류=2(핵심) 우선, 주변 업무=1. 동점은 시드 순서 유지(변동성 보존).
   const generalRows = candidates
     .map((r, i) => ({ r, t: titled[off + i] }))
     .filter(({ t }) => t?.ok !== false)
+    .sort((a, b) => (b.t?.fit ?? 1) - (a.t?.fit ?? 1))
     .slice(0, need);
 
   // ── 진짜 콘텐츠 경쟁(blog_total) 채우기 ──
