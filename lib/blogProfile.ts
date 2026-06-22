@@ -68,7 +68,8 @@ export const VERTICAL_CHOICES = [
 const TONE_VALUES = new Set(TONE_CHOICES.map((c) => c.value));
 const TYPE_VALUES = new Set(TYPE_CHOICES.map((c) => c.value));
 const PUBLISH_VALUES = new Set(PUBLISH_CHOICES.map((c) => c.value));
-const VERTICAL_VALUES = new Set(VERTICAL_CHOICES.map((c) => c.value));
+// online/hobby는 UI 선택지(VERTICAL_CHOICES)엔 없지만 3유형 온보딩이 보내는 정식 vertical → isVertical 통과시켜야 general로 강제저장 안 됨.
+const VERTICAL_VALUES = new Set([...VERTICAL_CHOICES.map((c) => c.value), "online", "hobby"]);
 
 export function isTone(v: unknown): boolean { return typeof v === "string" && TONE_VALUES.has(v as never); }
 export function isType(v: unknown): boolean { return typeof v === "string" && TYPE_VALUES.has(v as never); }
