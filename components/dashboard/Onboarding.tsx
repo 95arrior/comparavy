@@ -146,9 +146,10 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
     ) : null;
 
   return (
-    <div className="flex min-h-[100dvh] flex-col">
-      <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-md px-6 pt-8 pb-6">
+    // 고정 화면 — 스크롤 막음. h-[100dvh]로 모바일 주소바 토글에 맞춰 높이 조정, 버튼은 하단 고정(safe-area).
+    <div className="flex h-[100dvh] flex-col overflow-hidden">
+      <div className="min-h-0 flex-1 overflow-hidden">
+        <div className="mx-auto max-w-md px-6 pt-7 pb-4">
       {/* 진행 점 */}
       {step !== "done" && (
         <div className="mb-8 flex items-center justify-center gap-1.5">
