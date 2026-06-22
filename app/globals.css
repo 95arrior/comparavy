@@ -1343,49 +1343,65 @@ input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-sele
 }
 
 /* ── 글 본문 스타일 (에디터 + 실제 발행 모습과 동일하게) ───────── */
+/* 토스 테크 문서st — 읽기 좋은 본문 타이포 스펙(검토 화면 = 발행 모습) */
 .ateflo-article {
-  font-size: 1.05rem;
-  line-height: 1.8;
-  color: #262626;
+  font-size: 1.0625rem;        /* 17px */
+  line-height: 1.85;
+  color: #33363d;             /* 부드러운 진회색 본문 */
+  letter-spacing: -0.01em;    /* 한글 살짝 조여 깔끔하게 */
   word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 .ateflo-article:focus {
   outline: none;
 }
 .ateflo-article h2 {
-  font-size: 1.55rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  line-height: 1.35;
-  margin: 1.7em 0 0.6em;
+  line-height: 1.4;
+  letter-spacing: -0.022em;
+  color: #191f28;             /* 헤딩은 진한 먹색 — 섹션 명확 */
+  margin: 2.4em 0 0.7em;      /* 위 여백 넉넉히 = 섹션 구분 또렷 */
 }
+.ateflo-article h2:first-child { margin-top: 0.2em; }
 .ateflo-article h3 {
-  font-size: 1.22rem;
+  font-size: 1.2rem;
   font-weight: 700;
-  margin: 1.4em 0 0.5em;
+  line-height: 1.45;
+  letter-spacing: -0.018em;
+  color: #191f28;
+  margin: 1.9em 0 0.5em;
 }
 .ateflo-article p {
-  margin: 0.95em 0;
+  margin: 1.15em 0;
 }
 .ateflo-article ul {
   list-style: disc;
-  padding-left: 1.5em;
-  margin: 0.95em 0;
+  padding-left: 1.3em;
+  margin: 1.15em 0;
 }
 .ateflo-article ol {
   list-style: decimal;
-  padding-left: 1.5em;
-  margin: 0.95em 0;
+  padding-left: 1.4em;
+  margin: 1.15em 0;
 }
 .ateflo-article li {
-  margin: 0.35em 0;
+  margin: 0.5em 0;
+  padding-left: 0.15em;
+}
+.ateflo-article li::marker {
+  color: #b0b8c1;             /* 마커 절제된 회색 */
 }
 .ateflo-article a {
-  color: #2563eb;
+  color: #1d75f7;
   text-decoration: underline;
-  text-underline-offset: 2px;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  text-decoration-color: rgba(29, 117, 247, 0.35);
 }
 .ateflo-article strong {
   font-weight: 700;
+  color: #191f28;             /* 강조는 더 진하게 */
 }
 .ateflo-article figure {
   margin: 1.4em 0;
