@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import HoursEditor from "./HoursEditor";
 import AddressSearch from "./AddressSearch";
 import { VERTICAL_SUBS } from "@/lib/verticalSubs";
@@ -56,6 +56,13 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedProfile, setSavedProfile] = useState<BlogProfile | null>(null);
+
+  // 온보딩 동안 바깥 페이지(회색 래퍼/body) 스크롤 잠금 — 고정 화면 보장
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
 
   const toggleAud = (v: string) =>
     setAudience((prev) =>
@@ -146,8 +153,8 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
     ) : null;
 
   return (
-    // 고정 화면 — 스크롤 막음. h-[100dvh]로 모바일 주소바 토글에 맞춰 높이 조정, 버튼은 하단 고정(safe-area).
-    <div className="flex h-[100dvh] flex-col overflow-hidden">
+    // 화면 전체 고정 — 회색 래퍼 위를 덮고 스크롤 차단. h-[100dvh]로 주소바 토글에 높이 맞춤, 버튼 하단 고정(safe-area).
+    <div className="fixed left-0 top-0 z-50 flex h-[100dvh] w-full flex-col overflow-hidden bg-white">
       <div className="min-h-0 flex-1 overflow-hidden">
         <div className="mx-auto max-w-md px-6 pt-7 pb-4">
       {/* 진행 점 */}
