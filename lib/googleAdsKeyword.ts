@@ -132,10 +132,14 @@ export async function fetchGoogleIdeasDebug(seed: string): Promise<unknown> {
   try { parsed = JSON.parse(body.text); } catch { /* keep text */ }
   const totalSize = (parsed as { totalSize?: unknown })?.totalSize;
   const results = (parsed as { results?: unknown[] })?.results;
+  const loginEnv = digits(process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID);
+  const customerId = digits(process.env.GOOGLE_ADS_CUSTOMER_ID);
   return {
     version: body.version,
-    loginUsed: body.loginUsed,
-    customerId: digits(process.env.GOOGLE_ADS_CUSTOMER_ID),
+    loginEnv: loginEnv || "(미설정 → customerId로 폴백)", // 설정된 login-customer-id(=MCC여야 함)
+    loginUsed: body.loginUsed, // 실제 호출에 쓰인 login-customer-id
+    loginIsMcc: Boolean(loginEnv) && loginEnv !== customerId, // login이 하위계정과 다르면(=MCC면) true
+    customerId, // 대상 하위계정
     httpStatus: body.status,
     totalSize: totalSize ?? null,
     resultCount: Array.isArray(results) ? results.length : null,
