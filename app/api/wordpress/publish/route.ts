@@ -81,17 +81,31 @@ export async function POST(request: Request) {
   if (addInternalLinks) {
     const { data: others } = await supabase
       .from("articles")
-      .select("id, keyword, wp_link")
+      .select("id, keyword, title, wp_link")
       .eq("user_id", user.id)
       .eq("status", "published")
       .not("wp_link", "is", null)
       .neq("id", articleId)
       .limit(50);
-    const candidates = (others ?? [])
-      .filter((o) => o.wp_link && o.keyword)
+    const pub = (others ?? []).filter((o) => o.wp_link && o.keyword);
+    // ① 인라인 내부링크 — 본문에서 다른 글 키워드를 찾아 링크
+    const candidates = pub
       .map((o) => ({ phrase: String(o.keyword), url: String(o.wp_link) }))
       .sort((a, b) => b.phrase.length - a.phrase.length);
     if (candidates.length) contentHtml = insertInternalLinks(contentHtml, candidates);
+    // ② '함께 보면 좋은 글' 섹션 — 관련 깊은 발행글 top3(키워드 토큰 겹침) → 토픽 클러스터 강화
+    const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const curTokens = new Set(String(article.keyword ?? "").split(/\s+/).filter((t) => t.length >= 2));
+    const related = pub
+      .map((o) => ({ o, overlap: String(o.keyword).split(/\s+/).filter((t) => t.length >= 2 && curTokens.has(t)).length }))
+      .filter((x) => x.overlap > 0)
+      .sort((a, b) => b.overlap - a.overlap)
+      .slice(0, 3)
+      .map((x) => x.o);
+    if (related.length) {
+      const items = related.map((o) => `<li><a href="${o.wp_link}">${esc(String(o.title ?? o.keyword))}</a></li>`).join("");
+      contentHtml += `\n<h2>함께 보면 좋은 글</h2>\n<ul>${items}</ul>`;
+    }
   }
 
   try {
