@@ -25,6 +25,24 @@ const VLABEL: Record<string, string> = Object.fromEntries(VERTS.map((x) => [x.v,
 
 type Step = "type" | "vertical" | "sub" | "audience" | "biz" | "hours" | "strength" | "review" | "done";
 
+// 한글 초성 추출 — "성형외과" → "ㅅㅎㅇㄱ". 초성 검색용.
+const CHO = ["ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅃ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅉ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"];
+function toCho(s: string): string {
+  return [...s].map((ch) => {
+    const code = ch.charCodeAt(0) - 0xac00;
+    return code >= 0 && code <= 11171 ? CHO[Math.floor(code / 588)] : ch;
+  }).join("");
+}
+// 칩 검색 매칭 — 부분일치(성→성형외과) + 초성(ㅅㅎ→성형외과).
+function matchSub(chip: string, q: string): boolean {
+  const query = q.replace(/\s/g, "");
+  if (!query) return true;
+  const c = chip.replace(/\s/g, "");
+  if (c.includes(query)) return true;
+  if (/^[ㄱ-ㅎ]+$/.test(query)) return toCho(c).includes(query);
+  return false;
+}
+
 // 직접입력 가비지 가드(클라 즉시판정 — 의존성 없는 순수버전). 자판난타·자모·의미없음 차단.
 function isGarbageInput(raw: string): boolean {
   const k = (raw ?? "").trim();
@@ -215,21 +233,48 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
         {step === "sub" && (
           <div>
             <h2 className="font-pretendard whitespace-pre-line text-2xl font-bold tracking-tight">{subHeading}</h2>
-            <p className="mt-2 text-sm text-neutral-500">{isLocal ? "분야에 딱 맞는 키워드로 써드릴게요." : "고른 주제의 검색되는 글감을 추천해드려요."}</p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              {subCats.map((s) => (
-                <button key={s} onClick={() => pickSub(s)} className="rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm font-medium text-neutral-700 transition hover:border-[#1D75F7] hover:bg-[#1D75F7]/[0.03] active:scale-95">{s}</button>
-              ))}
+            <p className="mt-2 text-sm text-neutral-500">{isLocal ? "검색하거나 골라주세요. 없으면 직접 입력해도 돼요." : "고른 주제의 검색되는 글감을 추천해드려요."}</p>
+            {/* 검색바(고정) — 부분일치 + 초성(ㅅㅎ→성형외과) */}
+            <div className="relative mt-4">
+              <svg className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4-4" /></svg>
+              <input
+                value={customSub}
+                onChange={(e) => { setCustomSub(e.target.value); if (customErr) setCustomErr(""); }}
+                onKeyDown={(e) => {
+                  if (e.key !== "Enter") return;
+                  const f = subCats.filter((s) => matchSub(s, customSub));
+                  if (f.length === 1) pickSub(f[0]);
+                  else if (customSub.trim() && !subCats.includes(customSub.trim())) submitCustom();
+                }}
+                placeholder="검색 또는 직접 입력 (예: 성형외과 · ㅅㅎ)"
+                maxLength={40}
+                className={`${inputCls} pl-10`}
+                autoFocus
+              />
             </div>
-            {!customMode ? (
-              <button onClick={() => setCustomMode(true)} className="mt-4 text-sm font-medium text-[#1D75F7] transition hover:underline">＋ 직접 입력하기</button>
-            ) : (
-              <div className="mt-4">
-                <input value={customSub} onChange={(e) => { setCustomSub(e.target.value); if (customErr) setCustomErr(""); }} onKeyDown={(e) => { if (e.key === "Enter") submitCustom(); }} placeholder={isLocal ? "예: 통증의학과" : "예: 캠핑, 주식 차트"} maxLength={40} className={inputCls} autoFocus />
-                {customErr && <p className="mt-2 text-xs font-medium text-amber-600">{customErr}</p>}
-                <button onClick={submitCustom} disabled={!customSub.trim()} className={`mt-3 ${primaryBtn}`}>계속</button>
-              </div>
-            )}
+            {customErr && <p className="mt-2 text-xs font-medium text-amber-600">{customErr}</p>}
+            {/* 칩 스크롤 영역 — 검색 결과만 */}
+            {(() => {
+              const filtered = subCats.filter((s) => matchSub(s, customSub));
+              const q = customSub.trim();
+              return (
+                <div className="no-scrollbar mt-3 max-h-[42vh] overflow-y-auto">
+                  {filtered.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {filtered.map((s) => (
+                        <button key={s} onClick={() => pickSub(s)} className="rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm font-medium text-neutral-700 transition hover:border-[#1D75F7] hover:bg-[#1D75F7]/[0.03] active:scale-95">{s}</button>
+                      ))}
+                    </div>
+                  )}
+                  {/* 목록에 없는 거 입력 → 직접 시작 */}
+                  {q && !subCats.includes(q) && (
+                    <button onClick={submitCustom} className="mt-3 flex w-full items-center gap-2 rounded-xl border border-dashed border-[#1D75F7]/40 bg-[#1D75F7]/[0.04] px-4 py-3 text-left text-sm font-semibold text-[#1D75F7] transition hover:bg-[#1D75F7]/[0.07] active:scale-[0.99]">
+                      ＋ ‘{q}’ (으)로 직접 시작하기
+                    </button>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         )}
 
