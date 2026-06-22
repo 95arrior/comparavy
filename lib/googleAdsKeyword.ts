@@ -81,6 +81,24 @@ async function callOnce(version: string, seed: string, token: string, loginId: s
   return { status: res.status, text: await res.text(), headers };
 }
 
+// 이 토큰(OAuth 사용자)이 직접 접근 가능한 customer 목록 — 403 진단의 결정타.
+// login-customer-id 불필요(사용자 본인 접근 목록). resourceNames: ["customers/123", ...]
+async function listAccessibleCustomers(version: string, token: string): Promise<{ status: number; ids: string[]; text: string }> {
+  const res = await fetch(`https://googleads.googleapis.com/${version}/customers:listAccessibleCustomers`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "developer-token": process.env.GOOGLE_ADS_DEVELOPER_TOKEN!,
+    },
+  });
+  const text = await res.text();
+  let ids: string[] = [];
+  try {
+    const j = JSON.parse(text) as { resourceNames?: string[] };
+    ids = (j.resourceNames ?? []).map((r) => r.replace("customers/", ""));
+  } catch { /* keep */ }
+  return { status: res.status, ids, text };
+}
+
 // 원본 응답 1회 획득(버전 자동탐지 + login 폴백). status/text/version/login 반환.
 async function fetchRawBody(seed: string): Promise<{ status: number; text: string; version: string; loginUsed: string; primary?: { login: string; status: number; text: string; headers: Record<string, string> } }> {
   const token = await getAccessToken();
@@ -163,9 +181,23 @@ export async function fetchGoogleIdeasDebug(seed: string): Promise<unknown> {
     "developer-token": ph["developer-token"] ? `set(${ph["developer-token"].length}자)` : "(없음)",
     Authorization: ph.Authorization ? "Bearer ***" : "(없음)",
   };
+  // (C) 이 토큰이 직접 접근 가능한 customer 목록 — MCC/하위계정이 여기 있나로 권한 확정
+  let accessibleCustomers: unknown = null;
+  try {
+    const at = await getAccessToken();
+    const ac = await listAccessibleCustomers(body.version, at);
+    accessibleCustomers = {
+      status: ac.status,
+      ids: ac.ids, // 이 토큰이 접근 가능한 모든 계정
+      hasMcc_1655656317: ac.ids.includes(loginEnv), // MCC가 목록에 있나(=토큰 사용자가 MCC 권한)
+      hasTarget_2697435262: ac.ids.includes(customerId), // 하위계정 직접 접근 가능?
+      errorIfAny: ac.status >= 200 && ac.status < 300 ? null : ac.text.slice(0, 400),
+    };
+  } catch (e) { accessibleCustomers = { error: e instanceof Error ? e.message : String(e) }; }
   return {
     tokenAccount, // ★ (A) 토큰 계정/클라이언트
     sentHeaders,  // ★ (B) 실제 전송 헤더
+    accessibleCustomers, // ★ (C) 토큰이 접근 가능한 계정 목록 — 결정타
     version: body.version,
     loginEnv: loginEnv || "(미설정 → customerId로 폴백)", // 설정된 login-customer-id(=MCC여야 함)
     loginUsed: body.loginUsed, // 실제 결과를 낸 호출의 login-customer-id
