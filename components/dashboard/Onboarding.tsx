@@ -140,6 +140,8 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
         <button onClick={save} disabled={saving} className={primaryBtn}>{saving ? "저장 중…" : "맞아요, 시작할게요"}</button>
         <button onClick={goBack} disabled={saving} className={skipBtn}>수정할게요</button>
       </>
+    ) : step === "done" ? (
+      <button onClick={() => savedProfile && onSaved(savedProfile)} className={primaryBtn}>첫 글 쓰러 가기</button>
     ) : null;
 
   return (
@@ -309,14 +311,16 @@ export default function Onboarding({ onSaved }: { onSaved: (p: BlogProfile) => v
             </span>
             <h2 className="font-pretendard mt-6 text-2xl font-bold tracking-tight">다 됐어요! 🎉</h2>
             <p className="mt-2.5 text-[15px] leading-relaxed text-neutral-600">이제 키워드 하나만 고르면<br />첫 글이 완성돼요.</p>
-            <button onClick={() => savedProfile && onSaved(savedProfile)} className={`mt-9 ${primaryBtn}`}>첫 글 쓰러 가기</button>
           </div>
         )}
         </div>
         </div>
       </div>
       {footer && (
-        <div className="sticky bottom-0 z-20 border-t border-neutral-100 bg-white/95 px-6 py-3.5 backdrop-blur">
+        <div
+          className="sticky bottom-0 z-20 border-t border-neutral-100 bg-white/95 px-6 pt-3.5 backdrop-blur"
+          style={{ paddingBottom: "calc(0.875rem + env(safe-area-inset-bottom))" }}
+        >
           <div className="mx-auto max-w-md">{footer}</div>
         </div>
       )}
