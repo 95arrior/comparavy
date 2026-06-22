@@ -99,6 +99,21 @@ async function listAccessibleCustomers(version: string, token: string): Promise<
   return { status: res.status, ids, text };
 }
 
+// 대상 계정 속성 조회 — manager/test_account/status. 빈 결과 원인(테스트·매니저 계정) 확정용.
+async function getCustomerInfo(version: string, token: string, customerId: string, loginId: string): Promise<{ status: number; text: string }> {
+  const res = await fetch(`https://googleads.googleapis.com/${version}/customers/${customerId}/googleAds:search`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "developer-token": process.env.GOOGLE_ADS_DEVELOPER_TOKEN!,
+      "login-customer-id": loginId,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ query: "SELECT customer.id, customer.manager, customer.test_account, customer.status, customer.descriptive_name, customer.currency_code FROM customer LIMIT 1" }),
+  });
+  return { status: res.status, text: await res.text() };
+}
+
 // 원본 응답 1회 획득(버전 자동탐지 + login 폴백). status/text/version/login 반환.
 async function fetchRawBody(seed: string): Promise<{ status: number; text: string; version: string; loginUsed: string; primary?: { login: string; status: number; text: string; headers: Record<string, string> } }> {
   const token = await getAccessToken();
@@ -194,10 +209,23 @@ export async function fetchGoogleIdeasDebug(seed: string): Promise<unknown> {
       errorIfAny: ac.status >= 200 && ac.status < 300 ? null : ac.text.slice(0, 400),
     };
   } catch (e) { accessibleCustomers = { error: e instanceof Error ? e.message : String(e) }; }
+  // (D) 대상 계정(2697435262) 속성 — manager/test_account/status. login=하위계정(직접 접근됨)으로 조회.
+  let targetCustomerInfo: unknown = null;
+  try {
+    const at = await getAccessToken();
+    const ci = await getCustomerInfo(body.version, at, customerId, customerId);
+    let cj: unknown = ci.text;
+    try { cj = JSON.parse(ci.text); } catch { /* keep */ }
+    const cust = (cj as { results?: { customer?: Record<string, unknown> }[] })?.results?.[0]?.customer;
+    targetCustomerInfo = cust
+      ? { manager: cust.manager ?? null, testAccount: cust.testAccount ?? cust.test_account ?? null, status: cust.status ?? null, name: cust.descriptiveName ?? cust.descriptive_name ?? null }
+      : { status: ci.status, raw: typeof cj === "string" ? cj.slice(0, 400) : cj };
+  } catch (e) { targetCustomerInfo = { error: e instanceof Error ? e.message : String(e) }; }
   return {
     tokenAccount, // ★ (A) 토큰 계정/클라이언트
     sentHeaders,  // ★ (B) 실제 전송 헤더
     accessibleCustomers, // ★ (C) 토큰이 접근 가능한 계정 목록 — 결정타
+    targetCustomerInfo, // ★ (D) 대상 계정 속성(manager/test/status) — 빈결과 원인
     version: body.version,
     loginEnv: loginEnv || "(미설정 → customerId로 폴백)", // 설정된 login-customer-id(=MCC여야 함)
     loginUsed: body.loginUsed, // 실제 결과를 낸 호출의 login-customer-id
