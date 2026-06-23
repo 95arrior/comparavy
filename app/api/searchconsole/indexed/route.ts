@@ -31,7 +31,14 @@ export async function GET() {
   const start = new Date(end);
   start.setUTCDate(start.getUTCDate() - 89);
   const res = await gscSearchAnalytics(token, site, { startDate: ymd(start), endDate: ymd(end), dimensions: ["page"], rowLimit: 1000 });
-  if (res.error) return NextResponse.json({ connected: true, count: 0 });
-  const count = res.rows.filter((r) => r.impressions > 0).length;
-  return NextResponse.json({ connected: true, count });
+  const count = res.error ? 0 : res.rows.filter((r) => r.impressions > 0).length;
+
+  // 최근 28일 방문자(클릭) — n잡 히어로용
+  const end28 = new Date();
+  const start28 = new Date(end28);
+  start28.setUTCDate(start28.getUTCDate() - 27);
+  const totRes = await gscSearchAnalytics(token, site, { startDate: ymd(start28), endDate: ymd(end28), dimensions: [] });
+  const clicks = totRes.error ? 0 : (totRes.rows[0]?.clicks ?? 0);
+
+  return NextResponse.json({ connected: true, count, clicks });
 }

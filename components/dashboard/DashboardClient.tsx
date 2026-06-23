@@ -1017,6 +1017,7 @@ export default function DashboardClient(props: DashboardProps) {
                     onWrite={() => goLabView("home")}
                     onGoConnect={() => goTab("wordpress")}
                     onRegion={() => { goLabView("home"); setRegionTrigger((t) => t + 1); }}
+                    onEditBusiness={() => { setReonboardPrev(blogProfile); setBlogProfile(null); goTab("lab"); }}
                   />
                 </div>
               </main>

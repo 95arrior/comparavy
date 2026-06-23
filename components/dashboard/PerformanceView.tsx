@@ -142,36 +142,84 @@ function PathDetail({ p, onBack }: { p: Path; onBack: () => void }) {
   );
 }
 
-function AssetHero({ written, chars, streak, pub, indexed, type, onWrite }: { written: number; chars: number; streak: number; pub: number; indexed: number; type: BloggerType; onWrite: () => void }) {
+interface LocalDemand { keyword?: string; searches?: number; needAddress?: boolean }
+
+function HeroShell({ children }: { children: React.ReactNode }) {
+  return <div className="rounded-2xl bg-gradient-to-br from-[#1D75F7] to-[#1565d8] p-5 text-white shadow-[0_12px_30px_-14px_rgba(29,117,247,0.6)]">{children}</div>;
+}
+function HeroChips({ streak, indexed }: { streak: number; indexed: number }) {
+  if (streak < 2 && indexed <= 0) return null;
+  return (
+    <div className="mt-3 flex flex-wrap gap-2">
+      {streak >= 2 && <span className="rounded-full bg-white/15 px-2.5 py-1 text-[12px] font-bold">🔥 {streak}주 연속</span>}
+      {indexed > 0 && <span className="rounded-full bg-white/20 px-2.5 py-1 text-[12px] font-bold">🔍 구글이 {indexed}편 찾았어요</span>}
+    </div>
+  );
+}
+
+// 히어로 — '욕망' 지표로. 자영업=우리 동네 검색 수요(네이버), n잡=방문자(GSC). 데이터 전엔 결승선.
+function AssetHero({ written, streak, pub, indexed, type, localDemand, visitors, onWrite, onEditBusiness }: {
+  written: number; streak: number; pub: number; indexed: number; type: BloggerType;
+  localDemand: LocalDemand | null; visitors: number | null; onWrite: () => void; onEditBusiness?: () => void;
+}) {
   if (written === 0) {
     return (
-      <div className="rounded-2xl bg-gradient-to-br from-[#1D75F7] to-[#1565d8] p-5 text-white shadow-[0_12px_30px_-14px_rgba(29,117,247,0.6)]">
-        <p className="text-[13px] font-semibold text-white/75">내 블로그 자산</p>
-        <p className="mt-2 text-[19px] font-extrabold leading-snug tracking-tight">첫 글을 쓰면<br />자산이 쌓이기 시작해요</p>
+      <HeroShell>
+        <p className="text-[13px] font-semibold text-white/75">시작하기</p>
+        <p className="mt-2 text-[19px] font-extrabold leading-snug tracking-tight">첫 글을 쓰면<br />여기에 성과가 쌓여요</p>
         <button onClick={onWrite} className="mt-3.5 rounded-xl bg-white px-4 py-2 text-[13px] font-bold text-[#1D75F7] transition active:scale-95">첫 글 쓰러 가기</button>
-      </div>
+      </HeroShell>
     );
   }
   const local = type === "local";
-  const goal = local ? 5 : 20;
-  const remain = Math.max(0, goal - pub);
-  const finish = local
+  const remain = Math.max(0, (local ? 5 : 20) - pub);
+  const finishLine = local
     ? remain === 0 ? "동네 검색에 노출되는 중이에요" : `동네 검색 노출까지 ${remain}편`
     : remain === 0 ? "이제 애드센스 신청할 수 있어요" : `애드센스 신청까지 ${remain}편`;
+
+  // 자영업자 — 주소 미등록
+  if (local && localDemand?.needAddress) {
+    return (
+      <HeroShell>
+        <p className="text-[13px] font-semibold text-white/75">우리 동네 검색 수요</p>
+        <p className="mt-2 text-[18px] font-extrabold leading-snug tracking-tight">업체 주소를 등록하면<br />동네 손님 수요가 보여요</p>
+        <button onClick={onEditBusiness} className="mt-3.5 rounded-xl bg-white px-4 py-2 text-[13px] font-bold text-[#1D75F7] transition active:scale-95">업체 등록하러 가기</button>
+      </HeroShell>
+    );
+  }
+
+  // 자영업자 — 동네 검색 수요(네이버)
+  if (local && localDemand && (localDemand.searches ?? 0) > 0) {
+    return (
+      <HeroShell>
+        <p className="text-[13px] font-semibold text-white/75">우리 동네 검색 수요</p>
+        <p className="mt-2 leading-none tracking-tight"><span className="text-[34px] font-extrabold">{(localDemand.searches ?? 0).toLocaleString("ko-KR")}</span><span className="ml-1 text-[15px] font-bold text-white/80">회 / 월</span></p>
+        <p className="mt-2.5 text-[13px] font-bold text-white">한 달간 ‘{localDemand.keyword}’ 검색 · 지금 잡으면 우리가 1등 🎯</p>
+        <HeroChips streak={streak} indexed={indexed} />
+      </HeroShell>
+    );
+  }
+
+  // n잡·취미 — 방문자(GSC)
+  if (!local && (visitors ?? 0) > 0) {
+    return (
+      <HeroShell>
+        <p className="text-[13px] font-semibold text-white/75">최근 28일 방문자</p>
+        <p className="mt-2 leading-none tracking-tight"><span className="text-[34px] font-extrabold">{(visitors ?? 0).toLocaleString("ko-KR")}</span><span className="ml-1 text-[15px] font-bold text-white/80">명</span></p>
+        <p className="mt-2.5 text-[13px] font-bold text-white">🎯 {finishLine}</p>
+        <HeroChips streak={streak} indexed={indexed} />
+      </HeroShell>
+    );
+  }
+
+  // 데이터 전/0 — 결승선 중심(욕망: 돈·손님이 코앞)
   return (
-    <div className="rounded-2xl bg-gradient-to-br from-[#1D75F7] to-[#1565d8] p-5 text-white shadow-[0_12px_30px_-14px_rgba(29,117,247,0.6)]">
-      <p className="text-[13px] font-semibold text-white/75">내 블로그 자산</p>
-      <div className="mt-2.5 flex flex-wrap items-end gap-x-6 gap-y-1">
-        <p className="text-[30px] font-extrabold leading-none tracking-tight">{written}<span className="ml-0.5 text-[15px] font-bold text-white/80">편</span></p>
-        <p className="text-[30px] font-extrabold leading-none tracking-tight">{chars.toLocaleString("ko-KR")}<span className="ml-0.5 text-[15px] font-bold text-white/80">자</span></p>
-      </div>
-      <p className="mt-2.5 text-[13.5px] font-bold text-white">🎯 {finish}</p>
-      <div className="mt-3 flex flex-wrap gap-2">
-        {streak >= 2 && <span className="rounded-full bg-white/15 px-2.5 py-1 text-[12px] font-bold">🔥 {streak}주 연속</span>}
-        {indexed > 0 && <span className="rounded-full bg-white/20 px-2.5 py-1 text-[12px] font-bold">🔍 구글이 {indexed}편 찾았어요</span>}
-        <span className="rounded-full bg-white/15 px-2.5 py-1 text-[12px] font-medium text-white/90">발행 {pub}편</span>
-      </div>
-    </div>
+    <HeroShell>
+      <p className="text-[13px] font-semibold text-white/75">{local ? "우리 동네 공략" : "수익화 여정"}</p>
+      <p className="mt-2 text-[19px] font-extrabold leading-snug tracking-tight">🎯 {finishLine}</p>
+      <p className="mt-1.5 text-[13px] font-medium text-white/85">{local ? "조금만 더 쓰면 동네 손님이 우리를 찾아요" : "조금만 더 쓰면 광고 수익을 시작할 수 있어요"}</p>
+      <HeroChips streak={streak} indexed={indexed} />
+    </HeroShell>
   );
 }
 
@@ -197,6 +245,7 @@ export default function PerformanceView({
   onWrite,
   onGoConnect,
   onRegion,
+  onEditBusiness,
 }: {
   articles: Article[];
   wpConnected: boolean;
@@ -204,6 +253,7 @@ export default function PerformanceView({
   onWrite: () => void;
   onGoConnect: () => void;
   onRegion: () => void;
+  onEditBusiness?: () => void;
 }) {
   const stats = useMemo(() => {
     const nonGen = articles.filter((a) => a.status !== "generating");
@@ -215,12 +265,23 @@ export default function PerformanceView({
   }, [articles]);
 
   const [indexed, setIndexed] = useState(0);
+  const [visitors, setVisitors] = useState<number | null>(null);
   useEffect(() => {
     fetch("/api/searchconsole/indexed")
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d?.count) setIndexed(d.count); })
+      .then((d) => { if (d) { setIndexed(d.count ?? 0); setVisitors(d.clicks ?? 0); } })
       .catch(() => {});
   }, []);
+
+  // 자영업자만 — 우리 동네 검색 수요(네이버)
+  const [localDemand, setLocalDemand] = useState<LocalDemand | null>(null);
+  useEffect(() => {
+    if (type !== "local") return;
+    fetch("/api/local-demand")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) setLocalDemand(d); })
+      .catch(() => {});
+  }, [type]);
 
   const { title, paths } = buildPaths(type, stats.pub, wpConnected, onWrite, onGoConnect, onRegion);
   const [openIdx, setOpenIdx] = useState<number | null>(null);
@@ -228,7 +289,7 @@ export default function PerformanceView({
 
   return (
     <div className="space-y-4">
-      <AssetHero written={stats.written} chars={stats.chars} streak={stats.streak} pub={stats.pub} indexed={indexed} type={type} onWrite={onWrite} />
+      <AssetHero written={stats.written} streak={stats.streak} pub={stats.pub} indexed={indexed} type={type} localDemand={localDemand} visitors={visitors} onWrite={onWrite} onEditBusiness={onEditBusiness} />
 
       {open ? (
         <PathDetail p={open} onBack={() => setOpenIdx(null)} />
