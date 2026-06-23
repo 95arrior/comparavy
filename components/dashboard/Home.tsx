@@ -27,6 +27,9 @@ export default function Home({
   onGoConnect,
   bloggerType,
   isAdmin,
+  regionTrigger,
+  hasBusinessInfo,
+  onEditBusiness,
 }: {
   displayName: string;
   blogName: string;
@@ -40,6 +43,9 @@ export default function Home({
   onGoConnect: () => void;
   bloggerType: BloggerType;
   isAdmin?: boolean;
+  regionTrigger?: number; // 성과 페이지 '지역 선점'에서 넘어오면 지역 강화 자동 ON
+  hasBusinessInfo?: boolean; // 업체 주소 등록 여부 — 지역 강화 가능 판단
+  onEditBusiness?: () => void; // 업체 등록(온보딩 재진입)
 }) {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [topicsLoading, setTopicsLoading] = useState(true);
@@ -47,6 +53,10 @@ export default function Home({
   const [swapping, setSwapping] = useState<string | null>(null); // 교체 중인 글감 keyword
   const [cluster, setCluster] = useState<string | null>(null); // '주제 이어가기' 활성 토픽(null=기본 다양)
   const [regionMode, setRegionMode] = useState(false); // '지역 강화'(우리 동네 키워드 실데이터) 모드
+  // 성과 '지역 선점'에서 넘어오면 지역 강화 자동 ON (동네 사장님만)
+  useEffect(() => {
+    if (regionTrigger && bloggerType === "local") setRegionMode(true);
+  }, [regionTrigger, bloggerType]);
 
   // 사용자가 가장 많이 쓴 주제 토큰(2편 이상) → '주제 이어가기' 제안용
   const mainTopic = useMemo(() => {
@@ -203,8 +213,19 @@ export default function Home({
         </div>
       ) : (
         <div className="mt-3 rounded-3xl border border-dashed border-neutral-200 p-8 text-center text-sm text-neutral-400">
-          {cluster ? "이 주제로 더 쓸 글감이 없어요. " : regionMode ? "우리 동네 키워드를 못 찾았어요. " : "아직 추천할 글감이 없어요. "}
-          <button onClick={cluster ? () => setCluster(null) : regionMode ? () => setRegionMode(false) : loadTopics} className="font-medium text-[#1D75F7]">{cluster ? "다양한 글감으로" : regionMode ? "일반 글감으로" : "다시 받기"}</button>
+          {regionMode && hasBusinessInfo === false ? (
+            <>
+              <p className="font-bold text-neutral-700">업체 정보를 아직 등록 안 하셨어요</p>
+              <p className="mx-auto mt-1.5 max-w-xs text-[13px] leading-relaxed text-neutral-400">주소를 등록하면 우리 동네 손님이 찾는 글감을 찾아드려요.</p>
+              <button onClick={onEditBusiness} className="mt-4 rounded-xl bg-[#1D75F7] px-5 py-2.5 text-[13px] font-bold text-white transition hover:opacity-90 active:scale-95">업체 등록하러 가기</button>
+              <button onClick={() => setRegionMode(false)} className="mt-2 block w-full text-[12px] font-medium text-neutral-400">일반 글감으로</button>
+            </>
+          ) : (
+            <>
+              {cluster ? "이 주제로 더 쓸 글감이 없어요. " : regionMode ? "우리 동네 키워드를 못 찾았어요. " : "아직 추천할 글감이 없어요. "}
+              <button onClick={cluster ? () => setCluster(null) : regionMode ? () => setRegionMode(false) : loadTopics} className="font-medium text-[#1D75F7]">{cluster ? "다양한 글감으로" : regionMode ? "일반 글감으로" : "다시 받기"}</button>
+            </>
+          )}
         </div>
       )}
 

@@ -84,6 +84,7 @@ export default function DashboardClient(props: DashboardProps) {
   // 2단계-A: 블로그 프로필 + 키워드 예약 큐
   const [blogProfile, setBlogProfile] = useState<BlogProfile | null>(null);
   const [reonboardPrev, setReonboardPrev] = useState<BlogProfile | null>(null); // 재설정(재온보딩) 전 프로필 — 취소 시 복귀
+  const [regionTrigger, setRegionTrigger] = useState(0); // 성과 '지역 선점' → 홈 지역강화 자동 ON
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const pendingQueueId = useRef<string | null>(null); // 첫 글 생성 완료 시 연결할 큐 항목
   // 키워드 발굴 검색 state (KeywordFinder에서 리프트 — 탭 이동/새로고침에도 유지)
@@ -918,6 +919,9 @@ export default function DashboardClient(props: DashboardProps) {
                 onGoConnect={() => goTab("wordpress")}
                 bloggerType={bloggerType(blogProfile.vertical)}
                 isAdmin={props.isAdmin}
+                regionTrigger={regionTrigger}
+                hasBusinessInfo={Boolean(blogProfile.biz_address)}
+                onEditBusiness={() => { setReonboardPrev(blogProfile); setBlogProfile(null); goTab("lab"); }}
               />
             )}
             {labView === "home" && blocked && (
@@ -1012,7 +1016,7 @@ export default function DashboardClient(props: DashboardProps) {
                     type={bloggerType(blogProfile.vertical)}
                     onWrite={() => goLabView("home")}
                     onGoConnect={() => goTab("wordpress")}
-                    onRegion={() => goLabView("home")}
+                    onRegion={() => { goLabView("home"); setRegionTrigger((t) => t + 1); }}
                   />
                 </div>
               </main>
