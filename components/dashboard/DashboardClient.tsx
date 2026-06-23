@@ -998,7 +998,9 @@ export default function DashboardClient(props: DashboardProps) {
             {/* 내 글 */}
             {labView === "articles" && (
               <main className="ateflo-page-in mx-auto max-w-5xl px-6 py-10">
-                <button onClick={() => goLabView("home")} className="mb-4 -ml-1 flex items-center gap-1 text-sm text-neutral-400 transition hover:text-neutral-700"><span className="text-base leading-none">←</span> 홈</button>
+                <button onClick={() => goLabView("home")} className="-ml-1 flex items-center gap-1 text-sm text-neutral-400 transition hover:text-neutral-700"><span className="text-base leading-none">←</span> 홈</button>
+                <h1 className="mt-3 font-pretendard text-[26px] font-bold tracking-tight text-neutral-900 sm:text-[30px]">내 글</h1>
+                <p className="mb-6 mt-1.5 text-[15px] text-neutral-400">총 {articles.filter((a) => a.status !== "generating").length}편{articles.some((a) => a.status === "published") ? ` · 발행 ${articles.filter((a) => a.status === "published").length}편` : ""}</p>
                 {nextStepBanner}
                 {articles.length > 0 && (
                   <div className="mb-4">

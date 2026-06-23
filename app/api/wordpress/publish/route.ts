@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { ensureUserRow } from "@/lib/userPlan";
 import { PLANS } from "@/lib/plans";
-import { publishPost, insertInternalLinks, slugify, WpAuthError } from "@/lib/wordpress";
+import { publishPost, insertInternalLinks, slugify, isYmylText, WpAuthError } from "@/lib/wordpress";
 import { decryptSecret } from "@/lib/crypto";
 
 export async function POST(request: Request) {
@@ -127,6 +127,8 @@ export async function POST(request: Request) {
       categoryName: categoryName || undefined,
       tags: tagsOverride ?? (Array.isArray(article.tags) ? article.tags : undefined),
       addToc,
+      // YMYL(건강·돈·법률) 주제면 하단 면책 블록 — 키워드·제목·요약으로 판별
+      ymyl: isYmylText(`${article.keyword ?? ""} ${article.title ?? ""} ${article.meta_description ?? ""}`),
       status,
       date,
     });
