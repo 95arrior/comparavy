@@ -483,11 +483,11 @@ export default function DashboardClient(props: DashboardProps) {
   const allDone = steps.every((s) => s.done);
 
   const nextStep: { go: () => void; msg: string; label: string } | null = !steps[0].done
-    ? { go: () => goLabView("home"), msg: "키워드 하나만 고르면 첫 글이 만들어져요. 홈에서 바로 시작해보세요!", label: "홈으로 →" }
+    ? { go: () => goLabView("home"), msg: "키워드 하나만 고르면 첫 글이 만들어져요. 홈에서 바로 시작해보세요!", label: "홈으로" }
     : !steps[1].done
-    ? { go: () => goTab("wordpress"), msg: "첫 글 완성! 이제 ‘워드프레스’에서 내 블로그를 연결해 주세요.", label: "바로 가기 →" }
+    ? { go: () => goTab("wordpress"), msg: "첫 글 완성! 이제 ‘워드프레스’에서 내 블로그를 연결해 주세요.", label: "바로 가기" }
     : !steps[2].done
-    ? { go: () => goLabView("articles"), msg: "사이트 연결 완료! ‘내 글’에서 글을 열고 ‘워드프레스에 발행’을 누르면 끝이에요.", label: "바로 가기 →" }
+    ? { go: () => goLabView("articles"), msg: "사이트 연결 완료! ‘내 글’에서 글을 열고 ‘워드프레스에 발행’을 누르면 끝이에요.", label: "바로 가기" }
     : null;
 
   // 사이드바 = 연구소 중심으로 일원화 (키워드/발행계획/내글/블로그설정은 사이드바에서 제거)

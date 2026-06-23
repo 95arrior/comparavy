@@ -133,7 +133,7 @@ export default function Home({
       <div className="flex items-center justify-between pt-9">
         <p className="text-sm text-neutral-400">{displayName}님</p>
         {!wpConnected && (
-          <button onClick={onGoConnect} className="text-xs font-medium text-[#1D75F7] transition hover:underline">워드프레스 연결 →</button>
+          <button onClick={onGoConnect} className="text-xs font-medium text-[#1D75F7] transition hover:underline">워드프레스 연결</button>
         )}
       </div>
 
@@ -216,7 +216,7 @@ export default function Home({
         >
           <p className="text-[14px] font-bold text-neutral-900">📍 우리 동네 키워드 강화</p>
           <p className="mt-1 text-[12.5px] leading-relaxed text-neutral-500">우리 동네 손님이 실제로 검색하는 키워드로 글감을 받아요.</p>
-          <p className="mt-2 inline-flex items-center gap-0.5 text-[13px] font-bold text-[#1D75F7]">우리 동네 글감 보기 ›</p>
+          <p className="mt-2 inline-flex items-center gap-0.5 text-[13px] font-bold text-[#1D75F7]">우리 동네 글감 보기</p>
         </button>
       )}
 
@@ -228,7 +228,7 @@ export default function Home({
         >
           <p className="text-[14px] font-bold text-neutral-900">‘{mainTopic.token}’ 주제로 {mainTopic.count}편 쓰셨네요</p>
           <p className="mt-1 text-[12.5px] leading-relaxed text-neutral-500">한 주제를 깊이 쓰면 그 분야 <b className="text-[#1D75F7]">검색 권위</b>가 생겨 상위에 유리해요.</p>
-          <p className="mt-2 inline-flex items-center gap-0.5 text-[13px] font-bold text-[#1D75F7]">‘{mainTopic.token}’ 글감 더 보기 ›</p>
+          <p className="mt-2 inline-flex items-center gap-0.5 text-[13px] font-bold text-[#1D75F7]">‘{mainTopic.token}’ 글감 더 보기</p>
         </button>
       )}
       </div>

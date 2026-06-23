@@ -230,7 +230,7 @@ export default function WpGuideView({ onBack, onGoConnect }: { onBack: () => voi
                         className={`rounded-lg px-5 py-2.5 text-sm font-medium transition ${step.link ? "border border-neutral-300 text-neutral-600 hover:border-neutral-900" : "text-white"}`}
                         style={step.link ? undefined : { background: BRAND }}
                       >
-                        {step.link ? "신청 끝냈어요 →" : "이 단계 완료했어요 →"}
+                        {step.link ? "신청 끝냈어요" : "이 단계 완료했어요"}
                       </button>
                     </div>
                   </div>
@@ -245,7 +245,7 @@ export default function WpGuideView({ onBack, onGoConnect }: { onBack: () => voi
             <p className="text-base font-semibold tracking-tight">다 하셨어요! 🎉 이제 연결만 하면 끝이에요</p>
             <p className="mt-1.5 text-sm text-neutral-500">연결 화면에서 사이트 주소·사용자명·앱 비밀번호를 붙여넣으세요.</p>
             <button onClick={onGoConnect} className="mt-5 inline-block rounded-lg px-6 py-3 text-sm font-medium text-white transition" style={{ background: BRAND }}>
-              워드프레스 연결하러 가기 →
+              워드프레스 연결하러 가기
             </button>
           </div>
         )}

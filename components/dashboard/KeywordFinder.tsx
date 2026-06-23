@@ -204,7 +204,7 @@ export default function KeywordFinder({
           <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
             <p className="text-sm text-neutral-600"><b className="text-neutral-900">{selected.size}개</b> 선택됨</p>
             <button onClick={queue} disabled={queuing} className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition disabled:opacity-50" style={{ backgroundColor: BRAND }}>
-              {queuing ? "담는 중…" : "발행 큐에 담기 →"}
+              {queuing ? "담는 중…" : "발행 큐에 담기"}
             </button>
           </div>
         </div>

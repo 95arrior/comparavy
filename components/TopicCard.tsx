@@ -104,9 +104,8 @@ export default function TopicCard({
           </span>
         </div>
         {cta && (
-          <p className={`mt-3 inline-flex items-center gap-0.5 text-[12px] font-bold sm:text-[13px] ${isSak ? "text-violet-700" : "text-[#1D75F7]"}`}>
+          <p className={`mt-3 text-[12px] font-bold sm:text-[13px] ${isSak ? "text-violet-700" : "text-[#1D75F7]"}`}>
             {cta}
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
           </p>
         )}
       </div>

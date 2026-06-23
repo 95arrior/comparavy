@@ -106,7 +106,7 @@ export default function WordPressPanel({
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-semibold text-neutral-900">구글에 내 블로그 등록하기</span>
-              <span className="mt-0.5 block text-xs text-neutral-500">한 번만 등록하면 검색에 잡혀요. 따라하기 가이드 →</span>
+              <span className="mt-0.5 block text-xs text-neutral-500">한 번만 등록하면 검색에 잡혀요. 따라하기 가이드</span>
             </span>
           </button>
         )}
@@ -139,7 +139,6 @@ export default function WordPressPanel({
               {guideInProgress ? `시작 가이드 ${guideDone}/${guideTotal}단계 완료` : "처음이어도 5분이면 끝, 따라하기 가이드"}
             </span>
           </span>
-          <span className="shrink-0 text-lg" style={{ color: "#1D75F7" }}>→</span>
         </button>
       )}
 

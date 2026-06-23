@@ -158,7 +158,7 @@ export default function ResearchLab({
                 </p>
                 <p className="mt-0.5 text-xs text-neutral-400">월 {k.estimated ? "~" : ""}{k.mobile.toLocaleString("ko-KR")}회 (모바일) · 경쟁 {k.compIdx}</p>
               </div>
-              <span className="shrink-0 rounded-lg bg-[#1D75F7]/10 px-2.5 py-1 text-[11px] font-bold text-[#2f7fe6]">글감으로 →</span>
+              <span className="shrink-0 rounded-lg bg-[#1D75F7]/10 px-2.5 py-1 text-[11px] font-bold text-[#2f7fe6]">글감으로</span>
             </motion.button>
           ))}
         </div>
