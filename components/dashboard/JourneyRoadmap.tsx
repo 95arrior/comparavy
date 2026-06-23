@@ -53,9 +53,9 @@ export default function JourneyRoadmap({
   const next = ms.find((m) => !m.done);
 
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
+    <div className="rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
       <div className="flex items-center justify-between">
-        <p className="text-[15px] font-semibold text-neutral-900">{title}</p>
+        <p className="text-[15px] font-bold text-neutral-900">{title}</p>
         <span className="text-xs font-bold text-[#1D75F7]">{doneN}/{ms.length}</span>
       </div>
 

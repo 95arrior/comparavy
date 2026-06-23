@@ -36,7 +36,7 @@ function PerfTooltip({ active, payload, label }: { active?: boolean; payload?: {
 
 function Card({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="rounded-xl border border-neutral-200 bg-white px-3.5 py-3">
+    <div className="rounded-xl bg-neutral-50 px-3.5 py-3">
       <p className="text-[11px] text-neutral-400">{label}</p>
       <p className="mt-0.5 text-lg font-extrabold tracking-tight text-neutral-900">{value}</p>
       {sub && <p className="text-[10px] text-neutral-400">{sub}</p>}
@@ -90,7 +90,7 @@ export default function SearchPerformance({ onGoConnect }: { onGoConnect?: () =>
   // ── graceful: 미연결 / 사이트 미선택 ──
   if (!status.connected || !status.selectedSite) {
     return (
-      <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
+      <div className="rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
         <p className="text-sm font-semibold tracking-tight text-neutral-900">검색 성과</p>
         <p className="mt-1.5 text-sm text-neutral-500">
           {status.connected
@@ -100,9 +100,9 @@ export default function SearchPerformance({ onGoConnect }: { onGoConnect?: () =>
         {onGoConnect && (
           <button
             onClick={onGoConnect}
-            className="mt-3 rounded-xl bg-[#1D75F7] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 active:scale-95"
+            className="mt-3 rounded-xl bg-[#1D75F7] px-4 py-2 text-sm font-bold text-white transition hover:opacity-90 active:scale-95"
           >
-            워드프레스 탭에서 연결하기 →
+            워드프레스 탭에서 연결하기
           </button>
         )}
       </div>
@@ -113,7 +113,7 @@ export default function SearchPerformance({ onGoConnect }: { onGoConnect?: () =>
   const hasData = perf && perf.series.length > 0 && (t?.impressions ?? 0) > 0;
 
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
+    <div className="rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm font-semibold tracking-tight text-neutral-900">검색 성과</p>
