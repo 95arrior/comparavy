@@ -46,6 +46,7 @@ export default function Home({
   const [loadStage, setLoadStage] = useState(0);
   const [swapping, setSwapping] = useState<string | null>(null); // 교체 중인 글감 keyword
   const [cluster, setCluster] = useState<string | null>(null); // '주제 이어가기' 활성 토픽(null=기본 다양)
+  const [regionMode, setRegionMode] = useState(false); // '지역 강화'(우리 동네 키워드 실데이터) 모드
 
   // 사용자가 가장 많이 쓴 주제 토큰(2편 이상) → '주제 이어가기' 제안용
   const mainTopic = useMemo(() => {
@@ -78,6 +79,7 @@ export default function Home({
       const exclude = [...topics.map((t) => t.keyword), ...dismissed].join(",");
       const params = new URLSearchParams({ exclude });
       if (cluster) params.set("cluster", cluster);
+      if (regionMode) params.set("region", "1");
       const res = await fetch(`/api/topics?${params.toString()}`);
       const data = await res.json();
       const fresh: Topic[] = Array.isArray(data.topics) ? data.topics : [];
@@ -107,6 +109,7 @@ export default function Home({
       const params = new URLSearchParams();
       if (ex.length) params.set("exclude", ex.join(","));
       if (cluster) params.set("cluster", cluster);
+      if (regionMode) params.set("region", "1");
       const qs = params.toString();
       const res = await fetch(`/api/topics${qs ? `?${qs}` : ""}`);
       const data = await res.json();
@@ -116,7 +119,7 @@ export default function Home({
     } finally {
       setTopicsLoading(false);
     }
-  }, [cluster]);
+  }, [cluster, regionMode]);
 
   useEffect(() => {
     loadTopics();
@@ -151,6 +154,14 @@ export default function Home({
           <h2 className="mt-2 text-[15px] font-bold tracking-tight text-neutral-900">‘{cluster}’ 이어가기</h2>
           <p className="mt-1 text-[12px] leading-relaxed text-neutral-400">한 주제를 깊이 쓰면 그 분야 <b className="text-[#1D75F7]">검색 권위</b>가 생겨 상위에 유리해요</p>
         </div>
+      ) : regionMode ? (
+        <div className="mt-8">
+          <button onClick={() => setRegionMode(false)} className="-ml-1 flex items-center gap-1 text-[13px] font-medium text-neutral-400 transition hover:text-neutral-700">
+            <span className="text-base leading-none">←</span> 일반 글감으로
+          </button>
+          <h2 className="mt-2 text-[15px] font-bold tracking-tight text-neutral-900">우리 동네 강화</h2>
+          <p className="mt-1 text-[12px] leading-relaxed text-neutral-400">우리 동네 손님이 <b className="text-[#1D75F7]">실제로 검색하는</b> 키워드예요</p>
+        </div>
       ) : (
         <h2 className="mt-8 text-[15px] font-bold tracking-tight text-neutral-900">오늘의 추천 글감</h2>
       )}
@@ -178,14 +189,9 @@ export default function Home({
       ) : topics.length > 0 ? (
         <div className="mt-3">
           <div className="flex flex-col gap-3">
-            {topics.map((t, i) =>
-              t.region ? (
-                // 지역 글감 — TopicCard region 모드(같은 박스·높이) + ✕로 교체 가능
-                <TopicCard key={t.keyword} title={t.title} vol={t.vol} comp={t.comp} idx={i} cta="이 글 쓰기" region onClick={() => onWriteKeyword(t.keyword, t.title)} onDismiss={swapLeft > 0 ? () => swapTopic(t.keyword) : undefined} dismissing={swapping === t.keyword} />
-              ) : (
-                <TopicCard key={t.keyword} title={t.title} tag={t.tag || undefined} vol={t.vol} comp={t.comp} idx={i} cta="이 글 쓰기" onClick={() => onWriteKeyword(t.keyword, t.title)} onDismiss={swapLeft > 0 ? () => swapTopic(t.keyword) : undefined} dismissing={swapping === t.keyword} />
-              ),
-            )}
+            {topics.map((t, i) => (
+              <TopicCard key={t.keyword} title={t.title} tag={t.tag || undefined} vol={t.vol} comp={t.comp} idx={i} cta="이 글 쓰기" region={t.region} onClick={() => onWriteKeyword(t.keyword, t.title)} onDismiss={swapLeft > 0 ? () => swapTopic(t.keyword) : undefined} dismissing={swapping === t.keyword} />
+            ))}
           </div>
           {!isFinite(swapLeft) ? (
             <p className="mt-3 text-center text-[12px] text-neutral-300">마음에 안 들면 카드의 ✕로 교체 (테스트 · 무제한)</p>
@@ -197,13 +203,25 @@ export default function Home({
         </div>
       ) : (
         <div className="mt-3 rounded-3xl border border-dashed border-neutral-200 p-8 text-center text-sm text-neutral-400">
-          {cluster ? "이 주제로 더 쓸 글감이 없어요. " : "아직 추천할 글감이 없어요. "}
-          <button onClick={cluster ? () => setCluster(null) : loadTopics} className="font-medium text-[#1D75F7]">{cluster ? "다양한 글감으로" : "다시 받기"}</button>
+          {cluster ? "이 주제로 더 쓸 글감이 없어요. " : regionMode ? "우리 동네 키워드를 못 찾았어요. " : "아직 추천할 글감이 없어요. "}
+          <button onClick={cluster ? () => setCluster(null) : regionMode ? () => setRegionMode(false) : loadTopics} className="font-medium text-[#1D75F7]">{cluster ? "다양한 글감으로" : regionMode ? "일반 글감으로" : "다시 받기"}</button>
         </div>
       )}
 
+      {/* 지역 강화 — 동네 사장님 전용(선택형). 우리 동네 키워드 실데이터 */}
+      {!cluster && !regionMode && !topicsLoading && bloggerType === "local" && (
+        <button
+          onClick={() => setRegionMode(true)}
+          className="mt-3 w-full rounded-2xl border border-[#1D75F7]/20 bg-[#1D75F7]/[0.04] p-4 text-left transition hover:bg-[#1D75F7]/[0.07] active:scale-[0.99]"
+        >
+          <p className="text-[14px] font-bold text-neutral-900">📍 우리 동네 키워드 강화</p>
+          <p className="mt-1 text-[12.5px] leading-relaxed text-neutral-500">우리 동네 손님이 실제로 검색하는 키워드로 글감을 받아요.</p>
+          <p className="mt-2 inline-flex items-center gap-0.5 text-[13px] font-bold text-[#1D75F7]">우리 동네 글감 보기 ›</p>
+        </button>
+      )}
+
       {/* 주제 이어가기 — 기본 모드 + 쓴 주제 있을 때만(선택형 · 이유 안내) */}
-      {!cluster && !topicsLoading && mainTopic && (
+      {!cluster && !regionMode && !topicsLoading && mainTopic && (
         <button
           onClick={() => setCluster(mainTopic.token)}
           className="mt-4 w-full rounded-2xl border border-[#1D75F7]/20 bg-[#1D75F7]/[0.04] p-4 text-left transition hover:bg-[#1D75F7]/[0.07] active:scale-[0.99]"

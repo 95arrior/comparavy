@@ -71,12 +71,6 @@ export default function TopicCard({
           )}
         </div>
         <p className="text-[15px] font-bold leading-snug text-neutral-900 sm:text-[18px]">{title}</p>
-        {region ? (
-          <p className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-[#1D75F7] sm:text-[13px]">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="opacity-80"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z" /></svg>
-            우리 동네 손님이 찾는 검색
-          </p>
-        ) : (
         <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px] sm:text-[13px]">
           <span className="flex min-w-0 items-center gap-1.5">
             <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-neutral-500">
@@ -107,7 +101,6 @@ export default function TopicCard({
             </span>
           </span>
         </div>
-        )}
         {cta && (
           <p className={`mt-3 inline-flex items-center gap-0.5 text-[12px] font-bold sm:text-[13px] ${isSak ? "text-violet-700" : "text-[#1D75F7]"}`}>
             {cta}

@@ -10,6 +10,7 @@ import { compFromLabel, compFromBlogTotal, type Comp } from "@/lib/topicScore";
 import { fetchBlogTotal } from "@/lib/naverBlogSearch";
 import { expandLocalAreas } from "@/lib/aiSeeds";
 import { buildPoolForSub } from "@/lib/keywordPool";
+import { collectPoolKeywords } from "@/lib/poolCollect";
 import { checkRateLimit } from "@/lib/rateLimit";
 
 // 사장의 blog_profile(vertical + sub_category)로 keyword_pool에서 글감 3개를 뽑는다.
@@ -195,49 +196,60 @@ export async function GET(req: Request) {
     const aiAreas = await expandLocalAreas(String(profile.biz_address), sub || vertical, aud, level === "dong");
     if (aiAreas.length) regions = [...new Set([...aiAreas, ...regions])];
   }
-  const local = isLocalBusiness(level, regions) && !cluster; // 클러스터 모드는 지역글감 제외(주제 깊이만)
-  const localSeeds = local
-    ? buildLocalSeeds(regions, vertical, sub ?? null).filter(
-        (k) => !usedSet.has(normalizeKeyword(k)) && !isUnsafeKeyword(k),
-      )
-    : [];
+  const local = isLocalBusiness(level, regions) && !cluster;
+  // 지역 글감은 '지역 강화' 모드(opt-in)에서만 — 평소엔 안 띄움(데이터 백킹 + 버튼).
+  const regionMode = new URL(req.url).searchParams.get("region") === "1" && local;
 
-  // ── 일반 후보 ──
   // 하루 고정 시드(userId+날짜): 그날은 새로고침해도 같은 추천.
-  // 노이즈(ok=false)·중복 제외로 빠질 것 대비해 '여유분(want)'까지 뽑아 무조건 PICK개 채운다.
   const rng = mulberry32(seedFrom(`${user.id}-${new Date().toISOString().slice(0, 10)}`));
-  const need = Math.max(0, PICK - localSeeds.length);
-  const want = need + 8; // ok(노이즈) 필터 후에도 need개 채우게 넉넉히(부족 카테고리 3개 보장)
-  const general = pickBalanced(mid, audActive ? audSel : [], want + 1, rng);
-  const candidates: PoolRow[] = [];
-  if (low.length > 0 && rng() < 0.28) candidates.push(low[Math.floor(rng() * low.length)]); // 싹 1개 가끔
-  const add = (arr: PoolRow[]) => {
-    for (const r of arr) {
-      if (candidates.length >= want) break;
-      if (!candidates.some((x) => x.keyword === r.keyword)) candidates.push(r);
+  const want = PICK + 8; // ok·적합도 필터 후에도 PICK개 채우게 넉넉히
+  let candidates: PoolRow[] = [];
+
+  if (regionMode) {
+    // ── 지역 강화: 지역 키워드 '실데이터'(네이버 검색량/경쟁) 수집 — '오송 영어학원' 등 ──
+    const seeds = buildLocalSeeds(regions, vertical, sub ?? null).slice(0, 3);
+    const collected = new Map<string, PoolRow>();
+    for (const seed of seeds) {
+      try {
+        const kws = await collectPoolKeywords(seed);
+        for (const k of kws) {
+          if (collected.has(k.keyword) || usedSet.has(normalizeKeyword(k.keyword)) || isUnsafeKeyword(k.keyword)) continue;
+          collected.set(k.keyword, { keyword: k.keyword, monthly_searches: Number(k.monthlyMobileQcCnt) || 0, competition: k.compIdx ?? null, audience: null, blog_total: null });
+        }
+      } catch { /* 수집 실패 시드는 건너뜀 */ }
     }
-  };
-  add(general); // 일반(중간)
-  add(low);     // 부족하면 싹
-  add(high);    // 그래도 모자라면 빅키워드
+    const hasRegion = (kw: string) => regions.some((r) => kw.includes(r));
+    candidates = [...collected.values()]
+      .sort((a, b) => (hasRegion(b.keyword) ? 1 : 0) - (hasRegion(a.keyword) ? 1 : 0) || (b.monthly_searches ?? 0) - (a.monthly_searches ?? 0))
+      .slice(0, want);
+  } else {
+    // ── 일반 후보(풀 기반) ── 노이즈·중복 제외로 빠질 것 대비해 여유분(want)까지.
+    const general = pickBalanced(mid, audActive ? audSel : [], want + 1, rng);
+    if (low.length > 0 && rng() < 0.28) candidates.push(low[Math.floor(rng() * low.length)]); // 싹 1개 가끔
+    const add = (arr: PoolRow[]) => {
+      for (const r of arr) {
+        if (candidates.length >= want) break;
+        if (!candidates.some((x) => x.keyword === r.keyword)) candidates.push(r);
+      }
+    };
+    add(general); add(low); add(high);
+  }
 
   // ── 제목·카테고리·노이즈판별(여유분 한 번에) ──
-  const allKeywords = [...localSeeds, ...candidates.map((r) => r.keyword)];
+  const allKeywords = candidates.map((r) => r.keyword);
   if (allKeywords.length === 0) return NextResponse.json({ topics: [] });
   // 통합 맥락(분야·대상·사용자 지역) → AI가 브랜드·타지역·대상불일치·무관 키워드까지 한 번에 거름
   const ctxParts = [`분야: ${sub || vertical}`];
   if (audActive) ctxParts.push(`대상: ${audSel.filter((a) => a !== AUDIENCE_ALL).join("·")}`);
   if (local && regions.length) ctxParts.push(`사용자 지역: ${regions.join("·")}`);
   const titled = await keywordsToTitles(allKeywords, ctxParts.join(" / ")); // {title, tag, ok, fit}
-  const off = localSeeds.length;
 
-  // 화면에 뜰 일반 글감 행(노이즈 제외 + 업종 핵심 적합도 높은 순 + need개)
-  // fit: 감정평가사면 '부동산'류=2(핵심) 우선, 주변 업무=1. 동점은 시드 순서 유지(변동성 보존).
+  // 화면에 뜰 글감 행(노이즈 제외 + 업종 핵심 적합도 높은 순 + PICK개). 동점은 순서 유지(변동성).
   const generalRows = candidates
-    .map((r, i) => ({ r, t: titled[off + i] }))
+    .map((r, i) => ({ r, t: titled[i] }))
     .filter(({ t }) => t?.ok !== false)
     .sort((a, b) => (b.t?.fit ?? 1) - (a.t?.fit ?? 1))
-    .slice(0, need);
+    .slice(0, PICK);
 
   // ── 진짜 콘텐츠 경쟁(blog_total) 채우기 ──
   // 화면에 뜰 것만, 미수집(null)이면 네이버 블로그검색 1회 → 풀에 캐싱(전 유저 공용 → 유저수 무관).
@@ -251,37 +263,22 @@ export async function GET(req: Request) {
     }),
   );
 
-  const topics = [
-    // 지역 글감(앞) — 항상 포함
-    ...localSeeds.map((k, i) => ({
-      keyword: k,
-      title: titled[i]?.title ?? k,
-      demandLabel: "우리 동네 손님이 찾는 검색",
-      ssak: false,
-      region: true,
-      tone: "local" as BloggerType,
-      vol: 0,
-      comp: "mid" as Comp,
-      blogTotal: null as number | null,
-      tag: "",
-    })),
-    // 일반 글감 — comp는 blog_total(진짜 콘텐츠 경쟁) 있으면 그걸로, 없으면 광고경쟁 폴백
-    ...generalRows.map(({ r, t }) => {
-      const realComp: Comp = r.blog_total != null ? compFromBlogTotal(r.blog_total) : compFromLabel(r.competition);
-      return {
-        keyword: r.keyword,
-        title: t?.title ?? r.keyword,
-        demandLabel: demandLabel(r.monthly_searches, type),
-        ssak: realComp === "low",
-        region: false,
-        tone: type,
-        vol: r.monthly_searches ?? 0,
-        comp: realComp,
-        blogTotal: r.blog_total ?? null,
-        tag: t?.tag ?? "",
-      };
-    }),
-  ].slice(0, PICK);
+  // comp는 blog_total(진짜 콘텐츠 경쟁) 있으면 그걸로, 없으면 광고경쟁 폴백. region 모드면 '우리 동네' 칩.
+  const topics = generalRows.map(({ r, t }) => {
+    const realComp: Comp = r.blog_total != null ? compFromBlogTotal(r.blog_total) : compFromLabel(r.competition);
+    return {
+      keyword: r.keyword,
+      title: t?.title ?? r.keyword,
+      demandLabel: demandLabel(r.monthly_searches, type),
+      ssak: realComp === "low",
+      region: regionMode,
+      tone: type,
+      vol: r.monthly_searches ?? 0,
+      comp: realComp,
+      blogTotal: r.blog_total ?? null,
+      tag: t?.tag ?? "",
+    };
+  });
   // 우리동네(지역) 카드를 항상 맨 위 고정하지 않고 섞는다 — 하루 시드로 위치는 그날 내내 안정적.
   return NextResponse.json({ topics: shuffle(topics, rng) });
 }
