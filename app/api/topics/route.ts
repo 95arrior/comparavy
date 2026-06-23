@@ -8,6 +8,7 @@ import { regionLevel, extractRegions, isLocalBusiness, buildLocalSeeds } from "@
 import { bloggerType, type BloggerType } from "@/lib/bloggerTypes";
 import { compFromLabel, compFromBlogTotal, type Comp } from "@/lib/topicScore";
 import { fetchBlogTotal } from "@/lib/naverBlogSearch";
+import { expandLocalAreas } from "@/lib/aiSeeds";
 import { buildPoolForSub } from "@/lib/keywordPool";
 import { checkRateLimit } from "@/lib/rateLimit";
 
@@ -187,7 +188,13 @@ export async function GET(req: Request) {
   // 지역형 사업장이면 동네+업종 글감을 앞에. 본인이 쓴 건 제외.
   const level = regionLevel(vertical, sub ?? null);
   const type = bloggerType(vertical); // local/online/hobby → 카피 톤
-  const regions = extractRegions(profile?.biz_address as string | null, level);
+  let regions = extractRegions(profile?.biz_address as string | null, level);
+  // 생활권 별칭 AI 보완 — 주소 파싱이 못 잡는 봉산리→오송 등. 지역형(non-wide)일 때만.
+  if (level !== "wide" && profile?.biz_address && !cluster) {
+    const aud = audActive ? audSel.filter((a) => a !== AUDIENCE_ALL).join("·") : undefined;
+    const aiAreas = await expandLocalAreas(String(profile.biz_address), sub || vertical, aud, level === "dong");
+    if (aiAreas.length) regions = [...new Set([...aiAreas, ...regions])];
+  }
   const local = isLocalBusiness(level, regions) && !cluster; // 클러스터 모드는 지역글감 제외(주제 깊이만)
   const localSeeds = local
     ? buildLocalSeeds(regions, vertical, sub ?? null).filter(

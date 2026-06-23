@@ -1,5 +1,47 @@
 import Anthropic from "@anthropic-ai/sdk";
 
+// 주소 → 그 동네에서 '실제 통용되는 지역명'(생활권·별칭·동/리/구). 주소 파싱이 못 잡는 별칭(봉산리→오송) 보완.
+// 주소는 안 바뀌니 인스턴스 메모리에 캐싱(반복 호출 절감).
+const areaCache = new Map<string, string[]>();
+export async function expandLocalAreas(address: string, field: string, audience?: string, tight?: boolean): Promise<string[]> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const addr = (address || "").trim();
+  if (!apiKey || addr.length < 4) return [];
+  const cacheKey = `${addr}|${field}|${audience ?? ""}|${tight ? "t" : "w"}`;
+  const hit = areaCache.get(cacheKey);
+  if (hit) return hit;
+  try {
+    const client = new Anthropic({ apiKey });
+    const res = await client.messages.create({
+      model: "claude-haiku-4-5",
+      max_tokens: 200,
+      messages: [
+        {
+          role: "user",
+          content:
+            `주소: "${addr}"\n업종: ${field}${audience ? ` / 대상: ${audience}` : ""}\n` +
+            `이 위치의 손님(또는 대상)이 'OO ${field}' 식으로 검색할 때 실제로 쓰는 '지역명'을 가까운 순서로 2~4개 뽑아줘.\n` +
+            "- 행정구역명뿐 아니라 그 동네에서 통용되는 '생활권·별칭'을 우선해라(예: 청주 흥덕구 봉산리 → '오송'이 생활권 별칭).\n" +
+            (tight ? "- 학원·아동 등 가까운 곳만 다니므로 좁은 생활권·동네 위주로.\n" : "- 멀리서도 오므로 구·시까지 포함.\n") +
+            "- 너무 넓은 시/도(충청북도 등)는 넣지 마.\n" +
+            'JSON 배열로만 답해: ["오송","봉산","흥덕"]',
+        },
+      ],
+    });
+    const text = res.content.map((c) => (c.type === "text" ? c.text : "")).join("");
+    const m = text.match(/\[[\s\S]*\]/);
+    const arr = m ? (JSON.parse(m[0]) as unknown[]) : [];
+    const out = arr
+      .filter((x): x is string => typeof x === "string" && x.trim().length > 0)
+      .map((x) => x.trim())
+      .slice(0, 4);
+    areaCache.set(cacheKey, out);
+    return out;
+  } catch {
+    return [];
+  }
+}
+
 // 카테고리(라벨) → 그 분야의 '구체 하위주제 키워드' 다수 생성.
 // 카테고리명 하나만으론 네이버 연관이 적게 나와 풀이 얕음 → AI로 하위주제를 펼쳐
 // 각각을 네이버 연관 수집 시드로 써서 풀을 폭발적으로 키운다(카테고리당 1회·캐싱).
