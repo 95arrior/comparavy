@@ -448,6 +448,8 @@ export default function DashboardClient(props: DashboardProps) {
     setKwTopic(p.topic);
     autoSearched.current = false; // 새 주제면 키워드 탭 진입 시 자동검색 다시
     setNotice(isNew ? "블로그 준비 완료예요 🎉" : "설정을 저장했어요");
+    // 신규 카테고리 선수집 — 온보딩 직후 백그라운드로 글감 풀 워밍(첫 주자가 트리거). 글감 화면 도착 땐 이미 준비됨.
+    if (isNew) { try { fetch("/api/topics").catch(() => {}); } catch { /* 무시 */ } }
     goTab("lab"); // 홈으로
   }
 
