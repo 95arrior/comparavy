@@ -183,28 +183,31 @@ const ATEFLO_POST_STYLE =
   ".ateflo-post a{color:#1d75f7;text-underline-offset:3px;}" +
   ".ateflo-post strong{font-weight:700;color:#191f28;}" +
   ".ateflo-post img{max-width:100%;height:auto;border-radius:10px;}" +
-  ".ateflo-post .ateflo-disclaimer{margin-top:2.6em;padding:14px 16px;border-radius:10px;background:#f6f8fa;border:1px solid #eaecef;font-size:14px;line-height:1.7;color:#6a737d;}" +
-  ".ateflo-post .ateflo-disclaimer p{margin:0;}" +
+  ".ateflo-post .ateflo-disclaimer{margin:3em 0 0;padding-top:14px;border-top:1px solid #eee;font-size:12.5px;line-height:1.6;color:#aaa;}" +
   "</style>";
 
 function wrapWithAtefloStyle(html: string): string {
   return `${ATEFLO_POST_STYLE}<div class="ateflo-post">${html}</div>`;
 }
 
-// YMYL(건강·돈·법률·안전) 주제 판별 — vertical이 아니라 '주제'로(일반 블로그가 투자글 써도 잡게).
+// YMYL(건강·돈·법률) 주제 판별 — vertical 아니라 '주제'로. 진짜 민감한 것만(진단·투자권유·법적분쟁 수준).
+// 가벼운 언급(건강·보험·다이어트 등)은 제외 — 면책이 평범한 글엔 안 뜨게.
 const YMYL_TERMS = [
-  "건강", "질환", "질병", "증상", "통증", "치료", "수술", "병원", "의원", "약", "복용", "처방", "진단", "다이어트", "영양제", "부작용", "암", "혈압", "당뇨", "우울", "불면",
-  "투자", "재테크", "주식", "코인", "비트코인", "대출", "보험", "세금", "세무", "연금", "펀드", "수익률", "이자", "파산", "신용", "청약",
-  "법률", "소송", "이혼", "상속", "고소", "변호사", "합의금", "위자료", "형량", "안전사고",
+  // 의료 — 진단·치료 수준
+  "질환", "질병", "증상", "진단", "치료", "수술", "처방", "복용", "항암", "부작용", "후유증", "당뇨", "고혈압",
+  // 금융 — 투자·대출·세무
+  "투자", "주식", "코인", "비트코인", "대출", "펀드", "세무", "파산",
+  // 법률 — 분쟁·자문
+  "소송", "이혼", "상속", "고소", "합의금", "위자료", "형량",
 ];
 export function isYmylText(text: string): boolean {
   const s = (text || "").toLowerCase();
   return YMYL_TERMS.some((t) => s.includes(t));
 }
 
-// 발행 글 하단 면책 블록(YMYL일 때만). 정직 노선 — 정보 제공 목적·전문가 상담 안내.
+// 발행 글 하단 면책 블록(YMYL일 때만) — 은은하게(박스X, 옅은 윗줄 + 작은 회색 글씨).
 const DISCLAIMER_HTML =
-  '<div class="ateflo-disclaimer"><p>※ 이 글은 일반적인 정보 제공을 목적으로 하며, 의료·법률·세무·투자 등 전문적인 진단이나 자문을 대신하지 않습니다. 개인별 상황은 다를 수 있으니, 구체적인 결정 전에는 해당 분야 전문가와 상담하시기 바랍니다.</p></div>';
+  '<p class="ateflo-disclaimer">※ 일반적인 정보 제공 목적의 글이며, 의료·법률·세무·투자 등 전문적인 판단을 대신하지 않습니다. 구체적인 사안은 전문가와 상담하세요.</p>';
 
 /** Article 구조화 데이터(JSON-LD). FAQ는 본문 마이크로데이터로 따로 넣는다(아래 renderFaqSection). */
 function buildStructuredData(input: PublishInput): string {
