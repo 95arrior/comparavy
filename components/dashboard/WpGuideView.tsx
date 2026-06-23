@@ -6,16 +6,6 @@ const BRAND = "#1D75F7";
 const STORAGE_KEY = "ateflo_wp_guide_progress";
 export const WP_GUIDE_STEP_COUNT = 5;
 
-// 검색창 목업
-function SearchMock() {
-  return (
-    <div className="mt-4 flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm shadow-sm">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-neutral-400"><circle cx="11" cy="11" r="7" /><path d="M21 21l-3.5-3.5" /></svg>
-      <span className="text-neutral-700">워드프레스 호스팅 추천</span>
-    </div>
-  );
-}
-
 // 주소창 목업
 function AddressMock() {
   return (
@@ -39,34 +29,33 @@ function MenuMock() {
   );
 }
 
-type Step = { title: string; lines: string[]; tip?: string; visual?: React.ReactNode };
+type Step = { title: string; lines: string[]; tip?: string; visual?: React.ReactNode; link?: { label: string; url: string } };
 
 const STEPS: Step[] = [
   {
-    title: "워드프레스 호스팅 찾고 가입하기",
+    title: "카페24에서 워드프레스 신청하기",
     lines: [
-      "네이버나 구글 검색창에 **‘워드프레스 호스팅 추천’** 또는 **‘카페24 워드프레스 호스팅’** 이라고 검색하세요.",
-      "상품 설명에 **‘자동 설치’ 또는 ‘원클릭 설치’** 라고 적힌 호스팅을 고르면 가장 쉬워요.",
-      "마음에 드는 곳에서 ‘신청/가입’을 누르고 카드로 결제하면 끝이에요. 보통 한 달 몇천 원이에요.",
+      "아래 버튼을 누르면 카페24 **‘매니지드 워드프레스’** 신청 페이지가 새 창으로 열려요. 워드프레스가 **자동으로 깔리는** 상품이라 제일 쉬워요.",
+      "처음이라면 **‘빌드업’ 플랜**이 적당해요. (스타트업은 용량이 작아 추천하지 않아요)",
+      "회원가입 → 카드 결제하면 끝. 가입할 때 정한 **아이디·비밀번호는 꼭 메모장에 적어두세요.**",
     ],
-    tip: "꼭 카페24가 아니어도 돼요. ‘자동(원클릭) 워드프레스 설치’만 지원하면 어디든 괜찮아요.",
-    visual: <SearchMock />,
+    tip: "‘매니지드 워드프레스’는 워드프레스가 자동 설치돼서 따로 깔 필요가 없어요. 결제만 카페24에서 하고, 나머지는 AteFlo가 도와드려요.",
+    link: { label: "카페24 워드프레스 신청하러 가기", url: "https://hosting.cafe24.com/?controller=new_product_page&page=managed-wordpress" },
   },
   {
-    title: "워드프레스 자동으로 설치하기",
+    title: "워드프레스 자동 설치 확인하기",
     lines: [
-      "가입한 호스팅에 로그인해 **‘나의 서비스 관리’ 또는 ‘호스팅 관리’** 화면으로 들어가요.",
-      "거기서 **‘워드프레스 설치’ 또는 ‘원클릭 설치’** 버튼을 눌러요. 몇 분이면 자동으로 깔려요.",
-      "설치 중에 정하는 **관리자 아이디·비밀번호**를 꼭 메모장이나 종이에 **적어두세요.**",
+      "매니지드 워드프레스는 신청만 하면 **워드프레스가 자동으로 설치**돼요. 따로 설치할 필요 없어요!",
+      "신청 완료 안내(메일·문자·화면)에 적힌 **내 사이트 주소**와 **관리자 정보**를 확인하세요.",
     ],
-    tip: "이 아이디·비밀번호가 내 블로그에 들어가는 열쇠예요. 바로 다음 단계에서 써요.",
+    tip: "혹시 ‘매니지드’가 아닌 일반 웹호스팅을 고르셨다면 → 카페24 ‘나의서비스관리 → 호스팅관리 → 계정관리 → 프로그램 자동설치’에서 워드프레스를 설치하세요.",
   },
   {
     title: "내 블로그 관리자 화면 열기",
     lines: [
       "인터넷 주소창(맨 위 칸)에 **내 사이트 주소 뒤에 `/wp-admin`을 붙여** 입력하고 엔터를 눌러요.",
       "예) 내 주소가 myblog.com 이면 → 주소창에 myblog.com/wp-admin 이라고 쳐요.",
-      "2단계에서 적어둔 **아이디·비밀번호**로 로그인하면, 왼쪽에 까만 메뉴가 있는 관리자 화면이 나와요.",
+      "1단계에서 적어둔 **아이디·비밀번호**로 로그인하면, 왼쪽에 까만 메뉴가 있는 관리자 화면이 나와요.",
     ],
     visual: <AddressMock />,
   },
@@ -85,7 +74,7 @@ const STEPS: Step[] = [
     title: "AteFlo에 연결하면 끝!",
     lines: [
       "AteFlo의 **‘워드프레스’ 메뉴 → 연결 화면**으로 돌아와요.",
-      "**① 사이트 주소**(예: https://myblog.com) **② 사용자명**(2단계 관리자 아이디) **③ 앱 비밀번호**(방금 복사한 것)를 채워요.",
+      "**① 사이트 주소**(예: https://myblog.com) **② 사용자명**(1단계에서 정한 관리자 아이디) **③ 앱 비밀번호**(방금 복사한 것)를 채워요.",
       "**‘사이트 연결하기’**를 누르면 초록불이 켜지며 연결 완료! 이제 글을 쓰고 버튼 하나로 발행할 수 있어요. 🎉",
     ],
   },
@@ -158,7 +147,7 @@ export default function WpGuideView({ onBack, onGoConnect }: { onBack: () => voi
 
       <div className="mx-auto max-w-2xl px-6 py-12 sm:py-14">
         <div>
-          <p className="text-sm font-semibold tracking-tight" style={{ color: BRAND }}>워드프레스 5분 시작 가이드</p>
+          <p className="text-sm font-semibold tracking-tight" style={{ color: BRAND }}>카페24로 5분 만에 시작하기</p>
           <h1 className="mt-3 text-3xl font-bold leading-[1.2] tracking-tight sm:text-4xl">
             한 단계씩,<br />따라만 하면 끝나요.
           </h1>
@@ -218,18 +207,32 @@ export default function WpGuideView({ onBack, onGoConnect }: { onBack: () => voi
                       ))}
                     </ul>
                     {step.visual}
+                    {step.link && (
+                      <a
+                        href={step.link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-4 inline-flex items-center gap-1.5 rounded-xl px-5 py-3 text-sm font-bold text-white transition active:scale-95"
+                        style={{ background: BRAND }}
+                      >
+                        {step.link.label}
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7M9 7h8v8" /></svg>
+                      </a>
+                    )}
                     {step.tip && (
                       <p className="mt-4 rounded-xl px-4 py-3 text-sm leading-relaxed text-neutral-600" style={{ background: `${BRAND}0d` }}>
                         💡 {step.tip}
                       </p>
                     )}
-                    <button
-                      onClick={() => toggle(i)}
-                      className="mt-5 rounded-lg px-5 py-2.5 text-sm font-medium text-white transition"
-                      style={{ background: BRAND }}
-                    >
-                      이 단계 완료했어요 →
-                    </button>
+                    <div className="mt-5">
+                      <button
+                        onClick={() => toggle(i)}
+                        className={`rounded-lg px-5 py-2.5 text-sm font-medium transition ${step.link ? "border border-neutral-300 text-neutral-600 hover:border-neutral-900" : "text-white"}`}
+                        style={step.link ? undefined : { background: BRAND }}
+                      >
+                        {step.link ? "신청 끝냈어요 →" : "이 단계 완료했어요 →"}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
