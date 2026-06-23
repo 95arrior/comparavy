@@ -31,8 +31,8 @@ export default function TopicCard({
   dismissing?: boolean;
   region?: boolean; // 우리 동네 키워드(검색량 없음) — 칩·메트릭을 지역형으로
 }) {
-  const isSak = comp === "low";
   const filled = filledStars(vol, comp, blogTotal);
+  const isSak = filled >= 4; // 싹(특별 강조)은 별점과 일치 — 진짜 고선점(4~5개)만
   return (
     <div
       onClick={onClick}

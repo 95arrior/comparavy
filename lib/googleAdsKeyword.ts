@@ -59,18 +59,17 @@ type IdeaResult = { text?: string; keywordIdeaMetrics?: { avgMonthlySearches?: s
  * 시드의 구글 키워드 아이디어를 거둔다 → PoolKeyword[](keyword, 월검색량, 경쟁도).
  * 네이버 collectPoolKeywords와 호환되는 출력. (안전필터·정크필터는 호출 측에서 그대로 적용)
  */
-async function callOnce(version: string, seed: string, token: string, loginId: string): Promise<{ status: number; text: string; headers: Record<string, string> }> {
+async function callOnce(version: string, seed: string, token: string, loginId: string): Promise<{ status: number; text: string }> {
   const customerId = digits(process.env.GOOGLE_ADS_CUSTOMER_ID);
   const url = `https://googleads.googleapis.com/${version}/customers/${customerId}:generateKeywordIdeas`;
-  const headers: Record<string, string> = {
-    Authorization: `Bearer ${token}`,
-    "developer-token": process.env.GOOGLE_ADS_DEVELOPER_TOKEN!,
-    "login-customer-id": loginId,
-    "Content-Type": "application/json",
-  };
   const res = await fetch(url, {
     method: "POST",
-    headers,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "developer-token": process.env.GOOGLE_ADS_DEVELOPER_TOKEN!,
+      "login-customer-id": loginId, // 매니저(MCC). 대상 customer-id는 URL에. (MCC가 대상 계정을 정식 관리해야 200)
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({
       language: KOREAN_LANG,
       geoTargetConstants: [KOREA_GEO],
@@ -78,66 +77,25 @@ async function callOnce(version: string, seed: string, token: string, loginId: s
       keywordSeed: { keywords: [seed] },
     }),
   });
-  return { status: res.status, text: await res.text(), headers };
-}
-
-// 이 토큰(OAuth 사용자)이 직접 접근 가능한 customer 목록 — 403 진단의 결정타.
-// login-customer-id 불필요(사용자 본인 접근 목록). resourceNames: ["customers/123", ...]
-async function listAccessibleCustomers(version: string, token: string): Promise<{ status: number; ids: string[]; text: string }> {
-  const res = await fetch(`https://googleads.googleapis.com/${version}/customers:listAccessibleCustomers`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "developer-token": process.env.GOOGLE_ADS_DEVELOPER_TOKEN!,
-    },
-  });
-  const text = await res.text();
-  let ids: string[] = [];
-  try {
-    const j = JSON.parse(text) as { resourceNames?: string[] };
-    ids = (j.resourceNames ?? []).map((r) => r.replace("customers/", ""));
-  } catch { /* keep */ }
-  return { status: res.status, ids, text };
-}
-
-// 대상 계정 속성 조회 — manager/test_account/status. 빈 결과 원인(테스트·매니저 계정) 확정용.
-async function getCustomerInfo(version: string, token: string, customerId: string, loginId: string): Promise<{ status: number; text: string }> {
-  const res = await fetch(`https://googleads.googleapis.com/${version}/customers/${customerId}/googleAds:search`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "developer-token": process.env.GOOGLE_ADS_DEVELOPER_TOKEN!,
-      "login-customer-id": loginId,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ query: "SELECT customer.id, customer.manager, customer.test_account, customer.status, customer.descriptive_name, customer.currency_code FROM customer LIMIT 1" }),
-  });
   return { status: res.status, text: await res.text() };
 }
 
-// 원본 응답 1회 획득(버전 자동탐지 + login 폴백). status/text/version/login 반환.
-async function fetchRawBody(seed: string): Promise<{ status: number; text: string; version: string; loginUsed: string; primary?: { login: string; status: number; text: string; headers: Record<string, string> } }> {
+// 원본 응답 1회 획득(버전 자동탐지). login-customer-id=MCC, customer-id=대상(URL). 폴백 없음 — 에러를 그대로 노출.
+async function fetchRawBody(seed: string): Promise<{ status: number; text: string; version: string; loginUsed: string }> {
   const token = await getAccessToken();
   const versions = process.env.GOOGLE_ADS_API_VERSION
     ? [process.env.GOOGLE_ADS_API_VERSION]
     : resolvedVersion
     ? [resolvedVersion]
     : VERSION_CANDIDATES;
-
   const customerId = digits(process.env.GOOGLE_ADS_CUSTOMER_ID);
-  const loginEnv = digits(process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID) || customerId;
-
+  const loginUsed = digits(process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID) || customerId;
   let last = "";
   for (const v of versions) {
-    let loginUsed = loginEnv;
-    let r = await callOnce(v, seed, token, loginEnv);
+    const r = await callOnce(v, seed, token, loginUsed);
     if (r.status === 404) { last = `v=${v} 404`; continue; }
-    const primary = { login: loginEnv, status: r.status, text: r.text, headers: r.headers }; // 1차(MCC) 시도 원문·헤더 보존
-    if (r.status === 403 && /USER_PERMISSION_DENIED/.test(r.text) && loginEnv !== customerId) {
-      loginUsed = customerId;
-      r = await callOnce(v, seed, token, customerId);
-    }
     if (!process.env.GOOGLE_ADS_API_VERSION && r.status >= 200 && r.status < 300) resolvedVersion = v;
-    return { status: r.status, text: r.text, version: v, loginUsed, primary };
+    return { status: r.status, text: r.text, version: v, loginUsed };
   }
   throw new Error(`구글 애즈: 사용 가능한 API 버전을 못 찾음(${last}).`);
 }
@@ -165,81 +123,13 @@ export async function fetchGoogleIdeasDebug(seed: string): Promise<unknown> {
   const body = await fetchRawBody(seed);
   let parsed: unknown = body.text;
   try { parsed = JSON.parse(body.text); } catch { /* keep text */ }
-  const totalSize = (parsed as { totalSize?: unknown })?.totalSize;
   const results = (parsed as { results?: unknown[] })?.results;
-  const loginEnv = digits(process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID);
-  const customerId = digits(process.env.GOOGLE_ADS_CUSTOMER_ID);
-  // 1차(MCC) 시도 원문 — 403 등 진짜 에러가 여기 있음(폴백에 가려졌던 것)
-  const primary = body.primary;
-  let primaryRaw: unknown = primary?.text ?? null;
-  try { if (primary) primaryRaw = JSON.parse(primary.text); } catch { /* keep text */ }
-  const fellBack = Boolean(primary) && body.loginUsed !== primary!.login;
-  // (A) 이 토큰이 어느 구글 계정/클라이언트 것인지 — tokeninfo (403이 '다른 계정 토큰' 때문인지 판별)
-  let tokenAccount: unknown = null;
-  try {
-    const at = await getAccessToken();
-    const ti = (await (await fetch(`https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(at)}`)).json()) as Record<string, unknown>;
-    const tokAud = (ti.aud ?? ti.azp) as string | undefined;
-    tokenAccount = {
-      email: ti.email ?? "(이메일 스코프 없어 미표시 — scope/aud로 판별)",
-      aud_clientId: tokAud ?? null, // 토큰을 발급한 OAuth client_id
-      clientIdMatchesEnv: Boolean(tokAud) && tokAud === process.env.GOOGLE_ADS_CLIENT_ID, // ★ 우리 GOOGLE_ADS_CLIENT_ID와 동일?
-      envClientIdTail: (process.env.GOOGLE_ADS_CLIENT_ID ?? "").slice(-30) || null, // 참고용 env client_id 꼬리
-      scope: ti.scope ?? null,
-      sub: ti.sub ?? null,
-    };
-  } catch (e) { tokenAccount = { error: e instanceof Error ? e.message : String(e) }; }
-  // (B) 실제 전송된 헤더(민감값 마스킹) — login-customer-id 실림 확인
-  const ph = primary?.headers ?? {};
-  const sentHeaders = {
-    "login-customer-id": ph["login-customer-id"] ?? "(없음)",
-    "developer-token": ph["developer-token"] ? `set(${ph["developer-token"].length}자)` : "(없음)",
-    Authorization: ph.Authorization ? "Bearer ***" : "(없음)",
-  };
-  // (C) 이 토큰이 직접 접근 가능한 customer 목록 — MCC/하위계정이 여기 있나로 권한 확정
-  let accessibleCustomers: unknown = null;
-  try {
-    const at = await getAccessToken();
-    const ac = await listAccessibleCustomers(body.version, at);
-    accessibleCustomers = {
-      status: ac.status,
-      ids: ac.ids, // 이 토큰이 접근 가능한 모든 계정
-      hasMcc_1655656317: ac.ids.includes(loginEnv), // MCC가 목록에 있나(=토큰 사용자가 MCC 권한)
-      hasTarget_2697435262: ac.ids.includes(customerId), // 하위계정 직접 접근 가능?
-      errorIfAny: ac.status >= 200 && ac.status < 300 ? null : ac.text.slice(0, 400),
-    };
-  } catch (e) { accessibleCustomers = { error: e instanceof Error ? e.message : String(e) }; }
-  // (D) 대상 계정(2697435262) 속성 — manager/test_account/status. login=하위계정(직접 접근됨)으로 조회.
-  let targetCustomerInfo: unknown = null;
-  try {
-    const at = await getAccessToken();
-    const ci = await getCustomerInfo(body.version, at, customerId, customerId);
-    let cj: unknown = ci.text;
-    try { cj = JSON.parse(ci.text); } catch { /* keep */ }
-    const cust = (cj as { results?: { customer?: Record<string, unknown> }[] })?.results?.[0]?.customer;
-    targetCustomerInfo = cust
-      ? { manager: cust.manager ?? null, testAccount: cust.testAccount ?? cust.test_account ?? null, status: cust.status ?? null, name: cust.descriptiveName ?? cust.descriptive_name ?? null }
-      : { status: ci.status, raw: typeof cj === "string" ? cj.slice(0, 400) : cj };
-  } catch (e) { targetCustomerInfo = { error: e instanceof Error ? e.message : String(e) }; }
   return {
-    tokenAccount, // ★ (A) 토큰 계정/클라이언트
-    sentHeaders,  // ★ (B) 실제 전송 헤더
-    accessibleCustomers, // ★ (C) 토큰이 접근 가능한 계정 목록 — 결정타
-    targetCustomerInfo, // ★ (D) 대상 계정 속성(manager/test/status) — 빈결과 원인
     version: body.version,
-    loginEnv: loginEnv || "(미설정 → customerId로 폴백)", // 설정된 login-customer-id(=MCC여야 함)
-    loginUsed: body.loginUsed, // 실제 결과를 낸 호출의 login-customer-id
-    loginIsMcc: Boolean(loginEnv) && loginEnv !== customerId,
-    customerId, // 대상 하위계정
-    fellBackToSub: fellBack, // MCC 호출 실패로 하위계정 폴백했는지
-    primaryLogin: primary?.login ?? null, // 1차 시도 login(=MCC)
-    headerLoginCustomerIdSent: primary?.login ?? null, // ★ 실제 login-customer-id 헤더로 나간 값(헤더 전송 증거)
-    developerTokenPresent: Boolean(process.env.GOOGLE_ADS_DEVELOPER_TOKEN), // 개발자 토큰 헤더 존재
-    primaryStatus: primary?.status ?? null, // ★ MCC 호출 결과(403이면 권한/링크 문제)
-    primaryRaw: primaryRaw, // ★ MCC 호출 에러 원문(진짜 원인)
-    httpStatus: body.status, // 최종(폴백 포함) 상태
-    totalSize: totalSize ?? null,
-    resultCount: Array.isArray(results) ? results.length : null,
-    raw: parsed,
+    loginCustomerId: body.loginUsed, // login-customer-id(=MCC)
+    customerId: digits(process.env.GOOGLE_ADS_CUSTOMER_ID), // 대상 계정(URL)
+    httpStatus: body.status, // 200이면 OK, 403이면 MCC↔대상 링크/권한 문제
+    resultCount: Array.isArray(results) ? results.length : null, // 키워드 개수
+    raw: parsed, // 에러면 여기 메시지
   };
 }
