@@ -68,7 +68,13 @@ export default function TopicCard({
           ) : (
             <>
               {tag && <span className="inline-flex items-center rounded-full bg-[#E8F1FE] px-2 py-1 text-[10px] font-bold leading-none text-[#1D75F7] sm:text-[11px]">{tag}</span>}
-              {isSak && <span className="inline-flex items-center gap-0.5 rounded-full bg-violet-600 px-2 py-1 text-[9.5px] font-bold leading-none text-white sm:text-[10.5px]">✦ 싹 키워드</span>}
+              {isSak && (
+                <span className="relative inline-flex items-center gap-1 overflow-hidden rounded-full bg-violet-600 px-2 py-1 text-[10px] font-bold leading-none text-white sm:text-[11px]">
+                  <span className="ateflo-chip-aurora pointer-events-none absolute inset-0" />
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="relative h-3 w-3 shrink-0"><path d="M12 2l2.2 6.3a2 2 0 0 0 1.3 1.3L22 12l-6.5 2.2a2 2 0 0 0-1.3 1.3L12 22l-2.2-6.3a2 2 0 0 0-1.3-1.3L2 12l6.5-2.2a2 2 0 0 0 1.3-1.3z" /></svg>
+                  <span className="relative">싹 키워드</span>
+                </span>
+              )}
             </>
           )}
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { DAY_KEYS, DAY_LABELS, type DayKey, type WeeklyHours } from "@/lib/blogProfile";
 
 // 영업시간 입력 — "유형 먼저 → 맞는 것만". 출력은 WeeklyHours(기존 호환).
@@ -50,7 +51,8 @@ function TimeWheelSheet({ value, onConfirm, onClose }: { value: string; onConfir
     const hh = pm ? base + 12 : base;
     onConfirm(`${String(hh).padStart(2, "0")}:${String(MINS[mi]).padStart(2, "0")}`);
   };
-  return (
+  if (typeof document === "undefined") return null;
+  return createPortal(
     <div className="ateflo-backdrop-in fixed inset-0 z-[80] flex items-end justify-center bg-black/40" onClick={onClose}>
       <div className="ateflo-sheet-up w-full max-w-md rounded-t-3xl bg-white" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}>
         <p className="px-5 pb-1 pt-4 text-[15px] font-bold text-neutral-900">⏰ 시간 선택</p>
@@ -66,7 +68,8 @@ function TimeWheelSheet({ value, onConfirm, onClose }: { value: string; onConfir
           <button type="button" onClick={confirm} className="w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-bold text-white transition active:scale-[0.99]">확인</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
