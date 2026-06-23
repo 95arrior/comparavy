@@ -173,7 +173,7 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
   return (
     // 화면 전체 고정 — 회색 래퍼 위를 덮고 스크롤 차단. h-[100dvh]로 주소바 토글에 높이 맞춤, 버튼 하단 고정(safe-area).
     <div className="fixed left-0 top-0 z-50 flex h-[100dvh] w-full flex-col overflow-hidden bg-white">
-      <div className="min-h-0 flex-1 overflow-hidden">
+      <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-md px-6 pt-7 pb-4">
       {/* 취소 — 설정에서 재진입(재온보딩)일 때만. 원래 설정으로 복귀 */}
       {onCancel && step !== "done" && (
