@@ -12,54 +12,80 @@ const WEEKEND: DayKey[] = ["sat", "sun"];
 
 const MINS = Array.from({ length: 12 }, (_, i) => i * 5); // 0,5,...,55
 
-// 커스텀 드롭다운 — 항상 '아래로'(top-full) 펼침. 바깥 클릭 시 닫힘.
-function Picker({ label, value, options, onChange }: { label: string; value: string; options: { value: string; label: string }[]; onChange: (v: string) => void }) {
-  const [open, setOpen] = useState(false);
+// 세로 룰렛(휠) 1개 — 스크롤 스냅, 중앙 선택.
+function Wheel({ items, index, onIndex }: { items: string[]; index: number; onIndex: (i: number) => void }) {
   const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
-    document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
-  }, [open]);
+  const H = 40;
+  useEffect(() => { if (ref.current) ref.current.scrollTop = index * H; /* 마운트 시 1회 */ }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const tRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onScroll = () => {
+    if (tRef.current) clearTimeout(tRef.current);
+    tRef.current = setTimeout(() => {
+      const el = ref.current; if (!el) return;
+      const i = Math.max(0, Math.min(items.length - 1, Math.round(el.scrollTop / H)));
+      el.scrollTo({ top: i * H, behavior: "smooth" });
+      onIndex(i);
+    }, 110);
+  };
   return (
-    <div ref={ref} className="relative">
-      <button type="button" onClick={() => setOpen((v) => !v)} className="flex items-center gap-1 rounded-lg border border-neutral-200 bg-white px-2.5 py-2 text-sm text-neutral-800 transition hover:border-neutral-300">
-        {label}<span className="text-[10px] text-neutral-400">▾</span>
-      </button>
-      {open && (
-        <ul className="ateflo-reveal absolute left-0 top-full z-30 mt-1 max-h-52 w-full min-w-[88px] overflow-y-auto rounded-xl border border-neutral-200 bg-white py-1 shadow-lg">
-          {options.map((o) => (
-            <li key={o.value}>
-              <button type="button" onClick={() => { onChange(o.value); setOpen(false); }}
-                className={`block w-full px-3 py-2 text-left text-sm transition ${o.value === value ? "bg-[#1D75F7]/10 font-semibold text-[#1D75F7]" : "text-neutral-700 hover:bg-neutral-50"}`}>
-                {o.label}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+    <div ref={ref} onScroll={onScroll} className="no-scrollbar h-[160px] flex-1 snap-y snap-mandatory overflow-y-auto" style={{ paddingTop: 60, paddingBottom: 60 }}>
+      {items.map((it, i) => (
+        <div key={it} className={`flex h-10 snap-center items-center justify-center text-[17px] transition ${i === index ? "font-bold text-neutral-900" : "text-neutral-300"}`}>{it}</div>
+      ))}
     </div>
   );
 }
 
-// 오전/오후 토글 + 시(1~12) + 분. value="HH:MM".
-function TimeSelect({ value, onChange }: { value: string; onChange: (v: string) => void; end?: boolean }) {
+// 시간 휠 바텀시트 — 오전/오후 + 시(1~12) + 분.
+function TimeWheelSheet({ value, onConfirm, onClose }: { value: string; onConfirm: (v: string) => void; onClose: () => void }) {
   const [hs, ms] = (value || "09:00").split(":");
-  const h = Number(hs), m = Number(ms);
-  const isPM = h >= 12;
-  let h12 = h % 12; if (h12 === 0) h12 = 12;
-  const setPM = (pm: boolean) => { const base = h % 12; onChange(`${String(pm ? base + 12 : base).padStart(2, "0")}:${ms}`); };
-  const setH12 = (hh: number) => { const base = hh % 12; onChange(`${String(isPM ? base + 12 : base).padStart(2, "0")}:${ms}`); };
+  const h0 = Number(hs), m0 = Number(ms);
+  const HOURS12 = Array.from({ length: 12 }, (_, i) => i + 1);
+  const [pm, setPm] = useState(h0 >= 12);
+  const initH = (() => { const x = h0 % 12; return x === 0 ? 12 : x; })();
+  const [hi, setHi] = useState(Math.max(0, HOURS12.indexOf(initH)));
+  const [mi, setMi] = useState(Math.max(0, MINS.indexOf(m0)));
+  const confirm = () => {
+    const base = HOURS12[hi] % 12;
+    const hh = pm ? base + 12 : base;
+    onConfirm(`${String(hh).padStart(2, "0")}:${String(MINS[mi]).padStart(2, "0")}`);
+  };
   return (
-    <div className="flex items-center gap-1.5">
-      <div className="flex overflow-hidden rounded-lg border border-neutral-200 text-sm">
-        <button type="button" onClick={() => setPM(false)} className={`px-2 py-2 transition ${!isPM ? "bg-[#1D75F7]/10 font-semibold text-[#1D75F7]" : "text-neutral-500 hover:bg-neutral-50"}`}>오전</button>
-        <button type="button" onClick={() => setPM(true)} className={`px-2 py-2 transition ${isPM ? "bg-[#1D75F7]/10 font-semibold text-[#1D75F7]" : "text-neutral-500 hover:bg-neutral-50"}`}>오후</button>
+    <div className="ateflo-backdrop-in fixed inset-0 z-[80] flex items-end justify-center bg-black/40" onClick={onClose}>
+      <div className="ateflo-sheet-up w-full max-w-md rounded-t-3xl bg-white" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}>
+        <div className="flex items-center justify-between border-b border-neutral-100 px-5 py-3.5">
+          <button type="button" onClick={onClose} className="text-sm font-medium text-neutral-400">취소</button>
+          <p className="text-[15px] font-bold text-neutral-900">시간 선택</p>
+          <button type="button" onClick={confirm} className="text-sm font-bold text-[#1D75F7]">확인</button>
+        </div>
+        <div className="relative flex items-stretch gap-1 px-5 py-2">
+          <div className="pointer-events-none absolute inset-x-5 top-1/2 h-10 -translate-y-1/2 rounded-xl bg-neutral-100" />
+          <div className="relative z-10 flex flex-col justify-center gap-1.5 pr-1">
+            <button type="button" onClick={() => setPm(false)} className={`rounded-lg px-3 py-1.5 text-sm transition ${!pm ? "bg-[#1D75F7] font-bold text-white" : "text-neutral-400"}`}>오전</button>
+            <button type="button" onClick={() => setPm(true)} className={`rounded-lg px-3 py-1.5 text-sm transition ${pm ? "bg-[#1D75F7] font-bold text-white" : "text-neutral-400"}`}>오후</button>
+          </div>
+          <Wheel items={HOURS12.map((x) => `${x}시`)} index={hi} onIndex={setHi} />
+          <Wheel items={MINS.map((x) => `${String(x).padStart(2, "0")}분`)} index={mi} onIndex={setMi} />
+        </div>
       </div>
-      <Picker label={`${h12}시`} value={String(h12)} options={Array.from({ length: 12 }, (_, i) => i + 1).map((x) => ({ value: String(x), label: `${x}시` }))} onChange={(v) => setH12(Number(v))} />
-      <Picker label={`${m}분`} value={String(m)} options={MINS.map((x) => ({ value: String(x), label: `${String(x).padStart(2, "0")}분` }))} onChange={(v) => onChange(`${hs}:${String(Number(v)).padStart(2, "0")}`)} />
     </div>
+  );
+}
+
+// 시간 버튼 → 탭하면 휠 시트(하단에서 올라옴).
+function TimeSelect({ value, onChange }: { value: string; onChange: (v: string) => void; end?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const [hs, ms] = (value || "09:00").split(":");
+  const h = Number(hs);
+  const ap = h < 12 ? "오전" : "오후";
+  let h12 = h % 12; if (h12 === 0) h12 = 12;
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)} className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-800 transition hover:border-neutral-300">
+        {ap} {h12}:{ms}
+      </button>
+      {open && <TimeWheelSheet value={value} onConfirm={(v) => { onChange(v); setOpen(false); }} onClose={() => setOpen(false)} />}
+    </>
   );
 }
 
