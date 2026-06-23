@@ -167,6 +167,26 @@ export function slugify(s: string): string {
     .slice(0, 60);
 }
 
+// 발행 글 '우리 규격' 타이포 — 에디터 프리뷰(.ateflo-article)와 일치. 테마와 무관하게 깔끔 가독.
+// 본문을 .ateflo-post로 감싸고 스코프 CSS 주입(테마 영향 최소화). 관리자 앱비번 발행이라 <style> 통과.
+const ATEFLO_POST_STYLE =
+  "<style>" +
+  ".ateflo-post{font-size:17px;line-height:1.85;color:#33363d;letter-spacing:-.01em;word-break:keep-all;}" +
+  ".ateflo-post h2{font-size:1.5em;font-weight:700;line-height:1.4;letter-spacing:-.022em;color:#191f28;margin:2.2em 0 .7em;}" +
+  ".ateflo-post h3{font-size:1.2em;font-weight:700;line-height:1.45;letter-spacing:-.018em;color:#191f28;margin:1.8em 0 .5em;}" +
+  ".ateflo-post p{margin:1.1em 0;}" +
+  ".ateflo-post ul{list-style:disc;padding-left:1.3em;margin:1.1em 0;}" +
+  ".ateflo-post ol{list-style:decimal;padding-left:1.4em;margin:1.1em 0;}" +
+  ".ateflo-post li{margin:.5em 0;}" +
+  ".ateflo-post a{color:#1d75f7;text-underline-offset:3px;}" +
+  ".ateflo-post strong{font-weight:700;color:#191f28;}" +
+  ".ateflo-post img{max-width:100%;height:auto;border-radius:10px;}" +
+  "</style>";
+
+function wrapWithAtefloStyle(html: string): string {
+  return `${ATEFLO_POST_STYLE}<div class="ateflo-post">${html}</div>`;
+}
+
 /** Article 구조화 데이터(JSON-LD). FAQ는 본문 마이크로데이터로 따로 넣는다(아래 renderFaqSection). */
 function buildStructuredData(input: PublishInput): string {
   const nowIso = new Date().toISOString();
@@ -346,8 +366,8 @@ export async function publishPost(input: PublishInput): Promise<PublishResult> {
   }
   const body: Record<string, unknown> = {
     title: input.title,
-    // 본문 + Article 구조화 데이터(JSON-LD)
-    content: contentHtml + buildStructuredData(input),
+    // 본문(우리 규격 타이포로 감쌈) + Article 구조화 데이터(JSON-LD)
+    content: wrapWithAtefloStyle(contentHtml) + buildStructuredData(input),
     status: input.status ?? "draft",
   };
   if (input.metaDescription) body.excerpt = input.metaDescription;
