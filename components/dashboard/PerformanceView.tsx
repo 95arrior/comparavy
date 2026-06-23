@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Article } from "./types";
 import type { BloggerType } from "@/lib/bloggerTypes";
 import SearchPerformance from "./SearchPerformance";
@@ -121,7 +121,7 @@ function PathRow({ p, first }: { p: Path; first: boolean }) {
   );
 }
 
-function AssetHero({ written, chars, streak, pub, onWrite }: { written: number; chars: number; streak: number; pub: number; onWrite: () => void }) {
+function AssetHero({ written, chars, streak, pub, indexed, type, onWrite }: { written: number; chars: number; streak: number; pub: number; indexed: number; type: BloggerType; onWrite: () => void }) {
   if (written === 0) {
     return (
       <div className="rounded-2xl bg-gradient-to-br from-[#1D75F7] to-[#1565d8] p-5 text-white shadow-[0_12px_30px_-14px_rgba(29,117,247,0.6)]">
@@ -131,6 +131,13 @@ function AssetHero({ written, chars, streak, pub, onWrite }: { written: number; 
       </div>
     );
   }
+  // 욕망 결승선(FOMO) — 유형별로 '돈'(애드센스) 또는 '손님'(검색노출)이 코앞임을 보여준다.
+  const local = type === "local";
+  const goal = local ? 5 : 20;
+  const remain = Math.max(0, goal - pub);
+  const finish = local
+    ? remain === 0 ? "동네 검색에 노출되는 중이에요" : `동네 검색 노출까지 ${remain}편`
+    : remain === 0 ? "이제 애드센스 신청할 수 있어요" : `애드센스 신청까지 ${remain}편`;
   return (
     <div className="rounded-2xl bg-gradient-to-br from-[#1D75F7] to-[#1565d8] p-5 text-white shadow-[0_12px_30px_-14px_rgba(29,117,247,0.6)]">
       <p className="text-[13px] font-semibold text-white/75">내 블로그 자산</p>
@@ -138,8 +145,10 @@ function AssetHero({ written, chars, streak, pub, onWrite }: { written: number; 
         <p className="text-[30px] font-extrabold leading-none tracking-tight">{written}<span className="ml-0.5 text-[15px] font-bold text-white/80">편</span></p>
         <p className="text-[30px] font-extrabold leading-none tracking-tight">{chars.toLocaleString("ko-KR")}<span className="ml-0.5 text-[15px] font-bold text-white/80">자</span></p>
       </div>
-      <div className="mt-3.5 flex flex-wrap gap-2">
+      <p className="mt-2.5 text-[13.5px] font-bold text-white">🎯 {finish}</p>
+      <div className="mt-3 flex flex-wrap gap-2">
         {streak >= 2 && <span className="rounded-full bg-white/15 px-2.5 py-1 text-[12px] font-bold">🔥 {streak}주 연속</span>}
+        {indexed > 0 && <span className="rounded-full bg-white/20 px-2.5 py-1 text-[12px] font-bold">🔍 구글이 {indexed}편 찾았어요</span>}
         <span className="rounded-full bg-white/15 px-2.5 py-1 text-[12px] font-medium text-white/90">발행 {pub}편</span>
       </div>
     </div>
@@ -185,11 +194,20 @@ export default function PerformanceView({
     return { written, chars, pub, streak };
   }, [articles]);
 
+  // 선행지표 '색인'(구글이 찾은 글 수) — GSC 실데이터, graceful
+  const [indexed, setIndexed] = useState(0);
+  useEffect(() => {
+    fetch("/api/searchconsole/indexed")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d?.count) setIndexed(d.count); })
+      .catch(() => {});
+  }, []);
+
   const { title, paths } = buildPaths(type, stats.pub, wpConnected, onWrite, onRegion);
 
   return (
     <div className="space-y-4">
-      <AssetHero written={stats.written} chars={stats.chars} streak={stats.streak} pub={stats.pub} onWrite={onWrite} />
+      <AssetHero written={stats.written} chars={stats.chars} streak={stats.streak} pub={stats.pub} indexed={indexed} type={type} onWrite={onWrite} />
 
       <div className="rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
         <p className="text-[15px] font-bold text-neutral-900">{title}</p>
