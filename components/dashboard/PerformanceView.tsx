@@ -45,32 +45,32 @@ function buildPaths(type: BloggerType, pub: number, wpConnected: boolean, onWrit
     return {
       title: "손님이 오는 길",
       paths: [
-        { label: "동네 검색에 뜨기", desc: "동네 손님이 검색에서 우리 가게 발견", conditions: "글을 꾸준히 발행하면 자동으로 노출돼요. 별도 가입 없음.", how: ["‘동네 + 업종’ 글을 꾸준히 써요.", "구글·네이버가 글을 색인해 검색에 보여줘요.", "동네 손님이 우리 가게를 처음 만나요."], status: pub >= 5 ? "done" : "progress", note: pub >= 5 ? "" : `발행 ${pub}/5편`, emoji: "🔍", cta: { label: "글 쓰러 가기", onClick: onWrite } },
-        { label: "지역 키워드 선점", desc: "‘우리동네 OO’ 검색 상위 노리기", conditions: "경쟁 적은 동네 키워드를 먼저 글로 써서 선점해요.", how: ["지역 강화로 우리 동네 키워드를 찾아요.", "경쟁 적은 키워드부터 글로 선점해요.", "한 번 상위에 오르면 계속 손님이 들어와요."], status: "now", note: "", emoji: "📍", cta: { label: "지역 강화 시작", onClick: onRegion } },
-        { label: "단골 만들기", desc: "가게 이름 검색·재방문 손님", conditions: "꾸준한 정보 글로 신뢰가 쌓이면 재방문·브랜드 검색이 늘어요.", how: ["꾸준히 유용한 글을 쌓아요.", "가게 이름으로 검색하는 손님이 생겨요.", "신뢰가 쌓여 단골·재방문으로 이어져요."], status: pub >= 15 ? "done" : "locked", note: pub >= 15 ? "" : "글 더 쌓이면", emoji: "👥", cta: { label: "글 쓰러 가기", onClick: onWrite } },
-        { label: "네이버 플레이스 연동", desc: "길찾기·전화·예약 받기 (선택)", conditions: "네이버 스마트플레이스 무료 가입.", how: ["네이버 스마트플레이스에 가게를 등록해요.", "블로그 글에서 길찾기·전화·예약으로 바로 연결돼요."], status: "now", note: "", logo: "/logos/naverplace.png", cta: { label: "스마트플레이스 등록", url: NAVER_PLACE } },
+        { label: "동네 검색에 뜨기", desc: "동네 손님이 검색에서 우리 가게 발견", conditions: "글을 꾸준히 발행하면 자동으로 노출돼요. 별도 가입 없음.", how: ["‘동네 + 업종’ 글을 꾸준히 써요.", "구글·네이버가 글을 색인해 검색에 보여줘요.", "동네 손님이 우리 가게를 처음 만나요."], status: pub >= 5 ? "done" : "progress", note: pub >= 5 ? "" : `발행 ${pub}/5편`, logo: "/logos/local-search.png", emoji: "🔍", cta: { label: "글 쓰러 가기", onClick: onWrite } },
+        { label: "지역 키워드 선점", desc: "‘우리동네 OO’ 검색 상위 노리기", conditions: "경쟁 적은 동네 키워드를 먼저 글로 써서 선점해요.", how: ["지역 강화로 우리 동네 키워드를 찾아요.", "경쟁 적은 키워드부터 글로 선점해요.", "한 번 상위에 오르면 계속 손님이 들어와요."], status: "now", note: "", logo: "/logos/local-keyword.png", emoji: "📍", cta: { label: "지역 강화 시작", onClick: onRegion } },
+        { label: "단골 만들기", desc: "가게 이름 검색·재방문 손님", conditions: "꾸준한 정보 글로 신뢰가 쌓이면 재방문·브랜드 검색이 늘어요.", how: ["꾸준히 유용한 글을 쌓아요.", "가게 이름으로 검색하는 손님이 생겨요.", "신뢰가 쌓여 단골·재방문으로 이어져요."], status: pub >= 15 ? "done" : "locked", note: pub >= 15 ? "" : "글 더 쌓이면", logo: "/logos/local-regular.png", emoji: "👥", cta: { label: "글 쓰러 가기", onClick: onWrite } },
+        { label: "네이버 플레이스 연동", desc: "길찾기·전화·예약 받기 (선택)", conditions: "네이버 스마트플레이스 무료 가입.", how: ["네이버 스마트플레이스에 가게를 등록해요.", "블로그 글에서 길찾기·전화·예약으로 바로 연결돼요."], status: "now", note: "", logo: "/logos/naverplace.png", emoji: "📌", cta: { label: "스마트플레이스 등록", url: NAVER_PLACE } },
       ],
     };
   }
   return {
     title: type === "hobby" ? "수익화 (선택)" : "수익화 길",
     paths: [
-      { label: "쿠팡파트너스", desc: "전환 1건이면 첫 수익", conditions: "블로그(사이트)만 있으면 가입 · 거의 즉시 승인 · 첫 3개월 내 실적 1건 권장.", how: ["1. 쿠팡파트너스에 가입해요 (거의 즉시 승인).", "2. 내 글에 어울리는 제품 링크를 넣어요.", "3. 방문자가 그 링크로 사면 수수료 수익."], status: wpConnected ? "now" : "progress", note: wpConnected ? "" : "블로그 먼저 연결", logo: "/logos/coupang.png", cta: wpConnected ? { label: "쿠팡파트너스 가입", url: COUPANG } : { label: "블로그 먼저 연결", onClick: onGoConnect } },
-      { label: "구글 애드센스", desc: "자동 광고로 안정적 수동수입", conditions: "고유 도메인 + 양질의 글 20편+ 권장 · 구글 심사(수일~수주) · 정책 준수. ※ 편수만으로 승인을 보장하진 않아요.", how: ["1. 글을 20편+ 쌓고 애드센스를 신청해요.", "2. 승인되면 광고 코드를 사이트에 넣어요.", "3. 방문자가 광고를 보거나 누르면 수익."], status: pub >= 20 ? "now" : "progress", note: pub >= 20 ? "" : `발행 ${pub}/20편`, logo: "/logos/adsense.png", cta: pub >= 20 ? { label: "애드센스 신청", url: ADSENSE } : undefined },
-      { label: "제휴마케팅", desc: "텐핑·알리 등 다양한 제휴", conditions: "누구나 가입 · 사이트/SNS 있으면 OK.", how: ["1. 텐핑 등 제휴 플랫폼에 가입해요.", "2. 캠페인 링크를 글에 자연스럽게 넣어요.", "3. 클릭·구매당 수익이 쌓여요."], status: "now", note: "", logo: "/logos/tenping.png", cta: { label: "텐핑 가입", url: TENPING } },
+      { label: "쿠팡파트너스", desc: "전환 1건이면 첫 수익", conditions: "블로그(사이트)만 있으면 가입 · 거의 즉시 승인 · 첫 3개월 내 실적 1건 권장.", how: ["1. 쿠팡파트너스에 가입해요 (거의 즉시 승인).", "2. 내 글에 어울리는 제품 링크를 넣어요.", "3. 방문자가 그 링크로 사면 수수료 수익."], status: wpConnected ? "now" : "progress", note: wpConnected ? "" : "블로그 먼저 연결", logo: "/logos/coupang.png", emoji: "🛒", cta: wpConnected ? { label: "쿠팡파트너스 가입", url: COUPANG } : { label: "블로그 먼저 연결", onClick: onGoConnect } },
+      { label: "구글 애드센스", desc: "자동 광고로 안정적 수동수입", conditions: "고유 도메인 + 양질의 글 20편+ 권장 · 구글 심사(수일~수주) · 정책 준수. ※ 편수만으로 승인을 보장하진 않아요.", how: ["1. 글을 20편+ 쌓고 애드센스를 신청해요.", "2. 승인되면 광고 코드를 사이트에 넣어요.", "3. 방문자가 광고를 보거나 누르면 수익."], status: pub >= 20 ? "now" : "progress", note: pub >= 20 ? "" : `발행 ${pub}/20편`, logo: "/logos/adsense.png", emoji: "📢", cta: pub >= 20 ? { label: "애드센스 신청", url: ADSENSE } : undefined },
+      { label: "제휴마케팅", desc: "텐핑·알리 등 다양한 제휴", conditions: "누구나 가입 · 사이트/SNS 있으면 OK.", how: ["1. 텐핑 등 제휴 플랫폼에 가입해요.", "2. 캠페인 링크를 글에 자연스럽게 넣어요.", "3. 클릭·구매당 수익이 쌓여요."], status: "now", note: "", logo: "/logos/tenping.png", emoji: "🔗", cta: { label: "텐핑 가입", url: TENPING } },
       { label: "체험단·협찬", desc: "브랜드 협찬·원고료", conditions: "어느 정도 방문자·영향력이 쌓여야 제안이 들어와요.", how: ["방문자가 쌓이면 브랜드가 협찬을 제안해요.", "제품·원고료를 받고 후기를 써요."], status: "locked", note: "트래픽 쌓이면", emoji: "🎁" },
     ],
   };
 }
 
 function LogoSlot({ logo, emoji, size = "h-9 w-9" }: { logo?: string; emoji?: string; size?: string }) {
+  // 이모지 = 베이스(로고 파일 추가 전), 로고 이미지 = 위에 덮음(있으면). 파일 없으면 onError로 숨겨 이모지 노출.
   return (
-    <span className={`flex ${size} shrink-0 items-center justify-center overflow-hidden rounded-lg bg-neutral-100`}>
-      {logo ? (
+    <span className={`relative flex ${size} shrink-0 items-center justify-center overflow-hidden rounded-lg bg-neutral-100`}>
+      {emoji && <span className="text-[17px]">{emoji}</span>}
+      {logo && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={logo} alt="" className="h-full w-full object-contain p-1" onError={(e) => { e.currentTarget.style.display = "none"; }} />
-      ) : (
-        <span className="text-[17px]">{emoji}</span>
+        <img src={logo} alt="" className="absolute inset-0 h-full w-full object-contain p-1" onError={(e) => { e.currentTarget.style.display = "none"; }} />
       )}
     </span>
   );
