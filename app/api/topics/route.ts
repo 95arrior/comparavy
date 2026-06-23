@@ -282,5 +282,6 @@ export async function GET(req: Request) {
       };
     }),
   ].slice(0, PICK);
-  return NextResponse.json({ topics });
+  // 우리동네(지역) 카드를 항상 맨 위 고정하지 않고 섞는다 — 하루 시드로 위치는 그날 내내 안정적.
+  return NextResponse.json({ topics: shuffle(topics, rng) });
 }
