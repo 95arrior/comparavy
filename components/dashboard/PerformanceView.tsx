@@ -97,16 +97,26 @@ function PathRow({ p, first }: { p: Path; first: boolean }) {
   );
 }
 
-function AssetHero({ written, chars, streak, pub }: { written: number; chars: number; streak: number; pub: number }) {
+function AssetHero({ written, chars, streak, pub, onWrite }: { written: number; chars: number; streak: number; pub: number; onWrite: () => void }) {
+  // 글 0편 — '0편 0자'를 크게 보여주면 역효과 → 시작 유도로
+  if (written === 0) {
+    return (
+      <div className="rounded-2xl bg-gradient-to-br from-[#1D75F7] to-[#1565d8] p-5 text-white shadow-[0_12px_30px_-14px_rgba(29,117,247,0.6)]">
+        <p className="text-[13px] font-semibold text-white/75">내 블로그 자산</p>
+        <p className="mt-2 text-[19px] font-extrabold leading-snug tracking-tight">첫 글을 쓰면<br />자산이 쌓이기 시작해요</p>
+        <button onClick={onWrite} className="mt-3.5 rounded-xl bg-white px-4 py-2 text-[13px] font-bold text-[#1D75F7] transition active:scale-95">첫 글 쓰러 가기</button>
+      </div>
+    );
+  }
   return (
     <div className="rounded-2xl bg-gradient-to-br from-[#1D75F7] to-[#1565d8] p-5 text-white shadow-[0_12px_30px_-14px_rgba(29,117,247,0.6)]">
       <p className="text-[13px] font-semibold text-white/75">내 블로그 자산</p>
-      <div className="mt-2.5 flex items-end gap-6">
+      <div className="mt-2.5 flex flex-wrap items-end gap-x-6 gap-y-1">
         <p className="text-[30px] font-extrabold leading-none tracking-tight">{written}<span className="ml-0.5 text-[15px] font-bold text-white/80">편</span></p>
         <p className="text-[30px] font-extrabold leading-none tracking-tight">{chars.toLocaleString("ko-KR")}<span className="ml-0.5 text-[15px] font-bold text-white/80">자</span></p>
       </div>
       <div className="mt-3.5 flex flex-wrap gap-2">
-        {streak >= 2 && <span className="rounded-full bg-white/15 px-2.5 py-1 text-[12px] font-bold">🔥 {streak}주 연속 발행</span>}
+        {streak >= 2 && <span className="rounded-full bg-white/15 px-2.5 py-1 text-[12px] font-bold">🔥 {streak}주 연속</span>}
         <span className="rounded-full bg-white/15 px-2.5 py-1 text-[12px] font-medium text-white/90">발행 {pub}편</span>
       </div>
     </div>
@@ -156,7 +166,7 @@ export default function PerformanceView({
 
   return (
     <div className="space-y-4">
-      <AssetHero written={stats.written} chars={stats.chars} streak={stats.streak} pub={stats.pub} />
+      <AssetHero written={stats.written} chars={stats.chars} streak={stats.streak} pub={stats.pub} onWrite={onWrite} />
 
       <div className="rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
         <p className="text-[15px] font-bold text-neutral-900">{title}</p>
