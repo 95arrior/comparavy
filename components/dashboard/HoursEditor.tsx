@@ -13,25 +13,20 @@ const WEEKEND: DayKey[] = ["sat", "sun"];
 
 const MINS = Array.from({ length: 12 }, (_, i) => i * 5); // 0,5,...,55
 
-// 세로 룰렛(휠) 1개 — 스크롤 스냅, 중앙 선택.
+// 세로 룰렛(휠) 1개 — 애플 시간 피커처럼 스크롤 중 중앙값 '즉각' 반영(디바운스·강제스냅 없음, CSS 스냅에 맡김).
 function Wheel({ items, index, onIndex }: { items: string[]; index: number; onIndex: (i: number) => void }) {
   const ref = useRef<HTMLDivElement>(null);
-  const H = 40;
+  const H = 48;
   useEffect(() => { if (ref.current) ref.current.scrollTop = index * H; /* 마운트 시 1회 */ }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const tRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onScroll = () => {
-    if (tRef.current) clearTimeout(tRef.current);
-    tRef.current = setTimeout(() => {
-      const el = ref.current; if (!el) return;
-      const i = Math.max(0, Math.min(items.length - 1, Math.round(el.scrollTop / H)));
-      el.scrollTo({ top: i * H, behavior: "smooth" });
-      onIndex(i);
-    }, 110);
+    const el = ref.current; if (!el) return;
+    const i = Math.max(0, Math.min(items.length - 1, Math.round(el.scrollTop / H)));
+    if (i !== index) onIndex(i); // 즉각 반영 — 멈출 때까지 기다리지 않음
   };
   return (
-    <div ref={ref} onScroll={onScroll} className="no-scrollbar h-[160px] flex-1 snap-y snap-mandatory overflow-y-auto" style={{ paddingTop: 60, paddingBottom: 60 }}>
+    <div ref={ref} onScroll={onScroll} className="no-scrollbar h-[240px] flex-1 snap-y snap-mandatory overflow-y-auto" style={{ paddingTop: 96, paddingBottom: 96 }}>
       {items.map((it, i) => (
-        <div key={it} className={`flex h-10 snap-center items-center justify-center text-[17px] transition ${i === index ? "font-bold text-neutral-900" : "text-neutral-300"}`}>{it}</div>
+        <div key={it} className={`flex h-12 snap-center items-center justify-center text-[21px] transition-colors ${i === index ? "font-bold text-neutral-900" : "text-neutral-300"}`}>{it}</div>
       ))}
     </div>
   );
@@ -54,14 +49,14 @@ function TimeWheelSheet({ value, onConfirm, onClose }: { value: string; onConfir
   if (typeof document === "undefined") return null;
   return createPortal(
     <div className="ateflo-backdrop-in fixed inset-0 z-[80] flex items-end justify-center bg-black/40" onClick={onClose}>
-      <div className="ateflo-sheet-up w-full max-w-md rounded-t-3xl bg-white" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}>
+      <div className="ateflo-sheet-up w-full max-w-lg rounded-t-3xl bg-white" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}>
         <p className="px-5 pb-1 pt-4 text-[15px] font-bold text-neutral-900">⏰ 시간 선택</p>
-        <div className="relative flex items-center px-6">
+        <div className="relative flex items-center px-4">
           {/* 중앙 하이라이트(은은) */}
-          <div className="pointer-events-none absolute inset-x-4 top-1/2 h-10 -translate-y-1/2 rounded-xl bg-[#1D75F7]/[0.06]" />
+          <div className="pointer-events-none absolute inset-x-3 top-1/2 h-12 -translate-y-1/2 rounded-xl bg-[#1D75F7]/[0.07]" />
           <Wheel items={["오전", "오후"]} index={pm ? 1 : 0} onIndex={(i) => setPm(i === 1)} />
           <Wheel items={HOURS12.map((x) => String(x).padStart(2, "0"))} index={hi} onIndex={setHi} />
-          <span className="px-0.5 text-[19px] font-bold text-neutral-900">:</span>
+          <span className="px-1 text-[22px] font-bold text-neutral-900">:</span>
           <Wheel items={MINS.map((x) => String(x).padStart(2, "0"))} index={mi} onIndex={setMi} />
         </div>
         <div className="px-5 pt-1">
