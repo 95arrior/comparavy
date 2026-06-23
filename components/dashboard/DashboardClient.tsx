@@ -19,8 +19,7 @@ import Home from "./Home";
 import { toEngineType, type BlogProfile } from "@/lib/blogProfile";
 import { bloggerType } from "@/lib/bloggerTypes";
 import TossNav, { type NavKey } from "./TossNav";
-import JourneyRoadmap from "./JourneyRoadmap";
-import SearchPerformance from "./SearchPerformance";
+import PerformanceView from "./PerformanceView";
 import type { QueueItem } from "@/lib/keywordQueue";
 import AteFloLogo from "@/components/AteFloLogo";
 import Brand from "@/components/Brand";
@@ -1007,16 +1006,14 @@ export default function DashboardClient(props: DashboardProps) {
                 <h1 className="font-pretendard text-[26px] font-bold tracking-tight text-neutral-900 sm:text-[30px]">성과</h1>
                 <p className="mt-1.5 text-[15px] text-neutral-400">{blogProfile.blog_name ?? "내 블로그"}</p>
                 <div className="mt-7">
-                  <JourneyRoadmap
-                    publishedCount={articles.filter((a) => a.status === "published").length}
+                  <PerformanceView
+                    articles={articles}
                     wpConnected={Boolean(wpSiteUrl)}
+                    type={bloggerType(blogProfile.vertical)}
                     onWrite={() => goLabView("home")}
                     onGoConnect={() => goTab("wordpress")}
-                    type={bloggerType(blogProfile.vertical)}
+                    onRegion={() => goLabView("home")}
                   />
-                </div>
-                <div className="mt-4">
-                  <SearchPerformance onGoConnect={() => goTab("wordpress")} />
                 </div>
               </main>
             )}
