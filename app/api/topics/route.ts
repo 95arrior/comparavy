@@ -6,7 +6,7 @@ import { audienceOf, AUDIENCE_ALL } from "@/lib/audience";
 import { isUnsafeKeyword } from "@/lib/keywordSafety";
 import { regionLevel, extractRegions, isLocalBusiness, buildLocalSeeds } from "@/lib/region";
 import { bloggerType, type BloggerType } from "@/lib/bloggerTypes";
-import { compFromLabel, compFromBlogTotal, type Comp } from "@/lib/topicScore";
+import { compFromLabel, compFromBlogTotal, filledStarsFromData, type Comp } from "@/lib/topicScore";
 import { fetchBlogTotal } from "@/lib/naverBlogSearch";
 import { expandLocalAreas } from "@/lib/aiSeeds";
 import { buildPoolForSub } from "@/lib/keywordPool";
@@ -214,7 +214,7 @@ export async function GET(req: Request) {
         const kws = await collectPoolKeywords(seed);
         for (const k of kws) {
           if (collected.has(k.keyword) || usedSet.has(normalizeKeyword(k.keyword)) || isUnsafeKeyword(k.keyword)) continue;
-          collected.set(k.keyword, { keyword: k.keyword, monthly_searches: Number(k.monthlyMobileQcCnt) || 0, competition: k.compIdx ?? null, audience: null, blog_total: null });
+          collected.set(k.keyword, { keyword: k.keyword, monthly_searches: Number(k.monthlySearches) || 0, competition: k.compIdx ?? null, audience: null, blog_total: null });
         }
       } catch { /* 수집 실패 시드는 건너뜀 */ }
     }
@@ -244,17 +244,17 @@ export async function GET(req: Request) {
   if (local && regions.length) ctxParts.push(`사용자 지역: ${regions.join("·")}`);
   const titled = await keywordsToTitles(allKeywords, ctxParts.join(" / ")); // {title, tag, ok, fit}
 
-  // 화면에 뜰 글감 행(노이즈 제외 + 업종 핵심 적합도 높은 순 + PICK개). 동점은 순서 유지(변동성).
-  const generalRows = candidates
+  // fit 상위 후보를 넉넉히(PICK+6) 추림 — 대표 샘플이면 포화 키워드가 많이 보여서, 같은 fit 안에서 '이길 수 있는' 걸 고른다.
+  const fitTop = candidates
     .map((r, i) => ({ r, t: titled[i] }))
     .filter(({ t }) => t?.ok !== false)
     .sort((a, b) => (b.t?.fit ?? 1) - (a.t?.fit ?? 1))
-    .slice(0, PICK);
+    .slice(0, PICK + 6);
 
-  // ── 진짜 콘텐츠 경쟁(blog_total) 채우기 ──
-  // 화면에 뜰 것만, 미수집(null)이면 네이버 블로그검색 1회 → 풀에 캐싱(전 유저 공용 → 유저수 무관).
+  // ── 진짜 콘텐츠 경쟁(blog_total) 채우기 (fitTop 전체) ──
+  // 미수집(null)이면 네이버 블로그검색 1회 → 풀에 캐싱(전 유저 공용). 첫 1회만 호출, 이후 캐시.
   await Promise.all(
-    generalRows.map(async ({ r }) => {
+    fitTop.map(async ({ r }) => {
       if (r.blog_total != null) return;
       const total = await fetchBlogTotal(r.keyword);
       if (total == null) return;
@@ -262,6 +262,12 @@ export async function GET(req: Request) {
       try { await pool.from("keyword_pool").update({ blog_total: total }).eq("keyword", r.keyword); } catch { /* 캐싱 실패해도 진행 */ }
     }),
   );
+
+  // '이길 수 있는(선점 높은)' 순으로 PICK개 — 선점 우선, fit 미세 가산. blog_total 없으면 중간(3) 취급.
+  // 후보 집합은 매일 시드로 달라지므로(변동성) 그날의 후보 중 가장 winnable한 걸 보여준다.
+  const winScore = ({ r, t }: { r: PoolRow; t?: { fit?: number } }) =>
+    (r.blog_total != null ? filledStarsFromData(r.monthly_searches ?? 0, r.blog_total) : 3) * 10 + (t?.fit ?? 1);
+  const generalRows = [...fitTop].sort((a, b) => winScore(b) - winScore(a)).slice(0, PICK);
 
   // comp는 blog_total(진짜 콘텐츠 경쟁) 있으면 그걸로, 없으면 광고경쟁 폴백. region 모드면 '우리 동네' 칩.
   const topics = generalRows.map(({ r, t }) => {

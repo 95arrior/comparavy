@@ -54,7 +54,7 @@ export async function buildPoolForSub(vertical: string, sub: string, opts?: { sl
       vertical,
       sub,
       keyword: k.keyword, // 원본 키워드(글감형 변환은 추천 단계에서)
-      monthly_searches: k.monthlyMobileQcCnt,
+      monthly_searches: k.monthlySearches,
       competition: k.compIdx, // 낮음/중간/높음 그대로
       estimated: false, // 네이버 정확 검색량
       seed,
