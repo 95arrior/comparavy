@@ -10,24 +10,35 @@ export const EMOTION: Record<Comp, string> = {
   high: "이미 글이 많아요",
 };
 
-// 네이버 블로그 글 수 → 콘텐츠 경쟁 등급(진짜 선점 신호). 임계값은 데이터 보며 튜닝.
-export const BLOG_LOW = 5000;   // 미만 = 글 적음 = 선점 기회
-export const BLOG_HIGH = 50000; // 이상 = 글 많음 = 레드오션
+// 네이버 블로그 글 수 → 콘텐츠 경쟁 등급(진짜 선점 신호). EMOTION·싹 배지용.
+export const BLOG_LOW = 15000;   // 미만 = 글 적음 = 선점 기회(싹)
+export const BLOG_HIGH = 150000; // 이상 = 글 많음 = 레드오션
 export const compFromBlogTotal = (blogTotal: number): Comp => {
   if (blogTotal < BLOG_LOW) return "low";
   if (blogTotal < BLOG_HIGH) return "mid";
   return "high";
 };
 
-// 선점 점수 — 경쟁 낮을수록·검색 많을수록 ↑(검색↔경쟁 갭이 핵심).
+// ★ 부드러운 선점 점수 — 블로그 글수(진짜 콘텐츠 경쟁) 기반. 경쟁 비중 75%로(저경쟁 롱테일·지역이 살게).
+// 등급(저/중/고)이 거칠어 다 1~2개로 깔리던 문제 해결. blog_total 있을 때 사용.
+export const filledStarsFromData = (vol: number, blogTotal: number): number => {
+  const demand = Math.min(1, Math.log10(vol + 1) / 4);             // 검색 1만 → 1
+  const competition = Math.min(1, Math.log10(blogTotal + 1) / 5.3); // 글 ~20만 → 1(포화)
+  const score = (1 - competition) * 0.75 + demand * 0.25;
+  return Math.max(1, Math.min(5, 1 + Math.round(score * 4)));
+};
+
+// 선점 점수(폴백) — 광고경쟁 등급 기반. blog_total 없을 때.
 export const sakScore = (vol: number, comp: Comp): number => {
-  const c = comp === "low" ? 1 : comp === "mid" ? 0.55 : 0.25;
+  const c = comp === "low" ? 1 : comp === "mid" ? 0.6 : 0.35;
   return Math.round((c * 0.7 + Math.min(1, vol / 2500) * 0.3) * 100);
 };
 
-// 채워진 별 개수(1~5).
-export const filledStars = (vol: number, comp: Comp): number =>
-  Math.max(1, Math.min(5, Math.round(sakScore(vol, comp) / 20)));
+// 채워진 별 개수(1~5). blog_total 있으면 부드러운 데이터 점수 우선.
+export const filledStars = (vol: number, comp: Comp, blogTotal?: number | null): number => {
+  if (blogTotal != null) return filledStarsFromData(vol, blogTotal);
+  return Math.max(1, Math.min(5, Math.round(sakScore(vol, comp) / 20)));
+};
 
 // 선점 별점(★/☆ 5칸) 문자열.
 export const starsFor = (vol: number, comp: Comp): string => {

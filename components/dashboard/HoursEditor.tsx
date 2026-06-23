@@ -53,19 +53,17 @@ function TimeWheelSheet({ value, onConfirm, onClose }: { value: string; onConfir
   return (
     <div className="ateflo-backdrop-in fixed inset-0 z-[80] flex items-end justify-center bg-black/40" onClick={onClose}>
       <div className="ateflo-sheet-up w-full max-w-md rounded-t-3xl bg-white" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}>
-        <div className="flex items-center justify-between border-b border-neutral-100 px-5 py-3.5">
-          <button type="button" onClick={onClose} className="text-sm font-medium text-neutral-400">취소</button>
-          <p className="text-[15px] font-bold text-neutral-900">시간 선택</p>
-          <button type="button" onClick={confirm} className="text-sm font-bold text-[#1D75F7]">확인</button>
+        <p className="px-5 pb-1 pt-4 text-[15px] font-bold text-neutral-900">⏰ 시간 선택</p>
+        <div className="relative flex items-center px-6">
+          {/* 중앙 하이라이트(은은) */}
+          <div className="pointer-events-none absolute inset-x-4 top-1/2 h-10 -translate-y-1/2 rounded-xl bg-[#1D75F7]/[0.06]" />
+          <Wheel items={["오전", "오후"]} index={pm ? 1 : 0} onIndex={(i) => setPm(i === 1)} />
+          <Wheel items={HOURS12.map((x) => String(x).padStart(2, "0"))} index={hi} onIndex={setHi} />
+          <span className="px-0.5 text-[19px] font-bold text-neutral-900">:</span>
+          <Wheel items={MINS.map((x) => String(x).padStart(2, "0"))} index={mi} onIndex={setMi} />
         </div>
-        <div className="relative flex items-stretch gap-1 px-5 py-2">
-          <div className="pointer-events-none absolute inset-x-5 top-1/2 h-10 -translate-y-1/2 rounded-xl bg-neutral-100" />
-          <div className="relative z-10 flex flex-col justify-center gap-1.5 pr-1">
-            <button type="button" onClick={() => setPm(false)} className={`rounded-lg px-3 py-1.5 text-sm transition ${!pm ? "bg-[#1D75F7] font-bold text-white" : "text-neutral-400"}`}>오전</button>
-            <button type="button" onClick={() => setPm(true)} className={`rounded-lg px-3 py-1.5 text-sm transition ${pm ? "bg-[#1D75F7] font-bold text-white" : "text-neutral-400"}`}>오후</button>
-          </div>
-          <Wheel items={HOURS12.map((x) => `${x}시`)} index={hi} onIndex={setHi} />
-          <Wheel items={MINS.map((x) => `${String(x).padStart(2, "0")}분`)} index={mi} onIndex={setMi} />
+        <div className="px-5 pt-1">
+          <button type="button" onClick={confirm} className="w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-bold text-white transition active:scale-[0.99]">확인</button>
         </div>
       </div>
     </div>

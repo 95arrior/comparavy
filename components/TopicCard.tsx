@@ -16,11 +16,13 @@ export default function TopicCard({
   onDismiss,
   dismissing,
   region,
+  blogTotal,
 }: {
   title: string;
   tag?: string | null;
   vol: number;
   comp: Comp;
+  blogTotal?: number | null;
   idx?: number;
   revealed?: boolean;
   onClick?: () => void;
@@ -30,7 +32,7 @@ export default function TopicCard({
   region?: boolean; // 우리 동네 키워드(검색량 없음) — 칩·메트릭을 지역형으로
 }) {
   const isSak = comp === "low";
-  const filled = filledStars(vol, comp);
+  const filled = filledStars(vol, comp, blogTotal);
   return (
     <div
       onClick={onClick}
