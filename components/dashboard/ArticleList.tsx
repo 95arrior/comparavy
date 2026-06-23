@@ -141,7 +141,7 @@ export default function ArticleList({
         <p className="mt-1 text-sm text-neutral-500">키워드 하나만 입력하면 첫 글이 완성돼요.</p>
         <button
           onClick={onGoGenerate}
-          className="mt-5 rounded-xl bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700"
+          className="mt-5 rounded-xl bg-[#1D75F7] px-5 py-2.5 text-sm font-bold text-white transition hover:opacity-90 active:scale-95"
         >
           첫 글 생성하기
         </button>
@@ -235,21 +235,21 @@ export default function ArticleList({
           {filtered.map((a) => (
             <div
               key={a.id}
-              className="flex w-full items-center justify-between gap-4 rounded-2xl border border-neutral-100 bg-white shadow-sm p-5 transition hover:border-neutral-400"
+              className="flex w-full items-center justify-between gap-3 rounded-2xl bg-white p-4 ring-1 ring-black/[0.04] transition hover:ring-[#1D75F7]/30 active:scale-[0.997] sm:p-5"
             >
               <button onClick={() => onOpen(a)} className="min-w-0 flex-1 text-left">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   {a.locked ? (
-                    <span className="shrink-0 whitespace-nowrap rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">🔒 미리보기</span>
+                    <span className="shrink-0 whitespace-nowrap rounded-md bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">🔒 미리보기</span>
                   ) : (
-                    <span className={`shrink-0 whitespace-nowrap rounded-lg px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLE[a.status]}`}>
+                    <span className={`shrink-0 whitespace-nowrap rounded-md px-2 py-0.5 text-[11px] font-bold ${STATUS_STYLE[a.status]}`}>
                       {STATUS_LABEL[a.status]}
                     </span>
                   )}
-                  <span className="min-w-0 truncate text-xs text-neutral-400">{a.keyword}</span>
+                  <span className="min-w-0 truncate text-[11px] text-neutral-400">{a.keyword}</span>
                 </div>
-                <h3 className="mt-2 truncate text-base font-medium tracking-tight">{a.title}</h3>
-                <p className="mt-1 text-xs text-neutral-400">
+                <h3 className="mt-1.5 truncate text-[15px] font-bold tracking-tight text-neutral-900">{a.title}</h3>
+                <p className="mt-1 text-[11px] text-neutral-400">
                   {(a.char_count ?? 0).toLocaleString()}자 · {new Date(a.created_at).toLocaleDateString("ko-KR")}
                 </p>
               </button>
