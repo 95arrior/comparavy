@@ -112,9 +112,9 @@ export async function fetchGoogleKeywordIdeas(seed: string): Promise<PoolKeyword
     if (!keyword) continue;
     const m = r.keywordIdeaMetrics;
     const vol = Number(m?.avgMonthlySearches ?? 0) || 0;
-    out.push({ keyword, monthlyMobileQcCnt: vol, compIdx: COMP_MAP[String(m?.competition ?? "")] ?? "" });
+    out.push({ keyword, monthlySearches: vol, compIdx: COMP_MAP[String(m?.competition ?? "")] ?? "" });
   }
-  out.sort((a, b) => b.monthlyMobileQcCnt - a.monthlyMobileQcCnt);
+  out.sort((a, b) => b.monthlySearches - a.monthlySearches);
   return out;
 }
 
