@@ -621,50 +621,26 @@ export default function DashboardClient(props: DashboardProps) {
   const doneCount = steps.filter((s) => s.done).length;
   const firstUndone = steps.findIndex((s) => !s.done);
   const nextStepBanner = !allDone && nextStep ? (
-    <div className="mb-6 rounded-2xl border border-[#1D75F7]/30 bg-[#1D75F7]/5 px-5 py-4">
-      <p className="text-xs font-bold tracking-tight text-[#1D75F7]">시작하기 · {doneCount}/{steps.length} 완료</p>
-      {/* 3단계 진행 스트립 */}
-      <div className="mt-3 grid grid-cols-3 gap-2">
-        {steps.map((s, i) => {
-          const current = i === firstUndone;
-          return (
-            <div
-              key={s.label}
-              className={`flex min-w-0 flex-col gap-1 rounded-xl border px-3 py-2.5 transition ${
-                s.done
-                  ? "border-emerald-200 bg-emerald-50/70"
-                  : current
-                    ? "border-[#1D75F7] bg-white shadow-sm"
-                    : "border-neutral-200 bg-white/50"
-              }`}
-            >
-              <span className="flex items-center gap-1.5">
-                {s.done ? (
-                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
-                  </span>
-                ) : current ? (
-                  <span className="flex h-4 w-4 shrink-0 items-center justify-center"><span className="h-2 w-2 animate-pulse rounded-full bg-[#1D75F7]" /></span>
-                ) : (
-                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-neutral-300 text-[9px] font-bold text-neutral-400">{i + 1}</span>
-                )}
-                <span className={`text-[10px] font-bold ${s.done ? "text-emerald-600" : current ? "text-[#1D75F7]" : "text-neutral-400"}`}>{s.done ? "완료" : current ? "진행 중" : "대기"}</span>
-              </span>
-              <span className={`truncate text-[12px] font-medium ${s.done ? "text-neutral-400 line-through decoration-neutral-300" : current ? "text-neutral-900" : "text-neutral-500"}`}>{s.label}</span>
-            </div>
-          );
-        })}
+    <div className="mb-6 rounded-2xl bg-[#1D75F7]/[0.06] p-5">
+      {/* 진행 도트 (3칸 스트립 대신 — 라벨 안 짤리게) */}
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-bold tracking-tight text-[#1D75F7]">시작하기</span>
+        <span className="text-xs font-semibold text-[#1D75F7]/50">{doneCount}/{steps.length}</span>
+        <div className="ml-auto flex gap-1">
+          {steps.map((s, i) => (
+            <span key={s.label} className={`h-1.5 w-5 rounded-full transition ${s.done ? "bg-[#1D75F7]" : i === firstUndone ? "bg-[#1D75F7]/45" : "bg-[#1D75F7]/15"}`} />
+          ))}
+        </div>
       </div>
-      {/* 다음 할 일 강조 */}
-      <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-[#1D75F7]/15 pt-3">
-        <p className="min-w-0 flex-1 text-sm font-medium text-neutral-900">{nextStep.msg}</p>
-        <button
-          onClick={nextStep.go}
-          className="shrink-0 rounded-xl bg-[#1D75F7] px-5 py-2 text-sm font-medium text-white transition hover:opacity-90 active:scale-95"
-        >
-          {nextStep.label}
-        </button>
-      </div>
+      {/* 지금 할 일 — 제목(짤림 없음) + 안내 + CTA */}
+      <p className="mt-3 text-[15px] font-bold tracking-tight text-neutral-900">{steps[firstUndone]?.label ?? "다음 단계"}</p>
+      <p className="mt-1 text-[13px] leading-relaxed text-neutral-500">{nextStep.msg}</p>
+      <button
+        onClick={nextStep.go}
+        className="mt-4 w-full rounded-xl bg-[#1D75F7] py-3 text-sm font-bold text-white transition hover:opacity-90 active:scale-[0.98] sm:w-auto sm:px-7"
+      >
+        {nextStep.label}
+      </button>
     </div>
   ) : null;
 
