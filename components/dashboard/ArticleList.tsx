@@ -21,14 +21,6 @@ const STATUS_STYLE: Record<Article["status"], string> = {
 };
 
 type StatusFilter = "all" | Article["status"];
-type Sort = "new" | "old" | "long" | "short";
-
-const SORT_LABEL: Record<Sort, string> = {
-  new: "최신순",
-  old: "오래된순",
-  long: "글자 많은순",
-  short: "글자 적은순",
-};
 
 export default function ArticleList({
   articles: allArticles,
@@ -47,8 +39,6 @@ export default function ArticleList({
   const articles = allArticles.filter((a) => a.status !== "generating");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
-  const [sort, setSort] = useState<Sort>("new");
-  const [sortOpen, setSortOpen] = useState(false);
   const [confirmUnpub, setConfirmUnpub] = useState<Article | null>(null);
   const [unpubBusy, setUnpubBusy] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -113,32 +103,26 @@ export default function ArticleList({
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    let list = articles.filter((a) => {
-      if (status !== "all" && a.status !== status) return false;
-      if (q && !(`${a.title} ${a.keyword}`.toLowerCase().includes(q))) return false;
-      return true;
-    });
-    list = [...list].sort((a, b) => {
-      if (sort === "long") return (b.char_count ?? 0) - (a.char_count ?? 0);
-      if (sort === "short") return (a.char_count ?? 0) - (b.char_count ?? 0);
-      const ta = new Date(a.created_at).getTime();
-      const tb = new Date(b.created_at).getTime();
-      return sort === "old" ? ta - tb : tb - ta;
-    });
-    return list;
-  }, [articles, query, status, sort]);
+    return articles
+      .filter((a) => {
+        if (status !== "all" && a.status !== status) return false;
+        if (q && !(`${a.title} ${a.keyword}`.toLowerCase().includes(q))) return false;
+        return true;
+      })
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()); // 최신순 고정
+  }, [articles, query, status]);
 
   // 글이 아예 없을 때
   if (articles.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-neutral-300 bg-white px-6 py-14 text-center">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100 text-neutral-400">
+      <div className="rounded-2xl bg-neutral-50 px-6 py-14 text-center">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white text-neutral-400 ring-1 ring-black/[0.04]">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z" /><path d="M9 13h6M9 17h4" />
           </svg>
         </div>
-        <p className="mt-4 text-base font-semibold text-neutral-900">아직 만든 글이 없어요</p>
-        <p className="mt-1 text-sm text-neutral-500">키워드 하나만 입력하면 첫 글이 완성돼요.</p>
+        <p className="mt-4 text-base font-bold text-neutral-900">아직 쓴 글이 없어요</p>
+        <p className="mt-1 text-sm text-neutral-400">키워드만 넣으면 글이 만들어져요</p>
         <button
           onClick={onGoGenerate}
           className="mt-5 rounded-xl bg-[#1D75F7] px-5 py-2.5 text-sm font-bold text-white transition hover:opacity-90 active:scale-95"
@@ -151,8 +135,8 @@ export default function ArticleList({
 
   const statusChips: { key: StatusFilter; label: string }[] = [
     { key: "all", label: "전체" },
-    { key: "published", label: "발행됨" },
-    { key: "future", label: "예약됨" },
+    { key: "published", label: "발행" },
+    { key: "future", label: "예약" },
     { key: "draft", label: "초안" },
   ];
 
@@ -160,74 +144,45 @@ export default function ArticleList({
     <div>
       {/* 검색 */}
       <div className="relative">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="제목·키워드 검색"
-          className="w-full rounded-xl border border-neutral-300 bg-white py-2.5 pl-10 pr-3.5 text-sm outline-none transition focus:border-neutral-900"
+          placeholder="글 검색"
+          className="w-full rounded-xl bg-neutral-100 py-3 pl-11 pr-4 text-sm outline-none transition placeholder:text-neutral-400 focus:bg-neutral-50 focus:ring-2 focus:ring-[#1D75F7]/30"
         />
       </div>
 
-      {/* 상태 필터 + 정렬 */}
+      {/* 상태 필터 + 동기화(은은) */}
       <div className="mt-3 flex items-center justify-between gap-3">
         <Segmented
           options={statusChips.map((c) => ({ value: c.key, label: c.label, count: counts[c.key] }))}
           value={status}
           onChange={setStatus}
         />
-
-        <div className="flex shrink-0 items-center gap-2">
-          {wpConnected && (
-            <button
-              onClick={syncWp}
-              disabled={syncing}
-              title="워드프레스에서 직접 글을 삭제·발행·숨김 처리했을 때, 누르면 내 글 목록 상태에도 반영돼요. (예약 발행은 자동으로 맞춰져요)"
-              className="flex items-center gap-1.5 rounded-xl border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-neutral-900 disabled:opacity-50"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={syncing ? "animate-spin" : ""}><path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6" /></svg>
-              {syncing ? "동기화 중…" : "동기화"}
-            </button>
-          )}
-          <div className="relative">
+        {wpConnected && (
           <button
-            onClick={() => setSortOpen((o) => !o)}
-            className="flex items-center gap-1.5 rounded-xl border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-neutral-900"
+            onClick={syncWp}
+            disabled={syncing}
+            title="워드프레스에서 직접 바꾼 글 상태를 맞춰요"
+            className="flex shrink-0 items-center gap-1 text-xs font-medium text-neutral-400 transition hover:text-neutral-700 disabled:opacity-50"
           >
-            {SORT_LABEL[sort]}
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`text-neutral-400 transition-transform ${sortOpen ? "rotate-180" : ""}`}><path d="m6 9 6 6 6-6" /></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={syncing ? "animate-spin" : ""}><path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6" /></svg>
+            {syncing ? "맞추는 중" : "동기화"}
           </button>
-          {sortOpen && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setSortOpen(false)} />
-              <div className="ateflo-dropdown absolute right-0 top-full z-50 mt-2 w-36 rounded-xl border border-neutral-200 bg-white p-1 shadow-xl">
-                {(Object.keys(SORT_LABEL) as Sort[]).map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => { setSort(s); setSortOpen(false); }}
-                    className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition hover:bg-neutral-100 ${sort === s ? "font-medium text-neutral-900" : "text-neutral-600"}`}
-                  >
-                    {SORT_LABEL[s]}
-                    {sort === s && <span className="text-emerald-600">✓</span>}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-          </div>
-        </div>
+        )}
       </div>
 
       {/* 목록 */}
       {filtered.length === 0 ? (
-        <div className="mt-4 rounded-2xl border border-dashed border-neutral-300 bg-white px-6 py-12 text-center">
-          <p className="text-sm font-medium text-neutral-700">조건에 맞는 글이 없어요</p>
-          <p className="mt-1 text-xs text-neutral-500">검색어나 필터를 바꿔보세요.</p>
+        <div className="mt-4 rounded-2xl bg-neutral-50 px-6 py-12 text-center">
+          <p className="text-sm font-medium text-neutral-700">찾는 글이 없어요</p>
+          <p className="mt-1 text-xs text-neutral-400">검색어를 바꿔보세요</p>
           <button
-            onClick={() => { setQuery(""); setStatus("all"); setSort("new"); }}
-            className="mt-4 rounded-lg border border-neutral-300 px-4 py-1.5 text-sm font-medium text-neutral-700 transition hover:border-neutral-900"
+            onClick={() => { setQuery(""); setStatus("all"); }}
+            className="mt-4 rounded-lg bg-white px-4 py-1.5 text-sm font-medium text-neutral-600 ring-1 ring-neutral-200 transition hover:ring-neutral-400"
           >
-            필터 초기화
+            전체 보기
           </button>
         </div>
       ) : (
