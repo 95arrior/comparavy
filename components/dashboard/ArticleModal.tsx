@@ -7,6 +7,7 @@ import SectionSuggest from "./SectionSuggest";
 import CenterToast from "./CenterToast";
 import ScheduleCalendar from "./ScheduleCalendar";
 import { PLANS, formatKRW } from "@/lib/plans";
+import { bloggerType } from "@/lib/bloggerTypes";
 import { scanCompliance, applySuggestion } from "@/lib/complianceFilter";
 import LoadingScreen from "@/components/LoadingScreen";
 import type { Article } from "./types";
@@ -47,6 +48,8 @@ export default function ArticleModal({
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [publishSheetOpen, setPublishSheetOpen] = useState(false); // '발행하기' → 발행 설정 시트(슬라이드업)
+  const [naverOpen, setNaverOpen] = useState(false); // 네이버(자영업자) 복붙 발행 시트
+  const isNaver = bloggerType(vertical ?? "general") === "local"; // 자영업자=네이버 채널 → 복붙 흐름
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [autoSavedAt, setAutoSavedAt] = useState<string | null>(null);
@@ -627,12 +630,31 @@ export default function ArticleModal({
     );
   }
 
-  // '발행하기' 진입 — 한도 초과면 업셀, 미연결이면 기존 흐름(연결 안내), 그 외엔 발행 시트
+  // '발행하기' 진입 — 네이버(자영업자)는 복붙 시트, 그 외(WP)는 기존 흐름
   const openPublish = () => {
+    if (isNaver) { setNaverOpen(true); return; }
     if (!canPublish) { setShowUpsell(true); return; }
     if (!wpConnected) { publish("publish"); return; }
     setPublishSheetOpen(true);
   };
+
+  // 네이버에 직접 올린 글을 '발행됨'으로 표시(자동발행 없는 네이버 — 성과·내글 추적용)
+  async function markNaverPublished() {
+    try {
+      const res = await fetch(`/api/articles/${article.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "published" }),
+      });
+      if (res.ok) {
+        onUpdated({ ...article, status: "published" });
+        setNaverOpen(false);
+        setToast("발행 완료로 표시했어요");
+      } else {
+        setToast("표시하지 못했어요");
+      }
+    } catch { setToast("표시하지 못했어요"); }
+  }
 
   return (
     <>
@@ -663,9 +685,11 @@ export default function ArticleModal({
                 ? article.wp_post_id
                   ? "재발행 중…"
                   : "처리 중…"
-                : article.wp_post_id
-                  ? "재발행"
-                  : "발행"}
+                : isNaver
+                  ? "네이버에 올리기"
+                  : article.wp_post_id
+                    ? "재발행"
+                    : "발행"}
             </button>
 
             {scheduleOpen && (
@@ -811,6 +835,26 @@ export default function ArticleModal({
         )}
 
         {/* 메타 제목·설명은 자동 생성·사용(검토 화면에서 숨김 — 필요 시 발행 시트 고급) */}
+
+        {/* 네이버 발행(복붙) 시트 — 자영업자. API 없으니 복사→네이버 글쓰기 붙여넣기 */}
+        {naverOpen && (
+          <div className="ateflo-backdrop-in fixed inset-0 z-[70] flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center sm:p-6" onClick={() => setNaverOpen(false)}>
+            <div className="ateflo-sheet-up w-full max-w-md rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-3xl" style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom))" }} onClick={(e) => e.stopPropagation()}>
+              <p className="text-[17px] font-bold text-neutral-900">네이버 블로그에 올리기</p>
+              <p className="mt-1 text-[13px] leading-relaxed text-neutral-500">네이버는 자동 발행이 안 돼서 복사해서 붙여넣어요. 1분이면 끝나요.</p>
+              <ol className="mt-4 space-y-2 text-[13.5px] leading-relaxed text-neutral-700">
+                <li><b className="text-[#03C75A]">1.</b> 아래 <b>본문 복사</b>를 눌러요</li>
+                <li><b className="text-[#03C75A]">2.</b> <b>네이버 글쓰기</b>를 열어요</li>
+                <li><b className="text-[#03C75A]">3.</b> 붙여넣고, 본문 속 <b>[사진: ]</b> 자리에 사진을 넣어요</li>
+                <li><b className="text-[#03C75A]">4.</b> 맨 끝 해시태그 확인 후 <b>발행!</b></li>
+              </ol>
+              <button onClick={copyBody} className="mt-5 w-full rounded-xl bg-[#03C75A] py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">{copied ? "복사됨 ✓" : "본문 복사"}</button>
+              <a href="https://blog.naver.com/" target="_blank" rel="noopener noreferrer" className="mt-2 block w-full rounded-xl bg-neutral-100 py-3 text-center text-[14px] font-bold text-neutral-700 transition hover:bg-neutral-200">네이버 글쓰기 열기</a>
+              <button onClick={markNaverPublished} className="mt-3 w-full py-2 text-center text-[13px] font-bold text-[#1D75F7]">다 올렸어요 · 발행 완료로 표시</button>
+              <button onClick={() => setNaverOpen(false)} className="mt-1 w-full py-1.5 text-center text-sm font-medium text-neutral-400 transition hover:text-neutral-700">닫기</button>
+            </div>
+          </div>
+        )}
 
         {/* 발행 시트 — '발행하기' 누르면 슬라이드업. 카테고리·태그·옵션·발행 액션을 한 곳에 */}
         {wpConnected && publishSheetOpen && (() => {
@@ -1140,7 +1184,7 @@ export default function ArticleModal({
         {/* 모바일 하단 고정 '발행하기' CTA — 검토 → 발행 다음단계 인도 */}
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-neutral-100 bg-white/95 px-4 pt-2.5 backdrop-blur md:hidden" style={{ paddingBottom: "calc(0.625rem + env(safe-area-inset-bottom))" }}>
           <button onClick={openPublish} disabled={publishing} className="w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-bold text-white transition active:scale-[0.99] disabled:opacity-50">
-            {article.wp_post_id ? "재발행하기" : "발행하기"}
+            {isNaver ? "네이버에 올리기" : article.wp_post_id ? "재발행하기" : "발행하기"}
           </button>
         </div>
       </div>

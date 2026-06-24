@@ -49,6 +49,8 @@ export async function PATCH(
     update.tags = body.tags.filter((t: unknown): t is string => typeof t === "string").slice(0, 8);
   }
   if (typeof body.category === "string") update.category = body.category;
+  // 네이버 수동 발행 표시 — '네이버에 올렸어요'/'내렸어요'로 상태만 전환(자동발행 없는 네이버용)
+  if (body.status === "published" || body.status === "draft") update.status = body.status;
 
   const run = () =>
     supabase.from("articles").update(update).eq("id", id).eq("user_id", user.id).select("*").single();

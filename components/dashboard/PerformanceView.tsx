@@ -70,7 +70,7 @@ function LogoSlot({ logo, emoji, size = "h-9 w-9" }: { logo?: string; emoji?: st
       {emoji && <span className="text-[17px]">{emoji}</span>}
       {logo && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={logo} alt="" className="absolute inset-0 h-full w-full object-contain p-1" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+        <img src={logo} alt="" className="absolute inset-0 h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />
       )}
     </span>
   );
