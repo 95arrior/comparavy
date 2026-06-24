@@ -164,7 +164,8 @@ export async function GET(req: Request) {
   // '표시 가능한 글감(고경쟁 제외)' 기준으로 건강도 판정 → 개수만 많고 브랜드·고경쟁뿐인 옛 풀도 재빌드.
   // HEALTHY = 표시3 + 교체 여유. 부족하면 AI 시드(완벽함)로 보강. 남용 방지 레이트리밋(20/10분).
   const HEALTHY = 15;
-  if (sub) {
+  const isRegionReq = new URL(req.url).searchParams.get("region") === "1";
+  if (sub && !isRegionReq) { // 지역 강화 요청은 region 수집을 쓰므로 일반 풀 빌드 건너뜀(느린 빌드 방지)
     const subRows = await fetchPool(true, false); // 이 sub 전체(범위 무관)
     const goodCount = subRows.filter((r) => (r.competition ?? "").trim() !== "높음").length;
     if (goodCount < HEALTHY) {
@@ -204,8 +205,9 @@ export async function GET(req: Request) {
     if (aiAreas.length) regions = [...new Set([...aiAreas, ...regions])];
   }
   const local = isLocalBusiness(level, regions) && !cluster;
-  // 지역 글감은 '지역 강화' 모드(opt-in)에서만 — 평소엔 안 띄움(데이터 백킹 + 버튼).
-  const regionMode = new URL(req.url).searchParams.get("region") === "1" && local;
+  // 지역 강화 모드 — 지역형 업종(non-wide)이면 ON. 주소 파싱 여부와 무관(버튼 게이트 bloggerType와 일치).
+  // 주소가 비면 region 분기에서 빈 결과 → 클라가 '업체 등록/못 찾음' 안내(일반 글감으로 폴백 안 함).
+  const regionMode = new URL(req.url).searchParams.get("region") === "1" && level !== "wide" && !cluster;
 
   // 하루 고정 시드(userId+날짜): 그날은 새로고침해도 같은 추천.
   const rng = mulberry32(seedFrom(`${user.id}-${new Date().toISOString().slice(0, 10)}`));
