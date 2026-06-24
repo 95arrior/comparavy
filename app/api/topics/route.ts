@@ -11,6 +11,7 @@ import { fetchBlogTotal } from "@/lib/naverBlogSearch";
 import { expandLocalAreas } from "@/lib/aiSeeds";
 import { buildPoolForSub } from "@/lib/keywordPool";
 import { collectPoolKeywords } from "@/lib/poolCollect";
+import { fetchNaverAutocomplete } from "@/lib/naverAutocomplete";
 import { checkRateLimit } from "@/lib/rateLimit";
 
 // 사장의 blog_profile(vertical + sub_category)로 keyword_pool에서 글감 3개를 뽑는다.
@@ -207,7 +208,10 @@ export async function GET(req: Request) {
 
   if (regionMode) {
     // ── 지역 강화: 지역 키워드 '실데이터'(네이버 검색량/경쟁) 수집 — '오송 영어학원' 등 ──
-    const seeds = buildLocalSeeds(regions, vertical, sub ?? null).slice(0, 3);
+    const baseSeeds = buildLocalSeeds(regions, vertical, sub ?? null).slice(0, 3);
+    // 네이버 자동완성 — 우리 동네 사람들이 실제 치는 검색어를 시드로 추가(진짜 동네 키워드)
+    const acSeeds = baseSeeds.length ? (await fetchNaverAutocomplete(baseSeeds[0])).slice(0, 2) : [];
+    const seeds = [...new Set([...baseSeeds, ...acSeeds])];
     const collected = new Map<string, PoolRow>();
     for (const seed of seeds) {
       try {
