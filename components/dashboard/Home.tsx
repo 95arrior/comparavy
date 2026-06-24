@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import TopicCard from "@/components/TopicCard";
+import SeriesSheet from "./SeriesSheet";
 import type { Comp } from "@/lib/topicScore";
 import type { BloggerType } from "@/lib/bloggerTypes";
 import type { Article } from "./types";
@@ -53,6 +54,7 @@ export default function Home({
   const [swapping, setSwapping] = useState<string | null>(null); // 교체 중인 글감 keyword
   const [cluster, setCluster] = useState<string | null>(null); // '주제 이어가기' 활성 토픽(null=기본 다양)
   const [regionMode, setRegionMode] = useState(false); // '지역 강화'(우리 동네 키워드 실데이터) 모드
+  const [seriesOpen, setSeriesOpen] = useState(false); // '주제 시리즈'(연재 코스) 시트
   // 성과 '지역 선점'에서 넘어오면 지역 강화 자동 ON (동네 사장님만)
   useEffect(() => {
     if (regionTrigger && bloggerType === "local") setRegionMode(true);
@@ -252,6 +254,20 @@ export default function Home({
           <p className="mt-2 inline-flex items-center gap-0.5 text-[13px] font-bold text-[#1D75F7]">‘{mainTopic.token}’ 글감 더 보기</p>
         </button>
       )}
+
+      {/* 주제 시리즈 — 한 분야 연재로 전문 블로그(C-Rank 가속). 기본 모드에서 노출 */}
+      {!cluster && !regionMode && !topicsLoading && (
+        <button
+          onClick={() => setSeriesOpen(true)}
+          className="mt-3 w-full rounded-2xl border border-[#1D75F7]/20 bg-[#1D75F7]/[0.04] p-4 text-left transition hover:bg-[#1D75F7]/[0.07] active:scale-[0.99]"
+        >
+          <p className="text-[14px] font-bold text-neutral-900">📚 주제 시리즈로 깊게</p>
+          <p className="mt-1 text-[12.5px] leading-relaxed text-neutral-500">한 주제를 순서대로 연재하면 <b className="text-[#1D75F7]">전문 블로그</b>로 인식돼 상위노출에 유리해요.</p>
+          <p className="mt-2 inline-flex items-center gap-0.5 text-[13px] font-bold text-[#1D75F7]">시리즈 코스 보기</p>
+        </button>
+      )}
+
+      {seriesOpen && <SeriesSheet articles={articles} onWrite={onWriteKeyword} onClose={() => setSeriesOpen(false)} />}
       </div>
       </section>
 
