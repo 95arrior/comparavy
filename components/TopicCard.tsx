@@ -51,13 +51,14 @@ export default function TopicCard({
         <button
           onClick={(e) => { e.stopPropagation(); onDismiss(); }}
           disabled={dismissing}
-          aria-label="이 글감 별로예요"
-          className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-neutral-100/90 text-neutral-400 transition hover:bg-neutral-200 hover:text-neutral-600 disabled:opacity-60"
+          aria-label="이 글감 교체"
+          title="다른 글감으로 교체"
+          className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 text-neutral-500 transition hover:bg-[#1D75F7]/10 hover:text-[#1D75F7] active:scale-90 disabled:opacity-60"
         >
           {dismissing ? (
-            <span className="h-3 w-3 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-500" />
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-300 border-t-[#1D75F7]" />
           ) : (
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6" /></svg>
           )}
         </button>
       )}

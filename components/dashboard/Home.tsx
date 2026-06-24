@@ -50,8 +50,9 @@ export default function Home({
 }) {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [topicsLoading, setTopicsLoading] = useState(true);
+  const [collecting, setCollecting] = useState(false); // 재빌드(처음 모으는 중) — 일반 로딩과 다름
   const [loadStage, setLoadStage] = useState(0);
-  const [swapping, setSwapping] = useState<string | null>(null); // 교체 중인 글감 keyword
+  const [swapping, setSwapping] = useState<string[]>([]); // 교체 중인 글감 keyword들(동시·연속 교체)
   const [cluster, setCluster] = useState<string | null>(null); // '주제 이어가기' 활성 토픽(null=기본 다양)
   const [regionMode, setRegionMode] = useState(false); // '지역 강화'(우리 동네 키워드 실데이터) 모드
   const [seriesOpen, setSeriesOpen] = useState(false); // '주제 시리즈'(연재 코스) 시트
@@ -83,28 +84,37 @@ export default function Home({
   dismissedRef.current = dismissed;
   const swapLeft = Math.max(0, SWAP_LIMIT - dismissed.length);
 
-  // '이 글감 별로예요' → 보이는 3개 + 그날 교체분 제외하고 새 글감 1개로 그 카드만 교체
+  // 글감 캐시 키 — 하루 고정 + 모드별(새로고침·복귀·모드전환 시 재로딩·재셔플 방지)
+  const todayDate = new Date().toISOString().slice(0, 10);
+  const topicsCacheKey = (md: string) => `ateflo_topics_${todayDate}_${md}`;
+  const curModeKey = regionMode ? "region" : cluster ? `cluster:${cluster}` : "normal";
+
+  // '이 글감 교체' → 그 카드만 새 글감으로. 동시·연속 교체 허용(하나 끝나길 안 기다림).
   const swapTopic = async (kw: string) => {
-    if (swapping || swapLeft <= 0) return;
-    setSwapping(kw);
+    if (swapping.includes(kw) || dismissedRef.current.length + swapping.length >= SWAP_LIMIT) return;
+    setSwapping((s) => [...s, kw]);
     try {
-      const exclude = [...topics.map((t) => t.keyword), ...dismissed].join(",");
+      const exclude = [...topics.map((t) => t.keyword), ...dismissedRef.current].join(",");
       const params = new URLSearchParams({ exclude });
       if (cluster) params.set("cluster", cluster);
-      if (regionMode) params.set("region", "1");
       const res = await fetch(`/api/topics?${params.toString()}`);
       const data = await res.json();
       const fresh: Topic[] = Array.isArray(data.topics) ? data.topics : [];
       const current = new Set(topics.map((t) => t.keyword));
-      const repl = fresh.find((t) => !current.has(t.keyword));
+      const cands = fresh.filter((t) => !current.has(t.keyword) && !dismissedRef.current.includes(t.keyword));
+      const repl = cands.length ? cands[Math.floor(Math.random() * cands.length)] : null; // 동시 교체 충돌↓
       if (repl) {
-        setTopics((prev) => prev.map((t) => (t.keyword === kw ? repl : t)));
-        const nd = [...dismissed, kw];
+        setTopics((prev) => {
+          const next = prev.map((t) => (t.keyword === kw ? repl : t));
+          try { localStorage.setItem(topicsCacheKey(curModeKey), JSON.stringify(next)); } catch { /* ignore */ }
+          return next;
+        });
+        const nd = [...dismissedRef.current, kw];
         setDismissed(nd);
         try { localStorage.setItem(todayKey, JSON.stringify(nd)); } catch { /* ignore */ }
       }
     } catch { /* 유지 */ }
-    finally { setSwapping(null); }
+    finally { setSwapping((s) => s.filter((x) => x !== kw)); }
   };
 
   // 로딩 동안 안내 메시지 순환
@@ -115,7 +125,17 @@ export default function Home({
   }, [topicsLoading]);
 
   const loadTopics = useCallback(async () => {
+    const md = regionMode ? "region" : cluster ? `cluster:${cluster}` : "normal";
+    const ck = `ateflo_topics_${new Date().toISOString().slice(0, 10)}_${md}`;
+    // 하루 고정 — 캐시 있으면 즉시 표시(로딩·재셔플 없음). 새로고침·강력새로고침·모드전환 모두 안정.
+    try {
+      const raw = typeof window !== "undefined" ? localStorage.getItem(ck) : null;
+      if (raw) { const c = JSON.parse(raw); if (Array.isArray(c) && c.length) { setTopics(c); setTopicsLoading(false); return; } }
+    } catch { /* 캐시 미스 → 아래로 */ }
+
     setTopicsLoading(true);
+    setCollecting(false);
+    const collectTimer = setTimeout(() => setCollecting(true), 4000); // 4초+ = 재빌드(처음 모으는 중)
     try {
       const ex = dismissedRef.current; // 그날 교체한 글감은 새로고침해도 제외
       const params = new URLSearchParams();
@@ -125,10 +145,14 @@ export default function Home({
       const qs = params.toString();
       const res = await fetch(`/api/topics${qs ? `?${qs}` : ""}`);
       const data = await res.json();
-      setTopics(Array.isArray(data.topics) ? data.topics : []);
+      const t: Topic[] = Array.isArray(data.topics) ? data.topics : [];
+      setTopics(t);
+      try { if (t.length) localStorage.setItem(ck, JSON.stringify(t)); } catch { /* ignore */ }
     } catch {
       setTopics([]);
     } finally {
+      clearTimeout(collectTimer);
+      setCollecting(false);
       setTopicsLoading(false);
     }
   }, [cluster, regionMode]);
@@ -194,7 +218,7 @@ export default function Home({
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="flex items-center gap-2.5 rounded-full bg-white/85 px-5 py-2.5 shadow-[0_6px_20px_-8px_rgba(20,40,90,0.3)] backdrop-blur-sm">
               <svg className="ateflo-search-scan shrink-0 text-[#1D75F7]" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4-4" /></svg>
-              <p key={loadStage} className="ateflo-soft-in text-sm font-semibold text-neutral-700">{LOAD_MSGS[loadStage]}</p>
+              <p key={collecting ? "collect" : loadStage} className="ateflo-soft-in text-sm font-semibold text-neutral-700">{collecting ? "이 분야 글감을 처음 모으는 중이에요 · 조금 걸려요" : LOAD_MSGS[loadStage]}</p>
             </div>
           </div>
         </div>
@@ -202,15 +226,17 @@ export default function Home({
         <div className="mt-3">
           <div className="flex flex-col gap-3">
             {topics.map((t, i) => (
-              <TopicCard key={t.keyword} title={t.title} tag={t.tag || undefined} vol={t.vol} comp={t.comp} blogTotal={t.blogTotal} idx={i} cta="이 글 쓰기" region={t.region} onClick={() => onWriteKeyword(t.keyword, t.title)} onDismiss={swapLeft > 0 ? () => swapTopic(t.keyword) : undefined} dismissing={swapping === t.keyword} />
+              <TopicCard key={t.keyword} title={t.title} tag={t.tag || undefined} vol={t.vol} comp={t.comp} blogTotal={t.blogTotal} idx={i} cta="이 글 쓰기" region={t.region} onClick={() => onWriteKeyword(t.keyword, t.title)} onDismiss={!t.region && swapLeft > 0 ? () => swapTopic(t.keyword) : undefined} dismissing={swapping.includes(t.keyword)} />
             ))}
           </div>
-          {!isFinite(swapLeft) ? (
-            <p className="mt-3 text-center text-[12px] text-neutral-300">마음에 안 들면 카드의 ✕로 교체 (테스트 · 무제한)</p>
+          {regionMode ? (
+            <p className="mt-3 text-center text-[12px] text-neutral-300">우리 동네 글감은 그날 고정이에요</p>
+          ) : !isFinite(swapLeft) ? (
+            <p className="mt-3 text-center text-[12px] text-neutral-300">마음에 안 들면 ↻로 교체 (테스트 · 무제한)</p>
           ) : swapLeft <= 0 ? (
             <p className="mt-3 text-center text-[12px] text-neutral-400">오늘 글감 교체는 다 썼어요 · 내일 새 글감이 와요</p>
           ) : (
-            <p className="mt-3 text-center text-[12px] text-neutral-300">마음에 안 들면 카드의 ✕로 교체 (오늘 {swapLeft}회 남음)</p>
+            <p className="mt-3 text-center text-[12px] text-neutral-300">마음에 안 들면 ↻로 교체 (오늘 {swapLeft}회 남음)</p>
           )}
         </div>
       ) : (
