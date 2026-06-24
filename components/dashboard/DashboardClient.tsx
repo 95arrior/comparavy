@@ -866,9 +866,8 @@ export default function DashboardClient(props: DashboardProps) {
             title={pendingWrite.title}
             hasBiz={Boolean(blogProfile.biz_name)}
             local={bloggerType(blogProfile.vertical) === "local"}
-            defaultChannel={bloggerType(blogProfile.vertical) === "local" ? "naver" : "wp"}
             onClose={() => setPendingWrite(null)}
-            onPick={(promo, channel) => {
+            onPick={(promo) => {
               setSelected(null);
               setGenParams({
                 keyword: pendingWrite.keyword,
@@ -876,7 +875,7 @@ export default function DashboardClient(props: DashboardProps) {
                 type: toEngineType(blogProfile.article_type, blogProfile.vertical),
                 tone: blogProfile.tone,
                 promo,
-                channel,
+                channel: bloggerType(blogProfile.vertical) === "local" ? "naver" : "wp",
               });
               setPendingWrite(null);
             }}

@@ -4,26 +4,21 @@ import { useEffect, useState } from "react";
 
 // 글 생성 직전 '정보성/홍보용' 선택 — 탭=즉시생성 X. 선택(하이라이트) → '확인' 버튼으로만 생성(실수 방지).
 // 홍보용=마지막에 내 가게 자연 연결 + 섹션 추천. 정보성=순수 정보(가게 언급 X).
-export type WriteChannel = "wp" | "naver";
-
 export default function WriteTypeSheet({
   title,
   hasBiz,
   local,
-  defaultChannel,
   onPick,
   onClose,
 }: {
   title: string;
   hasBiz: boolean; // 업장 정보가 있을 때만 '홍보용'이 의미 있음
   local: boolean; // 동네 사장님만 '홍보용' 노출(online/hobby는 정보성만)
-  defaultChannel: WriteChannel; // 온보딩 타입 기본값(자영업=naver, 수익형=wp)
-  onPick: (promo: boolean, channel: WriteChannel) => void;
+  onPick: (promo: boolean) => void;
   onClose: () => void;
 }) {
-  // 동네 사장님은 선택형(null), online/hobby는 정보성만이라 미리 선택. 그래도 '확인'은 눌러야 생성.
+  // 채널(WP/네이버)은 온보딩 타입으로 자동 고정 — 여기선 안 물어봄(자영업=네이버, 수익형·취미=워드프레스).
   const [picked, setPicked] = useState<boolean | null>(local ? null : false);
-  const [channel, setChannel] = useState<WriteChannel>(defaultChannel); // 어디에 올릴지 — 글 규격이 달라짐
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -44,18 +39,10 @@ export default function WriteTypeSheet({
         style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom))" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <p className="text-xs font-medium text-neutral-400">이 글감</p>
+        <p className="text-xs font-medium text-neutral-400">이 글, 어떻게 쓸까요?</p>
         <p className="mt-1 truncate text-[15px] font-bold text-neutral-900">{title}</p>
 
-        {/* 채널 — 어디에 올릴지(글 규격이 달라짐). 타입별 기본값 + 토글 */}
-        <p className="mt-4 text-xs font-medium text-neutral-400">어디에 올릴까요?</p>
-        <div className="mt-2 flex gap-2 rounded-xl bg-neutral-100 p-1">
-          <button type="button" onClick={() => setChannel("wp")} className={`flex-1 rounded-lg py-2 text-[13px] font-bold transition ${channel === "wp" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-400"}`}>워드프레스</button>
-          <button type="button" onClick={() => setChannel("naver")} className={`flex-1 rounded-lg py-2 text-[13px] font-bold transition ${channel === "naver" ? "bg-white text-[#03C75A] shadow-sm" : "text-neutral-400"}`}>네이버 블로그</button>
-        </div>
-
-        <p className="mt-4 text-xs font-medium text-neutral-400">어떻게 쓸까요?</p>
-        <div className="mt-2 space-y-3">
+        <div className="mt-5 space-y-3">
           {/* 홍보용 — 동네 사장님만 */}
           {local && (
           <button
@@ -96,11 +83,11 @@ export default function WriteTypeSheet({
 
         {/* 확인 — 선택해야 활성. 실수 생성 방지 */}
         <button
-          onClick={() => picked !== null && onPick(picked, channel)}
+          onClick={() => picked !== null && onPick(picked)}
           disabled={picked === null}
           className="mt-5 w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-semibold text-white transition hover:opacity-90 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {picked === null ? "글 종류를 선택하세요" : `${channel === "naver" ? "네이버" : "워드프레스"}용 ${picked ? "홍보" : "정보"} 글 쓰기`}
+          {picked === null ? "글 종류를 선택하세요" : picked ? "홍보용으로 글 쓰기" : "정보성으로 글 쓰기"}
         </button>
         <p className="mt-2 text-center text-[11px] text-neutral-400">생성하면 되돌릴 수 없어요</p>
 
