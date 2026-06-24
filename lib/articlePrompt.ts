@@ -86,6 +86,8 @@ export interface ArticlePromptInput {
   bizName?: string | null;
   /** 운영자가 입력한 강점·특징(선택) — 이 범위 안에서만 언급, 과장은 순화. */
   bizStrength?: string | null;
+  /** 발행 채널 — naver면 네이버 블로그 규격(경험톤·사진자리·해시태그)으로 생성. 기본 wp. */
+  channel?: "wp" | "naver";
 }
 
 // 공통 SEO 콘텐츠 원칙 (general 포함 모든 블로그에 주입). 홍보글이 아니라 '검색 사용자가 궁금해하는 정보글'.
@@ -155,7 +157,19 @@ const VERTICAL_SYSTEM: Record<string, string> = {
   ].join("\n"),
 };
 
-export function buildSystemPrompt(vertical?: string): string {
+// 네이버 블로그 모드 — 구글/워드프레스와 다른 규격(C-Rank/DIA·경험톤·사진자리·해시태그).
+const NAVER_GUIDE = [
+  "",
+  "[네이버 블로그 모드 — 이 글은 네이버 블로그에 올린다]",
+  "• 목표 검색엔진은 '네이버'다(구글 아님). 네이버 C-Rank·D.I.A.가 좋아하는 글: 정보 + 직접 경험이 섞이고 끝까지 읽히는 글.",
+  "• 톤을 더 친근한 '경험담 후기체'로: '~해봤어요', '~하더라고요', '직접 보니' 같은 1인칭 경험 화법. 단 없는 경험·가짜 후기를 지어내진 않는다(일반적 경험 화법만).",
+  "• 문단을 짧게(2~3문장) 모바일 가독성 위주. 과한 이모지·말줄임표는 자제.",
+  "• 사진 들어갈 자리를 본문 흐름상 자연스러운 2~5곳에 '[사진: 무엇무엇]' 형태로 표시한다(네이버는 사진이 중요).",
+  "• 글 맨 끝에 관련 해시태그 8~12개를 '#키워드 #지역 #업종' 형식으로 제안한다(지역·업종·주제 조합).",
+  "• 메타(제목/설명)는 그대로 채우되, 본문은 위 네이버 규격을 우선한다.",
+].join("\n");
+
+export function buildSystemPrompt(vertical?: string, channel?: "wp" | "naver"): string {
   // 현재 날짜(한국시간) 주입 — 모델이 학습 시점 과거 연도(2024·2025 등)를 습관적으로 쓰는 것을 막는다
   const KST = 9 * 60 * 60 * 1000;
   const now = new Date(Date.now() + KST);
@@ -196,6 +210,7 @@ export function buildSystemPrompt(vertical?: string): string {
   // 업종별 지침(VERTICAL_SYSTEM)은 해당 업종에만 추가 — general은 특정 업종이 아니라 안 붙는다.
   let out = base + "\n" + COMMON_SEO_PRINCIPLES + "\n" + YMYL_GUARDRAIL;
   if (vertical && VERTICAL_SYSTEM[vertical]) out += "\n" + VERTICAL_SYSTEM[vertical];
+  if (channel === "naver") out += "\n" + NAVER_GUIDE;
   return out;
 }
 

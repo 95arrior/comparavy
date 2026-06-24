@@ -22,6 +22,7 @@ export interface GenParams {
   type: string;
   tone: string;
   promo: boolean; // true=홍보용(업장 연결) | false=정보성(순수 정보)
+  channel: "wp" | "naver"; // 발행 채널 — 글 규격(톤·구조·사진·해시태그)이 달라짐
 }
 
 // "글 생성하기" 직후 전환되는 전체 페이지 작성 화면. 편집화면과 같은 레이아웃에서

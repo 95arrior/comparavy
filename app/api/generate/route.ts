@@ -61,6 +61,7 @@ export async function POST(request: Request) {
     type?: string;
     tone?: string;
     promo?: boolean; // true=홍보용(업장 연결) | false=정보성(순수 정보). 기본 true(기존 동작)
+    channel?: "wp" | "naver"; // 발행 채널 — naver면 네이버 블로그 규격
   };
   try {
     body = await request.json();
@@ -141,6 +142,7 @@ export async function POST(request: Request) {
   const tone = body.tone ?? vDef?.tone ?? "friendly";
   // 홍보용 기본값 — local(동네 사장님)만 홍보(업장 연결), online/hobby는 업장 없어 정보성 기본.
   const promo = body.promo ?? (bloggerType(vertical) === "local");
+  const channel: "wp" | "naver" = body.channel ?? (bloggerType(vertical) === "local" ? "naver" : "wp");
 
   // 약한 audience 가드(버그2): 직접 입력해도 '설정한 대상과 명백히 동떨어진'(반대 연령어가 박힌) 글감만 막는다.
   // 명시적 연령어(성인/유아/초등/중고등)만 검사 → 도메인어(토익 등)·중립어는 통과(사장이 일부러 넣은 걸 과잉 차단 안 함).
@@ -201,7 +203,7 @@ export async function POST(request: Request) {
         }
 
         const article = await streamArticle(
-          { keyword, angle: body.angle, type, tone, maxWords, variantInstruction: variant.instruction, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null },
+          { keyword, angle: body.angle, type, tone, maxWords, variantInstruction: variant.instruction, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, channel },
           (bodyHtml) => send({ type: "body", html: bodyHtml }),
           (title) => send({ type: "title", title }),
           (u) => { void logUsage({ userId: user.id, model: u.model, kind: "generate", inputTokens: u.inputTokens, outputTokens: u.outputTokens }); },
