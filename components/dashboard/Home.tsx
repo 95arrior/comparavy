@@ -130,7 +130,8 @@ export default function Home({
     // 하루 고정 — 캐시 있으면 즉시 표시(로딩·재셔플 없음). 새로고침·강력새로고침·모드전환 모두 안정.
     try {
       const raw = typeof window !== "undefined" ? localStorage.getItem(ck) : null;
-      if (raw) { const c = JSON.parse(raw); if (Array.isArray(c) && c.length) { setTopics(c); setTopicsLoading(false); return; } }
+      // 꽉 찬(3개) 글감일 때만 캐시 사용 — 얇은(1~2개) 풀이 캐시되어 재빌드를 가리는 것 방지
+      if (raw) { const c = JSON.parse(raw); if (Array.isArray(c) && c.length >= 3) { setTopics(c); setTopicsLoading(false); return; } }
     } catch { /* 캐시 미스 → 아래로 */ }
 
     setTopicsLoading(true);
@@ -147,7 +148,7 @@ export default function Home({
       const data = await res.json();
       const t: Topic[] = Array.isArray(data.topics) ? data.topics : [];
       setTopics(t);
-      try { if (t.length) localStorage.setItem(ck, JSON.stringify(t)); } catch { /* ignore */ }
+      try { if (t.length >= 3) localStorage.setItem(ck, JSON.stringify(t)); } catch { /* ignore */ }
     } catch {
       setTopics([]);
     } finally {
