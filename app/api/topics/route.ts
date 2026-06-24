@@ -161,19 +161,24 @@ export async function GET(req: Request) {
   }
 
   // ── 게으른 풀 채우기 ──
-  // 풀이 비거나(신규) '3개도 못 채울 만큼 얇으면'(빈약 카테고리) AI 시드 확장으로 풀을 키운다.
-  // → 변동성·선점·3개 보장 확보. 이후 같은 업종은 풀에서 바로. 남용 방지 레이트리밋.
-  if (rows.length < PICK && sub) {
-    const seedRl = await checkRateLimit(supabase, user.id, "pool_seed", 20, 600);
-    if (seedRl.ok) {
-      try {
-        await buildPoolForSub(vertical, sub, { sleepMs: 300 });
-      } catch {
-        /* 수집 실패해도 빈 결과로 진행 */
-      }
-      for (const [useSub, ranged] of steps) {
-        rows = await fetchPool(useSub, ranged);
-        if (rows.length >= PICK) break;
+  // '표시 가능한 글감(고경쟁 제외)' 기준으로 건강도 판정 → 개수만 많고 브랜드·고경쟁뿐인 옛 풀도 재빌드.
+  // HEALTHY = 표시3 + 교체 여유. 부족하면 AI 시드(완벽함)로 보강. 남용 방지 레이트리밋(20/10분).
+  const HEALTHY = 15;
+  if (sub) {
+    const subRows = await fetchPool(true, false); // 이 sub 전체(범위 무관)
+    const goodCount = subRows.filter((r) => (r.competition ?? "").trim() !== "높음").length;
+    if (goodCount < HEALTHY) {
+      const seedRl = await checkRateLimit(supabase, user.id, "pool_seed", 20, 600);
+      if (seedRl.ok) {
+        try {
+          await buildPoolForSub(vertical, sub, { sleepMs: 300 });
+        } catch {
+          /* 수집 실패해도 빈 결과로 진행 */
+        }
+        for (const [useSub, ranged] of steps) {
+          rows = await fetchPool(useSub, ranged);
+          if (rows.length >= PICK) break;
+        }
       }
     }
   }
