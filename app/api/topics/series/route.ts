@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import Anthropic from "@anthropic-ai/sdk";
+import { getCache, setCache, TTL_WEEK } from "@/lib/apiCache";
 
 // 주제 시리즈 — 한 핵심 주제를 깊이 파는 '연재 코스'(8편). 한 분야 집중 = 네이버 C-Rank '전문 블로그' 인식 가속.
 // AI로 논리적 순서(입문→심화) 기획. graceful: 실패/미설정이면 빈 배열.
@@ -22,6 +23,11 @@ export async function GET() {
 
   const field = ((profile.sub_category as string | null) || (profile.vertical as string)).replace(/·/g, " ").trim();
   const aud = Array.isArray(profile.audience) ? (profile.audience as string[]).filter((a) => a && a !== "전체").join("·") : "";
+
+  // 캐시(유저+분야 7일) — 시리즈는 잘 안 바뀜. AI 호출 절감
+  const cacheKey = `series:${user.id}:${field}:${aud}`;
+  const cached = await getCache<{ theme: string; items: { title: string; keyword: string }[] }>(cacheKey);
+  if (cached) return NextResponse.json(cached);
 
   try {
     const client = new Anthropic({ apiKey });
@@ -53,7 +59,9 @@ export async function GET() {
           .map((x) => ({ title: x.title.trim(), keyword: x.keyword.trim() }))
           .slice(0, 8)
       : [];
-    return NextResponse.json({ theme: typeof j.theme === "string" ? j.theme : "", items });
+    const result = { theme: typeof j.theme === "string" ? j.theme : "", items };
+    if (items.length) await setCache(cacheKey, result, TTL_WEEK);
+    return NextResponse.json(result);
   } catch {
     return NextResponse.json({ items: [] });
   }

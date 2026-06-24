@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { isAdminEmail } from "@/lib/adminStats";
 import { gscGetValidToken, gscSearchAnalytics } from "@/lib/searchConsole";
+import { getCache, setCache, TTL_6H } from "@/lib/apiCache";
 
 // 선행지표 '색인' — 최근 90일 검색에 1회라도 노출된 페이지 수(=구글이 찾아 보여준 글 수).
 // 미연결/무데이터는 graceful: { connected, count:0 }.
@@ -27,6 +28,11 @@ export async function GET() {
   const token = await gscGetValidToken(user.id);
   if (!token) return NextResponse.json({ connected: false, count: 0 });
 
+  // 캐시(유저별 6시간) — GSC 쿼터 평탄화
+  const cacheKey = `gschero:${user.id}`;
+  const cached = await getCache<{ connected: boolean; count: number; clicks: number }>(cacheKey);
+  if (cached) return NextResponse.json(cached);
+
   const end = new Date();
   const start = new Date(end);
   start.setUTCDate(start.getUTCDate() - 89);
@@ -40,5 +46,7 @@ export async function GET() {
   const totRes = await gscSearchAnalytics(token, site, { startDate: ymd(start28), endDate: ymd(end28), dimensions: [] });
   const clicks = totRes.error ? 0 : (totRes.rows[0]?.clicks ?? 0);
 
-  return NextResponse.json({ connected: true, count, clicks });
+  const result = { connected: true, count, clicks };
+  await setCache(cacheKey, result, TTL_6H);
+  return NextResponse.json(result);
 }

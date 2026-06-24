@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { isAdminEmail } from "@/lib/adminStats";
 import { gscGetValidToken, gscSearchAnalytics } from "@/lib/searchConsole";
+import { getCache, setCache, TTL_6H } from "@/lib/apiCache";
 
 // 5-2: 선택한 사이트의 검색 성과(노출/클릭/CTR/평균순위) + 일별·주별 추이를 JSON으로 반환.
 // 화면 그래프는 5-3. 게이트는 기존과 동일(로그인 + PRELAUNCH 중 관리자만).
@@ -45,6 +46,11 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const days = Math.min(365, Math.max(1, parseInt(url.searchParams.get("days") || "28", 10) || 28));
   const granularity = url.searchParams.get("granularity") === "week" ? "week" : "date";
+
+  // 캐시(유저+기간 6시간) — GSC 쿼터 평탄화
+  const cacheKey = `gscperf:${user.id}:${days}:${granularity}`;
+  const cached = await getCache<unknown>(cacheKey);
+  if (cached) return NextResponse.json(cached);
 
   const end = new Date();
   const start = new Date(end);
@@ -92,5 +98,7 @@ export async function GET(req: Request) {
       }));
   }
 
-  return NextResponse.json({ site, range: { startDate, endDate }, granularity, totals, series });
+  const result = { site, range: { startDate, endDate }, granularity, totals, series };
+  await setCache(cacheKey, result, TTL_6H);
+  return NextResponse.json(result);
 }
