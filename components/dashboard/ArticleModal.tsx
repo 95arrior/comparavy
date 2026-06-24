@@ -848,7 +848,13 @@ export default function ArticleModal({
                 <li><b className="text-[#03C75A]">3.</b> 붙여넣고, 본문 속 <b>[사진: ]</b> 자리에 사진을 넣어요</li>
                 <li><b className="text-[#03C75A]">4.</b> 맨 끝 해시태그 확인 후 <b>발행!</b></li>
               </ol>
-              <button onClick={copyBody} className="mt-5 w-full rounded-xl bg-[#03C75A] py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">{copied ? "복사됨 ✓" : "본문 복사"}</button>
+              <div className="mt-4 rounded-xl bg-[#03C75A]/[0.06] p-3.5 text-[12.5px] leading-relaxed text-neutral-600">
+                <p className="font-bold text-[#03C75A]">노출 잘 되는 꿀팁</p>
+                <p className="mt-1">· <b>첫 사진</b>이 검색 썸네일이에요 — 제일 잘 나온 걸로</p>
+                <p>· 글 끝에 <b>네이버 지도(내 가게)</b>를 첨부하면 지역 노출에 유리해요</p>
+                <p>· 발행할 때 <b>태그</b>도 본문 해시태그처럼 넣어주세요</p>
+              </div>
+              <button onClick={copyBody} className="mt-4 w-full rounded-xl bg-[#03C75A] py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">{copied ? "복사됨 ✓" : "본문 복사"}</button>
               <a href="https://blog.naver.com/" target="_blank" rel="noopener noreferrer" className="mt-2 block w-full rounded-xl bg-neutral-100 py-3 text-center text-[14px] font-bold text-neutral-700 transition hover:bg-neutral-200">네이버 글쓰기 열기</a>
               <button onClick={markNaverPublished} className="mt-3 w-full py-2 text-center text-[13px] font-bold text-[#1D75F7]">다 올렸어요 · 발행 완료로 표시</button>
               <button onClick={() => setNaverOpen(false)} className="mt-1 w-full py-1.5 text-center text-sm font-medium text-neutral-400 transition hover:text-neutral-700">닫기</button>
