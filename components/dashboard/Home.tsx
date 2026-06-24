@@ -198,8 +198,14 @@ export default function Home({
           <button onClick={() => setRegionMode(false)} className="-ml-1 flex items-center gap-1 text-[13px] font-medium text-neutral-400 transition hover:text-neutral-700">
             <span className="text-base leading-none">←</span> 일반 글감으로
           </button>
-          <h2 className="mt-2 text-[15px] font-bold tracking-tight text-neutral-900">우리 동네 강화</h2>
-          <p className="mt-1 text-[12px] leading-relaxed text-neutral-400">우리 동네 손님이 <b className="text-[#1D75F7]">실제로 검색하는</b> 키워드예요</p>
+          {/* 우리동네 = 틸 배너 + 핀으로 일반 글감과 확실히 구분 */}
+          <div className="mt-2 flex items-center gap-3 rounded-2xl bg-teal-50 p-3.5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-500 text-white"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z" /></svg></span>
+            <div className="min-w-0">
+              <h2 className="text-[15px] font-bold tracking-tight text-teal-900">우리 동네 손님 공략</h2>
+              <p className="truncate text-[12px] text-teal-700/80">동네 손님이 실제 검색하는 키워드예요</p>
+            </div>
+          </div>
         </div>
       ) : (
         <h2 className="mt-8 text-[15px] font-bold tracking-tight text-neutral-900">오늘의 추천 글감</h2>
@@ -221,7 +227,7 @@ export default function Home({
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="flex items-center gap-2.5 rounded-full bg-white/85 px-5 py-2.5 shadow-[0_6px_20px_-8px_rgba(20,40,90,0.3)] backdrop-blur-sm">
               <svg className="ateflo-search-scan shrink-0 text-[#1D75F7]" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4-4" /></svg>
-              <p key={collecting ? "collect" : loadStage} className="ateflo-soft-in text-sm font-semibold text-neutral-700">{collecting ? "이 분야 글감을 처음 모으는 중이에요 · 조금 걸려요" : LOAD_MSGS[loadStage]}</p>
+              <p key={collecting ? "collect" : loadStage} className="ateflo-soft-in text-sm font-semibold text-neutral-700">{collecting ? "처음이라 글감을 모으는 중이에요" : LOAD_MSGS[loadStage]}</p>
             </div>
           </div>
         </div>
@@ -260,40 +266,29 @@ export default function Home({
         </div>
       )}
 
-      {/* 지역 강화 — 동네 사장님 전용(선택형). 우리 동네 키워드 실데이터 */}
-      {!cluster && !regionMode && !topicsLoading && bloggerType === "local" && (
-        <button
-          onClick={() => setRegionMode(true)}
-          className="mt-3 w-full rounded-2xl border border-[#1D75F7]/20 bg-[#1D75F7]/[0.04] p-4 text-left transition hover:bg-[#1D75F7]/[0.07] active:scale-[0.99]"
-        >
-          <p className="text-[14px] font-bold text-neutral-900">📍 우리 동네 키워드 강화</p>
-          <p className="mt-1 text-[12.5px] leading-relaxed text-neutral-500">우리 동네 손님이 실제로 검색하는 키워드로 글감을 받아요.</p>
-          <p className="mt-2 inline-flex items-center gap-0.5 text-[13px] font-bold text-[#1D75F7]">우리 동네 글감 보기</p>
-        </button>
-      )}
-
-      {/* 주제 이어가기 — 기본 모드 + 쓴 주제 있을 때만(선택형 · 이유 안내) */}
-      {!cluster && !regionMode && !topicsLoading && mainTopic && (
-        <button
-          onClick={() => setCluster(mainTopic.token)}
-          className="mt-4 w-full rounded-2xl border border-[#1D75F7]/20 bg-[#1D75F7]/[0.04] p-4 text-left transition hover:bg-[#1D75F7]/[0.07] active:scale-[0.99]"
-        >
-          <p className="text-[14px] font-bold text-neutral-900">‘{mainTopic.token}’ 주제로 {mainTopic.count}편 쓰셨네요</p>
-          <p className="mt-1 text-[12.5px] leading-relaxed text-neutral-500">한 주제를 깊이 쓰면 그 분야 <b className="text-[#1D75F7]">검색 권위</b>가 생겨 상위에 유리해요.</p>
-          <p className="mt-2 inline-flex items-center gap-0.5 text-[13px] font-bold text-[#1D75F7]">‘{mainTopic.token}’ 글감 더 보기</p>
-        </button>
-      )}
-
-      {/* 주제 시리즈 — 한 분야 연재로 전문 블로그(C-Rank 가속). 기본 모드에서 노출 */}
+      {/* 더 깊게 쓰기 — 토스 보상카드st 한 줄(아이콘+라벨+>). 설명은 아이콘·진입 화면에서 */}
       {!cluster && !regionMode && !topicsLoading && (
-        <button
-          onClick={() => setSeriesOpen(true)}
-          className="mt-3 w-full rounded-2xl border border-[#1D75F7]/20 bg-[#1D75F7]/[0.04] p-4 text-left transition hover:bg-[#1D75F7]/[0.07] active:scale-[0.99]"
-        >
-          <p className="text-[14px] font-bold text-neutral-900">📚 주제 시리즈로 깊게</p>
-          <p className="mt-1 text-[12.5px] leading-relaxed text-neutral-500">한 주제를 순서대로 연재하면 <b className="text-[#1D75F7]">전문 블로그</b>로 인식돼 상위노출에 유리해요.</p>
-          <p className="mt-2 inline-flex items-center gap-0.5 text-[13px] font-bold text-[#1D75F7]">시리즈 코스 보기</p>
-        </button>
+        <div className="mt-4 space-y-2">
+          {bloggerType === "local" && (
+            <button onClick={() => setRegionMode(true)} className="flex w-full items-center gap-3 rounded-2xl bg-white p-3.5 ring-1 ring-black/[0.04] transition hover:ring-teal-300 active:scale-[0.99]">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-600"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z" /></svg></span>
+              <span className="min-w-0 flex-1 truncate text-left text-[14px] font-bold text-neutral-900">우리 동네 키워드 강화</span>
+              <svg className="shrink-0 text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+            </button>
+          )}
+          {mainTopic && (
+            <button onClick={() => setCluster(mainTopic.token)} className="flex w-full items-center gap-3 rounded-2xl bg-white p-3.5 ring-1 ring-black/[0.04] transition hover:ring-[#1D75F7]/30 active:scale-[0.99]">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1D75F7]/10 text-[#1D75F7]"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg></span>
+              <span className="min-w-0 flex-1 truncate text-left text-[14px] font-bold text-neutral-900">‘{mainTopic.token}’ 이어쓰기 · {mainTopic.count}편째</span>
+              <svg className="shrink-0 text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+            </button>
+          )}
+          <button onClick={() => setSeriesOpen(true)} className="flex w-full items-center gap-3 rounded-2xl bg-white p-3.5 ring-1 ring-black/[0.04] transition hover:ring-violet-300 active:scale-[0.99]">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" /></svg></span>
+            <span className="min-w-0 flex-1 truncate text-left text-[14px] font-bold text-neutral-900">주제 시리즈로 전문 블로그 되기</span>
+            <svg className="shrink-0 text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+          </button>
+        </div>
       )}
 
       {seriesOpen && <SeriesSheet articles={articles} onWrite={onWriteKeyword} onClose={() => setSeriesOpen(false)} />}

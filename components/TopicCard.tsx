@@ -65,7 +65,7 @@ export default function TopicCard({
       <div className="relative">
         <div className="mb-1.5 flex items-center gap-1.5">
           {region ? (
-            <span className="inline-flex items-center rounded-full bg-[#E8F1FE] px-2 py-1 text-[10px] font-bold leading-none text-[#1D75F7] sm:text-[11px]">우리 동네</span>
+            <span className="inline-flex items-center gap-0.5 rounded-full bg-teal-50 px-2 py-1 text-[10px] font-bold leading-none text-teal-600 sm:text-[11px]"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z" /></svg>우리 동네</span>
           ) : (
             <>
               {tag && <span className="inline-flex items-center rounded-full bg-[#E8F1FE] px-2 py-1 text-[10px] font-bold leading-none text-[#1D75F7] sm:text-[11px]">{tag}</span>}

@@ -39,7 +39,7 @@ export default function SeriesSheet({
         <div className="px-6 pt-6">
           <p className="text-[11px] font-bold text-[#1D75F7]">📚 주제 시리즈</p>
           <p className="mt-1 text-[17px] font-bold tracking-tight text-neutral-900">{theme || "이 분야 전문 블로그 되기"}</p>
-          <p className="mt-1.5 text-[12.5px] leading-relaxed text-neutral-500">한 주제를 순서대로 깊게 쓰면 네이버·구글이 <b className="text-[#1D75F7]">전문 블로그</b>로 인식해요. 상위 노출에 가장 중요한 거예요.</p>
+          <p className="mt-1.5 text-[12.5px] leading-relaxed text-neutral-500">순서대로 쓰면 <b className="text-[#1D75F7]">전문 블로그</b>로 인식돼 상위노출에 유리해요</p>
         </div>
         <div className="mt-3 flex-1 overflow-y-auto px-6 pb-2">
           {loading ? (
