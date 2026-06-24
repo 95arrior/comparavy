@@ -6,7 +6,7 @@ import { streamArticle } from "@/lib/generateArticle";
 import { countKoreanChars } from "@/lib/humanizer";
 import { isDisposableEmail } from "@/lib/disposableEmail";
 import { checkRateLimit } from "@/lib/rateLimit";
-import { normalizeKeyword, pickVariant, simhash } from "@/lib/diversity";
+import { normalizeKeyword, pickVariant, pickAngle, simhash } from "@/lib/diversity";
 import { looksLikeGarbageKeyword } from "@/lib/keywordGuard";
 import { isUnsafeKeyword } from "@/lib/keywordSafety";
 import { explicitAudienceOf, AUDIENCE_ALL } from "@/lib/audience";
@@ -166,6 +166,9 @@ export async function POST(request: Request) {
     .eq("keyword_norm", keywordNorm);
   const usedSignatures = (usedRows ?? []).map((r: { signature: string }) => r.signature);
   const variant = pickVariant(usedSignatures, `${user.id}:${keywordNorm}:${usedSignatures.length}`);
+  // 관점 축(유저+키워드 시드) — 구조×관점 조합으로 같은 키워드도 유저마다 다른 글(중복 방지)
+  const angle = pickAngle(`${user.id}:${keywordNorm}`);
+  const variantInstruction = `${variant.instruction} ${angle}`;
 
   // SSE 스트리밍: 글이 써지는 과정을 실시간으로 흘려보낸다.
   const encoder = new TextEncoder();
@@ -203,7 +206,7 @@ export async function POST(request: Request) {
         }
 
         const article = await streamArticle(
-          { keyword, angle: body.angle, type, tone, maxWords, variantInstruction: variant.instruction, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, channel },
+          { keyword, angle: body.angle, type, tone, maxWords, variantInstruction, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, channel },
           (bodyHtml) => send({ type: "body", html: bodyHtml }),
           (title) => send({ type: "title", title }),
           (u) => { void logUsage({ userId: user.id, model: u.model, kind: "generate", inputTokens: u.inputTokens, outputTokens: u.outputTokens }); },
