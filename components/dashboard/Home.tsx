@@ -182,7 +182,12 @@ export default function Home({
       <h1 className="font-pretendard text-[28px] font-bold leading-[1.2] tracking-tight text-neutral-900 sm:text-[34px]">
         오늘, 한 편이면 돼요
       </h1>
-      <p className="mt-2 text-[15px] text-neutral-400">{blogName}</p>
+      <div className="mt-2 flex items-center gap-2">
+        <p className="text-[15px] text-neutral-400">{blogName}</p>
+        {articles.filter((a) => a.status !== "generating").length > 0 && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-[#1D75F7]/[0.07] px-2.5 py-0.5 text-[12px] font-bold text-[#1D75F7]">✍️ {articles.filter((a) => a.status !== "generating").length}편째</span>
+        )}
+      </div>
 
       {/* 추천 글감 — 랜딩과 동일한 글감 박스(실데이터). 누르면 그 글 쓰기 */}
       {cluster ? (
