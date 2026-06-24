@@ -31,6 +31,7 @@ export default function Home({
   regionTrigger,
   hasBusinessInfo,
   onEditBusiness,
+  profileKey,
 }: {
   displayName: string;
   blogName: string;
@@ -47,6 +48,7 @@ export default function Home({
   regionTrigger?: number; // 성과 페이지 '지역 선점'에서 넘어오면 지역 강화 자동 ON
   hasBusinessInfo?: boolean; // 업체 주소 등록 여부 — 지역 강화 가능 판단
   onEditBusiness?: () => void; // 업체 등록(온보딩 재진입)
+  profileKey?: string; // 업종:세부 — 글감 캐시 분리(업종 바꾸면 새 글감)
 }) {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [topicsLoading, setTopicsLoading] = useState(true);
@@ -86,7 +88,7 @@ export default function Home({
 
   // 글감 캐시 키 — 하루 고정 + 모드별(새로고침·복귀·모드전환 시 재로딩·재셔플 방지)
   const todayDate = new Date().toISOString().slice(0, 10);
-  const topicsCacheKey = (md: string) => `ateflo_topics_${todayDate}_${md}`;
+  const topicsCacheKey = (md: string) => `ateflo_topics_${todayDate}_${profileKey ?? ""}_${md}`;
   const curModeKey = regionMode ? "region" : cluster ? `cluster:${cluster}` : "normal";
 
   // '이 글감 교체' → 그 카드만 새 글감으로. 동시·연속 교체 허용(하나 끝나길 안 기다림).
@@ -126,7 +128,7 @@ export default function Home({
 
   const loadTopics = useCallback(async () => {
     const md = regionMode ? "region" : cluster ? `cluster:${cluster}` : "normal";
-    const ck = `ateflo_topics_${new Date().toISOString().slice(0, 10)}_${md}`;
+    const ck = `ateflo_topics_${new Date().toISOString().slice(0, 10)}_${profileKey ?? ""}_${md}`;
     // 하루 고정 — 캐시 있으면 즉시 표시(로딩·재셔플 없음). 새로고침·강력새로고침·모드전환 모두 안정.
     try {
       const raw = typeof window !== "undefined" ? localStorage.getItem(ck) : null;
@@ -156,7 +158,7 @@ export default function Home({
       setCollecting(false);
       setTopicsLoading(false);
     }
-  }, [cluster, regionMode]);
+  }, [cluster, regionMode, profileKey]);
 
   useEffect(() => {
     loadTopics();

@@ -925,6 +925,7 @@ export default function DashboardClient(props: DashboardProps) {
                 regionTrigger={regionTrigger}
                 hasBusinessInfo={Boolean(blogProfile.biz_address)}
                 onEditBusiness={() => { setReonboardPrev(blogProfile); setBlogProfile(null); goTab("lab"); }}
+                profileKey={`${blogProfile.vertical}:${blogProfile.sub_category ?? ""}`}
               />
             )}
             {labView === "home" && blocked && (
