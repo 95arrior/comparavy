@@ -150,8 +150,9 @@ export async function GET(req: Request) {
   }
 
   // 단계적 폴백: (sub+적정범위) → (sub+전체) → (vertical+적정범위) → (vertical+전체).
+  // 대상 선택해도 vertical 폴백 허용 — audMatch가 fetchPool에서 대상을 이미 거르므로 안전(얇은 풀 방지).
   const steps: [boolean, boolean][] = sub
-    ? (audActive ? [[true, true], [true, false]] : [[true, true], [true, false], [false, true], [false, false]])
+    ? [[true, true], [true, false], [false, true], [false, false]]
     : [[false, true], [false, false]];
   let rows: PoolRow[] = [];
   for (const [useSub, ranged] of steps) {
