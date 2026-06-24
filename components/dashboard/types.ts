@@ -30,6 +30,8 @@ export interface Article {
   write_note?: string | null;
   /** 글 유형: 'promo'(홍보용 — 업장 연결) | 'info'(정보성 — 순수 정보). 정보성은 섹션 추천 숨김. */
   article_type?: string | null;
+  /** 발행 채널 — wp(워드프레스 자동발행) | naver(복붙). 없으면 유저 타입으로 추론 */
+  channel?: string | null;
   /** 발행/예약 일시 — 콘텐츠 캘린더 표시용 (예약=예약 시각, 발행=발행 시각) */
   publish_at?: string | null;
   created_at: string;

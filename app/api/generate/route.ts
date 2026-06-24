@@ -250,6 +250,7 @@ export async function POST(request: Request) {
           write_note: article.write_note || null, // 글쓴이용 메모 (마이그레이션 0007)
           tags: article.tags ?? [], // 워드프레스 태그 (마이그레이션: articles.tags jsonb)
           article_type: promo ? "promo" : "info", // 홍보용/정보성 (마이그레이션 0040)
+          channel, // 발행 채널 wp|naver (마이그레이션 0042) — 컬럼 없으면 아래 재시도에서 제외
         };
         // 티저(잠금 미리보기)일 때만 locked 사용 → 마이그레이션(0006) 전에도 일반 생성은 정상 동작
         if (teaser) insertPayload.locked = true;
@@ -263,7 +264,7 @@ export async function POST(request: Request) {
         let { data: saved, error: saveError } = await writeArticle();
 
         // 아직 없는 선택 컬럼(write_note·tags 등)을 가리키는 오류면 그 컬럼만 빼고 재시도 → 마이그레이션 전에도 생성은 항상 동작
-        for (const col of ["tags", "write_note", "article_type"]) {
+        for (const col of ["tags", "write_note", "article_type", "channel"]) {
           if (saveError && new RegExp(col, "i").test(saveError.message ?? "")) {
             delete insertPayload[col];
             ({ data: saved, error: saveError } = await writeArticle());

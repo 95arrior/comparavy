@@ -49,7 +49,8 @@ export default function ArticleModal({
   const [publishing, setPublishing] = useState(false);
   const [publishSheetOpen, setPublishSheetOpen] = useState(false); // '발행하기' → 발행 설정 시트(슬라이드업)
   const [naverOpen, setNaverOpen] = useState(false); // 네이버(자영업자) 복붙 발행 시트
-  const isNaver = bloggerType(vertical ?? "general") === "local"; // 자영업자=네이버 채널 → 복붙 흐름
+  // 채널 — 글에 저장된 channel 우선(정확), 없으면(옛 글) 유저 타입으로 추론
+  const isNaver = article.channel ? article.channel === "naver" : bloggerType(vertical ?? "general") === "local";
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [autoSavedAt, setAutoSavedAt] = useState<string | null>(null);
