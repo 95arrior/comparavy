@@ -13,6 +13,7 @@ export default function StoryComposer({
   onStoryChange,
   promo,
   onPromoChange,
+  collapsible = false,
   onSubmit,
 }: {
   hasBiz: boolean;
@@ -23,6 +24,7 @@ export default function StoryComposer({
   onStoryChange: (s: string) => void;
   promo: boolean;
   onPromoChange: (p: boolean) => void;
+  collapsible?: boolean; // true면 검색창처럼 접혀 있다가 클릭하면 펼쳐짐
   onSubmit: (story: string, promo: boolean, title: string) => void;
 }) {
   const [focused, setFocused] = useState(false);
@@ -30,21 +32,28 @@ export default function StoryComposer({
   const setStory = onStoryChange;
   const setPromo = onPromoChange;
   const ready = story.trim().length >= 10;
+  const expanded = !collapsible || focused || story.trim().length > 0; // 펼침 여부
 
   return (
     <div>
       {/* 박스 — 하단 박스들과 동일하게 평평한 neutral-50(드롭쉐도우 없음). 포커스 시 오로라가 '테두리'로 또렷하게 일렁임 */}
       <div className={`rounded-2xl p-[2px] transition-all duration-500 ${focused ? "ateflo-chip-aurora shadow-[0_0_20px_-3px_rgba(150,160,255,0.5)]" : "bg-transparent"}`}>
         <div className="relative overflow-hidden rounded-[15px] bg-neutral-50">
+          {/* 접혔을 때(검색창) 앞의 ✍️ 아이콘 */}
+          {!expanded && (
+            <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+            </span>
+          )}
           <textarea
             value={story}
             onChange={(e) => setStory(e.target.value)}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
-            placeholder={focused ? "" : "블로그에 쓰고 싶은 내용을 간략하게 적어주세요"}
-            rows={6}
+            placeholder={focused ? "" : collapsible && !expanded ? "내가 직접 쓰기 — 블로그에 쓰고 싶은 내용을 적어보세요" : "블로그에 쓰고 싶은 내용을 간략하게 적어주세요"}
+            rows={expanded ? 6 : 1}
             maxLength={4000}
-            className="ateflo-thin-scroll relative w-full resize-none bg-transparent px-4 py-3.5 pr-14 text-[15px] leading-relaxed outline-none placeholder:text-neutral-400"
+            className={`ateflo-thin-scroll relative w-full resize-none bg-transparent py-3.5 pr-14 text-[15px] leading-relaxed outline-none transition-all duration-300 placeholder:text-neutral-400 ${expanded ? "px-4" : "pl-11"}`}
           />
           {/* 전송 — 비었을 땐 안 보이고, 충분히 적으면(ready) 파란 ↑가 자연스럽게 나타남 */}
           <button
@@ -58,19 +67,22 @@ export default function StoryComposer({
         </div>
       </div>
 
-      <div className="mt-1.5 flex items-center justify-between px-1">
-        <span className="text-[11px] text-neutral-400">없는 경험은 안 지어내요</span>
-        <span className="text-[11px] text-neutral-400">{story.length}/4000</span>
-      </div>
-
-      {local && (
-        <div className="relative mt-2.5 grid grid-cols-2 rounded-2xl bg-neutral-50 p-1.5">
-          {/* 슬라이딩 알약 — 선택에 따라 부드럽게 좌우로 미끄러짐 */}
-          <div className={`pointer-events-none absolute inset-y-1.5 left-1.5 w-[calc(50%-0.375rem)] rounded-xl bg-white shadow-sm transition-transform duration-300 ease-out ${promo ? "translate-x-0" : "translate-x-full"}`} />
-          <button onClick={() => setPromo(true)} className={`relative z-10 rounded-xl py-2.5 text-[13.5px] font-bold transition-colors duration-200 ${promo ? "text-[#1D75F7]" : "text-neutral-500"}`}>홍보용 <span className="text-[11px] font-medium opacity-70">(가게 연결)</span></button>
-          <button onClick={() => setPromo(false)} className={`relative z-10 rounded-xl py-2.5 text-[13.5px] font-bold transition-colors duration-200 ${!promo ? "text-[#1D75F7]" : "text-neutral-500"}`}>정보용 <span className="text-[11px] font-medium opacity-70">(순수 정보)</span></button>
+      {/* 펼쳤을 때만 — 글자수·홍보/정보 토글이 쭉 따라 내려옴 */}
+      <div className={`overflow-hidden transition-all duration-300 ${expanded ? "max-h-48 opacity-100" : "max-h-0 opacity-0"}`}>
+        <div className="mt-1.5 flex items-center justify-between px-1">
+          <span className="text-[11px] text-neutral-400">없는 경험은 안 지어내요</span>
+          <span className="text-[11px] text-neutral-400">{story.length}/4000</span>
         </div>
-      )}
+
+        {local && (
+          <div className="relative mt-2.5 grid grid-cols-2 rounded-2xl bg-neutral-50 p-1.5">
+            {/* 슬라이딩 알약 — 선택에 따라 부드럽게 좌우로 미끄러짐 */}
+            <div className={`pointer-events-none absolute inset-y-1.5 left-1.5 w-[calc(50%-0.375rem)] rounded-xl bg-white shadow-sm transition-transform duration-300 ease-out ${promo ? "translate-x-0" : "translate-x-full"}`} />
+            <button onClick={() => setPromo(true)} className={`relative z-10 rounded-xl py-2.5 text-[13.5px] font-bold transition-colors duration-200 ${promo ? "text-[#1D75F7]" : "text-neutral-500"}`}>홍보용 <span className="text-[11px] font-medium opacity-70">(가게 연결)</span></button>
+            <button onClick={() => setPromo(false)} className={`relative z-10 rounded-xl py-2.5 text-[13.5px] font-bold transition-colors duration-200 ${!promo ? "text-[#1D75F7]" : "text-neutral-500"}`}>정보용 <span className="text-[11px] font-medium opacity-70">(순수 정보)</span></button>
+          </div>
+        )}
+      </div>
 
       {/* 제목 정하기 — 글쓰기 직전에 */}
       {titleOpen && (

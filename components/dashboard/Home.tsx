@@ -78,14 +78,13 @@ export default function Home({
   const [swapping, setSwapping] = useState<string[]>([]); // 교체 중인 글감 keyword들(동시·연속 교체)
   const [cluster, setCluster] = useState<string | null>(null); // '주제 이어가기' 활성 토픽(null=기본 다양)
   const [regionMode, setRegionMode] = useState(false); // '지역 강화'(우리 동네 키워드 실데이터) 모드
-  const [showGlams, setShowGlams] = useState(true); // 기본은 '글감' 메인 — '내가 직접 쓰기'는 메뉴로 진입
   const [seriesOpen, setSeriesOpen] = useState(false); // '주제 시리즈' 시트
   const [storyTitle, setStoryTitle] = useState(""); // 사장님이 직접 정하는 제목(유지)
   const [storyDraft, setStoryDraft] = useState(""); // 내 이야기 초안 — 글감 보기 갔다 와도 유지(상태 끌어올림)
   const [storyPromo, setStoryPromo] = useState(() => bloggerType === "local"); // 동네 사장님은 '소개' 의도라 홍보용 기본
   // 성과 '지역 선점'에서 넘어오면 지역 강화 자동 ON (동네 사장님만)
   useEffect(() => {
-    if (regionTrigger && bloggerType === "local") { setShowGlams(true); setRegionMode(true); }
+    if (regionTrigger && bloggerType === "local") { setRegionMode(true); }
   }, [regionTrigger, bloggerType]);
 
   // 사용자가 가장 많이 쓴 주제 토큰(2편 이상) → '주제 이어가기' 제안용
@@ -197,25 +196,13 @@ export default function Home({
 
       {/* 중앙 — 히어로 + 오늘의 글감 3개 */}
       <div className="flex flex-1 flex-col justify-center py-6">
-      {/* 메인 — 내 이야기 인라인 입력. 글감은 '추천받기' 버튼으로 펼친다(showGlams) */}
-      {!showGlams ? (
-        <div className="ateflo-page-in mt-6">
-          <button onClick={() => setShowGlams(true)} className="mb-4 -ml-1 flex items-center gap-1 text-[13px] font-medium text-neutral-400 transition hover:text-neutral-700"><span className="text-base leading-none">←</span> 글감 보기</button>
-          <h2 className="text-[20px] font-bold tracking-tight text-neutral-900">내가 직접 쓰기</h2>
-          <p className="mb-4 mt-1 text-[13.5px] leading-relaxed text-neutral-400">방향만 슥 적어도, 두서없이 막 적어도 괜찮아요. <b className="text-[#1D75F7]">알아서 명품 글</b>로 만들어드려요.</p>
-          {onWriteStory && <StoryComposer hasBiz={hasBusinessInfo ?? false} local={bloggerType === "local"} title={storyTitle} onTitleChange={setStoryTitle} story={storyDraft} onStoryChange={setStoryDraft} promo={storyPromo} onPromoChange={setStoryPromo} onSubmit={(s, p, t) => onWriteStory(s, p, t)} />}
-        </div>
-      ) : (
+      {/* 메인 — 글감 + 상단 '직접 쓰기' 검색창(클릭하면 쭉 펼쳐짐) */}
+      {(
         <div className="ateflo-page-in">
-          {!cluster && !regionMode && (
-            <button onClick={() => setShowGlams(false)} className="mt-6 flex w-full items-center gap-2.5 rounded-2xl bg-white px-4 py-3.5 text-left ring-1 ring-black/[0.04] transition hover:ring-[#1D75F7]/30 active:scale-[0.99]">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#1D75F7]/10 text-[16px]">✍️</span>
-              <span className="flex-1">
-                <span className="block text-[14px] font-bold text-neutral-900">내가 직접 쓰기</span>
-                <span className="block text-[12px] text-neutral-400">방향만 적어도 명품 글로 만들어드려요</span>
-              </span>
-              <svg className="shrink-0 text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
-            </button>
+          {!cluster && !regionMode && onWriteStory && (
+            <div className="mt-6">
+              <StoryComposer collapsible hasBiz={hasBusinessInfo ?? false} local={bloggerType === "local"} title={storyTitle} onTitleChange={setStoryTitle} story={storyDraft} onStoryChange={setStoryDraft} promo={storyPromo} onPromoChange={setStoryPromo} onSubmit={(s, p, t) => onWriteStory(s, p, t)} />
+            </div>
           )}
 
       {/* 추천 글감(보조) — 글감이 떠오르지 않을 때. 누르면 그 글 쓰기 */}
