@@ -1198,16 +1198,17 @@ export default function ArticleModal({
             title={title}
             onTitleChange={setTitle}
             featuredImage={featured}
-            onFeaturedChange={setFeatured}
+            onFeaturedChange={isNaver ? undefined : setFeatured}
             originalHtml={article.original_html ?? undefined}
             initialHtml={article.body_html}
             onChange={setBodyHtml}
+            editable={!isNaver}
             toolbarOffset="top-[57px]"
           />
         </div>
 
-        {/* 섹션 추가 추천 — 체류시간↑ (홍보용 글만. 정보성은 순수 정보라 추천 안 띄움) */}
-        {!article.locked && article.article_type !== "info" && (
+        {/* 섹션 추가 추천 — 체류시간↑ (홍보용 글만. 정보성은 순수 정보라 추천 안 띄움. 네이버는 편집 안 하므로 숨김) */}
+        {!article.locked && article.article_type !== "info" && !isNaver && (
           <SectionSuggest
             articleId={article.id}
             onInsert={(html) => editorRef.current?.appendContent(html)}

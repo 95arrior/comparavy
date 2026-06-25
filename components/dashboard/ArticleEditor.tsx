@@ -144,6 +144,8 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
   featuredImage?: string | null;
   onFeaturedChange?: (src: string | null) => void;
   originalHtml?: string;
+  /** false면 읽기전용(툴바·편집 비활성) — 자영업자(네이버)는 우리 편집기에서 안 고치고 네이버에서 편집. */
+  editable?: boolean;
   /** 스크롤 시 툴바가 고정될 상단 오프셋 (상위 고정 바와 겹치지 않게). 예: "top-[57px]" */
   toolbarOffset?: string;
 }>(function ArticleEditor({
@@ -154,6 +156,7 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
   featuredImage,
   onFeaturedChange,
   originalHtml,
+  editable = true,
   toolbarOffset = "top-0",
 }, ref) {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -187,6 +190,7 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
       Highlight.configure({ multicolor: false }), // 형광펜(<mark>) — 네이버st 핵심 문장 강조
     ],
     content: initialHtml,
+    editable,
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
     editorProps: {
       attributes: { class: "ateflo-article" },
@@ -342,6 +346,7 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
           </div>
         </div>
       )}
+      {editable && (
       <div className={`sticky ${toolbarOffset} z-20 border-b border-neutral-200 bg-white/95 backdrop-blur`}>
         <div className="flex flex-wrap items-center gap-0.5 px-3 py-2">
           <Btn title="실행취소 (Ctrl+Z)" disabled={!editor.can().undo()} onClick={() => editor.chain().focus().undo().run()}><IconUndo /></Btn>
@@ -395,6 +400,7 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
           </div>
         )}
       </div>
+      )}
 
       <div className="mx-auto max-w-[720px] px-4 py-6 sm:px-8 sm:py-8">
         {onFeaturedChange && (
@@ -432,6 +438,7 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
             ref={titleRef}
             rows={1}
             value={title ?? ""}
+            readOnly={!editable}
             onChange={(e) => onTitleChange(e.target.value)}
             placeholder="제목을 입력하세요 (검색에 노출되는 H1)"
             style={{ resize: "none", overflow: "hidden" }}
