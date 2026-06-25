@@ -268,6 +268,22 @@ export default function ArticleModal({
       // 무시
     }
   }
+
+  // 네이버 '글쓰기' 화면으로 바로 이동 — 블로그 아이디는 1회만 입력받아 저장(blog.naver.com/{id}/postwrite)
+  function openNaverWrite() {
+    let id = "";
+    try { id = localStorage.getItem("ateflo_naver_blogid") || ""; } catch { /* ignore */ }
+    if (!id) {
+      const input = window.prompt("내 네이버 블로그 아이디를 입력해 주세요\n(예: blog.naver.com/myblog → myblog)");
+      if (!input) return;
+      id = input.trim().replace(/^https?:\/\//, "").replace(/^m\./, "").replace(/^blog\.naver\.com\//, "").replace(/[/?#].*$/, "").trim();
+      if (!id) return;
+      try { localStorage.setItem("ateflo_naver_blogid", id); } catch { /* ignore */ }
+    }
+    window.open(`https://blog.naver.com/${id}/postwrite`, "_blank", "noopener");
+    markNaverPublished(); // 글쓰기로 넘어가면 '발행됨'으로 표시(별도 버튼 없이 성과·내글 추적 유지)
+  }
+
   const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const tagsChanged = JSON.stringify(tags) !== JSON.stringify(Array.isArray(article.tags) ? article.tags : []);
@@ -865,9 +881,8 @@ export default function ArticleModal({
                 <p>· 발행할 때 <b>태그</b>도 본문 해시태그처럼 넣어주세요</p>
               </div>
               <button onClick={copyBody} className="mt-4 w-full rounded-xl bg-[#03C75A] py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">{copied ? "복사됨 ✓" : "본문 복사"}</button>
-              <a href="https://blog.naver.com/" target="_blank" rel="noopener noreferrer" className="mt-2 block w-full rounded-xl bg-neutral-100 py-3 text-center text-[14px] font-bold text-neutral-700 transition hover:bg-neutral-200">네이버 글쓰기 열기</a>
-              <button onClick={markNaverPublished} className="mt-3 w-full py-2 text-center text-[13px] font-bold text-[#1D75F7]">다 올렸어요 · 발행 완료로 표시</button>
-              <button onClick={() => setNaverOpen(false)} className="mt-1 w-full py-1.5 text-center text-sm font-medium text-neutral-400 transition hover:text-neutral-700">닫기</button>
+              <button onClick={openNaverWrite} className="mt-2 block w-full rounded-xl bg-neutral-100 py-3 text-center text-[14px] font-bold text-neutral-700 transition hover:bg-neutral-200">네이버 글쓰기 열기</button>
+              <button onClick={() => setNaverOpen(false)} className="mt-2 w-full py-1.5 text-center text-sm font-medium text-neutral-400 transition hover:text-neutral-700">닫기</button>
             </div>
           </div>
         )}
