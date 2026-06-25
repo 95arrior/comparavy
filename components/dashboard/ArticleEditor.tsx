@@ -317,6 +317,7 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
       type="button"
       title={title}
       disabled={disabled}
+      onMouseDown={(e) => e.preventDefault()} // 편집기 선택/커서를 뺏지 않게 — 안 하면 선택 풀려 '전체 볼드' 등 오작동
       onClick={onClick}
       className={`flex h-8 w-8 items-center justify-center rounded-md transition duration-150 active:scale-90 ${
         disabled
