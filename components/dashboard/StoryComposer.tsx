@@ -8,6 +8,8 @@ import AteFloLogo from "@/components/AteFloLogo";
 export default function StoryComposer({
   hasBiz,
   local,
+  title,
+  onTitleChange,
   story,
   onStoryChange,
   promo,
@@ -16,21 +18,32 @@ export default function StoryComposer({
 }: {
   hasBiz: boolean;
   local: boolean;
+  title: string; // 사장님이 직접 정하는 제목(비우면 AI가 핏하게)
+  onTitleChange: (t: string) => void;
   story: string; // 초안(Home이 보유 → 글감 보기 갔다 와도 유지)
   onStoryChange: (s: string) => void;
   promo: boolean;
   onPromoChange: (p: boolean) => void;
-  onSubmit: (story: string, promo: boolean) => void;
+  onSubmit: (story: string, promo: boolean, title: string) => void;
 }) {
   const [focused, setFocused] = useState(false);
   const setStory = onStoryChange;
   const setPromo = onPromoChange;
   const hasText = story.trim().length > 0;
   const ready = story.trim().length >= 10;
-  const submit = () => { if (ready) onSubmit(story.trim(), promo); };
+  const submit = () => { if (ready) onSubmit(story.trim(), promo, title.trim()); };
 
   return (
     <div>
+      {/* 제목 — 사장님이 직접 정하기(비우면 AI가 핏하게). 본문은 이 제목에 어긋나지 않게 */}
+      <input
+        value={title}
+        onChange={(e) => onTitleChange(e.target.value)}
+        placeholder="제목을 정해주세요 (비우면 AI가 알아서)"
+        maxLength={80}
+        className="mb-2.5 w-full rounded-2xl bg-white px-4 py-3 text-[15px] font-bold text-neutral-900 outline-none ring-1 ring-neutral-200 transition placeholder:font-normal placeholder:text-neutral-400 focus:ring-2 focus:ring-[#1D75F7]/30"
+      />
+
       {/* 박스 — 기본 회색 테두리(챗GPT풍), 포커스 시 오로라 테두리 애니메이션 */}
       <div className={`relative rounded-2xl p-[1.5px] transition-colors duration-300 ${focused ? "ateflo-chip-aurora" : "bg-neutral-200"}`}>
         <div className="relative rounded-[14.5px] bg-white">

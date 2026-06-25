@@ -935,11 +935,11 @@ export default function DashboardClient(props: DashboardProps) {
                 regionTrigger={regionTrigger}
                 hasBusinessInfo={Boolean(blogProfile.biz_address)}
                 onEditBusiness={() => setPage("profile")}
-                onWriteStory={(storyText, promo) => {
+                onWriteStory={(storyText, promo, title) => {
                   if (!blogProfile) return;
                   setSelected(null);
                   setGenParams({
-                    keyword: "", // 주제는 라우트가 이야기에서 AI로 핏하게 유도
+                    keyword: title, // 사장님이 정한 제목(비면 라우트가 AI로 유도)
                     angle: "",
                     type: toEngineType(blogProfile.article_type, blogProfile.vertical),
                     tone: blogProfile.tone,

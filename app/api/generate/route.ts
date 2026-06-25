@@ -73,7 +73,8 @@ export async function POST(request: Request) {
 
   const userStory = (body.userStory ?? "").trim().slice(0, 4000); // '내 이야기' 재료(상한)
   let keyword = (body.keyword ?? "").trim();
-  // '내 이야기'로 쓰는데 키워드(주제)가 비면, 이야기 첫 구절에서 파이프라인용 키워드를 뽑는다(실제 제목은 프롬프트가 이야기 기반으로 만든다).
+  const userTitle = userStory && keyword ? keyword.slice(0, 80) : null; // 사장님이 직접 쓴 제목(이야기+제목 둘 다일 때)
+  // '내 이야기'인데 제목을 안 적으면, 이야기 첫 구절을 파이프라인 키워드로(실제 제목은 아래서 AI가 핏하게 유도).
   if (!keyword && userStory) keyword = userStory.replace(/\s+/g, " ").split(/[.!?\n]/)[0].trim().slice(0, 40);
   // 1차(규칙): 자모(ㅁㅇ)·숫자·기호·반복(aaaa)·자판난타(qwrt) 등 명백한 쓰레기 차단 — 헛 생성·비용 낭비 방지
   if (looksLikeGarbageKeyword(keyword)) {
@@ -210,14 +211,14 @@ export async function POST(request: Request) {
           if (genId) send({ type: "generating", id: genId });
         }
 
-        // '내 이야기'인데 주제를 안 적었으면, 이야기에서 AI로 핏한 검색 질문형 주제를 뽑아 제목 앵커로 쓴다.
-        if (userStory && !(body.keyword ?? "").trim()) {
+        // '내 이야기'인데 제목을 안 적었으면, 이야기에서 AI로 핏한 검색 질문형 제목을 뽑아 앵커로 쓴다(제목 적었으면 그대로 존중).
+        if (userStory && !userTitle) {
           const aud = audSel.filter((a) => a !== AUDIENCE_ALL).join("·") || undefined;
           const derived = await deriveStoryTopic(userStory, profileRow?.sub_category || vertical, aud);
           if (derived) keyword = derived;
         }
         const article = await streamArticle(
-          { keyword, angle: body.angle, type, tone, maxWords, variantInstruction, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, channel, userStory: userStory || null },
+          { keyword, angle: body.angle, type, tone, maxWords, variantInstruction, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, channel, userStory: userStory || null, userTitle },
           (bodyHtml) => send({ type: "body", html: bodyHtml }),
           (title) => send({ type: "title", title }),
           (u) => { void logUsage({ userId: user.id, model: u.model, kind: "generate", inputTokens: u.inputTokens, outputTokens: u.outputTokens }); },

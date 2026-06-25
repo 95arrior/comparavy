@@ -50,7 +50,7 @@ export default function Home({
   regionTrigger?: number; // 성과 페이지 '지역 선점'에서 넘어오면 지역 강화 자동 ON
   hasBusinessInfo?: boolean; // 업체 주소 등록 여부 — 지역 강화 가능 판단
   onEditBusiness?: () => void; // 업체 등록(온보딩 재진입)
-  onWriteStory?: (story: string, promo: boolean) => void; // 내 이야기로 글쓰기(메인 기능, 인라인)
+  onWriteStory?: (story: string, promo: boolean, title: string) => void; // 내 이야기로 글쓰기(메인 기능, 인라인)
   profileKey?: string; // 업종:세부 — 글감 캐시 분리(업종 바꾸면 새 글감)
 }) {
   const [topics, setTopics] = useState<Topic[]>([]);
@@ -62,6 +62,7 @@ export default function Home({
   const [regionMode, setRegionMode] = useState(false); // '지역 강화'(우리 동네 키워드 실데이터) 모드
   const [seriesOpen, setSeriesOpen] = useState(false); // '주제 시리즈'(연재 코스) 시트
   const [showGlams, setShowGlams] = useState(false); // 글감 추천 보기(기본은 내 이야기 입력, 버튼으로 글감 펼침)
+  const [storyTitle, setStoryTitle] = useState(""); // 사장님이 직접 정하는 제목(유지)
   const [storyDraft, setStoryDraft] = useState(""); // 내 이야기 초안 — 글감 보기 갔다 와도 유지(상태 끌어올림)
   const [storyPromo, setStoryPromo] = useState(() => bloggerType === "local" && (hasBusinessInfo ?? false));
   // 성과 '지역 선점'에서 넘어오면 지역 강화 자동 ON (동네 사장님만)
@@ -202,7 +203,7 @@ export default function Home({
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1D75F7]/10 text-[#1D75F7]"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg></span>
             <p className="text-[15px] font-bold text-neutral-900">내 이야기로 글쓰기</p>
           </div>
-          {onWriteStory && <StoryComposer hasBiz={hasBusinessInfo ?? false} local={bloggerType === "local"} story={storyDraft} onStoryChange={setStoryDraft} promo={storyPromo} onPromoChange={setStoryPromo} onSubmit={(s, p) => onWriteStory(s, p)} />}
+          {onWriteStory && <StoryComposer hasBiz={hasBusinessInfo ?? false} local={bloggerType === "local"} title={storyTitle} onTitleChange={setStoryTitle} story={storyDraft} onStoryChange={setStoryDraft} promo={storyPromo} onPromoChange={setStoryPromo} onSubmit={(s, p, t) => onWriteStory(s, p, t)} />}
           <button onClick={() => setShowGlams(true)} className="mt-5 flex w-full items-center justify-center gap-1.5 rounded-2xl bg-white py-3.5 text-[13.5px] font-bold text-neutral-600 ring-1 ring-black/[0.04] transition hover:ring-[#1D75F7]/30 active:scale-[0.99]">
             뭘 쓸지 고민된다면? <span className="text-[#1D75F7]">글감 추천받기</span>
             <svg className="text-neutral-300" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
