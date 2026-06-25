@@ -9,6 +9,7 @@ import { checkRateLimit } from "@/lib/rateLimit";
 import { normalizeKeyword, pickVariant, pickAngle, simhash } from "@/lib/diversity";
 import { looksLikeGarbageKeyword } from "@/lib/keywordGuard";
 import { isUnsafeKeyword } from "@/lib/keywordSafety";
+import { deriveStoryTopic } from "@/lib/aiSeeds";
 import { explicitAudienceOf, AUDIENCE_ALL } from "@/lib/audience";
 import { isAdminEmail } from "@/lib/adminStats";
 import { logUsage } from "@/lib/usageLog";
@@ -136,7 +137,7 @@ export async function POST(request: Request) {
   // 업종(vertical) + 업체 정보 — 프로필에서 1회 조회(없으면 general/미입력). 프롬프트 분기 + 글 하단 NAP 박스에 사용.
   const { data: profileRow } = await supabase
     .from("blog_profiles")
-    .select("vertical,biz_name,biz_address,biz_detail_address,biz_phone,biz_hours,biz_hours_json,biz_strength,audience")
+    .select("vertical,sub_category,biz_name,biz_address,biz_detail_address,biz_phone,biz_hours,biz_hours_json,biz_strength,audience")
     .eq("user_id", user.id)
     .maybeSingle();
   const vertical = profileRow?.vertical ?? "general";
@@ -209,6 +210,12 @@ export async function POST(request: Request) {
           if (genId) send({ type: "generating", id: genId });
         }
 
+        // '내 이야기'인데 주제를 안 적었으면, 이야기에서 AI로 핏한 검색 질문형 주제를 뽑아 제목 앵커로 쓴다.
+        if (userStory && !(body.keyword ?? "").trim()) {
+          const aud = audSel.filter((a) => a !== AUDIENCE_ALL).join("·") || undefined;
+          const derived = await deriveStoryTopic(userStory, profileRow?.sub_category || vertical, aud);
+          if (derived) keyword = derived;
+        }
         const article = await streamArticle(
           { keyword, angle: body.angle, type, tone, maxWords, variantInstruction, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, channel, userStory: userStory || null },
           (bodyHtml) => send({ type: "body", html: bodyHtml }),

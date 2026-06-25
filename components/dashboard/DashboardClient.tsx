@@ -900,11 +900,11 @@ export default function DashboardClient(props: DashboardProps) {
             hasBiz={Boolean(blogProfile.biz_name)}
             local={bloggerType(blogProfile.vertical) === "local"}
             onClose={() => setStoryOpen(false)}
-            onSubmit={(storyText, topic, promo) => {
+            onSubmit={(storyText, promo) => {
               setStoryOpen(false);
               setSelected(null);
               setGenParams({
-                keyword: topic, // 비면 라우트가 이야기에서 유도
+                keyword: "", // 주제는 라우트가 이야기에서 AI로 핏하게 유도
                 angle: "",
                 type: toEngineType(blogProfile.article_type, blogProfile.vertical),
                 tone: blogProfile.tone,

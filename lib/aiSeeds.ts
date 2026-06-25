@@ -1,5 +1,34 @@
 import Anthropic from "@anthropic-ai/sdk";
 
+// '내 이야기'에서 가장 잘 맞는 검색 질문형 주제(제목 앵커)를 AI로 뽑는다 — 사용자가 주제를 안 적어도 핏하게.
+export async function deriveStoryTopic(story: string, field: string, audience?: string): Promise<string> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const s = (story || "").trim().slice(0, 2500);
+  if (!apiKey || s.length < 10) return "";
+  try {
+    const client = new Anthropic({ apiKey });
+    const res = await client.messages.create({
+      model: "claude-haiku-4-5",
+      max_tokens: 120,
+      messages: [
+        {
+          role: "user",
+          content:
+            `업종: ${field}${audience ? ` / 대상: ${audience}` : ""}\n사장님이 쓴 이야기:\n"""${s}"""\n\n` +
+            `이 이야기로 네이버 블로그 글을 쓴다면 가장 잘 맞는 '검색 질문형 주제(제목)' 딱 하나를 한 줄로. 사람들이 실제 검색할 자연스러운 질문/주제로(과장·낚시·대괄호 금지). JSON만: {"topic":"..."}`,
+        },
+      ],
+    });
+    const text = res.content.map((c) => (c.type === "text" ? c.text : "")).join("");
+    const m = text.match(/\{[\s\S]*\}/);
+    if (!m) return "";
+    const raw = JSON.parse(m[0]) as { topic?: string };
+    return (typeof raw.topic === "string" ? raw.topic.trim() : "").slice(0, 60);
+  } catch {
+    return "";
+  }
+}
+
 // 지역 글감 '생성' — 검색량(네이버 볼륨)에 의존하지 않고 지역×업종×대상×특성으로 동네 검색어를 만든다.
 // 작은 동네 키워드는 측정 검색량이 0이라 네이버 API엔 안 잡히지만, 동네 손님은 꾸준히 검색(고의도·무경쟁) → 생성으로 커버.
 const localKwCache = new Map<string, string[]>();
