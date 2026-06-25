@@ -36,11 +36,11 @@ const SAVE_TOOL: Anthropic.Tool = {
       },
       body_html: {
         type: "string",
-        description: "본문 HTML. <h2>,<h3>,<p>,<ul>,<li>만 사용하고 인라인 스타일 금지.",
+        description: "본문 HTML. <h2>,<h3>,<p>,<ul>,<li>만 사용하고 인라인 스타일 금지. ★각 소제목(h2) 바로 아래에 그 질문의 '핵심 답'을 2~3문장 먼저 주고(자기완결·그 부분만 떼어도 이해·인용 가능) 근거·방법으로 풀어쓴다.",
       },
       faq: {
         type: "array",
-        description: "자주 묻는 질문 3~5개 (한국어)",
+        description: "본문에서 다 못 푼, 검색한 사람이 '추가로' 검색할 만한 실제 질문 3~5개. 답은 짧고 정확하게(자기완결). 본문 내용 단순 반복·억지 채우기 금지.",
         items: {
           type: "object",
           properties: {

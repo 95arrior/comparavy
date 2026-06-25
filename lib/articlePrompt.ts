@@ -157,6 +157,18 @@ const VERTICAL_SYSTEM: Record<string, string> = {
   ].join("\n"),
 };
 
+// 해결·완결 + AEO — 2026 검색엔진(네이버·구글) 공통 핵심: '한 번 방문으로 문제를 해결했는가'. 모든 글에 주입.
+const AEO_RESOLUTION = [
+  "",
+  "[해결·완결 — 가장 중요한 원칙]",
+  "이 글의 목표는 '검색한 사람이 이 글 하나로 끝나서 다시 검색할 필요가 없게' 만드는 것이다. 네이버·구글 모두 '한 번 방문으로 문제를 해결했는가'를 핵심 신호로 본다(체류 채우기·주저리가 아니라 '완결').",
+  "1) [관련 질문까지] 핵심 질문 + 그 키워드로 검색한 사람이 곧이어 궁금해할 관련 질문(방법·비용·기준·주의점·비교·준비물·다음 단계 등)까지 미리 짚어 빈틈을 없앤다.",
+  "2) [답 먼저] 도입과 '각 소제목 바로 아래'에서 핵심 답을 2~3문장(약 130~170자)으로 먼저 분명히 준 뒤 근거·방법으로 풀어낸다. 결론을 끝까지 미루지 않는다.",
+  "3) [섹션 독립] 각 소제목 묶음은 그것만 떼어 읽어도 이해·인용되게 쓴다(AI 답변·스니펫이 그 부분만 가져가도 말이 되게). '앞에서 말했듯' 같은 앞 의존 표현 최소화.",
+  "4) [실행 가능] '자세한 건 알아보세요'로 떠넘기지 말고 글 안에서 판단·실행 가능한 수준까지 구체적으로. 단 모르는 정확 수치·시점은 지어내지 말고 '확인 권장'은 유지(정직+완결 동시).",
+  "5) [더 잘 해결] 검색엔진·AEO는 '그 주제를 가장 완전히 해결한 글'을 답으로 고른다. 이 글이 그 키워드에서 '가장 완결된 글'이 되게 한다.",
+].join("\n");
+
 // 네이버 블로그 모드 — 구글/워드프레스와 다른 규격(C-Rank/D.I.A.+·경험톤·사진·구조·해시태그).
 const NAVER_GUIDE = [
   "",
@@ -233,7 +245,7 @@ export function buildSystemPrompt(vertical?: string, channel?: "wp" | "naver"): 
   ].join("\n");
   // 공통 SEO 원칙은 general·미지정 포함 '모든' 블로그에 적용한다(검색되는 홍보글 방지·정보 충실).
   // 업종별 지침(VERTICAL_SYSTEM)은 해당 업종에만 추가 — general은 특정 업종이 아니라 안 붙는다.
-  let out = base + "\n" + COMMON_SEO_PRINCIPLES + "\n" + YMYL_GUARDRAIL;
+  let out = base + "\n" + COMMON_SEO_PRINCIPLES + "\n" + AEO_RESOLUTION + "\n" + YMYL_GUARDRAIL;
   if (vertical && VERTICAL_SYSTEM[vertical]) out += "\n" + VERTICAL_SYSTEM[vertical];
   if (channel === "naver") out += "\n" + NAVER_GUIDE;
   return out;
