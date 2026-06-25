@@ -269,15 +269,19 @@ export async function GET(req: Request) {
     }
   } else {
     // ── 일반 후보(풀 기반) ── 노이즈·중복 제외로 빠질 것 대비해 여유분(want)까지.
-    const general = pickBalanced(mid, audActive ? audSel : [], want + 1, rng);
-    if (low.length > 0 && rng() < 0.28) candidates.push(low[Math.floor(rng() * low.length)]); // 싹 1개 가끔
+    // 지역형(주소 있음)이면 '타지역' 키워드(대구 화상영어 등)는 일반 글감에서도 제거 — 우리 지역/일반 분야만.
+    const noForeign = (arr: PoolRow[]) => (regions.length ? arr.filter((r) => !mentionsForeignRegion(r.keyword, regions)) : arr);
+    const general = pickBalanced(noForeign(mid), audActive ? audSel : [], want + 1, rng);
+    const lowF = noForeign(low), highF = noForeign(high);
+    if (lowF.length > 0 && rng() < 0.28) candidates.push(lowF[Math.floor(rng() * lowF.length)]); // 싹 1개 가끔
     const add = (arr: PoolRow[]) => {
       for (const r of arr) {
         if (candidates.length >= want) break;
-        if (!candidates.some((x) => x.keyword === r.keyword)) candidates.push(r);
+        const nk = normalizeKeyword(r.keyword);
+        if (!candidates.some((x) => normalizeKeyword(x.keyword) === nk)) candidates.push(r); // 정규화 중복 제거
       }
     };
-    add(general); add(low); add(high);
+    add(general); add(lowF); add(highF);
   }
 
   // ── 제목·카테고리·노이즈판별(여유분 한 번에) ──
@@ -313,7 +317,17 @@ export async function GET(req: Request) {
   // 후보 집합은 매일 시드로 달라지므로(변동성) 그날의 후보 중 가장 winnable한 걸 보여준다.
   const winScore = ({ r, t }: { r: PoolRow; t?: { fit?: number } }) =>
     (r.blog_total != null ? filledStarsFromData(r.monthly_searches ?? 0, r.blog_total) : 3) * 10 + (t?.fit ?? 1);
-  const generalRows = [...fitTop].sort((a, b) => winScore(b) - winScore(a)).slice(0, PICK);
+  // 제목 정규화 중복 제거 — '화상영어 추천' vs '화상영어추천'처럼 키워드는 달라도 제목이 같은/비슷한 글감 방지.
+  const seenTitle = new Set<string>();
+  const generalRows = [...fitTop]
+    .sort((a, b) => winScore(b) - winScore(a))
+    .filter(({ r, t }) => {
+      const key = normalizeKeyword(t?.title ?? r.keyword);
+      if (seenTitle.has(key)) return false;
+      seenTitle.add(key);
+      return true;
+    })
+    .slice(0, PICK);
 
   // comp는 blog_total(진짜 콘텐츠 경쟁) 있으면 그걸로, 없으면 광고경쟁 폴백. region 모드면 '우리 동네' 칩.
   const topics = generalRows.map(({ r, t }) => {
