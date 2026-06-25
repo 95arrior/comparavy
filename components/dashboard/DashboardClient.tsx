@@ -478,15 +478,26 @@ export default function DashboardClient(props: DashboardProps) {
     setSelected(updated);
   }
 
-  const steps = [
-    { label: "첫 글 생성하기", done: articles.length > 0 },
-    { label: "워드프레스 사이트 연결하기", done: Boolean(wpSiteUrl) },
-    { label: "글 발행하기", done: hasPublished },
-  ];
+  // 자영업자(네이버)는 워드프레스 단계 없음 — 글 만들기 → 네이버 발행. 수익형·취미만 워드프레스.
+  const isLocal = blogProfile ? bloggerType(blogProfile.vertical) === "local" : false;
+  const steps = isLocal
+    ? [
+        { label: "첫 글 만들기", done: articles.length > 0 },
+        { label: "네이버에 발행하기", done: hasPublished },
+      ]
+    : [
+        { label: "첫 글 생성하기", done: articles.length > 0 },
+        { label: "워드프레스 사이트 연결하기", done: Boolean(wpSiteUrl) },
+        { label: "글 발행하기", done: hasPublished },
+      ];
   const allDone = steps.every((s) => s.done);
 
   const nextStep: { go: () => void; msg: string; label: string } | null = !steps[0].done
-    ? { go: () => goLabView("home"), msg: "키워드 하나만 고르면 첫 글이 만들어져요. 홈에서 바로 시작해보세요!", label: "홈으로" }
+    ? { go: () => goLabView("home"), msg: "이야기를 적거나 글감 하나만 고르면 첫 글이 만들어져요. 홈에서 바로 시작해보세요!", label: "홈으로" }
+    : isLocal
+    ? (!hasPublished
+        ? { go: () => goLabView("articles"), msg: "첫 글 완성! ‘내 글’에서 글을 열어 복사 → 네이버 블로그에 붙여넣으면 끝이에요.", label: "내 글로" }
+        : null)
     : !steps[1].done
     ? { go: () => goTab("wordpress"), msg: "첫 글 완성! 이제 ‘워드프레스’에서 내 블로그를 연결해 주세요.", label: "바로 가기" }
     : !steps[2].done
@@ -1100,12 +1111,14 @@ export default function DashboardClient(props: DashboardProps) {
             {/* 블로그 */}
             <p className="mb-2 mt-7 px-1 text-[13px] font-semibold text-neutral-400">블로그</p>
             <div className="divide-y divide-neutral-100 overflow-hidden rounded-2xl bg-white ring-1 ring-black/[0.04]">
+              {!isLocal && (
               <button onClick={() => goTab("wordpress")} className="flex w-full items-center gap-3 px-5 py-4 text-left transition active:bg-neutral-50">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#1D75F7]/10 text-[#1D75F7]"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5" /><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5" /></svg></span>
                 <span className="flex-1 text-[15px] font-medium text-neutral-800">워드프레스 연결</span>
                 <span className="text-[13px] text-neutral-400">{wpSiteUrl ? "연결됨" : "연결 안 됨"}</span>
                 <svg className="text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
               </button>
+              )}
               {blogProfile && (
                 <button onClick={() => setPage("profile")} className="flex w-full items-center gap-3 px-5 py-4 text-left transition active:bg-neutral-50">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-500"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg></span>

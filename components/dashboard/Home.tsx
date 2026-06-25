@@ -173,7 +173,7 @@ export default function Home({
       {/* 헤더 — 절제 */}
       <div className="flex items-center justify-between pt-9">
         <p className="text-sm text-neutral-400">{displayName}님</p>
-        {!wpConnected && (
+        {bloggerType !== "local" && !wpConnected && (
           <button onClick={onGoConnect} className="text-xs font-medium text-[#1D75F7] transition hover:underline">워드프레스 연결</button>
         )}
       </div>

@@ -41,7 +41,7 @@ export default function StoryComposer({
           onChange={(e) => setStory(e.target.value)}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          placeholder="무엇이든 편하게 적어주세요!"
+          placeholder={focused ? "" : "무엇이든 편하게 적어주세요!"}
           rows={6}
           maxLength={4000}
           className="relative w-full resize-none bg-transparent px-4 py-3.5 pr-14 text-[15px] leading-relaxed outline-none placeholder:text-neutral-400"
