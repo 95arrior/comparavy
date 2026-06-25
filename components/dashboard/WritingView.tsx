@@ -5,16 +5,14 @@ import AteFloLogo from "@/components/AteFloLogo";
 import LoadingScreen from "@/components/LoadingScreen";
 import type { Article } from "./types";
 
-// HTML을 태그/문자 단위로 쪼갠다(타이핑 시 태그가 잘리지 않게)
-function tokenize(html: string): string[] {
-  return html.match(/<[^>]*>|[^<]/g) ?? [];
+// 완성된 최상위 블록만 추출(닫는 태그가 온 것). 스트리밍 중 미완성 블록은 제외 → 문단 단위로 등장.
+const BLOCK_RE = /<(h1|h2|h3|p|ul|ol|blockquote)\b[^>]*>[\s\S]*?<\/\1>/gi;
+function completeBlocks(html: string): string[] {
+  return html.match(BLOCK_RE) ?? [];
 }
 
-// 티저(잠금 미리보기)는 본문 ~3줄만 쓰고 블러로 넘어간다
-const TEASER_BODY_CHARS = 130;
-
-// 제목 쓰고 본문 시작 전 대기 구간 안내 (순환)
-const WAIT_MSGS = ["거의 다 준비됐어요…", "조금만 기다려주세요!", "곧 본문이 시작돼요"];
+// 티저(잠금 미리보기)는 제목 + 첫 문단까지만 보여주고 블러로 넘어간다
+const TEASER_BLOCKS = 2;
 
 export interface GenParams {
   keyword: string;
@@ -26,8 +24,8 @@ export interface GenParams {
   userStory?: string; // 사장님이 직접 쓴 '내 이야기'(있으면 핵심 재료로 우리 품질로 재구성)
 }
 
-// "글 생성하기" 직후 전환되는 전체 페이지 작성 화면. 편집화면과 같은 레이아웃에서
-// 제목(H1) → 본문이 사람이 치듯 타이핑되고, 끝나면 편집 화면으로 자연스럽게 넘긴다.
+// "글 생성하기" 직후 전환되는 작성 화면.
+// 대기 = '분석 라이브'(엔진이 하는 일 체크리스트) + 스켈레톤. 글 = 문단이 하나씩 부드럽게 페이드업.
 export default function WritingView({
   params,
   pro,
@@ -43,137 +41,109 @@ export default function WritingView({
   onDone: (article: Article) => void;
   onExit: () => void;
 }) {
-  const [preview, setPreview] = useState("");
-  const [finished, setFinished] = useState(false); // 타이핑 완료(편집 전환 직전)
-  const [bodyStarted, setBodyStarted] = useState(false);
-  const [waitTick, setWaitTick] = useState(0);
+  const [available, setAvailable] = useState<string[]>([]);
+  const [revealed, setRevealed] = useState(0);
+  const [finished, setFinished] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [stepIdx, setStepIdx] = useState(0);
 
-  const targetRef = useRef("");
   const titleRef = useRef("");
   const bodyRef = useRef("");
-  const bodyStartedRef = useRef(false);
+  const availRef = useRef<string[]>([]);
   const doneArtRef = useRef<Article | null>(null);
-  const shownRef = useRef(0);
-  const visibleRef = useRef(0); // 지금까지 보여준 '글자' 수(태그 제외)
-  const revealRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fetchedRef = useRef(false);
   const abortRef = useRef<AbortController | null>(null);
+  const revealTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
-  const phase = error
-    ? "error"
-    : finished
-    ? "done"
-    : !preview
-    ? "thinking"
-    : !bodyStarted
-    ? "waiting"
-    : "writing";
+  const started = available.length > 0;
+  const phase = error ? "error" : finished ? "done" : started ? "writing" : "thinking";
 
-  // [2] 준비 구간 단계 문구 — 토스식. 업종(3단계)·홍보/정보(4단계)로 분기, 폴백 안전.
-  const stepMsgs = useMemo(() => {
+  // 분석 체크리스트 — 우리가 실제로 하는 일(해자 반영). 업종·채널·내 이야기로 분기.
+  const steps = useMemo(() => {
+    const story = Boolean(params.userStory && params.userStory.trim());
     const reg =
       vertical === "medical"
-        ? "안심하고 쓸 수 있게, 의료광고 규정을 살펴보고 있어요"
+        ? "의료광고 규정 점검"
         : vertical === "professional"
-        ? "안심하고 쓸 수 있게, 광고 규정을 살펴보고 있어요"
+        ? "광고 규정 점검"
         : vertical === "academy"
-        ? "안심하고 쓸 수 있게, 과장된 표현이 없는지 보고 있어요"
-        : "안심하고 쓸 수 있게, 관련 규정을 살펴보고 있어요";
-    const mode = params.promo ? "가게 이야기를 글에 자연스럽게 녹이고 있어요" : "술술 읽히게 다듬고 있어요";
-    return ["지금 뜨는 검색어를 살펴보고 있어요", "손님이 진짜 찾는 키워드를 고르고 있어요", reg, mode];
-  }, [vertical, params.promo]);
-  const [stepIdx, setStepIdx] = useState(0);
+        ? "과장된 표현 점검"
+        : "관련 규정 점검";
+    const ch = params.channel === "naver" ? "네이버 상위 글 구조 분석" : "검색 노출 구조 분석";
+    return [
+      story ? "사장님 이야기 꼼꼼히 읽는 중" : "검색 의도 분석 중",
+      story ? "핵심 뉘앙스·강조점 파악" : "지금 뜨는 키워드 분석",
+      ch,
+      "우리 동네·업종 데이터 반영",
+      reg,
+      "초안 쓰고 다듬는 중",
+    ];
+  }, [params.userStory, params.channel, vertical]);
+
+  // 대기 동안 스텝 진행(마지막에서 멈추고 펄스)
   useEffect(() => {
     if (phase !== "thinking") return;
-    const id = setInterval(() => setStepIdx((i) => Math.min(i + 1, stepMsgs.length - 1)), 1100);
+    const id = setInterval(() => setStepIdx((i) => Math.min(i + 1, steps.length - 1)), 1500);
     return () => clearInterval(id);
-  }, [phase, stepMsgs.length]);
+  }, [phase, steps.length]);
 
+  // 문단 페이드 등장 — 140ms마다 한 블록씩(쏟아짐 방지)
   useEffect(() => {
-    startReveal(); // 타자기 루프 (StrictMode 재마운트 시 재시작됨)
+    revealTimer.current = setInterval(() => {
+      setRevealed((r) => {
+        const cap = isTeaser ? Math.min(availRef.current.length, TEASER_BLOCKS) : availRef.current.length;
+        return r < cap ? r + 1 : r;
+      });
+    }, 140);
+    return () => {
+      if (revealTimer.current) clearInterval(revealTimer.current);
+    };
+  }, [isTeaser]);
+
+  // 서버 완료 + 다 보여줬으면 편집(또는 잠금) 화면으로
+  useEffect(() => {
+    const cap = isTeaser ? Math.min(available.length, TEASER_BLOCKS) : available.length;
+    if (doneArtRef.current && cap > 0 && revealed >= cap && !finished) {
+      setFinished(true);
+      const art = doneArtRef.current;
+      doneArtRef.current = null;
+      setTimeout(() => onDone(art), 1200);
+    }
+  }, [revealed, available.length, isTeaser, finished, onDone]);
+
+  // 네트워크 호출 1회
+  useEffect(() => {
     if (!fetchedRef.current) {
-      fetchedRef.current = true; // 네트워크 호출은 1회만 (= 1글 1콜 유지)
+      fetchedRef.current = true;
       run();
     }
-    return () => {
-      stopReveal();
-      abortRef.current?.abort();
-    };
+    return () => abortRef.current?.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 대기 구간 동안 안내 문구 순환
-  useEffect(() => {
-    if (phase !== "waiting") return;
-    const id = setInterval(() => setWaitTick((t) => t + 1), 1500);
-    return () => clearInterval(id);
-  }, [phase]);
-
-  // 써내려갈 때 끝(작성 표시)이 보이게 살짝 따라 내려간다
+  // 써지는 동안 끝이 보이게 살짝 따라 내려감
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [preview]);
+  }, [revealed]);
 
-  // 화면을 닫았다(백그라운드) 돌아오면, 그동안 받은 내용을 즉시 다 보여준다(fast-forward).
-  // 서버는 백그라운드에서도 끝까지 생성·저장하므로, 돌아오면 바로 완성돼 보인다.
+  // 백그라운드 갔다 오면 받은 내용 즉시 다 표시(fast-forward)
   useEffect(() => {
     function onVisible() {
       if (document.visibilityState !== "visible") return;
-      const tokens = tokenize(targetRef.current);
-      const cap = titleRef.current.length + TEASER_BODY_CHARS;
-      while (shownRef.current < tokens.length) {
-        if (isTeaser && visibleRef.current >= cap) break;
-        if (!tokens[shownRef.current].startsWith("<")) visibleRef.current += 1;
-        shownRef.current += 1;
-      }
-      setPreview(tokens.slice(0, shownRef.current).join(""));
+      const cap = isTeaser ? Math.min(availRef.current.length, TEASER_BLOCKS) : availRef.current.length;
+      setRevealed(cap);
     }
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isTeaser]);
 
-  function stopReveal() {
-    if (revealRef.current) {
-      clearInterval(revealRef.current);
-      revealRef.current = null;
-    }
-  }
-  function composeTarget() {
+  function recompute() {
     const t = titleRef.current ? `<h1>${titleRef.current}</h1>` : "";
-    targetRef.current = t + bodyRef.current;
-  }
-  function startReveal() {
-    stopReveal();
-    revealRef.current = setInterval(() => {
-      const tokens = tokenize(targetRef.current);
-      // 티저는 제목 + 본문 ~3줄까지만 타이핑하고 멈춘다
-      const capReached = isTeaser && visibleRef.current >= titleRef.current.length + TEASER_BODY_CHARS;
-      if (shownRef.current < tokens.length && !capReached) {
-        // 스트림보다 타이핑이 밀리면 빨리 따라잡고(체감 속도↑), 끝물엔 사람처럼 또박또박.
-        const remaining = tokens.length - shownRef.current;
-        const perTick = remaining > 240 ? 10 : remaining > 80 ? 5 : 2;
-        let typed = 0;
-        while (shownRef.current < tokens.length && typed < perTick) {
-          const tok = tokens[shownRef.current];
-          shownRef.current += 1;
-          if (!tok.startsWith("<")) {
-            typed += 1;
-            visibleRef.current += 1;
-          }
-        }
-        setPreview(tokens.slice(0, shownRef.current).join(""));
-      } else if (doneArtRef.current && (shownRef.current >= tokens.length || capReached)) {
-        // 비티저=다 따라잡은 뒤 / 티저=3줄 + 서버 완료 → 편집(또는 잠금 블러) 화면으로
-        const art = doneArtRef.current;
-        doneArtRef.current = null;
-        stopReveal();
-        setFinished(true);
-        setTimeout(() => onDone(art), 1400);
-      }
-    }, 32);
+    const blocks = completeBlocks(t + bodyRef.current);
+    availRef.current = blocks;
+    setAvailable(blocks);
   }
 
   async function run() {
@@ -186,10 +156,8 @@ export default function WritingView({
         body: JSON.stringify(params),
         signal: ctrl.signal,
       });
-      // 사전 검사 실패(429/403 등)는 일반 JSON 으로 옴
       if (!res.ok || !res.body) {
         const data = await res.json().catch(() => ({}));
-        stopReveal();
         setError(data.error ?? "글 생성에 실패했어요.");
         return;
       }
@@ -214,43 +182,29 @@ export default function WritingView({
           }
           if (msg.type === "title") {
             titleRef.current = msg.title ?? "";
-            composeTarget();
+            recompute();
           } else if (msg.type === "body") {
             bodyRef.current = msg.html ?? "";
-            composeTarget();
-            if (!bodyStartedRef.current && (msg.html ?? "").trim()) {
-              bodyStartedRef.current = true;
-              setBodyStarted(true);
-            }
+            recompute();
           } else if (msg.type === "done" && msg.article) {
-            doneArtRef.current = msg.article; // 타이핑이 다 따라잡으면(또는 티저 3줄) 전환
+            doneArtRef.current = msg.article;
             done = true;
           } else if (msg.type === "error") {
-            stopReveal();
             setError(msg.error ?? "글 생성에 실패했어요.");
             done = true;
           }
         }
       }
     } catch (e) {
-      // 사용자가 화면을 떠난 것(abort)은 오류 아님 — 서버는 끝까지 생성·저장한다
       if (e instanceof DOMException && e.name === "AbortError") return;
-      stopReveal();
       setError("네트워크 오류가 났어요. 잠시 후 다시 시도해 주세요.");
     }
   }
 
-  const indicatorText =
-    phase === "writing"
-      ? "글을 쓰고 있어요…"
-      : phase === "waiting"
-      ? WAIT_MSGS[waitTick % WAIT_MSGS.length]
-      : "글을 구상하고 있어요…";
+  const blocks = available.slice(0, revealed);
 
   return (
     <>
-      {/* 생성 대기(아직 본문 없음) — 로딩 페이지. 글이 써지기 시작하면 아래 스트리밍 미리보기로 전환 */}
-      {(phase === "waiting" || phase === "thinking") && !preview && <LoadingScreen label={stepMsgs[stepIdx]} />}
       <div className="sticky top-0 z-30 border-b border-neutral-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-6 py-3">
           {phase === "error" ? (
@@ -258,7 +212,6 @@ export default function WritingView({
               <span className="text-base leading-none">←</span> 글 목록으로
             </button>
           ) : (
-            // 생성 중엔 취소·이동 불가 — 끝까지 쓴 뒤 자동으로 편집 화면으로 넘어간다
             <span className="flex items-center gap-2 text-sm text-neutral-400">
               <AteFloLogo pro={pro} animated size={16} /> 글을 쓰고 있어요 · 잠시만 기다려 주세요
             </span>
@@ -276,18 +229,24 @@ export default function WritingView({
               </button>
             </div>
           </div>
+        ) : phase === "thinking" ? (
+          <AnalysisWaiting steps={steps} stepIdx={stepIdx} pro={pro} />
         ) : (
           <>
-            {preview && (
-              <>
-                <div className="prose prose-neutral max-w-none" dangerouslySetInnerHTML={{ __html: preview }} />
-                {phase === "writing" && <span className="ml-0.5 inline-block animate-pulse text-neutral-500">▍</span>}
-              </>
-            )}
-            {phase !== "done" && (
-              <div className="mt-5 flex items-center gap-2 text-sm text-neutral-400">
-                <AteFloLogo pro={pro} animated size={18} />
-                <span>{indicatorText}</span>
+            <div className="prose prose-neutral max-w-none">
+              {blocks.map((b, i) => (
+                <div
+                  key={i}
+                  className={`ateflo-block-in [&>*]:!my-0 ${b.startsWith("<h2") ? "mt-6 mb-2" : b.startsWith("<h1") ? "mb-3" : "mb-3.5"}`}
+                  dangerouslySetInnerHTML={{ __html: b }}
+                />
+              ))}
+            </div>
+            {!finished && (
+              <div className="ateflo-block-in mt-4 flex items-center gap-1">
+                <span className="h-2 w-2 animate-bounce rounded-full bg-[#1D75F7] [animation-delay:-0.3s]" />
+                <span className="h-2 w-2 animate-bounce rounded-full bg-[#1D75F7] [animation-delay:-0.15s]" />
+                <span className="h-2 w-2 animate-bounce rounded-full bg-[#1D75F7]" />
               </div>
             )}
           </>
@@ -295,7 +254,61 @@ export default function WritingView({
         <div ref={endRef} className="scroll-mb-40" />
       </div>
 
-      {phase === "done" && <LoadingScreen label="워드프레스 형식으로 정리하고 있어요" />}
+      {phase === "done" && (
+        <LoadingScreen label={params.channel === "naver" ? "네이버에 올릴 형식으로 정리하고 있어요" : "워드프레스 형식으로 정리하고 있어요"} />
+      )}
     </>
+  );
+}
+
+// 대기 화면 — 분석 라이브 체크리스트 + 완성될 글 스켈레톤
+function AnalysisWaiting({ steps, stepIdx, pro }: { steps: string[]; stepIdx: number; pro: boolean }) {
+  return (
+    <div className="ateflo-block-in">
+      <div className="flex items-center gap-2 text-[15px] font-bold text-neutral-800">
+        <AteFloLogo pro={pro} animated size={20} /> 사장님 글을 분석하고 있어요
+      </div>
+      <ul className="mt-5 space-y-3.5">
+        {steps.map((s, i) => {
+          const stateDone = i < stepIdx;
+          const active = i === stepIdx;
+          return (
+            <li key={i} className="flex items-center gap-3">
+              <span
+                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition-all duration-300 ${
+                  stateDone ? "bg-[#1D75F7] text-white" : active ? "bg-[#1D75F7]/15" : "bg-neutral-100"
+                }`}
+              >
+                {stateDone ? (
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                ) : active ? (
+                  <span className="h-2 w-2 animate-ping rounded-full bg-[#1D75F7]" />
+                ) : (
+                  <span className="h-1.5 w-1.5 rounded-full bg-neutral-300" />
+                )}
+              </span>
+              <span className={`text-[14.5px] transition-colors duration-300 ${stateDone ? "text-neutral-400" : active ? "font-semibold text-neutral-900" : "text-neutral-400"}`}>{s}</span>
+            </li>
+          );
+        })}
+      </ul>
+
+      {/* 완성될 글 스켈레톤 */}
+      <div className="mt-9 space-y-3">
+        <div className="ateflo-skel h-7 w-3/5" />
+        <div className="mt-5 space-y-2.5">
+          <div className="ateflo-skel h-3.5 w-full" />
+          <div className="ateflo-skel h-3.5 w-[92%]" />
+          <div className="ateflo-skel h-3.5 w-[97%]" />
+          <div className="ateflo-skel h-3.5 w-3/4" />
+        </div>
+        <div className="ateflo-skel mt-6 h-5 w-2/5" />
+        <div className="mt-4 space-y-2.5">
+          <div className="ateflo-skel h-3.5 w-[95%]" />
+          <div className="ateflo-skel h-3.5 w-full" />
+          <div className="ateflo-skel h-3.5 w-4/5" />
+        </div>
+      </div>
+    </div>
   );
 }
