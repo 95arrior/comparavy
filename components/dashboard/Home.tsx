@@ -254,7 +254,7 @@ export default function Home({
           )}
         </div>
       ) : (
-        <div className="mt-3 rounded-3xl border border-dashed border-neutral-200 p-8 text-center text-sm text-neutral-400">
+        <div className="mt-3 rounded-3xl bg-neutral-50 p-8 text-center text-sm text-neutral-400">
           {regionMode && hasBusinessInfo === false ? (
             <>
               <p className="font-bold text-neutral-700">업체 정보를 아직 등록 안 하셨어요</p>

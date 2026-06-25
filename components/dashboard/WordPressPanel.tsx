@@ -99,7 +99,7 @@ export default function WordPressPanel({
         {onOpenSitemapGuide && (
           <button
             onClick={onOpenSitemapGuide}
-            className="flex w-full items-center gap-3 rounded-2xl border border-neutral-100 bg-white p-5 text-left shadow-sm transition active:scale-[0.99] hover:border-neutral-300"
+            className="flex w-full items-center gap-3 rounded-2xl bg-white ring-1 ring-black/[0.04] p-5 text-left transition active:scale-[0.99] hover:border-neutral-300"
           >
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1D75F7]/10 text-[#1D75F7]">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7" /><path d="M21 21l-3.5-3.5M8 11h6M11 8v6" /></svg>
@@ -142,10 +142,10 @@ export default function WordPressPanel({
         </button>
       )}
 
-      <ol className="mt-5 space-y-2 rounded-xl border border-neutral-200 bg-neutral-50 p-5 text-sm text-neutral-600">
+      <ol className="mt-5 space-y-2 rounded-xl bg-neutral-50 p-5 text-sm text-neutral-600">
         {GUIDE_STEPS.map((step, i) => (
           <li key={i} className="flex gap-3">
-            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-xs text-white">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#1D75F7] text-xs font-bold text-white">
               {i + 1}
             </span>
             <span>{step}</span>
