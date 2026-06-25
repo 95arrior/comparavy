@@ -20,7 +20,9 @@ export function markToNaverBold(html: string): string {
 /** 네이버 복붙용 — 문단·리스트·인용구 뒤에 '빈 줄'을 넣어 편집기처럼 시원하게 띄운다.
  *  (네이버는 붙여넣을 때 문단 간격을 좁히므로, 실제 빈 단락을 넣어줘야 블로거들이 Enter 두 번 친 것처럼 보인다.) */
 export function addNaverSpacing(html: string): string {
-  return html.replace(/<\/(p|ul|ol|blockquote)>/gi, "</$1>\n<p>&nbsp;</p>");
+  // 문단·인용구 뒤에만 빈 줄. ★리스트(<ul>/<ol>)에는 빈 줄을 붙이지 않는다 — 네이버가 리스트 옆 빈 줄을 '빈 불릿(점)'으로 만들기 때문.
+  //   (리스트 바로 앞 문단 뒤에도 빈 줄을 안 넣어 점이 안 생기게.)
+  return html.replace(/<\/(p|blockquote)>(?!\s*<(?:ul|ol)[ >])/gi, "</$1>\n<p>&nbsp;</p>");
 }
 
 /** 미리보기 표시용 — 점선 박스 플레이스홀더. */
