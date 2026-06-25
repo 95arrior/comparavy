@@ -36,16 +36,25 @@ export function regionLevel(vertical: string, sub: string | null): RegionLevel {
   return "gu"; // 애매 → 구 폴백
 }
 
-/** 주소에서 시/구/동 토큰 파싱. */
+// 광역시·특별시·특별자치시 → 짧은 통용명(서울/부산/세종 …). 검색에 쓰는 형태.
+const METRO_RE = /^(서울|부산|대구|인천|광주|대전|울산|세종)(특별시|광역시|특별자치시)?$/;
+
+/** 주소에서 시/구/동 토큰 파싱. 광역시·세종특별자치시도 올바르게 잡는다. */
 function parseAddress(address: string): { gu?: string; dong?: string; si?: string } {
   const parts = address.trim().split(/\s+/);
   const guTok = parts.find((p) => /^[가-힣]{1,8}(구|군)$/.test(p));
   const dongTok = parts.find((p) => /^[가-힣]{1,8}동$/.test(p));
-  const siTok = parts.find((p) => /^[가-힣]{1,8}시$/.test(p) && !/특별시|광역시$/.test(p));
+  let si: string | undefined;
+  const metroTok = parts.find((p) => METRO_RE.test(p));
+  if (metroTok) si = metroTok.match(METRO_RE)![1]; // 서울특별시→서울, 세종특별자치시→세종, 부산광역시→부산
+  else {
+    const siTok = parts.find((p) => /^[가-힣]{2,6}(특별자치)?시$/.test(p)); // 청주시→청주, 성남시→성남
+    if (siTok) si = siTok.replace(/(특별자치)?시$/, "");
+  }
   return {
     gu: guTok ? guTok.replace(/(구|군)$/, "") : undefined, // 강남구 → 강남
     dong: dongTok, // 역삼동 (검색 그대로)
-    si: siTok ? siTok.replace(/시$/, "") : undefined, // 성남시 → 성남
+    si,
   };
 }
 

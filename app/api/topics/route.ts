@@ -214,7 +214,8 @@ export async function GET(req: Request) {
   } else {
     const t = addressRegionTiers(addr, "gu"); // [구, 시]
     const si = t[t.length - 1]; const gu = t[0];
-    regions = [...new Set([si, ...aiAreas, gu].filter((x): x is string => !!x))]; // 시 우선
+    // AI가 scope에 맞게(si·nation=도시 먼저) 순서를 내므로 aiAreas를 앞에. 파싱 폴백은 시→구.
+    regions = [...new Set([...aiAreas, si, gu].filter((x): x is string => !!x))];
   }
   const local = type === "local" && regions.length > 0 && !cluster;
   // 지역 강화 모드 — 지역형(bloggerType=local)이면 ON(법률·세무 포함). scope가 범위를 결정.
