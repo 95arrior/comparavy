@@ -8,15 +8,23 @@ import AteFloLogo from "@/components/AteFloLogo";
 export default function StoryComposer({
   hasBiz,
   local,
+  story,
+  onStoryChange,
+  promo,
+  onPromoChange,
   onSubmit,
 }: {
   hasBiz: boolean;
   local: boolean;
+  story: string; // 초안(Home이 보유 → 글감 보기 갔다 와도 유지)
+  onStoryChange: (s: string) => void;
+  promo: boolean;
+  onPromoChange: (p: boolean) => void;
   onSubmit: (story: string, promo: boolean) => void;
 }) {
-  const [story, setStory] = useState("");
-  const [promo, setPromo] = useState(local && hasBiz);
   const [focused, setFocused] = useState(false);
+  const setStory = onStoryChange;
+  const setPromo = onPromoChange;
   const hasText = story.trim().length > 0;
   const ready = story.trim().length >= 10;
   const submit = () => { if (ready) onSubmit(story.trim(), promo); };
