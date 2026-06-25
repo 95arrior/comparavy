@@ -4,11 +4,11 @@ import { keywordsToTitles } from "@/lib/topicTitles";
 import { normalizeKeyword } from "@/lib/diversity";
 import { audienceOf, AUDIENCE_ALL } from "@/lib/audience";
 import { isUnsafeKeyword, mentionsForeignRegion } from "@/lib/keywordSafety";
-import { regionLevel, isLocalBusiness, buildLocalSeeds, addressRegionTiers } from "@/lib/region";
+import { regionLevel, buildLocalSeeds, addressRegionTiers } from "@/lib/region";
 import { bloggerType, type BloggerType } from "@/lib/bloggerTypes";
 import { compFromLabel, compFromBlogTotal, filledStarsFromData, type Comp } from "@/lib/topicScore";
 import { fetchBlogTotal } from "@/lib/naverBlogSearch";
-import { expandLocalAreas } from "@/lib/aiSeeds";
+import { resolveLocalPlan, type LocalScope } from "@/lib/aiSeeds";
 import { buildPoolForSub } from "@/lib/keywordPool";
 import { collectPoolKeywords } from "@/lib/poolCollect";
 import { fetchNaverAutocomplete } from "@/lib/naverAutocomplete";
@@ -195,20 +195,31 @@ export async function GET(req: Request) {
 
   // ── 지역 글감(먼저 — 일반 후보 개수 계산에 필요) ──
   // 지역형 사업장이면 동네+업종 글감을 앞에. 본인이 쓴 건 제외.
-  const level = regionLevel(vertical, sub ?? null);
+  const level = regionLevel(vertical, sub ?? null); // 하드코딩 폴백(AI 실패 시)
   const type = bloggerType(vertical); // local/online/hobby → 카피 톤
-  // 지역 계층(좁은→넓은) — 진행적 확장·타지역 필터의 기준. AI 별칭(오송)은 아래서 맨 앞에 보강.
-  let regions = addressRegionTiers(profile?.biz_address as string | null, level);
-  // 생활권 별칭 AI 보완 — 주소 파싱이 못 잡는 봉산리→오송 등. 지역형(non-wide)일 때만.
-  if (level !== "wide" && profile?.biz_address && !cluster) {
+  const addr = profile?.biz_address as string | null;
+  // ── 업소별 지역 범위 AI 판정 — 업종/세부/위치로 손님 이동반경 계산(성형=전국, 소아=시, 치과=동네 …) ──
+  // AI 실패 시 regionLevel 폴백(wide→nation, gu→si, dong→dong).
+  let scope: LocalScope = level === "wide" ? "nation" : level === "gu" ? "si" : "dong";
+  let aiAreas: string[] = [];
+  if (type === "local" && addr && !cluster) {
     const aud = audActive ? audSel.filter((a) => a !== AUDIENCE_ALL).join("·") : undefined;
-    const aiAreas = await expandLocalAreas(String(profile.biz_address), sub || vertical, aud, level === "dong");
-    if (aiAreas.length) regions = [...new Set([...aiAreas, ...regions])];
+    const plan = await resolveLocalPlan(addr, sub || vertical, aud);
+    if (plan) { scope = plan.scope; aiAreas = plan.areas; }
   }
-  const local = isLocalBusiness(level, regions) && !cluster;
-  // 지역 강화 모드 — 지역형 업종(non-wide)이면 ON. 주소 파싱 여부와 무관(버튼 게이트 bloggerType와 일치).
-  // 주소가 비면 region 분기에서 빈 결과 → 클라가 '업체 등록/못 찾음' 안내(일반 글감으로 폴백 안 함).
-  const regionMode = new URL(req.url).searchParams.get("region") === "1" && level !== "wide" && !cluster;
+  // scope → 지역 계층 순서. dong=읍/동 우선, si·nation=시 우선. AI 별칭(오송)을 맨 앞 보강.
+  let regions: string[];
+  if (scope === "dong") {
+    regions = [...new Set([...aiAreas, ...addressRegionTiers(addr, "dong")])];
+  } else {
+    const t = addressRegionTiers(addr, "gu"); // [구, 시]
+    const si = t[t.length - 1]; const gu = t[0];
+    regions = [...new Set([si, ...aiAreas, gu].filter((x): x is string => !!x))]; // 시 우선
+  }
+  const local = type === "local" && regions.length > 0 && !cluster;
+  // 지역 강화 모드 — 지역형(bloggerType=local)이면 ON(법률·세무 포함). scope가 범위를 결정.
+  // 주소가 비면 region 분기에서 빈 결과 → 클라가 '업체 등록/못 찾음' 안내(일반 글감 폴백 X).
+  const regionMode = new URL(req.url).searchParams.get("region") === "1" && type === "local" && !cluster;
 
   // 하루 고정 시드(userId+날짜): 그날은 새로고침해도 같은 추천.
   const rng = mulberry32(seedFrom(`${user.id}-${new Date().toISOString().slice(0, 10)}`));

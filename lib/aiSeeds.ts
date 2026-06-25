@@ -42,6 +42,52 @@ export async function expandLocalAreas(address: string, field: string, audience?
   }
 }
 
+// 업소별 '지역 범위' AI 판정 — 업종/세부/위치로 손님이 어디까지 찾아오는지 계산(하드코딩 X, 어떤 세부업종도 커버).
+//   scope: dong(동네 밀착) | si(도시권) | nation(전국·비대면) · areas: 통용 지역명(가까운 순) · traits: 산단 등 특성. 캐싱.
+export type LocalScope = "dong" | "si" | "nation";
+export interface LocalPlan { scope: LocalScope; areas: string[]; traits: string[] }
+const planCache = new Map<string, LocalPlan>();
+export async function resolveLocalPlan(address: string, field: string, audience?: string): Promise<LocalPlan | null> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const addr = (address || "").trim();
+  if (!apiKey || addr.length < 4) return null;
+  const cacheKey = `${addr}|${field}|${audience ?? ""}`;
+  const hit = planCache.get(cacheKey);
+  if (hit) return hit;
+  try {
+    const client = new Anthropic({ apiKey });
+    const res = await client.messages.create({
+      model: "claude-haiku-4-5",
+      max_tokens: 220,
+      messages: [
+        {
+          role: "user",
+          content:
+            `주소: "${addr}"\n업종: ${field}${audience ? ` / 대상: ${audience}` : ""}\n\n` +
+            `이 업종·위치의 손님(또는 의뢰인)이 보통 '어디까지' 찾아오거나 검색하는지 판단해줘.\n` +
+            `- "dong"(동네): 도보·차로 10분 동네만. 예) 치과, 한의원, 동네 1차 의원(내과·이비인후과), 미용실, 유아·초등 학원, 동네 카페·식당.\n` +
+            `- "si"(도시): 도시 전체에서 옴. 예) 소아청소년과, 산부인과, 정형외과, 성인 입시·공시 단과, 인테리어, 부동산, 산후조리원.\n` +
+            `- "nation"(전국): 멀리서도 오거나 비대면 상담 가능. 예) 성형외과, 피부(미용)과, 모발이식, 변호사·세무사·노무사 상담, 한방난임, 공무원 종합학원.\n` +
+            `- 'OO ${field}'로 검색할 때 쓰는 지역명을 가까운 순으로 2~4개(생활권 별칭 우선: 청주 흥덕구 봉산리→오송). 너무 넓은 시/도(충청북도)는 빼.\n` +
+            `- 산업단지·신도시 등 지역 특성이 뚜렷하면 traits에(예: 오송=바이오산단).\n` +
+            `JSON만: {"scope":"dong|si|nation","areas":["오송","흥덕","청주"],"traits":["바이오산단"]}`,
+        },
+      ],
+    });
+    const text = res.content.map((c) => (c.type === "text" ? c.text : "")).join("");
+    const m = text.match(/\{[\s\S]*\}/);
+    if (!m) return null;
+    const raw = JSON.parse(m[0]) as { scope?: string; areas?: unknown[]; traits?: unknown[] };
+    const scope: LocalScope = raw.scope === "dong" || raw.scope === "si" || raw.scope === "nation" ? raw.scope : "si";
+    const clean = (a?: unknown[]) => (a ?? []).filter((x): x is string => typeof x === "string" && x.trim().length > 0).map((x) => x.trim());
+    const plan: LocalPlan = { scope, areas: clean(raw.areas).slice(0, 4), traits: clean(raw.traits).slice(0, 3) };
+    planCache.set(cacheKey, plan);
+    return plan;
+  } catch {
+    return null;
+  }
+}
+
 // 카테고리(라벨) → 그 분야의 '구체 하위주제 키워드' 다수 생성.
 // 카테고리명 하나만으론 네이버 연관이 적게 나와 풀이 얕음 → AI로 하위주제를 펼쳐
 // 각각을 네이버 연관 수집 시드로 써서 풀을 폭발적으로 키운다(카테고리당 1회·캐싱).
