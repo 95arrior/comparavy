@@ -42,12 +42,17 @@ function isRegionToken(t: string): boolean {
  */
 export function mentionsForeignRegion(keyword: string, ourRegions: string[]): boolean {
   const ours = ourRegions.filter(Boolean);
+  const isOurs = (s: string) => ours.some((r) => s === r || s.includes(r) || r.includes(s));
   const toks = keyword.split(/\s+/);
   for (const t of toks) {
-    const base = t.replace(/(특별시|광역시|시|군|구|동|읍|면|리)$/, "");
+    if (t.length < 2) continue;
+    if (isOurs(t)) continue; // 우리 지역(풀 토큰)
+    // ★풀 토큰을 먼저 검사 — '대구'(구로 끝)·'대전' 등이 접미사 제거로 깎이지 않게.
+    if (REGIONS.has(t)) return true; // 알려진 타 도시(대구·세종·천안 등)
+    const base = t.replace(/(특별시|광역시|특별자치시|시|군|구|동|읍|면|리)$/, "");
     if (base.length < 2) continue;
-    if (ours.some((r) => base === r || t === r || base.includes(r) || r.includes(base))) continue; // 우리 지역
-    if (REGIONS.has(base) || REGIONS.has(t)) return true; // 알려진 타 도시/구(천안·세종 등)
+    if (isOurs(base)) continue; // 강남구→강남이 우리 지역
+    if (REGIONS.has(base)) return true; // ○○구/시 떼도 알려진 타지역
     if (/(시|군)$/.test(t)) return true; // ○○시/군인데 우리 게 아니면 타지역
   }
   return false;
