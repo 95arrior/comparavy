@@ -35,15 +35,15 @@ export default function StoryComposer({
 
   return (
     <div>
-      {/* 박스 — 테두리 없음. 포커스 시 박스 안에서 오로라가 일렁임 */}
-      <div className="relative overflow-hidden rounded-2xl bg-neutral-50">
+      {/* 박스 — 테두리 없는 흰 박스 + 드롭쉐도우. 포커스 시 박스 안에서 오로라가 일렁임 */}
+      <div className="relative overflow-hidden rounded-2xl bg-white shadow-[0_6px_22px_-8px_rgba(20,40,90,0.18)]">
         <div className={`ateflo-chip-aurora pointer-events-none absolute inset-0 transition-opacity duration-500 ${focused ? "opacity-50" : "opacity-0"}`} />
         <textarea
           value={story}
           onChange={(e) => setStory(e.target.value)}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          placeholder="교재·수업·경험·강점, 편하게 적어주세요"
+          placeholder="무엇이든 편하게 적어주세요!"
           rows={6}
           maxLength={4000}
           className="relative w-full resize-none bg-transparent px-4 py-3.5 pr-14 text-[15px] leading-relaxed outline-none placeholder:text-neutral-400"

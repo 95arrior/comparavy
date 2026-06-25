@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import TopicCard from "@/components/TopicCard";
-import SeriesSheet from "./SeriesSheet";
 import StoryComposer from "./StoryComposer";
 import type { Comp } from "@/lib/topicScore";
 import type { BloggerType } from "@/lib/bloggerTypes";
@@ -60,7 +59,6 @@ export default function Home({
   const [swapping, setSwapping] = useState<string[]>([]); // 교체 중인 글감 keyword들(동시·연속 교체)
   const [cluster, setCluster] = useState<string | null>(null); // '주제 이어가기' 활성 토픽(null=기본 다양)
   const [regionMode, setRegionMode] = useState(false); // '지역 강화'(우리 동네 키워드 실데이터) 모드
-  const [seriesOpen, setSeriesOpen] = useState(false); // '주제 시리즈'(연재 코스) 시트
   const [showGlams, setShowGlams] = useState(false); // 글감 추천 보기(기본은 내 이야기 입력, 버튼으로 글감 펼침)
   const [storyTitle, setStoryTitle] = useState(""); // 사장님이 직접 정하는 제목(유지)
   const [storyDraft, setStoryDraft] = useState(""); // 내 이야기 초안 — 글감 보기 갔다 와도 유지(상태 끌어올림)
@@ -71,18 +69,6 @@ export default function Home({
   }, [regionTrigger, bloggerType]);
 
   // 사용자가 가장 많이 쓴 주제 토큰(2편 이상) → '주제 이어가기' 제안용
-  const mainTopic = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const a of articles) {
-      for (const tok of String(a.keyword ?? "").split(/\s+/)) {
-        if (tok.length >= 2) counts.set(tok, (counts.get(tok) ?? 0) + 1);
-      }
-    }
-    let best: string | null = null, bestN = 1;
-    for (const [tok, n] of counts) if (n > bestN) { best = tok; bestN = n; }
-    return best ? { token: best, count: bestN } : null;
-  }, [articles]);
-
   // 하루 3회 교체 + 교체한 글감은 그날 다시 안 나옴(기기에 기억 — 새로고침해도 유지)
   const SWAP_LIMIT = isAdmin ? Infinity : 3; // 관리자(테스트)는 무제한 교체
   const todayKey = `ateflo_dismissed_${new Date().toISOString().slice(0, 10)}`;
@@ -110,10 +96,13 @@ export default function Home({
       const data = await res.json();
       const fresh: Topic[] = Array.isArray(data.topics) ? data.topics : [];
       const current = new Set(topics.map((t) => t.keyword));
-      const cands = fresh.filter((t) => !current.has(t.keyword) && !dismissedRef.current.includes(t.keyword));
+      const currentTitles = new Set(topics.map((t) => t.title)); // ★제목 중복도 막는다(키워드만으론 같은 제목 다른 키워드가 중복됨)
+      const cands = fresh.filter((t) => !current.has(t.keyword) && !currentTitles.has(t.title) && !dismissedRef.current.includes(t.keyword));
       const repl = cands.length ? cands[Math.floor(Math.random() * cands.length)] : null; // 동시 교체 충돌↓
       if (repl) {
         setTopics((prev) => {
+          // 동시 교체로 다른 카드가 이미 같은 키워드/제목이면 교체 취소(중복 방지)
+          if (prev.some((t) => t.keyword !== kw && (t.keyword === repl.keyword || t.title === repl.title))) return prev;
           const next = prev.map((t) => (t.keyword === kw ? repl : t));
           try { localStorage.setItem(topicsCacheKey(curModeKey), JSON.stringify(next)); } catch { /* ignore */ }
           return next;
@@ -296,32 +285,19 @@ export default function Home({
         </div>
       )}
 
-      {/* 더 깊게 쓰기 — 토스 보상카드st 한 줄(아이콘+라벨+>). 설명은 아이콘·진입 화면에서 */}
-      {!cluster && !regionMode && !topicsLoading && (
+      {/* 우리 동네 키워드 강화 — 동네 사장님(local)만 */}
+      {!cluster && !regionMode && !topicsLoading && bloggerType === "local" && (
         <div className="mt-4 space-y-2">
-          {bloggerType === "local" && (
+          {(
             <button onClick={() => setRegionMode(true)} className="flex w-full items-center gap-3 rounded-2xl bg-white p-3.5 ring-1 ring-black/[0.04] transition hover:ring-teal-300 active:scale-[0.99]">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-600"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z" /></svg></span>
               <span className="min-w-0 flex-1 truncate text-left text-[14px] font-bold text-neutral-900">우리 동네 키워드 강화</span>
               <svg className="shrink-0 text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
             </button>
           )}
-          {mainTopic && (
-            <button onClick={() => setCluster(mainTopic.token)} className="flex w-full items-center gap-3 rounded-2xl bg-white p-3.5 ring-1 ring-black/[0.04] transition hover:ring-[#1D75F7]/30 active:scale-[0.99]">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1D75F7]/10 text-[#1D75F7]"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg></span>
-              <span className="min-w-0 flex-1 truncate text-left text-[14px] font-bold text-neutral-900">‘{mainTopic.token}’ 이어쓰기 · {mainTopic.count}편째</span>
-              <svg className="shrink-0 text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
-            </button>
-          )}
-          <button onClick={() => setSeriesOpen(true)} className="flex w-full items-center gap-3 rounded-2xl bg-white p-3.5 ring-1 ring-black/[0.04] transition hover:ring-violet-300 active:scale-[0.99]">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" /></svg></span>
-            <span className="min-w-0 flex-1 truncate text-left text-[14px] font-bold text-neutral-900">주제 시리즈로 전문 블로그 되기</span>
-            <svg className="shrink-0 text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
-          </button>
         </div>
       )}
 
-      {seriesOpen && <SeriesSheet articles={articles} onWrite={onWriteKeyword} onClose={() => setSeriesOpen(false)} />}
         </div>
       )}
       </div>
