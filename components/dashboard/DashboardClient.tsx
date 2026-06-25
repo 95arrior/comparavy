@@ -11,6 +11,7 @@ import Segmented from "./Segmented";
 import CenterToast from "./CenterToast";
 import WritingView, { type GenParams } from "./WritingView";
 import WriteTypeSheet from "./WriteTypeSheet";
+import ProfileSettings from "./ProfileSettings";
 import WordPressPanel from "./WordPressPanel";
 import KeywordFinder from "./KeywordFinder";
 import KeywordQueue from "./KeywordQueue";
@@ -71,7 +72,7 @@ export default function DashboardClient(props: DashboardProps) {
   const [subCanceled, setSubCanceled] = useState(props.subStatus === "canceled");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [page, setPage] = useState<null | "news" | "guide" | "sitemap">(null);
+  const [page, setPage] = useState<null | "news" | "guide" | "sitemap" | "profile">(null);
   const [unreadNews, setUnreadNews] = useState(false);
   // 워드프레스 카테고리·태그를 미리 불러둔다 → 글 편집 모달에서 드롭다운이 즉시 뜨도록(매번 새로 가져오는 1초 지연 제거)
   const [wpCategories, setWpCategories] = useState<{ id: number; name: string; count?: number }[]>([]);
@@ -829,6 +830,15 @@ export default function DashboardClient(props: DashboardProps) {
         {page === "news" && <NewsView onBack={() => setPage(null)} />}
         {page === "guide" && <WpGuideView onBack={() => setPage(null)} onGoConnect={() => goTab("wordpress")} />}
         {page === "sitemap" && <SitemapGuideView onBack={() => setPage(null)} />}
+        {page === "profile" && blogProfile && (
+          <main className="ateflo-page-in mx-auto max-w-xl px-6 py-10">
+            <button onClick={() => setPage(null)} className="-ml-1 flex items-center gap-1 text-sm text-neutral-400 transition hover:text-neutral-700"><span className="text-base leading-none">←</span> 돌아가기</button>
+            <h1 className="mt-3 font-pretendard text-[26px] font-bold tracking-tight text-neutral-900 sm:text-[30px]">블로그 설정</h1>
+            <p className="mt-1.5 text-[14px] text-neutral-400">지금 내 정보를 보고, 바꿀 것만 고쳐서 저장하세요.</p>
+            <ProfileSettings profile={blogProfile} onSaved={(p) => { setBlogProfile(p); setPage(null); setNotice("설정을 저장했어요"); }} />
+            <button onClick={() => { if (window.confirm("블로그를 처음부터 다시 설정할까요? (지금 정보는 사라져요)")) { setReonboardPrev(blogProfile); setBlogProfile(null); setPage(null); goTab("lab"); } }} className="mt-6 w-full text-center text-[13px] font-medium text-neutral-400 transition hover:text-neutral-600">처음부터 다시 설정하기</button>
+          </main>
+        )}
 
         {!page && selected && (
           <ArticleModal
@@ -924,7 +934,7 @@ export default function DashboardClient(props: DashboardProps) {
                 isAdmin={props.isAdmin}
                 regionTrigger={regionTrigger}
                 hasBusinessInfo={Boolean(blogProfile.biz_address)}
-                onEditBusiness={() => { setReonboardPrev(blogProfile); setBlogProfile(null); goTab("lab"); }}
+                onEditBusiness={() => setPage("profile")}
                 profileKey={`${blogProfile.vertical}:${blogProfile.sub_category ?? ""}`}
               />
             )}
@@ -1021,7 +1031,7 @@ export default function DashboardClient(props: DashboardProps) {
                     onWrite={() => goLabView("home")}
                     onGoConnect={() => goTab("wordpress")}
                     onRegion={() => { goLabView("home"); setRegionTrigger((t) => t + 1); }}
-                    onEditBusiness={() => { setReonboardPrev(blogProfile); setBlogProfile(null); goTab("lab"); }}
+                    onEditBusiness={() => setPage("profile")}
                   />
                 </div>
               </main>
@@ -1084,9 +1094,9 @@ export default function DashboardClient(props: DashboardProps) {
                 <svg className="text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
               </button>
               {blogProfile && (
-                <button onClick={() => { if (window.confirm("블로그를 처음부터 다시 설정할까요?")) { setReonboardPrev(blogProfile); setBlogProfile(null); goTab("lab"); } }} className="flex w-full items-center gap-3 px-5 py-4 text-left transition active:bg-neutral-50">
+                <button onClick={() => setPage("profile")} className="flex w-full items-center gap-3 px-5 py-4 text-left transition active:bg-neutral-50">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-500"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg></span>
-                  <span className="flex-1 text-[15px] font-medium text-neutral-800">블로그 설정·재설정</span>
+                  <span className="flex-1 text-[15px] font-medium text-neutral-800">블로그 설정</span>
                   <svg className="text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
                 </button>
               )}
