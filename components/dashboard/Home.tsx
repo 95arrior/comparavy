@@ -31,6 +31,7 @@ export default function Home({
   regionTrigger,
   hasBusinessInfo,
   onEditBusiness,
+  onWriteStory,
   profileKey,
 }: {
   displayName: string;
@@ -48,6 +49,7 @@ export default function Home({
   regionTrigger?: number; // 성과 페이지 '지역 선점'에서 넘어오면 지역 강화 자동 ON
   hasBusinessInfo?: boolean; // 업체 주소 등록 여부 — 지역 강화 가능 판단
   onEditBusiness?: () => void; // 업체 등록(온보딩 재진입)
+  onWriteStory?: () => void; // 내 이야기로 글쓰기(메인 기능)
   profileKey?: string; // 업종:세부 — 글감 캐시 분리(업종 바꾸면 새 글감)
 }) {
   const [topics, setTopics] = useState<Topic[]>([]);
@@ -189,7 +191,19 @@ export default function Home({
         )}
       </div>
 
-      {/* 추천 글감 — 랜딩과 동일한 글감 박스(실데이터). 누르면 그 글 쓰기 */}
+      {/* 메인 — 내 이야기로 글쓰기(GPT와 차별: 우리 데이터·네이버 규격·정직·발행 자동) */}
+      {onWriteStory && !cluster && !regionMode && (
+        <button onClick={onWriteStory} className="mt-6 flex w-full items-center gap-3 rounded-2xl bg-[#1D75F7] p-4 text-left text-white shadow-[0_10px_30px_-12px_rgba(29,117,247,0.5)] transition hover:opacity-95 active:scale-[0.99]">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/20"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg></span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[15px] font-bold">내 이야기로 글쓰기</span>
+            <span className="block text-[12.5px] text-white/85">교재·수업·경험만 적으면 네이버 글로 만들어요</span>
+          </span>
+          <svg className="shrink-0 text-white/70" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+        </button>
+      )}
+
+      {/* 추천 글감(보조) — 글감이 떠오르지 않을 때. 누르면 그 글 쓰기 */}
       {cluster ? (
         <div className="mt-8">
           <button onClick={() => setCluster(null)} className="-ml-1 flex items-center gap-1 text-[13px] font-medium text-neutral-400 transition hover:text-neutral-700">
@@ -213,7 +227,10 @@ export default function Home({
           </div>
         </div>
       ) : (
-        <h2 className="mt-8 text-[15px] font-bold tracking-tight text-neutral-900">오늘의 추천 글감</h2>
+        <div className="mt-8">
+          <p className="text-[12px] font-medium text-neutral-400">또는, 쓸 게 안 떠오르면</p>
+          <h2 className="mt-0.5 text-[15px] font-bold tracking-tight text-neutral-900">오늘의 추천 글감</h2>
+        </div>
       )}
       {topicsLoading ? (
         <div className="relative mt-3">

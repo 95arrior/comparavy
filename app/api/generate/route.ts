@@ -69,7 +69,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "요청이 올바르지 않아요." }, { status: 400 });
   }
 
-  const keyword = (body.keyword ?? "").trim();
+  const userStory = (body.userStory ?? "").trim().slice(0, 4000); // '내 이야기' 재료(상한)
+  let keyword = (body.keyword ?? "").trim();
+  // '내 이야기'로 쓰는데 키워드(주제)가 비면, 이야기 첫 구절에서 파이프라인용 키워드를 뽑는다(실제 제목은 프롬프트가 이야기 기반으로 만든다).
+  if (!keyword && userStory) keyword = userStory.replace(/\s+/g, " ").split(/[.!?\n]/)[0].trim().slice(0, 40);
   // 1차(규칙): 자모(ㅁㅇ)·숫자·기호·반복(aaaa)·자판난타(qwrt) 등 명백한 쓰레기 차단 — 헛 생성·비용 낭비 방지
   if (looksLikeGarbageKeyword(keyword)) {
     return NextResponse.json({ error: "검색할 만한 키워드를 입력해 주세요. (예: 강아지 분리불안)" }, { status: 400 });
@@ -206,7 +209,7 @@ export async function POST(request: Request) {
         }
 
         const article = await streamArticle(
-          { keyword, angle: body.angle, type, tone, maxWords, variantInstruction, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, channel },
+          { keyword, angle: body.angle, type, tone, maxWords, variantInstruction, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, channel, userStory: userStory || null },
           (bodyHtml) => send({ type: "body", html: bodyHtml }),
           (title) => send({ type: "title", title }),
           (u) => { void logUsage({ userId: user.id, model: u.model, kind: "generate", inputTokens: u.inputTokens, outputTokens: u.outputTokens }); },
