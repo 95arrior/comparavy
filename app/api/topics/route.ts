@@ -93,6 +93,29 @@ function pickBalanced(rows: PoolRow[], auds: string[], n: number, rnd: () => num
   return out.slice(0, n);
 }
 
+// 소주제 군집 키 — 비슷한 글감(같은 소주제: 영문법변환기 류) 몰림 방지용.
+// 띄어쓰기 무관하게 '앞 4글자(핵심 명사 prefix)'로 묶는다. 수식어 목록(공부법·추천 등) 의존하지 않아 견고.
+function clusterKey(kw: string): string {
+  const s = kw.replace(/\s+/g, "").replace(/[^가-힣a-z0-9]/gi, "");
+  return s.slice(0, 4) || s;
+}
+
+// 소주제 골고루 — 클러스터별 라운드로빈으로 n개. 한 소주제에 몰리지 않게(후보 단계부터 분산).
+function pickDiverse(rows: PoolRow[], n: number, rnd: () => number = Math.random): PoolRow[] {
+  const byC = new Map<string, PoolRow[]>();
+  for (const r of shuffle(rows, rnd)) {
+    const k = clusterKey(r.keyword);
+    const a = byC.get(k);
+    if (a) a.push(r); else byC.set(k, [r]);
+  }
+  const cl = [...byC.values()];
+  const out: PoolRow[] = [];
+  while (out.length < n && cl.some((c) => c.length)) {
+    for (const c of cl) { if (out.length >= n) break; const t = c.shift(); if (t) out.push(t); }
+  }
+  return out;
+}
+
 export async function GET(req: Request) {
   // 인증·프로필은 유저 클라이언트(RLS) — 본인 확인 + 본인 프로필만 읽음.
   const supabase = await createSupabaseServerClient();
@@ -251,27 +274,20 @@ export async function GET(req: Request) {
         }
       } catch { /* 수집 실패 시드는 건너뜀 */ }
     }
-    // 진행적 확장: 우리 지역 계층(오송→흥덕→청주) 순으로 tier 부여 → 좁은(tier 낮은) 것 우선 + 검색량.
-    // 지역 없는 일반 분야 키워드(유아영어 공부법 등)는 마지막 tier로 → 3개 미달 시 채움.
-    const regionTier = (kw: string) => {
-      const i = regions.findIndex((r) => kw.includes(r));
-      return i < 0 ? regions.length : i;
-    };
+    // ★지역 전용: '지역명이 들어간 진짜 지역 키워드'만 남긴다(일반 분야 글감 padding 안 함 — '우리 동네'인데 무관한 글감 뜨는 신뢰 저하 방지).
+    // 진행적 확장: 우리 지역 계층(오송→흥덕→청주) 순 tier → 좁은(tier 낮은) 것 우선 + 검색량. 부족하면 있는 만큼만(정직).
+    const regionIdx = (kw: string) => regions.findIndex((r) => kw.includes(r));
     candidates = [...collected.values()]
-      .sort((a, b) => regionTier(a.keyword) - regionTier(b.keyword) || (b.monthly_searches ?? 0) - (a.monthly_searches ?? 0))
+      .filter((c) => regionIdx(c.keyword) >= 0) // 지역명 포함만
+      .sort((a, b) => regionIdx(a.keyword) - regionIdx(b.keyword) || (b.monthly_searches ?? 0) - (a.monthly_searches ?? 0))
       .slice(0, want);
-    // 안전장치: 지역 데이터가 얕아 부족하면 분야 풀(일반 글감)로 보충 — '동네 손님도 찾는 분야 글감'. region 0개 방지.
-    if (candidates.length < want) {
-      const need = want - candidates.length;
-      const fieldFill = pickBalanced(mid, audActive ? audSel : [], need + 3, rng)
-        .filter((r) => !candidates.some((c) => c.keyword === r.keyword) && !mentionsForeignRegion(r.keyword, regions));
-      candidates = [...candidates, ...fieldFill.slice(0, need)];
-    }
   } else {
     // ── 일반 후보(풀 기반) ── 노이즈·중복 제외로 빠질 것 대비해 여유분(want)까지.
     // 지역형(주소 있음)이면 '타지역' 키워드(대구 화상영어 등)는 일반 글감에서도 제거 — 우리 지역/일반 분야만.
     const noForeign = (arr: PoolRow[]) => (regions.length ? arr.filter((r) => !mentionsForeignRegion(r.keyword, regions)) : arr);
-    const general = pickBalanced(noForeign(mid), audActive ? audSel : [], want + 1, rng);
+    // 오디언스 밸런스(넉넉히) → 소주제 분산. 둘 다 만족해 비슷한 글감 몰림 방지.
+    const balanced = pickBalanced(noForeign(mid), audActive ? audSel : [], (want + 1) * 2, rng);
+    const general = pickDiverse(balanced, want + 1, rng);
     const lowF = noForeign(low), highF = noForeign(high);
     if (lowF.length > 0 && rng() < 0.28) candidates.push(lowF[Math.floor(rng() * lowF.length)]); // 싹 1개 가끔
     const add = (arr: PoolRow[]) => {
@@ -317,17 +333,28 @@ export async function GET(req: Request) {
   // 후보 집합은 매일 시드로 달라지므로(변동성) 그날의 후보 중 가장 winnable한 걸 보여준다.
   const winScore = ({ r, t }: { r: PoolRow; t?: { fit?: number } }) =>
     (r.blog_total != null ? filledStarsFromData(r.monthly_searches ?? 0, r.blog_total) : 3) * 10 + (t?.fit ?? 1);
-  // 제목 정규화 중복 제거 — '화상영어 추천' vs '화상영어추천'처럼 키워드는 달라도 제목이 같은/비슷한 글감 방지.
+  // 제목 중복 제거 + 소주제 클러스터 라운드로빈 — 비슷한 글감(영문법변환기 3개) 몰림 방지, 골고루 다양하게.
+  type FitItem = (typeof fitTop)[number];
+  const sortedFit: FitItem[] = [...fitTop].sort((a, b) => winScore(b) - winScore(a));
+  const byCluster = new Map<string, FitItem[]>();
   const seenTitle = new Set<string>();
-  const generalRows = [...fitTop]
-    .sort((a, b) => winScore(b) - winScore(a))
-    .filter(({ r, t }) => {
-      const key = normalizeKeyword(t?.title ?? r.keyword);
-      if (seenTitle.has(key)) return false;
-      seenTitle.add(key);
-      return true;
-    })
-    .slice(0, PICK);
+  for (const item of sortedFit) {
+    const tkey = normalizeKeyword(item.t?.title ?? item.r.keyword);
+    if (seenTitle.has(tkey)) continue; // 같은/비슷한 제목 제거
+    seenTitle.add(tkey);
+    const ck = clusterKey(item.r.keyword);
+    const arr = byCluster.get(ck);
+    if (arr) arr.push(item); else byCluster.set(ck, [item]);
+  }
+  const clusters = [...byCluster.values()]; // 각 클러스터는 winScore 내림차순
+  const generalRows: FitItem[] = [];
+  while (generalRows.length < PICK && clusters.some((c) => c.length)) {
+    for (const c of clusters) { // 클러스터별로 하나씩 → 소주제 골고루
+      if (generalRows.length >= PICK) break;
+      const top = c.shift();
+      if (top) generalRows.push(top);
+    }
+  }
 
   // comp는 blog_total(진짜 콘텐츠 경쟁) 있으면 그걸로, 없으면 광고경쟁 폴백. region 모드면 '우리 동네' 칩.
   const topics = generalRows.map(({ r, t }) => {
