@@ -7,9 +7,9 @@ import { countKoreanChars } from "@/lib/humanizer";
 import { isDisposableEmail } from "@/lib/disposableEmail";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { normalizeKeyword, pickVariant, pickAngle, simhash } from "@/lib/diversity";
-import { looksLikeGarbageKeyword } from "@/lib/keywordGuard";
+import { looksLikeGarbageKeyword, looksLikeNonsenseStory } from "@/lib/keywordGuard";
 import { isUnsafeKeyword } from "@/lib/keywordSafety";
-import { deriveStoryTopic } from "@/lib/aiSeeds";
+import { deriveStoryTopic, validateStoryMeaning } from "@/lib/aiSeeds";
 import { explicitAudienceOf, AUDIENCE_ALL } from "@/lib/audience";
 import { isAdminEmail } from "@/lib/adminStats";
 import { logUsage } from "@/lib/usageLog";
@@ -86,6 +86,17 @@ export async function POST(request: Request) {
   // 타사 업체명·인물명·브랜드는 글감으로 금지(상표권·명예훼손·비교광고 위험)
   if (isUnsafeKeyword(keyword)) {
     return NextResponse.json({ error: "특정 업체명·브랜드는 글감으로 쓸 수 없어요. (상표권·명예훼손 위험) 일반 주제로 입력해 주세요." }, { status: 400 });
+  }
+
+  // ★'내 이야기'(userStory) — 생성 '전' 엄격 검증. 가비지/테스트면 비싼 생성 자체를 막아 비용·크레딧 0.
+  //   (길이 검증은 생성 '후'라 이미 비용 발생 → 여기서 먼저 막는다.)
+  if (userStory) {
+    if (looksLikeNonsenseStory(userStory) || (userTitle && looksLikeGarbageKeyword(userTitle))) {
+      return NextResponse.json({ error: "내용이 너무 짧거나 의미가 잘 안 통해요. 가게·수업·경험을 실제로 적어주세요." }, { status: 400 });
+    }
+    if (!(await validateStoryMeaning(userTitle ?? keyword, userStory))) {
+      return NextResponse.json({ error: "테스트·아무 말처럼 보여 글을 만들 수 없어요. 실제 이야기를 적어주세요." }, { status: 400 });
+    }
   }
 
   // 플랜·사용량 확인

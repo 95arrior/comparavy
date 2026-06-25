@@ -1,5 +1,37 @@
 import Anthropic from "@anthropic-ai/sdk";
 
+// '내 이야기'가 실제 의미 있는지 AI로 판별(생성 '전' 게이트). 가비지/테스트면 false → 비싼 생성 자체를 막아 비용 0.
+// ★두서없거나 맞춤법 틀려도 실제 내용·의도가 있으면 통과(실제 글을 막으면 안 됨). 명백히 무의미할 때만 차단.
+export async function validateStoryMeaning(title: string, story: string): Promise<boolean> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const s = (story || "").trim().slice(0, 2000);
+  if (s.length < 8) return false;
+  if (!apiKey) return true; // 키 없으면 규칙(1차)만으로 — 여기선 통과
+  try {
+    const client = new Anthropic({ apiKey });
+    const res = await client.messages.create({
+      model: "claude-haiku-4-5",
+      max_tokens: 60,
+      messages: [
+        {
+          role: "user",
+          content:
+            `블로그 글 작성용으로 사용자가 입력한 제목·내용이다. '실제 의미 있는 주제·경험·정보'면 ok=true, '의미 없는 테스트·자판 난타·가나다라 나열·아무 말 장난·낙서'면 ok=false.\n` +
+            `★중요: 두서없거나 맞춤법이 틀려도 '실제 내용·의도'가 있으면 반드시 true(진짜 글을 막으면 절대 안 됨). 명백히 무의미할 때만 false.\n` +
+            `제목: "${(title || "").slice(0, 100)}"\n내용: "${s}"\nJSON만: {"ok":true}`,
+        },
+      ],
+    });
+    const text = res.content.map((c) => (c.type === "text" ? c.text : "")).join("");
+    const m = text.match(/\{[\s\S]*\}/);
+    if (!m) return true; // 파싱 실패 → 통과(false-positive 방지, 규칙이 1차 방어)
+    const raw = JSON.parse(m[0]) as { ok?: boolean };
+    return raw.ok !== false;
+  } catch {
+    return true; // 오류 → 통과(규칙이 1차 방어)
+  }
+}
+
 // '내 이야기'에서 가장 잘 맞는 검색 질문형 주제(제목 앵커)를 AI로 뽑는다 — 사용자가 주제를 안 적어도 핏하게.
 export async function deriveStoryTopic(story: string, field: string, audience?: string): Promise<string> {
   const apiKey = process.env.ANTHROPIC_API_KEY;

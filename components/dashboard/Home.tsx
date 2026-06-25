@@ -13,6 +13,9 @@ interface Topic { keyword: string; title: string; demandLabel: string; ssak?: bo
 // 글감 모으는 동안 순환 안내(멈춘 듯 안 보이게 — 첫 카테고리는 네이버 수집이라 잠깐 걸림)
 const LOAD_MSGS = ["검색되는 키워드를 찾는 중…", "경쟁 낮은 글감을 고르는 중…", "글감 제목을 다듬는 중…"];
 
+// 소주제 군집 키(서버와 동일 규칙: 띄어쓰기·기호 제거 후 앞 4글자) — 교체 시 비슷한 소주제 중복 방지
+const clusterOf = (s: string) => s.replace(/\s+/g, "").replace(/[^가-힣a-z0-9]/gi, "").slice(0, 4);
+
 // 토스식 메인 홈 — '연구소' 컨셉/탭 제거. [미니 진척] → [성과] → [글감 자리+새 글 쓰기] → [내 글].
 // 미니 진척 배너는 3단계 완료되면 자동으로 사라진다(새 유저만 가이드).
 
@@ -98,13 +101,14 @@ export default function Home({
       const data = await res.json();
       const fresh: Topic[] = Array.isArray(data.topics) ? data.topics : [];
       const current = new Set(topics.map((t) => t.keyword));
-      const currentTitles = new Set(topics.map((t) => t.title)); // ★제목 중복도 막는다(키워드만으론 같은 제목 다른 키워드가 중복됨)
-      const cands = fresh.filter((t) => !current.has(t.keyword) && !currentTitles.has(t.title) && !dismissedRef.current.includes(t.keyword));
+      const currentTitles = new Set(topics.map((t) => t.title));
+      const currentClusters = new Set(topics.map((t) => clusterOf(t.title))); // ★소주제(클러스터) 단위 중복 방지 — '눈온열안대 사용법'·'눈온열안대 효과' 둘 다 안 나오게
+      const cands = fresh.filter((t) => !current.has(t.keyword) && !currentTitles.has(t.title) && !currentClusters.has(clusterOf(t.title)) && !dismissedRef.current.includes(t.keyword));
       const repl = cands.length ? cands[Math.floor(Math.random() * cands.length)] : null; // 동시 교체 충돌↓
       if (repl) {
         setTopics((prev) => {
-          // 동시 교체로 다른 카드가 이미 같은 키워드/제목이면 교체 취소(중복 방지)
-          if (prev.some((t) => t.keyword !== kw && (t.keyword === repl.keyword || t.title === repl.title))) return prev;
+          // 동시 교체로 다른 카드가 이미 같은 키워드/제목/소주제면 교체 취소(중복 방지)
+          if (prev.some((t) => t.keyword !== kw && (t.keyword === repl.keyword || t.title === repl.title || clusterOf(t.title) === clusterOf(repl.title)))) return prev;
           const next = prev.map((t) => (t.keyword === kw ? repl : t));
           try { localStorage.setItem(topicsCacheKey(curModeKey), JSON.stringify(next)); } catch { /* ignore */ }
           return next;
@@ -176,17 +180,6 @@ export default function Home({
 
       {/* 중앙 — 히어로 + 오늘의 글감 3개 */}
       <div className="flex flex-1 flex-col justify-center py-6">
-      {/* HERO — 큰 한 문장 */}
-      <h1 className="font-pretendard text-[28px] font-bold leading-[1.2] tracking-tight text-neutral-900 sm:text-[34px]">
-        오늘, 한 편이면 돼요
-      </h1>
-      <div className="mt-2 flex items-center gap-2">
-        <p className="text-[15px] text-neutral-400">{blogName}</p>
-        {articles.filter((a) => a.status !== "generating").length > 0 && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-[#1D75F7]/[0.07] px-2.5 py-0.5 text-[12px] font-bold text-[#1D75F7]">✍️ {articles.filter((a) => a.status !== "generating").length}편째</span>
-        )}
-      </div>
-
       {/* 메인 — 내 이야기 인라인 입력. 글감은 '추천받기' 버튼으로 펼친다(showGlams) */}
       {!showGlams ? (
         <div className="ateflo-page-in mt-6">

@@ -53,3 +53,20 @@ export async function isMeaningfulKeyword(raw: string): Promise<boolean> {
     return true; // fail-open
   }
 }
+
+/**
+ * '내 이야기'(story) 1차 방어(규칙). 명백한 무의미/장난 입력 차단 — 생성 '전'에 걸러 비용 0.
+ * 반환 true = 무의미(차단), false = 통과(→ AI 의미판별로).
+ */
+export function looksLikeNonsenseStory(raw: string): boolean {
+  const t = (raw ?? "").replace(/\s+/g, "");
+  if (t.length < 8) return true; // 너무 짧아 글 못 만듦
+  // 한글 자모 순서 나열(가나다라마바사…)
+  if (/가나다라|나다라마|다라마바|라마바사|마바사아|바사아자|아자차카|자차카타|차카타파/.test(t)) return true;
+  // 같은 글자 4회 이상 반복(ㅋㅋㅋㅋ·가가가가 등)
+  if (/(.)\1{3,}/.test(t)) return true;
+  // 의미 글자(한글 음절/영문) 비율이 절반 미만 → 기호·숫자·자모 범벅
+  const meaningful = (t.match(/[가-힣a-zA-Z]/g) ?? []).length;
+  if (meaningful / t.length < 0.5) return true;
+  return false;
+}
