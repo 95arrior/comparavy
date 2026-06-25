@@ -1028,7 +1028,8 @@ export default function DashboardClient(props: DashboardProps) {
                 <h1 className="mt-3 font-pretendard text-[26px] font-bold tracking-tight text-neutral-900 sm:text-[30px]">내 글</h1>
                 <p className="mb-6 mt-1.5 text-[15px] text-neutral-400">총 {articles.filter((a) => a.status !== "generating").length}편{articles.some((a) => a.status === "published") ? ` · 발행 ${articles.filter((a) => a.status === "published").length}편` : ""}</p>
                 {nextStepBanner}
-                {articles.length > 0 && (
+                {/* 캘린더(예약)는 워드프레스 전용 — 자영업자(네이버)는 예약발행이 없어 목록만 */}
+                {!isLocal && articles.length > 0 && (
                   <div className="mb-4">
                     <Segmented
                       options={[{ value: "list", label: "목록" }, { value: "calendar", label: "캘린더" }]}
@@ -1037,7 +1038,7 @@ export default function DashboardClient(props: DashboardProps) {
                     />
                   </div>
                 )}
-                {calView && articles.length > 0 ? (
+                {calView && !isLocal && articles.length > 0 ? (
                   <ContentCalendar articles={articles} onOpen={setSelected} onGoGenerate={() => goLabView("home")} />
                 ) : (
                   <ArticleList
@@ -1046,6 +1047,7 @@ export default function DashboardClient(props: DashboardProps) {
                     onGoGenerate={() => goLabView("home")}
                     onUpdated={(updated) => setArticles((prev) => prev.map((a) => (a.id === updated.id ? updated : a)))}
                     wpConnected={Boolean(wpSiteUrl)}
+                    local={isLocal}
                   />
                 )}
               </main>
@@ -1075,8 +1077,18 @@ export default function DashboardClient(props: DashboardProps) {
         {/* ── 워드프레스 ── */}
         {!page && !selected && !genParams && tab === "wordpress" && (
           <main className="ateflo-page-in mx-auto max-w-5xl px-6 py-10">
-            {nextStepBanner}
-            <WordPressPanel siteUrl={wpSiteUrl} onConnected={setWpSiteUrl} onDisconnected={() => setWpSiteUrl(null)} onOpenGuide={openGuide} onOpenSitemapGuide={openSitemapGuide} />
+            {isLocal ? (
+              <div className="rounded-2xl bg-white p-8 text-center ring-1 ring-black/[0.04]">
+                <p className="text-[15px] font-bold text-neutral-900">자영업자는 네이버 블로그로 운영해요</p>
+                <p className="mx-auto mt-1.5 max-w-sm text-[13px] leading-relaxed text-neutral-400">워드프레스 연결은 필요 없어요. 글을 만들어 ‘네이버에 올리기’로 복사해서 붙여넣으면 끝이에요.</p>
+                <button onClick={() => goLabView("home")} className="mt-4 rounded-xl bg-[#1D75F7] px-5 py-2.5 text-[13px] font-bold text-white transition hover:opacity-90 active:scale-95">홈으로</button>
+              </div>
+            ) : (
+              <>
+                {nextStepBanner}
+                <WordPressPanel siteUrl={wpSiteUrl} onConnected={setWpSiteUrl} onDisconnected={() => setWpSiteUrl(null)} onOpenGuide={openGuide} onOpenSitemapGuide={openSitemapGuide} />
+              </>
+            )}
           </main>
         )}
 

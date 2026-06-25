@@ -28,12 +28,14 @@ export default function ArticleList({
   onGoGenerate,
   onUpdated,
   wpConnected,
+  local = false,
 }: {
   articles: Article[];
   onOpen: (article: Article) => void;
   onGoGenerate: () => void;
   onUpdated?: (a: Article) => void;
   wpConnected?: boolean;
+  local?: boolean; // 자영업자(네이버) — 예약발행 없음
 }) {
   // 생성 중인 자리표시 글은 목록·카운트에서 제외 (메인의 '생성 중' 카드에서만 보여줌)
   const articles = allArticles.filter((a) => a.status !== "generating");
@@ -136,7 +138,7 @@ export default function ArticleList({
   const statusChips: { key: StatusFilter; label: string }[] = [
     { key: "all", label: "전체" },
     { key: "published", label: "발행" },
-    { key: "future", label: "예약" },
+    ...(local ? [] : [{ key: "future" as StatusFilter, label: "예약" }]), // 자영업자는 예약발행 없음
     { key: "draft", label: "초안" },
   ];
 

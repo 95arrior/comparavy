@@ -696,7 +696,7 @@ export default function ArticleModal({
             <span className="text-base leading-none">←</span> 목록으로
           </button>
           <div className="relative flex shrink-0 items-center gap-1.5">
-            {canPublish && (
+            {canPublish && !isNaver && (
               <button
                 onClick={() => setScheduleOpen((o) => !o)}
                 disabled={publishing}
