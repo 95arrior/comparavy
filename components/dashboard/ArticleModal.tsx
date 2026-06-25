@@ -290,6 +290,8 @@ export default function ArticleModal({
       if (!id) return;
       try { localStorage.setItem("ateflo_naver_blogid", id); } catch { /* ignore */ }
     }
+    // ★제목을 미리 클립보드에 — 네이버 열면 커서가 '제목칸'이라 바로 붙여넣게(왕복 1번으로 줄임)
+    try { navigator.clipboard?.writeText(title); setTitleCopied(true); setTimeout(() => setTitleCopied(false), 2500); } catch { /* ignore */ }
     window.open(`https://blog.naver.com/${id}/postwrite`, "_blank", "noopener");
     markNaverPublished(); // 글쓰기로 넘어가면 '발행됨'으로 표시(별도 버튼 없이 성과·내글 추적 유지)
   }
@@ -871,9 +873,9 @@ export default function ArticleModal({
               <p className="text-[17px] font-bold text-neutral-900">네이버 블로그에 올리기</p>
               <p className="mt-1 text-[13px] leading-relaxed text-neutral-500">네이버는 자동 발행이 안 돼서 복사해서 붙여넣어요. 1분이면 끝나요.</p>
               <ol className="mt-4 space-y-2 text-[13.5px] leading-relaxed text-neutral-700">
-                <li><b className="text-[#03C75A]">1.</b> <b>네이버 글쓰기</b>를 열어요</li>
-                <li><b className="text-[#03C75A]">2.</b> <b>제목 복사</b> → 네이버 <b>제목칸</b>에 붙여넣기</li>
-                <li><b className="text-[#03C75A]">3.</b> <b>본문 복사</b> → <b>본문칸</b>에 붙여넣기(소제목·형광펜·인용구 따라옴)</li>
+                <li><b className="text-[#03C75A]">1.</b> <b>네이버 글쓰기 열기</b> (제목이 자동 복사돼요)</li>
+                <li><b className="text-[#03C75A]">2.</b> 네이버 <b>제목칸</b>에 바로 붙여넣기(Ctrl/⌘+V)</li>
+                <li><b className="text-[#03C75A]">3.</b> 돌아와 <b>본문 복사</b> → <b>본문칸</b>에 붙여넣기(소제목·형광펜·인용구 따라옴)</li>
                 <li><b className="text-[#03C75A]">4.</b> <b>📷 사진 자리</b>마다 사진을 올리고, 그 안내 줄은 지워요</li>
                 <li><b className="text-[#03C75A]">5.</b> 맨 끝 해시태그 확인 후 <b>발행!</b></li>
               </ol>
@@ -890,11 +892,9 @@ export default function ArticleModal({
                 <p>· 글 끝에 <b>네이버 지도(내 가게)</b>를 첨부하면 지역 노출에 유리해요</p>
                 <p>· 발행할 때 <b>태그</b>도 본문 해시태그처럼 넣어주세요</p>
               </div>
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                <button onClick={copyTitle} className="rounded-xl bg-[#03C75A]/10 py-3.5 text-[14px] font-bold text-[#03C75A] transition hover:bg-[#03C75A]/15 active:scale-[0.99]">{titleCopied ? "복사됨 ✓" : "① 제목 복사"}</button>
-                <button onClick={copyBody} className="rounded-xl bg-[#03C75A] py-3.5 text-[14px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">{copied ? "복사됨 ✓" : "② 본문 복사"}</button>
-              </div>
-              <button onClick={openNaverWrite} className="mt-2 block w-full rounded-xl bg-neutral-100 py-3 text-center text-[14px] font-bold text-neutral-700 transition hover:bg-neutral-200">네이버 글쓰기 열기</button>
+              <button onClick={openNaverWrite} className="mt-4 w-full rounded-xl bg-[#03C75A] py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">네이버 글쓰기 열기 <span className="text-[12px] font-medium opacity-85">· 제목 자동 복사</span></button>
+              <button onClick={copyBody} className="mt-2 w-full rounded-xl bg-[#03C75A]/10 py-3.5 text-[14px] font-bold text-[#03C75A] transition hover:bg-[#03C75A]/15 active:scale-[0.99]">{copied ? "본문 복사됨 ✓ — 본문칸에 붙여넣기" : "본문 복사"}</button>
+              <button onClick={copyTitle} className="mt-2 w-full py-1.5 text-center text-[12px] font-medium text-neutral-400 transition hover:text-neutral-600">{titleCopied ? "제목 복사됨 ✓" : "제목 다시 복사"}</button>
               <button onClick={() => setNaverOpen(false)} className="mt-2 w-full py-1.5 text-center text-sm font-medium text-neutral-400 transition hover:text-neutral-700">닫기</button>
             </div>
           </div>
