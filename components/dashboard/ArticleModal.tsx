@@ -776,7 +776,7 @@ export default function ArticleModal({
         </div>
       )}
 
-      <div className="mx-auto max-w-3xl px-6 pt-8 pb-28 md:pb-8">
+      <div className="mx-auto max-w-3xl px-3 pt-8 pb-28 sm:px-6 md:pb-8">
         <div className="flex items-center justify-between gap-4">
           <span className="truncate text-xs text-neutral-400">키워드 · {article.keyword}</span>
         </div>
@@ -846,8 +846,9 @@ export default function ArticleModal({
               <ol className="mt-4 space-y-2 text-[13.5px] leading-relaxed text-neutral-700">
                 <li><b className="text-[#03C75A]">1.</b> 아래 <b>본문 복사</b>를 눌러요</li>
                 <li><b className="text-[#03C75A]">2.</b> <b>네이버 글쓰기</b>를 열어요</li>
-                <li><b className="text-[#03C75A]">3.</b> 붙여넣고, 본문 속 <b>[사진: ]</b> 자리에 사진을 넣어요</li>
-                <li><b className="text-[#03C75A]">4.</b> 맨 끝 해시태그 확인 후 <b>발행!</b></li>
+                <li><b className="text-[#03C75A]">3.</b> 붙여넣으면 <b>소제목·형광펜·인용구·요약 박스</b>까지 따라와요</li>
+                <li><b className="text-[#03C75A]">4.</b> 본문 속 <b>[사진: ]</b> 자리에 사진을 넣어요</li>
+                <li><b className="text-[#03C75A]">5.</b> 맨 끝 해시태그 확인 후 <b>발행!</b></li>
               </ol>
               <div className="mt-4 rounded-xl bg-[#03C75A]/[0.06] p-3.5 text-[12.5px] leading-relaxed text-neutral-600">
                 <p className="font-bold text-[#03C75A]">노출 잘 되는 꿀팁</p>

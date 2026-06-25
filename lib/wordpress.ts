@@ -183,6 +183,11 @@ const ATEFLO_POST_STYLE =
   ".ateflo-post a{color:#1d75f7;text-underline-offset:3px;}" +
   ".ateflo-post strong{font-weight:700;color:#191f28;}" +
   ".ateflo-post img{max-width:100%;height:auto;border-radius:10px;}" +
+  ".ateflo-post mark{background:linear-gradient(transparent 55%,#fff3a8 55%);color:inherit;padding:0 1px;font-weight:600;}" + // 형광펜
+  ".ateflo-post blockquote{margin:1.6em 0;padding:1em 1.2em;background:#f5f8ff;border-left:4px solid #1d75f7;border-radius:8px;color:#33363d;}" + // 인용구 박스
+  ".ateflo-post blockquote p{margin:.4em 0;}" +
+  ".ateflo-post .ateflo-toc{margin:1.4em 0;padding:1.1em 1.3em;background:#f7f8fa;border-radius:12px;}" + // 목차 박스
+  ".ateflo-post .ateflo-toc strong{display:block;margin-bottom:.5em;color:#191f28;}" +
   ".ateflo-post .ateflo-disclaimer{margin:3em 0 0;padding-top:14px;border-top:1px solid #eee;font-size:12.5px;line-height:1.6;color:#aaa;}" +
   "</style>";
 

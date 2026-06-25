@@ -13,6 +13,7 @@ import { TableHeader } from "@tiptap/extension-table-header";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { TextAlign } from "@tiptap/extension-text-align";
 import { TextStyle } from "@tiptap/extension-text-style";
+import Highlight from "@tiptap/extension-highlight";
 
 /* ── 아이콘 (라인, currentColor) ─────────────────────────── */
 const S = ({ d, fill = false }: { d: string; fill?: boolean }) => (
@@ -183,6 +184,7 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
       TableCell,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       FontSize,
+      Highlight.configure({ multicolor: false }), // 형광펜(<mark>) — 네이버st 핵심 문장 강조
     ],
     content: initialHtml,
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
@@ -348,6 +350,8 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
           <Btn title="제목" active={editor.isActive("heading", { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}><IconH2 /></Btn>
           <Btn title="소제목" active={editor.isActive("heading", { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}><IconH3 /></Btn>
           <Btn title="굵게" active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()}><IconBold /></Btn>
+          <Btn title="형광펜 (텍스트 드래그 후)" active={editor.isActive("highlight")} onClick={() => editor.chain().focus().toggleHighlight().run()}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 11-6 6v3h9l3-3" /><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4" /></svg></Btn>
+          <Btn title="인용구" active={editor.isActive("blockquote")} onClick={() => editor.chain().focus().toggleBlockquote().run()}><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 7h4v6H7c0 2 1 3 3 3v2c-3 0-5-2-5-5V7zm9 0h4v6h-4c0 2 1 3 3 3v2c-3 0-5-2-5-5V7z" /></svg></Btn>
           <Btn title="목록" active={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()}><IconList /></Btn>
           <Btn title="번호 목록" active={editor.isActive("orderedList")} onClick={() => editor.chain().focus().toggleOrderedList().run()}><IconOrderedList /></Btn>
           <span className="mx-1 h-5 w-px bg-neutral-200/80" />
@@ -392,7 +396,7 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
         )}
       </div>
 
-      <div className="mx-auto max-w-[720px] px-8 py-8">
+      <div className="mx-auto max-w-[720px] px-4 py-6 sm:px-8 sm:py-8">
         {onFeaturedChange && (
           <div className="mb-4">
             {featuredImage ? (

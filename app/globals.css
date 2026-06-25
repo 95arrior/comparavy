@@ -1454,3 +1454,23 @@ input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-sele
   height: 0;
   pointer-events: none;
 }
+
+/* 형광펜·인용구 — 에디터(.ProseMirror)·미리보기(.prose) 공통(발행 .ateflo-post와 동일 결) */
+.prose mark, .ProseMirror mark {
+  background: linear-gradient(transparent 55%, #fff3a8 55%);
+  color: inherit;
+  padding: 0 1px;
+  font-weight: 600;
+}
+.prose blockquote, .ProseMirror blockquote {
+  margin: 1.4em 0;
+  padding: 0.9em 1.1em;
+  background: #f5f8ff;
+  border-left: 4px solid #1d75f7;
+  border-radius: 8px;
+  font-style: normal;
+  color: #33363d;
+  quotes: none;
+}
+.prose blockquote p, .ProseMirror blockquote p { margin: 0.3em 0; }
+.prose blockquote p::before, .prose blockquote p::after { content: none; }
