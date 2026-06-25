@@ -335,7 +335,7 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
             <p className="mt-2 text-sm leading-relaxed text-neutral-600">수정한 내용이 모두 사라져요. 되돌릴 수 없어요.</p>
             <div className="mt-4 flex justify-end gap-2">
               <button onClick={() => setConfirmRestore(false)} className="rounded-lg border border-neutral-300 px-4 py-1.5 text-sm font-medium transition hover:border-neutral-900">취소</button>
-              <button onClick={doRestore} className="rounded-lg bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-800">되돌리기</button>
+              <button onClick={doRestore} className="rounded-lg bg-[#1D75F7] px-4 py-1.5 text-sm font-medium text-white transition hover:opacity-90">되돌리기</button>
             </div>
           </div>
         </div>
@@ -377,7 +377,7 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
                 <input type="checkbox" checked={linkNofollow} onChange={(e) => setLinkNofollow(e.target.checked)} className="accent-neutral-900" />
                 nofollow
               </label>
-              <button type="button" onClick={applyLink} className="rounded-lg bg-neutral-900 px-3.5 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-800 active:scale-95">적용</button>
+              <button type="button" onClick={applyLink} className="rounded-lg bg-[#1D75F7] px-3.5 py-1.5 text-sm font-medium text-white transition hover:opacity-90 active:scale-95">적용</button>
               <button type="button" onClick={() => setLinkOpen(false)} className="rounded-lg px-2.5 py-1.5 text-sm text-neutral-400 transition hover:bg-neutral-100">취소</button>
             </div>
           </div>

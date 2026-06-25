@@ -946,7 +946,7 @@ export default function DashboardClient(props: DashboardProps) {
                   {lockedArticle && <p className="mt-3 truncate text-sm font-medium text-neutral-900">“{lockedArticle.title}”</p>}
                   <div className="mt-3 flex flex-wrap gap-2">
                     {lockedArticle && <button onClick={() => setSelected(lockedArticle)} className="rounded-xl border border-amber-300 bg-white px-4 py-1.5 text-sm font-medium text-amber-900 transition hover:bg-amber-100">미리보기 글 보기</button>}
-                    <Link href="/pricing" className="rounded-xl bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700">프로로 업그레이드</Link>
+                    <Link href="/pricing" className="rounded-xl bg-[#1D75F7] px-4 py-1.5 text-sm font-medium text-white transition hover:opacity-90">프로로 업그레이드</Link>
                   </div>
                 </div>
               </div>
@@ -1080,7 +1080,7 @@ export default function DashboardClient(props: DashboardProps) {
               <div className="mt-4 rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3.5">
                 <p className="text-sm leading-relaxed text-neutral-600">해지를 예약했어요.{" "}
                   {props.currentPeriodEnd ? (<><b className="text-neutral-800">{new Date(props.currentPeriodEnd).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}까지</b> 쓸 수 있고,</>) : (<>남은 기간까지 쓸 수 있고,</>)}{" "}다음 결제는 안 나가요.</p>
-                <button onClick={resumeSubscription} disabled={busy} className="mt-3 rounded-lg bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:opacity-50">{busy ? "처리 중…" : "해지 취소하고 계속 이용"}</button>
+                <button onClick={resumeSubscription} disabled={busy} className="mt-3 rounded-lg bg-[#1D75F7] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50">{busy ? "처리 중…" : "해지 취소하고 계속 이용"}</button>
               </div>
             )}
 
@@ -1143,7 +1143,7 @@ export default function DashboardClient(props: DashboardProps) {
                           다음 결제만 안 나가고, 언제든 다시 켤 수 있어요.
                         </p>
                         <div className="mt-3 flex flex-wrap gap-2">
-                          <button onClick={cancelSubscription} disabled={busy} className="rounded-lg bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:opacity-50">
+                          <button onClick={cancelSubscription} disabled={busy} className="rounded-lg bg-[#1D75F7] px-4 py-1.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50">
                             {busy ? "처리 중…" : "해지하기"}
                           </button>
                           <button onClick={() => setConfirmCancel(false)} disabled={busy} className="rounded-lg border border-neutral-300 px-4 py-1.5 text-sm font-medium transition hover:border-neutral-900">

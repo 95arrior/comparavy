@@ -88,7 +88,7 @@ export default function ContentCalendar({
         <div className="flex items-center gap-3">
           <p className="text-xs text-neutral-500">{nudgeMsg}</p>
           {onGoGenerate && (
-            <button onClick={onGoGenerate} className="rounded-lg bg-neutral-900 px-3.5 py-2 text-xs font-semibold text-white transition active:scale-95 hover:bg-neutral-800">
+            <button onClick={onGoGenerate} className="rounded-lg bg-[#1D75F7] px-3.5 py-2 text-xs font-semibold text-white transition active:scale-95 hover:opacity-90">
               새 글 쓰기
             </button>
           )}

@@ -88,7 +88,7 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
         ? (prev.includes(AUDIENCE_ALL) ? [] : [AUDIENCE_ALL])
         : (() => { const n = prev.filter((x) => x !== AUDIENCE_ALL); return n.includes(v) ? n.filter((x) => x !== v) : [...n, v]; })());
 
-  const inputCls = "w-full rounded-xl border border-neutral-200 px-4 py-3.5 text-base outline-none transition focus:border-[#1D75F7] focus:ring-2 focus:ring-[#1D75F7]/20";
+  const inputCls = "w-full rounded-xl bg-neutral-100 px-4 py-3.5 text-base outline-none transition placeholder:text-neutral-400 focus:bg-white focus:ring-2 focus:ring-[#1D75F7]/30";
   const primaryBtn = "w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-semibold text-white transition hover:opacity-90 active:scale-[0.99] disabled:opacity-50";
   const skipBtn = "mt-2 w-full py-2 text-sm font-medium text-neutral-400 transition hover:text-neutral-600 disabled:opacity-50";
 
@@ -338,7 +338,7 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
           <div>
             <h2 className="font-pretendard text-2xl font-bold tracking-tight">이 정보가 맞나요?</h2>
             <p className="mt-2 text-sm text-neutral-500">맞으면 시작할게요. 틀린 게 있으면 수정할 수 있어요.</p>
-            <dl className="mt-5 divide-y divide-neutral-100 rounded-2xl border border-neutral-200">
+            <dl className="mt-5 divide-y divide-neutral-100 rounded-2xl bg-white ring-1 ring-black/[0.04]">
               {([
                 ["분야", `${isLocal ? (VLABEL[vertical] ?? vertical) : bType === "online" ? "수익형 블로거" : "취미·기록"}${sub ? ` · ${sub}` : ""}`],
                 ["블로그 이름", bizName.trim() || (sub ? defaultBlogName(sub) : "(자동 생성)")],

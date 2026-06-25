@@ -132,7 +132,7 @@ export default function PricingClient({
             <button
               disabled={loading}
               onClick={startPro}
-              className="mt-8 rounded-xl bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
+              className="mt-8 rounded-xl bg-[#1D75F7] px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
             >
               {loading ? "결제창 여는 중…" : loggedIn ? "프로 구독하기" : "로그인하고 시작"}
             </button>
@@ -210,7 +210,7 @@ export default function PricingClient({
               <button
                 disabled={!agreeOrder || !agreeRecurring || loading}
                 onClick={confirmAndPay}
-                className="flex-1 rounded-xl bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
+                className="flex-1 rounded-xl bg-[#1D75F7] px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
               >
                 {loading ? "결제창 여는 중…" : "동의하고 결제"}
               </button>

@@ -514,7 +514,7 @@ function SocialView({ stats }: { stats: AdminStats }) {
             </div>
             <div className="flex items-center gap-2">
               <a href="https://instagram.com/ateflo.official" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-lg border border-neutral-200 px-3 py-2 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50">인스타그램 ↗</a>
-              <button onClick={() => changeCfg({ autoEnabled: !autoEnabled }, { action: "settings", autoEnabled: !autoEnabled }, autoEnabled ? "중지했어요" : "시작했어요")} disabled={busy} className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition active:scale-95 disabled:opacity-50 ${autoEnabled ? "bg-red-600 hover:bg-red-700" : "bg-neutral-900 hover:bg-neutral-800"}`}>{autoEnabled ? "종료" : "시작"}</button>
+              <button onClick={() => changeCfg({ autoEnabled: !autoEnabled }, { action: "settings", autoEnabled: !autoEnabled }, autoEnabled ? "중지했어요" : "시작했어요")} disabled={busy} className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition active:scale-95 disabled:opacity-50 ${autoEnabled ? "bg-red-600 hover:bg-red-700" : "bg-[#1D75F7] hover:opacity-90"}`}>{autoEnabled ? "종료" : "시작"}</button>
             </div>
           </div>
           <div className="grid gap-3 p-5 sm:grid-cols-3">
@@ -532,7 +532,7 @@ function SocialView({ stats }: { stats: AdminStats }) {
             {s.threadsConnected ? (
               <button onClick={() => changeCfg({ threadsEnabled: !threadsEnabled }, { action: "settings", threadsEnabled: !threadsEnabled }, threadsEnabled ? "스레드 교차발행 껐어요" : "스레드 교차발행 켰어요")} disabled={busy} className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition active:scale-95 disabled:opacity-50 ${threadsEnabled ? "bg-neutral-900 text-white" : "border border-neutral-300 text-neutral-600"}`}>{threadsEnabled ? "카드 발행 시 스레드도 ✓" : "스레드 교차발행 켜기"}</button>
             ) : (
-              <a href="/api/threads/connect" className="rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-neutral-800">스레드 연결 ↗</a>
+              <a href="/api/threads/connect" className="rounded-lg bg-[#1D75F7] px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90">스레드 연결 ↗</a>
             )}
           </div>
         </div>
@@ -577,7 +577,7 @@ function SocialView({ stats }: { stats: AdminStats }) {
                       <span className="min-w-0 flex-1 truncate text-sm text-neutral-600">{(p.caption || "(캡션 없음)").split("\n")[0]}{p.error && <span className="ml-1 text-xs text-red-500">· {p.error}</span>}</span>
                       {p.status === "published" && p.published_at && <span className="shrink-0 text-xs text-neutral-400">{fmtDate(p.published_at)} 발행</span>}
                       {p.status !== "published" && (
-                        <button onClick={() => publishPost(p)} disabled={busy} className="shrink-0 rounded-md bg-neutral-900 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-neutral-800 active:scale-95 disabled:opacity-50">{publishingId === p.id ? "발행 중…" : "지금 발행"}</button>
+                        <button onClick={() => publishPost(p)} disabled={busy} className="shrink-0 rounded-md bg-[#1D75F7] px-2.5 py-1 text-xs font-semibold text-white transition hover:opacity-90 active:scale-95 disabled:opacity-50">{publishingId === p.id ? "발행 중…" : "지금 발행"}</button>
                       )}
                       <button onClick={() => removePost(p)} disabled={busy} title={p.status === "published" ? "기록만 삭제돼요. 인스타 게시물은 인스타 앱에서 직접 삭제하세요." : "삭제"} className="shrink-0 text-xs text-neutral-400 transition hover:text-red-500 disabled:opacity-50">{p.status === "published" ? "기록 삭제" : "삭제"}</button>
                     </div>
@@ -607,7 +607,7 @@ function SocialView({ stats }: { stats: AdminStats }) {
               <input value={igToken} onChange={(e) => setIgToken(e.target.value)} placeholder="장기 액세스 토큰 붙여넣기" autoComplete="off" className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:border-neutral-400 focus:outline-none" />
               <input value={igUserId} onChange={(e) => setIgUserId(e.target.value)} placeholder="인스타 계정 ID (선택 — 비우면 서버 설정 사용)" autoComplete="off" className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:border-neutral-400 focus:outline-none" />
               <div className="flex items-center gap-2">
-                <button onClick={connectIg} disabled={busy || !igToken.trim()} className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 active:scale-95 disabled:opacity-50">검증 후 연결</button>
+                <button onClick={connectIg} disabled={busy || !igToken.trim()} className="rounded-lg bg-[#1D75F7] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 active:scale-95 disabled:opacity-50">검증 후 연결</button>
                 {msg && <span className="text-xs text-neutral-400">{msg}</span>}
               </div>
             </div>

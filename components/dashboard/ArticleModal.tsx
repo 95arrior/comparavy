@@ -512,7 +512,7 @@ export default function ArticleModal({
             <button onClick={onClose} className="flex items-center gap-1.5 text-sm text-neutral-500 transition hover:text-neutral-900">
               <span className="text-base leading-none">←</span> 목록으로
             </button>
-            <Link href="/pricing" className="rounded-xl bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700">
+            <Link href="/pricing" className="rounded-xl bg-[#1D75F7] px-4 py-1.5 text-sm font-medium text-white transition hover:opacity-90">
               프로로 잠금 해제
             </Link>
           </div>
@@ -575,7 +575,7 @@ export default function ArticleModal({
               </button>
               <Link
                 href="/pricing"
-                className="rounded-xl bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700"
+                className="rounded-xl bg-[#1D75F7] px-4 py-1.5 text-sm font-medium text-white transition hover:opacity-90"
               >
                 프로로 편집하기
               </Link>
@@ -732,7 +732,7 @@ export default function ArticleModal({
                         publish("future", date);
                       }}
                       disabled={!scheduleAt || publishing}
-                      className="flex-1 rounded-xl bg-neutral-900 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-40"
+                      className="flex-1 rounded-xl bg-[#1D75F7] py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40"
                     >
                       {publishing ? "예약하는 중…" : "예약하기"}
                     </button>
@@ -808,7 +808,7 @@ export default function ArticleModal({
                     <span className="text-sm font-semibold text-neutral-900">‘{v.matched}’{v.count > 1 ? ` ×${v.count}` : ""}</span>
                     <span className="text-[11px] text-neutral-400">{v.field === "title" ? "제목" : "본문"} · {v.law}</span>
                     {v.suggestion && canEdit && (
-                      <button onClick={() => fixViolation(v)} className="ml-auto shrink-0 rounded-lg bg-neutral-900 px-2.5 py-1 text-xs font-medium text-white transition hover:bg-neutral-700">‘{v.suggestion}’로 바꾸기</button>
+                      <button onClick={() => fixViolation(v)} className="ml-auto shrink-0 rounded-lg bg-[#1D75F7] px-2.5 py-1 text-xs font-medium text-white transition hover:opacity-90">‘{v.suggestion}’로 바꾸기</button>
                     )}
                   </div>
                   <p className="mt-1 text-xs leading-relaxed text-neutral-600">{v.reason}</p>
@@ -894,7 +894,7 @@ export default function ArticleModal({
                     <button
                       onClick={confirmNewCategory}
                       disabled={!newCatInput.trim() || creatingCat}
-                      className="shrink-0 rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-30"
+                      className="shrink-0 rounded-xl bg-[#1D75F7] px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-30"
                     >
                       {creatingCat ? "생성 중…" : "확인"}
                     </button>
