@@ -216,9 +216,11 @@ export async function GET(req: Request) {
 
   if (regionMode) {
     // ── 지역 강화: 지역 키워드 '실데이터'(네이버 검색량/경쟁) 수집 — '오송 영어학원' 등 ──
-    const baseSeeds = buildLocalSeeds(regions, vertical, sub ?? null).slice(0, 3);
-    // 네이버 자동완성 — 우리 동네 사람들이 실제 치는 검색어를 시드로 추가(진짜 동네 키워드)
-    const acSeeds = baseSeeds.length ? (await fetchNaverAutocomplete(baseSeeds[0])).slice(0, 2) : [];
+    const baseSeeds = buildLocalSeeds(regions, vertical, sub ?? null).slice(0, 5);
+    // 네이버 자동완성 — 우리 동네 사람들이 실제 치는 검색어를 시드로(진짜 동네 키워드). 시드 넉넉히 → 필터 후에도 3개 채움
+    const acSeeds = baseSeeds.length
+      ? [...new Set((await Promise.all(baseSeeds.slice(0, 2).map((s) => fetchNaverAutocomplete(s)))).flat())].slice(0, 4)
+      : [];
     const seeds = [...new Set([...baseSeeds, ...acSeeds])];
     const collected = new Map<string, PoolRow>();
     for (const seed of seeds) {
@@ -294,7 +296,7 @@ export async function GET(req: Request) {
       vol: r.monthly_searches ?? 0,
       comp: realComp,
       blogTotal: r.blog_total ?? null,
-      tag: t?.tag ?? "",
+      tag: t?.tag || sub || "글감", // 칩 항상 표시 — AI 분류 없으면 세부업종으로 폴백
     };
   });
   // 우리동네(지역) 카드를 항상 맨 위 고정하지 않고 섞는다 — 하루 시드로 위치는 그날 내내 안정적.
