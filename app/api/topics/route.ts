@@ -202,10 +202,11 @@ export async function GET(req: Request) {
   // AI 실패 시 regionLevel 폴백(wide→nation, gu→si, dong→dong).
   let scope: LocalScope = level === "wide" ? "nation" : level === "gu" ? "si" : "dong";
   let aiAreas: string[] = [];
+  let aiTraits: string[] = [];
   if (type === "local" && addr && !cluster) {
     const aud = audActive ? audSel.filter((a) => a !== AUDIENCE_ALL).join("·") : undefined;
     const plan = await resolveLocalPlan(addr, sub || vertical, aud);
-    if (plan) { scope = plan.scope; aiAreas = plan.areas; }
+    if (plan) { scope = plan.scope; aiAreas = plan.areas; aiTraits = plan.traits; }
   }
   // scope → 지역 계층 순서. dong=읍/동 우선, si·nation=시 우선. AI 별칭(오송)을 맨 앞 보강.
   let regions: string[];
@@ -231,11 +232,14 @@ export async function GET(req: Request) {
     // ── 지역 강화: 지역 키워드 '실데이터'(네이버 검색량/경쟁) 수집 — '오송 영어학원' 등 ──
     const audSeed = audActive ? audSel.filter((a) => a !== AUDIENCE_ALL) : [];
     const baseSeeds = buildLocalSeeds(regions, vertical, sub ?? null, audSeed).slice(0, 6);
+    // 지역 특성(산단·신도시 등) 시드 — '오송 산업단지', '오송 바이오' 식. 무관하면 뒤 ok 필터가 거름.
+    const area0 = aiAreas[0] ?? regions[0];
+    const traitSeeds = area0 ? aiTraits.slice(0, 2).map((tr) => `${area0} ${tr}`) : [];
     // 네이버 자동완성 — 우리 동네 사람들이 실제 치는 검색어를 시드로(진짜 동네 키워드). 시드 넉넉히 → 필터 후에도 3개 채움
     const acSeeds = baseSeeds.length
       ? [...new Set((await Promise.all(baseSeeds.slice(0, 2).map((s) => fetchNaverAutocomplete(s)))).flat())].slice(0, 4)
       : [];
-    const seeds = [...new Set([...baseSeeds, ...acSeeds])];
+    const seeds = [...new Set([...baseSeeds, ...traitSeeds, ...acSeeds])];
     const collected = new Map<string, PoolRow>();
     for (const seed of seeds) {
       try {
@@ -256,6 +260,13 @@ export async function GET(req: Request) {
     candidates = [...collected.values()]
       .sort((a, b) => regionTier(a.keyword) - regionTier(b.keyword) || (b.monthly_searches ?? 0) - (a.monthly_searches ?? 0))
       .slice(0, want);
+    // 안전장치: 지역 데이터가 얕아 부족하면 분야 풀(일반 글감)로 보충 — '동네 손님도 찾는 분야 글감'. region 0개 방지.
+    if (candidates.length < want) {
+      const need = want - candidates.length;
+      const fieldFill = pickBalanced(mid, audActive ? audSel : [], need + 3, rng)
+        .filter((r) => !candidates.some((c) => c.keyword === r.keyword) && !mentionsForeignRegion(r.keyword, regions));
+      candidates = [...candidates, ...fieldFill.slice(0, need)];
+    }
   } else {
     // ── 일반 후보(풀 기반) ── 노이즈·중복 제외로 빠질 것 대비해 여유분(want)까지.
     const general = pickBalanced(mid, audActive ? audSel : [], want + 1, rng);
@@ -276,6 +287,7 @@ export async function GET(req: Request) {
   const ctxParts = [`분야: ${sub || vertical}`];
   if (audActive) ctxParts.push(`대상: ${audSel.filter((a) => a !== AUDIENCE_ALL).join("·")}`);
   if (local && regions.length) ctxParts.push(`사용자 지역: ${regions.join("·")}`);
+  if (regionMode && aiTraits.length) ctxParts.push(`동네 특성: ${aiTraits.join("·")}`);
   const titled = await keywordsToTitles(allKeywords, ctxParts.join(" / ")); // {title, tag, ok, fit}
 
   // fit 상위 후보를 넉넉히(PICK+6) 추림 — 대표 샘플이면 포화 키워드가 많이 보여서, 같은 fit 안에서 '이길 수 있는' 걸 고른다.

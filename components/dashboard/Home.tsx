@@ -88,7 +88,7 @@ export default function Home({
 
   // 글감 캐시 키 — 하루 고정 + 모드별(새로고침·복귀·모드전환 시 재로딩·재셔플 방지)
   const todayDate = new Date().toISOString().slice(0, 10);
-  const topicsCacheKey = (md: string) => `ateflo_topics_v6_${todayDate}_${profileKey ?? ""}_${md}`;
+  const topicsCacheKey = (md: string) => `ateflo_topics_v7_${todayDate}_${profileKey ?? ""}_${md}`;
   const curModeKey = regionMode ? "region" : cluster ? `cluster:${cluster}` : "normal";
 
   // '이 글감 교체' → 그 카드만 새 글감으로. 동시·연속 교체 허용(하나 끝나길 안 기다림).
@@ -128,7 +128,7 @@ export default function Home({
 
   const loadTopics = useCallback(async () => {
     const md = regionMode ? "region" : cluster ? `cluster:${cluster}` : "normal";
-    const ck = `ateflo_topics_v6_${new Date().toISOString().slice(0, 10)}_${profileKey ?? ""}_${md}`;
+    const ck = `ateflo_topics_v7_${new Date().toISOString().slice(0, 10)}_${profileKey ?? ""}_${md}`;
     // 하루 고정 — 캐시 있으면 즉시 표시(로딩·재셔플 없음). 새로고침·강력새로고침·모드전환 모두 안정.
     try {
       const raw = typeof window !== "undefined" ? localStorage.getItem(ck) : null;
