@@ -195,7 +195,7 @@ export default function Home({
 
       {/* 메인 — 내 이야기 인라인 입력. 글감은 '추천받기' 버튼으로 펼친다(showGlams) */}
       {!showGlams ? (
-        <div className="mt-6">
+        <div className="ateflo-page-in mt-6">
           <div className="mb-2.5 flex items-center gap-2">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1D75F7]/10 text-[#1D75F7]"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg></span>
             <p className="text-[15px] font-bold text-neutral-900">내 이야기로 글쓰기</p>
@@ -207,7 +207,7 @@ export default function Home({
           </button>
         </div>
       ) : (
-        <>
+        <div className="ateflo-page-in">
           {!cluster && !regionMode && (
             <button onClick={() => setShowGlams(false)} className="mt-6 -ml-1 flex items-center gap-1 text-[13px] font-medium text-neutral-400 transition hover:text-neutral-700"><span className="text-base leading-none">←</span> 내 이야기로</button>
           )}
@@ -323,7 +323,7 @@ export default function Home({
       )}
 
       {seriesOpen && <SeriesSheet articles={articles} onWrite={onWriteKeyword} onClose={() => setSeriesOpen(false)} />}
-        </>
+        </div>
       )}
       </div>
       </section>
