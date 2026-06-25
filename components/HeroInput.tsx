@@ -187,7 +187,7 @@ export default function HeroInput({ loggedIn, onStart, pro = false }: { loggedIn
                   onChange={(e) => setTopic(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); fetchIdeas(); } }}
                   placeholder="어떤 분야예요? (예: 강아지, 재테크, 다이어트)"
-                  className="min-w-0 flex-1 rounded-xl border border-neutral-300 px-3.5 py-2.5 text-sm outline-none transition-all duration-200 focus:border-neutral-900 focus:ring-4 focus:ring-neutral-900/5"
+                  className="min-w-0 flex-1 rounded-xl bg-neutral-100 px-3.5 py-2.5 text-sm outline-none transition-all duration-200 focus:bg-white focus:ring-2 focus:ring-[#1D75F7]/30 focus:ring-4 focus:ring-neutral-900/5"
                 />
                 <button
                   type="button"

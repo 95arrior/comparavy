@@ -79,7 +79,7 @@ export default function ThreadsConvert({ articleId, onToast }: { articleId: stri
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows={Math.min(16, Math.max(6, text.split("\n").length + 1))}
-            className="w-full resize-y rounded-xl border border-neutral-200 bg-neutral-50 p-3 text-[13.5px] leading-relaxed text-neutral-800 focus:border-neutral-900 focus:outline-none"
+            className="w-full resize-y rounded-xl bg-neutral-100 bg-neutral-50 p-3 text-[13.5px] leading-relaxed text-neutral-800 focus:bg-white focus:ring-2 focus:ring-[#1D75F7]/30 focus:outline-none"
           />
           <div className="mt-1.5 flex items-center justify-between">
             <span className={`text-xs ${over ? "font-semibold text-red-500" : "text-neutral-400"}`}>{len}/500자{over ? " · 줄여주세요" : ""}</span>

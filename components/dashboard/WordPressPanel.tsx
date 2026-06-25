@@ -160,7 +160,7 @@ export default function WordPressPanel({
             value={site}
             onChange={(e) => setSite(e.target.value)}
             placeholder="https://myblog.com"
-            className="mt-2 w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm outline-none transition focus:border-neutral-900"
+            className="mt-2 w-full rounded-xl bg-neutral-100 px-4 py-3 text-sm outline-none transition focus:bg-white focus:ring-2 focus:ring-[#1D75F7]/30"
           />
         </div>
         <div>
@@ -169,7 +169,7 @@ export default function WordPressPanel({
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="예: admin, myblog"
-            className="mt-2 w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm outline-none transition focus:border-neutral-900"
+            className="mt-2 w-full rounded-xl bg-neutral-100 px-4 py-3 text-sm outline-none transition focus:bg-white focus:ring-2 focus:ring-[#1D75F7]/30"
           />
           <p className="mt-1.5 text-xs text-neutral-500">
             워드프레스 관리자(wp-admin)에 로그인할 때 쓰는 아이디예요. (사람마다 달라요 — admin이 아닐 수 있어요)
@@ -181,7 +181,7 @@ export default function WordPressPanel({
             value={appPassword}
             onChange={(e) => setAppPassword(e.target.value)}
             placeholder="xxxx xxxx xxxx xxxx xxxx xxxx"
-            className="mt-2 w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm outline-none transition focus:border-neutral-900"
+            className="mt-2 w-full rounded-xl bg-neutral-100 px-4 py-3 text-sm outline-none transition focus:bg-white focus:ring-2 focus:ring-[#1D75F7]/30"
           />
           <p className="mt-1.5 text-xs text-neutral-500">
             로그인 비밀번호가 <span className="font-medium">아니에요.</span> ‘사용자 → 프로필’에서 발급한 앱 비밀번호를 넣어주세요.
@@ -193,7 +193,7 @@ export default function WordPressPanel({
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-xl bg-neutral-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
+          className="w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 disabled:opacity-50"
         >
           {loading ? "연결 확인 중…" : "사이트 연결하기"}
         </button>

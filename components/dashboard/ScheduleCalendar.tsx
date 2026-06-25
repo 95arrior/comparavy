@@ -84,7 +84,7 @@ export default function ScheduleCalendar({
         <select
           value={hour}
           onChange={(e) => emit(sel ?? new Date(), Number(e.target.value), minute)}
-          className="flex-1 rounded-lg border border-neutral-300 px-2.5 py-1.5 text-sm outline-none focus:border-neutral-900"
+          className="flex-1 rounded-lg bg-neutral-100 px-2.5 py-1.5 text-sm outline-none focus:bg-white focus:ring-2 focus:ring-[#1D75F7]/30"
         >
           {Array.from({ length: 24 }).map((_, h) => (
             <option key={h} value={h}>{h < 12 ? `오전 ${h === 0 ? 12 : h}시` : `오후 ${h === 12 ? 12 : h - 12}시`}</option>
@@ -93,7 +93,7 @@ export default function ScheduleCalendar({
         <select
           value={minute}
           onChange={(e) => emit(sel ?? new Date(), hour, Number(e.target.value))}
-          className="flex-1 rounded-lg border border-neutral-300 px-2.5 py-1.5 text-sm outline-none focus:border-neutral-900"
+          className="flex-1 rounded-lg bg-neutral-100 px-2.5 py-1.5 text-sm outline-none focus:bg-white focus:ring-2 focus:ring-[#1D75F7]/30"
         >
           {[0, 10, 20, 30, 40, 50].map((m) => <option key={m} value={m}>{pad(m)}분</option>)}
         </select>

@@ -370,7 +370,7 @@ const ArticleEditor = forwardRef<ArticleEditorHandle, {
               onKeyDown={(e) => { if (e.key === "Enter") applyLink(); if (e.key === "Escape") setLinkOpen(false); }}
               placeholder="https://..."
               inputMode="url"
-              className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none transition focus:border-neutral-900 sm:flex-1 sm:py-1.5"
+              className="w-full rounded-lg bg-neutral-100 px-3 py-2 text-sm outline-none transition focus:bg-white focus:ring-2 focus:ring-[#1D75F7]/30 sm:flex-1 sm:py-1.5"
             />
             <div className="flex items-center gap-2">
               <label className="mr-auto flex shrink-0 cursor-pointer items-center gap-1.5 text-xs text-neutral-500 sm:mr-0">
