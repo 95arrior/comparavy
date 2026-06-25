@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import TopicCard from "@/components/TopicCard";
+import SeriesSheet from "./SeriesSheet";
 import StoryComposer from "./StoryComposer";
 import type { Comp } from "@/lib/topicScore";
 import type { BloggerType } from "@/lib/bloggerTypes";
@@ -60,9 +61,10 @@ export default function Home({
   const [cluster, setCluster] = useState<string | null>(null); // '주제 이어가기' 활성 토픽(null=기본 다양)
   const [regionMode, setRegionMode] = useState(false); // '지역 강화'(우리 동네 키워드 실데이터) 모드
   const [showGlams, setShowGlams] = useState(false); // 글감 추천 보기(기본은 내 이야기 입력, 버튼으로 글감 펼침)
+  const [seriesOpen, setSeriesOpen] = useState(false); // '주제 시리즈' 시트
   const [storyTitle, setStoryTitle] = useState(""); // 사장님이 직접 정하는 제목(유지)
   const [storyDraft, setStoryDraft] = useState(""); // 내 이야기 초안 — 글감 보기 갔다 와도 유지(상태 끌어올림)
-  const [storyPromo, setStoryPromo] = useState(() => bloggerType === "local" && (hasBusinessInfo ?? false));
+  const [storyPromo, setStoryPromo] = useState(() => bloggerType === "local"); // 동네 사장님은 '소개' 의도라 홍보용 기본
   // 성과 '지역 선점'에서 넘어오면 지역 강화 자동 ON (동네 사장님만)
   useEffect(() => {
     if (regionTrigger && bloggerType === "local") { setShowGlams(true); setRegionMode(true); }
@@ -285,19 +287,25 @@ export default function Home({
         </div>
       )}
 
-      {/* 우리 동네 키워드 강화 — 동네 사장님(local)만 */}
-      {!cluster && !regionMode && !topicsLoading && bloggerType === "local" && (
+      {/* 더 깊게 쓰기 — 우리 동네 키워드 강화(local) + 주제 시리즈 */}
+      {!cluster && !regionMode && !topicsLoading && (
         <div className="mt-4 space-y-2">
-          {(
+          {bloggerType === "local" && (
             <button onClick={() => setRegionMode(true)} className="flex w-full items-center gap-3 rounded-2xl bg-white p-3.5 ring-1 ring-black/[0.04] transition hover:ring-teal-300 active:scale-[0.99]">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-600"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z" /></svg></span>
               <span className="min-w-0 flex-1 truncate text-left text-[14px] font-bold text-neutral-900">우리 동네 키워드 강화</span>
               <svg className="shrink-0 text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
             </button>
           )}
+          <button onClick={() => setSeriesOpen(true)} className="flex w-full items-center gap-3 rounded-2xl bg-white p-3.5 ring-1 ring-black/[0.04] transition hover:ring-violet-300 active:scale-[0.99]">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" /></svg></span>
+            <span className="min-w-0 flex-1 truncate text-left text-[14px] font-bold text-neutral-900">주제 시리즈로 전문 블로그 되기</span>
+            <svg className="shrink-0 text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+          </button>
         </div>
       )}
 
+      {seriesOpen && <SeriesSheet articles={articles} onWrite={onWriteKeyword} onClose={() => setSeriesOpen(false)} />}
         </div>
       )}
       </div>

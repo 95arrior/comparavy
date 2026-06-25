@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import AteFloLogo from "@/components/AteFloLogo";
 
 // '내 이야기로 글쓰기' 인라인 입력 — 테두리 없는 박스, 포커스 시 박스 '안'에서 오로라 애니메이션.
 // 제목은 분리하지 않고, 다 적고 ↑(글쓰기) 누르면 그때 '제목 정하기'가 뜬다. 비우면 AI가 핏하게.
@@ -30,7 +29,6 @@ export default function StoryComposer({
   const [titleOpen, setTitleOpen] = useState(false);
   const setStory = onStoryChange;
   const setPromo = onPromoChange;
-  const hasText = story.trim().length > 0;
   const ready = story.trim().length >= 10;
 
   return (
@@ -48,18 +46,14 @@ export default function StoryComposer({
           maxLength={4000}
           className="relative w-full resize-none bg-transparent px-4 py-3.5 pr-14 text-[15px] leading-relaxed outline-none placeholder:text-neutral-400"
         />
+        {/* 전송 — 비었을 땐 안 보이고, 충분히 적으면(ready) 파란 ↑가 자연스럽게 나타남 */}
         <button
           onClick={() => { if (ready) setTitleOpen(true); }}
           disabled={!ready}
           aria-label="글쓰기"
-          className={`absolute bottom-3 right-3 z-10 flex h-9 w-9 items-center justify-center overflow-hidden rounded-full transition-colors duration-300 ${ready ? "bg-[#1D75F7] active:scale-90 hover:opacity-90" : "bg-neutral-200"}`}
+          className={`absolute bottom-3 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-[#1D75F7] text-white transition-all duration-300 ${ready ? "scale-100 opacity-100 hover:opacity-90 active:scale-90" : "pointer-events-none scale-75 opacity-0"}`}
         >
-          <span className={`absolute transition-all duration-300 ${hasText ? "scale-50 opacity-0" : "scale-100 opacity-100"}`}>
-            <AteFloLogo size={18} />
-          </span>
-          <span className={`absolute transition-all duration-300 ${hasText ? "scale-100 opacity-100" : "scale-50 opacity-0"} ${ready ? "text-white" : "text-neutral-400"}`}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
-          </span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
         </button>
       </div>
 
@@ -68,7 +62,7 @@ export default function StoryComposer({
         <span className="text-[11px] text-neutral-400">{story.length}/4000</span>
       </div>
 
-      {local && hasBiz && (
+      {local && (
         <div className="mt-2.5 flex items-center justify-between rounded-2xl bg-neutral-50 p-1.5">
           <button onClick={() => setPromo(true)} className={`flex-1 rounded-xl py-2.5 text-[13.5px] font-bold transition ${promo ? "bg-white text-[#1D75F7] shadow-sm" : "text-neutral-500"}`}>홍보용 <span className="text-[11px] font-medium opacity-70">(가게 연결)</span></button>
           <button onClick={() => setPromo(false)} className={`flex-1 rounded-xl py-2.5 text-[13.5px] font-bold transition ${!promo ? "bg-white text-[#1D75F7] shadow-sm" : "text-neutral-500"}`}>정보용 <span className="text-[11px] font-medium opacity-70">(순수 정보)</span></button>
