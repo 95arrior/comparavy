@@ -1,6 +1,8 @@
 // 워드프레스 REST API 발행 클라이언트.
 // 인증: 사이트 사용자명 + 애플리케이션 비밀번호 (Basic Auth).
 
+import { stripPhotoMarkers } from "./photoMarkers";
+
 export interface WordPressCredentials {
   siteUrl: string;
   username: string;
@@ -381,6 +383,8 @@ export async function publishPost(input: PublishInput): Promise<PublishResult> {
   const base = normalizeSiteUrl(input.siteUrl);
   // 본문 이미지(base64·스토리지 URL)를 WP 미디어로 옮기고 URL로 교체
   let contentHtml = await uploadInlineImages(input.contentHtml, input);
+  // 사진 자리 마커 '[사진: ...]'는 발행 시 제거(이미지는 편집기에서 넣음 — 빈 마커가 literal로 노출되지 않게)
+  contentHtml = stripPhotoMarkers(contentHtml);
   // 워드프레스가 글 제목을 H1으로 렌더하므로, 본문의 H1은 H2로 강등 (H1 중복 방지)
   contentHtml = contentHtml.replace(/<h1(\s[^>]*)?>/gi, "<h2>").replace(/<\/h1>/gi, "</h2>");
   // 이미지가 본문 폭을 넘어 거대해지거나 가로 스크롤이 생기지 않게 제약 → 편집 화면과 동일하게 보이도록(WYSIWYG)

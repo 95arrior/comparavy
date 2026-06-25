@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect, useRef, useMemo } from "react";
 import ArticleEditor, { type ArticleEditorHandle } from "./ArticleEditor";
+import { photoMarkerToGuide, photoMarkerToSlot, photoSlots } from "@/lib/photoMarkers";
 import SectionSuggest from "./SectionSuggest";
 import CenterToast from "./CenterToast";
 import ScheduleCalendar from "./ScheduleCalendar";
@@ -247,7 +248,7 @@ export default function ArticleModal({
   // 본문을 클립보드로 복사 (서식 유지 HTML + 평문 동시) — 무료 사용자가 블로그에 붙여넣어 쓰는 핵심 기능
   async function copyBody() {
     try {
-      const html = `<h1>${title}</h1>\n${bodyHtml}`;
+      const html = `<h1>${title}</h1>\n${photoMarkerToGuide(bodyHtml)}`;
       const tmp = document.createElement("div");
       tmp.innerHTML = html;
       const text = `${title}\n\n${tmp.innerText}`;
@@ -526,7 +527,7 @@ export default function ArticleModal({
           <div className="relative mt-6">
             {/* 세로 크롭(본문은 위 일부만 노출) */}
             <div className="max-h-[30rem] overflow-hidden">
-              <div className="prose prose-neutral max-w-none" dangerouslySetInnerHTML={{ __html: article.body_html }} />
+              <div className="prose prose-neutral max-w-none" dangerouslySetInnerHTML={{ __html: photoMarkerToSlot(article.body_html) }} />
             </div>
             {/* 3줄 아래부터 흐려지고 배경색으로 사라짐. 좌우로 더 넓게 덮어 글자 끝이 안 잘리게 */}
             <div className="pointer-events-none absolute -inset-x-6 bottom-0 top-[4.75rem] bg-gradient-to-b from-transparent via-neutral-50/85 to-neutral-50 backdrop-blur-[2px] [mask-image:linear-gradient(to_bottom,transparent,#000_3rem)] [-webkit-mask-image:linear-gradient(to_bottom,transparent,#000_3rem)]" />
@@ -611,7 +612,7 @@ export default function ArticleModal({
             </Link>
           </div>
 
-          <div className="prose prose-neutral mt-6 max-w-none" dangerouslySetInnerHTML={{ __html: article.body_html }} />
+          <div className="prose prose-neutral mt-6 max-w-none" dangerouslySetInnerHTML={{ __html: photoMarkerToSlot(article.body_html) }} />
 
           {article.faq.length > 0 && (
             <div className="mt-8">
@@ -847,9 +848,15 @@ export default function ArticleModal({
                 <li><b className="text-[#03C75A]">1.</b> 아래 <b>본문 복사</b>를 눌러요</li>
                 <li><b className="text-[#03C75A]">2.</b> <b>네이버 글쓰기</b>를 열어요</li>
                 <li><b className="text-[#03C75A]">3.</b> 붙여넣으면 <b>소제목·형광펜·인용구·요약 박스</b>까지 따라와요</li>
-                <li><b className="text-[#03C75A]">4.</b> 본문 속 <b>[사진: ]</b> 자리에 사진을 넣어요</li>
+                <li><b className="text-[#03C75A]">4.</b> <b>📷 사진 자리</b>마다 사진을 올리고, 그 안내 줄은 지워요</li>
                 <li><b className="text-[#03C75A]">5.</b> 맨 끝 해시태그 확인 후 <b>발행!</b></li>
               </ol>
+              {photoSlots(bodyHtml).length > 0 && (
+                <div className="mt-3 rounded-xl bg-neutral-50 p-3 text-[12.5px] leading-relaxed text-neutral-600">
+                  <p className="font-bold text-neutral-700">📷 사진 자리 {photoSlots(bodyHtml).length}곳 — 미리 준비하면 빨라요</p>
+                  <p className="mt-1">{photoSlots(bodyHtml).join(" · ")}</p>
+                </div>
+              )}
               <div className="mt-4 rounded-xl bg-[#03C75A]/[0.06] p-3.5 text-[12.5px] leading-relaxed text-neutral-600">
                 <p className="font-bold text-[#03C75A]">노출 잘 되는 꿀팁</p>
                 <p className="mt-1">· <b>첫 사진</b>이 검색 썸네일이에요 — 제일 잘 나온 걸로</p>
