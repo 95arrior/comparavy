@@ -235,18 +235,20 @@ export async function POST(request: Request) {
           (u) => { void logUsage({ userId: user.id, model: u.model, kind: "generate", inputTokens: u.inputTokens, outputTokens: u.outputTokens }); },
         );
 
-        // 길이 검증: '실제 목표 분량(적정선 캡 3,500)'의 40% 미만이면 명백히 잘린/실패한 글로 보고 막는다.
-        // ★maxWords(플랜 상한 5000)가 아니라 프롬프트가 쓰는 캡(min(maxWords,3500))을 기준으로 한다.
-        //   안 그러면 '간결하게' 지침으로 적정 길이(2,500~3,500) 글을 써도 5000*0.4=2,000 floor에 걸려
-        //   좋은 글감이 '분량 부족'으로 오반려된다(길이 조절 a3fcf9b과의 충돌 해소).
-        const minChars = Math.round(Math.min(maxWords, 3500) * 0.4); // Pro 1,400 / Free 600
+        // 길이 검증 — 채널별로 다르게.
+        // ★네이버(자영업자): 좁은 주제도 '네이버 최적화로 뽑을 수 있는 만큼' 살린다. 네이버는 1,000자 안팎도 충분.
+        //   그래서 깊이 기준으로 반려하지 않고, '명백히 실패(빈/잘린)' 글만 막는 낮은 바닥(500자)만 둔다.
+        // ★워드프레스(구글): 검색 깊이가 필요하므로 기존대로 적정 캡(min(maxWords,3500))의 40%.
+        const minChars = channel === "naver" ? 500 : Math.round(Math.min(maxWords, 3500) * 0.4); // 네이버 500 / WP Pro 1,400·Free 600
         const charCount = countKoreanChars(article.body_html);
         if (charCount < minChars) {
           if (genId) await supabase.from("articles").delete().eq("id", genId); // 자리표시 행 정리
           send({
             type: "error",
             error:
-              "이 주제는 글로 풀기엔 다소 좁아서 충분한 분량이 안 나왔어요. 구글 검색에 잘 잡히는 글은 어느 정도 깊이가 필요해요. 조금 더 넓은 주제나 다른 키워드로 다시 시도해 주세요. (횟수는 차감되지 않아요)",
+              channel === "naver"
+                ? "글을 만드는 중 문제가 생겨 잠깐 멈췄어요. 다시 한 번 눌러 주세요. (횟수는 차감되지 않아요)"
+                : "이 주제는 글로 풀기엔 다소 좁아서 충분한 분량이 안 나왔어요. 검색에 잘 잡히는 글은 어느 정도 깊이가 필요해요. 조금 더 넓은 주제나 다른 키워드로 다시 시도해 주세요. (횟수는 차감되지 않아요)",
           });
           return;
         }

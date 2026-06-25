@@ -44,7 +44,7 @@ export default function StoryComposer({
             placeholder={focused ? "" : "블로그에 쓰고 싶은 내용을 간략하게 적어주세요"}
             rows={6}
             maxLength={4000}
-            className="relative w-full resize-none bg-transparent px-4 py-3.5 pr-14 text-[15px] leading-relaxed outline-none placeholder:text-neutral-400"
+            className="ateflo-thin-scroll relative w-full resize-none bg-transparent px-4 py-3.5 pr-14 text-[15px] leading-relaxed outline-none placeholder:text-neutral-400"
           />
           {/* 전송 — 비었을 땐 안 보이고, 충분히 적으면(ready) 파란 ↑가 자연스럽게 나타남 */}
           <button
@@ -64,9 +64,11 @@ export default function StoryComposer({
       </div>
 
       {local && (
-        <div className="mt-2.5 flex items-center justify-between rounded-2xl bg-neutral-50 p-1.5">
-          <button onClick={() => setPromo(true)} className={`flex-1 rounded-xl py-2.5 text-[13.5px] font-bold transition ${promo ? "bg-white text-[#1D75F7] shadow-sm" : "text-neutral-500"}`}>홍보용 <span className="text-[11px] font-medium opacity-70">(가게 연결)</span></button>
-          <button onClick={() => setPromo(false)} className={`flex-1 rounded-xl py-2.5 text-[13.5px] font-bold transition ${!promo ? "bg-white text-[#1D75F7] shadow-sm" : "text-neutral-500"}`}>정보용 <span className="text-[11px] font-medium opacity-70">(순수 정보)</span></button>
+        <div className="relative mt-2.5 grid grid-cols-2 rounded-2xl bg-neutral-50 p-1.5">
+          {/* 슬라이딩 알약 — 선택에 따라 부드럽게 좌우로 미끄러짐 */}
+          <div className={`pointer-events-none absolute inset-y-1.5 left-1.5 w-[calc(50%-0.375rem)] rounded-xl bg-white shadow-sm transition-transform duration-300 ease-out ${promo ? "translate-x-0" : "translate-x-full"}`} />
+          <button onClick={() => setPromo(true)} className={`relative z-10 rounded-xl py-2.5 text-[13.5px] font-bold transition-colors duration-200 ${promo ? "text-[#1D75F7]" : "text-neutral-500"}`}>홍보용 <span className="text-[11px] font-medium opacity-70">(가게 연결)</span></button>
+          <button onClick={() => setPromo(false)} className={`relative z-10 rounded-xl py-2.5 text-[13.5px] font-bold transition-colors duration-200 ${!promo ? "text-[#1D75F7]" : "text-neutral-500"}`}>정보용 <span className="text-[11px] font-medium opacity-70">(순수 정보)</span></button>
         </div>
       )}
 
