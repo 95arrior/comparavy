@@ -19,6 +19,7 @@ interface Path {
   desc: string;
   conditions: string;     // 기준(조건)
   how: string[];          // 어떻게(단계)
+  tips?: string[];        // 꼭 알아두기(주의점·꿀팁)
   status: PathStatus;
   note: string;           // 행 우측 progress/locked 안내
   logo?: string;          // /logos/xxx.png (없으면 emoji)
@@ -55,10 +56,10 @@ function buildPaths(type: BloggerType, pub: number, wpConnected: boolean, onWrit
   return {
     title: type === "hobby" ? "수익화 (선택)" : "수익화 길",
     paths: [
-      { label: "쿠팡파트너스", desc: "전환 1건이면 첫 수익", conditions: "블로그(사이트)만 있으면 가입 · 거의 즉시 승인 · 첫 3개월 내 실적 1건 권장.", how: ["1. 쿠팡파트너스에 가입해요 (거의 즉시 승인).", "2. 내 글에 어울리는 제품 링크를 넣어요.", "3. 방문자가 그 링크로 사면 수수료 수익."], status: wpConnected ? "now" : "progress", note: wpConnected ? "" : "블로그 먼저 연결", logo: "/logos/coupang.png", emoji: "🛒", cta: wpConnected ? { label: "쿠팡파트너스 가입", url: COUPANG } : { label: "블로그 먼저 연결", onClick: onGoConnect } },
-      { label: "구글 애드센스", desc: "자동 광고로 안정적 수동수입", conditions: "고유 도메인 + 양질의 글 20편+ 권장 · 구글 심사(수일~수주) · 정책 준수. ※ 편수만으로 승인을 보장하진 않아요.", how: ["1. 글을 20편+ 쌓고 애드센스를 신청해요.", "2. 승인되면 광고 코드를 사이트에 넣어요.", "3. 방문자가 광고를 보거나 누르면 수익."], status: pub >= 20 ? "now" : "progress", note: pub >= 20 ? "" : `발행 ${pub}/20편`, logo: "/logos/adsense.png", emoji: "📢", cta: pub >= 20 ? { label: "애드센스 신청", url: ADSENSE } : undefined },
-      { label: "제휴마케팅", desc: "텐핑·알리 등 다양한 제휴", conditions: "누구나 가입 · 사이트/SNS 있으면 OK.", how: ["1. 텐핑 등 제휴 플랫폼에 가입해요.", "2. 캠페인 링크를 글에 자연스럽게 넣어요.", "3. 클릭·구매당 수익이 쌓여요."], status: "now", note: "", logo: "/logos/tenping.png", emoji: "🔗", cta: { label: "텐핑 가입", url: TENPING } },
-      { label: "체험단·협찬", desc: "브랜드 협찬·원고료", conditions: "어느 정도 방문자·영향력이 쌓여야 제안이 들어와요.", how: ["방문자가 쌓이면 브랜드가 협찬을 제안해요.", "제품·원고료를 받고 후기를 써요."], status: "locked", note: "트래픽 쌓이면", emoji: "🎁" },
+      { label: "쿠팡파트너스", desc: "전환 1건이면 첫 수익", conditions: "블로그(사이트)만 있으면 가입 · 거의 즉시 승인 · 첫 3개월 내 실적 1건 권장.", how: ["partners.coupang.com에서 가입해요. 블로그(사이트)만 있으면 거의 즉시 승인돼요.", "글 주제에 맞는 쿠팡 상품을 검색하고 ‘링크 생성’으로 내 추천 링크를 만들어요.", "글에서 상품을 추천·비교하는 자연스러운 자리에 그 링크를 넣어요.", "방문자가 그 링크로 들어가 24시간 안에 무언가 사면 수수료가 들어와요(꼭 그 상품이 아니어도 돼요)."], tips: ["‘쿠팡 파트너스 활동의 일환으로 일정 수수료를 받습니다’ 문구를 글에 꼭 넣어요(필수).", "가입 후 첫 3개월 안에 실적 1건을 만들면 자격이 유지돼요.", "가전·뷰티처럼 단가 높은 카테고리가 수익에 유리해요."], status: wpConnected ? "now" : "progress", note: wpConnected ? "" : "블로그 먼저 연결", logo: "/logos/coupang.png", emoji: "🛒", cta: wpConnected ? { label: "쿠팡파트너스 가입", url: COUPANG } : { label: "블로그 먼저 연결", onClick: onGoConnect } },
+      { label: "구글 애드센스", desc: "자동 광고로 안정적 수동수입", conditions: "고유 도메인 + 양질의 글 20편+ 권장 · 구글 심사(수일~수주) · 정책 준수. ※ 편수만으로 승인을 보장하진 않아요.", how: ["글을 15~20편 이상 쌓아요(직접 경험·정보가 담길수록 유리). ★신뢰 페이지(소개·운영자·문의·개인정보처리방침)도 꼭 있어야 해요 — ‘워드프레스’ 탭에서 버튼 한 번으로 만들 수 있어요.", "adsense.google.com → ‘시작하기’ → 내 사이트 주소를 넣고 구글 계정을 연결해요.", "구글이 준 ‘연결 코드’를 사이트에 넣어요. 워드프레스는 플러그인 ‘Site Kit’을 깔면 클릭 몇 번으로 끝나요.", "‘검토 요청’을 누르면 구글이 심사해요(보통 며칠~2주). 승인되면 메일이 와요.", "승인 후 ‘자동 광고’를 켜면 글에 광고가 자동으로 붙어 수익이 시작돼요."], tips: ["한 번에 승인이 안 나도 부족한 부분(글·페이지)을 보완해 다시 신청할 수 있어요.", "‘광고 눌러주세요’ 같은 클릭 유도, 내 광고 직접 클릭은 계정 정지 사유 — 절대 금지.", "처음엔 수익이 적어요. 글·방문자가 쌓일수록 늘어나는 구조예요."], status: pub >= 20 ? "now" : "progress", note: pub >= 20 ? "" : `발행 ${pub}/20편`, logo: "/logos/adsense.png", emoji: "📢", cta: pub >= 20 ? { label: "애드센스 신청", url: ADSENSE } : undefined },
+      { label: "제휴마케팅", desc: "텐핑·알리 등 다양한 제휴", conditions: "누구나 가입 · 사이트/SNS 있으면 OK.", how: ["텐핑·애드픽 같은 제휴 플랫폼에 가입해요(사이트나 SNS 있으면 OK).", "내 글 주제에 맞는 캠페인을 골라 ‘내 전용 링크’를 받아요.", "글에 그 링크를 자연스럽게 넣어요(주제랑 맞게, 과하지 않게).", "방문자가 클릭하거나 가입·구매하면 건당 수익이 쌓여요."], tips: ["글 주제와 안 맞는 캠페인을 도배하면 신뢰도·검색 노출에 해로워요.", "광고·제휴 링크임을 표기하면 더 안전해요."], status: "now", note: "", logo: "/logos/tenping.png", emoji: "🔗", cta: { label: "텐핑 가입", url: TENPING } },
+      { label: "체험단·협찬", desc: "브랜드 협찬·원고료", conditions: "어느 정도 방문자·영향력이 쌓여야 제안이 들어와요.", how: ["방문자·구독이 어느 정도 쌓이면 브랜드나 체험단에서 협찬 제안이 들어와요.", "레뷰 등 체험단 플랫폼에 블로그를 등록해두면 직접 신청해 협찬을 받을 수도 있어요.", "제품·서비스를 받고 솔직한 후기를 써요."], tips: ["‘협찬·제공받았다’는 사실을 꼭 표기해요(공정위 규정).", "솔직하지 않은 과장 후기는 신뢰·노출에 오히려 독이 돼요."], status: "locked", note: "트래픽 쌓이면", emoji: "🎁" },
     ],
   };
 }
@@ -122,12 +123,26 @@ function PathDetail({ p, onBack }: { p: Path; onBack: () => void }) {
 
       <div className="mt-4">
         <p className="text-[12px] font-bold text-neutral-400">어떻게 하나요</p>
-        <ul className="mt-1.5 space-y-1.5">
+        <ul className="mt-1.5 space-y-2">
           {p.how.map((h, i) => (
-            <li key={i} className="text-[13.5px] leading-relaxed text-neutral-700">{h}</li>
+            <li key={i} className="flex gap-2 text-[13.5px] leading-relaxed text-neutral-700">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#1D75F7]/10 text-[11px] font-bold text-[#1D75F7]">{i + 1}</span>
+              <span>{h}</span>
+            </li>
           ))}
         </ul>
       </div>
+
+      {p.tips && p.tips.length > 0 && (
+        <div className="mt-4 rounded-xl bg-amber-50 p-4">
+          <p className="text-[12.5px] font-bold text-amber-700">꼭 알아두기</p>
+          <ul className="mt-1.5 space-y-1 text-[12.5px] leading-relaxed text-amber-900/80">
+            {p.tips.map((t, i) => (
+              <li key={i}>· {t}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {p.cta && (
         <div className="mt-5">
