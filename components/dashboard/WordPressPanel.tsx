@@ -111,6 +111,9 @@ export default function WordPressPanel({
           </button>
         )}
 
+        {/* 애드센스 준비 — 신뢰 페이지 자동 생성·발행 */}
+        <AdsensePagesCard />
+
         {/* 구글 서치콘솔 연결 + 사이트 선택 (5-1) */}
         <SearchConsoleConnect />
       </div>
@@ -198,6 +201,94 @@ export default function WordPressPanel({
           {loading ? "연결 확인 중…" : "사이트 연결하기"}
         </button>
       </form>
+    </div>
+  );
+}
+
+// 애드센스 준비 — 신뢰 페이지 4종 자동 생성·발행 + 푸터 연결 가이드 + 체크리스트
+function AdsensePagesCard() {
+  const [busy, setBusy] = useState(false);
+  const [pages, setPages] = useState<{ title: string; link: string }[] | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function run() {
+    setBusy(true);
+    setErr(null);
+    try {
+      const res = await fetch("/api/wordpress/adsense-pages", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) setErr(data.error ?? "페이지를 만들지 못했어요.");
+      else setPages(data.pages ?? []);
+    } catch {
+      setErr("네트워크 오류가 났어요. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="rounded-2xl bg-white p-6 ring-1 ring-black/[0.04] sm:p-8">
+      <div className="flex items-center gap-2.5">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1D75F7]/10 text-[#1D75F7]">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12l2 2 4-4" /><path d="M21 12c0 5-3.5 7.5-8.5 9.5C7.5 19.5 4 17 4 12V6l8.5-3L21 6z" /></svg>
+        </span>
+        <div>
+          <h3 className="text-[15px] font-bold tracking-tight text-neutral-900">애드센스 준비 · 신뢰 페이지</h3>
+          <p className="text-[12px] text-neutral-400">승인의 진짜 병목</p>
+        </div>
+      </div>
+      <p className="mt-3 text-[13.5px] leading-relaxed text-neutral-500">
+        구글은 글 품질만 보지 않고 <b className="text-neutral-700">‘진짜 운영되는 사이트인지’</b>를 봐요. 소개·운영자·문의·개인정보처리방침 페이지를 <b className="text-neutral-700">우리가 만들어 워드프레스에 바로 발행</b>할게요. (HTML 안 만져도 돼요.)
+      </p>
+
+      {!pages ? (
+        <button
+          onClick={run}
+          disabled={busy}
+          className="mt-4 w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99] disabled:opacity-50"
+        >
+          {busy ? "페이지를 만들고 있어요…" : "신뢰 페이지 4개 만들기"}
+        </button>
+      ) : (
+        <div className="mt-4">
+          <p className="text-[13.5px] font-bold text-emerald-600">✓ 발행 완료! 이 페이지들이 만들어졌어요</p>
+          <ul className="mt-2 space-y-1.5">
+            {pages.map((p) => (
+              <li key={p.link}>
+                <a href={p.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[13.5px] font-medium text-[#1D75F7] hover:underline">
+                  {p.title}
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7M7 7h10v10" /></svg>
+                </a>
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-5 rounded-xl bg-neutral-50 p-4">
+            <p className="text-[13px] font-bold text-neutral-800">마지막 한 가지 · 푸터에 연결하기 (한 번만)</p>
+            <ol className="mt-2 space-y-1.5 text-[12.5px] leading-relaxed text-neutral-600">
+              <li><b className="text-[#1D75F7]">1.</b> 워드프레스 관리자 → <b>외모 → 메뉴</b></li>
+              <li><b className="text-[#1D75F7]">2.</b> <b>새 메뉴 만들기</b>(이름: 푸터) → 만들기</li>
+              <li><b className="text-[#1D75F7]">3.</b> 왼쪽 ‘페이지’에서 방금 만든 <b>4개 페이지 체크</b> → ‘메뉴에 추가’</li>
+              <li><b className="text-[#1D75F7]">4.</b> 아래 <b>‘메뉴 위치 → 푸터’</b> 체크 → <b>메뉴 저장</b></li>
+            </ol>
+            <p className="mt-2 text-[11.5px] text-neutral-400">테마마다 위치 이름이 조금 다를 수 있어요(푸터/하단 등).</p>
+          </div>
+
+          <div className="mt-3 rounded-xl bg-[#1D75F7]/[0.04] p-4">
+            <p className="text-[13px] font-bold text-neutral-800">애드센스 신청 전 체크리스트</p>
+            <ul className="mt-2 space-y-1 text-[12.5px] leading-relaxed text-neutral-600">
+              <li>☑ 신뢰 페이지 4개 (방금 완료)</li>
+              <li>☐ 글 <b>15~20편 이상</b>, 경험 담긴 정보 글</li>
+              <li>☐ 푸터에 페이지 연결 (위 4단계)</li>
+              <li>☐ 가급적 <b>본인 도메인</b> 연결</li>
+              <li>☐ 문의 페이지에 <b>실제 받는 이메일</b></li>
+            </ul>
+          </div>
+
+          <button onClick={() => setPages(null)} className="mt-3 w-full py-2 text-center text-[12.5px] font-medium text-neutral-400 transition hover:text-neutral-700">다시 만들기</button>
+        </div>
+      )}
+      {err && <p className="mt-3 text-[13px] text-red-600">{err}</p>}
     </div>
   );
 }

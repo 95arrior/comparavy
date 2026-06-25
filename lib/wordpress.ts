@@ -476,3 +476,34 @@ export async function publishPost(input: PublishInput): Promise<PublishResult> {
   const data = await res.json();
   return { id: data.id, link: data.link, status: data.status };
 }
+
+/** 워드프레스 '페이지'(글이 아니라 고정 페이지) 발행/업데이트. 애드센스 신뢰 페이지(개인정보처리방침·소개 등)용.
+ *  같은 slug가 있으면 업데이트해 중복 발행을 막는다. */
+export async function publishPage(
+  creds: WordPressCredentials,
+  page: { title: string; content: string; slug: string },
+): Promise<{ id: number; link: string; title: string }> {
+  const base = normalizeSiteUrl(creds.siteUrl);
+  const auth = authHeader(creds);
+  const html = wrapWithAtefloStyle(page.content);
+  let existingId: number | null = null;
+  try {
+    const sr = await fetch(`${base}/wp-json/wp/v2/pages?slug=${encodeURIComponent(page.slug)}&status=publish,draft&per_page=1`, {
+      headers: { Authorization: auth },
+    });
+    if (sr.ok) {
+      const arr = await sr.json();
+      if (Array.isArray(arr) && arr[0]?.id) existingId = arr[0].id as number;
+    }
+  } catch { /* 검색 실패 시 새로 생성 */ }
+  const url = existingId ? `${base}/wp-json/wp/v2/pages/${existingId}` : `${base}/wp-json/wp/v2/pages`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { Authorization: auth, "Content-Type": "application/json" },
+    body: JSON.stringify({ title: page.title, content: html, status: "publish", slug: page.slug }),
+  });
+  if (res.status === 401 || res.status === 403) throw new WpAuthError();
+  if (!res.ok) throw new Error(`페이지 발행 실패 (${res.status})`);
+  const data = await res.json();
+  return { id: data.id, link: data.link, title: page.title };
+}
