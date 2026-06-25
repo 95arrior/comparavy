@@ -8,7 +8,7 @@ import { regionLevel, buildLocalSeeds, addressRegionTiers } from "@/lib/region";
 import { bloggerType, type BloggerType } from "@/lib/bloggerTypes";
 import { compFromLabel, compFromBlogTotal, filledStarsFromData, type Comp } from "@/lib/topicScore";
 import { fetchBlogTotal } from "@/lib/naverBlogSearch";
-import { resolveLocalPlan, type LocalScope } from "@/lib/aiSeeds";
+import { resolveLocalPlan, generateLocalKeywords, type LocalScope } from "@/lib/aiSeeds";
 import { buildPoolForSub } from "@/lib/keywordPool";
 import { collectPoolKeywords } from "@/lib/poolCollect";
 import { fetchNaverAutocomplete } from "@/lib/naverAutocomplete";
@@ -274,8 +274,19 @@ export async function GET(req: Request) {
         }
       } catch { /* 수집 실패 시드는 건너뜀 */ }
     }
-    // ★지역 전용: '지역명이 들어간 진짜 지역 키워드'만 남긴다(일반 분야 글감 padding 안 함 — '우리 동네'인데 무관한 글감 뜨는 신뢰 저하 방지).
-    // 진행적 확장: 우리 지역 계층(오송→흥덕→청주) 순 tier → 좁은(tier 낮은) 것 우선 + 검색량. 부족하면 있는 만큼만(정직).
+    // ★검색량에 의존하지 않는 '생성' 지역 글감 — 작은 동네 키워드는 네이버 볼륨이 0이라 위 수집엔 안 잡히지만,
+    //   동네 손님은 꾸준히 검색(고의도·무경쟁). 지역×업종×대상×특성으로 만들어 항상 채운다(네이버 데이터는 보강용).
+    const aud = audActive ? audSel.filter((a) => a !== AUDIENCE_ALL).join("·") : undefined;
+    const gen = await generateLocalKeywords(regions, sub || vertical, aud, aiTraits);
+    const norms = new Set([...collected.keys()].map((k) => normalizeKeyword(k)));
+    for (const kw of gen) {
+      const nk = normalizeKeyword(kw);
+      if (norms.has(nk) || usedSet.has(nk) || isUnsafeKeyword(kw) || mentionsForeignRegion(kw, regions)) continue;
+      norms.add(nk);
+      collected.set(kw, { keyword: kw, monthly_searches: 0, competition: null, audience: null, blog_total: null }); // 볼륨 미측정(생성)
+    }
+    // ★지역 전용: '지역명이 들어간 진짜 지역 키워드'만(일반 분야 padding 안 함). 진행적 확장(오송→흥덕→청주) 순.
+    // 같은 tier 안에선 측정 검색량 있는 것 먼저(실수요 증명) → 생성(볼륨0)이 뒤를 채움.
     const regionIdx = (kw: string) => regions.findIndex((r) => kw.includes(r));
     candidates = [...collected.values()]
       .filter((c) => regionIdx(c.keyword) >= 0) // 지역명 포함만

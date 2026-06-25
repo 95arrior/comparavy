@@ -1,5 +1,50 @@
 import Anthropic from "@anthropic-ai/sdk";
 
+// 지역 글감 '생성' — 검색량(네이버 볼륨)에 의존하지 않고 지역×업종×대상×특성으로 동네 검색어를 만든다.
+// 작은 동네 키워드는 측정 검색량이 0이라 네이버 API엔 안 잡히지만, 동네 손님은 꾸준히 검색(고의도·무경쟁) → 생성으로 커버.
+const localKwCache = new Map<string, string[]>();
+export async function generateLocalKeywords(areas: string[], field: string, audience?: string, traits?: string[]): Promise<string[]> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const ars = areas.filter(Boolean).slice(0, 3);
+  if (!apiKey || !ars.length || !field) return [];
+  const cacheKey = `${ars.join(",")}|${field}|${audience ?? ""}|${(traits ?? []).join(",")}`;
+  const hit = localKwCache.get(cacheKey);
+  if (hit) return hit;
+  try {
+    const client = new Anthropic({ apiKey });
+    const res = await client.messages.create({
+      model: "claude-haiku-4-5",
+      max_tokens: 500,
+      messages: [
+        {
+          role: "user",
+          content:
+            `지역: ${ars.join("·")} / 업종: ${field}${audience ? ` / 대상: ${audience}` : ""}${traits?.length ? ` / 동네 특성: ${traits.join("·")}` : ""}\n\n` +
+            `이 동네 손님이 네이버에 '실제로 검색할' 지역 검색어를 12개 만들어줘.\n` +
+            `- ★반드시 지역명(${ars.join("/")} 중 하나)을 포함. 가까운 동네(${ars[0]})를 더 많이.\n` +
+            `- 검색량이 적어도 됨(동네 실수요 — 양은 적어도 경쟁 거의 없어 우리 가게가 선점하기 좋음).\n` +
+            `- 추천·비용·후기·고르는법·대상별(${audience ?? "유아·초등 등"})·시간/위치 등 '다양한 의도'로. 같은 패턴 반복 금지.\n` +
+            (traits?.length ? `- 동네 특성(${traits.join("·")})을 살린 검색어도 1~2개(예: 산단 직장인 자녀 ${field}).\n` : "") +
+            `- 자연스러운 실제 검색어로(과장·낚시 금지).\n` +
+            `JSON 배열로만: ["${ars[0]} ${field} 추천", "${ars[0]} ..."]`,
+        },
+      ],
+    });
+    const text = res.content.map((c) => (c.type === "text" ? c.text : "")).join("");
+    const m = text.match(/\[[\s\S]*\]/);
+    const arr = m ? (JSON.parse(m[0]) as unknown[]) : [];
+    const out = arr
+      .filter((x): x is string => typeof x === "string" && x.trim().length > 1)
+      .map((x) => x.trim())
+      .filter((x) => ars.some((a) => x.includes(a))) // 지역명 포함만
+      .slice(0, 12);
+    localKwCache.set(cacheKey, out);
+    return out;
+  } catch {
+    return [];
+  }
+}
+
 // 주소 → 그 동네에서 '실제 통용되는 지역명'(생활권·별칭·동/리/구). 주소 파싱이 못 잡는 별칭(봉산리→오송) 보완.
 // 주소는 안 바뀌니 인스턴스 메모리에 캐싱(반복 호출 절감).
 const areaCache = new Map<string, string[]>();

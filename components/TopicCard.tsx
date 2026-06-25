@@ -83,8 +83,11 @@ export default function TopicCard({
         <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px] sm:text-[13px]">
           <span className="flex min-w-0 items-center gap-1.5">
             <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-neutral-500">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" className="shrink-0 opacity-70"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4-4" /></svg>
-월 검색 {vol.toLocaleString()}회
+              {region && vol === 0 ? (
+                <><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="shrink-0 opacity-70"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z" /></svg>동네 손님 검색</>
+              ) : (
+                <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" className="shrink-0 opacity-70"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4-4" /></svg>월 검색 {vol.toLocaleString()}회</>
+              )}
             </span>
             <span className="text-neutral-300">·</span>
             <span className={`truncate font-semibold ${isSak ? "text-violet-700" : "text-neutral-400"}`}>{EMOTION[comp]}</span>
