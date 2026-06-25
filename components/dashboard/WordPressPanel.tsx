@@ -80,7 +80,7 @@ export default function WordPressPanel({
   if (siteUrl) {
     return (
       <div className="space-y-4">
-        <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-6 sm:p-8">
+        <div className="rounded-2xl bg-white ring-1 ring-black/[0.04] p-6 sm:p-8">
           <h2 className="text-lg font-semibold tracking-tight">워드프레스 연결됨</h2>
           <p className="mt-2 flex items-center gap-2 text-sm text-neutral-600">
             <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
@@ -118,7 +118,7 @@ export default function WordPressPanel({
   }
 
   return (
-    <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-6 sm:p-8">
+    <div className="rounded-2xl bg-white ring-1 ring-black/[0.04] p-6 sm:p-8">
       <h2 className="text-lg font-semibold tracking-tight">워드프레스 사이트 연결</h2>
       <p className="mt-1 text-sm text-neutral-500">
         애플리케이션 비밀번호로 안전하게 연결해요. 일반 로그인 비밀번호가 아니에요.

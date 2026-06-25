@@ -54,7 +54,7 @@ export default function KeywordQueue({
         </p>
       </div>
 
-      <ul className="mt-8 divide-y divide-neutral-100 overflow-hidden rounded-2xl border border-neutral-100 bg-white shadow-sm">
+      <ul className="mt-8 divide-y divide-neutral-100 overflow-hidden rounded-2xl bg-white ring-1 ring-black/[0.04]">
         {queue.map((q) => {
           const st = STATUS[q.status] ?? STATUS.queued;
           return (

@@ -164,7 +164,7 @@ export default function WpGuideView({ onBack, onGoConnect }: { onBack: () => voi
             // 완료한 단계 = 접힌 카드
             if (isDone) {
               return (
-                <div key={i} className="flex items-center gap-3 rounded-2xl border border-neutral-100 bg-white shadow-sm px-5 py-4">
+                <div key={i} className="flex items-center gap-3 rounded-2xl bg-white ring-1 ring-black/[0.04] px-5 py-4">
                   <button
                     onClick={() => toggle(i)}
                     aria-label="이 단계 다시 하기"

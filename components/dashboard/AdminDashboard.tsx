@@ -95,7 +95,7 @@ function MiniBars({ title, data, color, suffix = "" }: { title: string; data: { 
   const max = Math.max(1, ...data.map((d) => d.count));
   const total = data.reduce((s, d) => s + d.count, 0);
   return (
-    <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-4 sm:p-5">
+    <div className="rounded-2xl bg-white ring-1 ring-black/[0.04] p-4 sm:p-5">
       <div className="flex items-baseline justify-between">
         <p className="text-sm font-medium text-neutral-900">{title}</p>
         <p className="text-xs text-neutral-400">7일 합 {total.toLocaleString()}{suffix}</p>
@@ -141,7 +141,7 @@ function Funnel({ stats }: { stats: AdminStats }) {
     }
   }
   return (
-    <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-4 sm:p-5">
+    <div className="rounded-2xl bg-white ring-1 ring-black/[0.04] p-4 sm:p-5">
       <div className="space-y-3">
         {steps.map((s, i) => {
           const widthPct = Math.max(2, Math.round((s.value / base) * 100));
@@ -252,7 +252,7 @@ function BudgetWidget({ stats }: { stats: AdminStats }) {
   const barColor = pct >= 90 ? "bg-red-500" : pct >= 80 ? "bg-amber-500" : "bg-neutral-900";
 
   return (
-    <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-5">
+    <div className="rounded-2xl bg-white ring-1 ring-black/[0.04] p-5">
       <div className="flex items-end justify-between">
         <div>
           <p className="text-sm text-neutral-500">이번 달 사용 (추정)</p>
@@ -298,7 +298,7 @@ function CostBreakdown({ stats }: { stats: AdminStats }) {
         <Stat label="누적 API 비용" value={won(stats.costTotalKrw)} accent />
         <Stat label="오늘 비용" value={won(stats.costTodayKrw ?? 0)} />
       </div>
-      <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-4 sm:p-5 lg:col-span-2">
+      <div className="rounded-2xl bg-white ring-1 ring-black/[0.04] p-4 sm:p-5 lg:col-span-2">
         <p className="text-sm font-medium text-neutral-900">종류별 비용</p>
         <div className="mt-3 space-y-2.5">
           {stats.costByKind.length === 0 ? (
@@ -334,7 +334,7 @@ function WaitlistView({ stats }: { stats: AdminStats }) {
   }
   return (
     <Section title="사전 등록 대기자" desc="출시 전 사전 등록한 이메일 (최신순). 오픈하면 이 목록으로 안내하면 돼요.">
-      <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-4 sm:p-5">
+      <div className="rounded-2xl bg-white ring-1 ring-black/[0.04] p-4 sm:p-5">
         <div className="flex items-center justify-between gap-3">
           <p className="text-2xl font-bold tracking-tight">{(stats.waitlistCount ?? list.length).toLocaleString()}<span className="ml-1 text-sm font-medium text-neutral-400">명</span></p>
           {list.length > 0 && (
@@ -506,7 +506,7 @@ function SocialView({ stats }: { stats: AdminStats }) {
     <>
       {/* 자동 발행 설정 */}
       <Section title="자동 발행" desc="대기 중인 카드를 정한 시각·간격으로 인스타에 자동 게시해요.">
-        <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm">
+        <div className="rounded-2xl bg-white ring-1 ring-black/[0.04]">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-100 p-5">
             <div className="flex items-center gap-2.5">
               <span className={`inline-block h-2.5 w-2.5 rounded-full ${autoEnabled ? "bg-emerald-500" : "bg-neutral-300"}`} />
@@ -548,7 +548,7 @@ function SocialView({ stats }: { stats: AdminStats }) {
         </div>
 
         {openList && (
-          <div className="mt-3 rounded-2xl border border-neutral-100 bg-white shadow-sm p-4 sm:p-5">
+          <div className="mt-3 rounded-2xl bg-white ring-1 ring-black/[0.04] p-4 sm:p-5">
             {openList === "queued" && queued.length > 0 && (
               <div className="mb-3 flex items-center justify-between gap-2 border-b border-neutral-100 pb-3">
                 <span className="text-sm text-neutral-500">대기 <b className="text-neutral-900">{queued.length}개</b> · 하나씩 순서대로 발행돼요</span>
@@ -709,7 +709,7 @@ export default function AdminDashboard({ stats }: { stats?: AdminStats | null })
       {/* 최근 활동 */}
       <Section title="최근 활동">
         <div className="grid gap-3 lg:grid-cols-2">
-          <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-4 sm:p-5">
+          <div className="rounded-2xl bg-white ring-1 ring-black/[0.04] p-4 sm:p-5">
             <p className="text-sm font-medium text-neutral-900">최근 가입</p>
             <ul className="mt-3 divide-y divide-neutral-100">
               {stats.recentUsers.length === 0 ? (
@@ -724,7 +724,7 @@ export default function AdminDashboard({ stats }: { stats?: AdminStats | null })
               )}
             </ul>
           </div>
-          <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-4 sm:p-5">
+          <div className="rounded-2xl bg-white ring-1 ring-black/[0.04] p-4 sm:p-5">
             <p className="text-sm font-medium text-neutral-900">최근 글</p>
             <ul className="mt-3 divide-y divide-neutral-100">
               {stats.recentArticles.length === 0 ? (

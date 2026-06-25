@@ -532,7 +532,7 @@ export default function ArticleModal({
             <div className="pointer-events-none absolute -inset-x-6 bottom-0 top-[4.75rem] bg-gradient-to-b from-transparent via-neutral-50/85 to-neutral-50 backdrop-blur-[2px] [mask-image:linear-gradient(to_bottom,transparent,#000_3rem)] [-webkit-mask-image:linear-gradient(to_bottom,transparent,#000_3rem)]" />
             {/* 결제 카드: 흐려진 영역 위 중앙, 바닥에서 충분히 띄워 그라데이션·그림자가 안 잘리게 */}
             <div className="absolute inset-x-0 bottom-12 flex justify-center px-4">
-              <div className="w-full max-w-sm rounded-2xl border border-neutral-100 bg-white shadow-sm p-5 text-center shadow-xl">
+              <div className="w-full max-w-sm rounded-2xl bg-white ring-1 ring-black/[0.04] p-5 text-center shadow-xl">
                 <p className="text-base font-semibold tracking-tight">여기부터는 프로 회원만 볼 수 있어요</p>
                 <p className="mt-1.5 text-sm leading-relaxed text-neutral-500">
                   프로로 업그레이드하면 이 글 전체가 열리고, 매달 30편까지 5,000자 깊이로 쓰고 워드프레스에 바로 발행할 수 있어요.
@@ -921,7 +921,7 @@ export default function ArticleModal({
                       {catOpen && (
                         <>
                           <div className="fixed inset-0 z-40" onClick={() => { setCatOpen(false); setCatToDelete(null); }} />
-                          <div className="ateflo-dropdown absolute left-0 right-0 top-full z-50 mt-2 max-h-72 overflow-auto rounded-2xl border border-neutral-100 bg-white shadow-sm p-1.5 shadow-xl">
+                          <div className="ateflo-dropdown absolute left-0 right-0 top-full z-50 mt-2 max-h-72 overflow-auto rounded-2xl bg-white ring-1 ring-black/[0.04] p-1.5 shadow-xl">
                             {catToDelete ? (
                               /* 삭제 확인 — 옮길 곳을 누르면 옮기고 삭제 (네이티브 셀렉트 없이 같은 리스트 스타일) */
                               <div>

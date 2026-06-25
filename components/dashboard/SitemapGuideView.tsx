@@ -132,7 +132,7 @@ export default function SitemapGuideView({ onBack }: { onBack: () => void }) {
 
             if (isDone) {
               return (
-                <div key={i} className="flex items-center gap-3 rounded-2xl border border-neutral-100 bg-white shadow-sm px-5 py-4">
+                <div key={i} className="flex items-center gap-3 rounded-2xl bg-white ring-1 ring-black/[0.04] px-5 py-4">
                   <button onClick={() => toggle(i)} aria-label="이 단계 다시 하기" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-sm font-bold text-white">
                     ✓
                   </button>

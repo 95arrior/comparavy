@@ -97,7 +97,7 @@ export default function ContentCalendar({
         <p className="text-xs font-medium text-emerald-600">꾸준히 가고 있어요</p>
       )}
     </div>
-    <div className="rounded-2xl border border-neutral-100 bg-white shadow-sm p-4 sm:p-6">
+    <div className="rounded-2xl bg-white ring-1 ring-black/[0.04] p-4 sm:p-6">
       {/* 헤더 — 월 이동 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1">

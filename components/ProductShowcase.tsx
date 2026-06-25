@@ -8,7 +8,7 @@ const BRAND = "#3182F6";
 /** 앱 화면처럼 보이는 프레임(상단 점 3개). 제목은 위 칩이 담당. */
 function Frame({ children }: { children: React.ReactNode }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-black/[0.04]">
       <div className="flex items-center gap-1.5 border-b border-neutral-100 bg-neutral-50/60 px-4 py-2.5">
         <span className="h-2.5 w-2.5 rounded-full bg-neutral-200" />
         <span className="h-2.5 w-2.5 rounded-full bg-neutral-200" />
