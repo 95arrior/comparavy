@@ -33,28 +33,29 @@ export default function StoryComposer({
 
   return (
     <div>
-      {/* 박스 — 테두리 없는 흰 박스 + 드롭쉐도우. 포커스 시 박스 안에서 오로라가 일렁임 */}
-      <div className="relative overflow-hidden rounded-2xl bg-white shadow-[0_6px_22px_-8px_rgba(20,40,90,0.18)]">
-        <div className={`ateflo-chip-aurora pointer-events-none absolute inset-0 transition-opacity duration-500 ${focused ? "opacity-50" : "opacity-0"}`} />
-        <textarea
-          value={story}
-          onChange={(e) => setStory(e.target.value)}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          placeholder={focused ? "" : "무엇이든 편하게 적어주세요!"}
-          rows={6}
-          maxLength={4000}
-          className="relative w-full resize-none bg-transparent px-4 py-3.5 pr-14 text-[15px] leading-relaxed outline-none placeholder:text-neutral-400"
-        />
-        {/* 전송 — 비었을 땐 안 보이고, 충분히 적으면(ready) 파란 ↑가 자연스럽게 나타남 */}
-        <button
-          onClick={() => { if (ready) setTitleOpen(true); }}
-          disabled={!ready}
-          aria-label="글쓰기"
-          className={`absolute bottom-3 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-[#1D75F7] text-white transition-all duration-300 ${ready ? "scale-100 opacity-100 hover:opacity-90 active:scale-90" : "pointer-events-none scale-75 opacity-0"}`}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
-        </button>
+      {/* 박스 — 하단 박스들과 동일하게 평평한 neutral-50(드롭쉐도우 없음). 포커스 시 오로라가 '테두리'로 또렷하게 일렁임 */}
+      <div className={`rounded-2xl p-[2px] transition-all duration-500 ${focused ? "ateflo-chip-aurora shadow-[0_0_20px_-3px_rgba(150,160,255,0.5)]" : "bg-transparent"}`}>
+        <div className="relative overflow-hidden rounded-[15px] bg-neutral-50">
+          <textarea
+            value={story}
+            onChange={(e) => setStory(e.target.value)}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            placeholder={focused ? "" : "예) 자주 받는 질문, 오늘 있었던 일, 꼭 알려주고 싶은 정보를 적어주세요"}
+            rows={6}
+            maxLength={4000}
+            className="relative w-full resize-none bg-transparent px-4 py-3.5 pr-14 text-[15px] leading-relaxed outline-none placeholder:text-neutral-400"
+          />
+          {/* 전송 — 비었을 땐 안 보이고, 충분히 적으면(ready) 파란 ↑가 자연스럽게 나타남 */}
+          <button
+            onClick={() => { if (ready) setTitleOpen(true); }}
+            disabled={!ready}
+            aria-label="글쓰기"
+            className={`absolute bottom-3 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-[#1D75F7] text-white transition-all duration-300 ${ready ? "scale-100 opacity-100 hover:opacity-90 active:scale-90" : "pointer-events-none scale-75 opacity-0"}`}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
+          </button>
+        </div>
       </div>
 
       <div className="mt-1.5 flex items-center justify-between px-1">
