@@ -16,6 +16,21 @@ const LOAD_MSGS = ["검색되는 키워드를 찾는 중…", "경쟁 낮은 글
 // 소주제 군집 키(서버와 동일 규칙: 띄어쓰기·기호 제거 후 앞 4글자) — 교체 시 비슷한 소주제 중복 방지
 const clusterOf = (s: string) => s.replace(/\s+/g, "").replace(/[^가-힣a-z0-9]/gi, "").slice(0, 4);
 
+// ★표시 글감 정제(하드코딩) — 키워드/제목/소주제 중 하나라도 겹치면 제외 + 최대 3개. 어떤 경로(캐시·교체·로드)로 와도 중복·초과 원천 차단.
+function sanitizeTopics(arr: Topic[], limit = 3): Topic[] {
+  const kw = new Set<string>(), ti = new Set<string>(), cl = new Set<string>();
+  const out: Topic[] = [];
+  for (const t of arr ?? []) {
+    if (!t || !t.keyword) continue;
+    const c = clusterOf(t.title ?? t.keyword);
+    if (kw.has(t.keyword) || ti.has(t.title) || cl.has(c)) continue;
+    kw.add(t.keyword); ti.add(t.title); cl.add(c);
+    out.push(t);
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
 // 토스식 메인 홈 — '연구소' 컨셉/탭 제거. [미니 진척] → [성과] → [글감 자리+새 글 쓰기] → [내 글].
 // 미니 진척 배너는 3단계 완료되면 자동으로 사라진다(새 유저만 가이드).
 
@@ -86,17 +101,19 @@ export default function Home({
 
   // 글감 캐시 키 — 하루 고정 + 모드별(새로고침·복귀·모드전환 시 재로딩·재셔플 방지)
   const todayDate = new Date().toISOString().slice(0, 10);
-  const topicsCacheKey = (md: string) => `ateflo_topics_v14_${todayDate}_${profileKey ?? ""}_${md}`;
+  const topicsCacheKey = (md: string) => `ateflo_topics_v15_${todayDate}_${profileKey ?? ""}_${md}`;
   const curModeKey = regionMode ? "region" : cluster ? `cluster:${cluster}` : "normal";
 
   // '이 글감 교체' → 그 카드만 새 글감으로. 동시·연속 교체 허용(하나 끝나길 안 기다림).
   const swapTopic = async (kw: string) => {
     if (swapping.includes(kw) || dismissedRef.current.length + swapping.length >= SWAP_LIMIT) return;
+    const modeKey = curModeKey; // ★시작 시점 모드 고정 — 완료 시 모드가 바뀌어도 엉뚱한 캐시(예: region)에 안 씀
     setSwapping((s) => [...s, kw]);
     try {
       const exclude = [...topics.map((t) => t.keyword), ...dismissedRef.current].join(",");
       const params = new URLSearchParams({ exclude });
       if (cluster) params.set("cluster", cluster);
+      if (regionMode) params.set("region", "1"); // 현재 모드에 맞는 후보만(일반↔지역 안 섞이게)
       const res = await fetch(`/api/topics?${params.toString()}`);
       const data = await res.json();
       const fresh: Topic[] = Array.isArray(data.topics) ? data.topics : [];
@@ -107,10 +124,10 @@ export default function Home({
       const repl = cands.length ? cands[Math.floor(Math.random() * cands.length)] : null; // 동시 교체 충돌↓
       if (repl) {
         setTopics((prev) => {
-          // 동시 교체로 다른 카드가 이미 같은 키워드/제목/소주제면 교체 취소(중복 방지)
+          // 다른 카드와 키워드/제목/소주제 겹치면 교체 취소
           if (prev.some((t) => t.keyword !== kw && (t.keyword === repl.keyword || t.title === repl.title || clusterOf(t.title) === clusterOf(repl.title)))) return prev;
-          const next = prev.map((t) => (t.keyword === kw ? repl : t));
-          try { localStorage.setItem(topicsCacheKey(curModeKey), JSON.stringify(next)); } catch { /* ignore */ }
+          const next = sanitizeTopics(prev.map((t) => (t.keyword === kw ? repl : t))); // ★정제(중복·초과 강제)
+          try { localStorage.setItem(topicsCacheKey(modeKey), JSON.stringify(next)); } catch { /* ignore */ }
           return next;
         });
         const nd = [...dismissedRef.current, kw];
@@ -130,12 +147,12 @@ export default function Home({
 
   const loadTopics = useCallback(async () => {
     const md = regionMode ? "region" : cluster ? `cluster:${cluster}` : "normal";
-    const ck = `ateflo_topics_v14_${new Date().toISOString().slice(0, 10)}_${profileKey ?? ""}_${md}`;
+    const ck = `ateflo_topics_v15_${new Date().toISOString().slice(0, 10)}_${profileKey ?? ""}_${md}`;
     // 하루 고정 — 캐시 있으면 즉시 표시(로딩·재셔플 없음). 새로고침·강력새로고침·모드전환 모두 안정.
     try {
       const raw = typeof window !== "undefined" ? localStorage.getItem(ck) : null;
-      // 꽉 찬(3개) 글감일 때만 캐시 사용 — 얇은(1~2개) 풀이 캐시되어 재빌드를 가리는 것 방지
-      if (raw) { const c = JSON.parse(raw); if (Array.isArray(c) && c.length >= 3) { setTopics(c); setTopicsLoading(false); return; } }
+      // 꽉 찬(3개) 글감일 때만 캐시 사용 — 얇은(1~2개) 풀이 캐시되어 재빌드를 가리는 것 방지. ★정제 후 검사(stale 중복·초과 캐시 차단)
+      if (raw) { const p = JSON.parse(raw); const c = Array.isArray(p) ? sanitizeTopics(p) : []; if (c.length >= 3) { setTopics(c); setTopicsLoading(false); return; } }
     } catch { /* 캐시 미스 → 아래로 */ }
 
     setTopicsLoading(true);
@@ -150,7 +167,7 @@ export default function Home({
       const qs = params.toString();
       const res = await fetch(`/api/topics${qs ? `?${qs}` : ""}`);
       const data = await res.json();
-      const t: Topic[] = Array.isArray(data.topics) ? data.topics : [];
+      const t = sanitizeTopics(Array.isArray(data.topics) ? data.topics : []); // ★정제(중복·초과 강제)
       setTopics(t);
       try { if (t.length >= 3) localStorage.setItem(ck, JSON.stringify(t)); } catch { /* ignore */ }
     } catch {
@@ -248,7 +265,7 @@ export default function Home({
       ) : topics.length > 0 ? (
         <div className="mt-3">
           <div className="flex flex-col gap-3">
-            {topics.map((t, i) => (
+            {sanitizeTopics(topics).map((t, i) => (
               <TopicCard key={t.keyword} title={t.title} tag={t.tag || undefined} vol={t.vol} comp={t.comp} blogTotal={t.blogTotal} idx={i} cta="이 글 쓰기" region={t.region} onClick={() => onWriteKeyword(t.keyword, t.title)} onDismiss={!t.region && swapLeft > 0 ? () => swapTopic(t.keyword) : undefined} dismissing={swapping.includes(t.keyword)} />
             ))}
           </div>
