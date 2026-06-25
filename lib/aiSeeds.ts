@@ -231,3 +231,48 @@ export async function expandSeeds(label: string, max = 15): Promise<string[]> {
     return []; // 실패 시 기본 시드만(현행 동작)
   }
 }
+
+// ★손님(대상) 기준 '비지역' 글감 생성 — 검색량 풀이 오염/얕아 온타겟이 부족할 때 채운다.
+//   원칙: '검색하는 사람 = 이 업장에 올 손님'. 분야가 같아도 손님이 아닌 검색(여행영어·성인토익 등)은 절대 안 만든다. 캐싱.
+const audTopicCache = new Map<string, string[]>();
+export async function generateAudienceTopics(field: string, audience: string | undefined, max = 8): Promise<string[]> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const clean = (field || "").trim();
+  if (!apiKey || clean.length < 1) return [];
+  const cacheKey = `${clean}|${audience ?? ""}`;
+  const hit = audTopicCache.get(cacheKey);
+  if (hit) return hit;
+  try {
+    const client = new Anthropic({ apiKey });
+    const res = await client.messages.create({
+      model: "claude-haiku-4-5",
+      max_tokens: 500,
+      messages: [
+        {
+          role: "user",
+          content:
+            `업장: ${clean}${audience ? ` / 대상(손님): ${audience}` : ""}\n` +
+            `이 업장의 '손님'이 실제로 네이버에 검색하는 블로그 글감 키워드를 ${max}개 만들어줘.\n` +
+            "★가장 중요: '검색하는 사람 = 이 업장에 올 손님'이어야 한다. 손님의 고민·궁금증·결정 직전 검색을 떠올려라(검색자=손님 매칭).\n" +
+            (audience
+              ? `★대상이 '${audience}'다. 그 대상의 보호자/본인이 칠 것만 만들어라(예: 대상이 유아·초등이면 그 '자녀의 학부모'가 칠 것 — '초등 영어 시작 시기', '파닉스 떼는 법' 등). 성인·여행·타 언어·타 대상 등 '손님이 아닌 사람'의 검색은 절대 만들지 마(여행영어·성인토익·스페인어 같은 것 금지).\n`
+              : "") +
+            "- 지역명·브랜드·특정 업체명은 넣지 마(일반 키워드).\n" +
+            "- 2~4어절 구체 키워드, 서로 다른 하위주제로 다양하게.\n" +
+            'JSON 배열로만 답해: ["키워드1","키워드2", ...]',
+        },
+      ],
+    });
+    const text = res.content.map((c) => (c.type === "text" ? c.text : "")).join("");
+    const m = text.match(/\[[\s\S]*\]/);
+    const arr = m ? (JSON.parse(m[0]) as unknown[]) : [];
+    const out = arr
+      .filter((x): x is string => typeof x === "string" && x.trim().length > 1)
+      .map((x) => x.trim())
+      .slice(0, max);
+    audTopicCache.set(cacheKey, out);
+    return out;
+  } catch {
+    return [];
+  }
+}

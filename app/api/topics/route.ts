@@ -8,7 +8,7 @@ import { regionLevel, buildLocalSeeds, addressRegionTiers } from "@/lib/region";
 import { bloggerType, type BloggerType } from "@/lib/bloggerTypes";
 import { compFromLabel, compFromBlogTotal, filledStarsFromData, type Comp } from "@/lib/topicScore";
 import { fetchBlogTotal } from "@/lib/naverBlogSearch";
-import { resolveLocalPlan, generateLocalKeywords, type LocalScope } from "@/lib/aiSeeds";
+import { resolveLocalPlan, generateLocalKeywords, generateAudienceTopics, type LocalScope } from "@/lib/aiSeeds";
 import { buildPoolForSub } from "@/lib/keywordPool";
 import { collectPoolKeywords } from "@/lib/poolCollect";
 import { fetchNaverAutocomplete } from "@/lib/naverAutocomplete";
@@ -309,6 +309,21 @@ export async function GET(req: Request) {
       }
     };
     add(general); add(lowF); add(highF);
+
+    // ★자영업자: 검색량 풀이 오염(여행영어 등)·얕아 온타겟이 부족할 수 있다 → '손님(대상)이 검색하는' 글감을 생성해 합류.
+    //   생성분은 검색자=손님 매칭이 보장돼, 뒤의 ok/fit 게이트를 통과하며 빈자리를 채운다(볼륨0=고의도·무경쟁).
+    if (type === "local") {
+      const audStr = audActive ? audSel.filter((a) => a !== AUDIENCE_ALL).join("·") : undefined;
+      const genTopics = await generateAudienceTopics(sub || vertical, audStr);
+      const norms = new Set(candidates.map((c) => normalizeKeyword(c.keyword)));
+      for (const kw of genTopics) {
+        const nk = normalizeKeyword(kw);
+        if (norms.has(nk) || usedSet.has(nk) || isUnsafeKeyword(kw)) continue;
+        if (regions.length && mentionsForeignRegion(kw, regions)) continue;
+        norms.add(nk);
+        candidates.push({ keyword: kw, monthly_searches: 0, competition: null, audience: null, blog_total: null });
+      }
+    }
   }
 
   // ── 제목·카테고리·노이즈판별(여유분 한 번에) ──
@@ -319,7 +334,7 @@ export async function GET(req: Request) {
   if (audActive) ctxParts.push(`대상: ${audSel.filter((a) => a !== AUDIENCE_ALL).join("·")}`);
   if (local && regions.length) ctxParts.push(`사용자 지역: ${regions.join("·")}`);
   if (regionMode && aiTraits.length) ctxParts.push(`동네 특성: ${aiTraits.join("·")}`);
-  const titled = await keywordsToTitles(allKeywords, ctxParts.join(" / ")); // {title, tag, ok, fit}
+  const titled = await keywordsToTitles(allKeywords, ctxParts.join(" / "), { localBiz: type === "local" }); // {title, tag, ok, fit} — 자영업자는 '검색자=손님' 매칭 게이트 강하게
 
   // fit 상위 후보를 넉넉히(PICK+6) 추림 — 대표 샘플이면 포화 키워드가 많이 보여서, 같은 fit 안에서 '이길 수 있는' 걸 고른다.
   const fitTop = candidates

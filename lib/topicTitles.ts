@@ -25,11 +25,22 @@ export interface TitledTopic {
  * 한 번의 AI 호출에서 제목 + 내용 카테고리 분류 + 노이즈 판별을 같이 한다.
  * AI 키 없음/오류면 템플릿으로 채우고 ok=true(드롭 안 함).
  */
-export async function keywordsToTitles(keywords: string[], context?: string): Promise<TitledTopic[]> {
+export async function keywordsToTitles(keywords: string[], context?: string, opts?: { localBiz?: boolean }): Promise<TitledTopic[]> {
   if (keywords.length === 0) return [];
   const apiKey = process.env.ANTHROPIC_API_KEY;
   const fallback = (): TitledTopic[] => keywords.map((k, i) => ({ title: templateTitle(k, i), tag: "", ok: true, fit: 1 }));
   if (!apiKey) return fallback();
+
+  // ★자영업자(동네 손님 받는 업장): '검색자 = 잠재 손님' 매칭을 1순위 게이트로. 분야가 같아도 검색자가 손님 아니면 제외.
+  const customerGate =
+    opts?.localBiz && context
+      ? "★★[가장 중요 — 검색자가 곧 '잠재 손님'인가] 이 업장은 동네 손님을 받는 자영업자다. 글감의 목적은 '이 키워드를 검색하는 사람'이 '이 업장에 올 손님'이 되는 것이다. 분야 단어가 같아도, 검색하는 사람이 이 업장의 손님(분야·대상이 맞는 사람)이 아니면 무조건 ok=false.\n" +
+        "- 검색자를 떠올려라: 이 키워드를 '누가, 왜' 치나? 그 사람이 이 가게 손님인가?\n" +
+        "- 예) 업장='유아·초등 영어 학원'(대상=유아·초등) → '여행 영어 표현'(검색자=여행 가는 성인), '스페인어 번역기'(검색자=타 언어 쓰는 성인, 영어도 아님), '성인 영어회화'·'토익'(검색자=성인·취준생) = 전부 우리 손님(유아·초등 자녀를 둔 학부모)이 아님 → ok=false로 제외.\n" +
+        "  남길 것 = 그 손님(학부모)이 칠 법한 것: '초등 영어 시작 시기', '파닉스 떼는 법', '유아 영어 노출 방법', '초등 영어 학원 고르는 법' 등.\n" +
+        "- 이 '검색자=손님' 매칭은 '애매하면 통과' 규칙의 예외다 — 손님과 안 맞으면 애매해도 뺀다. (분야·대상에 딱 맞는 것만 남겨라.)\n" +
+        "- f(적합도)도 이 기준으로: 손님이 자주 검색=2, 손님이 가끔=1, 손님과 거리 있음=0(되도록 ok=false).\n"
+      : "";
 
   try {
     const client = new Anthropic({ apiKey });
@@ -48,6 +59,7 @@ export async function keywordsToTitles(keywords: string[], context?: string): Pr
                 "- '대상'이 주어졌는데 명백히 안 맞는 키워드(예: 대상이 초등·중등인데 '성인 토익').\n" +
                 "(애매하면 통과 — 과도하게 빼지 마.)\n"
               : "") +
+            customerGate +
             "다음 각 '검색 키워드'를 블로그 글감 제목으로 바꿔줘. 화면에 이 키워드의 실제 검색량이 같이 표시되니, 제목이 키워드에서 멀어지면 안 된다. 키워드마다:\n" +
             "• t = 제목. 키워드의 핵심어는 꼭 포함(화면 검색량과 어긋나면 안 됨). ★단 너무 건조하게 줄이지 말고 '클릭하고 싶게' 궁금증·혜택 후킹을 자연스럽게 더해라(20~28자 권장). 단 키워드에 '없는 사실'(지역·대상·숫자·기관·구체 주장)은 지어내지 마 — 후킹은 표현·각도로만(예: '진짜', '핵심만', '이것만 알면', '놓치기 쉬운', '제대로').\n" +
             "  ▸ 자연스럽고 친근한 현대 한국어. '뭐하는 건가?','어떤 곳?','~란 무엇인가' 같은 막연·번역투 금지. 과장·낚시·이모지·따옴표 금지.\n" +
