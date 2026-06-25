@@ -13,6 +13,9 @@ export default function StoryComposer({
   onStoryChange,
   promo,
   onPromoChange,
+  placeholder,
+  presetLabel,
+  onClearPreset,
   onSubmit,
 }: {
   hasBiz: boolean;
@@ -23,6 +26,9 @@ export default function StoryComposer({
   onStoryChange: (s: string) => void;
   promo: boolean;
   onPromoChange: (p: boolean) => void;
+  placeholder?: string; // 빠른 시작 프리셋 선택 시 안내 placeholder
+  presetLabel?: string; // 선택된 프리셋 태그(이모지+라벨)
+  onClearPreset?: () => void;
   onSubmit: (story: string, promo: boolean, title: string) => void;
 }) {
   const [focused, setFocused] = useState(false);
@@ -33,6 +39,15 @@ export default function StoryComposer({
 
   return (
     <div>
+      {/* 선택된 빠른 시작 프리셋 태그 */}
+      {presetLabel && (
+        <div className="mb-2 flex">
+          <button onClick={() => onClearPreset?.()} className="flex items-center gap-1.5 rounded-full bg-[#1D75F7]/10 px-3 py-1.5 text-[12.5px] font-bold text-[#1D75F7] transition active:scale-95">
+            {presetLabel}
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+          </button>
+        </div>
+      )}
       {/* 박스 — 하단 박스들과 동일하게 평평한 neutral-50(드롭쉐도우 없음). 포커스 시 오로라가 '테두리'로 또렷하게 일렁임 */}
       <div className={`rounded-2xl p-[2px] transition-all duration-500 ${focused ? "ateflo-chip-aurora shadow-[0_0_20px_-3px_rgba(150,160,255,0.5)]" : "bg-transparent"}`}>
         <div className="relative overflow-hidden rounded-[15px] bg-neutral-50">
@@ -41,7 +56,7 @@ export default function StoryComposer({
             onChange={(e) => setStory(e.target.value)}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
-            placeholder={focused ? "" : "블로그에 쓰고 싶은 내용을 간략하게 적어주세요"}
+            placeholder={focused ? "" : (placeholder ?? "블로그에 쓰고 싶은 내용을 간략하게 적어주세요")}
             rows={6}
             maxLength={4000}
             className="ateflo-thin-scroll relative w-full resize-none bg-transparent px-4 py-3.5 pr-14 text-[15px] leading-relaxed outline-none placeholder:text-neutral-400"

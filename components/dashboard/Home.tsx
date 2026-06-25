@@ -83,6 +83,13 @@ export default function Home({
   const [storyTitle, setStoryTitle] = useState(""); // 사장님이 직접 정하는 제목(유지)
   const [storyDraft, setStoryDraft] = useState(""); // 내 이야기 초안 — 글감 보기 갔다 와도 유지(상태 끌어올림)
   const [storyPromo, setStoryPromo] = useState(() => bloggerType === "local"); // 동네 사장님은 '소개' 의도라 홍보용 기본
+  // '우리 가게 글' 빠른 시작 프리셋 — 업종마다 AI 자동 생성(소개·어필 글). 자영업자만.
+  const [presets, setPresets] = useState<{ label: string; emoji: string; hint: string }[]>([]);
+  const [activePreset, setActivePreset] = useState<{ label: string; emoji: string; hint: string } | null>(null);
+  useEffect(() => {
+    if (bloggerType !== "local") return;
+    fetch("/api/biz-presets").then((r) => r.json()).then((d) => { if (Array.isArray(d.presets)) setPresets(d.presets); }).catch(() => {});
+  }, [bloggerType]);
   // 성과 '지역 선점'에서 넘어오면 지역 강화 자동 ON (동네 사장님만)
   useEffect(() => {
     if (regionTrigger && bloggerType === "local") { setShowGlams(true); setRegionMode(true); }
@@ -200,7 +207,23 @@ export default function Home({
       {/* 메인 — 내 이야기 인라인 입력. 글감은 '추천받기' 버튼으로 펼친다(showGlams) */}
       {!showGlams ? (
         <div className="ateflo-page-in mt-6">
-          {onWriteStory && <StoryComposer hasBiz={hasBusinessInfo ?? false} local={bloggerType === "local"} title={storyTitle} onTitleChange={setStoryTitle} story={storyDraft} onStoryChange={setStoryDraft} promo={storyPromo} onPromoChange={setStoryPromo} onSubmit={(s, p, t) => onWriteStory(s, p, t)} />}
+          {bloggerType === "local" && presets.length > 0 && (
+            <div className="mb-3">
+              <p className="mb-2 px-1 text-[12.5px] font-semibold text-neutral-400">우리 가게 글, 이렇게 시작해보세요</p>
+              <div className="flex flex-wrap gap-2">
+                {presets.map((p) => (
+                  <button
+                    key={p.label}
+                    onClick={() => { setActivePreset((cur) => (cur?.label === p.label ? null : p)); setStoryPromo(true); }}
+                    className={`flex items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-bold transition active:scale-95 ${activePreset?.label === p.label ? "bg-[#1D75F7] text-white shadow-sm" : "bg-white text-neutral-600 ring-1 ring-black/[0.05] hover:ring-[#1D75F7]/30"}`}
+                  >
+                    <span>{p.emoji}</span> {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {onWriteStory && <StoryComposer hasBiz={hasBusinessInfo ?? false} local={bloggerType === "local"} title={storyTitle} onTitleChange={setStoryTitle} story={storyDraft} onStoryChange={setStoryDraft} promo={storyPromo} onPromoChange={setStoryPromo} placeholder={activePreset?.hint} presetLabel={activePreset ? `${activePreset.emoji} ${activePreset.label}` : undefined} onClearPreset={() => setActivePreset(null)} onSubmit={(s, p, t) => onWriteStory(s, p, t)} />}
           <button onClick={() => setShowGlams(true)} className="mt-5 flex w-full items-center justify-center gap-1.5 rounded-2xl bg-white py-3.5 text-[13.5px] font-bold text-neutral-600 ring-1 ring-black/[0.04] transition hover:ring-[#1D75F7]/30 active:scale-[0.99]">
             뭘 쓸지 고민된다면? <span className="text-[#1D75F7]">글감 추천받기</span>
             <svg className="text-neutral-300" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
