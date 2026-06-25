@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import TopicCard from "@/components/TopicCard";
 import SeriesSheet from "./SeriesSheet";
+import StoryComposer from "./StoryComposer";
 import type { Comp } from "@/lib/topicScore";
 import type { BloggerType } from "@/lib/bloggerTypes";
 import type { Article } from "./types";
@@ -49,7 +50,7 @@ export default function Home({
   regionTrigger?: number; // 성과 페이지 '지역 선점'에서 넘어오면 지역 강화 자동 ON
   hasBusinessInfo?: boolean; // 업체 주소 등록 여부 — 지역 강화 가능 판단
   onEditBusiness?: () => void; // 업체 등록(온보딩 재진입)
-  onWriteStory?: () => void; // 내 이야기로 글쓰기(메인 기능)
+  onWriteStory?: (story: string, promo: boolean) => void; // 내 이야기로 글쓰기(메인 기능, 인라인)
   profileKey?: string; // 업종:세부 — 글감 캐시 분리(업종 바꾸면 새 글감)
 }) {
   const [topics, setTopics] = useState<Topic[]>([]);
@@ -60,9 +61,10 @@ export default function Home({
   const [cluster, setCluster] = useState<string | null>(null); // '주제 이어가기' 활성 토픽(null=기본 다양)
   const [regionMode, setRegionMode] = useState(false); // '지역 강화'(우리 동네 키워드 실데이터) 모드
   const [seriesOpen, setSeriesOpen] = useState(false); // '주제 시리즈'(연재 코스) 시트
+  const [showGlams, setShowGlams] = useState(false); // 글감 추천 보기(기본은 내 이야기 입력, 버튼으로 글감 펼침)
   // 성과 '지역 선점'에서 넘어오면 지역 강화 자동 ON (동네 사장님만)
   useEffect(() => {
-    if (regionTrigger && bloggerType === "local") setRegionMode(true);
+    if (regionTrigger && bloggerType === "local") { setShowGlams(true); setRegionMode(true); }
   }, [regionTrigger, bloggerType]);
 
   // 사용자가 가장 많이 쓴 주제 토큰(2편 이상) → '주제 이어가기' 제안용
@@ -191,17 +193,24 @@ export default function Home({
         )}
       </div>
 
-      {/* 메인 — 내 이야기로 글쓰기(GPT와 차별: 우리 데이터·네이버 규격·정직·발행 자동) */}
-      {onWriteStory && !cluster && !regionMode && (
-        <button onClick={onWriteStory} className="mt-6 flex w-full items-center gap-3 rounded-2xl bg-[#1D75F7] p-4 text-left text-white shadow-[0_10px_30px_-12px_rgba(29,117,247,0.5)] transition hover:opacity-95 active:scale-[0.99]">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/20"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg></span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-[15px] font-bold">내 이야기로 글쓰기</span>
-            <span className="block text-[12.5px] text-white/85">교재·수업·경험만 적으면 네이버 글로 만들어요</span>
-          </span>
-          <svg className="shrink-0 text-white/70" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
-        </button>
-      )}
+      {/* 메인 — 내 이야기 인라인 입력. 글감은 '추천받기' 버튼으로 펼친다(showGlams) */}
+      {!showGlams ? (
+        <div className="mt-6">
+          <div className="mb-2.5 flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1D75F7]/10 text-[#1D75F7]"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg></span>
+            <p className="text-[15px] font-bold text-neutral-900">내 이야기로 글쓰기</p>
+          </div>
+          {onWriteStory && <StoryComposer hasBiz={hasBusinessInfo ?? false} local={bloggerType === "local"} onSubmit={(s, p) => onWriteStory(s, p)} />}
+          <button onClick={() => setShowGlams(true)} className="mt-5 flex w-full items-center justify-center gap-1.5 rounded-2xl bg-white py-3.5 text-[13.5px] font-bold text-neutral-600 ring-1 ring-black/[0.04] transition hover:ring-[#1D75F7]/30 active:scale-[0.99]">
+            뭘 쓸지 고민된다면? <span className="text-[#1D75F7]">글감 추천받기</span>
+            <svg className="text-neutral-300" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+          </button>
+        </div>
+      ) : (
+        <>
+          {!cluster && !regionMode && (
+            <button onClick={() => setShowGlams(false)} className="mt-6 -ml-1 flex items-center gap-1 text-[13px] font-medium text-neutral-400 transition hover:text-neutral-700"><span className="text-base leading-none">←</span> 내 이야기로</button>
+          )}
 
       {/* 추천 글감(보조) — 글감이 떠오르지 않을 때. 누르면 그 글 쓰기 */}
       {cluster ? (
@@ -314,6 +323,8 @@ export default function Home({
       )}
 
       {seriesOpen && <SeriesSheet articles={articles} onWrite={onWriteKeyword} onClose={() => setSeriesOpen(false)} />}
+        </>
+      )}
       </div>
       </section>
 

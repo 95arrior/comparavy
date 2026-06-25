@@ -11,7 +11,6 @@ import Segmented from "./Segmented";
 import CenterToast from "./CenterToast";
 import WritingView, { type GenParams } from "./WritingView";
 import WriteTypeSheet from "./WriteTypeSheet";
-import StorySheet from "./StorySheet";
 import ProfileSettings from "./ProfileSettings";
 import WordPressPanel from "./WordPressPanel";
 import KeywordFinder from "./KeywordFinder";
@@ -68,7 +67,6 @@ export default function DashboardClient(props: DashboardProps) {
   const [wpSiteUrl, setWpSiteUrl] = useState<string | null>(props.wpSiteUrl);
   const [selected, setSelected] = useState<Article | null>(null);
   const [genParams, setGenParams] = useState<GenParams | null>(null);
-  const [storyOpen, setStoryOpen] = useState(false); // '내 이야기로 글쓰기' 시트
   // 글 생성 직전 '정보성/홍보용' 선택 대기 (선택하면 genParams로 생성 시작)
   const [pendingWrite, setPendingWrite] = useState<{ keyword: string; title: string } | null>(null);
   const [subCanceled, setSubCanceled] = useState(props.subStatus === "canceled");
@@ -894,28 +892,6 @@ export default function DashboardClient(props: DashboardProps) {
           />
         )}
 
-        {/* 내 이야기로 글쓰기 — 사장님 이야기를 우리 품질로 재구성(메인 기능) */}
-        {storyOpen && blogProfile && (
-          <StorySheet
-            hasBiz={Boolean(blogProfile.biz_name)}
-            local={bloggerType(blogProfile.vertical) === "local"}
-            onClose={() => setStoryOpen(false)}
-            onSubmit={(storyText, promo) => {
-              setStoryOpen(false);
-              setSelected(null);
-              setGenParams({
-                keyword: "", // 주제는 라우트가 이야기에서 AI로 핏하게 유도
-                angle: "",
-                type: toEngineType(blogProfile.article_type, blogProfile.vertical),
-                tone: blogProfile.tone,
-                promo,
-                channel: bloggerType(blogProfile.vertical) === "local" ? "naver" : "wp",
-                userStory: storyText,
-              });
-            }}
-          />
-        )}
-
         {/* ── 연구소 (사이드바 '연구소') : 블로그 없으면 온보딩, 있으면 내부 탭으로 도구 전환 ── */}
         {/* 프로필 로딩 중 — 온보딩/메인 깜빡임 방지 가드 (로딩 끝나기 전엔 둘 다 안 보여줌) */}
         {!page && !selected && !genParams && tab === "lab" && !profileLoaded && (
@@ -959,7 +935,19 @@ export default function DashboardClient(props: DashboardProps) {
                 regionTrigger={regionTrigger}
                 hasBusinessInfo={Boolean(blogProfile.biz_address)}
                 onEditBusiness={() => setPage("profile")}
-                onWriteStory={() => setStoryOpen(true)}
+                onWriteStory={(storyText, promo) => {
+                  if (!blogProfile) return;
+                  setSelected(null);
+                  setGenParams({
+                    keyword: "", // 주제는 라우트가 이야기에서 AI로 핏하게 유도
+                    angle: "",
+                    type: toEngineType(blogProfile.article_type, blogProfile.vertical),
+                    tone: blogProfile.tone,
+                    promo,
+                    channel: bloggerType(blogProfile.vertical) === "local" ? "naver" : "wp",
+                    userStory: storyText,
+                  });
+                }}
                 profileKey={`${blogProfile.vertical}:${blogProfile.sub_category ?? ""}`}
               />
             )}
