@@ -3,8 +3,8 @@ import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/sup
 import { keywordsToTitles } from "@/lib/topicTitles";
 import { normalizeKeyword } from "@/lib/diversity";
 import { audienceOf, AUDIENCE_ALL } from "@/lib/audience";
-import { isUnsafeKeyword } from "@/lib/keywordSafety";
-import { regionLevel, extractRegions, isLocalBusiness, buildLocalSeeds } from "@/lib/region";
+import { isUnsafeKeyword, mentionsForeignRegion } from "@/lib/keywordSafety";
+import { regionLevel, isLocalBusiness, buildLocalSeeds, addressRegionTiers } from "@/lib/region";
 import { bloggerType, type BloggerType } from "@/lib/bloggerTypes";
 import { compFromLabel, compFromBlogTotal, filledStarsFromData, type Comp } from "@/lib/topicScore";
 import { fetchBlogTotal } from "@/lib/naverBlogSearch";
@@ -197,7 +197,8 @@ export async function GET(req: Request) {
   // 지역형 사업장이면 동네+업종 글감을 앞에. 본인이 쓴 건 제외.
   const level = regionLevel(vertical, sub ?? null);
   const type = bloggerType(vertical); // local/online/hobby → 카피 톤
-  let regions = extractRegions(profile?.biz_address as string | null, level);
+  // 지역 계층(좁은→넓은) — 진행적 확장·타지역 필터의 기준. AI 별칭(오송)은 아래서 맨 앞에 보강.
+  let regions = addressRegionTiers(profile?.biz_address as string | null, level);
   // 생활권 별칭 AI 보완 — 주소 파싱이 못 잡는 봉산리→오송 등. 지역형(non-wide)일 때만.
   if (level !== "wide" && profile?.biz_address && !cluster) {
     const aud = audActive ? audSel.filter((a) => a !== AUDIENCE_ALL).join("·") : undefined;
@@ -216,7 +217,8 @@ export async function GET(req: Request) {
 
   if (regionMode) {
     // ── 지역 강화: 지역 키워드 '실데이터'(네이버 검색량/경쟁) 수집 — '오송 영어학원' 등 ──
-    const baseSeeds = buildLocalSeeds(regions, vertical, sub ?? null).slice(0, 5);
+    const audSeed = audActive ? audSel.filter((a) => a !== AUDIENCE_ALL) : [];
+    const baseSeeds = buildLocalSeeds(regions, vertical, sub ?? null, audSeed).slice(0, 6);
     // 네이버 자동완성 — 우리 동네 사람들이 실제 치는 검색어를 시드로(진짜 동네 키워드). 시드 넉넉히 → 필터 후에도 3개 채움
     const acSeeds = baseSeeds.length
       ? [...new Set((await Promise.all(baseSeeds.slice(0, 2).map((s) => fetchNaverAutocomplete(s)))).flat())].slice(0, 4)
@@ -228,13 +230,19 @@ export async function GET(req: Request) {
         const kws = await collectPoolKeywords(seed);
         for (const k of kws) {
           if (collected.has(k.keyword) || usedSet.has(normalizeKeyword(k.keyword)) || isUnsafeKeyword(k.keyword)) continue;
+          if (mentionsForeignRegion(k.keyword, regions)) continue; // ★타지역(천안 등) 제거 — 우리 지역/일반 분야만
           collected.set(k.keyword, { keyword: k.keyword, monthly_searches: Number(k.monthlySearches) || 0, competition: k.compIdx ?? null, audience: null, blog_total: null });
         }
       } catch { /* 수집 실패 시드는 건너뜀 */ }
     }
-    const hasRegion = (kw: string) => regions.some((r) => kw.includes(r));
+    // 진행적 확장: 우리 지역 계층(오송→흥덕→청주) 순으로 tier 부여 → 좁은(tier 낮은) 것 우선 + 검색량.
+    // 지역 없는 일반 분야 키워드(유아영어 공부법 등)는 마지막 tier로 → 3개 미달 시 채움.
+    const regionTier = (kw: string) => {
+      const i = regions.findIndex((r) => kw.includes(r));
+      return i < 0 ? regions.length : i;
+    };
     candidates = [...collected.values()]
-      .sort((a, b) => (hasRegion(b.keyword) ? 1 : 0) - (hasRegion(a.keyword) ? 1 : 0) || (b.monthly_searches ?? 0) - (a.monthly_searches ?? 0))
+      .sort((a, b) => regionTier(a.keyword) - regionTier(b.keyword) || (b.monthly_searches ?? 0) - (a.monthly_searches ?? 0))
       .slice(0, want);
   } else {
     // ── 일반 후보(풀 기반) ── 노이즈·중복 제외로 빠질 것 대비해 여유분(want)까지.

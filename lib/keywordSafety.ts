@@ -34,6 +34,25 @@ function isRegionToken(t: string): boolean {
   return /(시|군|구|동|읍|면|리|로|길|역)$/.test(t); // 평촌동·강남구·강남역 등
 }
 
+/**
+ * 키워드가 '우리 지역이 아닌 다른 지역'을 가리키는지(우리동네 강화에서 타지역 제거용).
+ * - 우리 지역(ourRegions) 토큰을 포함하면 false(우리 것).
+ * - 알려진 다른 도시/구(천안·세종 등)나 시/군 접미사를 포함하면 true(타지역) → 제거.
+ * - 지역 토큰이 아예 없으면 false(일반 분야 키워드 → 허용).
+ */
+export function mentionsForeignRegion(keyword: string, ourRegions: string[]): boolean {
+  const ours = ourRegions.filter(Boolean);
+  const toks = keyword.split(/\s+/);
+  for (const t of toks) {
+    const base = t.replace(/(특별시|광역시|시|군|구|동|읍|면|리)$/, "");
+    if (base.length < 2) continue;
+    if (ours.some((r) => base === r || t === r || base.includes(r) || r.includes(base))) continue; // 우리 지역
+    if (REGIONS.has(base) || REGIONS.has(t)) return true; // 알려진 타 도시/구(천안·세종 등)
+    if (/(시|군)$/.test(t)) return true; // ○○시/군인데 우리 게 아니면 타지역
+  }
+  return false;
+}
+
 // 접미사 앞 '일반 수식어'(고유명사 아님 → 허용): 진료/과목/대상/일반 형용사
 const GENERIC_BEFORE = new Set([
   // 진료·시술·증상

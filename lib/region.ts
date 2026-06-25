@@ -67,6 +67,27 @@ export function isLocalBusiness(level: RegionLevel, regions: string[]): boolean 
   return level !== "wide" && regions.length > 0;
 }
 
+/**
+ * 주소 → 지역 계층(좁은→넓은). 진행적 확장(오송→흥덕→청주)·타지역 판별에 사용.
+ * level=dong(이동 어려움: 유아·초등 학원 등) → [읍/동, 구, 시]
+ * level=gu(이동 가능: 성형·인테리어 등)   → [구, 시]  (읍/동은 너무 좁아 제외)
+ * 예: "청주시 흥덕구 봉산리" + dong → ["봉산", "흥덕", "청주"] (오송은 AI 별칭으로 별도 보강)
+ */
+export function addressRegionTiers(address: string | null | undefined, level: RegionLevel = "dong"): string[] {
+  if (!address || level === "wide") return [];
+  const parts = address.trim().split(/\s+/);
+  const out: string[] = [];
+  if (level === "dong") {
+    const emr = parts.find((p) => /^[가-힣]{2,8}(읍|면|리)$/.test(p)); // 봉산리·오송읍
+    if (emr) out.push(emr.replace(/(읍|면|리)$/, ""));
+  }
+  const a = parseAddress(address);
+  if (level === "dong" && a.dong) out.push(a.dong);
+  if (a.gu) out.push(a.gu); // 구
+  if (a.si) out.push(a.si); // 시 — 진행적 확장의 가장 넓은 단계
+  return [...new Set(out)];
+}
+
 // sub가 없을 때 업종 기반 일반 표현
 const VERTICAL_PHRASE: Record<string, string> = { medical: "병원", academy: "학원" };
 
@@ -79,9 +100,22 @@ function localServicePhrase(vertical: string, sub: string | null): string | null
   return VERTICAL_PHRASE[vertical] ?? null;
 }
 
-/** 지역 글감 시드 생성: "역삼동 영어학원", "강남 성형외과" … */
-export function buildLocalSeeds(regions: string[], vertical: string, sub: string | null): string[] {
+/**
+ * 지역 글감 시드 생성(좁은→넓은 순): "오송 영어학원", "오송 초등영어", "흥덕 영어학원" …
+ * regions는 좁은→넓은 순으로 들어온다고 가정 → 시드도 그 순서(진행적 확장).
+ * academy면 대상(유아/초등 등)을 붙인 좁은 검색어도 추가해 동네 데이터를 더 잘 잡는다.
+ */
+export function buildLocalSeeds(regions: string[], vertical: string, sub: string | null, audiences?: string[]): string[] {
   const phrase = localServicePhrase(vertical, sub);
   if (!phrase) return [];
-  return [...new Set(regions.map((r) => `${r} ${phrase}`))];
+  const auds = (audiences ?? []).filter((a) => a && a !== "전체" && /^[가-힣]{2,4}$/.test(a));
+  const seeds: string[] = [];
+  for (const r of regions) {
+    seeds.push(`${r} ${phrase}`);
+    if (vertical === "academy" && sub) {
+      for (const a of auds) seeds.push(`${r} ${a}${sub}`); // "오송 초등영어"
+      if (!auds.length) seeds.push(`${r} ${sub}`); // "오송 영어"
+    }
+  }
+  return [...new Set(seeds)];
 }
