@@ -72,13 +72,13 @@ export default function ArticleList({
   async function doUnpublish() {
     if (!confirmUnpub || unpubBusy) return;
     setUnpubBusy(true);
+    const isNaver = confirmUnpub.channel === "naver";
     try {
-      const res = await fetch("/api/wordpress/unpublish", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ articleId: confirmUnpub.id }),
-      });
-      const data = await res.json();
+      // 네이버는 우리가 직접 못 내림 → 우리 상태만 '초안'으로(네이버 글은 사용자가 네이버에서 내림). 워드프레스는 실제 비공개 처리.
+      const res = isNaver
+        ? await fetch(`/api/articles/${confirmUnpub.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "draft" }) })
+        : await fetch("/api/wordpress/unpublish", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ articleId: confirmUnpub.id }) });
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
         onUpdated?.({ ...confirmUnpub, status: "draft" });
         setConfirmUnpub(null);
@@ -229,9 +229,11 @@ export default function ArticleList({
       {confirmUnpub && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30 px-6" onClick={() => !unpubBusy && setConfirmUnpub(null)}>
           <div className="ateflo-fade-in w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <p className="text-base font-semibold">정말로 글을 내리시겠어요?</p>
+            <p className="text-base font-semibold">{confirmUnpub.channel === "naver" ? "‘초안’으로 되돌릴까요?" : "정말로 글을 내리시겠어요?"}</p>
             <p className="mt-2 text-sm leading-relaxed text-neutral-500">
-              워드프레스에서 비공개로 바뀌고 ‘초안’이 돼요. 글은 지워지지 않아서 언제든 다시 발행할 수 있어요.
+              {confirmUnpub.channel === "naver"
+                ? "네이버 글은 우리가 직접 못 내려요. 여기선 ‘초안’ 표시만 바뀌어요 — 실제로 내리려면 네이버 블로그에서 직접 삭제·비공개로 바꿔주세요."
+                : "워드프레스에서 비공개로 바뀌고 ‘초안’이 돼요. 글은 지워지지 않아서 언제든 다시 발행할 수 있어요."}
             </p>
             <p className="mt-3 truncate text-sm font-medium text-neutral-800">“{confirmUnpub.title}”</p>
             <div className="mt-5 flex gap-2">
