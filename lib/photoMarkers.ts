@@ -17,6 +17,12 @@ export function markToNaverBold(html: string): string {
   return html.replace(/<mark>([\s\S]*?)<\/mark>/g, '<b style="background-color:#fff3a8;">$1</b>');
 }
 
+/** 네이버 복붙용 — 문단·리스트·인용구 뒤에 '빈 줄'을 넣어 편집기처럼 시원하게 띄운다.
+ *  (네이버는 붙여넣을 때 문단 간격을 좁히므로, 실제 빈 단락을 넣어줘야 블로거들이 Enter 두 번 친 것처럼 보인다.) */
+export function addNaverSpacing(html: string): string {
+  return html.replace(/<\/(p|ul|ol|blockquote)>/gi, "</$1>\n<p>&nbsp;</p>");
+}
+
 /** 미리보기 표시용 — 점선 박스 플레이스홀더. */
 export function photoMarkerToSlot(html: string): string {
   return html.replace(PHOTO_RE, (_m, d) => `<p class="ateflo-photo-slot">📷 여기에 '${escapeHtml(String(d).trim())}' 사진을 넣어보세요</p>`);

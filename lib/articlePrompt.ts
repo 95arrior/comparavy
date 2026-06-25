@@ -275,8 +275,8 @@ export function buildUserPrompt(input: ArticlePromptInput): string {
   let targetMin: number;
   let targetMax: number;
   if (input.channel === "naver") {
-    targetMin = 1500;
-    targetMax = 2400;
+    targetMin = 1400;
+    targetMax = 2100; // 글자수보다 '잘 읽힘' 우선 — 군더더기 빼고 핵심만(벽돌 방지)
   } else {
     targetMax = Math.min(input.maxWords, 3500);
     targetMin = Math.round(targetMax * 0.7);

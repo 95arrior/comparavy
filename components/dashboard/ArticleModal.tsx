@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect, useRef, useMemo } from "react";
 import ArticleEditor, { type ArticleEditorHandle } from "./ArticleEditor";
-import { photoMarkerToGuide, photoMarkerToSlot, photoSlots, markToNaverBold } from "@/lib/photoMarkers";
+import { photoMarkerToGuide, photoMarkerToSlot, photoSlots, markToNaverBold, addNaverSpacing } from "@/lib/photoMarkers";
 import SectionSuggest from "./SectionSuggest";
 import CenterToast from "./CenterToast";
 import ScheduleCalendar from "./ScheduleCalendar";
@@ -248,7 +248,7 @@ export default function ArticleModal({
   // 본문을 클립보드로 복사 (서식 유지 HTML + 평문 동시) — 무료 사용자가 블로그에 붙여넣어 쓰는 핵심 기능
   async function copyBody() {
     try {
-      const html = `<h1>${title}</h1>\n${photoMarkerToGuide(markToNaverBold(bodyHtml))}`;
+      const html = `<h1>${title}</h1>\n${addNaverSpacing(photoMarkerToGuide(markToNaverBold(bodyHtml)))}`;
       const tmp = document.createElement("div");
       tmp.innerHTML = html;
       const text = `${title}\n\n${tmp.innerText}`;
