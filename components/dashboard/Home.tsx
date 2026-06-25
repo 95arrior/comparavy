@@ -199,10 +199,6 @@ export default function Home({
       {/* 메인 — 내 이야기 인라인 입력. 글감은 '추천받기' 버튼으로 펼친다(showGlams) */}
       {!showGlams ? (
         <div className="ateflo-page-in mt-6">
-          <div className="mb-2.5 flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1D75F7]/10 text-[#1D75F7]"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg></span>
-            <p className="text-[15px] font-bold text-neutral-900">내 이야기로 글쓰기</p>
-          </div>
           {onWriteStory && <StoryComposer hasBiz={hasBusinessInfo ?? false} local={bloggerType === "local"} title={storyTitle} onTitleChange={setStoryTitle} story={storyDraft} onStoryChange={setStoryDraft} promo={storyPromo} onPromoChange={setStoryPromo} onSubmit={(s, p, t) => onWriteStory(s, p, t)} />}
           <button onClick={() => setShowGlams(true)} className="mt-5 flex w-full items-center justify-center gap-1.5 rounded-2xl bg-white py-3.5 text-[13.5px] font-bold text-neutral-600 ring-1 ring-black/[0.04] transition hover:ring-[#1D75F7]/30 active:scale-[0.99]">
             뭘 쓸지 고민된다면? <span className="text-[#1D75F7]">글감 추천받기</span>
