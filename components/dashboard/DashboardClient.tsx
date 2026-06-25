@@ -67,6 +67,15 @@ export default function DashboardClient(props: DashboardProps) {
   const [wpSiteUrl, setWpSiteUrl] = useState<string | null>(props.wpSiteUrl);
   const [selected, setSelected] = useState<Article | null>(null);
   const [genParams, setGenParams] = useState<GenParams | null>(null);
+  const [naverBlogId, setNaverBlogId] = useState(""); // 네이버 블로그 아이디(글쓰기 직행용) — 내정보에서 수정
+  useEffect(() => { try { setNaverBlogId(localStorage.getItem("ateflo_naver_blogid") || ""); } catch { /* ignore */ } }, []);
+  function editNaverBlogId() {
+    const input = window.prompt("내 네이버 블로그 아이디\n(예: blog.naver.com/myblog → myblog)", naverBlogId);
+    if (input == null) return;
+    const id = input.trim().replace(/^https?:\/\//, "").replace(/^m\./, "").replace(/^blog\.naver\.com\//, "").replace(/[/?#].*$/, "").trim();
+    try { if (id) localStorage.setItem("ateflo_naver_blogid", id); else localStorage.removeItem("ateflo_naver_blogid"); } catch { /* ignore */ }
+    setNaverBlogId(id);
+  }
   // 글 생성 직전 '정보성/홍보용' 선택 대기 (선택하면 genParams로 생성 시작)
   const [pendingWrite, setPendingWrite] = useState<{ keyword: string; title: string } | null>(null);
   const [subCanceled, setSubCanceled] = useState(props.subStatus === "canceled");
@@ -1118,6 +1127,14 @@ export default function DashboardClient(props: DashboardProps) {
                 <span className="text-[13px] text-neutral-400">{wpSiteUrl ? "연결됨" : "연결 안 됨"}</span>
                 <svg className="text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
               </button>
+              )}
+              {isLocal && (
+                <button onClick={editNaverBlogId} className="flex w-full items-center gap-3 px-5 py-4 text-left transition active:bg-neutral-50">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#03C75A]/10 text-[#03C75A] text-[14px] font-black">N</span>
+                  <span className="flex-1 text-[15px] font-medium text-neutral-800">네이버 블로그 주소</span>
+                  <span className="max-w-[40%] truncate text-[13px] text-neutral-400">{naverBlogId || "설정 안 됨"}</span>
+                  <svg className="shrink-0 text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+                </button>
               )}
               {blogProfile && (
                 <button onClick={() => setPage("profile")} className="flex w-full items-center gap-3 px-5 py-4 text-left transition active:bg-neutral-50">

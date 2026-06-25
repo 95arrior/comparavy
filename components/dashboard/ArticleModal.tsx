@@ -245,13 +245,13 @@ export default function ArticleModal({
   }
   const [copied, setCopied] = useState(false);
 
-  // 본문을 클립보드로 복사 (서식 유지 HTML + 평문 동시) — 무료 사용자가 블로그에 붙여넣어 쓰는 핵심 기능
+  // 본문만 복사 (제목 제외 — 네이버는 제목칸이 따로라 본문에 제목이 들어가면 안 됨). 서식 유지 HTML + 평문 동시.
   async function copyBody() {
     try {
-      const html = `<h1>${title}</h1>\n${addNaverSpacing(photoMarkerToGuide(markToNaverBold(bodyHtml)))}`;
+      const html = addNaverSpacing(photoMarkerToGuide(markToNaverBold(bodyHtml)));
       const tmp = document.createElement("div");
       tmp.innerHTML = html;
-      const text = `${title}\n\n${tmp.innerText}`;
+      const text = tmp.innerText;
       if (navigator.clipboard && typeof window !== "undefined" && "ClipboardItem" in window) {
         await navigator.clipboard.write([
           new ClipboardItem({
@@ -267,6 +267,16 @@ export default function ArticleModal({
     } catch {
       // 무시
     }
+  }
+
+  // 제목만 복사 — 네이버 제목칸에 붙여넣기용
+  const [titleCopied, setTitleCopied] = useState(false);
+  async function copyTitle() {
+    try {
+      await navigator.clipboard.writeText(title);
+      setTitleCopied(true);
+      setTimeout(() => setTitleCopied(false), 1600);
+    } catch { /* 무시 */ }
   }
 
   // 네이버 '글쓰기' 화면으로 바로 이동 — 블로그 아이디는 1회만 입력받아 저장(blog.naver.com/{id}/postwrite)
@@ -861,9 +871,9 @@ export default function ArticleModal({
               <p className="text-[17px] font-bold text-neutral-900">네이버 블로그에 올리기</p>
               <p className="mt-1 text-[13px] leading-relaxed text-neutral-500">네이버는 자동 발행이 안 돼서 복사해서 붙여넣어요. 1분이면 끝나요.</p>
               <ol className="mt-4 space-y-2 text-[13.5px] leading-relaxed text-neutral-700">
-                <li><b className="text-[#03C75A]">1.</b> 아래 <b>본문 복사</b>를 눌러요</li>
-                <li><b className="text-[#03C75A]">2.</b> <b>네이버 글쓰기</b>를 열어요</li>
-                <li><b className="text-[#03C75A]">3.</b> 붙여넣으면 <b>소제목·형광펜·인용구·요약 박스</b>까지 따라와요</li>
+                <li><b className="text-[#03C75A]">1.</b> <b>네이버 글쓰기</b>를 열어요</li>
+                <li><b className="text-[#03C75A]">2.</b> <b>제목 복사</b> → 네이버 <b>제목칸</b>에 붙여넣기</li>
+                <li><b className="text-[#03C75A]">3.</b> <b>본문 복사</b> → <b>본문칸</b>에 붙여넣기(소제목·형광펜·인용구 따라옴)</li>
                 <li><b className="text-[#03C75A]">4.</b> <b>📷 사진 자리</b>마다 사진을 올리고, 그 안내 줄은 지워요</li>
                 <li><b className="text-[#03C75A]">5.</b> 맨 끝 해시태그 확인 후 <b>발행!</b></li>
               </ol>
@@ -880,7 +890,10 @@ export default function ArticleModal({
                 <p>· 글 끝에 <b>네이버 지도(내 가게)</b>를 첨부하면 지역 노출에 유리해요</p>
                 <p>· 발행할 때 <b>태그</b>도 본문 해시태그처럼 넣어주세요</p>
               </div>
-              <button onClick={copyBody} className="mt-4 w-full rounded-xl bg-[#03C75A] py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">{copied ? "복사됨 ✓" : "본문 복사"}</button>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <button onClick={copyTitle} className="rounded-xl bg-[#03C75A]/10 py-3.5 text-[14px] font-bold text-[#03C75A] transition hover:bg-[#03C75A]/15 active:scale-[0.99]">{titleCopied ? "복사됨 ✓" : "① 제목 복사"}</button>
+                <button onClick={copyBody} className="rounded-xl bg-[#03C75A] py-3.5 text-[14px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">{copied ? "복사됨 ✓" : "② 본문 복사"}</button>
+              </div>
               <button onClick={openNaverWrite} className="mt-2 block w-full rounded-xl bg-neutral-100 py-3 text-center text-[14px] font-bold text-neutral-700 transition hover:bg-neutral-200">네이버 글쓰기 열기</button>
               <button onClick={() => setNaverOpen(false)} className="mt-2 w-full py-1.5 text-center text-sm font-medium text-neutral-400 transition hover:text-neutral-700">닫기</button>
             </div>
