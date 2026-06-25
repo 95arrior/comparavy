@@ -39,21 +39,15 @@ export default function StoryComposer({
       {/* 박스 — 하단 박스들과 동일하게 평평한 neutral-50(드롭쉐도우 없음). 포커스 시 오로라가 '테두리'로 또렷하게 일렁임 */}
       <div className={`rounded-2xl p-[2px] transition-all duration-500 ${focused ? "ateflo-chip-aurora shadow-[0_0_20px_-3px_rgba(150,160,255,0.5)]" : "bg-transparent"}`}>
         <div className="relative overflow-hidden rounded-[15px] bg-neutral-50">
-          {/* 접혔을 때(검색창) 앞의 ✍️ 아이콘 */}
-          {!expanded && (
-            <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
-            </span>
-          )}
           <textarea
             value={story}
             onChange={(e) => setStory(e.target.value)}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
-            placeholder={focused ? "" : collapsible && !expanded ? "내가 직접 쓰기 — 블로그에 쓰고 싶은 내용을 적어보세요" : "블로그에 쓰고 싶은 내용을 간략하게 적어주세요"}
+            placeholder={focused ? "" : "블로그에 쓰고 싶은 내용을 간략하게 적어주세요"}
             rows={expanded ? 6 : 1}
             maxLength={4000}
-            className={`ateflo-thin-scroll relative w-full resize-none bg-transparent py-3.5 pr-14 text-[15px] leading-relaxed outline-none transition-all duration-300 placeholder:text-neutral-400 ${expanded ? "px-4" : "pl-11"}`}
+            className="ateflo-thin-scroll relative w-full resize-none bg-transparent px-4 py-3.5 pr-14 text-[15px] leading-relaxed outline-none transition-all duration-300 placeholder:text-neutral-400"
           />
           {/* 전송 — 비었을 땐 안 보이고, 충분히 적으면(ready) 파란 ↑가 자연스럽게 나타남 */}
           <button
