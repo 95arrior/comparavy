@@ -62,6 +62,7 @@ export async function POST(request: Request) {
     tone?: string;
     promo?: boolean; // true=홍보용(업장 연결) | false=정보성(순수 정보). 기본 true(기존 동작)
     channel?: "wp" | "naver"; // 발행 채널 — naver면 네이버 블로그 규격
+    userStory?: string; // '내 이야기' 재료
   };
   try {
     body = await request.json();
