@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect, useRef, useMemo } from "react";
 import ArticleEditor, { type ArticleEditorHandle } from "./ArticleEditor";
-import { photoMarkerToGuide, photoMarkerToSlot, photoSlots } from "@/lib/photoMarkers";
+import { photoMarkerToGuide, photoMarkerToSlot, photoSlots, markToNaverBold } from "@/lib/photoMarkers";
 import SectionSuggest from "./SectionSuggest";
 import CenterToast from "./CenterToast";
 import ScheduleCalendar from "./ScheduleCalendar";
@@ -248,7 +248,7 @@ export default function ArticleModal({
   // 본문을 클립보드로 복사 (서식 유지 HTML + 평문 동시) — 무료 사용자가 블로그에 붙여넣어 쓰는 핵심 기능
   async function copyBody() {
     try {
-      const html = `<h1>${title}</h1>\n${photoMarkerToGuide(bodyHtml)}`;
+      const html = `<h1>${title}</h1>\n${photoMarkerToGuide(markToNaverBold(bodyHtml))}`;
       const tmp = document.createElement("div");
       tmp.innerHTML = html;
       const text = `${title}\n\n${tmp.innerText}`;
@@ -859,7 +859,8 @@ export default function ArticleModal({
               )}
               <div className="mt-4 rounded-xl bg-[#03C75A]/[0.06] p-3.5 text-[12.5px] leading-relaxed text-neutral-600">
                 <p className="font-bold text-[#03C75A]">노출 잘 되는 꿀팁</p>
-                <p className="mt-1">· <b>첫 사진</b>이 검색 썸네일이에요 — 제일 잘 나온 걸로</p>
+                <p className="mt-1">· <b>굵게 표시된 핵심 문장</b>을 드래그해 <b>형광펜</b>을 칠하면 상위 블로거처럼 눈에 띄어요</p>
+                <p>· <b>첫 사진</b>이 검색 썸네일이에요 — 제일 잘 나온 걸로</p>
                 <p>· 글 끝에 <b>네이버 지도(내 가게)</b>를 첨부하면 지역 노출에 유리해요</p>
                 <p>· 발행할 때 <b>태그</b>도 본문 해시태그처럼 넣어주세요</p>
               </div>

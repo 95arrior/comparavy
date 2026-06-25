@@ -12,6 +12,11 @@ export function photoMarkerToGuide(html: string): string {
   return html.replace(PHOTO_RE, (_m, d) => `<p>📷 여기에 '${escapeHtml(String(d).trim())}' 사진을 올려주세요</p>`);
 }
 
+/** 네이버 복붙용 — 형광펜(<mark>)이 붙여넣기로 사라지므로 '굵게 + 배경색 inline'으로 변환(굵게는 100% 전달, 배경색은 살면 형광펜처럼). */
+export function markToNaverBold(html: string): string {
+  return html.replace(/<mark>([\s\S]*?)<\/mark>/g, '<b style="background-color:#fff3a8;">$1</b>');
+}
+
 /** 미리보기 표시용 — 점선 박스 플레이스홀더. */
 export function photoMarkerToSlot(html: string): string {
   return html.replace(PHOTO_RE, (_m, d) => `<p class="ateflo-photo-slot">📷 여기에 '${escapeHtml(String(d).trim())}' 사진을 넣어보세요</p>`);
