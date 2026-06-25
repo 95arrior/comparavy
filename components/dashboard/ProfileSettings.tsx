@@ -47,7 +47,7 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const inputCls = "w-full rounded-xl border border-neutral-200 px-4 py-3 text-sm outline-none transition focus:border-[#1D75F7] focus:ring-2 focus:ring-[#1D75F7]/20";
+  const inputCls = "w-full rounded-xl bg-neutral-100 px-4 py-3 text-sm outline-none transition placeholder:text-neutral-400 focus:bg-white focus:ring-2 focus:ring-[#1D75F7]/30";
 
   // 업종 바꾸면 세부가 새 업종 목록에 없을 때 초기화(직접입력 값 포함)
   function chooseVertical(v: string) {
@@ -96,10 +96,10 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
   }
 
   return (
-    <div className="mt-6 space-y-6">
+    <div className="mt-6 space-y-3.5">
       {/* 업종(local) / 유형(online·hobby — 읽기전용) */}
-      <div>
-        <label className="text-sm font-bold tracking-tight">{isLocal ? "업종" : "유형"}</label>
+      <div className="rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
+        <label className="text-[15px] font-bold tracking-tight text-neutral-900">{isLocal ? "업종" : "유형"}</label>
         <p className="mt-1 text-xs text-neutral-500">{isLocal ? "업종에 맞춰 글의 톤·구조가 자동으로 정해져요." : "유형 변경은 새로 시작에서 가능해요. 여기선 카테고리만 바꿔요."}</p>
         {isLocal ? (
           <div className="mt-3 grid grid-cols-2 gap-2">
@@ -108,30 +108,30 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
                 key={x.v}
                 type="button"
                 onClick={() => chooseVertical(x.v)}
-                className={`rounded-xl border px-3 py-3 text-sm font-medium transition ${vertical === x.v ? "border-[#1D75F7] bg-[#1D75F7]/5 text-[#2f7fe6]" : "border-neutral-200 text-neutral-600 hover:border-neutral-300"}`}
+                className={`rounded-xl px-3 py-3 text-sm font-bold transition ${vertical === x.v ? "bg-[#1D75F7] text-white" : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"}`}
               >
                 {x.label}
               </button>
             ))}
           </div>
         ) : (
-          <div className="mt-3 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3 text-sm font-medium text-neutral-700">
+          <div className="mt-3 rounded-xl bg-neutral-100 px-4 py-3 text-sm font-bold text-neutral-700">
             {bType === "online" ? "수익형 블로거" : "취미·기록"}
           </div>
         )}
       </div>
 
       {/* 세부 분류 */}
-      <div>
-        <label className="text-sm font-bold tracking-tight">세부 분류</label>
-        <p className="mt-1 text-xs text-neutral-500">분야에 맞는 키워드를 추천하는 데 써요.</p>
+      <div className="rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
+        <label className="text-[15px] font-bold tracking-tight text-neutral-900">세부 분류</label>
+        <p className="mt-1 text-xs text-neutral-400">분야에 맞는 키워드를 추천하는 데 써요</p>
         <div className="mt-3 flex flex-wrap gap-2">
           {subOptions.map((s) => (
             <button
               key={s}
               type="button"
               onClick={() => setSub(s)}
-              className={`rounded-xl border px-3 py-2 text-sm font-medium transition ${sub === s ? "border-[#1D75F7] bg-[#1D75F7]/5 text-[#2f7fe6]" : "border-neutral-200 text-neutral-600 hover:border-neutral-300"}`}
+              className={`rounded-xl px-3 py-2 text-sm font-bold transition ${sub === s ? "bg-[#1D75F7] text-white" : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"}`}
             >
               {s}
             </button>
@@ -147,20 +147,20 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
       </div>
 
       {/* 블로그 이름 */}
-      <div>
-        <label className="text-sm font-bold tracking-tight">블로그 이름</label>
+      <div className="rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
+        <label className="text-[15px] font-bold tracking-tight text-neutral-900">블로그 이름</label>
         <input value={blogName} onChange={(e) => setBlogName(e.target.value)} placeholder="예: 우리동네치과 건강이야기" maxLength={60} className={`mt-3 ${inputCls}`} />
       </div>
 
       {/* 대상(누구를 가르치나) — academy만 */}
       {vertical === "academy" && (
-        <div>
-          <label className="text-sm font-bold tracking-tight">누구를 주로 가르치세요? <span className="text-xs font-normal text-neutral-400">(여러 개 선택 가능)</span></label>
-          <p className="mt-1 text-xs text-neutral-500">고른 대상이 검색할 만한 글감만 추천해 드려요. ‘전체’면 모든 대상에서 뽑아요.</p>
-          <div className="mt-2 flex flex-wrap gap-2">
+        <div className="rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
+          <label className="text-[15px] font-bold tracking-tight text-neutral-900">누구를 주로 가르치세요?</label>
+          <p className="mt-1 text-xs text-neutral-400">고른 대상이 검색할 글감만 추천해요 · 여러 개 선택 가능</p>
+          <div className="mt-3 flex flex-wrap gap-2">
             {ACADEMY_AUDIENCES.map((a) => (
               <button key={a.value} type="button" onClick={() => toggleAud(a.value)}
-                className={`rounded-full border px-3.5 py-1.5 text-sm transition ${audience.includes(a.value) ? "border-[#1D75F7] bg-[#1D75F7]/10 font-semibold text-[#1D75F7]" : "border-neutral-200 text-neutral-600 hover:border-neutral-300"}`}>
+                className={`rounded-full px-3.5 py-1.5 text-sm font-bold transition ${audience.includes(a.value) ? "bg-[#1D75F7] text-white" : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"}`}>
                 {a.label}
               </button>
             ))}
@@ -170,9 +170,9 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
 
       {/* 업체 정보 — local(동네 사장님)만. online/hobby는 주소·영업시간 없음 */}
       {isLocal && (
-      <div>
-        <label className="text-sm font-bold tracking-tight">업체 정보 <span className="text-xs font-normal text-neutral-400">(선택)</span></label>
-        <p className="mt-1 text-xs text-neutral-500">입력하면 글 맨 아래에 자동으로 들어가요.</p>
+      <div className="rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
+        <label className="text-[15px] font-bold tracking-tight text-neutral-900">업체 정보 <span className="text-xs font-normal text-neutral-400">선택</span></label>
+        <p className="mt-1 text-xs text-neutral-400">입력하면 글 맨 아래에 자동으로 들어가요</p>
         <input value={bizName} onChange={(e) => setBizName(e.target.value)} placeholder="상호명 (예: 우리동네치과의원)" maxLength={80} className={`mt-3 ${inputCls}`} />
         <div className="mt-2">
           <AddressSearch
@@ -194,8 +194,8 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
 
       {error && <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{error}</div>}
 
-      <button onClick={save} disabled={saving} className="w-full rounded-xl bg-[#1D75F7] py-3 text-sm font-semibold text-white transition hover:opacity-90 active:scale-[0.99] disabled:opacity-50">
-        {saving ? "저장 중…" : "저장"}
+      <button onClick={save} disabled={saving} className="w-full rounded-2xl bg-[#1D75F7] py-4 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99] disabled:opacity-50">
+        {saving ? "저장 중…" : "저장하기"}
       </button>
     </div>
   );
