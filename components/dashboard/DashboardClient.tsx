@@ -367,6 +367,12 @@ export default function DashboardClient(props: DashboardProps) {
     }
   }
 
+  // 첫 로드 — 브라우저 스크롤 복원·해시 점프 때문에 살짝 내려간 채 시작하는 것 방지
+  useEffect(() => {
+    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+    requestAnimationFrame(() => window.scrollTo(0, 0));
+  }, []);
+
   // 탭·뷰(공지/글편집/작성) 전환 시 항상 맨 위에서 시작.
   // selected는 '객체'가 아니라 'id'로 의존 → 자동저장으로 글 내용이 갱신될 때는 스크롤이 튀지 않음.
   useEffect(() => {
