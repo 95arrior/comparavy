@@ -24,3 +24,5 @@ export async function GET(request: Request) {
   const sample = (await getTrendTopics(category)).slice(0, 20).map((t) => t.title);
   return NextResponse.json({ ok: true, category, generated: count, sample });
 }
+
+// redeploy: trend-refresh route
