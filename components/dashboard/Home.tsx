@@ -215,24 +215,33 @@ function TopicRow({ topic, onClick, onSwap, swapping }: {
       ? { label: "경쟁 보통", cls: "bg-amber-50 text-amber-600" }
       : { label: "경쟁 높음", cls: "bg-rose-50 text-rose-500" };
   return (
-    <div className={`rounded-2xl bg-white p-5 ring-1 ring-black/[0.04] transition ${swapping ? "opacity-40" : ""}`}>
+    <div className={`rounded-2xl bg-white p-5 ring-1 ring-black/[0.04] transition ${swapping ? "at-ai-swap" : ""}`}>
       <div className="flex items-center gap-2">
         <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-bold ${compMeta.cls}`}>{compMeta.label}</span>
         <span className="text-[12px] font-medium text-[color:var(--at-grey-400)]">
           {topic.vol > 0 ? `월 ${topic.vol.toLocaleString("ko-KR")}회 검색` : "숨은 수요 키워드"}
         </span>
         {onSwap && (
-          <button onClick={onSwap} disabled={swapping} className="ml-auto shrink-0 text-[12px] font-semibold text-neutral-300 transition hover:text-neutral-500 disabled:opacity-50">
-            {swapping ? "바꾸는 중…" : "다른 걸로"}
+          <button onClick={onSwap} disabled={swapping} aria-label="새 글감 받기" className="at-press ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-neutral-300 transition hover:bg-neutral-50 hover:text-[#1D75F7] disabled:opacity-40">
+            <svg className={swapping ? "animate-spin" : ""} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M8 16H3v5" /></svg>
           </button>
         )}
       </div>
-      <button onClick={onClick} className="mt-2 block w-full text-left">
-        <p className="text-[15.5px] font-bold leading-snug text-[color:var(--at-grey-900)]">{topic.title}</p>
-      </button>
-      <button onClick={onClick} className="at-press mt-3 text-[13px] font-bold text-[#1D75F7]">
-        이 글 쓰기 →
-      </button>
+      {swapping ? (
+        <div className="mt-2.5" aria-hidden>
+          <div className="ateflo-skel h-[20px] w-4/5 rounded" />
+          <p className="mt-2.5 text-[12px] font-semibold text-[#8b7cf7]">AI가 새 글감을 고르고 있어요…</p>
+        </div>
+      ) : (
+        <>
+          <button onClick={onClick} className="mt-2 block w-full text-left">
+            <p className="text-[15.5px] font-bold leading-snug text-[color:var(--at-grey-900)]">{topic.title}</p>
+          </button>
+          <button onClick={onClick} className="at-press mt-3 text-[13px] font-bold text-[#1D75F7]">
+            이 글 쓰기 →
+          </button>
+        </>
+      )}
     </div>
   );
 }

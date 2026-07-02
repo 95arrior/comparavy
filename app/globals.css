@@ -1547,3 +1547,24 @@ input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-sele
   .at-rise { animation: none; }
   .at-press:active { transform: none; }
 }
+
+/* AI 생성 파동 — 글감 교체 중 카드 테두리에 연한 무지개가 흐름(생성되고 있다는 신호) */
+@keyframes at-ai-glow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+.at-ai-swap { position: relative; }
+.at-ai-swap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  padding: 1.5px;
+  background: linear-gradient(90deg, #8ec5ff, #b79cff, #ff9ec6, #ffd08a, #8ec5ff) 0 0 / 200% 100%;
+  animation: at-ai-glow 1.4s linear infinite;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.8;
+  pointer-events: none;
+}
