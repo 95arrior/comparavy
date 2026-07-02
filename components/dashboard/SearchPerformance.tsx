@@ -90,7 +90,7 @@ export default function SearchPerformance({ onGoConnect }: { onGoConnect?: () =>
   // ── graceful: 미연결 / 사이트 미선택 ──
   if (!status.connected || !status.selectedSite) {
     return (
-      <div className="rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
+      <div className="rounded-2xl at-glass p-5 ">
         <p className="text-sm font-semibold tracking-tight text-neutral-900">검색 성과</p>
         <p className="mt-1.5 text-sm text-neutral-500">
           {status.connected
@@ -113,7 +113,7 @@ export default function SearchPerformance({ onGoConnect }: { onGoConnect?: () =>
   const hasData = perf && perf.series.length > 0 && (t?.impressions ?? 0) > 0;
 
   return (
-    <div className="rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
+    <div className="rounded-2xl at-glass p-5 ">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm font-semibold tracking-tight text-neutral-900">검색 성과</p>

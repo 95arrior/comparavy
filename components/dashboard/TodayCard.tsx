@@ -1,5 +1,7 @@
 "use client";
 
+import GlassIcon from "@/components/GlassIcon";
+
 import type { CourseInfo } from "@/lib/course";
 
 // '오늘 할 일' 카드 — 홈 최상단, 뇌빼고의 심장. 오늘 해야 할 단 하나만 보여준다.
@@ -87,7 +89,7 @@ export default function TodayCard({
   if (locked) {
     return (
       <Card highlight>
-        <Header label="오늘의 글" chip="🔒 잠김" />
+        <Header label="오늘의 글" chip="잠김" chipIcon={<GlassIcon name="lock" tint="grey" size={18} icon={0.7} radius={6} />} />
         <p className="mt-2 flex items-start gap-1.5 text-[16px] font-bold leading-snug text-neutral-400">
           <span aria-hidden>🔒</span>
           <span className="min-w-0 flex-1">{topic.title}</span>
@@ -121,11 +123,11 @@ function Card({ children, highlight }: { children: React.ReactNode; highlight?: 
   );
 }
 
-function Header({ label, chip }: { label: string; chip?: string }) {
+function Header({ label, chip, chipIcon }: { label: string; chip?: string; chipIcon?: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-2">
       <p className="text-[12px] font-bold tracking-tight text-[#1D75F7]">{label}</p>
-      {chip && <span className="shrink-0 rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-bold text-neutral-600">{chip}</span>}
+      {chip && <span className="flex shrink-0 items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-bold text-neutral-600">{chipIcon}{chip}</span>}
     </div>
   );
 }

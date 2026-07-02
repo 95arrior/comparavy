@@ -70,7 +70,7 @@ export default function ArticleList({
 
   if (articles.length === 0) {
     return (
-      <div className="at-rise rounded-2xl bg-white px-6 py-14 text-center ring-1 ring-black/[0.04]">
+      <div className="at-rise rounded-2xl at-glass px-6 py-14 text-center ">
         <p className="text-[16px] font-bold text-[color:var(--at-grey-900)]">아직 쓴 글이 없어요</p>
         <p className="mt-1 text-[13px] text-neutral-400">오늘의 글부터 시작해 보세요</p>
         <button
@@ -111,18 +111,18 @@ export default function ArticleList({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="글 검색"
-          className="w-full rounded-2xl bg-white py-3.5 pl-11 pr-4 text-sm ring-1 ring-black/[0.04] outline-none transition placeholder:text-neutral-300 focus:ring-2 focus:ring-[#1D75F7]/25"
+          className="w-full rounded-2xl at-glass py-3.5 pl-11 pr-4 text-sm  outline-none transition placeholder:text-neutral-300 focus:ring-2 focus:ring-[#1D75F7]/25"
         />
       </div>
 
       {/* 목록 */}
       {filtered.length === 0 ? (
-        <div className="mt-3 rounded-2xl bg-white px-6 py-12 text-center ring-1 ring-black/[0.04]">
+        <div className="mt-3 rounded-2xl at-glass px-6 py-12 text-center ">
           <p className="text-sm font-semibold text-neutral-600">찾는 글이 없어요</p>
           <button onClick={() => { setQuery(""); setStatus("all"); }} className="mt-3 text-[13px] font-bold text-[#1D75F7]">전체 보기</button>
         </div>
       ) : (
-        <div className="at-rise at-d2 mt-3 divide-y divide-neutral-50 overflow-hidden rounded-2xl bg-white ring-1 ring-black/[0.04]">
+        <div className="at-rise at-d2 mt-3 divide-y divide-neutral-50 overflow-hidden rounded-2xl at-glass ">
           {filtered.map((a) => {
             const published = a.status === "published";
             return (
@@ -154,7 +154,7 @@ export default function ArticleList({
       {/* 초안으로 되돌리기 확인 */}
       {confirmUnpub && (
         <div className="ateflo-backdrop-in fixed inset-0 z-[60] flex items-center justify-center bg-black/30 px-6" onClick={() => !unpubBusy && setConfirmUnpub(null)}>
-          <div className="ateflo-fade-in w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="ateflo-fade-in w-full max-w-sm at-glass-strong rounded-3xl p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <p className="text-[16px] font-bold text-[color:var(--at-grey-900)]">‘초안’으로 되돌릴까요?</p>
             <p className="mt-2 text-[13px] leading-relaxed text-neutral-500">
               여기선 표시만 바뀌어요. 네이버에 올린 글을 실제로 내리려면 네이버 블로그에서 직접 삭제·비공개로 바꿔주세요.

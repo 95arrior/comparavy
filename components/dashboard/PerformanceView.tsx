@@ -1,5 +1,7 @@
 "use client";
 
+import GlassIcon, { type GlassTint } from "@/components/GlassIcon";
+
 import { useMemo, useState } from "react";
 import type { Article } from "./types";
 
@@ -51,15 +53,19 @@ function buildPaths(pub: number, onWrite: () => void): { title: string; paths: P
   };
 }
 
-function LogoSlot({ logo, emoji, size = "h-9 w-9" }: { logo?: string; emoji?: string; size?: string }) {
-  // 이모지 = 베이스(로고 파일 추가 전), 로고 이미지 = 위에 덮음(있으면). 파일 없으면 onError로 숨겨 이모지 노출.
+// 이모지 → 글래스 타일 매핑(수익화 길 4종)
+const GLASS_OF: Record<string, { name: string; tint: GlassTint }> = {
+  "📢": { name: "adpost", tint: "blue" },
+  "🎁": { name: "gift", tint: "rose" },
+  "🛒": { name: "cart", tint: "orange" },
+  "🏅": { name: "medal", tint: "amber" },
+};
+function LogoSlot({ emoji }: { logo?: string; emoji?: string; size?: string }) {
+  const g = emoji ? GLASS_OF[emoji] : undefined;
+  if (g) return <GlassIcon name={g.name} tint={g.tint} size={38} />;
   return (
-    <span className={`relative flex ${size} shrink-0 items-center justify-center overflow-hidden rounded-lg bg-neutral-100`}>
+    <span className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-neutral-100">
       {emoji && <span className="text-[17px]">{emoji}</span>}
-      {logo && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={logo} alt="" className="absolute inset-0 h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />
-      )}
     </span>
   );
 }
@@ -91,7 +97,7 @@ function PathRow({ p, first, onOpen }: { p: Path; first: boolean; onOpen: () => 
 
 function PathDetail({ p, onBack }: { p: Path; onBack: () => void }) {
   return (
-    <div className="ateflo-page-in rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
+    <div className="ateflo-page-in rounded-2xl at-glass p-5 ">
       <button onClick={onBack} className="-ml-1 flex items-center gap-1 text-[13px] font-medium text-neutral-400 transition hover:text-neutral-700">
         <span className="text-base leading-none">←</span> 돌아가기
       </button>
@@ -218,7 +224,7 @@ export default function PerformanceView({
       {open ? (
         <PathDetail p={open} onBack={() => setOpenIdx(null)} />
       ) : (
-        <div className="at-rise at-d2 rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
+        <div className="at-rise at-d2 rounded-2xl at-glass p-5 ">
           <p className="text-[15px] font-bold text-neutral-900">{title}</p>
           <div className="mt-1">
             {paths.map((p, i) => <PathRow key={p.label} p={p} first={i === 0} onOpen={() => setOpenIdx(i)} />)}

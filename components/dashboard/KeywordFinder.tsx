@@ -165,7 +165,7 @@ export default function KeywordFinder({
           <p className="mb-3 px-1 text-xs font-medium text-neutral-400">
             ‘{searchedTopic}’ 추천 {results.length}개 · 좋은 순 · 담을 키워드를 누르세요
           </p>
-          <ul className="divide-y divide-neutral-100 overflow-hidden rounded-2xl bg-white ring-1 ring-black/[0.04]">
+          <ul className="divide-y divide-neutral-100 overflow-hidden rounded-2xl at-glass ">
             {results.map((k) => {
               const on = selected.has(k.keyword);
               return (

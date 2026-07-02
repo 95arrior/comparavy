@@ -1,6 +1,7 @@
 "use client";
 
 import Brand from "@/components/Brand";
+import GlassIcon from "@/components/GlassIcon";
 
 // 토스st 공용 네비 — 모바일=하단 고정 탭바 / 웹=상단 고정 바. 같은 4탭, 위치만 반응형.
 // 활성=토스블루 / 비활성=회색, 절제된 모션·여백. 콘텐츠는 이 바깥에서 max-w-2xl 중앙.
@@ -17,6 +18,8 @@ function Icon({ k, active }: { k: NavKey; active: boolean }) {
   if (k === "performance") return <svg {...common}><path d="M4 19V5" /><path d="M4 19h16" /><path d="M8 16l3.5-4 3 2.5L20 8" /></svg>;
   return <svg {...common}><circle cx="12" cy="8" r="3.4" /><path d="M5.5 20a6.5 6.5 0 0 1 13 0" /></svg>;
 }
+
+const NAV_ICON: Record<NavKey, string> = { home: "nav-home", articles: "nav-articles", performance: "nav-performance", more: "nav-more" };
 
 const NAV: { key: NavKey; label: string }[] = [
   { key: "home", label: "홈" },
@@ -37,7 +40,7 @@ export default function TossNav({
   return (
     <>
       {/* 웹 — 상단 고정 바 */}
-      <header className="fixed inset-x-0 top-0 z-40 hidden border-b border-neutral-100 bg-white/90 backdrop-blur md:block">
+      <header className="at-glass-strong fixed inset-x-0 top-0 z-40 hidden !rounded-none !border-x-0 !border-t-0 md:block">
         <div className="mx-auto flex h-16 max-w-3xl items-center gap-2 px-6">
           <button onClick={() => onNav("home")} className="mr-2 shrink-0" aria-label="홈">
             <Brand size={22} />
@@ -68,7 +71,7 @@ export default function TossNav({
 
       {/* 모바일 — 하단 고정 탭바 */}
       <nav
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-neutral-100 bg-white/95 backdrop-blur md:hidden"
+        className="at-glass-strong fixed inset-x-0 bottom-0 z-40 !rounded-none !border-x-0 !border-b-0 md:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <div className="mx-auto flex max-w-md items-stretch">
@@ -81,8 +84,8 @@ export default function TossNav({
                 className="flex flex-1 flex-col items-center gap-0.5 py-2 transition active:scale-95"
                 style={{ color: on ? BLUE : "#aab1bd" }}
               >
-                <Icon k={n.key} active={on} />
-                <span className={`text-[11px] ${on ? "font-bold" : "font-medium"}`}>{n.label}</span>
+                <GlassIcon name={NAV_ICON[n.key]} tint={on ? "blue" : "grey"} size={30} icon={0.66} className={on ? "" : "opacity-60"} />
+                <span className={`mt-0.5 text-[11px] ${on ? "font-bold" : "font-medium"}`}>{n.label}</span>
               </button>
             );
           })}

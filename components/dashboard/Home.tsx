@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import TodayCard from "./TodayCard";
+import GlassIcon from "@/components/GlassIcon";
 import CourseRing from "./CourseRing";
 import { courseInfo } from "@/lib/course";
 import type { Comp } from "@/lib/topicScore";
@@ -146,7 +147,7 @@ export default function Home({
       <div className="at-rise flex items-center justify-between pt-7">
         <p className="at-label">{blogName}</p>
         <button onClick={onOpenCredits} className="at-press flex items-center gap-1 rounded-full bg-white px-3 py-1.5 ring-1 ring-black/[0.05] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)]">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="#1D75F7"><path d="M13 2 4.5 13.5H11L9.5 22 19 10h-6.5L13 2z" /></svg>
+          <GlassIcon name="credit" tint="blue" size={20} icon={0.7} radius={7} />
           <span className="text-[13px] font-bold text-[color:var(--at-grey-900)]">{credits.toLocaleString("ko-KR")}</span>
         </button>
       </div>
@@ -173,7 +174,7 @@ export default function Home({
       <div className="at-rise at-d3 mt-3">
         <button
           onClick={() => setMoreOpen((o) => !o)}
-          className="at-press flex w-full items-center gap-3 rounded-2xl bg-white px-5 py-4 text-left ring-1 ring-black/[0.04]"
+          className="at-press flex w-full items-center gap-3 rounded-2xl at-glass px-5 py-4 text-left "
         >
           <span className="min-w-0 flex-1 text-[14px] font-bold text-[color:var(--at-grey-700)]">
             다른 글감 {topicsLoading ? "" : rest.length}
@@ -191,7 +192,7 @@ export default function Home({
                 ))}
               </div>
             ) : (
-              <div className="rounded-2xl bg-white p-6 text-center text-[13px] text-neutral-400 ring-1 ring-black/[0.04]">
+              <div className="rounded-2xl at-glass p-6 text-center text-[13px] text-neutral-400 ">
                 오늘 글감은 위 카드가 전부예요. <button onClick={loadTopics} className="font-semibold text-[#1D75F7]">다시 받기</button>
               </div>
             )}
@@ -215,7 +216,7 @@ function TopicRow({ topic, onClick, onSwap, swapping }: {
       ? { label: "경쟁 보통", cls: "bg-amber-50 text-amber-600" }
       : { label: "경쟁 높음", cls: "bg-rose-50 text-rose-500" };
   return (
-    <div className={`rounded-2xl bg-white p-5 ring-1 ring-black/[0.04] transition ${swapping ? "at-ai-swap" : ""}`}>
+    <div className={`rounded-2xl at-glass p-5  transition ${swapping ? "at-ai-swap" : ""}`}>
       <div className="flex items-center gap-2">
         <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-bold ${compMeta.cls}`}>{compMeta.label}</span>
         <span className="text-[12px] font-medium text-[color:var(--at-grey-400)]">
@@ -223,7 +224,7 @@ function TopicRow({ topic, onClick, onSwap, swapping }: {
         </span>
         {onSwap && (
           <button onClick={onSwap} disabled={swapping} aria-label="새 글감 받기" className="at-press ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-neutral-300 transition hover:bg-neutral-50 hover:text-[#1D75F7] disabled:opacity-40">
-            <svg className={swapping ? "animate-spin" : ""} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M8 16H3v5" /></svg>
+<span className={swapping ? "animate-spin" : ""}><GlassIcon name="refresh" tint="grey" size={24} icon={0.68} radius={8} /></span>
           </button>
         )}
       </div>
@@ -251,7 +252,7 @@ function TopicsSkeleton({ collecting }: { collecting: boolean }) {
   return (
     <div className="flex flex-col gap-2.5">
       {[0, 1].map((i) => (
-        <div key={i} className="rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]" aria-hidden>
+        <div key={i} className="rounded-2xl at-glass p-5 " aria-hidden>
           <div className="flex items-center gap-2">
             <div className="ateflo-skel h-[18px] w-14 rounded-md" />
             <div className="ateflo-skel h-3.5 w-24 rounded" />

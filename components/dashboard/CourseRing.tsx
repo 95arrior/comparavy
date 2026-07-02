@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { COURSE_DAYS, type CourseInfo } from "@/lib/course";
+import GlassIcon from "@/components/GlassIcon";
 
 // 승인 준비 코스 진행 링 — 홈의 히어로. 매일 열 때마다 링이 차오르는 걸 보는 게 동기부여의 핵심.
 // 마운트 시 0에서 현재 진행까지 부드럽게 그려짐(0.9s, at-ease). 중앙 D-n, 하단 라벨, 우측 스트릭 칩.
@@ -49,8 +50,8 @@ export default function CourseRing({ info }: { info: CourseInfo }) {
         </div>
         {/* 스트릭 칩 — 링 우상단에 떠 있음 */}
         {info.streak >= 2 && (
-          <span className="absolute -right-3 top-3 rounded-full bg-white px-2.5 py-1 text-[12px] font-bold text-orange-500 shadow-[0_4px_14px_-4px_rgba(0,0,0,0.15)] ring-1 ring-black/[0.04]">
-            🔥 {info.streak}일 연속
+          <span className="absolute -right-5 top-2 flex items-center gap-1 rounded-full at-glass py-1 pl-1 pr-2.5 text-[12px] font-bold text-orange-500 shadow-[0_4px_14px_-4px_rgba(0,0,0,0.15)]">
+            <GlassIcon name="fire" tint="orange" size={20} icon={0.7} radius={999} /> {info.streak}일 연속
           </span>
         )}
       </div>

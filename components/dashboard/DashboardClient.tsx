@@ -16,6 +16,7 @@ import KeywordQueue from "./KeywordQueue";
 import Onboarding from "./Onboarding";
 import Home from "./Home";
 import { toEngineType, type BlogProfile } from "@/lib/blogProfile";
+import GlassIcon from "@/components/GlassIcon";
 import TossNav, { type NavKey } from "./TossNav";
 import PerformanceView from "./PerformanceView";
 import type { QueueItem } from "@/lib/keywordQueue";
@@ -432,7 +433,7 @@ export default function DashboardClient(props: DashboardProps) {
   ) : null;
 
   return (
-    <div className="flex min-h-screen bg-[#f2f4f6] text-neutral-900 antialiased">
+    <div className="at-app-bg flex min-h-screen text-neutral-900 antialiased">
       {/* 메인 */}
       {showNav && <TossNav active={navKey} onNav={onNav} initial={initial} />}
       <div className={`min-w-0 flex-1 ${showNav ? "pb-[78px] md:pb-0 md:pt-16" : ""}`}>
@@ -617,7 +618,7 @@ export default function DashboardClient(props: DashboardProps) {
             <h1 className="at-headline">내정보</h1>
 
             {/* 프로필 헤더 */}
-            <div className="mt-6 flex items-center gap-3 rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
+            <div className="mt-6 flex items-center gap-3 rounded-2xl at-glass p-5 ">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-neutral-800 text-base font-bold text-white">{initial}</span>
               <div className="min-w-0">
                 <p className="truncate text-[15px] font-bold text-neutral-900">{displayName}</p>
@@ -627,16 +628,16 @@ export default function DashboardClient(props: DashboardProps) {
 
             {/* 블로그 */}
             <p className="mb-2 mt-7 px-1 text-[13px] font-semibold text-neutral-400">블로그</p>
-            <div className="divide-y divide-neutral-100 overflow-hidden rounded-2xl bg-white ring-1 ring-black/[0.04]">
+            <div className="divide-y divide-neutral-100 overflow-hidden rounded-2xl at-glass ">
               <button onClick={editNaverBlogId} className="flex w-full items-center gap-3 px-5 py-4 text-left transition active:bg-neutral-50">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#03C75A]/10 text-[#03C75A] text-[14px] font-black">N</span>
+                <GlassIcon name="naver" tint="green" size={36} />
                 <span className="flex-1 text-[15px] font-medium text-neutral-800">네이버 블로그 주소</span>
                 <span className="max-w-[40%] truncate text-[13px] text-neutral-400">{naverBlogId || "설정 안 됨"}</span>
                 <svg className="shrink-0 text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
               </button>
               {blogProfile && (
                 <button onClick={() => setPage("profile")} className="flex w-full items-center gap-3 px-5 py-4 text-left transition active:bg-neutral-50">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-500"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg></span>
+                  <GlassIcon name="settings" tint="grey" size={36} />
                   <span className="flex-1 text-[15px] font-medium text-neutral-800">블로그 설정</span>
                   <svg className="text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
                 </button>
@@ -645,24 +646,24 @@ export default function DashboardClient(props: DashboardProps) {
 
             {/* 이용 */}
             <p className="mb-2 mt-7 px-1 text-[13px] font-semibold text-neutral-400">이용</p>
-            <div className="divide-y divide-neutral-100 overflow-hidden rounded-2xl bg-white ring-1 ring-black/[0.04]">
+            <div className="divide-y divide-neutral-100 overflow-hidden rounded-2xl at-glass ">
               <button onClick={() => setPage("credits")} className="flex w-full items-center gap-3 px-5 py-4 text-left transition active:bg-neutral-50">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#1D75F7]/10 text-[#1D75F7]"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" /></svg></span>
+                <GlassIcon name="card" tint="blue" size={36} />
                 <span className="flex-1 text-[15px] font-medium text-neutral-800">크레딧 충전·내역</span>
                 <span className="text-[13px] text-neutral-400">{credits.toLocaleString("ko-KR")} 보유</span>
                 <svg className="text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
               </button>
               <button onClick={openNews} className="flex w-full items-center gap-3 px-5 py-4 text-left transition active:bg-neutral-50">
-                <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-500">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>
-                  {unreadNews && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-[#1D75F7] ring-2 ring-neutral-100" />}
+                <span className="relative inline-flex shrink-0">
+                  <GlassIcon name="bell" tint="violet" size={36} />
+                  {unreadNews && <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-[#1D75F7] ring-2 ring-white" />}
                 </span>
                 <span className="flex-1 text-[15px] font-medium text-neutral-800">공지·업데이트</span>
                 <svg className="text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
               </button>
               {props.isAdmin && (
                 <button onClick={() => goTab("admin")} className="flex w-full items-center gap-3 px-5 py-4 text-left transition active:bg-neutral-50">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-500"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20h16" /><path d="M7 20v-6M12 20v-9M17 20v-4" /></svg></span>
+                  <GlassIcon name="chart" tint="grey" size={36} />
                   <span className="flex-1 text-[15px] font-medium text-neutral-800">관리</span>
                   <svg className="text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
                 </button>
@@ -671,9 +672,9 @@ export default function DashboardClient(props: DashboardProps) {
 
             {/* 계정 */}
             <p className="mb-2 mt-7 px-1 text-[13px] font-semibold text-neutral-400">계정</p>
-            <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-black/[0.04]">
+            <div className="overflow-hidden rounded-2xl at-glass ">
               <button onClick={signOut} className="flex w-full items-center gap-3 px-5 py-4 text-left transition active:bg-neutral-50">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-500"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5M21 12H9" /></svg></span>
+                <GlassIcon name="logout" tint="rose" size={36} />
                 <span className="flex-1 text-[15px] font-medium text-neutral-800">로그아웃</span>
                 <svg className="text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
               </button>

@@ -49,7 +49,7 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
   return (
     <div className="mt-6 space-y-3.5">
       {/* 주제 */}
-      <div className="rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
+      <div className="rounded-2xl at-glass p-5 ">
         <label className="text-[15px] font-bold tracking-tight text-neutral-900">주제</label>
         <p className="mt-1 text-xs text-neutral-400">주제에 맞는 글감·키워드를 추천하는 데 써요</p>
         <div className="mt-3 flex flex-wrap gap-2">
@@ -74,7 +74,7 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
       </div>
 
       {/* 블로그 이름 */}
-      <div className="rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
+      <div className="rounded-2xl at-glass p-5 ">
         <label className="text-[15px] font-bold tracking-tight text-neutral-900">블로그 이름</label>
         <input value={blogName} onChange={(e) => setBlogName(e.target.value)} placeholder="예: 월급쟁이 재테크 일기" maxLength={60} className={`mt-3 ${inputCls}`} />
       </div>

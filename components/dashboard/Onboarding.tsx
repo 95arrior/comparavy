@@ -258,7 +258,7 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
                 <p className="at-label">시장 확인</p>
                 <h2 className="at-headline mt-1">‘{sub}’</h2>
                 {checking ? (
-                  <div className="at-ai-swap mt-5 rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
+                  <div className="at-ai-swap mt-5 rounded-2xl at-glass p-5 ">
                     <div className="ateflo-skel h-5 w-2/3 rounded" />
                     <div className="ateflo-skel mt-2.5 h-4 w-1/2 rounded" />
                     <p className="mt-3 text-[12px] font-semibold text-[#8b7cf7]">네이버 검색 데이터를 확인하고 있어요…</p>
@@ -266,7 +266,7 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
                 ) : verdict && (
                   <div className="mt-5 space-y-3">
                     {/* 판정 카드 */}
-                    <div className="at-rise rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
+                    <div className="at-rise rounded-2xl at-glass p-5 ">
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <p className="text-[11.5px] font-semibold text-neutral-400">월 검색 규모</p>
@@ -296,7 +296,7 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
                     </div>
                     {/* 미리보기 키워드 */}
                     {verdict.preview.length > 0 && (
-                      <div className="at-rise at-d2 rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
+                      <div className="at-rise at-d2 rounded-2xl at-glass p-5 ">
                         <p className="text-[12px] font-bold text-neutral-400">시작하면 이런 키워드를 노려요</p>
                         <div className="mt-2.5 space-y-2">
                           {verdict.preview.map((k) => (
@@ -349,11 +349,11 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
                 <p className="at-label">블로그 준비</p>
                 <h2 className="at-headline mt-1 whitespace-pre-line">{"네이버 블로그가\n있으세요?"}</h2>
                 <div className="mt-6 space-y-2.5">
-                  <button onClick={() => { setDir("fwd"); setStep("setupid"); }} className="at-press w-full rounded-2xl bg-white p-5 text-left ring-1 ring-black/[0.04] transition hover:ring-[#1D75F7]/40">
+                  <button onClick={() => { setDir("fwd"); setStep("setupid"); }} className="at-press w-full rounded-2xl at-glass p-5 text-left  transition hover:ring-[#1D75F7]/40">
                     <span className="block text-[16px] font-bold text-[color:var(--at-grey-900)]">네, 있어요</span>
                     <span className="mt-0.5 block text-[12.5px] text-neutral-400">주소만 알려주면 바로 연결돼요</span>
                   </button>
-                  <button onClick={() => { setDir("fwd"); setStep("make"); }} className="at-press w-full rounded-2xl bg-white p-5 text-left ring-1 ring-black/[0.04] transition hover:ring-[#1D75F7]/40">
+                  <button onClick={() => { setDir("fwd"); setStep("make"); }} className="at-press w-full rounded-2xl at-glass p-5 text-left  transition hover:ring-[#1D75F7]/40">
                     <span className="block text-[16px] font-bold text-[color:var(--at-grey-900)]">아직 없어요</span>
                     <span className="mt-0.5 block text-[12.5px] text-neutral-400">같이 만들어요 — 3분이면 돼요</span>
                   </button>

@@ -73,7 +73,7 @@ export default function CreditsView({
 
       {/* 사용 내역 */}
       <p className="at-rise at-d2 mb-2 mt-7 px-1 text-[13px] font-semibold text-neutral-400">사용 내역</p>
-      <div className="at-rise at-d3 divide-y divide-neutral-100 overflow-hidden rounded-2xl bg-white ring-1 ring-black/[0.04]">
+      <div className="at-rise at-d3 divide-y divide-neutral-100 overflow-hidden rounded-2xl at-glass ">
         {rows === null ? (
           <div className="space-y-3 p-5" aria-hidden>
             {[0, 1, 2].map((i) => <div key={i} className="ateflo-skel h-5 w-full rounded" />)}
