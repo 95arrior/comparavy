@@ -309,7 +309,16 @@ export default function ArticleModal({
           </p>
         </div>
 
-        <div className="prose prose-neutral mt-6 max-w-none" dangerouslySetInnerHTML={{ __html: previewWithImages(bodyHtml) }} />
+        {/* ★모바일 미리보기 — 독자가 보는 그대로(390px 프레임, 가운데 정렬). PC에서도 이 프레임이 기본. */}
+        <div className="mt-6 flex justify-center">
+          <div className="w-full max-w-[390px] rounded-2xl bg-white px-5 py-6 shadow-[0_2px_20px_-8px_rgba(0,0,0,0.12)] ring-1 ring-black/[0.04]">
+            <p className="mb-3 text-center text-[11px] font-semibold text-neutral-400">모바일에서 이렇게 보여요</p>
+            <div
+              className="prose prose-neutral prose-sm max-w-none [&_img]:mx-auto [&_img]:rounded-lg [&_p]:my-3 [&_p]:text-[15px] [&_p]:leading-[1.75] [&_p]:text-center [&_h2]:text-center [&_h2]:mt-5 [&_h2]:text-[17px]"
+              dangerouslySetInnerHTML={{ __html: previewWithImages(bodyHtml) }}
+            />
+          </div>
+        </div>
 
         {article.write_note && (
           <div className="mt-6 rounded-xl border border-neutral-200 bg-white px-4 py-3">

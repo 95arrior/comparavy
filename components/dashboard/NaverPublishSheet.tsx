@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { PASTE_MODE } from "@/config/publish";
 import { buildRichHtml, buildMarkerHtml, buildPlainText, countPhotoSlots } from "@/lib/publishHtml";
 import { copyText, copyRich, copyImage, saveImage, shareImages } from "@/lib/clipboard";
+import { BODY_ALIGN } from "@/config/publish";
 
 // 네이버 발행 복사 마법사. 세로 순차 버튼: 완료 전은 흐리게, 지금 누를 것만 파란색.
 // 이모지·장식기호 금지. 대괄호, 숫자, 한글, 마침표만. 최종 탈고는 네이버 편집기에서.
@@ -108,7 +109,7 @@ export default function NaverPublishSheet({
   } else if (PASTE_MODE === "rich") {
     steps = [
       { key: "title", label: "제목 복사", sub: "네이버 글쓰기의 제목 칸에 붙여넣으세요.", showKeys: true, run: () => copyText(title) },
-      { key: "body", label: "본문 전체 복사 (사진 포함)", sub: "본문 칸을 누르고 붙여넣으세요. 사진도 같이 들어가요.", showKeys: true, run: () => copyRich(richHtml, plain) },
+      { key: "body", label: "본문 전체 복사 (사진 포함)", sub: `본문 칸을 누르고 붙여넣으세요. 사진도 같이 들어가요.${BODY_ALIGN === "center" ? " 정렬이 안 맞으면 네이버 편집기에서 전체 선택 후 가운데 정렬을 한 번 누르세요." : ""}`, showKeys: true, run: () => copyRich(richHtml, plain) },
       { key: "open", label: "네이버 글쓰기 열기", run: () => onOpenNaverWrite() },
     ];
   } else {

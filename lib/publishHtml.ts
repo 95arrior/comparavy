@@ -9,7 +9,19 @@ export interface PublishInput {
   hashtags?: string[]; // 해시태그(# 없이)
 }
 
+import { BODY_ALIGN } from "@/config/publish";
+
 const PHOTO_RE = /\[사진:\s*([^\]]+)\]/g;
+
+
+// 모바일 리듬: 블록 요소에 정렬 스타일 주입(가운데 기본). config로 분리.
+function applyAlign(html: string): string {
+  if (BODY_ALIGN !== "center") return html;
+  return html.replace(/<(p|h1|h2|h3|blockquote)(\s[^>]*)?>/gi, (m, tag, attr) => {
+    if (/style=/.test(attr ?? "")) return m.replace(/style="([^"]*)"/, 'style="$1;text-align:center"');
+    return `<${tag}${attr ?? ""} style="text-align:center">`;
+  });
+}
 
 // 형광펜 마크(mark) -> 굵게+배경(네이버 붙여넣기에서 배경이 유실돼도 굵게는 유지).
 function markToBold(html: string): string {
@@ -32,7 +44,7 @@ export function buildRichHtml(input: PublishInput): string {
   });
   const tags = hashtagLine(input.hashtags);
   if (tags) body += `<p>${tags}</p>`;
-  return body;
+  return applyAlign(body);
 }
 
 // marker 모드 본문 HTML — 이미지는 넣지 않고 [사진 N] 마커만.
@@ -44,7 +56,7 @@ export function buildMarkerHtml(input: PublishInput): string {
   });
   const tags = hashtagLine(input.hashtags);
   if (tags) body += `<p>${tags}</p>`;
-  return body;
+  return applyAlign(body);
 }
 
 // text/plain — 태그 제거, 이미지 위치에 [사진 N] 마커.
