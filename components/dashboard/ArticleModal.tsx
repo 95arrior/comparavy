@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { photoMarkerToGuide, photoMarkerToSlot, photoSlots, markToNaverBold, addNaverSpacing } from "@/lib/photoMarkers";
 import CenterToast from "./CenterToast";
+import { copyImage as clipCopyImage, saveImage as clipSaveImage } from "@/lib/clipboard";
 import NaverPublishSheet from "./NaverPublishSheet";
 import { openNaverBlogApp } from "@/lib/naverApp";
 import { scanCompliance, applySuggestion } from "@/lib/complianceFilter";
@@ -30,7 +31,6 @@ export default function ArticleModal({
   const [bodyHtml, setBodyHtml] = useState(article.body_html);
   const [naverOpen, setNaverOpen] = useState(false); // 네이버 복붙 발행 시트
   const [toast, setToast] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
 
   // 편집 화면 열릴 때 항상 맨 위로 (작성 화면에서 스크롤 내려와 있어도)
   useEffect(() => {
@@ -43,54 +43,6 @@ export default function ArticleModal({
     const t = setTimeout(() => setToast(null), 2200);
     return () => clearTimeout(t);
   }, [toast]);
-
-  // 본문만 복사 (제목 제외 — 네이버는 제목칸이 따로라 본문에 제목이 들어가면 안 됨). 서식 유지 HTML + 평문 동시.
-  async function copyBody() {
-    try {
-      const html = addNaverSpacing(photoMarkerToGuide(markToNaverBold(bodyHtml)));
-      const tmp = document.createElement("div");
-      tmp.innerHTML = html;
-      const text = tmp.innerText;
-      if (navigator.clipboard && typeof window !== "undefined" && "ClipboardItem" in window) {
-        await navigator.clipboard.write([
-          new ClipboardItem({
-            "text/html": new Blob([html], { type: "text/html" }),
-            "text/plain": new Blob([text], { type: "text/plain" }),
-          }),
-        ]);
-      } else {
-        await navigator.clipboard.writeText(text);
-      }
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1600);
-    } catch {
-      // 무시
-    }
-  }
-
-  // 모바일용: 제목+본문을 '한 번에' 플레인 텍스트로 복사 (앱 붙여넣기는 서식이 어차피 안 살아서 텍스트로)
-  const [allCopied, setAllCopied] = useState(false);
-  async function copyAllPlain() {
-    try {
-      const html = `<p>${title}</p><p>&nbsp;</p>` + addNaverSpacing(photoMarkerToGuide(markToNaverBold(bodyHtml)));
-      const tmp = document.createElement("div");
-      tmp.innerHTML = html;
-      const text = `${title}\n\n${tmp.innerText}`;
-      // ★플레인+HTML 동시 탑재 — 네이버 앱이 서식 붙여넣기를 받으면 볼드·형광펜·인용구가 살아나고, 아니면 플레인 폴백
-      if (typeof window !== "undefined" && "ClipboardItem" in window) {
-        await navigator.clipboard.write([
-          new ClipboardItem({
-            "text/html": new Blob([html], { type: "text/html" }),
-            "text/plain": new Blob([text], { type: "text/plain" }),
-          }),
-        ]);
-      } else {
-        await navigator.clipboard.writeText(text);
-      }
-      setAllCopied(true);
-      setTimeout(() => setAllCopied(false), 2200);
-    } catch { /* 무시 */ }
-  }
 
   // 네이버 '글쓰기' 화면으로 바로 이동 — 블로그 아이디는 1회만 입력받아 저장(blog.naver.com/{id}/postwrite)
   function openNaverWrite() {
@@ -192,49 +144,15 @@ export default function ArticleModal({
     }
   }
 
-  // ★이미지 복사 — 이미지를 클립보드에 담는다(스크린샷 붙여넣기와 동일). 네이버 에디터는 클립보드 이미지를 확실히 받는다.
+  // 이미지 복사·저장은 lib/clipboard로 일원화. 여기선 UI 피드백만.
   const [imgCopied, setImgCopied] = useState<number | null>(null);
-  async function copyImage(i: number, url: string) {
-    try {
-      // ★iOS 사파리: 클립보드 쓰기 전에 await가 끼면 사용자 제스처 인증이 풀려 거부됨
-      //  → ClipboardItem에 'Promise<Blob>'을 넘기는 패턴(제스처 유지)으로 해결
-      const blobPromise = fetch(url).then(async (res) => {
-        const b = await res.blob();
-        if (b.type === "image/png") return b;
-        const bmp = await createImageBitmap(b);
-        const canvas = document.createElement("canvas");
-        canvas.width = bmp.width; canvas.height = bmp.height;
-        canvas.getContext("2d")!.drawImage(bmp, 0, 0);
-        return await new Promise<Blob>((ok) => canvas.toBlob((x) => ok(x!), "image/png"));
-      });
-      await navigator.clipboard.write([new ClipboardItem({ "image/png": blobPromise })]);
+  async function copyImageAt(i: number, url: string) {
+    const ok = await clipCopyImage(url);
+    if (ok) {
       setImgCopied(i);
       setTimeout(() => setImgCopied((c) => (c === i ? null : c)), 2500);
-    } catch {
-      void downloadImage(url, `ateflo-image-${i + 1}.png`); // 미지원 → 저장 폴백
-    }
-  }
-
-  // ★진짜 다운로드 — 외부 저장소 URL은 <a download>가 무시돼 새 탭이 열림 → blob으로 받아 강제 저장
-  async function downloadImage(url: string, name: string) {
-    try {
-      const res = await fetch(url);
-      const blob = await res.blob();
-      // ★모바일: 파일 다운로드는 '파일 앱'으로 가버림 → 공유시트를 띄우면 '이미지 저장(사진 앱)'이 가능
-      const file = new File([blob], name, { type: blob.type || "image/png" });
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && navigator.canShare?.({ files: [file] })) {
-        try { await navigator.share({ files: [file] }); return; } catch { /* 취소·미지원 → 아래 다운로드 */ }
-      }
-      const obj = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = obj;
-      a.download = name;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(obj), 4000);
-    } catch {
-      window.open(url, "_blank", "noopener"); // 최후 폴백
+    } else {
+      void clipSaveImage(url, `ateflo-image-${i + 1}.png`); // 미지원 → 저장 폴백
     }
   }
 
@@ -366,10 +284,10 @@ export default function ArticleModal({
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={st.url} alt="" className="max-h-56 w-full rounded-lg object-cover" />
                         <div className="mt-2 flex items-center gap-2">
-                          <button onClick={() => st.url && copyImage(i, st.url)} className="at-press rounded-lg bg-[#1D75F7] px-3.5 py-2 text-[12.5px] font-bold text-white transition hover:opacity-90">
+                          <button onClick={() => st.url && copyImageAt(i, st.url)} className="at-press rounded-lg bg-[#1D75F7] px-3.5 py-2 text-[12.5px] font-bold text-white transition hover:opacity-90">
                             {imgCopied === i ? "복사됨 ✓ 네이버에 붙여넣기" : "이미지 복사"}
                           </button>
-                          <button onClick={() => st.url && downloadImage(st.url, `ateflo-image-${i + 1}.png`)} className="at-press rounded-lg bg-neutral-100 px-3.5 py-2 text-[12.5px] font-bold text-neutral-600 transition hover:bg-neutral-200">저장</button>
+                          <button onClick={() => st.url && clipSaveImage(st.url, `ateflo-image-${i + 1}.png`)} className="at-press rounded-lg bg-neutral-100 px-3.5 py-2 text-[12.5px] font-bold text-neutral-600 transition hover:bg-neutral-200">저장</button>
                           <button onClick={() => makeImage(i, slot)} disabled={st.busy} className="at-press rounded-lg bg-neutral-100 px-3.5 py-2 text-[12.5px] font-bold text-neutral-600 transition hover:bg-neutral-200 disabled:opacity-50">
                             {st.busy ? "그리는 중…" : "다시 만들기 · 4크레딧"}
                           </button>
@@ -418,12 +336,10 @@ export default function ArticleModal({
         {/* 네이버 발행 위저드 — 한 화면 = 한 문장 + 한 버튼 (80대 기준) */}
         {naverOpen && (
           <NaverPublishSheet
-            photoCount={photoSlots(bodyHtml).length}
-            copied={copied}
-            allCopied={allCopied}
+            title={title}
+            bodyHtml={bodyHtml}
+            images={Object.fromEntries(Object.entries(imgs).filter(([, v]) => v.url).map(([k, v]) => [Number(k), v.url as string]))}
             onOpenNaverWrite={openNaverWrite}
-            onCopyBody={copyBody}
-            onCopyAll={copyAllPlain}
             onDone={markNaverPublished}
             onClose={() => setNaverOpen(false)}
           />
