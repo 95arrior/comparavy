@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ensureSaleStarted, saleUntil, formatRemain } from "@/lib/sale";
+import { startSale, fetchSaleUntil, formatRemain } from "@/lib/sale";
 
 // 크레딧 0 → 생성 시도 시 뜨는 페이월 시트.
 // 결제 유도 심리: 빈 화면이 아니라 '하려던 일(글감 제목)'이 보이는 상태에서 잠김 → 손실 회피.
@@ -24,18 +24,18 @@ export default function CreditPaywallSheet({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  // ★24h 한정 할인 — '잠김'으로 열렸을 때 타이머 시작(최초 1회), 1초마다 갱신
+  // ★24h 한정 할인 — 계정 단위 서버 강제: 잠김으로 열리면 시작(이미 있으면 유지), 1초마다 갱신
   const [until, setUntil] = useState(0);
   useEffect(() => {
-    setUntil(pendingTitle ? ensureSaleStarted() : saleUntil());
+    (pendingTitle ? startSale() : fetchSaleUntil()).then(setUntil);
   }, [pendingTitle]);
   const [, tick] = useState(0);
   useEffect(() => {
     if (!until) return;
-    const id = setInterval(() => { tick((t) => t + 1); if (saleUntil() === 0) setUntil(0); }, 1000);
+    const id = setInterval(() => { tick((t) => t + 1); if (until <= Date.now()) setUntil(0); }, 1000);
     return () => clearInterval(id);
   }, [until]);
-  const saleOn = until > 0;
+  const saleOn = until > Date.now();
 
   return (
     <div className="ateflo-backdrop-in fixed inset-0 z-[70] flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center sm:p-6" onClick={onClose}>

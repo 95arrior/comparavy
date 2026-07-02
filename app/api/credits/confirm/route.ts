@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
+import { createSupabaseServerClient, createSupabaseAdminClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { confirmPayment } from "@/lib/toss";
 import { addCredits } from "@/lib/credits";
 import { packByKey } from "@/lib/creditPacks";
@@ -30,10 +30,18 @@ export async function POST(request: Request) {
   if (m![2] !== user.id.replace(/-/g, "").slice(0, 8)) {
     return NextResponse.json({ error: "주문자 정보가 일치하지 않아요." }, { status: 403 });
   }
-  // ★금액 검증 — 정가 또는 할인가만 허용. 다르면 승인 자체를 거부(변조 차단).
-  const validAmounts = [pack.price, ...(pack.salePrice ? [pack.salePrice] : [])];
+  // ★금액 검증 — 정가는 항상, 할인가는 '이 계정의 sale_until이 유효할 때만' 허용(서버 강제).
+  let saleActive = false;
+  if (pack.salePrice) {
+    try {
+      const admin = createSupabaseAdminClient();
+      const { data: u } = await admin.from("users").select("sale_until").eq("id", user.id).single();
+      saleActive = Boolean(u?.sale_until && new Date(u.sale_until).getTime() > Date.now());
+    } catch { saleActive = false; }
+  }
+  const validAmounts = [pack.price, ...(saleActive && pack.salePrice ? [pack.salePrice] : [])];
   if (!validAmounts.includes(amount)) {
-    return NextResponse.json({ error: "결제 금액이 상품 가격과 달라요." }, { status: 400 });
+    return NextResponse.json({ error: "결제 금액이 상품 가격과 달라요. 새로고침 후 다시 시도해 주세요." }, { status: 400 });
   }
 
   try {

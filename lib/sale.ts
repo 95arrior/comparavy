@@ -1,32 +1,22 @@
 "use client";
 
-// 24시간 한정 할인 — 크레딧 소진(잠김) 순간 시작되는 1회성 타이머(기기 저장).
-// 심리 설계: D-3 소진 → '하려던 글이 잠김' + 24h 한정가(승인팩 34,900→29,900).
-// 가격 바닥은 마진 70%(크레딧당 498원) — 서버 confirm이 정가/할인가만 허용하므로 적자 불가.
+// 24시간 한정 할인 — ★계정 단위 서버 강제(users.sale_until). 이 파일은 클라 헬퍼만.
+// 시작: POST /api/sale (잠긴 페이월 최초 노출 시 · 이미 있으면 재시작 없음)
+// 검증: /api/credits/confirm 이 sale_until > now 일 때만 할인가 승인.
 
-const KEY = "ateflo_sale_until";
-const DURATION_MS = 24 * 60 * 60 * 1000;
-
-/** 할인 타이머 시작(이미 있으면 유지) — 잠김 페이월이 처음 뜰 때 호출 */
-export function ensureSaleStarted(): number {
+export async function startSale(): Promise<number> {
   try {
-    const raw = localStorage.getItem(KEY);
-    const existing = raw ? Number(raw) : 0;
-    if (existing > Date.now()) return existing;
-    // 만료됐거나 없음 → 새로 시작은 '최초 1회'만(만료 기록이 있으면 재시작 안 함 — 한정의 신뢰)
-    if (raw !== null) return 0;
-    const until = Date.now() + DURATION_MS;
-    localStorage.setItem(KEY, String(until));
-    return until;
+    const res = await fetch("/api/sale", { method: "POST" });
+    const data = await res.json();
+    return typeof data.until === "number" ? data.until : 0;
   } catch { return 0; }
 }
 
-/** 현재 유효한 할인 마감 시각(ms) — 없거나 지났으면 0 */
-export function saleUntil(): number {
+export async function fetchSaleUntil(): Promise<number> {
   try {
-    const raw = localStorage.getItem(KEY);
-    const t = raw ? Number(raw) : 0;
-    return t > Date.now() ? t : 0;
+    const res = await fetch("/api/sale");
+    const data = await res.json();
+    return typeof data.until === "number" ? data.until : 0;
   } catch { return 0; }
 }
 

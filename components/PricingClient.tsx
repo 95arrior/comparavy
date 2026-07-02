@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
 import { CREDIT_PACKS, GENERATE_COST, type CreditPack } from "@/lib/creditPacks";
 import GlassIcon from "@/components/GlassIcon";
-import { saleUntil, formatRemain } from "@/lib/sale";
+import { fetchSaleUntil, formatRemain } from "@/lib/sale";
 
 // ★크레딧 팩 단건 결제 — 구독 아님. 팩 선택 → 동의 1회 → 토스 결제창 → successUrl에서 서버 승인·지급.
 // orderId 규격: crd_{packKey}_{uid8}_{random} (서버가 팩·주문자·금액을 이걸로 검증)
@@ -30,15 +30,16 @@ export default function PricingClient({
   const params = useSearchParams();
   const failed = params.get("fail") === "1";
   const [selected, setSelected] = useState<CreditPack | null>(null);
-  // ★24h 한정 할인 — 타이머가 살아있을 때만 salePrice 적용(항시 할인이면 '한정'의 신뢰가 무너짐)
+  // ★24h 한정 할인 — 계정 단위(서버 users.sale_until). 살아있을 때만 salePrice.
   const [until, setUntil] = useState(0);
-  useEffect(() => { setUntil(saleUntil()); }, []);
+  useEffect(() => { fetchSaleUntil().then(setUntil); }, []);
+  const [, tick] = useState(0);
   useEffect(() => {
     if (!until) return;
-    const id = setInterval(() => { if (saleUntil() === 0) setUntil(0); else setUntil((u) => u); }, 1000);
+    const id = setInterval(() => { tick((t) => t + 1); if (until <= Date.now()) setUntil(0); }, 1000);
     return () => clearInterval(id);
   }, [until]);
-  const saleOn = until > 0;
+  const saleOn = until > Date.now();
   const effPrice = (p: CreditPack) => (saleOn && p.salePrice ? p.salePrice : p.price);
   const [agree, setAgree] = useState(false);
   const payBoxRef = useRef<HTMLDivElement>(null);
