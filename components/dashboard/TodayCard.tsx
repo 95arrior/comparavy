@@ -76,7 +76,7 @@ export default function TodayCard({
   if (loading || !topic) {
     return (
       <Card>
-        <Header label="오늘의 글" chip={topic?.tag === "issue" ? "🔥 오늘 이슈" : undefined} />
+        <Header label="오늘의 글" chip={(topic?.tag === "issue" || topic?.tag === "trend") ? "🔥 실시간 트렌드" : undefined} />
         <div className="mt-3 space-y-2" aria-hidden>
           <div className="ateflo-skel h-5 w-3/4 rounded" />
           <div className="ateflo-skel h-10 w-full rounded-xl" />
@@ -105,7 +105,7 @@ export default function TodayCard({
   // 기본 — 오늘의 글 쓰기 (코스 시작 전이면 첫 글 = D-1)
   return (
     <Card highlight>
-      <Header label="오늘의 글" chip={topic?.tag === "issue" ? "🔥 오늘 이슈" : undefined} />
+      <Header label="오늘의 글" chip={(topic?.tag === "issue" || topic?.tag === "trend") ? "🔥 실시간 트렌드" : undefined} />
       <p className="mt-2 text-[18px] font-bold leading-snug text-[color:var(--at-grey-900)]">{topic.title}</p>
       {info.day === 0 && <p className="mt-1 text-[12.5px] text-neutral-400">첫 글이 코스 D-1이에요. 위 링이 승인 준비까지 차올라요.</p>}
       <button onClick={() => onWriteKeyword(topic.keyword, topic.title, topic.newsContext)} className="mt-3.5 w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">

@@ -66,6 +66,7 @@ export default function Home({
   const [collecting, setCollecting] = useState(false);
   const [swapping, setSwapping] = useState<string[]>([]);
   const [moreOpen, setMoreOpen] = useState(false); // '다른 글감' 접힘 토글
+  const [swapNotice, setSwapNotice] = useState(false); // 교체 한도 안내
   const moreRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (moreOpen) setTimeout(() => moreRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 80);
@@ -80,10 +81,17 @@ export default function Home({
   dismissedRef.current = dismissed;
 
   const todayDate = new Date().toISOString().slice(0, 10);
-  const topicsCacheKey = () => `ateflo_topics_v22_${todayDate}_${profileKey ?? ""}_normal`;
+  const topicsCacheKey = () => `ateflo_topics_v23_${todayDate}_${profileKey ?? ""}_normal`;
 
+  const SWAP_LIMIT = 12; // 하루 교체 상한 — 풀 소진·API 낭비 방지(유저 요청)
+  const swapCountKey = `ateflo_swaps_${new Date().toISOString().slice(0, 10)}`;
+  const [swapCount, setSwapCount] = useState<number>(() => {
+    try { return Number(localStorage.getItem(swapCountKey) ?? "0") || 0; } catch { return 0; }
+  });
   const swapTopic = async (kw: string) => {
     if (swapping.includes(kw)) return;
+    if (swapCount >= SWAP_LIMIT) { setSwapNotice(true); setTimeout(() => setSwapNotice(false), 2600); return; }
+    setSwapCount((c) => { const n = c + 1; try { localStorage.setItem(swapCountKey, String(n)); } catch { /* ignore */ } return n; });
     setSwapping((s) => [...s, kw]);
     try {
       const exclude = [...topics.map((t) => t.keyword), ...dismissedRef.current].join(",");
@@ -111,7 +119,7 @@ export default function Home({
   };
 
   const loadTopics = useCallback(async () => {
-    const ck = `ateflo_topics_v22_${new Date().toISOString().slice(0, 10)}_${profileKey ?? ""}_normal`;
+    const ck = `ateflo_topics_v23_${new Date().toISOString().slice(0, 10)}_${profileKey ?? ""}_normal`;
     try {
       const raw = typeof window !== "undefined" ? localStorage.getItem(ck) : null;
       if (raw) { const p = JSON.parse(raw); const c = Array.isArray(p) ? sanitizeTopics(p) : []; if (c.length >= 3) { setTopics(c); setTopicsLoading(false); return; } }
@@ -155,6 +163,11 @@ export default function Home({
 
   return (
     <main className="mx-auto max-w-2xl px-6 pb-10">
+      {swapNotice && (
+        <div className="ateflo-fade-in fixed left-1/2 top-6 z-[80] -translate-x-1/2 rounded-full at-glass-strong px-4 py-2.5 text-[13px] font-bold text-neutral-700 shadow-lg">
+          오늘 글감 교체는 여기까지예요 · 내일 새 글감이 와요
+        </div>
+      )}
       {/* 상단 — 블로그명 + 크레딧 칩(탭 → 충전·내역) */}
       <div className="at-rise flex items-center justify-between pt-7">
         <p className="at-label">{blogName}</p>
@@ -240,13 +253,13 @@ function TopicRow({ topic, onClick, onSwap, swapping }: {
   return (
     <div className={`rounded-2xl at-glass p-5  transition ${swapping ? "at-ai-swap" : ""}`}>
       <div className="flex items-center gap-2">
-        {topic.tag === "issue" ? (
-          <span className="rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-bold text-amber-600">🔥 오늘 이슈</span>
+        {topic.tag === "issue" || topic.tag === "trend" ? (
+          <span className="rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-bold text-amber-600">🔥 실시간 트렌드</span>
         ) : (
           <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-bold ${compMeta.cls}`}>{compMeta.label}</span>
         )}
         <span className="text-[12px] font-medium text-[color:var(--at-grey-400)]">
-          {topic.tag === "issue" ? "지금 뜨는 중 · 선점 기회" : topic.vol > 0 ? `월 ${topic.vol.toLocaleString("ko-KR")}회 검색` : "숨은 수요 키워드"}
+          {topic.tag === "issue" || topic.tag === "trend" ? "지금 뜨는 중 · 선점 기회" : topic.vol > 0 ? `월 ${topic.vol.toLocaleString("ko-KR")}회 검색` : "숨은 수요 키워드"}
         </span>
         {onSwap && (
           <button onClick={onSwap} disabled={swapping} aria-label="새 글감 받기" className="at-press ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-neutral-300 transition hover:bg-neutral-50 hover:text-[#1D75F7] disabled:opacity-40">

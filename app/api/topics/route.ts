@@ -10,7 +10,7 @@ import { compFromLabel, compFromBlogTotal, filledStarsFromData, type Comp } from
 import { fetchBlogTotal } from "@/lib/naverBlogSearch";
 import { resolveLocalPlan, generateLocalKeywords, generateAudienceTopics, type LocalScope } from "@/lib/aiSeeds";
 import { buildPoolForSub } from "@/lib/keywordPool";
-import { todayIssueTopic } from "@/lib/newsTopics";
+import { getTrendTopics, refreshCategoryTrends, hasFreshTrends } from "@/lib/trendTopics";
 import { collectPoolKeywords } from "@/lib/poolCollect";
 import { fetchNaverAutocomplete } from "@/lib/naverAutocomplete";
 import { checkRateLimit } from "@/lib/rateLimit";
@@ -470,33 +470,48 @@ export async function GET(req: Request) {
       tag: t?.tag || sub || "글감", // 칩 항상 표시 — AI 분류 없으면 세부업종으로 폴백
     };
   });
-  // ★오늘 이슈(네이버 뉴스 기반) — 신규 이슈 = 경쟁 0에 가까운 선점 구간. 맨 앞(오늘의 글) 고정.
-  //  가십·사건사고는 추출 단계에서 차단(법적 안전). 캐시 1일이라 호출 평탄.
-  let issueFirst: (typeof topics)[number] & { newsContext?: string } | null = null;
+  // ★실시간 트렌드 글감 — 카테고리 공유 풀(크론이 뉴스+웹검색으로 채움)에서 유저별 시드 회전으로 뽑는다.
+  //  '그날 그시간' 신선함이 홈판 노출의 핵심. 1만 명이 같은 풀을 봐도 시드 회전으로 다른 조각을 봄.
+  type TrendCard = (typeof topics)[number] & { newsContext?: string };
+  const trendCards: TrendCard[] = [];
   if (type === "online" && sub && !cluster && !regionMode) {
     try {
-      const issue = await todayIssueTopic(sub);
-      if (issue && !usedSet.has(normalizeKeyword(issue.keyword))) {
-        // 신규 이슈는 월 검색량이 아직 집계 전(전월 데이터) — 대신 경쟁(문서수)은 실시간 실측
-        const issueBlogTotal = await fetchBlogTotal(issue.keyword).catch(() => null);
-        issueFirst = {
-          keyword: issue.keyword,
-          title: issue.title,
+      let trends = await getTrendTopics(sub);
+      // 풀이 비었으면 즉석 갱신(첫 유저만, 레이트리밋·타임아웃 9s). 이후 유저·크론은 캐시를 읽음.
+      if (trends.length < 4) {
+        const rl = await checkRateLimit(supabase, user.id, `trend_seed_${sub}`, 3, 900);
+        if (rl.ok && !(await hasFreshTrends(sub))) {
+          await Promise.race([
+            refreshCategoryTrends(sub),
+            new Promise((r) => setTimeout(r, 9000)),
+          ]).catch(() => {});
+          trends = await getTrendTopics(sub);
+        }
+      }
+      // 유저 시드로 회전 — 만 명이 달라 보이게
+      const rotated = [...trends].sort((a, b) => (seedFrom(a.keyword + user.id) % 997) - (seedFrom(b.keyword + user.id) % 997));
+      for (const t of rotated) {
+        if (trendCards.length >= 2) break; // 트렌드는 상위 2장(나머지는 데이터 글감)
+        const nk = normalizeKeyword(t.keyword);
+        if (usedSet.has(nk) || topics.some((x) => normalizeKeyword(x.keyword) === nk)) continue;
+        trendCards.push({
+          keyword: t.keyword,
+          title: t.title,
           demandLabel: "지금 뜨는 중",
           ssak: true,
           region: false,
           tone: type,
           vol: 0,
-          comp: (issueBlogTotal != null ? compFromBlogTotal(issueBlogTotal) : "low") as Comp,
-          blogTotal: issueBlogTotal,
-          tag: "issue",
-          newsContext: issue.newsContext,
-        };
+          comp: "low" as Comp,
+          blogTotal: null,
+          tag: "trend",
+          newsContext: t.newsContext ?? undefined,
+        });
       }
-    } catch { /* 이슈 없이 진행 */ }
+    } catch { /* 트렌드 없이 진행 */ }
   }
 
-  // 우리동네(지역) 카드를 항상 맨 위 고정하지 않고 섞는다 — 하루 시드로 위치는 그날 내내 안정적.
+  // 트렌드(신선) 먼저, 데이터 글감은 섞어서 뒤에. 지역 카드는 섞임.
   const shuffled = shuffle(topics, rng);
-  return NextResponse.json({ topics: issueFirst ? [issueFirst, ...shuffled] : shuffled });
+  return NextResponse.json({ topics: [...trendCards, ...shuffled] });
 }
