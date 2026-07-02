@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { CREDIT_PACKS } from "@/lib/creditPacks";
 import { ensureSaleStarted, saleUntil, formatRemain } from "@/lib/sale";
 
 // 크레딧 0 → 생성 시도 시 뜨는 페이월 시트.
@@ -66,31 +65,6 @@ export default function CreditPaywallSheet({
             <p className="text-[13px] font-extrabold tabular-nums text-[#1D75F7]">{formatRemain(until)}</p>
           </div>
         )}
-
-        <div className="mt-4 space-y-2">
-          {CREDIT_PACKS.map((p) => (
-            <div key={p.key} className={`flex items-center gap-3 rounded-2xl border p-3.5 ${p.highlight ? "border-[#1D75F7] bg-[#1D75F7]/[0.04]" : "border-neutral-200 bg-white"}`}>
-              <div className="min-w-0 flex-1">
-                <p className="flex items-center gap-1.5 text-[14px] font-bold text-neutral-900">
-                  {p.name}
-                  {p.highlight && <span className="rounded-full bg-[#1D75F7] px-1.5 py-0.5 text-[10px] font-bold text-white">추천</span>}
-                </p>
-                <p className="mt-0.5 truncate text-[12px] text-neutral-500">{p.desc}</p>
-              </div>
-              <div className="shrink-0 text-right">
-                {saleOn && p.salePrice ? (
-                  <>
-                    <p className="text-[11px] font-medium text-neutral-300 line-through">{p.price.toLocaleString("ko-KR")}원</p>
-                    <p className="text-[14px] font-extrabold text-[#1D75F7]">{p.salePrice.toLocaleString("ko-KR")}원</p>
-                  </>
-                ) : (
-                  <p className="text-[14px] font-bold text-neutral-900">{p.price.toLocaleString("ko-KR")}원</p>
-                )}
-                <p className="text-[11px] text-neutral-400">{p.credits.toLocaleString("ko-KR")}크레딧</p>
-              </div>
-            </div>
-          ))}
-        </div>
 
         <Link
           href="/pricing"

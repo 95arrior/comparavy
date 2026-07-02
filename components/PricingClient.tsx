@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
 import { CREDIT_PACKS, GENERATE_COST, type CreditPack } from "@/lib/creditPacks";
@@ -41,6 +41,10 @@ export default function PricingClient({
   const saleOn = until > 0;
   const effPrice = (p: CreditPack) => (saleOn && p.salePrice ? p.salePrice : p.price);
   const [agree, setAgree] = useState(false);
+  const payBoxRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (selected) setTimeout(() => payBoxRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 60);
+  }, [selected]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -134,7 +138,7 @@ export default function PricingClient({
 
       {/* 결제 — 전자상거래법 고지 + 동의 후 진행 */}
       {selected && (
-        <div className="at-pop mt-5 rounded-2xl at-glass-strong p-5">
+        <div ref={payBoxRef} className="at-pop mt-5 rounded-2xl at-glass-strong p-5">
           <div className="flex items-center justify-between">
             <p className="text-[14px] font-bold text-neutral-900">{selected.name} · {selected.credits.toLocaleString("ko-KR")}크레딧</p>
             <p className="text-[16px] font-extrabold text-[#1D75F7]">{formatKRW(effPrice(selected))}</p>

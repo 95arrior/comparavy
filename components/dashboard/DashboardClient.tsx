@@ -444,7 +444,7 @@ export default function DashboardClient(props: DashboardProps) {
 
         {page === "news" && <NewsView onBack={() => setPage(null)} />}
         {page === "credits" && (
-          <CreditsView credits={credits} onBack={() => setPage(null)} onCharge={() => setPaywall({ charge: true })} />
+          <CreditsView credits={credits} onBack={() => setPage(null)} onCharge={() => { window.location.assign("/pricing"); }} />
         )}
         {page === "profile" && blogProfile && (
           <main className="ateflo-page-in mx-auto max-w-xl px-6 py-10">
