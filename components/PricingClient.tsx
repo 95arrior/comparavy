@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
-import { CREDIT_PACKS, GENERATE_COST, type CreditPack } from "@/lib/creditPacks";
+import { CREDIT_PACKS, type CreditPack } from "@/lib/creditPacks";
 import GlassIcon from "@/components/GlassIcon";
 import { fetchSaleUntil, formatRemain } from "@/lib/sale";
 
@@ -91,7 +91,7 @@ export default function PricingClient({
       )}
       {loggedIn && (
         <p className="mb-5 text-center text-[13px] text-neutral-500">
-          지금 잔액 <b className="text-[#1D75F7]">{credits.toLocaleString("ko-KR")}크레딧</b> · 글 1편 = {GENERATE_COST}크레딧
+          지금 잔액 <b className="text-[#1D75F7]">{credits.toLocaleString("ko-KR")}크레딧</b>
         </p>
       )}
 
@@ -99,8 +99,7 @@ export default function PricingClient({
       <div className="space-y-3">
         {CREDIT_PACKS.map((p, i) => {
           const isSel = selected?.key === p.key;
-          const amount = effPrice(p);
-          const perArticle = Math.round(amount / (p.credits / GENERATE_COST));
+
           return (
             <button
               key={p.key}
@@ -132,7 +131,6 @@ export default function PricingClient({
                   ) : (
                     <p className="text-[17px] font-extrabold text-neutral-900">{formatKRW(p.price)}</p>
                   )}
-                  <p className="text-[11px] text-neutral-400">글 1편 ≈ {perArticle.toLocaleString("ko-KR")}원</p>
                 </div>
               </div>
             </button>

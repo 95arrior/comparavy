@@ -56,7 +56,7 @@ export default function CreditPaywallSheet({
           <p className="text-[17px] font-bold text-neutral-900">{charge ? "크레딧 충전" : "크레딧이 다 떨어졌어요"}</p>
         )}
         <p className="mt-2 text-[13px] leading-relaxed text-neutral-500">
-          {charge ? "글 1편 = 10크레딧. 많이 살수록 편당 가격이 내려가요." : "크레딧을 충전하면 지금 바로 이어서 쓸 수 있어요. 글 1편 = 10크레딧."}
+          {charge ? "필요한 만큼 골라 충전해요." : "크레딧을 충전하면 지금 바로 이어서 쓸 수 있어요."}
         </p>
 
         {saleOn && (

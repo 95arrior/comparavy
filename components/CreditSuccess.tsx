@@ -67,7 +67,7 @@ export default function CreditSuccess() {
       </span>
       <p className="at-rise mt-6 text-[20px] font-extrabold tracking-tight text-neutral-900" style={{ animationDelay: "0.3s" }}>충전 완료!</p>
       <p className="at-rise mt-1.5 text-[14px] text-neutral-500" style={{ animationDelay: "0.5s" }}>
-        잔액 <b className="text-[#1D75F7]">{credits.toLocaleString("ko-KR")}크레딧</b> · 글 {Math.floor(credits / GENERATE_COST)}편 쓸 수 있어요
+        잔액 <b className="text-[#1D75F7]">{credits.toLocaleString("ko-KR")}크레딧</b> · 약 {Math.floor(credits / GENERATE_COST)}편 쓸 수 있어요
       </p>
       <button onClick={() => router.replace("/")} className="at-press at-rise mt-7 w-full rounded-xl bg-[#1D75F7] py-4 text-[15px] font-bold text-white" style={{ animationDelay: "0.7s" }}>
         글 쓰러 가기

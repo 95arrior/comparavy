@@ -65,7 +65,7 @@ export default function CreditsView({
         <p className="mt-1.5 leading-none tracking-tight">
           <span className="text-[40px] font-extrabold">{credits.toLocaleString("ko-KR")}</span>
         </p>
-        <p className="mt-2 text-[13px] font-medium text-white/85">글 {Math.floor(credits / GENERATE_COST)}편 쓸 수 있어요 · 1편 = {GENERATE_COST}크레딧</p>
+        <p className="mt-2 text-[13px] font-medium text-white/85">약 {Math.floor(credits / GENERATE_COST)}편 쓸 수 있어요</p>
         <button onClick={onCharge} className="at-press mt-4 w-full rounded-xl bg-white py-3 text-[14px] font-bold text-[#1D75F7] transition hover:opacity-95">
           충전하기
         </button>
