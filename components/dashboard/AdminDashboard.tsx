@@ -91,6 +91,86 @@ function Funnel({ stats }: { stats: AdminStats }) {
   );
 }
 
+// ★선불 연료 플래너 — Anthropic(글)·Google(이미지) 모두 선불이라 '잔여 일수'가 운영 생명줄.
+// 실측(최근 7일 글 생성·평균 원가) + 가정(유저·인당 글·글당 이미지)으로 일 소모를 계산하고,
+// 입력한 잔액으로 며칠 버티는지 + 30일 권장 충전액을 보여준다. 입력값은 이 기기에 저장.
+const FX = 1400; // USD→KRW
+const IMG_COST_KRW = 55; // Gemini 이미지 1장(~$0.039)
+
+function FuelPlanner({ stats }: { stats: AdminStats }) {
+  const read = (k: string, d: string) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
+  const [antBal, setAntBal] = useState(() => read("adm_ant_usd", ""));   // Anthropic 잔액($)
+  const [gemBal, setGemBal] = useState(() => read("adm_gem_krw", ""));   // Google 잔액(₩)
+  const [users, setUsers] = useState(() => read("adm_users", String(stats.usersTotal ?? 1)));
+  const [perDay, setPerDay] = useState(() => read("adm_perday", "1"));   // 인당 하루 글
+  const [imgs, setImgs] = useState(() => read("adm_imgs", "2"));         // 글당 이미지
+  const save = (k: string, v: string, fn: (v: string) => void) => { fn(v); try { localStorage.setItem(k, v); } catch { /* ignore */ } };
+
+  // 실측 — 최근 7일 일평균 글 생성 + 글 1편 실측 원가
+  const avgDaily = Math.max(0, Math.round((stats.dailyArticles.reduce((t, d) => t + d.count, 0) / 7) * 10) / 10);
+  const artCost = stats.avgArticleCostKrw; // 실측(usage_log) 기반, 없으면 추정치
+
+  // 가정 시나리오 일 소모
+  const n = Math.max(0, Number(users) || 0), m = Math.max(0, Number(perDay) || 0), im = Math.max(0, Number(imgs) || 0);
+  const dailyArticleCost = n * m * artCost;          // Anthropic ₩/일
+  const dailyImageCost = n * m * im * IMG_COST_KRW;  // Google ₩/일
+  const antBalKrw = (Number(antBal) || 0) * FX;
+  const gemBalKrw = Number(gemBal) || 0;
+  const antDays = dailyArticleCost > 0 ? Math.floor(antBalKrw / dailyArticleCost) : null;
+  const gemDays = dailyImageCost > 0 ? Math.floor(gemBalKrw / dailyImageCost) : null;
+
+  const inputCls = "w-full min-w-0 rounded-xl bg-neutral-100 px-3 py-2 text-[13px] outline-none transition placeholder:text-neutral-400 focus:bg-white focus:ring-2 focus:ring-[#1D75F7]/30";
+  const DayBadge = ({ days }: { days: number | null }) =>
+    days === null ? <span className="text-[11px] text-neutral-300">잔액 입력</span> :
+    <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-bold ${days < 7 ? "bg-red-50 text-red-600" : days < 14 ? "bg-amber-50 text-amber-600" : "bg-emerald-50 text-emerald-600"}`}>{days}일 분량</span>;
+
+  return (
+    <div className="rounded-2xl at-glass p-5">
+      <div className="flex items-baseline justify-between">
+        <p className="text-[13px] font-bold text-neutral-800">선불 연료 플래너</p>
+        <p className="text-[11px] text-neutral-300">실측: 최근 7일 일평균 {avgDaily}편 · 글 1편 ≈ {Math.round(artCost)}원</p>
+      </div>
+
+      {/* 가정 입력 */}
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        <label className="block"><span className="mb-1 block text-[11px] text-neutral-400">유저 수</span><input value={users} onChange={(e) => save("adm_users", e.target.value, setUsers)} inputMode="numeric" className={inputCls} /></label>
+        <label className="block"><span className="mb-1 block text-[11px] text-neutral-400">인당 하루 글</span><input value={perDay} onChange={(e) => save("adm_perday", e.target.value, setPerDay)} inputMode="decimal" className={inputCls} /></label>
+        <label className="block"><span className="mb-1 block text-[11px] text-neutral-400">글당 이미지</span><input value={imgs} onChange={(e) => save("adm_imgs", e.target.value, setImgs)} inputMode="decimal" className={inputCls} /></label>
+      </div>
+
+      {/* Anthropic */}
+      <div className="mt-4 rounded-xl bg-neutral-50 p-3.5">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[12.5px] font-bold text-neutral-700">Anthropic — 글 생성</p>
+          <DayBadge days={antDays} />
+        </div>
+        <div className="mt-2 flex items-center gap-2">
+          <input value={antBal} onChange={(e) => save("adm_ant_usd", e.target.value, setAntBal)} placeholder="현재 잔액 ($)" inputMode="decimal" className={`${inputCls} w-32`} />
+          <p className="min-w-0 flex-1 text-[11.5px] leading-relaxed text-neutral-500">
+            일 {won(dailyArticleCost)} 소모 · 30일 = <b className="text-neutral-700">{won(dailyArticleCost * 30)}</b> (${Math.ceil((dailyArticleCost * 30) / FX)})
+          </p>
+        </div>
+      </div>
+
+      {/* Google */}
+      <div className="mt-2 rounded-xl bg-neutral-50 p-3.5">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[12.5px] font-bold text-neutral-700">Google — 이미지 생성</p>
+          <DayBadge days={gemDays} />
+        </div>
+        <div className="mt-2 flex items-center gap-2">
+          <input value={gemBal} onChange={(e) => save("adm_gem_krw", e.target.value, setGemBal)} placeholder="현재 잔액 (₩)" inputMode="numeric" className={`${inputCls} w-32`} />
+          <p className="min-w-0 flex-1 text-[11.5px] leading-relaxed text-neutral-500">
+            일 {won(dailyImageCost)} 소모 · 30일 = <b className="text-neutral-700">{won(dailyImageCost * 30)}</b>
+          </p>
+        </div>
+      </div>
+
+      <p className="mt-3 text-[11px] leading-relaxed text-neutral-400">잔액은 각 콘솔에서 확인해 직접 입력(자동 조회 API 없음) · 14일 미만 노랑, 7일 미만 빨강 — 빨강 전에 충전.</p>
+    </div>
+  );
+}
+
 // 도구 — 크레딧 지급 + 내 계정 테스트 리셋
 function Tools() {
   const [email, setEmail] = useState("");
@@ -196,6 +276,11 @@ export default function AdminDashboard({ stats }: { stats: AdminStats | null }) 
           <MiniBars title="가입" data={stats.dailyUsers} color={BRAND} />
           <MiniBars title="글 생성" data={stats.dailyArticles} color="#34c98e" />
         </div>
+      </Section>
+
+      {/* 선불 연료 */}
+      <Section title="선불 연료" hint="Anthropic·Google 충전 계획">
+        <FuelPlanner stats={stats} />
       </Section>
 
       {/* 도구 */}
