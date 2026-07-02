@@ -58,7 +58,6 @@ export interface DashboardProps {
   nextBillingAt?: string | null;
   currentPeriodEnd?: string | null;
   initialArticles: Article[];
-  wpSiteUrl: string | null;
   isAdmin?: boolean;
   adminStats?: import("@/lib/adminStats").AdminStats | null;
 }

@@ -84,7 +84,7 @@ export default function HeroInput({ loggedIn, onStart, pro = false }: { loggedIn
     const tn = tone || "friendly";
     // 작업공간 안(로그인)에서는 페이지 이동 없이 바로 작성화면으로 — 무지개 잠깐 보여준 뒤
     if (onStart) {
-      setTimeout(() => onStart({ keyword: k, angle: "", type: t, tone: tn, promo: true, channel: "wp" }), 650);
+      setTimeout(() => onStart({ keyword: k, angle: "", type: t, tone: tn, promo: false }), 650);
       return;
     }
     // 대시보드가 이걸 읽어 바로 작성화면을 띄운다 (로그인 거쳐도 유지)

@@ -86,8 +86,7 @@ export interface ArticlePromptInput {
   bizName?: string | null;
   /** 운영자가 입력한 강점·특징(선택) — 이 범위 안에서만 언급, 과장은 순화. */
   bizStrength?: string | null;
-  /** 발행 채널 — naver면 네이버 블로그 규격(경험톤·사진자리·해시태그)으로 생성. 기본 wp. */
-  channel?: "wp" | "naver";
+  // (채널 개념 제거 — 네이버 단일. 모든 글은 네이버 블로그 규격으로 생성)
   /** 사장님이 직접 쓴 '내 이야기'(교재·수업·경험·강점 등, 두서없어도 OK) — 있으면 글의 핵심 재료로 삼아 우리 품질로 재구성. */
   userStory?: string | null;
   /** 사장님이 직접 정한 제목 — 있으면 이 제목을 그대로 쓰고, 본문이 제목과 어긋나지 않게 작성. */
@@ -220,7 +219,7 @@ const NAVER_GUIDE = [
   "[6] 금지 — 줄표(—/–)·과한 이모지·말줄임표(…)·AI 상투어. 사람이 자기 블로그에 쓰듯 담백하고 진짜처럼.",
 ].join("\n");
 
-export function buildSystemPrompt(vertical?: string, channel?: "wp" | "naver"): string {
+export function buildSystemPrompt(vertical?: string): string {
   // 현재 날짜(한국시간) 주입 — 모델이 학습 시점 과거 연도(2024·2025 등)를 습관적으로 쓰는 것을 막는다
   const KST = 9 * 60 * 60 * 1000;
   const now = new Date(Date.now() + KST);
@@ -261,39 +260,18 @@ export function buildSystemPrompt(vertical?: string, channel?: "wp" | "naver"): 
   // 업종별 지침(VERTICAL_SYSTEM)은 해당 업종에만 추가 — general은 특정 업종이 아니라 안 붙는다.
   let out = base + "\n" + COMMON_SEO_PRINCIPLES + "\n" + AEO_RESOLUTION + "\n" + YMYL_GUARDRAIL;
   if (vertical && VERTICAL_SYSTEM[vertical]) out += "\n" + VERTICAL_SYSTEM[vertical];
-  if (channel === "naver") out += "\n" + NAVER_GUIDE;
-  else out += "\n" + WP_GUIDE;
+  out += "\n" + NAVER_GUIDE; // 네이버 단일 — 모든 글이 네이버 규격
   return out;
 }
-
-// 워드프레스(수익형·취미·구글·애드센스) 규격 — 네이버 블로그형과 분리. 깔끔·전문적 E-E-A-T.
-const WP_GUIDE = [
-  "[워드프레스·구글·애드센스 규격]",
-  "- 이 글의 목표는 '구글 검색 노출·애드센스'다. 네이버 블로그가 아니라 '깔끔하고 전문적인' 글로 쓴다.",
-  "- ★네이버 블로그식 '형광펜(<mark>) 강조'와 '요약 인용박스(<blockquote>)'를 쓰지 않는다. 강조가 꼭 필요하면 <strong>(굵게)로 절제해서만.",
-  "- 가독성은 명확한 <h2>/<h3> 소제목 + 리스트(<ul>) + 적절한 길이의 문단으로 만든다(시각 장식이 아니라 '구조'로).",
-  "- ★E-E-A-T(경험·전문성·권위·신뢰): 직접 해보고 확인한 듯한 '구체적 경험·수치·사례·판단 기준'이 드러나 사람이 끝까지 읽고 신뢰하게 한다. 단 하지 않은 경험·없는 사실은 지어내지 않는다.",
-  "- 검색 의도에 끝까지 답하고(완결), 도입에서 핵심 답을 빠르게 준다.",
-].join("\n");
 
 export function buildUserPrompt(input: ArticlePromptInput): string {
   const typeInstruction = TYPE_INSTRUCTIONS[input.type] ?? "";
   const toneInstruction = TONE_INSTRUCTIONS[input.tone] ?? "";
   const toneEnding = TONE_ENDINGS[input.tone] ?? TONE_ENDINGS.friendly;
 
-  // 분량: 채널별 적정선. 플랜 상한(maxWords)은 절대 상한이고, 그 안에서 채널 권장 범위로 목표한다.
-  //  - 네이버(자영업자): 노출 적정선 1,500~2,400자(기본 1,800 전후). 지역 키워드가 많아 길게 안 늘림 — 글자수보다 구조·밀도.
-  //  - 워드프레스(수익형·취미·구글): 깊이를 보상하므로 더 길게(적정 ~3,500).
-  let targetMin: number;
-  let targetMax: number;
-  if (input.channel === "naver") {
-    targetMin = 1400;
-    targetMax = 2100; // 글자수보다 '잘 읽힘' 우선 — 군더더기 빼고 핵심만(벽돌 방지)
-  } else {
-    targetMax = Math.min(input.maxWords, 3500);
-    targetMin = Math.round(targetMax * 0.7);
-  }
-  targetMax = Math.min(targetMax, input.maxWords); // 플랜 상한(무료) 존중
+  // 분량: 네이버 노출 적정선 1,400~2,100자(글자수보다 '잘 읽힘' 우선 — 군더더기 빼고 핵심만, 벽돌 방지).
+  let targetMin = 1400;
+  let targetMax = Math.min(2100, input.maxWords); // 플랜 상한(무료) 존중
   targetMin = Math.min(targetMin, targetMax);
 
   // 홍보 녹이기: 업장명이 있으면 마무리에서 자연스럽게 연결(강점은 있을 때만, 과장 금지·없는 강점 금지).
@@ -328,7 +306,7 @@ export function buildUserPrompt(input: ArticlePromptInput): string {
     "",
     `목표 분량: ${targetMin.toLocaleString()}~${targetMax.toLocaleString()}자(공백 제외 한국어 글자수). 이 정도가 모바일에서 끝까지 읽히면서 검색엔진이 '충분히 다뤘다'고 보는 적정선이다. 이보다 더 길게 늘이지 말 것 — 분량을 채우려 군더더기·반복·일반론·지엽적 곁가지로 늘리지 않는다. 다만 ${targetMin.toLocaleString()}자보다 짧아 빈약해지지도 않게 한다(핵심을 제대로 담으면 자연히 이 범위가 된다). 길이보다 '핵심을 빠짐없이, 밀도 높게'가 우선이다.`,
     "",
-    `구조: 도입(상투어 없이 바로 핵심) → 본문 <h2> 핵심 소제목 ${input.channel === "naver" ? "3~5개" : "5~7개"}(지엽적인 소제목은 과감히 빼고, 정말 중요한 질문·주제만 남긴다) → 자주 묻는 질문(FAQ) 3~5개 → 짧은 마무리. 소제목을 잘게 쪼개 분량을 늘리지 말고, 중요한 것에 묶어 깊이 있게.`,
+    `구조: 도입(상투어 없이 바로 핵심) → 본문 <h2> 핵심 소제목 3~5개(지엽적인 소제목은 과감히 빼고, 정말 중요한 질문·주제만 남긴다) → 자주 묻는 질문(FAQ) 3~5개 → 짧은 마무리. 소제목을 잘게 쪼개 분량을 늘리지 말고, 중요한 것에 묶어 깊이 있게.`,
     "깊이(밀도): 형식적 나열·표면적 요약도, 끝없이 늘어지는 설명도 금지한다. 중요한 소제목에선 '왜·어떻게·판단 기준·흔한 실수·주의점'을 핵심만 골라 알차게 다루되, 한 소제목을 위해 곁가지로 문단을 불리지 않는다. 답은 핵심부터 간결하게, 같은 말 반복·뻔한 일반론은 뺀다. 검색한 사람이 '필요한 답을 빠르게, 빠짐없이' 얻게 한다(분량이 아니라 밀도로 승부).",
     "도입: 2~3문장으로 짧게. 시장 설명·일반 배경 나열 금지. 독자의 고민을 한 줄로 집고 바로 핵심으로 들어간다(첫 문단도 구글이 본다).",
     "소제목: 짧게, 형식을 하나로 통일한다(전부 명사형이든 전부 짧은 한 줄이든). 어떤 소제목엔 콜론+긴 문장 부연을 붙이고 어떤 덴 안 붙이는 식으로 섞지 않는다.",

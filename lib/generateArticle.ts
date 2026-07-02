@@ -39,7 +39,7 @@ const SAVE_TOOL: Anthropic.Tool = {
         description:
           "본문 HTML. 허용 태그: <h2>,<h3>,<p>,<ul>,<li>,<strong>,<mark>,<blockquote>. 인라인 스타일 금지. " +
           "★각 소제목(h2) 바로 아래에 그 질문의 '핵심 답'을 2~3문장 먼저(자기완결·그 부분만 떼어도 인용 가능) 후 근거로 풀어쓴다. " +
-          "★가독성: ①각 소제목 아래 '핵심 답'을 먼저 ②★한 문단은 짧게(1~3문장, 벽돌 금지) ③나열·비교·단계·조건은 줄글 말고 <ul>로 한눈에 ④마지막에 '핵심 요약'을 <ul>로 ⑤[사진:]을 소제목 직후 등 곳곳에 넣어 텍스트 벽을 깸. ★단 '형광펜(<mark>)·요약 인용박스(<blockquote>)' 같은 시각 강조의 사용 여부·정도는 시스템 지침의 '채널 규격'을 따른다(네이버 블로그형이면 적극, 워드프레스/구글형이면 쓰지 않음).",
+          "★가독성: ①각 소제목 아래 '핵심 답'을 먼저 ②★한 문단은 짧게(1~3문장, 벽돌 금지) ③나열·비교·단계·조건은 줄글 말고 <ul>로 한눈에 ④마지막에 '핵심 요약'을 <ul>로 ⑤[사진:]을 소제목 직후 등 곳곳에 넣어 텍스트 벽을 깸. ★네이버 블로그 규격이므로 '형광펜(<mark>)'과 '핵심 요약 인용박스(<blockquote>)'를 시스템 지침대로 적극 활용한다.",
       },
       faq: {
         type: "array",
@@ -110,7 +110,7 @@ export async function generateArticle(
   const res = await client.messages.create({
     model,
     max_tokens: maxTokens,
-    system: buildSystemPrompt(input.vertical, input.channel),
+    system: buildSystemPrompt(input.vertical),
     tools: [SAVE_TOOL],
     tool_choice: { type: "tool", name: "save_article" },
     messages: [{ role: "user", content: buildUserPrompt(input) }],
@@ -194,7 +194,7 @@ export async function streamArticle(
   const stream = client.messages.stream({
     model,
     max_tokens: maxTokens,
-    system: buildSystemPrompt(input.vertical, input.channel),
+    system: buildSystemPrompt(input.vertical),
     tools: [SAVE_TOOL],
     tool_choice: { type: "tool", name: "save_article" },
     messages: [{ role: "user", content: buildUserPrompt(input) }],

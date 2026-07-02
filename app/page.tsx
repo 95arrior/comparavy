@@ -3,7 +3,6 @@ import { SITE_NAME, SITE_DESCRIPTION, SITE_URL } from "@/lib/site";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { ensureUserRow } from "@/lib/userPlan";
 import { isAdminEmail, getAdminStats } from "@/lib/adminStats";
-import { syncScheduledStatuses } from "@/lib/syncScheduled";
 import ConstructionScreen from "@/components/ConstructionScreen";
 import NewLanding from "@/components/landing/NewLanding";
 import DashboardClient from "@/components/dashboard/DashboardClient";
@@ -41,13 +40,6 @@ export default async function Home() {
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
-    const { data: conn } = await supabase
-      .from("wordpress_connections")
-      .select("site_url, username, app_password")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    // 예약 글이 WP에서 이미 발행됐으면 상태를 동기화 (예약됨 칩이 잘못 남는 문제 방지)
-    await syncScheduledStatuses(articles, conn);
     const adminStats = isAdmin ? await getAdminStats() : null;
     return (
       <DashboardClient
@@ -60,7 +52,6 @@ export default async function Home() {
         nextBillingAt={row.next_billing_at ?? null}
         currentPeriodEnd={row.current_period_end ?? null}
         initialArticles={(articles ?? []) as Article[]}
-        wpSiteUrl={conn?.site_url ?? null}
         isAdmin={isAdmin}
         adminStats={adminStats}
       />

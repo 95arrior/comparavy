@@ -16,7 +16,6 @@ import { logUsage } from "@/lib/usageLog";
 import { recordAiResult } from "@/lib/aiHealth";
 import { VERTICAL_DEFAULTS } from "@/lib/blogProfile";
 import { buildBusinessBox } from "@/lib/businessBox";
-import { bloggerType } from "@/lib/bloggerTypes";
 
 export const maxDuration = 300;
 
@@ -61,8 +60,7 @@ export async function POST(request: Request) {
     angle?: string;
     type?: string;
     tone?: string;
-    promo?: boolean; // true=홍보용(업장 연결) | false=정보성(순수 정보). 기본 true(기존 동작)
-    channel?: "wp" | "naver"; // 발행 채널 — naver면 네이버 블로그 규격
+    promo?: boolean; // true=홍보용(업장 연결) | false=정보성(순수 정보). 네이버 수익형 단일 후 기본 false
     userStory?: string; // '내 이야기' 재료
   };
   try {
@@ -157,9 +155,9 @@ export async function POST(request: Request) {
   const vDef = VERTICAL_DEFAULTS[vertical];
   const type = body.type ?? vDef?.type ?? "howto";
   const tone = body.tone ?? vDef?.tone ?? "friendly";
-  // 홍보용 기본값 — local(동네 사장님)만 홍보(업장 연결), online/hobby는 업장 없어 정보성 기본.
-  const promo = body.promo ?? (bloggerType(vertical) === "local");
-  const channel: "wp" | "naver" = body.channel ?? (bloggerType(vertical) === "local" ? "naver" : "wp");
+  // 네이버 수익형 단일 — 업장 개념이 없어 정보성 기본(명시적으로 보내면 존중: 레거시 업장 프로필용).
+  const promo = body.promo ?? false;
+  const channel = "naver" as const; // 발행 채널 단일화 — 모든 글은 네이버 규격
 
   // 약한 audience 가드(버그2): 직접 입력해도 '설정한 대상과 명백히 동떨어진'(반대 연령어가 박힌) 글감만 막는다.
   // 명시적 연령어(성인/유아/초등/중고등)만 검사 → 도메인어(토익 등)·중립어는 통과(사장이 일부러 넣은 걸 과잉 차단 안 함).
@@ -229,26 +227,21 @@ export async function POST(request: Request) {
           if (derived) keyword = derived;
         }
         const article = await streamArticle(
-          { keyword, angle: body.angle, type, tone, maxWords, variantInstruction, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, channel, userStory: userStory || null, userTitle },
+          { keyword, angle: body.angle, type, tone, maxWords, variantInstruction, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userTitle },
           (bodyHtml) => send({ type: "body", html: bodyHtml }),
           (title) => send({ type: "title", title }),
           (u) => { void logUsage({ userId: user.id, model: u.model, kind: "generate", inputTokens: u.inputTokens, outputTokens: u.outputTokens }); },
         );
 
-        // 길이 검증 — 채널별로 다르게.
-        // ★네이버(자영업자): 좁은 주제도 '네이버 최적화로 뽑을 수 있는 만큼' 살린다. 네이버는 1,000자 안팎도 충분.
-        //   그래서 깊이 기준으로 반려하지 않고, '명백히 실패(빈/잘린)' 글만 막는 낮은 바닥(500자)만 둔다.
-        // ★워드프레스(구글): 검색 깊이가 필요하므로 기존대로 적정 캡(min(maxWords,3500))의 40%.
-        const minChars = channel === "naver" ? 500 : Math.round(Math.min(maxWords, 3500) * 0.4); // 네이버 500 / WP Pro 1,400·Free 600
+        // 길이 검증 — 네이버는 좁은 주제도 '네이버 최적화로 뽑을 수 있는 만큼' 살린다(1,000자 안팎도 충분).
+        // 깊이 기준으로 반려하지 않고, '명백히 실패(빈/잘린)' 글만 막는 낮은 바닥(500자)만 둔다.
+        const minChars = 500;
         const charCount = countKoreanChars(article.body_html);
         if (charCount < minChars) {
           if (genId) await supabase.from("articles").delete().eq("id", genId); // 자리표시 행 정리
           send({
             type: "error",
-            error:
-              channel === "naver"
-                ? "글을 만드는 중 문제가 생겨 잠깐 멈췄어요. 다시 한 번 눌러 주세요. (횟수는 차감되지 않아요)"
-                : "이 주제는 글로 풀기엔 다소 좁아서 충분한 분량이 안 나왔어요. 검색에 잘 잡히는 글은 어느 정도 깊이가 필요해요. 조금 더 넓은 주제나 다른 키워드로 다시 시도해 주세요. (횟수는 차감되지 않아요)",
+            error: "글을 만드는 중 문제가 생겨 잠깐 멈췄어요. 다시 한 번 눌러 주세요. (횟수는 차감되지 않아요)",
           });
           return;
         }

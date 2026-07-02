@@ -1,8 +1,10 @@
-// 3유형 블로거 모델 — 온보딩 '유형 선택'의 단일 소스.
+// ★네이버 수익형 단일 피벗(2026-07) — 신규 온보딩은 vertical="online" 하나만 만든다.
+// local/hobby는 '레거시 프로필(DB에 남은 옛 vertical)'을 서버 코드(키워드풀·지역 등)가 계속 읽을 수 있게만 유지.
+// UI(온보딩·홈·글쓰기)는 더 이상 유형 분기하지 않는다.
 // blogger_type은 별도 컬럼 없이 vertical로 인코딩:
-//   local  = medical/academy/professional/general (기존, 지역·규제 있음)
-//   online = vertical "online" (수익형·n잡, 지역 X, 규제 최소)
-//   hobby  = vertical "hobby"  (취미·기록, 지역 X, 규제 X)
+//   local  = medical/academy/professional/general (레거시)
+//   online = vertical "online" (수익형·n잡 — 현재 유일한 신규 유형)
+//   hobby  = vertical "hobby"  (레거시)
 export type BloggerType = "local" | "online" | "hobby";
 
 export const LOCAL_VERTICALS = new Set(["medical", "academy", "professional", "general", "b2b"]);
@@ -21,14 +23,7 @@ export function usesRegion(vertical: string | null | undefined): boolean {
   return bloggerType(vertical) === "local";
 }
 
-// 유형 카드 — 온보딩 첫 화면(2글자 톤 통일).
-export const BLOGGER_TYPE_CARDS: { type: BloggerType; vertical: string | null; label: string; desc: string }[] = [
-  { type: "local", vertical: null, label: "동네 사장님", desc: "가게·병원·학원 — 손님이 찾아오게" },
-  { type: "online", vertical: ONLINE_VERTICAL, label: "수익형 블로거", desc: "n잡·애드센스 — 검색으로 수익을" },
-  { type: "hobby", vertical: HOBBY_VERTICAL, label: "취미·기록", desc: "여행·취미 — 좋아하는 걸 기록" },
-];
-
-// online(수익형) 카테고리 — 검색량·애드센스 단가 높은 군.
+// online(수익형) 카테고리 — 검색량·수익 단가 높은 군. 온보딩 주제 선택의 단일 소스.
 export const ONLINE_CATEGORIES = [
   "재테크·투자", "IT·디지털·리뷰", "건강·다이어트", "부업·N잡", "여행",
   "자기계발", "쇼핑·제품리뷰", "교육·정보", "살림·인테리어", "자동차",

@@ -27,15 +27,11 @@ export default function ArticleList({
   onOpen,
   onGoGenerate,
   onUpdated,
-  wpConnected,
-  local = false,
 }: {
   articles: Article[];
   onOpen: (article: Article) => void;
   onGoGenerate: () => void;
   onUpdated?: (a: Article) => void;
-  wpConnected?: boolean;
-  local?: boolean; // 자영업자(네이버) — 예약발행 없음
 }) {
   // 생성 중인 자리표시 글은 목록·카운트에서 제외 (메인의 '생성 중' 카드에서만 보여줌)
   const articles = allArticles.filter((a) => a.status !== "generating");
@@ -43,43 +39,14 @@ export default function ArticleList({
   const [status, setStatus] = useState<StatusFilter>("all");
   const [confirmUnpub, setConfirmUnpub] = useState<Article | null>(null);
   const [unpubBusy, setUnpubBusy] = useState(false);
-  const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
-
-  // 워드프레스에서 직접 내리거나 지운 글을 우리 상태로 동기화
-  async function syncWp() {
-    if (syncing) return;
-    setSyncing(true);
-    setSyncMsg(null);
-    try {
-      const res = await fetch("/api/wordpress/sync", { method: "POST" });
-      const data = await res.json();
-      if (res.ok && Array.isArray(data.changed)) {
-        for (const c of data.changed as { id: string; status: Article["status"]; clearedWp: boolean }[]) {
-          const a = articles.find((x) => x.id === c.id);
-          if (a) onUpdated?.({ ...a, status: c.status, ...(c.clearedWp ? { wp_post_id: null, wp_link: null } : {}) });
-        }
-        setSyncMsg(data.changed.length ? `${data.changed.length}개 글 상태를 맞췄어요` : "이미 최신이에요");
-      } else {
-        setSyncMsg(data.error ?? "동기화하지 못했어요");
-      }
-    } catch {
-      setSyncMsg("동기화하지 못했어요");
-    } finally {
-      setSyncing(false);
-      setTimeout(() => setSyncMsg(null), 2500);
-    }
-  }
 
   async function doUnpublish() {
     if (!confirmUnpub || unpubBusy) return;
     setUnpubBusy(true);
-    const isNaver = confirmUnpub.channel === "naver";
     try {
-      // 네이버는 우리가 직접 못 내림 → 우리 상태만 '초안'으로(네이버 글은 사용자가 네이버에서 내림). 워드프레스는 실제 비공개 처리.
-      const res = isNaver
-        ? await fetch(`/api/articles/${confirmUnpub.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "draft" }) })
-        : await fetch("/api/wordpress/unpublish", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ articleId: confirmUnpub.id }) });
+      // 네이버는 우리가 직접 못 내림 → 우리 상태만 '초안'으로(실제 글은 사용자가 네이버에서 내림).
+      const res = await fetch(`/api/articles/${confirmUnpub.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "draft" }) });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
         onUpdated?.({ ...confirmUnpub, status: "draft" });
@@ -138,7 +105,6 @@ export default function ArticleList({
   const statusChips: { key: StatusFilter; label: string }[] = [
     { key: "all", label: "전체" },
     { key: "published", label: "발행" },
-    ...(local ? [] : [{ key: "future" as StatusFilter, label: "예약" }]), // 자영업자는 예약발행 없음
     { key: "draft", label: "초안" },
   ];
 
@@ -155,24 +121,13 @@ export default function ArticleList({
         />
       </div>
 
-      {/* 상태 필터 + 동기화(은은) */}
+      {/* 상태 필터 */}
       <div className="mt-3 flex items-center justify-between gap-3">
         <Segmented
           options={statusChips.map((c) => ({ value: c.key, label: c.label, count: counts[c.key] }))}
           value={status}
           onChange={setStatus}
         />
-        {wpConnected && (
-          <button
-            onClick={syncWp}
-            disabled={syncing}
-            title="워드프레스에서 직접 바꾼 글 상태를 맞춰요"
-            className="flex shrink-0 items-center gap-1 text-xs font-medium text-neutral-400 transition hover:text-neutral-700 disabled:opacity-50"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={syncing ? "animate-spin" : ""}><path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6" /></svg>
-            {syncing ? "맞추는 중" : "동기화"}
-          </button>
-        )}
       </div>
 
       {/* 목록 */}
@@ -231,11 +186,9 @@ export default function ArticleList({
       {confirmUnpub && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30 px-6" onClick={() => !unpubBusy && setConfirmUnpub(null)}>
           <div className="ateflo-fade-in w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <p className="text-base font-semibold">{confirmUnpub.channel === "naver" ? "‘초안’으로 되돌릴까요?" : "정말로 글을 내리시겠어요?"}</p>
+            <p className="text-base font-semibold">‘초안’으로 되돌릴까요?</p>
             <p className="mt-2 text-sm leading-relaxed text-neutral-500">
-              {confirmUnpub.channel === "naver"
-                ? "네이버 글은 우리가 직접 못 내려요. 여기선 ‘초안’ 표시만 바뀌어요 — 실제로 내리려면 네이버 블로그에서 직접 삭제·비공개로 바꿔주세요."
-                : "워드프레스에서 비공개로 바뀌고 ‘초안’이 돼요. 글은 지워지지 않아서 언제든 다시 발행할 수 있어요."}
+              네이버 글은 우리가 직접 못 내려요. 여기선 ‘초안’ 표시만 바뀌어요 — 실제로 내리려면 네이버 블로그에서 직접 삭제·비공개로 바꿔주세요.
             </p>
             <p className="mt-3 truncate text-sm font-medium text-neutral-800">“{confirmUnpub.title}”</p>
             <div className="mt-5 flex gap-2">

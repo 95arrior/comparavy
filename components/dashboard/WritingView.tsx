@@ -19,9 +19,8 @@ export interface GenParams {
   angle: string;
   type: string;
   tone: string;
-  promo: boolean; // true=홍보용(업장 연결) | false=정보성(순수 정보)
-  channel: "wp" | "naver"; // 발행 채널 — 글 규격(톤·구조·사진·해시태그)이 달라짐
-  userStory?: string; // 사장님이 직접 쓴 '내 이야기'(있으면 핵심 재료로 우리 품질로 재구성)
+  promo: boolean; // true=홍보용(업장 연결) | false=정보성(순수 정보) — 네이버 수익형 단일 후 기본 false
+  userStory?: string; // 직접 쓴 '내 이야기'(있으면 핵심 재료로 우리 품질로 재구성)
 }
 
 // "글 생성하기" 직후 전환되는 작성 화면.
@@ -70,16 +69,15 @@ export default function WritingView({
         : vertical === "academy"
         ? "과장된 표현 점검"
         : "관련 규정 점검";
-    const ch = params.channel === "naver" ? "네이버 상위 글 구조 분석" : "검색 노출 구조 분석";
     return [
-      story ? "사장님 이야기 꼼꼼히 읽는 중" : "검색 의도 분석 중",
+      story ? "내 이야기 꼼꼼히 읽는 중" : "검색 의도 분석 중",
       story ? "핵심 뉘앙스·강조점 파악" : "지금 뜨는 키워드 분석",
-      ch,
-      "우리 동네·업종 데이터 반영",
+      "네이버 상위 글 구조 분석",
+      "내 주제·분야 데이터 반영",
       reg,
       "초안 쓰고 다듬는 중",
     ];
-  }, [params.userStory, params.channel, vertical]);
+  }, [params.userStory, vertical]);
 
   // 대기 동안 스텝 진행(마지막에서 멈추고 펄스)
   useEffect(() => {
@@ -255,7 +253,7 @@ export default function WritingView({
       </div>
 
       {phase === "done" && (
-        <LoadingScreen label={params.channel === "naver" ? "네이버에 올릴 형식으로 정리하고 있어요" : "워드프레스 형식으로 정리하고 있어요"} />
+        <LoadingScreen label="네이버에 올릴 형식으로 정리하고 있어요" />
       )}
     </>
   );
@@ -266,7 +264,7 @@ function AnalysisWaiting({ steps, stepIdx, pro }: { steps: string[]; stepIdx: nu
   return (
     <div className="ateflo-block-in">
       <div className="flex items-center gap-2 text-[15px] font-bold text-neutral-800">
-        <AteFloLogo pro={pro} animated size={20} /> 사장님 글을 분석하고 있어요
+        <AteFloLogo pro={pro} animated size={20} /> 글감을 분석하고 있어요
       </div>
       <ul className="mt-5 space-y-3.5">
         {steps.map((s, i) => {
