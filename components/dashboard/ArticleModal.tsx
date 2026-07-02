@@ -184,6 +184,36 @@ export default function ArticleModal({
     }
   }
 
+  // ★진짜 다운로드 — 외부 저장소 URL은 <a download>가 무시돼 새 탭이 열림 → blob으로 받아 강제 저장
+  async function downloadImage(url: string, name: string) {
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const obj = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = obj;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(obj), 4000);
+    } catch {
+      window.open(url, "_blank", "noopener"); // 최후 폴백
+    }
+  }
+
+  // ★본문 미리보기에 이미지 '그 자리' 반영 — n번째 사진 마커를 생성된 이미지로 치환(표시 전용, 저장 본문은 그대로)
+  function previewWithImages(html: string): string {
+    let idx = -1;
+    const withImgs = html.replace(/\[사진:\s*([^\]]+)\]/g, (m0, d) => {
+      idx += 1;
+      const u = imgs[idx]?.url;
+      if (!u) return m0;
+      return `<img src="${u}" alt="" style="border-radius:14px;max-height:340px;object-fit:cover;width:100%;margin:0.4em 0" />`;
+    });
+    return photoMarkerToSlot(withImgs);
+  }
+
   // 발행 전 광고규제 표현 검사(주제별). 자동 차단이 아니라 경고 + 대안 제시 → 사용자가 판단.
   const compliance = useMemo(() => {
     const v = vertical ?? "general";
@@ -300,7 +330,7 @@ export default function ArticleModal({
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={st.url} alt="" className="max-h-56 w-full rounded-lg object-cover" />
                         <div className="mt-2 flex items-center gap-2">
-                          <a href={st.url} download={`ateflo-image-${i + 1}.png`} target="_blank" rel="noopener noreferrer" className="at-press rounded-lg bg-[#1D75F7] px-3.5 py-2 text-[12.5px] font-bold text-white transition hover:opacity-90">저장하기</a>
+                          <button onClick={() => st.url && downloadImage(st.url, `ateflo-image-${i + 1}.png`)} className="at-press rounded-lg bg-[#1D75F7] px-3.5 py-2 text-[12.5px] font-bold text-white transition hover:opacity-90">저장하기</button>
                           <button onClick={() => makeImage(i, slot)} disabled={st.busy} className="at-press rounded-lg bg-neutral-100 px-3.5 py-2 text-[12.5px] font-bold text-neutral-600 transition hover:bg-neutral-200 disabled:opacity-50">
                             {st.busy ? "그리는 중…" : "다시 만들기 · 4크레딧"}
                           </button>
@@ -322,7 +352,7 @@ export default function ArticleModal({
           </p>
         </div>
 
-        <div className="prose prose-neutral mt-6 max-w-none" dangerouslySetInnerHTML={{ __html: photoMarkerToSlot(bodyHtml) }} />
+        <div className="prose prose-neutral mt-6 max-w-none" dangerouslySetInnerHTML={{ __html: previewWithImages(bodyHtml) }} />
 
         {article.write_note && (
           <div className="mt-6 rounded-xl border border-neutral-200 bg-white px-4 py-3">

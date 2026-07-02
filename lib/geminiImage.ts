@@ -16,12 +16,11 @@ const BASE_STYLE = [
 // ★다양성 변주 — 1만 명이 같은 글감이어도 같은 그림이 안 나오게.
 //  계정 시드(항상 같은 축) + 요청 난수(매번 다른 축) 조합으로 스타일·팔레트·구도·분위기를 배정.
 const ART_STYLES = [
-  "clean flat vector illustration with soft rounded shapes",
-  "hand-drawn doodle illustration with organic imperfect lines",
-  "paper-cutout collage style illustration with layered shapes",
-  "isometric minimal illustration with gentle depth",
-  "soft watercolor-textured illustration with airy washes",
-  "bold geometric illustration with simple color blocks",
+  "premium editorial flat illustration with refined shapes and subtle grain texture",
+  "sophisticated isometric illustration with gentle depth and soft shadows",
+  "elegant gouache-textured illustration with rich layered colors",
+  "modern gradient-mesh illustration with smooth dimensional forms",
+  "detailed line-and-fill illustration with delicate linework and warm fills",
 ];
 const PALETTES = [
   "warm friendly palette of coral, cream and sky blue",
@@ -56,7 +55,7 @@ export async function generateBlogImage(slotDesc: string, articleTitle: string, 
   const palette = PALETTES[(uh >> 3) % PALETTES.length];
   const compo = COMPOSITIONS[nonce % COMPOSITIONS.length];
   const mood = MOODS[(nonce >> 4) % MOODS.length];
-  const STYLE = `${art}, ${palette}, ${compo}, ${mood} mood, modern Korean lifestyle blog aesthetic. ${BASE_STYLE}`;
+  const STYLE = `${art}, ${palette}, ${compo}, ${mood} mood, modern Korean lifestyle blog aesthetic. Masterful composition, harmonious lighting, crisp refined details, high-end magazine quality. ${BASE_STYLE}`;
   const prompt = `Blog illustration for a Korean blog post titled "${articleTitle}". Scene: ${slotDesc}. ${STYLE}`;
   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`, {
     method: "POST",
