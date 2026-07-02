@@ -45,6 +45,14 @@ export default async function PricingPage() {
         <Suspense>
           <PricingClient loggedIn={loggedIn} userIdFragment={userIdFragment} email={email} credits={credits} />
         </Suspense>
+        {/* 법정 고지 — 결제 화면 필수(전자상거래법·PG 심사) */}
+        <p className="mt-10 text-center text-[11px] text-neutral-400">
+          <Link href="/terms" className="hover:text-neutral-600">이용약관</Link>
+          <span className="mx-1.5">·</span>
+          <Link href="/privacy" className="hover:text-neutral-600">개인정보처리방침</Link>
+          <span className="mx-1.5">·</span>
+          <Link href="/refund" className="hover:text-neutral-600">환불정책</Link>
+        </p>
       </main>
     </div>
   );

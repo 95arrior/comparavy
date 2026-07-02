@@ -689,6 +689,13 @@ export default function DashboardClient(props: DashboardProps) {
               </button>
             </div>
             <p className="mt-3 px-1 text-[12px] leading-relaxed text-neutral-400">{props.email}</p>
+            <p className="mt-1 px-1 text-[11px] text-neutral-300">
+              <a href="/terms" className="hover:text-neutral-500">이용약관</a>
+              <span className="mx-1">·</span>
+              <a href="/privacy" className="hover:text-neutral-500">개인정보처리방침</a>
+              <span className="mx-1">·</span>
+              <a href="/refund" className="hover:text-neutral-500">환불정책</a>
+            </p>
 
                 {/* 계정 관리 — 눈에 띄지 않게(작은 텍스트), 단 접근은 가능하게 */}
                 <div className="mt-8 flex flex-col items-start gap-2 px-1 text-xs">

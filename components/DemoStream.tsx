@@ -146,7 +146,7 @@ export default function DemoStream() {
               return (
                 <div key={idx} className="ateflo-soft-in mt-3 overflow-hidden rounded-xl border border-neutral-100 bg-neutral-50">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/demo-class.png" alt="영어 수업 일러스트" className="mx-auto block max-h-[170px] w-full object-cover object-center" />
+                  <img src="/demo-class.png" alt="" onError={(e) => { e.currentTarget.style.display = "none"; }} className="mx-auto block max-h-[170px] w-full object-cover object-center" />
                 </div>
               );
             }

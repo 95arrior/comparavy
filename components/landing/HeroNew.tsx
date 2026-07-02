@@ -59,6 +59,7 @@ export default function HeroNew() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/hero.png"
+            onError={(e) => { (e.currentTarget.closest("[data-hero-img]") ?? e.currentTarget).setAttribute("style", "display:none"); }}
             alt="에이트플로 미리보기"
             className="mx-auto w-full max-w-6xl"
             style={{

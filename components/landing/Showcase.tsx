@@ -102,7 +102,7 @@ function OverlayCard({ img, heading, desc, topics, dark, imgClass, wide, reveale
     // 그림자 없음(캐러셀 클립). intro면 카드 전체 클릭 → 글감으로(자세히 버튼 외 이미지도)
     <div onClick={intro ? onDetail : undefined} className={`relative overflow-hidden rounded-3xl ring-1 ring-black/5 ${intro ? "cursor-pointer" : ""}`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={img} alt={heading} className={`block w-full ${imgClass ?? ""}`} />
+      <img onError={(e) => { e.currentTarget.style.display = "none"; }} src={img} alt={heading} className={`block w-full ${imgClass ?? ""}`} />
       {dark && <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/40 via-black/10 to-transparent to-55%" />}
       <div className={`absolute inset-y-0 flex flex-col ${wide ? "inset-x-0 max-w-[66%] justify-start px-4 pt-7 sm:max-w-none sm:px-6 sm:pt-9" : "left-0 w-[58%] justify-center px-4 sm:px-8 lg:px-10"}`}>
         <h3 className={`font-pretendard text-[17px] font-bold leading-tight tracking-tight sm:text-2xl lg:text-[30px] ${dark ? "text-white" : "text-neutral-900"}`}>{heading}</h3>
