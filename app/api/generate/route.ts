@@ -150,6 +150,10 @@ export async function POST(request: Request) {
   const angle = pickAngle(`${user.id}:${keywordNorm}`);
   const variantInstruction = `${variant.instruction} ${angle}`;
   // ★계정별 스타일 페르소나 — 같은 계정은 항상 같은 스타일, 계정 간은 다름(대량 발행 지문 방지). 유저 프롬프트 주입이라 캐싱 무영향.
+  // ★낡은 연도 교정 — 어떤 경로로든 '2024 최신 ○○' 각도가 들어오면 현재 연도로 치환(마지막 방어선)
+  const CUR_YEAR = String(new Date(Date.now() + 9 * 3600_000).getFullYear());
+  if (typeof body.angle === "string") body.angle = body.angle.replace(/20(1[0-9]|2[0-5])/g, CUR_YEAR);
+
   const styleInstruction = stylePersonaInstruction(user.id);
   // ★최신화 안전망 — 이슈 글감이 아니어도 그 키워드의 오늘 뉴스를 근거로 주입(모델 기억의 '2024 최신' 사고 방지).
   const resolvedNewsContext: string | null =

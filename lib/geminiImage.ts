@@ -47,7 +47,7 @@ const COMPOSITIONS = [
   "wide scene with a small human figure for scale contrast",
   "diagonal dynamic composition with strong movement",
 ];
-const MOODSconst MOODS = ["calm and tidy", "bright and optimistic", "cozy and warm", "fresh and energetic", "dramatic and striking", "playful and eye-catching", "luxurious and refined"];
+const MOODS = ["calm and tidy", "bright and optimistic", "cozy and warm", "fresh and energetic", "dramatic and striking", "playful and eye-catching", "luxurious and refined"];
 
 function fnv(str: string): number {
   let h = 0x811c9dc5;

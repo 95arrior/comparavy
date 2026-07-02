@@ -14,11 +14,13 @@ interface Topic { keyword: string; title: string; demandLabel: string; vol: numb
 const clusterOf = (s: string) => s.replace(/\s+/g, "").replace(/[^가-힣a-z0-9]/gi, "").slice(0, 4);
 
 // ★표시 글감 정제 — 키워드/제목/소주제 중 하나라도 겹치면 제외 + 최대 3개.
+const STALE_YEAR_RE = /20(1[0-9]|2[0-5])/; // 2010~2025 — '2024 최신' 같은 구식 글감은 어디서 왔든 화면에서 차단
 function sanitizeTopics(arr: Topic[], limit = 3): Topic[] {
   const kw = new Set<string>(), ti = new Set<string>(), cl = new Set<string>();
   const out: Topic[] = [];
   for (const t of arr ?? []) {
     if (!t || !t.keyword) continue;
+    if (STALE_YEAR_RE.test(t.keyword) || STALE_YEAR_RE.test(t.title ?? "")) continue;
     const c = clusterOf(t.title ?? t.keyword);
     if (kw.has(t.keyword) || ti.has(t.title) || cl.has(c)) continue;
     kw.add(t.keyword); ti.add(t.title); cl.add(c);
@@ -78,7 +80,7 @@ export default function Home({
   dismissedRef.current = dismissed;
 
   const todayDate = new Date().toISOString().slice(0, 10);
-  const topicsCacheKey = () => `ateflo_topics_v21_${todayDate}_${profileKey ?? ""}_normal`;
+  const topicsCacheKey = () => `ateflo_topics_v22_${todayDate}_${profileKey ?? ""}_normal`;
 
   const swapTopic = async (kw: string) => {
     if (swapping.includes(kw)) return;
@@ -109,7 +111,7 @@ export default function Home({
   };
 
   const loadTopics = useCallback(async () => {
-    const ck = `ateflo_topics_v21_${new Date().toISOString().slice(0, 10)}_${profileKey ?? ""}_normal`;
+    const ck = `ateflo_topics_v22_${new Date().toISOString().slice(0, 10)}_${profileKey ?? ""}_normal`;
     try {
       const raw = typeof window !== "undefined" ? localStorage.getItem(ck) : null;
       if (raw) { const p = JSON.parse(raw); const c = Array.isArray(p) ? sanitizeTopics(p) : []; if (c.length >= 3) { setTopics(c); setTopicsLoading(false); return; } }
