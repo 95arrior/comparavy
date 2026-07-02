@@ -530,6 +530,8 @@ export default function DashboardClient(props: DashboardProps) {
                 credits={credits}
                 onGoPerformance={() => goLabView("performance")}
                 onOpenCredits={() => setPage("credits")}
+                  unreadNews={unreadNews}
+                  onOpenNews={openNews}
                 onWriteKeyword={(keyword, title) => {
                   // 글감 카드 [이 글 쓰기] → 잔액 0이면 '쓰려던 글이 잠긴' 페이월, 있으면 확인 시트.
                   if (credits <= 0) {
@@ -663,7 +665,7 @@ export default function DashboardClient(props: DashboardProps) {
               <button onClick={openNews} className="flex w-full items-center gap-3 px-5 py-4 text-left transition active:bg-neutral-50">
                 <span className="relative inline-flex shrink-0">
                   <GlassIcon name="bell" tint="violet" size={36} />
-                  {unreadNews && <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-[#1D75F7] ring-2 ring-white" />}
+                  {unreadNews && <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white" />}
                 </span>
                 <span className="flex-1 text-[15px] font-medium text-neutral-800">공지·업데이트</span>
                 <svg className="text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>

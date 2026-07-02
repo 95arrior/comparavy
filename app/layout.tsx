@@ -15,16 +15,16 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `에이트플로(${SITE_NAME}) — 블로그 글쓰기, 키워드 하나면 끝`,
+    default: `에이트플로(${SITE_NAME}) — 네이버 블로그 수익화, 매일 글 하나면 끝`,
     template: `%s | 에이트플로`,
   },
   description: SITE_DESCRIPTION,
-  keywords: ["에이트플로", "AteFlo", "워드프레스 AI 글쓰기", "한국어 SEO 글", "AI 블로그 자동 발행", "블로그 글 자동 생성"],
+  keywords: ["에이트플로", "AteFlo", "네이버 블로그 수익화", "애드포스트 승인", "네이버 블로그 글쓰기", "블로그 부업", "AI 블로그 글 생성"],
   // 네이버 서치어드바이저 사이트 소유확인
   verification: { other: { "naver-site-verification": "da709303c197a62948b2ca78035db689574b8666" } },
   openGraph: {
     title: "에이트플로",
-    description: "글쓰기, 키워드 하나면 끝",
+    description: "네이버 블로그 수익화, 매일 글 하나면 끝",
     url: SITE_URL,
     siteName: SITE_NAME,
     locale: "ko_KR",
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "에이트플로",
-    description: "글쓰기, 키워드 하나면 끝",
+    description: "네이버 블로그 수익화, 매일 글 하나면 끝",
     images: [`${SITE_URL}/og-v2.jpg`],
   },
 };

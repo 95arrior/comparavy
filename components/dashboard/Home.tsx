@@ -40,6 +40,8 @@ export default function Home({
   onSelect,
   onGoPerformance,
   onOpenCredits,
+  unreadNews,
+  onOpenNews,
   profileKey,
 }: {
   displayName: string;
@@ -52,6 +54,9 @@ export default function Home({
   onGoPerformance: () => void;
   /** 크레딧 칩 탭 → 충전·사용내역 페이지 */
   onOpenCredits: () => void;
+  /** 공지 벨 — 안 읽은 소식 있으면 빨간 점+흔들림 */
+  unreadNews?: boolean;
+  onOpenNews?: () => void;
   profileKey?: string; // 주제:세부 — 글감 캐시 분리(주제 바꾸면 새 글감)
 }) {
   const [topics, setTopics] = useState<Topic[]>([]);
@@ -150,10 +155,20 @@ export default function Home({
       {/* 상단 — 블로그명 + 크레딧 칩(탭 → 충전·내역) */}
       <div className="at-rise flex items-center justify-between pt-7">
         <p className="at-label">{blogName}</p>
+        <div className="flex items-center gap-2">
+        {onOpenNews && (
+          <button onClick={onOpenNews} aria-label="공지·업데이트" className="at-press relative flex h-8 w-8 items-center justify-center rounded-full bg-white ring-1 ring-black/[0.05] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)]">
+            <span className={unreadNews ? "at-bell-shake inline-flex" : "inline-flex"}>
+              <GlassIcon name="bell" tint={unreadNews ? "violet" : "grey"} size={16} />
+            </span>
+            {unreadNews && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />}
+          </button>
+        )}
         <button onClick={onOpenCredits} className="at-press flex items-center gap-1 rounded-full bg-white px-3 py-1.5 ring-1 ring-black/[0.05] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)]">
           <GlassIcon name="credit" tint="blue" size={20} icon={0.7} radius={7} />
           <span className="text-[13px] font-bold text-[color:var(--at-grey-900)]">{credits.toLocaleString("ko-KR")}</span>
         </button>
+        </div>
       </div>
 
       {/* 히어로 — 코스 진행 링 */}
