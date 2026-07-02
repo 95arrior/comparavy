@@ -169,7 +169,7 @@ export async function GET(req: Request) {
 
   // ★트렌드 씨앗 × 개인화 증식 카드 — 키워드 풀과 독립. 조기 return에서도 트렌드가 나가게 함수로 분리.
   //  existing: 이미 담긴 글감 키워드(정규화) 집합(중복 방지). 온라인 vertical만 대상.
-  interface TrendCard { keyword: string; title: string; demandLabel: string; ssak: boolean; region: boolean; tone: BloggerType; vol: number; comp: Comp; blogTotal: number | null; tag: string; newsContext?: string }
+  interface TrendCard { keyword: string; title: string; demandLabel: string; ssak: boolean; region: boolean; tone: BloggerType; vol: number; comp: Comp; blogTotal: number | null; tag: string; newsContext?: string; titleSearch?: string; briefText?: string }
   async function buildTrendCards(existing: Set<string>): Promise<TrendCard[]> {
     const cards: TrendCard[] = [];
     if (!user) return cards;
@@ -178,7 +178,7 @@ export async function GET(req: Request) {
     try {
       const kstDay = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
       const ampKey = `amp:${user.id}:${kstDay}:${excludeSet.size}`;
-      let amped: { keyword: string; title: string; newsContext: string | null }[] = [];
+      let amped: { keyword: string; title: string; titleSearch?: string; newsContext: string | null; briefText?: string }[] = [];
       try {
         const { data: c } = await pool.from("api_cache").select("value, expires_at").eq("key", ampKey).single();
         if (c?.value && (!c.expires_at || new Date(c.expires_at).getTime() > Date.now())) amped = c.value as typeof amped;
@@ -210,7 +210,7 @@ export async function GET(req: Request) {
         if (cards.length >= 2) break;
         const nk = normalizeKeyword(t.keyword);
         if (usedSet.has(nk) || existing.has(nk)) continue;
-        cards.push({ keyword: t.keyword, title: t.title, demandLabel: "지금 뜨는 중", ssak: true, region: false, tone: bt, vol: 0, comp: "low" as Comp, blogTotal: null, tag: "trend", newsContext: t.newsContext ?? undefined });
+        cards.push({ keyword: t.keyword, title: t.title, demandLabel: "지금 뜨는 중", ssak: true, region: false, tone: bt, vol: 0, comp: "low" as Comp, blogTotal: null, tag: "trend", newsContext: t.newsContext ?? undefined, titleSearch: (t as { titleSearch?: string }).titleSearch, briefText: (t as { briefText?: string }).briefText });
       }
     } catch { /* 트렌드 없이 진행 */ }
     return cards;

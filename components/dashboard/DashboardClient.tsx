@@ -63,7 +63,7 @@ export default function DashboardClient(props: DashboardProps) {
     void fetch("/api/blog-profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ naver_blog_id: id }) });
   }
   // 글 생성 직전 '확인' 대기 (확인하면 genParams로 생성 시작 — 크레딧 실수 방지)
-  const [pendingWrite, setPendingWrite] = useState<{ keyword: string; title: string; newsContext?: string } | null>(null);
+  const [pendingWrite, setPendingWrite] = useState<{ keyword: string; title: string; newsContext?: string; briefText?: string } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState(false);
   const [page, setPage] = useState<null | "news" | "profile" | "credits">(null);
@@ -523,6 +523,7 @@ export default function DashboardClient(props: DashboardProps) {
                 promo: false,
                 withImages,
                 newsContext: pendingWrite.newsContext,
+                angleBrief: pendingWrite.briefText,
               });
               setPendingWrite(null);
             }}
@@ -556,13 +557,13 @@ export default function DashboardClient(props: DashboardProps) {
                 onOpenCredits={() => setPage("credits")}
                   unreadNews={unreadNews}
                   onOpenNews={openNews}
-                onWriteKeyword={(keyword, title, newsContext) => {
+                onWriteKeyword={(keyword, title, newsContext, briefText) => {
                   // 글감 카드 [이 글 쓰기] → 잔액 0이면 '쓰려던 글이 잠긴' 페이월, 있으면 확인 시트.
                   if (credits <= 0) {
                     setPaywall({ title });
                     return;
                   }
-                  setPendingWrite({ keyword, title, newsContext });
+                  setPendingWrite({ keyword, title, newsContext, briefText });
                 }}
                 onSelect={setSelected}
                 profileKey={`${blogProfile.vertical}:${blogProfile.sub_category ?? ""}`}

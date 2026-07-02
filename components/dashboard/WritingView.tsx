@@ -15,6 +15,8 @@ export interface GenParams {
   withImages?: boolean;
   /** ★오늘 이슈 글감 — 최신 뉴스 발췌(근거 자료). 있으면 엔진이 이 사실관계 기반으로 쓴다 */
   newsContext?: string;
+  /** ★앵글 브리프(C단계) — 이 글만의 방향(의도·구조·톤·독자·훅). 무중복 증식의 핵심 */
+  angleBrief?: string;
 }
 
 // ★생성 장면 v3 — "글이 눈앞에서 실제로 써진다".

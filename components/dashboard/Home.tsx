@@ -8,7 +8,7 @@ import { courseInfo } from "@/lib/course";
 import type { Comp } from "@/lib/topicScore";
 import type { Article } from "./types";
 
-interface Topic { keyword: string; title: string; demandLabel: string; vol: number; comp: Comp; tag?: string; blogTotal?: number | null; newsContext?: string }
+interface Topic { keyword: string; title: string; demandLabel: string; vol: number; comp: Comp; tag?: string; blogTotal?: number | null; newsContext?: string; briefText?: string }
 
 // 소주제 군집 키(서버와 동일 규칙) — 교체 시 비슷한 소주제 중복 방지
 const clusterOf = (s: string) => s.replace(/\s+/g, "").replace(/[^가-힣a-z0-9]/gi, "").slice(0, 4);
@@ -51,7 +51,7 @@ export default function Home({
   articles: Article[];
   /** 크레딧 잔액 — 0이면 '오늘의 글' 카드가 잠김(글감은 보임) */
   credits: number;
-  onWriteKeyword: (keyword: string, title: string, newsContext?: string) => void;
+  onWriteKeyword: (keyword: string, title: string, newsContext?: string, briefText?: string) => void;
   onSelect: (a: Article) => void;
   onGoPerformance: () => void;
   /** 크레딧 칩 탭 → 충전·사용내역 페이지 */
@@ -87,7 +87,7 @@ export default function Home({
   dismissedRef.current = dismissed;
 
   const todayDate = new Date().toISOString().slice(0, 10);
-  const topicsCacheKey = () => `ateflo_topics_v26_${todayDate}_${profileKey ?? ""}_normal`;
+  const topicsCacheKey = () => `ateflo_topics_v27_${todayDate}_${profileKey ?? ""}_normal`;
 
   const SWAP_LIMIT = 12; // 하루 교체 상한 — 풀 소진·API 낭비 방지(유저 요청)
   const swapCountKey = `ateflo_swaps_${new Date().toISOString().slice(0, 10)}`;
@@ -125,7 +125,7 @@ export default function Home({
   };
 
   const loadTopics = useCallback(async () => {
-    const ck = `ateflo_topics_v26_${new Date().toISOString().slice(0, 10)}_${profileKey ?? ""}_normal`;
+    const ck = `ateflo_topics_v27_${new Date().toISOString().slice(0, 10)}_${profileKey ?? ""}_normal`;
     try {
       const raw = typeof window !== "undefined" ? localStorage.getItem(ck) : null;
       if (raw) { const p = JSON.parse(raw); const c = Array.isArray(p) ? sanitizeTopics(p) : []; if (c.length >= 3) { setTopics(c); setTopicsLoading(false); return; } }
@@ -204,7 +204,7 @@ export default function Home({
       {/* 오늘의 글 — 단일 CTA */}
       <div className="at-rise at-d2 mt-6">
         <TodayCard
-          topic={first ? { keyword: first.keyword, title: first.title, tag: first.tag, newsContext: first.newsContext } : null}
+          topic={first ? { keyword: first.keyword, title: first.title, tag: first.tag, newsContext: first.newsContext, briefText: first.briefText } : null}
           loading={topicsLoading}
           credits={credits}
           info={info}
@@ -232,7 +232,7 @@ export default function Home({
             ) : rest.length > 0 ? (
               <div className="flex flex-col gap-2.5">
                 {rest.map((t) => (
-                  <TopicRow key={t.keyword} topic={t} onClick={() => onWriteKeyword(t.keyword, t.title, t.newsContext)} onSwap={() => swapTopic(t.keyword)} swapping={swapping.includes(t.keyword)} />
+                  <TopicRow key={t.keyword} topic={t} onClick={() => onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText)} onSwap={() => swapTopic(t.keyword)} swapping={swapping.includes(t.keyword)} />
                 ))}
               </div>
             ) : (
@@ -249,7 +249,7 @@ export default function Home({
 
 // ★글감 카드 v2 — 상단 데이터 배지 → 제목 → 명시 CTA. 교체는 우상단 텍스트 버튼(아이콘 없음).
 function TopicRow({ topic, onClick, onSwap, swapping }: {
-  topic: { keyword: string; title: string; vol: number; comp: Comp; blogTotal?: number | null; tag?: string; newsContext?: string };
+  topic: { keyword: string; title: string; vol: number; comp: Comp; blogTotal?: number | null; tag?: string; newsContext?: string; briefText?: string };
   onClick: () => void;
   onSwap?: () => void;
   swapping?: boolean;

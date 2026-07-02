@@ -66,6 +66,7 @@ export async function POST(request: Request) {
     promo?: boolean; // true=홍보용(업장 연결) | false=정보성(순수 정보). 네이버 수익형 단일 후 기본 false
     userStory?: string; // '내 이야기' 재료
     newsContext?: string; // ★오늘 이슈 — 최신 뉴스 발췌(근거 자료)
+    angleBrief?: string; // ★C단계 앵글 브리프(무중복 증식)
   };
   try {
     body = await request.json();
@@ -242,7 +243,7 @@ export async function POST(request: Request) {
           if (derived) keyword = derived;
         }
         const article = await streamArticle(
-          { keyword, angle: body.angle, type, tone, maxWords, variantInstruction, styleInstruction, relatedQueries, newsContext: resolvedNewsContext, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userTitle },
+          { keyword, angle: body.angle, type, tone, maxWords, variantInstruction, styleInstruction, relatedQueries, newsContext: resolvedNewsContext, angleBrief: typeof body.angleBrief === "string" ? body.angleBrief.slice(0, 900) : null, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userTitle },
           (bodyHtml) => send({ type: "body", html: bodyHtml }),
           (title) => send({ type: "title", title }),
           (u) => { void logUsage({ userId: user.id, model: u.model, kind: "generate", inputTokens: u.inputTokens, outputTokens: u.outputTokens }); },

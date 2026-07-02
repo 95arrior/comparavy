@@ -2,26 +2,76 @@ import Anthropic from "@anthropic-ai/sdk";
 import { logUsage } from "./usageLog";
 import type { TrendTopic } from "./trendTopics";
 
+// ★트렌드 씨앗 × 개인화 증식(C단계) — 같은 씨앗·롱테일이라도 유저마다 '앵글 브리프'가 달라 다른 글이 나온다.
+//  무중복 원리: 토픽(키워드)은 겹쳐도 되고, 글의 방향·구조·톤·독자가 달라야 홈판 피드에서 노출된다.
+//  구조 조합(의도×서두×전개×마무리×톤)은 코드가 userId로 결정론적 분산 → 무중복 보장(스케일 안전).
+//  창작(제목·독자 페르소나·훅)은 LLM이 그 조합 안에서. 검증(gap·momentum)은 씨앗층에서 끝났다.
 
-// ★트렌드 씨앗 × 개인화 증식 — 유한한 씨앗을 유저 데이터로 곱해 1만 명 무중복.
-//  스케일: 검증(momentum·gap)은 씨앗 층(공유·크론)에서 끝났고, 증식은 그 안전성을 '상속'받는다
-//  (저경쟁 씨앗의 롱테일은 더 저경쟁 → 유저별 네이버 API 재호출 불필요 = 쿼터 안전).
-//  최신성: 씨앗의 시의성 코어 단어를 반드시 보존(홈판 노출 생명선).
-
+export interface AngleBrief {
+  intent: string;   // 의도
+  opening: string;  // 서두 유형
+  flow: string;     // 전개 순서
+  closing: string;  // 마무리 방식
+  tone: string;     // 톤·문장 리듬
+  reader: string;   // 독자 페르소나(LLM)
+  hook: string;     // 첫 문단 훅(LLM)
+  coreWord: string; // 시의성 코어(제목 필수)
+}
 export interface AmplifiedTopic {
-  keyword: string;
-  title: string;
-  newsContext: string | null; // 씨앗에서 상속(최신성 근거)
+  keyword: string;       // 실검증 롱테일
+  title: string;         // 홈판 클릭형 제목
+  titleSearch: string;   // 검색형 제목(롱테일 포함)
+  newsContext: string | null;
+  brief: AngleBrief;
+  briefText: string; // brief를 엔진 주입용 지시문으로 직렬화(클라 스레딩용)
 }
 
-// FNV — userId → 결정적 난수(같은 유저 같은 날 같은 결과, 유저 간 상이)
+// ── 앵글 차원(구조 지문) — 스펙 최소치: 서두6·전개6·마무리5·톤5·의도6 ──
+const INTENT = ["정보 정리", "경험 공유", "비교 분석", "체크리스트", "문답(FAQ)", "시간순 가이드"];
+const OPENING = ["오해 깨기 반전", "공감 상황 훅", "결론 선공개", "의외의 숫자 제시", "질문 던지기", "실패담 도입"];
+const FLOW = ["문제→원인→해결", "단계별 순서", "비교표 중심", "자주 묻는 질문 나열", "시간순 흐름", "상황별 분기"];
+const CLOSING = ["핵심 요약", "이런 분께 도움", "다음 행동 안내", "놓치기 쉬운 주의점", "한 줄 정리와 응원"];
+const TONE = ["짧은 문장 위주", "차분한 설명형", "문답 교차", "담백한 기록형", "친근한 조언형"];
+
+// 조합 공간 크기(구조만) = 6×6×6×5×5 = 5,400. × 롱테일 선택(~6) = 32,400.
+// 여기에 유저 온보딩으로 갈리는 '독자 페르소나'(LLM)까지 곱하면, 온보딩이 다른 실제 유저 간엔 사실상 무한.
+// 온보딩이 동일한 유저 1만 명이 '같은 씨앗'에 몰려도 구조×롱테일 32,400 > 10,000이라 대부분 무중복.
+export const ANGLE_COMBO_SPACE = INTENT.length * OPENING.length * FLOW.length * CLOSING.length * TONE.length;
+
 function fnv(str: string): number {
   let h = 0x811c9dc5;
   for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
   return h >>> 0;
 }
 
-// 개인화에 쓰는 프로필 필드(부분 select 허용)
+// ★결정론적 구조 조합 배정 — (userId, 씨앗, 날짜)로 의도·서두·전개·마무리·톤을 분산. 유저 간 상이.
+export function assignAngle(userId: string, seedKeyword: string, day: string): Pick<AngleBrief, "intent" | "opening" | "flow" | "closing" | "tone"> {
+  const h = fnv(`${userId}|${seedKeyword}|${day}`);
+  return {
+    intent: INTENT[h % INTENT.length],
+    opening: OPENING[(h >>> 3) % OPENING.length],
+    flow: FLOW[(h >>> 6) % FLOW.length],
+    closing: CLOSING[(h >>> 9) % CLOSING.length],
+    tone: TONE[(h >>> 12) % TONE.length],
+  };
+}
+
+// 앵글 브리프 → 생성 엔진 주입용 지시문(순수 함수).
+export function briefToDirective(b: AngleBrief): string {
+  return [
+    "[앵글 브리프 — 이 글만의 방향(구조 지문)]",
+    `- 의도: ${b.intent}`,
+    `- 독자: ${b.reader}`,
+    `- 서두: ${b.opening}로 시작한다`,
+    `- 전개: ${b.flow} 순서로 푼다`,
+    `- 마무리: ${b.closing}로 끝낸다`,
+    `- 톤·문장 리듬: ${b.tone}`,
+    `- 첫 문단 훅: ${b.hook}`,
+    `- 시의성 코어 '${b.coreWord}'는 제목과 도입에 반드시 살린다.`,
+    "위 방향을 이 글의 뼈대로 삼되, 엔진의 안전·품질·모바일 포맷 규칙은 그대로 지킨다.",
+  ].join("\n");
+}
+
 export interface AmplifyProfile {
   sub_category?: string | null;
   audience?: string[] | null;
@@ -29,7 +79,6 @@ export interface AmplifyProfile {
   biz_address?: string | null;
 }
 
-// 온보딩 데이터 → 개인화 축 문자열(우리 데이터 해자)
 function userAxis(profile: AmplifyProfile | null): string {
   if (!profile) return "";
   const parts: string[] = [];
@@ -38,16 +87,21 @@ function userAxis(profile: AmplifyProfile | null): string {
   if (aud.length) parts.push(`대상 독자: ${aud.join("·")}`);
   if (profile.target) parts.push(`타깃: ${profile.target}`);
   if (profile.biz_address) {
-    // 시/구 단위만(개인정보 최소)
     const region = String(profile.biz_address).split(/\s+/).slice(0, 2).join(" ");
     if (region) parts.push(`지역: ${region}`);
   }
   return parts.join(" / ");
 }
 
+// 시의성 코어 추출 — 씨앗 제목/키워드에서 '지금인 이유' 단어.
+function coreOf(text: string): string {
+  const m = /(확대|개편|신설|인상|인하|동결|마감|출시|시행|개정|폐지|신청|변경|이번|2026)/.exec(text);
+  return m ? m[1] : "";
+}
+
 /**
- * 신선·검증된 씨앗들 × 유저 개인화 → 무중복 글감 N개.
- * 씨앗의 시의성 코어를 보존하면서 유저 관점으로 각도를 튼다. 실패 시 [].
+ * 신선·검증된 씨앗들 × 유저 개인화 → 무중복 글감 N개(앵글 브리프 포함).
+ * 구조 조합은 코드가 결정론적 배정(무중복), 창작은 LLM. 실패 시 [].
  */
 export async function amplifyForUser(
   seeds: TrendTopic[],
@@ -58,68 +112,84 @@ export async function amplifyForUser(
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey || seeds.length === 0) return [];
 
+  const day = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
   const axis = userAxis(profile);
-  // 유저별 씨앗 회전 — 같은 카테고리라도 유저마다 다른 씨앗 조합에서 출발
-  const uh = fnv(userId + new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10));
   const rotated = [...seeds].sort((a, b) => (fnv(a.keyword + userId) % 997) - (fnv(b.keyword + userId) % 997));
-  const picks = rotated.slice(0, Math.min(6, rotated.length));
-  // 씨앗별 실검증 롱테일(자동완성 = 실제 검색어). 증식은 이 안에서만 keyword를 고른다(유령 키워드 차단).
-  const seedList = picks.map((s, i) => {
+  const picks = rotated.slice(0, Math.min(want, rotated.length));
+
+  // 각 씨앗에 구조 조합(코드 배정) + 실검증 롱테일을 붙여 LLM에 브리핑
+  const briefs = picks.map((s) => {
+    const angle = assignAngle(userId, s.keyword, day);
     const lts = (s.longtails ?? []).map((l) => l.kw).slice(0, 6);
-    const ltStr = lts.length ? ` / 실검증검색어=[${lts.join(", ")}]` : "";
-    return `${i + 1}. 씨앗키워드="${s.keyword}" / 제목="${s.title}"${ltStr}`;
-  }).join("\n");
-  // 전체 롱테일 실존 집합(코드 검증용)
+    const core = coreOf(`${s.title} ${s.keyword}`);
+    return { seed: s, angle, lts, core };
+  });
   const validLongtails = new Set<string>();
-  for (const s of picks) for (const l of (s.longtails ?? [])) validLongtails.add(l.kw.replace(/\s+/g, ""));
+  for (const b of briefs) for (const kw of b.lts) validLongtails.add(kw.replace(/\s+/g, ""));
+
+  const seedList = briefs.map((b, i) => [
+    `${i + 1}번 씨앗:`,
+    `  실검증검색어=[${b.lts.join(", ") || "(없음)"}]`,
+    `  시의성코어="${b.core || "(없음)"}"`,
+    `  배정된 구조: 의도=${b.angle.intent} / 서두=${b.angle.opening} / 전개=${b.angle.flow} / 마무리=${b.angle.closing} / 톤=${b.angle.tone}`,
+  ].join("\n")).join("\n");
 
   const client = new Anthropic({ apiKey });
-  const prompt = `아래는 '지금 뜨는' 트렌드 씨앗들이다. 이 블로그 운영자에게 맞춘 글감 ${want}개를 만들어라.
-
-★keyword는 반드시 각 씨앗의 '실검증검색어' 목록 안에서 그대로 골라 쓴다(새 검색어를 지어내지 않는다 — 아무도 안 치는 유령 키워드 방지). 실검증검색어가 없는 씨앗은 씨앗키워드를 쓴다.
+  const prompt = `이 블로그 운영자에게 맞춘 글감 ${briefs.length}개를 만들어라. 각 글감은 아래 '배정된 구조'를 그대로 따르고, 창작 부분(제목·독자·훅)만 채운다.
 
 [운영자 개인화 축]
 ${axis || "(일반)"}
 
-[트렌드 씨앗 — 지금 뜨는 것]
+[씨앗 + 배정된 구조 — 구조는 바꾸지 말 것]
 ${seedList}
 
-★규칙(반드시):
-- 각 글감은 씨앗 하나를 골라 운영자 축(대상·지역·타깃·세부주제)으로 각도를 튼다.
-- ★씨앗의 '시의성 코어'(확대·개편·신설·인상·마감·2026·이번 등 '지금인 이유')는 제목에 반드시 살린다. 이걸 지우면 최신성이 죽는다.
-- 서로 다른 씨앗/각도를 써서 ${want}개가 겹치지 않게.
-- keyword=사람들이 실제 칠 검색어(롱테일 OK), title=클릭할 블로그 제목.
-- 개인화 축이 비어 있으면(일반) 씨앗을 살짝 구체화만 한다.
-- 다양성 시드값 ${uh % 100} 를 참고해 매번 다른 각도로.
-- JSON 배열만: [{"keyword":"...","title":"...","seedIndex":1}]`;
+★출력 규칙(반드시):
+- keyword: 그 씨앗의 실검증검색어 목록에서 그대로 하나 고른다(새로 지어내지 않는다). 목록이 없으면 비운다.
+- titleClick: 홈 피드에서 클릭을 부르는 호기심 훅 제목(운영자 독자에 맞게).
+- titleSearch: 검색형 제목 — 고른 keyword를 자연스럽게 포함.
+- reader: 이 글이 말 거는 독자를 온보딩 축 기반으로 한 문장 페르소나.
+- hook: 첫 문단이 잡을 긴장 한 줄(배정된 서두 유형에 맞게).
+- 시의성코어가 있으면 두 제목에 반드시 살린다.
+- JSON 배열만: [{"seedIndex":1,"keyword":"...","titleClick":"...","titleSearch":"...","reader":"...","hook":"..."}]`;
 
   try {
     const res = await client.messages.create({
       model: "claude-haiku-4-5",
-      max_tokens: 700,
+      max_tokens: 1100,
       messages: [{ role: "user", content: prompt }],
     });
     void logUsage({ userId, model: "claude-haiku-4-5", kind: "amplify", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
     const text = res.content[0]?.type === "text" ? res.content[0].text : "";
     const m = /\[[\s\S]*\]/.exec(text);
     if (!m) return [];
-    const parsed = JSON.parse(m[0]) as { keyword?: string; title?: string; seedIndex?: number }[];
+    const parsed = JSON.parse(m[0]) as { seedIndex?: number; keyword?: string; titleClick?: string; titleSearch?: string; reader?: string; hook?: string }[];
     const out: AmplifiedTopic[] = [];
     const seen = new Set<string>();
     for (const it of parsed) {
+      const b = briefs[(Number(it.seedIndex) || 1) - 1] ?? briefs[0];
+      if (!b) continue;
       let kw = (it.keyword ?? "").trim().slice(0, 60);
-      const ti = (it.title ?? "").trim().slice(0, 80);
-      if (!kw || !ti) continue;
-      const seed = picks[(Number(it.seedIndex) || 1) - 1] ?? picks[0];
-      // ★코드 검증 — LLM이 고른 keyword가 실검증 롱테일 풀에 없으면(지어냄) 씨앗의 실제 롱테일로 폴백.
+      // 코드 검증 — LLM이 고른 keyword가 실검증 롱테일에 없으면(지어냄) 실제 롱테일로 폴백.
       if (validLongtails.size > 0 && !validLongtails.has(kw.replace(/\s+/g, ""))) {
-        const fallback = (seed?.longtails ?? []).find((l) => !seen.has(l.kw.replace(/\s+/g, "")));
-        kw = fallback ? fallback.kw : (seed?.keyword ?? kw);
+        kw = b.lts.find((l) => !seen.has(l.replace(/\s+/g, ""))) ?? b.seed.keyword;
       }
+      if (!kw) kw = b.seed.keyword;
       const nk = kw.replace(/\s+/g, "");
       if (seen.has(nk)) continue;
       seen.add(nk);
-      out.push({ keyword: kw, title: ti, newsContext: seed?.newsContext ?? null });
+      const titleClick = (it.titleClick ?? b.seed.title).trim().slice(0, 80);
+      const titleSearch = (it.titleSearch ?? b.seed.title).trim().slice(0, 80);
+      out.push({
+        keyword: kw,
+        title: titleClick,
+        titleSearch,
+        newsContext: b.seed.newsContext ?? null,
+        brief: (() => {
+          const brief = { ...b.angle, reader: (it.reader ?? "").trim().slice(0, 120), hook: (it.hook ?? "").trim().slice(0, 160), coreWord: b.core };
+          return brief;
+        })(),
+        briefText: briefToDirective({ ...b.angle, reader: (it.reader ?? "").trim().slice(0, 120), hook: (it.hook ?? "").trim().slice(0, 160), coreWord: b.core }),
+      });
       if (out.length >= want) break;
     }
     return out;
