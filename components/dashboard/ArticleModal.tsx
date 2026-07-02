@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { photoMarkerToGuide, photoMarkerToSlot, photoSlots, markToNaverBold, addNaverSpacing } from "@/lib/photoMarkers";
 import CenterToast from "./CenterToast";
 import NaverPublishSheet from "./NaverPublishSheet";
+import { openNaverBlogApp } from "@/lib/naverApp";
 import { scanCompliance, applySuggestion } from "@/lib/complianceFilter";
 import type { Article } from "./types";
 
@@ -88,20 +89,10 @@ export default function ArticleModal({
       if (!id) return;
       try { localStorage.setItem("ateflo_naver_blogid", id); } catch { /* ignore */ }
     }
-    const ua = navigator.userAgent;
-    // ★모바일 — 무조건 네이버 블로그 '앱'으로: 안드로이드 intent(미설치 시 Play 자동 폴백), iOS 앱 시도 후 미전환이면 App Store.
-    //  클립보드는 건드리지 않는다(1단계에서 복사한 글 전체가 날아가면 안 됨).
-    if (/Android/i.test(ua)) {
-      const fallback = encodeURIComponent("https://play.google.com/store/apps/details?id=com.nhn.android.blog");
-      window.location.href = `intent://blog.naver.com/${id}/postwrite#Intent;scheme=https;package=com.nhn.android.blog;S.browser_fallback_url=${fallback};end`;
-      return;
-    }
-    if (/iPhone|iPad|iPod/.test(ua)) {
-      const timer = setTimeout(() => {
-        if (!document.hidden) window.location.href = "https://apps.apple.com/kr/app/id328813873";
-      }, 1800);
-      document.addEventListener("visibilitychange", () => { if (document.hidden) clearTimeout(timer); }, { once: true });
-      window.location.href = `https://m.blog.naver.com/${id}`;
+    // ★모바일 — 무조건 네이버 블로그 '앱'으로(iOS는 naverblog:// 스킴, 미설치 시 스토어).
+    //  클립보드는 건드리지 않는다(1단계에서 복사한 글 전체 보존).
+    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      openNaverBlogApp({ webPath: `${id}/postwrite` });
       return;
     }
     // 데스크톱 — 제목 미리 복사 후 글쓰기 새 탭

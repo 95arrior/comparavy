@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { ONLINE_CATEGORIES } from "@/lib/bloggerTypes";
 import { defaultBlogName } from "@/lib/blogName";
 import LoadingScreen from "@/components/LoadingScreen";
+import { openNaverBlogApp } from "@/lib/naverApp";
 import type { BlogProfile } from "@/lib/blogProfile";
 
 // ★온보딩 4막 — 화면이 아니라 '수익형 블로그 전략 세션'.
@@ -131,28 +132,13 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
     pickTopic(v);
   }
 
-  // ★검색 허용 설정 열기 — 기기별 최적 경로.
-  //  안드로이드: intent 링크(앱 있으면 앱, 없으면 Play 스토어 자동 폴백)
-  //  iOS: 유니버설 링크로 앱 시도 → 1.8초 안에 앱 전환이 없으면 App Store로
-  //  데스크톱: 블로그 관리(admin) — 기본 설정에 '검색 허용'이 있는 곳
+  // ★검색 허용 설정 열기 — 앱 우선(미설치 시 스토어), 데스크톱은 관리 페이지.
   function openSearchSetting() {
     const id = naverId.trim().replace(/^https?:\/\//, "").replace(/^m\./, "").replace(/^blog\.naver\.com\//, "").replace(/[/?#].*$/, "").trim();
-    const ua = navigator.userAgent;
-    if (/Android/i.test(ua)) {
-      const fallback = encodeURIComponent("https://play.google.com/store/apps/details?id=com.nhn.android.blog");
-      window.location.href = `intent://blog.naver.com/${id}#Intent;scheme=https;package=com.nhn.android.blog;S.browser_fallback_url=${fallback};end`;
-      return;
-    }
-    if (/iPhone|iPad|iPod/.test(ua)) {
-      const timer = setTimeout(() => {
-        if (!document.hidden) window.location.href = "https://apps.apple.com/kr/app/id328813873";
-      }, 1800);
-      const onHide = () => { if (document.hidden) clearTimeout(timer); };
-      document.addEventListener("visibilitychange", onHide, { once: true });
-      window.location.href = `https://m.blog.naver.com/${id}`;
-      return;
-    }
-    window.open(id ? `https://admin.blog.naver.com/AdminMain.naver?blogId=${id}` : "https://admin.blog.naver.com", "_blank", "noopener");
+    openNaverBlogApp({
+      webPath: id,
+      desktopUrl: id ? `https://admin.blog.naver.com/AdminMain.naver?blogId=${id}` : "https://admin.blog.naver.com",
+    });
   }
 
   async function save() {

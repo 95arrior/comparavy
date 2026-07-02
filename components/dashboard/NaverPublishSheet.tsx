@@ -42,7 +42,7 @@ export default function NaverPublishSheet({
         },
         {
           title: "네이버 앱에서\n붙여넣으세요",
-          sub: "버튼을 누르면 글쓰기가 열려요. 본문을 길게 눌러 ‘붙여넣기’ 하고 돌아오세요.",
+          sub: "앱이 열리면 연필(글쓰기)을 누르고, 본문을 길게 눌러 ‘붙여넣기’ 하세요.",
           cta: "네이버 블로그 앱 열기",
           act: () => onOpenNaverWrite(),
           aux: { label: "붙여넣었어요, 다음", act: () => setStep(2) },
