@@ -7,14 +7,18 @@ import { IMAGE_COST } from "@/lib/creditPacks";
 // ★이미지 동시 생성 토글: 켜면 글이 써지는 동안 사진 자리 앞 3곳의 AI 일러스트가 병렬로 만들어진다.
 export default function WriteTypeSheet({
   title,
+  titleAlt,
   onPick,
   onClose,
 }: {
   title: string;
-  onPick: (opts: { withImages: boolean }) => void;
+  titleAlt?: string; // 검색형 제목(2안). title=클릭형. 다르면 유저가 고른다.
+  onPick: (opts: { withImages: boolean; title?: string }) => void;
   onClose: () => void;
 }) {
   const [withImages, setWithImages] = useState(false);
+  const hasTwo = !!titleAlt && titleAlt.trim() && titleAlt.trim() !== title.trim();
+  const [pickTitle, setPickTitle] = useState(title);
   useEffect(() => {
     try { setWithImages(localStorage.getItem("ateflo_with_images") === "1"); } catch { /* ignore */ }
   }, []);
@@ -37,8 +41,28 @@ export default function WriteTypeSheet({
         style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom))" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <p className="text-xs font-medium text-neutral-400">이 글감으로 쓸까요?</p>
-        <p className="mt-1 text-[15px] font-bold leading-snug text-neutral-900">{title}</p>
+        <p className="text-xs font-medium text-neutral-400">{hasTwo ? "제목을 골라주세요" : "이 글감으로 쓸까요?"}</p>
+        {hasTwo ? (
+          <div className="mt-2 space-y-2">
+            {[{ t: title, tag: "클릭형" }, { t: titleAlt as string, tag: "검색형" }].map(({ t, tag }) => {
+              const on = pickTitle === t;
+              return (
+                <button key={t} onClick={() => setPickTitle(t)}
+                  className={`flex w-full items-start gap-2.5 rounded-2xl px-4 py-3 text-left transition ${on ? "bg-[#1D75F7]/[0.06] ring-1 ring-[#1D75F7]" : "bg-neutral-50 ring-1 ring-transparent"}`}>
+                  <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${on ? "border-[#1D75F7]" : "border-neutral-300"}`}>
+                    {on && <span className="h-1.5 w-1.5 rounded-full bg-[#1D75F7]" />}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[14px] font-bold leading-snug text-neutral-900">{t}</span>
+                    <span className={`mt-0.5 inline-block text-[11px] font-semibold ${on ? "text-[#1D75F7]" : "text-neutral-400"}`}>{tag}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="mt-1 text-[15px] font-bold leading-snug text-neutral-900">{title}</p>
+        )}
 
         {/* 이미지 동시 생성 토글 */}
         <button onClick={toggle} className="mt-4 flex w-full items-center gap-3 rounded-2xl bg-neutral-50 p-4 text-left transition active:scale-[0.99]">
@@ -52,7 +76,7 @@ export default function WriteTypeSheet({
         </button>
 
         <button
-          onClick={() => onPick({ withImages })}
+          onClick={() => onPick({ withImages, title: pickTitle })}
           className="at-press mt-4 w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-semibold text-white transition hover:opacity-90"
         >
           이 글 쓰기
