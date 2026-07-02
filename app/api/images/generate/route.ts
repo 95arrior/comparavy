@@ -25,6 +25,8 @@ export async function POST(request: Request) {
   const slot = String(body.slot ?? "").trim().slice(0, 200);
   const title = String(body.title ?? "").trim().slice(0, 120);
   const thumbnail = body.thumb === true; // 1번(대표) = 3초 훅 프롬프트
+  const articleId = typeof body.articleId === "string" ? body.articleId.slice(0, 60) : null;
+  const slotIdx = Number.isInteger(body.idx) && body.idx >= 0 && body.idx <= 9 ? (body.idx as number) : null;
   if (!slot) return NextResponse.json({ error: "어떤 이미지가 필요한지 알 수 없어요." }, { status: 400 });
 
   // 선차감(원자적) — 부족하면 402
@@ -44,6 +46,14 @@ export async function POST(request: Request) {
       const { error: upErr } = await admin.storage.from("ai-images").upload(path, Buffer.from(img.base64, "base64"), { contentType: img.mime });
       if (!upErr) url = admin.storage.from("ai-images").getPublicUrl(path).data.publicUrl;
     } catch { /* 폴백 */ }
+    // ★계정 저장 — 웹·모바일 어디서든 보이게(재과금 방지). RLS로 본인 글만.
+    if (url && articleId && slotIdx !== null) {
+      try {
+        const { data: cur } = await supabase.from("articles").select("images").eq("id", articleId).eq("user_id", user.id).single();
+        const merged = { ...((cur?.images as Record<string, string>) ?? {}), [String(slotIdx)]: url };
+        await supabase.from("articles").update({ images: merged }).eq("id", articleId).eq("user_id", user.id);
+      } catch { /* 컬럼 미적용 — 기기 저장 폴백 유지 */ }
+    }
     return NextResponse.json({ ok: true, url, dataUrl: url ? undefined : `data:${img.mime};base64,${img.base64}`, credits: balance });
   } catch (e) {
     // 멱등 환불 — 같은 ref 재시도에도 1회만

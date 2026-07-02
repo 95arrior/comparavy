@@ -125,19 +125,28 @@ export default function ArticleModal({
   // ★AI 이미지 — 사진 자리별 무자막 일러스트 생성(장당 4크레딧, 실패 시 자동 환불).
   //  네이버 앱 업로드용으로 다운로드 → 사진 자리에 올리는 흐름(외부 이미지 붙여넣기는 네이버가 차단).
   const [imgs, setImgs] = useState<Record<number, { url?: string; busy?: boolean; err?: string }>>({});
-  // 글 쓸 때 동시 생성된 이미지 이어받기(기기 저장 URL) — 재방문에도 유지
+  // 이미지 로드 — ★서버(article.images, 계정 저장)가 진실 + 기기(localStorage) 병합. 기기에만 있던 건 서버로 승격(1회).
   useEffect(() => {
+    const server: Record<string, string> = (article.images as Record<string, string>) ?? {};
+    let local: Record<string, string> = {};
     try {
       const raw = localStorage.getItem(`ateflo_imgs_${article.id}`);
-      if (raw) {
-        const saved = JSON.parse(raw) as Record<number, string>;
-        setImgs((m) => {
-          const next = { ...m };
-          for (const [k, v] of Object.entries(saved)) if (v) next[Number(k)] = { url: v };
-          return next;
-        });
-      }
+      if (raw) local = JSON.parse(raw);
     } catch { /* ignore */ }
+    const combined = { ...local, ...server }; // 서버 우선
+    if (Object.keys(combined).length > 0) {
+      setImgs((m) => {
+        const next = { ...m };
+        for (const [k, v] of Object.entries(combined)) if (v) next[Number(k)] = { url: v };
+        return next;
+      });
+    }
+    // 기기에만 있고 서버에 없는 건 승격 → 다른 기기에서도 보이게
+    const promote: Record<string, string> = {};
+    for (const [k, v] of Object.entries(local)) if (v && !server[k]) promote[k] = v;
+    if (Object.keys(promote).length > 0) {
+      void fetch(`/api/articles/${article.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ images: promote }) });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [article.id]);
   async function makeImage(i: number, slot: string) {
@@ -147,7 +156,7 @@ export default function ArticleModal({
       const res = await fetch("/api/images/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slot, title, thumb: i === 0 }),
+        body: JSON.stringify({ slot, title, thumb: i === 0, articleId: article.id, idx: i }),
       });
       const data = await res.json();
       if (!res.ok) {

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { countKoreanChars } from "@/lib/humanizer";
-import { ensureUserRow } from "@/lib/userPlan";
 
 async function getUser() {
   const supabase = await createSupabaseServerClient();
@@ -22,16 +21,23 @@ export async function PATCH(
   const { supabase, user } = await getUser();
   if (!user) return NextResponse.json({ error: "로그인이 필요해요." }, { status: 401 });
 
-  // 글 편집은 프로 전용 (무료는 생성·복사만)
-  const planRow = await ensureUserRow(supabase, user.id);
-  if (planRow.plan !== "pro") {
-    return NextResponse.json(
-      { error: "글 편집은 프로 플랜 기능이에요. 프로로 업그레이드하면 수정·이미지 삽입·발행을 할 수 있어요.", upgrade: true },
-      { status: 403 },
-    );
-  }
-
+  // (구 '프로 전용 편집' 게이트 철거 — 크레딧 시대엔 전원 유료라 근거 없음. 발행 표시·규제 수정이 전 유저에게 필요)
   const body = await request.json().catch(() => ({}));
+
+  // ★이미지 URL 병합 저장 — 기기 아닌 계정에(웹·모바일 동기화). {"0":url,...} 형태만 허용.
+  if (body.images && typeof body.images === "object" && !Array.isArray(body.images)) {
+    const incoming: Record<string, string> = {};
+    for (const [k, v] of Object.entries(body.images as Record<string, unknown>)) {
+      if (/^[0-9]$/.test(k) && typeof v === "string" && v.startsWith("https://") && v.length < 500) incoming[k] = v;
+    }
+    if (Object.keys(incoming).length > 0) {
+      try {
+        const { data: cur } = await supabase.from("articles").select("images").eq("id", id).eq("user_id", user.id).single();
+        const merged = { ...(cur?.images ?? {}), ...incoming };
+        await supabase.from("articles").update({ images: merged }).eq("id", id).eq("user_id", user.id);
+      } catch { /* 컬럼 미적용 등 — 기능엔 지장 없음 */ }
+    }
+  }
   const update: Record<string, unknown> = {};
   if (typeof body.title === "string") update.title = body.title;
   if (typeof body.body_html === "string") {
