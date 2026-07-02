@@ -15,7 +15,6 @@ import { isAdminEmail } from "@/lib/adminStats";
 import { logUsage } from "@/lib/usageLog";
 import { recordAiResult } from "@/lib/aiHealth";
 import { VERTICAL_DEFAULTS } from "@/lib/blogProfile";
-import { buildBusinessBox } from "@/lib/businessBox";
 
 export const maxDuration = 300;
 
@@ -230,11 +229,8 @@ export async function POST(request: Request) {
           return;
         }
 
-        // 업체 정보 NAP 박스를 글 하단에 자동 삽입(데이터 있을 때만, 글자수 검증 이후 — 검증은 원본 기준).
-        // simhash(근접중복)는 박스 제외한 본문 기준(박스가 전 글 공통이라 유사도 오판 방지).
-        const fullAddress = [profileRow?.biz_address, profileRow?.biz_detail_address].filter(Boolean).join(" ").trim() || null;
-        const businessBox = buildBusinessBox({ name: profileRow?.biz_name, address: fullAddress, phone: profileRow?.biz_phone, hours: profileRow?.biz_hours, hoursJson: profileRow?.biz_hours_json });
-        const finalBody = article.body_html + businessBox;
+        // (네이버 수익형 단일 — 자영업 시절의 업체 NAP 박스 삽입 제거. 수익형 블로그에 영업장 정보는 무의미 + 전 글 공통 박스는 패턴 지문 리스크)
+        const finalBody = article.body_html;
 
         // 저장 + 사용량 증가
         const insertPayload: Record<string, unknown> = {
