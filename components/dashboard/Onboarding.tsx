@@ -6,12 +6,33 @@ import { defaultBlogName } from "@/lib/blogName";
 import LoadingScreen from "@/components/LoadingScreen";
 import type { BlogProfile } from "@/lib/blogProfile";
 
-// 토스식 온보딩 — 네이버 수익형 단일. 한 화면 = 한 질문, 최소 스텝(주제 → 확인 → 완료).
-// 편집은 ProfileSettings가 담당(분리). 이건 신규(initial=null) 전용.
+// ★온보딩 4막 — 화면이 아니라 '수익형 블로그 전략 세션'.
+//  1막 주제 탐색: 주제를 고르면 실시간 검색 데이터로 시장을 판정해준다 (첫인상 = "얘네 데이터 있네")
+//  2막 플랜: 선택 주제 기준 개인화 20일 승인 준비 플랜 + 첫 공략 키워드 미리보기
+//  3막 세팅: 네이버 블로그 개설·설정 체크리스트(검증된 것만 확정 톤) + 블로그 아이디 연결
+//  4막 시작: 프로필 저장 → 코스 D-1로
+// 정직 원칙: 수익·승인을 보장하는 문구 금지. '시작점으로 최적' 프레임(시장 특성)까지만.
 
-type Step = "sub" | "review" | "done";
+type Step = "topic" | "verdict" | "plan" | "setup" | "done";
 
-// 한글 초성 추출 — "재테크" → "ㅈㅌㅋ". 초성 검색용.
+// 주제별 수익성 참고 등급 — 광고 단가·상업성 기준(자료: 주제 수익성 맵). 보장 아님, 참고용.
+const PROFIT: Record<string, { grade: "상" | "중상" | "중"; note: string }> = {
+  "재테크·투자": { grade: "상", note: "광고 단가가 높은 대표 주제" },
+  "IT·디지털·리뷰": { grade: "상", note: "제품 리뷰·제휴와 궁합이 좋아요" },
+  "자동차": { grade: "상", note: "소재가 풍부하고 단가가 높아요" },
+  "부업·N잡": { grade: "상", note: "검색 수요가 꾸준히 커요" },
+  "쇼핑·제품리뷰": { grade: "중상", note: "체험단·제휴로 이어지기 좋아요" },
+  "건강·다이어트": { grade: "중상", note: "수요 크지만 과장 표현 주의(우리가 자동 검토)" },
+  "교육·정보": { grade: "중", note: "꾸준한 검색, 경쟁도 무난" },
+  "살림·인테리어": { grade: "중", note: "생활 밀착형, 체험단 기회 많음" },
+  "자기계발": { grade: "중", note: "팬이 쌓이면 강한 주제" },
+  "여행": { grade: "중", note: "시즌을 타지만 사진 자산에 유리" },
+};
+
+interface KwLite { keyword: string; monthlyMobileQcCnt: number; compIdx: string }
+interface Verdict { total: number; goldenCount: number; preview: KwLite[]; volumeSum: number }
+
+// 한글 초성 검색
 const CHO = ["ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅃ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅉ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"];
 function toCho(s: string): string {
   return [...s].map((ch) => {
@@ -19,7 +40,6 @@ function toCho(s: string): string {
     return code >= 0 && code <= 11171 ? CHO[Math.floor(code / 588)] : ch;
   }).join("");
 }
-// 칩 검색 매칭 — 부분일치(재→재테크) + 초성(ㅈㅌ→재테크).
 function matchSub(chip: string, q: string): boolean {
   const query = q.replace(/\s/g, "");
   if (!query) return true;
@@ -28,8 +48,6 @@ function matchSub(chip: string, q: string): boolean {
   if (/^[ㄱ-ㅎ]+$/.test(query)) return toCho(c).includes(query);
   return false;
 }
-
-// 직접입력 가비지 가드(클라 즉시판정 — 의존성 없는 순수버전). 자판난타·자모·의미없음 차단.
 function isGarbageInput(raw: string): boolean {
   const k = (raw ?? "").trim();
   const meaningful = k.match(/[가-힣a-zA-Z]/g) ?? [];
@@ -40,16 +58,20 @@ function isGarbageInput(raw: string): boolean {
 }
 
 export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogProfile) => void; onCancel?: () => void }) {
-  const [step, setStep] = useState<Step>("sub");
+  const [step, setStep] = useState<Step>("topic");
   const [dir, setDir] = useState<"fwd" | "back">("fwd");
-  const [customErr, setCustomErr] = useState("");
   const [sub, setSub] = useState("");
   const [customSub, setCustomSub] = useState("");
+  const [customErr, setCustomErr] = useState("");
+  const [checking, setChecking] = useState(false);
+  const [verdict, setVerdict] = useState<Verdict | null>(null);
+  const [blogName, setBlogName] = useState("");
+  const [naverId, setNaverId] = useState("");
+  const [checks, setChecks] = useState<boolean[]>([false, false, false]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedProfile, setSavedProfile] = useState<BlogProfile | null>(null);
 
-  // 온보딩 동안 바깥 페이지(회색 래퍼/body) 스크롤 잠금 — 고정 화면 보장
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -57,35 +79,63 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
   }, []);
 
   const inputCls = "w-full rounded-xl bg-neutral-100 px-4 py-3.5 text-base outline-none transition placeholder:text-neutral-400 focus:bg-white focus:ring-2 focus:ring-[#1D75F7]/30";
-  const primaryBtn = "w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-semibold text-white transition hover:opacity-90 active:scale-[0.99] disabled:opacity-50";
-  const skipBtn = "mt-2 w-full py-2 text-sm font-medium text-neutral-400 transition hover:text-neutral-600 disabled:opacity-50";
+  const primaryBtn = "at-press w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-semibold text-white transition hover:opacity-90 disabled:opacity-50";
+  const ghostBtn = "mt-2 w-full py-2 text-sm font-medium text-neutral-400 transition hover:text-neutral-600 disabled:opacity-50";
 
-  const order: Step[] = ["sub", "review", "done"];
+  const order: Step[] = ["topic", "verdict", "plan", "setup", "done"];
   const idx = order.indexOf(step);
+  const dots = order.filter((s) => s !== "done");
   const goBack = () => { setDir("back"); setStep(order[Math.max(idx - 1, 0)]); };
 
-  function pickSub(s: string) {
-    setSub(s); setDir("fwd"); setStep("review");
+  // 1막 → 주제 선택 시 실시간 데이터 판정
+  async function pickTopic(s: string) {
+    setSub(s);
+    setBlogName(defaultBlogName(s));
+    setDir("fwd");
+    setStep("verdict");
+    setChecking(true);
+    setVerdict(null);
+    try {
+      const res = await fetch("/api/keywords/discover", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic: s }),
+      });
+      const data = await res.json();
+      const kws: KwLite[] = Array.isArray(data.keywords) ? data.keywords : [];
+      const golden = kws.filter((k) => k.compIdx === "낮음");
+      const preview = (golden.length >= 3 ? golden : kws).slice(0, 3);
+      setVerdict({
+        total: kws.length,
+        goldenCount: golden.length,
+        preview,
+        volumeSum: kws.reduce((t, k) => t + (k.monthlyMobileQcCnt || 0), 0),
+      });
+    } catch {
+      setVerdict({ total: 0, goldenCount: 0, preview: [], volumeSum: 0 });
+    } finally {
+      setChecking(false);
+    }
   }
-  // 직접입력 제출 — 가비지면 막고(가드), 통과하면 진행
   function submitCustom() {
     const v = customSub.trim();
     if (!v) return;
     if (isGarbageInput(v)) { setCustomErr("그건 주제로 보기 어려워요. 다시 입력해 주세요."); return; }
-    setCustomErr(""); pickSub(v);
+    setCustomErr("");
+    pickTopic(v);
   }
 
   async function save() {
     if (saving || !sub) return;
     setSaving(true); setError(null);
     try {
+      // 네이버 블로그 아이디 — 발행 직행용(기기 저장)
+      const id = naverId.trim().replace(/^https?:\/\//, "").replace(/^m\./, "").replace(/^blog\.naver\.com\//, "").replace(/[/?#].*$/, "").trim();
+      try { if (id) localStorage.setItem("ateflo_naver_blogid", id); } catch { /* ignore */ }
       const res = await fetch("/api/blog-profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          vertical: "online", sub_category: sub, blog_name: defaultBlogName(sub),
-          publish_mode: "manual",
-        }),
+        body: JSON.stringify({ vertical: "online", sub_category: sub, blog_name: blogName.trim() || defaultBlogName(sub), publish_mode: "manual" }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data?.error ?? "저장하지 못했어요."); return; }
@@ -95,138 +145,236 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
     finally { setSaving(false); }
   }
 
-  const dots = order.filter((s) => s !== "done");
+  const profit = PROFIT[sub] ?? null;
 
-  // 하단 고정 버튼(모바일 앱 표준) — 스텝별 액션. sub(탭 진행)·done 외.
   const footer =
-    step === "review" ? (
+    step === "verdict" && !checking ? (
       <>
-        <button onClick={save} disabled={saving} className={primaryBtn}>{saving ? "저장 중…" : "맞아요, 시작할게요"}</button>
-        <button onClick={goBack} disabled={saving} className={skipBtn}>수정할게요</button>
+        <button onClick={() => { setDir("fwd"); setStep("plan"); }} className={primaryBtn}>이 주제로 시작할게요</button>
+        <button onClick={goBack} className={ghostBtn}>다른 주제 볼래요</button>
+      </>
+    ) : step === "plan" ? (
+      <button onClick={() => { setDir("fwd"); setStep("setup"); }} className={primaryBtn}>좋아요, 이대로 갈게요</button>
+    ) : step === "setup" ? (
+      <>
+        <button onClick={save} disabled={saving} className={primaryBtn}>{saving ? "준비 중…" : "설정 끝, 시작할게요"}</button>
+        <button onClick={save} disabled={saving} className={ghostBtn}>블로그는 나중에 만들게요</button>
       </>
     ) : step === "done" ? (
-      <button onClick={() => savedProfile && onSaved(savedProfile)} className={primaryBtn}>첫 글 쓰러 가기</button>
+      <button onClick={() => savedProfile && onSaved(savedProfile)} className={primaryBtn}>D-1 시작하기</button>
     ) : null;
 
   return (
-    // 화면 전체 고정 — 회색 래퍼 위를 덮고 스크롤 차단. h-[100dvh]로 주소바 토글에 높이 맞춤, 버튼 하단 고정(safe-area).
     <div className="fixed left-0 top-0 z-50 flex h-[100dvh] w-full flex-col overflow-hidden bg-white">
       <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-md px-6 pt-7 pb-4">
-      {/* 취소 — 설정에서 재진입(재온보딩)일 때만. 원래 설정으로 복귀 */}
-      {onCancel && step !== "done" && (
-        <div className="mb-2 flex justify-end">
-          <button onClick={onCancel} className="text-sm font-medium text-neutral-400 transition hover:text-neutral-700">취소</button>
-        </div>
-      )}
-
-      {/* 진행 점 */}
-      {step !== "done" && (
-        <div className="mb-8 flex items-center justify-center gap-1.5">
-          {dots.map((s) => (
-            <span key={s} className={`h-1.5 rounded-full transition-all ${s === step ? "w-5 bg-[#1D75F7]" : dots.indexOf(s) < dots.indexOf(step) ? "w-1.5 bg-[#1D75F7]/40" : "w-1.5 bg-neutral-200"}`} />
-          ))}
-        </div>
-      )}
-
-      {/* 뒤로가기 (첫 화면·완료 제외) */}
-      {step !== "sub" && step !== "done" && (
-        <button onClick={goBack} className="mb-3 -ml-1 flex items-center gap-1 text-sm text-neutral-400 transition hover:text-neutral-700">
-          <span className="text-base leading-none">←</span> 뒤로
-        </button>
-      )}
-
-      <div key={step} className={`min-h-[300px] ${dir === "back" ? "ateflo-slide-back" : "ateflo-slide-fwd"}`}>
-        {/* 1) 주제 — 어떤 주제로 수익 낼 건가 */}
-        {step === "sub" && (
-          <div>
-            <h2 className="font-pretendard whitespace-pre-line text-2xl font-bold tracking-tight">{"어떤 주제로\n수익 낼 거예요?"}</h2>
-            <p className="mt-2 text-sm text-neutral-500">고른 주제로 검색되는 글감을 추천해드려요. 나중에 바꿀 수 있어요.</p>
-            {/* 검색바(고정) — 부분일치 + 초성(ㅈㅌ→재테크) */}
-            <div className="relative mt-4">
-              <svg className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4-4" /></svg>
-              <input
-                value={customSub}
-                onChange={(e) => { setCustomSub(e.target.value); if (customErr) setCustomErr(""); }}
-                onKeyDown={(e) => {
-                  if (e.key !== "Enter") return;
-                  const f = ONLINE_CATEGORIES.filter((s) => matchSub(s, customSub));
-                  if (f.length === 1) pickSub(f[0]);
-                  else if (customSub.trim() && !ONLINE_CATEGORIES.includes(customSub.trim())) submitCustom();
-                }}
-                placeholder="검색 또는 직접 입력 (예: 재테크 · ㅈㅌ)"
-                maxLength={40}
-                className={`${inputCls} pl-10`}
-              />
+          {onCancel && step !== "done" && (
+            <div className="mb-2 flex justify-end">
+              <button onClick={onCancel} className="text-sm font-medium text-neutral-400 transition hover:text-neutral-700">취소</button>
             </div>
-            {customErr && <p className="mt-2 text-xs font-medium text-amber-600">{customErr}</p>}
-            {/* 칩 스크롤 영역 — 검색 결과만 */}
-            {(() => {
-              const filtered = ONLINE_CATEGORIES.filter((s) => matchSub(s, customSub));
-              const q = customSub.trim();
-              return (
-                <div className="no-scrollbar mt-3 max-h-[42vh] overflow-y-auto">
-                  {filtered.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {filtered.map((s) => (
-                        <button key={s} onClick={() => pickSub(s)} className="rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm font-medium text-neutral-700 transition hover:border-[#1D75F7] hover:bg-[#1D75F7]/[0.03] active:scale-95">{s}</button>
-                      ))}
-                    </div>
-                  )}
-                  {/* 목록에 없는 거 입력 → 직접 시작 */}
-                  {q && !ONLINE_CATEGORIES.includes(q) && (
-                    <button onClick={submitCustom} className="mt-3 flex w-full items-center gap-2 rounded-xl border border-dashed border-[#1D75F7]/40 bg-[#1D75F7]/[0.04] px-4 py-3 text-left text-sm font-semibold text-[#1D75F7] transition hover:bg-[#1D75F7]/[0.07] active:scale-[0.99]">
-                      ＋ ‘{q}’ (으)로 직접 시작하기
-                    </button>
-                  )}
-                </div>
-              );
-            })()}
-          </div>
-        )}
+          )}
 
-        {/* 2) 확인 */}
-        {step === "review" && (
-          <div>
-            <h2 className="font-pretendard text-2xl font-bold tracking-tight">이 주제로 시작할까요?</h2>
-            <p className="mt-2 text-sm text-neutral-500">맞으면 시작할게요. 나중에 바꿀 수 있어요.</p>
-            <dl className="mt-5 divide-y divide-neutral-100 rounded-2xl bg-white ring-1 ring-black/[0.04]">
-              {([
-                ["주제", sub],
-                ["블로그 이름", defaultBlogName(sub)],
-              ] as [string, string][]).map(([k, v]) => (
-                <div key={k} className="flex gap-3 px-4 py-3">
-                  <dt className="w-16 shrink-0 text-[13px] font-medium text-neutral-400">{k}</dt>
-                  <dd className="min-w-0 flex-1 break-words text-[14px] font-medium text-neutral-800">{v}</dd>
-                </div>
+          {step !== "done" && (
+            <div className="mb-8 flex items-center justify-center gap-1.5">
+              {dots.map((s) => (
+                <span key={s} className={`h-1.5 rounded-full transition-all ${s === step ? "w-5 bg-[#1D75F7]" : dots.indexOf(s) < dots.indexOf(step) ? "w-1.5 bg-[#1D75F7]/40" : "w-1.5 bg-neutral-200"}`} />
               ))}
-            </dl>
-            {error && <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{error}</div>}
-          </div>
-        )}
+            </div>
+          )}
 
-        {/* 완료 — 화면 중앙, 파란 체크가 그려지듯 */}
-        {step === "done" && (
-          <div className="flex min-h-[58vh] flex-col items-center justify-center text-center">
-            <span className="ateflo-circle-pop flex h-20 w-20 items-center justify-center rounded-full bg-[#1D75F7] text-white shadow-[0_12px_44px_rgba(29,117,247,0.45)]">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path className="ateflo-check-draw" d="M5 13l4 4L19 7" /></svg>
-            </span>
-            <h2 className="font-pretendard mt-6 text-2xl font-bold tracking-tight">다 됐어요! 🎉</h2>
-            <p className="mt-2.5 text-[15px] leading-relaxed text-neutral-600">네이버 블로그 수익화,<br />지금부터 시작이에요.</p>
+          {step !== "topic" && step !== "done" && (
+            <button onClick={goBack} className="mb-3 -ml-1 flex items-center gap-1 text-sm text-neutral-400 transition hover:text-neutral-700">
+              <span className="text-base leading-none">←</span> 뒤로
+            </button>
+          )}
+
+          <div key={step} className={`min-h-[300px] ${dir === "back" ? "ateflo-slide-back" : "ateflo-slide-fwd"}`}>
+            {/* ═══ 1막. 주제 탐색 ═══ */}
+            {step === "topic" && (
+              <div>
+                <p className="at-label">수익형 블로그 전략 세션</p>
+                <h2 className="at-headline mt-1 whitespace-pre-line">{"어떤 주제로\n수익을 낼까요?"}</h2>
+                <p className="mt-2 text-sm text-neutral-500">주제를 고르면 실제 검색 데이터로 시장을 확인해드려요.</p>
+                <div className="relative mt-4">
+                  <svg className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4-4" /></svg>
+                  <input
+                    value={customSub}
+                    onChange={(e) => { setCustomSub(e.target.value); if (customErr) setCustomErr(""); }}
+                    onKeyDown={(e) => {
+                      if (e.key !== "Enter") return;
+                      const f = ONLINE_CATEGORIES.filter((s) => matchSub(s, customSub));
+                      if (f.length === 1) pickTopic(f[0]);
+                      else if (customSub.trim() && !ONLINE_CATEGORIES.includes(customSub.trim())) submitCustom();
+                    }}
+                    placeholder="검색 또는 직접 입력 (예: 재테크 · 캠핑)"
+                    maxLength={40}
+                    className={`${inputCls} pl-10`}
+                  />
+                </div>
+                {customErr && <p className="mt-2 text-xs font-medium text-amber-600">{customErr}</p>}
+                {(() => {
+                  const filtered = ONLINE_CATEGORIES.filter((s) => matchSub(s, customSub));
+                  const q = customSub.trim();
+                  return (
+                    <div className="no-scrollbar mt-3 max-h-[46vh] overflow-y-auto">
+                      {filtered.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {filtered.map((s) => {
+                            const g = PROFIT[s];
+                            return (
+                              <button key={s} onClick={() => pickTopic(s)} className="at-press flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm font-medium text-neutral-700 transition hover:border-[#1D75F7] hover:bg-[#1D75F7]/[0.03]">
+                                {s}
+                                {g && g.grade === "상" && <span className="rounded bg-[#1D75F7]/10 px-1 py-0.5 text-[10px] font-bold text-[#1D75F7]">수익성 상</span>}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                      {q && !ONLINE_CATEGORIES.includes(q) && (
+                        <button onClick={submitCustom} className="at-press mt-3 flex w-full items-center gap-2 rounded-xl border border-dashed border-[#1D75F7]/40 bg-[#1D75F7]/[0.04] px-4 py-3 text-left text-sm font-semibold text-[#1D75F7] transition hover:bg-[#1D75F7]/[0.07]">
+                          ＋ ‘{q}’ 데이터 확인해보기
+                        </button>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* ═══ 1.5막. 시장 판정 ═══ */}
+            {step === "verdict" && (
+              <div>
+                <p className="at-label">시장 확인</p>
+                <h2 className="at-headline mt-1">‘{sub}’</h2>
+                {checking ? (
+                  <div className="at-ai-swap mt-5 rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
+                    <div className="ateflo-skel h-5 w-2/3 rounded" />
+                    <div className="ateflo-skel mt-2.5 h-4 w-1/2 rounded" />
+                    <p className="mt-3 text-[12px] font-semibold text-[#8b7cf7]">네이버 검색 데이터를 확인하고 있어요…</p>
+                  </div>
+                ) : verdict && (
+                  <div className="mt-5 space-y-3">
+                    {/* 판정 카드 */}
+                    <div className="at-rise rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <p className="text-[11.5px] font-semibold text-neutral-400">월 검색 규모</p>
+                          <p className="mt-0.5 text-[19px] font-extrabold tracking-tight text-[color:var(--at-grey-900)]">
+                            {verdict.volumeSum > 0 ? `${verdict.volumeSum.toLocaleString("ko-KR")}회+` : "확인 중"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[11.5px] font-semibold text-neutral-400">경쟁 낮은 키워드</p>
+                          <p className="mt-0.5 text-[19px] font-extrabold tracking-tight text-emerald-600">
+                            {verdict.goldenCount > 0 ? `${verdict.goldenCount}개 발견` : verdict.total > 0 ? "확장 탐색 필요" : "데이터 준비 중"}
+                          </p>
+                        </div>
+                      </div>
+                      {profit && (
+                        <div className="mt-4 flex items-center gap-2 rounded-xl bg-[#1D75F7]/[0.05] px-3.5 py-2.5">
+                          <span className="rounded-md bg-[#1D75F7] px-1.5 py-0.5 text-[11px] font-bold text-white">수익성 {profit.grade}</span>
+                          <span className="text-[12.5px] font-medium text-neutral-600">{profit.note}</span>
+                        </div>
+                      )}
+                    </div>
+                    {/* 미리보기 키워드 */}
+                    {verdict.preview.length > 0 && (
+                      <div className="at-rise at-d2 rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
+                        <p className="text-[12px] font-bold text-neutral-400">시작하면 이런 키워드를 노려요</p>
+                        <div className="mt-2.5 space-y-2">
+                          {verdict.preview.map((k) => (
+                            <div key={k.keyword} className="flex items-center gap-2">
+                              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#1D75F7]" />
+                              <span className="min-w-0 flex-1 truncate text-[13.5px] font-semibold text-neutral-800">{k.keyword}</span>
+                              <span className="shrink-0 text-[11.5px] text-neutral-400">월 {(k.monthlyMobileQcCnt || 0).toLocaleString("ko-KR")}회</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {verdict.total === 0 && (
+                      <p className="text-[12.5px] leading-relaxed text-neutral-400">지금 데이터를 못 불러왔어요 — 시작하면 글감 추천에서 계속 찾아드려요.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ═══ 2막. 당신의 플랜 ═══ */}
+            {step === "plan" && (
+              <div>
+                <p className="at-label">{sub}</p>
+                <h2 className="at-headline mt-1 whitespace-pre-line">{"당신의\n승인 준비 플랜"}</h2>
+                <div className="mt-5 space-y-3">
+                  {[
+                    { d: "D-1 ~ D-20", t: "매일 글 1편, 우리가 글감부터 완성까지", s: "경쟁 낮은 키워드로 매일 1편씩. 홈의 링이 차올라요." },
+                    { d: "48시간 안에", t: "첫 글이 네이버 검색에 잡히는지 확인", s: "글 제목 그대로 검색해보면 색인 여부를 알 수 있어요." },
+                    { d: "D-20 이후", t: "애드포스트 승인 신청", s: "심사는 네이버 몫(최대 5영업일) — 반려돼도 쌓다가 재신청하면 돼요." },
+                  ].map((x, i) => (
+                    <div key={i} className={`at-rise at-d${i + 1} flex gap-3.5 rounded-2xl bg-white p-4.5 p-5 ring-1 ring-black/[0.04]`}>
+                      <span className="mt-0.5 shrink-0 rounded-lg bg-[#1D75F7]/10 px-2 py-1 text-[11px] font-bold text-[#1D75F7]">{x.d}</span>
+                      <div className="min-w-0">
+                        <p className="text-[14.5px] font-bold text-[color:var(--at-grey-900)]">{x.t}</p>
+                        <p className="mt-1 text-[12.5px] leading-relaxed text-neutral-500">{x.s}</p>
+                      </div>
+                    </div>
+                  ))}
+                  <p className="at-rise at-d4 px-1 text-[12px] leading-relaxed text-neutral-400">
+                    네이버는 첫 수익을 만들기 가장 좋은 시작점이에요. 승인·수익은 심사와 노출에 따라 달라질 수 있어요 — 우리는 확률을 높이는 준비를 함께해요.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* ═══ 3막. 블로그 세팅 ═══ */}
+            {step === "setup" && (
+              <div>
+                <p className="at-label">마지막 준비</p>
+                <h2 className="at-headline mt-1 whitespace-pre-line">{"네이버 블로그를\n준비할게요"}</h2>
+                <p className="mt-2 text-sm text-neutral-500">이미 있다면 아이디만 넣으면 돼요.</p>
+                <div className="mt-4 space-y-2.5">
+                  {[
+                    { t: "네이버 블로그 만들기", s: `blog.naver.com에서 개설하고, 블로그 주제를 ‘${sub}’ 계열로 설정해요.` },
+                    { t: "블로그 이름 정하기", s: "아래 추천 이름을 그대로 써도 좋아요." },
+                    { t: "공개 설정 켜기", s: "관리 → 기본 설정에서 ‘검색 허용’ 등 공개 옵션을 전부 켜요. 글은 항상 전체공개로." },
+                  ].map((x, i) => (
+                    <button key={i} onClick={() => setChecks((c) => c.map((v, j) => (j === i ? !v : v)))} className={`at-press flex w-full items-start gap-3 rounded-2xl p-4 text-left ring-1 transition ${checks[i] ? "bg-[#1D75F7]/[0.05] ring-[#1D75F7]/30" : "bg-white ring-black/[0.04]"}`}>
+                      <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition ${checks[i] ? "bg-[#1D75F7] text-white" : "bg-neutral-100 text-transparent"}`}>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-[14px] font-bold text-[color:var(--at-grey-900)]">{x.t}</span>
+                        <span className="mt-0.5 block text-[12.5px] leading-relaxed text-neutral-500">{x.s}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                <p className="mb-1.5 mt-5 px-1 text-[12px] font-semibold text-neutral-400">블로그 이름 (추천)</p>
+                <input value={blogName} onChange={(e) => setBlogName(e.target.value)} maxLength={60} className={inputCls} />
+                <p className="mb-1.5 mt-3 px-1 text-[12px] font-semibold text-neutral-400">네이버 블로그 아이디 <span className="font-normal">— 발행할 때 바로 열어드려요</span></p>
+                <input value={naverId} onChange={(e) => setNaverId(e.target.value)} placeholder="blog.naver.com/여기부분" maxLength={40} className={inputCls} />
+              </div>
+            )}
+
+            {/* ═══ 4막. 완료 ═══ */}
+            {step === "done" && (
+              <div className="flex min-h-[58vh] flex-col items-center justify-center text-center">
+                <span className="ateflo-circle-pop flex h-20 w-20 items-center justify-center rounded-full bg-[#1D75F7] text-white shadow-[0_12px_44px_rgba(29,117,247,0.45)]">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path className="ateflo-check-draw" d="M5 13l4 4L19 7" /></svg>
+                </span>
+                <h2 className="at-headline mt-6">전략 준비 완료</h2>
+                <p className="mt-2.5 text-[15px] leading-relaxed text-neutral-600">‘{sub}’로 승인 준비 코스를 시작해요.<br />오늘 첫 글이 D-1이에요.</p>
+              </div>
+            )}
           </div>
-        )}
-        </div>
         </div>
       </div>
       {footer && (
-        <div
-          className="sticky bottom-0 z-20 border-t border-neutral-100 bg-white/95 px-6 pt-3.5 backdrop-blur"
-          style={{ paddingBottom: "calc(0.875rem + env(safe-area-inset-bottom))" }}
-        >
+        <div className="sticky bottom-0 z-20 border-t border-neutral-100 bg-white/95 px-6 pt-3.5 backdrop-blur" style={{ paddingBottom: "calc(0.875rem + env(safe-area-inset-bottom))" }}>
           <div className="mx-auto max-w-md">{footer}</div>
         </div>
       )}
-      {saving && <LoadingScreen label="블로그를 준비하고 있어요" />}
+      {saving && <LoadingScreen label="전략을 저장하고 있어요" />}
     </div>
   );
 }
