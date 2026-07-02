@@ -434,6 +434,16 @@ export async function GET(req: Request) {
       if (top) generalRows.push(top);
     }
   }
+  // ★무조건 PICK개 채우기 — 필터(연도·경쟁·클러스터 중복)로 모자라면 남은 후보에서 보충.
+  //  카드가 2개, 1개로 줄어드는 화면은 신뢰를 깎는다(빈자리 금지).
+  if (generalRows.length < PICK) {
+    const usedKw = new Set(generalRows.map((g) => normalizeKeyword(g.r.keyword)));
+    for (const item of sortedFit) {
+      if (generalRows.length >= PICK) break;
+      const nk = normalizeKeyword(item.r.keyword);
+      if (!usedKw.has(nk)) { usedKw.add(nk); generalRows.push(item); }
+    }
+  }
 
   // comp는 blog_total(진짜 콘텐츠 경쟁) 있으면 그걸로, 없으면 광고경쟁 폴백. region 모드면 '우리 동네' 칩.
   const topics = generalRows.map(({ r, t }) => {
