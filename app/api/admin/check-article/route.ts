@@ -38,6 +38,7 @@ export async function GET(request: Request) {
   const noAlign = blocks.filter((b) => !/text-align:center/i.test(b[0]));
 
   return NextResponse.json({
+    build_marker: "wordsplit-791e324",
     article: { id: art.id, title: art.title, created_at: art.created_at },
     mobile_390px: {
       max_lines_threshold: MAX_LINES,
