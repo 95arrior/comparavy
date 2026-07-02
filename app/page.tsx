@@ -4,7 +4,7 @@ import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-serve
 import { ensureUserRow } from "@/lib/userPlan";
 import { isAdminEmail, getAdminStats } from "@/lib/adminStats";
 import ConstructionScreen from "@/components/ConstructionScreen";
-import NewLanding from "@/components/landing/NewLanding";
+import NaverLanding from "@/components/landing/NaverLanding";
 import DashboardClient from "@/components/dashboard/DashboardClient";
 import type { Article } from "@/components/dashboard/types";
 
@@ -53,5 +53,5 @@ export default async function Home() {
   }
 
   // 비로그인 방문자 → 새 랜딩(단일). 사전신청 폼으로 이메일 수집.
-  return <NewLanding />;
+  return <NaverLanding />;
 }

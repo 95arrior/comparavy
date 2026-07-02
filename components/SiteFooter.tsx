@@ -9,7 +9,7 @@ export default function SiteFooter({ pro = false }: { pro?: boolean }) {
         <div className="flex flex-col items-start gap-1.5">
           <Brand pro={pro} size={24} />
           <p className="text-xs leading-relaxed text-neutral-400">
-            에이트플로(AteFlo) — 키워드 하나로 검색에 걸리는 워드프레스 글을 써주는 AI 글쓰기 서비스
+            에이트플로(AteFlo) — 네이버 블로그 수익화, 매일 글 하나면 끝
           </p>
         </div>
         <nav className="flex flex-wrap gap-6">
