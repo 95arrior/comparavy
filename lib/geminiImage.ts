@@ -47,7 +47,7 @@ function fnv(str: string): number {
 }
 
 /** 사진 자리 설명(한국어) + 글 제목 → 무자막 일러스트 1장(base64). userSeed로 계정별 화풍 고정 + 요청마다 변주. 실패 시 throw. */
-export async function generateBlogImage(slotDesc: string, articleTitle: string, userSeed?: string): Promise<{ base64: string; mime: string }> {
+export async function generateBlogImage(slotDesc: string, articleTitle: string, userSeed?: string, opts?: { thumbnail?: boolean }): Promise<{ base64: string; mime: string }> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error("NOT_READY");
   const uh = fnv(userSeed ?? "anon");
@@ -59,7 +59,11 @@ export async function generateBlogImage(slotDesc: string, articleTitle: string, 
   const mood = MOODS[(nonce >> 4) % MOODS.length];
   const STYLE = `${art}, ${palette}, ${compo}, ${mood} mood, modern Korean lifestyle blog aesthetic. Wide horizontal 16:9 banner composition. Masterful composition, cinematic lighting, crisp refined details, rich color depth, award-winning high-end magazine quality. ${BASE_STYLE}`;
   void articleTitle; // 한글 제목은 프롬프트에 넣지 않는다 — 모델이 그 글자를 그림에 그리려다 깨진 텍스트가 나옴
-  const prompt = `Editorial illustration for a Korean lifestyle blog. Scene to depict: ${slotDesc}. ${STYLE}`;
+  // ★1번(대표) 이미지 = 검색 결과의 3초 훅 — 작게 봐도 읽히는 한 방이 없으면 클릭 자체가 없다
+  const HOOK = opts?.thumbnail
+    ? "This is the article's REPRESENTATIVE THUMBNAIL shown tiny in search results: ONE bold oversized focal subject filling the frame, dramatic scale contrast, punchy vivid colors against a clean simple background, strong silhouette readable even at 100px wide, curiosity-sparking composition. "
+    : "";
+  const prompt = `Editorial illustration for a Korean lifestyle blog. ${HOOK}Scene to depict: ${slotDesc}. ${STYLE}`;
   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

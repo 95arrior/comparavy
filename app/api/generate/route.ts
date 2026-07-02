@@ -226,7 +226,7 @@ export async function POST(request: Request) {
           if (derived) keyword = derived;
         }
         const article = await streamArticle(
-          { keyword, angle: body.angle, type, tone, maxWords, variantInstruction, styleInstruction, relatedQueries, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userTitle },
+          { keyword, angle: body.angle, type, tone, maxWords, variantInstruction, styleInstruction, relatedQueries, newsContext: typeof body.newsContext === "string" ? body.newsContext.slice(0, 1600) : null, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userTitle },
           (bodyHtml) => send({ type: "body", html: bodyHtml }),
           (title) => send({ type: "title", title }),
           (u) => { void logUsage({ userId: user.id, model: u.model, kind: "generate", inputTokens: u.inputTokens, outputTokens: u.outputTokens }); },

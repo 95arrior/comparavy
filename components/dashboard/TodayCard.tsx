@@ -18,12 +18,12 @@ export default function TodayCard({
   onGoPerformance,
 }: {
   /** 오늘의 글감(추천 1순위) — 로딩 전이면 null */
-  topic: { keyword: string; title: string } | null;
+  topic: { keyword: string; title: string; tag?: string; newsContext?: string } | null;
   loading: boolean;
   credits: number;
   info: CourseInfo;
   /** 글감으로 쓰기 — 잔액 0이면 상위(DashboardClient)에서 페이월을 띄운다 */
-  onWriteKeyword: (keyword: string, title: string) => void;
+  onWriteKeyword: (keyword: string, title: string, newsContext?: string) => void;
   /** 오늘 만든 초안 열기(발행 대기 상태) */
   onOpenTodayDraft: () => void;
   onGoPerformance: () => void;
@@ -51,7 +51,7 @@ export default function TodayCard({
         <Header label="오늘의 글" chip="완료 ✓" />
         <p className="mt-2 text-[17px] font-bold leading-snug text-neutral-900">오늘 미션 완료!<br />내일 새 글감이 와요.</p>
         {topic && !locked && (
-          <button onClick={() => onWriteKeyword(topic.keyword, topic.title)} className="mt-3 w-full rounded-xl bg-neutral-100 py-2.5 text-[13px] font-bold text-neutral-600 transition hover:bg-neutral-200 active:scale-[0.99]">
+          <button onClick={() => onWriteKeyword(topic.keyword, topic.title, topic.newsContext)} className="mt-3 w-full rounded-xl bg-neutral-100 py-2.5 text-[13px] font-bold text-neutral-600 transition hover:bg-neutral-200 active:scale-[0.99]">
             한 편 더 쓰기 <span className="font-medium text-neutral-400">· 승인이 빨라져요</span>
           </button>
         )}
@@ -76,7 +76,7 @@ export default function TodayCard({
   if (loading || !topic) {
     return (
       <Card>
-        <Header label="오늘의 글" />
+        <Header label="오늘의 글" chip={topic?.tag === "issue" ? "🔥 오늘 이슈" : undefined} />
         <div className="mt-3 space-y-2" aria-hidden>
           <div className="ateflo-skel h-5 w-3/4 rounded" />
           <div className="ateflo-skel h-10 w-full rounded-xl" />
@@ -95,7 +95,7 @@ export default function TodayCard({
           <span className="min-w-0 flex-1">{topic.title}</span>
         </p>
         <p className="mt-1.5 text-[12.5px] leading-relaxed text-neutral-500">오늘의 글이 준비돼 있어요. 크레딧을 충전하면 바로 이어서 써요.</p>
-        <button onClick={() => onWriteKeyword(topic.keyword, topic.title)} className="mt-3.5 w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">
+        <button onClick={() => onWriteKeyword(topic.keyword, topic.title, topic.newsContext)} className="mt-3.5 w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">
           코스 이어가기
         </button>
       </Card>
@@ -105,10 +105,10 @@ export default function TodayCard({
   // 기본 — 오늘의 글 쓰기 (코스 시작 전이면 첫 글 = D-1)
   return (
     <Card highlight>
-      <Header label="오늘의 글" />
+      <Header label="오늘의 글" chip={topic?.tag === "issue" ? "🔥 오늘 이슈" : undefined} />
       <p className="mt-2 text-[18px] font-bold leading-snug text-[color:var(--at-grey-900)]">{topic.title}</p>
       {info.day === 0 && <p className="mt-1 text-[12.5px] text-neutral-400">첫 글이 코스 D-1이에요. 위 링이 승인 준비까지 차올라요.</p>}
-      <button onClick={() => onWriteKeyword(topic.keyword, topic.title)} className="mt-3.5 w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">
+      <button onClick={() => onWriteKeyword(topic.keyword, topic.title, topic.newsContext)} className="mt-3.5 w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">
         이 글 쓰기
       </button>
     </Card>

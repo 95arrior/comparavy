@@ -147,7 +147,7 @@ export default function ArticleModal({
       const res = await fetch("/api/images/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slot, title }),
+        body: JSON.stringify({ slot, title, thumb: i === 0 }),
       });
       const data = await res.json();
       if (!res.ok) {

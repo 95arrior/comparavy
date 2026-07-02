@@ -10,6 +10,7 @@ import { compFromLabel, compFromBlogTotal, filledStarsFromData, type Comp } from
 import { fetchBlogTotal } from "@/lib/naverBlogSearch";
 import { resolveLocalPlan, generateLocalKeywords, generateAudienceTopics, type LocalScope } from "@/lib/aiSeeds";
 import { buildPoolForSub } from "@/lib/keywordPool";
+import { todayIssueTopic } from "@/lib/newsTopics";
 import { collectPoolKeywords } from "@/lib/poolCollect";
 import { fetchNaverAutocomplete } from "@/lib/naverAutocomplete";
 import { checkRateLimit } from "@/lib/rateLimit";
@@ -434,6 +435,31 @@ export async function GET(req: Request) {
       tag: t?.tag || sub || "글감", // 칩 항상 표시 — AI 분류 없으면 세부업종으로 폴백
     };
   });
+  // ★오늘 이슈(네이버 뉴스 기반) — 신규 이슈 = 경쟁 0에 가까운 선점 구간. 맨 앞(오늘의 글) 고정.
+  //  가십·사건사고는 추출 단계에서 차단(법적 안전). 캐시 1일이라 호출 평탄.
+  let issueFirst: (typeof topics)[number] & { newsContext?: string } | null = null;
+  if (type === "online" && sub && !cluster && !regionMode) {
+    try {
+      const issue = await todayIssueTopic(sub);
+      if (issue && !usedSet.has(normalizeKeyword(issue.keyword))) {
+        issueFirst = {
+          keyword: issue.keyword,
+          title: issue.title,
+          demandLabel: "지금 뜨는 중",
+          ssak: true,
+          region: false,
+          tone: type,
+          vol: 0,
+          comp: "low" as Comp,
+          blogTotal: null,
+          tag: "issue",
+          newsContext: issue.newsContext,
+        };
+      }
+    } catch { /* 이슈 없이 진행 */ }
+  }
+
   // 우리동네(지역) 카드를 항상 맨 위 고정하지 않고 섞는다 — 하루 시드로 위치는 그날 내내 안정적.
-  return NextResponse.json({ topics: shuffle(topics, rng) });
+  const shuffled = shuffle(topics, rng);
+  return NextResponse.json({ topics: issueFirst ? [issueFirst, ...shuffled] : shuffled });
 }

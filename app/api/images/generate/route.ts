@@ -24,6 +24,7 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const slot = String(body.slot ?? "").trim().slice(0, 200);
   const title = String(body.title ?? "").trim().slice(0, 120);
+  const thumbnail = body.thumb === true; // 1번(대표) = 3초 훅 프롬프트
   if (!slot) return NextResponse.json({ error: "어떤 이미지가 필요한지 알 수 없어요." }, { status: 400 });
 
   // 선차감(원자적) — 부족하면 402
@@ -32,7 +33,7 @@ export async function POST(request: Request) {
 
   const refundRef = crypto.randomUUID();
   try {
-    const img = await generateBlogImage(slot, title, user.id);
+    const img = await generateBlogImage(slot, title, user.id, { thumbnail });
     void logUsage({ userId: user.id, model: GEMINI_IMAGE_MODEL, kind: "image", inputTokens: 0, outputTokens: 1290 });
     // 스토리지 업로드 — URL로 반환(재방문·기기 간 유지). 실패하면 dataUrl 폴백.
     let url: string | null = null;

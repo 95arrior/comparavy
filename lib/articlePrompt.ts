@@ -95,6 +95,8 @@ export interface ArticlePromptInput {
   styleInstruction?: string | null;
   /** ★네이버 자동완성 실데이터 — 검색자들이 실제로 함께 찾는 검색어(관련 질문 점령을 추측→실데이터로). */
   relatedQueries?: string[] | null;
+  /** ★오늘 이슈 글감 — 최신 뉴스 발췌(근거 자료). 모델 지식보다 최신인 사실관계의 근거. */
+  newsContext?: string | null;
 }
 
 // 공통 SEO 콘텐츠 원칙 (general 포함 모든 블로그에 주입). 홍보글이 아니라 '검색 사용자가 궁금해하는 정보글'.
@@ -324,6 +326,9 @@ export function buildUserPrompt(input: ArticlePromptInput): string {
     `문체 지침: ${toneInstruction}`,
     input.variantInstruction ? `구성 방식(다양성 — 매번 다른 글이 되도록): ${input.variantInstruction}` : "",
     input.styleInstruction ? `★블로그 스타일(이 계정의 고정 정체성 — 매 글 동일하게 유지한다. 시스템 지침의 도입·형광펜·마무리·해시태그 '세부 형식'과 충돌하면 이 스타일이 우선): ${input.styleInstruction}` : "",
+    input.newsContext
+      ? `★[오늘의 근거 자료 — 최신 이슈] 아래는 이 글감의 오늘 자 뉴스 발췌다. 본문의 사실관계는 이 자료를 최우선 근거로 쓰고, 자료에 없는 수치·일정은 단정하지 않는다(모델 기억보다 이 자료가 최신). 뉴스 문장을 복사하지 말고 전부 내 문장으로 재작성한다. 출처 표기는 의무가 아니다 — 특정 발표·통계 수치를 쓸 때만 언론사가 아닌 원 기관명(예: 금융위원회·한국은행)을 자연스럽게 1회 언급한다.\n${input.newsContext}`
+      : "",
     input.relatedQueries && input.relatedQueries.length > 0 ? `★실제 검색자들이 이 키워드와 함께 찾는 검색어(네이버 자동완성 실데이터): ${input.relatedQueries.join(" / ")} — 이 중 이 글 주제에 맞는 것들을 소제목·FAQ로 커버해 '관련 질문 점령'을 실데이터 기반으로 한다. 주제와 안 맞는 건 억지로 넣지 않는다.` : "",
     "",
     `목표 분량: ${targetMin.toLocaleString()}~${targetMax.toLocaleString()}자(공백 제외 한국어 글자수). 이 정도가 모바일에서 끝까지 읽히면서 검색엔진이 '충분히 다뤘다'고 보는 적정선이다. 이보다 더 길게 늘이지 말 것 — 분량을 채우려 군더더기·반복·일반론·지엽적 곁가지로 늘리지 않는다. 다만 ${targetMin.toLocaleString()}자보다 짧아 빈약해지지도 않게 한다(핵심을 제대로 담으면 자연히 이 범위가 된다). 길이보다 '핵심을 빠짐없이, 밀도 높게'가 우선이다.`,

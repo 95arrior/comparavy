@@ -13,6 +13,8 @@ export interface GenParams {
   userStory?: string; // 직접 쓴 '내 이야기'(있으면 핵심 재료로 우리 품질로 재구성)
   /** ★이미지 동시 생성 — 글이 써지는 동안 사진 자리 앞 3곳을 병렬 생성(장당 4크레딧) */
   withImages?: boolean;
+  /** ★오늘 이슈 글감 — 최신 뉴스 발췌(근거 자료). 있으면 엔진이 이 사실관계 기반으로 쓴다 */
+  newsContext?: string;
 }
 
 // ★생성 장면 v3 — "글이 눈앞에서 실제로 써진다".
@@ -122,7 +124,7 @@ export default function WritingView({
       void fetch("/api/images/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slot: slots[i], title: titleRef.current }),
+        body: JSON.stringify({ slot: slots[i], title: titleRef.current, thumb: i === 0 }),
       })
         .then(async (res) => {
           const data = await res.json().catch(() => ({}));
