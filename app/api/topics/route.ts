@@ -11,6 +11,7 @@ import { fetchBlogTotal } from "@/lib/naverBlogSearch";
 import { resolveLocalPlan, generateLocalKeywords, generateAudienceTopics, type LocalScope } from "@/lib/aiSeeds";
 import { buildPoolForSub } from "@/lib/keywordPool";
 import { getTrendTopics, refreshCategoryTrends, hasFreshTrends } from "@/lib/trendTopics";
+import { amplifyForUser } from "@/lib/amplifyTopics";
 import { collectPoolKeywords } from "@/lib/poolCollect";
 import { fetchNaverAutocomplete } from "@/lib/naverAutocomplete";
 import { checkRateLimit } from "@/lib/rateLimit";
@@ -125,7 +126,7 @@ export async function GET(req: Request) {
 
   const { data: profile } = await supabase
     .from("blog_profiles")
-    .select("vertical, sub_category, audience, biz_address")
+    .select("vertical, sub_category, audience, biz_address, target")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -476,34 +477,40 @@ export async function GET(req: Request) {
   const trendCards: TrendCard[] = [];
   if (type === "online" && sub && !cluster && !regionMode) {
     try {
-      let trends = await getTrendTopics(sub);
-      // 풀이 비었으면 백그라운드 갱신 예약(after: 응답 후에도 끝까지 실행됨 — 죽지 않음).
-      //  이번 로드는 데이터 글감으로 폴백, 다음 로드부터 트렌드가 채워져 있음.
-      if (trends.length < 4) {
-        const rl = await checkRateLimit(supabase, user.id, `trend_seed_${sub}`, 3, 900);
-        if (rl.ok) {
-          const cat = sub;
-          after(async () => { try { if (!(await hasFreshTrends(cat))) await refreshCategoryTrends(cat); } catch { /* ignore */ } });
+      const kstDay = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
+      // ★씨앗 × 개인화 증식 결과는 유저·하루 단위 캐시(재증식·재과금 방지). 교체(exclude) 시엔 새로.
+      const ampKey = `amp:${user.id}:${kstDay}:${excludeSet.size}`;
+      let amped: { keyword: string; title: string; newsContext: string | null }[] = [];
+      try {
+        const { data: c } = await pool.from("api_cache").select("value, expires_at").eq("key", ampKey).single();
+        if (c?.value && (!c.expires_at || new Date(c.expires_at).getTime() > Date.now())) amped = c.value as typeof amped;
+      } catch { /* 캐시 미스 */ }
+
+      if (amped.length === 0) {
+        let trends = await getTrendTopics(sub);
+        if (trends.length < 4) {
+          const rl = await checkRateLimit(supabase, user.id, `trend_seed_${sub}`, 3, 900);
+          if (rl.ok) { const cat = sub; after(async () => { try { if (!(await hasFreshTrends(cat))) await refreshCategoryTrends(cat); } catch { /* ignore */ } }); }
+        }
+        if (trends.length > 0) {
+          // 씨앗(최신·검증) × 유저 개인화 = 무중복 글감. 씨앗의 시의성·근거는 상속.
+          amped = await amplifyForUser(trends, profile ?? null, user.id, 2);
+          if (amped.length > 0) {
+            try {
+              await pool.from("api_cache").upsert({ key: ampKey, value: amped, expires_at: new Date(Date.now() + 6 * 3600_000).toISOString(), updated_at: new Date().toISOString() });
+            } catch { /* ignore */ }
+          }
         }
       }
-      // 유저 시드로 회전 — 만 명이 달라 보이게
-      const rotated = [...trends].sort((a, b) => (seedFrom(a.keyword + user.id) % 997) - (seedFrom(b.keyword + user.id) % 997));
-      for (const t of rotated) {
-        if (trendCards.length >= 2) break; // 트렌드는 상위 2장(나머지는 데이터 글감)
+
+      for (const t of amped) {
+        if (trendCards.length >= 2) break;
         const nk = normalizeKeyword(t.keyword);
         if (usedSet.has(nk) || topics.some((x) => normalizeKeyword(x.keyword) === nk)) continue;
         trendCards.push({
-          keyword: t.keyword,
-          title: t.title,
-          demandLabel: "지금 뜨는 중",
-          ssak: true,
-          region: false,
-          tone: type,
-          vol: 0,
-          comp: "low" as Comp,
-          blogTotal: null,
-          tag: "trend",
-          newsContext: t.newsContext ?? undefined,
+          keyword: t.keyword, title: t.title, demandLabel: "지금 뜨는 중",
+          ssak: true, region: false, tone: type, vol: 0, comp: "low" as Comp,
+          blogTotal: null, tag: "trend", newsContext: t.newsContext ?? undefined,
         });
       }
     } catch { /* 트렌드 없이 진행 */ }
