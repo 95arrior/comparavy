@@ -49,10 +49,11 @@ function splitInner(inner: string): string[] {
   return out.length ? out : [inner];
 }
 export function splitLongParagraphs(html: string): string {
-  return html.replace(/<p(\s[^>]*)?>([\s\S]*?)<\/p>/gi, (_m, attr, inner) => {
+  // p뿐 아니라 blockquote(도입 요약 박스)·li도 분할 — 엔진이 긴 blockquote로 도입을 쓰면 여기서 쪼갠다.
+  return html.replace(/<(p|blockquote|li)(\s[^>]*)?>([\s\S]*?)<\/\1>/gi, (_m, tag, attr, inner) => {
     const chunks = splitInner(inner);
-    if (chunks.length <= 1) return `<p${attr ?? ""}>${inner}</p>`;
-    return chunks.map((c) => `<p${attr ?? ""}>${c}</p>`).join("");
+    if (chunks.length <= 1) return `<${tag}${attr ?? ""}>${inner}</${tag}>`;
+    return chunks.map((c) => `<${tag}${attr ?? ""}>${c}</${tag}>`).join("");
   });
 }
 
