@@ -1582,3 +1582,35 @@ input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-sele
   animation: at-ai-glow 2.2s linear infinite, at-orb-pulse 1.6s ease-in-out infinite;
   box-shadow: 0 14px 38px -12px rgba(140, 120, 255, 0.55);
 }
+
+/* 버튼 팝 — 스텝 전환 시 통통 튀며 등장(스프링 이징) */
+@keyframes at-pop {
+  0% { transform: scale(0.92); opacity: 0; }
+  60% { transform: scale(1.035); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.at-pop { animation: at-pop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
+
+/* 룰렛 상태 텍스트 — 위아래 블러(마스크) + 아래서 굴러 올라오는 롤 */
+.at-roll-mask {
+  mask-image: linear-gradient(transparent, #000 32%, #000 68%, transparent);
+  -webkit-mask-image: linear-gradient(transparent, #000 32%, #000 68%, transparent);
+}
+@keyframes at-roll-in {
+  from { transform: translateY(85%); opacity: 0; filter: blur(3px); }
+  to { transform: translateY(0); opacity: 1; filter: blur(0); }
+}
+.at-roll-in { animation: at-roll-in 0.5s var(--at-ease) backwards; }
+
+/* 라이브 커서 — 타자기 끝에서 깜빡이는 무지개 캐럿 */
+@keyframes at-caret-blink { 0%, 55% { opacity: 1; } 60%, 100% { opacity: 0.15; } }
+.at-caret {
+  display: inline-block;
+  width: 3px;
+  height: 1.05em;
+  margin-left: 2px;
+  vertical-align: -0.15em;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #8ec5ff, #b79cff, #ff9ec6) 0 0 / 100% 300%;
+  animation: at-caret-blink 1s steps(1) infinite, at-ai-glow 2s linear infinite;
+}

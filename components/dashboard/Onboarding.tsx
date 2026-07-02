@@ -18,18 +18,24 @@ type Step = "topic" | "verdict" | "plan" | "hasblog" | "make" | "setupid" | "set
 const STAGE_OF: Record<Step, number> = { topic: 0, verdict: 1, plan: 2, hasblog: 3, make: 3, setupid: 3, setupopen: 3, done: 4 };
 const BACK_OF: Partial<Record<Step, Step>> = { verdict: "topic", plan: "verdict", hasblog: "plan", make: "hasblog", setupid: "hasblog", setupopen: "setupid" };
 
-// 주제별 수익성 참고 등급 — 광고 단가·상업성 기준(자료: 주제 수익성 맵). 보장 아님, 참고용.
+// 주제별 수익성 참고 등급(광고 단가·상업성, 보장 아님) — 전 항목이 네이버 메이트(지원금) 25주제 정렬.
 const PROFIT: Record<string, { grade: "상" | "중상" | "중"; note: string }> = {
-  "재테크·투자": { grade: "상", note: "광고 단가가 높은 대표 주제" },
-  "IT·디지털·리뷰": { grade: "상", note: "제품 리뷰·제휴와 궁합이 좋아요" },
+  "경제·재테크": { grade: "상", note: "광고 단가가 높은 대표 주제" },
+  "IT·테크": { grade: "상", note: "리뷰·제휴와 궁합이 좋아요" },
   "자동차": { grade: "상", note: "소재가 풍부하고 단가가 높아요" },
-  "부업·N잡": { grade: "상", note: "검색 수요가 꾸준히 커요" },
-  "쇼핑·제품리뷰": { grade: "중상", note: "체험단·제휴로 이어지기 좋아요" },
-  "건강·다이어트": { grade: "중상", note: "수요 크지만 과장 표현 주의(우리가 자동 검토)" },
-  "교육·정보": { grade: "중", note: "꾸준한 검색, 경쟁도 무난" },
-  "살림·인테리어": { grade: "중", note: "생활 밀착형, 체험단 기회 많음" },
-  "자기계발": { grade: "중", note: "팬이 쌓이면 강한 주제" },
-  "여행": { grade: "중", note: "시즌을 타지만 사진 자산에 유리" },
+  "건강": { grade: "중상", note: "수요 크지만 과장 표현 주의(우리가 자동 검토)" },
+  "리빙·인테리어": { grade: "중", note: "생활 밀착형, 체험단 기회 많음" },
+  "반려동물": { grade: "중", note: "팬층이 단단한 주제" },
+  "육아": { grade: "중", note: "체험단·공동구매로 이어지기 좋아요" },
+  "국내여행": { grade: "중", note: "사진 자산에 유리, 시즌을 타요" },
+  "해외여행": { grade: "중", note: "단가 높은 제휴(항공·숙소)와 연결" },
+  "레시피·요리": { grade: "중", note: "꾸준한 검색, 재방문이 많아요" },
+  "맛집·푸드": { grade: "중상", note: "체험단이 가장 활발한 분야" },
+  "뷰티": { grade: "중상", note: "체험단·제휴 단가가 좋아요" },
+  "패션": { grade: "중", note: "시즌 트렌드로 검색이 꾸준해요" },
+  "게임": { grade: "중", note: "팬덤 유입이 강한 주제" },
+  "스포츠": { grade: "중", note: "시즌·이벤트 검색이 커요" },
+  "교육": { grade: "중", note: "꾸준한 검색, 경쟁도 무난" },
 };
 
 interface KwLite { keyword: string; monthlyMobileQcCnt: number; compIdx: string }
@@ -276,9 +282,15 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
                         </div>
                       </div>
                       {profit && (
-                        <div className="mt-4 flex items-center gap-2 rounded-xl bg-[#1D75F7]/[0.05] px-3.5 py-2.5">
-                          <span className="rounded-md bg-[#1D75F7] px-1.5 py-0.5 text-[11px] font-bold text-white">수익성 {profit.grade}</span>
-                          <span className="text-[12.5px] font-medium text-neutral-600">{profit.note}</span>
+                        <div className="mt-4 space-y-1.5">
+                          <div className="flex items-center gap-2 rounded-xl bg-[#1D75F7]/[0.05] px-3.5 py-2.5">
+                            <span className="rounded-md bg-[#1D75F7] px-1.5 py-0.5 text-[11px] font-bold text-white">수익성 {profit.grade}</span>
+                            <span className="text-[12.5px] font-medium text-neutral-600">{profit.note}</span>
+                          </div>
+                          <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-3.5 py-2.5">
+                            <span className="text-[13px]">🏅</span>
+                            <span className="text-[12.5px] font-medium text-amber-800">네이버 메이트(월 지원금) 선정 대상 분야예요</span>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -410,7 +422,7 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
       </div>
       {footer && (
         <div className="sticky bottom-0 z-20 border-t border-neutral-100 bg-white/95 px-6 pt-3.5 backdrop-blur" style={{ paddingBottom: "calc(0.875rem + env(safe-area-inset-bottom))" }}>
-          <div className="mx-auto max-w-md">{footer}</div>
+          <div key={`f-${step}`} className="at-pop mx-auto max-w-md">{footer}</div>
         </div>
       )}
       {saving && <LoadingScreen label="전략을 저장하고 있어요" />}

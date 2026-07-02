@@ -23,10 +23,12 @@ export function usesRegion(vertical: string | null | undefined): boolean {
   return bloggerType(vertical) === "local";
 }
 
-// online(수익형) 카테고리 — 검색량·수익 단가 높은 군. 온보딩 주제 선택의 단일 소스.
+// online(수익형) 카테고리 — ★네이버 메이트 25주제 정렬(2026 공식: mate.naver.com — AI 브리핑 인용수 기반 월 지원금 대상 분야).
+// 온보딩 주제 선택의 단일 소스. 수익성 등급은 Onboarding.PROFIT.
 export const ONLINE_CATEGORIES = [
-  "재테크·투자", "IT·디지털·리뷰", "건강·다이어트", "부업·N잡", "여행",
-  "자기계발", "쇼핑·제품리뷰", "교육·정보", "살림·인테리어", "자동차",
+  "경제·재테크", "IT·테크", "자동차", "건강", "리빙·인테리어",
+  "반려동물", "육아", "국내여행", "해외여행", "레시피·요리",
+  "맛집·푸드", "뷰티", "패션", "게임", "스포츠", "교육",
 ];
 
 // hobby(취미·기록) 카테고리 — 수익·손님 압박 없는 기록형.

@@ -89,14 +89,16 @@ export default function NaverPublishSheet({
         </div>
 
         {/* 한 화면 = 한 문장 + 한 버튼 */}
-        <div key={step} className="ateflo-slide-fwd mt-6 min-h-[120px]">
+        <div key={step} className="ateflo-slide-fwd mt-6 h-[148px]">
           <h3 className="whitespace-pre-line text-[20px] font-extrabold leading-snug tracking-tight text-[color:var(--at-grey-900)]">{cur.title}</h3>
           <p className="mt-2 text-[13.5px] leading-relaxed text-neutral-500">{cur.sub}</p>
         </div>
 
-        <button onClick={cur.act} className="at-press mt-5 w-full rounded-xl bg-[#03C75A] py-4 text-[15px] font-bold text-white transition hover:opacity-95">
-          {cur.cta}
-        </button>
+        <div key={`btn-${step}`} className="at-pop">
+          <button onClick={cur.act} className="at-press mt-2 w-full rounded-xl bg-[#03C75A] py-4 text-[15px] font-bold text-white transition hover:opacity-95">
+            {cur.cta}
+          </button>
+        </div>
         {"aux" in cur && cur.aux && (
           <button onClick={cur.aux.act} className="at-press mt-2 w-full rounded-xl bg-neutral-100 py-3.5 text-[14px] font-bold text-neutral-700 transition hover:bg-neutral-200">
             {cur.aux.label}
