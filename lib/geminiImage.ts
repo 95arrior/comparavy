@@ -18,27 +18,36 @@ const BASE_STYLE = [
 // ★다양성 변주 — 1만 명이 같은 글감이어도 같은 그림이 안 나오게.
 //  계정 시드(항상 같은 축) + 요청 난수(매번 다른 축) 조합으로 스타일·팔레트·구도·분위기를 배정.
 const ART_STYLES = [
-  "premium soft 3D clay render illustration with smooth rounded forms and studio lighting",
-  "high-end editorial flat illustration with rich textures, subtle grain and layered depth",
-  "sophisticated isometric 3D illustration with soft shadows and glossy accents",
-  "elegant painterly gouache illustration with rich color depth and visible brush texture",
-  "modern dimensional gradient illustration with glass-like translucent forms",
+  "premium soft 3D clay render with smooth rounded forms and studio lighting",
+  "dramatic cinematic 3D render with depth of field and volumetric light",
+  "bold pop-art illustration with thick outlines and halftone texture",
+  "surreal editorial illustration with playful oversized objects and tiny people",
+  "high-end flat illustration with rich grain texture and layered depth",
+  "vibrant gradient-glass illustration with translucent dimensional forms",
+  "retro-modern collage illustration with paper textures and bold shapes",
+  "isometric 3D diorama with miniature world charm and glossy accents",
+  "painterly gouache illustration with rich color depth and visible brushwork",
+  "neon-accent dark illustration with glowing highlights on deep background",
 ];
 const PALETTES = [
-  "warm friendly palette of coral, cream and sky blue",
-  "cool calm palette of navy, mint and off-white",
-  "pastel palette of lavender, peach and pale yellow",
-  "earthy palette of sage green, terracotta and sand",
-  "vivid palette of cobalt blue, tangerine and white",
+  "warm coral, cream and sky blue",
+  "deep navy, mint and off-white",
+  "pastel lavender, peach and pale yellow",
+  "earthy sage green, terracotta and sand",
+  "vivid cobalt blue, tangerine and white",
+  "bold crimson, charcoal and warm gray",
+  "electric purple, hot pink and midnight blue",
+  "sunshine yellow, forest green and cream",
 ];
 const COMPOSITIONS = [
   "subject centered with generous negative space",
-  "subject placed on the left third, airy background on the right",
-  "slight top-down diagonal composition",
-  "close-up framing on the key object",
-  "wide scene with small human figure for scale",
+  "subject on the left third, airy background on the right",
+  "dramatic low-angle view emphasizing scale",
+  "extreme close-up on the key object with shallow depth",
+  "wide scene with a small human figure for scale contrast",
+  "diagonal dynamic composition with strong movement",
 ];
-const MOODS = ["calm and tidy", "bright and optimistic", "cozy and warm", "fresh and energetic", "quiet and focused"];
+const MOODSconst MOODS = ["calm and tidy", "bright and optimistic", "cozy and warm", "fresh and energetic", "dramatic and striking", "playful and eye-catching", "luxurious and refined"];
 
 function fnv(str: string): number {
   let h = 0x811c9dc5;
@@ -61,7 +70,7 @@ export async function generateBlogImage(slotDesc: string, articleTitle: string, 
   const STYLE = `${art}, ${palette}, ${compo}, ${mood} mood, modern Korean lifestyle blog aesthetic. Wide horizontal 16:9 banner composition. Masterful composition, cinematic lighting, crisp refined details, rich color depth, award-winning high-end magazine quality. ${BASE_STYLE}`;
   // ★1번(대표) 이미지 = 검색 결과의 3초 훅 — 작게 봐도 읽히는 한 방이 없으면 클릭 자체가 없다
   const HOOK = opts?.thumbnail
-    ? "This is the article's REPRESENTATIVE THUMBNAIL shown tiny in search results: ONE bold oversized focal subject filling the frame, dramatic scale contrast, punchy vivid colors against a clean simple background, strong silhouette readable even at 100px wide, curiosity-sparking composition. "
+    ? "This is the article's REPRESENTATIVE THUMBNAIL competing for clicks in crowded search results: ONE bold oversized focal subject bursting toward the viewer, exaggerated dramatic scale, intense color contrast that pops against competitors, strong silhouette readable at 100px, a slightly provocative curiosity-gap composition that makes people NEED to tap — attention-grabbing but never misleading. "
     : "";
   // 주제 연관성: 제목은 '무엇에 관한 글인지' 맥락으로만 제공(글자로 그리지 말라고 명시), 장면 설명을 충실히 시각화
   const prompt = `Editorial illustration for a Korean lifestyle blog post. Topic context (for understanding ONLY — never render these words as text): ${articleTitle}. ${HOOK}Faithfully depict this specific scene with clearly recognizable subjects: ${slotDesc}. ${STYLE}`;

@@ -41,8 +41,10 @@ export async function todayIssueTopic(sub: string): Promise<IssueTopic | null> {
   const kstDay = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
   const cacheKey = `issue_topic:${kstDay}:${sub}`;
   try {
-    const { data } = await admin.from("api_cache").select("value").eq("key", cacheKey).single();
-    if (data?.value) return (data.value as { topic: IssueTopic | null }).topic;
+    const { data } = await admin.from("api_cache").select("value, expires_at").eq("key", cacheKey).single();
+    if (data?.value && (!data.expires_at || new Date(data.expires_at).getTime() > Date.now())) {
+      return (data.value as { topic: IssueTopic | null }).topic;
+    }
   } catch { /* 캐시 미스 */ }
 
   const news = await fetchNews(sub);
@@ -88,7 +90,7 @@ ${list}
     await admin.from("api_cache").upsert({
       key: cacheKey,
       value: { topic },
-      expires_at: new Date(Date.now() + 26 * 3600_000).toISOString(),
+      expires_at: new Date(Date.now() + (topic ? 26 : 2) * 3600_000).toISOString(), // 실패(null)는 2h만 — 하루 종일 이슈 실종 방지
       updated_at: new Date().toISOString(),
     });
   } catch { /* 캐시 실패 무시 */ }

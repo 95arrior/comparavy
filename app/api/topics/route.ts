@@ -312,9 +312,14 @@ export async function GET(req: Request) {
     const noForeign = (arr: PoolRow[]) => (regions.length ? arr.filter((r) => !mentionsForeignRegion(r.keyword, regions)) : arr);
     // ★최상급 계정(w.95arrior): 랜덤 배제 — 경쟁 '낮음' 전부 먼저(검색량순), 모자라면 '중간'(검색량순)
     if (adminBest) {
-      const byVol = (arr: PoolRow[]) => [...arr].sort((a, b) => (b.monthly_searches ?? 0) - (a.monthly_searches ?? 0));
-      for (const r of [...byVol(noForeign(low)), ...byVol(noForeign(mid))]) {
-        if (candidates.length >= want) break;
+      // ★'이길 수 있는' 우선 — 캐시된 진짜 경쟁(blog_total)이 있으면 그 별점을 최우선, 검색량은 그다음.
+      //  검색량 탐욕 정렬은 포화 키워드만 모아 winnable 필터에서 전멸했음(경쟁높음 범람의 원인).
+      const score = (r: PoolRow) =>
+        (r.blog_total != null ? filledStarsFromData(r.monthly_searches ?? 0, r.blog_total) : 3) * 1_000_000 + (r.monthly_searches ?? 0);
+      const ordered = [...noForeign(low), ...noForeign(mid)].sort((a, b) => score(b) - score(a));
+      const adminWant = want * 3 + 6; // 후보 폭 확대 — 실측 후에도 winnable이 넉넉히 남게
+      for (const r of ordered) {
+        if (candidates.length >= adminWant) break;
         const nk = normalizeKeyword(r.keyword);
         if (!candidates.some((x) => normalizeKeyword(x.keyword) === nk)) candidates.push(r);
       }
@@ -365,7 +370,7 @@ export async function GET(req: Request) {
     .map((r, i) => ({ r, t: titled[i] }))
     .filter(({ t }) => t?.ok !== false && !staleYear(t?.title ?? ""))
     .sort((a, b) => (b.t?.fit ?? 1) - (a.t?.fit ?? 1))
-    .slice(0, PICK + 6);
+    .slice(0, adminBest ? PICK + 14 : PICK + 6);
 
   // ── 진짜 콘텐츠 경쟁(blog_total) 채우기 (fitTop 전체) ──
   // 미수집(null)이면 네이버 블로그검색 1회 → 풀에 캐싱(전 유저 공용). 첫 1회만 호출, 이후 캐시.
