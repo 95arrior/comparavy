@@ -131,6 +131,30 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
     pickTopic(v);
   }
 
+  // ★검색 허용 설정 열기 — 기기별 최적 경로.
+  //  안드로이드: intent 링크(앱 있으면 앱, 없으면 Play 스토어 자동 폴백)
+  //  iOS: 유니버설 링크로 앱 시도 → 1.8초 안에 앱 전환이 없으면 App Store로
+  //  데스크톱: 블로그 관리(admin) — 기본 설정에 '검색 허용'이 있는 곳
+  function openSearchSetting() {
+    const id = naverId.trim().replace(/^https?:\/\//, "").replace(/^m\./, "").replace(/^blog\.naver\.com\//, "").replace(/[/?#].*$/, "").trim();
+    const ua = navigator.userAgent;
+    if (/Android/i.test(ua)) {
+      const fallback = encodeURIComponent("https://play.google.com/store/apps/details?id=com.nhn.android.blog");
+      window.location.href = `intent://blog.naver.com/${id}#Intent;scheme=https;package=com.nhn.android.blog;S.browser_fallback_url=${fallback};end`;
+      return;
+    }
+    if (/iPhone|iPad|iPod/.test(ua)) {
+      const timer = setTimeout(() => {
+        if (!document.hidden) window.location.href = "https://apps.apple.com/kr/app/id328813873";
+      }, 1800);
+      const onHide = () => { if (document.hidden) clearTimeout(timer); };
+      document.addEventListener("visibilitychange", onHide, { once: true });
+      window.location.href = `https://m.blog.naver.com/${id}`;
+      return;
+    }
+    window.open(id ? `https://admin.blog.naver.com/AdminMain.naver?blogId=${id}` : "https://admin.blog.naver.com", "_blank", "noopener");
+  }
+
   async function save() {
     if (saving || !sub) return;
     setSaving(true); setError(null);
@@ -395,15 +419,16 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
                 <p className="at-label">딱 하나만 켜요</p>
                 <h2 className="at-headline mt-1 whitespace-pre-line">{"‘검색 허용’을\n켜주세요"}</h2>
                 <p className="mt-2 text-sm leading-relaxed text-neutral-500">이걸 켜야 내 글이 네이버 검색에 나와요.</p>
-                <div className="mt-5 rounded-2xl bg-neutral-50 px-5 py-4 text-[13.5px] leading-relaxed text-neutral-700">
-                  <p className="font-bold text-neutral-800">📱 폰이라면 — 네이버 블로그 앱에서</p>
-                  <p className="mt-1">내 블로그 → 오른쪽 위 <b>≡</b> → <b>환경설정</b> → <b>블로그 정보 → 검색 허용</b> 켜기</p>
-                  <p className="mt-3 font-bold text-neutral-800">💻 컴퓨터라면</p>
-                  <p className="mt-1">내 블로그 → <b>관리</b> → 기본 설정의 <b>‘검색 허용’</b> 켜기</p>
+                <button onClick={openSearchSetting} className="at-press mt-5 block w-full rounded-xl bg-[#03C75A] py-4 text-center text-[15px] font-bold text-white transition hover:opacity-90">
+                  내 블로그 설정 열기
+                </button>
+                <p className="mt-2 text-center text-[11.5px] text-neutral-400">앱이 없으면 설치 화면으로 안내해요</p>
+                <div className="mt-4 rounded-2xl bg-neutral-50 px-5 py-4 text-[13px] leading-relaxed text-neutral-600">
+                  <p className="font-bold text-neutral-800">📱 앱에서</p>
+                  <p className="mt-0.5">내 블로그 → <b>≡</b> → <b>환경설정</b> → <b>검색 허용</b> 켜기</p>
+                  <p className="mt-2.5 font-bold text-neutral-800">💻 컴퓨터에서</p>
+                  <p className="mt-0.5">관리 → 기본 설정의 <b>검색 허용</b> 켜기</p>
                 </div>
-                <a href="https://blog.naver.com" target="_blank" rel="noopener noreferrer" className="at-press mt-4 block w-full rounded-xl bg-[#03C75A] py-4 text-center text-[15px] font-bold text-white transition hover:opacity-90">
-                  내 블로그 열기
-                </a>
               </div>
             )}
 
