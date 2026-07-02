@@ -214,9 +214,14 @@ export default function WritingView({
   const lastScroll = useRef(0);
   useEffect(() => {
     const now = Date.now();
-    if (now - lastScroll.current > 350) {
+    if (now - lastScroll.current < 350) return;
+    const el = endRef.current;
+    if (!el) return;
+    // ★글 끝이 화면 아래로 넘칠 때만 따라 내려간다 — 초반(제목만 써졌을 때) 스크롤돼 제목이 가려지는 것 방지
+    const bottom = el.getBoundingClientRect().bottom;
+    if (bottom > window.innerHeight - 120) {
       lastScroll.current = now;
-      endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+      el.scrollIntoView({ behavior: "smooth", block: "end" });
     }
   }, [typed]);
 
