@@ -95,6 +95,20 @@ function hasBrand(kw: string): boolean {
   return BRANDS.some((b) => s.includes(b));
 }
 
+// ★가십·이슈성 인물 시그널 — 연예·유명인 가십 글감 차단(허위조작정보법: 조회 10만+ 허위글 최대 5천만원 배상).
+// 인물명 DB 없이도 가십성 글감의 대부분은 이 단어들과 결합돼 들어온다. 법적 안전 원칙 1(연예 가십·어그로 금지)의 코드화.
+const GOSSIP_SIGNALS = [
+  "열애", "열애설", "결혼설", "이혼설", "파경", "불화설", "결별", "재혼설",
+  "논란", "루머", "찌라시", "폭로", "저격", "디스",
+  "마약", "음주운전", "도박", "학폭", "빚투", "미투",
+  "사망설", "위독", "구속", "기소", "재판", "실형", "송사",
+  "성형설", "임신설", "잠적", "은퇴설", "불륜",
+];
+function hasGossipSignal(kw: string): boolean {
+  const s = kw.replace(/\s+/g, "");
+  return GOSSIP_SIGNALS.some((g) => s.includes(g));
+}
+
 function looksLikeBizName(kw: string): boolean {
   // 공백 제거하지 않음 — '이름+접미사'가 붙어 있는(고유명사) 케이스만 잡고, 공백 있는 일반검색은 통과
   const m = SUFFIX_RE.exec(kw);
@@ -106,11 +120,12 @@ function looksLikeBizName(kw: string): boolean {
   return true; // 그 외 = 고유명사(업체명/인물명) → 차단
 }
 
-/** 풀 입력·서빙·생성에서 제외해야 하는 위험 키워드(타사 업체명·인물명·브랜드)면 true. */
+/** 풀 입력·서빙·생성에서 제외해야 하는 위험 키워드(타사 업체명·가십·브랜드)면 true. */
 export function isUnsafeKeyword(keyword: string): boolean {
   const kw = String(keyword ?? "").trim();
   if (!kw) return false;
   if (looksLikeBizName(kw)) return true;
+  if (hasGossipSignal(kw)) return true; // 연예·유명인 가십(법적 지뢰) — 전면 차단
   if (hasBrand(kw)) return true;
   return false;
 }
