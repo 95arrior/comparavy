@@ -128,10 +128,11 @@ export default function Home({
       const res = await fetch(`/api/topics${qs ? `?${qs}` : ""}`);
       const data = await res.json();
       const t = sanitizeTopics(Array.isArray(data.topics) ? data.topics : []);
-      setTopics(t);
+      // ★빈 응답 방어 — 서버가 일시적으로 0개를 주면 기존 목록 유지(화면 전멸 금지)
+      setTopics((prev) => (t.length > 0 ? t : prev));
       try { if (t.length >= 3) localStorage.setItem(ck, JSON.stringify(t)); } catch { /* ignore */ }
     } catch {
-      setTopics([]);
+      setTopics((prev) => prev); // 네트워크 실패 — 기존 유지
     } finally {
       clearTimeout(collectTimer);
       setCollecting(false);

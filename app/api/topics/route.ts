@@ -153,6 +153,7 @@ export async function GET(req: Request) {
   const usedSet = new Set((mine ?? []).map((a) => normalizeKeyword(String(a.keyword ?? ""))).filter(Boolean));
   // 카드별 교체('이 글감 별로예요') — 지금 보이는 글감들을 제외하고 새로 뽑는다.
   const exclude = (new URL(req.url).searchParams.get("exclude") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+  const excludeSet = new Set(exclude.map((e) => normalizeKeyword(e))); // 교체로 제외한 것들 — 풀 전멸 시 되살릴 수 있게 분리 보관
   for (const e of exclude) usedSet.add(normalizeKeyword(e));
   // 토픽 클러스터(주제 이어가기): 이 토큰이 든 키워드만 → 한 주제 깊이 파기. %_ 이스케이프.
   const cluster = (new URL(req.url).searchParams.get("cluster") ?? "").trim().replace(/[%_]/g, "").slice(0, 24);
@@ -221,6 +222,14 @@ export async function GET(req: Request) {
     }
   }
 
+  // ★교체 반복으로 표시 가능 글감이 바닥나면 — 빈 화면 대신 제외 목록을 풀고 재조회(이미 본 글감 재등장 허용)
+  if (rows.length < PICK && excludeSet.size > 0) {
+    for (const nk of excludeSet) usedSet.delete(nk);
+    for (const [useSub, ranged] of steps) {
+      rows = await fetchPool(useSub, ranged);
+      if (rows.length >= PICK) break;
+    }
+  }
   if (rows.length === 0) return NextResponse.json({ topics: [] });
 
   // ── 경쟁도 티어 ──

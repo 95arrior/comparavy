@@ -39,7 +39,7 @@ export async function fetchNews(query: string): Promise<NewsItem[]> {
 export async function todayIssueTopic(sub: string): Promise<IssueTopic | null> {
   const admin = createSupabaseAdminClient();
   const kstDay = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
-  const cacheKey = `issue_topic:${kstDay}:${sub}`;
+  const cacheKey = `issue_topic_v2:${kstDay}:${sub}`;
   try {
     const { data } = await admin.from("api_cache").select("value, expires_at").eq("key", cacheKey).single();
     if (data?.value && (!data.expires_at || new Date(data.expires_at).getTime() > Date.now())) {
@@ -47,7 +47,8 @@ export async function todayIssueTopic(sub: string): Promise<IssueTopic | null> {
     }
   } catch { /* 캐시 미스 */ }
 
-  const news = await fetchNews(sub);
+  // 검색어 정제 — "경제·재테크" 같은 가운뎃점 조합은 뉴스 검색이 빈약 → 공백 분리
+  const news = await fetchNews(sub.replace(/[·/]/g, " ").trim());
   let topic: IssueTopic | null = null;
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (news.length >= 3 && apiKey) {
