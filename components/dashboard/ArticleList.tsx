@@ -220,21 +220,20 @@ export default function ArticleList({
       {confirmUnpub && (
         <div className="ateflo-backdrop-in fixed inset-0 z-[60] flex items-center justify-center bg-black/30 px-6" onClick={() => !unpubBusy && setConfirmUnpub(null)}>
           <div className="ateflo-fade-in w-full max-w-sm at-glass-strong rounded-3xl p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <p className="text-[16px] font-bold text-[color:var(--at-grey-900)]">네이버에서 내린 글인가요?</p>
-            <p className="mt-2 text-[13px] leading-relaxed text-neutral-500">
-              ‘내렸어요’로 표시하면 발행 수·코스 집계에서 빠져요. 글 자체를 완전히 지우려면 삭제를 선택하세요.
-            </p>
-            <p className="mt-3 truncate text-[13.5px] font-semibold text-neutral-800">“{confirmUnpub.title}”</p>
-            <div className="mt-5 flex gap-2">
-              <button onClick={doUnpublish} disabled={unpubBusy || delBusy} className="at-press flex-1 rounded-xl bg-[color:var(--at-grey-900)] py-3 text-[13.5px] font-bold text-white transition disabled:opacity-50">
-                {unpubBusy ? "처리 중…" : "내렸어요 (초안으로)"}
+            <p className="text-[16px] font-bold text-[color:var(--at-grey-900)]">이 글, 어떻게 할까요?</p>
+            <p className="mt-2 truncate text-[13.5px] font-semibold text-neutral-800">“{confirmUnpub.title}”</p>
+            <div className="mt-4 space-y-2">
+              <button onClick={doUnpublish} disabled={unpubBusy || delBusy} className="at-press w-full rounded-xl bg-[color:var(--at-grey-900)] p-3.5 text-left transition disabled:opacity-50">
+                <span className="block text-[13.5px] font-bold text-white">{unpubBusy ? "처리 중…" : "내렸어요 (초안으로 보관)"}</span>
+                <span className="mt-0.5 block text-[11.5px] text-white/60">발행 카운트에서 빠져요 · 글은 남아서 다시 올릴 수 있어요</span>
               </button>
-              <button onClick={() => setConfirmUnpub(null)} disabled={unpubBusy || delBusy} className="at-press rounded-xl bg-neutral-100 px-5 py-3 text-[13.5px] font-bold text-neutral-600 transition disabled:opacity-50">
-                닫기
+              <button onClick={doDelete} disabled={unpubBusy || delBusy} className="at-press w-full rounded-xl bg-red-50 p-3.5 text-left ring-1 ring-red-100 transition hover:bg-red-100/70 disabled:opacity-50">
+                <span className="block text-[13.5px] font-bold text-red-600">{delBusy ? "삭제 중…" : "완전 삭제"}</span>
+                <span className="mt-0.5 block text-[11.5px] text-red-400">발행·작성·코스 모든 카운트에서 사라져요 · 복구 불가 · 크레딧 환불 없음</span>
               </button>
             </div>
-            <button onClick={doDelete} disabled={unpubBusy || delBusy} className="mt-2 w-full py-2 text-center text-[12.5px] font-semibold text-red-400 transition hover:text-red-600 disabled:opacity-50">
-              {delBusy ? "삭제 중…" : "이 글 완전 삭제 (크레딧 환불 없음)"}
+            <button onClick={() => setConfirmUnpub(null)} disabled={unpubBusy || delBusy} className="mt-2 w-full py-2 text-center text-[13px] font-medium text-neutral-400 transition hover:text-neutral-600 disabled:opacity-50">
+              닫기
             </button>
           </div>
         </div>
