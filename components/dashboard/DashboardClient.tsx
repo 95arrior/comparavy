@@ -530,19 +530,6 @@ export default function DashboardClient(props: DashboardProps) {
                 onUpdated={(u) => setArticles((prev) => prev.map((a) => (a.id === u.id ? u : a)))}
                 onAllArticles={() => goLabView("articles")}
                 isAdmin={props.isAdmin}
-                onWriteStory={(storyText, _promo, title) => {
-                  if (!blogProfile) return;
-                  if (credits <= 0) { setPaywall({ title: title || "내 이야기 글" }); return; }
-                  setSelected(null);
-                  setGenParams({
-                    keyword: title, // 직접 정한 제목(비면 라우트가 AI로 유도)
-                    angle: "",
-                    type: toEngineType(blogProfile.article_type, blogProfile.vertical),
-                    tone: blogProfile.tone,
-                    promo: false,
-                    userStory: storyText,
-                  });
-                }}
                 profileKey={`${blogProfile.vertical}:${blogProfile.sub_category ?? ""}`}
               />
             )}

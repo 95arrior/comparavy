@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import TopicCard from "@/components/TopicCard";
 import SeriesSheet from "./SeriesSheet";
-import StoryComposer from "./StoryComposer";
 import TodayCard from "./TodayCard";
 import CourseRing from "./CourseRing";
 import { courseInfo } from "@/lib/course";
@@ -48,7 +46,6 @@ export default function Home({
   onAllArticles,
   onGoPerformance,
   isAdmin,
-  onWriteStory,
   profileKey,
 }: {
   displayName: string;
@@ -63,7 +60,6 @@ export default function Home({
   onAllArticles: () => void;
   onGoPerformance: () => void;
   isAdmin?: boolean;
-  onWriteStory?: (story: string, promo: boolean, title: string) => void;
   profileKey?: string; // 주제:세부 — 글감 캐시 분리(주제 바꾸면 새 글감)
 }) {
   const [topics, setTopics] = useState<Topic[]>([]);
@@ -74,8 +70,6 @@ export default function Home({
   const [cluster, setCluster] = useState<string | null>(null); // '주제 이어가기' 활성 토픽(null=기본 다양)
   const [seriesOpen, setSeriesOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false); // '다른 글감' 접힘 토글
-  const [storyTitle, setStoryTitle] = useState("");
-  const [storyDraft, setStoryDraft] = useState("");
 
   // 하루 3회 교체 + 교체한 글감은 그날 다시 안 나옴(기기에 기억)
   const SWAP_LIMIT = isAdmin ? Infinity : 3;
@@ -186,8 +180,8 @@ export default function Home({
             <TopicsSkeleton collecting={collecting} loadStage={loadStage} />
           ) : clean.length > 0 ? (
             <div className="mt-3 flex flex-col gap-3">
-              {clean.map((t, i) => (
-                <TopicCard key={t.keyword} title={t.title} tag={t.tag || undefined} vol={t.vol} comp={t.comp} blogTotal={t.blogTotal} idx={i} cta="이 글 쓰기" onClick={() => onWriteKeyword(t.keyword, t.title)} onDismiss={swapLeft > 0 ? () => swapTopic(t.keyword) : undefined} dismissing={swapping.includes(t.keyword)} />
+              {clean.map((t) => (
+                <TopicRow key={t.keyword} topic={t} onClick={() => onWriteKeyword(t.keyword, t.title)} onSwap={swapLeft > 0 ? () => swapTopic(t.keyword) : undefined} swapping={swapping.includes(t.keyword)} />
               ))}
             </div>
           ) : (
@@ -245,8 +239,8 @@ export default function Home({
               <TopicsSkeleton collecting={collecting} loadStage={loadStage} />
             ) : rest.length > 0 ? (
               <div className="flex flex-col gap-2.5">
-                {rest.map((t, i) => (
-                  <TopicCard key={t.keyword} title={t.title} tag={t.tag || undefined} vol={t.vol} comp={t.comp} blogTotal={t.blogTotal} idx={i} cta="이 글 쓰기" onClick={() => onWriteKeyword(t.keyword, t.title)} onDismiss={swapLeft > 0 ? () => swapTopic(t.keyword) : undefined} dismissing={swapping.includes(t.keyword)} />
+                {rest.map((t) => (
+                  <TopicRow key={t.keyword} topic={t} onClick={() => onWriteKeyword(t.keyword, t.title)} onSwap={swapLeft > 0 ? () => swapTopic(t.keyword) : undefined} swapping={swapping.includes(t.keyword)} />
                 ))}
                 <button onClick={() => setSeriesOpen(true)} className="at-press flex w-full items-center gap-3 rounded-2xl bg-white p-3.5 ring-1 ring-black/[0.04] transition hover:ring-violet-300">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" /></svg></span>
@@ -263,15 +257,40 @@ export default function Home({
         )}
       </div>
 
-      {/* 접힘 — 내 이야기로 쓰기 (StoryComposer 자체가 검색창식 접힘 UI) */}
-      {onWriteStory && (
-        <div className="at-rise at-d4 mt-3">
-          <StoryComposer collapsible hasBiz={false} local={false} title={storyTitle} onTitleChange={setStoryTitle} story={storyDraft} onStoryChange={setStoryDraft} promo={false} onPromoChange={() => {}} onSubmit={(s, _p, t) => onWriteStory(s, false, t)} />
-        </div>
-      )}
-
       {seriesOpen && <SeriesSheet articles={articles} onWrite={onWriteKeyword} onClose={() => setSeriesOpen(false)} />}
     </main>
+  );
+}
+
+// ★새 글감 실루엣 — 토스식 슬림 로우: 제목 + 데이터 한 줄(월 검색·경쟁 점) + 교체.
+function TopicRow({ topic, onClick, onSwap, swapping }: {
+  topic: { keyword: string; title: string; vol: number; comp: Comp; blogTotal?: number | null };
+  onClick: () => void;
+  onSwap?: () => void;
+  swapping?: boolean;
+}) {
+  const compMeta = topic.comp === "low"
+    ? { label: "경쟁 낮음", dot: "bg-emerald-500" }
+    : topic.comp === "mid"
+      ? { label: "경쟁 보통", dot: "bg-amber-400" }
+      : { label: "경쟁 높음", dot: "bg-rose-400" };
+  return (
+    <div className={`at-press flex items-center gap-3 rounded-2xl bg-white px-5 py-4 ring-1 ring-black/[0.04] transition ${swapping ? "opacity-40" : ""}`}>
+      <button onClick={onClick} className="min-w-0 flex-1 text-left">
+        <p className="truncate text-[14.5px] font-bold text-[color:var(--at-grey-900)]">{topic.title}</p>
+        <p className="mt-1 flex items-center gap-1.5 text-[12px] font-medium text-[color:var(--at-grey-400)]">
+          {topic.vol > 0 ? `월 ${topic.vol.toLocaleString("ko-KR")}회 검색` : "숨은 수요"}
+          <span className={`inline-block h-1.5 w-1.5 rounded-full ${compMeta.dot}`} />
+          {compMeta.label}
+        </p>
+      </button>
+      {onSwap && (
+        <button onClick={onSwap} disabled={swapping} aria-label="이 글감 교체" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-neutral-300 transition hover:bg-neutral-100 hover:text-neutral-500 disabled:opacity-40">
+          <svg className={swapping ? "animate-spin" : ""} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6" /></svg>
+        </button>
+      )}
+      <svg onClick={onClick} className="shrink-0 cursor-pointer text-neutral-300" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+    </div>
   );
 }
 
