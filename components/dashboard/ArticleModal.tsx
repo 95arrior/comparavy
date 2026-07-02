@@ -16,12 +16,15 @@ export default function ArticleModal({
   vertical,
   onClose,
   onUpdated,
+  onCredits,
 }: {
   article: Article;
   /** 블로그 주제(vertical) — 발행 전 광고규제 표현 검사에 사용(없으면 general). */
   vertical?: string;
   onClose: () => void;
   onUpdated: (a: Article) => void;
+  /** 이미지 생성 등으로 크레딧 잔액이 바뀔 때(홈 칩 동기화) */
+  onCredits?: (balance: number) => void;
 }) {
   const [title, setTitle] = useState(article.title);
   const [bodyHtml, setBodyHtml] = useState(article.body_html);
@@ -119,6 +122,31 @@ export default function ArticleModal({
     } catch { setToast("표시하지 못했어요"); }
   }
 
+  // ★AI 이미지 — 사진 자리별 무자막 일러스트 생성(장당 4크레딧, 실패 시 자동 환불).
+  //  네이버 앱 업로드용으로 다운로드 → 사진 자리에 올리는 흐름(외부 이미지 붙여넣기는 네이버가 차단).
+  const [imgs, setImgs] = useState<Record<number, { url?: string; busy?: boolean; err?: string }>>({});
+  async function makeImage(i: number, slot: string) {
+    if (imgs[i]?.busy) return;
+    setImgs((m) => ({ ...m, [i]: { ...m[i], busy: true, err: undefined } }));
+    try {
+      const res = await fetch("/api/images/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slot, title }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        if (typeof data.credits === "number") onCredits?.(data.credits);
+        setImgs((m) => ({ ...m, [i]: { ...m[i], busy: false, err: data.error ?? "실패했어요" } }));
+        return;
+      }
+      if (typeof data.credits === "number") onCredits?.(data.credits);
+      setImgs((m) => ({ ...m, [i]: { url: data.dataUrl, busy: false } }));
+    } catch {
+      setImgs((m) => ({ ...m, [i]: { ...m[i], busy: false, err: "네트워크 오류가 났어요" } }));
+    }
+  }
+
   // 발행 전 광고규제 표현 검사(주제별). 자동 차단이 아니라 경고 + 대안 제시 → 사용자가 판단.
   const compliance = useMemo(() => {
     const v = vertical ?? "general";
@@ -196,6 +224,48 @@ export default function ArticleModal({
                     {v.suggestion && (
                       <button onClick={() => fixViolation(v)} className="ml-auto shrink-0 rounded-lg bg-[#1D75F7] px-2.5 py-1 text-xs font-medium text-white transition hover:opacity-90">‘{v.suggestion}’로 바꾸기</button>
                     )}
+
+        {/* ★AI 이미지 패널 — 사진 자리별 생성/다운로드 */}
+        {photoSlots(bodyHtml).length > 0 && (
+          <div className="mt-4 rounded-2xl at-glass p-5">
+            <div className="flex items-baseline justify-between">
+              <p className="text-[14px] font-bold text-neutral-900">사진 자리 {photoSlots(bodyHtml).length}곳</p>
+              <p className="text-[11.5px] text-neutral-400">AI 이미지 1장 = 4크레딧</p>
+            </div>
+            <p className="mt-1 text-[12px] leading-relaxed text-neutral-400">직접 찍은 사진이 가장 좋아요. 없으면 AI 일러스트로 채워요 — 만들면 저장했다가 네이버에서 사진 자리에 올려요.</p>
+            <div className="mt-3 space-y-2.5">
+              {photoSlots(bodyHtml).map((slot, i) => {
+                const st = imgs[i] ?? {};
+                return (
+                  <div key={i} className={`rounded-xl bg-white/70 p-3.5 ring-1 ring-black/[0.04] ${st.busy ? "at-ai-swap" : ""}`}>
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-[11px] font-bold text-neutral-500">{i + 1}</span>
+                      <p className="min-w-0 flex-1 truncate text-[13px] font-medium text-neutral-700">{slot}</p>
+                      {!st.url && (
+                        <button onClick={() => makeImage(i, slot)} disabled={st.busy} className="at-press shrink-0 rounded-lg bg-[#1D75F7]/10 px-3 py-1.5 text-[12px] font-bold text-[#1D75F7] transition hover:bg-[#1D75F7]/15 disabled:opacity-50">
+                          {st.busy ? "그리는 중…" : "AI 이미지 만들기"}
+                        </button>
+                      )}
+                    </div>
+                    {st.err && <p className="mt-2 text-[12px] font-medium text-amber-600">{st.err}</p>}
+                    {st.url && (
+                      <div className="mt-3">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={st.url} alt="" className="max-h-56 w-full rounded-lg object-cover" />
+                        <div className="mt-2 flex items-center gap-2">
+                          <a href={st.url} download={`ateflo-image-${i + 1}.png`} className="at-press rounded-lg bg-[#1D75F7] px-3.5 py-2 text-[12.5px] font-bold text-white transition hover:opacity-90">저장하기</a>
+                          <button onClick={() => makeImage(i, slot)} disabled={st.busy} className="at-press rounded-lg bg-neutral-100 px-3.5 py-2 text-[12.5px] font-bold text-neutral-600 transition hover:bg-neutral-200 disabled:opacity-50">
+                            {st.busy ? "그리는 중…" : "다시 만들기 · 4크레딧"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
                   </div>
                   <p className="mt-1 text-xs leading-relaxed text-neutral-600">{v.reason}</p>
                   {v.note && <p className="mt-0.5 text-[11px] text-neutral-400">{v.note}</p>}

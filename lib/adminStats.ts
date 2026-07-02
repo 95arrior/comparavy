@@ -47,6 +47,8 @@ export type AdminStats = {
     creditsSpent: number;       // 소모 크레딧 총합(생성 등)
     balanceOutstanding: number; // 유저 보유 잔액 합(= 미제공 서비스 부채)
   } | null;
+  /** ★이미지 생성 감시 — quotaFails24h > 0 이면 Google 잔액 소진 신호(즉시 충전 필요) */
+  images: { today: number; fails24h: number; quotaFails24h: number } | null;
   /** 퍼널: 글을 1편 이상 만든 사용자 수 */
   usersWithArticles: number | null;
   /** 퍼널: 1편 이상 발행한 사용자 수 */
@@ -331,5 +333,17 @@ export async function getAdminStats(): Promise<AdminStats> {
     };
   } catch { /* 집계 실패 시 카드 숨김 */ }
 
-  return { usersWithProfile, creditEconomy, usersTotal, usersToday, proUsers, freeUsers, articlesTotal, articlesToday, publishedArticles, lockedArticles, wpConnections, mrr, conversion, articlesPerUser, wpConnectRate, publishRate, estCostKrw, costTotalKrw, monthlyCostKrw, budgetKrw, avgArticleCostKrw, costTodayKrw, costByKind, usersWithArticles, usersWithPublished, dailyUsers, dailyArticles, recentUsers, recentArticles, waitlistCount, waitlist, social, ai };
+  // ★이미지 생성 감시 (usage_log: image / image_fail / image_quota_fail)
+  let images: AdminStats["images"] = null;
+  try {
+    const dayAgoIso = new Date(Date.now() - 86400000).toISOString();
+    const [imgToday, imgFails, quotaFails] = await Promise.all([
+      count(admin, "usage_log", (q) => q.eq("kind", "image").gte("created_at", todayIso)),
+      count(admin, "usage_log", (q) => q.in("kind", ["image_fail", "image_quota_fail"]).gte("created_at", dayAgoIso)),
+      count(admin, "usage_log", (q) => q.eq("kind", "image_quota_fail").gte("created_at", dayAgoIso)),
+    ]);
+    images = { today: imgToday ?? 0, fails24h: imgFails ?? 0, quotaFails24h: quotaFails ?? 0 };
+  } catch { /* 무시 */ }
+
+  return { usersWithProfile, creditEconomy, images, usersTotal, usersToday, proUsers, freeUsers, articlesTotal, articlesToday, publishedArticles, lockedArticles, wpConnections, mrr, conversion, articlesPerUser, wpConnectRate, publishRate, estCostKrw, costTotalKrw, monthlyCostKrw, budgetKrw, avgArticleCostKrw, costTodayKrw, costByKind, usersWithArticles, usersWithPublished, dailyUsers, dailyArticles, recentUsers, recentArticles, waitlistCount, waitlist, social, ai };
 }

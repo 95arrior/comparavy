@@ -234,12 +234,20 @@ export default function AdminDashboard({ stats }: { stats: AdminStats | null }) 
 
   return (
     <div className="pb-16">
+      {/* ★긴급 경보 — Google 이미지 잔액 소진 신호 */}
+      {stats.images && stats.images.quotaFails24h > 0 && (
+        <div className="mt-4 rounded-2xl bg-red-50 p-4 ring-1 ring-red-200">
+          <p className="text-[14px] font-bold text-red-700">🚨 이미지 생성 실패 {stats.images.quotaFails24h}건 (24시간, 쿼터/잔액)</p>
+          <p className="mt-1 text-[12.5px] leading-relaxed text-red-600">Google Gemini 선불 잔액이 소진됐을 가능성이 커요. 유저 크레딧은 자동 환불되지만 기능이 꺼진 상태 — <a href="https://aistudio.google.com/" target="_blank" rel="noopener noreferrer" className="font-bold underline">지금 충전하세요</a>.</p>
+        </div>
+      )}
+
       {/* 오늘 */}
       <Section title="오늘" hint="KST 자정 기준">
         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
           <Stat label="신규 가입" value={`${stats.usersToday ?? 0}명`} accent={Boolean(stats.usersToday)} />
           <Stat label="글 생성" value={`${stats.articlesToday ?? 0}편`} />
-          <Stat label="오늘 AI 비용" value={won(stats.costTodayKrw ?? 0)} />
+          <Stat label="오늘 AI 비용" value={won(stats.costTodayKrw ?? 0)} sub={stats.images ? `이미지 ${stats.images.today}장${stats.images.fails24h ? ` · 실패 ${stats.images.fails24h}` : ""}` : undefined} />
           <Stat label="전체 가입" value={`${stats.usersTotal ?? 0}명`} sub={`글 ${stats.articlesTotal ?? 0}편 · 발행 ${stats.publishedArticles ?? 0}편`} />
         </div>
       </Section>

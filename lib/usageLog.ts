@@ -5,6 +5,7 @@ const PRICE: Record<string, { in: number; out: number }> = {
   "claude-sonnet-4-6": { in: 3, out: 15 },
   "claude-haiku-4-5": { in: 1, out: 5 },
   "claude-opus-4-8": { in: 5, out: 25 },
+  "gemini-2.5-flash-image": { in: 0.3, out: 30 }, // 이미지 1장 = 1290 out tokens ≈ $0.039
 };
 // 환율(대략). 정밀 비용은 Anthropic 콘솔 기준, 여기선 운영 모니터링용.
 export const USD_TO_KRW = 1400;

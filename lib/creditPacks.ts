@@ -4,6 +4,7 @@
 // 마진 하한 70%(글 1편분=500원). 트라이얼은 마진 계산 제외(어뷰징 필터+결제 워밍업).
 
 export const GENERATE_COST = 10; // 글 1편당 차감 크레딧
+export const IMAGE_COST = 4; // AI 이미지 1장당 차감(원가 ~55원 → 마진 ~72%)
 
 export interface CreditPack {
   key: string;
