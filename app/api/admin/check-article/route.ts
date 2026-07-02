@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { isAdminEmail } from "@/lib/adminStats";
-import { buildRichHtml } from "@/lib/publishHtml";
+import { buildRichHtml, splitLongParagraphs } from "@/lib/publishHtml";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +23,7 @@ export async function GET(request: Request) {
   const art = data?.[0];
   if (!art) return NextResponse.json({ error: "글 없음(id 확인 또는 발행글 필요)" }, { status: 404 });
 
-  const body = String(art.body_html ?? "");
+  const body = splitLongParagraphs(String(art.body_html ?? "")); // 안전망 분할 후 측정(발행 실제 모양)
 
   // ① 문단 줄 수
   const paras = [...body.matchAll(/<(p|li|blockquote)[^>]*>([\s\S]*?)<\/\1>/gi)]

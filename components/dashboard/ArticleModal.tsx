@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { photoMarkerToGuide, photoMarkerToSlot, photoSlots, markToNaverBold, addNaverSpacing } from "@/lib/photoMarkers";
+import { splitLongParagraphs } from "@/lib/publishHtml";
 import CenterToast from "./CenterToast";
 import { copyImage as clipCopyImage, saveImage as clipSaveImage } from "@/lib/clipboard";
 import NaverPublishSheet from "./NaverPublishSheet";
@@ -315,7 +316,7 @@ export default function ArticleModal({
             <p className="mb-3 text-center text-[11px] font-semibold text-neutral-400">모바일에서 이렇게 보여요</p>
             <div
               className="prose prose-neutral prose-sm max-w-none [&_img]:mx-auto [&_img]:rounded-lg [&_p]:my-3 [&_p]:text-[15px] [&_p]:leading-[1.75] [&_p]:text-center [&_h2]:text-center [&_h2]:mt-5 [&_h2]:text-[17px]"
-              dangerouslySetInnerHTML={{ __html: previewWithImages(bodyHtml) }}
+              dangerouslySetInnerHTML={{ __html: splitLongParagraphs(previewWithImages(bodyHtml)) }}
             />
           </div>
         </div>

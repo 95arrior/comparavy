@@ -14,6 +14,47 @@ import { BODY_ALIGN } from "@/config/publish";
 const PHOTO_RE = /\[사진:\s*([^\]]+)\]/g;
 
 
+
+// ★출력 레이어 안전망 — 4줄(약 88자) 넘는 문단을 문장(.!?)·<br>·쉼표 경계로 자동 분할.
+//  엔진이 1차 분절하고, 여기서 남은 긴 문단을 결정적으로 쪼개 모바일 4줄 이하를 보장.
+const MOBILE_MAX_CHARS = 88; // 390px 4줄(약 22자 x 4)
+function visLen(html: string): number {
+  return html.replace(/<[^>]+>/g, "").replace(/&[a-z#0-9]{1,7};/gi, "가").length;
+}
+function splitInner(inner: string): string[] {
+  if (visLen(inner) <= MOBILE_MAX_CHARS) return [inner];
+  // 1차: <br> 및 문장 끝(.?! 뒤 공백/끝) 경계로 절
+  const parts = inner.split(/(?:<br\s*\/?>)|(?<=[.?!])\s+/g).map((x) => x.trim()).filter(Boolean);
+  // 2차: 아직 긴 절은 쉼표·구 경계로 더 쪼갬
+  const units: string[] = [];
+  for (const part of parts) {
+    if (visLen(part) <= MOBILE_MAX_CHARS) { units.push(part); continue; }
+    const sub = part.split(/(?<=[,،·])\s*/g).map((x) => x.trim()).filter(Boolean);
+    let buf = "";
+    for (const u of sub) {
+      if (visLen(buf + u) > MOBILE_MAX_CHARS && buf) { units.push(buf); buf = u; }
+      else buf = buf ? `${buf} ${u}` : u;
+    }
+    if (buf) units.push(buf);
+  }
+  // 절들을 4줄 이하 문단으로 재조립
+  const out: string[] = [];
+  let acc = "";
+  for (const u of units) {
+    if (visLen(acc + " " + u) > MOBILE_MAX_CHARS && acc) { out.push(acc); acc = u; }
+    else acc = acc ? `${acc} ${u}` : u;
+  }
+  if (acc) out.push(acc);
+  return out.length ? out : [inner];
+}
+export function splitLongParagraphs(html: string): string {
+  return html.replace(/<p(\s[^>]*)?>([\s\S]*?)<\/p>/gi, (_m, attr, inner) => {
+    const chunks = splitInner(inner);
+    if (chunks.length <= 1) return `<p${attr ?? ""}>${inner}</p>`;
+    return chunks.map((c) => `<p${attr ?? ""}>${c}</p>`).join("");
+  });
+}
+
 // 모바일 리듬: 블록 요소에 정렬 스타일 주입(가운데 기본). config로 분리.
 function applyAlign(html: string): string {
   if (BODY_ALIGN !== "center") return html;
@@ -47,7 +88,7 @@ export function buildRichHtml(input: PublishInput): string {
   });
   const tags = hashtagLine(input.hashtags);
   if (tags) body += `<p>${tags}</p>`;
-  return applyAlign(body);
+  return applyAlign(splitLongParagraphs(body));
 }
 
 // marker 모드 본문 HTML — 이미지는 넣지 않고 [사진 N] 마커만.
@@ -59,7 +100,7 @@ export function buildMarkerHtml(input: PublishInput): string {
   });
   const tags = hashtagLine(input.hashtags);
   if (tags) body += `<p>${tags}</p>`;
-  return applyAlign(body);
+  return applyAlign(splitLongParagraphs(body));
 }
 
 // text/plain — 태그 제거, 이미지 위치에 [사진 N] 마커.
