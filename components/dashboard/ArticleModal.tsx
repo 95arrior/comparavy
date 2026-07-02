@@ -251,6 +251,7 @@ export default function ArticleModal({
                 <p>· <b>첫 사진</b>이 검색 썸네일이에요 — 제일 잘 나온 걸로</p>
                 <p>· 발행할 때 <b>검색 허용 등 공개 옵션</b>을 모두 켜고 <b>전체공개</b>로 올려요</p>
                 <p>· 발행할 때 <b>태그</b>도 본문 해시태그처럼 넣어주세요</p>
+                <p className="mt-1.5 text-amber-700">⚠ 사진은 <b>직접 찍거나 무료 이미지</b>(픽사베이 등)만 — 남의 사진·캡처는 저작권 위반이에요</p>
               </div>
               <button onClick={openNaverWrite} className="mt-4 w-full rounded-xl bg-[#03C75A] py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">네이버 글쓰기 열기 <span className="text-[12px] font-medium opacity-85">· 제목 자동 복사</span></button>
               <button onClick={copyBody} className="mt-2 w-full rounded-xl bg-[#03C75A]/10 py-3.5 text-[14px] font-bold text-[#03C75A] transition hover:bg-[#03C75A]/15 active:scale-[0.99]">{copied ? "본문 복사됨 ✓ — 본문칸에 붙여넣기" : "본문 복사"}</button>
