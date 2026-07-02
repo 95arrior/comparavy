@@ -72,6 +72,26 @@ export default function ArticleList({
       : { text: "아직 색인 전", cls: "text-amber-600" };
   };
 
+  const [delBusy, setDelBusy] = useState(false);
+  async function doDelete() {
+    if (!confirmUnpub || delBusy) return;
+    setDelBusy(true);
+    try {
+      const res = await fetch(`/api/articles/${confirmUnpub.id}`, { method: "DELETE" });
+      if (res.ok) {
+        onUpdated?.({ ...confirmUnpub, status: "deleted" as Article["status"] });
+        setConfirmUnpub(null);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setMsg(data.error ?? "삭제하지 못했어요.");
+        setTimeout(() => setMsg(null), 2500);
+      }
+    } catch {
+      setMsg("삭제하지 못했어요.");
+      setTimeout(() => setMsg(null), 2500);
+    } finally { setDelBusy(false); }
+  }
+
   async function doUnpublish() {
     if (!confirmUnpub || unpubBusy) return;
     setUnpubBusy(true);
@@ -181,7 +201,7 @@ export default function ArticleList({
                 </button>
                 {published ? (
                   <button onClick={() => setConfirmUnpub(a)} className="shrink-0 text-[12px] font-semibold text-neutral-300 transition hover:text-neutral-500">
-                    초안으로
+                    내렸어요
                   </button>
                 ) : (
                   <button onClick={() => onOpen(a)} aria-label="네이버에 올리기" className="at-press flex h-8 w-8 shrink-0 items-center justify-center text-[#03C75A] transition hover:opacity-70">
@@ -200,19 +220,22 @@ export default function ArticleList({
       {confirmUnpub && (
         <div className="ateflo-backdrop-in fixed inset-0 z-[60] flex items-center justify-center bg-black/30 px-6" onClick={() => !unpubBusy && setConfirmUnpub(null)}>
           <div className="ateflo-fade-in w-full max-w-sm at-glass-strong rounded-3xl p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <p className="text-[16px] font-bold text-[color:var(--at-grey-900)]">‘초안’으로 되돌릴까요?</p>
+            <p className="text-[16px] font-bold text-[color:var(--at-grey-900)]">네이버에서 내린 글인가요?</p>
             <p className="mt-2 text-[13px] leading-relaxed text-neutral-500">
-              여기선 표시만 바뀌어요. 네이버에 올린 글을 실제로 내리려면 네이버 블로그에서 직접 삭제·비공개로 바꿔주세요.
+              ‘내렸어요’로 표시하면 발행 수·코스 집계에서 빠져요. 글 자체를 완전히 지우려면 삭제를 선택하세요.
             </p>
             <p className="mt-3 truncate text-[13.5px] font-semibold text-neutral-800">“{confirmUnpub.title}”</p>
             <div className="mt-5 flex gap-2">
-              <button onClick={doUnpublish} disabled={unpubBusy} className="at-press flex-1 rounded-xl bg-[color:var(--at-grey-900)] py-3 text-[13.5px] font-bold text-white transition disabled:opacity-50">
-                {unpubBusy ? "되돌리는 중…" : "초안으로"}
+              <button onClick={doUnpublish} disabled={unpubBusy || delBusy} className="at-press flex-1 rounded-xl bg-[color:var(--at-grey-900)] py-3 text-[13.5px] font-bold text-white transition disabled:opacity-50">
+                {unpubBusy ? "처리 중…" : "내렸어요 (초안으로)"}
               </button>
-              <button onClick={() => setConfirmUnpub(null)} disabled={unpubBusy} className="at-press rounded-xl bg-neutral-100 px-5 py-3 text-[13.5px] font-bold text-neutral-600 transition disabled:opacity-50">
+              <button onClick={() => setConfirmUnpub(null)} disabled={unpubBusy || delBusy} className="at-press rounded-xl bg-neutral-100 px-5 py-3 text-[13.5px] font-bold text-neutral-600 transition disabled:opacity-50">
                 닫기
               </button>
             </div>
+            <button onClick={doDelete} disabled={unpubBusy || delBusy} className="mt-2 w-full py-2 text-center text-[12.5px] font-semibold text-red-400 transition hover:text-red-600 disabled:opacity-50">
+              {delBusy ? "삭제 중…" : "이 글 완전 삭제 (크레딧 환불 없음)"}
+            </button>
           </div>
         </div>
       )}

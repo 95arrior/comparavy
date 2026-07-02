@@ -343,6 +343,11 @@ export default function DashboardClient(props: DashboardProps) {
   }
 
   function onUpdated(updated: Article) {
+    if (updated.status === "deleted") {
+      setArticles((prev) => prev.filter((a) => a.id !== updated.id));
+      setSelected(null);
+      return;
+    }
     setArticles((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
     setSelected(updated);
   }
@@ -610,7 +615,7 @@ export default function DashboardClient(props: DashboardProps) {
                     articles={articles}
                     onOpen={setSelected}
                     onGoGenerate={() => goLabView("home")}
-                    onUpdated={(updated) => setArticles((prev) => prev.map((a) => (a.id === updated.id ? updated : a)))}
+                    onUpdated={(updated) => setArticles((prev) => (updated.status === "deleted" ? prev.filter((a) => a.id !== updated.id) : prev.map((a) => (a.id === updated.id ? updated : a))))}
                   />
                 </div>
               </main>

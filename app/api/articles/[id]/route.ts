@@ -68,8 +68,13 @@ export async function PATCH(
   return NextResponse.json({ article: data });
 }
 
-export async function DELETE() {
-  // 글 삭제는 지원하지 않는다.
-  // (무료 한도 카운터는 monotonic이지만, 잠금 티저를 지우고 재생성하는 무한 무료생성 빈틈을 원천 차단)
-  return NextResponse.json({ error: "글 삭제는 지원하지 않아요." }, { status: 403 });
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  // 크레딧 선차감 시대 — 삭제해도 이미 결제된 생성이라 어뷰징 여지 없음(구 무료한도 방어 폐기).
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "로그인이 필요해요." }, { status: 401 });
+  const { id } = await params;
+  const { error } = await supabase.from("articles").delete().eq("id", id).eq("user_id", user.id);
+  if (error) return NextResponse.json({ error: "삭제하지 못했어요." }, { status: 500 });
+  return NextResponse.json({ ok: true });
 }

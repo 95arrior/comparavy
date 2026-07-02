@@ -157,6 +157,10 @@ export async function GET(req: Request) {
   // 토픽 클러스터(주제 이어가기): 이 토큰이 든 키워드만 → 한 주제 깊이 파기. %_ 이스케이프.
   const cluster = (new URL(req.url).searchParams.get("cluster") ?? "").trim().replace(/[%_]/g, "").slice(0, 24);
 
+  // ★낡은 연도 글감 차단 — '2024 ○○' 같은 키워드·제목은 그 자체로 구식 신호(신뢰 하락)
+  const STALE_YEAR = /20(1[0-9]|2[0-5])/;
+  const staleYear = (t: string) => STALE_YEAR.test(t);
+
   // keyword_pool은 공용 풀(RLS 정책 없음 = 서버 전용). 서비스롤로 읽는다(category_insights와 동일 패턴).
   // 유저별 비밀이 아닌 공용 데이터이고, 조회 조건은 위에서 본인 확인된 프로필 값(vertical/sub)뿐이라 안전.
   const pool = createSupabaseAdminClient();
@@ -169,7 +173,7 @@ export async function GET(req: Request) {
     if (cluster) q = q.ilike("keyword", `%${cluster}%`); // 클러스터: 이 토큰 든 키워드만
     if (adminBest) {
       // 최상급 = '이길 수 있는 최상' — 메가 키워드(검색량 무제한)는 문서수도 메가라 제외. 적정 상한을 둔다.
-      q = ranged ? q.gte("monthly_searches", 500).lte("monthly_searches", 8000) : q.lte("monthly_searches", 20000);
+      q = ranged ? q.gte("monthly_searches", 2000).lte("monthly_searches", 30000) : q.gte("monthly_searches", 1000);
     } else if (ranged) {
       q = q.gte("monthly_searches", 500).lte("monthly_searches", 5000);
     }
@@ -179,7 +183,7 @@ export async function GET(req: Request) {
       .limit(WINDOW);
     const rows = (data ?? []) as PoolRow[];
     // 본인 작성분 제외 + 고른 대상(audience)만 통과
-    return rows.filter((r) => !usedSet.has(normalizeKeyword(r.keyword)) && !isUnsafeKeyword(r.keyword) && audMatch(r.keyword, r.audience));
+    return rows.filter((r) => !usedSet.has(normalizeKeyword(r.keyword)) && !isUnsafeKeyword(r.keyword) && !staleYear(r.keyword) && audMatch(r.keyword, r.audience));
   }
 
   // 단계적 폴백: (sub+적정범위) → (sub+전체) → (vertical+적정범위) → (vertical+전체).
@@ -359,7 +363,7 @@ export async function GET(req: Request) {
   // fit 상위 후보를 넉넉히(PICK+6) 추림 — 대표 샘플이면 포화 키워드가 많이 보여서, 같은 fit 안에서 '이길 수 있는' 걸 고른다.
   const fitTop = candidates
     .map((r, i) => ({ r, t: titled[i] }))
-    .filter(({ t }) => t?.ok !== false)
+    .filter(({ t }) => t?.ok !== false && !staleYear(t?.title ?? ""))
     .sort((a, b) => (b.t?.fit ?? 1) - (a.t?.fit ?? 1))
     .slice(0, PICK + 6);
 
