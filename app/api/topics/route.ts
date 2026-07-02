@@ -193,6 +193,12 @@ export async function GET(req: Request) {
           amped = await amplifyForUser(trends, profile ?? null, user.id, 2);
           if (amped.length > 0) {
             try { await pool.from("api_cache").upsert({ key: ampKey, value: amped, expires_at: new Date(Date.now() + 6 * 3600_000).toISOString(), updated_at: new Date().toISOString() }); } catch { /* ignore */ }
+          } else {
+            // ★증식 실패 폴백 — 원본 씨앗이라도 유저 시드로 회전해 보여준다(홈 빈 화면 방지).
+            amped = [...trends]
+              .sort((a, b) => (seedFrom(a.keyword + user!.id) % 997) - (seedFrom(b.keyword + user!.id) % 997))
+              .slice(0, 2)
+              .map((t) => ({ keyword: t.keyword, title: t.title, newsContext: t.newsContext }));
           }
         }
       }
