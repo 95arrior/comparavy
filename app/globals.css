@@ -1554,12 +1554,13 @@ input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-sele
   100% { background-position: 200% 50%; }
 }
 .at-ai-swap { position: relative; }
+.at-ai-swap { box-shadow: 0 0 22px -6px rgba(150, 130, 255, 0.45); }
 .at-ai-swap::after {
   content: "";
   position: absolute;
-  inset: 0;
-  border-radius: 16px;
-  padding: 1.5px;
+  inset: -2.5px;
+  border-radius: 19px;
+  padding: 2.5px;
   background: linear-gradient(90deg, #8ec5ff, #b79cff, #ff9ec6, #ffd08a, #8ec5ff) 0 0 / 200% 100%;
   animation: at-ai-glow 1.4s linear infinite;
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
 import { CREDIT_PACKS, GENERATE_COST, type CreditPack } from "@/lib/creditPacks";
 import GlassIcon from "@/components/GlassIcon";
+import { saleUntil, formatRemain } from "@/lib/sale";
 
 // ★크레딧 팩 단건 결제 — 구독 아님. 팩 선택 → 동의 1회 → 토스 결제창 → successUrl에서 서버 승인·지급.
 // orderId 규격: crd_{packKey}_{uid8}_{random} (서버가 팩·주문자·금액을 이걸로 검증)
@@ -29,6 +30,16 @@ export default function PricingClient({
   const params = useSearchParams();
   const failed = params.get("fail") === "1";
   const [selected, setSelected] = useState<CreditPack | null>(null);
+  // ★24h 한정 할인 — 타이머가 살아있을 때만 salePrice 적용(항시 할인이면 '한정'의 신뢰가 무너짐)
+  const [until, setUntil] = useState(0);
+  useEffect(() => { setUntil(saleUntil()); }, []);
+  useEffect(() => {
+    if (!until) return;
+    const id = setInterval(() => { if (saleUntil() === 0) setUntil(0); else setUntil((u) => u); }, 1000);
+    return () => clearInterval(id);
+  }, [until]);
+  const saleOn = until > 0;
+  const effPrice = (p: CreditPack) => (saleOn && p.salePrice ? p.salePrice : p.price);
   const [agree, setAgree] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +52,7 @@ export default function PricingClient({
     setLoading(true);
     setError(null);
     try {
-      const amount = pack.salePrice ?? pack.price;
+      const amount = effPrice(pack);
       const orderId = `crd_${pack.key}_${userIdFragment}_${Math.random().toString(36).slice(2, 12)}`;
       const tossPayments = await loadTossPayments(clientKey);
       const payment = tossPayments.payment({ customerKey: `user_${userIdFragment}` });
@@ -67,6 +78,12 @@ export default function PricingClient({
           결제가 취소됐거나 실패했어요. 다시 시도할 수 있어요.
         </p>
       )}
+      {saleOn && (
+        <div className="mb-4 flex items-center justify-center gap-2 rounded-xl bg-[#1D75F7]/[0.07] px-4 py-2.5">
+          <p className="text-[12.5px] font-bold text-[#1D75F7]">한정 할인 진행 중</p>
+          <p className="text-[13px] font-extrabold tabular-nums text-[#1D75F7]">{formatRemain(until)}</p>
+        </div>
+      )}
       {loggedIn && (
         <p className="mb-5 text-center text-[13px] text-neutral-500">
           지금 잔액 <b className="text-[#1D75F7]">{credits.toLocaleString("ko-KR")}크레딧</b> · 글 1편 = {GENERATE_COST}크레딧
@@ -77,7 +94,7 @@ export default function PricingClient({
       <div className="space-y-3">
         {CREDIT_PACKS.map((p, i) => {
           const isSel = selected?.key === p.key;
-          const amount = p.salePrice ?? p.price;
+          const amount = effPrice(p);
           const perArticle = Math.round(amount / (p.credits / GENERATE_COST));
           return (
             <button
@@ -99,7 +116,7 @@ export default function PricingClient({
                   <p className="mt-0.5 text-[12.5px] text-neutral-500">{p.desc}</p>
                 </div>
                 <div className="shrink-0 text-right">
-                  {p.salePrice ? (
+                  {saleOn && p.salePrice ? (
                     <>
                       <p className="text-[12px] font-medium text-neutral-300 line-through">{formatKRW(p.price)}</p>
                       <p className="text-[17px] font-extrabold text-[#1D75F7]">{formatKRW(p.salePrice)}</p>
@@ -120,7 +137,7 @@ export default function PricingClient({
         <div className="at-pop mt-5 rounded-2xl at-glass-strong p-5">
           <div className="flex items-center justify-between">
             <p className="text-[14px] font-bold text-neutral-900">{selected.name} · {selected.credits.toLocaleString("ko-KR")}크레딧</p>
-            <p className="text-[16px] font-extrabold text-[#1D75F7]">{formatKRW(selected.salePrice ?? selected.price)}</p>
+            <p className="text-[16px] font-extrabold text-[#1D75F7]">{formatKRW(effPrice(selected))}</p>
           </div>
           <label className="mt-3 flex cursor-pointer items-start gap-2.5 text-[12.5px] leading-relaxed text-neutral-600">
             <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[#1D75F7]" />
@@ -134,7 +151,7 @@ export default function PricingClient({
             disabled={!agree || loading}
             className="at-press mt-4 w-full rounded-xl bg-[#1D75F7] py-4 text-[15px] font-bold text-white transition hover:opacity-90 disabled:opacity-40"
           >
-            {loading ? "결제창 여는 중…" : loggedIn ? `${formatKRW(selected.salePrice ?? selected.price)} 결제하기` : "로그인하고 결제하기"}
+            {loading ? "결제창 여는 중…" : loggedIn ? `${formatKRW(effPrice(selected))} 결제하기` : "로그인하고 결제하기"}
           </button>
         </div>
       )}

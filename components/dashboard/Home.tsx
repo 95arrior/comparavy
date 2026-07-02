@@ -224,7 +224,7 @@ function TopicRow({ topic, onClick, onSwap, swapping }: {
         </span>
         {onSwap && (
           <button onClick={onSwap} disabled={swapping} aria-label="새 글감 받기" className="at-press ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-neutral-300 transition hover:bg-neutral-50 hover:text-[#1D75F7] disabled:opacity-40">
-<span className={swapping ? "animate-spin" : ""}><GlassIcon name="refresh" tint="grey" size={24} icon={0.68} radius={8} /></span>
+<span className={`flex h-[18px] w-[18px] items-center justify-center ${swapping ? "animate-spin" : ""}`}><GlassIcon name="refresh" tint="grey" size={18} /></span>
           </button>
         )}
       </div>

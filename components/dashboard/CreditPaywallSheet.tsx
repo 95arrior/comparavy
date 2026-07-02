@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CREDIT_PACKS } from "@/lib/creditPacks";
+import { ensureSaleStarted, saleUntil, formatRemain } from "@/lib/sale";
 
 // 크레딧 0 → 생성 시도 시 뜨는 페이월 시트.
 // 결제 유도 심리: 빈 화면이 아니라 '하려던 일(글감 제목)'이 보이는 상태에서 잠김 → 손실 회피.
@@ -23,6 +24,19 @@ export default function CreditPaywallSheet({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
+
+  // ★24h 한정 할인 — '잠김'으로 열렸을 때 타이머 시작(최초 1회), 1초마다 갱신
+  const [until, setUntil] = useState(0);
+  useEffect(() => {
+    setUntil(pendingTitle ? ensureSaleStarted() : saleUntil());
+  }, [pendingTitle]);
+  const [, tick] = useState(0);
+  useEffect(() => {
+    if (!until) return;
+    const id = setInterval(() => { tick((t) => t + 1); if (saleUntil() === 0) setUntil(0); }, 1000);
+    return () => clearInterval(id);
+  }, [until]);
+  const saleOn = until > 0;
 
   return (
     <div className="ateflo-backdrop-in fixed inset-0 z-[70] flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center sm:p-6" onClick={onClose}>
@@ -46,6 +60,13 @@ export default function CreditPaywallSheet({
           {charge ? "글 1편 = 10크레딧. 많이 살수록 편당 가격이 내려가요." : "크레딧을 충전하면 지금 바로 이어서 쓸 수 있어요. 글 1편 = 10크레딧."}
         </p>
 
+        {saleOn && (
+          <div className="mt-3 flex items-center justify-between rounded-xl bg-[#1D75F7]/[0.07] px-3.5 py-2.5">
+            <p className="text-[12.5px] font-bold text-[#1D75F7]">지금만, 승인 팩 5,000원 할인</p>
+            <p className="text-[13px] font-extrabold tabular-nums text-[#1D75F7]">{formatRemain(until)}</p>
+          </div>
+        )}
+
         <div className="mt-4 space-y-2">
           {CREDIT_PACKS.map((p) => (
             <div key={p.key} className={`flex items-center gap-3 rounded-2xl border p-3.5 ${p.highlight ? "border-[#1D75F7] bg-[#1D75F7]/[0.04]" : "border-neutral-200 bg-white"}`}>
@@ -57,7 +78,14 @@ export default function CreditPaywallSheet({
                 <p className="mt-0.5 truncate text-[12px] text-neutral-500">{p.desc}</p>
               </div>
               <div className="shrink-0 text-right">
-                <p className="text-[14px] font-bold text-neutral-900">{p.price.toLocaleString("ko-KR")}원</p>
+                {saleOn && p.salePrice ? (
+                  <>
+                    <p className="text-[11px] font-medium text-neutral-300 line-through">{p.price.toLocaleString("ko-KR")}원</p>
+                    <p className="text-[14px] font-extrabold text-[#1D75F7]">{p.salePrice.toLocaleString("ko-KR")}원</p>
+                  </>
+                ) : (
+                  <p className="text-[14px] font-bold text-neutral-900">{p.price.toLocaleString("ko-KR")}원</p>
+                )}
                 <p className="text-[11px] text-neutral-400">{p.credits.toLocaleString("ko-KR")}크레딧</p>
               </div>
             </div>
