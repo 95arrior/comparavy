@@ -10,6 +10,7 @@ import { compFromLabel, compFromBlogTotal, filledStarsFromData, type Comp } from
 import { fetchBlogTotal } from "@/lib/naverBlogSearch";
 import { resolveLocalPlan, generateLocalKeywords, generateAudienceTopics, type LocalScope } from "@/lib/aiSeeds";
 import { buildPoolForSub } from "@/lib/keywordPool";
+import { isAdminEmail } from "@/lib/adminStats";
 import { collectPoolKeywords } from "@/lib/poolCollect";
 import { fetchNaverAutocomplete } from "@/lib/naverAutocomplete";
 import { checkRateLimit } from "@/lib/rateLimit";
@@ -128,6 +129,9 @@ export async function GET(req: Request) {
     .eq("user_id", user.id)
     .maybeSingle();
 
+  // ★관리자 우대 — 분산(least-used) 무시하고 절대 최상급(경쟁 낮음·검색량 상위)만
+  const adminBest = isAdminEmail(user.email);
+
   const vertical = profile?.vertical;
   const sub = profile?.sub_category;
   if (!vertical) return NextResponse.json({ topics: [] }); // 온보딩 전
@@ -162,9 +166,14 @@ export async function GET(req: Request) {
     let q = pool.from("keyword_pool").select("keyword, monthly_searches, competition, audience, blog_total").eq("vertical", vertical);
     if (useSub && sub) q = q.eq("sub", sub);
     if (cluster) q = q.ilike("keyword", `%${cluster}%`); // 클러스터: 이 토큰 든 키워드만
-    if (ranged) q = q.gte("monthly_searches", 500).lte("monthly_searches", 5000);
+    if (adminBest) {
+      // 관리자: 경쟁 낮음만 + 검색량 하한만(상한 해제) — 그날의 랜덤과 무관하게 풀의 최상급
+      q = q.eq("competition", "낮음").gte("monthly_searches", ranged ? 500 : 0);
+    } else if (ranged) {
+      q = q.gte("monthly_searches", 500).lte("monthly_searches", 5000);
+    }
     const { data } = await q
-      .order("times_assigned", { ascending: true }) // 덜 쓰인 것 먼저(기존 인덱스 활용)
+      .order(adminBest ? "monthly_searches" : "times_assigned", { ascending: adminBest ? false : true })
       .order("monthly_searches", { ascending: false })
       .limit(WINDOW);
     const rows = (data ?? []) as PoolRow[];
