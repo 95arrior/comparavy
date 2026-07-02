@@ -136,6 +136,17 @@ function Header() {
 function LiveDemo() {
   const [sel, setSel] = useState(0);
   const [run, setRun] = useState(false);
+  // ★자동 시연 — 대부분의 방문자는 버튼을 안 누른다. 섹션이 보이면 1번 글감으로 자동 시작.
+  const autoRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = autoRef.current;
+    if (!el) return;
+    const ob = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { setRun(true); ob.disconnect(); }
+    }, { threshold: 0.45 });
+    ob.observe(el);
+    return () => ob.disconnect();
+  }, []);
   const topic = DEMO_TOPICS[sel];
   const { shown, done, progress } = useTypewriter(topic.excerpt, run);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -144,7 +155,7 @@ function LiveDemo() {
   }, [shown, run]);
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div ref={autoRef} className="mx-auto max-w-2xl">
       {/* 글감 3종 — 실제 홈 UI 축소판 */}
       <div className="grid gap-2.5 sm:grid-cols-3">
         {DEMO_TOPICS.map((t, i) => (
@@ -168,7 +179,7 @@ function LiveDemo() {
         {!run ? (
           <div className="flex h-[300px] flex-col items-center justify-center px-6 text-center sm:h-[340px]">
             <span className="at-ai-orb" style={{ width: 56, height: 56 }} />
-            <p className="mt-5 text-[15px] font-bold text-neutral-700">위에서 글감을 하나 골라보세요</p>
+            <p className="mt-5 text-[15px] font-bold text-neutral-700">잠시 후 여기서 글이 써져요</p>
             <p className="mt-1 text-[12.5px] text-neutral-400">진짜로 이 자리에서 글이 써져요</p>
           </div>
         ) : (
