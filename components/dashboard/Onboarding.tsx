@@ -382,9 +382,15 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
               <div>
                 <p className="at-label">딱 하나만 켜요</p>
                 <h2 className="at-headline mt-1 whitespace-pre-line">{"‘검색 허용’을\n켜주세요"}</h2>
-                <p className="mt-2 text-sm leading-relaxed text-neutral-500">이걸 켜야 내 글이 네이버 검색에 나와요. 버튼을 누르면 설정 화면이 열려요 — <b className="text-neutral-700">기본 설정 → 검색 허용</b>을 켜고 돌아오세요.</p>
-                <a href="https://admin.blog.naver.com" target="_blank" rel="noopener noreferrer" className="at-press mt-6 block w-full rounded-xl bg-[#03C75A] py-4 text-center text-[15px] font-bold text-white transition hover:opacity-90">
-                  내 블로그 설정 열기
+                <p className="mt-2 text-sm leading-relaxed text-neutral-500">이걸 켜야 내 글이 네이버 검색에 나와요.</p>
+                <div className="mt-5 rounded-2xl bg-neutral-50 px-5 py-4 text-[13.5px] leading-relaxed text-neutral-700">
+                  <p className="font-bold text-neutral-800">📱 폰이라면 — 네이버 블로그 앱에서</p>
+                  <p className="mt-1">내 블로그 → 오른쪽 위 <b>≡</b> → <b>환경설정</b> → <b>블로그 정보 → 검색 허용</b> 켜기</p>
+                  <p className="mt-3 font-bold text-neutral-800">💻 컴퓨터라면</p>
+                  <p className="mt-1">내 블로그 → <b>관리</b> → 기본 설정의 <b>‘검색 허용’</b> 켜기</p>
+                </div>
+                <a href="https://blog.naver.com" target="_blank" rel="noopener noreferrer" className="at-press mt-4 block w-full rounded-xl bg-[#03C75A] py-4 text-center text-[15px] font-bold text-white transition hover:opacity-90">
+                  내 블로그 열기
                 </a>
               </div>
             )}
