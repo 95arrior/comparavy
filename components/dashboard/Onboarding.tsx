@@ -141,7 +141,7 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
       const res = await fetch("/api/blog-profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ vertical: "online", sub_category: sub, blog_name: blogName.trim() || defaultBlogName(sub), publish_mode: "manual" }),
+        body: JSON.stringify({ vertical: "online", sub_category: sub, blog_name: blogName.trim() || defaultBlogName(sub), publish_mode: "manual", naver_blog_id: id || undefined }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data?.error ?? "저장하지 못했어요."); return; }

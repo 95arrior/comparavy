@@ -73,6 +73,10 @@ export async function POST(request: Request) {
   // 업체 정보(선택) — 있는 것만 저장, 빈 값은 null
   const bizField = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "") || null;
   const sub_category = (typeof body.sub_category === "string" ? body.sub_category : "").trim().slice(0, 40) || null;
+  // 네이버 블로그 아이디 — 계정 단위 저장(기기 간 동기화). undefined면 기존값 유지.
+  const naver_blog_id = typeof body.naver_blog_id === "string"
+    ? body.naver_blog_id.trim().replace(/^https?:\/\//, "").replace(/^m\./, "").replace(/^blog\.naver\.com\//, "").replace(/[/?#].*$/, "").slice(0, 40) || null
+    : undefined;
   const biz_name = bizField(body.biz_name, 80);
   const biz_address = bizField(body.biz_address, 200);
   const biz_phone = bizField(body.biz_phone, 40);
@@ -99,7 +103,7 @@ export async function POST(request: Request) {
   const { data, error } = await supabase
     .from("blog_profiles")
     .upsert(
-      { user_id: user.id, topic, category, blog_name, tone, article_type, target, publish_mode, vertical, sub_category, biz_name, biz_address, biz_detail_address, biz_lat, biz_lng, biz_phone, biz_hours, biz_hours_json, biz_strength, audience, updated_at: new Date().toISOString() },
+      { user_id: user.id, topic, category, blog_name, tone, article_type, target, publish_mode, vertical, sub_category, ...(naver_blog_id !== undefined ? { naver_blog_id } : {}), biz_name, biz_address, biz_detail_address, biz_lat, biz_lng, biz_phone, biz_hours, biz_hours_json, biz_strength, audience, updated_at: new Date().toISOString() },
       { onConflict: "user_id" },
     )
     .select("*")
@@ -109,4 +113,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `저장 실패: ${error.message}` }, { status: 500 });
   }
   return NextResponse.json({ profile: data });
+}
+
+// 부분 수정 — 네이버 블로그 아이디만 갱신(POST 전체 upsert와 달리 다른 필드 보존).
+export async function PATCH(request: Request) {
+  if (!hasSupabaseEnv()) return NextResponse.json({ error: "서버 설정이 아직이에요." }, { status: 500 });
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "로그인이 필요해요." }, { status: 401 });
+  const body = await request.json().catch(() => ({}));
+  if (typeof body.naver_blog_id !== "string") return NextResponse.json({ error: "naver_blog_id가 필요해요." }, { status: 400 });
+  const id = body.naver_blog_id.trim().replace(/^https?:\/\//, "").replace(/^m\./, "").replace(/^blog\.naver\.com\//, "").replace(/[/?#].*$/, "").slice(0, 40) || null;
+  const { error } = await supabase.from("blog_profiles").update({ naver_blog_id: id, updated_at: new Date().toISOString() }).eq("user_id", user.id);
+  if (error) return NextResponse.json({ error: "저장하지 못했어요." }, { status: 500 });
+  return NextResponse.json({ ok: true, naver_blog_id: id });
 }
