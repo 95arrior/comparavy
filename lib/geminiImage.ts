@@ -9,7 +9,9 @@ export function imageReady(): boolean {
 }
 
 const BASE_STYLE = [
-  "STRICTLY NO text, NO letters, NO numbers, NO watermarks anywhere in the image.",
+  "ABSOLUTELY NO text of any kind: no letters, no numbers, no Korean characters (Hangul), no signs, no labels, no captions, no watermarks, no UI text.",
+  "Any screen, sign, book, paper or package in the scene must be completely blank or filled with abstract shapes only.",
+  "Do NOT render any words from this prompt into the image.",
   "NOT photorealistic — clearly an illustration.",
 ].join(" ");
 
@@ -56,7 +58,8 @@ export async function generateBlogImage(slotDesc: string, articleTitle: string, 
   const compo = COMPOSITIONS[nonce % COMPOSITIONS.length];
   const mood = MOODS[(nonce >> 4) % MOODS.length];
   const STYLE = `${art}, ${palette}, ${compo}, ${mood} mood, modern Korean lifestyle blog aesthetic. Masterful composition, harmonious lighting, crisp refined details, high-end magazine quality. ${BASE_STYLE}`;
-  const prompt = `Blog illustration for a Korean blog post titled "${articleTitle}". Scene: ${slotDesc}. ${STYLE}`;
+  void articleTitle; // 한글 제목은 프롬프트에 넣지 않는다 — 모델이 그 글자를 그림에 그리려다 깨진 텍스트가 나옴
+  const prompt = `Editorial illustration for a Korean lifestyle blog. Scene to depict: ${slotDesc}. ${STYLE}`;
   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

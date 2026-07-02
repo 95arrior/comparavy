@@ -44,21 +44,10 @@ export default function ArticleModal({
     return () => clearTimeout(t);
   }, [toast]);
 
-  // ★복사용 이미지 인라인 — 생성된 이미지가 있는 사진 자리는 <img>로 포함.
-  //  네이버 PC 에디터는 붙여넣은 외부 이미지를 자동으로 가져와 업로드하는 경우가 많다(안 되면 패널 '저장하기' 폴백).
-  function inlineImagesForCopy(html: string): string {
-    let idx = -1;
-    return html.replace(/\[사진:\s*([^\]]+)\]/g, (m0) => {
-      idx += 1;
-      const u = imgs[idx]?.url;
-      return u ? `<img src="${u}" alt="" />` : m0;
-    });
-  }
-
   // 본문만 복사 (제목 제외 — 네이버는 제목칸이 따로라 본문에 제목이 들어가면 안 됨). 서식 유지 HTML + 평문 동시.
   async function copyBody() {
     try {
-      const html = addNaverSpacing(photoMarkerToGuide(markToNaverBold(inlineImagesForCopy(bodyHtml))));
+      const html = addNaverSpacing(photoMarkerToGuide(markToNaverBold(bodyHtml)));
       const tmp = document.createElement("div");
       tmp.innerHTML = html;
       const text = tmp.innerText;
@@ -192,6 +181,29 @@ export default function ArticleModal({
       } catch { /* 본문 갱신 실패해도 이미지엔 지장 없음 */ }
     } catch {
       setImgs((m) => ({ ...m, [i]: { ...m[i], busy: false, err: "네트워크 오류가 났어요" } }));
+    }
+  }
+
+  // ★이미지 복사 — 이미지를 클립보드에 담는다(스크린샷 붙여넣기와 동일). 네이버 에디터는 클립보드 이미지를 확실히 받는다.
+  const [imgCopied, setImgCopied] = useState<number | null>(null);
+  async function copyImage(i: number, url: string) {
+    try {
+      const res = await fetch(url);
+      let blob = await res.blob();
+      if (blob.type !== "image/png") {
+        // 클립보드는 png가 가장 호환 — 캔버스로 변환
+        const bmp = await createImageBitmap(blob);
+        const canvas = document.createElement("canvas");
+        canvas.width = bmp.width; canvas.height = bmp.height;
+        canvas.getContext("2d")!.drawImage(bmp, 0, 0);
+        blob = await new Promise<Blob>((ok) => canvas.toBlob((b) => ok(b!), "image/png"));
+      }
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+      setImgCopied(i);
+      setTimeout(() => setImgCopied((c) => (c === i ? null : c)), 2500);
+    } catch {
+      // 클립보드 미지원 → 다운로드 폴백
+      void downloadImage(url, `ateflo-image-${i + 1}.png`);
     }
   }
 
@@ -341,7 +353,10 @@ export default function ArticleModal({
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={st.url} alt="" className="max-h-56 w-full rounded-lg object-cover" />
                         <div className="mt-2 flex items-center gap-2">
-                          <button onClick={() => st.url && downloadImage(st.url, `ateflo-image-${i + 1}.png`)} className="at-press rounded-lg bg-[#1D75F7] px-3.5 py-2 text-[12.5px] font-bold text-white transition hover:opacity-90">저장하기</button>
+                          <button onClick={() => st.url && copyImage(i, st.url)} className="at-press rounded-lg bg-[#1D75F7] px-3.5 py-2 text-[12.5px] font-bold text-white transition hover:opacity-90">
+                            {imgCopied === i ? "복사됨 ✓ 네이버에 붙여넣기" : "이미지 복사"}
+                          </button>
+                          <button onClick={() => st.url && downloadImage(st.url, `ateflo-image-${i + 1}.png`)} className="at-press rounded-lg bg-neutral-100 px-3.5 py-2 text-[12.5px] font-bold text-neutral-600 transition hover:bg-neutral-200">저장</button>
                           <button onClick={() => makeImage(i, slot)} disabled={st.busy} className="at-press rounded-lg bg-neutral-100 px-3.5 py-2 text-[12.5px] font-bold text-neutral-600 transition hover:bg-neutral-200 disabled:opacity-50">
                             {st.busy ? "그리는 중…" : "다시 만들기 · 4크레딧"}
                           </button>
