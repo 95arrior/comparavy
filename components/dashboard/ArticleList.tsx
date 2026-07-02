@@ -139,8 +139,8 @@ export default function ArticleList({
                     초안으로
                   </button>
                 ) : (
-                  <button onClick={() => onOpen(a)} className="shrink-0 text-[12px] font-bold text-[#03C75A]">
-                    올리기 →
+                  <button onClick={() => onOpen(a)} aria-label="네이버에 올리기" className="at-press flex h-8 w-8 shrink-0 items-center justify-center text-[#03C75A] transition hover:opacity-70">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15V4" /><path d="M7 9l5-5 5 5" /><path d="M4 20h16" /></svg>
                   </button>
                 )}
               </div>

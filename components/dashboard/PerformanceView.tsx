@@ -150,36 +150,51 @@ function PathDetail({ p, onBack }: { p: Path; onBack: () => void }) {
   );
 }
 
-function HeroShell({ children }: { children: React.ReactNode }) {
-  return <div className="rounded-2xl bg-gradient-to-br from-[#1D75F7] to-[#1565d8] p-5 text-white shadow-[0_12px_30px_-14px_rgba(29,117,247,0.6)]">{children}</div>;
-}
-
-// 히어로 — 결승선 중심(욕망: 수익이 코앞). 네이버는 방문자 API가 없어 발행·꾸준함 지표로 보여준다.
+// 히어로 v2 — 말 대신 숫자. 발행 수(주 지표) + 다음 목표까지 진행 바.
+// 네이버는 방문자 API가 없어 '발행·꾸준함'이 우리가 보여줄 수 있는 가장 정직한 지표다.
 function AssetHero({ written, streak, pub, onWrite }: {
   written: number; streak: number; pub: number; onWrite: () => void;
 }) {
   if (written === 0) {
     return (
-      <HeroShell>
-        <p className="text-[13px] font-semibold text-white/75">시작하기</p>
-        <p className="mt-2 text-[19px] font-extrabold leading-snug tracking-tight">첫 글을 쓰면<br />여기에 성과가 쌓여요</p>
-        <button onClick={onWrite} className="mt-3.5 rounded-xl bg-white px-4 py-2 text-[13px] font-bold text-[#1D75F7] transition active:scale-95">첫 글 쓰러 가기</button>
-      </HeroShell>
+      <div className="rounded-2xl at-glass p-6 text-center">
+        <p className="text-[16px] font-extrabold tracking-tight text-neutral-900">첫 글을 쓰면 여기에 성과가 쌓여요</p>
+        <p className="mt-1 text-[13px] text-neutral-400">발행 수·꾸준함·수익화 진행을 한눈에</p>
+        <button onClick={onWrite} className="at-press mt-4 rounded-xl bg-[#1D75F7] px-5 py-2.5 text-[13px] font-bold text-white transition hover:opacity-90">첫 글 쓰러 가기</button>
+      </div>
     );
   }
-  const remain = Math.max(0, 15 - pub);
-  const finishLine = remain === 0 ? "이제 애드포스트 신청할 수 있어요" : `애드포스트 신청까지 ${remain}편`;
-
+  const GOAL = 15; // 애드포스트 신청 목표선
+  const ratio = Math.min(1, pub / GOAL);
+  const remain = Math.max(0, GOAL - pub);
   return (
-    <HeroShell>
-      <p className="text-[13px] font-semibold text-white/75">수익화 여정</p>
-      <p className="mt-2 text-[19px] font-extrabold leading-snug tracking-tight">🎯 {finishLine}</p>
-      <p className="mt-1.5 text-[13px] font-medium text-white/85">조금만 더 쓰면 광고 수익을 시작할 수 있어요</p>
-      <div className="mt-3 flex flex-wrap gap-2">
-        {streak >= 2 && <span className="rounded-full bg-white/15 px-2.5 py-1 text-[12px] font-bold">🔥 {streak}주 연속</span>}
-        {pub > 0 && <span className="rounded-full bg-white/20 px-2.5 py-1 text-[12px] font-bold">📝 발행 {pub}편</span>}
+    <div className="rounded-2xl at-glass p-6">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-[12.5px] font-semibold text-neutral-400">발행한 글</p>
+          <p className="mt-1 leading-none tracking-tight text-neutral-900">
+            <span className="text-[42px] font-extrabold">{pub}</span>
+            <span className="ml-1 text-[17px] font-bold text-neutral-400">편</span>
+          </p>
+        </div>
+        <div className="text-right">
+          {streak >= 2 && <p className="text-[12.5px] font-bold text-orange-500">{streak}주 연속 발행</p>}
+          <p className="mt-0.5 text-[12px] text-neutral-400">작성 {written}편</p>
+        </div>
       </div>
-    </HeroShell>
+      {/* 다음 목표 진행 바 */}
+      <div className="mt-5">
+        <div className="h-2 overflow-hidden rounded-full bg-neutral-200/60">
+          <div className="h-full rounded-full" style={{ width: `${ratio * 100}%`, background: "linear-gradient(90deg, #1D75F7, #38cdf8)", transition: "width 0.9s var(--at-ease)" }} />
+        </div>
+        <div className="mt-2 flex items-center justify-between">
+          <p className="text-[12.5px] font-semibold text-neutral-600">
+            {remain === 0 ? "애드포스트를 신청할 수 있어요" : `애드포스트 신청까지 ${remain}편`}
+          </p>
+          <p className="text-[11.5px] text-neutral-400">{pub}/{GOAL}</p>
+        </div>
+      </div>
+    </div>
   );
 }
 
