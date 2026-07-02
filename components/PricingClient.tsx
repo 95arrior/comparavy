@@ -114,7 +114,7 @@ export default function PricingClient({
               <div className="flex items-center gap-4">
                 <span className="relative inline-block h-10 w-10 shrink-0">
                   <GlassIcon name="credit" tint="grey" size={40} className="absolute inset-0" />
-                  <GlassIcon name="credit" tint="blue" size={40} className={`at-fill absolute inset-0 ${isSel ? "at-fill-on" : p.highlight ? "at-zap" : ""}`} />
+                  <GlassIcon name="credit" tint="blue" size={40} className={`at-fill absolute inset-0 ${isSel ? "at-fill-on" : ""}`} />
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-[16px] font-extrabold tracking-tight text-neutral-900">
