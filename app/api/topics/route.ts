@@ -10,7 +10,6 @@ import { compFromLabel, compFromBlogTotal, filledStarsFromData, type Comp } from
 import { fetchBlogTotal } from "@/lib/naverBlogSearch";
 import { resolveLocalPlan, generateLocalKeywords, generateAudienceTopics, type LocalScope } from "@/lib/aiSeeds";
 import { buildPoolForSub } from "@/lib/keywordPool";
-import { isAdminEmail } from "@/lib/adminStats";
 import { collectPoolKeywords } from "@/lib/poolCollect";
 import { fetchNaverAutocomplete } from "@/lib/naverAutocomplete";
 import { checkRateLimit } from "@/lib/rateLimit";
@@ -129,8 +128,9 @@ export async function GET(req: Request) {
     .eq("user_id", user.id)
     .maybeSingle();
 
-  // ★관리자 우대 — 분산(least-used) 무시하고 절대 최상급(경쟁 낮음·검색량 상위)만
-  const adminBest = isAdminEmail(user.email);
+  // ★최상급 전용 계정 — 분산 무시, 절대 최상급(경쟁 낮음·검색량 상위)만.
+  //  w.95arrior만 적용 → tjdghdlgh는 일반 유저와 동일 로직(비교 테스트용 대조군).
+  const adminBest = (user.email ?? "").toLowerCase() === "w.95arrior@gmail.com";
 
   const vertical = profile?.vertical;
   const sub = profile?.sub_category;
