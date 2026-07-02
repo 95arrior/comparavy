@@ -29,12 +29,13 @@ export default function TodayCard({
   const locked = credits <= 0;
   const dayLabel = info.day > 0 ? `D-${info.day}` : "D-1";
 
-  // 코스 20일 완주 → 승인 신청 안내
+  // 코스 20일 완주 → 승인 신청 안내 (★정직: 승인은 네이버 심사라 보장 아님 — 반려 시 재신청 흐름 안내)
   if (info.finished) {
     return (
       <Card>
-        <Header label="애드포스트 승인 코스" chip="완주 🎉" />
-        <p className="mt-2 text-[17px] font-bold leading-snug text-neutral-900">20일을 채웠어요.<br />이제 승인 신청할 차례예요.</p>
+        <Header label="승인 준비 코스" chip="완주 🎉" />
+        <p className="mt-2 text-[17px] font-bold leading-snug text-neutral-900">준비 코스를 완주했어요.<br />애드포스트 신청해볼 차례예요.</p>
+        <p className="mt-1.5 text-[12.5px] leading-relaxed text-neutral-500">승인 여부는 네이버 심사(최대 5영업일)가 정해요. 반려돼도 글을 계속 쌓다가 재신청하면 돼요.</p>
         <button onClick={onGoPerformance} className="mt-4 w-full rounded-xl bg-[#1D75F7] py-3 text-[14px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">
           승인 신청 방법 보기
         </button>
@@ -108,7 +109,7 @@ export default function TodayCard({
         chip={info.streak >= 2 ? `🔥 ${info.streak}일 연속` : undefined}
       />
       <p className="mt-2 text-[16px] font-bold leading-snug text-neutral-900">{topic.title}</p>
-      {info.day === 0 && <p className="mt-1 text-[12.5px] text-neutral-400">첫 글이 코스 D-1이에요. 20일 뒤 애드포스트 승인 신청까지 이 카드가 안내해요.</p>}
+      {info.day === 0 && <p className="mt-1 text-[12.5px] text-neutral-400">첫 글이 코스 D-1이에요. 20일간 발행을 쌓아 애드포스트 신청 준비까지 이 카드가 안내해요.</p>}
       <button onClick={() => onWriteKeyword(topic.keyword, topic.title)} className="mt-3.5 w-full rounded-xl bg-[#1D75F7] py-3 text-[14px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">
         이 글 쓰기
       </button>
