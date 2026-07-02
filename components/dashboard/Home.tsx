@@ -171,13 +171,14 @@ export default function Home({
     <main className="mx-auto max-w-2xl px-6">
       {/* 한 화면 — 헤더 + (중앙) 오늘의 글감. 탭바 높이 빼서 스크롤 없이 한눈에 중앙 */}
       <section className="flex min-h-[calc(100svh-78px)] flex-col md:min-h-[calc(100svh-4rem)]">
-      {/* 헤더 — 절제 */}
-      <div className="flex items-center justify-between pt-9">
-        <p className="text-sm text-neutral-400">{displayName}님</p>
+      {/* 헤더 — 토스 위계: 작은 회색 라벨 + 크고 진한 헤드라인 */}
+      <div className="at-rise pt-9">
+        <p className="at-label">{blogName}</p>
+        <h1 className="at-headline mt-1">{displayName}님,<br />오늘도 한 편 쌓아볼까요</h1>
       </div>
 
-      {/* 중앙 — 오늘 할 일 카드(코스) + 내 이야기 + 글감 */}
-      <div className="flex flex-1 flex-col justify-center py-6">
+      {/* 본문 — 오늘 할 일 카드(코스) + 내 이야기 + 글감. 헤드라인이 생겨 중앙정렬 대신 자연 흐름 */}
+      <div className="flex flex-1 flex-col py-6">
       {(
         <div className="ateflo-page-in">
           {/* ★오늘 할 일 카드 — 코스 D-day 기반, 오늘 해야 할 단 하나. 잔액 0이면 잠김(→페이월) */}
@@ -188,7 +189,7 @@ export default function Home({
             const todayDraft = articles.find((a) => a.status === "draft" && sameDay(a.created_at));
             const first = sanitizeTopics(topics)[0] ?? null;
             return (
-              <div className="mt-2">
+              <div className="at-rise at-d1 mt-2">
                 <TodayCard
                   topic={first ? { keyword: first.keyword, title: first.title } : null}
                   loading={topicsLoading}
@@ -203,7 +204,7 @@ export default function Home({
           })()}
 
           {!cluster && onWriteStory && (
-            <div className="mt-4">
+            <div className="at-rise at-d2 mt-4">
               <StoryComposer collapsible hasBiz={false} local={false} title={storyTitle} onTitleChange={setStoryTitle} story={storyDraft} onStoryChange={setStoryDraft} promo={false} onPromoChange={() => {}} onSubmit={(s, _p, t) => onWriteStory(s, false, t)} />
             </div>
           )}
@@ -218,8 +219,8 @@ export default function Home({
           <p className="mt-1 text-[12px] leading-relaxed text-neutral-400">한 주제를 깊이 쓰면 그 분야 <b className="text-[#1D75F7]">블로그 지수</b>가 쌓여 상위에 유리해요</p>
         </div>
       ) : (
-        <div className="mt-8">
-          <p className="text-[12px] font-medium text-neutral-400">오늘의 글감이 마음에 안 들면</p>
+        <div className="at-rise at-d3 mt-8">
+          <p className="at-label">오늘의 글감이 마음에 안 들면</p>
           <h2 className="mt-0.5 text-[15px] font-bold tracking-tight text-neutral-900">다른 글감</h2>
         </div>
       )}
@@ -245,7 +246,7 @@ export default function Home({
           </div>
         </div>
       ) : topics.length > 0 ? (
-        <div className="mt-3">
+        <div className="at-rise at-d4 mt-3">
           <div className="flex flex-col gap-3">
             {/* 1순위 글감은 '오늘 할 일 카드'가 차지 → 리스트는 나머지(클러스터 모드는 전체) */}
             {(cluster ? sanitizeTopics(topics) : sanitizeTopics(topics).slice(1)).map((t, i) => (
@@ -269,8 +270,8 @@ export default function Home({
 
       {/* 더 깊게 쓰기 — 주제 시리즈 */}
       {!cluster && !topicsLoading && (
-        <div className="mt-4 space-y-2">
-          <button onClick={() => setSeriesOpen(true)} className="flex w-full items-center gap-3 rounded-2xl bg-white p-3.5 ring-1 ring-black/[0.04] transition hover:ring-violet-300 active:scale-[0.99]">
+        <div className="at-rise at-d5 mt-4 space-y-2">
+          <button onClick={() => setSeriesOpen(true)} className="at-press flex w-full items-center gap-3 rounded-2xl bg-white p-3.5 ring-1 ring-black/[0.04] transition hover:ring-violet-300">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" /></svg></span>
             <span className="min-w-0 flex-1 truncate text-left text-[14px] font-bold text-neutral-900">주제 시리즈로 전문 블로그 되기</span>
             <svg className="shrink-0 text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
