@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
 import { keywordsToTitles } from "@/lib/topicTitles";
 import { normalizeKeyword } from "@/lib/diversity";
@@ -477,15 +477,13 @@ export async function GET(req: Request) {
   if (type === "online" && sub && !cluster && !regionMode) {
     try {
       let trends = await getTrendTopics(sub);
-      // 풀이 비었으면 즉석 갱신(첫 유저만, 레이트리밋·타임아웃 9s). 이후 유저·크론은 캐시를 읽음.
+      // 풀이 비었으면 백그라운드 갱신 예약(after: 응답 후에도 끝까지 실행됨 — 죽지 않음).
+      //  이번 로드는 데이터 글감으로 폴백, 다음 로드부터 트렌드가 채워져 있음.
       if (trends.length < 4) {
         const rl = await checkRateLimit(supabase, user.id, `trend_seed_${sub}`, 3, 900);
-        if (rl.ok && !(await hasFreshTrends(sub))) {
-          await Promise.race([
-            refreshCategoryTrends(sub),
-            new Promise((r) => setTimeout(r, 9000)),
-          ]).catch(() => {});
-          trends = await getTrendTopics(sub);
+        if (rl.ok) {
+          const cat = sub;
+          after(async () => { try { if (!(await hasFreshTrends(cat))) await refreshCategoryTrends(cat); } catch { /* ignore */ } });
         }
       }
       // 유저 시드로 회전 — 만 명이 달라 보이게
