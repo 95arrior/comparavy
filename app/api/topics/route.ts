@@ -198,7 +198,11 @@ export async function GET(req: Request) {
             amped = [...trends]
               .sort((a, b) => (seedFrom(a.keyword + user!.id) % 997) - (seedFrom(b.keyword + user!.id) % 997))
               .slice(0, 2)
-              .map((t) => ({ keyword: t.keyword, title: t.title, newsContext: t.newsContext }));
+              .map((t) => {
+                // 실검증 롱테일(gap 낮은 것) 우선 — 뉴스 티 제거. 없으면 씨앗 keyword.
+                const lt = (t.longtails ?? [])[0];
+                return { keyword: lt?.kw ?? t.keyword, title: t.title, newsContext: t.newsContext };
+              });
           }
         }
       }

@@ -63,10 +63,20 @@ export async function amplifyForUser(
   const uh = fnv(userId + new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10));
   const rotated = [...seeds].sort((a, b) => (fnv(a.keyword + userId) % 997) - (fnv(b.keyword + userId) % 997));
   const picks = rotated.slice(0, Math.min(6, rotated.length));
-  const seedList = picks.map((s, i) => `${i + 1}. 씨앗키워드="${s.keyword}" / 제목="${s.title}"`).join("\n");
+  // 씨앗별 실검증 롱테일(자동완성 = 실제 검색어). 증식은 이 안에서만 keyword를 고른다(유령 키워드 차단).
+  const seedList = picks.map((s, i) => {
+    const lts = (s.longtails ?? []).map((l) => l.kw).slice(0, 6);
+    const ltStr = lts.length ? ` / 실검증검색어=[${lts.join(", ")}]` : "";
+    return `${i + 1}. 씨앗키워드="${s.keyword}" / 제목="${s.title}"${ltStr}`;
+  }).join("\n");
+  // 전체 롱테일 실존 집합(코드 검증용)
+  const validLongtails = new Set<string>();
+  for (const s of picks) for (const l of (s.longtails ?? [])) validLongtails.add(l.kw.replace(/\s+/g, ""));
 
   const client = new Anthropic({ apiKey });
   const prompt = `아래는 '지금 뜨는' 트렌드 씨앗들이다. 이 블로그 운영자에게 맞춘 글감 ${want}개를 만들어라.
+
+★keyword는 반드시 각 씨앗의 '실검증검색어' 목록 안에서 그대로 골라 쓴다(새 검색어를 지어내지 않는다 — 아무도 안 치는 유령 키워드 방지). 실검증검색어가 없는 씨앗은 씨앗키워드를 쓴다.
 
 [운영자 개인화 축]
 ${axis || "(일반)"}
@@ -97,11 +107,18 @@ ${seedList}
     const out: AmplifiedTopic[] = [];
     const seen = new Set<string>();
     for (const it of parsed) {
-      const kw = (it.keyword ?? "").trim().slice(0, 60);
+      let kw = (it.keyword ?? "").trim().slice(0, 60);
       const ti = (it.title ?? "").trim().slice(0, 80);
-      if (!kw || !ti || seen.has(kw)) continue;
-      seen.add(kw);
+      if (!kw || !ti) continue;
       const seed = picks[(Number(it.seedIndex) || 1) - 1] ?? picks[0];
+      // ★코드 검증 — LLM이 고른 keyword가 실검증 롱테일 풀에 없으면(지어냄) 씨앗의 실제 롱테일로 폴백.
+      if (validLongtails.size > 0 && !validLongtails.has(kw.replace(/\s+/g, ""))) {
+        const fallback = (seed?.longtails ?? []).find((l) => !seen.has(l.kw.replace(/\s+/g, "")));
+        kw = fallback ? fallback.kw : (seed?.keyword ?? kw);
+      }
+      const nk = kw.replace(/\s+/g, "");
+      if (seen.has(nk)) continue;
+      seen.add(nk);
       out.push({ keyword: kw, title: ti, newsContext: seed?.newsContext ?? null });
       if (out.length >= want) break;
     }
