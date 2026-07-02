@@ -64,7 +64,7 @@ export default function NaverPublishSheet({
         },
         {
           title: "이제 본문을 복사할게요",
-          sub: "복사한 뒤 네이버 본문칸에 붙여넣으세요. 소제목·형광펜이 그대로 따라가요.",
+          sub: "복사한 뒤 네이버 본문칸에 붙여넣으세요. 소제목·형광펜, 만든 이미지까지 함께 따라가요. (이미지가 빠지면 검토 화면의 저장하기로 올려요)",
           cta: copied ? "복사됐어요 ✓ 다음" : "본문 복사하기",
           act: () => { onCopyBody(); setTimeout(() => setStep(2), 600); },
         },

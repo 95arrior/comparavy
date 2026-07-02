@@ -44,10 +44,21 @@ export default function ArticleModal({
     return () => clearTimeout(t);
   }, [toast]);
 
+  // ★복사용 이미지 인라인 — 생성된 이미지가 있는 사진 자리는 <img>로 포함.
+  //  네이버 PC 에디터는 붙여넣은 외부 이미지를 자동으로 가져와 업로드하는 경우가 많다(안 되면 패널 '저장하기' 폴백).
+  function inlineImagesForCopy(html: string): string {
+    let idx = -1;
+    return html.replace(/\[사진:\s*([^\]]+)\]/g, (m0) => {
+      idx += 1;
+      const u = imgs[idx]?.url;
+      return u ? `<img src="${u}" alt="" />` : m0;
+    });
+  }
+
   // 본문만 복사 (제목 제외 — 네이버는 제목칸이 따로라 본문에 제목이 들어가면 안 됨). 서식 유지 HTML + 평문 동시.
   async function copyBody() {
     try {
-      const html = addNaverSpacing(photoMarkerToGuide(markToNaverBold(bodyHtml)));
+      const html = addNaverSpacing(photoMarkerToGuide(markToNaverBold(inlineImagesForCopy(bodyHtml))));
       const tmp = document.createElement("div");
       tmp.innerHTML = html;
       const text = tmp.innerText;
