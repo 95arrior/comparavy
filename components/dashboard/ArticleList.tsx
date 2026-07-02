@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import type { Article } from "./types";
 import CenterToast from "./CenterToast";
 
@@ -27,6 +27,50 @@ export default function ArticleList({
   const [confirmUnpub, setConfirmUnpub] = useState<Article | null>(null);
   const [unpubBusy, setUnpubBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+
+  // ★색인 체커 — 발행 글이 네이버 검색에 잡혔는지(최근 10편, 1시간 캐시).
+  //  '내 글이 뜨긴 하나?'라는 최대 불안을 데이터로 끊는다.
+  const [idx, setIdx] = useState<Record<string, "indexed" | "pending" | "unknown">>({});
+  useEffect(() => {
+    const pub = articles.filter((a) => a.status === "published").slice(0, 10);
+    if (pub.length === 0) return;
+    const CK = "ateflo_idx_cache";
+    try {
+      const raw = localStorage.getItem(CK);
+      if (raw) {
+        const c = JSON.parse(raw);
+        if (Date.now() - c.ts < 3600_000) { setIdx(c.results ?? {}); return; }
+      }
+    } catch { /* 캐시 미스 */ }
+    let blogId = "";
+    try { blogId = localStorage.getItem("ateflo_naver_blogid") ?? ""; } catch { /* ignore */ }
+    (async () => {
+      try {
+        const res = await fetch("/api/index-check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: pub.map((a) => a.id), blogId }),
+        });
+        const data = await res.json();
+        if (data.results) {
+          setIdx(data.results);
+          try { localStorage.setItem(CK, JSON.stringify({ ts: Date.now(), results: data.results })); } catch { /* ignore */ }
+        }
+      } catch { /* 조용히 생략 */ }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [articles.length]);
+
+  // 발행 후 48시간 안 지났으면 '색인 중'(정상), 지났는데 미색인이면 '색인 전'(점검 힌트)
+  const idxLabel = (a: Article): { text: string; cls: string } | null => {
+    const st = idx[a.id];
+    if (!st || st === "unknown" || a.status !== "published") return null;
+    if (st === "indexed") return { text: "검색 노출 중", cls: "text-emerald-600" };
+    const hours = (Date.now() - new Date(a.created_at).getTime()) / 3600_000;
+    return hours < 48
+      ? { text: "색인 중 (보통 2일)", cls: "text-neutral-400" }
+      : { text: "아직 색인 전", cls: "text-amber-600" };
+  };
 
   async function doUnpublish() {
     if (!confirmUnpub || unpubBusy) return;
@@ -132,6 +176,7 @@ export default function ArticleList({
                   <p className="truncate text-[14.5px] font-bold text-[color:var(--at-grey-900)]">{a.title}</p>
                   <p className="mt-0.5 text-[11.5px] font-medium text-neutral-400">
                     {published ? "발행됨" : "초안"} · {(a.char_count ?? 0).toLocaleString()}자 · {new Date(a.created_at).toLocaleDateString("ko-KR", { month: "long", day: "numeric" })}
+                    {(() => { const b = idxLabel(a); return b ? <> · <span className={`font-bold ${b.cls}`}>{b.text}</span></> : null; })()}
                   </p>
                 </button>
                 {published ? (

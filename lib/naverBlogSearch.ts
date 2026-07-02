@@ -24,3 +24,32 @@ export async function fetchBlogTotal(query: string): Promise<number | null> {
     return null;
   }
 }
+
+/**
+ * ★색인 체커 — 글 제목으로 네이버 블로그 검색을 돌려 '내 블로그 글'이 검색 결과에 잡히는지 확인.
+ * 판정: 결과 링크에 내 블로그 아이디가 있거나, 제목이 사실상 일치(공백·태그 제거)하면 색인됨.
+ * 실패/미설정 시 null(판정 불가 — UI는 표시 생략).
+ */
+export async function checkIndexed(title: string, blogId?: string | null): Promise<boolean | null> {
+  const id = process.env.NAVER_DATALAB_CLIENT_ID;
+  const secret = process.env.NAVER_DATALAB_SECRET;
+  const q = title.trim();
+  if (!id || !secret || !q) return null;
+  try {
+    const res = await fetch(`${ENDPOINT}?query=${encodeURIComponent(q)}&display=20`, {
+      headers: { "X-Naver-Client-Id": id, "X-Naver-Client-Secret": secret },
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { items?: { title?: string; link?: string }[] };
+    const norm = (s: string) => s.replace(/<[^>]+>/g, "").replace(/[\s ]/g, "").toLowerCase();
+    const target = norm(q);
+    const bid = (blogId ?? "").trim().toLowerCase();
+    for (const item of data.items ?? []) {
+      if (bid && (item.link ?? "").toLowerCase().includes(`blog.naver.com/${bid}`)) return true;
+      if (target.length >= 10 && norm(item.title ?? "") === target) return true;
+    }
+    return false;
+  } catch {
+    return null;
+  }
+}
