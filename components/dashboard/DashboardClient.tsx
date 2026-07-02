@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import type { Article, DashboardProps, KeywordResult, KeywordStatus } from "./types";
 import CreditPaywallSheet from "./CreditPaywallSheet";
+import CreditsView from "./CreditsView";
 import ArticleList from "./ArticleList";
 import ArticleModal from "./ArticleModal";
 import CenterToast from "./CenterToast";
@@ -31,7 +32,7 @@ export default function DashboardClient(props: DashboardProps) {
   const [labView, setLabView] = useState<LabView>("home");
   const [articles, setArticles] = useState<Article[]>(props.initialArticles);
   const [credits, setCredits] = useState(props.credits); // 크레딧 잔액 — 생성 완료 시 서버 잔액으로 갱신
-  const [paywall, setPaywall] = useState<null | { title?: string }>(null); // 잔액 0 → 결제 유도 시트(쓰려던 글감 제목 유지)
+  const [paywall, setPaywall] = useState<null | { title?: string; charge?: boolean }>(null); // 잔액 0 페이월 or 충전 시트
   const [selected, setSelected] = useState<Article | null>(null);
   const [genParams, setGenParams] = useState<GenParams | null>(null);
   const [naverBlogId, setNaverBlogId] = useState(""); // 네이버 블로그 아이디(글쓰기 직행용) — 내정보에서 수정
@@ -47,7 +48,7 @@ export default function DashboardClient(props: DashboardProps) {
   const [pendingWrite, setPendingWrite] = useState<{ keyword: string; title: string } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [page, setPage] = useState<null | "news" | "profile">(null);
+  const [page, setPage] = useState<null | "news" | "profile" | "credits">(null);
   const [unreadNews, setUnreadNews] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [doneId, setDoneId] = useState<string | null>(null); // 백그라운드 생성 완료 → '보러가기'로 안내
@@ -438,9 +439,12 @@ export default function DashboardClient(props: DashboardProps) {
         <CenterToast message={notice} />
 
         {/* 잔액 0 페이월 — 쓰려던 글감 제목이 잠긴 상태로 보이는 결제 유도 시트 */}
-        {paywall && <CreditPaywallSheet pendingTitle={paywall.title} onClose={() => setPaywall(null)} />}
+        {paywall && <CreditPaywallSheet pendingTitle={paywall.title} charge={paywall.charge} onClose={() => setPaywall(null)} />}
 
         {page === "news" && <NewsView onBack={() => setPage(null)} />}
+        {page === "credits" && (
+          <CreditsView credits={credits} onBack={() => setPage(null)} onCharge={() => setPaywall({ charge: true })} />
+        )}
         {page === "profile" && blogProfile && (
           <main className="ateflo-page-in mx-auto max-w-xl px-6 py-10">
             <button onClick={() => setPage(null)} className="-ml-1 flex items-center gap-1 text-sm text-neutral-400 transition hover:text-neutral-700"><span className="text-base leading-none">←</span> 돌아가기</button>
@@ -517,6 +521,7 @@ export default function DashboardClient(props: DashboardProps) {
                 articles={articles}
                 credits={credits}
                 onGoPerformance={() => goLabView("performance")}
+                onOpenCredits={() => setPage("credits")}
                 onWrite={() => goLabView("keywords")}
                 onWriteKeyword={(keyword, title) => {
                   // 글감 카드 [이 글 쓰기] → 잔액 0이면 '쓰려던 글이 잠긴' 페이월, 있으면 확인 시트.
@@ -645,12 +650,12 @@ export default function DashboardClient(props: DashboardProps) {
             {/* 이용 */}
             <p className="mb-2 mt-7 px-1 text-[13px] font-semibold text-neutral-400">이용</p>
             <div className="divide-y divide-neutral-100 overflow-hidden rounded-2xl bg-white ring-1 ring-black/[0.04]">
-              <a href="/pricing" className="flex w-full items-center gap-3 px-5 py-4 text-left transition active:bg-neutral-50">
+              <button onClick={() => setPage("credits")} className="flex w-full items-center gap-3 px-5 py-4 text-left transition active:bg-neutral-50">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#1D75F7]/10 text-[#1D75F7]"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" /></svg></span>
-                <span className="flex-1 text-[15px] font-medium text-neutral-800">크레딧 충전</span>
+                <span className="flex-1 text-[15px] font-medium text-neutral-800">크레딧 충전·내역</span>
                 <span className="text-[13px] text-neutral-400">{credits.toLocaleString("ko-KR")} 보유</span>
                 <svg className="text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
-              </a>
+              </button>
               <button onClick={openNews} className="flex w-full items-center gap-3 px-5 py-4 text-left transition active:bg-neutral-50">
                 <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-500">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>

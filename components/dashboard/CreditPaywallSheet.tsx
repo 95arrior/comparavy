@@ -9,10 +9,13 @@ import { CREDIT_PACKS } from "@/lib/creditPacks";
 // 카피는 "구매"가 아니라 "이어가기" — 코스 연속성 프레임.
 export default function CreditPaywallSheet({
   pendingTitle,
+  charge,
   onClose,
 }: {
   /** 유저가 쓰려던 글감 제목 — '이걸 못 쓰고 있다'를 보여주는 손실 회피 장치 */
   pendingTitle?: string | null;
+  /** 충전 모드 — 잔액이 있어도 크레딧 페이지에서 열 때(카피가 '떨어졌어요'가 아니어야) */
+  charge?: boolean;
   onClose: () => void;
 }) {
   useEffect(() => {
@@ -37,10 +40,10 @@ export default function CreditPaywallSheet({
             </p>
           </>
         ) : (
-          <p className="text-[17px] font-bold text-neutral-900">크레딧이 다 떨어졌어요</p>
+          <p className="text-[17px] font-bold text-neutral-900">{charge ? "크레딧 충전" : "크레딧이 다 떨어졌어요"}</p>
         )}
         <p className="mt-2 text-[13px] leading-relaxed text-neutral-500">
-          크레딧을 충전하면 지금 바로 이어서 쓸 수 있어요. 글 1편 = 10크레딧.
+          {charge ? "글 1편 = 10크레딧. 많이 살수록 편당 가격이 내려가요." : "크레딧을 충전하면 지금 바로 이어서 쓸 수 있어요. 글 1편 = 10크레딧."}
         </p>
 
         <div className="mt-4 space-y-2">
