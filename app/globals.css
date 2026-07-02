@@ -84,8 +84,8 @@ html {
   from { opacity: 0; transform: translateX(-28px); }
   to { opacity: 1; transform: translateX(0); }
 }
-.ateflo-slide-fwd { animation: ateflo-slide-fwd 0.32s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
-.ateflo-slide-back { animation: ateflo-slide-back 0.32s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+.ateflo-slide-fwd { animation: ateflo-slide-fwd 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+.ateflo-slide-back { animation: ateflo-slide-back 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
 @media (prefers-reduced-motion: reduce) {
   .ateflo-slide-fwd, .ateflo-slide-back { animation: ateflo-step-in 0.2s ease-out backwards; }
 }
@@ -1590,7 +1590,7 @@ input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-sele
   60% { transform: scale(1.035); opacity: 1; }
   100% { transform: scale(1); opacity: 1; }
 }
-.at-pop { animation: at-pop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
+.at-pop { animation: at-pop 0.55s cubic-bezier(0.34, 1.4, 0.64, 1) backwards; }
 
 /* 룰렛 상태 텍스트 — 위아래 블러(마스크) + 아래서 굴러 올라오는 롤 */
 .at-roll-mask {

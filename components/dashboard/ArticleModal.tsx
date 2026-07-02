@@ -88,7 +88,23 @@ export default function ArticleModal({
       if (!id) return;
       try { localStorage.setItem("ateflo_naver_blogid", id); } catch { /* ignore */ }
     }
-    // ★제목을 미리 클립보드에 — 네이버 열면 커서가 '제목칸'이라 바로 붙여넣게(왕복 1번으로 줄임)
+    const ua = navigator.userAgent;
+    // ★모바일 — 무조건 네이버 블로그 '앱'으로: 안드로이드 intent(미설치 시 Play 자동 폴백), iOS 앱 시도 후 미전환이면 App Store.
+    //  클립보드는 건드리지 않는다(1단계에서 복사한 글 전체가 날아가면 안 됨).
+    if (/Android/i.test(ua)) {
+      const fallback = encodeURIComponent("https://play.google.com/store/apps/details?id=com.nhn.android.blog");
+      window.location.href = `intent://blog.naver.com/${id}/postwrite#Intent;scheme=https;package=com.nhn.android.blog;S.browser_fallback_url=${fallback};end`;
+      return;
+    }
+    if (/iPhone|iPad|iPod/.test(ua)) {
+      const timer = setTimeout(() => {
+        if (!document.hidden) window.location.href = "https://apps.apple.com/kr/app/id328813873";
+      }, 1800);
+      document.addEventListener("visibilitychange", () => { if (document.hidden) clearTimeout(timer); }, { once: true });
+      window.location.href = `https://m.blog.naver.com/${id}`;
+      return;
+    }
+    // 데스크톱 — 제목 미리 복사 후 글쓰기 새 탭
     try { navigator.clipboard?.writeText(title); } catch { /* ignore */ }
     window.open(`https://blog.naver.com/${id}/postwrite`, "_blank", "noopener");
     // 발행 완료 처리는 시트의 '다 올렸어요' 버튼으로만 — 자동 처리하면 시트가 닫혀 본문 복사를 못 함(모바일 왕복 버그)

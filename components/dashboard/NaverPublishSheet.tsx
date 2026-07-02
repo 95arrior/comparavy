@@ -43,10 +43,10 @@ export default function NaverPublishSheet({
         {
           title: "네이버 앱에서\n붙여넣으세요",
           sub: "버튼을 누르면 글쓰기가 열려요. 본문을 길게 눌러 ‘붙여넣기’ 하고 돌아오세요.",
-          cta: "네이버 앱에서 글쓰기 열기",
+          cta: "네이버 블로그 앱 열기",
           act: () => onOpenNaverWrite(),
           aux: { label: "붙여넣었어요, 다음", act: () => setStep(2) },
-          stores: true,
+          note: "앱이 없으면 설치 화면으로 안내해요",
         },
         {
           title: "첫 줄을 잘라서\n제목칸으로 옮기세요",
@@ -89,9 +89,10 @@ export default function NaverPublishSheet({
         </div>
 
         {/* 한 화면 = 한 문장 + 한 버튼 */}
-        <div key={step} className="ateflo-slide-fwd mt-6 h-[148px]">
+        <div key={step} className="ateflo-slide-fwd mt-6 h-[156px]">
           <h3 className="whitespace-pre-line text-[20px] font-extrabold leading-snug tracking-tight text-[color:var(--at-grey-900)]">{cur.title}</h3>
           <p className="mt-2 text-[13.5px] leading-relaxed text-neutral-500">{cur.sub}</p>
+          {"note" in cur && cur.note && <p className="mt-2 text-[12px] font-medium text-neutral-400">{cur.note}</p>}
         </div>
 
         <div key={`btn-${step}`} className="at-pop">
@@ -103,14 +104,6 @@ export default function NaverPublishSheet({
           <button onClick={cur.aux.act} className="at-press mt-2 w-full rounded-xl bg-neutral-100 py-3.5 text-[14px] font-bold text-neutral-700 transition hover:bg-neutral-200">
             {cur.aux.label}
           </button>
-        )}
-        {"stores" in cur && cur.stores && (
-          <p className="mt-2.5 text-center text-[12px] text-neutral-400">
-            앱이 없다면 설치부터 —{" "}
-            <a href="https://apps.apple.com/kr/app/id328813873" target="_blank" rel="noopener noreferrer" className="font-semibold text-[#1D75F7]">App Store</a>
-            {" · "}
-            <a href="https://play.google.com/store/apps/details?id=com.nhn.android.blog" target="_blank" rel="noopener noreferrer" className="font-semibold text-[#1D75F7]">Play 스토어</a>
-          </p>
         )}
 
         <div className="mt-2 flex items-center justify-between">
