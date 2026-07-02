@@ -142,6 +142,18 @@ export default function ArticleModal({
       }
       if (typeof data.credits === "number") onCredits?.(data.credits);
       setImgs((m) => ({ ...m, [i]: { url: data.dataUrl, busy: false } }));
+      // ★추천 문구 정리 — 만든 자리의 긴 설명을 '저장한 AI 사진 N번'으로 교체(복붙 시 안내 줄이 간결해짐)
+      try {
+        let idx = -1;
+        const nextBody = bodyHtml.replace(/\[사진:\s*([^\]]+)\]/g, (m0) => {
+          idx += 1;
+          return idx === i ? `[사진: 저장한 AI 사진 ${i + 1}번]` : m0;
+        });
+        if (nextBody !== bodyHtml) {
+          setBodyHtml(nextBody);
+          void fetch(`/api/articles/${article.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ body_html: nextBody }) });
+        }
+      } catch { /* 본문 갱신 실패해도 이미지엔 지장 없음 */ }
     } catch {
       setImgs((m) => ({ ...m, [i]: { ...m[i], busy: false, err: "네트워크 오류가 났어요" } }));
     }
@@ -225,6 +237,16 @@ export default function ArticleModal({
                       <button onClick={() => fixViolation(v)} className="ml-auto shrink-0 rounded-lg bg-[#1D75F7] px-2.5 py-1 text-xs font-medium text-white transition hover:opacity-90">‘{v.suggestion}’로 바꾸기</button>
                     )}
 
+
+                  </div>
+                  <p className="mt-1 text-xs leading-relaxed text-neutral-600">{v.reason}</p>
+                  {v.note && <p className="mt-0.5 text-[11px] text-neutral-400">{v.note}</p>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {/* ★AI 이미지 패널 — 사진 자리별 생성/다운로드 */}
         {photoSlots(bodyHtml).length > 0 && (
           <div className="mt-4 rounded-2xl at-glass p-5">
@@ -264,14 +286,6 @@ export default function ArticleModal({
                 );
               })}
             </div>
-          </div>
-        )}
-                  </div>
-                  <p className="mt-1 text-xs leading-relaxed text-neutral-600">{v.reason}</p>
-                  {v.note && <p className="mt-0.5 text-[11px] text-neutral-400">{v.note}</p>}
-                </li>
-              ))}
-            </ul>
           </div>
         )}
 

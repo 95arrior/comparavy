@@ -630,7 +630,7 @@ export default function DashboardClient(props: DashboardProps) {
             <div className="mt-6 flex items-center gap-3 rounded-2xl at-glass p-5 ">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-neutral-800 text-base font-bold text-white">{initial}</span>
               <div className="min-w-0">
-                <p className="truncate text-[15px] font-bold text-neutral-900">{displayName}</p>
+                <p className="truncate text-[15px] font-bold text-neutral-900"><span className="px-0.5" style={{ background: "linear-gradient(transparent 62%, #ffe94d 62%)" }}>{displayName}</span></p>
                 <p className="text-[13px] text-neutral-400">크레딧 <b className="text-[#1D75F7]">{credits.toLocaleString("ko-KR")}</b> · 글 1편 = 10크레딧</p>
               </div>
             </div>
