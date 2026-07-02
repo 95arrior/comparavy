@@ -364,10 +364,27 @@ export async function GET(req: Request) {
     }),
   );
 
-  // '이길 수 있는(선점 높은)' 순으로 PICK개 — 선점 우선, fit 미세 가산. blog_total 없으면 중간(3) 취급.
+  // ★핵심 축 유지 — 네이버 공식 '주제 전문성·일관성': 초반엔 한 우물이 전문 출처 인식에 유리.
+  // 유저가 이미 쓴 글 키워드의 토큰(불용어 제외)을 축으로 삼아, 같은 축 후보에 가산점(별 반 개 수준 — 선점을 뒤집진 않음).
+  const AXIS_STOP = new Set(["추천", "방법", "후기", "비교", "정리", "순위", "가격", "종류", "하는법", "이유", "총정리"]);
+  const axisTokens = new Set<string>();
+  if ((mine ?? []).length >= 2) {
+    for (const a of mine ?? []) {
+      for (const tok of String(a.keyword ?? "").split(/\s+/)) {
+        if (tok.length >= 2 && !AXIS_STOP.has(tok)) axisTokens.add(tok);
+      }
+    }
+  }
+  const axisBoost = (kw: string): number => {
+    if (axisTokens.size === 0) return 0;
+    for (const tok of axisTokens) if (kw.includes(tok)) return 5;
+    return 0;
+  };
+
+  // '이길 수 있는(선점 높은)' 순으로 PICK개 — 선점 우선, 축 가산, fit 미세 가산. blog_total 없으면 중간(3) 취급.
   // 후보 집합은 매일 시드로 달라지므로(변동성) 그날의 후보 중 가장 winnable한 걸 보여준다.
   const winScore = ({ r, t }: { r: PoolRow; t?: { fit?: number } }) =>
-    (r.blog_total != null ? filledStarsFromData(r.monthly_searches ?? 0, r.blog_total) : 3) * 10 + (t?.fit ?? 1);
+    (r.blog_total != null ? filledStarsFromData(r.monthly_searches ?? 0, r.blog_total) : 3) * 10 + axisBoost(r.keyword) + (t?.fit ?? 1);
   // 제목 중복 제거 + 소주제 클러스터 라운드로빈 — 비슷한 글감(영문법변환기 3개) 몰림 방지, 골고루 다양하게.
   type FitItem = (typeof fitTop)[number];
   const sortedFit: FitItem[] = [...fitTop].sort((a, b) => winScore(b) - winScore(a));
