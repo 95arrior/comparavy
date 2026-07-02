@@ -11,6 +11,8 @@ export interface GenParams {
   tone: string;
   promo: boolean; // true=홍보용(업장 연결) | false=정보성(순수 정보) — 네이버 수익형 단일 후 기본 false
   userStory?: string; // 직접 쓴 '내 이야기'(있으면 핵심 재료로 우리 품질로 재구성)
+  /** ★이미지 동시 생성 — 글이 써지는 동안 사진 자리 앞 3곳을 병렬 생성(장당 4크레딧) */
+  withImages?: boolean;
 }
 
 // ★생성 장면 v3 — "글이 눈앞에서 실제로 써진다".
@@ -100,6 +102,39 @@ export default function WritingView({
   const abortRef = useRef<AbortController | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
+  // ★이미지 동시 생성 — 스트리밍 중 [사진:] 마커가 나타나는 즉시(앞 3곳) 병렬 생성 시작.
+  //  글이 끝날 때쯤 이미지도 끝나 → 대기시간에 일이 2배(지루함 해소). 결과 URL은 검토 화면이 이어받음.
+  const IMG_MAX = 3;
+  const imgStartedRef = useRef<Set<number>>(new Set());
+  const imgUrlsRef = useRef<Record<number, string>>({});
+  const imgPendingRef = useRef(0);
+  const [imgDone, setImgDone] = useState(0);
+  function kickImages() {
+    if (!params.withImages) return;
+    const slots: string[] = [];
+    const re = /\[사진:\s*([^\]]+)\]/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(bodyRef.current))) slots.push(String(m[1]).trim());
+    for (let i = 0; i < Math.min(slots.length, IMG_MAX); i++) {
+      if (imgStartedRef.current.has(i)) continue;
+      imgStartedRef.current.add(i);
+      imgPendingRef.current += 1;
+      void fetch("/api/images/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slot: slots[i], title: titleRef.current }),
+      })
+        .then(async (res) => {
+          const data = await res.json().catch(() => ({}));
+          if (typeof data.credits === "number") onCredits?.(data.credits);
+          if (res.ok && (data.url || data.dataUrl)) imgUrlsRef.current[i] = data.url ?? data.dataUrl;
+        })
+        .catch(() => { /* 실패해도 글은 그대로 — 검토 화면에서 다시 시도 가능 */ })
+        .finally(() => { imgPendingRef.current -= 1; setImgDone((d) => d + 1); });
+    }
+  }
+
+
   const started = typed > 0;
   const phase = error ? "error" : finished ? "done" : started ? "writing" : "thinking";
 
@@ -112,9 +147,10 @@ export default function WritingView({
       "네이버 상위 글 구조 분석 중",
       "경험과 근거를 심는 중",
       vertical === "medical" ? "의료광고 규정 점검 중" : "규정·표현 점검 중",
+      ...(params.withImages ? ["이미지도 만들어 넣는 중이에요 🎨"] : []),
       "문장을 다듬는 중",
     ];
-  }, [params.userStory, vertical]);
+  }, [params.userStory, vertical, params.withImages]);
 
   useEffect(() => {
     if (phase === "done") return;
@@ -143,9 +179,26 @@ export default function WritingView({
       setFinished(true);
       const art = doneArtRef.current;
       doneArtRef.current = null;
-      setTimeout(() => onDone(art), 1300);
+      // 이미지 동시 생성 중이면 잠깐 기다림(최대 12초) — 끝난 만큼만 검토 화면에 전달
+      const handoff = () => {
+        try {
+          if (Object.keys(imgUrlsRef.current).length > 0) {
+            localStorage.setItem(`ateflo_imgs_${art.id}`, JSON.stringify(imgUrlsRef.current));
+          }
+        } catch { /* ignore */ }
+        onDone(art);
+      };
+      if (params.withImages && imgPendingRef.current > 0) {
+        const deadline = Date.now() + 12000;
+        const wait = setInterval(() => {
+          if (imgPendingRef.current <= 0 || Date.now() > deadline) { clearInterval(wait); handoff(); }
+        }, 400);
+      } else {
+        setTimeout(handoff, 1300);
+      }
     }
-  }, [typed, finished, onDone]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [typed, finished, onDone, imgDone]);
 
   // 네트워크 호출 1회
   useEffect(() => {
@@ -171,6 +224,7 @@ export default function WritingView({
     const t = titleRef.current ? `<h1>${titleRef.current}</h1>` : "";
     totalRef.current = t + bodyRef.current;
     setTotalHtml(totalRef.current);
+    kickImages();
   }
 
   async function run() {
@@ -296,7 +350,7 @@ export default function WritingView({
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path className="ateflo-check-draw" d="M5 13l4 4L19 7" /></svg>
           </span>
           <p className="at-rise mt-5 text-[18px] font-extrabold tracking-tight text-[color:var(--at-grey-900)]" style={{ animationDelay: "0.3s" }}>글이 완성됐어요</p>
-          <p className="at-rise mt-1 text-[13px] text-neutral-400" style={{ animationDelay: "0.5s" }}>{typed.toLocaleString("ko-KR")}자 · 검토 화면으로 갈게요</p>
+          <p className="at-rise mt-1 text-[13px] text-neutral-400" style={{ animationDelay: "0.5s" }}>{typed.toLocaleString("ko-KR")}자{params.withImages && imgPendingRef.current > 0 ? " · 이미지 마무리 중…" : " · 검토 화면으로 갈게요"}</p>
         </div>
       )}
     </>

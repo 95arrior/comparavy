@@ -125,6 +125,21 @@ export default function ArticleModal({
   // ★AI 이미지 — 사진 자리별 무자막 일러스트 생성(장당 4크레딧, 실패 시 자동 환불).
   //  네이버 앱 업로드용으로 다운로드 → 사진 자리에 올리는 흐름(외부 이미지 붙여넣기는 네이버가 차단).
   const [imgs, setImgs] = useState<Record<number, { url?: string; busy?: boolean; err?: string }>>({});
+  // 글 쓸 때 동시 생성된 이미지 이어받기(기기 저장 URL) — 재방문에도 유지
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(`ateflo_imgs_${article.id}`);
+      if (raw) {
+        const saved = JSON.parse(raw) as Record<number, string>;
+        setImgs((m) => {
+          const next = { ...m };
+          for (const [k, v] of Object.entries(saved)) if (v) next[Number(k)] = { url: v };
+          return next;
+        });
+      }
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [article.id]);
   async function makeImage(i: number, slot: string) {
     if (imgs[i]?.busy) return;
     setImgs((m) => ({ ...m, [i]: { ...m[i], busy: true, err: undefined } }));
@@ -141,7 +156,17 @@ export default function ArticleModal({
         return;
       }
       if (typeof data.credits === "number") onCredits?.(data.credits);
-      setImgs((m) => ({ ...m, [i]: { url: data.dataUrl, busy: false } }));
+      const finalUrl = data.url ?? data.dataUrl;
+      setImgs((m) => ({ ...m, [i]: { url: finalUrl, busy: false } }));
+      // URL이면 기기 저장(재방문 유지 — dataUrl은 용량상 저장 안 함)
+      if (data.url) {
+        try {
+          const key = `ateflo_imgs_${article.id}`;
+          const saved = JSON.parse(localStorage.getItem(key) ?? "{}");
+          saved[i] = data.url;
+          localStorage.setItem(key, JSON.stringify(saved));
+        } catch { /* ignore */ }
+      }
       // ★추천 문구 정리 — 만든 자리의 긴 설명을 '저장한 AI 사진 N번'으로 교체(복붙 시 안내 줄이 간결해짐)
       try {
         let idx = -1;
@@ -275,7 +300,7 @@ export default function ArticleModal({
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={st.url} alt="" className="max-h-56 w-full rounded-lg object-cover" />
                         <div className="mt-2 flex items-center gap-2">
-                          <a href={st.url} download={`ateflo-image-${i + 1}.png`} className="at-press rounded-lg bg-[#1D75F7] px-3.5 py-2 text-[12.5px] font-bold text-white transition hover:opacity-90">저장하기</a>
+                          <a href={st.url} download={`ateflo-image-${i + 1}.png`} target="_blank" rel="noopener noreferrer" className="at-press rounded-lg bg-[#1D75F7] px-3.5 py-2 text-[12.5px] font-bold text-white transition hover:opacity-90">저장하기</a>
                           <button onClick={() => makeImage(i, slot)} disabled={st.busy} className="at-press rounded-lg bg-neutral-100 px-3.5 py-2 text-[12.5px] font-bold text-neutral-600 transition hover:bg-neutral-200 disabled:opacity-50">
                             {st.busy ? "그리는 중…" : "다시 만들기 · 4크레딧"}
                           </button>

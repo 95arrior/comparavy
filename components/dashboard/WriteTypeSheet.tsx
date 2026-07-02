@@ -1,18 +1,29 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { IMAGE_COST } from "@/lib/creditPacks";
 
-// 글 생성 직전 '확인' 시트 — 탭=즉시생성 X. 생성은 크레딧이 들어 실수 방지용 확인 한 번.
-// (구 '정보성/홍보용' 선택은 네이버 수익형 단일 피벗으로 제거 — 모든 글은 정보성)
+// 글 생성 직전 '확인' 시트 — 생성은 크레딧이 들어 실수 방지용 확인 한 번.
+// ★이미지 동시 생성 토글: 켜면 글이 써지는 동안 사진 자리 앞 3곳의 AI 일러스트가 병렬로 만들어진다.
 export default function WriteTypeSheet({
   title,
   onPick,
   onClose,
 }: {
   title: string;
-  onPick: () => void;
+  onPick: (opts: { withImages: boolean }) => void;
   onClose: () => void;
 }) {
+  const [withImages, setWithImages] = useState(false);
+  useEffect(() => {
+    try { setWithImages(localStorage.getItem("ateflo_with_images") === "1"); } catch { /* ignore */ }
+  }, []);
+  function toggle() {
+    setWithImages((v) => {
+      try { localStorage.setItem("ateflo_with_images", v ? "0" : "1"); } catch { /* ignore */ }
+      return !v;
+    });
+  }
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
@@ -29,14 +40,20 @@ export default function WriteTypeSheet({
         <p className="text-xs font-medium text-neutral-400">이 글감으로 쓸까요?</p>
         <p className="mt-1 text-[15px] font-bold leading-snug text-neutral-900">{title}</p>
 
-        <div className="mt-4 rounded-2xl bg-neutral-50 p-4 text-[13px] leading-relaxed text-neutral-600">
-          <p>· 네이버 규격(짧은 문단·형광펜·해시태그)으로 완성돼요</p>
-          <p>· 완성되면 <b className="text-neutral-800">복사 → 네이버에 붙여넣기</b>로 발행해요</p>
-        </div>
+        {/* 이미지 동시 생성 토글 */}
+        <button onClick={toggle} className="mt-4 flex w-full items-center gap-3 rounded-2xl bg-neutral-50 p-4 text-left transition active:scale-[0.99]">
+          <div className="min-w-0 flex-1">
+            <p className="text-[14px] font-bold text-neutral-900">AI 이미지도 함께 🎨</p>
+            <p className="mt-0.5 text-[12px] text-neutral-500">글 쓰는 동안 사진 자리 3곳을 채워요 · +{IMAGE_COST * 3}크레딧</p>
+          </div>
+          <span className={`flex h-7 w-12 shrink-0 items-center rounded-full px-0.5 transition-colors ${withImages ? "bg-[#1D75F7]" : "bg-neutral-200"}`}>
+            <span className={`h-6 w-6 rounded-full bg-white shadow transition-transform ${withImages ? "translate-x-5" : ""}`} />
+          </span>
+        </button>
 
         <button
-          onClick={onPick}
-          className="mt-5 w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-semibold text-white transition hover:opacity-90 active:scale-[0.99]"
+          onClick={() => onPick({ withImages })}
+          className="at-press mt-4 w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-semibold text-white transition hover:opacity-90"
         >
           이 글 쓰기
         </button>

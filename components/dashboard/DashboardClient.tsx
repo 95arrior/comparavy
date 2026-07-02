@@ -508,7 +508,7 @@ export default function DashboardClient(props: DashboardProps) {
           <WriteTypeSheet
             title={pendingWrite.title}
             onClose={() => setPendingWrite(null)}
-            onPick={() => {
+            onPick={({ withImages }) => {
               setSelected(null);
               setGenParams({
                 keyword: pendingWrite.keyword,
@@ -516,6 +516,7 @@ export default function DashboardClient(props: DashboardProps) {
                 type: toEngineType(blogProfile.article_type, blogProfile.vertical),
                 tone: blogProfile.tone,
                 promo: false,
+                withImages,
               });
               setPendingWrite(null);
             }}

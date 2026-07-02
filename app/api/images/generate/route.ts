@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
+import { createSupabaseServerClient, createSupabaseAdminClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { isAdminEmail } from "@/lib/adminStats";
 import { spendCredits, addCredits } from "@/lib/credits";
 import { IMAGE_COST } from "@/lib/creditPacks";
@@ -34,7 +34,16 @@ export async function POST(request: Request) {
   try {
     const img = await generateBlogImage(slot, title, user.id);
     void logUsage({ userId: user.id, model: GEMINI_IMAGE_MODEL, kind: "image", inputTokens: 0, outputTokens: 1290 });
-    return NextResponse.json({ ok: true, dataUrl: `data:${img.mime};base64,${img.base64}`, credits: balance });
+    // 스토리지 업로드 — URL로 반환(재방문·기기 간 유지). 실패하면 dataUrl 폴백.
+    let url: string | null = null;
+    try {
+      const admin = createSupabaseAdminClient();
+      try { await admin.storage.createBucket("ai-images", { public: true }); } catch { /* 이미 있음 */ }
+      const path = `${user.id}/${crypto.randomUUID()}.png`;
+      const { error: upErr } = await admin.storage.from("ai-images").upload(path, Buffer.from(img.base64, "base64"), { contentType: img.mime });
+      if (!upErr) url = admin.storage.from("ai-images").getPublicUrl(path).data.publicUrl;
+    } catch { /* 폴백 */ }
+    return NextResponse.json({ ok: true, url, dataUrl: url ? undefined : `data:${img.mime};base64,${img.base64}`, credits: balance });
   } catch (e) {
     // 멱등 환불 — 같은 ref 재시도에도 1회만
     const refunded = await addCredits(user.id, IMAGE_COST, "refund_image", refundRef).catch(() => null);
