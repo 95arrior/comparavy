@@ -1,25 +1,21 @@
 "use client";
 
-import Link from "next/link";
 import { useState, useEffect, useMemo } from "react";
 import { photoMarkerToGuide, photoMarkerToSlot, photoSlots, markToNaverBold, addNaverSpacing } from "@/lib/photoMarkers";
 import CenterToast from "./CenterToast";
-import { PLANS, formatKRW } from "@/lib/plans";
 import { scanCompliance, applySuggestion } from "@/lib/complianceFilter";
 import type { Article } from "./types";
 
 // ★네이버 수익형 단일 — 글 화면은 '검토 → 복사 → 네이버 붙여넣기' 하나의 흐름.
 // 앱 안 편집기(TipTap)·워드프레스 발행·예약은 제거. 최종 탈고는 네이버 에디터에서 한다.
+// 크레딧 모델(전원 유료) — 무료/프로 구분·티저 잠금 없음.
 export default function ArticleModal({
   article,
-  canEdit,
   vertical,
   onClose,
   onUpdated,
 }: {
   article: Article;
-  /** 프로 전용 편집권(광고규제 표현 '바꾸기' 등). 무료는 검토·복사만. */
-  canEdit?: boolean;
   /** 블로그 주제(vertical) — 발행 전 광고규제 표현 검사에 사용(없으면 general). */
   vertical?: string;
   onClose: () => void;
@@ -145,55 +141,6 @@ export default function ArticleModal({
     }
   }
 
-  // 무료 한도 초과로 만든 미리보기(티저): 상단만 보이고 아래는 블러 + 결제 유도. 프로 결제 전까지 유지.
-  if (article.locked) {
-    return (
-      <>
-        <div className="sticky top-0 z-30 border-b border-neutral-200 bg-white/95 backdrop-blur">
-          <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-6 py-3">
-            <button onClick={onClose} className="flex items-center gap-1.5 text-sm text-neutral-500 transition hover:text-neutral-900">
-              <span className="text-base leading-none">←</span> 목록으로
-            </button>
-            <Link href="/pricing" className="rounded-xl bg-[#1D75F7] px-4 py-1.5 text-sm font-medium text-white transition hover:opacity-90">
-              프로로 잠금 해제
-            </Link>
-          </div>
-        </div>
-
-        <div className="mx-auto max-w-3xl px-6 py-8">
-          <span className="text-xs text-neutral-400">미리보기 · {article.keyword}</span>
-          <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight sm:text-3xl">{article.title}</h1>
-
-          {/* 위 ~3줄만 선명, 그 아래는 블러+페이드, 결제 카드가 가운데 떠 있음 (일반적인 페이월 방식) */}
-          <div className="relative mt-6">
-            {/* 세로 크롭(본문은 위 일부만 노출) */}
-            <div className="max-h-[30rem] overflow-hidden">
-              <div className="prose prose-neutral max-w-none" dangerouslySetInnerHTML={{ __html: photoMarkerToSlot(article.body_html) }} />
-            </div>
-            {/* 3줄 아래부터 흐려지고 배경색으로 사라짐. 좌우로 더 넓게 덮어 글자 끝이 안 잘리게 */}
-            <div className="pointer-events-none absolute -inset-x-6 bottom-0 top-[4.75rem] bg-gradient-to-b from-transparent via-neutral-50/85 to-neutral-50 backdrop-blur-[2px] [mask-image:linear-gradient(to_bottom,transparent,#000_3rem)] [-webkit-mask-image:linear-gradient(to_bottom,transparent,#000_3rem)]" />
-            {/* 결제 카드: 흐려진 영역 위 중앙, 바닥에서 충분히 띄워 그라데이션·그림자가 안 잘리게 */}
-            <div className="absolute inset-x-0 bottom-12 flex justify-center px-4">
-              <div className="w-full max-w-sm rounded-2xl bg-white ring-1 ring-black/[0.04] p-5 text-center shadow-xl">
-                <p className="text-base font-semibold tracking-tight">여기부터는 프로 회원만 볼 수 있어요</p>
-                <p className="mt-1.5 text-sm leading-relaxed text-neutral-500">
-                  프로로 업그레이드하면 이 글 전체가 열리고, 매달 30편까지 네이버 규격 글을 계속 만들 수 있어요.
-                </p>
-                <Link
-                  href="/pricing"
-                  className="ateflo-rainbow mt-4 inline-block rounded-lg px-6 py-2.5 text-sm font-medium text-white transition"
-                >
-                  프로 업그레이드하고 전체보기 →
-                </Link>
-                <p className="mt-2 text-xs text-neutral-400">{formatKRW(PLANS.pro.price)}/월 · 언제든 해지</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </>
-    );
-  }
-
   return (
     <>
       {/* 상단 액션바 — 스크롤해도 따라옴 */}
@@ -235,7 +182,7 @@ export default function ArticleModal({
                     <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold ${v.severity === "high" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-800"}`}>{v.severity === "high" ? "높음" : "주의"}</span>
                     <span className="text-sm font-semibold text-neutral-900">‘{v.matched}’{v.count > 1 ? ` ×${v.count}` : ""}</span>
                     <span className="text-[11px] text-neutral-400">{v.field === "title" ? "제목" : "본문"} · {v.law}</span>
-                    {v.suggestion && canEdit && (
+                    {v.suggestion && (
                       <button onClick={() => fixViolation(v)} className="ml-auto shrink-0 rounded-lg bg-[#1D75F7] px-2.5 py-1 text-xs font-medium text-white transition hover:opacity-90">‘{v.suggestion}’로 바꾸기</button>
                     )}
                   </div>

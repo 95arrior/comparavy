@@ -10,6 +10,11 @@
 > **레거시**: DB의 옛 vertical(local·hobby)은 서버 코드가 계속 읽음(bloggerTypes 주석 참조). ProfileSettings 저장 시 online으로 통일됨.
 > **Phase 2 예정**: 개설 가이드(80대도)·애드포스트 20일 승인 코스·발행 streak·방문자 수동입력 트래킹·랜딩 리뉴얼. **Phase 3**: 홈피드 후킹(제목·썸네일)·숫자밀도 강화·허위조작정보법 가드 강화·수익화 허브.
 >
+> **크레딧 전환(2026-07-02, 이 커밋):** 플랜(월 N편)→크레딧(1편=1크레딧). 실측 원가 125원/글(캐시히트 시 ~109원, 검증됨), 설계 기준 150원.
+> 팩: 트라이얼 3cr 1,900원(어뷰징 필터·결제 워밍업, 마진 제외) / 스탠다드 30cr 19,900 / **승인팩 60cr 34,900(24h 한정 29,900 — 할인 바닥, 마진 70%)** / 프로 100cr 49,900. 마진 하한 = 크레딧당 500원, 이 밑 할인 금지.
+> 무료 크레딧 0 (구경만 무료 — 글감·데모). 선차감·원자적(spend_credits RPC) + 멱등 환불(add_credits) = 적자 코드상 불가능. 프롬프트 캐싱 적용·실검증(cache_read 9,473tok).
+> 제거: free/pro 플랜 로직·티저 잠금·구독 해지/재개 UI. ⚠️**배포 전 필수: `supabase/migrations/0043_credits.sql`을 Supabase에 적용** (users.credits·credit_ledger·RPC). 남은 것: 팩 구매(토스)·D-3 잠금 카드·24h 할인 타이머·pricing 페이지 크레딧화.
+>
 > 브랜치: `ateflo-korean-wordpress-saas` · 스택: Next.js 16 · Supabase · Stripe/Toss · Vercel 자동배포
 
 ---

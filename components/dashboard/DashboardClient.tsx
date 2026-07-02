@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
-import { PLANS } from "@/lib/plans";
 import type { Article, DashboardProps, KeywordResult, KeywordStatus } from "./types";
+import CreditPaywallSheet from "./CreditPaywallSheet";
 import ArticleList from "./ArticleList";
 import ArticleModal from "./ArticleModal";
 import CenterToast from "./CenterToast";
@@ -21,7 +21,6 @@ import type { QueueItem } from "@/lib/keywordQueue";
 import AdminDashboard from "./AdminDashboard";
 import NewsView from "./NewsView";
 import { LATEST_ANNOUNCEMENT_ID } from "@/lib/announcements";
-import Link from "next/link";
 
 // ★네이버 수익형 단일 — 워드프레스 탭·연결·예약발행 제거. 발행은 '복사 → 네이버 붙여넣기' 하나.
 type Tab = "lab" | "account" | "admin";
@@ -31,7 +30,8 @@ export default function DashboardClient(props: DashboardProps) {
   const [tab, setTab] = useState<Tab>("lab");
   const [labView, setLabView] = useState<LabView>("home");
   const [articles, setArticles] = useState<Article[]>(props.initialArticles);
-  const [articlesUsed, setArticlesUsed] = useState(props.articlesUsed);
+  const [credits, setCredits] = useState(props.credits); // 크레딧 잔액 — 생성 완료 시 서버 잔액으로 갱신
+  const [paywall, setPaywall] = useState<null | { title?: string }>(null); // 잔액 0 → 결제 유도 시트(쓰려던 글감 제목 유지)
   const [selected, setSelected] = useState<Article | null>(null);
   const [genParams, setGenParams] = useState<GenParams | null>(null);
   const [naverBlogId, setNaverBlogId] = useState(""); // 네이버 블로그 아이디(글쓰기 직행용) — 내정보에서 수정
@@ -45,13 +45,11 @@ export default function DashboardClient(props: DashboardProps) {
   }
   // 글 생성 직전 '확인' 대기 (확인하면 genParams로 생성 시작 — 크레딧 실수 방지)
   const [pendingWrite, setPendingWrite] = useState<{ keyword: string; title: string } | null>(null);
-  const [subCanceled, setSubCanceled] = useState(props.subStatus === "canceled");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState(false);
   const [page, setPage] = useState<null | "news" | "profile">(null);
   const [unreadNews, setUnreadNews] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-  const [confirmCancel, setConfirmCancel] = useState(false);
   const [doneId, setDoneId] = useState<string | null>(null); // 백그라운드 생성 완료 → '보러가기'로 안내
   // 블로그 프로필 + 키워드 예약 큐
   const [blogProfile, setBlogProfile] = useState<BlogProfile | null>(null);
@@ -143,12 +141,7 @@ export default function DashboardClient(props: DashboardProps) {
     try {
       const g = JSON.parse(raw) as { keyword?: string; type?: string; tone?: string };
       if (!g.keyword) return;
-      const overLimit = props.plan !== "pro" && props.articlesUsed >= props.articlesLimit;
-      const hasTeaser = props.initialArticles.some((a) => a.locked);
-      if (overLimit && hasTeaser) {
-        setTab("lab");
-        return;
-      }
+      if (props.credits <= 0) { setTab("lab"); setPaywall({}); return; } // 잔액 0 → 페이월
       setGenParams({ keyword: g.keyword, angle: "", type: g.type ?? "howto", tone: g.tone ?? "friendly", promo: false });
     } catch {
       // 무시
@@ -164,40 +157,7 @@ export default function DashboardClient(props: DashboardProps) {
     window.location.href = "/";
   }
 
-  // 구독 해지 — 다음 청구만 중단, 남은 기간은 그대로 이용
-  async function cancelSubscription() {
-    if (busy) return;
-    setBusy(true);
-    try {
-      const res = await fetch("/api/billing/cancel", { method: "POST" });
-      if (res.ok) {
-        setSubCanceled(true);
-        setConfirmCancel(false);
-        setNotice("구독 해지를 예약했어요");
-      } else {
-        setNotice("해지 처리에 실패했어요. 잠시 후 다시 시도해 주세요.");
-      }
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  // 구독 해지 취소(되돌리기) — 남은 기간이 있으면 자동결제를 다시 켠다
-  async function resumeSubscription() {
-    if (busy) return;
-    setBusy(true);
-    try {
-      const res = await fetch("/api/billing/resume", { method: "POST" });
-      if (res.ok) {
-        setSubCanceled(false);
-        setNotice("구독을 다시 이어가요");
-      } else {
-        setNotice("처리에 실패했어요. 잠시 후 다시 시도해 주세요.");
-      }
-    } finally {
-      setBusy(false);
-    }
-  }
+  // (크레딧 전환 — 구독 해지/재개 로직 제거. 크레딧은 소모성이라 구독 개념 없음)
 
   // 회원 탈퇴 — 모든 데이터·계정 영구 삭제 (되돌릴 수 없음)
   async function deleteAccount() {
@@ -300,6 +260,7 @@ export default function DashboardClient(props: DashboardProps) {
       goTab("account");
       return false;
     }
+    if (credits <= 0) { setPaywall({}); return false; } // 잔액 0 → 페이월(서버도 이중 차단)
     try {
       const res = await fetch("/api/keyword-queue", {
         method: "POST",
@@ -346,7 +307,6 @@ export default function DashboardClient(props: DashboardProps) {
 
   function onGenerated(article: Article) {
     setArticles((prev) => [article, ...prev]);
-    if (!article.locked) setArticlesUsed((n) => n + 1); // 티저(미리보기)는 사용량에 미포함
     // 큐에서 시작한 생성이면 그 항목을 완료 처리 + 글 연결
     const qid = pendingQueueId.current;
     if (qid) {
@@ -383,8 +343,6 @@ export default function DashboardClient(props: DashboardProps) {
 
   const displayName = props.email.split("@")[0] || props.email;
   const initial = (props.email.trim()[0] ?? "?").toUpperCase();
-  const lockedArticle = articles.find((a) => a.locked) ?? null;
-  const blocked = props.plan !== "pro" && articlesUsed >= props.articlesLimit && !!lockedArticle;
 
   // 공지·업데이트 알림 (안 읽은 소식 점 표시)
   useEffect(() => {
@@ -479,28 +437,8 @@ export default function DashboardClient(props: DashboardProps) {
       <div className={`min-w-0 flex-1 ${showNav ? "pb-[78px] md:pb-0 md:pt-16" : ""}`}>
         <CenterToast message={notice} />
 
-        {/* 결제 실패(유예 중) 배너 — 즉시 자르지 않고 카드 재등록을 유도 */}
-        {!page && !selected && !genParams && props.subStatus === "past_due" && (
-          <div className="px-4 pt-4 sm:px-6">
-            <div className="mx-auto flex max-w-5xl items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3.5 sm:px-5">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e11d48" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 shrink-0">
-                <rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" />
-              </svg>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-rose-900">결제에 실패했어요</p>
-                <p className="mt-0.5 text-xs leading-relaxed text-rose-700">
-                  카드를 다시 등록해 주세요. 며칠간 재시도하고, 계속 실패하면 무료로 바뀌어요.
-                </p>
-              </div>
-              <a
-                href="/pricing"
-                className="shrink-0 rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-rose-700"
-              >
-                카드 다시 등록
-              </a>
-            </div>
-          </div>
-        )}
+        {/* 잔액 0 페이월 — 쓰려던 글감 제목이 잠긴 상태로 보이는 결제 유도 시트 */}
+        {paywall && <CreditPaywallSheet pendingTitle={paywall.title} onClose={() => setPaywall(null)} />}
 
         {page === "news" && <NewsView onBack={() => setPage(null)} />}
         {page === "profile" && blogProfile && (
@@ -516,7 +454,6 @@ export default function DashboardClient(props: DashboardProps) {
         {!page && selected && (
           <ArticleModal
             article={selected}
-            canEdit={props.plan === "pro"}
             vertical={blogProfile?.vertical ?? "general"}
             onClose={() => setSelected(null)}
             onUpdated={onUpdated}
@@ -526,13 +463,13 @@ export default function DashboardClient(props: DashboardProps) {
         {!page && !selected && genParams && (
           <WritingView
             params={genParams}
-            pro={props.plan === "pro"}
-            isTeaser={props.plan !== "pro" && articlesUsed >= props.articlesLimit}
+            pro
             vertical={blogProfile?.vertical}
             onDone={(article) => {
               setGenParams(null);
               onGenerated(article);
             }}
+            onCredits={setCredits}
             onExit={() => setGenParams(null)}
           />
         )}
@@ -572,19 +509,17 @@ export default function DashboardClient(props: DashboardProps) {
 
         {!page && !selected && !genParams && tab === "lab" && blogProfile && (
           <div className="ateflo-page-in">
-            {/* 메인 홈 — 탭 없이 한 페이지(내 이야기 + 글감). 글쓰기는 '새 글 쓰기' 버튼으로 */}
-            {labView === "home" && !blocked && (
+            {/* 메인 홈 — 탭 없이 한 페이지(내 이야기 + 글감). 글감 '구경'은 잔액 0이어도 가능(구경 무료), 생성만 크레딧 */}
+            {labView === "home" && (
               <Home
                 displayName={displayName}
                 blogName={blogProfile.blog_name ?? "내 블로그"}
                 articles={articles}
                 onWrite={() => goLabView("keywords")}
                 onWriteKeyword={(keyword, title) => {
-                  // 글감 카드 [이 글 쓰기] → 확인 시트를 먼저 띄운다(생성은 확인 후).
-                  const overLimit = props.plan !== "pro" && articlesUsed >= props.articlesLimit;
-                  const hasTeaser = props.initialArticles.some((a) => a.locked);
-                  if (overLimit && hasTeaser) {
-                    goLabView("keywords");
+                  // 글감 카드 [이 글 쓰기] → 잔액 0이면 '쓰려던 글이 잠긴' 페이월, 있으면 확인 시트.
+                  if (credits <= 0) {
+                    setPaywall({ title });
                     return;
                   }
                   setPendingWrite({ keyword, title });
@@ -595,6 +530,7 @@ export default function DashboardClient(props: DashboardProps) {
                 isAdmin={props.isAdmin}
                 onWriteStory={(storyText, _promo, title) => {
                   if (!blogProfile) return;
+                  if (credits <= 0) { setPaywall({ title: title || "내 이야기 글" }); return; }
                   setSelected(null);
                   setGenParams({
                     keyword: title, // 직접 정한 제목(비면 라우트가 AI로 유도)
@@ -607,19 +543,6 @@ export default function DashboardClient(props: DashboardProps) {
                 }}
                 profileKey={`${blogProfile.vertical}:${blogProfile.sub_category ?? ""}`}
               />
-            )}
-            {labView === "home" && blocked && (
-              <div className="mx-auto max-w-xl px-6 py-16">
-                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-left">
-                  <p className="text-sm font-medium text-amber-900">무료 미리보기를 만들었어요 🔒</p>
-                  <p className="mt-1 text-sm leading-relaxed text-amber-800">계속 만들고 발행하려면 프로로 업그레이드하세요.</p>
-                  {lockedArticle && <p className="mt-3 truncate text-sm font-medium text-neutral-900">“{lockedArticle.title}”</p>}
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {lockedArticle && <button onClick={() => setSelected(lockedArticle)} className="rounded-xl border border-amber-300 bg-white px-4 py-1.5 text-sm font-medium text-amber-900 transition hover:bg-amber-100">미리보기 글 보기</button>}
-                    <Link href="/pricing" className="rounded-xl bg-[#1D75F7] px-4 py-1.5 text-sm font-medium text-white transition hover:opacity-90">프로로 업그레이드</Link>
-                  </div>
-                </div>
-              </div>
             )}
 
             {/* 키워드 발굴 */}
@@ -708,25 +631,9 @@ export default function DashboardClient(props: DashboardProps) {
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-neutral-800 text-base font-bold text-white">{initial}</span>
               <div className="min-w-0">
                 <p className="truncate text-[15px] font-bold text-neutral-900">{displayName}</p>
-                <p className="text-[13px] text-neutral-400">{PLANS[props.plan].name} · 생성 {articlesUsed}/{props.articlesLimit}편{props.plan !== "pro" ? " (평생)" : ""}</p>
+                <p className="text-[13px] text-neutral-400">크레딧 <b className="text-[#1D75F7]">{credits}</b>개 · 글 1편 = 1크레딧</p>
               </div>
             </div>
-
-            {/* 결제 경고 — 재시도 중 */}
-            {props.plan === "pro" && props.subStatus === "past_due" && (
-              <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3.5">
-                <p className="text-sm leading-relaxed text-rose-800">결제 실패로 <b className="text-rose-900">재시도 중</b>이에요. 카드를 다시 등록하면 바로 정상으로 돌아와요.</p>
-                <a href="/pricing" className="mt-3 inline-block rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700">카드 다시 등록</a>
-              </div>
-            )}
-            {/* 해지 예약 안내 */}
-            {props.plan === "pro" && subCanceled && (
-              <div className="mt-4 rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3.5">
-                <p className="text-sm leading-relaxed text-neutral-600">해지를 예약했어요.{" "}
-                  {props.currentPeriodEnd ? (<><b className="text-neutral-800">{new Date(props.currentPeriodEnd).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}까지</b> 쓸 수 있고,</>) : (<>남은 기간까지 쓸 수 있고,</>)}{" "}다음 결제는 안 나가요.</p>
-                <button onClick={resumeSubscription} disabled={busy} className="mt-3 rounded-lg bg-[#1D75F7] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50">{busy ? "처리 중…" : "해지 취소하고 계속 이용"}</button>
-              </div>
-            )}
 
             {/* 블로그 */}
             <p className="mb-2 mt-7 px-1 text-[13px] font-semibold text-neutral-400">블로그</p>
@@ -751,8 +658,8 @@ export default function DashboardClient(props: DashboardProps) {
             <div className="divide-y divide-neutral-100 overflow-hidden rounded-2xl bg-white ring-1 ring-black/[0.04]">
               <a href="/pricing" className="flex w-full items-center gap-3 px-5 py-4 text-left transition active:bg-neutral-50">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#1D75F7]/10 text-[#1D75F7]"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" /></svg></span>
-                <span className="flex-1 text-[15px] font-medium text-neutral-800">플랜·결제</span>
-                <span className="text-[13px] text-neutral-400">{props.plan === "pro" && props.nextBillingAt && !subCanceled ? `다음 결제 ${new Date(props.nextBillingAt).toLocaleDateString("ko-KR", { month: "long", day: "numeric" })}` : PLANS[props.plan].name}</span>
+                <span className="flex-1 text-[15px] font-medium text-neutral-800">크레딧 충전</span>
+                <span className="text-[13px] text-neutral-400">{credits}개 보유</span>
                 <svg className="text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
               </a>
               <button onClick={openNews} className="flex w-full items-center gap-3 px-5 py-4 text-left transition active:bg-neutral-50">
@@ -785,33 +692,6 @@ export default function DashboardClient(props: DashboardProps) {
 
                 {/* 계정 관리 — 눈에 띄지 않게(작은 텍스트), 단 접근은 가능하게 */}
                 <div className="mt-8 flex flex-col items-start gap-2 px-1 text-xs">
-                  {props.plan === "pro" && !subCanceled && (
-                    !confirmCancel ? (
-                      <button onClick={() => setConfirmCancel(true)} className="text-neutral-400 transition hover:text-neutral-600">
-                        구독 해지
-                      </button>
-                    ) : (
-                      <div className="w-full rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-                        <p className="text-sm font-medium text-neutral-900">구독을 해지할까요?</p>
-                        <p className="mt-1 text-sm leading-relaxed text-neutral-600">
-                          {props.currentPeriodEnd ? (
-                            <><b className="text-neutral-800">{new Date(props.currentPeriodEnd).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}까지</b> 쓸 수 있어요.</>
-                          ) : (
-                            <>남은 기간까지 쓸 수 있어요.</>
-                          )}{" "}
-                          다음 결제만 안 나가고, 언제든 다시 켤 수 있어요.
-                        </p>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <button onClick={cancelSubscription} disabled={busy} className="rounded-lg bg-[#1D75F7] px-4 py-1.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50">
-                            {busy ? "처리 중…" : "해지하기"}
-                          </button>
-                          <button onClick={() => setConfirmCancel(false)} disabled={busy} className="rounded-lg border border-neutral-300 px-4 py-1.5 text-sm font-medium transition hover:border-neutral-900">
-                            그대로 둘게요
-                          </button>
-                        </div>
-                      </div>
-                    )
-                  )}
                   {!confirmDelete ? (
                     <button onClick={() => setConfirmDelete(true)} className="text-neutral-400 transition hover:text-red-500">
                       회원 탈퇴
@@ -820,7 +700,7 @@ export default function DashboardClient(props: DashboardProps) {
                     <div className="w-full rounded-xl border border-red-200 bg-red-50 p-4">
                       <p className="text-sm font-medium text-red-900">정말 탈퇴할까요?</p>
                       <p className="mt-1 text-sm leading-relaxed text-red-800">
-                        <b>구독이 즉시 해지</b>되어 추가 청구는 없어요. 작성한 글·계정 정보가 <b>모두 영구 삭제</b>되고 되돌릴 수 없어요.
+                        남은 크레딧이 <b>소멸</b>되고, 작성한 글·계정 정보가 <b>모두 영구 삭제</b>되어 되돌릴 수 없어요.
                       </p>
                       <p className="mt-1 text-xs leading-relaxed text-red-700">
                         이미 결제한 이용권은 환불되지 않으며, 환불은 <a href="/refund" target="_blank" className="underline">환불 정책</a>을 따라요.

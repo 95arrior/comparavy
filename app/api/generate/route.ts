@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient, createSupabaseAdminClient, hasSupabaseEnv } from "@/lib/supabase-server";
-import { ensureUserRow, rolloverIfNeeded } from "@/lib/userPlan";
-import { PLANS } from "@/lib/plans";
+import { ensureUserRow } from "@/lib/userPlan";
+import { spendCredits, addCredits, GENERATE_COST } from "@/lib/credits";
 import { streamArticle } from "@/lib/generateArticle";
 import { countKoreanChars } from "@/lib/humanizer";
 import { isDisposableEmail } from "@/lib/disposableEmail";
@@ -97,53 +97,15 @@ export async function POST(request: Request) {
     }
   }
 
-  // 플랜·사용량 확인
-  let row = await ensureUserRow(supabase, user.id, user.email);
-  row = await rolloverIfNeeded(row);
+  // 유저 행 보장(신규면 생성 — 크레딧 0으로 시작, 무료 크레딧 없음)
+  await ensureUserRow(supabase, user.id, user.email);
 
-  // 증가/카운트는 서비스롤로 (유저 RLS로 막히던 문제 방지)
+  // 서비스롤(유저 RLS 우회가 필요한 카운터·RPC용)
   const adminDb = createSupabaseAdminClient();
-  // 무료(평생 한도)는 카운터에만 의존하지 않고 '실제 생성한 글 수'와 함께 큰 값을 써서 한도가 새지 않게 막는다.
-  // (프로는 월마다 카운터가 리셋되므로 전체 글 수로 막으면 안 됨 → 카운터 그대로 사용)
-  let used = row.articles_used ?? 0;
-  if (row.plan === "free") {
-    const { count: realUsed } = await adminDb
-      .from("articles")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .eq("locked", false);
-    used = Math.max(used, realUsed ?? 0);
-  }
 
-  // 한도 초과 처리: 프로는 차단. 무료는 결제 유도용 "미리보기(티저)"를 단 1개만 허용한다.
-  // (모델 호출은 평소와 동일하게 1회 — 1글=1콜 불변식 유지, 추가 비용은 무료 1편 분량으로 제한)
-  let teaser = false;
-  if (used >= row.articles_limit) {
-    if (row.plan !== "free") {
-      return NextResponse.json(
-        { error: "이번 달 생성 한도를 다 썼어요." },
-        { status: 403 },
-      );
-    }
-    const { count: lockedCount } = await supabase
-      .from("articles")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .eq("locked", true);
-    // 영구 플래그(teaser_used) 또는 현존 잠금 글이 있으면 추가 티저 금지.
-    // → 글이 30일 만료/삭제돼도 teaser_used가 남아 무한 무료생성을 막는다.
-    if (row.teaser_used || (lockedCount ?? 0) > 0) {
-      return NextResponse.json(
-        { error: "무료 미리보기를 이미 만들었어요. 프로로 업그레이드하면 잠금이 풀리고 계속 생성할 수 있어요." },
-        { status: 403 },
-      );
-    }
-    teaser = true;
-  }
-
-  // 티저(4번째 잠금 글)는 프로 품질(5000자)로 생성한다 — 결제해서 풀면 진짜 5000자 글을 얻어
-  // "그럴 거면 결제하고 5000자짜리 했지" 후회를 없앤다. (티저는 이메일당 평생 1회라 비용 통제됨)
-  const maxWords = teaser ? PLANS.pro.maxWords : PLANS[row.plan].maxWords;
+  // ★크레딧 전환 — 플랜 한도·티저(무료 미리보기) 로직 제거.
+  //   차감은 아래에서 '생성 시작 직전' 원자적 선차감(적자 방지: 크레딧 없으면 모델 호출 자체가 없음).
+  const maxWords = 5000; // 엔진이 네이버 적정선(1,400~2,100자)으로 자체 캡 — 상한만 넉넉히
   // 업종(vertical) + 업체 정보 — 프로필에서 1회 조회(없으면 general/미입력). 프롬프트 분기 + 글 하단 NAP 박스에 사용.
   const { data: profileRow } = await supabase
     .from("blog_profiles")
@@ -185,6 +147,32 @@ export async function POST(request: Request) {
   const angle = pickAngle(`${user.id}:${keywordNorm}`);
   const variantInstruction = `${variant.instruction} ${angle}`;
 
+  // ★원자적 선차감 — 잔액 >= 1일 때만 차감 성공. 부족하면 모델 호출 없이 여기서 끝(적자 원천 차단).
+  let creditBalance: number;
+  try {
+    const spent = await spendCredits(user.id, GENERATE_COST, "generate");
+    if (spent === null) {
+      return NextResponse.json(
+        { error: "크레딧이 없어요. 크레딧을 충전하면 바로 이어서 쓸 수 있어요.", code: "NO_CREDITS" },
+        { status: 402 },
+      );
+    }
+    creditBalance = spent;
+  } catch {
+    return NextResponse.json({ error: "잠시 문제가 생겼어요. 다시 시도해 주세요." }, { status: 500 });
+  }
+  // 실패 시 환불용 참조 — (reason, ref) 멱등이라 어떤 경로로 두 번 불려도 1회만 환불됨
+  const refundRef = globalThis.crypto.randomUUID();
+  let refunded = false;
+  const refundOnce = async () => {
+    if (refunded) return;
+    refunded = true;
+    try {
+      const b = await addCredits(user.id, GENERATE_COST, "refund_generate", refundRef);
+      if (b !== null) creditBalance = b;
+    } catch { /* 환불 실패는 원장에 남은 차감 기록으로 CS 복구 가능 */ }
+  };
+
   // SSE 스트리밍: 글이 써지는 과정을 실시간으로 흘려보낸다.
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
@@ -210,12 +198,7 @@ export async function POST(request: Request) {
             char_count: 0,
             status: "generating",
           };
-          if (teaser) genInsert.locked = true;
-          let { data: ph, error: phErr } = await supabase.from("articles").insert(genInsert).select("id").single();
-          if (phErr && /locked/i.test(phErr.message ?? "")) {
-            delete genInsert.locked;
-            ({ data: ph, error: phErr } = await supabase.from("articles").insert(genInsert).select("id").single());
-          }
+          const { data: ph } = await supabase.from("articles").insert(genInsert).select("id").single();
           genId = ph?.id ?? null;
           if (genId) send({ type: "generating", id: genId });
         }
@@ -239,9 +222,10 @@ export async function POST(request: Request) {
         const charCount = countKoreanChars(article.body_html);
         if (charCount < minChars) {
           if (genId) await supabase.from("articles").delete().eq("id", genId); // 자리표시 행 정리
+          await refundOnce(); // 실패 = 크레딧 환불(멱등)
           send({
             type: "error",
-            error: "글을 만드는 중 문제가 생겨 잠깐 멈췄어요. 다시 한 번 눌러 주세요. (횟수는 차감되지 않아요)",
+            error: "글을 만드는 중 문제가 생겨 잠깐 멈췄어요. 다시 한 번 눌러 주세요. (크레딧은 차감되지 않아요)",
           });
           return;
         }
@@ -268,10 +252,8 @@ export async function POST(request: Request) {
           write_note: article.write_note || null, // 글쓴이용 메모 (마이그레이션 0007)
           tags: article.tags ?? [], // 워드프레스 태그 (마이그레이션: articles.tags jsonb)
           article_type: promo ? "promo" : "info", // 홍보용/정보성 (마이그레이션 0040)
-          channel, // 발행 채널 wp|naver (마이그레이션 0042) — 컬럼 없으면 아래 재시도에서 제외
+          channel, // 발행 채널 naver 고정 (마이그레이션 0042) — 컬럼 없으면 아래 재시도에서 제외
         };
-        // 티저(잠금 미리보기)일 때만 locked 사용 → 마이그레이션(0006) 전에도 일반 생성은 정상 동작
-        if (teaser) insertPayload.locked = true;
 
         // 자리표시 행이 있으면 그 행을 채우고(UPDATE), 없으면 새로 INSERT
         const writeArticle = () =>
@@ -291,22 +273,13 @@ export async function POST(request: Request) {
 
         if (saveError) {
           if (genId) { try { await supabase.from("articles").delete().eq("id", genId); } catch {} }
+          await refundOnce(); // 저장 실패 = 크레딧 환불(멱등)
           // 진단용: 실제 DB 오류 메시지 표면화 (대부분 마이그레이션 미실행 = 컬럼 없음)
           send({ type: "error", error: `저장 실패: ${saveError.message ?? "알 수 없는 오류"}` });
           return;
         }
 
-        // 티저(미리보기)는 사용량을 올리지 않는다 (정식 글이 아니라 결제 유도용 잠금 글).
-        // 증가는 서비스롤(adminDb)로 — 유저 권한(RLS) 때문에 카운터가 안 올라가던 버그 방지.
-        if (!teaser) {
-          await adminDb
-            .from("users")
-            .update({ articles_used: used + 1 })
-            .eq("id", user.id);
-        } else {
-          // 티저를 만들었음을 영구 기록 → 글이 삭제·만료돼도 재생성 차단 (컬럼 없으면 에러는 무시)
-          await adminDb.from("users").update({ teaser_used: true }).eq("id", user.id);
-        }
+        // (크레딧 전환 — 사용량 카운터·티저 기록 제거. 차감·환불은 credit_ledger가 단일 근거)
 
         // Stage 2-B: 이 키워드로 실제 글을 썼다 → 풀 분산 카운터 +1 (best-effort, 실패해도 생성 무관).
         // 풀에 없는 키워드(직접발굴 등)면 매칭 0건으로 자연히 무시된다.
@@ -324,10 +297,11 @@ export async function POST(request: Request) {
             { onConflict: "user_id,keyword_norm,signature" },
           );
 
-        send({ type: "done", article: saved });
+        send({ type: "done", article: saved, credits: creditBalance });
         void recordAiResult(true);
       } catch (err) {
         if (genId) { try { await supabase.from("articles").delete().eq("id", genId); } catch {} }
+        await refundOnce(); // 생성 중 예외 = 크레딧 환불(멱등)
         const message = err instanceof Error ? err.message : "글을 만드는 중 문제가 생겼어요. 다시 시도해 주세요.";
         void recordAiResult(false, message);
         send({ type: "error", error: message });

@@ -44,13 +44,7 @@ export default async function Home() {
     return (
       <DashboardClient
         email={user.email ?? ""}
-        plan={row.plan}
-        articlesUsed={row.articles_used}
-        articlesLimit={row.articles_limit}
-        periodStart={row.period_start ?? null}
-        subStatus={row.sub_status}
-        nextBillingAt={row.next_billing_at ?? null}
-        currentPeriodEnd={row.current_period_end ?? null}
+        credits={row.credits ?? 0}
         initialArticles={(articles ?? []) as Article[]}
         isAdmin={isAdmin}
         adminStats={adminStats}

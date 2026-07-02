@@ -1,5 +1,3 @@
-import type { PlanKey } from "@/lib/plans";
-
 export interface FaqItem {
   question: string;
   answer: string;
@@ -50,13 +48,8 @@ export type KeywordStatus = "idle" | "loading" | "done" | "error";
 
 export interface DashboardProps {
   email: string;
-  plan: PlanKey;
-  articlesUsed: number;
-  articlesLimit: number;
-  periodStart?: string | null;
-  subStatus?: string | null;
-  nextBillingAt?: string | null;
-  currentPeriodEnd?: string | null;
+  /** 크레딧 잔액 — 글 생성 1편 = 1크레딧 (플랜 모델 폐기, 2026-07) */
+  credits: number;
   initialArticles: Article[];
   isAdmin?: boolean;
   adminStats?: import("@/lib/adminStats").AdminStats | null;

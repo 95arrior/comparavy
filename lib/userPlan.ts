@@ -11,6 +11,9 @@ export function emailHash(email: string): string {
 export interface UserRow {
   id: string;
   plan: PlanKey;
+  /** ★크레딧 잔액 (2026-07 크레딧 전환 — 글 생성 1편=1크레딧, 마이그레이션 0043) */
+  credits?: number;
+  /** [레거시] 플랜 한도 — 크레딧 전환으로 미사용, 스키마 호환용 유지 */
   articles_limit: number;
   articles_used: number;
   period_start: string;

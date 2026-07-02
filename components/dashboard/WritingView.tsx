@@ -11,9 +11,6 @@ function completeBlocks(html: string): string[] {
   return html.match(BLOCK_RE) ?? [];
 }
 
-// 티저(잠금 미리보기)는 제목 + 첫 문단까지만 보여주고 블러로 넘어간다
-const TEASER_BLOCKS = 2;
-
 export interface GenParams {
   keyword: string;
   angle: string;
@@ -28,16 +25,17 @@ export interface GenParams {
 export default function WritingView({
   params,
   pro,
-  isTeaser,
   vertical,
   onDone,
+  onCredits,
   onExit,
 }: {
   params: GenParams;
   pro: boolean;
-  isTeaser: boolean;
   vertical?: string;
   onDone: (article: Article) => void;
+  /** 생성 완료 시 서버가 알려준 크레딧 잔액 반영 */
+  onCredits?: (balance: number) => void;
   onExit: () => void;
 }) {
   const [available, setAvailable] = useState<string[]>([]);
@@ -89,26 +87,23 @@ export default function WritingView({
   // 문단 페이드 등장 — 140ms마다 한 블록씩(쏟아짐 방지)
   useEffect(() => {
     revealTimer.current = setInterval(() => {
-      setRevealed((r) => {
-        const cap = isTeaser ? Math.min(availRef.current.length, TEASER_BLOCKS) : availRef.current.length;
-        return r < cap ? r + 1 : r;
-      });
+      setRevealed((r) => (r < availRef.current.length ? r + 1 : r));
     }, 140);
     return () => {
       if (revealTimer.current) clearInterval(revealTimer.current);
     };
-  }, [isTeaser]);
+  }, []);
 
-  // 서버 완료 + 다 보여줬으면 편집(또는 잠금) 화면으로
+  // 서버 완료 + 다 보여줬으면 검토 화면으로
   useEffect(() => {
-    const cap = isTeaser ? Math.min(available.length, TEASER_BLOCKS) : available.length;
+    const cap = available.length;
     if (doneArtRef.current && cap > 0 && revealed >= cap && !finished) {
       setFinished(true);
       const art = doneArtRef.current;
       doneArtRef.current = null;
       setTimeout(() => onDone(art), 1200);
     }
-  }, [revealed, available.length, isTeaser, finished, onDone]);
+  }, [revealed, available.length, finished, onDone]);
 
   // 네트워크 호출 1회
   useEffect(() => {
@@ -129,13 +124,11 @@ export default function WritingView({
   useEffect(() => {
     function onVisible() {
       if (document.visibilityState !== "visible") return;
-      const cap = isTeaser ? Math.min(availRef.current.length, TEASER_BLOCKS) : availRef.current.length;
-      setRevealed(cap);
+      setRevealed(availRef.current.length);
     }
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isTeaser]);
+  }, []);
 
   function recompute() {
     const t = titleRef.current ? `<h1>${titleRef.current}</h1>` : "";
@@ -172,7 +165,7 @@ export default function WritingView({
         for (const part of parts) {
           const line = part.replace(/^data: /, "").trim();
           if (!line) continue;
-          let msg: { type: string; html?: string; title?: string; article?: Article; error?: string };
+          let msg: { type: string; html?: string; title?: string; article?: Article; error?: string; credits?: number };
           try {
             msg = JSON.parse(line);
           } catch {
@@ -186,6 +179,7 @@ export default function WritingView({
             recompute();
           } else if (msg.type === "done" && msg.article) {
             doneArtRef.current = msg.article;
+            if (typeof msg.credits === "number") onCredits?.(msg.credits); // 잔액 갱신
             done = true;
           } else if (msg.type === "error") {
             setError(msg.error ?? "글 생성에 실패했어요.");

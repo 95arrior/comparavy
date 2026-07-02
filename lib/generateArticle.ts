@@ -110,7 +110,10 @@ export async function generateArticle(
   const res = await client.messages.create({
     model,
     max_tokens: maxTokens,
-    system: buildSystemPrompt(input.vertical),
+    // ★프롬프트 캐싱 — tools→system 순으로 렌더되므로 system 마지막 블록의 breakpoint가 툴 스키마까지 캐싱.
+    //   내용은 동일(품질 영향 0), 입력 ~11.7k tokens가 캐시히트 시 0.1배 과금 → 글당 원가 대폭 절감.
+    //   시스템 프롬프트에 '오늘 날짜'가 있어 캐시는 하루 단위로 자연 갱신됨.
+    system: [{ type: "text" as const, text: buildSystemPrompt(input.vertical), cache_control: { type: "ephemeral" as const } }],
     tools: [SAVE_TOOL],
     tool_choice: { type: "tool", name: "save_article" },
     messages: [{ role: "user", content: buildUserPrompt(input) }],
@@ -194,7 +197,8 @@ export async function streamArticle(
   const stream = client.messages.stream({
     model,
     max_tokens: maxTokens,
-    system: buildSystemPrompt(input.vertical),
+    // ★프롬프트 캐싱 — generateArticle과 동일 프리픽스(캐시 공유). 내용 변경 없음(품질 영향 0).
+    system: [{ type: "text" as const, text: buildSystemPrompt(input.vertical), cache_control: { type: "ephemeral" as const } }],
     tools: [SAVE_TOOL],
     tool_choice: { type: "tool", name: "save_article" },
     messages: [{ role: "user", content: buildUserPrompt(input) }],
@@ -226,10 +230,16 @@ export async function streamArticle(
   }
 
   const final = await stream.finalMessage();
+  // 캐싱 도입 후 input_tokens는 '캐시 제외분'만 나옴 → 비용 모니터링용으로 '과금 등가 토큰'으로 환산해 기록.
+  // (캐시 읽기 0.1배, 캐시 쓰기 1.25배 — usage_log 스키마 변경 없이 원가가 정확히 찍히게)
+  const u = final.usage;
+  const billedEquivalentInput = Math.round(
+    (u?.input_tokens ?? 0) + (u?.cache_read_input_tokens ?? 0) * 0.1 + (u?.cache_creation_input_tokens ?? 0) * 1.25,
+  );
   onUsage?.({
     model,
-    inputTokens: final.usage?.input_tokens ?? 0,
-    outputTokens: final.usage?.output_tokens ?? 0,
+    inputTokens: billedEquivalentInput,
+    outputTokens: u?.output_tokens ?? 0,
   });
   const block = final.content.find((b) => b.type === "tool_use");
   if (!block || block.type !== "tool_use") {
