@@ -300,29 +300,29 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
               </div>
             )}
 
-            {/* ═══ 2막. 당신의 플랜 ═══ */}
+            {/* ═══ 2막. 당신의 플랜 — 하나씩 크게, 순차 등장 (모바일 텍스트 과다 방지) ═══ */}
             {step === "plan" && (
               <div>
                 <p className="at-label">{sub}</p>
                 <h2 className="at-headline mt-1 whitespace-pre-line">{"당신의\n승인 준비 플랜"}</h2>
-                <div className="mt-5 space-y-3">
+                <div className="mt-7 space-y-7">
                   {[
-                    { d: "D-1 ~ D-20", t: "매일 글 1편, 우리가 글감부터 완성까지", s: "경쟁 낮은 키워드로 매일 1편씩. 홈의 링이 차올라요." },
-                    { d: "48시간 안에", t: "첫 글이 네이버 검색에 잡히는지 확인", s: "글 제목 그대로 검색해보면 색인 여부를 알 수 있어요." },
-                    { d: "D-20 이후", t: "애드포스트 승인 신청", s: "심사는 네이버 몫(최대 5영업일) — 반려돼도 쌓다가 재신청하면 돼요." },
+                    { n: "1", t: "매일 1편만 쓰면 돼요", s: "글감부터 완성까지 우리가 준비해요" },
+                    { n: "2", t: "48시간 안에 검색 확인", s: "글 제목 그대로 검색하면 색인을 알 수 있어요" },
+                    { n: "3", t: "20일 뒤, 승인 신청", s: "반려돼도 쌓다가 다시 신청하면 돼요" },
                   ].map((x, i) => (
-                    <div key={i} className={`at-rise at-d${i + 1} flex gap-3.5 rounded-2xl bg-white p-4.5 p-5 ring-1 ring-black/[0.04]`}>
-                      <span className="mt-0.5 shrink-0 rounded-lg bg-[#1D75F7]/10 px-2 py-1 text-[11px] font-bold text-[#1D75F7]">{x.d}</span>
-                      <div className="min-w-0">
-                        <p className="text-[14.5px] font-bold text-[color:var(--at-grey-900)]">{x.t}</p>
-                        <p className="mt-1 text-[12.5px] leading-relaxed text-neutral-500">{x.s}</p>
+                    <div key={x.n} className="at-rise flex items-start gap-4" style={{ animationDelay: `${0.25 + i * 0.5}s` }}>
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1D75F7]/10 text-[16px] font-extrabold text-[#1D75F7]">{x.n}</span>
+                      <div className="min-w-0 pt-0.5">
+                        <p className="text-[19px] font-extrabold leading-snug tracking-tight text-[color:var(--at-grey-900)]">{x.t}</p>
+                        <p className="mt-1 text-[13px] text-neutral-400">{x.s}</p>
                       </div>
                     </div>
                   ))}
-                  <p className="at-rise at-d4 px-1 text-[12px] leading-relaxed text-neutral-400">
-                    네이버는 첫 수익을 만들기 가장 좋은 시작점이에요. 승인·수익은 심사와 노출에 따라 달라질 수 있어요 — 우리는 확률을 높이는 준비를 함께해요.
-                  </p>
                 </div>
+                <p className="at-rise mt-9 px-1 text-[12px] leading-relaxed text-neutral-400" style={{ animationDelay: "1.8s" }}>
+                  승인·수익은 심사와 노출에 따라 달라질 수 있어요. 우리는 확률을 높이는 준비를 함께해요.
+                </p>
               </div>
             )}
 
