@@ -52,48 +52,32 @@ export async function refreshCategoryTrends(category: string): Promise<number> {
   const kstDate = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
   const client = new Anthropic({ apiKey });
 
-  // 웹검색 도구로 열린 웹 트렌드까지 반영 + 뉴스 컨텍스트. haiku로 저비용.
-  const WEB_SEARCH = { type: "web_search_20260209", name: "web_search", max_uses: 3 } as unknown as Anthropic.Tool;
   const prompt = `오늘은 ${kstDate}(한국)이다. '${category}' 분야에서 지금 한국 사람들이 검색할 만한 '트렌디한 정보성 블로그 글감' 16개를 뽑아라.
 
-[아래 오늘 뉴스 참고 + web_search로 실시간 트렌드·인기 검색 주제까지 조사]
-${newsList || "(뉴스 없음 — web_search로 조사)"}
+[아래는 오늘 수집한 뉴스 헤드라인이다. 이걸 근거로 '지금 뜨는' 글감을 만들어라.]
+${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들어라)"}
 
 규칙:
-- 그날 그시간의 신선함이 최우선. 오래된·뻔한 주제(예: 은행 금리 비교만 반복)는 피하고 분야 전체에 걸쳐 다양하게 흩어라.
+- 그날의 신선함이 최우선. 오래된·뻔한 주제(예: 은행 금리 비교만 반복)는 피하고 분야 전체에 걸쳐 다양하게 흩어라.
 - 검색하는 사람이 실익을 얻는 정보성만. 연예인·유명인·사건사고·정치공방·부고·루머·자극적 가십은 절대 제외.
 - keyword=실제 검색어(2~5어절), title=클릭할 블로그 제목.
 - 16개가 서로 다른 소주제여야 한다(중복·유사 금지).
-- 반드시 마지막에 JSON 배열로만 답: [{"keyword":"...","title":"..."}, ...]`;
+- 반드시 JSON 배열로만 답(다른 말 금지): [{"keyword":"...","title":"..."}]`;
 
+  let text = "";
   try {
-    let res = await client.messages.create({
+    const res = await client.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 2000,
-      tools: [WEB_SEARCH],
       messages: [{ role: "user", content: prompt }],
     });
-    // 웹검색 후 이어서 최종 JSON을 받기 위해 tool 결과가 있으면 한 번 더(대화 지속). SDK가 자동 처리 안 하므로 텍스트만 파싱.
     void logUsage({ model: "claude-haiku-4-5", kind: "trend_refresh", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
+    text = res.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join("\n");
+  } catch {
+    return 0;
+  }
 
-    const collectText = (m: Anthropic.Message) => m.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join("\n");
-    let text = collectText(res);
-
-    // web_search 사용 후 stop_reason이 tool_use면 결과를 붙여 한 번 더 요청해 JSON을 받는다
-    if (res.stop_reason === "tool_use") {
-      res = await client.messages.create({
-        model: "claude-haiku-4-5",
-        max_tokens: 2000,
-        messages: [
-          { role: "user", content: prompt },
-          { role: "assistant", content: res.content },
-          { role: "user", content: "이제 web_search 없이, 위 조사 결과를 바탕으로 JSON 배열만 출력해라." },
-        ],
-      });
-      void logUsage({ model: "claude-haiku-4-5", kind: "trend_refresh", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
-      text = collectText(res);
-    }
-
+  try {
     const m = /\[[\s\S]*\]/.exec(text);
     if (!m) return 0;
     const parsed = JSON.parse(m[0]) as { keyword?: string; title?: string }[];

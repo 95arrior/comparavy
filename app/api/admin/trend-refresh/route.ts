@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { isAdminEmail } from "@/lib/adminStats";
 import { refreshCategoryTrends, getTrendTopics } from "@/lib/trendTopics";
+import { gatherHeadlines } from "@/lib/trendSources";
 
 export const maxDuration = 120;
 
@@ -20,9 +21,10 @@ export async function GET(request: Request) {
   }
   if (!category) return NextResponse.json({ error: "카테고리 없음(온보딩 먼저)" }, { status: 400 });
 
+  const heads = await gatherHeadlines(category).catch(() => []);
   const count = await refreshCategoryTrends(category);
   const sample = (await getTrendTopics(category)).slice(0, 20).map((t) => t.title);
-  return NextResponse.json({ ok: true, category, generated: count, sample });
+  return NextResponse.json({ ok: true, category, headlines: heads.length, headlineSample: heads.slice(0, 5).map((h) => h.title), generated: count, sample });
 }
 
 // redeploy: trend-refresh route
