@@ -614,7 +614,7 @@ export default function DashboardClient(props: DashboardProps) {
         {!page && !selected && !genParams && tab === "admin" && props.isAdmin && (
           <main className="ateflo-page-in mx-auto max-w-5xl px-6 py-10">
             <button onClick={() => goTab("account")} className="mb-4 -ml-1 flex items-center gap-1 text-sm text-neutral-400 transition hover:text-neutral-700"><span className="text-base leading-none">←</span> 내정보</button>
-            <AdminDashboard stats={props.adminStats} />
+            <AdminDashboard stats={props.adminStats ?? null} />
           </main>
         )}
 

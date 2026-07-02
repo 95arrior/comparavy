@@ -1,113 +1,56 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import type { AdminStats } from "@/lib/adminStats";
-import Segmented from "./Segmented";
-import { slotHours, clampGap } from "@/lib/socialSchedule";
+
+// ★관리자 대시보드 v2 — 네이버·크레딧 시대에 '관리자에게만 필요한 것'으로 재구성.
+// 구성: 오늘 요약 → 크레딧 경제(판매·소모·부채·비용) → 여정 퍼널 → 7일 추이 → 도구(지급·리셋) → 최근 가입/글.
+// 구버전의 WP 지표·SNS 발행 도구·플랜(MRR) 지표는 폐기.
 
 const BRAND = "#1D75F7";
-const STATUS_KO: Record<string, string> = { draft: "초안", published: "발행됨", future: "예약됨" };
-const KIND_KO: Record<string, string> = {
-  generate: "글 생성",
-  tag_suggest: "태그 추천",
-  keyword_ideas: "글감 추천",
-  keyword_guard: "키워드 검사",
-};
+const PACK_LABEL: Record<string, string> = { trial: "트라이얼", standard: "스탠다드", approval: "승인팩", pro: "프로", etc: "기타" };
 
 function won(n: number): string {
-  if (n >= 1e8) return `₩${(n / 1e8).toLocaleString("ko-KR", { maximumFractionDigits: 1 })}억`;
-  if (n >= 1e7) return `₩${Math.round(n / 1e4).toLocaleString("ko-KR")}만`;
-  return `₩${Math.round(n).toLocaleString("ko-KR")}`;
+  return `${Math.round(n).toLocaleString("ko-KR")}원`;
 }
-
 function fmtDate(iso: string): string {
   if (!iso) return "";
-  try {
-    return new Date(iso).toLocaleString("ko-KR", { timeZone: "Asia/Seoul", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
-  } catch {
-    return "";
-  }
+  return new Date(iso).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
-function Section({ title, desc, children }: { title: string; desc?: string; children: React.ReactNode }) {
+function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
-    <section className="mt-8 first:mt-6">
-      <h3 className="text-sm font-semibold tracking-tight text-neutral-900">{title}</h3>
-      {desc && <p className="mt-0.5 text-xs text-neutral-400">{desc}</p>}
-      <div className="mt-3">{children}</div>
+    <section className="mt-6">
+      <div className="flex items-baseline justify-between px-1">
+        <h2 className="text-[13px] font-bold text-neutral-400">{title}</h2>
+        {hint && <span className="text-[11px] text-neutral-300">{hint}</span>}
+      </div>
+      <div className="mt-2">{children}</div>
     </section>
   );
 }
 
-function Stat({ label, value, accent = false, hint }: { label: string; value: string; accent?: boolean; hint?: string }) {
+function Stat({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent?: boolean }) {
   return (
-    <div className={`min-w-0 rounded-2xl border p-4 sm:p-5 ${accent ? "border-[#1D75F7]/30 bg-[#1D75F7]/5" : "border-neutral-200 bg-white"}`}>
-      <p className="truncate text-xs font-medium text-neutral-400">{label}</p>
-      <p className="mt-1 truncate text-2xl font-semibold tracking-tight sm:text-[28px]" style={accent ? { color: BRAND } : undefined}>{value}</p>
-      {hint && <p className="mt-1 truncate text-[11px] text-neutral-400">{hint}</p>}
+    <div className="rounded-2xl at-glass p-4">
+      <p className="truncate text-[11.5px] font-semibold text-neutral-400">{label}</p>
+      <p className={`mt-1 truncate text-[20px] font-extrabold tracking-tight ${accent ? "text-[#1D75F7]" : "text-neutral-900"}`}>{value}</p>
+      {sub && <p className="mt-0.5 truncate text-[11px] text-neutral-400">{sub}</p>}
     </div>
   );
 }
 
-function Lightbox({ urls, index, onIndex, onClose }: { urls: string[]; index: number; onIndex: (i: number) => void; onClose: () => void }) {
-  useEffect(() => {
-    const h = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-      else if (e.key === "ArrowRight") onIndex(Math.min(urls.length - 1, index + 1));
-      else if (e.key === "ArrowLeft") onIndex(Math.max(0, index - 1));
-    };
-    window.addEventListener("keydown", h);
-    return () => window.removeEventListener("keydown", h);
-  }, [index, urls.length, onIndex, onClose]);
-
-  const go = (e: React.MouseEvent, i: number) => { e.stopPropagation(); onIndex(i); };
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={onClose}>
-      <button onClick={onClose} className="absolute right-5 top-5 text-2xl text-white/80 transition hover:text-white">✕</button>
-      {index > 0 && (
-        <button onClick={(e) => go(e, index - 1)} className="absolute left-3 sm:left-8 flex h-12 w-12 items-center justify-center rounded-full bg-white/15 text-2xl text-white transition hover:bg-white/30">‹</button>
-      )}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={urls[index]} alt={`슬라이드 ${index + 1}`} onClick={(e) => e.stopPropagation()} className="max-h-[86vh] max-w-[92vw] rounded-2xl shadow-2xl" />
-      {index < urls.length - 1 && (
-        <button onClick={(e) => go(e, index + 1)} className="absolute right-3 sm:right-8 flex h-12 w-12 items-center justify-center rounded-full bg-white/15 text-2xl text-white transition hover:bg-white/30">›</button>
-      )}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-sm font-medium text-white">{index + 1} / {urls.length}</div>
-    </div>
-  );
-}
-
-function StatButton({ label, value, hint, accent = false, active = false, onClick }: { label: string; value: string; hint?: string; accent?: boolean; active?: boolean; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`min-w-0 rounded-2xl border p-4 text-left transition hover:border-neutral-400 sm:p-5 ${active ? "border-neutral-900 ring-1 ring-neutral-900" : accent ? "border-[#1D75F7]/30 bg-[#1D75F7]/5" : "border-neutral-200 bg-white"}`}
-    >
-      <p className="truncate text-xs font-medium text-neutral-400">{label}</p>
-      <p className="mt-1 truncate text-2xl font-semibold tracking-tight sm:text-[28px]" style={accent && !active ? { color: BRAND } : undefined}>{value}</p>
-      <p className="mt-1 truncate text-[11px] text-neutral-400">{hint ?? (active ? "닫기 ▲" : "눌러서 목록 ▼")}</p>
-    </button>
-  );
-}
-
-function MiniBars({ title, data, color, suffix = "" }: { title: string; data: { date: string; count: number }[]; color: string; suffix?: string }) {
+function MiniBars({ title, data, color }: { title: string; data: { date: string; count: number }[]; color: string }) {
   const max = Math.max(1, ...data.map((d) => d.count));
-  const total = data.reduce((s, d) => s + d.count, 0);
   return (
-    <div className="rounded-2xl at-glass  p-4 sm:p-5">
-      <div className="flex items-baseline justify-between">
-        <p className="text-sm font-medium text-neutral-900">{title}</p>
-        <p className="text-xs text-neutral-400">7일 합 {total.toLocaleString()}{suffix}</p>
-      </div>
-      <div className="mt-4 flex items-end gap-1 sm:gap-1.5">
-        {data.map((d, i) => (
-          <div key={i} className="flex flex-1 flex-col items-center gap-1">
-            <span className="text-[10px] text-neutral-400">{d.count || ""}</span>
-            <div className="flex h-20 w-full items-end sm:h-24">
-              <div className="w-full rounded-t-md transition-all" style={{ height: `${(d.count / max) * 100}%`, minHeight: d.count > 0 ? 4 : 0, background: color }} />
-            </div>
-            <span className="text-[9px] text-neutral-400 sm:text-[10px]">{d.date}</span>
+    <div className="rounded-2xl at-glass p-4">
+      <p className="text-[11.5px] font-semibold text-neutral-400">{title}</p>
+      <div className="mt-3 flex h-16 items-end gap-1.5">
+        {data.map((d) => (
+          <div key={d.date} className="flex flex-1 flex-col items-center gap-1">
+            <span className="text-[10px] font-bold text-neutral-500">{d.count > 0 ? d.count : ""}</span>
+            <div className="w-full rounded-t" style={{ height: `${Math.max(3, (d.count / max) * 44)}px`, background: color, opacity: d.count > 0 ? 1 : 0.15 }} />
+            <span className="text-[9px] text-neutral-300">{d.date.slice(5).replace("-", "/")}</span>
           </div>
         ))}
       </div>
@@ -115,634 +58,176 @@ function MiniBars({ title, data, color, suffix = "" }: { title: string; data: { 
   );
 }
 
-function pct(part: number | null, whole: number | null): number {
-  if (!whole || whole <= 0 || part === null) return 0;
-  return Math.round((part / whole) * 100);
-}
-
+// 여정 퍼널 — 가입 → 온보딩 → 첫 글 → 발행 → 결제
 function Funnel({ stats }: { stats: AdminStats }) {
   const steps = [
-    { key: "join", label: "가입", value: stats.usersTotal ?? 0, color: BRAND },
-    { key: "write", label: "글 생성", value: stats.usersWithArticles ?? 0, color: "#5aa0ff" },
-    { key: "wp", label: "워드프레스 연결", value: stats.wpConnections ?? 0, color: "#2fd07a" },
-    { key: "pub", label: "발행", value: stats.usersWithPublished ?? 0, color: "#21b866" },
-    { key: "pro", label: "프로 전환", value: stats.proUsers ?? 0, color: "#b06bff" },
+    { label: "가입", value: stats.usersTotal ?? 0 },
+    { label: "온보딩 완료", value: stats.usersWithProfile ?? 0 },
+    { label: "첫 글", value: stats.usersWithArticles ?? 0 },
+    { label: "발행", value: stats.usersWithPublished ?? 0 },
+    { label: "결제", value: stats.creditEconomy?.buyers ?? 0 },
   ];
-  const base = steps[0].value || 1;
-  // 가장 큰 이탈 구간 찾기 (개선 포인트)
-  let worst = -1;
-  let worstDrop = -1;
-  for (let i = 1; i < steps.length; i++) {
-    const prev = steps[i - 1].value;
-    const drop = prev > 0 ? (prev - steps[i].value) / prev : 0;
-    if (prev > 0 && drop > worstDrop) {
-      worstDrop = drop;
-      worst = i;
-    }
-  }
+  const max = Math.max(1, steps[0].value);
   return (
-    <div className="rounded-2xl at-glass  p-4 sm:p-5">
-      <div className="space-y-3">
+    <div className="rounded-2xl at-glass p-5">
+      <div className="space-y-2.5">
         {steps.map((s, i) => {
-          const widthPct = Math.max(2, Math.round((s.value / base) * 100));
-          const fromPrev = i > 0 && steps[i - 1].value > 0 ? Math.round((s.value / steps[i - 1].value) * 100) : null;
-          const isWorst = i === worst && worstDrop > 0;
+          const prev = i > 0 ? steps[i - 1].value : s.value;
+          const rate = prev > 0 ? Math.round((s.value / prev) * 100) : 0;
           return (
-            <div key={s.key}>
-              <div className="flex items-center justify-between gap-3 text-sm">
-                <span className="font-medium text-neutral-700">{s.label}</span>
-                <span className="shrink-0 text-neutral-500">
-                  {s.value.toLocaleString()}명
-                  {fromPrev !== null && <span className={`ml-2 text-xs ${isWorst ? "font-semibold text-red-500" : "text-neutral-400"}`}>이전 대비 {fromPrev}%</span>}
-                </span>
+            <div key={s.label} className="flex items-center gap-3">
+              <span className="w-20 shrink-0 text-[12px] font-semibold text-neutral-600">{s.label}</span>
+              <div className="h-5 min-w-0 flex-1 overflow-hidden rounded-md bg-neutral-100">
+                <div className="flex h-full items-center rounded-md px-2" style={{ width: `${Math.max(4, (s.value / max) * 100)}%`, background: BRAND, opacity: 1 - i * 0.14 }}>
+                  <span className="text-[11px] font-bold text-white">{s.value}</span>
+                </div>
               </div>
-              <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-neutral-100">
-                <div className="h-full rounded-full transition-all" style={{ width: `${widthPct}%`, background: s.color }} />
-              </div>
+              {i > 0 && <span className="w-10 shrink-0 text-right text-[11px] font-medium text-neutral-400">{rate}%</span>}
             </div>
           );
         })}
       </div>
-      {worst > 0 && worstDrop > 0.05 && (
-        <div className="mt-4 rounded-xl bg-amber-50 px-3.5 py-2.5 text-xs leading-relaxed text-amber-700">
-          ⚠ 가장 큰 이탈: <b>{steps[worst - 1].label} → {steps[worst].label}</b> ({Math.round(worstDrop * 100)}% 이탈).
-          이 구간을 개선하면 효과가 가장 커요.
-        </div>
-      )}
     </div>
   );
 }
 
-function SelectField({ label, value, onChange, options, disabled }: { label: string; value: number; onChange: (v: number) => void; options: { value: number; label: string }[]; disabled?: boolean }) {
-  return (
-    <label className="block rounded-xl border border-neutral-200 px-3 py-2 transition focus-within:border-neutral-400">
-      <span className="mb-0.5 block text-xs text-neutral-400">{label}</span>
-      <div className="relative">
-        <select
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value))}
-          disabled={disabled}
-          className="w-full cursor-pointer appearance-none bg-transparent pr-6 text-sm font-semibold text-neutral-900 outline-none disabled:opacity-50"
-        >
-          {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-        <span className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-[10px] text-neutral-400">▼</span>
-      </div>
-    </label>
-  );
-}
-
-function LimitGuide() {
-  const [open, setOpen] = useState(false);
-  const rows = [
-    ["~100명", "약 8.5만원", "$500 유지", "지금 그대로"],
-    ["~1,000명", "약 85만원", "$1,500~2,500", "유료 ~100명 · MRR ~300만원"],
-    ["~10,000명", "약 855만원", "$10,000~15,000", "유료 ~1,000명 · MRR ~3천만원"],
-  ];
-  return (
-    <div className="mt-3">
-      <button
-        onClick={() => setOpen(!open)}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-semibold text-neutral-700 transition hover:bg-neutral-50"
-      >
-        💡 한도 상향 가이드 {open ? "▲" : "▼"}
-      </button>
-      {open && (
-        <div className="mt-3 overflow-x-auto rounded-xl border border-neutral-200">
-          <table className="w-full min-w-[480px] text-sm">
-            <thead className="bg-neutral-50 text-neutral-500">
-              <tr>
-                {["사용자", "예상 월 비용", "추천 한도", "올리는 시점"].map((h) => (
-                  <th key={h} className="px-3 py-2 text-left font-medium">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-neutral-100">
-              {rows.map((r) => (
-                <tr key={r[0]}>
-                  <td className="px-3 py-2 font-semibold text-neutral-800">{r[0]}</td>
-                  <td className="px-3 py-2 text-neutral-600">{r[1]}</td>
-                  <td className="px-3 py-2 text-neutral-600">{r[2]}</td>
-                  <td className="px-3 py-2 text-neutral-500">{r[3]}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <p className="px-3 py-2 text-xs text-neutral-400">
-            기준: 글 1편 ≈ 150원, 유료 전환 ~10%. <b className="text-neutral-500">예산 알림이 70~80% 뜨면 다음 단계로</b> 올리세요. 무료 사용자는 매출 0이라 순비용이니 폭증 시 주의(무료 3편 캡이 방패).
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-const BILLING_URL = "https://console.anthropic.com/settings/billing";
-
-function BudgetWidget({ stats }: { stats: AdminStats }) {
-  const month = stats.monthlyCostKrw ?? 0;
-  const budget = stats.budgetKrw;
-  const pct = budget > 0 ? Math.min(100, Math.round((month / budget) * 100)) : 0;
-  const remain = Math.max(0, budget - month);
-  const avg = Math.max(1, stats.avgArticleCostKrw);
-  const articlesLeft = Math.floor(remain / avg);
-  const freePeople = Math.floor(articlesLeft / 3); // 무료 3편/명
-  const proPeople = Math.floor(articlesLeft / 30); // 프로 30편/명
-  const warn = pct >= 80;
-  const barColor = pct >= 90 ? "bg-red-500" : pct >= 80 ? "bg-amber-500" : "bg-neutral-900";
-
-  return (
-    <div className="rounded-2xl at-glass  p-5">
-      <div className="flex items-end justify-between">
-        <div>
-          <p className="text-sm text-neutral-500">이번 달 사용 (추정)</p>
-          <p className="mt-0.5 text-2xl font-bold tracking-tight">{won(month)} <span className="text-sm font-medium text-neutral-400">/ {won(budget)} 한도</span></p>
-        </div>
-        <a href={BILLING_URL} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-semibold text-neutral-700 transition hover:bg-neutral-50">콘솔에서 확인 ↗</a>
-      </div>
-      <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-neutral-100">
-        <div className={`h-full rounded-full ${barColor}`} style={{ width: `${Math.max(2, pct)}%` }} />
-      </div>
-      <p className="mt-2 text-xs text-neutral-400">{pct}% 사용 · 남은 예산 {won(remain)}</p>
-
-      <div className="mt-4 rounded-xl bg-neutral-50 px-4 py-3 text-sm text-neutral-700">
-        남은 예산으로 글 <b className="text-neutral-900">약 {articlesLeft.toLocaleString()}편</b> 더 생성 가능
-        <span className="text-neutral-400"> (≈ 무료 {freePeople.toLocaleString()}명 · 프로 {proPeople.toLocaleString()}명분, 글 1편 평균 {won(avg)} 기준)</span>
-      </div>
-
-      {warn ? (
-        <p className="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
-          <b>예산의 {pct}%를 썼어요.</b> <a href={BILLING_URL} target="_blank" rel="noopener noreferrer" className="underline">Anthropic 콘솔</a>에서 사용량을 확인하고, 필요하면 <b>월 지출 한도를 올리거나 크레딧을 충전</b>하세요. (자동 리로드가 켜져 있으면 잔액은 자동 충전되지만, 월 한도에 닿으면 멈춰요)
-        </p>
-      ) : (
-        <p className="mt-3 text-xs text-neutral-400">
-          이 화면은 ‘쓴 금액 vs 월 한도’예요 — <b className="text-neutral-500">크레딧을 충전해도 따로 알릴 필요 없이</b> 새로고침하면 자동 갱신되고, 매달 초 0으로 리셋돼요. 자동 리로드가 켜져 있어 잔액은 자동 충전돼요. 단, 콘솔에서 <b className="text-neutral-500">월 한도 자체를 바꾸면</b> 설정값(AI_MONTHLY_BUDGET_USD)만 맞춰주세요. 위 금액은 우리 앱 기록 기준 추정치, 정확한 청구는 콘솔이 기준이에요.
-        </p>
-      )}
-    </div>
-  );
-}
-
-function CostBreakdown({ stats }: { stats: AdminStats }) {
-  if (stats.costTotalKrw === null) {
-    return (
-      <div className="rounded-2xl border border-dashed border-neutral-300 bg-white p-5 text-sm text-neutral-500">
-        아직 토큰 집계 전이에요. (usage_log 테이블 생성 후 글을 생성하면 실제 비용이 쌓여요)
-      </div>
-    );
-  }
-  const max = Math.max(1, ...stats.costByKind.map((k) => k.krw));
-  return (
-    <div className="grid gap-3 lg:grid-cols-3">
-      <div className="grid grid-cols-2 gap-3 lg:col-span-1 lg:grid-cols-1">
-        <Stat label="누적 API 비용" value={won(stats.costTotalKrw)} accent />
-        <Stat label="오늘 비용" value={won(stats.costTodayKrw ?? 0)} />
-      </div>
-      <div className="rounded-2xl at-glass  p-4 sm:p-5 lg:col-span-2">
-        <p className="text-sm font-medium text-neutral-900">종류별 비용</p>
-        <div className="mt-3 space-y-2.5">
-          {stats.costByKind.length === 0 ? (
-            <p className="text-sm text-neutral-400">아직 없어요</p>
-          ) : (
-            stats.costByKind.map((k) => (
-              <div key={k.kind}>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-neutral-600">{KIND_KO[k.kind] ?? k.kind}</span>
-                  <span className="text-neutral-500">{won(k.krw)}</span>
-                </div>
-                <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-neutral-100">
-                  <div className="h-full rounded-xl bg-neutral-900" style={{ width: `${Math.max(3, (k.krw / max) * 100)}%` }} />
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function WaitlistView({ stats }: { stats: AdminStats }) {
-  const [copied, setCopied] = useState(false);
-  const list = stats.waitlist ?? [];
-  function copyAll() {
-    const text = list.map((w) => w.email).join("\n");
-    navigator.clipboard?.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
-    });
-  }
-  return (
-    <Section title="사전 등록 대기자" desc="출시 전 사전 등록한 이메일 (최신순). 오픈하면 이 목록으로 안내하면 돼요.">
-      <div className="rounded-2xl at-glass  p-4 sm:p-5">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-2xl font-bold tracking-tight">{(stats.waitlistCount ?? list.length).toLocaleString()}<span className="ml-1 text-sm font-medium text-neutral-400">명</span></p>
-          {list.length > 0 && (
-            <button onClick={copyAll} className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-600 transition active:scale-95 hover:border-neutral-900">
-              {copied ? "복사됨 ✓" : "이메일 전체 복사"}
-            </button>
-          )}
-        </div>
-        <ul className="mt-4 divide-y divide-neutral-100">
-          {list.length === 0 ? (
-            <li className="py-3 text-sm text-neutral-400">아직 등록자가 없어요</li>
-          ) : (
-            list.map((w, i) => (
-              <li key={i} className="flex items-center justify-between gap-3 py-2.5 text-sm">
-                <span className="min-w-0 flex items-center gap-2">
-                  <span className="w-6 shrink-0 text-right text-xs text-neutral-300">{i + 1}</span>
-                  <span className="min-w-0 truncate text-neutral-700">{w.email}</span>
-                  {w.source && <span className="shrink-0 rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] text-neutral-400">{w.source}</span>}
-                </span>
-                <span className="shrink-0 text-xs text-neutral-400">{fmtDate(w.created_at)}</span>
-              </li>
-            ))
-          )}
-        </ul>
-      </div>
-    </Section>
-  );
-}
-
-
-function SocialView({ stats }: { stats: AdminStats }) {
-  const router = useRouter();
-  const s = stats.social;
+// 도구 — 크레딧 지급 + 내 계정 테스트 리셋
+function Tools() {
+  const [email, setEmail] = useState("");
+  const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
-  const [publishingId, setPublishingId] = useState<string | null>(null); // 발행 진행 중인 카드(인스타 인코딩 대기로 1~5분 걸림 → 멈춘 것처럼 보이지 않게)
-
-  // 인스타 발행 후 스레드 교차발행 결과를 한 줄로 — 실패가 묻히지 않게 토스트에 그대로 노출.
-  type ThreadsResult = { ok?: boolean; error?: string } | undefined;
-  function threadsNote(t: ThreadsResult): string {
-    if (!t) return "발행했어요 ✓";
-    if (t.ok) return "발행했어요 ✓ (스레드도 올라감)";
-    if (t.error === "스레드 미연결/꺼짐") return "발행했어요 ✓ · 스레드 교차발행은 꺼져 있어요";
-    return `발행했어요 ✓ · ⚠️ 스레드 실패: ${t.error ?? ""}`;
-  }
-  const threadsFailed = (t: ThreadsResult) => !!t && !t.ok && t.error !== "스레드 미연결/꺼짐";
   const [msg, setMsg] = useState<string | null>(null);
-  const [openList, setOpenList] = useState<null | "queued" | "published" | "failed">(null);
-  const [viewer, setViewer] = useState<{ urls: string[]; i: number } | null>(null);
-  // 낙관적 로컬 상태 — 버튼 누르는 즉시 화면 반영(무거운 전체 새로고침을 기다리지 않음)
-  type SP = NonNullable<AdminStats["social"]>["posts"][number];
-  const [posts, setPosts] = useState<SP[]>(s?.posts ?? []);
-  // 인스타 토큰 재연결 폼(만료/차단 시 재배포 없이 새 토큰 교체)
-  const [showConnect, setShowConnect] = useState(false);
-  const [igToken, setIgToken] = useState("");
-  const [igUserId, setIgUserId] = useState("");
-  const [cfg, setCfg] = useState({ autoEnabled: !!s?.autoEnabled, perDay: s?.postsPerDay ?? 2, gap: clampGap(s?.intervalHours ?? 12), postingHour: s?.postingHour ?? 9, threadsEnabled: !!s?.threadsEnabled });
-  useEffect(() => {
-    if (!s) return;
-    setPosts(s.posts);
-    setCfg({ autoEnabled: !!s.autoEnabled, perDay: s.postsPerDay ?? 2, gap: clampGap(s.intervalHours ?? 12), postingHour: s.postingHour ?? 9, threadsEnabled: !!s.threadsEnabled });
-  }, [s]);
 
-  async function send(payload: Record<string, unknown>): Promise<boolean> {
+  async function grant() {
+    if (busy) return;
+    setBusy(true); setMsg(null);
     try {
-      const r = await fetch("/api/social", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-      if (!r.ok) { const d = await r.json().catch(() => ({})); setMsg(d.error ?? "실패했어요"); return false; }
-      router.refresh(); // 백그라운드 동기화 (UI는 이미 낙관적으로 반영됨)
-      return true;
-    } catch { setMsg("오류가 났어요"); return false; }
+      const res = await fetch("/api/admin/grant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, credits: Number(amount) }),
+      });
+      const data = await res.json();
+      setMsg(res.ok ? `✅ ${data.email}에게 ${data.granted}크레딧 지급 (잔액 ${data.balance})` : `❌ ${data.error}`);
+      if (res.ok) { setEmail(""); setAmount(""); }
+    } catch { setMsg("❌ 네트워크 오류"); }
+    finally { setBusy(false); }
   }
-  async function changeCfg(patch: Partial<typeof cfg>, payload: Record<string, unknown>, okMsg: string) {
-    const prev = cfg; setCfg({ ...cfg, ...patch }); setMsg(okMsg); setBusy(true);
-    const ok = await send(payload); if (!ok) setCfg(prev); setBusy(false);
-  }
-  async function removePost(p: SP) {
-    const confirmMsg = p.status === "published"
-      ? "이 발행 완료 기록을 삭제할까요?\n인스타 게시물은 그대로 남고, 여기 기록만 사라져요."
-      : "이 발행 대기 카드를 삭제할까요?";
-    if (!window.confirm(confirmMsg)) return;
-    const prev = posts; setPosts(posts.filter((x) => x.id !== p.id)); setMsg(p.status === "published" ? "기록 삭제됨" : "삭제됨"); setBusy(true);
-    const ok = await send({ action: "delete", id: p.id }); if (!ok) setPosts(prev); setBusy(false);
-  }
-  async function publishPost(p: SP) {
-    // 인스타 발행은 인코딩 대기로 1~5분 걸리는 동기 작업 → '발행 중' 상태를 명확히 보여줘 멈춘 것처럼 보이지 않게.
-    setPublishingId(p.id);
-    setMsg("발행 중이에요… 1~2분 걸릴 수 있어요 (창을 닫지 마세요)");
-    setBusy(true);
+
+  async function resetMine() {
+    if (busy || !confirm("내 계정의 글·온보딩을 전부 지우고 처음 상태로 되돌릴까요? (크레딧은 보존)")) return;
+    setBusy(true); setMsg(null);
     try {
-      const r = await fetch("/api/social", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "publishNow", id: p.id }) });
-      const d = await r.json().catch(() => ({}));
-      if (r.ok) {
-        setPosts((cur) => cur.map((x) => (x.id === p.id ? { ...x, status: "published", published_at: new Date().toISOString(), error: null } : x)));
-        setMsg(threadsNote(d.threads)); // 스레드 교차발행 성공/실패까지 보여줌
-        router.refresh();
-      } else {
-        setMsg(d.error ?? "발행 실패");
-      }
-    } catch {
-      setMsg("오류가 났어요");
-    }
-    setPublishingId(null);
-    setBusy(false);
-  }
-  // 밀린 대기 카드를 한 번에 — 순차로 발행하며 진행률 표시(개당 인코딩 대기로 1~2분).
-  // 인스타 동시 발행은 충돌·레이트리밋 위험이 있어 일부러 하나씩 끝내고 다음으로 넘어간다.
-  async function publishAllQueued() {
-    const targets = posts.filter((x) => x.status === "queued");
-    if (targets.length === 0) return;
-    if (!window.confirm(`대기 중 ${targets.length}개를 모두 발행할까요?\n인스타·스레드에 실제로 올라가요. 하나씩 순서대로(개당 1~2분) 발행되니 창을 닫지 마세요.`)) return;
-    setBusy(true);
-    let done = 0;
-    let fail = 0;
-    let threadsFail = 0;
-    for (let i = 0; i < targets.length; i++) {
-      const p = targets[i];
-      setPublishingId(p.id);
-      setMsg(`발행 중… ${i + 1}/${targets.length} (개당 1~2분, 창 닫지 마세요)`);
-      try {
-        const r = await fetch("/api/social", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "publishNow", id: p.id }) });
-        const d = await r.json().catch(() => ({}));
-        if (r.ok) {
-          done++;
-          if (threadsFailed(d.threads)) threadsFail++;
-          setPosts((cur) => cur.map((x) => (x.id === p.id ? { ...x, status: "published", published_at: new Date().toISOString(), error: null } : x)));
-        } else {
-          fail++;
-          setPosts((cur) => cur.map((x) => (x.id === p.id ? { ...x, error: d.error ?? "실패" } : x)));
-        }
-      } catch {
-        fail++;
-      }
-    }
-    setPublishingId(null);
-    setBusy(false);
-    const base = fail === 0 ? `${done}개 모두 발행했어요 ✓` : `${done}개 발행 · ${fail}개 실패`;
-    setMsg(threadsFail > 0 ? `${base} · ⚠️ 스레드 ${threadsFail}개 실패` : base);
-    router.refresh();
-  }
-  async function connectIg() {
-    if (!igToken.trim()) { setMsg("토큰을 입력해 주세요"); return; }
-    setBusy(true); setMsg("인스타 토큰 확인 중…");
-    try {
-      const r = await fetch("/api/social", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "connectIg", token: igToken.trim(), igUserId: igUserId.trim() || undefined }) });
-      const d = await r.json().catch(() => ({}));
-      if (!r.ok) { setMsg(d.error ?? "연결 실패"); setBusy(false); return; }
-      setMsg(`연결됐어요${d.username ? ` (@${d.username})` : ""}`);
-      setIgToken(""); setShowConnect(false);
-      router.refresh();
-    } catch { setMsg("오류가 났어요"); }
-    setBusy(false);
+      const res = await fetch("/api/admin/reset-test");
+      const data = await res.json();
+      setMsg(res.ok ? `✅ 리셋 완료 — 글 ${data.deleted.articles}건, 프로필 ${data.deleted.blog_profiles}건 삭제 (크레딧 ${data.credits_preserved} 보존). 새로고침하세요.` : `❌ ${data.error}`);
+    } catch { setMsg("❌ 네트워크 오류"); }
+    finally { setBusy(false); }
   }
 
-  if (!s) return <Section title="SNS 발행"><p className="text-sm text-neutral-400">설정을 불러오지 못했어요. (마이그레이션 0017 실행 필요)</p></Section>;
-
-  const hourLabel = (h: number) => (h === 0 ? "오전 12시" : h < 12 ? `오전 ${h}시` : h === 12 ? "오후 12시" : `오후 ${h - 12}시`);
-  const { perDay, gap, postingHour, autoEnabled, threadsEnabled } = cfg;
-  const scheduleText = slotHours(postingHour, perDay, gap).map(hourLabel).join(" · ");
-
-  const queued = posts.filter((p) => p.status === "queued");
-  const published = posts.filter((p) => p.status === "published");
-  const failed = posts.filter((p) => p.status === "failed");
-  const daysLeft = perDay > 0 ? Math.floor(queued.length / perDay) : 0;
-  const lowStock = autoEnabled && queued.length < perDay * 3; // 3일치 미만이면 경고
-  const tokenDays = s.tokenExpiresAt ? Math.floor((new Date(s.tokenExpiresAt).getTime() - Date.now()) / 86400000) : null;
-  const tokenWarn = tokenDays !== null && tokenDays < 14; // 자동 갱신이 도는데도 14일 미만이면 점검 필요
-  const listFor = openList === "queued" ? queued : openList === "published" ? published : openList === "failed" ? failed : [];
+  const inputCls = "min-w-0 rounded-xl bg-neutral-100 px-3.5 py-2.5 text-[13px] outline-none transition placeholder:text-neutral-400 focus:bg-white focus:ring-2 focus:ring-[#1D75F7]/30";
 
   return (
-    <>
-      {/* 자동 발행 설정 */}
-      <Section title="자동 발행" desc="대기 중인 카드를 정한 시각·간격으로 인스타에 자동 게시해요.">
-        <div className="rounded-2xl at-glass ">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-100 p-5">
-            <div className="flex items-center gap-2.5">
-              <span className={`inline-block h-2.5 w-2.5 rounded-full ${autoEnabled ? "bg-emerald-500" : "bg-neutral-300"}`} />
-              <span className="text-sm font-semibold">{autoEnabled ? "자동 발행 켜짐" : "자동 발행 꺼짐"}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <a href="https://instagram.com/ateflo.official" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-lg border border-neutral-200 px-3 py-2 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50">인스타그램 ↗</a>
-              <button onClick={() => changeCfg({ autoEnabled: !autoEnabled }, { action: "settings", autoEnabled: !autoEnabled }, autoEnabled ? "중지했어요" : "시작했어요")} disabled={busy} className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition active:scale-95 disabled:opacity-50 ${autoEnabled ? "bg-red-600 hover:bg-red-700" : "bg-[#1D75F7] hover:opacity-90"}`}>{autoEnabled ? "종료" : "시작"}</button>
-            </div>
-          </div>
-          <div className="grid gap-3 p-5 sm:grid-cols-3">
-            <SelectField label="하루 발행 수" value={perDay} disabled={busy} onChange={(v) => changeCfg({ perDay: v }, { action: "settings", postsPerDay: v }, "발행 수 변경됨")} options={[1, 2, 3, 4, 5].map((n) => ({ value: n, label: `${n}개` }))} />
-            <SelectField label="발행 간격" value={gap} disabled={busy} onChange={(v) => changeCfg({ gap: clampGap(v) }, { action: "settings", intervalHours: v }, "간격 변경됨")} options={[4, 6, 8, 12].map((h) => ({ value: h, label: `${h}시간 간격` }))} />
-            <SelectField label="시작 시각" value={postingHour} disabled={busy} onChange={(v) => changeCfg({ postingHour: v }, { action: "settings", postingHour: v }, "시각 변경됨")} options={Array.from({ length: 17 }, (_, i) => i + 6).map((h) => ({ value: h, label: hourLabel(h) }))} />
-          </div>
-          <div className="mx-5 mt-1 rounded-xl bg-neutral-50 px-4 py-3 text-sm text-neutral-700">
-            {autoEnabled ? <>매일 <b className="text-neutral-900">{scheduleText}</b> (한국시간)에 발행돼요</> : <>‘시작’을 누르면 <b className="text-neutral-900">{scheduleText}</b>에 맞춰 발행돼요</>}
-            {msg && <span className="ml-2 text-neutral-400">· {msg}</span>}
-          </div>
-          {/* 스레드 교차발행 */}
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-neutral-100 px-5 py-3 text-sm">
-            <span className="text-neutral-500">스레드 {s.threadsConnected ? <b className="text-emerald-600">연결됨</b> : "미연결"}</span>
-            {s.threadsConnected ? (
-              <button onClick={() => changeCfg({ threadsEnabled: !threadsEnabled }, { action: "settings", threadsEnabled: !threadsEnabled }, threadsEnabled ? "스레드 교차발행 껐어요" : "스레드 교차발행 켰어요")} disabled={busy} className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition active:scale-95 disabled:opacity-50 ${threadsEnabled ? "bg-neutral-900 text-white" : "border border-neutral-300 text-neutral-600"}`}>{threadsEnabled ? "카드 발행 시 스레드도 ✓" : "스레드 교차발행 켜기"}</button>
-            ) : (
-              <a href="/api/threads/connect" className="rounded-lg bg-[#1D75F7] px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90">스레드 연결 ↗</a>
-            )}
-          </div>
-        </div>
-      </Section>
-
-      {/* 발행 현황 — 카드 클릭 시 목록 펼침 */}
-      <Section title="발행 현황" desc="카드를 눌러 목록을 펼치고, 썸네일 확인 후 발행·삭제하세요.">
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatButton label="발행 대기" value={`${queued.length}개`} accent active={openList === "queued"} onClick={() => setOpenList(openList === "queued" ? null : "queued")} hint={openList === "queued" ? "닫기 ▲" : s.autoEnabled ? `약 ${daysLeft}일치 · 목록 ▼` : "눌러서 목록 ▼"} />
-          <StatButton label="발행 완료" value={`${published.length}개`} active={openList === "published"} onClick={() => setOpenList(openList === "published" ? null : "published")} hint={openList === "published" ? "닫기 ▲" : "눌러서 목록 ▼"} />
-          <StatButton label="발행 실패" value={`${failed.length}개`} active={openList === "failed"} onClick={() => setOpenList(openList === "failed" ? null : "failed")} hint={openList === "failed" ? "닫기 ▲" : failed.length > 0 ? "확인 필요 ▼" : "목록 ▼"} />
-          <Stat label="인스타 토큰" value={tokenDays !== null ? `${Math.max(0, tokenDays)}일` : "—"} hint={tokenDays !== null ? "자동 갱신 중" : "갱신 후 표시"} />
-        </div>
-
-        {openList && (
-          <div className="mt-3 rounded-2xl at-glass  p-4 sm:p-5">
-            {openList === "queued" && queued.length > 0 && (
-              <div className="mb-3 flex items-center justify-between gap-2 border-b border-neutral-100 pb-3">
-                <span className="text-sm text-neutral-500">대기 <b className="text-neutral-900">{queued.length}개</b> · 하나씩 순서대로 발행돼요</span>
-                <button onClick={publishAllQueued} disabled={busy} className="shrink-0 rounded-lg bg-[#1D75F7] px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90 active:scale-95 disabled:opacity-50">{busy && publishingId ? "발행 중…" : `밀린 ${queued.length}개 모두 발행`}</button>
-              </div>
-            )}
-            {listFor.length === 0 ? (
-              <p className="py-2 text-sm text-neutral-400">{openList === "queued" ? <>대기 중인 카드가 없어요. 터미널에서 <code className="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-[13px]">npm run card:gen:bulk -- 14</code> 로 채워요.</> : "없어요"}</p>
-            ) : (
-              <ul className="divide-y divide-neutral-100">
-                {listFor.map((p) => (
-                  <li key={p.id} className="py-4 first:pt-0 last:pb-0">
-                    {/* 발행 완료는 글로만(썸네일 생략 — 계속 쌓여서 부담) */}
-                    {openList !== "published" && p.mediaUrls.length > 0 && (
-                      <div className="flex gap-2 overflow-x-auto pb-1">
-                        {p.mediaUrls.map((u, i) => (
-                          <button key={i} type="button" onClick={() => setViewer({ urls: p.mediaUrls, i })} className="group relative shrink-0">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={u} alt={`슬라이드 ${i + 1}`} loading="lazy" className="h-28 w-[90px] rounded-lg border border-neutral-200 object-cover transition group-hover:opacity-80" />
-                            {i === 0 && <span className="absolute left-1 top-1 rounded bg-black/55 px-1 py-0.5 text-[9px] font-medium text-white">표지</span>}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    <div className={`flex items-center gap-2 ${openList !== "published" ? "mt-2.5" : ""}`}>
-                      <span className="min-w-0 flex-1 truncate text-sm text-neutral-600">{(p.caption || "(캡션 없음)").split("\n")[0]}{p.error && <span className="ml-1 text-xs text-red-500">· {p.error}</span>}</span>
-                      {p.status === "published" && p.published_at && <span className="shrink-0 text-xs text-neutral-400">{fmtDate(p.published_at)} 발행</span>}
-                      {p.status !== "published" && (
-                        <button onClick={() => publishPost(p)} disabled={busy} className="shrink-0 rounded-md bg-[#1D75F7] px-2.5 py-1 text-xs font-semibold text-white transition hover:opacity-90 active:scale-95 disabled:opacity-50">{publishingId === p.id ? "발행 중…" : "지금 발행"}</button>
-                      )}
-                      <button onClick={() => removePost(p)} disabled={busy} title={p.status === "published" ? "기록만 삭제돼요. 인스타 게시물은 인스타 앱에서 직접 삭제하세요." : "삭제"} className="shrink-0 text-xs text-neutral-400 transition hover:text-red-500 disabled:opacity-50">{p.status === "published" ? "기록 삭제" : "삭제"}</button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
-
-        {lowStock && (
-          <p className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">대기열이 얼마 안 남았어요{daysLeft <= 0 ? " (곧 끊겨요)" : ` (약 ${daysLeft}일치)`}. 터미널에서 <code className="rounded bg-amber-100 px-1.5 py-0.5 font-mono text-[13px]">npm run card:gen:bulk -- 14</code> 으로 더 채워두세요.</p>
-        )}
-        {tokenWarn && (
-          <p className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">인스타 토큰이 <b>{tokenDays! <= 0 ? "만료됐어요" : `${tokenDays}일 뒤 만료`}</b>. 자동 갱신(주 1회)이 도는지 확인하고, 안 되면 아래에서 새 토큰으로 재연결하세요.</p>
-        )}
-
-        {/* 인스타 토큰 재연결 — 만료/차단 시 재배포 없이 새 토큰을 붙여넣어 복구 */}
-        <div className="mt-3 rounded-xl border border-neutral-100 bg-white p-4 shadow-sm">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-sm font-semibold text-neutral-700">인스타 토큰 재연결</span>
-            <button onClick={() => setShowConnect((v) => !v)} className="text-xs font-semibold text-neutral-500 transition hover:text-neutral-800">{showConnect ? "접기 ▲" : "열기 ▼"}</button>
-          </div>
-          {showConnect && (
-            <div className="mt-3 space-y-2">
-              <p className="text-xs leading-relaxed text-neutral-500">Meta에서 발급한 <b>인스타 장기 액세스 토큰</b>을 붙여넣으세요. 검증 후 암호화해 저장하고, 매주 자동 갱신해요. (계정 ID는 서버 설정값을 쓰려면 비워두세요.)</p>
-              <input value={igToken} onChange={(e) => setIgToken(e.target.value)} placeholder="장기 액세스 토큰 붙여넣기" autoComplete="off" className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:border-neutral-400 focus:outline-none" />
-              <input value={igUserId} onChange={(e) => setIgUserId(e.target.value)} placeholder="인스타 계정 ID (선택 — 비우면 서버 설정 사용)" autoComplete="off" className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:border-neutral-400 focus:outline-none" />
-              <div className="flex items-center gap-2">
-                <button onClick={connectIg} disabled={busy || !igToken.trim()} className="rounded-lg bg-[#1D75F7] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 active:scale-95 disabled:opacity-50">검증 후 연결</button>
-                {msg && <span className="text-xs text-neutral-400">{msg}</span>}
-              </div>
-            </div>
-          )}
-        </div>
-      </Section>
-
-      {viewer && <Lightbox urls={viewer.urls} index={viewer.i} onIndex={(i) => setViewer({ urls: viewer.urls, i })} onClose={() => setViewer(null)} />}
-    </>
+    <div className="rounded-2xl at-glass p-5">
+      <p className="text-[13px] font-bold text-neutral-800">크레딧 지급</p>
+      <div className="mt-2.5 flex flex-wrap items-center gap-2">
+        <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="user@email.com" className={`${inputCls} flex-1`} />
+        <input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="크레딧 (음수=회수)" inputMode="numeric" className={`${inputCls} w-36`} />
+        <button onClick={grant} disabled={busy || !email || !amount} className="at-press rounded-xl bg-[#1D75F7] px-4 py-2.5 text-[13px] font-bold text-white transition disabled:opacity-40">지급</button>
+      </div>
+      <div className="mt-4 border-t border-neutral-100 pt-4">
+        <p className="text-[13px] font-bold text-neutral-800">테스트 도구</p>
+        <button onClick={resetMine} disabled={busy} className="at-press mt-2 rounded-xl bg-neutral-100 px-4 py-2.5 text-[13px] font-bold text-neutral-700 transition hover:bg-neutral-200 disabled:opacity-40">
+          내 계정 초기화 (글·온보딩 삭제, 크레딧 보존)
+        </button>
+      </div>
+      {msg && <p className="mt-3 text-[12.5px] font-medium text-neutral-600">{msg}</p>}
+    </div>
   );
 }
 
-export default function AdminDashboard({ stats }: { stats?: AdminStats | null }) {
-  const [view, setViewState] = useState<"stats" | "waitlist" | "social">("stats");
-  useEffect(() => {
-    const v = localStorage.getItem("admin_tab");
-    if (v === "stats" || v === "social" || v === "waitlist") setViewState(v);
-  }, []);
-  const setView = (v: "stats" | "waitlist" | "social") => {
-    setViewState(v);
-    try { localStorage.setItem("admin_tab", v); } catch {}
-  };
-  if (!stats) return <p className="text-sm text-neutral-500">통계를 불러오지 못했어요.</p>;
+export default function AdminDashboard({ stats }: { stats: AdminStats | null }) {
+  if (!stats) return <p className="mt-8 text-sm text-neutral-400">통계를 불러오지 못했어요.</p>;
+  const ce = stats.creditEconomy;
+  const costKrw = stats.costTotalKrw ?? stats.estCostKrw ?? 0;
+  const margin = ce && ce.revenueKrw > 0 ? Math.round(((ce.revenueKrw - costKrw) / ce.revenueKrw) * 100) : null;
 
   return (
-    <div>
-      <h2 className="text-lg font-semibold tracking-tight">관리자 대시보드</h2>
-      <p className="mt-1 text-sm text-neutral-500">서비스 현황 한눈에 보기 · 오늘=한국시간 · 새로고침하면 최신</p>
-
-      {stats.ai && !stats.ai.ok && (
-        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          <b>⚠️ 글·카드 생성이 중단됐어요.</b> Claude 크레딧/결제 문제로 보여요. Anthropic 콘솔에서 크레딧을 충전하면 자동 복구돼요.
-          {stats.ai.lastError && <span className="ml-1 text-red-500">({stats.ai.lastError.slice(0, 80)})</span>}
+    <div className="pb-16">
+      {/* 오늘 */}
+      <Section title="오늘" hint="KST 자정 기준">
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+          <Stat label="신규 가입" value={`${stats.usersToday ?? 0}명`} accent={Boolean(stats.usersToday)} />
+          <Stat label="글 생성" value={`${stats.articlesToday ?? 0}편`} />
+          <Stat label="오늘 AI 비용" value={won(stats.costTodayKrw ?? 0)} />
+          <Stat label="전체 가입" value={`${stats.usersTotal ?? 0}명`} sub={`글 ${stats.articlesTotal ?? 0}편 · 발행 ${stats.publishedArticles ?? 0}편`} />
         </div>
+      </Section>
+
+      {/* 크레딧 경제 */}
+      {ce && (
+        <Section title="크레딧 경제" hint="판매액은 정가 기준(할인 미반영)">
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+            <Stat label="판매액" value={won(ce.revenueKrw)} sub={`${ce.purchaseCount}건 · ${ce.buyers}명`} accent />
+            <Stat label="AI 비용 누적" value={won(costKrw)} sub={margin !== null ? `마진 ~${margin}%` : "결제 전"} />
+            <Stat label="소모 크레딧" value={ce.creditsSpent.toLocaleString("ko-KR")} sub={`글 약 ${Math.floor(ce.creditsSpent / 10)}편분`} />
+            <Stat label="유저 보유 잔액" value={ce.balanceOutstanding.toLocaleString("ko-KR")} sub="아직 제공 안 한 서비스(부채)" />
+          </div>
+          {ce.byPack.length > 0 && (
+            <div className="mt-2.5 flex flex-wrap gap-2">
+              {ce.byPack.map((p) => (
+                <span key={p.key} className="rounded-full at-glass px-3 py-1.5 text-[12px] font-bold text-neutral-600">
+                  {PACK_LABEL[p.key] ?? p.key} <b className="text-[#1D75F7]">{p.count}</b>
+                </span>
+              ))}
+            </div>
+          )}
+        </Section>
       )}
 
-      <div className="mt-4">
-        <Segmented
-          options={[
-            { value: "stats", label: "분석" },
-            { value: "social", label: "SNS" },
-            { value: "waitlist", label: "대기자" },
-          ]}
-          value={view}
-          onChange={setView}
-        />
-      </div>
-
-      {view === "social" ? (
-        <SocialView stats={stats} />
-      ) : view === "waitlist" ? (
-        <WaitlistView stats={stats} />
-      ) : (
-        <>
-      {/* 요약 */}
-      <Section title="요약">
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <Stat label="예상 월매출(MRR)" value={stats.mrr === null ? "—" : won(stats.mrr)} accent hint={stats.proUsers !== null ? `프로 ${stats.proUsers}명` : undefined} />
-          <Stat label="전체 회원" value={stats.usersTotal?.toLocaleString() ?? "—"} hint={stats.usersToday !== null ? `오늘 +${stats.usersToday}` : undefined} />
-          <Stat label="전환율(무료→프로)" value={stats.conversion === null ? "—" : `${stats.conversion}%`} hint={stats.freeUsers !== null ? `무료 ${stats.freeUsers} · 프로 ${stats.proUsers}` : undefined} />
-          <Stat label={stats.costTotalKrw !== null ? "API 누적 비용" : "추정 비용"} value={stats.costTotalKrw !== null ? won(stats.costTotalKrw) : stats.estCostKrw !== null ? won(stats.estCostKrw) : "—"} hint={stats.costTotalKrw !== null ? `오늘 ${won(stats.costTodayKrw ?? 0)}` : "토큰 집계 전 추정"} />
-        </div>
-      </Section>
-
-      {/* 성장 추이 */}
-      <Section title="성장 추이" desc="최근 7일 (한국시간 기준)">
-        <div className="grid gap-3 lg:grid-cols-2">
-          <MiniBars title="가입" data={stats.dailyUsers} color={BRAND} suffix="명" />
-          <MiniBars title="글 생성" data={stats.dailyArticles} color="#2fd07a" suffix="편" />
-        </div>
-      </Section>
-
-      {/* 퍼널 */}
-      <Section title="사용자 퍼널 · 개선 포인트" desc="가입 → 글 생성 → 워드프레스 연결 → 발행 → 프로. 어디서 이탈하는지 보고 개선 우선순위를 정해요.">
+      {/* 여정 퍼널 */}
+      <Section title="여정 퍼널" hint="단계별 통과율">
         <Funnel stats={stats} />
       </Section>
 
-      {/* 운영 지표 */}
-      <Section title="운영 지표">
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <Stat label="오늘 생성" value={`${(stats.articlesToday ?? 0).toLocaleString()}편`} />
-          <Stat label="사용자당 평균 글" value={stats.articlesPerUser === null ? "—" : `${stats.articlesPerUser}편`} />
-          <Stat label="워드프레스 연결률" value={stats.wpConnectRate === null ? "—" : `${stats.wpConnectRate}%`} hint={stats.wpConnections !== null ? `${stats.wpConnections}곳` : undefined} />
-          <Stat label="발행률" value={stats.publishRate === null ? "—" : `${stats.publishRate}%`} hint={stats.publishedArticles !== null ? `발행 ${stats.publishedArticles}/${stats.articlesTotal}` : undefined} />
+      {/* 7일 추이 */}
+      <Section title="최근 7일">
+        <div className="grid gap-2.5 sm:grid-cols-2">
+          <MiniBars title="가입" data={stats.dailyUsers} color={BRAND} />
+          <MiniBars title="글 생성" data={stats.dailyArticles} color="#34c98e" />
         </div>
       </Section>
 
-      {/* 크레딧·예산 현황 */}
-      <Section title="크레딧·예산 현황" desc="이번 달 API 비용과 남은 여력. 한도 근접 시 콘솔에서 확인 후 충전·한도조정 하면 돼요.">
-        <BudgetWidget stats={stats} />
-        <LimitGuide />
+      {/* 도구 */}
+      <Section title="도구">
+        <Tools />
       </Section>
 
-      {/* API 비용 */}
-      <Section title="API 비용" desc="실제 토큰 기반 (Anthropic). 비용 구조를 파악해 가격·한도 정책에 반영해요.">
-        <CostBreakdown stats={stats} />
-      </Section>
-
-      {/* 최근 활동 */}
-      <Section title="최근 활동">
-        <div className="grid gap-3 lg:grid-cols-2">
-          <div className="rounded-2xl at-glass  p-4 sm:p-5">
-            <p className="text-sm font-medium text-neutral-900">최근 가입</p>
-            <ul className="mt-3 divide-y divide-neutral-100">
-              {stats.recentUsers.length === 0 ? (
-                <li className="py-2 text-sm text-neutral-400">아직 없어요</li>
-              ) : (
-                stats.recentUsers.map((u, i) => (
-                  <li key={i} className="flex items-center justify-between gap-3 py-2 text-sm">
-                    <span className="min-w-0 truncate text-neutral-700">{u.email}</span>
-                    <span className="shrink-0 text-xs text-neutral-400">{fmtDate(u.created_at)}</span>
-                  </li>
-                ))
-              )}
-            </ul>
-          </div>
-          <div className="rounded-2xl at-glass  p-4 sm:p-5">
-            <p className="text-sm font-medium text-neutral-900">최근 글</p>
-            <ul className="mt-3 divide-y divide-neutral-100">
-              {stats.recentArticles.length === 0 ? (
-                <li className="py-2 text-sm text-neutral-400">아직 없어요</li>
-              ) : (
-                stats.recentArticles.map((a, i) => (
-                  <li key={i} className="flex items-center justify-between gap-3 py-2 text-sm">
-                    <span className="min-w-0 truncate text-neutral-700">{a.locked ? "🔒 " : ""}{a.title}</span>
-                    <span className="shrink-0 text-xs text-neutral-400">{a.locked ? "미리보기" : STATUS_KO[a.status] ?? a.status} · {fmtDate(a.created_at)}</span>
-                  </li>
-                ))
-              )}
-            </ul>
-          </div>
+      {/* 최근 가입 / 글 */}
+      <Section title="최근 가입">
+        <div className="divide-y divide-neutral-100 overflow-hidden rounded-2xl at-glass">
+          {stats.recentUsers.slice(0, 10).map((u) => (
+            <div key={u.email + u.created_at} className="flex items-center justify-between px-4 py-2.5">
+              <span className="min-w-0 truncate text-[13px] font-medium text-neutral-700">{u.email}</span>
+              <span className="shrink-0 text-[11.5px] text-neutral-400">{fmtDate(u.created_at)}</span>
+            </div>
+          ))}
+          {stats.recentUsers.length === 0 && <p className="px-4 py-4 text-[12.5px] text-neutral-400">아직 없음</p>}
         </div>
       </Section>
-        </>
-      )}
+
+      <Section title="최근 글">
+        <div className="divide-y divide-neutral-100 overflow-hidden rounded-2xl at-glass">
+          {stats.recentArticles.slice(0, 10).map((a, i) => (
+            <div key={i} className="flex items-center gap-2.5 px-4 py-2.5">
+              <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${a.status === "published" ? "bg-emerald-500" : "bg-neutral-300"}`} />
+              <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-neutral-700">{a.title}</span>
+              <span className="shrink-0 text-[11.5px] text-neutral-400">{fmtDate(a.created_at)}</span>
+            </div>
+          ))}
+          {stats.recentArticles.length === 0 && <p className="px-4 py-4 text-[12.5px] text-neutral-400">아직 없음</p>}
+        </div>
+      </Section>
     </div>
   );
 }

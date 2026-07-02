@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { ONLINE_CATEGORIES } from "@/lib/bloggerTypes";
 import { defaultBlogName } from "@/lib/blogName";
 import LoadingScreen from "@/components/LoadingScreen";
-import { openNaverBlogApp } from "@/lib/naverApp";
 import type { BlogProfile } from "@/lib/blogProfile";
 
 // ★온보딩 4막 — 화면이 아니라 '수익형 블로그 전략 세션'.
@@ -132,15 +131,6 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
     pickTopic(v);
   }
 
-  // ★검색 허용 설정 열기 — 앱 우선(미설치 시 스토어), 데스크톱은 관리 페이지.
-  function openSearchSetting() {
-    const id = naverId.trim().replace(/^https?:\/\//, "").replace(/^m\./, "").replace(/^blog\.naver\.com\//, "").replace(/[/?#].*$/, "").trim();
-    openNaverBlogApp({
-      webPath: id,
-      desktopUrl: id ? `https://admin.blog.naver.com/AdminMain.naver?blogId=${id}` : "https://admin.blog.naver.com",
-    });
-  }
-
   async function save() {
     if (saving || !sub) return;
     setSaving(true); setError(null);
@@ -178,9 +168,8 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
       </>
     ) : step === "setupopen" ? (
       <>
-        <button onClick={save} disabled={saving} className={primaryBtn}>{saving ? "준비 중…" : "켰어요, 시작할게요"}</button>
-        <button onClick={save} disabled={saving} className={ghostBtn}>나중에 켤게요</button>
-      </>
+        <button onClick={save} disabled={saving} className={primaryBtn}>{saving ? "준비 중…" : "기억할게요, 시작!"}</button>
+        </>
     ) : step === "done" ? (
       <button onClick={() => savedProfile && onSaved(savedProfile)} className={primaryBtn}>D-1 시작하기</button>
     ) : null;
@@ -397,24 +386,29 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
                 <p className="mt-2 text-[12px] leading-relaxed text-neutral-400">내 블로그에 들어가면 주소창에서 볼 수 있어요.</p>
                 <p className="mb-1.5 mt-6 px-1 text-[12px] font-semibold text-neutral-400">블로그 이름 (추천 — 네이버에서 이 이름으로 지으면 좋아요)</p>
                 <input value={blogName} onChange={(e) => setBlogName(e.target.value)} maxLength={60} className={inputCls} />
+                <p className="mt-3 rounded-xl bg-neutral-50 px-4 py-3 text-[12.5px] leading-relaxed text-neutral-500">💡 네이버 블로그 관리의 <b className="text-neutral-700">블로그 정보 → 주제</b>도 ‘{sub}’ 계열로 맞춰두면 전문 블로그로 인식되는 데 도움돼요.</p>
               </div>
             )}
 
             {step === "setupopen" && (
               <div>
-                <p className="at-label">딱 하나만 켜요</p>
-                <h2 className="at-headline mt-1 whitespace-pre-line">{"‘검색 허용’을\n켜주세요"}</h2>
-                <p className="mt-2 text-sm leading-relaxed text-neutral-500">이걸 켜야 내 글이 네이버 검색에 나와요.</p>
-                <button onClick={openSearchSetting} className="at-press mt-5 block w-full rounded-xl bg-[#03C75A] py-4 text-center text-[15px] font-bold text-white transition hover:opacity-90">
-                  내 블로그 설정 열기
-                </button>
-                <p className="mt-2 text-center text-[11.5px] text-neutral-400">앱이 없으면 설치 화면으로 안내해요</p>
-                <div className="mt-4 rounded-2xl bg-neutral-50 px-5 py-4 text-[13px] leading-relaxed text-neutral-600">
-                  <p className="font-bold text-neutral-800">📱 앱에서</p>
-                  <p className="mt-0.5">내 블로그 → <b>≡</b> → <b>환경설정</b> → <b>검색 허용</b> 켜기</p>
-                  <p className="mt-2.5 font-bold text-neutral-800">💻 컴퓨터에서</p>
-                  <p className="mt-0.5">관리 → 기본 설정의 <b>검색 허용</b> 켜기</p>
+                <p className="at-label">하나만 기억하세요</p>
+                <h2 className="at-headline mt-1 whitespace-pre-line">{"글 올릴 때\n‘검색 허용’ 체크"}</h2>
+                <p className="mt-2 text-sm leading-relaxed text-neutral-500">이게 켜져야 내 글이 네이버 검색에 나와요. 블로그 설정이 아니라 <b className="text-neutral-700">글을 발행할 때마다</b> 공개 설정에 나오는 옵션이에요.</p>
+                <div className="mt-5 rounded-2xl at-glass p-5">
+                  <p className="text-[12px] font-bold text-neutral-400">발행 화면에서 이렇게 보여요</p>
+                  <div className="mt-3 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[14px] font-semibold text-neutral-800">공개 설정</span>
+                      <span className="rounded-md bg-[#03C75A]/10 px-2 py-0.5 text-[12px] font-bold text-[#03C75A]">전체공개</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[14px] font-semibold text-neutral-800">검색 허용</span>
+                      <span className="flex h-6 w-11 items-center rounded-full bg-[#03C75A] px-0.5"><span className="ml-auto h-5 w-5 rounded-full bg-white shadow" /></span>
+                    </div>
+                  </div>
                 </div>
+                <p className="mt-3 px-1 text-[12.5px] leading-relaxed text-neutral-400">걱정 마세요 — 발행할 때마다 저희가 다시 알려드려요.</p>
               </div>
             )}
 

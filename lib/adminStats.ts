@@ -36,6 +36,17 @@ export type AdminStats = {
   costTodayKrw: number | null;
   /** 종류별 비용 분해 (generate/tag_suggest/keyword_ideas …) */
   costByKind: { kind: string; krw: number }[];
+  /** 퍼널: 온보딩(블로그 프로필) 완료 사용자 수 */
+  usersWithProfile: number | null;
+  /** ★크레딧 경제 — 판매·소모·부채(잔액). revenueKrw는 정가 기준 추정(할인 미반영 주의) */
+  creditEconomy: {
+    purchaseCount: number;      // 결제 건수
+    buyers: number;             // 결제 유저 수
+    revenueKrw: number;         // 판매액(정가 기준 추정)
+    byPack: { key: string; count: number }[];
+    creditsSpent: number;       // 소모 크레딧 총합(생성 등)
+    balanceOutstanding: number; // 유저 보유 잔액 합(= 미제공 서비스 부채)
+  } | null;
   /** 퍼널: 글을 1편 이상 만든 사용자 수 */
   usersWithArticles: number | null;
   /** 퍼널: 1편 이상 발행한 사용자 수 */
@@ -292,5 +303,33 @@ export async function getAdminStats(): Promise<AdminStats> {
     ai = null;
   }
 
-  return { usersTotal, usersToday, proUsers, freeUsers, articlesTotal, articlesToday, publishedArticles, lockedArticles, wpConnections, mrr, conversion, articlesPerUser, wpConnectRate, publishRate, estCostKrw, costTotalKrw, monthlyCostKrw, budgetKrw, avgArticleCostKrw, costTodayKrw, costByKind, usersWithArticles, usersWithPublished, dailyUsers, dailyArticles, recentUsers, recentArticles, waitlistCount, waitlist, social, ai };
+  // ★크레딧 경제 집계 (credit_ledger + users.credits)
+  let creditEconomy: AdminStats["creditEconomy"] = null;
+  let usersWithProfile: number | null = null;
+  try {
+    usersWithProfile = await count(admin, "blog_profiles");
+    const { data: purchases } = await admin.from("credit_ledger").select("user_id, ref").eq("reason", "purchase").limit(5000);
+    const { data: spends } = await admin.from("credit_ledger").select("amount").lt("amount", 0).limit(20000);
+    const { data: balances } = await admin.from("users").select("credits").gt("credits", 0).limit(20000);
+    const { CREDIT_PACKS } = await import("./creditPacks");
+    const packPrice = Object.fromEntries(CREDIT_PACKS.map((pk) => [pk.key, pk.price]));
+    const byPackMap: Record<string, number> = {};
+    let revenueKrw = 0;
+    for (const row of purchases ?? []) {
+      const m = /^crd_([a-z]+)_/.exec(row.ref ?? "");
+      const key = m?.[1] ?? "etc";
+      byPackMap[key] = (byPackMap[key] ?? 0) + 1;
+      revenueKrw += packPrice[key] ?? 0;
+    }
+    creditEconomy = {
+      purchaseCount: purchases?.length ?? 0,
+      buyers: new Set((purchases ?? []).map((r) => r.user_id)).size,
+      revenueKrw,
+      byPack: Object.entries(byPackMap).map(([key, cnt]) => ({ key, count: cnt })).sort((a, b) => b.count - a.count),
+      creditsSpent: (spends ?? []).reduce((t, r) => t - (r.amount ?? 0), 0),
+      balanceOutstanding: (balances ?? []).reduce((t, r) => t + (r.credits ?? 0), 0),
+    };
+  } catch { /* 집계 실패 시 카드 숨김 */ }
+
+  return { usersWithProfile, creditEconomy, usersTotal, usersToday, proUsers, freeUsers, articlesTotal, articlesToday, publishedArticles, lockedArticles, wpConnections, mrr, conversion, articlesPerUser, wpConnectRate, publishRate, estCostKrw, costTotalKrw, monthlyCostKrw, budgetKrw, avgArticleCostKrw, costTodayKrw, costByKind, usersWithArticles, usersWithPublished, dailyUsers, dailyArticles, recentUsers, recentArticles, waitlistCount, waitlist, social, ai };
 }
