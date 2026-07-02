@@ -168,8 +168,8 @@ export async function GET(req: Request) {
     if (useSub && sub) q = q.eq("sub", sub);
     if (cluster) q = q.ilike("keyword", `%${cluster}%`); // 클러스터: 이 토큰 든 키워드만
     if (adminBest) {
-      // 최상급 계정: 검색량 하한만(상한 해제) — 티어 분리는 아래 후보 구성에서
-      if (ranged) q = q.gte("monthly_searches", 500);
+      // 최상급 = '이길 수 있는 최상' — 메가 키워드(검색량 무제한)는 문서수도 메가라 제외. 적정 상한을 둔다.
+      q = ranged ? q.gte("monthly_searches", 500).lte("monthly_searches", 8000) : q.lte("monthly_searches", 20000);
     } else if (ranged) {
       q = q.gte("monthly_searches", 500).lte("monthly_searches", 5000);
     }
@@ -396,9 +396,16 @@ export async function GET(req: Request) {
   // 후보 집합은 매일 시드로 달라지므로(변동성) 그날의 후보 중 가장 winnable한 걸 보여준다.
   const winScore = ({ r, t }: { r: PoolRow; t?: { fit?: number } }) =>
     (r.blog_total != null ? filledStarsFromData(r.monthly_searches ?? 0, r.blog_total) : 3) * 10 + axisBoost(r.keyword) + (t?.fit ?? 1);
+  // ★진짜 경쟁(문서수) '높음'은 원칙적으로 안 보여준다 — 유저가 어차피 거른다. 낮음·중간 소진 시에만 폴백.
+  const realCompOf = (r: PoolRow): Comp => (r.blog_total != null ? compFromBlogTotal(r.blog_total) : compFromLabel(r.competition));
   // 제목 중복 제거 + 소주제 클러스터 라운드로빈 — 비슷한 글감(영문법변환기 3개) 몰림 방지, 골고루 다양하게.
   type FitItem = (typeof fitTop)[number];
-  const sortedFit: FitItem[] = [...fitTop].sort((a, b) => winScore(b) - winScore(a));
+  const winnable = fitTop.filter((x) => realCompOf(x.r) !== "high");
+  const saturated = fitTop.filter((x) => realCompOf(x.r) === "high");
+  const sortedFit: FitItem[] = [
+    ...winnable.sort((a, b) => winScore(b) - winScore(a)),
+    ...saturated.sort((a, b) => winScore(b) - winScore(a)),
+  ];
   const byCluster = new Map<string, FitItem[]>();
   const seenTitle = new Set<string>();
   for (const item of sortedFit) {
