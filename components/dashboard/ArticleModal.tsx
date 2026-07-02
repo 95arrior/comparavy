@@ -226,37 +226,45 @@ export default function ArticleModal({
           </div>
         )}
 
-        {/* 네이버 발행(복붙) 시트 — API 없으니 복사→네이버 글쓰기 붙여넣기 */}
+        {/* 네이버 발행 시트 v2 — 컴팩트: 큰 버튼 2개가 전부, 세부는 접힘(모바일 잘림 방지) */}
         {naverOpen && (
           <div className="ateflo-backdrop-in fixed inset-0 z-[70] flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center sm:p-6" onClick={() => setNaverOpen(false)}>
-            <div className="ateflo-sheet-up w-full max-w-md rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-3xl" style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom))" }} onClick={(e) => e.stopPropagation()}>
-              <p className="text-[17px] font-bold text-neutral-900">네이버 블로그에 올리기</p>
-              <p className="mt-1 text-[13px] leading-relaxed text-neutral-500">네이버는 자동 발행이 안 돼서 복사해서 붙여넣어요. 1분이면 끝나요.</p>
-              <ol className="mt-4 space-y-2 text-[13.5px] leading-relaxed text-neutral-700">
-                <li><b className="text-[#03C75A]">1.</b> <b>네이버 글쓰기 열기</b> (제목이 자동 복사돼요)</li>
-                <li><b className="text-[#03C75A]">2.</b> 네이버 <b>제목칸</b>에 바로 붙여넣기(Ctrl/⌘+V)</li>
-                <li><b className="text-[#03C75A]">3.</b> 돌아와 <b>본문 복사</b> → <b>본문칸</b>에 붙여넣기(소제목·형광펜·인용구 따라옴)</li>
-                <li><b className="text-[#03C75A]">4.</b> <b>📷 사진 자리</b>마다 사진을 올리고, 그 안내 줄은 지워요</li>
-                <li><b className="text-[#03C75A]">5.</b> 맨 끝 해시태그 확인 후 <b>발행!</b></li>
-              </ol>
-              {photoSlots(bodyHtml).length > 0 && (
-                <div className="mt-3 rounded-xl bg-neutral-50 p-3 text-[12.5px] leading-relaxed text-neutral-600">
-                  <p className="font-bold text-neutral-700">📷 사진 자리 {photoSlots(bodyHtml).length}곳 — 미리 준비하면 빨라요</p>
-                  <p className="mt-1">{photoSlots(bodyHtml).join(" · ")}</p>
-                </div>
-              )}
-              <div className="mt-4 rounded-xl bg-[#03C75A]/[0.06] p-3.5 text-[12.5px] leading-relaxed text-neutral-600">
-                <p className="font-bold text-[#03C75A]">노출 잘 되는 꿀팁</p>
-                <p className="mt-1">· <b>굵게 표시된 핵심 문장</b>을 드래그해 <b>형광펜</b>을 칠하면 상위 블로거처럼 눈에 띄어요</p>
-                <p>· <b>첫 사진</b>이 검색 썸네일이에요 — 제일 잘 나온 걸로</p>
-                <p>· 발행할 때 <b>검색 허용 등 공개 옵션</b>을 모두 켜고 <b>전체공개</b>로 올려요</p>
-                <p>· 발행할 때 <b>태그</b>도 본문 해시태그처럼 넣어주세요</p>
-                <p className="mt-1.5 text-amber-700">⚠ 사진은 <b>직접 찍거나 무료 이미지</b>(픽사베이 등)만 — 남의 사진·캡처는 저작권 위반이에요</p>
+            <div className="ateflo-sheet-up max-h-[88vh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-3xl" style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom))" }} onClick={(e) => e.stopPropagation()}>
+              <p className="text-[17px] font-bold text-neutral-900">네이버에 올리기</p>
+              <p className="mt-1 text-[13px] text-neutral-500">두 번 붙여넣으면 끝나요.</p>
+
+              <div className="mt-5 space-y-2.5">
+                <button onClick={openNaverWrite} className="at-press w-full rounded-2xl bg-[#03C75A] px-5 py-4 text-left transition hover:opacity-95">
+                  <span className="block text-[15px] font-bold text-white">1. 네이버 글쓰기 열기</span>
+                  <span className="mt-0.5 block text-[12px] font-medium text-white/80">제목이 복사된 채 열려요 → 제목칸에 붙여넣기</span>
+                </button>
+                <button onClick={copyBody} className="at-press w-full rounded-2xl bg-[#03C75A]/10 px-5 py-4 text-left transition hover:bg-[#03C75A]/15">
+                  <span className="block text-[15px] font-bold text-[#03C75A]">{copied ? "본문 복사됨 ✓" : "2. 본문 복사하기"}</span>
+                  <span className="mt-0.5 block text-[12px] font-medium text-[#03C75A]/70">{copied ? "네이버 본문칸에 붙여넣으세요" : "돌아와서 누르면 → 본문칸에 붙여넣기"}</span>
+                </button>
               </div>
-              <button onClick={openNaverWrite} className="mt-4 w-full rounded-xl bg-[#03C75A] py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">네이버 글쓰기 열기 <span className="text-[12px] font-medium opacity-85">· 제목 자동 복사</span></button>
-              <button onClick={copyBody} className="mt-2 w-full rounded-xl bg-[#03C75A]/10 py-3.5 text-[14px] font-bold text-[#03C75A] transition hover:bg-[#03C75A]/15 active:scale-[0.99]">{copied ? "본문 복사됨 ✓ — 본문칸에 붙여넣기" : "본문 복사"}</button>
-              <button onClick={copyTitle} className="mt-2 w-full py-1.5 text-center text-[12px] font-medium text-neutral-400 transition hover:text-neutral-600">{titleCopied ? "제목 복사됨 ✓" : "제목 다시 복사"}</button>
-              <button onClick={() => setNaverOpen(false)} className="mt-2 w-full py-1.5 text-center text-sm font-medium text-neutral-400 transition hover:text-neutral-700">닫기</button>
+
+              {photoSlots(bodyHtml).length > 0 && (
+                <p className="mt-3 rounded-xl bg-neutral-50 px-4 py-3 text-[12.5px] leading-relaxed text-neutral-500">
+                  📷 사진 자리 <b className="text-neutral-700">{photoSlots(bodyHtml).length}곳</b> — 붙여넣은 뒤 표시된 자리에 사진을 올리고 그 안내 줄은 지워요. <span className="text-amber-600">직접 찍거나 무료 이미지만(저작권)</span>
+                </p>
+              )}
+
+              <details className="group mt-3">
+                <summary className="cursor-pointer list-none rounded-xl px-1 py-2 text-[12.5px] font-semibold text-neutral-400 transition hover:text-neutral-600">
+                  자세한 순서·꿀팁 보기 <span className="inline-block transition-transform group-open:rotate-180">⌄</span>
+                </summary>
+                <div className="mt-1 space-y-1.5 rounded-xl bg-neutral-50 px-4 py-3.5 text-[12.5px] leading-relaxed text-neutral-600">
+                  <p>· 붙여넣기는 <b>⌘V</b>(맥) / <b>Ctrl+V</b>(윈도우)</p>
+                  <p>· <b>굵은 핵심 문장</b>을 드래그해 형광펜을 칠하면 눈에 띄어요</p>
+                  <p>· <b>첫 사진</b>이 검색 썸네일 — 제일 잘 나온 걸로</p>
+                  <p>· 발행 시 <b>검색 허용 등 공개 옵션 전부 ON</b> + 전체공개</p>
+                  <p>· <b>태그</b>는 본문 끝 해시태그를 그대로</p>
+                </div>
+              </details>
+
+              <button onClick={copyTitle} className="mt-2 w-full py-1.5 text-center text-[12px] font-medium text-neutral-400 transition hover:text-neutral-600">{titleCopied ? "제목 복사됨 ✓" : "제목만 다시 복사"}</button>
+              <button onClick={() => setNaverOpen(false)} className="w-full py-1.5 text-center text-sm font-medium text-neutral-400 transition hover:text-neutral-700">닫기</button>
             </div>
           </div>
         )}

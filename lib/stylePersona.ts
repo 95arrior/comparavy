@@ -41,6 +41,11 @@ const VOICES = [
   "가끔 짧은 혼잣말·감탄을 한두 번 섞는 편(과하지 않게)",
   "차분하고 담백하게 이어가는 편",
 ];
+const EMOJIS = [
+  "이모지는 쓰지 않는다",
+  "소제목이나 핵심 포인트에 이모지를 아주 가끔(글 전체 1~3개)",
+  "문단 포인트·팁 표시에 이모지를 적절히(글 전체 3~6개, 같은 이모지 반복 금지)",
+];
 
 /** 유저별 고정 스타일 지시문. 같은 userId는 언제나 같은 문자열을 돌려준다. */
 export function stylePersonaInstruction(userId: string): string {
@@ -54,5 +59,6 @@ export function stylePersonaInstruction(userId: string): string {
     pick(HASHTAGS, 12),
     pick(HEADINGS, 16),
     pick(VOICES, 20),
+    pick(EMOJIS, 24),
   ].join(" · ");
 }
