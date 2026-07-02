@@ -1568,3 +1568,17 @@ input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-sele
   opacity: 0.8;
   pointer-events: none;
 }
+
+/* AI 오브 — 생성 장면의 심장. 무지개가 흐르며 숨쉬는 원 */
+@keyframes at-orb-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.07); }
+}
+.at-ai-orb {
+  width: 76px;
+  height: 76px;
+  border-radius: 9999px;
+  background: linear-gradient(120deg, #8ec5ff, #b79cff, #ff9ec6, #ffd08a, #8ec5ff) 0 0 / 300% 100%;
+  animation: at-ai-glow 2.2s linear infinite, at-orb-pulse 1.6s ease-in-out infinite;
+  box-shadow: 0 14px 38px -12px rgba(140, 120, 255, 0.55);
+}

@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import AteFloLogo from "@/components/AteFloLogo";
-import LoadingScreen from "@/components/LoadingScreen";
 import type { Article } from "./types";
 
 // 완성된 최상위 블록만 추출(닫는 태그가 온 것). 스트리밍 중 미완성 블록은 제외 → 문단 단위로 등장.
@@ -40,6 +39,7 @@ export default function WritingView({
 }) {
   const [available, setAvailable] = useState<string[]>([]);
   const [revealed, setRevealed] = useState(0);
+  const [charCount, setCharCount] = useState(0); // 지금까지 써진 글자수(라이브)
   const [finished, setFinished] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [stepIdx, setStepIdx] = useState(0);
@@ -135,6 +135,7 @@ export default function WritingView({
     const blocks = completeBlocks(t + bodyRef.current);
     availRef.current = blocks;
     setAvailable(blocks);
+    setCharCount(bodyRef.current.replace(/<[^>]+>/g, "").replace(/\s/g, "").length);
   }
 
   async function run() {
@@ -205,7 +206,8 @@ export default function WritingView({
             </button>
           ) : (
             <span className="flex items-center gap-2 text-sm text-neutral-400">
-              <AteFloLogo pro={pro} animated size={16} /> 글을 쓰고 있어요 · 잠시만 기다려 주세요
+              <AteFloLogo pro={pro} animated size={16} />
+              {phase === "writing" ? <>글을 쓰고 있어요 · <b className="tabular-nums text-neutral-600">{charCount.toLocaleString("ko-KR")}자</b></> : "글을 준비하고 있어요"}
             </span>
           )}
         </div>
@@ -247,59 +249,34 @@ export default function WritingView({
       </div>
 
       {phase === "done" && (
-        <LoadingScreen label="네이버에 올릴 형식으로 정리하고 있어요" />
+        <div className="ateflo-backdrop-in fixed inset-0 z-[80] flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm">
+          <span className="ateflo-circle-pop flex h-20 w-20 items-center justify-center rounded-full bg-[#1D75F7] text-white shadow-[0_12px_44px_rgba(29,117,247,0.45)]">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path className="ateflo-check-draw" d="M5 13l4 4L19 7" /></svg>
+          </span>
+          <p className="at-rise mt-5 text-[18px] font-extrabold tracking-tight text-[color:var(--at-grey-900)]" style={{ animationDelay: "0.3s" }}>글이 완성됐어요</p>
+          <p className="at-rise mt-1 text-[13px] text-neutral-400" style={{ animationDelay: "0.5s" }}>{charCount.toLocaleString("ko-KR")}자 · 검토 화면으로 갈게요</p>
+        </div>
       )}
     </>
   );
 }
 
-// 대기 화면 — 분석 라이브 체크리스트 + 완성될 글 스켈레톤
-function AnalysisWaiting({ steps, stepIdx, pro }: { steps: string[]; stepIdx: number; pro: boolean }) {
+// 대기 화면 — AI 오브 + 현재 단계 '한 문장 크게'(교체), 지난 단계는 작은 체크로 쌓임
+function AnalysisWaiting({ steps, stepIdx }: { steps: string[]; stepIdx: number; pro: boolean }) {
   return (
-    <div className="ateflo-block-in">
-      <div className="flex items-center gap-2 text-[15px] font-bold text-neutral-800">
-        <AteFloLogo pro={pro} animated size={20} /> 글감을 분석하고 있어요
+    <div className="flex min-h-[62vh] flex-col items-center justify-center text-center">
+      <div className="at-ai-orb" aria-hidden />
+      <div key={stepIdx} className="ateflo-soft-in mt-8 px-4">
+        <p className="text-[21px] font-extrabold leading-snug tracking-tight text-[color:var(--at-grey-900)]">{steps[stepIdx]}</p>
       </div>
-      <ul className="mt-5 space-y-3.5">
-        {steps.map((s, i) => {
-          const stateDone = i < stepIdx;
-          const active = i === stepIdx;
-          return (
-            <li key={i} className="flex items-center gap-3">
-              <span
-                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition-all duration-300 ${
-                  stateDone ? "bg-[#1D75F7] text-white" : active ? "bg-[#1D75F7]/15" : "bg-neutral-100"
-                }`}
-              >
-                {stateDone ? (
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
-                ) : active ? (
-                  <span className="h-2 w-2 animate-ping rounded-full bg-[#1D75F7]" />
-                ) : (
-                  <span className="h-1.5 w-1.5 rounded-full bg-neutral-300" />
-                )}
-              </span>
-              <span className={`text-[14.5px] transition-colors duration-300 ${stateDone ? "text-neutral-400" : active ? "font-semibold text-neutral-900" : "text-neutral-400"}`}>{s}</span>
-            </li>
-          );
-        })}
-      </ul>
-
-      {/* 완성될 글 스켈레톤 */}
-      <div className="mt-9 space-y-3">
-        <div className="ateflo-skel h-7 w-3/5" />
-        <div className="mt-5 space-y-2.5">
-          <div className="ateflo-skel h-3.5 w-full" />
-          <div className="ateflo-skel h-3.5 w-[92%]" />
-          <div className="ateflo-skel h-3.5 w-[97%]" />
-          <div className="ateflo-skel h-3.5 w-3/4" />
-        </div>
-        <div className="ateflo-skel mt-6 h-5 w-2/5" />
-        <div className="mt-4 space-y-2.5">
-          <div className="ateflo-skel h-3.5 w-[95%]" />
-          <div className="ateflo-skel h-3.5 w-full" />
-          <div className="ateflo-skel h-3.5 w-4/5" />
-        </div>
+      {/* 지나온 단계 — 작은 체크 스택(최근 3개만) */}
+      <div className="mt-6 space-y-1.5">
+        {steps.slice(Math.max(0, stepIdx - 3), stepIdx).map((s) => (
+          <p key={s} className="flex items-center justify-center gap-1.5 text-[12.5px] font-medium text-neutral-300">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#34c98e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+            {s}
+          </p>
+        ))}
       </div>
     </div>
   );
