@@ -395,8 +395,11 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
                 <p className="at-label">하나만 기억하세요</p>
                 <h2 className="at-headline mt-1 whitespace-pre-line">{"글 올릴 때\n‘검색 허용’ 체크"}</h2>
                 <p className="mt-2 text-sm leading-relaxed text-neutral-500">이게 켜져야 내 글이 네이버 검색에 나와요. 블로그 설정이 아니라 <b className="text-neutral-700">글을 발행할 때마다</b> 공개 설정에 나오는 옵션이에요.</p>
-                <div className="mt-5 rounded-2xl at-glass p-5">
-                  <p className="text-[12px] font-bold text-neutral-400">발행 화면에서 이렇게 보여요</p>
+                <div className="mt-5 select-none rounded-2xl at-glass p-5" aria-hidden>
+                  <div className="flex items-center justify-between">
+                    <p className="text-[12px] font-bold text-neutral-400">발행 화면에서 이렇게 보여요</p>
+                    <span className="rounded-md bg-neutral-100 px-1.5 py-0.5 text-[10px] font-bold text-neutral-400">미리보기</span>
+                  </div>
                   <div className="mt-3 space-y-2.5">
                     <div className="flex items-center justify-between">
                       <span className="text-[14px] font-semibold text-neutral-800">공개 설정</span>
