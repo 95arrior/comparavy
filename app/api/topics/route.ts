@@ -167,6 +167,45 @@ export async function GET(req: Request) {
   // 유저별 비밀이 아닌 공용 데이터이고, 조회 조건은 위에서 본인 확인된 프로필 값(vertical/sub)뿐이라 안전.
   const pool = createSupabaseAdminClient();
 
+  // ★트렌드 씨앗 × 개인화 증식 카드 — 키워드 풀과 독립. 조기 return에서도 트렌드가 나가게 함수로 분리.
+  //  existing: 이미 담긴 글감 키워드(정규화) 집합(중복 방지). 온라인 vertical만 대상.
+  interface TrendCard { keyword: string; title: string; demandLabel: string; ssak: boolean; region: boolean; tone: BloggerType; vol: number; comp: Comp; blogTotal: number | null; tag: string; newsContext?: string }
+  async function buildTrendCards(existing: Set<string>): Promise<TrendCard[]> {
+    const cards: TrendCard[] = [];
+    if (!user) return cards;
+    const bt = bloggerType(vertical);
+    if (!(bt === "online" && sub && !cluster)) return cards;
+    try {
+      const kstDay = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
+      const ampKey = `amp:${user.id}:${kstDay}:${excludeSet.size}`;
+      let amped: { keyword: string; title: string; newsContext: string | null }[] = [];
+      try {
+        const { data: c } = await pool.from("api_cache").select("value, expires_at").eq("key", ampKey).single();
+        if (c?.value && (!c.expires_at || new Date(c.expires_at).getTime() > Date.now())) amped = c.value as typeof amped;
+      } catch { /* 캐시 미스 */ }
+      if (amped.length === 0) {
+        const trends = await getTrendTopics(sub);
+        if (trends.length < 4) {
+          const rl = await checkRateLimit(supabase, user.id, `trend_seed_${sub}`, 3, 900);
+          if (rl.ok) { const cat = sub; after(async () => { try { if (!(await hasFreshTrends(cat))) await refreshCategoryTrends(cat); } catch { /* ignore */ } }); }
+        }
+        if (trends.length > 0) {
+          amped = await amplifyForUser(trends, profile ?? null, user.id, 2);
+          if (amped.length > 0) {
+            try { await pool.from("api_cache").upsert({ key: ampKey, value: amped, expires_at: new Date(Date.now() + 6 * 3600_000).toISOString(), updated_at: new Date().toISOString() }); } catch { /* ignore */ }
+          }
+        }
+      }
+      for (const t of amped) {
+        if (cards.length >= 2) break;
+        const nk = normalizeKeyword(t.keyword);
+        if (usedSet.has(nk) || existing.has(nk)) continue;
+        cards.push({ keyword: t.keyword, title: t.title, demandLabel: "지금 뜨는 중", ssak: true, region: false, tone: bt, vol: 0, comp: "low" as Comp, blogTotal: null, tag: "trend", newsContext: t.newsContext ?? undefined });
+      }
+    } catch { /* 트렌드 없이 진행 */ }
+    return cards;
+  }
+
   // least-used 우선 윈도우(times_assigned asc → 균등 분산). 본인이 쓴 건 제외 후 남은 것만.
   // 적정범위 = 월 500~5,000 (경쟁 과열·초저검색 회피). sub 없거나 부족하면 단계적으로 넓힌다.
   async function fetchPool(useSub: boolean, ranged: boolean): Promise<PoolRow[]> {
@@ -231,7 +270,7 @@ export async function GET(req: Request) {
       if (rows.length >= PICK) break;
     }
   }
-  if (rows.length === 0) return NextResponse.json({ topics: [] });
+  if (rows.length === 0) return NextResponse.json({ topics: await buildTrendCards(new Set()) });
 
   // ── 경쟁도 티어 ──
   // 낮음 = 싹 키워드(전설·희귀), 중간 = 일반(기본), 높음 = 빅키워드(최후)
@@ -367,7 +406,7 @@ export async function GET(req: Request) {
 
   // ── 제목·카테고리·노이즈판별(여유분 한 번에) ──
   const allKeywords = candidates.map((r) => r.keyword);
-  if (allKeywords.length === 0) return NextResponse.json({ topics: [] });
+  if (allKeywords.length === 0) return NextResponse.json({ topics: await buildTrendCards(new Set()) });
   // 통합 맥락(분야·대상·사용자 지역) → AI가 브랜드·타지역·대상불일치·무관 키워드까지 한 번에 거름
   const ctxParts = [`분야: ${sub || vertical}`];
   if (audActive) ctxParts.push(`대상: ${audSel.filter((a) => a !== AUDIENCE_ALL).join("·")}`);
@@ -473,48 +512,7 @@ export async function GET(req: Request) {
   });
   // ★실시간 트렌드 글감 — 카테고리 공유 풀(크론이 뉴스+웹검색으로 채움)에서 유저별 시드 회전으로 뽑는다.
   //  '그날 그시간' 신선함이 홈판 노출의 핵심. 1만 명이 같은 풀을 봐도 시드 회전으로 다른 조각을 봄.
-  type TrendCard = (typeof topics)[number] & { newsContext?: string };
-  const trendCards: TrendCard[] = [];
-  if (type === "online" && sub && !cluster && !regionMode) {
-    try {
-      const kstDay = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
-      // ★씨앗 × 개인화 증식 결과는 유저·하루 단위 캐시(재증식·재과금 방지). 교체(exclude) 시엔 새로.
-      const ampKey = `amp:${user.id}:${kstDay}:${excludeSet.size}`;
-      let amped: { keyword: string; title: string; newsContext: string | null }[] = [];
-      try {
-        const { data: c } = await pool.from("api_cache").select("value, expires_at").eq("key", ampKey).single();
-        if (c?.value && (!c.expires_at || new Date(c.expires_at).getTime() > Date.now())) amped = c.value as typeof amped;
-      } catch { /* 캐시 미스 */ }
-
-      if (amped.length === 0) {
-        let trends = await getTrendTopics(sub);
-        if (trends.length < 4) {
-          const rl = await checkRateLimit(supabase, user.id, `trend_seed_${sub}`, 3, 900);
-          if (rl.ok) { const cat = sub; after(async () => { try { if (!(await hasFreshTrends(cat))) await refreshCategoryTrends(cat); } catch { /* ignore */ } }); }
-        }
-        if (trends.length > 0) {
-          // 씨앗(최신·검증) × 유저 개인화 = 무중복 글감. 씨앗의 시의성·근거는 상속.
-          amped = await amplifyForUser(trends, profile ?? null, user.id, 2);
-          if (amped.length > 0) {
-            try {
-              await pool.from("api_cache").upsert({ key: ampKey, value: amped, expires_at: new Date(Date.now() + 6 * 3600_000).toISOString(), updated_at: new Date().toISOString() });
-            } catch { /* ignore */ }
-          }
-        }
-      }
-
-      for (const t of amped) {
-        if (trendCards.length >= 2) break;
-        const nk = normalizeKeyword(t.keyword);
-        if (usedSet.has(nk) || topics.some((x) => normalizeKeyword(x.keyword) === nk)) continue;
-        trendCards.push({
-          keyword: t.keyword, title: t.title, demandLabel: "지금 뜨는 중",
-          ssak: true, region: false, tone: type, vol: 0, comp: "low" as Comp,
-          blogTotal: null, tag: "trend", newsContext: t.newsContext ?? undefined,
-        });
-      }
-    } catch { /* 트렌드 없이 진행 */ }
-  }
+  const trendCards = await buildTrendCards(new Set(topics.map((x) => normalizeKeyword(x.keyword))));
 
   // 트렌드(신선) 먼저, 데이터 글감은 섞어서 뒤에. 지역 카드는 섞임.
   const shuffled = shuffle(topics, rng);
