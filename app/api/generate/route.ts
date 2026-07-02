@@ -17,6 +17,7 @@ import { recordAiResult } from "@/lib/aiHealth";
 import { VERTICAL_DEFAULTS } from "@/lib/blogProfile";
 import { stylePersonaInstruction } from "@/lib/stylePersona";
 import { newsContextFor } from "@/lib/newsTopics";
+import { isTimeSensitive } from "@/lib/timeSensitive";
 import { fetchNaverAutocomplete } from "@/lib/naverAutocomplete";
 
 export const maxDuration = 300;
@@ -156,10 +157,14 @@ export async function POST(request: Request) {
 
   const styleInstruction = stylePersonaInstruction(user.id);
   // ★최신화 안전망 — 이슈 글감이 아니어도 그 키워드의 오늘 뉴스를 근거로 주입(모델 기억의 '2024 최신' 사고 방지).
+  //  단, 뉴스 API 호출은 '시점 민감 글'에만(웹검색 게이트와 동일 기준) — 여행·레시피 등은 쿼터 낭비라 생략.
+  const timeSensitiveGen = isTimeSensitive({ keyword, angle: body.angle, vertical, newsContext: body.newsContext });
   const resolvedNewsContext: string | null =
     typeof body.newsContext === "string" && body.newsContext.trim()
       ? body.newsContext.slice(0, 1600)
-      : await newsContextFor(keyword).then((v) => (v ? v.slice(0, 1600) : null)).catch(() => null);
+      : timeSensitiveGen
+        ? await newsContextFor(keyword).then((v) => (v ? v.slice(0, 1600) : null)).catch(() => null)
+        : null;
   // ★네이버 자동완성 실데이터 — '관련 질문 점령'을 추측이 아니라 실제 함께 찾는 검색어로.
   //   긴 롱테일 문구는 자동완성이 비는 경우가 많아 '머리 키워드(앞 2어절)' 폴백. best-effort(2.5초 제한).
   const relatedQueries = await Promise.race([
