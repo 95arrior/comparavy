@@ -155,7 +155,7 @@ export default function ArticleModal({
           </button>
           <button
             onClick={() => setNaverOpen(true)}
-            className="rounded-xl bg-[#03C75A] px-5 py-2.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-95"
+            className="hidden rounded-xl bg-[#03C75A] px-5 py-2.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-95 md:inline-block"
           >
             네이버에 올리기
           </button>

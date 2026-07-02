@@ -41,10 +41,12 @@ export default function NaverPublishSheet({
           act: () => { onCopyAll(); setTimeout(() => setStep(1), 600); },
         },
         {
-          title: "네이버 블로그 앱을 열고\n글쓰기를 누르세요",
-          sub: "초록색 연필 버튼이에요. 본문을 길게 눌러 ‘붙여넣기’ 하세요.",
-          cta: "붙여넣었어요, 다음",
-          act: () => setStep(2),
+          title: "네이버 앱에서\n붙여넣으세요",
+          sub: "버튼을 누르면 글쓰기가 열려요. 본문을 길게 눌러 ‘붙여넣기’ 하고 돌아오세요.",
+          cta: "네이버 앱에서 글쓰기 열기",
+          act: () => onOpenNaverWrite(),
+          aux: { label: "붙여넣었어요, 다음", act: () => setStep(2) },
+          stores: true,
         },
         {
           title: "첫 줄을 잘라서\n제목칸으로 옮기세요",
@@ -95,6 +97,19 @@ export default function NaverPublishSheet({
         <button onClick={cur.act} className="at-press mt-5 w-full rounded-xl bg-[#03C75A] py-4 text-[15px] font-bold text-white transition hover:opacity-95">
           {cur.cta}
         </button>
+        {"aux" in cur && cur.aux && (
+          <button onClick={cur.aux.act} className="at-press mt-2 w-full rounded-xl bg-neutral-100 py-3.5 text-[14px] font-bold text-neutral-700 transition hover:bg-neutral-200">
+            {cur.aux.label}
+          </button>
+        )}
+        {"stores" in cur && cur.stores && (
+          <p className="mt-2.5 text-center text-[12px] text-neutral-400">
+            앱이 없다면 설치부터 —{" "}
+            <a href="https://apps.apple.com/kr/app/id328813873" target="_blank" rel="noopener noreferrer" className="font-semibold text-[#1D75F7]">App Store</a>
+            {" · "}
+            <a href="https://play.google.com/store/apps/details?id=com.nhn.android.blog" target="_blank" rel="noopener noreferrer" className="font-semibold text-[#1D75F7]">Play 스토어</a>
+          </p>
+        )}
 
         <div className="mt-2 flex items-center justify-between">
           {step > 0 ? (
