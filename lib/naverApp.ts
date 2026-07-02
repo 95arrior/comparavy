@@ -17,10 +17,14 @@ export function openNaverBlogApp(opts: { webPath?: string; desktopUrl?: string }
     return "android";
   }
   if (/iPhone|iPad|iPod/.test(ua)) {
+    // 앱 전환 신호를 3중으로 감지(visibilitychange가 늦게 오는 기기 대응) — 오판으로 스토어 가는 것 방지
     const timer = setTimeout(() => {
       if (!document.hidden) window.location.href = APPSTORE;
-    }, 2000);
-    document.addEventListener("visibilitychange", () => { if (document.hidden) clearTimeout(timer); }, { once: true });
+    }, 2500);
+    const cancel = () => clearTimeout(timer);
+    document.addEventListener("visibilitychange", () => { if (document.hidden) cancel(); }, { once: true });
+    window.addEventListener("pagehide", cancel, { once: true });
+    window.addEventListener("blur", cancel, { once: true });
     window.location.href = "naverblog://";
     return "ios";
   }

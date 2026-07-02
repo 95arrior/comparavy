@@ -18,11 +18,11 @@ const BASE_STYLE = [
 // ★다양성 변주 — 1만 명이 같은 글감이어도 같은 그림이 안 나오게.
 //  계정 시드(항상 같은 축) + 요청 난수(매번 다른 축) 조합으로 스타일·팔레트·구도·분위기를 배정.
 const ART_STYLES = [
-  "premium editorial flat illustration with refined shapes and subtle grain texture",
-  "sophisticated isometric illustration with gentle depth and soft shadows",
-  "elegant gouache-textured illustration with rich layered colors",
-  "modern gradient-mesh illustration with smooth dimensional forms",
-  "detailed line-and-fill illustration with delicate linework and warm fills",
+  "premium soft 3D clay render illustration with smooth rounded forms and studio lighting",
+  "high-end editorial flat illustration with rich textures, subtle grain and layered depth",
+  "sophisticated isometric 3D illustration with soft shadows and glossy accents",
+  "elegant painterly gouache illustration with rich color depth and visible brush texture",
+  "modern dimensional gradient illustration with glass-like translucent forms",
 ];
 const PALETTES = [
   "warm friendly palette of coral, cream and sky blue",
@@ -57,13 +57,13 @@ export async function generateBlogImage(slotDesc: string, articleTitle: string, 
   const palette = PALETTES[(uh >> 3) % PALETTES.length];
   const compo = COMPOSITIONS[nonce % COMPOSITIONS.length];
   const mood = MOODS[(nonce >> 4) % MOODS.length];
-  const STYLE = `${art}, ${palette}, ${compo}, ${mood} mood, modern Korean lifestyle blog aesthetic. Masterful composition, harmonious lighting, crisp refined details, high-end magazine quality. ${BASE_STYLE}`;
+  const STYLE = `${art}, ${palette}, ${compo}, ${mood} mood, modern Korean lifestyle blog aesthetic. Wide horizontal 16:9 banner composition. Masterful composition, cinematic lighting, crisp refined details, rich color depth, award-winning high-end magazine quality. ${BASE_STYLE}`;
   void articleTitle; // 한글 제목은 프롬프트에 넣지 않는다 — 모델이 그 글자를 그림에 그리려다 깨진 텍스트가 나옴
   const prompt = `Editorial illustration for a Korean lifestyle blog. Scene to depict: ${slotDesc}. ${STYLE}`;
   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { imageConfig: { aspectRatio: "16:9" } } }),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
