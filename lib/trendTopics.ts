@@ -25,14 +25,18 @@ const FRESH_MS = 6 * 3600_000; // 6시간 신선도
 export async function getTrendTopics(category: string): Promise<TrendTopic[]> {
   try {
     const admin = createSupabaseAdminClient();
-    const { data } = await admin
+    const run = (cols: string) => admin
       .from("trend_topics")
-      .select("keyword, title, news_context, longtails, expires_at")
+      .select(cols)
       .eq("category", category)
       .gt("expires_at", new Date().toISOString())
       .order("created_at", { ascending: false })
       .limit(40);
-    return (data ?? []).map((r) => ({ keyword: r.keyword, title: r.title, newsContext: r.news_context, longtails: Array.isArray(r.longtails) ? (r.longtails as Longtail[]) : [] }));
+    // longtails 컬럼(0049) 유무에 무관하게 작동 — 있으면 쓰고, 없으면(마이그레이션 전) 컬럼 빼고 재조회.
+    type Row = { keyword: string; title: string; news_context: string | null; longtails?: unknown };
+    const first = await run("keyword, title, news_context, longtails, expires_at");
+    const rows = (first.error ? (await run("keyword, title, news_context, expires_at")).data : first.data) as Row[] | null;
+    return (rows ?? []).map((r) => ({ keyword: r.keyword, title: r.title, newsContext: r.news_context, longtails: Array.isArray(r.longtails) ? (r.longtails as Longtail[]) : [] }));
   } catch {
     return [];
   }
