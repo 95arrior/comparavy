@@ -7,10 +7,12 @@ import GlassIcon from "@/components/GlassIcon";
 import SiteFooter from "@/components/SiteFooter";
 import { CREDIT_PACKS } from "@/lib/creditPacks";
 
-// ★네이버 수익화 랜딩 v2 — '섹션 나열'이 아니라 '제품이 화면 안에서 산다'.
-//  히어로: 아이폰 목업 안에서 실제 앱이 구동(링이 차오르고 글감이 갱신됨).
-//  스크롤 스토리: 폰 고정 + 스크롤로 장면 전환(글감 → 집필 → 발행) — 토스 문법.
-//  데모: 자동 시연 + 이미지 생성 연출. 메이트: 수치 카운트업.
+// ★네이버 수익화 랜딩 v3 — 애플 문법: 스크롤이 곧 연출.
+//  · 히어로: 스크롤에 따라 카피는 물러나고(패럴랙스 페이드) 폰은 다가온다
+//  · 앰비언트 라이트: 배경 광원이 스크롤 속도차로 흐른다
+//  · 스티키 스토리: 폰 고정 + 장면 크로스페이드 + 진행 점
+//  · 다크 시네마 섹션(메이트): 어두운 무대 위 발광 수치 카운트업
+//  · 대형 스테이트먼트 인터루드: 거대 타이포 한 문장
 //  정직 원칙: 가짜 카운터·수익 보장 금지. 시한·선점·공식 수치는 사실만.
 
 const BLUE = "#1D75F7";
@@ -57,6 +59,22 @@ const DEMO_TOPICS = [
 ];
 
 /* ═══════════ 유틸 훅 ═══════════ */
+/** 스크롤 Y — rAF 스로틀. 애플식 스크롤 연출의 심장. */
+function useScrollY() {
+  const [y, setY] = useState(0);
+  useEffect(() => {
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => { setY(window.scrollY); raf = 0; });
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => { window.removeEventListener("scroll", onScroll); if (raf) cancelAnimationFrame(raf); };
+  }, []);
+  return y;
+}
+
 function useTypewriter(html: string, active: boolean) {
   const [n, setN] = useState(0);
   const total = html.replace(/<[^>]+>/g, "").length;
@@ -98,14 +116,13 @@ function Rise({ children, delay = 0, className = "" }: { children: React.ReactNo
     return () => ob.disconnect();
   }, []);
   return (
-    <div ref={ref} className={className} style={{ opacity: on ? 1 : 0, transform: on ? "none" : "translateY(22px)", transition: `opacity 0.7s var(--at-ease) ${delay}ms, transform 0.7s var(--at-ease) ${delay}ms` }}>
+    <div ref={ref} className={className} style={{ opacity: on ? 1 : 0, transform: on ? "none" : "translateY(26px)", transition: `opacity 0.8s var(--at-ease) ${delay}ms, transform 0.8s var(--at-ease) ${delay}ms` }}>
       {children}
     </div>
   );
 }
 
-/** 카운트업 — 보이면 0→목표 */
-function CountUp({ to, suffix = "", duration = 1400 }: { to: number; suffix?: string; duration?: number }) {
+function CountUp({ to, suffix = "", duration = 1500 }: { to: number; suffix?: string; duration?: number }) {
   const ref = useRef<HTMLSpanElement>(null);
   const [v, setV] = useState(0);
   useEffect(() => {
@@ -128,22 +145,34 @@ function CountUp({ to, suffix = "", duration = 1400 }: { to: number; suffix?: st
   return <span ref={ref} className="tabular-nums">{v.toLocaleString("ko-KR")}{suffix}</span>;
 }
 
-/* ═══════════ 아이폰 목업 + 미니 앱 ═══════════ */
-function PhoneFrame({ children }: { children: React.ReactNode }) {
+/* ═══════════ 앰비언트 라이트 — 스크롤 속도차 광원 ═══════════ */
+function AmbientLights() {
+  const y = useScrollY();
   return (
-    <div className="relative mx-auto w-[290px] shrink-0 sm:w-[310px]">
-      <div className="rounded-[46px] bg-neutral-900 p-[10px] shadow-[0_34px_80px_-24px_rgba(20,40,90,0.5)]">
-        <div className="relative overflow-hidden rounded-[38px] bg-[#eef1f6]" style={{ aspectRatio: "9/19" }}>
-          {/* 노치 */}
-          <div className="absolute left-1/2 top-2.5 z-20 h-[22px] w-[86px] -translate-x-1/2 rounded-full bg-neutral-900" />
-          <div className="at-app-bg absolute inset-0 overflow-hidden">{children}</div>
-        </div>
-      </div>
+    <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden" aria-hidden>
+      <div className="absolute h-[520px] w-[520px] rounded-full opacity-50 blur-3xl" style={{ left: "-8%", top: 80 - y * 0.12, background: "radial-gradient(circle, rgba(96,150,255,0.35), transparent 65%)" }} />
+      <div className="absolute h-[440px] w-[440px] rounded-full opacity-40 blur-3xl" style={{ right: "-6%", top: 420 - y * 0.05, background: "radial-gradient(circle, rgba(168,140,255,0.3), transparent 65%)" }} />
+      <div className="absolute h-[400px] w-[400px] rounded-full opacity-30 blur-3xl" style={{ left: "34%", top: 900 - y * 0.02, background: "radial-gradient(circle, rgba(60,200,160,0.22), transparent 65%)" }} />
     </div>
   );
 }
 
-/** 미니 코스 링 — 루프 애니메이션(차오르고 잠시 쉬고 반복) */
+/* ═══════════ 아이폰 목업 + 미니 앱 ═══════════ */
+function PhoneFrame({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
+  return (
+    <div className="relative mx-auto w-[290px] shrink-0 sm:w-[310px]" style={style}>
+      <div className="rounded-[46px] bg-neutral-900 p-[10px] shadow-[0_44px_100px_-28px_rgba(20,40,90,0.55)]">
+        <div className="relative overflow-hidden rounded-[38px] bg-[#eef1f6]" style={{ aspectRatio: "9/19" }}>
+          <div className="absolute left-1/2 top-2.5 z-20 h-[22px] w-[86px] -translate-x-1/2 rounded-full bg-neutral-900" />
+          <div className="at-app-bg absolute inset-0 overflow-hidden">{children}</div>
+        </div>
+      </div>
+      {/* 유리 반사 하이라이트 */}
+      <div className="pointer-events-none absolute inset-0 rounded-[46px]" style={{ background: "linear-gradient(115deg, rgba(255,255,255,0.14) 0%, transparent 30%)" }} />
+    </div>
+  );
+}
+
 function MiniRing({ day = 7 }: { day?: number }) {
   const R = 44, C = 2 * Math.PI * R;
   const target = day / 20;
@@ -185,7 +214,6 @@ const MINI_TOPICS = [
   "예적금 금리 비교, 지금 갈아탈 은행",
 ];
 
-/** 폰 화면: 홈 장면 */
 function ScreenHome() {
   const [ti, setTi] = useState(0);
   useEffect(() => {
@@ -220,7 +248,6 @@ function ScreenHome() {
   );
 }
 
-/** 폰 화면: 집필 장면 */
 function ScreenWriting({ active }: { active: boolean }) {
   const { shown } = useTypewriter(DEMO_TOPICS[0].excerpt, active);
   return (
@@ -238,7 +265,6 @@ function ScreenWriting({ active }: { active: boolean }) {
   );
 }
 
-/** 폰 화면: 발행 완료 장면 */
 function ScreenDone() {
   return (
     <div className="flex h-full flex-col items-center justify-center px-6 text-center">
@@ -259,11 +285,72 @@ function ScreenDone() {
   );
 }
 
-/* ═══════════ 스크롤 스토리 — 폰 고정 + 장면 전환 ═══════════ */
+/* ═══════════ 히어로 — 스크롤 시네마 ═══════════ */
+function HeroCinema() {
+  const y = useScrollY();
+  const fade = Math.max(0, 1 - y / 480);           // 카피는 물러나고
+  const lift = Math.min(y * 0.18, 90);
+  const phoneScale = 1 + Math.min(y, 460) / 4200;  // 폰은 다가온다
+  const phoneLift = Math.min(y * 0.06, 34);
+  return (
+    <section className="mx-auto grid max-w-5xl items-center gap-12 px-5 pb-16 pt-28 sm:grid-cols-[1.1fr_0.9fr] sm:pb-28 sm:pt-40">
+      <div style={{ opacity: fade, transform: `translateY(${lift}px)` }}>
+        <Rise>
+          <p className="inline-flex items-center gap-1.5 rounded-full at-glass px-3.5 py-1.5 text-[12px] font-bold text-neutral-600">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> 네이버 블로그 수익화 코스
+          </p>
+        </Rise>
+        <Rise delay={90}>
+          <h1 className="mt-5 text-[40px] font-extrabold leading-[1.08] tracking-[-0.03em] sm:text-[60px]">
+            매일 글 하나면,
+            <br />
+            <span style={{ background: `linear-gradient(90deg, ${BLUE}, #38cdf8)`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              네이버가 수익이 돼요
+            </span>
+          </h1>
+        </Rise>
+        <Rise delay={180}>
+          <p className="mt-6 max-w-md text-[16px] leading-relaxed text-neutral-500">
+            뭘 쓸지 고민하지 마세요. 검색되는 글감부터 완성 글, 이미지까지 매일 준비돼요. 붙여넣으면 발행 끝.
+          </p>
+        </Rise>
+        <Rise delay={260}>
+          <div className="mt-9 flex flex-wrap items-center gap-4">
+            <Link href="/login" className="rounded-2xl bg-[#1D75F7] px-9 py-4 text-[16px] font-bold text-white shadow-[0_18px_44px_-14px_rgba(29,117,247,0.6)] transition-all duration-300 hover:scale-[1.04] hover:shadow-[0_22px_54px_-14px_rgba(29,117,247,0.75)] active:scale-[0.98]">
+              1,900원으로 시작하기
+            </Link>
+            <span className="text-[12px] leading-snug text-neutral-400">트라이얼 글 3편<br />자동결제 아님</span>
+          </div>
+        </Rise>
+      </div>
+      <Rise delay={220}>
+        <PhoneFrame style={{ transform: `scale(${phoneScale}) translateY(-${phoneLift}px)`, transition: "transform 0.1s linear" }}>
+          <ScreenHome />
+        </PhoneFrame>
+      </Rise>
+    </section>
+  );
+}
+
+/* ═══════════ 대형 스테이트먼트 ═══════════ */
+function Statement({ lines, sub }: { lines: string[]; sub?: string }) {
+  return (
+    <section className="mx-auto max-w-4xl px-5 py-28 text-center sm:py-40">
+      <h2 className="text-[34px] font-extrabold leading-[1.15] tracking-[-0.03em] text-neutral-900 sm:text-[56px]">
+        {lines.map((l, i) => (
+          <Rise key={l} delay={i * 160}><span className="block">{l}</span></Rise>
+        ))}
+      </h2>
+      {sub && <Rise delay={lines.length * 160 + 100}><p className="mx-auto mt-6 max-w-md text-[15px] leading-relaxed text-neutral-500">{sub}</p></Rise>}
+    </section>
+  );
+}
+
+/* ═══════════ 스티키 스토리 ═══════════ */
 const SCENES = [
-  { k: "topic", label: "01 · 글감", title: "뭘 쓸지, 데이터가 정해줘요", body: "네이버 검색량과 실제 경쟁(발행 글 수)으로 고른 '이길 수 있는 글감'이 매일 도착해요. 오늘 뜨는 이슈까지." },
-  { k: "write", label: "02 · 집필", title: "눈앞에서 글이 완성돼요", body: "네이버 로직(C-Rank·D.I.A.) 규격으로, 계정마다 다른 문체로. 원하면 이미지 3장도 같이 만들어져요." },
-  { k: "done", label: "03 · 발행", title: "붙여넣으면 끝, 계정은 안전", body: "자동 발행은 계정을 위험하게 해요. 마지막 붙여넣기만 남기는 게 우리 방식 — 발행 후 검색 반영까지 확인해 드려요." },
+  { k: "topic", label: "01 — 글감", title: "뭘 쓸지, 데이터가 정해줘요", body: "네이버 검색량과 실제 경쟁(발행 글 수)으로 고른 '이길 수 있는 글감'이 매일 도착해요. 오늘 뜨는 이슈까지." },
+  { k: "write", label: "02 — 집필", title: "눈앞에서 글이 완성돼요", body: "네이버 로직(C-Rank·D.I.A.) 규격으로, 계정마다 다른 문체로. 원하면 이미지 3장도 같이 만들어져요." },
+  { k: "done", label: "03 — 발행", title: "붙여넣으면 끝, 계정은 안전", body: "자동 발행은 계정을 위험하게 해요. 마지막 붙여넣기만 남기는 게 우리 방식 — 발행 후 검색 반영까지 확인해 드려요." },
 ];
 
 function StickyStory() {
@@ -284,25 +371,31 @@ function StickyStory() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
   return (
-    <div ref={wrapRef} className="relative" style={{ height: "260vh" }}>
+    <div ref={wrapRef} className="relative" style={{ height: "280vh" }}>
       <div className="sticky top-0 flex min-h-screen items-center">
         <div className="mx-auto grid w-full max-w-4xl items-center gap-10 px-5 sm:grid-cols-2">
-          {/* 텍스트 */}
           <div className="order-2 sm:order-1">
             {SCENES.map((s, i) => (
-              <div key={s.k} className="transition-all duration-500" style={{ opacity: scene === i ? 1 : 0.18, transform: scene === i ? "none" : "scale(0.985)" }}>
-                <p className="mt-6 text-[12px] font-bold tracking-widest" style={{ color: BLUE }}>{s.label}</p>
-                <h3 className="mt-1 text-[24px] font-extrabold leading-snug tracking-tight sm:text-[28px]">{s.title}</h3>
-                <p className="mt-2 max-w-sm text-[14px] leading-relaxed text-neutral-500">{s.body}</p>
+              <div key={s.k} className="transition-all duration-700" style={{ opacity: scene === i ? 1 : 0.14, transform: scene === i ? "none" : "translateY(6px) scale(0.985)", filter: scene === i ? "none" : "blur(0.4px)" }}>
+                <p className="mt-7 text-[12px] font-bold tracking-[0.2em]" style={{ color: BLUE }}>{s.label}</p>
+                <h3 className="mt-1.5 text-[26px] font-extrabold leading-snug tracking-tight sm:text-[30px]">{s.title}</h3>
+                <p className="mt-2.5 max-w-sm text-[14px] leading-relaxed text-neutral-500">{s.body}</p>
               </div>
             ))}
+            {/* 진행 점 */}
+            <div className="mt-8 flex gap-1.5">
+              {SCENES.map((s, i) => (
+                <span key={s.k} className="h-1.5 rounded-full transition-all duration-500" style={{ width: scene === i ? 22 : 6, background: scene === i ? BLUE : "#cfd8e6" }} />
+              ))}
+            </div>
           </div>
-          {/* 폰 */}
           <div className="order-1 sm:order-2">
             <PhoneFrame>
-              {scene === 0 && <ScreenHome />}
-              {scene === 1 && <ScreenWriting active />}
-              {scene === 2 && <ScreenDone />}
+              <div key={scene} className="ateflo-soft-in h-full">
+                {scene === 0 && <ScreenHome />}
+                {scene === 1 && <ScreenWriting active />}
+                {scene === 2 && <ScreenDone />}
+              </div>
             </PhoneFrame>
           </div>
         </div>
@@ -332,7 +425,7 @@ function Header() {
   );
 }
 
-/* ═══════════ 라이브 데모 (자동 재생 + 이미지 연출) ═══════════ */
+/* ═══════════ 라이브 데모 ═══════════ */
 function LiveDemo() {
   const [sel, setSel] = useState(0);
   const [run, setRun] = useState(false);
@@ -350,7 +443,7 @@ function LiveDemo() {
   useEffect(() => {
     if (run && boxRef.current) boxRef.current.scrollTop = boxRef.current.scrollHeight;
   }, [shown, run]);
-  const imgPhase = !run ? 0 : progress < 0.35 ? 0 : progress < 0.95 ? 1 : 2; // 0=대기 1=생성중 2=완성
+  const imgPhase = !run ? 0 : progress < 0.35 ? 0 : progress < 0.95 ? 1 : 2;
 
   return (
     <div ref={autoRef} className="mx-auto max-w-3xl">
@@ -372,7 +465,6 @@ function LiveDemo() {
       </div>
 
       <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_210px]">
-        {/* 원고 */}
         <div className={`relative overflow-hidden rounded-2xl transition-all duration-500 ${run ? "at-glass-strong" : "at-glass"}`}>
           {!run ? (
             <div className="flex h-[320px] flex-col items-center justify-center px-6 text-center">
@@ -399,7 +491,6 @@ function LiveDemo() {
           )}
         </div>
 
-        {/* 이미지 생성 연출 */}
         <div className="hidden flex-col gap-3 sm:flex">
           <div className={`relative flex-1 overflow-hidden rounded-2xl ${imgPhase === 1 ? "at-ai-swap at-glass" : "at-glass"}`}>
             {imgPhase < 2 ? (
@@ -429,97 +520,70 @@ function LiveDemo() {
 export default function NaverLanding() {
   return (
     <div className="at-app-bg min-h-screen overflow-x-clip text-neutral-900 antialiased">
+      <AmbientLights />
       <Header />
 
-      {/* ═══ 히어로 — 카피 × 살아있는 폰 ═══ */}
-      <section className="mx-auto grid max-w-5xl items-center gap-12 px-5 pb-16 pt-28 sm:grid-cols-[1.1fr_0.9fr] sm:pb-24 sm:pt-36">
-        <div>
-          <Rise>
-            <p className="inline-flex items-center gap-1.5 rounded-full at-glass px-3.5 py-1.5 text-[12px] font-bold text-neutral-600">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> 네이버 블로그 수익화 코스
-            </p>
-          </Rise>
-          <Rise delay={90}>
-            <h1 className="mt-5 text-[38px] font-extrabold leading-[1.12] tracking-tight sm:text-[54px]">
-              매일 글 하나면,
-              <br />
-              <span style={{ background: `linear-gradient(90deg, ${BLUE}, #38cdf8)`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                네이버가 수익이 돼요
-              </span>
-            </h1>
-          </Rise>
-          <Rise delay={180}>
-            <p className="mt-5 max-w-md text-[15.5px] leading-relaxed text-neutral-500">
-              뭘 쓸지 고민하지 마세요. 검색되는 글감부터 완성 글, 이미지까지 매일 준비돼요. 붙여넣으면 발행 끝.
-            </p>
-          </Rise>
-          <Rise delay={260}>
-            <div className="mt-8 flex flex-wrap items-center gap-4">
-              <Link href="/login" className="at-press rounded-2xl bg-[#1D75F7] px-8 py-4 text-[16px] font-bold text-white shadow-[0_14px_34px_-12px_rgba(29,117,247,0.55)] transition hover:opacity-90">
-                1,900원으로 시작하기
-              </Link>
-              <span className="text-[12px] leading-snug text-neutral-400">트라이얼 글 3편<br />자동결제 아님</span>
-            </div>
-          </Rise>
-        </div>
-        <Rise delay={200}>
-          <PhoneFrame><ScreenHome /></PhoneFrame>
-        </Rise>
-      </section>
+      <HeroCinema />
 
-      {/* ═══ 스크롤 스토리 ═══ */}
       <StickyStory />
 
+      {/* 스테이트먼트 1 */}
+      <Statement
+        lines={["쓰는 건 AI가,", "찾는 건 네이버가,", "버는 건 당신이."]}
+        sub="하루 5분. 그게 이 코스에서 당신이 할 전부예요."
+      />
+
       {/* ═══ 라이브 데모 ═══ */}
-      <section className="mx-auto max-w-4xl px-5 pb-24 pt-8">
+      <section className="mx-auto max-w-4xl px-5 pb-28">
         <Rise>
-          <p className="text-center text-[12px] font-bold tracking-widest" style={{ color: BLUE }}>LIVE DEMO</p>
-          <h2 className="mt-2 text-center text-[26px] font-extrabold tracking-tight sm:text-[32px]">말보다 증거, 직접 보세요</h2>
+          <p className="text-center text-[12px] font-bold tracking-[0.25em]" style={{ color: BLUE }}>LIVE DEMO</p>
+          <h2 className="mt-2 text-center text-[28px] font-extrabold tracking-tight sm:text-[34px]">말보다 증거, 직접 보세요</h2>
         </Rise>
-        <Rise delay={100} className="mt-8"><LiveDemo /></Rise>
+        <Rise delay={100} className="mt-9"><LiveDemo /></Rise>
       </section>
 
-      {/* ═══ 메이트 FOMO — 수치 카운트업 ═══ */}
-      <section className="mx-auto max-w-4xl px-5 pb-24">
+      {/* ═══ 다크 시네마 — 메이트 FOMO ═══ */}
+      <section className="px-3 pb-28 sm:px-5">
         <Rise>
-          <div className="overflow-hidden rounded-3xl at-glass-strong">
-            <div className="px-6 pt-10 text-center sm:px-12">
-              <p className="text-[12px] font-bold tracking-widest text-amber-500">2026 공식 · 네이버 메이트</p>
-              <h2 className="mt-2 text-[26px] font-extrabold leading-snug tracking-tight sm:text-[32px]">
+          <div className="relative mx-auto max-w-5xl overflow-hidden rounded-[2.5rem] px-6 py-16 text-center sm:px-12 sm:py-24" style={{ background: "#0a1020" }}>
+            {/* 무대 조명 */}
+            <div className="pointer-events-none absolute inset-0" aria-hidden style={{ background: "radial-gradient(700px 320px at 50% -8%, rgba(56,140,255,0.28), transparent 70%), radial-gradient(420px 260px at 82% 88%, rgba(140,90,255,0.18), transparent 70%)" }} />
+            <div className="relative">
+              <p className="text-[12px] font-bold tracking-[0.25em] text-amber-400">2026 공식 · 네이버 메이트</p>
+              <h2 className="mt-3 text-[30px] font-extrabold leading-[1.15] tracking-tight text-white sm:text-[44px]">
                 네이버가 블로거에게
                 <br />직접 돈을 주기 시작했어요
               </h2>
-              <p className="mx-auto mt-3 max-w-md text-[13.5px] leading-relaxed text-neutral-500">
-                AI 브리핑에 인용되는 글을 쓰면 매달 선정해 지원금을 줘요. <b className="text-neutral-700">베타는 2026년 12월까지</b> — 먼저 쌓은 블로그가 유리한 게임이에요.
+              <p className="mx-auto mt-4 max-w-md text-[14px] leading-relaxed text-white/55">
+                AI 브리핑에 인용되는 글을 쓰면 매달 선정해 지원금을 줘요.
+                <b className="text-white/85"> 베타는 2026년 12월까지</b> — 먼저 쌓은 블로그가 유리한 게임이에요.
               </p>
-            </div>
-            <div className="mt-8 grid grid-cols-3 divide-x divide-neutral-200/60 border-t border-neutral-200/60">
-              {[
-                { v: 30, s: "만원", l: "선정 시 매달" },
-                { v: 300, s: "만원", l: "스페셜 100명" },
-                { v: 1000, s: "만원", l: "스페셜 10명" },
-              ].map((x) => (
-                <div key={x.l} className="px-2 py-7 text-center">
-                  <p className="text-[26px] font-extrabold tracking-tight sm:text-[34px]" style={{ color: BLUE }}>
-                    <CountUp to={x.v} suffix={x.s} />
-                  </p>
-                  <p className="mt-1 text-[11.5px] font-semibold text-neutral-400">{x.l}</p>
-                </div>
-              ))}
+              <div className="mx-auto mt-12 grid max-w-2xl grid-cols-3 gap-2">
+                {[
+                  { v: 30, s: "만원", l: "선정 시 매달" },
+                  { v: 300, s: "만원", l: "스페셜 100명" },
+                  { v: 1000, s: "만원", l: "스페셜 10명" },
+                ].map((x) => (
+                  <div key={x.l} className="rounded-2xl px-2 py-7" style={{ background: "rgba(255,255,255,0.045)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                    <p className="text-[26px] font-extrabold tracking-tight sm:text-[38px]" style={{ background: "linear-gradient(90deg, #7db5ff, #38cdf8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                      <CountUp to={x.v} suffix={x.s} />
+                    </p>
+                    <p className="mt-1.5 text-[11.5px] font-semibold text-white/40">{x.l}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mx-auto mt-10 max-w-md text-[12.5px] leading-relaxed text-amber-200/70">
+                좋은 글감은 <b className="text-amber-200">선점 게임</b> — 그 검색어의 첫 완결 글이 검색을 가져가요. 오늘 쓴 글이 내일의 자리예요.
+              </p>
             </div>
           </div>
         </Rise>
-        <Rise delay={140}>
-          <p className="mt-4 rounded-2xl bg-amber-50 p-4 text-center text-[12.5px] leading-relaxed text-amber-800">
-            좋은 글감은 <b>선점 게임</b> — 그 검색어의 첫 완결 글이 검색을 가져가요. 오늘 쓴 글이 내일의 자리예요.
-          </p>
-        </Rise>
       </section>
 
-      {/* ═══ 신뢰 — 정직한 차별점 ═══ */}
-      <section className="mx-auto max-w-3xl px-5 pb-24">
-        <Rise><h2 className="text-center text-[26px] font-extrabold tracking-tight sm:text-[32px]">그럴듯한 약속 대신, 구조</h2></Rise>
-        <div className="mt-8 space-y-3">
+      {/* ═══ 신뢰 ═══ */}
+      <section className="mx-auto max-w-3xl px-5 pb-28">
+        <Rise><h2 className="text-center text-[28px] font-extrabold tracking-tight sm:text-[34px]">그럴듯한 약속 대신, 구조</h2></Rise>
+        <div className="mt-9 space-y-3">
           {[
             { t: "실데이터로 고르는 글감", s: "감이 아니라 네이버 검색량과 실제 발행 글 수(경쟁)로 골라요. 발행 후엔 검색에 잡혔는지도 자동 확인해 드려요." },
             { t: "네이버 공식 가이드 기반 글", s: "C-Rank·D.I.A.와 2026 AI 브리핑 가이드(경험·출처·완결) 규격. 계정마다 문체가 달라 같은 글이 없어요." },
@@ -540,12 +604,12 @@ export default function NaverLanding() {
       </section>
 
       {/* ═══ 가격 ═══ */}
-      <section className="mx-auto max-w-2xl px-5 pb-24">
+      <section className="mx-auto max-w-2xl px-5 pb-28">
         <Rise>
-          <h2 className="text-center text-[26px] font-extrabold tracking-tight sm:text-[32px]">커피 반 잔으로 시작</h2>
+          <h2 className="text-center text-[28px] font-extrabold tracking-tight sm:text-[34px]">커피 한 잔으로 시작</h2>
           <p className="mt-2 text-center text-[13.5px] text-neutral-500">구독 아님 · 1회 결제 · 크레딧은 유효기간 없이 계정에</p>
         </Rise>
-        <div className="mt-8 space-y-2.5">
+        <div className="mt-9 space-y-2.5">
           {CREDIT_PACKS.map((p, i) => (
             <Rise key={p.key} delay={i * 60}>
               <Link href="/login" className={`at-press relative flex items-center gap-4 rounded-2xl p-5 transition ${p.highlight ? "at-glass-strong ring-2 ring-[#1D75F7]" : "at-glass hover:ring-1 hover:ring-[#1D75F7]/40"}`}>
@@ -563,9 +627,9 @@ export default function NaverLanding() {
       </section>
 
       {/* ═══ FAQ ═══ */}
-      <section className="mx-auto max-w-2xl px-5 pb-24">
-        <Rise><h2 className="text-center text-[26px] font-extrabold tracking-tight sm:text-[32px]">솔직하게 답할게요</h2></Rise>
-        <div className="mt-8 space-y-2.5">
+      <section className="mx-auto max-w-2xl px-5 pb-28">
+        <Rise><h2 className="text-center text-[28px] font-extrabold tracking-tight sm:text-[34px]">솔직하게 답할게요</h2></Rise>
+        <div className="mt-9 space-y-2.5">
           {[
             { q: "AI가 쓴 글, 네이버가 싫어하지 않나요?", a: "네이버 공식 답변: \"AI 도구 사용 자체는 패널티가 아니에요.\" 걸러지는 건 무분별한 복제 글이에요. 에이트플로는 계정마다 문체가 다르고, 경험·출처·완결 같은 공식 기준에 맞춰 써요. 마지막에 내 경험 한 줄을 얹으면 가장 좋아요." },
             { q: "언제부터 수익이 나요?", a: "보장 못 해요 — 그게 정직한 답이에요. 통상 흐름은 발행 후 2일 안에 검색 반영, 1~2주부터 노출, 승인 신청은 글이 쌓인 뒤예요. 이 과정 전체를 코스로 안내하고, 검색 반영 여부를 자동으로 확인해 드려요." },
@@ -586,10 +650,10 @@ export default function NaverLanding() {
       </section>
 
       {/* ═══ 파이널 훅 ═══ */}
-      <section className="mx-auto max-w-3xl px-5 pb-24 text-center">
+      <section className="mx-auto max-w-3xl px-5 pb-28 text-center">
         <Rise>
-          <div className="rounded-3xl at-glass-strong px-6 py-14 sm:px-12">
-            <h2 className="text-[28px] font-extrabold leading-snug tracking-tight sm:text-[36px]">
+          <div className="rounded-3xl at-glass-strong px-6 py-16 sm:px-12">
+            <h2 className="text-[30px] font-extrabold leading-[1.2] tracking-tight sm:text-[40px]">
               1년 뒤에도 <span style={{ color: BLUE }}>"해볼걸"</span> 하고
               <br />있을 순 없잖아요
             </h2>
@@ -597,7 +661,7 @@ export default function NaverLanding() {
               블로그는 복리예요. 오늘 쓴 글이 계속 검색되고, 계속 일해요.
               <br />시작이 늦어질수록 복리도 늦게 시작돼요.
             </p>
-            <Link href="/login" className="at-press mt-8 inline-block rounded-2xl bg-[#1D75F7] px-10 py-4 text-[16px] font-bold text-white shadow-[0_14px_34px_-12px_rgba(29,117,247,0.55)] transition hover:opacity-90">
+            <Link href="/login" className="mt-9 inline-block rounded-2xl bg-[#1D75F7] px-10 py-4 text-[16px] font-bold text-white shadow-[0_18px_44px_-14px_rgba(29,117,247,0.6)] transition-all duration-300 hover:scale-[1.04] active:scale-[0.98]">
               오늘 첫 글 쓰기 (D-1)
             </Link>
             <p className="mt-3 text-[12px] text-neutral-400">1,900원 트라이얼 · 자동결제 아님 · 7일 환불</p>
