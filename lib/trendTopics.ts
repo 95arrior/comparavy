@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { createSupabaseAdminClient } from "./supabase-server";
-import { fetchNews } from "./newsTopics";
+import { gatherHeadlines } from "./trendSources";
+import { fetchTrend } from "./naverDatalab";
 import { isUnsafeKeyword } from "./keywordSafety";
 import { logUsage } from "./usageLog";
 
@@ -44,9 +45,9 @@ export async function refreshCategoryTrends(category: string): Promise<number> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return 0;
 
-  const cleaned = category.replace(/[·/]/g, " ").trim();
-  const news = await fetchNews(cleaned).catch(() => []);
-  const newsList = news.slice(0, 10).map((n, i) => `${i + 1}. [${n.press}] ${n.title} — ${n.description.slice(0, 100)}`).join("\n");
+  // ★다중 소스 — 네이버+구글 뉴스를 다양한 소주제로 수집(은행권 편향 제거)
+  const heads = await gatherHeadlines(category).catch(() => []);
+  const newsList = heads.slice(0, 20).map((n, i) => `${i + 1}. (${n.seed}) ${n.title} — ${n.description.slice(0, 90)}`).join("\n");
 
   const kstDate = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
   const client = new Anthropic({ apiKey });
@@ -98,7 +99,7 @@ ${newsList || "(뉴스 없음 — web_search로 조사)"}
     const parsed = JSON.parse(m[0]) as { keyword?: string; title?: string }[];
 
     // 근거 컨텍스트(뉴스) — 생성 시 최신성 주입용
-    const ctx = news.slice(0, 5).map((n) => `- [${n.press}] ${n.title}: ${n.description.slice(0, 140)}`).join("\n") || null;
+    const ctx = heads.slice(0, 6).map((n) => `- [${n.press || n.seed}] ${n.title}: ${n.description.slice(0, 130)}`).join("\n") || null;
 
     const seen = new Set<string>();
     const rows = [];
@@ -113,6 +114,18 @@ ${newsList || "(뉴스 없음 — web_search로 조사)"}
       rows.push({ category, keyword: kw, title: ti, news_context: ctx, created_at: new Date().toISOString(), expires_at: expires });
     }
     if (rows.length === 0) return 0;
+
+    // ★데이터랩 급상승 랭킹 — 합성 키워드의 실제 검색 momentum으로 정렬(지금 뜨는 게 위로).
+    //  데이터랩 그룹 한도 5개 → 배치로 조회. 실패해도 순서만 원본 유지(치명적 아님).
+    try {
+      const rising = new Map<string, number>();
+      for (let i = 0; i < rows.length; i += 5) {
+        const batch = rows.slice(i, i + 5).map((r) => r.keyword);
+        const tr = await fetchTrend(batch).catch(() => ({ items: [] as { keyword: string; rising: boolean; latest: number }[] }));
+        for (const it of tr.items) rising.set(it.keyword, (it.rising ? 1000 : 0) + (it.latest ?? 0));
+      }
+      rows.sort((a, b) => (rising.get(b.keyword) ?? 0) - (rising.get(a.keyword) ?? 0));
+    } catch { /* 랭킹 실패 — 원본 순서 유지 */ }
 
     const admin = createSupabaseAdminClient();
     // 이 카테고리의 만료분 정리 후 새로 upsert
