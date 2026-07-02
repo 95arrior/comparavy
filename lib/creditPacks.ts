@@ -1,7 +1,9 @@
 // 크레딧 팩 정의 — 클라이언트·서버 공용 순수 데이터 (서버 헬퍼는 lib/credits.ts).
-// 마진 하한 70%(크레딧당 500원). 트라이얼은 마진 계산 제외(어뷰징 필터+결제 워밍업).
+// ★단위 설계(Runway 패턴): 글 1편 = 10크레딧, 팩은 수백~천 단위 — '큰 지갑에서 조금씩' 느낌 +
+//   미래 경량 기능(제목 재생성 2cr, 태그 1cr 등) 차등 과금 여지. 가격·마진은 1편=1cr 시절과 동일(표기만 10배).
+// 마진 하한 70%(글 1편분=500원). 트라이얼은 마진 계산 제외(어뷰징 필터+결제 워밍업).
 
-export const GENERATE_COST = 1; // 글 1편당 차감 크레딧
+export const GENERATE_COST = 10; // 글 1편당 차감 크레딧
 
 export interface CreditPack {
   key: string;
@@ -15,10 +17,10 @@ export interface CreditPack {
 }
 
 export const CREDIT_PACKS: CreditPack[] = [
-  { key: "trial", name: "트라이얼", credits: 3, price: 1900, desc: "코스 3일 체험 — 글 3편" },
-  { key: "standard", name: "스탠다드", credits: 30, price: 19900, desc: "한 달, 매일 1편 페이스" },
-  { key: "approval", name: "승인 팩", credits: 60, price: 34900, salePrice: 29900, desc: "애드포스트 승인 코스(20일×3편) 완주", highlight: true },
-  { key: "pro", name: "프로", credits: 100, price: 49900, desc: "본격 운영 · 크레딧당 최저가" },
+  { key: "trial", name: "트라이얼", credits: 30, price: 1900, desc: "코스 3일 체험 — 글 3편" },
+  { key: "standard", name: "스탠다드", credits: 300, price: 19900, desc: "한 달, 매일 1편 페이스 — 글 30편" },
+  { key: "approval", name: "승인 팩", credits: 600, price: 34900, salePrice: 29900, desc: "애드포스트 승인 코스(20일×3편) 완주 — 글 60편", highlight: true },
+  { key: "pro", name: "프로", credits: 1000, price: 49900, desc: "본격 운영 — 글 100편 · 편당 최저가" },
 ];
 
 export function packByKey(key: string): CreditPack | undefined {

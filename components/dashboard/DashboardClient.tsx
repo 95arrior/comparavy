@@ -633,7 +633,7 @@ export default function DashboardClient(props: DashboardProps) {
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-neutral-800 text-base font-bold text-white">{initial}</span>
               <div className="min-w-0">
                 <p className="truncate text-[15px] font-bold text-neutral-900">{displayName}</p>
-                <p className="text-[13px] text-neutral-400">크레딧 <b className="text-[#1D75F7]">{credits}</b>개 · 글 1편 = 1크레딧</p>
+                <p className="text-[13px] text-neutral-400">크레딧 <b className="text-[#1D75F7]">{credits.toLocaleString("ko-KR")}</b> · 글 1편 = 10크레딧</p>
               </div>
             </div>
 
@@ -661,7 +661,7 @@ export default function DashboardClient(props: DashboardProps) {
               <a href="/pricing" className="flex w-full items-center gap-3 px-5 py-4 text-left transition active:bg-neutral-50">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#1D75F7]/10 text-[#1D75F7]"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" /></svg></span>
                 <span className="flex-1 text-[15px] font-medium text-neutral-800">크레딧 충전</span>
-                <span className="text-[13px] text-neutral-400">{credits}개 보유</span>
+                <span className="text-[13px] text-neutral-400">{credits.toLocaleString("ko-KR")} 보유</span>
                 <svg className="text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
               </a>
               <button onClick={openNews} className="flex w-full items-center gap-3 px-5 py-4 text-left transition active:bg-neutral-50">

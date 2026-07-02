@@ -40,7 +40,7 @@ export default function CreditPaywallSheet({
           <p className="text-[17px] font-bold text-neutral-900">크레딧이 다 떨어졌어요</p>
         )}
         <p className="mt-2 text-[13px] leading-relaxed text-neutral-500">
-          크레딧을 충전하면 지금 바로 이어서 쓸 수 있어요. 글 1편 = 1크레딧.
+          크레딧을 충전하면 지금 바로 이어서 쓸 수 있어요. 글 1편 = 10크레딧.
         </p>
 
         <div className="mt-4 space-y-2">
@@ -55,7 +55,7 @@ export default function CreditPaywallSheet({
               </div>
               <div className="shrink-0 text-right">
                 <p className="text-[14px] font-bold text-neutral-900">{p.price.toLocaleString("ko-KR")}원</p>
-                <p className="text-[11px] text-neutral-400">{p.credits}크레딧</p>
+                <p className="text-[11px] text-neutral-400">{p.credits.toLocaleString("ko-KR")}크레딧</p>
               </div>
             </div>
           ))}
