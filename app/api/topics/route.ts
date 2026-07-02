@@ -449,6 +449,8 @@ export async function GET(req: Request) {
     try {
       const issue = await todayIssueTopic(sub);
       if (issue && !usedSet.has(normalizeKeyword(issue.keyword))) {
+        // 신규 이슈는 월 검색량이 아직 집계 전(전월 데이터) — 대신 경쟁(문서수)은 실시간 실측
+        const issueBlogTotal = await fetchBlogTotal(issue.keyword).catch(() => null);
         issueFirst = {
           keyword: issue.keyword,
           title: issue.title,
@@ -457,8 +459,8 @@ export async function GET(req: Request) {
           region: false,
           tone: type,
           vol: 0,
-          comp: "low" as Comp,
-          blogTotal: null,
+          comp: (issueBlogTotal != null ? compFromBlogTotal(issueBlogTotal) : "low") as Comp,
+          blogTotal: issueBlogTotal,
           tag: "issue",
           newsContext: issue.newsContext,
         };

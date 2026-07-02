@@ -15,7 +15,7 @@ export interface IssueTopic {
 
 interface NewsItem { title: string; description: string; press: string }
 
-async function fetchNews(query: string): Promise<NewsItem[]> {
+export async function fetchNews(query: string): Promise<NewsItem[]> {
   const id = process.env.NAVER_DATALAB_CLIENT_ID;
   const secret = process.env.NAVER_DATALAB_SECRET;
   if (!id || !secret) return [];
@@ -93,4 +93,16 @@ ${list}
     });
   } catch { /* 캐시 실패 무시 */ }
   return topic;
+}
+
+/** ★모든 글 생성용 — 키워드의 오늘 뉴스를 근거 자료 문자열로(없으면 null). 시점 민감 정보의 '2024 최신' 사고 방지. */
+export async function newsContextFor(keyword: string): Promise<string | null> {
+  try {
+    const items = await Promise.race([
+      fetchNews(keyword),
+      new Promise<[]>((r) => setTimeout(() => r([]), 2500)),
+    ]);
+    if (!items || items.length < 2) return null;
+    return items.slice(0, 5).map((n) => `- [${n.press}] ${n.title}: ${n.description.slice(0, 150)}`).join("\n");
+  } catch { return null; }
 }

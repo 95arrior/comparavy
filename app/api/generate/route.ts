@@ -16,6 +16,7 @@ import { logUsage } from "@/lib/usageLog";
 import { recordAiResult } from "@/lib/aiHealth";
 import { VERTICAL_DEFAULTS } from "@/lib/blogProfile";
 import { stylePersonaInstruction } from "@/lib/stylePersona";
+import { newsContextFor } from "@/lib/newsTopics";
 import { fetchNaverAutocomplete } from "@/lib/naverAutocomplete";
 
 export const maxDuration = 300;
@@ -150,6 +151,11 @@ export async function POST(request: Request) {
   const variantInstruction = `${variant.instruction} ${angle}`;
   // ★계정별 스타일 페르소나 — 같은 계정은 항상 같은 스타일, 계정 간은 다름(대량 발행 지문 방지). 유저 프롬프트 주입이라 캐싱 무영향.
   const styleInstruction = stylePersonaInstruction(user.id);
+  // ★최신화 안전망 — 이슈 글감이 아니어도 그 키워드의 오늘 뉴스를 근거로 주입(모델 기억의 '2024 최신' 사고 방지).
+  const resolvedNewsContext: string | null =
+    typeof body.newsContext === "string" && body.newsContext.trim()
+      ? body.newsContext.slice(0, 1600)
+      : await newsContextFor(keyword).then((v) => (v ? v.slice(0, 1600) : null)).catch(() => null);
   // ★네이버 자동완성 실데이터 — '관련 질문 점령'을 추측이 아니라 실제 함께 찾는 검색어로.
   //   긴 롱테일 문구는 자동완성이 비는 경우가 많아 '머리 키워드(앞 2어절)' 폴백. best-effort(2.5초 제한).
   const relatedQueries = await Promise.race([
@@ -227,7 +233,7 @@ export async function POST(request: Request) {
           if (derived) keyword = derived;
         }
         const article = await streamArticle(
-          { keyword, angle: body.angle, type, tone, maxWords, variantInstruction, styleInstruction, relatedQueries, newsContext: typeof body.newsContext === "string" ? body.newsContext.slice(0, 1600) : null, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userTitle },
+          { keyword, angle: body.angle, type, tone, maxWords, variantInstruction, styleInstruction, relatedQueries, newsContext: resolvedNewsContext, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userTitle },
           (bodyHtml) => send({ type: "body", html: bodyHtml }),
           (title) => send({ type: "title", title }),
           (u) => { void logUsage({ userId: user.id, model: u.model, kind: "generate", inputTokens: u.inputTokens, outputTokens: u.outputTokens }); },
