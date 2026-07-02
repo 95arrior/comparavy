@@ -63,6 +63,7 @@ export async function POST(request: Request) {
     tone?: string;
     promo?: boolean; // true=홍보용(업장 연결) | false=정보성(순수 정보). 네이버 수익형 단일 후 기본 false
     userStory?: string; // '내 이야기' 재료
+    newsContext?: string; // ★오늘 이슈 — 최신 뉴스 발췌(근거 자료)
   };
   try {
     body = await request.json();
