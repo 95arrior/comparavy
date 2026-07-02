@@ -2,7 +2,7 @@
 //   실행: npx tsx scripts/check-mobile-format.mjs
 // 390px 프레임(좌우 패딩 20px씩 = 본문폭 350px), 본문 15px 기준 한글 폭 약 15px -> 줄당 약 23자.
 const CHARS_PER_LINE = 23;
-const MAX_LINES = 6;
+const MAX_LINES = 4; // 중앙정렬·짧은문단 전제로 강화
 
 // 샘플: 규칙 준수 글(짧은 문단) vs 위반 글(벽돌 문단)
 const good = `<h2>청년 지원금, 이번에 확대됐어요</h2>
@@ -28,7 +28,7 @@ function check(name, html) {
   const over = rows.filter((r) => r.lines > MAX_LINES);
   console.log(`\n[${name}] 문단 ${rows.length}개, 최대 ${Math.max(...rows.map((r) => r.lines))}줄`);
   rows.forEach((r) => console.log(`   ${r.lines}줄  ${r.text}...`));
-  console.log(over.length === 0 ? "  통과 (6줄 초과 0개)" : `  실패 (6줄 초과 ${over.length}개)`);
+  console.log(over.length === 0 ? "  통과 (4줄 초과 0개)" : `  실패 (4줄 초과 ${over.length}개)`);
   return over.length === 0;
 }
 

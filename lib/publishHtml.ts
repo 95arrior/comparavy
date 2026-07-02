@@ -17,9 +17,12 @@ const PHOTO_RE = /\[사진:\s*([^\]]+)\]/g;
 // 모바일 리듬: 블록 요소에 정렬 스타일 주입(가운데 기본). config로 분리.
 function applyAlign(html: string): string {
   if (BODY_ALIGN !== "center") return html;
-  return html.replace(/<(p|h1|h2|h3|blockquote)(\s[^>]*)?>/gi, (m, tag, attr) => {
-    if (/style=/.test(attr ?? "")) return m.replace(/style="([^"]*)"/, 'style="$1;text-align:center"');
-    return `<${tag}${attr ?? ""} style="text-align:center">`;
+  // 모든 블록 요소에 통일 적용(li·ul·ol·blockquote 포함). ul/ol은 불릿이 중앙에서 어색하므로 list-style 제거.
+  return html.replace(/<(p|h1|h2|h3|h4|blockquote|li|ul|ol)(\s[^>]*)?>/gi, (m, tag, attr) => {
+    const t = String(tag).toLowerCase();
+    const extra = (t === "ul" || t === "ol") ? ";list-style-position:inside" : "";
+    if (/style=/.test(attr ?? "")) return m.replace(/style="([^"]*)"/, `style="$1;text-align:center${extra}"`);
+    return `<${tag}${attr ?? ""} style="text-align:center${extra}">`;
   });
 }
 
