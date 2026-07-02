@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { photoMarkerToGuide, photoMarkerToSlot, photoSlots, markToNaverBold, addNaverSpacing } from "@/lib/photoMarkers";
-import { splitLongParagraphs } from "@/lib/publishHtml";
+import { formatBody } from "@/lib/publishHtml";
 import CenterToast from "./CenterToast";
 import { copyImage as clipCopyImage, saveImage as clipSaveImage } from "@/lib/clipboard";
 import NaverPublishSheet from "./NaverPublishSheet";
@@ -157,17 +157,6 @@ export default function ArticleModal({
     }
   }
 
-  // ★본문 미리보기에 이미지 '그 자리' 반영 — n번째 사진 마커를 생성된 이미지로 치환(표시 전용, 저장 본문은 그대로)
-  function previewWithImages(html: string): string {
-    let idx = -1;
-    const withImgs = html.replace(/\[사진:\s*([^\]]+)\]/g, (m0, d) => {
-      idx += 1;
-      const u = imgs[idx]?.url;
-      if (!u) return m0;
-      return `<img src="${u}" alt="" style="border-radius:14px;max-height:340px;object-fit:cover;width:100%;margin:0.4em 0" />`;
-    });
-    return photoMarkerToSlot(withImgs);
-  }
 
   // 발행 전 광고규제 표현 검사(주제별). 자동 차단이 아니라 경고 + 대안 제시 → 사용자가 판단.
   const compliance = useMemo(() => {
@@ -315,8 +304,8 @@ export default function ArticleModal({
           <div className="w-full max-w-[390px] rounded-2xl bg-white px-5 py-6 shadow-[0_2px_20px_-8px_rgba(0,0,0,0.12)] ring-1 ring-black/[0.04]">
             <p className="mb-3 text-center text-[11px] font-semibold text-neutral-400">모바일에서 이렇게 보여요</p>
             <div
-              className="prose prose-neutral prose-sm max-w-none [&_img]:mx-auto [&_img]:rounded-lg [&_p]:my-3 [&_p]:text-[15px] [&_p]:leading-[1.75] [&_p]:text-center [&_h2]:text-center [&_h2]:mt-5 [&_h2]:text-[17px]"
-              dangerouslySetInnerHTML={{ __html: splitLongParagraphs(previewWithImages(bodyHtml)) }}
+              className="prose prose-neutral prose-sm max-w-none [word-break:keep-all] [&_img]:mx-auto [&_img]:rounded-lg [&_p]:my-3 [&_p]:text-[15px] [&_p]:leading-[1.75] [&_h2]:mt-5 [&_h2]:text-[17px]"
+              dangerouslySetInnerHTML={{ __html: formatBody({ title, bodyHtml, images: Object.fromEntries(Object.entries(imgs).filter(([, v]) => v.url).map(([k, v]) => [Number(k), v.url as string])) }) }}
             />
           </div>
         </div>

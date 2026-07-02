@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { isAdminEmail } from "@/lib/adminStats";
-import { buildRichHtml, splitLongParagraphs } from "@/lib/publishHtml";
+import { formatBody } from "@/lib/publishHtml";
 
 export const dynamic = "force-dynamic";
 
@@ -23,22 +23,25 @@ export async function GET(request: Request) {
   const art = data?.[0];
   if (!art) return NextResponse.json({ error: "글 없음(id 확인 또는 발행글 필요)" }, { status: 404 });
 
-  const body = splitLongParagraphs(String(art.body_html ?? "")); // 안전망 분할 후 측정(발행 실제 모양)
+  const body = String(art.body_html ?? "");
+  const published = formatBody({ title: art.title ?? "", bodyHtml: body }); // 발행 실제 HTML(정렬·데이터박스·분할 적용)
 
   // ① 문단 줄 수
-  const paras = [...body.matchAll(/<(p|li|blockquote)[^>]*>([\s\S]*?)<\/\1>/gi)]
+  // 산문 문단만 4줄 검사 — 데이터박스(<div ...>) 안의 블록은 제외
+  const proseHtml = published.replace(/<div[^>]*>[\s\S]*?<\/div>/gi, "");
+  const paras = [...proseHtml.matchAll(/<(p|blockquote)[^>]*>([\s\S]*?)<\/\1>/gi)]
     .map((m) => m[2].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim())
     .filter(Boolean);
   const paraLines = paras.map((t) => ({ preview: t.slice(0, 24), lines: Math.max(1, Math.ceil(t.length / CHARS_PER_LINE)) }));
   const over = paraLines.filter((p) => p.lines > MAX_LINES);
 
   // ② 정렬 커버리지 — 발행 HTML(buildRichHtml)의 전 블록에 text-align 있는지
-  const rich = buildRichHtml({ title: art.title ?? "", bodyHtml: body });
-  const blocks = [...rich.matchAll(/<(p|h1|h2|h3|h4|blockquote|li|ul|ol)(\s[^>]*)?>/gi)];
-  const noAlign = blocks.filter((b) => !/text-align:center/i.test(b[0]));
+  // 전 블록(div 데이터박스 포함)이 정렬(center 또는 left) 명시됐는지. li는 부모(ul/div) 정렬 상속이라 제외.
+  const blocks = [...published.matchAll(/<(p|h1|h2|h3|h4|blockquote|ul|ol|div)(\s[^>]*)?>/gi)];
+  const noAlign = blocks.filter((b) => !/text-align:(center|left)/i.test(b[0]));
 
   return NextResponse.json({
-    build_marker: "blockquote-9367a1a",
+    build_marker: "datablock-v2",
     article: { id: art.id, title: art.title, created_at: art.created_at },
     mobile_390px: {
       max_lines_threshold: MAX_LINES,
