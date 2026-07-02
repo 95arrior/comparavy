@@ -574,7 +574,7 @@ export default function DashboardClient(props: DashboardProps) {
 
             {/* 내 글 — v2: at 위계 헤더, 배너·뒤로가기 제거(하단 탭이 내비) */}
             {labView === "articles" && (
-              <main className="ateflo-page-in mx-auto max-w-2xl px-6 py-8 pb-16">
+              <main className="mx-auto max-w-2xl px-6 py-8 pb-16">
                 <p className="at-label">총 {articles.filter((a) => a.status !== "generating").length}편{articles.some((a) => a.status === "published") ? ` · 발행 ${articles.filter((a) => a.status === "published").length}편` : ""}</p>
                 <h1 className="at-headline mt-1">내 글</h1>
                 <div className="mt-5">
@@ -590,7 +590,7 @@ export default function DashboardClient(props: DashboardProps) {
 
             {/* 성과 — 발행 흐름 + 수익화 여정 */}
             {labView === "performance" && (
-              <main className="ateflo-page-in mx-auto max-w-2xl px-6 py-8 pb-16">
+              <main className="mx-auto max-w-2xl px-6 py-8 pb-16">
                 <p className="at-label">{blogProfile.blog_name ?? "내 블로그"}</p>
                 <h1 className="at-headline mt-1">성과</h1>
                 <div className="mt-5">

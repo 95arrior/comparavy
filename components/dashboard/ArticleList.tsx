@@ -70,7 +70,7 @@ export default function ArticleList({
 
   if (articles.length === 0) {
     return (
-      <div className="at-rise rounded-2xl at-glass px-6 py-14 text-center ">
+      <div className="rounded-2xl at-glass px-6 py-14 text-center ">
         <p className="text-[16px] font-bold text-[color:var(--at-grey-900)]">아직 쓴 글이 없어요</p>
         <p className="mt-1 text-[13px] text-neutral-400">오늘의 글부터 시작해 보세요</p>
         <button
@@ -92,7 +92,7 @@ export default function ArticleList({
   return (
     <div>
       {/* 필터 필 + 검색 */}
-      <div className="at-rise flex items-center gap-1.5">
+      <div className="flex items-center gap-1.5">
         {pills.map((p) => (
           <button
             key={p.key}
@@ -105,7 +105,7 @@ export default function ArticleList({
           </button>
         ))}
       </div>
-      <div className="at-rise at-d1 relative mt-3">
+      <div className="relative mt-3">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-neutral-300"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
         <input
           value={query}
@@ -122,7 +122,7 @@ export default function ArticleList({
           <button onClick={() => { setQuery(""); setStatus("all"); }} className="mt-3 text-[13px] font-bold text-[#1D75F7]">전체 보기</button>
         </div>
       ) : (
-        <div className="at-rise at-d2 mt-3 divide-y divide-neutral-50 overflow-hidden rounded-2xl at-glass ">
+        <div className="mt-3 divide-y divide-neutral-50 overflow-hidden rounded-2xl at-glass ">
           {filtered.map((a) => {
             const published = a.status === "published";
             return (

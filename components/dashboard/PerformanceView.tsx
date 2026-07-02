@@ -234,12 +234,12 @@ export default function PerformanceView({
 
   return (
     <div className="space-y-4">
-      <div className="at-rise"><AssetHero written={stats.written} streak={stats.streak} pub={stats.pub} onWrite={onWrite} /></div>
+      <div className=""><AssetHero written={stats.written} streak={stats.streak} pub={stats.pub} onWrite={onWrite} /></div>
 
       {open ? (
         <PathDetail p={open} onBack={() => setOpenIdx(null)} />
       ) : (
-        <div className="at-rise at-d2 rounded-2xl at-glass p-5 ">
+        <div className="rounded-2xl at-glass p-5 ">
           <p className="text-[15px] font-bold text-neutral-900">{title}</p>
           <div className="mt-1">
             {paths.map((p, i) => <PathRow key={p.label} p={p} first={i === 0} onOpen={() => setOpenIdx(i)} />)}
@@ -247,7 +247,7 @@ export default function PerformanceView({
         </div>
       )}
 
-      <div className="at-rise at-d3"><ExpectationCard pub={stats.pub} /></div>
+      <div className=""><ExpectationCard pub={stats.pub} /></div>
     </div>
   );
 }
