@@ -78,3 +78,13 @@ export async function chargeBillingKey(input: {
 export function makeOrderId(prefix = "ateflo"): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 }
+
+/** 단건 결제 승인 — 결제창 successUrl로 받은 paymentKey를 서버에서 최종 승인한다(금액 교차검증 필수). */
+export async function confirmPayment(input: {
+  paymentKey: string;
+  orderId: string;
+  amount: number;
+}): Promise<{ paymentKey: string; orderId: string; status: string; approvedAt?: string; method?: string }> {
+  const data = await tossFetch("/payments/confirm", input);
+  return { paymentKey: data.paymentKey, orderId: data.orderId, status: data.status, approvedAt: data.approvedAt, method: data.method };
+}
