@@ -72,7 +72,7 @@ function StatusChip({ status }: { status: PathStatus }) {
 
 function PathRow({ p, first, onOpen }: { p: Path; first: boolean; onOpen: () => void }) {
   return (
-    <button onClick={onOpen} className={`flex w-full items-center gap-3 py-3 text-left transition active:bg-neutral-50 ${first ? "" : "border-t border-neutral-100"}`}>
+    <button onClick={onOpen} className={`at-press flex w-full items-center gap-3 py-3 text-left transition ${first ? "" : "border-t border-neutral-100"}`}>
       <LogoSlot logo={p.logo} emoji={p.emoji} />
       <div className="min-w-0 flex-1">
         <p className="flex items-center gap-1.5">
@@ -213,12 +213,12 @@ export default function PerformanceView({
 
   return (
     <div className="space-y-4">
-      <AssetHero written={stats.written} streak={stats.streak} pub={stats.pub} onWrite={onWrite} />
+      <div className="at-rise"><AssetHero written={stats.written} streak={stats.streak} pub={stats.pub} onWrite={onWrite} /></div>
 
       {open ? (
         <PathDetail p={open} onBack={() => setOpenIdx(null)} />
       ) : (
-        <div className="rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
+        <div className="at-rise at-d2 rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
           <p className="text-[15px] font-bold text-neutral-900">{title}</p>
           <div className="mt-1">
             {paths.map((p, i) => <PathRow key={p.label} p={p} first={i === 0} onOpen={() => setOpenIdx(i)} />)}
@@ -226,7 +226,7 @@ export default function PerformanceView({
         </div>
       )}
 
-      <ExpectationCard pub={stats.pub} />
+      <div className="at-rise at-d3"><ExpectationCard pub={stats.pub} /></div>
     </div>
   );
 }

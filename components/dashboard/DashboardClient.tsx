@@ -522,7 +522,6 @@ export default function DashboardClient(props: DashboardProps) {
                 credits={credits}
                 onGoPerformance={() => goLabView("performance")}
                 onOpenCredits={() => setPage("credits")}
-                onWrite={() => goLabView("keywords")}
                 onWriteKeyword={(keyword, title) => {
                   // 글감 카드 [이 글 쓰기] → 잔액 0이면 '쓰려던 글이 잠긴' 페이월, 있으면 확인 시트.
                   if (credits <= 0) {
@@ -532,9 +531,6 @@ export default function DashboardClient(props: DashboardProps) {
                   setPendingWrite({ keyword, title });
                 }}
                 onSelect={setSelected}
-                onUpdated={(u) => setArticles((prev) => prev.map((a) => (a.id === u.id ? u : a)))}
-                onAllArticles={() => goLabView("articles")}
-                isAdmin={props.isAdmin}
                 profileKey={`${blogProfile.vertical}:${blogProfile.sub_category ?? ""}`}
               />
             )}
@@ -575,28 +571,28 @@ export default function DashboardClient(props: DashboardProps) {
               </main>
             )}
 
-            {/* 내 글 */}
+            {/* 내 글 — v2: at 위계 헤더, 배너·뒤로가기 제거(하단 탭이 내비) */}
             {labView === "articles" && (
-              <main className="ateflo-page-in mx-auto max-w-5xl px-6 py-10">
-                <button onClick={() => goLabView("home")} className="-ml-1 flex items-center gap-1 text-sm text-neutral-400 transition hover:text-neutral-700"><span className="text-base leading-none">←</span> 홈</button>
-                <h1 className="mt-3 font-pretendard text-[26px] font-bold tracking-tight text-neutral-900 sm:text-[30px]">내 글</h1>
-                <p className="mb-6 mt-1.5 text-[15px] text-neutral-400">총 {articles.filter((a) => a.status !== "generating").length}편{articles.some((a) => a.status === "published") ? ` · 발행 ${articles.filter((a) => a.status === "published").length}편` : ""}</p>
-                {nextStepBanner}
-                <ArticleList
-                  articles={articles}
-                  onOpen={setSelected}
-                  onGoGenerate={() => goLabView("home")}
-                  onUpdated={(updated) => setArticles((prev) => prev.map((a) => (a.id === updated.id ? updated : a)))}
-                />
+              <main className="ateflo-page-in mx-auto max-w-2xl px-6 py-8 pb-16">
+                <p className="at-label">총 {articles.filter((a) => a.status !== "generating").length}편{articles.some((a) => a.status === "published") ? ` · 발행 ${articles.filter((a) => a.status === "published").length}편` : ""}</p>
+                <h1 className="at-headline mt-1">내 글</h1>
+                <div className="mt-5">
+                  <ArticleList
+                    articles={articles}
+                    onOpen={setSelected}
+                    onGoGenerate={() => goLabView("home")}
+                    onUpdated={(updated) => setArticles((prev) => prev.map((a) => (a.id === updated.id ? updated : a)))}
+                  />
+                </div>
               </main>
             )}
 
             {/* 성과 — 발행 흐름 + 수익화 여정 */}
             {labView === "performance" && (
-              <main className="ateflo-page-in mx-auto max-w-2xl px-6 py-10">
-                <h1 className="font-pretendard text-[26px] font-bold tracking-tight text-neutral-900 sm:text-[30px]">성과</h1>
-                <p className="mt-1.5 text-[15px] text-neutral-400">{blogProfile.blog_name ?? "내 블로그"}</p>
-                <div className="mt-7">
+              <main className="ateflo-page-in mx-auto max-w-2xl px-6 py-8 pb-16">
+                <p className="at-label">{blogProfile.blog_name ?? "내 블로그"}</p>
+                <h1 className="at-headline mt-1">성과</h1>
+                <div className="mt-5">
                   <PerformanceView
                     articles={articles}
                     onWrite={() => goLabView("home")}
@@ -618,7 +614,7 @@ export default function DashboardClient(props: DashboardProps) {
         {/* ── 내 정보 (+ 블로그 설정 통합) ── */}
         {!page && !selected && !genParams && tab === "account" && (
           <main className="ateflo-page-in mx-auto max-w-xl px-6 py-10">
-            <h1 className="font-pretendard text-[26px] font-bold tracking-tight text-neutral-900 sm:text-[30px]">내정보</h1>
+            <h1 className="at-headline">내정보</h1>
 
             {/* 프로필 헤더 */}
             <div className="mt-6 flex items-center gap-3 rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
