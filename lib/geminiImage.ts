@@ -8,17 +8,55 @@ export function imageReady(): boolean {
   return Boolean(process.env.GEMINI_API_KEY);
 }
 
-const STYLE = [
-  "Clean flat vector illustration, soft rounded shapes, warm friendly palette,",
-  "modern Korean lifestyle blog aesthetic, generous white space, subtle gradients.",
+const BASE_STYLE = [
   "STRICTLY NO text, NO letters, NO numbers, NO watermarks anywhere in the image.",
   "NOT photorealistic — clearly an illustration.",
 ].join(" ");
 
-/** 사진 자리 설명(한국어) + 글 제목 → 무자막 일러스트 1장(base64). 실패 시 throw. */
-export async function generateBlogImage(slotDesc: string, articleTitle: string): Promise<{ base64: string; mime: string }> {
+// ★다양성 변주 — 1만 명이 같은 글감이어도 같은 그림이 안 나오게.
+//  계정 시드(항상 같은 축) + 요청 난수(매번 다른 축) 조합으로 스타일·팔레트·구도·분위기를 배정.
+const ART_STYLES = [
+  "clean flat vector illustration with soft rounded shapes",
+  "hand-drawn doodle illustration with organic imperfect lines",
+  "paper-cutout collage style illustration with layered shapes",
+  "isometric minimal illustration with gentle depth",
+  "soft watercolor-textured illustration with airy washes",
+  "bold geometric illustration with simple color blocks",
+];
+const PALETTES = [
+  "warm friendly palette of coral, cream and sky blue",
+  "cool calm palette of navy, mint and off-white",
+  "pastel palette of lavender, peach and pale yellow",
+  "earthy palette of sage green, terracotta and sand",
+  "vivid palette of cobalt blue, tangerine and white",
+];
+const COMPOSITIONS = [
+  "subject centered with generous negative space",
+  "subject placed on the left third, airy background on the right",
+  "slight top-down diagonal composition",
+  "close-up framing on the key object",
+  "wide scene with small human figure for scale",
+];
+const MOODS = ["calm and tidy", "bright and optimistic", "cozy and warm", "fresh and energetic", "quiet and focused"];
+
+function fnv(str: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h >>> 0;
+}
+
+/** 사진 자리 설명(한국어) + 글 제목 → 무자막 일러스트 1장(base64). userSeed로 계정별 화풍 고정 + 요청마다 변주. 실패 시 throw. */
+export async function generateBlogImage(slotDesc: string, articleTitle: string, userSeed?: string): Promise<{ base64: string; mime: string }> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error("NOT_READY");
+  const uh = fnv(userSeed ?? "anon");
+  const nonce = Math.floor(Math.random() * 1e9);
+  // 화풍·팔레트 = 계정 고정(블로그 안 이미지 톤 일관) / 구도·분위기 = 요청마다 변주(같은 글감도 다른 그림)
+  const art = ART_STYLES[uh % ART_STYLES.length];
+  const palette = PALETTES[(uh >> 3) % PALETTES.length];
+  const compo = COMPOSITIONS[nonce % COMPOSITIONS.length];
+  const mood = MOODS[(nonce >> 4) % MOODS.length];
+  const STYLE = `${art}, ${palette}, ${compo}, ${mood} mood, modern Korean lifestyle blog aesthetic. ${BASE_STYLE}`;
   const prompt = `Blog illustration for a Korean blog post titled "${articleTitle}". Scene: ${slotDesc}. ${STYLE}`;
   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`, {
     method: "POST",

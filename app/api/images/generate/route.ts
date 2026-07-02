@@ -32,7 +32,7 @@ export async function POST(request: Request) {
 
   const refundRef = crypto.randomUUID();
   try {
-    const img = await generateBlogImage(slot, title);
+    const img = await generateBlogImage(slot, title, user.id);
     void logUsage({ userId: user.id, model: GEMINI_IMAGE_MODEL, kind: "image", inputTokens: 0, outputTokens: 1290 });
     return NextResponse.json({ ok: true, dataUrl: `data:${img.mime};base64,${img.base64}`, credits: balance });
   } catch (e) {

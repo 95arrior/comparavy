@@ -119,7 +119,7 @@ function FuelPlanner({ stats }: { stats: AdminStats }) {
   const antDays = dailyArticleCost > 0 ? Math.floor(antBalKrw / dailyArticleCost) : null;
   const gemDays = dailyImageCost > 0 ? Math.floor(gemBalKrw / dailyImageCost) : null;
 
-  const inputCls = "w-full min-w-0 rounded-xl bg-neutral-100 px-3 py-2 text-[13px] outline-none transition placeholder:text-neutral-400 focus:bg-white focus:ring-2 focus:ring-[#1D75F7]/30";
+  const inputCls = "min-w-0 rounded-xl bg-neutral-100 px-3 py-2 text-[13px] outline-none transition placeholder:text-neutral-400 focus:bg-white focus:ring-2 focus:ring-[#1D75F7]/30";
   const DayBadge = ({ days }: { days: number | null }) =>
     days === null ? <span className="text-[11px] text-neutral-300">잔액 입력</span> :
     <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-bold ${days < 7 ? "bg-red-50 text-red-600" : days < 14 ? "bg-amber-50 text-amber-600" : "bg-emerald-50 text-emerald-600"}`}>{days}일 분량</span>;
@@ -133,9 +133,9 @@ function FuelPlanner({ stats }: { stats: AdminStats }) {
 
       {/* 가정 입력 */}
       <div className="mt-3 grid grid-cols-3 gap-2">
-        <label className="block"><span className="mb-1 block text-[11px] text-neutral-400">유저 수</span><input value={users} onChange={(e) => save("adm_users", e.target.value, setUsers)} inputMode="numeric" className={inputCls} /></label>
-        <label className="block"><span className="mb-1 block text-[11px] text-neutral-400">인당 하루 글</span><input value={perDay} onChange={(e) => save("adm_perday", e.target.value, setPerDay)} inputMode="decimal" className={inputCls} /></label>
-        <label className="block"><span className="mb-1 block text-[11px] text-neutral-400">글당 이미지</span><input value={imgs} onChange={(e) => save("adm_imgs", e.target.value, setImgs)} inputMode="decimal" className={inputCls} /></label>
+        <label className="block"><span className="mb-1 block text-[11px] text-neutral-400">유저 수</span><input value={users} onChange={(e) => save("adm_users", e.target.value, setUsers)} inputMode="numeric" className={`w-full ${inputCls}`} /></label>
+        <label className="block"><span className="mb-1 block text-[11px] text-neutral-400">인당 하루 글</span><input value={perDay} onChange={(e) => save("adm_perday", e.target.value, setPerDay)} inputMode="decimal" className={`w-full ${inputCls}`} /></label>
+        <label className="block"><span className="mb-1 block text-[11px] text-neutral-400">글당 이미지</span><input value={imgs} onChange={(e) => save("adm_imgs", e.target.value, setImgs)} inputMode="decimal" className={`w-full ${inputCls}`} /></label>
       </div>
 
       {/* Anthropic */}
@@ -145,7 +145,7 @@ function FuelPlanner({ stats }: { stats: AdminStats }) {
           <DayBadge days={antDays} />
         </div>
         <div className="mt-2 flex items-center gap-2">
-          <input value={antBal} onChange={(e) => save("adm_ant_usd", e.target.value, setAntBal)} placeholder="현재 잔액 ($)" inputMode="decimal" className={`${inputCls} w-32`} />
+          <input value={antBal} onChange={(e) => save("adm_ant_usd", e.target.value, setAntBal)} placeholder="현재 잔액 ($)" inputMode="decimal" className={`w-32 shrink-0 ${inputCls}`} />
           <p className="min-w-0 flex-1 text-[11.5px] leading-relaxed text-neutral-500">
             일 {won(dailyArticleCost)} 소모 · 30일 = <b className="text-neutral-700">{won(dailyArticleCost * 30)}</b> (${Math.ceil((dailyArticleCost * 30) / FX)})
           </p>
@@ -159,7 +159,7 @@ function FuelPlanner({ stats }: { stats: AdminStats }) {
           <DayBadge days={gemDays} />
         </div>
         <div className="mt-2 flex items-center gap-2">
-          <input value={gemBal} onChange={(e) => save("adm_gem_krw", e.target.value, setGemBal)} placeholder="현재 잔액 (₩)" inputMode="numeric" className={`${inputCls} w-32`} />
+          <input value={gemBal} onChange={(e) => save("adm_gem_krw", e.target.value, setGemBal)} placeholder="현재 잔액 (₩)" inputMode="numeric" className={`w-32 shrink-0 ${inputCls}`} />
           <p className="min-w-0 flex-1 text-[11.5px] leading-relaxed text-neutral-500">
             일 {won(dailyImageCost)} 소모 · 30일 = <b className="text-neutral-700">{won(dailyImageCost * 30)}</b>
           </p>

@@ -167,8 +167,8 @@ export async function GET(req: Request) {
     if (useSub && sub) q = q.eq("sub", sub);
     if (cluster) q = q.ilike("keyword", `%${cluster}%`); // 클러스터: 이 토큰 든 키워드만
     if (adminBest) {
-      // 관리자: 경쟁 낮음만 + 검색량 하한만(상한 해제) — 그날의 랜덤과 무관하게 풀의 최상급
-      q = q.eq("competition", "낮음").gte("monthly_searches", ranged ? 500 : 0);
+      // 최상급 계정: 검색량 하한만(상한 해제) — 티어 분리는 아래 후보 구성에서
+      if (ranged) q = q.gte("monthly_searches", 500);
     } else if (ranged) {
       q = q.gte("monthly_searches", 500).lte("monthly_searches", 5000);
     }
@@ -305,6 +305,15 @@ export async function GET(req: Request) {
     // ── 일반 후보(풀 기반) ── 노이즈·중복 제외로 빠질 것 대비해 여유분(want)까지.
     // 지역형(주소 있음)이면 '타지역' 키워드(대구 화상영어 등)는 일반 글감에서도 제거 — 우리 지역/일반 분야만.
     const noForeign = (arr: PoolRow[]) => (regions.length ? arr.filter((r) => !mentionsForeignRegion(r.keyword, regions)) : arr);
+    // ★최상급 계정(w.95arrior): 랜덤 배제 — 경쟁 '낮음' 전부 먼저(검색량순), 모자라면 '중간'(검색량순)
+    if (adminBest) {
+      const byVol = (arr: PoolRow[]) => [...arr].sort((a, b) => (b.monthly_searches ?? 0) - (a.monthly_searches ?? 0));
+      for (const r of [...byVol(noForeign(low)), ...byVol(noForeign(mid))]) {
+        if (candidates.length >= want) break;
+        const nk = normalizeKeyword(r.keyword);
+        if (!candidates.some((x) => normalizeKeyword(x.keyword) === nk)) candidates.push(r);
+      }
+    } else {
     // 오디언스 밸런스(넉넉히) → 소주제 분산. 둘 다 만족해 비슷한 글감 몰림 방지.
     const balanced = pickBalanced(noForeign(mid), audActive ? audSel : [], (want + 1) * 2, rng);
     const general = pickDiverse(balanced, want + 1, rng);
@@ -318,6 +327,7 @@ export async function GET(req: Request) {
       }
     };
     add(general); add(lowF); add(highF);
+    }
 
     // ★자영업자: 검색량 풀이 오염(여행영어 등)·얕아 온타겟이 부족할 수 있다 → '손님(대상)이 검색하는' 글감을 생성해 합류.
     //   생성분은 검색자=손님 매칭이 보장돼, 뒤의 ok/fit 게이트를 통과하며 빈자리를 채운다(볼륨0=고의도·무경쟁).
