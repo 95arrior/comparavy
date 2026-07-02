@@ -64,6 +64,22 @@ export default function ArticleModal({
     }
   }
 
+  // 모바일(사파리 등) — 네이버 '웹' 에디터가 붙여넣기를 막아 앱 플로우로 안내
+  const isMobile = typeof navigator !== "undefined" && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+  // 모바일용: 제목+본문을 '한 번에' 플레인 텍스트로 복사 (앱 붙여넣기는 서식이 어차피 안 살아서 텍스트로)
+  const [allCopied, setAllCopied] = useState(false);
+  async function copyAllPlain() {
+    try {
+      const tmp = document.createElement("div");
+      tmp.innerHTML = addNaverSpacing(photoMarkerToGuide(markToNaverBold(bodyHtml)));
+      const text = `${title}\n\n${tmp.innerText}`;
+      await navigator.clipboard.writeText(text);
+      setAllCopied(true);
+      setTimeout(() => setAllCopied(false), 2200);
+    } catch { /* 무시 */ }
+  }
+
   // 제목만 복사 — 네이버 제목칸에 붙여넣기용
   async function copyTitle() {
     try {
@@ -87,7 +103,7 @@ export default function ArticleModal({
     // ★제목을 미리 클립보드에 — 네이버 열면 커서가 '제목칸'이라 바로 붙여넣게(왕복 1번으로 줄임)
     try { navigator.clipboard?.writeText(title); setTitleCopied(true); setTimeout(() => setTitleCopied(false), 2500); } catch { /* ignore */ }
     window.open(`https://blog.naver.com/${id}/postwrite`, "_blank", "noopener");
-    markNaverPublished(); // 글쓰기로 넘어가면 '발행됨'으로 표시(별도 버튼 없이 성과·내글 추적 유지)
+    // 발행 완료 처리는 시트의 '다 올렸어요' 버튼으로만 — 자동 처리하면 시트가 닫혀 본문 복사를 못 함(모바일 왕복 버그)
   }
 
   // 네이버에 직접 올린 글을 '발행됨'으로 표시(자동발행 없는 네이버 — 성과·내글 추적용)
@@ -231,18 +247,39 @@ export default function ArticleModal({
           <div className="ateflo-backdrop-in fixed inset-0 z-[70] flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center sm:p-6" onClick={() => setNaverOpen(false)}>
             <div className="ateflo-sheet-up max-h-[88vh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-3xl" style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom))" }} onClick={(e) => e.stopPropagation()}>
               <p className="text-[17px] font-bold text-neutral-900">네이버에 올리기</p>
-              <p className="mt-1 text-[13px] text-neutral-500">두 번 붙여넣으면 끝나요.</p>
 
-              <div className="mt-5 space-y-2.5">
-                <button onClick={openNaverWrite} className="at-press w-full rounded-2xl bg-[#03C75A] px-5 py-4 text-left transition hover:opacity-95">
-                  <span className="block text-[15px] font-bold text-white">1. 네이버 글쓰기 열기</span>
-                  <span className="mt-0.5 block text-[12px] font-medium text-white/80">제목이 복사된 채 열려요 → 제목칸에 붙여넣기</span>
-                </button>
-                <button onClick={copyBody} className="at-press w-full rounded-2xl bg-[#03C75A]/10 px-5 py-4 text-left transition hover:bg-[#03C75A]/15">
-                  <span className="block text-[15px] font-bold text-[#03C75A]">{copied ? "본문 복사됨 ✓" : "2. 본문 복사하기"}</span>
-                  <span className="mt-0.5 block text-[12px] font-medium text-[#03C75A]/70">{copied ? "네이버 본문칸에 붙여넣으세요" : "돌아와서 누르면 → 본문칸에 붙여넣기"}</span>
-                </button>
-              </div>
+              {isMobile ? (
+                <>
+                  {/* ★모바일 — 네이버 '웹' 에디터는 붙여넣기가 막혀 있어 '네이버 블로그 앱' 플로우로 */}
+                  <p className="mt-1 text-[13px] text-neutral-500">모바일은 네이버 블로그 앱에서 올려요.</p>
+                  <div className="mt-5 space-y-2.5">
+                    <button onClick={copyAllPlain} className="at-press w-full rounded-2xl bg-[#03C75A] px-5 py-4 text-left transition hover:opacity-95">
+                      <span className="block text-[15px] font-bold text-white">{allCopied ? "글 전체 복사됨 ✓" : "1. 글 전체 복사하기"}</span>
+                      <span className="mt-0.5 block text-[12px] font-medium text-white/80">{allCopied ? "이제 네이버 블로그 앱으로 가세요" : "제목부터 해시태그까지 한 번에"}</span>
+                    </button>
+                    <div className="rounded-2xl bg-neutral-50 px-5 py-4 text-[13px] leading-relaxed text-neutral-600">
+                      <p><b className="text-neutral-800">2.</b> <b className="text-[#03C75A]">네이버 블로그 앱</b>을 열고 글쓰기(연필 버튼)</p>
+                      <p className="mt-1"><b className="text-neutral-800">3.</b> 본문을 <b>길게 눌러 붙여넣기</b></p>
+                      <p className="mt-1"><b className="text-neutral-800">4.</b> 첫 줄(제목)을 잘라서 <b>제목칸</b>으로 옮기기</p>
+                    </div>
+                  </div>
+                  <p className="mt-3 px-1 text-[12px] leading-relaxed text-neutral-400">굵기·형광펜 서식은 모바일 앱 붙여넣기에선 사라져요 — 서식까지 살리려면 PC에서 올리는 걸 추천해요.</p>
+                </>
+              ) : (
+                <>
+                  <p className="mt-1 text-[13px] text-neutral-500">두 번 붙여넣으면 끝나요.</p>
+                  <div className="mt-5 space-y-2.5">
+                    <button onClick={openNaverWrite} className="at-press w-full rounded-2xl bg-[#03C75A] px-5 py-4 text-left transition hover:opacity-95">
+                      <span className="block text-[15px] font-bold text-white">1. 네이버 글쓰기 열기</span>
+                      <span className="mt-0.5 block text-[12px] font-medium text-white/80">제목이 복사된 채 열려요 → 제목칸에 붙여넣기</span>
+                    </button>
+                    <button onClick={copyBody} className="at-press w-full rounded-2xl bg-[#03C75A]/10 px-5 py-4 text-left transition hover:bg-[#03C75A]/15">
+                      <span className="block text-[15px] font-bold text-[#03C75A]">{copied ? "본문 복사됨 ✓" : "2. 본문 복사하기"}</span>
+                      <span className="mt-0.5 block text-[12px] font-medium text-[#03C75A]/70">{copied ? "네이버 본문칸에 붙여넣으세요" : "돌아와서 누르면 → 본문칸에 붙여넣기"}</span>
+                    </button>
+                  </div>
+                </>
+              )}
 
               {photoSlots(bodyHtml).length > 0 && (
                 <p className="mt-3 rounded-xl bg-neutral-50 px-4 py-3 text-[12.5px] leading-relaxed text-neutral-500">
@@ -250,12 +287,17 @@ export default function ArticleModal({
                 </p>
               )}
 
+              {/* 발행 완료 — 유저가 직접 확정(자동 처리 X) */}
+              <button onClick={markNaverPublished} className="at-press mt-4 w-full rounded-xl bg-[#1D75F7] py-3.5 text-[14px] font-bold text-white transition hover:opacity-90">
+                다 올렸어요 — 발행 완료
+              </button>
+
               <details className="group mt-3">
                 <summary className="cursor-pointer list-none rounded-xl px-1 py-2 text-[12.5px] font-semibold text-neutral-400 transition hover:text-neutral-600">
                   자세한 순서·꿀팁 보기 <span className="inline-block transition-transform group-open:rotate-180">⌄</span>
                 </summary>
                 <div className="mt-1 space-y-1.5 rounded-xl bg-neutral-50 px-4 py-3.5 text-[12.5px] leading-relaxed text-neutral-600">
-                  <p>· 붙여넣기는 <b>⌘V</b>(맥) / <b>Ctrl+V</b>(윈도우)</p>
+                  <p>· 붙여넣기: PC는 <b>⌘V / Ctrl+V</b>, 모바일은 <b>길게 눌러 붙여넣기</b></p>
                   <p>· <b>굵은 핵심 문장</b>을 드래그해 형광펜을 칠하면 눈에 띄어요</p>
                   <p>· <b>첫 사진</b>이 검색 썸네일 — 제일 잘 나온 걸로</p>
                   <p>· 발행 시 <b>검색 허용 등 공개 옵션 전부 ON</b> + 전체공개</p>
