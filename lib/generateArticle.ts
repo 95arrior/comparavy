@@ -73,6 +73,16 @@ const SAVE_TOOL: Anthropic.Tool = {
   },
 };
 
+// ★실시간 웹 검증 — 모델의 낡은 기억(예금자보호 5천만, 옛 금리 등)이 글에 실리는 것을 원천 차단.
+//  시점 민감 수치는 검색으로 확인 후 서술(시스템 프롬프트 [실시간 검증] 지침과 세트).
+//  비용: 검색 1회 ≈ $0.01 — max 4회 = 글당 최대 ~56원 추가(마진 내).
+const WEB_SEARCH_TOOL = {
+  type: "web_search_20260209",
+  name: "web_search",
+  max_uses: 4,
+} as unknown as Anthropic.Tool;
+
+
 function clamp(text: string, max: number): string {
   const trimmed = (text ?? "").trim();
   return trimmed.length <= max ? trimmed : trimmed.slice(0, max);
@@ -114,12 +124,12 @@ export async function generateArticle(
     //   내용은 동일(품질 영향 0), 입력 ~11.7k tokens가 캐시히트 시 0.1배 과금 → 글당 원가 대폭 절감.
     //   시스템 프롬프트에 '오늘 날짜'가 있어 캐시는 하루 단위로 자연 갱신됨.
     system: [{ type: "text" as const, text: buildSystemPrompt(input.vertical), cache_control: { type: "ephemeral" as const } }],
-    tools: [SAVE_TOOL],
-    tool_choice: { type: "tool", name: "save_article" },
+    tools: [WEB_SEARCH_TOOL, SAVE_TOOL],
+    tool_choice: { type: "any" }, // 검색을 허용하되, 마무리는 반드시 도구(save_article) 호출
     messages: [{ role: "user", content: buildUserPrompt(input) }],
   });
 
-  const block = res.content.find((b) => b.type === "tool_use");
+  const block = res.content.find((b) => b.type === "tool_use" && (b as { name?: string }).name === "save_article");
   if (!block || block.type !== "tool_use") {
     throw new Error("글 생성에 실패했습니다. 다시 시도해 주세요.");
   }
@@ -199,16 +209,23 @@ export async function streamArticle(
     max_tokens: maxTokens,
     // ★프롬프트 캐싱 — generateArticle과 동일 프리픽스(캐시 공유). 내용 변경 없음(품질 영향 0).
     system: [{ type: "text" as const, text: buildSystemPrompt(input.vertical), cache_control: { type: "ephemeral" as const } }],
-    tools: [SAVE_TOOL],
-    tool_choice: { type: "tool", name: "save_article" },
+    tools: [WEB_SEARCH_TOOL, SAVE_TOOL],
+    tool_choice: { type: "any" }, // 검색을 허용하되, 마무리는 반드시 도구(save_article) 호출
     messages: [{ role: "user", content: buildUserPrompt(input) }],
   });
 
   let acc = "";
   let lastBody = "";
   let lastTitle = "";
+  let inSave = false; // ★웹서치 블록의 input_json_delta가 섞이지 않게 — save_article 블록만 수집
   for await (const event of stream) {
+    if (event.type === "content_block_start") {
+      inSave = event.content_block.type === "tool_use" && (event.content_block as { name?: string }).name === "save_article";
+      continue;
+    }
+    if (event.type === "content_block_stop") { continue; }
     if (
+      inSave &&
       event.type === "content_block_delta" &&
       event.delta.type === "input_json_delta"
     ) {
@@ -241,7 +258,7 @@ export async function streamArticle(
     inputTokens: billedEquivalentInput,
     outputTokens: u?.output_tokens ?? 0,
   });
-  const block = final.content.find((b) => b.type === "tool_use");
+  const block = final.content.find((b) => b.type === "tool_use" && (b as { name?: string }).name === "save_article");
   if (!block || block.type !== "tool_use") {
     throw new Error("글 생성에 실패했습니다. 다시 시도해 주세요.");
   }
