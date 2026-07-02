@@ -13,7 +13,10 @@ import type { BlogProfile } from "@/lib/blogProfile";
 //  4막 시작: 프로필 저장 → 코스 D-1로
 // 정직 원칙: 수익·승인을 보장하는 문구 금지. '시작점으로 최적' 프레임(시장 특성)까지만.
 
-type Step = "topic" | "verdict" | "plan" | "setup" | "done";
+type Step = "topic" | "verdict" | "plan" | "hasblog" | "make" | "setupid" | "setupopen" | "done";
+// 진행 점(막 단위): setup 서브스텝들은 같은 점을 공유
+const STAGE_OF: Record<Step, number> = { topic: 0, verdict: 1, plan: 2, hasblog: 3, make: 3, setupid: 3, setupopen: 3, done: 4 };
+const BACK_OF: Partial<Record<Step, Step>> = { verdict: "topic", plan: "verdict", hasblog: "plan", make: "hasblog", setupid: "hasblog", setupopen: "setupid" };
 
 // 주제별 수익성 참고 등급 — 광고 단가·상업성 기준(자료: 주제 수익성 맵). 보장 아님, 참고용.
 const PROFIT: Record<string, { grade: "상" | "중상" | "중"; note: string }> = {
@@ -67,7 +70,6 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
   const [verdict, setVerdict] = useState<Verdict | null>(null);
   const [blogName, setBlogName] = useState("");
   const [naverId, setNaverId] = useState("");
-  const [checks, setChecks] = useState<boolean[]>([false, false, false]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedProfile, setSavedProfile] = useState<BlogProfile | null>(null);
@@ -82,10 +84,8 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
   const primaryBtn = "at-press w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-semibold text-white transition hover:opacity-90 disabled:opacity-50";
   const ghostBtn = "mt-2 w-full py-2 text-sm font-medium text-neutral-400 transition hover:text-neutral-600 disabled:opacity-50";
 
-  const order: Step[] = ["topic", "verdict", "plan", "setup", "done"];
-  const idx = order.indexOf(step);
-  const dots = order.filter((s) => s !== "done");
-  const goBack = () => { setDir("back"); setStep(order[Math.max(idx - 1, 0)]); };
+  const stage = STAGE_OF[step];
+  const goBack = () => { const b = BACK_OF[step]; if (b) { setDir("back"); setStep(b); } };
 
   // 1막 → 주제 선택 시 실시간 데이터 판정
   async function pickTopic(s: string) {
@@ -154,11 +154,16 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
         <button onClick={goBack} className={ghostBtn}>다른 주제 볼래요</button>
       </>
     ) : step === "plan" ? (
-      <button onClick={() => { setDir("fwd"); setStep("setup"); }} className={primaryBtn}>좋아요, 이대로 갈게요</button>
-    ) : step === "setup" ? (
+      <button onClick={() => { setDir("fwd"); setStep("hasblog"); }} className={primaryBtn}>좋아요, 이대로 갈게요</button>
+    ) : step === "setupid" ? (
       <>
-        <button onClick={save} disabled={saving} className={primaryBtn}>{saving ? "준비 중…" : "설정 끝, 시작할게요"}</button>
-        <button onClick={save} disabled={saving} className={ghostBtn}>블로그는 나중에 만들게요</button>
+        <button onClick={() => { setDir("fwd"); setStep("setupopen"); }} disabled={!naverId.trim()} className={primaryBtn}>저장하고 다음</button>
+        <button onClick={() => { setDir("fwd"); setStep("setupopen"); }} className={ghostBtn}>아이디는 나중에 넣을게요</button>
+      </>
+    ) : step === "setupopen" ? (
+      <>
+        <button onClick={save} disabled={saving} className={primaryBtn}>{saving ? "준비 중…" : "켰어요, 시작할게요"}</button>
+        <button onClick={save} disabled={saving} className={ghostBtn}>나중에 켤게요</button>
       </>
     ) : step === "done" ? (
       <button onClick={() => savedProfile && onSaved(savedProfile)} className={primaryBtn}>D-1 시작하기</button>
@@ -176,8 +181,8 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
 
           {step !== "done" && (
             <div className="mb-8 flex items-center justify-center gap-1.5">
-              {dots.map((s) => (
-                <span key={s} className={`h-1.5 rounded-full transition-all ${s === step ? "w-5 bg-[#1D75F7]" : dots.indexOf(s) < dots.indexOf(step) ? "w-1.5 bg-[#1D75F7]/40" : "w-1.5 bg-neutral-200"}`} />
+              {[0, 1, 2, 3].map((i) => (
+                <span key={i} className={`h-1.5 rounded-full transition-all ${i === stage ? "w-5 bg-[#1D75F7]" : i < stage ? "w-1.5 bg-[#1D75F7]/40" : "w-1.5 bg-neutral-200"}`} />
               ))}
             </div>
           )}
@@ -326,33 +331,61 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
               </div>
             )}
 
-            {/* ═══ 3막. 블로그 세팅 ═══ */}
-            {step === "setup" && (
+            {/* ═══ 3막. 블로그 세팅 — 체크박스 없음, 한 화면 한 질문, 버튼이 실제로 해줌 ═══ */}
+            {step === "hasblog" && (
               <div>
-                <p className="at-label">마지막 준비</p>
-                <h2 className="at-headline mt-1 whitespace-pre-line">{"네이버 블로그를\n준비할게요"}</h2>
-                <p className="mt-2 text-sm text-neutral-500">이미 있다면 아이디만 넣으면 돼요.</p>
-                <div className="mt-4 space-y-2.5">
-                  {[
-                    { t: "네이버 블로그 만들기", s: `blog.naver.com에서 개설하고, 블로그 주제를 ‘${sub}’ 계열로 설정해요.` },
-                    { t: "블로그 이름 정하기", s: "아래 추천 이름을 그대로 써도 좋아요." },
-                    { t: "공개 설정 켜기", s: "관리 → 기본 설정에서 ‘검색 허용’ 등 공개 옵션을 전부 켜요. 글은 항상 전체공개로." },
-                  ].map((x, i) => (
-                    <button key={i} onClick={() => setChecks((c) => c.map((v, j) => (j === i ? !v : v)))} className={`at-press flex w-full items-start gap-3 rounded-2xl p-4 text-left ring-1 transition ${checks[i] ? "bg-[#1D75F7]/[0.05] ring-[#1D75F7]/30" : "bg-white ring-black/[0.04]"}`}>
-                      <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition ${checks[i] ? "bg-[#1D75F7] text-white" : "bg-neutral-100 text-transparent"}`}>
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block text-[14px] font-bold text-[color:var(--at-grey-900)]">{x.t}</span>
-                        <span className="mt-0.5 block text-[12.5px] leading-relaxed text-neutral-500">{x.s}</span>
-                      </span>
-                    </button>
-                  ))}
+                <p className="at-label">블로그 준비</p>
+                <h2 className="at-headline mt-1 whitespace-pre-line">{"네이버 블로그가\n있으세요?"}</h2>
+                <div className="mt-6 space-y-2.5">
+                  <button onClick={() => { setDir("fwd"); setStep("setupid"); }} className="at-press w-full rounded-2xl bg-white p-5 text-left ring-1 ring-black/[0.04] transition hover:ring-[#1D75F7]/40">
+                    <span className="block text-[16px] font-bold text-[color:var(--at-grey-900)]">네, 있어요</span>
+                    <span className="mt-0.5 block text-[12.5px] text-neutral-400">주소만 알려주면 바로 연결돼요</span>
+                  </button>
+                  <button onClick={() => { setDir("fwd"); setStep("make"); }} className="at-press w-full rounded-2xl bg-white p-5 text-left ring-1 ring-black/[0.04] transition hover:ring-[#1D75F7]/40">
+                    <span className="block text-[16px] font-bold text-[color:var(--at-grey-900)]">아직 없어요</span>
+                    <span className="mt-0.5 block text-[12.5px] text-neutral-400">같이 만들어요 — 3분이면 돼요</span>
+                  </button>
                 </div>
-                <p className="mb-1.5 mt-5 px-1 text-[12px] font-semibold text-neutral-400">블로그 이름 (추천)</p>
+              </div>
+            )}
+
+            {step === "make" && (
+              <div>
+                <p className="at-label">블로그 만들기</p>
+                <h2 className="at-headline mt-1 whitespace-pre-line">{"버튼을 누르면\n네이버가 열려요"}</h2>
+                <p className="mt-2 text-sm leading-relaxed text-neutral-500">네이버에 로그인하면 내 블로그가 자동으로 생겨요. 만들어졌으면 여기로 돌아와 아래 버튼을 눌러주세요.</p>
+                <a href="https://blog.naver.com" target="_blank" rel="noopener noreferrer" className="at-press mt-6 block w-full rounded-xl bg-[#03C75A] py-4 text-center text-[15px] font-bold text-white transition hover:opacity-90">
+                  네이버 블로그 열기
+                </a>
+                <button onClick={() => { setDir("fwd"); setStep("setupid"); }} className="at-press mt-2.5 w-full rounded-xl bg-neutral-100 py-3.5 text-[14px] font-bold text-neutral-700 transition hover:bg-neutral-200">
+                  만들었어요, 다음으로
+                </button>
+              </div>
+            )}
+
+            {step === "setupid" && (
+              <div>
+                <p className="at-label">블로그 연결</p>
+                <h2 className="at-headline mt-1 whitespace-pre-line">{"블로그 주소를\n알려주세요"}</h2>
+                <p className="mt-2 text-sm leading-relaxed text-neutral-500">글을 발행할 때 내 블로그 글쓰기 화면을 바로 열어드려요.</p>
+                <div className="mt-5 flex items-center gap-1 rounded-xl bg-neutral-100 px-4 py-3.5 focus-within:bg-white focus-within:ring-2 focus-within:ring-[#1D75F7]/30">
+                  <span className="shrink-0 text-[14px] font-medium text-neutral-400">blog.naver.com/</span>
+                  <input value={naverId} onChange={(e) => setNaverId(e.target.value)} placeholder="여기에 아이디" maxLength={40} className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-neutral-300" autoFocus />
+                </div>
+                <p className="mt-2 text-[12px] leading-relaxed text-neutral-400">내 블로그에 들어가면 주소창에서 볼 수 있어요.</p>
+                <p className="mb-1.5 mt-6 px-1 text-[12px] font-semibold text-neutral-400">블로그 이름 (추천 — 네이버에서 이 이름으로 지으면 좋아요)</p>
                 <input value={blogName} onChange={(e) => setBlogName(e.target.value)} maxLength={60} className={inputCls} />
-                <p className="mb-1.5 mt-3 px-1 text-[12px] font-semibold text-neutral-400">네이버 블로그 아이디 <span className="font-normal">— 발행할 때 바로 열어드려요</span></p>
-                <input value={naverId} onChange={(e) => setNaverId(e.target.value)} placeholder="blog.naver.com/여기부분" maxLength={40} className={inputCls} />
+              </div>
+            )}
+
+            {step === "setupopen" && (
+              <div>
+                <p className="at-label">딱 하나만 켜요</p>
+                <h2 className="at-headline mt-1 whitespace-pre-line">{"‘검색 허용’을\n켜주세요"}</h2>
+                <p className="mt-2 text-sm leading-relaxed text-neutral-500">이걸 켜야 내 글이 네이버 검색에 나와요. 버튼을 누르면 설정 화면이 열려요 — <b className="text-neutral-700">기본 설정 → 검색 허용</b>을 켜고 돌아오세요.</p>
+                <a href="https://admin.blog.naver.com" target="_blank" rel="noopener noreferrer" className="at-press mt-6 block w-full rounded-xl bg-[#03C75A] py-4 text-center text-[15px] font-bold text-white transition hover:opacity-90">
+                  내 블로그 설정 열기
+                </a>
               </div>
             )}
 
