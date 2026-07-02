@@ -28,48 +28,17 @@ export default function ArticleList({
   const [unpubBusy, setUnpubBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
-  // ★색인 체커 — 발행 글이 네이버 검색에 잡혔는지(최근 10편, 1시간 캐시).
-  //  '내 글이 뜨긴 하나?'라는 최대 불안을 데이터로 끊는다.
-  const [idx, setIdx] = useState<Record<string, "indexed" | "pending" | "unknown">>({});
-  useEffect(() => {
-    const pub = articles.filter((a) => a.status === "published").slice(0, 10);
-    if (pub.length === 0) return;
-    const CK = "ateflo_idx_cache";
-    try {
-      const raw = localStorage.getItem(CK);
-      if (raw) {
-        const c = JSON.parse(raw);
-        if (Date.now() - c.ts < 3600_000) { setIdx(c.results ?? {}); return; }
-      }
-    } catch { /* 캐시 미스 */ }
-    let blogId = "";
-    try { blogId = localStorage.getItem("ateflo_naver_blogid") ?? ""; } catch { /* ignore */ }
-    (async () => {
-      try {
-        const res = await fetch("/api/index-check", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ids: pub.map((a) => a.id), blogId }),
-        });
-        const data = await res.json();
-        if (data.results) {
-          setIdx(data.results);
-          try { localStorage.setItem(CK, JSON.stringify({ ts: Date.now(), results: data.results })); } catch { /* ignore */ }
-        }
-      } catch { /* 조용히 생략 */ }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [articles.length]);
-
-  // 발행 후 48시간 안 지났으면 '색인 중'(정상), 지났는데 미색인이면 '색인 전'(점검 힌트)
+  // ★색인 상태 — 이제 크론이 하루 1번 검사해 DB(article.indexed_status)에 저장. 화면은 저장값만 읽는다.
+  //  (유저가 열 때마다 네이버 검색을 부르던 방식 폐기 → 1만 명 쿼터 문제 해소.)
   const idxLabel = (a: Article): { text: string; cls: string } | null => {
-    const st = idx[a.id];
-    if (!st || st === "unknown" || a.status !== "published") return null;
+    if (a.status !== "published") return null;
+    const st = a.indexed_status;
     if (st === "indexed") return { text: "검색 노출 중", cls: "text-emerald-600" };
     const hours = (Date.now() - new Date(a.created_at).getTime()) / 3600_000;
-    return hours < 48
-      ? { text: "색인 중 (보통 2일)", cls: "text-neutral-400" }
-      : { text: "아직 색인 전", cls: "text-amber-600" };
+    // 아직 크론 검사 전이거나 pending — 시간 기준으로 안내(48h 내는 정상 대기)
+    if (hours < 48) return { text: "색인 중 (보통 2일)", cls: "text-neutral-400" };
+    if (st === "pending") return { text: "아직 색인 전", cls: "text-amber-600" };
+    return null; // unknown/미검사 + 48h 경과 — 라벨 생략(과잉 경고 방지)
   };
 
   const [delBusy, setDelBusy] = useState(false);

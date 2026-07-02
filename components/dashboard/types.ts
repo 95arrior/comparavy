@@ -19,6 +19,8 @@ export interface Article {
   status: "draft" | "published" | "future" | "generating" | "deleted";
   /** AI 이미지 URL — {"0":url,...} (계정 저장, 웹·모바일 동기화) */
   images?: Record<string, string> | null;
+  /** 색인 상태 — 크론이 기록 (indexed | pending | unknown | null=미검사) */
+  indexed_status?: string | null;
   wp_link: string | null;
   /** 발행된 워드프레스 글 ID — 있으면 재발행 시 새 글이 아니라 이 글을 수정 */
   wp_post_id: number | null;

@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { isTimeSensitive } from "./timeSensitive";
 import {
   buildSystemPrompt,
   buildUserPrompt,
@@ -116,6 +117,7 @@ export async function generateArticle(
 
   // 한국어는 글자수 기준. 한글 1자 ≈ 1.5~2토큰으로 보고 여유 있게 budget 산정.
   const maxTokens = Math.min(16000, Math.ceil(input.maxWords * 2 + 1200));
+  const verify = isTimeSensitive(input);
 
   const res = await client.messages.create({
     model,
@@ -124,8 +126,9 @@ export async function generateArticle(
     //   내용은 동일(품질 영향 0), 입력 ~11.7k tokens가 캐시히트 시 0.1배 과금 → 글당 원가 대폭 절감.
     //   시스템 프롬프트에 '오늘 날짜'가 있어 캐시는 하루 단위로 자연 갱신됨.
     system: [{ type: "text" as const, text: buildSystemPrompt(input.vertical), cache_control: { type: "ephemeral" as const } }],
-    tools: [WEB_SEARCH_TOOL, SAVE_TOOL],
-    tool_choice: { type: "any" }, // 검색을 허용하되, 마무리는 반드시 도구(save_article) 호출
+    // ★웹 검색은 시점 민감 글(금융·정책·부동산·이슈)에만 — 여행·레시피 등엔 불필요(비용·지연·쿼터 절감).
+    tools: verify ? [WEB_SEARCH_TOOL, SAVE_TOOL] : [SAVE_TOOL],
+    tool_choice: verify ? { type: "any" } : { type: "tool", name: "save_article" },
     messages: [{ role: "user", content: buildUserPrompt(input) }],
   });
 
@@ -203,14 +206,16 @@ export async function streamArticle(
   const client = new Anthropic({ apiKey });
   const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
   const maxTokens = Math.min(16000, Math.ceil(input.maxWords * 2 + 1200));
+  const verify = isTimeSensitive(input);
 
   const stream = client.messages.stream({
     model,
     max_tokens: maxTokens,
     // ★프롬프트 캐싱 — generateArticle과 동일 프리픽스(캐시 공유). 내용 변경 없음(품질 영향 0).
     system: [{ type: "text" as const, text: buildSystemPrompt(input.vertical), cache_control: { type: "ephemeral" as const } }],
-    tools: [WEB_SEARCH_TOOL, SAVE_TOOL],
-    tool_choice: { type: "any" }, // 검색을 허용하되, 마무리는 반드시 도구(save_article) 호출
+    // ★웹 검색은 시점 민감 글(금융·정책·부동산·이슈)에만 — 여행·레시피 등엔 불필요(비용·지연·쿼터 절감).
+    tools: verify ? [WEB_SEARCH_TOOL, SAVE_TOOL] : [SAVE_TOOL],
+    tool_choice: verify ? { type: "any" } : { type: "tool", name: "save_article" },
     messages: [{ role: "user", content: buildUserPrompt(input) }],
   });
 
