@@ -23,21 +23,22 @@ function visLen(html: string): number {
 }
 function splitInner(inner: string): string[] {
   if (visLen(inner) <= MOBILE_MAX_CHARS) return [inner];
-  // 1차: <br> 및 문장 끝(.?! 뒤 공백/끝) 경계로 절
-  const parts = inner.split(/(?:<br\s*\/?>)|(?<=[.?!])\s+/g).map((x) => x.trim()).filter(Boolean);
-  // 2차: 아직 긴 절은 쉼표·구 경계로 더 쪼갬
+  // 1차: <br> 및 문장 끝(.?!) 경계로 절 분할
+  let parts = inner.split(/(?:<br\s*\/?>)|(?<=[.?!])\s+/g).map((x) => x.trim()).filter(Boolean);
+  // 2차: 아직 긴 절은 쉼표·구 경계로
+  parts = parts.flatMap((part) => (visLen(part) <= MOBILE_MAX_CHARS ? [part] : part.split(/(?<=[,،·])\s*/g).map((x) => x.trim()).filter(Boolean)));
+  // 3차(최종 폴백): 그래도 긴 절(마침표·쉼표 없는 단일 문장)은 어절(공백) 단위로 강제 분할 → 4줄 이하 보장
   const units: string[] = [];
   for (const part of parts) {
     if (visLen(part) <= MOBILE_MAX_CHARS) { units.push(part); continue; }
-    const sub = part.split(/(?<=[,،·])\s*/g).map((x) => x.trim()).filter(Boolean);
     let buf = "";
-    for (const u of sub) {
-      if (visLen(buf + u) > MOBILE_MAX_CHARS && buf) { units.push(buf); buf = u; }
-      else buf = buf ? `${buf} ${u}` : u;
+    for (const word of part.split(/\s+/).filter(Boolean)) {
+      if (visLen(buf + " " + word) > MOBILE_MAX_CHARS && buf) { units.push(buf); buf = word; }
+      else buf = buf ? `${buf} ${word}` : word;
     }
     if (buf) units.push(buf);
   }
-  // 절들을 4줄 이하 문단으로 재조립
+  // 짧은 절들을 4줄 이하 문단으로 재조립
   const out: string[] = [];
   let acc = "";
   for (const u of units) {
