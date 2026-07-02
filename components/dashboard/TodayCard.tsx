@@ -1,6 +1,6 @@
 "use client";
 
-import { COURSE_DAYS, type CourseInfo } from "@/lib/course";
+import type { CourseInfo } from "@/lib/course";
 
 // '오늘 할 일' 카드 — 홈 최상단, 뇌빼고의 심장. 오늘 해야 할 단 하나만 보여준다.
 // 상태 머신: 시작 전 → 오늘 글 쓰기 → 발행 대기(복붙) → 오늘 완료 → (크레딧 0) 잠김 → (20일) 승인 신청.
@@ -27,8 +27,7 @@ export default function TodayCard({
   onGoPerformance: () => void;
 }) {
   const locked = credits <= 0;
-  const dayLabel = info.day > 0 ? `D-${info.day}` : "D-1";
-
+  
   // 코스 20일 완주 → 승인 신청 안내 (★정직: 승인은 네이버 심사라 보장 아님 — 반려 시 재신청 흐름 안내)
   if (info.finished) {
     return (
@@ -36,7 +35,7 @@ export default function TodayCard({
         <Header label="승인 준비 코스" chip="완주 🎉" />
         <p className="mt-2 text-[17px] font-bold leading-snug text-neutral-900">준비 코스를 완주했어요.<br />애드포스트 신청해볼 차례예요.</p>
         <p className="mt-1.5 text-[12.5px] leading-relaxed text-neutral-500">승인 여부는 네이버 심사(최대 5영업일)가 정해요. 반려돼도 글을 계속 쌓다가 재신청하면 돼요.</p>
-        <button onClick={onGoPerformance} className="mt-4 w-full rounded-xl bg-[#1D75F7] py-3 text-[14px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">
+        <button onClick={onGoPerformance} className="mt-4 w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">
           승인 신청 방법 보기
         </button>
       </Card>
@@ -47,7 +46,7 @@ export default function TodayCard({
   if (info.publishedToday) {
     return (
       <Card>
-        <Header label={`오늘 할 일 · ${dayLabel}`} chip={info.streak >= 2 ? `🔥 ${info.streak}일 연속` : "완료 ✓"} />
+        <Header label="오늘의 글" chip="완료 ✓" />
         <p className="mt-2 text-[17px] font-bold leading-snug text-neutral-900">오늘 미션 완료!<br />내일 새 글감이 와요.</p>
         {topic && !locked && (
           <button onClick={() => onWriteKeyword(topic.keyword, topic.title)} className="mt-3 w-full rounded-xl bg-neutral-100 py-2.5 text-[13px] font-bold text-neutral-600 transition hover:bg-neutral-200 active:scale-[0.99]">
@@ -62,9 +61,9 @@ export default function TodayCard({
   if (info.todayCount > 0 && info.hasDraftToday) {
     return (
       <Card>
-        <Header label={`오늘 할 일 · ${dayLabel}`} chip="1단계 완료" />
+        <Header label="오늘의 글" chip="1단계 완료" />
         <p className="mt-2 text-[17px] font-bold leading-snug text-neutral-900">글이 준비됐어요.<br />네이버에 올리면 오늘 끝!</p>
-        <button onClick={onOpenTodayDraft} className="mt-4 w-full rounded-xl bg-[#03C75A] py-3 text-[14px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">
+        <button onClick={onOpenTodayDraft} className="mt-4 w-full rounded-xl bg-[#03C75A] py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">
           네이버에 올리러 가기
         </button>
       </Card>
@@ -75,7 +74,7 @@ export default function TodayCard({
   if (loading || !topic) {
     return (
       <Card>
-        <Header label={`오늘 할 일 · ${dayLabel}`} />
+        <Header label="오늘의 글" />
         <div className="mt-3 space-y-2" aria-hidden>
           <div className="ateflo-skel h-5 w-3/4 rounded" />
           <div className="ateflo-skel h-10 w-full rounded-xl" />
@@ -88,13 +87,13 @@ export default function TodayCard({
   if (locked) {
     return (
       <Card highlight>
-        <Header label={`오늘 할 일 · ${dayLabel}`} chip="🔒 잠김" />
+        <Header label="오늘의 글" chip="🔒 잠김" />
         <p className="mt-2 flex items-start gap-1.5 text-[16px] font-bold leading-snug text-neutral-400">
           <span aria-hidden>🔒</span>
           <span className="min-w-0 flex-1">{topic.title}</span>
         </p>
         <p className="mt-1.5 text-[12.5px] leading-relaxed text-neutral-500">오늘의 글이 준비돼 있어요. 크레딧을 충전하면 바로 이어서 써요.</p>
-        <button onClick={() => onWriteKeyword(topic.keyword, topic.title)} className="mt-3.5 w-full rounded-xl bg-[#1D75F7] py-3 text-[14px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">
+        <button onClick={() => onWriteKeyword(topic.keyword, topic.title)} className="mt-3.5 w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">
           코스 이어가기
         </button>
       </Card>
@@ -104,13 +103,10 @@ export default function TodayCard({
   // 기본 — 오늘의 글 쓰기 (코스 시작 전이면 첫 글 = D-1)
   return (
     <Card highlight>
-      <Header
-        label={info.day > 0 ? `오늘 할 일 · ${dayLabel}` : "오늘 할 일 · 시작"}
-        chip={info.streak >= 2 ? `🔥 ${info.streak}일 연속` : undefined}
-      />
-      <p className="mt-2 text-[16px] font-bold leading-snug text-neutral-900">{topic.title}</p>
-      {info.day === 0 && <p className="mt-1 text-[12.5px] text-neutral-400">첫 글이 코스 D-1이에요. 20일간 발행을 쌓아 애드포스트 신청 준비까지 이 카드가 안내해요.</p>}
-      <button onClick={() => onWriteKeyword(topic.keyword, topic.title)} className="mt-3.5 w-full rounded-xl bg-[#1D75F7] py-3 text-[14px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">
+      <Header label="오늘의 글" />
+      <p className="mt-2 text-[18px] font-bold leading-snug text-[color:var(--at-grey-900)]">{topic.title}</p>
+      {info.day === 0 && <p className="mt-1 text-[12.5px] text-neutral-400">첫 글이 코스 D-1이에요. 위 링이 승인 준비까지 차올라요.</p>}
+      <button onClick={() => onWriteKeyword(topic.keyword, topic.title)} className="mt-3.5 w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">
         이 글 쓰기
       </button>
     </Card>
