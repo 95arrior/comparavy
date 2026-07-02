@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import TopicCard from "@/components/TopicCard";
 import SeriesSheet from "./SeriesSheet";
 import StoryComposer from "./StoryComposer";
+import TodayCard from "./TodayCard";
+import { courseInfo } from "@/lib/course";
 import type { Comp } from "@/lib/topicScore";
 import type { Article } from "./types";
 
@@ -36,11 +38,13 @@ export default function Home({
   displayName,
   blogName,
   articles,
+  credits,
   onWrite,
   onWriteKeyword,
   onSelect,
   onUpdated,
   onAllArticles,
+  onGoPerformance,
   isAdmin,
   onWriteStory,
   profileKey,
@@ -48,11 +52,14 @@ export default function Home({
   displayName: string;
   blogName: string;
   articles: Article[];
+  /** 크레딧 잔액 — 0이면 '오늘 할 일' 카드가 잠김(글감은 보임) */
+  credits: number;
   onWrite: () => void;
   onWriteKeyword: (keyword: string, title: string) => void;
   onSelect: (a: Article) => void;
   onUpdated: (a: Article) => void;
   onAllArticles: () => void;
+  onGoPerformance: () => void;
   isAdmin?: boolean;
   onWriteStory?: (story: string, promo: boolean, title: string) => void; // 내 이야기로 글쓰기(메인 기능, 인라인)
   profileKey?: string; // 주제:세부 — 글감 캐시 분리(주제 바꾸면 새 글감)
@@ -169,13 +176,34 @@ export default function Home({
         <p className="text-sm text-neutral-400">{displayName}님</p>
       </div>
 
-      {/* 중앙 — 히어로 + 오늘의 글감 3개 */}
+      {/* 중앙 — 오늘 할 일 카드(코스) + 내 이야기 + 글감 */}
       <div className="flex flex-1 flex-col justify-center py-6">
-      {/* 메인 — 글감 + 상단 '직접 쓰기' 검색창(클릭하면 쭉 펼쳐짐) */}
       {(
         <div className="ateflo-page-in">
+          {/* ★오늘 할 일 카드 — 코스 D-day 기반, 오늘 해야 할 단 하나. 잔액 0이면 잠김(→페이월) */}
+          {!cluster && (() => {
+            const info = courseInfo(articles);
+            const todayK = new Date();
+            const sameDay = (iso: string) => { const d = new Date(iso); return d.getFullYear() === todayK.getFullYear() && d.getMonth() === todayK.getMonth() && d.getDate() === todayK.getDate(); };
+            const todayDraft = articles.find((a) => a.status === "draft" && sameDay(a.created_at));
+            const first = sanitizeTopics(topics)[0] ?? null;
+            return (
+              <div className="mt-2">
+                <TodayCard
+                  topic={first ? { keyword: first.keyword, title: first.title } : null}
+                  loading={topicsLoading}
+                  credits={credits}
+                  info={info}
+                  onWriteKeyword={onWriteKeyword}
+                  onOpenTodayDraft={() => { if (todayDraft) onSelect(todayDraft); }}
+                  onGoPerformance={onGoPerformance}
+                />
+              </div>
+            );
+          })()}
+
           {!cluster && onWriteStory && (
-            <div className="mt-6">
+            <div className="mt-4">
               <StoryComposer collapsible hasBiz={false} local={false} title={storyTitle} onTitleChange={setStoryTitle} story={storyDraft} onStoryChange={setStoryDraft} promo={false} onPromoChange={() => {}} onSubmit={(s, _p, t) => onWriteStory(s, false, t)} />
             </div>
           )}
@@ -191,8 +219,8 @@ export default function Home({
         </div>
       ) : (
         <div className="mt-8">
-          <p className="text-[12px] font-medium text-neutral-400">또는, 쓸 게 안 떠오르면</p>
-          <h2 className="mt-0.5 text-[15px] font-bold tracking-tight text-neutral-900">오늘의 추천 글감</h2>
+          <p className="text-[12px] font-medium text-neutral-400">오늘의 글감이 마음에 안 들면</p>
+          <h2 className="mt-0.5 text-[15px] font-bold tracking-tight text-neutral-900">다른 글감</h2>
         </div>
       )}
       {topicsLoading ? (
@@ -219,7 +247,8 @@ export default function Home({
       ) : topics.length > 0 ? (
         <div className="mt-3">
           <div className="flex flex-col gap-3">
-            {sanitizeTopics(topics).map((t, i) => (
+            {/* 1순위 글감은 '오늘 할 일 카드'가 차지 → 리스트는 나머지(클러스터 모드는 전체) */}
+            {(cluster ? sanitizeTopics(topics) : sanitizeTopics(topics).slice(1)).map((t, i) => (
               <TopicCard key={t.keyword} title={t.title} tag={t.tag || undefined} vol={t.vol} comp={t.comp} blogTotal={t.blogTotal} idx={i} cta="이 글 쓰기" onClick={() => onWriteKeyword(t.keyword, t.title)} onDismiss={swapLeft > 0 ? () => swapTopic(t.keyword) : undefined} dismissing={swapping.includes(t.keyword)} />
             ))}
           </div>

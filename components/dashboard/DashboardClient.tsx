@@ -515,6 +515,8 @@ export default function DashboardClient(props: DashboardProps) {
                 displayName={displayName}
                 blogName={blogProfile.blog_name ?? "내 블로그"}
                 articles={articles}
+                credits={credits}
+                onGoPerformance={() => goLabView("performance")}
                 onWrite={() => goLabView("keywords")}
                 onWriteKeyword={(keyword, title) => {
                   // 글감 카드 [이 글 쓰기] → 잔액 0이면 '쓰려던 글이 잠긴' 페이월, 있으면 확인 시트.
