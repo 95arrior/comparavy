@@ -50,20 +50,21 @@ function fnv(str: string): number {
 export async function generateBlogImage(slotDesc: string, articleTitle: string, userSeed?: string, opts?: { thumbnail?: boolean }): Promise<{ base64: string; mime: string }> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error("NOT_READY");
-  const uh = fnv(userSeed ?? "anon");
+  void fnv; void userSeed;
+  // ★전부 요청마다 랜덤 — '계정 고정 화풍'은 같은 계정이 여러 글을 쓰면 전부 같은 풍이 되는 역효과(유저 피드백).
+  //  장마다 화풍·팔레트·구도·분위기가 달라져 만 명이 써도, 한 명이 백 장을 만들어도 겹치지 않는다.
   const nonce = Math.floor(Math.random() * 1e9);
-  // 화풍·팔레트 = 계정 고정(블로그 안 이미지 톤 일관) / 구도·분위기 = 요청마다 변주(같은 글감도 다른 그림)
-  const art = ART_STYLES[uh % ART_STYLES.length];
-  const palette = PALETTES[(uh >> 3) % PALETTES.length];
-  const compo = COMPOSITIONS[nonce % COMPOSITIONS.length];
-  const mood = MOODS[(nonce >> 4) % MOODS.length];
+  const art = ART_STYLES[nonce % ART_STYLES.length];
+  const palette = PALETTES[(nonce >> 3) % PALETTES.length];
+  const compo = COMPOSITIONS[(nonce >> 7) % COMPOSITIONS.length];
+  const mood = MOODS[(nonce >> 11) % MOODS.length];
   const STYLE = `${art}, ${palette}, ${compo}, ${mood} mood, modern Korean lifestyle blog aesthetic. Wide horizontal 16:9 banner composition. Masterful composition, cinematic lighting, crisp refined details, rich color depth, award-winning high-end magazine quality. ${BASE_STYLE}`;
-  void articleTitle; // 한글 제목은 프롬프트에 넣지 않는다 — 모델이 그 글자를 그림에 그리려다 깨진 텍스트가 나옴
   // ★1번(대표) 이미지 = 검색 결과의 3초 훅 — 작게 봐도 읽히는 한 방이 없으면 클릭 자체가 없다
   const HOOK = opts?.thumbnail
     ? "This is the article's REPRESENTATIVE THUMBNAIL shown tiny in search results: ONE bold oversized focal subject filling the frame, dramatic scale contrast, punchy vivid colors against a clean simple background, strong silhouette readable even at 100px wide, curiosity-sparking composition. "
     : "";
-  const prompt = `Editorial illustration for a Korean lifestyle blog. ${HOOK}Scene to depict: ${slotDesc}. ${STYLE}`;
+  // 주제 연관성: 제목은 '무엇에 관한 글인지' 맥락으로만 제공(글자로 그리지 말라고 명시), 장면 설명을 충실히 시각화
+  const prompt = `Editorial illustration for a Korean lifestyle blog post. Topic context (for understanding ONLY — never render these words as text): ${articleTitle}. ${HOOK}Faithfully depict this specific scene with clearly recognizable subjects: ${slotDesc}. ${STYLE}`;
   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

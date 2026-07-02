@@ -72,10 +72,21 @@ export default function ArticleModal({
   const [allCopied, setAllCopied] = useState(false);
   async function copyAllPlain() {
     try {
+      const html = `<p>${title}</p><p>&nbsp;</p>` + addNaverSpacing(photoMarkerToGuide(markToNaverBold(bodyHtml)));
       const tmp = document.createElement("div");
-      tmp.innerHTML = addNaverSpacing(photoMarkerToGuide(markToNaverBold(bodyHtml)));
+      tmp.innerHTML = html;
       const text = `${title}\n\n${tmp.innerText}`;
-      await navigator.clipboard.writeText(text);
+      // ★플레인+HTML 동시 탑재 — 네이버 앱이 서식 붙여넣기를 받으면 볼드·형광펜·인용구가 살아나고, 아니면 플레인 폴백
+      if (typeof window !== "undefined" && "ClipboardItem" in window) {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            "text/html": new Blob([html], { type: "text/html" }),
+            "text/plain": new Blob([text], { type: "text/plain" }),
+          }),
+        ]);
+      } else {
+        await navigator.clipboard.writeText(text);
+      }
       setAllCopied(true);
       setTimeout(() => setAllCopied(false), 2200);
     } catch { /* 무시 */ }
@@ -176,18 +187,6 @@ export default function ArticleModal({
           localStorage.setItem(key, JSON.stringify(saved));
         } catch { /* ignore */ }
       }
-      // ★추천 문구 정리 — 만든 자리의 긴 설명을 '저장한 AI 사진 N번'으로 교체(복붙 시 안내 줄이 간결해짐)
-      try {
-        let idx = -1;
-        const nextBody = bodyHtml.replace(/\[사진:\s*([^\]]+)\]/g, (m0) => {
-          idx += 1;
-          return idx === i ? `[사진: 저장한 AI 사진 ${i + 1}번]` : m0;
-        });
-        if (nextBody !== bodyHtml) {
-          setBodyHtml(nextBody);
-          void fetch(`/api/articles/${article.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ body_html: nextBody }) });
-        }
-      } catch { /* 본문 갱신 실패해도 이미지엔 지장 없음 */ }
     } catch {
       setImgs((m) => ({ ...m, [i]: { ...m[i], busy: false, err: "네트워크 오류가 났어요" } }));
     }
@@ -197,22 +196,22 @@ export default function ArticleModal({
   const [imgCopied, setImgCopied] = useState<number | null>(null);
   async function copyImage(i: number, url: string) {
     try {
-      const res = await fetch(url);
-      let blob = await res.blob();
-      if (blob.type !== "image/png") {
-        // 클립보드는 png가 가장 호환 — 캔버스로 변환
-        const bmp = await createImageBitmap(blob);
+      // ★iOS 사파리: 클립보드 쓰기 전에 await가 끼면 사용자 제스처 인증이 풀려 거부됨
+      //  → ClipboardItem에 'Promise<Blob>'을 넘기는 패턴(제스처 유지)으로 해결
+      const blobPromise = fetch(url).then(async (res) => {
+        const b = await res.blob();
+        if (b.type === "image/png") return b;
+        const bmp = await createImageBitmap(b);
         const canvas = document.createElement("canvas");
         canvas.width = bmp.width; canvas.height = bmp.height;
         canvas.getContext("2d")!.drawImage(bmp, 0, 0);
-        blob = await new Promise<Blob>((ok) => canvas.toBlob((b) => ok(b!), "image/png"));
-      }
-      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+        return await new Promise<Blob>((ok) => canvas.toBlob((x) => ok(x!), "image/png"));
+      });
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": blobPromise })]);
       setImgCopied(i);
       setTimeout(() => setImgCopied((c) => (c === i ? null : c)), 2500);
     } catch {
-      // 클립보드 미지원 → 다운로드 폴백
-      void downloadImage(url, `ateflo-image-${i + 1}.png`);
+      void downloadImage(url, `ateflo-image-${i + 1}.png`); // 미지원 → 저장 폴백
     }
   }
 
@@ -221,6 +220,11 @@ export default function ArticleModal({
     try {
       const res = await fetch(url);
       const blob = await res.blob();
+      // ★모바일: 파일 다운로드는 '파일 앱'으로 가버림 → 공유시트를 띄우면 '이미지 저장(사진 앱)'이 가능
+      const file = new File([blob], name, { type: blob.type || "image/png" });
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && navigator.canShare?.({ files: [file] })) {
+        try { await navigator.share({ files: [file] }); return; } catch { /* 취소·미지원 → 아래 다운로드 */ }
+      }
       const obj = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = obj;

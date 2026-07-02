@@ -287,7 +287,7 @@ export default function WritingView({
       }
     } catch (e) {
       if (e instanceof DOMException && e.name === "AbortError") return;
-      setError("네트워크 오류가 났어요. 잠시 후 다시 시도해 주세요.");
+      setError("__DISCONNECT__");
     }
   }
 
@@ -312,6 +312,19 @@ export default function WritingView({
 
       <div className="mx-auto max-w-3xl px-6 py-8 pb-24">
         {error ? (
+          error === "__DISCONNECT__" ? (
+            /* ★연결 끊김 — 서버는 계속 쓰고 저장한다(자리표시 행 포함). 겁주지 말고 진실을 안내 */
+            <div className="rounded-2xl at-glass p-6 text-center">
+              <p className="text-[16px] font-extrabold text-neutral-900">연결이 잠깐 끊겼어요</p>
+              <p className="mt-2 text-[13.5px] leading-relaxed text-neutral-500">
+                걱정 마세요 — 글은 서버에서 <b className="text-neutral-700">계속 만들어지고 있어요.</b>
+                <br />잠시 후 ‘내 글’에서 완성본을 확인하세요.
+              </p>
+              <button onClick={onExit} className="at-press mt-5 rounded-xl bg-[#1D75F7] px-6 py-3 text-[14px] font-bold text-white transition hover:opacity-90">
+                내 글에서 확인하기
+              </button>
+            </div>
+          ) : (
           <div className="rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
             {error}
             <div className="mt-3">
@@ -320,6 +333,7 @@ export default function WritingView({
               </button>
             </div>
           </div>
+          )
         ) : phase === "thinking" ? (
           // 첫 글자가 오기 전 — 키워드만 크게, 나머지는 하단 룰렛이 말해줌
           <div className="flex min-h-[56vh] flex-col items-center justify-center text-center">
