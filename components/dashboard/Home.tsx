@@ -59,6 +59,10 @@ export default function Home({
   const [collecting, setCollecting] = useState(false);
   const [swapping, setSwapping] = useState<string[]>([]);
   const [moreOpen, setMoreOpen] = useState(false); // '다른 글감' 접힘 토글
+  const moreRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (moreOpen) setTimeout(() => moreRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 80);
+  }, [moreOpen]);
 
   // 교체 무제한(풀 조회라 원가 0). 교체한 글감은 그날 다시 안 나옴(기기에 기억).
   const todayKey = `ateflo_dismissed_${new Date().toISOString().slice(0, 10)}`;
@@ -182,7 +186,7 @@ export default function Home({
           <svg className={`shrink-0 text-neutral-300 transition-transform duration-200 ${moreOpen ? "rotate-180" : ""}`} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
         </button>
         {moreOpen && (
-          <div className="at-rise mt-2">
+          <div ref={moreRef} className="at-rise mt-2 scroll-mb-24">
             {topicsLoading ? (
               <TopicsSkeleton collecting={collecting} />
             ) : rest.length > 0 ? (

@@ -1648,3 +1648,17 @@ input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-sele
     0 12px 36px -14px rgba(30, 50, 90, 0.18),
     inset 0 1px 0 rgba(255, 255, 255, 0.95);
 }
+
+/* 크레딧 번개 — 선택 시 아래서 위로 차오름 */
+.at-fill { clip-path: inset(100% 0 0 0); transition: clip-path 0.6s var(--at-ease); }
+.at-fill-on { clip-path: inset(0 0 0 0); }
+
+/* 승인팩 번개 — 이따금 찌지직(전기 스파크) */
+@keyframes at-zap {
+  0%, 84%, 96%, 100% { opacity: 0; }
+  86% { opacity: 1; }
+  88% { opacity: 0.25; }
+  90% { opacity: 1; }
+  93% { opacity: 0.5; }
+}
+.at-zap { clip-path: inset(0 0 0 0); animation: at-zap 2.6s linear infinite; }

@@ -17,10 +17,10 @@ export interface CreditPack {
 }
 
 export const CREDIT_PACKS: CreditPack[] = [
-  { key: "trial", name: "트라이얼", credits: 30, price: 1900, desc: "글 3편 분량. 가볍게 시작" },
-  { key: "standard", name: "스탠다드", credits: 300, price: 19900, desc: "글 30편 분량. 꾸준히 쌓는 사람용" },
-  { key: "approval", name: "승인 팩", credits: 600, price: 34900, salePrice: 29900, desc: "글 60편 분량. 승인 코스 완주용", highlight: true },
-  { key: "pro", name: "프로", credits: 1000, price: 49900, desc: "글 100편 분량. 편당 최저가" },
+  { key: "trial", name: "트라이얼", credits: 30, price: 1900, desc: "글 3편" },
+  { key: "standard", name: "스탠다드", credits: 300, price: 19900, desc: "글 30편" },
+  { key: "approval", name: "승인 팩", credits: 600, price: 34900, salePrice: 29900, desc: "글 60편 · 승인 코스 완주", highlight: true },
+  { key: "pro", name: "프로", credits: 1000, price: 49900, desc: "글 100편 · 편당 최저가" },
 ];
 
 export function packByKey(key: string): CreditPack | undefined {

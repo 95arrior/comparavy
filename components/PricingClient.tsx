@@ -112,12 +112,15 @@ export default function PricingClient({
                 <span className="absolute -top-2.5 left-5 rounded-full bg-[#1D75F7] px-2.5 py-0.5 text-[11px] font-bold text-white">가장 많이 선택</span>
               )}
               <div className="flex items-center gap-4">
-                <GlassIcon name="credit" tint={p.highlight ? "blue" : "grey"} size={40} />
+                <span className="relative inline-block h-10 w-10 shrink-0">
+                  <GlassIcon name="credit" tint="grey" size={40} className="absolute inset-0" />
+                  <GlassIcon name="credit" tint="blue" size={40} className={`at-fill absolute inset-0 ${isSel ? "at-fill-on" : p.highlight ? "at-zap" : ""}`} />
+                </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-[16px] font-extrabold tracking-tight text-neutral-900">
                     {p.name} <span className="font-bold text-neutral-400">· {p.credits.toLocaleString("ko-KR")}크레딧</span>
                   </p>
-                  <p className="mt-0.5 text-[12.5px] text-neutral-500">{p.desc}</p>
+                  <p className="mt-0.5 truncate text-[12.5px] text-neutral-500">{p.desc}</p>
                 </div>
                 <div className="shrink-0 text-right">
                   {saleOn && p.salePrice ? (
