@@ -76,9 +76,26 @@ export function briefToDirective(b: AngleBrief): string {
     `- 마무리: ${b.closing}로 끝낸다`,
     `- 톤·문장 리듬: ${b.tone}`,
     `- 첫 문단 훅: ${b.hook}`,
-    `- 시의성 코어 '${b.coreWord}'는 제목과 도입에 반드시 살린다.`,
+    b.coreWord ? `- 시의성 코어 '${b.coreWord}'는 제목과 도입에 반드시 살린다.` : "", // 빈 코어는 줄 생략
     "위 방향을 이 글의 뼈대로 삼되, 엔진의 안전·품질·모바일 포맷 규칙은 그대로 지킨다.",
-  ].join("\n");
+  ].filter(Boolean).join("\n");
+}
+
+// 카피를 max자 이내로 — 단어(어절) 중간에서 자르지 않는다(미완성 카피 방지). 줄바꿈 유지.
+function clampCopy(raw: string, max: number): string {
+  const s = raw.replace(/\s*\n\s*/g, "\n").trim();
+  const visible = (t: string) => [...t.replace(/\n/g, "")].length;
+  if (visible(s) <= max) return s;
+  const tokens = s.split(/(\n| )/); // 구분자 유지
+  let out = "", count = 0;
+  for (const tok of tokens) {
+    if (tok === " " || tok === "\n") { out += tok; continue; }
+    const len = [...tok].length;
+    if (count + len > max) break;
+    out += tok; count += len;
+  }
+  out = out.replace(/[\n ]+$/g, "").trim();
+  return out || [...s].slice(0, max).join(""); // 첫 어절도 max 초과면 어쩔 수 없이 자름
 }
 
 export interface AmplifyProfile {
@@ -199,9 +216,9 @@ ${OPEN_LOOP_GUIDE}
       let titleClick = (it.titleClick ?? b.seed.title).trim().slice(0, 80);
       if (containsBanned(titleClick)) titleClick = b.seed.title.slice(0, 80);
       const titleSearch = (it.titleSearch ?? b.seed.title).trim().slice(0, 80);
-      let thumbMain = (it.thumbMain ?? "").trim().replace(/!/g, "").slice(0, 24);
-      if (!thumbMain || containsBanned(thumbMain)) thumbMain = titleClick.replace(/\s+/g, "\n").slice(0, 20);
-      let thumbSub = (it.thumbSub ?? "").trim().slice(0, 15);
+      let thumbMain = clampCopy((it.thumbMain ?? "").replace(/!/g, ""), 20);
+      if (!thumbMain || containsBanned(thumbMain)) thumbMain = clampCopy(titleClick, 18);
+      let thumbSub = clampCopy((it.thumbSub ?? ""), 15);
       if (containsBanned(thumbSub)) thumbSub = "";
       const brief = { ...b.angle, reader: (it.reader ?? "").trim().slice(0, 120), hook: (it.hook ?? "").trim().slice(0, 160), coreWord: b.core };
       out.push({

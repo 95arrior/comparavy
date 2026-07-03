@@ -114,10 +114,23 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
     const GAP_PER_SEED = 3;      // 씨앗당 gap 검사할 롱테일 수(검색량 상위)
     let gapUsed = 0;
     let ltTotal = 0;
+    // 분석성 꼬리말(효과·분석·변화·영향·정책 등)은 자동완성 쿼리에서 빼고 짧은 코어로 질의.
+    const shortenSeed = (kw: string): string[] => {
+      const toks = kw.replace(/\s+(효과|분석|변화|영향|정책|방안|현황|전망|비교|정리)\b/g, "").trim().split(/\s+/);
+      // 3토큰 → 2토큰 → 1토큰 순으로 시도(자동완성은 짧을수록 잘 걸림)
+      const tries: string[] = [];
+      for (const n of [2, 1]) { const q = toks.slice(0, n).join(" "); if (q && !tries.includes(q)) tries.push(q); }
+      if (toks.length >= 3) tries.unshift(toks.slice(0, 3).join(" "));
+      return tries;
+    };
     for (const row of rows) {
-      const acs = await fetchNaverAutocomplete(row.keyword).catch(() => []);
-      // 씨앗과 무관한 잡음 제거: 씨앗의 핵심 토큰을 포함하는 롱테일만
-      const core = row.keyword.split(/\s+/)[0];
+      // ★긴 뉴스 문구 씨앗은 자동완성이 안 걸림 → 짧은 코어로 순차 질의해 실검증 롱테일 확보.
+      let acs: string[] = [];
+      for (const q of shortenSeed(row.keyword)) {
+        acs = await fetchNaverAutocomplete(q).catch(() => []);
+        if (acs.length > 0) break;
+      }
+      const core = row.keyword.replace(/\s+(효과|분석|변화|영향|정책|방안|현황|전망)\b/g, "").split(/\s+/)[0];
       const cand = acs.filter((a) => a.includes(core) || a.length >= 6).slice(0, 8);
       ltTotal += cand.length;
       const longtails: Longtail[] = [];
