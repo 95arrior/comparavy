@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { logUsage } from "./usageLog";
 import type { TrendTopic } from "./trendTopics";
+import { pickHookPattern, OPEN_LOOP_GUIDE, containsBanned } from "./hookPatterns";
 
 // ★트렌드 씨앗 × 개인화 증식(C단계) — 같은 씨앗·롱테일이라도 유저마다 '앵글 브리프'가 달라 다른 글이 나온다.
 //  무중복 원리: 토픽(키워드)은 겹쳐도 되고, 글의 방향·구조·톤·독자가 달라야 홈판 피드에서 노출된다.
@@ -17,13 +18,21 @@ export interface AngleBrief {
   hook: string;     // 첫 문단 훅(LLM)
   coreWord: string; // 시의성 코어(제목 필수)
 }
+// 대표이미지 합성 카피 — 코드가 렌더(절대 안 깨짐). 길이 상한은 축소 썸네일 가독 기준.
+export interface ThumbCopy {
+  mainCopy: string;   // 1~2줄, 20자 이내. \n으로 줄 구분
+  subCopy: string;    // 15자 이내(선택)
+  badge: string;      // 카테고리 배지
+}
 export interface AmplifiedTopic {
   keyword: string;       // 실검증 롱테일
-  title: string;         // 홈판 클릭형 제목
+  title: string;         // 홈판 클릭형 제목(훅 패턴 적용)
   titleSearch: string;   // 검색형 제목(롱테일 포함)
   newsContext: string | null;
   brief: AngleBrief;
   briefText: string; // brief를 엔진 주입용 지시문으로 직렬화(클라 스레딩용)
+  hookKey: string;   // 적용된 훅 패턴 key
+  thumb: ThumbCopy;  // 대표이미지 합성 카피
 }
 
 // ── 앵글 차원(구조 지문) — 스펙 최소치: 서두6·전개6·마무리5·톤5·의도6 ──
@@ -117,12 +126,16 @@ export async function amplifyForUser(
   const rotated = [...seeds].sort((a, b) => (fnv(a.keyword + userId) % 997) - (fnv(b.keyword + userId) % 997));
   const picks = rotated.slice(0, Math.min(want, rotated.length));
 
-  // 각 씨앗에 구조 조합(코드 배정) + 실검증 롱테일을 붙여 LLM에 브리핑
+  const badge = (profile?.sub_category || "정보").toString().slice(0, 10);
+  // 각 씨앗에 구조 조합 + 훅 패턴(코드 배정, 배치 내 직전 제외) + 실검증 롱테일을 붙여 LLM에 브리핑
+  const usedHooks: string[] = [];
   const briefs = picks.map((s) => {
     const angle = assignAngle(userId, s.keyword, day);
     const lts = (s.longtails ?? []).map((l) => l.kw).slice(0, 6);
     const core = coreOf(`${s.title} ${s.keyword}`);
-    return { seed: s, angle, lts, core };
+    const hook = pickHookPattern(userId, s.keyword, day, usedHooks, `${s.title} ${s.keyword}`);
+    usedHooks.unshift(hook.key);
+    return { seed: s, angle, lts, core, hook };
   });
   const validLongtails = new Set<string>();
   for (const b of briefs) for (const kw of b.lts) validLongtails.add(kw.replace(/\s+/g, ""));
@@ -132,25 +145,31 @@ export async function amplifyForUser(
     `  실검증검색어=[${b.lts.join(", ") || "(없음)"}]`,
     `  시의성코어="${b.core || "(없음)"}"`,
     `  배정된 구조: 의도=${b.angle.intent} / 서두=${b.angle.opening} / 전개=${b.angle.flow} / 마무리=${b.angle.closing} / 톤=${b.angle.tone}`,
+    `  배정된 제목 훅 패턴: ${b.hook.name} — ${b.hook.guide}`,
   ].join("\n")).join("\n");
 
   const client = new Anthropic({ apiKey });
-  const prompt = `이 블로그 운영자에게 맞춘 글감 ${briefs.length}개를 만들어라. 각 글감은 아래 '배정된 구조'를 그대로 따르고, 창작 부분(제목·독자·훅)만 채운다.
+  const prompt = `이 블로그 운영자에게 맞춘 글감 ${briefs.length}개를 만들어라. 각 글감은 아래 '배정된 구조·훅'을 그대로 따르고, 창작 부분만 채운다.
 
 [운영자 개인화 축]
 ${axis || "(일반)"}
 
-[씨앗 + 배정된 구조 — 구조는 바꾸지 말 것]
+[씨앗 + 배정된 구조/훅 — 구조·훅 패턴은 바꾸지 말 것]
 ${seedList}
+
+${OPEN_LOOP_GUIDE}
 
 ★출력 규칙(반드시):
 - keyword: 그 씨앗의 실검증검색어 목록에서 그대로 하나 고른다(새로 지어내지 않는다). 목록이 없으면 비운다.
-- titleClick: 홈 피드에서 클릭을 부르는 호기심 훅 제목(운영자 독자에 맞게).
-- titleSearch: 검색형 제목 — 고른 keyword를 자연스럽게 포함.
-- reader: 이 글이 말 거는 독자를 온보딩 축 기반으로 한 문장 페르소나.
+- titleClick: 홈 피드 클릭형 제목 — 배정된 훅 패턴을 적용하고 열린 고리 원칙을 지킨다(답 숨김).
+- titleSearch: 검색형 제목 — 고른 keyword를 자연스럽게 포함(여긴 훅보다 검색 적합 우선).
+- reader: 온보딩 축 기반 독자 한 문장 페르소나.
 - hook: 첫 문단이 잡을 긴장 한 줄(배정된 서두 유형에 맞게).
-- 시의성코어가 있으면 두 제목에 반드시 살린다.
-- JSON 배열만: [{"seedIndex":1,"keyword":"...","titleClick":"...","titleSearch":"...","reader":"...","hook":"..."}]`;
+- thumbMain: 대표이미지 메인 카피. 1~2줄, 전체 20자 이내, 줄바꿈은 \\n. 제목을 그대로 복사하지 말고 압축/보완. 열린 고리(답 숨기고 궁금증만). 느낌표 금지.
+- thumbSub: 대표이미지 서브 카피 15자 이내(없으면 빈 문자열).
+- 시의성코어가 있으면 제목과 thumbMain에 살린다.
+- 금지: 무조건·100%·보장·충격류, 본문이 못 지킬 약속.
+- JSON 배열만: [{"seedIndex":1,"keyword":"...","titleClick":"...","titleSearch":"...","reader":"...","hook":"...","thumbMain":"...","thumbSub":"..."}]`;
 
   try {
     const res = await client.messages.create({
@@ -162,14 +181,13 @@ ${seedList}
     const text = res.content[0]?.type === "text" ? res.content[0].text : "";
     const m = /\[[\s\S]*\]/.exec(text);
     if (!m) return [];
-    const parsed = JSON.parse(m[0]) as { seedIndex?: number; keyword?: string; titleClick?: string; titleSearch?: string; reader?: string; hook?: string }[];
+    const parsed = JSON.parse(m[0]) as { seedIndex?: number; keyword?: string; titleClick?: string; titleSearch?: string; reader?: string; hook?: string; thumbMain?: string; thumbSub?: string }[];
     const out: AmplifiedTopic[] = [];
     const seen = new Set<string>();
     for (const it of parsed) {
       const b = briefs[(Number(it.seedIndex) || 1) - 1] ?? briefs[0];
       if (!b) continue;
       let kw = (it.keyword ?? "").trim().slice(0, 60);
-      // 코드 검증 — LLM이 고른 keyword가 실검증 롱테일에 없으면(지어냄) 실제 롱테일로 폴백.
       if (validLongtails.size > 0 && !validLongtails.has(kw.replace(/\s+/g, ""))) {
         kw = b.lts.find((l) => !seen.has(l.replace(/\s+/g, ""))) ?? b.seed.keyword;
       }
@@ -177,18 +195,24 @@ ${seedList}
       const nk = kw.replace(/\s+/g, "");
       if (seen.has(nk)) continue;
       seen.add(nk);
-      const titleClick = (it.titleClick ?? b.seed.title).trim().slice(0, 80);
+      // ★금지어 필터 — 어그로/약속류가 든 제목·카피는 안전한 씨앗 제목으로 폴백.
+      let titleClick = (it.titleClick ?? b.seed.title).trim().slice(0, 80);
+      if (containsBanned(titleClick)) titleClick = b.seed.title.slice(0, 80);
       const titleSearch = (it.titleSearch ?? b.seed.title).trim().slice(0, 80);
+      let thumbMain = (it.thumbMain ?? "").trim().replace(/!/g, "").slice(0, 24);
+      if (!thumbMain || containsBanned(thumbMain)) thumbMain = titleClick.replace(/\s+/g, "\n").slice(0, 20);
+      let thumbSub = (it.thumbSub ?? "").trim().slice(0, 15);
+      if (containsBanned(thumbSub)) thumbSub = "";
+      const brief = { ...b.angle, reader: (it.reader ?? "").trim().slice(0, 120), hook: (it.hook ?? "").trim().slice(0, 160), coreWord: b.core };
       out.push({
         keyword: kw,
         title: titleClick,
         titleSearch,
         newsContext: b.seed.newsContext ?? null,
-        brief: (() => {
-          const brief = { ...b.angle, reader: (it.reader ?? "").trim().slice(0, 120), hook: (it.hook ?? "").trim().slice(0, 160), coreWord: b.core };
-          return brief;
-        })(),
-        briefText: briefToDirective({ ...b.angle, reader: (it.reader ?? "").trim().slice(0, 120), hook: (it.hook ?? "").trim().slice(0, 160), coreWord: b.core }),
+        brief,
+        briefText: briefToDirective(brief),
+        hookKey: b.hook.key,
+        thumb: { mainCopy: thumbMain, subCopy: thumbSub, badge },
       });
       if (out.length >= want) break;
     }

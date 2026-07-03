@@ -1,6 +1,6 @@
 // Gemini 이미지 생성(REST) — 서버 전용. GEMINI_API_KEY 없으면 ready=false.
-// ★2트랙 원칙: 무자막 일러스트 비주얼만(이미지 속 텍스트 금지 — 한글 렌더 불안정 + 정보는 본문 텍스트가 담당),
-//   실사(사진) 위장 금지 — 경험 조작으로 보이면 계정 리스크.
+// ★파이프라인 최종: 본문=실사 사진 톤(텍스트 전면 금지), 대표이미지=AI 배경만(한글은 코드 합성).
+//  하드 규칙은 buildBodyPrompt/buildThumbBgPrompt 두 순수 함수에 코드로 강제(단위 테스트 대상).
 
 const MODEL = "gemini-2.5-flash-image";
 
@@ -8,46 +8,15 @@ export function imageReady(): boolean {
   return Boolean(process.env.GEMINI_API_KEY);
 }
 
-const BASE_STYLE = [
-  "ABSOLUTELY NO text of any kind: no letters, no numbers, no Korean characters (Hangul), no signs, no labels, no captions, no watermarks, no UI text.",
-  "Any screen, sign, book, paper or package in the scene must be completely blank or filled with abstract shapes only.",
-  "Do NOT render any words from this prompt into the image.",
-  "NOT photorealistic — clearly an illustration.",
+// ★하드 규칙(모든 프롬프트에 강제) — 텍스트·얼굴·손클로즈업·브랜드/UI·지폐정면 금지.
+export const IMAGE_HARD_RULES = [
+  "ABSOLUTELY NO text of any kind: no letters, numbers, Korean characters (Hangul), signs, labels, captions, watermarks, logos, or UI text anywhere.",
+  "Any screen, sign, book, paper, or package in the scene must be completely blank.",
+  "NO human faces — if a person appears, only from behind or cropped below the face, never showing facial features.",
+  "NO close-up of hands.",
+  "NO brand logos and NO app or phone UI screens.",
+  "NO front close-up of banknotes, cash, or bills — use a bankbook, coins, a piggy bank, or a plain blank card instead.",
 ].join(" ");
-
-// ★다양성 변주 — 1만 명이 같은 글감이어도 같은 그림이 안 나오게.
-//  계정 시드(항상 같은 축) + 요청 난수(매번 다른 축) 조합으로 스타일·팔레트·구도·분위기를 배정.
-const ART_STYLES = [
-  "premium soft 3D clay render with smooth rounded forms and studio lighting",
-  "dramatic cinematic 3D render with depth of field and volumetric light",
-  "bold pop-art illustration with thick outlines and halftone texture",
-  "surreal editorial illustration with playful oversized objects and tiny people",
-  "high-end flat illustration with rich grain texture and layered depth",
-  "vibrant gradient-glass illustration with translucent dimensional forms",
-  "retro-modern collage illustration with paper textures and bold shapes",
-  "isometric 3D diorama with miniature world charm and glossy accents",
-  "painterly gouache illustration with rich color depth and visible brushwork",
-  "neon-accent dark illustration with glowing highlights on deep background",
-];
-const PALETTES = [
-  "warm coral, cream and sky blue",
-  "deep navy, mint and off-white",
-  "pastel lavender, peach and pale yellow",
-  "earthy sage green, terracotta and sand",
-  "vivid cobalt blue, tangerine and white",
-  "bold crimson, charcoal and warm gray",
-  "electric purple, hot pink and midnight blue",
-  "sunshine yellow, forest green and cream",
-];
-const COMPOSITIONS = [
-  "subject centered with generous negative space",
-  "subject on the left third, airy background on the right",
-  "dramatic low-angle view emphasizing scale",
-  "extreme close-up on the key object with shallow depth",
-  "wide scene with a small human figure for scale contrast",
-  "diagonal dynamic composition with strong movement",
-];
-const MOODS = ["calm and tidy", "bright and optimistic", "cozy and warm", "fresh and energetic", "dramatic and striking", "playful and eye-catching", "luxurious and refined"];
 
 function fnv(str: string): number {
   let h = 0x811c9dc5;
@@ -55,42 +24,82 @@ function fnv(str: string): number {
   return h >>> 0;
 }
 
-/** 사진 자리 설명(한국어) + 글 제목 → 무자막 일러스트 1장(base64). userSeed로 계정별 화풍 고정 + 요청마다 변주. 실패 시 throw. */
-export async function generateBlogImage(slotDesc: string, articleTitle: string, userSeed?: string, opts?: { thumbnail?: boolean }): Promise<{ base64: string; mime: string }> {
+// ── 본문 이미지: 실사 사진 톤 다양성 ──
+const PHOTO_TONES = [
+  "warm natural window light, soft film-like tones",
+  "clean minimal desaturated studio light",
+  "bright morning sunlight, airy and fresh",
+  "cozy indoor tungsten warmth",
+  "low-saturation pastel daylight",
+  "autumn amber golden-hour tones",
+  "cool blue-hour calm light",
+  "soft overcast diffused light",
+];
+const PHOTO_COMPOS = [
+  "subject centered with generous negative space",
+  "subject on the left third, airy background",
+  "gentle top-down flat-lay arrangement",
+  "shallow depth of field, close but not macro",
+  "wide calm scene with the object small in frame",
+  "diagonal arrangement with soft natural shadow",
+];
+const PHOTO_MOODS = ["calm and tidy", "warm and inviting", "fresh and clean", "quiet and refined", "cozy everyday"];
+
+/** 본문 이미지 프롬프트(순수 함수, 실사 톤 + 하드룰). 테스트 대상. */
+export function buildBodyPrompt(slotDesc: string, articleTitle: string, seed: number): string {
+  const tone = PHOTO_TONES[seed % PHOTO_TONES.length];
+  const compo = PHOTO_COMPOS[(seed >> 3) % PHOTO_COMPOS.length];
+  const mood = PHOTO_MOODS[(seed >> 7) % PHOTO_MOODS.length];
+  return [
+    `Realistic lifestyle photograph for a Korean blog post. Topic context (for understanding only — never render as text): ${articleTitle}.`,
+    `Faithfully photograph this specific scene with clearly recognizable real objects: ${slotDesc}.`,
+    `${tone}, ${compo}, ${mood} mood. Natural realistic photography, true-to-life textures and materials, tasteful depth of field, high-end magazine quality. Wide horizontal 16:9 composition.`,
+    IMAGE_HARD_RULES,
+  ].join(" ");
+}
+
+/** 대표이미지 AI 배경 프롬프트(순수 함수) — 텍스트 절대 금지 + 저대비 여백(코드가 한글 합성). 테스트 대상. */
+export function buildThumbBgPrompt(bgStyleHint: string, paletteHint: string, seed: number): string {
+  const mood = PHOTO_MOODS[seed % PHOTO_MOODS.length];
+  return [
+    `Simple abstract background image for a blog thumbnail, ${bgStyleHint} style, color palette of ${paletteHint}.`,
+    `Minimal uncluttered composition with a large calm low-contrast empty area (for text to be placed on top later by code).`,
+    `${mood} mood, soft and premium, brand-magazine quality, no busy focal clutter. Square 1:1 composition.`,
+    // 텍스트 관련 하드룰만(배경엔 인물/사물 규칙 불필요)
+    "ABSOLUTELY NO text of any kind: no letters, numbers, Korean characters, signs, labels, captions, watermarks, or logos anywhere.",
+  ].join(" ");
+}
+
+async function callGemini(prompt: string, aspectRatio: "16:9" | "1:1"): Promise<{ base64: string; mime: string }> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error("NOT_READY");
-  void fnv; void userSeed;
-  // ★전부 요청마다 랜덤 — '계정 고정 화풍'은 같은 계정이 여러 글을 쓰면 전부 같은 풍이 되는 역효과(유저 피드백).
-  //  장마다 화풍·팔레트·구도·분위기가 달라져 만 명이 써도, 한 명이 백 장을 만들어도 겹치지 않는다.
-  const nonce = Math.floor(Math.random() * 1e9);
-  const art = ART_STYLES[nonce % ART_STYLES.length];
-  const palette = PALETTES[(nonce >> 3) % PALETTES.length];
-  const compo = COMPOSITIONS[(nonce >> 7) % COMPOSITIONS.length];
-  const mood = MOODS[(nonce >> 11) % MOODS.length];
-  const STYLE = `${art}, ${palette}, ${compo}, ${mood} mood, modern Korean lifestyle blog aesthetic. Wide horizontal 16:9 banner composition. Masterful composition, cinematic lighting, crisp refined details, rich color depth, award-winning high-end magazine quality. ${BASE_STYLE}`;
-  // ★1번(대표) 이미지 = 검색 결과의 3초 훅 — 작게 봐도 읽히는 한 방이 없으면 클릭 자체가 없다
-  const HOOK = opts?.thumbnail
-    ? "This is the article's REPRESENTATIVE THUMBNAIL competing for clicks in crowded search results: ONE bold oversized focal subject bursting toward the viewer, exaggerated dramatic scale, intense color contrast that pops against competitors, strong silhouette readable at 100px, a slightly provocative curiosity-gap composition that makes people NEED to tap — attention-grabbing but never misleading. "
-    : "";
-  // 주제 연관성: 제목은 '무엇에 관한 글인지' 맥락으로만 제공(글자로 그리지 말라고 명시), 장면 설명을 충실히 시각화
-  const prompt = `Editorial illustration for a Korean lifestyle blog post. Topic context (for understanding ONLY — never render these words as text): ${articleTitle}. ${HOOK}Faithfully depict this specific scene with clearly recognizable subjects: ${slotDesc}. ${STYLE}`;
   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { imageConfig: { aspectRatio: "16:9" } } }),
+    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { imageConfig: { aspectRatio } } }),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const msg = data?.error?.message ?? `Gemini ${res.status}`;
-    // 잔액 소진/쿼터 — 관리자가 즉시 알아야 하는 신호
     const quota = res.status === 429 || /quota|billing|exhausted/i.test(msg);
     throw new Error(quota ? "QUOTA" : msg);
   }
   const parts = data?.candidates?.[0]?.content?.parts ?? [];
-  for (const p of parts) {
-    if (p.inlineData?.data) return { base64: p.inlineData.data, mime: p.inlineData.mimeType ?? "image/png" };
-  }
+  for (const p of parts) if (p.inlineData?.data) return { base64: p.inlineData.data, mime: p.inlineData.mimeType ?? "image/png" };
   throw new Error("이미지가 생성되지 않았어요.");
+}
+
+/** 본문 이미지 1장(실사, base64). userSeed로 계정 축 + 요청 난수 변주. 실패 시 throw. */
+export async function generateBlogImage(slotDesc: string, articleTitle: string, userSeed?: string, _opts?: { thumbnail?: boolean }): Promise<{ base64: string; mime: string }> {
+  // 장마다 변주 — 만 명이 써도, 한 명이 백 장을 만들어도 겹치지 않게.
+  const seed = (fnv((userSeed ?? "") + ":") + Math.floor(Math.random() * 1e9)) >>> 0;
+  return callGemini(buildBodyPrompt(slotDesc, articleTitle, seed), "16:9");
+}
+
+/** 대표이미지 AI 배경 1장(1:1, base64) — 한글은 코드(satori)가 합성. 실패는 호출측이 코드 폴백. */
+export async function generateThumbBackground(bgStyleHint: string, paletteHint: string, userSeed?: string): Promise<{ base64: string; mime: string }> {
+  const seed = (fnv((userSeed ?? "") + ":bg") + Math.floor(Math.random() * 1e9)) >>> 0;
+  return callGemini(buildThumbBgPrompt(bgStyleHint, paletteHint, seed), "1:1");
 }
 
 export const GEMINI_IMAGE_MODEL = MODEL;
