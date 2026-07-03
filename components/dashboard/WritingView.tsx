@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import AteFloLogo from "@/components/AteFloLogo";
+import { parseSlots, parseCardItems } from "@/lib/publishHtml";
 import type { Article } from "./types";
 
 export interface GenParams {
@@ -117,25 +118,27 @@ export default function WritingView({
   const [imgDone, setImgDone] = useState(0);
   function kickImages() {
     if (!params.withImages) return;
-    const slots: string[] = [];
-    const re = /\[사진:\s*([^\]]+)\]/g;
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(bodyRef.current))) slots.push(String(m[1]).trim());
-    for (let i = 0; i < Math.min(slots.length, IMG_MAX); i++) {
+    // ★슬롯 통합 — 사진(Gemini·유료, IMG_MAX 상한)과 카드(satori·무료) 문서 순서로. 카드는 상한 밖(원가 0).
+    const slots = parseSlots(bodyRef.current);
+    let photoFired = 0;
+    for (let i = 0; i < slots.length; i++) {
       if (imgStartedRef.current.has(i)) continue;
+      const slot = slots[i];
+      const isPhoto = slot.type === "photo";
+      if (isPhoto && photoFired >= IMG_MAX) continue; // 사진만 상한
       imgStartedRef.current.add(i);
+      if (isPhoto) photoFired += 1;
       imgPendingRef.current += 1;
-      void fetch("/api/images/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slot: slots[i], title: titleRef.current, thumb: i === 0, thumbCopy: i === 0 ? params.thumb : undefined, articleSeed: titleRef.current }),
-      })
+      const reqBody = isPhoto
+        ? { slot: slot.desc, title: titleRef.current, thumb: photoFired === 1, thumbCopy: photoFired === 1 ? params.thumb : undefined, articleSeed: titleRef.current, idx: i }
+        : { slotType: "card", cardItems: parseCardItems(slot.desc), idx: i };
+      void fetch("/api/images/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(reqBody) })
         .then(async (res) => {
           const data = await res.json().catch(() => ({}));
           if (typeof data.credits === "number") onCredits?.(data.credits);
           if (res.ok && (data.url || data.dataUrl)) imgUrlsRef.current[i] = data.url ?? data.dataUrl;
         })
-        .catch(() => { /* 실패해도 글은 그대로 — 검토 화면에서 다시 시도 가능 */ })
+        .catch(() => { /* 실패해도 글은 그대로 */ })
         .finally(() => { imgPendingRef.current -= 1; setImgDone((d) => d + 1); });
     }
   }

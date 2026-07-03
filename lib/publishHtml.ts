@@ -13,9 +13,24 @@ export interface PublishInput {
 }
 
 const PHOTO_RE = /\[사진:\s*([^\]]+)\]/g;
+// ★슬롯 통합 — 사진·카드 둘 다 이미지 슬롯. 문서 순서로 인덱싱, images 맵이 URL 제공(사진=Gemini, 카드=satori).
+const SLOT_RE = /\[(?:사진|카드):\s*([^\]]+)\]/g;
+export interface Slot { type: "photo" | "card"; desc: string }
+// 본문의 슬롯을 문서 순서로 파싱(생성 파이프라인이 타입별로 렌더).
+export function parseSlots(bodyHtml: string): Slot[] {
+  const out: Slot[] = [];
+  const re = /\[(사진|카드):\s*([^\]]+)\]/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(bodyHtml))) out.push({ type: m[1] === "카드" ? "card" : "photo", desc: m[2].trim() });
+  return out;
+}
+// 카드 마커 desc('라벨=값 | 라벨=값') → CardItem 파싱.
+export function parseCardItems(desc: string): { label: string; value: string }[] {
+  return desc.split("|").map((seg) => { const [label, ...rest] = seg.split("="); return { label: (label ?? "").trim(), value: rest.join("=").trim() }; }).filter((x) => x.label && x.value).slice(0, 3);
+}
 // ★유출 판정 — '콜론형 원본 마커([사진: 설명])'와 '독자용 지시 문구'만 유출로 본다.
 //  깨끗한 '[사진 N]'(모바일 삽입 위치 표시)은 정상이라 건드리지 않는다.
-const PHOTO_MARKER_ANY_G = /\[\s*사진[^\]]*\]/g;               // 모든 [사진...] (rich에선 하나도 없어야)
+const PHOTO_MARKER_ANY_G = /\[\s*(?:사진|카드)[^\]]*\]/g;         // 모든 [사진/카드...] (rich에선 하나도 없어야)
 const INSTRUCTION_SRC = "\\[\\s*사진\\s*:[\\s\\S]*?\\]|사진을?\\s*(여기에\\s*)?(올려|넣어|추가|삽입)\\s*주세요";
 const INSTRUCTION_G = new RegExp(INSTRUCTION_SRC, "g");        // 콜론형 + 지시 문구
 // 이모지·픽토그램·기호(화살표 U+2190~21FF·가운뎃점·불릿은 보존).
@@ -32,8 +47,25 @@ export function sanitizeForCopy(html: string): string {
 export function sanitizePlain(text: string): string {
   return stripEmoji(text).replace(INSTRUCTION_G, "");
 }
-export function hasPhotoLeak(s: string): boolean { return /\[\s*사진[^\]]*\]/.test(s) || new RegExp(INSTRUCTION_SRC).test(s); }       // rich 기준(마커 하나도 불가)
+export function hasPhotoLeak(s: string): boolean { return /\[\s*(?:사진|카드)[^\]]*\]/.test(s) || new RegExp(INSTRUCTION_SRC).test(s); }       // rich 기준(마커 하나도 불가)
 export function hasPhotoLeakPlain(s: string): boolean { return new RegExp(INSTRUCTION_SRC).test(s); } // plain 기준(지시/콜론만)
+
+// ★서스펜스 개행 — 엔진이 긴장 지점에 '[간격]' 마킹만 하고, 렌더러가 여백을 삽입한다(엔진이 빈 줄 직접 X).
+//  글당 최대 3회. 초과분은 드롭. 마킹된 개행만 안전망 압축의 예외(비마킹 과잉 빈줄은 압축 유지).
+const SUSPENSE_TOKEN_RE = /<p[^>]*>\s*\[간격\]\s*<\/p>|\[간격\]/g;
+const SUSPENSE_MAX = 3;
+const SUSPENSE_SPACER = '<p style="text-align:left"><br></p><p style="text-align:left"><br></p>'; // 빈 줄 2칸
+export function applySuspenseBreaks(html: string): string {
+  let n = 0;
+  return html.replace(SUSPENSE_TOKEN_RE, () => { n += 1; return n <= SUSPENSE_MAX ? SUSPENSE_SPACER : ""; });
+}
+export function applySuspenseBreaksPlain(text: string): string {
+  let n = 0;
+  return text.replace(/\[간격\]/g, () => { n += 1; return n <= SUSPENSE_MAX ? "\n\n" : ""; });
+}
+export function countSuspenseMarks(html: string): number {
+  return (html.match(/\[간격\]/g) ?? []).length;
+}
 
 const MOBILE_MAX_CHARS = 88; // 390px 4줄(약 22자 x 4)
 function visLen(html: string): number {
@@ -117,7 +149,7 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   const withImages = opts?.withImages ?? true;
   let idx = -1;
   // ★사진 자리는 '구조화 슬롯'으로만 — 채워진 슬롯만 이미지로, 미충족 슬롯은 줄 자체를 제거(안내문구 유출 금지).
-  let body = markToBold(input.bodyHtml).replace(PHOTO_RE, () => {
+  let body = markToBold(input.bodyHtml).replace(SLOT_RE, () => {
     idx += 1;
     if (!withImages) return `<p>[사진 ${idx + 1}]</p>`; // marker 모드(수동 배치) — 명시적 선택
     const url = input.images?.[idx];
@@ -127,7 +159,8 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   if (tags) body += `<p>${tags}</p>`;
   // 최종 게이트: rich는 사진 마커/지시·이모지 전면 제거. marker 모드(수동 배치)는 [사진 N] 유지하고 이모지만.
   const gated = withImages ? sanitizeForCopy(body) : stripEmoji(body);
-  return styleBlocks(splitLongParagraphs(gated));
+  // ★서스펜스 개행은 맨 마지막(정렬·분할·빈문단 제거 이후) 삽입 — 마킹된 여백만 살아남는다.
+  return applySuspenseBreaks(styleBlocks(splitLongParagraphs(gated)));
 }
 
 // rich 모드 — 사진자리를 이미지로.
@@ -143,7 +176,7 @@ export function buildMarkerHtml(input: PublishInput): string {
 export function buildPlainText(input: PublishInput): string {
   let idx = -1;
   const hasAnyImage = input.images && Object.keys(input.images).length > 0;
-  const withMarkers = input.bodyHtml.replace(PHOTO_RE, () => {
+  const withMarkers = input.bodyHtml.replace(SLOT_RE, () => {
     idx += 1;
     // 이미지가 하나라도 있으면(=AI 모드) 채워진 슬롯만 마커, 미충족 제거. 이미지 전무(수동 모드)면 마커 유지.
     if (!hasAnyImage) return `[사진 ${idx + 1}]`;
@@ -156,13 +189,14 @@ export function buildPlainText(input: PublishInput): string {
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
     .replace(INSTRUCTION_G, "") // 잔존 지시/콜론형만 제거(깨끗한 [사진 N]은 유지)
-    .replace(/\n{3,}/g, "\n\n")
+    .replace(/\n{3,}/g, "\n\n")  // ★비마킹 과잉 빈줄 압축(안전망) — [간격] 토큰은 아래서 압축 이후 확장
     .trim();
+  const spaced = applySuspenseBreaksPlain(text); // 마킹된 서스펜스 개행만 여백으로(예외)
   const tags = hashtagLine(input.hashtags);
-  return tags ? `${text}\n\n${tags}` : text;
+  return tags ? `${spaced}\n\n${tags}` : spaced;
 }
 
 // 본문 내 사진자리 개수.
 export function countPhotoSlots(bodyHtml: string): number {
-  return (bodyHtml.match(PHOTO_RE) ?? []).length;
+  return (bodyHtml.match(SLOT_RE) ?? []).length; // 사진+카드 슬롯 총수
 }

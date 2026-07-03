@@ -42,6 +42,29 @@ export async function POST(request: Request) {
   const slotIdx = Number.isInteger(body.idx) && body.idx >= 0 && body.idx <= 9 ? (body.idx as number) : null;
   if (!slot) return NextResponse.json({ error: "어떤 이미지가 필요한지 알 수 없어요." }, { status: 400 });
 
+  // ★데이터 카드 슬롯 = satori 코드 렌더(무료·크레딧 0). 값은 클라가 [카드:] 마커에서 파싱해 전달.
+  if (body.slotType === "card" && Array.isArray(body.cardItems)) {
+    try {
+      const { renderDataCard } = await import("@/lib/dataCard");
+      const items = (body.cardItems as { label?: unknown; value?: unknown }[])
+        .map((it) => ({ label: String(it.label ?? "").slice(0, 20), value: String(it.value ?? "").slice(0, 28) }))
+        .filter((it) => it.label && it.value).slice(0, 3);
+      if (items.length === 0) return NextResponse.json({ ok: false, skipped: true });
+      const png = await renderDataCard(items, user.id, 1000);
+      const url = await uploadPng(user.id, png);
+      if (url && articleId && slotIdx !== null) {
+        try {
+          const { data: cur } = await supabase.from("articles").select("images").eq("id", articleId).eq("user_id", user.id).single();
+          const merged = { ...((cur?.images as Record<string, string>) ?? {}), [String(slotIdx)]: url };
+          await supabase.from("articles").update({ images: merged }).eq("id", articleId).eq("user_id", user.id);
+        } catch { /* 컬럼 미적용 */ }
+      }
+      return NextResponse.json({ ok: true, url, dataUrl: url ? undefined : `data:image/png;base64,${png.toString("base64")}` }); // 무료
+    } catch {
+      return NextResponse.json({ ok: false, skipped: true, error: "카드를 만들지 못했어요." });
+    }
+  }
+
   // ★대표이미지(슬롯0) + 합성 카피 있으면 = v4 코드 합성. 무료(AI 없음·크레딧 0) → 이중차감 구조적 불가.
   const tc = body.thumbCopy;
   const thumbCopy = (tc && typeof tc === "object")
