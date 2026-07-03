@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import TodayCard from "./TodayCard";
 import GlassIcon from "@/components/GlassIcon";
 import CourseRing from "./CourseRing";
-import { courseInfo } from "@/lib/course";
+import { courseInfo, yesterdayPublished } from "@/lib/course";
+import { GENERATE_COST } from "@/lib/creditPacks";
 import type { Comp } from "@/lib/topicScore";
 import type { Article } from "./types";
 
@@ -180,6 +181,7 @@ export default function Home({
         <button onClick={onOpenCredits} className="at-press flex items-center gap-1 rounded-full bg-white px-3 py-1.5 ring-1 ring-black/[0.05] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)]">
           <GlassIcon name="credit" tint="blue" size={20} icon={0.7} radius={7} />
           <span className="text-[13px] font-bold text-[color:var(--at-grey-900)]">{credits.toLocaleString("ko-KR")}</span>
+          {(() => { const d = Math.floor(credits / GENERATE_COST); return d > 0 ? <span className="text-[11px] font-semibold text-[color:var(--at-grey-400)]">약 {d > 999 ? "999+" : d}일치</span> : null; })()}
         </button>
         </div>
       </div>
@@ -189,10 +191,15 @@ export default function Home({
         <CourseRing info={info} />
       </div>
 
+      {/* 어제 결과 한 줄 — 발행 확인된 어제 글이 있을 때만(없으면 완전 미표시). 상태 참조=course.isPublishConfirmed */}
+      {yesterdayPublished(articles) && (
+        <p className="at-rise mt-2 text-center text-[12.5px] font-semibold text-[color:var(--at-grey-500)]">어제 글, 발행 확인됐어요.</p>
+      )}
+
       {/* 오늘의 글 — 단일 CTA */}
       <div className="at-rise at-d2 mt-6">
         <TodayCard
-          topic={first ? { keyword: first.keyword, title: first.title, tag: first.tag, newsContext: first.newsContext, briefText: first.briefText, titleSearch: first.titleSearch, thumb: first.thumb } : null}
+          topic={first ? { keyword: first.keyword, title: first.title, tag: first.tag, newsContext: first.newsContext, briefText: first.briefText, titleSearch: first.titleSearch, thumb: first.thumb, vol: first.vol, comp: first.comp, blogTotal: first.blogTotal } : null}
           loading={topicsLoading}
           credits={credits}
           info={info}
@@ -250,13 +257,10 @@ function TopicRow({ topic, onClick, onSwap, swapping }: {
     <div className={`rounded-2xl at-glass p-5  transition ${swapping ? "at-ai-swap" : ""}`}>
       <div className="flex items-center gap-2">
         {topic.tag === "issue" || topic.tag === "trend" ? (
-          <span className="rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-bold text-amber-600">🔥 실시간 트렌드</span>
+          <span className="rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-bold text-amber-600">실시간 트렌드</span>
         ) : (
           <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-bold ${compMeta.cls}`}>{compMeta.label}</span>
         )}
-        <span className="text-[12px] font-medium text-[color:var(--at-grey-400)]">
-          {topic.tag === "issue" || topic.tag === "trend" ? "지금 뜨는 중 · 선점 기회" : topic.vol > 0 ? `월 ${topic.vol.toLocaleString("ko-KR")}회 검색` : "숨은 수요 키워드"}
-        </span>
         {onSwap && (
           <button onClick={onSwap} disabled={swapping} aria-label="새 글감 받기" className="at-press ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-neutral-300 transition hover:bg-neutral-50 hover:text-[#1D75F7] disabled:opacity-40">
 <span className={`flex h-[18px] w-[18px] items-center justify-center ${swapping ? "animate-spin" : ""}`}><GlassIcon name="refresh" tint="grey" size={18} /></span>

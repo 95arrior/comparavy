@@ -63,3 +63,23 @@ export function courseInfo(articles: CourseArticleLite[], now: Date = new Date()
 
   return { day, finished, todayCount: todays.length, publishedToday, hasDraftToday, streak };
 }
+
+// ★발행 확인 상태 참조 — 한 곳에 모음. 지금은 자기신고('published'). RSS 검증 배포 시 'verified'로 여기만 바꾸면 전체 반영.
+export function isPublishConfirmed(a: CourseArticleLite): boolean {
+  return a.status === "published"; // TODO: RSS 검증(별도 작업 Part 2) 배포 시 || a.status === "verified"
+}
+
+// 코스 진행 퍼센트(일수 기준, 기존 정의 그대로).
+export function coursePercent(info: CourseInfo): number {
+  return info.finished ? 100 : Math.round(Math.max(0, Math.min(1, info.day / COURSE_DAYS)) * 100);
+}
+// '이 글을 쓰면 N%' — 오늘 몫을 채웠을 때 도달 퍼센트(일수 기준). day 0이면 첫 글 → 1일차.
+export function nextWritePercent(info: CourseInfo): number {
+  return Math.round(Math.max(1, info.day || 1) / COURSE_DAYS * 100);
+}
+// 어제 발행 확인된 글이 있나(어제 결과 한 줄 조건).
+export function yesterdayPublished(articles: CourseArticleLite[], now: Date = new Date()): boolean {
+  const y = new Date(now); y.setDate(y.getDate() - 1);
+  const yk = dayKey(y);
+  return (articles ?? []).some((a) => isPublishConfirmed(a) && dayKey(new Date(a.created_at)) === yk);
+}

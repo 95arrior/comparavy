@@ -67,7 +67,7 @@ export default function CourseRing({ info }: { info: CourseInfo }) {
         {/* 중앙 텍스트 */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           {info.finished ? (
-            <span className="text-[30px] font-extrabold tracking-tight text-[color:var(--at-grey-900)]">완주 🎉</span>
+            <span className="text-[30px] font-extrabold tracking-tight text-[color:var(--at-grey-900)]">완주</span>
           ) : info.day > 0 ? (
             <>
               <span className="text-[36px] font-extrabold leading-none tracking-tight text-[color:var(--at-grey-900)]">D-{info.day}</span>
