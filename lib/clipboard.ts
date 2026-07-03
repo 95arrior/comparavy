@@ -31,6 +31,54 @@ export async function copyRich(html: string, plain: string): Promise<boolean> {
   }
 }
 
+export type CopyResult = "ok" | "unverified" | "fail";
+
+// 클립보드 실제 내용 읽어 sample 포함 여부 확인. 읽기 불가(권한/미지원)면 null.
+async function verifyClipboard(sample: string): Promise<boolean | null> {
+  try {
+    if (!navigator.clipboard?.readText) return null;
+    const got = (await navigator.clipboard.readText()) ?? "";
+    const norm = (s: string) => s.replace(/\s+/g, "");
+    const s = norm(sample).slice(0, 24);
+    return s.length > 0 && norm(got).includes(s);
+  } catch {
+    return null; // 읽기 권한 없음 → 검증 불가
+  }
+}
+
+/** ★검증 복사(본문) — write 후 read로 실제 내용 확인. 실패 시 포커스 회복+1회 재시도. */
+export async function copyRichVerified(html: string, plain: string): Promise<CopyResult> {
+  const sample = plain.replace(/\[사진[^\]]*\]/g, " ").trim().slice(0, 30);
+  for (let i = 0; i < 2; i++) {
+    if (i > 0) { try { window.focus(); } catch { /* noop */ } await new Promise((r) => setTimeout(r, 150)); }
+    if (!(await copyRich(html, plain))) continue;
+    const v = await verifyClipboard(sample);
+    if (v === true) return "ok";
+    if (v === null) return "unverified"; // 쓰기는 됨, 검증만 불가
+    // v===false → 실제로 안 담김 → 재시도
+  }
+  return "fail";
+}
+
+/** ★검증 복사(텍스트/제목) — write 후 read로 확인. 실패 시 포커스 회복+1회 재시도. */
+export async function copyTextVerified(text: string): Promise<CopyResult> {
+  const sample = text.trim().slice(0, 24);
+  for (let i = 0; i < 2; i++) {
+    if (i > 0) { try { window.focus(); } catch { /* noop */ } await new Promise((r) => setTimeout(r, 150)); }
+    if (!(await copyText(text))) continue;
+    const v = await verifyClipboard(sample);
+    if (v === true) return "ok";
+    if (v === null) return "unverified";
+  }
+  return "fail";
+}
+
+/** 지금 클립보드 텍스트(인디케이터용). 읽기 불가면 null. */
+export async function readClipboardText(): Promise<string | null> {
+  try { return navigator.clipboard?.readText ? await navigator.clipboard.readText() : null; }
+  catch { return null; }
+}
+
 /** 이미지 URL을 PNG로 클립보드에 복사(스크린샷 붙여넣기와 동일). Safari 제스처 보존 위해 Promise<Blob> 패턴. */
 export async function copyImage(url: string): Promise<boolean> {
   try {
