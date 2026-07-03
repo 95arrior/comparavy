@@ -21,7 +21,8 @@ console.log("\n대표이미지 배경 프롬프트:");
 for (let seed = 0; seed < 24; seed += 8) {
   const p = buildThumbBgPrompt("soft-gradient", "warm coral, cream", seed).toLowerCase();
   must(/no text of any kind/.test(p), `[seed${seed}] 배경 텍스트 금지`);
-  must(/low-contrast empty area/.test(p), `[seed${seed}] 저대비 여백(합성 자리)`);
+  must(/top 35% a clean empty area/.test(p), `[seed${seed}] 상단 여백(합성 자리)`);
+  must(/3d abstract objects/.test(p), `[seed${seed}] 말랑한 3D 오브젝트`);
   must(/1:1/.test(p), `[seed${seed}] 1:1`);
 }
 
