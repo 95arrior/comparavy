@@ -78,6 +78,7 @@ export default function NaverPublishSheet({
   const richHtml = useMemo(() => { const h = buildRichHtml({ title, bodyHtml, images }); return hasPhotoLeak(h) ? sanitizeForCopy(h) : h; }, [title, bodyHtml, images]);
   const plain = useMemo(() => { const t = buildPlainText({ title, bodyHtml, images }); return hasPhotoLeakPlain(t) ? sanitizePlain(t) : t; }, [title, bodyHtml, images]);
   const bodyLeak = hasPhotoLeak(richHtml) || hasPhotoLeakPlain(plain);
+  const hasLinkSlot = bodyHtml.includes("[상품 링크 자리]"); // 리뷰형 — 쇼핑커넥트 링크 교체 안내
   const bodyClip = `본문${imageUrls.length ? ` (사진 ${imageUrls.length}장)` : ""}`;
 
   const copyBody = async (): Promise<CopyResult> => {
@@ -163,6 +164,7 @@ export default function NaverPublishSheet({
           </button>
         </div>
 
+        {hasLinkSlot && <p className="mt-3 rounded-xl bg-neutral-50 px-4 py-2.5 text-[12.5px] font-medium text-neutral-600">본문의 [상품 링크 자리]를 쇼핑커넥트에서 만든 내 링크로 바꿔 넣으세요.</p>}
         {bodyLeak && <p className="mt-3 text-[12.5px] font-medium text-amber-600">본문 정리 중 문제가 있어 복사를 잠시 막았어요. 글을 다시 만들어 주세요.</p>}
         {err && <p className="mt-3 text-[12.5px] font-medium text-amber-600">{err}</p>}
 

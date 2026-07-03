@@ -4,6 +4,7 @@ import GlassIcon from "@/components/GlassIcon";
 import type { CourseInfo } from "@/lib/course";
 import { nextWritePercent } from "@/lib/course";
 import { whyNow } from "@/lib/whyNow";
+import { revenuePath } from "@/lib/revenue";
 
 // '오늘 할 일' 카드 — 홈 최상단, 뇌빼고의 심장. 오늘 해야 할 단 하나만.
 //  주인공 카드가 가장 많은 근거를 가진다: 데이터 배지 + '왜 지금' 한 줄 + '쓰면 N%' 인과.
@@ -108,11 +109,14 @@ function DemandRow({ topic, muted }: { topic: TodayTopic; muted?: boolean }) {
     : topic.comp === "mid" ? { label: "경쟁 보통", cls: "bg-amber-50 text-amber-600" }
     : topic.comp === "high" ? { label: "경쟁 높음", cls: "bg-rose-50 text-rose-500" } : null;
   const demand = isTrend ? "지금 뜨는 중 · 선점 기회" : (topic.vol && topic.vol > 0) ? `월 ${topic.vol.toLocaleString("ko-KR")}회 검색` : "숨은 수요 키워드";
+  // ★수익 경로 태그(정보) — 리뷰/비교형이면 쇼핑커넥트 연계 가능. 사다리(행동)와 별개로 표시.
+  const rev = revenuePath({ keyword: topic.keyword, title: topic.title });
   return (
     <div className={`flex flex-wrap items-center gap-1.5 ${muted ? "opacity-60" : ""}`}>
       {isTrend
         ? <span className="rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-bold text-amber-600">실시간 트렌드</span>
         : comp && <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-bold ${comp.cls}`}>{comp.label}</span>}
+      <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-bold ${rev === "shopping" ? "bg-violet-50 text-violet-600" : "bg-sky-50 text-sky-600"}`}>{rev === "shopping" ? "쇼핑커넥트" : "애드포스트"}</span>
       <span className="text-[12px] font-medium text-[color:var(--at-grey-400)]">{demand}</span>
     </div>
   );

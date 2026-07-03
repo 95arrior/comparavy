@@ -40,25 +40,34 @@ function computeWeekStreak(dates: Date[]): number {
   return streak;
 }
 
-// 네이버 수익화 길 — 빠른 순서(애드포스트 → 체험단 → 제휴 → 지원금)
-function buildPaths(pub: number, onWrite: () => void): { title: string; paths: Path[] } {
+// ★수익화 사다리 — 애드포스트 → 쇼핑커넥트 → 체험단 → 인플루언서/브랜드커넥트.
+//  숫자(수수료·조건)는 확인 시점 표기 + 변동 문구. 수익 보장류 금지("열렸어요"=기회 개방, 수익 약속 아님).
+//  잠금해제 게이트: adpost(발행15), 쇼핑(adpost 달성=발행15), 체험단(발행30), 인플루언서(장기).
+const ASOF = "2026년 7월 기준이며 네이버 정책에 따라 달라질 수 있어요.";
+function buildPaths(pub: number, onWrite: () => void): { title: string; paths: Path[]; otherChannels: Path[] } {
+  const adpostDone = pub >= 15; // 애드포스트 신청 가능 = 승인 준비 완료(현 지표: 발행 수)
   return {
-    title: "수익화 길",
+    title: "수익화 사다리",
     paths: [
-      { label: "네이버 애드포스트", desc: "글에 광고가 붙는 기본 수익", conditions: "만 19세 이상 + 네이버 심사 통과가 필요해요. 심사 기준(운영 기간·글·방문자)은 공식 공개가 아니라서, 통설 기준으로 매일 1편씩 15편 이상 + 일 방문 100명 안팎을 목표로 준비해요.", how: ["adpost.naver.com에 접속해 네이버 아이디로 로그인하고 회원가입해요(본인인증 필요).", "가입 후 [미디어 관리 → 미디어 등록]에서 내 블로그를 선택해 검수를 신청해요.", "검수는 최대 5영업일 — 결과가 네이버 메일로 와요. 그동안 평소처럼 글을 계속 써요.", "승인되면 글에 광고가 자동으로 붙어요. 반려돼도 사유 보완하고(글·방문자 더 쌓고) 언제든 다시 신청할 수 있어요."], tips: ["여기까지의 모든 준비(주제 일관·검색 허용·꾸준한 발행)는 우리 코스가 챙겨온 것들이에요 — 신청만 하면 돼요.", "승인 전에 쓴 글도 승인 후 전부 수익 대상이 돼요.", "반려는 실패가 아니라 흔한 과정이에요 — 재신청에 불이익 없어요."], status: pub >= 15 ? "now" : "progress", note: pub >= 15 ? "" : `발행 ${pub}/15편`, logo: "/logos/adpost.png", emoji: "📢", cta: pub >= 15 ? { label: "애드포스트 신청하러 가기", url: ADPOST } : { label: "글 쓰러 가기", onClick: onWrite } },
-      { label: "체험단·기자단", desc: "지수 조금만 올라도 건당 현금·제품", conditions: "일 방문자가 어느 정도(수백 명) 나오면 선정되기 시작해요.", how: ["체험단 플랫폼(레뷰 등)에 내 블로그를 등록해요.", "내 주제와 맞는 캠페인에 신청해요(맛집·뷰티·생활용품 등).", "선정되면 제품·서비스를 받고 정해진 기한 안에 솔직한 후기를 써요.", "실적이 쌓이면 더 좋은 캠페인·원고료 제안이 들어와요."], tips: ["‘협찬·제공받았다’는 사실을 글에 꼭 표기해요(공정위 규정 — 미표기 시 과태료 위험).", "주제와 동떨어진 체험단을 도배하면 블로그 지수에 해로워요.", "솔직하지 않은 과장 후기는 신뢰·노출에 오히려 독이 돼요."], status: pub >= 10 ? "now" : "progress", note: pub >= 10 ? "" : `발행 ${pub}/10편`, emoji: "🎁" },
-      { label: "쿠팡파트너스·제휴", desc: "상품 추천 링크로 수수료", conditions: "블로그만 있으면 가입 가능 · 첫 3개월 내 실적 1건 권장.", how: ["partners.coupang.com에서 가입해요.", "글 주제에 맞는 상품을 검색해 ‘링크 생성’으로 내 추천 링크를 만들어요.", "글에서 상품을 추천·비교하는 자연스러운 자리에만 링크를 넣어요.", "방문자가 링크로 들어가 24시간 안에 구매하면 수수료가 들어와요."], tips: ["‘쿠팡 파트너스 활동의 일환으로 일정 수수료를 받습니다’ 문구를 꼭 넣어요(필수).", "★네이버는 외부 상업 링크에 민감해요 — 글마다 도배하면 노출이 떨어질 수 있으니 꼭 필요한 글에만 최소로.", "가전·뷰티처럼 단가 높은 카테고리가 수익에 유리해요."], status: "now", note: "", logo: "/logos/coupang.png", emoji: "🛒", cta: { label: "쿠팡파트너스 가입", url: COUPANG } },
-      { label: "네이버 메이트", desc: "AI 브리핑 인용으로 월 지원금", conditions: "네이버 공식 프로그램(베타 2026.06~12) — 신청 없이 'AI 브리핑 인용수' 중심으로 매월 자동 선정돼요. 선정 시 월 30만원 + 엠블럼, 스페셜은 월 100명 300만원·10명 1천만원.", how: ["한 주제로 경험이 담긴 글을 꾸준히 발행해요(주제 전문성·일관성·활동성이 공식 기준).", "각 소제목에 답을 먼저 주는 완결형 글이 AI 브리핑에 인용돼요 — 우리 엔진이 자동으로 해줘요.", "메이트 스튜디오(mate.naver.com/my)에서 내 AI 브리핑 인용수를 확인해요.", "선정되면 네이버 메일·앱 알림으로 안내가 와요."], tips: ["네이버 공식: 'AI 도구 사용 자체는 패널티가 아니에요 — 최종 검토와 본인 경험을 녹이는 게 중요해요.'", "복제 글·기계적 AI 생성 글 무분별 발행·과도한 광고는 공식 감점 사유예요.", "베타 프로그램이라 기준·지원금은 바뀔 수 있어요 — 공식 페이지(mate.naver.com) 기준."], status: pub >= 20 ? "now" : "locked", note: pub >= 20 ? "" : "글 쌓이면", emoji: "🏅", cta: { label: "내 인용수 보러 가기", url: "https://mate.naver.com/my" } },
+      { label: "네이버 애드포스트", desc: "글에 광고가 붙는 기본 수익", conditions: `만 19세 이상 + 네이버 심사 통과가 필요해요. 심사 기준(운영 기간·글·방문자)은 공식 공개가 아니라, 통설 기준으로 매일 1편씩 15편 이상 + 일 방문 100명 안팎을 목표로 준비해요. ${ASOF}`, how: ["adpost.naver.com에 접속해 네이버 아이디로 로그인하고 회원가입해요(본인인증 필요).", "가입 후 [미디어 관리 → 미디어 등록]에서 내 블로그를 선택해 검수를 신청해요.", "검수는 최대 5영업일 — 결과가 네이버 메일로 와요. 그동안 평소처럼 글을 계속 써요.", "승인되면 글에 광고가 자동으로 붙어요. 반려돼도 보완하고(글·방문자 더 쌓고) 다시 신청할 수 있어요."], tips: ["여기까지의 준비(주제 일관·검색 허용·꾸준한 발행)는 우리 코스가 챙겨온 거예요 — 신청만 하면 돼요.", "승인 전에 쓴 글도 승인 후 전부 수익 대상이 돼요.", "반려는 실패가 아니라 흔한 과정이에요 — 재신청에 불이익 없어요."], status: adpostDone ? "now" : "progress", note: adpostDone ? "" : `발행 ${pub}/15편`, emoji: "adpost", cta: adpostDone ? { label: "애드포스트 신청하러 가기", url: ADPOST } : { label: "글 쓰러 가기", onClick: onWrite } },
+      { label: "네이버 쇼핑커넥트", desc: "상품 추천 수수료 · 네이버 자체 제휴", conditions: `채널 인증만으로 시작할 수 있어요. 수수료는 판매자 설정에 따라 상품별로 달라요(상품에 따라 높게 잡히기도 해요). ${ASOF}`, how: ["네이버 브랜드커넥트(쇼핑커넥트)에 접속해 내 채널을 인증해요.", "글 주제에 맞는 상품을 골라 제휴 링크를 만들어요.", "리뷰·비교 글의 [상품 링크 자리]에 내 링크를 넣어요.", "방문자가 링크로 구매하면 수수료가 정산돼요."], tips: ["네이버 자체 제휴라 외부 링크보다 노출에 안정적이에요.", "리뷰·비교형 글과 궁합이 좋아요 — 글감 카드의 '쇼핑커넥트' 태그를 참고해요.", "'열렸어요'는 기회가 열린 거지 수익을 보장하는 게 아니에요."], status: adpostDone ? "now" : "locked", note: adpostDone ? "" : "애드포스트 승인 후", emoji: "cart", cta: adpostDone ? { label: "쇼핑커넥트 알아보기", url: "https://brandconnect.naver.com" } : undefined },
+      { label: "체험단·기자단", desc: "지수 조금만 올라도 건당 현금·제품", conditions: `발행 글 수와 운영 기간이 어느 정도 쌓이면 선정되기 시작해요(일 방문자 수백 명 안팎). ${ASOF}`, how: ["체험단 플랫폼(레뷰 등)에 내 블로그를 등록해요.", "내 주제와 맞는 캠페인에 신청해요.", "선정되면 제품·서비스를 받고 기한 안에 솔직한 후기를 써요.", "실적이 쌓이면 더 좋은 캠페인·원고료 제안이 들어와요."], tips: ["'협찬·제공받았다'는 사실을 글에 꼭 표기해요(공정위 규정 — 미표기 시 과태료 위험).", "주제와 동떨어진 체험단 도배는 블로그 지수에 해로워요.", "과장 후기는 신뢰·노출에 오히려 독이에요."], status: pub >= 30 ? "now" : "locked", note: pub >= 30 ? "" : `발행 ${pub}/30편`, emoji: "gift" },
+      { label: "네이버 인플루언서 · 브랜드커넥트", desc: "협찬·PPL·커머스 제휴 · 사다리 꼭대기", conditions: `네이버 인플루언서 승인이 있어야 브랜드커넥트로 협찬·PPL을 할 수 있어요. 한 분야의 꾸준한 전문성이 승인의 핵심이라 장기 목표예요. ${ASOF}`, how: ["한 주제로 경험이 담긴 글을 꾸준히 쌓아요(전문성·일관성).", "인플루언서 홈에서 내 분야로 지원해요.", "승인되면 브랜드커넥트에서 협찬·커머스 캠페인이 매칭돼요."], tips: ["단기 목표가 아니에요 — 앞 단계를 착실히 밟는 게 곧 준비예요.", "승인은 네이버 심사라 보장이 아니에요.", "'열렸어요'는 기회의 개방이지 수익 약속이 아니에요."], status: "locked", note: "장기 목표", emoji: "medal", cta: { label: "인플루언서 알아보기", url: "https://in.naver.com" } },
+    ],
+    // 사다리 밖 — 외부 제휴. 균형 잡힌 리스크 안내(겁주기 금지, 사실만).
+    otherChannels: [
+      { label: "쿠팡파트너스", desc: "외부 상업 링크 수수료 · 선택 채널", conditions: `블로그만 있으면 가입할 수 있고 기본 수수료는 3% 안팎이에요. ${ASOF}`, how: ["partners.coupang.com에서 가입해요.", "상품을 검색해 '링크 생성'으로 내 추천 링크를 만들어요.", "상품을 추천·비교하는 자연스러운 자리에만 최소로 넣어요.", "링크로 24시간 안에 구매가 일어나면 수수료가 들어와요."], tips: ["'쿠팡 파트너스 활동의 일환으로 일정 수수료를 받습니다' 문구를 꼭 넣어요(필수).", "네이버는 외부 상업 링크에 민감해요 — 도배하면 노출이 떨어질 수 있으니 꼭 필요한 글에만 최소로 쓰세요.", "네이버 자체 제휴인 쇼핑커넥트를 먼저 고려하고, 쿠팡은 보조로 쓰는 걸 권해요."], status: "now", note: "", emoji: "cart-o", cta: { label: "쿠팡파트너스 가입", url: COUPANG } },
     ],
   };
 }
 
-// 이모지 → 글래스 타일 매핑(수익화 길 4종)
+// 아이콘 키 → 글래스 타일 매핑(이모지 아님, 명명 키).
 const GLASS_OF: Record<string, { name: string; tint: GlassTint }> = {
-  "📢": { name: "adpost", tint: "blue" },
-  "🎁": { name: "gift", tint: "rose" },
-  "🛒": { name: "cart", tint: "orange" },
-  "🏅": { name: "medal", tint: "amber" },
+  adpost: { name: "adpost", tint: "blue" },
+  cart: { name: "cart", tint: "blue" },
+  "cart-o": { name: "cart", tint: "orange" },
+  gift: { name: "gift", tint: "rose" },
+  medal: { name: "medal", tint: "amber" },
 };
 function LogoSlot({ emoji }: { logo?: string; emoji?: string; size?: string }) {
   const g = emoji ? GLASS_OF[emoji] : undefined;
@@ -73,6 +82,7 @@ function LogoSlot({ emoji }: { logo?: string; emoji?: string; size?: string }) {
 function StatusChip({ status }: { status: PathStatus }) {
   if (status === "now") return <span className="shrink-0 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-600">지금 가능</span>;
   if (status === "done") return <span className="shrink-0 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-600">진행 중</span>;
+  if (status === "locked") return <span className="shrink-0 rounded-md bg-neutral-100 px-1.5 py-0.5 text-[10px] font-bold text-neutral-400">잠김</span>;
   return null;
 }
 
@@ -207,7 +217,7 @@ function ExpectationCard({ pub }: { pub: number }) {
         : "꾸준함이 블로그 지수가 돼요. 계속 쌓을수록 더 빠르게 올라와요.";
   return (
     <div className="rounded-2xl bg-[#1D75F7]/[0.06] p-4">
-      <p className="text-[13px] font-bold text-[#1D75F7]">💡 조급해하지 마세요</p>
+      <p className="text-[13px] font-bold text-[#1D75F7]">조급해하지 마세요</p>
       <p className="mt-1 text-[13px] leading-relaxed text-neutral-600">{msg}</p>
     </div>
   );
@@ -228,9 +238,10 @@ export default function PerformanceView({
     return { written, pub, streak };
   }, [articles]);
 
-  const { title, paths } = buildPaths(stats.pub, onWrite);
+  const { title, paths, otherChannels } = buildPaths(stats.pub, onWrite);
+  const allRows = [...paths, ...otherChannels];
   const [openIdx, setOpenIdx] = useState<number | null>(null);
-  const open = openIdx !== null ? paths[openIdx] : null;
+  const open = openIdx !== null ? allRows[openIdx] : null;
 
   return (
     <div className="space-y-4">
@@ -239,12 +250,21 @@ export default function PerformanceView({
       {open ? (
         <PathDetail p={open} onBack={() => setOpenIdx(null)} />
       ) : (
-        <div className="rounded-2xl at-glass p-5 ">
-          <p className="text-[15px] font-bold text-neutral-900">{title}</p>
-          <div className="mt-1">
-            {paths.map((p, i) => <PathRow key={p.label} p={p} first={i === 0} onOpen={() => setOpenIdx(i)} />)}
+        <>
+          <div className="rounded-2xl at-glass p-5 ">
+            <p className="text-[15px] font-bold text-neutral-900">{title}</p>
+            <div className="mt-1">
+              {paths.map((p, i) => <PathRow key={p.label} p={p} first={i === 0} onOpen={() => setOpenIdx(i)} />)}
+            </div>
           </div>
-        </div>
+          <div className="rounded-2xl at-glass p-5 ">
+            <p className="text-[15px] font-bold text-neutral-900">그 밖의 채널</p>
+            <p className="mt-0.5 text-[12px] text-neutral-400">사다리 밖 외부 제휴 — 필요할 때 선택으로</p>
+            <div className="mt-1">
+              {otherChannels.map((p, i) => <PathRow key={p.label} p={p} first={i === 0} onOpen={() => setOpenIdx(paths.length + i)} />)}
+            </div>
+          </div>
+        </>
       )}
 
       <div className=""><ExpectationCard pub={stats.pub} /></div>

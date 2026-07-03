@@ -3,6 +3,7 @@ import { createSupabaseServerClient, createSupabaseAdminClient, hasSupabaseEnv }
 import { ensureUserRow } from "@/lib/userPlan";
 import { spendCredits, addCredits, GENERATE_COST } from "@/lib/credits";
 import { streamArticle } from "@/lib/generateArticle";
+import { isReviewType, ensureDisclosure } from "@/lib/revenue";
 import { countKoreanChars } from "@/lib/humanizer";
 import { isDisposableEmail } from "@/lib/disposableEmail";
 import { checkRateLimit } from "@/lib/rateLimit";
@@ -124,6 +125,9 @@ export async function POST(request: Request) {
   const tone = body.tone ?? vDef?.tone ?? "friendly";
   // 네이버 수익형 단일 — 업장 개념이 없어 정보성 기본(명시적으로 보내면 존중: 레거시 업장 프로필용).
   const promo = body.promo ?? false;
+  // ★리뷰/제휴형 판정(대가성 문구·링크 자리) — 판정은 lib/revenue 한 곳. 브리프 의도도 반영.
+  const briefIntent = typeof body.angleBrief === "string" ? (/의도:\s*([^\n]+)/.exec(body.angleBrief)?.[1] ?? null) : null;
+  const isReview = isReviewType({ keyword: body.keyword, title: body.angle, intent: briefIntent, promo });
   const channel = "naver" as const; // 발행 채널 단일화 — 모든 글은 네이버 규격
 
   // 약한 audience 가드(버그2): 직접 입력해도 '설정한 대상과 명백히 동떨어진'(반대 연령어가 박힌) 글감만 막는다.
@@ -243,7 +247,7 @@ export async function POST(request: Request) {
           if (derived) keyword = derived;
         }
         const article = await streamArticle(
-          { keyword, angle: body.angle, type, tone, maxWords, variantInstruction, styleInstruction, relatedQueries, newsContext: resolvedNewsContext, angleBrief: typeof body.angleBrief === "string" ? body.angleBrief.slice(0, 900) : null, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userTitle },
+          { keyword, angle: body.angle, type, tone, maxWords, variantInstruction, styleInstruction, relatedQueries, newsContext: resolvedNewsContext, angleBrief: typeof body.angleBrief === "string" ? body.angleBrief.slice(0, 900) : null, affiliate: isReview, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userTitle },
           (bodyHtml) => send({ type: "body", html: bodyHtml }),
           (title) => send({ type: "title", title }),
           (u) => { void logUsage({ userId: user.id, model: u.model, kind: "generate", inputTokens: u.inputTokens, outputTokens: u.outputTokens }); },
@@ -264,7 +268,7 @@ export async function POST(request: Request) {
         }
 
         // (네이버 수익형 단일 — 자영업 시절의 업체 NAP 박스 삽입 제거. 수익형 블로그에 영업장 정보는 무의미 + 전 글 공통 박스는 패턴 지문 리스크)
-        const finalBody = article.body_html;
+        const finalBody = ensureDisclosure(article.body_html, isReview); // ★리뷰형이면 대가성 문구 상단 강제(누락 불가)
 
         // 저장 + 사용량 증가
         const insertPayload: Record<string, unknown> = {

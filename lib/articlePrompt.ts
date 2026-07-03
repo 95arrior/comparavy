@@ -99,6 +99,7 @@ export interface ArticlePromptInput {
   newsContext?: string | null;
   angleBrief?: string | null; // ★C단계 앵글 브리프(방향·구조·톤·독자·훅) — 무중복 증식
   sourceHint?: string | null; // ★근거 한 줄 — 씨앗 메타 출처(기관·매체). 있을 때만 근거 문장 1회.
+  affiliate?: boolean | null; // ★리뷰/제휴형 — 대가성 문구 상단 + 상품 링크 자리 마커
 }
 
 // 공통 SEO 콘텐츠 원칙 (general 포함 모든 블로그에 주입). 홍보글이 아니라 '검색 사용자가 궁금해하는 정보글'.
@@ -362,6 +363,7 @@ export function buildUserPrompt(input: ArticlePromptInput): string {
       ? `★[오늘의 근거 자료 — 최신 뉴스] 아래는 이 글감의 오늘 자 뉴스 발췌다. 글감과 직접 관련 있는 항목만 근거로 쓰고, 무관한 항목은 완전히 무시한다. 본문의 사실관계는 이 자료를 최우선 근거로 쓰고, 자료에 없는 수치·일정은 단정하지 않는다(모델 기억보다 이 자료가 최신). 뉴스 문장을 복사하지 말고 전부 내 문장으로 재작성한다. 출처 표기는 의무가 아니다 — 특정 발표·통계 수치를 쓸 때만 언론사가 아닌 원 기관명(예: 금융위원회·한국은행)을 자연스럽게 1회 언급한다.\n${input.newsContext}`
       : "",
     input.angleBrief ? input.angleBrief : "",
+    input.affiliate ? "★[대가성 문구·링크 자리] 이 글은 상품 리뷰/제휴형이다. ①본문 맨 위에 정확히 이 문장을 넣는다: '이 글에는 구매 시 작성자가 수수료를 받을 수 있는 링크가 포함되어 있습니다.'(흐리게·끝에 숨기지 말 것). ②상품을 추천·비교하는 자리에 '[상품 링크 자리]' 마커를 넣는다(대괄호+한글만, 링크를 직접 만들지 말 것). 수익 보장·예상 수익액 표현 금지." : "",
     input.sourceHint ? `★[근거 한 줄] 이 주제의 출처가 있다: ${input.sourceHint}. 리드 또는 관련 섹션에 근거 문장을 딱 1회 자연스럽게 넣는다(예: "${input.sourceHint} 기준"). 출처를 지어내지 말고, 준 것만 쓴다.` : "",
     input.relatedQueries && input.relatedQueries.length > 0 ? `★실제 검색자들이 이 키워드와 함께 찾는 검색어(네이버 자동완성 실데이터): ${input.relatedQueries.join(" / ")} — 이 중 이 글 주제에 맞는 것들을 소제목·FAQ로 커버해 '관련 질문 점령'을 실데이터 기반으로 한다. 주제와 안 맞는 건 억지로 넣지 않는다.` : "",
     "",
