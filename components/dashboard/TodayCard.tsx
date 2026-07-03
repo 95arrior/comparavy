@@ -14,7 +14,6 @@ export default function TodayCard({
   credits,
   info,
   onWriteKeyword,
-  onOpenTodayDraft,
   onGoPerformance,
 }: {
   /** 오늘의 글감(추천 1순위) — 로딩 전이면 null */
@@ -25,7 +24,6 @@ export default function TodayCard({
   /** 글감으로 쓰기 — 잔액 0이면 상위(DashboardClient)에서 페이월을 띄운다 */
   onWriteKeyword: (keyword: string, title: string, newsContext?: string, briefText?: string, titleSearch?: string) => void;
   /** 오늘 만든 초안 열기(발행 대기 상태) */
-  onOpenTodayDraft: () => void;
   onGoPerformance: () => void;
 }) {
   const locked = credits <= 0;
@@ -59,18 +57,7 @@ export default function TodayCard({
     );
   }
 
-  // 글은 만들었는데 발행 전 — 복붙만 하면 오늘 끝
-  if (info.todayCount > 0 && info.hasDraftToday) {
-    return (
-      <Card>
-        <Header label="오늘의 글" chip="1단계 완료" />
-        <p className="mt-2 text-[17px] font-bold leading-snug text-neutral-900">글이 준비됐어요.<br />네이버에 올리면 오늘 끝!</p>
-        <button onClick={onOpenTodayDraft} className="mt-4 w-full rounded-xl bg-[#03C75A] py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">
-          네이버에 올리러 가기
-        </button>
-      </Card>
-    );
-  }
+  // ★초안 대기 카드 제거 — 발행 전 초안이 있어도 '오늘의 글'엔 신선한 글감을 보여준다(초안은 글 목록에서 접근).
 
   // 오늘 글 쓰기 전 — 글감 로딩 중
   if (loading || !topic) {

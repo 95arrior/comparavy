@@ -71,12 +71,6 @@ export default function Home({
   useEffect(() => {
     if (moreOpen) setTimeout(() => moreRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 80);
   }, [moreOpen]);
-  // 오늘 초안이 있어 TodayCard가 글감을 못 보여줄 땐, '다른 글감'을 자동으로 펼쳐 신선한 글감을 노출.
-  const info0 = courseInfo(articles);
-  useEffect(() => {
-    if (info0.todayCount > 0 && info0.hasDraftToday) setMoreOpen(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [info0.todayCount, info0.hasDraftToday]);
 
   // 교체 무제한(풀 조회라 원가 0). 교체한 글감은 그날 다시 안 나옴(기기에 기억).
   const todayKey = `ateflo_dismissed_${new Date().toISOString().slice(0, 10)}`;
@@ -160,15 +154,9 @@ export default function Home({
 
   // 코스 상태 + 오늘의 초안
   const info = courseInfo(articles);
-  const now = new Date();
-  const sameDay = (iso: string) => { const d = new Date(iso); return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate(); };
-  const todayDraft = articles.find((a) => a.status === "draft" && sameDay(a.created_at));
   const clean = sanitizeTopics(topics);
-  // ★초안이 있으면 TodayCard는 초안('글이 준비됐어요')을 보여주므로 first 글감이 가려진다.
-  //  그 경우 글감을 잘라내지 말고 전부 '다른 글감'에 넣어 신선한 트렌드가 보이게 한다.
-  const draftMasksToday = info.todayCount > 0 && info.hasDraftToday;
-  const first = draftMasksToday ? null : (clean[0] ?? null);
-  const rest = draftMasksToday ? clean : clean.slice(1);
+  const first = clean[0] ?? null;
+  const rest = clean.slice(1);
 
   return (
     <main className="mx-auto max-w-2xl px-6 pb-10">
@@ -209,7 +197,6 @@ export default function Home({
           credits={credits}
           info={info}
           onWriteKeyword={onWriteKeyword}
-          onOpenTodayDraft={() => { if (todayDraft) onSelect(todayDraft); }}
           onGoPerformance={onGoPerformance}
         />
       </div>
