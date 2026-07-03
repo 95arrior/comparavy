@@ -42,16 +42,23 @@ export default function TodayCard({
     );
   }
 
-  // 오늘 완료
+  // 오늘 완료 — 미션 완료 + '한 편 더' 글감의 근거(배지·왜 지금)를 함께 보여준다.
   if (info.publishedToday) {
+    const whyNext = topic ? whyNow(topic) : "";
     return (
       <Card>
         <Header label="오늘의 글" chip="완료" />
         <p className="mt-2 text-[17px] font-bold leading-snug text-neutral-900">오늘 미션 완료!<br />내일 새 글감이 와요.</p>
         {topic && !locked && (
-          <button onClick={() => write(topic)} className="mt-3 w-full rounded-xl bg-neutral-100 py-2.5 text-[13px] font-bold text-neutral-600 transition hover:bg-neutral-200 active:scale-[0.99]">
-            한 편 더 쓰기 <span className="font-medium text-neutral-400">· 승인이 빨라져요</span>
-          </button>
+          <div className="mt-3 rounded-xl bg-neutral-50 p-3.5">
+            <p className="text-[11.5px] font-bold text-neutral-400">한 편 더 쓰면 승인이 빨라져요</p>
+            <div className="mt-1.5"><DemandRow topic={topic} /></div>
+            <p className="mt-1.5 text-[14.5px] font-bold leading-snug text-neutral-900">{topic.title}</p>
+            {whyNext && <p className="mt-1 text-[12.5px] leading-relaxed text-neutral-500">{whyNext}</p>}
+            <button onClick={() => write(topic)} className="at-press mt-3 w-full rounded-xl bg-[#1D75F7] py-2.5 text-[13px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">
+              한 편 더 쓰기
+            </button>
+          </div>
         )}
       </Card>
     );
