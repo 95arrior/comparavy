@@ -13,17 +13,59 @@ export interface PublishInput {
 }
 
 const PHOTO_RE = /\[사진:\s*([^\]]+)\]/g;
+// ★유출 판정 — '콜론형 원본 마커([사진: 설명])'와 '독자용 지시 문구'만 유출로 본다.
+//  깨끗한 '[사진 N]'(모바일 삽입 위치 표시)은 정상이라 건드리지 않는다.
+const PHOTO_MARKER_ANY_G = /\[\s*사진[^\]]*\]/g;               // 모든 [사진...] (rich에선 하나도 없어야)
+const INSTRUCTION_SRC = "\\[\\s*사진\\s*:[\\s\\S]*?\\]|사진을?\\s*(여기에\\s*)?(올려|넣어|추가|삽입)\\s*주세요";
+const INSTRUCTION_G = new RegExp(INSTRUCTION_SRC, "g");        // 콜론형 + 지시 문구
+// 이모지·픽토그램·기호(화살표 U+2190~21FF·가운뎃점·불릿은 보존).
+const EMOJI_RE = /[\u{1F1E6}-\u{1F1FF}\u{1F300}-\u{1FAFF}\u{1F000}-\u{1F0FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{2049}\u{203C}\u{2122}\u{2139}]/gu;
+export function stripEmoji(s: string): string {
+  return s.replace(EMOJI_RE, "").replace(/[ \t]{2,}/g, " ");
+}
+// rich 최종 게이트 — 모든 사진 마커·지시·이모지 제거 + 빈 문단 정리.
+export function sanitizeForCopy(html: string): string {
+  const s = stripEmoji(html).replace(PHOTO_MARKER_ANY_G, "").replace(INSTRUCTION_G, "");
+  return s.replace(/<p[^>]*>\s*<\/p>/gi, "");
+}
+// plain 게이트 — 지시/콜론형만 제거(깨끗한 [사진 N] 삽입 표시는 유지) + 이모지.
+export function sanitizePlain(text: string): string {
+  return stripEmoji(text).replace(INSTRUCTION_G, "");
+}
+export function hasPhotoLeak(s: string): boolean { return /\[\s*사진[^\]]*\]/.test(s) || new RegExp(INSTRUCTION_SRC).test(s); }       // rich 기준(마커 하나도 불가)
+export function hasPhotoLeakPlain(s: string): boolean { return new RegExp(INSTRUCTION_SRC).test(s); } // plain 기준(지시/콜론만)
 
 const MOBILE_MAX_CHARS = 88; // 390px 4줄(약 22자 x 4)
 function visLen(html: string): number {
   return html.replace(/<[^>]+>/g, "").replace(/&[a-z#0-9]{1,7};/gi, "가").length;
 }
 
+// ★괄호·따옴표 균형 추적 — 열린 상태에서 나눈 조각은 다시 합친다(미닫힌 괄호 분할 금지).
+function isBalanced(s: string): boolean {
+  let depth = 0;
+  for (const ch of s.replace(/<[^>]+>/g, "")) {
+    if (ch === "(" || ch === "（" || ch === "[" || ch === "「" || ch === "【") depth++;
+    else if (ch === ")" || ch === "）" || ch === "]" || ch === "」" || ch === "】") depth--;
+  }
+  const dq = (s.match(/["“”]/g) ?? []).length; // 따옴표 홀수면 열림
+  const sq = (s.match(/['‘’]/g) ?? []).length;
+  return depth <= 0 && dq % 2 === 0 && sq % 2 === 0;
+}
+function mergeUnbalanced(parts: string[]): string[] {
+  const out: string[] = [];
+  for (const p of parts) {
+    if (out.length && !isBalanced(out[out.length - 1])) out[out.length - 1] = `${out[out.length - 1]} ${p}`;
+    else out.push(p);
+  }
+  return out;
+}
+
 /* ── 안전망: 4줄 초과 문단 자동 분할 (문장 → 쉼표 → 어절) ── */
 function splitInner(inner: string): string[] {
   if (visLen(inner) <= MOBILE_MAX_CHARS) return [inner];
-  let parts = inner.split(/(?:<br\s*\/?>)|(?<=[.?!])\s+/g).map((x) => x.trim()).filter(Boolean);
-  parts = parts.flatMap((part) => (visLen(part) <= MOBILE_MAX_CHARS ? [part] : part.split(/(?<=[,،·])\s*/g).map((x) => x.trim()).filter(Boolean)));
+  let parts = mergeUnbalanced(inner.split(/(?:<br\s*\/?>)|(?<=[.?!])\s+/g).map((x) => x.trim()).filter(Boolean));
+  // 쉼표 분할 — 단, 괄호·따옴표가 열린 조각은 다시 합쳐 미닫힘 분할 방지.
+  parts = parts.flatMap((part) => (visLen(part) <= MOBILE_MAX_CHARS ? [part] : mergeUnbalanced(part.split(/(?<=[,，、])\s*/g).map((x) => x.trim()).filter(Boolean))));
   const units: string[] = [];
   for (const part of parts) {
     if (visLen(part) <= MOBILE_MAX_CHARS) { units.push(part); continue; }
@@ -121,18 +163,17 @@ function hashtagLine(tags?: string[]): string {
 export function formatBody(input: PublishInput, opts?: { withImages?: boolean }): string {
   const withImages = opts?.withImages ?? true;
   let idx = -1;
-  let body = markToBold(input.bodyHtml).replace(PHOTO_RE, (_m, d) => {
+  // ★사진 자리는 '구조화 슬롯'으로만 — 채워진 슬롯만 이미지로, 미충족 슬롯은 줄 자체를 제거(안내문구 유출 금지).
+  let body = markToBold(input.bodyHtml).replace(PHOTO_RE, () => {
     idx += 1;
-    if (withImages) {
-      const url = input.images?.[idx];
-      if (url) return `<p><img src="${url}" alt="" /></p>`;
-      return `<p>[사진 ${idx + 1}] 여기에 ${String(d).trim()} 사진을 올려주세요</p>`;
-    }
-    return `<p>[사진 ${idx + 1}]</p>`;
+    if (!withImages) return `<p>[사진 ${idx + 1}]</p>`; // marker 모드(수동 배치) — 명시적 선택
+    const url = input.images?.[idx];
+    return url ? `<p><img src="${url}" alt="" /></p>` : ""; // 미충족 → 제거(마커·지시 노출 안 함)
   });
   const tags = hashtagLine(input.hashtags);
   if (tags) body += `<p>${tags}</p>`;
-  return styleBlocks(splitLongParagraphs(body));
+  // 최종 게이트: 이모지·잔존 사진 마커/지시 제거(구조적 차단) → 분할 → 정렬.
+  return styleBlocks(splitLongParagraphs(sanitizeForCopy(body)));
 }
 
 // rich 모드 — 사진자리를 이미지로.
@@ -144,19 +185,23 @@ export function buildMarkerHtml(input: PublishInput): string {
   return formatBody(input, { withImages: false });
 }
 
-// text/plain — 태그 제거, 이미지 위치에 [사진 N] 마커.
+// text/plain — 태그 제거. 이미지가 채워진 슬롯만 [사진 N](모바일: 저장한 N번 사진 삽입 위치), 미충족은 제거.
 export function buildPlainText(input: PublishInput): string {
   let idx = -1;
+  const hasAnyImage = input.images && Object.keys(input.images).length > 0;
   const withMarkers = input.bodyHtml.replace(PHOTO_RE, () => {
     idx += 1;
-    return `[사진 ${idx + 1}]`;
+    // 이미지가 하나라도 있으면(=AI 모드) 채워진 슬롯만 마커, 미충족 제거. 이미지 전무(수동 모드)면 마커 유지.
+    if (!hasAnyImage) return `[사진 ${idx + 1}]`;
+    return input.images?.[idx] ? `[사진 ${idx + 1}]` : "";
   });
-  const text = withMarkers
+  const text = stripEmoji(withMarkers)
     .replace(/<\/(p|h1|h2|h3|blockquote|li)>/gi, "\n")
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<[^>]+>/g, "")
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
+    .replace(INSTRUCTION_G, "") // 잔존 지시/콜론형만 제거(깨끗한 [사진 N]은 유지)
     .replace(/\n{3,}/g, "\n\n")
     .trim();
   const tags = hashtagLine(input.hashtags);

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { isAdminEmail } from "@/lib/adminStats";
-import { formatBody } from "@/lib/publishHtml";
+import { formatBody, countPhotoSlots, hasPhotoLeak } from "@/lib/publishHtml";
 
 export const dynamic = "force-dynamic";
 
@@ -17,8 +17,8 @@ export async function GET(request: Request) {
   if (!user || !isAdminEmail(user.email)) return NextResponse.json({ error: "관리자만" }, { status: 403 });
 
   const id = new URL(request.url).searchParams.get("id");
-  let q = supabase.from("articles").select("id, title, body_html, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1);
-  if (id) q = supabase.from("articles").select("id, title, body_html, created_at").eq("user_id", user.id).eq("id", id).limit(1);
+  let q = supabase.from("articles").select("id, title, body_html, images, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1);
+  if (id) q = supabase.from("articles").select("id, title, body_html, images, created_at").eq("user_id", user.id).eq("id", id).limit(1);
   const { data } = await q;
   const art = data?.[0];
   if (!art) return NextResponse.json({ error: "글 없음(id 확인 또는 발행글 필요)" }, { status: 404 });
@@ -40,9 +40,27 @@ export async function GET(request: Request) {
   const blocks = [...published.matchAll(/<(p|h1|h2|h3|h4|blockquote|ul|ol|div)(\s[^>]*)?>/gi)];
   const noAlign = blocks.filter((b) => !/text-align:(center|left)/i.test(b[0]));
 
+  // ③ 발행 안전성 — 원인 분류(마커 수 vs 이미지 수) + 유출 0 증명
+  const markerCount = countPhotoSlots(body);
+  const imgMap = (art.images && typeof art.images === "object") ? (art.images as Record<string, string>) : {};
+  const imageCount = Object.values(imgMap).filter(Boolean).length;
+  const richWithImgs = formatBody({ title: art.title ?? "", bodyHtml: body, images: Object.fromEntries(Object.entries(imgMap).map(([k, v]) => [Number(k), v])) });
+  const proseP = [...richWithImgs.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)].map((m) => m[1]);
+  const brokenParen = proseP.filter((p) => (p.match(/[(（]/g) ?? []).length !== (p.match(/[)）]/g) ?? []).length).length;
+  const emojiHit = (richWithImgs.match(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/gu) ?? []).length;
+
   return NextResponse.json({
-    build_marker: "datablock-v2",
+    build_marker: "publish-safety-v1",
     article: { id: art.id, title: art.title, created_at: art.created_at },
+    publish_safety: {
+      marker_count: markerCount,       // 본문 [사진:] 마커 수
+      image_count: imageCount,         // 실제 생성 이미지 레코드 수
+      slot_image_synced: markerCount <= 3 && imageCount <= markerCount, // 슬롯≤3 & 이미지≤마커
+      photo_leak: hasPhotoLeak(richWithImgs), // 발행 HTML에 [사진/지시 잔존?
+      emoji_count: emojiHit,           // 발행 HTML 이모지 수
+      broken_paren_paragraphs: brokenParen, // 미닫힌 괄호로 쪼개진 문단 수
+      pass: !hasPhotoLeak(richWithImgs) && emojiHit === 0 && brokenParen === 0,
+    },
     mobile_390px: {
       max_lines_threshold: MAX_LINES,
       paragraphs: paras.length,

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { PASTE_MODE } from "@/config/publish";
-import { buildRichHtml, buildMarkerHtml, buildPlainText, countPhotoSlots } from "@/lib/publishHtml";
+import { buildRichHtml, buildMarkerHtml, buildPlainText, countPhotoSlots, sanitizeForCopy, sanitizePlain, hasPhotoLeak, hasPhotoLeakPlain } from "@/lib/publishHtml";
 import { copyText, copyRich, copyImage, saveImage, shareImages } from "@/lib/clipboard";
 import { BODY_ALIGN } from "@/config/publish";
 
@@ -81,10 +81,12 @@ export default function NaverPublishSheet({
     }
   }
 
-  // 본문 문자열(모드별) — 순수 함수
-  const richHtml = useMemo(() => buildRichHtml({ title, bodyHtml, images }), [title, bodyHtml, images]);
+  // 본문 문자열(모드별) — 순수 함수. ★최종 가드: 사진 마커/지시·이모지가 남으면 자동 재처리(sanitize)로 제거.
+  const richHtml = useMemo(() => { const h = buildRichHtml({ title, bodyHtml, images }); return hasPhotoLeak(h) ? sanitizeForCopy(h) : h; }, [title, bodyHtml, images]);
   const markerHtml = useMemo(() => buildMarkerHtml({ title, bodyHtml }), [title, bodyHtml]);
-  const plain = useMemo(() => buildPlainText({ title, bodyHtml }), [title, bodyHtml]);
+  const plain = useMemo(() => { const t = buildPlainText({ title, bodyHtml, images }); return hasPhotoLeakPlain(t) ? sanitizePlain(t) : t; }, [title, bodyHtml, images]);
+  // 재처리 후에도 유출이 남는 극단 케이스 → 복사 차단(발행본 오염 방지).
+  const bodyLeak = hasPhotoLeak(richHtml) || hasPhotoLeakPlain(plain);
 
   // 단계 정의
   let steps: StepDef[] = [];
@@ -142,7 +144,7 @@ export default function NaverPublishSheet({
               <div key={s.key}>
                 <button
                   onClick={() => act(s.key, s.run)}
-                  disabled={busy !== null}
+                  disabled={busy !== null || (s.key === "body" && bodyLeak)}
                   className={`flex w-full items-center gap-3 rounded-2xl px-5 text-left transition ${
                     isDone ? "bg-neutral-100" : isCurrent ? "" : "bg-white ring-1 ring-black/[0.06]"
                   } disabled:opacity-60`}
@@ -190,6 +192,7 @@ export default function NaverPublishSheet({
           </div>
         )}
 
+        {bodyLeak && <p className="mt-3 text-[12.5px] font-medium text-amber-600">본문 정리 중 문제가 있어 복사를 잠시 막았어요. 글을 다시 만들어 주세요.</p>}
         {err && <p className="mt-3 text-[12.5px] font-medium text-amber-600">{err}</p>}
 
         <button
