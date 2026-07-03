@@ -84,11 +84,14 @@ export const BODY_TONES = [
   "선명한 채도 낮춘 파스텔", "가을 앰버 톤", "청량한 블루아워 톤", "부드러운 흐린 날 확산광",
 ];
 
-// 조합 공간(썸네일): 레이아웃 10 × 팔레트 12 × 폰트 6 × 배경 8 = 5,760가지.
-//  userId 시드로 결정론적 산출. 1만 명 대비: 5,760 시각 조합 × (카피·앵글이 유저마다 다름) →
-//  같은 시각 조합이라도 카피/제목/본문이 달라 실질 중복은 0에 수렴(생일역설상 시각 조합 충돌은
-//  1만 중 다수 발생하나, 그건 '비슷한 톤'일 뿐 같은 이미지가 아니다 — 카피가 이미지를 가른다).
-export const THUMB_COMBO_SPACE = LAYOUTS.length * PALETTES.length * FONT_PAIRS.length * BG_STYLES.length;
+// ★조합 공간(썸네일, v4 실태):
+//  - 유저 고정 정체성(플랫 렌더): 레이아웃 10 × 팔레트 12 × 폰트 6 = 720가지. (bgStyle은 플랫 렌더에 미사용)
+//  - 유저 내 글별 '포즈 변주'(팔레트·템플릿·폰트 고정, 오브젝트 배치만): 좌우반전 2 × 블롭회전 3 × 배치이동 3 = 18.
+//    → 한 유저가 만드는 썸네일의 시각 변형은 720 계열 중 1계열 × 포즈 18 = 계열 내 18가지 '같은 옷 다른 포즈'.
+//  - AI 배경 경로를 쓰면 bgStyle 8종이 추가로 곱해짐(× 8).
+//  1만 명 대비: 720 정체성 × 포즈 18 = 12,960 시각 변형. 여기에 카피(무한)가 곱해져 실질 중복 0에 수렴.
+export const THUMB_COMBO_SPACE = LAYOUTS.length * PALETTES.length * FONT_PAIRS.length; // 720 (유저 고정 정체성)
+export const THUMB_POSE_VARIANTS = 2 * 3 * 3; // 18 (유저 내 글별 포즈)
 
 export interface VisualIdentity {
   layout: LayoutKey;

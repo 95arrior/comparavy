@@ -27,6 +27,7 @@ export async function GET(request: Request) {
     const { png, usedAiBackground } = await composeThumbnail({
       userId: seedU,
       thumb: { mainCopy, subCopy: "지금부터 준비하는 법", badge: "경제·재테크" },
+      articleId: url.searchParams.get("a") || null, // 글마다 포즈 변주 데모
       useAiBackground: useAi,
     });
     const renderMs = Date.now() - t0;

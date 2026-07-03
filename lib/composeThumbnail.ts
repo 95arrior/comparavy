@@ -10,9 +10,10 @@ import type { ThumbCopy } from "./amplifyTopics";
 export async function composeThumbnail(opts: {
   userId: string;
   thumb: ThumbCopy;
+  articleId?: string | null; // 글마다 오브젝트 포즈 변주(팔레트·템플릿·폰트는 불변)
   useAiBackground?: boolean; // 기본 true(가능하면 AI 배경). 폴백은 팔레트 코드 배경.
 }): Promise<{ png: Buffer; usedAiBackground: boolean }> {
-  const identity = visualIdentityFor(opts.userId);
+  const identity = visualIdentityFor(opts.userId); // ★프로덕션 경로: 실제 user.id → 유저 고정 정체성
   let bgDataUrl: string | null = null;
   let usedAiBackground = false;
 
@@ -31,6 +32,7 @@ export async function composeThumbnail(opts: {
     subCopy: opts.thumb.subCopy || undefined,
     badge: opts.thumb.badge || undefined,
     identity,
+    articleId: opts.articleId ?? null,
     bgDataUrl, // null이면 렌더러가 팔레트 코드 폴백 배경 사용
   };
   const png = await renderThumbnail(input);

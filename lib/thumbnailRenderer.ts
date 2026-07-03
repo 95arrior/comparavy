@@ -34,12 +34,19 @@ function el(type: string, props: Record<string, unknown> = {}, children?: unknow
   return { type, props: { ...props, ...(children !== undefined ? { children } : {}) } };
 }
 
+function fnv(s: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h >>> 0;
+}
+
 export interface ThumbInput {
   mainCopy: string;
   subCopy?: string;
   badge?: string;
   identity: VisualIdentity;
   bgDataUrl?: string | null;
+  articleId?: string | null; // ★글마다 오브젝트 배치 변주(같은 옷, 다른 포즈). 팔레트·템플릿·폰트는 불변.
 }
 
 /* ── 색 유틸 ── */
@@ -74,6 +81,25 @@ type Shape =
   | { kind: "ring"; size: number; x: number; y: number; t: number; thick: number }
   | { kind: "rrect"; w: number; h: number; r: number; x: number; y: number; t: number; rot?: number }
   | { kind: "semi"; size: number; x: number; y: number; t: number };
+
+// ★포즈 변주 — 팔레트·템플릿·폰트는 고정, 오브젝트 배치만 글(userId+articleId) 시드로 살짝 다르게.
+//  좌우 반전 × 블롭 회전 × 배치 이동 3종 → 유저 내 글마다 '같은 옷, 다른 포즈'. 조합공간 곱셈.
+function shapeWidth(s: Shape): number { return s.kind === "rrect" ? s.w : s.size; }
+function poseShapes(objects: Shape[], seed: string): Shape[] {
+  if (!seed) return objects;
+  const h = fnv(seed);
+  const mirror = (h & 1) === 1;
+  const rotDelta = [0, 9, -9][(h >>> 1) % 3];   // 블롭 회전 변주
+  const shiftX = [0, 44, -44][(h >>> 3) % 3];   // 배치 좌우 이동 변주
+  return objects.map((s0) => {
+    const s: Shape = { ...s0, x: s0.x + shiftX };
+    if (s.kind === "rrect") s.rot = (s.rot ?? 0) + rotDelta;
+    if (!mirror) return s;
+    const flipped: Shape = { ...s, x: SIZE - s.x - shapeWidth(s) };
+    if (flipped.kind === "rrect" && flipped.rot) flipped.rot = -flipped.rot;
+    return flipped;
+  });
+}
 
 const SOFT_SHADOW = "0 24px 70px -26px rgba(0,0,0,0.32)";
 function shapeEl(s: Shape, tints: string[]): El {
@@ -168,10 +194,13 @@ async function renderAt(input: ThumbInput, width: number): Promise<Buffer> {
 
   // 오브젝트 무대: AI 배경이면 생략(AI가 시각 담당), 아니면 플랫 덩어리.
   const tints = [p.point, shade(p.bg, dark ? 15 : -12), shade(p.point, dark ? 14 : -16)];
+  // 포즈 변주(글마다) — 팔레트·템플릿·폰트 불변, 오브젝트 배치만 userId+articleId로.
+  const poseSeed = `${identity.layout}|${input.articleId ?? ""}`;
+  const posedObjects = poseShapes(tpl.objects, input.articleId ? poseSeed : "");
   // backdrop(카피 뒤 z축 아래로 지나가는 링)은 배경에 가까운 은은한 명도 → 글자 획과 겹쳐도 가독 안 해침.
   const backdropTint = [shade(p.bg, dark ? 13 : -9)];
   const backdrop: El[] = (bgDataUrl || !tpl.backdrop) ? [] : [shapeEl(tpl.backdrop, backdropTint)];
-  const objects: El[] = bgDataUrl ? [] : tpl.objects.map((s) => shapeEl(s, tints));
+  const objects: El[] = bgDataUrl ? [] : posedObjects.map((s) => shapeEl(s, tints));
   // AI 배경 위 카피 대비 스크림(상단만 은은히).
   const scrim: El | null = bgDataUrl
     ? el("div", { style: { position: "absolute", inset: 0, backgroundImage: `linear-gradient(180deg, ${dark ? "rgba(0,0,0,0.42)" : "rgba(255,255,255,0.34)"}, rgba(0,0,0,0) 55%)` } })
