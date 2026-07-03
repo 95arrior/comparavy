@@ -5,5 +5,7 @@ export const PASTE_MODE: "rich" | "marker" = "rich"; // 실측 후 확정
 // 네이버 글쓰기 진입 기준 URL(데스크톱). 모바일은 lib/naverApp의 앱 우선 열기를 쓴다.
 export const NAVER_WRITE_URL = "https://blog.naver.com";
 
-// 본문 정렬 — 모바일 리듬을 위해 가운데 기본. 나중에 사용자 옵션으로 뺄 수 있게 분리(지금 옵션 UI 없음).
-export const BODY_ALIGN: "center" | "left" = "center";
+// 본문 정렬 — ★실기기 모바일 관찰 기반 최종 결정: 왼쪽 정렬로 통일(포맷 챕터 동결).
+//  본문·소제목·데이터줄·리스트 전부 왼쪽 단일 세계. 중앙/왼쪽 혼용·데이터박스 폐기.
+//  변경은 실사용 데이터(체류·이탈) 근거 있을 때만 재론.
+export const BODY_ALIGN: "center" | "left" = "left";

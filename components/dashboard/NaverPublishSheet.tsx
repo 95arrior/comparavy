@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { PASTE_MODE } from "@/config/publish";
 import { buildRichHtml, buildPlainText, countPhotoSlots, sanitizeForCopy, sanitizePlain, hasPhotoLeak, hasPhotoLeakPlain } from "@/lib/publishHtml";
 import { copyRichVerified, copyTextVerified, saveImage, shareImages, type CopyResult } from "@/lib/clipboard";
-import { BODY_ALIGN } from "@/config/publish";
 
 // 네이버 발행 복사 마법사(신뢰성판) — 복사는 '읽기 검증'을 통과해야만 완료로 표시.
 //  흐름: [1 본문 복사(사진 포함)] → [2 네이버 글쓰기 열기]. 제목은 마지막 카드(탭해서 복사).
@@ -99,7 +98,7 @@ export default function NaverPublishSheet({
     ];
   } else {
     steps = [
-      { key: "body", label: "본문 복사 (사진 포함)", sub: `네이버 본문 칸을 누르고 붙여넣으세요. 사진도 같이 들어가요.${BODY_ALIGN === "center" ? " 정렬이 안 맞으면 전체 선택 후 가운데 정렬을 한 번 누르세요." : ""}`, showKeys: true, run: copyBody },
+      { key: "body", label: "본문 복사 (사진 포함)", sub: "네이버 본문 칸을 누르고 붙여넣으세요. 사진도 같이 들어가요.", showKeys: true, run: copyBody },
       { key: "open", label: "네이버 글쓰기 열기", sub: "본문 칸에 붙여넣으세요.", run: () => onOpenNaverWrite() },
     ];
   }

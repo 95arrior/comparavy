@@ -93,61 +93,14 @@ export function splitLongParagraphs(html: string): string {
   });
 }
 
-/* ── 데이터 블록 판정 + 정렬 스타일링 ── */
-const DATA_BOX_STYLE = "background:#f2f4f6;border-radius:12px;padding:12px 16px;text-align:left;margin:10px 0";
-
-// 데이터 블록인가 — 리스트, 또는 '라벨: 값', 또는 br로 이어진 짧은 다행.
-function isDataBlock(tag: string, inner: string): boolean {
-  if (tag === "ul" || tag === "ol") return true;
-  if (tag !== "p") return false;
-  if (/<img/i.test(inner)) return false; // 이미지 문단은 산문 취급
-  const text = inner.replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").trim();
-  if (!text) return false;
-  // '라벨: 값' — 라벨이 짧고 문장부호가 적으며 전체가 길지 않음
-  if (/^[^.?!\n]{1,22}[:：]\s*\S/.test(text) && text.length <= 64) return true;
-  // br로 이어진 2행 이상, 각 행이 짧음
-  const lines = inner.split(/<br\s*\/?>/i).map((x) => x.replace(/<[^>]+>/g, "").trim()).filter(Boolean);
-  if (lines.length >= 2 && lines.every((l) => l.length <= 32)) return true;
-  return false;
-}
-
-function styleTag(tag: string, attr: string, inner: string, align: "center" | "left", extra: string): string {
-  const style = `text-align:${align}${extra}`;
-  if (/style=/.test(attr)) return `<${tag}${attr.replace(/style="([^"]*)"/, `style="$1;${style}"`)}>${inner}</${tag}>`;
-  return `<${tag}${attr} style="${style}">${inner}</${tag}>`;
-}
-
-// 산문=중앙(또는 config), 데이터=왼쪽+회색 박스(연속 데이터는 한 박스로 묶음).
+/* ── 정렬 — ★왼쪽 단일 세계(동결). 데이터박스·중앙분리 폐기, 리스트는 네이버 기본 불릿/번호. ── */
+//  모든 블록에 text-align만 주입. 인용구(blockquote)는 네이버 인용 포맷이 요소 자체로 구분되나 정렬은 동일.
 function styleBlocks(html: string): string {
-  const proseAlign: "center" | "left" = BODY_ALIGN === "center" ? "center" : "left";
-  const BLOCK_RE = /<(p|h1|h2|h3|h4|blockquote|ul|ol)(\s[^>]*)?>([\s\S]*?)<\/\1>/gi;
-  const blocks = [...html.matchAll(BLOCK_RE)];
-  if (blocks.length === 0) return html;
-  let out = "";
-  let last = 0;
-  let dataBuf: string[] = [];
-  const flush = () => {
-    if (!dataBuf.length) return;
-    out += `<div style="${DATA_BOX_STYLE}">${dataBuf.join("")}</div>`;
-    dataBuf = [];
-  };
-  for (const m of blocks) {
-    out += html.slice(last, m.index);
-    last = (m.index ?? 0) + m[0].length;
-    const tag = m[1].toLowerCase();
-    const attr = m[2] ?? "";
-    const inner = m[3];
-    if (isDataBlock(tag, inner)) {
-      const extra = (tag === "ul" || tag === "ol") ? ";list-style-position:inside" : "";
-      dataBuf.push(styleTag(tag, attr, inner, "left", extra));
-    } else {
-      flush();
-      out += styleTag(tag, attr, inner, proseAlign, "");
-    }
-  }
-  flush();
-  out += html.slice(last);
-  return out;
+  const align: "center" | "left" = BODY_ALIGN === "center" ? "center" : "left";
+  return html.replace(/<(p|h1|h2|h3|h4|blockquote|ul|ol|li)(\s[^>]*)?>/gi, (m, _tag, attr) => {
+    if (/style=/.test(attr ?? "")) return m.replace(/style="([^"]*)"/, `style="$1;text-align:${align}"`);
+    return m.replace(/>$/, ` style="text-align:${align}">`);
+  });
 }
 
 /* ── 형광펜·해시태그 ── */
@@ -172,8 +125,9 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   });
   const tags = hashtagLine(input.hashtags);
   if (tags) body += `<p>${tags}</p>`;
-  // 최종 게이트: 이모지·잔존 사진 마커/지시 제거(구조적 차단) → 분할 → 정렬.
-  return styleBlocks(splitLongParagraphs(sanitizeForCopy(body)));
+  // 최종 게이트: rich는 사진 마커/지시·이모지 전면 제거. marker 모드(수동 배치)는 [사진 N] 유지하고 이모지만.
+  const gated = withImages ? sanitizeForCopy(body) : stripEmoji(body);
+  return styleBlocks(splitLongParagraphs(gated));
 }
 
 // rich 모드 — 사진자리를 이미지로.

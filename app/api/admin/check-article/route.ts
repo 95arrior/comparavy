@@ -44,7 +44,8 @@ export async function GET(request: Request) {
   // ② 정렬 커버리지 — 발행 HTML(buildRichHtml)의 전 블록에 text-align 있는지
   // 전 블록(div 데이터박스 포함)이 정렬(center 또는 left) 명시됐는지. li는 부모(ul/div) 정렬 상속이라 제외.
   const blocks = [...published.matchAll(/<(p|h1|h2|h3|h4|blockquote|ul|ol|div)(\s[^>]*)?>/gi)];
-  const noAlign = blocks.filter((b) => !/text-align:(center|left)/i.test(b[0]));
+  const noAlign = blocks.filter((b) => !/text-align:left/i.test(b[0]));
+  const centerBlocks = blocks.filter((b) => /text-align:center/i.test(b[0])).length; // left 동결 — center는 0이어야
 
   // ③ 발행 안전성 — 원인 분류(마커 수 vs 이미지 수) + 유출 0 증명
   const markerCount = countPhotoSlots(body);
@@ -77,8 +78,9 @@ export async function GET(request: Request) {
     },
     alignment: {
       total_blocks: blocks.length,
-      missing_align: noAlign.length,
-      pass: noAlign.length === 0,
+      missing_align_left: noAlign.length,
+      center_blocks: centerBlocks,
+      pass: noAlign.length === 0 && centerBlocks === 0,
       missing_sample: noAlign.slice(0, 5).map((b) => b[0]),
     },
   }, { headers: { "cache-control": "no-store" } });

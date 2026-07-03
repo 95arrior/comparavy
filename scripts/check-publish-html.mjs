@@ -18,7 +18,7 @@ ok(countPhotoSlots(base.bodyHtml) === 2, "사진자리 2개 감지");
 // rich: 0번은 img, 1번은 안내 문단
 const rich = buildRichHtml(base);
 ok(rich.includes('<img src="https://cdn.example.com/a.png"'), "rich: 이미지 있는 자리 img 삽입");
-ok(rich.includes("[사진 2]") && rich.includes("서류 목록"), "rich: 이미지 없는 자리 안내 문단");
+ok(!rich.includes("[사진"), "rich: 미충족 슬롯 제거(안내문구 없음)");
 ok(rich.includes("<b style=\"background-color:#fff3a8;\">자격</b>"), "rich: 형광펜 -> 굵게+배경");
 ok(rich.includes("#청년지원금 #신청방법"), "rich: 해시태그 라인");
 ok(!rich.includes("[사진: 신청 화면]"), "rich: 원본 마커 소거");
@@ -31,7 +31,7 @@ ok(!marker.includes("<img"), "marker: img 없음");
 // plain: 태그 제거 + 마커
 const plain = buildPlainText(base);
 ok(!plain.includes("<"), "plain: 태그 제거");
-ok(plain.includes("[사진 1]") && plain.includes("[사진 2]"), "plain: 마커 유지");
+ok(plain.includes("[사진 1]") && !plain.includes("[사진 2]"), "plain: 채워진 슬롯만 마커(미충족 제거)");
 ok(plain.includes("#청년지원금"), "plain: 해시태그");
 ok(plain.includes("자격"), "plain: 형광펜 텍스트 보존");
 
