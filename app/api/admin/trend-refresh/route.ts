@@ -23,8 +23,13 @@ export async function GET(request: Request) {
 
   const heads = await gatherHeadlines(category).catch(() => []);
   const count = await refreshCategoryTrends(category);
-  const sample = (await getTrendTopics(category)).slice(0, 20).map((t) => t.title);
-  return NextResponse.json({ ok: true, category, headlines: heads.length, headlineSample: heads.slice(0, 5).map((h) => h.title), generated: count, sample });
+  // ★검증용 — 게이트 통과 씨앗 20개의 keyword(검색형) + 롱테일 유무. 뉴스 문구가 0개인지 육안 확인.
+  const topics = (await getTrendTopics(category)).slice(0, 20);
+  const seeds = topics.map((t) => ({ keyword: t.keyword, longtails: (t.longtails ?? []).slice(0, 3).map((l) => l.kw) }));
+  return NextResponse.json({
+    ok: true, category, headlines: heads.length, generated: count,
+    seeds, // [{keyword, longtails[]}] × 20 — keyword가 전부 검색형 명사구여야
+  });
 }
 
 // redeploy: trend-refresh route

@@ -27,7 +27,7 @@ export async function composeThumbnail(opts: {
   }
 
   const input: ThumbInput = {
-    mainCopy: opts.thumb.mainCopy || " ",
+    mainCopy: opts.thumb.mainCopy ?? "", // 빈 값=반려 → 렌더러가 배경+배지만(깨진 문구 렌더 불가)
     subCopy: opts.thumb.subCopy || undefined,
     badge: opts.thumb.badge || undefined,
     identity,

@@ -40,14 +40,13 @@ export interface ThumbInput {
   bgDataUrl?: string | null; // AI 배경(data: URL). 없으면 코드 폴백
 }
 
-// 카피 길이 → 자동 폰트 크기(축소 썸네일에서도 읽히게 크게).
+// 카피 길이 → 자동 폰트 크기. ★너비 맞춤: 가장 긴 줄이 캔버스 안에 들어오게 축소(넘침·자름 불가).
+const USABLE_W = 820; // 1080 - (좌우 여백 + 패널 패딩) 근사
 function autoTitleSize(main: string): number {
-  const longest = Math.max(...main.split("\n").map((l) => l.trim().length), 1);
-  if (longest <= 5) return 168;
-  if (longest <= 7) return 140;
-  if (longest <= 9) return 116;
-  if (longest <= 12) return 96;
-  return 80;
+  const longest = Math.max(...main.split("\n").map((l) => [...l.trim()].length), 1);
+  const byLen = longest <= 5 ? 168 : longest <= 7 ? 140 : longest <= 9 ? 116 : longest <= 12 ? 96 : 80;
+  const fitW = Math.floor(USABLE_W / longest); // 한글 글자폭 ≈ 1em → longest*size ≤ USABLE_W
+  return Math.max(48, Math.min(byLen, fitW));  // 너비를 넘지 않게 축소, 최소 48px
 }
 
 // 코드 폴백 배경 — 팔레트로 스타일별 그라데이션/도형. AI 없이도 완성도.
@@ -145,9 +144,10 @@ function composeLayout(layout: LayoutKey, input: ThumbInput): El {
   const p = identity.palette;
   const ft = identity.fontPair.title, fb = identity.fontPair.body;
   const onDark = isDark(p.bg);
+  const hasMain = (mainCopy ?? "").trim().length > 0; // ★반려된 카피(빈 값)면 제목 생략 → 깨진 문구 렌더 불가
   const B = badge ? badgeEl(badge, p, ft) : null;
-  const T = titleEl(mainCopy, p, ft, "center", onDark);
-  const Tl = titleEl(mainCopy, p, ft, "left", onDark);
+  const T = hasMain ? titleEl(mainCopy, p, ft, "center", onDark) : null;
+  const Tl = hasMain ? titleEl(mainCopy, p, ft, "left", onDark) : null;
   const S = subCopy ? subEl(subCopy, p, fb, "center") : null;
   const Sl = subCopy ? subEl(subCopy, p, fb, "left") : null;
   const pad = 90;

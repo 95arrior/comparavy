@@ -21,6 +21,20 @@ export interface TrendTopic {
 
 const FRESH_MS = 6 * 3600_000; // 6시간 신선도
 
+// ★헤드라인/합성 키워드 → 검색형 명사구 정규화(구조적). 조사·서술어·분석/논평어 제거, 2~3어절.
+//  검색창에 칠 법한 형태로 강제 → 자동완성이 걸리는 씨앗만 남게 하는 전제.
+const ANALYSIS_TAIL = /\s*(효과\s*분석|영향\s*분석|정책\s*변화|효과|분석|전망|현황|동향|방안|변화|영향|정책|이슈|논란|대책|정리|총정리|비교)\s*$/;
+export function compressToSearchKeyword(raw: string): string {
+  let s = (raw || "").trim().slice(0, 60);
+  // 분석/논평 꼬리를 반복 제거(예: "지원금 효과 분석" → "지원금")
+  for (let i = 0; i < 3 && ANALYSIS_TAIL.test(s); i++) s = s.replace(ANALYSIS_TAIL, "").trim();
+  // 끝 조사 제거
+  s = s.replace(/(은|는|이|가|을|를|의|에|에서|으로|로|과|와|도|께|한|할)\s*$/g, "").trim();
+  // 2~3어절 명사구로
+  const toks = s.split(/\s+/).filter(Boolean).slice(0, 3);
+  return toks.join(" ").trim();
+}
+
 /** 카테고리의 살아있는 트렌드 글감을 읽는다(만료 제외). */
 export async function getTrendTopics(category: string): Promise<TrendTopic[]> {
   try {
@@ -68,7 +82,8 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
 규칙:
 - 그날의 신선함이 최우선. 오래된·뻔한 주제(예: 은행 금리 비교만 반복)는 피하고 분야 전체에 걸쳐 다양하게 흩어라.
 - 검색하는 사람이 실익을 얻는 정보성만. 연예인·유명인·사건사고·정치공방·부고·루머·자극적 가십은 절대 제외.
-- keyword=실제 검색어(2~5어절), title=클릭할 블로그 제목.
+- ★keyword = 사람이 네이버 검색창에 실제로 칠 2~3어절 '명사구'다. 조사·서술어를 붙이지 말고, '분석·전망·현황·동향·효과·변화·영향·정책·방안·이슈' 같은 논평/분석어를 넣지 마라. (나쁜 예: "소상공인 지원금 효과 분석", "부동산 규제 정책 변화" → 좋은 예: "소상공인 지원금", "부동산 규제")
+- title=클릭할 블로그 제목.
 - 16개가 서로 다른 소주제여야 한다(중복·유사 금지).
 - 반드시 JSON 배열로만 답(다른 말 금지): [{"keyword":"...","title":"..."}]`;
 
@@ -97,7 +112,7 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
     const rows = [];
     const expires = new Date(Date.now() + FRESH_MS).toISOString();
     for (const it of parsed) {
-      const kw = (it.keyword ?? "").trim().slice(0, 60);
+      const kw = compressToSearchKeyword((it.keyword ?? "").trim()); // ★검색형 명사구로 정규화(조사·분석/논평어 제거)
       const ti = (it.title ?? "").trim().slice(0, 80);
       if (!kw || !ti || seen.has(kw)) continue;
       if (isUnsafeKeyword(kw) || isUnsafeKeyword(ti)) continue;
@@ -114,23 +129,12 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
     const GAP_PER_SEED = 3;      // 씨앗당 gap 검사할 롱테일 수(검색량 상위)
     let gapUsed = 0;
     let ltTotal = 0;
-    // 분석성 꼬리말(효과·분석·변화·영향·정책 등)은 자동완성 쿼리에서 빼고 짧은 코어로 질의.
-    const shortenSeed = (kw: string): string[] => {
-      const toks = kw.replace(/\s+(효과|분석|변화|영향|정책|방안|현황|전망|비교|정리)\b/g, "").trim().split(/\s+/);
-      // 3토큰 → 2토큰 → 1토큰 순으로 시도(자동완성은 짧을수록 잘 걸림)
-      const tries: string[] = [];
-      for (const n of [2, 1]) { const q = toks.slice(0, n).join(" "); if (q && !tries.includes(q)) tries.push(q); }
-      if (toks.length >= 3) tries.unshift(toks.slice(0, 3).join(" "));
-      return tries;
-    };
     for (const row of rows) {
-      // ★긴 뉴스 문구 씨앗은 자동완성이 안 걸림 → 짧은 코어로 순차 질의해 실검증 롱테일 확보.
+      // 씨앗이 이미 검색형 명사구(정규화됨) → 그대로 + 1어절 축약 순으로 자동완성 질의.
+      const core = row.keyword.split(/\s+/)[0];
+      const queries = [row.keyword, row.keyword.split(/\s+/).slice(0, 2).join(" "), core].filter((q, i, a) => q && a.indexOf(q) === i);
       let acs: string[] = [];
-      for (const q of shortenSeed(row.keyword)) {
-        acs = await fetchNaverAutocomplete(q).catch(() => []);
-        if (acs.length > 0) break;
-      }
-      const core = row.keyword.replace(/\s+(효과|분석|변화|영향|정책|방안|현황|전망)\b/g, "").split(/\s+/)[0];
+      for (const q of queries) { acs = await fetchNaverAutocomplete(q).catch(() => []); if (acs.length > 0) break; }
       const cand = acs.filter((a) => a.includes(core) || a.length >= 6).slice(0, 8);
       ltTotal += cand.length;
       const longtails: Longtail[] = [];
@@ -139,11 +143,14 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
         if (i < GAP_PER_SEED && gapUsed < GAP_BUDGET) { bt = await fetchBlogTotal(cand[i]).catch(() => null); gapUsed += 1; }
         longtails.push({ kw: cand[i], blogTotal: bt });
       }
-      // gap 낮은 것(선점 가능) 우선 정렬 — null(미검사)은 뒤로
       longtails.sort((a, b) => (a.blogTotal ?? 1e9) - (b.blogTotal ?? 1e9));
       (row as typeof row & { longtails?: Longtail[] }).longtails = longtails;
     }
-    console.log(`[trend] ${category}: seeds=${rows.length}, autocomplete=${ltTotal}, gapChecks=${gapUsed}/${GAP_BUDGET}`);
+    // ★하드 게이트 — 자동완성 롱테일이 0개인 씨앗(=아무도 안 치는 뉴스 문구)은 풀에서 제외.
+    const gated = rows.filter((r) => ((r as { longtails?: Longtail[] }).longtails?.length ?? 0) > 0);
+    console.log(`[trend] ${category}: seeds=${rows.length}→gated=${gated.length}, autocomplete=${ltTotal}, gapChecks=${gapUsed}/${GAP_BUDGET}`);
+    if (gated.length === 0) return 0; // 게이트 통과 0개면 기존 풀 유지(전멸 방지 — 삭제 안 함)
+    rows.length = 0; rows.push(...gated);
 
     // ★데이터랩 급상승 랭킹 — 합성 키워드의 실제 검색 momentum으로 정렬(지금 뜨는 게 위로).
     //  데이터랩 그룹 한도 5개 → 배치로 조회. 실패해도 순서만 원본 유지(치명적 아님).
@@ -158,8 +165,8 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
     } catch { /* 랭킹 실패 — 원본 순서 유지 */ }
 
     const admin = createSupabaseAdminClient();
-    // 이 카테고리의 만료분 정리 후 새로 upsert
-    try { await admin.from("trend_topics").delete().eq("category", category).lt("expires_at", new Date().toISOString()); } catch { /* ignore */ }
+    // ★게이트 통과 씨앗이 있으니 이 카테고리 기존 행 전체 purge 후 새로 넣는다(뉴스 문구형 잔재 일괄 정리).
+    try { await admin.from("trend_topics").delete().eq("category", category); } catch { /* ignore */ }
     await admin.from("trend_topics").upsert(rows, { onConflict: "category,keyword" });
     return rows.length;
   } catch {

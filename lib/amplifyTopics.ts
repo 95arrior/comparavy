@@ -65,37 +65,40 @@ export function assignAngle(userId: string, seedKeyword: string, day: string): P
   };
 }
 
-// 앵글 브리프 → 생성 엔진 주입용 지시문(순수 함수).
+// ★프롬프트 조립 공통 규칙 — 값이 비면 그 줄을 '주입하지 않는다'(빈 문자열 주입 금지). 구조적.
+//  section(label, value): value가 빈 값이면 null 반환 → 조립부에서 filter로 제거.
+function section(template: (v: string) => string, value: string | null | undefined): string | null {
+  const v = (value ?? "").trim();
+  return v ? template(v) : null;
+}
+// 앵글 브리프 → 생성 엔진 주입용 지시문(순수 함수). 빈 필드는 섹션 자체를 생략.
 export function briefToDirective(b: AngleBrief): string {
-  return [
+  const lines = [
     "[앵글 브리프 — 이 글만의 방향(구조 지문)]",
-    `- 의도: ${b.intent}`,
-    `- 독자: ${b.reader}`,
-    `- 서두: ${b.opening}로 시작한다`,
-    `- 전개: ${b.flow} 순서로 푼다`,
-    `- 마무리: ${b.closing}로 끝낸다`,
-    `- 톤·문장 리듬: ${b.tone}`,
-    `- 첫 문단 훅: ${b.hook}`,
-    b.coreWord ? `- 시의성 코어 '${b.coreWord}'는 제목과 도입에 반드시 살린다.` : "", // 빈 코어는 줄 생략
+    section((v) => `- 의도: ${v}`, b.intent),
+    section((v) => `- 독자: ${v}`, b.reader),
+    section((v) => `- 서두: ${v}로 시작한다`, b.opening),
+    section((v) => `- 전개: ${v} 순서로 푼다`, b.flow),
+    section((v) => `- 마무리: ${v}로 끝낸다`, b.closing),
+    section((v) => `- 톤·문장 리듬: ${v}`, b.tone),
+    section((v) => `- 첫 문단 훅: ${v}`, b.hook),
+    section((v) => `- 시의성 코어 '${v}'는 제목과 도입에 반드시 살린다.`, b.coreWord),
     "위 방향을 이 글의 뼈대로 삼되, 엔진의 안전·품질·모바일 포맷 규칙은 그대로 지킨다.",
-  ].filter(Boolean).join("\n");
+  ];
+  return lines.filter((l): l is string => Boolean(l)).join("\n");
 }
 
-// 카피를 max자 이내로 — 단어(어절) 중간에서 자르지 않는다(미완성 카피 방지). 줄바꿈 유지.
-function clampCopy(raw: string, max: number): string {
-  const s = raw.replace(/\s*\n\s*/g, "\n").trim();
-  const visible = (t: string) => [...t.replace(/\n/g, "")].length;
-  if (visible(s) <= max) return s;
-  const tokens = s.split(/(\n| )/); // 구분자 유지
-  let out = "", count = 0;
-  for (const tok of tokens) {
-    if (tok === " " || tok === "\n") { out += tok; continue; }
-    const len = [...tok].length;
-    if (count + len > max) break;
-    out += tok; count += len;
-  }
-  out = out.replace(/[\n ]+$/g, "").trim();
-  return out || [...s].slice(0, max).join(""); // 첫 어절도 max 초과면 어쩔 수 없이 자름
+// ★썸네일 메인 카피 유효성 — 최대 2줄, 줄당 10자 이내, 전체 20자 이내, 느낌표·금지어 없음.
+//  자르기가 아니라 통과/반려 판정. 통과한 카피만 렌더된다(미완성 문구 렌더 불가).
+export function validThumbMain(s: string): boolean {
+  const t = (s ?? "").trim();
+  if (!t) return false;
+  if (/!/.test(t)) return false;
+  if (containsBanned(t)) return false;
+  const lines = t.split("\n").map((l) => [...l.trim()].length);
+  if (lines.length > 2) return false;
+  if (lines.some((n) => n < 1 || n > 10)) return false; // 줄당 10자 초과 금지
+  return lines.reduce((a, c) => a + c, 0) <= 20;         // 전체 20자 이내
 }
 
 export interface AmplifyProfile {
@@ -216,9 +219,10 @@ ${OPEN_LOOP_GUIDE}
       let titleClick = (it.titleClick ?? b.seed.title).trim().slice(0, 80);
       if (containsBanned(titleClick)) titleClick = b.seed.title.slice(0, 80);
       const titleSearch = (it.titleSearch ?? b.seed.title).trim().slice(0, 80);
-      let thumbMain = clampCopy((it.thumbMain ?? "").replace(/!/g, ""), 20);
-      if (!thumbMain || containsBanned(thumbMain)) thumbMain = clampCopy(titleClick, 18);
-      let thumbSub = clampCopy((it.thumbSub ?? ""), 15);
+      // ★자르지 않는다 — 원문 그대로 받고 뒤에서 검증(초과 시 재생성→반려). 금지어·느낌표만 즉시 제거.
+      let thumbMain = (it.thumbMain ?? "").replace(/!/g, "").trim();
+      if (containsBanned(thumbMain)) thumbMain = "";
+      let thumbSub = (it.thumbSub ?? "").trim();
       if (containsBanned(thumbSub)) thumbSub = "";
       const brief = { ...b.angle, reader: (it.reader ?? "").trim().slice(0, 120), hook: (it.hook ?? "").trim().slice(0, 160), coreWord: b.core };
       out.push({
@@ -233,6 +237,26 @@ ${OPEN_LOOP_GUIDE}
       });
       if (out.length >= want) break;
     }
+
+    // ★썸네일 카피 검증 — 초과(줄당 10자/전체 20자/2줄 초과)면 재생성 1회, 그래도 안 되면 반려(빈 카피). 절대 자르지 않는다.
+    const invalid = out.filter((o) => !validThumbMain(o.thumb.mainCopy));
+    if (invalid.length > 0) {
+      try {
+        const fixPrompt = `아래 각 글감의 대표이미지 메인 카피만 다시 만들어라. 엄격 규칙: 최대 2줄(줄바꿈은 \\n), 줄당 10자 이내, 전체 20자 이내, 느낌표·과장·보장류 금지, 답을 숨긴 '열린 카피'.\n${invalid.map((o, i) => `${i + 1}. 주제: ${o.title}`).join("\n")}\nJSON 배열만: [{"i":1,"thumbMain":"...","thumbSub":"..."}]`;
+        const r = await client.messages.create({ model: "claude-haiku-4-5", max_tokens: 500, messages: [{ role: "user", content: fixPrompt }] });
+        void logUsage({ userId, model: "claude-haiku-4-5", kind: "amplify_thumb_fix", inputTokens: r.usage?.input_tokens, outputTokens: r.usage?.output_tokens });
+        const jt = r.content[0]?.type === "text" ? r.content[0].text : "";
+        const arr = JSON.parse((/\[[\s\S]*\]/.exec(jt) ?? ["[]"])[0]) as { i?: number; thumbMain?: string; thumbSub?: string }[];
+        for (const f of arr) {
+          const o = invalid[(Number(f.i) || 0) - 1];
+          if (!o) continue;
+          const mm = (f.thumbMain ?? "").replace(/!/g, "").trim();
+          if (validThumbMain(mm)) { o.thumb.mainCopy = mm; const ss = (f.thumbSub ?? "").trim(); if (!containsBanned(ss)) o.thumb.subCopy = ss; }
+        }
+      } catch { /* 재생성 실패 → 반려로 */ }
+    }
+    // 여전히 유효하지 않으면 반려 — 빈 카피(렌더러는 카피 없이 배경+배지만, 깨진 문구는 렌더 불가).
+    for (const o of out) if (!validThumbMain(o.thumb.mainCopy)) o.thumb.mainCopy = "";
     return out;
   } catch {
     return [];
