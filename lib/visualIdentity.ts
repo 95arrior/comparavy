@@ -48,15 +48,16 @@ export const PALETTES: Palette[] = [
   { name: "sky-ink", bg: "#E6EEF4", title: "#132330", point: "#2C6E8F", panel: "#FFFFFFCC" },
 ];
 
-/* ── 폰트 페어 6종 — 상업 무료(OFL). {title 파일, body 파일} ── */
+/* ── 폰트 페어 6종 — 전부 디스플레이성 강한 헤비 타이틀(OFL 1.1). {title, body} ──
+   Black Han Sans: OFL 1.1, © Zess (초헤비 디스플레이). 나머지 라이선스는 파일 상단 주석 참조. */
 export interface FontPair { name: string; title: string; body: string }
 export const FONT_PAIRS: FontPair[] = [
-  { name: "pretendard-strong", title: "Pretendard-Black", body: "Pretendard-Regular" },
-  { name: "pretendard-clean", title: "Pretendard-Bold", body: "Pretendard-Regular" },
-  { name: "dohyeon-pretendard", title: "DoHyeon", body: "Pretendard-Regular" },
-  { name: "jua-pretendard", title: "Jua", body: "Pretendard-Regular" },
-  { name: "gowun-pretendard", title: "GowunBatang-Bold", body: "Pretendard-Regular" },
-  { name: "pretendard-semi", title: "Pretendard-SemiBold", body: "Pretendard-Regular" },
+  { name: "blackhansans", title: "BlackHanSans", body: "Pretendard-Regular" },
+  { name: "pretendard-black", title: "Pretendard-Black", body: "Pretendard-Regular" },
+  { name: "dohyeon", title: "DoHyeon", body: "Pretendard-Regular" },
+  { name: "jua", title: "Jua", body: "Pretendard-Regular" },
+  { name: "pretendard-bold", title: "Pretendard-Bold", body: "Pretendard-Regular" },
+  { name: "gowun-editorial", title: "GowunBatang-Bold", body: "Pretendard-Regular" },
 ];
 
 /* ── 레이아웃 10종 — 토스/당근 문법(상하 2단·오브젝트 무대) 안의 변주 ──

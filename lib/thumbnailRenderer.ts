@@ -20,6 +20,7 @@ const FONT_FILES: Record<string, string> = {
   "GowunBatang-Bold": "GowunBatang-Bold.ttf",
   "Jua": "Jua.ttf",
   "DoHyeon": "DoHyeon.ttf",
+  "BlackHanSans": "BlackHanSans.ttf",
 };
 const fontCache = new Map<string, Buffer>();
 function loadFont(name: string): Buffer {
@@ -59,13 +60,12 @@ function luminanceQuick(hex: string): number {
 }
 const isDark = (hex: string) => luminanceQuick(hex) < 0.45;
 
-/* ── 카피 크기: 너비 맞춤(넘침·자름 불가) ── */
-const USABLE_W = 900;
+/* ── 카피 크기: v4 — 가장 긴 줄이 화면 폭 ~87%를 채우게 키운다(카피가 화면 지배). ── */
+const TARGET_W = 940; // ≈ 1080 * 0.87
 function autoTitleSize(main: string): number {
   const longest = Math.max(...main.split("\n").map((l) => [...l.trim()].length), 1);
-  const byLen = longest <= 5 ? 176 : longest <= 7 ? 150 : longest <= 9 ? 124 : longest <= 12 ? 100 : 84;
-  const fitW = Math.floor(USABLE_W / longest);
-  return Math.max(52, Math.min(byLen, fitW));
+  const fill = Math.floor(TARGET_W / longest); // 폭 채움 우선
+  return Math.max(66, Math.min(238, fill));    // 아주 짧은 카피 상한 238, 최소 66
 }
 
 /* ── 오브젝트 무대: 플랫 기하 덩어리 ── */
@@ -87,67 +87,63 @@ function shapeEl(s: Shape, tints: string[]): El {
   return el("div", { style: rrStyle });
 }
 
-interface Template { objects: Shape[]; align: "left" | "center"; badgePos: "above" | "below" }
-// 10 템플릿 — 같은 문법(2단·오브젝트 무대) 안의 변주. 좌표/크기 명세(1080 캔버스, 하단 y≥540).
+// v4: backdrop = 카피 뒤(z축 아래)로 지나가는 오브젝트(링/도넛). 카피는 위에 렌더 → 가독 유지.
+interface Template { objects: Shape[]; backdrop?: Shape; align: "left" | "center" }
+// 10 템플릿 — 링·도넛·블롭 중심(솔리드 원 나열 지양). 하단 무대 + 카피와 겹치는 backdrop.
+//  규칙: 2~4개, 1개는 40%+(≥430px), bleed(화면 밖으로 물림). 좌표=1080 캔버스.
 const TEMPLATES: Record<LayoutKey, Template> = {
-  "center-cluster": { align: "center", badgePos: "above", objects: [
-    { kind: "circle", size: 520, x: 280, y: 640, t: 0 }, { kind: "circle", size: 340, x: 90, y: 800, t: 1 }, { kind: "circle", size: 300, x: 700, y: 800, t: 2 } ] },
-  "right-mass": { align: "left", badgePos: "below", objects: [
-    { kind: "rrect", w: 560, h: 560, r: 160, x: 620, y: 620, t: 0, rot: 8 }, { kind: "circle", size: 300, x: 470, y: 860, t: 2 } ] },
-  "diagonal-flow": { align: "left", badgePos: "above", objects: [
-    { kind: "circle", size: 380, x: -70, y: 720, t: 1 }, { kind: "ring", size: 420, x: 360, y: 620, t: 0, thick: 64 }, { kind: "circle", size: 300, x: 760, y: 820, t: 2 } ] },
-  "left-blob": { align: "center", badgePos: "above", objects: [
-    { kind: "rrect", w: 620, h: 540, r: 240, x: -130, y: 640, t: 0, rot: -10 }, { kind: "circle", size: 280, x: 560, y: 860, t: 2 } ] },
-  "ring-accent": { align: "center", badgePos: "below", objects: [
-    { kind: "ring", size: 480, x: 90, y: 640, t: 0, thick: 72 }, { kind: "ring", size: 360, x: 610, y: 740, t: 2, thick: 56 }, { kind: "circle", size: 300, x: 400, y: 820, t: 1 } ] },
-  "arch-bottom": { align: "center", badgePos: "above", objects: [
-    { kind: "semi", size: 780, x: 150, y: 560, t: 0 }, { kind: "circle", size: 280, x: 120, y: 820, t: 2 } ] },
-  "stacked-mass": { align: "left", badgePos: "above", objects: [
-    { kind: "rrect", w: 900, h: 300, r: 90, x: 90, y: 720, t: 1 }, { kind: "rrect", w: 560, h: 250, r: 80, x: 300, y: 560, t: 0 } ] },
-  "corner-pop": { align: "left", badgePos: "above", objects: [
-    { kind: "circle", size: 660, x: 640, y: 640, t: 0 }, { kind: "circle", size: 240, x: 60, y: 880, t: 2 } ] },
-  "wide-band": { align: "center", badgePos: "below", objects: [
-    { kind: "rrect", w: 1220, h: 380, r: 70, x: -70, y: 760, t: 0 }, { kind: "circle", size: 240, x: 200, y: 830, t: 2 }, { kind: "circle", size: 200, x: 780, y: 850, t: 1 } ] },
-  "split-tone": { align: "left", badgePos: "above", objects: [
-    { kind: "rrect", w: 1220, h: 540, r: 0, x: -70, y: 620, t: 1 }, { kind: "circle", size: 360, x: 640, y: 700, t: 0 } ] },
+  "center-cluster": { align: "center", backdrop: { kind: "ring", size: 560, x: 260, y: 90, t: 0, thick: 52 }, objects: [
+    { kind: "ring", size: 520, x: 300, y: 620, t: 0, thick: 78 }, { kind: "circle", size: 300, x: 120, y: 800, t: 1 }, { kind: "circle", size: 250, x: 720, y: 820, t: 2 } ] },
+  "right-mass": { align: "left", backdrop: { kind: "ring", size: 360, x: 700, y: 120, t: 2, thick: 46 }, objects: [
+    { kind: "rrect", w: 620, h: 600, r: 220, x: 600, y: 600, t: 0, rot: 10 }, { kind: "ring", size: 340, x: 380, y: 800, t: 2, thick: 58 } ] },
+  "diagonal-flow": { align: "left", backdrop: { kind: "circle", size: 300, x: 720, y: 60, t: 0 }, objects: [
+    { kind: "ring", size: 460, x: -110, y: 660, t: 0, thick: 74 }, { kind: "ring", size: 360, x: 400, y: 640, t: 2, thick: 56 }, { kind: "circle", size: 260, x: 780, y: 840, t: 1 } ] },
+  "left-blob": { align: "center", backdrop: { kind: "ring", size: 420, x: 120, y: 70, t: 0, thick: 48 }, objects: [
+    { kind: "rrect", w: 660, h: 560, r: 260, x: -150, y: 620, t: 0, rot: -12 }, { kind: "ring", size: 320, x: 560, y: 800, t: 2, thick: 54 } ] },
+  "ring-accent": { align: "center", objects: [
+    { kind: "ring", size: 520, x: 60, y: 600, t: 0, thick: 84 }, { kind: "ring", size: 380, x: 560, y: 720, t: 2, thick: 60 }, { kind: "circle", size: 240, x: 440, y: 840, t: 1 } ] },
+  "arch-bottom": { align: "center", backdrop: { kind: "ring", size: 480, x: 300, y: 80, t: 0, thick: 50 }, objects: [
+    { kind: "semi", size: 820, x: 130, y: 540, t: 0 }, { kind: "ring", size: 280, x: 130, y: 800, t: 2, thick: 48 } ] },
+  "stacked-mass": { align: "left", objects: [
+    { kind: "rrect", w: 940, h: 300, r: 120, x: 70, y: 720, t: 1 }, { kind: "ring", size: 380, x: 560, y: 500, t: 0, thick: 66 }, { kind: "circle", size: 220, x: 150, y: 560, t: 2 } ] },
+  "corner-pop": { align: "left", backdrop: { kind: "ring", size: 400, x: 640, y: 80, t: 0, thick: 52 }, objects: [
+    { kind: "circle", size: 700, x: 620, y: 620, t: 0 }, { kind: "ring", size: 300, x: 40, y: 840, t: 2, thick: 52 } ] },
+  "wide-band": { align: "center", objects: [
+    { kind: "rrect", w: 1240, h: 400, r: 90, x: -80, y: 740, t: 0 }, { kind: "ring", size: 300, x: 180, y: 660, t: 2, thick: 54 }, { kind: "circle", size: 220, x: 760, y: 820, t: 1 } ] },
+  "split-tone": { align: "left", backdrop: { kind: "ring", size: 360, x: 660, y: 90, t: 2, thick: 46 }, objects: [
+    { kind: "rrect", w: 1240, h: 560, r: 0, x: -80, y: 600, t: 1 }, { kind: "ring", size: 420, x: 600, y: 660, t: 0, thick: 76 } ] },
 };
 
-/* ── 카피/배지 ── */
-function badgeEl(text: string, p: Palette, font: string, onDark: boolean): El {
-  return el("div", { style: {
-    display: "flex", alignItems: "center", background: onDark ? "rgba(255,255,255,0.18)" : shade(p.point, 0),
-    color: "#FFFFFF", fontFamily: font, fontSize: 32, fontWeight: 700, padding: "10px 24px", borderRadius: 999, letterSpacing: 0.5,
-  } }, text);
-}
+/* ── 카피(v4) — 배지 없음. 메인 크게 화면 지배, 서브는 메인이 약할 때만 예외 1줄 ── */
 function titleEl(main: string, p: Palette, font: string, align: "left" | "center", onDark: boolean): El {
   const size = autoTitleSize(main);
   const lines = main.split("\n").map((l) => l.trim()).filter(Boolean);
   return el("div", { style: {
-    display: "flex", flexDirection: "column", gap: 4,
+    display: "flex", flexDirection: "column", gap: 2,
     alignItems: align === "center" ? "center" : "flex-start", textAlign: align,
-    fontFamily: font, color: p.title, fontSize: size, fontWeight: 900, lineHeight: 1.1, letterSpacing: -1.5,
-    textShadow: onDark ? "0 2px 24px rgba(0,0,0,0.30)" : "none", wordBreak: "keep-all",
+    fontFamily: font, color: p.title, fontSize: size, fontWeight: 900,
+    lineHeight: 1.12, letterSpacing: -Math.round(size * 0.035), // 자간 -3.5%
+    textShadow: onDark ? "0 2px 26px rgba(0,0,0,0.32)" : "none", wordBreak: "keep-all",
   } }, lines.map((l) => el("div", { style: { display: "flex" } }, l)));
 }
 function subEl(text: string, p: Palette, font: string, align: "left" | "center"): El {
-  return el("div", { style: { display: "flex", fontFamily: font, color: p.title, opacity: 0.72, fontSize: 34, fontWeight: 500, textAlign: align, wordBreak: "keep-all" } }, text);
+  return el("div", { style: { display: "flex", fontFamily: font, color: p.title, opacity: 0.7, fontSize: 34, fontWeight: 600, textAlign: align, wordBreak: "keep-all" } }, text);
 }
 
-// 상단 카피 블록(top 25~35%) — 배지 + 큰 제목 + (서브). 무대 오브젝트는 렌더러가 하단에 깐다.
+// 상단 카피 블록 — 배지 폐지. 큰 제목만(+ 메인이 약할 때만 서브 1줄).
 function copyBlock(input: ThumbInput, tpl: Template): El {
-  const { identity, mainCopy, subCopy, badge } = input;
+  const { identity, mainCopy, subCopy } = input;
   const p = identity.palette, ft = identity.fontPair.title, fb = identity.fontPair.body;
   const onDark = isDark(p.bg);
   const hasMain = (mainCopy ?? "").trim().length > 0;
-  const B = badge ? badgeEl(badge, p, ft, onDark) : null;
   const T = hasMain ? titleEl(mainCopy, p, ft, tpl.align, onDark) : null;
-  // 서브카피는 메인과 의미 중복 방지: 메인 없을 때만/짧을 때만 보조로. 기본 생략 지향.
-  const S = (subCopy && subCopy.trim() && hasMain) ? subEl(subCopy, p, fb, tpl.align) : null;
-  const items = (tpl.badgePos === "above" ? [B, T, S] : [T, B, S]).filter(Boolean);
+  // 서브: 메인이 '약할 때'(단 1줄·6자 이하)만 예외적으로 보조 1줄. 그 외 생략.
+  const weakMain = hasMain && mainCopy.split("\n").filter((l) => l.trim()).length === 1 && [...mainCopy.trim()].length <= 6;
+  const S = (subCopy && subCopy.trim() && weakMain) ? subEl(subCopy, p, fb, tpl.align) : null;
   return el("div", { style: {
-    position: "absolute", top: 78, left: 84, right: 84, display: "flex", flexDirection: "column",
-    alignItems: tpl.align === "center" ? "center" : "flex-start", gap: 22,
-  } }, items);
+    position: "absolute", top: 92, left: 80, right: 80, display: "flex", flexDirection: "column",
+    alignItems: tpl.align === "center" ? "center" : "flex-start", gap: 16,
+  } }, [T, S].filter(Boolean));
 }
 
 /** 대표이미지 PNG(1:1) 렌더. AI 배경 있으면 그 위에, 없으면 팔레트 플랫 무대. */
@@ -172,14 +168,18 @@ async function renderAt(input: ThumbInput, width: number): Promise<Buffer> {
 
   // 오브젝트 무대: AI 배경이면 생략(AI가 시각 담당), 아니면 플랫 덩어리.
   const tints = [p.point, shade(p.bg, dark ? 15 : -12), shade(p.point, dark ? 14 : -16)];
+  // backdrop(카피 뒤 z축 아래로 지나가는 링)은 배경에 가까운 은은한 명도 → 글자 획과 겹쳐도 가독 안 해침.
+  const backdropTint = [shade(p.bg, dark ? 13 : -9)];
+  const backdrop: El[] = (bgDataUrl || !tpl.backdrop) ? [] : [shapeEl(tpl.backdrop, backdropTint)];
   const objects: El[] = bgDataUrl ? [] : tpl.objects.map((s) => shapeEl(s, tints));
   // AI 배경 위 카피 대비 스크림(상단만 은은히).
   const scrim: El | null = bgDataUrl
     ? el("div", { style: { position: "absolute", inset: 0, backgroundImage: `linear-gradient(180deg, ${dark ? "rgba(0,0,0,0.42)" : "rgba(255,255,255,0.34)"}, rgba(0,0,0,0) 55%)` } })
     : null;
 
+  // z순서: 배경 → backdrop(카피 뒤) → 무대 오브젝트 → 스크림 → 카피(최상단, 항상 위로 가독 보장).
   const root = el("div", { style: { display: "flex", width: SIZE, height: SIZE, position: "relative", overflow: "hidden", backgroundColor: p.bg } },
-    [bg, ...objects, scrim, copyBlock(input, tpl)].filter(Boolean));
+    [bg, ...backdrop, ...objects, scrim, copyBlock(input, tpl)].filter(Boolean));
 
   const fonts = [
     { name: identity.fontPair.title, data: loadFont(identity.fontPair.title), weight: 900 as const, style: "normal" as const },
