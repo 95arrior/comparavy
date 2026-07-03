@@ -6,6 +6,7 @@ import GlassIcon from "@/components/GlassIcon";
 import CourseRing from "./CourseRing";
 import { courseInfo, yesterdayPublished } from "@/lib/course";
 import { GENERATE_COST } from "@/lib/creditPacks";
+import { nextSeedRefreshLabel } from "@/lib/seedRefresh";
 import type { Comp } from "@/lib/topicScore";
 import type { Article } from "./types";
 
@@ -163,7 +164,7 @@ export default function Home({
     <main className="mx-auto max-w-2xl px-6 pb-10">
       {swapNotice && (
         <div className="ateflo-fade-in fixed left-1/2 top-6 z-[80] -translate-x-1/2 rounded-full at-glass-strong px-4 py-2.5 text-[13px] font-bold text-neutral-700 shadow-lg">
-          오늘 글감 교체는 여기까지예요 · 내일 새 글감이 와요
+          오늘 글감 교체는 여기까지예요 · {nextSeedRefreshLabel()}
         </div>
       )}
       {/* 상단 — 블로그명 + 크레딧 칩(탭 → 충전·내역) */}
