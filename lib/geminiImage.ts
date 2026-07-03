@@ -62,10 +62,9 @@ export function buildBodyPrompt(slotDesc: string, articleTitle: string, seed: nu
 export function buildThumbBgPrompt(bgStyleHint: string, paletteHint: string, seed: number): string {
   const mood = PHOTO_MOODS[seed % PHOTO_MOODS.length];
   return [
-    `Simple abstract background image for a blog thumbnail, ${bgStyleHint} style, color palette of ${paletteHint}.`,
-    `Minimal uncluttered composition with a large calm low-contrast empty area (for text to be placed on top later by code).`,
-    `${mood} mood, soft and premium, brand-magazine quality, no busy focal clutter. Square 1:1 composition.`,
-    // 텍스트 관련 하드룰만(배경엔 인물/사물 규칙 불필요)
+    `Soft matte 3D abstract objects (rounded blobs, spheres, gentle geometric forms) floating on a solid single-color background, color palette of ${paletteHint}.`,
+    `Playful premium 3D render like a Toss/Danggeun event card illustration. Objects clustered in the LOWER portion — keep the TOP 35% a clean empty area (text goes there later).`,
+    `${mood} mood, soft studio lighting, tactile clay-like material, no busy clutter. Square 1:1 composition.`,
     "ABSOLUTELY NO text of any kind: no letters, numbers, Korean characters, signs, labels, captions, watermarks, or logos anywhere.",
   ].join(" ");
 }

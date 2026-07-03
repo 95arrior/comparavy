@@ -59,15 +59,14 @@ export const FONT_PAIRS: FontPair[] = [
   { name: "pretendard-semi", title: "Pretendard-SemiBold", body: "Pretendard-Regular" },
 ];
 
-/* ── 레이아웃 10종 — 구조가 확실히 다른 배치 ── */
+/* ── 레이아웃 10종 — 토스/당근 문법(상하 2단·오브젝트 무대) 안의 변주 ──
+   각각 오브젝트 종류·배치 + 카피 정렬 + 배지 위치 조합. 좌표/크기는 렌더러의 TEMPLATES에 명세. */
 export type LayoutKey =
-  | "badge-top-center" | "editorial-left" | "band-bottom" | "framed"
-  | "split-horizontal" | "diagonal-ribbon" | "corner-badge" | "stacked-serifhero"
-  | "quote-panel" | "minimal-centered";
+  | "center-cluster" | "right-mass" | "diagonal-flow" | "left-blob" | "ring-accent"
+  | "arch-bottom" | "stacked-mass" | "corner-pop" | "wide-band" | "split-tone";
 export const LAYOUTS: LayoutKey[] = [
-  "badge-top-center", "editorial-left", "band-bottom", "framed",
-  "split-horizontal", "diagonal-ribbon", "corner-badge", "stacked-serifhero",
-  "quote-panel", "minimal-centered",
+  "center-cluster", "right-mass", "diagonal-flow", "left-blob", "ring-accent",
+  "arch-bottom", "stacked-mass", "corner-pop", "wide-band", "split-tone",
 ];
 
 /* ── 배경 스타일 8종 (AI 배경 프롬프트 힌트 + 코드 폴백 종류) ── */
