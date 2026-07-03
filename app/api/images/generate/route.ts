@@ -4,7 +4,20 @@ import { isAdminEmail } from "@/lib/adminStats";
 import { spendCredits, addCredits } from "@/lib/credits";
 import { IMAGE_COST } from "@/lib/creditPacks";
 import { generateBlogImage, imageReady, GEMINI_IMAGE_MODEL } from "@/lib/geminiImage";
+import { composeThumbnail } from "@/lib/composeThumbnail";
 import { logUsage } from "@/lib/usageLog";
+
+// 대표이미지(슬롯0) PNG를 스토리지에 올리고 URL 반환(실패 시 null → 호출측 dataUrl 폴백).
+async function uploadPng(userId: string, png: Buffer): Promise<string | null> {
+  try {
+    const admin = createSupabaseAdminClient();
+    try { await admin.storage.createBucket("ai-images", { public: true }); } catch { /* 있음 */ }
+    const path = `${userId}/${crypto.randomUUID()}.png`;
+    const { error } = await admin.storage.from("ai-images").upload(path, png, { contentType: "image/png" });
+    if (error) return null;
+    return admin.storage.from("ai-images").getPublicUrl(path).data.publicUrl;
+  } catch { return null; }
+}
 
 export const maxDuration = 60;
 
@@ -29,7 +42,31 @@ export async function POST(request: Request) {
   const slotIdx = Number.isInteger(body.idx) && body.idx >= 0 && body.idx <= 9 ? (body.idx as number) : null;
   if (!slot) return NextResponse.json({ error: "어떤 이미지가 필요한지 알 수 없어요." }, { status: 400 });
 
-  // 선차감(원자적) — 부족하면 402
+  // ★대표이미지(슬롯0) + 합성 카피 있으면 = v4 코드 합성. 무료(AI 없음·크레딧 0) → 이중차감 구조적 불가.
+  const tc = body.thumbCopy;
+  const thumbCopy = (tc && typeof tc === "object")
+    ? { mainCopy: String(tc.mainCopy ?? "").slice(0, 40), subCopy: String(tc.subCopy ?? "").slice(0, 30), badge: String(tc.badge ?? "").slice(0, 20) }
+    : null;
+  if (thumbnail && thumbCopy) {
+    try {
+      const seed = typeof body.articleSeed === "string" ? body.articleSeed.slice(0, 80) : null;
+      const { png } = await composeThumbnail({ userId: user.id, thumb: thumbCopy, articleId: seed, useAiBackground: false });
+      const url = await uploadPng(user.id, png);
+      if (url && articleId && slotIdx !== null) {
+        try {
+          const { data: cur } = await supabase.from("articles").select("images").eq("id", articleId).eq("user_id", user.id).single();
+          const merged = { ...((cur?.images as Record<string, string>) ?? {}), [String(slotIdx)]: url };
+          await supabase.from("articles").update({ images: merged }).eq("id", articleId).eq("user_id", user.id);
+        } catch { /* 컬럼 미적용 — 기기 저장 폴백 */ }
+      }
+      return NextResponse.json({ ok: true, url, dataUrl: url ? undefined : `data:image/png;base64,${png.toString("base64")}` }); // credits 미변경(무료)
+    } catch {
+      // 합성 실패 → 썸네일 생략(과금 0, 발행 지장 없음). 본문 이미지는 별도 슬롯에서 계속.
+      return NextResponse.json({ ok: false, skipped: true, error: "썸네일을 만들지 못했어요." });
+    }
+  }
+
+  // 본문 이미지(또는 카피 없는 대표) — 유료 Gemini. 선차감(원자적) — 부족하면 402
   const balance = await spendCredits(user.id, IMAGE_COST, "image");
   if (balance === null) return NextResponse.json({ error: "크레딧이 부족해요.", code: "NO_CREDITS" }, { status: 402 });
 

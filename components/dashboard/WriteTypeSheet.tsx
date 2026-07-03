@@ -68,7 +68,7 @@ export default function WriteTypeSheet({
         <button onClick={toggle} className="mt-4 flex w-full items-center gap-3 rounded-2xl bg-neutral-50 p-4 text-left transition active:scale-[0.99]">
           <div className="min-w-0 flex-1">
             <p className="text-[14px] font-bold text-neutral-900">AI 이미지도 함께 🎨</p>
-            <p className="mt-0.5 text-[12px] text-neutral-500">글 쓰는 동안 사진 자리 3곳을 채워요 · +{IMAGE_COST * 3}크레딧</p>
+            <p className="mt-0.5 text-[12px] text-neutral-500">대표이미지는 무료로, 본문 사진은 최대 +{IMAGE_COST * 2}크레딧</p>
           </div>
           <span className={`flex h-7 w-12 shrink-0 items-center rounded-full px-0.5 transition-colors ${withImages ? "bg-[#1D75F7]" : "bg-neutral-200"}`}>
             <span className={`h-6 w-6 rounded-full bg-white shadow transition-transform ${withImages ? "translate-x-5" : ""}`} />

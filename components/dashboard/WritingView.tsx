@@ -17,6 +17,8 @@ export interface GenParams {
   newsContext?: string;
   /** ★앵글 브리프(C단계) — 이 글만의 방향(의도·구조·톤·독자·훅). 무중복 증식의 핵심 */
   angleBrief?: string;
+  /** ★대표이미지 합성 카피(v4) — 슬롯0 썸네일에 코드 합성(무료). 없으면 배경+오브젝트만 */
+  thumb?: { mainCopy: string; subCopy: string; badge: string };
 }
 
 // ★생성 장면 v3 — "글이 눈앞에서 실제로 써진다".
@@ -126,7 +128,7 @@ export default function WritingView({
       void fetch("/api/images/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slot: slots[i], title: titleRef.current, thumb: i === 0 }),
+        body: JSON.stringify({ slot: slots[i], title: titleRef.current, thumb: i === 0, thumbCopy: i === 0 ? params.thumb : undefined, articleSeed: titleRef.current }),
       })
         .then(async (res) => {
           const data = await res.json().catch(() => ({}));
