@@ -16,7 +16,13 @@ export async function GET(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user || !isAdminEmail(user.email)) return NextResponse.json({ error: "관리자만" }, { status: 403 });
 
-  const id = new URL(request.url).searchParams.get("id");
+  const url0 = new URL(request.url);
+  // ?list=1 → 최근 글 id·제목 10개(어떤 id를 넣을지 확인용)
+  if (url0.searchParams.get("list") === "1") {
+    const { data: rows } = await supabase.from("articles").select("id, title, status, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(10);
+    return NextResponse.json({ count: rows?.length ?? 0, articles: (rows ?? []).map((r) => ({ id: r.id, title: r.title, status: r.status, created_at: r.created_at })) }, { headers: { "cache-control": "no-store" } });
+  }
+  const id = url0.searchParams.get("id");
   let q = supabase.from("articles").select("id, title, body_html, images, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1);
   if (id) q = supabase.from("articles").select("id, title, body_html, images, created_at").eq("user_id", user.id).eq("id", id).limit(1);
   const { data } = await q;
