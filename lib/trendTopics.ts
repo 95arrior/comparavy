@@ -83,6 +83,8 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
 - 그날의 신선함이 최우선. 오래된·뻔한 주제(예: 은행 금리 비교만 반복)는 피하고 분야 전체에 걸쳐 다양하게 흩어라.
 - 검색하는 사람이 실익을 얻는 정보성만. 연예인·유명인·사건사고·정치공방·부고·루머·자극적 가십은 절대 제외.
 - ★keyword = 사람이 네이버 검색창에 실제로 칠 2~3어절 '명사구'다. 조사·서술어를 붙이지 말고, '분석·전망·현황·동향·효과·변화·영향·정책·방안·이슈' 같은 논평/분석어를 넣지 마라. (나쁜 예: "소상공인 지원금 효과 분석", "부동산 규제 정책 변화" → 좋은 예: "소상공인 지원금", "부동산 규제")
+- ★keyword는 '하나의 일관된 검색 주제'여야 한다. 서로 다른 두 뉴스·개념을 억지로 붙이지 마라. (나쁜 예: "전기차 미니 원전", "AI 생산혁명 부동산", "카타르 인프라 투자" — 이건 무관한 헤드라인을 합친 것) 실제로 그 단어 조합을 통째로 검색창에 칠 사람이 있어야 한다.
+- ★특정 인물명·회사 인사(신임사장 등)·지역 행정소식처럼 '검색 실익'이 없는 건 제외한다.
 - title=클릭할 블로그 제목.
 - 16개가 서로 다른 소주제여야 한다(중복·유사 금지).
 - 반드시 JSON 배열로만 답(다른 말 금지): [{"keyword":"...","title":"..."}]`;
@@ -129,13 +131,22 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
     const GAP_PER_SEED = 3;      // 씨앗당 gap 검사할 롱테일 수(검색량 상위)
     let gapUsed = 0;
     let ltTotal = 0;
+    // 관련성 앵커 — 씨앗의 '구별되는' 부분. 가장 긴 토큰이 4자↑면 그걸(고유 복합명사), 아니면 앞 2토큰.
+    //  롱테일은 이 앵커를 포함할 때만 채택 → 1토큰 일반어("전기차"·"구글") 매칭으로 무관한 인기검색어가 딸려오는 드리프트 차단.
+    const norm = (x: string) => x.replace(/\s+/g, "");
+    const anchorOf = (kw: string): string => {
+      const toks = kw.split(/\s+/).filter(Boolean);
+      const longest = [...toks].sort((a, b) => [...b].length - [...a].length)[0] ?? "";
+      return [...longest].length >= 4 ? norm(longest) : norm(toks.slice(0, 2).join(""));
+    };
     for (const row of rows) {
-      // 씨앗이 이미 검색형 명사구(정규화됨) → 그대로 + 1어절 축약 순으로 자동완성 질의.
-      const core = row.keyword.split(/\s+/)[0];
-      const queries = [row.keyword, row.keyword.split(/\s+/).slice(0, 2).join(" "), core].filter((q, i, a) => q && a.indexOf(q) === i);
+      const anchor = anchorOf(row.keyword);
+      const toks = row.keyword.split(/\s+/).filter(Boolean);
+      const queries = [row.keyword, toks.slice(0, 2).join(" "), toks[0]].filter((q, i, a) => q && a.indexOf(q) === i);
       let acs: string[] = [];
       for (const q of queries) { acs = await fetchNaverAutocomplete(q).catch(() => []); if (acs.length > 0) break; }
-      const cand = acs.filter((a) => a.includes(core) || a.length >= 6).slice(0, 8);
+      // ★관련성 게이트 — 앵커를 포함하는 롱테일만(드리프트 제거).
+      const cand = acs.filter((a) => norm(a).includes(anchor)).slice(0, 8);
       ltTotal += cand.length;
       const longtails: Longtail[] = [];
       for (let i = 0; i < cand.length; i++) {
