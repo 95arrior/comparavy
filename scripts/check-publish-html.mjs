@@ -20,7 +20,7 @@ const rich = buildRichHtml(base);
 ok(rich.includes('<img src="https://cdn.example.com/a.png"'), "rich: 이미지 있는 자리 img 삽입");
 ok(!rich.includes("[사진"), "rich: 미충족 슬롯 제거(안내문구 없음)");
 ok(rich.includes("<b style=\"background-color:#fff3a8;\">자격</b>"), "rich: 형광펜 -> 굵게+배경");
-ok(rich.includes("#청년지원금 #신청방법"), "rich: 해시태그 라인");
+ok(!rich.includes("#청년지원금"), "rich: 해시태그 본문 미포함(태그칸 자동 등록 중복 방지 — 위저드 태그 단계로)");
 ok(!rich.includes("[사진: 신청 화면]"), "rich: 원본 마커 소거");
 
 // marker: 이미지 안 넣고 마커만
@@ -32,7 +32,7 @@ ok(!marker.includes("<img"), "marker: img 없음");
 const plain = buildPlainText(base);
 ok(!plain.includes("<"), "plain: 태그 제거");
 ok(plain.includes("[사진 1]") && !plain.includes("[사진 2]"), "plain: 채워진 슬롯만 마커(미충족 제거)");
-ok(plain.includes("#청년지원금"), "plain: 해시태그");
+ok(!plain.includes("#청년지원금"), "plain: 해시태그 미포함");
 ok(plain.includes("자격"), "plain: 형광펜 텍스트 보존");
 
 // 빈 해시태그 안전
