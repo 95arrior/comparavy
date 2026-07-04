@@ -4,6 +4,7 @@
 // ★정렬 규칙: 산문 문단·인용구·소제목 = 중앙 / 데이터 블록(리스트·라벨:값·다행 짧은 행) = 왼쪽 + 옅은 회색 박스.
 
 import { BODY_ALIGN } from "@/config/publish";
+import { sanitizeUrls } from "./linkWhitelist";
 
 export interface PublishInput {
   title: string;
@@ -250,7 +251,8 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   const groups = hashtagGroups(input.hashtags);
   if (groups.length) body += `<p>${groups.join("<br>")}</p>`; // 해시태그 2~3개 단위 줄 나눔
   // 최종 게이트: rich는 사진 마커/지시·이모지 전면 제거. marker 모드(수동 배치)는 [사진 N] 유지하고 이모지만.
-  const gated = withImages ? sanitizeForCopy(body) : stripEmoji(body);
+  const gated0 = withImages ? sanitizeForCopy(body) : stripEmoji(body);
+  const gated = sanitizeUrls(gated0).html; // ★기존 초안 소급 — 사전 밖 URL은 복사 시점에도 정화
   // 파이프: 분할 → 정렬 → 크기 위계 → ★여백 스케일 v2(마크업 스페이서) → 서스펜스(마킹 예외)
   return applySuspenseBreaks(applySpacingRich(applySizing(styleBlocks(splitLongParagraphs(gated)))));
 }

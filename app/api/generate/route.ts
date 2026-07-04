@@ -5,6 +5,7 @@ import { spendCredits, addCredits, GENERATE_COST } from "@/lib/credits";
 import { streamArticle } from "@/lib/generateArticle";
 import { isReviewType, ensureDisclosure } from "@/lib/revenue";
 import { hasFabricatedExperience } from "@/lib/editorial";
+import { sanitizeUrls } from "@/lib/linkWhitelist";
 import { countKoreanChars } from "@/lib/humanizer";
 import { isDisposableEmail } from "@/lib/disposableEmail";
 import { checkRateLimit } from "@/lib/rateLimit";
@@ -286,7 +287,9 @@ export async function POST(request: Request) {
         }
 
         // (네이버 수익형 단일 — 자영업 시절의 업체 NAP 박스 삽입 제거. 수익형 블로그에 영업장 정보는 무의미 + 전 글 공통 박스는 패턴 지문 리스크)
-        const finalBody = ensureDisclosure(article.body_html, isReview); // ★리뷰형이면 대가성 문구 상단 강제(누락 불가)
+        const urlClean = sanitizeUrls(ensureDisclosure(article.body_html, isReview)); // ★URL 정화(사전 밖 경로 치환 — 404 방지)
+        if (urlClean.replaced > 0) console.log(`[url-sanitize] user=${user.id.slice(0, 8)} replaced=${urlClean.replaced} fabricated=${JSON.stringify(urlClean.fabricated)}`);
+        const finalBody = urlClean.html;
 
         // 저장 + 사용량 증가
         const insertPayload: Record<string, unknown> = {

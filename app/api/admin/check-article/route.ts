@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { isAdminEmail } from "@/lib/adminStats";
 import { formatBody, countPhotoSlots, hasPhotoLeak } from "@/lib/publishHtml";
+import { extractUrls, VERIFIED_LINKS } from "@/lib/linkWhitelist";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,18 @@ export async function GET(request: Request) {
   if (url0.searchParams.get("list") === "1") {
     const { data: rows } = await supabase.from("articles").select("id, title, status, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(10);
     return NextResponse.json({ count: rows?.length ?? 0, articles: (rows ?? []).map((r) => ({ id: r.id, title: r.title, status: r.status, created_at: r.created_at })) }, { headers: { "cache-control": "no-store" } });
+  }
+  // ?urls=1 → 기존 글 전수 URL 스캔: 사전 밖 URL 목록(발행물 수동 수정용)
+  if (url0.searchParams.get("urls") === "1") {
+    const { data: arts } = await supabase.from("articles").select("id, title, status, body_html").eq("user_id", user.id).order("created_at", { ascending: false }).limit(100);
+    const wl = Object.keys(VERIFIED_LINKS);
+    const offenders: { id: string; title: string; status: string; urls: string[] }[] = [];
+    for (const a of arts ?? []) {
+      const urls = extractUrls(String(a.body_html ?? ""));
+      const bad = urls.filter((u) => { const d = u.replace(/^https?:\/\//i, "").replace(/^www\./, "").split("/")[0].toLowerCase(); return !wl.some((k) => d === k || d.endsWith("." + k)); });
+      if (bad.length) offenders.push({ id: a.id, title: a.title, status: a.status, urls: [...new Set(bad)].slice(0, 10) });
+    }
+    return NextResponse.json({ scanned: arts?.length ?? 0, offenders }, { headers: { "cache-control": "no-store" } });
   }
   const id = url0.searchParams.get("id");
   let q = supabase.from("articles").select("id, title, body_html, images, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1);
