@@ -119,7 +119,7 @@ export async function POST(request: Request) {
   // 업종(vertical) + 업체 정보 — 프로필에서 1회 조회(없으면 general/미입력). 프롬프트 분기 + 글 하단 NAP 박스에 사용.
   const { data: profileRow } = await supabase
     .from("blog_profiles")
-    .select("vertical,sub_category,biz_name,biz_address,biz_detail_address,biz_phone,biz_hours,biz_hours_json,biz_strength,audience")
+    .select("id,vertical,sub_category,biz_name,biz_address,biz_detail_address,biz_phone,biz_hours,biz_hours_json,biz_strength,audience")
     .eq("user_id", user.id)
     .maybeSingle();
   const vertical = profileRow?.vertical ?? "general";
@@ -274,7 +274,7 @@ export async function POST(request: Request) {
           } else if (body.series && typeof body.series === "object" && body.series.title && Array.isArray(body.series.arc) && body.series.arc.length >= 3) {
             const arc = (body.series.arc as { role?: string; angle?: string }[]).map((e) => ({ role: String(e.role ?? "").slice(0, 40), angle: String(e.angle ?? "").slice(0, 90) })).filter((e) => e.role && e.angle).slice(0, 4);
             if (arc.length >= 3) {
-              const { data: ins } = await supabase.from("user_series").insert({ user_id: user.id, keyword, title: String(body.series.title).slice(0, 60), arc, total: arc.length, next_ep: 2 }).select("id").single();
+              const { data: ins } = await supabase.from("user_series").insert({ user_id: user.id, blog_id: (profileRow as { id?: string } | null)?.id ?? null, keyword, title: String(body.series.title).slice(0, 60), arc, total: arc.length, next_ep: 2 }).select("id").single();
               if (ins) { seriesId = ins.id; episodeIndex = 1; seriesDirective = `\n[시리즈] "${String(body.series.title).slice(0, 60)}" 1화/${arc.length} — 이 화의 역할: ${arc[0].role} (${arc[0].angle}). 이 화만 읽어도 완결되게.`; }
             }
           }
@@ -345,6 +345,7 @@ export async function POST(request: Request) {
           tags: article.tags ?? [], // 워드프레스 태그 (마이그레이션: articles.tags jsonb)
           article_type: promo ? "promo" : "info", // 홍보용/정보성 (마이그레이션 0040)
           series_id: seriesId, episode_index: episodeIndex, // 시리즈(0054) — 미적용 시 아래 재시도에서 제외
+          blog_id: (profileRow as { id?: string } | null)?.id ?? null, // ★멀티 블로그 Phase A(0055) — 글의 블로그 소속
           channel, // 발행 채널 naver 고정 (마이그레이션 0042) — 컬럼 없으면 아래 재시도에서 제외
         };
 
@@ -357,7 +358,7 @@ export async function POST(request: Request) {
         let { data: saved, error: saveError } = await writeArticle();
 
         // 아직 없는 선택 컬럼(write_note·tags 등)을 가리키는 오류면 그 컬럼만 빼고 재시도 → 마이그레이션 전에도 생성은 항상 동작
-        for (const col of ["tags", "write_note", "article_type", "channel"]) {
+        for (const col of ["tags", "write_note", "article_type", "channel", "series_id", "episode_index", "blog_id"]) {
           if (saveError && new RegExp(col, "i").test(saveError.message ?? "")) {
             delete insertPayload[col];
             ({ data: saved, error: saveError } = await writeArticle());

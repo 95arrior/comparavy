@@ -76,7 +76,7 @@ export async function POST(request: Request) {
   // ── 입력 조립(generate 라우트와 동기) ──
   const adminDb = createSupabaseAdminClient();
   const { data: profileRow } = await supabase.from("blog_profiles")
-    .select("vertical,sub_category,biz_name,biz_strength,audience").eq("user_id", user.id).maybeSingle();
+    .select("id,vertical,sub_category,biz_name,biz_strength,audience").eq("user_id", user.id).maybeSingle();
   const vertical = profileRow?.vertical ?? "general";
   const vDef = VERTICAL_DEFAULTS[vertical];
   const type = vDef?.type ?? "howto";
@@ -124,13 +124,19 @@ export async function POST(request: Request) {
       const charCount = countKoreanChars(finalBody);
       if (charCount < 500) throw new Error("too-short");
 
-      const { error: upErr } = await adminDb.from("articles").update({
+      const upPayload: Record<string, unknown> = {
         title: article.title, meta_title: article.meta_title, meta_description: article.meta_description,
         body_html: finalBody, faq: article.faq, char_count: charCount,
         simhash: simhash(article.body_html), original_html: finalBody,
         write_note: article.write_note || null, tags: article.tags ?? [],
         article_type: "info", status: "pre_generated",
-      }).eq("id", phId).eq("status", "pre_generating");
+        blog_id: (profileRow as { id?: string } | null)?.id ?? null, // 멀티 블로그 Phase A(0055)
+      };
+      let { error: upErr } = await adminDb.from("articles").update(upPayload).eq("id", phId).eq("status", "pre_generating");
+      if (upErr && /blog_id/.test(upErr.message)) { // 0055 미적용 방어 — 사전 생성이 죽지 않게
+        delete upPayload.blog_id;
+        ({ error: upErr } = await adminDb.from("articles").update(upPayload).eq("id", phId).eq("status", "pre_generating"));
+      }
       if (upErr) throw upErr;
       const ms = Date.now() - t0;
       void logUsage({ userId: user.id, model: "pregen", kind: "pregen_ready", inputTokens: 0, outputTokens: Math.round(ms / 1000) });
