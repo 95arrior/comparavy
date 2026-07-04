@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import TodayCard from "./TodayCard";
 import GlassIcon from "@/components/GlassIcon";
 import CourseRing from "./CourseRing";
+import CheckinCard from "./CheckinCard";
 import { courseInfo, yesterdayPublished, pickNextTopic, todayKeywords, localPubFlagKey } from "@/lib/course";
 import { GENERATE_COST } from "@/lib/creditPacks";
 import { nextSeedRefreshLabel } from "@/lib/seedRefresh";
@@ -202,6 +203,9 @@ export default function Home({
       {yesterdayPublished(articles) && (
         <p className="at-rise mt-2 text-center text-[12.5px] font-semibold text-[color:var(--at-grey-500)]">어제 글, 발행 확인됐어요.</p>
       )}
+
+      {/* 아침 체크인 — 1일 1회, 30초 동선. 입력→그래프→바로 아래 오늘 할 일로 연결 */}
+      <CheckinCard articles={articles} />
 
       {/* 오늘의 글 — 단일 CTA */}
       <div className="at-rise at-d2 mt-6">

@@ -3,6 +3,7 @@
 import GlassIcon, { type GlassTint } from "@/components/GlassIcon";
 
 import { useMemo, useState } from "react";
+import RevenueDash from "./RevenueDash";
 import type { Article } from "./types";
 
 // 성과 페이지 — 네이버 수익형 단일. 초반 이탈 방어:
@@ -246,6 +247,9 @@ export default function PerformanceView({
   return (
     <div className="space-y-4">
       <div className=""><AssetHero written={stats.written} streak={stats.streak} pub={stats.pub} onWrite={onWrite} /></div>
+
+      {/* 수익 대시보드 v1 — 입력 데이터만 */}
+      <RevenueDash publishedCount={stats.pub} />
 
       {open ? (
         <PathDetail p={open} onBack={() => setOpenIdx(null)} />
