@@ -10,7 +10,8 @@ import { yesterdayPublished, type CourseArticleLite } from "@/lib/course";
 interface Row { day: string; visitors: number | null; revenue: number | null }
 
 export default function CheckinCard({ articles, onSaved }: { articles: CourseArticleLite[]; onSaved?: () => void }) {
-  const [state, setState] = useState<"loading" | "form" | "done" | "hidden">("loading");
+  const [state, setState] = useState<"loading" | "form" | "done" | "skipped" | "recorded">("loading");
+  const [savedRow, setSavedRow] = useState<Row | null>(null); // 오늘 기록값(요약·수정용)
   const [rows, setRows] = useState<Row[]>([]);
   const [prev, setPrev] = useState<Row | null>(null);
   const [visitors, setVisitors] = useState("");
@@ -24,14 +25,17 @@ export default function CheckinCard({ articles, onSaved }: { articles: CourseArt
     let alive = true;
     (async () => {
       try {
-        if (localStorage.getItem(skipKey) === "1") { setState("hidden"); return; }
         const res = await fetch("/api/checkin");
         const d = await res.json();
         if (!alive) return;
-        setRows(Array.isArray(d.rows) ? d.rows : []);
+        const rs: Row[] = Array.isArray(d.rows) ? d.rows : [];
+        setRows(rs);
         setPrev(d.prev ?? null);
-        setState(d.doneToday ? "hidden" : "form");
-      } catch { if (alive) setState("hidden"); }
+        const yRow = rs.find((r) => r.day === d.yesterdayKey) ?? null;
+        if (yRow) { setSavedRow(yRow); setState("recorded"); return; }           // 이미 기록 → 한 줄 요약(수정 가능)
+        if (localStorage.getItem(skipKey) === "1") { setState("skipped"); return; } // 건너뜀 → 한 줄(다시 열기 가능, 내일 자동 재등장)
+        setState("form");
+      } catch { if (alive) setState("recorded"), setSavedRow(null); }
     })();
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -54,13 +58,35 @@ export default function CheckinCard({ articles, onSaved }: { articles: CourseArt
       if ((d.revenue ?? 0) > 0) {
         try { if (localStorage.getItem("ateflo_first_revenue") !== "1") { localStorage.setItem("ateflo_first_revenue", "1"); setFirstRevenue(true); } } catch { /* ignore */ }
       }
+      setSavedRow(newRow);
       setState("done");
       onSaved?.();
-      setTimeout(() => setState("hidden"), firstRevenue ? 4200 : 1600); // 그래프 자라는 걸 보여준 뒤 오늘 할 일로
+      setTimeout(() => setState("recorded"), firstRevenue ? 4200 : 1600); // 그래프 성장 보여준 뒤 한 줄 요약으로(수정 가능)
     } finally { setBusy(false); }
   }
 
-  if (state === "loading" || state === "hidden") return null;
+  if (state === "loading") return null;
+  if (state === "recorded" && savedRow === null) return null; // 로드 실패 — 다음 진입에 재시도
+  // 건너뜀 — 실수 복구: 탭하면 즉시 폼 복귀. 내일이 되면(skipKey 날짜 변경) 자동으로 폼 재등장.
+  if (state === "skipped") {
+    return (
+      <button onClick={() => { try { localStorage.removeItem(skipKey); } catch { /* ignore */ } setState("form"); }}
+        className="at-rise mt-3 flex w-full items-center justify-between rounded-2xl bg-white px-5 py-3 text-left ring-1 ring-black/[0.04] transition hover:bg-neutral-50">
+        <span className="text-[12.5px] font-medium text-neutral-400">오늘 체크인은 건너뛰었어요</span>
+        <span className="text-[12.5px] font-bold text-[#1D75F7]">다시 열기</span>
+      </button>
+    );
+  }
+  // 기록 완료 — 한 줄 요약 + 수정(오입력 복구). upsert라 다시 저장하면 덮어쓴다.
+  if (state === "recorded" && savedRow) {
+    return (
+      <button onClick={() => { setVisitors(savedRow.visitors !== null ? String(savedRow.visitors) : ""); setRevenue(savedRow.revenue !== null ? String(savedRow.revenue) : ""); setState("form"); }}
+        className="at-rise mt-3 flex w-full items-center justify-between rounded-2xl bg-white px-5 py-3 text-left ring-1 ring-black/[0.04] transition hover:bg-neutral-50">
+        <span className="text-[12.5px] font-medium text-neutral-500">어제 기록 · 방문자 {savedRow.visitors ?? 0}명{savedRow.revenue !== null ? ` · ${savedRow.revenue.toLocaleString("ko-KR")}원` : ""}</span>
+        <span className="text-[12.5px] font-bold text-[#1D75F7]">수정</span>
+      </button>
+    );
+  }
   const yPub = yesterdayPublished(articles);
   const last7 = (() => {
     const map = new Map(rows.map((r) => [r.day, r] as const));
@@ -120,7 +146,7 @@ export default function CheckinCard({ articles, onSaved }: { articles: CourseArt
                 어제와 같음
               </button>
             )}
-            <button onClick={() => { try { localStorage.setItem(skipKey, "1"); } catch { /* ignore */ } setState("hidden"); }}
+            <button onClick={() => { try { localStorage.setItem(skipKey, "1"); } catch { /* ignore */ } setState("skipped"); }}
               className="at-press rounded-xl px-2.5 py-2.5 text-[12.5px] font-medium text-neutral-400 transition hover:text-neutral-600">건너뛰기</button>
           </div>
         </>

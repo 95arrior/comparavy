@@ -5,6 +5,7 @@ import TodayCard from "./TodayCard";
 import GlassIcon from "@/components/GlassIcon";
 import CourseRing from "./CourseRing";
 import CheckinCard from "./CheckinCard";
+import NeighborMission from "./NeighborMission";
 import { courseInfo, yesterdayPublished, pickNextTopic, todayKeywords, localPubFlagKey } from "@/lib/course";
 import { GENERATE_COST } from "@/lib/creditPacks";
 import { nextSeedRefreshLabel } from "@/lib/seedRefresh";
@@ -48,6 +49,7 @@ export default function Home({
   unreadNews,
   onOpenNews,
   profileKey,
+  subCategory,
 }: {
   displayName: string;
   blogName: string;
@@ -63,6 +65,7 @@ export default function Home({
   unreadNews?: boolean;
   onOpenNews?: () => void;
   profileKey?: string; // 주제:세부 — 글감 캐시 분리(주제 바꾸면 새 글감)
+  subCategory?: string | null; // 이웃 미션 검색어·인사말 개인화
 }) {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [topicsLoading, setTopicsLoading] = useState(true);
@@ -218,6 +221,11 @@ export default function Home({
           onGoPerformance={onGoPerformance}
           onOpenTodayDraft={(() => { const d = articles.find((a) => a.status === "draft" && new Date(a.created_at).toDateString() === new Date().toDateString()); return d ? () => onSelect(d) : undefined; })()}
         />
+      </div>
+
+      {/* 이웃 미션 — 보너스(스트릭 아님). 글 1편 + 이웃 5명 + 댓글 2개 세트 */}
+      <div className="at-rise at-d2">
+        <NeighborMission subCategory={subCategory} />
       </div>
 
       {/* 접힘 — 다른 글감 */}

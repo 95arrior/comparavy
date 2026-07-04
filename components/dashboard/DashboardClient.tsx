@@ -573,6 +573,7 @@ export default function DashboardClient(props: DashboardProps) {
                 }}
                 onSelect={setSelected}
                 profileKey={`${blogProfile.vertical}:${blogProfile.sub_category ?? ""}`}
+                subCategory={blogProfile.sub_category ?? blogProfile.topic}
               />
             )}
 
