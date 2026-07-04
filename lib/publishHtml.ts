@@ -55,9 +55,10 @@ export function hasPhotoLeakPlain(s: string): boolean { return new RegExp(INSTRU
 const SUSPENSE_TOKEN_RE = /<p[^>]*>\s*\[간격\]\s*<\/p>|\[간격\]/g;
 const SUSPENSE_MAX = 3;
 const SUSPENSE_SPACER = '<p style="text-align:left"><br></p><p style="text-align:left"><br></p>'; // 빈 줄 2칸
+const SUSPENSE_OVER = '<p style="text-align:left"><br></p>'; // 상한 초과 마킹 → 일반 여백 1칸
 export function applySuspenseBreaks(html: string): string {
   let n = 0;
-  return html.replace(SUSPENSE_TOKEN_RE, () => { n += 1; return n <= SUSPENSE_MAX ? SUSPENSE_SPACER : ""; });
+  return html.replace(SUSPENSE_TOKEN_RE, () => { n += 1; return n <= SUSPENSE_MAX ? SUSPENSE_SPACER : SUSPENSE_OVER; });
 }
 export function applySuspenseBreaksPlain(text: string): string {
   let n = 0;
@@ -135,14 +136,103 @@ function styleBlocks(html: string): string {
   });
 }
 
+/* ── ★여백 스케일 v2 — 블록 무게 비례. 여백은 CSS가 아니라 '마크업'(스페이서 문단)으로 넣는다(네이버 실렌더 = 미리보기 = 복사본 동일). ── */
+//  소제목 앞3·뒤1 / 문단 사이1 / 4줄↑ 긴 블록 위아래3 / 강조 문장 위아래2 / 해시태그 앞2. 연속 빈 줄 상한 4(압축 아님 — 캡만).
+export const BLANK_P = '<p style="text-align:left"><br></p>'; // 네이버 스마트에디터ONE 생존형 빈 줄
+const BLANK_CAP = 4;
+const CHARS_PER_LINE_PUB = 22;
+function blockLines(inner: string): number {
+  return Math.max(1, Math.ceil(visLen(inner) / CHARS_PER_LINE_PUB));
+}
+interface Blk { tag: string; attr: string; inner: string; raw: string }
+function walkBlocks(html: string): { blocks: Blk[]; exact: boolean } {
+  const re = /<(p|h1|h2|h3|h4|blockquote|ul|ol)(\s[^>]*)?>([\s\S]*?)<\/\1>/gi;
+  const blocks: Blk[] = [];
+  let covered = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html))) { blocks.push({ tag: m[1].toLowerCase(), attr: m[2] ?? "", inner: m[3], raw: m[0] }); covered += m[0].length; }
+  return { blocks, exact: covered >= html.replace(/\s+/g, "").length * 0 }; // exact 판정은 재조합 검증에서
+}
+function isEmphasisPara(b: Blk): boolean { // <b>단독 문단(형광펜 배경 제외) = 강조/브릿지 규격
+  return b.tag === "p" && /^\s*<b(?![^>]*background)[^>]*>[\s\S]{2,80}<\/b>\s*$/.test(b.inner);
+}
+function isHashtagPara(b: Blk): boolean { return b.tag === "p" && /^\s*#/.test(b.inner.replace(/<[^>]+>/g, "")); }
+function isImagePara(b: Blk): boolean { return b.tag === "p" && /<img/i.test(b.inner); }
+function isSuspenseMark(b: Blk): boolean { return b.tag === "p" && /^\s*\[간격\]\s*$/.test(b.inner.replace(/<[^>]+>/g, "")); }
+function beforeBlanks(b: Blk): number {
+  if (isSuspenseMark(b)) return 0; // 여백은 서스펜스 확장 전담
+  if (/^h[1-4]$/.test(b.tag)) return 3;
+  if (isHashtagPara(b)) return 2;
+  if (isEmphasisPara(b)) return 2;
+  if (!isImagePara(b) && blockLines(b.inner) >= 4) return 3;
+  return 1;
+}
+function afterBlanks(b: Blk): number {
+  if (isSuspenseMark(b)) return 0;
+  if (/^h[1-4]$/.test(b.tag)) return 1;
+  if (isEmphasisPara(b)) return 2;
+  if (!isImagePara(b) && blockLines(b.inner) >= 4) return 3;
+  return 1;
+}
+/** 블록 사이 빈 줄 수(마크업) — max(앞블록 after, 뒷블록 before), 상한 4. */
+export function gapBetween(prev: { tag: string; inner: string } | null, cur: { tag: string; inner: string }): number {
+  const c = cur as Blk;
+  if (!prev) return 0;
+  // [간격] 마킹 인접 갭은 0 — 그 자리 여백은 서스펜스 확장(2칸/초과 1칸)이 전담
+  if (isSuspenseMark(prev as Blk) || isSuspenseMark(c)) return 0;
+  return Math.min(BLANK_CAP, Math.max(afterBlanks(prev as Blk), beforeBlanks(c)));
+}
+function applySpacingRich(html: string): string {
+  const { blocks } = walkBlocks(html);
+  if (blocks.length === 0) return html;
+  let out = "";
+  for (let i = 0; i < blocks.length; i++) {
+    if (i > 0) out += BLANK_P.repeat(gapBetween(blocks[i - 1], blocks[i]));
+    out += blocks[i].raw;
+  }
+  return out;
+}
+
+/* ── ★크기 위계 — 밀도 블록 축소(13px), 강조/브릿지 확대(17px). 네이버 생존은 실측 체크리스트로. ── */
+function applySizing(html: string): string {
+  return html.replace(/<(p|blockquote|ul|ol)(\s[^>]*)?>([\s\S]*?)<\/\1>/gi, (raw, tag, attr, inner) => {
+    const t = String(tag).toLowerCase();
+    const addStyle = (r: string, css: string) => /style="/.test(r) ? r.replace(/style="([^"]*)"/, `style="$1;${css}"`) : r.replace(new RegExp(`^<${t}`), `<${t} style="${css}"`);
+    if (t === "blockquote") {
+      const len = visLen(inner);
+      if (len > 44) { // 모바일 2줄(약 44자) 초과 → 축소 + 의미 단위 줄 분리
+        const parts = inner.split(/(?<=[.?!,，])\s+/).map((x: string) => x.trim()).filter(Boolean);
+        const joined = parts.length > 1 ? parts.join("<br>") : inner;
+        return addStyle(`<blockquote${attr ?? ""}>${joined}</blockquote>`, "font-size:13px");
+      }
+      return raw;
+    }
+    if (t === "ul" || t === "ol") {
+      const items = [...inner.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)].map((m) => m[1].replace(/<[^>]+>/g, ""));
+      const dense = items.length >= 6 || items.some((it) => [...it].length > CHARS_PER_LINE_PUB); // 6항목+ 또는 줄바꿈 발생
+      if (dense) {
+        const shrunk = raw.replace(/<li(\s[^>]*)?>/gi, (lm: string) => /style="/.test(lm) ? lm.replace(/style="([^"]*)"/, 'style="$1;font-size:13px"') : lm.replace(/^<li/, '<li style="font-size:13px"'));
+        return addStyle(shrunk, "font-size:13px");
+      }
+      return raw;
+    }
+    // p: <b> 단독 문단(강조/브릿지) → 확대
+    if (/^\s*<b(?![^>]*background)[^>]*>[\s\S]{2,80}<\/b>\s*$/.test(inner)) return addStyle(raw, "font-size:17px");
+    return raw;
+  });
+}
+
 /* ── 형광펜·해시태그 ── */
 function markToBold(html: string): string {
   return html.replace(/<mark>([\s\S]*?)<\/mark>/g, '<b style="background-color:#fff3a8;">$1</b>');
 }
-function hashtagLine(tags?: string[]): string {
-  const list = (tags ?? []).map((t) => String(t).trim().replace(/^#/, "")).filter(Boolean);
-  return list.length ? list.map((t) => `#${t}`).join(" ") : "";
+function hashtagGroups(tags?: string[]): string[] {
+  const list = (tags ?? []).map((t) => String(t).trim().replace(/^#/, "")).filter(Boolean).map((t) => `#${t}`);
+  const groups: string[] = [];
+  for (let i = 0; i < list.length; i += 3) groups.push(list.slice(i, i + 3).join(" ")); // 2~3개 단위 줄
+  return groups;
 }
+function hashtagLine(tags?: string[]): string { return hashtagGroups(tags).join(" "); }
 
 /* ── 최종 발행 본문 (미리보기·검증·복사 공용) ── */
 export function formatBody(input: PublishInput, opts?: { withImages?: boolean }): string {
@@ -155,12 +245,12 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
     const url = input.images?.[idx];
     return url ? `<p><img src="${url}" alt="" /></p>` : ""; // 미충족 → 제거(마커·지시 노출 안 함)
   });
-  const tags = hashtagLine(input.hashtags);
-  if (tags) body += `<p>${tags}</p>`;
+  const groups = hashtagGroups(input.hashtags);
+  if (groups.length) body += `<p>${groups.join("<br>")}</p>`; // 해시태그 2~3개 단위 줄 나눔
   // 최종 게이트: rich는 사진 마커/지시·이모지 전면 제거. marker 모드(수동 배치)는 [사진 N] 유지하고 이모지만.
   const gated = withImages ? sanitizeForCopy(body) : stripEmoji(body);
-  // ★서스펜스 개행은 맨 마지막(정렬·분할·빈문단 제거 이후) 삽입 — 마킹된 여백만 살아남는다.
-  return applySuspenseBreaks(styleBlocks(splitLongParagraphs(gated)));
+  // 파이프: 분할 → 정렬 → 크기 위계 → ★여백 스케일 v2(마크업 스페이서) → 서스펜스(마킹 예외)
+  return applySuspenseBreaks(applySpacingRich(applySizing(styleBlocks(splitLongParagraphs(gated)))));
 }
 
 // rich 모드 — 사진자리를 이미지로.
@@ -172,28 +262,22 @@ export function buildMarkerHtml(input: PublishInput): string {
   return formatBody(input, { withImages: false });
 }
 
-// text/plain — 태그 제거. 이미지가 채워진 슬롯만 [사진 N](모바일: 저장한 N번 사진 삽입 위치), 미충족은 제거.
+// text/plain — ★rich(formatBody)에서 파생: 여백 스케일·서스펜스·해시태그 그룹이 rich와 항상 동일(단일 소스).
+//  채워진 사진 슬롯은 [사진 N](모바일 삽입 위치), 미충족은 제거(formatBody와 동일 규칙).
 export function buildPlainText(input: PublishInput): string {
-  let idx = -1;
-  const hasAnyImage = input.images && Object.keys(input.images).length > 0;
-  const withMarkers = input.bodyHtml.replace(SLOT_RE, () => {
-    idx += 1;
-    // 이미지가 하나라도 있으면(=AI 모드) 채워진 슬롯만 마커, 미충족 제거. 이미지 전무(수동 모드)면 마커 유지.
-    if (!hasAnyImage) return `[사진 ${idx + 1}]`;
-    return input.images?.[idx] ? `[사진 ${idx + 1}]` : "";
-  });
-  const text = stripEmoji(withMarkers)
-    .replace(/<\/(p|h1|h2|h3|blockquote|li)>/gi, "\n")
+  const rich = formatBody(input, { withImages: true });
+  let n = 0;
+  const text = rich
+    .replace(new RegExp(BLANK_P.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), "\n") // 스페이서 1개 = 빈 줄 1
+    .replace(/<p[^>]*><img[^>]*><\/p>/gi, () => { n += 1; return `[사진 ${n}]\n`; })
     .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|h1|h2|h3|h4|blockquote|li)>/gi, "\n")
     .replace(/<[^>]+>/g, "")
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
-    .replace(INSTRUCTION_G, "") // 잔존 지시/콜론형만 제거(깨끗한 [사진 N]은 유지)
-    .replace(/\n{3,}/g, "\n\n")  // ★비마킹 과잉 빈줄 압축(안전망) — [간격] 토큰은 아래서 압축 이후 확장
-    .trim();
-  const spaced = applySuspenseBreaksPlain(text); // 마킹된 서스펜스 개행만 여백으로(예외)
-  const tags = hashtagLine(input.hashtags);
-  return tags ? `${spaced}\n\n${tags}` : spaced;
+    .replace(/\n{6,}/g, "\n\n\n\n\n") // 상한 4 빈 줄(=개행 5) 캡 — 압축 아님
+    .replace(/^[\n\s]+|[\n\s]+$/g, "");
+  return text;
 }
 
 // 본문 내 사진자리 개수.

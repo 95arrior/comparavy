@@ -1,0 +1,21 @@
+// 여백 스케일 v2 검증 — 소제목 앞3/뒤1·문단1·긴블록3·강조2·해시태그(앞2+그룹)·캡4.
+import { formatBody, buildPlainText } from "../lib/publishHtml.ts";
+let fail=0; const ok=(c,m)=>{if(!c){fail++;console.log(`  !! ${m}`);}else console.log(`  OK ${m}`);};
+const SP='<p style="text-align:left"><br></p>';
+const esc=SP.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+const gap=(html,a,b)=>{const re=new RegExp(a+`((?:${esc})*)`+b);const m=re.exec(html);return m?m[1].split("</p>").length-1:-1;};
+const body="<p>문단 하나.</p><p>문단 둘.</p><h2>소제목</h2><p>답 문단.</p><p>이 문단은 아주 길어서 네 줄을 넘기도록 일부러 계속 늘려 쓴 긴 블록의 예시 문장으로 여든여덟자 이상이 되도록 만들어 둔 것입니다 확실히 길죠</p><p>짧은 문단.</p><p><b>핵심 강조 한 줄</b></p><p>마무리.</p>";
+const rich=formatBody({title:"t",bodyHtml:body,hashtags:["하나","둘","셋","넷"]});
+ok(gap(rich,"문단 하나\\.</p>","<p [^>]*>문단 둘")===1,"문단 사이 1");
+ok(gap(rich,"문단 둘\\.</p>","<h2")===3,"소제목 앞 3");
+ok(gap(rich,"</h2>","<p [^>]*>답 문단")===1,"소제목 뒤 1");
+ok(gap(rich,"확실히 길죠</p>","<p [^>]*>짧은")===3,"긴 블록(4줄+) 아래 3");
+ok(gap(rich,"짧은 문단\\.</p>","<p [^>]*font-size:17px")===2,"강조 문장 앞 2");
+ok(gap(rich,"마무리\\.</p>","<p [^>]*>#")===2,"해시태그 앞 2");
+ok(/#하나 #둘 #셋<br>#넷/.test(rich),"해시태그 3개 단위 그룹");
+ok(!new RegExp(`(?:${esc}){5,}`).test(rich),"연속 스페이서 상한 4");
+// plain 동일 여백
+const plain=buildPlainText({title:"t",bodyHtml:body,hashtags:["하나","둘"]});
+ok(/문단 둘\.\n\n\n\n소제목/.test(plain),"plain 소제목 앞 3(빈줄)");
+console.log(fail===0?"\n통과: 여백 스케일 v2":"\n실패: "+fail);
+process.exit(fail?1:0);

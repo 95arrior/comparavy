@@ -8,20 +8,18 @@ console.log("① 상한 3 + 초과 드롭:");
 const body5 = "<p>질문 하나?</p><p>[간격]</p><p>답 하나.</p><p>[간격]</p><p>둘.</p><p>[간격]</p><p>셋.</p><p>[간격]</p><p>넷.</p><p>[간격]</p><p>다섯.</p>";
 ok(countSuspenseMarks(body5)===5, "원본 마킹 5개");
 const rich = formatBody({title:"t", bodyHtml: body5});
-const spacers = (rich.match(/<p style="text-align:left"><br><\/p><p style="text-align:left"><br><\/p>/g)??[]).length;
-ok(spacers===3, `여백 spacer 3개만 (실제 ${spacers})`);
+const SPRE='(?:<p style="text-align:left"><br></p>)';
+const gapAfter=(label)=>{const m=new RegExp(label+"</p>("+SPRE+"*)").exec(rich);return m?(m[1].match(/<\/p>/g)??[]).length:-1;};
+ok(gapAfter("질문 하나\\?")===2, `1번째 마킹 = 서스펜스 2칸(${gapAfter("질문 하나\\?")})`);
+ok(gapAfter("셋\\.")<=1, `4번째 마킹 드롭(상한3) → 일반 여백(${gapAfter("셋\\.")}칸)`);
 ok(!/\[간격\]/.test(rich), "발행본에 [간격] 토큰 잔존 0");
 
-// 안전망: 마킹은 살고, 비마킹 과잉 빈줄은 압축
-console.log("\n② 안전망 압축 예외(plain):");
-const plainBody = "<p>질문?</p><p>[간격]</p><p>답이에요.</p><p>일반 서술 1.</p><p></p><p></p><p></p><p>일반 서술 2.</p>";
+// 안전망 v2: 압축 반전 — 상한 4 캡만. 마킹 서스펜스 유지.
+console.log("\n② 여백 캡4(압축 아님) + 서스펜스(plain):");
+const plainBody = "<p>질문?</p><p>[간격]</p><p>답이에요.</p><p>일반 서술 1.</p><p>일반 서술 2.</p>";
 const plain = buildPlainText({title:"t", bodyHtml: plainBody});
-// 마킹 여백: '질문?' 다음에 빈 줄 2칸(=\n\n\n 이상) 있어야
-const hasSuspenseGap = /질문\?\n\n\n/.test(plain);
-ok(hasSuspenseGap, "마킹된 서스펜스 개행은 여백 유지");
-// 비마킹 3연속 빈 문단은 압축(일반서술1 다음 과잉 빈줄이 2줄 이하로)
-const between = plain.split("일반 서술 1.")[1]?.split("일반 서술 2.")[0] ?? "";
-ok((between.match(/\n/g)??[]).length <= 3, `비마킹 과잉 빈줄 압축됨 (개행 ${(between.match(/\n/g)??[]).length})`);
+ok(/질문\?\n\n\n/.test(plain), "마킹된 서스펜스 개행 여백 유지(2칸+)");
+ok(!/\n{6,}/.test(plain), "연속 빈 줄 상한 4 캡(개행 5 이하)");
 ok(!/\[간격\]/.test(plain), "plain에 [간격] 잔존 0");
 
 // 마킹 없는 글은 여백 안 생김

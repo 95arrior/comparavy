@@ -304,7 +304,7 @@ export default function ArticleModal({
           <div className="w-full max-w-[390px] rounded-2xl bg-white px-5 py-6 shadow-[0_2px_20px_-8px_rgba(0,0,0,0.12)] ring-1 ring-black/[0.04]">
             <p className="mb-3 text-center text-[11px] font-semibold text-neutral-400">모바일에서 이렇게 보여요</p>
             <div
-              className="prose prose-neutral prose-sm max-w-none [word-break:keep-all] [&_img]:mx-auto [&_img]:rounded-lg [&_p]:my-3 [&_p]:text-[15px] [&_p]:leading-[1.75] [&_h2]:mt-5 [&_h2]:text-[17px]"
+              className="max-w-none [word-break:keep-all] text-[15px] leading-[1.7] text-neutral-800 [&_img]:mx-auto [&_img]:rounded-lg [&_p]:my-0 [&_h2]:my-0 [&_h2]:text-[17px] [&_h2]:font-bold [&_blockquote]:my-0 [&_blockquote]:border-l-2 [&_blockquote]:border-emerald-500 [&_blockquote]:pl-3 [&_ul]:my-0 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:my-0"
               dangerouslySetInnerHTML={{ __html: formatBody({ title, bodyHtml, images: Object.fromEntries(Object.entries(imgs).filter(([, v]) => v.url).map(([k, v]) => [Number(k), v.url as string])) }) }}
             />
           </div>
