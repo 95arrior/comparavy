@@ -24,6 +24,7 @@ export default function NaverPublishSheet({
   images,
   tags,
   onOpenNaverWrite,
+  onCopied,
   onDone,
   onClose,
 }: {
@@ -33,6 +34,7 @@ export default function NaverPublishSheet({
   /** 네이버 태그칸 전용 — 본문엔 넣지 않는다(자동 등록 중복 방지) */
   tags?: string[];
   onOpenNaverWrite: () => void; // ★탭만 연다 — 클립보드 접근 금지(회귀 테스트로 고정)
+  onCopied?: () => void; // 본문 복사 검증 성공 시(상태 모델 copied 전이)
   onDone: () => void;
   onClose: () => void;
 }) {
@@ -65,6 +67,7 @@ export default function NaverPublishSheet({
       const r: CopyResult = isMobile ? await copyTextVerified(plain) : await copyRichVerified(richHtml, plain);
       if (r === "fail") { setErr("복사가 안 됐어요. 한 번 더 눌러주세요."); return; }
       setClip(bodyClip);
+      onCopied?.();
       setScreen(2); // 검증 성공 시에만 자동 전환
     } finally { setBusy(false); }
   }

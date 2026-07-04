@@ -10,6 +10,7 @@ import type { BlogProfile } from "@/lib/blogProfile";
 export default function ProfileSettings({ profile, onSaved }: { profile: BlogProfile; onSaved: (p: BlogProfile) => void }) {
   const [sub, setSub] = useState(profile.sub_category ?? "");
   const [blogName, setBlogName] = useState(profile.blog_name ?? "");
+  const [naverId, setNaverId] = useState((profile as { naver_blog_id?: string | null }).naver_blog_id ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,6 +30,7 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
           vertical: "online", // 수익형 단일 — 레거시 vertical도 저장 시 online으로 통일
           sub_category: sub.trim(),
           blog_name: blogName.trim(),
+          naver_blog_id: naverId.trim(), // 어떤 URL 형태든 라우트가 blogId로 파싱
           publish_mode: profile.publish_mode ?? "manual",
           // topic/tone/article_type 안 보냄 → 라우트가 vertical로 자동 설정(정규화)
         }),
@@ -77,6 +79,10 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
       <div className="rounded-2xl at-glass p-5 ">
         <label className="text-[15px] font-bold tracking-tight text-neutral-900">블로그 이름</label>
         <input value={blogName} onChange={(e) => setBlogName(e.target.value)} placeholder="예: 월급쟁이 재테크 일기" maxLength={60} className={`mt-3 ${inputCls}`} />
+
+        <p className="mt-5 text-[13px] font-bold text-neutral-800">내 네이버 블로그 주소</p>
+        <p className="mt-0.5 text-[11.5px] text-neutral-400">발행 확인(자동 검증)과 글쓰기 바로가기에 써요. 주소 전체를 붙여넣어도 돼요.</p>
+        <input value={naverId} onChange={(e) => setNaverId(e.target.value)} placeholder="blog.naver.com/아이디 또는 아이디만" maxLength={120} className={`mt-2 ${inputCls}`} />
       </div>
 
       {error && <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{error}</div>}

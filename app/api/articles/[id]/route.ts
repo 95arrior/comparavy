@@ -56,7 +56,10 @@ export async function PATCH(
   }
   if (typeof body.category === "string") update.category = body.category;
   // 네이버 수동 발행 표시 — '네이버에 올렸어요'/'내렸어요'로 상태만 전환(자동발행 없는 네이버용)
-  if (body.status === "published" || body.status === "draft") update.status = body.status;
+  if (["published", "draft", "copied", "pending_verify", "deleted"].includes(body.status)) {
+    update.status = body.status; // verified는 클라 직접 금지 — /api/verify-post(RSS·URL 확인)만 부여
+    if (body.status === "pending_verify") { update.claimed_at = new Date().toISOString(); update.verify_attempts = 0; }
+  }
 
   const run = () =>
     supabase.from("articles").update(update).eq("id", id).eq("user_id", user.id).select("*").single();

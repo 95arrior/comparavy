@@ -16,7 +16,7 @@ export interface Article {
   /** 워드프레스 카테고리(분류) 이름 */
   category?: string | null;
   char_count: number;
-  status: "draft" | "published" | "future" | "generating" | "deleted";
+  status: "draft" | "copied" | "pending_verify" | "verified" | "published" | "future" | "generating" | "deleted"; // published=자기신고 레거시(verified 동급)
   /** AI 이미지 URL — {"0":url,...} (계정 저장, 웹·모바일 동기화) */
   images?: Record<string, string> | null;
   /** 색인 상태 — 크론이 기록 (indexed | pending | unknown | null=미검사) */
@@ -37,6 +37,8 @@ export interface Article {
   /** 발행/예약 일시 — 콘텐츠 캘린더 표시용 (예약=예약 시각, 발행=발행 시각) */
   publish_at?: string | null;
   created_at: string;
+  verify_attempts?: number | null;
+  naver_url?: string | null;
 }
 
 /** 키워드 발굴 결과 한 건 (서버 lib/goldenKeyword.ts의 GoldenKeyword와 동일 — 클라 번들에 서버 모듈 안 끌리게 별도 선언) */

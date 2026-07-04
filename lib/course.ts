@@ -48,8 +48,8 @@ export function courseInfo(articles: CourseArticleLite[], now: Date = new Date()
 
   const todayK = dayKey(now);
   const todays = real.filter((a) => dayKey(new Date(a.created_at)) === todayK);
-  const publishedToday = todays.some((a) => a.status === "published");
-  const hasDraftToday = todays.some((a) => a.status === "draft");
+  const publishedToday = todays.some((a) => a.status === "published" || a.status === "verified" || a.status === "pending_verify"); // 낙관: 신고 즉시 미션 완료(게이지는 verified만)
+  const hasDraftToday = todays.some((a) => a.status === "draft" || a.status === "copied"); // copied=복사까지 하고 발행 신고 전
 
   // 연속 일수 — 오늘 안 썼으면 어제부터 카운트(오늘 쓰면 이어짐)
   const daysWithArticle = new Set(real.map((a) => dayKey(new Date(a.created_at))));
@@ -66,7 +66,7 @@ export function courseInfo(articles: CourseArticleLite[], now: Date = new Date()
 
 // ★발행 확인 상태 참조 — 한 곳에 모음. 지금은 자기신고('published'). RSS 검증 배포 시 'verified'로 여기만 바꾸면 전체 반영.
 export function isPublishConfirmed(a: CourseArticleLite): boolean {
-  return a.status === "published"; // TODO: RSS 검증(별도 작업 Part 2) 배포 시 || a.status === "verified"
+  return isVerifiedStatus(a.status); // RSS 검증 배포됨 — verified + 자기신고 레거시(published)
 }
 
 // 코스 진행 퍼센트(일수 기준, 기존 정의 그대로).
@@ -92,6 +92,12 @@ export function progressPercent(info: CourseInfo): number {
   return Math.round(Math.max(0, Math.min(1, effectiveDay / COURSE_DAYS)) * 100);
 }
 
+// ★RSS 검증 상태 모델 — 게이지·성과는 verified만 인정. 기존 자기신고(published)=verified_legacy 취급(자동 소급 삭제 금지).
+export function isVerifiedStatus(status: string): boolean {
+  return status === "verified" || status === "published"; // published = 레거시 자기신고(소급 유지)
+}
+export const VERIFIED_STATUSES = ["verified", "published"] as const;
+
 const normKw = (s: string) => String(s ?? "").replace(/\s+/g, "").toLowerCase();
 
 /** '한 편 더'·오늘의 글 후보 — 오늘 이미 만든 글감 제외 + ★트렌드 명시 우선(배열 순서 의존 제거): 실시간 > 꾸준 > 풀. */
@@ -107,7 +113,7 @@ export function findTodayDraftByKeyword<A extends { keyword?: string | null; sta
   articles: A[], keyword: string, now: Date = new Date(),
 ): A | null {
   const k = normKw(keyword);
-  return articles.find((a) => a.status === "draft" && normKw(a.keyword ?? "") === k && dayKey(new Date(a.created_at)) === dayKey(now)) ?? null;
+  return articles.find((a) => (a.status === "draft" || a.status === "copied") && normKw(a.keyword ?? "") === k && dayKey(new Date(a.created_at)) === dayKey(now)) ?? null;
 }
 
 /** 오늘 생성한 글들의 keyword 목록(다음 글감 제외용). */

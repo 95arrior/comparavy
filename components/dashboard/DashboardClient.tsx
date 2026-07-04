@@ -10,7 +10,7 @@ import ArticleModal from "./ArticleModal";
 import CenterToast from "./CenterToast";
 import WritingView, { type GenParams } from "./WritingView";
 import WriteTypeSheet from "./WriteTypeSheet";
-import { findTodayDraftByKeyword } from "@/lib/course";
+import { findTodayDraftByKeyword, isVerifiedStatus } from "@/lib/course";
 import ProfileSettings from "./ProfileSettings";
 import KeywordFinder from "./KeywordFinder";
 import KeywordQueue from "./KeywordQueue";
@@ -169,7 +169,7 @@ export default function DashboardClient(props: DashboardProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const hasPublished = articles.some((a) => a.status === "published");
+  const hasPublished = articles.some((a) => isVerifiedStatus(a.status));
 
   async function signOut() {
     const supabase = createSupabaseBrowserClient();
@@ -489,6 +489,7 @@ export default function DashboardClient(props: DashboardProps) {
           <ArticleModal
             article={selected}
             vertical={blogProfile?.vertical ?? "general"}
+            naverBlogId={(blogProfile as { naver_blog_id?: string | null } | null)?.naver_blog_id ?? null}
             onClose={() => setSelected(null)}
             onUpdated={onUpdated}
             onPublished={() => { setSelected(null); goLabView("articles"); }}
@@ -617,7 +618,7 @@ export default function DashboardClient(props: DashboardProps) {
             {/* 내 글 — v2: at 위계 헤더, 배너·뒤로가기 제거(하단 탭이 내비) */}
             {labView === "articles" && (
               <main className="ateflo-page-in mx-auto max-w-2xl px-6 py-8 pb-16">
-                <p className="at-label">총 {articles.filter((a) => a.status !== "generating").length}편{articles.some((a) => a.status === "published") ? ` · 발행 ${articles.filter((a) => a.status === "published").length}편` : ""}</p>
+                <p className="at-label">총 {articles.filter((a) => a.status !== "generating").length}편{articles.some((a) => isVerifiedStatus(a.status)) ? ` · 발행 ${articles.filter((a) => isVerifiedStatus(a.status)).length}편` : ""}</p>
                 <h1 className="at-headline mt-1">내 글</h1>
                 <div className="mt-5">
                   <ArticleList

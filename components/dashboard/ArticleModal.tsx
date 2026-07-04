@@ -17,6 +17,7 @@ import type { Article } from "./types";
 export default function ArticleModal({
   article,
   vertical,
+  naverBlogId,
   onClose,
   onUpdated,
   onPublished,
@@ -25,6 +26,8 @@ export default function ArticleModal({
   article: Article;
   /** 블로그 주제(vertical) — 발행 전 광고규제 표현 검사에 사용(없으면 general). */
   vertical?: string;
+  /** 프로필의 네이버 블로그 아이디 — 글쓰기 직행·발행 검증에 사용 */
+  naverBlogId?: string | null;
   onClose: () => void;
   onUpdated: (a: Article) => void;
   /** 발행 완료 표시 후 — 모달 닫고 글 목록으로(상위에서 처리) */
@@ -42,6 +45,7 @@ export default function ArticleModal({
   const pubTitle = titlePick === "search" && hasTwoTitles ? titleAlt : title;
   // ★인라인 수정(오타 수준) — 미리보기 문단 탭 → 시트에서 고침. 원문 매칭 실패 시 네이버 수정 안내.
   const [editSeg, setEditSeg] = useState<null | { original: string; value: string }>(null);
+  const [manualUrl, setManualUrl] = useState("");
   const [strategyOpen, setStrategyOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -59,8 +63,9 @@ export default function ArticleModal({
 
   // 네이버 '글쓰기' 화면으로 바로 이동 — 블로그 아이디는 1회만 입력받아 저장(blog.naver.com/{id}/postwrite)
   function openNaverWrite() {
-    let id = "";
-    try { id = localStorage.getItem("ateflo_naver_blogid") || ""; } catch { /* ignore */ }
+    // ★직행 링크 업그레이드 — 프로필(naver_blog_id, 서버 저장) 우선, 기기 저장 폴백(레거시), 최후에 1회 입력
+    let id = (naverBlogId ?? "").trim();
+    if (!id) { try { id = localStorage.getItem("ateflo_naver_blogid") || ""; } catch { /* ignore */ } }
     if (!id) {
       const input = window.prompt("내 네이버 블로그 아이디를 입력해 주세요\n(예: blog.naver.com/myblog → myblog)");
       if (!input) return;
@@ -85,10 +90,14 @@ export default function ArticleModal({
       const res = await fetch(`/api/articles/${article.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "published" }),
+        body: JSON.stringify({ status: "pending_verify" }), // ★RSS 검증 모델 — 신고=pending, verified는 서버(RSS 매칭)만 부여
       });
       if (res.ok) {
-        onUpdated({ ...article, title, body_html: bodyHtml, status: "published" });
+        // 즉시 1차 검증(발행 직후 RSS에 대부분 반영) — 실패해도 크론이 10분×6 재시도
+        let blogId = ""; try { blogId = localStorage.getItem("ateflo_naver_blogid") ?? ""; } catch { /* ignore */ }
+        void fetch("/api/verify-post", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ articleId: article.id, blogId }) })
+          .then((r) => r.json()).then((d) => { if (d.state === "verified") setToast("네이버 발행 확인됐어요"); }).catch(() => { /* 크론 몫 */ });
+        onUpdated({ ...article, title, body_html: bodyHtml, status: "pending_verify" });
         try { const { localPubFlagKey } = await import("@/lib/course"); localStorage.setItem(localPubFlagKey(), "1"); } catch { /* ignore */ }
         setNaverOpen(false);
         setToast("발행 완료로 표시했어요");
@@ -381,6 +390,31 @@ export default function ArticleModal({
           )}
         </div>
 
+        {/* ★검증 폴백 — 재시도 소진 시 글 주소 붙여넣기(verify-post가 살아있는 글 확인 후 verified) */}
+        {article.status === "pending_verify" && (article.verify_attempts ?? 0) >= 6 && (
+          <div className="mt-4 rounded-2xl bg-amber-50 p-4 ring-1 ring-amber-200/60">
+            <p className="text-[13px] font-bold text-amber-800">발행 확인이 아직 안 됐어요</p>
+            <p className="mt-1 text-[12px] leading-relaxed text-amber-700/80">발행한 글 주소를 붙여넣으면 바로 확인할게요.</p>
+            <div className="mt-2 flex gap-2">
+              <input value={manualUrl} onChange={(e) => setManualUrl(e.target.value)} placeholder="https://blog.naver.com/..." className="min-w-0 flex-1 rounded-lg bg-white px-3 py-2 text-[13px] outline-none ring-1 ring-black/[0.06]" />
+              <button onClick={async () => {
+                const r = await fetch("/api/verify-post", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ articleId: article.id, url: manualUrl }) });
+                const d = await r.json();
+                if (r.ok && d.state === "verified") { setToast("발행 확인됐어요"); onUpdated({ ...article, status: "verified" } as Article); }
+                else setToast(d.error ?? "확인하지 못했어요");
+              }} className="at-press shrink-0 rounded-lg bg-amber-600 px-3.5 py-2 text-[12.5px] font-bold text-white">확인</button>
+            </div>
+          </div>
+        )}
+
+        {/* ★수동 차감 — 발행 글을 지웠을 때(게이지는 verified만 세므로 상태 전환=자동 차감) */}
+        {(article.status === "verified" || article.status === "published") && (
+          <button onClick={async () => {
+            const r = await fetch(`/api/articles/${article.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "deleted" }) });
+            if (r.ok) { setToast("반영했어요"); onUpdated({ ...article, status: "deleted" } as Article); }
+          }} className="mt-4 w-full py-2 text-center text-[12px] font-medium text-neutral-300 transition hover:text-neutral-500">네이버에서 이 글을 지웠어요 · 발행 수에서 빼기</button>
+        )}
+
         {article.write_note && (
           <div className="mt-6 rounded-xl border border-neutral-200 bg-white px-4 py-3">
             <p className="text-xs font-medium text-neutral-500">이 글, 이렇게 썼어요</p>
@@ -434,6 +468,7 @@ export default function ArticleModal({
             bodyHtml={bodyHtml}
             images={Object.fromEntries(Object.entries(imgs).filter(([, v]) => v.url).map(([k, v]) => [Number(k), v.url as string]))}
             tags={Array.isArray(article.tags) ? (article.tags as string[]) : []}
+            onCopied={() => { if (article.status === "draft") void fetch(`/api/articles/${article.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "copied" }) }); }}
             onOpenNaverWrite={openNaverWrite}
             onDone={markNaverPublished}
             onClose={() => setNaverOpen(false)}

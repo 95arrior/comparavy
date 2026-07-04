@@ -5,6 +5,7 @@ import GlassIcon, { type GlassTint } from "@/components/GlassIcon";
 import { useEffect, useMemo, useState } from "react";
 import RevenueDash from "./RevenueDash";
 import ApprovalInput from "./ApprovalInput";
+import { isVerifiedStatus } from "@/lib/course";
 import type { Article } from "./types";
 
 // 성과 페이지 — 네이버 수익형 단일. 초반 이탈 방어:
@@ -235,7 +236,7 @@ export default function PerformanceView({
   const stats = useMemo(() => {
     const nonGen = articles.filter((a) => a.status !== "generating");
     const written = nonGen.length;
-    const pub = articles.filter((a) => a.status === "published").length;
+    const pub = articles.filter((a) => isVerifiedStatus(a.status)).length; // ★게이지=verified만(+레거시)
     const streak = computeWeekStreak(nonGen.map((a) => new Date(a.created_at)));
     return { written, pub, streak };
   }, [articles]);
