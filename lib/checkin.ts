@@ -39,3 +39,18 @@ export function depletionForecast(
   const weekday = ["일", "월", "화", "수", "목", "금", "토"][d.getDay()] + "요일";
   return { daysLeft, weekday, postsLeft };
 }
+
+// ★진단 분기 — 최근 '입력된' 3일이 연속 방문자 0 + 그 기간 발행이 있으면 노출 점검 카드.
+//  원인 단정 금지 — 확인 행동만 안내(카드 카피는 컴포넌트).
+export function threeDayZeroWithPosts(
+  rows: CheckinRow[],
+  articles: { status: string; created_at: string }[],
+  now: Date = new Date(),
+): boolean {
+  const withV = rows.filter((r) => r.visitors !== null && r.visitors !== undefined).slice(-3);
+  if (withV.length < 3) return false;
+  if (!withV.every((r) => (r.visitors ?? 0) === 0)) return false;
+  const from = new Date(withV[0].day + "T00:00:00").getTime();
+  const hasPub = (articles ?? []).some((a) => a.status === "published" && new Date(a.created_at).getTime() >= from && new Date(a.created_at).getTime() <= now.getTime());
+  return hasPub;
+}

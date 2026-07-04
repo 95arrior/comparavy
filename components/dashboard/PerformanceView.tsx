@@ -2,8 +2,9 @@
 
 import GlassIcon, { type GlassTint } from "@/components/GlassIcon";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import RevenueDash from "./RevenueDash";
+import ApprovalInput from "./ApprovalInput";
 import type { Article } from "./types";
 
 // 성과 페이지 — 네이버 수익형 단일. 초반 이탈 방어:
@@ -45,12 +46,12 @@ function computeWeekStreak(dates: Date[]): number {
 //  숫자(수수료·조건)는 확인 시점 표기 + 변동 문구. 수익 보장류 금지("열렸어요"=기회 개방, 수익 약속 아님).
 //  잠금해제 게이트: adpost(발행15), 쇼핑(adpost 달성=발행15), 체험단(발행30), 인플루언서(장기).
 const ASOF = "2026년 7월 기준이며 네이버 정책에 따라 달라질 수 있어요.";
-function buildPaths(pub: number, onWrite: () => void): { title: string; paths: Path[]; otherChannels: Path[] } {
-  const adpostDone = pub >= 15; // 애드포스트 신청 가능 = 승인 준비 완료(현 지표: 발행 수)
+function buildPaths(pub: number, onWrite: () => void, approved = false): { title: string; paths: Path[]; otherChannels: Path[] } {
+  const adpostDone = approved || pub >= 15; // 승인 입력이 진짜 열쇠, 발행 15편은 신청 가능 게이트
   return {
     title: "수익화 사다리",
     paths: [
-      { label: "네이버 애드포스트", desc: "글에 광고가 붙는 기본 수익", conditions: `만 19세 이상 + 네이버 심사 통과가 필요해요. 심사 기준(운영 기간·글·방문자)은 공식 공개가 아니라, 통설 기준으로 매일 1편씩 15편 이상 + 일 방문 100명 안팎을 목표로 준비해요. ${ASOF}`, how: ["adpost.naver.com에 접속해 네이버 아이디로 로그인하고 회원가입해요(본인인증 필요).", "가입 후 [미디어 관리 → 미디어 등록]에서 내 블로그를 선택해 검수를 신청해요.", "검수는 최대 5영업일 — 결과가 네이버 메일로 와요. 그동안 평소처럼 글을 계속 써요.", "승인되면 글에 광고가 자동으로 붙어요. 반려돼도 보완하고(글·방문자 더 쌓고) 다시 신청할 수 있어요."], tips: ["여기까지의 준비(주제 일관·검색 허용·꾸준한 발행)는 우리 코스가 챙겨온 거예요 — 신청만 하면 돼요.", "승인 전에 쓴 글도 승인 후 전부 수익 대상이 돼요.", "반려는 실패가 아니라 흔한 과정이에요 — 재신청에 불이익 없어요."], status: adpostDone ? "now" : "progress", note: adpostDone ? "" : `발행 ${pub}/15편`, emoji: "adpost", cta: adpostDone ? { label: "애드포스트 신청하러 가기", url: ADPOST } : { label: "글 쓰러 가기", onClick: onWrite } },
+      approved ? { label: "네이버 애드포스트", desc: "승인 완료 · 초기 설정 가이드", conditions: `승인을 축하해요. 이제 광고 설정만 하면 수익이 쌓이기 시작해요. 아래 값은 2026년 7월 기준이며 네이버 정책에 따라 달라질 수 있어요.`, how: ["adpost.naver.com [미디어 관리]에서 내 블로그를 선택해요.", "광고 게재 위치: 본문 하단은 기본으로 켜고, 본문 중간 광고도 켜는 걸 권해요(수익 기회가 늘어요 — 효과 수치는 계정마다 달라요).", "게재율은 기본값으로 시작해요. 며칠 수익을 보고 조절해도 늦지 않아요.", "설정 후 첫 반영까지 시간이 걸릴 수 있어요 — 다음 날 글에서 광고가 보이는지 확인해요."], tips: ["설정 효과는 블로그마다 달라요 — 확인되지 않은 수치를 믿기보다 내 수익 기록으로 판단해요.", "아침 체크인에 어제 수익을 기록하면 글당 평균이 계산돼요."], status: "done" as PathStatus, note: "", emoji: "adpost", cta: { label: "애드포스트 설정 열기", url: ADPOST } } : { label: "네이버 애드포스트", desc: "글에 광고가 붙는 기본 수익", conditions: `만 19세 이상 + 네이버 심사 통과가 필요해요. 심사 기준(운영 기간·글·방문자)은 공식 공개가 아니라, 통설 기준으로 매일 1편씩 15편 이상 + 일 방문 100명 안팎을 목표로 준비해요. ${ASOF}`, how: ["adpost.naver.com에 접속해 네이버 아이디로 로그인하고 회원가입해요(본인인증 필요).", "가입 후 [미디어 관리 → 미디어 등록]에서 내 블로그를 선택해 검수를 신청해요.", "검수는 최대 5영업일 — 결과가 네이버 메일로 와요. 그동안 평소처럼 글을 계속 써요.", "승인되면 글에 광고가 자동으로 붙어요. 반려돼도 보완하고(글·방문자 더 쌓고) 다시 신청할 수 있어요."], tips: ["여기까지의 준비(주제 일관·검색 허용·꾸준한 발행)는 우리 코스가 챙겨온 거예요 — 신청만 하면 돼요.", "승인 전에 쓴 글도 승인 후 전부 수익 대상이 돼요.", "반려는 실패가 아니라 흔한 과정이에요 — 재신청에 불이익 없어요."], status: adpostDone ? "now" : "progress", note: adpostDone ? "" : `발행 ${pub}/15편`, emoji: "adpost", cta: adpostDone ? { label: "애드포스트 신청하러 가기", url: ADPOST } : { label: "글 쓰러 가기", onClick: onWrite } },
       { label: "네이버 쇼핑커넥트", desc: "상품 추천 수수료 · 네이버 자체 제휴", conditions: `채널 인증만으로 시작할 수 있어요. 수수료는 판매자 설정에 따라 상품별로 달라요(상품에 따라 높게 잡히기도 해요). ${ASOF}`, how: ["네이버 브랜드커넥트(쇼핑커넥트)에 접속해 내 채널을 인증해요.", "글 주제에 맞는 상품을 골라 제휴 링크를 만들어요.", "리뷰·비교 글의 [상품 링크 자리]에 내 링크를 넣어요.", "방문자가 링크로 구매하면 수수료가 정산돼요."], tips: ["네이버 자체 제휴라 외부 링크보다 노출에 안정적이에요.", "리뷰·비교형 글과 궁합이 좋아요 — 글감 카드의 '쇼핑커넥트' 태그를 참고해요.", "'열렸어요'는 기회가 열린 거지 수익을 보장하는 게 아니에요."], status: adpostDone ? "now" : "locked", note: adpostDone ? "" : "애드포스트 승인 후", emoji: "cart", cta: adpostDone ? { label: "쇼핑커넥트 알아보기", url: "https://brandconnect.naver.com" } : undefined },
       { label: "체험단·기자단", desc: "지수 조금만 올라도 건당 현금·제품", conditions: `발행 글 수와 운영 기간이 어느 정도 쌓이면 선정되기 시작해요(일 방문자 수백 명 안팎). ${ASOF}`, how: ["체험단 플랫폼(레뷰 등)에 내 블로그를 등록해요.", "내 주제와 맞는 캠페인에 신청해요.", "선정되면 제품·서비스를 받고 기한 안에 솔직한 후기를 써요.", "실적이 쌓이면 더 좋은 캠페인·원고료 제안이 들어와요."], tips: ["'협찬·제공받았다'는 사실을 글에 꼭 표기해요(공정위 규정 — 미표기 시 과태료 위험).", "주제와 동떨어진 체험단 도배는 블로그 지수에 해로워요.", "과장 후기는 신뢰·노출에 오히려 독이에요."], status: pub >= 30 ? "now" : "locked", note: pub >= 30 ? "" : `발행 ${pub}/30편`, emoji: "gift" },
       { label: "네이버 인플루언서 · 브랜드커넥트", desc: "협찬·PPL·커머스 제휴 · 사다리 꼭대기", conditions: `네이버 인플루언서 승인이 있어야 브랜드커넥트로 협찬·PPL을 할 수 있어요. 한 분야의 꾸준한 전문성이 승인의 핵심이라 장기 목표예요. ${ASOF}`, how: ["한 주제로 경험이 담긴 글을 꾸준히 쌓아요(전문성·일관성).", "인플루언서 홈에서 내 분야로 지원해요.", "승인되면 브랜드커넥트에서 협찬·커머스 캠페인이 매칭돼요."], tips: ["단기 목표가 아니에요 — 앞 단계를 착실히 밟는 게 곧 준비예요.", "승인은 네이버 심사라 보장이 아니에요.", "'열렸어요'는 기회의 개방이지 수익 약속이 아니에요."], status: "locked", note: "장기 목표", emoji: "medal", cta: { label: "인플루언서 알아보기", url: "https://in.naver.com" } },
@@ -239,7 +240,9 @@ export default function PerformanceView({
     return { written, pub, streak };
   }, [articles]);
 
-  const { title, paths, otherChannels } = buildPaths(stats.pub, onWrite);
+  const [approved, setApproved] = useState(false);
+  useEffect(() => { try { setApproved(localStorage.getItem("ateflo_adpost_approved") === "1"); } catch { /* ignore */ } }, []);
+  const { title, paths, otherChannels } = buildPaths(stats.pub, onWrite, approved);
   const allRows = [...paths, ...otherChannels];
   const [openIdx, setOpenIdx] = useState<number | null>(null);
   const open = openIdx !== null ? allRows[openIdx] : null;
@@ -250,6 +253,9 @@ export default function PerformanceView({
 
       {/* 수익 대시보드 v1 — 입력 데이터만 */}
       <RevenueDash publishedCount={stats.pub} />
+
+      {/* 승인 결과 입력 — 승인=수익칸·쇼핑커넥트 열쇠 / 거절=D-7 재신청 코스 */}
+      {stats.pub >= 10 && <ApprovalInput onChanged={() => { try { setApproved(localStorage.getItem("ateflo_adpost_approved") === "1"); } catch { /* ignore */ } }} />}
 
       {open ? (
         <PathDetail p={open} onBack={() => setOpenIdx(null)} />

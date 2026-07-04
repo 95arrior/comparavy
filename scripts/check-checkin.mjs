@@ -18,5 +18,14 @@ if(depletionForecast(30,10,[])!==null){console.log("!! 페이스 없음인데 �
 if(depletionForecast(0,10,mk(7,1))!==null){console.log("!! 0크레딧 예측");process.exit(1);}
 if(depletionForecast(1000,10,mk(1,1))!==null){console.log("!! 14일 초과인데 배너");process.exit(1);}
 console.log("소진 예측 4케이스 OK");
-console.log(fail===0?"\n통과: 체크인 계산+소진 예측":"\n실패: "+fail);
+// 진단 분기 — 3일 연속 0 + 발행
+const { threeDayZeroWithPosts } = await import("../lib/checkin.ts");
+const z=(d,v)=>({day:ym(d),visitors:v,revenue:null});
+const pub=(d)=>({status:"published",created_at:new Date(Date.now()-d*86400000).toISOString()});
+ok(threeDayZeroWithPosts([z(3,0),z(2,0),z(1,0)],[pub(2)])===true,"3일 연속 0+발행 → 진단 카드");
+ok(threeDayZeroWithPosts([z(3,0),z(2,5),z(1,0)],[pub(2)])===false,"중간에 방문 있으면 미노출");
+ok(threeDayZeroWithPosts([z(2,0),z(1,0)],[pub(1)])===false,"입력 2일뿐이면 미노출");
+ok(threeDayZeroWithPosts([z(3,0),z(2,0),z(1,0)],[])===false,"발행 없으면 미노출(글부터)");
+
+console.log(fail===0?"\n통과: 체크인 계산+소진 예측+진단":"\n실패: "+fail);
 process.exit(fail?1:0);

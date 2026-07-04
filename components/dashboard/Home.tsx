@@ -6,6 +6,7 @@ import GlassIcon from "@/components/GlassIcon";
 import CourseRing from "./CourseRing";
 import CheckinCard from "./CheckinCard";
 import NeighborMission from "./NeighborMission";
+import DiagnosisCard from "./DiagnosisCard";
 import { courseInfo, yesterdayPublished, pickNextTopic, todayKeywords, localPubFlagKey } from "@/lib/course";
 import { depletionForecast } from "@/lib/checkin";
 import { GENERATE_COST } from "@/lib/creditPacks";
@@ -225,6 +226,28 @@ export default function Home({
 
       {/* 아침 체크인 — 1일 1회, 30초 동선. 입력→그래프→바로 아래 오늘 할 일로 연결 */}
       <CheckinCard articles={articles} />
+
+      {/* 진단 분기 — 3일 연속 방문 0 + 발행 있음일 때만(원인 단정 없이 확인 안내) */}
+      <DiagnosisCard articles={articles} />
+
+      {/* 잠금해제 1회성 — 승인 입력 시 새 수익원 안내 */}
+      {(() => {
+        try {
+          if (typeof window !== "undefined" && localStorage.getItem("ateflo_adpost_approved") === "1" && localStorage.getItem("ateflo_unlock_shown") !== "1") {
+            return (
+              <button onClick={() => { try { localStorage.setItem("ateflo_unlock_shown", "1"); } catch { /* ignore */ } onGoPerformance(); }}
+                className="at-rise mt-3 flex w-full items-center justify-between rounded-2xl bg-[#1D75F7]/[0.06] px-5 py-3.5 text-left ring-1 ring-[#1D75F7]/20 transition hover:bg-[#1D75F7]/[0.1]">
+                <span className="min-w-0 flex-1">
+                  <span className="text-[13px] font-bold text-[#1D75F7]">새로운 수익원이 열렸어요</span>
+                  <span className="mt-0.5 block text-[12px] text-[#1D75F7]/70">쇼핑커넥트를 시작할 수 있어요 · 가이드 보기</span>
+                </span>
+                <span className="shrink-0 text-[12.5px] font-bold text-[#1D75F7]">열기</span>
+              </button>
+            );
+          }
+        } catch { /* ignore */ }
+        return null;
+      })()}
 
       {/* 오늘의 글 — 단일 CTA */}
       <div className="at-rise at-d2 mt-6">
