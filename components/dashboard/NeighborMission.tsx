@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { copyTextVerified } from "@/lib/clipboard";
 
 // ★이웃 미션(보너스) — 오늘 할 일 세트: 글 1편(스트릭) + 이웃 5명·댓글 2개(보너스 체크, 스트릭 아님).
@@ -16,7 +16,9 @@ export default function NeighborMission({ subCategory, sheet }: { subCategory?: 
   const [greeting, setGreeting] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+
   const [coach, setCoach] = useState<string | null>(null);
+  const variantRef = useRef(0); // 재생성마다 +1 → 구조 변형(시드 변주)
 
   useEffect(() => {
     try { const raw = localStorage.getItem(missionKey); if (raw) setChecks(JSON.parse(raw)); } catch { /* ignore */ }
@@ -43,7 +45,7 @@ export default function NeighborMission({ subCategory, sheet }: { subCategory?: 
     if (busy) return;
     setBusy(true); setCopied(false);
     try {
-      const res = await fetch("/api/neighbor-greeting", { method: "POST" });
+      const res = await fetch("/api/neighbor-greeting", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ variant: variantRef.current++ }) });
       const d = await res.json();
       if (res.ok && d.greeting) setGreeting(d.greeting);
       else if (d.error) setGreeting(null);
