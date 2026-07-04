@@ -15,6 +15,7 @@ export interface TodayTopic {
   keyword: string; title: string; tag?: string; newsContext?: string;
   briefText?: string; titleSearch?: string; thumb?: { mainCopy: string; subCopy: string; badge: string };
   vol?: number; comp?: CompLevel; blogTotal?: number | null; bidHigh?: boolean;
+  seriesId?: string; seriesBadge?: string; series?: { title: string; arc: { role: string; angle: string }[] } | null;
 }
 
 export default function TodayCard({
@@ -24,7 +25,7 @@ export default function TodayCard({
   loading: boolean;
   credits: number;
   info: CourseInfo;
-  onWriteKeyword: (keyword: string, title: string, newsContext?: string, briefText?: string, titleSearch?: string, thumb?: { mainCopy: string; subCopy: string; badge: string }) => void;
+  onWriteKeyword: (keyword: string, title: string, newsContext?: string, briefText?: string, titleSearch?: string, thumb?: { mainCopy: string; subCopy: string; badge: string }, extra?: { seriesId?: string; series?: TodayTopic["series"] }) => void;
   onGoPerformance: () => void;
   /** 오늘 draft 재진입(이어서 발행) — draft 상태 카드 전용 */
   onOpenTodayDraft?: () => void;
@@ -33,7 +34,7 @@ export default function TodayCard({
   onReadToday?: () => void;
 }) {
   const locked = credits <= 0;
-  const write = (t: TodayTopic) => onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb);
+  const write = (t: TodayTopic) => onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb, { seriesId: t.seriesId, series: t.series });
 
   // 코스 완주 → 승인 신청 안내
   if (info.finished) {
@@ -123,7 +124,7 @@ export default function TodayCard({
       <Header label="오늘의 글" />
       <DemandRow topic={topic} onGoPerformance={onGoPerformance} />
       <p className="mt-2 text-[19px] font-extrabold leading-snug text-[color:var(--at-grey-900)]">{topic.title}</p>
-      {why && <p className="mt-1.5 text-[13px] font-medium leading-relaxed text-neutral-500">{why}</p>}
+      {topic.tag === "followup" ? <p className="mt-1.5 text-[13px] font-medium leading-relaxed text-neutral-500">어제 글이 반응이 좋았어요. 이어서 쓰면 효과가 커져요.</p> : why ? <p className="mt-1.5 text-[13px] font-medium leading-relaxed text-neutral-500">{why}</p> : null}
       <div className="mt-3 flex items-center gap-1.5 rounded-xl bg-[#1D75F7]/[0.06] px-3.5 py-2.5">
         <span className="text-[13px] font-bold text-[#1D75F7]">이 글을 쓰면 {writePct}%가 돼요</span>
         {info.day === 0 && <span className="text-[12px] font-medium text-[#1D75F7]/70">· 첫 글이 코스 시작</span>}
@@ -145,7 +146,11 @@ function DemandRow({ topic, muted, onGoPerformance }: { topic: TodayTopic; muted
   const rev = revenuePath({ keyword: topic.keyword, title: topic.title });
   return (
     <div className={`flex flex-wrap items-center gap-1.5 ${muted ? "opacity-60" : ""}`}>
-      {isTrend
+      {topic.seriesBadge
+        ? <span className="rounded-md bg-[#1D75F7]/10 px-1.5 py-0.5 text-[11px] font-bold text-[#1D75F7]">{topic.seriesBadge}</span>
+        : topic.tag === "followup"
+        ? <span className="rounded-md bg-emerald-50 px-1.5 py-0.5 text-[11px] font-bold text-emerald-600">반응 후속</span>
+        : isTrend
         ? <span className="rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-bold text-amber-600">실시간 트렌드</span>
         : isSteady
         ? <span className="rounded-md bg-sky-50 px-1.5 py-0.5 text-[11px] font-bold text-sky-600">꾸준한 수요</span>

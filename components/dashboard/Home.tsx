@@ -8,9 +8,12 @@ import CheckinCard from "./CheckinCard";
 import NeighborMission from "./NeighborMission";
 import DiagnosisCard from "./DiagnosisCard";
 import { courseInfo, yesterdayPublished, pickNextTopic, todayKeywords, localPubFlagKey } from "@/lib/course";
-import { depletionForecast } from "@/lib/checkin";
+import { depletionForecast, attackEligible } from "@/lib/checkin";
 import { GENERATE_COST } from "@/lib/creditPacks";
 import { nextSeedRefreshLabel } from "@/lib/seedRefresh";
+import { revenuePath } from "@/lib/revenue";
+import { isVerifiedStatus } from "@/lib/course";
+import { REVIEW_WEEKLY_MIN } from "@/lib/scoreWeights";
 import type { Comp } from "@/lib/topicScore";
 import type { Article } from "./types";
 
@@ -59,7 +62,7 @@ export default function Home({
   articles: Article[];
   /** 크레딧 잔액 — 0이면 '오늘의 글' 카드가 잠김(글감은 보임) */
   credits: number;
-  onWriteKeyword: (keyword: string, title: string, newsContext?: string, briefText?: string, titleSearch?: string, thumb?: { mainCopy: string; subCopy: string; badge: string }) => void;
+  onWriteKeyword: (keyword: string, title: string, newsContext?: string, briefText?: string, titleSearch?: string, thumb?: { mainCopy: string; subCopy: string; badge: string }, extra?: { seriesId?: string; series?: unknown }) => void;
   onSelect: (a: Article) => void;
   onGoPerformance: () => void;
   /** 크레딧 칩 탭 → 충전·사용내역 페이지 */
@@ -120,7 +123,7 @@ export default function Home({
     setSwapping((s) => [...s, kw]);
     try {
       const exclude = [...topics.map((t) => t.keyword), ...dismissedRef.current].join(",");
-      const res = await fetch(`/api/topics?${new URLSearchParams({ exclude }).toString()}`);
+      const res = await fetch(`/api/topics?${new URLSearchParams({ exclude, ...(localStorage.getItem("ateflo_attack_mode") === "1" ? { attack: "1" } : {}) }).toString()}`);
       const data = await res.json();
       const fresh: Topic[] = Array.isArray(data.topics) ? data.topics : [];
       const current = new Set(topics.map((t) => t.keyword));
@@ -158,7 +161,8 @@ export default function Home({
       const params = new URLSearchParams();
       if (ex.length) params.set("exclude", ex.join(","));
       const qs = params.toString();
-      const res = await fetch(`/api/topics${qs ? `?${qs}` : ""}`);
+      let atk = ""; try { atk = localStorage.getItem("ateflo_attack_mode") === "1" ? (qs ? "&" : "") + "attack=1" : ""; } catch { /* ignore */ }
+      const res = await fetch(`/api/topics${qs || atk ? `?${qs}${atk}` : ""}`);
       const data = await res.json();
       const t = sanitizeTopics(Array.isArray(data.topics) ? data.topics : []);
       // ★빈 응답 방어 — 서버가 일시적으로 0개를 주면 기존 목록 유지(화면 전멸 금지)
@@ -185,8 +189,16 @@ export default function Home({
   const info = pubFlag && !infoRaw.publishedToday ? { ...infoRaw, publishedToday: true } : infoRaw;
   const clean = sanitizeTopics(topics);
   // ★'오늘의 글' 후보 — 오늘 이미 만든 글감(발행분 포함)은 제외(한 편 더 = 같은 글감 재생성 버그 방지).
+  // 랭크: 후속(증폭)·시리즈 > 트렌드(이슈 인터럽트 훅: 시리즈보다 뜨거운 이슈는 유저가 아래 목록에서 즉시 선택 가능) > 꾸준 > 풀.
+  // 주간 리뷰형 최소 보장(REVIEW_WEEKLY_MIN) — 증폭·시리즈 없을 때 리뷰형 후보 승격(쇼핑커넥트 경로가 굶지 않게).
   const usedToday = todayKeywords(articles);
-  const first = pickNextTopic(clean, usedToday);
+  const normK = (k: string) => k.replace(/\s+/g, "").toLowerCase();
+  const availClean = clean.filter((t) => !usedToday.map(normK).includes(normK(t.keyword)));
+  const boost = availClean.find((t) => t.tag === "followup" || (t as { seriesId?: string }).seriesId);
+  const weekAgo = Date.now() - 7 * 86400000;
+  const reviewThisWeek = articles.filter((a) => a.status !== "generating" && new Date(a.created_at).getTime() >= weekAgo && revenuePath({ keyword: a.keyword ?? "", title: a.title }) === "shopping").length;
+  const reviewPick = reviewThisWeek < REVIEW_WEEKLY_MIN ? availClean.find((t) => revenuePath({ keyword: t.keyword, title: t.title }) === "shopping") : undefined;
+  const first = boost ?? reviewPick ?? pickNextTopic(clean, usedToday);
   // 트리거 조건: 글감 확정 + 크레딧 있음 + 오늘 미완료·무초안. 같은 글감 재트리거 금지(ref).
   useEffect(() => {
     const f = first;
@@ -277,6 +289,28 @@ export default function Home({
         );
       })()}
 
+
+      {/* ★공격 모드 잠금해제(Part 3) — 조건 충족 시 자동 제안(사다리 문법). 조건 미달 초보 = 존재 자체 비노출. */}
+      {(() => {
+        try {
+          if (typeof window === "undefined") return null;
+          if (localStorage.getItem("ateflo_attack_mode") === "1" || localStorage.getItem("ateflo_attack_offer") === "1") return null;
+          const verified = articles.filter((a) => isVerifiedStatus(a.status)).length;
+          const approved = localStorage.getItem("ateflo_adpost_approved") === "1";
+          const last7 = articles.filter((a) => a.status !== "generating" && new Date(a.created_at).getTime() >= Date.now() - 7 * 86400000).length;
+          if (!attackEligible(verified, approved, last7)) return null;
+          return (
+            <button onClick={() => { try { localStorage.setItem("ateflo_attack_mode", "1"); localStorage.setItem("ateflo_attack_offer", "1"); } catch { /* ignore */ } loadTopics(); }}
+              className="at-rise mt-3 flex w-full items-center justify-between rounded-2xl bg-neutral-900 px-5 py-4 text-left transition hover:bg-neutral-800">
+              <span className="min-w-0 flex-1">
+                <span className="text-[13.5px] font-bold text-white">공격 모드가 열렸어요</span>
+                <span className="mt-0.5 block text-[12px] text-white/60">단가 높은 글감과 더 큰 싸움 — 신뢰 쌓인 블로그의 다음 단계예요. 켜면 오늘 글감부터 바뀌어요.</span>
+              </span>
+              <span className="shrink-0 text-[12.5px] font-bold text-white">켜기</span>
+            </button>
+          );
+        } catch { return null; }
+      })()}
 
       {/* 진단 분기 — 3일 연속 방문 0 + 발행 있음일 때만(원인 단정 없이 확인 안내) */}
       <DiagnosisCard articles={articles} />

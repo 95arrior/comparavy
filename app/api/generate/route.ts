@@ -70,6 +70,8 @@ export async function POST(request: Request) {
     userStory?: string; // '내 이야기' 재료
     newsContext?: string; // ★오늘 이슈 — 최신 뉴스 발췌(근거 자료)
     angleBrief?: string; // ★C단계 앵글 브리프(무중복 증식)
+    seriesId?: string; // ★시리즈 2화+ — user_series 진행
+    series?: { title?: string; arc?: { role?: string; angle?: string }[] } | null; // ★시리즈 1화 — 아크 생성
   };
   try {
     body = await request.json();
@@ -248,7 +250,37 @@ export async function POST(request: Request) {
           const derived = await deriveStoryTopic(userStory, profileRow?.sub_category || vertical, aud);
           if (derived) keyword = derived;
         }
-        const genInput = { keyword, angle: body.angle, type, tone, maxWords, variantInstruction, styleInstruction, relatedQueries, newsContext: resolvedNewsContext, angleBrief: typeof body.angleBrief === "string" ? body.angleBrief.slice(0, 900) : null, affiliate: isReview, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userTitle };
+        // ★시리즈(수익 증폭) — 1화: series(title+arc) 수신 → user_series 생성. 2화+: seriesId 수신 → 화 진행.
+        //  멀티 블로그(Stage 5): user_id → blog_id 전환 지점.
+        let seriesId: string | null = null;
+        let episodeIndex: number | null = null;
+        let seriesDirective = "";
+        let prevUrl: string | null = null;
+        let prevTitle: string | null = null;
+        try {
+          if (body.seriesId && typeof body.seriesId === "string") {
+            const { data: sr } = await supabase.from("user_series").select("*").eq("id", body.seriesId).eq("user_id", user.id).eq("status", "active").maybeSingle();
+            if (sr) {
+              seriesId = sr.id; episodeIndex = sr.next_ep;
+              const arc = (sr.arc as { role: string; angle: string }[]) ?? [];
+              const ep = arc[sr.next_ep - 1];
+              seriesDirective = `\n[시리즈] "${sr.title}" ${sr.next_ep}화/${sr.total} — 이 화의 역할: ${ep?.role ?? ""} (${ep?.angle ?? ""}). 이 화만 읽어도 완결되게 쓰되, 도입 직후 전편을 잇는 한 줄과 함께 [전편 링크 자리] 마커를 한 번 넣는다.`;
+              // 전편 — verified면 URL 자동 삽입(RSS 검증 배포로 활성화), 아니면 마커+위저드 안내 폴백
+              const { data: prev } = await supabase.from("articles").select("title, status, naver_url").eq("series_id", sr.id).eq("episode_index", sr.next_ep - 1).eq("user_id", user.id).maybeSingle();
+              if (prev && (prev.status === "verified") && prev.naver_url) { prevUrl = prev.naver_url; prevTitle = prev.title; }
+              const done = sr.next_ep >= sr.total;
+              await supabase.from("user_series").update({ next_ep: sr.next_ep + 1, status: done ? "done" : "active" }).eq("id", sr.id);
+            }
+          } else if (body.series && typeof body.series === "object" && body.series.title && Array.isArray(body.series.arc) && body.series.arc.length >= 3) {
+            const arc = (body.series.arc as { role?: string; angle?: string }[]).map((e) => ({ role: String(e.role ?? "").slice(0, 40), angle: String(e.angle ?? "").slice(0, 90) })).filter((e) => e.role && e.angle).slice(0, 4);
+            if (arc.length >= 3) {
+              const { data: ins } = await supabase.from("user_series").insert({ user_id: user.id, keyword, title: String(body.series.title).slice(0, 60), arc, total: arc.length, next_ep: 2 }).select("id").single();
+              if (ins) { seriesId = ins.id; episodeIndex = 1; seriesDirective = `\n[시리즈] "${String(body.series.title).slice(0, 60)}" 1화/${arc.length} — 이 화의 역할: ${arc[0].role} (${arc[0].angle}). 이 화만 읽어도 완결되게.`; }
+            }
+          }
+        } catch { /* 시리즈 실패 = 단발로 자연 폴백(테이블 미적용 포함) */ }
+
+        const genInput = { keyword, angle: body.angle, type, tone, maxWords, variantInstruction, styleInstruction, relatedQueries, newsContext: resolvedNewsContext, angleBrief: ((typeof body.angleBrief === "string" ? body.angleBrief.slice(0, 900) : "") + seriesDirective).trim() || null, affiliate: isReview, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userTitle };
         let article = await streamArticle(
           genInput,
           (bodyHtml) => send({ type: "body", html: bodyHtml }),
@@ -289,7 +321,12 @@ export async function POST(request: Request) {
         // (네이버 수익형 단일 — 자영업 시절의 업체 NAP 박스 삽입 제거. 수익형 블로그에 영업장 정보는 무의미 + 전 글 공통 박스는 패턴 지문 리스크)
         const urlClean = sanitizeUrls(ensureDisclosure(article.body_html, isReview)); // ★URL 정화(사전 밖 경로 치환 — 404 방지)
         if (urlClean.replaced > 0) console.log(`[url-sanitize] user=${user.id.slice(0, 8)} replaced=${urlClean.replaced} fabricated=${JSON.stringify(urlClean.fabricated)}`);
-        const finalBody = urlClean.html;
+        let finalBody = urlClean.html;
+        if (prevUrl) { // ★전편 링크 자동 삽입(verified만) — 마커를 실제 링크로. 미충족 시 마커 유지(위저드 안내 폴백)
+          finalBody = finalBody.includes("[전편 링크 자리]")
+            ? finalBody.replace("[전편 링크 자리]", `<a href="${prevUrl}">${(prevTitle ?? "전편 글").replace(/</g, "")}</a>`)
+            : finalBody;
+        }
 
         // 저장 + 사용량 증가
         const insertPayload: Record<string, unknown> = {
@@ -307,6 +344,7 @@ export async function POST(request: Request) {
           write_note: article.write_note || null, // 글쓴이용 메모 (마이그레이션 0007)
           tags: article.tags ?? [], // 워드프레스 태그 (마이그레이션: articles.tags jsonb)
           article_type: promo ? "promo" : "info", // 홍보용/정보성 (마이그레이션 0040)
+          series_id: seriesId, episode_index: episodeIndex, // 시리즈(0054) — 미적용 시 아래 재시도에서 제외
           channel, // 발행 채널 naver 고정 (마이그레이션 0042) — 컬럼 없으면 아래 재시도에서 제외
         };
 

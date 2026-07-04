@@ -274,6 +274,7 @@ export function buildPlainText(input: PublishInput): string {
   const text = rich
     .replace(new RegExp(BLANK_P.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), "\n") // 스페이서 1개 = 빈 줄 1
     .replace(/<p[^>]*><img[^>]*><\/p>/gi, () => { n += 1; return `[사진 ${n}]\n`; })
+    .replace(/<a\s[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi, "$2 ($1)") // 전편 링크 등 — plain에도 URL 보존
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/(p|h1|h2|h3|h4|blockquote|li)>/gi, "\n")
     .replace(/<[^>]+>/g, "")

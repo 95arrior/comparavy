@@ -37,6 +37,8 @@ export interface AmplifiedTopic {
   hookKey: string;   // 적용된 훅 패턴 key
   thumb: ThumbCopy;  // 대표이미지 합성 카피
   source?: string;   // 씨앗 출처(news/season/discover) — 배지 분리
+  // ★시리즈(수익 증폭 Part 1) — 성립 기준 통과 씨앗만. 미달=단발(강제 금지 — 억지 4부작이 더 나쁘다).
+  series?: { title: string; arc: { role: string; angle: string }[] } | null;
 }
 
 // ── 앵글 차원(구조 지문) — 스펙 최소치: 서두6·전개6·마무리5·톤5·의도6 ──
@@ -197,9 +199,14 @@ ${OPEN_LOOP_GUIDE}
 - verdict: 이 글의 한 문장 판결 — 독자가 지금 해야 할 행동/선택(예: "오늘 6시 전 카드사 앱 신청이 결론"). 판단은 조건 비교의 분석 판단만 — 경험 지어내기·보장 표현 금지.
 - cutList: 이 글에서 다루지 않을 하위 소재 1~3개(각각 "소재 — 짧은 이유"). ★적합한 게 없으면 빈 배열 — 억지로 채우지 않는다.
 - branchAxis: 독자 상황 분기 축과 분기 2~4개 한 줄(예: "가구형태: 1인→13만 기준 / 맞벌이→+1 기준"). ★글감이 분기에 안 맞으면 빈 문자열.
+- series: ★씨앗이 '하위 주제 3개 이상으로 자연 분해'될 때만 3~4화 시리즈 아크를 설계(제목+각 화의 역할·각도). 분해가 억지스러우면 null — 시리즈 강제 금지.
+  아크는 씨앗 성격에 맞게 설계하되 참고 패턴(고정 아님): ①정책·혜택형=개요·훅→자격·조건→신청 단계→거절·사후 ②정보·비교형=고르는 기준→후보 비교→상황별 선택→활용·관리 ③리뷰·경험형=고르는 기준→스펙·첫인상 정보→사용자 후기 종합→총평·추천 대상.
+  ★role은 그 화의 역할 명사(예: "자격·조건", "신청 단계") — 패턴 이름("정책·혜택형")을 넣지 마라.
+  ★리뷰형이라도 '직접 써봤다' 류 1인칭 경험을 요구하는 angle 금지(경험 지어내기 금지) — 후기·스펙 종합 분석으로 설계한다.
+  각 화 angle은 그 화만 읽어도 완결되게(시리즈는 연결 장치일 뿐 의존 금지).
 - 시의성코어가 있으면 제목과 thumbMain에 살린다.
 - 금지: 무조건·100%·보장·충격류, 본문이 못 지킬 약속.
-- JSON 배열만: [{"seedIndex":1,"keyword":"...","titleClick":"...","titleSearch":"...","reader":"...","hook":"...","thumbMain":"...","thumbSub":"...","verdict":"...","cutList":["..."],"branchAxis":"..."}]`;
+- JSON 배열만: [{"seedIndex":1,"keyword":"...","titleClick":"...","titleSearch":"...","reader":"...","hook":"...","thumbMain":"...","thumbSub":"...","verdict":"...","cutList":["..."],"branchAxis":"...","series":{"title":"...","arc":[{"role":"...","angle":"..."}]} 또는 null}]`;
 
   try {
     const res = await client.messages.create({
@@ -211,7 +218,7 @@ ${OPEN_LOOP_GUIDE}
     const text = res.content[0]?.type === "text" ? res.content[0].text : "";
     const m = /\[[\s\S]*\]/.exec(text);
     if (!m) return [];
-    const parsed = JSON.parse(m[0]) as { seedIndex?: number; keyword?: string; titleClick?: string; titleSearch?: string; reader?: string; hook?: string; thumbMain?: string; thumbSub?: string; verdict?: string; cutList?: string[]; branchAxis?: string }[];
+    const parsed = JSON.parse(m[0]) as { seedIndex?: number; keyword?: string; titleClick?: string; titleSearch?: string; reader?: string; hook?: string; thumbMain?: string; thumbSub?: string; verdict?: string; cutList?: string[]; branchAxis?: string; series?: { title?: string; arc?: { role?: string; angle?: string }[] } | null }[];
     const out: AmplifiedTopic[] = [];
     const seen = new Set<string>();
     for (const it of parsed) {
@@ -248,6 +255,14 @@ ${OPEN_LOOP_GUIDE}
         hookKey: b.hook.key,
         thumb: { mainCopy: thumbMain, subCopy: thumbSub, badge },
         source: b.seed.source,
+        series: (() => { // 성립 기준: arc 3~4화 + 각 화 role·angle 완비. 미달 = null(단발)
+          const sr = it.series;
+          if (!sr || !sr.title || !Array.isArray(sr.arc)) return null;
+          const arc = sr.arc.map((e) => ({ role: String(e?.role ?? "").trim().slice(0, 40), angle: String(e?.angle ?? "").trim().slice(0, 90) })).filter((e) => e.role && e.angle);
+          if (arc.length < 3 || arc.length > 4) return null;
+          if (containsBanned(sr.title) || arc.some((e) => containsBanned(e.angle))) return null;
+          return { title: String(sr.title).trim().slice(0, 60), arc };
+        })(),
       });
       if (out.length >= want) break;
     }

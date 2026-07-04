@@ -54,3 +54,25 @@ export function threeDayZeroWithPosts(
   const hasPub = (articles ?? []).some((a) => a.status === "published" && new Date(a.created_at).getTime() >= from && new Date(a.created_at).getTime() <= now.getTime());
   return hasPub;
 }
+
+// ★증폭 — 배합 가중 학습(유저 입력 신호만). 상한·하한 필수: 한 유형 독점 금지 + 다양성 하한.
+import { MIX_WEIGHT_STEP, MIX_WEIGHT_CAP, MIX_WEIGHT_FLOOR, SPIKE_RATIO, SPIKE_MIN_VISITORS, ATTACK_UNLOCK } from "./scoreWeights";
+export type MixWeights = Record<string, number>;
+export function bumpMixWeight(cur: MixWeights | null | undefined, type: string): MixWeights {
+  const w = { ...(cur ?? {}) };
+  w[type] = Math.min(MIX_WEIGHT_CAP, (w[type] ?? 1) + MIX_WEIGHT_STEP);
+  for (const k of Object.keys(w)) w[k] = Math.max(MIX_WEIGHT_FLOOR, Math.min(MIX_WEIGHT_CAP, w[k]));
+  return w;
+}
+/** 체크인 급등 — 최근 7일(오늘 제외) 평균 대비 SPIKE_RATIO배 + 절대 최소. 표본 3일 미만이면 false(오탐 방지). */
+export function isSpike(todayVisitors: number | null, prevRows: CheckinRow[]): boolean {
+  if (todayVisitors === null || todayVisitors < SPIKE_MIN_VISITORS) return false;
+  const prev = prevRows.map((r) => r.visitors).filter((v): v is number => v !== null && v !== undefined).slice(-7);
+  if (prev.length < 3) return false;
+  const avg = prev.reduce((a, b) => a + b, 0) / prev.length;
+  return avg > 0 && todayVisitors >= avg * SPIKE_RATIO;
+}
+/** 공격 모드 잠금해제 — 발행 확인 30편+ & 승인 완료 & 최근 7일 일평균 3편 페이스. */
+export function attackEligible(verifiedCount: number, approved: boolean, articlesLast7: number): boolean {
+  return verifiedCount >= ATTACK_UNLOCK.minVerified && (approved || !ATTACK_UNLOCK.needApproved) && articlesLast7 / 7 >= ATTACK_UNLOCK.recentDailyPace;
+}

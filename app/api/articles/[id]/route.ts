@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { countKoreanChars } from "@/lib/humanizer";
+import { bumpMixWeight } from "@/lib/checkin";
+import { isReviewType } from "@/lib/revenue";
 
 async function getUser() {
   const supabase = await createSupabaseServerClient();
@@ -38,6 +40,18 @@ export async function PATCH(
       } catch { /* 컬럼 미적용 등 — 기능엔 지장 없음 */ }
     }
   }
+  // ★증폭 신호 — '이 글 반응 좋아요'(수동) / 체크인 급등 후속 선택. hot_at 기록 + 배합 가중 학습(상한·하한 코드 강제).
+  if (body.hot === true) {
+    try {
+      const { data: art } = await supabase.from("articles").select("keyword, title").eq("id", id).eq("user_id", user.id).single();
+      await supabase.from("articles").update({ hot_at: new Date().toISOString() }).eq("id", id).eq("user_id", user.id);
+      const type = art && isReviewType({ keyword: art.keyword, title: art.title }) ? "review" : "info";
+      const { data: prof } = await supabase.from("blog_profiles").select("mix_weights").eq("user_id", user.id).maybeSingle();
+      await supabase.from("blog_profiles").update({ mix_weights: bumpMixWeight(prof?.mix_weights as Record<string, number> | null, type) }).eq("user_id", user.id);
+    } catch { /* 0054 미적용 — 신호만 유실, 무해 */ }
+    return NextResponse.json({ ok: true });
+  }
+
   const update: Record<string, unknown> = {};
   if (typeof body.title === "string") update.title = body.title;
   if (typeof body.body_html === "string") {

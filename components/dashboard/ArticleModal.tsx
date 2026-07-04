@@ -407,6 +407,14 @@ export default function ArticleModal({
           </div>
         )}
 
+        {/* ★증폭 수동 신고 — '이 글 반응 좋아요'(다음 날 후속 글감 배정 + 배합 가중 학습) */}
+        {(article.status === "verified" || article.status === "published" || article.status === "pending_verify") && (
+          <button onClick={async () => {
+            const r = await fetch(`/api/articles/${article.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ hot: true }) });
+            if (r.ok) setToast("반영했어요 — 내일 이 글의 후속을 준비할게요");
+          }} className="at-press mt-4 w-full rounded-xl bg-emerald-50 py-3 text-[13.5px] font-bold text-emerald-700 transition hover:bg-emerald-100">이 글 반응 좋아요 · 후속 준비하기</button>
+        )}
+
         {/* ★수동 차감 — 발행 글을 지웠을 때(게이지는 verified만 세므로 상태 전환=자동 차감) */}
         {(article.status === "verified" || article.status === "published") && (
           <button onClick={async () => {

@@ -15,7 +15,10 @@ import { amplifyForUser } from "@/lib/amplifyTopics";
 import { collectPoolKeywords } from "@/lib/poolCollect";
 import { fetchNaverAutocomplete } from "@/lib/naverAutocomplete";
 import { checkRateLimit } from "@/lib/rateLimit";
-import { BID_WEIGHT, BID_DEPTH_CAP, BID_COMP_BONUS, BID_BADGE_RATIO, BID_HIGH_MIN_DEPTH } from "@/lib/scoreWeights";
+import { BID_WEIGHT, BID_DEPTH_CAP, BID_COMP_BONUS, BID_BADGE_RATIO, BID_HIGH_MIN_DEPTH, ATTACK } from "@/lib/scoreWeights";
+import { revenuePath } from "@/lib/revenue";
+import { logUsage } from "@/lib/usageLog";
+import { isAdminEmail } from "@/lib/adminStats";
 
 // 사장의 blog_profile(vertical + sub_category)로 keyword_pool에서 글감 3개를 뽑는다.
 // Stage 2-B 분산: ① least-used 우선(times_assigned asc) ② 본인이 이미 쓴 키워드 제외 ③ 그 안 랜덤.
@@ -127,7 +130,7 @@ export async function GET(req: Request) {
 
   const { data: profile } = await supabase
     .from("blog_profiles")
-    .select("vertical, sub_category, audience, biz_address, target")
+    .select("vertical, sub_category, audience, biz_address, target, mix_weights")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -155,6 +158,9 @@ export async function GET(req: Request) {
   const usedSet = new Set((mine ?? []).map((a) => normalizeKeyword(String(a.keyword ?? ""))).filter(Boolean));
   // 카드별 교체('이 글감 별로예요') — 지금 보이는 글감들을 제외하고 새로 뽑는다.
   const exclude = (new URL(req.url).searchParams.get("exclude") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+  const attack = new URL(req.url).searchParams.get("attack") === "1";
+  // 한계 테스트 트랙(관리자 플래그 계정) — 공격 서빙을 로그로 기록해 안전선 재조정 근거 데이터로.
+  if (attack) void logUsage({ userId: user.id, model: "mix", kind: isAdminEmail(user.email) ? "attack_serve_admin" : "attack_serve", inputTokens: 0, outputTokens: 0 }); // ★공격 모드(Part 3) — 배합 오버라이드. Stage 5: blog_profiles.attack_mode로 서버 판정 전환
   const excludeSet = new Set(exclude.map((e) => normalizeKeyword(e))); // 교체로 제외한 것들 — 풀 전멸 시 되살릴 수 있게 분리 보관
   for (const e of exclude) usedSet.add(normalizeKeyword(e));
   // 토픽 클러스터(주제 이어가기): 이 토큰이 든 키워드만 → 한 주제 깊이 파기. %_ 이스케이프.
@@ -170,7 +176,7 @@ export async function GET(req: Request) {
 
   // ★트렌드 씨앗 × 개인화 증식 카드 — 키워드 풀과 독립. 조기 return에서도 트렌드가 나가게 함수로 분리.
   //  existing: 이미 담긴 글감 키워드(정규화) 집합(중복 방지). 온라인 vertical만 대상.
-  interface TrendCard { keyword: string; title: string; demandLabel: string; ssak: boolean; region: boolean; tone: BloggerType; vol: number; comp: Comp; blogTotal: number | null; tag: string; newsContext?: string; titleSearch?: string; briefText?: string; hookKey?: string; thumb?: { mainCopy: string; subCopy: string; badge: string }; brief?: unknown }
+  interface TrendCard { keyword: string; title: string; demandLabel: string; ssak: boolean; region: boolean; tone: BloggerType; vol: number; comp: Comp; blogTotal: number | null; tag: string; newsContext?: string; titleSearch?: string; briefText?: string; hookKey?: string; thumb?: { mainCopy: string; subCopy: string; badge: string }; brief?: unknown; series?: unknown; seriesId?: string; seriesBadge?: string }
   async function buildTrendCards(existing: Set<string>): Promise<TrendCard[]> {
     const cards: TrendCard[] = [];
     if (!user) return cards;
@@ -214,7 +220,7 @@ export async function GET(req: Request) {
         const src = (t as { source?: string }).source;
         // ★momentum 배지 분리 — 뉴스/시즌='지금 뜨는 중', 자동완성 발굴='꾸준히 찾는 주제'(뜨는 척 금지)
         const demandLabel = src === "discover" ? "꾸준히 찾는 주제" : "지금 뜨는 중";
-        cards.push({ keyword: t.keyword, title: t.title, demandLabel, ssak: true, region: false, tone: bt, vol: 0, comp: "low" as Comp, blogTotal: null, tag: src === "discover" ? "steady" : "trend", newsContext: t.newsContext ?? undefined, titleSearch: (t as { titleSearch?: string }).titleSearch, briefText: (t as { briefText?: string }).briefText, hookKey: (t as { hookKey?: string }).hookKey, thumb: (t as { thumb?: { mainCopy: string; subCopy: string; badge: string } }).thumb, brief: (t as { brief?: unknown }).brief });
+        cards.push({ keyword: t.keyword, title: t.title, demandLabel, ssak: true, region: false, tone: bt, vol: 0, comp: "low" as Comp, blogTotal: null, tag: src === "discover" ? "steady" : "trend", newsContext: t.newsContext ?? undefined, titleSearch: (t as { titleSearch?: string }).titleSearch, briefText: (t as { briefText?: string }).briefText, hookKey: (t as { hookKey?: string }).hookKey, thumb: (t as { thumb?: { mainCopy: string; subCopy: string; badge: string } }).thumb, brief: (t as { brief?: unknown }).brief, series: (t as { series?: unknown }).series ?? null });
       }
     } catch { /* 트렌드 없이 진행 */ }
     return cards;
@@ -309,9 +315,14 @@ export async function GET(req: Request) {
   const bidHigh = (r: PoolRow) => bidHighSet.has(r.keyword);
   // 서빙 랭크 소프트 부스트 — 랜덤(0~1) + BID_WEIGHT×정규화 단가. 다양성(셔플)은 유지하되 단가 높은 글감이 자주 앞에.
   //  가중치 상수는 lib/scoreWeights — '공격 모드'가 나중에 이 상수를 오버라이드한다.
+  const bidW = attack ? ATTACK.BID_WEIGHT : BID_WEIGHT; // ★공격 모드 = 상수 오버라이드(scoreWeights.ATTACK)
+  const mixW = ((profile as { mix_weights?: Record<string, number> } | null)?.mix_weights) ?? {}; // 증폭 가중 학습(상한·하한은 저장 시 강제)
   const bidBoostSort = (items: PoolRow[]): PoolRow[] =>
-    items.map((r) => ({ r, s: rng() + BID_WEIGHT * (Math.min(r.ad_depth ?? 0, BID_DEPTH_CAP) / BID_DEPTH_CAP) }))
-      .sort((a, b) => b.s - a.s).map((x) => x.r);
+    items.map((r) => {
+      const isRev = revenuePath({ keyword: r.keyword }) === "shopping";
+      const revBoost = (attack ? ATTACK.REVIEW_BOOST : 0) + (isRev ? ((mixW.review ?? 1) - 1) * 0.3 : ((mixW.info ?? 1) - 1) * 0.3);
+      return { r, s: rng() + bidW * (Math.min(r.ad_depth ?? 0, BID_DEPTH_CAP) / BID_DEPTH_CAP) + (isRev ? revBoost : 0) };
+    }).sort((a, b) => b.s - a.s).map((x) => x.r);
   const low = rows.filter((r) => comp(r) === "낮음");
   const mid = rows.filter((r) => comp(r) === "중간");
   const high = rows.filter((r) => comp(r) === "높음");
@@ -422,7 +433,7 @@ export async function GET(req: Request) {
         if (!candidates.some((x) => normalizeKeyword(x.keyword) === nk)) candidates.push(r); // 정규화 중복 제거
       }
     };
-    add(general); add(lowF); add(highF);
+    add(general); add(lowF); if (attack && ATTACK.ALLOW_COMP_HIGH) add(bidBoostSort(highF)); else add(highF); // ★공격: 경쟁 높음도 정식 후보(이길 수 있는 싸움)
     }
 
     // ★자영업자: 검색량 풀이 오염(여행영어 등)·얕아 온타겟이 부족할 수 있다 → '손님(대상)이 검색하는' 글감을 생성해 합류.
@@ -553,6 +564,23 @@ export async function GET(req: Request) {
   const trendCards = await buildTrendCards(new Set(topics.map((x) => normalizeKeyword(x.keyword))));
 
   // 트렌드(신선) 먼저, 데이터 글감은 섞어서 뒤에. 지역 카드는 섞임.
+  // ★수익 증폭 카드(최우선 후보) — ①활성 시리즈 다음 화 ②hot(반응 좋아요) 단발의 후속.
+  //  '더 뜨거운 이슈 인터럽트'는 클라 랭크(pickNextTopic)가 판단할 수 있게 tag로 구분만 한다. 실패=조용히 생략.
+  const boostCards: typeof trendCards = [];
+  try {
+    const { data: sr } = await supabase.from("user_series").select("id, title, keyword, arc, total, next_ep").eq("user_id", user.id).eq("status", "active").order("created_at", { ascending: false }).limit(1).maybeSingle();
+    if (sr && sr.next_ep <= sr.total) {
+      const ep = (sr.arc as { role: string; angle: string }[])[sr.next_ep - 1];
+      boostCards.push({ keyword: sr.keyword, title: ep?.angle ?? `${sr.title} ${sr.next_ep}화`, demandLabel: "시리즈 이어쓰기", ssak: true, region: false, tone: "online", vol: 0, comp: "low" as Comp, blogTotal: null, tag: "series", newsContext: undefined, titleSearch: undefined, briefText: undefined, hookKey: undefined, thumb: undefined, brief: undefined, seriesId: sr.id, seriesBadge: `시리즈 ${sr.next_ep}/${sr.total}` } as (typeof trendCards)[number] & { seriesId: string; seriesBadge: string });
+    } else {
+      const twoDays = new Date(Date.now() - 48 * 3600_000).toISOString();
+      const { data: hot } = await supabase.from("articles").select("keyword, title").eq("user_id", user.id).is("series_id", null).gte("hot_at", twoDays).order("hot_at", { ascending: false }).limit(1).maybeSingle();
+      if (hot) {
+        boostCards.push({ keyword: hot.keyword, title: `${hot.keyword}, 한 걸음 더 들어가기`, demandLabel: "어제 반응 좋았던 글의 후속", ssak: true, region: false, tone: "online", vol: 0, comp: "low" as Comp, blogTotal: null, tag: "followup", newsContext: undefined, titleSearch: undefined, briefText: `[후속 지시] 전작 "${hot.title}"이 반응이 좋았다. 같은 검색 의도의 심화·확장편을 쓴다(중복 서술 금지 — 전작이 못 다룬 다음 질문에 답한다). 도입 직후 [전편 링크 자리] 마커 1회.`, hookKey: undefined, thumb: undefined, brief: undefined } as (typeof trendCards)[number]);
+      }
+    }
+  } catch { /* 0054 미적용 등 — 조용히 생략 */ }
+
   const shuffled = shuffle(topics, rng);
-  return NextResponse.json({ topics: [...trendCards, ...shuffled] });
+  return NextResponse.json({ topics: [...boostCards, ...trendCards, ...shuffled] });
 }

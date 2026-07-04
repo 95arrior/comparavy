@@ -58,6 +58,7 @@ export default function NaverPublishSheet({
   const plain = useMemo(() => { const t = buildPlainText({ title, bodyHtml, images }); return hasPhotoLeakPlain(t) ? sanitizePlain(t) : t; }, [title, bodyHtml, images]);
   const bodyLeak = hasPhotoLeak(richHtml) || hasPhotoLeakPlain(plain);
   const hasLinkSlot = bodyHtml.includes("[상품 링크 자리]"); // 리뷰형에만 존재 — 조건부 안내
+  const hasPrevSlot = bodyHtml.includes("[전편 링크 자리]"); // 시리즈 unverified 폴백 — verified면 서버가 URL로 치환해 이 마커가 없음
   const bodyClip = `본문${imageUrls.length ? ` (사진 ${imageUrls.length}장)` : ""}`;
 
   async function copyBody() {
@@ -159,6 +160,9 @@ export default function NaverPublishSheet({
             </button>
             {hasLinkSlot && (
               <p className="mt-3 rounded-xl bg-neutral-50 px-4 py-2.5 text-[12.5px] font-medium text-neutral-600">본문의 [상품 링크 자리]를 쇼핑커넥트에서 만든 내 링크로 바꿔 넣으세요.</p>
+            )}
+            {hasPrevSlot && (
+              <p className="mt-3 rounded-xl bg-neutral-50 px-4 py-2.5 text-[12.5px] font-medium text-neutral-600">전편 글 주소를 본문의 [전편 링크 자리]에 붙여 넣으세요.</p>
             )}
             <button onClick={() => setScreen(4)} className={`${bigBtn} mt-4`} style={{ background: BLUE }}>다음</button>
           </div>

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
+import { isSpike } from "@/lib/checkin";
 
 // 아침 체크인 — GET: 최근 시리즈+오늘 완료 여부, POST: 어제 데이터 upsert(수동 입력만).
 const dayKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -31,5 +32,11 @@ export async function POST(request: Request) {
   const y = new Date(); y.setDate(y.getDate() - 1);
   const { error } = await supabase.from("checkins").upsert({ user_id: user.id, day: dayKey(y), visitors, revenue }, { onConflict: "user_id,day" });
   if (error) return NextResponse.json({ error: "저장하지 못했어요. 잠시 후 다시 시도해 주세요." }, { status: 500 });
-  return NextResponse.json({ ok: true, day: dayKey(y), visitors, revenue });
+  // ★급등 감지(증폭 신호) — 유저 입력만 근거. 감지 시 카드가 "어제 어떤 글이 잘 됐어요?" 후속 질문.
+  let spike = false;
+  try {
+    const { data: prev } = await supabase.from("checkins").select("day, visitors, revenue").eq("user_id", user.id).lt("day", dayKey(y)).order("day", { ascending: false }).limit(7);
+    spike = isSpike(visitors, (prev ?? []).reverse());
+  } catch { /* ignore */ }
+  return NextResponse.json({ ok: true, day: dayKey(y), visitors, revenue, spike });
 }

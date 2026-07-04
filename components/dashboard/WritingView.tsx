@@ -21,6 +21,9 @@ export interface GenParams {
   angleBrief?: string;
   /** ★대표이미지 합성 카피(v4) — 슬롯0 썸네일에 코드 합성(무료). 없으면 배경+오브젝트만 */
   thumb?: { mainCopy: string; subCopy: string; badge: string };
+  /** ★시리즈(수익 증폭) — 2화+: user_series id / 1화: 아크 */
+  seriesId?: string;
+  series?: { title: string; arc: { role: string; angle: string }[] } | null;
 }
 
 // ★생성 장면 v3 — "글이 눈앞에서 실제로 써진다".

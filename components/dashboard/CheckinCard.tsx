@@ -18,6 +18,7 @@ export default function CheckinCard({ articles, onSaved }: { articles: CourseArt
   const [revenue, setRevenue] = useState("");
   const [busy, setBusy] = useState(false);
   const [firstRevenue, setFirstRevenue] = useState(false);
+  const [spikeAsk, setSpikeAsk] = useState(false); // ★급등 감지 — "어제 어떤 글이 잘 됐어요?" 후속 질문
   const approved = typeof window !== "undefined" && (() => { try { return localStorage.getItem("ateflo_adpost_approved") === "1"; } catch { return false; } })();
   const skipKey = `ateflo_checkin_skip_${new Date().toISOString().slice(0, 10)}`;
 
@@ -52,6 +53,7 @@ export default function CheckinCard({ articles, onSaved }: { articles: CourseArt
       const res = await fetch("/api/checkin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const d = await res.json();
       if (!res.ok) { setBusy(false); return; }
+      if (d.spike === true) setSpikeAsk(true); // 증폭 신호원(유저 입력 기반)
       const newRow: Row = { day: d.day, visitors: d.visitors, revenue: d.revenue };
       setRows((prevRows) => [...prevRows.filter((x) => x.day !== d.day), newRow]);
       // 첫 수익 1회성 카드
@@ -61,7 +63,7 @@ export default function CheckinCard({ articles, onSaved }: { articles: CourseArt
       setSavedRow(newRow);
       setState("done");
       onSaved?.();
-      setTimeout(() => setState("recorded"), firstRevenue ? 4200 : 1600); // 그래프 성장 보여준 뒤 한 줄 요약으로(수정 가능)
+      if (d.spike !== true) setTimeout(() => setState("recorded"), firstRevenue ? 4200 : 1600); // 급등 질문 중엔 유지 // 그래프 성장 보여준 뒤 한 줄 요약으로(수정 가능)
     } finally { setBusy(false); }
   }
 
@@ -113,6 +115,25 @@ export default function CheckinCard({ articles, onSaved }: { articles: CourseArt
       {state === "done" ? (
         <div className="mt-3">
           <p className="text-[14px] font-bold text-neutral-900">기록했어요.</p>
+          {spikeAsk && (() => {
+            const recent = articles.filter((a) => ["verified", "published", "pending_verify"].includes(a.status) && new Date(a.created_at).getTime() >= Date.now() - 7 * 86400000).slice(0, 5) as unknown as { id: string; title: string }[];
+            if (recent.length === 0) return null;
+            return (
+              <div className="mt-3 rounded-xl bg-[#1D75F7]/[0.06] p-3.5">
+                <p className="text-[13px] font-bold text-[#1D75F7]">방문자가 확 뛰었어요. 어제 어떤 글이 잘 됐어요?</p>
+                <p className="mt-0.5 text-[11px] text-neutral-400">네이버 크리에이터 어드바이저의 유입 분석에서 글별 방문을 확인할 수 있어요.</p>
+                <div className="mt-2 space-y-1.5">
+                  {recent.map((a) => (
+                    <button key={a.id} onClick={async () => {
+                      await fetch(`/api/articles/${a.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ hot: true }) });
+                      setSpikeAsk(false);
+                    }} className="at-press w-full rounded-lg bg-white px-3 py-2 text-left text-[12.5px] font-semibold text-neutral-700 ring-1 ring-black/[0.05] transition hover:bg-neutral-50">{a.title}</button>
+                  ))}
+                </div>
+                <button onClick={() => setSpikeAsk(false)} className="mt-1.5 w-full py-1 text-center text-[11.5px] text-neutral-400">모르겠어요 · 건너뛰기</button>
+              </div>
+            );
+          })()}
           {firstRevenue && (
             <div className="mt-2 rounded-xl bg-[#1D75F7]/[0.06] px-4 py-3">
               <p className="text-[14px] font-bold text-[#1D75F7]">첫 수익이에요. 여기서부터 시작입니다.</p>

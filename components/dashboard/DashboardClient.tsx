@@ -64,7 +64,7 @@ export default function DashboardClient(props: DashboardProps) {
     void fetch("/api/blog-profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ naver_blog_id: id }) });
   }
   // 글 생성 직전 '확인' 대기 (확인하면 genParams로 생성 시작 — 크레딧 실수 방지)
-  const [pendingWrite, setPendingWrite] = useState<{ keyword: string; title: string; newsContext?: string; briefText?: string; titleSearch?: string; thumb?: { mainCopy: string; subCopy: string; badge: string } } | null>(null);
+  const [pendingWrite, setPendingWrite] = useState<{ keyword: string; title: string; newsContext?: string; briefText?: string; titleSearch?: string; thumb?: { mainCopy: string; subCopy: string; badge: string }; seriesId?: string; series?: unknown } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState(false);
   const [page, setPage] = useState<null | "news" | "profile" | "credits">(null);
@@ -529,6 +529,8 @@ export default function DashboardClient(props: DashboardProps) {
                 newsContext: pendingWrite.newsContext,
                 angleBrief: pendingWrite.briefText,
                 thumb: pendingWrite.thumb,
+                seriesId: pendingWrite.seriesId,
+                series: pendingWrite.series as { title: string; arc: { role: string; angle: string }[] } | null | undefined,
               });
               setPendingWrite(null);
             }}
@@ -562,7 +564,7 @@ export default function DashboardClient(props: DashboardProps) {
                 onOpenCredits={() => setPage("credits")}
                   unreadNews={unreadNews}
                   onOpenNews={openNews}
-                onWriteKeyword={(keyword, title, newsContext, briefText, titleSearch, thumb) => {
+                onWriteKeyword={(keyword, title, newsContext, briefText, titleSearch, thumb, extra) => {
                   // ★같은 글감의 오늘 draft가 있으면 재생성이 아니라 재진입(크레딧 이중 소모 방지 — 확인 모달 없이 중복 생성 불가).
                   const dup = findTodayDraftByKeyword(articles, keyword);
                   if (dup) { setSelected(dup); return; }
@@ -571,7 +573,7 @@ export default function DashboardClient(props: DashboardProps) {
                     setPaywall({ title });
                     return;
                   }
-                  setPendingWrite({ keyword, title, newsContext, briefText, titleSearch, thumb });
+                  setPendingWrite({ keyword, title, newsContext, briefText, titleSearch, thumb, ...(extra ?? {}) });
                 }}
                 onSelect={setSelected}
                 profileKey={`${blogProfile.vertical}:${blogProfile.sub_category ?? ""}`}
