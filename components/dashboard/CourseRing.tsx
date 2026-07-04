@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { COURSE_DAYS, type CourseInfo } from "@/lib/course";
+import { COURSE_DAYS, progressPercent, type CourseInfo } from "@/lib/course";
 import GlassIcon from "@/components/GlassIcon";
 
 // ★코스 링 v2 — 홈의 심장. 그라데이션 스트로크(블루→시안) + 소프트 글로우 +
@@ -9,7 +9,7 @@ import GlassIcon from "@/components/GlassIcon";
 export default function CourseRing({ info }: { info: CourseInfo }) {
   const R = 64;
   const C = 2 * Math.PI * R;
-  const progress = info.finished ? 1 : Math.max(0, Math.min(1, info.day / COURSE_DAYS));
+  const progress = progressPercent(info) / 100; // ★발행 기준 — 오늘 미발행이면 오늘 몫 미채움
   const [drawn, setDrawn] = useState(0);
   useEffect(() => {
     const t = requestAnimationFrame(() => setDrawn(progress));

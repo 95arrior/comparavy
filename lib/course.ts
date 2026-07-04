@@ -83,3 +83,38 @@ export function yesterdayPublished(articles: CourseArticleLite[], now: Date = ne
   const yk = dayKey(y);
   return (articles ?? []).some((a) => isPublishConfirmed(a) && dayKey(new Date(a.created_at)) === yk);
 }
+
+// ★상태 모델 v2 — 완료 판정은 '발행'(claimed) 기준. 생성(draft)은 완료가 아니다.
+//  링 진행률도 같은 기준: 오늘 발행 전엔 오늘 몫을 채우지 않는다.
+export function progressPercent(info: CourseInfo): number {
+  if (info.finished) return 100;
+  const effectiveDay = info.publishedToday ? info.day : Math.max(0, info.day - 1);
+  return Math.round(Math.max(0, Math.min(1, effectiveDay / COURSE_DAYS)) * 100);
+}
+
+const normKw = (s: string) => String(s ?? "").replace(/\s+/g, "").toLowerCase();
+
+/** '한 편 더' 글감 — 오늘 이미 만든 글감(발행분 포함)을 제외한 첫 후보(트렌드 우선 = 배열 순서). */
+export function pickNextTopic<T extends { keyword: string }>(topics: T[], todayKeywords: string[]): T | null {
+  const used = new Set(todayKeywords.map(normKw));
+  return topics.find((t) => !used.has(normKw(t.keyword))) ?? null;
+}
+
+/** 같은 글감의 오늘 draft — 있으면 재생성이 아니라 재진입(크레딧 이중 소모 방지). */
+export function findTodayDraftByKeyword<A extends { keyword?: string | null; status: string; created_at: string }>(
+  articles: A[], keyword: string, now: Date = new Date(),
+): A | null {
+  const k = normKw(keyword);
+  return articles.find((a) => a.status === "draft" && normKw(a.keyword ?? "") === k && dayKey(new Date(a.created_at)) === dayKey(now)) ?? null;
+}
+
+/** 오늘 생성한 글들의 keyword 목록(다음 글감 제외용). */
+export function todayKeywords<A extends { keyword?: string | null; status: string; created_at: string }>(articles: A[], now: Date = new Date()): string[] {
+  return (articles ?? []).filter((a) => a.status !== "generating" && dayKey(new Date(a.created_at)) === dayKey(now)).map((a) => String(a.keyword ?? "")).filter(Boolean);
+}
+
+// ★발행 후 삭제 케이스(규칙): 당일 미션은 유지(이미 수행) — 클라 로컬 플래그(ateflo_pub_{day})가 담당.
+//  게이지 카운트 차감은 RSS 삭제 감지/수동 차감 규칙(별도 설계)이 처리. 홈에 별도 표시 없음.
+export function localPubFlagKey(now: Date = new Date()): string {
+  return `ateflo_pub_${dayKey(now)}`;
+}

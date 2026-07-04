@@ -78,6 +78,7 @@ export default function ArticleModal({
       });
       if (res.ok) {
         onUpdated({ ...article, title, body_html: bodyHtml, status: "published" });
+        try { const { localPubFlagKey } = await import("@/lib/course"); localStorage.setItem(localPubFlagKey(), "1"); } catch { /* ignore */ }
         setNaverOpen(false);
         setToast("발행 완료로 표시했어요");
       } else {

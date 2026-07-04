@@ -10,6 +10,7 @@ import ArticleModal from "./ArticleModal";
 import CenterToast from "./CenterToast";
 import WritingView, { type GenParams } from "./WritingView";
 import WriteTypeSheet from "./WriteTypeSheet";
+import { findTodayDraftByKeyword } from "@/lib/course";
 import ProfileSettings from "./ProfileSettings";
 import KeywordFinder from "./KeywordFinder";
 import KeywordQueue from "./KeywordQueue";
@@ -560,6 +561,9 @@ export default function DashboardClient(props: DashboardProps) {
                   unreadNews={unreadNews}
                   onOpenNews={openNews}
                 onWriteKeyword={(keyword, title, newsContext, briefText, titleSearch, thumb) => {
+                  // ★같은 글감의 오늘 draft가 있으면 재생성이 아니라 재진입(크레딧 이중 소모 방지 — 확인 모달 없이 중복 생성 불가).
+                  const dup = findTodayDraftByKeyword(articles, keyword);
+                  if (dup) { setSelected(dup); return; }
                   // 글감 카드 [이 글 쓰기] → 잔액 0이면 '쓰려던 글이 잠긴' 페이월, 있으면 확인 시트.
                   if (credits <= 0) {
                     setPaywall({ title });

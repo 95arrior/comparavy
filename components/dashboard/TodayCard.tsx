@@ -18,7 +18,7 @@ export interface TodayTopic {
 }
 
 export default function TodayCard({
-  topic, loading, credits, info, onWriteKeyword, onGoPerformance,
+  topic, loading, credits, info, onWriteKeyword, onGoPerformance, onOpenTodayDraft,
 }: {
   topic: TodayTopic | null;
   loading: boolean;
@@ -26,6 +26,8 @@ export default function TodayCard({
   info: CourseInfo;
   onWriteKeyword: (keyword: string, title: string, newsContext?: string, briefText?: string, titleSearch?: string, thumb?: { mainCopy: string; subCopy: string; badge: string }) => void;
   onGoPerformance: () => void;
+  /** 오늘 draft 재진입(이어서 발행) — draft 상태 카드 전용 */
+  onOpenTodayDraft?: () => void;
 }) {
   const locked = credits <= 0;
   const write = (t: TodayTopic) => onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb);
@@ -42,24 +44,36 @@ export default function TodayCard({
     );
   }
 
-  // 오늘 완료 — 미션 완료 + '한 편 더' 글감의 근거(배지·왜 지금)를 함께 보여준다.
+  // 오늘 완료(발행 기준) — 완료 배지와 독려를 한 문장으로. topic은 '오늘 발행분 제외' 다음 글감(상위에서 선별).
   if (info.publishedToday) {
     const whyNext = topic ? whyNow(topic) : "";
     return (
       <Card>
         <Header label="오늘의 글" chip="완료" />
-        <p className="mt-2 text-[17px] font-bold leading-snug text-neutral-900">오늘 미션 완료!<br />내일 새 글감이 와요.</p>
+        <p className="mt-2 text-[17px] font-bold leading-snug text-neutral-900">오늘 1편 발행 완료.<br />한 편 더 쓰면 승인이 가까워져요.</p>
         {topic && !locked && (
           <div className="mt-3 rounded-xl bg-neutral-50 p-3.5">
-            <p className="text-[11.5px] font-bold text-neutral-400">한 편 더 쓰면 승인이 빨라져요</p>
-            <div className="mt-1.5"><DemandRow topic={topic} /></div>
+            <div><DemandRow topic={topic} /></div>
             <p className="mt-1.5 text-[14.5px] font-bold leading-snug text-neutral-900">{topic.title}</p>
             {whyNext && <p className="mt-1 text-[12.5px] leading-relaxed text-neutral-500">{whyNext}</p>}
             <button onClick={() => write(topic)} className="at-press mt-3 w-full rounded-xl bg-[#1D75F7] py-2.5 text-[13px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">
-              한 편 더 쓰기
+              다음 글감 쓰기
             </button>
           </div>
         )}
+      </Card>
+    );
+  }
+
+  // ★draft만 있고 발행 없음 — 미션 미완료. 쓰다 만 글 재진입이 1순위 행동.
+  if (info.hasDraftToday && onOpenTodayDraft) {
+    return (
+      <Card highlight>
+        <Header label="오늘의 글" chip="발행 전" />
+        <p className="mt-2 text-[17px] font-bold leading-snug text-neutral-900">쓰다 만 글이 있어요.<br />발행까지 마쳐야 오늘 미션 완료예요.</p>
+        <button onClick={onOpenTodayDraft} className="at-press mt-3.5 w-full rounded-xl bg-[#03C75A] py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">
+          이어서 발행하기
+        </button>
       </Card>
     );
   }

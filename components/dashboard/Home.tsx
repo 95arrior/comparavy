@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import TodayCard from "./TodayCard";
 import GlassIcon from "@/components/GlassIcon";
 import CourseRing from "./CourseRing";
-import { courseInfo, yesterdayPublished } from "@/lib/course";
+import { courseInfo, yesterdayPublished, pickNextTopic, todayKeywords, localPubFlagKey } from "@/lib/course";
 import { GENERATE_COST } from "@/lib/creditPacks";
 import { nextSeedRefreshLabel } from "@/lib/seedRefresh";
 import type { Comp } from "@/lib/topicScore";
@@ -155,10 +155,16 @@ export default function Home({
   }, [loadTopics]);
 
   // 코스 상태 + 오늘의 초안
-  const info = courseInfo(articles);
+  const infoRaw = courseInfo(articles);
+  // ★발행 후 삭제 케이스 — 당일 미션 유지(이미 수행): 로컬 발행 플래그 병합. 게이지 차감은 별도 규칙.
+  let pubFlag = false;
+  try { pubFlag = typeof window !== "undefined" && localStorage.getItem(localPubFlagKey()) === "1"; } catch { /* ignore */ }
+  const info = pubFlag && !infoRaw.publishedToday ? { ...infoRaw, publishedToday: true } : infoRaw;
   const clean = sanitizeTopics(topics);
-  const first = clean[0] ?? null;
-  const rest = clean.slice(1);
+  // ★'오늘의 글' 후보 — 오늘 이미 만든 글감(발행분 포함)은 제외(한 편 더 = 같은 글감 재생성 버그 방지).
+  const usedToday = todayKeywords(articles);
+  const first = pickNextTopic(clean, usedToday);
+  const rest = clean.filter((t) => t !== first);
 
   return (
     <main className="mx-auto max-w-2xl px-6 pb-10">
@@ -206,6 +212,7 @@ export default function Home({
           info={info}
           onWriteKeyword={onWriteKeyword}
           onGoPerformance={onGoPerformance}
+          onOpenTodayDraft={(() => { const d = articles.find((a) => a.status === "draft" && new Date(a.created_at).toDateString() === new Date().toDateString()); return d ? () => onSelect(d) : undefined; })()}
         />
       </div>
 
