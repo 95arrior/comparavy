@@ -268,8 +268,16 @@ export default function WritingView({
           </div>
         ) : (
           // ★라이브 원고 — 글자 단위로 실시간 작성 + 무지개 캐럿
-          <div className="prose prose-neutral max-w-none [&>h1]:text-2xl [&>h1]:font-bold [&>h1]:tracking-tight">
+          <div className="prose prose-neutral max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:tracking-tight [&_h1]:leading-snug">
             <span dangerouslySetInnerHTML={{ __html: shownHtml }} />
+            {!finished && (
+              // ★다음 문단의 자리 — 완결될 때까지 꼬리에 상주(제목 뒤 웹검색 구간·블록 사이 공백에도 죽은 화면 없음)
+              <div className="mt-5 space-y-3 not-prose" aria-hidden>
+                <div className="ateflo-skel h-4 w-full rounded" />
+                <div className="ateflo-skel h-4 w-11/12 rounded" />
+                <div className="ateflo-skel h-4 w-3/5 rounded" />
+              </div>
+            )}
           </div>
         )}
         <div ref={endRef} className="scroll-mb-40" />
