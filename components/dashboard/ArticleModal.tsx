@@ -35,6 +35,14 @@ export default function ArticleModal({
   const [title, setTitle] = useState(article.title);
   const [bodyHtml, setBodyHtml] = useState(article.body_html);
   const [naverOpen, setNaverOpen] = useState(false); // 네이버 복붙 발행 시트
+  // ★제목 2안 — 클릭형(title) / 검색형(meta_title). 다르면 탭으로 고르고, 발행 흐름 전체가 선택본을 쓴다.
+  const titleAlt = (article.meta_title ?? "").trim();
+  const hasTwoTitles = !!titleAlt && titleAlt !== (article.title ?? "").trim();
+  const [titlePick, setTitlePick] = useState<"click" | "search">("click");
+  const pubTitle = titlePick === "search" && hasTwoTitles ? titleAlt : title;
+  // ★인라인 수정(오타 수준) — 미리보기 문단 탭 → 시트에서 고침. 원문 매칭 실패 시 네이버 수정 안내.
+  const [editSeg, setEditSeg] = useState<null | { original: string; value: string }>(null);
+  const [strategyOpen, setStrategyOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
   // 편집 화면 열릴 때 항상 맨 위로 (작성 화면에서 스크롤 내려와 있어도)
@@ -236,7 +244,19 @@ export default function ArticleModal({
           <span className="truncate text-xs text-neutral-400">키워드 · {article.keyword}</span>
         </div>
 
-        <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight sm:text-3xl">{title}</h1>
+        {hasTwoTitles ? (
+          <div className="mt-3">
+            <div className="flex gap-1.5">
+              {([["click", "클릭형"], ["search", "검색형"]] as const).map(([k, label]) => (
+                <button key={k} onClick={() => setTitlePick(k)}
+                  className={`rounded-full px-3 py-1 text-[12px] font-bold transition ${titlePick === k ? "bg-[#1D75F7] text-white" : "bg-neutral-100 text-neutral-500 hover:bg-neutral-200"}`}>{label}</button>
+              ))}
+            </div>
+            <h1 className="mt-2 text-2xl font-bold leading-tight tracking-tight sm:text-3xl">{pubTitle}</h1>
+          </div>
+        ) : (
+          <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight sm:text-3xl">{title}</h1>
+        )}
 
         {compliance.length > 0 && (
           <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50/70 p-4">
@@ -330,10 +350,35 @@ export default function ArticleModal({
           <div className="w-full max-w-[390px] rounded-2xl bg-white px-5 py-6 shadow-[0_2px_20px_-8px_rgba(0,0,0,0.12)] ring-1 ring-black/[0.04]">
             <p className="mb-3 text-center text-[11px] font-semibold text-neutral-400">모바일에서 이렇게 보여요</p>
             <div
-              className="max-w-none [word-break:keep-all] text-[15px] leading-[1.7] text-neutral-800 [&_img]:mx-auto [&_img]:rounded-lg [&_p]:my-0 [&_h2]:my-0 [&_h2]:text-[17px] [&_h2]:font-bold [&_blockquote]:my-0 [&_blockquote]:border-l-2 [&_blockquote]:border-emerald-500 [&_blockquote]:pl-3 [&_ul]:my-0 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:my-0"
+              className="max-w-none [word-break:keep-all] text-[15px] leading-[1.7] text-neutral-800 [&_img]:mx-auto [&_img]:rounded-lg [&_p]:my-0 [&_h2]:my-0 [&_h2]:text-[17px] [&_h2]:font-bold [&_blockquote]:my-0 [&_blockquote]:border-l-2 [&_blockquote]:border-emerald-500 [&_blockquote]:pl-3 [&_ul]:my-0 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:my-0 [&_p]:cursor-pointer"
+              onClick={(e) => {
+                // ★문장 탭 → 오타 수준 인라인 수정(편집기 신설 금지 — 탈고는 네이버 원칙 유지)
+                const el = (e.target as HTMLElement).closest("p");
+                const text = el?.textContent?.trim();
+                if (!text || text.length < 4 || el?.querySelector("img")) return;
+                setEditSeg({ original: text, value: text });
+              }}
               dangerouslySetInnerHTML={{ __html: formatBody({ title, bodyHtml, images: Object.fromEntries(Object.entries(imgs).filter(([, v]) => v.url).map(([k, v]) => [Number(k), v.url as string])) }) }}
             />
+            <p className="mt-3 text-center text-[10.5px] text-neutral-300">문장을 탭하면 오타를 고칠 수 있어요</p>
           </div>
+        </div>
+
+        {/* ★전략 카드(접힘) — 이 글이 노리는 것. 별도 패널·대시보드화 금지, 접힌 한 섹션만. */}
+        <div className="mt-4 rounded-2xl at-glass">
+          <button onClick={() => setStrategyOpen((o) => !o)} className="flex w-full items-center justify-between px-5 py-3.5 text-left">
+            <span className="text-[13.5px] font-bold text-neutral-800">이 글의 작전</span>
+            <svg className={`text-neutral-300 transition-transform ${strategyOpen ? "rotate-180" : ""}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+          </button>
+          {strategyOpen && (
+            <div className="space-y-2.5 px-5 pb-4">
+              <p className="text-[12.5px] text-neutral-600"><span className="font-bold text-neutral-800">노리는 검색어</span> · {article.keyword}</p>
+              {Array.isArray(article.tags) && article.tags.length > 0 && (
+                <p className="flex flex-wrap gap-1">{(article.tags as string[]).slice(0, 6).map((t) => <span key={t} className="rounded-md bg-neutral-100 px-1.5 py-0.5 text-[11px] font-semibold text-neutral-500">#{t}</span>)}</p>
+              )}
+              <p className="text-[12.5px] leading-relaxed text-neutral-600"><span className="font-bold text-neutral-800">발행 후 할 일</span> · 이웃 5명에게 첫 반응 받기 — 첫 반응이 노출 테스트를 통과시켜요(홈 이웃 미션).</p>
+            </div>
+          )}
         </div>
 
         {article.write_note && (
@@ -359,9 +404,33 @@ export default function ArticleModal({
         )}
 
         {/* 네이버 발행 위저드 — 한 화면 = 한 문장 + 한 버튼 (80대 기준) */}
+        {editSeg && (
+          <div className="ateflo-backdrop-in fixed inset-0 z-[75] flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center sm:p-6" onClick={() => setEditSeg(null)}>
+            <div className="ateflo-sheet-up w-full max-w-md at-glass-strong rounded-t-3xl p-6 shadow-2xl sm:rounded-3xl" style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom))" }} onClick={(e) => e.stopPropagation()}>
+              <p className="text-[15px] font-bold text-neutral-900">문장 고치기</p>
+              <p className="mt-0.5 text-[12px] text-neutral-400">오타 수준만 — 큰 수정은 네이버 편집기가 편해요.</p>
+              <textarea value={editSeg.value} onChange={(e) => setEditSeg({ ...editSeg, value: e.target.value })} rows={4}
+                className="mt-3 w-full rounded-xl bg-white p-3.5 text-[14px] leading-relaxed text-neutral-800 outline-none ring-1 ring-black/[0.06] focus:ring-[#1D75F7]/40" />
+              <div className="mt-3 flex gap-2">
+                <button onClick={async () => {
+                  const { original, value } = editSeg;
+                  if (!value.trim() || value === original) { setEditSeg(null); return; }
+                  if (!bodyHtml.includes(original)) { setToast("이 문장은 네이버에서 수정해 주세요"); setEditSeg(null); return; }
+                  const next = bodyHtml.replace(original, value.trim());
+                  setBodyHtml(next);
+                  setEditSeg(null);
+                  const res = await fetch(`/api/articles/${article.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ body_html: next }) });
+                  if (res.ok) { setToast("고쳤어요"); onUpdated({ ...article, title, body_html: next }); } else setToast("저장하지 못했어요");
+                }} className="at-press flex-1 rounded-xl bg-[#1D75F7] py-3 text-[14px] font-bold text-white transition hover:opacity-90">저장</button>
+                <button onClick={() => setEditSeg(null)} className="at-press rounded-xl bg-neutral-100 px-5 py-3 text-[14px] font-bold text-neutral-600">취소</button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {naverOpen && (
           <NaverPublishSheet
-            title={title}
+            title={pubTitle}
             bodyHtml={bodyHtml}
             images={Object.fromEntries(Object.entries(imgs).filter(([, v]) => v.url).map(([k, v]) => [Number(k), v.url as string]))}
             tags={Array.isArray(article.tags) ? (article.tags as string[]) : []}

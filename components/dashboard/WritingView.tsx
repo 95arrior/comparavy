@@ -253,10 +253,10 @@ export default function WritingView({
           )
         ) : phase === "thinking" ? (
           // 첫 글자가 오기 전 — 키워드만 크게, 나머지는 하단 룰렛이 말해줌
-          // 첫 블록 전 — 대기 언어·스피너 없이 '자리 약속'만(홈과 같은 스켈레톤 문법). 죽은 화면 금지.
-          <div className="mx-auto max-w-xl pt-6" aria-hidden>
-            <p className="text-[20px] font-extrabold leading-snug tracking-tight text-[color:var(--at-grey-900)]">{params.keyword}</p>
-            <div className="mt-6 space-y-3">
+          // ★작전판 0초 — 대기 대신 '이 글의 작전'이 즉시 선다(제목 후보·노리는 검색어·의도·독자). 본문은 아래로 33초대 흐름.
+          <div className="mx-auto max-w-xl pt-6">
+            <OpsBoard params={params} />
+            <div className="mt-6 space-y-3" aria-hidden>
               <div className="ateflo-skel h-6 w-4/5 rounded" />
               <div className="ateflo-skel h-4 w-full rounded" />
               <div className="ateflo-skel h-4 w-11/12 rounded" />
@@ -268,7 +268,9 @@ export default function WritingView({
           </div>
         ) : (
           // ★라이브 원고 — 글자 단위로 실시간 작성 + 무지개 캐럿
-          <div className="prose prose-neutral max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:tracking-tight [&_h1]:leading-snug">
+          <div className="mx-auto max-w-xl">
+          <OpsBoard params={params} compact />
+          <div className="prose prose-neutral max-w-none mt-5 [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:tracking-tight [&_h1]:leading-snug">
             <span dangerouslySetInnerHTML={{ __html: shownHtml }} />
             {!finished && (
               // ★다음 문단의 자리 — 완결될 때까지 꼬리에 상주(제목 뒤 웹검색 구간·블록 사이 공백에도 죽은 화면 없음)
@@ -278,6 +280,7 @@ export default function WritingView({
                 <div className="ateflo-skel h-4 w-3/5 rounded" />
               </div>
             )}
+          </div>
           </div>
         )}
         <div ref={endRef} className="scroll-mb-40" />
@@ -294,5 +297,23 @@ export default function WritingView({
         </div>
       )}
     </>
+  );
+}
+
+
+// ★작전판 — 폴백 경로 0초 콘텐츠(대기 표시가 아니라 이 글의 전략). briefText에서 의도·독자 추출.
+function OpsBoard({ params, compact }: { params: GenParams; compact?: boolean }) {
+  const intent = /의도:\s*([^\n]+)/.exec(params.angleBrief ?? "")?.[1]?.trim();
+  const reader = /독자:\s*([^\n]+)/.exec(params.angleBrief ?? "")?.[1]?.trim();
+  return (
+    <div className={`rounded-2xl at-glass ${compact ? "p-4" : "p-5"}`}>
+      <p className="text-[11.5px] font-bold text-[#1D75F7]">이 글의 작전</p>
+      <p className={`mt-1.5 font-extrabold leading-snug tracking-tight text-[color:var(--at-grey-900)] ${compact ? "text-[15px]" : "text-[18px]"}`}>{params.angle}</p>
+      <div className="mt-2.5 flex flex-wrap gap-1.5">
+        <span className="rounded-md bg-[#1D75F7]/[0.07] px-2 py-0.5 text-[11.5px] font-bold text-[#1D75F7]">노리는 검색어 · {params.keyword}</span>
+        {intent && <span className="rounded-md bg-neutral-100 px-2 py-0.5 text-[11.5px] font-semibold text-neutral-600">{intent}</span>}
+      </div>
+      {!compact && reader && <p className="mt-2 text-[12.5px] leading-relaxed text-neutral-500">읽는 사람: {reader}</p>}
+    </div>
   );
 }
