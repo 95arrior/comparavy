@@ -46,5 +46,25 @@ clipboard = "이전제목내용"; focused = true; silentFail = true; // write �
 r = await copyTextVerified(BODY);
 ok(r === "fail", `오탐을 fail로 차단 결과=${r} (기존 '${clipboard.slice(0,6)}' 유지)`);
 
-console.log(fail === 0 ? "\n통과: 3시나리오 정상 + 오탐 차단" : `\n실패: ${fail}건`);
+// (e) ★회귀 고정(2회 재발 버그): '네이버 열기'는 클립보드를 절대 만지지 않는다.
+console.log("\n(e) 열기 후 클립보드 불변(덮어쓰기 회귀):");
+clipboard = ""; focused = true; silentFail = false;
+await copyTextVerified(BODY);                       // 화면1: 본문 복사
+// 화면2: 열기 — window.open만(순수). 클립보드 API 호출이 있었다면 mock이 내용을 바꿨을 것.
+const openNaver = () => { /* window.open(...) — 탭만 */ };
+openNaver();
+ok((await readClipboardText()) === BODY, "열기 클릭 후에도 클립보드 = 본문(제목 아님)");
+
+// 정적 가드 — 열기 경로 소스에 clipboard 접근 코드가 없어야 한다(잔재 코드 재유입 차단).
+const fs = await import("node:fs");
+const naverApp = fs.readFileSync("lib/naverApp.ts", "utf8");
+ok(!/clipboard/i.test(naverApp), "lib/naverApp.ts에 clipboard 접근 0");
+const am = fs.readFileSync("components/dashboard/ArticleModal.tsx", "utf8");
+const openFn = am.slice(am.indexOf("function openNaverWrite"), am.indexOf("}", am.indexOf("window.open(`https://blog.naver.com")) + 1);
+ok(!/clipboard/i.test(openFn), "openNaverWrite 함수 내 clipboard 접근 0");
+const sheet = fs.readFileSync("components/dashboard/NaverPublishSheet.tsx", "utf8");
+const openBtn = sheet.slice(sheet.indexOf("화면 2"), sheet.indexOf("화면 3"));
+ok(!/copyText|copyRich|clipboard/i.test(openBtn), "위저드 화면2(열기)에 복사 호출 0");
+
+console.log(fail === 0 ? "\n통과: 3시나리오 + 오탐 차단 + 열기 불변(회귀 고정)" : `\n실패: ${fail}건`);
 process.exit(fail === 0 ? 0 : 1);

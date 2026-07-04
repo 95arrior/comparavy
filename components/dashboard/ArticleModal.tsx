@@ -63,8 +63,7 @@ export default function ArticleModal({
       openNaverBlogApp({ webPath: `${id}/postwrite` });
       return;
     }
-    // 데스크톱 — 제목 미리 복사 후 글쓰기 새 탭
-    try { navigator.clipboard?.writeText(title); } catch { /* ignore */ }
+    // 데스크톱 — 새 탭만 연다. ★클립보드는 절대 건드리지 않는다(본문 복사 보존 — 덮어쓰기 버그 2회 재발 지점).
     window.open(`https://blog.naver.com/${id}/postwrite`, "_blank", "noopener");
     // 발행 완료 처리는 시트의 '다 올렸어요' 버튼으로만 — 자동 처리하면 시트가 닫혀 본문 복사를 못 함(모바일 왕복 버그)
   }
