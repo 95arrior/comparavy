@@ -59,13 +59,18 @@ export async function buildPoolForSub(vertical: string, sub: string, opts?: { sl
       keyword: k.keyword, // 원본 키워드(글감형 변환은 추천 단계에서)
       monthly_searches: k.monthlySearches,
       competition: k.compIdx, // 낮음/중간/높음 그대로
+      ad_depth: k.adDepth ?? null, // ★단가 프록시(광고 밀도) — 같은 응답 필드라 추가 호출 0 (0052)
       estimated: false, // 네이버 정확 검색량
       seed,
       source: "naver",
       updated_at: new Date().toISOString(),
     }));
     // unique(vertical,sub,keyword) → 중복은 갱신(times_assigned·created_at 보존)
-    const { error } = await admin.from("keyword_pool").upsert(rows, { onConflict: "vertical,sub,keyword" });
+    let { error } = await admin.from("keyword_pool").upsert(rows, { onConflict: "vertical,sub,keyword" });
+    if (error && /ad_depth/.test(error.message)) { // 0052 미적용 방어
+      const bare = rows.map(({ ad_depth: _d, ...rest }) => rest);
+      ({ error } = await admin.from("keyword_pool").upsert(bare, { onConflict: "vertical,sub,keyword" }));
+    }
     if (error) throw new Error(`풀 저장 실패: ${error.message}`);
     inserted = rows.length;
   }

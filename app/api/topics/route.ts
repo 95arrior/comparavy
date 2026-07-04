@@ -15,6 +15,7 @@ import { amplifyForUser } from "@/lib/amplifyTopics";
 import { collectPoolKeywords } from "@/lib/poolCollect";
 import { fetchNaverAutocomplete } from "@/lib/naverAutocomplete";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { BID_WEIGHT, BID_DEPTH_CAP, BID_COMP_BONUS, BID_BADGE_RATIO, BID_HIGH_MIN_DEPTH } from "@/lib/scoreWeights";
 
 // 사장의 blog_profile(vertical + sub_category)로 keyword_pool에서 글감 3개를 뽑는다.
 // Stage 2-B 분산: ① least-used 우선(times_assigned asc) ② 본인이 이미 쓴 키워드 제외 ③ 그 안 랜덤.
@@ -24,7 +25,7 @@ export const maxDuration = 60; // 신규 카테고리 첫 요청은 lazy-fill(�
 const PICK = 5; // 홈 5~6개 동적 노출(오늘 1 + 다른 글감 4~5)
 const WINDOW = 150; // least-used 윈도우 크기 — 이 안에서 랜덤(반복 많으면 키우고, 마이너 자주 뜨면 줄임)
 
-interface PoolRow { keyword: string; monthly_searches: number | null; competition: string | null; audience: string | null; blog_total: number | null }
+interface PoolRow { keyword: string; monthly_searches: number | null; competition: string | null; audience: string | null; blog_total: number | null; ad_depth?: number | null }
 
 // 검색량 → 쉬운 말(숫자 노출 X). 유형별 톤: local=손님 / online=검색 / hobby=찾는 주제.
 function demandLabel(searches: number | null, type: BloggerType): string {
@@ -222,7 +223,8 @@ export async function GET(req: Request) {
   // least-used 우선 윈도우(times_assigned asc → 균등 분산). 본인이 쓴 건 제외 후 남은 것만.
   // 적정범위 = 월 500~5,000 (경쟁 과열·초저검색 회피). sub 없거나 부족하면 단계적으로 넓힌다.
   async function fetchPool(useSub: boolean, ranged: boolean): Promise<PoolRow[]> {
-    let q = pool.from("keyword_pool").select("keyword, monthly_searches, competition, audience, blog_total").eq("vertical", vertical);
+    const COLS = "keyword, monthly_searches, competition, audience, blog_total";
+    let q = pool.from("keyword_pool").select(`${COLS}, ad_depth`).eq("vertical", vertical);
     if (useSub && sub) q = q.eq("sub", sub);
     if (cluster) q = q.ilike("keyword", `%${cluster}%`); // 클러스터: 이 토큰 든 키워드만
     if (adminBest) {
@@ -231,10 +233,19 @@ export async function GET(req: Request) {
     } else if (ranged) {
       q = q.gte("monthly_searches", 500).lte("monthly_searches", 5000);
     }
-    const { data } = await q
+    let { data, error } = await q
       .order(adminBest ? "monthly_searches" : "times_assigned", { ascending: adminBest ? false : true })
       .order("monthly_searches", { ascending: false })
       .limit(WINDOW);
+    if (error) { // ad_depth(0052) 미적용 방어 — 컬럼 빼고 재조회
+      let q2 = pool.from("keyword_pool").select(COLS).eq("vertical", vertical);
+      if (useSub && sub) q2 = q2.eq("sub", sub);
+      if (cluster) q2 = q2.ilike("keyword", `%${cluster}%`);
+      if (adminBest) q2 = ranged ? q2.gte("monthly_searches", 2000).lte("monthly_searches", 30000) : q2.gte("monthly_searches", 1000);
+      else if (ranged) q2 = q2.gte("monthly_searches", 500).lte("monthly_searches", 5000);
+      const fb = await q2.order(adminBest ? "monthly_searches" : "times_assigned", { ascending: adminBest ? false : true }).order("monthly_searches", { ascending: false }).limit(WINDOW);
+      data = (fb.data ?? []) as unknown as typeof data;
+    }
     const rows = (data ?? []) as PoolRow[];
     // 본인 작성분 제외 + 고른 대상(audience)만 통과
     return rows.filter((r) => !usedSet.has(normalizeKeyword(r.keyword)) && !isUnsafeKeyword(r.keyword) && !staleYear(r.keyword) && audMatch(r.keyword, r.audience));
@@ -288,6 +299,19 @@ export async function GET(req: Request) {
   // ── 경쟁도 티어 ──
   // 낮음 = 싹 키워드(전설·희귀), 중간 = 일반(기본), 높음 = 빅키워드(최후)
   const comp = (r: PoolRow) => (r.competition ?? "").trim();
+  // ★단가 축(Part B) — '단가 높음'은 카테고리 '상대 상위 30% 랭크'(절대값이면 금융 독식, percentile은 동률 포화 시 전원/0명 — 실측으로 랭크 확정).
+  //  단가점수 = ad_depth(광고 밀도 프록시, 천장 10) + 광고경쟁 보정. 동률은 검색량 큰 순. 바닥 depth 5 미만은 제외.
+  const bidScoreOf = (r: PoolRow) => (r.ad_depth ?? 0) + (BID_COMP_BONUS[(r.competition ?? "").trim()] ?? 0);
+  const bidRanked = rows.filter((r) => (r.ad_depth ?? 0) >= BID_HIGH_MIN_DEPTH)
+    .sort((a, b) => bidScoreOf(b) - bidScoreOf(a) || (b.monthly_searches ?? 0) - (a.monthly_searches ?? 0));
+  const badgeN = bidRanked.length >= 4 ? Math.max(1, Math.round(bidRanked.length * BID_BADGE_RATIO)) : 0;
+  const bidHighSet = new Set(bidRanked.slice(0, badgeN).map((r) => r.keyword));
+  const bidHigh = (r: PoolRow) => bidHighSet.has(r.keyword);
+  // 서빙 랭크 소프트 부스트 — 랜덤(0~1) + BID_WEIGHT×정규화 단가. 다양성(셔플)은 유지하되 단가 높은 글감이 자주 앞에.
+  //  가중치 상수는 lib/scoreWeights — '공격 모드'가 나중에 이 상수를 오버라이드한다.
+  const bidBoostSort = (items: PoolRow[]): PoolRow[] =>
+    items.map((r) => ({ r, s: rng() + BID_WEIGHT * (Math.min(r.ad_depth ?? 0, BID_DEPTH_CAP) / BID_DEPTH_CAP) }))
+      .sort((a, b) => b.s - a.s).map((x) => x.r);
   const low = rows.filter((r) => comp(r) === "낮음");
   const mid = rows.filter((r) => comp(r) === "중간");
   const high = rows.filter((r) => comp(r) === "높음");
@@ -387,7 +411,7 @@ export async function GET(req: Request) {
       }
     } else {
     // 오디언스 밸런스(넉넉히) → 소주제 분산. 둘 다 만족해 비슷한 글감 몰림 방지.
-    const balanced = pickBalanced(noForeign(mid), audActive ? audSel : [], (want + 1) * 2, rng);
+    const balanced = pickBalanced(bidBoostSort(noForeign(mid)), audActive ? audSel : [], (want + 1) * 2, rng); // ★단가 소프트 부스트(BID_WEIGHT)
     const general = pickDiverse(balanced, want + 1, rng);
     const lowF = noForeign(low), highF = noForeign(high);
     if (lowF.length > 0 && rng() < 0.28) candidates.push(lowF[Math.floor(rng() * lowF.length)]); // 싹 1개 가끔
@@ -520,6 +544,7 @@ export async function GET(req: Request) {
       vol: r.monthly_searches ?? 0,
       comp: realComp,
       blogTotal: r.blog_total ?? null,
+      bidHigh: bidHigh(r), // ★단가 높음(카테고리 상대) — 배지용
       tag: t?.tag || sub || "글감", // 칩 항상 표시 — AI 분류 없으면 세부업종으로 폴백
     };
   });

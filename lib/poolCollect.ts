@@ -34,7 +34,8 @@ function isJunk(keyword: string): boolean {
 export interface PoolKeyword {
   keyword: string;
   monthlySearches: number; // 모바일+PC 합산(실제 총 검색량)
-  compIdx: string; // 낮음/중간/높음 (높음도 보존)
+  compIdx: string;
+  adDepth?: number; // ★단가 프록시(plAvgDepth) — Part B // 낮음/중간/높음 (높음도 보존)
 }
 
 /**
@@ -55,7 +56,7 @@ export async function collectPoolKeywords(seed: string): Promise<PoolKeyword[]> 
     if (isJunk(keyword)) continue;
     if (isUnsafeKeyword(keyword)) continue; // 타사 업체명·인물명·브랜드 차단(법적)
     seen.add(key);
-    out.push({ keyword, monthlySearches: total, compIdx: String(k.compIdx ?? "") });
+    out.push({ keyword, monthlySearches: total, compIdx: String(k.compIdx ?? ""), adDepth: typeof k.plAvgDepth === "number" ? k.plAvgDepth : 0 });
   }
   out.sort((a, b) => b.monthlySearches - a.monthlySearches); // 검색량 많은 순
   return out;

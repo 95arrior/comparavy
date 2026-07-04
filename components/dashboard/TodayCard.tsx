@@ -14,7 +14,7 @@ type CompLevel = "low" | "mid" | "high" | undefined;
 export interface TodayTopic {
   keyword: string; title: string; tag?: string; newsContext?: string;
   briefText?: string; titleSearch?: string; thumb?: { mainCopy: string; subCopy: string; badge: string };
-  vol?: number; comp?: CompLevel; blogTotal?: number | null;
+  vol?: number; comp?: CompLevel; blogTotal?: number | null; bidHigh?: boolean;
 }
 
 export default function TodayCard({
@@ -56,7 +56,7 @@ export default function TodayCard({
         <p className="mt-2 text-[17px] font-bold leading-snug text-neutral-900">오늘 1편 발행 완료.<br />한 편 더 쓰면 승인이 가까워져요.</p>
         {topic && !locked && (
           <div className="mt-3 rounded-xl bg-neutral-50 p-3.5">
-            <div><DemandRow topic={topic} /></div>
+            <div><DemandRow topic={topic} onGoPerformance={onGoPerformance} /></div>
             <p className="mt-1.5 text-[14.5px] font-bold leading-snug text-neutral-900">{topic.title}</p>
             {whyNext && <p className="mt-1 text-[12.5px] leading-relaxed text-neutral-500">{whyNext}</p>}
             <button onClick={() => write(topic)} className="at-press mt-3 w-full rounded-xl bg-[#1D75F7] py-2.5 text-[13px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">
@@ -121,7 +121,7 @@ export default function TodayCard({
   return (
     <Card highlight>
       <Header label="오늘의 글" />
-      <DemandRow topic={topic} />
+      <DemandRow topic={topic} onGoPerformance={onGoPerformance} />
       <p className="mt-2 text-[19px] font-extrabold leading-snug text-[color:var(--at-grey-900)]">{topic.title}</p>
       {why && <p className="mt-1.5 text-[13px] font-medium leading-relaxed text-neutral-500">{why}</p>}
       <div className="mt-3 flex items-center gap-1.5 rounded-xl bg-[#1D75F7]/[0.06] px-3.5 py-2.5">
@@ -134,7 +134,7 @@ export default function TodayCard({
 }
 
 // 데이터 배지 행 — 주인공 카드로 이동(월 검색량·경쟁·선점 기회).
-function DemandRow({ topic, muted }: { topic: TodayTopic; muted?: boolean }) {
+function DemandRow({ topic, muted, onGoPerformance }: { topic: TodayTopic; muted?: boolean; onGoPerformance?: () => void }) {
   const isTrend = topic.tag === "issue" || topic.tag === "trend";
   const isSteady = topic.tag === "steady";
   const comp = topic.comp === "low" ? { label: "경쟁 낮음", cls: "bg-emerald-50 text-emerald-600" }
@@ -150,7 +150,14 @@ function DemandRow({ topic, muted }: { topic: TodayTopic; muted?: boolean }) {
         : isSteady
         ? <span className="rounded-md bg-sky-50 px-1.5 py-0.5 text-[11px] font-bold text-sky-600">꾸준한 수요</span>
         : comp && <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-bold ${comp.cls}`}>{comp.label}</span>}
-      <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-bold ${rev === "shopping" ? "bg-violet-50 text-violet-600" : "bg-sky-50 text-sky-600"}`}>{rev === "shopping" ? "쇼핑커넥트" : "애드포스트"}</span>
+      <button onClick={(e) => {
+        e.stopPropagation();
+        if (rev === "shopping") {
+          let approved = false; try { approved = localStorage.getItem("ateflo_adpost_approved") === "1"; } catch { /* ignore */ }
+          if (!approved && onGoPerformance) onGoPerformance(); // 잠김 → "애드포스트 승인 후 열려요" = 사다리 화면이 안내
+        } else if (onGoPerformance) onGoPerformance();
+      }} className={`rounded-md px-1.5 py-0.5 text-[11px] font-bold ${rev === "shopping" ? "bg-violet-50 text-violet-600" : "bg-sky-50 text-sky-600"}`}>{rev === "shopping" ? "쇼핑커넥트" : "애드포스트"}</button>
+      {topic.bidHigh && <span className="rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-bold text-amber-700">단가 높음</span>}
       <span className="text-[12px] font-medium text-[color:var(--at-grey-400)]">{demand}</span>
     </div>
   );
