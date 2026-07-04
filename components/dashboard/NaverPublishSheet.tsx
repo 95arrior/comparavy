@@ -22,6 +22,7 @@ export default function NaverPublishSheet({
   title,
   bodyHtml,
   images,
+  tags,
   onOpenNaverWrite,
   onDone,
   onClose,
@@ -29,6 +30,8 @@ export default function NaverPublishSheet({
   title: string;
   bodyHtml: string;
   images: Record<number, string>;
+  /** 네이버 태그칸 전용 — 본문엔 넣지 않는다(자동 등록 중복 방지) */
+  tags?: string[];
   onOpenNaverWrite: () => void; // ★탭만 연다 — 클립보드 접근 금지(회귀 테스트로 고정)
   onDone: () => void;
   onClose: () => void;
@@ -39,7 +42,11 @@ export default function NaverPublishSheet({
     [images],
   );
 
-  const [screen, setScreen] = useState(1); // 1 본문 → 2 열기 → 3 제목 → 4 완료
+  const tagList = (tags ?? []).map((t) => String(t).trim().replace(/^#/, "")).filter(Boolean).slice(0, 10);
+  const hasTags = tagList.length > 0;
+  const totalScreens = hasTags ? 5 : 4;
+  const [screen, setScreen] = useState(1); // 1 본문 → 2 열기 → 3 제목 → (4 태그) → 마지막 완료
+  const [tagsCopied, setTagsCopied] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [clip, setClip] = useState<string | null>(null);
@@ -71,6 +78,15 @@ export default function NaverPublishSheet({
       setClip("제목"); setTitleCopied(true);
     } finally { setBusy(false); }
   }
+  async function copyTags() {
+    if (busy) return;
+    setBusy(true); setErr(null);
+    try {
+      const r = await copyTextVerified(tagList.map((t) => `#${t}`).join(" "));
+      if (r === "fail") { setErr("복사가 안 됐어요. 한 번 더 눌러주세요."); return; }
+      setClip("태그"); setTagsCopied(true);
+    } finally { setBusy(false); }
+  }
   async function saveAllImages() {
     if (busy) return;
     setBusy(true);
@@ -95,8 +111,8 @@ export default function NaverPublishSheet({
           <button onClick={() => (screen > 1 ? setScreen(screen - 1) : onClose())} className="at-press -ml-1 rounded-lg px-2 py-1 text-[13px] font-medium text-neutral-400 transition hover:text-neutral-700">
             {screen > 1 ? "← 뒤로" : "닫기"}
           </button>
-          <div className="flex items-center gap-1.5" aria-label={`${screen}/4 단계`}>
-            {[1, 2, 3, 4].map((n) => (
+          <div className="flex items-center gap-1.5" aria-label={`${screen}/${totalScreens} 단계`}>
+            {Array.from({ length: totalScreens }, (_, i) => i + 1).map((n) => (
               <span key={n} className={`h-1.5 rounded-full transition-all ${n === screen ? "w-5 bg-[#1D75F7]" : n < screen ? "w-1.5 bg-[#1D75F7]/50" : "w-1.5 bg-neutral-200"}`} />
             ))}
           </div>
@@ -155,8 +171,25 @@ export default function NaverPublishSheet({
           </div>
         )}
 
-        {/* 화면 4 — 완료 */}
-        {screen === 4 && (
+        {/* 화면 4 — 태그(있을 때만): 본문엔 없음 — 태그칸에 붙여넣으면 자동으로 나뉜다 */}
+        {hasTags && screen === 4 && (
+          <div className="mt-5">
+            <p className="text-[17px] font-bold text-neutral-900">태그를 채우세요</p>
+            <p className="mt-1 text-[13px] leading-relaxed text-neutral-500">발행 화면 아래 태그 칸에 붙여넣으면 자동으로 나뉘어 들어가요.</p>
+            <button onClick={copyTags} disabled={busy} className="at-press mt-3 w-full rounded-2xl bg-neutral-50 p-4 text-left ring-1 ring-black/[0.05] transition hover:bg-neutral-100 disabled:opacity-60">
+              <p className="flex flex-wrap gap-1.5">
+                {tagList.map((t) => <span key={t} className="rounded-md bg-white px-2 py-0.5 text-[12.5px] font-semibold text-neutral-600 ring-1 ring-black/[0.05]">#{t}</span>)}
+              </p>
+              <p className="mt-2 flex items-center gap-1.5 text-[12.5px] font-bold" style={{ color: BLUE }}>
+                {tagsCopied && <Check />}{busy ? "확인 중" : tagsCopied ? "태그 복사됨 · 태그 칸에 붙여넣으세요" : "탭하면 복사돼요"}
+              </p>
+            </button>
+            <button onClick={() => setScreen(5)} className={`${bigBtn} mt-4`} style={{ background: BLUE }}>다음</button>
+          </div>
+        )}
+
+        {/* 마지막 화면 — 완료 */}
+        {screen === totalScreens && (
           <div className="mt-5">
             <p className="text-[17px] font-bold text-neutral-900">발행 버튼까지 눌렀나요?</p>
             <p className="mt-1 text-[13px] leading-relaxed text-neutral-500">네이버에서 발행을 마쳤다면 아래를 눌러 오늘 미션을 끝내세요.</p>

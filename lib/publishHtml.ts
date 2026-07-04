@@ -248,8 +248,8 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
     const url = input.images?.[idx];
     return url ? `<p><img src="${url}" alt="" /></p>` : ""; // 미충족 → 제거(마커·지시 노출 안 함)
   });
-  const groups = hashtagGroups(input.hashtags);
-  if (groups.length) body += `<p>${groups.join("<br>")}</p>`; // 해시태그 2~3개 단위 줄 나눔
+  // ★해시태그는 본문에 넣지 않는다 — 네이버가 본문 #태그를 태그칸에 자동 등록해 '본문+태그칸' 중복이 생김.
+  //  태그는 발행 위저드의 '태그' 단계에서 태그칸 전용으로 복사(hashtagGroups는 그 용도로 유지).
   // 최종 게이트: rich는 사진 마커/지시·이모지 전면 제거. marker 모드(수동 배치)는 [사진 N] 유지하고 이모지만.
   const gated0 = withImages ? sanitizeForCopy(body) : stripEmoji(body);
   const gated = sanitizeUrls(gated0).html; // ★기존 초안 소급 — 사전 밖 URL은 복사 시점에도 정화

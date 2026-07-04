@@ -360,6 +360,7 @@ export default function ArticleModal({
             title={title}
             bodyHtml={bodyHtml}
             images={Object.fromEntries(Object.entries(imgs).filter(([, v]) => v.url).map(([k, v]) => [Number(k), v.url as string]))}
+            tags={Array.isArray(article.tags) ? (article.tags as string[]) : []}
             onOpenNaverWrite={openNaverWrite}
             onDone={markNaverPublished}
             onClose={() => setNaverOpen(false)}
