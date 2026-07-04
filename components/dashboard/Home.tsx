@@ -12,6 +12,7 @@ import { depletionForecast, attackEligible } from "@/lib/checkin";
 import { GENERATE_COST } from "@/lib/creditPacks";
 import { nextSeedRefreshLabel } from "@/lib/seedRefresh";
 import { revenuePath } from "@/lib/revenue";
+import CountUp from "@/components/CountUp";
 import { isVerifiedStatus } from "@/lib/course";
 import { REVIEW_WEEKLY_MIN } from "@/lib/scoreWeights";
 import type { Comp } from "@/lib/topicScore";
@@ -244,25 +245,36 @@ export default function Home({
       {/* 인사말 */}
       <p className="tk-seq-1 pt-6 text-[15px] font-semibold text-[color:var(--color-text-sub)]">{blogName}</p>
 
-      {/* 상태 카드 — 토스 자산 카드 문법: 큰 숫자 + 파란 진행바 + 문장 한 줄 */}
+      {/* 상태 카드 — 큰 숫자 + 파란 진행바 + 최근 7일 발행 도트(장식이 아니라 데이터) */}
       <button onClick={onGoPerformance} className="tk-seq-1 tk-cta mt-3 block w-full rounded-[20px] bg-white p-6 text-left shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
-        <p className="text-[13px] text-[color:var(--color-text-weak)]">애드포스트 승인까지</p>
-        <div className="mt-1 flex items-baseline gap-2">
-          <span className="text-[34px] font-bold leading-none tracking-[-0.02em] tabular-nums text-[color:var(--color-text)]">{info.finished ? "완주" : info.day > 0 ? `D-${info.day}` : "D-20"}</span>
-          <span className="text-[15px] font-semibold tabular-nums text-[color:var(--color-brand)]">{progressPercent(info)}%</span>
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-[13px] text-[color:var(--color-text-weak)]">애드포스트 승인까지</p>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-[34px] font-bold leading-none tracking-[-0.02em] tabular-nums text-[color:var(--color-text)]">{info.finished ? "완주" : info.day > 0 ? `D-${info.day}` : "D-20"}</span>
+              <span className="text-[15px] font-semibold tabular-nums text-[color:var(--color-brand)]"><CountUp to={progressPercent(info)} duration={800} />%</span>
+            </div>
+          </div>
+          {/* 최근 7일 발행 도트 — 오른쪽 호흡 + 한눈 리듬 */}
+          <div className="mt-1 flex items-end gap-1" aria-hidden>
+            {Array.from({ length: 7 }, (_, i) => {
+              const d = new Date(); d.setDate(d.getDate() - (6 - i));
+              const done = articles.some((a) => isVerifiedStatus(a.status) && new Date(a.created_at).toDateString() === d.toDateString());
+              return <span key={i} className={`tk-dot h-2 w-2 rounded-full ${done ? "bg-[color:var(--color-brand)]" : "bg-[color:var(--color-line)]"}`} style={{ animationDelay: `${300 + i * 60}ms` }} />;
+            })}
+          </div>
         </div>
-        <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-[color:var(--color-line)]">
+        <div className="mt-5 h-2 w-full overflow-hidden rounded-full bg-[color:var(--color-line)]">
           <div className="tk-bar-fill h-full rounded-full bg-[color:var(--color-brand)]" style={{ width: `${Math.max(progressPercent(info), 2)}%` }} />
         </div>
         {(info.streak > 0 || yesterdayPublished(articles)) && (
-          <p className="mt-3 text-[13px] text-[color:var(--color-text-sub)]">
+          <p className="mt-4 text-[13px] text-[color:var(--color-text-sub)]">
             {info.streak > 0 ? `${info.streak}일 연속 발행 중` : ""}
             {info.streak > 0 && yesterdayPublished(articles) ? " · " : ""}
             {yesterdayPublished(articles) ? "어제 발행 확인됐어요" : ""}
           </p>
         )}
       </button>
-
 
       {/* 크레딧 소진 예고 — 잔여 3편 이하 + 실사용 페이스로 예측 가능할 때만(지어내기 금지) */}
       {(() => {
@@ -382,9 +394,9 @@ export default function Home({
               {routineSheet === "neighbor" && <NeighborMission subCategory={subCategory} sheet />}
               {routineSheet === "topics" && (
                 topicsLoading ? <TopicsSkeleton collecting={collecting} /> : rest.length > 0 ? (
-                  <div className="flex flex-col gap-2.5">
-                    {rest.map((t) => (
-                      <TopicRow key={t.keyword} topic={t} onClick={() => { setRoutineSheet(null); onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb); }} onSwap={() => swapTopic(t.keyword)} swapping={swapping.includes(t.keyword)} />
+                  <div className="flex flex-col gap-3">
+                    {rest.map((t, ti) => (
+                      <div key={t.keyword} className="tk-chip" style={{ animationDelay: `${ti * 50}ms` }}><TopicRow topic={t} onClick={() => { setRoutineSheet(null); onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb); }} onSwap={() => swapTopic(t.keyword)} swapping={swapping.includes(t.keyword)} /></div>
                     ))}
                   </div>
                 ) : (
@@ -414,42 +426,37 @@ function TopicRow({ topic, onClick, onSwap, swapping }: {
       ? { label: "경쟁 보통", cls: "bg-amber-50 text-amber-600" }
       : { label: "경쟁 높음", cls: "bg-rose-50 text-rose-500" };
   return (
-    <div className={`rounded-2xl at-glass p-5  transition ${swapping ? "at-ai-swap" : ""}`}>
-      <div className="flex items-center gap-2">
+    <div className={`rounded-[20px] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition ${swapping ? "at-ai-swap" : ""}`}>
+      <div className="flex items-center gap-1.5">
         {topic.tag === "issue" || topic.tag === "trend" ? (
-          <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--color-text)]">실시간 트렌드</span>
+          <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2.5 py-1 text-[12px] font-semibold text-[color:var(--color-brand)]">실시간 트렌드</span>
         ) : topic.tag === "steady" ? (
-          <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--color-text)]">꾸준한 수요</span>
+          <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2.5 py-1 text-[12px] font-semibold text-[color:var(--color-text-sub)]">꾸준한 수요</span>
         ) : (
-          <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--color-text)]">{compMeta.label}</span>
+          <span className="rounded-full bg-[#F7F8FA] px-2.5 py-1 text-[12px] font-semibold text-[color:var(--color-text-sub)]">{compMeta.label}</span>
         )}
-        {(topic as { bidHigh?: boolean }).bidHigh && <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--color-warning)]">단가 높음</span>}
+        {(topic as { bidHigh?: boolean }).bidHigh && <span className="rounded-full bg-[#FFF8EB] px-2.5 py-1 text-[12px] font-semibold text-[color:var(--color-warning)]">단가 높음</span>}
         {onSwap && (
-          <button onClick={onSwap} disabled={swapping} aria-label="새 글감 받기" className="at-press ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-neutral-300 transition hover:bg-neutral-50 hover:text-[color:var(--color-text)] disabled:opacity-40">
-<span className={`flex h-[18px] w-[18px] items-center justify-center ${swapping ? "animate-spin" : ""}`}><GlassIcon name="refresh" tint="grey" size={18} /></span>
+          <button onClick={(e) => { e.stopPropagation(); onSwap(); }} disabled={swapping} aria-label="새 글감 받기" className="at-press ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-neutral-300 transition hover:bg-[#F7F8FA] hover:text-[color:var(--color-text-sub)] disabled:opacity-40">
+            <span className={`flex h-[18px] w-[18px] items-center justify-center ${swapping ? "animate-spin" : ""}`}><GlassIcon name="refresh" tint="grey" size={18} /></span>
           </button>
         )}
       </div>
       {swapping ? (
-        <div className="mt-2.5" aria-hidden>
-          <div className="ateflo-skel h-[20px] w-4/5 rounded" />
-          <p className="mt-2.5 text-[12px] font-semibold text-[#8b7cf7]">AI가 새 글감을 고르고 있어요…</p>
+        <div className="mt-3" aria-hidden>
+          <div className="ateflo-skel h-[22px] w-4/5 rounded" />
+          <p className="mt-3 text-[13px] font-semibold text-[color:var(--color-text-weak)]">새 글감을 고르고 있어요</p>
         </div>
       ) : (
-        <>
-          <button onClick={onClick} className="mt-2 block w-full text-left">
-            <p className="text-[15.5px] font-bold leading-snug text-[color:var(--at-grey-900)]">{topic.title}</p>
-          </button>
-          <button onClick={onClick} className="at-press mt-3 text-[13px] font-semibold text-[color:var(--color-text)] underline underline-offset-2">
-            이 글 쓰기 →
-          </button>
-        </>
+        <button onClick={onClick} className="mt-3 block w-full text-left">
+          <p className="text-[17px] font-bold leading-[1.4] text-[color:var(--color-text)]">{topic.title}</p>
+          <p className="mt-3 inline-flex items-center gap-1 text-[14px] font-semibold text-[color:var(--color-brand)]">이 글 쓰기<span aria-hidden>→</span></p>
+        </button>
       )}
     </div>
   );
 }
 
-// 글감 로딩 — 새 규격: v2 카드 실루엣 셔머(블러·돋보기 제거)
 function TopicsSkeleton({ collecting }: { collecting: boolean }) {
   return (
     <div className="flex flex-col gap-2.5">

@@ -95,6 +95,10 @@ html {
 .tk-bar-fill { transform-origin: left; animation: tk-bar-in 0.6s var(--ease-standard) 200ms both; }
 .tk-cta { transition: transform var(--duration-standard) var(--ease-standard), box-shadow var(--duration-standard) var(--ease-standard), opacity var(--duration-standard) var(--ease-standard); }
 .tk-cta:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+@keyframes tk-pop { from { opacity: 0; transform: translateY(4px) scale(0.96); } to { opacity: 1; transform: none; } }
+.tk-chip { animation: tk-pop 0.35s var(--ease-standard) both; }
+.tk-chip:nth-child(2) { animation-delay: 60ms; } .tk-chip:nth-child(3) { animation-delay: 120ms; } .tk-chip:nth-child(4) { animation-delay: 180ms; }
+.tk-dot { animation: tk-pop 0.3s var(--ease-standard) both; }
 
 /* 생성 시작 표시용 무지개 버튼 (흐르는 그라데이션) */
 @keyframes ateflo-rainbow {

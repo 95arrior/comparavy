@@ -124,8 +124,8 @@ export default function TodayCard({
   return (
     <Card plain={plain} highlight>
       <Header label="오늘의 글" />
-      <DemandRow topic={topic} onGoPerformance={onGoPerformance} />
-      <p className="mt-3 text-[22px] font-bold leading-[1.35] tracking-[-0.01em] text-[color:var(--color-text)]">{topic.title}</p>
+      <div className="mt-3.5"><DemandRow topic={topic} onGoPerformance={onGoPerformance} /></div>
+      <p className="mt-4 text-[22px] font-bold leading-[1.35] tracking-[-0.01em] text-[color:var(--color-text)]">{topic.title}</p>
       {topic.tag === "followup" ? <p className="mt-2 text-[13px] leading-relaxed text-[color:var(--color-text-weak)]">어제 글이 반응이 좋았어요. 이어서 쓰면 효과가 커져요.</p> : why ? <p className="mt-2 text-[13px] leading-relaxed text-[color:var(--color-text-weak)]">{why}</p> : null}
       <div className="mt-4 flex items-center gap-1.5 rounded-[12px] bg-[#F7F8FA] px-4 py-3">
         <span className="text-[14px] text-[color:var(--color-text-sub)]">이 글을 쓰면 <span className="font-bold tabular-nums text-[color:var(--color-brand)]">{writePct}%</span>가 돼요</span>
@@ -147,7 +147,7 @@ function DemandRow({ topic, muted, onGoPerformance }: { topic: TodayTopic; muted
   // ★수익 경로 태그(정보) — 리뷰/비교형이면 쇼핑커넥트 연계 가능. 사다리(행동)와 별개로 표시.
   const rev = revenuePath({ keyword: topic.keyword, title: topic.title });
   return (
-    <div className={`flex flex-wrap items-center gap-1.5 ${muted ? "opacity-60" : ""}`}>
+    <div className={`flex flex-wrap items-center gap-1.5 [&>*]:tk-chip ${muted ? "opacity-60" : ""}`}>
       {topic.seriesBadge
         ? <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[12px] text-[color:var(--color-text-sub)]">{topic.seriesBadge}</span>
         : topic.tag === "followup"
