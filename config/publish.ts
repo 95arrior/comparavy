@@ -9,3 +9,8 @@ export const NAVER_WRITE_URL = "https://blog.naver.com";
 //  본문·소제목·데이터줄·리스트 전부 왼쪽 단일 세계. 중앙/왼쪽 혼용·데이터박스 폐기.
 //  변경은 실사용 데이터(체류·이탈) 근거 있을 때만 재론.
 export const BODY_ALIGN: "center" | "left" = "left";
+
+// ★AI 이미지 봉인(제품 결정 2026-07-04) — 동일 스타일 도배로 글 품질 저하. 코드 보존, 플래그 오프.
+//  본문 AI 이미지·AI 배경 썸네일 = 오프 / 데이터 카드(satori, 글 내용 시각화) = 유지.
+//  대체 UX: 슬롯별 '추천 가이드 + 사진 올리기'. 해제 전 필요: 슬롯 인덱스 문서순 단일화(완료), 스타일 다양화.
+export const AI_IMAGES_ENABLED = false;

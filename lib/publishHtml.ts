@@ -96,15 +96,16 @@ function mergeUnbalanced(parts: string[]): string[] {
 /* ── 안전망: 4줄 초과 문단 자동 분할 (문장 → 쉼표 → 어절) ── */
 function splitInner(inner: string): string[] {
   if (visLen(inner) <= MOBILE_MAX_CHARS) return [inner];
-  let parts = mergeUnbalanced(inner.split(/(?:<br\s*\/?>)|(?<=[.?!])\s+/g).map((x) => x.trim()).filter(Boolean));
+  let parts = mergeUnbalanced(inner.split(/(?:<br\s*\/?>)|(?<=[?!])\s+|(?<=[^\d]\.)\s+/g).map((x) => x.trim()).filter(Boolean)); // 숫자. 뒤(소수·날짜)는 문장 경계 아님
   // 쉼표 분할 — 단, 괄호·따옴표가 열린 조각은 다시 합쳐 미닫힘 분할 방지.
-  parts = parts.flatMap((part) => (visLen(part) <= MOBILE_MAX_CHARS ? [part] : mergeUnbalanced(part.split(/(?<=[,，、])\s*/g).map((x) => x.trim()).filter(Boolean))));
+  parts = parts.flatMap((part) => (visLen(part) <= MOBILE_MAX_CHARS ? [part] : mergeUnbalanced(part.split(/(?<=[,，、])(?!\d)\s*/g) /* 천 단위 쉼표(4,500) 분할 금지 */.map((x) => x.trim()).filter(Boolean))));
   const units: string[] = [];
   for (const part of parts) {
     if (visLen(part) <= MOBILE_MAX_CHARS) { units.push(part); continue; }
     let buf = "";
     for (const word of part.split(/\s+/).filter(Boolean)) {
-      if (visLen(buf + " " + word) > MOBILE_MAX_CHARS && buf) { units.push(buf); buf = word; }
+      const canBreak = buf && !/\d[.,]$/.test(buf); // "2026. 7." 같은 숫자 구두점 끝에선 안 끊음(날짜·금액 보호)
+      if (visLen(buf + " " + word) > MOBILE_MAX_CHARS && canBreak) { units.push(buf); buf = word; }
       else buf = buf ? `${buf} ${word}` : word;
     }
     if (buf) units.push(buf);
@@ -112,7 +113,8 @@ function splitInner(inner: string): string[] {
   const out: string[] = [];
   let acc = "";
   for (const u of units) {
-    if (visLen(acc + " " + u) > MOBILE_MAX_CHARS && acc) { out.push(acc); acc = u; }
+    const canBreak = acc && !/\d[.,]$/.test(acc);
+    if (visLen(acc + " " + u) > MOBILE_MAX_CHARS && canBreak) { out.push(acc); acc = u; }
     else acc = acc ? `${acc} ${u}` : u;
   }
   if (acc) out.push(acc);

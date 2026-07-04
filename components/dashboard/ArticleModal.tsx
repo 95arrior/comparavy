@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { photoMarkerToGuide, photoMarkerToSlot, photoSlots, markToNaverBold, addNaverSpacing } from "@/lib/photoMarkers";
-import { formatBody } from "@/lib/publishHtml";
+import { formatBody, parseSlots } from "@/lib/publishHtml";
+import { AI_IMAGES_ENABLED } from "@/config/publish";
 import CenterToast from "./CenterToast";
 import { copyImage as clipCopyImage, saveImage as clipSaveImage } from "@/lib/clipboard";
 import NaverPublishSheet from "./NaverPublishSheet";
@@ -145,6 +146,21 @@ export default function ArticleModal({
     }
   }
 
+  // ★사진 올리기(AI 봉인 대체) — 문서순 슬롯 idx로 업로드 → 미리보기·복사 HTML에 포함.
+  async function uploadImage(i: number, file: File) {
+    if (imgs[i]?.busy) return;
+    setImgs((m) => ({ ...m, [i]: { ...m[i], busy: true, err: undefined } }));
+    try {
+      const fd = new FormData();
+      fd.append("file", file); fd.append("articleId", article.id); fd.append("idx", String(i));
+      const res = await fetch("/api/images/upload", { method: "POST", body: fd });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.url) { setImgs((m) => ({ ...m, [i]: { ...m[i], busy: false, err: data.error ?? "업로드하지 못했어요" } })); return; }
+      setImgs((m) => ({ ...m, [i]: { url: data.url, busy: false } }));
+      try { const key = `ateflo_imgs_${article.id}`; const saved = JSON.parse(localStorage.getItem(key) ?? "{}"); saved[i] = data.url; localStorage.setItem(key, JSON.stringify(saved)); } catch { /* ignore */ }
+    } catch { setImgs((m) => ({ ...m, [i]: { ...m[i], busy: false, err: "네트워크 오류가 났어요" } })); }
+  }
+
   // 이미지 복사·저장은 lib/clipboard로 일원화. 여기선 UI 피드백만.
   const [imgCopied, setImgCopied] = useState<number | null>(null);
   async function copyImageAt(i: number, url: string) {
@@ -246,41 +262,46 @@ export default function ArticleModal({
           </div>
         )}
 
-        {/* ★AI 이미지 패널 — 사진 자리별 생성/다운로드 */}
-        {photoSlots(bodyHtml).length > 0 && (
+        {/* ★이미지 슬롯 패널 — 문서순(사진+카드). 사진=추천 가이드+올리기(AI 봉인), 카드=자동 생성. */}
+        {parseSlots(bodyHtml).length > 0 && (
           <div className="mt-4 rounded-2xl at-glass p-5">
-            <div className="flex items-baseline justify-between">
-              <p className="text-[14px] font-bold text-neutral-900">사진 자리 {photoSlots(bodyHtml).length}곳</p>
-              <p className="text-[11.5px] text-neutral-400">AI 이미지 1장 = 4크레딧</p>
-            </div>
-            <p className="mt-1 text-[12px] leading-relaxed text-neutral-400">직접 찍은 사진이 가장 좋아요. 없으면 AI 일러스트로 채워요 — 만들면 저장했다가 네이버에서 사진 자리에 올려요.</p>
+            <p className="text-[14px] font-bold text-neutral-900">이미지 자리 {parseSlots(bodyHtml).length}곳</p>
+            <p className="mt-1 text-[12px] leading-relaxed text-neutral-400">직접 찍은 사진이 노출에 가장 좋아요. 올리면 그 자리에 들어가고, 복사할 때 같이 넘어가요. 비워 두고 발행해도 괜찮아요.</p>
             <div className="mt-3 space-y-2.5">
-              {photoSlots(bodyHtml).map((slot, i) => {
+              {parseSlots(bodyHtml).map((slot, i) => {
                 const st = imgs[i] ?? {};
+                if (slot.type === "card") {
+                  return (
+                    <div key={i} className="rounded-xl bg-white/70 p-3.5 ring-1 ring-black/[0.04]">
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#1D75F7]/10 text-[11px] font-bold text-[#1D75F7]">{i + 1}</span>
+                        <p className="min-w-0 flex-1 truncate text-[13px] font-medium text-neutral-700">데이터 카드 · 자동으로 만들어져요</p>
+                        {st.url && <span className="text-[11px] font-bold text-emerald-600">완료</span>}
+                      </div>
+                      {st.url && <img src={st.url} alt="" className="mt-3 max-h-56 w-full rounded-lg object-cover" />}
+                    </div>
+                  );
+                }
                 return (
                   <div key={i} className={`rounded-xl bg-white/70 p-3.5 ring-1 ring-black/[0.04] ${st.busy ? "at-ai-swap" : ""}`}>
                     <div className="flex items-center gap-3">
                       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-[11px] font-bold text-neutral-500">{i + 1}</span>
-                      <p className="min-w-0 flex-1 truncate text-[13px] font-medium text-neutral-700">{slot}</p>
-                      {!st.url && (
-                        <button onClick={() => makeImage(i, slot)} disabled={st.busy} className="at-press shrink-0 rounded-lg bg-[#1D75F7]/10 px-3 py-1.5 text-[12px] font-bold text-[#1D75F7] transition hover:bg-[#1D75F7]/15 disabled:opacity-50">
-                          {st.busy ? "그리는 중…" : "AI 이미지 만들기"}
-                        </button>
+                      <p className="min-w-0 flex-1 text-[13px] font-medium text-neutral-700">예: {slot.desc}</p>
+                      <label className="at-press shrink-0 cursor-pointer rounded-lg bg-[#1D75F7]/10 px-3 py-1.5 text-[12px] font-bold text-[#1D75F7] transition hover:bg-[#1D75F7]/15">
+                        {st.busy ? "올리는 중" : st.url ? "바꾸기" : "사진 올리기"}
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadImage(i, f); e.target.value = ""; }} />
+                      </label>
+                      {AI_IMAGES_ENABLED && !st.url && (
+                        <button onClick={() => makeImage(i, slot.desc)} disabled={st.busy} className="at-press shrink-0 rounded-lg bg-neutral-100 px-3 py-1.5 text-[12px] font-bold text-neutral-600 disabled:opacity-50">AI로 만들기</button>
                       )}
                     </div>
                     {st.err && <p className="mt-2 text-[12px] font-medium text-amber-600">{st.err}</p>}
                     {st.url && (
                       <div className="mt-3">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={st.url} alt="" className="max-h-56 w-full rounded-lg object-cover" />
                         <div className="mt-2 flex items-center gap-2">
-                          <button onClick={() => st.url && copyImageAt(i, st.url)} className="at-press rounded-lg bg-[#1D75F7] px-3.5 py-2 text-[12.5px] font-bold text-white transition hover:opacity-90">
-                            {imgCopied === i ? "복사됨 ✓ 네이버에 붙여넣기" : "이미지 복사"}
-                          </button>
+                          <button onClick={() => st.url && copyImageAt(i, st.url)} className="at-press rounded-lg bg-[#1D75F7] px-3.5 py-2 text-[12.5px] font-bold text-white transition hover:opacity-90">{imgCopied === i ? "복사됨 · 네이버에 붙여넣기" : "이미지 복사"}</button>
                           <button onClick={() => st.url && clipSaveImage(st.url, `ateflo-image-${i + 1}.png`)} className="at-press rounded-lg bg-neutral-100 px-3.5 py-2 text-[12.5px] font-bold text-neutral-600 transition hover:bg-neutral-200">저장</button>
-                          <button onClick={() => makeImage(i, slot)} disabled={st.busy} className="at-press rounded-lg bg-neutral-100 px-3.5 py-2 text-[12.5px] font-bold text-neutral-600 transition hover:bg-neutral-200 disabled:opacity-50">
-                            {st.busy ? "그리는 중…" : "다시 만들기 · 4크레딧"}
-                          </button>
                         </div>
                       </div>
                     )}

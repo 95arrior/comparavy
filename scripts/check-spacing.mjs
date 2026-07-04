@@ -17,5 +17,13 @@ ok(!new RegExp(`(?:${esc}){5,}`).test(rich),"연속 스페이서 상한 4");
 // plain 동일 여백
 const plain=buildPlainText({title:"t",bodyHtml:body,hashtags:["하나","둘"]});
 ok(/문단 둘\.\n\n\n\n소제목/.test(plain),"plain 소제목 앞 3(빈줄)");
-console.log(fail===0?"\n통과: 여백 스케일 v2":"\n실패: "+fail);
+// ★숫자 쉼표 회귀 — 4,500만 원 등이 쉼표에서 쪼개지지 않아야
+const numBody="<p>지원 한도는 4,500만 원이고 수수료는 3,900원이며 자산 1,000만 원 이상이면 대상에서 제외되는데 이 조건은 소득 3.5% 기준과 2026. 7. 4. 공고 기준으로 정해졌다는 점을 꼭 확인하세요 반드시요.</p>";
+const numRich=formatBody({title:"t",bodyHtml:numBody});
+const numParas=[...numRich.matchAll(/<p[^>]*>([^<]*)<\/p>/g)].map(m=>m[1]).filter(t=>t.trim());
+const brokenNum=numParas.filter(t=>/\d[,.]$/.test(t.trim()));
+ok(brokenNum.length===0, `숫자 쉼표/소수점 분할 0 (깨진 조각 ${brokenNum.length})`);
+ok(/4,500만 원/.test(numRich)&&/3,900원/.test(numRich)&&/1,000만 원/.test(numRich), "4,500·3,900·1,000 원형 보존");
+
+console.log(fail===0?"\n통과: 여백 스케일 v2 + 숫자 회귀":"\n실패: "+fail);
 process.exit(fail?1:0);

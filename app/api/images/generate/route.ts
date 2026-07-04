@@ -5,6 +5,7 @@ import { spendCredits, addCredits } from "@/lib/credits";
 import { IMAGE_COST } from "@/lib/creditPacks";
 import { generateBlogImage, imageReady, GEMINI_IMAGE_MODEL } from "@/lib/geminiImage";
 import { composeThumbnail } from "@/lib/composeThumbnail";
+import { AI_IMAGES_ENABLED } from "@/config/publish";
 import { logUsage } from "@/lib/usageLog";
 
 // 대표이미지(슬롯0) PNG를 스토리지에 올리고 URL 반환(실패 시 null → 호출측 dataUrl 폴백).
@@ -70,7 +71,7 @@ export async function POST(request: Request) {
   const thumbCopy = (tc && typeof tc === "object")
     ? { mainCopy: String(tc.mainCopy ?? "").slice(0, 40), subCopy: String(tc.subCopy ?? "").slice(0, 30), badge: String(tc.badge ?? "").slice(0, 20) }
     : null;
-  if (thumbnail && thumbCopy) {
+  if (thumbnail && thumbCopy && AI_IMAGES_ENABLED) {
     try {
       const seed = typeof body.articleSeed === "string" ? body.articleSeed.slice(0, 80) : null;
       const { png } = await composeThumbnail({ userId: user.id, thumb: thumbCopy, articleId: seed, useAiBackground: false });
@@ -88,6 +89,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, skipped: true, error: "썸네일을 만들지 못했어요." });
     }
   }
+
+  // ★AI 봉인 — 본문 AI 이미지 생성 오프(과금 전 차단). 데이터 카드·업로드는 위에서 처리됨.
+  if (!AI_IMAGES_ENABLED) return NextResponse.json({ error: "지금은 직접 찍은 사진을 올리는 방식이에요.", code: "AI_OFF" }, { status: 403 });
 
   // 본문 이미지(또는 카피 없는 대표) — 유료 Gemini. 선차감(원자적) — 부족하면 402
   const balance = await spendCredits(user.id, IMAGE_COST, "image");

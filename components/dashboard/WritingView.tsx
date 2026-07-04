@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import AteFloLogo from "@/components/AteFloLogo";
 import { parseSlots, parseCardItems } from "@/lib/publishHtml";
+import { AI_IMAGES_ENABLED } from "@/config/publish";
 import type { Article } from "./types";
 
 export interface GenParams {
@@ -117,7 +118,8 @@ export default function WritingView({
   const imgPendingRef = useRef(0);
   const [imgDone, setImgDone] = useState(0);
   function kickImages() {
-    if (!params.withImages) return;
+    // ★데이터 카드는 항상 자동(무료·satori). 사진(AI)은 봉인 플래그+토글 둘 다 켜졌을 때만.
+    const firePhotos = AI_IMAGES_ENABLED && !!params.withImages;
     // ★슬롯 통합 — 사진(Gemini·유료, IMG_MAX 상한)과 카드(satori·무료) 문서 순서로. 카드는 상한 밖(원가 0).
     const slots = parseSlots(bodyRef.current);
     let photoFired = 0;
@@ -125,6 +127,7 @@ export default function WritingView({
       if (imgStartedRef.current.has(i)) continue;
       const slot = slots[i];
       const isPhoto = slot.type === "photo";
+      if (isPhoto && !firePhotos) continue; // AI 봉인 — 사진 슬롯은 검토 화면 업로드로
       if (isPhoto && photoFired >= IMG_MAX) continue; // 사진만 상한
       imgStartedRef.current.add(i);
       if (isPhoto) photoFired += 1;
