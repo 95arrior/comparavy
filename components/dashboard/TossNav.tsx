@@ -7,7 +7,6 @@ import GlassIcon from "@/components/GlassIcon";
 // 활성=토스블루 / 비활성=회색, 절제된 모션·여백. 콘텐츠는 이 바깥에서 max-w-2xl 중앙.
 export type NavKey = "home" | "articles" | "performance" | "more";
 
-const BLUE = "#1D75F7";
 
 // 라인 아이콘(토스 느낌 — 둥근 스트로크). active면 살짝 굵게.
 function Icon({ k, active }: { k: NavKey; active: boolean }) {
@@ -82,7 +81,7 @@ export default function TossNav({
                 key={n.key}
                 onClick={() => onNav(n.key)}
                 className="flex flex-1 flex-col items-center gap-0.5 py-2 transition active:scale-95"
-                style={{ color: on ? BLUE : "#aab1bd" }}
+                style={{ color: on ? "#191f28" : "#8b95a1" }}
               >
                 <GlassIcon name={NAV_ICON[n.key]} tint={on ? "blue" : "grey"} size={30} icon={0.66} className={on ? "" : "opacity-60"} />
                 <span className={`mt-0.5 text-[11px] ${on ? "font-bold" : "font-medium"}`}>{n.label}</span>
