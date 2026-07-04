@@ -255,13 +255,6 @@ export default function Home({
               <span className="text-[15px] font-semibold tabular-nums text-[color:var(--color-brand)]"><CountUp to={progressPercent(info)} duration={800} />%</span>
             </div>
           </div>
-          {/* 최근 7일 발행 도트 — 오른쪽 호흡 + 한눈 리듬 */}
-          <div className="mt-1 flex items-end gap-1" aria-hidden>
-            {Array.from({ length: 7 }, (_, i) => {
-              const d = new Date(); d.setDate(d.getDate() - (6 - i));
-              const done = articles.some((a) => isVerifiedStatus(a.status) && new Date(a.created_at).toDateString() === d.toDateString());
-              return <span key={i} className={`tk-dot h-2 w-2 rounded-full ${done ? "bg-[color:var(--color-brand)]" : "bg-[color:var(--color-line)]"}`} style={{ animationDelay: `${300 + i * 60}ms` }} />;
-            })}
           </div>
         </div>
         <div className="tk-gauge mt-5 h-2.5 w-full rounded-full bg-[#E8EDF7]">
@@ -357,14 +350,14 @@ export default function Home({
         <p className="px-2 text-[13px] font-semibold text-[color:var(--color-text-weak)]">오늘의 루틴</p>
         <div className="mt-3 grid grid-cols-3 gap-3">
           {([
-            { key: "checkin" as const, label: "아침 체크인", sub: "30초", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1" /></svg> },
-            { key: "neighbor" as const, label: "이웃 미션", sub: "이웃 5 · 댓글 2", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="3.2" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0" /><circle cx="17" cy="9" r="2.4" /><path d="M15.5 19a4.6 4.6 0 0 1 6 -4.2" /></svg> },
-            { key: "topics" as const, label: "다른 글감", sub: topicsLoading ? "로딩" : `${rest.length}개`, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 4h11l3 3v13H5z" /><path d="M9 10h6M9 14h6" /></svg> },
+            { key: "checkin" as const, label: "아침 체크인", sub: "30초", icon: <GlassIcon name="check" tint="green" size={30} /> },
+            { key: "neighbor" as const, label: "이웃 미션", sub: "이웃 5 · 댓글 2", icon: <GlassIcon name="gift" tint="rose" size={30} /> },
+            { key: "topics" as const, label: "다른 글감", sub: topicsLoading ? "로딩" : `${rest.length}개`, icon: <GlassIcon name="search" tint="amber" size={30} /> },
           ]).map((r, i) => (
             <button key={r.key} onClick={() => setRoutineSheet(r.key)}
               className="at-press tk-chip rounded-[20px] bg-white p-4 text-left shadow-[0_2px_12px_-4px_rgba(29,117,247,0.12)] tk-tr hover:-translate-y-0.5 hover:shadow-[0_8px_20px_-6px_rgba(29,117,247,0.2)]"
               style={{ animationDelay: `${200 + i * 80}ms` }}>
-              <span className="tk-icon-orb flex h-10 w-10 items-center justify-center rounded-full">{r.icon}</span>
+              <span className="flex h-10 w-10 items-center">{r.icon}</span>
               <span className="mt-3 block text-[14px] font-bold text-[color:var(--color-text)]">{r.label}</span>
               <span className="mt-0.5 block text-[12px] text-[color:var(--color-text-weak)]">{r.sub}</span>
             </button>

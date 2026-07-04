@@ -45,8 +45,8 @@
   --text-caption--line-height: 1.5;
   /* 간격 스케일: 4/8/12/16/24/32만(= p-1/2/3/4/6/8). 임의 px 금지 */
   /* 모션 표준 1종 — 의미 있는 곳만(링·스파크바·체크·시트). 장식 모션 금지 */
-  --ease-standard: cubic-bezier(0, 0, 0.2, 1);
-  --duration-standard: 180ms;
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1); /* 깊은 감속 — 끊김 금지 */
+  --duration-standard: 260ms;
 }
 
 :root {
@@ -56,6 +56,11 @@
 
 * {
   box-sizing: border-box;
+}
+
+/* ★디폴트 부드러움 — 모든 인터랙티브 요소의 호버·프레스가 항상 이 곡선을 탄다(딱딱함 금지) */
+button, a, [role="button"] {
+  transition: transform var(--duration-standard) var(--ease-standard), box-shadow var(--duration-standard) var(--ease-standard), background-color var(--duration-standard) var(--ease-standard), color var(--duration-standard) var(--ease-standard), opacity var(--duration-standard) var(--ease-standard);
 }
 
 body {
@@ -135,7 +140,7 @@ html {
 /* 게이지 — 그라데이션 fill + 광택이 계속 흐르는 sweep(살아있는 진행) */
 .tk-gauge { position: relative; overflow: hidden; }
 .tk-gauge-fill {
-  position: relative; height: 100%; border-radius: 999px;
+  position: relative; height: 100%; border-radius: 999px; overflow: hidden; /* ★광택이 fill 밖으로 새지 않게 */
   background: linear-gradient(90deg, #1d75f7, #4f9df9 55%, #28d8c2 100%);
   transform-origin: left; animation: tk-bar-in 0.9s var(--ease-standard) 200ms both;
 }
