@@ -2,10 +2,51 @@
 
 /* 블랙 통일 — 토스 잉크(쿨 다크 슬레이트). bg/text/border-neutral-900 전부 이 색으로.
    호버가 같은 계열로 밝아지도록 800·700도 쿨톤으로 맞춤. */
+/* ★디자인 토큰(1단계) — 이 팔레트·스케일 밖 값 사용 금지. 레퍼런스: 토스(색의 침묵)·Linear(위계)·애플(여백).
+   라이트 단일(다크모드 없음). 그라데이션·글래스·보라 금지. 상태색은 배지·상태 표시에만(장식 금지). */
 @theme {
+  /* 표면 */
+  --color-bg: #ffffff;
+  --color-bg-subtle: #fafafb;   /* 섹션 구분 — 카드 남발 대체 */
+  /* 텍스트 3단계뿐(중간톤 신설 금지) */
+  --color-text: #191f28;
+  --color-text-sub: #6b7684;
+  --color-text-weak: #8b95a1;
+  /* 브랜드 — 화면당 '지금 눌러야 할 것' 한 곳만 brand 원색 */
+  --color-brand: #1d75f7;
+  --color-brand-weak: #ebf3fe;  /* 배지·선택 배경 */
+  /* 선 — 보더는 이것 하나, 1px만 */
+  --color-line: #f2f4f6;
+  /* 상태색 — 배지·상태에만 */
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  /* 기존 코드 호환(neutral-900 계열은 잉크로 통일 유지) */
   --color-neutral-900: #191f28;
   --color-neutral-800: #2a3038;
   --color-neutral-700: #3c434d;
+  /* radius 3종만: 카드 12 / 버튼·인풋 8 / 배지·필 999 */
+  --radius-card: 12px;
+  --radius-btn: 8px;
+  --radius-pill: 999px;
+  /* 그림자 1종 — 떠 있는 요소(시트·모달)만. 구분은 여백과 line으로 */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  /* 타이포 5단계뿐(중간 크기 신설 금지) — display는 핵심 숫자 전용 */
+  --text-display: 30px;
+  --text-display--line-height: 1.2;
+  --text-display--letter-spacing: -0.02em;
+  --text-display--font-weight: 700;
+  --text-title: 20px;
+  --text-title--line-height: 1.35;
+  --text-title--font-weight: 600;
+  --text-body: 15px;
+  --text-body--line-height: 1.6;
+  --text-caption: 13px;
+  --text-caption--line-height: 1.5;
+  /* 간격 스케일: 4/8/12/16/24/32만(= p-1/2/3/4/6/8). 임의 px 금지 */
+  /* 모션 표준 1종 — 의미 있는 곳만(링·스파크바·체크·시트). 장식 모션 금지 */
+  --ease-standard: cubic-bezier(0, 0, 0.2, 1);
+  --duration-standard: 180ms;
 }
 
 :root {
@@ -38,8 +79,13 @@ html {
 }
 
 .ateflo-surface {
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  box-shadow: var(--shadow-sm);
 }
+
+/* ★토큰 시스템 표준 부품 — 카드·행·표준 트랜지션 (2~6단계에서 화면별로 갈아입힘) */
+.tk-card { background: var(--color-bg); border: 1px solid var(--color-line); border-radius: var(--radius-card); }
+.tk-section { background: var(--color-bg-subtle); border-radius: var(--radius-card); }
+.tk-tr { transition: all var(--duration-standard) var(--ease-standard); }
 
 /* 생성 시작 표시용 무지개 버튼 (흐르는 그라데이션) */
 @keyframes ateflo-rainbow {
