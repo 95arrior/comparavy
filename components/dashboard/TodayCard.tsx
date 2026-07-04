@@ -1,6 +1,6 @@
 "use client";
 
-import GlassIcon from "@/components/GlassIcon";
+import GlassIcon, { GlassGlyph } from "@/components/GlassIcon";
 import type { CourseInfo } from "@/lib/course";
 import { nextWritePercent } from "@/lib/course";
 import { whyNow } from "@/lib/whyNow";
@@ -129,8 +129,8 @@ export default function TodayCard({
         <div className="flex items-center justify-between">
           <p className="text-[13px] font-semibold text-white/70">오늘의 글</p>
           {onHeroSwap && (
-            <button onClick={onHeroSwap} aria-label="다른 글감으로 교체" className="at-press flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-white/80 hover:bg-white/25">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.3" /><path d="M21 3v6h-6" /></svg>
+            <button onClick={onHeroSwap} aria-label="다른 글감으로 교체" className="at-press flex h-8 w-8 items-center justify-center rounded-full bg-white/15 hover:bg-white/25">
+              <GlassGlyph name="refresh" size={15} />
             </button>
           )}
         </div>
