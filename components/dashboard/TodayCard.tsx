@@ -125,13 +125,13 @@ export default function TodayCard({
     <Card plain={plain} highlight>
       <Header label="오늘의 글" />
       <DemandRow topic={topic} onGoPerformance={onGoPerformance} />
-      <p className="mt-3 text-[20px] font-semibold leading-snug text-[color:var(--color-text)]">{topic.title}</p>
+      <p className="mt-3 text-[22px] font-bold leading-[1.35] tracking-[-0.01em] text-[color:var(--color-text)]">{topic.title}</p>
       {topic.tag === "followup" ? <p className="mt-2 text-[13px] leading-relaxed text-[color:var(--color-text-weak)]">어제 글이 반응이 좋았어요. 이어서 쓰면 효과가 커져요.</p> : why ? <p className="mt-2 text-[13px] leading-relaxed text-[color:var(--color-text-weak)]">{why}</p> : null}
-      <div className="mt-3 flex items-center gap-1.5 rounded-[8px] bg-[color:var(--color-bg-subtle)] px-4 py-3">
-        <span className="text-[15px] text-[color:var(--color-text-sub)]">이 글을 쓰면 <span className="font-semibold tabular-nums text-[color:var(--color-text)]">{writePct}%</span>가 돼요</span>
+      <div className="mt-4 flex items-center gap-1.5 rounded-[12px] bg-[#F7F8FA] px-4 py-3">
+        <span className="text-[14px] text-[color:var(--color-text-sub)]">이 글을 쓰면 <span className="font-bold tabular-nums text-[color:var(--color-brand)]">{writePct}%</span>가 돼요</span>
         {info.day === 0 && <span className="text-[13px] text-[color:var(--color-text-weak)]">· 첫 글이 코스 시작</span>}
       </div>
-      <button onClick={() => (preReady && onReadToday ? onReadToday() : write(topic))} className="at-press tk-cta mt-4 flex min-h-12 w-full items-center justify-center rounded-[8px] bg-[color:var(--color-brand)] text-[15px] font-semibold text-white">{preReady ? "글 읽어보기" : "이 글 쓰기"}</button>
+      <button onClick={() => (preReady && onReadToday ? onReadToday() : write(topic))} className="at-press tk-cta mt-5 flex h-[52px] w-full items-center justify-center rounded-[14px] bg-[color:var(--color-brand)] text-[16px] font-bold text-white">{preReady ? "글 읽어보기" : "이 글 쓰기"}</button>
     </Card>
   );
 }
@@ -170,15 +170,15 @@ function DemandRow({ topic, muted, onGoPerformance }: { topic: TodayTopic; muted
   );
 }
 
-function Card({ children, plain }: { children: React.ReactNode; highlight?: boolean; plain?: boolean }) {
-  if (plain) return <div className="tk-seq-2 pt-8">{children}</div>; // 캔버스 위 섹션 — 껍데기 없음(구분=여백)
-  return <div className="rounded-[12px] border border-[color:var(--color-line)] bg-white p-6">{children}</div>;
+function Card({ children }: { children: React.ReactNode; highlight?: boolean; plain?: boolean }) {
+  // 토스 카드 문법 — 회색 캔버스 위 흰 카드, 라운드 20, 소프트 섀도(빈곤한 플랫 금지)
+  return <div className="tk-seq-2 mt-3 rounded-[20px] bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">{children}</div>;
 }
 
 function Header({ label, chip, chipIcon }: { label: string; chip?: string; chipIcon?: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <p className="text-[13px] font-semibold text-[color:var(--color-text-sub)]">{label}</p>
+      <p className="text-[13px] font-semibold text-[color:var(--color-brand)]">{label}</p>
       {chip && <span className="flex shrink-0 items-center gap-1 rounded-full bg-[color:var(--color-bg-subtle)] px-2 py-0.5 text-[12px] text-[color:var(--color-text-sub)]">{chipIcon}{chip}</span>}
     </div>
   );

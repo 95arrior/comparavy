@@ -240,25 +240,28 @@ export default function Home({
   const rest = clean.filter((t) => t !== first);
 
   return (
-    <main className="mx-auto max-w-5xl px-5 pb-10 lg:grid lg:grid-cols-[minmax(0,1fr)_264px] lg:gap-12">
-      {/* ★모바일 상태 스트립 — 스크롤 0에서 상태는 한 줄 요약, 오늘 할 일이 주인공. 탭=성과 */}
-      <button onClick={onGoPerformance} className="mt-4 flex w-full items-center gap-2 overflow-x-auto whitespace-nowrap text-[13px] text-[color:var(--color-text-sub)] lg:hidden">
-        <span className="font-semibold tabular-nums text-[color:var(--color-text)]">{info.finished ? "완주" : info.day > 0 ? `D-${info.day}` : "시작 전"}</span>
-        <span className="tabular-nums">{progressPercent(info)}%</span>
-        {info.streak > 0 && <><span className="text-[color:var(--color-line)]">·</span><span className="tabular-nums">{info.streak}일 연속</span></>}
-        <span className="text-[color:var(--color-line)]">·</span>
-        <span className="tabular-nums">크레딧 {credits.toLocaleString("ko-KR")}</span>
-        <span className="ml-auto text-[color:var(--color-text-weak)]">›</span>
-      </button>
+    <main className="mx-auto max-w-[520px] px-5 pb-16">
+      {/* 인사말 */}
+      <p className="tk-seq-1 pt-6 text-[15px] font-semibold text-[color:var(--color-text-sub)]">{blogName}</p>
 
-      <div className="min-w-0">
-      {swapNotice && (
-        <div className="ateflo-fade-in fixed left-1/2 top-6 z-[80] -translate-x-1/2 rounded-full at-glass-strong px-4 py-2.5 text-[13px] font-bold text-neutral-700 shadow-lg">
-          오늘 글감 교체는 여기까지예요 · {nextSeedRefreshLabel()}
+      {/* 상태 카드 — 토스 자산 카드 문법: 큰 숫자 + 파란 진행바 + 문장 한 줄 */}
+      <button onClick={onGoPerformance} className="tk-seq-1 tk-cta mt-3 block w-full rounded-[20px] bg-white p-6 text-left shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+        <p className="text-[13px] text-[color:var(--color-text-weak)]">애드포스트 승인까지</p>
+        <div className="mt-1 flex items-baseline gap-2">
+          <span className="text-[34px] font-bold leading-none tracking-[-0.02em] tabular-nums text-[color:var(--color-text)]">{info.finished ? "완주" : info.day > 0 ? `D-${info.day}` : "D-20"}</span>
+          <span className="text-[15px] font-semibold tabular-nums text-[color:var(--color-brand)]">{progressPercent(info)}%</span>
         </div>
-      )}
-      {/* 인사말 — 좌정렬, title급(주 컬럼의 시작) */}
-      <h1 className="tk-seq-2 pt-6 text-[20px] font-semibold text-[color:var(--color-text)]">{blogName}</h1>
+        <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-[color:var(--color-line)]">
+          <div className="tk-bar-fill h-full rounded-full bg-[color:var(--color-brand)]" style={{ width: `${Math.max(progressPercent(info), 2)}%` }} />
+        </div>
+        {(info.streak > 0 || yesterdayPublished(articles)) && (
+          <p className="mt-3 text-[13px] text-[color:var(--color-text-sub)]">
+            {info.streak > 0 ? `${info.streak}일 연속 발행 중` : ""}
+            {info.streak > 0 && yesterdayPublished(articles) ? " · " : ""}
+            {yesterdayPublished(articles) ? "어제 발행 확인됐어요" : ""}
+          </p>
+        )}
+      </button>
 
 
       {/* 크레딧 소진 예고 — 잔여 3편 이하 + 실사용 페이스로 예측 가능할 때만(지어내기 금지) */}
@@ -338,18 +341,18 @@ export default function Home({
       </div>
 
       {/* ★오늘의 루틴 — 토스식: 홈엔 행 하나씩, 상세는 시트. 홈의 주인공은 위 '오늘의 글' 하나뿐. */}
-      <div className="tk-seq-3 mt-12">
-        <p className="px-1 text-[13px] text-[color:var(--color-text-weak)]">오늘의 루틴</p>
-        <div className="mt-2">
+      <div className="tk-seq-3 mt-8">
+        <p className="px-2 text-[13px] font-semibold text-[color:var(--color-text-weak)]">오늘의 루틴</p>
+        <div className="mt-2 overflow-hidden rounded-[20px] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
           {([
             { key: "checkin" as const, label: "아침 체크인", sub: "어제 방문자 기록 · 30초" },
             { key: "neighbor" as const, label: "이웃 미션", sub: "이웃 5명 · 댓글 2개 · 보너스" },
             { key: "topics" as const, label: "다른 글감", sub: topicsLoading ? "불러오는 중" : `${rest.length}개 준비됨` },
           ]).map((r, i) => (
             <button key={r.key} onClick={() => setRoutineSheet(r.key)}
-              className={`at-press flex min-h-12 w-full items-center gap-3 px-1 py-4 text-left tk-tr hover:bg-white ${i > 0 ? "border-t border-[color:var(--color-line)]" : ""}`}>
+              className={`at-press flex min-h-[56px] w-full items-center gap-3 px-5 py-4 text-left tk-tr hover:bg-[#F7F8FA] ${i > 0 ? "border-t border-[color:var(--color-line)]" : ""}`}>
               <span className="min-w-0 flex-1">
-                <span className="text-[15px] text-[color:var(--color-text)]">{r.label}</span>
+                <span className="text-[15px] font-semibold text-[color:var(--color-text)]">{r.label}</span>
                 <span className="mt-1 block text-[13px] text-[color:var(--color-text-weak)]">{r.sub}</span>
               </span>
               <svg className="shrink-0 text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
@@ -394,29 +397,6 @@ export default function Home({
           </div>
         </div>
       )}
-      </div>
-
-      {/* ★보조 컬럼 — 문장 카드 2개(관리자 대시보드 금지: 라벨-값 쌍이 아니라 문장으로) */}
-      <aside className="hidden lg:block">
-        <div className="tk-seq-1 sticky top-6 space-y-8 pt-6">
-          <button onClick={onGoPerformance} className="block w-full text-left">
-            <p className="text-[13px] text-[color:var(--color-text-weak)]">승인까지 <span className="mx-0.5 align-middle text-[30px] font-bold leading-none tracking-[-0.02em] tabular-nums text-[color:var(--color-text)]">{info.finished ? "완주" : info.day > 0 ? `D-${info.day}` : "D-20"}</span> · <span className="tabular-nums">{progressPercent(info)}%</span></p>
-            <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[color:var(--color-line)]">
-              <div className="tk-bar-fill h-full rounded-full bg-[color:var(--color-text)]" style={{ width: `${progressPercent(info)}%` }} />
-            </div>
-          </button>
-          {(info.streak > 0 || yesterdayPublished(articles)) && (
-            <p className="text-[13px] text-[color:var(--color-text-sub)]">
-              {info.streak > 0 ? `${info.streak}일 연속 발행 중` : ""}
-              {info.streak > 0 && yesterdayPublished(articles) ? " · " : ""}
-              {yesterdayPublished(articles) ? "어제 발행 확인" : ""}
-            </p>
-          )}
-          {onOpenNews && unreadNews && (
-            <button onClick={onOpenNews} className="flex items-center gap-1.5 text-[13px] text-[color:var(--color-text-sub)]">새 공지가 있어요 <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--color-danger)]" /></button>
-          )}
-        </div>
-      </aside>
     </main>
   );
 }

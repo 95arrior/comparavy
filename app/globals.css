@@ -1676,7 +1676,7 @@ input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-sele
    순백 유리 아이콘이 살려면 배경에 톤이 있어야 한다 — 앱 배경 = 은은한 블루 틴트 그라데이션,
    카드 = 반투명 유리(블러+새츄레이션+상단 하이라이트), 아이콘 = 색 그라데이션 타일 위 백색 유리. */
 .at-app-bg {
-  background-color: var(--color-bg-subtle);
+  background-color: #f2f4f6; /* 토스 캔버스 — 흰 카드가 떠 보이는 회색 */
 }
 
 .at-glass { /* 글래스 폐기(2단계) — 흰 카드 + line 1px. 구분은 여백과 선으로 */
