@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { isAdminEmail } from "@/lib/adminStats";
 import { refreshCategoryTrends, getTrendTopics } from "@/lib/trendTopics";
-import { gatherHeadlines } from "@/lib/trendSources";
+import { gatherHeadlinesWithStats } from "@/lib/trendSources";
 
 export const maxDuration = 120;
 
@@ -21,14 +21,15 @@ export async function GET(request: Request) {
   }
   if (!category) return NextResponse.json({ error: "카테고리 없음(온보딩 먼저)" }, { status: 400 });
 
-  const heads = await gatherHeadlines(category).catch(() => []);
+  const { stats } = await gatherHeadlinesWithStats(category).catch(() => ({ headlines: [], stats: null }));
   const count = await refreshCategoryTrends(category);
   // ★검증용 — 게이트 통과 씨앗 20개의 keyword(검색형) + 롱테일 유무. 뉴스 문구가 0개인지 육안 확인.
   const topics = (await getTrendTopics(category)).slice(0, 20);
-  const seeds = topics.map((t) => ({ keyword: t.keyword, longtails: (t.longtails ?? []).slice(0, 3).map((l) => l.kw) }));
+  const seeds = topics.map((t) => ({ keyword: t.keyword, source: t.source ?? "?", longtails: (t.longtails ?? []).slice(0, 3).map((l) => l.kw) }));
   return NextResponse.json({
-    ok: true, category, headlines: heads.length, generated: count,
-    seeds, // [{keyword, longtails[]}] × 20 — keyword가 전부 검색형 명사구여야
+    ok: true, category, generated: count,
+    freshness: stats, // {raw, fresh, unverified, stale(탈락), kept, perSeed} — 신선도 게이트 분포
+    seeds, // [{keyword, source, longtails[]}] × 20 — 옛날 기사 유래 0건이 합격선
   });
 }
 

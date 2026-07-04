@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { createSupabaseAdminClient } from "./supabase-server";
-import { gatherHeadlines } from "./trendSources";
+import { gatherHeadlinesWithStats } from "./trendSources";
+import { seasonalSeeds } from "./seasonalEvents";
 import { fetchNaverAutocomplete } from "./naverAutocomplete";
 import { fetchBlogTotal } from "./naverBlogSearch";
 import { fetchTrend } from "./naverDatalab";
@@ -12,11 +13,13 @@ import { logUsage } from "./usageLog";
 //  스케일: 유저 무관(카테고리당 1회) → 1만·100만 명 동일 비용. 유저는 이 풀에서 시드 회전으로 다른 조각을 봄.
 
 export interface Longtail { kw: string; blogTotal: number | null }
+export type SeedSource = "news" | "season" | "discover";
 export interface TrendTopic {
   keyword: string;
   title: string;
   newsContext: string | null;
   longtails: Longtail[]; // 자동완성 실검증 롱테일(실익 키워드). 검색자가 실제로 치는 것.
+  source?: SeedSource;   // 씨앗 출처 — news/season='지금 뜨는', discover='꾸준한 수요'(momentum 배지 분리)
 }
 
 const FRESH_MS = 6 * 3600_000; // 6시간 신선도
@@ -47,10 +50,10 @@ export async function getTrendTopics(category: string): Promise<TrendTopic[]> {
       .order("created_at", { ascending: false })
       .limit(40);
     // longtails 컬럼(0049) 유무에 무관하게 작동 — 있으면 쓰고, 없으면(마이그레이션 전) 컬럼 빼고 재조회.
-    type Row = { keyword: string; title: string; news_context: string | null; longtails?: unknown };
-    const first = await run("keyword, title, news_context, longtails, expires_at");
+    type Row = { keyword: string; title: string; news_context: string | null; longtails?: unknown; source?: string };
+    const first = await run("keyword, title, news_context, longtails, source, expires_at");
     const rows = (first.error ? (await run("keyword, title, news_context, expires_at")).data : first.data) as Row[] | null;
-    return (rows ?? []).map((r) => ({ keyword: r.keyword, title: r.title, newsContext: r.news_context, longtails: Array.isArray(r.longtails) ? (r.longtails as Longtail[]) : [] }));
+    return (rows ?? []).map((r) => ({ keyword: r.keyword, title: r.title, newsContext: r.news_context, longtails: Array.isArray(r.longtails) ? (r.longtails as Longtail[]) : [], source: (r.source as SeedSource) ?? undefined }));
   } catch {
     return [];
   }
@@ -68,8 +71,9 @@ export async function refreshCategoryTrends(category: string): Promise<number> {
   if (!apiKey) return 0;
 
   // ★다중 소스 — 네이버+구글 뉴스를 다양한 소주제로 수집(은행권 편향 제거)
-  const heads = await gatherHeadlines(category).catch(() => []);
-  const newsList = heads.slice(0, 20).map((n, i) => `${i + 1}. (${n.seed}) ${n.title} — ${n.description.slice(0, 90)}`).join("\n");
+  const { headlines: heads, stats } = await gatherHeadlinesWithStats(category).catch(() => ({ headlines: [], stats: null as null }));
+  if (stats) console.log(`[trend-fresh] ${category}: raw=${stats.raw} fresh=${stats.fresh} unverified=${stats.unverified} stale(탈락)=${stats.stale} kept=${stats.kept}`, JSON.stringify(stats.perSeed));
+  const newsList = heads.slice(0, 28).map((n, i) => `${i + 1}. (${n.seed}) ${n.title} — ${n.description.slice(0, 90)}`).join("\n");
 
   const kstDate = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
   const client = new Anthropic({ apiKey });
@@ -120,8 +124,34 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
       if (isUnsafeKeyword(kw) || isUnsafeKeyword(ti)) continue;
       if (/20(1[0-9]|2[0-3])/.test(kw) || /20(1[0-9]|2[0-3])/.test(ti)) continue; // 낡은 연도
       seen.add(kw);
-      rows.push({ category, keyword: kw, title: ti, news_context: ctx, longtails: [] as Longtail[], created_at: new Date().toISOString(), expires_at: expires });
+      rows.push({ category, keyword: kw, title: ti, news_context: ctx, longtails: [] as Longtail[], source: "news", created_at: new Date().toISOString(), expires_at: expires });
     }
+    // ★시즌 캘린더 주입 — D-14 이내 예측 가능 이슈(뉴스 신선도 게이트 면제, 자동완성 게이트는 동일 적용)
+    for (const ev of seasonalSeeds(category)) {
+      if (seen.has(ev.keyword)) continue;
+      seen.add(ev.keyword);
+      rows.push({ category, keyword: ev.keyword, title: ev.title, news_context: null, longtails: [] as Longtail[], source: "season", created_at: new Date().toISOString(), expires_at: expires });
+    }
+
+    // ★자동완성 발굴 — 카테고리 루트어의 실검색 확장(무료·무제한). 브랜드성 후보 제외. source=discover(배지 분리).
+    {
+      const INFO_INTENT = /(방법|조건|신청|추천|비교|후기|금리|지원|혜택|기간|환급|계산|순위|비용|가격|일정|자격|서류|대상)/;
+      const BRANDY = /(카드|캐피탈|저축은행|뱅크|페이|증권|보험|생명|화재|의정석|리츠)/;
+      const roots = [...new Set(rows.slice(0, 6).map((r) => r.keyword.split(/\s+/)[0]))].slice(0, 4);
+      for (const root of roots) {
+        const acs = await fetchNaverAutocomplete(root).catch(() => []);
+        for (const cand of acs) {
+          if (rows.length >= 26) break;
+          const kw = cand.trim();
+          if ([...kw].length < 5 || seen.has(kw)) continue;
+          if (BRANDY.test(kw) && !INFO_INTENT.test(kw)) continue; // 브랜드 상품명 제외
+          if (!INFO_INTENT.test(kw)) continue;                    // 정보 의도 있는 실검색어만
+          seen.add(kw);
+          rows.push({ category, keyword: kw, title: `${kw}, 지금 확인할 것들`, news_context: null, longtails: [] as Longtail[], source: "discover", created_at: new Date().toISOString(), expires_at: expires });
+        }
+      }
+    }
+
     if (rows.length === 0) return 0;
 
     // ★B단계: 씨앗별 자동완성 롱테일(실검증) + gap(예산). 자동완성은 비공식·무제한(무료), gap(fetchBlogTotal)만 쿼터 소비.
@@ -178,7 +208,11 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
     const admin = createSupabaseAdminClient();
     // ★게이트 통과 씨앗이 있으니 이 카테고리 기존 행 전체 purge 후 새로 넣는다(뉴스 문구형 잔재 일괄 정리).
     try { await admin.from("trend_topics").delete().eq("category", category); } catch { /* ignore */ }
-    await admin.from("trend_topics").upsert(rows, { onConflict: "category,keyword" });
+    const { error: upErr } = await admin.from("trend_topics").upsert(rows, { onConflict: "category,keyword" });
+    if (upErr) { // source 컬럼(0050) 미적용 방어 — 컬럼 빼고 재시도
+      const bare = rows.map(({ source: _s, ...rest }) => rest);
+      await admin.from("trend_topics").upsert(bare, { onConflict: "category,keyword" });
+    }
     return rows.length;
   } catch {
     return 0;

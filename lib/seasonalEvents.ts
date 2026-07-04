@@ -68,3 +68,20 @@ export function upcomingEvents(category: string | null, today: Date = new Date()
   out.sort((a, b) => a.dday - b.dday);
   return out.slice(0, limit);
 }
+
+/** ★씨앗층 주입용 — D-windowDays 이내 활성 이벤트를 검색형 씨앗으로. (뉴스 신선도 게이트 면제 — 예측 가능 이슈) */
+export function seasonalSeeds(category: string, today: Date = new Date(), windowDays = 14): { keyword: string; title: string }[] {
+  const t = new Date(today); t.setHours(0, 0, 0, 0);
+  const out: { keyword: string; title: string }[] = [];
+  for (const e of EVENTS) {
+    // 퍼지 매칭 — 이벤트 카테고리 토큰이 트렌드 카테고리에 포함되면 매치(예: '재테크' ⊂ '경제·재테크')
+    const matched = !e.categories.length || e.categories.some((c) => category.includes(c) || c.includes(category) || c.split("/").some((tk) => category.includes(tk)));
+    if (!matched) continue;
+    const d = nextDate(e, t);
+    if (!d) continue;
+    const dday = Math.round((d.getTime() - t.getTime()) / 86400000);
+    if (dday < 0 || dday > windowDays) continue;
+    out.push({ keyword: e.name, title: `${e.name} 미리 준비하면 좋은 것들` });
+  }
+  return out.slice(0, 3);
+}

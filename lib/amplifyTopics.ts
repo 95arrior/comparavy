@@ -33,6 +33,7 @@ export interface AmplifiedTopic {
   briefText: string; // brief를 엔진 주입용 지시문으로 직렬화(클라 스레딩용)
   hookKey: string;   // 적용된 훅 패턴 key
   thumb: ThumbCopy;  // 대표이미지 합성 카피
+  source?: string;   // 씨앗 출처(news/season/discover) — 배지 분리
 }
 
 // ── 앵글 차원(구조 지문) — 스펙 최소치: 서두6·전개6·마무리5·톤5·의도6 ──
@@ -234,6 +235,7 @@ ${OPEN_LOOP_GUIDE}
         briefText: briefToDirective(brief),
         hookKey: b.hook.key,
         thumb: { mainCopy: thumbMain, subCopy: thumbSub, badge },
+        source: b.seed.source,
       });
       if (out.length >= want) break;
     }

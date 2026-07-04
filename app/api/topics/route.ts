@@ -177,8 +177,8 @@ export async function GET(req: Request) {
     if (!(bt === "online" && sub && !cluster)) return cards;
     try {
       const kstDay = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
-      const ampKey = `amp:v2:${user.id}:${kstDay}:${excludeSet.size}`; // v2=C단계(브리프·썸네일) 캐시 무효화
-      let amped: { keyword: string; title: string; titleSearch?: string; newsContext: string | null; briefText?: string; hookKey?: string; thumb?: { mainCopy: string; subCopy: string; badge: string }; brief?: unknown }[] = [];
+      const ampKey = `amp:v3:${user.id}:${kstDay}:${excludeSet.size}`; // v3=source(배지 분리) 캐시 무효화
+      let amped: { keyword: string; title: string; titleSearch?: string; newsContext: string | null; briefText?: string; hookKey?: string; thumb?: { mainCopy: string; subCopy: string; badge: string }; brief?: unknown; source?: string }[] = [];
       try {
         const { data: c } = await pool.from("api_cache").select("value, expires_at").eq("key", ampKey).single();
         if (c?.value && (!c.expires_at || new Date(c.expires_at).getTime() > Date.now())) amped = c.value as typeof amped;
@@ -201,7 +201,7 @@ export async function GET(req: Request) {
               .map((t) => {
                 // 실검증 롱테일(gap 낮은 것) 우선 — 뉴스 티 제거. 없으면 씨앗 keyword.
                 const lt = (t.longtails ?? [])[0];
-                return { keyword: lt?.kw ?? t.keyword, title: t.title, newsContext: t.newsContext };
+                return { keyword: lt?.kw ?? t.keyword, title: t.title, newsContext: t.newsContext, source: t.source };
               });
           }
         }
@@ -210,7 +210,10 @@ export async function GET(req: Request) {
         if (cards.length >= 2) break;
         const nk = normalizeKeyword(t.keyword);
         if (usedSet.has(nk) || existing.has(nk)) continue;
-        cards.push({ keyword: t.keyword, title: t.title, demandLabel: "지금 뜨는 중", ssak: true, region: false, tone: bt, vol: 0, comp: "low" as Comp, blogTotal: null, tag: "trend", newsContext: t.newsContext ?? undefined, titleSearch: (t as { titleSearch?: string }).titleSearch, briefText: (t as { briefText?: string }).briefText, hookKey: (t as { hookKey?: string }).hookKey, thumb: (t as { thumb?: { mainCopy: string; subCopy: string; badge: string } }).thumb, brief: (t as { brief?: unknown }).brief });
+        const src = (t as { source?: string }).source;
+        // ★momentum 배지 분리 — 뉴스/시즌='지금 뜨는 중', 자동완성 발굴='꾸준히 찾는 주제'(뜨는 척 금지)
+        const demandLabel = src === "discover" ? "꾸준히 찾는 주제" : "지금 뜨는 중";
+        cards.push({ keyword: t.keyword, title: t.title, demandLabel, ssak: true, region: false, tone: bt, vol: 0, comp: "low" as Comp, blogTotal: null, tag: src === "discover" ? "steady" : "trend", newsContext: t.newsContext ?? undefined, titleSearch: (t as { titleSearch?: string }).titleSearch, briefText: (t as { briefText?: string }).briefText, hookKey: (t as { hookKey?: string }).hookKey, thumb: (t as { thumb?: { mainCopy: string; subCopy: string; badge: string } }).thumb, brief: (t as { brief?: unknown }).brief });
       }
     } catch { /* 트렌드 없이 진행 */ }
     return cards;
