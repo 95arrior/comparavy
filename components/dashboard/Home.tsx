@@ -248,7 +248,7 @@ export default function Home({
       )}
       {/* 상단 — 블로그명 + 크레딧 칩(탭 → 충전·내역) */}
       <div className="at-rise flex items-center justify-between pt-7">
-        <p className="at-label">{blogName}</p>
+        <p className="text-[13px] text-[color:var(--color-text-weak)]">{blogName}</p>
         <div className="flex items-center gap-2">
         {onOpenNews && (
           <button onClick={onOpenNews} aria-label="공지·업데이트" className="at-press relative flex h-8 w-8 items-center justify-center rounded-full bg-white ring-1 ring-black/[0.05] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)]">
@@ -260,8 +260,8 @@ export default function Home({
         )}
         <button onClick={onOpenCredits} className="at-press flex items-center gap-1 rounded-full bg-white px-3 py-1.5 ring-1 ring-black/[0.05] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)]">
           <GlassIcon name="credit" tint="blue" size={20} icon={0.7} radius={7} />
-          <span className="text-[13px] font-bold text-[color:var(--at-grey-900)]">{credits.toLocaleString("ko-KR")}</span>
-          {(() => { const d = Math.floor(credits / GENERATE_COST); return d > 0 ? <span className="text-[11px] font-semibold text-[color:var(--at-grey-400)]">약 {d > 999 ? "999+" : d}일치</span> : null; })()}
+          <span className="text-[13px] tabular-nums text-[color:var(--color-text-sub)]">{credits.toLocaleString("ko-KR")}</span>
+          {(() => { const d = Math.floor(credits / GENERATE_COST); return d > 0 ? <span className="text-[12px] text-[color:var(--color-text-weak)]">약 {d > 999 ? "999+" : d}일치</span> : null; })()}
         </button>
         </div>
       </div>
@@ -351,18 +351,18 @@ export default function Home({
 
       {/* ★오늘의 루틴 — 토스식: 홈엔 행 하나씩, 상세는 시트. 홈의 주인공은 위 '오늘의 글' 하나뿐. */}
       <div className="at-rise at-d3 mt-5">
-        <p className="at-label px-1">오늘의 루틴</p>
-        <div className="mt-2 overflow-hidden rounded-2xl at-glass">
+        <p className="px-1 text-[13px] text-[color:var(--color-text-weak)]">오늘의 루틴</p>
+        <div className="mt-2">
           {([
             { key: "checkin" as const, label: "아침 체크인", sub: "어제 방문자 기록 · 30초" },
             { key: "neighbor" as const, label: "이웃 미션", sub: "이웃 5명 · 댓글 2개 · 보너스" },
             { key: "topics" as const, label: "다른 글감", sub: topicsLoading ? "불러오는 중" : `${rest.length}개 준비됨` },
           ]).map((r, i) => (
             <button key={r.key} onClick={() => setRoutineSheet(r.key)}
-              className={`at-press flex w-full items-center gap-3 px-5 py-4 text-left transition hover:bg-white/40 ${i > 0 ? "border-t border-neutral-100/80" : ""}`}>
+              className={`at-press flex w-full items-center gap-3 px-1 py-4 text-left tk-tr hover:bg-white ${i > 0 ? "border-t border-[color:var(--color-line)]" : ""}`}>
               <span className="min-w-0 flex-1">
-                <span className="text-[14px] font-bold text-[color:var(--at-grey-800)]">{r.label}</span>
-                <span className="mt-0.5 block text-[12px] text-neutral-400">{r.sub}</span>
+                <span className="text-[15px] text-[color:var(--color-text)]">{r.label}</span>
+                <span className="mt-1 block text-[13px] text-[color:var(--color-text-weak)]">{r.sub}</span>
               </span>
               <svg className="shrink-0 text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
             </button>

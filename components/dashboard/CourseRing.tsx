@@ -62,15 +62,15 @@ export default function CourseRing({ info }: { info: CourseInfo }) {
         {/* 중앙 텍스트 */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           {info.finished ? (
-            <span className="text-[30px] font-extrabold tracking-tight text-[color:var(--at-grey-900)]">완주</span>
+            <span className="text-[30px] font-bold tracking-[-0.02em] text-[color:var(--color-text)]">완주</span>
           ) : info.day > 0 ? (
             <>
-              <span className="text-[36px] font-bold leading-none tracking-[-0.02em] tabular-nums text-[color:var(--color-text)]">D-{info.day}</span>
+              <span className="text-[32px] font-bold leading-none tracking-[-0.02em] tabular-nums text-[color:var(--color-text)]">D-{info.day}</span>
               <span className="mt-1 text-[13px] tabular-nums text-[color:var(--color-text-weak)]">{pct}%</span>
             </>
           ) : (
             <>
-              <span className="text-[26px] font-extrabold leading-none tracking-tight text-[color:var(--at-grey-900)]">시작 전</span>
+              <span className="text-[26px] font-bold leading-none tracking-[-0.02em] text-[color:var(--color-text-sub)]">시작 전</span>
               <span className="mt-1 text-[12px] font-semibold text-[color:var(--at-grey-400)]">첫 글이 D-1</span>
             </>
           )}
@@ -83,7 +83,7 @@ export default function CourseRing({ info }: { info: CourseInfo }) {
           </span>
         )}
       </div>
-      <p className="mt-3 text-[13px] font-semibold text-[color:var(--at-grey-600)]">
+      <p className="mt-3 text-[13px] text-[color:var(--color-text-weak)]">
         {info.finished ? "애드포스트 신청해볼 차례예요" : "승인 준비 코스 진행 중"}
       </p>
     </div>

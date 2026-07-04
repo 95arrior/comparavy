@@ -123,10 +123,10 @@ export default function TodayCard({
     <Card highlight>
       <Header label="오늘의 글" />
       <DemandRow topic={topic} onGoPerformance={onGoPerformance} />
-      <p className="mt-2 text-[19px] font-extrabold leading-snug text-[color:var(--at-grey-900)]">{topic.title}</p>
-      {topic.tag === "followup" ? <p className="mt-1.5 text-[13px] font-medium leading-relaxed text-neutral-500">어제 글이 반응이 좋았어요. 이어서 쓰면 효과가 커져요.</p> : why ? <p className="mt-1.5 text-[13px] font-medium leading-relaxed text-neutral-500">{why}</p> : null}
+      <p className="mt-3 text-[20px] font-semibold leading-snug text-[color:var(--color-text)]">{topic.title}</p>
+      {topic.tag === "followup" ? <p className="mt-2 text-[13px] leading-relaxed text-[color:var(--color-text-weak)]">어제 글이 반응이 좋았어요. 이어서 쓰면 효과가 커져요.</p> : why ? <p className="mt-2 text-[13px] leading-relaxed text-[color:var(--color-text-weak)]">{why}</p> : null}
       <div className="mt-3 flex items-center gap-1.5 rounded-[8px] bg-[color:var(--color-bg-subtle)] px-4 py-3">
-        <span className="text-[15px] font-semibold text-[color:var(--color-text)]">이 글을 쓰면 <span className="tabular-nums">{writePct}%</span>가 돼요</span>
+        <span className="text-[15px] text-[color:var(--color-text-sub)]">이 글을 쓰면 <span className="font-semibold tabular-nums text-[color:var(--color-text)]">{writePct}%</span>가 돼요</span>
         {info.day === 0 && <span className="text-[13px] text-[color:var(--color-text-weak)]">· 첫 글이 코스 시작</span>}
       </div>
       <button onClick={() => (preReady && onReadToday ? onReadToday() : write(topic))} className="at-press mt-4 w-full rounded-[8px] bg-[color:var(--color-brand)] py-3.5 text-[15px] font-semibold text-white tk-tr hover:opacity-90">{preReady ? "글 읽어보기" : "이 글 쓰기"}</button>
@@ -147,23 +147,23 @@ function DemandRow({ topic, muted, onGoPerformance }: { topic: TodayTopic; muted
   return (
     <div className={`flex flex-wrap items-center gap-1.5 ${muted ? "opacity-60" : ""}`}>
       {topic.seriesBadge
-        ? <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--color-text)]">{topic.seriesBadge}</span>
+        ? <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[12px] text-[color:var(--color-text-sub)]">{topic.seriesBadge}</span>
         : topic.tag === "followup"
-        ? <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--color-text)]">반응 후속</span>
+        ? <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[12px] text-[color:var(--color-text-sub)]">반응 후속</span>
         : isTrend
-        ? <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--color-text)]">실시간 트렌드</span>
+        ? <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[12px] text-[color:var(--color-text-sub)]">실시간 트렌드</span>
         : isSteady
-        ? <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--color-text)]">꾸준한 수요</span>
-        : comp && <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--color-text)]">{comp.label}</span>}
+        ? <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[12px] text-[color:var(--color-text-sub)]">꾸준한 수요</span>
+        : comp && <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[12px] text-[color:var(--color-text-sub)]">{comp.label}</span>}
       <button onClick={(e) => {
         e.stopPropagation();
         if (rev === "shopping") {
           let approved = false; try { approved = localStorage.getItem("ateflo_adpost_approved") === "1"; } catch { /* ignore */ }
           if (!approved && onGoPerformance) onGoPerformance(); // 잠김 → "애드포스트 승인 후 열려요" = 사다리 화면이 안내
         } else if (onGoPerformance) onGoPerformance();
-      }} className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--color-text)]">{rev === "shopping" ? "쇼핑커넥트" : "애드포스트"}</button>
-      {topic.bidHigh && <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--color-warning)]">단가 높음</span>}
-      <span className="text-[12px] font-medium text-[color:var(--at-grey-400)]">{demand}</span>
+      }} className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[12px] text-[color:var(--color-text-sub)]">{rev === "shopping" ? "쇼핑커넥트" : "애드포스트"}</button>
+      {topic.bidHigh && <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[12px] text-[color:var(--color-warning)]">단가 높음</span>}
+      <span className="text-[13px] text-[color:var(--color-text-weak)]">{demand}</span>
     </div>
   );
 }
@@ -178,7 +178,7 @@ function Header({ label, chip, chipIcon }: { label: string; chip?: string; chipI
   return (
     <div className="flex items-center justify-between gap-2">
       <p className="text-[13px] font-semibold text-[color:var(--color-text-sub)]">{label}</p>
-      {chip && <span className="flex shrink-0 items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-bold text-neutral-600">{chipIcon}{chip}</span>}
+      {chip && <span className="flex shrink-0 items-center gap-1 rounded-full bg-[color:var(--color-bg-subtle)] px-2 py-0.5 text-[12px] text-[color:var(--color-text-sub)]">{chipIcon}{chip}</span>}
     </div>
   );
 }
