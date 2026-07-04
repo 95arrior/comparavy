@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
-import { fetchBlogRss, matchInRss, checkPostDeleted, parseNaverBlogId } from "@/lib/naverRss";
+import { verifyTitleInBlog, checkPostDeleted, parseNaverBlogId } from "@/lib/naverRss";
 import { logUsage } from "@/lib/usageLog";
 
 // ★발행 검증 즉시 1차 — '발행까지 끝냈어요' 직후 호출. RSS 매칭 성공 → verified.
@@ -30,6 +30,8 @@ export async function POST(request: Request) {
   }
 
   // ── RSS 1차 매칭 ──
+  // ★blogId 해석은 '이 글이 속한 프로필' 기준 — 지금은 계정=프로필 1:1이라 user_id 조회.
+  //  Stage 5(멀티 블로그): 여기만 articles.blog_id → blog_profiles.id 경유로 교체(verifyTitleInBlog 시그니처는 그대로).
   const { data: prof } = await supabase.from("blog_profiles").select("naver_blog_id").eq("user_id", user.id).maybeSingle();
   let blogId = prof?.naver_blog_id ?? null;
   if (!blogId && typeof body.blogId === "string") { // 위저드에서 방금 입력받은 경우 — 파싱해 저장
@@ -38,9 +40,8 @@ export async function POST(request: Request) {
   }
   if (!blogId) return NextResponse.json({ ok: false, state: "need_blog_id" });
 
-  const items = await fetchBlogRss(blogId).catch(() => []);
   const claimed = art.claimed_at ? new Date(art.claimed_at).getTime() : Date.now();
-  const hit = matchInRss(art.title, items, claimed);
+  const hit = await verifyTitleInBlog(blogId, art.title, claimed); // 명시 blogId — 이 글의 블로그에서만 매칭
   if (hit) {
     await supabase.from("articles").update({ status: "verified", naver_url: hit.link, verified_at: new Date().toISOString() }).eq("id", id).eq("user_id", user.id);
     void logUsage({ userId: user.id, model: "rss", kind: "verify_hit_instant", inputTokens: 0, outputTokens: 0 });

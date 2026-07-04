@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient, hasSupabaseEnv } from "@/lib/supabase-server";
-import { fetchBlogRss, matchInRss, checkPostDeleted } from "@/lib/naverRss";
+import { fetchBlogRss, matchInRss, checkPostDeleted } from "@/lib/naverRss"; // fetch는 blogId 명시 — 그룹 키가 곧 blogId 해석 단위
 import { logUsage } from "@/lib/usageLog";
 
 // ★검증 크론(10분) — pending_verify 재시도(최대 6회, 소진 시 UI가 URL 폴백 안내).
@@ -21,6 +21,8 @@ export async function GET(request: Request) {
   // ── 재시도: pending_verify & attempts<6 ──
   const { data: pend } = await db.from("articles").select("id, user_id, title, claimed_at, verify_attempts")
     .eq("status", "pending_verify").lt("verify_attempts", 6).order("claimed_at", { ascending: true }).limit(300);
+  // ★그룹 키 = blogId 해석 단위. 지금은 user_id(계정=프로필 1:1). Stage 5(멀티 블로그): 이 그룹 키를
+  //  articles.blog_id로 바꾸고 프로필 조회를 blog_id로 — 아래 매칭은 그 그룹의 RSS만 보므로 교차 오염 불가.
   const byUser = new Map<string, typeof pend>();
   for (const a of pend ?? []) { const arr = byUser.get(a.user_id) ?? []; arr.push(a); byUser.set(a.user_id, arr); }
   let verified = 0, missed = 0;
@@ -36,7 +38,7 @@ export async function GET(request: Request) {
   }
   if (verified + missed > 0) void logUsage({ model: "rss", kind: "verify_cron", inputTokens: verified, outputTokens: missed });
 
-  // ── 삭제 스캔(일 1회, KST 04:0x 배치만) — URL 조회 기반. 불확실(unknown)=유지(보수). ──
+  // ── 삭제 스캔(일 1회, KST 04:0x 배치만) — 글에 저장된 naver_url(그 글의 블로그 링크) 단위 조회라 멀티 블로그에서도 교차 오염 없음. 불확실(unknown)=유지(보수). ──
   let deleted = 0, scanned = 0;
   const kstHour = new Date(Date.now() + 9 * 3600_000).getUTCHours();
   const kstMin = new Date(Date.now() + 9 * 3600_000).getUTCMinutes();

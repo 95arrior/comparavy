@@ -84,3 +84,11 @@ export async function checkPostDeleted(url: string): Promise<DeleteVerdict> {
     return "alive"; // 200 + 삭제 문구 없음
   } catch { return "unknown"; }
 }
+
+/** ★검증 단일 진입점 — blogId를 '명시적으로' 받는다(멀티 블로그 대비: 글이 속한 blog_profile의 blogId만 넘길 것).
+ *  계정 단일 참조를 이 아래로 내려보내지 않는다 — 호출측이 글→프로필 해석을 책임진다. */
+export async function verifyTitleInBlog(blogId: string, title: string, claimedAtMs: number): Promise<RssItem | null> {
+  if (!blogId) return null;
+  const items = await fetchBlogRss(blogId).catch(() => []);
+  return matchInRss(title, items, claimedAtMs);
+}
