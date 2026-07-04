@@ -103,6 +103,7 @@ export default function Home({
     try { const r = await fetch("/api/blogs"); const d = await r.json(); setBlogList(Array.isArray(d.blogs) ? d.blogs : []); } catch { /* ignore */ }
   } // ★토스식 — 루틴은 행, 상세는 시트
   const [swapNotice, setSwapNotice] = useState(false); // 교체 한도 안내
+  const [swapEmpty, setSwapEmpty] = useState(false); // 교체 후보 없음 안내(무반응 방지)
   const moreRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (moreOpen) setTimeout(() => moreRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 80);
@@ -147,6 +148,11 @@ export default function Home({
       const sameKind = outgoing && isTrendy(outgoing) ? cands.filter(isTrendy) : cands;
       const pickPool = sameKind.length ? sameKind : cands;
       const repl = pickPool.length ? pickPool[Math.floor(Math.random() * pickPool.length)] : null;
+      if (!repl) {
+        // ★후보 고갈 — 무반응 금지: 안내 + 이번 시도는 횟수에서 되돌림(억울함 방지)
+        setSwapCount((c) => { const n = Math.max(0, c - 1); try { localStorage.setItem(swapCountKey, String(n)); } catch { /* ignore */ } return n; });
+        setSwapEmpty(true); setTimeout(() => setSwapEmpty(false), 2800);
+      }
       if (repl) {
         setTopics((prev) => {
           if (prev.some((t) => t.keyword !== kw && (t.keyword === repl.keyword || t.title === repl.title || clusterOf(t.title) === clusterOf(repl.title)))) return prev;
