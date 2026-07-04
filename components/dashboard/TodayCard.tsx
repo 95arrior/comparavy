@@ -131,7 +131,7 @@ export default function TodayCard({
         <span className="text-[14px] text-[color:var(--color-text-sub)]">이 글을 쓰면 <span className="font-bold tabular-nums text-[color:var(--color-brand)]">{writePct}%</span>가 돼요</span>
         {info.day === 0 && <span className="text-[13px] text-[color:var(--color-text-weak)]">· 첫 글이 코스 시작</span>}
       </div>
-      <button onClick={() => (preReady && onReadToday ? onReadToday() : write(topic))} className="at-press tk-cta mt-5 flex h-[52px] w-full items-center justify-center rounded-[14px] bg-[color:var(--color-brand)] text-[16px] font-bold text-white">{preReady ? "글 읽어보기" : "이 글 쓰기"}</button>
+      <button onClick={() => (preReady && onReadToday ? onReadToday() : write(topic))} className="at-press tk-grad-cta mt-5 flex h-[52px] w-full items-center justify-center rounded-[14px] text-[16px] font-bold text-white">{preReady ? "글 읽어보기" : "이 글 쓰기"}</button>
     </Card>
   );
 }
@@ -172,7 +172,7 @@ function DemandRow({ topic, muted, onGoPerformance }: { topic: TodayTopic; muted
 
 function Card({ children }: { children: React.ReactNode; highlight?: boolean; plain?: boolean }) {
   // 토스 카드 문법 — 회색 캔버스 위 흰 카드, 라운드 20, 소프트 섀도(빈곤한 플랫 금지)
-  return <div className="tk-seq-2 mt-3 rounded-[20px] bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">{children}</div>;
+  return <div className="tk-seq-2 tk-card-glow mt-4 rounded-[20px] p-6 shadow-[0_2px_12px_-4px_rgba(29,117,247,0.12)]">{children}</div>;
 }
 
 function Header({ label, chip, chipIcon }: { label: string; chip?: string; chipIcon?: React.ReactNode }) {

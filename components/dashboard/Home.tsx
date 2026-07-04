@@ -246,12 +246,12 @@ export default function Home({
       <p className="tk-seq-1 pt-6 text-[15px] font-semibold text-[color:var(--color-text-sub)]">{blogName}</p>
 
       {/* 상태 카드 — 큰 숫자 + 파란 진행바 + 최근 7일 발행 도트(장식이 아니라 데이터) */}
-      <button onClick={onGoPerformance} className="tk-seq-1 tk-cta mt-3 block w-full rounded-[20px] bg-white p-6 text-left shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+      <button onClick={onGoPerformance} className="tk-seq-1 tk-cta tk-card-glow mt-3 block w-full rounded-[20px] p-6 text-left shadow-[0_2px_12px_-4px_rgba(29,117,247,0.12)]">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-[13px] text-[color:var(--color-text-weak)]">애드포스트 승인까지</p>
             <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-[34px] font-bold leading-none tracking-[-0.02em] tabular-nums text-[color:var(--color-text)]">{info.finished ? "완주" : info.day > 0 ? `D-${info.day}` : "D-20"}</span>
+              <span className="tk-grad-text text-[36px] font-extrabold leading-none tracking-[-0.02em] tabular-nums">{info.finished ? "완주" : info.day > 0 ? `D-${info.day}` : "D-20"}</span>
               <span className="text-[15px] font-semibold tabular-nums text-[color:var(--color-brand)]"><CountUp to={progressPercent(info)} duration={800} />%</span>
             </div>
           </div>
@@ -264,8 +264,8 @@ export default function Home({
             })}
           </div>
         </div>
-        <div className="mt-5 h-2 w-full overflow-hidden rounded-full bg-[color:var(--color-line)]">
-          <div className="tk-bar-fill h-full rounded-full bg-[color:var(--color-brand)]" style={{ width: `${Math.max(progressPercent(info), 2)}%` }} />
+        <div className="tk-gauge mt-5 h-2.5 w-full rounded-full bg-[#E8EDF7]">
+          <div className="tk-gauge-fill" style={{ width: `${Math.max(progressPercent(info), 3)}%` }} />
         </div>
         {(info.streak > 0 || yesterdayPublished(articles)) && (
           <p className="mt-4 text-[13px] text-[color:var(--color-text-sub)]">

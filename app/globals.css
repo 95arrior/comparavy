@@ -95,6 +95,32 @@ html {
 .tk-bar-fill { transform-origin: left; animation: tk-bar-in 0.6s var(--ease-standard) 200ms both; }
 .tk-cta { transition: transform var(--duration-standard) var(--ease-standard), box-shadow var(--duration-standard) var(--ease-standard), opacity var(--duration-standard) var(--ease-standard); }
 .tk-cta:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+/* ★메이트 감성(유저 방향 전환) — 비비드 블루 그라데이션·광택·살아있는 게이지. */
+.tk-grad-text {
+  background: linear-gradient(92deg, #1d75f7 10%, #7c6cff 55%, #22c9e8 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.tk-grad-cta {
+  background: linear-gradient(135deg, #1d75f7 0%, #3d8bff 60%, #5aa4ff 100%);
+  box-shadow: 0 6px 18px -6px rgba(29, 117, 247, 0.45);
+  transition: transform var(--duration-standard) var(--ease-standard), box-shadow var(--duration-standard) var(--ease-standard);
+}
+.tk-grad-cta:hover { transform: translateY(-2px); box-shadow: 0 12px 28px -8px rgba(29, 117, 247, 0.55); }
+/* 게이지 — 그라데이션 fill + 광택이 계속 흐르는 sweep(살아있는 진행) */
+.tk-gauge { position: relative; overflow: hidden; }
+.tk-gauge-fill {
+  position: relative; height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, #1d75f7, #4f9df9 55%, #28d8c2 100%);
+  transform-origin: left; animation: tk-bar-in 0.9s var(--ease-standard) 200ms both;
+}
+.tk-gauge-fill::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.55) 50%, transparent 80%);
+  transform: translateX(-100%); animation: tk-sheen 2.4s ease-in-out 1s infinite;
+}
+@keyframes tk-sheen { 0% { transform: translateX(-100%); } 60% { transform: translateX(100%); } 100% { transform: translateX(100%); } }
+/* 카드 표면 — 흰색에 은은한 블루 틴트(메이트 카드 광) */
+.tk-card-glow { background: linear-gradient(160deg, #ffffff 55%, #f2f7ff 100%); }
 @keyframes tk-pop { from { opacity: 0; transform: translateY(4px) scale(0.96); } to { opacity: 1; transform: none; } }
 .tk-chip { animation: tk-pop 0.35s var(--ease-standard) both; }
 .tk-chip:nth-child(2) { animation-delay: 60ms; } .tk-chip:nth-child(3) { animation-delay: 120ms; } .tk-chip:nth-child(4) { animation-delay: 180ms; }
@@ -1680,7 +1706,7 @@ input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-sele
    순백 유리 아이콘이 살려면 배경에 톤이 있어야 한다 — 앱 배경 = 은은한 블루 틴트 그라데이션,
    카드 = 반투명 유리(블러+새츄레이션+상단 하이라이트), 아이콘 = 색 그라데이션 타일 위 백색 유리. */
 .at-app-bg {
-  background-color: #f2f4f6; /* 토스 캔버스 — 흰 카드가 떠 보이는 회색 */
+  background: linear-gradient(180deg, #f2f5ff 0%, #f5f7fc 40%, #f4f6f9 100%); /* 메이트 톤 — 은은한 블루 캔버스 */
 }
 
 .at-glass { /* 글래스 폐기(2단계) — 흰 카드 + line 1px. 구분은 여백과 선으로 */
