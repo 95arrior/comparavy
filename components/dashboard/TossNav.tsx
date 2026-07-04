@@ -31,10 +31,15 @@ export default function TossNav({
   active,
   onNav,
   initial,
+  credits,
+  onCredits,
 }: {
   active: NavKey;
   onNav: (k: NavKey) => void;
   initial: string;
+  /** 조용한 크레딧 필(프로필 옆) — 매일 볼 숫자가 아니라 caption 톤 */
+  credits?: number;
+  onCredits?: () => void;
 }) {
   return (
     <>
@@ -58,9 +63,14 @@ export default function TossNav({
               );
             })}
           </nav>
+          {typeof credits === "number" && (
+            <button onClick={onCredits} className="ml-auto mr-3 rounded-full border border-[color:var(--color-line)] px-3 py-1 text-[13px] tabular-nums text-[color:var(--color-text-sub)] tk-tr hover:bg-[color:var(--color-bg-subtle)]">
+              {credits.toLocaleString("ko-KR")}
+            </button>
+          )}
           <button
             onClick={() => onNav("more")}
-            className="ml-auto flex h-9 w-9 items-center justify-center rounded-full bg-neutral-100 text-sm font-bold text-neutral-600 transition hover:bg-neutral-200"
+            className={`${typeof credits === "number" ? "" : "ml-auto "}flex h-9 w-9 items-center justify-center rounded-full bg-neutral-100 text-sm font-bold text-neutral-600 transition hover:bg-neutral-200`}
             aria-label="내정보"
           >
             {initial}

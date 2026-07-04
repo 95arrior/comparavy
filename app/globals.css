@@ -86,6 +86,15 @@ html {
 .tk-card { background: var(--color-bg); border: 1px solid var(--color-line); border-radius: var(--radius-card); }
 .tk-section { background: var(--color-bg-subtle); border-radius: var(--radius-card); }
 .tk-tr { transition: all var(--duration-standard) var(--ease-standard); }
+/* 시네마틱 3종(홈 동결) — ①위계 순 120ms 스태거 페이드인 ②진행바 1회 차오름 ③CTA 호버 상승. 그 외 모션 금지 */
+@keyframes tk-fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.tk-seq-1 { animation: tk-fade-up 0.4s var(--ease-standard) 0ms both; }
+.tk-seq-2 { animation: tk-fade-up 0.4s var(--ease-standard) 120ms both; }
+.tk-seq-3 { animation: tk-fade-up 0.4s var(--ease-standard) 240ms both; }
+@keyframes tk-bar-in { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.tk-bar-fill { transform-origin: left; animation: tk-bar-in 0.6s var(--ease-standard) 200ms both; }
+.tk-cta { transition: transform var(--duration-standard) var(--ease-standard), box-shadow var(--duration-standard) var(--ease-standard), opacity var(--duration-standard) var(--ease-standard); }
+.tk-cta:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
 
 /* 생성 시작 표시용 무지개 버튼 (흐르는 그라데이션) */
 @keyframes ateflo-rainbow {

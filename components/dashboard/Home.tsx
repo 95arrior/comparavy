@@ -258,7 +258,7 @@ export default function Home({
         </div>
       )}
       {/* 인사말 — 좌정렬, title급(주 컬럼의 시작) */}
-      <h1 className="at-rise pt-6 text-[20px] font-semibold text-[color:var(--color-text)]">{blogName}</h1>
+      <h1 className="tk-seq-2 pt-6 text-[20px] font-semibold text-[color:var(--color-text)]">{blogName}</h1>
 
 
       {/* 크레딧 소진 예고 — 잔여 3편 이하 + 실사용 페이스로 예측 가능할 때만(지어내기 금지) */}
@@ -338,7 +338,7 @@ export default function Home({
       </div>
 
       {/* ★오늘의 루틴 — 토스식: 홈엔 행 하나씩, 상세는 시트. 홈의 주인공은 위 '오늘의 글' 하나뿐. */}
-      <div className="at-rise at-d3 mt-6">
+      <div className="tk-seq-3 mt-12">
         <p className="px-1 text-[13px] text-[color:var(--color-text-weak)]">오늘의 루틴</p>
         <div className="mt-2">
           {([
@@ -396,35 +396,24 @@ export default function Home({
       )}
       </div>
 
-      {/* ★보조 컬럼 — 내 상태(데스크톱). 라벨 caption + 숫자 위주, 링 폐지 → 숫자+수평 진행바 */}
+      {/* ★보조 컬럼 — 문장 카드 2개(관리자 대시보드 금지: 라벨-값 쌍이 아니라 문장으로) */}
       <aside className="hidden lg:block">
-        <div className="sticky top-6 space-y-6 pt-6">
+        <div className="tk-seq-1 sticky top-6 space-y-8 pt-6">
           <button onClick={onGoPerformance} className="block w-full text-left">
-            <p className="text-[13px] text-[color:var(--color-text-weak)]">{info.finished ? "코스 완주" : "승인 준비 코스"}</p>
-            <p className="mt-2 text-[30px] font-bold leading-none tracking-[-0.02em] tabular-nums text-[color:var(--color-text)]">{info.finished ? "완주" : info.day > 0 ? `D-${info.day}` : "시작 전"}</p>
+            <p className="text-[13px] text-[color:var(--color-text-weak)]">승인까지 <span className="mx-0.5 align-middle text-[30px] font-bold leading-none tracking-[-0.02em] tabular-nums text-[color:var(--color-text)]">{info.finished ? "완주" : info.day > 0 ? `D-${info.day}` : "D-20"}</span> · <span className="tabular-nums">{progressPercent(info)}%</span></p>
             <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[color:var(--color-line)]">
-              <div className="h-full rounded-full bg-[color:var(--color-text)] tk-tr" style={{ width: `${progressPercent(info)}%` }} />
+              <div className="tk-bar-fill h-full rounded-full bg-[color:var(--color-text)]" style={{ width: `${progressPercent(info)}%` }} />
             </div>
-            <p className="mt-1 text-[13px] tabular-nums text-[color:var(--color-text-weak)]">{progressPercent(info)}%</p>
           </button>
-          {info.streak > 0 && (
-            <div>
-              <p className="text-[13px] text-[color:var(--color-text-weak)]">연속 발행</p>
-              <p className="mt-1 text-[15px] tabular-nums text-[color:var(--color-text)]">{info.streak}일</p>
-            </div>
+          {(info.streak > 0 || yesterdayPublished(articles)) && (
+            <p className="text-[13px] text-[color:var(--color-text-sub)]">
+              {info.streak > 0 ? `${info.streak}일 연속 발행 중` : ""}
+              {info.streak > 0 && yesterdayPublished(articles) ? " · " : ""}
+              {yesterdayPublished(articles) ? "어제 발행 확인" : ""}
+            </p>
           )}
-          <button onClick={onOpenCredits} className="block w-full text-left">
-            <p className="text-[13px] text-[color:var(--color-text-weak)]">크레딧</p>
-            <p className="mt-1 text-[15px] tabular-nums text-[color:var(--color-text)]">{credits.toLocaleString("ko-KR")}{(() => { const d = Math.floor(credits / GENERATE_COST); return d > 0 ? <span className="ml-1 text-[13px] text-[color:var(--color-text-weak)]">약 {d > 999 ? "999+" : d}일치</span> : null; })()}</p>
-          </button>
-          <div>
-            <p className="text-[13px] text-[color:var(--color-text-weak)]">어제</p>
-            <p className="mt-1 text-[13px] text-[color:var(--color-text-sub)]">{yesterdayPublished(articles) ? "발행 확인됐어요" : "발행 기록 없어요"}</p>
-          </div>
-          {onOpenNews && (
-            <button onClick={onOpenNews} className="flex items-center gap-1.5 text-[13px] text-[color:var(--color-text-weak)] hover:text-[color:var(--color-text-sub)]">
-              공지·업데이트{unreadNews && <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--color-danger)]" />}
-            </button>
+          {onOpenNews && unreadNews && (
+            <button onClick={onOpenNews} className="flex items-center gap-1.5 text-[13px] text-[color:var(--color-text-sub)]">새 공지가 있어요 <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--color-danger)]" /></button>
           )}
         </div>
       </aside>

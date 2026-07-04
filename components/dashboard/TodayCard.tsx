@@ -131,7 +131,7 @@ export default function TodayCard({
         <span className="text-[15px] text-[color:var(--color-text-sub)]">이 글을 쓰면 <span className="font-semibold tabular-nums text-[color:var(--color-text)]">{writePct}%</span>가 돼요</span>
         {info.day === 0 && <span className="text-[13px] text-[color:var(--color-text-weak)]">· 첫 글이 코스 시작</span>}
       </div>
-      <button onClick={() => (preReady && onReadToday ? onReadToday() : write(topic))} className="at-press mt-4 flex min-h-12 w-full items-center justify-center rounded-[8px] bg-[color:var(--color-brand)] text-[15px] font-semibold text-white tk-tr hover:opacity-90">{preReady ? "글 읽어보기" : "이 글 쓰기"}</button>
+      <button onClick={() => (preReady && onReadToday ? onReadToday() : write(topic))} className="at-press tk-cta mt-4 flex min-h-12 w-full items-center justify-center rounded-[8px] bg-[color:var(--color-brand)] text-[15px] font-semibold text-white">{preReady ? "글 읽어보기" : "이 글 쓰기"}</button>
     </Card>
   );
 }
@@ -171,7 +171,7 @@ function DemandRow({ topic, muted, onGoPerformance }: { topic: TodayTopic; muted
 }
 
 function Card({ children, plain }: { children: React.ReactNode; highlight?: boolean; plain?: boolean }) {
-  if (plain) return <div className="pt-5">{children}</div>; // 캔버스 위 섹션 — 껍데기 없음(구분=여백)
+  if (plain) return <div className="tk-seq-2 pt-8">{children}</div>; // 캔버스 위 섹션 — 껍데기 없음(구분=여백)
   return <div className="rounded-[12px] border border-[color:var(--color-line)] bg-white p-6">{children}</div>;
 }
 

@@ -464,7 +464,7 @@ export default function DashboardClient(props: DashboardProps) {
   return (
     <div className="at-app-bg flex min-h-screen text-neutral-900 antialiased">
       {/* 메인 */}
-      {showNav && <TossNav active={navKey} onNav={onNav} initial={initial} />}
+      {showNav && <TossNav active={navKey} onNav={onNav} initial={initial} credits={credits} onCredits={() => setPage("credits")} />}
       <div className={`min-w-0 flex-1 ${showNav ? "pb-[78px] md:pb-0 md:pt-16" : ""}`}>
         <CenterToast message={notice} />
 
