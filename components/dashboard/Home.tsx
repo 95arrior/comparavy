@@ -215,6 +215,19 @@ export default function Home({
   const reviewThisWeek = articles.filter((a) => a.status !== "generating" && new Date(a.created_at).getTime() >= weekAgo && revenuePath({ keyword: a.keyword ?? "", title: a.title }) === "shopping").length;
   const reviewPick = reviewThisWeek < REVIEW_WEEKLY_MIN ? availClean.find((t) => revenuePath({ keyword: t.keyword, title: t.title }) === "shopping") : undefined;
   const first = boost ?? reviewPick ?? pickNextTopic(clean, usedToday);
+  // ★오늘의 글 교체 — 하루 2회(무한 고르기 방지·뇌빼고 유지). 파쇄기류 미스매치 탈출구.
+  const heroSwapKey = `ateflo_heroswap_${new Date().toISOString().slice(0, 10)}`;
+  function heroSwap() {
+    if (!first) return;
+    let n = 0; try { n = Number(localStorage.getItem(heroSwapKey) ?? "0") || 0; } catch { /* ignore */ }
+    if (n >= 2) { setSwapNotice(true); setTimeout(() => setSwapNotice(false), 2600); return; }
+    try { localStorage.setItem(heroSwapKey, String(n + 1)); } catch { /* ignore */ }
+    const kw = first.keyword;
+    const nd = [...dismissedRef.current, kw];
+    setDismissed(nd);
+    try { localStorage.setItem(todayKey, JSON.stringify(nd)); } catch { /* ignore */ }
+    setTopics((prev) => { const next = prev.filter((t) => t.keyword !== kw); try { localStorage.setItem(topicsCacheKey(), JSON.stringify(next)); } catch { /* ignore */ } return next; });
+  }
   // 트리거 조건: 글감 확정 + 크레딧 있음 + 오늘 미완료·무초안. 같은 글감 재트리거 금지(ref).
   useEffect(() => {
     const f = first;
@@ -355,6 +368,7 @@ export default function Home({
           info={info}
           onWriteKeyword={onWriteKeyword}
           onGoPerformance={onGoPerformance}
+          onHeroSwap={heroSwap}
           onOpenTodayDraft={(() => { const d = articles.find((a) => a.status === "draft" && new Date(a.created_at).toDateString() === new Date().toDateString()); return d ? () => onSelect(d) : undefined; })()}
           preReady={!!preReadyId}
           onReadToday={readToday}

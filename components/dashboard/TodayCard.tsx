@@ -19,7 +19,7 @@ export interface TodayTopic {
 }
 
 export default function TodayCard({
-  topic, loading, credits, info, onWriteKeyword, onGoPerformance, onOpenTodayDraft, preReady, onReadToday, plain,
+  topic, loading, credits, info, onWriteKeyword, onGoPerformance, onOpenTodayDraft, preReady, onReadToday, onHeroSwap, plain,
 }: {
   topic: TodayTopic | null;
   loading: boolean;
@@ -32,6 +32,8 @@ export default function TodayCard({
   /** ★사전 생성 완료 — 버튼이 '글 읽어보기'로 조용히 전환(생성 광고 금지, 이 라벨이 유일한 신호) */
   preReady?: boolean;
   onReadToday?: () => void;
+  /** 오늘의 글 교체(하루 2회 제한은 상위에서) */
+  onHeroSwap?: () => void;
   /** 캔버스 위 섹션(카드 껍데기 없음) — 홈 재설계 */
   plain?: boolean;
 }) {
@@ -124,7 +126,14 @@ export default function TodayCard({
   return (
     <div className="tk-hero tk-hero-in mt-4 rounded-[24px] p-6 pb-7 text-white">
       <div className="relative z-10">
-        <p className="text-[13px] font-semibold text-white/70">오늘의 글</p>
+        <div className="flex items-center justify-between">
+          <p className="text-[13px] font-semibold text-white/70">오늘의 글</p>
+          {onHeroSwap && (
+            <button onClick={onHeroSwap} aria-label="다른 글감으로 교체" className="at-press flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-white/80 hover:bg-white/25">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.3" /><path d="M21 3v6h-6" /></svg>
+            </button>
+          )}
+        </div>
         <div className="mt-3.5"><DemandRow topic={topic} onGoPerformance={onGoPerformance} onDark /></div>
         <p className="mt-4 text-[24px] font-extrabold leading-[1.32] tracking-[-0.01em] text-white">{topic.title}</p>
         {topic.tag === "followup" ? (
