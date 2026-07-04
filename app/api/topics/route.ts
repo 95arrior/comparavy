@@ -257,10 +257,11 @@ export async function GET(req: Request) {
     return rows.filter((r) => !usedSet.has(normalizeKeyword(r.keyword)) && !isUnsafeKeyword(r.keyword) && !staleYear(r.keyword) && audMatch(r.keyword, r.audience));
   }
 
-  // 단계적 폴백: (sub+적정범위) → (sub+전체) → (vertical+적정범위) → (vertical+전체).
-  // 대상 선택해도 vertical 폴백 허용 — audMatch가 fetchPool에서 대상을 이미 거르므로 안전(얇은 풀 방지).
+  // 단계적 폴백: (sub+적정범위) → (sub+전체). ★vertical 전체 폴백 제거(실측: 자동차 블로그에 '파쇄기' —
+  //  타 주제 키워드가 오늘의 글로 서는 관련성 붕괴). sub 풀이 비면 아래 '게으른 채우기'가 그 주제로 즉석 수집,
+  //  그동안은 트렌드(카테고리 즉석 수확)와 수집중 UI가 받친다 — 무관 글감보다 잠깐의 빈자리가 낫다.
   const steps: [boolean, boolean][] = sub
-    ? [[true, true], [true, false], [false, true], [false, false]]
+    ? [[true, true], [true, false]]
     : [[false, true], [false, false]];
   let rows: PoolRow[] = [];
   for (const [useSub, ranged] of steps) {
