@@ -259,6 +259,8 @@ function TopicRow({ topic, onClick, onSwap, swapping }: {
       <div className="flex items-center gap-2">
         {topic.tag === "issue" || topic.tag === "trend" ? (
           <span className="rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-bold text-amber-600">실시간 트렌드</span>
+        ) : topic.tag === "steady" ? (
+          <span className="rounded-md bg-sky-50 px-1.5 py-0.5 text-[11px] font-bold text-sky-600">꾸준한 수요</span>
         ) : (
           <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-bold ${compMeta.cls}`}>{compMeta.label}</span>
         )}
