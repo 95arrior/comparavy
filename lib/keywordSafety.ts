@@ -88,6 +88,8 @@ const BRANDS = [
   // 온라인 판매·쇼핑몰 빌더 등 타사 SaaS(특정 서비스 '사용법' 글은 경쟁사 홍보꼴 → 글감 부적격)
   // 일반 주제(스마트스토어·쿠팡파트너스·애드센스 등)는 정상 콘텐츠라 차단 안 함.
   "마이셀즈", "아임웹", "카페24", "식스샵", "고도몰", "메이크샵", "NHN커머스", "샵바이프리미엄", "위사", "imweb",
+  // 금융 브랜드 서비스·앱(실측 유입: 디지로카·카드의정석 등 — 타사 브랜드 글감 부적격)
+  "디지로카", "카드의정석", "신한쏠", "쏠뱅크", "토스뱅크", "카카오뱅크", "케이뱅크", "리브엠", "모니모",
 ];
 
 // ★ETF/펀드 상품명 계열 — 브랜드 접두(KODEX·TIGER 등) 또는 상품명 패턴(액티브·합성·커버드콜…)이 붙은 '상품명' 키워드.
@@ -126,6 +128,9 @@ const SENSITIVE_TOPICS = [
   "우울증", "공황장애", "조현병", "조울증", "불안장애", "정신질환", "정신병", "자해", "자살", "섭식장애", "거식증", "폭식증", "분노조절장애", "산후우울",
   "항암", "암치료", "말기암", "희귀질환", "난치병", "치매치료", "정신과약", "향정신성",
 ];
+// 고객센터·상담전화류 — CS 검색은 글감 실익 없음 + 브랜드 결합(실측: 현대캐피탈고객센터). '캐피탈'은 전부 브랜드 접미.
+const CS_BRAND_RE = /(고객센터|상담전화|전화번호|캐피탈)/;
+
 function hasSensitiveTopic(kw: string): boolean {
   const s = kw.replace(/\s+/g, "").toLowerCase();
   return SENSITIVE_TOPICS.some((t) => s.includes(t));
@@ -149,6 +154,7 @@ export function isUnsafeKeyword(keyword: string): boolean {
   if (looksLikeBizName(kw)) return true;
   if (hasGossipSignal(kw)) return true; // 연예·유명인 가십(법적 지뢰) — 전면 차단
   if (hasSensitiveTopic(kw)) return true; // 의료·발달장애·정신건강 — 씨앗층 의료 클린
+  if (CS_BRAND_RE.test(kw.replace(/\s+/g, ""))) return true; // 고객센터·캐피탈류(브랜드 CS)
   if (hasBrand(kw)) return true;
   return false;
 }

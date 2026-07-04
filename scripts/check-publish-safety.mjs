@@ -27,8 +27,9 @@ ok(!hasPhotoLeak(cleaned), "지시문구 문단 제거됨");
 console.log("\n③ 이모지 구조적 제거:");
 const emo = "<p>정리했어요 🎨 꿀팁 😊👍 시작 🔥</p>";
 const noEmo = formatBody({ title: "t", bodyHtml: emo, images: {} });
-ok(!EMOJI_TEST(noEmo), "본문 이모지 0");
-ok(stripEmoji("화살표→유지 ✅제거 · 보존").includes("→") && stripEmoji("화살표→유지 ✅제거 · 보존").includes("·") && !/[✅]/.test(stripEmoji("✅")), "화살표·가운뎃점 보존, 이모지 제거");
+ok(!/[🤣🚀😂🔥]/u.test(noEmo), "화이트리스트 외 이모지 0(포맷 v3)");
+ok(stripEmoji("📌 포인트 💡 유지 🤣 제거").includes("📌") && stripEmoji("📌💡🤣").includes("💡") && !stripEmoji("🤣").includes("🤣"), "포인트 이모지(📌💡) 생존, 도배류 제거");
+ok(stripEmoji("화살표→유지 🤪제거 · 보존").includes("→") && stripEmoji("화살표→유지 🤪제거 · 보존").includes("·") && !stripEmoji("🤪").includes("🤪"), "화살표·가운뎃점 보존, 비허용 이모지 제거");
 function EMOJI_TEST(s){ return /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(s); }
 
 // ── 4. 미닫힌 괄호 분할 금지 ──

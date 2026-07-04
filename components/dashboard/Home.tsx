@@ -131,7 +131,12 @@ export default function Home({
       const currentTitles = new Set(topics.map((t) => t.title));
       const currentClusters = new Set(topics.map((t) => clusterOf(t.title)));
       const cands = fresh.filter((t) => !current.has(t.keyword) && !currentTitles.has(t.title) && !currentClusters.has(clusterOf(t.title)) && !dismissedRef.current.includes(t.keyword));
-      const repl = cands.length ? cands[Math.floor(Math.random() * cands.length)] : null;
+      // ★같은 계열 우선 — 트렌드 자리는 트렌드로 먼저 교체(재고 소진 시에만 풀로). 교체 반복 시 전부 풀로 수렴하는 체감 완화.
+      const outgoing = topics.find((t) => t.keyword === kw);
+      const isTrendy = (t: { tag?: string }) => t.tag === "trend" || t.tag === "issue" || t.tag === "steady";
+      const sameKind = outgoing && isTrendy(outgoing) ? cands.filter(isTrendy) : cands;
+      const pickPool = sameKind.length ? sameKind : cands;
+      const repl = pickPool.length ? pickPool[Math.floor(Math.random() * pickPool.length)] : null;
       if (repl) {
         setTopics((prev) => {
           if (prev.some((t) => t.keyword !== kw && (t.keyword === repl.keyword || t.title === repl.title || clusterOf(t.title) === clusterOf(repl.title)))) return prev;

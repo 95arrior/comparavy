@@ -36,8 +36,15 @@ const INSTRUCTION_SRC = "\\[\\s*사진\\s*:[\\s\\S]*?\\]|사진을?\\s*(여기�
 const INSTRUCTION_G = new RegExp(INSTRUCTION_SRC, "g");        // 콜론형 + 지시 문구
 // 이모지·픽토그램·기호(화살표 U+2190~21FF·가운뎃점·불릿은 보존).
 const EMOJI_RE = /[\u{1F1E6}-\u{1F1FF}\u{1F300}-\u{1FAFF}\u{1F000}-\u{1F0FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{2049}\u{203C}\u{2122}\u{2139}]/gu;
+// ★포맷 v3(네이버 공식 블로그팀 문법) — 포인트 이모지 화이트리스트만 통과(도배 방지), 그 외 전부 제거.
+const EMOJI_ALLOW = ["📌", "✅", "💡", "🍀", "🎉", "😊", "👇", "⏰", "📢"];
 export function stripEmoji(s: string): string {
-  return s.replace(EMOJI_RE, "").replace(/[ \t]{2,}/g, " ");
+  const MASK = "\u0000EM";
+  let out = s;
+  EMOJI_ALLOW.forEach((e, i) => { out = out.split(e).join(`${MASK}${i};`); });
+  out = out.replace(EMOJI_RE, "");
+  EMOJI_ALLOW.forEach((e, i) => { out = out.split(`${MASK}${i};`).join(e); });
+  return out.replace(/[ \t]{2,}/g, " ");
 }
 // rich 최종 게이트 — 모든 사진 마커·지시·이모지 제거 + 빈 문단 정리.
 export function sanitizeForCopy(html: string): string {
@@ -134,6 +141,7 @@ export function splitLongParagraphs(html: string): string {
 function styleBlocks(html: string): string {
   const align: "center" | "left" = BODY_ALIGN === "center" ? "center" : "left";
   return html.replace(/<(p|h1|h2|h3|h4|blockquote|ul|ol|li)(\s[^>]*)?>/gi, (m, _tag, attr) => {
+    if (/text-align\s*:\s*center/.test(attr ?? "")) return m; // ★중앙 안내 블록(포맷 v3) — 엔진 지정 존중
     if (/style=/.test(attr ?? "")) return m.replace(/style="([^"]*)"/, `style="$1;text-align:${align}"`);
     return m.replace(/>$/, ` style="text-align:${align}">`);
   });
