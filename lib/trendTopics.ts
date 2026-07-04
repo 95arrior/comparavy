@@ -175,21 +175,41 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
     const GAP_PER_SEED = 3;      // 씨앗당 gap 검사할 롱테일 수(검색량 상위)
     let gapUsed = 0;
     let ltTotal = 0;
-    // 관련성 앵커(v2) — 오탈락 3버그 수정: ①대소문자 정규화 ②핵심어가 뒤에 있어도 질의(4자↑ 토큰 직접 질의)
-    //  ③매칭: 씨앗의 4자↑ 토큰 '아무거나' 포함이면 관련(복합명사=구별력 충분). 4자↑ 토큰이 없으면 기존 2토큰 앵커(드리프트 방어 유지).
+    // 관련성 앵커(v3) — v2에 더해: ⑤롱테일 관련성(핵심 명사 포함 필수, 무관 매칭 차단) ⑥폴백 생존 씨앗은 키워드 교체/드롭(하드게이트 우회 차단).
     const norm = (x: string) => x.replace(/\s+/g, "").toLowerCase();
+    // ★롱테일 관련성 — 원 키워드 핵심 명사 규칙:
+    //  1토큰: 그 토큰 포함 / 2토큰: 첫 토큰 포함 또는 두 토큰 모두("폴더블 스마트폰"→'스마트폰내시경' 차단, '갤럭시 폴더블폰' 통과)
+    //  3토큰↑: 최소 2토큰 포함("취약계층 아동 교육지원"→'미소금융 취약계층' 차단)
+    const relOK = (seedKw: string, cand: string): boolean => {
+      const st = seedKw.split(/\s+/).filter((t) => [...t].length >= 2 && !/^\d+$/.test(t)).map(norm);
+      if (st.length === 0) return false;
+      const n = norm(cand);
+      const hits = st.filter((t) => n.includes(t)).length;
+      if (st.length === 1) return hits >= 1;
+      if (st.length === 2) return n.includes(st[0]) || hits >= 2;
+      return hits >= 2;
+    };
     for (const row of rows) {
       const toks = row.keyword.split(/\s+/).filter(Boolean);
-      const bigToks = toks.filter((t) => [...t].length >= 4).map(norm); // 구별되는 복합명사들
-      const fallbackAnchor = norm(toks.slice(0, 2).join(""));           // 4자↑ 없을 때(전기차 미니 원전류 드리프트 방어)
       const longestBig = toks.filter((t) => [...t].length >= 4).sort((a, b) => [...b].length - [...a].length)[0];
-      // 질의 순서: 전체 → 핵심어(가장 긴 4자↑ 토큰) → 앞 2토큰 → 첫 토큰. 핵심어가 어순 뒤에 있어도 잡힌다.
+      // 질의 순서: 전체 → 핵심어(4자↑ 최장 토큰) → 앞 2토큰 → 첫 토큰
       const queries = [row.keyword, longestBig, toks.slice(0, 2).join(" "), toks[0]].filter((q, i, a): q is string => Boolean(q) && a.indexOf(q) === i);
       let acs: string[] = [];
-      for (const q of queries) { acs = await fetchNaverAutocomplete(q).catch(() => []); if (acs.length > 0) break; }
-      // ★관련성 게이트 — 4자↑ 토큰 중 하나라도 포함(대소문자 무시)이면 관련. 없으면 2토큰 앵커 요구.
-      const related = (a: string) => { const n = norm(a); return bigToks.length > 0 ? bigToks.some((t) => n.includes(t)) : n.includes(fallbackAnchor); };
-      const cand = acs.filter(related).slice(0, 8);
+      let matchedIdx = -1;
+      for (let qi = 0; qi < queries.length; qi++) {
+        acs = await fetchNaverAutocomplete(queries[qi]).catch(() => []);
+        if (acs.length > 0) { matchedIdx = qi; break; }
+      }
+      // ★폴백 생존 처리 — 전체 키워드가 자동완성에 없으면(matchedIdx>0) 원 키워드는 유령.
+      //  실검색어 후보로 '교체'(중복·unsafe 제외), 후보 없으면 드롭(하드게이트 우회 경로 차단).
+      if (matchedIdx > 0) {
+        const repl = acs.find((c) => !seen.has(compressToSearchKeyword(c)) && !isUnsafeKeyword(c) && [...c.trim()].length >= 5);
+        if (!repl) { (row as typeof row & { longtails?: Longtail[] }).longtails = []; continue; } // → gap 드롭
+        seen.add(compressToSearchKeyword(repl));
+        row.keyword = repl.trim(); // 제목(뉴스 각도)은 유지, 키워드만 실검색어로
+      }
+      // 관련성 게이트 — (교체됐다면 새 키워드 기준) 핵심 명사 포함 필수. 위반 롱테일 제거.
+      const cand = acs.filter((a) => a.trim() !== row.keyword && relOK(row.keyword, a) && !isUnsafeKeyword(a)).slice(0, 8);
       ltTotal += cand.length;
       const longtails: Longtail[] = [];
       for (let i = 0; i < cand.length; i++) {
@@ -197,6 +217,8 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
         if (i < GAP_PER_SEED && gapUsed < GAP_BUDGET) { bt = await fetchBlogTotal(cand[i]).catch(() => null); gapUsed += 1; }
         longtails.push({ kw: cand[i], blogTotal: bt });
       }
+      // 교체된 씨앗은 자기 자신이 실검색어 — 롱테일 0이어도 생존하도록 자신을 포함
+      if (matchedIdx > 0 && longtails.length === 0) longtails.push({ kw: row.keyword, blogTotal: null });
       longtails.sort((a, b) => (a.blogTotal ?? 1e9) - (b.blogTotal ?? 1e9));
       (row as typeof row & { longtails?: Longtail[] }).longtails = longtails;
     }

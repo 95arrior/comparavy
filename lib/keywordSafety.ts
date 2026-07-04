@@ -118,6 +118,19 @@ function hasGossipSignal(kw: string): boolean {
   return GOSSIP_SIGNALS.some((g) => s.includes(g));
 }
 
+// ★민감 주제 — 의료 클린 원칙의 씨앗층 버전. 발달장애·정신건강·중증질환·치료행위는 글감 부적격
+//  (비전문 블로그의 의료 조언 = 법적·윤리 리스크. "자폐 아동 혼내는 법" 같은 키워드가 글감이 되면 안 된다).
+//  '건강검진·영양제·다이어트' 같은 일반 생활건강은 차단하지 않는다 — 진단·치료·장애 개입만.
+const SENSITIVE_TOPICS = [
+  "자폐", "발달장애", "지적장애", "아스퍼거", "틱장애", "adhd", "발달지연", "언어장애", "학습장애",
+  "우울증", "공황장애", "조현병", "조울증", "불안장애", "정신질환", "정신병", "자해", "자살", "섭식장애", "거식증", "폭식증", "분노조절장애", "산후우울",
+  "항암", "암치료", "말기암", "희귀질환", "난치병", "치매치료", "정신과약", "향정신성",
+];
+function hasSensitiveTopic(kw: string): boolean {
+  const s = kw.replace(/\s+/g, "").toLowerCase();
+  return SENSITIVE_TOPICS.some((t) => s.includes(t));
+}
+
 function looksLikeBizName(kw: string): boolean {
   // 공백 제거하지 않음 — '이름+접미사'가 붙어 있는(고유명사) 케이스만 잡고, 공백 있는 일반검색은 통과
   const m = SUFFIX_RE.exec(kw);
@@ -135,6 +148,7 @@ export function isUnsafeKeyword(keyword: string): boolean {
   if (!kw) return false;
   if (looksLikeBizName(kw)) return true;
   if (hasGossipSignal(kw)) return true; // 연예·유명인 가십(법적 지뢰) — 전면 차단
+  if (hasSensitiveTopic(kw)) return true; // 의료·발달장애·정신건강 — 씨앗층 의료 클린
   if (hasBrand(kw)) return true;
   return false;
 }
