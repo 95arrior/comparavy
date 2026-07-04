@@ -106,6 +106,9 @@ export async function POST(request: Request) {
   const createNew = body.createNew === true;
   let data: unknown = null; let error: { message: string } | null = null;
   if (createNew) {
+    // ★블로그 상한 5개 — 크레딧 공유·일 3편(블로그당) 구조에서 운영 가능한 현실 상한(실수·어뷰징 방지)
+    const { count } = await supabase.from("blog_profiles").select("id", { count: "exact", head: true }).eq("user_id", user.id);
+    if ((count ?? 0) >= 5) return NextResponse.json({ error: "블로그는 5개까지 만들 수 있어요." }, { status: 400 });
     await supabase.from("blog_profiles").update({ is_active: false }).eq("user_id", user.id).eq("is_active", true);
     ({ data, error } = await supabase.from("blog_profiles").insert({ ...payload, is_active: true }).select("*").single());
   } else {
