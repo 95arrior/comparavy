@@ -52,7 +52,7 @@ export default function TossNav({
                 <button
                   key={n.key}
                   onClick={() => onNav(n.key)}
-                  className={`rounded-xl px-3.5 py-2 text-[15px] font-semibold transition ${on ? "text-[#1D75F7]" : "text-neutral-400 hover:text-neutral-700"}`}
+                  className={`rounded-xl px-3.5 py-2 text-[15px] font-semibold transition ${on ? "text-[color:var(--color-text)]" : "text-[color:var(--color-text-weak)] hover:text-[color:var(--color-text-sub)]"}`}
                 >
                   {n.label}
                 </button>

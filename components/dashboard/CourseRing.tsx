@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { COURSE_DAYS, progressPercent, type CourseInfo } from "@/lib/course";
-import GlassIcon from "@/components/GlassIcon";
 
 // ★코스 링 v2 — 홈의 심장. 그라데이션 스트로크(블루→시안) + 소프트 글로우 +
 // 20일 눈금 + 진행 끝점에 빛나는 펄(그룹 회전으로 링과 함께 이동). 마운트 시 0→현재 드로잉.
@@ -26,13 +25,9 @@ export default function CourseRing({ info }: { info: CourseInfo }) {
         <svg width="176" height="176" viewBox="0 0 176 176" className="-rotate-90">
           <defs>
             <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#1D75F7" />
-              <stop offset="55%" stopColor="#4f9df9" />
-              <stop offset="100%" stopColor="#38cdf8" />
+              <stop offset="0%" stopColor="#191f28" />
+              <stop offset="100%" stopColor="#191f28" />
             </linearGradient>
-            <filter id="ringGlow" x="-40%" y="-40%" width="180%" height="180%">
-              <feGaussianBlur stdDeviation="5" />
-            </filter>
           </defs>
 
           {/* 20일 눈금 */}
@@ -41,7 +36,7 @@ export default function CourseRing({ info }: { info: CourseInfo }) {
             const x1 = 88 + r1 * Math.cos(a), y1 = 88 + r1 * Math.sin(a);
             const x2 = 88 + r2 * Math.cos(a), y2 = 88 + r2 * Math.sin(a);
             const passed = i / COURSE_DAYS < drawn - 0.001;
-            return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={passed ? "#1D75F7" : "#dde4ee"} strokeWidth="2.5" strokeLinecap="round" style={{ transition: `stroke 0.4s ease ${0.9 * (i / COURSE_DAYS)}s` }} />;
+            return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={passed ? "#191f28" : "#e8ebef"} strokeWidth="2.5" strokeLinecap="round" style={{ transition: `stroke 0.4s ease ${0.9 * (i / COURSE_DAYS)}s` }} />;
           })}
 
           {/* 트랙 */}
@@ -49,7 +44,7 @@ export default function CourseRing({ info }: { info: CourseInfo }) {
 
           {/* 글로우(뒤) + 본 링 */}
           <circle cx="88" cy="88" r={R} fill="none" stroke="url(#ringGrad)" strokeWidth="12" strokeLinecap="round"
-            strokeDasharray={C} strokeDashoffset={C * (1 - drawn)} filter="url(#ringGlow)" opacity="0.45"
+            strokeDasharray={C} strokeDashoffset={C * (1 - drawn)} opacity="0.45"
             style={{ transition: "stroke-dashoffset 0.9s var(--at-ease)" }} />
           <circle cx="88" cy="88" r={R} fill="none" stroke="url(#ringGrad)" strokeWidth="12" strokeLinecap="round"
             strokeDasharray={C} strokeDashoffset={C * (1 - drawn)}
@@ -58,7 +53,7 @@ export default function CourseRing({ info }: { info: CourseInfo }) {
           {/* 진행 끝점 펄 — 그룹 회전으로 링 끝을 따라감 */}
           {drawn > 0.001 && (
             <g style={{ transformOrigin: "88px 88px", transform: `rotate(${drawn * 360}deg)`, transition: "transform 0.9s var(--at-ease)" }}>
-              <circle cx={88 + R} cy="88" r="9" fill="#fff" opacity="0.9" filter="url(#ringGlow)" />
+              <circle cx={88 + R} cy="88" r="9" fill="#fff" opacity="0.9" />
               <circle cx={88 + R} cy="88" r="5.5" fill="#fff" stroke="url(#ringGrad)" strokeWidth="3" />
             </g>
           )}
@@ -70,8 +65,8 @@ export default function CourseRing({ info }: { info: CourseInfo }) {
             <span className="text-[30px] font-extrabold tracking-tight text-[color:var(--at-grey-900)]">완주</span>
           ) : info.day > 0 ? (
             <>
-              <span className="text-[36px] font-extrabold leading-none tracking-tight text-[color:var(--at-grey-900)]">D-{info.day}</span>
-              <span className="mt-1 text-[13px] font-semibold text-[color:var(--at-grey-400)]">{pct}%</span>
+              <span className="text-[36px] font-bold leading-none tracking-[-0.02em] tabular-nums text-[color:var(--color-text)]">D-{info.day}</span>
+              <span className="mt-1 text-[13px] tabular-nums text-[color:var(--color-text-weak)]">{pct}%</span>
             </>
           ) : (
             <>
@@ -83,8 +78,8 @@ export default function CourseRing({ info }: { info: CourseInfo }) {
 
         {/* 스트릭 칩 */}
         {info.streak >= 2 && (
-          <span className="absolute -right-6 top-2 flex items-center gap-1 rounded-full at-glass px-2.5 py-1 text-[12px] font-bold text-orange-500 shadow-[0_4px_14px_-4px_rgba(0,0,0,0.15)]">
-            <GlassIcon name="fire" tint="orange" size={14} /> {info.streak}일 연속
+          <span className="absolute -right-6 top-2 rounded-full border border-[color:var(--color-line)] bg-white px-2.5 py-1 text-[12px] font-semibold tabular-nums text-[color:var(--color-text-sub)]">
+            {info.streak}일 연속
           </span>
         )}
       </div>

@@ -43,7 +43,7 @@ export default function TodayCard({
         <Header label="승인 준비 코스" chip="완주" />
         <p className="mt-2 text-[17px] font-bold leading-snug text-neutral-900">준비 코스를 완주했어요.<br />애드포스트 신청해볼 차례예요.</p>
         <p className="mt-1.5 text-[12.5px] leading-relaxed text-neutral-500">승인 여부는 네이버 심사(최대 5영업일)가 정해요. 반려돼도 글을 계속 쌓다가 재신청하면 돼요.</p>
-        <button onClick={onGoPerformance} className="mt-4 w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">승인 신청 방법 보기</button>
+        <button onClick={onGoPerformance} className="mt-4 w-full rounded-[8px] bg-neutral-900 py-3.5 text-[15px] font-semibold text-white tk-tr hover:bg-neutral-800">승인 신청 방법 보기</button>
       </Card>
     );
   }
@@ -60,7 +60,7 @@ export default function TodayCard({
             <div><DemandRow topic={topic} onGoPerformance={onGoPerformance} /></div>
             <p className="mt-1.5 text-[14.5px] font-bold leading-snug text-neutral-900">{topic.title}</p>
             {whyNext && <p className="mt-1 text-[12.5px] leading-relaxed text-neutral-500">{whyNext}</p>}
-            <button onClick={() => write(topic)} className="at-press mt-3 w-full rounded-xl bg-[#1D75F7] py-2.5 text-[13px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">
+            <button onClick={() => write(topic)} className="at-press mt-3 w-full rounded-[8px] bg-neutral-900 py-2.5 text-[13px] font-semibold text-white tk-tr hover:bg-neutral-800">
               다음 글감 쓰기
             </button>
           </div>
@@ -113,7 +113,7 @@ export default function TodayCard({
         <DemandRow topic={topic} muted />
         <p className="mt-2 text-[16px] font-bold leading-snug text-neutral-400">{topic.title}</p>
         <p className="mt-1.5 text-[12.5px] leading-relaxed text-neutral-500">오늘의 글이 준비돼 있어요. 크레딧을 충전하면 바로 이어서 써요.</p>
-        <button onClick={() => write(topic)} className="mt-3.5 w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">코스 이어가기</button>
+        <button onClick={() => write(topic)} className="mt-4 w-full rounded-[8px] bg-[color:var(--color-brand)] py-3.5 text-[15px] font-semibold text-white tk-tr hover:opacity-90">코스 이어가기</button>
       </Card>
     );
   }
@@ -125,11 +125,11 @@ export default function TodayCard({
       <DemandRow topic={topic} onGoPerformance={onGoPerformance} />
       <p className="mt-2 text-[19px] font-extrabold leading-snug text-[color:var(--at-grey-900)]">{topic.title}</p>
       {topic.tag === "followup" ? <p className="mt-1.5 text-[13px] font-medium leading-relaxed text-neutral-500">어제 글이 반응이 좋았어요. 이어서 쓰면 효과가 커져요.</p> : why ? <p className="mt-1.5 text-[13px] font-medium leading-relaxed text-neutral-500">{why}</p> : null}
-      <div className="mt-3 flex items-center gap-1.5 rounded-xl bg-[#1D75F7]/[0.06] px-3.5 py-2.5">
-        <span className="text-[13px] font-bold text-[#1D75F7]">이 글을 쓰면 {writePct}%가 돼요</span>
-        {info.day === 0 && <span className="text-[12px] font-medium text-[#1D75F7]/70">· 첫 글이 코스 시작</span>}
+      <div className="mt-3 flex items-center gap-1.5 rounded-[8px] bg-[color:var(--color-bg-subtle)] px-4 py-3">
+        <span className="text-[15px] font-semibold text-[color:var(--color-text)]">이 글을 쓰면 <span className="tabular-nums">{writePct}%</span>가 돼요</span>
+        {info.day === 0 && <span className="text-[13px] text-[color:var(--color-text-weak)]">· 첫 글이 코스 시작</span>}
       </div>
-      <button onClick={() => (preReady && onReadToday ? onReadToday() : write(topic))} className="at-press mt-3.5 w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">{preReady ? "글 읽어보기" : "이 글 쓰기"}</button>
+      <button onClick={() => (preReady && onReadToday ? onReadToday() : write(topic))} className="at-press mt-4 w-full rounded-[8px] bg-[color:var(--color-brand)] py-3.5 text-[15px] font-semibold text-white tk-tr hover:opacity-90">{preReady ? "글 읽어보기" : "이 글 쓰기"}</button>
     </Card>
   );
 }
@@ -147,22 +147,22 @@ function DemandRow({ topic, muted, onGoPerformance }: { topic: TodayTopic; muted
   return (
     <div className={`flex flex-wrap items-center gap-1.5 ${muted ? "opacity-60" : ""}`}>
       {topic.seriesBadge
-        ? <span className="rounded-md bg-[#1D75F7]/10 px-1.5 py-0.5 text-[11px] font-bold text-[#1D75F7]">{topic.seriesBadge}</span>
+        ? <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--color-text)]">{topic.seriesBadge}</span>
         : topic.tag === "followup"
-        ? <span className="rounded-md bg-emerald-50 px-1.5 py-0.5 text-[11px] font-bold text-emerald-600">반응 후속</span>
+        ? <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--color-text)]">반응 후속</span>
         : isTrend
-        ? <span className="rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-bold text-amber-600">실시간 트렌드</span>
+        ? <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--color-text)]">실시간 트렌드</span>
         : isSteady
-        ? <span className="rounded-md bg-sky-50 px-1.5 py-0.5 text-[11px] font-bold text-sky-600">꾸준한 수요</span>
-        : comp && <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-bold ${comp.cls}`}>{comp.label}</span>}
+        ? <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--color-text)]">꾸준한 수요</span>
+        : comp && <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--color-text)]">{comp.label}</span>}
       <button onClick={(e) => {
         e.stopPropagation();
         if (rev === "shopping") {
           let approved = false; try { approved = localStorage.getItem("ateflo_adpost_approved") === "1"; } catch { /* ignore */ }
           if (!approved && onGoPerformance) onGoPerformance(); // 잠김 → "애드포스트 승인 후 열려요" = 사다리 화면이 안내
         } else if (onGoPerformance) onGoPerformance();
-      }} className={`rounded-md px-1.5 py-0.5 text-[11px] font-bold ${rev === "shopping" ? "bg-violet-50 text-violet-600" : "bg-sky-50 text-sky-600"}`}>{rev === "shopping" ? "쇼핑커넥트" : "애드포스트"}</button>
-      {topic.bidHigh && <span className="rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-bold text-amber-700">단가 높음</span>}
+      }} className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--color-text)]">{rev === "shopping" ? "쇼핑커넥트" : "애드포스트"}</button>
+      {topic.bidHigh && <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--color-warning)]">단가 높음</span>}
       <span className="text-[12px] font-medium text-[color:var(--at-grey-400)]">{demand}</span>
     </div>
   );
@@ -170,14 +170,14 @@ function DemandRow({ topic, muted, onGoPerformance }: { topic: TodayTopic; muted
 
 function Card({ children, highlight }: { children: React.ReactNode; highlight?: boolean }) {
   return (
-    <div className={`rounded-2xl bg-white p-5 ring-1 transition ${highlight ? "ring-[#1D75F7]/25 shadow-[0_10px_30px_-16px_rgba(29,117,247,0.35)]" : "ring-black/[0.04]"}`}>{children}</div>
+    <div className="rounded-[12px] border border-[color:var(--color-line)] bg-white p-6">{children}</div>
   );
 }
 
 function Header({ label, chip, chipIcon }: { label: string; chip?: string; chipIcon?: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <p className="text-[12px] font-bold tracking-tight text-[#1D75F7]">{label}</p>
+      <p className="text-[13px] font-semibold text-[color:var(--color-text-sub)]">{label}</p>
       {chip && <span className="flex shrink-0 items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-bold text-neutral-600">{chipIcon}{chip}</span>}
     </div>
   );

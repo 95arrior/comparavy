@@ -1667,33 +1667,19 @@ input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-sele
    순백 유리 아이콘이 살려면 배경에 톤이 있어야 한다 — 앱 배경 = 은은한 블루 틴트 그라데이션,
    카드 = 반투명 유리(블러+새츄레이션+상단 하이라이트), 아이콘 = 색 그라데이션 타일 위 백색 유리. */
 .at-app-bg {
-  background-color: #eceff5;
-  background-image:
-    radial-gradient(1100px 480px at 15% -8%, rgba(96, 150, 255, 0.18), transparent 62%),
-    radial-gradient(900px 460px at 105% 2%, rgba(168, 140, 255, 0.12), transparent 58%),
-    radial-gradient(800px 500px at 50% 110%, rgba(60, 200, 160, 0.07), transparent 60%),
-    linear-gradient(180deg, #e9edf7 0%, #edf0f5 55%, #eef1f5 100%);
+  background-color: var(--color-bg-subtle);
 }
 
-.at-glass {
-  background: rgba(255, 255, 255, 0.62);
-  -webkit-backdrop-filter: blur(18px) saturate(1.6);
-  backdrop-filter: blur(18px) saturate(1.6);
-  border: 1px solid rgba(255, 255, 255, 0.75);
-  box-shadow:
-    0 10px 30px -14px rgba(30, 50, 90, 0.14),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+.at-glass { /* 글래스 폐기(2단계) — 흰 카드 + line 1px. 구분은 여백과 선으로 */
+  background: var(--color-bg);
+  border: 1px solid var(--color-line);
 }
 
 /* 시트·바처럼 가독성이 더 필요한 면 */
-.at-glass-strong {
-  background: rgba(255, 255, 255, 0.82);
-  -webkit-backdrop-filter: blur(24px) saturate(1.5);
-  backdrop-filter: blur(24px) saturate(1.5);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  box-shadow:
-    0 12px 36px -14px rgba(30, 50, 90, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+.at-glass-strong { /* 시트·모달(떠 있는 요소) — 그림자는 shadow-sm 하나만 */
+  background: var(--color-bg);
+  border: 1px solid var(--color-line);
+  box-shadow: var(--shadow-sm);
 }
 
 /* 크레딧 번개 — 선택 시 아래서 위로 차오름 */

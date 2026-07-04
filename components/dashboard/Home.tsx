@@ -321,12 +321,12 @@ export default function Home({
           if (typeof window !== "undefined" && localStorage.getItem("ateflo_adpost_approved") === "1" && localStorage.getItem("ateflo_unlock_shown") !== "1") {
             return (
               <button onClick={() => { try { localStorage.setItem("ateflo_unlock_shown", "1"); } catch { /* ignore */ } onGoPerformance(); }}
-                className="at-rise mt-3 flex w-full items-center justify-between rounded-2xl bg-[#1D75F7]/[0.06] px-5 py-3.5 text-left ring-1 ring-[#1D75F7]/20 transition hover:bg-[#1D75F7]/[0.1]">
+                className="at-rise mt-3 flex w-full items-center justify-between rounded-[12px] border border-[color:var(--color-line)] bg-[color:var(--color-brand-weak)] px-5 py-3.5 text-left tk-tr">
                 <span className="min-w-0 flex-1">
-                  <span className="text-[13px] font-bold text-[#1D75F7]">새로운 수익원이 열렸어요</span>
-                  <span className="mt-0.5 block text-[12px] text-[#1D75F7]/70">쇼핑커넥트를 시작할 수 있어요 · 가이드 보기</span>
+                  <span className="text-[13px] font-semibold text-[color:var(--color-text)]">새로운 수익원이 열렸어요</span>
+                  <span className="mt-0.5 block text-[13px] text-[color:var(--color-text-sub)]">쇼핑커넥트를 시작할 수 있어요 · 가이드 보기</span>
                 </span>
-                <span className="shrink-0 text-[12.5px] font-bold text-[#1D75F7]">열기</span>
+                <span className="shrink-0 text-[13px] font-semibold text-[color:var(--color-text)]">열기</span>
               </button>
             );
           }
@@ -398,7 +398,7 @@ export default function Home({
                   </div>
                 ) : (
                   <div className="rounded-2xl bg-neutral-50 p-6 text-center text-[13px] text-neutral-400">
-                    오늘 글감은 오늘의 글이 전부예요. <button onClick={loadTopics} className="font-semibold text-[#1D75F7]">다시 받기</button>
+                    오늘 글감은 오늘의 글이 전부예요. <button onClick={loadTopics} className="font-semibold text-[color:var(--color-text)] underline">다시 받기</button>
                   </div>
                 )
               )}
@@ -426,15 +426,15 @@ function TopicRow({ topic, onClick, onSwap, swapping }: {
     <div className={`rounded-2xl at-glass p-5  transition ${swapping ? "at-ai-swap" : ""}`}>
       <div className="flex items-center gap-2">
         {topic.tag === "issue" || topic.tag === "trend" ? (
-          <span className="rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-bold text-amber-600">실시간 트렌드</span>
+          <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--color-text)]">실시간 트렌드</span>
         ) : topic.tag === "steady" ? (
-          <span className="rounded-md bg-sky-50 px-1.5 py-0.5 text-[11px] font-bold text-sky-600">꾸준한 수요</span>
+          <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--color-text)]">꾸준한 수요</span>
         ) : (
-          <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-bold ${compMeta.cls}`}>{compMeta.label}</span>
+          <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--color-text)]">{compMeta.label}</span>
         )}
-        {(topic as { bidHigh?: boolean }).bidHigh && <span className="rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-bold text-amber-700">단가 높음</span>}
+        {(topic as { bidHigh?: boolean }).bidHigh && <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--color-warning)]">단가 높음</span>}
         {onSwap && (
-          <button onClick={onSwap} disabled={swapping} aria-label="새 글감 받기" className="at-press ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-neutral-300 transition hover:bg-neutral-50 hover:text-[#1D75F7] disabled:opacity-40">
+          <button onClick={onSwap} disabled={swapping} aria-label="새 글감 받기" className="at-press ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-neutral-300 transition hover:bg-neutral-50 hover:text-[color:var(--color-text)] disabled:opacity-40">
 <span className={`flex h-[18px] w-[18px] items-center justify-center ${swapping ? "animate-spin" : ""}`}><GlassIcon name="refresh" tint="grey" size={18} /></span>
           </button>
         )}
@@ -449,7 +449,7 @@ function TopicRow({ topic, onClick, onSwap, swapping }: {
           <button onClick={onClick} className="mt-2 block w-full text-left">
             <p className="text-[15.5px] font-bold leading-snug text-[color:var(--at-grey-900)]">{topic.title}</p>
           </button>
-          <button onClick={onClick} className="at-press mt-3 text-[13px] font-bold text-[#1D75F7]">
+          <button onClick={onClick} className="at-press mt-3 text-[13px] font-semibold text-[color:var(--color-text)] underline underline-offset-2">
             이 글 쓰기 →
           </button>
         </>
