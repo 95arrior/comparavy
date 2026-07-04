@@ -32,7 +32,8 @@ export function compressToSearchKeyword(raw: string): string {
   // 분석/논평 꼬리를 반복 제거(예: "지원금 효과 분석" → "지원금")
   for (let i = 0; i < 3 && ANALYSIS_TAIL.test(s); i++) s = s.replace(ANALYSIS_TAIL, "").trim();
   // 끝 조사 제거
-  s = s.replace(/(은|는|이|가|을|를|의|에|에서|으로|로|과|와|도|께|한|할)\s*$/g, "").trim();
+  // 조사 제거 — 단, 이/가/한/할은 명사 끝과 충돌(휴가·평가·인가·조사·분할)이라 제외. 안전한 조사만.
+  s = s.replace(/(은|는|을|를|의|에서|으로|와|도|께)\s*$/g, "").trim();
   // 2~3어절 명사구로
   const toks = s.split(/\s+/).filter(Boolean).slice(0, 3);
   return toks.join(" ").trim();
