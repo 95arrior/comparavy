@@ -201,9 +201,20 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
         if (acs.length > 0) { matchedIdx = qi; break; }
       }
       // ★폴백 생존 처리 — 전체 키워드가 자동완성에 없으면(matchedIdx>0) 원 키워드는 유령.
-      //  실검색어 후보로 '교체'(중복·unsafe 제외), 후보 없으면 드롭(하드게이트 우회 경로 차단).
+      //  교체 조건(오염 방지): ①질의어가 '핵심어'일 때만(4자↑ 단어 or 4자↑ 2토큰 구 — "남성"·"임산부" 같은 짧은 일반어 질의 결과로 교체 금지)
+      //  ②후보가 질의어를 포함 ③해몽/밈/브랜드 후보 제외. 조건 미달이면 드롭(하드게이트 우회 차단).
       if (matchedIdx > 0) {
-        const repl = acs.find((c) => !seen.has(compressToSearchKeyword(c)) && !isUnsafeKeyword(c) && [...c.trim()].length >= 5);
+        const q = queries[matchedIdx];
+        const qn = norm(q);
+        const qIsCore = [...qn].length >= 4; // 질의어(공백 제거) 4자 이상 = 구별력 있는 핵심어/구
+        const JUNK_RE = /(꿈|해몽|사주|타로|나무위키|디시|갤러리|이란$|뜻$)/;
+        const BRANDY_RE = /(카드|캐피탈|저축은행|은행|뱅크|페이|증권|보험|생명|화재)/;
+        const INFO_RE = /(방법|조건|신청|추천|비교|후기|금리|지원|혜택|기간|환급|계산|순위|비용|가격|일정|자격|서류|대상)/;
+        const repl = qIsCore ? acs.find((c) => {
+          const ct = c.trim();
+          return norm(ct).includes(qn) && !seen.has(compressToSearchKeyword(ct)) && !isUnsafeKeyword(ct)
+            && [...ct].length >= 5 && !JUNK_RE.test(ct) && !(BRANDY_RE.test(ct) && !INFO_RE.test(ct));
+        }) : undefined;
         if (!repl) { (row as typeof row & { longtails?: Longtail[] }).longtails = []; continue; } // → gap 드롭
         seen.add(compressToSearchKeyword(repl));
         row.keyword = repl.trim(); // 제목(뉴스 각도)은 유지, 키워드만 실검색어로
@@ -240,6 +251,19 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
       }
       rows.sort((a, b) => (rising.get(b.keyword) ?? 0) - (rising.get(a.keyword) ?? 0));
     } catch { /* 랭킹 실패 — 원본 순서 유지 */ }
+
+    // ★클러스터 dedupe — 유사 변형("고유가지원금 신청/기간/대상/조회…")이 씨앗 슬롯을 독식하지 않게
+    //  정규화(공백 제거) 앞 6자 같으면 한 클러스터 = momentum 상위 1개만 생존.
+    {
+      const clusterSeen = new Set<string>();
+      const uniq = rows.filter((r) => {
+        const ck = r.keyword.replace(/\s+/g, "").toLowerCase().slice(0, 6);
+        if (clusterSeen.has(ck)) return false;
+        clusterSeen.add(ck);
+        return true;
+      });
+      rows.length = 0; rows.push(...uniq);
+    }
 
     const admin = createSupabaseAdminClient();
     // ★게이트 통과 씨앗이 있으니 이 카테고리 기존 행 전체 purge 후 새로 넣는다(뉴스 문구형 잔재 일괄 정리).
