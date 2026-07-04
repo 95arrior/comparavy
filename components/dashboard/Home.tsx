@@ -17,6 +17,7 @@ import type { Article } from "./types";
 interface Topic { keyword: string; title: string; demandLabel: string; vol: number; comp: Comp; tag?: string; blogTotal?: number | null; newsContext?: string; briefText?: string; titleSearch?: string; thumb?: { mainCopy: string; subCopy: string; badge: string } }
 
 // 소주제 군집 키(서버와 동일 규칙) — 교체 시 비슷한 소주제 중복 방지
+let freshDoneRef = false; // ?fresh=1 1회 가드
 const clusterOf = (s: string) => s.replace(/\s+/g, "").replace(/[^가-힣a-z0-9]/gi, "").slice(0, 4);
 
 // ★표시 글감 정제 — 키워드/제목/소주제 중 하나라도 겹치면 제외 + 최대 6개(오늘 1 + 다른 글감 5, 소모 시 교체로 풀 리필).
@@ -72,6 +73,18 @@ export default function Home({
   const [topics, setTopics] = useState<Topic[]>([]);
   const [topicsLoading, setTopicsLoading] = useState(true);
   const [collecting, setCollecting] = useState(false);
+  // ★?fresh=1 — 글감만 리셋(콘솔 불필요, 여정 테스트용). 발행·체크인·진행 데이터는 무관.
+  //  useState 초기화보다 먼저 동기 실행돼야 dismissed·캐시 초기값에 반영된다.
+  if (typeof window !== "undefined" && !freshDoneRef && new URLSearchParams(window.location.search).has("fresh")) {
+    try {
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith("ateflo_topics_") || k.startsWith("ateflo_dismissed_") || k.startsWith("ateflo_swaps_"))
+        .forEach((k) => localStorage.removeItem(k));
+      window.history.replaceState(null, "", window.location.pathname);
+    } catch { /* ignore */ }
+    freshDoneRef = true;
+  }
+
   const [swapping, setSwapping] = useState<string[]>([]);
   const [moreOpen, setMoreOpen] = useState(false); // '다른 글감' 접힘 토글(시트로 대체 — 유지: 스크롤 ref)
   const [routineSheet, setRoutineSheet] = useState<null | "checkin" | "neighbor" | "topics">(null); // ★토스식 — 루틴은 행, 상세는 시트
