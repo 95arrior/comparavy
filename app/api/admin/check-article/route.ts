@@ -23,6 +23,16 @@ export async function GET(request: Request) {
     const { data: rows } = await supabase.from("articles").select("id, title, status, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(10);
     return NextResponse.json({ count: rows?.length ?? 0, articles: (rows ?? []).map((r) => ({ id: r.id, title: r.title, status: r.status, created_at: r.created_at })) }, { headers: { "cache-control": "no-store" } });
   }
+  // ?usage=1 → 최근 7일 usage_log kind별 집계(가드·재생성 발동률 실측용)
+  if (url0.searchParams.get("usage") === "1") {
+    const since = new Date(Date.now() - 7 * 86400000).toISOString();
+    const { data: logs } = await supabase.from("usage_log").select("kind").gte("created_at", since).limit(5000);
+    const freq: Record<string, number> = {};
+    for (const r of logs ?? []) freq[r.kind] = (freq[r.kind] ?? 0) + 1;
+    const gen = freq["generate"] ?? 0, retry = freq["fabricated_retry"] ?? 0;
+    return NextResponse.json({ sinceDays: 7, kinds: freq, fabricatedRetryRate: gen > 0 ? `${retry}/${gen} (${Math.round((retry / Math.max(1, gen)) * 100)}%)` : "표본 없음" }, { headers: { "cache-control": "no-store" } });
+  }
+
   // ?urls=1 → 기존 글 전수 URL 스캔: 사전 밖 URL 목록(발행물 수동 수정용)
   if (url0.searchParams.get("urls") === "1") {
     const { data: arts } = await supabase.from("articles").select("id, title, status, body_html").eq("user_id", user.id).order("created_at", { ascending: false }).limit(100);

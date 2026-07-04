@@ -25,22 +25,22 @@ export interface GeneratedArticle {
 
 const SAVE_TOOL: Anthropic.Tool = {
   name: "save_article",
-  description: "생성한 한국어 SEO 블로그 글을 구조화된 형태로 저장한다.",
+  description: "생성한 한국어 SEO 블로그 글을 구조화된 형태로 저장한다. 필드는 스키마 순서대로 채운다(title 다음 body_html — 스트리밍 체감).",
   input_schema: {
     type: "object",
     properties: {
       title: { type: "string", description: "글 제목(H1). 핵심 키워드를 앞쪽에 자연스럽게, 검색 의도에 맞게" },
-      meta_title: { type: "string", description: "검색결과 노출용 제목. 핵심 키워드를 앞에, 한국어 30자 내외(검색결과에서 잘리지 않게)" },
-      meta_description: {
-        type: "string",
-        description: "검색결과 설명문(스니펫). 키워드 포함 + 클릭 유도, 한국어 75자 내외",
-      },
       body_html: {
         type: "string",
         description:
           "본문 HTML. 허용 태그: <h2>,<h3>,<p>,<ul>,<li>,<strong>,<mark>,<blockquote>. 인라인 스타일 금지. " +
           "★각 소제목(h2) 바로 아래에 그 질문의 '핵심 답'을 2~3문장 먼저(자기완결·그 부분만 떼어도 인용 가능) 후 근거로 풀어쓴다. " +
           "★가독성: ①각 소제목 아래 '핵심 답'을 먼저 ②★한 문단은 짧게(1~3문장, 벽돌 금지) ③나열·비교·단계·조건은 줄글 말고 <ul>로 한눈에 ④마지막에 '핵심 요약'을 <ul>로 ⑤[사진:]을 소제목 직후 등 곳곳에 넣어 텍스트 벽을 깸. ★네이버 블로그 규격이므로 '형광펜(<mark>)'과 '핵심 요약 인용박스(<blockquote>)'를 시스템 지침대로 적극 활용한다.",
+      },
+      meta_title: { type: "string", description: "검색결과 노출용 제목. 핵심 키워드를 앞에, 한국어 30자 내외(검색결과에서 잘리지 않게)" },
+      meta_description: {
+        type: "string",
+        description: "검색결과 설명문(스니펫). 키워드 포함 + 클릭 유도, 한국어 75자 내외",
       },
       faq: {
         type: "array",
@@ -70,7 +70,7 @@ const SAVE_TOOL: Anthropic.Tool = {
           "글쓴이(블로그 운영자)에게 보여줄 짧은 메모 1~2문장. 이 키워드의 검색 의도를 어떻게 파악했고, 왜 이런 소제목·순서·구성으로 썼는지 담백하게 설명한다. 자기소개·인사·메타 표현 없이. 본문에는 절대 포함하지 않는다.",
       },
     },
-    required: ["title", "meta_title", "meta_description", "body_html", "faq", "tags"],
+    required: ["title", "body_html", "meta_title", "meta_description", "faq", "tags"],
   },
 };
 
@@ -208,7 +208,10 @@ export async function streamArticle(
   const maxTokens = Math.min(16000, Math.ceil(input.maxWords * 2 + 1200));
   const verify = isTimeSensitive(input);
 
-  const stream = client.messages.stream({
+  // ★fine-grained tool streaming — 기본 모드는 tool input JSON을 서버가 버퍼링해 제목→본문 사이 40초대 공백 발생(실측).
+  //  베타를 켜면 델타가 실시간으로 흘러 갭 0.4s. 파서(extractJsonString)는 부분 JSON 내성이라 안전.
+  const stream = client.beta.messages.stream({
+    betas: ["fine-grained-tool-streaming-2025-05-14"],
     model,
     max_tokens: maxTokens,
     // ★프롬프트 캐싱 — generateArticle과 동일 프리픽스(캐시 공유). 내용 변경 없음(품질 영향 0).
