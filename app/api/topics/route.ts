@@ -21,7 +21,7 @@ import { checkRateLimit } from "@/lib/rateLimit";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60; // 신규 카테고리 첫 요청은 lazy-fill(네이버 수집)이 요청 안에서 돌아 시간 필요
 
-const PICK = 3;
+const PICK = 5; // 홈 5~6개 동적 노출(오늘 1 + 다른 글감 4~5)
 const WINDOW = 150; // least-used 윈도우 크기 — 이 안에서 랜덤(반복 많으면 키우고, 마이너 자주 뜨면 줄임)
 
 interface PoolRow { keyword: string; monthly_searches: number | null; competition: string | null; audience: string | null; blog_total: number | null }
@@ -190,14 +190,14 @@ export async function GET(req: Request) {
           if (rl.ok) { const cat = sub; after(async () => { try { if (!(await hasFreshTrends(cat))) await refreshCategoryTrends(cat); } catch { /* ignore */ } }); }
         }
         if (trends.length > 0) {
-          amped = await amplifyForUser(trends, profile ?? null, user.id, 2);
+          amped = await amplifyForUser(trends, profile ?? null, user.id, 3);
           if (amped.length > 0) {
             try { await pool.from("api_cache").upsert({ key: ampKey, value: amped, expires_at: new Date(Date.now() + 6 * 3600_000).toISOString(), updated_at: new Date().toISOString() }); } catch { /* ignore */ }
           } else {
             // ★증식 실패 폴백 — 원본 씨앗이라도 유저 시드로 회전해 보여준다(홈 빈 화면 방지).
             amped = [...trends]
               .sort((a, b) => (seedFrom(a.keyword + user!.id) % 997) - (seedFrom(b.keyword + user!.id) % 997))
-              .slice(0, 2)
+              .slice(0, 3)
               .map((t) => {
                 // 실검증 롱테일(gap 낮은 것) 우선 — 뉴스 티 제거. 없으면 씨앗 keyword.
                 const lt = (t.longtails ?? [])[0];
@@ -207,7 +207,7 @@ export async function GET(req: Request) {
         }
       }
       for (const t of amped) {
-        if (cards.length >= 2) break;
+        if (cards.length >= 3) break;
         const nk = normalizeKeyword(t.keyword);
         if (usedSet.has(nk) || existing.has(nk)) continue;
         const src = (t as { source?: string }).source;
