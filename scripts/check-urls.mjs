@@ -19,6 +19,8 @@ r=sanitizeUrls("<p>정부24에서 보조금24를 검색하세요. https://www.go
 ok(r.html.includes("https://www.gov.kr")&&r.replaced===0,"화이트리스트 루트는 무치환");
 r=sanitizeUrls('<p><img src="https://abc.supabase.co/storage/x.png" /></p>');
 ok(r.html.includes("supabase.co/storage/x.png"),"업로드 이미지 src 보존");
+r=sanitizeUrls('<p><img src="https://cdn.example.com/a.png" alt="" /></p>');
+ok(r.html.includes('src="https://cdn.example.com/a.png"')&&r.replaced===0,"외부 CDN img src도 구조적 보호(마스킹)");
 ok(sanitizeUrls("<p>URL 없는 보통 문단이에요.</p>").replaced===0,"URL 없으면 무변화");
 
 console.log("\n④ 복사 게이트 소급(formatBody):");

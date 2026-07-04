@@ -31,8 +31,10 @@ function whitelistHit(domain: string): { root: string; name: string } | null {
 export function sanitizeUrls(html: string): { html: string; replaced: number; fabricated: string[] } {
   let replaced = 0;
   const fabricated: string[] = [];
-  const out = html.replace(URL_RE, (raw) => {
-    // 이미지 src 등 태그 속성 내부는 보존(본문 텍스트 URL만) — img src는 http로 시작하며 태그 안: 간단 판별 위해 스토리지 도메인 예외
+  // ★태그 속성(src/href) 내부는 구조적으로 보호 — 마스킹 후 본문 텍스트 URL만 검사, 마지막에 복원.
+  const masks: string[] = [];
+  const masked = html.replace(/(src|href)="[^"]*"/gi, (m) => { masks.push(m); return `__ATTR${masks.length - 1}__`; });
+  const out0 = masked.replace(URL_RE, (raw) => {
     if (/supabase\.co|supabase\.in|ateflo\.com/i.test(raw)) return raw;
     const d = domainOf(raw);
     const hit = whitelistHit(d);
@@ -46,6 +48,7 @@ export function sanitizeUrls(html: string): { html: string; replaced: number; fa
     fabricated.push(raw.slice(0, 80));
     return `${d} 공식 사이트에서 검색`; // 사전 밖 — 경로 제거 + 검색 유도
   });
+  const out = out0.replace(/__ATTR(\d+)__/g, (_m, i) => masks[Number(i)] ?? "");
   return { html: out, replaced, fabricated };
 }
 export function extractUrls(html: string): string[] {
