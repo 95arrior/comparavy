@@ -240,7 +240,7 @@ export default function WritingView({
                 걱정 마세요 — 글은 서버에서 <b className="text-neutral-700">계속 만들어지고 있어요.</b>
                 <br />잠시 후 ‘내 글’에서 완성본을 확인하세요.
               </p>
-              <button onClick={onExit} className="at-press mt-5 rounded-xl bg-[#1D75F7] px-6 py-3 text-[14px] font-bold text-white transition hover:opacity-90">
+              <button onClick={onExit} className="at-press mt-5 rounded-xl tk-grad-cta px-6 py-3 text-[14px] font-bold text-white transition hover:opacity-90">
                 내 글에서 확인하기
               </button>
             </div>
@@ -292,7 +292,7 @@ export default function WritingView({
 
       {phase === "done" && (
         <div className="ateflo-backdrop-in fixed inset-0 z-[80] flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm">
-          <span className="ateflo-circle-pop flex h-20 w-20 items-center justify-center rounded-full bg-[#1D75F7] text-white shadow-[0_12px_44px_rgba(29,117,247,0.45)]">
+          <span className="ateflo-circle-pop flex h-20 w-20 items-center justify-center rounded-full tk-grad-cta text-white shadow-[0_12px_44px_rgba(29,117,247,0.45)]">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path className="ateflo-check-draw" d="M5 13l4 4L19 7" /></svg>
           </span>
           <p className="at-rise mt-5 text-[18px] font-extrabold tracking-tight text-[color:var(--at-grey-900)]" style={{ animationDelay: "0.3s" }}>글이 완성됐어요</p>

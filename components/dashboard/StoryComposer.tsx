@@ -54,7 +54,7 @@ export default function StoryComposer({
             onClick={() => { if (ready) setTitleOpen(true); }}
             disabled={!ready}
             aria-label="글쓰기"
-            className={`absolute bottom-3 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-[#1D75F7] text-white transition-all duration-300 ${ready ? "scale-100 opacity-100 hover:opacity-90 active:scale-90" : "pointer-events-none scale-75 opacity-0"}`}
+            className={`absolute bottom-3 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-full tk-grad-cta text-white transition-all duration-300 ${ready ? "scale-100 opacity-100 hover:opacity-90 active:scale-90" : "pointer-events-none scale-75 opacity-0"}`}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
           </button>
@@ -95,7 +95,7 @@ export default function StoryComposer({
             />
             <button
               onClick={() => onSubmit(story.trim(), promo, title.trim())}
-              className="mt-4 w-full rounded-2xl bg-[#1D75F7] py-4 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]"
+              className="mt-4 w-full rounded-2xl tk-grad-cta py-4 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]"
             >
               {title.trim() ? "이 제목으로 글쓰기" : "AI가 제목 정하고 글쓰기"}
             </button>

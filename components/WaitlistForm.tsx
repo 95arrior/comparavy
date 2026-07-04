@@ -78,7 +78,7 @@ export default function WaitlistForm({ source = "landing", autoFocus = false, ex
         <button
           type="submit"
           disabled={state === "loading"}
-          className="shrink-0 rounded-xl bg-[#1D75F7] px-5 py-2.5 text-sm font-medium text-white transition active:scale-95 hover:opacity-90 disabled:opacity-50"
+          className="shrink-0 rounded-xl tk-grad-cta px-5 py-2.5 text-sm font-medium text-white transition active:scale-95 hover:opacity-90 disabled:opacity-50"
         >
           {state === "loading" ? "신청 중…" : "신청하기"}
         </button>

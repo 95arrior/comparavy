@@ -213,7 +213,7 @@ function Tools() {
       <div className="mt-2.5 flex flex-wrap items-center gap-2">
         <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="user@email.com" className={`${inputCls} flex-1`} />
         <input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="크레딧 (음수=회수)" inputMode="numeric" className={`${inputCls} w-36`} />
-        <button onClick={grant} disabled={busy || !email || !amount} className="at-press rounded-xl bg-[#1D75F7] px-4 py-2.5 text-[13px] font-bold text-white transition disabled:opacity-40">지급</button>
+        <button onClick={grant} disabled={busy || !email || !amount} className="at-press rounded-xl tk-grad-cta px-4 py-2.5 text-[13px] font-bold text-white transition disabled:opacity-40">지급</button>
       </div>
       <div className="mt-4 border-t border-neutral-100 pt-4">
         <p className="text-[13px] font-bold text-neutral-800">테스트 도구</p>

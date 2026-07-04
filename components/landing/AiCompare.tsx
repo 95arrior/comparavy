@@ -10,7 +10,7 @@ const US_ITEMS = ["검색되는 글감 자동", "SEO·AEO 구조 자동", "광�
 
 function Tick({ blue }: { blue?: boolean }) {
   return (
-    <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${blue ? "bg-[#1D75F7] text-white shadow-[0_4px_10px_-2px_rgba(29,117,247,0.7)]" : "bg-neutral-200 text-white"}`}>
+    <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${blue ? "tk-grad-cta text-white shadow-[0_4px_10px_-2px_rgba(29,117,247,0.7)]" : "bg-neutral-200 text-white"}`}>
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
     </span>
   );
@@ -93,7 +93,7 @@ export default function AiCompare() {
               <li key={t} className="flex items-center gap-2 text-[12px] font-medium leading-snug text-neutral-800 sm:text-[13.5px]">
                 <span className="relative" style={popStyle(i)}>
                   {!reduce && shown && (
-                    <span className="absolute inset-0 rounded-full bg-[#1D75F7]" style={{ animation: `ateflo-pop-ring 0.55s ease-out ${260 + i * 160}ms both` }} />
+                    <span className="absolute inset-0 rounded-full tk-grad-cta" style={{ animation: `ateflo-pop-ring 0.55s ease-out ${260 + i * 160}ms both` }} />
                   )}
                   <Tick blue />
                 </span>

@@ -74,8 +74,8 @@ export default function NeighborMission({ subCategory, sheet }: { subCategory?: 
         <div className="mt-4 space-y-3">
           {/* 보너스 체크 2개 — 스트릭 조건 아님 */}
           {([["neighbor", "이웃 신청 5명"], ["comment", "진심 댓글 2개"]] as const).map(([k, label]) => (
-            <button key={k} onClick={() => toggle(k)} className="flex w-full items-center gap-2.5 rounded-xl bg-white/70 px-4 py-3 text-left ring-1 ring-black/[0.04] transition">
-              <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition ${checks[k] ? "border-[#1D75F7] bg-[#1D75F7]" : "border-neutral-300"}`}>
+            <button key={k} onClick={() => toggle(k)} className="flex w-full items-center gap-2.5 rounded-[14px] bg-[#F7F8FA] px-4 py-3 text-left transition">
+              <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition ${checks[k] ? "border-[#1D75F7] tk-grad-cta" : "border-neutral-300"}`}>
                 {checks[k] && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>}
               </span>
               <span className={`text-[14px] font-bold ${checks[k] ? "text-neutral-400 line-through" : "text-neutral-800"}`}>{label}</span>
@@ -94,7 +94,7 @@ export default function NeighborMission({ subCategory, sheet }: { subCategory?: 
           </div>
 
           {/* ③ 뭐라고 — 인사말 생성(탭 복사·재생성). 댓글은 생성하지 않음(가이드만). */}
-          <div className="rounded-xl bg-white/70 p-4 ring-1 ring-black/[0.04]">
+          <div className="rounded-[14px] bg-[#F7F8FA] p-4">
             <div className="flex items-center justify-between">
               <p className="text-[11.5px] font-bold text-neutral-400">서로이웃 인사말</p>
               <button onClick={makeGreeting} disabled={busy} className="at-press rounded-lg bg-neutral-100 px-2.5 py-1 text-[11.5px] font-bold text-neutral-600 transition hover:bg-neutral-200 disabled:opacity-50">

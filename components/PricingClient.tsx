@@ -109,7 +109,7 @@ export default function PricingClient({
               }`}
             >
               {p.highlight && (
-                <span className="absolute -top-2.5 left-5 rounded-full bg-[#1D75F7] px-2.5 py-0.5 text-[11px] font-bold text-white">가장 많이 선택</span>
+                <span className="absolute -top-2.5 left-5 rounded-full tk-grad-cta px-2.5 py-0.5 text-[11px] font-bold text-white">가장 많이 선택</span>
               )}
               <div className="flex items-center gap-4">
                 <span className="relative inline-block h-10 w-10 shrink-0">
@@ -155,7 +155,7 @@ export default function PricingClient({
           <button
             onClick={() => pay(selected)}
             disabled={!agree || loading}
-            className="at-press mt-4 w-full rounded-xl bg-[#1D75F7] py-4 text-[15px] font-bold text-white transition hover:opacity-90 disabled:opacity-40"
+            className="at-press mt-4 w-full rounded-xl tk-grad-cta py-4 text-[15px] font-bold text-white transition hover:opacity-90 disabled:opacity-40"
           >
             {loading ? "결제창 여는 중…" : loggedIn ? `${formatKRW(effPrice(selected))} 결제하기` : "로그인하고 결제하기"}
           </button>

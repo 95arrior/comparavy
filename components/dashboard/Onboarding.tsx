@@ -87,7 +87,7 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
   }, []);
 
   const inputCls = "w-full rounded-xl bg-neutral-100 px-4 py-3.5 text-base outline-none transition placeholder:text-neutral-400 focus:bg-white focus:ring-2 focus:ring-[#1D75F7]/30";
-  const primaryBtn = "at-press w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-semibold text-white transition hover:opacity-90 disabled:opacity-50";
+  const primaryBtn = "at-press w-full rounded-xl tk-grad-cta py-3.5 text-[15px] font-semibold text-white transition hover:opacity-90 disabled:opacity-50";
   const ghostBtn = "mt-2 w-full py-2 text-sm font-medium text-neutral-400 transition hover:text-neutral-600 disabled:opacity-50";
 
   const stage = STAGE_OF[step];
@@ -187,7 +187,7 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
           {step !== "done" && (
             <div className="mb-8 flex items-center justify-center gap-1.5">
               {[0, 1, 2, 3].map((i) => (
-                <span key={i} className={`h-1.5 rounded-full transition-all ${i === stage ? "w-5 bg-[#1D75F7]" : i < stage ? "w-1.5 bg-[#1D75F7]/40" : "w-1.5 bg-neutral-200"}`} />
+                <span key={i} className={`h-1.5 rounded-full transition-all ${i === stage ? "w-5 tk-grad-cta" : i < stage ? "w-1.5 bg-[#1D75F7]/40" : "w-1.5 bg-neutral-200"}`} />
               ))}
             </div>
           )}
@@ -283,7 +283,7 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
                       {profit && (
                         <div className="mt-4 space-y-1.5">
                           <div className="flex items-center gap-2 rounded-xl bg-[#1D75F7]/[0.05] px-3.5 py-2.5">
-                            <span className="rounded-md bg-[#1D75F7] px-1.5 py-0.5 text-[11px] font-bold text-white">수익성 {profit.grade}</span>
+                            <span className="rounded-md tk-grad-cta px-1.5 py-0.5 text-[11px] font-bold text-white">수익성 {profit.grade}</span>
                             <span className="text-[12.5px] font-medium text-neutral-600">{profit.note}</span>
                           </div>
                           <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-3.5 py-2.5">
@@ -300,7 +300,7 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
                         <div className="mt-2.5 space-y-2">
                           {verdict.preview.map((k) => (
                             <div key={k.keyword} className="flex items-center gap-2">
-                              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#1D75F7]" />
+                              <span className="h-1.5 w-1.5 shrink-0 rounded-full tk-grad-cta" />
                               <span className="min-w-0 flex-1 truncate text-[13.5px] font-semibold text-neutral-800">{k.keyword}</span>
                               <span className="shrink-0 text-[11.5px] text-neutral-400">월 {(k.monthlyMobileQcCnt || 0).toLocaleString("ko-KR")}회</span>
                             </div>
@@ -418,7 +418,7 @@ export default function Onboarding({ onSaved, onCancel }: { onSaved: (p: BlogPro
             {/* ═══ 4막. 완료 ═══ */}
             {step === "done" && (
               <div className="flex min-h-[58vh] flex-col items-center justify-center text-center">
-                <span className="ateflo-circle-pop flex h-20 w-20 items-center justify-center rounded-full bg-[#1D75F7] text-white shadow-[0_12px_44px_rgba(29,117,247,0.45)]">
+                <span className="ateflo-circle-pop flex h-20 w-20 items-center justify-center rounded-full tk-grad-cta text-white shadow-[0_12px_44px_rgba(29,117,247,0.45)]">
                   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path className="ateflo-check-draw" d="M5 13l4 4L19 7" /></svg>
                 </span>
                 <h2 className="at-headline mt-6">전략 준비 완료</h2>

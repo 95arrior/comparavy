@@ -445,7 +445,7 @@ export default function DashboardClient(props: DashboardProps) {
         <span className="text-xs font-semibold text-[#1D75F7]/50">{doneCount}/{steps.length}</span>
         <div className="ml-auto flex gap-1">
           {steps.map((s, i) => (
-            <span key={s.label} className={`h-1.5 w-5 rounded-full transition ${s.done ? "bg-[#1D75F7]" : i === firstUndone ? "bg-[#1D75F7]/45" : "bg-[#1D75F7]/15"}`} />
+            <span key={s.label} className={`h-1.5 w-5 rounded-full transition ${s.done ? "tk-grad-cta" : i === firstUndone ? "bg-[#1D75F7]/45" : "bg-[#1D75F7]/15"}`} />
           ))}
         </div>
       </div>
@@ -454,7 +454,7 @@ export default function DashboardClient(props: DashboardProps) {
       <p className="mt-1 text-[13px] leading-relaxed text-neutral-500">{nextStep.msg}</p>
       <button
         onClick={nextStep.go}
-        className="mt-4 w-full rounded-xl bg-[#1D75F7] py-3 text-sm font-bold text-white transition hover:opacity-90 active:scale-[0.98] sm:w-auto sm:px-7"
+        className="mt-4 w-full rounded-xl tk-grad-cta py-3 text-sm font-bold text-white transition hover:opacity-90 active:scale-[0.98] sm:w-auto sm:px-7"
       >
         {nextStep.label}
       </button>

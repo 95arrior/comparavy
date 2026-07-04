@@ -99,7 +99,7 @@ export default function CheckinCard({ articles, onSaved }: { articles: CourseArt
   const maxV = Math.max(1, ...last7.map((x) => x.v ?? 0));
 
   return (
-    <div className="at-rise rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
+    <div className="at-rise rounded-[20px] bg-white p-5">
       <div className="flex items-center justify-between">
         <p className="text-[12px] font-bold tracking-tight text-[#1D75F7]">아침 체크인</p>
         <span className="text-[11px] font-semibold text-neutral-400">{yPub ? "어제 발행 확인됨" : "어제 발행 기록 없음"}</span>
@@ -146,19 +146,19 @@ export default function CheckinCard({ articles, onSaved }: { articles: CourseArt
             <label className="flex-1">
               <span className="text-[11.5px] font-semibold text-neutral-400">어제 방문자</span>
               <input inputMode="numeric" pattern="[0-9]*" value={visitors} onChange={(e) => setVisitors(e.target.value.replace(/[^0-9]/g, ""))} placeholder="0"
-                className="mt-1 w-full rounded-xl bg-neutral-50 px-3.5 py-2.5 text-[15px] font-bold text-neutral-900 outline-none ring-1 ring-black/[0.05] focus:ring-[#1D75F7]/40" />
+                className="mt-1 w-full rounded-xl bg-neutral-50 px-3.5 py-2.5 text-[15px] font-bold text-neutral-900 outline-none ring-1 ring-black/[0.05] focus:ring-2 focus:ring-[#1D75F7]/30" />
             </label>
             {approved && (
               <label className="flex-1">
                 <span className="text-[11.5px] font-semibold text-neutral-400">어제 수익(원)</span>
                 <input inputMode="numeric" pattern="[0-9]*" value={revenue} onChange={(e) => setRevenue(e.target.value.replace(/[^0-9]/g, ""))} placeholder="0"
-                  className="mt-1 w-full rounded-xl bg-neutral-50 px-3.5 py-2.5 text-[15px] font-bold text-neutral-900 outline-none ring-1 ring-black/[0.05] focus:ring-[#1D75F7]/40" />
+                  className="mt-1 w-full rounded-xl bg-neutral-50 px-3.5 py-2.5 text-[15px] font-bold text-neutral-900 outline-none ring-1 ring-black/[0.05] focus:ring-2 focus:ring-[#1D75F7]/30" />
               </label>
             )}
           </div>
           <div className="mt-3 flex items-center gap-2">
             <button onClick={() => save(visitors, revenue)} disabled={busy || (visitors.trim() === "" && (!approved || revenue.trim() === ""))}
-              className="at-press flex-1 rounded-xl bg-[#1D75F7] py-2.5 text-[13.5px] font-bold text-white transition hover:opacity-90 disabled:opacity-50">
+              className="at-press flex-1 rounded-xl tk-grad-cta py-2.5 text-[13.5px] font-bold text-white transition hover:opacity-90 disabled:opacity-50">
               {busy ? "저장 중" : "기록하기"}
             </button>
             {prev && (prev.visitors !== null || prev.revenue !== null) && (

@@ -237,7 +237,7 @@ function ScreenHome() {
           <span className="rounded bg-amber-50 px-1 py-0.5 text-[8px] font-bold text-amber-600">🔥 오늘 이슈</span>
         </div>
         <p key={ti} className="ateflo-soft-in mt-1.5 text-[12px] font-bold leading-snug text-neutral-900">{MINI_TOPICS[ti]}</p>
-        <div className="mt-2.5 rounded-lg bg-[#1D75F7] py-2 text-center text-[10.5px] font-bold text-white">이 글 쓰기</div>
+        <div className="mt-2.5 rounded-lg tk-grad-cta py-2 text-center text-[10.5px] font-bold text-white">이 글 쓰기</div>
       </div>
       <div className="mt-auto mb-3 flex items-center justify-around rounded-2xl bg-white/80 px-2 py-2 shadow-sm ring-1 ring-black/[0.04] backdrop-blur">
         {(["nav-home", "nav-articles", "nav-performance", "nav-more"] as const).map((n, i) => (
@@ -268,7 +268,7 @@ function ScreenWriting({ active }: { active: boolean }) {
 function ScreenDone() {
   return (
     <div className="flex h-full flex-col items-center justify-center px-6 text-center">
-      <span className="ateflo-circle-pop flex h-14 w-14 items-center justify-center rounded-full bg-[#1D75F7] text-white shadow-[0_10px_30px_rgba(29,117,247,0.45)]">
+      <span className="ateflo-circle-pop flex h-14 w-14 items-center justify-center rounded-full tk-grad-cta text-white shadow-[0_10px_30px_rgba(29,117,247,0.45)]">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
       </span>
       <p className="mt-4 text-[15px] font-extrabold text-neutral-900">발행 완료</p>
@@ -316,7 +316,7 @@ function HeroCinema() {
         </Rise>
         <Rise delay={260}>
           <div className="mt-9 flex flex-wrap items-center gap-4">
-            <Link href="/login" className="rounded-2xl bg-[#1D75F7] px-9 py-4 text-[16px] font-bold text-white shadow-[0_18px_44px_-14px_rgba(29,117,247,0.6)] transition-all duration-300 hover:scale-[1.04] hover:shadow-[0_22px_54px_-14px_rgba(29,117,247,0.75)] active:scale-[0.98]">
+            <Link href="/login" className="rounded-2xl tk-grad-cta px-9 py-4 text-[16px] font-bold text-white shadow-[0_18px_44px_-14px_rgba(29,117,247,0.6)] transition-all duration-300 hover:scale-[1.04] hover:shadow-[0_22px_54px_-14px_rgba(29,117,247,0.75)] active:scale-[0.98]">
               1,900원으로 시작하기
             </Link>
             <span className="text-[12px] leading-snug text-neutral-400">트라이얼 글 3편<br />자동결제 아님</span>
@@ -417,7 +417,7 @@ function Header() {
     <header className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${scrolled ? "at-glass-strong !rounded-none !border-x-0 !border-t-0" : "bg-transparent"}`}>
       <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-4">
         <a href="/" aria-label="에이트플로"><Brand size={24} /></a>
-        <Link href="/login" className="at-press rounded-xl bg-[#1D75F7] px-4 py-2 text-[13.5px] font-bold text-white transition hover:opacity-90">
+        <Link href="/login" className="at-press rounded-xl tk-grad-cta px-4 py-2 text-[13.5px] font-bold text-white transition hover:opacity-90">
           시작하기
         </Link>
       </div>
@@ -480,7 +480,7 @@ function LiveDemo() {
                 {done && (
                   <div className="at-pop mt-4 rounded-xl bg-[#1D75F7]/[0.06] p-4 text-center">
                     <p className="text-[13px] font-bold" style={{ color: BLUE }}>이런 글이 매일 준비돼요</p>
-                    <Link href="/login" className="at-press mt-2.5 inline-block rounded-xl bg-[#1D75F7] px-6 py-2.5 text-[13px] font-bold text-white transition hover:opacity-90">내 주제로 시작하기</Link>
+                    <Link href="/login" className="at-press mt-2.5 inline-block rounded-xl tk-grad-cta px-6 py-2.5 text-[13px] font-bold text-white transition hover:opacity-90">내 주제로 시작하기</Link>
                   </div>
                 )}
               </div>
@@ -613,7 +613,7 @@ export default function NaverLanding() {
           {CREDIT_PACKS.map((p, i) => (
             <Rise key={p.key} delay={i * 60}>
               <Link href="/login" className={`at-press relative flex items-center gap-4 rounded-2xl p-5 transition ${p.highlight ? "at-glass-strong ring-2 ring-[#1D75F7]" : "at-glass hover:ring-1 hover:ring-[#1D75F7]/40"}`}>
-                {p.highlight && <span className="absolute -top-2.5 left-5 rounded-full bg-[#1D75F7] px-2.5 py-0.5 text-[11px] font-bold text-white">가장 많이 선택</span>}
+                {p.highlight && <span className="absolute -top-2.5 left-5 rounded-full tk-grad-cta px-2.5 py-0.5 text-[11px] font-bold text-white">가장 많이 선택</span>}
                 <GlassIcon name="credit" tint={p.highlight ? "blue" : "grey"} size={30} />
                 <div className="min-w-0 flex-1">
                   <p className="text-[15px] font-extrabold text-neutral-900">{p.name} <span className="font-bold text-neutral-400">· {p.credits.toLocaleString("ko-KR")}크레딧</span></p>
@@ -661,7 +661,7 @@ export default function NaverLanding() {
               블로그는 복리예요. 오늘 쓴 글이 계속 검색되고, 계속 일해요.
               <br />시작이 늦어질수록 복리도 늦게 시작돼요.
             </p>
-            <Link href="/login" className="mt-9 inline-block rounded-2xl bg-[#1D75F7] px-10 py-4 text-[16px] font-bold text-white shadow-[0_18px_44px_-14px_rgba(29,117,247,0.6)] transition-all duration-300 hover:scale-[1.04] active:scale-[0.98]">
+            <Link href="/login" className="mt-9 inline-block rounded-2xl tk-grad-cta px-10 py-4 text-[16px] font-bold text-white shadow-[0_18px_44px_-14px_rgba(29,117,247,0.6)] transition-all duration-300 hover:scale-[1.04] active:scale-[0.98]">
               오늘 첫 글 쓰기 (D-1)
             </Link>
             <p className="mt-3 text-[12px] text-neutral-400">1,900원 트라이얼 · 자동결제 아님 · 7일 환불</p>

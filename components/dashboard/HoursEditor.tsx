@@ -60,7 +60,7 @@ function TimeWheelSheet({ value, onConfirm, onClose }: { value: string; onConfir
           <Wheel items={MINS.map((x) => String(x).padStart(2, "0"))} index={mi} onIndex={setMi} />
         </div>
         <div className="px-5 pt-1">
-          <button type="button" onClick={confirm} className="w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-bold text-white transition active:scale-[0.99]">확인</button>
+          <button type="button" onClick={confirm} className="w-full rounded-xl tk-grad-cta py-3.5 text-[15px] font-bold text-white transition active:scale-[0.99]">확인</button>
         </div>
       </div>
     </div>,

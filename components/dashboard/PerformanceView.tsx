@@ -153,9 +153,9 @@ function PathDetail({ p, onBack }: { p: Path; onBack: () => void }) {
       {p.cta && (
         <div className="mt-5">
           {p.cta.url ? (
-            <a href={p.cta.url} target="_blank" rel="noopener noreferrer" className="block w-full rounded-xl bg-[#1D75F7] py-3 text-center text-[14px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">{p.cta.label}</a>
+            <a href={p.cta.url} target="_blank" rel="noopener noreferrer" className="block w-full rounded-xl tk-grad-cta py-3 text-center text-[14px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">{p.cta.label}</a>
           ) : (
-            <button onClick={p.cta.onClick} className="w-full rounded-xl bg-[#1D75F7] py-3 text-[14px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">{p.cta.label}</button>
+            <button onClick={p.cta.onClick} className="w-full rounded-xl tk-grad-cta py-3 text-[14px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">{p.cta.label}</button>
           )}
         </div>
       )}
@@ -173,7 +173,7 @@ function AssetHero({ written, streak, pub, onWrite }: {
       <div className="rounded-2xl at-glass p-6 text-center">
         <p className="text-[16px] font-extrabold tracking-tight text-neutral-900">첫 글을 쓰면 여기에 성과가 쌓여요</p>
         <p className="mt-1 text-[13px] text-neutral-400">발행 수·꾸준함·수익화 진행을 한눈에</p>
-        <button onClick={onWrite} className="at-press mt-4 rounded-xl bg-[#1D75F7] px-5 py-2.5 text-[13px] font-bold text-white transition hover:opacity-90">첫 글 쓰러 가기</button>
+        <button onClick={onWrite} className="at-press mt-4 rounded-xl tk-grad-cta px-5 py-2.5 text-[13px] font-bold text-white transition hover:opacity-90">첫 글 쓰러 가기</button>
       </div>
     );
   }

@@ -76,7 +76,7 @@ export default function ApprovalInput({ onChanged }: { onChanged?: () => void })
       <p className="text-[14px] font-bold text-neutral-900">애드포스트 신청 결과가 나왔나요?</p>
       <p className="mt-0.5 text-[12px] text-neutral-400">결과를 알려주시면 다음 단계를 준비해 드려요.</p>
       <div className="mt-3 flex gap-2">
-        <button onClick={setApproved} className="at-press flex-1 rounded-xl bg-[#1D75F7] py-2.5 text-[13px] font-bold text-white transition hover:opacity-90">승인</button>
+        <button onClick={setApproved} className="at-press flex-1 rounded-xl tk-grad-cta py-2.5 text-[13px] font-bold text-white transition hover:opacity-90">승인</button>
         <button onClick={() => setState("hold")} className="at-press flex-1 rounded-xl bg-neutral-100 py-2.5 text-[13px] font-bold text-neutral-600 transition hover:bg-neutral-200">보류·심사 중</button>
         <button onClick={() => { setState("rejected"); setReason(null); setRetryDday(null); }} className="at-press flex-1 rounded-xl bg-neutral-100 py-2.5 text-[13px] font-bold text-neutral-600 transition hover:bg-neutral-200">거절</button>
       </div>

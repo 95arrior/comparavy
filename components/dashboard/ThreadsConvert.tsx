@@ -84,7 +84,7 @@ export default function ThreadsConvert({ articleId, onToast }: { articleId: stri
           <div className="mt-1.5 flex items-center justify-between">
             <span className={`text-xs ${over ? "font-semibold text-red-500" : "text-neutral-400"}`}>{len}/500자{over ? " · 줄여주세요" : ""}</span>
             <div className="flex gap-2">
-              <button onClick={copy} className="rounded-lg bg-[#1D75F7] px-3.5 py-1.5 text-xs font-semibold text-white transition hover:opacity-90 active:scale-95">복사하기</button>
+              <button onClick={copy} className="rounded-lg tk-grad-cta px-3.5 py-1.5 text-xs font-semibold text-white transition hover:opacity-90 active:scale-95">복사하기</button>
               <a
                 href={`https://www.threads.net/intent/post?text=${encodeURIComponent(text)}`}
                 target="_blank"

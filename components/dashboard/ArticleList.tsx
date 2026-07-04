@@ -108,7 +108,7 @@ export default function ArticleList({
         <p className="mt-1 text-[13px] text-neutral-400">오늘의 글부터 시작해 보세요</p>
         <button
           onClick={onGoGenerate}
-          className="at-press mt-5 rounded-xl bg-[#1D75F7] px-6 py-3 text-[14px] font-bold text-white transition hover:opacity-90"
+          className="at-press mt-5 rounded-xl tk-grad-cta px-6 py-3 text-[14px] font-bold text-white transition hover:opacity-90"
         >
           첫 글 쓰러 가기
         </button>

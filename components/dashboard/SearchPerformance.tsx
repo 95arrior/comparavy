@@ -100,7 +100,7 @@ export default function SearchPerformance({ onGoConnect }: { onGoConnect?: () =>
         {onGoConnect && (
           <button
             onClick={onGoConnect}
-            className="mt-3 rounded-xl bg-[#1D75F7] px-4 py-2 text-sm font-bold text-white transition hover:opacity-90 active:scale-95"
+            className="mt-3 rounded-xl tk-grad-cta px-4 py-2 text-sm font-bold text-white transition hover:opacity-90 active:scale-95"
           >
             워드프레스 탭에서 연결하기
           </button>

@@ -258,7 +258,7 @@ export default function ArticleModal({
             <div className="flex gap-1.5">
               {([["click", "클릭형"], ["search", "검색형"]] as const).map(([k, label]) => (
                 <button key={k} onClick={() => setTitlePick(k)}
-                  className={`rounded-full px-3 py-1 text-[12px] font-bold transition ${titlePick === k ? "bg-[#1D75F7] text-white" : "bg-neutral-100 text-neutral-500 hover:bg-neutral-200"}`}>{label}</button>
+                  className={`rounded-full px-3 py-1 text-[12px] font-bold transition ${titlePick === k ? "tk-grad-cta text-white" : "bg-neutral-100 text-neutral-500 hover:bg-neutral-200"}`}>{label}</button>
               ))}
             </div>
             <h1 className="mt-2 text-2xl font-bold leading-tight tracking-tight sm:text-3xl">{pubTitle}</h1>
@@ -282,7 +282,7 @@ export default function ArticleModal({
                     <span className="text-sm font-semibold text-neutral-900">‘{v.matched}’{v.count > 1 ? ` ×${v.count}` : ""}</span>
                     <span className="text-[11px] text-neutral-400">{v.field === "title" ? "제목" : "본문"} · {v.law}</span>
                     {v.suggestion && (
-                      <button onClick={() => fixViolation(v)} className="ml-auto shrink-0 rounded-lg bg-[#1D75F7] px-2.5 py-1 text-xs font-medium text-white transition hover:opacity-90">‘{v.suggestion}’로 바꾸기</button>
+                      <button onClick={() => fixViolation(v)} className="ml-auto shrink-0 rounded-lg tk-grad-cta px-2.5 py-1 text-xs font-medium text-white transition hover:opacity-90">‘{v.suggestion}’로 바꾸기</button>
                     )}
 
 
@@ -334,7 +334,7 @@ export default function ArticleModal({
                       <div className="mt-3">
                         <img src={st.url} alt="" className="max-h-56 w-full rounded-lg object-cover" />
                         <div className="mt-2 flex items-center gap-2">
-                          <button onClick={() => st.url && copyImageAt(i, st.url)} className="at-press rounded-lg bg-[#1D75F7] px-3.5 py-2 text-[12.5px] font-bold text-white transition hover:opacity-90">{imgCopied === i ? "복사됨 · 네이버에 붙여넣기" : "이미지 복사"}</button>
+                          <button onClick={() => st.url && copyImageAt(i, st.url)} className="at-press rounded-lg tk-grad-cta px-3.5 py-2 text-[12.5px] font-bold text-white transition hover:opacity-90">{imgCopied === i ? "복사됨 · 네이버에 붙여넣기" : "이미지 복사"}</button>
                           <button onClick={() => st.url && clipSaveImage(st.url, `ateflo-image-${i + 1}.png`)} className="at-press rounded-lg bg-neutral-100 px-3.5 py-2 text-[12.5px] font-bold text-neutral-600 transition hover:bg-neutral-200">저장</button>
                         </div>
                       </div>
@@ -463,7 +463,7 @@ export default function ArticleModal({
                   setEditSeg(null);
                   const res = await fetch(`/api/articles/${article.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ body_html: next }) });
                   if (res.ok) { setToast("고쳤어요"); onUpdated({ ...article, title, body_html: next }); } else setToast("저장하지 못했어요");
-                }} className="at-press flex-1 rounded-xl bg-[#1D75F7] py-3 text-[14px] font-bold text-white transition hover:opacity-90">저장</button>
+                }} className="at-press flex-1 rounded-xl tk-grad-cta py-3 text-[14px] font-bold text-white transition hover:opacity-90">저장</button>
                 <button onClick={() => setEditSeg(null)} className="at-press rounded-xl bg-neutral-100 px-5 py-3 text-[14px] font-bold text-neutral-600">취소</button>
               </div>
             </div>

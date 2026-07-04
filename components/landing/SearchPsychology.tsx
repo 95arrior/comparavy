@@ -110,7 +110,7 @@ export default function SearchPsychology() {
             <span
               key={c.v}
               className={`relative inline-flex items-center gap-2 whitespace-nowrap rounded-full border px-3.5 py-2.5 text-[13px] font-medium transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] sm:px-4 sm:text-sm ${
-                sel ? "border-[#1D75F7] bg-[#1D75F7] text-white shadow-[0_8px_20px_-6px_rgba(29,117,247,0.45)]" : "border-neutral-200 bg-white text-neutral-500"
+                sel ? "border-[#1D75F7] tk-grad-cta text-white shadow-[0_8px_20px_-6px_rgba(29,117,247,0.45)]" : "border-neutral-200 bg-white text-neutral-500"
               } ${on && phase === "select" ? "ateflo-shine ateflo-tap" : ""}`}
               style={{
                 transitionDelay: phase === "spread" ? `${idx * 70}ms` : "0ms",

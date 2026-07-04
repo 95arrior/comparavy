@@ -127,7 +127,7 @@ export default function HeroInput({ loggedIn, onStart, pro = false }: { loggedIn
           type="submit"
           disabled={loading}
           className={`shrink-0 rounded-xl px-6 py-2.5 text-sm font-medium text-white transition active:scale-95 ${
-            loading ? "ateflo-rainbow" : "bg-[#1D75F7] hover:opacity-90"
+            loading ? "ateflo-rainbow" : "tk-grad-cta hover:opacity-90"
           }`}
         >
           {loading ? "준비하고 있어요…" : "글 생성"}
@@ -193,7 +193,7 @@ export default function HeroInput({ loggedIn, onStart, pro = false }: { loggedIn
                   type="button"
                   onClick={fetchIdeas}
                   disabled={!topic.trim() || ideaLoading}
-                  className="shrink-0 rounded-xl bg-[#1D75F7] px-4 py-2.5 text-sm font-medium text-white transition active:scale-95 hover:opacity-90 disabled:opacity-40"
+                  className="shrink-0 rounded-xl tk-grad-cta px-4 py-2.5 text-sm font-medium text-white transition active:scale-95 hover:opacity-90 disabled:opacity-40"
                 >
                   추천받기
                 </button>

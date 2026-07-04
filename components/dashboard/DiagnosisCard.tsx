@@ -40,13 +40,13 @@ export default function DiagnosisCard({ articles }: { articles: CourseArticleLit
       {open && (
         <div className="ateflo-backdrop-in fixed inset-0 z-[70] flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center sm:p-6" onClick={() => setOpen(false)}>
           <div className="ateflo-sheet-up w-full max-w-md at-glass-strong rounded-t-3xl p-6 shadow-2xl sm:rounded-3xl" style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom))" }} onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-1.5">{steps.map((_, i) => <span key={i} className={`h-1.5 rounded-full transition-all ${i === step ? "w-5 bg-[#1D75F7]" : "w-1.5 bg-neutral-200"}`} />)}</div>
+            <div className="flex items-center gap-1.5">{steps.map((_, i) => <span key={i} className={`h-1.5 rounded-full transition-all ${i === step ? "w-5 tk-grad-cta" : "w-1.5 bg-neutral-200"}`} />)}</div>
             <p className="mt-4 text-[17px] font-bold text-neutral-900">{steps[step].t}</p>
             <p className="mt-1.5 text-[13.5px] leading-relaxed text-neutral-600">{steps[step].d}</p>
             {step === 2 && (
               <a href="https://searchadvisor.naver.com" target="_blank" rel="noopener noreferrer" className="mt-3 block w-full rounded-xl bg-[#03C75A] py-3 text-center text-[14px] font-bold text-white transition hover:opacity-90">서치어드바이저 열기</a>
             )}
-            <button onClick={() => (step < steps.length - 1 ? setStep(step + 1) : setOpen(false))} className="at-press mt-4 w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-bold text-white transition hover:opacity-90">
+            <button onClick={() => (step < steps.length - 1 ? setStep(step + 1) : setOpen(false))} className="at-press mt-4 w-full rounded-xl tk-grad-cta py-3.5 text-[15px] font-bold text-white transition hover:opacity-90">
               {step < steps.length - 1 ? "다음" : "확인 끝"}
             </button>
             <button onClick={() => setOpen(false)} className="mt-2 w-full py-2 text-center text-[13px] font-medium text-neutral-400">닫기</button>

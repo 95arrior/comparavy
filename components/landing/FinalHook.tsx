@@ -63,7 +63,7 @@ export default function FinalHook({ onCTA }: { onCTA: () => void }) {
     <section ref={ref} data-page className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-[#0a1f54] px-2 py-20 text-center text-white">
       {/* 깊이감 — 위쪽 브랜드 블루 글로우, 아래 진한 네이비 */}
       <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(120% 90% at 50% -10%, #1D75F7 0%, #143a8f 38%, #0a1f54 72%)" }} />
-      <div className="pointer-events-none absolute left-1/2 top-[-18%] h-[340px] w-[340px] -translate-x-1/2 rounded-full bg-[#1D75F7] opacity-30 blur-[110px]" />
+      <div className="pointer-events-none absolute left-1/2 top-[-18%] h-[340px] w-[340px] -translate-x-1/2 rounded-full tk-grad-cta opacity-30 blur-[110px]" />
 
       <div className="relative mx-auto max-w-2xl px-5 sm:px-6">
         <div style={st(0)} className="flex justify-center">

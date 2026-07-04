@@ -107,7 +107,7 @@ export default function NaverPublishSheet({
           </button>
           <div className="flex items-center gap-1.5" aria-label={`${screen}/${totalScreens} 단계`}>
             {Array.from({ length: totalScreens }, (_, i) => i + 1).map((n) => (
-              <span key={n} className={`h-1.5 rounded-full transition-all ${n === screen ? "w-5 bg-[#1D75F7]" : n < screen ? "w-1.5 bg-[#1D75F7]/50" : "w-1.5 bg-neutral-200"}`} />
+              <span key={n} className={`h-1.5 rounded-full transition-all ${n === screen ? "w-5 tk-grad-cta" : n < screen ? "w-1.5 bg-[#1D75F7]/50" : "w-1.5 bg-neutral-200"}`} />
             ))}
           </div>
           <span className="w-10" />

@@ -57,7 +57,7 @@ export default function StorySheet({
               onClick={submit}
               disabled={!ready}
               aria-label="이 이야기로 글 만들기"
-              className={`absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full transition active:scale-90 ${ready ? "bg-[#1D75F7] text-white hover:opacity-90" : "bg-neutral-300 text-white"}`}
+              className={`absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full transition active:scale-90 ${ready ? "tk-grad-cta text-white hover:opacity-90" : "bg-neutral-300 text-white"}`}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
             </button>

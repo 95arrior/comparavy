@@ -46,7 +46,7 @@
   /* 간격 스케일: 4/8/12/16/24/32만(= p-1/2/3/4/6/8). 임의 px 금지 */
   /* 모션 표준 1종 — 의미 있는 곳만(링·스파크바·체크·시트). 장식 모션 금지 */
   --ease-standard: cubic-bezier(0.22, 1, 0.36, 1); /* 깊은 감속 — 끊김 금지 */
-  --duration-standard: 260ms;
+  --duration-standard: 330ms;
 }
 
 :root {
@@ -93,9 +93,9 @@ html {
 .tk-tr { transition: all var(--duration-standard) var(--ease-standard); }
 /* 시네마틱 3종(홈 동결) — ①위계 순 120ms 스태거 페이드인 ②진행바 1회 차오름 ③CTA 호버 상승. 그 외 모션 금지 */
 @keyframes tk-fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-.tk-seq-1 { animation: tk-fade-up 0.4s var(--ease-standard) 0ms both; }
-.tk-seq-2 { animation: tk-fade-up 0.4s var(--ease-standard) 120ms both; }
-.tk-seq-3 { animation: tk-fade-up 0.4s var(--ease-standard) 240ms both; }
+.tk-seq-1 { animation: tk-fade-up 0.45s var(--ease-standard) 0ms backwards; }
+.tk-seq-2 { animation: tk-fade-up 0.45s var(--ease-standard) 120ms backwards; }
+.tk-seq-3 { animation: tk-fade-up 0.45s var(--ease-standard) 240ms backwards; }
 @keyframes tk-bar-in { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 .tk-bar-fill { transform-origin: left; animation: tk-bar-in 0.6s var(--ease-standard) 200ms both; }
 .tk-cta { transition: transform var(--duration-standard) var(--ease-standard), box-shadow var(--duration-standard) var(--ease-standard), opacity var(--duration-standard) var(--ease-standard); }
@@ -121,7 +121,7 @@ html {
 }
 .tk-hero-cta:hover { transform: translateY(-2px); box-shadow: 0 16px 34px -10px rgba(8, 30, 80, 0.55); }
 @keyframes tk-hero-in { from { opacity: 0; transform: translateY(14px) scale(0.98); } to { opacity: 1; transform: none; } }
-.tk-hero-in { animation: tk-hero-in 0.55s var(--ease-standard) 80ms both; }
+.tk-hero-in { animation: tk-hero-in 0.6s var(--ease-standard) 80ms backwards; }
 /* 루틴 타일 아이콘 — 그라데이션 원 */
 .tk-icon-orb {
   background: linear-gradient(135deg, #1d75f7, #7c6cff);
@@ -153,9 +153,9 @@ html {
 /* 카드 표면 — 흰색에 은은한 블루 틴트(메이트 카드 광) */
 .tk-card-glow { background: linear-gradient(160deg, #ffffff 55%, #f2f7ff 100%); }
 @keyframes tk-pop { from { opacity: 0; transform: translateY(4px) scale(0.96); } to { opacity: 1; transform: none; } }
-.tk-chip { animation: tk-pop 0.35s var(--ease-standard) both; }
+.tk-chip { animation: tk-pop 0.4s var(--ease-standard) backwards; }
 .tk-chip:nth-child(2) { animation-delay: 60ms; } .tk-chip:nth-child(3) { animation-delay: 120ms; } .tk-chip:nth-child(4) { animation-delay: 180ms; }
-.tk-dot { animation: tk-pop 0.3s var(--ease-standard) both; }
+.tk-dot { animation: tk-pop 0.3s var(--ease-standard) backwards; }
 
 /* 생성 시작 표시용 무지개 버튼 (흐르는 그라데이션) */
 @keyframes ateflo-rainbow {
@@ -1740,16 +1740,17 @@ input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-sele
   background: linear-gradient(180deg, #f2f5ff 0%, #f5f7fc 40%, #f4f6f9 100%); /* 메이트 톤 — 은은한 블루 캔버스 */
 }
 
-.at-glass { /* 글래스 폐기(2단계) — 흰 카드 + line 1px. 구분은 여백과 선으로 */
-  background: var(--color-bg);
-  border: 1px solid var(--color-line);
+.at-glass { /* ★메이트 카드 — 흰→연블루 광 표면 + 블루 섀도(전 화면 공통 카드 언어) */
+  background: linear-gradient(160deg, #ffffff 55%, #f2f7ff 100%);
+  border: 1px solid rgba(29, 117, 247, 0.06);
+  box-shadow: 0 2px 12px -4px rgba(29, 117, 247, 0.12);
+  border-radius: 20px;
 }
 
 /* 시트·바처럼 가독성이 더 필요한 면 */
-.at-glass-strong { /* 시트·모달(떠 있는 요소) — 그림자는 shadow-sm 하나만 */
-  background: var(--color-bg);
-  border: 1px solid var(--color-line);
-  box-shadow: var(--shadow-sm);
+.at-glass-strong { /* 시트·모달 — 떠 있는 요소는 깊은 블루 섀도 */
+  background: #ffffff;
+  box-shadow: 0 -8px 40px -12px rgba(20, 60, 140, 0.18);
 }
 
 /* 크레딧 번개 — 선택 시 아래서 위로 차오름 */

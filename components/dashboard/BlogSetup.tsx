@@ -99,7 +99,7 @@ export default function BlogSetup({
               aria-label={`${i + 1}단계 ${s}`}
             >
               <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition ${
-                i < step ? "bg-[#1D75F7] text-white" : i === step ? "bg-[#1D75F7] text-white ring-4 ring-[#1D75F7]/15" : "bg-neutral-100 text-neutral-400"
+                i < step ? "tk-grad-cta text-white" : i === step ? "tk-grad-cta text-white ring-4 ring-[#1D75F7]/15" : "bg-neutral-100 text-neutral-400"
               }`}>
                 {i < step ? "✓" : i + 1}
               </span>
@@ -108,7 +108,7 @@ export default function BlogSetup({
           ))}
         </div>
         <div className="mt-4 h-1 overflow-hidden rounded-full bg-neutral-100">
-          <div className="h-full rounded-full bg-[#1D75F7] transition-all duration-300" style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
+          <div className="h-full rounded-full tk-grad-cta transition-all duration-300" style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
         </div>
         <p className="mt-2 text-right text-xs text-neutral-400">{step + 1} / {STEPS.length}</p>
       </div>

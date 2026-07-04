@@ -68,7 +68,7 @@ export default function CreditPaywallSheet({
 
         <Link
           href="/pricing"
-          className="mt-5 block w-full rounded-xl bg-[#1D75F7] py-3.5 text-center text-[15px] font-semibold text-white transition hover:opacity-90 active:scale-[0.99]"
+          className="mt-5 block w-full rounded-xl tk-grad-cta py-3.5 text-center text-[15px] font-semibold text-white transition hover:opacity-90 active:scale-[0.99]"
         >
           {pendingTitle ? "코스 이어가기" : "크레딧 충전하기"}
         </Link>

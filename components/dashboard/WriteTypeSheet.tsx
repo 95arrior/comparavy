@@ -51,7 +51,7 @@ export default function WriteTypeSheet({
                 <button key={t} onClick={() => setPickTitle(t)}
                   className={`flex w-full items-start gap-2.5 rounded-2xl px-4 py-3 text-left transition ${on ? "bg-[#1D75F7]/[0.06] ring-1 ring-[#1D75F7]" : "bg-neutral-50 ring-1 ring-transparent"}`}>
                   <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${on ? "border-[#1D75F7]" : "border-neutral-300"}`}>
-                    {on && <span className="h-1.5 w-1.5 rounded-full bg-[#1D75F7]" />}
+                    {on && <span className="h-1.5 w-1.5 rounded-full tk-grad-cta" />}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-[14px] font-bold leading-snug text-neutral-900">{t}</span>
@@ -71,14 +71,14 @@ export default function WriteTypeSheet({
             <p className="text-[14px] font-bold text-neutral-900">AI 이미지도 함께 🎨</p>
             <p className="mt-0.5 text-[12px] text-neutral-500">대표이미지는 무료로, 본문 사진은 최대 +{IMAGE_COST * 2}크레딧</p>
           </div>
-          <span className={`flex h-7 w-12 shrink-0 items-center rounded-full px-0.5 transition-colors ${withImages ? "bg-[#1D75F7]" : "bg-neutral-200"}`}>
+          <span className={`flex h-7 w-12 shrink-0 items-center rounded-full px-0.5 transition-colors ${withImages ? "tk-grad-cta" : "bg-neutral-200"}`}>
             <span className={`h-6 w-6 rounded-full bg-white shadow transition-transform ${withImages ? "translate-x-5" : ""}`} />
           </span>
         </button>}
 
         <button
           onClick={() => onPick({ withImages: AI_IMAGES_ENABLED && withImages, title: pickTitle })}
-          className="at-press mt-4 w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-semibold text-white transition hover:opacity-90"
+          className="at-press mt-4 w-full rounded-xl tk-grad-cta py-3.5 text-[15px] font-semibold text-white transition hover:opacity-90"
         >
           이 글 쓰기
         </button>

@@ -53,7 +53,7 @@ export default function CreditSuccess() {
       <div className="flex max-w-sm flex-col items-center">
         <p className="text-[18px] font-extrabold text-neutral-900">앗, 확인이 필요해요</p>
         <p className="mt-2 text-[13.5px] leading-relaxed text-neutral-500">{message}</p>
-        <button onClick={() => router.replace("/")} className="at-press mt-6 w-full rounded-xl bg-[#1D75F7] py-3.5 text-[14px] font-bold text-white">
+        <button onClick={() => router.replace("/")} className="at-press mt-6 w-full rounded-xl tk-grad-cta py-3.5 text-[14px] font-bold text-white">
           홈으로
         </button>
       </div>
@@ -62,14 +62,14 @@ export default function CreditSuccess() {
 
   return (
     <div className="flex max-w-sm flex-col items-center">
-      <span className="ateflo-circle-pop flex h-20 w-20 items-center justify-center rounded-full bg-[#1D75F7] text-white shadow-[0_12px_44px_rgba(29,117,247,0.45)]">
+      <span className="ateflo-circle-pop flex h-20 w-20 items-center justify-center rounded-full tk-grad-cta text-white shadow-[0_12px_44px_rgba(29,117,247,0.45)]">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path className="ateflo-check-draw" d="M5 13l4 4L19 7" /></svg>
       </span>
       <p className="at-rise mt-6 text-[20px] font-extrabold tracking-tight text-neutral-900" style={{ animationDelay: "0.3s" }}>충전 완료!</p>
       <p className="at-rise mt-1.5 text-[14px] text-neutral-500" style={{ animationDelay: "0.5s" }}>
         잔액 <b className="text-[#1D75F7]">{credits.toLocaleString("ko-KR")}크레딧</b> · 약 {Math.floor(credits / GENERATE_COST)}편 쓸 수 있어요
       </p>
-      <button onClick={() => router.replace("/")} className="at-press at-rise mt-7 w-full rounded-xl bg-[#1D75F7] py-4 text-[15px] font-bold text-white" style={{ animationDelay: "0.7s" }}>
+      <button onClick={() => router.replace("/")} className="at-press at-rise mt-7 w-full rounded-xl tk-grad-cta py-4 text-[15px] font-bold text-white" style={{ animationDelay: "0.7s" }}>
         글 쓰러 가기
       </button>
     </div>

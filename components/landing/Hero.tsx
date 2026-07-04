@@ -140,7 +140,7 @@ export default function Hero() {
         className="fixed inset-x-0 bottom-0 z-40 border-t border-neutral-100 bg-white/95 px-4 pt-3 backdrop-blur sm:hidden"
         style={{ paddingBottom: "calc(0.9rem + env(safe-area-inset-bottom))" }}
       >
-        <button onClick={toForm} className="w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-semibold text-white transition active:scale-[0.99]">
+        <button onClick={toForm} className="w-full rounded-xl tk-grad-cta py-3.5 text-[15px] font-semibold text-white transition active:scale-[0.99]">
           무료로 사전신청하기
         </button>
       </div>

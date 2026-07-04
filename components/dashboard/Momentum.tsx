@@ -57,7 +57,7 @@ export default function Momentum({ articles }: { articles: Article[] }) {
       </p>
 
       <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-neutral-100">
-        <div className={`h-full rounded-full transition-all duration-500 ${weekDone ? "bg-emerald-500" : "bg-[#1D75F7]"}`} style={{ width: `${weekPct}%` }} />
+        <div className={`h-full rounded-full transition-all duration-500 ${weekDone ? "bg-emerald-500" : "tk-grad-cta"}`} style={{ width: `${weekPct}%` }} />
       </div>
       <p className="mt-2 text-[11px] text-neutral-400">
         {weekDone ? "이번 주 목표 달성! 계속 쌓아요" : `${WEEK_GOAL - weekCount}편 더 쓰면 이번 주 목표 달성`} · 총 {total}편
@@ -67,7 +67,7 @@ export default function Momentum({ articles }: { articles: Article[] }) {
       <div className="mt-4 flex justify-start gap-[3px]">
         <div className="grid grid-flow-col grid-rows-7 gap-[3px]">
           {cells.map((c) => (
-            <span key={c.key} className={`h-2.5 w-2.5 rounded-[2px] ${c.active ? "bg-[#1D75F7]" : "bg-neutral-100"}`} />
+            <span key={c.key} className={`h-2.5 w-2.5 rounded-[2px] ${c.active ? "tk-grad-cta" : "bg-neutral-100"}`} />
           ))}
         </div>
       </div>

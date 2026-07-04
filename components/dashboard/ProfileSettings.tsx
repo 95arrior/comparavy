@@ -60,7 +60,7 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
               key={s}
               type="button"
               onClick={() => setSub(s)}
-              className={`rounded-xl px-3 py-2 text-sm font-bold transition ${sub === s ? "bg-[#1D75F7] text-white" : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"}`}
+              className={`rounded-xl px-3 py-2 text-sm font-bold transition ${sub === s ? "tk-grad-cta text-white" : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"}`}
             >
               {s}
             </button>
@@ -87,7 +87,7 @@ export default function ProfileSettings({ profile, onSaved }: { profile: BlogPro
 
       {error && <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{error}</div>}
 
-      <button onClick={save} disabled={saving} className="w-full rounded-2xl bg-[#1D75F7] py-4 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99] disabled:opacity-50">
+      <button onClick={save} disabled={saving} className="w-full rounded-2xl tk-grad-cta py-4 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99] disabled:opacity-50">
         {saving ? "저장 중…" : "저장하기"}
       </button>
     </div>

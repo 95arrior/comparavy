@@ -39,7 +39,7 @@ export default function LandingHeader() {
         </a>
         <button
           onClick={toForm}
-          className="hidden rounded-full bg-[#1D75F7] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 active:scale-95 sm:block"
+          className="hidden rounded-full tk-grad-cta px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 active:scale-95 sm:block"
         >
           사전신청
         </button>

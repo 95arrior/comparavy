@@ -211,7 +211,7 @@ function EtcCards({ cards, onDetail, onActive }: { cards: SubCard[]; onDetail: (
               key={c.img}
               onClick={() => goTo(i)}
               aria-label={`${i + 1}번째 카드 보기`}
-              className={`h-2 rounded-full transition-all duration-300 ${i === active ? "w-6 bg-[#1D75F7]" : "w-2 bg-neutral-300"}`}
+              className={`h-2 rounded-full transition-all duration-300 ${i === active ? "w-6 tk-grad-cta" : "w-2 bg-neutral-300"}`}
             />
           ))}
         </div>
@@ -307,7 +307,7 @@ export default function Showcase({ sel, onSelect, detail, detailCard, onDetail, 
                   opacity: shown ? 1 : 0,
                 }}
                 className={`rounded-full px-8 py-5 text-lg font-bold active:scale-95 sm:px-10 sm:py-6 sm:text-xl ${
-                  on ? "bg-[#1D75F7] text-white" : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                  on ? "tk-grad-cta text-white" : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
                 }`}
               >
                 {c.label}
@@ -352,7 +352,7 @@ export default function Showcase({ sel, onSelect, detail, detailCard, onDetail, 
                 <div className="mx-auto w-full max-w-md rounded-3xl bg-white p-7 text-center shadow-[0_24px_60px_-22px_rgba(20,40,90,0.4)] ring-1 ring-black/5">
                   <h3 className="font-pretendard text-2xl font-bold tracking-tight text-neutral-900">{cat.heading}</h3>
                   <p className="mt-3 text-[15px] leading-relaxed text-neutral-500">{cat.desc}</p>
-                  <button onClick={() => onDetail()} className="mt-5 inline-flex items-center gap-1 rounded-full bg-[#1D75F7] px-4 py-2.5 text-[13px] font-bold text-white active:scale-95">추천 글감 보기</button>
+                  <button onClick={() => onDetail()} className="mt-5 inline-flex items-center gap-1 rounded-full tk-grad-cta px-4 py-2.5 text-[13px] font-bold text-white active:scale-95">추천 글감 보기</button>
                 </div>
               )
             ) : (

@@ -174,7 +174,7 @@ export default function KeywordFinder({
                     onClick={() => toggle(k.keyword)}
                     className={`flex w-full items-center gap-3 px-4 py-3.5 text-left transition ${on ? "bg-[#1D75F7]/5" : "hover:bg-neutral-50"}`}
                   >
-                    <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition ${on ? "border-[#1D75F7] bg-[#1D75F7] text-white" : "border-neutral-300 text-transparent"}`}>
+                    <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition ${on ? "border-[#1D75F7] tk-grad-cta text-white" : "border-neutral-300 text-transparent"}`}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
                     </span>
                     <div className="min-w-0 flex-1">

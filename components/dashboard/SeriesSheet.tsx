@@ -55,7 +55,7 @@ export default function SeriesSheet({
                     <span className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] font-bold ${done ? "bg-emerald-500 text-white" : "bg-white text-neutral-400 ring-1 ring-neutral-200"}`}>{done ? "✓" : i + 1}</span>
                     <span className={`min-w-0 flex-1 text-[13.5px] font-semibold leading-snug ${done ? "text-neutral-400 line-through decoration-neutral-300" : "text-neutral-900"}`}>{it.title}</span>
                     {!done && (
-                      <button onClick={() => { onWrite(it.keyword, it.title); onClose(); }} className="mt-0.5 shrink-0 rounded-lg bg-[#1D75F7] px-3 py-1.5 text-[12px] font-bold text-white transition hover:opacity-90 active:scale-95">쓰기</button>
+                      <button onClick={() => { onWrite(it.keyword, it.title); onClose(); }} className="mt-0.5 shrink-0 rounded-lg tk-grad-cta px-3 py-1.5 text-[12px] font-bold text-white transition hover:opacity-90 active:scale-95">쓰기</button>
                     )}
                   </li>
                 );

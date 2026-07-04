@@ -95,7 +95,7 @@ export default function SearchConsoleConnect() {
       {!status.connected ? (
         <a
           href="/api/searchconsole/connect"
-          className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#1D75F7] px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90 active:scale-95"
+          className="mt-5 inline-flex items-center gap-2 rounded-xl tk-grad-cta px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90 active:scale-95"
         >
           구글 계정으로 연결하기
         </a>
@@ -128,7 +128,7 @@ export default function SearchConsoleConnect() {
                 <button
                   onClick={saveSite}
                   disabled={!selected || busy || selected === status.selectedSite}
-                  className="shrink-0 rounded-xl bg-[#1D75F7] px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-40"
+                  className="shrink-0 rounded-xl tk-grad-cta px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-40"
                 >
                   {selected === status.selectedSite ? "저장됨" : busy ? "저장 중…" : "저장"}
                 </button>

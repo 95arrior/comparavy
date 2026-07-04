@@ -83,7 +83,7 @@ export default function PricingCards({ loggedIn, currentPlan }: { loggedIn: bool
         ) : (
           <button
             onClick={() => router.push(loggedIn ? "/pricing" : "/login")}
-            className="mt-8 rounded-xl bg-[#1D75F7] px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
+            className="mt-8 rounded-xl tk-grad-cta px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
           >
             {loggedIn ? "프로 구독하기" : "프로 선택"}
           </button>
