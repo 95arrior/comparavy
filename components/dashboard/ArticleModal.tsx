@@ -19,6 +19,7 @@ export default function ArticleModal({
   vertical,
   onClose,
   onUpdated,
+  onPublished,
   onCredits,
 }: {
   article: Article;
@@ -26,6 +27,8 @@ export default function ArticleModal({
   vertical?: string;
   onClose: () => void;
   onUpdated: (a: Article) => void;
+  /** 발행 완료 표시 후 — 모달 닫고 글 목록으로(상위에서 처리) */
+  onPublished?: () => void;
   /** 이미지 생성 등으로 크레딧 잔액이 바뀔 때(홈 칩 동기화) */
   onCredits?: (balance: number) => void;
 }) {
@@ -81,6 +84,7 @@ export default function ArticleModal({
         try { const { localPubFlagKey } = await import("@/lib/course"); localStorage.setItem(localPubFlagKey(), "1"); } catch { /* ignore */ }
         setNaverOpen(false);
         setToast("발행 완료로 표시했어요");
+        onPublished?.();
       } else {
         setToast("표시하지 못했어요");
       }

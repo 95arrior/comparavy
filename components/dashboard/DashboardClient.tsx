@@ -491,6 +491,7 @@ export default function DashboardClient(props: DashboardProps) {
             vertical={blogProfile?.vertical ?? "general"}
             onClose={() => setSelected(null)}
             onUpdated={onUpdated}
+            onPublished={() => { setSelected(null); goLabView("articles"); }}
             onCredits={setCredits}
           />
         )}

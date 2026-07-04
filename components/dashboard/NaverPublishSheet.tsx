@@ -42,11 +42,10 @@ export default function NaverPublishSheet({
     [images],
   );
 
-  const tagList = (tags ?? []).map((t) => String(t).trim().replace(/^#/, "")).filter(Boolean).slice(0, 10);
-  const hasTags = tagList.length > 0;
-  const totalScreens = hasTags ? 5 : 4;
-  const [screen, setScreen] = useState(1); // 1 본문 → 2 열기 → 3 제목 → (4 태그) → 마지막 완료
-  const [tagsCopied, setTagsCopied] = useState(false);
+  // 태그: 본문 끝 해시태그를 네이버가 태그칸에 자동 등록(복붙 한 번) — 별도 태그 단계 없음(잉여라 제거, 실측 확인).
+  void tags;
+  const totalScreens = 4;
+  const [screen, setScreen] = useState(1); // 1 본문 → 2 열기 → 3 제목 → 4 완료
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [clip, setClip] = useState<string | null>(null);
@@ -76,15 +75,6 @@ export default function NaverPublishSheet({
       const r = await copyTextVerified(title);
       if (r === "fail") { setErr("복사가 안 됐어요. 한 번 더 눌러주세요."); return; }
       setClip("제목"); setTitleCopied(true);
-    } finally { setBusy(false); }
-  }
-  async function copyTags() {
-    if (busy) return;
-    setBusy(true); setErr(null);
-    try {
-      const r = await copyTextVerified(tagList.map((t) => `#${t}`).join(" "));
-      if (r === "fail") { setErr("복사가 안 됐어요. 한 번 더 눌러주세요."); return; }
-      setClip("태그"); setTagsCopied(true);
     } finally { setBusy(false); }
   }
   async function saveAllImages() {
@@ -168,23 +158,6 @@ export default function NaverPublishSheet({
               <p className="mt-3 rounded-xl bg-neutral-50 px-4 py-2.5 text-[12.5px] font-medium text-neutral-600">본문의 [상품 링크 자리]를 쇼핑커넥트에서 만든 내 링크로 바꿔 넣으세요.</p>
             )}
             <button onClick={() => setScreen(4)} className={`${bigBtn} mt-4`} style={{ background: BLUE }}>다음</button>
-          </div>
-        )}
-
-        {/* 화면 4 — 태그(있을 때만): 본문엔 없음 — 태그칸에 붙여넣으면 자동으로 나뉜다 */}
-        {hasTags && screen === 4 && (
-          <div className="mt-5">
-            <p className="text-[17px] font-bold text-neutral-900">태그를 채우세요</p>
-            <p className="mt-1 text-[13px] leading-relaxed text-neutral-500">발행 화면 아래 태그 칸에 붙여넣으면 자동으로 나뉘어 들어가요.</p>
-            <button onClick={copyTags} disabled={busy} className="at-press mt-3 w-full rounded-2xl bg-neutral-50 p-4 text-left ring-1 ring-black/[0.05] transition hover:bg-neutral-100 disabled:opacity-60">
-              <p className="flex flex-wrap gap-1.5">
-                {tagList.map((t) => <span key={t} className="rounded-md bg-white px-2 py-0.5 text-[12.5px] font-semibold text-neutral-600 ring-1 ring-black/[0.05]">#{t}</span>)}
-              </p>
-              <p className="mt-2 flex items-center gap-1.5 text-[12.5px] font-bold" style={{ color: BLUE }}>
-                {tagsCopied && <Check />}{busy ? "확인 중" : tagsCopied ? "태그 복사됨 · 태그 칸에 붙여넣으세요" : "탭하면 복사돼요"}
-              </p>
-            </button>
-            <button onClick={() => setScreen(5)} className={`${bigBtn} mt-4`} style={{ background: BLUE }}>다음</button>
           </div>
         )}
 
