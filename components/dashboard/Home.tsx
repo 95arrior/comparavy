@@ -7,7 +7,7 @@ import CourseRing from "./CourseRing";
 import CheckinCard from "./CheckinCard";
 import NeighborMission from "./NeighborMission";
 import DiagnosisCard from "./DiagnosisCard";
-import { courseInfo, yesterdayPublished, pickNextTopic, todayKeywords, localPubFlagKey } from "@/lib/course";
+import { courseInfo, yesterdayPublished, pickNextTopic, todayKeywords, localPubFlagKey, progressPercent } from "@/lib/course";
 import { depletionForecast, attackEligible } from "@/lib/checkin";
 import { GENERATE_COST } from "@/lib/creditPacks";
 import { nextSeedRefreshLabel } from "@/lib/seedRefresh";
@@ -240,38 +240,25 @@ export default function Home({
   const rest = clean.filter((t) => t !== first);
 
   return (
-    <main className="mx-auto max-w-2xl px-6 pb-10">
+    <main className="mx-auto max-w-5xl px-5 pb-10 lg:grid lg:grid-cols-[minmax(0,1fr)_264px] lg:gap-12">
+      {/* ★모바일 상태 스트립 — 스크롤 0에서 상태는 한 줄 요약, 오늘 할 일이 주인공. 탭=성과 */}
+      <button onClick={onGoPerformance} className="mt-4 flex w-full items-center gap-2 overflow-x-auto whitespace-nowrap text-[13px] text-[color:var(--color-text-sub)] lg:hidden">
+        <span className="font-semibold tabular-nums text-[color:var(--color-text)]">{info.finished ? "완주" : info.day > 0 ? `D-${info.day}` : "시작 전"}</span>
+        <span className="tabular-nums">{progressPercent(info)}%</span>
+        {info.streak > 0 && <><span className="text-[color:var(--color-line)]">·</span><span className="tabular-nums">{info.streak}일 연속</span></>}
+        <span className="text-[color:var(--color-line)]">·</span>
+        <span className="tabular-nums">크레딧 {credits.toLocaleString("ko-KR")}</span>
+        <span className="ml-auto text-[color:var(--color-text-weak)]">›</span>
+      </button>
+
+      <div className="min-w-0">
       {swapNotice && (
         <div className="ateflo-fade-in fixed left-1/2 top-6 z-[80] -translate-x-1/2 rounded-full at-glass-strong px-4 py-2.5 text-[13px] font-bold text-neutral-700 shadow-lg">
           오늘 글감 교체는 여기까지예요 · {nextSeedRefreshLabel()}
         </div>
       )}
-      {/* 상단 — 블로그명 + 크레딧 칩(탭 → 충전·내역) */}
-      <div className="at-rise flex items-center justify-between pt-7">
-        <p className="text-[13px] text-[color:var(--color-text-weak)]">{blogName}</p>
-        <div className="flex items-center gap-2">
-        {onOpenNews && (
-          <button onClick={onOpenNews} aria-label="공지·업데이트" className="at-press relative flex h-8 w-8 items-center justify-center rounded-full bg-white ring-1 ring-black/[0.05] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)]">
-            <span className={unreadNews ? "at-bell-shake inline-flex" : "inline-flex"}>
-              <GlassIcon name="bell" tint={unreadNews ? "violet" : "grey"} size={16} />
-            </span>
-            {unreadNews && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />}
-          </button>
-        )}
-        <button onClick={onOpenCredits} className="at-press flex items-center gap-1 rounded-full bg-white px-3 py-1.5 ring-1 ring-black/[0.05] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)]">
-          <GlassIcon name="credit" tint="blue" size={20} icon={0.7} radius={7} />
-          <span className="text-[13px] tabular-nums text-[color:var(--color-text-sub)]">{credits.toLocaleString("ko-KR")}</span>
-          {(() => { const d = Math.floor(credits / GENERATE_COST); return d > 0 ? <span className="text-[12px] text-[color:var(--color-text-weak)]">약 {d > 999 ? "999+" : d}일치</span> : null; })()}
-        </button>
-        </div>
-      </div>
-
-      {/* 히어로 — 코스 진행 링 */}
-      <div className="at-rise at-d1 mt-4">
-        <CourseRing info={info} />
-      </div>
-
-      {/* 어제 결과 한 줄 — 발행 확인된 어제 글이 있을 때만(없으면 완전 미표시). 상태 참조=course.isPublishConfirmed */}
+      {/* 인사말 — 좌정렬, title급(주 컬럼의 시작) */}
+      <h1 className="at-rise pt-6 text-[20px] font-semibold text-[color:var(--color-text)]">{blogName}</h1>
 
 
       {/* 크레딧 소진 예고 — 잔여 3편 이하 + 실사용 페이스로 예측 가능할 때만(지어내기 금지) */}
@@ -337,6 +324,7 @@ export default function Home({
       {/* 오늘의 글 — 단일 CTA */}
       <div className="at-rise at-d2 mt-6">
         <TodayCard
+          plain
           topic={first ? { keyword: first.keyword, title: first.title, tag: first.tag, newsContext: first.newsContext, briefText: first.briefText, titleSearch: first.titleSearch, thumb: first.thumb, vol: first.vol, comp: first.comp, blogTotal: first.blogTotal } : null}
           loading={topicsLoading}
           credits={credits}
@@ -350,7 +338,7 @@ export default function Home({
       </div>
 
       {/* ★오늘의 루틴 — 토스식: 홈엔 행 하나씩, 상세는 시트. 홈의 주인공은 위 '오늘의 글' 하나뿐. */}
-      <div className="at-rise at-d3 mt-5">
+      <div className="at-rise at-d3 mt-6">
         <p className="px-1 text-[13px] text-[color:var(--color-text-weak)]">오늘의 루틴</p>
         <div className="mt-2">
           {([
@@ -359,7 +347,7 @@ export default function Home({
             { key: "topics" as const, label: "다른 글감", sub: topicsLoading ? "불러오는 중" : `${rest.length}개 준비됨` },
           ]).map((r, i) => (
             <button key={r.key} onClick={() => setRoutineSheet(r.key)}
-              className={`at-press flex w-full items-center gap-3 px-1 py-4 text-left tk-tr hover:bg-white ${i > 0 ? "border-t border-[color:var(--color-line)]" : ""}`}>
+              className={`at-press flex min-h-12 w-full items-center gap-3 px-1 py-4 text-left tk-tr hover:bg-white ${i > 0 ? "border-t border-[color:var(--color-line)]" : ""}`}>
               <span className="min-w-0 flex-1">
                 <span className="text-[15px] text-[color:var(--color-text)]">{r.label}</span>
                 <span className="mt-1 block text-[13px] text-[color:var(--color-text-weak)]">{r.sub}</span>
@@ -406,6 +394,40 @@ export default function Home({
           </div>
         </div>
       )}
+      </div>
+
+      {/* ★보조 컬럼 — 내 상태(데스크톱). 라벨 caption + 숫자 위주, 링 폐지 → 숫자+수평 진행바 */}
+      <aside className="hidden lg:block">
+        <div className="sticky top-6 space-y-6 pt-6">
+          <button onClick={onGoPerformance} className="block w-full text-left">
+            <p className="text-[13px] text-[color:var(--color-text-weak)]">{info.finished ? "코스 완주" : "승인 준비 코스"}</p>
+            <p className="mt-2 text-[30px] font-bold leading-none tracking-[-0.02em] tabular-nums text-[color:var(--color-text)]">{info.finished ? "완주" : info.day > 0 ? `D-${info.day}` : "시작 전"}</p>
+            <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[color:var(--color-line)]">
+              <div className="h-full rounded-full bg-[color:var(--color-text)] tk-tr" style={{ width: `${progressPercent(info)}%` }} />
+            </div>
+            <p className="mt-1 text-[13px] tabular-nums text-[color:var(--color-text-weak)]">{progressPercent(info)}%</p>
+          </button>
+          {info.streak > 0 && (
+            <div>
+              <p className="text-[13px] text-[color:var(--color-text-weak)]">연속 발행</p>
+              <p className="mt-1 text-[15px] tabular-nums text-[color:var(--color-text)]">{info.streak}일</p>
+            </div>
+          )}
+          <button onClick={onOpenCredits} className="block w-full text-left">
+            <p className="text-[13px] text-[color:var(--color-text-weak)]">크레딧</p>
+            <p className="mt-1 text-[15px] tabular-nums text-[color:var(--color-text)]">{credits.toLocaleString("ko-KR")}{(() => { const d = Math.floor(credits / GENERATE_COST); return d > 0 ? <span className="ml-1 text-[13px] text-[color:var(--color-text-weak)]">약 {d > 999 ? "999+" : d}일치</span> : null; })()}</p>
+          </button>
+          <div>
+            <p className="text-[13px] text-[color:var(--color-text-weak)]">어제</p>
+            <p className="mt-1 text-[13px] text-[color:var(--color-text-sub)]">{yesterdayPublished(articles) ? "발행 확인됐어요" : "발행 기록 없어요"}</p>
+          </div>
+          {onOpenNews && (
+            <button onClick={onOpenNews} className="flex items-center gap-1.5 text-[13px] text-[color:var(--color-text-weak)] hover:text-[color:var(--color-text-sub)]">
+              공지·업데이트{unreadNews && <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--color-danger)]" />}
+            </button>
+          )}
+        </div>
+      </aside>
     </main>
   );
 }

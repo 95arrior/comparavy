@@ -19,7 +19,7 @@ export interface TodayTopic {
 }
 
 export default function TodayCard({
-  topic, loading, credits, info, onWriteKeyword, onGoPerformance, onOpenTodayDraft, preReady, onReadToday,
+  topic, loading, credits, info, onWriteKeyword, onGoPerformance, onOpenTodayDraft, preReady, onReadToday, plain,
 }: {
   topic: TodayTopic | null;
   loading: boolean;
@@ -32,6 +32,8 @@ export default function TodayCard({
   /** ★사전 생성 완료 — 버튼이 '글 읽어보기'로 조용히 전환(생성 광고 금지, 이 라벨이 유일한 신호) */
   preReady?: boolean;
   onReadToday?: () => void;
+  /** 캔버스 위 섹션(카드 껍데기 없음) — 홈 재설계 */
+  plain?: boolean;
 }) {
   const locked = credits <= 0;
   const write = (t: TodayTopic) => onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb, { seriesId: t.seriesId, series: t.series });
@@ -39,7 +41,7 @@ export default function TodayCard({
   // 코스 완주 → 승인 신청 안내
   if (info.finished) {
     return (
-      <Card>
+      <Card plain={plain}>
         <Header label="승인 준비 코스" chip="완주" />
         <p className="mt-2 text-[17px] font-bold leading-snug text-neutral-900">준비 코스를 완주했어요.<br />애드포스트 신청해볼 차례예요.</p>
         <p className="mt-1.5 text-[12.5px] leading-relaxed text-neutral-500">승인 여부는 네이버 심사(최대 5영업일)가 정해요. 반려돼도 글을 계속 쌓다가 재신청하면 돼요.</p>
@@ -52,7 +54,7 @@ export default function TodayCard({
   if (info.publishedToday) {
     const whyNext = topic ? whyNow(topic) : "";
     return (
-      <Card>
+      <Card plain={plain}>
         <Header label="오늘의 글" chip="완료" />
         <p className="mt-2 text-[17px] font-bold leading-snug text-neutral-900">오늘 1편 발행 완료.<br />한 편 더 쓰면 승인이 가까워져요.</p>
         {topic && !locked && (
@@ -72,7 +74,7 @@ export default function TodayCard({
   // ★draft만 있고 발행 없음 — 미션 미완료. 쓰다 만 글 재진입이 1순위 행동.
   if (info.hasDraftToday && onOpenTodayDraft) {
     return (
-      <Card highlight>
+      <Card plain={plain} highlight>
         <Header label="오늘의 글" chip="발행 전" />
         <p className="mt-2 text-[17px] font-bold leading-snug text-neutral-900">쓰다 만 글이 있어요.<br />발행까지 마쳐야 오늘 미션 완료예요.</p>
         <button onClick={onOpenTodayDraft} className="at-press mt-3.5 w-full rounded-xl bg-[#03C75A] py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">
@@ -85,7 +87,7 @@ export default function TodayCard({
   // 로딩 — 완성 카드와 같은 뼈대의 스켈레톤(배지 줄·제목 2줄·인과 박스·버튼). 갑툭튀 방지 + 레이아웃 시프트 0.
   if (loading || !topic) {
     return (
-      <Card highlight>
+      <Card plain={plain} highlight>
         <Header label="오늘의 글" />
         <div className="at-rise mt-2 space-y-0" aria-hidden>
           <div className="flex items-center gap-1.5">
@@ -108,7 +110,7 @@ export default function TodayCard({
   // 잠김 — 크레딧 0
   if (locked) {
     return (
-      <Card highlight>
+      <Card plain={plain} highlight>
         <Header label="오늘의 글" chip="잠김" chipIcon={<GlassIcon name="lock" tint="grey" size={16} icon={0.7} radius={6} />} />
         <DemandRow topic={topic} muted />
         <p className="mt-2 text-[16px] font-bold leading-snug text-neutral-400">{topic.title}</p>
@@ -120,7 +122,7 @@ export default function TodayCard({
 
   // 기본 — 오늘의 글 쓰기 (주인공 카드: 배지 + 제목 + 왜 지금 + 쓰면 N%)
   return (
-    <Card highlight>
+    <Card plain={plain} highlight>
       <Header label="오늘의 글" />
       <DemandRow topic={topic} onGoPerformance={onGoPerformance} />
       <p className="mt-3 text-[20px] font-semibold leading-snug text-[color:var(--color-text)]">{topic.title}</p>
@@ -129,7 +131,7 @@ export default function TodayCard({
         <span className="text-[15px] text-[color:var(--color-text-sub)]">이 글을 쓰면 <span className="font-semibold tabular-nums text-[color:var(--color-text)]">{writePct}%</span>가 돼요</span>
         {info.day === 0 && <span className="text-[13px] text-[color:var(--color-text-weak)]">· 첫 글이 코스 시작</span>}
       </div>
-      <button onClick={() => (preReady && onReadToday ? onReadToday() : write(topic))} className="at-press mt-4 w-full rounded-[8px] bg-[color:var(--color-brand)] py-3.5 text-[15px] font-semibold text-white tk-tr hover:opacity-90">{preReady ? "글 읽어보기" : "이 글 쓰기"}</button>
+      <button onClick={() => (preReady && onReadToday ? onReadToday() : write(topic))} className="at-press mt-4 flex min-h-12 w-full items-center justify-center rounded-[8px] bg-[color:var(--color-brand)] text-[15px] font-semibold text-white tk-tr hover:opacity-90">{preReady ? "글 읽어보기" : "이 글 쓰기"}</button>
     </Card>
   );
 }
@@ -168,10 +170,9 @@ function DemandRow({ topic, muted, onGoPerformance }: { topic: TodayTopic; muted
   );
 }
 
-function Card({ children, highlight }: { children: React.ReactNode; highlight?: boolean }) {
-  return (
-    <div className="rounded-[12px] border border-[color:var(--color-line)] bg-white p-6">{children}</div>
-  );
+function Card({ children, plain }: { children: React.ReactNode; highlight?: boolean; plain?: boolean }) {
+  if (plain) return <div className="pt-5">{children}</div>; // 캔버스 위 섹션 — 껍데기 없음(구분=여백)
+  return <div className="rounded-[12px] border border-[color:var(--color-line)] bg-white p-6">{children}</div>;
 }
 
 function Header({ label, chip, chipIcon }: { label: string; chip?: string; chipIcon?: React.ReactNode }) {
