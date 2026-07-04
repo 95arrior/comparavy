@@ -184,7 +184,7 @@ export async function GET(req: Request) {
     if (!(bt === "online" && sub && !cluster)) return cards;
     try {
       const kstDay = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
-      const ampKey = `amp:v3:${user.id}:${kstDay}:${excludeSet.size}`; // v3=source(배지 분리) 캐시 무효화
+      const ampKey = `amp:v4:${user.id}:${(profile as { id?: string } | null)?.id ?? "solo"}:${kstDay}:${excludeSet.size}`; // ★v4=블로그별 격리 — 전환 시 이전 블로그 글감 서빙 사고(실측: 자동차 블로그에 캘리포니아비치) 차단
       let amped: { keyword: string; title: string; titleSearch?: string; newsContext: string | null; briefText?: string; hookKey?: string; thumb?: { mainCopy: string; subCopy: string; badge: string }; brief?: unknown; source?: string }[] = [];
       try {
         const { data: c } = await pool.from("api_cache").select("value, expires_at").eq("key", ampKey).single();

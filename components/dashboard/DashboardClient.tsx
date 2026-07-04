@@ -577,7 +577,7 @@ export default function DashboardClient(props: DashboardProps) {
                   setPendingWrite({ keyword, title, newsContext, briefText, titleSearch, thumb, ...(extra ?? {}) });
                 }}
                 onSelect={setSelected}
-                profileKey={`${blogProfile.vertical}:${blogProfile.sub_category ?? ""}`}
+                profileKey={`${(blogProfile as { id?: string }).id ?? ""}:${blogProfile.vertical}:${blogProfile.sub_category ?? ""}`} // ★블로그 id 포함 — 같은 주제 두 블로그도 캐시 분리
                 subCategory={blogProfile.sub_category ?? blogProfile.topic}
                 onAddBlog={() => setAddBlogMode(true)}
               />
