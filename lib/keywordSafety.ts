@@ -90,9 +90,18 @@ const BRANDS = [
   "마이셀즈", "아임웹", "카페24", "식스샵", "고도몰", "메이크샵", "NHN커머스", "샵바이프리미엄", "위사", "imweb",
 ];
 
+// ★ETF/펀드 상품명 계열 — 브랜드 접두(KODEX·TIGER 등) 또는 상품명 패턴(액티브·합성·커버드콜…)이 붙은 '상품명' 키워드.
+//  일반 주제("ETF 투자 방법")는 정상 — 접두/패턴이 결합된 상품명만 차단.
+const ETF_PREFIX = /(KODEX|TIGER|ACE|RISE|SOL|PLUS|KBSTAR|ARIRANG|HANARO|KOSEF|KIWOOM|WON|UNICORN|TIMEFOLIO|FOCUS)/i;
+const ETF_PATTERN = /(액티브|합성|커버드콜|레버리지|인버스|TR\b|채권혼합|배당성장|미국S&P|나스닥1?0?0)/i;
+function isEtfProductName(kw: string): boolean {
+  const s = kw.replace(/\s+/g, "");
+  return ETF_PREFIX.test(s) || (/ETF|ETN/i.test(s) && ETF_PATTERN.test(s));
+}
+
 function hasBrand(kw: string): boolean {
   const s = kw.replace(/\s+/g, "");
-  return BRANDS.some((b) => s.includes(b));
+  return BRANDS.some((b) => s.includes(b)) || isEtfProductName(s);
 }
 
 // ★가십·이슈성 인물 시그널 — 연예·유명인 가십 글감 차단(허위조작정보법: 조회 10만+ 허위글 최대 5천만원 배상).

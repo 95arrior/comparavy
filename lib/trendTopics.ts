@@ -136,7 +136,7 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
     // ★자동완성 발굴 — 카테고리 루트어의 실검색 확장(무료·무제한). 브랜드성 후보 제외. source=discover(배지 분리).
     {
       const INFO_INTENT = /(방법|조건|신청|추천|비교|후기|금리|지원|혜택|기간|환급|계산|순위|비용|가격|일정|자격|서류|대상)/;
-      const BRANDY = /(카드|캐피탈|저축은행|뱅크|페이|증권|보험|생명|화재|의정석|리츠)/;
+      const BRANDY = /(카드|캐피탈|저축은행|뱅크|페이|증권|보험|생명|화재|의정석|리츠|KODEX|TIGER|ACE|RISE|SOL|PLUS|KBSTAR|ARIRANG|HANARO|KOSEF|액티브|합성|커버드콜|레버리지|인버스|ETN)/i;
       const roots = [...new Set(rows.slice(0, 6).map((r) => r.keyword.split(/\s+/)[0]))].slice(0, 4);
       for (const root of roots) {
         const acs = await fetchNaverAutocomplete(root).catch(() => []);

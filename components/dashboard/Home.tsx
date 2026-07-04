@@ -83,7 +83,7 @@ export default function Home({
   dismissedRef.current = dismissed;
 
   const todayDate = new Date().toISOString().slice(0, 10);
-  const topicsCacheKey = () => `ateflo_topics_v28_${todayDate}_${profileKey ?? ""}_normal`;
+  const topicsCacheKey = () => `ateflo_topics_v29_${todayDate}_${profileKey ?? ""}_normal`;
 
   const SWAP_LIMIT = 12; // 하루 교체 상한 — 풀 소진·API 낭비 방지(유저 요청)
   const swapCountKey = `ateflo_swaps_${new Date().toISOString().slice(0, 10)}`;
@@ -121,7 +121,7 @@ export default function Home({
   };
 
   const loadTopics = useCallback(async () => {
-    const ck = `ateflo_topics_v28_${new Date().toISOString().slice(0, 10)}_${profileKey ?? ""}_normal`;
+    const ck = `ateflo_topics_v29_${new Date().toISOString().slice(0, 10)}_${profileKey ?? ""}_normal`;
     try {
       const raw = typeof window !== "undefined" ? localStorage.getItem(ck) : null;
       if (raw) { const p = JSON.parse(raw); const c = Array.isArray(p) ? sanitizeTopics(p) : []; if (c.length >= 3) { setTopics(c); setTopicsLoading(false); return; } }
