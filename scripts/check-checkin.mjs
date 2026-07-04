@@ -11,3 +11,13 @@ ok(p===null||p>0,"페이스: 실데이터 기반 양수 또는 미표시(3일 �
 ok(monthPace([{day:ym(1),visitors:1,revenue:100}])===null,"입력 3일 미만 → 페이스 미표시(과장 방지)");
 console.log(fail===0?"\n통과: 체크인 계산":"\n실패: "+fail);
 process.exit(fail?1:0);
+
+// 소진 예측
+const { depletionForecast } = await import("../lib/checkin.ts");
+const mk=(n,daysAgo)=>Array.from({length:n},(_,i)=>({status:"draft",created_at:new Date(Date.now()-daysAgo*86400000-i*3600000).toISOString()}));
+const f1=depletionForecast(30,10,mk(7,1)); // 3편 남음, 최근 7일 7편(1일 1편)
+if(!(f1&&f1.postsLeft===3&&f1.daysLeft===3&&/요일$/.test(f1.weekday))){console.log("!! 예측 3편/3일 실패",f1);process.exit(1);}
+if(depletionForecast(30,10,[])!==null){console.log("!! 페이스 없음인데 예측 생성");process.exit(1);}
+if(depletionForecast(0,10,mk(7,1))!==null){console.log("!! 0크레딧 예측");process.exit(1);}
+if(depletionForecast(1000,10,mk(1,1))!==null){console.log("!! 14일 초과인데 배너");process.exit(1);}
+console.log("소진 예측 4케이스 OK");

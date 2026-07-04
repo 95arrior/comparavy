@@ -21,3 +21,21 @@ export function monthPace(rows: CheckinRow[], now: Date = new Date()): number | 
   const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
   return Math.round((sum / month.length) * daysInMonth / 100) * 100; // 백원 단위 라운딩("약 N원대")
 }
+
+// ★크레딧 소진 예측 — 유저 '실사용 페이스'(최근 7일 생성 편수) 기반. 페이스 0이면 예측 근거 없음 → null(지어내기 금지).
+export function depletionForecast(
+  credits: number, generateCost: number,
+  articles: { status: string; created_at: string }[], now: Date = new Date(),
+): { daysLeft: number; weekday: string; postsLeft: number } | null {
+  const postsLeft = Math.floor(credits / generateCost);
+  if (postsLeft <= 0) return null;
+  const weekAgo = now.getTime() - 7 * 86400000;
+  const recent = (articles ?? []).filter((a) => a.status !== "generating" && new Date(a.created_at).getTime() >= weekAgo).length;
+  if (recent === 0) return null; // 최근 사용 없음 — 페이스 산정 불가
+  const dailyPace = recent / 7;
+  const daysLeft = Math.max(1, Math.ceil(postsLeft / dailyPace));
+  if (daysLeft > 14) return null; // 2주 넘게 남으면 배너 소음
+  const d = new Date(now); d.setDate(d.getDate() + daysLeft);
+  const weekday = ["일", "월", "화", "수", "목", "금", "토"][d.getDay()] + "요일";
+  return { daysLeft, weekday, postsLeft };
+}

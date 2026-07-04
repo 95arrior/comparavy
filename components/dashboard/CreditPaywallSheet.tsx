@@ -48,7 +48,7 @@ export default function CreditPaywallSheet({
           <>
             <p className="text-xs font-medium text-neutral-400">오늘의 글이 준비됐어요</p>
             <p className="mt-1 flex items-center gap-1.5 text-[15px] font-bold leading-snug text-neutral-900">
-              <span className="text-neutral-300">🔒</span>
+              
               <span className="min-w-0 flex-1">{pendingTitle}</span>
             </p>
           </>

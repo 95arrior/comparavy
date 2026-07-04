@@ -120,7 +120,7 @@ export default function PricingClient({
                   <p className="text-[16px] font-extrabold tracking-tight text-neutral-900">
                     {p.name} <span className="font-bold text-neutral-400">· {p.credits.toLocaleString("ko-KR")}크레딧</span>
                   </p>
-                  <p className="mt-0.5 truncate text-[12.5px] text-neutral-500">{p.desc}</p>
+                  <p className="mt-0.5 truncate text-[12.5px] text-neutral-500">{p.desc} · 약 {Math.floor(p.credits / 10)}일치</p>
                 </div>
                 <div className="shrink-0 text-right">
                   {saleOn && p.salePrice ? (

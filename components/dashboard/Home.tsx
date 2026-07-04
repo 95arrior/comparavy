@@ -7,6 +7,7 @@ import CourseRing from "./CourseRing";
 import CheckinCard from "./CheckinCard";
 import NeighborMission from "./NeighborMission";
 import { courseInfo, yesterdayPublished, pickNextTopic, todayKeywords, localPubFlagKey } from "@/lib/course";
+import { depletionForecast } from "@/lib/checkin";
 import { GENERATE_COST } from "@/lib/creditPacks";
 import { nextSeedRefreshLabel } from "@/lib/seedRefresh";
 import type { Comp } from "@/lib/topicScore";
@@ -206,6 +207,21 @@ export default function Home({
       {yesterdayPublished(articles) && (
         <p className="at-rise mt-2 text-center text-[12.5px] font-semibold text-[color:var(--at-grey-500)]">어제 글, 발행 확인됐어요.</p>
       )}
+
+      {/* 크레딧 소진 예고 — 잔여 3편 이하 + 실사용 페이스로 예측 가능할 때만(지어내기 금지) */}
+      {(() => {
+        const f = depletionForecast(credits, GENERATE_COST, articles);
+        if (!f || f.postsLeft > 3) return null;
+        return (
+          <button onClick={onOpenCredits} className="at-rise mt-3 flex w-full items-center justify-between rounded-2xl bg-amber-50 px-5 py-3.5 text-left ring-1 ring-amber-200/60 transition hover:bg-amber-100/70">
+            <span className="min-w-0 flex-1">
+              <span className="text-[13px] font-bold text-amber-700">글 {f.postsLeft}편 분량 남았어요</span>
+              <span className="mt-0.5 block text-[12px] text-amber-600/80">이번 페이스면 {f.weekday}쯤 다 떨어져요 · 미리 충전하면 흐름이 안 끊겨요</span>
+            </span>
+            <span className="shrink-0 text-[12.5px] font-bold text-amber-700">충전</span>
+          </button>
+        );
+      })()}
 
       {/* 아침 체크인 — 1일 1회, 30초 동선. 입력→그래프→바로 아래 오늘 할 일로 연결 */}
       <CheckinCard articles={articles} />
