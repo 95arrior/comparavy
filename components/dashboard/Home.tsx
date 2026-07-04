@@ -245,7 +245,7 @@ export default function Home({
       {/* 인사말 */}
       <p className="tk-seq-1 pt-6 text-[15px] font-semibold text-[color:var(--color-text-sub)]">{blogName}</p>
 
-      {/* 상태 카드 — 큰 숫자 + 파란 진행바 + 최근 7일 발행 도트(장식이 아니라 데이터) */}
+      {/* 상태 카드 — 큰 숫자(그라데이션) + 살아있는 게이지 */}
       <button onClick={onGoPerformance} className="tk-seq-1 tk-cta tk-card-glow mt-3 block w-full rounded-[20px] p-6 text-left shadow-[0_2px_12px_-4px_rgba(29,117,247,0.12)]">
         <div className="flex items-start justify-between">
           <div>
@@ -254,7 +254,6 @@ export default function Home({
               <span className="tk-grad-text text-[36px] font-extrabold leading-none tracking-[-0.02em] tabular-nums">{info.finished ? "완주" : info.day > 0 ? `D-${info.day}` : "D-20"}</span>
               <span className="text-[15px] font-semibold tabular-nums text-[color:var(--color-brand)]"><CountUp to={progressPercent(info)} duration={800} />%</span>
             </div>
-          </div>
           </div>
         </div>
         <div className="tk-gauge mt-5 h-2.5 w-full rounded-full bg-[#E8EDF7]">
