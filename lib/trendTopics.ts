@@ -65,10 +65,15 @@ export async function hasFreshTrends(category: string): Promise<boolean> {
   return t.length >= 8;
 }
 
+// 게이트 탈락 기록 — 이후 튜닝의 기준 데이터(stale은 소스층 [trend-fresh] 로그, 여기는 합성 이후 게이트).
+export interface SeedDrop { keyword: string; title: string; reason: "unsafe_brand" | "stale_year" | "no_utility" | "gap" }
+export interface RefreshResult { generated: number; drops: SeedDrop[] }
+
 /** 카테고리 트렌드 갱신 — 뉴스+웹검색 종합 → AI 합성 → 풀 저장. 크론에서만 호출. */
-export async function refreshCategoryTrends(category: string): Promise<number> {
+export async function refreshCategoryTrends(category: string): Promise<RefreshResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return 0;
+  const drops: SeedDrop[] = [];
+  if (!apiKey) return { generated: 0, drops };
 
   // ★다중 소스 — 네이버+구글 뉴스를 다양한 소주제로 수집(은행권 편향 제거)
   const { headlines: heads, stats } = await gatherHeadlinesWithStats(category).catch(() => ({ headlines: [], stats: null as null }));
@@ -90,8 +95,11 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
 - ★keyword는 '하나의 일관된 검색 주제'여야 한다. 서로 다른 두 뉴스·개념을 억지로 붙이지 마라. (나쁜 예: "전기차 미니 원전", "AI 생산혁명 부동산", "카타르 인프라 투자" — 이건 무관한 헤드라인을 합친 것) 실제로 그 단어 조합을 통째로 검색창에 칠 사람이 있어야 한다.
 - ★특정 인물명·회사 인사(신임사장 등)·지역 행정소식처럼 '검색 실익'이 없는 건 제외한다.
 - title=클릭할 블로그 제목.
+- ★utility 판정(각 글감마다): "이 검색어로 들어온 사람이 [신청 방법/조건·자격/비교·선택/비용·후기] 중 하나를 실제로 얻어가는가?" 얻어가면 그 유형을, 아니면 "없음"을 utility에 적어라. 판정만 하고 글감을 빼지는 마라(우리가 거른다).
+  · 실익 없음의 전형: 시사 논평·해설("~는 사실 ~였다", "~의 명과 암"), 거시지표·국가 단위 이야기(정부부채·성장률), 기업/산업 동향(파운드리 수율·투자 유치 — 개인이 행동할 수 없는 것).
+  · ★경계 주의: '제도·정책 변경'은 개인 행동(확인·신청·이동)이 따르므로 실익 있음이다(예: 예금자보호 한도 변경=조건, 육아휴직 개편=신청, 마감 임박·자격 변경=신청/조건). 이런 걸 없음으로 판정하지 마라.
 - 16개가 서로 다른 소주제여야 한다(중복·유사 금지).
-- 반드시 JSON 배열로만 답(다른 말 금지): [{"keyword":"...","title":"..."}]`;
+- 반드시 JSON 배열로만 답(다른 말 금지): [{"keyword":"...","title":"...","utility":"신청|조건|비교|비용|후기|없음"}]`;
 
   let text = "";
   try {
@@ -103,13 +111,13 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
     void logUsage({ model: "claude-haiku-4-5", kind: "trend_refresh", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
     text = res.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join("\n");
   } catch {
-    return 0;
+    return { generated: 0, drops };
   }
 
   try {
     const m = /\[[\s\S]*\]/.exec(text);
-    if (!m) return 0;
-    const parsed = JSON.parse(m[0]) as { keyword?: string; title?: string }[];
+    if (!m) return { generated: 0, drops };
+    const parsed = JSON.parse(m[0]) as { keyword?: string; title?: string; utility?: string }[];
 
     // 근거 컨텍스트(뉴스) — 생성 시 최신성 주입용
     const ctx = heads.slice(0, 6).map((n) => `- [${n.press || n.seed}] ${n.title}: ${n.description.slice(0, 130)}`).join("\n") || null;
@@ -117,12 +125,17 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
     const seen = new Set<string>();
     const rows = [];
     const expires = new Date(Date.now() + FRESH_MS).toISOString();
+    // 논평형 title 보조 게이트(정규식) — utility 판정 누수 방어.
+    const COMMENTARY_RE = /(가 아니라 .+(다|였다)|의 명과 암|에 던진 질문|의 민낯|잔혹사|를 둘러싼|의 그림자)/;
     for (const it of parsed) {
       const kw = compressToSearchKeyword((it.keyword ?? "").trim()); // ★검색형 명사구로 정규화(조사·분석/논평어 제거)
       const ti = (it.title ?? "").trim().slice(0, 80);
       if (!kw || !ti || seen.has(kw)) continue;
-      if (isUnsafeKeyword(kw) || isUnsafeKeyword(ti)) continue;
-      if (/20(1[0-9]|2[0-3])/.test(kw) || /20(1[0-9]|2[0-3])/.test(ti)) continue; // 낡은 연도
+      if (isUnsafeKeyword(kw) || isUnsafeKeyword(ti)) { drops.push({ keyword: kw, title: ti, reason: "unsafe_brand" }); continue; }
+      if (/20(1[0-9]|2[0-3])/.test(kw) || /20(1[0-9]|2[0-3])/.test(ti)) { drops.push({ keyword: kw, title: ti, reason: "stale_year" }); continue; } // 낡은 연도
+      // ★실익 게이트 — utility='없음' 또는 논평형 title은 드롭(reason: no_utility)
+      const util = (it.utility ?? "").trim();
+      if (util === "없음" || COMMENTARY_RE.test(ti)) { drops.push({ keyword: kw, title: ti, reason: "no_utility" }); continue; }
       seen.add(kw);
       rows.push({ category, keyword: kw, title: ti, news_context: ctx, longtails: [] as Longtail[], source: "news", created_at: new Date().toISOString(), expires_at: expires });
     }
@@ -152,7 +165,7 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
       }
     }
 
-    if (rows.length === 0) return 0;
+    if (rows.length === 0) return { generated: 0, drops };
 
     // ★B단계: 씨앗별 자동완성 롱테일(실검증) + gap(예산). 자동완성은 비공식·무제한(무료), gap(fetchBlogTotal)만 쿼터 소비.
     //  예산 계산: 30 카테고리 × GAP_BUDGET(60)/refresh × 4 refresh/day = 7,200/day (네이버 검색 API 25,000/일 한도의 약 29%).
@@ -188,9 +201,10 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
       (row as typeof row & { longtails?: Longtail[] }).longtails = longtails;
     }
     // ★하드 게이트 — 자동완성 롱테일이 0개인 씨앗(=아무도 안 치는 뉴스 문구)은 풀에서 제외.
+    for (const r of rows) if (((r as { longtails?: Longtail[] }).longtails?.length ?? 0) === 0) drops.push({ keyword: r.keyword, title: r.title, reason: "gap" });
     const gated = rows.filter((r) => ((r as { longtails?: Longtail[] }).longtails?.length ?? 0) > 0);
     console.log(`[trend] ${category}: seeds=${rows.length}→gated=${gated.length}, autocomplete=${ltTotal}, gapChecks=${gapUsed}/${GAP_BUDGET}`);
-    if (gated.length === 0) return 0; // 게이트 통과 0개면 기존 풀 유지(전멸 방지 — 삭제 안 함)
+    if (gated.length === 0) return { generated: 0, drops }; // 게이트 통과 0개면 기존 풀 유지(전멸 방지 — 삭제 안 함)
     rows.length = 0; rows.push(...gated);
 
     // ★데이터랩 급상승 랭킹 — 합성 키워드의 실제 검색 momentum으로 정렬(지금 뜨는 게 위로).
@@ -213,8 +227,12 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
       const bare = rows.map(({ source: _s, ...rest }) => rest);
       await admin.from("trend_topics").upsert(bare, { onConflict: "category,keyword" });
     }
-    return rows.length;
+    // 게이트별 탈락 분포 로그 — 튜닝 기준 데이터
+    const dist: Record<string, number> = {};
+    for (const d of drops) dist[d.reason] = (dist[d.reason] ?? 0) + 1;
+    console.log(`[trend-drops] ${category}:`, JSON.stringify(dist), JSON.stringify(drops.map((d) => `${d.reason}:${d.keyword}`)));
+    return { generated: rows.length, drops };
   } catch {
-    return 0;
+    return { generated: 0, drops };
   }
 }

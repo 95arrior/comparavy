@@ -22,14 +22,18 @@ export async function GET(request: Request) {
   if (!category) return NextResponse.json({ error: "카테고리 없음(온보딩 먼저)" }, { status: 400 });
 
   const { stats } = await gatherHeadlinesWithStats(category).catch(() => ({ headlines: [], stats: null }));
-  const count = await refreshCategoryTrends(category);
+  const { generated: count, drops } = await refreshCategoryTrends(category);
   // ★검증용 — 게이트 통과 씨앗 20개의 keyword(검색형) + 롱테일 유무. 뉴스 문구가 0개인지 육안 확인.
   const topics = (await getTrendTopics(category)).slice(0, 20);
   const seeds = topics.map((t) => ({ keyword: t.keyword, source: t.source ?? "?", longtails: (t.longtails ?? []).slice(0, 3).map((l) => l.kw) }));
+  const dropDist: Record<string, number> = {};
+  for (const d of drops) dropDist[d.reason] = (dropDist[d.reason] ?? 0) + 1;
   return NextResponse.json({
     ok: true, category, generated: count,
     freshness: stats, // {raw, fresh, unverified, stale(탈락), kept, perSeed} — 신선도 게이트 분포
-    seeds, // [{keyword, source, longtails[]}] × 20 — 옛날 기사 유래 0건이 합격선
+    dropDist,         // 게이트별 탈락 분포 {unsafe_brand, stale_year, no_utility, gap}
+    drops,            // ★탈락 목록 전체 — 오탈락(아까운 것) 감사용
+    seeds, // [{keyword, source, longtails[]}] × 20
   });
 }
 

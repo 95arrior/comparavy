@@ -32,8 +32,8 @@ export async function GET(request: Request) {
   let refreshed = 0, skipped = 0, total = 0;
   for (const cat of list) {
     if (await hasFreshTrends(cat)) { skipped++; continue; }
-    const n = await refreshCategoryTrends(cat);
-    if (n > 0) { refreshed++; total += n; }
+    const r = await refreshCategoryTrends(cat);
+    if (r.generated > 0) { refreshed++; total += r.generated; }
   }
   return NextResponse.json({ ok: true, categories: list.length, refreshed, skipped, topics: total });
 }
