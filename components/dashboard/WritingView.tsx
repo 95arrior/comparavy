@@ -27,56 +27,6 @@ export interface GenParams {
 //  대기→블록 쏟아짐 패턴 폐기. 스트림 버퍼를 '글자 단위 타자기'로 연속 재생(밀리면 속도만 자동 상승, 덤프 없음).
 //  끝엔 무지개 캐럿, 하단엔 룰렛(위아래 블러 마스크) 상태 텍스트. 완성 시 체크 팝.
 
-// HTML을 '보이는 글자 n자'까지 안전하게 자른다 — 태그는 통째로 포함, 열린 태그는 닫아서 반환.
-function cutHtml(html: string, n: number): string {
-  if (n <= 0) return "";
-  let out = "";
-  let count = 0;
-  const stack: string[] = [];
-  const VOID = new Set(["br", "img", "hr", "input", "meta"]);
-  let i = 0;
-  while (i < html.length && count < n) {
-    const ch = html[i];
-    if (ch === "<") {
-      const end = html.indexOf(">", i);
-      if (end === -1) break;
-      const tag = html.slice(i, end + 1);
-      const m = /^<\/?([a-zA-Z0-9]+)/.exec(tag);
-      if (m) {
-        const name = m[1].toLowerCase();
-        if (tag[1] === "/") {
-          const at = stack.lastIndexOf(name);
-          if (at !== -1) stack.splice(at, 1);
-        } else if (!VOID.has(name) && !tag.endsWith("/>")) {
-          stack.push(name);
-        }
-      }
-      out += tag;
-      i = end + 1;
-    } else if (ch === "&") {
-      const end = html.indexOf(";", i);
-      if (end !== -1 && end - i <= 8) {
-        out += html.slice(i, end + 1);
-        i = end + 1;
-      } else {
-        out += ch;
-        i++;
-      }
-      count++;
-    } else {
-      out += ch;
-      i++;
-      count++;
-    }
-  }
-  for (let j = stack.length - 1; j >= 0; j--) out += `</${stack[j]}>`;
-  return out;
-}
-
-// 보이는 글자 수(태그 제외)
-function visibleLen(html: string): number {
-  return html.replace(/<[^>]+>/g, "").replace(/&[a-zA-Z0-9#]{1,7};/g, "가").length;
-}
 
 export default function WritingView({
   params,
@@ -94,16 +44,13 @@ export default function WritingView({
   onCredits?: (balance: number) => void;
   onExit: () => void;
 }) {
-  const [typed, setTyped] = useState(0); // 지금까지 '타자된' 보이는 글자 수
   const [totalHtml, setTotalHtml] = useState(""); // 스트림으로 도착한 전체 HTML(제목 포함)
   const [finished, setFinished] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [stepIdx, setStepIdx] = useState(0);
 
   const titleRef = useRef("");
   const bodyRef = useRef("");
   const totalRef = useRef("");
-  const typedRef = useRef(0);
   const doneArtRef = useRef<Article | null>(null);
   const streamDoneRef = useRef(false);
   const fetchedRef = useRef(false);
@@ -148,47 +95,14 @@ export default function WritingView({
   }
 
 
-  const started = typed > 0;
+  const started = totalHtml.length > 0;
   const phase = error ? "error" : finished ? "done" : started ? "writing" : "thinking";
 
-  // 룰렛 상태 문구 — 생성 내내 순환(우리가 실제로 하는 일)
-  const steps = useMemo(() => {
-    const story = Boolean(params.userStory && params.userStory.trim());
-    return [
-      story ? "내 이야기를 꼼꼼히 읽는 중" : "검색 의도를 읽는 중",
-      "실제 검색어 데이터 반영 중",
-      "네이버 상위 글 구조 분석 중",
-      "경험과 근거를 심는 중",
-      vertical === "medical" ? "의료광고 규정 점검 중" : "규정·표현 점검 중",
-      ...(params.withImages ? ["이미지도 만들어 넣는 중이에요 🎨"] : []),
-      "문장을 다듬는 중",
-    ];
-  }, [params.userStory, vertical, params.withImages]);
 
-  useEffect(() => {
-    if (phase === "done") return;
-    const id = setInterval(() => setStepIdx((i) => (i + 1) % steps.length), 2200);
-    return () => clearInterval(id);
-  }, [phase, steps.length]);
 
-  // ★타자기 엔진 — 40ms마다, 밀린 분량에 비례해 속도 자동 조절(끊김도 덤프도 없음)
+  // 서버 완료 → 즉시 검토 화면으로(타자 대기 없음 — 대기라는 개념 자체를 지운다)
   useEffect(() => {
-    const id = setInterval(() => {
-      const totalChars = visibleLen(totalRef.current);
-      const backlog = totalChars - typedRef.current;
-      if (backlog <= 0) return;
-      // 남은 분량의 1/40씩(최소 2자) — 많이 밀리면 빨라지고, 따라잡으면 자연 속도로
-      const stepN = Math.max(2, Math.ceil(backlog / 40));
-      typedRef.current = Math.min(totalChars, typedRef.current + stepN);
-      setTyped(typedRef.current);
-    }, 40);
-    return () => clearInterval(id);
-  }, []);
-
-  // 서버 완료 + 타자 완료 → 검토 화면으로
-  useEffect(() => {
-    const totalChars = visibleLen(totalRef.current);
-    if (streamDoneRef.current && doneArtRef.current && typed >= totalChars && totalChars > 0 && !finished) {
+    if (streamDoneRef.current && doneArtRef.current && !finished) {
       setFinished(true);
       const art = doneArtRef.current;
       doneArtRef.current = null;
@@ -211,7 +125,7 @@ export default function WritingView({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [typed, finished, onDone, imgDone]);
+  }, [totalHtml, finished, onDone, imgDone]);
 
   // 네트워크 호출 1회
   useEffect(() => {
@@ -223,20 +137,6 @@ export default function WritingView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 써지는 동안 끝이 보이게 따라 내려감(부드럽게, 과호출 방지)
-  const lastScroll = useRef(0);
-  useEffect(() => {
-    const now = Date.now();
-    if (now - lastScroll.current < 350) return;
-    const el = endRef.current;
-    if (!el) return;
-    // ★글 끝이 화면 아래로 넘칠 때만 따라 내려간다 — 초반(제목만 써졌을 때) 스크롤돼 제목이 가려지는 것 방지
-    const bottom = el.getBoundingClientRect().bottom;
-    if (bottom > window.innerHeight - 120) {
-      lastScroll.current = now;
-      el.scrollIntoView({ behavior: "smooth", block: "end" });
-    }
-  }, [typed]);
 
   function recompute() {
     const t = titleRef.current ? `<h1>${titleRef.current}</h1>` : "";
@@ -302,7 +202,14 @@ export default function WritingView({
     }
   }
 
-  const shownHtml = useMemo(() => cutHtml(totalHtml, typed), [totalHtml, typed]);
+  // ★완결 블록 단위 렌더 — 마지막 닫힌 블록까지만. 안전망 포맷이 적용된 '최종 모습'만 나타난다(반쯤 쓴 문장 노출 금지).
+  const shownHtml = useMemo(() => {
+    if (finished) return totalHtml;
+    const ends = ["</p>", "</h2>", "</h1>", "</ul>", "</ol>", "</blockquote>"];
+    let cut = -1;
+    for (const e of ends) { const i = totalHtml.lastIndexOf(e); if (i >= 0) cut = Math.max(cut, i + e.length); }
+    return cut > 0 ? totalHtml.slice(0, cut) : "";
+  }, [totalHtml, finished]);
 
   return (
     <>
@@ -315,7 +222,6 @@ export default function WritingView({
           ) : (
             <span className="flex items-center gap-2 text-sm text-neutral-400">
               <AteFloLogo pro={pro} animated size={16} />
-              {phase === "writing" ? <>쓰는 중 · <b className="tabular-nums text-neutral-600">{typed.toLocaleString("ko-KR")}자</b></> : "글을 준비하고 있어요"}
             </span>
           )}
         </div>
@@ -348,33 +254,17 @@ export default function WritingView({
         ) : phase === "thinking" ? (
           // 첫 글자가 오기 전 — 키워드만 크게, 나머지는 하단 룰렛이 말해줌
           <div className="flex min-h-[56vh] flex-col items-center justify-center text-center">
-            <p className="at-label">이 주제로 쓰고 있어요</p>
-            <p className="mt-2 max-w-sm text-[22px] font-extrabold leading-snug tracking-tight text-[color:var(--at-grey-900)]">
-              {params.keyword}<span className="at-caret" />
-            </p>
+            <p className="max-w-sm text-[22px] font-extrabold leading-snug tracking-tight text-[color:var(--at-grey-900)]">{params.keyword}</p>
           </div>
         ) : (
           // ★라이브 원고 — 글자 단위로 실시간 작성 + 무지개 캐럿
           <div className="prose prose-neutral max-w-none [&>h1]:text-2xl [&>h1]:font-bold [&>h1]:tracking-tight">
             <span dangerouslySetInnerHTML={{ __html: shownHtml }} />
-            {!finished && <span className="at-caret" />}
           </div>
         )}
         <div ref={endRef} className="scroll-mb-40" />
       </div>
 
-      {/* 하단 룰렛 상태 — 위아래 블러 마스크 속에서 굴러 올라오는 한 줄 */}
-      {phase !== "done" && phase !== "error" && (
-        <div className="pointer-events-none fixed inset-x-0 bottom-6 z-30 flex justify-center">
-          <div className="rounded-full bg-white/90 px-5 py-2 shadow-[0_8px_24px_-10px_rgba(20,40,90,0.35)] ring-1 ring-black/[0.04] backdrop-blur">
-            <div className="at-roll-mask h-6 overflow-hidden">
-              <p key={stepIdx} className="at-roll-in flex h-6 items-center text-[13px] font-semibold text-neutral-600">
-                {steps[stepIdx]}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {phase === "done" && (
         <div className="ateflo-backdrop-in fixed inset-0 z-[80] flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm">
@@ -382,7 +272,7 @@ export default function WritingView({
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path className="ateflo-check-draw" d="M5 13l4 4L19 7" /></svg>
           </span>
           <p className="at-rise mt-5 text-[18px] font-extrabold tracking-tight text-[color:var(--at-grey-900)]" style={{ animationDelay: "0.3s" }}>글이 완성됐어요</p>
-          <p className="at-rise mt-1 text-[13px] text-neutral-400" style={{ animationDelay: "0.5s" }}>{typed.toLocaleString("ko-KR")}자{params.withImages && imgPendingRef.current > 0 ? " · 이미지 마무리 중…" : " · 검토 화면으로 갈게요"}</p>
+          
         </div>
       )}
     </>

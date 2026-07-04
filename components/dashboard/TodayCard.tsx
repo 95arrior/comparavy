@@ -18,7 +18,7 @@ export interface TodayTopic {
 }
 
 export default function TodayCard({
-  topic, loading, credits, info, onWriteKeyword, onGoPerformance, onOpenTodayDraft,
+  topic, loading, credits, info, onWriteKeyword, onGoPerformance, onOpenTodayDraft, preReady, onReadToday,
 }: {
   topic: TodayTopic | null;
   loading: boolean;
@@ -28,6 +28,9 @@ export default function TodayCard({
   onGoPerformance: () => void;
   /** 오늘 draft 재진입(이어서 발행) — draft 상태 카드 전용 */
   onOpenTodayDraft?: () => void;
+  /** ★사전 생성 완료 — 버튼이 '글 읽어보기'로 조용히 전환(생성 광고 금지, 이 라벨이 유일한 신호) */
+  preReady?: boolean;
+  onReadToday?: () => void;
 }) {
   const locked = credits <= 0;
   const write = (t: TodayTopic) => onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb);
@@ -118,7 +121,7 @@ export default function TodayCard({
         <span className="text-[13px] font-bold text-[#1D75F7]">이 글을 쓰면 {writePct}%가 돼요</span>
         {info.day === 0 && <span className="text-[12px] font-medium text-[#1D75F7]/70">· 첫 글이 코스 시작</span>}
       </div>
-      <button onClick={() => write(topic)} className="at-press mt-3.5 w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">이 글 쓰기</button>
+      <button onClick={() => (preReady && onReadToday ? onReadToday() : write(topic))} className="at-press mt-3.5 w-full rounded-xl bg-[#1D75F7] py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-[0.99]">{preReady ? "글 읽어보기" : "이 글 쓰기"}</button>
     </Card>
   );
 }

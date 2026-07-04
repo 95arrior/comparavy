@@ -39,6 +39,7 @@ export default async function Home() {
       .from("articles")
       .select("*")
       .eq("user_id", user.id)
+      .not("status", "in", "(pre_generating,pre_generated)")
       .order("created_at", { ascending: false });
     const adminStats = isAdmin ? await getAdminStats() : null;
     return (

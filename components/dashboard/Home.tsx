@@ -89,6 +89,9 @@ export default function Home({
   const dismissedRef = useRef(dismissed);
   dismissedRef.current = dismissed;
 
+  // ★사전 생성(생성 경험 v2) — 홈 진입 시 오늘의 글 1편을 서버 백그라운드로. 홈에 어떤 진행 표시도 없다(침묵 원칙).
+  const preFiredRef = useRef<string | null>(null);
+  const [preReadyId, setPreReadyId] = useState<string | null>(null);
   const todayDate = new Date().toISOString().slice(0, 10);
   const topicsCacheKey = () => `ateflo_topics_v29_${todayDate}_${profileKey ?? ""}_normal`;
 
@@ -171,6 +174,44 @@ export default function Home({
   // ★'오늘의 글' 후보 — 오늘 이미 만든 글감(발행분 포함)은 제외(한 편 더 = 같은 글감 재생성 버그 방지).
   const usedToday = todayKeywords(articles);
   const first = pickNextTopic(clean, usedToday);
+  // 트리거 조건: 글감 확정 + 크레딧 있음 + 오늘 미완료·무초안. 같은 글감 재트리거 금지(ref).
+  useEffect(() => {
+    const f = first;
+    if (!f || credits < GENERATE_COST || info.publishedToday || info.hasDraftToday) return;
+    if (preFiredRef.current === f.keyword) return;
+    preFiredRef.current = f.keyword;
+    (async () => {
+      try {
+        const r = await fetch("/api/pregen", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ keyword: f.keyword, title: f.title, newsContext: f.newsContext, briefText: f.briefText, userTitle: f.title }) });
+        const d = await r.json();
+        if (d.status === "ready" && d.articleId) { setPreReadyId(d.articleId); return; }
+        if (d.status === "started" || d.status === "exists") {
+          setTimeout(async () => { // 조용한 1회 확인(라벨 전환용) — UI 표시 없음
+            try { const g = await fetch(`/api/pregen?keyword=${encodeURIComponent(f.keyword)}`); const gd = await g.json(); if (gd.status === "ready" && gd.articleId) setPreReadyId(gd.articleId); } catch { /* ignore */ }
+          }, 75000);
+        }
+      } catch { /* 침묵 — 실패해도 일반 경로 그대로 */ }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [first?.keyword, credits, info.publishedToday, info.hasDraftToday]);
+
+  // ★열람 = 차감 → 0초 검토. 실패는 일반 경로 자연 폴백.
+  async function readToday() {
+    const f = first;
+    if (!preReadyId || !f) return;
+    const t0 = performance.now();
+    try {
+      const r = await fetch("/api/pregen/claim", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ articleId: preReadyId }) });
+      const d = await r.json();
+      if (r.ok && d.article) {
+        console.log(`[pregen] tap→shown ${(performance.now() - t0).toFixed(0)}ms`); // 계측: 열람 체감
+        onSelect(d.article);
+        return;
+      }
+    } catch { /* 폴백 */ }
+    setPreReadyId(null);
+    onWriteKeyword(f.keyword, f.title, f.newsContext, f.briefText, f.titleSearch, f.thumb);
+  }
   const rest = clean.filter((t) => t !== first);
 
   return (
@@ -256,6 +297,8 @@ export default function Home({
           onWriteKeyword={onWriteKeyword}
           onGoPerformance={onGoPerformance}
           onOpenTodayDraft={(() => { const d = articles.find((a) => a.status === "draft" && new Date(a.created_at).toDateString() === new Date().toDateString()); return d ? () => onSelect(d) : undefined; })()}
+          preReady={!!preReadyId}
+          onReadToday={readToday}
         />
       </div>
 
