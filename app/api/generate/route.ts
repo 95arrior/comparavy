@@ -4,6 +4,7 @@ import { ensureUserRow } from "@/lib/userPlan";
 import { spendCredits, addCredits, GENERATE_COST } from "@/lib/credits";
 import { streamArticle } from "@/lib/generateArticle";
 import { isReviewType, ensureDisclosure } from "@/lib/revenue";
+import { hasFabricatedExperience } from "@/lib/editorial";
 import { countKoreanChars } from "@/lib/humanizer";
 import { isDisposableEmail } from "@/lib/disposableEmail";
 import { checkRateLimit } from "@/lib/rateLimit";
@@ -246,12 +247,29 @@ export async function POST(request: Request) {
           const derived = await deriveStoryTopic(userStory, profileRow?.sub_category || vertical, aud);
           if (derived) keyword = derived;
         }
-        const article = await streamArticle(
-          { keyword, angle: body.angle, type, tone, maxWords, variantInstruction, styleInstruction, relatedQueries, newsContext: resolvedNewsContext, angleBrief: typeof body.angleBrief === "string" ? body.angleBrief.slice(0, 900) : null, affiliate: isReview, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userTitle },
+        const genInput = { keyword, angle: body.angle, type, tone, maxWords, variantInstruction, styleInstruction, relatedQueries, newsContext: resolvedNewsContext, angleBrief: typeof body.angleBrief === "string" ? body.angleBrief.slice(0, 900) : null, affiliate: isReview, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userTitle };
+        let article = await streamArticle(
+          genInput,
           (bodyHtml) => send({ type: "body", html: bodyHtml }),
           (title) => send({ type: "title", title }),
           (u) => { void logUsage({ userId: user.id, model: u.model, kind: "generate", inputTokens: u.inputTokens, outputTokens: u.outputTokens }); },
         );
+        // ★경험 조작 가드 — '제가 써보니' 류 검출 시 재생성 1회(경고 주입), 재검출은 아래 실패 흐름으로.
+        if (!userStory && hasFabricatedExperience(article.body_html)) {
+          void logUsage({ userId: user.id, model: "guard", kind: "fabricated_retry", inputTokens: 0, outputTokens: 0 });
+          article = await streamArticle(
+            { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ★경고: 직전 생성에서 '제가 써보니/직접 해보니' 같은 지어낸 개인 경험 서술이 검출됐다. 이번엔 절대 금지 — 판단은 조건 비교의 분석 판단('조건만 보면 A가 유리해요')으로만.`.trim() },
+            (bodyHtml) => send({ type: "body", html: bodyHtml }),
+            (title) => send({ type: "title", title }),
+            (u) => { void logUsage({ userId: user.id, model: u.model, kind: "generate", inputTokens: u.inputTokens, outputTokens: u.outputTokens }); },
+          );
+          if (hasFabricatedExperience(article.body_html)) {
+            if (genId) await supabase.from("articles").delete().eq("id", genId);
+            await refundOnce();
+            send({ type: "error", error: "글을 만드는 중 문제가 생겨 잠깐 멈췄어요. 다시 한 번 눌러 주세요. (크레딧은 차감되지 않아요)" });
+            return;
+          }
+        }
 
         // 길이 검증 — 네이버는 좁은 주제도 '네이버 최적화로 뽑을 수 있는 만큼' 살린다(1,000자 안팎도 충분).
         // 깊이 기준으로 반려하지 않고, '명백히 실패(빈/잘린)' 글만 막는 낮은 바닥(500자)만 둔다.

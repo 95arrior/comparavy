@@ -17,6 +17,9 @@ export interface AngleBrief {
   reader: string;   // 독자 페르소나(LLM)
   hook: string;     // 첫 문단 훅(LLM)
   coreWord: string; // 시의성 코어(제목 필수)
+  verdict?: string;    // ★편집력: 한 문장 판결(독자가 지금 할 행동/선택)
+  cutList?: string[];  // ★다루지 않을 하위 소재 1~3(+짧은 이유)
+  branchAxis?: string; // ★독자 상황 분기 축+분기 2~4(예: "가구형태: 1인→A / 맞벌이→B")
 }
 // 대표이미지 합성 카피 — 코드가 렌더(절대 안 깨짐). 길이 상한은 축소 썸네일 가독 기준.
 export interface ThumbCopy {
@@ -84,6 +87,9 @@ export function briefToDirective(b: AngleBrief): string {
     section((v) => `- 톤·문장 리듬: ${v}`, b.tone),
     section((v) => `- 첫 문단 훅: ${v}`, b.hook),
     section((v) => `- 시의성 코어 '${v}'는 제목과 도입에 반드시 살린다.`, b.coreWord),
+    section((v) => `- ★판결(verdict): "${v}" — 리드 직후 '바쁘면 이것만' 결론 블록의 핵심으로 쓴다.`, b.verdict),
+    section((v) => `- ★덜어냄(cut): 다음 소재는 본문에서 다루지 않는다(범위 선언 1회만): ${v}`, (b.cutList ?? []).join(" / ")),
+    section((v) => `- ★상황 분기: ${v} — 자격·조건 섹션 근처에 분기 블록 1회.`, b.branchAxis),
     "위 방향을 이 글의 뼈대로 삼되, 엔진의 안전·품질·모바일 포맷 규칙은 그대로 지킨다.",
   ];
   return lines.filter((l): l is string => Boolean(l)).join("\n");
@@ -188,9 +194,12 @@ ${OPEN_LOOP_GUIDE}
 - hook: 첫 문단이 잡을 긴장 한 줄(배정된 서두 유형에 맞게).
 - thumbMain: 대표이미지 메인 카피. 1~2줄, 전체 20자 이내, 줄바꿈은 \\n. 제목을 그대로 복사하지 말고 압축/보완. 열린 고리(답 숨기고 궁금증만). 느낌표 금지.
 - thumbSub: 대표이미지 서브 카피 15자 이내(없으면 빈 문자열).
+- verdict: 이 글의 한 문장 판결 — 독자가 지금 해야 할 행동/선택(예: "오늘 6시 전 카드사 앱 신청이 결론"). 판단은 조건 비교의 분석 판단만 — 경험 지어내기·보장 표현 금지.
+- cutList: 이 글에서 다루지 않을 하위 소재 1~3개(각각 "소재 — 짧은 이유"). ★적합한 게 없으면 빈 배열 — 억지로 채우지 않는다.
+- branchAxis: 독자 상황 분기 축과 분기 2~4개 한 줄(예: "가구형태: 1인→13만 기준 / 맞벌이→+1 기준"). ★글감이 분기에 안 맞으면 빈 문자열.
 - 시의성코어가 있으면 제목과 thumbMain에 살린다.
 - 금지: 무조건·100%·보장·충격류, 본문이 못 지킬 약속.
-- JSON 배열만: [{"seedIndex":1,"keyword":"...","titleClick":"...","titleSearch":"...","reader":"...","hook":"...","thumbMain":"...","thumbSub":"..."}]`;
+- JSON 배열만: [{"seedIndex":1,"keyword":"...","titleClick":"...","titleSearch":"...","reader":"...","hook":"...","thumbMain":"...","thumbSub":"...","verdict":"...","cutList":["..."],"branchAxis":"..."}]`;
 
   try {
     const res = await client.messages.create({
@@ -202,7 +211,7 @@ ${OPEN_LOOP_GUIDE}
     const text = res.content[0]?.type === "text" ? res.content[0].text : "";
     const m = /\[[\s\S]*\]/.exec(text);
     if (!m) return [];
-    const parsed = JSON.parse(m[0]) as { seedIndex?: number; keyword?: string; titleClick?: string; titleSearch?: string; reader?: string; hook?: string; thumbMain?: string; thumbSub?: string }[];
+    const parsed = JSON.parse(m[0]) as { seedIndex?: number; keyword?: string; titleClick?: string; titleSearch?: string; reader?: string; hook?: string; thumbMain?: string; thumbSub?: string; verdict?: string; cutList?: string[]; branchAxis?: string }[];
     const out: AmplifiedTopic[] = [];
     const seen = new Set<string>();
     for (const it of parsed) {
@@ -225,7 +234,10 @@ ${OPEN_LOOP_GUIDE}
       if (containsBanned(thumbMain)) thumbMain = "";
       let thumbSub = (it.thumbSub ?? "").trim();
       if (containsBanned(thumbSub)) thumbSub = "";
-      const brief = { ...b.angle, reader: (it.reader ?? "").trim().slice(0, 120), hook: (it.hook ?? "").trim().slice(0, 160), coreWord: b.core };
+      const verdict = containsBanned(it.verdict ?? "") ? "" : (it.verdict ?? "").trim().slice(0, 120);
+      const cutList = (Array.isArray(it.cutList) ? it.cutList : []).map((c) => String(c).trim().slice(0, 60)).filter(Boolean).slice(0, 3);
+      const branchAxis = (it.branchAxis ?? "").trim().slice(0, 200);
+      const brief = { ...b.angle, reader: (it.reader ?? "").trim().slice(0, 120), hook: (it.hook ?? "").trim().slice(0, 160), coreWord: b.core, verdict, cutList, branchAxis };
       out.push({
         keyword: kw,
         title: titleClick,
