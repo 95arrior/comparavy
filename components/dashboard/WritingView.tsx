@@ -253,8 +253,18 @@ export default function WritingView({
           )
         ) : phase === "thinking" ? (
           // 첫 글자가 오기 전 — 키워드만 크게, 나머지는 하단 룰렛이 말해줌
-          <div className="flex min-h-[56vh] flex-col items-center justify-center text-center">
-            <p className="max-w-sm text-[22px] font-extrabold leading-snug tracking-tight text-[color:var(--at-grey-900)]">{params.keyword}</p>
+          // 첫 블록 전 — 대기 언어·스피너 없이 '자리 약속'만(홈과 같은 스켈레톤 문법). 죽은 화면 금지.
+          <div className="mx-auto max-w-xl pt-6" aria-hidden>
+            <p className="text-[20px] font-extrabold leading-snug tracking-tight text-[color:var(--at-grey-900)]">{params.keyword}</p>
+            <div className="mt-6 space-y-3">
+              <div className="ateflo-skel h-6 w-4/5 rounded" />
+              <div className="ateflo-skel h-4 w-full rounded" />
+              <div className="ateflo-skel h-4 w-11/12 rounded" />
+              <div className="ateflo-skel h-4 w-3/5 rounded" />
+              <div className="ateflo-skel mt-6 h-5 w-2/5 rounded" />
+              <div className="ateflo-skel h-4 w-full rounded" />
+              <div className="ateflo-skel h-4 w-4/5 rounded" />
+            </div>
           </div>
         ) : (
           // ★라이브 원고 — 글자 단위로 실시간 작성 + 무지개 캐럿
