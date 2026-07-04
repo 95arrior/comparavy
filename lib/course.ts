@@ -94,10 +94,12 @@ export function progressPercent(info: CourseInfo): number {
 
 const normKw = (s: string) => String(s ?? "").replace(/\s+/g, "").toLowerCase();
 
-/** '한 편 더' 글감 — 오늘 이미 만든 글감(발행분 포함)을 제외한 첫 후보(트렌드 우선 = 배열 순서). */
-export function pickNextTopic<T extends { keyword: string }>(topics: T[], todayKeywords: string[]): T | null {
+/** '한 편 더'·오늘의 글 후보 — 오늘 이미 만든 글감 제외 + ★트렌드 명시 우선(배열 순서 의존 제거): 실시간 > 꾸준 > 풀. */
+export function pickNextTopic<T extends { keyword: string; tag?: string }>(topics: T[], todayKeywords: string[]): T | null {
   const used = new Set(todayKeywords.map(normKw));
-  return topics.find((t) => !used.has(normKw(t.keyword))) ?? null;
+  const avail = topics.filter((t) => !used.has(normKw(t.keyword)));
+  const rank = (t: T) => (t.tag === "trend" || t.tag === "issue" ? 0 : t.tag === "steady" ? 1 : 2);
+  return avail.sort((a, b) => rank(a) - rank(b))[0] ?? null;
 }
 
 /** 같은 글감의 오늘 draft — 있으면 재생성이 아니라 재진입(크레딧 이중 소모 방지). */
