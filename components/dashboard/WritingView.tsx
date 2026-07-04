@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import AteFloLogo from "@/components/AteFloLogo";
 import { parseSlots, parseCardItems } from "@/lib/publishHtml";
-import { AI_IMAGES_ENABLED } from "@/config/publish";
+import { AI_IMAGES_ENABLED, DATA_CARDS_ENABLED } from "@/config/publish";
 import type { Article } from "./types";
 
 export interface GenParams {
@@ -128,6 +128,7 @@ export default function WritingView({
       const slot = slots[i];
       const isPhoto = slot.type === "photo";
       if (isPhoto && !firePhotos) continue; // AI 봉인 — 사진 슬롯은 검토 화면 업로드로
+      if (!isPhoto && !DATA_CARDS_ENABLED) continue; // 카드 봉인 — 수치는 데이터 줄이 맡음
       if (isPhoto && photoFired >= IMG_MAX) continue; // 사진만 상한
       imgStartedRef.current.add(i);
       if (isPhoto) photoFired += 1;

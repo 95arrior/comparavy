@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { photoMarkerToGuide, photoMarkerToSlot, photoSlots, markToNaverBold, addNaverSpacing } from "@/lib/photoMarkers";
 import { formatBody, parseSlots } from "@/lib/publishHtml";
-import { AI_IMAGES_ENABLED } from "@/config/publish";
+import { AI_IMAGES_ENABLED, DATA_CARDS_ENABLED } from "@/config/publish";
 import CenterToast from "./CenterToast";
 import { copyImage as clipCopyImage, saveImage as clipSaveImage } from "@/lib/clipboard";
 import NaverPublishSheet from "./NaverPublishSheet";
@@ -264,12 +264,13 @@ export default function ArticleModal({
         {/* ★이미지 슬롯 패널 — 문서순(사진+카드). 사진=추천 가이드+올리기(AI 봉인), 카드=자동 생성. */}
         {parseSlots(bodyHtml).length > 0 && (
           <div className="mt-4 rounded-2xl at-glass p-5">
-            <p className="text-[14px] font-bold text-neutral-900">이미지 자리 {parseSlots(bodyHtml).length}곳</p>
+            <p className="text-[14px] font-bold text-neutral-900">이미지 자리 {parseSlots(bodyHtml).filter((sl) => sl.type === "photo" || DATA_CARDS_ENABLED).length}곳</p>
             <p className="mt-1 text-[12px] leading-relaxed text-neutral-400">직접 찍은 사진이 노출에 가장 좋아요. 올리면 그 자리에 들어가고, 복사할 때 같이 넘어가요. 비워 두고 발행해도 괜찮아요.</p>
             <div className="mt-3 space-y-2.5">
               {parseSlots(bodyHtml).map((slot, i) => {
                 const st = imgs[i] ?? {};
                 if (slot.type === "card") {
+                  if (!DATA_CARDS_ENABLED) return null; // 카드 봉인 — 행 자체 미표시(문서순 인덱스는 유지)
                   return (
                     <div key={i} className="rounded-xl bg-white/70 p-3.5 ring-1 ring-black/[0.04]">
                       <div className="flex items-center gap-3">

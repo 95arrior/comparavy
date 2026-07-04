@@ -14,3 +14,7 @@ export const BODY_ALIGN: "center" | "left" = "left";
 //  본문 AI 이미지·AI 배경 썸네일 = 오프 / 데이터 카드(satori, 글 내용 시각화) = 유지.
 //  대체 UX: 슬롯별 '추천 가이드 + 사진 올리기'. 해제 전 필요: 슬롯 인덱스 문서순 단일화(완료), 스타일 다양화.
 export const AI_IMAGES_ENABLED = false;
+
+// ★데이터 카드 봉인(최종 결정 2026-07-04) — 생성 이미지 전면 제거. 코드 보존, 플래그 오프.
+//  수치는 '데이터 줄 묶음'(텍스트), 행동 순서는 체크리스트가 맡는다. 모든 슬롯 = 업로드형.
+export const DATA_CARDS_ENABLED = false;

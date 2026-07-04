@@ -14,9 +14,9 @@ ok(!/근거 한 줄/.test(noSrc), "출처 없으면 근거 지침 없음(지어�
 console.log("\n항목4 섹션 시각 밀도:");
 function sectionDensity(html){
   const parts = html.split(/<h2[^>]*>/i).slice(1); // 각 섹션
-  return parts.map(sec=>({ hasVisual: /\[사진:|\[카드:|<ul/i.test(sec) }));
+  return parts.map(sec=>({ hasVisual: /\[사진:|<ul|<p>[^<]{1,22}[:：]\s*\S/i.test(sec) })); // 슬롯 또는 데이터 줄(라벨:값)
 }
-const good="<h2>대상</h2><p>가.</p>[카드: 대상=70%]<h2>방법</h2><p>나.</p><ul><li>x</li></ul>";
+const good="<h2>대상</h2><p>가.</p><p>대상: 전 국민 70%</p><h2>방법</h2><p>나.</p><ul><li>x</li></ul>";
 const bad="<h2>대상</h2><p>가.</p><p>나.</p><h2>방법</h2><p>다.</p>";
 ok(sectionDensity(good).every(s=>s.hasVisual), "각 섹션 시각요소 있으면 통과");
 ok(sectionDensity(bad).some(s=>!s.hasVisual), "시각요소 없는 섹션 탐지");
