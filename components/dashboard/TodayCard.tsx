@@ -120,24 +120,32 @@ export default function TodayCard({
     );
   }
 
-  // 기본 — 오늘의 글 쓰기 (주인공 카드: 배지 + 제목 + 왜 지금 + 쓰면 N%)
+  // 기본 — ★메이트 히어로 배너: 오늘의 글이 포스터다(딥블루 그라데이션+떠다니는 오브+흰 CTA).
   return (
-    <Card plain={plain} highlight>
-      <Header label="오늘의 글" />
-      <div className="mt-3.5"><DemandRow topic={topic} onGoPerformance={onGoPerformance} /></div>
-      <p className="mt-4 text-[22px] font-bold leading-[1.35] tracking-[-0.01em] text-[color:var(--color-text)]">{topic.title}</p>
-      {topic.tag === "followup" ? <p className="mt-2 text-[13px] leading-relaxed text-[color:var(--color-text-weak)]">어제 글이 반응이 좋았어요. 이어서 쓰면 효과가 커져요.</p> : why ? <p className="mt-2 text-[13px] leading-relaxed text-[color:var(--color-text-weak)]">{why}</p> : null}
-      <div className="mt-4 flex items-center gap-1.5 rounded-[12px] bg-[#F7F8FA] px-4 py-3">
-        <span className="text-[14px] text-[color:var(--color-text-sub)]">이 글을 쓰면 <span className="font-bold tabular-nums text-[color:var(--color-brand)]">{writePct}%</span>가 돼요</span>
-        {info.day === 0 && <span className="text-[13px] text-[color:var(--color-text-weak)]">· 첫 글이 코스 시작</span>}
+    <div className="tk-hero tk-hero-in mt-4 rounded-[24px] p-6 pb-7 text-white">
+      <div className="relative z-10">
+        <p className="text-[13px] font-semibold text-white/70">오늘의 글</p>
+        <div className="mt-3.5"><DemandRow topic={topic} onGoPerformance={onGoPerformance} onDark /></div>
+        <p className="mt-4 text-[24px] font-extrabold leading-[1.32] tracking-[-0.01em] text-white">{topic.title}</p>
+        {topic.tag === "followup" ? (
+          <p className="mt-2.5 text-[13px] leading-relaxed text-white/70">어제 글이 반응이 좋았어요. 이어서 쓰면 효과가 커져요.</p>
+        ) : why ? (
+          <p className="mt-2.5 text-[13px] leading-relaxed text-white/70">{why}</p>
+        ) : null}
+        <div className="mt-5 flex items-center gap-1.5 rounded-[12px] bg-white/12 px-4 py-3 backdrop-blur-[2px]">
+          <span className="text-[14px] text-white/85">이 글을 쓰면 <span className="font-bold tabular-nums text-white">{writePct}%</span>가 돼요</span>
+          {info.day === 0 && <span className="text-[13px] text-white/60">· 첫 글이 코스 시작</span>}
+        </div>
+        <button onClick={() => (preReady && onReadToday ? onReadToday() : write(topic))} className="at-press tk-hero-cta mt-5 flex h-[54px] w-full items-center justify-center rounded-[14px] text-[16px] font-bold">
+          {preReady ? "글 읽어보기" : "이 글 쓰기"}
+        </button>
       </div>
-      <button onClick={() => (preReady && onReadToday ? onReadToday() : write(topic))} className="at-press tk-grad-cta mt-5 flex h-[52px] w-full items-center justify-center rounded-[14px] text-[16px] font-bold text-white">{preReady ? "글 읽어보기" : "이 글 쓰기"}</button>
-    </Card>
+    </div>
   );
 }
 
-// 데이터 배지 행 — 주인공 카드로 이동(월 검색량·경쟁·선점 기회).
-function DemandRow({ topic, muted, onGoPerformance }: { topic: TodayTopic; muted?: boolean; onGoPerformance?: () => void }) {
+// 데이터 배지 행// 데이터 배지 행 — 주인공 카드로 이동(월 검색량·경쟁·선점 기회).
+function DemandRow({ topic, muted, onGoPerformance, onDark }: { topic: TodayTopic; muted?: boolean; onGoPerformance?: () => void; onDark?: boolean }) {
   const isTrend = topic.tag === "issue" || topic.tag === "trend";
   const isSteady = topic.tag === "steady";
   const comp = topic.comp === "low" ? { label: "경쟁 낮음", cls: "bg-emerald-50 text-emerald-600" }
@@ -146,26 +154,29 @@ function DemandRow({ topic, muted, onGoPerformance }: { topic: TodayTopic; muted
   const demand = isTrend ? "지금 뜨는 중 · 선점 기회" : isSteady ? "꾸준히 찾는 주제" : (topic.vol && topic.vol > 0) ? `월 ${topic.vol.toLocaleString("ko-KR")}회 검색` : "숨은 수요 키워드";
   // ★수익 경로 태그(정보) — 리뷰/비교형이면 쇼핑커넥트 연계 가능. 사다리(행동)와 별개로 표시.
   const rev = revenuePath({ keyword: topic.keyword, title: topic.title });
+  const chip = onDark
+    ? "rounded-full bg-white/15 px-2.5 py-1 text-[12px] font-semibold text-white backdrop-blur-[2px]"
+    : "rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[12px] text-[color:var(--color-text-sub)]";
   return (
     <div className={`flex flex-wrap items-center gap-1.5 [&>*]:tk-chip ${muted ? "opacity-60" : ""}`}>
       {topic.seriesBadge
-        ? <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[12px] text-[color:var(--color-text-sub)]">{topic.seriesBadge}</span>
+        ? <span className={chip}>{topic.seriesBadge}</span>
         : topic.tag === "followup"
-        ? <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[12px] text-[color:var(--color-text-sub)]">반응 후속</span>
+        ? <span className={chip}>반응 후속</span>
         : isTrend
-        ? <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[12px] text-[color:var(--color-text-sub)]">실시간 트렌드</span>
+        ? <span className={chip}>실시간 트렌드</span>
         : isSteady
-        ? <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[12px] text-[color:var(--color-text-sub)]">꾸준한 수요</span>
-        : comp && <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[12px] text-[color:var(--color-text-sub)]">{comp.label}</span>}
+        ? <span className={chip}>꾸준한 수요</span>
+        : comp && <span className={chip}>{comp.label}</span>}
       <button onClick={(e) => {
         e.stopPropagation();
         if (rev === "shopping") {
           let approved = false; try { approved = localStorage.getItem("ateflo_adpost_approved") === "1"; } catch { /* ignore */ }
           if (!approved && onGoPerformance) onGoPerformance(); // 잠김 → "애드포스트 승인 후 열려요" = 사다리 화면이 안내
         } else if (onGoPerformance) onGoPerformance();
-      }} className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[12px] text-[color:var(--color-text-sub)]">{rev === "shopping" ? "쇼핑커넥트" : "애드포스트"}</button>
-      {topic.bidHigh && <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[12px] text-[color:var(--color-warning)]">단가 높음</span>}
-      <span className="text-[13px] text-[color:var(--color-text-weak)]">{demand}</span>
+      }} className={chip}>{rev === "shopping" ? "쇼핑커넥트" : "애드포스트"}</button>
+      {topic.bidHigh && <span className={onDark ? "rounded-full bg-white/15 px-2.5 py-1 text-[12px] font-semibold text-amber-200" : "rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[12px] text-[color:var(--color-warning)]"}>단가 높음</span>}
+      <span className={onDark ? "text-[13px] text-white/60" : "text-[13px] text-[color:var(--color-text-weak)]"}>{demand}</span>
     </div>
   );
 }

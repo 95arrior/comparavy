@@ -355,19 +355,18 @@ export default function Home({
       {/* ★오늘의 루틴 — 토스식: 홈엔 행 하나씩, 상세는 시트. 홈의 주인공은 위 '오늘의 글' 하나뿐. */}
       <div className="tk-seq-3 mt-8">
         <p className="px-2 text-[13px] font-semibold text-[color:var(--color-text-weak)]">오늘의 루틴</p>
-        <div className="mt-2 overflow-hidden rounded-[20px] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+        <div className="mt-3 grid grid-cols-3 gap-3">
           {([
-            { key: "checkin" as const, label: "아침 체크인", sub: "어제 방문자 기록 · 30초" },
-            { key: "neighbor" as const, label: "이웃 미션", sub: "이웃 5명 · 댓글 2개 · 보너스" },
-            { key: "topics" as const, label: "다른 글감", sub: topicsLoading ? "불러오는 중" : `${rest.length}개 준비됨` },
+            { key: "checkin" as const, label: "아침 체크인", sub: "30초", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1" /></svg> },
+            { key: "neighbor" as const, label: "이웃 미션", sub: "이웃 5 · 댓글 2", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="3.2" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0" /><circle cx="17" cy="9" r="2.4" /><path d="M15.5 19a4.6 4.6 0 0 1 6 -4.2" /></svg> },
+            { key: "topics" as const, label: "다른 글감", sub: topicsLoading ? "로딩" : `${rest.length}개`, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 4h11l3 3v13H5z" /><path d="M9 10h6M9 14h6" /></svg> },
           ]).map((r, i) => (
             <button key={r.key} onClick={() => setRoutineSheet(r.key)}
-              className={`at-press flex min-h-[56px] w-full items-center gap-3 px-5 py-4 text-left tk-tr hover:bg-[#F7F8FA] ${i > 0 ? "border-t border-[color:var(--color-line)]" : ""}`}>
-              <span className="min-w-0 flex-1">
-                <span className="text-[15px] font-semibold text-[color:var(--color-text)]">{r.label}</span>
-                <span className="mt-1 block text-[13px] text-[color:var(--color-text-weak)]">{r.sub}</span>
-              </span>
-              <svg className="shrink-0 text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+              className="at-press tk-chip rounded-[20px] bg-white p-4 text-left shadow-[0_2px_12px_-4px_rgba(29,117,247,0.12)] tk-tr hover:-translate-y-0.5 hover:shadow-[0_8px_20px_-6px_rgba(29,117,247,0.2)]"
+              style={{ animationDelay: `${200 + i * 80}ms` }}>
+              <span className="tk-icon-orb flex h-10 w-10 items-center justify-center rounded-full">{r.icon}</span>
+              <span className="mt-3 block text-[14px] font-bold text-[color:var(--color-text)]">{r.label}</span>
+              <span className="mt-0.5 block text-[12px] text-[color:var(--color-text-weak)]">{r.sub}</span>
             </button>
           ))}
         </div>
