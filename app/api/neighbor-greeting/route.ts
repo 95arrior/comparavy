@@ -18,7 +18,7 @@ export async function POST(request: Request) {
   const rl = await checkRateLimit(supabase, user.id, "neighbor_greeting", 20, 86400);
   if (!rl.ok) return NextResponse.json({ error: "오늘은 충분히 만들었어요. 내일 다시 만들 수 있어요." }, { status: 429 });
 
-  const { data: p } = await supabase.from("blog_profiles").select("sub_category, topic, blog_name, target, audience").eq("user_id", user.id).maybeSingle();
+  const { data: p } = await supabase.from("blog_profiles").select("sub_category, topic, blog_name, target, audience").eq("user_id", user.id).eq("is_active", true).maybeSingle();
   const subject = (p?.sub_category || p?.topic || "블로그").toString().slice(0, 30);
   const target = (p?.target ?? "").toString().slice(0, 40);
   const body = await request.json().catch(() => ({}));

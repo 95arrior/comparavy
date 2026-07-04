@@ -16,7 +16,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   let category = url.searchParams.get("category")?.trim() || "";
   if (!category) {
-    const { data: p } = await supabase.from("blog_profiles").select("sub_category, vertical").eq("user_id", user.id).single();
+    const { data: p } = await supabase.from("blog_profiles").select("sub_category, vertical").eq("user_id", user.id).eq("is_active", true).single();
     category = (p?.sub_category || p?.vertical || "").trim();
   }
   if (!category) return NextResponse.json({ error: "카테고리 없음(온보딩 먼저)" }, { status: 400 });

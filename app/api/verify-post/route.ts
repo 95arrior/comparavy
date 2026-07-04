@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   const id = typeof body.articleId === "string" ? body.articleId.slice(0, 60) : "";
   if (!id) return NextResponse.json({ error: "bad" }, { status: 400 });
 
-  const { data: art } = await supabase.from("articles").select("id, title, status, claimed_at").eq("id", id).eq("user_id", user.id).maybeSingle();
+  const { data: art } = await supabase.from("articles").select("id, title, status, claimed_at, blog_id").eq("id", id).eq("user_id", user.id).maybeSingle();
   if (!art) return NextResponse.json({ error: "글 없음" }, { status: 404 });
   if (art.status === "verified" || art.status === "published") return NextResponse.json({ ok: true, state: "verified" });
 
@@ -30,9 +30,10 @@ export async function POST(request: Request) {
   }
 
   // ── RSS 1차 매칭 ──
-  // ★blogId 해석은 '이 글이 속한 프로필' 기준 — 지금은 계정=프로필 1:1이라 user_id 조회.
-  //  Stage 5(멀티 블로그): 여기만 articles.blog_id → blog_profiles.id 경유로 교체(verifyTitleInBlog 시그니처는 그대로).
-  const { data: prof } = await supabase.from("blog_profiles").select("naver_blog_id").eq("user_id", user.id).maybeSingle();
+  // ★멀티 블로그(Phase B 전환 완료) — 이 글이 속한 블로그의 RSS로만 검증(교차 매칭 불가). 레거시(blog_id null)는 활성 폴백.
+  const { data: prof } = (art as { blog_id?: string | null }).blog_id
+    ? await supabase.from("blog_profiles").select("naver_blog_id").eq("id", (art as { blog_id?: string }).blog_id!).eq("user_id", user.id).maybeSingle()
+    : await supabase.from("blog_profiles").select("naver_blog_id").eq("user_id", user.id).eq("is_active", true).maybeSingle();
   let blogId = prof?.naver_blog_id ?? null;
   if (!blogId && typeof body.blogId === "string") { // 위저드에서 방금 입력받은 경우 — 파싱해 저장
     blogId = parseNaverBlogId(body.blogId);

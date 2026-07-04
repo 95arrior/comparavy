@@ -17,7 +17,7 @@ export async function GET() {
   const out: Record<string, unknown> = { build: BUILD_MARKER, email: user.email };
 
   // 5) 내 계정 프로필 값
-  const { data: profile } = await admin.from("blog_profiles").select("vertical, sub_category, audience, target").eq("user_id", user.id).single();
+  const { data: profile } = await admin.from("blog_profiles").select("vertical, sub_category, audience, target").eq("user_id", user.id).eq("is_active", true).single();
   out.profile = profile ?? "(프로필 없음)";
   const sub = profile?.sub_category ?? null;
 

@@ -130,8 +130,8 @@ export async function GET(req: Request) {
 
   const { data: profile } = await supabase
     .from("blog_profiles")
-    .select("vertical, sub_category, audience, biz_address, target, mix_weights")
-    .eq("user_id", user.id)
+    .select("id, vertical, sub_category, audience, biz_address, target, mix_weights")
+    .eq("user_id", user.id).eq("is_active", true)
     .maybeSingle();
 
   // ★최상급 전용 계정 — 분산 무시, 절대 최상급(경쟁 낮음·검색량 상위)만.
@@ -197,7 +197,7 @@ export async function GET(req: Request) {
           if (rl.ok) { const cat = sub; after(async () => { try { if (!(await hasFreshTrends(cat))) await refreshCategoryTrends(cat); } catch { /* ignore */ } }); }
         }
         if (trends.length > 0) {
-          amped = await amplifyForUser(trends, profile ?? null, user.id, 3);
+          amped = await amplifyForUser(trends, profile ?? null, ((profile as { id?: string } | null)?.id ?? user.id), 3); // 블로그별 앵글 지문
           if (amped.length > 0) {
             try { await pool.from("api_cache").upsert({ key: ampKey, value: amped, expires_at: new Date(Date.now() + 6 * 3600_000).toISOString(), updated_at: new Date().toISOString() }); } catch { /* ignore */ }
           } else {
@@ -568,13 +568,18 @@ export async function GET(req: Request) {
   //  '더 뜨거운 이슈 인터럽트'는 클라 랭크(pickNextTopic)가 판단할 수 있게 tag로 구분만 한다. 실패=조용히 생략.
   const boostCards: typeof trendCards = [];
   try {
-    const { data: sr } = await supabase.from("user_series").select("id, title, keyword, arc, total, next_ep").eq("user_id", user.id).eq("status", "active").order("created_at", { ascending: false }).limit(1).maybeSingle();
+    const activeBlogId = (profile as { id?: string } | null)?.id ?? null;
+    let srQ = supabase.from("user_series").select("id, title, keyword, arc, total, next_ep, blog_id").eq("user_id", user.id).eq("status", "active");
+    if (activeBlogId) srQ = srQ.or(`blog_id.eq.${activeBlogId},blog_id.is.null`);
+    const { data: sr } = await srQ.order("created_at", { ascending: false }).limit(1).maybeSingle();
     if (sr && sr.next_ep <= sr.total) {
       const ep = (sr.arc as { role: string; angle: string }[])[sr.next_ep - 1];
       boostCards.push({ keyword: sr.keyword, title: ep?.angle ?? `${sr.title} ${sr.next_ep}화`, demandLabel: "시리즈 이어쓰기", ssak: true, region: false, tone: "online", vol: 0, comp: "low" as Comp, blogTotal: null, tag: "series", newsContext: undefined, titleSearch: undefined, briefText: undefined, hookKey: undefined, thumb: undefined, brief: undefined, seriesId: sr.id, seriesBadge: `시리즈 ${sr.next_ep}/${sr.total}` } as (typeof trendCards)[number] & { seriesId: string; seriesBadge: string });
     } else {
       const twoDays = new Date(Date.now() - 48 * 3600_000).toISOString();
-      const { data: hot } = await supabase.from("articles").select("keyword, title").eq("user_id", user.id).is("series_id", null).gte("hot_at", twoDays).order("hot_at", { ascending: false }).limit(1).maybeSingle();
+      let hotQ = supabase.from("articles").select("keyword, title").eq("user_id", user.id).is("series_id", null).gte("hot_at", twoDays);
+      if (activeBlogId) hotQ = hotQ.or(`blog_id.eq.${activeBlogId},blog_id.is.null`);
+      const { data: hot } = await hotQ.order("hot_at", { ascending: false }).limit(1).maybeSingle();
       if (hot) {
         boostCards.push({ keyword: hot.keyword, title: `${hot.keyword}, 한 걸음 더 들어가기`, demandLabel: "어제 반응 좋았던 글의 후속", ssak: true, region: false, tone: "online", vol: 0, comp: "low" as Comp, blogTotal: null, tag: "followup", newsContext: undefined, titleSearch: undefined, briefText: `[후속 지시] 전작 "${hot.title}"이 반응이 좋았다. 같은 검색 의도의 심화·확장편을 쓴다(중복 서술 금지 — 전작이 못 다룬 다음 질문에 답한다). 도입 직후 [전편 링크 자리] 마커 1회.`, hookKey: undefined, thumb: undefined, brief: undefined } as (typeof trendCards)[number]);
       }

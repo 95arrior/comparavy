@@ -48,7 +48,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { data: profile } = await supabase
     .from("blog_profiles")
     .select("biz_name, biz_strength")
-    .eq("user_id", user.id)
+    .eq("user_id", user.id).eq("is_active", true)
     .maybeSingle();
 
   const apiKey = process.env.ANTHROPIC_API_KEY;

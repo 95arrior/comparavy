@@ -35,12 +35,15 @@ export default async function Home() {
       return <ConstructionScreen email={user.email ?? ""} />;
     }
     const row = await ensureUserRow(supabase, user.id, user.email);
-    const { data: articles } = await supabase
+    const { data: activeProf } = await supabase.from("blog_profiles").select("id").eq("user_id", user.id).eq("is_active", true).maybeSingle();
+    // ★멀티 블로그 — 홈·코스·게이지는 '활성 블로그'의 글만(블로그당 안전선·진행). blog_id 없는 레거시는 포함(백필 후 소멸).
+    let artQ = supabase
       .from("articles")
       .select("*")
       .eq("user_id", user.id)
-      .not("status", "in", "(pre_generating,pre_generated)")
-      .order("created_at", { ascending: false });
+      .not("status", "in", "(pre_generating,pre_generated)");
+    if (activeProf?.id) artQ = artQ.or(`blog_id.eq.${activeProf.id},blog_id.is.null`);
+    const { data: articles } = await artQ.order("created_at", { ascending: false });
     const adminStats = isAdmin ? await getAdminStats() : null;
     return (
       <DashboardClient

@@ -46,7 +46,7 @@ export async function PATCH(
       const { data: art } = await supabase.from("articles").select("keyword, title").eq("id", id).eq("user_id", user.id).single();
       await supabase.from("articles").update({ hot_at: new Date().toISOString() }).eq("id", id).eq("user_id", user.id);
       const type = art && isReviewType({ keyword: art.keyword, title: art.title }) ? "review" : "info";
-      const { data: prof } = await supabase.from("blog_profiles").select("mix_weights").eq("user_id", user.id).maybeSingle();
+      const { data: prof } = await supabase.from("blog_profiles").select("mix_weights").eq("user_id", user.id).eq("is_active", true).maybeSingle();
       await supabase.from("blog_profiles").update({ mix_weights: bumpMixWeight(prof?.mix_weights as Record<string, number> | null, type) }).eq("user_id", user.id);
     } catch { /* 0054 미적용 — 신호만 유실, 무해 */ }
     return NextResponse.json({ ok: true });

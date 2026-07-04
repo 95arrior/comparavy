@@ -76,8 +76,9 @@ export async function POST(request: Request) {
   // ── 입력 조립(generate 라우트와 동기) ──
   const adminDb = createSupabaseAdminClient();
   const { data: profileRow } = await supabase.from("blog_profiles")
-    .select("id,vertical,sub_category,biz_name,biz_strength,audience").eq("user_id", user.id).maybeSingle();
+    .select("id,vertical,sub_category,biz_name,biz_strength,audience").eq("user_id", user.id).eq("is_active", true).maybeSingle();
   const vertical = profileRow?.vertical ?? "general";
+  const seedId = (profileRow as { id?: string } | null)?.id ?? user.id; // 블로그별 지문
   const vDef = VERTICAL_DEFAULTS[vertical];
   const type = vDef?.type ?? "howto";
   const tone = vDef?.tone ?? "friendly";
@@ -87,8 +88,8 @@ export async function POST(request: Request) {
   const keywordNorm = normalizeKeyword(keyword);
   const { data: usedRows } = await supabase.from("article_patterns").select("signature").eq("user_id", user.id).eq("keyword_norm", keywordNorm);
   const usedSignatures = (usedRows ?? []).map((r: { signature: string }) => r.signature);
-  const variant = pickVariant(usedSignatures, `${user.id}:${keywordNorm}:${usedSignatures.length}`);
-  const angleAxis = pickAngle(`${user.id}:${keywordNorm}`);
+  const variant = pickVariant(usedSignatures, `${seedId}:${keywordNorm}:${usedSignatures.length}`);
+  const angleAxis = pickAngle(`${seedId}:${keywordNorm}`);
   const CUR_YEAR = String(new Date(Date.now() + 9 * 3600_000).getFullYear());
   const angle = title.replace(/20(1[0-9]|2[0-5])/g, CUR_YEAR);
 
@@ -109,7 +110,7 @@ export async function POST(request: Request) {
       const article = await generateArticle({
         keyword, angle, type, tone, maxWords: 5000,
         variantInstruction: `${variant.instruction} ${angleAxis}`,
-        styleInstruction: stylePersonaInstruction(user.id),
+        styleInstruction: stylePersonaInstruction(seedId),
         relatedQueries, newsContext: resolvedNews, angleBrief: briefText,
         affiliate: isReview, vertical, bizName: null, bizStrength: null, userStory: null,
         userTitle: typeof body.userTitle === "string" ? body.userTitle.slice(0, 120) : null,

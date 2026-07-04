@@ -57,6 +57,7 @@ export default function Home({
   onOpenNews,
   profileKey,
   subCategory,
+  onAddBlog,
 }: {
   displayName: string;
   blogName: string;
@@ -73,6 +74,7 @@ export default function Home({
   onOpenNews?: () => void;
   profileKey?: string; // 주제:세부 — 글감 캐시 분리(주제 바꾸면 새 글감)
   subCategory?: string | null; // 이웃 미션 검색어·인사말 개인화
+  onAddBlog?: () => void; // ★멀티 블로그 — 새 블로그 추가(온보딩 재사용)
 }) {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [topicsLoading, setTopicsLoading] = useState(true);
@@ -91,7 +93,15 @@ export default function Home({
 
   const [swapping, setSwapping] = useState<string[]>([]);
   const [moreOpen, setMoreOpen] = useState(false); // '다른 글감' 접힘 토글(시트로 대체 — 유지: 스크롤 ref)
-  const [routineSheet, setRoutineSheet] = useState<null | "checkin" | "neighbor" | "topics">(null); // ★토스식 — 루틴은 행, 상세는 시트
+  const [routineSheet, setRoutineSheet] = useState<null | "checkin" | "neighbor" | "topics">(null);
+  const [blogSheet, setBlogSheet] = useState(false); // ★블로그 스위처
+  const [blogCount, setBlogCount] = useState(1);
+  useEffect(() => { fetch("/api/blogs").then((r) => r.json()).then((d) => { const n = Array.isArray(d.blogs) ? d.blogs.length : 1; setBlogCount(Math.max(1, n)); }).catch(() => { /* ignore */ }); }, []);
+  const [blogList, setBlogList] = useState<{ id: string; blog_name: string | null; sub_category: string | null; is_active: boolean }[]>([]);
+  async function openBlogSheet() {
+    setBlogSheet(true);
+    try { const r = await fetch("/api/blogs"); const d = await r.json(); setBlogList(Array.isArray(d.blogs) ? d.blogs : []); } catch { /* ignore */ }
+  } // ★토스식 — 루틴은 행, 상세는 시트
   const [swapNotice, setSwapNotice] = useState(false); // 교체 한도 안내
   const moreRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -248,7 +258,10 @@ export default function Home({
   return (
     <main className="mx-auto max-w-[520px] px-5 pb-16">
       {/* 인사말 */}
-      <p className="tk-seq-1 pt-6 text-[15px] font-semibold text-[color:var(--color-text-sub)]">{blogName}</p>
+      <button onClick={openBlogSheet} className="tk-seq-1 flex items-center gap-1 pt-6 text-[15px] font-semibold text-[color:var(--color-text-sub)]">
+        {blogName}
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="opacity-50"><path d="m6 9 6 6 6-6" /></svg>
+      </button>
 
       {/* 상태 카드 — 큰 숫자(그라데이션) + 살아있는 게이지 */}
       <button onClick={onGoPerformance} className="tk-seq-1 tk-cta tk-card-glow mt-3 block w-full rounded-[20px] p-6 text-left shadow-[0_2px_12px_-4px_rgba(29,117,247,0.12)]">
@@ -264,13 +277,12 @@ export default function Home({
         <div className="tk-gauge mt-5 h-2.5 w-full rounded-full bg-[#E8EDF7]">
           <div className="tk-gauge-fill" style={{ width: `${Math.max(progressPercent(info), 3)}%` }} />
         </div>
-        {(info.streak > 0 || yesterdayPublished(articles)) && (
-          <p className="mt-4 text-[13px] text-[color:var(--color-text-sub)]">
-            {info.streak > 0 ? `${info.streak}일 연속 발행 중` : ""}
-            {info.streak > 0 && yesterdayPublished(articles) ? " · " : ""}
-            {yesterdayPublished(articles) ? "어제 발행 확인됐어요" : ""}
-          </p>
-        )}
+        <p className="mt-4 text-[13px] text-[color:var(--color-text-sub)]">
+          {info.streak > 0 ? `${info.streak}일 연속 발행 중 · ` : ""}
+          {yesterdayPublished(articles) ? "어제 발행 확인 · " : ""}
+          {(() => { const d = Math.floor(credits / (GENERATE_COST * blogCount)); return d > 0 ? `크레딧 약 ${d > 999 ? "999+" : d}일치` : "크레딧 충전이 필요해요"; })()}
+          {blogCount > 1 ? ` (블로그 ${blogCount}개 기준)` : ""}
+        </p>
       </button>
 
       {/* 크레딧 소진 예고 — 잔여 3편 이하 + 실사용 페이스로 예측 가능할 때만(지어내기 금지) */}
@@ -368,6 +380,36 @@ export default function Home({
           ))}
         </div>
       </div>
+
+      {/* ★블로그 스위처 시트 */}
+      {blogSheet && (
+        <div className="ateflo-backdrop-in fixed inset-0 z-[70] flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center sm:p-6" onClick={() => setBlogSheet(false)}>
+          <div className="ateflo-sheet-up w-full max-w-md at-glass-strong rounded-t-3xl p-6 shadow-2xl sm:rounded-3xl" style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom))" }} onClick={(e) => e.stopPropagation()}>
+            <p className="text-[17px] font-bold text-[color:var(--color-text)]">내 블로그</p>
+            <div className="mt-3 space-y-2">
+              {blogList.map((b) => (
+                <button key={b.id} onClick={async () => {
+                  if (b.is_active) { setBlogSheet(false); return; }
+                  const r = await fetch("/api/blogs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ activate: b.id }) });
+                  if (r.ok) window.location.reload(); // 활성 전환 — 홈 데이터 전체가 그 블로그 기준으로
+                }} className={`flex w-full items-center gap-3 rounded-[14px] px-4 py-3.5 text-left tk-tr ${b.is_active ? "bg-[color:var(--color-brand-weak)]" : "bg-[#F7F8FA] hover:bg-[#EFF2F6]"}`}>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[14px] font-bold text-[color:var(--color-text)]">{b.blog_name ?? "내 블로그"}</span>
+                    {b.sub_category && <span className="mt-0.5 block text-[12px] text-[color:var(--color-text-weak)]">{b.sub_category}</span>}
+                  </span>
+                  {b.is_active && <span className="shrink-0 text-[12px] font-bold text-[color:var(--color-brand)]">사용 중</span>}
+                </button>
+              ))}
+            </div>
+            {onAddBlog && (
+              <button onClick={() => { setBlogSheet(false); onAddBlog(); }} className="at-press mt-3 w-full rounded-[14px] border border-dashed border-[color:var(--color-text-weak)]/40 py-3.5 text-[14px] font-semibold text-[color:var(--color-text-sub)]">
+                새 블로그 만들기
+              </button>
+            )}
+            <p className="mt-2 text-center text-[11.5px] text-[color:var(--color-text-weak)]">새 블로그는 기존 블로그와 다른 주제를 추천해요 · 크레딧은 함께 써요</p>
+          </div>
+        </div>
+      )}
 
       {/* 루틴 시트 — 한 화면 한 주제 */}
       {routineSheet && (

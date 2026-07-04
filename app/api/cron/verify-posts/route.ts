@@ -19,15 +19,16 @@ export async function GET(request: Request) {
   const db = createSupabaseAdminClient();
 
   // ── 재시도: pending_verify & attempts<6 ──
-  const { data: pend } = await db.from("articles").select("id, user_id, title, claimed_at, verify_attempts")
+  const { data: pend } = await db.from("articles").select("id, user_id, blog_id, title, claimed_at, verify_attempts")
     .eq("status", "pending_verify").lt("verify_attempts", 6).order("claimed_at", { ascending: true }).limit(300);
-  // ★그룹 키 = blogId 해석 단위. 지금은 user_id(계정=프로필 1:1). Stage 5(멀티 블로그): 이 그룹 키를
-  //  articles.blog_id로 바꾸고 프로필 조회를 blog_id로 — 아래 매칭은 그 그룹의 RSS만 보므로 교차 오염 불가.
+  // ★멀티 블로그(Phase B 전환 완료) — 그룹 키 = blog_id(레거시 null은 "u:{user_id}" 그룹 → 활성 프로필 폴백).
   const byUser = new Map<string, typeof pend>();
-  for (const a of pend ?? []) { const arr = byUser.get(a.user_id) ?? []; arr.push(a); byUser.set(a.user_id, arr); }
+  for (const a of pend ?? []) { const k = (a as { blog_id?: string | null }).blog_id ?? `u:${a.user_id}`; const arr = byUser.get(k) ?? []; arr.push(a); byUser.set(k, arr); }
   let verified = 0, missed = 0;
-  for (const [userId, arts] of byUser) {
-    const { data: prof } = await db.from("blog_profiles").select("naver_blog_id").eq("user_id", userId).maybeSingle();
+  for (const [groupKey, arts] of byUser) {
+    const { data: prof } = groupKey.startsWith("u:")
+      ? await db.from("blog_profiles").select("naver_blog_id").eq("user_id", groupKey.slice(2)).eq("is_active", true).maybeSingle()
+      : await db.from("blog_profiles").select("naver_blog_id").eq("id", groupKey).maybeSingle();
     if (!prof?.naver_blog_id) { for (const a of arts!) await db.from("articles").update({ verify_attempts: (a.verify_attempts ?? 0) + 1 }).eq("id", a.id); continue; }
     const items = await fetchBlogRss(prof.naver_blog_id).catch(() => []); // 유저당 1회
     for (const a of arts!) {

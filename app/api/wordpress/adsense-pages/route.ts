@@ -20,7 +20,7 @@ export async function POST() {
   const { data: profile } = await supabase
     .from("blog_profiles")
     .select("blog_name, biz_name, vertical, sub_category")
-    .eq("user_id", user.id)
+    .eq("user_id", user.id).eq("is_active", true)
     .maybeSingle();
 
   const siteName = (profile?.blog_name || profile?.biz_name || "내 블로그").trim();

@@ -120,9 +120,11 @@ export async function POST(request: Request) {
   const { data: profileRow } = await supabase
     .from("blog_profiles")
     .select("id,vertical,sub_category,biz_name,biz_address,biz_detail_address,biz_phone,biz_hours,biz_hours_json,biz_strength,audience")
-    .eq("user_id", user.id)
+    .eq("user_id", user.id).eq("is_active", true)
     .maybeSingle();
   const vertical = profileRow?.vertical ?? "general";
+  // ★멀티 블로그 시드 — 문체 페르소나·구조·앵글이 블로그별로 갈린다(같은 계정의 블로그끼리도 다른 지문)
+  const seedId = (profileRow as { id?: string } | null)?.id ?? user.id;
   // tone/type은 '명시적으로 보낸 값 우선', 없을 때만 업종 기본값 폴백(general은 매핑 없음=현행 howto/friendly).
   const vDef = VERTICAL_DEFAULTS[vertical];
   const type = body.type ?? vDef?.type ?? "howto";
@@ -155,16 +157,16 @@ export async function POST(request: Request) {
     .eq("user_id", user.id)
     .eq("keyword_norm", keywordNorm);
   const usedSignatures = (usedRows ?? []).map((r: { signature: string }) => r.signature);
-  const variant = pickVariant(usedSignatures, `${user.id}:${keywordNorm}:${usedSignatures.length}`);
+  const variant = pickVariant(usedSignatures, `${seedId}:${keywordNorm}:${usedSignatures.length}`);
   // 관점 축(유저+키워드 시드) — 구조×관점 조합으로 같은 키워드도 유저마다 다른 글(중복 방지)
-  const angle = pickAngle(`${user.id}:${keywordNorm}`);
+  const angle = pickAngle(`${seedId}:${keywordNorm}`);
   const variantInstruction = `${variant.instruction} ${angle}`;
   // ★계정별 스타일 페르소나 — 같은 계정은 항상 같은 스타일, 계정 간은 다름(대량 발행 지문 방지). 유저 프롬프트 주입이라 캐싱 무영향.
   // ★낡은 연도 교정 — 어떤 경로로든 '2024 최신 ○○' 각도가 들어오면 현재 연도로 치환(마지막 방어선)
   const CUR_YEAR = String(new Date(Date.now() + 9 * 3600_000).getFullYear());
   if (typeof body.angle === "string") body.angle = body.angle.replace(/20(1[0-9]|2[0-5])/g, CUR_YEAR);
 
-  const styleInstruction = stylePersonaInstruction(user.id);
+  const styleInstruction = stylePersonaInstruction(seedId);
   // ★최신화 안전망 — 이슈 글감이 아니어도 그 키워드의 오늘 뉴스를 근거로 주입(모델 기억의 '2024 최신' 사고 방지).
   //  단, 뉴스 API 호출은 '시점 민감 글'에만(웹검색 게이트와 동일 기준) — 여행·레시피 등은 쿼터 낭비라 생략.
   const timeSensitiveGen = isTimeSensitive({ keyword, angle: body.angle, vertical, newsContext: body.newsContext });

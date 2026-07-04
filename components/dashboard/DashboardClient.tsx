@@ -74,6 +74,7 @@ export default function DashboardClient(props: DashboardProps) {
   // 블로그 프로필 + 키워드 예약 큐
   const [blogProfile, setBlogProfile] = useState<BlogProfile | null>(null);
   const [reonboardPrev, setReonboardPrev] = useState<BlogProfile | null>(null); // 재설정(재온보딩) 전 프로필 — 취소 시 복귀
+  const [addBlogMode, setAddBlogMode] = useState(false); // ★멀티 블로그 — 새 블로그 추가(온보딩 재사용, createNew)
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const pendingQueueId = useRef<string | null>(null); // 첫 글 생성 완료 시 연결할 큐 항목
   // 키워드 발굴 검색 state (KeywordFinder에서 리프트 — 탭 이동/새로고침에도 유지)
@@ -545,9 +546,9 @@ export default function DashboardClient(props: DashboardProps) {
           </div>
         )}
 
-        {!page && !selected && !genParams && tab === "lab" && profileLoaded && !blogProfile && (
+        {!page && !selected && !genParams && tab === "lab" && profileLoaded && (!blogProfile || addBlogMode) && (
           <div className="ateflo-page-in">
-            <Onboarding onSaved={onProfileSaved} onCancel={reonboardPrev ? () => { setBlogProfile(reonboardPrev); setReonboardPrev(null); } : undefined} />
+            <Onboarding onSaved={(p) => { setAddBlogMode(false); onProfileSaved(p); try { window.location.reload(); } catch { /* ignore */ } }} createNew={addBlogMode} onCancel={reonboardPrev || addBlogMode ? () => { if (addBlogMode) { setAddBlogMode(false); } else { setBlogProfile(reonboardPrev); setReonboardPrev(null); } } : undefined} />
           </div>
         )}
 
@@ -578,6 +579,7 @@ export default function DashboardClient(props: DashboardProps) {
                 onSelect={setSelected}
                 profileKey={`${blogProfile.vertical}:${blogProfile.sub_category ?? ""}`}
                 subCategory={blogProfile.sub_category ?? blogProfile.topic}
+                onAddBlog={() => setAddBlogMode(true)}
               />
             )}
 

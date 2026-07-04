@@ -44,7 +44,7 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "로그인이 필요해요." }, { status: 401 });
 
-  const { data } = await supabase.from("blog_profiles").select("*").eq("user_id", user.id).maybeSingle();
+  const { data } = await supabase.from("blog_profiles").select("*").eq("user_id", user.id).eq("is_active", true).maybeSingle();
   return NextResponse.json({ profile: data ?? null });
 }
 
@@ -100,15 +100,19 @@ export async function POST(request: Request) {
   const rawName = (typeof body.blog_name === "string" ? body.blog_name : "").trim().slice(0, 60);
   const blog_name = rawName || defaultBlogName(category ?? topic); // 자동 기본값만 '블로그 블로그' 중복 정리(입력은 보존)
 
-  const { data, error } = await supabase
-    .from("blog_profiles")
-    .upsert(
-      { user_id: user.id, topic, category, blog_name, tone, article_type, target, publish_mode, vertical, sub_category, ...(naver_blog_id !== undefined ? { naver_blog_id } : {}), biz_name, biz_address, biz_detail_address, biz_lat, biz_lng, biz_phone, biz_hours, biz_hours_json, biz_strength, audience, updated_at: new Date().toISOString() },
-      { onConflict: "user_id" },
-    )
-    .select("*")
-    .single();
-
+  // ★멀티 블로그(0056) — unique(user_id) 해제됨. 저장 규칙:
+  //  기본 = '활성 블로그' 행 update(없으면 insert). createNew=true = 기존 활성 내리고 새 블로그 insert(활성).
+  const payload = { user_id: user.id, topic, category, blog_name, tone, article_type, target, publish_mode, vertical, sub_category, ...(naver_blog_id !== undefined ? { naver_blog_id } : {}), biz_name, biz_address, biz_detail_address, biz_lat, biz_lng, biz_phone, biz_hours, biz_hours_json, biz_strength, audience, updated_at: new Date().toISOString() };
+  const createNew = body.createNew === true;
+  let data: unknown = null; let error: { message: string } | null = null;
+  if (createNew) {
+    await supabase.from("blog_profiles").update({ is_active: false }).eq("user_id", user.id).eq("is_active", true);
+    ({ data, error } = await supabase.from("blog_profiles").insert({ ...payload, is_active: true }).select("*").single());
+  } else {
+    const { data: cur } = await supabase.from("blog_profiles").select("id").eq("user_id", user.id).eq("is_active", true).maybeSingle();
+    if (cur) ({ data, error } = await supabase.from("blog_profiles").update(payload).eq("id", cur.id).select("*").single());
+    else ({ data, error } = await supabase.from("blog_profiles").insert({ ...payload, is_active: true }).select("*").single());
+  }
   if (error) {
     return NextResponse.json({ error: `저장 실패: ${error.message}` }, { status: 500 });
   }
