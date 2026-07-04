@@ -3,6 +3,8 @@
 //  ★신선도 게이트: pubDate 기준 48시간 이내만(24h는 주말 고갈 위험). 파싱 실패는 '미확인'으로 분리 —
 //   시드당 확인된 신선 기사 3개 이상이면 미확인분 버리고, 3개 미만이면 미확인분으로 보충(고갈 방어).
 
+import { CATEGORIES } from "./categories";
+
 export interface Headline { title: string; description: string; press: string; seed: string; fresh: boolean | null } // fresh: true=48h내, false=오래됨, null=미확인
 export interface GatherStats { raw: number; fresh: number; unverified: number; stale: number; kept: number; perSeed: Record<string, { fresh: number; unverified: number; stale: number }> }
 
@@ -27,11 +29,24 @@ const SEEDS: Record<string, string[]> = {
   "게임": ["게임 신작", "게임 업데이트", "e스포츠", "게임 이벤트", "콘솔 신제품", "모바일 게임"],
   "스포츠": ["스포츠 경기", "선수 이적", "리그 일정", "홈트 운동", "스포츠 용품", "마라톤 대회"],
   "교육": ["입시 정보", "교육 정책", "공부법", "자격증 시험", "온라인 강의", "학원비 지원"],
+  "부업": ["부업 추천", "블로그 수익", "스마트스토어", "앱테크", "N잡 세금", "재택 부업"],
+  "IT/리뷰": ["신제품 출시", "AI 서비스", "스마트폰 출시", "가전 신기술", "앱 추천", "통신 요금제"],
+  "정부지원금/생활정보": ["정부지원금", "복지 혜택", "청약 일정", "세금 환급", "생활 지원 정책", "신청 마감"],
+  "결혼/웨딩": ["결혼 준비", "웨딩홀 비용", "신혼집 대출", "결혼 지원금", "혼수 준비", "신혼여행"],
+  "취미": ["취미 추천", "원데이클래스", "카메라 입문", "독서 모임", "그림 배우기", "홈트 취미"],
+  "원예/식물": ["실내식물 추천", "식물 키우기", "다육이 관리", "베란다 텃밭", "화분 분갈이", "공기정화식물"],
 };
 
 function seedsFor(category: string): string[] {
   const key = Object.keys(SEEDS).find((k) => category.includes(k) || k.includes(category));
-  if (key) return SEEDS[key]; // ★6개 전부 사용(기존 slice(0,5) 제거)
+  if (key) return SEEDS[key]; // ★6개 전부 사용
+  // ★세부 카테고리(주식·강아지·지원금 등) — 부모 대분류 시드 상속 + 세부어 구체 시드 2개(전 카테고리 정합)
+  const parent = CATEGORIES.find((c) => c.subs.includes(category))?.name;
+  if (parent) {
+    const pk = Object.keys(SEEDS).find((k) => parent.includes(k) || k.includes(parent));
+    const base = pk ? SEEDS[pk].slice(0, 4) : [];
+    return [...base, `${category} 추천`, `${category} 최신`];
+  }
   const c = category.replace(/[·/]/g, " ").trim();
   return [`${c} 추천`, `${c} 방법`, `${c} 정보`, `${c} 트렌드`, `${c} 최신`, `${c} 비용`];
 }
