@@ -73,7 +73,8 @@ export default function Home({
   const [topicsLoading, setTopicsLoading] = useState(true);
   const [collecting, setCollecting] = useState(false);
   const [swapping, setSwapping] = useState<string[]>([]);
-  const [moreOpen, setMoreOpen] = useState(false); // '다른 글감' 접힘 토글
+  const [moreOpen, setMoreOpen] = useState(false); // '다른 글감' 접힘 토글(시트로 대체 — 유지: 스크롤 ref)
+  const [routineSheet, setRoutineSheet] = useState<null | "checkin" | "neighbor" | "topics">(null); // ★토스식 — 루틴은 행, 상세는 시트
   const [swapNotice, setSwapNotice] = useState(false); // 교체 한도 안내
   const moreRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -205,9 +206,7 @@ export default function Home({
       </div>
 
       {/* 어제 결과 한 줄 — 발행 확인된 어제 글이 있을 때만(없으면 완전 미표시). 상태 참조=course.isPublishConfirmed */}
-      {yesterdayPublished(articles) && (
-        <p className="at-rise mt-2 text-center text-[12.5px] font-semibold text-[color:var(--at-grey-500)]">어제 글, 발행 확인됐어요.</p>
-      )}
+
 
       {/* 크레딧 소진 예고 — 잔여 3편 이하 + 실사용 페이스로 예측 가능할 때만(지어내기 금지) */}
       {(() => {
@@ -224,8 +223,6 @@ export default function Home({
         );
       })()}
 
-      {/* 아침 체크인 — 1일 1회, 30초 동선. 입력→그래프→바로 아래 오늘 할 일로 연결 */}
-      <CheckinCard articles={articles} />
 
       {/* 진단 분기 — 3일 연속 방문 0 + 발행 있음일 때만(원인 단정 없이 확인 안내) */}
       <DiagnosisCard articles={articles} />
@@ -262,40 +259,63 @@ export default function Home({
         />
       </div>
 
-      {/* 이웃 미션 — 보너스(스트릭 아님). 글 1편 + 이웃 5명 + 댓글 2개 세트 */}
-      <div className="at-rise at-d2">
-        <NeighborMission subCategory={subCategory} />
+      {/* ★오늘의 루틴 — 토스식: 홈엔 행 하나씩, 상세는 시트. 홈의 주인공은 위 '오늘의 글' 하나뿐. */}
+      <div className="at-rise at-d3 mt-5">
+        <p className="at-label px-1">오늘의 루틴</p>
+        <div className="mt-2 overflow-hidden rounded-2xl at-glass">
+          {([
+            { key: "checkin" as const, label: "아침 체크인", sub: "어제 방문자 기록 · 30초" },
+            { key: "neighbor" as const, label: "이웃 미션", sub: "이웃 5명 · 댓글 2개 · 보너스" },
+            { key: "topics" as const, label: "다른 글감", sub: topicsLoading ? "불러오는 중" : `${rest.length}개 준비됨` },
+          ]).map((r, i) => (
+            <button key={r.key} onClick={() => setRoutineSheet(r.key)}
+              className={`at-press flex w-full items-center gap-3 px-5 py-4 text-left transition hover:bg-white/40 ${i > 0 ? "border-t border-neutral-100/80" : ""}`}>
+              <span className="min-w-0 flex-1">
+                <span className="text-[14px] font-bold text-[color:var(--at-grey-800)]">{r.label}</span>
+                <span className="mt-0.5 block text-[12px] text-neutral-400">{r.sub}</span>
+              </span>
+              <svg className="shrink-0 text-neutral-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* 접힘 — 다른 글감 */}
-      <div className="at-rise at-d3 mt-3">
-        <button
-          onClick={() => setMoreOpen((o) => !o)}
-          className="at-press flex w-full items-center gap-3 rounded-2xl at-glass px-5 py-4 text-left "
-        >
-          <span className="min-w-0 flex-1 text-[14px] font-bold text-[color:var(--at-grey-700)]">
-            다른 글감 {topicsLoading ? "" : rest.length}
-          </span>
-          <svg className={`shrink-0 text-neutral-300 transition-transform duration-200 ${moreOpen ? "rotate-180" : ""}`} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
-        </button>
-        {moreOpen && (
-          <div ref={moreRef} className="at-rise mt-2 scroll-mb-24">
-            {topicsLoading ? (
-              <TopicsSkeleton collecting={collecting} />
-            ) : rest.length > 0 ? (
-              <div className="flex flex-col gap-2.5">
-                {rest.map((t) => (
-                  <TopicRow key={t.keyword} topic={t} onClick={() => onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb)} onSwap={() => swapTopic(t.keyword)} swapping={swapping.includes(t.keyword)} />
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-2xl at-glass p-6 text-center text-[13px] text-neutral-400 ">
-                오늘 글감은 위 카드가 전부예요. <button onClick={loadTopics} className="font-semibold text-[#1D75F7]">다시 받기</button>
-              </div>
-            )}
+      {/* 루틴 시트 — 한 화면 한 주제 */}
+      {routineSheet && (
+        <div className="ateflo-backdrop-in fixed inset-0 z-[70] flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center sm:p-6" onClick={() => setRoutineSheet(null)}>
+          <div className="ateflo-sheet-up max-h-[88vh] w-full max-w-md overflow-y-auto at-glass-strong rounded-t-3xl p-6 shadow-2xl sm:rounded-3xl"
+            style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom))" }} onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <p className="text-[17px] font-bold text-neutral-900">
+                {routineSheet === "checkin" ? "아침 체크인" : routineSheet === "neighbor" ? "이웃 미션" : "다른 글감"}
+              </p>
+              <button onClick={() => setRoutineSheet(null)} className="rounded-lg px-2 py-1 text-[13px] font-medium text-neutral-400 transition hover:text-neutral-700">닫기</button>
+            </div>
+            <div className="mt-3">
+              {routineSheet === "checkin" && (
+                <>
+                  {yesterdayPublished(articles) && <p className="mb-2 text-[12.5px] font-semibold text-emerald-600">어제 글, 발행 확인됐어요.</p>}
+                  <CheckinCard articles={articles} />
+                </>
+              )}
+              {routineSheet === "neighbor" && <NeighborMission subCategory={subCategory} sheet />}
+              {routineSheet === "topics" && (
+                topicsLoading ? <TopicsSkeleton collecting={collecting} /> : rest.length > 0 ? (
+                  <div className="flex flex-col gap-2.5">
+                    {rest.map((t) => (
+                      <TopicRow key={t.keyword} topic={t} onClick={() => { setRoutineSheet(null); onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb); }} onSwap={() => swapTopic(t.keyword)} swapping={swapping.includes(t.keyword)} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-2xl bg-neutral-50 p-6 text-center text-[13px] text-neutral-400">
+                    오늘 글감은 오늘의 글이 전부예요. <button onClick={loadTopics} className="font-semibold text-[#1D75F7]">다시 받기</button>
+                  </div>
+                )
+              )}
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </main>
   );
 }

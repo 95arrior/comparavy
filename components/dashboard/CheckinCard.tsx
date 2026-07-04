@@ -71,7 +71,7 @@ export default function CheckinCard({ articles, onSaved }: { articles: CourseArt
   if (state === "skipped") {
     return (
       <button onClick={() => { try { localStorage.removeItem(skipKey); } catch { /* ignore */ } setState("form"); }}
-        className="at-rise mt-3 flex w-full items-center justify-between rounded-2xl bg-white px-5 py-3 text-left ring-1 ring-black/[0.04] transition hover:bg-neutral-50">
+        className="at-rise flex w-full items-center justify-between rounded-2xl bg-white px-5 py-3 text-left ring-1 ring-black/[0.04] transition hover:bg-neutral-50">
         <span className="text-[12.5px] font-medium text-neutral-400">오늘 체크인은 건너뛰었어요</span>
         <span className="text-[12.5px] font-bold text-[#1D75F7]">다시 열기</span>
       </button>
@@ -81,7 +81,7 @@ export default function CheckinCard({ articles, onSaved }: { articles: CourseArt
   if (state === "recorded" && savedRow) {
     return (
       <button onClick={() => { setVisitors(savedRow.visitors !== null ? String(savedRow.visitors) : ""); setRevenue(savedRow.revenue !== null ? String(savedRow.revenue) : ""); setState("form"); }}
-        className="at-rise mt-3 flex w-full items-center justify-between rounded-2xl bg-white px-5 py-3 text-left ring-1 ring-black/[0.04] transition hover:bg-neutral-50">
+        className="at-rise flex w-full items-center justify-between rounded-2xl bg-white px-5 py-3 text-left ring-1 ring-black/[0.04] transition hover:bg-neutral-50">
         <span className="text-[12.5px] font-medium text-neutral-500">어제 기록 · 방문자 {savedRow.visitors ?? 0}명{savedRow.revenue !== null ? ` · ${savedRow.revenue.toLocaleString("ko-KR")}원` : ""}</span>
         <span className="text-[12.5px] font-bold text-[#1D75F7]">수정</span>
       </button>
@@ -97,7 +97,7 @@ export default function CheckinCard({ articles, onSaved }: { articles: CourseArt
   const maxV = Math.max(1, ...last7.map((x) => x.v ?? 0));
 
   return (
-    <div className="at-rise mt-3 rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
+    <div className="at-rise rounded-2xl bg-white p-5 ring-1 ring-black/[0.04]">
       <div className="flex items-center justify-between">
         <p className="text-[12px] font-bold tracking-tight text-[#1D75F7]">아침 체크인</p>
         <span className="text-[11px] font-semibold text-neutral-400">{yPub ? "어제 발행 확인됨" : "어제 발행 기록 없음"}</span>

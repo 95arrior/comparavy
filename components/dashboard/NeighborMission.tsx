@@ -9,9 +9,9 @@ import { copyTextVerified } from "@/lib/clipboard";
 
 const dayKey = () => new Date().toISOString().slice(0, 10);
 
-export default function NeighborMission({ subCategory }: { subCategory?: string | null }) {
+export default function NeighborMission({ subCategory, sheet }: { subCategory?: string | null; sheet?: boolean }) {
   const missionKey = `ateflo_mission_${dayKey()}`;
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(!!sheet); // sheet 모드=항상 펼침(토글 헤더 숨김)
   const [checks, setChecks] = useState<{ neighbor: boolean; comment: boolean }>({ neighbor: false, comment: false });
   const [greeting, setGreeting] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -58,14 +58,14 @@ export default function NeighborMission({ subCategory }: { subCategory?: string 
   const doneCount = (checks.neighbor ? 1 : 0) + (checks.comment ? 1 : 0);
 
   return (
-    <div className="at-rise mt-3 rounded-2xl at-glass p-5">
-      <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-2 text-left">
+    <div className={sheet ? "" : "at-rise mt-3 rounded-2xl at-glass p-5"}>
+      <button onClick={() => !sheet && setOpen((o) => !o)} className={`flex w-full items-center gap-2 text-left ${sheet ? "cursor-default" : ""}`}>
         <span className="min-w-0 flex-1">
           <span className="text-[14px] font-bold text-[color:var(--at-grey-700)]">이웃 미션 <span className="font-medium text-neutral-400">· 보너스</span></span>
           <span className="mt-0.5 block text-[12px] text-neutral-400">이웃 1명은 새 글의 첫 독자 1명이에요. 첫 반응이 노출 테스트를 통과시켜요.</span>
         </span>
         <span className="shrink-0 rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-bold text-neutral-500">{doneCount}/2</span>
-        <svg className={`shrink-0 text-neutral-300 transition-transform duration-200 ${open ? "rotate-180" : ""}`} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+        {!sheet && <svg className={`shrink-0 text-neutral-300 transition-transform duration-200 ${open ? "rotate-180" : ""}`} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>}
       </button>
 
       {open && (
