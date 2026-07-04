@@ -81,14 +81,21 @@ export default function TodayCard({
     );
   }
 
-  // 로딩
+  // 로딩 — 완성 카드와 같은 뼈대의 스켈레톤(배지 줄·제목 2줄·인과 박스·버튼). 갑툭튀 방지 + 레이아웃 시프트 0.
   if (loading || !topic) {
     return (
-      <Card>
+      <Card highlight>
         <Header label="오늘의 글" />
-        <div className="mt-3 space-y-2" aria-hidden>
-          <div className="ateflo-skel h-5 w-3/4 rounded" />
-          <div className="ateflo-skel h-10 w-full rounded-xl" />
+        <div className="at-rise mt-2 space-y-0" aria-hidden>
+          <div className="flex items-center gap-1.5">
+            <div className="ateflo-skel h-[18px] w-16 rounded-md" />
+            <div className="ateflo-skel h-[18px] w-14 rounded-md" />
+            <div className="ateflo-skel h-3.5 w-20 rounded" />
+          </div>
+          <div className="ateflo-skel mt-3 h-[22px] w-11/12 rounded" />
+          <div className="ateflo-skel mt-2 h-[22px] w-3/5 rounded" />
+          <div className="ateflo-skel mt-3 h-[42px] w-full rounded-xl" />
+          <div className="ateflo-skel mt-3.5 h-[50px] w-full rounded-xl" />
         </div>
       </Card>
     );

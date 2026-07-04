@@ -427,7 +427,7 @@ function TopicRow({ topic, onClick, onSwap, swapping }: {
 function TopicsSkeleton({ collecting }: { collecting: boolean }) {
   return (
     <div className="flex flex-col gap-2.5">
-      {[0, 1].map((i) => (
+      {[0, 1, 2, 3, 4].map((i) => (
         <div key={i} className="rounded-2xl at-glass p-5 " aria-hidden>
           <div className="flex items-center gap-2">
             <div className="ateflo-skel h-[18px] w-14 rounded-md" />
