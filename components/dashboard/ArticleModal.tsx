@@ -440,7 +440,7 @@ export default function ArticleModal({
         </div>
 
         {/* ★검증 폴백 — 재시도 소진 시 글 주소 붙여넣기(verify-post가 살아있는 글 확인 후 verified) */}
-        {article.status === "pending_verify" && (article.verify_attempts ?? 0) >= 6 && (
+        {article.status === "pending_verify" && (
           <div className="mt-4 rounded-2xl bg-amber-50 p-4 ring-1 ring-amber-200/60">
             <p className="text-[13px] font-bold text-amber-800">발행 확인이 아직 안 됐어요</p>
             <p className="mt-1 text-[12px] leading-relaxed text-amber-700/80">발행한 글 주소를 붙여넣으면 바로 확인할게요.</p>
@@ -456,21 +456,13 @@ export default function ArticleModal({
           </div>
         )}
 
-        {/* ★증폭 수동 신고 — '이 글 반응 좋아요'(다음 날 후속 글감 배정 + 배합 가중 학습).
-            상태 불문 노출(실측: 위저드 도입 전 발행 글이 draft로 남아 버튼이 숨음) — draft면 발행됨 마킹도 겸한다. */}
+        {/* 글 삭제하기 — 상세 맨 밑은 이것 하나(후속·발행 빼기는 내 글 목록의 '관리'로 이사, 유저 지정 배치) */}
         <button onClick={async () => {
-          if (article.status === "draft") { try { await markNaverPublished(); } catch { /* 무해 */ } }
-          const r = await fetch(`/api/articles/${article.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ hot: true }) });
-          if (r.ok) setToast("반영했어요 — 내일 이 글의 후속을 준비할게요");
-        }} className="at-press mt-4 w-full rounded-xl bg-emerald-50 py-3 text-[13.5px] font-bold text-emerald-700 transition hover:bg-emerald-100">이 글 반응 좋아요 · 후속 준비하기</button>
-
-        {/* ★수동 차감 — 발행 글을 지웠을 때(게이지는 verified만 세므로 상태 전환=자동 차감) */}
-        {(article.status === "verified" || article.status === "published") && (
-          <button onClick={async () => {
-            const r = await fetch(`/api/articles/${article.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "deleted" }) });
-            if (r.ok) { setToast("반영했어요"); onUpdated({ ...article, status: "deleted" } as Article); }
-          }} className="mt-4 w-full py-2 text-center text-[12px] font-medium text-neutral-300 transition hover:text-neutral-500">네이버에서 이 글을 지웠어요 · 발행 수에서 빼기</button>
-        )}
+          if (!window.confirm("이 글을 완전히 삭제할까요? 내 글 목록에서도 사라지고 복구할 수 없어요.")) return;
+          const r = await fetch(`/api/articles/${article.id}`, { method: "DELETE" });
+          if (r.ok) { onUpdated({ ...article, status: "deleted" } as Article); onClose(); }
+          else setToast("삭제하지 못했어요");
+        }} className="mt-5 w-full py-2 text-center text-[12.5px] font-medium text-neutral-300 transition hover:text-red-500">글 삭제하기</button>
 
         {article.write_note && (
           <div className="mt-6 rounded-xl border border-neutral-200 bg-white px-4 py-3">

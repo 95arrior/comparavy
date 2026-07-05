@@ -207,7 +207,7 @@ export default function ArticleList({
                 </button>
                 {published ? (
                   <button onClick={() => setConfirmUnpub(a)} className="shrink-0 text-[12px] font-semibold text-neutral-300 transition hover:text-neutral-500">
-                    내렸어요
+                    관리
                   </button>
                 ) : pending ? (
                   <span className="shrink-0 text-[11.5px] font-semibold text-amber-500">확인 중</span>
@@ -233,8 +233,16 @@ export default function ArticleList({
             <p className="text-[16px] font-bold text-[color:var(--at-grey-900)]">이 글, 어떻게 할까요?</p>
             <p className="mt-2 truncate text-[13.5px] font-semibold text-neutral-800">“{confirmUnpub.title}”</p>
             <div className="mt-4 space-y-2">
+              <button onClick={async () => {
+                const r = await fetch(`/api/articles/${confirmUnpub.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ hot: true }) });
+                if (r.ok) { setMsg("반영했어요 — 내일 이 글의 후속을 준비할게요"); setTimeout(() => setMsg(null), 3000); }
+                setConfirmUnpub(null);
+              }} disabled={unpubBusy || delBusy} className="at-press w-full rounded-xl bg-emerald-50 p-3.5 text-left ring-1 ring-emerald-100 transition hover:bg-emerald-100/70 disabled:opacity-50">
+                <span className="block text-[13.5px] font-bold text-emerald-700">이 글 반응 좋아요 · 후속 준비</span>
+                <span className="mt-0.5 block text-[11.5px] text-emerald-600/70">내일 오늘의 글에 이 글의 후속 글감이 우선 배정돼요</span>
+              </button>
               <button onClick={doUnpublish} disabled={unpubBusy || delBusy} className="at-press w-full rounded-xl bg-[color:var(--at-grey-900)] p-3.5 text-left transition disabled:opacity-50">
-                <span className="block text-[13.5px] font-bold text-white">{unpubBusy ? "처리 중…" : "내렸어요 (초안으로 보관)"}</span>
+                <span className="block text-[13.5px] font-bold text-white">{unpubBusy ? "처리 중…" : "발행 수에서 빼기 (초안으로 보관)"}</span>
                 <span className="mt-0.5 block text-[11.5px] text-white/60">발행 카운트에서 빠져요 · 글은 남아서 다시 올릴 수 있어요</span>
               </button>
               <button onClick={doDelete} disabled={unpubBusy || delBusy} className="at-press w-full rounded-xl bg-red-50 p-3.5 text-left ring-1 ring-red-100 transition hover:bg-red-100/70 disabled:opacity-50">
