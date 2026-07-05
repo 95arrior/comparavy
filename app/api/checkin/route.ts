@@ -17,12 +17,6 @@ export async function GET() {
   const { data } = await q.order("day", { ascending: false }).limit(60);
   const rows = (data ?? []).reverse();
   const y = new Date(); y.setDate(y.getDate() - 1);
-  // ★소급 입력(놓친 날 채우기) — body.day가 어제~7일 전 범위면 그 날짜로 기록
-  if (typeof body.day === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.day)) {
-    const target = new Date(`${body.day}T00:00:00+09:00`).getTime();
-    const min = Date.now() - 8 * 86400000, max = Date.now() - 0.5 * 86400000;
-    if (target >= min && target <= max) { const d2 = new Date(body.day); y.setFullYear(d2.getFullYear(), d2.getMonth(), d2.getDate()); }
-  }
   const yk = dayKey(y);
   const doneToday = rows.some((r) => r.day === yk); // 오늘 체크인 = 어제 데이터 존재
   const prev = rows.filter((r) => r.day !== yk).at(-1) ?? null; // '어제와 같음' 빠른 버튼용 직전 값
