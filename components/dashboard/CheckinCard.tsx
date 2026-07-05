@@ -22,6 +22,10 @@ export default function CheckinCard({ articles, onSaved }: { articles: CourseArt
   const [firstRevenue, setFirstRevenue] = useState(false);
   const [spikeAsk, setSpikeAsk] = useState(false); // ★급등 감지 — "어제 어떤 글이 잘 됐어요?" 후속 질문
   const [verdict, setVerdict] = useState<string | null>(null); // ★즉석 판정 — 기록의 보상(며칠차 벤치마크)
+  useEffect(() => { // 판정 복원(소유감) — 최근 판정은 recorded 상태에서도 계속 보이게
+    try { const raw = localStorage.getItem("ateflo_verdict_last"); if (raw) { const v = JSON.parse(raw); if (typeof v?.text === "string") setVerdict(v.text); } } catch { /* ignore */ }
+  }, []);
+  const [backfillDay, setBackfillDay] = useState<string | null>(null); // 빠진 날 채우기 대상
   const approved = typeof window !== "undefined" && (() => { try { return localStorage.getItem("ateflo_adpost_approved") === "1"; } catch { return false; } })();
   const skipKey = `ateflo_checkin_skip_${new Date().toISOString().slice(0, 10)}`;
 
@@ -49,6 +53,7 @@ export default function CheckinCard({ articles, onSaved }: { articles: CourseArt
     setBusy(true);
     try {
       const payload: Record<string, unknown> = {};
+      if (backfillDay) payload.day = backfillDay; // 소급(빠진 날 채우기)
       if (v.trim() !== "") payload.visitors = Number(v);
       if (approved && r.trim() !== "") payload.revenue = Number(r);
       if (Object.keys(payload).length === 0) { setBusy(false); return; }
@@ -57,13 +62,14 @@ export default function CheckinCard({ articles, onSaved }: { articles: CourseArt
       if (!res.ok) { setBusy(false); return; }
       invalidateGet("/api/checkin"); // 저장 후 캐시 무효화 — 다른 컴포넌트가 새 값을 본다
       if (d.spike === true) setSpikeAsk(true); // 증폭 신호원(유저 입력 기반)
-      if (typeof d.verdict === "string") setVerdict(d.verdict);
+      if (typeof d.verdict === "string") { setVerdict(d.verdict); try { localStorage.setItem("ateflo_verdict_last", JSON.stringify({ day: d.day, text: d.verdict })); } catch { /* ignore */ } }
       const newRow: Row = { day: d.day, visitors: d.visitors, revenue: d.revenue };
       setRows((prevRows) => [...prevRows.filter((x) => x.day !== d.day), newRow]);
       // 첫 수익 1회성 카드
       if ((d.revenue ?? 0) > 0) {
         try { if (localStorage.getItem("ateflo_first_revenue") !== "1") { localStorage.setItem("ateflo_first_revenue", "1"); setFirstRevenue(true); } } catch { /* ignore */ }
       }
+      if (backfillDay) setBackfillDay(null);
       setSavedRow(newRow);
       setState("done");
       onSaved?.();
@@ -85,12 +91,28 @@ export default function CheckinCard({ articles, onSaved }: { articles: CourseArt
   }
   // 기록 완료 — 한 줄 요약 + 수정(오입력 복구). upsert라 다시 저장하면 덮어쓴다.
   if (state === "recorded" && savedRow) {
+    // 최근 7일 중 빠진 날(기록 없음) — 소급 채우기 제안(가장 최근 것 하나씩)
+    const missed = (() => {
+      const have = new Set(rows.map((r) => r.day));
+      const out: string[] = [];
+      for (let i = 2; i <= 7; i++) { const d = new Date(); d.setDate(d.getDate() - i); const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; if (!have.has(k)) out.push(k); }
+      return out;
+    })();
     return (
-      <button onClick={() => { setVisitors(savedRow.visitors !== null ? String(savedRow.visitors) : ""); setRevenue(savedRow.revenue !== null ? String(savedRow.revenue) : ""); setState("form"); }}
-        className="at-rise flex w-full items-center justify-between rounded-2xl bg-white px-5 py-3 text-left ring-1 ring-black/[0.04] transition hover:bg-neutral-50">
-        <span className="text-[12.5px] font-medium text-neutral-500">어제 기록 · 방문자 {savedRow.visitors ?? 0}명{savedRow.revenue !== null ? ` · ${savedRow.revenue.toLocaleString("ko-KR")}원` : ""}</span>
-        <span className="text-[12.5px] font-bold text-[#1D75F7]">수정</span>
-      </button>
+      <div className="at-rise rounded-2xl bg-white px-5 py-3 ring-1 ring-black/[0.04]">
+        <button onClick={() => { setBackfillDay(null); setVisitors(savedRow.visitors !== null ? String(savedRow.visitors) : ""); setRevenue(savedRow.revenue !== null ? String(savedRow.revenue) : ""); setState("form"); }}
+          className="flex w-full items-center justify-between text-left">
+          <span className="text-[12.5px] font-medium text-neutral-500">어제 기록 · 방문자 {savedRow.visitors ?? 0}명{savedRow.revenue !== null ? ` · ${savedRow.revenue.toLocaleString("ko-KR")}원` : ""}</span>
+          <span className="text-[12.5px] font-bold text-[#1D75F7]">수정</span>
+        </button>
+        {verdict && <p className="mt-2 rounded-[10px] bg-[#1D75F7]/[0.06] px-3 py-2 text-[12px] font-semibold text-[#1D75F7]">{verdict}</p>}
+        {missed.length > 0 && (
+          <button onClick={() => { setBackfillDay(missed[0]); setVisitors(""); setRevenue(""); setState("form"); }}
+            className="mt-2 text-[12px] font-semibold text-neutral-400 transition hover:text-[#1D75F7]">
+            빠진 날 채우기 · {Number(missed[0].slice(5, 7))}월 {Number(missed[0].slice(8, 10))}일 방문자 기억나면 +
+          </button>
+        )}
+      </div>
     );
   }
   const yPub = yesterdayPublished(articles);
@@ -149,7 +171,7 @@ export default function CheckinCard({ articles, onSaved }: { articles: CourseArt
         <>
           <div className="mt-3 flex gap-2">
             <label className="flex-1">
-              <span className="text-[11.5px] font-semibold text-neutral-400">어제 방문자</span>
+              <span className="text-[11.5px] font-semibold text-neutral-400">{backfillDay ? `${Number(backfillDay.slice(5, 7))}월 ${Number(backfillDay.slice(8, 10))}일 방문자` : "어제 방문자"}</span>
               <input inputMode="numeric" pattern="[0-9]*" value={visitors} onChange={(e) => setVisitors(e.target.value.replace(/[^0-9]/g, ""))} placeholder="0"
                 className="mt-1 w-full rounded-xl bg-neutral-50 px-3.5 py-2.5 text-[15px] font-bold text-neutral-900 outline-none ring-1 ring-black/[0.05] focus:ring-2 focus:ring-[#1D75F7]/30" />
             </label>

@@ -17,6 +17,12 @@ export async function GET() {
   const { data } = await q.order("day", { ascending: false }).limit(60);
   const rows = (data ?? []).reverse();
   const y = new Date(); y.setDate(y.getDate() - 1);
+  // ★소급 입력(놓친 날 채우기) — body.day가 어제~7일 전 범위면 그 날짜로 기록
+  if (typeof body.day === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.day)) {
+    const target = new Date(`${body.day}T00:00:00+09:00`).getTime();
+    const min = Date.now() - 8 * 86400000, max = Date.now() - 0.5 * 86400000;
+    if (target >= min && target <= max) { const d2 = new Date(body.day); y.setFullYear(d2.getFullYear(), d2.getMonth(), d2.getDate()); }
+  }
   const yk = dayKey(y);
   const doneToday = rows.some((r) => r.day === yk); // 오늘 체크인 = 어제 데이터 존재
   const prev = rows.filter((r) => r.day !== yk).at(-1) ?? null; // '어제와 같음' 빠른 버튼용 직전 값
@@ -34,6 +40,12 @@ export async function POST(request: Request) {
   const revenue = num(body.revenue, 100_000_000);
   if (visitors === null && revenue === null) return NextResponse.json({ error: "숫자를 입력해 주세요." }, { status: 400 });
   const y = new Date(); y.setDate(y.getDate() - 1);
+  // ★소급 입력(놓친 날 채우기) — body.day가 어제~7일 전 범위면 그 날짜로 기록
+  if (typeof body.day === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.day)) {
+    const target = new Date(`${body.day}T00:00:00+09:00`).getTime();
+    const min = Date.now() - 8 * 86400000, max = Date.now() - 0.5 * 86400000;
+    if (target >= min && target <= max) { const d2 = new Date(body.day); y.setFullYear(d2.getFullYear(), d2.getMonth(), d2.getDate()); }
+  }
   const { data: ap } = await supabase.from("blog_profiles").select("id").eq("user_id", user.id).eq("is_active", true).maybeSingle();
   // 0057 적용 후: (user, blog, day) 단위. 미적용(컬럼 없음)이면 구 동작으로 폴백 — 저장이 죽지 않게
   let { error } = await supabase.from("checkins").upsert({ user_id: user.id, blog_id: ap?.id ?? null, day: dayKey(y), visitors, revenue }, { onConflict: "user_id,blog_id,day" });
