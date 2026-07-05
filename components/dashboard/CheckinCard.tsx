@@ -21,6 +21,7 @@ export default function CheckinCard({ articles, onSaved }: { articles: CourseArt
   const [busy, setBusy] = useState(false);
   const [firstRevenue, setFirstRevenue] = useState(false);
   const [spikeAsk, setSpikeAsk] = useState(false); // ★급등 감지 — "어제 어떤 글이 잘 됐어요?" 후속 질문
+  const [verdict, setVerdict] = useState<string | null>(null); // ★즉석 판정 — 기록의 보상(며칠차 벤치마크)
   const approved = typeof window !== "undefined" && (() => { try { return localStorage.getItem("ateflo_adpost_approved") === "1"; } catch { return false; } })();
   const skipKey = `ateflo_checkin_skip_${new Date().toISOString().slice(0, 10)}`;
 
@@ -56,6 +57,7 @@ export default function CheckinCard({ articles, onSaved }: { articles: CourseArt
       if (!res.ok) { setBusy(false); return; }
       invalidateGet("/api/checkin"); // 저장 후 캐시 무효화 — 다른 컴포넌트가 새 값을 본다
       if (d.spike === true) setSpikeAsk(true); // 증폭 신호원(유저 입력 기반)
+      if (typeof d.verdict === "string") setVerdict(d.verdict);
       const newRow: Row = { day: d.day, visitors: d.visitors, revenue: d.revenue };
       setRows((prevRows) => [...prevRows.filter((x) => x.day !== d.day), newRow]);
       // 첫 수익 1회성 카드
@@ -65,7 +67,7 @@ export default function CheckinCard({ articles, onSaved }: { articles: CourseArt
       setSavedRow(newRow);
       setState("done");
       onSaved?.();
-      if (d.spike !== true) setTimeout(() => setState("recorded"), firstRevenue ? 4200 : 1600); // 급등 질문 중엔 유지 // 그래프 성장 보여준 뒤 한 줄 요약으로(수정 가능)
+      if (d.spike !== true) setTimeout(() => setState("recorded"), firstRevenue || typeof d.verdict === "string" ? 4200 : 1600); // 급등 질문 중엔 유지 // 그래프 성장 보여준 뒤 한 줄 요약으로(수정 가능)
     } finally { setBusy(false); }
   }
 
@@ -117,6 +119,7 @@ export default function CheckinCard({ articles, onSaved }: { articles: CourseArt
       {state === "done" ? (
         <div className="mt-3">
           <p className="text-[14px] font-bold text-neutral-900">기록했어요.</p>
+          {verdict && <p className="mt-1.5 rounded-[10px] bg-[#1D75F7]/[0.06] px-3 py-2 text-[12.5px] font-semibold text-[#1D75F7]">{verdict}</p>}
           {spikeAsk && (() => {
             const recent = articles.filter((a) => ["verified", "published", "pending_verify"].includes(a.status) && new Date(a.created_at).getTime() >= Date.now() - 7 * 86400000).slice(0, 5) as unknown as { id: string; title: string }[];
             if (recent.length === 0) return null;

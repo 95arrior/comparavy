@@ -10,7 +10,11 @@ export async function GET() {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "로그인이 필요해요." }, { status: 401 });
-  const { data } = await supabase.from("checkins").select("day, visitors, revenue").eq("user_id", user.id).order("day", { ascending: false }).limit(60);
+  // ★블로그별 분리(0057) — 활성 블로그의 기록만(레거시 null 포함: 과거 계정 단위 기록 연속성)
+  const { data: ap } = await supabase.from("blog_profiles").select("id").eq("user_id", user.id).eq("is_active", true).maybeSingle();
+  let q = supabase.from("checkins").select("day, visitors, revenue").eq("user_id", user.id);
+  if (ap?.id) q = q.or(`blog_id.eq.${ap.id},blog_id.is.null`);
+  const { data } = await q.order("day", { ascending: false }).limit(60);
   const rows = (data ?? []).reverse();
   const y = new Date(); y.setDate(y.getDate() - 1);
   const yk = dayKey(y);
@@ -30,13 +34,37 @@ export async function POST(request: Request) {
   const revenue = num(body.revenue, 100_000_000);
   if (visitors === null && revenue === null) return NextResponse.json({ error: "숫자를 입력해 주세요." }, { status: 400 });
   const y = new Date(); y.setDate(y.getDate() - 1);
-  const { error } = await supabase.from("checkins").upsert({ user_id: user.id, day: dayKey(y), visitors, revenue }, { onConflict: "user_id,day" });
+  const { data: ap } = await supabase.from("blog_profiles").select("id").eq("user_id", user.id).eq("is_active", true).maybeSingle();
+  // 0057 적용 후: (user, blog, day) 단위. 미적용(컬럼 없음)이면 구 동작으로 폴백 — 저장이 죽지 않게
+  let { error } = await supabase.from("checkins").upsert({ user_id: user.id, blog_id: ap?.id ?? null, day: dayKey(y), visitors, revenue }, { onConflict: "user_id,blog_id,day" });
+  if (error) {
+    ({ error } = await supabase.from("checkins").upsert({ user_id: user.id, day: dayKey(y), visitors, revenue }, { onConflict: "user_id,day" }));
+  }
   if (error) return NextResponse.json({ error: "저장하지 못했어요. 잠시 후 다시 시도해 주세요." }, { status: 500 });
   // ★급등 감지(증폭 신호) — 유저 입력만 근거. 감지 시 카드가 "어제 어떤 글이 잘 됐어요?" 후속 질문.
   let spike = false;
   try {
-    const { data: prev } = await supabase.from("checkins").select("day, visitors, revenue").eq("user_id", user.id).lt("day", dayKey(y)).order("day", { ascending: false }).limit(7);
+    let pq = supabase.from("checkins").select("day, visitors, revenue").eq("user_id", user.id).lt("day", dayKey(y));
+    if (ap?.id) pq = pq.or(`blog_id.eq.${ap.id},blog_id.is.null`);
+    const { data: prev } = await pq.order("day", { ascending: false }).limit(7);
     spike = isSpike(visitors, (prev ?? []).reverse());
   } catch { /* ignore */ }
-  return NextResponse.json({ ok: true, day: dayKey(y), visitors, revenue, spike });
+  // ★즉석 판정(무쓸모 체감 해소) — 기록의 보상: 며칠차 대비 통상 범위 판정을 바로 돌려준다(통설 벤치마크, 보장 아님)
+  let verdict: string | null = null;
+  try {
+    if (typeof visitors === "number") {
+      let fq = supabase.from("articles").select("created_at").eq("user_id", user.id).not("status", "in", "(pre_generating,pre_generated,generating)").order("created_at", { ascending: true }).limit(1);
+      const { data: firstArt } = await fq;
+      const started = firstArt?.[0]?.created_at ? new Date(firstArt[0].created_at).getTime() : Date.now();
+      const days = Math.max(1, Math.ceil((Date.now() - started) / 86400000));
+      const BM: [number, number, number][] = [[3, 0, 5], [7, 0, 20], [14, 10, 50], [30, 30, 100], [90, 50, 300], [180, 100, 500], [365, 200, 1000]];
+      const [, lo, hi] = BM.find(([d]) => days <= d) ?? BM[BM.length - 1];
+      verdict = visitors > hi
+        ? `${days}일차 기준 통상 범위(${lo}~${hi})를 넘었어요 — 상위권 페이스예요`
+        : visitors >= lo
+        ? `${days}일차 통상 범위(${lo}~${hi}) 안 — 정상 궤도예요`
+        : `${days}일차 통상 범위(${lo}~${hi})보다 낮아요 — 꾸준함이 답이에요, 초기엔 흔해요`;
+    }
+  } catch { /* 판정 실패 = 생략 */ }
+  return NextResponse.json({ ok: true, day: dayKey(y), visitors, revenue, spike, verdict });
 }

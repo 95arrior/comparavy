@@ -474,7 +474,7 @@ export default function Home({
                   <CheckinCard articles={articles} />
                 </>
               )}
-              {routineSheet === "neighbor" && <NeighborMission subCategory={subCategory} sheet />}
+              {routineSheet === "neighbor" && <NeighborMission subCategory={subCategory} blogKey={profileKey} sheet />}
               {routineSheet === "topics" && (
                 topicsLoading ? <TopicsSkeleton collecting={collecting} /> : rest.length > 0 ? (
                   <div className="flex flex-col gap-3">

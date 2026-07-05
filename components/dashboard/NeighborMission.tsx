@@ -11,8 +11,8 @@ import { copyTextVerified } from "@/lib/clipboard";
 
 const dayKey = () => new Date().toISOString().slice(0, 10);
 
-export default function NeighborMission({ subCategory, sheet }: { subCategory?: string | null; sheet?: boolean }) {
-  const missionKey = `ateflo_mission_${dayKey()}`;
+export default function NeighborMission({ subCategory, sheet, blogKey }: { subCategory?: string | null; sheet?: boolean; blogKey?: string | null }) {
+  const missionKey = `ateflo_mission_${dayKey()}_${blogKey ?? ""}`; // ★블로그별 분리 — 박카·경제 체크가 안 섞이게
   const [open, setOpen] = useState(!!sheet); // sheet 모드=항상 펼침(토글 헤더 숨김)
   const [checks, setChecks] = useState<{ neighbor: boolean; comment: boolean }>({ neighbor: false, comment: false });
   const [greeting, setGreeting] = useState<string | null>(null);
