@@ -19,7 +19,7 @@ export interface TodayTopic {
 }
 
 export default function TodayCard({
-  topic, loading, credits, info, onWriteKeyword, onGoPerformance, onOpenTodayDraft, preReady, onReadToday, onHeroSwap, plain,
+  topic, loading, credits, info, onWriteKeyword, onGoPerformance, onOpenTodayDraft, preReady, onReadToday, onHeroSwap, heroSwapsLeft, plain,
 }: {
   topic: TodayTopic | null;
   loading: boolean;
@@ -32,8 +32,10 @@ export default function TodayCard({
   /** ★사전 생성 완료 — 버튼이 '글 읽어보기'로 조용히 전환(생성 광고 금지, 이 라벨이 유일한 신호) */
   preReady?: boolean;
   onReadToday?: () => void;
-  /** 오늘의 글 교체(하루 2회 제한은 상위에서) */
+  /** 오늘의 글 교체(한도는 상위에서) */
   onHeroSwap?: () => void;
+  /** 오늘 남은 교체 횟수 — 0이면 버튼 흐림(안 먹히는 것처럼 보이는 UX 제거) */
+  heroSwapsLeft?: number;
   /** 캔버스 위 섹션(카드 껍데기 없음) — 홈 재설계 */
   plain?: boolean;
 }) {
@@ -60,8 +62,9 @@ export default function TodayCard({
         <div className="flex items-center justify-between">
           <Header label="오늘의 글" chip="완료" />
           {topic && !locked && onHeroSwap && (
-            <button onClick={onHeroSwap} aria-label="다음 글감 교체" className="at-press flex h-8 w-8 items-center justify-center rounded-full bg-[#F7F8FA] hover:bg-[#EFF2F6]">
-              <GlassIcon name="refresh" tint="grey" size={15} />
+            <button onClick={onHeroSwap} aria-label="다음 글감 교체" className={`at-press flex h-8 items-center gap-1.5 rounded-full bg-[#F7F8FA] px-2.5 hover:bg-[#EFF2F6] ${heroSwapsLeft === 0 ? "opacity-45" : ""}`}>
+              <GlassIcon name="refresh" tint="grey" size={14} />
+              {typeof heroSwapsLeft === "number" && <span className="text-[11.5px] font-bold tabular-nums text-neutral-500">{heroSwapsLeft}</span>}
             </button>
           )}
         </div>
@@ -139,8 +142,9 @@ export default function TodayCard({
         <div className="flex items-center justify-between">
           <p className="text-[13px] font-semibold text-white/70">오늘의 글</p>
           {onHeroSwap && (
-            <button onClick={onHeroSwap} aria-label="다른 글감으로 교체" className="at-press flex h-8 w-8 items-center justify-center rounded-full bg-white/15 hover:bg-white/25">
-              <GlassGlyph name="refresh" size={15} />
+            <button onClick={onHeroSwap} aria-label="다른 글감으로 교체" className={`at-press flex h-8 items-center gap-1.5 rounded-full bg-white/15 px-2.5 hover:bg-white/25 ${heroSwapsLeft === 0 ? "opacity-45" : ""}`}>
+              <GlassGlyph name="refresh" size={14} />
+              {typeof heroSwapsLeft === "number" && <span className="text-[11.5px] font-bold tabular-nums text-white/85">{heroSwapsLeft}</span>}
             </button>
           )}
         </div>

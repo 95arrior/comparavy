@@ -223,19 +223,26 @@ export default function Home({
   const weekAgo = Date.now() - 7 * 86400000;
   const reviewThisWeek = articles.filter((a) => a.status !== "generating" && new Date(a.created_at).getTime() >= weekAgo && revenuePath({ keyword: a.keyword ?? "", title: a.title }) === "shopping").length;
   const reviewPick = reviewThisWeek < REVIEW_WEEKLY_MIN ? availClean.find((t) => revenuePath({ keyword: t.keyword, title: t.title }) === "shopping") : undefined;
-  const first = boost ?? reviewPick ?? pickNextTopic(clean, usedToday);
-  // ★오늘의 글 교체 — 하루 2회(무한 고르기 방지·뇌빼고 유지). 파쇄기류 미스매치 탈출구.
+  const heroPool = clean.filter((t) => !heroSkipped.includes(t.keyword));
+  const first = boost ?? reviewPick ?? pickNextTopic(heroPool.length ? heroPool : clean, usedToday);
+  // ★오늘의 글 교체 v2 — '버리기'가 아니라 '순환': 이전 글감은 다른 글감 시트로 내려간다(되돌리기 = 시트에서 그 글감 쓰기).
+  //  하루 3회(무한 고르기 방지·뇌빼고 유지), 소진 시 전용 알림. 미스매치(파쇄기류) 탈출구.
   const heroSwapKey = `ateflo_heroswap_${new Date().toISOString().slice(0, 10)}`;
+  const heroSkipKey = `ateflo_heroskip_${new Date().toISOString().slice(0, 10)}`;
+  const [heroSkipped, setHeroSkipped] = useState<string[]>(() => { try { return JSON.parse(localStorage.getItem(heroSkipKey) ?? "[]"); } catch { return []; } });
+  const [heroSwapsUsed, setHeroSwapsUsed] = useState<number>(() => { try { return Number(localStorage.getItem(heroSwapKey) ?? "0") || 0; } catch { return 0; } });
+  const HERO_SWAP_MAX = 3;
+  const [heroLimitNotice, setHeroLimitNotice] = useState(false);
   function heroSwap() {
     if (!first) return;
-    let n = 0; try { n = Number(localStorage.getItem(heroSwapKey) ?? "0") || 0; } catch { /* ignore */ }
-    if (n >= 2) { setSwapNotice(true); setTimeout(() => setSwapNotice(false), 2600); return; }
-    try { localStorage.setItem(heroSwapKey, String(n + 1)); } catch { /* ignore */ }
+    if (heroSwapsUsed >= HERO_SWAP_MAX) { setHeroLimitNotice(true); setTimeout(() => setHeroLimitNotice(false), 3200); return; }
+    const n = heroSwapsUsed + 1;
+    setHeroSwapsUsed(n);
+    try { localStorage.setItem(heroSwapKey, String(n)); } catch { /* ignore */ }
     const kw = first.keyword;
-    const nd = [...dismissedRef.current, kw];
-    setDismissed(nd);
-    try { localStorage.setItem(todayKey, JSON.stringify(nd)); } catch { /* ignore */ }
-    setTopics((prev) => { const next = prev.filter((t) => t.keyword !== kw); try { localStorage.setItem(topicsCacheKey(), JSON.stringify(next)); } catch { /* ignore */ } return next; });
+    const ns = [...heroSkipped, kw];
+    setHeroSkipped(ns);
+    try { localStorage.setItem(heroSkipKey, JSON.stringify(ns)); } catch { /* ignore */ }
   }
   // 트리거 조건: 글감 확정 + 크레딧 있음 + 오늘 미완료·무초안. 같은 글감 재트리거 금지(ref).
   useEffect(() => {
@@ -277,7 +284,9 @@ export default function Home({
   }
   // ★쓴 글은 시트에서도 제외(실측: 오늘 쓴 2편이 '다른 글감'에 계속 노출) — 키워드·제목 모두 대조
   const writtenTitles = new Set(articles.map((a) => (a.title ?? "").trim()).filter(Boolean));
-  const rest = clean.filter((t) => t !== first && !usedToday.map(normK).includes(normK(t.keyword)) && !writtenTitles.has(t.title.trim()));
+  const restBase = clean.filter((t) => t !== first && !usedToday.map(normK).includes(normK(t.keyword)) && !writtenTitles.has(t.title.trim()));
+  // 히어로에서 내려온 글감을 시트 맨 위로 — '방금 교체한 그거 어디 갔지'가 항상 첫눈에
+  const rest = [...restBase.filter((t) => heroSkipped.includes(t.keyword)).reverse(), ...restBase.filter((t) => !heroSkipped.includes(t.keyword))];
 
   return (
     <main className="mx-auto max-w-[520px] px-5 pb-16">
@@ -380,6 +389,7 @@ export default function Home({
           onWriteKeyword={onWriteKeyword}
           onGoPerformance={onGoPerformance}
           onHeroSwap={heroSwap}
+          heroSwapsLeft={Math.max(0, HERO_SWAP_MAX - heroSwapsUsed)}
           onOpenTodayDraft={(() => { const d = articles.find((a) => a.status === "draft" && new Date(a.created_at).toDateString() === new Date().toDateString()); return d ? () => onSelect(d) : undefined; })()}
           preReady={!!preReadyId}
           onReadToday={readToday}
