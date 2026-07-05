@@ -100,6 +100,18 @@ export default function Home({
   const [moreOpen, setMoreOpen] = useState(false); // '다른 글감' 접힘 토글(시트로 대체 — 유지: 스크롤 ref)
   const [routineSheet, setRoutineSheet] = useState<null | "checkin" | "neighbor" | "topics">(null);
   const [blogSheet, setBlogSheet] = useState(false); // ★블로그 스위처
+  // ★오늘 할 일 스텝퍼 — 상태 자동 감지(선택의 여지 제거: 다음 미완료가 항상 하이라이트)
+  const [checkinDone, setCheckinDone] = useState(false);
+  const [neighborDone, setNeighborDone] = useState(false);
+  useEffect(() => {
+    cachedGet<{ doneToday?: boolean }>("/api/checkin").then((d) => setCheckinDone(d.doneToday === true)).catch(() => { /* ignore */ });
+    try {
+      const dk = new Date(); const day = `${dk.getFullYear()}-${String(dk.getMonth() + 1).padStart(2, "0")}-${String(dk.getDate()).padStart(2, "0")}`;
+      const raw = localStorage.getItem(`ateflo_mission_${day}_${profileKey ?? ""}`);
+      const c = raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
+      setNeighborDone(Object.values(c).filter(Boolean).length >= 2); // 이웃 미션 2개 이상 체크 = 오늘 몫
+    } catch { /* ignore */ }
+  }, [routineSheet, profileKey]); // 시트 닫을 때 재평가 — 방금 한 것이 바로 체크되게
   const [switching, setSwitching] = useState<string | null>(null); // 전환 중 즉각 피드백(리로드 전 죽은 시간 제거)
   const [blogCount, setBlogCount] = useState(1);
   useEffect(() => { cachedGet<{ blogs?: { id: string; blog_name: string | null; sub_category: string | null; is_active: boolean }[] }>("/api/blogs", 60_000).then((d) => { const list = Array.isArray(d.blogs) ? d.blogs : []; setBlogCount(Math.max(1, list.length)); setBlogList(list); }).catch(() => { /* ignore */ }); }, []); // 마운트 선로딩 — 스위처가 탭 즉시 뜨게(실측: 반응 지연)
@@ -399,25 +411,53 @@ export default function Home({
         />
       </div>
 
-      {/* ★오늘의 루틴 — 토스식: 홈엔 행 하나씩, 상세는 시트. 홈의 주인공은 위 '오늘의 글' 하나뿐. */}
-      <div className="tk-seq-3 mt-8">
-        <p className="px-2 text-[13px] font-semibold text-[color:var(--color-text-weak)]">오늘의 루틴</p>
-        <div className="mt-3 grid grid-cols-3 gap-3">
-          {([
-            { key: "checkin" as const, label: "아침 체크인", sub: "30초", icon: <GlassIcon name="check" tint="green" size={30} /> },
-            { key: "neighbor" as const, label: "이웃 미션", sub: "이웃 5 · 댓글 2", icon: <GlassIcon name="gift" tint="rose" size={30} /> },
-            { key: "topics" as const, label: "다른 글감", sub: topicsLoading ? "로딩" : `${rest.length}개`, icon: <GlassIcon name="search" tint="amber" size={30} /> },
-          ]).map((r, i) => (
-            <button key={r.key} onClick={() => setRoutineSheet(r.key)}
-              className="at-press tk-chip rounded-[20px] bg-white p-4 text-left shadow-[0_2px_12px_-4px_rgba(29,117,247,0.12)] tk-tr hover:-translate-y-px hover:shadow-[0_6px_16px_-6px_rgba(29,117,247,0.18)]"
-              style={{ animationDelay: `${200 + i * 80}ms` }}>
-              <span className="flex h-10 w-10 items-center">{r.icon}</span>
-              <span className="mt-3 block text-[14px] font-bold text-[color:var(--color-text)]">{r.label}</span>
-              <span className="mt-0.5 block text-[12px] text-[color:var(--color-text-weak)]">{r.sub}</span>
+      {/* ★오늘 할 일 — 순서 스텝퍼(토스식: 선택의 여지 없음, 다음 것 하나만 켜진다). 다른 글감은 보조 링크로 강등. */}
+      {(() => {
+        const steps = [
+          { key: "checkin" as const, label: "아침 체크인", sub: "어제 방문자 기록 · 30초", done: checkinDone },
+          { key: "write" as const, label: "오늘의 글 발행", sub: "위의 글감으로 한 편", done: info.publishedToday },
+          { key: "neighbor" as const, label: "이웃 미션", sub: "이웃 5 · 댓글 2 — 첫 반응이 노출을 열어요", done: neighborDone },
+        ];
+        const doneCount = steps.filter((x) => x.done).length;
+        const nextIdx = steps.findIndex((x) => !x.done);
+        return (
+          <div className="tk-seq-3 mt-8">
+            <div className="flex items-center justify-between px-2">
+              <p className="text-[13px] font-semibold text-[color:var(--color-text-weak)]">오늘 할 일</p>
+              <p className="text-[12px] font-bold tabular-nums text-[color:var(--color-brand)]">{doneCount}/{steps.length}</p>
+            </div>
+            {doneCount === steps.length ? (
+              <div className="tk-card-glow mt-3 rounded-[20px] p-6 text-center shadow-[0_2px_12px_-4px_rgba(29,117,247,0.12)]">
+                <p className="text-[17px] font-bold text-[color:var(--color-text)]">오늘 몫 전부 끝!</p>
+                <p className="mt-1 text-[12.5px] text-[color:var(--color-text-weak)]">이대로만 하면 돼요 — 내일 아침에 새 글감으로 만나요.</p>
+              </div>
+            ) : (
+              <div className="mt-3 overflow-hidden rounded-[20px] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+                {steps.map((r, i) => {
+                  const isNext = i === nextIdx;
+                  return (
+                    <button key={r.key}
+                      onClick={() => { if (r.key === "write") { if (first && !info.publishedToday) window.scrollTo({ top: 0, behavior: "smooth" }); } else setRoutineSheet(r.key); }}
+                      className={`flex min-h-[60px] w-full items-center gap-3 px-5 py-4 text-left tk-tr ${i > 0 ? "border-t border-[color:var(--color-line)]" : ""} ${isNext ? "bg-[#1D75F7]/[0.05]" : ""}`}>
+                      <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11.5px] font-bold ${r.done ? "tk-grad-cta text-white" : isNext ? "bg-[color:var(--color-brand)] text-white" : "bg-neutral-100 text-neutral-400"}`}>
+                        {r.done ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg> : i + 1}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className={`block text-[15px] font-semibold ${r.done ? "text-neutral-300 line-through" : "text-[color:var(--color-text)]"}`}>{r.label}</span>
+                        {!r.done && <span className="mt-0.5 block text-[12px] text-[color:var(--color-text-weak)]">{r.sub}</span>}
+                      </span>
+                      {isNext && <span className="shrink-0 rounded-full bg-[color:var(--color-brand)] px-2.5 py-1 text-[11.5px] font-bold text-white">지금 할 차례</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            <button onClick={() => setRoutineSheet("topics")} className="mt-2 w-full py-2 text-center text-[12.5px] font-semibold text-[color:var(--color-text-weak)] transition hover:text-[color:var(--color-brand)]">
+              다른 글감 보기{topicsLoading ? "" : ` · ${rest.length}개`}
             </button>
-          ))}
-        </div>
-      </div>
+          </div>
+        );
+      })()}
 
       {/* ★레벨 추천 — 시스템이 다음 행동을 말해준다(챌린지 코어). 생각 불필요. */}
       {(() => {

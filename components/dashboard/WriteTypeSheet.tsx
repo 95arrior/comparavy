@@ -45,7 +45,7 @@ export default function WriteTypeSheet({
         <p className="text-xs font-medium text-neutral-400">{hasTwo ? "제목을 골라주세요" : "이 글감으로 쓸까요?"}</p>
         {hasTwo ? (
           <div className="mt-2 space-y-2">
-            {[{ t: title, tag: "클릭형" }, { t: titleAlt as string, tag: "검색형" }].map(({ t, tag }) => {
+            {[{ t: title, tag: "클릭형 · 추천" }, { t: titleAlt as string, tag: "검색형" }].map(({ t, tag }) => {
               const on = pickTitle === t;
               return (
                 <button key={t} onClick={() => setPickTitle(t)}
