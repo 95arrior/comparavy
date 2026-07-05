@@ -124,7 +124,7 @@ export default function Home({
   const preFiredRef = useRef<string | null>(null);
   const [preReadyId, setPreReadyId] = useState<string | null>(null);
   const todayDate = new Date().toISOString().slice(0, 10);
-  const topicsCacheKey = () => `ateflo_topics_v29_${todayDate}_${profileKey ?? ""}_normal`;
+  const topicsCacheKey = () => `ateflo_topics_v30_${todayDate}_${profileKey ?? ""}_normal`;
 
   const SWAP_LIMIT = 12; // 하루 교체 상한 — 풀 소진·API 낭비 방지(유저 요청)
   const swapCountKey = `ateflo_swaps_${new Date().toISOString().slice(0, 10)}`;
@@ -172,7 +172,7 @@ export default function Home({
   };
 
   const loadTopics = useCallback(async () => {
-    const ck = `ateflo_topics_v29_${new Date().toISOString().slice(0, 10)}_${profileKey ?? ""}_normal`;
+    const ck = `ateflo_topics_v30_${new Date().toISOString().slice(0, 10)}_${profileKey ?? ""}_normal`;
     try {
       const raw = typeof window !== "undefined" ? localStorage.getItem(ck) : null;
       if (raw) { const p = JSON.parse(raw); const c = Array.isArray(p) ? sanitizeTopics(p) : []; if (c.length >= 3) { setTopics(c); setTopicsLoading(false); return; } }
@@ -275,7 +275,9 @@ export default function Home({
     setPreReadyId(null);
     onWriteKeyword(f.keyword, f.title, f.newsContext, f.briefText, f.titleSearch, f.thumb);
   }
-  const rest = clean.filter((t) => t !== first);
+  // ★쓴 글은 시트에서도 제외(실측: 오늘 쓴 2편이 '다른 글감'에 계속 노출) — 키워드·제목 모두 대조
+  const writtenTitles = new Set(articles.map((a) => (a.title ?? "").trim()).filter(Boolean));
+  const rest = clean.filter((t) => t !== first && !usedToday.map(normK).includes(normK(t.keyword)) && !writtenTitles.has(t.title.trim()));
 
   return (
     <main className="mx-auto max-w-[520px] px-5 pb-16">
