@@ -16,6 +16,7 @@ export default function RevenueDash({ publishedCount }: { publishedCount: number
   }, []);
   if (!rows || rows.length === 0) return null; // 입력 전 — 아무것도 표시 안 함
 
+  const map = new Map(rows.map((x) => [x.day, x] as const));
   const total = totalRevenue(rows);
   const avg = avgPerPost(rows, publishedCount);
   const pace = monthPace(rows);
@@ -24,15 +25,37 @@ export default function RevenueDash({ publishedCount }: { publishedCount: number
 
   // 최근 30일 이중 그래프 — 방문자(위) + 수익(아래), 빈 날 공백
   const days: { key: string; v: number | null; r: number | null }[] = [];
-  const map = new Map(rows.map((x) => [x.day, x] as const));
   for (let i = 30; i >= 1; i--) { const d = new Date(); d.setDate(d.getDate() - i); const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; const row = map.get(k); days.push({ key: k, v: row?.visitors ?? null, r: row?.revenue ?? null }); }
   const maxV = Math.max(1, ...days.map((x) => x.v ?? 0));
   const maxR = Math.max(1, ...days.map((x) => x.r ?? 0));
 
+  // ★성장 서사(실측: '이게 뭔가 싶다') — 이번 주 vs 지난주 큰 숫자 + 최고 기록. 승인 전에도 성장이 보이게.
+  const sum = (from: number, to: number) => { let t = 0, has = false; for (let i = from; i >= to; i--) { const d = new Date(); d.setDate(d.getDate() - i); const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; const v = map.get(k)?.visitors; if (typeof v === "number") { t += v; has = true; } } return has ? t : null; };
+  const thisWeek = sum(7, 1);
+  const lastWeek = sum(14, 8);
+  const growth = thisWeek !== null && lastWeek !== null && lastWeek > 0 ? Math.round(((thisWeek - lastWeek) / lastWeek) * 100) : null;
+  const best = rows.reduce((m, r) => Math.max(m, r.visitors ?? 0), 0);
+  const cum = rows.reduce((t, r) => t + (r.visitors ?? 0), 0);
+
   return (
     <div className="rounded-2xl at-glass p-5">
-      <p className="text-[15px] font-bold text-neutral-900">수익 기록</p>
-      <p className="mt-0.5 text-[11.5px] text-neutral-400">직접 입력한 데이터만 보여드려요.</p>
+      <p className="text-[15px] font-bold text-neutral-900">성장 기록</p>
+      <p className="mt-0.5 text-[11.5px] text-neutral-400">체크인에 기록한 데이터로 그려져요.</p>
+      {thisWeek !== null && (
+        <div className="mt-3 flex items-baseline gap-2">
+          <span className="tk-grad-text text-[28px] font-extrabold leading-none tabular-nums">{thisWeek.toLocaleString("ko-KR")}</span>
+          <span className="text-[13px] font-semibold text-neutral-500">이번 주 방문</span>
+          {growth !== null && (
+            <span className={`rounded-full px-2 py-0.5 text-[11.5px] font-bold tabular-nums ${growth >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-neutral-100 text-neutral-400"}`}>
+              {growth >= 0 ? `지난주보다 +${growth}%` : `지난주보다 ${growth}%`}
+            </span>
+          )}
+        </div>
+      )}
+      <div className="mt-2 flex gap-3 text-[11.5px] text-neutral-400">
+        {best > 0 && <span>최고 하루 <b className="tabular-nums text-neutral-600">{best.toLocaleString("ko-KR")}</b></span>}
+        {cum > 0 && <span>누적 <b className="tabular-nums text-neutral-600">{cum.toLocaleString("ko-KR")}</b></span>}
+      </div>
       <div className="mt-3 grid grid-cols-3 gap-2">
         {hasRevenue && (
           <div className="rounded-xl bg-white/70 p-3 ring-1 ring-black/[0.04]">

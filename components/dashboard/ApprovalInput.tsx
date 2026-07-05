@@ -11,13 +11,14 @@ const REASONS = [
 ];
 
 export default function ApprovalInput({ onChanged }: { onChanged?: () => void }) {
-  const [state, setState] = useState<"idle" | "approved" | "rejected" | "hold">("idle");
+  const [state, setState] = useState<"idle" | "applied" | "approved" | "rejected" | "hold">("idle");
   const [reason, setReason] = useState<string | null>(null);
   const [retryDday, setRetryDday] = useState<number | null>(null);
 
   useEffect(() => {
     try {
       if (localStorage.getItem("ateflo_adpost_approved") === "1") { setState("approved"); return; }
+      if (localStorage.getItem("ateflo_adpost_applied") === "1") { setState("applied"); }
       const until = Number(localStorage.getItem("ateflo_adpost_retry_until") ?? 0);
       if (until > Date.now()) { setState("rejected"); setReason(localStorage.getItem("ateflo_adpost_reject_reason")); setRetryDday(Math.ceil((until - Date.now()) / 86400000)); }
     } catch { /* ignore */ }
@@ -68,6 +69,20 @@ export default function ApprovalInput({ onChanged }: { onChanged?: () => void })
         <p className="mt-1.5 text-[12.5px] leading-relaxed text-neutral-600">{r?.next ?? "글을 더 쌓은 뒤 재신청해 보세요. 재신청으로 승인받는 경우가 많아요."}</p>
         <p className="mt-1 text-[12px] text-neutral-400">그때까지 매일 발행 페이스를 유지하면 준비 끝이에요.</p>
         <button onClick={setApproved} className="at-press mt-3 w-full rounded-xl bg-neutral-100 py-2.5 text-[13px] font-bold text-neutral-600 transition hover:bg-neutral-200">그 사이 승인됐어요</button>
+      </div>
+    );
+  }
+  // ★신청 게이트(실측: 신청도 안 했는데 결과부터 물음) — idle=신청 안내, applied 이후에만 결과 질문
+  if (state === "idle") {
+    return (
+      <div className="rounded-2xl at-glass p-5">
+        <p className="text-[14px] font-bold text-neutral-900">애드포스트 신청할 준비가 됐어요</p>
+        <p className="mt-0.5 text-[12px] leading-relaxed text-neutral-400">글이 충분히 쌓였어요. adpost.naver.com에서 미디어 등록을 신청하고, 하셨으면 알려주세요.</p>
+        <div className="mt-3 flex gap-2">
+          <a href="https://adpost.naver.com" target="_blank" rel="noopener" className="at-press flex-1 rounded-xl tk-grad-cta py-2.5 text-center text-[13px] font-bold text-white transition hover:opacity-90">애드포스트 열기</a>
+          <button onClick={() => { try { localStorage.setItem("ateflo_adpost_applied", "1"); } catch { /* ignore */ } setState("applied"); }}
+            className="at-press flex-1 rounded-xl bg-neutral-100 py-2.5 text-[13px] font-bold text-neutral-600 transition hover:bg-neutral-200">신청했어요</button>
+        </div>
       </div>
     );
   }
