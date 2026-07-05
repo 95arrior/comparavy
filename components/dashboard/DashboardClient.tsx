@@ -707,7 +707,7 @@ export default function DashboardClient(props: DashboardProps) {
                       <p className="truncate text-[15px] font-bold text-neutral-900"><span className="px-0.5" style={{ background: "linear-gradient(transparent 62%, #ffe94d 62%)" }}>{displayName}</span>
                         <span className="ml-2 rounded-full bg-[#1D75F7]/10 px-2 py-0.5 align-middle text-[11px] font-bold text-[#1D75F7]">Lv.{lv.level} {lv.name}</span>
                       </p>
-                      <p className="text-[13px] text-neutral-400">크레딧 <b className="text-[#1D75F7]">{credits.toLocaleString("ko-KR")}</b> · 글 1편 = 10크레딧</p>
+                      <p className="text-[13px] text-neutral-400">크레딧 <b className="text-[#1D75F7]">{credits.toLocaleString("ko-KR")}</b> · 글 1편 = 15크레딧</p>
                     </div>
                   </div>
                   {lv.next && <p className="mt-3 rounded-[10px] bg-[#F7F8FA] px-3 py-2 text-[12px] font-semibold text-neutral-500">다음 목표 · {lv.next}</p>}

@@ -5,7 +5,7 @@ import { pickWpTopic } from "@/lib/googleTopics";
 import { publishPost } from "@/lib/wordpress";
 import { decryptSecret } from "@/lib/crypto";
 import { spendCredits, addCredits } from "@/lib/credits";
-import { GENERATE_COST } from "@/lib/creditPacks";
+import { WP_GENERATE_COST } from "@/lib/creditPacks";
 import { stylePersonaInstruction } from "@/lib/stylePersona";
 import { logUsage } from "@/lib/usageLog";
 
@@ -49,7 +49,7 @@ export async function GET(request: Request) {
       const pick = await pickWpTopic(b.user_id, sub);
       if (!pick) { results.push({ blog: b.id, result: "no_topic" }); continue; }
 
-      const balance = await spendCredits(b.user_id, GENERATE_COST, "wp_auto");
+      const balance = await spendCredits(b.user_id, WP_GENERATE_COST, "wp_auto");
       if (balance === null) { results.push({ blog: b.id, result: "no_credits" }); continue; }
 
       try {
@@ -89,7 +89,7 @@ export async function GET(request: Request) {
         }
         void logUsage({ userId: b.user_id, model: "wp-auto", kind: "wp_autopublish", inputTokens: 0, outputTokens: 0 });
       } catch (e) {
-        await addCredits(b.user_id, GENERATE_COST, "refund_wp_auto", `wpauto-${b.id}-${kstDay()}`).catch(() => null); // 멱등 환불
+        await addCredits(b.user_id, WP_GENERATE_COST, "refund_wp_auto", `wpauto-${b.id}-${kstDay()}`).catch(() => null); // 멱등 환불
         results.push({ blog: b.id, result: `fail:${e instanceof Error ? e.message.slice(0, 60) : "?"}` });
       }
     } catch (e) {
