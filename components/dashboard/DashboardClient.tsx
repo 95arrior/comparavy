@@ -16,6 +16,7 @@ import KeywordFinder from "./KeywordFinder";
 import KeywordQueue from "./KeywordQueue";
 import Onboarding from "./Onboarding";
 import WpOnboarding from "./WpOnboarding";
+import WpHome from "./WpHome";
 import Home from "./Home";
 import { toEngineType, type BlogProfile } from "@/lib/blogProfile";
 import GlassIcon from "@/components/GlassIcon";
@@ -570,7 +571,16 @@ export default function DashboardClient(props: DashboardProps) {
         {!page && !selected && !genParams && tab === "lab" && blogProfile && (
           <div className="ateflo-page-in">
             {/* 메인 홈 — 탭 없이 한 페이지(내 이야기 + 글감). 글감 '구경'은 잔액 0이어도 가능(구경 무료), 생성만 크레딧 */}
-            {labView === "home" && (
+            {labView === "home" && (blogProfile as { channel?: string }).channel === "wordpress" ? (
+              <WpHome
+                blogName={blogProfile.blog_name ?? "내 블로그"}
+                blogId={(blogProfile as { id?: string }).id ?? ""}
+                articles={articles}
+                credits={credits}
+                onOpenArticle={(a) => setSelected(a)}
+                onAddBlog={() => setAddBlogMode(true)}
+              />
+            ) : labView === "home" && (
               <Home
                 displayName={displayName}
                 blogName={blogProfile.blog_name ?? "내 블로그"}
