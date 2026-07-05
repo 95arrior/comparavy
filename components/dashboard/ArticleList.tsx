@@ -28,6 +28,19 @@ export default function ArticleList({
   const [unpubBusy, setUnpubBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
+  // ★발행 유실 자동 회수 — 목록 진입 시 1회, 초안 중 실제 블로그(RSS)에 올라간 글을 발행됨으로 승격.
+  //  '발행까지 끝냈어요'를 안 누르고 닫아도 시스템이 찾아낸다(수동 관리 불필요 — 뇌빼고 원칙).
+  useEffect(() => {
+    if (!allArticles.some((a) => a.status === "draft" || a.status === "copied")) return;
+    fetch("/api/reconcile-posts", { method: "POST" }).then((r) => r.json()).then((d) => {
+      if (d?.recovered > 0) {
+        setMsg(`네이버에서 발행 ${d.recovered}편을 찾아 반영했어요`);
+        try { window.setTimeout(() => window.location.reload(), 1400); } catch { /* ignore */ }
+      }
+    }).catch(() => { /* 조용히 — 다음 진입 때 재시도 */ });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ★색인 상태 — 이제 크론이 하루 1번 검사해 DB(article.indexed_status)에 저장. 화면은 저장값만 읽는다.
   //  (유저가 열 때마다 네이버 검색을 부르던 방식 폐기 → 1만 명 쿼터 문제 해소.)
   const idxLabel = (a: Article): { text: string; cls: string } | null => {

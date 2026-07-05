@@ -131,7 +131,7 @@ export async function PATCH(request: Request) {
   const body = await request.json().catch(() => ({}));
   if (typeof body.naver_blog_id !== "string") return NextResponse.json({ error: "naver_blog_id가 필요해요." }, { status: 400 });
   const id = body.naver_blog_id.trim().replace(/^https?:\/\//, "").replace(/^m\./, "").replace(/^blog\.naver\.com\//, "").replace(/[/?#].*$/, "").slice(0, 40) || null;
-  const { error } = await supabase.from("blog_profiles").update({ naver_blog_id: id, updated_at: new Date().toISOString() }).eq("user_id", user.id);
+  const { error } = await supabase.from("blog_profiles").update({ naver_blog_id: id, updated_at: new Date().toISOString() }).eq("user_id", user.id).eq("is_active", true); // ★활성 블로그만(실측: 전 블로그가 같은 주소로 덮임)
   if (error) return NextResponse.json({ error: "저장하지 못했어요." }, { status: 500 });
   return NextResponse.json({ ok: true, naver_blog_id: id });
 }
