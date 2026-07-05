@@ -53,7 +53,7 @@ export default function DashboardClient(props: DashboardProps) {
       } catch { /* ignore */ }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [(blogProfile as { naver_blog_id?: string | null } | null)?.naver_blog_id]); // ★활성 블로그 전환·프로필 도착 시 재동기(실측: 전환해도 이전 블로그 주소 고정)
+  }, []);
   function editNaverBlogId() {
     const input = window.prompt("내 네이버 블로그 아이디\n(예: blog.naver.com/myblog → myblog)", naverBlogId);
     if (input == null) return;
@@ -73,6 +73,12 @@ export default function DashboardClient(props: DashboardProps) {
   const [doneId, setDoneId] = useState<string | null>(null); // 백그라운드 생성 완료 → '보러가기'로 안내
   // 블로그 프로필 + 키워드 예약 큐
   const [blogProfile, setBlogProfile] = useState<BlogProfile | null>(null);
+  // ★활성 블로그 전환·프로필 도착 시 주소 재동기(실측: 전환해도 이전 블로그 주소 고정)
+  useEffect(() => {
+    const sid = (blogProfile as { naver_blog_id?: string | null } | null)?.naver_blog_id ?? "";
+    if (sid) { setNaverBlogId(sid); try { localStorage.setItem("ateflo_naver_blogid", sid); } catch { /* ignore */ } }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [(blogProfile as { naver_blog_id?: string | null } | null)?.naver_blog_id]);
   const [reonboardPrev, setReonboardPrev] = useState<BlogProfile | null>(null); // 재설정(재온보딩) 전 프로필 — 취소 시 복귀
   const [addBlogMode, setAddBlogMode] = useState(false); // ★멀티 블로그 — 새 블로그 추가(온보딩 재사용, createNew)
   const [queue, setQueue] = useState<QueueItem[]>([]);
