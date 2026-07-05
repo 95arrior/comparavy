@@ -1,6 +1,7 @@
 "use client";
 
 import GlassIcon, { GlassGlyph } from "@/components/GlassIcon";
+import TipChip, { tipFor } from "@/components/TipChip";
 import type { CourseInfo } from "@/lib/course";
 import { nextWritePercent } from "@/lib/course";
 import { whyNow } from "@/lib/whyNow";
@@ -186,14 +187,12 @@ function DemandRow({ topic, muted, onGoPerformance, onDark }: { topic: TodayTopi
     <div className={muted ? "opacity-60" : ""}>
       <div className="flex flex-wrap items-center gap-1.5 [&>*]:tk-chip">
         {topic.seriesBadge
-          ? <span className={chip}>{topic.seriesBadge}</span>
+          ? <TipChip tip={tipFor(topic.seriesBadge)} className={chip}>{topic.seriesBadge}</TipChip>
           : topic.tag === "followup"
-          ? <span className={chip}>반응 후속</span>
-          : <span className={chip}>{kind.chip}</span>}
-        {rev === "shopping" && (
-          <button onClick={(e) => { e.stopPropagation(); if (onGoPerformance) onGoPerformance(); }} className={chip}>커미션 기회</button>
-        )}
-        {topic.bidHigh && <span className={onDark ? "rounded-full bg-white/15 px-2.5 py-1 text-[12px] font-semibold text-amber-200" : "rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[12px] text-[color:var(--color-warning)]"}>단가 높음</span>}
+          ? <TipChip tip={tipFor("반응 후속")} className={chip}>반응 후속</TipChip>
+          : <TipChip tip={tipFor(kind.chip)} className={chip}>{kind.chip}</TipChip>}
+        {rev === "shopping" && <TipChip tip={tipFor("커미션 기회")} className={chip}>커미션 기회</TipChip>}
+        {topic.bidHigh && <TipChip tip={tipFor("단가 높음")} className={onDark ? "rounded-full bg-white/15 px-2.5 py-1 text-[12px] font-semibold text-amber-200" : "rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[12px] text-[color:var(--color-warning)]"}>단가 높음</TipChip>}
       </div>
       <p className={onDark ? "mt-1.5 text-[12.5px] text-white/60" : "mt-1.5 text-[12.5px] text-[color:var(--color-text-weak)]"}>{kind.desc}</p>
     </div>

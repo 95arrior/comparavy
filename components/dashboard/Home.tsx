@@ -5,6 +5,7 @@ import { cachedGet, invalidateGet } from "@/lib/clientFetchCache";
 import { useState, useEffect, useCallback, useRef } from "react";
 import TodayCard from "./TodayCard";
 import GlassIcon from "@/components/GlassIcon";
+import TipChip, { tipFor } from "@/components/TipChip";
 import CourseRing from "./CourseRing";
 import CheckinCard from "./CheckinCard";
 import NeighborMission from "./NeighborMission";
@@ -511,11 +512,11 @@ function TopicRow({ topic, onClick, onSwap, swapping }: {
     <div className={`rounded-[20px] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition ${swapping ? "at-ai-swap" : ""}`}>
       <div className="flex items-center gap-1.5">
         {topic.tag === "issue" || topic.tag === "trend" ? (
-          <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2.5 py-1 text-[12px] font-semibold text-[color:var(--color-brand)]">지금 뜨는 키워드</span>
+          <TipChip tip={tipFor("지금 뜨는 키워드")} className="rounded-full bg-[color:var(--color-brand-weak)] px-2.5 py-1 text-[12px] font-semibold text-[color:var(--color-brand)]">지금 뜨는 키워드</TipChip>
         ) : (
-          <span className="rounded-full bg-[#F7F8FA] px-2.5 py-1 text-[12px] font-semibold text-[color:var(--color-text-sub)]">꾸준한 수요</span>
+          <TipChip tip={tipFor("꾸준한 수요")} className="rounded-full bg-[#F7F8FA] px-2.5 py-1 text-[12px] font-semibold text-[color:var(--color-text-sub)]">꾸준한 수요</TipChip>
         )}
-        {(topic as { bidHigh?: boolean }).bidHigh && <span className="rounded-full bg-[#FFF8EB] px-2.5 py-1 text-[12px] font-semibold text-[color:var(--color-warning)]">단가 높음</span>}
+        {(topic as { bidHigh?: boolean }).bidHigh && <TipChip tip={tipFor("단가 높음")} className="rounded-full bg-[#FFF8EB] px-2.5 py-1 text-[12px] font-semibold text-[color:var(--color-warning)]">단가 높음</TipChip>}
         {onSwap && (
           <button onClick={(e) => { e.stopPropagation(); onSwap(); }} disabled={swapping} aria-label="새 글감 받기" className="at-press ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-neutral-300 transition hover:bg-[#F7F8FA] hover:text-[color:var(--color-text-sub)] disabled:opacity-40">
             <span className={`flex h-[18px] w-[18px] items-center justify-center ${swapping ? "animate-spin" : ""}`}><GlassIcon name="refresh" tint="grey" size={18} /></span>
