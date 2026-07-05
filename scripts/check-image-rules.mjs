@@ -13,8 +13,8 @@ for (let seed = 0; seed < 40; seed += 7) {
   must(/no close-up of hands/.test(p), `[seed${seed}] 손 클로즈업 금지`);
   must(/no brand logos/.test(p), `[seed${seed}] 브랜드/UI 금지`);
   must(/no front close-up of banknotes/.test(p), `[seed${seed}] 지폐 정면 금지`);
-  must(/Soft matte 3D illustration/.test(p) || /Realistic lifestyle photograph/.test(p), `[seed${seed}] 스타일 지정(실사 또는 토스톤)`);
-  must(/Realistic/.test(p) ? !/Toss|clay/i.test(p) : (/Toss/.test(p) && /clay/i.test(p)), `[seed${seed}] 스타일 순수성(혼용 금지)`);
+  must(/soft matte 3d illustration/.test(p) || /realistic lifestyle photograph/.test(p), `[seed${seed}] 스타일 지정(실사 또는 토스톤)`);
+  must(/realistic/.test(p) ? !/toss|clay/.test(p) : (/toss/.test(p) && /clay/.test(p)), `[seed${seed}] 스타일 순수성(혼용 금지)`);
 }
 
 console.log("\n대표이미지 배경 프롬프트:");
