@@ -63,7 +63,13 @@ export default function WpHome({ blogName, blogId, articles, credits, onOpenArti
       "안내대로 계정·속성을 만들면 ‘측정 ID(G-로 시작)’가 나와요",
       "워드프레스 관리자 → 플러그인 → ‘Site Kit by Google’을 설치하면 아이디만 넣으면 끝이에요",
     ] },
-    { k: "adsense", t: `애드센스 신청 (글 ${ADSENSE_GOAL}편 모이면)`, steps: [
+    { k: "adsense", t: pub >= ADSENSE_GOAL ? "애드센스 신청하기 (준비 완료!)" : `애드센스 신청 (글 ${ADSENSE_GOAL}편 모이면)`, steps: pub >= ADSENSE_GOAL ? [
+      "구글에서 ‘애드센스’를 검색해 열고 ‘시작하기’를 눌러요",
+      "내 블로그 주소를 넣고, 안내대로 계정을 만들어요",
+      "받은 코드 조각은 워드프레스 관리자 → Site Kit(설치했다면 자동) 또는 호스팅 고객센터 도움으로 넣어요",
+      "심사는 보통 2주~한 달 — 그동안 자동 발행은 계속 돌아가요",
+      "승인 메일이 오면 광고가 자동으로 붙기 시작해요 — 여기부터 수익이에요",
+    ] : [
       `아직 ${Math.max(0, ADSENSE_GOAL - pub)}편 남았어요 — 매일 자동 발행이 쌓아줘요`,
       "글이 모이면 여기서 신청 순서를 단계별로 알려드릴게요",
     ] },
@@ -90,6 +96,17 @@ export default function WpHome({ blogName, blogId, articles, credits, onOpenArti
         </div>
         <p className="mt-4 text-[13px] text-[color:var(--color-text-sub)]">매일 자동으로 1편씩 쌓여요 · 크레딧 {credits.toLocaleString("ko-KR")}</p>
       </div>
+
+      {/* 크레딧 부족 — 자동 발행이 멈추기 전에(충전 동선) */}
+      {credits < 10 && (
+        <button onClick={() => { try { window.location.assign("/pricing"); } catch { /* ignore */ } }} className="tk-seq-2 mt-4 flex w-full items-center justify-between rounded-[16px] bg-amber-50 px-5 py-4 text-left ring-1 ring-amber-100">
+          <span>
+            <span className="block text-[13.5px] font-bold text-amber-800">크레딧이 부족해 자동 발행이 멈춰요</span>
+            <span className="mt-0.5 block text-[12px] text-amber-600/80">충전해두면 매일 아침 글이 계속 쌓여요</span>
+          </span>
+          <span className="shrink-0 text-[13px] font-bold text-amber-700">충전 →</span>
+        </button>
+      )}
 
       {/* 오늘의 글 — 승인 대기 or 예고 */}
       {reviewDraft ? (
