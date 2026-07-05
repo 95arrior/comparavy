@@ -4,10 +4,12 @@ import { cachedGet, invalidateGet } from "@/lib/clientFetchCache";
 
 import { useEffect, useState } from "react";
 import { totalRevenue, avgPerPost, monthPace, type CheckinRow } from "@/lib/checkin";
+import GrowthReport, { type GrowthArticleLite } from "./GrowthReport";
 
 // ★수익 대시보드 v1 — 유저 입력 데이터만. 미입력 지표는 표시하지 않는다(추정 생성 금지).
 //  빈 날은 공백(정직). 수익 데이터는 유저 소유 — 동의 없이 노출·활용하지 않는다.
-export default function RevenueDash({ publishedCount }: { publishedCount: number }) {
+export default function RevenueDash({ publishedCount, articles = [] }: { publishedCount: number; articles?: GrowthArticleLite[] }) {
+  const [reportOpen, setReportOpen] = useState(false);
   const [rows, setRows] = useState<CheckinRow[] | null>(null);
   useEffect(() => {
     let alive = true;
@@ -39,8 +41,14 @@ export default function RevenueDash({ publishedCount }: { publishedCount: number
 
   return (
     <div className="rounded-2xl at-glass p-5">
-      <p className="text-[15px] font-bold text-neutral-900">성장 기록</p>
-      <p className="mt-0.5 text-[11.5px] text-neutral-400">체크인에 기록한 데이터로 그려져요.</p>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-[15px] font-bold text-neutral-900">성장 기록</p>
+          <p className="mt-0.5 text-[11.5px] text-neutral-400">체크인에 기록한 데이터로 그려져요.</p>
+        </div>
+        <button onClick={() => setReportOpen(true)} className="at-press shrink-0 rounded-lg bg-[#1D75F7]/10 px-3 py-1.5 text-[12px] font-bold text-[#1D75F7] transition hover:bg-[#1D75F7]/15">진단 보기</button>
+      </div>
+      {reportOpen && <GrowthReport rows={rows} articles={articles} onClose={() => setReportOpen(false)} />}
       {thisWeek !== null && (
         <div className="mt-3 flex items-baseline gap-2">
           <span className="tk-grad-text text-[28px] font-extrabold leading-none tabular-nums">{thisWeek.toLocaleString("ko-KR")}</span>

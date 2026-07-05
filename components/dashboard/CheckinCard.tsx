@@ -59,7 +59,7 @@ export default function CheckinCard({ articles, onSaved }: { articles: CourseArt
       if (Object.keys(payload).length === 0) { setBusy(false); return; }
       const res = await fetch("/api/checkin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const d = await res.json();
-      if (!res.ok) { setBusy(false); return; }
+      if (!res.ok) { setVerdict(null); setBusy(false); alert(d.error ?? "저장하지 못했어요. 잠시 후 다시 시도해 주세요."); return; } // ★무반응 금지(실측)
       invalidateGet("/api/checkin"); // 저장 후 캐시 무효화 — 다른 컴포넌트가 새 값을 본다
       if (d.spike === true) setSpikeAsk(true); // 증폭 신호원(유저 입력 기반)
       if (typeof d.verdict === "string") { setVerdict(d.verdict); try { localStorage.setItem("ateflo_verdict_last", JSON.stringify({ day: d.day, text: d.verdict })); } catch { /* ignore */ } }
@@ -69,7 +69,10 @@ export default function CheckinCard({ articles, onSaved }: { articles: CourseArt
       if ((d.revenue ?? 0) > 0) {
         try { if (localStorage.getItem("ateflo_first_revenue") !== "1") { localStorage.setItem("ateflo_first_revenue", "1"); setFirstRevenue(true); } } catch { /* ignore */ }
       }
-      if (backfillDay) setBackfillDay(null);
+      if (backfillDay) {
+        setBackfillDay(null);
+        setState("recorded"); setBusy(false); return; // 소급은 요약(어제 기록)을 덮지 않는다 — rows만 갱신
+      }
       setSavedRow(newRow);
       setState("done");
       onSaved?.();
