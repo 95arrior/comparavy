@@ -430,7 +430,7 @@ export default function ArticleModal({
                 if (!text || text.length < 4 || el?.querySelector("img")) return;
                 setEditSeg({ original: text, value: text });
               }}
-              dangerouslySetInnerHTML={{ __html: formatBody({ title, bodyHtml, images: Object.fromEntries(Object.entries(imgs).filter(([, v]) => v.url).map(([k, v]) => [Number(k), v.url as string])) }) }}
+              dangerouslySetInnerHTML={{ __html: isWp ? bodyHtml : formatBody({ title, bodyHtml, images: Object.fromEntries(Object.entries(imgs).filter(([, v]) => v.url).map(([k, v]) => [Number(k), v.url as string])) }) }} // WP 글=원문(네이버 스페이서·정렬 미적용)
             />
             <p className="mt-3 text-center text-[10.5px] text-neutral-300">문장을 탭하면 오타를 고칠 수 있어요</p>
           </div>

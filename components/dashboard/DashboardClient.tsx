@@ -17,6 +17,7 @@ import KeywordQueue from "./KeywordQueue";
 import Onboarding from "./Onboarding";
 import WpOnboarding from "./WpOnboarding";
 import WpHome from "./WpHome";
+import { computeLevel } from "@/lib/level";
 import Home from "./Home";
 import { toEngineType, type BlogProfile } from "@/lib/blogProfile";
 import GlassIcon from "@/components/GlassIcon";
@@ -689,14 +690,30 @@ export default function DashboardClient(props: DashboardProps) {
           <main className="ateflo-page-in mx-auto max-w-xl px-6 py-10">
             <h1 className="at-headline">내정보</h1>
 
-            {/* 프로필 헤더 */}
-            <div className="mt-6 flex items-center gap-3 rounded-2xl at-glass p-5 ">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-neutral-800 text-base font-bold text-white">{initial}</span>
-              <div className="min-w-0">
-                <p className="truncate text-[15px] font-bold text-neutral-900"><span className="px-0.5" style={{ background: "linear-gradient(transparent 62%, #ffe94d 62%)" }}>{displayName}</span></p>
-                <p className="text-[13px] text-neutral-400">크레딧 <b className="text-[#1D75F7]">{credits.toLocaleString("ko-KR")}</b> · 글 1편 = 10크레딧</p>
-              </div>
-            </div>
+            {/* 프로필 헤더 + ★레벨(게이미피케이션 v0 — 챌린지 정체성) */}
+            {(() => {
+              let approved = false; try { approved = localStorage.getItem("ateflo_adpost_approved") === "1"; } catch { /* ignore */ }
+              const lv = computeLevel({
+                published: articles.filter((a) => a.status === "verified" || a.status === "published").length,
+                adpostApproved: approved,
+                blogCount: 1, // 정확 수는 /api/blogs — 표시용 근사(전환 시 새로고침으로 갱신)
+                hasWp: (blogProfile as { channel?: string } | null)?.channel === "wordpress",
+              });
+              return (
+                <div className="mt-6 rounded-2xl at-glass p-5">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-neutral-800 text-base font-bold text-white">{initial}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[15px] font-bold text-neutral-900"><span className="px-0.5" style={{ background: "linear-gradient(transparent 62%, #ffe94d 62%)" }}>{displayName}</span>
+                        <span className="ml-2 rounded-full bg-[#1D75F7]/10 px-2 py-0.5 align-middle text-[11px] font-bold text-[#1D75F7]">Lv.{lv.level} {lv.name}</span>
+                      </p>
+                      <p className="text-[13px] text-neutral-400">크레딧 <b className="text-[#1D75F7]">{credits.toLocaleString("ko-KR")}</b> · 글 1편 = 10크레딧</p>
+                    </div>
+                  </div>
+                  {lv.next && <p className="mt-3 rounded-[10px] bg-[#F7F8FA] px-3 py-2 text-[12px] font-semibold text-neutral-500">다음 목표 · {lv.next}</p>}
+                </div>
+              );
+            })()}
 
             {/* 블로그 */}
             <p className="mb-2 mt-7 px-1 text-[13px] font-semibold text-neutral-400">블로그</p>
