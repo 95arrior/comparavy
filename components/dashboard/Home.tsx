@@ -1,5 +1,7 @@
 "use client";
 
+import { cachedGet, invalidateGet } from "@/lib/clientFetchCache";
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import TodayCard from "./TodayCard";
 import GlassIcon from "@/components/GlassIcon";
@@ -95,8 +97,9 @@ export default function Home({
   const [moreOpen, setMoreOpen] = useState(false); // '다른 글감' 접힘 토글(시트로 대체 — 유지: 스크롤 ref)
   const [routineSheet, setRoutineSheet] = useState<null | "checkin" | "neighbor" | "topics">(null);
   const [blogSheet, setBlogSheet] = useState(false); // ★블로그 스위처
+  const [switching, setSwitching] = useState<string | null>(null); // 전환 중 즉각 피드백(리로드 전 죽은 시간 제거)
   const [blogCount, setBlogCount] = useState(1);
-  useEffect(() => { fetch("/api/blogs").then((r) => r.json()).then((d) => { const n = Array.isArray(d.blogs) ? d.blogs.length : 1; setBlogCount(Math.max(1, n)); }).catch(() => { /* ignore */ }); }, []);
+  useEffect(() => { cachedGet<{ blogs?: unknown[] }>("/api/blogs", 60_000).then((d) => { const n = Array.isArray(d.blogs) ? d.blogs.length : 1; setBlogCount(Math.max(1, n)); }).catch(() => { /* ignore */ }); }, []);
   const [blogList, setBlogList] = useState<{ id: string; blog_name: string | null; sub_category: string | null; is_active: boolean }[]>([]);
   async function openBlogSheet() {
     setBlogSheet(true);
@@ -391,7 +394,7 @@ export default function Home({
             { key: "topics" as const, label: "다른 글감", sub: topicsLoading ? "로딩" : `${rest.length}개`, icon: <GlassIcon name="search" tint="amber" size={30} /> },
           ]).map((r, i) => (
             <button key={r.key} onClick={() => setRoutineSheet(r.key)}
-              className="at-press tk-chip rounded-[20px] bg-white p-4 text-left shadow-[0_2px_12px_-4px_rgba(29,117,247,0.12)] tk-tr hover:-translate-y-0.5 hover:shadow-[0_8px_20px_-6px_rgba(29,117,247,0.2)]"
+              className="at-press tk-chip rounded-[20px] bg-white p-4 text-left shadow-[0_2px_12px_-4px_rgba(29,117,247,0.12)] tk-tr hover:-translate-y-px hover:shadow-[0_6px_16px_-6px_rgba(29,117,247,0.18)]"
               style={{ animationDelay: `${200 + i * 80}ms` }}>
               <span className="flex h-10 w-10 items-center">{r.icon}</span>
               <span className="mt-3 block text-[14px] font-bold text-[color:var(--color-text)]">{r.label}</span>
@@ -400,6 +403,14 @@ export default function Home({
           ))}
         </div>
       </div>
+
+      {/* 전환 중 오버레이 — 부드러운 즉각 피드백 */}
+      {switching && (
+        <div className="ateflo-backdrop-in fixed inset-0 z-[90] flex flex-col items-center justify-center bg-white/92 backdrop-blur-sm">
+          <span className="h-8 w-8 animate-spin rounded-full border-[3px] border-[color:var(--color-line)] border-t-[color:var(--color-brand)]" />
+          <p className="mt-4 text-[14px] font-semibold text-[color:var(--color-text-sub)]">{switching}(으)로 바꾸는 중</p>
+        </div>
+      )}
 
       {/* ★블로그 스위처 시트 */}
       {blogSheet && (
@@ -410,8 +421,9 @@ export default function Home({
               {blogList.map((b) => (
                 <button key={b.id} onClick={async () => {
                   if (b.is_active) { setBlogSheet(false); return; }
+                  setSwitching(b.blog_name ?? "블로그"); // 즉각 피드백 — 누른 순간 전환 화면
                   const r = await fetch("/api/blogs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ activate: b.id }) });
-                  if (r.ok) window.location.reload(); // 활성 전환 — 홈 데이터 전체가 그 블로그 기준으로
+                  if (r.ok) { try { sessionStorage.clear(); } catch { /* ignore */ } window.location.reload(); } else setSwitching(null);
                 }} className={`flex w-full items-center gap-3 rounded-[14px] px-4 py-3.5 text-left tk-tr ${b.is_active ? "bg-[color:var(--color-brand-weak)]" : "bg-[#F7F8FA] hover:bg-[#EFF2F6]"}`}>
                   <span className="min-w-0 flex-1">
                     <span className="block text-[14px] font-bold text-[color:var(--color-text)]">{b.blog_name ?? "내 블로그"}</span>

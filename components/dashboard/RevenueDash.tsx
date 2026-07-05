@@ -1,5 +1,7 @@
 "use client";
 
+import { cachedGet, invalidateGet } from "@/lib/clientFetchCache";
+
 import { useEffect, useState } from "react";
 import { totalRevenue, avgPerPost, monthPace, type CheckinRow } from "@/lib/checkin";
 
@@ -9,7 +11,7 @@ export default function RevenueDash({ publishedCount }: { publishedCount: number
   const [rows, setRows] = useState<CheckinRow[] | null>(null);
   useEffect(() => {
     let alive = true;
-    fetch("/api/checkin").then((r) => r.json()).then((d) => { if (alive) setRows(Array.isArray(d.rows) ? d.rows : []); }).catch(() => { if (alive) setRows([]); });
+    cachedGet<{ rows?: CheckinRow[] }>("/api/checkin").then((d) => { if (alive) setRows(Array.isArray(d.rows) ? d.rows : []); }).catch(() => { if (alive) setRows([]); });
     return () => { alive = false; };
   }, []);
   if (!rows || rows.length === 0) return null; // 입력 전 — 아무것도 표시 안 함

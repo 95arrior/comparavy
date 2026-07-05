@@ -1,5 +1,7 @@
 "use client";
 
+import { cachedGet, invalidateGet } from "@/lib/clientFetchCache";
+
 import { useEffect, useRef, useState } from "react";
 import { copyTextVerified } from "@/lib/clipboard";
 
@@ -23,7 +25,7 @@ export default function NeighborMission({ subCategory, sheet }: { subCategory?: 
   useEffect(() => {
     try { const raw = localStorage.getItem(missionKey); if (raw) setChecks(JSON.parse(raw)); } catch { /* ignore */ }
     // 코칭 한 줄 — 체크인 데이터 기반(범위 표현만, 원인 단정 금지)
-    fetch("/api/checkin").then((r) => r.json()).then((d) => {
+    cachedGet<{ rows?: { day: string; visitors: number | null }[] }>("/api/checkin").then((d) => {
       const rows: { day: string; visitors: number | null }[] = Array.isArray(d.rows) ? d.rows : [];
       const recent = rows.slice(-5).map((r) => r.visitors).filter((v): v is number => v !== null);
       if (recent.length >= 3) {

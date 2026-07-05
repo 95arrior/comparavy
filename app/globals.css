@@ -99,7 +99,8 @@ html {
 @keyframes tk-bar-in { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 .tk-bar-fill { transform-origin: left; animation: tk-bar-in 0.6s var(--ease-standard) 200ms both; }
 .tk-cta { transition: transform var(--duration-standard) var(--ease-standard), box-shadow var(--duration-standard) var(--ease-standard), opacity var(--duration-standard) var(--ease-standard); }
-.tk-cta:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.tk-cta { transition-duration: 450ms; }
+.tk-cta:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
 /* ★메이트 감성 — 히어로 배너·떠다니는 오브·광택. */
 .tk-hero {
   position: relative; overflow: hidden;
@@ -119,7 +120,8 @@ html {
   box-shadow: 0 10px 26px -8px rgba(8, 30, 80, 0.45);
   transition: transform var(--duration-standard) var(--ease-standard), box-shadow var(--duration-standard) var(--ease-standard);
 }
-.tk-hero-cta:hover { transform: translateY(-2px); box-shadow: 0 16px 34px -10px rgba(8, 30, 80, 0.55); }
+.tk-hero-cta { transition-duration: 450ms; }
+.tk-hero-cta:hover { transform: translateY(-1px); box-shadow: 0 14px 30px -10px rgba(8, 30, 80, 0.5); }
 @keyframes tk-hero-in { from { opacity: 0; transform: translateY(14px) scale(0.98); } to { opacity: 1; transform: none; } }
 .tk-hero-in { animation: tk-hero-in 0.6s var(--ease-standard) 80ms backwards; }
 /* 루틴 타일 아이콘 — 그라데이션 원 */
@@ -136,7 +138,8 @@ html {
   box-shadow: 0 6px 18px -6px rgba(29, 117, 247, 0.45);
   transition: transform var(--duration-standard) var(--ease-standard), box-shadow var(--duration-standard) var(--ease-standard);
 }
-.tk-grad-cta:hover { transform: translateY(-2px); box-shadow: 0 12px 28px -8px rgba(29, 117, 247, 0.55); }
+.tk-grad-cta { transition-duration: 450ms; }
+.tk-grad-cta:hover { transform: translateY(-1px); box-shadow: 0 10px 24px -8px rgba(29, 117, 247, 0.5); }
 /* 게이지 — 그라데이션 fill + 광택이 계속 흐르는 sweep(살아있는 진행) */
 .tk-gauge { position: relative; overflow: hidden; }
 .tk-gauge-fill {

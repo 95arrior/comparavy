@@ -1,5 +1,7 @@
 "use client";
 
+import { cachedGet, invalidateGet } from "@/lib/clientFetchCache";
+
 import { useEffect, useState } from "react";
 import { yesterdayPublished, type CourseArticleLite } from "@/lib/course";
 
@@ -26,8 +28,7 @@ export default function CheckinCard({ articles, onSaved }: { articles: CourseArt
     let alive = true;
     (async () => {
       try {
-        const res = await fetch("/api/checkin");
-        const d = await res.json();
+        const d = await cachedGet<{ rows?: Row[]; doneToday?: boolean; yesterdayKey?: string; prev?: Row | null }>("/api/checkin");
         if (!alive) return;
         const rs: Row[] = Array.isArray(d.rows) ? d.rows : [];
         setRows(rs);
@@ -53,6 +54,7 @@ export default function CheckinCard({ articles, onSaved }: { articles: CourseArt
       const res = await fetch("/api/checkin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const d = await res.json();
       if (!res.ok) { setBusy(false); return; }
+      invalidateGet("/api/checkin"); // 저장 후 캐시 무효화 — 다른 컴포넌트가 새 값을 본다
       if (d.spike === true) setSpikeAsk(true); // 증폭 신호원(유저 입력 기반)
       const newRow: Row = { day: d.day, visitors: d.visitors, revenue: d.revenue };
       setRows((prevRows) => [...prevRows.filter((x) => x.day !== d.day), newRow]);

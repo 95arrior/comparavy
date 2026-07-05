@@ -1,5 +1,7 @@
 "use client";
 
+import { cachedGet, invalidateGet } from "@/lib/clientFetchCache";
+
 import { useEffect, useState } from "react";
 import { threeDayZeroWithPosts, type CheckinRow } from "@/lib/checkin";
 import type { CourseArticleLite } from "@/lib/course";
@@ -11,7 +13,7 @@ export default function DiagnosisCard({ articles }: { articles: CourseArticleLit
   const [step, setStep] = useState(0);
   useEffect(() => {
     let alive = true;
-    fetch("/api/checkin").then((r) => r.json()).then((d) => {
+    cachedGet<{ rows?: CheckinRow[] }>("/api/checkin").then((d) => {
       if (!alive) return;
       const rows: CheckinRow[] = Array.isArray(d.rows) ? d.rows : [];
       setShow(threeDayZeroWithPosts(rows, articles));
