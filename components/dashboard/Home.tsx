@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import TodayCard from "./TodayCard";
 import GlassIcon from "@/components/GlassIcon";
 import TipChip, { tipFor } from "@/components/TipChip";
+import ReassureLine from "./ReassureLine";
 import CourseRing from "./CourseRing";
 import CheckinCard from "./CheckinCard";
 import NeighborMission from "./NeighborMission";
@@ -416,6 +417,8 @@ export default function Home({
           ))}
         </div>
       </div>
+
+      <ReassureLine className="tk-seq-3 mt-6" />
 
       {/* 전환 중 오버레이 — 부드러운 즉각 피드백 */}
       {switching && (

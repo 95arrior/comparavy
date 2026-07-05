@@ -64,7 +64,8 @@ export default function TossNav({
             })}
           </nav>
           {typeof credits === "number" && (
-            <button onClick={onCredits} className="ml-auto mr-3 rounded-full border border-[color:var(--color-line)] px-3 py-1 text-[13px] tabular-nums text-[color:var(--color-text-sub)] tk-tr hover:bg-[color:var(--color-bg-subtle)]">
+            <button onClick={onCredits} className="ml-auto mr-3 flex items-center gap-1.5 rounded-full border border-[color:var(--color-line)] px-3 py-1 text-[13px] tabular-nums text-[color:var(--color-text-sub)] tk-tr hover:bg-[color:var(--color-bg-subtle)]">
+              <span className="tk-float-soft flex items-center"><GlassIcon name="credit" tint="blue" size={14} /></span>
               {credits.toLocaleString("ko-KR")}
             </button>
           )}

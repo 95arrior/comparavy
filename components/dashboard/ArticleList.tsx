@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import type { Article } from "./types";
+import ReassureLine from "./ReassureLine";
 import CenterToast from "./CenterToast";
 
 // ★내 글 v2 — 발행 여정 중심의 토스식 리스트.
@@ -224,6 +225,8 @@ export default function ArticleList({
       <CenterToast message={msg} />
 
       {/* 초안으로 되돌리기 확인 */}
+      <ReassureLine className="mt-5" />
+
       {confirmUnpub && (
         <div className="ateflo-backdrop-in fixed inset-0 z-[60] flex items-center justify-center bg-black/30 px-6" onClick={() => !unpubBusy && setConfirmUnpub(null)}>
           <div className="ateflo-fade-in w-full max-w-sm at-glass-strong rounded-3xl p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
