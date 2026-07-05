@@ -312,7 +312,7 @@ export default function ArticleModal({
         )}
 
         {/* ★이미지 슬롯 패널 — 문서순(사진+카드). 사진=추천 가이드+올리기(AI 봉인), 카드=자동 생성. */}
-        {parseSlots(bodyHtml).length > 0 && (
+        {parseSlots(bodyHtml).length > 0 && (<>
           {/* 썸네일 문구 추천 — 3초 훅(어그로되 글이 답하는 약속만) */}
           <div className="mt-4 rounded-2xl at-glass p-5">
             <div className="flex items-center justify-between gap-3">
@@ -386,7 +386,7 @@ export default function ArticleModal({
               })}
             </div>
           </div>
-        )}
+        </>)}
 
         <div className="mt-5 flex items-start gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-xs leading-relaxed text-neutral-500">
           <span aria-hidden className="mt-px">💡</span>
@@ -450,7 +450,7 @@ export default function ArticleModal({
         )}
 
         {/* ★증폭 수동 신고 — '이 글 반응 좋아요'(다음 날 후속 글감 배정 + 배합 가중 학습) */}
-        {(article.status === "verified" || article.status === "published" || article.status === "pending_verify") && (
+        {(article.status === "verified" || article.status === "published" || article.status === "pending_verify" || article.status === "copied") && (
           <button onClick={async () => {
             const r = await fetch(`/api/articles/${article.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ hot: true }) });
             if (r.ok) setToast("반영했어요 — 내일 이 글의 후속을 준비할게요");
