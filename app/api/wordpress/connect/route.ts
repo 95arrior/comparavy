@@ -44,7 +44,13 @@ export async function POST(request: Request) {
   const { error } = await supabase
     .from("wordpress_connections")
     .upsert(
-      { user_id: user.id, site_url: siteUrl, username, app_password: encryptSecret(appPassword) },
+      (await (async () => {
+        // ★듀얼 채널 — 연결을 활성 블로그(WP 채널)에 귀속. 0059 미적용이면 blog_id 없이(레거시 동작).
+        const { data: ap } = await supabase.from("blog_profiles").select("id, channel").eq("user_id", user.id).eq("is_active", true).maybeSingle();
+        const base: Record<string, unknown> = { user_id: user.id, site_url: siteUrl, username, app_password: encryptSecret(appPassword) };
+        if (ap?.id && (ap as { channel?: string }).channel === "wordpress") base.blog_id = ap.id;
+        return base;
+      })()),
       { onConflict: "user_id" },
     );
 

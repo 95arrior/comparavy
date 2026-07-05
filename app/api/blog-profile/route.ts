@@ -102,7 +102,10 @@ export async function POST(request: Request) {
 
   // ★멀티 블로그(0056) — unique(user_id) 해제됨. 저장 규칙:
   //  기본 = '활성 블로그' 행 update(없으면 insert). createNew=true = 기존 활성 내리고 새 블로그 insert(활성).
-  const payload = { user_id: user.id, topic, category, blog_name, tone, article_type, target, publish_mode, vertical, sub_category, ...(naver_blog_id !== undefined ? { naver_blog_id } : {}), biz_name, biz_address, biz_detail_address, biz_lat, biz_lng, biz_phone, biz_hours, biz_hours_json, biz_strength, audience, updated_at: new Date().toISOString() };
+  const channel = body.channel === "wordpress" ? "wordpress" : "naver"; // ★듀얼 채널 — 기본 naver(기존 무변경)
+  const auto_publish = ["daily", "review"].includes(String(body.auto_publish)) ? String(body.auto_publish) : "off";
+  const auto_publish_hour = Number.isInteger(body.auto_publish_hour) && body.auto_publish_hour >= 0 && body.auto_publish_hour <= 23 ? body.auto_publish_hour : 7;
+  const payload = { user_id: user.id, channel, auto_publish, auto_publish_hour, topic, category, blog_name, tone, article_type, target, publish_mode, vertical, sub_category, ...(naver_blog_id !== undefined ? { naver_blog_id } : {}), biz_name, biz_address, biz_detail_address, biz_lat, biz_lng, biz_phone, biz_hours, biz_hours_json, biz_strength, audience, updated_at: new Date().toISOString() };
   const createNew = body.createNew === true;
   let data: unknown = null; let error: { message: string } | null = null;
   if (createNew) {

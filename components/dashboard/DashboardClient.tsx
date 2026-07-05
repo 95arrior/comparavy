@@ -15,6 +15,7 @@ import ProfileSettings from "./ProfileSettings";
 import KeywordFinder from "./KeywordFinder";
 import KeywordQueue from "./KeywordQueue";
 import Onboarding from "./Onboarding";
+import WpOnboarding from "./WpOnboarding";
 import Home from "./Home";
 import { toEngineType, type BlogProfile } from "@/lib/blogProfile";
 import GlassIcon from "@/components/GlassIcon";
@@ -68,6 +69,7 @@ export default function DashboardClient(props: DashboardProps) {
   }, [blogProfile]);
   const [reonboardPrev, setReonboardPrev] = useState<BlogProfile | null>(null); // 재설정(재온보딩) 전 프로필 — 취소 시 복귀
   const [addBlogMode, setAddBlogMode] = useState(false); // ★멀티 블로그 — 새 블로그 추가(온보딩 재사용, createNew)
+  const [addChannel, setAddChannel] = useState<"pick" | "naver" | "wordpress">("pick"); // 추가 시 채널 선택
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const pendingQueueId = useRef<string | null>(null); // 첫 글 생성 완료 시 연결할 큐 항목
   // 키워드 발굴 검색 state (KeywordFinder에서 리프트 — 탭 이동/새로고침에도 유지)
@@ -542,7 +544,26 @@ export default function DashboardClient(props: DashboardProps) {
 
         {!page && !selected && !genParams && tab === "lab" && profileLoaded && (!blogProfile || addBlogMode) && (
           <div className="ateflo-page-in">
-            <Onboarding onSaved={(p) => { setAddBlogMode(false); onProfileSaved(p); try { window.location.reload(); } catch { /* ignore */ } }} createNew={addBlogMode} onCancel={reonboardPrev || addBlogMode ? () => { if (addBlogMode) { setAddBlogMode(false); } else { setBlogProfile(reonboardPrev); setReonboardPrev(null); } } : undefined} />
+            {addBlogMode && addChannel === "pick" ? (
+              <div className="mx-auto max-w-md px-5 pt-10">
+                <p className="text-[22px] font-bold leading-snug text-neutral-900">어떤 블로그를<br />만들까요?</p>
+                <div className="mt-5 space-y-2">
+                  <button onClick={() => setAddChannel("naver")} className="at-press w-full rounded-2xl bg-white p-4 text-left ring-1 ring-black/[0.05] transition hover:ring-[#03C75A]/50">
+                    <span className="block text-[15px] font-bold text-neutral-900">네이버 블로그</span>
+                    <span className="mt-0.5 block text-[12.5px] text-neutral-400">빨리 크고, 복사·붙여넣기로 발행해요</span>
+                  </button>
+                  <button onClick={() => setAddChannel("wordpress")} className="at-press w-full rounded-2xl bg-white p-4 text-left ring-1 ring-black/[0.05] transition hover:ring-[#1D75F7]/50">
+                    <span className="block text-[15px] font-bold text-neutral-900">워드프레스 <span className="ml-1 rounded bg-[#1D75F7]/10 px-1.5 py-0.5 text-[10.5px] font-bold text-[#1D75F7]">자동 발행</span></span>
+                    <span className="mt-0.5 block text-[12.5px] text-neutral-400">구글에서 오래 가는 자산 — 글이 매일 자동으로 올라가요</span>
+                  </button>
+                </div>
+                <button onClick={() => { setAddBlogMode(false); setAddChannel("pick"); }} className="mt-3 w-full py-2 text-center text-[13px] font-medium text-neutral-400">취소</button>
+              </div>
+            ) : addBlogMode && addChannel === "wordpress" ? (
+              <WpOnboarding onSaved={() => { setAddBlogMode(false); setAddChannel("pick"); }} onCancel={() => setAddChannel("pick")} />
+            ) : (
+              <Onboarding onSaved={(p) => { setAddBlogMode(false); setAddChannel("pick"); onProfileSaved(p); try { window.location.reload(); } catch { /* ignore */ } }} createNew={addBlogMode} onCancel={reonboardPrev || addBlogMode ? () => { if (addBlogMode) { setAddBlogMode(false); setAddChannel("pick"); } else { setBlogProfile(reonboardPrev); setReonboardPrev(null); } } : undefined} />
+            )}
           </div>
         )}
 
