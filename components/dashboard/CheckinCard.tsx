@@ -26,6 +26,7 @@ export default function CheckinCard({ articles, onSaved }: { articles: CourseArt
     try { const raw = localStorage.getItem("ateflo_verdict_last"); if (raw) { const v = JSON.parse(raw); if (typeof v?.text === "string") setVerdict(v.text); } } catch { /* ignore */ }
   }, []);
   const [backfillDay, setBackfillDay] = useState<string | null>(null); // 빠진 날 채우기 대상
+  const [statGuide, setStatGuide] = useState(false); // ★통계 보는 법(네이버 API 불가 — 손잡고 안내)
   const approved = typeof window !== "undefined" && (() => { try { return localStorage.getItem("ateflo_adpost_approved") === "1"; } catch { return false; } })();
   const skipKey = `ateflo_checkin_skip_${new Date().toISOString().slice(0, 10)}`;
 
@@ -175,6 +176,23 @@ export default function CheckinCard({ articles, onSaved }: { articles: CourseArt
           <div className="mt-3 flex gap-2">
             <label className="flex-1">
               <span className="text-[11.5px] font-semibold text-neutral-400">{backfillDay ? `${Number(backfillDay.slice(5, 7))}월 ${Number(backfillDay.slice(8, 10))}일 방문자` : "어제 방문자"}</span>
+              <button onClick={() => setStatGuide((v) => !v)} className="ml-2 text-[11.5px] font-bold text-[#1D75F7]">어디서 보나요?</button>
+              {statGuide && (
+                <div className="mt-2 w-full rounded-[12px] bg-[#F7F8FA] p-4 text-left">
+                  <p className="text-[12.5px] font-bold text-neutral-800">네이버 통계 보는 법 (1분)</p>
+                  <ol className="mt-1.5 space-y-1 text-[12px] leading-relaxed text-neutral-500">
+                    <li><b className="text-neutral-800">1.</b> 네이버 블로그 앱을 열고 <b className="text-neutral-800">내 블로그</b>를 눌러요</li>
+                    <li><b className="text-neutral-800">2.</b> 프로필 아래 <b className="text-neutral-800">통계</b>를 눌러요 (컴퓨터는 내 블로그 → 관리 → 통계)</li>
+                    <li><b className="text-neutral-800">3.</b> <b className="text-neutral-800">‘조회수’</b> 숫자를 그대로 아래 칸에 적으면 끝이에요</li>
+                  </ol>
+                  <p className="mt-2.5 text-[12.5px] font-bold text-neutral-800">보이는 것마다 할 일이 달라요</p>
+                  <ul className="mt-1.5 space-y-1 text-[12px] leading-relaxed text-neutral-500">
+                    <li>• 조회수가 <b className="text-neutral-800">확 뛰었다</b> → 그대로 기록하세요, 제가 알아채고 내일 후속 글감을 준비할게요</li>
+                    <li>• <b className="text-neutral-800">게시물 순위 1위 글</b>이 보인다 → 내 글에서 그 글의 <b className="text-neutral-800">관리 → 반응 좋아요</b>를 눌러주세요 — 이어지는 글로 방문을 키워요</li>
+                    <li>• 며칠째 <b className="text-neutral-800">0</b>이다 → 정상이에요(색인 전). 계속 0이면 성과 탭에 진단 카드가 자동으로 떠요</li>
+                  </ul>
+                </div>
+              )}
               <input inputMode="numeric" pattern="[0-9]*" value={visitors} onChange={(e) => setVisitors(e.target.value.replace(/[^0-9]/g, ""))} placeholder="0"
                 className="mt-1 w-full rounded-xl bg-neutral-50 px-3.5 py-2.5 text-[15px] font-bold text-neutral-900 outline-none ring-1 ring-black/[0.05] focus:ring-2 focus:ring-[#1D75F7]/30" />
             </label>
