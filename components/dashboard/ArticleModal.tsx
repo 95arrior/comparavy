@@ -43,6 +43,20 @@ export default function ArticleModal({
   const [title, setTitle] = useState(article.title);
   const [bodyHtml, setBodyHtml] = useState(article.body_html);
   const [naverOpen, setNaverOpen] = useState(false); // 네이버 복붙 발행 시트
+  // ★듀얼 채널 — WP 글은 네이버 위저드 대신 원클릭 WP 발행
+  const isWp = (article as { channel?: string }).channel === "wordpress";
+  const [wpBusy, setWpBusy] = useState(false);
+  async function publishToWp() {
+    if (wpBusy) return;
+    setWpBusy(true);
+    try {
+      const r = await fetch("/api/wordpress/publish", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ articleId: article.id, status: "publish", addToc: true, addInternalLinks: true }) });
+      const d = await r.json();
+      if (r.ok) { setToast("워드프레스에 발행했어요"); onUpdated({ ...article, status: "published" } as Article); }
+      else setToast(d.error ?? "발행하지 못했어요");
+    } catch { setToast("네트워크 오류예요"); }
+    setWpBusy(false);
+  }
   // ★제목 2안 — 클릭형(title) / 검색형(meta_title). 다르면 탭으로 고르고, 발행 흐름 전체가 선택본을 쓴다.
   const titleAlt = (article.meta_title ?? "").trim();
   const hasTwoTitles = !!titleAlt && titleAlt !== (article.title ?? "").trim();
@@ -250,10 +264,10 @@ export default function ArticleModal({
             <span className="text-base leading-none">←</span> 목록으로
           </button>
           <button
-            onClick={() => setNaverOpen(true)}
+            onClick={() => (isWp ? publishToWp() : setNaverOpen(true))}
             className="hidden rounded-xl bg-[#03C75A] px-5 py-2.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-95 md:inline-block"
           >
-            네이버에 올리기
+            {isWp ? (wpBusy ? "발행 중…" : "워드프레스에 발행") : "네이버에 올리기"}
           </button>
         </div>
       </div>
@@ -542,8 +556,8 @@ export default function ArticleModal({
 
         {/* 모바일 하단 고정 CTA — 검토 → 발행 다음단계 인도 */}
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-neutral-100 bg-white/95 px-4 pt-2.5 backdrop-blur md:hidden" style={{ paddingBottom: "calc(0.625rem + env(safe-area-inset-bottom))" }}>
-          <button onClick={() => setNaverOpen(true)} className="w-full rounded-xl bg-[#03C75A] py-3.5 text-[15px] font-bold text-white transition active:scale-[0.99]">
-            네이버에 올리기
+          <button onClick={() => (isWp ? publishToWp() : setNaverOpen(true))} className={`w-full rounded-xl py-3.5 text-[15px] font-bold text-white transition active:scale-[0.99] ${isWp ? "tk-grad-cta" : "bg-[#03C75A]"}`}>
+            {isWp ? (wpBusy ? "발행 중…" : "워드프레스에 발행") : "네이버에 올리기"}
           </button>
         </div>
       </div>
