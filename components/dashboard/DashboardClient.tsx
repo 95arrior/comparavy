@@ -53,7 +53,7 @@ export default function DashboardClient(props: DashboardProps) {
       } catch { /* ignore */ }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [(blogProfile as { naver_blog_id?: string | null } | null)?.naver_blog_id]); // ★활성 블로그 전환·프로필 도착 시 재동기(실측: 전환해도 이전 블로그 주소 고정)
   function editNaverBlogId() {
     const input = window.prompt("내 네이버 블로그 아이디\n(예: blog.naver.com/myblog → myblog)", naverBlogId);
     if (input == null) return;
