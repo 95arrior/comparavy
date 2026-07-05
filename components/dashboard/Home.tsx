@@ -217,6 +217,14 @@ export default function Home({
   // ★'오늘의 글' 후보 — 오늘 이미 만든 글감(발행분 포함)은 제외(한 편 더 = 같은 글감 재생성 버그 방지).
   // 랭크: 후속(증폭)·시리즈 > 트렌드(이슈 인터럽트 훅: 시리즈보다 뜨거운 이슈는 유저가 아래 목록에서 즉시 선택 가능) > 꾸준 > 풀.
   // 주간 리뷰형 최소 보장(REVIEW_WEEKLY_MIN) — 증폭·시리즈 없을 때 리뷰형 후보 승격(쇼핑커넥트 경로가 굶지 않게).
+  // ★오늘의 글 교체 v2 — '버리기'가 아니라 '순환': 이전 글감은 다른 글감 시트로 내려간다(되돌리기 = 시트에서 그 글감 쓰기).
+  //  하루 3회(무한 고르기 방지·뇌빼고 유지), 소진 시 전용 알림. 미스매치(파쇄기류) 탈출구.
+  const heroSwapKey = `ateflo_heroswap_${new Date().toISOString().slice(0, 10)}`;
+  const heroSkipKey = `ateflo_heroskip_${new Date().toISOString().slice(0, 10)}`;
+  const [heroSkipped, setHeroSkipped] = useState<string[]>(() => { try { const v = JSON.parse(localStorage.getItem(heroSkipKey) ?? "[]"); return Array.isArray(v) ? v : []; } catch { return []; } });
+  const [heroSwapsUsed, setHeroSwapsUsed] = useState<number>(() => { try { return Number(localStorage.getItem(heroSwapKey) ?? "0") || 0; } catch { return 0; } });
+  const HERO_SWAP_MAX = 3;
+  const [heroLimitNotice, setHeroLimitNotice] = useState(false);
   const usedToday = todayKeywords(articles);
   const normK = (k: string) => k.replace(/\s+/g, "").toLowerCase();
   const availClean = clean.filter((t) => !usedToday.map(normK).includes(normK(t.keyword)));
@@ -226,14 +234,6 @@ export default function Home({
   const reviewPick = reviewThisWeek < REVIEW_WEEKLY_MIN ? availClean.find((t) => revenuePath({ keyword: t.keyword, title: t.title }) === "shopping") : undefined;
   const heroPool = clean.filter((t) => !heroSkipped.includes(t.keyword));
   const first = boost ?? reviewPick ?? pickNextTopic(heroPool.length ? heroPool : clean, usedToday);
-  // ★오늘의 글 교체 v2 — '버리기'가 아니라 '순환': 이전 글감은 다른 글감 시트로 내려간다(되돌리기 = 시트에서 그 글감 쓰기).
-  //  하루 3회(무한 고르기 방지·뇌빼고 유지), 소진 시 전용 알림. 미스매치(파쇄기류) 탈출구.
-  const heroSwapKey = `ateflo_heroswap_${new Date().toISOString().slice(0, 10)}`;
-  const heroSkipKey = `ateflo_heroskip_${new Date().toISOString().slice(0, 10)}`;
-  const [heroSkipped, setHeroSkipped] = useState<string[]>(() => { try { return JSON.parse(localStorage.getItem(heroSkipKey) ?? "[]"); } catch { return []; } });
-  const [heroSwapsUsed, setHeroSwapsUsed] = useState<number>(() => { try { return Number(localStorage.getItem(heroSwapKey) ?? "0") || 0; } catch { return 0; } });
-  const HERO_SWAP_MAX = 3;
-  const [heroLimitNotice, setHeroLimitNotice] = useState(false);
   function heroSwap() {
     if (!first) return;
     if (heroSwapsUsed >= HERO_SWAP_MAX) { setHeroLimitNotice(true); setTimeout(() => setHeroLimitNotice(false), 3200); return; }
