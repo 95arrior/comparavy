@@ -1,4 +1,4 @@
-import { visualIdentityFor } from "./visualIdentity";
+import { visualIdentityFor, PALETTES } from "./visualIdentity";
 import { renderThumbnail, type ThumbInput } from "./thumbnailRenderer";
 import { generateThumbBackground, imageReady } from "./geminiImage";
 import { verifyImage } from "./imageVerify";
@@ -12,8 +12,13 @@ export async function composeThumbnail(opts: {
   thumb: ThumbCopy;
   articleId?: string | null; // 글마다 오브젝트 포즈 변주(팔레트·템플릿·폰트는 불변)
   useAiBackground?: boolean; // 기본 true(가능하면 AI 배경). 폴백은 팔레트 코드 배경.
+  /** 썸네일 메이커 — 유저 선택 팔레트(name)·워시(0~1) 오버라이드 */
+  paletteName?: string;
+  bgWash?: number;
 }): Promise<{ png: Buffer; usedAiBackground: boolean }> {
-  const identity = visualIdentityFor(opts.userId); // ★프로덕션 경로: 실제 user.id → 유저 고정 정체성
+  const base = visualIdentityFor(opts.userId); // ★프로덕션 경로: 실제 user.id → 유저 고정 정체성
+  const pal = opts.paletteName ? PALETTES.find((x) => x.name === opts.paletteName) : null;
+  const identity = pal ? { ...base, palette: pal } : base;
   let bgDataUrl: string | null = null;
   let usedAiBackground = false;
 
@@ -34,6 +39,7 @@ export async function composeThumbnail(opts: {
     identity,
     articleId: opts.articleId ?? null,
     bgDataUrl, // null이면 렌더러가 팔레트 코드 폴백 배경 사용
+    bgWash: opts.bgWash,
   };
   const png = await renderThumbnail(input);
   return { png, usedAiBackground };

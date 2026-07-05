@@ -8,6 +8,7 @@ import { IMAGE_COST } from "@/lib/creditPacks";
 import CenterToast from "./CenterToast";
 import { copyImage as clipCopyImage, saveImage as clipSaveImage } from "@/lib/clipboard";
 import NaverPublishSheet from "./NaverPublishSheet";
+import ThumbMakerSheet from "./ThumbMakerSheet";
 import { openNaverBlogApp } from "@/lib/naverApp";
 import { scanCompliance, applySuggestion } from "@/lib/complianceFilter";
 import type { Article } from "./types";
@@ -130,6 +131,7 @@ export default function ArticleModal({
   // ★썸네일 3초 훅 문구 추천(무료) — 유저가 직접 만드는 썸네일용. 탭=복사.
   const [thumbCopies, setThumbCopies] = useState<string[] | null>(null);
   const [thumbBusy, setThumbBusy] = useState(false);
+  const [thumbMakerOpen, setThumbMakerOpen] = useState(false);
   async function fetchThumbCopies() {
     if (thumbBusy) return;
     setThumbBusy(true);
@@ -328,7 +330,10 @@ export default function ArticleModal({
           </div>
 
           <div className="mt-4 rounded-2xl at-glass p-5">
-            <p className="text-[14px] font-bold text-neutral-900">이미지 자리 {parseSlots(bodyHtml).filter((sl) => sl.type === "photo" || DATA_CARDS_ENABLED).length}곳</p>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[14px] font-bold text-neutral-900">이미지 자리 {parseSlots(bodyHtml).filter((sl) => sl.type === "photo" || DATA_CARDS_ENABLED).length}곳</p>
+              <button onClick={() => setThumbMakerOpen(true)} className="at-press shrink-0 rounded-lg bg-[#1D75F7]/10 px-3 py-1.5 text-[12px] font-bold text-[#1D75F7] transition hover:bg-[#1D75F7]/15">썸네일 만들기</button>
+            </div>
             <p className="mt-1 text-[12px] leading-relaxed text-neutral-400">직접 찍은 사진이 노출에 가장 좋아요. 올리면 그 자리에 들어가고, 복사할 때 같이 넘어가요. 비워 두고 발행해도 괜찮아요. 첫 번째 사진이 대표이미지 후보가 돼요.</p>
             <div className="mt-3 space-y-2.5">
               {parseSlots(bodyHtml).map((slot, i) => {
@@ -501,6 +506,18 @@ export default function ArticleModal({
               </div>
             </div>
           </div>
+        )}
+
+        {thumbMakerOpen && (
+          <ThumbMakerSheet
+            articleId={article.id}
+            copies={thumbCopies}
+            onFetchCopies={fetchThumbCopies}
+            slots={parseSlots(bodyHtml).map((sl, i) => ({ idx: i, desc: sl.desc, type: sl.type })).filter((x) => x.type === "photo").map(({ idx, desc }) => ({ idx, desc }))}
+            onPlaced={(idx, url) => setImgs((m) => ({ ...m, [idx]: { ...m[idx], url } }))}
+            onCredits={onCredits}
+            onClose={() => setThumbMakerOpen(false)}
+          />
         )}
 
         {naverOpen && (

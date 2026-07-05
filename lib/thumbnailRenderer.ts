@@ -47,6 +47,8 @@ export interface ThumbInput {
   identity: VisualIdentity;
   bgDataUrl?: string | null;
   articleId?: string | null; // ★글마다 오브젝트 배치 변주(같은 옷, 다른 포즈). 팔레트·템플릿·폰트는 불변.
+  /** 배경 이미지 위 팔레트색 워시(0~1) — 높을수록 오브젝트가 은은해지고 텍스트가 주인공(썸네일 메이커 톤 조절). */
+  bgWash?: number;
 }
 
 /* ── 색 유틸 ── */
@@ -208,7 +210,9 @@ async function renderAt(input: ThumbInput, width: number): Promise<Buffer> {
 
   // z순서: 배경 → backdrop(카피 뒤) → 무대 오브젝트 → 스크림 → 카피(최상단, 항상 위로 가독 보장).
   const root = el("div", { style: { display: "flex", width: SIZE, height: SIZE, position: "relative", overflow: "hidden", backgroundColor: p.bg } },
-    [bg, ...backdrop, ...objects, scrim, copyBlock(input, tpl)].filter(Boolean));
+    [bg,
+      bgDataUrl && input.bgWash ? el("div", { style: { position: "absolute", inset: 0, backgroundColor: p.bg, opacity: Math.min(0.85, Math.max(0, input.bgWash)) } }) : null,
+      ...backdrop, ...objects, scrim, copyBlock(input, tpl)].filter(Boolean));
 
   const fonts = [
     { name: identity.fontPair.title, data: loadFont(identity.fontPair.title), weight: 900 as const, style: "normal" as const },

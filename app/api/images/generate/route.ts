@@ -22,6 +22,8 @@ async function uploadPng(userId: string, png: Buffer): Promise<string | null> {
 
 export const maxDuration = 60;
 
+function refundKeyTM(userId: string, copy: string): string { return `tm-${userId}-${copy}`.slice(0, 60); }
+
 // AI 이미지 생성 — 장당 IMAGE_COST 크레딧. ★적자 불가 구조: 키 확인 → 선차감 → 생성 → 실패 시 멱등 환불.
 // 실패는 usage_log(kind: image_fail)로 남겨 관리자 대시보드가 감시(잔액 소진 조기 경보).
 export async function POST(request: Request) {
@@ -41,7 +43,7 @@ export async function POST(request: Request) {
   const thumbnail = body.thumb === true; // 1번(대표) = 3초 훅 프롬프트
   const articleId = typeof body.articleId === "string" ? body.articleId.slice(0, 60) : null;
   const slotIdx = Number.isInteger(body.idx) && body.idx >= 0 && body.idx <= 9 ? (body.idx as number) : null;
-  if (!slot) return NextResponse.json({ error: "어떤 이미지가 필요한지 알 수 없어요." }, { status: 400 });
+  if (!slot && body.thumbMaker !== true) return NextResponse.json({ error: "어떤 이미지가 필요한지 알 수 없어요." }, { status: 400 });
 
   // ★데이터 카드 슬롯 = satori 코드 렌더(무료·크레딧 0). 값은 클라가 [카드:] 마커에서 파싱해 전달.
   if (body.slotType === "card" && Array.isArray(body.cardItems)) {
@@ -63,6 +65,47 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true, url, dataUrl: url ? undefined : `data:image/png;base64,${png.toString("base64")}` }); // 무료
     } catch {
       return NextResponse.json({ ok: false, skipped: true, error: "카드를 만들지 못했어요." });
+    }
+  }
+
+  // ★썸네일 메이커(유저 요청 2026-07-05) — 문구·배경색·톤 선택형. 3D(AI) 배경=IMAGE_COST, 심플(코드) 배경=무료.
+  if (body.thumbMaker === true) {
+    const mainRaw = String(body.mainCopy ?? "").trim().slice(0, 40);
+    if (!mainRaw) return NextResponse.json({ error: "썸네일 문구를 입력해 주세요." }, { status: 400 });
+    const { breakThumbCopy } = await import("@/lib/thumbCopyBreak");
+    const paletteName = typeof body.paletteName === "string" ? body.paletteName.slice(0, 30) : undefined;
+    const wash = typeof body.wash === "number" ? Math.min(0.85, Math.max(0, body.wash)) : 0.35;
+    const aiBg = body.aiBg === true;
+    if (aiBg && !imageReady()) return NextResponse.json({ error: "이미지 기능을 준비하고 있어요.", code: "NOT_READY" }, { status: 503 });
+    let balance: number | null = null;
+    if (aiBg) {
+      balance = await spendCredits(user.id, IMAGE_COST, "image");
+      if (balance === null) return NextResponse.json({ error: "크레딧이 부족해요.", code: "NO_CREDITS" }, { status: 402 });
+    }
+    try {
+      const { png, usedAiBackground } = await composeThumbnail({
+        userId: user.id,
+        thumb: { mainCopy: breakThumbCopy(mainRaw), subCopy: "", badge: "" },
+        articleId: articleId ?? mainRaw,
+        useAiBackground: aiBg,
+        paletteName,
+        bgWash: wash,
+      });
+      // AI 배경 실패로 코드 폴백됐으면 과금 취소(받은 것만 청구)
+      if (aiBg && !usedAiBackground) { await addCredits(user.id, IMAGE_COST, "refund_image", crypto.randomUUID()).catch(() => null); }
+      const url = await uploadPng(user.id, png);
+      if (url && articleId && slotIdx !== null) {
+        try {
+          const { data: cur } = await supabase.from("articles").select("images").eq("id", articleId).eq("user_id", user.id).single();
+          const merged = { ...((cur?.images as Record<string, string>) ?? {}), [String(slotIdx)]: url };
+          await supabase.from("articles").update({ images: merged }).eq("id", articleId).eq("user_id", user.id);
+        } catch { /* 컬럼 미적용 */ }
+      }
+      void logUsage({ userId: user.id, model: "thumb", kind: "thumb_maker", inputTokens: 0, outputTokens: aiBg && usedAiBackground ? 1290 : 0 });
+      return NextResponse.json({ ok: true, url, dataUrl: url ? undefined : `data:image/png;base64,${png.toString("base64")}`, usedAiBackground, credits: balance ?? undefined });
+    } catch {
+      if (aiBg) await addCredits(user.id, IMAGE_COST, "refund_image", refundKeyTM(user.id, mainRaw)).catch(() => null);
+      return NextResponse.json({ error: "썸네일을 만들지 못했어요. 크레딧은 돌려드렸어요." }, { status: 502 });
     }
   }
 
