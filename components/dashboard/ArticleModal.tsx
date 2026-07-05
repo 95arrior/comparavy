@@ -514,7 +514,10 @@ export default function ArticleModal({
         {thumbMakerOpen && (
           <ThumbMakerSheet
             articleId={article.id}
+            articleTitle={article.title}
             copies={thumbCopies}
+            initialPreview={lastThumb}
+            onGenerated={setLastThumb}
             onFetchCopies={fetchThumbCopies}
             slots={parseSlots(bodyHtml).map((sl, i) => ({ idx: i, desc: sl.desc, type: sl.type })).filter((x) => x.type === "photo").map(({ idx, desc }) => ({ idx, desc }))}
             onPlaced={(idx, url) => setImgs((m) => ({ ...m, [idx]: { ...m[idx], url } }))}
