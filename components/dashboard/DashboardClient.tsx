@@ -41,14 +41,16 @@ export default function DashboardClient(props: DashboardProps) {
   const [selected, setSelected] = useState<Article | null>(null);
   const [genParams, setGenParams] = useState<GenParams | null>(null);
   const [naverBlogId, setNaverBlogId] = useState(""); // 네이버 블로그 아이디 — 내정보에서 수정(블로그별)
-  function editNaverBlogId() {
-    const input = window.prompt("내 네이버 블로그 아이디\n(예: blog.naver.com/myblog → myblog)", naverBlogId);
-    if (input == null) return;
-    const id = input.trim().replace(/^https?:\/\//, "").replace(/^m\./, "").replace(/^blog\.naver\.com\//, "").replace(/[/?#].*$/, "").trim();
+  const [blogIdSheet, setBlogIdSheet] = useState(false); // 주소 수정 시트(브라우저 prompt 폐기 — 토스식)
+  const [blogIdInput, setBlogIdInput] = useState("");
+  function editNaverBlogId() { setBlogIdInput(naverBlogId); setBlogIdSheet(true); }
+  function saveNaverBlogId() {
+    const id = blogIdInput.trim().replace(/^https?:\/\//, "").replace(/^m\./, "").replace(/^blog\.naver\.com\//, "").replace(/[/?#].*$/, "").trim();
     try { if (id) localStorage.setItem("ateflo_naver_blogid", id); else localStorage.removeItem("ateflo_naver_blogid"); } catch { /* ignore */ }
     setNaverBlogId(id);
-    // 서버에도 저장 — 모바일·웹 동기화
     void fetch("/api/blog-profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ naver_blog_id: id }) });
+    setBlogIdSheet(false);
+    setNotice("저장했어요 — 이 블로그에만 적용돼요");
   }
   // 글 생성 직전 '확인' 대기 (확인하면 genParams로 생성 시작 — 크레딧 실수 방지)
   const [pendingWrite, setPendingWrite] = useState<{ keyword: string; title: string; newsContext?: string; briefText?: string; titleSearch?: string; thumb?: { mainCopy: string; subCopy: string; badge: string }; seriesId?: string; series?: unknown } | null>(null);
@@ -462,6 +464,19 @@ export default function DashboardClient(props: DashboardProps) {
   return (
     <div className="at-app-bg flex min-h-screen text-neutral-900 antialiased">
       {/* 메인 */}
+      {blogIdSheet && (
+        <div className="ateflo-backdrop-in fixed inset-0 z-[80] flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center sm:p-6" onClick={() => setBlogIdSheet(false)}>
+          <div className="ateflo-sheet-up w-full max-w-md at-glass-strong rounded-t-3xl p-6 shadow-2xl sm:rounded-3xl" style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom))" }} onClick={(e) => e.stopPropagation()}>
+            <p className="text-[17px] font-bold text-neutral-900">네이버 블로그 주소</p>
+            <p className="mt-1 text-[12.5px] text-neutral-400">지금 보고 있는 블로그에만 저장돼요 — 발행 확인에 쓰여요.</p>
+            <input value={blogIdInput} onChange={(e) => setBlogIdInput(e.target.value)} placeholder="blog.naver.com/아이디 또는 아이디만"
+              autoFocus className="mt-4 w-full rounded-xl bg-neutral-100 px-4 py-3.5 text-[15px] outline-none transition placeholder:text-neutral-400 focus:bg-white focus:ring-2 focus:ring-[#1D75F7]/30" />
+            <button onClick={saveNaverBlogId} className="at-press tk-grad-cta mt-4 w-full rounded-xl py-3.5 text-[15px] font-semibold text-white">저장</button>
+            <button onClick={() => setBlogIdSheet(false)} className="mt-2 w-full py-2 text-center text-sm font-medium text-neutral-400 transition hover:text-neutral-700">취소</button>
+          </div>
+        </div>
+      )}
+
       {showNav && <TossNav active={navKey} onNav={onNav} initial={initial} credits={credits} onCredits={() => setPage("credits")} />}
       <div className={`min-w-0 flex-1 ${showNav ? "pb-[78px] md:pb-0 md:pt-16" : ""}`}>
         <CenterToast message={notice} />
