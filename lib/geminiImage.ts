@@ -25,14 +25,30 @@ function fnv(str: string): number {
 }
 
 // ── 본문 이미지: 실사 사진 톤 다양성 ──
-// ★토스톤 팔레트 회전 — 비비드 블루 축 + 파스텔 액센트(도배 방지 변주는 팔레트로)
-const PHOTO_TONES = [
+// ★토스톤 팔레트 회전(개념·수치·비교용) + 실사 톤 회전(실제 씬용) — 혼합 정책(유저 결정 2026-07-05)
+const TOSS_TONES = [
   "vivid blue (#3182F6) primary with soft sky-blue pastels",
   "vivid blue accent with warm coral pastel touches",
   "vivid blue accent with fresh mint pastel touches",
   "vivid blue accent with soft lavender pastel touches",
   "vivid blue accent with gentle amber pastel touches",
 ];
+const PHOTO_TONES = [
+  "warm natural window light, soft film-like tones",
+  "clean minimal desaturated studio light",
+  "bright morning sunlight, airy and fresh",
+  "low-saturation pastel daylight",
+  "soft overcast diffused light",
+];
+// 슬롯 설명 성격 분기 — 실제 씬(장소·물건·현장) vs 개념(비교·절차·수치). 애매하면 시드 랜덤.
+const CONCRETE_RE = /전경|모습|현장|매장|가게|음식|요리|거리|풍경|장소|건물|실내|외관|제품|실물|기기|착용|모음|재료|간판|메뉴|차량|도로|공원|바다|산|숙소|객실|사람|손|책상|주방|화면을 보는/;
+const ABSTRACT_RE = /비교|정리|요약|절차|단계|순서|구성|개념|금액|비용|수익|금리|계산|조건|장단점|체크리스트|일정|통계|그래프|표|자료|아이콘|상징/;
+export function pickImageStyle(slotDesc: string, seed: number): "photo" | "toss" {
+  const c = CONCRETE_RE.test(slotDesc), a = ABSTRACT_RE.test(slotDesc);
+  if (c && !a) return "photo";
+  if (a && !c) return "toss";
+  return seed % 2 === 0 ? "photo" : "toss";
+}
 const PHOTO_COMPOS = [
   "subject centered with generous negative space",
   "subject on the left third, airy background",
@@ -43,14 +59,23 @@ const PHOTO_COMPOS = [
 ];
 const PHOTO_MOODS = ["calm and tidy", "warm and inviting", "fresh and clean", "quiet and refined", "cozy everyday"];
 
-/** 본문 이미지 프롬프트(순수 함수) — ★토스톤 디폴트(유저 결정 2026-07-05): 소프트 매트 3D 일러스트. 테스트 대상. */
+/** 본문 이미지 프롬프트(순수 함수) — ★혼합 정책(유저 결정): 실제 씬=실사 / 개념·수치=토스톤 3D / 애매=시드 랜덤. 테스트 대상. */
 export function buildBodyPrompt(slotDesc: string, articleTitle: string, seed: number): string {
-  const tone = PHOTO_TONES[seed % PHOTO_TONES.length];
   const compo = PHOTO_COMPOS[(seed >> 3) % PHOTO_COMPOS.length];
   const mood = PHOTO_MOODS[(seed >> 7) % PHOTO_MOODS.length];
+  if (pickImageStyle(slotDesc, seed) === "photo") {
+    const tone = PHOTO_TONES[seed % PHOTO_TONES.length];
+    return [
+      `Realistic lifestyle photograph for a Korean blog post. Topic context (for understanding only — never render as text): ${articleTitle}.`,
+      `Faithfully photograph this specific scene with clearly recognizable real objects: ${slotDesc}.`,
+      `${tone}, ${compo}, ${mood} mood. Natural realistic photography, true-to-life textures and materials, tasteful depth of field, high-end magazine quality. Wide horizontal 16:9 composition.`,
+      IMAGE_HARD_RULES,
+    ].join(" ");
+  }
+  const tone = TOSS_TONES[seed % TOSS_TONES.length];
   return [
     `Soft matte 3D illustration in the style of a premium Korean fintech app (Toss) event card. Topic context (for understanding only — never render as text): ${articleTitle}.`,
-    `Depict this scene as cute rounded clay-like 3D objects that are instantly recognizable: ${slotDesc}.`,
+    `Depict this concept as cute rounded clay-like 3D objects that are instantly recognizable: ${slotDesc}.`,
     `Color: ${tone}, on a clean single-color light background. ${compo}, ${mood} mood. Tactile smooth clay material, soft studio lighting, gentle shadows, no clutter. Playful but premium. Wide horizontal 16:9 composition.`,
     IMAGE_HARD_RULES,
   ].join(" ");
