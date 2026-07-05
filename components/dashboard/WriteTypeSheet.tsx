@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { IMAGE_COST } from "@/lib/creditPacks";
-import { AI_IMAGES_ENABLED } from "@/config/publish";
+import { AI_IMAGES_AT_CREATE } from "@/config/publish";
 
 // 글 생성 직전 '확인' 시트 — 생성은 크레딧이 들어 실수 방지용 확인 한 번.
 // ★이미지 동시 생성 토글: 켜면 글이 써지는 동안 사진 자리 앞 3곳의 AI 일러스트가 병렬로 만들어진다.
@@ -66,7 +66,7 @@ export default function WriteTypeSheet({
         )}
 
         {/* 이미지 동시 생성 토글 — AI 봉인 중엔 숨김(사진은 검토 화면에서 직접 업로드) */}
-        {AI_IMAGES_ENABLED && <button onClick={toggle} className="mt-4 flex w-full items-center gap-3 rounded-2xl bg-neutral-50 p-4 text-left transition active:scale-[0.99]">
+        {AI_IMAGES_AT_CREATE && <button onClick={toggle} className="mt-4 flex w-full items-center gap-3 rounded-2xl bg-neutral-50 p-4 text-left transition active:scale-[0.99]">
           <div className="min-w-0 flex-1">
             <p className="text-[14px] font-bold text-neutral-900">AI 이미지도 함께 🎨</p>
             <p className="mt-0.5 text-[12px] text-neutral-500">대표이미지는 무료로, 본문 사진은 최대 +{IMAGE_COST * 2}크레딧</p>
@@ -77,7 +77,7 @@ export default function WriteTypeSheet({
         </button>}
 
         <button
-          onClick={() => onPick({ withImages: AI_IMAGES_ENABLED && withImages, title: pickTitle })}
+          onClick={() => onPick({ withImages: AI_IMAGES_AT_CREATE && withImages, title: pickTitle })}
           className="at-press mt-4 w-full rounded-xl tk-grad-cta py-3.5 text-[15px] font-semibold text-white transition hover:opacity-90"
         >
           이 글 쓰기

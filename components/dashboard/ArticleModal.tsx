@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { photoMarkerToGuide, photoMarkerToSlot, photoSlots, markToNaverBold, addNaverSpacing } from "@/lib/photoMarkers";
 import { formatBody, parseSlots } from "@/lib/publishHtml";
 import { AI_IMAGES_ENABLED, DATA_CARDS_ENABLED } from "@/config/publish";
+import { IMAGE_COST } from "@/lib/creditPacks";
 import CenterToast from "./CenterToast";
 import { copyImage as clipCopyImage, saveImage as clipSaveImage } from "@/lib/clipboard";
 import NaverPublishSheet from "./NaverPublishSheet";
@@ -329,7 +330,7 @@ export default function ArticleModal({
                         <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadImage(i, f); e.target.value = ""; }} />
                       </label>
                       {AI_IMAGES_ENABLED && !st.url && (
-                        <button onClick={() => makeImage(i, slot.desc)} disabled={st.busy} className="at-press shrink-0 rounded-lg bg-neutral-100 px-3 py-1.5 text-[12px] font-bold text-neutral-600 disabled:opacity-50">AI로 만들기</button>
+                        <button onClick={() => makeImage(i, slot.desc)} disabled={st.busy} className="at-press shrink-0 rounded-lg bg-[#1D75F7]/10 px-3 py-1.5 text-[12px] font-bold text-[#1D75F7] transition hover:bg-[#1D75F7]/15 disabled:opacity-50"><span aria-hidden>✦</span> AI 생성 · {IMAGE_COST}크레딧</button>
                       )}
                     </div>
                     {st.err && <p className="mt-2 text-[12px] font-medium text-amber-600">{st.err}</p>}
