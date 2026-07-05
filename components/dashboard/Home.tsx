@@ -87,7 +87,7 @@ export default function Home({
   if (typeof window !== "undefined" && !freshDoneRef && new URLSearchParams(window.location.search).has("fresh")) {
     try {
       Object.keys(localStorage)
-        .filter((k) => k.startsWith("ateflo_topics_") || k.startsWith("ateflo_dismissed_") || k.startsWith("ateflo_swaps_"))
+        .filter((k) => k.startsWith("ateflo_topics_") || k.startsWith("ateflo_dismissed_") || k.startsWith("ateflo_swaps_") || k.startsWith("ateflo_heroswap_") || k.startsWith("ateflo_heroskip_")) // 히어로 교체 횟수·스킵도 리셋(교체 v2)
         .forEach((k) => localStorage.removeItem(k));
       window.history.replaceState(null, "", window.location.pathname);
     } catch { /* ignore */ }
