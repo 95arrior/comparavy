@@ -66,6 +66,9 @@ export default function TodayCard({
           )}
         </div>
         <p className="mt-2 text-[17px] font-bold leading-snug text-neutral-900">오늘 1편 발행 완료.<br />한 편 더 쓰면 승인이 가까워져요.</p>
+        {!topic && !locked && (
+          <p className="mt-3 rounded-[12px] bg-[#F7F8FA] px-4 py-3 text-[13px] text-[color:var(--color-text-sub)]">이 주제의 새 글감을 모으고 있어요 — 잠시 후 새로고침해 보세요.</p>
+        )}
         {topic && !locked && (
           <div className="mt-3 rounded-[12px] bg-[#F7F8FA] p-3.5">
             <div><DemandRow topic={topic} onGoPerformance={onGoPerformance} /></div>
