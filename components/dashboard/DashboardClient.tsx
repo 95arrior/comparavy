@@ -579,7 +579,7 @@ export default function DashboardClient(props: DashboardProps) {
                 articles={articles}
                 credits={credits}
                 onOpenArticle={(a) => setSelected(a)}
-                onAddBlog={() => setAddBlogMode(true)}
+                onAddBlog={(ch?: "wordpress") => { setAddBlogMode(true); setAddChannel(ch === "wordpress" ? "wordpress" : "pick"); }}
               />
             ) : labView === "home" && (
               <Home
@@ -605,7 +605,7 @@ export default function DashboardClient(props: DashboardProps) {
                 onSelect={setSelected}
                 profileKey={`${(blogProfile as { id?: string }).id ?? ""}:${blogProfile.vertical}:${blogProfile.sub_category ?? ""}`} // ★블로그 id 포함 — 같은 주제 두 블로그도 캐시 분리
                 subCategory={blogProfile.sub_category ?? blogProfile.topic}
-                onAddBlog={() => setAddBlogMode(true)}
+                onAddBlog={(ch?: "wordpress") => { setAddBlogMode(true); setAddChannel(ch === "wordpress" ? "wordpress" : "pick"); }}
               />
             )}
 

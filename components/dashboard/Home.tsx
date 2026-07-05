@@ -7,6 +7,7 @@ import TodayCard from "./TodayCard";
 import GlassIcon from "@/components/GlassIcon";
 import TipChip, { tipFor } from "@/components/TipChip";
 import ReassureLine from "./ReassureLine";
+import { computeLevel } from "@/lib/level";
 import CourseRing from "./CourseRing";
 import CheckinCard from "./CheckinCard";
 import NeighborMission from "./NeighborMission";
@@ -78,7 +79,7 @@ export default function Home({
   onOpenNews?: () => void;
   profileKey?: string; // 주제:세부 — 글감 캐시 분리(주제 바꾸면 새 글감)
   subCategory?: string | null; // 이웃 미션 검색어·인사말 개인화
-  onAddBlog?: () => void; // ★멀티 블로그 — 새 블로그 추가(온보딩 재사용)
+  onAddBlog?: (channel?: "wordpress") => void; // ★멀티 블로그 — 새 블로그 추가(wordpress 힌트 시 채널 선택 건너뜀)
 }) {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [topicsLoading, setTopicsLoading] = useState(true);
@@ -101,11 +102,11 @@ export default function Home({
   const [blogSheet, setBlogSheet] = useState(false); // ★블로그 스위처
   const [switching, setSwitching] = useState<string | null>(null); // 전환 중 즉각 피드백(리로드 전 죽은 시간 제거)
   const [blogCount, setBlogCount] = useState(1);
-  useEffect(() => { cachedGet<{ blogs?: unknown[] }>("/api/blogs", 60_000).then((d) => { const n = Array.isArray(d.blogs) ? d.blogs.length : 1; setBlogCount(Math.max(1, n)); }).catch(() => { /* ignore */ }); }, []);
+  useEffect(() => { cachedGet<{ blogs?: { id: string; blog_name: string | null; sub_category: string | null; is_active: boolean }[] }>("/api/blogs", 60_000).then((d) => { const list = Array.isArray(d.blogs) ? d.blogs : []; setBlogCount(Math.max(1, list.length)); setBlogList(list); }).catch(() => { /* ignore */ }); }, []); // 마운트 선로딩 — 스위처가 탭 즉시 뜨게(실측: 반응 지연)
   const [blogList, setBlogList] = useState<{ id: string; blog_name: string | null; sub_category: string | null; is_active: boolean }[]>([]);
-  async function openBlogSheet() {
-    setBlogSheet(true);
-    try { const r = await fetch("/api/blogs"); const d = await r.json(); setBlogList(Array.isArray(d.blogs) ? d.blogs : []); } catch { /* ignore */ }
+  function openBlogSheet() {
+    setBlogSheet(true); // 목록은 마운트 때 선로딩됨 — 즉시 표시, 백그라운드 갱신만
+    fetch("/api/blogs").then((r) => r.json()).then((d) => { if (Array.isArray(d.blogs)) setBlogList(d.blogs); }).catch(() => { /* ignore */ });
   } // ★토스식 — 루틴은 행, 상세는 시트
   const [swapNotice, setSwapNotice] = useState(false); // 교체 한도 안내
   const [swapEmpty, setSwapEmpty] = useState(false); // 교체 후보 없음 안내(무반응 방지)
@@ -417,6 +418,28 @@ export default function Home({
           ))}
         </div>
       </div>
+
+      {/* ★레벨 추천 — 시스템이 다음 행동을 말해준다(챌린지 코어). 생각 불필요. */}
+      {(() => {
+        let approved = false; try { approved = localStorage.getItem("ateflo_adpost_approved") === "1"; } catch { /* ignore */ }
+        const lv = computeLevel({ published: articles.filter((a) => a.status === "verified" || a.status === "published").length, adpostApproved: approved, blogCount, hasWp: false });
+        return (
+          <div className="tk-seq-3 tk-card-glow mt-6 rounded-[20px] p-5 shadow-[0_2px_12px_-4px_rgba(29,117,247,0.12)]">
+            <div className="flex items-center gap-2">
+              <span className="rounded-full tk-grad-cta px-2.5 py-1 text-[11.5px] font-bold text-white">Lv.{lv.level} {lv.name}</span>
+              {lv.next && <span className="min-w-0 flex-1 truncate text-[11.5px] text-[color:var(--color-text-weak)]">{lv.next}</span>}
+            </div>
+            <p className="mt-3 text-[15px] font-bold text-[color:var(--color-text)]">{lv.recTitle}</p>
+            <p className="mt-1 text-[12.5px] leading-relaxed text-[color:var(--color-text-sub)]">{lv.recDesc}</p>
+            {lv.recAction === "wordpress" && onAddBlog && (
+              <button onClick={() => onAddBlog("wordpress")} className="at-press tk-grad-cta mt-3 w-full rounded-[12px] py-3 text-[14px] font-bold text-white">워드프레스 시작하기</button>
+            )}
+            {lv.recAction === "checkin" && (
+              <button onClick={() => setRoutineSheet("checkin")} className="at-press mt-3 w-full rounded-[12px] bg-[#1D75F7]/[0.07] py-3 text-[14px] font-bold text-[#1D75F7]">아침 체크인 하기</button>
+            )}
+          </div>
+        );
+      })()}
 
       <ReassureLine className="tk-seq-3 mt-6" />
 
