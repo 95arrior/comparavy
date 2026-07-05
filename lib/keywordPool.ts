@@ -13,6 +13,7 @@ export interface PoolBuildResult {
   vertical: string;
   sub: string;
   inserted: number; // keyword_pool에 upsert한 행 수((vertical,sub) 내 dedupe 후)
+  dropped?: number; // 관련성 게이트로 버린 무관 키워드 수
   perSeed: { seed: string; found: number; error?: string }[];
   durationMs: number;
 }
@@ -51,6 +52,26 @@ export async function buildPoolForSub(vertical: string, sub: string, opts?: { sl
     await sleep(sleepMs);
   }
 
+  // ★관련성 게이트(실측: '자동차' 창고에 파쇄기 — keywordstool 연관이 광고 지면 기준이라 주제 무관 키워드 혼입).
+  //  저장 전에 Haiku 1콜로 무관 키워드 제거. 게이트 실패 시엔 기존 동작(통과)하되 로그로 감시.
+  let droppedByGate = 0;
+  if (collected.size > 0) {
+    try {
+      const list = [...collected.keys()].slice(0, 400);
+      const client = new (await import("@anthropic-ai/sdk")).default({ apiKey: process.env.ANTHROPIC_API_KEY });
+      const res = await client.messages.create({
+        model: "claude-haiku-4-5", max_tokens: 1500,
+        messages: [{ role: "user", content: `블로그 카테고리 "${sub}"의 글감 후보 키워드 목록이야. 이 카테고리와 무관한 키워드의 인덱스만 JSON 배열로 답해(0부터). 애매하면 관련으로 간주(과잉 제거 금지). 목록:
+${list.map((k, i) => `${i}:${k}`).join("\n")}
+출력: [숫자, ...]만.` }],
+      });
+      const txt = res.content.find((b) => b.type === "text")?.text ?? "[]";
+      const m = txt.match(/\[[\d,\s]*\]/);
+      const bad = new Set<number>(m ? (JSON.parse(m[0]) as number[]) : []);
+      for (const [i, k] of list.entries()) if (bad.has(i)) { collected.delete(k); droppedByGate++; }
+    } catch { /* 게이트 실패 — 수집은 계속(오염 감시는 로그) */ }
+  }
+
   let inserted = 0;
   if (collected.size > 0) {
     const rows = [...collected.values()].map(({ k, seed }) => ({
@@ -75,5 +96,5 @@ export async function buildPoolForSub(vertical: string, sub: string, opts?: { sl
     inserted = rows.length;
   }
 
-  return { vertical, sub, inserted, perSeed, durationMs: Date.now() - t0 };
+  return { vertical, sub, inserted, dropped: droppedByGate, perSeed, durationMs: Date.now() - t0 };
 }

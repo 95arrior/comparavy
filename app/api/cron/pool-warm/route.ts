@@ -33,6 +33,17 @@ export async function GET(request: Request) {
   if (!(await authorized(request))) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   if (!hasSupabaseEnv()) return NextResponse.json({ error: "no env" }, { status: 500 });
   const db = createSupabaseAdminClient();
+  // ★오염 재빌드(관리자) — ?rebuild={sub}: 그 카테고리 창고를 비우고 관련성 게이트를 거쳐 재수집(실측: 자동차에 파쇄기)
+  const rebuild = new URL(request.url).searchParams.get("rebuild");
+  if (rebuild) {
+    await db.from("keyword_pool").delete().eq("vertical", "online").eq("sub", rebuild);
+    try {
+      const r = await buildPoolForSub("online", rebuild, { sleepMs: 250 });
+      return NextResponse.json({ ok: true, rebuilt: rebuild, inserted: r.inserted, dropped: r.dropped ?? 0 });
+    } catch (e) {
+      return NextResponse.json({ ok: false, rebuilt: rebuild, error: e instanceof Error ? e.message.slice(0, 100) : "?" }, { status: 500 });
+    }
+  }
   const subs = allSubs();
 
   // sub별 상태(개수·최신 갱신) → 빈 것 우선, 다음 오래된 것
