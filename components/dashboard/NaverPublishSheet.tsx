@@ -24,6 +24,7 @@ export default function NaverPublishSheet({
   images,
   tags,
   onOpenNaverWrite,
+  targetBlogId,
   onCopied,
   onDone,
   onClose,
@@ -33,7 +34,9 @@ export default function NaverPublishSheet({
   images: Record<number, string>;
   /** 네이버 태그칸 전용 — 본문엔 넣지 않는다(자동 등록 중복 방지) */
   tags?: string[];
-  onOpenNaverWrite: () => void; // ★탭만 연다 — 클립보드 접근 금지(회귀 테스트로 고정)
+  onOpenNaverWrite: () => void;
+  /** 이 글이 속한 블로그의 네이버 아이디 — 편집기는 '로그인된 계정'으로 열리므로 대상 명시 가드 */
+  targetBlogId?: string | null; // ★탭만 연다 — 클립보드 접근 금지(회귀 테스트로 고정)
   onCopied?: () => void; // 본문 복사 검증 성공 시(상태 모델 copied 전이)
   onDone: () => void;
   onClose: () => void;
@@ -142,6 +145,11 @@ export default function NaverPublishSheet({
           <div className="mt-5">
             <p className="text-[17px] font-bold text-neutral-900">네이버 본문 칸에 붙여넣으세요</p>
             <p className="mt-1 text-[13px] leading-relaxed text-neutral-500">{isMobile ? "본문 칸을 길게 눌러 붙여넣기 하세요." : "본문 칸 클릭 후 Ctrl+V 하세요."}</p>
+            {targetBlogId && (
+              <p className="mt-3 rounded-xl bg-neutral-50 px-4 py-2.5 text-[12.5px] font-medium text-neutral-600">
+                이 글은 <b className="text-neutral-900">{targetBlogId}</b> 블로그 글이에요. 편집기는 지금 네이버에 로그인된 계정으로 열리니, 다른 블로그가 열리면 네이버에서 <b className="text-neutral-900">{targetBlogId}</b> 계정으로 다시 로그인해 주세요. 로그인이 안 돼 있으면 로그인 화면이 먼저 떠요.
+              </p>
+            )}
             <button onClick={() => { onOpenNaverWrite(); setScreen(3); }} className={`${bigBtn} mt-4`} style={{ background: "#03C75A" }}>
               네이버 글쓰기 열기
             </button>

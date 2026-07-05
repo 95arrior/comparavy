@@ -37,23 +37,7 @@ export default function DashboardClient(props: DashboardProps) {
   const [paywall, setPaywall] = useState<null | { title?: string; charge?: boolean }>(null); // 잔액 0 페이월 or 충전 시트
   const [selected, setSelected] = useState<Article | null>(null);
   const [genParams, setGenParams] = useState<GenParams | null>(null);
-  const [naverBlogId, setNaverBlogId] = useState(""); // 네이버 블로그 아이디(글쓰기 직행용) — 내정보에서 수정
-  useEffect(() => {
-    // ★서버(프로필)가 진실 — 있으면 기기 캐시를 덮어써 모바일·웹 동기화. 없으면 기기 캐시 폴백(구버전 호환).
-    const serverId = (blogProfile as { naver_blog_id?: string | null } | null)?.naver_blog_id ?? "";
-    if (serverId) {
-      setNaverBlogId(serverId);
-      try { localStorage.setItem("ateflo_naver_blogid", serverId); } catch { /* ignore */ }
-    } else {
-      try {
-        const local = localStorage.getItem("ateflo_naver_blogid") || "";
-        setNaverBlogId(local);
-        // 기기에만 있던 값은 서버로 승격(1회 마이그레이션)
-        if (local && blogProfile) void fetch("/api/blog-profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ naver_blog_id: local }) });
-      } catch { /* ignore */ }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const [naverBlogId, setNaverBlogId] = useState(""); // 네이버 블로그 아이디 — 내정보에서 수정(블로그별)
   function editNaverBlogId() {
     const input = window.prompt("내 네이버 블로그 아이디\n(예: blog.naver.com/myblog → myblog)", naverBlogId);
     if (input == null) return;
@@ -73,12 +57,15 @@ export default function DashboardClient(props: DashboardProps) {
   const [doneId, setDoneId] = useState<string | null>(null); // 백그라운드 생성 완료 → '보러가기'로 안내
   // 블로그 프로필 + 키워드 예약 큐
   const [blogProfile, setBlogProfile] = useState<BlogProfile | null>(null);
-  // ★활성 블로그 전환·프로필 도착 시 주소 재동기(실측: 전환해도 이전 블로그 주소 고정)
+  // ★활성 블로그 전환·프로필 도착 시 주소 재동기 — 서버(활성 프로필) 값이 유일한 진실. 빈 값도 그대로(이전 블로그 값 잔류 금지).
+  //  구'기기값 서버 승격' 로직은 제거 — 멀티 블로그에서 이전 블로그 주소를 새 블로그 프로필에 오염시키는 사고 경로였다.
   useEffect(() => {
-    const sid = (blogProfile as { naver_blog_id?: string | null } | null)?.naver_blog_id ?? "";
-    if (sid) { setNaverBlogId(sid); try { localStorage.setItem("ateflo_naver_blogid", sid); } catch { /* ignore */ } }
+    if (!blogProfile) return;
+    const sid = (blogProfile as { naver_blog_id?: string | null }).naver_blog_id ?? "";
+    setNaverBlogId(sid);
+    try { if (sid) localStorage.setItem("ateflo_naver_blogid", sid); else localStorage.removeItem("ateflo_naver_blogid"); } catch { /* ignore */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [(blogProfile as { naver_blog_id?: string | null } | null)?.naver_blog_id]);
+  }, [blogProfile]);
   const [reonboardPrev, setReonboardPrev] = useState<BlogProfile | null>(null); // 재설정(재온보딩) 전 프로필 — 취소 시 복귀
   const [addBlogMode, setAddBlogMode] = useState(false); // ★멀티 블로그 — 새 블로그 추가(온보딩 재사용, createNew)
   const [queue, setQueue] = useState<QueueItem[]>([]);

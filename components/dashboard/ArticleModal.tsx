@@ -511,6 +511,7 @@ export default function ArticleModal({
             tags={Array.isArray(article.tags) ? (article.tags as string[]) : []}
             onCopied={() => { if (article.status === "draft") void fetch(`/api/articles/${article.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "copied" }) }); }}
             onOpenNaverWrite={openNaverWrite}
+            targetBlogId={naverBlogId}
             onDone={markNaverPublished}
             onClose={() => setNaverOpen(false)}
           />
