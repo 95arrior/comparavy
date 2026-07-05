@@ -299,7 +299,7 @@ export default function ArticleModal({
         {parseSlots(bodyHtml).length > 0 && (
           <div className="mt-4 rounded-2xl at-glass p-5">
             <p className="text-[14px] font-bold text-neutral-900">이미지 자리 {parseSlots(bodyHtml).filter((sl) => sl.type === "photo" || DATA_CARDS_ENABLED).length}곳</p>
-            <p className="mt-1 text-[12px] leading-relaxed text-neutral-400">직접 찍은 사진이 노출에 가장 좋아요. 올리면 그 자리에 들어가고, 복사할 때 같이 넘어가요. 비워 두고 발행해도 괜찮아요.</p>
+            <p className="mt-1 text-[12px] leading-relaxed text-neutral-400">직접 찍은 사진이 노출에 가장 좋아요. 올리면 그 자리에 들어가고, 복사할 때 같이 넘어가요. 비워 두고 발행해도 괜찮아요. 첫 번째 사진이 대표이미지 후보가 돼요.</p>
             <div className="mt-3 space-y-2.5">
               {parseSlots(bodyHtml).map((slot, i) => {
                 const st = imgs[i] ?? {};
@@ -320,7 +320,10 @@ export default function ArticleModal({
                   <div key={i} className={`rounded-xl bg-white/70 p-3.5 ring-1 ring-black/[0.04] ${st.busy ? "at-ai-swap" : ""}`}>
                     <div className="flex items-center gap-3">
                       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-[11px] font-bold text-neutral-500">{i + 1}</span>
-                      <p className="min-w-0 flex-1 text-[13px] font-medium text-neutral-700">예: {slot.desc}</p>
+                      <p className="min-w-0 flex-1 text-[13px] font-medium text-neutral-700">
+                        {i === 0 && <span className="mr-1.5 rounded bg-[#1D75F7]/10 px-1.5 py-0.5 text-[10.5px] font-bold text-[#1D75F7] align-middle">대표</span>}
+                        예: {slot.desc}
+                      </p>
                       <label className="at-press shrink-0 cursor-pointer rounded-lg bg-[#1D75F7]/10 px-3 py-1.5 text-[12px] font-bold text-[#1D75F7] transition hover:bg-[#1D75F7]/15">
                         {st.busy ? "올리는 중" : st.url ? "바꾸기" : "사진 올리기"}
                         <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadImage(i, f); e.target.value = ""; }} />

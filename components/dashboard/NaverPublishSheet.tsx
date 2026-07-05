@@ -168,11 +168,17 @@ export default function NaverPublishSheet({
           </div>
         )}
 
-        {/* 마지막 화면 — 완료 */}
+        {/* 마지막 화면 — 완료(+대표이미지 가이드 — 붙여넣은 사진은 대표로 안 잡히는 네이버 동작, 실측 우회법) */}
         {screen === totalScreens && (
           <div className="mt-5">
             <p className="text-[17px] font-bold text-neutral-900">발행 버튼까지 눌렀나요?</p>
             <p className="mt-1 text-[13px] leading-relaxed text-neutral-500">네이버에서 발행을 마쳤다면 아래를 눌러 오늘 미션을 끝내세요.</p>
+            {/<img/i.test(richHtml) && (
+              <div className="mt-3 rounded-xl bg-neutral-50 px-4 py-3">
+                <p className="text-[12.5px] font-bold text-neutral-700">대표이미지가 안 잡힌다면</p>
+                <p className="mt-1 text-[12px] leading-relaxed text-neutral-500">붙여넣은 사진은 네이버가 대표로 인식하지 못할 때가 있어요. 발행 화면에서 대표이미지가 비어 있으면 — 본문에서 그 사진을 지우고, 같은 자리에서 사진 버튼으로 다시 올리면 대표로 지정할 수 있어요.</p>
+              </div>
+            )}
             <button onClick={onDone} className={`${bigBtn} mt-4`} style={{ background: BLUE }}>발행까지 끝냈어요</button>
           </div>
         )}
