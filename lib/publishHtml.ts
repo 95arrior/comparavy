@@ -170,6 +170,14 @@ function isEmphasisPara(b: Blk): boolean { // <b>단독 문단(형광펜 배경 
 function isHashtagPara(b: Blk): boolean { return b.tag === "p" && /^\s*#/.test(b.inner.replace(/<[^>]+>/g, "")); }
 function isImagePara(b: Blk): boolean { return b.tag === "p" && /<img/i.test(b.inner); }
 function isSuspenseMark(b: Blk): boolean { return b.tag === "p" && /^\s*\[간격\]\s*$/.test(b.inner.replace(/<[^>]+>/g, "")); }
+// ★단계 헤더(실측: 1단계/2단계 여백이 제각각 — h3·굵은 문단·📌 강조가 섞여 규칙이 널뛰기) —
+//  'N단계:'·'STEP N'·'첫째:' 류는 형태 불문 앞2·뒤1로 통일한다.
+function isStepPara(b: Blk): boolean {
+  if (!/^(p|h[1-4])$/.test(b.tag)) return false;
+  const t = b.inner.replace(/<[^>]+>/g, "").trim();
+  if (t.length > 60) return false; // 헤더성 짧은 줄만
+  return /^(?:[📌✅💡🍀🎉😊👇⏰📢]\s*)?(?:\d{1,2}\s*단계|STEP\s*\d{1,2}|Step\s*\d{1,2}|(?:첫|둘|셋|넷|다섯|여섯|일곱|여덟|아홉|열)째)\s*[:.]/u.test(t);
+}
 function beforeBlanks(b: Blk): number {
   if (isSuspenseMark(b)) return 0; // 여백은 서스펜스 확장 전담
   if (/^h[1-4]$/.test(b.tag)) return 3;
@@ -191,6 +199,9 @@ export function gapBetween(prev: { tag: string; inner: string } | null, cur: { t
   if (!prev) return 0;
   // [간격] 마킹 인접 갭은 0 — 그 자리 여백은 서스펜스 확장(2칸/초과 1칸)이 전담
   if (isSuspenseMark(prev as Blk) || isSuspenseMark(c)) return 0;
+  // ★단계 헤더 고정 규격 — 앞2(직전 블록이 뭐든)·뒤1(제목과 본문 밀착). 시퀀스 전체가 같은 리듬.
+  if (isStepPara(c)) return 2;
+  if (isStepPara(prev as Blk)) return 1;
   return Math.min(BLANK_CAP, Math.max(afterBlanks(prev as Blk), beforeBlanks(c)));
 }
 function applySpacingRich(html: string): string {
