@@ -136,6 +136,21 @@ export default function ArticleModal({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [article.id]);
+  // ★썸네일 3초 훅 문구 추천(무료) — 유저가 직접 만드는 썸네일용. 탭=복사.
+  const [thumbCopies, setThumbCopies] = useState<string[] | null>(null);
+  const [thumbBusy, setThumbBusy] = useState(false);
+  async function fetchThumbCopies() {
+    if (thumbBusy) return;
+    setThumbBusy(true);
+    try {
+      const r = await fetch("/api/thumb-copy", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ articleId: article.id }) });
+      const d = await r.json();
+      if (r.ok && Array.isArray(d.copies)) setThumbCopies(d.copies);
+      else setToast(d.error ?? "문구를 만들지 못했어요");
+    } catch { setToast("문구를 만들지 못했어요"); }
+    setThumbBusy(false);
+  }
+
   async function makeImage(i: number, slot: string) {
     if (imgs[i]?.busy) return;
     setImgs((m) => ({ ...m, [i]: { ...m[i], busy: true, err: undefined } }));
@@ -298,6 +313,29 @@ export default function ArticleModal({
 
         {/* ★이미지 슬롯 패널 — 문서순(사진+카드). 사진=추천 가이드+올리기(AI 봉인), 카드=자동 생성. */}
         {parseSlots(bodyHtml).length > 0 && (
+          {/* 썸네일 문구 추천 — 3초 훅(어그로되 글이 답하는 약속만) */}
+          <div className="mt-4 rounded-2xl at-glass p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[14px] font-bold text-neutral-900">썸네일 문구</p>
+                <p className="mt-0.5 text-[12px] text-neutral-400">썸네일에 큰 글씨로 박을 3초 훅 — 탭하면 복사돼요.</p>
+              </div>
+              <button onClick={fetchThumbCopies} disabled={thumbBusy} className="at-press shrink-0 rounded-lg bg-[#1D75F7]/10 px-3 py-1.5 text-[12px] font-bold text-[#1D75F7] transition hover:bg-[#1D75F7]/15 disabled:opacity-50">
+                {thumbBusy ? "만드는 중" : thumbCopies ? "다시 추천" : "✦ 추천 받기"}
+              </button>
+            </div>
+            {thumbCopies && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {thumbCopies.map((c) => (
+                  <button key={c} onClick={async () => { try { await navigator.clipboard.writeText(c); setToast("복사했어요 — 썸네일에 붙여넣으세요"); } catch { setToast("복사하지 못했어요"); } }}
+                    className="at-press rounded-full bg-neutral-50 px-3.5 py-2 text-[13px] font-bold text-neutral-800 ring-1 ring-black/[0.05] transition hover:bg-[#1D75F7]/[0.06] hover:ring-[#1D75F7]/30">
+                    {c}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="mt-4 rounded-2xl at-glass p-5">
             <p className="text-[14px] font-bold text-neutral-900">이미지 자리 {parseSlots(bodyHtml).filter((sl) => sl.type === "photo" || DATA_CARDS_ENABLED).length}곳</p>
             <p className="mt-1 text-[12px] leading-relaxed text-neutral-400">직접 찍은 사진이 노출에 가장 좋아요. 올리면 그 자리에 들어가고, 복사할 때 같이 넘어가요. 비워 두고 발행해도 괜찮아요. 첫 번째 사진이 대표이미지 후보가 돼요.</p>
