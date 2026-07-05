@@ -13,8 +13,8 @@ for (let seed = 0; seed < 40; seed += 7) {
   must(/no close-up of hands/.test(p), `[seed${seed}] 손 클로즈업 금지`);
   must(/no brand logos/.test(p), `[seed${seed}] 브랜드/UI 금지`);
   must(/no front close-up of banknotes/.test(p), `[seed${seed}] 지폐 정면 금지`);
-  must(/realistic.*photograph/.test(p), `[seed${seed}] 실사 사진 톤`);
-  must(!/\billustration\b/.test(p), `[seed${seed}] 일러스트 아님`);
+  must(/Soft matte 3D illustration/.test(p), `[seed${seed}] 토스톤 3D 일러스트`);
+  must(/Toss/.test(p) && /clay/i.test(p), `[seed${seed}] 토스 문법(클레이 질감)`);
 }
 
 console.log("\n대표이미지 배경 프롬프트:");
