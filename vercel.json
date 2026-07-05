@@ -35,6 +35,10 @@
     {
       "path": "/api/cron/pool-warm",
       "schedule": "30 17,5 * * *"
+    },
+    {
+      "path": "/api/cron/wp-autopublish",
+      "schedule": "0 * * * *"
     }
   ]
 }
