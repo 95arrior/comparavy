@@ -333,6 +333,25 @@ export default function Home({
         </p>
       </button>
 
+      {/* ★다음 할 일 원라인 — 홈 첫 시선에 '지금 할 차례'(체크인·이웃만: 글쓰기는 아래 히어로가 곧 그 행동) */}
+      {!checkinDone ? (
+        <button onClick={() => setRoutineSheet("checkin")} className="tk-seq-1 mt-3 flex w-full items-center justify-between rounded-[14px] bg-white px-5 py-3.5 text-left shadow-[0_1px_3px_rgba(0,0,0,0.05)] tk-tr hover:bg-[#F7F8FA]">
+          <span className="flex items-center gap-2.5">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--color-brand)] text-[11.5px] font-bold text-white">1</span>
+            <span className="text-[14px] font-semibold text-[color:var(--color-text)]">아침 체크인부터 — 30초면 돼요</span>
+          </span>
+          <span className="text-[13px] font-bold text-[color:var(--color-brand)]">시작 →</span>
+        </button>
+      ) : info.publishedToday && !neighborDone ? (
+        <button onClick={() => setRoutineSheet("neighbor")} className="tk-seq-1 mt-3 flex w-full items-center justify-between rounded-[14px] bg-white px-5 py-3.5 text-left shadow-[0_1px_3px_rgba(0,0,0,0.05)] tk-tr hover:bg-[#F7F8FA]">
+          <span className="flex items-center gap-2.5">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--color-brand)] text-[11.5px] font-bold text-white">3</span>
+            <span className="text-[14px] font-semibold text-[color:var(--color-text)]">마지막 하나 — 이웃 미션</span>
+          </span>
+          <span className="text-[13px] font-bold text-[color:var(--color-brand)]">시작 →</span>
+        </button>
+      ) : null}
+
       {/* 크레딧 소진 예고 — 잔여 3편 이하 + 실사용 페이스로 예측 가능할 때만(지어내기 금지) */}
       {(() => {
         const f = depletionForecast(credits, GENERATE_COST, articles);
