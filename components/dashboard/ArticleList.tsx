@@ -27,6 +27,28 @@ export default function ArticleList({
   const [confirmUnpub, setConfirmUnpub] = useState<Article | null>(null);
   const [unpubBusy, setUnpubBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [pubBusy, setPubBusy] = useState<string | null>(null); // [발행했어요] 처리 중 글 id
+
+  // ★수동 발행 신고(유저 제안) — 위저드 '끝냈어요'를 안 눌렀어도 목록에서 한 탭.
+  //  정직한 카운터: 자기신고로 끝내지 않고 즉시 RSS 1차 확인 → 실제 발행이면 그 자리에서 verified(카운트).
+  async function markPublished(a: Article) {
+    if (pubBusy) return;
+    setPubBusy(a.id);
+    try {
+      await fetch(`/api/articles/${a.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "pending_verify" }) });
+      const r = await fetch("/api/verify-post", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: a.id }) });
+      const d = await r.json().catch(() => ({}));
+      if (r.ok && d.state === "verified") {
+        onUpdated?.({ ...a, status: "verified" as Article["status"] });
+        setMsg("발행 확인됐어요 — 카운트에 반영");
+      } else {
+        onUpdated?.({ ...a, status: "pending_verify" as Article["status"] });
+        setMsg("네이버 반영을 확인하는 중이에요 — 확인되면 자동으로 카운트돼요");
+      }
+      setTimeout(() => setMsg(null), 3200);
+    } catch { /* 다음 진입 시 자동 회수가 받침 */ }
+    setPubBusy(null);
+  }
 
   // ★발행 유실 자동 회수 — 목록 진입 시 1회, 초안 중 실제 블로그(RSS)에 올라간 글을 발행됨으로 승격.
   //  '발행까지 끝냈어요'를 안 누르고 닫아도 시스템이 찾아낸다(수동 관리 불필요 — 뇌빼고 원칙).
@@ -170,14 +192,15 @@ export default function ArticleList({
       ) : (
         <div className="mt-3 divide-y divide-neutral-50 overflow-hidden rounded-2xl at-glass ">
           {filtered.map((a) => {
-            const published = a.status === "published";
+            const published = a.status === "published" || a.status === "verified";
+            const pending = a.status === "pending_verify";
             return (
               <div key={a.id} className="flex items-center gap-3.5 px-5 py-4 transition active:bg-neutral-50">
                 <span className={`h-2 w-2 shrink-0 rounded-full ${published ? "bg-emerald-500" : "bg-neutral-200"}`} aria-hidden />
                 <button onClick={() => onOpen(a)} className="min-w-0 flex-1 text-left">
                   <p className="truncate text-[14.5px] font-bold text-[color:var(--at-grey-900)]">{a.title}</p>
                   <p className="mt-0.5 text-[11.5px] font-medium text-neutral-400">
-                    {published ? "발행됨" : "초안"} · {(a.char_count ?? 0).toLocaleString()}자 · {new Date(a.created_at).toLocaleDateString("ko-KR", { month: "long", day: "numeric" })}
+                    {published ? "발행됨" : pending ? "발행 확인 중" : "초안"} · {(a.char_count ?? 0).toLocaleString()}자 · {new Date(a.created_at).toLocaleDateString("ko-KR", { month: "long", day: "numeric" })}
                     {(() => { const b = idxLabel(a); return b ? <> · <span className={`font-bold ${b.cls}`}>{b.text}</span></> : null; })()}
                   </p>
                 </button>
@@ -185,9 +208,11 @@ export default function ArticleList({
                   <button onClick={() => setConfirmUnpub(a)} className="shrink-0 text-[12px] font-semibold text-neutral-300 transition hover:text-neutral-500">
                     내렸어요
                   </button>
+                ) : pending ? (
+                  <span className="shrink-0 text-[11.5px] font-semibold text-amber-500">확인 중</span>
                 ) : (
-                  <button onClick={() => onOpen(a)} aria-label="네이버에 올리기" className="at-press flex h-8 w-8 shrink-0 items-center justify-center text-[#03C75A] transition hover:opacity-70">
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15V4" /><path d="M7 9l5-5 5 5" /><path d="M4 20h16" /></svg>
+                  <button onClick={() => markPublished(a)} disabled={pubBusy === a.id} className="at-press shrink-0 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[11.5px] font-bold text-emerald-600 transition hover:bg-emerald-100 disabled:opacity-50">
+                    {pubBusy === a.id ? "확인 중" : "발행했어요"}
                   </button>
                 )}
               </div>
