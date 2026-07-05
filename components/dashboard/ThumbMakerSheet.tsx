@@ -19,7 +19,7 @@ const TONES = [
   { key: "vivid", label: "살리기", wash: 0.12 },
 ];
 
-export default function ThumbMakerSheet({ articleId, copies, slots, onFetchCopies, onPlaced, onCredits, onClose }: {
+export default function ThumbMakerSheet({ articleId, copies, slots, onFetchCopies, onPlaced, onCredits, onClose, initialPreview, onGenerated }: {
   articleId: string;
   copies: string[] | null; // 썸네일 문구 추천(상위 공유)
   slots: { idx: number; desc: string }[]; // 배치 가능한 사진 슬롯
@@ -27,13 +27,16 @@ export default function ThumbMakerSheet({ articleId, copies, slots, onFetchCopie
   onPlaced: (idx: number, url: string) => void;
   onCredits?: (n: number) => void;
   onClose: () => void;
+  /** 시트를 닫아도 생성물이 사라지지 않게 — 상위가 보존한 마지막 결과 */
+  initialPreview?: string | null;
+  onGenerated?: (url: string) => void;
 }) {
   const [text, setText] = useState("");
   const [palette, setPalette] = useState(SWATCHES[0].name);
   const [tone, setTone] = useState("mid");
   const [aiBg, setAiBg] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [preview, setPreview] = useState<string | null>(initialPreview ?? null);
   const [err, setErr] = useState<string | null>(null);
   const [placed, setPlaced] = useState<number | null>(null);
 
@@ -55,7 +58,7 @@ export default function ThumbMakerSheet({ articleId, copies, slots, onFetchCopie
       });
       const d = await r.json();
       if (!r.ok) { setErr(d.error ?? "만들지 못했어요"); if (typeof d.credits === "number") onCredits?.(d.credits); }
-      else { setPreview(d.url ?? d.dataUrl ?? null); if (typeof d.credits === "number") onCredits?.(d.credits); }
+      else { const u = d.url ?? d.dataUrl ?? null; setPreview(u); if (u) onGenerated?.(u); if (typeof d.credits === "number") onCredits?.(d.credits); }
     } catch { setErr("네트워크 오류예요. 다시 시도해 주세요."); }
     setBusy(false);
   }
@@ -72,7 +75,7 @@ export default function ThumbMakerSheet({ articleId, copies, slots, onFetchCopie
 
   return (
     <div className="ateflo-backdrop-in fixed inset-0 z-[70] flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center sm:p-6" onClick={onClose}>
-      <div className="ateflo-sheet-up flex max-h-[92vh] w-full max-w-md flex-col overflow-y-auto at-glass-strong rounded-t-3xl p-6 shadow-2xl sm:rounded-3xl" style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom))" }} onClick={(e) => e.stopPropagation()}>
+      <div className="ateflo-sheet-up at-thin-scroll flex max-h-[92vh] w-full max-w-md flex-col overflow-y-auto at-glass-strong rounded-t-3xl p-6 shadow-2xl sm:rounded-3xl" style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom))" }} onClick={(e) => e.stopPropagation()}>
         <p className="text-[17px] font-bold text-neutral-900">썸네일 만들기</p>
         <p className="mt-1 text-[12.5px] text-neutral-400">문구가 주인공이에요 — 배경은 은은하게 깔려요.</p>
 
@@ -118,7 +121,9 @@ export default function ThumbMakerSheet({ articleId, copies, slots, onFetchCopie
         </button>
 
         <button onClick={make} disabled={!text.trim() || busy} className="at-press tk-grad-cta mt-4 w-full rounded-[12px] py-3.5 text-[15px] font-bold text-white disabled:opacity-50">
-          {busy ? "만드는 중… (10초쯤)" : preview ? "다시 만들기" : "썸네일 만들기"}
+          {busy
+            ? <><span className="tk-wand mr-1.5" aria-hidden>✦</span>썸네일을 만들고 있어요</>
+            : <>{preview ? "다시 만들기" : "썸네일 만들기"}<span className="ml-1.5 text-[12.5px] font-semibold text-white/75">{aiBg ? `· ${IMAGE_COST}크레딧` : "· 무료"}</span></>}
         </button>
         {err && <p className="mt-2 text-[12.5px] font-medium text-amber-600">{err}</p>}
 

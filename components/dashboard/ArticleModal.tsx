@@ -132,6 +132,7 @@ export default function ArticleModal({
   const [thumbCopies, setThumbCopies] = useState<string[] | null>(null);
   const [thumbBusy, setThumbBusy] = useState(false);
   const [thumbMakerOpen, setThumbMakerOpen] = useState(false);
+  const [lastThumb, setLastThumb] = useState<string | null>(null); // 시트 닫아도 생성물 보존
   async function fetchThumbCopies() {
     if (thumbBusy) return;
     setThumbBusy(true);
@@ -330,11 +331,11 @@ export default function ArticleModal({
           </div>
 
           <div className="mt-4 rounded-2xl at-glass p-5">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-[14px] font-bold text-neutral-900">이미지 자리 {parseSlots(bodyHtml).filter((sl) => sl.type === "photo" || DATA_CARDS_ENABLED).length}곳</p>
-              <button onClick={() => setThumbMakerOpen(true)} className="at-press shrink-0 rounded-lg bg-[#1D75F7]/10 px-3 py-1.5 text-[12px] font-bold text-[#1D75F7] transition hover:bg-[#1D75F7]/15">썸네일 만들기</button>
-            </div>
+            <p className="text-[14px] font-bold text-neutral-900">이미지 자리 {parseSlots(bodyHtml).filter((sl) => sl.type === "photo" || DATA_CARDS_ENABLED).length}곳</p>
             <p className="mt-1 text-[12px] leading-relaxed text-neutral-400">직접 찍은 사진이 노출에 가장 좋아요. 올리면 그 자리에 들어가고, 복사할 때 같이 넘어가요. 비워 두고 발행해도 괜찮아요. 첫 번째 사진이 대표이미지 후보가 돼요.</p>
+            <button onClick={() => setThumbMakerOpen(true)} className="at-press mt-3 flex w-full items-center justify-center gap-1.5 rounded-[12px] bg-[#1D75F7]/[0.07] py-3 text-[13.5px] font-bold text-[#1D75F7] transition hover:bg-[#1D75F7]/[0.12]">
+              <span aria-hidden>✦</span> 썸네일 만들기 <span className="text-[11.5px] font-semibold text-[#1D75F7]/60">문구·배경 골라서</span>
+            </button>
             <div className="mt-3 space-y-2.5">
               {parseSlots(bodyHtml).map((slot, i) => {
                 const st = imgs[i] ?? {};
