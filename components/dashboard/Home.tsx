@@ -511,11 +511,9 @@ function TopicRow({ topic, onClick, onSwap, swapping }: {
     <div className={`rounded-[20px] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition ${swapping ? "at-ai-swap" : ""}`}>
       <div className="flex items-center gap-1.5">
         {topic.tag === "issue" || topic.tag === "trend" ? (
-          <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2.5 py-1 text-[12px] font-semibold text-[color:var(--color-brand)]">실시간 트렌드</span>
-        ) : topic.tag === "steady" ? (
-          <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2.5 py-1 text-[12px] font-semibold text-[color:var(--color-text-sub)]">꾸준한 수요</span>
+          <span className="rounded-full bg-[color:var(--color-brand-weak)] px-2.5 py-1 text-[12px] font-semibold text-[color:var(--color-brand)]">지금 뜨는 키워드</span>
         ) : (
-          <span className="rounded-full bg-[#F7F8FA] px-2.5 py-1 text-[12px] font-semibold text-[color:var(--color-text-sub)]">{compMeta.label}</span>
+          <span className="rounded-full bg-[#F7F8FA] px-2.5 py-1 text-[12px] font-semibold text-[color:var(--color-text-sub)]">꾸준한 수요</span>
         )}
         {(topic as { bidHigh?: boolean }).bidHigh && <span className="rounded-full bg-[#FFF8EB] px-2.5 py-1 text-[12px] font-semibold text-[color:var(--color-warning)]">단가 높음</span>}
         {onSwap && (
@@ -524,6 +522,11 @@ function TopicRow({ topic, onClick, onSwap, swapping }: {
           </button>
         )}
       </div>
+      <p className="mt-2 text-[12px] text-[color:var(--color-text-weak)]">
+        {topic.tag === "issue" || topic.tag === "trend"
+          ? "숏테일 · 오늘 쓰면 첫 글로 선점할 수 있어요"
+          : `롱테일${topic.vol && topic.vol > 0 ? ` · 월 ${topic.vol.toLocaleString("ko-KR")}회 검색` : ""} · ${compMeta.label} — 한 번 잡히면 오래 들어와요`}
+      </p>
       {swapping ? (
         <div className="mt-3" aria-hidden>
           <div className="ateflo-skel h-[22px] w-4/5 rounded" />

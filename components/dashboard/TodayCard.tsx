@@ -171,35 +171,31 @@ export default function TodayCard({
 function DemandRow({ topic, muted, onGoPerformance, onDark }: { topic: TodayTopic; muted?: boolean; onGoPerformance?: () => void; onDark?: boolean }) {
   const isTrend = topic.tag === "issue" || topic.tag === "trend";
   const isSteady = topic.tag === "steady";
-  const comp = topic.comp === "low" ? { label: "경쟁 낮음", cls: "bg-emerald-50 text-emerald-600" }
-    : topic.comp === "mid" ? { label: "경쟁 보통", cls: "bg-amber-50 text-amber-600" }
-    : topic.comp === "high" ? { label: "경쟁 높음", cls: "bg-rose-50 text-rose-500" } : null;
-  const demand = isTrend ? "지금 뜨는 중 · 선점 기회" : isSteady ? "꾸준히 찾는 주제" : (topic.vol && topic.vol > 0) ? `월 ${topic.vol.toLocaleString("ko-KR")}회 검색` : "숨은 수요 키워드";
-  // ★수익 경로 태그(정보) — 리뷰/비교형이면 쇼핑커넥트 연계 가능. 사다리(행동)와 별개로 표시.
+  const compLabel = topic.comp === "low" ? "경쟁 낮음" : topic.comp === "mid" ? "경쟁 보통" : topic.comp === "high" ? "경쟁 높음" : null;
+  // ★숏테일/롱테일 프레임(유저 제안) — 유형 칩 1개 + 자기설명 문장. '애드포스트' 칩은 정보량 0이라 폐기(2회 실측: 의미 불명).
+  const kind = isTrend
+    ? { chip: "지금 뜨는 키워드", desc: "숏테일 · 오늘 쓰면 첫 글로 선점할 수 있어요" }
+    : isSteady
+    ? { chip: "꾸준한 수요", desc: `롱테일 · 검색이 계속 있는 주제${compLabel ? ` · ${compLabel}` : ""}` }
+    : { chip: "꾸준한 수요", desc: `롱테일${topic.vol && topic.vol > 0 ? ` · 월 ${topic.vol.toLocaleString("ko-KR")}회 검색` : " · 숨은 수요"}${compLabel ? ` · ${compLabel}` : ""} — 한 번 잡히면 오래 들어와요` };
   const rev = revenuePath({ keyword: topic.keyword, title: topic.title });
   const chip = onDark
     ? "rounded-full bg-white/15 px-2.5 py-1 text-[12px] font-semibold text-white backdrop-blur-[2px]"
     : "rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[12px] text-[color:var(--color-text-sub)]";
   return (
-    <div className={`flex flex-wrap items-center gap-1.5 [&>*]:tk-chip ${muted ? "opacity-60" : ""}`}>
-      {topic.seriesBadge
-        ? <span className={chip}>{topic.seriesBadge}</span>
-        : topic.tag === "followup"
-        ? <span className={chip}>반응 후속</span>
-        : isTrend
-        ? <span className={chip}>실시간 트렌드</span>
-        : isSteady
-        ? <span className={chip}>꾸준한 수요</span>
-        : comp && <span className={chip}>{comp.label}</span>}
-      <button onClick={(e) => {
-        e.stopPropagation();
-        if (rev === "shopping") {
-          let approved = false; try { approved = localStorage.getItem("ateflo_adpost_approved") === "1"; } catch { /* ignore */ }
-          if (!approved && onGoPerformance) onGoPerformance(); // 잠김 → "애드포스트 승인 후 열려요" = 사다리 화면이 안내
-        } else if (onGoPerformance) onGoPerformance();
-      }} className={chip}>{rev === "shopping" ? "쇼핑커넥트" : "애드포스트"}</button>
-      {topic.bidHigh && <span className={onDark ? "rounded-full bg-white/15 px-2.5 py-1 text-[12px] font-semibold text-amber-200" : "rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[12px] text-[color:var(--color-warning)]"}>단가 높음</span>}
-      <span className={onDark ? "text-[13px] text-white/60" : "text-[13px] text-[color:var(--color-text-weak)]"}>{demand}</span>
+    <div className={muted ? "opacity-60" : ""}>
+      <div className="flex flex-wrap items-center gap-1.5 [&>*]:tk-chip">
+        {topic.seriesBadge
+          ? <span className={chip}>{topic.seriesBadge}</span>
+          : topic.tag === "followup"
+          ? <span className={chip}>반응 후속</span>
+          : <span className={chip}>{kind.chip}</span>}
+        {rev === "shopping" && (
+          <button onClick={(e) => { e.stopPropagation(); if (onGoPerformance) onGoPerformance(); }} className={chip}>커미션 기회</button>
+        )}
+        {topic.bidHigh && <span className={onDark ? "rounded-full bg-white/15 px-2.5 py-1 text-[12px] font-semibold text-amber-200" : "rounded-full bg-[color:var(--color-brand-weak)] px-2 py-0.5 text-[12px] text-[color:var(--color-warning)]"}>단가 높음</span>}
+      </div>
+      <p className={onDark ? "mt-1.5 text-[12.5px] text-white/60" : "mt-1.5 text-[12.5px] text-[color:var(--color-text-weak)]"}>{kind.desc}</p>
     </div>
   );
 }
