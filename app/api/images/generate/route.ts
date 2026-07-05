@@ -83,6 +83,8 @@ export async function POST(request: Request) {
       if (balance === null) return NextResponse.json({ error: "크레딧이 부족해요.", code: "NO_CREDITS" }, { status: 402 });
     }
     try {
+      const FONT_ALLOW = ["GmarketSansBold", "BlackHanSans", "Pretendard-Black", "Jua"];
+      const fontTitle = FONT_ALLOW.includes(String(body.fontName)) ? String(body.fontName) : "GmarketSansBold";
       const { png, usedAiBackground } = await composeThumbnail({
         userId: user.id,
         thumb: { mainCopy: breakThumbCopy(mainRaw), subCopy: "", badge: "" },
@@ -90,6 +92,8 @@ export async function POST(request: Request) {
         useAiBackground: aiBg,
         paletteName,
         bgWash: wash,
+        fontTitle,
+        topicHint: title || mainRaw, // 글 제목 우선 — 배경 오브젝트가 주제를 그린다
       });
       // AI 배경 실패로 코드 폴백됐으면 과금 취소(받은 것만 청구)
       if (aiBg && !usedAiBackground) { await addCredits(user.id, IMAGE_COST, "refund_image", crypto.randomUUID()).catch(() => null); }

@@ -19,8 +19,9 @@ const TONES = [
   { key: "vivid", label: "살리기", wash: 0.12 },
 ];
 
-export default function ThumbMakerSheet({ articleId, copies, slots, onFetchCopies, onPlaced, onCredits, onClose, initialPreview, onGenerated }: {
+export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots, onFetchCopies, onPlaced, onCredits, onClose, initialPreview, onGenerated }: {
   articleId: string;
+  articleTitle?: string; // 배경 오브젝트 주제 힌트
   copies: string[] | null; // 썸네일 문구 추천(상위 공유)
   slots: { idx: number; desc: string }[]; // 배치 가능한 사진 슬롯
   onFetchCopies: () => void;
@@ -35,6 +36,7 @@ export default function ThumbMakerSheet({ articleId, copies, slots, onFetchCopie
   const [palette, setPalette] = useState(SWATCHES[0].name);
   const [tone, setTone] = useState("mid");
   const [aiBg, setAiBg] = useState(true);
+  const [font, setFont] = useState("GmarketSansBold");
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState<string | null>(initialPreview ?? null);
   const [err, setErr] = useState<string | null>(null);
@@ -54,7 +56,7 @@ export default function ThumbMakerSheet({ articleId, copies, slots, onFetchCopie
     try {
       const r = await fetch("/api/images/generate", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ thumbMaker: true, mainCopy: text.trim(), paletteName: palette, wash: TONES.find((t) => t.key === tone)?.wash ?? 0.35, aiBg, articleId }),
+        body: JSON.stringify({ thumbMaker: true, mainCopy: text.trim(), paletteName: palette, wash: TONES.find((t) => t.key === tone)?.wash ?? 0.35, aiBg, articleId, fontName: font, title: articleTitle }),
       });
       const d = await r.json();
       if (!r.ok) { setErr(d.error ?? "만들지 못했어요"); if (typeof d.credits === "number") onCredits?.(d.credits); }
@@ -98,6 +100,19 @@ export default function ThumbMakerSheet({ articleId, copies, slots, onFetchCopie
             <button key={s.name} onClick={() => setPalette(s.name)} aria-label={s.label}
               className={`h-9 w-9 rounded-full transition ${palette === s.name ? "ring-2 ring-[#1D75F7] ring-offset-2" : "ring-1 ring-black/10"}`}
               style={{ background: `linear-gradient(135deg, ${s.bg} 55%, ${s.dot})` }} />
+          ))}
+        </div>
+
+        {/* 폰트 */}
+        <p className="mt-4 text-[13px] font-bold text-neutral-700">글씨체</p>
+        <div className="mt-2 grid grid-cols-4 gap-1.5">
+          {[
+            { key: "GmarketSansBold", label: "G마켓산스" },
+            { key: "BlackHanSans", label: "블랙한" },
+            { key: "Pretendard-Black", label: "프리텐다드" },
+            { key: "Jua", label: "주아" },
+          ].map((f) => (
+            <button key={f.key} onClick={() => setFont(f.key)} className={`at-press rounded-[10px] py-2 text-[12px] font-bold transition ${font === f.key ? "bg-[#1D75F7]/[0.08] text-[#1D75F7] ring-1 ring-[#1D75F7]/40" : "bg-neutral-50 text-neutral-500"}`}>{f.label}</button>
           ))}
         </div>
 

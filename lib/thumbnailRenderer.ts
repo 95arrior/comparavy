@@ -21,6 +21,7 @@ const FONT_FILES: Record<string, string> = {
   "Jua": "Jua.ttf",
   "DoHyeon": "DoHyeon.ttf",
   "BlackHanSans": "BlackHanSans.ttf",
+  "GmarketSansBold": "GmarketSansBold.ttf", // ★썸네일 메이커 디폴트(OFL 1.1, 이베이코리아)
 };
 const fontCache = new Map<string, Buffer>();
 function loadFont(name: string): Buffer {
@@ -49,6 +50,8 @@ export interface ThumbInput {
   articleId?: string | null; // ★글마다 오브젝트 배치 변주(같은 옷, 다른 포즈). 팔레트·템플릿·폰트는 불변.
   /** 배경 이미지 위 팔레트색 워시(0~1) — 높을수록 오브젝트가 은은해지고 텍스트가 주인공(썸네일 메이커 톤 조절). */
   bgWash?: number;
+  /** 타이틀 폰트 오버라이드(썸네일 메이커 — 기본 GmarketSansBold) */
+  fontTitle?: string;
 }
 
 /* ── 색 유틸 ── */
@@ -183,7 +186,11 @@ export async function renderThumbnailAt(input: ThumbInput, width: number): Promi
   return renderAt(input, width);
 }
 
-async function renderAt(input: ThumbInput, width: number): Promise<Buffer> {
+async function renderAt(rawInput: ThumbInput, width: number): Promise<Buffer> {
+  // ★폰트 오버라이드(썸네일 메이커) — 팔레트·레이아웃은 그대로, 타이틀 폰트만 교체
+  const input: ThumbInput = rawInput.fontTitle
+    ? { ...rawInput, identity: { ...rawInput.identity, fontPair: { ...rawInput.identity.fontPair, title: rawInput.fontTitle } } }
+    : rawInput;
   const { identity, bgDataUrl } = input;
   const p = identity.palette;
   const tpl = TEMPLATES[identity.layout] ?? TEMPLATES["center-cluster"];

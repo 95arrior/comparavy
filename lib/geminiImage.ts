@@ -81,13 +81,27 @@ export function buildBodyPrompt(slotDesc: string, articleTitle: string, seed: nu
   ].join(" ");
 }
 
-/** 대표이미지 AI 배경 프롬프트(순수 함수) — 텍스트 절대 금지 + 저대비 여백(코드가 한글 합성). 테스트 대상. */
-export function buildThumbBgPrompt(bgStyleHint: string, paletteHint: string, seed: number): string {
+/** 대표이미지 AI 배경 프롬프트(순수 함수) — ★주제 인식(실측 비교 판정: 추상 blob은 짜침, 주제 오브젝트가 정답).
+ *  topic이 있으면 그 주제를 나타내는 구체 오브젝트(차·동전·달력 등), 없으면 기존 추상. 텍스트 절대 금지 + 상단 여백. */
+export function buildThumbBgPrompt(bgStyleHint: string, paletteHint: string, seed: number, topic?: string): string {
   const mood = PHOTO_MOODS[seed % PHOTO_MOODS.length];
+  const subject = topic && topic.trim()
+    ? `Cute rounded clay-like 3D objects that clearly represent this topic (understand only — never render as text): "${topic.trim()}". Pick 2-4 instantly recognizable real objects related to it.`
+    : `Soft matte 3D abstract objects (rounded blobs, spheres, gentle geometric forms).`;
   return [
-    `Soft matte 3D abstract objects (rounded blobs, spheres, gentle geometric forms) floating on a solid single-color background, color palette of ${paletteHint}.`,
-    `Playful premium 3D render like a Toss/Danggeun event card illustration. Objects clustered in the LOWER portion — keep the TOP 35% a clean empty area (text goes there later).`,
+    `${subject} Floating on a solid single-color background, color palette of ${paletteHint}.`,
+    `Playful premium 3D render like a Toss/Danggeun event card illustration. Objects arranged in the LOWER two-thirds — keep the TOP 35% a clean empty area (text goes there later).`,
     `${mood} mood, soft studio lighting, tactile clay-like material, no busy clutter. Square 1:1 composition.`,
+    "ABSOLUTELY NO text of any kind: no letters, numbers, Korean characters, signs, labels, captions, watermarks, or logos anywhere.",
+  ].join(" ");
+}
+/** 실사 배경(썸네일) — 주제 씬 사진, 위 여백·저대비(텍스트 자리). */
+export function buildThumbPhotoBgPrompt(topic: string, seed: number): string {
+  const tone = PHOTO_TONES[seed % PHOTO_TONES.length];
+  return [
+    `Realistic lifestyle photograph representing this topic (understand only — never render as text): "${topic.trim()}".`,
+    `Main subject small and placed in the LOWER two-thirds; the TOP 35% must be a calm, low-detail area (sky, wall, soft bokeh) for text overlay later.`,
+    `${tone}, muted and calm, shallow depth of field, premium magazine quality. Square 1:1 composition.`,
     "ABSOLUTELY NO text of any kind: no letters, numbers, Korean characters, signs, labels, captions, watermarks, or logos anywhere.",
   ].join(" ");
 }
@@ -119,9 +133,12 @@ export async function generateBlogImage(slotDesc: string, articleTitle: string, 
 }
 
 /** 대표이미지 AI 배경 1장(1:1, base64) — 한글은 코드(satori)가 합성. 실패는 호출측이 코드 폴백. */
-export async function generateThumbBackground(bgStyleHint: string, paletteHint: string, userSeed?: string): Promise<{ base64: string; mime: string }> {
+export async function generateThumbBackground(bgStyleHint: string, paletteHint: string, userSeed?: string, topic?: string): Promise<{ base64: string; mime: string }> {
   const seed = (fnv((userSeed ?? "") + ":bg") + Math.floor(Math.random() * 1e9)) >>> 0;
-  return callGemini(buildThumbBgPrompt(bgStyleHint, paletteHint, seed), "1:1");
+  // ★어울림 자동 — 주제가 구체 씬이면 실사, 아니면 토스 3D(그때그때 다르게, 유저 판정)
+  const style = topic ? pickImageStyle(topic, seed) : "toss";
+  const prompt = style === "photo" && topic ? buildThumbPhotoBgPrompt(topic, seed) : buildThumbBgPrompt(bgStyleHint, paletteHint, seed, topic);
+  return callGemini(prompt, "1:1");
 }
 
 export const GEMINI_IMAGE_MODEL = MODEL;
