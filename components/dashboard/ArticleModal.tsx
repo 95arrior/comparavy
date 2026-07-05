@@ -64,24 +64,15 @@ export default function ArticleModal({
 
   // 네이버 '글쓰기' 화면으로 바로 이동 — 블로그 아이디는 1회만 입력받아 저장(blog.naver.com/{id}/postwrite)
   function openNaverWrite() {
-    // ★직행 링크 업그레이드 — 프로필(naver_blog_id, 서버 저장) 우선, 기기 저장 폴백(레거시), 최후에 1회 입력
-    let id = (naverBlogId ?? "").trim();
-    if (!id) { try { id = localStorage.getItem("ateflo_naver_blogid") || ""; } catch { /* ignore */ } }
-    if (!id) {
-      const input = window.prompt("내 네이버 블로그 아이디를 입력해 주세요\n(예: blog.naver.com/myblog → myblog)");
-      if (!input) return;
-      id = input.trim().replace(/^https?:\/\//, "").replace(/^m\./, "").replace(/^blog\.naver\.com\//, "").replace(/[/?#].*$/, "").trim();
-      if (!id) return;
-      try { localStorage.setItem("ateflo_naver_blogid", id); } catch { /* ignore */ }
-    }
-    // ★모바일 — 무조건 네이버 블로그 '앱'으로(iOS는 naverblog:// 스킴, 미설치 시 스토어).
-    //  클립보드는 건드리지 않는다(1단계에서 복사한 글 전체 보존).
+    // ★열기 주소 수리(실측 2026-07-05): blog.naver.com/{id}/postwrite가 404('없는 게시물')로 변경됨.
+    //  공식 진입 GoBlogWrite.naver = 로그인한 내 블로그 에디터로 자동 이동 — blogId 입력 자체가 불필요.
+    //  클립보드는 절대 건드리지 않는다(본문 복사 보존 — 덮어쓰기 버그 2회 재발 지점).
     if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-      openNaverBlogApp({ webPath: `${id}/postwrite` });
+      // 모바일 — 네이버 블로그 '앱' 우선(iOS 스킴), 안드로이드 웹 폴백도 에디터 진입으로.
+      openNaverBlogApp({ webPath: "GoBlogWrite.naver" });
       return;
     }
-    // 데스크톱 — 새 탭만 연다. ★클립보드는 절대 건드리지 않는다(본문 복사 보존 — 덮어쓰기 버그 2회 재발 지점).
-    window.open(`https://blog.naver.com/${id}/postwrite`, "_blank", "noopener");
+    window.open("https://blog.naver.com/GoBlogWrite.naver", "_blank", "noopener");
     // 발행 완료 처리는 시트의 '다 올렸어요' 버튼으로만 — 자동 처리하면 시트가 닫혀 본문 복사를 못 함(모바일 왕복 버그)
   }
 
