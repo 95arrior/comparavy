@@ -72,6 +72,8 @@ export const KOREAN_CLICHES: string[] = [
 ];
 
 export interface ArticlePromptInput {
+  /** 발행 채널 — 기본 naver(무변경), wordpress면 구글 모드 v2 */
+  channel?: "naver" | "wordpress";
   keyword: string;
   angle?: string;
   type: string;
@@ -181,6 +183,27 @@ const AEO_RESOLUTION = [
   "5) [더 잘 해결] 검색엔진·AEO는 '그 주제를 가장 완전히 해결한 글'을 답으로 고른다. 이 글이 그 키워드에서 '가장 완결된 글'이 되게 한다.",
 ].join("\n");
 
+
+// ★구글/워드프레스 모드 v2(2026) — 네이버 모드와 배타. E-E-A-T(Experience 최우선)·AI Overviews 인용·Helpful Content 방어.
+const GOOGLE_GUIDE_2026 = [
+  "",
+  "═══ 구글/워드프레스 모드 (이 글은 워드프레스에 발행되어 한국 구글 검색·AI Overviews를 노린다) ═══",
+  "목표 검색엔진은 '구글'이다. 2026 구글의 핵심 판정: Helpful Content(검색자 우선 — 얇은 AI 양산 글은 사이트 전체가 강등된다)와 E-E-A-T 중 Experience(실사용 관점).",
+  "",
+  "[1] AI Overviews 인용 규격 — 구글 검색의 30%+에 AI 요약이 뜨고, 인용되는 글이 이긴다",
+  "• 글 첫 두 문장 안에 검색 질문의 직답. 각 h2 아래 첫 문장 = 단독 발췌해도 완결되는 40~60자 직답(지시어 시작 금지).",
+  "• 소제목(h2)은 사람들이 실제 검색하는 문장형 질문으로. 관련 질문(PAA류)을 h2들로 빠짐없이 커버 — 이 글 하나로 검색 여정이 끝나게.",
+  "[2] E-E-A-T — Experience 시그널",
+  "• 실무·실사용 관점 문장을 섹션마다 1개 이상('실제로 해보면 ~한 경우가 많다', '표기만 보면 놓치기 쉬운 부분은 ~'). 단 없는 특정 경험·후기 날조는 금지(일반 전문 화법만).",
+  "• 수치·기준은 공신력 출처(정부·공공기관·공식 통계) 기반으로 쓰고 '기준 시점 + 출처명'을 본문에 명시한다. 모르면 지어내지 말 것.",
+  "[3] Helpful Content 방어 — 독자적 가치 1개 이상",
+  "• 다른 글을 요약한 듯한 무난한 글 금지. 비교 기준표·판단 체크리스트·구체 계산 예시·실수 포인트 중 최소 1개를 글의 중심에 둔다.",
+  "• 키워드 반복 금지(제목·첫 문단·h2 1~2곳만 원형), 본문은 자연 변형. 분량 채우기용 중복 문단 금지 — 완결이 기준이지 글자수가 아니다.",
+  "[4] 형식 — 워드프레스 규격",
+  "• h2(큰 질문)·h3(세부) 위계를 정확히. 목록·표를 적극 사용(구글은 구조화를 좋아한다). 네이버식 해시태그·형광펜 문법은 쓰지 않는다.",
+  "• 같은 블로그의 연관 주제를 언급할 자리가 있으면 '[내부링크: 주제명]' 마커를 1~2개 남긴다(토픽 클러스터 — 시스템이 나중에 실제 링크로 치환).",
+].join("\n");
+
 // 네이버 블로그 모드 — 구글/워드프레스와 다른 규격(C-Rank/D.I.A.+·경험톤·사진·구조·해시태그).
 const NAVER_GUIDE = [
   "",
@@ -281,7 +304,7 @@ const NAVER_GUIDE = [
   "• 제목이 약속한 내용을 본문이 정확히, 충분히 답한다. 제목에 없는 주제로 새거나, 본문에 없는 것을 제목에 걸지 않는다.",
 ].join("\n");
 
-export function buildSystemPrompt(vertical?: string): string {
+export function buildSystemPrompt(vertical?: string, channel: "naver" | "wordpress" = "naver"): string {
   // 현재 날짜(한국시간) 주입 — 모델이 학습 시점 과거 연도(2024·2025 등)를 습관적으로 쓰는 것을 막는다
   const KST = 9 * 60 * 60 * 1000;
   const now = new Date(Date.now() + KST);
@@ -334,7 +357,7 @@ export function buildSystemPrompt(vertical?: string): string {
   // 업종별 지침(VERTICAL_SYSTEM)은 해당 업종에만 추가 — general은 특정 업종이 아니라 안 붙는다.
   let out = base + "\n" + COMMON_SEO_PRINCIPLES + "\n" + AEO_RESOLUTION + "\n" + YMYL_GUARDRAIL;
   if (vertical && VERTICAL_SYSTEM[vertical]) out += "\n" + VERTICAL_SYSTEM[vertical];
-  out += "\n" + NAVER_GUIDE; // 네이버 단일 — 모든 글이 네이버 규격
+  out += "\n" + (channel === "wordpress" ? GOOGLE_GUIDE_2026 : NAVER_GUIDE); // 채널 배타 — 네이버 경로 무변경, WP만 구글 v2
   return out;
 }
 

@@ -119,7 +119,7 @@ export async function POST(request: Request) {
   // 업종(vertical) + 업체 정보 — 프로필에서 1회 조회(없으면 general/미입력). 프롬프트 분기 + 글 하단 NAP 박스에 사용.
   const { data: profileRow } = await supabase
     .from("blog_profiles")
-    .select("id,vertical,sub_category,biz_name,biz_address,biz_detail_address,biz_phone,biz_hours,biz_hours_json,biz_strength,audience")
+    .select("id,channel,vertical,sub_category,biz_name,biz_address,biz_detail_address,biz_phone,biz_hours,biz_hours_json,biz_strength,audience")
     .eq("user_id", user.id).eq("is_active", true)
     .maybeSingle();
   const vertical = profileRow?.vertical ?? "general";
@@ -134,7 +134,7 @@ export async function POST(request: Request) {
   // ★리뷰/제휴형 판정(대가성 문구·링크 자리) — 판정은 lib/revenue 한 곳. 브리프 의도도 반영.
   const briefIntent = typeof body.angleBrief === "string" ? (/의도:\s*([^\n]+)/.exec(body.angleBrief)?.[1] ?? null) : null;
   const isReview = isReviewType({ keyword: body.keyword, title: body.angle, intent: briefIntent, promo });
-  const channel = "naver" as const; // 발행 채널 단일화 — 모든 글은 네이버 규격
+  const channel = (((profileRow as { channel?: string } | null)?.channel === "wordpress") ? "wordpress" : "naver") as "naver" | "wordpress"; // ★채널 = 활성 블로그 속성(0059). 네이버 블로그는 기존과 동일
 
   // 약한 audience 가드(버그2): 직접 입력해도 '설정한 대상과 명백히 동떨어진'(반대 연령어가 박힌) 글감만 막는다.
   // 명시적 연령어(성인/유아/초등/중고등)만 검사 → 도메인어(토익 등)·중립어는 통과(사장이 일부러 넣은 걸 과잉 차단 안 함).
@@ -282,7 +282,7 @@ export async function POST(request: Request) {
           }
         } catch { /* 시리즈 실패 = 단발로 자연 폴백(테이블 미적용 포함) */ }
 
-        const genInput = { keyword, angle: body.angle, type, tone, maxWords, variantInstruction, styleInstruction, relatedQueries, newsContext: resolvedNewsContext, angleBrief: ((typeof body.angleBrief === "string" ? body.angleBrief.slice(0, 900) : "") + seriesDirective).trim() || null, affiliate: isReview, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userTitle };
+        const genInput = { keyword, channel, angle: body.angle, type, tone, maxWords, variantInstruction, styleInstruction, relatedQueries, newsContext: resolvedNewsContext, angleBrief: ((typeof body.angleBrief === "string" ? body.angleBrief.slice(0, 900) : "") + seriesDirective).trim() || null, affiliate: isReview, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userTitle };
         let article = await streamArticle(
           genInput,
           (bodyHtml) => send({ type: "body", html: bodyHtml }),

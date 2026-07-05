@@ -125,7 +125,7 @@ export async function generateArticle(
     // ★프롬프트 캐싱 — tools→system 순으로 렌더되므로 system 마지막 블록의 breakpoint가 툴 스키마까지 캐싱.
     //   내용은 동일(품질 영향 0), 입력 ~11.7k tokens가 캐시히트 시 0.1배 과금 → 글당 원가 대폭 절감.
     //   시스템 프롬프트에 '오늘 날짜'가 있어 캐시는 하루 단위로 자연 갱신됨.
-    system: [{ type: "text" as const, text: buildSystemPrompt(input.vertical), cache_control: { type: "ephemeral" as const } }],
+    system: [{ type: "text" as const, text: buildSystemPrompt(input.vertical, input.channel ?? "naver"), cache_control: { type: "ephemeral" as const } }],
     // ★웹 검색은 시점 민감 글(금융·정책·부동산·이슈)에만 — 여행·레시피 등엔 불필요(비용·지연·쿼터 절감).
     tools: verify ? [WEB_SEARCH_TOOL, SAVE_TOOL] : [SAVE_TOOL],
     tool_choice: verify ? { type: "any" } : { type: "tool", name: "save_article" },
@@ -215,7 +215,7 @@ export async function streamArticle(
     model,
     max_tokens: maxTokens,
     // ★프롬프트 캐싱 — generateArticle과 동일 프리픽스(캐시 공유). 내용 변경 없음(품질 영향 0).
-    system: [{ type: "text" as const, text: buildSystemPrompt(input.vertical), cache_control: { type: "ephemeral" as const } }],
+    system: [{ type: "text" as const, text: buildSystemPrompt(input.vertical, input.channel ?? "naver"), cache_control: { type: "ephemeral" as const } }],
     // ★웹 검색은 시점 민감 글(금융·정책·부동산·이슈)에만 — 여행·레시피 등엔 불필요(비용·지연·쿼터 절감).
     tools: verify ? [WEB_SEARCH_TOOL, SAVE_TOOL] : [SAVE_TOOL],
     tool_choice: verify ? { type: "any" } : { type: "tool", name: "save_article" },
