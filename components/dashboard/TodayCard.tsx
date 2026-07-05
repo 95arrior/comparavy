@@ -57,14 +57,21 @@ export default function TodayCard({
     const whyNext = topic ? whyNow(topic) : "";
     return (
       <Card plain={plain}>
-        <Header label="오늘의 글" chip="완료" />
+        <div className="flex items-center justify-between">
+          <Header label="오늘의 글" chip="완료" />
+          {topic && !locked && onHeroSwap && (
+            <button onClick={onHeroSwap} aria-label="다음 글감 교체" className="at-press flex h-8 w-8 items-center justify-center rounded-full bg-[#F7F8FA] hover:bg-[#EFF2F6]">
+              <GlassIcon name="refresh" tint="grey" size={15} />
+            </button>
+          )}
+        </div>
         <p className="mt-2 text-[17px] font-bold leading-snug text-neutral-900">오늘 1편 발행 완료.<br />한 편 더 쓰면 승인이 가까워져요.</p>
         {topic && !locked && (
-          <div className="mt-3 rounded-xl bg-neutral-50 p-3.5">
+          <div className="mt-3 rounded-[12px] bg-[#F7F8FA] p-3.5">
             <div><DemandRow topic={topic} onGoPerformance={onGoPerformance} /></div>
             <p className="mt-1.5 text-[14.5px] font-bold leading-snug text-neutral-900">{topic.title}</p>
             {whyNext && <p className="mt-1 text-[12.5px] leading-relaxed text-neutral-500">{whyNext}</p>}
-            <button onClick={() => write(topic)} className="at-press mt-3 w-full rounded-[8px] bg-neutral-900 py-2.5 text-[13px] font-semibold text-white tk-tr hover:bg-neutral-800">
+            <button onClick={() => write(topic)} className="at-press tk-grad-cta mt-3 w-full rounded-[12px] py-3 text-[14px] font-bold text-white">
               다음 글감 쓰기
             </button>
           </div>

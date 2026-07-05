@@ -1,3 +1,4 @@
+import { titleSimilarity } from "@/lib/naverRss";
 import { NextResponse, after } from "next/server";
 import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
 import { keywordsToTitles } from "@/lib/topicTitles";
@@ -154,8 +155,20 @@ export async function GET(req: Request) {
   };
 
   // 본인이 이미 쓴 키워드(정규화 집합) — 제외용. articles는 owner RLS라 유저 클라로 본인 것만.
-  const { data: mine } = await supabase.from("articles").select("keyword").eq("user_id", user.id);
+  const { data: mine } = await supabase.from("articles").select("keyword, title").eq("user_id", user.id);
   const usedSet = new Set((mine ?? []).map((a) => normalizeKeyword(String(a.keyword ?? ""))).filter(Boolean));
+  // ★유사 글감 게이트(실측: 쓴 '중소기업 지원금 총정리'와 거의 같은 증식 변형이 재등장) —
+  //  정확 일치를 넘어, 쓴 글 제목·키워드와 bigram 유사하거나 핵심 토큰이 대부분 겹치면 제외.
+  const usedTexts = (mine ?? []).flatMap((a) => [String(a.title ?? ""), String(a.keyword ?? "")]).filter((t) => t.length >= 4);
+  const usedForbidden = (cand: string): boolean => {
+    for (const u of usedTexts) {
+      if (titleSimilarity(cand, u) >= 0.45) return true;
+      const ct = new Set(cand.replace(/[^가-힣a-z0-9 ]/gi, " ").split(/\s+/).filter((w) => w.length >= 2));
+      const ut = u.replace(/[^가-힣a-z0-9 ]/gi, " ").split(/\s+/).filter((w) => w.length >= 2);
+      if (ut.length >= 2) { const hit = ut.filter((w) => ct.has(w)).length; if (hit >= 2 && hit / ut.length >= 0.6) return true; }
+    }
+    return false;
+  };
   // 카드별 교체('이 글감 별로예요') — 지금 보이는 글감들을 제외하고 새로 뽑는다.
   const exclude = (new URL(req.url).searchParams.get("exclude") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
   const attack = new URL(req.url).searchParams.get("attack") === "1";
@@ -217,6 +230,7 @@ export async function GET(req: Request) {
         if (cards.length >= 3) break;
         const nk = normalizeKeyword(t.keyword);
         if (usedSet.has(nk) || existing.has(nk)) continue;
+        if (usedForbidden(`${t.title} ${t.keyword}`)) continue; // 쓴 글과 유사 — 재등장 차단
         const src = (t as { source?: string }).source;
         // ★momentum 배지 분리 — 뉴스/시즌='지금 뜨는 중', 자동완성 발굴='꾸준히 찾는 주제'(뜨는 척 금지)
         const demandLabel = src === "discover" ? "꾸준히 찾는 주제" : "지금 뜨는 중";
@@ -254,7 +268,7 @@ export async function GET(req: Request) {
     }
     const rows = (data ?? []) as PoolRow[];
     // 본인 작성분 제외 + 고른 대상(audience)만 통과
-    return rows.filter((r) => !usedSet.has(normalizeKeyword(r.keyword)) && !isUnsafeKeyword(r.keyword) && !staleYear(r.keyword) && audMatch(r.keyword, r.audience));
+    return rows.filter((r) => !usedSet.has(normalizeKeyword(r.keyword)) && !usedForbidden(r.keyword) && !isUnsafeKeyword(r.keyword) && !staleYear(r.keyword) && audMatch(r.keyword, r.audience));
   }
 
   // 단계적 폴백: (sub+적정범위) → (sub+전체). ★vertical 전체 폴백 제거(실측: 자동차 블로그에 '파쇄기' —
