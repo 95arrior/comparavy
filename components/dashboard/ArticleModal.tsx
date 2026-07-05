@@ -24,6 +24,7 @@ export default function ArticleModal({
   onUpdated,
   onPublished,
   onCredits,
+  credits,
 }: {
   article: Article;
   /** 블로그 주제(vertical) — 발행 전 광고규제 표현 검사에 사용(없으면 general). */
@@ -36,6 +37,8 @@ export default function ArticleModal({
   onPublished?: () => void;
   /** 이미지 생성 등으로 크레딧 잔액이 바뀔 때(홈 칩 동기화) */
   onCredits?: (balance: number) => void;
+  /** 실시간 크레딧 잔액 — 이미지 카드 헤더에 표시(✦ 소모 결정 참고) */
+  credits?: number;
 }) {
   const [title, setTitle] = useState(article.title);
   const [bodyHtml, setBodyHtml] = useState(article.body_html);
@@ -331,7 +334,12 @@ export default function ArticleModal({
           </div>
 
           <div className="mt-4 rounded-2xl at-glass p-5">
-            <p className="text-[14px] font-bold text-neutral-900">이미지 자리 {parseSlots(bodyHtml).filter((sl) => sl.type === "photo" || DATA_CARDS_ENABLED).length}곳</p>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[14px] font-bold text-neutral-900">이미지 자리 {parseSlots(bodyHtml).filter((sl) => sl.type === "photo" || DATA_CARDS_ENABLED).length}곳</p>
+              {typeof credits === "number" && (
+                <span className="shrink-0 rounded-full bg-[#F7F8FA] px-2.5 py-1 text-[11.5px] font-bold tabular-nums text-neutral-500">크레딧 {credits.toLocaleString("ko-KR")}</span>
+              )}
+            </div>
             <p className="mt-1 text-[12px] leading-relaxed text-neutral-400">직접 찍은 사진이 노출에 가장 좋아요. 올리면 그 자리에 들어가고, 복사할 때 같이 넘어가요. 비워 두고 발행해도 괜찮아요. 첫 번째 사진이 대표이미지 후보가 돼요.</p>
             <button onClick={() => setThumbMakerOpen(true)} className="at-press mt-3 flex w-full items-center justify-center gap-1.5 rounded-[12px] bg-[#1D75F7]/[0.07] py-3 text-[13.5px] font-bold text-[#1D75F7] transition hover:bg-[#1D75F7]/[0.12]">
               <span aria-hidden>✦</span> 썸네일 만들기 <span className="text-[11.5px] font-semibold text-[#1D75F7]/60">문구·배경 골라서</span>

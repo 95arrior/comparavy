@@ -481,6 +481,7 @@ export default function DashboardClient(props: DashboardProps) {
 
         {!page && selected && (
           <ArticleModal
+            credits={credits}
             article={selected}
             vertical={blogProfile?.vertical ?? "general"}
             naverBlogId={(blogProfile as { naver_blog_id?: string | null } | null)?.naver_blog_id ?? null}
