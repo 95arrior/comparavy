@@ -64,8 +64,15 @@ export async function GET(request: Request) {
     .slice(0, BATCH)
     .map(({ s }) => s);
 
+  // ★자동 세탁 로테이션 — 매 실행마다 '가장 오래 안 갱신된' 데이터 보유 sub 1개는 delete 후 재수집(관련성 게이트).
+  //  하루 2회 × 1개 → 약 6주에 전 카테고리 1바퀴 세탁. 신규 수집은 게이트라 새 오염 없음 — 수동 rebuild 불필요.
+  const withData = subs.map((x) => ({ s: x, st: bySub.get(x) })).filter((x) => x.st && x.st.count > 0 && x.st.latest < staleMs).sort((a, b) => a.st!.latest - b.st!.latest);
+  const washTarget = withData[0]?.s ?? null;
+  if (washTarget) { try { await db.from("keyword_pool").delete().eq("vertical", "online").eq("sub", washTarget); } catch { /* 실패 시 다음 회차 */ } }
+  const finalTargets = washTarget ? [washTarget, ...targets.filter((t) => t !== washTarget).slice(0, BATCH - 1)] : targets;
+
   const results: { sub: string; inserted: number; error?: string }[] = [];
-  for (const sub of targets) {
+  for (const sub of finalTargets) {
     try {
       const r = await buildPoolForSub("online", sub, { sleepMs: 250 });
       results.push({ sub, inserted: r.inserted });
@@ -74,5 +81,5 @@ export async function GET(request: Request) {
     }
   }
   void logUsage({ model: "pool", kind: "pool_warm", inputTokens: targets.length, outputTokens: results.reduce((a, r) => a + r.inserted, 0) });
-  return NextResponse.json({ ok: true, warmed: results, remainingCandidates: Math.max(0, subs.length - targets.length) });
+  return NextResponse.json({ ok: true, washed: washTarget, warmed: results, remainingCandidates: Math.max(0, subs.length - finalTargets.length) });
 }

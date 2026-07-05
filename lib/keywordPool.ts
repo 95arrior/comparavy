@@ -57,18 +57,21 @@ export async function buildPoolForSub(vertical: string, sub: string, opts?: { sl
   let droppedByGate = 0;
   if (collected.size > 0) {
     try {
-      const list = [...collected.keys()].slice(0, 400);
+      const all = [...collected.keys()];
       const client = new (await import("@anthropic-ai/sdk")).default({ apiKey: process.env.ANTHROPIC_API_KEY });
-      const res = await client.messages.create({
-        model: "claude-haiku-4-5", max_tokens: 1500,
-        messages: [{ role: "user", content: `블로그 카테고리 "${sub}"의 글감 후보 키워드 목록이야. 이 카테고리와 무관한 키워드의 인덱스만 JSON 배열로 답해(0부터). 애매하면 관련으로 간주(과잉 제거 금지). 목록:
+      for (let off = 0; off < all.length; off += 500) { // ★전량 검사(이전 400 상한 구멍 — 뒷번호 오염 통과) 
+        const list = all.slice(off, off + 500);
+        const res = await client.messages.create({
+          model: "claude-haiku-4-5", max_tokens: 2000,
+          messages: [{ role: "user", content: `블로그 카테고리 "${sub}"의 글감 후보 키워드 목록이야. 이 카테고리와 무관한 키워드의 인덱스만 JSON 배열로 답해(0부터). 애매하면 관련으로 간주(과잉 제거 금지). 목록:
 ${list.map((k, i) => `${i}:${k}`).join("\n")}
 출력: [숫자, ...]만.` }],
-      });
-      const txt = res.content.find((b) => b.type === "text")?.text ?? "[]";
-      const m = txt.match(/\[[\d,\s]*\]/);
-      const bad = new Set<number>(m ? (JSON.parse(m[0]) as number[]) : []);
-      for (const [i, k] of list.entries()) if (bad.has(i)) { collected.delete(k); droppedByGate++; }
+        });
+        const txt = res.content.find((b) => b.type === "text")?.text ?? "[]";
+        const m = txt.match(/\[[\d,\s]*\]/);
+        const bad = new Set<number>(m ? (JSON.parse(m[0]) as number[]) : []);
+        for (const [i, k] of list.entries()) if (bad.has(i)) { collected.delete(k); droppedByGate++; }
+      }
     } catch { /* 게이트 실패 — 수집은 계속(오염 감시는 로그) */ }
   }
 
