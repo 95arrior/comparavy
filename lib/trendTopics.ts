@@ -144,7 +144,7 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
     for (const ev of seasonalSeeds(category)) {
       if (seen.has(ev.keyword)) continue;
       seen.add(ev.keyword);
-      rows.push({ category, keyword: ev.keyword, title: ev.title, news_context: null, longtails: [] as Longtail[], source: "season", created_at: new Date().toISOString(), expires_at: expires });
+      rows.push({ category, keyword: ev.keyword, title: ev.title, news_context: `[시즌 이슈: ${ev.title}] ★반드시 '${category}' 카테고리 관점으로만 다룬다 — 이 블로그 주제와 무관한 일반 시즌 글 금지(예: 자동차 블로그면 휴가철 장거리 운전 전 점검·차량 용품, 여행 블로그면 여행지·예약). 제목에도 카테고리 관점이 드러나야 한다.`, longtails: [] as Longtail[], source: "season", created_at: new Date().toISOString(), expires_at: expires });
     }
 
     // ★자동완성 발굴 — 카테고리 루트어의 실검색 확장(무료·무제한). 브랜드성 후보 제외. source=discover(배지 분리).

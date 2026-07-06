@@ -268,6 +268,9 @@ export default function Home({
   function heroSwap() {
     if (!first) return;
     if (heroSwapsUsed >= HERO_SWAP_MAX) { setHeroLimitNotice(true); setTimeout(() => setHeroLimitNotice(false), 3200); return; }
+    // ★실교체 가능 후보 확인(실측 2회: 무반응인데 카운터만 소모) — 스킵해도 세울 다음 후보가 없으면 소모 없이 안내
+    const nextPool = clean.filter((t) => t.keyword !== first.keyword && !heroSkipped.includes(t.keyword) && !usedToday.map((k) => k.replace(/\s+/g, "").toLowerCase()).includes(t.keyword.replace(/\s+/g, "").toLowerCase()));
+    if (nextPool.length === 0) { setSwapEmpty(true); setTimeout(() => setSwapEmpty(false), 2800); void loadTopics(); return; }
     const n = heroSwapsUsed + 1;
     setHeroSwapsUsed(n);
     try { localStorage.setItem(heroSwapKey, String(n)); } catch { /* ignore */ }
