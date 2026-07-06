@@ -93,7 +93,9 @@ export async function POST(request: Request) {
         paletteName,
         bgWash: wash,
         fontTitle,
-        topicHint: title || mainRaw, // 글 제목 우선 — 배경 오브젝트가 주제를 그린다
+        topicHint: title || mainRaw, // 글 제목 우선 — 배경이 주제를 그린다
+        bgStyle: body.bgStyle === "toss" ? "toss" : "photo", // ★메이커 기본=실사(유저 확정)
+        centerCopy: true, // ★문구 정중앙(유저 확정)
       });
       // AI 배경 실패로 코드 폴백됐으면 과금 취소(받은 것만 청구)
       if (aiBg && !usedAiBackground) { await addCredits(user.id, IMAGE_COST, "refund_image", crypto.randomUUID()).catch(() => null); }

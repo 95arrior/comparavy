@@ -52,6 +52,8 @@ export interface ThumbInput {
   bgWash?: number;
   /** 타이틀 폰트 오버라이드(썸네일 메이커 — 기본 GmarketSansBold) */
   fontTitle?: string;
+  /** ★정중앙 모드(썸네일 메이커) — 카피를 화면 정중앙에, 코드 오브젝트 무대 생략(배경 사진이 주인공) */
+  centerCopy?: boolean;
 }
 
 /* ── 색 유틸 ── */
@@ -167,10 +169,16 @@ function copyBlock(input: ThumbInput, tpl: Template): El {
   const p = identity.palette, ft = identity.fontPair.title, fb = identity.fontPair.body;
   const onDark = isDark(p.bg);
   const hasMain = (mainCopy ?? "").trim().length > 0;
-  const T = hasMain ? titleEl(mainCopy, p, ft, tpl.align, onDark) : null;
+  const T = hasMain ? titleEl(mainCopy, p, ft, input.centerCopy ? "center" : tpl.align, onDark) : null;
   // 서브: 메인이 '약할 때'(단 1줄·6자 이하)만 예외적으로 보조 1줄. 그 외 생략.
   const weakMain = hasMain && mainCopy.split("\n").filter((l) => l.trim()).length === 1 && [...mainCopy.trim()].length <= 6;
   const S = (subCopy && subCopy.trim() && weakMain) ? subEl(subCopy, p, fb, tpl.align) : null;
+  if (input.centerCopy) {
+    return el("div", { style: {
+      position: "absolute", top: 0, left: 60, right: 60, bottom: 0, display: "flex", flexDirection: "column",
+      alignItems: "center", justifyContent: "center", gap: 16,
+    } }, [T, S].filter(Boolean));
+  }
   return el("div", { style: {
     position: "absolute", top: 92, left: 80, right: 80, display: "flex", flexDirection: "column",
     alignItems: tpl.align === "center" ? "center" : "flex-start", gap: 16,
@@ -205,7 +213,7 @@ async function renderAt(rawInput: ThumbInput, width: number): Promise<Buffer> {
   const tints = [p.point, shade(p.bg, dark ? 15 : -12), shade(p.point, dark ? 14 : -16)];
   // 포즈 변주(글마다) — 팔레트·템플릿·폰트 불변, 오브젝트 배치만 userId+articleId로.
   const poseSeed = `${identity.layout}|${input.articleId ?? ""}`;
-  const posedObjects = poseShapes(tpl.objects, input.articleId ? poseSeed : "");
+  const posedObjects = input.centerCopy ? [] : poseShapes(tpl.objects, input.articleId ? poseSeed : "");
   // backdrop(카피 뒤 z축 아래로 지나가는 링)은 배경에 가까운 은은한 명도 → 글자 획과 겹쳐도 가독 안 해침.
   const backdropTint = [shade(p.bg, dark ? 13 : -9)];
   const backdrop: El[] = (bgDataUrl || !tpl.backdrop) ? [] : [shapeEl(tpl.backdrop, backdropTint)];

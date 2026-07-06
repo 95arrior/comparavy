@@ -35,7 +35,7 @@ export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots
   const [text, setText] = useState("");
   const [palette, setPalette] = useState(SWATCHES[0].name);
   const [tone, setTone] = useState("mid");
-  const [aiBg, setAiBg] = useState(true);
+  const [bgKind, setBgKind] = useState<"photo" | "toss" | "plain">("photo"); // 기본=실사(유저 확정)
   const [font, setFont] = useState("GmarketSansBold");
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState<string | null>(initialPreview ?? null);
@@ -56,7 +56,7 @@ export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots
     try {
       const r = await fetch("/api/images/generate", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ thumbMaker: true, mainCopy: text.trim(), paletteName: palette, wash: TONES.find((t) => t.key === tone)?.wash ?? 0.35, aiBg, articleId, fontName: font, title: articleTitle }),
+        body: JSON.stringify({ thumbMaker: true, mainCopy: text.trim(), paletteName: palette, wash: TONES.find((t) => t.key === tone)?.wash ?? 0.35, aiBg: bgKind !== "plain", bgStyle: bgKind === "toss" ? "toss" : "photo", articleId, fontName: font, title: articleTitle }),
       });
       const d = await r.json();
       if (!r.ok) { setErr(d.error ?? "만들지 못했어요"); if (typeof d.credits === "number") onCredits?.(d.credits); }
@@ -124,21 +124,25 @@ export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots
           ))}
         </div>
 
-        {/* 배경 종류 */}
-        <button onClick={() => setAiBg((v) => !v)} className="mt-4 flex w-full items-center gap-3 rounded-[12px] bg-neutral-50 p-3.5 text-left">
-          <span className="min-w-0 flex-1">
-            <span className="block text-[13.5px] font-bold text-neutral-900">3D 배경 <span aria-hidden>✦</span></span>
-            <span className="mt-0.5 block text-[11.5px] text-neutral-400">{aiBg ? `주제에 맞는 말랑한 3D 오브젝트 · ${IMAGE_COST}크레딧` : "색상 그라데이션 배경 · 무료"}</span>
-          </span>
-          <span className={`flex h-6 w-11 shrink-0 items-center rounded-full px-0.5 transition-colors ${aiBg ? "tk-grad-cta" : "bg-neutral-200"}`}>
-            <span className={`h-5 w-5 rounded-full bg-white shadow transition-transform ${aiBg ? "translate-x-5" : ""}`} />
-          </span>
-        </button>
+        {/* 배경 종류 — 실사 기본(주제 사진 깔고 정중앙 문구) */}
+        <p className="mt-4 text-[13px] font-bold text-neutral-700">배경</p>
+        <div className="mt-2 grid grid-cols-3 gap-1.5">
+          {[
+            { k: "photo" as const, label: "실사 사진", sub: `추천 · ${IMAGE_COST}cr` },
+            { k: "toss" as const, label: "3D 일러스트", sub: `${IMAGE_COST}cr` },
+            { k: "plain" as const, label: "단색", sub: "무료" },
+          ].map((o) => (
+            <button key={o.k} onClick={() => setBgKind(o.k)} className={`at-press rounded-[12px] px-2 py-2.5 text-center transition ${bgKind === o.k ? "bg-[#1D75F7]/[0.08] ring-1 ring-[#1D75F7]/40" : "bg-neutral-50"}`}>
+              <span className={`block text-[12.5px] font-bold ${bgKind === o.k ? "text-[#1D75F7]" : "text-neutral-700"}`}>{o.label}</span>
+              <span className="mt-0.5 block text-[10.5px] text-neutral-400">{o.sub}</span>
+            </button>
+          ))}
+        </div>
 
         <button onClick={make} disabled={!text.trim() || busy} className="at-press tk-grad-cta mt-4 w-full rounded-[12px] py-3.5 text-[15px] font-bold text-white disabled:opacity-50">
           {busy
             ? <><span className="tk-wand mr-1.5" aria-hidden>✦</span>썸네일을 만들고 있어요</>
-            : <>{preview ? "다시 만들기" : "썸네일 만들기"}<span className="ml-1.5 text-[12.5px] font-semibold text-white/75">{aiBg ? `· ${IMAGE_COST}크레딧` : "· 무료"}</span></>}
+            : <>{preview ? "다시 만들기" : "썸네일 만들기"}<span className="ml-1.5 text-[12.5px] font-semibold text-white/75">{bgKind !== "plain" ? `· ${IMAGE_COST}크레딧` : "· 무료"}</span></>}
         </button>
         {err && <p className="mt-2 text-[12.5px] font-medium text-amber-600">{err}</p>}
 

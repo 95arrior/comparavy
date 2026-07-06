@@ -96,12 +96,14 @@ export function buildThumbBgPrompt(bgStyleHint: string, paletteHint: string, see
     "ABSOLUTELY NO text of any kind: no letters, numbers, Korean characters, signs, labels, captions, watermarks, or logos anywhere.",
   ].join(" ");
 }
-/** 실사 배경(썸네일) — 주제 씬 사진, 위 여백·저대비(텍스트 자리). */
-export function buildThumbPhotoBgPrompt(topic: string, seed: number): string {
+/** 실사 배경(썸네일) — 주제 씬 사진. center=true면 중앙 저디테일(정중앙 텍스트용), 아니면 상단 여백형. */
+export function buildThumbPhotoBgPrompt(topic: string, seed: number, center = false): string {
   const tone = PHOTO_TONES[seed % PHOTO_TONES.length];
   return [
     `Realistic lifestyle photograph representing this topic (understand only — never render as text): "${topic.trim()}".`,
-    `Main subject small and placed in the LOWER two-thirds; the TOP 35% must be a calm, low-detail area (sky, wall, soft bokeh) for text overlay later.`,
+    center
+      ? `Subjects arranged toward the edges/corners; the CENTER of the frame must stay calm and low-detail (soft bokeh, plain surface, gentle gradient of the scene) — large Korean text will be overlaid dead-center later. Slightly dark or muted overall so white/graphic text pops.`
+      : `Main subject small and placed in the LOWER two-thirds; the TOP 35% must be a calm, low-detail area (sky, wall, soft bokeh) for text overlay later.`,
     `${tone}, muted and calm, shallow depth of field, premium magazine quality. Square 1:1 composition.`,
     "ABSOLUTELY NO text of any kind: no letters, numbers, Korean characters, signs, labels, captions, watermarks, or logos anywhere.",
   ].join(" ");
@@ -134,11 +136,11 @@ export async function generateBlogImage(slotDesc: string, articleTitle: string, 
 }
 
 /** 대표이미지 AI 배경 1장(1:1, base64) — 한글은 코드(satori)가 합성. 실패는 호출측이 코드 폴백. */
-export async function generateThumbBackground(bgStyleHint: string, paletteHint: string, userSeed?: string, topic?: string): Promise<{ base64: string; mime: string }> {
+export async function generateThumbBackground(bgStyleHint: string, paletteHint: string, userSeed?: string, topic?: string, opts?: { forceStyle?: "photo" | "toss"; centerText?: boolean }): Promise<{ base64: string; mime: string }> {
   const seed = (fnv((userSeed ?? "") + ":bg") + Math.floor(Math.random() * 1e9)) >>> 0;
-  // ★어울림 자동 — 주제가 구체 씬이면 실사, 아니면 토스 3D(그때그때 다르게, 유저 판정)
-  const style = topic ? pickImageStyle(topic, seed) : "toss";
-  const prompt = style === "photo" && topic ? buildThumbPhotoBgPrompt(topic, seed) : buildThumbBgPrompt(bgStyleHint, paletteHint, seed, topic);
+  // ★스타일: 강제 지정(썸네일 메이커=실사 기본) > 주제 자동(구체 씬=실사)
+  const style = opts?.forceStyle ?? (topic ? pickImageStyle(topic, seed) : "toss");
+  const prompt = style === "photo" && topic ? buildThumbPhotoBgPrompt(topic, seed, opts?.centerText === true) : buildThumbBgPrompt(bgStyleHint, paletteHint, seed, topic);
   return callGemini(prompt, "1:1");
 }
 
