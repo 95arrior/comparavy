@@ -25,6 +25,7 @@ export default function NaverPublishSheet({
   tags,
   onOpenNaverWrite,
   targetBlogId,
+  articleId,
   onCopied,
   onDone,
   onClose,
@@ -36,7 +37,9 @@ export default function NaverPublishSheet({
   tags?: string[];
   onOpenNaverWrite: () => void;
   /** 이 글이 속한 블로그의 네이버 아이디 — 편집기는 '로그인된 계정'으로 열리므로 대상 명시 가드 */
-  targetBlogId?: string | null; // ★탭만 연다 — 클립보드 접근 금지(회귀 테스트로 고정)
+  targetBlogId?: string | null;
+  /** 완료 화면 주소 확정용(선택 입력 — 발행 직후가 주소를 들고 있는 순간) */
+  articleId?: string; // ★탭만 연다 — 클립보드 접근 금지(회귀 테스트로 고정)
   onCopied?: () => void; // 본문 복사 검증 성공 시(상태 모델 copied 전이)
   onDone: () => void;
   onClose: () => void;
@@ -53,6 +56,9 @@ export default function NaverPublishSheet({
   const [screen, setScreen] = useState(1); // 1 본문 → 2 열기 → 3 제목 → 4 완료
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [doneUrl, setDoneUrl] = useState("");
+  const [urlBusy, setUrlBusy] = useState(false);
+  const [urlMsg, setUrlMsg] = useState<string | null>(null);
   const [clip, setClip] = useState<string | null>(null);
   const [titleCopied, setTitleCopied] = useState(false);
   const [imagesSaved, setImagesSaved] = useState(false);
@@ -181,6 +187,26 @@ export default function NaverPublishSheet({
           <div className="mt-5">
             <p className="text-[17px] font-bold text-neutral-900">발행 버튼까지 눌렀나요?</p>
             <p className="mt-1 text-[13px] leading-relaxed text-neutral-500">네이버에서 발행을 마쳤다면 아래를 눌러 오늘 미션을 끝내세요.</p>
+            {articleId && (
+              <div className="mt-3 rounded-xl bg-neutral-50 px-4 py-3">
+                <p className="text-[12.5px] font-bold text-neutral-700">글 주소를 붙여넣으면 확인이 바로 끝나요 <span className="font-medium text-neutral-400">(선택)</span></p>
+                <div className="mt-2 flex gap-2">
+                  <input value={doneUrl} onChange={(e) => setDoneUrl(e.target.value)} placeholder="https://blog.naver.com/..." className="min-w-0 flex-1 rounded-lg bg-white px-3 py-2 text-[13px] outline-none ring-1 ring-black/[0.06]" />
+                  <button onClick={async () => {
+                    if (!doneUrl.trim() || urlBusy) return;
+                    setUrlBusy(true);
+                    try {
+                      const r = await fetch("/api/verify-post", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ articleId, url: doneUrl.trim() }) });
+                      const d = await r.json();
+                      if (r.ok && d.state === "verified") { setUrlMsg("확인 완료 — 카운트에 반영됐어요"); setTimeout(() => onDone(), 900); }
+                      else setUrlMsg(d.error ?? "주소를 확인하지 못했어요");
+                    } catch { setUrlMsg("네트워크 오류예요"); }
+                    setUrlBusy(false);
+                  }} disabled={urlBusy} className="at-press shrink-0 rounded-lg tk-grad-cta px-3.5 py-2 text-[12.5px] font-bold text-white disabled:opacity-50">{urlBusy ? "확인 중" : "확인"}</button>
+                </div>
+                {urlMsg && <p className="mt-1.5 text-[12px] font-semibold text-neutral-500">{urlMsg}</p>}
+              </div>
+            )}
             {/<img/i.test(richHtml) && (
               <div className="mt-3 rounded-xl bg-neutral-50 px-4 py-3">
                 <p className="text-[12.5px] font-bold text-neutral-700">대표이미지가 안 잡힌다면</p>

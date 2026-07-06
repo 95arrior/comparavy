@@ -29,6 +29,8 @@ export default function ArticleList({
   const [unpubBusy, setUnpubBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [pubBusy, setPubBusy] = useState<string | null>(null); // [발행했어요] 처리 중 글 id
+  const [urlFor, setUrlFor] = useState<string | null>(null); // 확인 중 → 주소 입력 펼침 글 id
+  const [urlVal, setUrlVal] = useState("");
 
   // ★수동 발행 신고(유저 제안) — 위저드 '끝냈어요'를 안 눌렀어도 목록에서 한 탭.
   //  정직한 카운터: 자기신고로 끝내지 않고 즉시 RSS 1차 확인 → 실제 발행이면 그 자리에서 verified(카운트).
@@ -196,7 +198,8 @@ export default function ArticleList({
             const published = a.status === "published" || a.status === "verified";
             const pending = a.status === "pending_verify";
             return (
-              <div key={a.id} className="flex items-center gap-3.5 px-5 py-4 transition active:bg-neutral-50">
+              <div key={a.id}>
+              <div className="flex items-center gap-3.5 px-5 py-4 transition active:bg-neutral-50">
                 <span className={`h-2 w-2 shrink-0 rounded-full ${published ? "bg-emerald-500" : "bg-neutral-200"}`} aria-hidden />
                 <button onClick={() => onOpen(a)} className="min-w-0 flex-1 text-left">
                   <p className="truncate text-[14.5px] font-bold text-[color:var(--at-grey-900)]">{a.title}</p>
@@ -210,12 +213,28 @@ export default function ArticleList({
                     관리
                   </button>
                 ) : pending ? (
-                  <span className="shrink-0 text-[11.5px] font-semibold text-amber-500">확인 중</span>
+                  <button onClick={() => { setUrlFor(urlFor === a.id ? null : a.id); setUrlVal(""); }} className="at-press shrink-0 rounded-lg bg-amber-50 px-2.5 py-1.5 text-[11.5px] font-bold text-amber-600 transition hover:bg-amber-100">
+                    확인 중 · 주소로 바로 확정
+                  </button>
                 ) : (
                   <button onClick={() => markPublished(a)} disabled={pubBusy === a.id} className="at-press shrink-0 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[11.5px] font-bold text-emerald-600 transition hover:bg-emerald-100 disabled:opacity-50">
                     {pubBusy === a.id ? "확인 중" : "발행했어요"}
                   </button>
                 )}
+              </div>
+              {pending && urlFor === a.id && (
+                <div className="flex gap-2 px-5 pb-4">
+                  <input value={urlVal} onChange={(e) => setUrlVal(e.target.value)} placeholder="발행한 글 주소 (https://blog.naver.com/...)" autoFocus
+                    className="min-w-0 flex-1 rounded-lg bg-neutral-50 px-3 py-2 text-[13px] outline-none ring-1 ring-black/[0.06] focus:ring-[#1D75F7]/40" />
+                  <button onClick={async () => {
+                    if (!urlVal.trim()) return;
+                    const r = await fetch("/api/verify-post", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ articleId: a.id, url: urlVal.trim() }) });
+                    const d = await r.json();
+                    if (r.ok && d.state === "verified") { onUpdated?.({ ...a, status: "verified" as Article["status"] }); setUrlFor(null); setMsg("발행 확인됐어요 — 카운트에 반영"); setTimeout(() => setMsg(null), 2600); }
+                    else { setMsg(d.error ?? "확인하지 못했어요"); setTimeout(() => setMsg(null), 2600); }
+                  }} className="at-press shrink-0 rounded-lg tk-grad-cta px-3.5 py-2 text-[12.5px] font-bold text-white">확정</button>
+                </div>
+              )}
               </div>
             );
           })}
