@@ -74,3 +74,23 @@ img{max-width:100%;height:auto;display:block}
   .post{padding:26px 18px}
   .home-hero h1{font-size:22px}
 }
+
+
+/* ── 상세: 힐링페이퍼식 중앙 히어로 헤더 ── */
+.post-detail .post-hero{text-align:center;padding-top:8px}
+.hero-cat{display:inline-block;font-size:13px;font-weight:700;color:var(--brand);background:rgba(29,117,247,.08);padding:4px 12px;border-radius:999px}
+.post-detail .post-title{margin-top:14px;font-size:27px;line-height:1.4}
+.post-sub{margin-top:10px;color:var(--weak);font-size:15px}
+.hero-img{margin:22px auto 0;max-width:640px}
+.hero-img img{width:100%;height:auto;border-radius:16px;box-shadow:0 8px 28px -12px rgba(25,31,40,.18)}
+.post-detail .post-meta{margin-top:16px}
+.post-detail .post-body{margin-top:30px;text-align:left}
+
+/* 등장 애니 — 아래→위 부드럽게(JS 0, 순차 스태거) */
+@keyframes riseIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.rise{animation:riseIn .6s cubic-bezier(.22,1,.36,1) both}
+.r1{animation-delay:.05s}.r2{animation-delay:.12s}.r3{animation-delay:.2s}.r4{animation-delay:.28s}.r5{animation-delay:.4s}
+@media (prefers-reduced-motion:reduce){.rise{animation:none}}
+
+/* 광고 슬롯 — 콘텐츠와 구분되되 튀지 않게(레이아웃 흔들림 방지 최소높이) */
+.ad-slot{margin:26px 0;min-height:100px;display:flex;justify-content:center;overflow:hidden}
