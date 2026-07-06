@@ -5,7 +5,7 @@
 const MODEL = "gemini-2.5-flash-image";
 
 export function imageReady(): boolean {
-  return Boolean(process.env.GEMINI_API_KEY);
+  return Boolean(process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY); // 어느 프로바이더든 키 하나면 가동
 }
 
 // ★하드 규칙(모든 프롬프트에 강제) — 텍스트·얼굴·손클로즈업·브랜드/UI·지폐정면 금지.
