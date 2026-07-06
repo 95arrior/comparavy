@@ -200,6 +200,8 @@ export async function GET(req: Request) {
     if (!(bt === "online" && sub && !cluster)) return cards;
     try {
       const kstDay = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
+      const trends = await getTrendTopics(sub); // 캐시 키(씨앗 세대) 계산용 — 가벼운 조회라 캐시 앞으로 이동
+      if (debugMode) diag.trendSeeds = trends.length;
       const ampKey = `amp:v5:${user.id}:${(profile as { id?: string } | null)?.id ??"solo"}:${kstDay}:${excludeSet.size}:${trends.length}`; // ★v5=씨앗 세대 포함 — 재수확 직후(0→15) 캐시 자동 무효화(실측: 수확해도 옛 세트 서빙) // ★v4=블로그별 격리 — 전환 시 이전 블로그 글감 서빙 사고(실측: 자동차 블로그에 캘리포니아비치) 차단
       let amped: { keyword: string; title: string; titleSearch?: string; newsContext: string | null; briefText?: string; hookKey?: string; thumb?: { mainCopy: string; subCopy: string; badge: string }; brief?: unknown; source?: string }[] = [];
       try {
@@ -207,8 +209,6 @@ export async function GET(req: Request) {
         if (c?.value && (!c.expires_at || new Date(c.expires_at).getTime() > Date.now())) amped = c.value as typeof amped;
       } catch { /* 캐시 미스 */ }
       if (amped.length === 0) {
-        const trends = await getTrendTopics(sub);
-      if (debugMode) diag.trendSeeds = trends.length;
         if (trends.length < 4) {
           const rl = await checkRateLimit(supabase, user.id, `trend_seed_${sub}`, 3, 900);
           if (rl.ok) { const cat = sub; after(async () => { try { if (!(await hasFreshTrends(cat))) await refreshCategoryTrends(cat); } catch { /* ignore */ } }); }
