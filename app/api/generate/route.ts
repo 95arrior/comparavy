@@ -119,7 +119,7 @@ export async function POST(request: Request) {
   // 업종(vertical) + 업체 정보 — 프로필에서 1회 조회(없으면 general/미입력). 프롬프트 분기 + 글 하단 NAP 박스에 사용.
   const { data: profileRow } = await supabase
     .from("blog_profiles")
-    .select("id,channel,vertical,sub_category,biz_name,biz_address,biz_detail_address,biz_phone,biz_hours,biz_hours_json,biz_strength,audience")
+    .select("id,channel,naver_blog_id,vertical,sub_category,biz_name,biz_address,biz_detail_address,biz_phone,biz_hours,biz_hours_json,biz_strength,audience")
     .eq("user_id", user.id).eq("is_active", true)
     .maybeSingle();
   const vertical = profileRow?.vertical ?? "general";
@@ -321,7 +321,7 @@ export async function POST(request: Request) {
         }
 
         // (네이버 수익형 단일 — 자영업 시절의 업체 NAP 박스 삽입 제거. 수익형 블로그에 영업장 정보는 무의미 + 전 글 공통 박스는 패턴 지문 리스크)
-        const urlClean = sanitizeUrls(ensureDisclosure(article.body_html, isReview)); // ★URL 정화(사전 밖 경로 치환 — 404 방지)
+        const urlClean = sanitizeUrls(ensureDisclosure(article.body_html, isReview), { allowNaverBlogId: (profileRow as { naver_blog_id?: string | null } | null)?.naver_blog_id }); // ★URL 정화 — 내 블로그 전편 링크는 통과
         if (urlClean.replaced > 0) console.log(`[url-sanitize] user=${user.id.slice(0, 8)} replaced=${urlClean.replaced} fabricated=${JSON.stringify(urlClean.fabricated)}`);
         let finalBody = urlClean.html;
         if (prevUrl) { // ★전편 링크 자동 삽입(verified만) — 마커를 실제 링크로. 미충족 시 마커 유지(위저드 안내 폴백)

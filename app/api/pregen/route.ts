@@ -76,7 +76,7 @@ export async function POST(request: Request) {
   // ── 입력 조립(generate 라우트와 동기) ──
   const adminDb = createSupabaseAdminClient();
   const { data: profileRow } = await supabase.from("blog_profiles")
-    .select("id,vertical,sub_category,biz_name,biz_strength,audience").eq("user_id", user.id).eq("is_active", true).maybeSingle();
+    .select("id,naver_blog_id,vertical,sub_category,biz_name,biz_strength,audience").eq("user_id", user.id).eq("is_active", true).maybeSingle();
   const vertical = profileRow?.vertical ?? "general";
   const seedId = (profileRow as { id?: string } | null)?.id ?? user.id; // 블로그별 지문
   const vDef = VERTICAL_DEFAULTS[vertical];
@@ -119,7 +119,7 @@ export async function POST(request: Request) {
 
       // 후처리(generate와 동일): 경험 가드(사전 생성은 재시도 없이 폐기 — 무해) → 대가성 → URL 정화 → 분량
       if (hasFabricatedExperience(article.body_html)) throw new Error("fabricated");
-      const urlClean = sanitizeUrls(ensureDisclosure(article.body_html, isReview));
+      const urlClean = sanitizeUrls(ensureDisclosure(article.body_html, isReview), { allowNaverBlogId: (profileRow as { naver_blog_id?: string | null } | null)?.naver_blog_id });
       if (urlClean.replaced > 0) console.log(`[url-sanitize] pregen user=${user.id.slice(0, 8)} replaced=${urlClean.replaced}`);
       const finalBody = urlClean.html;
       const charCount = countKoreanChars(finalBody);

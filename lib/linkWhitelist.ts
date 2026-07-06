@@ -28,7 +28,10 @@ function whitelistHit(domain: string): { root: string; name: string } | null {
 }
 
 /** 본문 URL 정화 — 사전 도메인=루트로 축약(딥 경로 제거), 사전 밖=검색 유도 문구 치환. 치환 수 반환. */
-export function sanitizeUrls(html: string): { html: string; replaced: number; fabricated: string[] } {
+export function sanitizeUrls(html: string, opts?: { allowNaverBlogId?: string | null }): { html: string; replaced: number; fabricated: string[] } {
+  // ★자기 블로그 글 주소 허용(실측: 시리즈 전편 링크가 '공식 사이트에서 검색'으로 마스킹됨) —
+  //  본인 naver_blog_id의 blog.naver.com 주소만 통과. 남의/지어낸 블로그 주소는 여전히 차단(원 취지 유지).
+  const ownBlog = (opts?.allowNaverBlogId ?? "").trim().toLowerCase();
   let replaced = 0;
   const fabricated: string[] = [];
   // ★태그 속성(src/href) 내부는 구조적으로 보호 — 마스킹 후 본문 텍스트 URL만 검사, 마지막에 복원.
@@ -36,6 +39,7 @@ export function sanitizeUrls(html: string): { html: string; replaced: number; fa
   const masked = html.replace(/(src|href)="[^"]*"/gi, (m) => { masks.push(m); return `__ATTR${masks.length - 1}__`; });
   const out0 = masked.replace(URL_RE, (raw) => {
     if (/supabase\.co|supabase\.in|ateflo\.com/i.test(raw)) return raw;
+    if (ownBlog && new RegExp(`^https?://(m\\.)?blog\\.naver\\.com/${ownBlog.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}(/|$)`, "i").test(raw)) return raw; // 내 블로그 글(전편 링크)
     const d = domainOf(raw);
     const hit = whitelistHit(d);
     if (hit) {

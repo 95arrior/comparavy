@@ -57,7 +57,7 @@ export default function NaverPublishSheet({
   const [titleCopied, setTitleCopied] = useState(false);
   const [imagesSaved, setImagesSaved] = useState(false);
 
-  const richHtml = useMemo(() => { const h = buildRichHtml({ title, bodyHtml, images }); return hasPhotoLeak(h) ? sanitizeForCopy(h) : h; }, [title, bodyHtml, images]);
+  const richHtml = useMemo(() => { const h = buildRichHtml({ title, bodyHtml, images, ownNaverBlogId: targetBlogId }); return hasPhotoLeak(h) ? sanitizeForCopy(h) : h; }, [title, bodyHtml, images, targetBlogId]);
   const plain = useMemo(() => { const t = buildPlainText({ title, bodyHtml, images }); return hasPhotoLeakPlain(t) ? sanitizePlain(t) : t; }, [title, bodyHtml, images]);
   const bodyLeak = hasPhotoLeak(richHtml) || hasPhotoLeakPlain(plain);
   const hasLinkSlot = bodyHtml.includes("[상품 링크 자리]"); // 리뷰형에만 존재 — 조건부 안내

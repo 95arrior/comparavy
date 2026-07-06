@@ -11,6 +11,8 @@ export interface PublishInput {
   bodyHtml: string; // 엔진 산출 본문(내부에 [사진: 설명] 마커 포함)
   images?: Record<number, string>; // 사진자리 인덱스 -> 공개 이미지 URL
   hashtags?: string[]; // 해시태그(# 없이)
+  /** 내 네이버 블로그 아이디 — 자기 글 주소(전편 링크)는 URL 정화에서 통과 */
+  ownNaverBlogId?: string | null;
 }
 
 const PHOTO_RE = /\[사진:\s*([^\]]+)\]/g;
@@ -271,7 +273,7 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   //  태그는 발행 위저드의 '태그' 단계에서 태그칸 전용으로 복사(hashtagGroups는 그 용도로 유지).
   // 최종 게이트: rich는 사진 마커/지시·이모지 전면 제거. marker 모드(수동 배치)는 [사진 N] 유지하고 이모지만.
   const gated0 = withImages ? sanitizeForCopy(body) : stripEmoji(body);
-  const gated = sanitizeUrls(gated0).html; // ★기존 초안 소급 — 사전 밖 URL은 복사 시점에도 정화
+  const gated = sanitizeUrls(gated0, { allowNaverBlogId: input.ownNaverBlogId }).html; // ★소급 정화 — 내 블로그 전편 링크는 통과
   // 파이프: 분할 → 정렬 → 크기 위계 → ★여백 스케일 v2(마크업 스페이서) → 서스펜스(마킹 예외)
   return applySuspenseBreaks(applySpacingRich(applySizing(styleBlocks(splitLongParagraphs(gated)))));
 }
