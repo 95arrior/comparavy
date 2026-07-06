@@ -113,3 +113,22 @@ add_filter('the_content', function ($html) {
   if ($bottom) $html .= '<div class="ad-slot">' . $bottom . '</div>';
   return $html;
 }, 20);
+
+/* ── v2.0: 커스텀 로고(사용자 정의 → 사이트 아이덴티티에서 업로드) ── */
+add_action('after_setup_theme', function () {
+  add_theme_support('custom-logo', ['height' => 64, 'width' => 64, 'flex-width' => true]);
+});
+
+/* ── 조회수 자동 집계(플러그인 없이) — 인기 글 섹션 데이터원 ── */
+add_action('wp_head', function () {
+  if (!is_singular('post') || current_user_can('edit_posts')) return;
+  $id = get_the_ID();
+  update_post_meta($id, 'ateflo_views', ((int) get_post_meta($id, 'ateflo_views', true)) + 1);
+});
+
+/* 인기 글 N개 — 조회수 순, 데이터 부족하면 최신으로 자연 폴백 */
+function ateflo_popular_posts(int $n = 5): array {
+  $q = get_posts(['numberposts' => $n, 'meta_key' => 'ateflo_views', 'orderby' => 'meta_value_num', 'order' => 'DESC']);
+  if (count($q) < $n) $q = array_merge($q, get_posts(['numberposts' => $n - count($q), 'exclude' => wp_list_pluck($q, 'ID')]));
+  return $q;
+}

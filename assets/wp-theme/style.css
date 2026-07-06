@@ -1,7 +1,7 @@
 /*
 Theme Name: Ateflo Toss
 Description: 토스풍 초경량 블로그 테마 — 외부 요청 0, JS 0, PageSpeed 100 지향. ateflo 발행 글(.ateflo-post)과 완전 호환.
-Version: 1.2.0
+Version: 2.0.0
 Author: swooosy
 Text Domain: ateflo-toss
 */
@@ -117,3 +117,26 @@ img{max-width:100%;height:auto;display:block}
 
 /* 광고 슬롯 — 콘텐츠와 구분되되 튀지 않게(레이아웃 흔들림 방지 최소높이) */
 .ad-slot{margin:26px 0;min-height:100px;display:flex;justify-content:center;overflow:hidden}
+
+
+/* ── v2.0: 로고·pill 버튼·검색·인기 앨범 ── */
+.site-logo{display:flex;align-items:center;gap:9px}
+.logo-img{width:34px;height:34px;border-radius:9px;object-fit:contain}
+.site-nav .pill{display:inline-flex;align-items:center;min-height:38px;padding:0 14px;border-radius:10px;background:#e9ecf1;color:var(--ink);font-size:13.5px;font-weight:700;margin-left:8px}
+.site-nav .pill-b{background:rgba(29,117,247,.1);color:var(--brand)}
+.site-nav .pill:hover{background:#e0e4ea}
+.site-nav .pill-b:hover{background:rgba(29,117,247,.16)}
+
+.searchbar{margin-top:18px;display:flex;gap:8px;background:#fff;border-radius:14px;padding:6px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.searchbar input{flex:1;border:0;outline:0;background:transparent;font:inherit;font-size:15px;padding:8px 12px;color:var(--ink)}
+.searchbar input::placeholder{color:#b0b8c1}
+.searchbar button{border:0;background:var(--brand);color:#fff;font:inherit;font-size:14px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer}
+
+.sec-title{margin:38px 0 14px;font-size:19px;font-weight:800;letter-spacing:-.02em}
+.album{display:flex;gap:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:8px;scroll-snap-type:x mandatory}
+.al-card{flex:0 0 150px;scroll-snap-align:start;background:#fff;border-radius:16px;padding:10px;box-shadow:0 1px 3px rgba(0,0,0,.05);transition:transform .3s cubic-bezier(.22,1,.36,1)}
+.al-card:hover{transform:translateY(-2px)}
+.al-thumb{display:block;width:100%;height:96px;border-radius:10px;overflow:hidden;background:linear-gradient(135deg,#eef3ff,#dfe9ff)}
+.al-thumb img{width:100%;height:100%;object-fit:cover}
+.al-thumb .ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#9db9f0}
+.al-title{display:block;margin-top:9px;font-size:13px;font-weight:700;line-height:1.4;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}

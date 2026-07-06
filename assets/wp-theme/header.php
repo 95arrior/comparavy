@@ -9,10 +9,15 @@
 <a class="skip" href="#main">본문 바로가기</a>
 <header class="site-head">
   <div class="in">
-    <a class="site-logo" href="<?php echo esc_url(home_url('/')); ?>"><?php bloginfo('name'); ?><b>.</b></a>
+    <a class="site-logo" href="<?php echo esc_url(home_url('/')); ?>">
+      <?php if (has_custom_logo()) { $logo = wp_get_attachment_image_src(get_theme_mod('custom_logo'), 'thumbnail'); if ($logo) echo '<img class="logo-img" src="' . esc_url($logo[0]) . '" alt="" width="34" height="34">'; } ?>
+      <span><?php bloginfo('name'); ?><b>.</b></span>
+    </a>
     <nav class="site-nav" aria-label="주요 메뉴">
-      <?php $cats = get_categories(['number' => 3, 'orderby' => 'count', 'order' => 'DESC']);
-      foreach ($cats as $c) echo '<a href="' . esc_url(get_category_link($c)) . '">' . esc_html($c->name) . '</a>'; ?>
+      <?php $about = get_page_by_title('소개') ?: get_page_by_title('운영자 소개');
+      if ($about) echo '<a class="pill" href="' . esc_url(get_permalink($about)) . '">소개</a>';
+      $contact = get_page_by_title('문의');
+      if ($contact) echo '<a class="pill pill-b" href="' . esc_url(get_permalink($contact)) . '">문의</a>'; ?>
     </nav>
   </div>
 </header>
