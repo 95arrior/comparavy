@@ -4,7 +4,6 @@
 <section class="home-hero">
   <h1><?php bloginfo('name'); ?></h1>
   <p><?php echo esc_html(get_bloginfo('description') ?: '매일 한 편, 도움이 되는 글'); ?></p>
-  <p class="hero-badge"><span class="dot"></span>매일 아침 새 글이 자동으로 올라와요</p>
 </section>
 <?php elseif (is_category()) : ?>
 <section class="home-hero"><h1><?php single_cat_title(); ?></h1><p><?php echo esc_html(single_cat_title('', false)); ?> 글 모음</p></section>
