@@ -621,11 +621,13 @@ export default function Home({
                     {tailLoading && <div className="space-y-3">{[0,1,2].map((i)=><div key={i} className="ateflo-skel h-[92px] rounded-[20px]" />)}</div>}
                     {!tailLoading && (tailMode === "all" ? tailFiltered : (tailTopics ?? []).filter((t) => t.keyword !== first?.keyword)).map((t, ti) => (
                       <div key={t.keyword} className="tk-chip" style={{ animationDelay: `${ti * 50}ms` }}><TopicRow topic={t} onClick={() => { setRoutineSheet(null); onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb); }} onSwap={() => {
-                        if (tailMode !== "all") { // ★전용 세트에서 ↻ = 목록에서 치우기(실측: 전체 상태만 갱신돼 화면 무변화)
+                        if (tailMode !== "all") { // ★전용 세트에서 ↻ = 치우기 + 부족하면 자동 보충(실측: 다 치우면 소진 고착)
                           const nd = [...dismissedRef.current, t.keyword];
                           setDismissed(nd);
                           try { localStorage.setItem(todayKey, JSON.stringify(nd)); } catch { /* ignore */ }
-                          setTailTopics((prev) => (prev ?? []).filter((x) => x.keyword !== t.keyword));
+                          const remain = (tailTopics ?? []).filter((x) => x.keyword !== t.keyword);
+                          setTailTopics(remain);
+                          if (remain.length < 3) void pickTail(tailMode); // exclude가 늘어 새 키로 재증식 — 새 변형 후보 시도
                           return;
                         }
                         swapTopic(t.keyword);
