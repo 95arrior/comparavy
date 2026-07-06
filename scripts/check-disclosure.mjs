@@ -10,20 +10,23 @@ ok(revenuePath({keyword:"노트북 추천"})==="shopping","리뷰 → shopping �
 ok(revenuePath({keyword:"연말정산 방법"})==="adpost","정보 → adpost 태그");
 
 console.log("\n② 대가성 문구 누락 불가:");
-const review="<h2>추천</h2><p>이 제품 좋아요.</p>";
+const review=`<h2>추천</h2><p>이 제품 좋아요. ${LINK_MARKER}</p>`; // v2: 고지는 링크 자리와 동행
 const out=ensureDisclosure(review,true);
 ok(out.startsWith(`<p><b>${DISCLOSURE_TEXT}</b></p>`),"리뷰형+문구없음 → 상단 강제 삽입");
 ok(hasDisclosure(out),"삽입 후 hasDisclosure=true");
 // 이미 있으면 중복 삽입 안 함
-const already=`<p>${DISCLOSURE_TEXT}</p><h2>x</h2>`;
+const already=`<p>${DISCLOSURE_TEXT}</p><h2>x</h2><p>${LINK_MARKER}</p>`;
 ok(ensureDisclosure(already,true)===already,"이미 있으면 중복 삽입 안 함");
 // 정보형은 삽입 안 함
 ok(ensureDisclosure("<p>정보글</p>",false)==="<p>정보글</p>","정보형 → 삽입 안 함");
 // 누락 경로 불가능: 리뷰형은 항상 문구 보장
 for(const kw of ["에어팟 후기","공기청정기 추천","노트북 비교 vs"]){
-  const g=ensureDisclosure(`<p>${kw} 내용</p>`, isReviewType({keyword:kw}));
-  ok(hasDisclosure(g),`리뷰형 "${kw}" → 문구 항상 존재`);
+  const g=ensureDisclosure(`<p>${kw} 내용 ${LINK_MARKER}</p>`, isReviewType({keyword:kw}));
+  ok(hasDisclosure(g),`리뷰형+링크자리 "${kw}" → 문구 항상 존재`);
 }
+// ★v2 핵심: 링크 자리 없는 글에 고지가 잘못 들면 '제거'된다(광고글 오인 방지)
+const wrong=ensureDisclosure(`<p><b>${DISCLOSURE_TEXT}</b></p>\n<p>순수 정보 글</p>`, true);
+ok(!hasDisclosure(wrong),"링크 없는 글의 오폭 고지 → 제거");
 console.log("\n③ 링크 자리 마커:");
 ok(LINK_MARKER==="[상품 링크 자리]","마커 = [상품 링크 자리]");
 
