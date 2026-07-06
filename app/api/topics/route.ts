@@ -288,6 +288,12 @@ export async function GET(req: Request) {
     return out;
   }
 
+  // ★mode=short 조기 반환(실측: 504) — 트렌드만 원하는데 풀·게으른 수집·검색량 조회까지 돌면 60s 초과.
+  if (tailMode === "short") {
+    const tc = await buildTrendCards(new Set());
+    return NextResponse.json(debugMode ? { topics: tc, diag: { ...diag, mode: "short", trendCards: tc.length } } : { topics: tc });
+  }
+
   // 단계적 폴백: (sub+적정범위) → (sub+전체). ★vertical 전체 폴백 제거(실측: 자동차 블로그에 '파쇄기' —
   //  타 주제 키워드가 오늘의 글로 서는 관련성 붕괴). sub 풀이 비면 아래 '게으른 채우기'가 그 주제로 즉석 수집,
   //  그동안은 트렌드(카테고리 즉석 수확)와 수집중 UI가 받친다 — 무관 글감보다 잠깐의 빈자리가 낫다.
@@ -622,7 +628,6 @@ export async function GET(req: Request) {
   } catch { /* 0054 미적용 등 — 조용히 생략 */ }
 
   const shuffled = shuffle(topics, rng);
-  if (tailMode === "short") return NextResponse.json(debugMode ? { topics: [...boostCards, ...trendCards], diag: { ...diag, mode: "short", trendCards: trendCards.length } } : { topics: [...boostCards, ...trendCards] });
   if (tailMode === "long") return NextResponse.json(debugMode ? { topics: shuffled, diag: { ...diag, mode: "long", poolCards: shuffled.length } } : { topics: shuffled });
   return NextResponse.json(debugMode ? { topics: [...boostCards, ...trendCards, ...shuffled], diag: { ...diag, boost: boostCards.length, trendCards: trendCards.length, poolCards: shuffled.length } } : { topics: [...boostCards, ...trendCards, ...shuffled] });
 }
