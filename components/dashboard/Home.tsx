@@ -257,10 +257,12 @@ export default function Home({
   const usedToday = todayKeywords(articles);
   const normK = (k: string) => k.replace(/\s+/g, "").toLowerCase();
   const availClean = clean.filter((t) => !usedToday.map(normK).includes(normK(t.keyword)));
-  const boost = availClean.find((t) => t.tag === "followup" || (t as { seriesId?: string }).seriesId);
+  // ★교체(스킵)는 boost·리뷰픽에도 적용(실측: 반응 후속을 교체해도 그대로 서서 카운터만 소모)
+  const notSkipped = (t: { keyword: string }) => !heroSkipped.includes(t.keyword);
+  const boost = availClean.filter(notSkipped).find((t) => t.tag === "followup" || (t as { seriesId?: string }).seriesId);
   const weekAgo = Date.now() - 7 * 86400000;
   const reviewThisWeek = articles.filter((a) => a.status !== "generating" && new Date(a.created_at).getTime() >= weekAgo && revenuePath({ keyword: a.keyword ?? "", title: a.title }) === "shopping").length;
-  const reviewPick = reviewThisWeek < REVIEW_WEEKLY_MIN ? availClean.find((t) => revenuePath({ keyword: t.keyword, title: t.title }) === "shopping") : undefined;
+  const reviewPick = reviewThisWeek < REVIEW_WEEKLY_MIN ? availClean.filter(notSkipped).find((t) => revenuePath({ keyword: t.keyword, title: t.title }) === "shopping") : undefined;
   const heroPool = clean.filter((t) => !heroSkipped.includes(t.keyword));
   const first = boost ?? reviewPick ?? pickNextTopic(heroPool.length ? heroPool : clean, usedToday);
   function heroSwap() {
