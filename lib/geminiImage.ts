@@ -11,6 +11,7 @@ export function imageReady(): boolean {
 // ★하드 규칙(모든 프롬프트에 강제) — 텍스트·얼굴·손클로즈업·브랜드/UI·지폐정면 금지.
 export const IMAGE_HARD_RULES = [
   "ABSOLUTELY NO text of any kind: no letters, numbers, Korean characters (Hangul), signs, labels, captions, watermarks, logos, or UI text anywhere.",
+  "NEVER reproduce a real branded product's identifiable design (specific car models, phones, devices): depict a GENERIC unbranded version of that object category instead — no brand logos, no signature grilles/shapes that identify a specific model. (Design-right safety — 실존 제품 디자인 재현 금지)",
   "Any screen, sign, book, paper, or package in the scene must be completely blank.",
   "NO human faces — if a person appears, only from behind or cropped below the face, never showing facial features.",
   "NO close-up of hands.",
