@@ -4,6 +4,7 @@
 <section class="home-hero">
   <h1><?php bloginfo('name'); ?></h1>
   <p><?php echo esc_html(get_bloginfo('description') ?: '매일 한 편, 도움이 되는 글'); ?></p>
+  <p class="hero-badge"><span class="dot"></span>매일 아침 새 글이 자동으로 올라와요</p>
   <form class="searchbar" role="search" method="get" action="<?php echo esc_url(home_url('/')); ?>">
     <input type="search" name="s" placeholder="궁금한 걸 검색해 보세요" aria-label="검색">
     <button type="submit">검색</button>

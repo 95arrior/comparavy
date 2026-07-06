@@ -132,3 +132,15 @@ function ateflo_popular_posts(int $n = 5): array {
   if (count($q) < $n) $q = array_merge($q, get_posts(['numberposts' => $n - count($q), 'exclude' => wp_list_pluck($q, 'ID')]));
   return $q;
 }
+
+/* ── v2.1: 스크롤 리빌(초경량 인라인 — 외부 요청 0 유지) ── */
+add_action('wp_footer', function () { ?>
+<script>document.addEventListener('DOMContentLoaded',function(){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.08});document.querySelectorAll('.row,.al-card,.rel-card').forEach(function(el){el.classList.add('reveal');io.observe(el)})});</script>
+<?php });
+
+/* 관련 글 3개 — 같은 카테고리(내부 링크·체류) */
+function ateflo_related_posts($post_id, int $n = 3): array {
+  $cats = wp_get_post_categories($post_id);
+  if (!$cats) return [];
+  return get_posts(['numberposts' => $n, 'category__in' => $cats, 'exclude' => [$post_id], 'orderby' => 'date', 'order' => 'DESC']);
+}

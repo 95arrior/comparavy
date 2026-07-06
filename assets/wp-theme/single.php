@@ -14,6 +14,14 @@
   </header>
   <div class="post-body"><?php the_content(); ?></div>
 </article>
+<?php $rel = ateflo_related_posts(get_the_ID()); if ($rel) : ?>
+<section class="related">
+  <h2 class="sec-title">함께 보면 좋은 글</h2>
+  <div class="rel-grid">
+    <?php foreach ($rel as $r) : ?><a class="rel-card" href="<?php echo esc_url(get_permalink($r)); ?>"><?php echo esc_html($r->post_title); ?></a><?php endforeach; ?>
+  </div>
+</section>
+<?php endif; ?>
 <nav class="post-nav" aria-label="이전 다음 글">
   <?php $prev = get_previous_post(); $next = get_next_post();
   if ($prev) echo '<a href="' . esc_url(get_permalink($prev)) . '">← ' . esc_html(wp_trim_words($prev->post_title, 8, '…')) . '</a>';
