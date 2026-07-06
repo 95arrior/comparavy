@@ -141,8 +141,12 @@ add_action('wp_footer', function () { ?>
 /* 관련 글 3개 — 같은 카테고리(내부 링크·체류) */
 function ateflo_related_posts($post_id, int $n = 3): array {
   $cats = wp_get_post_categories($post_id);
-  if (!$cats) return [];
-  return get_posts(['numberposts' => $n, 'category__in' => $cats, 'exclude' => [$post_id], 'orderby' => 'date', 'order' => 'DESC']);
+  $rel = $cats ? get_posts(['numberposts' => $n, 'category__in' => $cats, 'exclude' => [$post_id]]) : [];
+  if (count($rel) < $n) { // 같은 카테고리가 모자라면 최신 글로 채움 — 자리가 비지 않게
+    $ids = array_merge([$post_id], wp_list_pluck($rel, 'ID'));
+    $rel = array_merge($rel, get_posts(['numberposts' => $n - count($rel), 'exclude' => $ids]));
+  }
+  return $rel;
 }
 
 /* v2.2: 협업 문의 이메일(사용자 정의 → 블로그 정보) */
@@ -157,4 +161,13 @@ add_action('customize_register', function ($wp_customize) {
 function ateflo_find_page(array $titles) {
   foreach ($titles as $t) { $pg = get_page_by_title($t); if ($pg) return $pg; }
   return null;
+}
+
+
+/* v2.3: 개인정보처리방침 URL — WP 설정 미지정이어도 페이지 제목으로 탐색 */
+function ateflo_privacy_url(): string {
+  $u = get_privacy_policy_url();
+  if ($u) return $u;
+  $pg = ateflo_find_page(['개인정보처리방침', '개인정보 처리방침']);
+  return $pg ? get_permalink($pg) : '';
 }
