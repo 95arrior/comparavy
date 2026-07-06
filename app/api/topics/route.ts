@@ -175,6 +175,9 @@ export async function GET(req: Request) {
   // 한계 테스트 트랙(관리자 플래그 계정) — 공격 서빙을 로그로 기록해 안전선 재조정 근거 데이터로.
   if (attack) void logUsage({ userId: user.id, model: "mix", kind: isAdminEmail(user.email) ? "attack_serve_admin" : "attack_serve", inputTokens: 0, outputTokens: 0 }); // ★공격 모드(Part 3) — 배합 오버라이드. Stage 5: blog_profiles.attack_mode로 서버 판정 전환
   const excludeSet = new Set(exclude.map((e) => normalizeKeyword(e))); // 교체로 제외한 것들 — 풀 전멸 시 되살릴 수 있게 분리 보관
+  // ★X-ray(관리자 진단) — ?debug=1이면 각 단계 생존 수를 응답에 동봉(실측: 공급 0 원인 추적)
+  const debugMode = new URL(req.url).searchParams.get("debug") === "1" && isAdminEmail(user.email);
+  const diag: Record<string, unknown> = debugMode ? { vertical, sub, usedSet: usedSet.size, usedTexts: usedTexts.length, exclude: excludeSet.size } : {};
   for (const e of exclude) usedSet.add(normalizeKeyword(e));
   // 토픽 클러스터(주제 이어가기): 이 토큰이 든 키워드만 → 한 주제 깊이 파기. %_ 이스케이프.
   const cluster = (new URL(req.url).searchParams.get("cluster") ?? "").trim().replace(/[%_]/g, "").slice(0, 24);
@@ -205,6 +208,7 @@ export async function GET(req: Request) {
       } catch { /* 캐시 미스 */ }
       if (amped.length === 0) {
         const trends = await getTrendTopics(sub);
+      if (debugMode) diag.trendSeeds = trends.length;
         if (trends.length < 4) {
           const rl = await checkRateLimit(supabase, user.id, `trend_seed_${sub}`, 3, 900);
           if (rl.ok) { const cat = sub; after(async () => { try { if (!(await hasFreshTrends(cat))) await refreshCategoryTrends(cat); } catch { /* ignore */ } }); }
@@ -268,7 +272,19 @@ export async function GET(req: Request) {
     }
     const rows = (data ?? []) as PoolRow[];
     // 본인 작성분 제외 + 고른 대상(audience)만 통과
-    return rows.filter((r) => !usedSet.has(normalizeKeyword(r.keyword)) && !usedForbidden(r.keyword) && !isUnsafeKeyword(r.keyword) && !staleYear(r.keyword) && audMatch(r.keyword, r.audience));
+    const out = rows.filter((r) => !usedSet.has(normalizeKeyword(r.keyword)) && !usedForbidden(r.keyword) && !isUnsafeKeyword(r.keyword) && !staleYear(r.keyword) && audMatch(r.keyword, r.audience));
+    if (debugMode) {
+      const c = { raw: rows.length, used: 0, forbidden: 0, unsafe: 0, stale: 0, aud: 0 };
+      for (const r of rows) {
+        if (usedSet.has(normalizeKeyword(r.keyword))) { c.used++; continue; }
+        if (usedForbidden(r.keyword)) { c.forbidden++; continue; }
+        if (isUnsafeKeyword(r.keyword)) { c.unsafe++; continue; }
+        if (staleYear(r.keyword)) { c.stale++; continue; }
+        if (!audMatch(r.keyword, r.audience)) { c.aud++; continue; }
+      }
+      (diag.poolSteps as unknown[] ?? (diag.poolSteps = [])) && (diag.poolSteps as unknown[]).push({ useSub, ranged, ...c, survived: out.length });
+    }
+    return out;
   }
 
   // 단계적 폴백: (sub+적정범위) → (sub+전체). ★vertical 전체 폴백 제거(실측: 자동차 블로그에 '파쇄기' —
@@ -315,7 +331,7 @@ export async function GET(req: Request) {
       if (rows.length >= PICK) break;
     }
   }
-  if (rows.length === 0) return NextResponse.json({ topics: await buildTrendCards(new Set()) });
+  if (rows.length === 0) { const tc = await buildTrendCards(new Set()); return NextResponse.json(debugMode ? { topics: tc, diag: { ...diag, note: "pool 0 — trend only", trendCards: tc.length } } : { topics: tc }); }
 
   // ── 경쟁도 티어 ──
   // 낮음 = 싹 키워드(전설·희귀), 중간 = 일반(기본), 높음 = 빅키워드(최후)
@@ -469,7 +485,7 @@ export async function GET(req: Request) {
 
   // ── 제목·카테고리·노이즈판별(여유분 한 번에) ──
   const allKeywords = candidates.map((r) => r.keyword);
-  if (allKeywords.length === 0) return NextResponse.json({ topics: await buildTrendCards(new Set()) });
+  if (allKeywords.length === 0) { const tc = await buildTrendCards(new Set()); return NextResponse.json(debugMode ? { topics: tc, diag: { ...diag, note: "allKeywords 0", trendCards: tc.length } } : { topics: tc }); }
   // 통합 맥락(분야·대상·사용자 지역) → AI가 브랜드·타지역·대상불일치·무관 키워드까지 한 번에 거름
   const ctxParts = [`분야: ${sub || vertical}`];
   if (audActive) ctxParts.push(`대상: ${audSel.filter((a) => a !== AUDIENCE_ALL).join("·")}`);
@@ -604,5 +620,5 @@ export async function GET(req: Request) {
   } catch { /* 0054 미적용 등 — 조용히 생략 */ }
 
   const shuffled = shuffle(topics, rng);
-  return NextResponse.json({ topics: [...boostCards, ...trendCards, ...shuffled] });
+  return NextResponse.json(debugMode ? { topics: [...boostCards, ...trendCards, ...shuffled], diag: { ...diag, boost: boostCards.length, trendCards: trendCards.length, poolCards: shuffled.length } } : { topics: [...boostCards, ...trendCards, ...shuffled] });
 }
