@@ -14,9 +14,9 @@
       <span><?php bloginfo('name'); ?><b>.</b></span>
     </a>
     <nav class="site-nav" aria-label="주요 메뉴">
-      <?php $about = get_page_by_title('소개') ?: get_page_by_title('운영자 소개');
+      <?php $about = ateflo_find_page(['소개', get_bloginfo('name') . ' 소개', '운영자 소개']);
       if ($about) echo '<a class="pill" href="' . esc_url(get_permalink($about)) . '">소개</a>';
-      $contact = get_page_by_title('문의');
+      $contact = ateflo_find_page(['문의', '문의하기']);
       if ($contact) echo '<a class="pill pill-b" href="' . esc_url(get_permalink($contact)) . '">문의</a>'; ?>
     </nav>
   </div>

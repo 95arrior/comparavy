@@ -4,7 +4,8 @@
     <p class="side-name"><?php bloginfo('name'); ?></p>
     <?php if (get_bloginfo('description')) : ?><p class="side-desc"><?php echo esc_html(get_bloginfo('description')); ?></p><?php endif; ?>
     <ul class="side-links">
-      <?php foreach (['운영자 소개', '소개', '문의'] as $t) { $pg = get_page_by_title($t); if ($pg) echo '<li><a href="' . esc_url(get_permalink($pg)) . '">' . esc_html($t === '소개' ? '블로그 소개' : $t) . '</a></li>'; } ?>
+      <?php $items = [['운영자 소개', ['운영자 소개']], ['블로그 소개', ['소개', get_bloginfo('name') . ' 소개']], ['문의', ['문의', '문의하기']]];
+      foreach ($items as [$label, $titles]) { $pg = ateflo_find_page($titles); if ($pg) echo '<li><a href="' . esc_url(get_permalink($pg)) . '">' . esc_html($label) . '</a></li>'; } ?>
       <li><a href="<?php echo esc_url(get_privacy_policy_url() ?: home_url('/')); ?>">개인정보처리방침</a></li>
     </ul>
     <?php $mail = get_theme_mod('ateflo_contact_email', ''); if ($mail) : ?>
