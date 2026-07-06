@@ -1,7 +1,7 @@
 /*
 Theme Name: Ateflo Toss
 Description: 토스풍 초경량 블로그 테마 — 외부 요청 0, JS 0, PageSpeed 100 지향. ateflo 발행 글(.ateflo-post)과 완전 호환.
-Version: 2.1.0
+Version: 2.2.0
 Author: swooosy
 Text Domain: ateflo-toss
 */
@@ -162,3 +162,22 @@ img{max-width:100%;height:auto;display:block}
 @media (max-width:680px){.rel-grid{grid-template-columns:1fr}}
 .rel-card{background:#fff;border-radius:14px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.05);font-size:13.5px;font-weight:700;line-height:1.45;color:var(--ink);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;transition:transform .3s cubic-bezier(.22,1,.36,1)}
 .rel-card:hover{transform:translateY(-2px);color:var(--brand)}
+
+
+/* ── v2.2: 우측 프로필 사이드바(sticky) — 데스크톱 전용, 모바일은 상단 pill 네비가 담당 ── */
+.cols{display:grid;grid-template-columns:1fr;gap:24px}
+@media (min-width:960px){.cols{grid-template-columns:minmax(0,1fr) 300px}}
+.side{display:none}
+@media (min-width:960px){.side{display:block}}
+.side-card{position:sticky;top:84px;background:#fff;border-radius:var(--r);padding:22px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.side-logo{width:100%;height:auto;border-radius:14px;object-fit:cover;background:linear-gradient(135deg,#eef3ff,#dfe9ff)}
+.side-name{margin-top:14px;font-size:17px;font-weight:800;letter-spacing:-.02em}
+.side-desc{margin-top:6px;font-size:13px;line-height:1.6;color:var(--sub)}
+.side-links{list-style:none;margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.side-links li{margin:2px 0}
+.side-links a{display:block;padding:7px 2px;font-size:13.5px;font-weight:600;color:var(--sub)}
+.side-links a:hover{color:var(--brand)}
+.side-mail{margin-top:12px;border-top:1px solid var(--line);padding-top:12px;font-size:12px;color:var(--weak)}
+.side-mail a{color:var(--brand);font-weight:700}
+/* 사이드 있으니 데스크톱 리스트는 1열 유지가 균형(2열+사이드는 과밀) */
+@media (min-width:960px){.rows{grid-template-columns:1fr}}

@@ -144,3 +144,10 @@ function ateflo_related_posts($post_id, int $n = 3): array {
   if (!$cats) return [];
   return get_posts(['numberposts' => $n, 'category__in' => $cats, 'exclude' => [$post_id], 'orderby' => 'date', 'order' => 'DESC']);
 }
+
+/* v2.2: 협업 문의 이메일(사용자 정의 → 블로그 정보) */
+add_action('customize_register', function ($wp_customize) {
+  $wp_customize->add_section('ateflo_info', ['title' => '블로그 정보(사이드바)', 'priority' => 25]);
+  $wp_customize->add_setting('ateflo_contact_email', ['default' => '', 'sanitize_callback' => 'sanitize_email']);
+  $wp_customize->add_control('ateflo_contact_email', ['section' => 'ateflo_info', 'label' => '협업 문의 이메일', 'type' => 'email']);
+});

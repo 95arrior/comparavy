@@ -5,10 +5,6 @@
   <h1><?php bloginfo('name'); ?></h1>
   <p><?php echo esc_html(get_bloginfo('description') ?: '매일 한 편, 도움이 되는 글'); ?></p>
   <p class="hero-badge"><span class="dot"></span>매일 아침 새 글이 자동으로 올라와요</p>
-  <form class="searchbar" role="search" method="get" action="<?php echo esc_url(home_url('/')); ?>">
-    <input type="search" name="s" placeholder="궁금한 걸 검색해 보세요" aria-label="검색">
-    <button type="submit">검색</button>
-  </form>
 </section>
 <?php elseif (is_category()) : ?>
 <section class="home-hero"><h1><?php single_cat_title(); ?></h1><p><?php echo esc_html(single_cat_title('', false)); ?> 글 모음</p></section>
@@ -16,6 +12,8 @@
 <section class="home-hero"><h1>“<?php the_search_query(); ?>” 검색 결과</h1></section>
 <?php endif; ?>
 
+<div class="cols">
+<div class="col-main">
 <?php if (is_home() || is_category()) : ?>
 <nav class="cat-bar" aria-label="카테고리">
   <a href="<?php echo esc_url(home_url('/')); ?>" class="<?php echo is_home() ? 'on' : ''; ?>">전체</a>
@@ -61,5 +59,9 @@
   </div>
 </section>
 <?php endif; endif; ?>
+
+</div><!-- /col-main -->
+<?php if (!is_paged()) get_sidebar(); ?>
+</div><!-- /cols -->
 
 <?php get_footer(); ?>
