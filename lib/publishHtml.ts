@@ -159,7 +159,7 @@ function blockLines(inner: string): number {
 }
 interface Blk { tag: string; attr: string; inner: string; raw: string }
 function walkBlocks(html: string): { blocks: Blk[]; exact: boolean } {
-  const re = /<(p|h1|h2|h3|h4|blockquote|ul|ol)(\s[^>]*)?>([\s\S]*?)<\/\1>/gi;
+  const re = /<(p|h1|h2|h3|h4|blockquote|ul|ol|table)(\s[^>]*)?>([\s\S]*?)<\/\1>/gi; // table 포함 — 표가 여백 재조립에서 증발하지 않게(평가 반영)
   const blocks: Blk[] = [];
   let covered = 0;
   let m: RegExpExecArray | null;
@@ -218,6 +218,14 @@ function applySpacingRich(html: string): string {
 }
 
 /* ── ★크기 위계 — 밀도 블록 축소(13px), 강조/브릿지 확대(17px). 네이버 생존은 실측 체크리스트로. ── */
+// ★표 규격(평가 반영) — 네이버 붙여넣기 생존을 위해 인라인 보더·패딩 주입, 셀 좌정렬.
+function styleTables(html: string): string {
+  return html
+    .replace(/<table(\s[^>]*)?>/gi, '<table style="border-collapse:collapse;width:100%;margin:8px 0">')
+    .replace(/<th(\s[^>]*)?>/gi, '<th style="border:1px solid #ddd;padding:8px 10px;background:#f7f8fa;text-align:left;font-size:14px">')
+    .replace(/<td(\s[^>]*)?>/gi, '<td style="border:1px solid #ddd;padding:8px 10px;text-align:left;font-size:14px">');
+}
+
 function applySizing(html: string): string {
   return html.replace(/<(p|blockquote|ul|ol)(\s[^>]*)?>([\s\S]*?)<\/\1>/gi, (raw, tag, attr, inner) => {
     const t = String(tag).toLowerCase();
@@ -275,7 +283,7 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   const gated0 = withImages ? sanitizeForCopy(body) : stripEmoji(body);
   const gated = sanitizeUrls(gated0, { allowNaverBlogId: input.ownNaverBlogId }).html; // ★소급 정화 — 내 블로그 전편 링크는 통과
   // 파이프: 분할 → 정렬 → 크기 위계 → ★여백 스케일 v2(마크업 스페이서) → 서스펜스(마킹 예외)
-  return applySuspenseBreaks(applySpacingRich(applySizing(styleBlocks(splitLongParagraphs(gated)))));
+  return applySuspenseBreaks(applySpacingRich(styleTables(applySizing(styleBlocks(splitLongParagraphs(gated))))));
 }
 
 // rich 모드 — 사진자리를 이미지로.
@@ -289,8 +297,16 @@ export function buildMarkerHtml(input: PublishInput): string {
 
 // text/plain — ★rich(formatBody)에서 파생: 여백 스케일·서스펜스·해시태그 그룹이 rich와 항상 동일(단일 소스).
 //  채워진 사진 슬롯은 [사진 N](모바일 삽입 위치), 미충족은 제거(formatBody와 동일 규칙).
+function tableToLines(html: string): string {
+  return html.replace(/<table[\s\S]*?<\/table>/gi, (t) => {
+    const rows = [...t.matchAll(/<tr[\s\S]*?<\/tr>/gi)].map((r) =>
+      [...r[0].matchAll(/<t[hd][^>]*>([\s\S]*?)<\/t[hd]>/gi)].map((c) => c[1].replace(/<[^>]+>/g, "").trim()).filter(Boolean).join(" : ")
+    ).filter(Boolean);
+    return `<p>${rows.join("</p><p>")}</p>`;
+  });
+}
 export function buildPlainText(input: PublishInput): string {
-  const rich = formatBody(input, { withImages: true });
+  const rich = tableToLines(formatBody(input, { withImages: true })); // 표 → '항목 : 값' 줄(모바일 plain)
   let n = 0;
   const text = rich
     .replace(new RegExp(BLANK_P.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), "\n") // 스페이서 1개 = 빈 줄 1

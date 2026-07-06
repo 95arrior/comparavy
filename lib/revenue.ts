@@ -31,9 +31,18 @@ export function hasDisclosure(html: string): boolean {
   return /수수료를 받을 수 있는 링크|경제적 대가|제휴\s*링크가 포함/.test(html);
 }
 
-// ★누락 불가 안전망 — 리뷰/제휴형인데 문구가 없으면 본문 '상단'에 강제 삽입.
+// ★대가성 문구 규칙 v2(실측: 링크 없는 정보성 글에 수수료 문구가 붙어 신뢰 자해) —
+//  [상품 링크 자리]가 실제 본문에 있을 때만 수수료 고지. 없으면 반대로 잘못 든 고지를 '제거'하고
+//  정보성 신뢰 문구(조사 기반·공식 확인 안내)는 본문 마무리 규칙이 맡는다.
 export function ensureDisclosure(html: string, isReview: boolean): string {
-  if (!isReview) return html;
-  if (hasDisclosure(html)) return html;
-  return `<p><b>${DISCLOSURE_TEXT}</b></p>\n${html}`;
+  const hasLinkSlot = html.includes(LINK_MARKER);
+  if (hasLinkSlot) {
+    if (hasDisclosure(html)) return html;
+    return `<p><b>${DISCLOSURE_TEXT}</b></p>\n${html}`;
+  }
+  // 링크 자리가 없는데 고지가 있으면 오폭 — 그 문단 제거
+  if (hasDisclosure(html)) {
+    return html.replace(/<p>(?:<b>)?[^<]*(?:수수료를 받을 수 있는 링크|제휴\s*링크가 포함)[^<]*(?:<\/b>)?<\/p>\n?/g, "");
+  }
+  return html;
 }
