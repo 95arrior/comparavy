@@ -348,7 +348,7 @@ export default function Home({
     setAnalyzing(true);
     try {
       await fetch("/api/admin/trend-refresh").catch(() => null); // 관리자면 즉시 수확, 아니면 무해(401)
-      await loadTopics(); // 일반 유저도 재조회가 백그라운드 수확(trend_seed rl)을 트리거
+      await pickTail("short"); // ★분석 후 숏테일 전용 세트 재요청(실측: 전체만 재조회해 소진 표시 고착)
     } finally { setAnalyzing(false); }
   }
 
