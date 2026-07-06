@@ -24,7 +24,8 @@ export async function POST() {
     .maybeSingle();
 
   const siteName = (profile?.blog_name || profile?.biz_name || "내 블로그").trim();
-  const field = (profile?.sub_category || profile?.vertical || "다양한 주제").trim();
+  const fieldBase = (profile?.sub_category || profile?.vertical || "다양한 주제").trim();
+  const field = /경제|재테크|금융/.test(fieldBase) ? `${fieldBase} (주식·대출·부동산·정부 지원금·세금·연금 등 생활 경제 전반)` : fieldBase; // 다루는 스펙트럼 명시(유저 지정)
   const email = user.email || "";
   if (!email) return NextResponse.json({ error: "연락 이메일을 확인할 수 없어요. 내정보에서 이메일을 확인해 주세요." }, { status: 400 });
 
