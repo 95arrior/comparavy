@@ -47,7 +47,7 @@ export function pickImageStyle(slotDesc: string, seed: number): "photo" | "toss"
   const c = CONCRETE_RE.test(slotDesc), a = ABSTRACT_RE.test(slotDesc);
   if (c && !a) return "photo";
   if (a && !c) return "toss";
-  return seed % 2 === 0 ? "photo" : "toss";
+  return seed % 10 < 7 ? "photo" : "toss"; // ★애매하면 실사 70%(실측: 3D 비중 과다 판정)
 }
 const PHOTO_COMPOS = [
   "subject centered with generous negative space",
@@ -75,7 +75,8 @@ export function buildBodyPrompt(slotDesc: string, articleTitle: string, seed: nu
   const tone = TOSS_TONES[seed % TOSS_TONES.length];
   return [
     `Soft matte 3D illustration in the style of a premium Korean fintech app (Toss) event card. Topic context (for understanding only — never render as text): ${articleTitle}.`,
-    `Depict this concept as cute rounded clay-like 3D objects that are instantly recognizable: ${slotDesc}.`,
+    `Depict EXACTLY this: ${slotDesc}. Choose 2-4 distinct objects that are explicitly mentioned in, or uniquely specific to, that description — ${["show the tools/items used for it", "show the place or setting where it happens", "show the end result or benefit of it", "show the items being compared side by side"][seed % 4]}.`,
+    "NEVER use generic clichés: NO piggy banks, NO plain coin stacks, NO generic calculators, NO lightbulbs — unless that exact object is in the description.",
     `Color: ${tone}, on a clean single-color light background. ${compo}, ${mood} mood. Tactile smooth clay material, soft studio lighting, gentle shadows, no clutter. Playful but premium. Wide horizontal 16:9 composition.`,
     IMAGE_HARD_RULES,
   ].join(" ");
@@ -86,7 +87,7 @@ export function buildBodyPrompt(slotDesc: string, articleTitle: string, seed: nu
 export function buildThumbBgPrompt(bgStyleHint: string, paletteHint: string, seed: number, topic?: string): string {
   const mood = PHOTO_MOODS[seed % PHOTO_MOODS.length];
   const subject = topic && topic.trim()
-    ? `Cute rounded clay-like 3D objects that clearly represent this topic (understand only — never render as text): "${topic.trim()}". Pick 2-4 instantly recognizable real objects related to it.`
+    ? `Cute rounded clay-like 3D objects that clearly represent this topic (understand only — never render as text): "${topic.trim()}". Pick 2-4 real objects uniquely specific to this exact topic — NEVER generic clichés (NO piggy banks, NO plain coin stacks, NO generic calculators) unless the topic is literally about them.`
     : `Soft matte 3D abstract objects (rounded blobs, spheres, gentle geometric forms).`;
   return [
     `${subject} Floating on a solid single-color background, color palette of ${paletteHint}.`,
