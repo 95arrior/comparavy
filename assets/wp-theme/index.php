@@ -1,24 +1,39 @@
 <?php get_header(); ?>
 
+<?php if ((is_home() || is_category()) ) : ?>
 <?php if (is_home() && !is_paged()) : ?>
 <section class="home-hero">
   <h1><?php bloginfo('name'); ?></h1>
   <p><?php echo esc_html(get_bloginfo('description') ?: '매일 한 편, 도움이 되는 글'); ?></p>
 </section>
 <?php endif; ?>
+<nav class="cat-bar" aria-label="카테고리">
+  <a href="<?php echo esc_url(home_url('/')); ?>" class="<?php echo (is_home()) ? 'on' : ''; ?>">전체</a>
+  <?php foreach (get_categories(['orderby' => 'count', 'order' => 'DESC', 'number' => 8]) as $c) :
+    $on = is_category($c->term_id) ? 'on' : ''; ?>
+    <a href="<?php echo esc_url(get_category_link($c)); ?>" class="<?php echo $on; ?>"><?php echo esc_html($c->name); ?></a>
+  <?php endforeach; ?>
+</nav>
+<?php endif; ?>
 
-<div class="cards">
-<?php if (have_posts()) : while (have_posts()) : the_post(); ?>
-  <article class="card">
-    <a href="<?php the_permalink(); ?>" aria-label="<?php the_title_attribute(); ?>">
-      <?php $cat = get_the_category(); if ($cat) echo '<span class="cat">' . esc_html($cat[0]->name) . '</span>'; ?>
-      <h2><?php the_title(); ?></h2>
-      <p class="ex"><?php echo esc_html(wp_trim_words(get_the_excerpt(), 30, '…')); ?></p>
-      <p class="meta"><?php echo get_the_date('Y년 n월 j일'); ?></p>
+<div class="rows">
+<?php if (have_posts()) : while (have_posts()) : the_post(); $tu = ateflo_thumb_url(get_the_ID()); ?>
+  <article class="row">
+    <a class="thumb" href="<?php the_permalink(); ?>" tabindex="-1" aria-hidden="true">
+      <?php if ($tu) : ?><img src="<?php echo esc_url($tu); ?>" alt="" loading="lazy" width="104" height="104">
+      <?php else : ?><span class="ph"><?php echo esc_html(mb_substr(get_the_title(), 0, 1)); ?></span><?php endif; ?>
     </a>
+    <div class="tx">
+      <a href="<?php the_permalink(); ?>">
+        <?php $cat = get_the_category(); if ($cat) echo '<span class="cat">' . esc_html($cat[0]->name) . '</span>'; ?>
+        <h2><?php the_title(); ?></h2>
+        <p class="ex"><?php echo esc_html(wp_trim_words(get_the_excerpt(), 24, '…')); ?></p>
+        <p class="meta"><?php echo get_the_date('Y년 n월 j일'); ?></p>
+      </a>
+    </div>
   </article>
 <?php endwhile; else : ?>
-  <article class="card"><h2>아직 글이 없어요</h2><p class="ex">첫 글이 곧 자동으로 올라와요.</p></article>
+  <article class="row"><div class="tx"><h2>아직 글이 없어요</h2><p class="ex">첫 글이 곧 자동으로 올라와요.</p></div></article>
 <?php endif; ?>
 </div>
 
