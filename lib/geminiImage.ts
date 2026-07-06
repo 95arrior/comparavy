@@ -110,6 +110,37 @@ export function buildThumbPhotoBgPrompt(topic: string, seed: number, center = fa
   ].join(" ");
 }
 
+// ★프로바이더 스위치(유저 결정: GPT 품질 우위) — OPENAI_API_KEY 있으면 gpt-image-1, 없으면 Gemini 폴백.
+//  원가: gpt-image-1 medium 1024²≈$0.04(~60원) — IMAGE_COST 6cr(300~400원) 마진 유지. 실패 시 상호 폴백.
+async function callOpenAIImage(prompt: string, aspectRatio: "16:9" | "1:1"): Promise<{ base64: string; mime: string }> {
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) throw new Error("NOT_READY");
+  const size = aspectRatio === "16:9" ? "1536x1024" : "1024x1024";
+  const res = await fetch("https://api.openai.com/v1/images/generations", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+    body: JSON.stringify({ model: "gpt-image-1", prompt: prompt.slice(0, 4000), size, quality: "medium", n: 1 }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = data?.error?.message ?? `OpenAI ${res.status}`;
+    const quota = res.status === 429 || /quota|billing|rate/i.test(msg);
+    throw new Error(quota ? "QUOTA" : msg);
+  }
+  const b64 = data?.data?.[0]?.b64_json;
+  if (b64) return { base64: b64, mime: "image/png" };
+  throw new Error("이미지가 생성되지 않았어요.");
+}
+
+async function callImage(prompt: string, aspectRatio: "16:9" | "1:1"): Promise<{ base64: string; mime: string }> {
+  const prefer = process.env.IMAGE_PROVIDER === "gemini" ? "gemini" : process.env.OPENAI_API_KEY ? "openai" : "gemini";
+  if (prefer === "openai") {
+    try { return await callOpenAIImage(prompt, aspectRatio); }
+    catch (e) { if (process.env.GEMINI_API_KEY && !/QUOTA/.test(String(e))) return callGemini(prompt, aspectRatio); throw e; }
+  }
+  return callGemini(prompt, aspectRatio);
+}
+
 async function callGemini(prompt: string, aspectRatio: "16:9" | "1:1"): Promise<{ base64: string; mime: string }> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error("NOT_READY");
@@ -133,7 +164,7 @@ async function callGemini(prompt: string, aspectRatio: "16:9" | "1:1"): Promise<
 export async function generateBlogImage(slotDesc: string, articleTitle: string, userSeed?: string, _opts?: { thumbnail?: boolean }): Promise<{ base64: string; mime: string }> {
   // 장마다 변주 — 만 명이 써도, 한 명이 백 장을 만들어도 겹치지 않게.
   const seed = (fnv((userSeed ?? "") + ":") + Math.floor(Math.random() * 1e9)) >>> 0;
-  return callGemini(buildBodyPrompt(slotDesc, articleTitle, seed), "16:9");
+  return callImage(buildBodyPrompt(slotDesc, articleTitle, seed), "16:9");
 }
 
 /** 대표이미지 AI 배경 1장(1:1, base64) — 한글은 코드(satori)가 합성. 실패는 호출측이 코드 폴백. */
@@ -142,7 +173,7 @@ export async function generateThumbBackground(bgStyleHint: string, paletteHint: 
   // ★스타일: 강제 지정(썸네일 메이커=실사 기본) > 주제 자동(구체 씬=실사)
   const style = opts?.forceStyle ?? (topic ? pickImageStyle(topic, seed) : "toss");
   const prompt = style === "photo" && topic ? buildThumbPhotoBgPrompt(topic, seed, opts?.centerText === true) : buildThumbBgPrompt(bgStyleHint, paletteHint, seed, topic);
-  return callGemini(prompt, "1:1");
+  return callImage(prompt, "1:1");
 }
 
 export const GEMINI_IMAGE_MODEL = MODEL;
