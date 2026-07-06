@@ -96,9 +96,10 @@ export async function POST(request: Request) {
   after(async () => {
     try {
       const timeSens = isTimeSensitive({ keyword, angle, vertical, newsContext: body.newsContext });
+      const numericSens = /금리|대출|지원금|보조금|세금|환급|연금|보험료|요금|수수료|한도|공제|청약|재난지원/.test(keyword); // 수치 민감 — 사전 생성도 최신 발췌
       const resolvedNews: string | null = typeof body.newsContext === "string" && body.newsContext.trim()
         ? String(body.newsContext).slice(0, 1600)
-        : timeSens ? await newsContextFor(keyword).then((v) => (v ? v.slice(0, 1600) : null)).catch(() => null) : null;
+        : (timeSens || numericSens) ? await newsContextFor(keyword).then((v) => (v ? v.slice(0, 1600) : null)).catch(() => null) : null;
       let relatedQueries: string[] = [];
       try {
         relatedQueries = await Promise.race([
