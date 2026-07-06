@@ -13,6 +13,8 @@ export interface PublishInput {
   hashtags?: string[]; // 해시태그(# 없이)
   /** 내 네이버 블로그 아이디 — 자기 글 주소(전편 링크)는 URL 정화에서 통과 */
   ownNaverBlogId?: string | null;
+  /** AI 생성 이미지 슬롯 인덱스 — 해당 이미지 아래 '참고 이미지' 캡션 자동(오인 방지) */
+  aiImageIdx?: number[];
 }
 
 const PHOTO_RE = /\[사진:\s*([^\]]+)\]/g;
@@ -275,7 +277,10 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
     idx += 1;
     if (!withImages) return `<p>[사진 ${idx + 1}]</p>`; // marker 모드(수동 배치) — 명시적 선택
     const url = input.images?.[idx];
-    return url ? `<p><img src="${url}" alt="" /></p>` : ""; // 미충족 → 제거(마커·지시 노출 안 함)
+    if (!url) return ""; // 미충족 → 제거(마커·지시 노출 안 함)
+    const isAi = input.aiImageIdx?.includes(idx);
+    // ★AI 생성분 캡션 자동(오인 방지) — 참고 이미지 명시가 신뢰를 지킨다
+    return `<p><img src="${url}" alt="" /></p>${isAi ? `<p><span style="font-size:12px;color:#999">AI로 제작한 참고 이미지입니다. 실제와 다를 수 있어요.</span></p>` : ""}`;
   });
   // ★해시태그는 본문에 넣지 않는다 — 네이버가 본문 #태그를 태그칸에 자동 등록해 '본문+태그칸' 중복이 생김.
   //  태그는 발행 위저드의 '태그' 단계에서 태그칸 전용으로 복사(hashtagGroups는 그 용도로 유지).
