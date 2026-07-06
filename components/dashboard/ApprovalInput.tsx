@@ -76,8 +76,8 @@ export default function ApprovalInput({ onChanged }: { onChanged?: () => void })
   if (state === "idle") {
     return (
       <div className="rounded-2xl at-glass p-5">
-        <p className="text-[14px] font-bold text-neutral-900">애드포스트 신청할 준비가 됐어요</p>
-        <p className="mt-0.5 text-[12px] leading-relaxed text-neutral-400">글이 충분히 쌓였어요. adpost.naver.com에서 미디어 등록을 신청하고, 하셨으면 알려주세요.</p>
+        <p className="text-[14px] font-bold text-neutral-900">애드포스트 신청, 준비물은 끝났어요</p>
+        <p className="mt-0.5 text-[12px] leading-relaxed text-neutral-400">글은 충분해요. 단, 네이버는 <b className="text-neutral-700">블로그 개설 90일부터</b> 신청을 받아요(시스템이 막아요 — 2026.7 실측). 90일 전이면 지금처럼 쌓기만 하면 되고, 그동안의 글·방문 기록이 첫 신청 통과율을 올려줘요. 90일이 지났다면 바로 신청하세요.</p>
         <div className="mt-3 flex gap-2">
           <a href="https://adpost.naver.com" target="_blank" rel="noopener" className="at-press flex-1 rounded-xl tk-grad-cta py-2.5 text-center text-[13px] font-bold text-white transition hover:opacity-90">애드포스트 열기</a>
           <button onClick={() => { try { localStorage.setItem("ateflo_adpost_applied", "1"); } catch { /* ignore */ } setState("applied"); }}
