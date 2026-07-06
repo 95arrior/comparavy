@@ -596,7 +596,9 @@ export async function GET(req: Request) {
       if (activeBlogId) hotQ = hotQ.or(`blog_id.eq.${activeBlogId},blog_id.is.null`);
       const { data: hot } = await hotQ.order("hot_at", { ascending: false }).limit(1).maybeSingle();
       if (hot) {
-        boostCards.push({ keyword: hot.keyword, title: `${hot.keyword}, 한 걸음 더 들어가기`, demandLabel: "어제 반응 좋았던 글의 후속", ssak: true, region: false, tone: "online", vol: 0, comp: "low" as Comp, blogTotal: null, tag: "followup", newsContext: undefined, titleSearch: undefined, briefText: `[후속 지시] 전작 "${hot.title}"이 반응이 좋았다. 같은 검색 의도의 심화·확장편을 쓴다(중복 서술 금지 — 전작이 못 다룬 다음 질문에 답한다). 도입 직후 [전편 링크 자리] 마커 1회.`, hookKey: undefined, thumb: undefined, brief: undefined } as (typeof trendCards)[number]);
+        boostCards.push({ keyword: hot.keyword, title: `${hot.keyword}, 한 걸음 더 들어가기`, demandLabel: "어제 반응 좋았던 글의 후속", ssak: true, region: false, tone: "online", vol: 0, comp: "low" as Comp, blogTotal: null, tag: "followup", newsContext: undefined, titleSearch: undefined, briefText: (/마감|신청|모집|접수|\d+차/.test(`${hot.keyword} ${hot.title}`)
+          ? `[후속 지시 — 회차 환생 패턴(실측: 1차 마감 후 '2차' 검색 폭발)] 전작 "${hot.title}"이 반응이 좋았고, 마감·신청형 주제다. 후속은 '다음 회차·추가 모집·지급일·발표일·못 받은 경우' 같은 마감 이후 검색 의도에 정확히 답한다(전작 요약 재탕 금지). 도입 직후 [전편 링크 자리] 마커 1회.`
+          : `[후속 지시] 전작 "${hot.title}"이 반응이 좋았다. 같은 검색 의도의 심화·확장편을 쓴다(중복 서술 금지 — 전작이 못 다룬 다음 질문에 답한다). 도입 직후 [전편 링크 자리] 마커 1회.`), hookKey: undefined, thumb: undefined, brief: undefined } as (typeof trendCards)[number]);
       }
     }
   } catch { /* 0054 미적용 등 — 조용히 생략 */ }
