@@ -1,0 +1,72 @@
+<?php
+/**
+ * Ateflo Toss — 초경량·SEO 100 지향.
+ * 원칙: 외부 요청 0, JS 0, 렌더 차단 최소, 메타(title/description/OG/canonical) 완비.
+ */
+
+add_action('after_setup_theme', function () {
+  add_theme_support('title-tag');
+  add_theme_support('post-thumbnails');
+  add_theme_support('automatic-feed-links');
+  add_theme_support('html5', ['search-form','gallery','caption','style','script']);
+});
+
+add_action('wp_enqueue_scripts', function () {
+  wp_enqueue_style('ateflo-toss', get_stylesheet_uri(), [], filemtime(get_stylesheet_directory() . '/style.css'));
+});
+
+remove_action('wp_head', 'print_emoji_detection_script', 7);
+remove_action('wp_print_styles', 'print_emoji_styles');
+remove_action('wp_head', 'wp_generator');
+remove_action('wp_head', 'wlwmanifest_link');
+remove_action('wp_head', 'rsd_link');
+remove_action('wp_head', 'wp_shortlink_wp_head');
+add_action('wp_enqueue_scripts', function () {
+  wp_dequeue_style('wp-block-library');
+  wp_dequeue_style('classic-theme-styles');
+  wp_dequeue_style('global-styles');
+}, 20);
+
+function ateflo_meta_description(): string {
+  if (is_singular()) {
+    $p = get_queried_object();
+    $ex = has_excerpt($p) ? get_the_excerpt($p) : wp_trim_words(wp_strip_all_tags($p->post_content), 40, '…');
+    return mb_substr(trim(preg_replace('/\s+/', ' ', $ex)), 0, 155);
+  }
+  if (is_home() || is_front_page()) return get_bloginfo('description') ?: get_bloginfo('name');
+  if (is_category()) { $d = category_description(); return $d ? mb_substr(wp_strip_all_tags($d), 0, 155) : single_cat_title('', false) . ' 관련 글 모음'; }
+  return get_bloginfo('name');
+}
+add_action('wp_head', function () {
+  $desc = esc_attr(ateflo_meta_description());
+  echo '<meta name="description" content="' . $desc . '">' . "\n";
+  echo '<meta property="og:site_name" content="' . esc_attr(get_bloginfo('name')) . '">' . "\n";
+  echo '<meta property="og:locale" content="ko_KR">' . "\n";
+  if (is_singular()) {
+    echo '<meta property="og:type" content="article">' . "\n";
+    echo '<meta property="og:title" content="' . esc_attr(get_the_title()) . '">' . "\n";
+    echo '<meta property="og:description" content="' . $desc . '">' . "\n";
+    echo '<meta property="og:url" content="' . esc_url(get_permalink()) . '">' . "\n";
+    if (has_post_thumbnail()) echo '<meta property="og:image" content="' . esc_url(get_the_post_thumbnail_url(null, 'large')) . '">' . "\n";
+  }
+}, 5);
+
+add_action('wp_head', function () {
+  if (!is_singular('post')) return;
+  $ld = [
+    '@context' => 'https://schema.org', '@type' => 'Article',
+    'headline' => get_the_title(),
+    'datePublished' => get_the_date('c'),
+    'dateModified' => get_the_modified_date('c'),
+    'author' => ['@type' => 'Person', 'name' => get_the_author()],
+    'mainEntityOfPage' => get_permalink(),
+  ];
+  if (has_post_thumbnail()) $ld['image'] = get_the_post_thumbnail_url(null, 'large');
+  echo '<script type="application/ld+json">' . wp_json_encode($ld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . '</script>' . "\n";
+}, 6);
+
+add_filter('the_content', function ($html) {
+  $title = esc_attr(get_the_title());
+  $html = preg_replace('/<img(?![^>]*alt=)([^>]*)>/i', '<img alt="' . $title . ' 관련 이미지"$1>', $html);
+  return $html;
+});
