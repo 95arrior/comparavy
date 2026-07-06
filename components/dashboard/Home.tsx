@@ -132,6 +132,7 @@ export default function Home({
   const [tailMode, setTailMode] = useState<"all" | "short" | "long">("all"); // ★숏/롱테일 선택(유저 제안)
   const [tailTopics, setTailTopics] = useState<Topic[] | null>(null); // 전용 요청 결과(탭=서버에서 그 종족만 왕창)
   const [tailLoading, setTailLoading] = useState(false);
+  const autoAnalyzedRef = useRef(false); // 세션당 1회 — 자동 재분석 무한루프 방지
   async function pickTail(mode: "all" | "short" | "long") {
     setTailMode(mode);
     if (mode === "all") { setTailTopics(null); return; }
@@ -143,7 +144,19 @@ export default function Home({
       if (ex.length) params.set("exclude", ex.join(","));
       const r = await fetch(`/api/topics?${params.toString()}`);
       const d = await r.json();
-      setTailTopics(sanitizeTopics(Array.isArray(d.topics) ? d.topics : []));
+      const got = sanitizeTopics(Array.isArray(d.topics) ? d.topics : []);
+      setTailTopics(got);
+      // ★0개면 자동 재분석(버튼 누르게 하지 않기 — 선택의 여지 제거). 세션당 1회.
+      if (mode === "short" && got.length === 0 && !autoAnalyzedRef.current) {
+        autoAnalyzedRef.current = true;
+        setAnalyzing(true);
+        try {
+          await fetch("/api/admin/trend-refresh").catch(() => null);
+          const r2 = await fetch(`/api/topics?${params.toString()}`);
+          const d2 = await r2.json();
+          setTailTopics(sanitizeTopics(Array.isArray(d2.topics) ? d2.topics : []));
+        } finally { setAnalyzing(false); }
+      }
     } catch { setTailTopics([]); }
     setTailLoading(false);
   }
@@ -635,7 +648,7 @@ export default function Home({
                     ))}
                     {!tailLoading && tailMode === "short" && (tailTopics ?? []).filter((t) => t.keyword !== first?.keyword).length === 0 && (
                       <div className="rounded-2xl bg-neutral-50 p-6 text-center">
-                        <p className="text-[13px] text-neutral-500">지금 뜨는 글감이 소진됐어요.</p>
+                        <p className="text-[13px] text-neutral-500">오늘 뜨는 이슈는 다 소화했어요 — 새 이슈는 몇 시간 안에 수확돼요.</p>
                         <button onClick={analyzeTrendsNow} disabled={analyzing} className="at-press mt-3 rounded-[12px] tk-grad-cta px-4 py-2.5 text-[13px] font-bold text-white disabled:opacity-60">
                           {analyzing ? <><span className="tk-wand mr-1" aria-hidden>✦</span>트렌드 분석 중…</> : "지금 트렌드 다시 분석"}
                         </button>
