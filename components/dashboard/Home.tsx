@@ -129,6 +129,8 @@ export default function Home({
   } // ★토스식 — 루틴은 행, 상세는 시트
   const [swapNotice, setSwapNotice] = useState(false); // 교체 한도 안내
   const [swapEmpty, setSwapEmpty] = useState(false); // 교체 후보 없음 안내(무반응 방지)
+  const [tailMode, setTailMode] = useState<"all" | "short" | "long">("all"); // ★숏/롱테일 선택(유저 제안)
+  const [analyzing, setAnalyzing] = useState(false); // 트렌드 재분석 중
   const moreRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (moreOpen) setTimeout(() => moreRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 80);
@@ -322,6 +324,16 @@ export default function Home({
   const restBase = clean.filter((t) => t !== first && !usedToday.map(normK).includes(normK(t.keyword)) && !writtenTitles.has(t.title.trim()));
   // 히어로에서 내려온 글감을 시트 맨 위로 — '방금 교체한 그거 어디 갔지'가 항상 첫눈에
   const rest = [...restBase.filter((t) => heroSkipped.includes(t.keyword)).reverse(), ...restBase.filter((t) => !heroSkipped.includes(t.keyword))];
+  const isShort = (t: { tag?: string }) => t.tag === "trend" || t.tag === "issue" || t.tag === "followup";
+  const tailFiltered = tailMode === "short" ? rest.filter(isShort) : tailMode === "long" ? rest.filter((t) => !isShort(t)) : rest;
+  async function analyzeTrendsNow() {
+    if (analyzing) return;
+    setAnalyzing(true);
+    try {
+      await fetch("/api/admin/trend-refresh").catch(() => null); // 관리자면 즉시 수확, 아니면 무해(401)
+      await loadTopics(); // 일반 유저도 재조회가 백그라운드 수확(trend_seed rl)을 트리거
+    } finally { setAnalyzing(false); }
+  }
 
   return (
     <main className="mx-auto max-w-[520px] px-5 pb-16">
@@ -583,9 +595,26 @@ export default function Home({
               {routineSheet === "topics" && (
                 topicsLoading ? <TopicsSkeleton collecting={collecting} /> : rest.length > 0 ? (
                   <div className="flex flex-col gap-3">
-                    {rest.map((t, ti) => (
+                    {/* ★숏/롱테일 선택(유저 제안) — 지금 원하는 종족만 */}
+                    <div className="flex gap-1.5">
+                      {([["all", "전체"], ["short", "지금 뜨는"], ["long", "꾸준한 수요"]] as const).map(([k, label]) => (
+                        <button key={k} onClick={() => setTailMode(k)} className={`at-press flex-1 rounded-[10px] py-2 text-[12.5px] font-bold transition ${tailMode === k ? "bg-[#1D75F7]/[0.08] text-[#1D75F7] ring-1 ring-[#1D75F7]/40" : "bg-neutral-50 text-neutral-500"}`}>{label}</button>
+                      ))}
+                    </div>
+                    {tailFiltered.map((t, ti) => (
                       <div key={t.keyword} className="tk-chip" style={{ animationDelay: `${ti * 50}ms` }}><TopicRow topic={t} onClick={() => { setRoutineSheet(null); onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb); }} onSwap={() => swapTopic(t.keyword)} swapping={swapping.includes(t.keyword)} /></div>
                     ))}
+                    {tailMode === "short" && tailFiltered.length === 0 && (
+                      <div className="rounded-2xl bg-neutral-50 p-6 text-center">
+                        <p className="text-[13px] text-neutral-500">지금 뜨는 글감이 소진됐어요.</p>
+                        <button onClick={analyzeTrendsNow} disabled={analyzing} className="at-press mt-3 rounded-[12px] tk-grad-cta px-4 py-2.5 text-[13px] font-bold text-white disabled:opacity-60">
+                          {analyzing ? <><span className="tk-wand mr-1" aria-hidden>✦</span>트렌드 분석 중…</> : "지금 트렌드 다시 분석"}
+                        </button>
+                      </div>
+                    )}
+                    {tailMode === "long" && tailFiltered.length === 0 && (
+                      <p className="rounded-2xl bg-neutral-50 p-6 text-center text-[13px] text-neutral-400">꾸준한 수요 글감을 모으는 중이에요.</p>
+                    )}
                   </div>
                 ) : (
                   <div className="rounded-2xl bg-neutral-50 p-6 text-center text-[13px] text-neutral-400">
