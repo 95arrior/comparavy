@@ -174,6 +174,7 @@ export async function GET(req: Request) {
   const attack = new URL(req.url).searchParams.get("attack") === "1";
   // 한계 테스트 트랙(관리자 플래그 계정) — 공격 서빙을 로그로 기록해 안전선 재조정 근거 데이터로.
   if (attack) void logUsage({ userId: user.id, model: "mix", kind: isAdminEmail(user.email) ? "attack_serve_admin" : "attack_serve", inputTokens: 0, outputTokens: 0 }); // ★공격 모드(Part 3) — 배합 오버라이드. Stage 5: blog_profiles.attack_mode로 서버 판정 전환
+  const tailMode = new URL(req.url).searchParams.get("mode"); // ★숏/롱테일 전용 요청(유저 제안: 탭=그 순간 그 종족만 왕창)
   const excludeSet = new Set(exclude.map((e) => normalizeKeyword(e))); // 교체로 제외한 것들 — 풀 전멸 시 되살릴 수 있게 분리 보관
   // ★X-ray(관리자 진단) — ?debug=1이면 각 단계 생존 수를 응답에 동봉(실측: 공급 0 원인 추적)
   const debugMode = new URL(req.url).searchParams.get("debug") === "1" && isAdminEmail(user.email);
@@ -231,7 +232,7 @@ export async function GET(req: Request) {
         }
       }
       for (const t of amped) {
-        if (cards.length >= 5) break; // 씨앗 풍부하면 트렌드 최대 5(풀 글감은 그 뒤로)
+        if (cards.length >= (tailMode === "short" ? 10 : 5)) break; // short 탭=트렌드만 10개까지
         const nk = normalizeKeyword(t.keyword);
         if (usedSet.has(nk) || existing.has(nk)) continue;
         if (usedForbidden(`${t.title} ${t.keyword}`)) continue; // 쓴 글과 유사 — 재등장 차단
@@ -554,10 +555,11 @@ export async function GET(req: Request) {
     if (arr) arr.push(item); else byCluster.set(ck, [item]);
   }
   const clusters = [...byCluster.values()]; // 각 클러스터는 winScore 내림차순
+  const pickN = tailMode === "long" ? 10 : PICK; // long 탭=풀 10개(유저: 왕창)
   const generalRows: FitItem[] = [];
-  while (generalRows.length < PICK && clusters.some((c) => c.length)) {
+  while (generalRows.length < pickN && clusters.some((c) => c.length)) {
     for (const c of clusters) { // 클러스터별로 하나씩 → 소주제 골고루
-      if (generalRows.length >= PICK) break;
+      if (generalRows.length >= pickN) break;
       const top = c.shift();
       if (top) generalRows.push(top);
     }
@@ -620,5 +622,7 @@ export async function GET(req: Request) {
   } catch { /* 0054 미적용 등 — 조용히 생략 */ }
 
   const shuffled = shuffle(topics, rng);
+  if (tailMode === "short") return NextResponse.json(debugMode ? { topics: [...boostCards, ...trendCards], diag: { ...diag, mode: "short", trendCards: trendCards.length } } : { topics: [...boostCards, ...trendCards] });
+  if (tailMode === "long") return NextResponse.json(debugMode ? { topics: shuffled, diag: { ...diag, mode: "long", poolCards: shuffled.length } } : { topics: shuffled });
   return NextResponse.json(debugMode ? { topics: [...boostCards, ...trendCards, ...shuffled], diag: { ...diag, boost: boostCards.length, trendCards: trendCards.length, poolCards: shuffled.length } } : { topics: [...boostCards, ...trendCards, ...shuffled] });
 }

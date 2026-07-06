@@ -130,6 +130,23 @@ export default function Home({
   const [swapNotice, setSwapNotice] = useState(false); // 교체 한도 안내
   const [swapEmpty, setSwapEmpty] = useState(false); // 교체 후보 없음 안내(무반응 방지)
   const [tailMode, setTailMode] = useState<"all" | "short" | "long">("all"); // ★숏/롱테일 선택(유저 제안)
+  const [tailTopics, setTailTopics] = useState<Topic[] | null>(null); // 전용 요청 결과(탭=서버에서 그 종족만 왕창)
+  const [tailLoading, setTailLoading] = useState(false);
+  async function pickTail(mode: "all" | "short" | "long") {
+    setTailMode(mode);
+    if (mode === "all") { setTailTopics(null); return; }
+    setTailLoading(true);
+    try {
+      const usedKw = todayKeywords(articles);
+      const ex = [...new Set([...dismissedRef.current, ...usedKw])];
+      const params = new URLSearchParams({ mode });
+      if (ex.length) params.set("exclude", ex.join(","));
+      const r = await fetch(`/api/topics?${params.toString()}`);
+      const d = await r.json();
+      setTailTopics(sanitizeTopics(Array.isArray(d.topics) ? d.topics : []));
+    } catch { setTailTopics([]); }
+    setTailLoading(false);
+  }
   const [analyzing, setAnalyzing] = useState(false); // 트렌드 재분석 중
   const moreRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -598,13 +615,14 @@ export default function Home({
                     {/* ★숏/롱테일 선택(유저 제안) — 지금 원하는 종족만 */}
                     <div className="flex gap-1.5">
                       {([["all", "전체"], ["short", "지금 뜨는"], ["long", "꾸준한 수요"]] as const).map(([k, label]) => (
-                        <button key={k} onClick={() => setTailMode(k)} className={`at-press flex-1 rounded-[10px] py-2 text-[12.5px] font-bold transition ${tailMode === k ? "bg-[#1D75F7]/[0.08] text-[#1D75F7] ring-1 ring-[#1D75F7]/40" : "bg-neutral-50 text-neutral-500"}`}>{label}</button>
+                        <button key={k} onClick={() => void pickTail(k)} className={`at-press flex-1 rounded-[10px] py-2 text-[12.5px] font-bold transition ${tailMode === k ? "bg-[#1D75F7]/[0.08] text-[#1D75F7] ring-1 ring-[#1D75F7]/40" : "bg-neutral-50 text-neutral-500"}`}>{label}</button>
                       ))}
                     </div>
-                    {tailFiltered.map((t, ti) => (
+                    {tailLoading && <div className="space-y-3">{[0,1,2].map((i)=><div key={i} className="ateflo-skel h-[92px] rounded-[20px]" />)}</div>}
+                    {!tailLoading && (tailMode === "all" ? tailFiltered : (tailTopics ?? []).filter((t) => t.keyword !== first?.keyword)).map((t, ti) => (
                       <div key={t.keyword} className="tk-chip" style={{ animationDelay: `${ti * 50}ms` }}><TopicRow topic={t} onClick={() => { setRoutineSheet(null); onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb); }} onSwap={() => swapTopic(t.keyword)} swapping={swapping.includes(t.keyword)} /></div>
                     ))}
-                    {tailMode === "short" && tailFiltered.length === 0 && (
+                    {!tailLoading && tailMode === "short" && (tailTopics ?? []).filter((t) => t.keyword !== first?.keyword).length === 0 && (
                       <div className="rounded-2xl bg-neutral-50 p-6 text-center">
                         <p className="text-[13px] text-neutral-500">지금 뜨는 글감이 소진됐어요.</p>
                         <button onClick={analyzeTrendsNow} disabled={analyzing} className="at-press mt-3 rounded-[12px] tk-grad-cta px-4 py-2.5 text-[13px] font-bold text-white disabled:opacity-60">
@@ -612,7 +630,7 @@ export default function Home({
                         </button>
                       </div>
                     )}
-                    {tailMode === "long" && tailFiltered.length === 0 && (
+                    {!tailLoading && tailMode === "long" && (tailTopics ?? []).length === 0 && (
                       <p className="rounded-2xl bg-neutral-50 p-6 text-center text-[13px] text-neutral-400">꾸준한 수요 글감을 모으는 중이에요.</p>
                     )}
                   </div>
