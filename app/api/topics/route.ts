@@ -210,7 +210,7 @@ export async function GET(req: Request) {
           if (rl.ok) { const cat = sub; after(async () => { try { if (!(await hasFreshTrends(cat))) await refreshCategoryTrends(cat); } catch { /* ignore */ } }); }
         }
         if (trends.length > 0) {
-          amped = await amplifyForUser(trends, profile ?? null, ((profile as { id?: string } | null)?.id ?? user.id), 3); // 블로그별 앵글 지문
+          amped = await amplifyForUser(trends, profile ?? null, ((profile as { id?: string } | null)?.id ?? user.id), 5); // 블로그별 앵글 지문 · ★트렌드 상한 3→5(실측: 숏테일 체감 빈약 — 씨앗은 있는데 서빙에서 자르고 있었음)
           if (amped.length > 0) {
             try { await pool.from("api_cache").upsert({ key: ampKey, value: amped, expires_at: new Date(Date.now() + 6 * 3600_000).toISOString(), updated_at: new Date().toISOString() }); } catch { /* ignore */ }
           } else {
@@ -227,7 +227,7 @@ export async function GET(req: Request) {
         }
       }
       for (const t of amped) {
-        if (cards.length >= 3) break;
+        if (cards.length >= 5) break; // 씨앗 풍부하면 트렌드 최대 5(풀 글감은 그 뒤로)
         const nk = normalizeKeyword(t.keyword);
         if (usedSet.has(nk) || existing.has(nk)) continue;
         if (usedForbidden(`${t.title} ${t.keyword}`)) continue; // 쓴 글과 유사 — 재등장 차단
