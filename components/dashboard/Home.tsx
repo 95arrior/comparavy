@@ -83,6 +83,13 @@ export default function Home({
 }) {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [topicsLoading, setTopicsLoading] = useState(true);
+  const heroSwapKey = `ateflo_heroswap_${new Date().toISOString().slice(0, 10)}`;
+  const heroSkipKey = `ateflo_heroskip_${new Date().toISOString().slice(0, 10)}`;
+  const [heroSkipped, setHeroSkipped] = useState<string[]>(() => { try { const v = JSON.parse(localStorage.getItem(heroSkipKey) ?? "[]"); return Array.isArray(v) ? v : []; } catch { return []; } });
+  const [heroSwapsUsed, setHeroSwapsUsed] = useState<number>(() => { try { return Number(localStorage.getItem(heroSwapKey) ?? "0") || 0; } catch { return 0; } });
+  const HERO_SWAP_MAX = 3;
+  const [heroLimitNotice, setHeroLimitNotice] = useState(false);
+
   const [collecting, setCollecting] = useState(false);
   // ★?fresh=1 — 글감만 리셋(콘솔 불필요, 여정 테스트용). 발행·체크인·진행 데이터는 무관.
   //  useState 초기화보다 먼저 동기 실행돼야 dismissed·캐시 초기값에 반영된다.
@@ -197,7 +204,10 @@ export default function Home({
     setCollecting(false);
     const collectTimer = setTimeout(() => setCollecting(true), 4000);
     try {
-      const ex = dismissedRef.current;
+      // ★공급 재개 신호(실측: 발행·교체 후 1시간 무응답) — 버림·스킵·오늘 발행분을 전부 exclude로 보내
+      //  서버 증식 캐시 키가 exclude 크기를 포함하므로, 이 목록이 커질 때마다 새 세트를 재증식한다.
+      const usedKw = todayKeywords(articles);
+      const ex = [...new Set([...dismissedRef.current, ...heroSkipped, ...usedKw])];
       const params = new URLSearchParams();
       if (ex.length) params.set("exclude", ex.join(","));
       const qs = params.toString();
@@ -233,12 +243,17 @@ export default function Home({
   // 주간 리뷰형 최소 보장(REVIEW_WEEKLY_MIN) — 증폭·시리즈 없을 때 리뷰형 후보 승격(쇼핑커넥트 경로가 굶지 않게).
   // ★오늘의 글 교체 v2 — '버리기'가 아니라 '순환': 이전 글감은 다른 글감 시트로 내려간다(되돌리기 = 시트에서 그 글감 쓰기).
   //  하루 3회(무한 고르기 방지·뇌빼고 유지), 소진 시 전용 알림. 미스매치(파쇄기류) 탈출구.
-  const heroSwapKey = `ateflo_heroswap_${new Date().toISOString().slice(0, 10)}`;
-  const heroSkipKey = `ateflo_heroskip_${new Date().toISOString().slice(0, 10)}`;
-  const [heroSkipped, setHeroSkipped] = useState<string[]>(() => { try { const v = JSON.parse(localStorage.getItem(heroSkipKey) ?? "[]"); return Array.isArray(v) ? v : []; } catch { return []; } });
-  const [heroSwapsUsed, setHeroSwapsUsed] = useState<number>(() => { try { return Number(localStorage.getItem(heroSwapKey) ?? "0") || 0; } catch { return 0; } });
-  const HERO_SWAP_MAX = 3;
-  const [heroLimitNotice, setHeroLimitNotice] = useState(false);
+  // ★자동 리필 폴링 — 후보 소진 시 시스템이 알아서 다시 가져온다(유저에게 '새로고침' 시키지 않기).
+  const pollCountRef = useRef(0);
+  useEffect(() => {
+    if (topicsLoading) return;
+    const noNext = !boost && !reviewPick && clean.filter((t) => !heroSkipped.includes(t.keyword)).length === 0;
+    if (!noNext || pollCountRef.current >= 8) return;
+    const t = setTimeout(() => { pollCountRef.current += 1; void loadTopics(); }, 45_000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [topicsLoading, topics, heroSkipped]);
+
   const usedToday = todayKeywords(articles);
   const normK = (k: string) => k.replace(/\s+/g, "").toLowerCase();
   const availClean = clean.filter((t) => !usedToday.map(normK).includes(normK(t.keyword)));
