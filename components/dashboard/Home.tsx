@@ -620,7 +620,16 @@ export default function Home({
                     </div>
                     {tailLoading && <div className="space-y-3">{[0,1,2].map((i)=><div key={i} className="ateflo-skel h-[92px] rounded-[20px]" />)}</div>}
                     {!tailLoading && (tailMode === "all" ? tailFiltered : (tailTopics ?? []).filter((t) => t.keyword !== first?.keyword)).map((t, ti) => (
-                      <div key={t.keyword} className="tk-chip" style={{ animationDelay: `${ti * 50}ms` }}><TopicRow topic={t} onClick={() => { setRoutineSheet(null); onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb); }} onSwap={() => swapTopic(t.keyword)} swapping={swapping.includes(t.keyword)} /></div>
+                      <div key={t.keyword} className="tk-chip" style={{ animationDelay: `${ti * 50}ms` }}><TopicRow topic={t} onClick={() => { setRoutineSheet(null); onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb); }} onSwap={() => {
+                        if (tailMode !== "all") { // ★전용 세트에서 ↻ = 목록에서 치우기(실측: 전체 상태만 갱신돼 화면 무변화)
+                          const nd = [...dismissedRef.current, t.keyword];
+                          setDismissed(nd);
+                          try { localStorage.setItem(todayKey, JSON.stringify(nd)); } catch { /* ignore */ }
+                          setTailTopics((prev) => (prev ?? []).filter((x) => x.keyword !== t.keyword));
+                          return;
+                        }
+                        swapTopic(t.keyword);
+                      }} swapping={swapping.includes(t.keyword)} /></div>
                     ))}
                     {!tailLoading && tailMode === "short" && (tailTopics ?? []).filter((t) => t.keyword !== first?.keyword).length === 0 && (
                       <div className="rounded-2xl bg-neutral-50 p-6 text-center">
