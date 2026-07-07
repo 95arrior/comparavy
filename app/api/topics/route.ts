@@ -201,7 +201,10 @@ export async function GET(req: Request) {
     if (!(bt === "online" && sub && !cluster)) return cards;
     try {
       const kstDay = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
-      const trends = await getTrendTopics(sub); // 캐시 키(씨앗 세대) 계산용 — 가벼운 조회라 캐시 앞으로 이동
+      let trends = await getTrendTopics(sub); // 캐시 키(씨앗 세대) 계산용 — 가벼운 조회라 캐시 앞으로 이동
+      // ★유입력 우선(유저 핵심 진단: 뉴스에 나온 것 ≠ 검색하는 것) — 자동완성 실검색 흔적(longtails)이 많은 씨앗부터 증식.
+      trends = [...trends].sort((a, b) => ((b.longtails?.length ?? 0) * 2 + (b.newsContext ? 1 : 0)) - ((a.longtails?.length ?? 0) * 2 + (a.newsContext ? 1 : 0)));
+      if (tailMode === "short") trends = trends.filter((t) => t.source !== "discover"); // 숏테일 탭 순도 — 꾸준 수요 혼입 제거(실측)
       if (debugMode) diag.trendSeeds = trends.length;
       const ampKey = `amp:v5:${user.id}:${(profile as { id?: string } | null)?.id ??"solo"}:${kstDay}:${excludeSet.size}:${trends.length}:${tailMode === "short" ? "s" : "n"}`; // short=전용 캐시(증식량 다름) // ★v5=씨앗 세대 포함 — 재수확 직후(0→15) 캐시 자동 무효화(실측: 수확해도 옛 세트 서빙) // ★v4=블로그별 격리 — 전환 시 이전 블로그 글감 서빙 사고(실측: 자동차 블로그에 캘리포니아비치) 차단
       let amped: { keyword: string; title: string; titleSearch?: string; newsContext: string | null; briefText?: string; hookKey?: string; thumb?: { mainCopy: string; subCopy: string; badge: string }; brief?: unknown; source?: string }[] = [];
@@ -215,7 +218,7 @@ export async function GET(req: Request) {
           if (rl.ok) { const cat = sub; after(async () => { try { if (!(await hasFreshTrends(cat))) await refreshCategoryTrends(cat); } catch { /* ignore */ } }); }
         }
         if (trends.length > 0) {
-          amped = await amplifyForUser(trends, profile ?? null, ((profile as { id?: string } | null)?.id ?? user.id), tailMode === "short" ? 10 : 5); // ★short 탭=증식 10(실측: 씨앗 19인데 카드 2 — 증식 상한 5가 병목)
+          amped = await amplifyForUser(trends, profile ?? null, ((profile as { id?: string } | null)?.id ?? user.id), tailMode === "short" ? 15 : 5); // ★short 탭=증식 15(10명 타겟 — 절약보다 볼륨)(실측: 씨앗 19인데 카드 2 — 증식 상한 5가 병목)
           if (amped.length > 0) {
             try { await pool.from("api_cache").upsert({ key: ampKey, value: amped, expires_at: new Date(Date.now() + 6 * 3600_000).toISOString(), updated_at: new Date().toISOString() }); } catch { /* ignore */ }
           } else {
@@ -232,7 +235,7 @@ export async function GET(req: Request) {
         }
       }
       for (const t of amped) {
-        if (cards.length >= (tailMode === "short" ? 10 : 5)) break; // short 탭=트렌드만 10개까지
+        if (cards.length >= (tailMode === "short" ? 15 : 5)) break; // short 탭=트렌드만 10개까지
         const nk = normalizeKeyword(t.keyword);
         if (usedSet.has(nk) || existing.has(nk)) continue;
         if (usedForbidden(`${t.title} ${t.keyword}`)) continue; // 쓴 글과 유사 — 재등장 차단

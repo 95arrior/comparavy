@@ -356,7 +356,7 @@ export default function ArticleModal({
             </div>
             <p className="mt-1 text-[12px] leading-relaxed text-neutral-400">직접 찍은 사진이 노출에 가장 좋아요. 올리면 그 자리에 들어가고, 복사할 때 같이 넘어가요. 비워 두고 발행해도 괜찮아요. 첫 번째 사진이 대표이미지 후보가 돼요.</p>
             <button onClick={() => setThumbMakerOpen(true)} className="at-press mt-3 flex w-full items-center justify-center gap-1.5 rounded-[12px] bg-[#1D75F7]/[0.07] py-3 text-[13.5px] font-bold text-[#1D75F7] transition hover:bg-[#1D75F7]/[0.12]">
-              <span aria-hidden>✦</span> 썸네일 만들기 <span className="text-[11.5px] font-semibold text-[#1D75F7]/60">문구·배경 골라서</span>
+              <span aria-hidden>✦</span> 썸네일 만들기 <span className="text-[11.5px] font-semibold text-[#1D75F7]/60">홈판 노출은 썸네일 싸움이에요</span>
             </button>
             <div className="mt-3 space-y-2.5">
               {parseSlots(bodyHtml).map((slot, i) => {
