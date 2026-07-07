@@ -9,15 +9,19 @@ export function imageReady(): boolean {
 }
 
 // ★하드 규칙(모든 프롬프트에 강제) — 텍스트·얼굴·손클로즈업·브랜드/UI·지폐정면 금지.
-export const IMAGE_HARD_RULES = [
+const HARD_RULES_ARR = [
   "ABSOLUTELY NO text of any kind: no letters, numbers, Korean characters (Hangul), signs, labels, captions, watermarks, logos, or UI text anywhere.",
   "NEVER reproduce a real branded product's identifiable design (specific car models, phones, devices): depict a GENERIC unbranded version of that object category instead — no brand logos, no signature grilles/shapes that identify a specific model. (Design-right safety — 실존 제품 디자인 재현 금지)",
   "Any screen, sign, book, paper, or package in the scene must be completely blank.",
   "NO human faces — if a person appears, only from behind or cropped below the face, never showing facial features.",
   "NO close-up of hands.",
   "NO brand logos and NO app or phone UI screens.",
-  "NO front close-up of banknotes, cash, or bills — use a bankbook, coins, a piggy bank, or a plain blank card instead.",
-].join(" ");
+  "NO front close-up of banknotes, cash, or bills — use a bankbook or a plain blank card instead. NEVER piggy banks.", // ★돼지저금통 '권장' 문구가 진범이었음 — 금지로 반전
+];
+export const IMAGE_HARD_RULES = HARD_RULES_ARR.join(" ");
+// ★한국어 텍스트 허용판(gpt-image-1 전용) — 텍스트 금지·백지 강제·UI 금지·손 금지 해제(정보 데스크 씬에 필요)
+export const IMAGE_HARD_RULES_TEXT_OK = HARD_RULES_ARR.filter((r) =>
+  !/NO text of any kind|completely blank|NO close-up of hands|app or phone UI screens/.test(r)).join(" ");
 
 function fnv(str: string): number {
   let h = 0x811c9dc5;
@@ -61,7 +65,7 @@ const PHOTO_COMPOS = [
 const PHOTO_MOODS = ["calm and tidy", "warm and inviting", "fresh and clean", "quiet and refined", "cozy everyday"];
 
 /** 본문 이미지 프롬프트(순수 함수) — ★혼합 정책(유저 결정): 실제 씬=실사 / 개념·수치=토스톤 3D / 애매=시드 랜덤. 테스트 대상. */
-export function buildBodyPrompt(slotDesc: string, articleTitle: string, seed: number): string {
+export function buildBodyPrompt(slotDesc: string, articleTitle: string, seed: number, opts?: { koreanText?: boolean }): string {
   const compo = PHOTO_COMPOS[(seed >> 3) % PHOTO_COMPOS.length];
   const mood = PHOTO_MOODS[(seed >> 7) % PHOTO_MOODS.length];
   if (true) { // ★본문=100% 실사 다큐(유저 판정: 3D 오브젝트는 본문에서 독 — 썸네일 toss 배경에만 유지)
@@ -69,12 +73,14 @@ export function buildBodyPrompt(slotDesc: string, articleTitle: string, seed: nu
     return [
       `Realistic lifestyle photograph for a Korean blog post. Topic context (for understanding only — never render as text): ${articleTitle}.`,
       `Scene to capture: ${slotDesc}.`,
-      // ★빈 화면 함정(실측: '신청 화면·서류 체크리스트' 슬롯 → 빈 노트북+백지 클로즈업 = 정보성 제로) —
-      //  텍스트 금지 규칙과 충돌하는 화면·문서류는 주피사체로 쓰지 않는다. 대신 그 '상황'을 주제 실물로.
-      "CRITICAL: screens, documents, forms and papers must NEVER be the focal point of the frame (they are required to be blank, so a close-up of them looks empty and useless). If the scene mentions a screen/form/checklist, reinterpret it: show the real-life SITUATION around that task instead, keeping any screen/paper small, angled away, or out of focus in the background.",
-      `Prefer a candid documentary moment of a real person DOING the activity (hands close-up, back view, or over-the-shoulder — face never visible), like an editorial photo taken by the blog author. Include at least 2 physical objects that are UNIQUELY specific to the topic above (e.g., housing topic → door keys, moving boxes, apartment window view; car topic → car interior, charging cable). NEVER generic clichés: NO piggy banks, NO coin stacks, NO generic calculators, NO lightbulbs — unless the topic is literally about them.`,
+      // ★정보 밀도 분기 — GPT(한글 렌더 가능): 화면·서류가 '읽히는 한국어 정보'의 주인공(유저 베스트: 신청 폼+체크리스트+포스트잇 데스크 씬).
+      //  Gemini(한글 깨짐): 기존 빈 화면 함정 회피 유지.
+      opts?.koreanText
+        ? "Screens, documents and sticky notes SHOULD display realistic, legible KOREAN (Hangul) text directly relevant to the topic — e.g. an application form UI with labeled fields, a printed checklist with checkbox items, a sticky note with a deadline date. All Hangul must be correctly spelled and natural. STRICT SAFETY: never render real organization names/logos, real phone numbers, or real URLs — use plausible generic wording only. Rich informative flat-lay or over-the-shoulder desk scene, editorial quality."
+        : "CRITICAL: screens, documents, forms and papers must NEVER be the focal point of the frame (they are required to be blank, so a close-up of them looks empty and useless). If the scene mentions a screen/form/checklist, reinterpret it: show the real-life SITUATION around that task instead, keeping any screen/paper small, angled away, or out of focus in the background.",
+      `The topic-specific OBJECTS are the hero of the frame — a person may appear only as hands interacting with them (no full figures, face never visible). Include at least 2 physical objects that are UNIQUELY specific to the topic above (e.g., housing topic → door keys, moving boxes, apartment window view; car topic → car interior, charging cable). NEVER generic clichés: NO piggy banks, NO coin stacks, NO generic calculators, NO lightbulbs — unless the topic is literally about them.`,
       `${tone}, ${compo}, ${mood} mood. Natural realistic photography, true-to-life textures and materials, tasteful depth of field, high-end magazine quality. Wide horizontal 16:9 composition.`,
-      IMAGE_HARD_RULES,
+      opts?.koreanText ? IMAGE_HARD_RULES_TEXT_OK : IMAGE_HARD_RULES,
     ].join(" ");
   }
   const tone = TOSS_TONES[seed % TOSS_TONES.length];
@@ -170,9 +176,10 @@ async function callGemini(prompt: string, aspectRatio: "16:9" | "1:1"): Promise<
 
 /** 본문 이미지 1장(실사, base64). userSeed로 계정 축 + 요청 난수 변주. 실패 시 throw. */
 export async function generateBlogImage(slotDesc: string, articleTitle: string, userSeed?: string, _opts?: { thumbnail?: boolean }): Promise<{ base64: string; mime: string; provider?: string }> {
+  const gptFirst = process.env.IMAGE_PROVIDER !== "gemini" && !!process.env.OPENAI_API_KEY; // 한글 텍스트는 GPT만 안전
   // 장마다 변주 — 만 명이 써도, 한 명이 백 장을 만들어도 겹치지 않게.
   const seed = (fnv((userSeed ?? "") + ":") + Math.floor(Math.random() * 1e9)) >>> 0;
-  return callImage(buildBodyPrompt(slotDesc, articleTitle, seed), "16:9");
+  return callImage(buildBodyPrompt(slotDesc, articleTitle, seed, { koreanText: gptFirst }), "16:9");
 }
 
 /** 대표이미지 AI 배경 1장(1:1, base64) — 한글은 코드(satori)가 합성. 실패는 호출측이 코드 폴백. */
