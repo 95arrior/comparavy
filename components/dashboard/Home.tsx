@@ -132,21 +132,32 @@ export default function Home({
   const [tailTopics, setTailTopics] = useState<Topic[] | null>(null); // 전용 요청 결과(탭=서버에서 그 종족만 왕창)
   const [tailLoading, setTailLoading] = useState(false);
   const autoAnalyzedRef = useRef(false); // 세션당 1회 — 자동 재분석 무한루프 방지
-  async function pickTail(mode: "all" | "short" | "long") {
-    setTailMode(mode);
-    if (mode === "all") { setTailTopics(null); return; }
-    setTailLoading(true);
+  async function pickTail(mode: "all" | "short" | "long", opts?: { quiet?: boolean; extraExclude?: string[] }) {
+    if (!opts?.quiet) {
+      setTailMode(mode);
+      if (mode === "all") { setTailTopics(null); return; }
+      setTailLoading(true);
+    }
     try {
       const usedKw = todayKeywords(articles);
-      const ex = [...new Set([...dismissedRef.current, ...usedKw])];
+      const ex = [...new Set([...dismissedRef.current, ...(opts?.extraExclude ?? []), ...usedKw])];
       const params = new URLSearchParams({ mode });
       if (ex.length) params.set("exclude", ex.join(","));
       const r = await fetch(`/api/topics?${params.toString()}`);
       const d = await r.json();
       const got = sanitizeTopics(Array.isArray(d.topics) ? d.topics : []);
+      if (opts?.quiet) {
+        // ★조용한 보충(실측: 치우기가 전체 리셋처럼 보임) — 기존 카드 유지, 새 것만 뒤에 추가
+        setTailTopics((prev) => {
+          const have = new Set((prev ?? []).map((t) => t.keyword));
+          const ban = new Set(opts?.extraExclude ?? []);
+          return [...(prev ?? []), ...got.filter((t) => !have.has(t.keyword) && !ban.has(t.keyword))];
+        });
+        return;
+      }
       setTailTopics(got);
       // ★0개면 자동 재분석(버튼 누르게 하지 않기 — 선택의 여지 제거). 세션당 1회.
-      if (mode === "short" && got.length < 3 && !autoAnalyzedRef.current) { // 3개 미만이면 즉시 재수확(1개 고착 실측)
+      if (!opts?.quiet && mode === "short" && got.length < 3 && !autoAnalyzedRef.current) { // 3개 미만이면 즉시 재수확(1개 고착 실측)
         autoAnalyzedRef.current = true;
         setAnalyzing(true);
         try {
@@ -156,8 +167,8 @@ export default function Home({
           setTailTopics(sanitizeTopics(Array.isArray(d2.topics) ? d2.topics : []));
         } finally { setAnalyzing(false); }
       }
-    } catch { setTailTopics([]); }
-    setTailLoading(false);
+    } catch { if (!opts?.quiet) setTailTopics([]); }
+    if (!opts?.quiet) setTailLoading(false);
   }
   const [analyzing, setAnalyzing] = useState(false); // 트렌드 재분석 중
   const moreRef = useRef<HTMLDivElement>(null);
@@ -618,11 +629,12 @@ export default function Home({
                       <div key={t.keyword} className="tk-chip" style={{ animationDelay: `${ti * 50}ms` }}><TopicRow topic={t} onClick={() => { setRoutineSheet(null); onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb, { tag: t.tag }); }} onSwap={() => {
                         if (tailMode !== "all") { // ★전용 세트에서 ↻ = 치우기 + 부족하면 자동 보충(실측: 다 치우면 소진 고착)
                           const nd = [...dismissedRef.current, t.keyword];
+                          dismissedRef.current = nd; // ★즉시 갱신(실측: 보충 요청이 옛 제외목록을 읽어 같은 세트 반환)
                           setDismissed(nd);
                           try { localStorage.setItem(todayKey, JSON.stringify(nd)); } catch { /* ignore */ }
                           const remain = (tailTopics ?? []).filter((x) => x.keyword !== t.keyword);
                           setTailTopics(remain);
-                          if (remain.length < 3) void pickTail(tailMode); // exclude가 늘어 새 키로 재증식 — 새 변형 후보 시도
+                          if (remain.length < 5) void pickTail(tailMode, { quiet: true, extraExclude: nd }); // ★조용한 보충 — 화면 리셋 없음
                           return;
                         }
                         swapTopic(t.keyword);
