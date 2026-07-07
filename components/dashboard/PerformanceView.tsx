@@ -256,7 +256,7 @@ export default function PerformanceView({
       <RevenueDash publishedCount={stats.pub} articles={articles} />
 
       {/* 승인 결과 입력 — 승인=수익칸·쇼핑커넥트 열쇠 / 거절=D-7 재신청 코스 */}
-      {stats.pub >= 10 && <ApprovalInput onChanged={() => { try { setApproved(localStorage.getItem("ateflo_adpost_approved") === "1"); } catch { /* ignore */ } }} />}
+      {stats.pub >= 10 && <ApprovalInput blogKey={null} onChanged={() => { try { setApproved(localStorage.getItem("ateflo_adpost_approved") === "1"); } catch { /* ignore */ } }} />}
 
       {open ? (
         <PathDetail p={open} onBack={() => setOpenIdx(null)} />

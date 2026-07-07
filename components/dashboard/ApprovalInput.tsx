@@ -10,8 +10,19 @@ const REASONS = [
   { key: "quality", label: "품질·기타", next: "최근 글 몇 편을 열어 도입이 검색 의도에 답하는지 확인해 보세요. 글을 다듬고 7일 뒤 재신청하면 돼요." },
 ];
 
-export default function ApprovalInput({ onChanged }: { onChanged?: () => void }) {
+export default function ApprovalInput({ onChanged, blogKey }: { onChanged?: () => void; blogKey?: string | null }) {
+  const openKey = `ateflo_blog_opened_${blogKey ?? "solo"}`;
   const [state, setState] = useState<"idle" | "applied" | "approved" | "rejected" | "hold">("idle");
+  const [openedAt, setOpenedAt] = useState<string>("");
+  useEffect(() => { try { const v = localStorage.getItem(openKey); if (v) setOpenedAt(v); } catch { /* ignore */ } // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openKey]);
+  const dday = (() => {
+    if (!openedAt) return null;
+    const opened = new Date(`${openedAt}T00:00:00+09:00`).getTime();
+    if (Number.isNaN(opened)) return null;
+    const days = Math.floor((Date.now() - opened) / 86_400_000);
+    return { passed: days, left: Math.max(0, 90 - days), ok: days >= 90 };
+  })();
   const [reason, setReason] = useState<string | null>(null);
   const [retryDday, setRetryDday] = useState<number | null>(null);
 
@@ -77,7 +88,24 @@ export default function ApprovalInput({ onChanged }: { onChanged?: () => void })
     return (
       <div className="rounded-2xl at-glass p-5">
         <p className="text-[14px] font-bold text-neutral-900">애드포스트 신청, 준비물은 끝났어요</p>
-        <p className="mt-0.5 text-[12px] leading-relaxed text-neutral-400">글은 충분해요. 단, 네이버는 <b className="text-neutral-700">블로그 개설 90일부터</b> 신청을 받아요(시스템이 막아요 — 2026.7 실측). 90일 전이면 지금처럼 쌓기만 하면 되고, 그동안의 글·방문 기록이 첫 신청 통과율을 올려줘요. 90일이 지났다면 바로 신청하세요.</p>
+        <p className="mt-0.5 text-[12px] leading-relaxed text-neutral-400">글은 충분해요. 단, 네이버는 <b className="text-neutral-700">블로그 개설 90일부터</b> 신청을 받아요(시스템이 막아요 — 2026.7 실측). 그동안의 글·방문 기록이 첫 신청 통과율을 올려줘요.</p>
+        {/* ★90일 D-day — 막연한 대기를 숫자로. 개설일은 내 블로그 첫 글 날짜나 블로그 관리(admin.blog.naver.com) 기본 정보에서 확인 */}
+        <div className="mt-3 rounded-xl bg-[#F7F8FA] px-4 py-3">
+          {!openedAt ? (
+            <div className="flex items-center gap-2">
+              <span className="min-w-0 flex-1 text-[12px] font-semibold text-neutral-600">블로그 개설일을 넣으면 신청일을 세드려요</span>
+              <input type="date" max={new Date().toISOString().slice(0, 10)} onChange={(e) => { const v = e.target.value; if (!v) return; setOpenedAt(v); try { localStorage.setItem(openKey, v); } catch { /* ignore */ } }}
+                className="shrink-0 rounded-lg bg-white px-2.5 py-1.5 text-[12.5px] outline-none ring-1 ring-black/[0.06]" />
+            </div>
+          ) : dday?.ok ? (
+            <p className="text-[13px] font-bold text-emerald-600">신청 자격 충족 — 개설 {dday.passed}일째예요. 오늘 바로 신청하세요.</p>
+          ) : (
+            <div>
+              <p className="text-[13px] font-bold text-[#1D75F7]">신청까지 D-{dday?.left} <span className="font-medium text-neutral-400">· 개설 {dday?.passed}일째</span></p>
+              <p className="mt-0.5 text-[11.5px] text-neutral-400">그날까지 쌓인 글이 전부 심사 무기가 돼요 · <button onClick={() => { setOpenedAt(""); try { localStorage.removeItem(openKey); } catch { /* ignore */ } }} className="underline">날짜 수정</button></p>
+            </div>
+          )}
+        </div>
         <div className="mt-3 flex gap-2">
           <a href="https://adpost.naver.com" target="_blank" rel="noopener" className="at-press flex-1 rounded-xl tk-grad-cta py-2.5 text-center text-[13px] font-bold text-white transition hover:opacity-90">애드포스트 열기</a>
           <button onClick={() => { try { localStorage.setItem("ateflo_adpost_applied", "1"); } catch { /* ignore */ } setState("applied"); }}
