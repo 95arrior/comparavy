@@ -65,7 +65,7 @@ const PHOTO_COMPOS = [
 const PHOTO_MOODS = ["calm and tidy", "warm and inviting", "fresh and clean", "quiet and refined", "cozy everyday"];
 
 /** 본문 이미지 프롬프트(순수 함수) — ★혼합 정책(유저 결정): 실제 씬=실사 / 개념·수치=토스톤 3D / 애매=시드 랜덤. 테스트 대상. */
-export function buildBodyPrompt(slotDesc: string, articleTitle: string, seed: number, opts?: { koreanText?: boolean }): string {
+export function buildBodyPrompt(slotDesc: string, articleTitle: string, seed: number): string {
   const compo = PHOTO_COMPOS[(seed >> 3) % PHOTO_COMPOS.length];
   const mood = PHOTO_MOODS[(seed >> 7) % PHOTO_MOODS.length];
   if (true) { // ★본문=100% 실사 다큐(유저 판정: 3D 오브젝트는 본문에서 독 — 썸네일 toss 배경에만 유지)
@@ -73,14 +73,11 @@ export function buildBodyPrompt(slotDesc: string, articleTitle: string, seed: nu
     return [
       `Realistic lifestyle photograph for a Korean blog post. Topic context (for understanding only — never render as text): ${articleTitle}.`,
       `Scene to capture: ${slotDesc}.`,
-      // ★정보 밀도 분기 — GPT(한글 렌더 가능): 화면·서류가 '읽히는 한국어 정보'의 주인공(유저 베스트: 신청 폼+체크리스트+포스트잇 데스크 씬).
-      //  Gemini(한글 깨짐): 기존 빈 화면 함정 회피 유지.
-      opts?.koreanText
-        ? "Pick the ONE scene type that best fits this topic: (a) INDUSTRY/PLACE topics (energy, real estate, cars, travel, markets) → a cinematic wide establishing shot of the real-world place itself — industrial plant, apartment complex, dealership lot, harbor — with impressive scale and natural light, like a professional editorial photograph. NO text needed in this type. (b) APPLICATION/PAPERWORK topics (신청·서류·지원금 절차) → an information-rich desk scene where screens, documents and sticky notes display realistic, legible KOREAN (Hangul) text relevant to the topic (form UI with labeled fields, printed checklist, deadline sticky note); all Hangul correctly spelled; STRICT SAFETY: never real organization names/logos, phone numbers, or URLs. (c) otherwise → a clean bright STILL-LIFE: multiple objects that belong to the topic category, neatly arranged on a light wooden table near a window, soft natural daylight, airy minimal styling, gentle shadows — like a lifestyle magazine product spread (참고: 주제 관련 사물들을 정갈하게 배열). Choose (a) whenever the topic has a physical place or industry behind it."
-        : "CRITICAL: screens, documents, forms and papers must NEVER be the focal point of the frame (they are required to be blank, so a close-up of them looks empty and useless). If the scene mentions a screen/form/checklist, reinterpret it: show the real-life SITUATION around that task instead, keeping any screen/paper small, angled away, or out of focus in the background.",
+      // ★단일 문법(유저 최종 판정: 텍스트 절대 금지 — 깨짐, 빈 화면도 금지 — 허접) — 상황이 스스로 말하는 씬 3택.
+      "Pick the ONE scene type that best fits this topic: (a) INDUSTRY/PLACE topics (energy, real estate, cars, travel, markets) → a cinematic wide establishing shot of the real-world place itself — industrial plant, apartment complex, dealership lot, harbor — impressive scale, natural light, professional editorial photograph. (b) PAPERWORK/APPLICATION topics → stage the SITUATION with zero readable text: any document or screen may appear only as a small angled background prop where no writing is visible — NEVER a blank screen or blank paper as the focal point; tell the story with topic objects instead (keys with a contract folder, a calendar page, a stamped envelope). (c) otherwise → a clean bright STILL-LIFE: multiple objects of the topic category neatly arranged on a light wooden table near a window, soft daylight, airy minimal styling — like a lifestyle magazine product spread. The image must spark curiosity and instantly convey what the article is about — a scene that tells the story by itself.",
       `The topic-specific OBJECTS are the hero of the frame — a person may appear only as hands interacting with them (no full figures, face never visible). Include at least 2 physical objects that are UNIQUELY specific to the topic above (e.g., housing topic → door keys, moving boxes, apartment window view; car topic → car interior, charging cable). NEVER generic clichés: NO piggy banks, NO coin stacks, NO generic calculators, NO lightbulbs — unless the topic is literally about them.`,
       `${tone}, ${compo}, ${mood} mood. Natural realistic photography, true-to-life textures and materials, tasteful depth of field, high-end magazine quality. Wide horizontal 16:9 composition.`,
-      opts?.koreanText ? IMAGE_HARD_RULES_TEXT_OK : IMAGE_HARD_RULES,
+      IMAGE_HARD_RULES,
     ].join(" ");
   }
   const tone = TOSS_TONES[seed % TOSS_TONES.length];
@@ -176,10 +173,9 @@ async function callGemini(prompt: string, aspectRatio: "16:9" | "1:1"): Promise<
 
 /** 본문 이미지 1장(실사, base64). userSeed로 계정 축 + 요청 난수 변주. 실패 시 throw. */
 export async function generateBlogImage(slotDesc: string, articleTitle: string, userSeed?: string, _opts?: { thumbnail?: boolean }): Promise<{ base64: string; mime: string; provider?: string }> {
-  const gptFirst = process.env.IMAGE_PROVIDER !== "gemini" && !!process.env.OPENAI_API_KEY; // 한글 텍스트는 GPT만 안전
   // 장마다 변주 — 만 명이 써도, 한 명이 백 장을 만들어도 겹치지 않게.
   const seed = (fnv((userSeed ?? "") + ":") + Math.floor(Math.random() * 1e9)) >>> 0;
-  return callImage(buildBodyPrompt(slotDesc, articleTitle, seed, { koreanText: gptFirst }), "16:9");
+  return callImage(buildBodyPrompt(slotDesc, articleTitle, seed), "16:9");
 }
 
 /** 대표이미지 AI 배경 1장(1:1, base64) — 한글은 코드(satori)가 합성. 실패는 호출측이 코드 폴백. */
