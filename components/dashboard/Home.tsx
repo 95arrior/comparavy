@@ -269,6 +269,14 @@ export default function Home({
   let pubFlag = false;
   try { pubFlag = typeof window !== "undefined" && localStorage.getItem(localPubFlagKey()) === "1"; } catch { /* ignore */ }
   const info = pubFlag && !infoRaw.publishedToday ? { ...infoRaw, publishedToday: true } : infoRaw;
+  // ★3~4편 루프 재료 — 오늘 발행 수(초안 제외), 골든타임(발행 확정 후 30분), 다음 추천 시간대
+  const pubCountToday = articles.filter((a) => (a.status === "copied" || a.status === "verified" || a.status === "published" || a.status === "pending_verify") && new Date(a.created_at).toDateString() === new Date().toDateString()).length;
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => { const t = setInterval(() => setNowTick(Date.now()), 60_000); return () => clearInterval(t); }, []);
+  let goldenTime = false;
+  try { const lp = Number(localStorage.getItem("ateflo_last_pub_at") ?? 0); goldenTime = lp > 0 && nowTick - lp < 30 * 60_000; } catch { /* ignore */ }
+  const hourNow = new Date(nowTick).getHours();
+  const nextSlotLabel = hourNow < 11 ? "점심 전에" : hourNow < 16 ? "저녁 6시 전에" : hourNow < 21 ? "자기 전에" : "내일 아침에";
   const clean = sanitizeTopics(topics);
   // ★'오늘의 글' 후보 — 오늘 이미 만든 글감(발행분 포함)은 제외(한 편 더 = 같은 글감 재생성 버그 방지).
   // 랭크: 후속(증폭)·시리즈 > 트렌드(이슈 인터럽트 훅: 시리즈보다 뜨거운 이슈는 유저가 아래 목록에서 즉시 선택 가능) > 꾸준 > 풀.
@@ -405,12 +413,24 @@ export default function Home({
           <span className="text-[13px] font-bold text-[color:var(--color-brand)]">시작 →</span>
         </button>
       ) : info.publishedToday && !neighborDone ? (
-        <button onClick={() => setRoutineSheet("neighbor")} className="tk-seq-1 mt-3 flex w-full items-center justify-between rounded-[14px] bg-white px-5 py-3.5 text-left shadow-[0_1px_3px_rgba(0,0,0,0.05)] tk-tr hover:bg-[#F7F8FA]">
+        <button onClick={() => setRoutineSheet("neighbor")} className={`tk-seq-1 mt-3 flex w-full items-center justify-between rounded-[14px] px-5 py-3.5 text-left shadow-[0_1px_3px_rgba(0,0,0,0.05)] tk-tr ${goldenTime ? "bg-[#1D75F7]/[0.06] ring-1 ring-[#1D75F7]/30" : "bg-white hover:bg-[#F7F8FA]"}`}>
           <span className="flex items-center gap-2.5">
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--color-brand)] text-[11.5px] font-bold text-white">3</span>
-            <span className="text-[14px] font-semibold text-[color:var(--color-text)]">마지막 하나 — 이웃 미션</span>
+            <span className="min-w-0">
+              <span className="block text-[14px] font-semibold text-[color:var(--color-text)]">{goldenTime ? "지금 30분이 골든타임 — 이웃 미션" : "마지막 하나 — 이웃 미션"}</span>
+              {goldenTime && <span className="mt-0.5 block text-[12px] text-[color:var(--color-text-weak)]">발행 직후 첫 반응이 홈피드 노출을 결정해요</span>}
+            </span>
           </span>
           <span className="text-[13px] font-bold text-[color:var(--color-brand)]">시작 →</span>
+        </button>
+      ) : info.publishedToday && neighborDone && pubCountToday < 4 ? (
+        /* ★3~4편 체제 루프 — 한 편 끝났으면 다음 편으로(시간대 분산: 홈피드 노출 기회가 시간대별로 갈림) */
+        <button onClick={() => setRoutineSheet("topics")} className="tk-seq-1 mt-3 flex w-full items-center justify-between rounded-[14px] bg-white px-5 py-3.5 text-left shadow-[0_1px_3px_rgba(0,0,0,0.05)] tk-tr hover:bg-[#F7F8FA]">
+          <span className="min-w-0">
+            <span className="block text-[14px] font-semibold text-[color:var(--color-text)]">오늘 {pubCountToday}편째 완료 — {nextSlotLabel} 한 편 더 어때요?</span>
+            <span className="mt-0.5 block text-[12px] text-[color:var(--color-text-weak)]">시간대를 나눠 올리면 홈피드 노출 기회도 나뉘어 와요</span>
+          </span>
+          <span className="shrink-0 text-[13px] font-bold text-[color:var(--color-brand)]">글감 보기 →</span>
         </button>
       ) : null}
 

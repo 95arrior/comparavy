@@ -96,6 +96,7 @@ export default function ArticleModal({
 
   // 네이버에 직접 올린 글을 '발행됨'으로 표시(자동발행 없는 네이버 — 성과·내글 추적용)
   async function markNaverPublished() {
+    try { localStorage.setItem("ateflo_last_pub_at", String(Date.now())); } catch { /* ignore */ } // 골든타임 30분 기준점
     try {
       const res = await fetch(`/api/articles/${article.id}`, {
         method: "PATCH",
@@ -558,6 +559,7 @@ export default function ArticleModal({
 
         {/* 모바일 하단 고정 CTA — 검토 → 발행 다음단계 인도 */}
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-neutral-100 bg-white/95 px-4 pt-2.5 backdrop-blur md:hidden" style={{ paddingBottom: "calc(0.625rem + env(safe-area-inset-bottom))" }}>
+          {!isWp && !lastThumb && <p className="mb-1.5 text-center text-[12px] font-semibold text-amber-600">썸네일 없이 발행하면 홈피드에서 그냥 스쳐가요 — 위에서 30초면 만들어요</p>}
           <button onClick={() => (isWp ? publishToWp() : setNaverOpen(true))} className={`w-full rounded-xl py-3.5 text-[15px] font-bold text-white transition active:scale-[0.99] ${isWp ? "tk-grad-cta" : "bg-[#03C75A]"}`}>
             {isWp ? (wpBusy ? "발행 중…" : "워드프레스에 발행") : "네이버에 올리기"}
           </button>
