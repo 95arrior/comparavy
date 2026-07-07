@@ -244,7 +244,7 @@ function styleMarkers(html: string): string {
 function listsToTable(html: string): string {
   return html.replace(/<(ul|ol)(\s[^>]*)?>([\s\S]*?)<\/\1>/gi, (raw, tag, _attr, inner) => {
     const items = (inner.match(/<li[\s\S]*?<\/li>/gi) ?? []).map((li: string) => li.replace(/<\/?li[^>]*>/gi, "").trim()).filter(Boolean);
-    if (items.length < 2) return raw;
+    if (items.length < 4) return raw; // ★짧은 리스트는 불릿 유지(유저: 전부 표는 단조) — 긴 나열만 박스
     const ol = String(tag).toLowerCase() === "ol";
     const rows = items.map((it: string, i: number) => `<tr><td>${ol ? `<b>${i + 1}.</b> ` : "• "}${it}</td></tr>`).join("");
     return `<table><tbody>${rows}</tbody></table>`;
@@ -305,6 +305,10 @@ function applySizing(html: string): string {
 // ★형광펜 총량 게이트(실측: 도배 — 3줄짜리 통형광 다수) — 규칙 위반은 코드가 강등한다.
 //  70자 초과=무조건 해제(면적 도배), 문장급(15~70자)=글 전체 3개까지, 구급(≤14자)=5개까지. 초과분은 볼드로.
 function capMarks(html: string): string {
+  // ★고아 태그 방어 — <mark> 열림/닫힘 불균형이면 형광 전부 해제(도배보다 무강조가 낫다)
+  const opens = (html.match(/<mark>/g) ?? []).length;
+  const closes = (html.match(/<\/mark>/g) ?? []).length;
+  if (opens !== closes) return html.replace(/<\/?mark>/g, "");
   let sentCount = 0, phraseCount = 0;
   return html.replace(/<mark>([\s\S]*?)<\/mark>/g, (raw, inner) => {
     const len = [...String(inner).replace(/<[^>]+>/g, "")].length;
@@ -321,7 +325,8 @@ function markToBold(html: string): string {
     .replace(/([^>\s])\s*\u0000MARKBLOCK\u0000/g, "$1<br>\u0000MARKBLOCK\u0000")
     .replace(/\u0000\/MARKBLOCK\u0000\s*([^<\s])/g, "\u0000/MARKBLOCK\u0000<br>$1")
     .replace(/\u0000MARKBLOCK\u0000([\s\S]*?)\u0000\/MARKBLOCK\u0000/g, '<b style="background-color:#fff3a8;">$1</b>');
-  return html.replace(/<mark>([\s\S]*?)<\/mark>/g, '<b style="background-color:#fff3a8;">$1</b>'); // 짧은 구 — 인라인
+  html = html.replace(/<mark>([\s\S]*?)<\/mark>/g, '<b style="background-color:#fff3a8;">$1</b>'); // 짧은 구 — 인라인
+  return html.replace(/<\/?mark>/g, ""); // ★잔여 고아 태그 최종 소거 — 네이버가 생 <mark>를 노랑으로 칠해 도배가 된다
 }
 function hashtagGroups(tags?: string[]): string[] {
   const list = (tags ?? []).map((t) => String(t).trim().replace(/^#/, "")).filter(Boolean).map((t) => `#${t}`);
