@@ -661,7 +661,7 @@ export async function GET(req: Request) {
         const derived = acs.filter((a) => a !== base && a.startsWith(root) && FRICTION.test(a.replace(base, "")) && !usedSet.has(normalizeKeyword(a)) && !excludeSet.has(normalizeKeyword(a)));
         const pick = derived[0];
         if (pick) {
-          boostCards.unshift({ keyword: pick, title: `${pick}, 지금 다들 이게 궁금해요`, demandLabel: "내 글에서 파생된 실검색 급상승", ssak: true, region: false, tone: bt, vol: 0, comp: "low" as Comp, blogTotal: null, tag: "followup", newsContext: undefined, titleSearch: undefined, briefText: `[파생 급상승 지시] 전작 "${pb.title}"(키워드: ${base})을 본 뒤 사람들이 지금 실제로 검색하는 파생 질문이 "${pick}"이다(네이버 자동완성 실측). 이 파생 질문 하나에만 완결로 답하라 — 특히 불안(개인정보·불이익·거절 사유)이 깔린 질문이면 첫 두 문장에서 그 불안부터 해소한다. 전작 요약 재탕 금지, 도입 직후 [전편 링크 자리] 마커 1회.`, hookKey: undefined, thumb: undefined, brief: undefined } as (typeof trendCards)[number]);
+          boostCards.unshift({ keyword: pick, title: `${pick}, 지금 다들 이게 궁금해요`, demandLabel: "내 글에서 파생된 실검색 급상승", ssak: true, region: false, tone: "online" as BloggerType, vol: 0, comp: "low" as Comp, blogTotal: null, tag: "followup", newsContext: undefined, titleSearch: undefined, briefText: `[파생 급상승 지시] 전작 "${pb.title}"(키워드: ${base})을 본 뒤 사람들이 지금 실제로 검색하는 파생 질문이 "${pick}"이다(네이버 자동완성 실측). 이 파생 질문 하나에만 완결로 답하라 — 특히 불안(개인정보·불이익·거절 사유)이 깔린 질문이면 첫 두 문장에서 그 불안부터 해소한다. 전작 요약 재탕 금지, 도입 직후 [전편 링크 자리] 마커 1회.`, hookKey: undefined, thumb: undefined, brief: undefined } as (typeof trendCards)[number]);
           break; // 하루 1개 — 과속 금지
         }
       }
