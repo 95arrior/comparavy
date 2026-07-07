@@ -227,16 +227,18 @@ async function renderAt(rawInput: ThumbInput, width: number): Promise<Buffer> {
 
   // ★보도형 — 실사 위 다크 그라데이션 + 좌하단 카피 + 브랜드 프레임(운영자가 공들인 제작물 문법)
   if (input.press) {
-    void input.press.brandName; // 브랜드 라벨·바 제거(유저 판정: 카피와 사진만) — 입력은 호환 유지
+    const brand = input.press.brandName.trim() || "BLOG";
     const lines = (input.mainCopy ?? "").split("\n").map((l) => l.trim()).filter(Boolean);
     const pressSize = Math.max(72, Math.min(150, Math.floor(920 / Math.max(...lines.map((l) => [...l].length), 1))));
     const pressRoot = el("div", { style: { display: "flex", width: SIZE, height: SIZE, position: "relative", overflow: "hidden", backgroundColor: "#101728" } }, [
       bgDataUrl ? el("img", { src: bgDataUrl, width: SIZE, height: SIZE, style: { position: "absolute", inset: 0, objectFit: "cover" } })
                 : el("div", { style: { position: "absolute", inset: 0, backgroundImage: `linear-gradient(160deg, ${shade(p.bg, 7)}, ${shade(p.bg, -9)})` } }),
       el("div", { style: { position: "absolute", inset: 0, backgroundImage: "linear-gradient(0deg, rgba(8,14,28,0.92) 0%, rgba(8,14,28,0.55) 34%, rgba(8,14,28,0.10) 62%, rgba(8,14,28,0.16) 100%)" } }),
-      el("div", { style: { position: "absolute", left: 56, right: 56, bottom: 110, display: "flex", flexDirection: "column", gap: 6 } },
+      el("div", { style: { position: "absolute", left: 56, right: 56, bottom: 128, display: "flex", flexDirection: "column", gap: 6 } },
         lines.map((l) => el("div", { style: { display: "flex", fontFamily: identity.fontPair.title, fontSize: pressSize, fontWeight: 900, color: "#FFFFFF", lineHeight: 1.18, letterSpacing: -Math.round(pressSize * 0.03), wordBreak: "keep-all", textShadow: "0 3px 30px rgba(0,0,0,0.45)" } }, l))),
-      input.subCopy && input.subCopy.trim() ? el("div", { style: { position: "absolute", left: 56, right: 56, bottom: 62, display: "flex", fontFamily: identity.fontPair.body, fontSize: 32, fontWeight: 500, color: "rgba(255,255,255,0.78)" } }, input.subCopy.trim()) : null,
+      input.subCopy && input.subCopy.trim() ? el("div", { style: { position: "absolute", left: 56, right: 56, bottom: 84, display: "flex", fontFamily: identity.fontPair.body, fontSize: 32, fontWeight: 500, color: "rgba(255,255,255,0.78)" } }, input.subCopy.trim()) : null,
+      el("div", { style: { position: "absolute", left: 56, right: 56, bottom: 64, display: "flex", height: 2, backgroundColor: "rgba(255,255,255,0.30)" } }),
+      el("div", { style: { position: "absolute", left: 56, right: 56, bottom: 26, display: "flex", justifyContent: "center", fontFamily: identity.fontPair.body, fontSize: 17, fontWeight: 500, color: "rgba(255,255,255,0.60)", letterSpacing: 7 } }, brand),
     ].filter(Boolean));
     const pressFonts = [
       { name: identity.fontPair.title, data: loadFont(identity.fontPair.title), weight: 900 as const, style: "normal" as const },
