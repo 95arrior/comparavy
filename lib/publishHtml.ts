@@ -111,7 +111,7 @@ function mergeUnbalanced(parts: string[]): string[] {
 // ★유저 교본(2026-07-07): 문단을 쪼개면(빈 줄) 흐름이 끊긴다 — 같은 문단 안에서 <br>로 '의미 구 줄바꿈'.
 //  문장별 한 줄. 문장이 길면(>44자) 쉼표·연결어미 구 경계에서 균형 줄바꿈(양쪽 12자 이상일 때만 — 고아 조각 금지).
 function breakSentence(sen: string): string {
-  // ★모바일 줄폭 개행(네이버 실측 ~18자): 절 경계에서 반복 절단. 1차=이상 구간(10~28자), 실패 시 2차=완화(8~40자).
+  // ★모바일 줄폭(유저 최종 규격): 한계선 23자(공백 포함) — 목표 18(꽉 채우지 않기), 어절 경계에서만 절단.
   if (/<br/.test(sen)) return sen;
   const CLAUSE = /([,，、]|에서|라면|다면|하면|이면|인지|는지|한지|는 건|은 건|하고|하며|지만|는데|면서|위해|보다|어서|아서|여도|해도|므로|더라도|든지|거나|처럼|때는|때만|경우|까지|기간은|기한은|여부는|한도는|기준은|넣어야|하려면|통해|따라|대해|관해|[가-힣]{2,}[은는도]|[가-힣]{2,}할|[가-힣]{2,}면)\s+/g;
   const parts: string[] = [];
@@ -123,7 +123,7 @@ function breakSentence(sen: string): string {
     CLAUSE.lastIndex = 0;
     while ((m = CLAUSE.exec(rest))) cands.push(m.index + m[0].length);
     let best = -1, bestD = Infinity;
-    for (const pass of [{ min: 10, max: 28 }, { min: 8, max: 9999 }]) { // 2차: 상한 없음 — 통줄보다 낫다
+    for (const pass of [{ min: 10, max: 23 }, { min: 8, max: 23 }]) { // 한계선 23자 — 초과 개행 금지
       for (const cut of cands) {
         const left = visLen(rest.slice(0, cut));
         if (left < pass.min || left > pass.max || visLen(rest.slice(cut)) < 4) continue; // 우측 4자('접수해요.')도 유효한 줄
@@ -132,7 +132,21 @@ function breakSentence(sen: string): string {
       }
       if (best >= 0) break;
     }
-    if (best < 0) break;
+    if (best < 0) {
+      // 최후 폴백 — 조사·어미 경계가 없으면 일반 어절(공백) 경계에서(단어 중간 절단 아님)
+      const words = [...rest.matchAll(/\s+/g)].map((m) => m.index ?? 0);
+      let wb = -1, wd = Infinity;
+      for (const w of words) {
+        const left = visLen(rest.slice(0, w));
+        if (left < 8 || left > 23 || visLen(rest.slice(w)) < 4) continue;
+        const d = Math.abs(left - 18);
+        if (d < wd) { wd = d; wb = w; }
+      }
+      if (wb < 0) break;
+      parts.push(rest.slice(0, wb).trimEnd());
+      rest = rest.slice(wb).trimStart();
+      continue;
+    }
     parts.push(rest.slice(0, best).trimEnd());
     rest = rest.slice(best).trimStart();
   }
@@ -306,8 +320,8 @@ function applySpacingRich(html: string): string {
 function styleTables(html: string): string {
   return html
     .replace(/<table(\s[^>]*)?>/gi, '<table style="border-collapse:collapse;width:100%;margin:8px 0">')
-    .replace(/<th(\s[^>]*)?>/gi, '<th style="border:1px solid #ddd;padding:8px 10px;background:#f7f8fa;text-align:left;font-size:14px">')
-    .replace(/<td(\s[^>]*)?>/gi, '<td style="border:1px solid #ddd;padding:8px 10px;text-align:left;font-size:14px">');
+    .replace(/<th(\s[^>]*)?>/gi, '<th style="border:1px solid #ddd;padding:8px 10px;background:#f7f8fa;text-align:left;font-size:14px;word-break:keep-all">')
+    .replace(/<td(\s[^>]*)?>/gi, '<td style="border:1px solid #ddd;padding:8px 10px;text-align:left;font-size:14px;word-break:keep-all">');
 }
 
 function applySizing(html: string): string {
