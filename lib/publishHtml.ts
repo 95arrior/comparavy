@@ -276,6 +276,7 @@ function applySizing(html: string): string {
     const addStyle = (r: string, css: string) => /style="/.test(r) ? r.replace(/style="([^"]*)"/, `style="$1;${css}"`) : r.replace(new RegExp(`^<${t}`), `<${t} style="${css}"`);
     if (t === "blockquote") {
       const len = visLen(inner);
+      if (len <= 44) return addStyle(raw, "font-size:17px;font-weight:700"); // ★도입 훅 인용(유저 교본) — 크고 진하게
       if (len > 44) { // 모바일 2줄(약 44자) 초과 → 축소 + 의미 단위 줄 분리
         const parts = inner.split(/(?<=[.?!,，])\s+/).map((x: string) => x.trim()).filter(Boolean);
         const joined = parts.length > 1 ? parts.join("<br>") : inner;
