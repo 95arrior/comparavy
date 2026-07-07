@@ -2,7 +2,6 @@ import { titleSimilarity } from "@/lib/naverRss";
 import { NextResponse, after } from "next/server";
 import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
 import { keywordsToTitles } from "@/lib/topicTitles";
-import { fetchNaverAutocomplete } from "@/lib/naverAutocomplete";
 import { normalizeKeyword } from "@/lib/diversity";
 import { audienceOf, AUDIENCE_ALL } from "@/lib/audience";
 import { isUnsafeKeyword, mentionsForeignRegion } from "@/lib/keywordSafety";
