@@ -114,7 +114,7 @@ function breakSentence(sen: string): string {
   // ★모바일 줄폭 개행(유저 모범답안): 긴 문장은 절 경계에서 22자 내외 줄들로 반복 절단 —
   //  모바일에서 어중간한 wrap 없이 매 줄이 의미 단위로 딱 떨어진다. 경계 없으면 자연 줄바꿈(keep-all).
   if (/<br/.test(sen)) return sen;
-  const CLAUSE = /([,，、]|에서|라면|다면|인지|는 건|은 건|하고|하며|지만|는데|면서|위해|보다|어서|아서|여도|므로)\s+/g;
+  const CLAUSE = /([,，、]|에서|라면|다면|인지|는 건|은 건|하고|하며|지만|는데|면서|위해|보다|어서|아서|여도|므로|더라도|든지|거나|처럼|때는|때만|경우|한도는|기준은)\s+/g;
   const parts: string[] = [];
   let rest = sen;
   let guard = 0;
