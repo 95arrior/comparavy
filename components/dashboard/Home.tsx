@@ -117,6 +117,12 @@ export default function Home({
       const c = raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
       setNeighborDone(Object.values(c).filter(Boolean).length >= 2); // 이웃 미션 2개 이상 체크 = 오늘 몫
     } catch { /* ignore */ }
+    // ★골든타임 소비 — 이웃 미션 시트를 열었다 닫으면 이번 골든타임 완료 처리(카드 소멸 → 다음 글 카드 등장)
+    if (prevSheetRef.current === "neighbor" && routineSheet === null && goldenLp > 0) {
+      try { localStorage.setItem(`ateflo_golden_done_${profileKey ?? ""}`, String(goldenLp)); } catch { /* ignore */ }
+      setNowTick(Date.now()); // 즉시 재평가
+    }
+    prevSheetRef.current = routineSheet;
   }, [routineSheet, profileKey]); // 시트 닫을 때 재평가 — 방금 한 것이 바로 체크되게
   const [switching, setSwitching] = useState<string | null>(null); // 전환 중 즉각 피드백(리로드 전 죽은 시간 제거)
   const [blogCount, setBlogCount] = useState(1);
@@ -284,9 +290,15 @@ export default function Home({
   const [hydrated, setHydrated] = useState(false); // ★로컬 기억 읽기 전 카드 확정 금지(실측: '오늘의 글' 잔상 깜빡)
   useEffect(() => setHydrated(true), []);
   const [nowTick, setNowTick] = useState(() => Date.now());
+  const prevSheetRef = useRef<string | null>(null);
   useEffect(() => { const t = setInterval(() => setNowTick(Date.now()), 60_000); return () => clearInterval(t); }, []);
   let goldenTime = false;
-  try { const lp = Number(localStorage.getItem(`ateflo_last_pub_at_${profileKey ?? ""}`) ?? 0); goldenTime = lp > 0 && nowTick - lp < 30 * 60_000; } catch { /* ignore */ } // ★블로그별 골든타임
+  let goldenLp = 0;
+  try {
+    goldenLp = Number(localStorage.getItem(`ateflo_last_pub_at_${profileKey ?? ""}`) ?? 0);
+    const consumed = localStorage.getItem(`ateflo_golden_done_${profileKey ?? ""}`);
+    goldenTime = goldenLp > 0 && nowTick - goldenLp < 30 * 60_000 && consumed !== String(goldenLp); // ★미션 하고 나면 골든 카드 소멸(실측: 30분 독점)
+  } catch { /* ignore */ }
   const hourNow = new Date(nowTick).getHours();
   // ★한 상태 = 한 카드(실측: '쓰던 글'+'오늘의 글' 이중 표기) — 상태 소유권: first만 히어로, 나머지는 가이드
   const guideKind: "golden" | "checkin" | "done5" | "draft" | "credit" | "first" | "more" =
