@@ -20,6 +20,7 @@ export interface TrendTopic {
   newsContext: string | null;
   longtails: Longtail[]; // 자동완성 실검증 롱테일(실익 키워드). 검색자가 실제로 치는 것.
   source?: SeedSource;   // 씨앗 출처 — news/season='지금 뜨는', discover='꾸준한 수요'(momentum 배지 분리)
+  expiresAt?: string | null; // 씨앗 만료 시각 — 트렌드 수명 카운터용
 }
 
 const FRESH_MS = 6 * 3600_000; // 6시간 신선도
@@ -54,7 +55,7 @@ export async function getTrendTopics(category: string): Promise<TrendTopic[]> {
     type Row = { keyword: string; title: string; news_context: string | null; longtails?: unknown; source?: string };
     const first = await run("keyword, title, news_context, longtails, source, expires_at");
     const rows = (first.error ? (await run("keyword, title, news_context, expires_at")).data : first.data) as Row[] | null;
-    return (rows ?? []).map((r) => ({ keyword: r.keyword, title: r.title, newsContext: r.news_context, longtails: Array.isArray(r.longtails) ? (r.longtails as Longtail[]) : [], source: (r.source as SeedSource) ?? undefined }));
+    return (rows ?? []).map((r) => ({ keyword: r.keyword, title: r.title, newsContext: r.news_context, longtails: Array.isArray(r.longtails) ? (r.longtails as Longtail[]) : [], source: (r.source as SeedSource) ?? undefined, expiresAt: (r as { expires_at?: string }).expires_at ?? null }));
   } catch {
     return [];
   }

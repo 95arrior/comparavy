@@ -22,7 +22,7 @@ import { REVIEW_WEEKLY_MIN } from "@/lib/scoreWeights";
 import type { Comp } from "@/lib/topicScore";
 import type { Article } from "./types";
 
-interface Topic { keyword: string; title: string; demandLabel: string; vol: number; comp: Comp; tag?: string; blogTotal?: number | null; newsContext?: string; briefText?: string; titleSearch?: string; thumb?: { mainCopy: string; subCopy: string; badge: string } }
+interface Topic { keyword: string; title: string; demandLabel: string; vol: number; comp: Comp; tag?: string; expiresAt?: string | null; blogTotal?: number | null; newsContext?: string; briefText?: string; titleSearch?: string; thumb?: { mainCopy: string; subCopy: string; badge: string } }
 
 // 소주제 군집 키(서버와 동일 규칙) — 교체 시 비슷한 소주제 중복 방지
 let freshDoneRef = false; // ?fresh=1 1회 가드
@@ -682,7 +682,7 @@ export default function Home({
 
 // ★글감 카드 v2 — 상단 데이터 배지 → 제목 → 명시 CTA. 교체는 우상단 텍스트 버튼(아이콘 없음).
 function TopicRow({ topic, onClick, onSwap, swapping }: {
-  topic: { keyword: string; title: string; vol: number; comp: Comp; blogTotal?: number | null; tag?: string; newsContext?: string; briefText?: string; titleSearch?: string; thumb?: { mainCopy: string; subCopy: string; badge: string } };
+  topic: { keyword: string; title: string; vol: number; comp: Comp; blogTotal?: number | null; tag?: string; expiresAt?: string | null; newsContext?: string; briefText?: string; titleSearch?: string; thumb?: { mainCopy: string; subCopy: string; badge: string } };
   onClick: () => void;
   onSwap?: () => void;
   swapping?: boolean;
@@ -692,11 +692,27 @@ function TopicRow({ topic, onClick, onSwap, swapping }: {
     : topic.comp === "mid"
       ? { label: "경쟁 보통", cls: "bg-amber-50 text-amber-600" }
       : { label: "경쟁 높음", cls: "bg-rose-50 text-rose-500" };
+  const [lifeTick, setLifeTick] = useState(() => Date.now());
+  useEffect(() => {
+    if (!topic.expiresAt) return;
+    const t = setInterval(() => setLifeTick(Date.now()), 60_000);
+    return () => clearInterval(t);
+  }, [topic.expiresAt]);
+  const lifeLeft = (() => {
+    if (!topic.expiresAt) return null;
+    const ms = new Date(topic.expiresAt).getTime() - lifeTick;
+    if (ms <= 0) return "곧 교체";
+    const h = Math.floor(ms / 3600_000), m = Math.floor((ms % 3600_000) / 60_000);
+    return h > 0 ? `${h}시간 ${m}분 남음` : `${m}분 남음`;
+  })();
   return (
     <div className={`rounded-[20px] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition ${swapping ? "at-ai-swap" : ""}`}>
       <div className="flex items-center gap-1.5">
         {topic.tag === "issue" || topic.tag === "trend" ? (
-          <TipChip tip={tipFor("지금 뜨는 키워드")} className="rounded-full bg-[color:var(--color-brand-weak)] px-2.5 py-1 text-[12px] font-semibold text-[color:var(--color-brand)]">지금 뜨는 키워드</TipChip>
+          <>
+            <TipChip tip={tipFor("지금 뜨는 키워드")} className="rounded-full bg-[color:var(--color-brand-weak)] px-2.5 py-1 text-[12px] font-semibold text-[color:var(--color-brand)]">지금 뜨는 키워드</TipChip>
+            {lifeLeft && <span className="text-[11.5px] font-semibold tabular-nums text-amber-600">⏳ {lifeLeft}</span>}
+          </>
         ) : (
           <TipChip tip={tipFor("꾸준한 수요")} className="rounded-full bg-[#F7F8FA] px-2.5 py-1 text-[12px] font-semibold text-[color:var(--color-text-sub)]">꾸준한 수요</TipChip>
         )}
