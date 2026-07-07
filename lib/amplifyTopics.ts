@@ -29,7 +29,7 @@ export interface ThumbCopy {
 }
 export interface AmplifiedTopic {
   keyword: string;       // 실검증 롱테일
-  title: string;         // 홈판 클릭형 제목(훅 패턴 적용)
+  title: string;         // 홈피드(홈판) 최적화 후킹 제목 — 트렌드 종족의 주 싸움터(훅 패턴 적용)
   titleSearch: string;   // 검색형 제목(롱테일 포함)
   newsContext: string | null;
   brief: AngleBrief;
@@ -178,7 +178,7 @@ export async function amplifyForUser(
   ].join("\n")).join("\n");
 
   const client = new Anthropic({ apiKey });
-  const prompt = `이 블로그 운영자에게 맞춘 글감 ${briefs.length}개를 만들어라. 각 글감은 아래 '배정된 구조·훅'을 그대로 따르고, 창작 부분만 채운다.
+  const prompt = `이 블로그 운영자에게 맞춘 글감 ${briefs.length}개를 만들어라. 각 글감은 아래 '배정된 구조·훅'을 그대로 따르고, 창작 부분만 채운다.\n★이 글감들은 '지금 뜨는 트렌드' 종족 — title은 네이버 홈피드(홈판) 노출이 주 싸움터다: 스치는 0.5초에 멈추게 하는 후킹(열린 고리·구체 숫자·대상 지목)이 최우선. titleSearch는 반대로 검색창·AI 브리핑용 — 키워드 선두 배치, 의도 완결(대상·조건·방법이 제목에 보이게), 후킹 금지.
 
 [운영자 개인화 축]
 ${axis || "(일반)"}

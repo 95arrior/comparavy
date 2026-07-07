@@ -69,7 +69,7 @@ export default function Home({
   articles: Article[];
   /** 크레딧 잔액 — 0이면 '오늘의 글' 카드가 잠김(글감은 보임) */
   credits: number;
-  onWriteKeyword: (keyword: string, title: string, newsContext?: string, briefText?: string, titleSearch?: string, thumb?: { mainCopy: string; subCopy: string; badge: string }, extra?: { seriesId?: string; series?: unknown }) => void;
+  onWriteKeyword: (keyword: string, title: string, newsContext?: string, briefText?: string, titleSearch?: string, thumb?: { mainCopy: string; subCopy: string; badge: string }, extra?: { seriesId?: string; series?: unknown; tag?: string }) => void;
   onSelect: (a: Article) => void;
   onGoPerformance: () => void;
   /** 크레딧 칩 탭 → 충전·사용내역 페이지 */
@@ -347,7 +347,7 @@ export default function Home({
       }
     } catch { /* 폴백 */ }
     setPreReadyId(null);
-    onWriteKeyword(f.keyword, f.title, f.newsContext, f.briefText, f.titleSearch, f.thumb);
+    onWriteKeyword(f.keyword, f.title, f.newsContext, f.briefText, f.titleSearch, f.thumb, { tag: f.tag });
   }
   // ★쓴 글은 시트에서도 제외(실측: 오늘 쓴 2편이 '다른 글감'에 계속 노출) — 키워드·제목 모두 대조
   const writtenTitles = new Set(articles.map((a) => (a.title ?? "").trim()).filter(Boolean));
@@ -638,7 +638,7 @@ export default function Home({
                       </div>
                     )}
                     {!tailLoading && !analyzing && (tailMode === "all" ? tailFiltered : (tailTopics ?? []).filter((t) => t.keyword !== first?.keyword)).map((t, ti) => (
-                      <div key={t.keyword} className="tk-chip" style={{ animationDelay: `${ti * 50}ms` }}><TopicRow topic={t} onClick={() => { setRoutineSheet(null); onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb); }} onSwap={() => {
+                      <div key={t.keyword} className="tk-chip" style={{ animationDelay: `${ti * 50}ms` }}><TopicRow topic={t} onClick={() => { setRoutineSheet(null); onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb, { tag: t.tag }); }} onSwap={() => {
                         if (tailMode !== "all") { // ★전용 세트에서 ↻ = 치우기 + 부족하면 자동 보충(실측: 다 치우면 소진 고착)
                           const nd = [...dismissedRef.current, t.keyword];
                           setDismissed(nd);

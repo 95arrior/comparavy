@@ -9,17 +9,19 @@ import { AI_IMAGES_AT_CREATE } from "@/config/publish";
 export default function WriteTypeSheet({
   title,
   titleAlt,
+  recommendSearch = false,
   onPick,
   onClose,
 }: {
   title: string;
   titleAlt?: string; // 검색형 제목(2안). title=클릭형. 다르면 유저가 고른다.
+  recommendSearch?: boolean; // ★종족별 추천 — 롱테일(꾸준 수요)=검색형이 정답, 트렌드=클릭형(홈피드)
   onPick: (opts: { withImages: boolean; title?: string }) => void;
   onClose: () => void;
 }) {
   const [withImages, setWithImages] = useState(false);
   const hasTwo = !!titleAlt && titleAlt.trim() && titleAlt.trim() !== title.trim();
-  const [pickTitle, setPickTitle] = useState(title);
+  const [pickTitle, setPickTitle] = useState(recommendSearch && titleAlt?.trim() ? (titleAlt as string) : title);
   useEffect(() => {
     try { setWithImages(localStorage.getItem("ateflo_with_images") === "1"); } catch { /* ignore */ }
   }, []);
@@ -45,7 +47,7 @@ export default function WriteTypeSheet({
         <p className="text-xs font-medium text-neutral-400">{hasTwo ? "제목을 골라주세요" : "이 글감으로 쓸까요?"}</p>
         {hasTwo ? (
           <div className="mt-2 space-y-2">
-            {[{ t: title, tag: "클릭형 · 추천" }, { t: titleAlt as string, tag: "검색형" }].map(({ t, tag }) => {
+            {(recommendSearch ? [{ t: titleAlt as string, tag: "검색·AI브리핑 최적화 · 추천" }, { t: title, tag: "홈피드 클릭형" }] : [{ t: title, tag: "홈피드 최적화 · 추천" }, { t: titleAlt as string, tag: "검색·AI브리핑형" }]).map(({ t, tag }) => {
               const on = pickTitle === t;
               return (
                 <button key={t} onClick={() => setPickTitle(t)}
