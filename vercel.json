@@ -26,7 +26,7 @@
     },
     {
       "path": "/api/cron/trend-refresh",
-      "schedule": "0 */6 * * *"
+      "schedule": "0 0,2,6,12 * * *"
     },
     {
       "path": "/api/cron/verify-posts",
