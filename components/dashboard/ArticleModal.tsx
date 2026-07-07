@@ -8,6 +8,7 @@ import { IMAGE_COST } from "@/lib/creditPacks";
 import CenterToast from "./CenterToast";
 import { copyImage as clipCopyImage, saveImage as clipSaveImage } from "@/lib/clipboard";
 import NaverPublishSheet from "./NaverPublishSheet";
+import { seedHasDeadline } from "@/lib/hookPatterns";
 import ThumbMakerSheet from "./ThumbMakerSheet";
 import { openNaverBlogApp } from "@/lib/naverApp";
 import { scanCompliance, applySuggestion } from "@/lib/complianceFilter";
@@ -603,6 +604,18 @@ export default function ArticleModal({ pubStampKey, blogName,
 
         {/* 모바일 하단 고정 CTA — 검토 → 발행 다음단계 인도 */}
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-neutral-100 bg-white/95 px-4 pt-2.5 backdrop-blur md:hidden" style={{ paddingBottom: "calc(0.625rem + env(safe-area-inset-bottom))" }}>
+          {!isWp && (() => {
+            const h = new Date().getHours();
+            const deadline = seedHasDeadline(`${article.keyword ?? ""} ${article.title ?? ""}`);
+            const trendy = deadline; // 날짜값 파싱 전 단계 — 마감 신호 감지 시 트렌드 취급(3단 분기는 별도 작업)
+            const adv = trendy
+              ? { text: "마감·기한형 글 — 지금 바로 발행 추천, 신선도가 순위예요", hot: true }
+              : h >= 17 && h < 19 ? { text: "지금이 발행하기 좋은 시간이에요", hot: true }
+              : h >= 6 && h < 8 ? { text: "지금 발행 좋아요 — 출근길과 점심 시간대를 커버해요", hot: true }
+              : h < 6 ? { text: "아침 6시 이후 발행 추천 — 읽는 사람이 많은 시간에 가장 신선한 상태로 내보내는 게 유리해요", hot: false }
+              : { text: "17~19시 발행 추천 — 네이버 발행 화면에서 예약을 걸어둘 수도 있어요", hot: false };
+            return <p className={`mb-1 text-center text-[12px] font-semibold ${adv.hot ? "text-[#F04452]" : "text-neutral-400"}`}>{adv.text}</p>;
+          })()}
           {!isWp && !lastThumb && <p className="mb-1.5 text-center text-[12px] font-semibold text-amber-600">썸네일 없이 발행하면 홈피드에서 그냥 스쳐가요 — 위에서 30초면 만들어요</p>}
           <button onClick={() => (isWp ? publishToWp() : setNaverOpen(true))} className={`w-full rounded-xl py-3.5 text-[15px] font-bold text-white transition active:scale-[0.99] ${isWp ? "tk-grad-cta" : "bg-[#03C75A]"}`}>
             {isWp ? (wpBusy ? "발행 중…" : "워드프레스에 발행") : "네이버에 올리기"}

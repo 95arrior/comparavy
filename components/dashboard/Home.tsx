@@ -834,7 +834,7 @@ function TopicRow({ topic, onClick, onSwap, swapping }: {
         {topic.tag === "issue" || topic.tag === "trend" ? (
           <>
             <TipChip tip={tipFor("지금 뜨는 키워드")} className="rounded-full bg-[color:var(--color-brand-weak)] px-2.5 py-1 text-[12px] font-semibold text-[color:var(--color-brand)]">지금 뜨는 키워드</TipChip>
-            {lifeLeft && <span className="text-[11.5px] font-semibold tabular-nums text-amber-600">⏳ {lifeLeft}</span>}
+            {lifeLeft && <span className="text-[11.5px] font-semibold tabular-nums text-amber-600">{lifeLeft}</span>}
           </>
         ) : (
           <TipChip tip={tipFor("꾸준한 수요")} className="rounded-full bg-[#F7F8FA] px-2.5 py-1 text-[12px] font-semibold text-[color:var(--color-text-sub)]">꾸준한 수요</TipChip>
@@ -897,17 +897,26 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
     if (lines.length > 0) return `오늘 관련 보도 ${lines.length}건 · 경쟁 글 적을 때 선점`;
     return "오늘 수확된 실시간 이슈 · 선점 기회";
   })();
+  const pubAdvice = (() => {
+    const h = new Date().getHours();
+    if (isTrend) return { text: "지금 바로 발행 추천 — 신선도가 순위", hot: true };
+    if (h >= 17 && h < 19) return { text: "지금이 발행하기 좋은 시간이에요", hot: true };
+    if (h >= 6 && h < 8) return { text: "지금 발행 좋아요 — 출근길과 점심을 커버해요", hot: true };
+    if (h < 6) return { text: "아침 6시 이후 발행 추천 — 읽는 사람이 많은 시간에 가장 신선한 상태로 내보내는 게 유리해요", hot: false };
+    return { text: "17~19시 발행 추천 · 2순위 6~7시", hot: false };
+  })();
   return (
     <button onClick={onWrite} className="at-press rounded-[16px] bg-white p-4 text-left shadow-[0_1px_3px_rgba(0,0,0,0.05)] tk-tr hover:shadow-[0_4px_14px_-6px_rgba(29,117,247,0.18)]">
       <div className="flex items-center gap-1">
-        {onDismiss && <span role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); onDismiss(); }} className="order-last ml-auto flex h-6 w-6 items-center justify-center rounded-full text-neutral-300 transition hover:bg-[#F7F8FA] hover:text-neutral-500" aria-label="다른 글감으로 교체">↻</span>}
+        {onDismiss && <span role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); onDismiss(); }} className="order-last ml-auto flex h-6 w-6 items-center justify-center rounded-full opacity-45 transition hover:bg-[#F7F8FA] hover:opacity-80" aria-label="다른 글감으로 교체"><GlassGlyph name="refresh" size={14} /></span>}
         {isTrend
           ? <span className="rounded-full bg-[#FFF1F0] px-2 py-0.5 text-[10.5px] font-bold text-[#F04452]">실시간 급상승</span>
           : <span className="rounded-full bg-[#EFF6FF] px-2 py-0.5 text-[10.5px] font-bold text-[#1D75F7]">안정 수요</span>}
-        {life && <span className="text-[10px] font-semibold tabular-nums text-amber-600">⏳ {life}</span>}
+        {life && <span className="text-[10.5px] font-semibold tabular-nums text-amber-600">{life}</span>}
       </div>
       <p className="mt-2 line-clamp-2 text-[14.5px] font-bold leading-snug text-[color:var(--color-text)]">{topic.title}</p>
       {evidence && <p className="mt-1.5 line-clamp-2 text-[12px] leading-snug text-neutral-400">{evidence}</p>}
+      <p className={`mt-1 text-[11px] font-semibold ${pubAdvice.hot ? "text-[#F04452]" : "text-neutral-400"}`}>{pubAdvice.text}</p>
     </button>
   );
 }
