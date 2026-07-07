@@ -308,7 +308,7 @@ export default function Home({
       const wantCheckin0 = !checkinDone && yesterdayPublished(articles);
       if (goldenTime) return "golden";
       if (wantCheckin0) return "checkin";
-      if (pubCountToday >= 5) return "done5";
+      if (pubCountToday >= 10) return "done5"; // ★한도 5→10(유저: 초반 테스트 볼륨)
       if (info.hasDraftToday && !info.publishedToday) return "draft";
       if (credits < GENERATE_COST && !info.hasDraftToday) return "credit";
       if (pubCountToday === 0 && !info.publishedToday) return "first"; // ★발행 플래그 정합(실측: 어제 생성→오늘 발행이 first로 오판 → 히어로 발행후 카드 재등장)
@@ -460,7 +460,7 @@ export default function Home({
           ? { emoji: "⚡", title: "지금 30분이 골든타임", sub: "방금 글과 같은 주제의 이웃에게 인사 — 첫 반응이 노출을 열어요", cta: "이웃 미션 시작", onGo: () => setRoutineSheet("neighbor") }
           : wantCheckin
           ? { emoji: "🌅", title: "어제 성적 확인부터", sub: "30초면 끝나요 — 숫자가 오늘 방향을 정해줘요", cta: "체크인 하기", onGo: () => setRoutineSheet("checkin") }
-          : pubCountToday >= 5
+          : pubCountToday >= 10
           ? { emoji: "🌙", title: "오늘은 충분해요", sub: `${pubCountToday}편 발행 — 과속은 오히려 독이에요. 내일 아침에 만나요`, cta: "이웃 미션 마무리", onGo: () => setRoutineSheet("neighbor") }
           : info.hasDraftToday && !info.publishedToday
           ? { emoji: "📝", title: "쓰던 글이 기다리고 있어요", sub: "읽어보고 마음에 들면 바로 발행해요", cta: "이어서 검토하기", onGo: goWrite }
