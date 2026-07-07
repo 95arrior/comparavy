@@ -459,7 +459,7 @@ export default function Home({
   }
 
   return (
-    <main className="mx-auto max-w-[520px] px-5 pb-16">
+    <main className="mx-auto max-w-[760px] px-5 pb-16">
       {/* 인사말 */}
       <button onClick={openBlogSheet} className="tk-seq-1 flex items-center gap-1 pt-6 text-[15px] font-semibold text-[color:var(--color-text-sub)]">
         {blogName}
@@ -616,7 +616,12 @@ export default function Home({
               <p className="mt-0.5 text-center text-[11px] text-[color:var(--color-text-weak)]">{sub}</p>
               <div className="mt-2 flex flex-col gap-2">
                 {list === null && [0, 1, 2].map((i) => <div key={i} className="ateflo-skel h-[86px] rounded-[14px]" />)}
-                {list !== null && list.length === 0 && <p className="rounded-[14px] bg-white px-3 py-4 text-center text-[11.5px] text-neutral-400 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">{mode === "short" ? "새 이슈 수확 중 — 잠시 후 다시" : "글감을 채우는 중이에요"}</p>}
+                {list !== null && list.length === 0 && (
+                  <div className="rounded-[14px] bg-white px-3 py-5 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+                    <p className="flex items-center justify-center gap-1.5 text-[12px] font-bold text-[#1D75F7]"><span className="tk-wand" aria-hidden>✦</span>{mode === "short" ? "실시간 이슈를 수확하고 있어요…" : "글감을 채우고 있어요…"}</p>
+                    <div className="ateflo-skel mt-3 h-[52px] rounded-[10px]" />
+                  </div>
+                )}
                 {(list ?? []).map((t) => <BoardCard key={t.keyword} topic={t} onWrite={() => onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb, { tag: t.tag })} />)}
               </div>
             </div>
@@ -822,23 +827,31 @@ function BoardCard({ topic, onWrite }: { topic: Topic; onWrite: () => void }) {
     const h = Math.floor(ms / 3600_000), m = Math.floor((ms % 3600_000) / 60_000);
     return h > 0 ? `${h}시간 ${m}분` : `${m}분`;
   })();
-  // 근거 — 실검색 확인 배지 우선, 아니면 뉴스 첫 헤드라인
+  // ★근거 — 사실 기반 설득(실측 버그: 무관 헤드라인 3연속): 카드 키워드와 겹치는 헤드라인만, 없으면 정직한 일반 근거
   const evidence = (() => {
-    if (topic.demandLabel?.includes("실검색 확인")) return "실검색 급상승 확인";
-    const first = (topic.newsContext ?? "").split("\n").find((l) => l.trim().startsWith("-"));
-    if (first) { const m = first.match(/\]\s*([^:]{6,60})/); if (m) return `뉴스: ${m[1].trim().slice(0, 26)}…`; }
-    return topic.demandLabel ?? null;
+    if (!isTrend) {
+      // 꾸준: 실데이터(월 검색량·경쟁) — '많이 검색되는 주제예요' 같은 빈말 금지
+      if (topic.vol > 0) return `월 ${topic.vol.toLocaleString()}회 검색 · 경쟁 ${topic.comp === "low" ? "낮음" : topic.comp === "mid" ? "보통" : "높음"} · 한 번 잡으면 오래 유입`;
+      return topic.demandLabel ?? "지속 검색되는 주제";
+    }
+    if (topic.demandLabel?.includes("실검색 확인")) return "네이버 자동완성에서 실검색 급증 확인";
+    const lines = (topic.newsContext ?? "").split("\n").filter((l) => l.trim().startsWith("-"));
+    const kwToks = topic.keyword.split(/\s+/).filter((t) => t.length >= 2);
+    const hit = lines.find((l) => kwToks.some((t) => l.includes(t)));
+    if (hit) { const m = hit.match(/\]\s*([^:]{6,60})/); if (m) return `근거 뉴스: ${m[1].trim().slice(0, 24)}…`; }
+    if (lines.length > 0) return `오늘 관련 보도 ${lines.length}건 · 경쟁 글 적을 때 선점`;
+    return "오늘 수확된 실시간 이슈 · 선점 기회";
   })();
   return (
     <button onClick={onWrite} className="at-press rounded-[14px] bg-white p-3 text-left shadow-[0_1px_3px_rgba(0,0,0,0.05)] tk-tr hover:shadow-[0_4px_14px_-6px_rgba(29,117,247,0.18)]">
       <div className="flex items-center gap-1">
         {isTrend
-          ? <span className="rounded-full bg-[color:var(--color-brand-weak)] px-1.5 py-0.5 text-[10px] font-bold text-[color:var(--color-brand)]">뜨는 중</span>
-          : <span className="rounded-full bg-[#F7F8FA] px-1.5 py-0.5 text-[10px] font-bold text-neutral-500">꾸준</span>}
+          ? <span className="rounded-full bg-[#FFF1F0] px-2 py-0.5 text-[10.5px] font-bold text-[#F04452]">실시간 급상승</span>
+          : <span className="rounded-full bg-[#EFF6FF] px-2 py-0.5 text-[10.5px] font-bold text-[#1D75F7]">안정 수요</span>}
         {life && <span className="text-[10px] font-semibold tabular-nums text-amber-600">⏳ {life}</span>}
       </div>
-      <p className="mt-1.5 line-clamp-2 text-[12.5px] font-bold leading-snug text-[color:var(--color-text)]">{topic.title}</p>
-      {evidence && <p className="mt-1 truncate text-[10.5px] text-neutral-400">{evidence}</p>}
+      <p className="mt-1.5 line-clamp-2 text-[13.5px] font-bold leading-snug text-[color:var(--color-text)]">{topic.title}</p>
+      {evidence && <p className="mt-1.5 line-clamp-2 text-[11px] leading-snug text-neutral-400">{evidence}</p>}
     </button>
   );
 }
