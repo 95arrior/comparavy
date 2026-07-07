@@ -97,8 +97,8 @@ export async function POST(request: Request) {
         fontTitle,
         topicHint: title || mainRaw, // 글 제목 우선 — 배경이 주제를 그린다
         bgStyle: body.bgStyle === "toss" ? "toss" : "photo", // ★메이커 기본=실사(유저 확정)
-        centerCopy: body.bgStyle === "toss" || body.bgStyle === "plain", // 토스톤·단색=정중앙 유지
-        press: body.bgStyle !== "toss" && body.bgStyle !== "plain" ? { brandName: String(body.brandName ?? "").trim() || brandName || "MY BLOG" } : undefined, // ★실사=보도형(유저 레퍼런스: 뉴스룸 문법)
+        centerCopy: false,
+        press: { brandName: String(body.brandName ?? "").trim() || brandName || "MY BLOG" }, // ★전 배경 공통 보도형(유저 확정: 3D도 좌하단 — 앨범 레이아웃 통일)
       });
       // AI 배경 실패로 코드 폴백됐으면 과금 취소(받은 것만 청구)
       if (aiBg && !usedAiBackground) { await addCredits(user.id, IMAGE_COST, "refund_image", crypto.randomUUID()).catch(() => null); }
