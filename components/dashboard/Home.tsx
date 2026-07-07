@@ -22,6 +22,12 @@ import { REVIEW_WEEKLY_MIN } from "@/lib/scoreWeights";
 import type { Comp } from "@/lib/topicScore";
 import type { Article } from "./types";
 
+// ★로컬(KST) 날짜 키 — toISOString은 UTC라 자정~오전 9시에 '어제'로 계산되는 버그(실측: 새벽 교체 0)
+function localDayStr(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 interface Topic { keyword: string; title: string; demandLabel: string; vol: number; comp: Comp; tag?: string; expiresAt?: string | null; blogTotal?: number | null; newsContext?: string; briefText?: string; titleSearch?: string; thumb?: { mainCopy: string; subCopy: string; badge: string } }
 
 // 소주제 군집 키(서버와 동일 규칙) — 교체 시 비슷한 소주제 중복 방지
@@ -82,8 +88,8 @@ export default function Home({
 }) {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [topicsLoading, setTopicsLoading] = useState(true);
-  const heroSwapKey = `ateflo_heroswap_${new Date().toISOString().slice(0, 10)}`;
-  const heroSkipKey = `ateflo_heroskip_${new Date().toISOString().slice(0, 10)}`;
+  const heroSwapKey = `ateflo_heroswap_${localDayStr()}`;
+  const heroSkipKey = `ateflo_heroskip_${localDayStr()}`;
   const [heroSkipped, setHeroSkipped] = useState<string[]>(() => { try { const v = JSON.parse(localStorage.getItem(heroSkipKey) ?? "[]"); return Array.isArray(v) ? v : []; } catch { return []; } });
   const [heroSwapsUsed, setHeroSwapsUsed] = useState<number>(() => { try { return Number(localStorage.getItem(heroSwapKey) ?? "0") || 0; } catch { return 0; } });
   const HERO_SWAP_MAX = 3;
@@ -183,7 +189,7 @@ export default function Home({
   }, [moreOpen]);
 
   // 교체 무제한(풀 조회라 원가 0). 교체한 글감은 그날 다시 안 나옴(기기에 기억).
-  const todayKey = `ateflo_dismissed_${new Date().toISOString().slice(0, 10)}`;
+  const todayKey = `ateflo_dismissed_${localDayStr()}`;
   const [dismissed, setDismissed] = useState<string[]>(() => {
     try { const raw = typeof window !== "undefined" ? localStorage.getItem(todayKey) : null; return raw ? JSON.parse(raw) : []; } catch { return []; }
   });
@@ -193,11 +199,11 @@ export default function Home({
   // ★사전 생성(생성 경험 v2) — 홈 진입 시 오늘의 글 1편을 서버 백그라운드로. 홈에 어떤 진행 표시도 없다(침묵 원칙).
   const preFiredRef = useRef<string | null>(null);
   const [preReadyId, setPreReadyId] = useState<string | null>(null);
-  const todayDate = new Date().toISOString().slice(0, 10);
+  const todayDate = localDayStr();
   const topicsCacheKey = () => `ateflo_topics_v30_${todayDate}_${profileKey ?? ""}_normal`;
 
   const SWAP_LIMIT = 12; // 하루 교체 상한 — 풀 소진·API 낭비 방지(유저 요청)
-  const swapCountKey = `ateflo_swaps_${new Date().toISOString().slice(0, 10)}`;
+  const swapCountKey = `ateflo_swaps_${localDayStr()}`;
   const [swapCount, setSwapCount] = useState<number>(() => {
     try { return Number(localStorage.getItem(swapCountKey) ?? "0") || 0; } catch { return 0; }
   });
@@ -242,7 +248,7 @@ export default function Home({
   };
 
   const loadTopics = useCallback(async () => {
-    const ck = `ateflo_topics_v30_${new Date().toISOString().slice(0, 10)}_${profileKey ?? ""}_normal`;
+    const ck = `ateflo_topics_v30_${localDayStr()}_${profileKey ?? ""}_normal`;
     try {
       const raw = typeof window !== "undefined" ? localStorage.getItem(ck) : null;
       if (raw) { const p = JSON.parse(raw); const c = Array.isArray(p) ? sanitizeTopics(p) : []; if (c.length >= 3) { setTopics(c); setTopicsLoading(false); return; } }

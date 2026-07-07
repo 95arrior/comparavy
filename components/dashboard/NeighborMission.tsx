@@ -9,7 +9,7 @@ import { copyTextVerified } from "@/lib/clipboard";
 //  유저가 멈추는 4지점을 제품이 대신 준비: ①어디서(검색 링크) ②누굴(기준) ③뭐라고(인사말 생성) ④잘하고 있나(기대 범위+코칭).
 //  절대: 타인 글 댓글은 생성하지 않는다(구조 가이드만). 버튼은 이동·복사까지만(네이버 조작 금지). 이모지·보장 금지.
 
-const dayKey = () => new Date().toISOString().slice(0, 10);
+const dayKey = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; }; // ★로컬 기준(UTC는 새벽에 어제로 계산)
 
 export default function NeighborMission({ subCategory, sheet, blogKey, goldenKeyword }: { subCategory?: string | null; sheet?: boolean; blogKey?: string | null; goldenKeyword?: string | null }) {
   const missionKey = `ateflo_mission_${dayKey()}_${blogKey ?? ""}`; // ★블로그별 분리 — 박카·경제 체크가 안 섞이게
