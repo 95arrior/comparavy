@@ -404,36 +404,38 @@ export default function Home({
         </p>
       </button>
 
-      {/* ★다음 할 일 원라인 — 홈 첫 시선에 '지금 할 차례'(체크인·이웃만: 글쓰기는 아래 히어로가 곧 그 행동) */}
-      {!checkinDone ? (
-        <button onClick={() => setRoutineSheet("checkin")} className="tk-seq-1 mt-3 flex w-full items-center justify-between rounded-[14px] bg-white px-5 py-3.5 text-left shadow-[0_1px_3px_rgba(0,0,0,0.05)] tk-tr hover:bg-[#F7F8FA]">
-          <span className="flex items-center gap-2.5">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--color-brand)] text-[11.5px] font-bold text-white">1</span>
-            <span className="text-[14px] font-semibold text-[color:var(--color-text)]">아침 체크인부터 — 30초면 돼요</span>
-          </span>
-          <span className="text-[13px] font-bold text-[color:var(--color-brand)]">시작 →</span>
-        </button>
-      ) : info.publishedToday && (goldenTime || !neighborDone) ? (
-        <button onClick={() => setRoutineSheet("neighbor")} className={`tk-seq-1 mt-3 flex w-full items-center justify-between rounded-[14px] px-5 py-3.5 text-left shadow-[0_1px_3px_rgba(0,0,0,0.05)] tk-tr ${goldenTime ? "bg-[#1D75F7]/[0.06] ring-1 ring-[#1D75F7]/30" : "bg-white hover:bg-[#F7F8FA]"}`}>
-          <span className="flex items-center gap-2.5">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--color-brand)] text-[11.5px] font-bold text-white">3</span>
-            <span className="min-w-0">
-              <span className="block text-[14px] font-semibold text-[color:var(--color-text)]">{goldenTime ? "지금 30분이 골든타임 — 이웃 미션" : "마지막 하나 — 이웃 미션"}</span>
-              {goldenTime && <span className="mt-0.5 block text-[12px] text-[color:var(--color-text-weak)]">발행 직후 첫 반응이 홈피드 노출을 결정해요</span>}
-            </span>
-          </span>
-          <span className="text-[13px] font-bold text-[color:var(--color-brand)]">시작 →</span>
-        </button>
-      ) : info.publishedToday && neighborDone && pubCountToday < 4 ? (
-        /* ★3~4편 체제 루프 — 한 편 끝났으면 다음 편으로(시간대 분산: 홈피드 노출 기회가 시간대별로 갈림) */
-        <button onClick={() => setRoutineSheet("topics")} className="tk-seq-1 mt-3 flex w-full items-center justify-between rounded-[14px] bg-white px-5 py-3.5 text-left shadow-[0_1px_3px_rgba(0,0,0,0.05)] tk-tr hover:bg-[#F7F8FA]">
-          <span className="min-w-0">
-            <span className="block text-[14px] font-semibold text-[color:var(--color-text)]">오늘 {pubCountToday}편째 완료 — {nextSlotLabel} 한 편 더 어때요?</span>
-            <span className="mt-0.5 block text-[12px] text-[color:var(--color-text-weak)]">시간대를 나눠 올리면 홈피드 노출 기회도 나뉘어 와요</span>
-          </span>
-          <span className="shrink-0 text-[13px] font-bold text-[color:var(--color-brand)]">글감 보기 →</span>
-        </button>
-      ) : null}
+      {/* ★오늘 가이드 원카드(토스 이체식) — 화면엔 항상 '지금 할 행동 1개'. 스텝퍼·라인·루프를 전부 흡수. */}
+      {(() => {
+        type G = { emoji: string; title: string; sub: string; cta: string; onGo: () => void; alt?: { label: string; onGo: () => void } };
+        const wantCheckin = !checkinDone && yesterdayPublished(articles); // 어제 발행한 날만 아침 마찰
+        const noCredit = credits < GENERATE_COST && !info.hasDraftToday;
+        const goWrite = () => { if (info.hasDraftToday || preReadyId || first) void readToday(); };
+        const g: G | null = wantCheckin
+          ? { emoji: "🌅", title: "어제 성적 확인부터", sub: "30초면 끝나요 — 숫자가 오늘 방향을 정해줘요", cta: "체크인 하기", onGo: () => setRoutineSheet("checkin") }
+          : pubCountToday >= 5
+          ? { emoji: "🌙", title: "오늘은 충분해요", sub: `${pubCountToday}편 발행 — 과속은 오히려 독이에요. 내일 아침에 만나요`, cta: "오늘 글 돌아보기", onGo: () => setRoutineSheet("neighbor") }
+          : goldenTime
+          ? { emoji: "⚡", title: "지금 30분이 골든타임", sub: "방금 글과 같은 주제의 이웃에게 인사 — 첫 반응이 노출을 열어요", cta: "이웃 미션 시작", onGo: () => setRoutineSheet("neighbor") }
+          : info.hasDraftToday && !info.publishedToday
+          ? { emoji: "📝", title: "쓰던 글이 기다리고 있어요", sub: "읽어보고 마음에 들면 바로 발행해요", cta: "이어서 검토하기", onGo: goWrite }
+          : noCredit
+          ? { emoji: "🔋", title: "크레딧이 다 떨어졌어요", sub: "충전하면 바로 다음 글을 쓸 수 있어요", cta: "충전하기", onGo: onOpenCredits }
+          : pubCountToday === 0
+          ? { emoji: "✍️", title: "오늘 첫 글을 쓸 시간이에요", sub: first ? `추천 글감: ${first.title.slice(0, 30)}${first.title.length > 30 ? "…" : ""}` : "지금 뜨는 글감부터 보여드릴게요", cta: first ? "이 글감으로 쓰기" : "글감 보기", onGo: first ? goWrite : () => setRoutineSheet("topics"), alt: first ? { label: "다른 글감 볼래요", onGo: () => setRoutineSheet("topics") } : undefined }
+          : pubCountToday === 1
+          ? { emoji: "💪", title: "오늘은 2편이 기본이에요", sub: `${nextSlotLabel} 한 편 더 — 시간을 나눠 올리면 노출 기회도 두 배`, cta: "2편째 쓰기", onGo: () => setRoutineSheet("topics"), alt: !neighborDone ? { label: "이웃 미션 먼저", onGo: () => setRoutineSheet("neighbor") } : undefined }
+          : { emoji: "🔥", title: `오늘 ${pubCountToday}편 — 기본 몫 끝!`, sub: "더 쓰면 그만큼 빨라져요. 무리는 금물", cta: "한 편 더 쓰기", onGo: () => setRoutineSheet("topics"), alt: !neighborDone ? { label: "이웃 미션 하기", onGo: () => setRoutineSheet("neighbor") } : undefined };
+        if (!g) return null;
+        return (
+          <div className="tk-seq-1 tk-card-glow mt-3 rounded-[20px] bg-white p-6 shadow-[0_2px_12px_-4px_rgba(29,117,247,0.12)]">
+            <p className="text-[26px] leading-none" aria-hidden>{g.emoji}</p>
+            <p className="mt-2.5 text-[18px] font-bold leading-snug text-[color:var(--color-text)]">{g.title}</p>
+            <p className="mt-1 text-[13px] leading-relaxed text-[color:var(--color-text-weak)]">{g.sub}</p>
+            <button onClick={g.onGo} className="at-press mt-4 w-full rounded-[14px] tk-grad-cta py-3.5 text-[15px] font-bold text-white transition hover:opacity-90">{g.cta}</button>
+            {g.alt && <button onClick={g.alt.onGo} className="mt-2 w-full py-1.5 text-center text-[13px] font-semibold text-[color:var(--color-text-weak)] transition hover:text-[color:var(--color-brand)]">{g.alt.label}</button>}
+          </div>
+        );
+      })()}
 
       {/* 크레딧 소진 예고 — 잔여 3편 이하 + 실사용 페이스로 예측 가능할 때만(지어내기 금지) */}
       {(() => {
@@ -513,53 +515,7 @@ export default function Home({
         />
       </div>
 
-      {/* ★오늘 할 일 — 순서 스텝퍼(토스식: 선택의 여지 없음, 다음 것 하나만 켜진다). 다른 글감은 보조 링크로 강등. */}
-      {(() => {
-        const steps = [
-          { key: "checkin" as const, label: "아침 체크인", sub: "어제 방문자 기록 · 30초", done: checkinDone },
-          { key: "write" as const, label: "오늘의 글 발행", sub: "위의 글감으로 한 편", done: info.publishedToday },
-          { key: "neighbor" as const, label: "이웃 미션", sub: "이웃 5 · 댓글 2 — 첫 반응이 노출을 열어요", done: neighborDone },
-        ];
-        const doneCount = steps.filter((x) => x.done).length;
-        const nextIdx = steps.findIndex((x) => !x.done);
-        return (
-          <div className="tk-seq-3 mt-8">
-            <div className="flex items-center justify-between px-2">
-              <p className="text-[13px] font-semibold text-[color:var(--color-text-weak)]">오늘 할 일</p>
-              <p className="text-[12px] font-bold tabular-nums text-[color:var(--color-brand)]">{doneCount}/{steps.length}</p>
-            </div>
-            {doneCount === steps.length ? (
-              <div className="tk-card-glow mt-3 rounded-[20px] p-6 text-center shadow-[0_2px_12px_-4px_rgba(29,117,247,0.12)]">
-                <p className="text-[17px] font-bold text-[color:var(--color-text)]">오늘 몫 전부 끝!</p>
-                <p className="mt-1 text-[12.5px] text-[color:var(--color-text-weak)]">이대로만 하면 돼요 — 내일 아침에 새 글감으로 만나요.</p>
-              </div>
-            ) : (
-              <div className="mt-3 overflow-hidden rounded-[20px] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
-                {steps.map((r, i) => {
-                  const isNext = i === nextIdx;
-                  return (
-                    <button key={r.key}
-                      onClick={() => { if (r.key === "write") { if (first && !info.publishedToday) window.scrollTo({ top: 0, behavior: "smooth" }); } else setRoutineSheet(r.key); }}
-                      className={`flex min-h-[60px] w-full items-center gap-3 px-5 py-4 text-left tk-tr ${i > 0 ? "border-t border-[color:var(--color-line)]" : ""} ${isNext ? "bg-[#1D75F7]/[0.05]" : ""}`}>
-                      <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11.5px] font-bold ${r.done ? "tk-grad-cta text-white" : isNext ? "bg-[color:var(--color-brand)] text-white" : "bg-neutral-100 text-neutral-400"}`}>
-                        {r.done ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg> : i + 1}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className={`block text-[15px] font-semibold ${r.done ? "text-neutral-300 line-through" : "text-[color:var(--color-text)]"}`}>{r.label}</span>
-                        {!r.done && <span className="mt-0.5 block text-[12px] text-[color:var(--color-text-weak)]">{r.sub}</span>}
-                      </span>
-                      {isNext && <span className="shrink-0 rounded-full bg-[color:var(--color-brand)] px-2.5 py-1 text-[11.5px] font-bold text-white">지금 할 차례</span>}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-            <button onClick={() => setRoutineSheet("topics")} className="mt-2 w-full py-2 text-center text-[12.5px] font-semibold text-[color:var(--color-text-weak)] transition hover:text-[color:var(--color-brand)]">
-              다른 글감 보기{topicsLoading ? "" : ` · ${rest.length}개`}
-            </button>
-          </div>
-        );
-      })()}
+      {/* 스텝퍼 제거 — 오늘 가이드 원카드가 흡수(토스식 단일 행동) */}
 
       {/* ★레벨 추천 — 시스템이 다음 행동을 말해준다(챌린지 코어). 생각 불필요. */}
       {(() => {
