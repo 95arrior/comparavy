@@ -54,6 +54,8 @@ export interface ThumbInput {
   fontTitle?: string;
   /** ★정중앙 모드(썸네일 메이커) — 카피를 화면 정중앙에, 코드 오브젝트 무대 생략(배경 사진이 주인공) */
   centerCopy?: boolean;
+  /** ★보도형(서울대병원 뉴스룸 문법) — 실사 배경+하단 다크 오버레이+좌하단 큰 카피+상하단 브랜드 바 */
+  press?: { brandName: string };
 }
 
 /* ── 색 유틸 ── */
@@ -222,6 +224,33 @@ async function renderAt(rawInput: ThumbInput, width: number): Promise<Buffer> {
   const scrim: El | null = bgDataUrl
     ? el("div", { style: { position: "absolute", inset: 0, backgroundImage: `linear-gradient(180deg, ${dark ? "rgba(0,0,0,0.42)" : "rgba(255,255,255,0.34)"}, rgba(0,0,0,0) 55%)` } })
     : null;
+
+  // ★보도형 — 실사 위 다크 그라데이션 + 좌하단 카피 + 브랜드 프레임(운영자가 공들인 제작물 문법)
+  if (input.press) {
+    const brand = input.press.brandName.trim() || "BLOG";
+    const lines = (input.mainCopy ?? "").split("\n").map((l) => l.trim()).filter(Boolean);
+    const pressSize = Math.max(72, Math.min(150, Math.floor(920 / Math.max(...lines.map((l) => [...l].length), 1))));
+    const pressRoot = el("div", { style: { display: "flex", width: SIZE, height: SIZE, position: "relative", overflow: "hidden", backgroundColor: "#101728" } }, [
+      bgDataUrl ? el("img", { src: bgDataUrl, width: SIZE, height: SIZE, style: { position: "absolute", inset: 0, objectFit: "cover" } })
+                : el("div", { style: { position: "absolute", inset: 0, backgroundImage: `linear-gradient(160deg, ${shade(p.bg, 7)}, ${shade(p.bg, -9)})` } }),
+      el("div", { style: { position: "absolute", inset: 0, backgroundImage: "linear-gradient(0deg, rgba(8,14,28,0.92) 0%, rgba(8,14,28,0.55) 34%, rgba(8,14,28,0.10) 62%, rgba(8,14,28,0.16) 100%)" } }),
+      el("div", { style: { position: "absolute", top: 44, left: 56, display: "flex", alignItems: "center", gap: 14 } }, [
+        el("div", { style: { display: "flex", width: 10, height: 34, backgroundColor: "#3B82F6", borderRadius: 3 } }),
+        el("div", { style: { display: "flex", fontFamily: identity.fontPair.body, fontSize: 30, fontWeight: 500, color: "rgba(255,255,255,0.92)", letterSpacing: 2 } }, brand),
+      ]),
+      el("div", { style: { position: "absolute", left: 56, right: 56, bottom: 150, display: "flex", flexDirection: "column", gap: 6 } },
+        lines.map((l) => el("div", { style: { display: "flex", fontFamily: identity.fontPair.title, fontSize: pressSize, fontWeight: 900, color: "#FFFFFF", lineHeight: 1.18, letterSpacing: -Math.round(pressSize * 0.03), wordBreak: "keep-all", textShadow: "0 3px 30px rgba(0,0,0,0.45)" } }, l))),
+      input.subCopy && input.subCopy.trim() ? el("div", { style: { position: "absolute", left: 56, right: 56, bottom: 96, display: "flex", fontFamily: identity.fontPair.body, fontSize: 32, fontWeight: 500, color: "rgba(255,255,255,0.78)" } }, input.subCopy.trim()) : null,
+      el("div", { style: { position: "absolute", left: 0, right: 0, bottom: 0, height: 52, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "rgba(8,14,28,0.85)" } },
+        el("div", { style: { display: "flex", fontFamily: identity.fontPair.body, fontSize: 20, fontWeight: 500, color: "rgba(255,255,255,0.55)" , letterSpacing: 6 } }, brand)),
+    ].filter(Boolean));
+    const pressFonts = [
+      { name: identity.fontPair.title, data: loadFont(identity.fontPair.title), weight: 900 as const, style: "normal" as const },
+      { name: identity.fontPair.body, data: loadFont(identity.fontPair.body), weight: 500 as const, style: "normal" as const },
+    ];
+    const pressSvg = await satori(pressRoot as unknown as React.ReactNode, { width: SIZE, height: SIZE, fonts: pressFonts });
+    return Buffer.from(new Resvg(pressSvg, { fitTo: { mode: "width", value: width } }).render().asPng());
+  }
 
   // z순서: 배경 → backdrop(카피 뒤) → 무대 오브젝트 → 스크림 → 카피(최상단, 항상 위로 가독 보장).
   const root = el("div", { style: { display: "flex", width: SIZE, height: SIZE, position: "relative", overflow: "hidden", backgroundColor: p.bg } },

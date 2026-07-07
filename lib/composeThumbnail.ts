@@ -20,6 +20,7 @@ export async function composeThumbnail(opts: {
   /** 배경 스타일 강제(메이커=photo 기본) + 정중앙 텍스트 */
   bgStyle?: "photo" | "toss";
   centerCopy?: boolean;
+  press?: { brandName: string }; // 보도형(뉴스룸 문법) — photo 배경 디폴트
   /** 주제 힌트(글 제목) — 배경 오브젝트가 주제를 그리게(추상 blob 금지 판정) */
   topicHint?: string;
 }): Promise<{ png: Buffer; usedAiBackground: boolean }> {
@@ -49,6 +50,7 @@ export async function composeThumbnail(opts: {
     bgWash: opts.bgWash,
     fontTitle: opts.fontTitle,
     centerCopy: opts.centerCopy,
+    press: opts.press,
   };
   const png = await renderThumbnail(input);
   return { png, usedAiBackground };

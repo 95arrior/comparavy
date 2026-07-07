@@ -83,6 +83,8 @@ export async function POST(request: Request) {
       if (balance === null) return NextResponse.json({ error: "크레딧이 부족해요.", code: "NO_CREDITS" }, { status: 402 });
     }
     try {
+      let brandName = "";
+      try { const { data: bp } = await supabase.from("blog_profiles").select("blog_name").eq("user_id", user.id).order("created_at", { ascending: true }).limit(1).single(); brandName = (bp?.blog_name ?? "").trim(); } catch { /* ignore */ }
       const FONT_ALLOW = ["GmarketSansBold", "BlackHanSans", "Pretendard-Black", "Jua"];
       const fontTitle = FONT_ALLOW.includes(String(body.fontName)) ? String(body.fontName) : "GmarketSansBold";
       const { png, usedAiBackground } = await composeThumbnail({
@@ -95,7 +97,8 @@ export async function POST(request: Request) {
         fontTitle,
         topicHint: title || mainRaw, // 글 제목 우선 — 배경이 주제를 그린다
         bgStyle: body.bgStyle === "toss" ? "toss" : "photo", // ★메이커 기본=실사(유저 확정)
-        centerCopy: true, // ★문구 정중앙(유저 확정)
+        centerCopy: body.bgStyle === "toss" || body.bgStyle === "plain", // 토스톤·단색=정중앙 유지
+        press: body.bgStyle !== "toss" && body.bgStyle !== "plain" ? { brandName: String(body.brandName ?? "").trim() || brandName || "MY BLOG" } : undefined, // ★실사=보도형(유저 레퍼런스: 뉴스룸 문법)
       });
       // AI 배경 실패로 코드 폴백됐으면 과금 취소(받은 것만 청구)
       if (aiBg && !usedAiBackground) { await addCredits(user.id, IMAGE_COST, "refund_image", crypto.randomUUID()).catch(() => null); }
