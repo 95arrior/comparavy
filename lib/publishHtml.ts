@@ -286,7 +286,7 @@ function styleMarkers(html: string): string {
       const q = plain.replace(/^(?:&gt;|>)\s+/, "");
       return `<p style="text-align:center;font-size:17px;font-weight:700;color:#33363d;padding:4px 24px">“${q}”</p>`;
     }
-    if (/^Q[.．]\s?/.test(plain)) { qNum += 1; return `<p><b style="font-size:16px">${plain.replace(/^Q[.．]\s?/, `${qNum}. `)}</b></p>`; } // Q. → 번호 볼드
+    if (/^Q[.．]\s?/.test(plain)) { qNum += 1; return `<p><b style="font-size:16px"><span style="color:#1D75F7">${qNum}.</span> ${plain.replace(/^Q[.．]\s?/, "")}</b></p>`; } // Q. → 파랑 번호(구조 라벨)+볼드
     return raw;
   });
 }
@@ -357,6 +357,15 @@ function applySizing(html: string): string {
 /* ── 형광펜·해시태그 ── */
 // ★형광펜 총량 게이트(실측: 도배 — 3줄짜리 통형광 다수) — 규칙 위반은 코드가 강등한다.
 //  70자 초과=무조건 해제(면적 도배), 문장급(15~70자)=글 전체 3개까지, 구급(≤14자)=5개까지. 초과분은 볼드로.
+// ★빨강(주의) 총량 게이트 — 글 전체 4곳 초과분은 볼드로 강등(색이 흔하면 아무것도 안 보인다)
+function capDanger(html: string): string {
+  let n = 0;
+  return html.replace(/<span style="color:\s*#F04452[^"]*">([\s\S]*?)<\/span>/gi, (_m, inner) => {
+    n += 1;
+    return n <= 4 ? `<span style="color:#F04452">${inner}</span>` : `<b>${inner}</b>`;
+  });
+}
+
 function capMarks(html: string): string {
   // ★고아 태그 방어 — <mark> 열림/닫힘 불균형이면 형광 전부 해제(도배보다 무강조가 낫다)
   const opens = (html.match(/<mark>/g) ?? []).length;
@@ -389,7 +398,7 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   const withImages = opts?.withImages ?? true;
   let idx = -1;
   // ★사진 자리는 '구조화 슬롯'으로만 — 채워진 슬롯만 이미지로, 미충족 슬롯은 줄 자체를 제거(안내문구 유출 금지).
-  let body = markToBold(capMarks(input.bodyHtml)).replace(SLOT_RE, (_m, desc: string) => {
+  let body = markToBold(capMarks(capDanger(input.bodyHtml))).replace(SLOT_RE, (_m, desc: string) => {
     idx += 1;
     if (!withImages) return `<p>[사진 ${idx + 1}]</p>`; // marker 모드(수동 배치) — 명시적 선택
     const url = input.images?.[idx];
