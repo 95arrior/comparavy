@@ -153,10 +153,16 @@ export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots
             <img src={preview} alt="썸네일 미리보기" className="w-full rounded-[14px]" />
             <button onClick={async () => {
               try {
-                const r = await fetch(preview); const b = await r.blob();
-                const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "ateflo-thumbnail.png"; a.click(); URL.revokeObjectURL(a.href);
-              } catch { /* ignore */ }
-            }} className="at-press mt-2 w-full rounded-[10px] bg-neutral-100 py-2.5 text-[12.5px] font-bold text-neutral-600 transition hover:bg-neutral-200">💾 내 기기에 저장 (네이버 대표이미지로 올릴 때)</button>
+                // ★300×300 고정 저장(유저 규격 — 본문 마무리·대표이미지용)
+                const img = new Image(); img.crossOrigin = "anonymous"; img.src = preview;
+                await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
+                const cv = document.createElement("canvas"); cv.width = 300; cv.height = 300;
+                cv.getContext("2d")!.drawImage(img, 0, 0, 300, 300);
+                const a = document.createElement("a"); a.href = cv.toDataURL("image/png"); a.download = "ateflo-thumb-300.png"; a.click();
+              } catch { /* 폴백 — 원본 저장 */
+                try { const r = await fetch(preview); const b = await r.blob(); const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "ateflo-thumbnail.png"; a.click(); URL.revokeObjectURL(a.href); } catch { /* ignore */ }
+              }
+            }} className="at-press mt-2 w-full rounded-[10px] bg-neutral-100 py-2.5 text-[12.5px] font-bold text-neutral-600 transition hover:bg-neutral-200">💾 300×300으로 저장 (대표이미지·본문 마무리용)</button>
             <p className="mt-3 text-[13px] font-bold text-neutral-700">어디에 넣을까요?</p>
             <div className="mt-2 space-y-1.5">
               {slots.map((sl) => (
