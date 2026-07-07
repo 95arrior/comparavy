@@ -118,7 +118,7 @@ export function buildThumbBgPrompt(bgStyleHint: string, paletteHint: string, see
 export function buildThumbPhotoBgPrompt(topic: string, seed: number, center = false): string {
   const tone = PHOTO_TONES[seed % PHOTO_TONES.length];
   return [
-    `Viral Korean YouTube-thumbnail style photograph for this topic (understand only — never render as text): "${topic.trim()}". ★ALL people must be KOREAN (East Asian Korean features, Korean styling) — never Western. Faces and big expressions are WELCOME here (this is the one image type where faces sell the click). EXAGGERATED cinematic staging that stops a scrolling thumb: vivid saturated colors, dramatic studio-quality lighting, larger-than-life emotion.`,
+    `Viral Korean YouTube-thumbnail style photograph for this topic (understand only — never render as text): "${topic.trim()}". PEOPLE ARE OPTIONAL — pick whatever sells THIS copy best: expressive people, the object itself (car, money, house), or the place. IF people appear they must be KOREAN (East Asian Korean features, Korean styling) — never Western — and faces with big expressions are welcome here. EXAGGERATED cinematic staging that stops a scrolling thumb: vivid saturated colors, dramatic studio-quality lighting, larger-than-life emotion.`,
     center
       ? `Subjects arranged toward the edges/corners; the CENTER of the frame must stay calm and low-detail (soft bokeh, plain surface, gentle gradient of the scene) — large Korean text will be overlaid dead-center later. Slightly dark or muted overall so white/graphic text pops.`
       : `Main subject small and placed in the LOWER two-thirds; the TOP 35% must be a calm, low-detail area (sky, wall, soft bokeh) for text overlay later.`,
