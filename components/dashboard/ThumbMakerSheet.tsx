@@ -108,8 +108,8 @@ export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots
           ))}
         </div>
 
-        {/* 폰트 */}
-        <p className="mt-4 text-[13px] font-bold text-neutral-700">글씨체</p>
+        {/* 폰트 — 블로그별 고정(앨범 일관성) */}
+        <p className="mt-4 text-[13px] font-bold text-neutral-700">글씨체 <span className="text-[11px] font-medium text-neutral-400">한 번 고르면 이 블로그에 계속 적용 — 앨범이 통일돼요</span></p>
         <div className="mt-2 grid grid-cols-4 gap-1.5">
           {[
             { key: "GmarketSansBold", label: "G마켓산스" },
