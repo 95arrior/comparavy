@@ -19,7 +19,7 @@ const TONES = [
   { key: "vivid", label: "살리기", wash: 0.12 },
 ];
 
-export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots, onFetchCopies, onPlaced, onCredits, onClose, initialPreview, onGenerated }: {
+export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots, onFetchCopies, onPlaced, onCredits, onClose, initialPreview, onGenerated, brandKey }: {
   articleId: string;
   articleTitle?: string; // 배경 오브젝트 주제 힌트
   copies: string[] | null; // 썸네일 문구 추천(상위 공유)
@@ -31,12 +31,17 @@ export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots
   /** 시트를 닫아도 생성물이 사라지지 않게 — 상위가 보존한 마지막 결과 */
   initialPreview?: string | null;
   onGenerated?: (url: string) => void;
+  brandKey?: string; // ★블로그별 폰트 고정(앨범 일관성)
 }) {
   const [text, setText] = useState("");
   const [palette, setPalette] = useState(SWATCHES[0].name);
   const [tone, setTone] = useState("mid");
   const [bgKind, setBgKind] = useState<"photo" | "toss" | "plain">("photo"); // 기본=실사(유저 확정)
-  const [font, setFont] = useState("GmarketSansBold");
+  const fontKey = `ateflo_tfont_${brandKey ?? ""}`;
+  const [font, setFontRaw] = useState("GmarketSansBold");
+  useEffect(() => { try { const v = localStorage.getItem(fontKey); if (v) setFontRaw(v); } catch { /* ignore */ } // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fontKey]);
+  const setFont = (f: string) => { setFontRaw(f); try { localStorage.setItem(fontKey, f); } catch { /* ignore */ } }; // ★한 번 고르면 이 블로그 고정(실측: 앨범뷰 폰트 뒤죽박죽)
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState<string | null>(initialPreview ?? null);
   const [err, setErr] = useState<string | null>(null);

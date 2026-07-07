@@ -564,6 +564,7 @@ export default function ArticleModal({ pubStampKey,
 
         {thumbMakerOpen && (
           <ThumbMakerSheet
+            brandKey={pubStampKey}
             articleId={article.id}
             articleTitle={article.title}
             copies={thumbCopies}
