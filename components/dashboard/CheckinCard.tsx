@@ -176,7 +176,11 @@ export default function CheckinCard({ blogKey, articles, onSaved }: { blogKey?: 
         <>
           <div className="mt-3 flex gap-2">
             <label className="flex-1">
-              <span className="text-[11.5px] font-semibold text-neutral-400">{backfillDay ? `${Number(backfillDay.slice(5, 7))}월 ${Number(backfillDay.slice(8, 10))}일 방문자` : "어제 방문자"}</span>
+              <span className="text-[11.5px] font-semibold text-neutral-400">{(() => {
+                const d = backfillDay ? new Date(`${backfillDay}T00:00:00`) : new Date(Date.now() - 86_400_000);
+                const wd = ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
+                return `${d.getMonth() + 1}월 ${d.getDate()}일(${wd}) 방문자`;
+              })()}</span>
               <button onClick={() => setStatGuide((v) => !v)} className="ml-2 text-[11.5px] font-bold text-[#1D75F7]">어디서 보나요?</button>
               {statGuide && (
                 <div className="mt-2 w-full rounded-[12px] bg-[#F7F8FA] p-4 text-left">
@@ -194,8 +198,14 @@ export default function CheckinCard({ blogKey, articles, onSaved }: { blogKey?: 
                   </ul>
                 </div>
               )}
-              <input inputMode="numeric" pattern="[0-9]*" value={visitors} onChange={(e) => setVisitors(e.target.value.replace(/[^0-9]/g, ""))} placeholder="0"
+              <input inputMode="numeric" pattern="[0-9]*" value={visitors} onChange={(e) => setVisitors(e.target.value.replace(/[^0-9]/g, ""))} placeholder={prev?.visitors !== null && prev?.visitors !== undefined ? `직전 기록 ${prev.visitors}명` : "네이버 통계의 조회수"}
                 className="mt-1 w-full rounded-xl bg-neutral-50 px-3.5 py-2.5 text-[15px] font-bold text-neutral-900 outline-none ring-1 ring-black/[0.05] focus:ring-2 focus:ring-[#1D75F7]/30" />
+              {visitors.trim() !== "" && prev?.visitors !== null && prev?.visitors !== undefined && (() => {
+                const cur = Number(visitors), base = Number(prev.visitors);
+                if (!Number.isFinite(cur) || base <= 0) return null;
+                const diff = cur - base; const pct = Math.round((diff / base) * 100);
+                return <p className={`mt-1.5 text-[12px] font-bold ${diff >= 0 ? "text-emerald-600" : "text-amber-600"}`}>{diff >= 0 ? `직전보다 +${diff}명 (${pct}%↑)` : `직전보다 ${diff}명 (${Math.abs(pct)}%↓) — 흐름은 주간으로 봐요`}</p>;
+              })()}
             </label>
             {approved && (
               <label className="flex-1">
@@ -210,14 +220,7 @@ export default function CheckinCard({ blogKey, articles, onSaved }: { blogKey?: 
               className="at-press flex-1 rounded-xl tk-grad-cta py-2.5 text-[13.5px] font-bold text-white transition hover:opacity-90 disabled:opacity-50">
               {busy ? "저장 중" : "기록하기"}
             </button>
-            {prev && (prev.visitors !== null || prev.revenue !== null) && (
-              <button onClick={() => save(String(prev.visitors ?? ""), String(prev.revenue ?? ""))} disabled={busy}
-                className="at-press rounded-xl bg-neutral-100 px-3.5 py-2.5 text-[12.5px] font-bold text-neutral-600 transition hover:bg-neutral-200 disabled:opacity-50">
-                어제와 같음
-              </button>
-            )}
-            <button onClick={() => { try { localStorage.setItem(skipKey, "1"); } catch { /* ignore */ } setState("skipped"); }}
-              className="at-press rounded-xl px-2.5 py-2.5 text-[12.5px] font-medium text-neutral-400 transition hover:text-neutral-600">건너뛰기</button>
+
           </div>
         </>
       )}
