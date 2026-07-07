@@ -488,11 +488,13 @@ export default function Home({
           <div className="w-[46%] shrink-0 sm:w-[38%]">
             <p className="text-[13px] text-[color:var(--color-text-weak)]">오늘 기록</p>
             <div className="mt-2 space-y-1.5">
-              {([["글 발행", info.publishedToday], ["이웃 미션", neighborDone], ["아침 체크인", checkinDone]] as const).map(([label, done]) => (
-                <p key={label} className="flex items-center gap-2 text-[12.5px]">
+              {([["글 발행", info.publishedToday, "board"], ["이웃 미션", neighborDone, "neighbor"], ["아침 체크인", checkinDone, "checkin"]] as const).map(([label, done, act]) => (
+                <span key={label} role="button" tabIndex={0}
+                  onClick={(e) => { e.stopPropagation(); if (act === "board") { try { document.getElementById("topic-board")?.scrollIntoView({ behavior: "smooth" }); } catch { /* ignore */ } } else setRoutineSheet(act as "neighbor" | "checkin"); }}
+                  className="flex items-center gap-2 rounded-lg px-1 py-0.5 text-[12.5px] transition hover:bg-[#F7F8FA]">
                   <span className={`flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold ${done ? "tk-grad-cta text-white" : "bg-neutral-100 text-neutral-300"}`}>{done ? "✓" : ""}</span>
                   <span className={done ? "font-semibold text-[color:var(--color-text)]" : "text-[color:var(--color-text-weak)]"}>{label}</span>
-                </p>
+                </span>
               ))}
             </div>
           </div>
@@ -630,7 +632,22 @@ export default function Home({
                   dismissedRef.current = nd; setDismissed(nd);
                   try { localStorage.setItem(todayKey, JSON.stringify(nd)); } catch { /* ignore */ }
                   const setter = mode === "short" ? setBoardShort : setBoardLong;
-                  setter((prev) => (prev ?? []).filter((x) => x.keyword !== t.keyword));
+                  setter((prev) => {
+                    const next = (prev ?? []).filter((x) => x.keyword !== t.keyword);
+                    if (next.length < 5) { // ★재고 소진 시 조용한 보충(실측: 치울수록 감소 — 서버 재고 5개 세대)
+                      const ex = [...new Set([...nd, ...todayKeywords(articles), ...next.map((x) => x.keyword)])];
+                      fetch(`/api/topics?mode=${mode}&exclude=${encodeURIComponent(ex.join(","))}`)
+                        .then((r) => r.json())
+                        .then((d) => {
+                          const got = sanitizeTopics(Array.isArray(d.topics) ? d.topics : []);
+                          setter((cur) => {
+                            const have = new Set((cur ?? []).map((x) => x.keyword));
+                            return [...(cur ?? []), ...got.filter((g) => !have.has(g.keyword) && !nd.includes(g.keyword))];
+                          });
+                        }).catch(() => { /* 무해 */ });
+                    }
+                    return next;
+                  });
                 }} />)}
               </div>
             </div>
