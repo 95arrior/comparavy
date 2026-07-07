@@ -113,7 +113,7 @@ function mergeUnbalanced(parts: string[]): string[] {
 function breakSentence(sen: string): string {
   // ★모바일 줄폭 개행(네이버 실측 ~18자): 절 경계에서 반복 절단. 1차=이상 구간(10~28자), 실패 시 2차=완화(8~40자).
   if (/<br/.test(sen)) return sen;
-  const CLAUSE = /([,，、]|에서|라면|다면|하면|이면|인지|는지|한지|는 건|은 건|하고|하며|지만|는데|면서|위해|보다|어서|아서|여도|해도|므로|더라도|든지|거나|처럼|때는|때만|경우|한도는|기준은|넣어야|하려면)\s+/g;
+  const CLAUSE = /([,，、]|에서|라면|다면|하면|이면|인지|는지|한지|는 건|은 건|하고|하며|지만|는데|면서|위해|보다|어서|아서|여도|해도|므로|더라도|든지|거나|처럼|때는|때만|경우|까지|기간은|기한은|여부는|한도는|기준은|넣어야|하려면|[가-힣]{2,}[은는도])\s+/g;
   const parts: string[] = [];
   let rest = sen;
   let guard = 0;
@@ -123,7 +123,7 @@ function breakSentence(sen: string): string {
     CLAUSE.lastIndex = 0;
     while ((m = CLAUSE.exec(rest))) cands.push(m.index + m[0].length);
     let best = -1, bestD = Infinity;
-    for (const pass of [{ min: 10, max: 28 }, { min: 8, max: 40 }]) {
+    for (const pass of [{ min: 10, max: 28 }, { min: 8, max: 9999 }]) { // 2차: 상한 없음 — 통줄보다 낫다
       for (const cut of cands) {
         const left = visLen(rest.slice(0, cut));
         if (left < pass.min || left > pass.max || visLen(rest.slice(cut)) < 6) continue;
