@@ -111,24 +111,30 @@ function mergeUnbalanced(parts: string[]): string[] {
 // ★유저 교본(2026-07-07): 문단을 쪼개면(빈 줄) 흐름이 끊긴다 — 같은 문단 안에서 <br>로 '의미 구 줄바꿈'.
 //  문장별 한 줄. 문장이 길면(>44자) 쉼표·연결어미 구 경계에서 균형 줄바꿈(양쪽 12자 이상일 때만 — 고아 조각 금지).
 function breakSentence(sen: string): string {
-  // ★의미 절 개행(유저 교본 확정판): 28자 넘는 문장은 절 경계(쉼표·~에서·~라면·~인지·~는 건·연결어미)에서
-  //  중앙에 가장 가까운 지점 1곳만 <br> — 좌우 8자 미만(고아)이면 안 끊고 자연 줄바꿈(keep-all이 어절 보호).
-  if (visLen(sen) <= 28 || /<br/.test(sen)) return sen;
-  const re = /([,，、]|에서|라면|다면|인지|는 건|은 건|하고|하며|지만|는데|면서|위해|보다)\s+/g;
-  const cands: number[] = [];
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(sen))) cands.push(m.index + m[0].length);
-  if (!cands.length) return sen;
-  const mid = visLen(sen) / 2;
-  let best = -1, bestDist = Infinity;
-  for (const c of cands) {
-    const left = visLen(sen.slice(0, c)), right = visLen(sen.slice(c));
-    if (left < 8 || right < 8) continue;
-    const d = Math.abs(left - mid);
-    if (d < bestDist) { bestDist = d; best = c; }
+  // ★모바일 줄폭 개행(유저 모범답안): 긴 문장은 절 경계에서 22자 내외 줄들로 반복 절단 —
+  //  모바일에서 어중간한 wrap 없이 매 줄이 의미 단위로 딱 떨어진다. 경계 없으면 자연 줄바꿈(keep-all).
+  if (/<br/.test(sen)) return sen;
+  const CLAUSE = /([,，、]|에서|라면|다면|인지|는 건|은 건|하고|하며|지만|는데|면서|위해|보다|어서|아서|여도|므로)\s+/g;
+  const parts: string[] = [];
+  let rest = sen;
+  let guard = 0;
+  while (visLen(rest) > 28 && guard++ < 8) {
+    let m: RegExpExecArray | null; let best = -1; let bestD = Infinity;
+    CLAUSE.lastIndex = 0;
+    while ((m = CLAUSE.exec(rest))) {
+      const cut = m.index + m[0].length;
+      const left = visLen(rest.slice(0, cut));
+      if (left < 10) continue;
+      if (left > 34) break;
+      const d = Math.abs(left - 22);
+      if (d < bestD) { bestD = d; best = cut; }
+    }
+    if (best < 0) break;
+    parts.push(rest.slice(0, best).trimEnd());
+    rest = rest.slice(best).trimStart();
   }
-  if (best < 0) return sen;
-  return `${sen.slice(0, best).trimEnd()}<br>${sen.slice(best).trimStart()}`;
+  parts.push(rest);
+  return parts.join("<br>");
 }
 function splitInner(inner: string): string[] {
   if (visLen(inner) <= MOBILE_MAX_CHARS && !/(?<=[?!])\s|(?<=[^\d]\.)\s/.test(inner.replace(/<[^>]+>/g, ""))) return [inner];
@@ -217,9 +223,9 @@ export function gapBetween(prev: { tag: string; inner: string } | null, cur: { t
   // ★단계 헤더 고정 규격 — 앞2(직전 블록이 뭐든)·뒤1(제목과 본문 밀착). 시퀀스 전체가 같은 리듬.
   if (isStepPara(c)) return 2;
   if (isStepPara(prev as Blk)) return 1;
-  // ★FAQ 규격(실측: Q와 답 사이가 벌어져 읽기 불편) — Q 앞 2, Q 뒤(답) 밀착 0
-  if (isQPara(c)) return 2;
-  if (isQPara(prev as Blk)) return 0;
+  // ★FAQ 리듬(유저 모범답안): 제목 → 빈줄 1 → 설명 → 빈줄 3 → 다음 제목
+  if (isQPara(c)) return 3;
+  if (isQPara(prev as Blk)) return 1;
   return Math.min(BLANK_CAP, Math.max(afterBlanks(prev as Blk), beforeBlanks(c)));
 }
 // ★엔진 마커 변환 — '---' 단독 문단=구분선, '> 문장'=인용 블록, 'Q.' 문단=강조(FAQ 가독)
