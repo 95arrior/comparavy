@@ -49,7 +49,7 @@ export async function POST(request: Request) {
         raw = [...text.matchAll(/["\u201c']([^"\u201d'\n]{4,20})["\u201d']/g)].map((x) => x[1]);
       }
       const cleaned = (Array.isArray(raw) ? raw : [])
-        .map((c) => String(c).trim().replace(/^["'\s]+|["'\s]+$/g, ""))
+        .map((c) => String(c).trim().replace(/^[\[\]"\u201c\u201d'\s]+|[\[\]"\u201c\u201d'\s]+$/g, "")) // ★대괄호·스마트따옴표 찌꺼기 소거(실측: 앞뒤 [])
         .filter((c) => c.length >= 4)
         .map((c) => (c.length > 20 ? "" : c)) // 20자까지 관대(온도 상향으로 문구 길어짐)
         .filter(Boolean)
