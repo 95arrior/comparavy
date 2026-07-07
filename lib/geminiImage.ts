@@ -68,13 +68,16 @@ const PHOTO_MOODS = ["calm and tidy", "warm and inviting", "fresh and clean", "q
 export function buildBodyPrompt(slotDesc: string, articleTitle: string, seed: number): string {
   const compo = PHOTO_COMPOS[(seed >> 3) % PHOTO_COMPOS.length];
   const mood = PHOTO_MOODS[(seed >> 7) % PHOTO_MOODS.length];
-  if (true) { // ★본문=100% 실사 다큐(유저 판정: 3D 오브젝트는 본문에서 독 — 썸네일 toss 배경에만 유지)
+  const conceptSlot = /개념|상징|아이콘|기분|마음|정리|요약/.test(slotDesc);
+  const useEmoji3d = conceptSlot || seed % 5 === 0; // ★토스 이모지풍 3D(유저 재지정) — 개념 슬롯 + 글당 1개꼴 로테이션
+  if (!useEmoji3d) { // 기본=실사 다큐
     const tone = PHOTO_TONES[seed % PHOTO_TONES.length];
     return [
+      "ZERO TEXT IMAGE — absolutely no letters, numbers or Hangul anywhere in the image (any rendered text will be broken and ruin the photo).",
       `Realistic lifestyle photograph for a Korean blog post. Topic context (for understanding only — never render as text): ${articleTitle}.`,
       `Scene to capture: ${slotDesc}.`,
       // ★단일 문법(유저 최종 판정: 텍스트 절대 금지 — 깨짐, 빈 화면도 금지 — 허접) — 상황이 스스로 말하는 씬 3택.
-      "Pick the ONE scene type that best fits this topic: (a) INDUSTRY/PLACE topics (energy, real estate, cars, travel, markets) → a cinematic wide establishing shot of the real-world place itself — industrial plant, apartment complex, dealership lot, harbor — impressive scale, natural light, professional editorial photograph. (b) PAPERWORK/APPLICATION topics → stage the SITUATION with zero readable text: any document or screen may appear only as a small angled background prop where no writing is visible — NEVER a blank screen or blank paper as the focal point; tell the story with topic objects instead (keys with a contract folder, a calendar page, a stamped envelope). (c) otherwise → a clean bright STILL-LIFE: multiple objects of the topic category neatly arranged on a light wooden table near a window, soft daylight, airy minimal styling — like a lifestyle magazine product spread. The image must spark curiosity and instantly convey what the article is about — a scene that tells the story by itself.",
+      "Pick the ONE scene type that best fits this topic: (a) INDUSTRY/PLACE topics (energy, real estate, cars, travel, markets) → a cinematic wide establishing shot of the real-world place itself — industrial plant, apartment complex, dealership lot, harbor — impressive scale, natural light, professional editorial photograph. (b) PAPERWORK/APPLICATION topics → stage the SITUATION using NON-PAPER objects only: keys, a small house model, a calendar (numbers-free), coins in a tray, a phone lying face-down. DO NOT include documents, forms, sticky notes, books or screens AT ALL — any paper-like object tempts text and text always renders broken. (c) otherwise → a clean bright STILL-LIFE: multiple objects of the topic category neatly arranged on a light wooden table near a window, soft daylight, airy minimal styling — like a lifestyle magazine product spread. The image must spark curiosity and instantly convey what the article is about — a scene that tells the story by itself.",
       `The topic-specific OBJECTS are the hero of the frame — a person may appear only as hands interacting with them (no full figures, face never visible). Include at least 2 physical objects that are UNIQUELY specific to the topic above (e.g., housing topic → door keys, moving boxes, apartment window view; car topic → car interior, charging cable). NEVER generic clichés: NO piggy banks, NO coin stacks, NO generic calculators, NO lightbulbs — unless the topic is literally about them.`,
       `${tone}, ${compo}, ${mood} mood. Natural realistic photography, true-to-life textures and materials, tasteful depth of field, high-end magazine quality. Wide horizontal 16:9 composition.`,
       IMAGE_HARD_RULES,
@@ -82,7 +85,8 @@ export function buildBodyPrompt(slotDesc: string, articleTitle: string, seed: nu
   }
   const tone = TOSS_TONES[seed % TOSS_TONES.length];
   return [
-    `Soft matte 3D illustration in the style of a premium Korean fintech app (Toss) event card. Topic context (for understanding only — never render as text): ${articleTitle}.`,
+    "ZERO TEXT IMAGE — absolutely no letters, numbers or Hangul anywhere.",
+    `Premium 3D emoji in the style of Toss (Korean fintech) Tossface: ONE single glossy rounded hero object representing the idea, vivid soft gradient colors, subtle highlights like a polished toy, centered LARGE on a clean single-color pastel background with lots of breathing room. NOT a cluttered scene — one object, emoji-like simplicity. Topic context (understand only, never render as text): ${articleTitle}.`,
     `Depict EXACTLY this: ${slotDesc}. Choose 2-4 distinct objects that are explicitly mentioned in, or uniquely specific to, that description — ${["show the tools/items used for it", "show the place or setting where it happens", "show the end result or benefit of it", "show the items being compared side by side"][seed % 4]}.`,
     "NEVER use generic clichés: NO piggy banks, NO plain coin stacks, NO generic calculators, NO lightbulbs — unless that exact object is in the description.",
     `Color: ${tone}, on a clean single-color light background. ${compo}, ${mood} mood. Tactile smooth clay material, soft studio lighting, gentle shadows, no clutter. Playful but premium. Wide horizontal 16:9 composition.`,

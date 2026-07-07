@@ -37,7 +37,10 @@ export function sanitizeUrls(html: string, opts?: { allowNaverBlogId?: string | 
   // ★태그 속성(src/href) 내부는 구조적으로 보호 — 마스킹 후 본문 텍스트 URL만 검사, 마지막에 복원.
   const masks: string[] = [];
   const masked = html.replace(/(src|href)="[^"]*"/gi, (m) => { masks.push(m); return `__ATTR${masks.length - 1}__`; });
-  const out0 = masked.replace(URL_RE, (raw) => {
+  const out0 = masked.replace(URL_RE, (raw, ...rest) => {
+    const offset = rest[rest.length - 2] as number; const whole = rest[rest.length - 1] as string;
+    const after = whole.slice(offset + raw.length, offset + raw.length + 24);
+    if (/^\s*(공식\s*사이트에서\s*검색|에서\s*검색)/.test(after)) return domainOf(raw); // ★중복 방지(실측: '검색 공식 사이트에서 검색')
     if (/supabase\.co|supabase\.in|ateflo\.com/i.test(raw)) return raw;
     if (ownBlog && new RegExp(`^https?://(m\\.)?blog\\.naver\\.com/${ownBlog.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}(/|$)`, "i").test(raw)) return raw; // 내 블로그 글(전편 링크)
     const d = domainOf(raw);

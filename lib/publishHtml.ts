@@ -156,7 +156,7 @@ function styleBlocks(html: string): string {
 /* ── ★여백 스케일 v2 — 블록 무게 비례. 여백은 CSS가 아니라 '마크업'(스페이서 문단)으로 넣는다(네이버 실렌더 = 미리보기 = 복사본 동일). ── */
 //  소제목 앞3·뒤1 / 문단 사이1 / 4줄↑ 긴 블록 위아래3 / 강조 문장 위아래2 / 해시태그 앞2. 연속 빈 줄 상한 4(압축 아님 — 캡만).
 export const BLANK_P = '<p style="text-align:left"><br></p>'; // 네이버 스마트에디터ONE 생존형 빈 줄
-const BLANK_CAP = 4;
+const BLANK_CAP = 3; // ★실측: FAQ·요약 주변 여백 과다 — 상한 4→3
 const CHARS_PER_LINE_PUB = 22;
 function blockLines(inner: string): number {
   return Math.max(1, Math.ceil(visLen(inner) / CHARS_PER_LINE_PUB));
@@ -184,22 +184,23 @@ function isStepPara(b: Blk): boolean {
   if (t.length > 60) return false; // 헤더성 짧은 줄만
   return /^(?:[📌✅💡🍀🎉😊👇⏰📢]\s*)?(?:\d{1,2}\s*단계|STEP\s*\d{1,2}|Step\s*\d{1,2}|(?:첫|둘|셋|넷|다섯|여섯|일곱|여덟|아홉|열)째)\s*[:.]/u.test(t);
 }
+const isQPara = (b: Blk) => b.tag === "p" && /^\s*(?:<[^>]+>\s*)*Q[.．]\s?/.test(b.inner.replace(/<[^>]+>/g, "").trim()) || (b.tag === "p" && /^Q[.．]/.test(b.inner.replace(/<[^>]+>/g, "").trim()));
 function beforeBlanks(b: Blk): number {
   if (isSuspenseMark(b)) return 0; // 여백은 서스펜스 확장 전담
   if (/^h[1-4]$/.test(b.tag)) return 3;
   if (isHashtagPara(b)) return 2;
   if (isEmphasisPara(b)) return 2;
-  if (!isImagePara(b) && blockLines(b.inner) >= 4) return 3;
+  if (!isImagePara(b) && blockLines(b.inner) >= 4) return 2; // ★3→2(실측: 과다)
   return 1;
 }
 function afterBlanks(b: Blk): number {
   if (isSuspenseMark(b)) return 0;
   if (/^h[1-4]$/.test(b.tag)) return 1;
   if (isEmphasisPara(b)) return 2;
-  if (!isImagePara(b) && blockLines(b.inner) >= 4) return 3;
+  if (!isImagePara(b) && blockLines(b.inner) >= 4) return 2; // ★3→2
   return 1;
 }
-/** 블록 사이 빈 줄 수(마크업) — max(앞블록 after, 뒷블록 before), 상한 4. */
+/** 블록 사이 빈 줄 수(마크업) — max(앞블록 after, 뒷블록 before), 상한 3. */
 export function gapBetween(prev: { tag: string; inner: string } | null, cur: { tag: string; inner: string }): number {
   const c = cur as Blk;
   if (!prev) return 0;
@@ -208,8 +209,25 @@ export function gapBetween(prev: { tag: string; inner: string } | null, cur: { t
   // ★단계 헤더 고정 규격 — 앞2(직전 블록이 뭐든)·뒤1(제목과 본문 밀착). 시퀀스 전체가 같은 리듬.
   if (isStepPara(c)) return 2;
   if (isStepPara(prev as Blk)) return 1;
+  // ★FAQ 규격(실측: Q와 답 사이가 벌어져 읽기 불편) — Q 앞 2, Q 뒤(답) 밀착 0
+  if (isQPara(c)) return 2;
+  if (isQPara(prev as Blk)) return 0;
   return Math.min(BLANK_CAP, Math.max(afterBlanks(prev as Blk), beforeBlanks(c)));
 }
+// ★엔진 마커 변환 — '---' 단독 문단=구분선, '> 문장'=인용 블록, 'Q.' 문단=강조(FAQ 가독)
+function styleMarkers(html: string): string {
+  return html.replace(/<p(\s[^>]*)?>([\s\S]*?)<\/p>/gi, (raw, attr, inner) => {
+    const plain = String(inner).replace(/<[^>]+>/g, "").trim();
+    if (/^-{3,}$/.test(plain)) return '<p style="text-align:center;color:#d5d9df;letter-spacing:2px;margin:8px 0">─────</p>';
+    if (/^(?:&gt;|>)\s+/.test(plain)) {
+      const q = plain.replace(/^(?:&gt;|>)\s+/, "");
+      return `<p style="text-align:center;font-size:17px;font-weight:700;color:#33363d;padding:4px 24px">“${q}”</p>`;
+    }
+    if (/^Q[.．]\s?/.test(plain)) return `<p><b style="font-size:16px">${plain}</b></p>`;
+    return raw;
+  });
+}
+
 function applySpacingRich(html: string): string {
   const { blocks } = walkBlocks(html);
   if (blocks.length === 0) return html;
@@ -290,7 +308,7 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   const gated0 = withImages ? sanitizeForCopy(body) : stripEmoji(body);
   const gated = sanitizeUrls(gated0, { allowNaverBlogId: input.ownNaverBlogId }).html; // ★소급 정화 — 내 블로그 전편 링크는 통과
   // 파이프: 분할 → 정렬 → 크기 위계 → ★여백 스케일 v2(마크업 스페이서) → 서스펜스(마킹 예외)
-  let out = applySuspenseBreaks(applySpacingRich(styleTables(applySizing(styleBlocks(splitLongParagraphs(gated))))));
+  let out = applySuspenseBreaks(applySpacingRich(styleTables(applySizing(styleBlocks(styleMarkers(splitLongParagraphs(gated)))))));
   // ★클로징(뉴스룸 마감 문법) — 얇은 경계선 + 중앙 작은 이미지(보통 썸네일). withImages(rich)일 때만.
   if (withImages && input.closingImageUrl) {
     out += `<p><br /></p><p style="text-align:center;"><span style="display:inline-block;width:55%;border-top:1px solid #d9dde3;">&nbsp;</span></p><p style="text-align:center;"><img src="${input.closingImageUrl}" alt="" width="420" /></p>`;
