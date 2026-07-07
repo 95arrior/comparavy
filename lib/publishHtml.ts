@@ -228,6 +228,17 @@ function styleMarkers(html: string): string {
   });
 }
 
+// ★나열은 표 박스로(유저 확정: 중앙 정렬 본문에서 리스트가 흐름을 끊음 — 박스에 담아 좌정렬 유지)
+function listsToTable(html: string): string {
+  return html.replace(/<(ul|ol)(\s[^>]*)?>([\s\S]*?)<\/\1>/gi, (raw, tag, _attr, inner) => {
+    const items = (inner.match(/<li[\s\S]*?<\/li>/gi) ?? []).map((li: string) => li.replace(/<\/?li[^>]*>/gi, "").trim()).filter(Boolean);
+    if (items.length < 2) return raw;
+    const ol = String(tag).toLowerCase() === "ol";
+    const rows = items.map((it: string, i: number) => `<tr><td>${ol ? `<b>${i + 1}.</b> ` : "• "}${it}</td></tr>`).join("");
+    return `<table><tbody>${rows}</tbody></table>`;
+  });
+}
+
 function applySpacingRich(html: string): string {
   const { blocks } = walkBlocks(html);
   if (blocks.length === 0) return html;
@@ -257,7 +268,7 @@ function applySizing(html: string): string {
       if (len > 44) { // 모바일 2줄(약 44자) 초과 → 축소 + 의미 단위 줄 분리
         const parts = inner.split(/(?<=[.?!,，])\s+/).map((x: string) => x.trim()).filter(Boolean);
         const joined = parts.length > 1 ? parts.join("<br>") : inner;
-        return addStyle(`<blockquote${attr ?? ""}>${joined}</blockquote>`, "font-size:13px");
+        return addStyle(`<blockquote${attr ?? ""}>${joined}</blockquote>`, "font-size:14px");
       }
       return raw;
     }
@@ -266,12 +277,13 @@ function applySizing(html: string): string {
       const dense = items.length >= 6 || items.some((it) => [...it].length > CHARS_PER_LINE_PUB); // 6항목+ 또는 줄바꿈 발생
       if (dense) {
         const shrunk = raw.replace(/<li(\s[^>]*)?>/gi, (lm: string) => /style="/.test(lm) ? lm.replace(/style="([^"]*)"/, 'style="$1;font-size:13px"') : lm.replace(/^<li/, '<li style="font-size:13px"'));
-        return addStyle(shrunk, "font-size:13px");
+        return addStyle(shrunk, "font-size:14px");
       }
       return raw;
     }
     // p: <b> 단독 문단(강조/브릿지) → 확대
-    if (/^\s*<b(?![^>]*background)[^>]*>[\s\S]{2,80}<\/b>\s*$/.test(inner)) return addStyle(raw, "font-size:17px");
+    if (/^\s*<b(?![^>]*background)[^>]*>[\s\S]{2,80}<\/b>\s*$/.test(inner)) return addStyle(raw, "font-size:18px");
+    if (t === "p" && !/font-size/.test(String(attr ?? ""))) return addStyle(raw, "font-size:16px"); // ★기본 본문 16px(40/50대 가독)
     return raw;
   });
 }
@@ -308,7 +320,7 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   const gated0 = withImages ? sanitizeForCopy(body) : stripEmoji(body);
   const gated = sanitizeUrls(gated0, { allowNaverBlogId: input.ownNaverBlogId }).html; // ★소급 정화 — 내 블로그 전편 링크는 통과
   // 파이프: 분할 → 정렬 → 크기 위계 → ★여백 스케일 v2(마크업 스페이서) → 서스펜스(마킹 예외)
-  let out = applySuspenseBreaks(applySpacingRich(styleTables(applySizing(styleBlocks(styleMarkers(splitLongParagraphs(gated)))))));
+  let out = applySuspenseBreaks(applySpacingRich(styleTables(applySizing(styleBlocks(listsToTable(styleMarkers(splitLongParagraphs(gated))))))));
   // ★클로징(뉴스룸 마감 문법) — 얇은 경계선 + 중앙 작은 이미지(보통 썸네일). withImages(rich)일 때만.
   if (withImages && input.closingImageUrl) {
     out += `<p><br /></p><p style="text-align:center;"><span style="display:inline-block;width:55%;border-top:1px solid #d9dde3;">&nbsp;</span></p><p style="text-align:center;"><img src="${input.closingImageUrl}" alt="" width="420" /></p>`;
