@@ -301,6 +301,18 @@ function applySizing(html: string): string {
 }
 
 /* ── 형광펜·해시태그 ── */
+// ★형광펜 총량 게이트(실측: 도배 — 3줄짜리 통형광 다수) — 규칙 위반은 코드가 강등한다.
+//  70자 초과=무조건 해제(면적 도배), 문장급(15~70자)=글 전체 3개까지, 구급(≤14자)=5개까지. 초과분은 볼드로.
+function capMarks(html: string): string {
+  let sentCount = 0, phraseCount = 0;
+  return html.replace(/<mark>([\s\S]*?)<\/mark>/g, (raw, inner) => {
+    const len = [...String(inner).replace(/<[^>]+>/g, "")].length;
+    if (len > 70) return `<b>${inner}</b>`;
+    if (len >= 15) { sentCount += 1; return sentCount <= 3 ? raw : `<b>${inner}</b>`; }
+    phraseCount += 1; return phraseCount <= 5 ? raw : `<b>${inner}</b>`;
+  });
+}
+
 function markToBold(html: string): string {
   // ★형광펜 이중 문법(유저 교본 4차) — 구 단위(≤14자: '집값의 70~80%')는 문장 속 인라인, 문장급(>14자)은 단독 줄
   html = html.replace(/<mark>([\s\S]{15,}?)<\/mark>/g, "\u0000MARKBLOCK\u0000$1\u0000/MARKBLOCK\u0000");
@@ -323,7 +335,7 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   const withImages = opts?.withImages ?? true;
   let idx = -1;
   // ★사진 자리는 '구조화 슬롯'으로만 — 채워진 슬롯만 이미지로, 미충족 슬롯은 줄 자체를 제거(안내문구 유출 금지).
-  let body = markToBold(input.bodyHtml).replace(SLOT_RE, () => {
+  let body = markToBold(capMarks(input.bodyHtml)).replace(SLOT_RE, () => {
     idx += 1;
     if (!withImages) return `<p>[사진 ${idx + 1}]</p>`; // marker 모드(수동 배치) — 명시적 선택
     const url = input.images?.[idx];
