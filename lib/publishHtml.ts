@@ -108,20 +108,36 @@ function mergeUnbalanced(parts: string[]): string[] {
 }
 
 /* ── 안전망: 4줄 초과 문단 자동 분할 (문장 → 쉼표 → 어절) ── */
-function splitInner(inner: string): string[] {
-  if (visLen(inner) <= MOBILE_MAX_CHARS) return [inner];
-  // ★문장 단위로만 분할(유저 확정: 글자 수 절단은 '위험/신호예요' 고아 조각을 만든다).
-  //  문장 경계(마침표·물음표·느낌표 + 공백)에서만 자르고, 한 문장이 길면 그대로 둔다(중앙 정렬 자연 줄바꿈이 처리).
-  const sentences = mergeUnbalanced(inner.split(/(?:<br\s*\/?>)|(?<=[?!])\s+|(?<=[^\d]\.)\s+/g).map((x) => x.trim()).filter(Boolean)); // 숫자. 뒤(소수·날짜)는 경계 아님
-  if (sentences.length <= 1) return [inner]; // 못 나누면 원문 그대로 — 억지 절단 금지
-  const out: string[] = [];
-  let acc = "";
-  for (const sen of sentences) {
-    if (acc && visLen(acc + " " + sen) > MOBILE_MAX_CHARS) { out.push(acc); acc = sen; }
-    else acc = acc ? `${acc} ${sen}` : sen;
+// ★유저 교본(2026-07-07): 문단을 쪼개면(빈 줄) 흐름이 끊긴다 — 같은 문단 안에서 <br>로 '의미 구 줄바꿈'.
+//  문장별 한 줄. 문장이 길면(>44자) 쉼표·연결어미 구 경계에서 균형 줄바꿈(양쪽 12자 이상일 때만 — 고아 조각 금지).
+function breakSentence(sen: string): string {
+  if (visLen(sen) <= 44) return sen;
+  const cands: number[] = [];
+  const re = /(?:(?<=[,，、])\s*)|(?:(?<=(?:하고|하며|지만|는데|으니|니까|어서|아서|려면|다면|면서))\s+)/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(sen))) cands.push(m.index + (m[0] ?? "").length);
+  if (!cands.length) return sen;
+  const mid = visLen(sen) / 2;
+  let best = -1, bestDist = Infinity;
+  for (const c of cands) {
+    const left = visLen(sen.slice(0, c)), right = visLen(sen.slice(c));
+    if (left < 12 || right < 12) continue; // 고아 조각 금지
+    const d = Math.abs(left - mid);
+    if (d < bestDist) { bestDist = d; best = c; }
   }
-  if (acc) out.push(acc);
-  return out.length ? out : [inner];
+  if (best < 0) return sen;
+  return `${sen.slice(0, best).trimEnd()}<br>${sen.slice(best).trimStart()}`;
+}
+function splitInner(inner: string): string[] {
+  if (visLen(inner) <= MOBILE_MAX_CHARS && !/(?<=[?!])\s|(?<=[^\d]\.)\s/.test(inner.replace(/<[^>]+>/g, ""))) return [inner];
+  const sentences = mergeUnbalanced(inner.split(/(?:<br\s*\/?>)|(?<=[?!])\s+|(?<=[^\d]\.)\s+/g).map((x) => x.trim()).filter(Boolean));
+  if (sentences.length <= 1) return [breakSentence(inner)];
+  // 2문장씩 한 문단(그룹 안은 <br> 밀착·그룹 사이만 여백) — 유저 편집본 리듬
+  const out: string[] = [];
+  for (let i = 0; i < sentences.length; i += 2) {
+    out.push(sentences.slice(i, i + 2).map(breakSentence).join("<br>"));
+  }
+  return out;
 }
 export function splitLongParagraphs(html: string): string {
   return html.replace(/<(p|blockquote|li)(\s[^>]*)?>([\s\S]*?)<\/\1>/gi, (_m, tag, attr, inner) => {
@@ -205,6 +221,12 @@ export function gapBetween(prev: { tag: string; inner: string } | null, cur: { t
 }
 // ★엔진 마커 변환 — '---' 단독 문단=구분선, '> 문장'=인용 블록, 'Q.' 문단=강조(FAQ 가독)
 function styleMarkers(html: string): string {
+  let qNum = 0; // ★FAQ 질문 자동 번호(유저 교본: 1. 2. 3. 진행감)
+  html = html.replace(/<(h[2-4])(\s[^>]*)?>([\s\S]*?)<\/\1>/gi, (raw, tag, attr, inner) => {
+    const plain = String(inner).replace(/<[^>]+>/g, "").trim();
+    if (/자주 묻는 질문|FAQ/i.test(plain)) return `<${tag}${attr ?? ""}><b style="background-color:#fff3a8;">${plain}</b></${tag}>`; // 헤더 형광펜
+    return raw;
+  });
   return html.replace(/<p(\s[^>]*)?>([\s\S]*?)<\/p>/gi, (raw, attr, inner) => {
     const plain = String(inner).replace(/<[^>]+>/g, "").trim();
     if (/^-{3,}$/.test(plain)) return '<p style="text-align:center;color:#d5d9df;letter-spacing:2px;margin:8px 0">─────</p>';
@@ -212,7 +234,7 @@ function styleMarkers(html: string): string {
       const q = plain.replace(/^(?:&gt;|>)\s+/, "");
       return `<p style="text-align:center;font-size:17px;font-weight:700;color:#33363d;padding:4px 24px">“${q}”</p>`;
     }
-    if (/^Q[.．]\s?/.test(plain)) return `<p><b style="font-size:16px">${plain}</b></p>`;
+    if (/^Q[.．]\s?/.test(plain)) { qNum += 1; return `<p><b style="font-size:16px">${plain.replace(/^Q[.．]\s?/, `${qNum}. `)}</b></p>`; } // Q. → 번호 볼드
     return raw;
   });
 }
