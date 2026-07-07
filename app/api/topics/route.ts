@@ -306,6 +306,17 @@ export async function GET(req: Request) {
 
   // ★mode=short 조기 반환(실측: 504) — 트렌드만 원하는데 풀·게으른 수집·검색량 조회까지 돌면 60s 초과.
   if (tailMode === "short") {
+    // ★신선도 보증(실측: 지식iN 고수는 1시간 전 급상승에 진입 — 우리는 카드가 차 있으면 묵은 수확을 계속 서빙) —
+    //  마지막 수확이 2시간 넘었으면 응답과 무관하게 백그라운드 재수확(구글 트렌드 급상승·뉴스 최신분 흡수). 다음 탭에서 신선분.
+    try {
+      const { data: newest } = await pool.from("trend_topics").select("created_at").eq("category", sub).order("created_at", { ascending: false }).limit(1).maybeSingle();
+      const ageMs = newest?.created_at ? Date.now() - new Date(newest.created_at as string).getTime() : Infinity;
+      if (ageMs > 2 * 3600_000) {
+        const rl = await checkRateLimit(supabase, user.id, `trend_seed_${sub}`, 3, 900);
+        if (rl.ok) after(async () => { try { await refreshCategoryTrends(sub); } catch { /* ignore */ } });
+        if (debugMode) diag.freshKick = Math.round(ageMs / 60000);
+      }
+    } catch { /* ignore */ }
     const tc = await buildTrendCards(new Set());
     return NextResponse.json(debugMode ? { topics: tc, diag: { ...diag, mode: "short", trendCards: tc.length } } : { topics: tc });
   }
