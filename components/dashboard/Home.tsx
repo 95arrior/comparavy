@@ -129,8 +129,8 @@ export default function Home({
         const q = (mode: string) => fetch(`/api/topics?mode=${mode}${ex.length ? `&exclude=${encodeURIComponent(ex.join(","))}` : ""}`).then((r) => r.json()).catch(() => ({ topics: [] }));
         const [sh, lo] = await Promise.all([q("short"), q("long")]);
         if (!alive) return;
-        setBoardShort(sanitizeTopics(Array.isArray(sh.topics) ? sh.topics : []).slice(0, 5));
-        setBoardLong(sanitizeTopics(Array.isArray(lo.topics) ? lo.topics : []).slice(0, 5));
+        setBoardShort(sanitizeTopics(Array.isArray(sh.topics) ? sh.topics : [])); // 전체 보관 — 치우면 다음이 올라옴
+        setBoardLong(sanitizeTopics(Array.isArray(lo.topics) ? lo.topics : []));
       } catch { if (alive) { setBoardShort([]); setBoardLong([]); } }
     })();
     return () => { alive = false; };
@@ -460,33 +460,43 @@ export default function Home({
   }
 
   return (
-    <main className="mx-auto max-w-[760px] px-5 pb-16">
+    <main className="mx-auto max-w-[920px] px-5 pb-16">
       {/* 인사말 */}
       <button onClick={openBlogSheet} className="tk-seq-1 flex items-center gap-1 pt-6 text-[15px] font-semibold text-[color:var(--color-text-sub)]">
         {blogName}
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="opacity-50"><path d="m6 9 6 6 6-6" /></svg>
       </button>
 
-      {/* 상태 카드 — 큰 숫자(그라데이션) + 살아있는 게이지 */}
+      {/* ★2분할 헤더(유저 목업) — 좌: 우리가 함께한 여정 / 우: 오늘 기록 */}
       <button onClick={onGoPerformance} className="tk-seq-1 tk-cta tk-card-glow mt-3 block w-full rounded-[20px] p-6 text-left shadow-[0_2px_12px_-4px_rgba(29,117,247,0.12)]">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-[13px] text-[color:var(--color-text-weak)]">애드포스트 승인까지</p>
+        <div className="flex items-stretch gap-5">
+          <div className="min-w-0 flex-1">
+            <p className="text-[13px] text-[color:var(--color-text-weak)]">우리가 함께한 여정</p>
             <div className="mt-2 flex items-baseline gap-2">
-              <span className="tk-grad-text text-[36px] font-extrabold leading-none tracking-[-0.02em] tabular-nums">{info.finished ? "완주" : info.day > 0 ? `D-${info.day}` : "D-20"}</span>
-              <span className="text-[15px] font-semibold tabular-nums text-[color:var(--color-brand)]"><CountUp to={progressPercent(info)} duration={800} />%</span>
+              <span className="tk-grad-text text-[34px] font-extrabold leading-none tracking-[-0.02em] tabular-nums">{info.finished ? "완주" : info.day > 0 ? `D-${info.day}` : "D-20"}</span>
+              <span className="text-[14px] font-semibold tabular-nums text-[color:var(--color-brand)]"><CountUp to={progressPercent(info)} duration={800} />%</span>
+            </div>
+            <div className="tk-gauge mt-3 h-2 w-full rounded-full bg-[#E8EDF7]">
+              <div className="tk-gauge-fill" style={{ width: `${Math.max(progressPercent(info), 3)}%` }} />
+            </div>
+            <p className="mt-2.5 truncate text-[12px] text-[color:var(--color-text-sub)]">
+              {info.streak > 0 ? `${info.streak}일 연속 발행 · ` : ""}
+              {(() => { const d = Math.floor(credits / (GENERATE_COST * blogCount)); return d > 0 ? `크레딧 약 ${d > 999 ? "999+" : d}일치` : "크레딧 충전 필요"; })()}
+            </p>
+          </div>
+          <div className="w-px shrink-0 bg-[color:var(--color-line)]" />
+          <div className="w-[46%] shrink-0 sm:w-[38%]">
+            <p className="text-[13px] text-[color:var(--color-text-weak)]">오늘 기록</p>
+            <div className="mt-2 space-y-1.5">
+              {([["글 발행", info.publishedToday], ["이웃 미션", neighborDone], ["아침 체크인", checkinDone]] as const).map(([label, done]) => (
+                <p key={label} className="flex items-center gap-2 text-[12.5px]">
+                  <span className={`flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold ${done ? "tk-grad-cta text-white" : "bg-neutral-100 text-neutral-300"}`}>{done ? "✓" : ""}</span>
+                  <span className={done ? "font-semibold text-[color:var(--color-text)]" : "text-[color:var(--color-text-weak)]"}>{label}</span>
+                </p>
+              ))}
             </div>
           </div>
         </div>
-        <div className="tk-gauge mt-5 h-2.5 w-full rounded-full bg-[#E8EDF7]">
-          <div className="tk-gauge-fill" style={{ width: `${Math.max(progressPercent(info), 3)}%` }} />
-        </div>
-        <p className="mt-4 text-[13px] text-[color:var(--color-text-sub)]">
-          {info.streak > 0 ? `${info.streak}일 연속 발행 중 · ` : ""}
-          {yesterdayPublished(articles) ? "어제 발행 확인 · " : ""}
-          {(() => { const d = Math.floor(credits / (GENERATE_COST * blogCount)); return d > 0 ? `크레딧 약 ${d > 999 ? "999+" : d}일치` : "크레딧 충전이 필요해요"; })()}
-          {blogCount > 1 ? ` (블로그 ${blogCount}개 기준)` : ""}
-        </p>
       </button>
 
       {/* ★오늘 가이드 원카드(토스 이체식) — 화면엔 항상 '지금 할 행동 1개'. 스텝퍼·라인·루프를 전부 흡수. */}
@@ -513,7 +523,7 @@ export default function Home({
           : noCredit
           ? { emoji: "🔋", title: "크레딧이 다 떨어졌어요", sub: "충전하면 바로 다음 글을 쓸 수 있어요", cta: "충전하기", onGo: onOpenCredits }
           : pubCountToday === 0
-          ? { emoji: "✍️", title: "오늘 첫 글을 쓸 시간이에요", sub: first ? `추천: ${first.title.slice(0, 34)}${first.title.length > 34 ? "…" : ""}` : "아래 글감판에서 골라보세요", cta: first ? "추천 글감 바로 쓰기" : "글감 보러 가기", onGo: first ? goWrite : () => setRoutineSheet("topics"), alt: { label: "아래 글감판에서 직접 고를래요", onGo: () => { try { document.getElementById("topic-board")?.scrollIntoView({ behavior: "smooth" }); } catch { /* ignore */ } } } }
+          ? null // ★첫 글 상태 = 카드 없음(유저 확정: 보드에서 바로 고른다)
           : pubCountToday === 1
           ? { emoji: "💪", title: "오늘은 2편이 기본이에요", sub: `${nextSlotLabel} 한 편 더 — 시간을 나눠 올리면 노출 기회도 두 배`, cta: "2편째 글감 고르기", onGo: () => setRoutineSheet("topics") } // 선택지 없음 — 2편은 기본(유저 확정)
           : { emoji: "🔥", title: `오늘 ${Math.max(pubCountToday, 1)}편 — 기본 몫 끝!`, sub: "더 쓰면 그만큼 빨라져요. 무리는 금물", cta: "글 추가로 더 쓰기", onGo: () => setRoutineSheet("topics"), alt: { label: "이웃 미션 하기", onGo: () => setRoutineSheet("neighbor") } }; // 2편+ = 선택 2개(유저 확정)
@@ -615,7 +625,13 @@ export default function Home({
                     <div className="ateflo-skel mt-3 h-[52px] rounded-[10px]" />
                   </div>
                 )}
-                {(list ?? []).map((t) => <BoardCard key={t.keyword} topic={t} onWrite={() => onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb, { tag: t.tag })} />)}
+                {(list ?? []).slice(0, 5).map((t) => <BoardCard key={t.keyword} topic={t} onWrite={() => onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb, { tag: t.tag })} onDismiss={() => {
+                  const nd = [...dismissedRef.current, t.keyword];
+                  dismissedRef.current = nd; setDismissed(nd);
+                  try { localStorage.setItem(todayKey, JSON.stringify(nd)); } catch { /* ignore */ }
+                  const setter = mode === "short" ? setBoardShort : setBoardLong;
+                  setter((prev) => (prev ?? []).filter((x) => x.keyword !== t.keyword));
+                }} />)}
               </div>
             </div>
           ))}
@@ -806,20 +822,20 @@ function TopicRow({ topic, onClick, onSwap, swapping }: {
 }
 
 // ★보드 카드(컴팩트) — 트렌드: ⏳수명 타이머 + 📰근거(뉴스 헤드라인/실검색 확인)
-function BoardCard({ topic, onWrite }: { topic: Topic; onWrite: () => void }) {
+function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () => void; onDismiss?: () => void }) {
   const isTrend = topic.tag === "trend" || topic.tag === "issue" || topic.tag === "followup";
   const [tick, setTick] = useState(() => Date.now());
   useEffect(() => {
     if (!topic.expiresAt) return;
-    const t = setInterval(() => setTick(Date.now()), 60_000);
+    const t = setInterval(() => setTick(Date.now()), 1000); // ★초 단위 실시간(유저 확정)
     return () => clearInterval(t);
   }, [topic.expiresAt]);
   const life = (() => {
     if (!isTrend || !topic.expiresAt) return null;
     const ms = new Date(topic.expiresAt).getTime() - tick;
     if (ms <= 0) return "곧 교체";
-    const h = Math.floor(ms / 3600_000), m = Math.floor((ms % 3600_000) / 60_000);
-    return h > 0 ? `${h}시간 ${m}분` : `${m}분`;
+    const h = Math.floor(ms / 3600_000), m = Math.floor((ms % 3600_000) / 60_000), sec = Math.floor((ms % 60_000) / 1000);
+    return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}` : `${m}:${String(sec).padStart(2, "0")}`;
   })();
   // ★근거 — 사실 기반 설득(실측 버그: 무관 헤드라인 3연속): 카드 키워드와 겹치는 헤드라인만, 없으면 정직한 일반 근거
   const evidence = (() => {
@@ -839,6 +855,7 @@ function BoardCard({ topic, onWrite }: { topic: Topic; onWrite: () => void }) {
   return (
     <button onClick={onWrite} className="at-press rounded-[16px] bg-white p-4 text-left shadow-[0_1px_3px_rgba(0,0,0,0.05)] tk-tr hover:shadow-[0_4px_14px_-6px_rgba(29,117,247,0.18)]">
       <div className="flex items-center gap-1">
+        {onDismiss && <span role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); onDismiss(); }} className="order-last ml-auto flex h-6 w-6 items-center justify-center rounded-full text-neutral-300 transition hover:bg-[#F7F8FA] hover:text-neutral-500" aria-label="다른 글감으로 교체">↻</span>}
         {isTrend
           ? <span className="rounded-full bg-[#FFF1F0] px-2 py-0.5 text-[10.5px] font-bold text-[#F04452]">실시간 급상승</span>
           : <span className="rounded-full bg-[#EFF6FF] px-2 py-0.5 text-[10.5px] font-bold text-[#1D75F7]">안정 수요</span>}
