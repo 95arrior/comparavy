@@ -301,7 +301,11 @@ function applySizing(html: string): string {
 
 /* ── 형광펜·해시태그 ── */
 function markToBold(html: string): string {
-  return html.replace(/<mark>([\s\S]*?)<\/mark>/g, '<b style="background-color:#fff3a8;">$1</b>');
+  // ★형광펜 문장은 단독 줄(유저 교본: 뒤 문장이 붙으면 강조가 죽는다) — mark 앞뒤에 이어지는 텍스트가 있으면 <br>로 분리
+  return html
+    .replace(/([^>\s])\s*<mark>/g, "$1<br><mark>")
+    .replace(/<\/mark>\s*([^<\s])/g, "</mark><br>$1")
+    .replace(/<mark>([\s\S]*?)<\/mark>/g, '<b style="background-color:#fff3a8;">$1</b>');
 }
 function hashtagGroups(tags?: string[]): string[] {
   const list = (tags ?? []).map((t) => String(t).trim().replace(/^#/, "")).filter(Boolean).map((t) => `#${t}`);
