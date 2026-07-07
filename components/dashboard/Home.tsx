@@ -136,6 +136,24 @@ export default function Home({
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profileKey]);
+  // ★빈 보드 자동 폴링(실측: 연타 치우기 → 재고 소진 → 5분 고착) — 백그라운드 수확이 끝나면 자동으로 나타난다
+  useEffect(() => {
+    if (boardShort === null || boardShort.length > 0) return;
+    let tries = 0;
+    const t = setInterval(async () => {
+      tries += 1;
+      if (tries > 8) { clearInterval(t); return; }
+      try {
+        const ex = [...new Set([...dismissedRef.current, ...todayKeywords(articles)])];
+        const r = await fetch(`/api/topics?mode=short${ex.length ? `&exclude=${encodeURIComponent(ex.join(","))}` : ""}`);
+        const d = await r.json();
+        const got = sanitizeTopics(Array.isArray(d.topics) ? d.topics : []).filter((g) => !dismissedRef.current.includes(g.keyword));
+        if (got.length > 0) { setBoardShort(got); clearInterval(t); }
+      } catch { /* 다음 틱 */ }
+    }, 30_000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boardShort === null || boardShort.length === 0]);
   // ★?fresh=1 — 글감만 리셋(콘솔 불필요, 여정 테스트용). 발행·체크인·진행 데이터는 무관.
   //  useState 초기화보다 먼저 동기 실행돼야 dismissed·캐시 초기값에 반영된다.
   if (typeof window !== "undefined" && !freshDoneRef && new URLSearchParams(window.location.search).has("fresh")) {
@@ -623,7 +641,7 @@ export default function Home({
                 {list === null && [0, 1, 2].map((i) => <div key={i} className="ateflo-skel h-[86px] rounded-[14px]" />)}
                 {list !== null && list.length === 0 && (
                   <div className="rounded-[14px] bg-white px-3 py-5 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
-                    <p className="flex items-center justify-center gap-1.5 text-[12px] font-bold text-[#1D75F7]"><span className="tk-wand" aria-hidden>✦</span>{mode === "short" ? "실시간 이슈를 수확하고 있어요…" : "글감을 채우고 있어요…"}</p>
+                    <p className="flex items-center justify-center gap-1.5 text-[12px] font-bold text-[#1D75F7]"><span className="tk-wand" aria-hidden>✦</span>{mode === "short" ? "실시간 이슈를 수확하고 있어요 — 끝나면 여기 자동으로 나타나요" : "글감을 채우고 있어요…"}</p>
                     <div className="ateflo-skel mt-3 h-[52px] rounded-[10px]" />
                   </div>
                 )}
