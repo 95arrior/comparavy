@@ -144,7 +144,7 @@ function splitInner(inner: string): string[] {
 export function splitLongParagraphs(html: string): string {
   return html.replace(/<(p|blockquote|li)(\s[^>]*)?>([\s\S]*?)<\/\1>/gi, (_m, tag, attr, inner) => {
     const chunks = splitInner(inner);
-    if (chunks.length <= 1) return `<${tag}${attr ?? ""}>${inner}</${tag}>`;
+    if (chunks.length <= 1) return `<${tag}${attr ?? ""}>${chunks[0] ?? inner}</${tag}>`; // ★가공본(절 개행 <br>) 보존 — 원문 반환이 개행을 버리고 있었음
     return chunks.map((c) => `<${tag}${attr ?? ""}>${c}</${tag}>`).join("");
   });
 }
