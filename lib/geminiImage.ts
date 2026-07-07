@@ -118,11 +118,11 @@ export function buildThumbBgPrompt(bgStyleHint: string, paletteHint: string, see
 export function buildThumbPhotoBgPrompt(topic: string, seed: number, center = false): string {
   const tone = PHOTO_TONES[seed % PHOTO_TONES.length];
   return [
-    `Realistic lifestyle photograph representing this topic (understand only — never render as text): "${topic.trim()}". THUMBNAIL DRAMA: this image must stop a scrolling thumb — use one emotionally charged moment or striking composition (strong subject against soft background, dramatic natural light, tension or anticipation in the scene), editorial cover quality — NOT a calm generic stock photo.`,
+    `Viral Korean YouTube-thumbnail style photograph for this topic (understand only — never render as text): "${topic.trim()}". ★ALL people must be KOREAN (East Asian Korean features, Korean styling) — never Western. Faces and big expressions are WELCOME here (this is the one image type where faces sell the click). EXAGGERATED cinematic staging that stops a scrolling thumb: vivid saturated colors, dramatic studio-quality lighting, larger-than-life emotion.`,
     center
       ? `Subjects arranged toward the edges/corners; the CENTER of the frame must stay calm and low-detail (soft bokeh, plain surface, gentle gradient of the scene) — large Korean text will be overlaid dead-center later. Slightly dark or muted overall so white/graphic text pops.`
       : `Main subject small and placed in the LOWER two-thirds; the TOP 35% must be a calm, low-detail area (sky, wall, soft bokeh) for text overlay later.`,
-    `${tone}, muted and calm, shallow depth of field, premium magazine quality. Square 1:1 composition.`,
+    `${tone}, vivid and punchy, crisp focus on faces/subject, glossy commercial quality. Square 1:1 composition.`,
     "ABSOLUTELY NO text of any kind: no letters, numbers, Korean characters, signs, labels, captions, watermarks, or logos anywhere.",
   ].join(" ");
 }
@@ -196,7 +196,7 @@ export async function generateThumbBackground(bgStyleHint: string, paletteHint: 
   let prompt = style === "photo" && topic ? buildThumbPhotoBgPrompt(topic, seed, opts?.centerText === true) : buildThumbBgPrompt(bgStyleHint, paletteHint, seed, topic);
   // ★카피-배경 감정 동기화(실측: '900만 원 놓치고 있었네요' 아래 웃는 커플 — 이미지가 카피와 따로 놀면 저품질)
   if (opts?.copyText?.trim()) {
-    prompt += ` CRITICAL EMOTIONAL SYNC: the Korean copy overlaid on this image reads "${opts.copyText.trim()}" (understand only — never render it). TWO sync rules: (1) SUBJECT — the hero of the frame must be the concrete OBJECT the copy talks about (money missed in a pension/savings account → a bankbook, account passbook or finance app moment on a desk; a car recall → the car; NOT generic people chatting in a cafe). People may appear only as hands or a tense glance supporting that object. (2) EMOTION — loss/warning copy → serious, tense mood, no smiling; deadline → hurried focused moment; benefit → quiet anticipation. A cheerful lifestyle scene that ignores the copy subject is a failed image.`;
+    prompt += ` CRITICAL EMOTIONAL SYNC: the Korean copy overlaid on this image reads "${opts.copyText.trim()}" (understand only — never render it). TWO sync rules (viral thumbnail grammar): (1) SUBJECT — stage the concrete thing the copy talks about, exaggerated: money/benefit copy → stylized Korean banknotes and gold coins RAINING around the people, arms raised; a car topic → the car dramatically lit. (2) EMOTION — benefit/money copy → EXPLOSIVE joy (huge smiles, surprised delight, celebratory gestures); loss/warning copy → shocked wide-eyed disbelief (hands on face, dramatic gasp — not calm sadness); deadline → urgent alarm. Emotions must be theatrical like a viral YouTube thumbnail — subtle understated scenes do not get clicks.`;
   }
   return callImage(prompt, "1:1");
 }
