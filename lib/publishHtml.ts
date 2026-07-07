@@ -137,7 +137,7 @@ function breakSentence(sen: string): string {
   return parts.join("<br>");
 }
 function splitInner(inner: string): string[] {
-  if (visLen(inner) <= MOBILE_MAX_CHARS && !/(?<=[?!])\s|(?<=[^\d]\.)\s/.test(inner.replace(/<[^>]+>/g, ""))) return [inner];
+  if (visLen(inner) <= MOBILE_MAX_CHARS && !/(?<=[?!])\s|(?<=[^\d]\.)\s/.test(inner.replace(/<[^>]+>/g, ""))) return [breakSentence(inner)]; // ★단문 문단도 절 개행은 적용(실측: 한 문장 문단이 통줄로 남음)
   const sentences = mergeUnbalanced(inner.split(/(?:<br\s*\/?>)|(?<=[?!])\s+|(?<=[^\d]\.)\s+/g).map((x) => x.trim()).filter(Boolean));
   if (sentences.length <= 1) return [breakSentence(inner)];
   // 2문장씩 한 문단(그룹 안은 <br> 밀착·그룹 사이만 여백) — 유저 편집본 리듬
