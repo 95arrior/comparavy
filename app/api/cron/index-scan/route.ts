@@ -31,7 +31,7 @@ export async function GET(request: Request) {
   const { data: rows } = await admin
     .from("articles")
     .select("id, user_id, title, indexed_status, indexed_at")
-    .eq("status", "published")
+    .in("status", ["verified", "published"]) // ★verified가 주력(published는 레거시) — 색인 검사 누락 수리
     .gte("created_at", since30)
     .or(`indexed_at.is.null,indexed_at.lt.${d7},and(indexed_status.eq.pending,indexed_at.lt.${h20})`)
     .order("indexed_at", { ascending: true, nullsFirst: true })

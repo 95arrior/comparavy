@@ -71,7 +71,7 @@ export default function ArticleList({ pubStampKey,
   // ★색인 상태 — 이제 크론이 하루 1번 검사해 DB(article.indexed_status)에 저장. 화면은 저장값만 읽는다.
   //  (유저가 열 때마다 네이버 검색을 부르던 방식 폐기 → 1만 명 쿼터 문제 해소.)
   const idxLabel = (a: Article): { text: string; cls: string } | null => {
-    if (a.status !== "published") return null;
+    if (a.status !== "published" && a.status !== "verified") return null; // ★verified 포함(주력 상태 — 라벨 누락 수리)
     const st = a.indexed_status;
     if (st === "indexed") return { text: "검색 노출 중", cls: "text-emerald-600" };
     const hours = (Date.now() - new Date(a.created_at).getTime()) / 3600_000;
