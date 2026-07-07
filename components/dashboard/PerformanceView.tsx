@@ -269,19 +269,21 @@ export default function PerformanceView({
         <PathDetail p={open} onBack={() => setOpenIdx(null)} />
       ) : (
         <>
-          <Fold title="수익 기록" sub="아침 체크인의 숫자가 여기 쌓여요" storageKey="ateflo_fold_rev">
-            <RevenueDash publishedCount={stats.pub} articles={articles} />
-          </Fold>
-          <Fold title="수익화 사다리" sub={`지금 단계: ${paths.find((x) => x.status === "now")?.label ?? paths[0].label}`} storageKey="ateflo_fold_ladder">
-            <div className="px-4 pb-2">
+          <RevenueDash publishedCount={stats.pub} articles={articles} />
+          <div className="rounded-2xl at-glass p-5">
+            <p className="text-[15px] font-bold text-neutral-900">수익화 사다리</p>
+            <div className="mt-1">
               {paths.map((p, i) => <PathRow key={p.label} p={p} first={i === 0} onOpen={() => setOpenIdx(i)} />)}
-              <p className="mt-3 text-[12px] font-bold text-neutral-400">그 밖의 채널</p>
+            </div>
+          </div>
+          <div className="rounded-2xl at-glass p-5">
+            <p className="text-[15px] font-bold text-neutral-900">그 밖의 채널</p>
+            <p className="mt-0.5 text-[12px] text-neutral-400">사다리 밖 외부 제휴 — 필요할 때 선택으로</p>
+            <div className="mt-1">
               {otherChannels.map((p, i) => <PathRow key={p.label} p={p} first={i === 0} onOpen={() => setOpenIdx(paths.length + i)} />)}
             </div>
-          </Fold>
-          <Fold title="어느 정도가 보통일까" sub="기대 범위 — 조급함 방지용" storageKey="ateflo_fold_expect">
-            <ExpectationCard pub={stats.pub} />
-          </Fold>
+          </div>
+          <ExpectationCard pub={stats.pub} />
         </>
       )}
     </div>
