@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IMAGE_COST } from "@/lib/creditPacks";
 
 // ★썸네일 메이커(유저 요청) — 문구(추천 클릭/직접 입력) + 배경색 + 오브젝트 톤 + 3D/심플 배경 → 원하는 슬롯에 배치.
@@ -44,6 +44,7 @@ export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots
   }, [fontKey]);
   const setFont = (f: string) => { setFontRaw(f); try { localStorage.setItem(fontKey, f); } catch { /* ignore */ } }; // ★한 번 고르면 이 블로그 고정(실측: 앨범뷰 폰트 뒤죽박죽)
   const [busy, setBusy] = useState(false);
+  const retryRef = useRef<{ copy: string; n: number }>({ copy: "", n: 0 });
   const [preview, setPreview] = useState<string | null>(initialPreview ?? null);
   const [err, setErr] = useState<string | null>(null);
   const [placed, setPlaced] = useState<number | null>(null);
@@ -62,7 +63,7 @@ export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots
     try {
       const r = await fetch("/api/images/generate", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ thumbMaker: true, mainCopy: text.trim(), paletteName: palette, wash: TONES.find((t) => t.key === tone)?.wash ?? 0.35, aiBg: bgKind !== "plain", bgStyle: bgKind === "toss" ? "toss" : "photo", articleId, fontName: font, title: articleTitle, brandName }),
+        body: JSON.stringify({ thumbMaker: true, mainCopy: text.trim(), paletteName: palette, wash: TONES.find((t) => t.key === tone)?.wash ?? 0.35, aiBg: bgKind !== "plain", bgStyle: bgKind === "toss" ? "toss" : "photo", articleId, fontName: font, title: articleTitle, brandName, variant: (() => { if (retryRef.current.copy === text.trim()) { retryRef.current.n += 1; } else { retryRef.current = { copy: text.trim(), n: 0 }; } return retryRef.current.n; })() }),
       });
       const d = await r.json();
       if (!r.ok) { setErr(d.error ?? "만들지 못했어요"); if (typeof d.credits === "number") onCredits?.(d.credits); }

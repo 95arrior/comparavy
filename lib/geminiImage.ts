@@ -116,17 +116,27 @@ export function buildThumbBgPrompt(bgStyleHint: string, paletteHint: string, see
   ].join(" ");
 }
 /** 실사 배경(썸네일) — 주제 씬 사진. center=true면 중앙 저디테일(정중앙 텍스트용), 아니면 상단 여백형. */
-export function buildThumbPhotoBgPrompt(topic: string, seed: number, center = false): string {
+export function buildThumbPhotoBgPrompt(topic: string, seed: number, center = false, opts?: { copyText?: string; variant?: number }): string {
   const tone = PHOTO_TONES[seed % PHOTO_TONES.length];
+  const copy = opts?.copyText?.trim() ?? "";
+  const v = Math.max(0, opts?.variant ?? 0);
+  // ★장면 각도 로테이션(재생성 변주) — 같은 문구라도 다시 만들면 다른 장면으로 강제 전환
+  const angle = ["a close-up emotional moment (face or posture tells the story)", "a wider situational scene (the place and circumstance around the person)", "an object-metaphor scene (the situation told through objects, no people)"][v % 3];
+  const subjectRule = copy
+    ? `THE COPY IS THE SCRIPT (highest priority): the Korean copy overlaid on this image reads "${copy}" (understand only — never render it). Draw the exact SCENE this copy describes — the reader\'s own situation, not the topic\'s category symbol. If the copy\'s subject is a person (사람들·사장·~라면), the hero MUST be a KOREAN person living that moment (예: \'절세가 아니라 손실이 되는 사람들\' → a shop owner realizing a loss in front of a bill; \'모르면 매달 새는 돈\' → money slipping away unnoticed). Government buildings (국회의사당·청사) are FORBIDDEN unless the copy itself names an institution or a policy announcement. Variation directive for this attempt: stage it as ${angle} — do not repeat the previous attempt\'s scene type.`
+    : `Viral Korean YouTube-thumbnail photograph for this topic (understand only — never render as text): "${topic.trim()}". DEFAULT SUBJECT = the topic\'s most iconic dramatic object or scene. People only if the topic is about people — then KOREAN features.`;
+  const layout = center
+    ? `Subjects arranged toward the edges/corners; the CENTER of the frame stays calm and low-detail — large Korean text will be overlaid dead-center later.`
+    : `Main subject in the UPPER two-thirds; the BOTTOM third must stay calm and low-detail (soft surface, gentle falloff) — text overlay goes there.`;
   return [
-    `Viral Korean YouTube-thumbnail style photograph for this topic (understand only — never render as text): "${topic.trim()}". DEFAULT SUBJECT = the topic's most ICONIC dramatic object or scene, NOT people: investing/ETF → a glowing surging candlestick chart with an upward golden arrow and coins; real estate → an apartment tower looming; savings → a vault of stacked gold. Use people ONLY when the copy itself is about people (like 부부·엄마·직장인) — and then they must be KOREAN (East Asian Korean features) — never Western — with big expressive faces. EXAGGERATED cinematic staging that stops a scrolling thumb: vivid saturated colors, dramatic studio-quality lighting, larger-than-life emotion.`,
-    center
-      ? `Subjects arranged toward the edges/corners; the CENTER of the frame must stay calm and low-detail (soft bokeh, plain surface, gentle gradient of the scene) — large Korean text will be overlaid dead-center later. Slightly dark or muted overall so white/graphic text pops.`
-      : `Main subject small and placed in the LOWER two-thirds; the TOP 35% must be a calm, low-detail area (sky, wall, soft bokeh) for text overlay later.`,
-    `${tone}, vivid and punchy, crisp focus on faces/subject, glossy commercial quality. Square 1:1 composition.`,
-    "ABSOLUTELY NO text of any kind: no letters, numbers, Korean characters, signs, labels, captions, watermarks, or logos anywhere.",
+    subjectRule,
+    "EXAGGERATED cinematic staging that stops a scrolling thumb: vivid saturated colors, dramatic studio-quality lighting, larger-than-life emotion. Big expressions welcome when people appear.",
+    layout,
+    `${tone}, vivid and punchy, crisp focus on the subject, glossy commercial quality. Square 1:1 composition.`,
+    "ABSOLUTELY NO text of any kind: no letters, numbers, Korean characters, signs, labels, captions, watermarks, or logos anywhere. No real brand logos.",
   ].join(" ");
 }
+
 
 // ★프로바이더 스위치(유저 결정: GPT 품질 우위) — OPENAI_API_KEY 있으면 gpt-image-1, 없으면 Gemini 폴백.
 //  원가: gpt-image-1 medium 1024²≈$0.04(~60원) — IMAGE_COST 6cr(300~400원) 마진 유지. 실패 시 상호 폴백.
@@ -190,15 +200,11 @@ export async function generateBlogImage(slotDesc: string, articleTitle: string, 
 }
 
 /** 대표이미지 AI 배경 1장(1:1, base64) — 한글은 코드(satori)가 합성. 실패는 호출측이 코드 폴백. */
-export async function generateThumbBackground(bgStyleHint: string, paletteHint: string, userSeed?: string, topic?: string, opts?: { forceStyle?: "photo" | "toss"; centerText?: boolean; copyText?: string }): Promise<{ base64: string; mime: string; provider?: string }> {
+export async function generateThumbBackground(bgStyleHint: string, paletteHint: string, userSeed?: string, topic?: string, opts?: { forceStyle?: "photo" | "toss"; centerText?: boolean; copyText?: string; variant?: number }): Promise<{ base64: string; mime: string; provider?: string }> {
   const seed = (fnv((userSeed ?? "") + ":bg") + Math.floor(Math.random() * 1e9)) >>> 0;
   // ★스타일: 강제 지정(썸네일 메이커=실사 기본) > 주제 자동(구체 씬=실사)
   const style = opts?.forceStyle ?? (topic ? pickImageStyle(topic, seed) : "toss");
-  let prompt = style === "photo" && topic ? buildThumbPhotoBgPrompt(topic, seed, opts?.centerText === true) : buildThumbBgPrompt(bgStyleHint, paletteHint, seed, topic);
-  // ★카피-배경 감정 동기화(실측: '900만 원 놓치고 있었네요' 아래 웃는 커플 — 이미지가 카피와 따로 놀면 저품질)
-  if (opts?.copyText?.trim()) {
-    prompt += ` CRITICAL EMOTIONAL SYNC: the Korean copy overlaid on this image reads "${opts.copyText.trim()}" (understand only — never render it). TWO sync rules (viral grammar — OBEY the DEFAULT SUBJECT rule above, do NOT add people just to show emotion): (1) SUBJECT — stage the concrete ICON the copy talks about, exaggerated: government budget/추경/정책 → the National Assembly dome or a mountain of gold coins over a state building; money/benefit → stylized Korean banknotes and gold coins bursting around the ICONIC OBJECT; a car topic → the car dramatically lit. (2) EMOTION — express it through STAGING AND LIGHT, with or without people: joy/benefit → golden triumphant light, rising motion, coin burst; loss/warning → harsh dramatic contrast, storm mood, cracks; deadline → red urgent glow, clock motif. Theatrical like a viral YouTube thumbnail — subtle scenes do not get clicks.`;
-  }
+  let prompt = style === "photo" && topic ? buildThumbPhotoBgPrompt(topic, seed, opts?.centerText === true, { copyText: opts?.copyText, variant: opts?.variant }) : buildThumbBgPrompt(bgStyleHint, paletteHint, seed, topic);
   return callImage(prompt, "1:1");
 }
 
