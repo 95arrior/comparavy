@@ -28,6 +28,26 @@ function localDayStr(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+// ★블로그 스코프 마이그레이션(1회성 — 구키 발견 시에만 동작하고 스스로 소멸)
+//  원칙: 목록(누적형)=활성 블로그로 이관, 카운터·낙관 플래그(휘발형)=폐기(관대한 쪽 오류가 낫다).
+function migrateBlogScopeKeys(profileKey: string) {
+  try {
+    const day = localDayStr();
+    for (const name of ["dismissed", "heroskip"]) {
+      const oldK = `ateflo_${name}_${day}`;
+      const newK = `ateflo_${name}_${day}_${profileKey}`;
+      const oldRaw = localStorage.getItem(oldK);
+      if (oldRaw) {
+        const oldArr = JSON.parse(oldRaw) as string[];
+        const cur = JSON.parse(localStorage.getItem(newK) ?? "[]") as string[];
+        localStorage.setItem(newK, JSON.stringify([...new Set([...cur, ...oldArr])]));
+        localStorage.removeItem(oldK);
+      }
+    }
+    for (const k of [`ateflo_swaps_${day}`, `ateflo_heroswap_${day}`, `ateflo_pub_${day}`]) localStorage.removeItem(k);
+  } catch { /* ignore */ }
+}
+
 interface Topic { keyword: string; title: string; demandLabel: string; vol: number; comp: Comp; tag?: string; expiresAt?: string | null; blogTotal?: number | null; newsContext?: string; briefText?: string; titleSearch?: string; thumb?: { mainCopy: string; subCopy: string; badge: string } }
 
 // 소주제 군집 키(서버와 동일 규칙) — 교체 시 비슷한 소주제 중복 방지
@@ -88,8 +108,8 @@ export default function Home({
 }) {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [topicsLoading, setTopicsLoading] = useState(true);
-  const heroSwapKey = `ateflo_heroswap_${localDayStr()}`;
-  const heroSkipKey = `ateflo_heroskip_${localDayStr()}`;
+  const heroSwapKey = `ateflo_heroswap_${localDayStr()}_${profileKey ?? ""}`; // ★블로그 스코프(조사 D1)
+  const heroSkipKey = `ateflo_heroskip_${localDayStr()}_${profileKey ?? ""}`;
   const [heroSkipped, setHeroSkipped] = useState<string[]>(() => { try { const v = JSON.parse(localStorage.getItem(heroSkipKey) ?? "[]"); return Array.isArray(v) ? v : []; } catch { return []; } });
   const [heroSwapsUsed, setHeroSwapsUsed] = useState<number>(() => { try { return Number(localStorage.getItem(heroSwapKey) ?? "0") || 0; } catch { return 0; } });
   const HERO_SWAP_MAX = 3;
@@ -189,7 +209,7 @@ export default function Home({
   }, [moreOpen]);
 
   // 교체 무제한(풀 조회라 원가 0). 교체한 글감은 그날 다시 안 나옴(기기에 기억).
-  const todayKey = `ateflo_dismissed_${localDayStr()}`;
+  const todayKey = `ateflo_dismissed_${localDayStr()}_${profileKey ?? ""}`;
   const [dismissed, setDismissed] = useState<string[]>(() => {
     try { const raw = typeof window !== "undefined" ? localStorage.getItem(todayKey) : null; return raw ? JSON.parse(raw) : []; } catch { return []; }
   });
@@ -203,7 +223,7 @@ export default function Home({
   const topicsCacheKey = () => `ateflo_topics_v30_${todayDate}_${profileKey ?? ""}_normal`;
 
   const SWAP_LIMIT = 12; // 하루 교체 상한 — 풀 소진·API 낭비 방지(유저 요청)
-  const swapCountKey = `ateflo_swaps_${localDayStr()}`;
+  const swapCountKey = `ateflo_swaps_${localDayStr()}_${profileKey ?? ""}`;
   const [swapCount, setSwapCount] = useState<number>(() => {
     try { return Number(localStorage.getItem(swapCountKey) ?? "0") || 0; } catch { return 0; }
   });
@@ -289,14 +309,15 @@ export default function Home({
   const infoRaw = courseInfo(articles);
   // ★발행 후 삭제 케이스 — 당일 미션 유지(이미 수행): 로컬 발행 플래그 병합. 게이지 차감은 별도 규칙.
   let pubFlag = false;
-  try { pubFlag = typeof window !== "undefined" && localStorage.getItem(localPubFlagKey()) === "1"; } catch { /* ignore */ }
+  try { pubFlag = typeof window !== "undefined" && localStorage.getItem(localPubFlagKey(new Date(), profileKey)) === "1"; } catch { /* ignore */ }
   const info = pubFlag && !infoRaw.publishedToday ? { ...infoRaw, publishedToday: true } : infoRaw;
   // (pubCountToday 정합은 guideKind 계산 직전에서 — 어제 생성·오늘 발행 글이 생성일 기준 카운트에서 빠지는 실측 케이스)
   // ★3~4편 루프 재료 — 오늘 발행 수(초안 제외), 골든타임(발행 확정 후 30분), 다음 추천 시간대
   const pubCountRaw = articles.filter((a) => (a.status === "copied" || a.status === "verified" || a.status === "published" || a.status === "pending_verify") && new Date(a.created_at).toDateString() === new Date().toDateString()).length;
   const pubCountToday = Math.max(pubCountRaw, 0); // 아래에서 info.publishedToday와 정합(어제 생성→오늘 발행 케이스)
   const [hydrated, setHydrated] = useState(false); // ★로컬 기억 읽기 전 카드 확정 금지(실측: '오늘의 글' 잔상 깜빡)
-  useEffect(() => setHydrated(true), []);
+  useEffect(() => { setHydrated(true); if (profileKey) migrateBlogScopeKeys(profileKey); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [nowTick, setNowTick] = useState(() => Date.now());
   const prevSheetRef = useRef<string | null>(null);
   useEffect(() => { const t = setInterval(() => setNowTick(Date.now()), 60_000); return () => clearInterval(t); }, []);

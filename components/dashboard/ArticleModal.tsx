@@ -111,7 +111,7 @@ export default function ArticleModal({ pubStampKey, blogName,
         void fetch("/api/verify-post", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ articleId: article.id, blogId }) })
           .then((r) => r.json()).then((d) => { if (d.state === "verified") setToast("네이버 발행 확인됐어요"); }).catch(() => { /* 크론 몫 */ });
         onUpdated({ ...article, title, body_html: bodyHtml, status: "pending_verify" });
-        try { const { localPubFlagKey } = await import("@/lib/course"); localStorage.setItem(localPubFlagKey(), "1"); } catch { /* ignore */ }
+        try { const { localPubFlagKey } = await import("@/lib/course"); localStorage.setItem(localPubFlagKey(new Date(), pubStampKey), "1"); } catch { /* ignore */ }
         setNaverOpen(false);
         setToast("발행 완료로 표시했어요");
         onPublished?.();

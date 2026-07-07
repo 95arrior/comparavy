@@ -123,6 +123,6 @@ export function todayKeywords<A extends { keyword?: string | null; status: strin
 
 // ★발행 후 삭제 케이스(규칙): 당일 미션은 유지(이미 수행) — 클라 로컬 플래그(ateflo_pub_{day})가 담당.
 //  게이지 카운트 차감은 RSS 삭제 감지/수동 차감 규칙(별도 설계)이 처리. 홈에 별도 표시 없음.
-export function localPubFlagKey(now: Date = new Date()): string {
-  return `ateflo_pub_${dayKey(now)}`;
+export function localPubFlagKey(now: Date = new Date(), blogKey?: string | null): string {
+  return `ateflo_pub_${dayKey(now)}_${blogKey ?? ""}`; // ★블로그 스코프(조사 D1 — 날짜만으로 키 금지)
 }
