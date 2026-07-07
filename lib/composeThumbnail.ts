@@ -36,7 +36,7 @@ export async function composeThumbnail(opts: {
     //  (press는 하단 다크 그라데이션+대형 카피가 배경을 덮어 배경 소글자 리스크가 낮다. Gemini는 텍스트 금지 준수율도 높음)
     try {
       const paletteHint = `${identity.palette.name.replace(/-/g, " ")}`;
-      const bg = await generateThumbBackground(identity.bgStyle, paletteHint, opts.userId, opts.topicHint, { forceStyle: opts.bgStyle, centerText: opts.centerCopy });
+      const bg = await generateThumbBackground(identity.bgStyle, paletteHint, opts.userId, opts.topicHint, { forceStyle: opts.bgStyle, centerText: opts.centerCopy, copyText: opts.thumb.mainCopy });
       if (opts.press) { bgDataUrl = `data:${bg.mime};base64,${bg.base64}`; usedAiBackground = true; }
       else {
         const v = await verifyImage(bg.base64, bg.mime, "abstract background", { bgOnly: true, userId: opts.userId });

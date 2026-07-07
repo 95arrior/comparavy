@@ -186,11 +186,15 @@ export async function generateBlogImage(slotDesc: string, articleTitle: string, 
 }
 
 /** 대표이미지 AI 배경 1장(1:1, base64) — 한글은 코드(satori)가 합성. 실패는 호출측이 코드 폴백. */
-export async function generateThumbBackground(bgStyleHint: string, paletteHint: string, userSeed?: string, topic?: string, opts?: { forceStyle?: "photo" | "toss"; centerText?: boolean }): Promise<{ base64: string; mime: string }> {
+export async function generateThumbBackground(bgStyleHint: string, paletteHint: string, userSeed?: string, topic?: string, opts?: { forceStyle?: "photo" | "toss"; centerText?: boolean; copyText?: string }): Promise<{ base64: string; mime: string; provider?: string }> {
   const seed = (fnv((userSeed ?? "") + ":bg") + Math.floor(Math.random() * 1e9)) >>> 0;
   // ★스타일: 강제 지정(썸네일 메이커=실사 기본) > 주제 자동(구체 씬=실사)
   const style = opts?.forceStyle ?? (topic ? pickImageStyle(topic, seed) : "toss");
-  const prompt = style === "photo" && topic ? buildThumbPhotoBgPrompt(topic, seed, opts?.centerText === true) : buildThumbBgPrompt(bgStyleHint, paletteHint, seed, topic);
+  let prompt = style === "photo" && topic ? buildThumbPhotoBgPrompt(topic, seed, opts?.centerText === true) : buildThumbBgPrompt(bgStyleHint, paletteHint, seed, topic);
+  // ★카피-배경 감정 동기화(실측: '900만 원 놓치고 있었네요' 아래 웃는 커플 — 이미지가 카피와 따로 놀면 저품질)
+  if (opts?.copyText?.trim()) {
+    prompt += ` CRITICAL EMOTIONAL SYNC: the Korean copy overlaid on this image reads "${opts.copyText.trim()}" (understand only — never render it). The scene MUST match its emotion: loss/warning copy → concerned or serious expression, tense mood, no smiling; deadline/urgency → hurried focused moment; benefit/opportunity → hopeful anticipation (not celebration). A cheerful smiling scene under a warning copy is a failed image.`;
+  }
   return callImage(prompt, "1:1");
 }
 
