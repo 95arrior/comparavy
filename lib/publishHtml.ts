@@ -113,9 +113,10 @@ function mergeUnbalanced(parts: string[]): string[] {
 function breakSentence(sen: string): string {
   if (visLen(sen) <= 44) return sen;
   const cands: number[] = [];
-  const re = /(?:(?<=[,，、])\s*)|(?:(?<=(?:하고|하며|지만|는데|으니|니까|어서|아서|려면|다면|면서))\s+)/g;
+  // ★사파리 호환(실측: '화면을 불러오지 못했어요' 크래시) — 가변 길이 lookbehind는 Safari가 파싱 자체를 거부. 캡처 방식으로.
+  const re = /([,，、]|하고|하며|지만|는데|으니|니까|어서|아서|려면|다면|면서)\s+/g;
   let m: RegExpExecArray | null;
-  while ((m = re.exec(sen))) cands.push(m.index + (m[0] ?? "").length);
+  while ((m = re.exec(sen))) cands.push(m.index + m[1].length + 0 + (m[0].length - m[1].length));
   if (!cands.length) return sen;
   const mid = visLen(sen) / 2;
   let best = -1, bestDist = Infinity;
