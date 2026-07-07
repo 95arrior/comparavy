@@ -895,8 +895,7 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
     const kwToks = topic.keyword.split(/\s+/).filter((t) => t.length >= 2);
     const hit = lines.find((l) => kwToks.some((t) => l.includes(t)));
     if (hit) { const m = hit.match(/\]\s*([^:]{6,60})/); if (m) return `근거 뉴스: ${m[1].trim().slice(0, 24)}…`; }
-    if (lines.length > 0) return `오늘 관련 보도 ${lines.length}건 · 경쟁 글 적을 때 선점`;
-    return "오늘 수확된 실시간 이슈 · 선점 기회";
+    return "오늘 수확된 실시간 이슈 · 신선할 때가 기회"; // ★가짜 정밀함 제거(유저 원칙: UI 숫자도 근거 필수) — 배치 공통 뭉치 건수·미실측 경쟁 주장 폐기
   })();
   const pubAdvice = (() => {
     const h = new Date().getHours();
