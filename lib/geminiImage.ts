@@ -132,13 +132,17 @@ async function callOpenAIImage(prompt: string, aspectRatio: "16:9" | "1:1"): Pro
   throw new Error("이미지가 생성되지 않았어요.");
 }
 
-async function callImage(prompt: string, aspectRatio: "16:9" | "1:1"): Promise<{ base64: string; mime: string }> {
+async function callImage(prompt: string, aspectRatio: "16:9" | "1:1"): Promise<{ base64: string; mime: string; provider: string }> {
   const prefer = process.env.IMAGE_PROVIDER === "gemini" ? "gemini" : process.env.OPENAI_API_KEY ? "openai" : "gemini";
   if (prefer === "openai") {
-    try { return await callOpenAIImage(prompt, aspectRatio); }
-    catch (e) { if (process.env.GEMINI_API_KEY && !/QUOTA/.test(String(e))) return callGemini(prompt, aspectRatio); throw e; }
+    try { return { ...(await callOpenAIImage(prompt, aspectRatio)), provider: "gpt-image-1" }; }
+    catch (e) {
+      console.error("[image] openai 실패 → gemini 폴백:", String(e).slice(0, 300)); // 조용한 폴백 금지 — 원인 로그
+      if (process.env.GEMINI_API_KEY && !/QUOTA/.test(String(e))) return { ...(await callGemini(prompt, aspectRatio)), provider: "gemini(폴백)" };
+      throw e;
+    }
   }
-  return callGemini(prompt, aspectRatio);
+  return { ...(await callGemini(prompt, aspectRatio)), provider: "gemini" };
 }
 
 async function callGemini(prompt: string, aspectRatio: "16:9" | "1:1"): Promise<{ base64: string; mime: string }> {
@@ -161,7 +165,7 @@ async function callGemini(prompt: string, aspectRatio: "16:9" | "1:1"): Promise<
 }
 
 /** 본문 이미지 1장(실사, base64). userSeed로 계정 축 + 요청 난수 변주. 실패 시 throw. */
-export async function generateBlogImage(slotDesc: string, articleTitle: string, userSeed?: string, _opts?: { thumbnail?: boolean }): Promise<{ base64: string; mime: string }> {
+export async function generateBlogImage(slotDesc: string, articleTitle: string, userSeed?: string, _opts?: { thumbnail?: boolean }): Promise<{ base64: string; mime: string; provider?: string }> {
   // 장마다 변주 — 만 명이 써도, 한 명이 백 장을 만들어도 겹치지 않게.
   const seed = (fnv((userSeed ?? "") + ":") + Math.floor(Math.random() * 1e9)) >>> 0;
   return callImage(buildBodyPrompt(slotDesc, articleTitle, seed), "16:9");

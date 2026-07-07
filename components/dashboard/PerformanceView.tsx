@@ -3,6 +3,7 @@
 import GlassIcon, { type GlassTint } from "@/components/GlassIcon";
 
 import { useEffect, useMemo, useState } from "react";
+import { computeLevel } from "@/lib/level";
 import RevenueDash from "./RevenueDash";
 import ApprovalInput from "./ApprovalInput";
 import { isVerifiedStatus } from "@/lib/course";
@@ -252,6 +253,16 @@ export default function PerformanceView({
     <div className="space-y-3">
       {/* 표면 = 큰 숫자 + 지금 단계(D-day)만. 나머지는 접힘 디폴트(토스식 — 유저: 성과 페이지 복잡) */}
       <div className=""><AssetHero written={stats.written} streak={stats.streak} pub={stats.pub} onWrite={onWrite} /></div>
+      {(() => { // 레벨·다음 목표(홈에서 이사 — 홈 표면은 게이지+가이드만)
+        const lv = computeLevel({ published: stats.pub, adpostApproved: approved, blogCount: 1, hasWp: false });
+        return (
+          <div className="rounded-2xl at-glass px-5 py-4">
+            <p className="text-[12px] font-bold text-[#1D75F7]">Lv.{lv.level} {lv.name}</p>
+            <p className="mt-1 text-[13.5px] font-bold text-neutral-900">{lv.recTitle}</p>
+            <p className="mt-0.5 text-[12px] leading-relaxed text-neutral-400">{lv.recDesc}</p>
+          </div>
+        );
+      })()}
       {stats.pub >= 10 && <ApprovalInput blogKey={null} onChanged={() => { try { setApproved(localStorage.getItem("ateflo_adpost_approved") === "1"); } catch { /* ignore */ } }} />}
 
       {open ? (

@@ -197,6 +197,7 @@ export default function ArticleModal({
       if (typeof data.credits === "number") onCredits?.(data.credits);
       const finalUrl = data.url ?? data.dataUrl;
       setImgs((m) => ({ ...m, [i]: { url: finalUrl, busy: false, ai: true } })); // AI 생성 표시 — 발행 시 '참고 이미지' 캡션 자동
+      if (data.provider) setToast(`완성 — ${data.provider}`); // 프로바이더 확정용(안정되면 제거)
       // URL이면 기기 저장(재방문 유지 — dataUrl은 용량상 저장 안 함)
       if (data.url) {
         try {

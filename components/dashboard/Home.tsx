@@ -6,7 +6,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import TodayCard from "./TodayCard";
 import GlassIcon from "@/components/GlassIcon";
 import TipChip, { tipFor } from "@/components/TipChip";
-import ReassureLine from "./ReassureLine";
 import { computeLevel } from "@/lib/level";
 import CourseRing from "./CourseRing";
 import CheckinCard from "./CheckinCard";
@@ -536,29 +535,8 @@ export default function Home({
 
       {/* 스텝퍼 제거 — 오늘 가이드 원카드가 흡수(토스식 단일 행동) */}
 
-      {/* ★레벨 추천 — 시스템이 다음 행동을 말해준다(챌린지 코어). 생각 불필요. */}
-      {(() => {
-        let approved = false; try { approved = localStorage.getItem("ateflo_adpost_approved") === "1"; } catch { /* ignore */ }
-        const lv = computeLevel({ published: articles.filter((a) => a.status === "verified" || a.status === "published").length, adpostApproved: approved, blogCount, hasWp: false });
-        return (
-          <div className="tk-seq-3 tk-card-glow mt-6 rounded-[20px] p-5 shadow-[0_2px_12px_-4px_rgba(29,117,247,0.12)]">
-            <div className="flex items-center gap-2">
-              <span className="rounded-full tk-grad-cta px-2.5 py-1 text-[11.5px] font-bold text-white">Lv.{lv.level} {lv.name}</span>
-              {lv.next && <span className="min-w-0 flex-1 truncate text-[11.5px] text-[color:var(--color-text-weak)]">{lv.next}</span>}
-            </div>
-            <p className="mt-3 text-[15px] font-bold text-[color:var(--color-text)]">{lv.recTitle}</p>
-            <p className="mt-1 text-[12.5px] leading-relaxed text-[color:var(--color-text-sub)]">{lv.recDesc}</p>
-            {lv.recAction === "wordpress" && onAddBlog && (
-              <button onClick={() => onAddBlog("wordpress")} className="at-press tk-grad-cta mt-3 w-full rounded-[12px] py-3 text-[14px] font-bold text-white">워드프레스 시작하기</button>
-            )}
-            {lv.recAction === "checkin" && (
-              <button onClick={() => setRoutineSheet("checkin")} className="at-press mt-3 w-full rounded-[12px] bg-[#1D75F7]/[0.07] py-3 text-[14px] font-bold text-[#1D75F7]">아침 체크인 하기</button>
-            )}
-          </div>
-        );
-      })()}
+      {/* 레벨 추천 카드 — 성과 탭으로 이사(홈 표면 = 게이지+가이드 원카드, 토스 문법) */}
 
-      <ReassureLine className="tk-seq-3 mt-6" />
 
       {/* 전환 중 오버레이 — 부드러운 즉각 피드백 */}
       {switching && (

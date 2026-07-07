@@ -167,7 +167,7 @@ export async function POST(request: Request) {
         await supabase.from("articles").update({ images: merged }).eq("id", articleId).eq("user_id", user.id);
       } catch { /* 컬럼 미적용 — 기기 저장 폴백 유지 */ }
     }
-    return NextResponse.json({ ok: true, url, dataUrl: url ? undefined : `data:${img.mime};base64,${img.base64}`, credits: balance });
+    return NextResponse.json({ ok: true, url, dataUrl: url ? undefined : `data:${img.mime};base64,${img.base64}`, credits: balance, provider: (img as { provider?: string }).provider });
   } catch (e) {
     // 멱등 환불 — 같은 ref 재시도에도 1회만
     const refunded = await addCredits(user.id, IMAGE_COST, "refund_image", refundRef).catch(() => null);
