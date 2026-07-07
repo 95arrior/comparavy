@@ -621,7 +621,7 @@ export default function ArticleModal({ pubStampKey, blogName,
             const filled = Object.values(imgs).filter((v) => v.url).length;
             const empty = totalSlots - filled;
             if (empty <= 0) return null;
-            return <p className="mb-1.5 text-center text-[12px] font-semibold text-amber-600">이미지 {empty}자리가 비어 있어요 — 본문 복사에 [이미지 N — 여기에 삽입] 마커가 포함되니, 네이버에서 채우고 마커를 지워주세요</p>;
+            return <p className="mb-1.5 text-center text-[12px] font-semibold text-amber-600">이미지 {empty}자리가 비어 있어요 — 본문 복사에 [이미지·링크 카드 자리] 마커가 포함되니, 네이버에서 채우고 마커를 지워주세요</p>;
           })()}
           {!isWp && !lastThumb && <p className="mb-1.5 text-center text-[12px] font-semibold text-amber-600">썸네일 없이 발행하면 홈피드에서 그냥 스쳐가요 — 위에서 30초면 만들어요</p>}
           <button onClick={() => (isWp ? publishToWp() : setNaverOpen(true))} className={`w-full rounded-xl py-3.5 text-[15px] font-bold text-white transition active:scale-[0.99] ${isWp ? "tk-grad-cta" : "bg-[#03C75A]"}`}>

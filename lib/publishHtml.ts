@@ -250,9 +250,15 @@ function arrowChainToSteps(html: string): string {
 }
 
 function styleMarkers(html: string): string {
-  // ★내부링크 마커 — [관련글: URL | 제목] → 중앙 링크 문단(네이버가 URL을 링크카드로)
-  html = html.replace(/\[관련글:\s*(https?:[^\s|\]]+)\s*\|\s*([^\]]+)\]/g,
-    '<p style="text-align:center;font-size:14px">함께 보면 좋은 글<br>$2<br>$1</p>');
+  // ★내부링크 마커 — 하단 3층(유저 확정: 유저가 네이버 링크 카드로 직접 삽입 — 시스템은 그 직전까지 준비)
+  html = html.replace(/\[마무리관련글:\s*(https?:[^\s|\]]+)\s*\|\s*([^|\]]+)\|\s*([^\]]+)\]/g, (_m, url: string, _t: string, reason: string) => {
+    const clean = url.split("?")[0]; // 트래킹 파라미터 제거 — 원형만
+    return `<p style="text-align:center;font-size:15px;font-weight:700">함께 보면 좋은 글</p><p style="text-align:center;font-size:13.5px;color:#4e5968">${reason.trim()}</p><p style="text-align:center;background-color:#f5f6f8;padding:10px 8px;font-size:13px;color:#8b95a1">[링크 카드 자리 — 아래 주소를 링크 버튼에 붙여넣으세요]</p><p style="text-align:center;font-size:13px">${clean}</p>`;
+  });
+  // 중간 마커 — 기존대로(간결한 안내 문단)
+  html = html.replace(/\[관련글:\s*(https?:[^\s|\]]+)\s*\|\s*([^\]]+)\]/g, (_m, url: string, t: string) => {
+    return `<p style="text-align:center;font-size:14px">함께 보면 좋은 글<br>${t.trim()}<br>${url.split("?")[0]}</p>`;
+  });
   let qNum = 0; // ★FAQ 질문 자동 번호(유저 교본: 1. 2. 3. 진행감)
   html = html.replace(/<(h[2-4])(\s[^>]*)?>([\s\S]*?)<\/\1>/gi, (raw, tag, attr, inner) => {
     const plain = String(inner).replace(/<[^>]+>/g, "").trim();
