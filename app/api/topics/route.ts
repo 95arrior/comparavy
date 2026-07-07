@@ -223,13 +223,16 @@ export async function GET(req: Request) {
           //  정책: 확인=가점+배지, 미확인=중립(신어·급상승 초기가 걸러지면 안 됨). 씨앗 longtails 존재도 '주제 확인'으로 상속.
           if (amped.length > 0) {
             const seedVerified = new Set(trends.filter((t) => (t.longtails?.length ?? 0) > 0).map((t) => normalizeKeyword(t.keyword)));
-            await Promise.all(amped.map(async (a, i) => {
-              await new Promise((r) => setTimeout(r, i * 120)); // 완만한 간격 — 자동완성 예절
-              try {
-                const hits = await fetchNaverAutocomplete(a.keyword.split(" ").slice(0, 3).join(" "));
-                (a as { inflow?: string }).inflow = hits.length > 0 ? "hit" : seedVerified.size > 0 ? "seed" : "";
-              } catch { (a as { inflow?: string }).inflow = ""; }
-            }));
+            await Promise.race([ // ★속도 캡(실측: 새벽 첫 로드 지연) — 2.5초 안에 끝난 만큼만 반영, 나머지는 중립
+              Promise.all(amped.map(async (a, i) => {
+                await new Promise((r) => setTimeout(r, Math.min(i, 5) * 60));
+                try {
+                  const hits = await fetchNaverAutocomplete(a.keyword.split(" ").slice(0, 3).join(" "));
+                  (a as { inflow?: string }).inflow = hits.length > 0 ? "hit" : seedVerified.size > 0 ? "seed" : "";
+                } catch { (a as { inflow?: string }).inflow = ""; }
+              })),
+              new Promise((r) => setTimeout(r, 2500)),
+            ]);
             amped = [...amped].sort((x, y) => ((y as { inflow?: string }).inflow === "hit" ? 1 : 0) - ((x as { inflow?: string }).inflow === "hit" ? 1 : 0)); // 확인분 앞으로(안정 정렬 — 유입력 씨앗순 유지)
           }
           if (amped.length > 0) {
@@ -665,10 +668,13 @@ export async function GET(req: Request) {
       if (activeBlogId2) pubQ = pubQ.or(`blog_id.eq.${activeBlogId2},blog_id.is.null`);
       const { data: pubs } = await pubQ.order("created_at", { ascending: false }).limit(2);
       const FRICTION = /(동의|서류|심사|자격|거부|탈락|거절|방법|기간|발표|지급|해지|변경|취소|조건|한도|후기|수령)/;
-      for (const pb of pubs ?? []) {
+      const acResults = await Promise.race([
+        Promise.all((pubs ?? []).map(async (pb) => ({ pb, acs: await fetchNaverAutocomplete(String(pb.keyword ?? "").trim()).catch(() => [] as string[]) }))),
+        new Promise<{ pb: { keyword: string | null; title: string | null }; acs: string[] }[]>((r) => setTimeout(() => r([]), 2000)),
+      ]); // ★병렬+2초 캡(실측: 새벽 로딩 지연)
+      for (const { pb, acs } of acResults) {
         const base = String(pb.keyword ?? "").trim();
         if (!base) continue;
-        const acs = await fetchNaverAutocomplete(base).catch(() => [] as string[]);
         const root = base.split(" ")[0] ?? base;
         const derived = acs.filter((a) => a !== base && a.startsWith(root) && FRICTION.test(a.replace(base, "")) && !usedSet.has(normalizeKeyword(a)) && !excludeSet.has(normalizeKeyword(a)));
         const pick = derived[0];

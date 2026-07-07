@@ -783,8 +783,9 @@ function TopicsSkeleton({ collecting }: { collecting: boolean }) {
           <div className="ateflo-skel mt-3 h-3.5 w-16 rounded" />
         </div>
       ))}
-      <p className="pt-1 text-center text-[12px] font-medium text-neutral-400">
-        {collecting ? "처음이라 글감을 모으고 있어요 — 잠시만요" : "검색 데이터로 글감을 고르는 중…"}
+      <p className="flex items-center justify-center gap-1.5 pt-1 text-center text-[13px] font-bold text-[#1D75F7]">
+        <span className="tk-wand" aria-hidden>✦</span>
+        {collecting ? "처음이라 글감을 모으고 있어요 — 잠시만요" : "실시간 인기 글감을 찾고 있어요…"}
       </p>
     </div>
   );

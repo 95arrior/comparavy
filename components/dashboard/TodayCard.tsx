@@ -118,6 +118,7 @@ export default function TodayCard({
           <div className="ateflo-skel mt-2 h-[22px] w-3/5 rounded" />
           <div className="ateflo-skel mt-3 h-[42px] w-full rounded-xl" />
           <div className="ateflo-skel mt-3.5 h-[50px] w-full rounded-xl" />
+          <p className="flex items-center justify-center gap-1.5 pt-3 text-[13px] font-bold text-[#1D75F7]"><span className="tk-wand">✦</span>실시간 인기 글감을 찾고 있어요…</p>
         </div>
       </Card>
     );
