@@ -201,7 +201,11 @@ function isStepPara(b: Blk): boolean {
   if (t.length > 60) return false; // 헤더성 짧은 줄만
   return /^(?:[📌✅💡🍀🎉😊👇⏰📢]\s*)?(?:\d{1,2}\s*단계|STEP\s*\d{1,2}|Step\s*\d{1,2}|(?:첫|둘|셋|넷|다섯|여섯|일곱|여덟|아홉|열)째)\s*[:.]/u.test(t);
 }
-const isQPara = (b: Blk) => b.tag === "p" && /^\s*(?:<[^>]+>\s*)*Q[.．]\s?/.test(b.inner.replace(/<[^>]+>/g, "").trim()) || (b.tag === "p" && /^Q[.．]/.test(b.inner.replace(/<[^>]+>/g, "").trim()));
+const isQPara = (b: Blk) => {
+  if (b.tag !== "p") return false;
+  const plain = b.inner.replace(/<[^>]+>/g, "").trim();
+  return /^Q[.．]\s?/.test(plain) || (/^\d{1,2}[.．]\s/.test(plain) && /\?$/.test(plain)); // Q. 원형 + 변환 후(1. …?) 모두
+};
 function beforeBlanks(b: Blk): number {
   if (isSuspenseMark(b)) return 0; // 여백은 서스펜스 확장 전담
   if (/^h[1-4]$/.test(b.tag)) return 3;
