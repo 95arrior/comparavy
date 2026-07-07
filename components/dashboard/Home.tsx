@@ -641,8 +641,18 @@ export default function Home({
                 {list === null && [0, 1, 2].map((i) => <div key={i} className="ateflo-skel h-[86px] rounded-[14px]" />)}
                 {list !== null && list.length === 0 && (
                   <div className="rounded-[14px] bg-white px-3 py-5 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
-                    <p className="flex items-center justify-center gap-1.5 text-[12px] font-bold text-[#1D75F7]"><span className="tk-wand" aria-hidden>✦</span>{mode === "short" ? "실시간 이슈를 수확하고 있어요 — 끝나면 여기 자동으로 나타나요" : "글감을 채우고 있어요…"}</p>
-                    <div className="ateflo-skel mt-3 h-[52px] rounded-[10px]" />
+                    <p className="flex items-center justify-center gap-1.5 text-[12px] font-bold text-[#1D75F7]"><span className="tk-wand" aria-hidden>✦</span>{mode === "short" ? "실시간 이슈를 수확하고 있어요" : "글감을 채우고 있어요…"}</p>
+                    {mode === "short" && (
+                      <button onClick={async () => {
+                        setBoardShort(null); // 스켈레톤 복귀
+                        try {
+                          const ex = [...new Set([...dismissedRef.current, ...todayKeywords(articles)])];
+                          const r = await fetch(`/api/topics?mode=short${ex.length ? `&exclude=${encodeURIComponent(ex.join(","))}` : ""}`);
+                          const d = await r.json();
+                          setBoardShort(sanitizeTopics(Array.isArray(d.topics) ? d.topics : []).filter((g) => !dismissedRef.current.includes(g.keyword)));
+                        } catch { setBoardShort([]); }
+                      }} className="at-press mx-auto mt-3 block rounded-[10px] bg-[#1D75F7]/[0.08] px-4 py-2 text-[12.5px] font-bold text-[#1D75F7]">지금 다시 수확하기</button>
+                    )}
                   </div>
                 )}
                 {(list ?? []).slice(0, 5).map((t) => <BoardCard key={t.keyword} topic={t} onWrite={() => onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb, { tag: t.tag })} onDismiss={() => {

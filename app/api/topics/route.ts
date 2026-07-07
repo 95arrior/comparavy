@@ -321,7 +321,18 @@ export async function GET(req: Request) {
         if (debugMode) diag.freshKick = Math.round(ageMs / 60000);
       }
     } catch { /* ignore */ }
-    const tc = await buildTrendCards(new Set());
+    let tc = await buildTrendCards(new Set());
+    if (tc.length === 0) {
+      // ★빈손 즉석 수확(실측: 20분 빈 보드 — 백그라운드 킥은 실패해도 아무도 모른다) — 응답 안에서 1회 동기 수확 후 재시도
+      try {
+        const rl2 = await checkRateLimit(supabase, user.id, `trend_sync_${sub}`, 2, 900);
+        if (rl2.ok) {
+          await refreshCategoryTrends(sub);
+          tc = await buildTrendCards(new Set());
+          if (debugMode) diag.syncHarvest = tc.length;
+        }
+      } catch { /* 폴백 실패 — 빈 응답 그대로 */ }
+    }
     return NextResponse.json(debugMode ? { topics: tc, diag: { ...diag, mode: "short", trendCards: tc.length } } : { topics: tc });
   }
 
