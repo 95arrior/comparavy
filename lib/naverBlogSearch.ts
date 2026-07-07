@@ -53,3 +53,23 @@ export async function checkIndexed(title: string, blogId?: string | null): Promi
     return null;
   }
 }
+
+/**
+ * ★SERP 역분석 — 키워드 상위 블로그 글 제목·요약(정확도순). '제치기'의 눈.
+ * 실패/미설정 시 [] (생성은 그대로 진행 — 눈 없이도 쓰던 기존 품질).
+ */
+export async function fetchTopPosts(query: string, n = 5): Promise<{ title: string; description: string }[]> {
+  const id = process.env.NAVER_DATALAB_CLIENT_ID;
+  const secret = process.env.NAVER_DATALAB_SECRET;
+  const q = query.trim();
+  if (!id || !secret || !q) return [];
+  try {
+    const res = await fetch(`${ENDPOINT}?query=${encodeURIComponent(q)}&display=${Math.min(10, n)}&sort=sim`, {
+      headers: { "X-Naver-Client-Id": id, "X-Naver-Client-Secret": secret },
+    });
+    if (!res.ok) return [];
+    const data = (await res.json()) as { items?: { title?: string; description?: string }[] };
+    const strip = (s: string) => s.replace(/<[^>]+>/g, "").replace(/&quot;/g, '"').replace(/&amp;/g, "&").trim();
+    return (data.items ?? []).slice(0, n).map((it) => ({ title: strip(it.title ?? ""), description: strip(it.description ?? "") })).filter((x) => x.title);
+  } catch { return []; }
+}

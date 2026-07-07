@@ -1,4 +1,5 @@
 import { NextResponse, after } from "next/server";
+import { fetchTopPosts } from "@/lib/naverBlogSearch";
 import { createSupabaseServerClient, createSupabaseAdminClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { generateArticle } from "@/lib/generateArticle";
 import { isReviewType, ensureDisclosure } from "@/lib/revenue";
@@ -108,7 +109,10 @@ export async function POST(request: Request) {
         ]);
       } catch { /* best-effort */ }
 
+      const topPosts = await fetchTopPosts(keyword, 5).catch(() => []);
+      const serpContext = topPosts.length ? topPosts.map((t, i) => `${i + 1}. ${t.title} — ${t.description.slice(0, 90)}`).join("\n") : null;
       const article = await generateArticle({
+        serpContext,
         keyword, angle, type, tone, maxWords: 5000,
         variantInstruction: `${variant.instruction} ${angleAxis}`,
         styleInstruction: stylePersonaInstruction(seedId),

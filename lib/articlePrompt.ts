@@ -99,6 +99,7 @@ export interface ArticlePromptInput {
   relatedQueries?: string[] | null;
   /** ★오늘 이슈 글감 — 최신 뉴스 발췌(근거 자료). 모델 지식보다 최신인 사실관계의 근거. */
   newsContext?: string | null;
+  serpContext?: string | null; // ★SERP 역분석 — 현재 상위 글 제목·요약(능가 브리프)
   angleBrief?: string | null; // ★C단계 앵글 브리프(방향·구조·톤·독자·훅) — 무중복 증식
   sourceHint?: string | null; // ★근거 한 줄 — 씨앗 메타 출처(기관·매체). 있을 때만 근거 문장 1회.
   affiliate?: boolean | null; // ★리뷰/제휴형 — 대가성 문구 상단 + 상품 링크 자리 마커
@@ -410,6 +411,9 @@ export function buildUserPrompt(input: ArticlePromptInput): string {
     input.variantInstruction ? `구성 방식(다양성 — 매번 다른 글이 되도록): ${input.variantInstruction}` : "",
     input.styleInstruction ? `★블로그 스타일(이 계정의 고정 정체성 — 매 글 동일하게 유지한다. 시스템 지침의 도입·형광펜·마무리·해시태그 '세부 형식'과 충돌하면 이 스타일이 우선): ${input.styleInstruction}` : "",
     `★[시점] 오늘은 ${new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10)}(KST)이다. '최신·올해'를 표방하는 글에서 과거 연도(2024 등)의 상품·제도·수치를 최신인 것처럼 쓰지 않는다. 시점에 민감한 정보(금융상품·금리·요금·제도)는 근거 자료에 없으면 구체 상품명·수치를 단정하지 말고 '${new Date(Date.now() + 9 * 3600_000).getFullYear()}년 기준, 최신 조건은 공식 페이지에서 확인' 프레임으로 쓴다.`,
+    input.serpContext
+      ? `★[상위 글 역분석 — 능가 원칙] 아래는 이 키워드로 지금 네이버 상위에 노출 중인 글들의 제목·요약이다. 이 글들을 이기는 게 목표다: ①이들이 공통으로 다루는 내용은 기본기로 전부 포함(빠지면 진다) ②이들이 안 다룬 질문·조건·예외·최신 변화를 찾아 별도 섹션으로 추가(이게 차별점) ③같은 내용도 더 구체적으로 — 이들이 두루뭉술하면 우리는 숫자·절차·실example로. ④제목·문장을 절대 모방하지 않는다(중복=둘 다 추락).\n${input.serpContext}`
+      : "",
     input.newsContext
       ? `★[오늘의 근거 자료 — 최신 뉴스] 아래는 이 글감의 오늘 자 뉴스 발췌다. 글감과 직접 관련 있는 항목만 근거로 쓰고, 무관한 항목은 완전히 무시한다. 본문의 사실관계는 이 자료를 최우선 근거로 쓰고, 자료에 없는 수치·일정은 단정하지 않는다(모델 기억보다 이 자료가 최신). 뉴스 문장을 복사하지 말고 전부 내 문장으로 재작성한다. 출처 표기는 의무가 아니다 — 특정 발표·통계 수치를 쓸 때만 언론사가 아닌 원 기관명(예: 금융위원회·한국은행)을 자연스럽게 1회 언급한다.\n${input.newsContext}`
       : "",
