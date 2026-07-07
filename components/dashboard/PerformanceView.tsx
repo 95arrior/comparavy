@@ -249,36 +249,50 @@ export default function PerformanceView({
   const open = openIdx !== null ? allRows[openIdx] : null;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
+      {/* 표면 = 큰 숫자 + 지금 단계(D-day)만. 나머지는 접힘 디폴트(토스식 — 유저: 성과 페이지 복잡) */}
       <div className=""><AssetHero written={stats.written} streak={stats.streak} pub={stats.pub} onWrite={onWrite} /></div>
-
-      {/* 수익 대시보드 v1 — 입력 데이터만 */}
-      <RevenueDash publishedCount={stats.pub} articles={articles} />
-
-      {/* 승인 결과 입력 — 승인=수익칸·쇼핑커넥트 열쇠 / 거절=D-7 재신청 코스 */}
       {stats.pub >= 10 && <ApprovalInput blogKey={null} onChanged={() => { try { setApproved(localStorage.getItem("ateflo_adpost_approved") === "1"); } catch { /* ignore */ } }} />}
 
       {open ? (
         <PathDetail p={open} onBack={() => setOpenIdx(null)} />
       ) : (
         <>
-          <div className="rounded-2xl at-glass p-5 ">
-            <p className="text-[15px] font-bold text-neutral-900">{title}</p>
-            <div className="mt-1">
+          <Fold title="수익 기록" sub="아침 체크인의 숫자가 여기 쌓여요" storageKey="ateflo_fold_rev">
+            <RevenueDash publishedCount={stats.pub} articles={articles} />
+          </Fold>
+          <Fold title="수익화 사다리" sub={`지금 단계: ${paths.find((x) => x.status === "now")?.label ?? paths[0].label}`} storageKey="ateflo_fold_ladder">
+            <div className="px-4 pb-2">
               {paths.map((p, i) => <PathRow key={p.label} p={p} first={i === 0} onOpen={() => setOpenIdx(i)} />)}
-            </div>
-          </div>
-          <div className="rounded-2xl at-glass p-5 ">
-            <p className="text-[15px] font-bold text-neutral-900">그 밖의 채널</p>
-            <p className="mt-0.5 text-[12px] text-neutral-400">사다리 밖 외부 제휴 — 필요할 때 선택으로</p>
-            <div className="mt-1">
+              <p className="mt-3 text-[12px] font-bold text-neutral-400">그 밖의 채널</p>
               {otherChannels.map((p, i) => <PathRow key={p.label} p={p} first={i === 0} onOpen={() => setOpenIdx(paths.length + i)} />)}
             </div>
-          </div>
+          </Fold>
+          <Fold title="어느 정도가 보통일까" sub="기대 범위 — 조급함 방지용" storageKey="ateflo_fold_expect">
+            <ExpectationCard pub={stats.pub} />
+          </Fold>
         </>
       )}
+    </div>
+  );
+}
 
-      <div className=""><ExpectationCard pub={stats.pub} /></div>
+
+// ── 접기 행(토스식 표면 단순화) — 열림 상태 기억, 디폴트 접힘 ──
+function Fold({ title, sub, storageKey, children }: { title: string; sub?: string; storageKey: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  useEffect(() => { try { setOpen(localStorage.getItem(storageKey) === "1"); } catch { /* ignore */ } }, [storageKey]);
+  const toggle = () => setOpen((v) => { try { localStorage.setItem(storageKey, v ? "0" : "1"); } catch { /* ignore */ } return !v; });
+  return (
+    <div className="overflow-hidden rounded-2xl at-glass">
+      <button onClick={toggle} className="flex w-full items-center justify-between px-5 py-4 text-left">
+        <span className="min-w-0">
+          <span className="block text-[14px] font-bold text-neutral-900">{title}</span>
+          {sub && !open && <span className="mt-0.5 block text-[12px] text-neutral-400">{sub}</span>}
+        </span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className={`shrink-0 text-neutral-300 transition-transform duration-300 ${open ? "rotate-180" : ""}`}><path d="m6 9 6 6 6-6" /></svg>
+      </button>
+      {open && <div className="px-1 pb-2">{children}</div>}
     </div>
   );
 }
