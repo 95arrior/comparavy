@@ -270,6 +270,8 @@ export default function Home({
   const info = pubFlag && !infoRaw.publishedToday ? { ...infoRaw, publishedToday: true } : infoRaw;
   // ★3~4편 루프 재료 — 오늘 발행 수(초안 제외), 골든타임(발행 확정 후 30분), 다음 추천 시간대
   const pubCountToday = articles.filter((a) => (a.status === "copied" || a.status === "verified" || a.status === "published" || a.status === "pending_verify") && new Date(a.created_at).toDateString() === new Date().toDateString()).length;
+  const [hydrated, setHydrated] = useState(false); // ★로컬 기억 읽기 전 카드 확정 금지(실측: '오늘의 글' 잔상 깜빡)
+  useEffect(() => setHydrated(true), []);
   const [nowTick, setNowTick] = useState(() => Date.now());
   useEffect(() => { const t = setInterval(() => setNowTick(Date.now()), 60_000); return () => clearInterval(t); }, []);
   let goldenTime = false;
@@ -418,6 +420,7 @@ export default function Home({
       {/* ★오늘 가이드 원카드(토스 이체식) — 화면엔 항상 '지금 할 행동 1개'. 스텝퍼·라인·루프를 전부 흡수. */}
       {(() => {
         type G = { emoji: string; title: string; sub: string; cta: string; onGo: () => void; alt?: { label: string; onGo: () => void } };
+        if (!hydrated) return <div className="tk-seq-1 mt-3 ateflo-skel h-[168px] rounded-[20px]" />; // 자리 고정 — 잔상·시프트 방지
         if (guideKind === "first") return null; // 첫 글 상태는 아래 '오늘의 글' 히어로가 원카드(글감 상세·교체 보유)
         const wantCheckin = guideKind === "checkin";
         const noCredit = guideKind === "credit";
@@ -516,7 +519,7 @@ export default function Home({
       })()}
 
       {/* 오늘의 글 — 단일 CTA. 가이드 소유 상태(draft·발행후·5편)에선 숨김(카드 이중 표기 방지) */}
-      {!(guideKind === "draft" || guideKind === "more" || guideKind === "done5") && <div className="at-rise at-d2 mt-6">
+      {hydrated && !(guideKind === "draft" || guideKind === "more" || guideKind === "done5") && <div className="at-rise at-d2 mt-6">
         <TodayCard
           plain
           topic={first ? { keyword: first.keyword, title: first.title, tag: first.tag, newsContext: first.newsContext, briefText: first.briefText, titleSearch: first.titleSearch, thumb: first.thumb, vol: first.vol, comp: first.comp, blogTotal: first.blogTotal } : null}
