@@ -110,26 +110,15 @@ function mergeUnbalanced(parts: string[]): string[] {
 /* ── 안전망: 4줄 초과 문단 자동 분할 (문장 → 쉼표 → 어절) ── */
 function splitInner(inner: string): string[] {
   if (visLen(inner) <= MOBILE_MAX_CHARS) return [inner];
-  let parts = mergeUnbalanced(inner.split(/(?:<br\s*\/?>)|(?<=[?!])\s+|(?<=[^\d]\.)\s+/g).map((x) => x.trim()).filter(Boolean)); // 숫자. 뒤(소수·날짜)는 문장 경계 아님
-  // 쉼표 분할 — 단, 괄호·따옴표가 열린 조각은 다시 합쳐 미닫힘 분할 방지.
-  parts = parts.flatMap((part) => (visLen(part) <= MOBILE_MAX_CHARS ? [part] : mergeUnbalanced(part.split(/(?<=[,，、])(?!\d)\s*/g) /* 천 단위 쉼표(4,500) 분할 금지 */.map((x) => x.trim()).filter(Boolean))));
-  const units: string[] = [];
-  for (const part of parts) {
-    if (visLen(part) <= MOBILE_MAX_CHARS) { units.push(part); continue; }
-    let buf = "";
-    for (const word of part.split(/\s+/).filter(Boolean)) {
-      const canBreak = buf && !/\d[.,]$/.test(buf); // "2026. 7." 같은 숫자 구두점 끝에선 안 끊음(날짜·금액 보호)
-      if (visLen(buf + " " + word) > MOBILE_MAX_CHARS && canBreak) { units.push(buf); buf = word; }
-      else buf = buf ? `${buf} ${word}` : word;
-    }
-    if (buf) units.push(buf);
-  }
+  // ★문장 단위로만 분할(유저 확정: 글자 수 절단은 '위험/신호예요' 고아 조각을 만든다).
+  //  문장 경계(마침표·물음표·느낌표 + 공백)에서만 자르고, 한 문장이 길면 그대로 둔다(중앙 정렬 자연 줄바꿈이 처리).
+  const sentences = mergeUnbalanced(inner.split(/(?:<br\s*\/?>)|(?<=[?!])\s+|(?<=[^\d]\.)\s+/g).map((x) => x.trim()).filter(Boolean)); // 숫자. 뒤(소수·날짜)는 경계 아님
+  if (sentences.length <= 1) return [inner]; // 못 나누면 원문 그대로 — 억지 절단 금지
   const out: string[] = [];
   let acc = "";
-  for (const u of units) {
-    const canBreak = acc && !/\d[.,]$/.test(acc);
-    if (visLen(acc + " " + u) > MOBILE_MAX_CHARS && canBreak) { out.push(acc); acc = u; }
-    else acc = acc ? `${acc} ${u}` : u;
+  for (const sen of sentences) {
+    if (acc && visLen(acc + " " + sen) > MOBILE_MAX_CHARS) { out.push(acc); acc = sen; }
+    else acc = acc ? `${acc} ${sen}` : sen;
   }
   if (acc) out.push(acc);
   return out.length ? out : [inner];
