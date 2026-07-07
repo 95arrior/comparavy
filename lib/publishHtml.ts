@@ -111,7 +111,24 @@ function mergeUnbalanced(parts: string[]): string[] {
 // ★유저 교본(2026-07-07): 문단을 쪼개면(빈 줄) 흐름이 끊긴다 — 같은 문단 안에서 <br>로 '의미 구 줄바꿈'.
 //  문장별 한 줄. 문장이 길면(>44자) 쉼표·연결어미 구 경계에서 균형 줄바꿈(양쪽 12자 이상일 때만 — 고아 조각 금지).
 function breakSentence(sen: string): string {
-  return sen; // ★문장 안 개행 전면 금지(유저 교본 최종: 쉼표·어미 개행 = 끊어치기 — 부드럽게 자연 줄바꿈으로 흘린다)
+  // ★의미 절 개행(유저 교본 확정판): 28자 넘는 문장은 절 경계(쉼표·~에서·~라면·~인지·~는 건·연결어미)에서
+  //  중앙에 가장 가까운 지점 1곳만 <br> — 좌우 8자 미만(고아)이면 안 끊고 자연 줄바꿈(keep-all이 어절 보호).
+  if (visLen(sen) <= 28 || /<br/.test(sen)) return sen;
+  const re = /([,，、]|에서|라면|다면|인지|는 건|은 건|하고|하며|지만|는데|면서|위해|보다)\s+/g;
+  const cands: number[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(sen))) cands.push(m.index + m[0].length);
+  if (!cands.length) return sen;
+  const mid = visLen(sen) / 2;
+  let best = -1, bestDist = Infinity;
+  for (const c of cands) {
+    const left = visLen(sen.slice(0, c)), right = visLen(sen.slice(c));
+    if (left < 8 || right < 8) continue;
+    const d = Math.abs(left - mid);
+    if (d < bestDist) { bestDist = d; best = c; }
+  }
+  if (best < 0) return sen;
+  return `${sen.slice(0, best).trimEnd()}<br>${sen.slice(best).trimStart()}`;
 }
 function splitInner(inner: string): string[] {
   if (visLen(inner) <= MOBILE_MAX_CHARS && !/(?<=[?!])\s|(?<=[^\d]\.)\s/.test(inner.replace(/<[^>]+>/g, ""))) return [inner];
@@ -229,7 +246,10 @@ function styleMarkers(html: string): string {
 function listsToTable(html: string): string {
   return html.replace(/<(ul|ol)(\s[^>]*)?>([\s\S]*?)<\/\1>/gi, (raw, tag, _attr, inner) => {
     const items = (inner.match(/<li[\s\S]*?<\/li>/gi) ?? []).map((li: string) => li.replace(/<\/?li[^>]*>/gi, "").trim()).filter(Boolean);
-    if (items.length < 4) return raw; // ★짧은 리스트는 불릿 유지(유저: 전부 표는 단조) — 긴 나열만 박스
+    if (items.length < 4) { // ★짧은 리스트=중앙 불릿 라인(실측: 웹에서 좌측 불릿이 흉함 — 중앙 세계와 정합)
+      const lines = items.map((it: string) => `• ${it}`).join("<br>");
+      return `<p style="text-align:center;word-break:keep-all">${lines}</p>`;
+    }
     const ol = String(tag).toLowerCase() === "ol";
     const rows = items.map((it: string, i: number) => `<tr><td>${ol ? `<b>${i + 1}.</b> ` : "• "}${it}</td></tr>`).join("");
     return `<table><tbody>${rows}</tbody></table>`;
@@ -281,7 +301,7 @@ function applySizing(html: string): string {
     }
     // p: <b> 단독 문단(강조/브릿지) → 확대
     if (/^\s*<b(?![^>]*background)[^>]*>[\s\S]{2,80}<\/b>\s*$/.test(inner)) return addStyle(raw, "font-size:18px");
-    if (t === "p" && !/font-size/.test(String(attr ?? ""))) return addStyle(raw, "font-size:16px"); // ★기본 본문 16px(40/50대 가독)
+    if (t === "p" && !/font-size/.test(String(attr ?? ""))) return addStyle(raw, "font-size:16px;word-break:keep-all"); // ★16px+어절 단위 줄바꿈(실측: 포/인트예요 단어 잘림)
     return raw;
   });
 }
