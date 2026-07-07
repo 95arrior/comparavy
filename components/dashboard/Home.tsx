@@ -285,8 +285,10 @@ export default function Home({
   let pubFlag = false;
   try { pubFlag = typeof window !== "undefined" && localStorage.getItem(localPubFlagKey()) === "1"; } catch { /* ignore */ }
   const info = pubFlag && !infoRaw.publishedToday ? { ...infoRaw, publishedToday: true } : infoRaw;
+  // (pubCountToday 정합은 guideKind 계산 직전에서 — 어제 생성·오늘 발행 글이 생성일 기준 카운트에서 빠지는 실측 케이스)
   // ★3~4편 루프 재료 — 오늘 발행 수(초안 제외), 골든타임(발행 확정 후 30분), 다음 추천 시간대
-  const pubCountToday = articles.filter((a) => (a.status === "copied" || a.status === "verified" || a.status === "published" || a.status === "pending_verify") && new Date(a.created_at).toDateString() === new Date().toDateString()).length;
+  const pubCountRaw = articles.filter((a) => (a.status === "copied" || a.status === "verified" || a.status === "published" || a.status === "pending_verify") && new Date(a.created_at).toDateString() === new Date().toDateString()).length;
+  const pubCountToday = Math.max(pubCountRaw, 0); // 아래에서 info.publishedToday와 정합(어제 생성→오늘 발행 케이스)
   const [hydrated, setHydrated] = useState(false); // ★로컬 기억 읽기 전 카드 확정 금지(실측: '오늘의 글' 잔상 깜빡)
   useEffect(() => setHydrated(true), []);
   const [nowTick, setNowTick] = useState(() => Date.now());
@@ -309,7 +311,7 @@ export default function Home({
       if (pubCountToday >= 5) return "done5";
       if (info.hasDraftToday && !info.publishedToday) return "draft";
       if (credits < GENERATE_COST && !info.hasDraftToday) return "credit";
-      if (pubCountToday === 0) return "first";
+      if (pubCountToday === 0 && !info.publishedToday) return "first"; // ★발행 플래그 정합(실측: 어제 생성→오늘 발행이 first로 오판 → 히어로 발행후 카드 재등장)
       return "more";
     })();
   const nextSlotLabel = hourNow < 11 ? "점심 전에" : hourNow < 16 ? "저녁 6시 전에" : hourNow < 21 ? "자기 전에" : "내일 아침에";
@@ -468,7 +470,7 @@ export default function Home({
           ? { emoji: "✍️", title: "오늘 첫 글을 쓸 시간이에요", sub: first ? `추천 글감: ${first.title.slice(0, 30)}${first.title.length > 30 ? "…" : ""}` : "지금 뜨는 글감부터 보여드릴게요", cta: first ? "이 글감으로 쓰기" : "글감 보기", onGo: first ? goWrite : () => setRoutineSheet("topics"), alt: first ? { label: "다른 글감 볼래요", onGo: () => setRoutineSheet("topics") } : undefined }
           : pubCountToday === 1
           ? { emoji: "💪", title: "오늘은 2편이 기본이에요", sub: `${nextSlotLabel} 한 편 더 — 시간을 나눠 올리면 노출 기회도 두 배`, cta: "2편째 글감 고르기", onGo: () => setRoutineSheet("topics") } // 선택지 없음 — 2편은 기본(유저 확정)
-          : { emoji: "🔥", title: `오늘 ${pubCountToday}편 — 기본 몫 끝!`, sub: "더 쓰면 그만큼 빨라져요. 무리는 금물", cta: "글 추가로 더 쓰기", onGo: () => setRoutineSheet("topics"), alt: { label: "이웃 미션 하기", onGo: () => setRoutineSheet("neighbor") } }; // 2편+ = 선택 2개(유저 확정)
+          : { emoji: "🔥", title: `오늘 ${Math.max(pubCountToday, 1)}편 — 기본 몫 끝!`, sub: "더 쓰면 그만큼 빨라져요. 무리는 금물", cta: "글 추가로 더 쓰기", onGo: () => setRoutineSheet("topics"), alt: { label: "이웃 미션 하기", onGo: () => setRoutineSheet("neighbor") } }; // 2편+ = 선택 2개(유저 확정)
         if (!g) return null;
         return (
           <div className="tk-seq-1 tk-card-glow mt-3 rounded-[20px] bg-white p-6 shadow-[0_2px_12px_-4px_rgba(29,117,247,0.12)]">
