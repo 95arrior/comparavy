@@ -32,16 +32,18 @@ export async function composeThumbnail(opts: {
 
   let aiFailReason: string | undefined;
   if (opts.useAiBackground !== false && imageReady()) {
-    // ★실측(단색 전멸): 1회 실패·텍스트 검출 시 즉시 폴백하지 않고 1회 재시도 — GPT 실사는 간판·화면 텍스트 혼입 확률이 높다
-    for (let attempt = 0; attempt < 2 && !usedAiBackground; attempt++) {
-      try {
-        const paletteHint = `${identity.palette.name.replace(/-/g, " ")}`;
-        const bg = await generateThumbBackground(identity.bgStyle, paletteHint, opts.userId, opts.topicHint, { forceStyle: opts.bgStyle, centerText: opts.centerCopy });
+    // ★속도 우선(실측: 제작 시간 급증 — 재시도 루프가 AI 왕복 4회까지) — 1회 생성, 보도형(press)은 검증 스킵
+    //  (press는 하단 다크 그라데이션+대형 카피가 배경을 덮어 배경 소글자 리스크가 낮다. Gemini는 텍스트 금지 준수율도 높음)
+    try {
+      const paletteHint = `${identity.palette.name.replace(/-/g, " ")}`;
+      const bg = await generateThumbBackground(identity.bgStyle, paletteHint, opts.userId, opts.topicHint, { forceStyle: opts.bgStyle, centerText: opts.centerCopy });
+      if (opts.press) { bgDataUrl = `data:${bg.mime};base64,${bg.base64}`; usedAiBackground = true; }
+      else {
         const v = await verifyImage(bg.base64, bg.mime, "abstract background", { bgOnly: true, userId: opts.userId });
-        if (!v.hasText) { bgDataUrl = `data:${bg.mime};base64,${bg.base64}`; usedAiBackground = true; aiFailReason = undefined; }
-        else aiFailReason = "배경에 글자가 섞여 재시도했어요";
-      } catch (e) { aiFailReason = `배경 생성 실패: ${String(e instanceof Error ? e.message : e).slice(0, 80)}`; }
-    }
+        if (!v.hasText) { bgDataUrl = `data:${bg.mime};base64,${bg.base64}`; usedAiBackground = true; }
+        else aiFailReason = "배경에 글자가 섞였어요";
+      }
+    } catch (e) { aiFailReason = `배경 생성 실패: ${String(e instanceof Error ? e.message : e).slice(0, 80)}`; }
   }
 
   const input: ThumbInput = {
