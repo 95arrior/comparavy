@@ -369,11 +369,14 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   const withImages = opts?.withImages ?? true;
   let idx = -1;
   // ★사진 자리는 '구조화 슬롯'으로만 — 채워진 슬롯만 이미지로, 미충족 슬롯은 줄 자체를 제거(안내문구 유출 금지).
-  let body = markToBold(capMarks(input.bodyHtml)).replace(SLOT_RE, () => {
+  let body = markToBold(capMarks(input.bodyHtml)).replace(SLOT_RE, (_m, desc: string) => {
     idx += 1;
     if (!withImages) return `<p>[사진 ${idx + 1}]</p>`; // marker 모드(수동 배치) — 명시적 선택
     const url = input.images?.[idx];
-    if (!url) return ""; // 미충족 → 제거(마커·지시 노출 안 함)
+    if (!url) {
+      // ★미충족 → 명시 마커(유저 확정: 에디터에서 이 자리에 이미지를 넣고 마커를 지우는 흐름 — 대괄호 유지로 눈에 띄게)
+      return `<p style="text-align:center;background-color:#f5f6f8;padding:10px 8px;font-size:13px;color:#8b95a1">[이미지 ${idx + 1} — 여기에 삽입]<br>표현: ${desc.trim().slice(0, 60)}</p>`;
+    }
     const isAi = input.aiImageIdx?.includes(idx);
     // ★AI 생성분 캡션 자동(오인 방지) — 참고 이미지 명시가 신뢰를 지킨다
     return `<p><img src="${url}" alt="" /></p>${isAi ? `<p><span style="font-size:12px;color:#999">AI로 제작한 참고 이미지입니다. 실제와 다를 수 있어요.</span></p>` : ""}`;

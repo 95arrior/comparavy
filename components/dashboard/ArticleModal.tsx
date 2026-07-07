@@ -616,6 +616,13 @@ export default function ArticleModal({ pubStampKey, blogName,
               : { text: "17~19시 발행 추천 — 네이버 발행 화면에서 예약을 걸어둘 수도 있어요", hot: false };
             return <p className={`mb-1 text-center text-[12px] font-semibold ${adv.hot ? "text-[#F04452]" : "text-neutral-400"}`}>{adv.text}</p>;
           })()}
+          {!isWp && (() => {
+            const totalSlots = (bodyHtml.match(/\[(?:사진|카드):/g) ?? []).length;
+            const filled = Object.values(imgs).filter((v) => v.url).length;
+            const empty = totalSlots - filled;
+            if (empty <= 0) return null;
+            return <p className="mb-1.5 text-center text-[12px] font-semibold text-amber-600">이미지 {empty}자리가 비어 있어요 — 본문 복사에 [이미지 N — 여기에 삽입] 마커가 포함되니, 네이버에서 채우고 마커를 지워주세요</p>;
+          })()}
           {!isWp && !lastThumb && <p className="mb-1.5 text-center text-[12px] font-semibold text-amber-600">썸네일 없이 발행하면 홈피드에서 그냥 스쳐가요 — 위에서 30초면 만들어요</p>}
           <button onClick={() => (isWp ? publishToWp() : setNaverOpen(true))} className={`w-full rounded-xl py-3.5 text-[15px] font-bold text-white transition active:scale-[0.99] ${isWp ? "tk-grad-cta" : "bg-[#03C75A]"}`}>
             {isWp ? (wpBusy ? "발행 중…" : "워드프레스에 발행") : "네이버에 올리기"}
