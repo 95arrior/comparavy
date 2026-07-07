@@ -16,7 +16,7 @@ import type { Article } from "./types";
 // ★네이버 수익형 단일 — 글 화면은 '검토 → 복사 → 네이버 붙여넣기' 하나의 흐름.
 // 앱 안 편집기(TipTap)·워드프레스 발행·예약은 제거. 최종 탈고는 네이버 에디터에서 한다.
 // 크레딧 모델(전원 유료) — 무료/프로 구분·티저 잠금 없음.
-export default function ArticleModal({
+export default function ArticleModal({ pubStampKey,
   article,
   vertical,
   naverBlogId,
@@ -26,6 +26,7 @@ export default function ArticleModal({
   onCredits,
   credits,
 }: {
+  pubStampKey?: string;
   article: Article;
   /** 블로그 주제(vertical) — 발행 전 광고규제 표현 검사에 사용(없으면 general). */
   vertical?: string;
@@ -96,7 +97,7 @@ export default function ArticleModal({
 
   // 네이버에 직접 올린 글을 '발행됨'으로 표시(자동발행 없는 네이버 — 성과·내글 추적용)
   async function markNaverPublished() {
-    try { localStorage.setItem("ateflo_last_pub_at", String(Date.now())); } catch { /* ignore */ } // 골든타임 30분 기준점
+    try { localStorage.setItem(`ateflo_last_pub_at_${pubStampKey ?? ""}`, String(Date.now())); } catch { /* ignore */ } // 골든타임 기준점 — ★블로그별(실측: 경제 발행 골든이 박카에 뜸)
     try {
       const res = await fetch(`/api/articles/${article.id}`, {
         method: "PATCH",

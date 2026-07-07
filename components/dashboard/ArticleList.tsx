@@ -10,12 +10,13 @@ import CenterToast from "./CenterToast";
 
 type StatusFilter = "all" | "published" | "draft";
 
-export default function ArticleList({
+export default function ArticleList({ pubStampKey,
   articles: allArticles,
   onOpen,
   onGoGenerate,
   onUpdated,
 }: {
+  pubStampKey?: string;
   articles: Article[];
   onOpen: (article: Article) => void;
   onGoGenerate: () => void;
@@ -39,7 +40,7 @@ export default function ArticleList({
     setPubBusy(a.id);
     try {
       await fetch(`/api/articles/${a.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "pending_verify" }) });
-      try { localStorage.setItem("ateflo_last_pub_at", String(Date.now())); } catch { /* ignore */ } // 골든타임 기준점
+      try { localStorage.setItem(`ateflo_last_pub_at_${pubStampKey ?? ""}`, String(Date.now())); } catch { /* ignore */ } // 골든타임 기준점 — 블로그별
       const r = await fetch("/api/verify-post", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: a.id }) });
       const d = await r.json().catch(() => ({}));
       if (r.ok && d.state === "verified") {

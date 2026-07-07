@@ -500,6 +500,7 @@ export default function DashboardClient(props: DashboardProps) {
 
         {!page && selected && (
           <ArticleModal
+            pubStampKey={blogProfile ? `${(blogProfile as { id?: string }).id ?? ""}:${blogProfile.vertical}:${blogProfile.sub_category ?? ""}` : ""}
             credits={credits}
             article={selected}
             vertical={blogProfile?.vertical ?? "general"}
@@ -668,6 +669,7 @@ export default function DashboardClient(props: DashboardProps) {
                 <h1 className="at-headline mt-1">내 글</h1>
                 <div className="mt-5">
                   <ArticleList
+                    pubStampKey={blogProfile ? `${(blogProfile as { id?: string }).id ?? ""}:${blogProfile.vertical}:${blogProfile.sub_category ?? ""}` : ""}
                     articles={articles}
                     onOpen={setSelected}
                     onGoGenerate={() => goLabView("home")}

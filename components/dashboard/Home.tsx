@@ -275,7 +275,7 @@ export default function Home({
   const [nowTick, setNowTick] = useState(() => Date.now());
   useEffect(() => { const t = setInterval(() => setNowTick(Date.now()), 60_000); return () => clearInterval(t); }, []);
   let goldenTime = false;
-  try { const lp = Number(localStorage.getItem("ateflo_last_pub_at") ?? 0); goldenTime = lp > 0 && nowTick - lp < 30 * 60_000; } catch { /* ignore */ }
+  try { const lp = Number(localStorage.getItem(`ateflo_last_pub_at_${profileKey ?? ""}`) ?? 0); goldenTime = lp > 0 && nowTick - lp < 30 * 60_000; } catch { /* ignore */ } // ★블로그별 골든타임
   const hourNow = new Date(nowTick).getHours();
   // ★한 상태 = 한 카드(실측: '쓰던 글'+'오늘의 글' 이중 표기) — 상태 소유권: first만 히어로, 나머지는 가이드
   const guideKind: "golden" | "checkin" | "done5" | "draft" | "credit" | "first" | "more" =
