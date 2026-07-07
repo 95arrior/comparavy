@@ -276,6 +276,18 @@ export default function Home({
   let goldenTime = false;
   try { const lp = Number(localStorage.getItem("ateflo_last_pub_at") ?? 0); goldenTime = lp > 0 && nowTick - lp < 30 * 60_000; } catch { /* ignore */ }
   const hourNow = new Date(nowTick).getHours();
+  // ★한 상태 = 한 카드(실측: '쓰던 글'+'오늘의 글' 이중 표기) — 상태 소유권: first만 히어로, 나머지는 가이드
+  const guideKind: "golden" | "checkin" | "done5" | "draft" | "credit" | "first" | "more" =
+    (() => {
+      const wantCheckin0 = !checkinDone && yesterdayPublished(articles);
+      if (goldenTime) return "golden";
+      if (wantCheckin0) return "checkin";
+      if (pubCountToday >= 5) return "done5";
+      if (info.hasDraftToday && !info.publishedToday) return "draft";
+      if (credits < GENERATE_COST && !info.hasDraftToday) return "credit";
+      if (pubCountToday === 0) return "first";
+      return "more";
+    })();
   const nextSlotLabel = hourNow < 11 ? "점심 전에" : hourNow < 16 ? "저녁 6시 전에" : hourNow < 21 ? "자기 전에" : "내일 아침에";
   const lastPubKeyword = (() => { const t = articles.filter((a) => (a.status === "copied" || a.status === "verified" || a.status === "published" || a.status === "pending_verify") && new Date(a.created_at).toDateString() === new Date().toDateString()); return t.length ? String(t[0].keyword ?? "") : ""; })();
   const clean = sanitizeTopics(topics);
@@ -407,8 +419,9 @@ export default function Home({
       {/* ★오늘 가이드 원카드(토스 이체식) — 화면엔 항상 '지금 할 행동 1개'. 스텝퍼·라인·루프를 전부 흡수. */}
       {(() => {
         type G = { emoji: string; title: string; sub: string; cta: string; onGo: () => void; alt?: { label: string; onGo: () => void } };
-        const wantCheckin = !checkinDone && yesterdayPublished(articles); // 어제 발행한 날만 아침 마찰
-        const noCredit = credits < GENERATE_COST && !info.hasDraftToday;
+        if (guideKind === "first") return null; // 첫 글 상태는 아래 '오늘의 글' 히어로가 원카드(글감 상세·교체 보유)
+        const wantCheckin = guideKind === "checkin";
+        const noCredit = guideKind === "credit";
         const todayDraft = articles.find((a) => a.status === "draft" && new Date(a.created_at).toDateString() === new Date().toDateString());
         const goWrite = () => {
           if (todayDraft) { onSelect(todayDraft); return; } // 쓰던 초안 직접 열기(키워드 불일치여도 안전)
@@ -503,8 +516,8 @@ export default function Home({
         return null;
       })()}
 
-      {/* 오늘의 글 — 단일 CTA */}
-      <div className="at-rise at-d2 mt-6">
+      {/* 오늘의 글 — 단일 CTA. 가이드 소유 상태(draft·발행후·5편)에선 숨김(카드 이중 표기 방지) */}
+      {!(guideKind === "draft" || guideKind === "more" || guideKind === "done5") && <div className="at-rise at-d2 mt-6">
         <TodayCard
           plain
           topic={first ? { keyword: first.keyword, title: first.title, tag: first.tag, newsContext: first.newsContext, briefText: first.briefText, titleSearch: first.titleSearch, thumb: first.thumb, vol: first.vol, comp: first.comp, blogTotal: first.blogTotal } : null}
@@ -519,7 +532,7 @@ export default function Home({
           preReady={!!preReadyId}
           onReadToday={readToday}
         />
-      </div>
+      </div>}
 
       {/* 스텝퍼 제거 — 오늘 가이드 원카드가 흡수(토스식 단일 행동) */}
 
