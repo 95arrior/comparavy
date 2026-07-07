@@ -116,6 +116,25 @@ export default function Home({
   const [heroLimitNotice, setHeroLimitNotice] = useState(false);
 
   const [collecting, setCollecting] = useState(false);
+  // ★홈 글감 보드(유저 목업: 두 종족 상시 노출) — 마운트 시 병렬 로드(캐시 경유라 가벼움)
+  const [boardShort, setBoardShort] = useState<Topic[] | null>(null);
+  const [boardLong, setBoardLong] = useState<Topic[] | null>(null);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const usedKw = todayKeywords(articles);
+        const ex = [...new Set([...dismissedRef.current, ...usedKw])];
+        const q = (mode: string) => fetch(`/api/topics?mode=${mode}${ex.length ? `&exclude=${encodeURIComponent(ex.join(","))}` : ""}`).then((r) => r.json()).catch(() => ({ topics: [] }));
+        const [sh, lo] = await Promise.all([q("short"), q("long")]);
+        if (!alive) return;
+        setBoardShort(sanitizeTopics(Array.isArray(sh.topics) ? sh.topics : []).slice(0, 5));
+        setBoardLong(sanitizeTopics(Array.isArray(lo.topics) ? lo.topics : []).slice(0, 5));
+      } catch { if (alive) { setBoardShort([]); setBoardLong([]); } }
+    })();
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileKey]);
   // ★?fresh=1 — 글감만 리셋(콘솔 불필요, 여정 테스트용). 발행·체크인·진행 데이터는 무관.
   //  useState 초기화보다 먼저 동기 실행돼야 dismissed·캐시 초기값에 반영된다.
   if (typeof window !== "undefined" && !freshDoneRef && new URLSearchParams(window.location.search).has("fresh")) {
@@ -588,6 +607,23 @@ export default function Home({
         />
       </div>}
 
+      {/* ★글감 보드(유저 목업) — 두 종족 상시 노출, 트렌드=수명 타이머+근거 */}
+      {hydrated && (
+        <div className="tk-seq-2 mt-6 grid grid-cols-2 gap-3">
+          {([["short", "지금 뜨는", "현재 실시간 인기 키워드 글감이에요", boardShort], ["long", "꾸준한 수요", "지속적으로 수요가 있는 글감이에요", boardLong]] as const).map(([mode, title, sub, list]) => (
+            <div key={mode} className="min-w-0">
+              <p className="text-center text-[15px] font-bold text-[color:var(--color-text)]">{title}</p>
+              <p className="mt-0.5 text-center text-[11px] text-[color:var(--color-text-weak)]">{sub}</p>
+              <div className="mt-2 flex flex-col gap-2">
+                {list === null && [0, 1, 2].map((i) => <div key={i} className="ateflo-skel h-[86px] rounded-[14px]" />)}
+                {list !== null && list.length === 0 && <p className="rounded-[14px] bg-white px-3 py-4 text-center text-[11.5px] text-neutral-400 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">{mode === "short" ? "새 이슈 수확 중 — 잠시 후 다시" : "글감을 채우는 중이에요"}</p>}
+                {(list ?? []).map((t) => <BoardCard key={t.keyword} topic={t} onWrite={() => onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb, { tag: t.tag })} />)}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* 스텝퍼 제거 — 오늘 가이드 원카드가 흡수(토스식 단일 행동) */}
 
       {/* 레벨 추천 카드 — 성과 탭으로 이사(홈 표면 = 게이지+가이드 원카드, 토스 문법) */}
@@ -767,6 +803,43 @@ function TopicRow({ topic, onClick, onSwap, swapping }: {
         </button>
       )}
     </div>
+  );
+}
+
+// ★보드 카드(컴팩트) — 트렌드: ⏳수명 타이머 + 📰근거(뉴스 헤드라인/실검색 확인)
+function BoardCard({ topic, onWrite }: { topic: Topic; onWrite: () => void }) {
+  const isTrend = topic.tag === "trend" || topic.tag === "issue" || topic.tag === "followup";
+  const [tick, setTick] = useState(() => Date.now());
+  useEffect(() => {
+    if (!topic.expiresAt) return;
+    const t = setInterval(() => setTick(Date.now()), 60_000);
+    return () => clearInterval(t);
+  }, [topic.expiresAt]);
+  const life = (() => {
+    if (!isTrend || !topic.expiresAt) return null;
+    const ms = new Date(topic.expiresAt).getTime() - tick;
+    if (ms <= 0) return "곧 교체";
+    const h = Math.floor(ms / 3600_000), m = Math.floor((ms % 3600_000) / 60_000);
+    return h > 0 ? `${h}시간 ${m}분` : `${m}분`;
+  })();
+  // 근거 — 실검색 확인 배지 우선, 아니면 뉴스 첫 헤드라인
+  const evidence = (() => {
+    if (topic.demandLabel?.includes("실검색 확인")) return "실검색 급상승 확인";
+    const first = (topic.newsContext ?? "").split("\n").find((l) => l.trim().startsWith("-"));
+    if (first) { const m = first.match(/\]\s*([^:]{6,60})/); if (m) return `뉴스: ${m[1].trim().slice(0, 26)}…`; }
+    return topic.demandLabel ?? null;
+  })();
+  return (
+    <button onClick={onWrite} className="at-press rounded-[14px] bg-white p-3 text-left shadow-[0_1px_3px_rgba(0,0,0,0.05)] tk-tr hover:shadow-[0_4px_14px_-6px_rgba(29,117,247,0.18)]">
+      <div className="flex items-center gap-1">
+        {isTrend
+          ? <span className="rounded-full bg-[color:var(--color-brand-weak)] px-1.5 py-0.5 text-[10px] font-bold text-[color:var(--color-brand)]">뜨는 중</span>
+          : <span className="rounded-full bg-[#F7F8FA] px-1.5 py-0.5 text-[10px] font-bold text-neutral-500">꾸준</span>}
+        {life && <span className="text-[10px] font-semibold tabular-nums text-amber-600">⏳ {life}</span>}
+      </div>
+      <p className="mt-1.5 line-clamp-2 text-[12.5px] font-bold leading-snug text-[color:var(--color-text)]">{topic.title}</p>
+      {evidence && <p className="mt-1 truncate text-[10.5px] text-neutral-400">{evidence}</p>}
+    </button>
   );
 }
 
