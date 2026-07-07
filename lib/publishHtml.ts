@@ -268,9 +268,8 @@ function styleMarkers(html: string): string {
 function listsToTable(html: string): string {
   return html.replace(/<(ul|ol)(\s[^>]*)?>([\s\S]*?)<\/\1>/gi, (raw, tag, _attr, inner) => {
     const items = (inner.match(/<li[\s\S]*?<\/li>/gi) ?? []).map((li: string) => li.replace(/<\/?li[^>]*>/gi, "").trim()).filter(Boolean);
-    if (items.length < 4) { // ★짧은 리스트=중앙 불릿 라인(실측: 웹에서 좌측 불릿이 흉함 — 중앙 세계와 정합)
-      const lines = items.map((it: string) => `• ${it}`).join("<br>");
-      return `<p style="text-align:center;word-break:keep-all">${lines}</p>`;
+    if (items.length < 4) { // ★짧은 리스트=중앙 불릿 문단들(유저 교본: 항목 사이 빈 줄 — 붙이면 답답)
+      return items.map((it: string) => `<p style="text-align:center;word-break:keep-all">• ${it}</p>`).join("");
     }
     const ol = String(tag).toLowerCase() === "ol";
     const rows = items.map((it: string, i: number) => `<tr><td>${ol ? `<b>${i + 1}.</b> ` : "• "}${it}</td></tr>`).join("");
