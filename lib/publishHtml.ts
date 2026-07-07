@@ -118,15 +118,15 @@ function breakSentence(sen: string): string {
   const parts: string[] = [];
   let rest = sen;
   let guard = 0;
-  while (visLen(rest) > 28 && guard++ < 8) {
+  while (visLen(rest) > 24 && guard++ < 8) {
     let m: RegExpExecArray | null; let best = -1; let bestD = Infinity;
     CLAUSE.lastIndex = 0;
     while ((m = CLAUSE.exec(rest))) {
       const cut = m.index + m[0].length;
       const left = visLen(rest.slice(0, cut));
       if (left < 10) continue;
-      if (left > 34) break;
-      const d = Math.abs(left - 22);
+      if (left > 28) break;
+      const d = Math.abs(left - 18); // ★네이버 모바일 실측 줄폭(~18자 — 22자 가정은 네이버에서 재접힘)
       if (d < bestD) { bestD = d; best = cut; }
     }
     if (best < 0) break;
@@ -171,7 +171,7 @@ function styleBlocks(html: string): string {
 //  소제목 앞3·뒤1 / 문단 사이1 / 4줄↑ 긴 블록 위아래3 / 강조 문장 위아래2 / 해시태그 앞2. 연속 빈 줄 상한 4(압축 아님 — 캡만).
 export const BLANK_P = '<p style="text-align:left"><br></p>'; // 네이버 스마트에디터ONE 생존형 빈 줄
 const BLANK_CAP = 3; // ★실측: FAQ·요약 주변 여백 과다 — 상한 4→3
-const CHARS_PER_LINE_PUB = 22;
+const CHARS_PER_LINE_PUB = 19; // ★네이버 실측
 function blockLines(inner: string): number {
   return Math.max(1, Math.ceil(visLen(inner) / CHARS_PER_LINE_PUB));
 }
