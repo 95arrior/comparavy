@@ -147,7 +147,7 @@ export default function Home({
       const got = sanitizeTopics(Array.isArray(d.topics) ? d.topics : []);
       setTailTopics(got);
       // ★0개면 자동 재분석(버튼 누르게 하지 않기 — 선택의 여지 제거). 세션당 1회.
-      if (mode === "short" && got.length === 0 && !autoAnalyzedRef.current) {
+      if (mode === "short" && got.length < 3 && !autoAnalyzedRef.current) { // 3개 미만이면 즉시 재수확(1개 고착 실측)
         autoAnalyzedRef.current = true;
         setAnalyzing(true);
         try {
@@ -606,7 +606,7 @@ export default function Home({
       {/* 루틴 시트 — 한 화면 한 주제 */}
       {routineSheet && (
         <div className="ateflo-backdrop-in fixed inset-0 z-[70] flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center sm:p-6" onClick={() => setRoutineSheet(null)}>
-          <div className="ateflo-sheet-up max-h-[88vh] w-full max-w-md overflow-y-auto at-glass-strong rounded-t-3xl p-6 shadow-2xl sm:rounded-3xl"
+          <div className="ateflo-sheet-up at-no-scrollbar max-h-[88vh] w-full max-w-md overflow-y-auto at-glass-strong rounded-t-3xl p-6 shadow-2xl sm:rounded-3xl"
             style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom))" }} onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <p className="text-[17px] font-bold text-neutral-900">
@@ -631,8 +631,13 @@ export default function Home({
                         <button key={k} onClick={() => void pickTail(k)} className={`at-press flex-1 rounded-[10px] py-2 text-[12.5px] font-bold transition ${tailMode === k ? "bg-[#1D75F7]/[0.08] text-[#1D75F7] ring-1 ring-[#1D75F7]/40" : "bg-neutral-50 text-neutral-500"}`}>{label}</button>
                       ))}
                     </div>
-                    {tailLoading && <div className="space-y-3">{[0,1,2].map((i)=><div key={i} className="ateflo-skel h-[92px] rounded-[20px]" />)}</div>}
-                    {!tailLoading && (tailMode === "all" ? tailFiltered : (tailTopics ?? []).filter((t) => t.keyword !== first?.keyword)).map((t, ti) => (
+                    {(tailLoading || analyzing) && (
+                      <div className="space-y-3">
+                        <p className="flex items-center justify-center gap-1.5 py-1 text-[13px] font-bold text-[#1D75F7]"><span className="tk-wand" aria-hidden>✦</span>{analyzing ? "실시간 인기 글감을 분석하고 있어요…" : tailMode === "short" ? "실시간 인기 글감을 찾고 있어요…" : "글감을 고르고 있어요…"}</p>
+                        {[0,1,2].map((i)=><div key={i} className="ateflo-skel h-[92px] rounded-[20px]" />)}
+                      </div>
+                    )}
+                    {!tailLoading && !analyzing && (tailMode === "all" ? tailFiltered : (tailTopics ?? []).filter((t) => t.keyword !== first?.keyword)).map((t, ti) => (
                       <div key={t.keyword} className="tk-chip" style={{ animationDelay: `${ti * 50}ms` }}><TopicRow topic={t} onClick={() => { setRoutineSheet(null); onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb); }} onSwap={() => {
                         if (tailMode !== "all") { // ★전용 세트에서 ↻ = 치우기 + 부족하면 자동 보충(실측: 다 치우면 소진 고착)
                           const nd = [...dismissedRef.current, t.keyword];
@@ -646,7 +651,7 @@ export default function Home({
                         swapTopic(t.keyword);
                       }} swapping={swapping.includes(t.keyword)} /></div>
                     ))}
-                    {!tailLoading && tailMode === "short" && (tailTopics ?? []).filter((t) => t.keyword !== first?.keyword).length === 0 && (
+                    {!tailLoading && !analyzing && tailMode === "short" && (tailTopics ?? []).filter((t) => t.keyword !== first?.keyword).length === 0 && (
                       <div className="rounded-2xl bg-neutral-50 p-6 text-center">
                         <p className="text-[13px] text-neutral-500">오늘 뜨는 이슈는 다 소화했어요 — 새 이슈는 몇 시간 안에 수확돼요.</p>
                         <button onClick={analyzeTrendsNow} disabled={analyzing} className="at-press mt-3 rounded-[12px] tk-grad-cta px-4 py-2.5 text-[13px] font-bold text-white disabled:opacity-60">
@@ -654,7 +659,7 @@ export default function Home({
                         </button>
                       </div>
                     )}
-                    {!tailLoading && tailMode === "long" && (tailTopics ?? []).length === 0 && (
+                    {!tailLoading && !analyzing && tailMode === "long" && (tailTopics ?? []).length === 0 && (
                       <p className="rounded-2xl bg-neutral-50 p-6 text-center text-[13px] text-neutral-400">꾸준한 수요 글감을 모으는 중이에요.</p>
                     )}
                   </div>

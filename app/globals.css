@@ -1798,3 +1798,7 @@ input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-sele
   96% { transform: rotate(3deg); }
 }
 .at-bell-shake { animation: at-bell-shake 3.2s ease-in-out infinite; transform-origin: 50% 15%; }
+
+/* 시트 내부 스크롤 — 바는 숨기고 스크롤만(유저: 보이는 스크롤이 부자연) */
+.at-no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; overscroll-behavior: contain; }
+.at-no-scrollbar::-webkit-scrollbar { display: none; }
