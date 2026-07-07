@@ -150,7 +150,9 @@ export default function ArticleModal({
   const [thumbCopies, setThumbCopies] = useState<string[] | null>(null);
   const [thumbBusy, setThumbBusy] = useState(false);
   const [thumbMakerOpen, setThumbMakerOpen] = useState(false);
-  const [lastThumb, setLastThumb] = useState<string | null>(null); // 시트 닫아도 생성물 보존
+  const [lastThumb, setLastThumbRaw] = useState<string | null>(null); // 시트 닫아도 생성물 보존
+  useEffect(() => { try { const v = localStorage.getItem(`ateflo_thumb_${article.id}`); if (v) setLastThumbRaw(v); } catch { /* ignore */ } }, [article.id]);
+  const setLastThumb = (u: string | null) => { setLastThumbRaw(u); if (u) { try { localStorage.setItem(`ateflo_thumb_${article.id}`, u); } catch { /* ignore */ } } };
   async function fetchThumbCopies() {
     if (thumbBusy) return;
     setThumbBusy(true);
