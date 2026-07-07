@@ -23,21 +23,25 @@ export async function composeThumbnail(opts: {
   press?: { brandName: string }; // 보도형(뉴스룸 문법) — photo 배경 디폴트
   /** 주제 힌트(글 제목) — 배경 오브젝트가 주제를 그리게(추상 blob 금지 판정) */
   topicHint?: string;
-}): Promise<{ png: Buffer; usedAiBackground: boolean }> {
+}): Promise<{ png: Buffer; usedAiBackground: boolean; aiFailReason?: string }> {
   const base = visualIdentityFor(opts.userId); // ★프로덕션 경로: 실제 user.id → 유저 고정 정체성
   const pal = opts.paletteName ? PALETTES.find((x) => x.name === opts.paletteName) : null;
   const identity = pal ? { ...base, palette: pal } : base;
   let bgDataUrl: string | null = null;
   let usedAiBackground = false;
 
+  let aiFailReason: string | undefined;
   if (opts.useAiBackground !== false && imageReady()) {
-    try {
-      const paletteHint = `${identity.palette.name.replace(/-/g, " ")}`;
-      const bg = await generateThumbBackground(identity.bgStyle, paletteHint, opts.userId, opts.topicHint, { forceStyle: opts.bgStyle, centerText: opts.centerCopy });
-      // 배경 텍스트 검증 — 글자 검출되면 폴백(합성 카피와 충돌 방지)
-      const v = await verifyImage(bg.base64, bg.mime, "abstract background", { bgOnly: true, userId: opts.userId });
-      if (!v.hasText) { bgDataUrl = `data:${bg.mime};base64,${bg.base64}`; usedAiBackground = true; }
-    } catch { /* 폴백으로 */ }
+    // ★실측(단색 전멸): 1회 실패·텍스트 검출 시 즉시 폴백하지 않고 1회 재시도 — GPT 실사는 간판·화면 텍스트 혼입 확률이 높다
+    for (let attempt = 0; attempt < 2 && !usedAiBackground; attempt++) {
+      try {
+        const paletteHint = `${identity.palette.name.replace(/-/g, " ")}`;
+        const bg = await generateThumbBackground(identity.bgStyle, paletteHint, opts.userId, opts.topicHint, { forceStyle: opts.bgStyle, centerText: opts.centerCopy });
+        const v = await verifyImage(bg.base64, bg.mime, "abstract background", { bgOnly: true, userId: opts.userId });
+        if (!v.hasText) { bgDataUrl = `data:${bg.mime};base64,${bg.base64}`; usedAiBackground = true; aiFailReason = undefined; }
+        else aiFailReason = "배경에 글자가 섞여 재시도했어요";
+      } catch (e) { aiFailReason = `배경 생성 실패: ${String(e instanceof Error ? e.message : e).slice(0, 80)}`; }
+    }
   }
 
   const input: ThumbInput = {
@@ -53,5 +57,5 @@ export async function composeThumbnail(opts: {
     press: opts.press,
   };
   const png = await renderThumbnail(input);
-  return { png, usedAiBackground };
+  return { png, usedAiBackground, aiFailReason };
 }

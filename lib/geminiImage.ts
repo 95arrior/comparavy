@@ -81,7 +81,7 @@ export function buildBodyPrompt(slotDesc: string, articleTitle: string, seed: nu
       "SIMPLIFY: reduce the scene hint to its ONE strongest visual anchor — a building, a counter, a place, or an object — and photograph that simply and beautifully. Ignore procedural details, screen contents, document items or written clauses entirely (예: '등기소 화면에서 근저당 확인' → 법원 건물 외관, '주민센터 창구에서 전입신고' → 창구 풍경만).",
       // ★단일 문법(유저 최종 판정: 텍스트 절대 금지 — 깨짐, 빈 화면도 금지 — 허접) — 상황이 스스로 말하는 씬 3택.
       "Pick the ONE scene type that best fits this topic: (a) INDUSTRY/PLACE topics (energy, real estate, cars, travel, markets) → a cinematic wide establishing shot of the real-world place itself — industrial plant, apartment complex, dealership lot, harbor — impressive scale, natural light, professional editorial photograph. (b) PAPERWORK/APPLICATION topics → stage the SITUATION using NON-PAPER objects only: keys, a small house model, a calendar (numbers-free), coins in a tray, a phone lying face-down. DO NOT include documents, forms, sticky notes, books or screens AT ALL — any paper-like object tempts text and text always renders broken. (c) otherwise → a clean bright STILL-LIFE: multiple objects of the topic category neatly arranged on a light wooden table near a window, soft daylight, airy minimal styling — like a lifestyle magazine product spread. The image must spark curiosity and instantly convey what the article is about — a scene that tells the story by itself.",
-      `The topic-specific OBJECTS are the hero of the frame — a person may appear only as hands interacting with them (no full figures, face never visible). Include at least 2 physical objects that are UNIQUELY specific to the topic above (e.g., housing topic → door keys, moving boxes, apartment window view; car topic → car interior, charging cable). NEVER generic clichés: NO piggy banks, NO coin stacks, NO generic calculators, NO lightbulbs — unless the topic is literally about them.`,
+      `The topic-specific OBJECTS are the hero of the frame — a person may appear only as hands interacting with them (no full figures, face never visible). Include at least 2 physical objects that are UNIQUELY specific to the topic above (e.g., housing topic → door keys, moving boxes, apartment window view; car topic → car interior, charging cable). NEVER generic clichés: NO piggy banks, NO coin stacks, NO calculators, NO lightbulbs, NO miniature house models, NO keys-next-to-props. AVOID the tired 'objects arranged on a desk' composition unless the topic is literally desk work — when the topic has a real-world place (bank, apartment complex, market, road), GO THERE with a wide editorial shot instead.`,
       `${tone}, ${compo}, ${mood} mood. Natural realistic photography, true-to-life textures and materials, tasteful depth of field, high-end magazine quality. Wide horizontal 16:9 composition.`,
       IMAGE_HARD_RULES,
     ].join(" ");
@@ -152,7 +152,7 @@ async function callImage(prompt: string, aspectRatio: "16:9" | "1:1"): Promise<{
     try { return { ...(await callOpenAIImage(prompt, aspectRatio)), provider: "gpt-image-1" }; }
     catch (e) {
       console.error("[image] openai 실패 → gemini 폴백:", String(e).slice(0, 300)); // 조용한 폴백 금지 — 원인 로그
-      if (process.env.GEMINI_API_KEY && !/QUOTA/.test(String(e))) return { ...(await callGemini(prompt, aspectRatio)), provider: "gemini(폴백)" };
+      if (process.env.GEMINI_API_KEY) return { ...(await callGemini(prompt, aspectRatio)), provider: "gemini(폴백)" }; // ★QUOTA 포함 전면 폴백(실측: 썸네일 단색 — 폴백 불발로 AI 배경 전멸)
       throw e;
     }
   }

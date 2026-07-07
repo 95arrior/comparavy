@@ -65,7 +65,7 @@ export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots
       });
       const d = await r.json();
       if (!r.ok) { setErr(d.error ?? "만들지 못했어요"); if (typeof d.credits === "number") onCredits?.(d.credits); }
-      else { const u = d.url ?? d.dataUrl ?? null; setPreview(u); if (u) onGenerated?.(u); if (typeof d.credits === "number") onCredits?.(d.credits); }
+      else { const u = d.url ?? d.dataUrl ?? null; setPreview(u); if (u) onGenerated?.(u); if (typeof d.credits === "number") onCredits?.(d.credits); if (d.aiFailReason && !d.usedAiBackground) setErr(`AI 배경 실패 → 단색 폴백 (${d.aiFailReason}) · 크레딧은 환불됐어요`); }
     } catch { setErr("네트워크 오류예요. 다시 시도해 주세요."); }
     setBusy(false);
   }

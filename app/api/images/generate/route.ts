@@ -87,7 +87,7 @@ export async function POST(request: Request) {
       try { const { data: bp } = await supabase.from("blog_profiles").select("blog_name").eq("user_id", user.id).order("created_at", { ascending: true }).limit(1).single(); brandName = (bp?.blog_name ?? "").trim(); } catch { /* ignore */ }
       const FONT_ALLOW = ["GmarketSansBold", "BlackHanSans", "Pretendard-Black", "Jua"];
       const fontTitle = FONT_ALLOW.includes(String(body.fontName)) ? String(body.fontName) : "GmarketSansBold";
-      const { png, usedAiBackground } = await composeThumbnail({
+      const { png, usedAiBackground, aiFailReason } = await composeThumbnail({
         userId: user.id,
         thumb: { mainCopy: breakThumbCopy(mainRaw), subCopy: "", badge: "" },
         articleId: articleId ?? mainRaw,
@@ -111,7 +111,7 @@ export async function POST(request: Request) {
         } catch { /* 컬럼 미적용 */ }
       }
       void logUsage({ userId: user.id, model: "thumb", kind: "thumb_maker", inputTokens: 0, outputTokens: aiBg && usedAiBackground ? 1290 : 0 });
-      return NextResponse.json({ ok: true, url, dataUrl: url ? undefined : `data:image/png;base64,${png.toString("base64")}`, usedAiBackground, credits: balance ?? undefined });
+      return NextResponse.json({ ok: true, url, dataUrl: url ? undefined : `data:image/png;base64,${png.toString("base64")}`, usedAiBackground, aiFailReason, credits: balance ?? undefined });
     } catch {
       if (aiBg) await addCredits(user.id, IMAGE_COST, "refund_image", refundKeyTM(user.id, mainRaw)).catch(() => null);
       return NextResponse.json({ error: "썸네일을 만들지 못했어요. 크레딧은 돌려드렸어요." }, { status: 502 });
