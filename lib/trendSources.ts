@@ -101,11 +101,35 @@ async function fetchGoogleNews(query: string, seed: string, now: number): Promis
 }
 
 /** 신선도 게이트가 적용된 헤드라인 + 분포 통계. */
+
+// ── 구글 트렌드 KR 급상승 RSS — 유일한 공식 '실시간 인기 통계'(검색량 근사치 동봉). 전 카테고리 공통, 관련성은 선별 게이트가 거른다.
+let gtCache: { at: number; items: Headline[] } | null = null;
+export async function fetchGoogleTrendsKR(now: number): Promise<Headline[]> {
+  if (gtCache && now - gtCache.at < 10 * 60_000) return gtCache.items;
+  try {
+    const res = await fetch("https://trends.google.co.kr/trending/rss?geo=KR", { headers: { "User-Agent": "Mozilla/5.0" }, signal: AbortSignal.timeout(6000) });
+    if (!res.ok) return [];
+    const xml = await res.text();
+    const items: Headline[] = [];
+    const blocks = xml.split("<item>").slice(1);
+    for (const b of blocks.slice(0, 20)) {
+      const kw = (b.match(/<title>([^<]+)<\/title>/)?.[1] ?? "").trim();
+      const traffic = (b.match(/<ht:approx_traffic>([^<]+)<\/ht:approx_traffic>/)?.[1] ?? "").trim();
+      const newsTitle = (b.match(/<ht:news_item_title>([^<]+)<\/ht:news_item_title>/)?.[1] ?? "").trim();
+      if (!kw) continue;
+      items.push({ title: `[실시간 급상승 ${traffic || "?"} 검색] ${kw}${newsTitle ? ` — ${newsTitle}` : ""}`, description: newsTitle, press: "구글트렌드", seed: "실시간급상승", fresh: true });
+    }
+    gtCache = { at: now, items };
+    return items;
+  } catch { return []; }
+}
+
 export async function gatherHeadlinesWithStats(category: string): Promise<{ headlines: Headline[]; stats: GatherStats }> {
   const now = Date.now();
   const seeds = seedsFor(category);
   const jobs: Promise<Headline[]>[] = [];
   for (const s of seeds) { jobs.push(fetchNaverNews(s, s, now)); jobs.push(fetchGoogleNews(s, s, now)); }
+  jobs.push(fetchGoogleTrendsKR(now)); // ★실시간 인기 통계 합류 — 검색량 근사치가 제목에 실려 선별 AI가 강신호로 읽음
   const all = (await Promise.all(jobs.map((p) => p.catch(() => [] as Headline[])))).flat();
 
   // 제목 정규화 중복 제거
