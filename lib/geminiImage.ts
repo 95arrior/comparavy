@@ -193,7 +193,7 @@ export async function generateThumbBackground(bgStyleHint: string, paletteHint: 
   let prompt = style === "photo" && topic ? buildThumbPhotoBgPrompt(topic, seed, opts?.centerText === true) : buildThumbBgPrompt(bgStyleHint, paletteHint, seed, topic);
   // ★카피-배경 감정 동기화(실측: '900만 원 놓치고 있었네요' 아래 웃는 커플 — 이미지가 카피와 따로 놀면 저품질)
   if (opts?.copyText?.trim()) {
-    prompt += ` CRITICAL EMOTIONAL SYNC: the Korean copy overlaid on this image reads "${opts.copyText.trim()}" (understand only — never render it). The scene MUST match its emotion: loss/warning copy → concerned or serious expression, tense mood, no smiling; deadline/urgency → hurried focused moment; benefit/opportunity → hopeful anticipation (not celebration). A cheerful smiling scene under a warning copy is a failed image.`;
+    prompt += ` CRITICAL EMOTIONAL SYNC: the Korean copy overlaid on this image reads "${opts.copyText.trim()}" (understand only — never render it). TWO sync rules: (1) SUBJECT — the hero of the frame must be the concrete OBJECT the copy talks about (money missed in a pension/savings account → a bankbook, account passbook or finance app moment on a desk; a car recall → the car; NOT generic people chatting in a cafe). People may appear only as hands or a tense glance supporting that object. (2) EMOTION — loss/warning copy → serious, tense mood, no smiling; deadline → hurried focused moment; benefit → quiet anticipation. A cheerful lifestyle scene that ignores the copy subject is a failed image.`;
   }
   return callImage(prompt, "1:1");
 }
