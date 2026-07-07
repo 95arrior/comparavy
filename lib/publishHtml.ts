@@ -15,6 +15,8 @@ export interface PublishInput {
   ownNaverBlogId?: string | null;
   /** AI 생성 이미지 슬롯 인덱스 — 해당 이미지 아래 '참고 이미지' 캡션 자동(오인 방지) */
   aiImageIdx?: number[];
+  /** 본문 클로징 — 경계선 + 중앙 작은 이미지(뉴스룸 마감 문법, 보통 썸네일 재사용) */
+  closingImageUrl?: string | null;
 }
 
 const PHOTO_RE = /\[사진:\s*([^\]]+)\]/g;
@@ -288,7 +290,12 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   const gated0 = withImages ? sanitizeForCopy(body) : stripEmoji(body);
   const gated = sanitizeUrls(gated0, { allowNaverBlogId: input.ownNaverBlogId }).html; // ★소급 정화 — 내 블로그 전편 링크는 통과
   // 파이프: 분할 → 정렬 → 크기 위계 → ★여백 스케일 v2(마크업 스페이서) → 서스펜스(마킹 예외)
-  return applySuspenseBreaks(applySpacingRich(styleTables(applySizing(styleBlocks(splitLongParagraphs(gated))))));
+  let out = applySuspenseBreaks(applySpacingRich(styleTables(applySizing(styleBlocks(splitLongParagraphs(gated))))));
+  // ★클로징(뉴스룸 마감 문법) — 얇은 경계선 + 중앙 작은 이미지(보통 썸네일). withImages(rich)일 때만.
+  if (withImages && input.closingImageUrl) {
+    out += `<p><br /></p><p style="text-align:center;"><span style="display:inline-block;width:55%;border-top:1px solid #d9dde3;">&nbsp;</span></p><p style="text-align:center;"><img src="${input.closingImageUrl}" alt="" width="420" /></p>`;
+  }
+  return out;
 }
 
 // rich 모드 — 사진자리를 이미지로.

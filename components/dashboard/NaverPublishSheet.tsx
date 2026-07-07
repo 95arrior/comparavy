@@ -27,6 +27,7 @@ export default function NaverPublishSheet({
   targetBlogId,
   articleId,
   aiImageIdx,
+  closingImageUrl,
   onCopied,
   onDone,
   onClose,
@@ -41,7 +42,8 @@ export default function NaverPublishSheet({
   targetBlogId?: string | null;
   /** 완료 화면 주소 확정용(선택 입력 — 발행 직후가 주소를 들고 있는 순간) */
   articleId?: string;
-  aiImageIdx?: number[]; // ★탭만 연다 — 클립보드 접근 금지(회귀 테스트로 고정)
+  aiImageIdx?: number[];
+  closingImageUrl?: string | null; // ★탭만 연다 — 클립보드 접근 금지(회귀 테스트로 고정)
   onCopied?: () => void; // 본문 복사 검증 성공 시(상태 모델 copied 전이)
   onDone: () => void;
   onClose: () => void;
@@ -65,7 +67,7 @@ export default function NaverPublishSheet({
   const [titleCopied, setTitleCopied] = useState(false);
   const [imagesSaved, setImagesSaved] = useState(false);
 
-  const richHtml = useMemo(() => { const h = buildRichHtml({ title, bodyHtml, images, ownNaverBlogId: targetBlogId, aiImageIdx }); return hasPhotoLeak(h) ? sanitizeForCopy(h) : h; }, [title, bodyHtml, images, targetBlogId]);
+  const richHtml = useMemo(() => { const h = buildRichHtml({ title, bodyHtml, images, ownNaverBlogId: targetBlogId, aiImageIdx, closingImageUrl }); return hasPhotoLeak(h) ? sanitizeForCopy(h) : h; }, [title, bodyHtml, images, targetBlogId]);
   const plain = useMemo(() => { const t = buildPlainText({ title, bodyHtml, images }); return hasPhotoLeakPlain(t) ? sanitizePlain(t) : t; }, [title, bodyHtml, images]);
   const bodyLeak = hasPhotoLeak(richHtml) || hasPhotoLeakPlain(plain);
   const hasLinkSlot = bodyHtml.includes("[상품 링크 자리]"); // 리뷰형에만 존재 — 조건부 안내

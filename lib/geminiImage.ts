@@ -64,7 +64,7 @@ const PHOTO_MOODS = ["calm and tidy", "warm and inviting", "fresh and clean", "q
 export function buildBodyPrompt(slotDesc: string, articleTitle: string, seed: number): string {
   const compo = PHOTO_COMPOS[(seed >> 3) % PHOTO_COMPOS.length];
   const mood = PHOTO_MOODS[(seed >> 7) % PHOTO_MOODS.length];
-  if (pickImageStyle(slotDesc, seed) === "photo") {
+  if (true) { // ★본문=100% 실사 다큐(유저 판정: 3D 오브젝트는 본문에서 독 — 썸네일 toss 배경에만 유지)
     const tone = PHOTO_TONES[seed % PHOTO_TONES.length];
     return [
       `Realistic lifestyle photograph for a Korean blog post. Topic context (for understanding only — never render as text): ${articleTitle}.`,
