@@ -117,6 +117,7 @@ export default function Home({
 
   const [collecting, setCollecting] = useState(false);
   // ★홈 글감 보드(유저 목업: 두 종족 상시 노출) — 마운트 시 병렬 로드(캐시 경유라 가벼움)
+  const [boardTab, setBoardTab] = useState<"short" | "long">("short"); // 모바일 탭
   const [boardShort, setBoardShort] = useState<Topic[] | null>(null);
   const [boardLong, setBoardLong] = useState<Topic[] | null>(null);
   useEffect(() => {
@@ -492,7 +493,6 @@ export default function Home({
       {(() => {
         type G = { emoji: string; title: string; sub: string; cta: string; onGo: () => void; alt?: { label: string; onGo: () => void } };
         if (!hydrated) return <div className="tk-seq-1 mt-3 ateflo-skel h-[168px] rounded-[20px]" />; // 자리 고정 — 잔상·시프트 방지
-        if (guideKind === "first") return null; // 첫 글 상태는 아래 '오늘의 글' 히어로가 원카드(글감 상세·교체 보유)
         const wantCheckin = guideKind === "checkin";
         const noCredit = guideKind === "credit";
         const todayDraft = articles.find((a) => a.status === "draft" && new Date(a.created_at).toDateString() === new Date().toDateString());
@@ -513,7 +513,7 @@ export default function Home({
           : noCredit
           ? { emoji: "🔋", title: "크레딧이 다 떨어졌어요", sub: "충전하면 바로 다음 글을 쓸 수 있어요", cta: "충전하기", onGo: onOpenCredits }
           : pubCountToday === 0
-          ? { emoji: "✍️", title: "오늘 첫 글을 쓸 시간이에요", sub: first ? `추천 글감: ${first.title.slice(0, 30)}${first.title.length > 30 ? "…" : ""}` : "지금 뜨는 글감부터 보여드릴게요", cta: first ? "이 글감으로 쓰기" : "글감 보기", onGo: first ? goWrite : () => setRoutineSheet("topics"), alt: first ? { label: "다른 글감 볼래요", onGo: () => setRoutineSheet("topics") } : undefined }
+          ? { emoji: "✍️", title: "오늘 첫 글을 쓸 시간이에요", sub: first ? `추천: ${first.title.slice(0, 34)}${first.title.length > 34 ? "…" : ""}` : "아래 글감판에서 골라보세요", cta: first ? "추천 글감 바로 쓰기" : "글감 보러 가기", onGo: first ? goWrite : () => setRoutineSheet("topics"), alt: { label: "아래 글감판에서 직접 고를래요", onGo: () => { try { document.getElementById("topic-board")?.scrollIntoView({ behavior: "smooth" }); } catch { /* ignore */ } } } }
           : pubCountToday === 1
           ? { emoji: "💪", title: "오늘은 2편이 기본이에요", sub: `${nextSlotLabel} 한 편 더 — 시간을 나눠 올리면 노출 기회도 두 배`, cta: "2편째 글감 고르기", onGo: () => setRoutineSheet("topics") } // 선택지 없음 — 2편은 기본(유저 확정)
           : { emoji: "🔥", title: `오늘 ${Math.max(pubCountToday, 1)}편 — 기본 몫 끝!`, sub: "더 쓰면 그만큼 빨라져요. 무리는 금물", cta: "글 추가로 더 쓰기", onGo: () => setRoutineSheet("topics"), alt: { label: "이웃 미션 하기", onGo: () => setRoutineSheet("neighbor") } }; // 2편+ = 선택 2개(유저 확정)
@@ -589,32 +589,25 @@ export default function Home({
         return null;
       })()}
 
-      {/* 오늘의 글 — 단일 CTA. 가이드 소유 상태(draft·발행후·5편)에선 숨김(카드 이중 표기 방지) */}
-      {hydrated && !(guideKind === "draft" || guideKind === "more" || guideKind === "done5" || guideKind === "golden") && <div className="at-rise at-d2 mt-6">
-        <TodayCard
-          plain
-          topic={first ? { keyword: first.keyword, title: first.title, tag: first.tag, newsContext: first.newsContext, briefText: first.briefText, titleSearch: first.titleSearch, thumb: first.thumb, vol: first.vol, comp: first.comp, blogTotal: first.blogTotal } : null}
-          loading={topicsLoading}
-          credits={credits}
-          info={info}
-          onWriteKeyword={onWriteKeyword}
-          onGoPerformance={onGoPerformance}
-          onHeroSwap={heroSwap}
-          heroSwapsLeft={Math.max(0, HERO_SWAP_MAX - heroSwapsUsed)}
-          onOpenTodayDraft={(() => { const d = articles.find((a) => a.status === "draft" && new Date(a.created_at).toDateString() === new Date().toDateString()); return d ? () => onSelect(d) : undefined; })()}
-          preReady={!!preReadyId}
-          onReadToday={readToday}
-        />
-      </div>}
+      {/* 오늘의 글 히어로 퇴역(유저 확정: 보드가 주인공) — 추천·0초 쓰기는 가이드 원카드가 흡수 */}
 
       {/* ★글감 보드(유저 목업) — 두 종족 상시 노출, 트렌드=수명 타이머+근거 */}
       {hydrated && (
-        <div className="tk-seq-2 mt-6 grid grid-cols-2 gap-3">
+        <div id="topic-board" className="tk-seq-2 mt-6">
+          {/* 모바일: 탭 전환(한 컬럼 풀폭) */}
+          <div className="mb-3 flex gap-1.5 sm:hidden">
+            {([["short", "지금 뜨는"], ["long", "꾸준한 수요"]] as const).map(([k, label]) => (
+              <button key={k} onClick={() => setBoardTab(k)} className={`at-press flex-1 rounded-[12px] py-2.5 text-[13.5px] font-bold transition ${boardTab === k ? "bg-[#1D75F7]/[0.08] text-[#1D75F7] ring-1 ring-[#1D75F7]/40" : "bg-white text-neutral-500 shadow-[0_1px_3px_rgba(0,0,0,0.05)]"}`}>{label}</button>
+            ))}
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {([["short", "지금 뜨는", "현재 실시간 인기 키워드 글감이에요", boardShort], ["long", "꾸준한 수요", "지속적으로 수요가 있는 글감이에요", boardLong]] as const).map(([mode, title, sub, list]) => (
-            <div key={mode} className="min-w-0">
-              <p className="text-center text-[15px] font-bold text-[color:var(--color-text)]">{title}</p>
-              <p className="mt-0.5 text-center text-[11px] text-[color:var(--color-text-weak)]">{sub}</p>
-              <div className="mt-2 flex flex-col gap-2">
+            <div key={mode} className={`min-w-0 ${boardTab === mode ? "" : "hidden sm:block"}`}>
+              <div className="hidden sm:block">
+              <p className="text-center text-[16px] font-bold text-[color:var(--color-text)]">{title}</p>
+              <p className="mt-0.5 text-center text-[11.5px] text-[color:var(--color-text-weak)]">{sub}</p>
+              </div>
+              <div className="mt-2 flex flex-col gap-2.5">
                 {list === null && [0, 1, 2].map((i) => <div key={i} className="ateflo-skel h-[86px] rounded-[14px]" />)}
                 {list !== null && list.length === 0 && (
                   <div className="rounded-[14px] bg-white px-3 py-5 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
@@ -626,6 +619,7 @@ export default function Home({
               </div>
             </div>
           ))}
+          </div>
         </div>
       )}
 
@@ -843,15 +837,15 @@ function BoardCard({ topic, onWrite }: { topic: Topic; onWrite: () => void }) {
     return "오늘 수확된 실시간 이슈 · 선점 기회";
   })();
   return (
-    <button onClick={onWrite} className="at-press rounded-[14px] bg-white p-3 text-left shadow-[0_1px_3px_rgba(0,0,0,0.05)] tk-tr hover:shadow-[0_4px_14px_-6px_rgba(29,117,247,0.18)]">
+    <button onClick={onWrite} className="at-press rounded-[16px] bg-white p-4 text-left shadow-[0_1px_3px_rgba(0,0,0,0.05)] tk-tr hover:shadow-[0_4px_14px_-6px_rgba(29,117,247,0.18)]">
       <div className="flex items-center gap-1">
         {isTrend
           ? <span className="rounded-full bg-[#FFF1F0] px-2 py-0.5 text-[10.5px] font-bold text-[#F04452]">실시간 급상승</span>
           : <span className="rounded-full bg-[#EFF6FF] px-2 py-0.5 text-[10.5px] font-bold text-[#1D75F7]">안정 수요</span>}
         {life && <span className="text-[10px] font-semibold tabular-nums text-amber-600">⏳ {life}</span>}
       </div>
-      <p className="mt-1.5 line-clamp-2 text-[13.5px] font-bold leading-snug text-[color:var(--color-text)]">{topic.title}</p>
-      {evidence && <p className="mt-1.5 line-clamp-2 text-[11px] leading-snug text-neutral-400">{evidence}</p>}
+      <p className="mt-2 line-clamp-2 text-[14.5px] font-bold leading-snug text-[color:var(--color-text)]">{topic.title}</p>
+      {evidence && <p className="mt-1.5 line-clamp-2 text-[12px] leading-snug text-neutral-400">{evidence}</p>}
     </button>
   );
 }
