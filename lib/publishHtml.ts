@@ -111,23 +111,7 @@ function mergeUnbalanced(parts: string[]): string[] {
 // ★유저 교본(2026-07-07): 문단을 쪼개면(빈 줄) 흐름이 끊긴다 — 같은 문단 안에서 <br>로 '의미 구 줄바꿈'.
 //  문장별 한 줄. 문장이 길면(>44자) 쉼표·연결어미 구 경계에서 균형 줄바꿈(양쪽 12자 이상일 때만 — 고아 조각 금지).
 function breakSentence(sen: string): string {
-  if (visLen(sen) <= 44) return sen;
-  const cands: number[] = [];
-  // ★사파리 호환(실측: '화면을 불러오지 못했어요' 크래시) — 가변 길이 lookbehind는 Safari가 파싱 자체를 거부. 캡처 방식으로.
-  const re = /([,，、]|하고|하며|지만|는데|으니|니까|어서|아서|려면|다면|면서)\s+/g;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(sen))) cands.push(m.index + m[1].length + 0 + (m[0].length - m[1].length));
-  if (!cands.length) return sen;
-  const mid = visLen(sen) / 2;
-  let best = -1, bestDist = Infinity;
-  for (const c of cands) {
-    const left = visLen(sen.slice(0, c)), right = visLen(sen.slice(c));
-    if (left < 12 || right < 12) continue; // 고아 조각 금지
-    const d = Math.abs(left - mid);
-    if (d < bestDist) { bestDist = d; best = c; }
-  }
-  if (best < 0) return sen;
-  return `${sen.slice(0, best).trimEnd()}<br>${sen.slice(best).trimStart()}`;
+  return sen; // ★문장 안 개행 전면 금지(유저 교본 최종: 쉼표·어미 개행 = 끊어치기 — 부드럽게 자연 줄바꿈으로 흘린다)
 }
 function splitInner(inner: string): string[] {
   if (visLen(inner) <= MOBILE_MAX_CHARS && !/(?<=[?!])\s|(?<=[^\d]\.)\s/.test(inner.replace(/<[^>]+>/g, ""))) return [inner];
@@ -152,7 +136,8 @@ export function splitLongParagraphs(html: string): string {
 //  모든 블록에 text-align만 주입. 인용구(blockquote)는 네이버 인용 포맷이 요소 자체로 구분되나 정렬은 동일.
 function styleBlocks(html: string): string {
   const align: "center" | "left" = BODY_ALIGN === "center" ? "center" : "left";
-  return html.replace(/<(p|h1|h2|h3|h4|blockquote|ul|ol|li)(\s[^>]*)?>/gi, (m, _tag, attr) => {
+  return html.replace(/<(p|h1|h2|h3|h4|blockquote|ul|ol|li)(\s[^>]*)?>/gi, (m, tag, attr) => {
+    if (/^(ul|ol|li)$/i.test(String(tag))) return /style=/.test(attr ?? "") ? m.replace(/style="([^"]*)"/, 'style="$1;text-align:left"') : m.replace(/>$/, ' style="text-align:left">'); // ★리스트는 항상 좌(유저 교본: 불릿 중앙정렬 금지)
     if (/text-align\s*:\s*center/.test(attr ?? "")) return m; // ★중앙 안내 블록(포맷 v3) — 엔진 지정 존중
     if (/style=/.test(attr ?? "")) return m.replace(/style="([^"]*)"/, `style="$1;text-align:${align}"`);
     return m.replace(/>$/, ` style="text-align:${align}">`);
@@ -319,14 +304,9 @@ function capMarks(html: string): string {
 }
 
 function markToBold(html: string): string {
-  // ★형광펜 이중 문법(유저 교본 4차) — 구 단위(≤14자: '집값의 70~80%')는 문장 속 인라인, 문장급(>14자)은 단독 줄
-  html = html.replace(/<mark>([\s\S]{15,}?)<\/mark>/g, "\u0000MARKBLOCK\u0000$1\u0000/MARKBLOCK\u0000");
-  html = html
-    .replace(/([^>\s])\s*\u0000MARKBLOCK\u0000/g, "$1<br>\u0000MARKBLOCK\u0000")
-    .replace(/\u0000\/MARKBLOCK\u0000\s*([^<\s])/g, "\u0000/MARKBLOCK\u0000<br>$1")
-    .replace(/\u0000MARKBLOCK\u0000([\s\S]*?)\u0000\/MARKBLOCK\u0000/g, '<b style="background-color:#fff3a8;">$1</b>');
-  html = html.replace(/<mark>([\s\S]*?)<\/mark>/g, '<b style="background-color:#fff3a8;">$1</b>'); // 짧은 구 — 인라인
-  return html.replace(/<\/?mark>/g, ""); // ★잔여 고아 태그 최종 소거 — 네이버가 생 <mark>를 노랑으로 칠해 도배가 된다
+  // ★전부 인라인(유저 교본 최종: 단독 줄 강제가 '…경향' 형광 뒤 '이 있어요' 고아 조각을 만들었다) — 문장 흐름 절대 보존
+  html = html.replace(/<mark>([\s\S]*?)<\/mark>/g, '<b style="background-color:#fff3a8;">$1</b>');
+  return html.replace(/<\/?mark>/g, ""); // 잔여 고아 태그 소거(도배 방어)
 }
 function hashtagGroups(tags?: string[]): string[] {
   const list = (tags ?? []).map((t) => String(t).trim().replace(/^#/, "")).filter(Boolean).map((t) => `#${t}`);
