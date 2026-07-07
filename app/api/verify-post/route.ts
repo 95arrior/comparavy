@@ -25,6 +25,7 @@ export async function POST(request: Request) {
     const verdict = await checkPostDeleted(url);
     if (verdict === "deleted") return NextResponse.json({ error: "이 주소의 글을 찾지 못했어요. 발행된 글 주소인지 확인해 주세요." }, { status: 400 });
     await supabase.from("articles").update({ status: "verified", naver_url: url, verified_at: new Date().toISOString() }).eq("id", id).eq("user_id", user.id);
+    try { await supabase.from("articles").update({ verified_via: "direct" }).eq("id", id).eq("user_id", user.id); } catch { /* 0060 미적용 */ }
     void logUsage({ userId: user.id, model: "rss", kind: "verify_manual_url", inputTokens: 0, outputTokens: 0 });
     return NextResponse.json({ ok: true, state: "verified" });
   }
@@ -45,6 +46,7 @@ export async function POST(request: Request) {
   const hit = await verifyTitleInBlog(blogId, art.title, claimed); // 명시 blogId — 이 글의 블로그에서만 매칭
   if (hit) {
     await supabase.from("articles").update({ status: "verified", naver_url: hit.link, verified_at: new Date().toISOString() }).eq("id", id).eq("user_id", user.id);
+    try { await supabase.from("articles").update({ verified_via: "rss" }).eq("id", id).eq("user_id", user.id); } catch { /* 0060 미적용 */ }
     void logUsage({ userId: user.id, model: "rss", kind: "verify_hit_instant", inputTokens: 0, outputTokens: 0 });
     return NextResponse.json({ ok: true, state: "verified" });
   }

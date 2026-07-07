@@ -625,6 +625,23 @@ export default function Home({
       {/* ★글감 보드(유저 목업) — 두 종족 상시 노출, 트렌드=수명 타이머+근거 */}
       {hydrated && (
         <div id="topic-board" className="tk-seq-2 mt-6">
+          {(() => { // ★오늘 발행 현황(유저 승인 시안 — 일 2회 리듬을 화면만 보고 관리)
+            const today = new Date().toDateString();
+            const times = articles
+              .map((a) => (a as { verified_at?: string | null }).verified_at)
+              .filter((v): v is string => !!v)
+              .map((v) => new Date(v))
+              .filter((d) => !Number.isNaN(d.getTime()) && d.toDateString() === today);
+            const morning = times.filter((d) => d.getHours() >= 6 && d.getHours() < 8).length;
+            const evening = times.filter((d) => d.getHours() >= 17 && d.getHours() < 19).length;
+            return (
+              <p className="mb-3 text-center text-[12.5px] font-semibold text-[color:var(--color-text-sub)]">
+                {times.length > 0
+                  ? `오늘 ${times.length}회 발행 확인 (아침 창 ${morning} · 저녁 창 ${evening})`
+                  : "오늘 아직 발행 전 — 에버그린은 아침 창(6~8시)과 저녁 창(17~19시)이 좋아요, 트렌드는 지금 바로"}
+              </p>
+            );
+          })()}
           {/* 모바일: 탭 전환(한 컬럼 풀폭) */}
           <div className="mb-3 flex gap-1.5 sm:hidden">
             {([["short", "지금 뜨는"], ["long", "꾸준한 수요"]] as const).map(([k, label]) => (

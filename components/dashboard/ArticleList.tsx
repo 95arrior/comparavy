@@ -70,6 +70,17 @@ export default function ArticleList({ pubStampKey,
 
   // ★색인 상태 — 이제 크론이 하루 1번 검사해 DB(article.indexed_status)에 저장. 화면은 저장값만 읽는다.
   //  (유저가 열 때마다 네이버 검색을 부르던 방식 폐기 → 1만 명 쿼터 문제 해소.)
+  // ★발행 시각 라벨(유저 승인 시안) — direct="발행"·rss/구데이터="확인"(시각이 어긋날 수 있어 단정 금지), 시간대 창 병기
+  const pubTimeLabel = (a: Article): string | null => {
+    const at = (a as { verified_at?: string | null }).verified_at;
+    if (!at || !(a.status === "verified" || a.status === "published")) return null;
+    const d = new Date(at);
+    if (Number.isNaN(d.getTime())) return null;
+    const h = d.getHours();
+    const win = h < 6 ? "새벽" : h < 8 ? "아침 창" : h < 17 ? "낮" : h < 19 ? "저녁 창" : "밤";
+    const word = (a as { verified_via?: string | null }).verified_via === "direct" ? "발행" : "확인";
+    return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")} ${word} · ${win}`;
+  };
   const idxLabel = (a: Article): { text: string; cls: string } | null => {
     if (a.status !== "published" && a.status !== "verified") return null; // ★verified 포함(주력 상태 — 라벨 누락 수리)
     const st = a.indexed_status;
@@ -208,6 +219,7 @@ export default function ArticleList({ pubStampKey,
                   <p className="mt-0.5 text-[11.5px] font-medium text-neutral-400">
                     {published ? "발행됨" : pending ? "발행 확인 중" : "초안"} · {(a.char_count ?? 0).toLocaleString()}자 · {new Date(a.created_at).toLocaleDateString("ko-KR", { month: "long", day: "numeric" })}
                     {(() => { const b = idxLabel(a); return b ? <> · <span className={`font-bold ${b.cls}`}>{b.text}</span></> : null; })()}
+                    {(() => { const t = pubTimeLabel(a); return t ? <> · <span className="text-neutral-400">{t}</span></> : null; })()}
                   </p>
                 </button>
                 {published ? (

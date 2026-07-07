@@ -42,7 +42,7 @@ export async function POST() {
         const { error } = await supabase.from("articles").update({
           status: "verified", naver_url: hit.link || null, verified_at: new Date().toISOString(),
         }).eq("id", d.id).eq("user_id", user.id);
-        if (!error) { recovered++; recoveredIds.push(d.id); }
+        if (!error) { recovered++; recoveredIds.push(d.id); try { await supabase.from("articles").update({ verified_via: "rss" }).eq("id", d.id).eq("user_id", user.id); } catch { /* 0060 미적용 */ } }
         break;
       }
     }
