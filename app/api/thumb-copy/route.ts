@@ -35,17 +35,32 @@ export async function POST(request: Request) {
     "- 출력 계약(어기면 실패): 설명·비교·머리말 없이, 첫 글자가 [ 이고 마지막 글자가 ] 인 JSON 배열 한 줄만 출력한다. 예: [\"고지서 그대로 내면 손해\",\"3월 전 증여가 답인 이유\"]",
   ].join("\n");
   try {
-    const res = await client.messages.create({ model: "claude-haiku-4-5", max_tokens: 300, messages: [{ role: "user", content: prompt }] });
-    void logUsage({ userId: user.id, model: "claude-haiku-4-5", kind: "thumb_copy", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
-    const text = res.content.find((b) => b.type === "text")?.text ?? "[]";
-    const m = text.match(/\[[\s\S]*\]/);
-    const raw: unknown = m ? JSON.parse(m[0]) : [];
-    const copies = (Array.isArray(raw) ? raw : [])
-      .map((c) => String(c).trim().replace(/^["'\s]+|["'\s]+$/g, ""))
-      .filter((c) => c.length >= 4 && c.length <= 18)
-      .filter((c) => bannedHits(c).length === 0) // 과장·보장류는 코드로 폐기
-      .slice(0, 4);
-    if (copies.length === 0) return NextResponse.json({ error: "문구를 만들지 못했어요. 다시 시도해 주세요." }, { status: 502 });
+    // ★빈손 금지 3단(실측: 간헐 '문구를 만들지 못했어요' — 필터 전멸이 원인): AI→관대한 회수→규칙 폴백
+    let copies: string[] = [];
+    for (let attempt = 0; attempt < 2 && copies.length === 0; attempt++) {
+      const res = await client.messages.create({ model: "claude-haiku-4-5", max_tokens: 300, messages: [{ role: "user", content: prompt }] });
+      void logUsage({ userId: user.id, model: "claude-haiku-4-5", kind: "thumb_copy", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
+      const text = res.content.find((b) => b.type === "text")?.text ?? "[]";
+      const m = text.match(/\[[\s\S]*\]/);
+      let raw: unknown = [];
+      try { raw = m ? JSON.parse(m[0]) : []; } catch { raw = []; }
+      if (!Array.isArray(raw) || raw.length === 0) {
+        // 파싱 폴백 — 따옴표 줄 추출
+        raw = [...text.matchAll(/["\u201c']([^"\u201d'\n]{4,20})["\u201d']/g)].map((x) => x[1]);
+      }
+      const cleaned = (Array.isArray(raw) ? raw : [])
+        .map((c) => String(c).trim().replace(/^["'\s]+|["'\s]+$/g, ""))
+        .filter((c) => c.length >= 4)
+        .map((c) => (c.length > 20 ? "" : c)) // 20자까지 관대(온도 상향으로 문구 길어짐)
+        .filter(Boolean)
+        .filter((c) => bannedHits(c).length === 0);
+      copies = [...new Set(cleaned)].slice(0, 4);
+    }
+    if (copies.length === 0) {
+      // 최후 폴백 — 규칙 기반(원가 0, 항상 성공): 키워드 훅 템플릿
+      const kw = String(art.keyword ?? art.title ?? "").split(/\s+/).slice(0, 2).join(" ").slice(0, 10) || "이번 정보";
+      copies = [`${kw}, 이게 핵심이다`, `${kw} 그대로 두면 손해`, `${kw}, 지금 확인`, `${kw} 모르면 나만 손해`].map((c) => c.slice(0, 20));
+    }
     return NextResponse.json({ copies });
   } catch {
     return NextResponse.json({ error: "문구를 만들지 못했어요. 잠시 후 다시 시도해 주세요." }, { status: 502 });
