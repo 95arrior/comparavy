@@ -315,16 +315,20 @@ export default function ArticleModal({ pubStampKey, blogName,
 
         {hasTwoTitles ? (
           <div className="mt-3">
-            <div className="flex gap-1.5">
-              {([["click", "클릭형"], ["search", "검색형"]] as const).map(([k, label]) => (
+            <div className="flex items-center gap-1.5">
+              {([["click", "홈판용"], ["search", "검색용"]] as const).map(([k, label]) => (
                 <button key={k} onClick={() => setTitlePick(k)}
-                  className={`rounded-full px-3 py-1 text-[12px] font-bold transition ${titlePick === k ? "tk-grad-cta text-white" : "bg-neutral-100 text-neutral-500 hover:bg-neutral-200"}`}>{label}</button>
+                  className={`rounded-full px-3 py-1 text-[12px] font-bold transition ${titlePick === k ? (k === "click" ? "bg-[#F04452] text-white" : "bg-[#1D75F7] text-white") : "bg-neutral-100 text-neutral-500 hover:bg-neutral-200"}`}>{label}</button>
               ))}
             </div>
+            <p className="mt-1.5 text-[11.5px] text-neutral-400">{titlePick === "click" ? "네이버 홈피드 추천에 유리한 구조의 제목이에요" : "검색 결과와 AI 브리핑에 유리한 구조의 제목이에요"}</p>
             <h1 className="mt-2 text-2xl font-bold leading-tight tracking-tight sm:text-3xl">{pubTitle}</h1>
           </div>
         ) : (
-          <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight sm:text-3xl">{title}</h1>
+          <div className="mt-3">
+            <span className="rounded-full bg-[#F04452]/10 px-3 py-1 text-[12px] font-bold text-[#F04452]">홈판용</span>
+            <h1 className="mt-2 text-2xl font-bold leading-tight tracking-tight sm:text-3xl">{title}</h1>
+          </div>
         )}
 
         {compliance.length > 0 && (
