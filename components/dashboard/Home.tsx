@@ -4,6 +4,7 @@ import { cachedGet, invalidateGet } from "@/lib/clientFetchCache";
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import TodayCard from "./TodayCard";
+import { GlassGlyph } from "../GlassIcon";
 import GlassIcon from "@/components/GlassIcon";
 import TipChip, { tipFor } from "@/components/TipChip";
 import { computeLevel } from "@/lib/level";
