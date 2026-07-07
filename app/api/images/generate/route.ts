@@ -84,7 +84,17 @@ export async function POST(request: Request) {
     }
     try {
       let brandName = "";
-      try { const { data: bp } = await supabase.from("blog_profiles").select("blog_name").eq("user_id", user.id).order("created_at", { ascending: true }).limit(1).single(); brandName = (bp?.blog_name ?? "").trim(); } catch { /* ignore */ }
+      // ★글이 속한 블로그의 이름(실측: '첫 블로그' 조회라 박카 썸네일에 경제 이름) — articleId 기반이 가장 확실
+      try {
+        if (articleId) {
+          const { data: art } = await supabase.from("articles").select("blog_id").eq("id", articleId).eq("user_id", user.id).single();
+          if (art?.blog_id) {
+            const { data: bp } = await supabase.from("blog_profiles").select("blog_name").eq("id", art.blog_id).single();
+            brandName = (bp?.blog_name ?? "").trim();
+          }
+        }
+        if (!brandName) { const { data: bp2 } = await supabase.from("blog_profiles").select("blog_name").eq("user_id", user.id).order("created_at", { ascending: true }).limit(1).single(); brandName = (bp2?.blog_name ?? "").trim(); }
+      } catch { /* ignore */ }
       const FONT_ALLOW = ["GmarketSansBold", "BlackHanSans", "Pretendard-Black", "Jua"];
       const fontTitle = FONT_ALLOW.includes(String(body.fontName)) ? String(body.fontName) : "GmarketSansBold";
       const { png, usedAiBackground, aiFailReason } = await composeThumbnail({
@@ -98,7 +108,7 @@ export async function POST(request: Request) {
         topicHint: title || mainRaw, // 글 제목 우선 — 배경이 주제를 그린다
         bgStyle: body.bgStyle === "toss" ? "toss" : "photo", // ★메이커 기본=실사(유저 확정)
         centerCopy: false,
-        press: { brandName: String(body.brandName ?? "").trim() || brandName || "MY BLOG" }, // ★전 배경 공통 보도형(유저 확정: 3D도 좌하단 — 앨범 레이아웃 통일)
+        press: { brandName: brandName || String(body.brandName ?? "").trim() || "MY BLOG" }, // ★전 배경 공통 보도형(유저 확정: 3D도 좌하단 — 앨범 레이아웃 통일)
       });
       // AI 배경 실패로 코드 폴백됐으면 과금 취소(받은 것만 청구)
       if (aiBg && !usedAiBackground) { await addCredits(user.id, IMAGE_COST, "refund_image", crypto.randomUUID()).catch(() => null); }
