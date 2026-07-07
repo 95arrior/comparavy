@@ -643,6 +643,31 @@ export async function GET(req: Request) {
     }
   } catch { /* 0054 미적용 등 — 조용히 생략 */ }
 
+  // ★파생 급상승 레이더(실측: 청년미래적금 본편 발행 다음날 '가구원 동의'가 진짜 폭발 지점 — 이벤트는 연작이다)
+  //  최근 48h 발행 키워드의 자동완성을 지금 다시 긁어, 마찰·절차 파생어가 새로 떠 있으면 최우선 후속 카드로.
+  try {
+    if (boostCards.length < 2) {
+      const twoDays2 = new Date(Date.now() - 48 * 3600_000).toISOString();
+      const activeBlogId2 = (profile as { id?: string } | null)?.id ?? null;
+      let pubQ = supabase.from("articles").select("keyword, title").eq("user_id", user.id).in("status", ["copied", "pending_verify", "verified", "published"]).gte("created_at", twoDays2);
+      if (activeBlogId2) pubQ = pubQ.or(`blog_id.eq.${activeBlogId2},blog_id.is.null`);
+      const { data: pubs } = await pubQ.order("created_at", { ascending: false }).limit(2);
+      const FRICTION = /(동의|서류|심사|자격|거부|탈락|거절|방법|기간|발표|지급|해지|변경|취소|조건|한도|후기|수령)/;
+      for (const pb of pubs ?? []) {
+        const base = String(pb.keyword ?? "").trim();
+        if (!base) continue;
+        const acs = await fetchNaverAutocomplete(base).catch(() => [] as string[]);
+        const root = base.split(" ")[0] ?? base;
+        const derived = acs.filter((a) => a !== base && a.startsWith(root) && FRICTION.test(a.replace(base, "")) && !usedSet.has(normalizeKeyword(a)) && !excludeSet.has(normalizeKeyword(a)));
+        const pick = derived[0];
+        if (pick) {
+          boostCards.unshift({ keyword: pick, title: `${pick}, 지금 다들 이게 궁금해요`, demandLabel: "내 글에서 파생된 실검색 급상승", ssak: true, region: false, tone: bt, vol: 0, comp: "low" as Comp, blogTotal: null, tag: "followup", newsContext: undefined, titleSearch: undefined, briefText: `[파생 급상승 지시] 전작 "${pb.title}"(키워드: ${base})을 본 뒤 사람들이 지금 실제로 검색하는 파생 질문이 "${pick}"이다(네이버 자동완성 실측). 이 파생 질문 하나에만 완결로 답하라 — 특히 불안(개인정보·불이익·거절 사유)이 깔린 질문이면 첫 두 문장에서 그 불안부터 해소한다. 전작 요약 재탕 금지, 도입 직후 [전편 링크 자리] 마커 1회.`, hookKey: undefined, thumb: undefined, brief: undefined } as (typeof trendCards)[number]);
+          break; // 하루 1개 — 과속 금지
+        }
+      }
+    }
+  } catch { /* 조용히 생략 */ }
+
   const shuffled = shuffle(topics, rng);
   if (tailMode === "long") return NextResponse.json(debugMode ? { topics: shuffled, diag: { ...diag, mode: "long", poolCards: shuffled.length } } : { topics: shuffled });
   return NextResponse.json(debugMode ? { topics: [...boostCards, ...trendCards, ...shuffled], diag: { ...diag, boost: boostCards.length, trendCards: trendCards.length, poolCards: shuffled.length } } : { topics: [...boostCards, ...trendCards, ...shuffled] });
