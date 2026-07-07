@@ -11,7 +11,7 @@ import { copyTextVerified } from "@/lib/clipboard";
 
 const dayKey = () => new Date().toISOString().slice(0, 10);
 
-export default function NeighborMission({ subCategory, sheet, blogKey }: { subCategory?: string | null; sheet?: boolean; blogKey?: string | null }) {
+export default function NeighborMission({ subCategory, sheet, blogKey, goldenKeyword }: { subCategory?: string | null; sheet?: boolean; blogKey?: string | null; goldenKeyword?: string | null }) {
   const missionKey = `ateflo_mission_${dayKey()}_${blogKey ?? ""}`; // ★블로그별 분리 — 박카·경제 체크가 안 섞이게
   const [open, setOpen] = useState(!!sheet); // sheet 모드=항상 펼침(토글 헤더 숨김)
   const [checks, setChecks] = useState<{ neighbor: boolean; comment: boolean }>({ neighbor: false, comment: false });
@@ -40,7 +40,8 @@ export default function NeighborMission({ subCategory, sheet, blogKey }: { subCa
     setChecks((c) => { const n = { ...c, [key]: !c[key] }; try { localStorage.setItem(missionKey, JSON.stringify(n)); } catch { /* ignore */ } return n; });
   }
   function openSearch() {
-    const q = encodeURIComponent(`${(subCategory ?? "").trim() || "블로그"} 기록`);
+    // ★골든타임(발행 직후 30분): 내 글과 '같은 주제'의 최신 글로 — 같은 주제 독자·이웃에게 존재가 찍히는 게 첫 반응의 씨앗
+    const q = encodeURIComponent(goldenKeyword?.trim() ? goldenKeyword.trim() : `${(subCategory ?? "").trim() || "블로그"} 기록`);
     window.open(`https://section.blog.naver.com/Search/Post.naver?keyword=${q}`, "_blank", "noopener");
   }
   async function makeGreeting() {
@@ -74,6 +75,7 @@ export default function NeighborMission({ subCategory, sheet, blogKey }: { subCa
 
       {open && (
         <div className="mt-4 space-y-3">
+          {goldenKeyword && <p className="rounded-xl bg-[#1D75F7]/[0.06] px-3.5 py-2.5 text-[12px] leading-relaxed text-[#1D75F7]"><b>골든타임 모드</b> — 방금 올린 글과 같은 주제(&lsquo;{goldenKeyword}&rsquo;)의 최신 글 3개에 공감, 1개엔 진심 댓글 한 줄. 아래 [둘러보기]가 그 주제로 바로 열려요.</p>}
           {/* 보너스 체크 2개 — 스트릭 조건 아님 */}
           {([["neighbor", "이웃 신청 5명"], ["comment", "진심 댓글 2개"]] as const).map(([k, label]) => (
             <button key={k} onClick={() => toggle(k)} className="flex w-full items-center gap-2.5 rounded-[14px] bg-[#F7F8FA] px-4 py-3 text-left transition">

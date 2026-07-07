@@ -153,13 +153,27 @@ export default function ArticleModal({
   const [lastThumb, setLastThumbRaw] = useState<string | null>(null); // 시트 닫아도 생성물 보존
   useEffect(() => { try { const v = localStorage.getItem(`ateflo_thumb_${article.id}`); if (v) setLastThumbRaw(v); } catch { /* ignore */ } }, [article.id]);
   const setLastThumb = (u: string | null) => { setLastThumbRaw(u); if (u) { try { localStorage.setItem(`ateflo_thumb_${article.id}`, u); } catch { /* ignore */ } } };
+  // ★사전 로드(3~4편 페이스에서 썸네일 스킵 방지) — 검토 진입 시 미리. 글별 캐시로 재진입 0콜, draft·네이버만.
+  useEffect(() => {
+    if (isWp || article.status !== "draft" || thumbCopies) return;
+    try { const c = localStorage.getItem(`ateflo_tcopy_${article.id}`); if (c) { setThumbCopies(JSON.parse(c)); return; } } catch { /* ignore */ }
+    void (async () => {
+      try {
+        const r = await fetch("/api/thumb-copy", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ articleId: article.id }) });
+        const d = await r.json();
+        if (r.ok && Array.isArray(d.copies)) { setThumbCopies(d.copies); try { localStorage.setItem(`ateflo_tcopy_${article.id}`, JSON.stringify(d.copies)); } catch { /* ignore */ } }
+      } catch { /* 조용히 — 버튼 경로가 폴백 */ }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [article.id, article.status]);
+
   async function fetchThumbCopies() {
     if (thumbBusy) return;
     setThumbBusy(true);
     try {
       const r = await fetch("/api/thumb-copy", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ articleId: article.id }) });
       const d = await r.json();
-      if (r.ok && Array.isArray(d.copies)) setThumbCopies(d.copies);
+      if (r.ok && Array.isArray(d.copies)) { setThumbCopies(d.copies); try { localStorage.setItem(`ateflo_tcopy_${article.id}`, JSON.stringify(d.copies)); } catch { /* ignore */ } }
       else setToast(d.error ?? "문구를 만들지 못했어요");
     } catch { setToast("문구를 만들지 못했어요"); }
     setThumbBusy(false);

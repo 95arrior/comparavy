@@ -277,6 +277,7 @@ export default function Home({
   try { const lp = Number(localStorage.getItem("ateflo_last_pub_at") ?? 0); goldenTime = lp > 0 && nowTick - lp < 30 * 60_000; } catch { /* ignore */ }
   const hourNow = new Date(nowTick).getHours();
   const nextSlotLabel = hourNow < 11 ? "점심 전에" : hourNow < 16 ? "저녁 6시 전에" : hourNow < 21 ? "자기 전에" : "내일 아침에";
+  const lastPubKeyword = (() => { const t = articles.filter((a) => (a.status === "copied" || a.status === "verified" || a.status === "published" || a.status === "pending_verify") && new Date(a.created_at).toDateString() === new Date().toDateString()); return t.length ? String(t[0].keyword ?? "") : ""; })();
   const clean = sanitizeTopics(topics);
   // ★'오늘의 글' 후보 — 오늘 이미 만든 글감(발행분 포함)은 제외(한 편 더 = 같은 글감 재생성 버그 방지).
   // 랭크: 후속(증폭)·시리즈 > 트렌드(이슈 인터럽트 훅: 시리즈보다 뜨거운 이슈는 유저가 아래 목록에서 즉시 선택 가능) > 꾸준 > 풀.
@@ -412,7 +413,7 @@ export default function Home({
           </span>
           <span className="text-[13px] font-bold text-[color:var(--color-brand)]">시작 →</span>
         </button>
-      ) : info.publishedToday && !neighborDone ? (
+      ) : info.publishedToday && (goldenTime || !neighborDone) ? (
         <button onClick={() => setRoutineSheet("neighbor")} className={`tk-seq-1 mt-3 flex w-full items-center justify-between rounded-[14px] px-5 py-3.5 text-left shadow-[0_1px_3px_rgba(0,0,0,0.05)] tk-tr ${goldenTime ? "bg-[#1D75F7]/[0.06] ring-1 ring-[#1D75F7]/30" : "bg-white hover:bg-[#F7F8FA]"}`}>
           <span className="flex items-center gap-2.5">
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--color-brand)] text-[11.5px] font-bold text-white">3</span>
@@ -641,7 +642,7 @@ export default function Home({
                   <CheckinCard articles={articles} />
                 </>
               )}
-              {routineSheet === "neighbor" && <NeighborMission subCategory={subCategory} blogKey={profileKey} sheet />}
+              {routineSheet === "neighbor" && <NeighborMission subCategory={subCategory} blogKey={profileKey} sheet goldenKeyword={goldenTime ? lastPubKeyword : null} />}
               {routineSheet === "topics" && (
                 topicsLoading ? <TopicsSkeleton collecting={collecting} /> : rest.length > 0 ? (
                   <div className="flex flex-col gap-3">
