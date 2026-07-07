@@ -65,7 +65,7 @@ const PHOTO_COMPOS = [
 const PHOTO_MOODS = ["calm and tidy", "warm and inviting", "fresh and clean", "quiet and refined", "cozy everyday"];
 
 /** 본문 이미지 프롬프트(순수 함수) — ★혼합 정책(유저 결정): 실제 씬=실사 / 개념·수치=토스톤 3D / 애매=시드 랜덤. 테스트 대상. */
-export function buildBodyPrompt(slotDesc: string, articleTitle: string, seed: number): string {
+export function buildBodyPrompt(slotDesc: string, articleTitle: string, seed: number, opts?: { context?: string }): string {
   const compo = PHOTO_COMPOS[(seed >> 3) % PHOTO_COMPOS.length];
   const mood = PHOTO_MOODS[(seed >> 7) % PHOTO_MOODS.length];
   const conceptSlot = /개념|상징|아이콘|기분|마음|정리|요약/.test(slotDesc);
@@ -77,6 +77,9 @@ export function buildBodyPrompt(slotDesc: string, articleTitle: string, seed: nu
       "ZERO TEXT IMAGE — absolutely no letters, numbers or Hangul anywhere in the image (any rendered text will be broken and ruin the photo).",
       `Realistic lifestyle photograph for a Korean blog post. Topic context (for understanding only — never render as text): ${articleTitle}.`,
       `Scene hint (may be overly detailed): ${slotDesc}.`,
+      // ★은유 극화(유저 최종 인사이트): 이미지는 슬롯 문구가 아니라 '그 자리 문단의 메시지'를 시각 은유로 —
+      //  예: '연 90만원 환급을 안 받는 것' → 돈·통장이 쓰레기통에 버려지는 한 장면. 앱 화면 묘사보다 은유가 백배 강하다.
+      opts?.context?.trim() ? `THE PARAGRAPH THIS IMAGE ILLUSTRATES (understand only — never render as text): "${opts.context.trim().slice(0, 300)}". Extract its ONE emotional point and stage it as a BOLD VISUAL METAPHOR that makes the reader feel that point instantly (e.g. losing an annual refund → a bankbook and coins dropped into a trash bin; a deadline passing → a calendar page burning out). Prefer a striking metaphor over literally depicting app screens or procedures.` : "",
       // ★장면 단순화(유저 컨셉 확정) — 설명의 디테일을 그리려 하면 텍스트·복잡성이 끼어 깨진다. 핵심 명사 1개로 환원.
       "OVERRIDE RULE: if the scene hint describes objects on a desk/table (calculator, documents, keys, house model, coins), DISCARD that hint completely — it produces cheap stock-prop photos. Derive instead the real PLACE or human MOMENT behind the topic (loan topic → bank counter or apartment complex seen from below; moving topic → moving boxes moment). SIMPLIFY: reduce the scene hint to its ONE strongest visual anchor — a building, a counter, a place, or an object — and photograph that simply and beautifully. Ignore procedural details, screen contents, document items or written clauses entirely (예: '등기소 화면에서 근저당 확인' → 법원 건물 외관, '주민센터 창구에서 전입신고' → 창구 풍경만).",
       // ★단일 문법(유저 최종 판정: 텍스트 절대 금지 — 깨짐, 빈 화면도 금지 — 허접) — 상황이 스스로 말하는 씬 3택.
@@ -179,10 +182,10 @@ async function callGemini(prompt: string, aspectRatio: "16:9" | "1:1"): Promise<
 }
 
 /** 본문 이미지 1장(실사, base64). userSeed로 계정 축 + 요청 난수 변주. 실패 시 throw. */
-export async function generateBlogImage(slotDesc: string, articleTitle: string, userSeed?: string, _opts?: { thumbnail?: boolean }): Promise<{ base64: string; mime: string; provider?: string }> {
+export async function generateBlogImage(slotDesc: string, articleTitle: string, userSeed?: string, _opts?: { thumbnail?: boolean; context?: string }): Promise<{ base64: string; mime: string; provider?: string }> {
   // 장마다 변주 — 만 명이 써도, 한 명이 백 장을 만들어도 겹치지 않게.
   const seed = (fnv((userSeed ?? "") + ":") + Math.floor(Math.random() * 1e9)) >>> 0;
-  return callImage(buildBodyPrompt(slotDesc, articleTitle, seed), "16:9");
+  return callImage(buildBodyPrompt(slotDesc, articleTitle, seed, _opts as { context?: string } | undefined), "16:9");
 }
 
 /** 대표이미지 AI 배경 1장(1:1, base64) — 한글은 코드(satori)가 합성. 실패는 호출측이 코드 폴백. */

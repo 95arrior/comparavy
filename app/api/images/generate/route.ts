@@ -161,7 +161,20 @@ export async function POST(request: Request) {
 
   const refundRef = crypto.randomUUID();
   try {
-    const img = await generateBlogImage(slot, title, user.id, { thumbnail });
+    // ★은유 극화 — 이 슬롯이 놓인 자리의 앞 문단(메시지)을 추출해 이미지에 물린다(유저: 이미지는 문단의 포인트를 그려야)
+    let paraContext = "";
+    try {
+      if (articleId && slotIdx !== null) {
+        const { data: artRow } = await supabase.from("articles").select("content").eq("id", articleId).eq("user_id", user.id).single();
+        const html = String(artRow?.content ?? "");
+        const parts = html.split(/\[사진[:\s]/);
+        if (parts.length > slotIdx) {
+          const before = parts[slotIdx] ?? "";
+          paraContext = before.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(-300); // 슬롯 직전 300자
+        }
+      }
+    } catch { /* 없어도 무해 */ }
+    const img = await generateBlogImage(slot, title, user.id, { thumbnail, context: paraContext });
     void logUsage({ userId: user.id, model: GEMINI_IMAGE_MODEL, kind: "image", inputTokens: 0, outputTokens: 1290 });
     // 스토리지 업로드 — URL로 반환(재방문·기기 간 유지). 실패하면 dataUrl 폴백.
     let url: string | null = null;
