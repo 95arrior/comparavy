@@ -179,6 +179,19 @@ export default function ArticleModal({
     setThumbBusy(false);
   }
 
+  // ★자료 이미지(크레딧 0) — 본문 표·체크리스트를 '공들인 인포그래픽'으로(유저 레퍼런스: 부동산원 차트)
+  async function makeInfographic(i: number, slot: string) {
+    if (imgs[i]?.busy) return;
+    setImgs((m) => ({ ...m, [i]: { ...m[i], busy: true, err: undefined } }));
+    try {
+      const res = await fetch("/api/infographic", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ articleId: article.id, slotIdx: i, slotDesc: slot }) });
+      const data = await res.json();
+      if (!res.ok || !data.url) { setImgs((m) => ({ ...m, [i]: { ...m[i], busy: false, err: data.error ?? "만들지 못했어요" } })); return; }
+      setImgs((m) => ({ ...m, [i]: { url: data.url, busy: false } })); // 자료 이미지 — AI 캡션 없음
+      try { const key = `ateflo_imgs_${article.id}`; const saved = JSON.parse(localStorage.getItem(key) ?? "{}"); saved[i] = data.url; localStorage.setItem(key, JSON.stringify(saved)); } catch { /* ignore */ }
+    } catch { setImgs((m) => ({ ...m, [i]: { ...m[i], busy: false, err: "네트워크 오류가 났어요" } })); }
+  }
+
   async function makeImage(i: number, slot: string) {
     if (imgs[i]?.busy) return;
     setImgs((m) => ({ ...m, [i]: { ...m[i], busy: true, err: undefined } }));
@@ -404,6 +417,11 @@ export default function ArticleModal({
                         {st.busy ? "올리는 중" : st.url ? "불러오기" : "사진 올리기"}
                         <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadImage(i, f); e.target.value = ""; }} />
                       </label>
+                      {/표|비교|그래프|차트|체크리스트|절차|순서/.test(slot.desc) && (
+                        <button onClick={() => makeInfographic(i, slot.desc)} disabled={st.busy} className="at-press shrink-0 rounded-lg bg-emerald-500/10 px-3 py-1.5 text-[12px] font-bold text-emerald-600 transition hover:bg-emerald-500/15 disabled:opacity-50">
+                          📊 {st.busy ? "만드는 중" : "자료 만들기 · 무료"}
+                        </button>
+                      )}
                       {AI_IMAGES_ENABLED && (
                         <button onClick={() => makeImage(i, slot.desc)} disabled={st.busy} className="at-press shrink-0 rounded-lg bg-[#1D75F7]/10 px-3 py-1.5 text-[12px] font-bold text-[#1D75F7] transition hover:bg-[#1D75F7]/15 disabled:opacity-50">
                           <span className={st.busy ? "tk-wand inline-block" : ""} aria-hidden>✦</span> {st.busy ? "만드는 중" : st.url ? `AI 다시 · ${IMAGE_COST}크레딧` : `AI 생성 · ${IMAGE_COST}크레딧`}

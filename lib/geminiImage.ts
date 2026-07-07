@@ -72,7 +72,7 @@ export function buildBodyPrompt(slotDesc: string, articleTitle: string, seed: nu
       // ★빈 화면 함정(실측: '신청 화면·서류 체크리스트' 슬롯 → 빈 노트북+백지 클로즈업 = 정보성 제로) —
       //  텍스트 금지 규칙과 충돌하는 화면·문서류는 주피사체로 쓰지 않는다. 대신 그 '상황'을 주제 실물로.
       "CRITICAL: screens, documents, forms and papers must NEVER be the focal point of the frame (they are required to be blank, so a close-up of them looks empty and useless). If the scene mentions a screen/form/checklist, reinterpret it: show the real-life SITUATION around that task instead, keeping any screen/paper small, angled away, or out of focus in the background.",
-      `Include at least 2 physical objects that are UNIQUELY specific to the topic above (e.g., housing topic → door keys, moving boxes, apartment window view; car topic → car interior, charging cable). NEVER generic clichés: NO piggy banks, NO coin stacks, NO generic calculators, NO lightbulbs — unless the topic is literally about them.`,
+      `Prefer a candid documentary moment of a real person DOING the activity (hands close-up, back view, or over-the-shoulder — face never visible), like an editorial photo taken by the blog author. Include at least 2 physical objects that are UNIQUELY specific to the topic above (e.g., housing topic → door keys, moving boxes, apartment window view; car topic → car interior, charging cable). NEVER generic clichés: NO piggy banks, NO coin stacks, NO generic calculators, NO lightbulbs — unless the topic is literally about them.`,
       `${tone}, ${compo}, ${mood} mood. Natural realistic photography, true-to-life textures and materials, tasteful depth of field, high-end magazine quality. Wide horizontal 16:9 composition.`,
       IMAGE_HARD_RULES,
     ].join(" ");
