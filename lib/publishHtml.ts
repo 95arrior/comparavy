@@ -302,11 +302,13 @@ function applySizing(html: string): string {
 
 /* ── 형광펜·해시태그 ── */
 function markToBold(html: string): string {
-  // ★형광펜 문장은 단독 줄(유저 교본: 뒤 문장이 붙으면 강조가 죽는다) — mark 앞뒤에 이어지는 텍스트가 있으면 <br>로 분리
-  return html
-    .replace(/([^>\s])\s*<mark>/g, "$1<br><mark>")
-    .replace(/<\/mark>\s*([^<\s])/g, "</mark><br>$1")
-    .replace(/<mark>([\s\S]*?)<\/mark>/g, '<b style="background-color:#fff3a8;">$1</b>');
+  // ★형광펜 이중 문법(유저 교본 4차) — 구 단위(≤14자: '집값의 70~80%')는 문장 속 인라인, 문장급(>14자)은 단독 줄
+  html = html.replace(/<mark>([\s\S]{15,}?)<\/mark>/g, "\u0000MARKBLOCK\u0000$1\u0000/MARKBLOCK\u0000");
+  html = html
+    .replace(/([^>\s])\s*\u0000MARKBLOCK\u0000/g, "$1<br>\u0000MARKBLOCK\u0000")
+    .replace(/\u0000\/MARKBLOCK\u0000\s*([^<\s])/g, "\u0000/MARKBLOCK\u0000<br>$1")
+    .replace(/\u0000MARKBLOCK\u0000([\s\S]*?)\u0000\/MARKBLOCK\u0000/g, '<b style="background-color:#fff3a8;">$1</b>');
+  return html.replace(/<mark>([\s\S]*?)<\/mark>/g, '<b style="background-color:#fff3a8;">$1</b>'); // 짧은 구 — 인라인
 }
 function hashtagGroups(tags?: string[]): string[] {
   const list = (tags ?? []).map((t) => String(t).trim().replace(/^#/, "")).filter(Boolean).map((t) => `#${t}`);
