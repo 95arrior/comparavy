@@ -126,3 +126,23 @@ export function todayKeywords<A extends { keyword?: string | null; status: strin
 export function localPubFlagKey(now: Date = new Date(), blogKey?: string | null): string {
   return `ateflo_pub_${dayKey(now)}_${blogKey ?? ""}`; // ★블로그 스코프(조사 D1 — 날짜만으로 키 금지)
 }
+
+// ★애드포스트 상태 — 블로그별(조사 D1: 글로벌이라 한 블로그 승인이 전 블로그 수익칸 오픈).
+//  1회성 마이그레이션: 구 글로벌 키가 true면 호출 시점의 활성 블로그로 이관 후 소멸(잘못 귀속 시 성과 탭 재입력으로 복구 가능 — 비파괴).
+export function adpostKey(name: "approved" | "applied" | "retry_until" | "reject_reason", blogKey?: string | null): string {
+  return `ateflo_adpost_${name}_${blogKey ?? ""}`;
+}
+export function migrateAdpostKeys(blogKey: string) {
+  try {
+    const map: [string, string][] = [
+      ["ateflo_adpost_approved", adpostKey("approved", blogKey)],
+      ["ateflo_adpost_applied", adpostKey("applied", blogKey)],
+      ["ateflo_adpost_retry_until", adpostKey("retry_until", blogKey)],
+      ["ateflo_adpost_reject_reason", adpostKey("reject_reason", blogKey)],
+    ];
+    for (const [oldK, newK] of map) {
+      const v = localStorage.getItem(oldK);
+      if (v !== null) { if (!localStorage.getItem(newK)) localStorage.setItem(newK, v); localStorage.removeItem(oldK); }
+    }
+  } catch { /* ignore */ }
+}

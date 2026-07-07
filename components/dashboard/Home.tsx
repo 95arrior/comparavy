@@ -11,7 +11,7 @@ import CourseRing from "./CourseRing";
 import CheckinCard from "./CheckinCard";
 import NeighborMission from "./NeighborMission";
 import DiagnosisCard from "./DiagnosisCard";
-import { courseInfo, yesterdayPublished, pickNextTopic, todayKeywords, localPubFlagKey, progressPercent } from "@/lib/course";
+import { courseInfo, yesterdayPublished, pickNextTopic, todayKeywords, localPubFlagKey, progressPercent, adpostKey, migrateAdpostKeys } from "@/lib/course";
 import { depletionForecast, attackEligible } from "@/lib/checkin";
 import { GENERATE_COST } from "@/lib/creditPacks";
 import { nextSeedRefreshLabel } from "@/lib/seedRefresh";
@@ -316,7 +316,7 @@ export default function Home({
   const pubCountRaw = articles.filter((a) => (a.status === "copied" || a.status === "verified" || a.status === "published" || a.status === "pending_verify") && new Date(a.created_at).toDateString() === new Date().toDateString()).length;
   const pubCountToday = Math.max(pubCountRaw, 0); // 아래에서 info.publishedToday와 정합(어제 생성→오늘 발행 케이스)
   const [hydrated, setHydrated] = useState(false); // ★로컬 기억 읽기 전 카드 확정 금지(실측: '오늘의 글' 잔상 깜빡)
-  useEffect(() => { setHydrated(true); if (profileKey) migrateBlogScopeKeys(profileKey); // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { setHydrated(true); if (profileKey) { migrateBlogScopeKeys(profileKey); migrateAdpostKeys(profileKey); } // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [nowTick, setNowTick] = useState(() => Date.now());
   const prevSheetRef = useRef<string | null>(null);
@@ -532,7 +532,7 @@ export default function Home({
           if (typeof window === "undefined") return null;
           if (localStorage.getItem("ateflo_attack_mode") === "1" || localStorage.getItem("ateflo_attack_offer") === "1") return null;
           const verified = articles.filter((a) => isVerifiedStatus(a.status)).length;
-          const approved = localStorage.getItem("ateflo_adpost_approved") === "1";
+          const approved = localStorage.getItem(adpostKey("approved", profileKey)) === "1";
           const last7 = articles.filter((a) => a.status !== "generating" && new Date(a.created_at).getTime() >= Date.now() - 7 * 86400000).length;
           if (!attackEligible(verified, approved, last7)) return null;
           return (
@@ -554,7 +554,7 @@ export default function Home({
       {/* 잠금해제 1회성 — 승인 입력 시 새 수익원 안내 */}
       {(() => {
         try {
-          if (typeof window !== "undefined" && localStorage.getItem("ateflo_adpost_approved") === "1" && localStorage.getItem("ateflo_unlock_shown") !== "1") {
+          if (typeof window !== "undefined" && localStorage.getItem(adpostKey("approved", profileKey)) === "1" && localStorage.getItem("ateflo_unlock_shown") !== "1") {
             return (
               <button onClick={() => { try { localStorage.setItem("ateflo_unlock_shown", "1"); } catch { /* ignore */ } onGoPerformance(); }}
                 className="at-rise mt-3 flex w-full items-center justify-between rounded-[12px] border border-[color:var(--color-line)] bg-[color:var(--color-brand-weak)] px-5 py-3.5 text-left tk-tr">
@@ -647,7 +647,7 @@ export default function Home({
               {routineSheet === "checkin" && (
                 <>
                   {yesterdayPublished(articles) && <p className="mb-2 text-[12.5px] font-semibold text-emerald-600">어제 글, 발행 확인됐어요.</p>}
-                  <CheckinCard articles={articles} />
+                  <CheckinCard articles={articles} blogKey={profileKey} />
                 </>
               )}
               {routineSheet === "neighbor" && <NeighborMission subCategory={subCategory} blogKey={profileKey} sheet goldenKeyword={goldenTime ? lastPubKeyword : null} />}

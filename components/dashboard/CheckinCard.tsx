@@ -3,6 +3,7 @@
 import { cachedGet, invalidateGet } from "@/lib/clientFetchCache";
 
 import { useEffect, useState } from "react";
+import { adpostKey } from "@/lib/course";
 import { yesterdayPublished, type CourseArticleLite } from "@/lib/course";
 
 // ★아침 체크인 — 1일 1회, 30초 동선(숫자 키패드·어제와 같음·건너뛰기). 입력 즉시 스파크바가 자란다.
@@ -11,7 +12,7 @@ import { yesterdayPublished, type CourseArticleLite } from "@/lib/course";
 
 interface Row { day: string; visitors: number | null; revenue: number | null }
 
-export default function CheckinCard({ articles, onSaved }: { articles: CourseArticleLite[]; onSaved?: () => void }) {
+export default function CheckinCard({ blogKey, articles, onSaved }: { blogKey?: string | null; articles: CourseArticleLite[]; onSaved?: () => void }) {
   const [state, setState] = useState<"loading" | "form" | "done" | "skipped" | "recorded">("loading");
   const [savedRow, setSavedRow] = useState<Row | null>(null); // 오늘 기록값(요약·수정용)
   const [rows, setRows] = useState<Row[]>([]);
@@ -27,7 +28,7 @@ export default function CheckinCard({ articles, onSaved }: { articles: CourseArt
   }, []);
   const [backfillDay, setBackfillDay] = useState<string | null>(null); // 빠진 날 채우기 대상
   const [statGuide, setStatGuide] = useState(false); // ★통계 보는 법(네이버 API 불가 — 손잡고 안내)
-  const approved = typeof window !== "undefined" && (() => { try { return localStorage.getItem("ateflo_adpost_approved") === "1"; } catch { return false; } })();
+  const approved = typeof window !== "undefined" && (() => { try { return localStorage.getItem(adpostKey("approved", blogKey)) === "1"; } catch { return false; } })();
   const skipKey = `ateflo_checkin_skip_${new Date().toISOString().slice(0, 10)}`;
 
   useEffect(() => {

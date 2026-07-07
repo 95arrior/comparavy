@@ -3,6 +3,7 @@
 import GlassIcon, { type GlassTint } from "@/components/GlassIcon";
 
 import { useEffect, useMemo, useState } from "react";
+import { adpostKey } from "@/lib/course";
 import { computeLevel } from "@/lib/level";
 import RevenueDash from "./RevenueDash";
 import ApprovalInput from "./ApprovalInput";
@@ -227,10 +228,11 @@ function ExpectationCard({ pub }: { pub: number }) {
   );
 }
 
-export default function PerformanceView({
+export default function PerformanceView({ blogKey,
   articles,
   onWrite,
 }: {
+  blogKey?: string | null;
   articles: Article[];
   onWrite: () => void;
 }) {
@@ -243,7 +245,7 @@ export default function PerformanceView({
   }, [articles]);
 
   const [approved, setApproved] = useState(false);
-  useEffect(() => { try { setApproved(localStorage.getItem("ateflo_adpost_approved") === "1"); } catch { /* ignore */ } }, []);
+  useEffect(() => { try { setApproved(localStorage.getItem(adpostKey("approved", blogKey)) === "1"); } catch { /* ignore */ } }, []);
   const { title, paths, otherChannels } = buildPaths(stats.pub, onWrite, approved);
   const allRows = [...paths, ...otherChannels];
   const [openIdx, setOpenIdx] = useState<number | null>(null);
@@ -263,7 +265,7 @@ export default function PerformanceView({
           </div>
         );
       })()}
-      {stats.pub >= 10 && <ApprovalInput blogKey={null} onChanged={() => { try { setApproved(localStorage.getItem("ateflo_adpost_approved") === "1"); } catch { /* ignore */ } }} />}
+      {stats.pub >= 10 && <ApprovalInput blogKey={blogKey ?? null} onChanged={() => { try { setApproved(localStorage.getItem(adpostKey("approved", blogKey)) === "1"); } catch { /* ignore */ } }} />}
 
       {open ? (
         <PathDetail p={open} onBack={() => setOpenIdx(null)} />

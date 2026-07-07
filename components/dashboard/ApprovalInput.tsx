@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { adpostKey } from "@/lib/course";
 
 // ★애드포스트 승인 결과 입력 — 승인/보류/거절. 거절은 흔한 일 톤(범위 표현, 보장 없음).
 //  승인 → ateflo_adpost_approved=1 (체크인 수익칸·사다리 쇼핑커넥트의 열쇠). Stage 5에서 blog_profiles로 서버 이관 예정.
@@ -28,21 +29,21 @@ export default function ApprovalInput({ onChanged, blogKey }: { onChanged?: () =
 
   useEffect(() => {
     try {
-      if (localStorage.getItem("ateflo_adpost_approved") === "1") { setState("approved"); return; }
-      if (localStorage.getItem("ateflo_adpost_applied") === "1") { setState("applied"); }
-      const until = Number(localStorage.getItem("ateflo_adpost_retry_until") ?? 0);
-      if (until > Date.now()) { setState("rejected"); setReason(localStorage.getItem("ateflo_adpost_reject_reason")); setRetryDday(Math.ceil((until - Date.now()) / 86400000)); }
+      if (localStorage.getItem(adpostKey("approved", blogKey)) === "1") { setState("approved"); return; }
+      if (localStorage.getItem(adpostKey("applied", blogKey)) === "1") { setState("applied"); }
+      const until = Number(localStorage.getItem(adpostKey("retry_until", blogKey)) ?? 0);
+      if (until > Date.now()) { setState("rejected"); setReason(localStorage.getItem(adpostKey("reject_reason", blogKey))); setRetryDday(Math.ceil((until - Date.now()) / 86400000)); }
     } catch { /* ignore */ }
   }, []);
 
   function setApproved() {
-    try { localStorage.setItem("ateflo_adpost_approved", "1"); localStorage.removeItem("ateflo_adpost_retry_until"); } catch { /* ignore */ }
+    try { localStorage.setItem(adpostKey("approved", blogKey), "1"); localStorage.removeItem(adpostKey("retry_until", blogKey)); } catch { /* ignore */ }
     setState("approved"); onChanged?.();
   }
   function setRejected(r: string) {
     try {
-      localStorage.setItem("ateflo_adpost_retry_until", String(Date.now() + 7 * 86400000)); // D-7 재신청 미니 코스
-      localStorage.setItem("ateflo_adpost_reject_reason", r);
+      localStorage.setItem(adpostKey("retry_until", blogKey), String(Date.now() + 7 * 86400000)); // D-7 재신청 미니 코스
+      localStorage.setItem(adpostKey("reject_reason", blogKey), r);
     } catch { /* ignore */ }
     setReason(r); setRetryDday(7); setState("rejected"); onChanged?.();
   }
@@ -108,7 +109,7 @@ export default function ApprovalInput({ onChanged, blogKey }: { onChanged?: () =
         </div>
         <div className="mt-3 flex gap-2">
           <a href="https://adpost.naver.com" target="_blank" rel="noopener" className="at-press flex-1 rounded-xl tk-grad-cta py-2.5 text-center text-[13px] font-bold text-white transition hover:opacity-90">애드포스트 열기</a>
-          <button onClick={() => { try { localStorage.setItem("ateflo_adpost_applied", "1"); } catch { /* ignore */ } setState("applied"); }}
+          <button onClick={() => { try { localStorage.setItem(adpostKey("applied", blogKey), "1"); } catch { /* ignore */ } setState("applied"); }}
             className="at-press flex-1 rounded-xl bg-neutral-100 py-2.5 text-[13px] font-bold text-neutral-600 transition hover:bg-neutral-200">신청했어요</button>
         </div>
       </div>

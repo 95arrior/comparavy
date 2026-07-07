@@ -687,6 +687,7 @@ export default function DashboardClient(props: DashboardProps) {
                 <h1 className="at-headline mt-1">성과</h1>
                 <div className="mt-5">
                   <PerformanceView
+                    blogKey={blogProfile ? `${(blogProfile as { id?: string }).id ?? ""}:${blogProfile.vertical}:${blogProfile.sub_category ?? ""}` : null}
                     articles={articles}
                     onWrite={() => goLabView("home")}
                   />
@@ -711,7 +712,7 @@ export default function DashboardClient(props: DashboardProps) {
 
             {/* 프로필 헤더 + ★레벨(게이미피케이션 v0 — 챌린지 정체성) */}
             {(() => {
-              let approved = false; try { approved = localStorage.getItem("ateflo_adpost_approved") === "1"; } catch { /* ignore */ }
+              let approved = false; try { approved = localStorage.getItem(`ateflo_adpost_approved_${blogProfile ? `${(blogProfile as { id?: string } | null)?.id ?? ""}:${blogProfile?.vertical ?? ""}:${blogProfile?.sub_category ?? ""}` : ""}`) === "1"; } catch { /* ignore */ }
               const lv = computeLevel({
                 published: articles.filter((a) => a.status === "verified" || a.status === "published").length,
                 adpostApproved: approved,
