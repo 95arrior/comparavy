@@ -2,6 +2,7 @@ import { titleSimilarity } from "@/lib/naverRss";
 import { NextResponse, after } from "next/server";
 import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
 import { keywordsToTitles } from "@/lib/topicTitles";
+import { fetchNaverAutocomplete } from "@/lib/naverAutocomplete";
 import { normalizeKeyword } from "@/lib/diversity";
 import { audienceOf, AUDIENCE_ALL } from "@/lib/audience";
 import { isUnsafeKeyword, mentionsForeignRegion } from "@/lib/keywordSafety";
@@ -219,6 +220,19 @@ export async function GET(req: Request) {
         }
         if (trends.length > 0) {
           amped = await amplifyForUser(trends, profile ?? null, ((profile as { id?: string } | null)?.id ?? user.id), tailMode === "short" ? 15 : 5); // ★short 탭=증식 15(10명 타겟 — 절약보다 볼륨)(실측: 씨앗 19인데 카드 2 — 증식 상한 5가 병목)
+          // ★유입력 2차(글감 레벨) — 증식 키워드를 자동완성 실조회로 확인. 캐시에 박제되므로 비용은 증식 1회당.
+          //  정책: 확인=가점+배지, 미확인=중립(신어·급상승 초기가 걸러지면 안 됨). 씨앗 longtails 존재도 '주제 확인'으로 상속.
+          if (amped.length > 0) {
+            const seedVerified = new Set(trends.filter((t) => (t.longtails?.length ?? 0) > 0).map((t) => normalizeKeyword(t.keyword)));
+            await Promise.all(amped.map(async (a, i) => {
+              await new Promise((r) => setTimeout(r, i * 120)); // 완만한 간격 — 자동완성 예절
+              try {
+                const hits = await fetchNaverAutocomplete(a.keyword.split(" ").slice(0, 3).join(" "));
+                (a as { inflow?: string }).inflow = hits.length > 0 ? "hit" : seedVerified.size > 0 ? "seed" : "";
+              } catch { (a as { inflow?: string }).inflow = ""; }
+            }));
+            amped = [...amped].sort((x, y) => ((y as { inflow?: string }).inflow === "hit" ? 1 : 0) - ((x as { inflow?: string }).inflow === "hit" ? 1 : 0)); // 확인분 앞으로(안정 정렬 — 유입력 씨앗순 유지)
+          }
           if (amped.length > 0) {
             try { await pool.from("api_cache").upsert({ key: ampKey, value: amped, expires_at: new Date(Date.now() + 6 * 3600_000).toISOString(), updated_at: new Date().toISOString() }); } catch { /* ignore */ }
           } else {
@@ -242,7 +256,7 @@ export async function GET(req: Request) {
         const src = (t as { source?: string }).source;
         // ★momentum 배지 분리 — 뉴스/시즌='지금 뜨는 중', 자동완성 발굴='꾸준히 찾는 주제'(뜨는 척 금지)
         const demandLabel = src === "discover" ? "꾸준히 찾는 주제" : "지금 뜨는 중";
-        cards.push({ keyword: t.keyword, title: t.title, demandLabel, ssak: true, region: false, tone: bt, vol: 0, comp: "low" as Comp, blogTotal: null, tag: src === "discover" ? "steady" : "trend", newsContext: t.newsContext ?? undefined, titleSearch: (t as { titleSearch?: string }).titleSearch, briefText: (t as { briefText?: string }).briefText, hookKey: (t as { hookKey?: string }).hookKey, thumb: (t as { thumb?: { mainCopy: string; subCopy: string; badge: string } }).thumb, brief: (t as { brief?: unknown }).brief, series: (t as { series?: unknown }).series ?? null });
+        cards.push({ keyword: t.keyword, title: t.title, demandLabel: (t as { inflow?: string }).inflow === "hit" ? "실검색 확인 · 지금 뜨는 중" : demandLabel, ssak: true, region: false, tone: bt, vol: 0, comp: "low" as Comp, blogTotal: null, tag: src === "discover" ? "steady" : "trend", newsContext: t.newsContext ?? undefined, titleSearch: (t as { titleSearch?: string }).titleSearch, briefText: (t as { briefText?: string }).briefText, hookKey: (t as { hookKey?: string }).hookKey, thumb: (t as { thumb?: { mainCopy: string; subCopy: string; badge: string } }).thumb, brief: (t as { brief?: unknown }).brief, series: (t as { series?: unknown }).series ?? null });
       }
     } catch { /* 트렌드 없이 진행 */ }
     return cards;
