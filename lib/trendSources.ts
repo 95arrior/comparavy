@@ -12,8 +12,8 @@ const FRESH_WINDOW_MS = 48 * 3600_000; // 48시간
 
 // 카테고리별 소주제 시드 — 이걸로 각각 뉴스를 긁어 편향을 깬다. 없으면 generic 폴백.
 const SEEDS: Record<string, string[]> = {
-  "경제·재테크": ["정부지원금", "부동산 정책", "세금 절세", "청년 지원", "재테크 투자", "금리 예적금"],
-  "경제": ["정부지원금", "부동산 정책", "세금 절세", "청년 지원", "재테크 투자", "금리"],
+  "경제·재테크": ["정부지원금", "부동산 정책", "세금 절세", "청년 지원", "재테크 투자", "금리 예적금", "지원금 신청", "보조금 지급", "지원사업 공고", "바우처 신청"],
+  "경제": ["정부지원금", "부동산 정책", "세금 절세", "청년 지원", "재테크 투자", "금리", "지원금 신청", "보조금 지급", "지원사업 공고", "바우처 신청"],
   "IT·테크": ["IT 신제품", "AI 서비스", "스마트폰 출시", "앱 업데이트", "가전 신기술", "통신 요금제"],
   "자동차": ["신차 출시", "전기차 보조금", "자동차 리콜", "중고차 시세", "자동차 세금", "자동차 보험"],
   "건강": ["건강 정보", "다이어트 방법", "영양제 효능", "질환 예방", "운동 루틴", "건강검진"],
@@ -113,9 +113,10 @@ export async function fetchGoogleTrendsKR(now: number): Promise<Headline[]> {
     const items: Headline[] = [];
     const blocks = xml.split("<item>").slice(1);
     for (const b of blocks.slice(0, 20)) {
-      const kw = (b.match(/<title>([^<]+)<\/title>/)?.[1] ?? "").trim();
+      const dec = (x: string) => x.replace(/&quot;/g, '"').replace(/&apos;|&#39;/g, "'").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+      const kw = dec((b.match(/<title>([^<]+)<\/title>/)?.[1] ?? "").trim());
       const traffic = (b.match(/<ht:approx_traffic>([^<]+)<\/ht:approx_traffic>/)?.[1] ?? "").trim();
-      const newsTitle = (b.match(/<ht:news_item_title>([^<]+)<\/ht:news_item_title>/)?.[1] ?? "").trim();
+      const newsTitle = dec((b.match(/<ht:news_item_title>([^<]+)<\/ht:news_item_title>/)?.[1] ?? "").trim());
       if (!kw) continue;
       items.push({ title: `[실시간 급상승 ${traffic || "?"} 검색] ${kw}${newsTitle ? ` — ${newsTitle}` : ""}`, description: newsTitle, press: "구글트렌드", seed: "실시간급상승", fresh: true });
     }
