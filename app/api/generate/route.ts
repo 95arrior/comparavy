@@ -285,10 +285,26 @@ export async function POST(request: Request) {
           }
         } catch { /* 시리즈 실패 = 단발로 자연 폴백(테이블 미적용 포함) */ }
 
+        // ★내부링크(허브 앤 스포크) — 같은 블로그의 확정 URL 글 중 키워드 토큰 겹침 상위 2개
+        let relatedPosts: { title: string; url: string }[] = [];
+        try {
+          const blogIdForLink = (profileRow as { id?: string } | null)?.id ?? null;
+          let rq = supabase.from("articles").select("keyword, title, naver_url, created_at").eq("user_id", user.id).in("status", ["verified", "published"]).not("naver_url", "is", null).order("created_at", { ascending: false }).limit(30);
+          if (blogIdForLink) rq = rq.or(`blog_id.eq.${blogIdForLink},blog_id.is.null`);
+          const { data: cands } = await rq;
+          const tok = (t: string) => new Set(String(t).split(/[\s·,]+/).filter((x) => x.length >= 2));
+          const myTok = tok(`${keyword} ${body.angle ?? ""}`);
+          relatedPosts = (cands ?? [])
+            .map((c) => ({ title: String(c.title ?? ""), url: String(c.naver_url ?? ""), score: [...tok(`${c.keyword} ${c.title}`)].filter((t) => myTok.has(t)).length }))
+            .filter((c) => c.url && c.score >= 1)
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 2)
+            .map(({ title, url }) => ({ title, url }));
+        } catch { /* 무해 — 링크 없이 진행 */ }
         // ★SERP 역분석(상위노출 직접 전술) — 상위 5글 제목·요약을 능가 브리프로(실패 시 빈 배열, 기존 품질 유지)
         const topPosts = channel === "wordpress" ? [] : await fetchTopPosts(keyword, 5).catch(() => []);
         const serpContext = topPosts.length ? topPosts.map((t, i) => `${i + 1}. ${t.title} — ${t.description.slice(0, 90)}`).join("\n") : null;
-        const genInput = { keyword, channel, serpContext, angle: body.angle, type, tone, maxWords, variantInstruction, styleInstruction, relatedQueries, newsContext: resolvedNewsContext, angleBrief: ((typeof body.angleBrief === "string" ? body.angleBrief.slice(0, 900) : "") + seriesDirective).trim() || null, affiliate: isReview, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userTitle };
+        const genInput = { keyword, channel, serpContext, relatedPosts, angle: body.angle, type, tone, maxWords, variantInstruction, styleInstruction, relatedQueries, newsContext: resolvedNewsContext, angleBrief: ((typeof body.angleBrief === "string" ? body.angleBrief.slice(0, 900) : "") + seriesDirective).trim() || null, affiliate: isReview, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userTitle };
         let article = await streamArticle(
           genInput,
           (bodyHtml) => send({ type: "body", html: bodyHtml }),

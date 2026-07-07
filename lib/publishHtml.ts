@@ -250,6 +250,9 @@ function arrowChainToSteps(html: string): string {
 }
 
 function styleMarkers(html: string): string {
+  // ★내부링크 마커 — [관련글: URL | 제목] → 중앙 링크 문단(네이버가 URL을 링크카드로)
+  html = html.replace(/\[관련글:\s*(https?:[^\s|\]]+)\s*\|\s*([^\]]+)\]/g,
+    '<p style="text-align:center;font-size:14px">함께 보면 좋은 글<br>$2<br>$1</p>');
   let qNum = 0; // ★FAQ 질문 자동 번호(유저 교본: 1. 2. 3. 진행감)
   html = html.replace(/<(h[2-4])(\s[^>]*)?>([\s\S]*?)<\/\1>/gi, (raw, tag, attr, inner) => {
     const plain = String(inner).replace(/<[^>]+>/g, "").trim();
