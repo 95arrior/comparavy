@@ -232,6 +232,19 @@ export function gapBetween(prev: { tag: string; inner: string } | null, cur: { t
   return Math.min(BLANK_CAP, Math.max(afterBlanks(prev as Blk), beforeBlanks(c)));
 }
 // ★엔진 마커 변환 — '---' 단독 문단=구분선, '> 문장'=인용 블록, 'Q.' 문단=강조(FAQ 가독)
+// ★화살표 체인 분해(유저 교본: 'A → B → C 순서예요'가 중앙정렬에서 뒤엉킴) — →가 2개 이상이면 번호 세로 줄로
+function arrowChainToSteps(html: string): string {
+  return html.replace(/<p(\s[^>]*)?>([\s\S]*?)<\/p>/gi, (raw, attr, inner) => {
+    if (/<(table|img|ul|ol)/i.test(inner)) return raw;
+    const arrows = (inner.match(/→/g) ?? []).length;
+    if (arrows < 2) return raw;
+    const steps = inner.split(/\s*→\s*/).map((x: string) => x.trim()).filter(Boolean);
+    if (steps.length < 3) return raw;
+    const lines = steps.map((st: string, i: number) => `${i + 1}. ${st}`).join("<br>");
+    return `<p${attr ?? ""}>${lines}</p>`;
+  });
+}
+
 function styleMarkers(html: string): string {
   let qNum = 0; // ★FAQ 질문 자동 번호(유저 교본: 1. 2. 3. 진행감)
   html = html.replace(/<(h[2-4])(\s[^>]*)?>([\s\S]*?)<\/\1>/gi, (raw, tag, attr, inner) => {
@@ -365,7 +378,7 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   const gated0 = withImages ? sanitizeForCopy(body) : stripEmoji(body);
   const gated = sanitizeUrls(gated0, { allowNaverBlogId: input.ownNaverBlogId }).html; // ★소급 정화 — 내 블로그 전편 링크는 통과
   // 파이프: 분할 → 정렬 → 크기 위계 → ★여백 스케일 v2(마크업 스페이서) → 서스펜스(마킹 예외)
-  let out = applySuspenseBreaks(applySpacingRich(styleTables(applySizing(styleBlocks(listsToTable(styleMarkers(splitLongParagraphs(gated))))))));
+  let out = applySuspenseBreaks(applySpacingRich(styleTables(applySizing(styleBlocks(listsToTable(styleMarkers(arrowChainToSteps(splitLongParagraphs(gated)))))))));
   // ★클로징(뉴스룸 마감 문법) — 얇은 경계선 + 중앙 작은 이미지(보통 썸네일). withImages(rich)일 때만.
   if (withImages && input.closingImageUrl) {
     out += `<p><br /></p><p style="text-align:center;"><span style="display:inline-block;width:55%;border-top:1px solid #d9dde3;">&nbsp;</span></p><p style="text-align:center;"><img src="${input.closingImageUrl}" alt="" width="300" /></p>`;
