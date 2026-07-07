@@ -115,7 +115,7 @@ export function buildThumbBgPrompt(bgStyleHint: string, paletteHint: string, see
 export function buildThumbPhotoBgPrompt(topic: string, seed: number, center = false): string {
   const tone = PHOTO_TONES[seed % PHOTO_TONES.length];
   return [
-    `Realistic lifestyle photograph representing this topic (understand only — never render as text): "${topic.trim()}".`,
+    `Realistic lifestyle photograph representing this topic (understand only — never render as text): "${topic.trim()}". THUMBNAIL DRAMA: this image must stop a scrolling thumb — use one emotionally charged moment or striking composition (strong subject against soft background, dramatic natural light, tension or anticipation in the scene), editorial cover quality — NOT a calm generic stock photo.`,
     center
       ? `Subjects arranged toward the edges/corners; the CENTER of the frame must stay calm and low-detail (soft bokeh, plain surface, gentle gradient of the scene) — large Korean text will be overlaid dead-center later. Slightly dark or muted overall so white/graphic text pops.`
       : `Main subject small and placed in the LOWER two-thirds; the TOP 35% must be a calm, low-detail area (sky, wall, soft bokeh) for text overlay later.`,
