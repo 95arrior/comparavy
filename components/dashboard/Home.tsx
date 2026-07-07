@@ -409,13 +409,19 @@ export default function Home({
         type G = { emoji: string; title: string; sub: string; cta: string; onGo: () => void; alt?: { label: string; onGo: () => void } };
         const wantCheckin = !checkinDone && yesterdayPublished(articles); // 어제 발행한 날만 아침 마찰
         const noCredit = credits < GENERATE_COST && !info.hasDraftToday;
-        const goWrite = () => { if (info.hasDraftToday || preReadyId || first) void readToday(); };
-        const g: G | null = wantCheckin
+        const todayDraft = articles.find((a) => a.status === "draft" && new Date(a.created_at).toDateString() === new Date().toDateString());
+        const goWrite = () => {
+          if (todayDraft) { onSelect(todayDraft); return; } // 쓰던 초안 직접 열기(키워드 불일치여도 안전)
+          if (preReadyId) { void readToday(); return; }      // 사전 생성분 0초 열람
+          if (first) { onWriteKeyword(first.keyword, first.title, first.newsContext, first.briefText, first.titleSearch, first.thumb, { tag: first.tag }); return; } // 일반 생성
+          setRoutineSheet("topics");
+        };
+        const g: G | null = goldenTime
+          ? { emoji: "⚡", title: "지금 30분이 골든타임", sub: "방금 글과 같은 주제의 이웃에게 인사 — 첫 반응이 노출을 열어요", cta: "이웃 미션 시작", onGo: () => setRoutineSheet("neighbor") }
+          : wantCheckin
           ? { emoji: "🌅", title: "어제 성적 확인부터", sub: "30초면 끝나요 — 숫자가 오늘 방향을 정해줘요", cta: "체크인 하기", onGo: () => setRoutineSheet("checkin") }
           : pubCountToday >= 5
-          ? { emoji: "🌙", title: "오늘은 충분해요", sub: `${pubCountToday}편 발행 — 과속은 오히려 독이에요. 내일 아침에 만나요`, cta: "오늘 글 돌아보기", onGo: () => setRoutineSheet("neighbor") }
-          : goldenTime
-          ? { emoji: "⚡", title: "지금 30분이 골든타임", sub: "방금 글과 같은 주제의 이웃에게 인사 — 첫 반응이 노출을 열어요", cta: "이웃 미션 시작", onGo: () => setRoutineSheet("neighbor") }
+          ? { emoji: "🌙", title: "오늘은 충분해요", sub: `${pubCountToday}편 발행 — 과속은 오히려 독이에요. 내일 아침에 만나요`, cta: "이웃 미션 마무리", onGo: () => setRoutineSheet("neighbor") }
           : info.hasDraftToday && !info.publishedToday
           ? { emoji: "📝", title: "쓰던 글이 기다리고 있어요", sub: "읽어보고 마음에 들면 바로 발행해요", cta: "이어서 검토하기", onGo: goWrite }
           : noCredit
