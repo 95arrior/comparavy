@@ -500,6 +500,7 @@ export default function DashboardClient(props: DashboardProps) {
 
         {!page && selected && (
           <ArticleModal
+            blogName={(blogProfile as { blog_name?: string } | null)?.blog_name ?? ""}
             pubStampKey={blogProfile ? `${(blogProfile as { id?: string }).id ?? ""}:${blogProfile.vertical}:${blogProfile.sub_category ?? ""}` : ""}
             credits={credits}
             article={selected}

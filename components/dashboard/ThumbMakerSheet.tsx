@@ -19,7 +19,7 @@ const TONES = [
   { key: "vivid", label: "살리기", wash: 0.12 },
 ];
 
-export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots, onFetchCopies, onPlaced, onCredits, onClose, initialPreview, onGenerated, brandKey }: {
+export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots, onFetchCopies, onPlaced, onCredits, onClose, initialPreview, onGenerated, brandKey, brandName }: {
   articleId: string;
   articleTitle?: string; // 배경 오브젝트 주제 힌트
   copies: string[] | null; // 썸네일 문구 추천(상위 공유)
@@ -32,6 +32,7 @@ export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots
   initialPreview?: string | null;
   onGenerated?: (url: string) => void;
   brandKey?: string; // ★블로그별 폰트 고정(앨범 일관성)
+  brandName?: string; // ★활성 블로그명(실측: 서버 조회가 첫 블로그 고정 — 박카에 경제 이름)
 }) {
   const [text, setText] = useState("");
   const [palette, setPalette] = useState(SWATCHES[0].name);
@@ -61,7 +62,7 @@ export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots
     try {
       const r = await fetch("/api/images/generate", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ thumbMaker: true, mainCopy: text.trim(), paletteName: palette, wash: TONES.find((t) => t.key === tone)?.wash ?? 0.35, aiBg: bgKind !== "plain", bgStyle: bgKind === "toss" ? "toss" : "photo", articleId, fontName: font, title: articleTitle }),
+        body: JSON.stringify({ thumbMaker: true, mainCopy: text.trim(), paletteName: palette, wash: TONES.find((t) => t.key === tone)?.wash ?? 0.35, aiBg: bgKind !== "plain", bgStyle: bgKind === "toss" ? "toss" : "photo", articleId, fontName: font, title: articleTitle, brandName }),
       });
       const d = await r.json();
       if (!r.ok) { setErr(d.error ?? "만들지 못했어요"); if (typeof d.credits === "number") onCredits?.(d.credits); }

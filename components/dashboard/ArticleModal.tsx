@@ -16,7 +16,7 @@ import type { Article } from "./types";
 // ★네이버 수익형 단일 — 글 화면은 '검토 → 복사 → 네이버 붙여넣기' 하나의 흐름.
 // 앱 안 편집기(TipTap)·워드프레스 발행·예약은 제거. 최종 탈고는 네이버 에디터에서 한다.
 // 크레딧 모델(전원 유료) — 무료/프로 구분·티저 잠금 없음.
-export default function ArticleModal({ pubStampKey,
+export default function ArticleModal({ pubStampKey, blogName,
   article,
   vertical,
   naverBlogId,
@@ -27,6 +27,7 @@ export default function ArticleModal({ pubStampKey,
   credits,
 }: {
   pubStampKey?: string;
+  blogName?: string;
   article: Article;
   /** 블로그 주제(vertical) — 발행 전 광고규제 표현 검사에 사용(없으면 general). */
   vertical?: string;
@@ -565,6 +566,7 @@ export default function ArticleModal({ pubStampKey,
         {thumbMakerOpen && (
           <ThumbMakerSheet
             brandKey={pubStampKey}
+            brandName={blogName}
             articleId={article.id}
             articleTitle={article.title}
             copies={thumbCopies}
