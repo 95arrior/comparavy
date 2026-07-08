@@ -143,5 +143,5 @@ export async function renderCompositionCard(opts: { title: string; items: Compos
       ]),
     ]);
   });
-  return toPng(frame(opts.title, opts.brand, rows));
+  return toPng(frame(opts.title, opts.brand, [el("div", { style: { display: "flex", flexDirection: "column", justifyContent: "center", flexGrow: 1 } }, rows)]));
 }
