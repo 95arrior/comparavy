@@ -13,6 +13,7 @@ import { resolveLocalPlan, generateLocalKeywords, generateAudienceTopics, type L
 import { buildPoolForSub } from "@/lib/keywordPool";
 import { getTrendTopics, refreshCategoryTrends, hasFreshTrends } from "@/lib/trendTopics";
 import { amplifyForUser } from "@/lib/amplifyTopics";
+import { fetchKeywordStats, normalizeKey } from "@/lib/naverKeyword";
 import { collectPoolKeywords } from "@/lib/poolCollect";
 import { fetchNaverAutocomplete } from "@/lib/naverAutocomplete";
 import { checkRateLimit } from "@/lib/rateLimit";
@@ -193,7 +194,7 @@ export async function GET(req: Request) {
 
   // ★트렌드 씨앗 × 개인화 증식 카드 — 키워드 풀과 독립. 조기 return에서도 트렌드가 나가게 함수로 분리.
   //  existing: 이미 담긴 글감 키워드(정규화) 집합(중복 방지). 온라인 vertical만 대상.
-  interface TrendCard { keyword: string; title: string; demandLabel: string; expiresAt?: string | null; ssak: boolean; region: boolean; tone: BloggerType; vol: number; comp: Comp; blogTotal: number | null; tag: string; newsContext?: string; sourceTitle?: string; titleSearch?: string; briefText?: string; hookKey?: string; thumb?: { mainCopy: string; subCopy: string; badge: string }; brief?: unknown; series?: unknown; seriesId?: string; seriesBadge?: string }
+  interface TrendCard { keyword: string; title: string; demandLabel: string; expiresAt?: string | null; ssak: boolean; region: boolean; tone: BloggerType; vol: number; comp: Comp; blogTotal: number | null; tag: string; newsContext?: string; sourceTitle?: string; demandBadge?: string; titleSearch?: string; briefText?: string; hookKey?: string; thumb?: { mainCopy: string; subCopy: string; badge: string }; brief?: unknown; series?: unknown; seriesId?: string; seriesBadge?: string }
   async function buildTrendCards(existing: Set<string>): Promise<TrendCard[]> {
     const cards: TrendCard[] = [];
     if (!user) return cards;
@@ -325,6 +326,28 @@ export async function GET(req: Request) {
       try { const { data: fsRow } = await pool.from("api_cache").select("value").eq("key", `fresh_stats:${sub}`).maybeSingle(); if (fsRow?.value) diag.freshStats = fsRow.value; } catch { /* ignore */ }
     }
     let tc = await buildTrendCards(new Set());
+    // ★수요 신호(유저 확정: 신선하지만 아무도 안 찾는 씨앗 문제) — 실측 검색량 부착. 폐기 아닌 표시(지자체 틈새=저수요·경쟁공백 가치는 유저 판단)
+    if (tc.length > 0) {
+      try {
+        const volKey = `trendvol:${sub}:${tc.map((c) => c.keyword).join("|").slice(0, 180)}`;
+        let volMap: Record<string, { vol: number; comp: string }> | null = null;
+        const { data: vc } = await pool.from("api_cache").select("value, expires_at").eq("key", volKey).maybeSingle();
+        if (vc?.value && new Date(String(vc.expires_at)).getTime() > Date.now()) volMap = vc.value as Record<string, { vol: number; comp: string }>;
+        if (!volMap) {
+          const stats = await fetchKeywordStats(tc.map((c) => c.keyword.split(" ").slice(0, 3).join(" ")), 3);
+          volMap = {};
+          for (const c of tc) {
+            const st = stats.get(normalizeKey(c.keyword)) ?? stats.get(normalizeKey(c.keyword.split(" ").slice(0, 3).join(" ")));
+            if (st) volMap[c.keyword] = { vol: st.mobile + st.pc, comp: st.compIdx };
+          }
+          try { await pool.from("api_cache").upsert({ key: volKey, value: volMap, expires_at: new Date(Date.now() + 24 * 3600_000).toISOString(), updated_at: new Date().toISOString() }); } catch { /* ignore */ }
+        }
+        for (const c of tc) {
+          const v = volMap[c.keyword];
+          if (v) { c.vol = v.vol; (c as { demandBadge?: string }).demandBadge = v.vol >= 1000 ? `월 ${v.vol.toLocaleString()}회 검색` : v.vol > 0 ? `월 ${v.vol.toLocaleString()}회 · 수요 낮음(경쟁 공백일 수 있음)` : "검색량 미집계 · 수요 낮음"; }
+        }
+      } catch { /* 수요 조회 실패는 카드를 막지 않는다 */ }
+    }
     if (tc.length === 0) {
       // ★빈손 즉석 수확(실측: 20분 빈 보드 — 백그라운드 킥은 실패해도 아무도 모른다) — 응답 안에서 1회 동기 수확 후 재시도
       try {

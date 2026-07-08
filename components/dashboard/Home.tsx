@@ -907,8 +907,10 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
       if (topic.vol > 0) return `월 ${topic.vol.toLocaleString()}회 검색 · 경쟁 ${topic.comp === "low" ? "낮음" : topic.comp === "mid" ? "보통" : "높음"} · 한 번 잡으면 오래 유입`;
       return topic.demandLabel ?? "지속 검색되는 주제";
     }
-    if (topic.demandLabel?.includes("실검색 확인")) return "네이버 자동완성에서 실검색 급증 확인";
+    const badge = (topic as { demandBadge?: string }).demandBadge;
+    if (topic.demandLabel?.includes("실검색 확인")) return badge ? `실검색 급증 확인 · ${badge}` : "네이버 자동완성에서 실검색 급증 확인";
     const src = (topic as { sourceTitle?: string }).sourceTitle;
+    if (src && badge) return `출처 이슈: ${src.slice(0, 22)} · ${badge}`;
     if (src) return `출처 이슈: ${src.slice(0, 30)}`; // ★카드별 진짜 혈통(씨앗 제목) — 무관 헤드라인 인용 문제의 근본 수리
     const lines = (topic.newsContext ?? "").split("\n").filter((l) => l.trim().startsWith("-"));
     const kwToks = topic.keyword.split(/\s+/).filter((t) => t.length >= 2);
