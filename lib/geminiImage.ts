@@ -121,9 +121,13 @@ export function buildThumbPhotoBgPrompt(topic: string, seed: number, center = fa
   const copy = opts?.copyText?.trim() ?? "";
   const v = Math.max(0, opts?.variant ?? 0);
   // ★장면 각도 로테이션(재생성 변주) — 같은 문구라도 다시 만들면 다른 장면으로 강제 전환
-  const angle = ["a close-up emotional moment (face or posture tells the story)", "a wider situational scene (the place and circumstance around the person)", "an object-metaphor scene (the situation told through objects, no people)"][v % 3];
+  const angle = [
+    "PERSON + OBJECT situation: a Korean person interacting with the topic object (the owner in front of the containers, a hand holding the bill)",
+    "OBJECT-ONLY close-up: the topic\'s symbolic objects alone, dramatic and larger-than-life (money stacks, documents, buildings — no people)",
+    "CONTRAST composition: before/after, the one who got it vs the one who missed it, rising vs falling — split or juxtaposed in one frame",
+  ][v % 3];
   const subjectRule = copy
-    ? `THE COPY IS THE SCRIPT (highest priority): the Korean copy overlaid on this image reads "${copy}" (understand only — never render it). Draw the exact SCENE this copy describes — the reader\'s own situation, not the topic\'s category symbol. If the copy\'s subject is a person (사람들·사장·~라면), the hero MUST be a KOREAN person living that moment (예: \'절세가 아니라 손실이 되는 사람들\' → a shop owner realizing a loss in front of a bill; \'모르면 매달 새는 돈\' → money slipping away unnoticed). Government buildings (국회의사당·청사) are FORBIDDEN unless the copy itself names an institution or a policy announcement. Variation directive for this attempt: stage it as ${angle} — do not repeat the previous attempt\'s scene type.`
+    ? `THE COPY IS THE SCRIPT (highest priority): the Korean copy overlaid on this image reads "${copy}" (understand only — never render it). Draw the SCENE this copy describes. NON-NEGOTIABLE: include at least ONE topic-identifying object from "${topic.trim()}" so the field is recognizable even with the text covered (수출→shipping containers/cargo ship/export boxes, 에너지지원금→utility bill/power meter, 대출→house/contract, 적금→bankbook/coins). A person alone with generic despair is WRONG — emotion without topic context reads as a different article. If a person appears, they must INTERACT with that object (the owner in front of containers, a hand holding the bill). Government buildings (국회의사당·청사) only when the copy names an institution or policy announcement. Composition for this attempt: ${angle} — never repeat the previous attempt\'s composition. LITMUS TEST: with the text hidden, a viewer should still guess the article\'s field.`
     : `Viral Korean YouTube-thumbnail photograph for this topic (understand only — never render as text): "${topic.trim()}". DEFAULT SUBJECT = the topic\'s most iconic dramatic object or scene. People only if the topic is about people — then KOREAN features.`;
   const layout = center
     ? `Subjects arranged toward the edges/corners; the CENTER of the frame stays calm and low-detail — large Korean text will be overlaid dead-center later.`
