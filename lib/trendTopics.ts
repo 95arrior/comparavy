@@ -14,7 +14,7 @@ import { logUsage } from "./usageLog";
 //  스케일: 유저 무관(카테고리당 1회) → 1만·100만 명 동일 비용. 유저는 이 풀에서 시드 회전으로 다른 조각을 봄.
 
 export interface Longtail { kw: string; blogTotal: number | null }
-export type SeedSource = "news" | "season" | "discover";
+export type SeedSource = "news" | "season" | "discover" | "applyhome";
 export interface TrendTopic {
   keyword: string;
   title: string;
@@ -290,7 +290,7 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
         for (const h of homes) {
           rows.push({
             category, keyword: h.keyword, title: h.title, news_context: h.newsContext,
-            longtails: [] as Longtail[], source: "news", created_at: new Date().toISOString(),
+            longtails: h.longtails ?? ([] as Longtail[]), source: "applyhome", created_at: new Date().toISOString(),
             expires_at: `${h.actionEnd}T23:59:59+09:00`, // 카드 만료 = 접수 마감(유저 확정)
             action_start: h.actionStart, action_end: h.actionEnd,
           } as (typeof rows)[number] & { action_start: string; action_end: string });
