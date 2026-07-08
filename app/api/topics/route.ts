@@ -204,6 +204,15 @@ export async function GET(req: Request) {
       const kstDay = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
       let trends = await getTrendTopics(sub); // 캐시 키(씨앗 세대) 계산용 — 가벼운 조회라 캐시 앞으로 이동
       // ★유입력 우선(유저 핵심 진단: 뉴스에 나온 것 ≠ 검색하는 것) — 자동완성 실검색 흔적(longtails)이 많은 씨앗부터 증식.
+      // ★최근 7일 발행 키워드(유저 확정: 같은 키워드 연속 발행=노출 잠식) — 감점+표시(제외 아님: 후속·시리즈 판단은 유저)
+      const recentPub = new Set<string>();
+      try {
+        const { data: rp } = await pool.from("articles").select("keyword").eq("user_id", user.id)
+          .in("status", ["verified", "published"]).gte("created_at", new Date(Date.now() - 7 * 86400_000).toISOString()).limit(60);
+        for (const r of rp ?? []) { const k = String(r.keyword ?? "").replace(/\s+/g, ""); if (k) recentPub.add(k); }
+      } catch { /* ignore */ }
+      const isRecentDup = (kw: string) => { const n = kw.replace(/\s+/g, ""); return n.length > 0 && (recentPub.has(n) || [...recentPub].some((r) => r.length >= 4 && (n.includes(r) || r.includes(n)))); };
+
       // ★청약홈 공고 씨앗 — 증식(LLM) 우회 직접 카드화: 제목·날짜가 전부 API 실값이라 변형 금지(유저 신뢰 원칙)
       const announceSeeds = trends.filter((t) => (t as { actionEnd?: string | null }).actionEnd);
       trends = trends.filter((t) => !(t as { actionEnd?: string | null }).actionEnd);
@@ -226,6 +235,7 @@ export async function GET(req: Request) {
         if (/(신청|접수|마감|선착순|추첨|무순위|모집|공고|환급)/.test(txt)) sc += 2;
         if (/([0-9,.]+\s?(만\s?원|억|%)|지원금|보조금|장려금|바우처)/.test(txt)) sc += 1;
         if (/(기소|구속|재판|실적|영업이익|전망|주가|급락|급등|논란|의혹|사과)/.test(txt)) sc -= 2;
+        if (isRecentDup(t.keyword ?? "")) sc -= 3; // 최근 발행 키워드 — 노출 잠식 방지
         return sc;
       };
       trends = [...trends].sort((a, b) => ((b.longtails?.length ?? 0) * 2 + (b.newsContext ? 1 : 0) + actionScore(b)) - ((a.longtails?.length ?? 0) * 2 + (a.newsContext ? 1 : 0) + actionScore(a)));
@@ -286,6 +296,7 @@ export async function GET(req: Request) {
         const demandLabel = src === "discover" ? "꾸준히 찾는 주제" : "지금 뜨는 중";
         cards.push({ keyword: t.keyword, title: t.title, expiresAt: seedExpiry, demandLabel: (t as { inflow?: string }).inflow === "hit" ? "실검색 확인 · 지금 뜨는 중" : demandLabel, ssak: true, region: false, tone: bt, vol: 0, comp: "low" as Comp, blogTotal: null, tag: src === "discover" ? "steady" : "trend", newsContext: t.newsContext ?? undefined, sourceTitle: (t as { sourceTitle?: string | null }).sourceTitle ?? undefined, titleSearch: (t as { titleSearch?: string }).titleSearch, briefText: (t as { briefText?: string }).briefText, hookKey: (t as { hookKey?: string }).hookKey, thumb: (t as { thumb?: { mainCopy: string; subCopy: string; badge: string } }).thumb, brief: (t as { brief?: unknown }).brief, series: (t as { series?: unknown }).series ?? null });
       }
+      for (const c of cards) if (isRecentDup(c.keyword)) c.demandBadge = "최근 7일 내 발행한 키워드 — 연속 발행은 서로 노출을 잠식해요";
     } catch { /* 트렌드 없이 진행 */ }
     return cards;
   }

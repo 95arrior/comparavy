@@ -83,7 +83,9 @@ export async function keywordsToTitles(keywords: string[], context?: string, opt
     const arr = m ? (JSON.parse(m[0]) as unknown[]) : [];
     return keywords.map((k, i) => {
       const o = arr[i] as { t?: unknown; c?: unknown; ok?: unknown; f?: unknown } | undefined;
-      const title = o && typeof o.t === "string" && o.t.trim() ? o.t.trim() : templateTitle(k, i);
+      let title = o && typeof o.t === "string" && o.t.trim() ? o.t.trim() : templateTitle(k, i);
+      // ★키워드 포함 보증(유저 확정: 키워드 없는 제목은 노출 판정 자체가 안 된다) — 핵심 토큰 전무 시 템플릿 폴백
+      { const toks = k.split(/\s+/).filter((t) => t.length >= 2); if (toks.length > 0 && !toks.some((t) => title.includes(t))) title = templateTitle(k, i); }
       const tag = o && typeof o.c === "string" ? o.c.trim() : "";
       const ok = o ? o.ok !== false : true; // 명시적 false만 노이즈로 제외
       const fit = o && typeof o.f === "number" ? Math.max(0, Math.min(2, o.f)) : 1; // 업종 적합도

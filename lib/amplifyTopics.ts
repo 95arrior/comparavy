@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { validateSearchTitle, fallbackSearchTitle, ensureKeywordInTitle } from "./titleRules";
 import { logUsage } from "./usageLog";
 import type { TrendTopic } from "./trendTopics";
 import { pickHookPattern, OPEN_LOOP_GUIDE, containsBanned } from "./hookPatterns";
@@ -179,7 +180,7 @@ export async function amplifyForUser(
   ].join("\n")).join("\n");
 
   const client = new Anthropic({ apiKey });
-  const prompt = `이 블로그 운영자에게 맞춘 글감 ${briefs.length}개를 만들어라. 각 글감은 아래 '배정된 구조·훅'을 그대로 따르고, 창작 부분만 채운다.\n★이 글감들은 '지금 뜨는 트렌드' 종족 — title은 네이버 홈피드(홈판) 노출이 주 싸움터다. [제목 규칙] (1)앞 15자 안에 클릭 유도 요소 1개를 배치한다 — 구체 숫자(월 20만원), 대상 지목(~라면·~인 사람), 긴급성(오늘 마감·이번 주까지), 궁금증 유발 중 하나. 낚시성 금지. (2)검색 키워드는 제목에서 빠지지 않되 위치는 유연하게 — 훅이 문을 열고 키워드가 뒤를 받친다. (3)제목에 쓰는 숫자·금액·날짜는 씨앗 자료(뉴스·브리프)에 근거가 있는 값만 — 근거 없는 숫자는 만들지 않는다. 자리표시(OO만원·N만원·□□ 등) 절대 금지: 금액을 확인 못 하면 금액 없는 제목으로 쓴다(예: '서울시 출산 가구 주거비 지원, 신청 조건과 방법'). (4)이 종족은 기간제(스파이크) 글이므로 날짜·마감 훅 허용 — 단 실제 날짜가 자료에 있을 때만. titleSearch는 반대로 검색창·AI 브리핑용 — 키워드 선두 배치, 의도 완결, 후킹 금지.
+  const prompt = `이 블로그 운영자에게 맞춘 글감 ${briefs.length}개를 만들어라. 각 글감은 아래 '배정된 구조·훅'을 그대로 따르고, 창작 부분만 채운다.\n★이 글감들은 '지금 뜨는 트렌드' 종족 — title은 네이버 홈피드(홈판) 노출이 주 싸움터다. [제목 규칙] (1)앞 15자 안에 클릭 유도 요소 1개를 배치한다 — 구체 숫자(월 20만원), 대상 지목(~라면·~인 사람), 긴급성(오늘 마감·이번 주까지), 궁금증 유발 중 하나. 낚시성 금지. (2)검색 키워드는 제목에서 빠지지 않되 위치는 유연하게 — 훅이 문을 열고 키워드가 뒤를 받친다. (3)제목에 쓰는 숫자·금액·날짜는 씨앗 자료(뉴스·브리프)에 근거가 있는 값만 — 근거 없는 숫자는 만들지 않는다. 자리표시(OO만원·N만원·□□ 등) 절대 금지: 금액을 확인 못 하면 금액 없는 제목으로 쓴다(예: '서울시 출산 가구 주거비 지원, 신청 조건과 방법'). (4)이 종족은 기간제(스파이크) 글이므로 날짜·마감 훅 허용 — 단 실제 날짜가 자료에 있을 때만. titleSearch는 반대로 검색창·AI 브리핑용 — [규격] ①핵심 키워드 정확히 1개를 제목 맨 앞에(네이버는 제목으로 키워드를 판정한다 — 키워드가 흐리면 본문이 좋아도 노출이 안 된다) ②동급 키워드 병렬 금지('A대출 B대출 C대출 총정리' 유형 — 서로를 흐린다). 보조 수식(조건·방법·기간·신청)은 허용 ③공백 포함 25~40자 ④특수문자·이모지 금지 ⑤후킹 금지, 의도 완결.
 
 [운영자 개인화 축]
 ${axis || "(일반)"}
@@ -239,7 +240,14 @@ ${OPEN_LOOP_GUIDE}
       // ★금지어 필터 — 어그로/약속류가 든 제목·카피는 안전한 씨앗 제목으로 폴백.
       let titleClick = (it.titleClick ?? b.seed.title).trim().slice(0, 80);
       if (containsBanned(titleClick)) titleClick = b.seed.title.slice(0, 80);
-      const titleSearch = (it.titleSearch ?? b.seed.title).trim().slice(0, 80);
+      let titleSearch = (it.titleSearch ?? b.seed.title).trim().slice(0, 80);
+      // ★검색용 코드 게이트(유저 확정: 키워드 선두·25~40자·병렬 금지·특수문자 금지) — 위반 시 키워드 실값 규칙 조립로 폴백
+      {
+        const v = validateSearchTitle(titleSearch, kw);
+        if (!v.ok) titleSearch = fallbackSearchTitle(kw);
+      }
+      // ★홈판용도 키워드 포함 보증 — 훅만 남고 키워드가 빠지면 노출 판정 자체가 안 된다
+      titleClick = ensureKeywordInTitle(titleClick, kw, titleSearch);
       // ★자르지 않는다 — 원문 그대로 받고 뒤에서 검증(초과 시 재생성→반려). 금지어·느낌표만 즉시 제거.
       let thumbMain = (it.thumbMain ?? "").replace(/!/g, "").trim();
       if (containsBanned(thumbMain)) thumbMain = "";
