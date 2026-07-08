@@ -679,7 +679,12 @@ export default function Home({
                     )}
                   </div>
                 )}
-                {(list ?? []).slice(0, 5).map((t) => <BoardCard key={t.keyword} topic={t} onWrite={() => onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb, { tag: t.tag })} onDismiss={() => {
+                {(() => {
+                  const all = list ?? [];
+                  const active = all.filter((t) => !(t as { publishedOn?: string }).publishedOn).slice(0, 5);
+                  const done = all.filter((t) => (t as { publishedOn?: string }).publishedOn).slice(0, 3); // 발행함은 활성 5개와 별도(슬롯 잠식 방지)
+                  return [...active, ...done];
+                })().map((t) => <BoardCard key={t.keyword} topic={t} onWrite={() => onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb, { tag: t.tag })} onDismiss={() => {
                   const nd = [...dismissedRef.current, t.keyword];
                   dismissedRef.current = nd; setDismissed(nd);
                   try { localStorage.setItem(todayKey, JSON.stringify(nd)); } catch { /* ignore */ }
