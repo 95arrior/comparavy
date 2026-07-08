@@ -116,10 +116,28 @@ export function buildThumbBgPrompt(bgStyleHint: string, paletteHint: string, see
   ].join(" ");
 }
 /** 실사 배경(썸네일) — 주제 씬 사진. center=true면 중앙 저디테일(정중앙 텍스트용), 아니면 상단 여백형. */
+// ★문구 유형 → 감정 팔레트 4종(유저 확정: '자극=부정 감정' 고착 해소 — 채널이 불안 마케팅 톤으로 굳는 것 방지)
+function emotionOf(copy: string): string {
+  if (/(손해|손실|주의|위험|놓치|사라|새는|날리|폭탄|마감|늦으면|모르면|실수|거부|탈락)/.test(copy))
+    return "EMOTION = concern/seriousness (worry, gravity) — warning copy";
+  if (/(지원|혜택|환급|받는|받을|아끼|절약|기회|무료|추가|더 준|올랐|커진)/.test(copy))
+    return "EMOTION = bright discovery ('ah, THIS was it') — lit-up focused face, hopeful energy, NOT worry";
+  if (/(비교|차이|vs|VS|뭐가|어디가|어느|선택|고르|나을까)/.test(copy))
+    return "EMOTION = weighing/deliberating — looking between two options, thoughtful tilt, NOT distress";
+  return "EMOTION = calm concentration — checking documents, taking notes, steady focused hands, NOT anxiety";
+}
+
 export function buildThumbPhotoBgPrompt(topic: string, seed: number, center = false, opts?: { copyText?: string; variant?: number }): string {
   const tone = PHOTO_TONES[seed % PHOTO_TONES.length];
   const copy = opts?.copyText?.trim() ?? "";
   const v = Math.max(0, opts?.variant ?? 0);
+  // ★인물 구성 로테이션(실증: 재생성 시 소재만 바뀌고 '걱정하는 중년 남성' 동일 복제) — 재생성마다 인물 유형 강제 전환
+  const persona = [
+    "a Korean woman in her 30s",
+    "a Korean man in his 40s-50s",
+    "a young Korean person in their 20s",
+    "hands only — no face in frame (the situation told through hand gestures and objects)",
+  ][(seed + v) % 4];
   // ★장면 각도 로테이션(재생성 변주) — 같은 문구라도 다시 만들면 다른 장면으로 강제 전환
   const angle = [
     "PERSON + OBJECT situation: a Korean person interacting with the topic object (the owner in front of the containers, a hand holding the bill)",
@@ -127,7 +145,7 @@ export function buildThumbPhotoBgPrompt(topic: string, seed: number, center = fa
     "CONTRAST composition: before/after, the one who got it vs the one who missed it, rising vs falling — split or juxtaposed in one frame",
   ][v % 3];
   const subjectRule = copy
-    ? `THE COPY IS THE SCRIPT (highest priority): the Korean copy overlaid on this image reads "${copy}" (understand only — never render it). Draw the SCENE this copy describes. NON-NEGOTIABLE: include at least ONE topic-identifying object from "${topic.trim()}" so the field is recognizable even with the text covered (수출→shipping containers/cargo ship/export boxes, 에너지지원금→utility bill/power meter, 대출→house/contract, 적금→bankbook/coins). A person alone with generic despair is WRONG — emotion without topic context reads as a different article. If a person appears, they must INTERACT with that object (the owner in front of containers, a hand holding the bill). Government buildings (국회의사당·청사) only when the copy names an institution or policy announcement. Composition for this attempt: ${angle} — never repeat the previous attempt\'s composition. LITMUS TEST: with the text hidden, a viewer should still guess the article\'s field.`
+    ? `THE COPY IS THE SCRIPT (highest priority): the Korean copy overlaid on this image reads "${copy}" (understand only — never render it). Draw the SCENE this copy describes. NON-NEGOTIABLE: include at least ONE topic-identifying object from "${topic.trim()}" so the field is recognizable even with the text covered (수출→shipping containers/cargo ship/export boxes, 에너지지원금→utility bill/power meter, 대출→house/contract, 적금→bankbook/coins). A person alone with generic despair is WRONG — emotion without topic context reads as a different article. If a person appears, they must INTERACT with that object (the owner in front of containers, a hand holding the bill). Government buildings (국회의사당·청사) only when the copy names an institution or policy announcement. Composition for this attempt: ${angle} — never repeat the previous attempt\'s composition. LITMUS TEST: with the text hidden, a viewer should still guess the article\'s field. ${emotionOf(copy)}. If a person appears, cast: ${persona} — never repeat the previous attempt\'s person type or facial staging. 'Eye-catching' is the job of COMPOSITION, CONTRAST and the overlaid copy — NOT of negative emotion; do not default to worried faces.`
     : `Viral Korean YouTube-thumbnail photograph for this topic (understand only — never render as text): "${topic.trim()}". DEFAULT SUBJECT = the topic\'s most iconic dramatic object or scene. People only if the topic is about people — then KOREAN features.`;
   const layout = center
     ? `Subjects arranged toward the edges/corners; the CENTER of the frame stays calm and low-detail — large Korean text will be overlaid dead-center later.`
