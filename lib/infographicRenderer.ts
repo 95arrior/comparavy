@@ -96,3 +96,34 @@ export async function renderChecklistCard(opts: { title: string; items: string[]
   ]));
   return toPng(frame(opts.title, opts.brand, rows));
 }
+
+/* ── 4) 핵심 수치 카드(a) — 큰 숫자 1개가 주인공(벤치마크: 스크롤만 해도 숫자가 읽힌다) ── */
+export async function renderStatCard(opts: { title: string; value: string; label: string; subs?: string[]; brand: string }): Promise<Buffer> {
+  const subs = (opts.subs ?? []).slice(0, 2);
+  const body = el("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flexGrow: 1, gap: 10 } }, [
+    el("div", { style: { display: "flex", fontFamily: "T", fontSize: 128, fontWeight: 900, color: BLUE, letterSpacing: -4, lineHeight: 1 } }, opts.value),
+    el("div", { style: { display: "flex", fontFamily: "B", fontSize: 34, color: INK, marginTop: 6 } }, opts.label),
+    ...subs.map((t) => el("div", { style: { display: "flex", fontFamily: "R", fontSize: 24, color: SUB, marginTop: 2 } }, t)),
+  ]);
+  return toPng(frame(opts.title, opts.brand, [body]));
+}
+
+/* ── 5) 전후 비교 카드(b) — 기존 vs 확대(변경·개정 글 전용) ── */
+export interface BeforeAfterRow { label: string; before: string; after: string }
+export async function renderBeforeAfterCard(opts: { title: string; beforeHead?: string; afterHead?: string; rows: BeforeAfterRow[]; brand: string }): Promise<Buffer> {
+  const rows = opts.rows.slice(0, 4);
+  const fs1 = rows.length >= 3 ? 27 : 32;
+  const header = el("div", { style: { display: "flex", marginTop: 4 } }, [
+    el("div", { style: { display: "flex", flex: 1 } }),
+    el("div", { style: { display: "flex", flex: 1.2, justifyContent: "center", fontFamily: "B", fontSize: 24, color: WEAK } }, opts.beforeHead ?? "기존"),
+    el("div", { style: { display: "flex", width: 56 } }),
+    el("div", { style: { display: "flex", flex: 1.2, justifyContent: "center", fontFamily: "T", fontSize: 24, color: BLUE } }, opts.afterHead ?? "변경 후"),
+  ]);
+  const lines = rows.map((r, i) => el("div", { style: { display: "flex", alignItems: "center", padding: "22px 0", borderBottom: i === rows.length - 1 ? "none" : `2px solid ${LINE}` } }, [
+    el("div", { style: { display: "flex", flex: 1, fontFamily: "B", fontSize: fs1 - 3, color: INK } }, r.label),
+    el("div", { style: { display: "flex", flex: 1.2, justifyContent: "center", fontFamily: "R", fontSize: fs1, color: WEAK, textDecoration: "line-through" } }, r.before),
+    el("div", { style: { display: "flex", width: 56, justifyContent: "center", fontFamily: "T", fontSize: fs1, color: BLUE } }, "→"),
+    el("div", { style: { display: "flex", flex: 1.2, justifyContent: "center", fontFamily: "T", fontSize: fs1 + 4, color: BLUE } }, r.after),
+  ]));
+  return toPng(frame(opts.title, opts.brand, [header, ...lines]));
+}
