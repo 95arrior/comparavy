@@ -293,14 +293,13 @@ function styleMarkers(html: string): string {
 
 // ★나열은 표 박스로(유저 확정: 중앙 정렬 본문에서 리스트가 흐름을 끊음 — 박스에 담아 좌정렬 유지)
 function listsToTable(html: string): string {
+  // ★유저 확정: 리스트는 리스트로(모든 개수) — 중앙 불릿 문단·항목 사이 빈 줄. 표는 엔진이 비교·조건 구조로 <table>을 직접 쓸 때만(styleTables가 처리).
   return html.replace(/<(ul|ol)(\s[^>]*)?>([\s\S]*?)<\/\1>/gi, (raw, tag, _attr, inner) => {
+    if (/<(table|img)/i.test(inner)) return raw;
     const items = (inner.match(/<li[\s\S]*?<\/li>/gi) ?? []).map((li: string) => li.replace(/<\/?li[^>]*>/gi, "").trim()).filter(Boolean);
-    if (items.length < 4) { // ★짧은 리스트=중앙 불릿 문단들(유저 교본: 항목 사이 빈 줄 — 붙이면 답답)
-      return items.map((it: string) => `<p style="text-align:center;word-break:keep-all">• ${it}</p>`).join("");
-    }
+    if (items.length < 2) return raw;
     const ol = String(tag).toLowerCase() === "ol";
-    const rows = items.map((it: string, i: number) => `<tr><td>${ol ? `<b>${i + 1}.</b> ` : "• "}${it}</td></tr>`).join("");
-    return `<table><tbody>${rows}</tbody></table>`;
+    return items.map((it: string, i: number) => `<p style="text-align:center;word-break:keep-all">${ol ? `<b>${i + 1}.</b> ` : "• "}${it}</p>`).join("");
   });
 }
 
