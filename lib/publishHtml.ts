@@ -276,6 +276,16 @@ function styleMarkers(html: string): string {
     });
   }
 
+  // ★소제목 네이버 공식 문법(유저 레퍼런스: 블로그팀 공식 — 파란 큰 소제목이 섹션 마디를 색으로 보여준다)
+  html = html.replace(/<h2(\s[^>]*)?>([\s\S]*?)<\/h2>/gi, (_m, _attr, inner) => {
+    const clean = String(inner).replace(/<[^>]+>/g, "").trim();
+    return `<h2 style="text-align:center;font-size:20px;font-weight:800;color:#0073e9;word-break:keep-all">${clean}</h2>`;
+  });
+  // ★※ 각주 — 작은 회색 보조문(레퍼런스 문법: 참고·단서는 본문보다 한 단계 작고 옅게)
+  html = html.replace(/<p(\s[^>]*)?>\s*(※[\s\S]*?)<\/p>/gi, (_m, _attr, inner) => {
+    return `<p style="text-align:center;font-size:13px;color:#8b95a1;word-break:keep-all">${inner}</p>`;
+  });
+
   // ★엔진이 평문으로 쓴 '함께 보면 좋은 글' 라벨 소거(규격 위반 실측: 블록 2회) — 라벨은 시스템 산출(하단 3층) 전용
   html = html.replace(/<p[^>]*>\s*(?:<b[^>]*>)?\s*함께\s?보면\s?좋은\s?글\s*[:：]?\s*(?:<\/b>)?\s*<\/p>/g, "");
   // ★마무리 마커 2개+ 방어 — 마지막 것만 3층 블록, 앞엣것은 제거(중간 링크 전면 폐기 — 유저 확정)
