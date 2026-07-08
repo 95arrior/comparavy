@@ -154,6 +154,8 @@ function breakSentence(sen: string): string {
   return parts.join("<br>");
 }
 function splitInner(inner: string): string[] {
+  // ★마커 문단 보호 — 절 개행이 [관련글]/[마무리관련글]/[사진] 마커 안에 <br>을 박으면 변환 정규식이 죽는다(실측: 3층 블록 미출력·마커 원형 노출)
+  if (/\[(?:마무리)?관련글:|\[(?:사진|카드):|\[링크 카드/.test(inner)) return [inner];
   if (visLen(inner) <= MOBILE_MAX_CHARS && !/(?<=[?!])\s|(?<=[^\d]\.)\s/.test(inner.replace(/<[^>]+>/g, ""))) return [breakSentence(inner)]; // ★단문 문단도 절 개행은 적용(실측: 한 문장 문단이 통줄로 남음)
   const sentences = mergeUnbalanced(inner.split(/(?:<br\s*\/?>)|(?<=[?!])\s+|(?<=[^\d]\.)\s+/g).map((x) => x.trim()).filter(Boolean));
   if (sentences.length <= 1) return [breakSentence(inner)];
