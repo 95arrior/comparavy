@@ -268,12 +268,12 @@ function arrowChainToSteps(html: string): string {
 function styleMarkers(html: string): string {
   // ★엔진이 평문으로 쓴 '함께 보면 좋은 글' 라벨 소거(규격 위반 실측: 블록 2회) — 라벨은 시스템 산출(하단 3층) 전용
   html = html.replace(/<p[^>]*>\s*(?:<b[^>]*>)?\s*함께\s?보면\s?좋은\s?글\s*[:：]?\s*(?:<\/b>)?\s*<\/p>/g, "");
-  // ★마무리 마커 2개+ 방어 — 마지막 것만 3층 블록, 앞엣것은 중간 간결형으로 강등
+  // ★마무리 마커 2개+ 방어 — 마지막 것만 3층 블록, 앞엣것은 제거(중간 링크 전면 폐기 — 유저 확정)
   {
     const finals = [...html.matchAll(/\[마무리관련글:\s*(https?:[^\s|\]]+)\s*\|\s*([^|\]]+)\|\s*([^\]]+)\]/g)];
     for (let i = 0; i < finals.length - 1; i++) {
       const f = finals[i];
-      if (f) html = html.replace(f[0], `[관련글: ${f[1]} | ${(f[2] ?? "").trim()}]`);
+      if (f) html = html.replace(f[0], "");
     }
   }
   // ★내부링크 마커 — 하단 3층(유저 확정: 유저가 네이버 링크 카드로 직접 삽입 — 시스템은 그 직전까지 준비)
@@ -281,10 +281,8 @@ function styleMarkers(html: string): string {
     const clean = url.split("?")[0]; // 트래킹 파라미터 제거 — 원형만
     return `<p style="text-align:center;font-size:15px;font-weight:700">함께 보면 좋은 글</p><p style="text-align:center;font-size:13.5px;color:#4e5968">${reason.trim()}</p><p style="text-align:center;background-color:#f5f6f8;padding:10px 8px;font-size:13px;color:#8b95a1">[링크 카드 자리 — 아래 주소를 링크 버튼에 붙여넣으세요]</p><p style="text-align:center;font-size:13px">${clean}</p>`;
   });
-  // 중간 마커 — 헤더 없는 간결형(실측: '함께 보면 좋은 글' 헤더가 하단과 중복돼 보임 — 헤더는 하단 3층 전용)
-  html = html.replace(/\[관련글:\s*(https?:[^\s|\]]+)\s*\|\s*([^\]]+)\]/g, (_m, url: string, t: string) => {
-    return `<p style="text-align:center;font-size:13.5px;color:#4e5968">${t.trim()}<br>${url.split("?")[0]}</p>`;
-  });
+  // ★중간 [관련글:] 마커 — 전면 제거(유저 확정: 내부링크는 하단 '함께 보면 좋은 글'만) — 기존 생성 글의 마커도 조립 시 소거
+  html = html.replace(/\[관련글:\s*(https?:[^\s|\]]+)\s*\|\s*([^\]]+)\]/g, "");
   // ★중복 링크 게이트 — 같은 URL이 2회 이상이면 두 번째부터 문단 제거(엔진 위반 방어)
   {
     const seen = new Set<string>();
