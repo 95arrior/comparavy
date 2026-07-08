@@ -32,6 +32,7 @@ export interface AmplifiedTopic {
   title: string;         // 홈피드(홈판) 최적화 후킹 제목 — 트렌드 종족의 주 싸움터(훅 패턴 적용)
   titleSearch: string;   // 검색형 제목(롱테일 포함)
   newsContext: string | null;
+  sourceTitle?: string | null;
   brief: AngleBrief;
   briefText: string; // brief를 엔진 주입용 지시문으로 직렬화(클라 스레딩용)
   hookKey: string;   // 적용된 훅 패턴 key
@@ -178,7 +179,7 @@ export async function amplifyForUser(
   ].join("\n")).join("\n");
 
   const client = new Anthropic({ apiKey });
-  const prompt = `이 블로그 운영자에게 맞춘 글감 ${briefs.length}개를 만들어라. 각 글감은 아래 '배정된 구조·훅'을 그대로 따르고, 창작 부분만 채운다.\n★이 글감들은 '지금 뜨는 트렌드' 종족 — title은 네이버 홈피드(홈판) 노출이 주 싸움터다. [제목 규칙] (1)앞 15자 안에 클릭 유도 요소 1개를 배치한다 — 구체 숫자(월 20만원), 대상 지목(~라면·~인 사람), 긴급성(오늘 마감·이번 주까지), 궁금증 유발 중 하나. 낚시성 금지. (2)검색 키워드는 제목에서 빠지지 않되 위치는 유연하게 — 훅이 문을 열고 키워드가 뒤를 받친다. (3)제목에 쓰는 숫자·금액·날짜는 씨앗 자료(뉴스·브리프)에 근거가 있는 값만 — 근거 없는 숫자는 만들지 않는다(틀린 숫자는 신뢰를 깎고, 본문과 불일치하면 이탈 신호가 된다). (4)이 종족은 기간제(스파이크) 글이므로 날짜·마감 훅 허용 — 단 실제 날짜가 자료에 있을 때만. titleSearch는 반대로 검색창·AI 브리핑용 — 키워드 선두 배치, 의도 완결, 후킹 금지.
+  const prompt = `이 블로그 운영자에게 맞춘 글감 ${briefs.length}개를 만들어라. 각 글감은 아래 '배정된 구조·훅'을 그대로 따르고, 창작 부분만 채운다.\n★이 글감들은 '지금 뜨는 트렌드' 종족 — title은 네이버 홈피드(홈판) 노출이 주 싸움터다. [제목 규칙] (1)앞 15자 안에 클릭 유도 요소 1개를 배치한다 — 구체 숫자(월 20만원), 대상 지목(~라면·~인 사람), 긴급성(오늘 마감·이번 주까지), 궁금증 유발 중 하나. 낚시성 금지. (2)검색 키워드는 제목에서 빠지지 않되 위치는 유연하게 — 훅이 문을 열고 키워드가 뒤를 받친다. (3)제목에 쓰는 숫자·금액·날짜는 씨앗 자료(뉴스·브리프)에 근거가 있는 값만 — 근거 없는 숫자는 만들지 않는다. 자리표시(OO만원·N만원·□□ 등) 절대 금지: 금액을 확인 못 하면 금액 없는 제목으로 쓴다(예: '서울시 출산 가구 주거비 지원, 신청 조건과 방법'). (4)이 종족은 기간제(스파이크) 글이므로 날짜·마감 훅 허용 — 단 실제 날짜가 자료에 있을 때만. titleSearch는 반대로 검색창·AI 브리핑용 — 키워드 선두 배치, 의도 완결, 후킹 금지.
 
 [운영자 개인화 축]
 ${axis || "(일반)"}
@@ -223,6 +224,9 @@ ${OPEN_LOOP_GUIDE}
     const seen = new Set<string>();
     for (const it of parsed) {
       const b = briefs[(Number(it.seedIndex) || 1) - 1] ?? briefs[0];
+      // ★플레이스홀더 게이트(실측: '최대 OO만원' 제목 노출) — 미확인 수치 자리표시가 있으면 카드 폐기
+      const PLACEHOLDER = /(OO|ОО|○○|◯◯|□□|XX|NN|몇\s?만\s?원|[０-９]*＿+|\bN\s?(?=만\s?원|원|개|%|년|월|일))/;
+      if (PLACEHOLDER.test(String(it.titleClick ?? "")) || PLACEHOLDER.test(String(it.titleSearch ?? ""))) continue;
       if (!b) continue;
       let kw = (it.keyword ?? "").trim().slice(0, 60);
       if (validLongtails.size > 0 && !validLongtails.has(kw.replace(/\s+/g, ""))) {
@@ -250,6 +254,7 @@ ${OPEN_LOOP_GUIDE}
         title: titleClick,
         titleSearch,
         newsContext: b.seed.newsContext ?? null,
+        sourceTitle: b.seed.title ?? null, // ★카드별 진짜 혈통(씨앗 제목) — 근거 표시용(배치 공통 뉴스 뭉치와 달리 카드 귀속 확실)
         brief,
         briefText: briefToDirective(brief),
         hookKey: b.hook.key,

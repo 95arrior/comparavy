@@ -908,6 +908,8 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
       return topic.demandLabel ?? "지속 검색되는 주제";
     }
     if (topic.demandLabel?.includes("실검색 확인")) return "네이버 자동완성에서 실검색 급증 확인";
+    const src = (topic as { sourceTitle?: string }).sourceTitle;
+    if (src) return `출처 이슈: ${src.slice(0, 30)}`; // ★카드별 진짜 혈통(씨앗 제목) — 무관 헤드라인 인용 문제의 근본 수리
     const lines = (topic.newsContext ?? "").split("\n").filter((l) => l.trim().startsWith("-"));
     const kwToks = topic.keyword.split(/\s+/).filter((t) => t.length >= 2);
     const hit = lines.find((l) => kwToks.some((t) => l.includes(t)));
