@@ -94,7 +94,7 @@ export async function renderChecklistCard(opts: { title: string; items: string[]
     el("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", width: 40, height: 40, borderRadius: 10, backgroundColor: BLUE, fontFamily: "T", fontSize: 22, color: "#FFF" } }, String(i + 1)),
     el("div", { style: { display: "flex", fontFamily: "B", fontSize: fs1, color: INK, wordBreak: "keep-all", flex: 1 } }, t),
   ]));
-  return toPng(frame(opts.title, opts.brand, rows));
+  return toPng(frame(opts.title, opts.brand, [el("div", { style: { display: "flex", flexDirection: "column", justifyContent: "center", flexGrow: 1 } }, rows)]));
 }
 
 /* ── 4) 핵심 수치 카드(a) — 큰 숫자 1개가 주인공(벤치마크: 스크롤만 해도 숫자가 읽힌다) ── */
@@ -125,5 +125,23 @@ export async function renderBeforeAfterCard(opts: { title: string; beforeHead?: 
     el("div", { style: { display: "flex", width: 56, justifyContent: "center", fontFamily: "T", fontSize: fs1, color: BLUE } }, "→"),
     el("div", { style: { display: "flex", flex: 1.2, justifyContent: "center", fontFamily: "T", fontSize: fs1 + 4, color: BLUE } }, r.after),
   ]));
-  return toPng(frame(opts.title, opts.brand, [header, ...lines]));
+  return toPng(frame(opts.title, opts.brand, [el("div", { style: { display: "flex", flexDirection: "column", justifyContent: "center", flexGrow: 1 } }, [header, ...lines])]));
+}
+
+/* ── 6) 구성/비중 카드(c) — 항목별 가로 바(예산·구성 글 전용) ── */
+export interface CompositionItem { label: string; value: number; valueText: string }
+export async function renderCompositionCard(opts: { title: string; items: CompositionItem[]; brand: string }): Promise<Buffer> {
+  const items = opts.items.slice(0, 5);
+  const maxVal = Math.max(...items.map((i) => Math.abs(i.value)), 0.0001);
+  const rows = items.map((it, i) => {
+    const w = Math.max(8, Math.round((Math.abs(it.value) / maxVal) * 62)); // % of track
+    return el("div", { style: { display: "flex", alignItems: "center", gap: 18, marginTop: i === 0 ? 6 : 22 } }, [
+      el("div", { style: { display: "flex", width: 240, fontFamily: "B", fontSize: 27, color: INK, justifyContent: "flex-end" } }, it.label),
+      el("div", { style: { display: "flex", flexGrow: 1, alignItems: "center", gap: 14 } }, [
+        el("div", { style: { display: "flex", width: `${w}%`, height: 40, backgroundColor: i === 0 ? BLUE : "#7EB0FB", borderRadius: 9 } }),
+        el("div", { style: { display: "flex", fontFamily: "T", fontSize: 27, color: i === 0 ? BLUE : SUB } }, it.valueText),
+      ]),
+    ]);
+  });
+  return toPng(frame(opts.title, opts.brand, rows));
 }

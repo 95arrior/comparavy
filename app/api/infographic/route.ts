@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
-import { renderBarChart, renderTableCard, renderChecklistCard } from "@/lib/infographicRenderer";
+import { renderBarChart, renderTableCard, renderChecklistCard, renderStatCard, renderBeforeAfterCard, renderCompositionCard } from "@/lib/infographicRenderer";
+import { parseCardMarker, verifyNumbersInBody } from "@/lib/cardMarker";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -62,7 +63,16 @@ export async function POST(req: Request) {
 
   try {
     let png: Buffer | null = null;
-    if (wantChecklist && checklist.length >= 2) {
+    // ★구조화 카드 마커(유저 승인 4종) — slotDesc가 [카드: 유형|...] 구조면 템플릿 직행 + 본문 실값 대조
+    const cardSpec = parseCardMarker(stripTags(slotDesc).replace(/^\[?카드:?\s*/, ""));
+    if (cardSpec) {
+      const missing = verifyNumbersInBody(cardSpec, html);
+      if (missing.length > 0) return NextResponse.json({ error: `카드의 숫자(${missing.slice(0, 3).join(", ")})가 본문에 없어요 — 본문 실값만 카드로 만들 수 있어요.` }, { status: 422 });
+      if (cardSpec.kind === "stat") png = await renderStatCard({ title: cardSpec.title, value: cardSpec.value, label: cardSpec.label, subs: cardSpec.subs, brand });
+      else if (cardSpec.kind === "compare") png = await renderBeforeAfterCard({ title: cardSpec.title, rows: cardSpec.rows, brand });
+      else if (cardSpec.kind === "composition") png = await renderCompositionCard({ title: cardSpec.title, items: cardSpec.items, brand });
+      else png = await renderChecklistCard({ title: cardSpec.title, items: cardSpec.items, brand });
+    } else if (wantChecklist && checklist.length >= 2) {
       png = await renderChecklistCard({ title: cardTitle || "신청 절차 한눈에", items: checklist, brand });
     } else if (table) {
       // 숫자 밀도 높고 2~3열이면 비교 막대, 아니면 표 카드
