@@ -269,10 +269,20 @@ function styleMarkers(html: string): string {
     const clean = url.split("?")[0]; // 트래킹 파라미터 제거 — 원형만
     return `<p style="text-align:center;font-size:15px;font-weight:700">함께 보면 좋은 글</p><p style="text-align:center;font-size:13.5px;color:#4e5968">${reason.trim()}</p><p style="text-align:center;background-color:#f5f6f8;padding:10px 8px;font-size:13px;color:#8b95a1">[링크 카드 자리 — 아래 주소를 링크 버튼에 붙여넣으세요]</p><p style="text-align:center;font-size:13px">${clean}</p>`;
   });
-  // 중간 마커 — 기존대로(간결한 안내 문단)
+  // 중간 마커 — 헤더 없는 간결형(실측: '함께 보면 좋은 글' 헤더가 하단과 중복돼 보임 — 헤더는 하단 3층 전용)
   html = html.replace(/\[관련글:\s*(https?:[^\s|\]]+)\s*\|\s*([^\]]+)\]/g, (_m, url: string, t: string) => {
-    return `<p style="text-align:center;font-size:14px">함께 보면 좋은 글<br>${t.trim()}<br>${url.split("?")[0]}</p>`;
+    return `<p style="text-align:center;font-size:13.5px;color:#4e5968">${t.trim()}<br>${url.split("?")[0]}</p>`;
   });
+  // ★중복 링크 게이트 — 같은 URL이 2회 이상이면 두 번째부터 문단 제거(엔진 위반 방어)
+  {
+    const seen = new Set<string>();
+    html = html.replace(/<p[^>]*>(?:[^<]|<br\s*\/?>|<b[^>]*>[^<]*<\/b>|<span[^>]*>[^<]*<\/span>)*?(https?:\/\/blog\.naver\.com\/[^\s<]+)[\s\S]*?<\/p>/g, (m, url: string) => {
+      const k = url.split("?")[0];
+      if (seen.has(k)) return "";
+      seen.add(k);
+      return m;
+    });
+  }
   let qNum = 0; // ★FAQ 질문 자동 번호(유저 교본: 1. 2. 3. 진행감)
   html = html.replace(/<(h[2-4])(\s[^>]*)?>([\s\S]*?)<\/\1>/gi, (raw, tag, attr, inner) => {
     const plain = String(inner).replace(/<[^>]+>/g, "").trim();
