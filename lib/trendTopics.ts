@@ -79,7 +79,16 @@ export async function refreshCategoryTrends(category: string): Promise<RefreshRe
 
   // ★다중 소스 — 네이버+구글 뉴스를 다양한 소주제로 수집(은행권 편향 제거)
   const { headlines: heads, stats } = await gatherHeadlinesWithStats(category).catch(() => ({ headlines: [], stats: null as null }));
-  if (stats) console.log(`[trend-fresh] ${category}: raw=${stats.raw} fresh=${stats.fresh} unverified=${stats.unverified} stale(탈락)=${stats.stale} kept=${stats.kept}`, JSON.stringify(stats.perSeed));
+  if (stats) {
+    // ★발행일 파싱 실패율(유저 지시: 보충 폐지 후 씨앗 공급량의 관건 — 실패율 높으면 다음 일은 소스 폐기가 아니라 파서 수리, 특히 지자체 공고)
+    const denom = Math.max(stats.raw, 1);
+    const failPct = Math.round((stats.unverified / denom) * 100);
+    console.log(`[trend-fresh] ${category}: raw=${stats.raw} fresh=${stats.fresh} 파싱실패=${stats.unverified}(${failPct}%) stale=${stats.stale} kept=${stats.kept}`, JSON.stringify(stats.perSeed));
+    try {
+      const admin = createSupabaseAdminClient();
+      await admin.from("api_cache").upsert({ key: `fresh_stats:${category}`, value: { ...stats, failPct, at: new Date().toISOString() }, expires_at: new Date(Date.now() + 7 * 86400_000).toISOString(), updated_at: new Date().toISOString() });
+    } catch { /* 관측 실패는 수확을 막지 않는다 */ }
+  }
   const newsList = heads.slice(0, 28).map((n, i) => `${i + 1}. (${n.seed}) ${n.title} — ${n.description.slice(0, 90)}`).join("\n");
 
   const kstDate = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);

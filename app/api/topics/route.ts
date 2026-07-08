@@ -321,6 +321,9 @@ export async function GET(req: Request) {
         if (debugMode) diag.freshKick = Math.round(ageMs / 60000);
       }
     } catch { /* ignore */ }
+    if (debugMode) {
+      try { const { data: fsRow } = await pool.from("api_cache").select("value").eq("key", `fresh_stats:${sub}`).maybeSingle(); if (fsRow?.value) diag.freshStats = fsRow.value; } catch { /* ignore */ }
+    }
     let tc = await buildTrendCards(new Set());
     if (tc.length === 0) {
       // ★빈손 즉석 수확(실측: 20분 빈 보드 — 백그라운드 킥은 실패해도 아무도 모른다) — 응답 안에서 1회 동기 수확 후 재시도
