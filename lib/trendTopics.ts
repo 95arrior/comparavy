@@ -72,7 +72,7 @@ export async function hasFreshTrends(category: string): Promise<boolean> {
 }
 
 // 게이트 탈락 기록 — 이후 튜닝의 기준 데이터(stale은 소스층 [trend-fresh] 로그, 여기는 합성 이후 게이트).
-export interface SeedDrop { keyword: string; title: string; reason: "unsafe_brand" | "stale_year" | "no_utility" | "gap" }
+export interface SeedDrop { keyword: string; title: string; reason: "unsafe_brand" | "stale_year" | "no_utility" | "gap" | "dead_or_niche" }
 export interface RefreshResult { generated: number; drops: SeedDrop[]; applyhome?: { ecoCategory: boolean; keySet: boolean; fetched: number; joined: number; error?: string } }
 
 /** 카테고리 트렌드 갱신 — 뉴스+웹검색 종합 → AI 합성 → 풀 저장. 크론에서만 호출. */
@@ -102,7 +102,7 @@ export async function refreshCategoryTrends(category: string): Promise<RefreshRe
   const prompt = `오늘은 ${kstDate}(한국)이다. '${category}' 분야에서 지금 한국 사람들이 검색할 만한 '트렌디한 정보성 블로그 글감' 16개를 뽑아라.
 
 [아래는 오늘 수집한 뉴스 헤드라인이다. 이걸 근거로 '지금 뜨는' 글감을 만들어라.]
-[선별 기준 — 돈+행동 최우선] ①검색자의 돈이 직접 걸리고(지원금·환급·청약·보조금) ②신청·접수·마감·선착순처럼 행동 창이 있는 소재를 최우선으로 뽑아라(이런 글감이 실측 트래픽 수십만을 만든다). ③기업 기소·실적·주가·전망·논란 같은 '읽고 끝나는 뉴스'는 검색자가 행동할 게 없어 트래픽이 안 된다 — 그 소재로 글감을 만들지 마라.
+[선별 기준 — 돈+행동 최우선] ①검색자의 돈이 직접 걸리고(지원금·환급·청약·보조금) ②신청·접수·마감·선착순처럼 행동 창이 있는 소재를 최우선으로 뽑아라(이런 글감이 실측 트래픽 수십만을 만든다). ③기업 기소·실적·주가·전망·논란 같은 '읽고 끝나는 뉴스'는 검색자가 행동할 게 없어 트래픽이 안 된다 — 그 소재로 글감을 만들지 마라. ④이미 끝난 일(최종 선정·수상·성료·협약 체결)도 같은 이유로 금지 — 행동 창이 닫힌 공고는 죽은 글감이다. ⑤단일 기관·특정 지역의 행사(농협 아카데미·문화센터 특강)는 전국 검색 수요가 없다 — 금지.
 ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들어라)"}
 
 규칙:
@@ -248,6 +248,19 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
       if (matchedIdx > 0 && longtails.length === 0) longtails.push({ kw: row.keyword, blogTotal: null });
       longtails.sort((a, b) => (a.blogTotal ?? 1e9) - (b.blogTotal ?? 1e9));
       (row as typeof row & { longtails?: Longtail[] }).longtails = longtails;
+    }
+    // ★죽은 공고·초지역 행사 게이트(유저 확정: 트래픽 안 되는 약체는 수확 단계에서 제외)
+    //  - 행동 창이 이미 닫힌 것: 선정 완료·수상·성료·협약식(검색자가 할 행동이 없다)
+    //  - 단일 기관 행사: 아카데미·특강·강좌(전국 검색 수요 없음)
+    {
+      const DEAD = /(최종 선정|선정 완료|선정됐|선정돼|수상|시상|성료|개최했|마쳤|체결했|협약식|발표회|출범식|기념식|위촉)/;
+      const NICHE = /(아카데미|특강|강좌|교실|강연회|워크숍|간담회)/;
+      const alive = rows.filter((r) => {
+        const txt = `${r.title} ${r.keyword}`;
+        if (DEAD.test(txt) || NICHE.test(txt)) { drops.push({ keyword: r.keyword, title: r.title, reason: "dead_or_niche" }); return false; }
+        return true;
+      });
+      rows.length = 0; rows.push(...alive);
     }
     // ★하드 게이트 — 자동완성 롱테일이 0개인 씨앗(=아무도 안 치는 뉴스 문구)은 풀에서 제외.
     for (const r of rows) if (((r as { longtails?: Longtail[] }).longtails?.length ?? 0) === 0) drops.push({ keyword: r.keyword, title: r.title, reason: "gap" });
