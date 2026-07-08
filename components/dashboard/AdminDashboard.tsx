@@ -242,6 +242,18 @@ export default function AdminDashboard({ stats }: { stats: AdminStats | null }) 
         </div>
       )}
 
+      {/* 외부 API 키 만료 카운터 */}
+      {stats.keyExpiries && stats.keyExpiries.length > 0 && (
+        <div className="mt-4 space-y-2">
+          {stats.keyExpiries.map((k) => (
+            <div key={k.name} className={`rounded-2xl p-4 ring-1 ${k.daysLeft <= 30 ? "bg-red-50 ring-red-200" : k.daysLeft <= 90 ? "bg-amber-50 ring-amber-200" : "bg-white ring-black/[0.05]"}`}>
+              <p className={`text-[13.5px] font-bold ${k.daysLeft <= 30 ? "text-red-700" : k.daysLeft <= 90 ? "text-amber-700" : "text-neutral-800"}`}>{k.name} — D-{k.daysLeft}</p>
+              <p className="mt-0.5 text-[12px] text-neutral-500">만료 {k.expires} · 만료 전 <a href="https://www.data.go.kr/iim/api/selectAcountList.do" target="_blank" rel="noopener noreferrer" className="font-semibold underline">포털 마이페이지</a>에서 연장 신청</p>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* 오늘 */}
       <Section title="오늘" hint="KST 자정 기준">
         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">

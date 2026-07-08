@@ -3,6 +3,7 @@ import { PLANS } from "./plans";
 import { costKrw, USD_TO_KRW } from "./usageLog";
 
 export type AdminStats = {
+  keyExpiries?: { name: string; expires: string; daysLeft: number }[] | null; // ★외부 API 키 만료 카운터(유저 지시: 공공데이터포털 2년)
   usersTotal: number | null;
   usersToday: number | null;
   proUsers: number | null;
@@ -345,5 +346,13 @@ export async function getAdminStats(): Promise<AdminStats> {
     images = { today: imgToday ?? 0, fails24h: imgFails ?? 0, quotaFails24h: quotaFails ?? 0 };
   } catch { /* 무시 */ }
 
-  return { usersWithProfile, creditEconomy, images, usersTotal, usersToday, proUsers, freeUsers, articlesTotal, articlesToday, publishedArticles, lockedArticles, wpConnections, mrr, conversion, articlesPerUser, wpConnectRate, publishRate, estCostKrw, costTotalKrw, monthlyCostKrw, budgetKrw, avgArticleCostKrw, costTodayKrw, costByKind, usersWithArticles, usersWithPublished, dailyUsers, dailyArticles, recentUsers, recentArticles, waitlistCount, waitlist, social, ai };
+  const keyExpiries: AdminStats["keyExpiries"] = [];
+  {
+    const exp = (process.env.DATA_GO_KR_KEY_EXPIRES ?? "").trim();
+    if (process.env.DATA_GO_KR_KEY && exp) {
+      const d = new Date(`${exp}T00:00:00+09:00`);
+      if (!Number.isNaN(d.getTime())) keyExpiries.push({ name: "공공데이터포털 인증키", expires: exp, daysLeft: Math.ceil((d.getTime() - Date.now()) / 86400_000) });
+    }
+  }
+  return { keyExpiries: keyExpiries.length ? keyExpiries : null, usersWithProfile, creditEconomy, images, usersTotal, usersToday, proUsers, freeUsers, articlesTotal, articlesToday, publishedArticles, lockedArticles, wpConnections, mrr, conversion, articlesPerUser, wpConnectRate, publishRate, estCostKrw, costTotalKrw, monthlyCostKrw, budgetKrw, avgArticleCostKrw, costTodayKrw, costByKind, usersWithArticles, usersWithPublished, dailyUsers, dailyArticles, recentUsers, recentArticles, waitlistCount, waitlist, social, ai };
 }
