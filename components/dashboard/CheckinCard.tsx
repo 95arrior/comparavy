@@ -114,7 +114,7 @@ export default function CheckinCard({ blogKey, articles, onSaved }: { blogKey?: 
         {missed.length > 0 && (
           <button onClick={() => { setBackfillDay(missed[0]); setVisitors(""); setRevenue(""); setState("form"); }}
             className="mt-2 text-[12px] font-semibold text-neutral-400 transition hover:text-[#1D75F7]">
-            빠진 날 채우기 · {Number(missed[0].slice(5, 7))}월 {Number(missed[0].slice(8, 10))}일 방문자 기억나면 +
+            빠진 날 {missed.length}개 채우기 — 날짜를 골라 넣을 수 있어요
           </button>
         )}
       </div>
@@ -127,7 +127,6 @@ export default function CheckinCard({ blogKey, articles, onSaved }: { blogKey?: 
     for (let i = 7; i >= 1; i--) { const d = new Date(); d.setDate(d.getDate() - i); const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; out.push({ key: k, v: map.get(k)?.visitors ?? null }); }
     return out;
   })();
-  const maxV = Math.max(1, ...last7.map((x) => x.v ?? 0));
 
   return (
     <div className="at-rise rounded-[20px] bg-white p-5">
@@ -136,11 +135,26 @@ export default function CheckinCard({ blogKey, articles, onSaved }: { blogKey?: 
         <span className="text-[11px] font-semibold text-neutral-400">{yPub ? "어제 발행 확인됨" : "어제 발행 기록 없음"}</span>
       </div>
 
-      {/* 스파크바 — 최근 7일 방문자. 놓친 날은 공백. 저장 직후 새 칸이 자란다(transition). */}
-      <div className="mt-3 flex h-10 items-end gap-1.5" aria-hidden>
-        {last7.map((b) => (
-          <div key={b.key} className="flex-1 rounded-t bg-[#1D75F7]/70 transition-all duration-500" style={{ height: b.v === null ? 2 : Math.max(4, (b.v / maxV) * 40), opacity: b.v === null ? 0.15 : 1 }} />
-        ))}
+      {/* ★날짜 칩 스트립(유저 실측: 날짜 찾기 힘듦·놓친 날 채우기 불편) — 탭=그 날짜 입력/수정, 빈 날이 한눈에 보인다 */}
+      <div className="mt-3 flex gap-1.5">
+        {last7.map((b) => {
+          const yesterdayKey = last7[last7.length - 1]?.key;
+          const selected = (backfillDay ?? yesterdayKey) === b.key;
+          const d = new Date(`${b.key}T00:00:00`);
+          const wd = ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
+          return (
+            <button key={b.key} onClick={() => {
+              setBackfillDay(b.key === yesterdayKey ? null : b.key);
+              const row = rows.find((r) => r.day === b.key);
+              setVisitors(row && row.visitors !== null ? String(row.visitors) : "");
+              setRevenue(row && row.revenue !== null ? String(row.revenue) : "");
+            }} className={`flex flex-1 flex-col items-center rounded-[10px] py-1.5 transition ${selected ? "bg-[#1D75F7] text-white" : b.v === null ? "bg-[#F7F8FA] text-neutral-400 ring-1 ring-dashed ring-neutral-200" : "bg-[#EFF6FF] text-[#1D75F7]"}`}>
+              <span className="text-[10px] font-semibold opacity-80">{wd}</span>
+              <span className="text-[11.5px] font-bold tabular-nums">{d.getDate()}</span>
+              <span className={`text-[9.5px] font-semibold ${selected ? "text-white/80" : ""}`}>{b.v === null ? "비어요" : b.v}</span>
+            </button>
+          );
+        })}
       </div>
 
       {state === "done" ? (
