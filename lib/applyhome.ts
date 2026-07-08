@@ -30,9 +30,9 @@ type Row = Record<string, string | number | null>;
 
 async function fetchList(path: string): Promise<Row[]> {
   const key = process.env.DATA_GO_KR_KEY;
-  if (!key) return [];
+  if (!key) throw new Error("DATA_GO_KR_KEY_MISSING");
   const res = await fetch(`${BASE}/${path}?page=1&perPage=60&serviceKey=${encodeURIComponent(key)}`, { signal: AbortSignal.timeout(12_000) });
-  if (!res.ok) return [];
+  if (!res.ok) throw new Error(`APPLYHOME_HTTP_${res.status}`);
   const data = (await res.json()) as { data?: Row[] };
   return Array.isArray(data.data) ? data.data : [];
 }
@@ -68,8 +68,8 @@ export async function fetchApplyhomeSeeds(): Promise<ApplyhomeSeed[]> {
   const FRESH = 48 * 3600_000;
   try {
     const [remainder, general] = await Promise.all([
-      fetchList("getRemndrLttotPblancDetail").catch(() => [] as Row[]),
-      fetchList("getAPTLttotPblancDetail").catch(() => [] as Row[]),
+      fetchList("getRemndrLttotPblancDetail"),
+      fetchList("getAPTLttotPblancDetail"),
     ]);
     const seeds: ApplyhomeSeed[] = [];
     for (const [rows, isRem] of [[remainder, true], [general, false]] as const) {
@@ -85,7 +85,7 @@ export async function fetchApplyhomeSeeds(): Promise<ApplyhomeSeed[]> {
     // 무순위 우선(반복 검색 강도 최고 실증), 이어서 공고일 최신순
     seeds.sort((a, b) => (Number(/무순위/.test(b.kind)) - Number(/무순위/.test(a.kind))) || b.announceDate.localeCompare(a.announceDate));
     return seeds.slice(0, 8);
-  } catch {
-    return [];
+  } catch (e) {
+    throw e instanceof Error ? e : new Error("APPLYHOME_UNKNOWN");
   }
 }

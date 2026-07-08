@@ -73,12 +73,13 @@ export async function hasFreshTrends(category: string): Promise<boolean> {
 
 // 게이트 탈락 기록 — 이후 튜닝의 기준 데이터(stale은 소스층 [trend-fresh] 로그, 여기는 합성 이후 게이트).
 export interface SeedDrop { keyword: string; title: string; reason: "unsafe_brand" | "stale_year" | "no_utility" | "gap" }
-export interface RefreshResult { generated: number; drops: SeedDrop[] }
+export interface RefreshResult { generated: number; drops: SeedDrop[]; applyhome?: { ecoCategory: boolean; keySet: boolean; fetched: number; joined: number; error?: string } }
 
 /** 카테고리 트렌드 갱신 — 뉴스+웹검색 종합 → AI 합성 → 풀 저장. 크론에서만 호출. */
 export async function refreshCategoryTrends(category: string): Promise<RefreshResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   const drops: SeedDrop[] = [];
+  const ah: NonNullable<RefreshResult["applyhome"]> = { ecoCategory: false, keySet: Boolean(process.env.DATA_GO_KR_KEY), fetched: 0, joined: 0 };
   if (!apiKey) return { generated: 0, drops };
 
   // ★다중 소스 — 네이버+구글 뉴스를 다양한 소주제로 수집(은행권 편향 제거)
@@ -281,9 +282,11 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
     }
 
     // ★청약홈 공고 씨앗(2026-07-08 유저 승인 — 돈+행동 1단계): 경제 계열 카테고리만, LLM 선별 우회(실값 보존 — 공고일·접수일·세대수 전부 API 실값)
-    if (/경제|재테크|금융|부동산|투자/.test(category)) {
+    if (/경제|재테크|금융|부동산|투자|살아남|생활|정보/.test(category)) { // ★카테고리 폭 확대(실측 추적: sub_category 실값이 정규식 밖일 가능성)
+      ah.ecoCategory = true;
       try {
         const homes = await fetchApplyhomeSeeds();
+        ah.fetched = homes.length;
         for (const h of homes) {
           rows.push({
             category, keyword: h.keyword, title: h.title, news_context: h.newsContext,
@@ -292,8 +295,9 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
             action_start: h.actionStart, action_end: h.actionEnd,
           } as (typeof rows)[number] & { action_start: string; action_end: string });
         }
+        ah.joined = homes.length;
         if (homes.length) console.log(`[applyhome] ${category}: 공고 씨앗 ${homes.length}건 합류`);
-      } catch { /* 청약 수확 실패는 일반 수확을 막지 않는다 */ }
+      } catch (e) { ah.error = e instanceof Error ? e.message.slice(0, 120) : "unknown"; }
     }
 
     const admin = createSupabaseAdminClient();
@@ -312,7 +316,7 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
     const dist: Record<string, number> = {};
     for (const d of drops) dist[d.reason] = (dist[d.reason] ?? 0) + 1;
     console.log(`[trend-drops] ${category}:`, JSON.stringify(dist), JSON.stringify(drops.map((d) => `${d.reason}:${d.keyword}`)));
-    return { generated: rows.length, drops };
+    return { generated: rows.length, drops, applyhome: ah };
   } catch {
     return { generated: 0, drops };
   }
