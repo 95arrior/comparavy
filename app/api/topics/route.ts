@@ -330,21 +330,28 @@ export async function GET(req: Request) {
     if (tc.length > 0) {
       try {
         const volKey = `trendvol:${sub}:${tc.map((c) => c.keyword).join("|").slice(0, 180)}`;
-        let volMap: Record<string, { vol: number; comp: string }> | null = null;
+        let volMap: Record<string, { vol: number; comp: string; base?: string }> | null = null;
         const { data: vc } = await pool.from("api_cache").select("value, expires_at").eq("key", volKey).maybeSingle();
-        if (vc?.value && new Date(String(vc.expires_at)).getTime() > Date.now()) volMap = vc.value as Record<string, { vol: number; comp: string }>;
+        if (vc?.value && new Date(String(vc.expires_at)).getTime() > Date.now()) volMap = vc.value as Record<string, { vol: number; comp: string; base?: string }>;
         if (!volMap) {
           const stats = await fetchKeywordStats(tc.map((c) => c.keyword.split(" ").slice(0, 3).join(" ")), 3);
           volMap = {};
           for (const c of tc) {
-            const st = stats.get(normalizeKey(c.keyword)) ?? stats.get(normalizeKey(c.keyword.split(" ").slice(0, 3).join(" ")));
-            if (st) volMap[c.keyword] = { vol: st.mobile + st.pc, comp: st.compIdx };
+            const exact = stats.get(normalizeKey(c.keyword));
+            const head = c.keyword.split(" ").slice(0, 3).join(" ");
+            const partial = exact ? null : stats.get(normalizeKey(head));
+            const st = exact ?? partial;
+            if (st) volMap[c.keyword] = { vol: st.mobile + st.pc, comp: st.compIdx, base: exact ? "" : head }; // base=부분 매치 시 조회 기준어(정확성: 전체 구 검색량이 아님을 명시)
           }
           try { await pool.from("api_cache").upsert({ key: volKey, value: volMap, expires_at: new Date(Date.now() + 24 * 3600_000).toISOString(), updated_at: new Date().toISOString() }); } catch { /* ignore */ }
         }
         for (const c of tc) {
           const v = volMap[c.keyword];
-          if (v) { c.vol = v.vol; (c as { demandBadge?: string }).demandBadge = v.vol >= 1000 ? `월 ${v.vol.toLocaleString()}회 검색` : v.vol > 0 ? `월 ${v.vol.toLocaleString()}회 · 수요 낮음(경쟁 공백일 수 있음)` : "검색량 미집계 · 수요 낮음"; }
+          if (v) {
+            c.vol = v.vol;
+            const scope = v.base ? `'${v.base}' 기준 ` : ""; // 부분 매치는 조회 기준어 명시 — 전체 키워드 검색량으로 오독 방지
+            (c as { demandBadge?: string }).demandBadge = v.vol >= 1000 ? `${scope}월 ${v.vol.toLocaleString()}회 검색` : v.vol > 0 ? `${scope}월 ${v.vol.toLocaleString()}회 · 수요 낮음(경쟁 공백일 수 있음)` : `${scope}월 10회 미만 검색 · 수요 낮음`; // vol 0 = keywordstool '<10' 실측(미집계 아님)
+          }
         }
       } catch { /* 수요 조회 실패는 카드를 막지 않는다 */ }
     }
