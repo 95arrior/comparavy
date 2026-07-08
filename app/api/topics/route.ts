@@ -204,7 +204,16 @@ export async function GET(req: Request) {
       const kstDay = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
       let trends = await getTrendTopics(sub); // 캐시 키(씨앗 세대) 계산용 — 가벼운 조회라 캐시 앞으로 이동
       // ★유입력 우선(유저 핵심 진단: 뉴스에 나온 것 ≠ 검색하는 것) — 자동완성 실검색 흔적(longtails)이 많은 씨앗부터 증식.
-      trends = [...trends].sort((a, b) => ((b.longtails?.length ?? 0) * 2 + (b.newsContext ? 1 : 0)) - ((a.longtails?.length ?? 0) * 2 + (a.newsContext ? 1 : 0)));
+      // ★돈+행동 스코어(유저 승인 — 무순위 청약 28.7만 실증 구조: 돈 걸림+반복 검색+행동 창): 신청·접수형 가점, 뉴스성(기소·실적) 감점
+      const actionScore = (t: { title?: string; keyword?: string }) => {
+        const txt = `${t.title ?? ""} ${t.keyword ?? ""}`;
+        let sc = 0;
+        if (/(신청|접수|마감|선착순|추첨|무순위|모집|공고|환급)/.test(txt)) sc += 2;
+        if (/([0-9,.]+\s?(만\s?원|억|%)|지원금|보조금|장려금|바우처)/.test(txt)) sc += 1;
+        if (/(기소|구속|재판|실적|영업이익|전망|주가|급락|급등|논란|의혹|사과)/.test(txt)) sc -= 2;
+        return sc;
+      };
+      trends = [...trends].sort((a, b) => ((b.longtails?.length ?? 0) * 2 + (b.newsContext ? 1 : 0) + actionScore(b)) - ((a.longtails?.length ?? 0) * 2 + (a.newsContext ? 1 : 0) + actionScore(a)));
       if (tailMode === "short") trends = trends.filter((t) => t.source !== "discover"); // 숏테일 탭 순도 — 꾸준 수요 혼입 제거(실측)
       if (debugMode) diag.trendSeeds = trends.length;
       const ampKey = `amp:v5:${user.id}:${(profile as { id?: string } | null)?.id ??"solo"}:${kstDay}:${excludeSet.size}:${trends.length}:${tailMode === "short" ? "s" : "n"}`; // short=전용 캐시(증식량 다름) // ★v5=씨앗 세대 포함 — 재수확 직후(0→15) 캐시 자동 무효화(실측: 수확해도 옛 세트 서빙) // ★v4=블로그별 격리 — 전환 시 이전 블로그 글감 서빙 사고(실측: 자동차 블로그에 캘리포니아비치) 차단
