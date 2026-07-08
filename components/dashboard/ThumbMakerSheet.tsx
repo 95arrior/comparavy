@@ -63,7 +63,7 @@ export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots
     try {
       const r = await fetch("/api/images/generate", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ thumbMaker: true, mainCopy: text.trim(), paletteName: palette, wash: TONES.find((t) => t.key === tone)?.wash ?? 0.35, aiBg: bgKind !== "plain", bgStyle: bgKind === "toss" ? "toss" : "photo", articleId, fontName: font, title: articleTitle, brandName, variant: (() => { if (retryRef.current.copy === text.trim()) { retryRef.current.n += 1; } else { retryRef.current = { copy: text.trim(), n: 0 }; } let h = 0; for (const ch of `${articleId ?? ""}${text.trim()}`) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return (h % 3) + retryRef.current.n; })() // ★첫 생성도 글·문구별 구도 분산(실측: 전 글 첫 생성=인물 구도 고착) }),
+        body: JSON.stringify({ thumbMaker: true, mainCopy: text.trim(), paletteName: palette, wash: TONES.find((t) => t.key === tone)?.wash ?? 0.35, aiBg: bgKind !== "plain", bgStyle: bgKind === "toss" ? "toss" : "photo", articleId, fontName: font, title: articleTitle, brandName, variant: (() => { if (retryRef.current.copy === text.trim()) { retryRef.current.n += 1; } else { retryRef.current = { copy: text.trim(), n: 0 }; } let h = 0; for (const ch of `${articleId ?? ""}${text.trim()}`) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return (h % 3) + retryRef.current.n; })() }),
       });
       const d = await r.json();
       if (!r.ok) { setErr(d.error ?? "만들지 못했어요"); if (typeof d.credits === "number") onCredits?.(d.credits); }
