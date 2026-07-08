@@ -378,6 +378,17 @@ function applySizing(html: string): string {
 /* ── 형광펜·해시태그 ── */
 // ★형광펜 총량 게이트(실측: 도배 — 3줄짜리 통형광 다수) — 규칙 위반은 코드가 강등한다.
 //  70자 초과=무조건 해제(면적 도배), 문장급(15~70자)=글 전체 3개까지, 구급(≤14자)=5개까지. 초과분은 볼드로.
+// ★AI 문체 부호 소거(유저 실측: '7월 21일 — 접수 시작 전에' — em dash는 대표적 AI 문체 신호) — 조립 시 일괄 치환
+function sanitizeAiPunct(html: string): string {
+  return html
+    .replace(/(\d)\s*[–—]\s*(\d)/g, "$1~$2")        // 숫자 범위 → 물결
+    .replace(/\s*[—–]\s*/g, ", ")                     // em/en dash → 쉼표(기본 치환 — 유저 승인)
+    .replace(/([가-힣0-9)\]”"])\s*;\s*/g, "$1, ")     // 한국어 문장 내 세미콜론 → 쉼표
+    .replace(/\s*--\s*/g, ", ")                        // 이중 하이픈
+    .replace(/[\u201C\u201D]/g, "\"")                 // 스마트 큰따옴표 → 직선(문체 정규화)
+    .replace(/[\u2018\u2019]/g, "'");
+}
+
 // ★빨강(주의) 총량 게이트 — 글 전체 4곳 초과분은 볼드로 강등(색이 흔하면 아무것도 안 보인다)
 function capDanger(html: string): string {
   let n = 0;
@@ -419,7 +430,7 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   const withImages = opts?.withImages ?? true;
   let idx = -1;
   // ★사진 자리는 '구조화 슬롯'으로만 — 채워진 슬롯만 이미지로, 미충족 슬롯은 줄 자체를 제거(안내문구 유출 금지).
-  let body = markToBold(capMarks(capDanger(input.bodyHtml))).replace(SLOT_RE, (_m, desc: string) => {
+  let body = markToBold(capMarks(capDanger(sanitizeAiPunct(input.bodyHtml)))).replace(SLOT_RE, (_m, desc: string) => {
     idx += 1;
     if (!withImages) return `<p>[사진 ${idx + 1}]</p>`; // marker 모드(수동 배치) — 명시적 선택
     const url = input.images?.[idx];
