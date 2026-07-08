@@ -628,10 +628,16 @@ export default function Home({
           {(() => { // ★오늘 발행 현황(유저 승인 시안 — 일 2회 리듬을 화면만 보고 관리)
             const today = new Date().toDateString();
             const times = articles
-              .map((a) => (a as { verified_at?: string | null }).verified_at)
-              .filter((v): v is string => !!v)
-              .map((v) => new Date(v))
-              .filter((d) => !Number.isNaN(d.getTime()) && d.toDateString() === today);
+              .filter((a) => {
+                const at = (a as { verified_at?: string | null }).verified_at;
+                if (!at || new Date(at).toDateString() !== today) return false;
+                // ★RSS 회수 부풀림 방지(실측 4→6): 회수 시각≠발행 시각 — direct 확정이거나 오늘 생성한 글만 오늘 발행으로 집계
+                const via = (a as { verified_via?: string | null }).verified_via;
+                const created = (a as { created_at?: string }).created_at;
+                return via === "direct" || (created ? new Date(created).toDateString() === today : false);
+              })
+              .map((a) => new Date((a as { verified_at?: string }).verified_at as string))
+              .filter((d) => !Number.isNaN(d.getTime()));
             const morning = times.filter((d) => d.getHours() >= 6 && d.getHours() < 8).length;
             const evening = times.filter((d) => d.getHours() >= 17 && d.getHours() < 19).length;
             return (
@@ -887,6 +893,7 @@ function TopicRow({ topic, onClick, onSwap, swapping }: {
 // ★보드 카드(컴팩트) — 트렌드: ⏳수명 타이머 + 📰근거(뉴스 헤드라인/실검색 확인)
 function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () => void; onDismiss?: () => void }) {
   const isTrend = topic.tag === "trend" || topic.tag === "issue" || topic.tag === "followup";
+  const publishedOn = (topic as { publishedOn?: string }).publishedOn;
   const [tick, setTick] = useState(() => Date.now());
   useEffect(() => {
     if (!topic.expiresAt) return;
@@ -919,6 +926,7 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
     return "오늘 수확된 실시간 이슈 · 신선할 때가 기회"; // ★가짜 정밀함 제거(유저 원칙: UI 숫자도 근거 필수) — 배치 공통 뭉치 건수·미실측 경쟁 주장 폐기
   })();
   const pubAdvice = (() => {
+    if (publishedOn) return null; // 발행한 카드 — 추천 문구 없음(유저 확정)
     const h = new Date().getHours();
     // ★청약 공고 행동 창(유저 확정): 접수 전=선점 발행, 접수 중=마감 임박 훅
     const aStart = (topic as { actionStart?: string | null }).actionStart;
@@ -937,17 +945,19 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
     return { text: "17~19시 발행 추천 · 2순위 6~7시", hot: false };
   })();
   return (
-    <button onClick={onWrite} className="at-press rounded-[16px] bg-white p-4 text-left shadow-[0_1px_3px_rgba(0,0,0,0.05)] tk-tr hover:shadow-[0_4px_14px_-6px_rgba(29,117,247,0.18)]">
+    <button onClick={onWrite} className={`${publishedOn ? "opacity-55 saturate-50 " : ""}at-press rounded-[16px] bg-white p-4 text-left shadow-[0_1px_3px_rgba(0,0,0,0.05)] tk-tr hover:shadow-[0_4px_14px_-6px_rgba(29,117,247,0.18)]`}>
       <div className="flex items-center gap-1">
         {onDismiss && <span role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); onDismiss(); }} className="order-last ml-auto flex h-6 w-6 items-center justify-center rounded-full opacity-45 transition hover:bg-[#F7F8FA] hover:opacity-80" aria-label="다른 글감으로 교체"><GlassGlyph name="refresh" size={14} /></span>}
-        {isTrend
+        {publishedOn
+          ? <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10.5px] font-bold text-neutral-500">{publishedOn}</span>
+          : isTrend
           ? <span className="rounded-full bg-[#FFF1F0] px-2 py-0.5 text-[10.5px] font-bold text-[#F04452]">실시간 급상승</span>
           : <span className="rounded-full bg-[#EFF6FF] px-2 py-0.5 text-[10.5px] font-bold text-[#1D75F7]">안정 수요</span>}
         {life && <span className="text-[10.5px] font-semibold tabular-nums text-amber-600">{life}</span>}
       </div>
       <p className="mt-2 line-clamp-2 text-[14.5px] font-bold leading-snug text-[color:var(--color-text)]">{topic.title}</p>
       {evidence && <p className="mt-1.5 line-clamp-2 text-[12px] leading-snug text-neutral-400">{evidence}</p>}
-      <p className={`mt-1 text-[11px] font-semibold ${pubAdvice.hot ? "text-[#F04452]" : "text-neutral-400"}`}>{pubAdvice.text}</p>
+      {pubAdvice && <p className={`mt-1 text-[11px] font-semibold ${pubAdvice.hot ? "text-[#F04452]" : "text-neutral-400"}`}>{pubAdvice.text}</p>}
     </button>
   );
 }

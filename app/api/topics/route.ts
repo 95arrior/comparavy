@@ -194,7 +194,7 @@ export async function GET(req: Request) {
 
   // ★트렌드 씨앗 × 개인화 증식 카드 — 키워드 풀과 독립. 조기 return에서도 트렌드가 나가게 함수로 분리.
   //  existing: 이미 담긴 글감 키워드(정규화) 집합(중복 방지). 온라인 vertical만 대상.
-  interface TrendCard { keyword: string; title: string; demandLabel: string; expiresAt?: string | null; ssak: boolean; region: boolean; tone: BloggerType; vol: number; comp: Comp; blogTotal: number | null; tag: string; newsContext?: string; sourceTitle?: string; demandBadge?: string; actionStart?: string | null; actionEnd?: string | null; titleSearch?: string; briefText?: string; hookKey?: string; thumb?: { mainCopy: string; subCopy: string; badge: string }; brief?: unknown; series?: unknown; seriesId?: string; seriesBadge?: string }
+  interface TrendCard { keyword: string; title: string; demandLabel: string; expiresAt?: string | null; ssak: boolean; region: boolean; tone: BloggerType; vol: number; comp: Comp; blogTotal: number | null; tag: string; newsContext?: string; sourceTitle?: string; demandBadge?: string; publishedOn?: string; actionStart?: string | null; actionEnd?: string | null; titleSearch?: string; briefText?: string; hookKey?: string; thumb?: { mainCopy: string; subCopy: string; badge: string }; brief?: unknown; series?: unknown; seriesId?: string; seriesBadge?: string }
   async function buildTrendCards(existing: Set<string>): Promise<TrendCard[]> {
     const cards: TrendCard[] = [];
     if (!user) return cards;
@@ -206,10 +206,17 @@ export async function GET(req: Request) {
       // ★유입력 우선(유저 핵심 진단: 뉴스에 나온 것 ≠ 검색하는 것) — 자동완성 실검색 흔적(longtails)이 많은 씨앗부터 증식.
       // ★최근 7일 발행 키워드(유저 확정: 같은 키워드 연속 발행=노출 잠식) — 감점+표시(제외 아님: 후속·시리즈 판단은 유저)
       const recentPub = new Set<string>();
+      const pubDateByKw = new Map<string, string>(); // 정규화 키워드 → 발행 근사일(direct=확정 시각·rss=생성일)
       try {
-        const { data: rp } = await pool.from("articles").select("keyword").eq("user_id", user.id)
+        const { data: rp } = await pool.from("articles").select("keyword, verified_at, verified_via, created_at").eq("user_id", user.id)
           .in("status", ["verified", "published"]).gte("created_at", new Date(Date.now() - 7 * 86400_000).toISOString()).limit(60);
-        for (const r of rp ?? []) { const k = String(r.keyword ?? "").replace(/\s+/g, ""); if (k) recentPub.add(k); }
+        for (const r of rp ?? []) {
+          const k = String(r.keyword ?? "").replace(/\s+/g, "");
+          if (!k) continue;
+          recentPub.add(k);
+          const basis = (r as { verified_via?: string | null }).verified_via === "direct" ? r.verified_at : ((r as { created_at?: string }).created_at ?? r.verified_at);
+          if (basis && !pubDateByKw.has(k)) pubDateByKw.set(k, String(basis));
+        }
       } catch { /* ignore */ }
       const isRecentDup = (kw: string) => { const n = kw.replace(/\s+/g, ""); return n.length > 0 && (recentPub.has(n) || [...recentPub].some((r) => r.length >= 4 && (n.includes(r) || r.includes(n)))); };
 
@@ -296,7 +303,14 @@ export async function GET(req: Request) {
         const demandLabel = src === "discover" ? "꾸준히 찾는 주제" : "지금 뜨는 중";
         cards.push({ keyword: t.keyword, title: t.title, expiresAt: seedExpiry, demandLabel: (t as { inflow?: string }).inflow === "hit" ? "실검색 확인 · 지금 뜨는 중" : demandLabel, ssak: true, region: false, tone: bt, vol: 0, comp: "low" as Comp, blogTotal: null, tag: src === "discover" ? "steady" : "trend", newsContext: t.newsContext ?? undefined, sourceTitle: (t as { sourceTitle?: string | null }).sourceTitle ?? undefined, titleSearch: (t as { titleSearch?: string }).titleSearch, briefText: (t as { briefText?: string }).briefText, hookKey: (t as { hookKey?: string }).hookKey, thumb: (t as { thumb?: { mainCopy: string; subCopy: string; badge: string } }).thumb, brief: (t as { brief?: unknown }).brief, series: (t as { series?: unknown }).series ?? null });
       }
-      for (const c of cards) if (isRecentDup(c.keyword)) c.demandBadge = "최근 7일 내 발행한 키워드 — 연속 발행은 서로 노출을 잠식해요";
+        for (const c of cards) {
+        const norm = c.keyword.replace(/\s+/g, "");
+        const pubAt = pubDateByKw.get(norm);
+        if (pubAt) { // ★발행함 상태(유저 확정: 청약 카드는 접수 마감까지 살아있어 발행 후에도 잔존 — 삭제 대신 상태 전환, 접수일 후속 글 재활용 여지)
+          const d = new Date(pubAt);
+          (c as { publishedOn?: string }).publishedOn = Number.isNaN(d.getTime()) ? "발행함" : `${d.getMonth() + 1}/${d.getDate()} 발행함`;
+        } else if (isRecentDup(c.keyword)) c.demandBadge = "최근 7일 내 발행한 키워드 — 연속 발행은 서로 노출을 잠식해요";
+      }
     } catch { /* 트렌드 없이 진행 */ }
     return cards;
   }
