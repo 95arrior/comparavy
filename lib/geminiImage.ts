@@ -118,7 +118,7 @@ export function buildThumbBgPrompt(bgStyleHint: string, paletteHint: string, see
 /** 실사 배경(썸네일) — 주제 씬 사진. center=true면 중앙 저디테일(정중앙 텍스트용), 아니면 상단 여백형. */
 // ★문구 유형 → 감정 팔레트 4종(유저 확정: '자극=부정 감정' 고착 해소 — 채널이 불안 마케팅 톤으로 굳는 것 방지)
 function emotionOf(copy: string): string {
-  if (/(손해|손실|주의|위험|놓치|사라|새는|날리|폭탄|마감|늦으면|모르면|실수|거부|탈락)/.test(copy))
+  if (/(손해|손실|주의|위험|놓치|사라|새는|날리|폭탄|마감|늦으면|모르면|실수|거부|탈락|소멸|해지|취소|박탈|삭감|중단|끊기|날아가)/.test(copy))
     return "EMOTION = concern/seriousness (worry, gravity) — warning copy";
   if (/(지원|혜택|환급|받는|받을|아끼|절약|기회|무료|추가|더 준|올랐|커진)/.test(copy))
     return "EMOTION = bright discovery ('ah, THIS was it') — lit-up focused face, hopeful energy, NOT worry";
