@@ -127,32 +127,42 @@ function emotionOf(copy: string): string {
   return "EMOTION = calm concentration — checking documents, taking notes, steady focused hands, NOT anxiety";
 }
 
+// ★구도 코드 배정(유저 확정: 프롬프트 재량 로테이션이 미작동 — 전부 사람+오브젝트) — 문구 주어가 구도를 결정한다
+export function compositionOf(copy: string): 0 | 1 | 2 {
+  // (c) 대비: 전/후·손익·비교 페어
+  if (/(vs|VS|비교|차이|전과 후|전후|받은.*놓친|놓친.*받은|오른.*내린|내린.*오른|유리|손해.*이득|이득.*손해)/.test(copy)) return 2;
+  // (a) 사람: 문구의 주인공이 사람일 때만
+  if (/(사람|사장|~?라면|당신|나만|엄마|아빠|부모|직장인|주부|신혼|은퇴|초보|분들|누구|가구)/.test(copy)) return 0;
+  // (b) 기본: 장소·사물·숫자가 주인공 — 사람 넣지 않기
+  return 1;
+}
+
 export function buildThumbPhotoBgPrompt(topic: string, seed: number, center = false, opts?: { copyText?: string; variant?: number }): string {
   const tone = PHOTO_TONES[seed % PHOTO_TONES.length];
   const copy = opts?.copyText?.trim() ?? "";
   const v = Math.max(0, opts?.variant ?? 0);
-  // ★인물 구성 로테이션(실증: 재생성 시 소재만 바뀌고 '걱정하는 중년 남성' 동일 복제) — 재생성마다 인물 유형 강제 전환
+  // 첫 생성 = 문구 주어 판정 구도, 재생성 = (a)→(b)→(c) 코드 순환(AI 재량 없음)
+  const comp = ((compositionOf(copy) + v) % 3) as 0 | 1 | 2;
   const persona = [
     "a Korean woman in her 30s",
     "a Korean man in his 40s-50s",
     "a young Korean person in their 20s",
     "hands only — no face in frame (the situation told through hand gestures and objects)",
   ][(seed + v) % 4];
-  // ★장면 각도 로테이션(재생성 변주) — 같은 문구라도 다시 만들면 다른 장면으로 강제 전환
-  const angle = [
-    "PERSON + OBJECT situation: a Korean person interacting with the topic object (the owner in front of the containers, a hand holding the bill)",
-    "OBJECT-ONLY close-up: the topic\'s symbolic objects alone, dramatic and larger-than-life (money stacks, documents, buildings — no people)",
-    "CONTRAST composition: before/after, the one who got it vs the one who missed it, rising vs falling — split or juxtaposed in one frame",
-  ][v % 3];
+  const compRule = [
+    `COMPOSITION (fixed, not optional) = PERSON + OBJECT: ${persona} interacting with the topic object (the owner in front of the containers, a hand holding the bill). ${emotionOf(copy)}. Never repeat the previous attempt's person type or facial staging.`,
+    `COMPOSITION (fixed, not optional) = OBJECT/PLACE ONLY — ABSOLUTELY NO PEOPLE in frame, no faces, no hands. The topic's object or place IS the hero, dramatic and larger-than-life. When the copy's hero is a place or number, the place is the star (예: '2026년 역세권 기회는 지금' → sunset skyline of a high-rise apartment complex rising above a subway station, no people).`,
+    `COMPOSITION (fixed, not optional) = CONTRAST: before/after, the one who got it vs the one who missed it, rising vs falling — split or juxtaposed in ONE frame. ${emotionOf(copy)}`,
+  ][comp];
   const subjectRule = copy
-    ? `THE COPY IS THE SCRIPT (highest priority): the Korean copy overlaid on this image reads "${copy}" (understand only — never render it). Draw the SCENE this copy describes. NON-NEGOTIABLE: include at least ONE topic-identifying object from "${topic.trim()}" so the field is recognizable even with the text covered (수출→shipping containers/cargo ship/export boxes, 에너지지원금→utility bill/power meter, 대출→house/contract, 적금→bankbook/coins). A person alone with generic despair is WRONG — emotion without topic context reads as a different article. If a person appears, they must INTERACT with that object (the owner in front of containers, a hand holding the bill). Government buildings (국회의사당·청사) only when the copy names an institution or policy announcement. Composition for this attempt: ${angle} — never repeat the previous attempt\'s composition. LITMUS TEST: with the text hidden, a viewer should still guess the article\'s field. ${emotionOf(copy)}. If a person appears, cast: ${persona} — never repeat the previous attempt\'s person type or facial staging. 'Eye-catching' is the job of COMPOSITION, CONTRAST and the overlaid copy — NOT of negative emotion; do not default to worried faces.`
-    : `Viral Korean YouTube-thumbnail photograph for this topic (understand only — never render as text): "${topic.trim()}". DEFAULT SUBJECT = the topic\'s most iconic dramatic object or scene. People only if the topic is about people — then KOREAN features.`;
+    ? `THE COPY IS THE SCRIPT (highest priority): the Korean copy overlaid on this image reads "${copy}" (understand only — never render it). Draw the SCENE this copy describes. NON-NEGOTIABLE: include at least ONE topic-identifying object from "${topic.trim()}" so the field is recognizable even with the text covered (수출→shipping containers/cargo ship, 에너지지원금→utility bill/power meter, 대출→house/contract, 적금→bankbook/coins, 역세권→station+apartment skyline). Government buildings (국회의사당·청사) only when the copy names an institution or policy announcement. ${compRule} LITMUS TEST: with the text hidden, a viewer should still guess the article's field. 'Eye-catching' is the job of COMPOSITION, CONTRAST and the overlaid copy — NOT of negative emotion.`
+    : `Viral Korean YouTube-thumbnail photograph for this topic (understand only — never render as text): "${topic.trim()}". DEFAULT SUBJECT = the topic's most iconic dramatic object or scene. People only if the topic is about people — then KOREAN features.`;
   const layout = center
     ? `Subjects arranged toward the edges/corners; the CENTER of the frame stays calm and low-detail — large Korean text will be overlaid dead-center later.`
     : `Main subject in the UPPER two-thirds; the BOTTOM third must stay calm and low-detail (soft surface, gentle falloff) — text overlay goes there.`;
   return [
     subjectRule,
-    "EXAGGERATED cinematic staging that stops a scrolling thumb: vivid saturated colors, dramatic studio-quality lighting, larger-than-life emotion. Big expressions welcome when people appear.",
+    "EXAGGERATED cinematic staging that stops a scrolling thumb: vivid saturated colors, dramatic studio-quality lighting, larger-than-life scale.",
     layout,
     `${tone}, vivid and punchy, crisp focus on the subject, glossy commercial quality. Square 1:1 composition.`,
     "ABSOLUTELY NO text of any kind: no letters, numbers, Korean characters, signs, labels, captions, watermarks, or logos anywhere. This includes text ON objects: shipping containers, boxes, documents, bills, storefronts and machines must have BLANK or blurred surfaces — no container markings, no fake brand names, no gibberish lettering (no 'GOAI TAE'-style pseudo-text). If a surface would normally carry text, render it clean or out of focus.",
