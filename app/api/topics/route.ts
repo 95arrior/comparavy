@@ -194,7 +194,7 @@ export async function GET(req: Request) {
 
   // ★트렌드 씨앗 × 개인화 증식 카드 — 키워드 풀과 독립. 조기 return에서도 트렌드가 나가게 함수로 분리.
   //  existing: 이미 담긴 글감 키워드(정규화) 집합(중복 방지). 온라인 vertical만 대상.
-  interface TrendCard { keyword: string; title: string; demandLabel: string; expiresAt?: string | null; ssak: boolean; region: boolean; tone: BloggerType; vol: number; comp: Comp; blogTotal: number | null; tag: string; newsContext?: string; sourceTitle?: string; demandBadge?: string; titleSearch?: string; briefText?: string; hookKey?: string; thumb?: { mainCopy: string; subCopy: string; badge: string }; brief?: unknown; series?: unknown; seriesId?: string; seriesBadge?: string }
+  interface TrendCard { keyword: string; title: string; demandLabel: string; expiresAt?: string | null; ssak: boolean; region: boolean; tone: BloggerType; vol: number; comp: Comp; blogTotal: number | null; tag: string; newsContext?: string; sourceTitle?: string; demandBadge?: string; actionStart?: string | null; actionEnd?: string | null; titleSearch?: string; briefText?: string; hookKey?: string; thumb?: { mainCopy: string; subCopy: string; badge: string }; brief?: unknown; series?: unknown; seriesId?: string; seriesBadge?: string }
   async function buildTrendCards(existing: Set<string>): Promise<TrendCard[]> {
     const cards: TrendCard[] = [];
     if (!user) return cards;
@@ -204,6 +204,21 @@ export async function GET(req: Request) {
       const kstDay = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
       let trends = await getTrendTopics(sub); // 캐시 키(씨앗 세대) 계산용 — 가벼운 조회라 캐시 앞으로 이동
       // ★유입력 우선(유저 핵심 진단: 뉴스에 나온 것 ≠ 검색하는 것) — 자동완성 실검색 흔적(longtails)이 많은 씨앗부터 증식.
+      // ★청약홈 공고 씨앗 — 증식(LLM) 우회 직접 카드화: 제목·날짜가 전부 API 실값이라 변형 금지(유저 신뢰 원칙)
+      const announceSeeds = trends.filter((t) => (t as { actionEnd?: string | null }).actionEnd);
+      trends = trends.filter((t) => !(t as { actionEnd?: string | null }).actionEnd);
+      for (const a of announceSeeds.slice(0, 3)) {
+        if (existing.has(a.keyword)) continue;
+        cards.push({
+          keyword: a.keyword, title: a.title, expiresAt: a.expiresAt ?? null,
+          demandLabel: "청약홈 공고 · 실공고 데이터", ssak: true, region: false, tone: bt,
+          vol: 0, comp: "low" as Comp, blogTotal: null, tag: "trend",
+          newsContext: a.newsContext ?? undefined, sourceTitle: `청약홈 공고: ${a.title}`,
+          actionStart: (a as { actionStart?: string | null }).actionStart ?? null,
+          actionEnd: (a as { actionEnd?: string | null }).actionEnd ?? null,
+        });
+      }
+
       // ★돈+행동 스코어(유저 승인 — 무순위 청약 28.7만 실증 구조: 돈 걸림+반복 검색+행동 창): 신청·접수형 가점, 뉴스성(기소·실적) 감점
       const actionScore = (t: { title?: string; keyword?: string }) => {
         const txt = `${t.title ?? ""} ${t.keyword ?? ""}`;

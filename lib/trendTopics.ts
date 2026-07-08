@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { createSupabaseAdminClient } from "./supabase-server";
+import { fetchApplyhomeSeeds } from "./applyhome";
 import { gatherHeadlinesWithStats } from "./trendSources";
 import { seasonalSeeds } from "./seasonalEvents";
 import { fetchNaverAutocomplete } from "./naverAutocomplete";
@@ -21,6 +22,8 @@ export interface TrendTopic {
   longtails: Longtail[]; // 자동완성 실검증 롱테일(실익 키워드). 검색자가 실제로 치는 것.
   source?: SeedSource;   // 씨앗 출처 — news/season='지금 뜨는', discover='꾸준한 수요'(momentum 배지 분리)
   expiresAt?: string | null; // 씨앗 만료 시각 — 트렌드 수명 카운터용
+  actionStart?: string | null; // ★행동 창(공고형) — 접수 시작
+  actionEnd?: string | null;   // 접수 마감(=카드 만료)
 }
 
 const FRESH_MS = 6 * 3600_000; // 6시간 신선도
@@ -53,9 +56,10 @@ export async function getTrendTopics(category: string): Promise<TrendTopic[]> {
       .limit(40);
     // longtails 컬럼(0049) 유무에 무관하게 작동 — 있으면 쓰고, 없으면(마이그레이션 전) 컬럼 빼고 재조회.
     type Row = { keyword: string; title: string; news_context: string | null; longtails?: unknown; source?: string };
-    const first = await run("keyword, title, news_context, longtails, source, expires_at");
-    const rows = (first.error ? (await run("keyword, title, news_context, expires_at")).data : first.data) as Row[] | null;
-    return (rows ?? []).map((r) => ({ keyword: r.keyword, title: r.title, newsContext: r.news_context, longtails: Array.isArray(r.longtails) ? (r.longtails as Longtail[]) : [], source: (r.source as SeedSource) ?? undefined, expiresAt: (r as { expires_at?: string }).expires_at ?? null }));
+    const first = await run("keyword, title, news_context, longtails, source, expires_at, action_start, action_end");
+    const second = first.error ? await run("keyword, title, news_context, longtails, source, expires_at") : null;
+    const rows = (first.error ? (second && !second.error ? second.data : (await run("keyword, title, news_context, expires_at")).data) : first.data) as Row[] | null;
+    return (rows ?? []).map((r) => ({ keyword: r.keyword, title: r.title, newsContext: r.news_context, longtails: Array.isArray(r.longtails) ? (r.longtails as Longtail[]) : [], source: (r.source as SeedSource) ?? undefined, expiresAt: (r as { expires_at?: string }).expires_at ?? null, actionStart: (r as { action_start?: string }).action_start ?? null, actionEnd: (r as { action_end?: string }).action_end ?? null }));
   } catch {
     return [];
   }
@@ -276,13 +280,33 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
       rows.length = 0; rows.push(...uniq);
     }
 
+    // ★청약홈 공고 씨앗(2026-07-08 유저 승인 — 돈+행동 1단계): 경제 계열 카테고리만, LLM 선별 우회(실값 보존 — 공고일·접수일·세대수 전부 API 실값)
+    if (/경제|재테크|금융|부동산|투자/.test(category)) {
+      try {
+        const homes = await fetchApplyhomeSeeds();
+        for (const h of homes) {
+          rows.push({
+            category, keyword: h.keyword, title: h.title, news_context: h.newsContext,
+            longtails: [] as Longtail[], source: "news", created_at: new Date().toISOString(),
+            expires_at: `${h.actionEnd}T23:59:59+09:00`, // 카드 만료 = 접수 마감(유저 확정)
+            action_start: h.actionStart, action_end: h.actionEnd,
+          } as (typeof rows)[number] & { action_start: string; action_end: string });
+        }
+        if (homes.length) console.log(`[applyhome] ${category}: 공고 씨앗 ${homes.length}건 합류`);
+      } catch { /* 청약 수확 실패는 일반 수확을 막지 않는다 */ }
+    }
+
     const admin = createSupabaseAdminClient();
     // ★게이트 통과 씨앗이 있으니 이 카테고리 기존 행 전체 purge 후 새로 넣는다(뉴스 문구형 잔재 일괄 정리).
     try { await admin.from("trend_topics").delete().eq("category", category); } catch { /* ignore */ }
     const { error: upErr } = await admin.from("trend_topics").upsert(rows, { onConflict: "category,keyword" });
-    if (upErr) { // source 컬럼(0050) 미적용 방어 — 컬럼 빼고 재시도
-      const bare = rows.map(({ source: _s, ...rest }) => rest);
-      await admin.from("trend_topics").upsert(bare, { onConflict: "category,keyword" });
+    if (upErr) { // source(0050)·action(0061) 컬럼 미적용 방어 — 순차 강등 재시도
+      const noAction = rows.map((r) => { const { action_start: _a, action_end: _b, ...rest } = r as Record<string, unknown>; return rest; });
+      const { error: e2 } = await admin.from("trend_topics").upsert(noAction, { onConflict: "category,keyword" });
+      if (e2) {
+        const bare = noAction.map((r) => { const { source: _s, ...rest } = r as Record<string, unknown>; return rest; });
+        await admin.from("trend_topics").upsert(bare, { onConflict: "category,keyword" });
+      }
     }
     // 게이트별 탈락 분포 로그 — 튜닝 기준 데이터
     const dist: Record<string, number> = {};

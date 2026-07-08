@@ -920,6 +920,16 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
   })();
   const pubAdvice = (() => {
     const h = new Date().getHours();
+    // ★청약 공고 행동 창(유저 확정): 접수 전=선점 발행, 접수 중=마감 임박 훅
+    const aStart = (topic as { actionStart?: string | null }).actionStart;
+    const aEnd = (topic as { actionEnd?: string | null }).actionEnd;
+    if (aStart && aEnd) {
+      const now = Date.now();
+      const st = new Date(`${aStart}T00:00:00+09:00`).getTime();
+      const en = new Date(`${aEnd}T23:59:59+09:00`).getTime();
+      if (now < st) { const d = Math.ceil((st - now) / 86400_000); return { text: `접수 ${d === 0 ? "오늘" : `D-${d}`} — 지금 발행하면 접수일에 선점돼요`, hot: true }; }
+      if (now <= en) { const d = Math.ceil((en - now) / 86400_000); return { text: `접수 중 · 마감 ${d <= 1 ? "임박" : `D-${d}`} — 마감 임박 훅이 통하는 시점`, hot: true }; }
+    }
     if (isTrend) return { text: "지금 바로 발행 추천 — 신선도가 순위", hot: true };
     if (h >= 17 && h < 19) return { text: "지금이 발행하기 좋은 시간이에요", hot: true };
     if (h >= 6 && h < 8) return { text: "지금 발행 좋아요 — 출근길과 점심을 커버해요", hot: true };
