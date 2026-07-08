@@ -97,7 +97,7 @@ export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots
             ))}
           </div>
         )}
-        <input value={text} onChange={(e) => setText(e.target.value.slice(0, 20))} placeholder="직접 입력 (최대 20자)"
+        <input value={text} onChange={(e) => setText([...e.target.value].slice(0, 18).join(""))} placeholder="직접 입력 (최대 18자)"
           className="mt-2 w-full rounded-[12px] bg-neutral-50 px-4 py-3 text-[14px] font-semibold outline-none ring-1 ring-black/[0.05] placeholder:text-neutral-300 focus:ring-2 focus:ring-[#1D75F7]/30" />
 
         {/* 배경색 */}

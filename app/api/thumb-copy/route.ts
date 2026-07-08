@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { breakThumbCopy } from "@/lib/thumbCopyBreak";
 import Anthropic from "@anthropic-ai/sdk";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { checkRateLimit } from "@/lib/rateLimit";
@@ -25,7 +26,7 @@ export async function POST(request: Request) {
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const prompt = [
-    `네이버 블로그 썸네일에 큰 글씨로 박을 '3초 훅' 문구 6개를 만들어줘. 글 제목: "${art.title}" / 키워드: "${art.keyword}"${art.meta_description ? ` / 요지: ${String(art.meta_description).slice(0, 100)}` : ""}`,
+    `네이버 블로그 썸네일에 큰 글씨로 박을 '3초 훅' 문구 6개를 만들어줘. 절대 조건: 각 문구는 공백 포함 18자 이내(폰트가 고정 크기라 길면 잘린다 — 한 줄 9자 x 2줄에 들어가야 함). 글 제목: "${art.title}" / 키워드: "${art.keyword}"${art.meta_description ? ` / 요지: ${String(art.meta_description).slice(0, 100)}` : ""}`,
     "",
     "규칙:",
     "- 6~14자, 구어체. ★무난한 요약은 실격 — 심장을 건드려야 한다: 손해의 공포, 남만 아는 정보라는 소외감, 단정적 선언, 뒤통수 반전. 단 글이 실제로 답하는 내용과 반드시 연관(낚시 금지).",
@@ -51,7 +52,8 @@ export async function POST(request: Request) {
       const cleaned = (Array.isArray(raw) ? raw : [])
         .map((c) => String(c).trim().replace(/^[\[\]"\u201c\u201d'\s]+|[\[\]"\u201c\u201d'\s]+$/g, "")) // ★대괄호·스마트따옴표 찌꺼기 소거(실측: 앞뒤 [])
         .filter((c) => c.length >= 4)
-        .map((c) => (c.length > 20 ? "" : c)) // 20자까지 관대(온도 상향으로 문구 길어짐)
+        .map((c) => ([...c].length > 18 ? "" : c)) // ★18자 상한(유저 규격: 고정 폰트 1줄 9자·2줄 — 초과는 후보 제외)
+        .filter((c) => c && breakThumbCopy(c).split("\n").every((l) => [...l].length <= 9)) // ★9자/줄 분할 가능까지 검사(어절 배분상 불가 문구 제외)
         .filter(Boolean)
         .filter((c) => bannedHits(c).length === 0);
       copies = [...new Set(cleaned)].slice(0, 4);
@@ -59,7 +61,7 @@ export async function POST(request: Request) {
     if (copies.length === 0) {
       // 최후 폴백 — 규칙 기반(원가 0, 항상 성공): 키워드 훅 템플릿
       const kw = String(art.keyword ?? art.title ?? "").split(/\s+/).slice(0, 2).join(" ").slice(0, 10) || "이번 정보";
-      copies = [`${kw}, 이게 핵심이다`, `${kw} 그대로 두면 손해`, `${kw}, 지금 확인`, `${kw} 모르면 나만 손해`].map((c) => c.slice(0, 20));
+      copies = [`${kw}, 이게 핵심이다`, `${kw} 그대로 두면 손해`, `${kw}, 지금 확인`, `${kw} 모르면 나만 손해`].map((c) => [...c].slice(0, 18).join(""));
     }
     return NextResponse.json({ copies });
   } catch {

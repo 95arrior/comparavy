@@ -229,7 +229,8 @@ async function renderAt(rawInput: ThumbInput, width: number): Promise<Buffer> {
   if (input.press) {
     const brand = input.press.brandName.trim() || "BLOG";
     const lines = (input.mainCopy ?? "").split("\n").map((l) => l.trim()).filter(Boolean);
-    const pressSize = Math.max(72, Math.min(150, Math.floor(920 / Math.max(...lines.map((l) => [...l].length), 1))));
+    const longest = Math.max(...lines.map((l) => [...l].length), 1);
+    const pressSize = longest <= 9 ? 100 : Math.floor(920 / longest); // ★100 고정(유저 규격) — 게이트 우회 커스텀 입력(9자 초과 줄)만 넘침 방지 축소
     const pressRoot = el("div", { style: { display: "flex", width: SIZE, height: SIZE, position: "relative", overflow: "hidden", backgroundColor: "#101728" } }, [
       bgDataUrl ? el("img", { src: bgDataUrl, width: SIZE, height: SIZE, style: { position: "absolute", inset: 0, objectFit: "cover" } })
                 : el("div", { style: { position: "absolute", inset: 0, backgroundImage: `linear-gradient(160deg, ${shade(p.bg, 7)}, ${shade(p.bg, -9)})` } }),
