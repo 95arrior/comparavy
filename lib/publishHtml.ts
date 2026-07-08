@@ -266,6 +266,16 @@ function arrowChainToSteps(html: string): string {
 }
 
 function styleMarkers(html: string): string {
+  // ★소제목 앞 구분선 보정(유저 실측: 구분선 부족=텍스트 과밀) — h2 직전에 구분선(또는 --- 마커)이 없으면 자동 삽입. 첫 h2 제외(도입 직후 과밀 방지)
+  {
+    let h2Seen = 0;
+    html = html.replace(/(<p[^>]*>\s*(?:─+|-{3,})\s*<\/p>\s*)?<h2(\s[^>]*)?>/gi, (m, divider) => {
+      h2Seen += 1;
+      if (h2Seen === 1 || divider) return m; // 첫 소제목이거나 이미 구분선 있음
+      return `<p>---</p>${m}`;
+    });
+  }
+
   // ★엔진이 평문으로 쓴 '함께 보면 좋은 글' 라벨 소거(규격 위반 실측: 블록 2회) — 라벨은 시스템 산출(하단 3층) 전용
   html = html.replace(/<p[^>]*>\s*(?:<b[^>]*>)?\s*함께\s?보면\s?좋은\s?글\s*[:：]?\s*(?:<\/b>)?\s*<\/p>/g, "");
   // ★마무리 마커 2개+ 방어 — 마지막 것만 3층 블록, 앞엣것은 제거(중간 링크 전면 폐기 — 유저 확정)
