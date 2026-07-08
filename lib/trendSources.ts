@@ -1,6 +1,6 @@
 // ★다중 소스 트렌드 헤드라인 수집 — 네이버 편향(경제=은행권만) 탈피.
 //  네이버 뉴스 + 구글 뉴스 RSS(무료·무인증)를 '다양한 소주제 시드'로 병렬 조회해 넓게 긁는다.
-//  ★신선도 게이트: pubDate 기준 48시간 이내만(24h는 주말 고갈 위험). 파싱 실패는 '미확인'으로 분리 —
+//  ★신선도 게이트: pubDate 기준 48시간 이내만. 파싱 실패(미확인)는 트렌드 부적격 — 폐기(2026-07-08 유저 확정) —
 //   시드당 확인된 신선 기사 3개 이상이면 미확인분 버리고, 3개 미만이면 미확인분으로 보충(고갈 방어).
 
 import { CATEGORIES } from "./categories";
@@ -153,7 +153,8 @@ export async function gatherHeadlinesWithStats(category: string): Promise<{ head
     const stale = group.filter((h) => h.fresh === false);
     perSeed[s] = { fresh: fresh.length, unverified: unverified.length, stale: stale.length };
     kept.push(...fresh);
-    if (fresh.length < 3) kept.push(...unverified.slice(0, 3 - fresh.length)); // 고갈 방어 보충
+    // ★미확인(발행일 파싱 실패) 보충 폐지(유저 확정 — 실측: 과거 공고가 '실시간 급상승'으로 승격 의심): 발행일 못 찾는 소스는 트렌드 부적격.
+    //  고갈은 즉석 수확·공고형 쿼리 다변화로 감수 — 가짜 신선보다 빈 보드가 정직하다.
   }
 
   const stats: GatherStats = {
