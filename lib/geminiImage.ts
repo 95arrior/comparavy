@@ -137,7 +137,7 @@ export function buildThumbPhotoBgPrompt(topic: string, seed: number, center = fa
     "EXAGGERATED cinematic staging that stops a scrolling thumb: vivid saturated colors, dramatic studio-quality lighting, larger-than-life emotion. Big expressions welcome when people appear.",
     layout,
     `${tone}, vivid and punchy, crisp focus on the subject, glossy commercial quality. Square 1:1 composition.`,
-    "ABSOLUTELY NO text of any kind: no letters, numbers, Korean characters, signs, labels, captions, watermarks, or logos anywhere. No real brand logos.",
+    "ABSOLUTELY NO text of any kind: no letters, numbers, Korean characters, signs, labels, captions, watermarks, or logos anywhere. This includes text ON objects: shipping containers, boxes, documents, bills, storefronts and machines must have BLANK or blurred surfaces — no container markings, no fake brand names, no gibberish lettering (no 'GOAI TAE'-style pseudo-text). If a surface would normally carry text, render it clean or out of focus.",
   ].join(" ");
 }
 
