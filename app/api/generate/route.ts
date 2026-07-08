@@ -292,9 +292,13 @@ export async function POST(request: Request) {
           let rq = supabase.from("articles").select("keyword, title, naver_url, created_at").eq("user_id", user.id).in("status", ["verified", "published"]).not("naver_url", "is", null).order("created_at", { ascending: false }).limit(30);
           if (blogIdForLink) rq = rq.or(`blog_id.eq.${blogIdForLink},blog_id.is.null`);
           const { data: cands } = await rq;
-          const tok = (t: string) => new Set(String(t).split(/[\s·,]+/).filter((x) => x.length >= 2));
+          // ★유저 실측 반영(ETF 글에 부동산 청약 추천): ①기간제(청약·마감형) 글 제외 — 접수가 끝나면 죽은 링크 ②범용 단어 겹침 배제 — 실질 주제 토큰만
+          const STOP = new Set(["방법", "정리", "총정리", "조건", "신청", "기간", "확인", "이유", "비교", "기준", "주의", "사항", "완벽", "가이드", "하는", "해야", "알아야", "지금", "오늘", "관련", "대상", "혜택", "지원", "제도"]);
+          const TIMED = /(무순위|청약|공고|마감|접수|모집|선착순|추첨)/; // 행동 창이 닫히면 수명이 끝나는 글
+          const tok = (t: string) => new Set(String(t).split(/[\s·,]+/).filter((x) => x.length >= 2 && !STOP.has(x)));
           const myTok = tok(`${keyword} ${body.angle ?? ""}`);
           relatedPosts = (cands ?? [])
+            .filter((c) => !TIMED.test(`${c.keyword ?? ""} ${c.title ?? ""}`))
             .map((c) => ({ title: String(c.title ?? ""), url: String(c.naver_url ?? ""), score: [...tok(`${c.keyword} ${c.title}`)].filter((t) => myTok.has(t)).length }))
             .filter((c) => c.url && c.score >= 1)
             .sort((a, b) => b.score - a.score)
