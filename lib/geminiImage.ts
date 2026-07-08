@@ -68,9 +68,8 @@ const PHOTO_MOODS = ["calm and tidy", "warm and inviting", "fresh and clean", "q
 export function buildBodyPrompt(slotDesc: string, articleTitle: string, seed: number, opts?: { context?: string }): string {
   const compo = PHOTO_COMPOS[(seed >> 3) % PHOTO_COMPOS.length];
   const mood = PHOTO_MOODS[(seed >> 7) % PHOTO_MOODS.length];
-  const conceptSlot = /개념|상징|아이콘|기분|마음|정리|요약/.test(slotDesc);
-  const docSlot = /계약서|서류|양식|증명서|등본|고지서|신청서|위임장|약관/.test(slotDesc); // ★문서류=실사로 찍으면 텍스트가 끼어 깨짐 → 이모지 3D(매끈한 무지 종이 오브젝트)
-  const useEmoji3d = conceptSlot || docSlot || seed % 5 === 0; // ★토스 이모지풍 3D(유저 재지정) — 개념 슬롯 + 글당 1개꼴 로테이션
+  // ★글 단위 스타일 통일(유저 실증: 한 글 3장 중 1장만 3D — 질감 불일치) — 슬롯별 3D 분기·랜덤 로테이션 폐기, 전부 실사. 문서류는 장면형 실사(도장 찍는 손과 서류)로, 표면 무텍스트 규칙이 글자 깨짐을 방지한다.
+  const useEmoji3d = /^AI 컨셉.*(아이콘|이모지|3D)/.test(slotDesc); // 명시 요청 시에만
   if (!useEmoji3d) { // 기본=실사 다큐
     const tone = PHOTO_TONES[seed % PHOTO_TONES.length];
     return [
