@@ -264,6 +264,16 @@ function arrowChainToSteps(html: string): string {
 }
 
 function styleMarkers(html: string): string {
+  // ★엔진이 평문으로 쓴 '함께 보면 좋은 글' 라벨 소거(규격 위반 실측: 블록 2회) — 라벨은 시스템 산출(하단 3층) 전용
+  html = html.replace(/<p[^>]*>\s*(?:<b[^>]*>)?\s*함께\s?보면\s?좋은\s?글\s*[:：]?\s*(?:<\/b>)?\s*<\/p>/g, "");
+  // ★마무리 마커 2개+ 방어 — 마지막 것만 3층 블록, 앞엣것은 중간 간결형으로 강등
+  {
+    const finals = [...html.matchAll(/\[마무리관련글:\s*(https?:[^\s|\]]+)\s*\|\s*([^|\]]+)\|\s*([^\]]+)\]/g)];
+    for (let i = 0; i < finals.length - 1; i++) {
+      const f = finals[i];
+      if (f) html = html.replace(f[0], `[관련글: ${f[1]} | ${(f[2] ?? "").trim()}]`);
+    }
+  }
   // ★내부링크 마커 — 하단 3층(유저 확정: 유저가 네이버 링크 카드로 직접 삽입 — 시스템은 그 직전까지 준비)
   html = html.replace(/\[마무리관련글:\s*(https?:[^\s|\]]+)\s*\|\s*([^|\]]+)\|\s*([^\]]+)\]/g, (_m, url: string, _t: string, reason: string) => {
     const clean = url.split("?")[0]; // 트래킹 파라미터 제거 — 원형만
