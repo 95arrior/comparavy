@@ -299,7 +299,7 @@ function listsToTable(html: string): string {
     const items = (inner.match(/<li[\s\S]*?<\/li>/gi) ?? []).map((li: string) => li.replace(/<\/?li[^>]*>/gi, "").trim()).filter(Boolean);
     if (items.length < 2) return raw;
     const ol = String(tag).toLowerCase() === "ol";
-    return items.map((it: string, i: number) => `<p style="text-align:center;word-break:keep-all">${ol ? `<b>${i + 1}.</b> ` : "• "}${it}</p>`).join("");
+    return items.map((it: string, i: number) => `<p style="text-align:left;word-break:keep-all">${ol ? `<b>${i + 1}.</b> ` : "• "}${it}</p>`).join(""); // ★좌정렬 풀폭(유저: 넓이 꽉꽉)
   });
 }
 
@@ -318,7 +318,7 @@ function applySpacingRich(html: string): string {
 // ★표 규격(평가 반영) — 네이버 붙여넣기 생존을 위해 인라인 보더·패딩 주입, 셀 좌정렬.
 function styleTables(html: string): string {
   return html
-    .replace(/<table(\s[^>]*)?>/gi, '<table style="border-collapse:collapse;width:100%;margin:8px 0">')
+    .replace(/<table(\s[^>]*)?>/gi, '<table style="border-collapse:collapse;width:100%;table-layout:fixed;margin:8px 0">')
     .replace(/<th(\s[^>]*)?>/gi, '<th style="border:1px solid #ddd;padding:8px 10px;background:#f7f8fa;text-align:left;font-size:14px;word-break:keep-all">')
     .replace(/<td(\s[^>]*)?>/gi, '<td style="border:1px solid #ddd;padding:8px 10px;text-align:left;font-size:14px;word-break:keep-all">');
 }
