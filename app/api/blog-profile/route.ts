@@ -132,6 +132,14 @@ export async function PATCH(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "로그인이 필요해요." }, { status: 401 });
   const body = await request.json().catch(() => ({}));
+  // ★블로그 이름 변경(2026-07-10 유저: 썸네일 하단 브랜드명 수정 경로 부재) — 활성 블로그만
+  if (typeof body.blog_name === "string") {
+    const name = body.blog_name.trim().slice(0, 20);
+    if (!name) return NextResponse.json({ error: "이름을 입력해 주세요." }, { status: 400 });
+    const { error } = await supabase.from("blog_profiles").update({ blog_name: name, updated_at: new Date().toISOString() }).eq("user_id", user.id).eq("is_active", true);
+    if (error) return NextResponse.json({ error: "저장하지 못했어요." }, { status: 500 });
+    return NextResponse.json({ ok: true, blog_name: name });
+  }
   if (typeof body.naver_blog_id !== "string") return NextResponse.json({ error: "naver_blog_id가 필요해요." }, { status: 400 });
   const id = body.naver_blog_id.trim().replace(/^https?:\/\//, "").replace(/^m\./, "").replace(/^blog\.naver\.com\//, "").replace(/[/?#].*$/, "").slice(0, 40) || null;
   const { error } = await supabase.from("blog_profiles").update({ naver_blog_id: id, updated_at: new Date().toISOString() }).eq("user_id", user.id).eq("is_active", true); // ★활성 블로그만(실측: 전 블로그가 같은 주소로 덮임)

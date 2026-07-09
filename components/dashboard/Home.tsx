@@ -749,6 +749,15 @@ export default function Home({
                     {b.sub_category && <span className="mt-0.5 block text-[12px] text-[color:var(--color-text-weak)]">{b.sub_category}</span>}
                   </span>
                   {b.is_active && <span className="shrink-0 text-[12px] font-bold text-[color:var(--color-brand)]">사용 중</span>}
+                  {b.is_active && (
+                    <span role="button" tabIndex={0} onClick={async (e) => {
+                      e.stopPropagation();
+                      const name = window.prompt("블로그 이름 — 썸네일 하단에 이 이름이 들어가요 (최대 20자)", b.blog_name ?? "");
+                      if (!name || !name.trim() || name.trim() === b.blog_name) return;
+                      const r = await fetch("/api/blog-profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ blog_name: name.trim().slice(0, 20) }) });
+                      if (r.ok) window.location.reload(); else alert("저장하지 못했어요");
+                    }} className="shrink-0 rounded-lg bg-white px-2.5 py-1.5 text-[11.5px] font-bold text-neutral-500 ring-1 ring-black/[0.06] transition hover:text-[color:var(--color-brand)]">이름 바꾸기</span>
+                  )}
                 </button>
               ))}
             </div>
