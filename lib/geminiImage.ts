@@ -48,6 +48,18 @@ const PHOTO_TONES = [
 // 슬롯 설명 성격 분기 — 실제 씬(장소·물건·현장) vs 개념(비교·절차·수치). 애매하면 시드 랜덤.
 const CONCRETE_RE = /전경|모습|현장|매장|가게|음식|요리|거리|풍경|장소|건물|실내|외관|제품|실물|기기|착용|모음|재료|간판|메뉴|차량|도로|공원|바다|산|숙소|객실|사람|손|책상|주방|화면을 보는/;
 const ABSTRACT_RE = /비교|정리|요약|절차|단계|순서|구성|개념|금액|비용|수익|금리|계산|조건|장단점|체크리스트|일정|통계|그래프|표|자료|아이콘|상징/;
+
+// ★아테플로 시그니처 스타일(2026-07-09 유저 확정 — 실사 폐기, 전 유저 공통): 토스풍 플랫 벡터 일러스트.
+//  "잘 그린 그림"이 아니라 "3초에 읽히는 기호" — AI 실사의 불쾌함이 원천 부재, 채널 아이덴티티 통일.
+const ATEFLO_ILLUST_STYLE = [
+  "STYLE (non-negotiable): flat vector illustration in the style of modern Korean fintech branding (Toss-like).",
+  "Characters: simple geometric human figures — round soft shapes, minimal or no facial features (tiny dot eyes at most), black or dark hair as a simple shape, peach/salmon skin accents, expressive POSE not face.",
+  "Palette: one dominant vivid blue (#3268f6 to #1D75F7 family) as background or key object, warm orange and off-white accents, occasional light blue. Max 4 colors total.",
+  "Composition: ONE clear metaphor — a single object or moment tells the whole meaning (a person reading a giant book = learning; an umbrella = protection). Big simple shapes, generous negative space.",
+  "Texture: subtle film grain / noise over flat colors (signature finish). Soft minimal shadows only.",
+  "NOT photorealistic, NOT 3D render, NOT detailed anime, NO gradients except one soft radial, NO clutter.",
+].join(" ");
+
 export function pickImageStyle(slotDesc: string, seed: number): "photo" | "toss" {
   const c = CONCRETE_RE.test(slotDesc), a = ABSTRACT_RE.test(slotDesc);
   if (c && !a) return "photo";
@@ -79,17 +91,18 @@ export function buildBodyPrompt(slotDesc: string, articleTitle: string, seed: nu
     const tone = PHOTO_TONES[seed % PHOTO_TONES.length];
     return [
       "ZERO TEXT IMAGE — absolutely no letters, numbers or Hangul anywhere in the image (any rendered text will be broken and ruin the photo).",
-      `Realistic lifestyle photograph for a Korean blog post. Topic context (for understanding only — never render as text): ${articleTitle}.`,
+      `Flat vector illustration for a Korean blog post. Topic context (for understanding only — never render as text): ${articleTitle}.`,
       `Scene hint (may be overly detailed): ${slotDesc}.`,
+      ATEFLO_ILLUST_STYLE,
       // ★은유 극화(유저 최종 인사이트): 이미지는 슬롯 문구가 아니라 '그 자리 문단의 메시지'를 시각 은유로 —
       //  예: '연 90만원 환급을 안 받는 것' → 돈·통장이 쓰레기통에 버려지는 한 장면. 앱 화면 묘사보다 은유가 백배 강하다.
       opts?.context?.trim() ? `THE PARAGRAPH THIS IMAGE ILLUSTRATES (understand only — never render as text): "${opts.context.trim().slice(0, 300)}". Extract its ONE emotional point and stage it as a BOLD VISUAL METAPHOR that makes the reader feel that point instantly — staged THEATRICALLY like a viral thumbnail (e.g. losing an annual refund → stylized Korean banknotes and coins tumbling into a trash bin, dramatic light; a deadline passing → a calendar page burning out). Prefer a striking exaggerated metaphor over literally depicting app screens or procedures.` : "",
       // ★장면 단순화(유저 컨셉 확정) — 설명의 디테일을 그리려 하면 텍스트·복잡성이 끼어 깨진다. 핵심 명사 1개로 환원.
-      "RADICAL SIMPLIFICATION (final rule — a clean beautiful PLACE photo always beats a complex scene done badly): from the scene hint keep ONLY the place, rendered as a professional unmanned establishing shot — 도청·관공서 → the building facade only; 민원 창구 → the empty counter interior only; 논밭 → the fields only; 은행 → the branch exterior or lobby only. ABSOLUTELY NO people, NO hands, NO banners, NO signs, NO documents, NO tablets/phones/devices, NO drones — every added element tempts broken text or awkward staging. Just the place, great light, great composition.",
+      "RADICAL SIMPLIFICATION — one metaphor beats a complex scene: from the scene hint keep ONE simple visual idea and render it as bold flat shapes (a building = simple geometric facade; fields = layered green shapes; a person learning = round figure with a giant book). Simple geometric characters ARE welcome here (pose tells the story, minimal face).",
       // ★단일 문법(유저 최종 판정: 텍스트 절대 금지 — 깨짐, 빈 화면도 금지 — 허접) — 상황이 스스로 말하는 씬 3택.
-      "Pick the ONE scene type that best fits this topic: (a) INDUSTRY/PLACE topics (energy, real estate, cars, travel, markets) → a cinematic wide establishing shot of the real-world place itself — industrial plant, apartment complex, dealership lot, harbor — impressive scale, natural light, professional editorial photograph. (b) PAPERWORK/APPLICATION topics → stage the SITUATION using NON-PAPER objects only: keys, a small house model, a calendar (numbers-free), coins in a tray, a phone lying face-down. DO NOT include documents, forms, sticky notes, books or screens AT ALL — any paper-like object tempts text and text always renders broken. (c) otherwise → a clean bright STILL-LIFE: multiple objects of the topic category neatly arranged on a light wooden table near a window, soft daylight, airy minimal styling — like a lifestyle magazine product spread. The image must spark curiosity and instantly convey what the article is about — a scene that tells the story by itself.",
+      "Pick the ONE idea that best fits this topic: (a) PLACE topics → the place as bold simple shapes (apartment silhouette, factory outline). (b) MONEY/APPLICATION topics → one iconic object oversized: giant coin, house shape, calendar shape (no numbers), an envelope. (c) PEOPLE situations → one round geometric character in an expressive pose interacting with ONE object. The image must instantly convey what the article is about — a symbol, not a scene.",
       `Setting is always KOREA (Korean apartments, Korean streets, Korean products; any hands or partial figures are Korean). The topic-specific OBJECTS are the hero of the frame — a person may appear only as hands interacting with them (no full figures, face never visible). Include at least 2 physical objects that are UNIQUELY specific to the topic above (e.g., housing topic → door keys, moving boxes, apartment window view; car topic → car interior, charging cable). NEVER generic clichés: NO piggy banks, NO coin stacks, NO calculators, NO lightbulbs, NO miniature house models, NO keys-next-to-props. AVOID the tired 'objects arranged on a desk' composition unless the topic is literally desk work — when the topic has a real-world place (bank, apartment complex, market, road), GO THERE with a wide editorial shot instead.`,
-      `${tone}, ${compo}, ${mood} mood. Natural realistic photography with PUNCH — rich saturated colors, dramatic directional light, crisp textures (not flat muted stock). Wide horizontal 16:9 composition.`,
+      `${mood} mood. Wide horizontal 16:9 composition.`,
       IMAGE_HARD_RULES,
     ].join(" ");
   }
@@ -154,21 +167,21 @@ export function buildThumbPhotoBgPrompt(topic: string, seed: number, center = fa
     "hands only — no face in frame (the situation told through hand gestures and objects)",
   ][(seed + v) % 4];
   const compRule = [
-    `COMPOSITION (fixed, not optional) = PERSON + OBJECT: ${persona} interacting with the topic object (the owner in front of the containers, a hand holding the bill). ${emotionOf(copy)}. Never repeat the previous attempt's person type or facial staging.`,
-    `COMPOSITION (fixed, not optional) = OBJECT/PLACE ONLY — ABSOLUTELY NO PEOPLE in frame, no faces, no hands. The topic's object or place IS the hero, dramatic and larger-than-life. When the copy's hero is a place or number, the place is the star (예: '2026년 역세권 기회는 지금' → sunset skyline of a high-rise apartment complex rising above a subway station, no people).`,
-    `COMPOSITION (fixed, not optional) = CONTRAST: before/after, the one who got it vs the one who missed it, rising vs falling — split or juxtaposed in ONE frame. ${emotionOf(copy)}`,
+    `COMPOSITION (fixed, not optional) = CHARACTER + OBJECT: one simple geometric character interacting with the topic object oversized (a round figure holding a giant coin, reading a giant book). ${emotionOf(copy)} — expressed through POSE and staging, not facial detail.`,
+    `COMPOSITION (fixed, not optional) = OBJECT/PLACE ONLY — no characters. The topic's object or place as ONE bold oversized symbol (a giant house shape, an apartment silhouette skyline, a huge calendar shape). When the copy's hero is a place or number, the symbol is the star.`,
+    `COMPOSITION (fixed, not optional) = CONTRAST: two sides in one frame — big vs small, up-arrow side vs down-arrow side, got-it vs missed-it — told with simple shapes and color blocking. ${emotionOf(copy)}`,
   ][comp];
   const subjectRule = copy
-    ? `THE COPY IS THE SCRIPT (highest priority): the Korean copy overlaid on this image reads "${copy}" (understand only — never render it). Draw the SCENE this copy describes. NON-NEGOTIABLE: include at least ONE topic-identifying object from "${topic.trim()}" so the field is recognizable even with the text covered (수출→shipping containers/cargo ship, 에너지지원금→utility bill/power meter, 대출→house/contract, 적금→bankbook/coins, 역세권→station+apartment skyline). Government buildings (국회의사당·청사) only when the copy names an institution or policy announcement. ${compRule} LITMUS TEST: with the text hidden, a viewer should still guess the article's field. 'Eye-catching' is the job of COMPOSITION, CONTRAST and the overlaid copy — NOT of negative emotion.`
-    : `Viral Korean YouTube-thumbnail photograph for this topic (understand only — never render as text): "${topic.trim()}". DEFAULT SUBJECT = the topic's most iconic dramatic object or scene. People only if the topic is about people — then KOREAN features.`;
+    ? `THE COPY IS THE SCRIPT (highest priority): the Korean copy overlaid on this image reads "${copy}" (understand only — never render it). Draw the IDEA this copy describes as one bold flat-illustration symbol. NON-NEGOTIABLE: include ONE topic-identifying object from "${topic.trim()}" so the field is recognizable even with the text covered (수출→container/ship shape, 지원금→giant coin/envelope, 대출·청약→house/apartment shapes, 적금→coin stack). ${compRule} LITMUS TEST: with the text hidden, a viewer should still guess the article's field. ${ATEFLO_ILLUST_STYLE}`
+    : `Flat vector illustration thumbnail for this topic (understand only — never render as text): "${topic.trim()}". ONE iconic oversized symbol of the topic. ${ATEFLO_ILLUST_STYLE}`;
   const layout = center
     ? `Subjects arranged toward the edges/corners; the CENTER of the frame stays calm and low-detail — large Korean text will be overlaid dead-center later.`
     : `Main subject in the UPPER two-thirds; the BOTTOM third must stay calm and low-detail (soft surface, gentle falloff) — text overlay goes there.`;
   return [
     subjectRule,
-    "EXAGGERATED cinematic staging that stops a scrolling thumb: vivid saturated colors, dramatic studio-quality lighting, larger-than-life scale.",
+    "Bold larger-than-life scale that stops a scrolling thumb — one big symbol, generous negative space.",
     layout,
-    `${tone}, vivid and punchy, crisp focus on the subject, glossy commercial quality. Square 1:1 composition.`,
+    "Square 1:1 composition.",
     "ABSOLUTELY NO text of any kind: no letters, numbers, Korean characters, signs, labels, captions, watermarks, or logos anywhere. This includes text ON objects: shipping containers, boxes, documents, bills, storefronts and machines must have BLANK or blurred surfaces — no container markings, no fake brand names, no gibberish lettering (no 'GOAI TAE'-style pseudo-text). If a surface would normally carry text, render it clean or out of focus.",
   ].join(" ");
 }
