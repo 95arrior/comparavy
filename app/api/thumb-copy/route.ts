@@ -21,7 +21,7 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const articleId = typeof body.articleId === "string" ? body.articleId.slice(0, 60) : "";
   if (!articleId) return NextResponse.json({ error: "글을 알 수 없어요." }, { status: 400 });
-  const { data: art } = await supabase.from("articles").select("title, keyword, meta_description").eq("id", articleId).eq("user_id", user.id).maybeSingle();
+  const { data: art } = await supabase.from("articles").select("title, keyword, meta_description, content").eq("id", articleId).eq("user_id", user.id).maybeSingle();
   if (!art) return NextResponse.json({ error: "글을 찾을 수 없어요." }, { status: 404 });
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -54,6 +54,14 @@ export async function POST(request: Request) {
         .filter((c) => c.length >= 4)
         .map((c) => ([...c].length > 18 ? "" : c)) // ★18자 상한(유저 규격: 고정 폰트 1줄 9자·2줄 — 초과는 후보 제외)
         .filter((c) => c && breakThumbCopy(c).split("\n").every((l) => [...l].length <= 9)) // ★9자/줄 분할 가능까지 검사(어절 배분상 불가 문구 제외)
+        .filter((c) => { // ★숫자 근거 게이트(실측: 접수 13일인데 '7월 14일까지' 유령 날짜) — 소스에 없는 숫자 문구 제외
+          const src = `${art.title ?? ""} ${art.keyword ?? ""} ${art.meta_description ?? ""} ${String(art.content ?? "").replace(/<[^>]+>/g, " ").slice(0, 1200)}`.replace(/[,\s]/g, "");
+          for (const num of c.match(/[0-9][0-9,.]*/g) ?? []) {
+            const n = num.replace(/,/g, "");
+            if (n.length >= 1 && !src.includes(n)) return false;
+          }
+          return true;
+        })
         .filter(Boolean)
         .filter((c) => bannedHits(c).length === 0);
       copies = [...new Set(cleaned)].slice(0, 4);
