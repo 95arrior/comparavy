@@ -112,7 +112,8 @@ function mergeUnbalanced(parts: string[]): string[] {
 //  문장별 한 줄. 문장이 길면(>44자) 쉼표·연결어미 구 경계에서 균형 줄바꿈(양쪽 12자 이상일 때만 — 고아 조각 금지).
 function breakSentence(sen: string): string {
   // ★모바일 줄폭(유저 최종 규격): 한계선 23자(공백 포함) — 목표 18(꽉 채우지 않기), 어절 경계에서만 절단.
-  if (/<br/.test(sen)) return sen;
+  // ★인라인 태그(mark·b·u 등) 포함 문장은 통째 스킵(실측: mark 속성 중간 절단 → style="..."> 텍스트 노출) — keep-all 자연 줄바꿈에 맡긴다
+  if (/<[a-z]/i.test(sen)) return sen;
   const CLAUSE = /([,，、]|에서|라면|다면|하면|이면|인지|는지|한지|는 건|은 건|하고|하며|지만|는데|면서|위해|보다|어서|아서|여도|해도|므로|더라도|든지|거나|처럼|때는|때만|경우|까지|기간은|기한은|여부는|한도는|기준은|넣어야|하려면|통해|따라|대해|관해|[가-힣]{2,}[은는도]|[가-힣]{2,}할|[가-힣]{2,}면)\s+/g;
   const parts: string[] = [];
   let rest = sen;
@@ -285,6 +286,9 @@ function styleMarkers(html: string): string {
   html = html.replace(/<p(\s[^>]*)?>\s*(※[\s\S]*?)<\/p>/gi, (_m, _attr, inner) => {
     return `<p style="text-align:center;font-size:13px;color:#8b95a1;word-break:keep-all">${inner}</p>`;
   });
+
+  // ★깨진 태그 잔재 소거(실측: style="background-color:#fff3a8;"> 텍스트 노출) — 태그 시작(<) 없이 속성 문자열이 텍스트로 남은 것
+  html = html.replace(/(^|[^<a-zA-Z"'=])(?:style|class)="[^"<>]*;?\s*"?\s*\/?>/g, "$1");
 
   // ★엔진이 평문으로 쓴 '함께 보면 좋은 글' 라벨 소거(규격 위반 실측: 블록 2회) — 라벨은 시스템 산출(하단 3층) 전용
   html = html.replace(/<p[^>]*>\s*(?:<b[^>]*>)?\s*함께\s?보면\s?좋은\s?글\s*[:：]?\s*(?:<\/b>)?\s*<\/p>/g, "");
