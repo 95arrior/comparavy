@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { createSupabaseAdminClient } from "./supabase-server";
 import { fetchApplyhomeSeeds } from "./applyhome";
+import { fetchGov24Seeds } from "./gov24";
 import { gatherHeadlinesWithStats } from "./trendSources";
 import { seasonalSeeds } from "./seasonalEvents";
 import { fetchNaverAutocomplete } from "./naverAutocomplete";
@@ -14,7 +15,7 @@ import { logUsage } from "./usageLog";
 //  스케일: 유저 무관(카테고리당 1회) → 1만·100만 명 동일 비용. 유저는 이 풀에서 시드 회전으로 다른 조각을 봄.
 
 export interface Longtail { kw: string; blogTotal: number | null }
-export type SeedSource = "news" | "season" | "discover" | "applyhome";
+export type SeedSource = "news" | "season" | "discover" | "applyhome" | "gov24";
 export interface TrendTopic {
   keyword: string;
   title: string;
@@ -311,6 +312,19 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
         ah.joined = homes.length;
         if (homes.length) console.log(`[applyhome] ${category}: 공고 씨앗 ${homes.length}건 합류`);
       } catch (e) { ah.error = e instanceof Error ? e.message.slice(0, 120) : "unknown"; }
+      // ★보조금24(2단계 승인) — 기간 파싱된 신청형만(상시 제외), 조회수=실수요 정렬
+      try {
+        const govs = await fetchGov24Seeds();
+        for (const g of govs.slice(0, 4)) {
+          rows.push({
+            category, keyword: g.keyword, title: g.title, news_context: g.newsContext,
+            longtails: [] as Longtail[], source: "gov24", created_at: new Date().toISOString(),
+            expires_at: `${g.actionEnd}T23:59:59+09:00`,
+            action_start: g.actionStart, action_end: g.actionEnd,
+          } as (typeof rows)[number] & { action_start: string; action_end: string });
+        }
+        if (govs.length) console.log(`[gov24] ${category}: 신청형 씨앗 ${Math.min(govs.length, 4)}건 합류`);
+      } catch (e) { console.log(`[gov24] 실패: ${e instanceof Error ? e.message : "unknown"}`); }
     }
 
     const admin = createSupabaseAdminClient();
