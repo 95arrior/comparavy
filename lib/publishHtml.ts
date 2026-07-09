@@ -183,6 +183,7 @@ export function splitLongParagraphs(html: string): string {
 function styleBlocks(html: string): string {
   const align: "center" | "left" = BODY_ALIGN === "center" ? "center" : "left";
   return html.replace(/<(p|h1|h2|h3|h4|blockquote|ul|ol|li)(\s[^>]*)?>/gi, (m, tag, attr) => {
+    if (/^blockquote$/i.test(String(tag))) return /style=/.test(attr ?? "") ? m.replace(/style="([^"]*)"/, 'style="$1;text-align:center"') : m.replace(/>$/, ' style="text-align:center">'); // ★도입 훅 인용구는 중앙 유지(2026-07-10 유저 확인 — 좌측 문서체 속 유일한 중앙 포인트)
     if (/^(ul|ol|li)$/i.test(String(tag))) return /style=/.test(attr ?? "") ? m.replace(/style="([^"]*)"/, 'style="$1;text-align:left"') : m.replace(/>$/, ' style="text-align:left">'); // ★리스트는 항상 좌(유저 교본: 불릿 중앙정렬 금지)
     if (/text-align\s*:\s*center/.test(attr ?? "")) return m; // ★중앙 안내 블록(포맷 v3) — 엔진 지정 존중
     if (/style=/.test(attr ?? "")) return m.replace(/style="([^"]*)"/, `style="$1;text-align:${align}"`);
@@ -390,7 +391,7 @@ function applySizing(html: string): string {
     const addStyle = (r: string, css: string) => /style="/.test(r) ? r.replace(/style="([^"]*)"/, `style="$1;${css}"`) : r.replace(new RegExp(`^<${t}`), `<${t} style="${css}"`);
     if (t === "blockquote") {
       const len = visLen(inner);
-      if (len <= 44) return addStyle(raw, "font-size:17px;font-weight:700"); // ★도입 훅 인용(유저 교본) — 크고 진하게
+      if (len <= 90) return addStyle(raw, "font-size:17px;font-weight:700"); // ★도입 훅 인용 — 길이 무관 크고 진하게(44자 게이트가 47자 훅을 축소하던 실측)
       if (len > 44) { // 모바일 2줄(약 44자) 초과 → 축소 + 의미 단위 줄 분리
         const parts = inner.split(/(?<=[.?!,，])\s+/).map((x: string) => x.trim()).filter(Boolean);
         const joined = parts.length > 1 ? parts.join("<br>") : inner;
