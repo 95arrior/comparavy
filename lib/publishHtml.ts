@@ -111,31 +111,35 @@ function mergeUnbalanced(parts: string[]): string[] {
 // ★유저 교본(2026-07-07): 문단을 쪼개면(빈 줄) 흐름이 끊긴다 — 같은 문단 안에서 <br>로 '의미 구 줄바꿈'.
 //  문장별 한 줄. 문장이 길면(>44자) 쉼표·연결어미 구 경계에서 균형 줄바꿈(양쪽 12자 이상일 때만 — 고아 조각 금지).
 function breakSentence(sen: string): string {
-  // ★모바일 줄폭(유저 최종 규격): 한계선 23자(공백 포함) — 목표 18(꽉 채우지 않기), 어절 경계에서만 절단.
-  // ★인라인 태그(mark·b·u 등) 포함 문장은 통째 스킵(실측: mark 속성 중간 절단 → style="..."> 텍스트 노출) — keep-all 자연 줄바꿈에 맡긴다
-  if (/<[a-z]/i.test(sen)) return sen;
+  // ★모바일 줄폭(유저 최종 규격): 한계선 23자 — 목표 18, 어절 경계만.
+  // ★태그-인식 절단(v2): 인라인 태그(mark·b·u) 문장도 '텍스트 구간에서만' 자른다 — 태그 중간 절단 불가 + 통줄 부작용 해소(실측 68자 통줄).
+  // ★공백 보존: 절단점의 공백을 지우지 않는다 — 네이버가 <br>을 삭게 될 때 단어가 붙는 사고 방지(실측 '연금도돌려받을').
+  if (/<br/i.test(sen)) return sen;
   const CLAUSE = /([,，、]|에서|라면|다면|하면|이면|인지|는지|한지|는 건|은 건|하고|하며|지만|는데|면서|위해|보다|어서|아서|여도|해도|므로|더라도|든지|거나|처럼|때는|때만|경우|까지|기간은|기한은|여부는|한도는|기준은|넣어야|하려면|통해|따라|대해|관해|[가-힣]{2,}[은는도]|[가-힣]{2,}할|[가-힣]{2,}면)\s+/g;
-  const parts: string[] = [];
-  let rest = sen;
+  // 태그/텍스트 토큰 분해 — 절단점은 plain(태그 제외 텍스트)의 시각 오프셋으로 계산 후 텍스트 토큰에만 삽입
+  const tokens = sen.split(/(<[^>]+>)/).filter((t) => t !== "");
+  const plain = tokens.filter((t) => !t.startsWith("<")).join("");
+  const cutOffsets: number[] = []; // plain 기준 절단 오프셋(누적)
+  let rest = plain;
+  let base = 0;
   let guard = 0;
-  while (visLen(rest) > 21 && guard++ < 8) { // ★진입 24→21(실측: 22자 잔여 줄이 네이버 폭에서 재접힘 '접/수해요')
+  while (visLen(rest) > 21 && guard++ < 8) {
     const cands: number[] = [];
     let m: RegExpExecArray | null;
     CLAUSE.lastIndex = 0;
     while ((m = CLAUSE.exec(rest))) cands.push(m.index + m[0].length);
     let best = -1, bestD = Infinity;
-    for (const pass of [{ min: 10, max: 23 }, { min: 8, max: 23 }]) { // 한계선 23자 — 초과 개행 금지
+    for (const pass of [{ min: 10, max: 23 }, { min: 8, max: 23 }]) {
       for (const cut of cands) {
         const left = visLen(rest.slice(0, cut));
-        if (left < pass.min || left > pass.max || visLen(rest.slice(cut)) < 4) continue; // 우측 4자('접수해요.')도 유효한 줄
+        if (left < pass.min || left > pass.max || visLen(rest.slice(cut)) < 4) continue;
         const d = Math.abs(left - 18);
         if (d < bestD) { bestD = d; best = cut; }
       }
       if (best >= 0) break;
     }
     if (best < 0) {
-      // 최후 폴백 — 조사·어미 경계가 없으면 일반 어절(공백) 경계에서(단어 중간 절단 아님)
-      const words = [...rest.matchAll(/\s+/g)].map((m) => m.index ?? 0);
+      const words = [...rest.matchAll(/\s+/g)].map((w) => w.index ?? 0);
       let wb = -1, wd = Infinity;
       for (const w of words) {
         const left = visLen(rest.slice(0, w));
@@ -144,15 +148,33 @@ function breakSentence(sen: string): string {
         if (d < wd) { wd = d; wb = w; }
       }
       if (wb < 0) break;
-      parts.push(rest.slice(0, wb).trimEnd());
-      rest = rest.slice(wb).trimStart();
-      continue;
+      best = wb;
     }
-    parts.push(rest.slice(0, best).trimEnd());
-    rest = rest.slice(best).trimStart();
+    cutOffsets.push(base + best);
+    base += best;
+    rest = plain.slice(base);
   }
-  parts.push(rest);
-  return parts.join("<br>");
+  if (cutOffsets.length === 0) return sen;
+  // 토큰 순회 — 텍스트 토큰 안의 해당 오프셋에 <br> 삽입(공백은 보존: 자르기만, trim 없음)
+  let acc = 0; // plain 누적 길이
+  let ci = 0;
+  const out: string[] = [];
+  for (const tok of tokens) {
+    if (tok.startsWith("<")) { out.push(tok); continue; }
+    let t = tok;
+    let consumed = 0;
+    while (ci < cutOffsets.length) {
+      const target = cutOffsets[ci]! - acc - consumed;
+      if (target <= 0 || target >= t.length) break;
+      out.push(t.slice(0, target), "<br>");
+      t = t.slice(target);
+      consumed += target;
+      ci += 1;
+    }
+    out.push(t);
+    acc += tok.length;
+  }
+  return out.join("");
 }
 function splitInner(inner: string): string[] {
   // ★마커 문단 보호 — 절 개행이 [관련글]/[마무리관련글]/[사진] 마커 안에 <br>을 박으면 변환 정규식이 죽는다(실측: 3층 블록 미출력·마커 원형 노출)
@@ -400,6 +422,13 @@ function applySizing(html: string): string {
 /* ── 형광펜·해시태그 ── */
 // ★형광펜 총량 게이트(실측: 도배 — 3줄짜리 통형광 다수) — 규칙 위반은 코드가 강등한다.
 //  70자 초과=무조건 해제(면적 도배), 문장급(15~70자)=글 전체 3개까지, 구급(≤14자)=5개까지. 초과분은 볼드로.
+// ★리스트 이중 불릿·발행물 이모지 소거(실측: '• ✅ 배당' — 불릿 위 체크 이모지 중첩, 💡 안내 이모지) — 📌(포인트 승격 규격)은 유지
+function stripListEmoji(html: string): string {
+  return html
+    .replace(/([•·]\s*)(?:✅|☑️|✔️|❌|⭕️|🔹|🔸|▪️)+\s*/gu, "$1")
+    .replace(/(?:💡|✅|☑️|✔️|🔔|⚠️|❗️)\s?/gu, "");
+}
+
 // ★AI 문체 부호 소거(유저 실측: '7월 21일 — 접수 시작 전에' — em dash는 대표적 AI 문체 신호) — 조립 시 일괄 치환
 function sanitizeAiPunct(html: string): string {
   return html
@@ -452,7 +481,7 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   const withImages = opts?.withImages ?? true;
   let idx = -1;
   // ★사진 자리는 '구조화 슬롯'으로만 — 채워진 슬롯만 이미지로, 미충족 슬롯은 줄 자체를 제거(안내문구 유출 금지).
-  let body = markToBold(capMarks(capDanger(sanitizeAiPunct(input.bodyHtml)))).replace(SLOT_RE, (_m, desc: string) => {
+  let body = markToBold(capMarks(capDanger(sanitizeAiPunct(stripListEmoji(input.bodyHtml))))).replace(SLOT_RE, (_m, desc: string) => {
     idx += 1;
     if (!withImages) return `<p>[사진 ${idx + 1}]</p>`; // marker 모드(수동 배치) — 명시적 선택
     const url = input.images?.[idx];
