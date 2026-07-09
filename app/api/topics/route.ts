@@ -395,6 +395,17 @@ export async function GET(req: Request) {
           }
           try { await pool.from("api_cache").upsert({ key: volKey, value: volMap, expires_at: new Date(Date.now() + 24 * 3600_000).toISOString(), updated_at: new Date().toISOString() }); } catch { /* ignore */ }
         }
+        // ★수요 기반 선별(유저 확정: 표시만 하던 검색량을 선별에 사용 — '수요 낮음'을 최상단에 올리는 자기모순 제거)
+        tc = tc.filter((c) => {
+          const v = volMap[c.keyword];
+          const isAnnounce = Boolean((c as { actionEnd?: string | null }).actionEnd);
+          if (isAnnounce && v && v.vol < 300) return false; // 청약·신청형: 실측 저수요(소단지 무순위 등) 컷 — 미조회는 유지
+          return true;
+        });
+        // 수요 내림차순 재정렬 — 실측 큰 것 위로, 미조회는 현 순서 유지(뒤로 밀지 않음: 신선 이슈일 수 있음)
+        tc = tc.map((c, i) => ({ c, i, vol: volMap[c.keyword]?.vol ?? -1 }))
+          .sort((a, b) => (b.vol - a.vol) || (a.i - b.i))
+          .map((x) => x.c);
         for (const c of tc) {
           const v = volMap[c.keyword];
           if (v) {
