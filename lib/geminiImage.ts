@@ -98,7 +98,7 @@ export function buildBodyPrompt(slotDesc: string, articleTitle: string, seed: nu
       //  예: '연 90만원 환급을 안 받는 것' → 돈·통장이 쓰레기통에 버려지는 한 장면. 앱 화면 묘사보다 은유가 백배 강하다.
       opts?.context?.trim() ? `THE PARAGRAPH THIS IMAGE ILLUSTRATES (understand only — never render as text): "${opts.context.trim().slice(0, 300)}". Extract its ONE emotional point and stage it as a BOLD VISUAL METAPHOR that makes the reader feel that point instantly — staged THEATRICALLY like a viral thumbnail (e.g. losing an annual refund → stylized Korean banknotes and coins tumbling into a trash bin, dramatic light; a deadline passing → a calendar page burning out). Prefer a striking exaggerated metaphor over literally depicting app screens or procedures.` : "",
       // ★장면 단순화(유저 컨셉 확정) — 설명의 디테일을 그리려 하면 텍스트·복잡성이 끼어 깨진다. 핵심 명사 1개로 환원.
-      "RADICAL SIMPLIFICATION — one metaphor beats a complex scene: from the scene hint keep ONE simple visual idea and render it as bold flat shapes (a building = simple geometric facade; fields = layered green shapes; a person learning = round figure with a giant book). Simple geometric characters ARE welcome here (pose tells the story, minimal face).",
+      "HARD RULE: MAXIMUM 2 meaningful objects in the frame — if the scene hint lists more, keep only the most symbolic one. RADICAL SIMPLIFICATION — one metaphor beats a complex scene: from the scene hint keep ONE simple visual idea and render it as bold flat shapes (a building = simple geometric facade; fields = layered green shapes; a person learning = round figure with a giant book). Simple geometric characters ARE welcome here (pose tells the story, minimal face).",
       // ★단일 문법(유저 최종 판정: 텍스트 절대 금지 — 깨짐, 빈 화면도 금지 — 허접) — 상황이 스스로 말하는 씬 3택.
       "Pick the ONE idea that best fits this topic: (a) PLACE topics → the place as bold simple shapes (apartment silhouette, factory outline). (b) MONEY/APPLICATION topics → one iconic object oversized: giant coin, house shape, calendar shape (no numbers), an envelope. (c) PEOPLE situations → one round geometric character in an expressive pose interacting with ONE object. The image must instantly convey what the article is about — a symbol, not a scene.",
       `Setting is always KOREA (Korean apartments, Korean streets, Korean products; any hands or partial figures are Korean). The topic-specific OBJECTS are the hero of the frame — a person may appear only as hands interacting with them (no full figures, face never visible). Include at least 2 physical objects that are UNIQUELY specific to the topic above (e.g., housing topic → door keys, moving boxes, apartment window view; car topic → car interior, charging cable). NEVER generic clichés: NO piggy banks, NO coin stacks, NO calculators, NO lightbulbs, NO miniature house models, NO keys-next-to-props. AVOID the tired 'objects arranged on a desk' composition unless the topic is literally desk work — when the topic has a real-world place (bank, apartment complex, market, road), GO THERE with a wide editorial shot instead.`,
@@ -154,26 +154,31 @@ export function compositionOf(copy: string): 0 | 1 | 2 {
   return 1;
 }
 
+// ★배경 문법 4종(2026-07-09 유저 레퍼런스 — 통일성은 스타일, 다양성은 문법·색으로)
+const BG_GRAMMARS = [
+  "GRAMMAR = ONE GIANT SYMBOL: a single oversized icon-like object dead-simple and instantly readable (a banknote bundle, a shield, a coin with a percent sign), centered-ish with generous flat negative space around it.",
+  "GRAMMAR = OUTLINE CHARACTER + ORBIT: one simple line-drawn character (minimal face) holding a phone or object, with 3-4 tiny satellite icons (envelope, calendar, chat bubble, coin) orbiting around on dotted paths.",
+  "GRAMMAR = ICON GRID: a tidy 2x2 grid of soft rounded app-like icons, each a simple glyph on its own colored rounded square, floating on the flat background.",
+  "GRAMMAR = FESTIVE SCATTER: the center stays EMPTY flat color (text goes there later); small playful doodle objects and confetti shapes scattered around the top and bottom edges only.",
+];
+const BG_PALETTES = [
+  "dominant vivid blue (#3268f6 family), off-white and warm orange accents",
+  "dominant fresh green (#2DB400 family), off-white and dark ink accents",
+  "dominant warm coral (#ff7f6e family), soft teal and cream accents",
+  "dominant deep violet (#6b5cff family), light blue and white accents",
+];
+
 export function buildThumbPhotoBgPrompt(topic: string, seed: number, center = false, opts?: { copyText?: string; variant?: number }): string {
   const tone = PHOTO_TONES[seed % PHOTO_TONES.length];
   const copy = opts?.copyText?.trim() ?? "";
   const v = Math.max(0, opts?.variant ?? 0);
-  // 첫 생성 = 문구 주어 판정 구도, 재생성 = (a)→(b)→(c) 코드 순환(AI 재량 없음)
-  const comp = ((compositionOf(copy) + v) % 3) as 0 | 1 | 2;
-  const persona = [
-    "a Korean woman in her 30s",
-    "a Korean man in his 40s-50s",
-    "a young Korean person in their 20s",
-    "hands only — no face in frame (the situation told through hand gestures and objects)",
-  ][(seed + v) % 4];
-  const compRule = [
-    `COMPOSITION (fixed, not optional) = CHARACTER + OBJECT: one simple geometric character interacting with the topic object oversized (a round figure holding a giant coin, reading a giant book). ${emotionOf(copy)} — expressed through POSE and staging, not facial detail.`,
-    `COMPOSITION (fixed, not optional) = OBJECT/PLACE ONLY — no characters. The topic's object or place as ONE bold oversized symbol (a giant house shape, an apartment silhouette skyline, a huge calendar shape). When the copy's hero is a place or number, the symbol is the star.`,
-    `COMPOSITION (fixed, not optional) = CONTRAST: two sides in one frame — big vs small, up-arrow side vs down-arrow side, got-it vs missed-it — told with simple shapes and color blocking. ${emotionOf(copy)}`,
-  ][comp];
+  // 문구 주어 → 시작 문법 매핑(사람=인물 문법, 그 외=심볼), variant·seed로 문법×팔레트 회전
+  const baseG = compositionOf(copy) === 0 ? 1 : 0;
+  const grammar = BG_GRAMMARS[(baseG + v) % BG_GRAMMARS.length];
+  const palette = BG_PALETTES[(seed + v) % BG_PALETTES.length];
   const subjectRule = copy
-    ? `THE COPY IS THE SCRIPT (highest priority): the Korean copy overlaid on this image reads "${copy}" (understand only — never render it). Draw the IDEA this copy describes as one bold flat-illustration symbol. NON-NEGOTIABLE: include ONE topic-identifying object from "${topic.trim()}" so the field is recognizable even with the text covered (수출→container/ship shape, 지원금→giant coin/envelope, 대출·청약→house/apartment shapes, 적금→coin stack). ${compRule} LITMUS TEST: with the text hidden, a viewer should still guess the article's field. ${ATEFLO_ILLUST_STYLE}`
-    : `Flat vector illustration thumbnail for this topic (understand only — never render as text): "${topic.trim()}". ONE iconic oversized symbol of the topic. ${ATEFLO_ILLUST_STYLE}`;
+    ? `THE COPY IS THE SCRIPT (highest priority): the Korean copy overlaid on this image reads "${copy}" (understand only — never render it). Draw the IDEA this copy describes as one bold flat-illustration symbol. NON-NEGOTIABLE: include ONE topic-identifying object from "${topic.trim()}" so the field is recognizable even with the text covered (수출→container/ship shape, 지원금→giant coin/envelope, 대출·청약→house/apartment shapes, 적금→coin stack). ${grammar} PALETTE: ${palette} (max 4 colors, subtle film grain finish). MAXIMUM 2 meaningful objects unless the grammar says otherwise — simplicity wins. LITMUS TEST: with the text hidden, a viewer should still guess the article's field. ${ATEFLO_ILLUST_STYLE}`
+    : `Flat vector illustration thumbnail for this topic (understand only — never render as text): "${topic.trim()}". ${grammar} PALETTE: ${palette}. ${ATEFLO_ILLUST_STYLE}`;
   const layout = center
     ? `Subjects arranged toward the edges/corners; the CENTER of the frame stays calm and low-detail — large Korean text will be overlaid dead-center later.`
     : `Main subject in the UPPER two-thirds; the BOTTOM third must stay calm and low-detail (soft surface, gentle falloff) — text overlay goes there.`;

@@ -37,7 +37,7 @@ export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots
   const [text, setText] = useState("");
   const [palette, setPalette] = useState(SWATCHES[0].name);
   const [tone, setTone] = useState("mid");
-  const [bgKind, setBgKind] = useState<"photo" | "toss" | "plain">("photo"); // 기본=실사(유저 확정)
+  const [bgKind, setBgKind] = useState<"photo" | "plain">("photo"); // photo=일러스트(2026-07-09 실사 폐기 — 프롬프트가 일러스트), 기본=일러스트
   const fontKey = `ateflo_tfont_${brandKey ?? ""}`;
   const [font, setFontRaw] = useState("GmarketSansBold");
   useEffect(() => { try { const v = localStorage.getItem(fontKey); if (v) setFontRaw(v); } catch { /* ignore */ } // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -63,7 +63,7 @@ export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots
     try {
       const r = await fetch("/api/images/generate", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ thumbMaker: true, mainCopy: text.trim(), paletteName: palette, wash: TONES.find((t) => t.key === tone)?.wash ?? 0.35, aiBg: bgKind !== "plain", bgStyle: bgKind === "toss" ? "toss" : "photo", articleId, fontName: font, title: articleTitle, brandName, variant: (() => { if (retryRef.current.copy === text.trim()) { retryRef.current.n += 1; } else { retryRef.current = { copy: text.trim(), n: 0 }; } return retryRef.current.n; })() }),
+        body: JSON.stringify({ thumbMaker: true, mainCopy: text.trim(), paletteName: palette, wash: TONES.find((t) => t.key === tone)?.wash ?? 0.35, aiBg: bgKind !== "plain", bgStyle: "photo", articleId, fontName: font, title: articleTitle, brandName, variant: (() => { if (retryRef.current.copy === text.trim()) { retryRef.current.n += 1; } else { retryRef.current = { copy: text.trim(), n: 0 }; } return retryRef.current.n; })() }),
       });
       const d = await r.json();
       if (!r.ok) { setErr(d.error ?? "만들지 못했어요"); if (typeof d.credits === "number") onCredits?.(d.credits); }
@@ -135,9 +135,8 @@ export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots
         <p className="mt-4 text-[13px] font-bold text-neutral-700">배경</p>
         <div className="mt-2 grid grid-cols-3 gap-1.5">
           {[
-            { k: "photo" as const, label: "실사 사진", sub: `추천 · ${IMAGE_COST}cr` },
-            { k: "toss" as const, label: "3D 일러스트", sub: `${IMAGE_COST}cr` },
-            { k: "plain" as const, label: "단색", sub: "무료" },
+            { k: "photo" as const, label: "일러스트", sub: `추천 · ${IMAGE_COST}cr` },
+            { k: "plain" as const, label: "색면", sub: "무료" },
           ].map((o) => (
             <button key={o.k} onClick={() => setBgKind(o.k)} className={`at-press rounded-[12px] px-2 py-2.5 text-center transition ${bgKind === o.k ? "bg-[#1D75F7]/[0.08] ring-1 ring-[#1D75F7]/40" : "bg-neutral-50"}`}>
               <span className={`block text-[12.5px] font-bold ${bgKind === o.k ? "text-[#1D75F7]" : "text-neutral-700"}`}>{o.label}</span>

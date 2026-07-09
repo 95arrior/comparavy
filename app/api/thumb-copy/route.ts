@@ -54,6 +54,11 @@ export async function POST(request: Request) {
         .filter((c) => c.length >= 4)
         .map((c) => ([...c].length > 18 ? "" : c)) // ★18자 상한(유저 규격: 고정 폰트 1줄 9자·2줄 — 초과는 후보 제외)
         .filter((c) => c && breakThumbCopy(c).split("\n").every((l) => [...l].length <= 9)) // ★9자/줄 분할 가능까지 검사(어절 배분상 불가 문구 제외)
+        .filter((c) => { // ★주제어 게이트(실측: '아는 사람만 써먹는 경로' — 무엇의 경로인지 부재) — 키워드·제목의 실질 명사 1개 필수
+          const stop = new Set(["방법", "정리", "조건", "확인", "신청", "가능", "지금", "오늘", "이유", "핵심", "순서", "전에", "먼저"]);
+          const toks = `${art.keyword ?? ""} ${art.title ?? ""}`.split(/[\s,·]+/).map((t) => t.replace(/[^가-힣a-zA-Z0-9]/g, "")).filter((t) => t.length >= 2 && !stop.has(t));
+          return toks.length === 0 || toks.some((t) => c.includes(t) || (t.length >= 4 && c.includes(t.slice(0, Math.max(3, t.length - 2)))));
+        })
         .filter((c) => { // ★숫자 근거 게이트(실측: 접수 13일인데 '7월 14일까지' 유령 날짜) — 소스에 없는 숫자 문구 제외
           const src = `${art.title ?? ""} ${art.keyword ?? ""} ${art.meta_description ?? ""} ${String((art as { body_html?: string }).body_html ?? "").replace(/<[^>]+>/g, " ").slice(0, 1200)}`.replace(/[,\s]/g, "");
           for (const num of c.match(/[0-9][0-9,.]*/g) ?? []) {
