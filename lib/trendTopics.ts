@@ -70,7 +70,8 @@ export async function getTrendTopics(category: string): Promise<TrendTopic[]> {
 /** 카테고리에 신선한 트렌드가 있는지(있으면 갱신 스킵). */
 export async function hasFreshTrends(category: string): Promise<boolean> {
   const t = await getTrendTopics(category);
-  return t.length >= 8;
+  // ★공고 씨앗(접수 마감까지 장수명 — actionEnd 보유)은 카운트 제외(실측: 공고 10개가 '신선' 판정을 채워 뉴스 재수확 영구 스킵 — 서해구 불멸 사고)
+  return t.filter((x) => !x.actionEnd).length >= 8;
 }
 
 // 게이트 탈락 기록 — 이후 튜닝의 기준 데이터(stale은 소스층 [trend-fresh] 로그, 여기는 합성 이후 게이트).
