@@ -617,7 +617,7 @@ export default function ArticleModal({ pubStampKey, blogName,
             return <p className={`mb-1 text-center text-[12px] font-semibold ${adv.hot ? "text-[#F04452]" : "text-neutral-400"}`}>{adv.text}</p>;
           })()}
           {!isWp && (() => {
-            const totalSlots = (bodyHtml.match(/\[(?:사진|카드):/g) ?? []).length;
+            const totalSlots = (bodyHtml.match(/\[(?:사진|카드|차트):/g) ?? []).length;
             const filled = Object.values(imgs).filter((v) => v.url).length;
             const empty = totalSlots - filled;
             if (empty <= 0) return null;

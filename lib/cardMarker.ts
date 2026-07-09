@@ -60,3 +60,44 @@ export function verifyNumbersInBody(spec: CardSpec, bodyHtml: string): string[] 
   }
   return [...new Set(missing)];
 }
+
+/* ── 차트 마커(2026-07-09 유저 확정 — 숫자 무결성 최우선) ──
+   형식: [차트: {"kind":"trend"|"bars","label":"주담대 연체율","unit":"%","points":[{"x":"25.3Q","y":"0.24"}],"conclusion":"...","source_sentence":"..."}]
+   또는 bars: {"kind":"bars","label":...,"series":["규제 전","2단계"],"groups":[{"label":"소득 5천","values":["6억","4.5억"]}]}
+   원칙: 렌더러는 이 JSON을 그대로 그린다(중간 AI 재서술 금지), y·values는 본문 원문 문자열 그대로(반올림·단위 변환 금지). */
+export type ChartSpec =
+  | { kind: "trend"; label: string; unit?: string; points: { x: string; y: string }[]; conclusion?: string; source_sentence?: string }
+  | { kind: "bars"; label: string; unit?: string; series: string[]; groups: { label: string; values: string[] }[]; source_sentence?: string };
+
+export function parseChartMarker(desc: string): ChartSpec | null {
+  const jstart = desc.indexOf("{");
+  if (jstart < 0) return null;
+  try {
+    const o = JSON.parse(desc.slice(jstart)) as Record<string, unknown>;
+    if (o.kind === "trend" && Array.isArray(o.points)) {
+      const points = (o.points as { x?: unknown; y?: unknown }[]).map((p) => ({ x: String(p.x ?? "").slice(0, 12), y: String(p.y ?? "").slice(0, 14) })).filter((p) => p.x && p.y).slice(0, 5);
+      if (points.length < 3) return null;
+      return { kind: "trend", label: String(o.label ?? "").slice(0, 30), unit: o.unit ? String(o.unit).slice(0, 8) : undefined, points, conclusion: o.conclusion ? String(o.conclusion).slice(0, 40) : undefined, source_sentence: o.source_sentence ? String(o.source_sentence).slice(0, 200) : undefined };
+    }
+    if (o.kind === "bars" && Array.isArray(o.groups)) {
+      const series = (Array.isArray(o.series) ? o.series : []).map((x) => String(x).slice(0, 12)).slice(0, 3);
+      const groups = (o.groups as { label?: unknown; values?: unknown }[]).map((g) => ({ label: String(g.label ?? "").slice(0, 12), values: (Array.isArray(g.values) ? g.values : []).map((v) => String(v).slice(0, 14)).slice(0, 3) })).filter((g) => g.label && g.values.length > 0).slice(0, 3);
+      if (groups.length < 2 || series.length === 0) return null;
+      return { kind: "bars", label: String(o.label ?? "").slice(0, 30), unit: o.unit ? String(o.unit).slice(0, 8) : undefined, series, groups, source_sentence: o.source_sentence ? String(o.source_sentence).slice(0, 200) : undefined };
+    }
+    return null;
+  } catch { return null; }
+}
+
+/** 차트 수치 역검증 — 모든 수치가 본문에 '문자열 그대로' 존재해야(반올림·변환은 오류 지점 — 유저 확정). 불일치 목록 반환. */
+export function verifyChartNumbers(spec: ChartSpec, bodyHtml: string): string[] {
+  const bodyDigits = bodyHtml.replace(/<[^>]+>/g, " ").replace(/[,\s]/g, "");
+  const texts: string[] = spec.kind === "trend" ? spec.points.map((p) => p.y) : spec.groups.flatMap((g) => g.values);
+  const missing: string[] = [];
+  for (const t of texts) {
+    const n = t.replace(/[,\s]/g, "").replace(/[^0-9.억조만%~+-]/g, "");
+    const core = n.match(/[0-9][0-9.]*/)?.[0] ?? "";
+    if (core && !bodyDigits.includes(core)) missing.push(t);
+  }
+  return [...new Set(missing)];
+}

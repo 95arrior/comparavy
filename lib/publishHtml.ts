@@ -21,7 +21,7 @@ export interface PublishInput {
 
 const PHOTO_RE = /\[사진:\s*([^\]]+)\]/g;
 // ★슬롯 통합 — 사진·카드 둘 다 이미지 슬롯. 문서 순서로 인덱싱, images 맵이 URL 제공(사진=Gemini, 카드=satori).
-const SLOT_RE = /\[(?:사진|카드):\s*([^\]]+)\]/g;
+const SLOT_RE = /\[(?:사진|카드|차트):\s*([^\]]+)\]/g;
 export interface Slot { type: "photo" | "card"; desc: string }
 // 본문의 슬롯을 문서 순서로 파싱(생성 파이프라인이 타입별로 렌더).
 export function parseSlots(bodyHtml: string): Slot[] {
@@ -178,7 +178,7 @@ function breakSentence(sen: string): string {
 }
 function splitInner(inner: string): string[] {
   // ★마커 문단 보호 — 절 개행이 [관련글]/[마무리관련글]/[사진] 마커 안에 <br>을 박으면 변환 정규식이 죽는다(실측: 3층 블록 미출력·마커 원형 노출)
-  if (/\[(?:마무리)?관련글:|\[(?:사진|카드):|\[링크 카드/.test(inner)) return [inner];
+  if (/\[(?:마무리)?관련글:|\[(?:사진|카드|차트):|\[링크 카드/.test(inner)) return [inner];
   if (visLen(inner) <= MOBILE_MAX_CHARS && !/(?<=[?!])\s|(?<=[^\d]\.)\s/.test(inner.replace(/<[^>]+>/g, ""))) return [breakSentence(inner)]; // ★단문 문단도 절 개행은 적용(실측: 한 문장 문단이 통줄로 남음)
   const sentences = mergeUnbalanced(inner.split(/(?:<br\s*\/?>)|(?<=[?!])\s+|(?<=[^\d]\.)\s+/g).map((x) => x.trim()).filter(Boolean));
   if (sentences.length <= 1) return [breakSentence(inner)];

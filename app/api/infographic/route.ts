@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
-import { renderBarChart, renderTableCard, renderChecklistCard, renderStatCard, renderBeforeAfterCard, renderCompositionCard } from "@/lib/infographicRenderer";
-import { parseCardMarker, verifyNumbersInBody } from "@/lib/cardMarker";
+import { renderBarChart, renderTableCard, renderChecklistCard, renderStatCard, renderBeforeAfterCard, renderCompositionCard, renderTrendChart } from "@/lib/infographicRenderer";
+import { parseCardMarker, verifyNumbersInBody, parseChartMarker, verifyChartNumbers } from "@/lib/cardMarker";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -63,8 +63,20 @@ export async function POST(req: Request) {
 
   try {
     let png: Buffer | null = null;
+    // ★차트 마커(유저 확정 — 숫자 무결성 최우선): JSON 그대로 렌더, 역검증 불일치=자동 탈락
+    const chartSpec = parseChartMarker(slotDesc);
+    if (chartSpec) {
+      const missing = verifyChartNumbers(chartSpec, html);
+      if (missing.length > 0) return NextResponse.json({ error: `수치 불일치 — 차트의 ${missing.slice(0, 3).join(", ")}이(가) 본문에 없어요. 틀릴 수 있는 차트보다 없는 게 나아요(빈 슬롯엔 분위기 이미지를 쓸 수 있어요).` }, { status: 422 });
+      if (chartSpec.kind === "trend") {
+        const nums = chartSpec.points.map((pt) => parseFloat(pt.y.replace(/[^0-9.-]/g, "")));
+        png = await renderTrendChart({ title: chartSpec.label, unit: chartSpec.unit, points: chartSpec.points.map((pt, i) => ({ x: pt.x, y: Number.isFinite(nums[i]) ? (nums[i] as number) : 0, yText: pt.y })), conclusion: chartSpec.conclusion, brand });
+      } else {
+        png = await renderBarChart({ title: chartSpec.label, unit: chartSpec.unit, seriesNames: chartSpec.series, groups: chartSpec.groups.map((g) => ({ label: g.label, values: g.values.map((v) => parseFloat(v.replace(/[^0-9.-]/g, "")) || 0) })), brand });
+      }
+    }
     // ★구조화 카드 마커(유저 승인 4종) — slotDesc가 [카드: 유형|...] 구조면 템플릿 직행 + 본문 실값 대조
-    const cardSpec = parseCardMarker(stripTags(slotDesc).replace(/^\[?카드:?\s*/, ""));
+    const cardSpec = png ? null : parseCardMarker(stripTags(slotDesc).replace(/^\[?카드:?\s*/, ""));
     if (cardSpec) {
       const missing = verifyNumbersInBody(cardSpec, html);
       if (missing.length > 0) return NextResponse.json({ error: `카드의 숫자(${missing.slice(0, 3).join(", ")})가 본문에 없어요 — 본문 실값만 카드로 만들 수 있어요.` }, { status: 422 });

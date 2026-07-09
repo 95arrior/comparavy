@@ -49,17 +49,17 @@ export interface BarGroup { label: string; values: number[] } // values 1~2개
 export async function renderBarChart(opts: { title: string; unit?: string; seriesNames: string[]; groups: BarGroup[]; brand: string; source?: string }): Promise<Buffer> {
   const groups = opts.groups.slice(0, 6);
   const maxVal = Math.max(...groups.flatMap((g) => g.values.map((v) => Math.abs(v))), 0.0001);
-  const colors = [BLUE, RED];
+  const colors = [BLUE, "#7EB0FB", "#A9B4C2"]; // 토스톤 — 파랑 주축·연파랑·그레이 보조(유저 토큰)
   const plotH = 380;
   const legend = el("div", { style: { display: "flex", gap: 22, justifyContent: "flex-end" } },
-    opts.seriesNames.slice(0, 2).map((n, i) => el("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, [
+    opts.seriesNames.slice(0, 3).map((n, i) => el("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, [
       el("div", { style: { display: "flex", width: 18, height: 18, backgroundColor: colors[i], borderRadius: 4 } }),
       el("div", { style: { display: "flex", fontFamily: "B", fontSize: 22, color: SUB } }, n),
     ])));
   const bars = el("div", { style: { display: "flex", alignItems: "flex-end", justifyContent: "space-around", height: plotH, marginTop: 18, borderBottom: `3px solid ${INK}`, paddingBottom: 0 } },
     groups.map((g) => el("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 0 } }, [
       el("div", { style: { display: "flex", alignItems: "flex-end", gap: 10 } },
-        g.values.slice(0, 2).map((v, i) => {
+        g.values.slice(0, 3).map((v, i) => {
           const h = Math.max(10, Math.round((Math.abs(v) / maxVal) * (plotH - 90)));
           return el("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 8 } }, [
             el("div", { style: { display: "flex", fontFamily: "T", fontSize: 24, color: colors[i] } }, String(v)),
@@ -144,4 +144,39 @@ export async function renderCompositionCard(opts: { title: string; items: Compos
     ]);
   });
   return toPng(frame(opts.title, opts.brand, [el("div", { style: { display: "flex", flexDirection: "column", justifyContent: "center", flexGrow: 1 } }, rows)]));
+}
+
+/* ── 7) 추이 차트(e) — 시계열 3~5포인트, 포인트 수치 라벨, 하단 결론 박스(벤치마크 주력 유형) ── */
+export interface TrendPoint { x: string; y: number; yText: string }
+export async function renderTrendChart(opts: { title: string; unit?: string; points: TrendPoint[]; conclusion?: string; brand: string }): Promise<Buffer> {
+  const pts = opts.points.slice(0, 5);
+  const ys = pts.map((p) => p.y);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const span = maxY - minY || Math.abs(maxY) || 1;
+  const plotW = 1000, plotH = 300, padX = 80;
+  const stepX = pts.length > 1 ? (plotW - padX * 2) / (pts.length - 1) : 0;
+  const posOf = (i: number) => ({ cx: padX + stepX * i, cy: 40 + (plotH - 80) * (1 - (pts[i]!.y - minY) / span) });
+  const nodes: El[] = [];
+  // 선 — 회전 대신 보간 점(satori의 transform-origin 비호환 실측: 선이 포인트에서 이탈) — 촘촘한 원으로 라인 근사
+  for (let i = 0; i < pts.length - 1; i++) {
+    const a = posOf(i), b = posOf(i + 1);
+    const segs = 22;
+    for (let k = 1; k < segs; k++) {
+      const t = k / segs;
+      nodes.push(el("div", { style: { position: "absolute", left: a.cx + (b.cx - a.cx) * t - 3, top: a.cy + (b.cy - a.cy) * t - 3, width: 7, height: 7, borderRadius: 4, backgroundColor: BLUE } }));
+    }
+  }
+  // 포인트 + 수치 라벨 + x 라벨
+  pts.forEach((p, i) => {
+    const { cx, cy } = posOf(i);
+    nodes.push(el("div", { style: { position: "absolute", left: cx - 11, top: cy - 11, width: 22, height: 22, borderRadius: 11, backgroundColor: "#FFFFFF", border: `6px solid ${BLUE}` } }));
+    nodes.push(el("div", { style: { position: "absolute", left: cx - 90, top: cy - 56, width: 180, display: "flex", justifyContent: "center", fontFamily: "T", fontSize: 30, color: i === pts.length - 1 ? BLUE : INK } }, p.yText));
+    nodes.push(el("div", { style: { position: "absolute", left: cx - 90, top: plotH - 6, width: 180, display: "flex", justifyContent: "center", fontFamily: "B", fontSize: 23, color: SUB } }, p.x));
+  });
+  const plot = el("div", { style: { display: "flex", position: "relative", width: plotW + 80, height: plotH + 30, marginTop: 8 } }, nodes);
+  const unit = opts.unit ? el("div", { style: { display: "flex", justifyContent: "flex-end", fontFamily: "R", fontSize: 20, color: WEAK } }, `(단위: ${opts.unit})`) : el("div", { style: { display: "flex" } });
+  const conclusion = opts.conclusion
+    ? el("div", { style: { display: "flex", justifyContent: "center", backgroundColor: "#F2F6FF", borderRadius: 12, padding: "16px 20px", marginTop: 10, fontFamily: "T", fontSize: 27, color: BLUE } }, opts.conclusion)
+    : el("div", { style: { display: "flex" } });
+  return toPng(frame(opts.title, opts.brand, [unit, el("div", { style: { display: "flex", flexDirection: "column", justifyContent: "center", flexGrow: 1 } }, [plot]), conclusion]));
 }

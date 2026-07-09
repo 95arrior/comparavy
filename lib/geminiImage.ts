@@ -66,6 +66,11 @@ const PHOTO_MOODS = ["calm and tidy", "warm and inviting", "fresh and clean", "q
 
 /** 본문 이미지 프롬프트(순수 함수) — ★혼합 정책(유저 결정): 실제 씬=실사 / 개념·수치=토스톤 3D / 애매=시드 랜덤. 테스트 대상. */
 export function buildBodyPrompt(slotDesc: string, articleTitle: string, seed: number, opts?: { context?: string }): string {
+  // ★차트류 AI 생성 금지(유저 확정: 그래프·차트·표는 무조건 템플릿 렌더러 — AI가 그리면 숫자가 오염된다)
+  //  이 자리로 온 차트 요청은 desc를 버리고 '분위기 컷'으로 폴백(빈 슬롯보다 낫되, 숫자는 절대 그리지 않음)
+  if (/차트|그래프|다이어그램|도표|막대|추이|그래픽|\[차트/.test(slotDesc)) {
+    slotDesc = `글 주제(${articleTitle})와 어울리는 분위기 장면 — 장소·사물 중심, 숫자·글자·그래프 없이`;
+  }
   const compo = PHOTO_COMPOS[(seed >> 3) % PHOTO_COMPOS.length];
   const mood = PHOTO_MOODS[(seed >> 7) % PHOTO_MOODS.length];
   // ★글 단위 스타일 통일(유저 실증: 한 글 3장 중 1장만 3D — 질감 불일치) — 슬롯별 3D 분기·랜덤 로테이션 폐기, 전부 실사. 문서류는 장면형 실사(도장 찍는 손과 서류)로, 표면 무텍스트 규칙이 글자 깨짐을 방지한다.
