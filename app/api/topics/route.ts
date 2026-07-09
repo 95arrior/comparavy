@@ -651,7 +651,11 @@ export async function GET(req: Request) {
   }
 
   // ── 제목·카테고리·노이즈판별(여유분 한 번에) ──
-  const allKeywords = candidates.map((r) => r.keyword);
+  // ★에버그린 뉴스성 게이트(유저 실측: '2분기실적발표' — 검색량이 있어도 특정 기업을 찾는 수요라 일반 정보글에 안 붙는다)
+  //  트렌드 쪽 감점과 동일 철학 — 읽고 끝나는·특정 대상 없는 뉴스성 키워드는 풀에서 제외
+  const NEWSY_POOL = /(실적발표|실적 발표|어닝|주가 전망|증시 전망|환율 전망|공모주 일정|급등주|테마주|수혜주)/;
+  const candidates2 = candidates.filter((r) => !NEWSY_POOL.test(r.keyword));
+  const allKeywords = candidates2.map((r) => r.keyword);
   if (allKeywords.length === 0) { const tc = await buildTrendCards(new Set()); return NextResponse.json(debugMode ? { topics: tc, diag: { ...diag, note: "allKeywords 0", trendCards: tc.length } } : { topics: tc }); }
   // 통합 맥락(분야·대상·사용자 지역) → AI가 브랜드·타지역·대상불일치·무관 키워드까지 한 번에 거름
   const ctxParts = [`분야: ${sub || vertical}`];
