@@ -288,7 +288,7 @@ function styleMarkers(html: string): string {
   });
 
   // ★깨진 태그 잔재 소거(실측: style="background-color:#fff3a8;"> 텍스트 노출) — 태그 시작(<) 없이 속성 문자열이 텍스트로 남은 것
-  html = html.replace(/(^|[^<a-zA-Z"'=])(?:style|class)="[^"<>]*;?\s*"?\s*\/?>/g, "$1");
+  html = html.replace(/([가-힣0-9)\].,!?%])\s*(?:style|class)="[^"<>]*"\s*\/?>/g, "$1 "); // 앞 문자가 한글·문장부호일 때만(정상 태그 안의 style 앞은 항상 태그명·공백 — 한글 불가)
 
   // ★엔진이 평문으로 쓴 '함께 보면 좋은 글' 라벨 소거(규격 위반 실측: 블록 2회) — 라벨은 시스템 산출(하단 3층) 전용
   html = html.replace(/<p[^>]*>\s*(?:<b[^>]*>)?\s*함께\s?보면\s?좋은\s?글\s*[:：]?\s*(?:<\/b>)?\s*<\/p>/g, "");
