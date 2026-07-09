@@ -311,14 +311,24 @@ function styleMarkers(html: string): string {
 
   // ★평문 불릿 문단 좌정렬(실측: 엔진이 <ul> 대신 <p>・항목</p>로 쓰면 중앙 감김 — 리스트=좌정렬 풀폭 규격 적용)
   html = html.replace(/<p(\s[^>]*)?>(\s*(?:[•・·]|- )[\s\S]*?)<\/p>/g, (_m, _attr, inner) => `<p style="text-align:left;word-break:keep-all">${inner}</p>`);
-  // ★인라인 단계 나열 분리(실측: '1단계: … 2단계: …' 여섯 단계가 한 문단 통짜) — 두 번째 단계부터 줄바꿈
+  // ★단계 블록 승격(유저 교본 최종: 'N단계' 볼드 단독 줄 + 내용 + 단계 간 빈 줄 — 인라인 불릿은 전부 같은 무게라 지루)
   html = html.replace(/<p(\s[^>]*)?>([\s\S]*?)<\/p>/g, (m, attr, inner) => {
     const steps = (String(inner).match(/\d{1,2}\s?단계\s?:/g) ?? []).length;
-    if (steps < 3) return m;
-    let first = true;
-    const fixed = String(inner).replace(/\s*(\d{1,2}\s?단계\s?:)/g, (mm, tag) => { if (first) { first = false; return mm; } return `<br>${tag}`; });
-    return `<p${attr ?? ""}>${fixed}</p>`;
+    if (steps < 2) return m;
+    // 문단을 단계 단위로 쪼개 각각 별도 문단으로: <b>N단계</b><br>내용
+    const parts = String(inner).split(/(?=\d{1,2}\s?단계\s?:)/);
+    const head = (parts[0] ?? "").trim();
+    const blocks = parts.slice(head && !/^\d{1,2}\s?단계/.test(head) ? 1 : 0).map((seg) => {
+      const mm = /^(\d{1,2})\s?단계\s?:\s*([\s\S]*)$/.exec(seg.trim());
+      if (!mm) return "";
+      return `<p style="text-align:center;word-break:keep-all"><b>${mm[1]}단계</b><br>${(mm[2] ?? "").replace(/^[・•\s]+/, "").trim()}</p>`;
+    }).filter(Boolean).join("");
+    const lead = head && !/^\d{1,2}\s?단계/.test(head) ? `<p${attr ?? ""}>${head}</p>` : "";
+    return lead + blocks;
   });
+  // 불릿 안의 단계('• 1단계: ...' 각각 별도 문단으로 온 경우)도 같은 승격
+  html = html.replace(/<p(\s[^>]*)?>\s*[・•]?\s*(\d{1,2})\s?단계\s?:\s*([\s\S]*?)<\/p>/g,
+    (_m, _attr, n, body) => `<p style="text-align:center;word-break:keep-all"><b>${n}단계</b><br>${String(body).trim()}</p>`);
 
   // ★깨진 태그 잔재 소거(실측: style="background-color:#fff3a8;"> 텍스트 노출) — 태그 시작(<) 없이 속성 문자열이 텍스트로 남은 것
   html = html.replace(/([가-힣0-9)\].,!?%])\s*(?:style|class)="[^"<>]*"\s*\/?>/g, "$1 "); // 앞 문자가 한글·문장부호일 때만(정상 태그 안의 style 앞은 항상 태그명·공백 — 한글 불가)
