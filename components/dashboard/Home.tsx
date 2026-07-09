@@ -643,7 +643,12 @@ export default function Home({
             return (
               <p className="mb-3 text-center text-[12.5px] font-semibold text-[color:var(--color-text-sub)]">
                 {times.length > 0
-                  ? `오늘 ${times.length}회 발행 확인 (아침 창 ${morning} · 저녁 창 ${evening})`
+                  ? (() => {
+                      const last = Math.max(...times.map((d) => d.getTime()));
+                      const gapMin = Math.round((Date.now() - last) / 60_000);
+                      const wait = gapMin < 120 ? ` · 다음 글은 ${new Date(last + 2 * 3600_000).getHours()}시 ${String(new Date(last + 2 * 3600_000).getMinutes()).padStart(2, "0")}분 이후가 좋아요(간격 2시간)` : "";
+                      return `오늘 ${times.length}회 발행 확인 (아침 창 ${morning} · 저녁 창 ${evening})${wait}`;
+                    })()
                   : "오늘 아직 발행 전 — 에버그린은 아침 창(6~8시)과 저녁 창(17~19시)이 좋아요, 트렌드는 지금 바로"}
               </p>
             );

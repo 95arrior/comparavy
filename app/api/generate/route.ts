@@ -307,7 +307,18 @@ export async function POST(request: Request) {
         } catch { /* 무해 — 링크 없이 진행 */ }
         // ★SERP 역분석(상위노출 직접 전술) — 상위 5글 제목·요약을 능가 브리프로(실패 시 빈 배열, 기존 품질 유지)
         const topPosts = channel === "wordpress" ? [] : await fetchTopPosts(keyword, 5).catch(() => []);
-        const serpContext = topPosts.length ? topPosts.map((t, i) => `${i + 1}. ${t.title} — ${t.description.slice(0, 90)}`).join("\n") : null;
+        const fmtAge = (pd?: string) => {
+          if (!pd || !/^\d{8}$/.test(pd)) return "";
+          const months = Math.floor((Date.now() - new Date(`${pd.slice(0, 4)}-${pd.slice(4, 6)}-${pd.slice(6, 8)}`).getTime()) / (30 * 86400_000));
+          return months >= 1 ? ` (${months}개월 전 글)` : " (최근 글)";
+        };
+        const ages = topPosts.map((t) => (t as { postdate?: string }).postdate).filter((p2): p2 is string => Boolean(p2 && /^\d{8}$/.test(p2)))
+          .map((p2) => (Date.now() - new Date(`${p2.slice(0, 4)}-${p2.slice(4, 6)}-${p2.slice(6, 8)}`).getTime()) / (30 * 86400_000));
+        const staleSerp = ages.length >= 3 && ages.filter((a) => a >= 8).length >= Math.ceil(ages.length * 0.6); // 상위 글 60%+가 8개월+ = 오래된 판
+        const serpContext = topPosts.length
+          ? topPosts.map((t, i) => `${i + 1}. ${t.title}${fmtAge((t as { postdate?: string }).postdate)} — ${t.description.slice(0, 90)}`).join("\n")
+            + (staleSerp ? "\n★기회 — 오래된 판: 상위 글 대부분이 8개월 이상 지난 글이다. 네이버는 최신 글을 끌어올리는 경향이 있어 새 블로그도 비집고 들어갈 수 있는 판 — 제목·도입에 2026년 최신 기준임을 명시하고, 오래된 글들이 못 담은 최신 변경사항을 앞세워라." : "")
+          : null;
         const genInput = { keyword, channel, serpContext, relatedPosts, angle: body.angle, type, tone, maxWords, variantInstruction, styleInstruction, relatedQueries, newsContext: resolvedNewsContext, angleBrief: ((typeof body.angleBrief === "string" ? body.angleBrief.slice(0, 900) : "") + seriesDirective).trim() || null, affiliate: isReview, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userTitle };
         let article = await streamArticle(
           genInput,
