@@ -672,8 +672,8 @@ export async function GET(req: Request) {
   const titled = await keywordsToTitles(allKeywords, ctxParts.join(" / "), { localBiz: type === "local" }); // {title, tag, ok, fit} — 자영업자는 '검색자=손님' 매칭 게이트 강하게
 
   // fit 상위 후보를 넉넉히(PICK+6) 추림 — 대표 샘플이면 포화 키워드가 많이 보여서, 같은 fit 안에서 '이길 수 있는' 걸 고른다.
-  const fitTop = candidates
-    .map((r, i) => ({ r, t: titled[i] }))
+  const fitTop = candidates2
+    .map((r, i) => ({ r, t: titled[i] })) // ★candidates2로 통일 — 뉴스성 필터 후 인덱스가 titled와 1:1이어야(실측: 필터로 한 칸 밀려 제목·키워드 어긋남)
     .filter(({ t }) => t?.ok !== false && !staleYear(t?.title ?? ""))
     .sort((a, b) => (b.t?.fit ?? 1) - (a.t?.fit ?? 1))
     .slice(0, adminBest ? PICK + 14 : PICK + 6);
