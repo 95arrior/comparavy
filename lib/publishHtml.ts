@@ -433,6 +433,14 @@ function applySizing(html: string): string {
 /* ── 형광펜·해시태그 ── */
 // ★형광펜 총량 게이트(실측: 도배 — 3줄짜리 통형광 다수) — 규칙 위반은 코드가 강등한다.
 //  70자 초과=무조건 해제(면적 도배), 문장급(15~70자)=글 전체 3개까지, 구급(≤14자)=5개까지. 초과분은 볼드로.
+// ★형광 표기 정규화(두더지 종결) — 엔진이 <mark>·<b style>·<span style> 어떤 표기로 형광을 써도 <mark>로 통일.
+//  이후 capMarks(총량 게이트) 단일 관문 통과 — 표기 변형으로 게이트를 우회하는 경로 자체를 제거.
+function normalizeHighlights(html: string): string {
+  return html
+    .replace(/<(b|strong|span|em|i)((?:\s[^>]*)?style="[^"]*background(?:-color)?\s*:[^"]*")([^>]*)>([\s\S]*?)<\/\1>/gi, "<mark>$4</mark>")
+    .replace(/<mark(\s[^>]*)?><mark(\s[^>]*)?>/gi, "<mark>").replace(/<\/mark>\s*<\/mark>/gi, "</mark>");
+}
+
 // ★리스트 이중 불릿·발행물 이모지 소거(실측: '• ✅ 배당' — 불릿 위 체크 이모지 중첩, 💡 안내 이모지) — 📌(포인트 승격 규격)은 유지
 function stripListEmoji(html: string): string {
   return html
@@ -450,7 +458,8 @@ function sanitizeAiPunct(html: string): string {
     .replace(/-{3,}/g, "\u0000HR\u0000")                 // 구분선 마커 보호
     .replace(/\s*--\s*/g, ", ")                        // 이중 하이픈
     .replace(/\u0000HR\u0000/g, "---")                  // 구분선 복원
-    .replace(/([가-힣.!?%)\]])\s*,?\s*-{2,}(?:\s+-{2,})*\s*(?=<|$)/g, "$1")   // 문장 끝 --- 쓰레기(연속 그룹 '--- ---' 포함 — 실측)
+    .replace(/([가-힣.!?%)\]])\s*,?\s*-{2,}(?:\s+-{2,})*\s*(?=<|$)/g, "$1")   // 문장 끝 --- 쓰레기(연속 그룹 포함)
+    .replace(/(<br\s*\/?>)\s*-{2,}(?:\s+-{2,})*\s*(?=<)/gi, "$1")             // <br> 뒤 줄로 남은 --- (실측)
     .replace(/[\u201C\u201D]/g, "\"")                 // 스마트 큰따옴표 → 직선(문체 정규화)
     .replace(/[\u2018\u2019]/g, "'");
 }
@@ -471,10 +480,12 @@ function capMarks(html: string): string {
   if (opens !== closes) return html.replace(/<\/?mark[^>]*>/g, "");
   let sentCount = 0, phraseCount = 0;
   return html.replace(/<mark(?:\s[^>]*)?>([\s\S]*?)<\/mark>/g, (raw, inner) => {
-    const len = [...String(inner).replace(/<[^>]+>/g, "")].length;
-    if (len > 70) return `<b>${inner}</b>`;
-    if (len >= 15) { sentCount += 1; return sentCount <= 3 ? raw : `<b>${inner}</b>`; }
-    phraseCount += 1; return phraseCount <= 5 ? raw : `<b>${inner}</b>`;
+    const plain = String(inner).replace(/<[^>]+>/g, "").trim();
+    if (/^[─\-•·\s]*$/.test(plain)) return plain; // 구분선·불릿만 감싼 형광(실측) — 태그 소거
+    const len = [...plain].length;
+    if (len > 70) return String(inner); // 통문단 형광 — 평문으로(볼드 도배 전이 방지, 실측)
+    if (len >= 15) { sentCount += 1; return sentCount <= 3 ? raw : (sentCount <= 5 ? `<b>${inner}</b>` : String(inner)); }
+    phraseCount += 1; return phraseCount <= 5 ? raw : String(inner);
   });
 }
 
@@ -496,7 +507,7 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   const withImages = opts?.withImages ?? true;
   let idx = -1;
   // ★사진 자리는 '구조화 슬롯'으로만 — 채워진 슬롯만 이미지로, 미충족 슬롯은 줄 자체를 제거(안내문구 유출 금지).
-  let body = markToBold(capMarks(capDanger(sanitizeAiPunct(stripListEmoji(input.bodyHtml))))).replace(SLOT_RE, (_m, desc: string) => {
+  let body = markToBold(capMarks(capDanger(sanitizeAiPunct(stripListEmoji(normalizeHighlights(input.bodyHtml)))))).replace(SLOT_RE, (_m, desc: string) => {
     idx += 1;
     if (!withImages) return `<p>[사진 ${idx + 1}]</p>`; // marker 모드(수동 배치) — 명시적 선택
     const url = input.images?.[idx];
