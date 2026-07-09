@@ -154,7 +154,12 @@ export async function amplifyForUser(
 
   const day = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
   const axis = userAxis(profile);
-  const rotated = [...seeds].sort((a, b) => (fnv(a.keyword + userId) % 997) - (fnv(b.keyword + userId) % 997));
+  // ★상위 보존(실측: 유저 해시 셔플이 route의 돈+행동·풀 정렬을 덮어써 '주담대 한도 축소' 같은 대형이 컷 밖으로) —
+  //  입력 정렬 상위 8은 그대로(좋은 씨앗은 모두에게 — 무중복은 유저별 앵글 브리프가 담당), 나머지만 셔플 분산
+  const KEEP = Math.min(8, seeds.length);
+  const head = seeds.slice(0, KEEP);
+  const tail = seeds.slice(KEEP).sort((a, b) => (fnv(a.keyword + userId) % 997) - (fnv(b.keyword + userId) % 997));
+  const rotated = [...head, ...tail];
   const picks = rotated.slice(0, Math.min(want, rotated.length));
 
   const badge = (profile?.sub_category || "정보").toString().slice(0, 10);

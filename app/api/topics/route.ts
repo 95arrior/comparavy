@@ -210,7 +210,7 @@ export async function GET(req: Request) {
       const pubDateByKw = new Map<string, string>(); // 정규화 키워드 → 발행 근사일(direct=확정 시각·rss=생성일)
       try {
         const { data: rp } = await pool.from("articles").select("keyword, verified_at, verified_via, created_at").eq("user_id", user.id)
-          .in("status", ["verified", "published"]).gte("created_at", new Date(Date.now() - 7 * 86400_000).toISOString()).limit(60);
+          .in("status", ["verified", "published", "copied"]).gte("created_at", new Date(Date.now() - 7 * 86400_000).toISOString()).limit(60); // copied 포함 — 복사(발행 진행) 후 주소 확정 전 몇 시간 동안 카드가 활성 잔존하던 실측
         for (const r of rp ?? []) {
           const k = String(r.keyword ?? "").replace(/\s+/g, "");
           if (!k) continue;
