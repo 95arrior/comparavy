@@ -306,7 +306,10 @@ export async function GET(req: Request) {
       }
         for (const c of cards) {
         const norm = c.keyword.replace(/\s+/g, "");
-        const pubAt = pubDateByKw.get(norm);
+        let pubAt = pubDateByKw.get(norm);
+        if (!pubAt) { // ★포함 관계 매칭(실측: 루원시티 — 생성 파이프가 키워드를 다듬어 완전일치 실패) — 6자+ 상호 포함이면 같은 글감
+          for (const [k, v] of pubDateByKw) { if (k.length >= 6 && (norm.includes(k) || k.includes(norm))) { pubAt = v; break; } }
+        }
         if (pubAt) { // ★발행함 상태(유저 확정: 청약 카드는 접수 마감까지 살아있어 발행 후에도 잔존 — 삭제 대신 상태 전환, 접수일 후속 글 재활용 여지)
           const d = new Date(pubAt);
           (c as { publishedOn?: string }).publishedOn = Number.isNaN(d.getTime()) ? "발행함" : `${d.getMonth() + 1}/${d.getDate()} 발행함`;
