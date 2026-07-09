@@ -17,6 +17,7 @@ export interface PublishInput {
   aiImageIdx?: number[];
   /** 본문 클로징 — 경계선 + 중앙 작은 이미지(뉴스룸 마감 문법, 보통 썸네일 재사용) */
   closingImageUrl?: string | null;
+  topImageUrl?: string | null; // ★썸네일 맨 위 배치(2026-07-10 유저) — 제목 바로 아래 대표컷
 }
 
 const PHOTO_RE = /\[사진:\s*([^\]]+)\]/g;
@@ -111,51 +112,9 @@ function mergeUnbalanced(parts: string[]): string[] {
 // ★유저 교본(2026-07-07): 문단을 쪼개면(빈 줄) 흐름이 끊긴다 — 같은 문단 안에서 <br>로 '의미 구 줄바꿈'.
 //  문장별 한 줄. 문장이 길면(>44자) 쉼표·연결어미 구 경계에서 균형 줄바꿈(양쪽 12자 이상일 때만 — 고아 조각 금지).
 function breakSentence(sen: string): string {
-  // ★개행 v3(2026-07-10 유저 확정 — 네이버 공식 문법): 강제 절단 폐지. 문장은 자연스럽게 흐르고,
-  //  45자 초과 문장만 의미 절(쉼표 최우선)에서 나눈다 — "억지로 끊은 문장"(실측 지적) 종결.
-  if (/<br/i.test(sen)) return sen;
-  const tokens = sen.split(/(<[^>]+>)/).filter((t) => t !== "");
-  const plain = tokens.filter((t) => !t.startsWith("<")).join("");
-  if (visLen(plain) <= 45) return sen;
-  // 절단점: 쉼표 뒤 > 연결어미 뒤 — 25~50자 구간에서 중앙(35자)에 가장 가까운 곳 1개(필요시 반복)
-  const CLAUSE = /([,，、]\s+|(?:하고|하며|지만|는데|면서|므로|다면|라면|통해|위해|대해|따라|보다)\s+)/g;
-  const cutOffsets: number[] = [];
-  let rest = plain, base = 0, guard = 0;
-  while (visLen(rest) > 45 && guard++ < 4) {
-    const cands: number[] = [];
-    let m: RegExpExecArray | null;
-    CLAUSE.lastIndex = 0;
-    while ((m = CLAUSE.exec(rest))) cands.push(m.index + m[0].length);
-    let best = -1, bestD = Infinity;
-    for (const cut of cands) {
-      const left = visLen(rest.slice(0, cut));
-      if (left < 25 || left > 50 || visLen(rest.slice(cut)) < 8) continue;
-      const d = Math.abs(left - 35);
-      if (d < bestD) { bestD = d; best = cut; }
-    }
-    if (best < 0) break; // 자를 자리 없으면 통줄(자연 wrap — keep-all이 단어 절단 방지)
-    cutOffsets.push(base + best);
-    base += best;
-    rest = plain.slice(base);
-  }
-  if (cutOffsets.length === 0) return sen;
-  let acc = 0, ci = 0;
-  const out: string[] = [];
-  for (const tok of tokens) {
-    if (tok.startsWith("<")) { out.push(tok); continue; }
-    let t = tok, consumed = 0;
-    while (ci < cutOffsets.length) {
-      const target = cutOffsets[ci]! - acc - consumed;
-      if (target <= 0 || target >= t.length) break;
-      out.push(t.slice(0, target), "<br>");
-      t = t.slice(target);
-      consumed += target;
-      ci += 1;
-    }
-    out.push(t);
-    acc += tok.length;
-  }
-  return out.join("");
+  // ★개행 v4(2026-07-10 유저 최종): 문장 내 강제 개행 전면 폐지 — 좌측 정렬에서는 끝까지 채우고
+  //  자연 줄바꿈(keep-all)에 맡긴다. 내려쓰기는 문장 경계·의도된 구조(단계·리스트)만.
+  return sen;
 }
 function splitInner(inner: string): string[] {
   // ★마커 문단 보호 — 절 개행이 [관련글]/[마무리관련글]/[사진] 마커 안에 <br>을 박으면 변환 정규식이 죽는다(실측: 3층 블록 미출력·마커 원형 노출)
@@ -227,6 +186,13 @@ const isQPara = (b: Blk) => {
   const plain = b.inner.replace(/<[^>]+>/g, "").trim();
   return /^Q[.．]\s?/.test(plain) || (/^\d{1,2}[.．]\s/.test(plain) && /\?$/.test(plain)); // Q. 원형 + 변환 후(1. …?) 모두
 };
+function isEmojiOnlyPara(b: Blk): boolean { // 📌 단독 문단 — 다음 블록을 가리키는 라벨
+  const t = b.inner.replace(/<[^>]+>/g, "").trim();
+  return b.tag === "p" && t.length <= 3 && /[📌]/u.test(t);
+}
+function isBulletPara(b: Blk): boolean { // 불릿·리스트 문단(ul/ol 또는 평문 불릿)
+  return /^(ul|ol)$/.test(b.tag) || (b.tag === "p" && /^\s*(?:<[^>]+>\s*)*[•・·]/.test(b.inner));
+}
 function beforeBlanks(b: Blk): number {
   if (isSuspenseMark(b)) return 0; // 여백은 서스펜스 확장 전담
   if (/^h[1-4]$/.test(b.tag)) return 3;
@@ -252,8 +218,13 @@ export function gapBetween(prev: { tag: string; inner: string } | null, cur: { t
   if (isStepPara(c)) return 2;
   if (isStepPara(prev as Blk)) return 1;
   // ★FAQ 리듬(유저 모범답안): 제목 → 빈줄 1 → 설명 → 빈줄 3 → 다음 제목
-  if (isQPara(c)) return 3;
+  if (isQPara(c)) return /^h[1-4]$/.test((prev as Blk).tag) ? 2 : 3; // 헤더 직후 첫 Q는 2(유저: 위3·아래2 리듬)
   if (isQPara(prev as Blk)) return 1;
+  // ★📌 라벨 밀착(유저 최종: 위2·아래1 — 아래도 2칸이면 뭘 가리키는지 모름)
+  if (isEmojiOnlyPara(prev as Blk)) return 1;
+  if (isEmojiOnlyPara(c)) return 2;
+  // ★리스트 리듬(유저 최종: 리스트 사이는 1칸 — 2줄짜리만 2칸이던 것 통일)
+  if (isBulletPara(prev as Blk) && isBulletPara(c)) return 1;
   return Math.min(BLANK_CAP, Math.max(afterBlanks(prev as Blk), beforeBlanks(c)));
 }
 // ★엔진 마커 변환 — '---' 단독 문단=구분선, '> 문장'=인용 블록, 'Q.' 문단=강조(FAQ 가독)
@@ -321,7 +292,7 @@ function styleMarkers(html: string): string {
   // ★내부링크 마커 — 하단 3층(유저 확정: 유저가 네이버 링크 카드로 직접 삽입 — 시스템은 그 직전까지 준비)
   html = html.replace(/\[마무리관련글:\s*(https?:[^\s|\]]+)\s*\|\s*([^|\]]+)\|\s*([^\]]+)\]/g, (_m, url: string, _t: string, reason: string) => {
     const clean = url.split("?")[0]; // 트래킹 파라미터 제거 — 원형만
-    return `<p style="text-align:left;font-size:15px;font-weight:700">함께 보면 좋은 글</p><p style="text-align:left;font-size:13.5px;color:#4e5968">${reason.trim()}</p><p style="text-align:left;background-color:#f5f6f8;padding:10px 8px;font-size:13px;color:#8b95a1">[링크 카드 자리 — 아래 주소를 링크 버튼에 붙여넣으세요]</p><p style="text-align:left;font-size:13px">${clean}</p>`;
+    return `<p style="text-align:center;font-size:15px;font-weight:700">함께 보면 좋은 글</p><p style="text-align:center;font-size:13.5px;color:#4e5968">${reason.trim()}</p><p style="text-align:center;background-color:#f5f6f8;padding:10px 8px;font-size:13px;color:#8b95a1">[링크 카드 자리 — 아래 주소를 링크 버튼에 붙여넣으세요]</p><p style="text-align:center;font-size:13px">${clean}</p>`;
   });
   // ★중간 [관련글:] 마커 — 전면 제거(유저 확정: 내부링크는 하단 '함께 보면 좋은 글'만) — 기존 생성 글의 마커도 조립 시 소거
   html = html.replace(/\[관련글:\s*(https?:[^\s|\]]+)\s*\|\s*([^\]]+)\]/g, "");
@@ -512,6 +483,9 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   // 파이프: 분할 → 정렬 → 크기 위계 → ★여백 스케일 v2(마크업 스페이서) → 서스펜스(마킹 예외)
   let out = applySuspenseBreaks(applySpacingRich(styleTables(applySizing(styleBlocks(listsToTable(styleMarkers(arrowChainToSteps(splitLongParagraphs(gated)))))))));
   // ★클로징(뉴스룸 마감 문법) — 얇은 경계선 + 중앙 작은 이미지(보통 썸네일). withImages(rich)일 때만.
+  if (withImages && input.topImageUrl) {
+    out = `<p style="text-align:center;"><img src="${input.topImageUrl}" alt="" /></p><p style="text-align:left"><br></p>` + out;
+  }
   if (withImages && input.closingImageUrl) {
     out += `<p><br /></p><p style="text-align:center;"><span style="display:inline-block;width:55%;border-top:1px solid #d9dde3;">&nbsp;</span></p><p style="text-align:center;"><img src="${input.closingImageUrl}" alt="" width="300" /></p>`;
   }

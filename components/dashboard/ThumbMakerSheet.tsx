@@ -165,6 +165,16 @@ export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots
             }} className="at-press mt-2 w-full rounded-[10px] bg-neutral-100 py-2.5 text-[12.5px] font-bold text-neutral-600 transition hover:bg-neutral-200">💾 원본 화질로 저장</button>
             <p className="mt-3 text-[13px] font-bold text-neutral-700">어디에 넣을까요?</p>
             <div className="mt-2 space-y-1.5">
+              <button onClick={async () => {
+                if (!preview) return;
+                setPlaced(-1);
+                try { await fetch(`/api/articles/${articleId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ images: { top: preview } }) }); } catch { /* ignore */ }
+                onPlaced(-1, preview);
+              }} className={`at-press flex w-full items-center gap-2.5 rounded-[10px] px-3.5 py-2.5 text-left text-[12.5px] font-semibold transition ${placed === -1 ? "bg-emerald-50 text-emerald-700" : "bg-[#1D75F7]/[0.06] text-[#1D75F7] hover:bg-[#1D75F7]/[0.1]"}`}>
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white text-[10.5px] font-bold ring-1 ring-black/10">↑</span>
+                <span className="min-w-0 flex-1">맨 위 · 제목 바로 아래 (대표컷)</span>
+                {placed === -1 && <span className="shrink-0 text-[11px] font-bold">넣었어요</span>}
+              </button>
               {slots.map((sl) => (
                 <button key={sl.idx} onClick={() => place(sl.idx)}
                   className={`at-press flex w-full items-center gap-2.5 rounded-[10px] px-3.5 py-2.5 text-left text-[12.5px] font-semibold transition ${placed === sl.idx ? "bg-emerald-50 text-emerald-700" : "bg-neutral-50 text-neutral-700 hover:bg-neutral-100"}`}>
