@@ -422,6 +422,7 @@ export async function GET(req: Request) {
           const top: typeof tc = []; const rest: typeof tc = [];
           let ann = 0;
           for (const c of tc) {
+            if ((c as { publishedOn?: string }).publishedOn) { rest.push(c); continue; } // 발행함은 쿼터 계산 제외(실측: 발행함이 5칸을 세어 공고 3장 노출)
             const isAnn = Boolean((c as { actionEnd?: string | null }).actionEnd);
             const big = isBigPool(`${c.title} ${c.keyword} ${(c.newsContext ?? "").slice(0, 200)}`);
             if (top.length < 5 && isAnn && !big && ann >= 2) { rest.push(c); continue; }
