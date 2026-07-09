@@ -41,9 +41,9 @@ const PHOTO_MARKER_ANY_G = /\[\s*(?:사진|카드)[^\]]*\]/g;         // 모든 
 const INSTRUCTION_SRC = "\\[\\s*사진\\s*:[\\s\\S]*?\\]|사진을?\\s*(여기에\\s*)?(올려|넣어|추가|삽입)\\s*주세요";
 const INSTRUCTION_G = new RegExp(INSTRUCTION_SRC, "g");        // 콜론형 + 지시 문구
 // 이모지·픽토그램·기호(화살표 U+2190~21FF·가운뎃점·불릿은 보존).
-const EMOJI_RE = /[\u{1F1E6}-\u{1F1FF}\u{1F300}-\u{1FAFF}\u{1F000}-\u{1F0FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{2049}\u{203C}\u{2122}\u{2139}]/gu;
+const EMOJI_RE = /[\u{1F1E6}-\u{1F1FF}\u{1F300}-\u{1FAFF}\u{1F000}-\u{1F0FF}\u{2300}-\u{23FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{2049}\u{203C}\u{2122}\u{2139}]/gu;
 // ★포맷 v3(네이버 공식 블로그팀 문법) — 포인트 이모지 화이트리스트만 통과(도배 방지), 그 외 전부 제거.
-const EMOJI_ALLOW = ["📌", "✅", "💡", "🍀", "🎉", "😊", "👇", "⏰", "📢"];
+const EMOJI_ALLOW = ["📌"]; // 발행물 이모지 원칙(유저): 포인트 승격 📌 하나만 — ✅💡⏰ 등은 실측 도배·중첩
 export function stripEmoji(s: string): string {
   const MASK = "\u0000EM";
   let out = s;
@@ -309,6 +309,17 @@ function styleMarkers(html: string): string {
     return `<p style="text-align:center;font-size:13px;color:#8b95a1;word-break:keep-all">${inner}</p>`;
   });
 
+  // ★평문 불릿 문단 좌정렬(실측: 엔진이 <ul> 대신 <p>・항목</p>로 쓰면 중앙 감김 — 리스트=좌정렬 풀폭 규격 적용)
+  html = html.replace(/<p(\s[^>]*)?>(\s*(?:[•・·]|- )[\s\S]*?)<\/p>/g, (_m, _attr, inner) => `<p style="text-align:left;word-break:keep-all">${inner}</p>`);
+  // ★인라인 단계 나열 분리(실측: '1단계: … 2단계: …' 여섯 단계가 한 문단 통짜) — 두 번째 단계부터 줄바꿈
+  html = html.replace(/<p(\s[^>]*)?>([\s\S]*?)<\/p>/g, (m, attr, inner) => {
+    const steps = (String(inner).match(/\d{1,2}\s?단계\s?:/g) ?? []).length;
+    if (steps < 3) return m;
+    let first = true;
+    const fixed = String(inner).replace(/\s*(\d{1,2}\s?단계\s?:)/g, (mm, tag) => { if (first) { first = false; return mm; } return `<br>${tag}`; });
+    return `<p${attr ?? ""}>${fixed}</p>`;
+  });
+
   // ★깨진 태그 잔재 소거(실측: style="background-color:#fff3a8;"> 텍스트 노출) — 태그 시작(<) 없이 속성 문자열이 텍스트로 남은 것
   html = html.replace(/([가-힣0-9)\].,!?%])\s*(?:style|class)="[^"<>]*"\s*\/?>/g, "$1 "); // 앞 문자가 한글·문장부호일 때만(정상 태그 안의 style 앞은 항상 태그명·공백 — 한글 불가)
 
@@ -432,10 +443,14 @@ function stripListEmoji(html: string): string {
 // ★AI 문체 부호 소거(유저 실측: '7월 21일 — 접수 시작 전에' — em dash는 대표적 AI 문체 신호) — 조립 시 일괄 치환
 function sanitizeAiPunct(html: string): string {
   return html
+    .replace(/([.!?요다])\s*,\s*-+\s*(?=<|$|\s)/g, "$1 ")   // 기저장 글 잔재 '요., -' 정리
     .replace(/(\d)\s*[–—]\s*(\d)/g, "$1~$2")        // 숫자 범위 → 물결
     .replace(/\s*[—–]\s*/g, ", ")                     // em/en dash → 쉼표(기본 치환 — 유저 승인)
     .replace(/([가-힣0-9)\]”"])\s*;\s*/g, "$1, ")     // 한국어 문장 내 세미콜론 → 쉼표
+    .replace(/-{3,}/g, "\u0000HR\u0000")                 // 구분선 마커 보호
     .replace(/\s*--\s*/g, ", ")                        // 이중 하이픈
+    .replace(/\u0000HR\u0000/g, "---")                  // 구분선 복원
+    .replace(/([가-힣.!?%)\]])\s*,?\s*-{2,}\s*(?=<|$)/g, "$1")   // 문장 끝에 붙은 --- 쓰레기(구분선 아님) + ', -' 잔재
     .replace(/[\u201C\u201D]/g, "\"")                 // 스마트 큰따옴표 → 직선(문체 정규화)
     .replace(/[\u2018\u2019]/g, "'");
 }
@@ -451,11 +466,11 @@ function capDanger(html: string): string {
 
 function capMarks(html: string): string {
   // ★고아 태그 방어 — <mark> 열림/닫힘 불균형이면 형광 전부 해제(도배보다 무강조가 낫다)
-  const opens = (html.match(/<mark>/g) ?? []).length;
+  const opens = (html.match(/<mark(\s[^>]*)?>/g) ?? []).length;
   const closes = (html.match(/<\/mark>/g) ?? []).length;
-  if (opens !== closes) return html.replace(/<\/?mark>/g, "");
+  if (opens !== closes) return html.replace(/<\/?mark[^>]*>/g, "");
   let sentCount = 0, phraseCount = 0;
-  return html.replace(/<mark>([\s\S]*?)<\/mark>/g, (raw, inner) => {
+  return html.replace(/<mark(?:\s[^>]*)?>([\s\S]*?)<\/mark>/g, (raw, inner) => {
     const len = [...String(inner).replace(/<[^>]+>/g, "")].length;
     if (len > 70) return `<b>${inner}</b>`;
     if (len >= 15) { sentCount += 1; return sentCount <= 3 ? raw : `<b>${inner}</b>`; }
@@ -465,8 +480,8 @@ function capMarks(html: string): string {
 
 function markToBold(html: string): string {
   // ★전부 인라인(유저 교본 최종: 단독 줄 강제가 '…경향' 형광 뒤 '이 있어요' 고아 조각을 만들었다) — 문장 흐름 절대 보존
-  html = html.replace(/<mark>([\s\S]*?)<\/mark>/g, '<b style="background-color:#fff3a8;">$1</b>');
-  return html.replace(/<\/?mark>/g, ""); // 잔여 고아 태그 소거(도배 방어)
+  html = html.replace(/<mark(?:\s[^>]*)?>([\s\S]*?)<\/mark>/g, '<b style="background-color:#fff3a8;">$1</b>');
+  return html.replace(/<\/?mark[^>]*>/g, ""); // 잔여 고아 태그 소거(도배 방어)
 }
 function hashtagGroups(tags?: string[]): string[] {
   const list = (tags ?? []).map((t) => String(t).trim().replace(/^#/, "")).filter(Boolean).map((t) => `#${t}`);
