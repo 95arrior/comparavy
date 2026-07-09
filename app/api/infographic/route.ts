@@ -49,13 +49,13 @@ export async function POST(req: Request) {
   const slotDesc = typeof body.slotDesc === "string" ? body.slotDesc : "";
   if (!articleId) return NextResponse.json({ error: "글을 찾을 수 없어요." }, { status: 400 });
 
-  const { data: article } = await supabase.from("articles").select("id, title, content, images").eq("id", articleId).eq("user_id", user.id).single();
+  const { data: article } = await supabase.from("articles").select("id, title, body_html, images").eq("id", articleId).eq("user_id", user.id).single();
   if (!article) return NextResponse.json({ error: "글을 찾을 수 없어요." }, { status: 404 });
 
   let brand = "MY BLOG";
   try { const { data: bp } = await supabase.from("blog_profiles").select("blog_name").eq("user_id", user.id).order("created_at", { ascending: true }).limit(1).single(); brand = (bp?.blog_name ?? "").trim() || brand; } catch { /* ignore */ }
 
-  const html = String(article.content ?? "");
+  const html = String((article as { body_html?: string }).body_html ?? "");
   const wantChecklist = /체크리스트|절차|순서|준비물/.test(slotDesc);
   const table = parseFirstTable(html);
   const checklist = parseChecklist(html);
