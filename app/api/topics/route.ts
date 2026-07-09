@@ -15,6 +15,7 @@ import { getTrendTopics, refreshCategoryTrends, hasFreshTrends } from "@/lib/tre
 import { amplifyForUser } from "@/lib/amplifyTopics";
 import { fetchKeywordStats, normalizeKey } from "@/lib/naverKeyword";
 import { poolScore, isBigPool } from "@/lib/trafficPool";
+import { finalGate } from "@/lib/cardFinalGate";
 import { collectPoolKeywords } from "@/lib/poolCollect";
 import { fetchNaverAutocomplete } from "@/lib/naverAutocomplete";
 import { checkRateLimit } from "@/lib/rateLimit";
@@ -458,6 +459,12 @@ export async function GET(req: Request) {
         }
       } catch { /* 폴백 실패 — 빈 응답 그대로 */ }
     }
+    {
+      const g = finalGate(tc);
+      if (g.drops.length) console.log("[final-gate:short]", JSON.stringify(g.drops));
+      tc = g.pass;
+      if (debugMode) diag.finalGateDrops = g.drops;
+    }
     return NextResponse.json(debugMode ? { topics: tc, diag: { ...diag, mode: "short", trendCards: tc.length } } : { topics: tc });
   }
 
@@ -827,6 +834,11 @@ export async function GET(req: Request) {
   } catch { /* 조용히 생략 */ }
 
   const shuffled = shuffle(topics, rng);
-  if (tailMode === "long") return NextResponse.json(debugMode ? { topics: shuffled, diag: { ...diag, mode: "long", poolCards: shuffled.length } } : { topics: shuffled });
+  if (tailMode === "long") {
+    const g = finalGate(shuffled as { keyword: string; title: string }[]);
+    if (g.drops.length) console.log("[final-gate:long]", JSON.stringify(g.drops));
+    if (debugMode) diag.finalGateDrops = g.drops;
+    return NextResponse.json(debugMode ? { topics: g.pass, diag: { ...diag, mode: "long", poolCards: g.pass.length } } : { topics: g.pass });
+  }
   return NextResponse.json(debugMode ? { topics: [...boostCards, ...trendCards, ...shuffled], diag: { ...diag, boost: boostCards.length, trendCards: trendCards.length, poolCards: shuffled.length } } : { topics: [...boostCards, ...trendCards, ...shuffled] });
 }
