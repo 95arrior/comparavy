@@ -63,7 +63,7 @@ export async function fetchGov24Seeds(): Promise<Gov24Seed[]> {
       const dLeft = (endTs - now.getTime()) / 86400_000;
       if (spanDays > 60 && dLeft > 21) continue;
       // ★기초지자체(구·군) 제외 — 해당 주민만 대상이라 전국 검색 수요 없음(강서구 실측). 시·도 광역은 허용(서울시 출산가구 720만 실증)
-      if (/^[가-힣]{1,4}(구|군)\s/.test(name)) continue;
+      if (/[가-힣]{1,4}(구|군)(?![가-힣])/.test(name)) continue; // 이름 어디든 구·군(실측: 앞머리 앵커라 [인천] 서해구 통과하던 구멍)
       const started = startTs <= now.getTime();
       const mmdd = (d: string) => `${Number(d.slice(5, 7))}월 ${Number(d.slice(8, 10))}일`;
       const summary = String(r["지원내용"] ?? "").replace(/\s+/g, " ").trim().slice(0, 200);

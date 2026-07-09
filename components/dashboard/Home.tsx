@@ -910,6 +910,7 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
     const ms = new Date(topic.expiresAt).getTime() - tick;
     if (ms <= 0) return "곧 교체";
     const h = Math.floor(ms / 3600_000), m = Math.floor((ms % 3600_000) / 60_000), sec = Math.floor((ms % 60_000) / 1000);
+    if (h >= 24) return `D-${Math.ceil(ms / 86400_000)}`; // 24시간+ = 날짜가 읽기 쉽다(실측: 1377:43:50 혼란)
     return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}` : `${m}:${String(sec).padStart(2, "0")}`;
   })();
   // ★근거 — 사실 기반 설득(실측 버그: 무관 헤드라인 3연속): 카드 키워드와 겹치는 헤드라인만, 없으면 정직한 일반 근거

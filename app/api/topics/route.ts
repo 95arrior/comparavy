@@ -226,11 +226,12 @@ export async function GET(req: Request) {
       trends = trends.filter((t) => !(t as { actionEnd?: string | null }).actionEnd);
       for (const a of announceSeeds.slice(0, 3)) {
         if (existing.has(a.keyword)) continue;
+        const srcName = ({ applyhome: "청약홈 공고", gov24: "보조금24 실데이터", bizinfo: "기업마당 공고" } as Record<string, string>)[(a as { source?: string }).source ?? ""] ?? "공공 실데이터";
         cards.push({
           keyword: a.keyword, title: a.title, expiresAt: a.expiresAt ?? null,
-          demandLabel: "청약홈 공고 · 실공고 데이터", ssak: true, region: false, tone: bt,
+          demandLabel: `${srcName} · 실공고 데이터`, ssak: true, region: false, tone: bt,
           vol: 0, comp: "low" as Comp, blogTotal: null, tag: "trend",
-          newsContext: a.newsContext ?? undefined, sourceTitle: `청약홈 공고: ${a.title}`,
+          newsContext: a.newsContext ?? undefined, sourceTitle: `${srcName}: ${a.title}`,
           actionStart: (a as { actionStart?: string | null }).actionStart ?? null,
           actionEnd: (a as { actionEnd?: string | null }).actionEnd ?? null,
         });
@@ -416,6 +417,18 @@ export async function GET(req: Request) {
           if (isBigPool(ctx)) (c as { demandBadge?: string }).demandBadge = `전국 관심 예상 · ${(c as { demandBadge?: string }).demandBadge ?? "잠재 수요 큰 글감"}`;
           return { c, i, score: volBand + pool };
         }).sort((a, b) => (b.score - a.score) || (a.i - b.i)).map((x) => x.c);
+        // ★유형 믹스 쿼터(유저 회의: 공고형이 5칸 독식 방지) — 상위 5 중 공고형 최대 2, 초과분은 6위 밖으로(대형 풀 5점+는 예외)
+        {
+          const top: typeof tc = []; const rest: typeof tc = [];
+          let ann = 0;
+          for (const c of tc) {
+            const isAnn = Boolean((c as { actionEnd?: string | null }).actionEnd);
+            const big = isBigPool(`${c.title} ${c.keyword} ${(c.newsContext ?? "").slice(0, 200)}`);
+            if (top.length < 5 && isAnn && !big && ann >= 2) { rest.push(c); continue; }
+            if (top.length < 5) { top.push(c); if (isAnn) ann += 1; } else rest.push(c);
+          }
+          tc = [...top, ...rest];
+        }
         for (const c of tc) {
           const v = volMap[c.keyword];
           if (v) {

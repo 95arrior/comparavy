@@ -41,6 +41,7 @@ export async function fetchBizinfoSeeds(): Promise<BizinfoSeed[]> {
     const region = pick(b, "jrsdInsttNm");
     // 기초지자체(구·군) 소관 제외 — 전국 검색 수요 없음(보조금24와 동일 규칙). 광역·중앙부처 허용
     if (/^[가-힣]{1,4}(구|군)$/.test(region)) continue;
+    if (/[가-힣]{1,4}(구|군)(?![가-힣])/.test(name.replace(/\[[^\]]*\]/g, ""))) continue; // 공고명 속 구·군(실측: [인천] 서해구·[대전] 유성구 통과)
     const field = pick(b, "pldirSportRealmLclasCodeNm");
     const target = pick(b, "trgetNm");
     // ★독자 정합 게이트(유저 원칙: 많이 읽을 것만) — B2B 과제 공고는 기업 담당자 소수만 검색.
