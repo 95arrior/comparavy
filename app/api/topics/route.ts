@@ -157,16 +157,19 @@ export async function GET(req: Request) {
   };
 
   // 본인이 이미 쓴 키워드(정규화 집합) — 제외용. articles는 owner RLS라 유저 클라로 본인 것만.
-  const { data: mine } = await supabase.from("articles").select("keyword, title").eq("user_id", user.id);
+  const { data: mine } = await supabase.from("articles").select("keyword, title, created_at").eq("user_id", user.id);
   const usedSet = new Set((mine ?? []).map((a) => normalizeKeyword(String(a.keyword ?? ""))).filter(Boolean));
   // ★유사 글감 게이트(실측: 쓴 '중소기업 지원금 총정리'와 거의 같은 증식 변형이 재등장) —
   //  정확 일치를 넘어, 쓴 글 제목·키워드와 bigram 유사하거나 핵심 토큰이 대부분 겹치면 제외.
-  const usedTexts = (mine ?? []).flatMap((a) => [String(a.title ?? ""), String(a.keyword ?? "")]).filter((t) => t.length >= 4);
+  // ★유사 차단은 최근 14일만(실측: 58편 누적 시 카테고리 핵심 토큰이 전부 잠겨 씨앗 24→카드 1 고사) — 정확 일치(usedSet)는 전 기간 유지
+  const recent14 = (mine ?? []).filter((a) => { const c = (a as { created_at?: string }).created_at; return c ? Date.now() - new Date(c).getTime() < 14 * 86400_000 : true; });
+  const usedTexts = recent14.flatMap((a) => [String(a.title ?? ""), String(a.keyword ?? "")]).filter((t) => t.length >= 4);
+  const GENERIC_TOK = new Set(["지원금", "지원", "신청", "방법", "정리", "총정리", "조건", "기간", "확인", "세금", "혜택", "정부", "정부지원금", "보조금", "금리", "대출", "연금", "청약", "2025", "2026"]);
   const usedForbidden = (cand: string): boolean => {
     for (const u of usedTexts) {
-      if (titleSimilarity(cand, u) >= 0.45) return true;
-      const ct = new Set(cand.replace(/[^가-힣a-z0-9 ]/gi, " ").split(/\s+/).filter((w) => w.length >= 2));
-      const ut = u.replace(/[^가-힣a-z0-9 ]/gi, " ").split(/\s+/).filter((w) => w.length >= 2);
+      if (titleSimilarity(cand, u) >= 0.58) return true; // 0.45는 과차단(실측) — 거의 같은 제목만
+      const ct = new Set(cand.replace(/[^가-힣a-z0-9 ]/gi, " ").split(/\s+/).filter((w) => w.length >= 2 && !GENERIC_TOK.has(w)));
+      const ut = u.replace(/[^가-힣a-z0-9 ]/gi, " ").split(/\s+/).filter((w) => w.length >= 2 && !GENERIC_TOK.has(w));
       if (ut.length >= 2) { const hit = ut.filter((w) => ct.has(w)).length; if (hit >= 2 && hit / ut.length >= 0.6) return true; }
     }
     return false;
