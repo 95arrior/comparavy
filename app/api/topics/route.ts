@@ -408,7 +408,11 @@ export async function GET(req: Request) {
         tc = tc.filter((c) => {
           const v = volMap[c.keyword];
           const isAnnounce = Boolean((c as { actionEnd?: string | null }).actionEnd);
-          if (isAnnounce && v && v.vol < 300) return false; // 청약·신청형: 실측 저수요(소단지 무순위 등) 컷 — 미조회는 유지
+          if (!isAnnounce) return true;
+          if (v && v.vol < 300) return false; // 실측 저수요 컷
+          // ★미조회 공고 뒷문 봉쇄(실측: [강원] 마케터 양성 — 검색량 DB에 없는 공고명 = 아무도 안 찾음).
+          //  단 잠재 풀 큰 공고(동탄 줍줍 — 공고 직후라 미조회)는 풀 스코어로 구제
+          if (!v && poolScore(`${c.title} ${c.keyword} ${(c.newsContext ?? "").slice(0, 200)}`) < 3) return false;
           return true;
         });
         // ★수요(실측) + 풀 스코어(잠재 독자 크기 — 유저 회의 확정: 동탄 줍줍 vs 지방 소단지) 결합 정렬
