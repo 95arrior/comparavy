@@ -26,9 +26,9 @@ export interface Slot { type: "photo" | "card"; desc: string }
 // 본문의 슬롯을 문서 순서로 파싱(생성 파이프라인이 타입별로 렌더).
 export function parseSlots(bodyHtml: string): Slot[] {
   const out: Slot[] = [];
-  const re = /\[(사진|카드):\s*([^\]]+)\]/g;
+  const re = /\[(사진|카드|차트):\s*([^\]]+)\]/g;
   let m: RegExpExecArray | null;
-  while ((m = re.exec(bodyHtml))) out.push({ type: m[1] === "카드" ? "card" : "photo", desc: m[2].trim() });
+  while ((m = re.exec(bodyHtml))) out.push({ type: m[1] === "사진" ? "photo" : "card", desc: (m[1] === "차트" ? "차트: " : "") + m[2].trim() });
   return out;
 }
 // 카드 마커 desc('라벨=값 | 라벨=값') → CardItem 파싱.

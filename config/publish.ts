@@ -19,4 +19,4 @@ export const AI_IMAGES_AT_CREATE = false;
 
 // ★데이터 카드 봉인(최종 결정 2026-07-04) — 생성 이미지 전면 제거. 코드 보존, 플래그 오프.
 //  수치는 '데이터 줄 묶음'(텍스트), 행동 순서는 체크리스트가 맡는다. 모든 슬롯 = 업로드형.
-export const DATA_CARDS_ENABLED = false;
+export const DATA_CARDS_ENABLED = true; // 2026-07-09 정보 카드·차트 시스템(유저 승인)과 함께 봉인 해제 — 슬롯 행에 [자료 만들기] 노출

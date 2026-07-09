@@ -360,8 +360,8 @@ export default function ArticleModal({ pubStampKey, blogName,
           </div>
         )}
 
-        {/* ★이미지 슬롯 패널 — 문서순(사진+카드). 사진=추천 가이드+올리기(AI 봉인), 카드=자동 생성. */}
-        {parseSlots(bodyHtml).length > 0 && (<>
+        {/* ★이미지 슬롯 패널 — 썸네일은 슬롯 유무와 무관하게 항상(실측: 새 배정 규칙 글에서 슬롯 0 → 썸네일 기능 증발) */}
+        {!isWp && (<>
           {/* 썸네일 문구 추천 — 3초 훅(어그로되 글이 답하는 약속만) */}
           <div className="mt-4 rounded-2xl at-glass p-5">
             <div className="flex items-center justify-between gap-3">
