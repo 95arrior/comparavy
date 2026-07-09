@@ -70,6 +70,27 @@ export type ChartSpec =
   | { kind: "bars"; label: string; unit?: string; series: string[]; groups: { label: string; values: string[] }[]; source_sentence?: string };
 
 export function parseChartMarker(desc: string): ChartSpec | null {
+  // ★평탄 포맷(정식 — JSON의 ]가 슬롯 정규식과 충돌해 마커 잔해 노출, 실측):
+  //   추이: "추이 | 라벨 | 단위 | 25.3Q=0.24 ; 25.4Q=0.28 ; 26.1Q=0.31 | 결론 | 근거문장"
+  //   비교: "비교 | 라벨 | 단위 | 시리즈A, 시리즈B | 그룹1: 6억, 4.5억 ; 그룹2: 10억, 6억 | 근거문장"
+  {
+    const parts = desc.replace(/^\[?차트:?\s*/, "").split("|").map((x) => x.trim());
+    if ((parts[0] === "추이" || parts[0] === "trend") && parts.length >= 4) {
+      const points = (parts[3] ?? "").split(";").map((x) => x.trim()).map((x) => {
+        const m = /^(.+?)=(.+)$/.exec(x);
+        return m ? { x: (m[1] ?? "").trim().slice(0, 12), y: (m[2] ?? "").trim().slice(0, 14) } : null;
+      }).filter((v): v is { x: string; y: string } => !!v).slice(0, 5);
+      if (points.length >= 3) return { kind: "trend", label: (parts[1] ?? "").slice(0, 30), unit: (parts[2] ?? "").slice(0, 8) || undefined, points, conclusion: (parts[4] ?? "").slice(0, 40) || undefined, source_sentence: (parts[5] ?? "").slice(0, 200) || undefined };
+    }
+    if ((parts[0] === "비교" || parts[0] === "bars") && parts.length >= 5) {
+      const series = (parts[3] ?? "").split(",").map((x) => x.trim().slice(0, 12)).filter(Boolean).slice(0, 3);
+      const groups = (parts[4] ?? "").split(";").map((x) => x.trim()).map((g) => {
+        const m = /^(.+?):(.+)$/.exec(g);
+        return m ? { label: (m[1] ?? "").trim().slice(0, 12), values: (m[2] ?? "").split(",").map((v) => v.trim().slice(0, 14)).filter(Boolean).slice(0, 3) } : null;
+      }).filter((v): v is { label: string; values: string[] } => !!v && v.values.length > 0).slice(0, 3);
+      if (groups.length >= 2 && series.length > 0) return { kind: "bars", label: (parts[1] ?? "").slice(0, 30), unit: (parts[2] ?? "").slice(0, 8) || undefined, series, groups, source_sentence: (parts[5] ?? "").slice(0, 200) || undefined };
+    }
+  }
   const jstart = desc.indexOf("{");
   if (jstart < 0) return null;
   try {
