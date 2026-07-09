@@ -111,58 +111,39 @@ function mergeUnbalanced(parts: string[]): string[] {
 // ★유저 교본(2026-07-07): 문단을 쪼개면(빈 줄) 흐름이 끊긴다 — 같은 문단 안에서 <br>로 '의미 구 줄바꿈'.
 //  문장별 한 줄. 문장이 길면(>44자) 쉼표·연결어미 구 경계에서 균형 줄바꿈(양쪽 12자 이상일 때만 — 고아 조각 금지).
 function breakSentence(sen: string): string {
-  // ★모바일 줄폭(유저 최종 규격): 한계선 23자 — 목표 18, 어절 경계만.
-  // ★태그-인식 절단(v2): 인라인 태그(mark·b·u) 문장도 '텍스트 구간에서만' 자른다 — 태그 중간 절단 불가 + 통줄 부작용 해소(실측 68자 통줄).
-  // ★공백 보존: 절단점의 공백을 지우지 않는다 — 네이버가 <br>을 삭게 될 때 단어가 붙는 사고 방지(실측 '연금도돌려받을').
+  // ★개행 v3(2026-07-10 유저 확정 — 네이버 공식 문법): 강제 절단 폐지. 문장은 자연스럽게 흐르고,
+  //  45자 초과 문장만 의미 절(쉼표 최우선)에서 나눈다 — "억지로 끊은 문장"(실측 지적) 종결.
   if (/<br/i.test(sen)) return sen;
-  const CLAUSE = /([,，、]|에서|라면|다면|하면|이면|인지|는지|한지|는 건|은 건|하고|하며|지만|는데|면서|위해|보다|어서|아서|여도|해도|므로|더라도|든지|거나|처럼|때는|때만|경우|까지|기간은|기한은|여부는|한도는|기준은|넣어야|하려면|통해|따라|대해|관해|[가-힣]{2,}[은는도]|[가-힣]{2,}할|[가-힣]{2,}면)\s+/g;
-  // 태그/텍스트 토큰 분해 — 절단점은 plain(태그 제외 텍스트)의 시각 오프셋으로 계산 후 텍스트 토큰에만 삽입
   const tokens = sen.split(/(<[^>]+>)/).filter((t) => t !== "");
   const plain = tokens.filter((t) => !t.startsWith("<")).join("");
-  const cutOffsets: number[] = []; // plain 기준 절단 오프셋(누적)
-  let rest = plain;
-  let base = 0;
-  let guard = 0;
-  while (visLen(rest) > 21 && guard++ < 8) {
+  if (visLen(plain) <= 45) return sen;
+  // 절단점: 쉼표 뒤 > 연결어미 뒤 — 25~50자 구간에서 중앙(35자)에 가장 가까운 곳 1개(필요시 반복)
+  const CLAUSE = /([,，、]\s+|(?:하고|하며|지만|는데|면서|므로|다면|라면|통해|위해|대해|따라|보다)\s+)/g;
+  const cutOffsets: number[] = [];
+  let rest = plain, base = 0, guard = 0;
+  while (visLen(rest) > 45 && guard++ < 4) {
     const cands: number[] = [];
     let m: RegExpExecArray | null;
     CLAUSE.lastIndex = 0;
     while ((m = CLAUSE.exec(rest))) cands.push(m.index + m[0].length);
     let best = -1, bestD = Infinity;
-    for (const pass of [{ min: 10, max: 23 }, { min: 8, max: 23 }]) {
-      for (const cut of cands) {
-        const left = visLen(rest.slice(0, cut));
-        if (left < pass.min || left > pass.max || visLen(rest.slice(cut)) < 4) continue;
-        const d = Math.abs(left - 18);
-        if (d < bestD) { bestD = d; best = cut; }
-      }
-      if (best >= 0) break;
+    for (const cut of cands) {
+      const left = visLen(rest.slice(0, cut));
+      if (left < 25 || left > 50 || visLen(rest.slice(cut)) < 8) continue;
+      const d = Math.abs(left - 35);
+      if (d < bestD) { bestD = d; best = cut; }
     }
-    if (best < 0) {
-      const words = [...rest.matchAll(/\s+/g)].map((w) => w.index ?? 0);
-      let wb = -1, wd = Infinity;
-      for (const w of words) {
-        const left = visLen(rest.slice(0, w));
-        if (left < 8 || left > 23 || visLen(rest.slice(w)) < 4) continue;
-        const d = Math.abs(left - 18);
-        if (d < wd) { wd = d; wb = w; }
-      }
-      if (wb < 0) break;
-      best = wb;
-    }
+    if (best < 0) break; // 자를 자리 없으면 통줄(자연 wrap — keep-all이 단어 절단 방지)
     cutOffsets.push(base + best);
     base += best;
     rest = plain.slice(base);
   }
   if (cutOffsets.length === 0) return sen;
-  // 토큰 순회 — 텍스트 토큰 안의 해당 오프셋에 <br> 삽입(공백은 보존: 자르기만, trim 없음)
-  let acc = 0; // plain 누적 길이
-  let ci = 0;
+  let acc = 0, ci = 0;
   const out: string[] = [];
   for (const tok of tokens) {
     if (tok.startsWith("<")) { out.push(tok); continue; }
-    let t = tok;
-    let consumed = 0;
+    let t = tok, consumed = 0;
     while (ci < cutOffsets.length) {
       const target = cutOffsets[ci]! - acc - consumed;
       if (target <= 0 || target >= t.length) break;
@@ -290,23 +271,16 @@ function arrowChainToSteps(html: string): string {
 
 function styleMarkers(html: string): string {
   // ★소제목 앞 구분선 보정(유저 실측: 구분선 부족=텍스트 과밀) — h2 직전에 구분선(또는 --- 마커)이 없으면 자동 삽입. 첫 h2 제외(도입 직후 과밀 방지)
-  {
-    let h2Seen = 0;
-    html = html.replace(/(<p[^>]*>\s*(?:─+|-{3,})\s*<\/p>\s*)?<h2(\s[^>]*)?>/gi, (m, divider) => {
-      h2Seen += 1;
-      if (h2Seen === 1 || divider) return m; // 첫 소제목이거나 이미 구분선 있음
-      return `<p>---</p>${m}`;
-    });
-  }
+  // (2026-07-10) 소제목 앞 자동 구분선 폐지 — 네이버 공식 문법: 마디는 여백+세로바 소제목이 담당
 
   // ★소제목 네이버 공식 문법(유저 레퍼런스: 블로그팀 공식 — 파란 큰 소제목이 섹션 마디를 색으로 보여준다)
   html = html.replace(/<h2(\s[^>]*)?>([\s\S]*?)<\/h2>/gi, (_m, _attr, inner) => {
     const clean = String(inner).replace(/<[^>]+>/g, "").trim();
-    return `<h2 style="text-align:center;font-size:20px;font-weight:800;color:#0073e9;word-break:keep-all">${clean}</h2>`;
+    return `<h2 style="text-align:left;font-size:18px;font-weight:800;color:#191f28;word-break:keep-all">▍ ${clean}</h2>`;
   });
   // ★※ 각주 — 작은 회색 보조문(레퍼런스 문법: 참고·단서는 본문보다 한 단계 작고 옅게)
   html = html.replace(/<p(\s[^>]*)?>\s*(※[\s\S]*?)<\/p>/gi, (_m, _attr, inner) => {
-    return `<p style="text-align:center;font-size:13px;color:#8b95a1;word-break:keep-all">${inner}</p>`;
+    return `<p style="text-align:left;font-size:13px;color:#8b95a1;word-break:keep-all">${inner}</p>`;
   });
 
   // ★평문 불릿 문단 좌정렬(실측: 엔진이 <ul> 대신 <p>・항목</p>로 쓰면 중앙 감김 — 리스트=좌정렬 풀폭 규격 적용)
@@ -321,17 +295,17 @@ function styleMarkers(html: string): string {
     const blocks = parts.slice(head && !/^\d{1,2}\s?단계/.test(head) ? 1 : 0).map((seg) => {
       const mm = /^(\d{1,2})\s?단계\s?:\s*([\s\S]*)$/.exec(seg.trim());
       if (!mm) return "";
-      return `<p style="text-align:center;word-break:keep-all"><b>${mm[1]}단계</b><br>${(mm[2] ?? "").replace(/^[・•\s]+/, "").trim()}</p>`;
+      return `<p style="text-align:left;word-break:keep-all"><b>${mm[1]}단계</b><br>${(mm[2] ?? "").replace(/^[・•\s]+/, "").trim()}</p>`;
     }).filter(Boolean).join("");
     const lead = head && !/^\d{1,2}\s?단계/.test(head) ? `<p${attr ?? ""}>${head}</p>` : "";
     return lead + blocks;
   });
   // 불릿 안의 단계('• 1단계: ...' 각각 별도 문단으로 온 경우)도 같은 승격
   html = html.replace(/<p(\s[^>]*)?>\s*[・•]?\s*(\d{1,2})\s?단계\s?:\s*([\s\S]*?)<\/p>/g,
-    (_m, _attr, n, body) => `<p style="text-align:center;word-break:keep-all"><b>${n}단계</b><br>${String(body).trim()}</p>`);
+    (_m, _attr, n, body) => `<p style="text-align:left;word-break:keep-all"><b>${n}단계</b><br>${String(body).trim()}</p>`);
 
   // ★깨진 태그 잔재 소거(실측: style="background-color:#fff3a8;"> 텍스트 노출) — 태그 시작(<) 없이 속성 문자열이 텍스트로 남은 것
-  html = html.replace(/([가-힣0-9)\].,!?%])\s*(?:style|class)="[^"<>]*"\s*\/?>/g, "$1 "); // 앞 문자가 한글·문장부호일 때만(정상 태그 안의 style 앞은 항상 태그명·공백 — 한글 불가)
+  html = html.replace(/([가-힣)\].,!?%])\s*(?:style|class)="[^"<>]*"\s*\/?>/g, "$1 "); // 앞 문자가 한글·문장부호일 때만 — 숫자 제외(h2·h3의 2·3이 매치돼 소제목 태그를 파손하던 실측 버그)
 
   // ★엔진이 평문으로 쓴 '함께 보면 좋은 글' 라벨 소거(규격 위반 실측: 블록 2회) — 라벨은 시스템 산출(하단 3층) 전용
   html = html.replace(/<p[^>]*>\s*(?:<b[^>]*>)?\s*함께\s?보면\s?좋은\s?글\s*[:：]?\s*(?:<\/b>)?\s*<\/p>/g, "");
@@ -346,7 +320,7 @@ function styleMarkers(html: string): string {
   // ★내부링크 마커 — 하단 3층(유저 확정: 유저가 네이버 링크 카드로 직접 삽입 — 시스템은 그 직전까지 준비)
   html = html.replace(/\[마무리관련글:\s*(https?:[^\s|\]]+)\s*\|\s*([^|\]]+)\|\s*([^\]]+)\]/g, (_m, url: string, _t: string, reason: string) => {
     const clean = url.split("?")[0]; // 트래킹 파라미터 제거 — 원형만
-    return `<p style="text-align:center;font-size:15px;font-weight:700">함께 보면 좋은 글</p><p style="text-align:center;font-size:13.5px;color:#4e5968">${reason.trim()}</p><p style="text-align:center;background-color:#f5f6f8;padding:10px 8px;font-size:13px;color:#8b95a1">[링크 카드 자리 — 아래 주소를 링크 버튼에 붙여넣으세요]</p><p style="text-align:center;font-size:13px">${clean}</p>`;
+    return `<p style="text-align:left;font-size:15px;font-weight:700">함께 보면 좋은 글</p><p style="text-align:left;font-size:13.5px;color:#4e5968">${reason.trim()}</p><p style="text-align:left;background-color:#f5f6f8;padding:10px 8px;font-size:13px;color:#8b95a1">[링크 카드 자리 — 아래 주소를 링크 버튼에 붙여넣으세요]</p><p style="text-align:left;font-size:13px">${clean}</p>`;
   });
   // ★중간 [관련글:] 마커 — 전면 제거(유저 확정: 내부링크는 하단 '함께 보면 좋은 글'만) — 기존 생성 글의 마커도 조립 시 소거
   html = html.replace(/\[관련글:\s*(https?:[^\s|\]]+)\s*\|\s*([^\]]+)\]/g, "");
@@ -371,7 +345,7 @@ function styleMarkers(html: string): string {
     if (/^-{3,}$/.test(plain)) return '<p style="text-align:center;color:#d5d9df;letter-spacing:2px;margin:8px 0">─────</p>';
     if (/^(?:&gt;|>)\s+/.test(plain)) {
       const q = plain.replace(/^(?:&gt;|>)\s+/, "");
-      return `<p style="text-align:center;font-size:17px;font-weight:700;color:#33363d;padding:4px 24px">“${q}”</p>`;
+      return `<p style="text-align:left;font-size:17px;font-weight:700;color:#33363d;padding:4px 0">“${q}”</p>`;
     }
     if (/^Q[.．]\s?/.test(plain)) { qNum += 1; return `<p><b style="font-size:16px"><span style="color:#1D75F7">${qNum}.</span> ${plain.replace(/^Q[.．]\s?/, "")}</b></p>`; } // Q. → 파랑 번호(구조 라벨)+볼드
     return raw;
@@ -523,7 +497,7 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
     const url = input.images?.[idx];
     if (!url) {
       // ★미충족 → 명시 마커(유저 확정: 에디터에서 이 자리에 이미지를 넣고 마커를 지우는 흐름 — 대괄호 유지로 눈에 띄게)
-      return `<p style="text-align:center;background-color:#f5f6f8;padding:10px 8px;font-size:13px;color:#8b95a1">[이미지 ${idx + 1} — 여기에 삽입]<br>표현: ${desc.trim().slice(0, 60)}</p>`;
+      return `<p style="text-align:left;background-color:#f5f6f8;padding:10px 8px;font-size:13px;color:#8b95a1">[이미지 ${idx + 1} — 여기에 삽입]<br>표현: ${desc.trim().slice(0, 60)}</p>`;
     }
     const isAi = input.aiImageIdx?.includes(idx);
     // ★AI 생성분 캡션 자동(오인 방지) — 참고 이미지 명시가 신뢰를 지킨다
