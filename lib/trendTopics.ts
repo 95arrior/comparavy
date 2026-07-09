@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createSupabaseAdminClient } from "./supabase-server";
 import { fetchApplyhomeSeeds } from "./applyhome";
 import { fetchGov24Seeds } from "./gov24";
+import { fetchBizinfoSeeds } from "./bizinfoSeeds";
 import { gatherHeadlinesWithStats } from "./trendSources";
 import { seasonalSeeds } from "./seasonalEvents";
 import { fetchNaverAutocomplete } from "./naverAutocomplete";
@@ -15,7 +16,7 @@ import { logUsage } from "./usageLog";
 //  스케일: 유저 무관(카테고리당 1회) → 1만·100만 명 동일 비용. 유저는 이 풀에서 시드 회전으로 다른 조각을 봄.
 
 export interface Longtail { kw: string; blogTotal: number | null }
-export type SeedSource = "news" | "season" | "discover" | "applyhome" | "gov24";
+export type SeedSource = "news" | "season" | "discover" | "applyhome" | "gov24" | "bizinfo";
 export interface TrendTopic {
   keyword: string;
   title: string;
@@ -325,6 +326,19 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
         }
         if (govs.length) console.log(`[gov24] ${category}: 신청형 씨앗 ${Math.min(govs.length, 4)}건 합류`);
       } catch (e) { console.log(`[gov24] 실패: ${e instanceof Error ? e.message : "unknown"}`); }
+      // ★기업마당(3호) — 소상공인 대상 공고만(B2B 과제 게이트), 등록 48h·접수 창 규격 동일
+      try {
+        const biz = await fetchBizinfoSeeds();
+        for (const z of biz.slice(0, 3)) {
+          rows.push({
+            category, keyword: z.keyword, title: z.title, news_context: z.newsContext,
+            longtails: [] as Longtail[], source: "bizinfo", created_at: new Date().toISOString(),
+            expires_at: `${z.actionEnd}T23:59:59+09:00`,
+            action_start: z.actionStart, action_end: z.actionEnd,
+          } as (typeof rows)[number] & { action_start: string; action_end: string });
+        }
+        if (biz.length) console.log(`[bizinfo] ${category}: 소상공인 공고 씨앗 ${Math.min(biz.length, 3)}건 합류`);
+      } catch (e) { console.log(`[bizinfo] 실패: ${e instanceof Error ? e.message : "unknown"}`); }
     }
 
     const admin = createSupabaseAdminClient();
