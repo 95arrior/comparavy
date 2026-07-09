@@ -1,5 +1,6 @@
 // ★청약홈 수확기(2026-07-08 유저 승인 — "돈+행동" 1단계) — 공공데이터포털 실호출 검증 완료 API 2종.
 import { fetchNaverAutocomplete } from "./naverAutocomplete";
+import { poolScore } from "./trafficPool";
 //  선점 공식: 공고일 수확 → 즉시 발행 → 접수일 색인 완료 (무순위 1글 28.7만 조회 실증 구조).
 //  신뢰 원칙: 모든 표시값은 API 실값만(공고일·접수일·세대수·지역). 분양가는 API가 제공하지 않음 — 어디서도 금액 생성 금지.
 
@@ -84,8 +85,9 @@ export async function fetchApplyhomeSeeds(): Promise<ApplyhomeSeed[]> {
         seeds.push(s);
       }
     }
-    // 무순위 우선(반복 검색 강도 최고 실증), 이어서 공고일 최신순
-    seeds.sort((a, b) => (Number(/무순위/.test(b.kind)) - Number(/무순위/.test(a.kind))) || b.announceDate.localeCompare(a.announceDate));
+    // ★풀 스코어 우선(유저 회의: 동탄 줍줍 > 지방 소단지 — 지역·무순위·규모가 잠재 풀), 동점이면 공고일 최신
+    const ps = (s2: ApplyhomeSeed) => poolScore(`${s2.kind} ${s2.region} ${s2.title}`) + (s2.households >= 100 ? 1 : 0);
+    seeds.sort((a, b) => (ps(b) - ps(a)) || b.announceDate.localeCompare(a.announceDate));
     const top = seeds.slice(0, 8);
     // ★단지명 롱테일(유저 지시) — '힐스테이트 시흥 무순위 조건/일정' 같은 실검색 패턴을 자동완성으로 실검증(씨앗당 1콜)
     await Promise.all(top.map(async (s2) => {

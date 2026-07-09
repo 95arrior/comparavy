@@ -14,6 +14,7 @@ import { buildPoolForSub } from "@/lib/keywordPool";
 import { getTrendTopics, refreshCategoryTrends, hasFreshTrends } from "@/lib/trendTopics";
 import { amplifyForUser } from "@/lib/amplifyTopics";
 import { fetchKeywordStats, normalizeKey } from "@/lib/naverKeyword";
+import { poolScore, isBigPool } from "@/lib/trafficPool";
 import { collectPoolKeywords } from "@/lib/poolCollect";
 import { fetchNaverAutocomplete } from "@/lib/naverAutocomplete";
 import { checkRateLimit } from "@/lib/rateLimit";
@@ -244,6 +245,7 @@ export async function GET(req: Request) {
         if (/(기소|구속|재판|실적|영업이익|전망|주가|급락|급등|논란|의혹|사과)/.test(txt)) sc -= 2;
         if (/(최종 선정|선정 완료|수상|시상|성료|협약|아카데미|특강|강좌)/.test(txt)) sc -= 5; // 죽은 공고·초지역 행사 — 사실상 바닥
         if (isRecentDup(t.keyword ?? "")) sc -= 3; // 최근 발행 키워드 — 노출 잠식 방지
+        sc += Math.round(poolScore(txt) / 2); // 잠재 풀 가점(0~4) — 전 국민 주제·인기지가 위로
         return sc;
       };
       trends = [...trends].sort((a, b) => ((b.longtails?.length ?? 0) * 2 + (b.newsContext ? 1 : 0) + actionScore(b)) - ((a.longtails?.length ?? 0) * 2 + (a.newsContext ? 1 : 0) + actionScore(a)));
@@ -405,10 +407,15 @@ export async function GET(req: Request) {
           if (isAnnounce && v && v.vol < 300) return false; // 청약·신청형: 실측 저수요(소단지 무순위 등) 컷 — 미조회는 유지
           return true;
         });
-        // 수요 내림차순 재정렬 — 실측 큰 것 위로, 미조회는 현 순서 유지(뒤로 밀지 않음: 신선 이슈일 수 있음)
-        tc = tc.map((c, i) => ({ c, i, vol: volMap[c.keyword]?.vol ?? -1 }))
-          .sort((a, b) => (b.vol - a.vol) || (a.i - b.i))
-          .map((x) => x.c);
+        // ★수요(실측) + 풀 스코어(잠재 독자 크기 — 유저 회의 확정: 동탄 줍줍 vs 지방 소단지) 결합 정렬
+        tc = tc.map((c, i) => {
+          const ctx = `${c.title} ${c.keyword} ${(c.newsContext ?? "").slice(0, 200)}`;
+          const vol = volMap[c.keyword]?.vol ?? -1;
+          const volBand = vol >= 5000 ? 4 : vol >= 1000 ? 3 : vol > 0 ? 1 : 0;
+          const pool = poolScore(ctx);
+          if (isBigPool(ctx)) (c as { demandBadge?: string }).demandBadge = `전국 관심 예상 · ${(c as { demandBadge?: string }).demandBadge ?? "잠재 수요 큰 글감"}`;
+          return { c, i, score: volBand + pool };
+        }).sort((a, b) => (b.score - a.score) || (a.i - b.i)).map((x) => x.c);
         for (const c of tc) {
           const v = volMap[c.keyword];
           if (v) {
