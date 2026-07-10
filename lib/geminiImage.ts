@@ -53,7 +53,7 @@ const ABSTRACT_RE = /비교|정리|요약|절차|단계|순서|구성|개념|금
 //  "잘 그린 그림"이 아니라 "3초에 읽히는 기호" — AI 실사의 불쾌함이 원천 부재, 채널 아이덴티티 통일.
 const ATEFLO_ILLUST_STYLE = [
   "STYLE (non-negotiable): premium EDITORIAL ILLUSTRATION — the quality of an award-winning fintech brand campaign (Behance/agency grade), NOT clipart, NOT cheap flat icons.",
-  "Rendering: clean bold vector shapes with soft airbrush/dimensional shading and a fine grain texture finish. Confident silhouettes, generous negative space.",
+  "Rendering: hand-crafted feel — rich color blocking, soft airbrush shading, depth with subtle soft shadows, fine grain/noise texture. Confident silhouettes, generous negative space. Think premium fintech campaign art (Toss/Cash App grade), NOT flat UI icons.",
   "Background: one strong saturated SOLID color filling the entire frame (no scenes, no landscapes).",
   "Subject: ONE oversized iconic object as the hero, centered-ish, larger than life. People only as small simple silhouettes if essential.",
   "NOT photorealistic, NOT 3D render, NOT anime, NOT clip-art, NOT icon grids, NO clutter — one idea, told big.",
@@ -154,6 +154,22 @@ export function compositionOf(copy: string): 0 | 1 | 2 {
 }
 
 // ★배경 문법 4종(2026-07-09 유저 레퍼런스 — 통일성은 스타일, 다양성은 문법·색으로)
+// ★은유 콘셉트 뱅크(2026-07-10 — 실측: 카드·동전·화살표 3종 세트로 게으르게 수렴) — 아이디어를 우리가 공급한다
+const METAPHOR_BANK = [
+  "갈아타기·환승 → a person hopping across stepping stones, each stone a different color",
+  "비교·선택 → an old-fashioned balance scale with two different objects, or a person at a fork in two colored paths",
+  "손해·새는 돈 → a pouch or bucket with a small hole and drops leaking out",
+  "이자·불어남 → a snowball rolling downhill getting bigger, or a watering can growing a plant",
+  "보호·안전 → a money pouch wearing a seatbelt, or an umbrella over a small object",
+  "마감·시간 → a melting ice cube, or an hourglass almost empty",
+  "자격·문 열림 → a giant door slightly open with light, or a key fitting into a lock",
+  "숨은 혜택 → a person lifting a rug corner to find something shiny underneath",
+  "순서·절차 → a winding path with numbered flags to a small house or flag",
+  "함정·주의 → a banana peel on a clean floor, or a mousetrap with a coin as bait",
+  "성장·목돈 → a tiny seedling growing out of a jar of coins",
+  "빠른 처리 → a paper plane flying across the frame leaving a color trail",
+] as const;
+
 const BG_GRAMMARS = [
   "GRAMMAR = GIANT OBJECT: the topic's single most iconic object, oversized and centered, soft dimensional shading (예: a huge money pouch, three overlapping bank cards, a giant coin).",
   "GRAMMAR = WITTY COMBO: the topic object PLUS one unexpected everyday element fused into a single visual pun — like a money pouch wearing a car seatbelt (= protecting money), a key stuck in a dartboard bullseye (= the exact solution). ONE combined object only.",
@@ -174,11 +190,13 @@ export function buildThumbPhotoBgPrompt(topic: string, seed: number, center = fa
   const copy = opts?.copyText?.trim() ?? "";
   const v = Math.max(0, opts?.variant ?? 0);
   // 문구 주어 → 시작 문법 매핑(사람=인물 문법, 그 외=심볼), variant·seed로 문법×팔레트 회전
-  const baseG = compositionOf(copy) === 0 ? 1 : 0;
+  // 시작 문법 균등 분산(실측: 항상 GIANT OBJECT 시작 → 다시 만들기도 비슷) — 사람 문구는 TINY PEOPLE 우선, 그 외 seed·문구 해시 균등
+  let ch = 0; for (const c2 of copy) ch = (ch * 31 + c2.charCodeAt(0)) >>> 0;
+  const baseG = compositionOf(copy) === 0 ? 2 : (seed + ch) % BG_GRAMMARS.length;
   const grammar = BG_GRAMMARS[(baseG + v) % BG_GRAMMARS.length];
   const palette = BG_PALETTES[(seed + v) % BG_PALETTES.length];
   const subjectRule = copy
-    ? `THE COPY IS THE SCRIPT (highest priority): the Korean copy overlaid on this image reads "${copy}" (understand only — never render it). Draw the IDEA this copy describes as one bold flat-illustration symbol. NON-NEGOTIABLE: include ONE topic-identifying object from "${topic.trim()}" so the field is recognizable even with the text covered (수출→container/ship shape, 지원금→giant coin/envelope, 대출·청약→house/apartment shapes, 적금→coin stack). ${grammar} PALETTE: ${palette} (max 4 colors, subtle film grain finish). MAXIMUM 2 meaningful objects unless the grammar says otherwise — simplicity wins. LITMUS TEST: with the text hidden, a viewer should still guess the article's field. ${ATEFLO_ILLUST_STYLE}`
+    ? `THE COPY IS THE SCRIPT (highest priority): the Korean copy overlaid on this image reads "${copy}" (understand only — never render it). Draw the IDEA this copy describes as one bold flat-illustration symbol. CLICHE BAN: do NOT default to credit cards, coins, banknotes, arrows or generic money stacks — these are exhausted; use them ONLY if the copy is literally about a card/coin. Instead pick ONE witty metaphor matching the copy's angle from this bank (or invent an equally specific one): ${METAPHOR_BANK[(seed + v) % METAPHOR_BANK.length]} / ${METAPHOR_BANK[(seed + v + 5) % METAPHOR_BANK.length]}. When a person appears, draw an appealing simple editorial character (confident line/shape work, expressive pose, like premium fintech brand mascots — not a stick figure). ${grammar} PALETTE: ${palette} (max 4 colors, subtle film grain finish). MAXIMUM 2 meaningful objects unless the grammar says otherwise — simplicity wins. LITMUS TEST: with the text hidden, a viewer should still guess the article's field. ${ATEFLO_ILLUST_STYLE}`
     : `Flat vector illustration thumbnail for this topic (understand only — never render as text): "${topic.trim()}". ${grammar} PALETTE: ${palette}. ${ATEFLO_ILLUST_STYLE}`;
   const layout = center
     ? `Subjects arranged toward the edges/corners; the CENTER of the frame stays calm and low-detail — large Korean text will be overlaid dead-center later.`
