@@ -23,7 +23,7 @@ import { BID_WEIGHT, BID_DEPTH_CAP, BID_COMP_BONUS, BID_BADGE_RATIO, BID_HIGH_MI
 import { FF } from "@/config/featureFlags";
 import { getPerfWeights } from "@/lib/perfWeights";
 import { computeBlogTier, applyDemoteGuard, type TierResult, type BlogTier } from "@/lib/blogTier";
-import { TIER_BANDS } from "@/lib/scoreWeights";
+import { TIER_BANDS, TIER_MIX } from "@/lib/scoreWeights";
 import { revenuePath } from "@/lib/revenue";
 import { logUsage } from "@/lib/usageLog";
 import { isAdminEmail } from "@/lib/adminStats";
@@ -931,5 +931,20 @@ export async function GET(req: Request) {
     if (debugMode) diag.finalGateDrops = g.drops;
     return NextResponse.json(debugMode ? { topics: g.pass, diag: { ...diag, mode: "long", poolCards: g.pass.length } } : { topics: g.pass, ...(FF.perfLoop ? { ff: { perfLoop: true } } : {}), ...(FF.tierBands && tierInfo ? { tier: { name: tierInfo.tier, note: tierInfo.note } } : {}) });
   }
-  return NextResponse.json(debugMode ? { topics: [...boostCards, ...trendCards, ...shuffled], diag: { ...diag, boost: boostCards.length, trendCards: trendCards.length, poolCards: shuffled.length } } : { topics: [...boostCards, ...trendCards, ...shuffled], ...(FF.tierBands && tierInfo ? { tier: { name: tierInfo.tier, note: tierInfo.note } } : {}) });
+  // ★tier별 종족 비율(FF_TIER_MIX §4) — 상위 10슬롯의 트렌드:에버그린 배분. 별도 레이어:
+  //  boost(시리즈·후속) 최우선 고정, 트렌드 내부 순서(공고 쿼터 포함)와 에버그린 내부 순서는 무수정 — 충돌 시 기존 규칙 승리.
+  let finalList = [...boostCards, ...trendCards, ...shuffled];
+  if (FF.tierMix && tierInfo) {
+    const [tw, ew] = TIER_MIX[tierInfo.tier];
+    const trends = [...trendCards]; const evers = [...shuffled];
+    const mixed: typeof finalList = [];
+    while ((trends.length || evers.length) && mixed.length < 10) {
+      const pos = mixed.length % (tw + ew);
+      const pick = pos < tw ? (trends.shift() ?? evers.shift()) : (evers.shift() ?? trends.shift());
+      if (!pick) break;
+      mixed.push(pick);
+    }
+    finalList = [...boostCards, ...mixed, ...trends, ...evers];
+  }
+  return NextResponse.json(debugMode ? { topics: finalList, diag: { ...diag, boost: boostCards.length, trendCards: trendCards.length, poolCards: shuffled.length } } : { topics: finalList, ...(FF.tierBands && tierInfo ? { tier: { name: tierInfo.tier, note: tierInfo.note } } : {}) });
 }
