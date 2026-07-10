@@ -412,8 +412,14 @@ export async function GET(req: Request) {
           if (!isAnnounce) return true;
           if (v && v.vol < 300) return false; // 실측 저수요 컷
           // ★미조회 공고 뒷문 봉쇄(실측: [강원] 마케터 양성 — 검색량 DB에 없는 공고명 = 아무도 안 찾음).
-          //  단 잠재 풀 큰 공고(동탄 줍줍 — 공고 직후라 미조회)는 풀 스코어로 구제
-          if (!v && poolScore(`${c.title} ${c.keyword} ${(c.newsContext ?? "").slice(0, 200)}`) < 3) return false;
+          //  단 잠재 풀 큰 공고(동탄 줍줍 — 공고 직후라 미조회)는 풀 스코어로 구제.
+          //  플랫폼 실측 조회 1만 회 이상(보조금24·기업마당 newsContext의 '플랫폼 조회 N회')도 실수요 증거로 구제
+          //  — 실측: 귀농 주택구입지원(조회 2.2만)이 풀 스코어 0으로 버려지던 구멍
+          if (!v) {
+            const pv = /플랫폼 조회\s*([\d,]+)회/.exec(c.newsContext ?? "");
+            const platformViews = pv ? Number(pv[1]!.replace(/,/g, "")) : 0;
+            if (platformViews < 10_000 && poolScore(`${c.title} ${c.keyword} ${(c.newsContext ?? "").slice(0, 200)}`) < 3) return false;
+          }
           return true;
         });
         // ★수요(실측) + 풀 스코어(잠재 독자 크기 — 유저 회의 확정: 동탄 줍줍 vs 지방 소단지) 결합 정렬

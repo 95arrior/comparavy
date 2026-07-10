@@ -75,7 +75,7 @@ export async function fetchGov24Seeds(): Promise<Gov24Seed[]> {
         actionStart: win.start, actionEnd: win.end,
         views: Number(r["조회수"] ?? 0),
         newsContext: [
-          `- [보조금24 실데이터] ${name} | 신청기한 원문: ${period.slice(0, 120)} | 접수 ${win.start}~${win.end}${target ? ` | 대상: ${target}` : ""}${link ? ` | 상세: ${link}` : ""}`,
+          `- [보조금24 실데이터] ${name} | 플랫폼 조회 ${Number(r["조회수"] ?? 0).toLocaleString()}회 | 신청기한 원문: ${period.slice(0, 120)} | 접수 ${win.start}~${win.end}${target ? ` | 대상: ${target}` : ""}${link ? ` | 상세: ${link}` : ""}`,
           summary ? `- 지원내용(원문): ${summary}` : "",
           `※ 금액·조건은 위 원문 범위 안에서만 서술 — 원문에 없는 수치 추정 절대 금지. 정확한 기준은 '보조금24에서 확인'으로 안내한다.`,
         ].filter(Boolean).join("\n"),

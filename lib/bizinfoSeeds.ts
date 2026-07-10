@@ -59,7 +59,7 @@ export async function fetchBizinfoSeeds(): Promise<BizinfoSeed[]> {
       actionStart: start!, actionEnd: end!,
       views: Number(pick(b, "inqireCo") || 0),
       newsContext: [
-        `- [기업마당 공고 실데이터] ${name} | 소관 ${region} | 분야 ${field}${target ? ` | 대상 ${target}` : ""} | 접수 ${start}~${end} | 공고 등록 ${created.slice(0, 10)}${url ? ` | 공고문 ${url}` : ""}`,
+        `- [기업마당 공고 실데이터] ${name} | 플랫폼 조회 ${Number(pick(b, "inqireCo") || 0).toLocaleString()}회 | 소관 ${region} | 분야 ${field}${target ? ` | 대상 ${target}` : ""} | 접수 ${start}~${end} | 공고 등록 ${created.slice(0, 10)}${url ? ` | 공고문 ${url}` : ""}`,
         summary ? `- 사업 요약(원문): ${summary}` : "",
         `※ 지원 금액·조건은 위 원문 범위 안에서만 서술 — 원문에 없는 수치 추정 절대 금지. 정확한 기준은 '기업마당 공고문에서 확인'으로 안내한다.`,
       ].filter(Boolean).join("\n"),
