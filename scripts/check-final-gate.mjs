@@ -8,6 +8,9 @@ const cases = [
   { c: { keyword: "삼성전자 실적", title: "삼성전자 2분기 실적발표 정리" }, drop: "newsy" },
   { c: { keyword: "일시적1가구2주택", title: "스톡옵션 전에 확인하면 좋은 것" }, drop: "title_keyword_mismatch" },
   { c: { keyword: "신혼부부 혼인증여공제", title: "신혼부부 3억원대 혼인증여공제 100% 활용하는 법" }, drop: null },
+  { c: { keyword: "식품기업 정부지원금", title: "식품 기업 최대 1360만원 정부지원금…11월까지 신청" }, drop: "b2b_audience" },
+  { c: { keyword: "중소기업청년지원금", title: "중소기업청년지원금 받을 수 있는 조건" }, drop: null },
+  { c: { keyword: "소상공인 스마트상점", title: "소상공인 스마트상점 기술 지원, 최대 500만원" }, drop: null },
 ];
 let fail = 0;
 for (const { c, drop } of cases) {
