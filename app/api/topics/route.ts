@@ -21,6 +21,7 @@ import { fetchNaverAutocomplete } from "@/lib/naverAutocomplete";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { BID_WEIGHT, BID_DEPTH_CAP, BID_COMP_BONUS, BID_BADGE_RATIO, BID_HIGH_MIN_DEPTH, ATTACK } from "@/lib/scoreWeights";
 import { FF } from "@/config/featureFlags";
+import { getPerfWeights } from "@/lib/perfWeights";
 import { revenuePath } from "@/lib/revenue";
 import { logUsage } from "@/lib/usageLog";
 import { isAdminEmail } from "@/lib/adminStats";
@@ -437,14 +438,22 @@ export async function GET(req: Request) {
           return true;
         });
         // ★수요(실측) + 풀 스코어(잠재 독자 크기 — 유저 회의 확정: 동탄 줍줍 vs 지방 소단지) 결합 정렬
+        // ★되먹임 가중치(FF_PERF_LOOP §1-4) — 표본 30+ 조합만 ±20% 곱셈 보정. 실패/미가동=전부 1(현행 동일)
+        const pw = FF.perfLoop ? await getPerfWeights(pool) : null;
         tc = tc.map((c, i) => {
           const ctx = `${c.title} ${c.keyword} ${(c.newsContext ?? "").slice(0, 200)}`;
           const vol = volMap[c.keyword]?.vol ?? -1;
           const volBand = vol >= 5000 ? 4 : vol >= 1000 ? 3 : vol > 0 ? 1 : 0;
           const pool = poolScore(ctx);
           if (isBigPool(ctx)) (c as { demandBadge?: string }).demandBadge = `전국 관심 예상 · ${(c as { demandBadge?: string }).demandBadge ?? "잠재 수요 큰 글감"}`;
-          if (FF.perfLoop) c.sel = { ...(c.sel ?? {}), vol: volMap[c.keyword]?.vol ?? null, volBand, poolScore: pool, sortScore: volBand + pool };
-          return { c, i, score: volBand + pool };
+          let score = volBand + pool;
+          if (pw) {
+            const srcW = pw.bySource[String((c.sel as { seedSource?: string } | undefined)?.seedSource ?? "")] ?? 1;
+            const hkW = c.hookKey ? (pw.byHookSpecies[`${c.hookKey}|trend`] ?? 1) : 1;
+            score = score * srcW * hkW;
+          }
+          if (FF.perfLoop) c.sel = { ...(c.sel ?? {}), vol: volMap[c.keyword]?.vol ?? null, volBand, poolScore: pool, sortScore: score };
+          return { c, i, score };
         }).sort((a, b) => (b.score - a.score) || (a.i - b.i)).map((x) => x.c);
         // ★유형 믹스 쿼터(유저 회의: 공고형이 5칸 독식 방지) — 상위 5 중 공고형 최대 2, 초과분은 6위 밖으로(대형 풀 5점+는 예외)
         {
