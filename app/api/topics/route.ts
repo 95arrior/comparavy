@@ -13,7 +13,7 @@ import { resolveLocalPlan, generateLocalKeywords, generateAudienceTopics, type L
 import { buildPoolForSub } from "@/lib/keywordPool";
 import { getTrendTopics, refreshCategoryTrends, hasFreshTrends } from "@/lib/trendTopics";
 import { amplifyForUser } from "@/lib/amplifyTopics";
-import { fetchKeywordStats, normalizeKey } from "@/lib/naverKeyword";
+import { fetchKeywordStats, normalizeKey, fetchRelatedKeywords } from "@/lib/naverKeyword";
 import { poolScore, isBigPool } from "@/lib/trafficPool";
 import { finalGate } from "@/lib/cardFinalGate";
 import { collectPoolKeywords } from "@/lib/poolCollect";
@@ -665,6 +665,38 @@ export async function GET(req: Request) {
   }
 
   // ── 제목·카테고리·노이즈판별(여유분 한 번에) ──
+  // ★스포크 확장(2026-07-10 유저: 상위 후보 소진 — 쓸수록 풀이 자라는 구조): 최근 발행 키워드의 연관어를
+  //  keywordstool에서 캐와(검색량 실측 포함) 미사용 신규만 후보 합류 + 공유 풀에 적립. 24h 캐시·요청당 2시드.
+  try {
+    const spokeKey = `spokes:${user.id}:${sub}:${new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10)}`;
+    let spokes: { keyword: string; monthly_searches: number; competition: string | null }[] | null = null;
+    const { data: sc } = await pool.from("api_cache").select("value, expires_at").eq("key", spokeKey).maybeSingle();
+    if (sc?.value && new Date(String(sc.expires_at)).getTime() > Date.now()) spokes = sc.value as typeof spokes;
+    if (!spokes) {
+      spokes = [];
+      const seeds = [...new Set((mine ?? []).slice(0, 12).map((a) => String(a.keyword ?? "").trim()).filter((k) => k.length >= 2))].slice(0, 2);
+      for (const seed of seeds) {
+        const rel = await fetchRelatedKeywords(seed).catch(() => []);
+        for (const r of rel.slice(0, 20)) {
+          const kw = String(r.relKeyword ?? "").trim();
+          if (!kw || usedSet.has(normalizeKeyword(kw))) continue;
+          const vol = (typeof r.monthlyMobileQcCnt === "number" ? r.monthlyMobileQcCnt : 0) + (typeof r.monthlyPcQcCnt === "number" ? r.monthlyPcQcCnt : 0);
+          if (vol < 800) continue; // 실측 수요 있는 스포크만
+          spokes.push({ keyword: kw, monthly_searches: vol, competition: String(r.compIdx ?? "") || null });
+        }
+      }
+      spokes = spokes.slice(0, 10);
+      try { await pool.from("api_cache").upsert({ key: spokeKey, value: spokes, expires_at: new Date(Date.now() + 24 * 3600_000).toISOString(), updated_at: new Date().toISOString() }); } catch { /* ignore */ }
+    }
+    for (const sp of spokes) {
+      const nk = normalizeKeyword(sp.keyword);
+      if (!candidates.some((x) => normalizeKeyword(x.keyword) === nk)) {
+        candidates.push({ keyword: sp.keyword, monthly_searches: sp.monthly_searches, competition: sp.competition, audience: null, blog_total: null } as (typeof candidates)[number]);
+      }
+    }
+    if (debugMode) diag.spokes = spokes.length;
+  } catch { /* 스포크 확장 실패는 기본 풀로 진행 */ }
+
   // ★에버그린 뉴스성 게이트(유저 실측: '2분기실적발표' — 검색량이 있어도 특정 기업을 찾는 수요라 일반 정보글에 안 붙는다)
   //  트렌드 쪽 감점과 동일 철학 — 읽고 끝나는·특정 대상 없는 뉴스성 키워드는 풀에서 제외
   const NEWSY_POOL = /(실적발표|실적 발표|어닝|주가 전망|증시 전망|환율 전망|공모주 일정|급등주|테마주|수혜주)/;
