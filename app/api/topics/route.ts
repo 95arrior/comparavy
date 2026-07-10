@@ -20,6 +20,7 @@ import { collectPoolKeywords } from "@/lib/poolCollect";
 import { fetchNaverAutocomplete } from "@/lib/naverAutocomplete";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { BID_WEIGHT, BID_DEPTH_CAP, BID_COMP_BONUS, BID_BADGE_RATIO, BID_HIGH_MIN_DEPTH, ATTACK } from "@/lib/scoreWeights";
+import { FF } from "@/config/featureFlags";
 import { revenuePath } from "@/lib/revenue";
 import { logUsage } from "@/lib/usageLog";
 import { isAdminEmail } from "@/lib/adminStats";
@@ -206,7 +207,7 @@ export async function GET(req: Request) {
 
   // ★트렌드 씨앗 × 개인화 증식 카드 — 키워드 풀과 독립. 조기 return에서도 트렌드가 나가게 함수로 분리.
   //  existing: 이미 담긴 글감 키워드(정규화) 집합(중복 방지). 온라인 vertical만 대상.
-  interface TrendCard { keyword: string; title: string; demandLabel: string; expiresAt?: string | null; ssak: boolean; region: boolean; tone: BloggerType; vol: number; comp: Comp; blogTotal: number | null; tag: string; newsContext?: string; sourceTitle?: string; demandBadge?: string; publishedOn?: string; actionStart?: string | null; actionEnd?: string | null; titleSearch?: string; briefText?: string; hookKey?: string; thumb?: { mainCopy: string; subCopy: string; badge: string }; brief?: unknown; series?: unknown; seriesId?: string; seriesBadge?: string }
+  interface TrendCard { keyword: string; title: string; demandLabel: string; expiresAt?: string | null; ssak: boolean; region: boolean; tone: BloggerType; vol: number; comp: Comp; blogTotal: number | null; tag: string; newsContext?: string; sourceTitle?: string; demandBadge?: string; publishedOn?: string; actionStart?: string | null; actionEnd?: string | null; titleSearch?: string; briefText?: string; hookKey?: string; thumb?: { mainCopy: string; subCopy: string; badge: string }; brief?: unknown; series?: unknown; seriesId?: string; seriesBadge?: string; sel?: Record<string, unknown> }
   async function buildTrendCards(existing: Set<string>): Promise<TrendCard[]> {
     const cards: TrendCard[] = [];
     if (!user) return cards;
@@ -245,6 +246,8 @@ export async function GET(req: Request) {
           newsContext: a.newsContext ?? undefined, sourceTitle: `${srcName}: ${a.title}`,
           actionStart: (a as { actionStart?: string | null }).actionStart ?? null,
           actionEnd: (a as { actionEnd?: string | null }).actionEnd ?? null,
+          // ★성과 루프(FF_PERF_LOOP) — 선별 맥락을 카드에 실어 발행 스냅샷까지 운반
+          ...(FF.perfLoop ? { sel: { species: "trend", seedSource: (a as { source?: string }).source ?? "announce" } } : {}),
         });
       }
 
@@ -316,7 +319,8 @@ export async function GET(req: Request) {
         const src = (t as { source?: string }).source;
         // ★momentum 배지 분리 — 뉴스/시즌='지금 뜨는 중', 자동완성 발굴='꾸준히 찾는 주제'(뜨는 척 금지)
         const demandLabel = src === "discover" ? "꾸준히 찾는 주제" : "지금 뜨는 중";
-        cards.push({ keyword: t.keyword, title: t.title, expiresAt: seedExpiry, demandLabel: (t as { inflow?: string }).inflow === "hit" ? "실검색 확인 · 지금 뜨는 중" : demandLabel, ssak: true, region: false, tone: bt, vol: 0, comp: "low" as Comp, blogTotal: null, tag: src === "discover" ? "steady" : "trend", newsContext: t.newsContext ?? undefined, sourceTitle: (t as { sourceTitle?: string | null }).sourceTitle ?? undefined, titleSearch: (t as { titleSearch?: string }).titleSearch, briefText: (t as { briefText?: string }).briefText, hookKey: (t as { hookKey?: string }).hookKey, thumb: (t as { thumb?: { mainCopy: string; subCopy: string; badge: string } }).thumb, brief: (t as { brief?: unknown }).brief, series: (t as { series?: unknown }).series ?? null });
+        cards.push({ keyword: t.keyword, title: t.title, expiresAt: seedExpiry, demandLabel: (t as { inflow?: string }).inflow === "hit" ? "실검색 확인 · 지금 뜨는 중" : demandLabel, ssak: true, region: false, tone: bt, vol: 0, comp: "low" as Comp, blogTotal: null, tag: src === "discover" ? "steady" : "trend", newsContext: t.newsContext ?? undefined, sourceTitle: (t as { sourceTitle?: string | null }).sourceTitle ?? undefined, titleSearch: (t as { titleSearch?: string }).titleSearch, briefText: (t as { briefText?: string }).briefText, hookKey: (t as { hookKey?: string }).hookKey, thumb: (t as { thumb?: { mainCopy: string; subCopy: string; badge: string } }).thumb, brief: (t as { brief?: unknown }).brief, series: (t as { series?: unknown }).series ?? null,
+          ...(FF.perfLoop ? { sel: (() => { const bf = (t as { brief?: { intent?: string; opening?: string; flow?: string } }).brief; return { species: "trend", seedSource: src ?? "news", hookKey: (t as { hookKey?: string }).hookKey ?? null, structure: bf ? [bf.intent, bf.opening, bf.flow].filter(Boolean).join("|") || null : null }; })() } : {}) });
       }
         for (const c of cards) {
         const norm = c.keyword.replace(/\s+/g, "");
@@ -439,6 +443,7 @@ export async function GET(req: Request) {
           const volBand = vol >= 5000 ? 4 : vol >= 1000 ? 3 : vol > 0 ? 1 : 0;
           const pool = poolScore(ctx);
           if (isBigPool(ctx)) (c as { demandBadge?: string }).demandBadge = `전국 관심 예상 · ${(c as { demandBadge?: string }).demandBadge ?? "잠재 수요 큰 글감"}`;
+          if (FF.perfLoop) c.sel = { ...(c.sel ?? {}), vol: volMap[c.keyword]?.vol ?? null, volBand, poolScore: pool, sortScore: volBand + pool };
           return { c, i, score: volBand + pool };
         }).sort((a, b) => (b.score - a.score) || (a.i - b.i)).map((x) => x.c);
         // ★유형 믹스 쿼터(유저 회의: 공고형이 5칸 독식 방지) — 상위 5 중 공고형 최대 2, 초과분은 6위 밖으로(대형 풀 5점+는 예외)
@@ -481,7 +486,7 @@ export async function GET(req: Request) {
       tc = g.pass;
       if (debugMode) diag.finalGateDrops = g.drops;
     }
-    return NextResponse.json(debugMode ? { topics: tc, diag: { ...diag, mode: "short", trendCards: tc.length } } : { topics: tc });
+    return NextResponse.json(debugMode ? { topics: tc, diag: { ...diag, mode: "short", trendCards: tc.length } } : { topics: tc, ...(FF.perfLoop ? { ff: { perfLoop: true } } : {}) });
   }
 
   // 단계적 폴백: (sub+적정범위) → (sub+전체). ★vertical 전체 폴백 제거(실측: 자동차 블로그에 '파쇄기' —
@@ -822,6 +827,8 @@ export async function GET(req: Request) {
       blogTotal: r.blog_total ?? null,
       bidHigh: bidHigh(r), // ★단가 높음(카테고리 상대) — 배지용
       tag: t?.tag || sub || "글감", // 칩 항상 표시 — AI 분류 없으면 세부업종으로 폴백
+      // ★성과 루프(FF_PERF_LOOP) — 에버그린 선별 당시 실측값 운반
+      ...(FF.perfLoop ? { sel: { species: "evergreen", seedSource: "pool", vol: r.monthly_searches ?? 0, blogTotal: r.blog_total ?? null, stars: r.blog_total != null ? filledStarsFromData(r.monthly_searches ?? 0, r.blog_total) : null } } : {}),
     };
   });
   // ★실시간 트렌드 글감 — 카테고리 공유 풀(크론이 뉴스+웹검색으로 채움)에서 유저별 시드 회전으로 뽑는다.
@@ -886,7 +893,7 @@ export async function GET(req: Request) {
     const g = finalGate(shuffled as { keyword: string; title: string }[]);
     if (g.drops.length) console.log("[final-gate:long]", JSON.stringify(g.drops));
     if (debugMode) diag.finalGateDrops = g.drops;
-    return NextResponse.json(debugMode ? { topics: g.pass, diag: { ...diag, mode: "long", poolCards: g.pass.length } } : { topics: g.pass });
+    return NextResponse.json(debugMode ? { topics: g.pass, diag: { ...diag, mode: "long", poolCards: g.pass.length } } : { topics: g.pass, ...(FF.perfLoop ? { ff: { perfLoop: true } } : {}) });
   }
   return NextResponse.json(debugMode ? { topics: [...boostCards, ...trendCards, ...shuffled], diag: { ...diag, boost: boostCards.length, trendCards: trendCards.length, poolCards: shuffled.length } } : { topics: [...boostCards, ...trendCards, ...shuffled] });
 }

@@ -27,3 +27,25 @@ export const ATTACK = {
   ADMIN_DAILY_LIMIT: 5,     // 한계 테스트 트랙(관리자 플래그 계정)만
 };
 export const ATTACK_UNLOCK = { minVerified: 30, needApproved: true, recentDailyPace: 3 }; // 자동 제안 조건
+
+// ── 성과 루프·티어 상수(2026-07-11 업그레이드 — 전부 FF_* 플래그 뒤, 기본 OFF) ──
+export const RANK_WIN = { blogTabTop: 10 } as const;      // 상위노출 판정: 블로그탭 N위 이내(조정 가능 상수 — 스펙 §1-2)
+export const RANK_CHECK_DAYS = [1, 3, 7, 14] as const;    // 순위 체크 시점(D+N)
+export const PERF_MIN_SAMPLE = 30;                        // 이 표본 미만 조합엔 가중치 절대 미적용(§1-4)
+export const PERF_WEIGHT_CLAMP = 0.2;                     // 보정 가중치 ±20% 클램프
+// tier별 에버그린 밴드(§2-2) — [vol하한, vol상한, blog_total상한(null=제한없음)]
+export const TIER_BANDS = {
+  SEEDLING: { volMin: 500, volMax: 3000, blogTotalMax: 1000 },
+  GROWING: { volMin: 1000, volMax: 10000, blogTotalMax: 5000 },
+  ESTABLISHED: { volMin: 2000, volMax: 30000, blogTotalMax: null as number | null },
+} as const;
+// tier 승급 조건(§2-1) — 최근 10건 중 D+7 상위노출 승수
+export const TIER_PROMOTE = { GROWING: 3, ESTABLISHED: 5, ESTABLISHED_BIGWIN: { vol: 5000, wins: 2 } } as const;
+export const TIER_DEMOTE_MARGIN = 2; // 강등 보수 기준: 승급선보다 이만큼 크게 밑돌 때만 한 단계
+// tier별 트렌드:에버그린 슬롯 비율(§4)
+export const TIER_MIX = { SEEDLING: [7, 3], GROWING: [5, 5], ESTABLISHED: [3, 7] } as const;
+// 씨앗 동시 발행 상한(§5) — 대형 풀 씨앗은 여유, 일반은 타이트
+export const SEED_CLAIM_CAP = { big: 5, normal: 3 } as const;
+export const SEED_CLAIM_WINDOW_H = 72; // 클레임 유효(동시 활성) 창
+// 수익 경로 태그(§6) — high_cpc 판정 임계(ad_depth)
+export const REVENUE_HIGH_CPC_DEPTH = 8;

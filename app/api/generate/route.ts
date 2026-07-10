@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { FF } from "@/config/featureFlags";
 import { fetchTopPosts } from "@/lib/naverBlogSearch";
 import { createSupabaseServerClient, createSupabaseAdminClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { ensureUserRow } from "@/lib/userPlan";
@@ -71,6 +72,7 @@ export async function POST(request: Request) {
     userStory?: string; // '내 이야기' 재료
     newsContext?: string; // ★오늘 이슈 — 최신 뉴스 발췌(근거 자료)
     angleBrief?: string; // ★C단계 앵글 브리프(무중복 증식)
+    selectionMeta?: Record<string, unknown>; // ★성과 루프(FF_PERF_LOOP) — 선별 맥락(발행 스냅샷용)
     seriesId?: string; // ★시리즈 2화+ — user_series 진행
     series?: { title?: string; arc?: { role?: string; angle?: string }[] } | null; // ★시리즈 1화 — 아크 생성
   };
@@ -378,6 +380,7 @@ export async function POST(request: Request) {
           faq: article.faq,
           char_count: charCount,
           simhash: simhash(article.body_html), // 근접 중복 모니터링용 (박스 제외 본문 기준, 재생성 안 함)
+          ...(FF.perfLoop && body.selectionMeta && typeof body.selectionMeta === "object" && JSON.stringify(body.selectionMeta).length <= 4000 ? { selection_meta: body.selectionMeta } : {}), // ★성과 루프 — 선별 맥락(4KB 캡 초과 시 통째 생략 — 잘라서 JSON 깨뜨리지 않는다, 0062)
           original_html: finalBody, // 원본 복구용 (박스 포함 = 처음 받은 상태)
           status: "draft",
           write_note: article.write_note || null, // 글쓴이용 메모 (마이그레이션 0007)
@@ -397,7 +400,7 @@ export async function POST(request: Request) {
         let { data: saved, error: saveError } = await writeArticle();
 
         // 아직 없는 선택 컬럼(write_note·tags 등)을 가리키는 오류면 그 컬럼만 빼고 재시도 → 마이그레이션 전에도 생성은 항상 동작
-        for (const col of ["tags", "write_note", "article_type", "channel", "series_id", "episode_index", "blog_id"]) {
+        for (const col of ["tags", "write_note", "article_type", "channel", "series_id", "episode_index", "blog_id", "selection_meta"]) {
           if (saveError && new RegExp(col, "i").test(saveError.message ?? "")) {
             delete insertPayload[col];
             ({ data: saved, error: saveError } = await writeArticle());

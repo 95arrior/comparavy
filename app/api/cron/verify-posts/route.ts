@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseAdminClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { fetchBlogRss, matchInRss, checkPostDeleted } from "@/lib/naverRss"; // fetch는 blogId 명시 — 그룹 키가 곧 blogId 해석 단위
 import { logUsage } from "@/lib/usageLog";
+import { recordPostPerformance } from "@/lib/postPerformance";
 
 // ★검증 크론(10분) — pending_verify 재시도(최대 6회, 소진 시 UI가 URL 폴백 안내).
 //  유저당 RSS 1회/배치(조회 예의). 새벽 배치 1회는 삭제 스캔(URL 조회 기반 — RSS 부재로 판정 금지).
@@ -33,7 +34,7 @@ export async function GET(request: Request) {
     const items = await fetchBlogRss(prof.naver_blog_id).catch(() => []); // 유저당 1회
     for (const a of arts!) {
       const hit = matchInRss(a.title, items, a.claimed_at ? new Date(a.claimed_at).getTime() : Date.now());
-      if (hit) { verified += 1; await db.from("articles").update({ status: "verified", naver_url: hit.link, verified_at: new Date().toISOString() }).eq("id", a.id); }
+      if (hit) { verified += 1; await db.from("articles").update({ status: "verified", naver_url: hit.link, verified_at: new Date().toISOString() }).eq("id", a.id); void recordPostPerformance(String(a.id)); }
       else { missed += 1; await db.from("articles").update({ verify_attempts: (a.verify_attempts ?? 0) + 1 }).eq("id", a.id); }
     }
   }

@@ -53,7 +53,7 @@ export default function DashboardClient(props: DashboardProps) {
     setNotice("저장했어요 — 이 블로그에만 적용돼요");
   }
   // 글 생성 직전 '확인' 대기 (확인하면 genParams로 생성 시작 — 크레딧 실수 방지)
-  const [pendingWrite, setPendingWrite] = useState<{ keyword: string; title: string; newsContext?: string; briefText?: string; titleSearch?: string; thumb?: { mainCopy: string; subCopy: string; badge: string }; seriesId?: string; series?: unknown; tag?: string } | null>(null);
+  const [pendingWrite, setPendingWrite] = useState<{ keyword: string; title: string; newsContext?: string; briefText?: string; titleSearch?: string; thumb?: { mainCopy: string; subCopy: string; badge: string }; seriesId?: string; series?: unknown; tag?: string; sel?: Record<string, unknown> } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState(false);
   const [page, setPage] = useState<null | "news" | "profile" | "credits">(null);
@@ -548,6 +548,7 @@ export default function DashboardClient(props: DashboardProps) {
                 thumb: pendingWrite.thumb,
                 seriesId: pendingWrite.seriesId,
                 series: pendingWrite.series as { title: string; arc: { role: string; angle: string }[] } | null | undefined,
+                selectionMeta: pendingWrite.sel, // ★성과 루프 — 선별 맥락을 생성까지 운반(서버가 플래그 OFF면 무시)
               });
               setPendingWrite(null);
             }}

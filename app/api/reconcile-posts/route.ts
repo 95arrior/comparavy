@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { recordPostPerformance } from "@/lib/postPerformance";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { fetchBlogRss, titleSimilarity } from "@/lib/naverRss";
 import { checkRateLimit } from "@/lib/rateLimit";
@@ -42,7 +43,7 @@ export async function POST() {
         const { error } = await supabase.from("articles").update({
           status: "verified", naver_url: hit.link || null, verified_at: new Date().toISOString(),
         }).eq("id", d.id).eq("user_id", user.id);
-        if (!error) { recovered++; recoveredIds.push(d.id); try { await supabase.from("articles").update({ verified_via: "rss" }).eq("id", d.id).eq("user_id", user.id); } catch { /* 0060 미적용 */ } }
+        if (!error) { recovered++; recoveredIds.push(d.id); void recordPostPerformance(String(d.id)); try { await supabase.from("articles").update({ verified_via: "rss" }).eq("id", d.id).eq("user_id", user.id); } catch { /* 0060 미적용 */ } }
         break;
       }
     }

@@ -49,7 +49,7 @@ function migrateBlogScopeKeys(profileKey: string) {
   } catch { /* ignore */ }
 }
 
-interface Topic { keyword: string; title: string; demandLabel: string; vol: number; comp: Comp; tag?: string; expiresAt?: string | null; blogTotal?: number | null; newsContext?: string; briefText?: string; titleSearch?: string; thumb?: { mainCopy: string; subCopy: string; badge: string } }
+interface Topic { keyword: string; title: string; demandLabel: string; vol: number; comp: Comp; tag?: string; expiresAt?: string | null; blogTotal?: number | null; newsContext?: string; briefText?: string; titleSearch?: string; thumb?: { mainCopy: string; subCopy: string; badge: string }; sel?: Record<string, unknown> }
 
 // 소주제 군집 키(서버와 동일 규칙) — 교체 시 비슷한 소주제 중복 방지
 let freshDoneRef = false; // ?fresh=1 1회 가드
@@ -95,7 +95,7 @@ export default function Home({
   articles: Article[];
   /** 크레딧 잔액 — 0이면 '오늘의 글' 카드가 잠김(글감은 보임) */
   credits: number;
-  onWriteKeyword: (keyword: string, title: string, newsContext?: string, briefText?: string, titleSearch?: string, thumb?: { mainCopy: string; subCopy: string; badge: string }, extra?: { seriesId?: string; series?: unknown; tag?: string }) => void;
+  onWriteKeyword: (keyword: string, title: string, newsContext?: string, briefText?: string, titleSearch?: string, thumb?: { mainCopy: string; subCopy: string; badge: string }, extra?: { seriesId?: string; series?: unknown; tag?: string; sel?: Record<string, unknown> }) => void;
   onSelect: (a: Article) => void;
   onGoPerformance: () => void;
   /** 크레딧 칩 탭 → 충전·사용내역 페이지 */
@@ -479,7 +479,7 @@ export default function Home({
       }
     } catch { /* 폴백 */ }
     setPreReadyId(null);
-    onWriteKeyword(f.keyword, f.title, f.newsContext, f.briefText, f.titleSearch, f.thumb, { tag: f.tag });
+    onWriteKeyword(f.keyword, f.title, f.newsContext, f.briefText, f.titleSearch, f.thumb, { tag: f.tag, sel: f.sel });
   }
   // ★쓴 글은 시트에서도 제외(실측: 오늘 쓴 2편이 '다른 글감'에 계속 노출) — 키워드·제목 모두 대조
   const writtenTitles = new Set(articles.map((a) => (a.title ?? "").trim()).filter(Boolean));
@@ -549,7 +549,7 @@ export default function Home({
         const goWrite = () => {
           if (todayDraft) { onSelect(todayDraft); return; } // 쓰던 초안 직접 열기(키워드 불일치여도 안전)
           if (preReadyId) { void readToday(); return; }      // 사전 생성분 0초 열람
-          if (first) { onWriteKeyword(first.keyword, first.title, first.newsContext, first.briefText, first.titleSearch, first.thumb, { tag: first.tag }); return; } // 일반 생성
+          if (first) { onWriteKeyword(first.keyword, first.title, first.newsContext, first.briefText, first.titleSearch, first.thumb, { tag: first.tag, sel: first.sel }); return; } // 일반 생성
           setRoutineSheet("topics");
         };
         const g: G | null = goldenTime
@@ -716,7 +716,7 @@ export default function Home({
                   const active = all.filter((t) => !(t as { publishedOn?: string }).publishedOn).slice(0, 5);
                   const done = all.filter((t) => (t as { publishedOn?: string }).publishedOn).slice(0, 3); // 발행함은 활성 5개와 별도(슬롯 잠식 방지)
                   return [...active, ...done];
-                })().map((t) => <BoardCard key={t.keyword} topic={t} onWrite={() => onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb, { tag: t.tag })} onDismiss={() => {
+                })().map((t) => <BoardCard key={t.keyword} topic={t} onWrite={() => onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb, { tag: t.tag, sel: t.sel })} onDismiss={() => {
                   const nd = [...dismissedRef.current, t.keyword];
                   dismissedRef.current = nd; setDismissed(nd);
                   try { localStorage.setItem(todayKey, JSON.stringify(nd)); } catch { /* ignore */ }
@@ -833,7 +833,7 @@ export default function Home({
                       </div>
                     )}
                     {!tailLoading && !analyzing && (tailMode === "all" ? tailFiltered : (tailTopics ?? []).filter((t) => t.keyword !== first?.keyword)).map((t, ti) => (
-                      <div key={t.keyword} className="tk-chip" style={{ animationDelay: `${ti * 50}ms` }}><TopicRow topic={t} onClick={() => { setRoutineSheet(null); onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb, { tag: t.tag }); }} onSwap={() => {
+                      <div key={t.keyword} className="tk-chip" style={{ animationDelay: `${ti * 50}ms` }}><TopicRow topic={t} onClick={() => { setRoutineSheet(null); onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb, { tag: t.tag, sel: t.sel }); }} onSwap={() => {
                         if (tailMode !== "all") { // ★전용 세트에서 ↻ = 치우기 + 부족하면 자동 보충(실측: 다 치우면 소진 고착)
                           const nd = [...dismissedRef.current, t.keyword];
                           dismissedRef.current = nd; // ★즉시 갱신(실측: 보충 요청이 옛 제외목록을 읽어 같은 세트 반환)

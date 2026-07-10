@@ -24,6 +24,8 @@ export interface GenParams {
   /** ★시리즈(수익 증폭) — 2화+: user_series id / 1화: 아크 */
   seriesId?: string;
   series?: { title: string; arc: { role: string; angle: string }[] } | null;
+  /** ★성과 루프(FF_PERF_LOOP) — 글감 카드의 선별 맥락(훅·씨앗·점수). 서버가 발행 스냅샷에 기록 */
+  selectionMeta?: Record<string, unknown>;
 }
 
 // ★생성 장면 v3 — "글이 눈앞에서 실제로 써진다".
