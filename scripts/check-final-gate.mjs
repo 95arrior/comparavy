@@ -13,6 +13,9 @@ const cases = [
   { c: { keyword: "소상공인 스마트상점", title: "소상공인 스마트상점 기술 지원, 최대 500만원" }, drop: null },
   { c: { keyword: "강제동원 위로금", title: "한일청구권 협정 강제동원 피해자, 위로금과 지원금 대상 확대 전망" }, drop: "sensitive" },
   { c: { keyword: "전기차 구매 보조금", title: "2026년 전기차 구매 보조금, 테슬라·현대차·기아 모델별 지원액 비교" }, drop: null },
+  { c: { keyword: "경영혁신 외식서비스 지원 신청", title: "[경북] 2026년 경영혁신 외식서비스 지원 사업 참가 접수, 7월 12일 마감" }, drop: "region_niche" },
+  { c: { keyword: "경남은행 파킹통장", title: "경남은행 파킹통장 금리, 최고 조건 정리" }, drop: null },
+  { c: { keyword: "경기 침체 대비", title: "경기 침체 대비, 비상금 통장 만드는 법" }, drop: null },
 ];
 let fail = 0;
 for (const { c, drop } of cases) {

@@ -395,14 +395,15 @@ export async function GET(req: Request) {
     let tc = await buildTrendCards(new Set());
     // ★수요 신호(유저 확정: 신선하지만 아무도 안 찾는 씨앗 문제) — 실측 검색량 부착. 폐기 아닌 표시(지자체 틈새=저수요·경쟁공백 가치는 유저 판단)
     if (tc.length > 0) {
+      // ★fail-closed(실측 2026-07-11 새벽: 검색량 API 실패 시 catch가 선별 게이트·쿼터까지 통째로 건너뛰어
+      //  [경북] 외식서비스·원산지검증이 무검문 통과) — 실패 허용은 '조회'까지만, 게이트는 API 무관하게 항상 실행
+      const volMap: Record<string, { vol: number; comp: string; base?: string }> = {};
       try {
         const volKey = `trendvol:${sub}:${tc.map((c) => c.keyword).join("|").slice(0, 180)}`;
-        let volMap: Record<string, { vol: number; comp: string; base?: string }> | null = null;
         const { data: vc } = await pool.from("api_cache").select("value, expires_at").eq("key", volKey).maybeSingle();
-        if (vc?.value && new Date(String(vc.expires_at)).getTime() > Date.now()) volMap = vc.value as Record<string, { vol: number; comp: string; base?: string }>;
-        if (!volMap) {
+        if (vc?.value && new Date(String(vc.expires_at)).getTime() > Date.now()) Object.assign(volMap, vc.value as typeof volMap);
+        else {
           const stats = await fetchKeywordStats(tc.map((c) => c.keyword.split(" ").slice(0, 3).join(" ")), 3);
-          volMap = {};
           for (const c of tc) {
             const exact = stats.get(normalizeKey(c.keyword));
             const head = c.keyword.split(" ").slice(0, 3).join(" ");
@@ -412,6 +413,8 @@ export async function GET(req: Request) {
           }
           try { await pool.from("api_cache").upsert({ key: volKey, value: volMap, expires_at: new Date(Date.now() + 24 * 3600_000).toISOString(), updated_at: new Date().toISOString() }); } catch { /* ignore */ }
         }
+      } catch { /* 검색량 '조회' 실패 — volMap 빈 채로 진행(아래 게이트는 API 무관하게 항상 실행) */ }
+      {
         // ★수요 기반 선별(유저 확정: 표시만 하던 검색량을 선별에 사용 — '수요 낮음'을 최상단에 올리는 자기모순 제거)
         tc = tc.filter((c) => {
           const v = volMap[c.keyword];
@@ -459,7 +462,7 @@ export async function GET(req: Request) {
             (c as { demandBadge?: string }).demandBadge = v.vol >= 1000 ? `${scope}월 ${v.vol.toLocaleString()}회 검색` : v.vol > 0 ? `${scope}월 ${v.vol.toLocaleString()}회 · 수요 낮음(경쟁 공백일 수 있음)` : `${scope}월 10회 미만 검색 · 수요 낮음`; // vol 0 = keywordstool '<10' 실측(미집계 아님)
           }
         }
-      } catch { /* 수요 조회 실패는 카드를 막지 않는다 */ }
+      }
     }
     if (tc.length === 0) {
       // ★빈손 즉석 수확(실측: 20분 빈 보드 — 백그라운드 킥은 실패해도 아무도 모른다) — 응답 안에서 1회 동기 수확 후 재시도
