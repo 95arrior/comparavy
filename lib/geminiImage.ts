@@ -268,6 +268,8 @@ async function callGemini(prompt: string, aspectRatio: "16:9" | "1:1"): Promise<
   if (!res.ok) {
     const msg = data?.error?.message ?? `Gemini ${res.status}`;
     const quota = res.status === 429 || /quota|billing|exhausted/i.test(msg);
+    // 어떤 제한(분당 RPM/일일 RPD/티어)인지 원문을 로그로 — 잔액 있어도 429가 나는 원인 구분용
+    if (quota) console.error(`[image] gemini 429 원문: ${msg.slice(0, 400)}`);
     throw new Error(quota ? "QUOTA" : msg);
   }
   const parts = data?.candidates?.[0]?.content?.parts ?? [];
