@@ -11,6 +11,8 @@ const cases = [
   { c: { keyword: "식품기업 정부지원금", title: "식품 기업 최대 1360만원 정부지원금…11월까지 신청" }, drop: "b2b_audience" },
   { c: { keyword: "중소기업청년지원금", title: "중소기업청년지원금 받을 수 있는 조건" }, drop: null },
   { c: { keyword: "소상공인 스마트상점", title: "소상공인 스마트상점 기술 지원, 최대 500만원" }, drop: null },
+  { c: { keyword: "강제동원 위로금", title: "한일청구권 협정 강제동원 피해자, 위로금과 지원금 대상 확대 전망" }, drop: "sensitive" },
+  { c: { keyword: "전기차 구매 보조금", title: "2026년 전기차 구매 보조금, 테슬라·현대차·기아 모델별 지원액 비교" }, drop: null },
 ];
 let fail = 0;
 for (const { c, drop } of cases) {
