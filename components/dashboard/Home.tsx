@@ -50,7 +50,7 @@ function migrateBlogScopeKeys(profileKey: string) {
   } catch { /* ignore */ }
 }
 
-interface Topic { keyword: string; title: string; demandLabel: string; vol: number; comp: Comp; tag?: string; expiresAt?: string | null; blogTotal?: number | null; newsContext?: string; briefText?: string; titleSearch?: string; thumb?: { mainCopy: string; subCopy: string; badge: string }; sel?: Record<string, unknown> }
+interface Topic { keyword: string; title: string; demandLabel: string; vol: number; comp: Comp; tag?: string; expiresAt?: string | null; blogTotal?: number | null; newsContext?: string; briefText?: string; titleSearch?: string; thumb?: { mainCopy: string; subCopy: string; badge: string }; sel?: Record<string, unknown>; revenueLabel?: string }
 
 // 소주제 군집 키(서버와 동일 규칙) — 교체 시 비슷한 소주제 중복 방지
 let freshDoneRef = false; // ?fresh=1 1회 가드
@@ -1021,6 +1021,7 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
           : isTrend
           ? <span className="rounded-full bg-[#FFF1F0] px-2 py-0.5 text-[10.5px] font-bold text-[#F04452]">실시간 급상승</span>
           : <span className="rounded-full bg-[#EFF6FF] px-2 py-0.5 text-[10.5px] font-bold text-[#1D75F7]">안정 수요</span>}
+        {topic.revenueLabel && <span className="rounded-full bg-[#F5F3EE] px-2 py-0.5 text-[10.5px] font-bold text-[#8A6D1F]">{topic.revenueLabel}</span>}
         {life && <span className="text-[10.5px] font-semibold tabular-nums text-amber-600">{life}</span>}
       </div>
       <p className="mt-2 line-clamp-2 text-[14.5px] font-bold leading-snug text-[color:var(--color-text)]">{topic.title}</p>

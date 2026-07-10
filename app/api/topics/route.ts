@@ -23,6 +23,7 @@ import { BID_WEIGHT, BID_DEPTH_CAP, BID_COMP_BONUS, BID_BADGE_RATIO, BID_HIGH_MI
 import { FF } from "@/config/featureFlags";
 import { getPerfWeights } from "@/lib/perfWeights";
 import { dwellPotential } from "@/lib/dwellScore";
+import { revenuePathOf, REVENUE_TAG_LABEL, type RevenuePath } from "@/lib/revenuePath";
 import { computeBlogTier, applyDemoteGuard, type TierResult, type BlogTier } from "@/lib/blogTier";
 import { TIER_BANDS, TIER_MIX } from "@/lib/scoreWeights";
 import { revenuePath } from "@/lib/revenue";
@@ -326,7 +327,8 @@ export async function GET(req: Request) {
         // ★momentum 배지 분리 — 뉴스/시즌='지금 뜨는 중', 자동완성 발굴='꾸준히 찾는 주제'(뜨는 척 금지)
         const demandLabel = src === "discover" ? "꾸준히 찾는 주제" : "지금 뜨는 중";
         cards.push({ keyword: t.keyword, title: t.title, expiresAt: seedExpiry, demandLabel: (t as { inflow?: string }).inflow === "hit" ? "실검색 확인 · 지금 뜨는 중" : demandLabel, ssak: true, region: false, tone: bt, vol: 0, comp: "low" as Comp, blogTotal: null, tag: src === "discover" ? "steady" : "trend", newsContext: t.newsContext ?? undefined, sourceTitle: (t as { sourceTitle?: string | null }).sourceTitle ?? undefined, titleSearch: (t as { titleSearch?: string }).titleSearch, briefText: (t as { briefText?: string }).briefText, hookKey: (t as { hookKey?: string }).hookKey, thumb: (t as { thumb?: { mainCopy: string; subCopy: string; badge: string } }).thumb, brief: (t as { brief?: unknown }).brief, series: (t as { series?: unknown }).series ?? null,
-          ...(FF.perfLoop ? { sel: (() => { const bf = (t as { brief?: { intent?: string; opening?: string; flow?: string } }).brief; return { species: "trend", seedSource: src ?? "news", hookKey: (t as { hookKey?: string }).hookKey ?? null, structure: bf ? [bf.intent, bf.opening, bf.flow].filter(Boolean).join("|") || null : null }; })() } : {}) });
+          ...(FF.perfLoop ? { sel: (() => { const bf = (t as { brief?: { intent?: string; opening?: string; flow?: string } }).brief; return { species: "trend", seedSource: src ?? "news", hookKey: (t as { hookKey?: string }).hookKey ?? null, structure: bf ? [bf.intent, bf.opening, bf.flow].filter(Boolean).join("|") || null : null }; })() } : {}),
+          ...(FF.revenueTag ? (() => { const rp = revenuePathOf({ keyword: t.keyword, title: t.title }); return rp === "none" ? {} : { revenuePath: rp, revenueLabel: REVENUE_TAG_LABEL[rp as Exclude<RevenuePath, "none">] }; })() : {}) });
       }
         for (const c of cards) {
         const norm = c.keyword.replace(/\s+/g, "");
@@ -868,6 +870,8 @@ export async function GET(req: Request) {
       tag: t?.tag || sub || "글감", // 칩 항상 표시 — AI 분류 없으면 세부업종으로 폴백
       // ★성과 루프(FF_PERF_LOOP) — 에버그린 선별 당시 실측값 운반
       ...(FF.perfLoop ? { sel: { species: "evergreen", seedSource: "pool", vol: r.monthly_searches ?? 0, blogTotal: r.blog_total ?? null, stars: r.blog_total != null ? filledStarsFromData(r.monthly_searches ?? 0, r.blog_total) : null } } : {}),
+      // ★수익 경로 태그(FF_REVENUE_TAG §6) — 표시용, 선별 점수 무관
+      ...(FF.revenueTag ? (() => { const rp = revenuePathOf({ keyword: r.keyword, title: t?.title ?? null, adDepth: r.ad_depth ?? null }); return rp === "none" ? {} : { revenuePath: rp, revenueLabel: REVENUE_TAG_LABEL[rp as Exclude<RevenuePath, "none">] }; })() : {}),
     };
   });
   // ★실시간 트렌드 글감 — 카테고리 공유 풀(크론이 뉴스+웹검색으로 채움)에서 유저별 시드 회전으로 뽑는다.
