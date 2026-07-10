@@ -227,19 +227,28 @@ async function renderAt(rawInput: ThumbInput, width: number): Promise<Buffer> {
 
   // ★보도형 — 실사 위 다크 그라데이션 + 좌하단 카피 + 브랜드 프레임(운영자가 공들인 제작물 문법)
   if (input.press) {
+    // ★홈판 레이아웃 v2(2026-07-10 유저 실측: 홈판 카드가 좌하단에 채널 칩을 오버레이 — 좌하단 카피가 깔림)
+    //  문구=정중앙 대형(타이포 중심, 실측 상위 썸네일 문법) · 하단 15%=세이프 존(아무것도 안 둠) · 브랜드=상단 얇게
     const brand = input.press.brandName.trim() || "BLOG";
     const lines = (input.mainCopy ?? "").split("\n").map((l) => l.trim()).filter(Boolean);
     const longest = Math.max(...lines.map((l) => [...l].length), 1);
-    const pressSize = longest <= 9 ? 100 : Math.floor(920 / longest); // ★100 고정(유저 규격) — 게이트 우회 커스텀 입력(9자 초과 줄)만 넘침 방지 축소
+    const pressSize = longest <= 7 ? 148 : longest <= 9 ? 120 : Math.floor(960 / longest); // 대형화 — 문구가 주인공
+    const accent = "#FFD34D"; // 핵심(마지막) 줄 포인트 — 다크 위 최고 가독 옐로
+    // ★최종(2026-07-10): 풀블리드 — 액자는 배경 퀄이 오른 지금 이미지를 잘라 손해(+흰 홈판에서 경계 소실). 칩 회피는 중앙 문구+세이프 존이 담당
+    const M = 0;
     const pressRoot = el("div", { style: { display: "flex", width: SIZE, height: SIZE, position: "relative", overflow: "hidden", backgroundColor: "#101728" } }, [
-      bgDataUrl ? el("img", { src: bgDataUrl, width: SIZE, height: SIZE, style: { position: "absolute", inset: 0, objectFit: "cover" } })
-                : el("div", { style: { position: "absolute", inset: 0, backgroundImage: `linear-gradient(160deg, ${shade(p.bg, 7)}, ${shade(p.bg, -9)})` } }),
-      el("div", { style: { position: "absolute", inset: 0, backgroundImage: "linear-gradient(0deg, rgba(8,14,28,0.92) 0%, rgba(8,14,28,0.55) 34%, rgba(8,14,28,0.10) 62%, rgba(8,14,28,0.16) 100%)" } }),
-      el("div", { style: { position: "absolute", left: 56, right: 56, bottom: 128, display: "flex", flexDirection: "column", gap: 6 } },
-        lines.map((l) => el("div", { style: { display: "flex", fontFamily: identity.fontPair.title, fontSize: pressSize, fontWeight: 900, color: "#FFFFFF", lineHeight: 1.18, letterSpacing: -Math.round(pressSize * 0.03), wordBreak: "keep-all", textShadow: "0 3px 30px rgba(0,0,0,0.45)" } }, l))),
-      input.subCopy && input.subCopy.trim() ? el("div", { style: { position: "absolute", left: 56, right: 56, bottom: 84, display: "flex", fontFamily: identity.fontPair.body, fontSize: 32, fontWeight: 500, color: "rgba(255,255,255,0.78)" } }, input.subCopy.trim()) : null,
-      el("div", { style: { position: "absolute", left: 56, right: 56, bottom: 64, display: "flex", height: 2, backgroundColor: "rgba(255,255,255,0.30)" } }),
-      el("div", { style: { position: "absolute", left: 56, right: 56, bottom: 26, display: "flex", justifyContent: "center", fontFamily: identity.fontPair.body, fontSize: 17, fontWeight: 500, color: "rgba(255,255,255,0.60)", letterSpacing: 7 } }, brand),
+      el("div", { style: { position: "absolute", inset: 0, overflow: "hidden", display: "flex" } }, [
+        bgDataUrl ? el("img", { src: bgDataUrl, width: SIZE, height: SIZE, style: { position: "absolute", inset: 0, objectFit: "cover" } })
+                  : el("div", { style: { position: "absolute", inset: 0, backgroundImage: `radial-gradient(circle at 30% 20%, ${shade(p.bg, 18)}, ${shade(p.bg, -12)})` } }),
+        el("div", { style: { position: "absolute", inset: 0, backgroundImage: "radial-gradient(circle at 50% 46%, rgba(8,14,28,0.68) 0%, rgba(8,14,28,0.42) 46%, rgba(8,14,28,0.18) 78%)" } }),
+      ]),
+      // 브랜드 — 상단 얇게(하단은 채널 칩 세이프 존)
+      el("div", { style: { position: "absolute", left: 0, right: 0, top: M + 34, display: "flex", justifyContent: "center", fontFamily: identity.fontPair.body, fontSize: 19, fontWeight: 500, color: "rgba(255,255,255,0.65)", letterSpacing: 8 } }, brand),
+      // 문구 — 정중앙, 마지막 줄 옐로 포인트(핵심 강조)
+      el("div", { style: { position: "absolute", left: 48, right: 48, top: 0, bottom: Math.round(SIZE * 0.15), display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 } },
+        lines.map((l, i) => el("div", { style: { display: "flex", textAlign: "center", fontFamily: identity.fontPair.title, fontSize: pressSize, fontWeight: 900, color: i === lines.length - 1 && lines.length > 1 ? accent : "#FFFFFF", lineHeight: 1.16, letterSpacing: -Math.round(pressSize * 0.03), wordBreak: "keep-all", textShadow: "0 4px 34px rgba(0,0,0,0.5)" } }, l))),
+      input.subCopy && input.subCopy.trim() ? el("div", { style: { position: "absolute", left: 48, right: 48, top: Math.round(SIZE * 0.72), display: "flex", justifyContent: "center", fontFamily: identity.fontPair.body, fontSize: 30, fontWeight: 500, color: "rgba(255,255,255,0.75)" } }, input.subCopy.trim()) : null,
+      // 하단 15% — 세이프 존(채널 칩 자리): 의도적으로 빈 공간
     ].filter(Boolean));
     const pressFonts = [
       { name: identity.fontPair.title, data: loadFont(identity.fontPair.title), weight: 900 as const, style: "normal" as const },
@@ -248,6 +257,7 @@ async function renderAt(rawInput: ThumbInput, width: number): Promise<Buffer> {
     const pressSvg = await satori(pressRoot as unknown as React.ReactNode, { width: SIZE, height: SIZE, fonts: pressFonts });
     return Buffer.from(new Resvg(pressSvg, { fitTo: { mode: "width", value: width } }).render().asPng());
   }
+
 
   // z순서: 배경 → backdrop(카피 뒤) → 무대 오브젝트 → 스크림 → 카피(최상단, 항상 위로 가독 보장).
   const root = el("div", { style: { display: "flex", width: SIZE, height: SIZE, position: "relative", overflow: "hidden", backgroundColor: p.bg } },
