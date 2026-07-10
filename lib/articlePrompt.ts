@@ -393,9 +393,10 @@ export function buildUserPrompt(input: ArticlePromptInput): string {
   const toneInstruction = TONE_INSTRUCTIONS[input.tone] ?? "";
   const toneEnding = TONE_ENDINGS[input.tone] ?? TONE_ENDINGS.friendly;
 
-  // 분량: 네이버 노출 적정선 1,400~2,100자(글자수보다 '잘 읽힘' 우선 — 군더더기 빼고 핵심만, 벽돌 방지).
-  let targetMin = 1400;
-  let targetMax = Math.min(2100, input.maxWords); // 플랜 상한(무료) 존중
+  // ★분량 최종(2026-07-10 유저 확정): 평균 1,600자 고정대 — 함축·담백, "꾸역꾸역 채운 느낌" 제거.
+  //  1,450~1,750자 좁은 밴드(2,000자대는 늘어짐 실측 판정). 완결이 우선 — 밴드 안에서 군더더기 먼저 삭제.
+  let targetMin = 1450;
+  let targetMax = Math.min(1750, input.maxWords);
   targetMin = Math.min(targetMin, targetMax);
 
   // 홍보 녹이기: 업장명이 있으면 마무리에서 자연스럽게 연결(강점은 있을 때만, 과장 금지·없는 강점 금지).
