@@ -208,8 +208,8 @@ async function renderAt(rawInput: ThumbInput, width: number): Promise<Buffer> {
 
   // 배경: 주조색 지배 + 동일 색상군 미묘한 명도 그라데이션(풀블리드).
   const bg: El = bgDataUrl
-    ? el("img", { src: bgDataUrl, width: SIZE, height: SIZE, style: { position: "absolute", inset: 0, objectFit: "cover" } })
-    : el("div", { style: { position: "absolute", inset: 0, backgroundImage: `linear-gradient(160deg, ${shade(p.bg, dark ? 7 : 5)}, ${shade(p.bg, dark ? -9 : -7)})` } });
+    ? el("img", { src: bgDataUrl, width: SIZE, height: SIZE, style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, objectFit: "cover" } })
+    : el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: `linear-gradient(160deg, ${shade(p.bg, dark ? 7 : 5)}, ${shade(p.bg, dark ? -9 : -7)})` } });
 
   // 오브젝트 무대: AI 배경이면 생략(AI가 시각 담당), 아니면 플랫 덩어리.
   const tints = [p.point, shade(p.bg, dark ? 15 : -12), shade(p.point, dark ? 14 : -16)];
@@ -222,7 +222,7 @@ async function renderAt(rawInput: ThumbInput, width: number): Promise<Buffer> {
   const objects: El[] = bgDataUrl ? [] : posedObjects.map((s) => shapeEl(s, tints));
   // AI 배경 위 카피 대비 스크림(상단만 은은히).
   const scrim: El | null = bgDataUrl
-    ? el("div", { style: { position: "absolute", inset: 0, backgroundImage: `linear-gradient(180deg, ${dark ? "rgba(0,0,0,0.42)" : "rgba(255,255,255,0.34)"}, rgba(0,0,0,0) 55%)` } })
+    ? el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: `linear-gradient(180deg, ${dark ? "rgba(0,0,0,0.42)" : "rgba(255,255,255,0.34)"}, rgba(0,0,0,0) 55%)` } })
     : null;
 
   // ★보도형 — 실사 위 다크 그라데이션 + 좌하단 카피 + 브랜드 프레임(운영자가 공들인 제작물 문법)
@@ -236,11 +236,19 @@ async function renderAt(rawInput: ThumbInput, width: number): Promise<Buffer> {
     const accent = "#FFD34D"; // 핵심(마지막) 줄 포인트 — 다크 위 최고 가독 옐로
     // ★최종(2026-07-10): 풀블리드 — 액자는 배경 퀄이 오른 지금 이미지를 잘라 손해(+흰 홈판에서 경계 소실). 칩 회피는 중앙 문구+세이프 존이 담당
     const M = 0;
+    // ★색면(코드) 배경 분리(2026-07-10 실측: 이미지 가독용 중앙 다크 스크림이 색면까지 덮어 어떤 팔레트든 먹빛 단색이 됨)
+    //  — 색면은 비비드 컬러 포스터: 팔레트 주조색 라디얼 + 포인트색 글로우 + 가장자리만 비네트. 밝은 팔레트는 포인트색을 주조로(흰 글자 대비)
+    const rgba = (hex: string, a: number) => { const n = parseInt(hex.slice(1, 7), 16); return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`; };
+    const flatBase = isDark(p.bg) ? p.bg : p.point;
     const pressRoot = el("div", { style: { display: "flex", width: SIZE, height: SIZE, position: "relative", overflow: "hidden", backgroundColor: "#101728" } }, [
-      el("div", { style: { position: "absolute", inset: 0, overflow: "hidden", display: "flex" } }, [
-        bgDataUrl ? el("img", { src: bgDataUrl, width: SIZE, height: SIZE, style: { position: "absolute", inset: 0, objectFit: "cover" } })
-                  : el("div", { style: { position: "absolute", inset: 0, backgroundImage: `radial-gradient(circle at 30% 20%, ${shade(p.bg, 18)}, ${shade(p.bg, -12)})` } }),
-        el("div", { style: { position: "absolute", inset: 0, backgroundImage: "radial-gradient(circle at 50% 46%, rgba(8,14,28,0.68) 0%, rgba(8,14,28,0.42) 46%, rgba(8,14,28,0.18) 78%)" } }),
+      el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, overflow: "hidden", display: "flex" } }, bgDataUrl ? [
+        el("img", { src: bgDataUrl, width: SIZE, height: SIZE, style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, objectFit: "cover" } }),
+        // (inset 버그로 이 스크림은 지금껏 안 그려졌음 — 활성화되며 원값 0.68은 일러스트를 죽여 완화)
+        el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: "radial-gradient(circle at 50% 46%, rgba(8,14,28,0.52) 0%, rgba(8,14,28,0.30) 46%, rgba(8,14,28,0.12) 78%)" } }),
+      ] : [
+        el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: `radial-gradient(circle at 28% 18%, ${shade(flatBase, isDark(p.bg) ? 38 : 26)}, ${shade(flatBase, isDark(p.bg) ? -8 : -16)})` } }),
+        el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: `radial-gradient(circle at 76% 82%, ${rgba(shade(p.point, isDark(p.bg) ? 16 : 24), isDark(p.bg) ? 0.55 : 0.42)} 0%, rgba(0,0,0,0) 55%)` } }),
+        el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: "radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 60%, rgba(8,14,28,0.32) 100%)" } }),
       ]),
       // 브랜드 — 상단 얇게(하단은 채널 칩 세이프 존)
       el("div", { style: { position: "absolute", left: 0, right: 0, top: M + 34, display: "flex", justifyContent: "center", fontFamily: identity.fontPair.body, fontSize: 19, fontWeight: 500, color: "rgba(255,255,255,0.65)", letterSpacing: 8 } }, brand),
@@ -262,7 +270,7 @@ async function renderAt(rawInput: ThumbInput, width: number): Promise<Buffer> {
   // z순서: 배경 → backdrop(카피 뒤) → 무대 오브젝트 → 스크림 → 카피(최상단, 항상 위로 가독 보장).
   const root = el("div", { style: { display: "flex", width: SIZE, height: SIZE, position: "relative", overflow: "hidden", backgroundColor: p.bg } },
     [bg,
-      bgDataUrl && input.bgWash ? el("div", { style: { position: "absolute", inset: 0, backgroundColor: p.bg, opacity: Math.min(0.85, Math.max(0, input.bgWash)) } }) : null,
+      bgDataUrl && input.bgWash ? el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: p.bg, opacity: Math.min(0.85, Math.max(0, input.bgWash)) } }) : null,
       ...backdrop, ...objects, scrim, copyBlock(input, tpl)].filter(Boolean));
 
   const fonts = [
