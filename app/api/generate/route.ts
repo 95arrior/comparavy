@@ -122,7 +122,7 @@ export async function POST(request: Request) {
   // 업종(vertical) + 업체 정보 — 프로필에서 1회 조회(없으면 general/미입력). 프롬프트 분기 + 글 하단 NAP 박스에 사용.
   const { data: profileRow } = await supabase
     .from("blog_profiles")
-    .select("id,channel,naver_blog_id,vertical,sub_category,biz_name,biz_address,biz_detail_address,biz_phone,biz_hours,biz_hours_json,biz_strength,audience")
+    .select("id,channel,naver_blog_id,vertical,sub_category,biz_name,biz_address,biz_detail_address,biz_phone,biz_hours,biz_hours_json,biz_strength,audience,my_angle")
     .eq("user_id", user.id).eq("is_active", true)
     .maybeSingle();
   const vertical = profileRow?.vertical ?? "general";
@@ -321,7 +321,16 @@ export async function POST(request: Request) {
           ? topPosts.map((t, i) => `${i + 1}. ${t.title}${fmtAge((t as { postdate?: string }).postdate)} — ${t.description.slice(0, 90)}`).join("\n")
             + (staleSerp ? "\n★기회 — 오래된 판: 상위 글 대부분이 8개월 이상 지난 글이다. 네이버는 최신 글을 끌어올리는 경향이 있어 새 블로그도 비집고 들어갈 수 있는 판 — 제목·도입에 2026년 최신 기준임을 명시하고, 오래된 글들이 못 담은 최신 변경사항을 앞세워라." : "")
           : null;
-        const genInput = { keyword, channel, serpContext, relatedPosts, angle: body.angle, type, tone, maxWords, variantInstruction, styleInstruction, relatedQueries, newsContext: resolvedNewsContext, angleBrief: ((typeof body.angleBrief === "string" ? body.angleBrief.slice(0, 900) : "") + seriesDirective).trim() || null, affiliate: isReview, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userTitle };
+        // ★유저 고유 관점 블록(FF_SEED_CLAIM §5-2) — 온보딩/설정 한 줄(my_angle)을 본문에 자연스럽게(없으면 생략, 발행 비차단)
+        const myAngle = FF.seedClaim ? String((profileRow as { my_angle?: string | null } | null)?.my_angle ?? "").trim().slice(0, 120) : "";
+        const angleAddon = myAngle ? `\n[유저 고유 관점] 운영자가 밝힌 한 줄: "${myAngle}" — 본문 중간에 이 관점·상황이 자연스럽게 묻어나는 문단 1개를 넣어라(광고 아님, 없는 경험 지어내기 금지, 이 한 줄의 범위 안에서만).` : "";
+        // ★씨앗 클레임(FF_SEED_CLAIM §5-1) — 트렌드 씨앗 글감만(뉴스 맥락 보유), 실패해도 생성은 계속
+        if (FF.seedClaim && body.newsContext) {
+          try {
+            await adminDb.from("seed_claims").upsert({ category: profileRow?.sub_category || vertical, keyword_norm: keyword.replace(/\s+/g, ""), user_id: user.id }, { onConflict: "keyword_norm,user_id" });
+          } catch { /* 0063 미적용/실패 — 무시 */ }
+        }
+        const genInput = { keyword, channel, serpContext, relatedPosts, angle: body.angle, type, tone, maxWords, variantInstruction, styleInstruction, relatedQueries, newsContext: resolvedNewsContext, angleBrief: ((typeof body.angleBrief === "string" ? body.angleBrief.slice(0, 900) : "") + seriesDirective + angleAddon).trim() || null, affiliate: isReview, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userTitle };
         let article = await streamArticle(
           genInput,
           (bodyHtml) => send({ type: "body", html: bodyHtml }),

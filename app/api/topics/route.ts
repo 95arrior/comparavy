@@ -25,7 +25,7 @@ import { getPerfWeights } from "@/lib/perfWeights";
 import { dwellPotential } from "@/lib/dwellScore";
 import { revenuePathOf, REVENUE_TAG_LABEL, type RevenuePath } from "@/lib/revenuePath";
 import { computeBlogTier, applyDemoteGuard, type TierResult, type BlogTier } from "@/lib/blogTier";
-import { TIER_BANDS, TIER_MIX } from "@/lib/scoreWeights";
+import { TIER_BANDS, TIER_MIX, SEED_CLAIM_CAP, SEED_CLAIM_WINDOW_H } from "@/lib/scoreWeights";
 import { revenuePath } from "@/lib/revenue";
 import { logUsage } from "@/lib/usageLog";
 import { isAdminEmail } from "@/lib/adminStats";
@@ -486,6 +486,25 @@ export async function GET(req: Request) {
           if (FF.perfLoop) c.sel = { ...(c.sel ?? {}), vol: volMap[c.keyword]?.vol ?? null, volBand, poolScore: pool, sortScore: score };
           return { c, i, score };
         }).sort((a, b) => (b.score - a.score) || (a.i - b.i)).map((x) => x.c);
+        // ★씨앗 클레임 후순위(FF_SEED_CLAIM §5-1) — 동시 활성 발행 유저 상한 도달 씨앗은 뒤로(완전 차단 아님, 대형 풀 예외)
+        if (FF.seedClaim && tc.length > 0) {
+          try {
+            const norms = tc.map((c) => c.keyword.replace(/\s+/g, ""));
+            const sinceClaim = new Date(Date.now() - SEED_CLAIM_WINDOW_H * 3600_000).toISOString();
+            const { data: claims } = await pool.from("seed_claims").select("keyword_norm, user_id").in("keyword_norm", norms).gte("created_at", sinceClaim).limit(1000);
+            const cnt = new Map<string, Set<string>>();
+            for (const cl of claims ?? []) { const k = String(cl.keyword_norm); if (!cnt.has(k)) cnt.set(k, new Set()); cnt.get(k)!.add(String(cl.user_id)); }
+            const under: typeof tc = []; const over: typeof tc = [];
+            for (const c of tc) {
+              const ctx2 = `${c.title} ${c.keyword} ${(c.newsContext ?? "").slice(0, 200)}`;
+              const cap = isBigPool(ctx2) ? SEED_CLAIM_CAP.big : SEED_CLAIM_CAP.normal;
+              const users = cnt.get(c.keyword.replace(/\s+/g, ""));
+              const mine = users?.has(user.id) ?? false; // 내가 이미 클레임한 씨앗은 후순위 제외(내 후속·시리즈 방해 금지)
+              if (!mine && (users?.size ?? 0) >= cap) over.push(c); else under.push(c);
+            }
+            tc = [...under, ...over];
+          } catch { /* 0063 미적용/조회 실패 — 후순위 미적용(fail-open은 '순서'라 안전) */ }
+        }
         // ★유형 믹스 쿼터(유저 회의: 공고형이 5칸 독식 방지) — 상위 5 중 공고형 최대 2, 초과분은 6위 밖으로(대형 풀 5점+는 예외)
         {
           const top: typeof tc = []; const rest: typeof tc = [];
