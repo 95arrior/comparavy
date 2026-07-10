@@ -46,7 +46,9 @@ export async function keywordsToTitles(keywords: string[], context?: string, opt
     const client = new Anthropic({ apiKey });
     const res = await client.messages.create({
       model: "claude-haiku-4-5",
-      max_tokens: 700,
+      // ★2000으로 상향(실측 2026-07-10: 키워드 13개분 JSON이 700을 넘어 잘림 → 파싱 실패 → 보드 전체가 템플릿 폴백
+      //  '총정리·이것만 알면'으로 서빙. 훅 미달 제목의 숨은 원인)
+      max_tokens: 2000,
       messages: [
         {
           role: "user",
@@ -80,7 +82,15 @@ export async function keywordsToTitles(keywords: string[], context?: string, opt
     });
     const text = res.content.map((c) => (c.type === "text" ? c.text : "")).join("").trim();
     const m = text.match(/\[[\s\S]*\]/);
-    const arr = m ? (JSON.parse(m[0]) as unknown[]) : [];
+    // ★잘림 방어 — max_tokens 초과로 JSON이 중간에 끊겨도 완성된 객체까지는 살린다(전량 폴백 방지)
+    let arr: unknown[] = [];
+    if (m) {
+      try { arr = JSON.parse(m[0]) as unknown[]; }
+      catch {
+        const objs = m[0].match(/\{[^{}]*\}/g) ?? [];
+        arr = objs.map((s) => { try { return JSON.parse(s); } catch { return undefined; } });
+      }
+    }
     return keywords.map((k, i) => {
       const o = arr[i] as { t?: unknown; c?: unknown; ok?: unknown; f?: unknown } | undefined;
       let title = o && typeof o.t === "string" && o.t.trim() ? o.t.trim() : templateTitle(k, i);
@@ -91,7 +101,8 @@ export async function keywordsToTitles(keywords: string[], context?: string, opt
       const fit = o && typeof o.f === "number" ? Math.max(0, Math.min(2, o.f)) : 1; // 업종 적합도
       return { title, tag, ok, fit };
     });
-  } catch {
+  } catch (e) {
+    console.error("[topicTitles] AI 제목 실패 — 템플릿 폴백:", e instanceof Error ? e.message : e);
     return fallback();
   }
 }

@@ -229,7 +229,7 @@ ${OPEN_LOOP_GUIDE}
     const out: AmplifiedTopic[] = [];
     const seen = new Set<string>();
     for (const it of parsed) {
-      const b = briefs[(Number(it.seedIndex) || 1) - 1] ?? briefs[0];
+      let b = briefs[(Number(it.seedIndex) || 1) - 1] ?? briefs[0];
       // ★플레이스홀더 게이트(실측: '최대 OO만원' 제목 노출) — 미확인 수치 자리표시가 있으면 카드 폐기
       const PLACEHOLDER = /(OO|ОО|○○|◯◯|□□|XX|NN|몇\s?만\s?원|[０-９]*＿+|\bN\s?(?=만\s?원|원|개|%|년|월|일))/;
       if (PLACEHOLDER.test(String(it.titleClick ?? "")) || PLACEHOLDER.test(String(it.titleSearch ?? ""))) continue;
@@ -242,6 +242,18 @@ ${OPEN_LOOP_GUIDE}
       const nk = kw.replace(/\s+/g, "");
       if (seen.has(nk)) continue;
       seen.add(nk);
+      // ★혈통 재귀속(실측 2026-07-10: '서울 토허' 제목 카드에 '진안군 기본소득' 근거 뉴스 — LLM이 신고한 seedIndex를
+      //  그대로 믿어 다른 씨앗의 newsContext·sourceTitle이 붙었고, 그 근거로 본문까지 쓰게 되는 사고).
+      //  키워드가 실제로 속한 씨앗(키워드 일치 또는 그 씨앗의 롱테일)으로 재귀속 — 못 찾으면 토큰 교집합 검사, 전무하면 폐기.
+      const own = briefs.find((x) => x.seed.keyword.replace(/\s+/g, "") === nk || x.lts.some((l) => l.replace(/\s+/g, "") === nk));
+      if (own) b = own;
+      else {
+        const tok = (t: string) => new Set(t.replace(/[^가-힣a-zA-Z0-9 ]/g, " ").split(/\s+/).filter((w) => w.length >= 2));
+        const kt = tok(`${kw} ${String(it.titleClick ?? "")}`);
+        const st = tok(`${b.seed.keyword} ${b.seed.title}`);
+        const hit = [...kt].some((w) => st.has(w) || [...st].some((s2) => s2.includes(w) || w.includes(s2)));
+        if (!hit) continue;
+      }
       // ★금지어 필터 — 어그로/약속류가 든 제목·카피는 안전한 씨앗 제목으로 폴백.
       let titleClick = (it.titleClick ?? b.seed.title).trim().slice(0, 80);
       if (containsBanned(titleClick)) titleClick = b.seed.title.slice(0, 80);
