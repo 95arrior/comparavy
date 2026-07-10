@@ -52,12 +52,11 @@ const ABSTRACT_RE = /비교|정리|요약|절차|단계|순서|구성|개념|금
 // ★아테플로 시그니처 스타일(2026-07-09 유저 확정 — 실사 폐기, 전 유저 공통): 토스풍 플랫 벡터 일러스트.
 //  "잘 그린 그림"이 아니라 "3초에 읽히는 기호" — AI 실사의 불쾌함이 원천 부재, 채널 아이덴티티 통일.
 const ATEFLO_ILLUST_STYLE = [
-  "STYLE (non-negotiable): flat vector illustration in the style of modern Korean fintech branding (Toss-like).",
-  "Characters: simple geometric human figures — round soft shapes, minimal or no facial features (tiny dot eyes at most), black or dark hair as a simple shape, peach/salmon skin accents, expressive POSE not face.",
-  "Palette: one dominant vivid blue (#3268f6 to #1D75F7 family) as background or key object, warm orange and off-white accents, occasional light blue. Max 4 colors total.",
-  "Composition: ONE clear metaphor — a single object or moment tells the whole meaning (a person reading a giant book = learning; an umbrella = protection). Big simple shapes, generous negative space.",
-  "Texture: subtle film grain / noise over flat colors (signature finish). Soft minimal shadows only.",
-  "NOT photorealistic, NOT 3D render, NOT detailed anime, NO gradients except one soft radial, NO clutter.",
+  "STYLE (non-negotiable): premium EDITORIAL ILLUSTRATION — the quality of an award-winning fintech brand campaign (Behance/agency grade), NOT clipart, NOT cheap flat icons.",
+  "Rendering: clean bold vector shapes with soft airbrush/dimensional shading and a fine grain texture finish. Confident silhouettes, generous negative space.",
+  "Background: one strong saturated SOLID color filling the entire frame (no scenes, no landscapes).",
+  "Subject: ONE oversized iconic object as the hero, centered-ish, larger than life. People only as small simple silhouettes if essential.",
+  "NOT photorealistic, NOT 3D render, NOT anime, NOT clip-art, NOT icon grids, NO clutter — one idea, told big.",
 ].join(" ");
 
 export function pickImageStyle(slotDesc: string, seed: number): "photo" | "toss" {
@@ -156,16 +155,18 @@ export function compositionOf(copy: string): 0 | 1 | 2 {
 
 // ★배경 문법 4종(2026-07-09 유저 레퍼런스 — 통일성은 스타일, 다양성은 문법·색으로)
 const BG_GRAMMARS = [
-  "GRAMMAR = ONE GIANT SYMBOL: a single oversized icon-like object dead-simple and instantly readable (a banknote bundle, a shield, a coin with a percent sign), centered-ish with generous flat negative space around it.",
-  "GRAMMAR = OUTLINE CHARACTER + ORBIT: one simple line-drawn character (minimal face) holding a phone or object, with 3-4 tiny satellite icons (envelope, calendar, chat bubble, coin) orbiting around on dotted paths.",
-  "GRAMMAR = ICON GRID: a tidy 2x2 grid of soft rounded app-like icons, each a simple glyph on its own colored rounded square, floating on the flat background.",
-  "GRAMMAR = FESTIVE SCATTER: the center stays EMPTY flat color (text goes there later); small playful doodle objects and confetti shapes scattered around the top and bottom edges only.",
+  "GRAMMAR = GIANT OBJECT: the topic's single most iconic object, oversized and centered, soft dimensional shading (예: a huge money pouch, three overlapping bank cards, a giant coin).",
+  "GRAMMAR = WITTY COMBO: the topic object PLUS one unexpected everyday element fused into a single visual pun — like a money pouch wearing a car seatbelt (= protecting money), a key stuck in a dartboard bullseye (= the exact solution). ONE combined object only.",
+  "GRAMMAR = TINY PEOPLE, GIANT THING: one oversized topic object with 1-2 tiny simple human silhouettes interacting with it — scale contrast tells the story.",
+  "GRAMMAR = PATTERN: the topic object repeated 3-6 times in a loose playful arrangement (fanned cards, scattered coins), like an editorial magazine spot.",
 ];
 const BG_PALETTES = [
-  "dominant vivid blue (#3268f6 family), off-white and warm orange accents",
-  "dominant fresh green (#2DB400 family), off-white and dark ink accents",
-  "dominant warm coral (#ff7f6e family), soft teal and cream accents",
-  "dominant deep violet (#6b5cff family), light blue and white accents",
+  "solid sky blue background (#7fb5f5 family), hero object in warm orange and navy",
+  "solid vivid red background (#e8402d family), hero object in white and charcoal",
+  "solid fresh green background (#12b76a family), hero object in cream and dark ink",
+  "solid amber yellow background (#ffc933 family), hero object in navy and white",
+  "solid deep violet background (#6b5cff family), hero object in peach and light blue",
+  "solid warm coral background (#ff7f6e family), hero object in teal and cream",
 ];
 
 export function buildThumbPhotoBgPrompt(topic: string, seed: number, center = false, opts?: { copyText?: string; variant?: number }): string {
