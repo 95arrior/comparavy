@@ -3,6 +3,8 @@ import { validateSearchTitle, fallbackSearchTitle, ensureKeywordInTitle } from "
 import { logUsage } from "./usageLog";
 import type { TrendTopic } from "./trendTopics";
 import { pickHookPattern, OPEN_LOOP_GUIDE, containsBanned } from "./hookPatterns";
+import { FF } from "@/config/featureFlags";
+import { dwellPotential, DWELL_BRIEF_DIRECTIVE } from "./dwellScore";
 
 // ★트렌드 씨앗 × 개인화 증식(C단계) — 같은 씨앗·롱테일이라도 유저마다 '앵글 브리프'가 달라 다른 글이 나온다.
 //  무중복 원리: 토픽(키워드)은 겹쳐도 되고, 글의 방향·구조·톤·독자가 달라야 홈판 피드에서 노출된다.
@@ -281,7 +283,7 @@ ${OPEN_LOOP_GUIDE}
         newsContext: b.seed.newsContext ?? null,
         sourceTitle: b.seed.title ?? null, // ★카드별 진짜 혈통(씨앗 제목) — 근거 표시용(배치 공통 뉴스 뭉치와 달리 카드 귀속 확실)
         brief,
-        briefText: briefToDirective(brief),
+        briefText: briefToDirective(brief) + (FF.dwellScore && dwellPotential(`${titleClick} ${kw}`) === 2 ? `\n${DWELL_BRIEF_DIRECTIVE}` : ""), // ★체류 지시(FF_DWELL_SCORE)
         hookKey: b.hook.key,
         thumb: { mainCopy: thumbMain, subCopy: thumbSub, badge },
         source: b.seed.source,

@@ -22,6 +22,7 @@ import { checkRateLimit } from "@/lib/rateLimit";
 import { BID_WEIGHT, BID_DEPTH_CAP, BID_COMP_BONUS, BID_BADGE_RATIO, BID_HIGH_MIN_DEPTH, ATTACK } from "@/lib/scoreWeights";
 import { FF } from "@/config/featureFlags";
 import { getPerfWeights } from "@/lib/perfWeights";
+import { dwellPotential } from "@/lib/dwellScore";
 import { computeBlogTier, applyDemoteGuard, type TierResult, type BlogTier } from "@/lib/blogTier";
 import { TIER_BANDS, TIER_MIX } from "@/lib/scoreWeights";
 import { revenuePath } from "@/lib/revenue";
@@ -266,7 +267,9 @@ export async function GET(req: Request) {
         sc += Math.round(poolScore(txt) / 2); // 잠재 풀 가점(0~4) — 전 국민 주제·인기지가 위로
         return sc;
       };
-      trends = [...trends].sort((a, b) => ((b.longtails?.length ?? 0) * 2 + (b.newsContext ? 1 : 0) + actionScore(b)) - ((a.longtails?.length ?? 0) * 2 + (a.newsContext ? 1 : 0) + actionScore(a)));
+      // ★체류 프록시(FF_DWELL_SCORE §3) — 별도 가산 항목(기존 actionScore 무수정). OFF=0.
+      const dwellOf = (t: { title?: string; keyword?: string }) => (FF.dwellScore ? dwellPotential(`${t.title ?? ""} ${t.keyword ?? ""}`) : 0);
+      trends = [...trends].sort((a, b) => ((b.longtails?.length ?? 0) * 2 + (b.newsContext ? 1 : 0) + actionScore(b) + dwellOf(b)) - ((a.longtails?.length ?? 0) * 2 + (a.newsContext ? 1 : 0) + actionScore(a) + dwellOf(a)));
       if (tailMode === "short") trends = trends.filter((t) => t.source !== "discover"); // 숏테일 탭 순도 — 꾸준 수요 혼입 제거(실측)
       if (debugMode) diag.trendSeeds = trends.length;
       const ampKey = `amp:v5:${user.id}:${(profile as { id?: string } | null)?.id ??"solo"}:${kstDay}:${excludeSet.size}:${trends.length}:${tailMode === "short" ? "s" : "n"}:r${regenNonce}`; // short=전용 캐시(증식량 다름) // ★v5=씨앗 세대 포함 — 재수확 직후(0→15) 캐시 자동 무효화(실측: 수확해도 옛 세트 서빙) // ★v4=블로그별 격리 — 전환 시 이전 블로그 글감 서빙 사고(실측: 자동차 블로그에 캘리포니아비치) 차단
