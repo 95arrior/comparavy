@@ -243,8 +243,8 @@ async function renderAt(rawInput: ThumbInput, width: number): Promise<Buffer> {
     const pressRoot = el("div", { style: { display: "flex", width: SIZE, height: SIZE, position: "relative", overflow: "hidden", backgroundColor: "#101728" } }, [
       el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, overflow: "hidden", display: "flex" } }, bgDataUrl ? [
         el("img", { src: bgDataUrl, width: SIZE, height: SIZE, style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, objectFit: "cover" } }),
-        // (inset 버그로 이 스크림은 지금껏 안 그려졌음 — 활성화되며 원값 0.68은 일러스트를 죽여 완화)
-        el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: "radial-gradient(circle at 50% 46%, rgba(8,14,28,0.52) 0%, rgba(8,14,28,0.30) 46%, rgba(8,14,28,0.12) 78%)" } }),
+        // 일러스트 위 가독 스크림(유저 실측 2026-07-10: 텍스트가 잘 안 보임 → 투명도 상향)
+        el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: "radial-gradient(circle at 50% 50%, rgba(8,14,28,0.64) 0%, rgba(8,14,28,0.42) 46%, rgba(8,14,28,0.20) 78%)" } }),
       ] : [
         el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: `radial-gradient(circle at 28% 18%, ${shade(flatBase, isDark(p.bg) ? 38 : 26)}, ${shade(flatBase, isDark(p.bg) ? -8 : -16)})` } }),
         el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: `radial-gradient(circle at 76% 82%, ${rgba(shade(p.point, isDark(p.bg) ? 16 : 24), isDark(p.bg) ? 0.55 : 0.42)} 0%, rgba(0,0,0,0) 55%)` } }),
@@ -252,9 +252,9 @@ async function renderAt(rawInput: ThumbInput, width: number): Promise<Buffer> {
       ]),
       // 브랜드 — 상단 얇게(하단은 채널 칩 세이프 존)
       el("div", { style: { position: "absolute", left: 0, right: 0, top: M + 34, display: "flex", justifyContent: "center", fontFamily: identity.fontPair.body, fontSize: 19, fontWeight: 500, color: "rgba(255,255,255,0.65)", letterSpacing: 8 } }, brand),
-      // 문구 — 정중앙, 마지막 줄 옐로 포인트(핵심 강조)
-      el("div", { style: { position: "absolute", left: 48, right: 48, top: 0, bottom: Math.round(SIZE * 0.15), display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 } },
-        lines.map((l, i) => el("div", { style: { display: "flex", textAlign: "center", fontFamily: identity.fontPair.title, fontSize: pressSize, fontWeight: 900, color: i === lines.length - 1 && lines.length > 1 ? accent : "#FFFFFF", lineHeight: 1.16, letterSpacing: -Math.round(pressSize * 0.03), wordBreak: "keep-all", textShadow: "0 4px 34px rgba(0,0,0,0.5)" } }, l))),
+      // 문구 — 진짜 정중앙(유저 확정 2026-07-10: 중앙은 홈판 칩에 안 가림), 마지막 줄 옐로 포인트(핵심 강조)
+      el("div", { style: { position: "absolute", left: 48, right: 48, top: 0, bottom: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 } },
+        lines.map((l, i) => el("div", { style: { display: "flex", textAlign: "center", fontFamily: identity.fontPair.title, fontSize: pressSize, fontWeight: 900, color: i === lines.length - 1 && lines.length > 1 ? accent : "#FFFFFF", lineHeight: 1.16, letterSpacing: -Math.round(pressSize * 0.03), wordBreak: "keep-all", textShadow: bgDataUrl ? "0 3px 14px rgba(0,0,0,0.72), 0 8px 44px rgba(0,0,0,0.6)" : "0 4px 34px rgba(0,0,0,0.5)" } }, l))),
       input.subCopy && input.subCopy.trim() ? el("div", { style: { position: "absolute", left: 48, right: 48, top: Math.round(SIZE * 0.72), display: "flex", justifyContent: "center", fontFamily: identity.fontPair.body, fontSize: 30, fontWeight: 500, color: "rgba(255,255,255,0.75)" } }, input.subCopy.trim()) : null,
       // 하단 15% — 세이프 존(채널 칩 자리): 의도적으로 빈 공간
     ].filter(Boolean));
