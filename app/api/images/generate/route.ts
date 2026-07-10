@@ -75,7 +75,12 @@ export async function POST(request: Request) {
     const { breakThumbCopy } = await import("@/lib/thumbCopyBreak");
     const paletteName = typeof body.paletteName === "string" ? body.paletteName.slice(0, 30) : undefined;
     const wash = typeof body.wash === "number" ? Math.min(0.85, Math.max(0, body.wash)) : 0.35;
-    const aiBg = body.aiBg === true;
+    // ★유저 업로드 배경(2026-07-10 유저 요청: "텍스트만 너가, 배경은 내가") — 무료, AI 호출 없음
+    const customBg = typeof body.customBg === "string"
+      && /^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/.test(body.customBg)
+      && body.customBg.length < 6_000_000
+      ? body.customBg : null;
+    const aiBg = body.aiBg === true && !customBg;
     if (aiBg && !imageReady()) return NextResponse.json({ error: "이미지 기능을 준비하고 있어요.", code: "NOT_READY" }, { status: 503 });
     let balance: number | null = null;
     if (aiBg) {
@@ -102,6 +107,7 @@ export async function POST(request: Request) {
         thumb: { mainCopy: breakThumbCopy(mainRaw), subCopy: "", badge: "" },
         articleId: articleId ?? mainRaw,
         useAiBackground: aiBg,
+        customBgDataUrl: customBg,
         paletteName,
         bgWash: wash,
         fontTitle,

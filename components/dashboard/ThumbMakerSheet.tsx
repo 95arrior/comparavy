@@ -37,7 +37,9 @@ export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots
   const [text, setText] = useState("");
   const [palette, setPalette] = useState(SWATCHES[0].name);
   const [tone, setTone] = useState("mid");
-  const [bgKind, setBgKind] = useState<"photo" | "plain">("photo"); // photo=일러스트(2026-07-09 실사 폐기 — 프롬프트가 일러스트), 기본=일러스트
+  const [bgKind, setBgKind] = useState<"photo" | "plain" | "upload">("photo"); // photo=일러스트(2026-07-09 실사 폐기 — 프롬프트가 일러스트), 기본=일러스트. upload=내 사진(무료)
+  const [customBg, setCustomBg] = useState<string | null>(null); // 유저 업로드 배경(1080 정방 크롭 dataURL)
+  const fileRef = useRef<HTMLInputElement>(null);
   const fontKey = `ateflo_tfont_${brandKey ?? ""}`;
   const [font, setFontRaw] = useState("GmarketSansBold");
   useEffect(() => { try { const v = localStorage.getItem(fontKey); if (v) setFontRaw(v); } catch { /* ignore */ } // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -59,11 +61,12 @@ export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots
 
   async function make() {
     if (!text.trim() || busy) return;
+    if (bgKind === "upload" && !customBg) { fileRef.current?.click(); return; } // 사진 미선택 — 선택창부터
     setBusy(true); setErr(null); setPreview(null); setPlaced(null);
     try {
       const r = await fetch("/api/images/generate", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ thumbMaker: true, mainCopy: text.trim(), paletteName: palette, wash: TONES.find((t) => t.key === tone)?.wash ?? 0.35, aiBg: bgKind !== "plain", bgStyle: "photo", articleId, fontName: font, title: articleTitle, brandName, variant: (() => { if (retryRef.current.copy === text.trim()) { retryRef.current.n += 1; } else { retryRef.current = { copy: text.trim(), n: 0 }; } return retryRef.current.n; })() }),
+        body: JSON.stringify({ thumbMaker: true, mainCopy: text.trim(), paletteName: palette, wash: TONES.find((t) => t.key === tone)?.wash ?? 0.35, aiBg: bgKind === "photo", ...(bgKind === "upload" && customBg ? { customBg } : {}), bgStyle: "photo", articleId, fontName: font, title: articleTitle, brandName, variant: (() => { if (retryRef.current.copy === text.trim()) { retryRef.current.n += 1; } else { retryRef.current = { copy: text.trim(), n: 0 }; } return retryRef.current.n; })() }),
       });
       const d = await r.json();
       if (!r.ok) { setErr(d.error ?? "만들지 못했어요"); if (typeof d.credits === "number") onCredits?.(d.credits); }
@@ -131,24 +134,41 @@ export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots
           ))}
         </div>
 
-        {/* 배경 종류 — 실사 기본(주제 사진 깔고 정중앙 문구) */}
+        {/* 배경 종류 — 실사 기본(주제 사진 깔고 정중앙 문구). 내 사진=유저 업로드(무료) */}
         <p className="mt-4 text-[13px] font-bold text-neutral-700">배경</p>
         <div className="mt-2 grid grid-cols-3 gap-1.5">
           {[
             { k: "photo" as const, label: "일러스트", sub: `추천 · ${IMAGE_COST}cr` },
             { k: "plain" as const, label: "색면", sub: "무료" },
+            { k: "upload" as const, label: "내 사진", sub: customBg ? "선택됨 ✓" : "무료" },
           ].map((o) => (
-            <button key={o.k} onClick={() => setBgKind(o.k)} className={`at-press rounded-[12px] px-2 py-2.5 text-center transition ${bgKind === o.k ? "bg-[#1D75F7]/[0.08] ring-1 ring-[#1D75F7]/40" : "bg-neutral-50"}`}>
+            <button key={o.k} onClick={() => { setBgKind(o.k); if (o.k === "upload") fileRef.current?.click(); }} className={`at-press rounded-[12px] px-2 py-2.5 text-center transition ${bgKind === o.k ? "bg-[#1D75F7]/[0.08] ring-1 ring-[#1D75F7]/40" : "bg-neutral-50"}`}>
               <span className={`block text-[12.5px] font-bold ${bgKind === o.k ? "text-[#1D75F7]" : "text-neutral-700"}`}>{o.label}</span>
-              <span className="mt-0.5 block text-[10.5px] text-neutral-400">{o.sub}</span>
+              <span className={`mt-0.5 block text-[10.5px] ${o.k === "upload" && customBg ? "text-emerald-600 font-semibold" : "text-neutral-400"}`}>{o.sub}</span>
             </button>
           ))}
         </div>
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={async (e) => {
+          const f = e.target.files?.[0];
+          e.target.value = ""; // 같은 파일 재선택 허용
+          if (!f) return;
+          try {
+            const url = await new Promise<string>((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = rej; r.readAsDataURL(f); });
+            const img = await new Promise<HTMLImageElement>((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = url; });
+            // 1080 정방 커버 크롭 — 페이로드 축소 + 렌더 규격 일치
+            const S = 1080, cv = document.createElement("canvas"); cv.width = S; cv.height = S;
+            const ctx = cv.getContext("2d")!;
+            const sc = Math.max(S / img.width, S / img.height);
+            ctx.drawImage(img, (S - img.width * sc) / 2, (S - img.height * sc) / 2, img.width * sc, img.height * sc);
+            setCustomBg(cv.toDataURL("image/jpeg", 0.86));
+            setBgKind("upload");
+          } catch { setErr("사진을 읽지 못했어요. 다른 사진으로 시도해 주세요."); }
+        }} />
 
         <button onClick={make} disabled={!text.trim() || busy} className="at-press tk-grad-cta mt-4 w-full rounded-[12px] py-3.5 text-[15px] font-bold text-white disabled:opacity-50">
           {busy
             ? <><span className="tk-wand mr-1.5" aria-hidden>✦</span>썸네일을 만들고 있어요</>
-            : <>{preview ? "다시 만들기" : "썸네일 만들기"}<span className="ml-1.5 text-[12.5px] font-semibold text-white/75">{bgKind !== "plain" ? `· ${IMAGE_COST}크레딧` : "· 무료"}</span></>}
+            : <>{preview ? "다시 만들기" : "썸네일 만들기"}<span className="ml-1.5 text-[12.5px] font-semibold text-white/75">{bgKind === "photo" ? `· ${IMAGE_COST}크레딧` : "· 무료"}</span></>}
         </button>
         {err && <p className="mt-2 text-[12.5px] font-medium text-amber-600">{err}</p>}
 
