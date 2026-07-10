@@ -243,7 +243,17 @@ async function callImage(prompt: string, aspectRatio: "16:9" | "1:1"): Promise<{
       throw e;
     }
   }
-  return { ...(await callGemini(prompt, aspectRatio)), provider: "gemini" };
+  // ★역방향 비상 폴백(실측 2026-07-10: Gemini QUOTA → 단색 폴백으로 AI 배경 전멸) — 쿼터 계열 실패만 GPT로.
+  //  GPT는 텍스트 금지 준수율이 낮아 기본값으론 기각(유저 확정)이지만, 단색보다는 낫다 — 비상시 한정.
+  try { return { ...(await callGemini(prompt, aspectRatio)), provider: "gemini" }; }
+  catch (e) {
+    const quota = e instanceof Error && e.message === "QUOTA";
+    if (quota && process.env.OPENAI_API_KEY) {
+      console.error("[image] gemini QUOTA → gpt-image-1 비상 폴백");
+      return { ...(await callOpenAIImage(prompt, aspectRatio)), provider: "gpt-image-1(비상)" };
+    }
+    throw e;
+  }
 }
 
 async function callGemini(prompt: string, aspectRatio: "16:9" | "1:1"): Promise<{ base64: string; mime: string }> {
