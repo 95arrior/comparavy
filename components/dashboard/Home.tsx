@@ -930,7 +930,14 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
   // ★근거 — 사실 기반 설득(실측 버그: 무관 헤드라인 3연속): 카드 키워드와 겹치는 헤드라인만, 없으면 정직한 일반 근거
   const evidence = (() => {
     if (!isTrend) {
-      // 꾸준: 실데이터(월 검색량·경쟁) — '많이 검색되는 주제예요' 같은 빈말 금지
+      // 꾸준: 실데이터 — ★기회지수(유저 확정: 수요多·공급少가 선점의 핵심): 검색량÷경쟁 문서 수
+      const bt = (topic as { blogTotal?: number | null }).blogTotal;
+      if (topic.vol > 0 && bt != null && bt > 0) {
+        const ratio = topic.vol / bt;
+        const btTxt = bt >= 10000 ? `${(bt / 10000).toFixed(1)}만` : bt.toLocaleString();
+        if (ratio >= 3) return `월 ${topic.vol.toLocaleString()}회 검색 · 문서 ${btTxt}개뿐 — 선점 기회`;
+        return `월 ${topic.vol.toLocaleString()}회 검색 · 경쟁 문서 ${btTxt}개`;
+      }
       if (topic.vol > 0) return `월 ${topic.vol.toLocaleString()}회 검색 · 경쟁 ${topic.comp === "low" ? "낮음" : topic.comp === "mid" ? "보통" : "높음"} · 한 번 잡으면 오래 유입`;
       return topic.demandLabel ?? "지속 검색되는 주제";
     }
