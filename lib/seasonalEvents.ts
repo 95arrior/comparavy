@@ -9,16 +9,28 @@ interface SeasonEvent {
   month?: number; // 매년 반복(월)
   day?: number; // 매년 반복(일)
   dates?: string[]; // 음력 등 연도별 명시(yyyy-mm-dd)
+  /** 씨앗 리드타임(일) — 대형 연례 키워드는 폭발 4~6주 전 심어야 색인·체류가 쌓인 채 폭발을 맞는다(기본 14) */
+  lead?: number;
 }
 
 const EVENTS: SeasonEvent[] = [
-  { name: "연말정산", emoji: "🧾", message: "절세·환급 글을 지금 쓰면 검색 선점!", categories: ["재테크", "부업", "정부지원금/생활정보"], month: 1, day: 15 },
+  { name: "연말정산", emoji: "🧾", message: "절세·환급 글을 지금 쓰면 검색 선점!", categories: ["재테크", "부업", "정부지원금/생활정보"], month: 1, day: 15, lead: 45 },
+  // ── 경제 연례 캘린더(2026-07-10 유저: 캘린더 글감 — 매년 찾는 글을 폭발 전에 심는다) ──
+  { name: "재산세 납부", emoji: "🏠", message: "7월 재산세 — 납부 기간·카드 혜택 검색 급증", categories: ["재테크", "정부지원금/생활정보"], month: 7, day: 16, lead: 30 },
+  { name: "재산세 2기분", emoji: "🏠", message: "9월 재산세 2기분 — 조회·분납 검색 시즌", categories: ["재테크", "정부지원금/생활정보"], month: 9, day: 16, lead: 30 },
+  { name: "주민세 납부", emoji: "🧾", message: "8월 주민세 — 납부 방법·감면 검색 시즌", categories: ["재테크", "정부지원금/생활정보"], month: 8, day: 16, lead: 21 },
+  { name: "근로장려금 반기 신청", emoji: "💰", message: "9월 근로장려금 반기 — 자격·신청 검색 급증", categories: ["재테크", "부업", "정부지원금/생활정보"], month: 9, day: 1, lead: 30 },
+  { name: "연말정산 미리보기", emoji: "🔍", message: "홈택스 미리보기 오픈 — 남은 두 달 절세 전략 시즌", categories: ["재테크", "부업"], month: 11, day: 1, lead: 30 },
+  { name: "종합부동산세", emoji: "🏢", message: "12월 종부세 고지 — 계산·이의신청 검색 시즌", categories: ["재테크"], month: 12, day: 1, lead: 30 },
+  { name: "연금저축·IRP 막차", emoji: "🎯", message: "세액공제 한도 채우기 — 12월 막차 검색 급증", categories: ["재테크"], month: 12, day: 10, lead: 40 },
+  { name: "자동차세 연납", emoji: "🚗", message: "1월 연납 신청 — 할인율·신청 방법 검색 급증", categories: ["재테크", "자동차", "정부지원금/생활정보"], month: 1, day: 10, lead: 30 },
+  { name: "부가세 1기 확정신고", emoji: "🧮", message: "1월 부가세 — 사업자 신고·환급 시즌", categories: ["부업", "재테크"], month: 1, day: 25, lead: 21 },
   { name: "새해 다이어트", emoji: "🏃", message: "새해 결심 시즌 — 다이어트·운동 검색 폭증", categories: ["건강", "뷰티", "요리"], month: 1, day: 1 },
   { name: "발렌타인데이", emoji: "🍫", message: "초콜릿·선물 키워드가 뜨는 시기", categories: ["요리", "뷰티"], month: 2, day: 14 },
   { name: "봄 이사철", emoji: "📦", message: "이사철 — 부동산·인테리어 수요 상승", categories: ["재테크", "인테리어"], month: 3, day: 1 },
   { name: "환절기 건강", emoji: "🌿", message: "환절기 — 건강관리 키워드 챙길 때", categories: ["건강", "반려동물"], month: 3, day: 1 },
   { name: "어린이날", emoji: "🎈", message: "선물·나들이 키워드 미리 선점", categories: ["육아"], month: 5, day: 5 },
-  { name: "종합소득세 신고", emoji: "💸", message: "종소세 마감 — 환급·절세 검색 급증", categories: ["재테크", "부업"], month: 5, day: 31 },
+  { name: "종합소득세 신고", emoji: "💸", message: "종소세 마감 — 환급·절세 검색 급증", categories: ["재테크", "부업"], month: 5, day: 31, lead: 40 },
   { name: "여름 휴가철", emoji: "🏖️", message: "여행·캠핑 검색이 가장 뜨거운 시기", categories: ["여행", "자동차"], month: 7, day: 15 },
   { name: "반려동물 여름나기", emoji: "🐶", message: "더위·관리 키워드 수요 상승", categories: ["반려동물"], month: 7, day: 1 },
   { name: "부가세 신고", emoji: "🧮", message: "사업자 부가세 — 자영업 키워드", categories: ["부업"], month: 7, day: 25 },
@@ -80,7 +92,7 @@ export function seasonalSeeds(category: string, today: Date = new Date(), window
     const d = nextDate(e, t);
     if (!d) continue;
     const dday = Math.round((d.getTime() - t.getTime()) / 86400000);
-    if (dday < 0 || dday > windowDays) continue;
+    if (dday < 0 || dday > (e.lead ?? windowDays)) continue; // ★이벤트별 리드타임 — 대형 연례는 D-30~45 선점(2026-07-10)
     out.push({ keyword: e.name, title: `${e.name} 미리 준비하면 좋은 것들` });
   }
   return out.slice(0, 3);
