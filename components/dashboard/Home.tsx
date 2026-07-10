@@ -137,6 +137,25 @@ export default function Home({
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profileKey]);
+  // ★글감 새로 받기(2026-07-10 유저: "크론 기다리는 게 애매해") — 강제 재수확+에버그린 갈이 후 두 보드 재로드
+  const [regenBusy, setRegenBusy] = useState(false);
+  const [regenMsg, setRegenMsg] = useState<string | null>(null);
+  async function regenBoards() {
+    if (regenBusy) return;
+    setRegenBusy(true); setRegenMsg(null);
+    try {
+      const r = await fetch("/api/topics/regen", { method: "POST" });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) { setRegenMsg(d.error ?? "잠시 후 다시 시도해 주세요"); setTimeout(() => setRegenMsg(null), 4000); return; }
+      setBoardShort(null); setBoardLong(null); // 스켈레톤 — 새 세트 로드
+      const ex = [...new Set([...dismissedRef.current, ...todayKeywords(articles)])];
+      const q = (mode: string) => fetch(`/api/topics?mode=${mode}${ex.length ? `&exclude=${encodeURIComponent(ex.join(","))}` : ""}`).then((r) => r.json()).catch(() => ({ topics: [] }));
+      const [sh, lo] = await Promise.all([q("short"), q("long")]);
+      setBoardShort(sanitizeTopics(Array.isArray(sh.topics) ? sh.topics : []).filter((g) => !dismissedRef.current.includes(g.keyword)));
+      setBoardLong(sanitizeTopics(Array.isArray(lo.topics) ? lo.topics : []).filter((g) => !dismissedRef.current.includes(g.keyword)));
+    } catch { setRegenMsg("네트워크 오류예요"); setTimeout(() => setRegenMsg(null), 4000); }
+    finally { setRegenBusy(false); }
+  }
   // ★빈 보드 자동 폴링(실측: 연타 치우기 → 재고 소진 → 5분 고착) — 백그라운드 수확이 끝나면 자동으로 나타난다
   useEffect(() => {
     if (boardShort === null || boardShort.length > 0) return;
@@ -653,6 +672,14 @@ export default function Home({
               </p>
             );
           })()}
+          {/* ★글감 새로 받기 — 크론 안 기다리고 두 보드 갈이(1시간 2회) */}
+          <div className="mb-2 flex justify-end">
+            <button onClick={regenBoards} disabled={regenBusy}
+              className="at-press flex items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-[12px] font-bold text-neutral-500 shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition hover:text-[#1D75F7] disabled:opacity-70">
+              <span className={`inline-block ${regenBusy ? "animate-spin" : ""}`} aria-hidden>↻</span>
+              {regenMsg ?? (regenBusy ? "새 글감 받는 중…" : "글감 새로 받기")}
+            </button>
+          </div>
           {/* 모바일: 탭 전환(한 컬럼 풀폭) */}
           <div className="mb-3 flex gap-1.5 sm:hidden">
             {([["short", "지금 뜨는"], ["long", "꾸준한 수요"]] as const).map(([k, label]) => (

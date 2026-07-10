@@ -197,6 +197,13 @@ export async function GET(req: Request) {
   // 유저별 비밀이 아닌 공용 데이터이고, 조회 조건은 위에서 본인 확인된 프로필 값(vertical/sub)뿐이라 안전.
   const pool = createSupabaseAdminClient();
 
+  // ★새로 받기 논스(regen 라우트가 올림) — 에버그린 하루 고정 시드·증식 캐시 키에 섞여 세트를 강제 교체
+  let regenNonce = 0;
+  try {
+    const { data: rn } = await pool.from("api_cache").select("value").eq("key", `regen:${user.id}`).maybeSingle();
+    regenNonce = Number((rn?.value as { n?: number } | null)?.n ?? 0);
+  } catch { /* 논스 없으면 0 */ }
+
   // ★트렌드 씨앗 × 개인화 증식 카드 — 키워드 풀과 독립. 조기 return에서도 트렌드가 나가게 함수로 분리.
   //  existing: 이미 담긴 글감 키워드(정규화) 집합(중복 방지). 온라인 vertical만 대상.
   interface TrendCard { keyword: string; title: string; demandLabel: string; expiresAt?: string | null; ssak: boolean; region: boolean; tone: BloggerType; vol: number; comp: Comp; blogTotal: number | null; tag: string; newsContext?: string; sourceTitle?: string; demandBadge?: string; publishedOn?: string; actionStart?: string | null; actionEnd?: string | null; titleSearch?: string; briefText?: string; hookKey?: string; thumb?: { mainCopy: string; subCopy: string; badge: string }; brief?: unknown; series?: unknown; seriesId?: string; seriesBadge?: string }
@@ -256,7 +263,7 @@ export async function GET(req: Request) {
       trends = [...trends].sort((a, b) => ((b.longtails?.length ?? 0) * 2 + (b.newsContext ? 1 : 0) + actionScore(b)) - ((a.longtails?.length ?? 0) * 2 + (a.newsContext ? 1 : 0) + actionScore(a)));
       if (tailMode === "short") trends = trends.filter((t) => t.source !== "discover"); // 숏테일 탭 순도 — 꾸준 수요 혼입 제거(실측)
       if (debugMode) diag.trendSeeds = trends.length;
-      const ampKey = `amp:v5:${user.id}:${(profile as { id?: string } | null)?.id ??"solo"}:${kstDay}:${excludeSet.size}:${trends.length}:${tailMode === "short" ? "s" : "n"}`; // short=전용 캐시(증식량 다름) // ★v5=씨앗 세대 포함 — 재수확 직후(0→15) 캐시 자동 무효화(실측: 수확해도 옛 세트 서빙) // ★v4=블로그별 격리 — 전환 시 이전 블로그 글감 서빙 사고(실측: 자동차 블로그에 캘리포니아비치) 차단
+      const ampKey = `amp:v5:${user.id}:${(profile as { id?: string } | null)?.id ??"solo"}:${kstDay}:${excludeSet.size}:${trends.length}:${tailMode === "short" ? "s" : "n"}:r${regenNonce}`; // short=전용 캐시(증식량 다름) // ★v5=씨앗 세대 포함 — 재수확 직후(0→15) 캐시 자동 무효화(실측: 수확해도 옛 세트 서빙) // ★v4=블로그별 격리 — 전환 시 이전 블로그 글감 서빙 사고(실측: 자동차 블로그에 캘리포니아비치) 차단
       let amped: { keyword: string; title: string; titleSearch?: string; newsContext: string | null; sourceTitle?: string | null; briefText?: string; hookKey?: string; thumb?: { mainCopy: string; subCopy: string; badge: string }; brief?: unknown; source?: string }[] = [];
       try {
         const { data: c } = await pool.from("api_cache").select("value, expires_at").eq("key", ampKey).single();
@@ -575,8 +582,8 @@ export async function GET(req: Request) {
   // 주소가 비면 region 분기에서 빈 결과 → 클라가 '업체 등록/못 찾음' 안내(일반 글감 폴백 X).
   const regionMode = new URL(req.url).searchParams.get("region") === "1" && type === "local" && !cluster;
 
-  // 하루 고정 시드(userId+날짜): 그날은 새로고침해도 같은 추천.
-  const rng = mulberry32(seedFrom(`${user.id}-${new Date().toISOString().slice(0, 10)}`));
+  // 하루 고정 시드(userId+날짜): 그날은 새로고침해도 같은 추천. regen 논스가 오르면 그날 세트도 갈린다.
+  const rng = mulberry32(seedFrom(`${user.id}-${new Date().toISOString().slice(0, 10)}-r${regenNonce}`));
   const want = PICK + 8; // ok·적합도 필터 후에도 PICK개 채우게 넉넉히
   let candidates: PoolRow[] = [];
 
