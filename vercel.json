@@ -39,6 +39,10 @@
     {
       "path": "/api/cron/wp-autopublish",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/rank-track",
+      "schedule": "20 1,7,13 * * *"
     }
   ]
 }
