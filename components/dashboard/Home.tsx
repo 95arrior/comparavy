@@ -133,6 +133,7 @@ export default function Home({
         if (!alive) return;
         setBoardShort(sanitizeTopics(Array.isArray(sh.topics) ? sh.topics : [])); // 전체 보관 — 치우면 다음이 올라옴
         if ((sh as { ff?: { perfLoop?: boolean } }).ff?.perfLoop || (lo as { ff?: { perfLoop?: boolean } }).ff?.perfLoop) setFfPerf(true);
+        const tn = (lo as { tier?: { note?: string } }).tier?.note; if (tn) setTierNote(tn);
         setBoardLong(sanitizeTopics(Array.isArray(lo.topics) ? lo.topics : []));
       } catch { if (alive) { setBoardShort([]); setBoardLong([]); } }
     })();
@@ -142,6 +143,7 @@ export default function Home({
   // ★글감 새로 받기(2026-07-10 유저: "크론 기다리는 게 애매해") — 강제 재수확+에버그린 갈이 후 두 보드 재로드
   const [regenBusy, setRegenBusy] = useState(false);
   const [ffPerf, setFfPerf] = useState(false); // FF_PERF_LOOP 서버 힌트(topics 응답)
+  const [tierNote, setTierNote] = useState<string | null>(null); // FF_TIER_BANDS — 밴드 안내 한 줄
   const [perfSheet, setPerfSheet] = useState(false);
   const [regenMsg, setRegenMsg] = useState<string | null>(null);
   async function regenBoards() {
@@ -703,6 +705,7 @@ export default function Home({
               <div className="hidden sm:block">
               <p className="text-center text-[16px] font-bold text-[color:var(--color-text)]">{title}</p>
               <p className="mt-0.5 text-center text-[11.5px] text-[color:var(--color-text-weak)]">{sub}</p>
+              {mode === "long" && tierNote && <p className="mt-1 text-center text-[11px] text-[#1D75F7]">{tierNote}</p>}
               </div>
               <div className="mt-2 flex flex-col gap-2.5">
                 {list === null && [0, 1, 2].map((i) => <div key={i} className="ateflo-skel h-[86px] rounded-[14px]" />)}

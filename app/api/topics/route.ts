@@ -22,6 +22,8 @@ import { checkRateLimit } from "@/lib/rateLimit";
 import { BID_WEIGHT, BID_DEPTH_CAP, BID_COMP_BONUS, BID_BADGE_RATIO, BID_HIGH_MIN_DEPTH, ATTACK } from "@/lib/scoreWeights";
 import { FF } from "@/config/featureFlags";
 import { getPerfWeights } from "@/lib/perfWeights";
+import { computeBlogTier, applyDemoteGuard, type TierResult, type BlogTier } from "@/lib/blogTier";
+import { TIER_BANDS } from "@/lib/scoreWeights";
 import { revenuePath } from "@/lib/revenue";
 import { logUsage } from "@/lib/usageLog";
 import { isAdminEmail } from "@/lib/adminStats";
@@ -338,6 +340,24 @@ export async function GET(req: Request) {
     return cards;
   }
 
+  // ★tier 밴드(FF_TIER_BANDS §2) — 성과 실측 기반 단계. 데이터 없으면 null = 기존 밴드 그대로(절대 임의 강등 없음)
+  let tierInfo: TierResult | null = null;
+  async function loadTier(): Promise<TierResult | null> {
+    if (!FF.tierBands) return null;
+    if (tierInfo) return tierInfo;
+    try {
+      const key = `blog_tier:${(profile as { id?: string } | null)?.id ?? user!.id}`;
+      const { data: c } = await pool.from("api_cache").select("value, expires_at").eq("key", key).maybeSingle();
+      const cached = c?.value as (TierResult & { prev?: BlogTier }) | undefined;
+      if (cached && new Date(String(c!.expires_at)).getTime() > Date.now()) return cached;
+      const fresh = await computeBlogTier(pool, user!.id, (profile as { id?: string } | null)?.id ?? null);
+      if (!fresh) return null;
+      const guarded = applyDemoteGuard((cached?.tier as BlogTier | undefined) ?? null, fresh);
+      try { await pool.from("api_cache").upsert({ key, value: guarded, expires_at: new Date(Date.now() + 24 * 3600_000).toISOString(), updated_at: new Date().toISOString() }); } catch { /* ignore */ }
+      return guarded;
+    } catch { return null; /* 판정 실패 = 기존 밴드(§2-1) */ }
+  }
+
   // least-used 우선 윈도우(times_assigned asc → 균등 분산). 본인이 쓴 건 제외 후 남은 것만.
   // 적정범위 = 월 500~5,000 (경쟁 과열·초저검색 회피). sub 없거나 부족하면 단계적으로 넓힌다.
   async function fetchPool(useSub: boolean, ranged: boolean): Promise<PoolRow[]> {
@@ -345,7 +365,12 @@ export async function GET(req: Request) {
     let q = pool.from("keyword_pool").select(`${COLS}, ad_depth`).eq("vertical", vertical);
     if (useSub && sub) q = q.eq("sub", sub);
     if (cluster) q = q.ilike("keyword", `%${cluster}%`); // 클러스터: 이 토큰 든 키워드만
-    if (adminBest) {
+    // ★tier 밴드 오버라이드(FF_TIER_BANDS) — tier 판정이 있을 때만 기존 밴드 대신 적용(별도 레이어, 기존 분기 무수정)
+    const tb = FF.tierBands && tierInfo ? TIER_BANDS[tierInfo.tier] : null;
+    if (tb) {
+      q = ranged ? q.gte("monthly_searches", tb.volMin).lte("monthly_searches", tb.volMax) : q.gte("monthly_searches", Math.min(1000, tb.volMin));
+      if (tb.blogTotalMax != null) q = q.or(`blog_total.is.null,blog_total.lt.${tb.blogTotalMax}`); // 미측정(null)은 통과 — 측정 후 별점이 거른다
+    } else if (adminBest) {
       // 최상급 = '이길 수 있는 최상' — 메가 키워드(검색량 무제한)는 문서수도 메가라 제외. 적정 상한을 둔다.
       q = ranged ? q.gte("monthly_searches", 2000).lte("monthly_searches", 30000) : q.gte("monthly_searches", 1000);
     } else if (ranged) {
@@ -359,7 +384,8 @@ export async function GET(req: Request) {
       let q2 = pool.from("keyword_pool").select(COLS).eq("vertical", vertical);
       if (useSub && sub) q2 = q2.eq("sub", sub);
       if (cluster) q2 = q2.ilike("keyword", `%${cluster}%`);
-      if (adminBest) q2 = ranged ? q2.gte("monthly_searches", 2000).lte("monthly_searches", 30000) : q2.gte("monthly_searches", 1000);
+      if (tb) { q2 = ranged ? q2.gte("monthly_searches", tb.volMin).lte("monthly_searches", tb.volMax) : q2.gte("monthly_searches", Math.min(1000, tb.volMin)); if (tb.blogTotalMax != null) q2 = q2.or(`blog_total.is.null,blog_total.lt.${tb.blogTotalMax}`); }
+      else if (adminBest) q2 = ranged ? q2.gte("monthly_searches", 2000).lte("monthly_searches", 30000) : q2.gte("monthly_searches", 1000);
       else if (ranged) q2 = q2.gte("monthly_searches", 500).lte("monthly_searches", 5000);
       const fb = await q2.order(adminBest ? "monthly_searches" : "times_assigned", { ascending: adminBest ? false : true }).order("monthly_searches", { ascending: false }).limit(WINDOW);
       data = (fb.data ?? []) as unknown as typeof data;
@@ -505,6 +531,7 @@ export async function GET(req: Request) {
     ? [[true, true], [true, false]]
     : [[false, true], [false, false]];
   let rows: PoolRow[] = [];
+  tierInfo = await loadTier(); // ★FF_TIER_BANDS — 밴드 결정 전에 1회(캐시 24h, 실패=기존 밴드)
   for (const [useSub, ranged] of steps) {
     rows = await fetchPool(useSub, ranged);
     if (rows.length >= PICK) break;
@@ -902,7 +929,7 @@ export async function GET(req: Request) {
     const g = finalGate(shuffled as { keyword: string; title: string }[]);
     if (g.drops.length) console.log("[final-gate:long]", JSON.stringify(g.drops));
     if (debugMode) diag.finalGateDrops = g.drops;
-    return NextResponse.json(debugMode ? { topics: g.pass, diag: { ...diag, mode: "long", poolCards: g.pass.length } } : { topics: g.pass, ...(FF.perfLoop ? { ff: { perfLoop: true } } : {}) });
+    return NextResponse.json(debugMode ? { topics: g.pass, diag: { ...diag, mode: "long", poolCards: g.pass.length } } : { topics: g.pass, ...(FF.perfLoop ? { ff: { perfLoop: true } } : {}), ...(FF.tierBands && tierInfo ? { tier: { name: tierInfo.tier, note: tierInfo.note } } : {}) });
   }
-  return NextResponse.json(debugMode ? { topics: [...boostCards, ...trendCards, ...shuffled], diag: { ...diag, boost: boostCards.length, trendCards: trendCards.length, poolCards: shuffled.length } } : { topics: [...boostCards, ...trendCards, ...shuffled] });
+  return NextResponse.json(debugMode ? { topics: [...boostCards, ...trendCards, ...shuffled], diag: { ...diag, boost: boostCards.length, trendCards: trendCards.length, poolCards: shuffled.length } } : { topics: [...boostCards, ...trendCards, ...shuffled], ...(FF.tierBands && tierInfo ? { tier: { name: tierInfo.tier, note: tierInfo.note } } : {}) });
 }
