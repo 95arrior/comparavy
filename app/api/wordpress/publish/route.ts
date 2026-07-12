@@ -133,7 +133,7 @@ export async function POST(request: Request) {
       siteName,
       faq: Array.isArray(article.faq) ? article.faq : undefined,
       slug: article.keyword ? (slugify(String(article.keyword)) || undefined) : undefined,
-      featuredImage: article.featured_image ?? await autoFeaturedImage(user.id, String(article.keyword ?? ""), siteName ?? "", String(articleId)) ?? undefined, // ★대표 이미지 자동(코드 렌더·비용 0 — 테마 카드·구글 썸네일)
+      featuredImage: article.featured_image ?? await autoFeaturedImage(user.id, String(article.keyword ?? ""), siteName ?? "", String(articleId), { title: article.title, bgUrl: /class="ateflo-banner"[^>]*>\s*<img[^>]+src="([^"]+)"/.exec(contentHtml)?.[1] ?? null }) ?? undefined, // ★대표 이미지 v2 — 제목 훅 문구+배너 배경 재활용
       // 이미 발행한 글이면 그 워드프레스 글을 수정(재발행) → 중복 글 방지
       postId: article.wp_post_id ?? undefined,
       // 카테고리(미지정 시 미분류) · 태그(없으면 글에 저장된 AI 태그 사용)

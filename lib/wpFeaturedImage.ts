@@ -1,19 +1,47 @@
 // ★WP 대표 이미지 자동 생성(2026-07-12 유저: 테마 카드·구글 썸네일에 대표 이미지 필요) — AI 비용 0.
-//  네이버 썸네일 렌더러(색면 포스터·press 조판)를 재사용하되, 구글용이라 자극 문구 대신 '키워드 제목 카드'.
-//  실패 = null(대표 이미지 없이 발행 — 발행을 막지 않는다).
+//  v2(유저 피드백): ①문구=키워드가 아니라 '제목의 훅 부분'(쉼표 뒤 질문/훅 — 제목과 연관) ②배경=본문 AI 배너 재활용(추가 비용 0, 색면 폴백).
 import { renderThumbnail } from "./thumbnailRenderer";
 import { visualIdentityFor } from "./visualIdentity";
 import { breakThumbCopy } from "./thumbCopyBreak";
 
-export async function autoFeaturedImage(userId: string, keyword: string, siteName: string, articleId?: string | null): Promise<string | null> {
+/** 제목에서 훅 문구 추출 — "개인연금 세액공제, 연봉별로 얼마나 돌려받을 수 있을까" → "연봉별로 얼마나 돌려받을까" */
+export function hookCopyFromTitle(title: string | null | undefined, keyword: string): string {
+  const t = String(title ?? "").trim();
+  const parts = t.split(/[,，]/);
+  let hook = (parts.length >= 2 ? parts.slice(1).join(" ") : t).trim();
+  hook = hook.replace(/(할 수 있을까|할 수 있나요|수 있을까|수 있나요)\s*\??$/, "할까").replace(/\?$/, "").trim();
+  if ([...hook].length < 6) hook = t.replace(/\?$/, "").trim(); // 훅이 너무 짧으면 제목 전체
+  if ([...hook].length < 4) hook = keyword;
+  return hook.slice(0, 20);
+}
+
+export async function autoFeaturedImage(
+  userId: string,
+  keyword: string,
+  siteName: string,
+  articleId?: string | null,
+  opts?: { title?: string | null; bgUrl?: string | null },
+): Promise<string | null> {
   try {
-    const copy = breakThumbCopy(String(keyword || "").trim().slice(0, 20));
+    const copy = breakThumbCopy(hookCopyFromTitle(opts?.title, String(keyword || "").trim()));
     if (!copy.trim()) return null;
+    // 배경: 본문 배너 1장을 재활용(이미 생성된 AI 일러스트 — 추가 비용 0). 실패하면 색면 포스터 폴백.
+    let bgDataUrl: string | null = null;
+    if (opts?.bgUrl) {
+      try {
+        const r = await fetch(opts.bgUrl, { signal: AbortSignal.timeout(8000) });
+        if (r.ok) {
+          const mime = (r.headers.get("content-type") || "image/png").split(";")[0];
+          bgDataUrl = `data:${mime};base64,${Buffer.from(await r.arrayBuffer()).toString("base64")}`;
+        }
+      } catch { /* 색면 폴백 */ }
+    }
     const png = await renderThumbnail({
       mainCopy: copy,
       identity: visualIdentityFor(userId),
       press: { brandName: (siteName || "").trim() || "BLOG" },
       articleId: articleId ?? keyword,
+      bgDataUrl,
     });
     return `data:image/png;base64,${png.toString("base64")}`;
   } catch (e) {

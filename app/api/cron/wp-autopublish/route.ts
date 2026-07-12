@@ -90,7 +90,7 @@ export async function GET(request: Request) {
             metaDescription: saved.meta_description ?? undefined, metaTitle: saved.meta_title ?? undefined,
             faq: Array.isArray(saved.faq) ? saved.faq : undefined,
             tags: Array.isArray(saved.tags) ? (saved.tags as string[]) : undefined,
-            featuredImage: await autoFeaturedImage(b.user_id, String(saved.keyword ?? pick.keyword), String((b as { blog_name?: string | null }).blog_name ?? ""), String(saved.id)) ?? undefined, // ★대표 이미지 자동
+            featuredImage: await autoFeaturedImage(b.user_id, String(saved.keyword ?? pick.keyword), String((b as { blog_name?: string | null }).blog_name ?? ""), String(saved.id), { title: saved.title, bgUrl: /class="ateflo-banner"[^>]*>\s*<img[^>]+src="([^"]+)"/.exec(dailyHtml)?.[1] ?? null }) ?? undefined, // ★대표 이미지 v2
             categoryName: wpCategoryFor(String(saved.keyword ?? pick.keyword), saved.title), // ★카테고리 자동
             addToc: true, ymyl: false, status: "publish",
           });
