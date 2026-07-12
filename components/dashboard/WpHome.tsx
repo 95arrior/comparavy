@@ -35,13 +35,17 @@ export default function WpHome({ blogName, blogId, articles, credits, onOpenArti
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [pagesBusy, setPagesBusy] = useState(false);
+  const trustKey = `ateflo_trustpages_${blogId ?? ""}`;
+  const [pagesDone, setPagesDone] = useState(false);
+  useEffect(() => { try { setPagesDone(localStorage.getItem(trustKey) === "1"); } catch { /* ignore */ } // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trustKey]);
   async function makeTrustPages() {
     if (pagesBusy) return;
     setPagesBusy(true);
     try {
       const r = await fetch("/api/wordpress/adsense-pages", { method: "POST" });
       const d = await r.json();
-      if (r.ok) setToast(`신뢰 페이지 ${Array.isArray(d.pages) ? d.pages.length : 4}개를 만들었어요 — 사이트에서 확인해 보세요`);
+      if (r.ok) { setToast(`신뢰 페이지 ${Array.isArray(d.pages) ? d.pages.length : 4}개를 만들었어요 — 사이트에서 확인해 보세요`); setPagesDone(true); try { localStorage.setItem(trustKey, "1"); } catch { /* ignore */ } }
       else setToast(d.error ?? "페이지를 만들지 못했어요");
     } catch { setToast("네트워크 오류예요"); }
     setPagesBusy(false);
@@ -166,9 +170,16 @@ export default function WpHome({ blogName, blogId, articles, credits, onOpenArti
       {/* 셋업 챌린지 — 하나씩 깨기 */}
       <div className="tk-seq-3 mt-8">
         <p className="px-2 text-[13px] font-semibold text-[color:var(--color-text-weak)]">기초 공사 체크리스트</p>
+        {pagesDone ? (
+          <div className="mt-2 flex items-center justify-between rounded-[14px] bg-emerald-50 px-4 py-3">
+            <span className="text-[13px] font-bold text-emerald-700">신뢰 페이지 4종 완료 (소개·운영자·문의·개인정보)</span>
+            <button onClick={makeTrustPages} disabled={pagesBusy} className="text-[12px] font-semibold text-emerald-600/70 underline underline-offset-2">{pagesBusy ? "갱신 중…" : "다시 만들기"}</button>
+          </div>
+        ) : (
         <button onClick={makeTrustPages} disabled={pagesBusy} className="at-press mt-2 flex w-full items-center justify-center gap-1.5 rounded-[14px] tk-grad-cta py-3.5 text-[14px] font-bold text-white disabled:opacity-60">
           {pagesBusy ? <><span className="tk-wand" aria-hidden>✦</span>신뢰 페이지를 짓고 있어요…</> : "✦ 신뢰 페이지 4종 자동 만들기 (소개·운영자·문의·개인정보)"}
         </button>
+        )}
         <div className="mt-2 overflow-hidden rounded-[20px] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
           {SETUP_ITEMS.map((it, i) => (
             <div key={it.k} className={i > 0 ? "border-t border-[color:var(--color-line)]" : ""}>
