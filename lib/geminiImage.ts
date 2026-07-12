@@ -3,6 +3,7 @@
 //  하드 규칙은 buildBodyPrompt/buildThumbBgPrompt 두 순수 함수에 코드로 강제(단위 테스트 대상).
 
 const MODEL = "gemini-2.5-flash-image";
+import { buildBannerPrompt, bodyStyleRotation } from "./bannerPrompts";
 
 export function imageReady(): boolean {
   return Boolean(process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY); // 어느 프로바이더든 키 하나면 가동
@@ -279,9 +280,13 @@ async function callGemini(prompt: string, aspectRatio: "16:9" | "1:1"): Promise<
 
 /** 본문 이미지 1장(실사, base64). userSeed로 계정 축 + 요청 난수 변주. 실패 시 throw. */
 export async function generateBlogImage(slotDesc: string, articleTitle: string, userSeed?: string, _opts?: { thumbnail?: boolean; context?: string }): Promise<{ base64: string; mime: string; provider?: string }> {
-  // 장마다 변주 — 만 명이 써도, 한 명이 백 장을 만들어도 겹치지 않게.
-  const seed = (fnv((userSeed ?? "") + ":") + Math.floor(Math.random() * 1e9)) >>> 0;
-  return callImage(buildBodyPrompt(slotDesc, articleTitle, seed, _opts as { context?: string } | undefined), "16:9");
+  // ★키워드 배너 문법(2026-07-13 유저 확정 — WP에서 실증) — 슬롯 설명(상황)은 버린다:
+  //  상황 프롬프트는 전부 비슷한 손·소품 클로즈업으로 수렴(실측). 주제를 그리는 오브젝트/장면/3D타이포 로테이션.
+  //  slotDesc는 스타일 회전 시드로만 사용(같은 글 안에서 슬롯마다 다른 스타일 보장).
+  const seed = (fnv((userSeed ?? "") + ":" + slotDesc) + Math.floor(Math.random() * 1e9)) >>> 0;
+  const styles = bodyStyleRotation(articleTitle);
+  const style = styles[seed % styles.length]!;
+  return callImage(buildBannerPrompt(articleTitle, style, seed), "16:9");
 }
 
 /** 대표이미지 AI 배경 1장(1:1, base64) — 한글은 코드(satori)가 합성. 실패는 호출측이 코드 폴백. */

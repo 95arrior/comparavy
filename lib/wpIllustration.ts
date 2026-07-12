@@ -3,6 +3,7 @@
 //  ②오브젝트 은유 배너 ③플랫 일러스트 장면. 글마다 스타일 로테이션(다양성 — 유저 조건).
 //  발행 시점 생성(초안 DB 비대 방지), 실패 = 빈 배열(발행은 계속).
 import { callImage } from "./geminiImage";
+import { buildBannerPrompt, bodyStyleRotation } from "./bannerPrompts";
 import { createSupabaseAdminClient } from "./supabase-server";
 import { renderThumbnail } from "./thumbnailRenderer";
 import { visualIdentityFor } from "./visualIdentity";
@@ -12,51 +13,6 @@ function fnv(s: string): number {
   let h = 0x811c9dc5;
   for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
   return h >>> 0;
-}
-
-// 영문 약어 토큰(3D 타이포 허용 대상) — 키워드에서 추출: IRP, ISA, ETF, CMA, DSR, LTV 등
-function englishToken(keyword: string): string | null {
-  const m = /\b([A-Z]{2,5}[0-9]{0,2})\b/.exec(keyword.toUpperCase());
-  return m ? m[1]! : null;
-}
-
-const PALETTES = [
-  "soft pink and rose gold with cream background",
-  "teal and mint with warm yellow accents",
-  "vivid blue and sky gradient with coral accents",
-  "fresh green gradient with gold coin accents",
-  "warm ivory and orange with navy accents",
-  "lavender and periwinkle with silver accents",
-];
-
-const NO_TEXT = "ABSOLUTELY NO other text, letters, numbers or Korean characters anywhere (no labels, captions, watermarks, UI). Blank surfaces on any papers/screens. No human faces (silhouettes or cropped only). No brand logos.";
-
-function buildBannerPrompt(keyword: string, style: "stage" | "object" | "scene", seed: number): string {
-  const palette = PALETTES[seed % PALETTES.length];
-  if (style === "stage") {
-    // ★글자 자리 무대(2026-07-12 유저 확정: AI 한글 타이포 깨짐 → 글자는 우리가 G마켓 산스로 조판) —
-    //  중앙을 비운 파스텔 무대만 그리게 하고 텍스트는 코드가 얹는다.
-    return [
-      `Clean premium 3D pastel stage backdrop for a Korean finance blog banner about "${keyword}" (understand only — never render as text).`,
-      "Soft rounded podium or floating card shapes at the EDGES only, 2-3 small finance objects (coin, calculator sculpture) tucked in corners — the CENTER of the frame stays EMPTY and low-detail (large Korean typography will be overlaid there later).",
-      `Palette: ${palette}. Square 1:1, soft studio lighting, agency-grade (Behance level), NOT clipart.`,
-      NO_TEXT,
-    ].join(" ");
-  }
-  if (style === "object") {
-    return [
-      `Premium graphic banner for a Korean finance blog about "${keyword}" (understand only — never render as text).`,
-      "ONE oversized iconic object as the hero (e.g. a giant card, coin stack sculpture, document with a seal, safe, umbrella over coins — pick what fits the topic), centered on a bold gradient background with 2-3 tiny floating accents (confetti coins, sparkles).",
-      `Style: modern fintech campaign art, soft 3D or rich flat with airbrush shading, ${palette}. Square 1:1. Agency-grade, NOT clipart.`,
-      NO_TEXT,
-    ].join(" ");
-  }
-  return [
-    `Flat vector illustration scene for a Korean finance blog about "${keyword}" (understand only — never render as text).`,
-    "A charming designed character in an office/home scene interacting with ONE big symbolic object related to the topic (desk with monitor, money bag, growing chart sculpture). Maximum 3 objects total. CHARACTER SPEC (when a person appears): NOT a plain circle-head blob — a DESIGNED flat-vector character at premium fintech campaign level: distinct hairstyle, real outfit (office shirt/cardigan/suit — colors from the palette), expressive posture and gesture, head:body about 1:3, soft airbrush shading on clothes. Minimal face (dot eyes, tiny smile) is fine, but silhouette and styling must look like a branded illustration character, never a generic stick figure or plain circle person.",
-    `Style: premium editorial flat illustration (Toss/fintech campaign grade), bold color blocking, soft shadows, ${palette}. Square 1:1.`,
-    NO_TEXT,
-  ].join(" ");
 }
 
 /** 본문 배너 n장 — 1장째 = AI 무대 배경 + 키워드 G마켓 산스 조판(글자 절대 안 깨짐), 나머지 = 글자 없는 일러스트. */
@@ -79,9 +35,9 @@ export async function generateWpBanners(keyword: string, articleId: string, n = 
     console.error("[wp] 무대 배너 실패 — 건너뜀:", e instanceof Error ? e.message : e);
   }
   // 2장째부터: 순수 일러스트(글자 완전 금지)
-  const styles: ("object" | "scene")[] = seed % 2 === 0 ? ["object", "scene"] : ["scene", "object"];
+  const styles = bodyStyleRotation(keyword); // 영문 약어 키워드면 3D 타이포 포함(IRP 레퍼런스 — 유저 선호)
   for (let i = 1; i < n; i++) {
-    const style = styles[(i - 1) % styles.length]!;
+    const style = styles[(seed + i) % styles.length]!;
     try {
       const img = await callImage(buildBannerPrompt(keyword, style, seed + i * 7), "1:1");
       out.push(`data:${img.mime};base64,${img.base64}`);

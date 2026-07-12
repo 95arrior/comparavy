@@ -1,0 +1,65 @@
+// ★키워드 비주얼 배너 프롬프트(2026-07-13 양 채널 공용 승격 — 유저 확정: 상황 묘사 폐기, 주제 키워드를 그린다).
+//  실측: 상황(슬롯 설명) 기반 프롬프트는 전부 비슷한 손·소품 클로즈업으로 수렴 — 키워드 히어로 문법이 다양하고 잘 나옴.
+//  스타일 4종: stage(글자 없는 무대 — 조판용) / object(오브젝트 히어로) / scene(캐릭터 장면) / typo3d(영문 약어만 — IRP·ISA).
+
+export type BannerStyle = "stage" | "object" | "scene" | "typo3d";
+
+/** 영문 약어 토큰(3D 타이포 허용 대상) — IRP, ISA, ETF, CMA, DSR, LTV 등. 한글 타이포는 AI가 깨뜨려 금지. */
+export function englishToken(text: string): string | null {
+  const m = /\b([A-Z]{2,5}[0-9]{0,2})\b/.exec((text || "").toUpperCase());
+  return m ? m[1]! : null;
+}
+
+export const BANNER_PALETTES = [
+  "soft pink and rose gold with cream background",
+  "teal and mint with warm yellow accents",
+  "vivid blue and sky gradient with coral accents",
+  "fresh green gradient with gold coin accents",
+  "warm ivory and orange with navy accents",
+  "lavender and periwinkle with silver accents",
+];
+
+const NO_TEXT = "ABSOLUTELY NO other text, letters, numbers or Korean characters anywhere (no labels, captions, watermarks, UI). Blank surfaces on any papers/screens. No brand logos.";
+
+// 캐릭터 스펙(2026-07-13 유저: 민무늬 원형 인물 금지) — 헤어·복장·자세가 있는 디자인된 캐릭터
+const CHARACTER_SPEC = "CHARACTER SPEC (when a person appears): NOT a plain circle-head blob — a DESIGNED flat-vector character at premium fintech campaign level: distinct hairstyle, real outfit (office shirt/cardigan/suit — colors from the palette), expressive posture and gesture, head:body about 1:3, soft airbrush shading on clothes. Minimal face (dot eyes, tiny smile) is fine, but silhouette and styling must look like a branded illustration character, never a generic stick figure or plain circle person.";
+
+export function buildBannerPrompt(topic: string, style: BannerStyle, seed: number): string {
+  const palette = BANNER_PALETTES[seed % BANNER_PALETTES.length];
+  const en = englishToken(topic);
+  if (style === "typo3d" && en) {
+    return [
+      `Premium 3D typography hero image for a Korean finance blog: the word "${en}" as giant glossy 3D letters (clay/plastic render, soft studio lighting), standing on a clean pastel stage.`,
+      `Surround the letters with 2-3 small finance objects (calculator, coins, piggy bank sculpture, small chart) — objects stay small, the word "${en}" is the hero.`,
+      `Palette: ${palette}. Square 1:1, generous negative space, agency-grade quality (Behance level), NOT clipart.`,
+      `The ONLY text allowed in the image is exactly "${en}" — nothing else. ${NO_TEXT.replace("NO other text", "NO additional text")}`,
+    ].join(" ");
+  }
+  if (style === "stage") {
+    return [
+      `Clean premium 3D pastel stage backdrop for a Korean finance blog banner about "${topic}" (understand only — never render as text).`,
+      "Soft rounded podium or floating card shapes at the EDGES only, 2-3 small finance objects (coin, calculator sculpture) tucked in corners — the CENTER of the frame stays EMPTY and low-detail (large Korean typography will be overlaid there later).",
+      `Palette: ${palette}. Square 1:1, soft studio lighting, agency-grade (Behance level), NOT clipart.`,
+      NO_TEXT,
+    ].join(" ");
+  }
+  if (style === "object") {
+    return [
+      `Premium graphic banner for a Korean finance blog about "${topic}" (understand only — never render as text).`,
+      "ONE oversized iconic object as the hero (e.g. a giant card, coin stack sculpture, document with a seal, safe, umbrella over coins — pick what fits the topic), centered on a bold gradient background with 2-3 tiny floating accents (confetti coins, sparkles).",
+      `Style: modern fintech campaign art, soft 3D or rich flat with airbrush shading, ${palette}. Square 1:1. Agency-grade, NOT clipart.`,
+      NO_TEXT,
+    ].join(" ");
+  }
+  return [
+    `Flat vector illustration scene for a Korean finance blog about "${topic}" (understand only — never render as text).`,
+    `A charming designed character in an office/home scene interacting with ONE big symbolic object related to the topic (desk with monitor, money bag, growing chart sculpture). Maximum 3 objects total. ${CHARACTER_SPEC}`,
+    `Style: premium editorial flat illustration (Toss/fintech campaign grade), bold color blocking, soft shadows, ${palette}. Square 1:1.`,
+    NO_TEXT,
+  ].join(" ");
+}
+
+/** 본문용 스타일 로테이션 — 영문 약어가 있으면 3D 타이포 포함. seed로 시작점 회전(글 안에서 서로 다른 스타일). */
+export function bodyStyleRotation(topic: string): Exclude<BannerStyle, "stage">[] {
+  return englishToken(topic) ? ["object", "scene", "typo3d"] : ["object", "scene"];
+}
