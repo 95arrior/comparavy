@@ -24,7 +24,7 @@ export async function POST() {
   if (!user) return NextResponse.json({ error: "로그인이 필요해요." }, { status: 401 });
 
   const { data: b } = await supabase.from("blog_profiles")
-    .select("id, sub_category, topic, tone, channel")
+    .select("id, sub_category, topic, tone, channel, blog_name")
     .eq("user_id", user.id).eq("is_active", true).maybeSingle();
   if (!b || (b as { channel?: string }).channel !== "wordpress") {
     return NextResponse.json({ error: "워드프레스 블로그가 활성 상태일 때 쓸 수 있어요." }, { status: 400 });
@@ -54,7 +54,7 @@ export async function POST() {
     });
     let body = stripNaverArtifacts(article.body_html); // 해시태그·마커 일괄 소거(중앙 소거기)
     // ★배너를 초안 단계에 삽입(유저: 읽어보기에서 최종 모습 확인) — 스토리지 URL, 실패=배너 없이 계속
-    try { body = insertBanners(body, await generateWpBannersToStorage(user.id, pick.keyword, `${b.id}-${kstDay()}`, 3), pick.keyword); } catch { /* ignore */ }
+    try { body = insertBanners(body, await generateWpBannersToStorage(user.id, pick.keyword, `${b.id}-${kstDay()}`, 3, String((b as { blog_name?: string | null }).blog_name ?? "")), pick.keyword); } catch { /* ignore */ }
     const ins = {
       user_id: user.id, blog_id: b.id, keyword: pick.keyword, title: article.title,
       meta_title: article.meta_title, meta_description: article.meta_description,

@@ -144,7 +144,7 @@ export default function WpHome({ blogName, blogId, articles, credits, onOpenArti
         <div className="tk-gauge mt-5 h-2.5 w-full rounded-full bg-[#E8EDF7]">
           <div className="tk-gauge-fill" style={{ width: `${Math.max(pct, 3)}%` }} />
         </div>
-        <p className="mt-4 text-[13px] text-[color:var(--color-text-sub)]">매일 자동으로 1편씩 쌓여요 · 크레딧 {credits.toLocaleString("ko-KR")}</p>
+        <p className="mt-4 text-[13px] text-[color:var(--color-text-sub)]">매일 자동으로 2편씩 쌓여요 · 크레딧 {credits.toLocaleString("ko-KR")}</p>
       </div>
 
       {/* 크레딧 부족 — 자동 발행이 멈추기 전에(충전 동선) */}
@@ -176,10 +176,10 @@ export default function WpHome({ blogName, blogId, articles, credits, onOpenArti
       ) : (
         <div className="tk-seq-2 tk-card-glow mt-4 rounded-[20px] p-6 shadow-[0_2px_12px_-4px_rgba(29,117,247,0.12)]">
           <p className="text-[13px] font-semibold text-[color:var(--color-brand)]">오늘의 글</p>
-          <p className="mt-2 text-[15px] font-bold leading-snug text-neutral-900">내일 아침, 글이 자동으로 준비돼요.</p>
+          <p className="mt-2 text-[15px] font-bold leading-snug text-neutral-900">{pub === 0 ? "내일 아침, 글이 자동으로 준비돼요." : "다음 글이 자동으로 준비돼요. (하루 2편)"}</p>
           <p className="mt-1 text-[12.5px] leading-relaxed text-neutral-400">구글에서 오래 검색될 주제를 데이터가 고르고, 글까지 써둘게요.</p>
           <button onClick={generateFirstNow} disabled={genBusy} className="at-press tk-grad-cta mt-4 w-full rounded-[14px] py-3.5 text-[14.5px] font-bold text-white disabled:opacity-60">
-            {genBusy ? <><span className="tk-wand" aria-hidden>✦</span>글을 만들고 있어요… (1~2분)</> : "첫 글 지금 만들어보기"}
+            {genBusy ? <><span className="tk-wand" aria-hidden>✦</span>글을 만들고 있어요… (1~2분)</> : pub === 0 ? "첫 글 지금 만들어보기" : "다음 글 지금 만들어보기"}
           </button>
           {genErr && <p className="mt-2 text-[12.5px] font-medium text-amber-600">{genErr}</p>}
         </div>

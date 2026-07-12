@@ -4,6 +4,9 @@
 //  발행 시점 생성(초안 DB 비대 방지), 실패 = 빈 배열(발행은 계속).
 import { callImage } from "./geminiImage";
 import { createSupabaseAdminClient } from "./supabase-server";
+import { renderThumbnail } from "./thumbnailRenderer";
+import { visualIdentityFor } from "./visualIdentity";
+import { breakThumbCopy } from "./thumbCopyBreak";
 
 function fnv(s: string): number {
   let h = 0x811c9dc5;
@@ -28,15 +31,16 @@ const PALETTES = [
 
 const NO_TEXT = "ABSOLUTELY NO other text, letters, numbers or Korean characters anywhere (no labels, captions, watermarks, UI). Blank surfaces on any papers/screens. No human faces (silhouettes or cropped only). No brand logos.";
 
-function buildBannerPrompt(keyword: string, style: "typo3d" | "object" | "scene", seed: number): string {
+function buildBannerPrompt(keyword: string, style: "stage" | "object" | "scene", seed: number): string {
   const palette = PALETTES[seed % PALETTES.length];
-  const en = englishToken(keyword);
-  if (style === "typo3d" && en) {
+  if (style === "stage") {
+    // ★글자 자리 무대(2026-07-12 유저 확정: AI 한글 타이포 깨짐 → 글자는 우리가 G마켓 산스로 조판) —
+    //  중앙을 비운 파스텔 무대만 그리게 하고 텍스트는 코드가 얹는다.
     return [
-      `Premium 3D typography hero banner for a Korean finance blog: the word "${en}" as giant glossy 3D letters (clay/plastic render, soft studio lighting), standing on a clean pastel stage.`,
-      `Surround the letters with 2-3 small finance objects (calculator, coins, small chart sculpture) — objects stay small, the word "${en}" is the hero.`,
-      `Palette: ${palette}. Square 1:1, generous negative space, agency-grade quality (Behance level), NOT clipart.`,
-      `The ONLY text allowed in the image is exactly "${en}" — nothing else. ${NO_TEXT.replace("NO other text", "NO additional text")}`,
+      `Clean premium 3D pastel stage backdrop for a Korean finance blog banner about "${keyword}" (understand only — never render as text).`,
+      "Soft rounded podium or floating card shapes at the EDGES only, 2-3 small finance objects (coin, calculator sculpture) tucked in corners — the CENTER of the frame stays EMPTY and low-detail (large Korean typography will be overlaid there later).",
+      `Palette: ${palette}. Square 1:1, soft studio lighting, agency-grade (Behance level), NOT clipart.`,
+      NO_TEXT,
     ].join(" ");
   }
   if (style === "object") {
@@ -55,15 +59,29 @@ function buildBannerPrompt(keyword: string, style: "typo3d" | "object" | "scene"
   ].join(" ");
 }
 
-/** 본문 배너 n장 — 스타일 로테이션(글 시드 기준 시작점 회전, 같은 글 안에서는 서로 다른 스타일). */
-export async function generateWpBanners(keyword: string, articleId: string, n = 2): Promise<string[]> {
+/** 본문 배너 n장 — 1장째 = AI 무대 배경 + 키워드 G마켓 산스 조판(글자 절대 안 깨짐), 나머지 = 글자 없는 일러스트. */
+export async function generateWpBanners(keyword: string, articleId: string, n = 2, brandName = ""): Promise<string[]> {
   const seed = fnv(`${keyword}|${articleId}`);
-  const en = englishToken(keyword);
-  const styles: ("typo3d" | "object" | "scene")[] = en ? ["typo3d", "object", "scene"] : ["object", "scene"];
-  const start = seed % styles.length;
   const out: string[] = [];
-  for (let i = 0; i < n; i++) {
-    const style = styles[(start + i) % styles.length]!;
+  // 1장째: 무대 배경 → 우리 조판(썸네일과 동일 파이프 — 유저 확정: 글자는 G마켓 산스)
+  try {
+    const bg = await callImage(buildBannerPrompt(keyword, "stage", seed), "1:1");
+    const png = await renderThumbnail({
+      mainCopy: breakThumbCopy(keyword.trim().slice(0, 20)),
+      identity: visualIdentityFor(articleId),
+      press: { brandName: brandName || "" },
+      articleId,
+      bgDataUrl: `data:${bg.mime};base64,${bg.base64}`,
+      fontTitle: "GmarketSansBold",
+    });
+    out.push(`data:image/png;base64,${png.toString("base64")}`);
+  } catch (e) {
+    console.error("[wp] 무대 배너 실패 — 건너뜀:", e instanceof Error ? e.message : e);
+  }
+  // 2장째부터: 순수 일러스트(글자 완전 금지)
+  const styles: ("object" | "scene")[] = seed % 2 === 0 ? ["object", "scene"] : ["scene", "object"];
+  for (let i = 1; i < n; i++) {
+    const style = styles[(i - 1) % styles.length]!;
     try {
       const img = await callImage(buildBannerPrompt(keyword, style, seed + i * 7), "1:1");
       out.push(`data:${img.mime};base64,${img.base64}`);
@@ -75,8 +93,8 @@ export async function generateWpBanners(keyword: string, articleId: string, n = 
 }
 
 /** 배너 n장을 스토리지에 올려 공개 URL로 — 초안 단계 삽입용(DB엔 URL만, 미리보기에 보임). */
-export async function generateWpBannersToStorage(userId: string, keyword: string, articleId: string, n = 2): Promise<string[]> {
-  const dataUrls = await generateWpBanners(keyword, articleId, n);
+export async function generateWpBannersToStorage(userId: string, keyword: string, articleId: string, n = 2, brandName = ""): Promise<string[]> {
+  const dataUrls = await generateWpBanners(keyword, articleId, n, brandName);
   const admin = createSupabaseAdminClient();
   const out: string[] = [];
   for (let i = 0; i < dataUrls.length; i++) {
