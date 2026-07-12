@@ -5,6 +5,7 @@ import { pickWpTopic } from "@/lib/googleTopics";
 import { adsenseUnsafe } from "@/lib/cardFinalGate";
 import { autoFeaturedImage } from "@/lib/wpFeaturedImage";
 import { wpCategoryFor } from "@/lib/wpCategory";
+import { generateWpBanners, insertBanners } from "@/lib/wpIllustration";
 import { publishPost, stripNaverArtifacts } from "@/lib/wordpress";
 import { decryptSecret } from "@/lib/crypto";
 import { spendCredits, addCredits } from "@/lib/credits";
@@ -80,9 +81,11 @@ export async function GET(request: Request) {
         if (error || !saved) throw new Error(error?.message ?? "insert fail");
 
         if (b.auto_publish === "daily") {
+          let dailyHtml = saved.body_html as string;
+          try { dailyHtml = insertBanners(dailyHtml, await generateWpBanners(String(saved.keyword ?? pick.keyword), String(saved.id), 2), String(saved.keyword ?? pick.keyword)); } catch { /* 배너 실패 — 계속 */ }
           const r = await publishPost({
             siteUrl: conn.site_url, username: conn.username, appPassword: decryptSecret(conn.app_password),
-            title: saved.title, contentHtml: saved.body_html,
+            title: saved.title, contentHtml: dailyHtml,
             metaDescription: saved.meta_description ?? undefined, metaTitle: saved.meta_title ?? undefined,
             faq: Array.isArray(saved.faq) ? saved.faq : undefined,
             tags: Array.isArray(saved.tags) ? (saved.tags as string[]) : undefined,

@@ -233,7 +233,7 @@ async function callOpenAIImage(prompt: string, aspectRatio: "16:9" | "1:1"): Pro
   throw new Error("이미지가 생성되지 않았어요.");
 }
 
-async function callImage(prompt: string, aspectRatio: "16:9" | "1:1"): Promise<{ base64: string; mime: string; provider: string }> {
+export async function callImage(prompt: string, aspectRatio: "16:9" | "1:1"): Promise<{ base64: string; mime: string; provider: string }> {
   const prefer = process.env.IMAGE_PROVIDER === "openai" && process.env.OPENAI_API_KEY ? "openai" : "gemini"; // ★기본=Gemini 회귀(유저 확정: GPT는 텍스트 금지를 못 지켜 배경 검증 연쇄 탈락 — 실측 자막으로 확인). GPT 재실험은 env IMAGE_PROVIDER=openai로만
   if (prefer === "openai") {
     try { return { ...(await callOpenAIImage(prompt, aspectRatio)), provider: "gpt-image-1" }; }
