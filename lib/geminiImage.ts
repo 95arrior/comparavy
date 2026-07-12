@@ -291,10 +291,10 @@ export async function generateBlogImage(slotDesc: string, articleTitle: string, 
 
 /** 대표이미지 AI 배경 1장(1:1, base64) — 한글은 코드(satori)가 합성. 실패는 호출측이 코드 폴백. */
 export async function generateThumbBackground(bgStyleHint: string, paletteHint: string, userSeed?: string, topic?: string, opts?: { forceStyle?: "photo" | "toss"; centerText?: boolean; copyText?: string; variant?: number }): Promise<{ base64: string; mime: string; provider?: string }> {
-  const seed = (fnv((userSeed ?? "") + ":bg") + Math.floor(Math.random() * 1e9)) >>> 0;
-  // ★스타일: 강제 지정(썸네일 메이커=실사 기본) > 주제 자동(구체 씬=실사)
-  const style = opts?.forceStyle ?? (topic ? pickImageStyle(topic, seed) : "toss");
-  let prompt = style === "photo" && topic ? buildThumbPhotoBgPrompt(topic, seed, opts?.centerText === true, { copyText: opts?.copyText, variant: opts?.variant }) : buildThumbBgPrompt(bgStyleHint, paletteHint, seed, topic);
+  const seed = (fnv((userSeed ?? "") + ":bg" + String(opts?.variant ?? 0)) + Math.floor(Math.random() * 1e9)) >>> 0;
+  // ★공용 무대(stage) 문법으로 통일(2026-07-13 유저: 배경이 주제와 무관·전부 비슷) —
+  //  주제 오브젝트는 가장자리, 중앙은 문구 자리(조판용 설계). 팔레트 6종 회전으로 색 다양성.
+  const prompt = buildBannerPrompt((topic ?? bgStyleHint ?? "").trim() || "재테크", "stage", seed);
   return callImage(prompt, "1:1");
 }
 
