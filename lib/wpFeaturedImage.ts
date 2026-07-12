@@ -9,10 +9,17 @@ export function hookCopyFromTitle(title: string | null | undefined, keyword: str
   const t = String(title ?? "").trim();
   const parts = t.split(/[,，]/);
   let hook = (parts.length >= 2 ? parts.slice(1).join(" ") : t).trim();
-  hook = hook.replace(/(할 수 있을까|할 수 있나요|수 있을까|수 있나요)\s*\??$/, "할까").replace(/\?$/, "").trim();
+  // 어미 압축: "돌려받을 수 있을까"→"돌려받을까", "받을 수 있나요"→"받나요" (형태소 경계 유지)
+  hook = hook.replace(/을?\s*수\s*있(을까요?|나요)\s*\??$/, (m) => (/나요/.test(m) ? "나요" : "을까")).replace(/\?$/, "").trim();
   if ([...hook].length < 6) hook = t.replace(/\?$/, "").trim(); // 훅이 너무 짧으면 제목 전체
   if ([...hook].length < 4) hook = keyword;
-  return hook.slice(0, 20);
+  // 22자 상한 — 단어 중간에서 자르지 않는다(마지막 공백에서 끊기)
+  if ([...hook].length > 22) {
+    const cut = hook.slice(0, 22);
+    const sp = cut.lastIndexOf(" ");
+    hook = (sp > 8 ? cut.slice(0, sp) : cut).trim();
+  }
+  return hook;
 }
 
 export async function autoFeaturedImage(
