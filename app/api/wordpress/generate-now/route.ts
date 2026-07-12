@@ -5,6 +5,7 @@ import { pickWpTopic } from "@/lib/googleTopics";
 import { adsenseUnsafe } from "@/lib/cardFinalGate";
 import { spendCredits, addCredits } from "@/lib/credits";
 import { WP_GENERATE_COST } from "@/lib/creditPacks";
+import { stripNaverArtifacts } from "@/lib/wordpress";
 import { stylePersonaInstruction } from "@/lib/stylePersona";
 import { logUsage } from "@/lib/usageLog";
 
@@ -49,9 +50,7 @@ export async function POST() {
       relatedQueries: [], newsContext: undefined, angleBrief: null, affiliate: false,
       vertical: "online", bizName: null, bizStrength: null, userStory: null, userTitle: null,
     });
-    const body = article.body_html
-      .replace(/\[내부링크:[^\]]*\]/g, "")
-      .replace(/\[사진[^\]]*\]/g, "");
+    const body = stripNaverArtifacts(article.body_html); // 해시태그·마커 일괄 소거(중앙 소거기)
     const ins = {
       user_id: user.id, blog_id: b.id, keyword: pick.keyword, title: article.title,
       meta_title: article.meta_title, meta_description: article.meta_description,

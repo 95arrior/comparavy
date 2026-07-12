@@ -5,7 +5,7 @@ import { pickWpTopic } from "@/lib/googleTopics";
 import { adsenseUnsafe } from "@/lib/cardFinalGate";
 import { autoFeaturedImage } from "@/lib/wpFeaturedImage";
 import { wpCategoryFor } from "@/lib/wpCategory";
-import { publishPost } from "@/lib/wordpress";
+import { publishPost, stripNaverArtifacts } from "@/lib/wordpress";
 import { decryptSecret } from "@/lib/crypto";
 import { spendCredits, addCredits } from "@/lib/credits";
 import { WP_GENERATE_COST } from "@/lib/creditPacks";
@@ -68,9 +68,7 @@ export async function GET(request: Request) {
           vertical: "online", bizName: null, bizStrength: null, userStory: null, userTitle: null,
         });
         // WP 후처리 — 네이버 포맷터(스페이서·형광펜) 미적용. 마커만 정리.
-        const body = article.body_html
-          .replace(/\[내부링크:[^\]]*\]/g, "") // 발행 코어의 insertInternalLinks가 실링크 처리
-          .replace(/\[사진[^\]]*\]/g, "");
+        const body = stripNaverArtifacts(article.body_html); // 해시태그·마커 일괄 소거(중앙 소거기)
         const ins = {
           user_id: b.user_id, blog_id: b.id, keyword: pick.keyword, title: article.title,
           meta_title: article.meta_title, meta_description: article.meta_description,

@@ -4,7 +4,7 @@ import { wpCategoryFor } from "@/lib/wpCategory";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { ensureUserRow } from "@/lib/userPlan";
 import { PLANS } from "@/lib/plans";
-import { publishPost, insertInternalLinks, slugify, isYmylText, WpAuthError } from "@/lib/wordpress";
+import { stripNaverArtifacts, publishPost, insertInternalLinks, slugify, isYmylText, WpAuthError } from "@/lib/wordpress";
 import { decryptSecret } from "@/lib/crypto";
 
 export async function POST(request: Request) {
@@ -81,10 +81,7 @@ export async function POST(request: Request) {
   // 내부 링크 자동: 내가 이미 발행한 다른 글들의 키워드를 본문에서 찾아 그 글로 링크
   let contentHtml = article.body_html as string;
   // ★마커 잔존 방어(2026-07-12 실사: 자동발행엔 있고 수동 발행엔 없던 비대칭) — 내부링크·네이버형 슬롯 마커가 실물로 노출되지 않게
-  contentHtml = contentHtml
-    .replace(/\[내부링크:[^\]]*\]/g, "")
-    .replace(/<p>\s*\[(사진|이미지|차트|카드|스탯|표):[^\]]*\]\s*<\/p>/g, "")
-    .replace(/\[(사진|이미지|차트|카드|스탯|표):[^\]]*\]/g, "");
+  contentHtml = stripNaverArtifacts(contentHtml).replace(/<p>\s*<\/p>/g, ""); // 해시태그·마커 일괄 소거(중앙 소거기)
   if (addInternalLinks) {
     const { data: others } = await supabase
       .from("articles")

@@ -172,6 +172,16 @@ export function slugify(s: string): string {
 }
 
 // 발행 글 '우리 규격' 타이포 — 에디터 프리뷰(.ateflo-article)와 일치. 테마와 무관하게 깔끔 가독.
+// ★네이버 문법 잔재 소거(2026-07-12 실측: WP 본문에 해시태그 문단 — 워드프레스에선 아무 기능 없음).
+//  프롬프트 금지 조항을 모델이 어긴 케이스 — 코드 게이트로 강제(프롬프트는 방향, 코드는 한계선).
+export function stripNaverArtifacts(html: string): string {
+  return (html || "")
+    .replace(/<p>(?:\s|&nbsp;)*(?:#[^\s<#]{1,30}(?:\s|&nbsp;)*){3,}<\/p>/g, "") // 해시태그만으로 된 문단(3개+)
+    .replace(/(?:^|\n)(?:#[^\s<#]{1,30}\s*){3,}(?=\n|$)/g, "")                    // 태그 없는 평문 해시태그 줄
+    .replace(/\[내부링크:[^\]]*\]/g, "")
+    .replace(/\[(사진|이미지|차트|카드|스탯|표):[^\]]*\]/g, "");
+}
+
 // 본문을 .ateflo-post로 감싸고 스코프 CSS 주입(테마 영향 최소화). 관리자 앱비번 발행이라 <style> 통과.
 const ATEFLO_POST_STYLE =
   "<style>" +
