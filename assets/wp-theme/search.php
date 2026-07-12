@@ -60,7 +60,7 @@
 <?php endif; endif; ?>
 
 </div><!-- /col-main -->
-<?php if (!is_paged()) get_sidebar(); ?>
+<?php /* 사이드바 제거(2026-07-12 유저: 안내 링크는 푸터에 이미 — 메인은 글에 전폭) */ ?>
 </div><!-- /cols -->
 
 <?php get_footer(); ?>
