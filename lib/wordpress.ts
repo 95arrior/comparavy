@@ -470,11 +470,27 @@ export async function publishPost(input: PublishInput): Promise<PublishResult> {
     res = await create();
   }
 
+  // ★415 자동 격리(실측 2026-07-12 pigtong: 첫 발행은 성공, 카테고리·대표이미지 추가 후 415 — 서버 보안 모듈이 특정 필드 거부 추정)
+  //  카테고리 제외 → 대표이미지 제외 → 최소 페이로드 순으로 재시도해 발행을 살리고, 원인을 로그로 남긴다.
+  if (!res.ok && res.status === 415) {
+    const url = input.postId ? `${base}/wp-json/wp/v2/posts/${input.postId}` : `${base}/wp-json/wp/v2/posts`;
+    const variants: [string, Record<string, unknown>][] = [
+      ["카테고리 제외", { ...body, categories: undefined }],
+      ["대표이미지 제외", { ...body, featured_media: undefined }],
+      ["카테고리·대표이미지 제외", { ...body, categories: undefined, featured_media: undefined }],
+      ["최소 페이로드", { title: (body as Record<string, unknown>).title, content: (body as Record<string, unknown>).content, status: (body as Record<string, unknown>).status }],
+    ];
+    for (const [name, vb] of variants) {
+      const r2 = await fetch(url, { method: "POST", headers: { Authorization: authHeader(input), "Content-Type": "application/json" }, body: JSON.stringify(vb) });
+      if (r2.ok) { console.error(`[wp] 415 회피 성공 — 제외한 필드: ${name}`); res = r2; break; }
+    }
+  }
   if (!res.ok) {
     let message = `발행 실패 (${res.status}).`;
     try {
-      const data = await res.json();
-      if (data?.message) message = data.message;
+      const raw = await res.text();
+      try { const data = JSON.parse(raw); if (data?.message) message = data.message; }
+      catch { if (raw) message += ` — 서버 응답: ${raw.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 140)}`; }
     } catch {
       // ignore
     }
