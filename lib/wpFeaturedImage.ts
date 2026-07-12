@@ -49,6 +49,7 @@ export async function autoFeaturedImage(
       press: { brandName: (siteName || "").trim() || "BLOG" },
       articleId: articleId ?? keyword,
       bgDataUrl,
+      fontTitle: "GmarketSansBold", // 유저 확정(2026-07-12) — WP 대표 이미지 폰트 고정
     });
     return `data:image/png;base64,${png.toString("base64")}`;
   } catch (e) {
