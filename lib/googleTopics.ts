@@ -39,10 +39,17 @@ export async function pickWpTopic(userId: string, sub: string): Promise<WpTopicP
     .limit(60);
   // ★중앙 관문 + 애드센스 게이트(2026-07-12) — WP 글감도 무검문 금지: 지역 협소·민감·B2B·뉴스성 + 광고 정책 부적합 컷
   const gated = finalGate((pool ?? []).map((r) => ({ keyword: String(r.keyword), title: String(r.keyword), row: r })));
+  // ★유사 키워드 제외(실측 2026-07-13: '증권수수료 비교' 발행 직후 '증권수수료'가 재선정 — 완전 일치만 보던 구멍).
+  //  발행 키워드와 포함 관계(6자+)면 같은 주제로 간주해 제외 — 같은 주제 글 2개는 서로 노출을 잠식한다.
+  const usedList = [...used].filter((u) => u.length >= 6);
+  const similarToUsed = (kw: string) => {
+    const nk = kw.replace(/\s+/g, "").toLowerCase();
+    return used.has(nk) || usedList.some((u) => nk.includes(u) || u.includes(nk));
+  };
   const cands = gated.pass
     .filter((x) => !adsenseUnsafe(x.keyword))
     .map((x) => x.row)
-    .filter((r) => !used.has(String(r.keyword).replace(/\s+/g, "").toLowerCase()))
+    .filter((r) => !similarToUsed(String(r.keyword)))
     .filter((r) => isEvergreenKeyword(String(r.keyword)));
   for (const c of cands.slice(0, 12)) { // 서제스트 예의 — 최대 12콜
     const sug = await googleSuggest(String(c.keyword).slice(0, 20));
