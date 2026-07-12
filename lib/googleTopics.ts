@@ -19,7 +19,7 @@ export function isEvergreenKeyword(kw: string): boolean {
   return !TIMELY_RE.test(kw) && !isUnsafeKeyword(kw);
 }
 
-export interface WpTopicPick { keyword: string; monthly: number; adDepth: number | null }
+export interface WpTopicPick { keyword: string; monthly: number; adDepth: number | null; suggests?: string[] }
 
 /**
  * WP 자동 발행용 글감 1개 — keyword_pool(활성 블로그 sub)에서:
@@ -48,7 +48,7 @@ export async function pickWpTopic(userId: string, sub: string): Promise<WpTopicP
     const sug = await googleSuggest(String(c.keyword).slice(0, 20));
     const norm = (s: string) => s.replace(/\s+/g, "").toLowerCase();
     const hit = sug.some((s2) => norm(s2).includes(norm(String(c.keyword)).slice(0, 6)));
-    if (hit) return { keyword: String(c.keyword), monthly: Number(c.monthly_searches ?? 0), adDepth: c.ad_depth === null ? null : Number(c.ad_depth) };
+    if (hit) return { keyword: String(c.keyword), monthly: Number(c.monthly_searches ?? 0), adDepth: c.ad_depth === null ? null : Number(c.ad_depth), suggests: sug.filter((x) => x && x !== String(c.keyword)).slice(0, 6) }; // ★파생 키워드(외부 리뷰 반영) — 본문 자연 배치용
     await new Promise((r) => setTimeout(r, 300));
   }
   return cands.length ? { keyword: String(cands[0].keyword), monthly: Number(cands[0].monthly_searches ?? 0), adDepth: cands[0].ad_depth === null ? null : Number(cands[0].ad_depth) } : null; // 교차 검증 전멸 시 폴백(수요 데이터는 이미 확인됨)

@@ -107,5 +107,11 @@ export function insertBanners(html: string, banners: string[], alt: string): str
     if (mid && h2s2.length >= 3) out = out.slice(0, mid.index!) + img(banners[1]) + out.slice(mid.index!);
     else out = out + img(banners[1]);
   }
+  if (banners[2]) {
+    // 3장째 = 마지막 h2(보통 '자주 묻는 질문') 직전 — 글 후반 시각 리듬(외부 리뷰: 이미지 배치 보완)
+    const h2s3 = [...out.matchAll(/<h2[^>]*>/g)];
+    const last = h2s3[h2s3.length - 1];
+    if (last && h2s3.length >= 4) out = out.slice(0, last.index!) + img(banners[2]) + out.slice(last.index!);
+  }
   return out;
 }

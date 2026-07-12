@@ -48,12 +48,12 @@ export async function POST() {
     const article = await generateArticle({
       keyword: pick.keyword, channel: "wordpress", angle: undefined, type: "info", tone: (b as { tone?: string }).tone || "friendly", maxWords: 5000,
       variantInstruction: "", styleInstruction: stylePersonaInstruction(b.id),
-      relatedQueries: [], newsContext: undefined, angleBrief: null, affiliate: false,
+      relatedQueries: pick.suggests ?? [], newsContext: undefined, angleBrief: null, affiliate: false, // ★파생 키워드 주입
       vertical: "online", bizName: null, bizStrength: null, userStory: null, userTitle: null,
     });
     let body = stripNaverArtifacts(article.body_html); // 해시태그·마커 일괄 소거(중앙 소거기)
     // ★배너를 초안 단계에 삽입(유저: 읽어보기에서 최종 모습 확인) — 스토리지 URL, 실패=배너 없이 계속
-    try { body = insertBanners(body, await generateWpBannersToStorage(user.id, pick.keyword, `${b.id}-${kstDay()}`, 2), pick.keyword); } catch { /* ignore */ }
+    try { body = insertBanners(body, await generateWpBannersToStorage(user.id, pick.keyword, `${b.id}-${kstDay()}`, 3), pick.keyword); } catch { /* ignore */ }
     const ins = {
       user_id: user.id, blog_id: b.id, keyword: pick.keyword, title: article.title,
       meta_title: article.meta_title, meta_description: article.meta_description,

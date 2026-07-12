@@ -65,13 +65,13 @@ export async function GET(request: Request) {
         const article = await generateArticle({
           keyword: pick.keyword, channel: "wordpress", angle: undefined, type: "info", tone: b.tone || "friendly", maxWords: 5000,
           variantInstruction: "", styleInstruction: stylePersonaInstruction(b.id),
-          relatedQueries: [], newsContext: undefined, angleBrief: null, affiliate: false,
+          relatedQueries: pick.suggests ?? [], newsContext: undefined, angleBrief: null, affiliate: false, // ★파생 키워드 주입
           vertical: "online", bizName: null, bizStrength: null, userStory: null, userTitle: null,
         });
         // WP 후처리 — 네이버 포맷터(스페이서·형광펜) 미적용. 마커만 정리.
         let body = stripNaverArtifacts(article.body_html); // 해시태그·마커 일괄 소거(중앙 소거기)
         // ★배너를 초안 단계에 삽입(2026-07-12 유저: 읽어보기에 이미지가 안 보임 — 승인은 최종 모습으로) — 스토리지 URL이라 DB 비대 없음
-        try { body = insertBanners(body, await generateWpBannersToStorage(b.user_id, pick.keyword, `${b.id}-${kstDay()}`, 2), pick.keyword); } catch { /* 배너 실패 — 계속 */ }
+        try { body = insertBanners(body, await generateWpBannersToStorage(b.user_id, pick.keyword, `${b.id}-${kstDay()}`, 3), pick.keyword); } catch { /* 배너 실패 — 계속 */ }
         const ins = {
           user_id: b.user_id, blog_id: b.id, keyword: pick.keyword, title: article.title,
           meta_title: article.meta_title, meta_description: article.meta_description,
