@@ -1,8 +1,8 @@
 <aside class="side" aria-label="블로그 정보">
   <div class="side-card">
     <?php if (has_custom_logo()) { $logo = wp_get_attachment_image_src(get_theme_mod('custom_logo'), 'medium'); if ($logo) echo '<img class="side-logo" src="' . esc_url($logo[0]) . '" alt="' . esc_attr(get_bloginfo('name')) . ' 로고" width="240" height="240">'; } ?>
-    <p class="side-name"><?php bloginfo('name'); ?></p>
-    <?php if (get_bloginfo('description')) : ?><p class="side-desc"><?php echo esc_html(get_bloginfo('description')); ?></p><?php endif; ?>
+    <?php // 사이트명 3중 중복 제거(2026-07-12 유저: 메인에 이름이 너무 많음) — 사이드바는 '안내' 역할만
+    ?><p class="side-name">안내</p>
     <ul class="side-links">
       <?php $items = [['운영자 소개', ['운영자 소개']], ['블로그 소개', ['소개', get_bloginfo('name') . ' 소개']], ['문의', ['문의', '문의하기']]];
       foreach ($items as [$label, $titles]) { $pg = ateflo_find_page($titles); if ($pg) echo '<li><a href="' . esc_url(get_permalink($pg)) . '">' . esc_html($label) . '</a></li>'; } ?>

@@ -10,8 +10,9 @@
 <header class="site-head">
   <div class="in">
     <a class="site-logo" href="<?php echo esc_url(home_url('/')); ?>">
-      <?php if (has_custom_logo()) { $logo = wp_get_attachment_image_src(get_theme_mod('custom_logo'), 'thumbnail'); if ($logo) echo '<img class="logo-img" src="' . esc_url($logo[0]) . '" alt="" width="34" height="34">'; } ?>
-      <span><?php bloginfo('name'); ?><b>.</b></span>
+      <?php // 로고를 올리면(사용자 정의하기 > 사이트 아이덴티티) 텍스트 대신 로고만, 없으면 텍스트(점 없이 — 2026-07-12 유저 요청)
+      if (has_custom_logo()) { $logo = wp_get_attachment_image_src(get_theme_mod('custom_logo'), 'thumbnail'); if ($logo) { echo '<img class="logo-img" src="' . esc_url($logo[0]) . '" alt="' . esc_attr(get_bloginfo('name')) . '" width="34" height="34">'; } else { echo '<span>' . esc_html(get_bloginfo('name')) . '</span>'; } }
+      else { echo '<span>' . esc_html(get_bloginfo('name')) . '</span>'; } ?>
     </a>
     <nav class="site-nav" aria-label="주요 메뉴">
       <?php $about = ateflo_find_page(['소개', get_bloginfo('name') . ' 소개', '운영자 소개']);
