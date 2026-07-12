@@ -1,5 +1,6 @@
 // ★구글(WP) 글감 전략 — 신생 도메인 정석: 숏테일(뉴스·트렌드) 포기, 롱테일 질문형 에버그린 + 고단가 올인.
 //  차별 무기: 네이버 수요 데이터(keyword_pool 실검색량) × 구글 자동완성 교차 검증 — 두 판 모두 수요가 확인된 키워드만.
+import { finalGate, adsenseUnsafe } from "./cardFinalGate";
 import { createSupabaseAdminClient } from "./supabase-server";
 import { isUnsafeKeyword } from "./keywordSafety";
 
@@ -36,7 +37,11 @@ export async function pickWpTopic(userId: string, sub: string): Promise<WpTopicP
     .neq("competition", "높음")
     .order("ad_depth", { ascending: false, nullsFirst: false })
     .limit(60);
-  const cands = (pool ?? [])
+  // ★중앙 관문 + 애드센스 게이트(2026-07-12) — WP 글감도 무검문 금지: 지역 협소·민감·B2B·뉴스성 + 광고 정책 부적합 컷
+  const gated = finalGate((pool ?? []).map((r) => ({ keyword: String(r.keyword), title: String(r.keyword), row: r })));
+  const cands = gated.pass
+    .filter((x) => !adsenseUnsafe(x.keyword))
+    .map((x) => x.row)
     .filter((r) => !used.has(String(r.keyword).replace(/\s+/g, "").toLowerCase()))
     .filter((r) => isEvergreenKeyword(String(r.keyword)));
   for (const c of cands.slice(0, 12)) { // 서제스트 예의 — 최대 12콜

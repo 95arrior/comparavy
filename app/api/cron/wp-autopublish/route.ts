@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseAdminClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { generateArticle } from "@/lib/generateArticle";
 import { pickWpTopic } from "@/lib/googleTopics";
+import { adsenseUnsafe } from "@/lib/cardFinalGate";
 import { publishPost } from "@/lib/wordpress";
 import { decryptSecret } from "@/lib/crypto";
 import { spendCredits, addCredits } from "@/lib/credits";
@@ -51,6 +52,8 @@ export async function GET(request: Request) {
       const sub = b.sub_category || b.topic || "";
       const pick = await pickWpTopic(b.user_id, sub);
       if (!pick) { results.push({ blog: b.id, result: "no_topic" }); continue; }
+      // ★애드센스 정책 이중 가드(2026-07-12) — 선별이 걸렀어도 발행 직전 최종 확인(광고 정책 위반 글 자동발행 금지)
+      { const bad = adsenseUnsafe(pick.keyword); if (bad) { results.push({ blog: b.id, result: `adsense_unsafe:${bad}` }); continue; } }
 
       const balance = await spendCredits(b.user_id, WP_GENERATE_COST, "wp_auto");
       if (balance === null) { results.push({ blog: b.id, result: "no_credits" }); continue; }

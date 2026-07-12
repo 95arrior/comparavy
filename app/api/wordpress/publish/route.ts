@@ -78,6 +78,11 @@ export async function POST(request: Request) {
 
   // 내부 링크 자동: 내가 이미 발행한 다른 글들의 키워드를 본문에서 찾아 그 글로 링크
   let contentHtml = article.body_html as string;
+  // ★마커 잔존 방어(2026-07-12 실사: 자동발행엔 있고 수동 발행엔 없던 비대칭) — 내부링크·네이버형 슬롯 마커가 실물로 노출되지 않게
+  contentHtml = contentHtml
+    .replace(/\[내부링크:[^\]]*\]/g, "")
+    .replace(/<p>\s*\[(사진|이미지|차트|카드|스탯|표):[^\]]*\]\s*<\/p>/g, "")
+    .replace(/\[(사진|이미지|차트|카드|스탯|표):[^\]]*\]/g, "");
   if (addInternalLinks) {
     const { data: others } = await supabase
       .from("articles")

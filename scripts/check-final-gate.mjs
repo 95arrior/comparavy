@@ -1,4 +1,4 @@
-import { finalGate } from "../lib/cardFinalGate.ts";
+import { finalGate, adsenseUnsafe } from "../lib/cardFinalGate.ts";
 const cases = [
   { c: { keyword: "강서구 평생교육이용권", title: "강서구 평생교육이용권 2차 지원 신청 방법과 사용처" }, drop: "region_niche" },
   { c: { keyword: "대구 섬유염색업 버팀이음", title: "대구 섬유염색업 고용안정 버팀이음 프로젝트 신청 대상" }, drop: "region_niche" },
@@ -24,5 +24,16 @@ for (const { c, drop } of cases) {
   const ok = got === drop;
   if (!ok) fail++;
   console.log(ok ? "OK " : "FAIL", "|", c.title.slice(0, 30), "→", got ?? "통과");
+}
+// ★애드센스 게이트(WP 전용) — 부적합 3 + 통과 3
+const ad = [
+  ["토토 사이트 환급", true], ["휴대폰 소액결제 현금화 방법", true], ["개인회생 브로커 후기", true],
+  ["재산세 카드 납부 혜택", false], ["IRP 계좌 개설", false], ["전세보증금 반환보증", false],
+];
+for (const [t, bad] of ad) {
+  const got = adsenseUnsafe(t) != null;
+  const ok = got === bad;
+  if (!ok) fail++;
+  console.log(ok ? "OK " : "FAIL", "| adsense |", t, "→", got ? "부적합" : "통과");
 }
 process.exit(fail ? 1 : 0);
