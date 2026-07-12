@@ -13,6 +13,7 @@ import { WP_GENERATE_COST } from "@/lib/creditPacks";
 import { stylePersonaInstruction } from "@/lib/stylePersona";
 import { logUsage } from "@/lib/usageLog";
 import { FF } from "@/config/featureFlags";
+import { WP_DAILY_CAP, WP_SECOND_SLOT_OFFSET_H } from "@/lib/scoreWeights";
 
 // ★WP 자동 발행(Phase 2 모듈 B) — 매시 실행, auto_publish_hour(KST)가 지금인 WP 블로그만 처리.
 //  daily=생성→즉시 발행 / review=생성만(아침 승인탭에서 유저가 발행). 크레딧 선차감·실패 멱등 환불.
@@ -32,20 +33,25 @@ export async function GET(request: Request) {
   const db = createSupabaseAdminClient();
   const hour = kstHour();
 
-  const { data: blogs } = await db.from("blog_profiles")
+  // ★하루 2편(유저 확정 2026-07-12) — 1편은 설정 시각, 2편은 8시간 뒤 슬롯(도배 패턴 방지 분산)
+  const { data: blogsAll } = await db.from("blog_profiles")
     .select("id, user_id, sub_category, topic, auto_publish, auto_publish_hour, tone, blog_name")
-    .eq("channel", "wordpress").neq("auto_publish", "off").eq("auto_publish_hour", hour);
-  if (!blogs?.length) return NextResponse.json({ ok: true, processed: 0 });
+    .eq("channel", "wordpress").neq("auto_publish", "off");
+  const blogs = (blogsAll ?? []).filter((b) => {
+    const h = Number((b as { auto_publish_hour?: number | null }).auto_publish_hour ?? -1);
+    return h === hour || (WP_DAILY_CAP >= 2 && (h + WP_SECOND_SLOT_OFFSET_H) % 24 === hour);
+  });
+  if (!blogs.length) return NextResponse.json({ ok: true, processed: 0 });
 
   const results: { blog: string; result: string }[] = [];
   for (const b of blogs) {
     try {
       // ★발행 시각 지터(FF_SEED_CLAIM §5-3) — 같은 정시에 몰리는 자동발행 패턴 분산(블로그별 랜덤 지연, maxDuration 안)
       if (FF.seedClaim) await new Promise((r) => setTimeout(r, Math.floor(Math.random() * 45_000)));
-      // 일 1편 상한 — 오늘 이미 이 블로그에 자동 생성분 있으면 스킵
+      // 일 상한(WP_DAILY_CAP=2) — 오늘 이 블로그 생성분이 상한이면 스킵
       const { data: today } = await db.from("articles").select("id").eq("blog_id", b.id)
-        .gte("created_at", `${kstDay()}T00:00:00+09:00`).limit(1);
-      if (today?.length) { results.push({ blog: b.id, result: "already_today" }); continue; }
+        .gte("created_at", `${kstDay()}T00:00:00+09:00`).limit(WP_DAILY_CAP);
+      if ((today?.length ?? 0) >= WP_DAILY_CAP) { results.push({ blog: b.id, result: "cap_reached" }); continue; }
 
       // WP 연결 확인(블로그 귀속 우선, 레거시 user 단위 폴백)
       let { data: conn } = await db.from("wordpress_connections").select("site_url, username, app_password").eq("blog_id", b.id).maybeSingle();

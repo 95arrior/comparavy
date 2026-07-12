@@ -49,3 +49,6 @@ export const SEED_CLAIM_CAP = { big: 5, normal: 3 } as const;
 export const SEED_CLAIM_WINDOW_H = 72; // 클레임 유효(동시 활성) 창
 // 수익 경로 태그(§6) — high_cpc 판정 임계(ad_depth)
 export const REVENUE_HIGH_CPC_DEPTH = 8;
+// WP 자동발행 일일 상한(2026-07-12 유저 확정: 하루 2편) — 2편은 8시간 간격으로 분산(도배 패턴 방지)
+export const WP_DAILY_CAP = 2;
+export const WP_SECOND_SLOT_OFFSET_H = 8;
