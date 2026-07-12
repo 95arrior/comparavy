@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { autoFeaturedImage } from "@/lib/wpFeaturedImage";
+import { wpCategoryFor } from "@/lib/wpCategory";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { ensureUserRow } from "@/lib/userPlan";
 import { PLANS } from "@/lib/plans";
@@ -125,11 +127,11 @@ export async function POST(request: Request) {
       siteName,
       faq: Array.isArray(article.faq) ? article.faq : undefined,
       slug: article.keyword ? (slugify(String(article.keyword)) || undefined) : undefined,
-      featuredImage: article.featured_image ?? undefined,
+      featuredImage: article.featured_image ?? await autoFeaturedImage(user.id, String(article.keyword ?? ""), siteName ?? "", String(articleId)) ?? undefined, // ★대표 이미지 자동(코드 렌더·비용 0 — 테마 카드·구글 썸네일)
       // 이미 발행한 글이면 그 워드프레스 글을 수정(재발행) → 중복 글 방지
       postId: article.wp_post_id ?? undefined,
       // 카테고리(미지정 시 미분류) · 태그(없으면 글에 저장된 AI 태그 사용)
-      categoryName: categoryName || undefined,
+      categoryName: categoryName || wpCategoryFor(String(article.keyword ?? ""), article.title), // ★카테고리 자동 선별(Uncategorized 방치 금지)
       tags: tagsOverride ?? (Array.isArray(article.tags) ? article.tags : undefined),
       addToc,
       // YMYL(건강·돈·법률) 주제면 하단 면책 블록 — 키워드·제목·요약으로 판별

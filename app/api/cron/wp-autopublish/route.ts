@@ -3,6 +3,8 @@ import { createSupabaseAdminClient, hasSupabaseEnv } from "@/lib/supabase-server
 import { generateArticle } from "@/lib/generateArticle";
 import { pickWpTopic } from "@/lib/googleTopics";
 import { adsenseUnsafe } from "@/lib/cardFinalGate";
+import { autoFeaturedImage } from "@/lib/wpFeaturedImage";
+import { wpCategoryFor } from "@/lib/wpCategory";
 import { publishPost } from "@/lib/wordpress";
 import { decryptSecret } from "@/lib/crypto";
 import { spendCredits, addCredits } from "@/lib/credits";
@@ -30,7 +32,7 @@ export async function GET(request: Request) {
   const hour = kstHour();
 
   const { data: blogs } = await db.from("blog_profiles")
-    .select("id, user_id, sub_category, topic, auto_publish, auto_publish_hour, tone")
+    .select("id, user_id, sub_category, topic, auto_publish, auto_publish_hour, tone, blog_name")
     .eq("channel", "wordpress").neq("auto_publish", "off").eq("auto_publish_hour", hour);
   if (!blogs?.length) return NextResponse.json({ ok: true, processed: 0 });
 
@@ -86,6 +88,8 @@ export async function GET(request: Request) {
             metaDescription: saved.meta_description ?? undefined, metaTitle: saved.meta_title ?? undefined,
             faq: Array.isArray(saved.faq) ? saved.faq : undefined,
             tags: Array.isArray(saved.tags) ? (saved.tags as string[]) : undefined,
+            featuredImage: await autoFeaturedImage(b.user_id, String(saved.keyword ?? pick.keyword), String((b as { blog_name?: string | null }).blog_name ?? ""), String(saved.id)) ?? undefined, // ★대표 이미지 자동
+            categoryName: wpCategoryFor(String(saved.keyword ?? pick.keyword), saved.title), // ★카테고리 자동
             addToc: true, ymyl: false, status: "publish",
           });
           await db.from("articles").update({ status: "published", wp_post_id: r.id, wp_link: r.link, publish_at: new Date().toISOString() }).eq("id", saved.id);
