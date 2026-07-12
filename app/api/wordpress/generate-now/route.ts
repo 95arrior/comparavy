@@ -6,6 +6,7 @@ import { adsenseUnsafe } from "@/lib/cardFinalGate";
 import { spendCredits, addCredits } from "@/lib/credits";
 import { WP_GENERATE_COST } from "@/lib/creditPacks";
 import { stripNaverArtifacts } from "@/lib/wordpress";
+import { generateWpBannersToStorage, insertBanners } from "@/lib/wpIllustration";
 import { stylePersonaInstruction } from "@/lib/stylePersona";
 import { logUsage } from "@/lib/usageLog";
 
@@ -50,7 +51,9 @@ export async function POST() {
       relatedQueries: [], newsContext: undefined, angleBrief: null, affiliate: false,
       vertical: "online", bizName: null, bizStrength: null, userStory: null, userTitle: null,
     });
-    const body = stripNaverArtifacts(article.body_html); // 해시태그·마커 일괄 소거(중앙 소거기)
+    let body = stripNaverArtifacts(article.body_html); // 해시태그·마커 일괄 소거(중앙 소거기)
+    // ★배너를 초안 단계에 삽입(유저: 읽어보기에서 최종 모습 확인) — 스토리지 URL, 실패=배너 없이 계속
+    try { body = insertBanners(body, await generateWpBannersToStorage(user.id, pick.keyword, `${b.id}-${kstDay()}`, 2), pick.keyword); } catch { /* ignore */ }
     const ins = {
       user_id: user.id, blog_id: b.id, keyword: pick.keyword, title: article.title,
       meta_title: article.meta_title, meta_description: article.meta_description,

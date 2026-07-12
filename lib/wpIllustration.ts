@@ -3,6 +3,7 @@
 //  ②오브젝트 은유 배너 ③플랫 일러스트 장면. 글마다 스타일 로테이션(다양성 — 유저 조건).
 //  발행 시점 생성(초안 DB 비대 방지), 실패 = 빈 배열(발행은 계속).
 import { callImage } from "./geminiImage";
+import { createSupabaseAdminClient } from "./supabase-server";
 
 function fnv(s: string): number {
   let h = 0x811c9dc5;
@@ -73,11 +74,28 @@ export async function generateWpBanners(keyword: string, articleId: string, n = 
   return out;
 }
 
+/** 배너 n장을 스토리지에 올려 공개 URL로 — 초안 단계 삽입용(DB엔 URL만, 미리보기에 보임). */
+export async function generateWpBannersToStorage(userId: string, keyword: string, articleId: string, n = 2): Promise<string[]> {
+  const dataUrls = await generateWpBanners(keyword, articleId, n);
+  const admin = createSupabaseAdminClient();
+  const out: string[] = [];
+  for (let i = 0; i < dataUrls.length; i++) {
+    try {
+      const m = /^data:(image\/[a-z]+);base64,(.+)$/.exec(dataUrls[i]!);
+      if (!m) continue;
+      const path = `${userId}/wpbanner-${articleId}-${i}.png`;
+      const { error } = await admin.storage.from("ai-images").upload(path, Buffer.from(m[2]!, "base64"), { contentType: m[1]!, upsert: true });
+      if (!error) out.push(admin.storage.from("ai-images").getPublicUrl(path).data.publicUrl);
+    } catch (e) { console.error("[wp] 배너 업로드 실패:", e instanceof Error ? e.message : e); }
+  }
+  return out;
+}
+
 /** 본문에 배너 삽입 — 1장: 도입(첫 h2 직전), 2장: 중간 h2 직전. publishPost가 data URL을 미디어로 업로드. */
 export function insertBanners(html: string, banners: string[], alt: string): string {
   if (!banners.length) return html;
   let out = html;
-  const img = (src: string) => `<figure style="margin:1.6em 0"><img src="${src}" alt="${alt.replace(/"/g, "")}" style="width:100%;border-radius:14px" /></figure>`;
+  const img = (src: string) => `<figure class="ateflo-banner" style="margin:1.6em 0"><img src="${src}" alt="${alt.replace(/"/g, "")}" style="width:100%;border-radius:14px" /></figure>`;
   const h2s = [...out.matchAll(/<h2[^>]*>/g)];
   if (banners[0]) {
     if (h2s.length > 0) out = out.slice(0, h2s[0]!.index!) + img(banners[0]) + out.slice(h2s[0]!.index!);

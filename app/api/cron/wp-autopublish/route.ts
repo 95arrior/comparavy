@@ -5,7 +5,7 @@ import { pickWpTopic } from "@/lib/googleTopics";
 import { adsenseUnsafe } from "@/lib/cardFinalGate";
 import { autoFeaturedImage } from "@/lib/wpFeaturedImage";
 import { wpCategoryFor } from "@/lib/wpCategory";
-import { generateWpBanners, insertBanners } from "@/lib/wpIllustration";
+import { generateWpBanners, generateWpBannersToStorage, insertBanners } from "@/lib/wpIllustration";
 import { publishPost, stripNaverArtifacts } from "@/lib/wordpress";
 import { decryptSecret } from "@/lib/crypto";
 import { spendCredits, addCredits } from "@/lib/credits";
@@ -69,7 +69,9 @@ export async function GET(request: Request) {
           vertical: "online", bizName: null, bizStrength: null, userStory: null, userTitle: null,
         });
         // WP 후처리 — 네이버 포맷터(스페이서·형광펜) 미적용. 마커만 정리.
-        const body = stripNaverArtifacts(article.body_html); // 해시태그·마커 일괄 소거(중앙 소거기)
+        let body = stripNaverArtifacts(article.body_html); // 해시태그·마커 일괄 소거(중앙 소거기)
+        // ★배너를 초안 단계에 삽입(2026-07-12 유저: 읽어보기에 이미지가 안 보임 — 승인은 최종 모습으로) — 스토리지 URL이라 DB 비대 없음
+        try { body = insertBanners(body, await generateWpBannersToStorage(b.user_id, pick.keyword, `${b.id}-${kstDay()}`, 2), pick.keyword); } catch { /* 배너 실패 — 계속 */ }
         const ins = {
           user_id: b.user_id, blog_id: b.id, keyword: pick.keyword, title: article.title,
           meta_title: article.meta_title, meta_description: article.meta_description,
@@ -81,8 +83,7 @@ export async function GET(request: Request) {
         if (error || !saved) throw new Error(error?.message ?? "insert fail");
 
         if (b.auto_publish === "daily") {
-          let dailyHtml = saved.body_html as string;
-          try { dailyHtml = insertBanners(dailyHtml, await generateWpBanners(String(saved.keyword ?? pick.keyword), String(saved.id), 2), String(saved.keyword ?? pick.keyword)); } catch { /* 배너 실패 — 계속 */ }
+          const dailyHtml = saved.body_html as string; // 배너는 위에서 이미 삽입됨
           const r = await publishPost({
             siteUrl: conn.site_url, username: conn.username, appPassword: decryptSecret(conn.app_password),
             title: saved.title, contentHtml: dailyHtml,

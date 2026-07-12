@@ -85,7 +85,7 @@ export async function POST(request: Request) {
   contentHtml = stripNaverArtifacts(contentHtml).replace(/<p>\s*<\/p>/g, ""); // 해시태그·마커 일괄 소거(중앙 소거기)
   // ★키워드 비주얼 배너 2장(2026-07-12 유저 확정 — 금융보카 레퍼런스: 데이터 차트 아님, 주제 키워드 시각 앵커).
   //  발행 시점 생성(초안 DB 비대 방지)·실패=배너 없이 계속. publishPost가 data URL을 WP 미디어로 업로드.
-  if (status === "publish") {
+  if (status === "publish" && !contentHtml.includes("ateflo-banner")) { // 초안에 이미 배너가 있으면 스킵(이중 생성·이중 과금 방지)
     try {
       const banners = await generateWpBanners(String(article.keyword ?? ""), String(articleId), 2);
       contentHtml = insertBanners(contentHtml, banners, String(article.keyword ?? ""));

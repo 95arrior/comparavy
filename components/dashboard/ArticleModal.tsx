@@ -314,7 +314,13 @@ export default function ArticleModal({ pubStampKey, blogName,
           <span className="truncate text-xs text-neutral-400">키워드 · {article.keyword}</span>
         </div>
 
-        {hasTwoTitles ? (
+        {isWp ? (
+          <div className="mt-3">
+            <span className="rounded-full bg-[#1D75F7]/10 px-3 py-1 text-[12px] font-bold text-[#1D75F7]">구글 최적화</span>
+            <p className="mt-1.5 text-[11.5px] text-neutral-400">구글 검색과 AI 요약 인용에 맞춘 질문형 제목이에요</p>
+            <h1 className="mt-2 text-2xl font-bold leading-tight tracking-tight sm:text-3xl">{title}</h1>
+          </div>
+        ) : hasTwoTitles ? (
           <div className="mt-3">
             <div className="flex items-center gap-1.5">
               {([["click", "홈판용"], ["search", "검색용"]] as const).map(([k, label]) => (
