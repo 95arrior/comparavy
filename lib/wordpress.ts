@@ -379,7 +379,7 @@ async function uploadMedia(source: string, creds: WordPressCredentials): Promise
 async function uploadInlineImages(html: string, creds: WordPressCredentials): Promise<string> {
   const dataUris = html.match(/data:image\/[A-Za-z0-9.+-]+;base64,[^"')\s]+/g) ?? [];
   const storageUrls =
-    html.match(/https?:\/\/[^"')\s]*\/storage\/v1\/object\/public\/article-images\/[^"')\s]+/g) ?? [];
+    html.match(/https?:\/\/[^"')\s]*\/storage\/v1\/object\/public\/(?:article-images|ai-images)\/[^"')\s]+/g) ?? []; // ★ai-images(배너·대표) 포함 — 공유 스토리지 참조 잔존이 덮어쓰기 사고의 절반이었음(2026-07-13)
   const sources = Array.from(new Set([...dataUris, ...storageUrls]));
   for (const src of sources) {
     const media = await uploadMedia(src, creds);
