@@ -53,7 +53,7 @@ function buildBannerPrompt(keyword: string, style: "stage" | "object" | "scene",
   }
   return [
     `Flat vector illustration scene for a Korean finance blog about "${keyword}" (understand only — never render as text).`,
-    "A simple geometric character (round, minimal face) in an office/home scene interacting with ONE big symbolic object related to the topic (desk with monitor, money bag, growing chart sculpture). Maximum 3 objects total.",
+    "A charming designed character in an office/home scene interacting with ONE big symbolic object related to the topic (desk with monitor, money bag, growing chart sculpture). Maximum 3 objects total. CHARACTER SPEC (when a person appears): NOT a plain circle-head blob — a DESIGNED flat-vector character at premium fintech campaign level: distinct hairstyle, real outfit (office shirt/cardigan/suit — colors from the palette), expressive posture and gesture, head:body about 1:3, soft airbrush shading on clothes. Minimal face (dot eyes, tiny smile) is fine, but silhouette and styling must look like a branded illustration character, never a generic stick figure or plain circle person.",
     `Style: premium editorial flat illustration (Toss/fintech campaign grade), bold color blocking, soft shadows, ${palette}. Square 1:1.`,
     NO_TEXT,
   ].join(" ");
