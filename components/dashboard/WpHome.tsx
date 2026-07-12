@@ -37,7 +37,13 @@ export default function WpHome({ blogName, blogId, articles, credits, onOpenArti
   const [pagesBusy, setPagesBusy] = useState(false);
   const trustKey = `ateflo_trustpages_${blogId ?? ""}`;
   const [pagesDone, setPagesDone] = useState(false);
-  useEffect(() => { try { setPagesDone(localStorage.getItem(trustKey) === "1"); } catch { /* ignore */ } // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    try { if (localStorage.getItem(trustKey) === "1") { setPagesDone(true); return; } } catch { /* ignore */ }
+    // 로컬 기록 없음 — WP 실물 확인(배포 전 완료 유저 소급 처리)
+    fetch("/api/wordpress/adsense-pages").then((r) => r.json()).then((d) => {
+      if (d?.done) { setPagesDone(true); try { localStorage.setItem(trustKey, "1"); } catch { /* ignore */ } }
+    }).catch(() => null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trustKey]);
   async function makeTrustPages() {
     if (pagesBusy) return;

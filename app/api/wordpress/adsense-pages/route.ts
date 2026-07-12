@@ -4,6 +4,23 @@ import { decryptSecret } from "@/lib/crypto";
 import { publishPage, WpAuthError, type WordPressCredentials } from "@/lib/wordpress";
 import { buildAdsensePages } from "@/lib/adsensePages";
 
+// ★완료 확인(2026-07-12 유저: 이미 만들었는데 버튼이 계속 뜸 — 로컬 기록이 아니라 WP 실물로 판정)
+export async function GET() {
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ done: false });
+  const { data: conn } = await supabase.from("wordpress_connections").select("site_url").eq("user_id", user.id).maybeSingle();
+  if (!conn?.site_url) return NextResponse.json({ done: false });
+  try {
+    const base = String(conn.site_url).replace(/\/$/, "");
+    const r = await fetch(`${base}/wp-json/wp/v2/pages?slug=privacy-policy&per_page=1`, { signal: AbortSignal.timeout(8000) });
+    const arr = r.ok ? ((await r.json()) as unknown[]) : [];
+    return NextResponse.json({ done: Array.isArray(arr) && arr.length > 0 });
+  } catch {
+    return NextResponse.json({ done: false });
+  }
+}
+
 // 애드센스 신뢰 페이지 4종(소개·운영자·문의·개인정보처리방침)을 AI로 만들어 워드프레스에 '페이지'로 발행.
 export async function POST() {
   const supabase = await createSupabaseServerClient();
