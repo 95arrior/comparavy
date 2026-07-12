@@ -19,6 +19,19 @@ export default function WpHome({ blogName, blogId, articles, credits, onOpenArti
   const pub = articles.filter((a) => a.status === "published").length;
   const pct = Math.min(100, Math.round((pub / ADSENSE_GOAL) * 100));
   const reviewDraft = articles.find((a) => a.status === "draft"); // 아침 승인탭 대기(자동 생성분)
+  const [genBusy, setGenBusy] = useState(false);
+  const [genErr, setGenErr] = useState<string | null>(null);
+  async function generateFirstNow() {
+    if (genBusy) return;
+    setGenBusy(true); setGenErr(null);
+    try {
+      const r = await fetch("/api/wordpress/generate-now", { method: "POST" });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) { setGenErr(d.error ?? "글을 만들지 못했어요. 잠시 뒤 다시 시도해 주세요."); return; }
+      window.location.reload(); // 생성된 초안이 히어로(읽어보기/발행하기)로 뜨게
+    } catch { setGenErr("네트워크 오류예요. 다시 시도해 주세요."); }
+    finally { setGenBusy(false); }
+  }
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [pagesBusy, setPagesBusy] = useState(false);
@@ -143,6 +156,10 @@ export default function WpHome({ blogName, blogId, articles, credits, onOpenArti
           <p className="text-[13px] font-semibold text-[color:var(--color-brand)]">오늘의 글</p>
           <p className="mt-2 text-[15px] font-bold leading-snug text-neutral-900">내일 아침, 글이 자동으로 준비돼요.</p>
           <p className="mt-1 text-[12.5px] leading-relaxed text-neutral-400">구글에서 오래 검색될 주제를 데이터가 고르고, 글까지 써둘게요.</p>
+          <button onClick={generateFirstNow} disabled={genBusy} className="at-press tk-grad-cta mt-4 w-full rounded-[14px] py-3.5 text-[14.5px] font-bold text-white disabled:opacity-60">
+            {genBusy ? <><span className="tk-wand" aria-hidden>✦</span>글을 만들고 있어요… (1~2분)</> : "첫 글 지금 만들어보기"}
+          </button>
+          {genErr && <p className="mt-2 text-[12.5px] font-medium text-amber-600">{genErr}</p>}
         </div>
       )}
 
