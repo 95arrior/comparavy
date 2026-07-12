@@ -186,9 +186,9 @@ export function stripNaverArtifacts(html: string): string {
 const ATEFLO_POST_STYLE =
   "<style>" +
   ".ateflo-post{font-size:17px;line-height:1.85;color:#33363d;letter-spacing:-.01em;word-break:keep-all;}" +
-  ".ateflo-post h2{font-size:1.5em;font-weight:700;line-height:1.4;letter-spacing:-.022em;color:#191f28;margin:2.2em 0 .7em;}" +
+  ".ateflo-post h2{font-size:1.5em;font-weight:700;line-height:1.4;letter-spacing:-.022em;color:#191f28;margin:2.7em 0 .8em;}" +
   ".ateflo-post h3{font-size:1.2em;font-weight:700;line-height:1.45;letter-spacing:-.018em;color:#191f28;margin:1.8em 0 .5em;}" +
-  ".ateflo-post p{margin:1.1em 0;}" +
+  ".ateflo-post p{margin:1.5em 0;}" +
   ".ateflo-post ul{list-style:disc;padding-left:1.3em;margin:1.1em 0;}" +
   ".ateflo-post ol{list-style:decimal;padding-left:1.4em;margin:1.1em 0;}" +
   ".ateflo-post li{margin:.5em 0;}" +

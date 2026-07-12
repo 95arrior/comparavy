@@ -113,23 +113,24 @@ export async function generateWpBannersToStorage(userId: string, keyword: string
 export function insertBanners(html: string, banners: string[], alt: string): string {
   if (!banners.length) return html;
   let out = html;
-  const img = (src: string) => `<figure class="ateflo-banner" style="margin:1.6em 0"><img src="${src}" alt="${alt.replace(/"/g, "")}" style="width:100%;border-radius:14px" /></figure>`;
+  // 1장째(글자 조판 배너)는 -text 클래스 — 대표 이미지 배경 재활용에서 제외(실측: 글자 위에 훅 문구 겹침)
+  const img = (src: string, hasText: boolean) => `<figure class="ateflo-banner${hasText ? " ateflo-banner-text" : ""}" style="margin:1.6em 0"><img src="${src}" alt="${alt.replace(/"/g, "")}" style="width:100%;border-radius:14px" /></figure>`;
   const h2s = [...out.matchAll(/<h2[^>]*>/g)];
   if (banners[0]) {
-    if (h2s.length > 0) out = out.slice(0, h2s[0]!.index!) + img(banners[0]) + out.slice(h2s[0]!.index!);
-    else out = img(banners[0]) + out;
+    if (h2s.length > 0) out = out.slice(0, h2s[0]!.index!) + img(banners[0], true) + out.slice(h2s[0]!.index!);
+    else out = img(banners[0], true) + out;
   }
   if (banners[1]) {
     const h2s2 = [...out.matchAll(/<h2[^>]*>/g)];
     const mid = h2s2[Math.floor(h2s2.length / 2)];
-    if (mid && h2s2.length >= 3) out = out.slice(0, mid.index!) + img(banners[1]) + out.slice(mid.index!);
-    else out = out + img(banners[1]);
+    if (mid && h2s2.length >= 3) out = out.slice(0, mid.index!) + img(banners[1], false) + out.slice(mid.index!);
+    else out = out + img(banners[1], false);
   }
   if (banners[2]) {
     // 3장째 = 마지막 h2(보통 '자주 묻는 질문') 직전 — 글 후반 시각 리듬(외부 리뷰: 이미지 배치 보완)
     const h2s3 = [...out.matchAll(/<h2[^>]*>/g)];
     const last = h2s3[h2s3.length - 1];
-    if (last && h2s3.length >= 4) out = out.slice(0, last.index!) + img(banners[2]) + out.slice(last.index!);
+    if (last && h2s3.length >= 4) out = out.slice(0, last.index!) + img(banners[2], false) + out.slice(last.index!);
   }
   return out;
 }

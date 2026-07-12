@@ -19,6 +19,8 @@ export function hookCopyFromTitle(title: string | null | undefined, keyword: str
     const sp = cut.lastIndexOf(" ");
     hook = (sp > 8 ? cut.slice(0, sp) : cut).trim();
   }
+  // 꼬리 불완전 토큰 제거(실측: "…환급액까지 한") — 마지막 단어가 1글자 연결어면 떨군다
+  hook = hook.replace(/\s+(한|그|이|저|더|또|및|등)$/, "").trim();
   return hook;
 }
 
