@@ -59,6 +59,19 @@
 </section>
 <?php endif; endif; ?>
 
+<?php // ★최신 글 텍스트 리스트(2026-07-12 유저: 글 쌓이면 더 보여주기) — 위 카드 10개 이후 15개, 제목+날짜만
+if (is_home() && !is_paged()) : $more = new WP_Query(['post_type' => 'post', 'post_status' => 'publish', 'posts_per_page' => 15, 'offset' => 10, 'no_found_rows' => true]);
+if ($more->have_posts()) : ?>
+<section class="txtlist">
+  <h2 class="sec-title">더 볼만한 글</h2>
+  <ul>
+    <?php while ($more->have_posts()) : $more->the_post(); ?>
+    <li><a href="<?php the_permalink(); ?>"><span class="t"><?php the_title(); ?></span><span class="d"><?php echo get_the_date('n월 j일'); ?></span></a></li>
+    <?php endwhile; wp_reset_postdata(); ?>
+  </ul>
+</section>
+<?php endif; endif; ?>
+
 </div><!-- /col-main -->
 <?php /* 사이드바 제거(2026-07-12 유저: 안내 링크는 푸터에 이미 — 메인은 글에 전폭) */ ?>
 </div><!-- /cols -->

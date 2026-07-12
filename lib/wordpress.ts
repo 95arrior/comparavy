@@ -121,7 +121,7 @@ function addTableOfContents(html: string): string {
   });
   if (items.length < 2) return html;
   const lis = items
-    .map((it) => `<li style="margin-left:${it.level === "h3" ? "1.2em" : "0"}"><a href="#${it.id}">${escapeHtml(it.text)}</a></li>`)
+    .map((it) => `<li style="margin:.5em 0 .5em ${it.level === "h3" ? "1.2em" : "0"};line-height:1.5"><a href="#${it.id}" style="text-decoration:none;font-weight:600">${escapeHtml(it.text)}</a></li>`)
     .join("");
   const toc = `<div class="ateflo-toc" style="border:1px solid #eee;border-radius:10px;padding:14px 18px;margin:0 0 24px"><p style="margin:0 0 8px;font-weight:700">목차</p><ul style="margin:0;padding-left:1.1em">${lis}</ul></div>`;
   return toc + withIds;
