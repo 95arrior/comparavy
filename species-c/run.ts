@@ -93,8 +93,8 @@ async function main(): Promise<void> {
   await renderChecklistCard(fit.length ? fit : ["같은 문제를 겪고 있다면"], no.length ? no : ["기대치가 아주 높다면"], checkPng);
   cards.push({ file: checkPng, kind: "checklist" });
   // §7-3 비교형 — 두 상품의 '입력 실측값'만으로 비교표(임의 생성 금지)
-  if (input.compareWith?.name && keywords.articleType === "compare") {
-    const b = input.compareWith;
+  if (input.compareWith && input.compareWith.name && keywords.articleType === "compare") {
+    const b = { ...input.compareWith, name: input.compareWith.name! };
     const comparePng = path.join(tmp, "compare.png");
     await renderCompareCard([
       { label: "가격", a: `${product.price.toLocaleString()}원`, b: b.price ? `${b.price.toLocaleString()}원` : "확인 필요" },
