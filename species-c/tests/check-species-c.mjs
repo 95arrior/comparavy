@@ -50,6 +50,7 @@ const okDraft = { titleSearch: "차 에어컨 냄새, 시공 없이 잡는 방�
   t("마크다운 유출 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n## 소제목" }, product).pass);
   t("제목-키워드 정합", checkTitleKeyword("차 에어컨 냄새 잡는 법", "차 에어컨 냄새") === null);
   t("제목-키워드 누락 감지", checkTitleKeyword("여름철 차량 관리", "차 에어컨 냄새") !== null);
+  t("앞 15자 훅 — 키워드 뒤로 밀리면 실격", checkTitleKeyword("여름 장마철 관리 꿀팁 총정리와 차 에어컨 냄새", "차 에어컨 냄새") !== null);
 }
 
 console.log(fail ? `\n${fail} FAILED` : "\nALL PASS");

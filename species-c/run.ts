@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { writeArticle } from "./article";
 import { buildBrief } from "./brief";
-import { renderChecklistCard, renderCtaCard, renderReviewCard } from "./cards";
+import { renderChecklistCard, renderCompareCard, renderCtaCard, renderReviewCard } from "./cards";
 import { logPost } from "./db";
 import { runQualityGate, checkTitleKeyword } from "./finalGate";
 import { runProductGate } from "./gate";
@@ -92,6 +92,17 @@ async function main(): Promise<void> {
   const checkPng = path.join(tmp, "checklist.png");
   await renderChecklistCard(fit.length ? fit : ["같은 문제를 겪고 있다면"], no.length ? no : ["기대치가 아주 높다면"], checkPng);
   cards.push({ file: checkPng, kind: "checklist" });
+  // §7-3 비교형 — 두 상품의 '입력 실측값'만으로 비교표(임의 생성 금지)
+  if (input.compareWith?.name && keywords.articleType === "compare") {
+    const b = input.compareWith;
+    const comparePng = path.join(tmp, "compare.png");
+    await renderCompareCard([
+      { label: "가격", a: `${product.price.toLocaleString()}원`, b: b.price ? `${b.price.toLocaleString()}원` : "확인 필요" },
+      { label: "평점", a: String(product.rating), b: b.rating != null ? String(b.rating) : "확인 필요" },
+      { label: "리뷰 수", a: product.reviewCount.toLocaleString(), b: b.reviewCount != null ? b.reviewCount.toLocaleString() : "확인 필요" },
+    ], product.name, b.name, comparePng);
+    cards.push({ file: comparePng, kind: "compare" });
+  }
   stepLog("이미지 카드", `${cards.length}장 렌더링 완료`);
 
   // ⑩ 패키지 + 로그

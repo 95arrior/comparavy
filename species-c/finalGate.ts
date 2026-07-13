@@ -56,7 +56,13 @@ export function runQualityGate(draft: ArticleDraft, product: Product): QualityRe
 /** 제목-키워드 정합은 메인 키워드를 알아야 해서 별도 함수(§9-8). */
 export function checkTitleKeyword(title: string, mainKeyword: string): GateIssue | null {
   const toks = mainKeyword.split(/\s+/).filter((t) => t.length >= 2);
-  const missing = toks.filter((t) => !title.replace(/\s+/g, "").includes(t.replace(/\s+/g, "")));
+  const flat = title.replace(/\s+/g, "");
+  const missing = toks.filter((t) => !flat.includes(t.replace(/\s+/g, "")));
   if (missing.length) return { rule: "title-keyword", detail: `검색 제목에 키워드 토큰 누락: ${missing.join(", ")}` };
+  // ★앞 15자 훅(§9-8) — 핵심 토큰 중 하나는 제목 앞 15자 안에서 시작해야 한다(검색 결과 스캔은 앞머리만 읽힌다)
+  const head = [...title].slice(0, 15).join("");
+  if (!toks.some((t) => head.includes(t.replace(/\s+/g, "").slice(0, Math.min(4, t.length))))) {
+    return { rule: "title-hook15", detail: `제목 앞 15자("${head}") 안에 메인 키워드 토큰 없음 — 키워드를 앞으로` };
+  }
   return null;
 }
