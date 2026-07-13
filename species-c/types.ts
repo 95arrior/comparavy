@@ -62,6 +62,10 @@ export interface PsychBrief {
 }
 
 export interface ReviewMining {
+  /** ★A-1(라운드1): 코드가 직접 센 붙여넣기 표본 건수 — 모든 '분석했다' 주장은 이 숫자만 쓴다 */
+  sampleSize: number;
+  /** 별점 1~3 부정 리뷰 감지 수(A-2 경고용) */
+  negativeCount: number;
   totalParsed: number;
   satisfactionTop3: { point: string; mentions: number }[];
   complaintsTop2: { point: string; mentions: number }[];

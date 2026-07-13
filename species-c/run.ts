@@ -7,7 +7,7 @@ import { writeArticle } from "./article";
 import { buildBrief } from "./brief";
 import { renderChecklistCard, renderCompareCard, renderCtaCard, renderReviewCard } from "./cards";
 import { logPost } from "./db";
-import { runQualityGate, checkTitleKeyword } from "./finalGate";
+import { runQualityGate, checkTitleKeyword, checkTitleHook15 } from "./finalGate";
 import { runProductGate } from "./gate";
 import { intake } from "./intake";
 import { discoverKeywords } from "./keywords";
@@ -17,6 +17,20 @@ import type { ProductInput } from "./types";
 
 function stepLog(step: string, detail: string): void {
   console.log(`\n[${step}] ${detail}`);
+}
+
+// ★B-1: 불만 → "이런 분은 다시 생각하세요" 독자 조건문("소음이 생각보다 큼" → "무음에 가까운 조용함이 필요하시다면")
+async function rewriteComplaints(points: string[]): Promise<string[]> {
+  if (!points.length) return ["기대치가 아주 높으신 분"];
+  try {
+    const { askJson } = await import("./llm");
+    const out = await askJson<string[]>(
+      `리뷰 불만 포인트를 '이런 분은 다시 생각하세요' 목록의 독자 조건문으로 재작성하라. 각각 "~하시다면/~가 필요하시다면/~이 신경 쓰이신다면" 꼴의 자연스러운 한 구절(20자 이내), 이모지·과장 금지.\n예: "소음이 생각보다 큼" → "무음에 가까운 조용함이 필요하시다면"\n입력: ${JSON.stringify(points)}\nJSON 배열만 출력.`,
+      1500,
+    );
+    const clean = out.map((t) => String(t).trim()).filter((t) => t && [...t].length <= 26 && !/[\u{1F000}-\u{1FAFF}✅✔]/u.test(t));
+    return clean.length ? clean.slice(0, 2) : ["기대치가 아주 높으신 분"];
+  } catch { return ["기대치가 아주 높으신 분"]; }
 }
 
 async function main(): Promise<void> {
@@ -49,7 +63,8 @@ async function main(): Promise<void> {
     if (e instanceof ReviewShortage) { console.error(`\n리뷰 원료 부족 — ${e.message}\n(§6: 게이트 재확인으로 되돌림)`); process.exit(3); }
     throw e;
   }
-  stepLog("리뷰 마이닝", `${reviews.totalParsed}건 분석 — 만족: ${reviews.satisfactionTop3.map((s) => s.point).join(" / ")}`);
+  stepLog("리뷰 마이닝", `표본 ${reviews.sampleSize}건(코드 실측) · 부정 ${reviews.negativeCount}건 — 만족: ${reviews.satisfactionTop3.map((s) => s.point).join(" / ")}`);
+  if (reviews.negativeCount === 0) console.warn("  경고: 부정(별점 1~3) 리뷰 0건 — 낮은 평점 리뷰를 추가하면 단점 분석·신뢰도가 올라갑니다(권장 표본: 최신순 20건 + 평점 낮은순 10건)");
 
   // ⑤ 심리 브리프
   const brief = await buildBrief(product, keywords, reviews);
@@ -63,17 +78,17 @@ async function main(): Promise<void> {
   // ⑦+⑨ 본문 생성 + 품질 게이트 (실격 시 사유 주입 재생성 1회)
   let article = await writeArticle(product, keywords, brief, reviews);
   article.body = capQuotes(article.body);
-  let quality = runQualityGate(article, product);
-  const titleIssue = checkTitleKeyword(article.titleSearch, keywords.main.keyword);
-  if (titleIssue) quality = { pass: false, issues: [...quality.issues, titleIssue] };
+  const mining = { sampleSize: reviews.sampleSize, totalReviews: product.reviewCount };
+  const titleIssues = (t: string) => [checkTitleKeyword(t, keywords.main.keyword), checkTitleHook15(t)].filter((x): x is NonNullable<typeof x> => x != null);
+  let quality = runQualityGate(article, product, mining);
+  quality = { pass: quality.pass && titleIssues(article.titleSearch).length === 0, issues: [...quality.issues, ...titleIssues(article.titleSearch)] };
   if (!quality.pass) {
     stepLog("품질 게이트", `1차 실격 ${quality.issues.length}건 — 재생성`);
     quality.issues.forEach((i) => console.log(`  - [${i.rule}] ${i.detail}`));
     article = await writeArticle(product, keywords, brief, reviews); // 프롬프트가 규칙을 이미 담고 있어 재추첨로 통과 시도
     article.body = capQuotes(article.body);
-    quality = runQualityGate(article, product);
-    const t2 = checkTitleKeyword(article.titleSearch, keywords.main.keyword);
-    if (t2) quality = { pass: false, issues: [...quality.issues, t2] };
+    quality = runQualityGate(article, product, mining);
+    quality = { pass: quality.pass && titleIssues(article.titleSearch).length === 0, issues: [...quality.issues, ...titleIssues(article.titleSearch)] };
   }
   stepLog("품질 게이트", quality.pass ? "전 규칙 통과" : `실격 ${quality.issues.length}건(패키지에 경고 동봉)`);
   quality.issues.forEach((i) => console.log(`  - [${i.rule}] ${i.detail}`));
@@ -88,7 +103,8 @@ async function main(): Promise<void> {
   await renderCtaCard(product, ctaPng);
   cards.push({ file: ctaPng, kind: "cta" });
   const fit = reviews.buyContexts.slice(0, 3).map((b) => b.context);
-  const no = reviews.complaintsTop2.map((c) => `${c.point} 이 민감하다면`);
+  // ★B-1(라운드1 — 실측 버그: "소음이 생각보다 큼 이 민감하다면"): 불만 원문을 직결하지 않고 독자 조건문으로 재작성
+  const no = await rewriteComplaints(reviews.complaintsTop2.map((c) => c.point));
   const checkPng = path.join(tmp, "checklist.png");
   await renderChecklistCard(fit.length ? fit : ["같은 문제를 겪고 있다면"], no.length ? no : ["기대치가 아주 높다면"], checkPng);
   cards.push({ file: checkPng, kind: "checklist" });

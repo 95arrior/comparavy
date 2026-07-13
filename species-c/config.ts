@@ -92,5 +92,11 @@ export const ARTICLE_LENGTH = { min: 1400, max: 1900 };
 // max_tokens는 사고(thinking) 예산까지 포함 — 짜게 잡으면 JSON이 잘린다(기존 시스템 실측 교훈: thumb-copy 300 잘림 사고)
 export const LLM = { model: "claude-opus-4-8", briefMaxTokens: 6000, articleMaxTokens: 20000, keywordMaxTokens: 6000, reviewMaxTokens: 8000 };
 
+/** ★신뢰 회계(라운드1 A) — '3,128건 분석+6회 언급' 사고 박제 */
+export const SAMPLE_MIN_FOR_NUMBERS = 30; // 미만이면 수치 표기 금지(정성 서술)
+export const samplePhrase = (total: number, sample: number) => `전체 리뷰 ${total.toLocaleString()}건 중 최근 ${sample}건을 직접 정독했습니다.`;
+/** 실사용 입력 없으면 제목·본문·태그 금지(라운드1 B-2) */
+export const FAKE_REVIEW_WORDS = ["후기", "사용기", "내돈내산", "직접 써보니"];
+
 /** 태그 개수(§7-1 9번) */
 export const TAG_COUNT = 10;

@@ -6,6 +6,15 @@ import type { ReviewMining } from "./types";
 
 export class ReviewShortage extends Error {}
 
+/** ★A-1: 표본 건수는 LLM이 아니라 코드가 센다(사고 원인: 카운터 부재). 별점 마커 우선, 없으면 문단 블록. */
+export function countSample(text: string): { sampleSize: number; negativeCount: number } {
+  const stars = [...text.matchAll(/[★☆]\s*([1-5])(?:\.\d)?\b/g)];
+  const blocks = text.split(/\n+/).map((b) => b.trim()).filter((b) => [...b].length >= 25 && /[가-힣]/.test(b) && !/^\[/.test(b));
+  const sampleSize = stars.length >= 3 ? stars.length : Math.max(stars.length, blocks.length);
+  const negativeCount = stars.filter((m) => Number(m[1]) <= 3).length;
+  return { sampleSize, negativeCount };
+}
+
 export async function mineReviews(reviewsText: string, productName: string): Promise<ReviewMining> {
   const trimmed = reviewsText.trim();
   // 대략 리뷰 10건 미만 분량이면 원료 부족 — 게이트 재확인으로 되돌린다
@@ -31,5 +40,13 @@ export async function mineReviews(reviewsText: string, productName: string): Pro
   );
   if (!mined.satisfactionTop3?.length) throw new ReviewShortage("리뷰에서 만족 포인트를 추출하지 못했습니다 — 리뷰 텍스트를 더 붙여넣으세요");
   mined.vividPhrases = (mined.vividPhrases ?? []).map((p) => [...p].slice(0, REVIEW_QUOTE.maxLen).join("")).filter(Boolean).slice(0, 5);
+  // ★A-1: 표본은 코드 카운트가 진실 — LLM 추정치 덮어쓰기 + 언급 수는 표본을 넘을 수 없다(클램프)
+  const counted = countSample(reviewsText);
+  mined.sampleSize = counted.sampleSize;
+  mined.negativeCount = counted.negativeCount;
+  mined.totalParsed = counted.sampleSize;
+  const clamp = (m: number) => Math.max(1, Math.min(m, counted.sampleSize));
+  mined.satisfactionTop3 = mined.satisfactionTop3.map((x) => ({ ...x, mentions: clamp(x.mentions) }));
+  mined.complaintsTop2 = (mined.complaintsTop2 ?? []).map((x) => ({ ...x, mentions: clamp(x.mentions) }));
   return mined;
 }

@@ -51,13 +51,15 @@ async function render(node: Node, height: number, file: string): Promise<void> {
 }
 
 export async function renderReviewCard(p: Product, r: ReviewMining, file: string): Promise<void> {
+  // ★A-3(라운드1): 절대 횟수 금지 — 표본<30이면 정성 라벨, 이상이면 "표본 중 N건" 비율. 헤더는 표본 선언.
+  const label = (m: number) => (r.sampleSize >= 30 ? `${r.sampleSize}건 중 ${m}건` : m / Math.max(1, r.sampleSize) >= 0.5 ? "가장 자주 언급" : m / Math.max(1, r.sampleSize) >= 0.25 ? "여러 건에서 반복" : "일부 언급");
   const h = 560;
-  await render(frame(`리뷰 ${p.reviewCount.toLocaleString()}건 분석`, [
+  await render(frame(`전체 ${p.reviewCount.toLocaleString()}건 중 ${r.sampleSize}건 정독`, [
     txt("실구매자가 말하는 만족 포인트", { fontFamily: "GmarketSansBold", fontSize: 32, color: P.ink, marginBottom: 20 }),
-    ...r.satisfactionTop3.map((s, i) => row(`${i + 1}. ${s.point}`, `${s.mentions}회 언급`)),
+    ...r.satisfactionTop3.map((s, i) => row(`${i + 1}. ${s.point}`, label(s.mentions))),
     el("div", { display: "flex", height: 3, backgroundColor: P.ink, opacity: 0.15, margin: "14px 0 18px" }),
     txt("아쉽다는 얘기도 있습니다", { fontFamily: "GmarketSansBold", fontSize: 27, color: P.accent, marginBottom: 14 }),
-    ...r.complaintsTop2.map((c) => row(c.point, `${c.mentions}회`, true)),
+    ...r.complaintsTop2.map((c) => row(c.point, label(c.mentions), true)),
   ], h), h, file);
 }
 
