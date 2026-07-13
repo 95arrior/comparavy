@@ -2,7 +2,7 @@
 //  실측: 상황(슬롯 설명) 기반 프롬프트는 전부 비슷한 손·소품 클로즈업으로 수렴 — 키워드 히어로 문법이 다양하고 잘 나옴.
 //  스타일 4종: stage(글자 없는 무대 — 조판용) / object(오브젝트 히어로) / scene(캐릭터 장면) / typo3d(영문 약어만 — IRP·ISA).
 
-export type BannerStyle = "stage" | "object" | "scene" | "typo3d";
+export type BannerStyle = "stage" | "object" | "scene" | "typo3d" | "isometric" | "flatlay";
 
 /** 영문 약어 토큰(3D 타이포 허용 대상) — IRP, ISA, ETF, CMA, DSR, LTV 등. 한글 타이포는 AI가 깨뜨려 금지. */
 export function englishToken(text: string): string | null {
@@ -66,6 +66,22 @@ export function buildBannerPrompt(topic: string, style: BannerStyle, seed: numbe
       noText(topic),
     ].join(" ");
   }
+  if (style === "isometric") {
+    return [
+      `Cute isometric 3D miniature diorama about "${topic}" (understand only — never render as text): a tiny floating world on a rounded platform — miniature buildings, desks, documents and paths as LANDSCAPE elements derived from this topic, soft clay/plastic render, high-angle view.`,
+      `Tiny faceless mini-figures may walk around (no big characters, no faces). ${PROP_BAN} ${hintLine}`,
+      `Palette: ${palette}. Square 1:1, soft studio lighting, generous negative space, agency-grade (Behance level), NOT clipart.`,
+      noText(topic),
+    ].join(" ");
+  }
+  if (style === "flatlay") {
+    return [
+      `Top-down knolling flat lay about "${topic}" (understand only — never render as text): 4-6 topic-specific objects neatly arranged on a soft pastel surface, perfectly organized grid feel, soft shadows, paper-craft or matte 3D render.`,
+      `NO people. Objects must be derived from what THIS topic is about. ${PROP_BAN} ${hintLine}`,
+      `Palette: ${palette}. Square 1:1, agency-grade (Behance level), NOT clipart.`,
+      noText(topic),
+    ].join(" ");
+  }
   if (style === "object") {
     return [
       `Premium graphic banner for a Korean finance blog about "${topic}" (understand only — never render as text).`,
@@ -84,7 +100,8 @@ export function buildBannerPrompt(topic: string, style: BannerStyle, seed: numbe
 
 /** 본문용 스타일 로테이션 — 영문 약어가 있으면 3D 타이포 포함. seed로 시작점 회전(글 안에서 서로 다른 스타일). */
 export function bodyStyleRotation(topic: string): Exclude<BannerStyle, "stage">[] {
-  return englishToken(topic) ? ["object", "scene", "typo3d"] : ["object", "scene"];
+  // ★풀 확장(2026-07-13 실측: 약어 없는 주제는 풀 2종 → 슬롯 1·3이 같은 스타일로 떨어져 'LOAN 남자' 판박이) — 3슬롯까지 무조건 서로 다른 스타일
+  return englishToken(topic) ? ["object", "scene", "isometric", "typo3d", "flatlay"] : ["object", "scene", "isometric", "flatlay"];
 }
 
 /** ★썸네일 배경 = 카피 은유 극화(2026-07-13 유저 베스트 실측: "연체금만 쌓인다" → 청구서 더미에 깔린 사람).
