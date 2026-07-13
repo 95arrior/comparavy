@@ -30,8 +30,9 @@ export async function mineReviews(reviewsText: string, productName: string): Pro
       `- complaintsTop2: 불만 포인트 상위 2개 {point, mentions}`,
       `- vividPhrases: 반복 등장하는 구체 표현 3~5개 — 원문 그대로, 각 ${REVIEW_QUOTE.maxLen}자 이내로 자른다`,
       `- buyContexts: 어떤 상황의 사람들이 샀나 2~4개 {context, share("다수"/"일부" 수준)}`,
+      `- searchPhrases: 구매자들의 표현을 근거로 '이 사람들이 사기 전에 검색했을 법한 검색어' 5~10개 (리뷰에 실제로 나온 상황·표현 기반, 브랜드명 금지)`,
       ``,
-      `JSON만: {"totalParsed":0,"satisfactionTop3":[{"point":"","mentions":0}],"complaintsTop2":[{"point":"","mentions":0}],"vividPhrases":[""],"buyContexts":[{"context":"","share":""}]}`,
+      `JSON만: {"totalParsed":0,"satisfactionTop3":[{"point":"","mentions":0}],"complaintsTop2":[{"point":"","mentions":0}],"vividPhrases":[""],"buyContexts":[{"context":"","share":""}],"searchPhrases":[""]}`,
       ``,
       `--- 리뷰 원문 ---`,
       trimmed.slice(0, 12000),
@@ -46,6 +47,7 @@ export async function mineReviews(reviewsText: string, productName: string): Pro
   mined.negativeCount = counted.negativeCount;
   mined.totalParsed = counted.sampleSize;
   const clamp = (m: number) => Math.max(1, Math.min(m, counted.sampleSize));
+  mined.searchPhrases = (mined.searchPhrases ?? []).map((x) => String(x).trim()).filter((x) => x && [...x].length <= 25).slice(0, 10);
   mined.satisfactionTop3 = mined.satisfactionTop3.map((x) => ({ ...x, mentions: clamp(x.mentions) }));
   mined.complaintsTop2 = (mined.complaintsTop2 ?? []).map((x) => ({ ...x, mentions: clamp(x.mentions) }));
   return mined;

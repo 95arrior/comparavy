@@ -26,7 +26,25 @@ export function getDb(): DatabaseSync {
       performance_note text
     );
   `);
+  db.exec(`
+    create table if not exists keyword_candidates (
+      id integer primary key autoincrement,
+      created_at text not null,
+      source text not null,               -- 'review' 등(바늘 광산 1b)
+      product_name text,
+      keyword text not null unique,
+      monthly_searches integer,
+      blog_total integer,
+      tag text                            -- 'golden' | 'gold' | null
+    );
+  `);
   return db;
+}
+
+/** 리뷰 유래 검색어 씨앗 적재(1b) — 다음 글감 후보. 중복 키워드는 무시. */
+export function saveKeywordCandidates(rows: { source: string; productName: string; keyword: string; monthlySearches?: number | null; blogTotal?: number | null; tag?: string | null }[]): void {
+  const st = getDb().prepare(`insert or ignore into keyword_candidates (created_at, source, product_name, keyword, monthly_searches, blog_total, tag) values (?, ?, ?, ?, ?, ?, ?)`);
+  for (const r of rows) st.run(new Date().toISOString(), r.source, r.productName, r.keyword, r.monthlySearches ?? null, r.blogTotal ?? null, r.tag ?? null);
 }
 
 export function logPost(row: { productName: string; productUrl: string; mainKeyword: string; monthlySearches: number | null; blogTotal: number | null; articleType: string; gateResult: unknown; qualityResult: unknown; outDir: string }): void {

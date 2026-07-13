@@ -142,3 +142,13 @@ export function checkTitleKeyword(title: string, mainKeyword: string): GateIssue
   }
   return null;
 }
+
+/** ★1글 1바늘(키워드 확장 라운드 3): 제목에는 메인 키워드만 — 서브 키워드 문구가 제목에 오면 실격(서브는 본문 소제목에만). */
+export function checkTitleSingleNeedle(title: string, subKeywords: string[]): GateIssue | null {
+  const flat = title.replace(/\s+/g, "");
+  for (const sub of subKeywords) {
+    const sk = sub.replace(/\s+/g, "");
+    if (sk.length >= 4 && flat.includes(sk)) return { rule: "single-needle", detail: `제목에 서브 키워드 "${sub}" 포함 — 1글 1바늘(서브는 본문 소제목에만)` };
+  }
+  return null;
+}

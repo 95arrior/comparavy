@@ -43,11 +43,17 @@ export type KeywordLayer = "problem" | "purchase" | "info" | "owner";
 export interface KeywordCand {
   keyword: string;
   layer: KeywordLayer;
+  /** 후보 출처(바늘 광산): llm | autocomplete | matrix | review */
+  source: "llm" | "autocomplete" | "matrix" | "review";
   vol: number | null; // 월 검색량(모바일+PC) — null=실측 실패(폐기)
   blogTotal: number | null;
   journeyScore: number;
   finalScore: number;
   inBand: boolean;
+  /** ★황금(검색량 100~2,000 · blog_total<500 · 여정 만점) */
+  golden: boolean;
+  /** ★골드 뱃지(blog_total<300) */
+  goldBadge: boolean;
 }
 export interface KeywordResult { main: KeywordCand; subs: KeywordCand[]; all: KeywordCand[]; articleType: ArticleType }
 
@@ -62,6 +68,8 @@ export interface PsychBrief {
 }
 
 export interface ReviewMining {
+  /** 리뷰 유래 검색어 후보(1b) — 다음 글감의 씨앗, keyword_candidates 적재용 */
+  searchPhrases?: string[];
   /** ★A-1(라운드1): 코드가 직접 센 붙여넣기 표본 건수 — 모든 '분석했다' 주장은 이 숫자만 쓴다 */
   sampleSize: number;
   /** 별점 1~3 부정 리뷰 감지 수(A-2 경고용) */

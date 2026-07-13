@@ -7,8 +7,8 @@ import { writeArticle } from "./article";
 import { buildBrief } from "./brief";
 import { reviewCardV2, productFrameV2 } from "./design/cardsV2";
 import { fetchShopImage } from "./copied/naverApi";
-import { logPost } from "./db";
-import { runQualityGate, checkTitleKeyword, checkTitleHook15 } from "./finalGate";
+import { logPost, saveKeywordCandidates } from "./db";
+import { runQualityGate, checkTitleKeyword, checkTitleHook15, checkTitleSingleNeedle } from "./finalGate";
 import { runProductGate } from "./gate";
 import { intake } from "./intake";
 import { discoverKeywords } from "./keywords";
@@ -52,8 +52,11 @@ async function main(): Promise<void> {
 
   // ④ 키워드 발굴·실측
   const keywords = await discoverKeywords(product, Boolean(input.compareWith), gate.seasonScore);
-  stepLog("키워드", `메인 "${keywords.main.keyword}" (${keywords.main.layer}) — 월 ${keywords.main.vol?.toLocaleString()}회 / 문서 ${keywords.main.blogTotal?.toLocaleString()}개 / 밴드 ${keywords.main.inBand ? "내" : "외(차선)"}`);
-  keywords.subs.forEach((s) => console.log(`  서브: ${s.keyword} (월 ${s.vol?.toLocaleString()} / 문서 ${s.blogTotal?.toLocaleString()})`));
+  const badge = (c: { golden: boolean; goldBadge: boolean }) => (c.golden ? " ★황금" : "") + (c.goldBadge ? " [골드]" : "");
+  stepLog("키워드", `메인 "${keywords.main.keyword}" (${keywords.main.layer}·${keywords.main.source})${badge(keywords.main)} — 월 ${keywords.main.vol?.toLocaleString()}회 / 문서 ${keywords.main.blogTotal?.toLocaleString()}개 / 밴드 ${keywords.main.inBand ? "내" : "외(차선)"}`);
+  keywords.subs.forEach((s) => console.log(`  서브: ${s.keyword} (${s.source})${badge(s)} — 월 ${s.vol?.toLocaleString()} / 문서 ${s.blogTotal?.toLocaleString()}`));
+  const goldenAll = keywords.all.filter((c) => c.golden);
+  if (goldenAll.length) console.log(`  ★황금 발굴 ${goldenAll.length}개: ${goldenAll.slice(0, 5).map((c) => c.keyword).join(" / ")}`);
   console.log(`  글 유형: ${keywords.articleType}`);
 
   // ⑥ 리뷰 마이닝 (⑤ 브리프가 리뷰 신호를 쓰므로 먼저)
@@ -68,6 +71,13 @@ async function main(): Promise<void> {
   if (reviews.negativeCount === 0) console.warn("  경고: 부정(별점 1~3) 리뷰 0건 — 낮은 평점 리뷰를 추가하면 단점 분석·신뢰도가 올라갑니다(권장 표본: 최신순 20건 + 평점 낮은순 10건)");
 
   // ⑤ 심리 브리프
+  // 1b: 리뷰 유래 검색어 씨앗 적재(다음 글감 후보 — keyword_candidates)
+  if (reviews.searchPhrases?.length) {
+    try {
+      saveKeywordCandidates(reviews.searchPhrases.map((kw) => ({ source: "review", productName: product.name, keyword: kw })));
+      console.log(`  리뷰 유래 씨앗 ${reviews.searchPhrases.length}개 적재(keyword_candidates)`);
+    } catch { /* 적재 실패 무해 */ }
+  }
   const brief = await buildBrief(product, keywords, reviews);
   stepLog("심리 브리프", brief.scene);
 
@@ -80,7 +90,7 @@ async function main(): Promise<void> {
   let article = await writeArticle(product, keywords, brief, reviews);
   article.body = capQuotes(article.body);
   const mining = { sampleSize: reviews.sampleSize, totalReviews: product.reviewCount };
-  const titleIssues = (t: string) => [checkTitleKeyword(t, keywords.main.keyword), checkTitleHook15(t)].filter((x): x is NonNullable<typeof x> => x != null);
+  const titleIssues = (t: string) => [checkTitleKeyword(t, keywords.main.keyword), checkTitleHook15(t), checkTitleSingleNeedle(t, keywords.subs.map((s) => s.keyword))].filter((x): x is NonNullable<typeof x> => x != null);
   let quality = runQualityGate(article, product, mining);
   quality = { pass: quality.pass && titleIssues(article.titleSearch).length === 0, issues: [...quality.issues, ...titleIssues(article.titleSearch)] };
   if (!quality.pass) {

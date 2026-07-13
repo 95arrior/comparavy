@@ -85,3 +85,48 @@ export async function fetchShopImage(productName: string): Promise<Buffer | null
     return Buffer.from(await imgRes.arrayBuffer());
   } catch { return null; }
 }
+
+// copied from lib/naverAutocomplete.ts — 독립 유지, 원본과 동기화하지 않음.
+/** 네이버 자동완성(비공식·graceful) — 실패 시 빈 배열. */
+export async function fetchAutocomplete(query: string): Promise<string[]> {
+  const q = (query || "").trim();
+  if (q.length < 2) return [];
+  try {
+    const url = `https://ac.search.naver.com/nx/ac?q=${encodeURIComponent(q)}&con=0&frm=nv&ans=2&r_format=json&r_enc=UTF-8&r_unicode=0&t_koreng=1&run=2&rev=4&q_enc=UTF-8&st=100`;
+    const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0", Referer: "https://search.naver.com/" } });
+    if (!res.ok) return [];
+    const j = (await res.json()) as { items?: unknown[][] };
+    const items = j?.items?.[0];
+    if (!Array.isArray(items)) return [];
+    const out: string[] = [];
+    for (const row of items) {
+      const t = Array.isArray(row) ? String(row[0] ?? "").trim() : "";
+      if (t && t !== q && !out.includes(t)) out.push(t);
+    }
+    return out.slice(0, 10);
+  } catch { return []; }
+}
+
+/** 자동완성 재귀 확장(깊이 2·중복 제거) — 시드당 1차 제안 → 상위 제안 재확장. */
+export async function expandAutocomplete(seeds: string[], perSeedCap = 8): Promise<string[]> {
+  const seen = new Set<string>(seeds.map((s) => s.replace(/\s+/g, "")));
+  const out: string[] = [];
+  for (const seed of seeds) {
+    const d1 = await fetchAutocomplete(seed);
+    const picked1 = d1.slice(0, perSeedCap);
+    for (const k of picked1) {
+      const nk = k.replace(/\s+/g, "");
+      if (!seen.has(nk)) { seen.add(nk); out.push(k); }
+    }
+    for (const k of picked1.slice(0, 3)) { // 깊이 2 — 상위 3개만 재확장(폭주 방지)
+      const d2 = await fetchAutocomplete(k);
+      for (const k2 of d2.slice(0, 5)) {
+        const nk2 = k2.replace(/\s+/g, "");
+        if (!seen.has(nk2)) { seen.add(nk2); out.push(k2); }
+      }
+      await new Promise((r) => setTimeout(r, 120));
+    }
+    await new Promise((r) => setTimeout(r, 120));
+  }
+  return out;
+}

@@ -1,7 +1,8 @@
 // [species-c] 자체 회귀 — 실패 사례가 나올 때마다 여기 박제(기존 시스템의 회귀 문화 복제).
 // 실행: npx tsx species-c/tests/check-species-c.mjs
 import { runProductGate } from "../gate.ts";
-import { runQualityGate, checkTitleKeyword, checkTitleHook15 } from "../finalGate.ts";
+import { runQualityGate, checkTitleKeyword, checkTitleHook15, checkTitleSingleNeedle } from "../finalGate.ts";
+import { judgeGolden } from "../keywords.ts";
 import { countSample } from "../reviews.ts";
 import { DISCLOSURE_TEXT, MARKER_LINK_1, MARKER_LINK_2, MARKER_PRODUCT_IMG, MARKER_REVIEW_CARD } from "../config.ts";
 
@@ -91,6 +92,18 @@ const okDraft = { titleSearch: "차 에어컨 냄새, 3분이면 잡히는 이�
   t("v2 — 제목 이모지 실격", !runQualityGate({ ...okDraft, titleSearch: okDraft.titleSearch + " 😊" }, product, M).pass);
   t("v2 — 특수 심볼(화살표) 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n순서를 지키세요 → 중요합니다" }, product, M).pass);
   t("v2 — 도입 대사 31자 초과 실격", !runQualityGate({ ...okDraft, body: okBody.replace('"이 냄새 뭐야, 또 시작이네"', '"이 냄새 뭐야 도대체 왜 매일 아침마다 이렇게 지독하게 올라오는 거야"') }, product, M).pass);
+}
+
+// ── 키워드 확장 라운드(황금 판정·1글 1바늘)
+{
+  t("황금 — 3조건 충족", judgeGolden(800, 400, 2).golden === true);
+  t("황금 — 검색량 미달(99) 탈락", judgeGolden(99, 400, 2).golden === false);
+  t("황금 — 검색량 초과(2001) 탈락", judgeGolden(2001, 400, 2).golden === false);
+  t("황금 — 경쟁 초과(500) 탈락", judgeGolden(800, 500, 2).golden === false);
+  t("황금 — 여정 미만점 탈락", judgeGolden(800, 400, 1).golden === false);
+  t("골드 뱃지 — blog_total<300", judgeGolden(800, 299, 1).goldBadge === true);
+  t("1바늘 — 서브 문구가 제목에 오면 실격", checkTitleSingleNeedle("차 에어컨 냄새와 차량용 탈취제 추천", ["차량용 탈취제 추천"]) !== null);
+  t("1바늘 — 메인만 있으면 통과", checkTitleSingleNeedle("차 에어컨 냄새, 3분이면 잡히는 이유", ["차량용 탈취제 추천"]) === null);
 }
 
 console.log(fail ? `\n${fail} FAILED` : "\nALL PASS");

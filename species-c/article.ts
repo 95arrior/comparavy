@@ -25,7 +25,7 @@ export async function writeArticle(p: Product, kw: KeywordResult, brief: PsychBr
       ``,
       `[상품] ${p.name} / ${p.price.toLocaleString()}원${p.discountPct ? ` (할인 ${p.discountPct}%)` : ""} / 평점 ${p.rating} / 리뷰 ${p.reviewCount.toLocaleString()}건 / 카테고리 ${p.category}`,
       p.myExperience ? `[실사용 입력 — 이 범위 안에서만 직접 경험 서술 허용] ${p.myExperience}` : `[실사용 입력 없음 — 직접 경험 서술 전면 금지, 리뷰 집계 프레임만]`,
-      `[메인 키워드] ${kw.main.keyword} (제목·첫 문단에 자연 포함) / 서브: ${kw.subs.map((s) => s.keyword).join(", ")}`,
+      `[메인 키워드 — 1글 1바늘] "${kw.main.keyword}" 이 문구가 제목에 자연스럽게 포함되어야 한다(변형 금지). ★서브 키워드(${kw.subs.map((s) => s.keyword).join(", ")})는 제목에 절대 넣지 말고 본문 소제목에만 배치한다.`,
       `[리뷰 집계 실측 — 이 데이터만 사용, 창작 금지]`,
       `★신뢰 회계(절대 조항): 붙여넣기 표본은 ${reviews.sampleSize}건이다. 분석 주장("정독했다·읽어봤다")에는 오직 이 표본 수만 쓴다 — 전체 리뷰 수(${p.reviewCount.toLocaleString()}건)로 분석했다고 말하면 실격. 리뷰 집계 섹션은 정확히 이 문장으로 연다: "${samplePhrase(p.reviewCount, reviews.sampleSize)}"`,
       reviews.sampleSize < SAMPLE_MIN_FOR_NUMBERS
