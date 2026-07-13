@@ -19,6 +19,9 @@ const cases = [
   { c: { keyword: "환경공단 해외진출 지원금", title: "환경공단 순환경제 우수기업 해외진출 지원금 신청" }, drop: "b2b_audience" },
   { c: { keyword: "원산지검증 대응 지원 신청", title: "원산지검증 대응 지원 신청, 7월 18일 마감" }, drop: "b2b_audience" },
   { c: { keyword: "청년 해외취업 지원금", title: "청년 해외취업 K-Move 지원금, 신청 방법" }, drop: null },
+  { c: { keyword: "광주 입학지원금", title: "광주 신입생 30만원 입학지원금 신청 자격·일정·서류" }, drop: "region_niche" },
+  { c: { keyword: "서울 전세보증금 반환", title: "서울 전세보증금 반환 절차, 집주인이 안 줄 때" }, drop: null },
+  { c: { keyword: "인천공항 환전", title: "인천공항 환전 수수료 아끼는 법" }, drop: null },
 ];
 let fail = 0;
 for (const { c, drop } of cases) {
