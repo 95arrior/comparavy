@@ -56,7 +56,7 @@ if (is_home() && !is_paged()) : $pop = ateflo_popular_posts(8); if ($pop) : ?>
       <a class="al-card" href="<?php echo esc_url(get_permalink($p)); ?>">
         <span class="al-thumb"><span class="al-rank r<?php echo min($rank, 4); ?>"><?php echo $rank; ?>위</span><?php if ($tu) : ?><img src="<?php echo esc_url($tu); ?>" alt="" loading="lazy" width="150" height="110"><?php else : ?><span class="ph"><?php echo esc_html(mb_substr($p->post_title, 0, 1)); ?></span><?php endif; ?></span>
         <span class="al-title"><?php echo esc_html(wp_trim_words($p->post_title, 10, '…')); ?></span>
-        <?php if ($vs > 0) : ?><span class="al-views">조회 <?php echo number_format($vs); ?></span><?php endif; ?>
+        <?php if ($vs > 0) : ?><span class="al-views"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.6"/></svg> <?php echo number_format($vs); ?></span><?php endif; ?>
       </a>
       <?php endforeach; ?>
     </div>
@@ -67,12 +67,12 @@ if (is_home() && !is_paged()) : $pop = ateflo_popular_posts(8); if ($pop) : ?>
 <?php endif; endif; ?>
 
 <?php // ★최신 글 텍스트 리스트(2026-07-12 유저: 글 쌓이면 더 보여주기) — 위 카드 10개 이후 15개, 제목+날짜만
-if (is_home() && !is_paged()) : $more = new WP_Query(['post_type' => 'post', 'post_status' => 'publish', 'posts_per_page' => 12, 'offset' => 4, 'no_found_rows' => true]);
-if ($more->have_posts()) : ?>
+if (is_home() && !is_paged()) : $txq = new WP_Query(['post_type' => 'post', 'post_status' => 'publish', 'posts_per_page' => 12, 'offset' => 4, 'no_found_rows' => true]);
+if ($txq->have_posts()) : ?>
 <section class="txtlist">
   <h2 class="sec-title">더 볼만한 글</h2>
   <ul>
-    <?php while ($more->have_posts()) : $more->the_post(); ?>
+    <?php while ($txq->have_posts()) : $txq->the_post(); ?>
     <li><a href="<?php the_permalink(); ?>"><span class="t"><?php the_title(); ?></span><span class="d"><?php echo get_the_date('n월 j일'); ?></span></a></li>
     <?php endwhile; wp_reset_postdata(); ?>
   </ul>

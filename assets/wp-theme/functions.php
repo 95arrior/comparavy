@@ -1,4 +1,14 @@
 <?php
+/* ★임시 디버그(2026-07-13 홈 500 진단) — ?ateflo_debug=1 요청에서만 마지막 치명 오류를 페이지 끝에 출력 */
+if (isset($_GET['ateflo_debug'])) {
+  register_shutdown_function(function () {
+    $e = error_get_last();
+    if ($e && in_array($e['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
+      echo '<pre style="background:#fff;color:#c00;padding:20px;font-size:14px">ATEFLO DEBUG: ' . htmlspecialchars($e['message'] . ' @ ' . $e['file'] . ':' . $e['line']) . '</pre>';
+    }
+  });
+}
+
 /**
  * Ateflo Toss — 초경량·SEO 100 지향.
  * 원칙: 외부 요청 0, JS 0, 렌더 차단 최소, 메타(title/description/OG/canonical) 완비.
