@@ -89,7 +89,8 @@ export const CARD = {
 export const ARTICLE_LENGTH = { min: 1400, max: 1900 };
 
 /** LLM */
-export const LLM = { model: "claude-opus-4-8", briefMaxTokens: 1200, articleMaxTokens: 6000, keywordMaxTokens: 1500, reviewMaxTokens: 2000 };
+// max_tokens는 사고(thinking) 예산까지 포함 — 짜게 잡으면 JSON이 잘린다(기존 시스템 실측 교훈: thumb-copy 300 잘림 사고)
+export const LLM = { model: "claude-opus-4-8", briefMaxTokens: 6000, articleMaxTokens: 20000, keywordMaxTokens: 6000, reviewMaxTokens: 8000 };
 
 /** 태그 개수(§7-1 9번) */
 export const TAG_COUNT = 10;
