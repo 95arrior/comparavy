@@ -144,7 +144,7 @@ export default function WpHome({ blogName, blogId, articles, credits, onOpenArti
         <div className="tk-gauge mt-5 h-2.5 w-full rounded-full bg-[#E8EDF7]">
           <div className="tk-gauge-fill" style={{ width: `${Math.max(pct, 3)}%` }} />
         </div>
-        <p className="mt-4 text-[13px] text-[color:var(--color-text-sub)]">매일 자동으로 2편씩 쌓여요 · 크레딧 {credits.toLocaleString("ko-KR")}</p>
+        <p className="mt-4 text-[13px] text-[color:var(--color-text-sub)]">매일 자동 2편 권장 · 원하면 더 만들 수 있어요 · 크레딧 {credits.toLocaleString("ko-KR")}</p>
       </div>
 
       {/* 크레딧 부족 — 자동 발행이 멈추기 전에(충전 동선) */}

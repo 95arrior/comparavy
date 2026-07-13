@@ -5,7 +5,7 @@ import { pickWpTopic } from "@/lib/googleTopics";
 import { adsenseUnsafe } from "@/lib/cardFinalGate";
 import { spendCredits, addCredits } from "@/lib/credits";
 import { WP_GENERATE_COST } from "@/lib/creditPacks";
-import { WP_DAILY_CAP } from "@/lib/scoreWeights";
+import { WP_DAILY_HARD_CAP } from "@/lib/scoreWeights";
 import { stripNaverArtifacts } from "@/lib/wordpress";
 import { generateWpBannersToStorage, insertBanners } from "@/lib/wpIllustration";
 import { stylePersonaInstruction } from "@/lib/stylePersona";
@@ -31,10 +31,10 @@ export async function POST() {
   }
   const db = createSupabaseAdminClient();
 
-  // 일 상한(WP_DAILY_CAP=2) — 크론과 동일 기준(오늘 이 블로그 생성분)
+  // 수동 하드 상한 10(2026-07-13 유저: 권장은 2편 워딩 유지, 발행은 10편까지)
   const { data: today } = await db.from("articles").select("id").eq("blog_id", b.id)
-    .gte("created_at", `${kstDay()}T00:00:00+09:00`).limit(WP_DAILY_CAP);
-  if ((today?.length ?? 0) >= WP_DAILY_CAP) return NextResponse.json({ error: "오늘 글 2편이 이미 준비됐어요. 사이트 건강을 위해 하루 두 편이 안전선이에요." }, { status: 429 });
+    .gte("created_at", `${kstDay()}T00:00:00+09:00`).limit(WP_DAILY_HARD_CAP);
+  if ((today?.length ?? 0) >= WP_DAILY_HARD_CAP) return NextResponse.json({ error: "오늘 10편을 모두 채웠어요. 내일 다시 만들 수 있어요." }, { status: 429 });
 
   const sub = b.sub_category || (b as { topic?: string }).topic || "";
   const pick = await pickWpTopic(user.id, sub);
