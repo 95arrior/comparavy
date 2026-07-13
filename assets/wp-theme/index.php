@@ -46,7 +46,7 @@
 <nav class="pagination" aria-label="페이지"><?php echo paginate_links(['prev_text' => '이전', 'next_text' => '다음']); ?></nav>
 
 <?php // ★인기 캐러셀 v2(2026-07-13 유저): 8개·순위 뱃지·조회수·좌우 버튼·우측 페이드(스크롤바 숨김)
-if (is_home() && !is_paged()) : $pop = ateflo_popular_posts(8); if ($pop) : ?>
+if (is_home() || is_category()) : $pop = ateflo_popular_posts(8); if ($pop) : ?>
 <section class="popular">
   <h2 class="sec-title">많이 읽은 글</h2>
   <div class="car">
@@ -67,7 +67,7 @@ if (is_home() && !is_paged()) : $pop = ateflo_popular_posts(8); if ($pop) : ?>
 <?php endif; endif; ?>
 
 <?php // ★최신 글 텍스트 리스트(2026-07-12 유저: 글 쌓이면 더 보여주기) — 위 카드 10개 이후 15개, 제목+날짜만
-if (is_home() && !is_paged()) : $txq = new WP_Query(['post_type' => 'post', 'post_status' => 'publish', 'posts_per_page' => 12, 'offset' => 4, 'no_found_rows' => true]);
+if (is_home()) : $atf_pg = max(1, (int) get_query_var('paged')); $txq = new WP_Query(['post_type' => 'post', 'post_status' => 'publish', 'posts_per_page' => 12, 'offset' => 4 * $atf_pg, 'no_found_rows' => true]); // ★2.4.3: 2페이지부터도 하단 섹션 유지(offset을 페이지에 맞춰 이동)
 if ($txq->have_posts()) : ?>
 <section class="txtlist">
   <h2 class="sec-title">더 볼만한 글</h2>

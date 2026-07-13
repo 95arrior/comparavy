@@ -1,7 +1,7 @@
 /*
 Theme Name: Ateflo Toss
 Description: 토스풍 초경량 블로그 테마 — 외부 요청 0, JS 0, PageSpeed 100 지향. ateflo 발행 글(.ateflo-post)과 완전 호환.
-Version: 2.4.2
+Version: 2.4.3
 Author: swooosy
 Text Domain: ateflo-toss
 */
@@ -12,6 +12,8 @@ Text Domain: ateflo-toss
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%}
+/* ★가로 잠금(2026-07-13 모바일 실측: car-btn -10px 돌출로 화면이 옆으로 밀림) */
+html,body{overflow-x:hidden;max-width:100%}
 body{
   background:var(--bg); color:var(--ink);
   font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,"Segoe UI","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
@@ -147,6 +149,8 @@ body.admin-bar .site-head{top:32px}
 .car-btn:hover{transform:scale(1.08)}
 .car-prev{left:-10px}
 .car-next{right:-10px}
+/* 모바일은 손가락 스와이프가 기본 — 버튼 숨겨 돌출·오탭 제거, 페이드 힌트만 유지 */
+@media (max-width:768px){.car-btn{display:none}.car-prev,.car-next{left:auto;right:auto}}
 .al-rank{position:absolute;top:8px;left:8px;z-index:1;padding:3px 9px;border-radius:8px;font-size:12.5px;font-weight:800;color:#fff;line-height:1.2;box-shadow:0 2px 8px rgba(0,0,0,.25);text-shadow:0 1px 2px rgba(0,0,0,.3)}
 .al-rank.r1{background:#F5A800}
 .al-rank.r2{background:#8B95A1}

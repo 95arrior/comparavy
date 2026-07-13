@@ -83,7 +83,7 @@ add_filter('the_content', function ($html) {
 
 /* ── 목록 썸네일: 대표이미지 → 본문 첫 이미지 폴백(자동 발행 글 대비) ── */
 function ateflo_thumb_url($post_id): string {
-  if (has_post_thumbnail($post_id)) return get_the_post_thumbnail_url($post_id, 'medium') ?: '';
+  if (has_post_thumbnail($post_id)) return get_the_post_thumbnail_url($post_id, 'large') ?: ''; // ★2.4.3: medium(300px)이 모바일 풀폭 카드에서 확대 열화
   $content = get_post_field('post_content', $post_id);
   if (preg_match('/<img[^>]+src="([^"]+)"/i', $content, $m)) return $m[1];
   return '';
