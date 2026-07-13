@@ -7,7 +7,7 @@ import { breakThumbCopy } from "./thumbCopyBreak";
 /** 제목에서 훅 문구 추출 — "개인연금 세액공제, 연봉별로 얼마나 돌려받을 수 있을까" → "연봉별로 얼마나 돌려받을까" */
 export function hookCopyFromTitle(title: string | null | undefined, keyword: string): string {
   const t = String(title ?? "").trim();
-  const parts = t.split(/[,，]/);
+  const parts = t.split(/[,，:：|｜]/); // 쉼표·콜론·파이프 — 뒤쪽이 훅
   let hook = (parts.length >= 2 ? parts.slice(1).join(" ") : t).trim();
   // 어미 압축: "돌려받을 수 있을까"→"돌려받을까", "받을 수 있나요"→"받나요" (형태소 경계 유지)
   hook = hook.replace(/을?\s*수\s*있(을까요?|나요)\s*\??$/, (m) => (/나요/.test(m) ? "나요" : "을까")).replace(/\?$/, "").trim();

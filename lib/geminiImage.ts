@@ -3,7 +3,7 @@
 //  하드 규칙은 buildBodyPrompt/buildThumbBgPrompt 두 순수 함수에 코드로 강제(단위 테스트 대상).
 
 const MODEL = "gemini-2.5-flash-image";
-import { buildBannerPrompt, bodyStyleRotation } from "./bannerPrompts";
+import { buildBannerPrompt, bodyStyleRotation, buildThumbMetaphorPrompt } from "./bannerPrompts";
 
 export function imageReady(): boolean {
   return Boolean(process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY); // 어느 프로바이더든 키 하나면 가동
@@ -292,9 +292,9 @@ export async function generateBlogImage(slotDesc: string, articleTitle: string, 
 /** 대표이미지 AI 배경 1장(1:1, base64) — 한글은 코드(satori)가 합성. 실패는 호출측이 코드 폴백. */
 export async function generateThumbBackground(bgStyleHint: string, paletteHint: string, userSeed?: string, topic?: string, opts?: { forceStyle?: "photo" | "toss"; centerText?: boolean; copyText?: string; variant?: number }): Promise<{ base64: string; mime: string; provider?: string }> {
   const seed = (fnv((userSeed ?? "") + ":bg" + String(opts?.variant ?? 0)) + Math.floor(Math.random() * 1e9)) >>> 0;
-  // ★공용 무대(stage) 문법으로 통일(2026-07-13 유저: 배경이 주제와 무관·전부 비슷) —
-  //  주제 오브젝트는 가장자리, 중앙은 문구 자리(조판용 설계). 팔레트 6종 회전으로 색 다양성.
-  const prompt = buildBannerPrompt((topic ?? bgStyleHint ?? "").trim() || "재테크", "stage", seed);
+  // ★카피 은유 극화(2026-07-13 유저 베스트 실측 — 추상 무대는 주제 무관 판정): 훅 문구의 감정 포인트를 장면으로.
+  //  중앙 비움(조판 자리)·팔레트 회전·디자인 캐릭터는 유지. 영문 소품 라벨(INVOICE 등)만 허용, 한글 금지.
+  const prompt = buildThumbMetaphorPrompt((topic ?? bgStyleHint ?? "").trim() || "재테크", opts?.copyText, seed);
   return callImage(prompt, "1:1");
 }
 

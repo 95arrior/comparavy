@@ -63,3 +63,21 @@ export function buildBannerPrompt(topic: string, style: BannerStyle, seed: numbe
 export function bodyStyleRotation(topic: string): Exclude<BannerStyle, "stage">[] {
   return englishToken(topic) ? ["object", "scene", "typo3d"] : ["object", "scene"];
 }
+
+/** ★썸네일 배경 = 카피 은유 극화(2026-07-13 유저 베스트 실측: "연체금만 쌓인다" → 청구서 더미에 깔린 사람).
+ *  추상 무대가 아니라 '문구의 감정 포인트'를 연극적으로 그린다. 중앙은 조판 자리로 비움. */
+export function buildThumbMetaphorPrompt(topic: string, copyText: string | undefined, seed: number): string {
+  const palette = BANNER_PALETTES[seed % BANNER_PALETTES.length];
+  const copy = (copyText ?? "").replace(/\n/g, " ").trim();
+  return [
+    `Premium editorial illustration for a Korean finance blog thumbnail. Topic: "${topic}" (understand only — never render as text).`,
+    copy
+      ? `THE COPY THIS IMAGE ILLUSTRATES (understand only — never render as Korean text): "${copy}". Extract its ONE emotional point and stage it as a BOLD THEATRICAL VISUAL METAPHOR the reader feels instantly — e.g. unpaid bills piling up → a person buried under giant invoice papers; a deadline → a calendar page burning; starting a business → a young person proudly opening a small shop door with an OPEN sign. The metaphor must clearly belong to THIS topic — never generic finance props.`
+      : "Stage ONE bold visual metaphor that instantly says what this topic is about — never generic finance props.",
+    "A person MAY appear and often should (people make metaphors emotional). " +
+      "CHARACTER SPEC: a DESIGNED flat-vector character — distinct hairstyle, real outfit, expressive posture, head:body about 1:3, minimal face (dot eyes) is fine, never a plain circle-head blob.",
+    "COMPOSITION: subjects pushed toward top/bottom/edges — the CENTER band of the frame stays relatively calm and low-detail (large Korean typography will be overlaid dead-center later).",
+    `Style: award-winning editorial illustration (fintech campaign grade) — rich color blocking, soft airbrush shading, subtle grain. Palette: ${palette}. Square 1:1.`,
+    "Small ENGLISH labels on props are allowed when natural (INVOICE, TAX, OPEN — one or two words max). ABSOLUTELY NO Korean characters, no sentences, no watermarks, no logos, no UI.",
+  ].join(" ");
+}
