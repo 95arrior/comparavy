@@ -4,6 +4,7 @@ import { isAdminEmail } from "@/lib/adminStats";
 import { spendCredits, addCredits } from "@/lib/credits";
 import { IMAGE_COST } from "@/lib/creditPacks";
 import { generateBlogImage, imageReady, GEMINI_IMAGE_MODEL } from "@/lib/geminiImage";
+import { generateTypoBannerDataUrl } from "@/lib/wpIllustration";
 import { composeThumbnail } from "@/lib/composeThumbnail";
 import { AI_IMAGES_ENABLED } from "@/config/publish";
 import { logUsage } from "@/lib/usageLog";
@@ -180,7 +181,22 @@ export async function POST(request: Request) {
         }
       }
     } catch { /* 없어도 무해 */ }
-    const img = await generateBlogImage(slot, title, user.id, { thumbnail, context: paraContext });
+    // ★대표(1번) 슬롯 = 무대 배경 + 키워드 G마켓 산스 조판(유저 원칙 2026-07-13: 이미지 속 텍스트는 항상 조판 — AI 한글 금지)
+    let img: { base64: string; mime: string; provider?: string };
+    let typoDone = false;
+    if (!thumbnail && slotIdx === 0 && articleId) {
+      try {
+        const { data: art3 } = await supabase.from("articles").select("keyword, blog_id").eq("id", articleId).eq("user_id", user.id).maybeSingle();
+        let brand = "";
+        try {
+          if (art3?.blog_id) { const { data: bp3 } = await supabase.from("blog_profiles").select("blog_name").eq("id", art3.blog_id).single(); brand = (bp3?.blog_name ?? "").trim(); }
+        } catch { /* ignore */ }
+        const d = await generateTypoBannerDataUrl(String(art3?.keyword ?? title).trim() || title, `${articleId}-rep`, brand);
+        if (d) { img = { base64: d.split(",")[1]!, mime: "image/png" }; typoDone = true; }
+      } catch { /* 폴백 — 일반 배너 */ }
+    }
+    if (!typoDone) img = await generateBlogImage(slot, title, user.id, { thumbnail, context: paraContext, slotIdx });
+    img = img!;
     void logUsage({ userId: user.id, model: GEMINI_IMAGE_MODEL, kind: "image", inputTokens: 0, outputTokens: 1290 });
     // 스토리지 업로드 — URL로 반환(재방문·기기 간 유지). 실패하면 dataUrl 폴백.
     let url: string | null = null;

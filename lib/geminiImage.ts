@@ -279,14 +279,16 @@ async function callGemini(prompt: string, aspectRatio: "16:9" | "1:1"): Promise<
 }
 
 /** 본문 이미지 1장(실사, base64). userSeed로 계정 축 + 요청 난수 변주. 실패 시 throw. */
-export async function generateBlogImage(slotDesc: string, articleTitle: string, userSeed?: string, _opts?: { thumbnail?: boolean; context?: string }): Promise<{ base64: string; mime: string; provider?: string }> {
-  // ★키워드 배너 문법(2026-07-13 유저 확정 — WP에서 실증) — 슬롯 설명(상황)은 버린다:
-  //  상황 프롬프트는 전부 비슷한 손·소품 클로즈업으로 수렴(실측). 주제를 그리는 오브젝트/장면/3D타이포 로테이션.
-  //  slotDesc는 스타일 회전 시드로만 사용(같은 글 안에서 슬롯마다 다른 스타일 보장).
-  const seed = (fnv((userSeed ?? "") + ":" + slotDesc) + Math.floor(Math.random() * 1e9)) >>> 0;
+export async function generateBlogImage(slotDesc: string, articleTitle: string, userSeed?: string, _opts?: { thumbnail?: boolean; context?: string; slotIdx?: number | null }): Promise<{ base64: string; mime: string; provider?: string }> {
+  // ★슬롯별 결정론 로테이션(2026-07-13 유저 실측: 같은 글 1·3번이 동일 — 랜덤이 원인) —
+  //  스타일은 (글 시드+슬롯 번호)로 강제 분산, 무대·팔레트도 슬롯마다 회전. slotDesc는 소재 명사 힌트로만.
+  const base = fnv(`${articleTitle}|${userSeed ?? ""}`);
+  const slotN = _opts?.slotIdx ?? (fnv(slotDesc) % 7);
   const styles = bodyStyleRotation(articleTitle);
-  const style = styles[seed % styles.length]!;
-  return callImage(buildBannerPrompt(articleTitle, style, seed), "16:9");
+  const style = styles[(base + slotN) % styles.length]!;
+  const seed = (base + slotN * 13 + Math.floor(Math.random() * 7)) >>> 0; // 소폭 랜덤 — 재생성 시 변주
+  const hint = slotDesc.replace(/^예\s*[:：]\s*/, "").replace(/장면|모습|전경|풍경|공간/g, " ").trim();
+  return callImage(buildBannerPrompt(articleTitle, style, seed, hint), "16:9");
 }
 
 /** 대표이미지 AI 배경 1장(1:1, base64) — 한글은 코드(satori)가 합성. 실패는 호출측이 코드 폴백. */

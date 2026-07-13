@@ -20,20 +20,8 @@ export async function generateWpBanners(keyword: string, articleId: string, n = 
   const seed = fnv(`${keyword}|${articleId}`);
   const out: string[] = [];
   // 1장째: 무대 배경 → 우리 조판(썸네일과 동일 파이프 — 유저 확정: 글자는 G마켓 산스)
-  try {
-    const bg = await callImage(buildBannerPrompt(keyword, "stage", seed), "1:1");
-    const png = await renderThumbnail({
-      mainCopy: breakThumbCopy(keyword.trim().slice(0, 20)),
-      identity: visualIdentityFor(articleId),
-      press: { brandName: brandName || "" },
-      articleId,
-      bgDataUrl: `data:${bg.mime};base64,${bg.base64}`,
-      fontTitle: "GmarketSansBold",
-    });
-    out.push(`data:image/png;base64,${png.toString("base64")}`);
-  } catch (e) {
-    console.error("[wp] 무대 배너 실패 — 건너뜀:", e instanceof Error ? e.message : e);
-  }
+  const typo = await generateTypoBannerDataUrl(keyword, articleId, brandName);
+  if (typo) out.push(typo);
   // 2장째부터: 순수 일러스트(글자 완전 금지)
   const styles = bodyStyleRotation(keyword); // 영문 약어 키워드면 3D 타이포 포함(IRP 레퍼런스 — 유저 선호)
   for (let i = 1; i < n; i++) {
@@ -46,6 +34,26 @@ export async function generateWpBanners(keyword: string, articleId: string, n = 
     }
   }
   return out;
+}
+
+/** 무대 배경 + 키워드 G마켓 산스 조판 1장 — 양 채널 공용(WP 1번 배너·네이버 대표 슬롯). 실패=null. */
+export async function generateTypoBannerDataUrl(topic: string, seedKey: string, brandName = ""): Promise<string | null> {
+  try {
+    const seed = fnv(`${topic}|${seedKey}`);
+    const bg = await callImage(buildBannerPrompt(topic, "stage", seed), "1:1");
+    const png = await renderThumbnail({
+      mainCopy: breakThumbCopy(topic.trim().slice(0, 20)),
+      identity: visualIdentityFor(seedKey),
+      press: { brandName: brandName || "" },
+      articleId: seedKey,
+      bgDataUrl: `data:${bg.mime};base64,${bg.base64}`,
+      fontTitle: "GmarketSansBold",
+    });
+    return `data:image/png;base64,${png.toString("base64")}`;
+  } catch (e) {
+    console.error("[banner] 조판 배너 실패:", e instanceof Error ? e.message : e);
+    return null;
+  }
 }
 
 /** 배너 n장을 스토리지에 올려 공개 URL로 — 초안 단계 삽입용(DB엔 URL만, 미리보기에 보임). */

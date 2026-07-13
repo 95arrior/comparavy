@@ -24,8 +24,23 @@ const NO_TEXT = "ABSOLUTELY NO other text, letters, numbers or Korean characters
 // 캐릭터 스펙(2026-07-13 유저: 민무늬 원형 인물 금지) — 헤어·복장·자세가 있는 디자인된 캐릭터
 const CHARACTER_SPEC = "CHARACTER SPEC (when a person appears): NOT a plain circle-head blob — a DESIGNED flat-vector character at premium fintech campaign level: distinct hairstyle, real outfit (office shirt/cardigan/suit — colors from the palette), expressive posture and gesture, head:body about 1:3, soft airbrush shading on clothes. Minimal face (dot eyes, tiny smile) is fine, but silhouette and styling must look like a branded illustration character, never a generic stick figure or plain circle person.";
 
-export function buildBannerPrompt(topic: string, style: BannerStyle, seed: number): string {
+// 장면 무대 로테이션(2026-07-13 유저: 같은 글 1·3번이 동일 소재 — 고정 예시가 수렴의 원인) — 시드로 회전
+const SCENE_SETTINGS = [
+  "a small storefront being proudly opened (a tiny OPEN sign is fine)",
+  "an award stage with a giant trophy and confetti",
+  "signing an oversized contract with a big seal stamp",
+  "a celebration with coins and confetti falling around the character",
+  "climbing giant ascending steps or blocks toward a flag",
+  "presenting in front of a huge blank board",
+];
+const OBJECT_HEROES = [
+  "a giant trophy", "a giant coin stack sculpture", "a giant document with a red seal", "a giant safe",
+  "a giant umbrella sheltering coins", "a giant key", "a giant calendar sculpture (no numbers)", "a giant medal with ribbon",
+];
+
+export function buildBannerPrompt(topic: string, style: BannerStyle, seed: number, hint?: string): string {
   const palette = BANNER_PALETTES[seed % BANNER_PALETTES.length];
+  const hintLine = (hint ?? "").trim() ? `Prop inspiration for THIS slot (nouns only, optional): ${hint!.trim().slice(0, 60)}.` : "";
   const en = englishToken(topic);
   if (style === "typo3d" && en) {
     return [
@@ -46,14 +61,14 @@ export function buildBannerPrompt(topic: string, style: BannerStyle, seed: numbe
   if (style === "object") {
     return [
       `Premium graphic banner for a Korean finance blog about "${topic}" (understand only — never render as text).`,
-      "ONE oversized iconic object as the hero (e.g. a giant card, coin stack sculpture, document with a seal, safe, umbrella over coins — pick what fits the topic), centered on a bold gradient background with 2-3 tiny floating accents (confetti coins, sparkles).",
+      `ONE oversized iconic object as the hero — start from ${OBJECT_HEROES[(seed >> 3) % OBJECT_HEROES.length]} but ADAPT it to fit THIS topic (the object must instantly say what the topic is). Centered on a bold gradient background with 2-3 tiny floating accents (confetti coins, sparkles). ${hintLine}`,
       `Style: modern fintech campaign art, soft 3D or rich flat with airbrush shading, ${palette}. Square 1:1. Agency-grade, NOT clipart.`,
       NO_TEXT,
     ].join(" ");
   }
   return [
     `Flat vector illustration scene for a Korean finance blog about "${topic}" (understand only — never render as text).`,
-    `A charming designed character in an office/home scene interacting with ONE big symbolic object related to the topic (desk with monitor, money bag, growing chart sculpture). Maximum 3 objects total. ${CHARACTER_SPEC}`,
+    `A charming designed character in this setting: ${SCENE_SETTINGS[(seed >> 4) % SCENE_SETTINGS.length]} — adapted to THIS topic. ONE big symbolic object only, maximum 3 objects total. NEVER default to the desk-monitor-moneybag-chart combo. ${hintLine} ${CHARACTER_SPEC}`,
     `Style: premium editorial flat illustration (Toss/fintech campaign grade), bold color blocking, soft shadows, ${palette}. Square 1:1.`,
     NO_TEXT,
   ].join(" ");
