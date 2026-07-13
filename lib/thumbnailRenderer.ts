@@ -234,10 +234,10 @@ async function renderAt(rawInput: ThumbInput, width: number): Promise<Buffer> {
     const brand = input.press.brandName.trim() || "BLOG";
     const lines = (input.mainCopy ?? "").split("\n").map((l) => l.trim()).filter(Boolean);
     const longest = Math.max(...lines.map((l) => [...l].length), 1);
-    // ★채널 분리(2026-07-13 실측: WP 고정이 네이버까지 줄임) — WP=pressFixedSize(112 통일), 네이버=동적 대형(홈판 문법)
-    const pressSize = input.pressFixedSize
-      ? (longest <= 9 ? input.pressFixedSize : Math.floor(978 / longest))
-      : (longest <= 7 ? 148 : longest <= 9 ? 120 : Math.floor(960 / longest));
+    // ★크기 통일(2026-07-13 유저 확정: 텍스트 크기는 일정해야) — 네이버 120 고정 / WP 112 고정(pressFixedSize).
+    //  문구 소스가 9자/줄을 보장(추천 게이트+폴백 fit9)하므로 사실상 전부 고정 크기 — 초과 엣지만 안전 축소.
+    const uniform = input.pressFixedSize ?? 120;
+    const pressSize = longest <= 9 ? uniform : Math.floor(Math.min(978, uniform * 8.7) / longest);
     const accent = "#FFD34D"; // 핵심(마지막) 줄 포인트 — 다크 위 최고 가독 옐로
     // ★최종(2026-07-10): 풀블리드 — 액자는 배경 퀄이 오른 지금 이미지를 잘라 손해(+흰 홈판에서 경계 소실). 칩 회피는 중앙 문구+세이프 존이 담당
     const M = 0;
