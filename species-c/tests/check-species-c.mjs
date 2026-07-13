@@ -42,12 +42,13 @@ const okBody = [
   MARKER_LINK_1,
   "이런 분께 맞습니다 🙌",
   "차에서 냄새가 나기 시작한 분. 셀프 시공이 부담스러운 분.",
+  MARKER_PRODUCT_IMG,
   "오늘도 그 냄새 참고 타실 건가요 😢",
-  "판매왕이 깐깐하게 고른 이유가 있습니다 😊",
+  "장마 끝나기 전에 준비해두면 아침이 편해져요 😊",
   "속 시원하게 해결하고 뽀송한 아침 맞으세요 💧",
   MARKER_LINK_2,
 ].join("\n\n");
-const okDraft = { titleSearch: "차 에어컨 냄새, 3분이면 잡히는 이유", titleHook: "쉰내 나는 차, 판매왕의 처방", body: okBody, tags: ["차에어컨냄새", "차량탈취제"] };
+const okDraft = { titleSearch: "차 에어컨 냄새, 3분이면 잡히는 이유", titleHook: "쉰내 나는 차, 3분 처방", body: okBody, tags: ["차에어컨냄새", "차량탈취제"] };
 {
   t("v2 정상 본문 통과", runQualityGate(okDraft, product, M).pass);
   t("대가성 문구 누락 실격", !runQualityGate({ ...okDraft, body: okBody.replace(DISCLOSURE_TEXT, "") }, product, M).pass);
@@ -75,7 +76,11 @@ const okDraft = { titleSearch: "차 에어컨 냄새, 3분이면 잡히는 이�
   t("규정 — 대가성 문구가 첫 줄 아니면 실격", !runQualityGate({ ...okDraft, body: okBody.replace(DISCLOSURE_TEXT + "\n\n", "") + "\n\n" + DISCLOSURE_TEXT }, product, M).pass);
   t("규정 — 공식 문구 정확 일치(변형 실격)", !runQualityGate({ ...okDraft, body: okBody.replace(DISCLOSURE_TEXT, "이 포스팅은 쇼핑 커넥트 활동으로 수수료를 받을 수 있습니다.") }, product, M).pass);
   t("규정 — 구 마커 잔존 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n[이미지: CTA 카드]" }, product, M).pass);
-  t("이미지 오프 — 상품 이미지 1곳뿐이면 실격(정확히 2)", !runQualityGate({ ...okDraft, body: okBody.replace(MARKER_PRODUCT_IMG + "\n\n" + "정말", "정말") }, product, M).pass);
+  t("이미지 자리 — 2곳이면 실격(3~5 변동)", !runQualityGate({ ...okDraft, body: okBody.replace(MARKER_PRODUCT_IMG + "\n\n" + "정말", "정말") }, product, M).pass);
+  t("이미지 자리 — 6곳이면 실격(과다)", !runQualityGate({ ...okDraft, body: okBody + ("\n\n" + MARKER_PRODUCT_IMG).repeat(3) }, product, M).pass);
+  t("오글 — '판매왕' 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n판매왕이 골랐습니다." }, product, M).pass);
+  t("오글 — '양심에 걸고' 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n양심에 걸고 말씀드려요." }, product, M).pass);
+  t("오글 — '정성으로만' 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n정성으로만 전해드립니다." }, product, M).pass);
   t("이미지 오프 — 리뷰 카드 마커 잔존 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n" + MARKER_REVIEW_CARD }, product, M).pass);
   t("훅15 — 파일럿 사고 제목 실격", checkTitleHook15("신발 냄새 없애는 법 신발 건조기 추천") !== null);
   t("훅15 — 숫자 훅 통과", checkTitleHook15("3만원대 신발 건조기, 살까 말까") === null);
@@ -88,9 +93,9 @@ const okDraft = { titleSearch: "차 에어컨 냄새, 3분이면 잡히는 이�
   t("v2 — 문단 과밀(3문장) 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n첫 문장입니다. 둘째 문장입니다. 셋째 문장까지 이어지면 벽돌입니다." }, product, M).pass);
   t("v2 — 이모지 0개(리듬 미적용) 실격", !runQualityGate({ ...okDraft, body: okBody.replace(/[😩🤔☔✨🙌😢😊💧]/gu, "") }, product, M).pass);
   t("v2 — 이모지 13개(과다) 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n좋아요 😊😊😊😊😊" }, product, M).pass);
-  t("v2 — 수치 문장 이모지 실격", !runQualityGate({ ...okDraft, body: okBody.replace("판매왕이 깐깐하게 고른 이유가 있습니다 😊", "가격은 15,900원이라 부담이 없어요 😊") }, product, M).pass);
-  t("v2 — 대가성 문단 이모지 실격", !runQualityGate({ ...okDraft, body: okBody.replace(DISCLOSURE_TEXT, DISCLOSURE_TEXT + " 😊").replace("판매왕이 깐깐하게 고른 이유가 있습니다 😊", "판매왕이 깐깐하게 고른 이유가 있습니다") }, product, M).pass);
-  t("v2 — 단점 문장 이모지 실격", !runQualityGate({ ...okDraft, body: okBody.replace("다만 향이 강하다는 아쉬움도 있습니다.", "다만 향이 강하다는 아쉬움도 있어요 😅.").replace("판매왕이 깐깐하게 고른 이유가 있습니다 😊", "판매왕이 깐깐하게 고른 이유가 있습니다") }, product, M).pass);
+  t("v2 — 수치 문장 이모지 실격", !runQualityGate({ ...okDraft, body: okBody.replace("장마 끝나기 전에 준비해두면 아침이 편해져요 😊", "가격은 15,900원이라 부담이 없어요 😊") }, product, M).pass);
+  t("v2 — 대가성 문단 이모지 실격", !runQualityGate({ ...okDraft, body: okBody.replace(DISCLOSURE_TEXT, DISCLOSURE_TEXT + " 😊").replace("장마 끝나기 전에 준비해두면 아침이 편해져요 😊", "장마 끝나기 전에 준비해두면 아침이 편해져요") }, product, M).pass);
+  t("v2 — 단점 문장 이모지 실격", !runQualityGate({ ...okDraft, body: okBody.replace("다만 향이 강하다는 아쉬움도 있습니다.", "다만 향이 강하다는 아쉬움도 있어요 😅.").replace("장마 끝나기 전에 준비해두면 아침이 편해져요 😊", "장마 끝나기 전에 준비해두면 아침이 편해져요") }, product, M).pass);
   t("v2 — 하이라이트 0곳 실격", !runQualityGate({ ...okDraft, body: okBody.replace(/==/g, "") }, product, M).pass);
   t("v2 — 제목 이모지 실격", !runQualityGate({ ...okDraft, titleSearch: okDraft.titleSearch + " 😊" }, product, M).pass);
   t("v2 — 특수 심볼(화살표) 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n순서를 지키세요 → 중요합니다" }, product, M).pass);
@@ -117,7 +122,7 @@ const okDraft = { titleSearch: "차 에어컨 냄새, 3분이면 잡히는 이�
   t("리치 — 하이라이트 자동 형광펜", rich.includes(`background-color:#FFF3A0`) && !rich.includes("=="));
   t("리치 — 소제목 19px 볼드", /<b><span style="font-size:19px[^"]*">[^<]*될까요/.test(rich.replace(/\s/g, (c) => c)));
   t("리치 — 판정 헤더 색 역할(파랑/빨강)", rich.includes("#1D75F7") || rich.includes("#F04452"));
-  t("리치 — 마커 교체 박스 4곳", (rich.match(/이 줄을 지우고/g) ?? []).length === 4);
+  t("리치 — 마커 교체 박스 5곳(상품3+링크2)", (rich.match(/이 줄을 지우고/g) ?? []).length === 5);
 }
 
 // ── 기능 단정 완곡(외부 검수 반영) 회귀

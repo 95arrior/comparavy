@@ -38,7 +38,7 @@ export function writePackage(args: {
     `2. 02_본문.txt 전체 복사 → 본문에 붙여넣기`,
     `2-1. view.html의 [본문 복사]를 쓰면 중앙정렬·크기·형광펜 서식이 자동으로 붙습니다(권장). 02_본문.txt(플레인)를 쓴 경우에만: ==문장== 2~4곳을 드래그 → 형광펜 → == 삭제`,
     `3. 마커 교체(4곳):`,
-    `   - [상품 이미지] 2곳 → 상품 페이지의 대표·상세 이미지를 저장해 각각 업로드(스토어 제공 이미지 — 저작권 안전)`,
+    `   - [상품 이미지] 3~5곳(글마다 다름) → 상품 페이지의 대표·상세컷을 여러 장 저장해 각각 업로드(같은 사진 반복 금지)`,
     `   - [쇼핑커넥트 링크 1]·[쇼핑커넥트 링크 2] → 각각 지우고 쇼핑커넥트 발급 링크 삽입(링크 카드가 상품 이미지·가격을 자동 표시)`,
     `4. 04_태그.txt의 태그들을 태그 칸에 입력`,
     `5. 발행 전 최종 체크:`,
@@ -78,7 +78,7 @@ function buildViewHtml(args: { product: Product; keywords: KeywordResult; articl
 ${imgs.length ? `<div style="background:#fff;border:2px solid #2B2117;border-radius:12px;padding:16px;margin-bottom:14px">
   <b>3. 이미지 (마커 자리에 순서대로)</b>
   ${imgs.map((im, i) => `<div style="margin-top:12px"><button onclick="cpImg(this,'im${i}')">이미지 ${i + 1} 복사</button> <span style="color:#8A6F4D;font-size:13px">${esc(im.name)}</span><br><img id="im${i}" src="data:image/png;base64,${im.b64}" style="max-width:100%;border:1px solid #ddd;border-radius:8px;margin-top:6px"></div>`).join("")}
-</div>` : `<div style="background:#fff;border:2px solid #2B2117;border-radius:12px;padding:16px;margin-bottom:14px"><b>3. 이미지</b> <span style="font-size:13px;color:#8A6F4D">회색 박스 [상품 이미지] 2곳에 상품 페이지의 대표·상세 이미지를 저장해 업로드하세요(스토어 제공 이미지).</span></div>`}
+</div>` : `<div style="background:#fff;border:2px solid #2B2117;border-radius:12px;padding:16px;margin-bottom:14px"><b>3. 이미지</b> <span style="font-size:13px;color:#8A6F4D">회색 박스 [상품 이미지] 3~5곳에 상품 페이지의 대표·상세컷을 각각 업로드하세요(같은 사진 반복 금지).</span></div>`}
 <div style="background:#fff;border:2px solid #2B2117;border-radius:12px;padding:16px;margin-bottom:14px">
   <b>4. 태그</b> <button onclick="cp(this,${JSON.stringify(JSON.stringify(args.article.tags.join(", ")))})">태그 복사</button>
   <div style="margin-top:8px;color:#555;font-size:14px">${esc(args.article.tags.join(", "))}</div>

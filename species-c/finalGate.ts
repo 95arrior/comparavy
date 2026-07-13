@@ -1,5 +1,5 @@
 // [species-c] §9 품질 게이트 — 규칙은 이 파일 한 곳에만. 하나라도 걸리면 사유와 함께 재생성.
-import { ALWAYS_BANNED_WORDS, BANNED_PHRASES, CLAIM_PATTERNS, DISCLOSURE_TEXT, FAKE_EXPERIENCE_PATTERNS, FAKE_REVIEW_WORDS, FULLNAME_MAX_BODY, MARKER_LINK_1, MARKER_LINK_2, MARKER_PRODUCT_IMG, MARKER_REVIEW_CARD, REVIEW_QUOTE } from "./config";
+import { ALWAYS_BANNED_WORDS, BANNED_PHRASES, CLAIM_PATTERNS, CRINGE_PATTERNS, PRODUCT_IMG_RANGE, DISCLOSURE_TEXT, FAKE_EXPERIENCE_PATTERNS, FAKE_REVIEW_WORDS, FULLNAME_MAX_BODY, MARKER_LINK_1, MARKER_LINK_2, MARKER_PRODUCT_IMG, MARKER_REVIEW_CARD, REVIEW_QUOTE } from "./config";
 import type { ArticleDraft, GateIssue, Product, QualityResult } from "./types";
 
 // 문체 v2(2026-07-14): 이모지는 본문 존 규칙(8~12개·금지 존), 특수 심볼(화살표·체크)은 여전히 전면 금지
@@ -16,6 +16,11 @@ export function runQualityGate(draft: ArticleDraft, product: Product, mining?: {
   if (!body.includes(DISCLOSURE_TEXT)) issues.push({ rule: "disclosure", detail: "대가성 공식 문구 부재" });
   else if (firstLine !== DISCLOSURE_TEXT) issues.push({ rule: "disclosure", detail: `대가성 문구가 본문 첫 줄이 아님(첫 줄: "${firstLine.slice(0, 24)}…")` });
 
+  // 2-00. ★오글 멘트(유저 실측: "판매왕 양심에 걸고 과장 없이 정성으로만")
+  for (const cr of CRINGE_PATTERNS) {
+    const m = cr.exec(full);
+    if (m) issues.push({ rule: "cringe", detail: `오글 멘트: "${m[0]}" — 신뢰 선언 금지(데이터로 보여준다)` });
+  }
   // 2-0. ★기능 단정(외부 검수 반영) — 사실처럼 단정 금지, 완곡 프레임 강제
   for (const cp of CLAIM_PATTERNS) {
     const m = cp.re.exec(body);
@@ -79,7 +84,7 @@ export function runQualityGate(draft: ArticleDraft, product: Product, mining?: {
   // 7. ★마커 4종(이미지 구성 개편): 상품 이미지 1~2, 리뷰 분석 카드 1, 링크 1·2 각 1
   const cnt = (m: string) => body.split(m).length - 1;
   const pi = cnt(MARKER_PRODUCT_IMG);
-  if (pi !== 2) issues.push({ rule: "marker", detail: `${MARKER_PRODUCT_IMG} ${pi}곳(정확히 2 — 유저 확정: 제품 자리 2)` });
+  if (pi < PRODUCT_IMG_RANGE.min || pi > PRODUCT_IMG_RANGE.max) issues.push({ rule: "marker", detail: `${MARKER_PRODUCT_IMG} ${pi}곳(허용 ${PRODUCT_IMG_RANGE.min}~${PRODUCT_IMG_RANGE.max} — 글마다 변동)` });
   if (cnt(MARKER_REVIEW_CARD) !== 0) issues.push({ rule: "marker", detail: `${MARKER_REVIEW_CARD} 잔존 — 이미지 생성 오프(제품 자리 2·링크 2만)` });
   if (cnt(MARKER_LINK_1) !== 1 || cnt(MARKER_LINK_2) !== 1) issues.push({ rule: "marker", detail: `쇼핑커넥트 링크 마커 1·2가 각 1곳이어야 함(현재 ${cnt(MARKER_LINK_1)}·${cnt(MARKER_LINK_2)})` });
   if (/\[이미지:|\[쇼핑커넥트 링크 교체 위치\]/.test(body)) issues.push({ rule: "marker", detail: "구 마커 형식 잔존([이미지:…]/링크 교체 위치)" });
