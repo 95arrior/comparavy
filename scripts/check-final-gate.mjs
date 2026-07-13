@@ -16,6 +16,9 @@ const cases = [
   { c: { keyword: "경영혁신 외식서비스 지원 신청", title: "[경북] 2026년 경영혁신 외식서비스 지원 사업 참가 접수, 7월 12일 마감" }, drop: "region_niche" },
   { c: { keyword: "경남은행 파킹통장", title: "경남은행 파킹통장 금리, 최고 조건 정리" }, drop: null },
   { c: { keyword: "경기 침체 대비", title: "경기 침체 대비, 비상금 통장 만드는 법" }, drop: null },
+  { c: { keyword: "환경공단 해외진출 지원금", title: "환경공단 순환경제 우수기업 해외진출 지원금 신청" }, drop: "b2b_audience" },
+  { c: { keyword: "원산지검증 대응 지원 신청", title: "원산지검증 대응 지원 신청, 7월 18일 마감" }, drop: "b2b_audience" },
+  { c: { keyword: "청년 해외취업 지원금", title: "청년 해외취업 K-Move 지원금, 신청 방법" }, drop: null },
 ];
 let fail = 0;
 for (const { c, drop } of cases) {
