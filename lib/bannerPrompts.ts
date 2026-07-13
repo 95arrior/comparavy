@@ -27,6 +27,9 @@ function noText(topic: string): string {
   return `${base} If a sign or label feels natural, it must be ONE short ENGLISH capital word that a real object in THIS scene would naturally carry AND that belongs to THIS topic (a house may say RENT, a shop may say OPEN). NEVER write finance abbreviations or any word unrelated to the topic — when in doubt, render no text at all.`;
 }
 
+// ★썸네일 배경 전용(2026-07-13 유저: 썸네일엔 영어도 쓰지 마 — 그림으로만. 문구 조판이 위에 얹히므로 배경 글자는 소음)
+const NO_TEXT_STRICT = "TEXT RULE (critical): this image must contain ABSOLUTELY NO text of any kind — no words, no letters, no numbers, no labels, no signs, no logos, no watermarks, in ANY language (Korean is strictly forbidden and always breaks; English is also forbidden here). Every paper, screen, sign and surface stays completely blank. Express everything with imagery only.";
+
 // 캐릭터 스펙(2026-07-13 유저: 민무늬 원형 인물 금지) — 헤어·복장·자세가 있는 디자인된 캐릭터
 const CHARACTER_SPEC = "CHARACTER SPEC (when a person appears): NOT a plain circle-head blob — a DESIGNED flat-vector character at premium fintech campaign level: distinct hairstyle, real outfit (office shirt/cardigan/suit — colors from the palette), expressive posture and gesture, head:body about 1:3, soft airbrush shading on clothes. Minimal face (dot eyes, tiny smile) is fine, but silhouette and styling must look like a branded illustration character, never a generic stick figure or plain circle person.";
 
@@ -92,12 +95,12 @@ export function buildThumbMetaphorPrompt(topic: string, copyText: string | undef
   return [
     `Premium editorial illustration for a Korean finance blog thumbnail. Topic: "${topic}" (understand only — never render as text).`,
     copy
-      ? `THE COPY THIS IMAGE ILLUSTRATES (understand only — never render as Korean text): "${copy}". Extract its ONE emotional point and stage it as a BOLD THEATRICAL VISUAL METAPHOR the reader feels instantly — e.g. unpaid bills piling up → a person buried under giant invoice papers; a deadline → a calendar page burning; starting a business → a young person proudly opening a small shop door with an OPEN sign. The metaphor must clearly belong to THIS topic — never generic finance props.`
+      ? `THE COPY THIS IMAGE ILLUSTRATES (understand only — never render as Korean text): "${copy}". Extract its ONE emotional point and stage it as a BOLD THEATRICAL VISUAL METAPHOR the reader feels instantly — e.g. unpaid bills piling up → a person buried under giant invoice papers; a deadline → a calendar page burning; starting a business → a young person proudly opening a small shop door. The metaphor must clearly belong to THIS topic — never generic finance props.`
       : "Stage ONE bold visual metaphor that instantly says what this topic is about — never generic finance props.",
     "A person MAY appear and often should (people make metaphors emotional). " +
       "CHARACTER SPEC: a DESIGNED flat-vector character — distinct hairstyle, real outfit, expressive posture, head:body about 1:3, minimal face (dot eyes) is fine, never a plain circle-head blob.",
     "COMPOSITION: subjects pushed toward top/bottom/edges — the CENTER band of the frame stays relatively calm and low-detail (large Korean typography will be overlaid dead-center later).",
     `Style: award-winning editorial illustration (fintech campaign grade) — rich color blocking, soft airbrush shading, subtle grain. Palette: ${palette}. Square 1:1.`,
-    noText(topic),
+    NO_TEXT_STRICT,
   ].join(" ");
 }
