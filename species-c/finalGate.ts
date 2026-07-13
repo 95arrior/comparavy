@@ -1,5 +1,5 @@
 // [species-c] §9 품질 게이트 — 규칙은 이 파일 한 곳에만. 하나라도 걸리면 사유와 함께 재생성.
-import { ALWAYS_BANNED_WORDS, BANNED_PHRASES, DISCLOSURE_TEXT, FAKE_EXPERIENCE_PATTERNS, FAKE_REVIEW_WORDS, FULLNAME_MAX_BODY, MARKER_LINK_1, MARKER_LINK_2, MARKER_PRODUCT_IMG, MARKER_REVIEW_CARD, REVIEW_QUOTE } from "./config";
+import { ALWAYS_BANNED_WORDS, BANNED_PHRASES, CLAIM_PATTERNS, DISCLOSURE_TEXT, FAKE_EXPERIENCE_PATTERNS, FAKE_REVIEW_WORDS, FULLNAME_MAX_BODY, MARKER_LINK_1, MARKER_LINK_2, MARKER_PRODUCT_IMG, MARKER_REVIEW_CARD, REVIEW_QUOTE } from "./config";
 import type { ArticleDraft, GateIssue, Product, QualityResult } from "./types";
 
 // 문체 v2(2026-07-14): 이모지는 본문 존 규칙(8~12개·금지 존), 특수 심볼(화살표·체크)은 여전히 전면 금지
@@ -16,6 +16,11 @@ export function runQualityGate(draft: ArticleDraft, product: Product, mining?: {
   if (!body.includes(DISCLOSURE_TEXT)) issues.push({ rule: "disclosure", detail: "대가성 공식 문구 부재" });
   else if (firstLine !== DISCLOSURE_TEXT) issues.push({ rule: "disclosure", detail: `대가성 문구가 본문 첫 줄이 아님(첫 줄: "${firstLine.slice(0, 24)}…")` });
 
+  // 2-0. ★기능 단정(외부 검수 반영) — 사실처럼 단정 금지, 완곡 프레임 강제
+  for (const cp of CLAIM_PATTERNS) {
+    const m = cp.re.exec(body);
+    if (m) issues.push({ rule: "claim-hedge", detail: `기능 단정: "${m[0]}" → 권장: ${cp.fix}` });
+  }
   // 2. 과장·보장 표현
   for (const ph of BANNED_PHRASES) if (full.includes(ph)) issues.push({ rule: "banned-phrase", detail: `금지 표현: "${ph}"` });
 

@@ -35,7 +35,7 @@ const okBody = [
   MARKER_PRODUCT_IMG,
   "정말 뿌리기만 하면 될까요? 🤔",
   "이 탈취제는 분사형이라 시공이 없습니다. ==구매자들이 가장 많이 꼽은 장점도 설치 부담이 없다는 점입니다.==",
-  "다만 향이 강하다는 아쉬움도 있습니다. 무향을 찾는 분께는 못 팝니다.",
+  "다만 향이 강하다는 아쉬움도 있습니다. 무향이 필요하시다면 구매 전 이 부분을 꼭 고려해 보세요.",
   "왜 장마철에 사야 할까요? ☔",
   "지금 같은 장마철이 냄새가 가장 심해지는 시기입니다. ==냄새는 습기가 마르기 전에 잡는 게 빠릅니다.==",
   "매일 아침이 상쾌해지는 상상, 해보셨나요 ✨",
@@ -118,6 +118,16 @@ const okDraft = { titleSearch: "차 에어컨 냄새, 3분이면 잡히는 이�
   t("리치 — 소제목 19px 볼드", /<b><span style="font-size:19px[^"]*">[^<]*될까요/.test(rich.replace(/\s/g, (c) => c)));
   t("리치 — 판정 헤더 색 역할(파랑/빨강)", rich.includes("#1D75F7") || rich.includes("#F04452"));
   t("리치 — 마커 교체 박스 4곳", (rich.match(/이 줄을 지우고/g) ?? []).length === 4);
+}
+
+// ── 기능 단정 완곡(외부 검수 반영) 회귀
+{
+  t("단정 — '냄새를 잡아줍니다' 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n이 제품이 냄새를 잡아줍니다." }, product, M).pass);
+  t("단정 — '살균해 줍니다' 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n신발 속을 살균해 줍니다." }, product, M).pass);
+  t("단정 — '세균을 잡' 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n세균을 잡는 기능이 있습니다." }, product, M).pass);
+  t("단정 — '못 팝니다' 화법 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n이런 분께는 못 팝니다." }, product, M).pass);
+  t("완곡 — '도움이 될 수 있습니다' 통과", runQualityGate({ ...okDraft, body: okBody + "\n\n냄새 완화에 도움이 될 수 있습니다." }, product, M).pass);
+  t("완곡 — '살균 기능을 지원합니다' 통과", runQualityGate({ ...okDraft, body: okBody + "\n\n이 제품은 살균 기능을 지원합니다." }, product, M).pass);
 }
 
 console.log(fail ? `\n${fail} FAILED` : "\nALL PASS");
