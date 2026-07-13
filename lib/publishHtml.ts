@@ -44,13 +44,22 @@ const INSTRUCTION_G = new RegExp(INSTRUCTION_SRC, "g");        // 콜론형 + �
 // 이모지·픽토그램·기호(화살표 U+2190~21FF·가운뎃점·불릿은 보존).
 const EMOJI_RE = /[\u{1F1E6}-\u{1F1FF}\u{1F300}-\u{1FAFF}\u{1F000}-\u{1F0FF}\u{2300}-\u{23FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{2049}\u{203C}\u{2122}\u{2139}]/gu;
 // ★포맷 v3(네이버 공식 블로그팀 문법) — 포인트 이모지 화이트리스트만 통과(도배 방지), 그 외 전부 제거.
-const EMOJI_ALLOW = ["📌"]; // 발행물 이모지 원칙(유저): 포인트 승격 📌 하나만 — ✅💡⏰ 등은 실측 도배·중첩
+// ★정책 전환(2026-07-13 유저 확정 — 금융보카 레퍼런스): 가벼운 이모지 간간히 허용. 도배 우려는 금지가 아니라 '총량 캡'으로 해소.
+const EMOJI_ALLOW = ["📌", "💡", "⚠️", "✔️", "👀", "😊", "😂", "🎯", "💰", "🙌"];
+const EMOJI_CAP = 6; // 📌 제외 글당 상한 — 초과분은 뒤에서부터 소거
 export function stripEmoji(s: string): string {
   const MASK = "\u0000EM";
   let out = s;
   EMOJI_ALLOW.forEach((e, i) => { out = out.split(e).join(`${MASK}${i};`); });
   out = out.replace(EMOJI_RE, "");
   EMOJI_ALLOW.forEach((e, i) => { out = out.split(`${MASK}${i};`).join(e); });
+  // 총량 캡 — 📌 외 허용 이모지가 EMOJI_CAP을 넘으면 초과분(뒤쪽부터) 제거
+  let seen = 0;
+  out = out.replace(/📌|💡|⚠️|✔️|👀|😊|😂|🎯|💰|🙌/gu, (m) => {
+    if (m === "📌") return m;
+    seen += 1;
+    return seen <= EMOJI_CAP ? m : "";
+  });
   return out.replace(/[ \t]{2,}/g, " ");
 }
 // rich 최종 게이트 — 모든 사진 마커·지시·이모지 제거 + 빈 문단 정리.
@@ -441,8 +450,25 @@ function normalizeHighlights(html: string): string {
 // ★리스트 이중 불릿·발행물 이모지 소거(실측: '• ✅ 배당' — 불릿 위 체크 이모지 중첩, 💡 안내 이모지) — 📌(포인트 승격 규격)은 유지
 function stripListEmoji(html: string): string {
   return html
-    .replace(/([•·]\s*)(?:✅|☑️|✔️|❌|⭕️|🔹|🔸|▪️)+\s*/gu, "$1")
-    .replace(/(?:💡|✅|☑️|✔️|🔔|⚠️|❗️)\s?/gu, "");
+    .replace(/([•·]\s*)(?:✅|☑️|✔️|❌|⭕️|🔹|🔸|▪️)+\s*/gu, "$1") // 불릿 위 체크 중첩만 제거
+    .replace(/(?:✅|☑️|🔔|❗️)\s?/gu, ""); // 2026-07-13 정책 전환 — 💡⚠️✔️는 허용(총량 캡이 도배 방지)
+}
+
+// ★흑색 벽 코드 게이트(2026-07-13 — 프롬프트 하한이 3번째 미준수): h2 구간에 강조(<b>·<mark>)가 하나도 없으면
+//  첫 문단의 첫 문장을 <b>로 승격(직답 규격상 첫 문장=핵심), 볼드 없는 불릿은 '핵심어 — 설명' 앞부분을 볼드.
+function ensureSectionEmphasis(html: string): string {
+  let out = html.replace(/<li>([^<]{4,80})<\/li>/g, (m, t: string) => {
+    if (/<b>|<mark>/.test(m)) return m;
+    const sep = t.match(/^(.{2,18}?)\s+[—:-]\s+(.+)$/);
+    if (sep) return `<li><b>${sep[1]}</b> — ${sep[2]}</li>`;
+    return [...t].length <= 16 ? `<li><b>${t}</b></li>` : m;
+  });
+  const parts = out.split(/(?=<h2)/);
+  out = parts.map((sec, i) => {
+    if (i === 0 || /<b>|<mark>/.test(sec)) return sec;
+    return sec.replace(/<p>([^<]{12,120}?[.!?])(\s*[^<]*)<\/p>/, (m, first: string, rest: string) => `<p><b>${first}</b>${rest}</p>`);
+  }).join("");
+  return out;
 }
 
 // ★AI 문체 부호 소거(유저 실측: '7월 21일 — 접수 시작 전에' — em dash는 대표적 AI 문체 신호) — 조립 시 일괄 치환
@@ -504,7 +530,7 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   const withImages = opts?.withImages ?? true;
   let idx = -1;
   // ★사진 자리는 '구조화 슬롯'으로만 — 채워진 슬롯만 이미지로, 미충족 슬롯은 줄 자체를 제거(안내문구 유출 금지).
-  let body = markToBold(capMarks(capDanger(sanitizeAiPunct(stripListEmoji(normalizeHighlights(input.bodyHtml)))))).replace(SLOT_RE, (_m, desc: string) => {
+  let body = ensureSectionEmphasis(markToBold(capMarks(capDanger(sanitizeAiPunct(stripListEmoji(normalizeHighlights(input.bodyHtml))))))).replace(SLOT_RE, (_m, desc: string) => {
     idx += 1;
     if (!withImages) return `<p>[사진 ${idx + 1}]</p>`; // marker 모드(수동 배치) — 명시적 선택
     const url = input.images?.[idx];
