@@ -2,6 +2,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { briefToMarkdownish } from "./brief";
+import { buildRichBody } from "./richBody";
 import type { ArticleDraft, GateResult, KeywordResult, Product, PsychBrief, QualityResult } from "./types";
 
 export function writePackage(args: {
@@ -35,7 +36,7 @@ export function writePackage(args: {
     ``,
     `1. 네이버 블로그 글쓰기 열기 → 01_제목.txt의 "검색 최적화안"을 제목에 붙여넣기`,
     `2. 02_본문.txt 전체 복사 → 본문에 붙여넣기`,
-    `2-1. 본문에서 ==문장== 으로 감싼 곳(2~4곳)을 찾아: 그 문장을 드래그 → 에디터 형광펜(배경색) 적용 → 앞뒤 == 기호 삭제`,
+    `2-1. view.html의 [본문 복사]를 쓰면 중앙정렬·크기·형광펜 서식이 자동으로 붙습니다(권장). 02_본문.txt(플레인)를 쓴 경우에만: ==문장== 2~4곳을 드래그 → 형광펜 → == 삭제`,
     `3. 마커 교체(4종):`,
     `   - [상품 이미지] → 03_이미지에 product 프레임이 있으면 그걸, 없으면 상품 페이지 대표 이미지를 저장해 업로드`,
     `   - [리뷰 분석 카드] → 03_이미지/01_review.png 업로드`,
@@ -52,6 +53,7 @@ export function writePackage(args: {
   ].join("\n"));
 
   fs.writeFileSync(path.join(outDir, "06_심리브리프.md"), briefToMarkdownish(args.brief));
+  fs.writeFileSync(path.join(outDir, "07_본문_서식.html"), buildRichBody(args.article.body)); // 리치 조립본(스마트에디터 생존 서식)
   fs.writeFileSync(path.join(outDir, "view.html"), buildViewHtml(args, outDir));
   return outDir;
 }
@@ -60,11 +62,8 @@ export function writePackage(args: {
 function buildViewHtml(args: { product: Product; keywords: KeywordResult; article: ArticleDraft; cards: { file: string; kind: string }[] }, outDir: string): string {
   const esc = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const imgs = fs.readdirSync(path.join(outDir, "03_이미지")).filter((f) => f.endsWith(".png")).map((f) => ({ name: f, b64: fs.readFileSync(path.join(outDir, "03_이미지", f)).toString("base64") }));
-  const bodyHtml = esc(args.article.body)
-    .replace(/\[쇼핑커넥트 링크 ([12])\]/g, '<mark style="background:#FFE27A;padding:2px 8px;border-radius:6px;font-weight:700">[쇼핑커넥트 링크 $1 — 발급 링크 붙이기]</mark>')
-    .replace(/\[(상품 이미지|리뷰 분석 카드)\]/g, '<mark style="background:#CFE3FF;padding:2px 8px;border-radius:6px;font-weight:700">[여기에 업로드: $1]</mark>')
-    .replace(/==([^=\n]{2,80})==/g, '<span style="background:#FFF3A0;padding:1px 4px;border-radius:4px">$1</span> <span style="color:#C43D2B;font-size:12px;font-weight:700">← 형광펜 후 == 삭제</span>')
-    .replace(/\n/g, "<br>");
+  const richHtml = buildRichBody(args.article.body); // 서식(중앙정렬·크기·색·형광펜) 자동 — 복사하면 스마트에디터에 서식째 붙음
+  const bodyHtml = richHtml;
   return `<meta charset="utf-8"><title>박카상사 복붙 도우미</title>
 <body style="font-family:-apple-system,sans-serif;max-width:760px;margin:24px auto;padding:0 16px;background:#FFF7E8">
 <h2 style="margin:8px 0">박카상사 복붙 도우미</h2>
@@ -74,8 +73,8 @@ function buildViewHtml(args: { product: Product; keywords: KeywordResult; articl
   <div style="margin-top:8px;font-size:15px">${esc(args.article.titleSearch)}</div>
 </div>
 <div style="background:#fff;border:2px solid #2B2117;border-radius:12px;padding:16px;margin-bottom:14px">
-  <b>2. 본문</b> <button id="bodyBtn">본문 복사</button>
-  <div id="bodyText" style="margin-top:10px;font-size:14.5px;line-height:1.7;color:#2B2117">${bodyHtml}</div>
+  <b>2. 본문</b> <button id="bodyBtn">본문 복사 (서식 포함)</button> <span style="font-size:12px;color:#8A6F4D">중앙정렬·크기·형광펜이 그대로 붙습니다 — 회색 박스 4곳만 교체</span>
+  <div id="bodyText" style="margin-top:10px;background:#fff;padding:8px 0">${bodyHtml}</div>
 </div>
 <div style="background:#fff;border:2px solid #2B2117;border-radius:12px;padding:16px;margin-bottom:14px">
   <b>3. 이미지 (마커 자리에 순서대로)</b>
@@ -89,7 +88,7 @@ function buildViewHtml(args: { product: Product; keywords: KeywordResult; articl
 <script>
 function done(b){const t=b.textContent;b.textContent="복사됨!";setTimeout(()=>b.textContent=t,1200)}
 function cp(b,t){navigator.clipboard.writeText(t).then(()=>done(b))}
-document.getElementById("bodyBtn").onclick=function(){navigator.clipboard.writeText(${JSON.stringify(args.article.body)}).then(()=>done(this))}
+document.getElementById("bodyBtn").onclick=async function(){const html=document.getElementById("bodyText").innerHTML;const blob=new Blob([html],{type:"text/html"});const plain=new Blob([${JSON.stringify(args.article.body)}],{type:"text/plain"});await navigator.clipboard.write([new ClipboardItem({"text/html":blob,"text/plain":plain})]);done(this)}
 async function cpImg(b,id){const img=document.getElementById(id);const c=document.createElement("canvas");c.width=img.naturalWidth;c.height=img.naturalHeight;c.getContext("2d").drawImage(img,0,0);const bl=await new Promise(r=>c.toBlob(r,"image/png"));await navigator.clipboard.write([new ClipboardItem({"image/png":bl})]);done(b)}
 </script></body>`;
 }

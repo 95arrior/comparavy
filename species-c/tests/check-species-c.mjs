@@ -4,6 +4,7 @@ import { runProductGate } from "../gate.ts";
 import { runQualityGate, checkTitleKeyword, checkTitleHook15, checkTitleSingleNeedle } from "../finalGate.ts";
 import { judgeGolden } from "../keywords.ts";
 import { countSample } from "../reviews.ts";
+import { buildRichBody } from "../richBody.ts";
 import { DISCLOSURE_TEXT, MARKER_LINK_1, MARKER_LINK_2, MARKER_PRODUCT_IMG, MARKER_REVIEW_CARD } from "../config.ts";
 
 let fail = 0;
@@ -106,5 +107,17 @@ const okDraft = { titleSearch: "차 에어컨 냄새, 3분이면 잡히는 이�
   t("1바늘 — 메인만 있으면 통과", checkTitleSingleNeedle("차 에어컨 냄새, 3분이면 잡히는 이유", ["차량용 탈취제 추천"]) === null);
 }
 
+// ── 리치 조립기(모바일 최적화 서식) 회귀
+{
+  const rich = buildRichBody(okBody);
+  t("리치 — 전 문단 중앙정렬", !rich.includes("<p ") || !/<p style="(?!text-align:center)/.test(rich));
+  t("리치 — 대가성 첫 줄 13px 보조색", rich.indexOf("font-size:13px") < rich.indexOf("font-size:19px"));
+  t("리치 — 하이라이트 자동 형광펜", rich.includes(`background-color:#FFF3A0`) && !rich.includes("=="));
+  t("리치 — 소제목 19px 볼드", /<b><span style="font-size:19px[^"]*">[^<]*될까요/.test(rich.replace(/\s/g, (c) => c)));
+  t("리치 — 판정 헤더 색 역할(파랑/빨강)", rich.includes("#1D75F7") || rich.includes("#F04452"));
+  t("리치 — 마커 교체 박스 4곳", (rich.match(/이 줄을 지우고/g) ?? []).length === 4);
+}
+
 console.log(fail ? `\n${fail} FAILED` : "\nALL PASS");
 process.exit(fail ? 1 : 0);
+
