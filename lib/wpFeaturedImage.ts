@@ -58,6 +58,7 @@ export async function autoFeaturedImage(
       articleId: articleId ?? keyword,
       bgDataUrl,
       fontTitle: "GmarketSansBold", // 유저 확정(2026-07-12) — WP 대표 이미지 폰트 고정
+      pressFixedSize: 112, // WP 통일 크기(네이버는 동적 대형 유지)
     });
     return `data:image/png;base64,${png.toString("base64")}`;
   } catch (e) {

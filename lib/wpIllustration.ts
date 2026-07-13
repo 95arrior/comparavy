@@ -48,6 +48,7 @@ export async function generateTypoBannerDataUrl(topic: string, seedKey: string, 
       articleId: seedKey,
       bgDataUrl: `data:${bg.mime};base64,${bg.base64}`,
       fontTitle: "GmarketSansBold",
+      pressFixedSize: 112, // WP 통일 크기
     });
     return `data:image/png;base64,${png.toString("base64")}`;
   } catch (e) {
