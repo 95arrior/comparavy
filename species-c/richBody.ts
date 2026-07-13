@@ -43,7 +43,11 @@ export function buildRichBody(body: string): string {
     const lines = para.split("\n").map((l) => l.trim()).filter(Boolean);
     for (const line of lines) {
       // 1) 대가성 첫 줄 — 작은 보조색(규정 문구는 존재가 중요, 크기는 겸손하게)
-      if (line === DISCLOSURE_TEXT) { html.push(P(size(13, esc(line), SUB))); html.push(BLANK); continue; }
+      if (line === DISCLOSURE_TEXT) { // 유저 확정: 쉼표에서 내려쓰기 2줄 + 11px 고정
+        const [a, b] = line.split(/(?<=,)\s*/);
+        html.push(P(size(11, esc(a ?? line), SUB) + "<br>" + size(11, esc(b ?? ""), SUB)));
+        html.push(BLANK); continue;
+      }
       // 2) 마커 — 교체 지점 박스(발행 시 지우고 교체)
       if (MARKERS.includes(line)) {
         html.push(BLANK);
