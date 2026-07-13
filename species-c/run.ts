@@ -103,7 +103,7 @@ async function main(): Promise<void> {
 
   // ⑧ 이미지 생성 오프(유저 확정 2026-07-14): 마커 배치만 — [상품 이미지] 2곳(스토어 이미지 직접 업로드)·링크 2곳
   const cards: { file: string; kind: string }[] = [];
-  stepLog("이미지", "생성 안 함 — [상품 이미지] 2곳은 상품 페이지 이미지를 저장해 업로드(조립 가이드)");
+  stepLog("이미지", "생성 안 함 — [상품 이미지] 3~5곳(글마다 변동)은 상품 페이지 이미지를 저장해 업로드(조립 가이드)");
 
   // ⑩ 패키지 + 로그
   const outDir = writePackage({ product, gate, keywords, brief, article, cards, quality });
