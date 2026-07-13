@@ -55,8 +55,14 @@ async function main(): Promise<void> {
   const brief = await buildBrief(product, keywords, reviews);
   stepLog("심리 브리프", brief.scene);
 
+  // 인용 상한 결정론 수리(실측: 재추첨으로 quote-count가 안 잡힘) — 4번째부터 따옴표 해제(내용 보존)
+  const capQuotes = (body: string): string => {
+    let n = 0;
+    return body.replace(/"([^"\n]{1,80})"/g, (m, inner: string) => (++n <= 3 ? m : inner));
+  };
   // ⑦+⑨ 본문 생성 + 품질 게이트 (실격 시 사유 주입 재생성 1회)
   let article = await writeArticle(product, keywords, brief, reviews);
+  article.body = capQuotes(article.body);
   let quality = runQualityGate(article, product);
   const titleIssue = checkTitleKeyword(article.titleSearch, keywords.main.keyword);
   if (titleIssue) quality = { pass: false, issues: [...quality.issues, titleIssue] };
@@ -64,6 +70,7 @@ async function main(): Promise<void> {
     stepLog("품질 게이트", `1차 실격 ${quality.issues.length}건 — 재생성`);
     quality.issues.forEach((i) => console.log(`  - [${i.rule}] ${i.detail}`));
     article = await writeArticle(product, keywords, brief, reviews); // 프롬프트가 규칙을 이미 담고 있어 재추첨로 통과 시도
+    article.body = capQuotes(article.body);
     quality = runQualityGate(article, product);
     const t2 = checkTitleKeyword(article.titleSearch, keywords.main.keyword);
     if (t2) quality = { pass: false, issues: [...quality.issues, t2] };
