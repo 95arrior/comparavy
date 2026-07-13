@@ -81,7 +81,19 @@ export async function POST(request: Request) {
       // ★제목 훅 우선(실측: 템플릿 4종이 어떤 키워드든 판박이) — 제목의 각도(쉼표·콜론 뒤)를 1순위 폴백으로
       const { hookCopyFromTitle } = await import("@/lib/wpFeaturedImage");
       const titleHook = hookCopyFromTitle(art.title, kw).slice(0, 18);
-      copies = [...new Set([titleHook, `${kw}, 이것부터`, `${kw} 그대로 두면 손해`, `${kw}, 지금 확인`])].filter((c) => [...c].length >= 4).map((c) => [...c].slice(0, 18).join(""));
+      // ★9자/줄 분할 검증을 폴백에도(실측: '경기도 청년안심주택, 지금 확인' — 11자 줄이 새서 썸네일 축소) — 안 쪼개지면 어절을 덜어 맞춘다
+      const fit9 = (c: string): string | null => {
+        let t = c.trim();
+        for (let i = 0; i < 4; i++) {
+          if (breakThumbCopy(t).split("\n").every((l) => [...l].length <= 9)) return t;
+          if (!t.includes(" ")) return null;
+          t = t.split(" ").slice(0, -1).join(" ").replace(/[,，]$/, "");
+        }
+        return null;
+      };
+      copies = [...new Set([titleHook, `${kw}, 이것부터`, `${kw} 그대로 두면 손해`, `${kw}, 지금 확인`]
+        .map(fit9).filter((c): c is string => !!c && [...c].length >= 4))].slice(0, 4);
+      if (copies.length === 0) copies = [kw.slice(0, 9)];
     }
     return NextResponse.json({ copies });
   } catch {
