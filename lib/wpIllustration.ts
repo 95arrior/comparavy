@@ -2,7 +2,7 @@
 //  '주제 키워드'를 시각 앵커로: ①3D 타이포(영문 약어 키워드만 — IRP·ISA·ETF. 한글 타이포는 깨짐 위험이라 금지)
 //  ②오브젝트 은유 배너 ③플랫 일러스트 장면. 글마다 스타일 로테이션(다양성 — 유저 조건).
 //  발행 시점 생성(초안 DB 비대 방지), 실패 = 빈 배열(발행은 계속).
-import { callImage } from "./geminiImage";
+import { callImage, englishBrief, stripHangul } from "./geminiImage";
 import { buildBannerPrompt, bodyStyleRotation } from "./bannerPrompts";
 import { createSupabaseAdminClient } from "./supabase-server";
 import { renderThumbnail } from "./thumbnailRenderer";
@@ -24,10 +24,14 @@ export async function generateWpBanners(keyword: string, articleId: string, n = 
   if (typo) out.push(typo);
   // 2장째부터: 순수 일러스트(글자 완전 금지)
   const styles = bodyStyleRotation(keyword); // 영문 약어 키워드면 3D 타이포 포함(IRP 레퍼런스 — 유저 선호)
+  // ★한글 원천 제거(2026-07-13) — 프롬프트에 한글이 인용되면 금지 문구와 무관하게 그려진다
+  const brief = await englishBrief(keyword);
+  const kwEn = brief?.topicEn ?? stripHangul(keyword, "korean personal finance topic");
+  const enTok = (keyword.toUpperCase().match(/\b[A-Z]{2,5}[0-9]{0,2}\b/) ?? [])[0] ?? null;
   for (let i = 1; i < n; i++) {
     const style = styles[(seed + i) % styles.length]!;
     try {
-      const img = await callImage(buildBannerPrompt(keyword, style, seed + i * 7), "1:1");
+      const img = await callImage(buildBannerPrompt(style === "typo3d" && enTok ? `${enTok} — ${kwEn}` : kwEn, style, seed + i * 7), "1:1");
       out.push(`data:${img.mime};base64,${img.base64}`);
     } catch (e) {
       console.error(`[wp] 배너 생성 실패(${style}) — 건너뜀:`, e instanceof Error ? e.message : e);
@@ -40,7 +44,8 @@ export async function generateWpBanners(keyword: string, articleId: string, n = 
 export async function generateTypoBannerDataUrl(topic: string, seedKey: string, brandName = ""): Promise<string | null> {
   try {
     const seed = fnv(`${topic}|${seedKey}`);
-    const bg = await callImage(buildBannerPrompt(topic, "stage", seed), "1:1");
+    const stageBrief = await englishBrief(topic); // ★무대 배경도 한글 0자(글자는 어차피 우리 조판이 얹는다)
+    const bg = await callImage(buildBannerPrompt(stageBrief?.topicEn ?? stripHangul(topic, "personal finance"), "stage", seed), "1:1");
     const png = await renderThumbnail({
       mainCopy: breakThumbCopy(topic.trim().slice(0, 20)),
       identity: visualIdentityFor(seedKey),
