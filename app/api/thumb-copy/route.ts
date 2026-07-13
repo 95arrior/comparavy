@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     // ★빈손 금지 3단(실측: 간헐 '문구를 만들지 못했어요' — 필터 전멸이 원인): AI→관대한 회수→규칙 폴백
     let copies: string[] = [];
     for (let attempt = 0; attempt < 2 && copies.length === 0; attempt++) {
-      const res = await client.messages.create({ model: "claude-haiku-4-5", max_tokens: 300, messages: [{ role: "user", content: prompt }] });
+      const res = await client.messages.create({ model: "claude-haiku-4-5", max_tokens: 800, messages: [{ role: "user", content: prompt }] }); // ★800(실측 2026-07-13: 300이 6문구 JSON을 잘라 폴백 템플릿 서빙 — 에버그린 제목과 동일 병)
       void logUsage({ userId: user.id, model: "claude-haiku-4-5", kind: "thumb_copy", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
       const text = res.content.find((b) => b.type === "text")?.text ?? "[]";
       const m = text.match(/\[[\s\S]*\]/);
@@ -73,11 +73,15 @@ export async function POST(request: Request) {
         .filter(Boolean)
         .filter((c) => bannedHits(c).length === 0);
       copies = [...new Set(cleaned)].slice(0, 4);
+      if (copies.length === 0) console.error(`[thumb-copy] 시도${attempt + 1} 전멸 — raw:${Array.isArray(raw) ? raw.length : 0} (18자·분할·주제어·숫자 게이트 통과 0) kw:${String(art.keyword ?? "").slice(0, 20)}`);
     }
     if (copies.length === 0) {
       // 최후 폴백 — 규칙 기반(원가 0, 항상 성공): 키워드 훅 템플릿
       const kw = String(art.keyword ?? art.title ?? "").split(/\s+/).slice(0, 2).join(" ").slice(0, 10) || "이번 정보";
-      copies = [`${kw}, 이게 핵심이다`, `${kw} 그대로 두면 손해`, `${kw}, 지금 확인`, `${kw} 모르면 나만 손해`].map((c) => [...c].slice(0, 18).join(""));
+      // ★제목 훅 우선(실측: 템플릿 4종이 어떤 키워드든 판박이) — 제목의 각도(쉼표·콜론 뒤)를 1순위 폴백으로
+      const { hookCopyFromTitle } = await import("@/lib/wpFeaturedImage");
+      const titleHook = hookCopyFromTitle(art.title, kw).slice(0, 18);
+      copies = [...new Set([titleHook, `${kw}, 이것부터`, `${kw} 그대로 두면 손해`, `${kw}, 지금 확인`])].filter((c) => [...c].length >= 4).map((c) => [...c].slice(0, 18).join(""));
     }
     return NextResponse.json({ copies });
   } catch {
