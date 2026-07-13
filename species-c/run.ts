@@ -4,7 +4,7 @@ import fs from "node:fs";
 import { writeArticle } from "./article";
 import { buildBrief } from "./brief";
 
-import { logPost, saveKeywordCandidates } from "./db";
+import { countPosts, logPost, saveKeywordCandidates } from "./db";
 import { runQualityGate, checkTitleKeyword, checkTitleHook15, checkTitleSingleNeedle } from "./finalGate";
 import { runProductGate } from "./gate";
 import { intake } from "./intake";
@@ -84,7 +84,9 @@ async function main(): Promise<void> {
     return body.replace(/"([^"\n]{1,80})"/g, (m, inner: string) => (++n <= 4 ? m : inner));
   };
   // ⑦+⑨ 본문 생성 + 품질 게이트 (실격 시 사유 주입 재생성 1회)
-  let article = await writeArticle(product, keywords, brief, reviews);
+  const angleIdx = countPosts(); // 글 유형 로테이션(리뷰분석→문제해설→사용팁→구매가이드 순환)
+  stepLog("글 변주", `${["리뷰 분석", "문제 해설", "사용 팁", "구매 가이드"][angleIdx % 4]} 중심(누적 ${angleIdx}글)`);
+  let article = await writeArticle(product, keywords, brief, reviews, angleIdx);
   article.body = capQuotes(article.body);
   const mining = { sampleSize: reviews.sampleSize, totalReviews: product.reviewCount };
   const titleIssues = (t: string) => [checkTitleKeyword(t, keywords.main.keyword), checkTitleHook15(t), checkTitleSingleNeedle(t, keywords.subs.map((s) => s.keyword), keywords.main.keyword)].filter((x): x is NonNullable<typeof x> => x != null);
@@ -93,7 +95,7 @@ async function main(): Promise<void> {
   if (!quality.pass) {
     stepLog("품질 게이트", `1차 실격 ${quality.issues.length}건 — 재생성`);
     quality.issues.forEach((i) => console.log(`  - [${i.rule}] ${i.detail}`));
-    article = await writeArticle(product, keywords, brief, reviews); // 프롬프트가 규칙을 이미 담고 있어 재추첨로 통과 시도
+    article = await writeArticle(product, keywords, brief, reviews, angleIdx); // 프롬프트가 규칙을 이미 담고 있어 재추첨로 통과 시도
     article.body = capQuotes(article.body);
     quality = runQualityGate(article, product, mining);
     quality = { pass: quality.pass && titleIssues(article.titleSearch).length === 0, issues: [...quality.issues, ...titleIssues(article.titleSearch)] };
