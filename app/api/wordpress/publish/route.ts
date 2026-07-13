@@ -115,9 +115,22 @@ export async function POST(request: Request) {
       .sort((a, b) => b.overlap - a.overlap)
       .slice(0, 3)
       .map((x) => x.o);
-    if (related.length) {
+    // ★WP→네이버 크로스(2026-07-13 유저 확정 — 완전 핏만, 없으면 생략)
+    let naverItems = "";
+    try {
+      const { data: nvs } = await supabase.from("articles").select("keyword, title, naver_url").eq("user_id", user.id).in("status", ["verified", "published"]).not("naver_url", "is", null).order("created_at", { ascending: false }).limit(30);
+      const TIMED = /(무순위|청약|공고|마감|접수|모집|선착순|추첨)/;
+      const nvBest = (nvs ?? [])
+        .filter((o) => !TIMED.test(`${o.keyword ?? ""} ${o.title ?? ""}`))
+        .map((o) => { const shared = String(o.keyword ?? "").split(/[\s·,]+/).filter((t) => t.length >= 2 && curTokens.has(t)); return { o, score: shared.length, strong: shared.length >= 2 || shared.some((t) => t.length >= 4) }; })
+        .filter((x) => x.strong && x.o.naver_url)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 2);
+      naverItems = nvBest.map((x) => `<li><a href="${x.o.naver_url}" target="_blank" rel="noopener">${esc(String(x.o.title ?? x.o.keyword))}</a></li>`).join("");
+    } catch { /* 무해 */ }
+    if (related.length || naverItems) {
       const items = related.map((o) => `<li><a href="${o.wp_link}">${esc(String(o.title ?? o.keyword))}</a></li>`).join("");
-      contentHtml += `\n<h2>함께 보면 좋은 글</h2>\n<ul>${items}</ul>`;
+      contentHtml += `\n<h2>함께 보면 좋은 글</h2>\n<ul>${items}${naverItems}</ul>`;
     }
   }
 

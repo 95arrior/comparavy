@@ -299,13 +299,28 @@ export async function POST(request: Request) {
           const TIMED = /(무순위|청약|공고|마감|접수|모집|선착순|추첨)/; // 행동 창이 닫히면 수명이 끝나는 글
           const tok = (t: string) => new Set(String(t).split(/[\s·,]+/).filter((x) => x.length >= 2 && !STOP.has(x)));
           const myTok = tok(`${keyword} ${body.angle ?? ""}`);
+          // ★완전 핏만(2026-07-13 유저 확정: 애매하면 아예 생략 — 글은 쌓이니 핏이 생기면 그때) —
+          //  토큰 2개+ 겹침, 또는 4자+ 강한 주제 명사(연금저축·세액공제급) 1개 겹침만 인정
+          const strongFit = (c: { keyword?: string | null; title?: string | null }) => {
+            const shared = [...tok(`${c.keyword} ${c.title}`)].filter((t) => myTok.has(t));
+            return { score: shared.length, strong: shared.length >= 2 || shared.some((t) => t.length >= 4) };
+          };
           relatedPosts = (cands ?? [])
             .filter((c) => !TIMED.test(`${c.keyword ?? ""} ${c.title ?? ""}`))
-            .map((c) => ({ title: String(c.title ?? ""), url: String(c.naver_url ?? ""), score: [...tok(`${c.keyword} ${c.title}`)].filter((t) => myTok.has(t)).length }))
-            .filter((c) => c.url && c.score >= 1)
+            .map((c) => { const f = strongFit(c); return { title: String(c.title ?? ""), url: String(c.naver_url ?? ""), score: f.score, strong: f.strong }; })
+            .filter((c) => c.url && c.strong)
             .sort((a, b) => b.score - a.score)
             .slice(0, 2)
             .map(({ title, url }) => ({ title, url }));
+          // ★네이버→WP 크로스 링크(2026-07-13 — 신생 도메인 신호 공급, 글당 1개 상한·완전 핏만)
+          try {
+            const { data: wps } = await supabase.from("articles").select("keyword, title, wp_link").eq("user_id", user.id).eq("status", "published").not("wp_link", "is", null).order("created_at", { ascending: false }).limit(30);
+            const wpBest = (wps ?? [])
+              .map((c) => { const f = strongFit(c); return { title: String(c.title ?? ""), url: String(c.wp_link ?? ""), score: f.score, strong: f.strong }; })
+              .filter((c) => c.url && c.strong)
+              .sort((a, b) => b.score - a.score)[0];
+            if (wpBest) relatedPosts.push({ title: wpBest.title, url: wpBest.url });
+          } catch { /* 무해 */ }
         } catch { /* 무해 — 링크 없이 진행 */ }
         // ★SERP 역분석(상위노출 직접 전술) — 상위 5글 제목·요약을 능가 브리프로(실패 시 빈 배열, 기존 품질 유지)
         const topPosts = channel === "wordpress" ? [] : await fetchTopPosts(keyword, 5).catch(() => []);
