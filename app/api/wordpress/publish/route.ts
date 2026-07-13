@@ -108,9 +108,13 @@ export async function POST(request: Request) {
     if (candidates.length) contentHtml = insertInternalLinks(contentHtml, candidates);
     // ② '함께 보면 좋은 글' 섹션 — 관련 깊은 발행글 top3(키워드 토큰 겹침) → 토픽 클러스터 강화
     const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const curTokens = new Set(String(article.keyword ?? "").split(/\s+/).filter((t) => t.length >= 2));
+    // ★핏 기준 통일(2026-07-13 — 네이버 내부 링크와 동일): 범용어·어미 조각 배제, 키워드 명사끼리만
+    const LSTOP = new Set(["방법", "정리", "총정리", "조건", "신청", "기간", "확인", "이유", "비교", "기준", "주의", "사항", "가이드", "관련", "대상", "혜택", "지원", "제도", "종류", "순서", "발급"]);
+    const LVERBAL = /(하는|되는|받는|하기|해요|대로|까지|부터|위한|없이|좋은)$/;
+    const ltok = (t: string) => new Set(String(t).split(/[\s·,]+/).map((x) => x.replace(/[^가-힣a-zA-Z0-9]/g, "")).filter((x) => x.length >= 2 && !LSTOP.has(x) && !LVERBAL.test(x)));
+    const curTokens = ltok(String(article.keyword ?? ""));
     const related = pub
-      .map((o) => ({ o, overlap: String(o.keyword).split(/\s+/).filter((t) => t.length >= 2 && curTokens.has(t)).length }))
+      .map((o) => ({ o, overlap: [...ltok(String(o.keyword))].filter((t) => curTokens.has(t)).length }))
       .filter((x) => x.overlap > 0)
       .sort((a, b) => b.overlap - a.overlap)
       .slice(0, 3)
@@ -122,7 +126,7 @@ export async function POST(request: Request) {
       const TIMED = /(무순위|청약|공고|마감|접수|모집|선착순|추첨)/;
       const nvBest = (nvs ?? [])
         .filter((o) => !TIMED.test(`${o.keyword ?? ""} ${o.title ?? ""}`))
-        .map((o) => { const shared = String(o.keyword ?? "").split(/[\s·,]+/).filter((t) => t.length >= 2 && curTokens.has(t)); return { o, score: shared.length, strong: shared.length >= 2 || shared.some((t) => t.length >= 4) }; })
+        .map((o) => { const shared = [...ltok(String(o.keyword ?? ""))].filter((t) => curTokens.has(t)); return { o, score: shared.length, strong: shared.length >= 2 || shared.some((t) => t.length >= 4) }; })
         .filter((x) => x.strong && x.o.naver_url)
         .sort((a, b) => b.score - a.score)
         .slice(0, 2);

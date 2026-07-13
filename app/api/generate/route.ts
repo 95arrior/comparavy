@@ -295,14 +295,17 @@ export async function POST(request: Request) {
           if (blogIdForLink) rq = rq.or(`blog_id.eq.${blogIdForLink},blog_id.is.null`);
           const { data: cands } = await rq;
           // ★유저 실측 반영(ETF 글에 부동산 청약 추천): ①기간제(청약·마감형) 글 제외 — 접수가 끝나면 죽은 링크 ②범용 단어 겹침 배제 — 실질 주제 토큰만
-          const STOP = new Set(["방법", "정리", "총정리", "조건", "신청", "기간", "확인", "이유", "비교", "기준", "주의", "사항", "완벽", "가이드", "하는", "해야", "알아야", "지금", "오늘", "관련", "대상", "혜택", "지원", "제도"]);
+          const STOP = new Set(["방법", "정리", "총정리", "조건", "신청", "기간", "확인", "이유", "비교", "기준", "주의", "사항", "완벽", "가이드", "하는", "해야", "알아야", "지금", "오늘", "관련", "대상", "혜택", "지원", "제도", "종류", "순서", "발급"]);
           const TIMED = /(무순위|청약|공고|마감|접수|모집|선착순|추첨)/; // 행동 창이 닫히면 수명이 끝나는 글
-          const tok = (t: string) => new Set(String(t).split(/[\s·,]+/).filter((x) => x.length >= 2 && !STOP.has(x)));
-          const myTok = tok(`${keyword} ${body.angle ?? ""}`);
+          // ★어미 조각 배제(2026-07-13 실측: 정책대출 글↔임산부 지원금 — '신청하는'·'순서대로' 같은 4자 동사 조각이 '강한 명사'로 오인돼 통과)
+          const VERBAL = /(하는|되는|받는|하기|해요|대로|까지|부터|위한|없이|좋은|바뀐|놓친)$/;
+          const tok = (t: string) => new Set(String(t).split(/[\s·,]+/).map((x) => x.replace(/[^가-힣a-zA-Z0-9]/g, "")).filter((x) => x.length >= 2 && !STOP.has(x) && !VERBAL.test(x)));
+          // ★키워드끼리만 대조(제목·앵글은 어미 조각 유입원) — 키워드는 명사구라 깨끗하다
+          const myTok = tok(keyword);
           // ★완전 핏만(2026-07-13 유저 확정: 애매하면 아예 생략 — 글은 쌓이니 핏이 생기면 그때) —
-          //  토큰 2개+ 겹침, 또는 4자+ 강한 주제 명사(연금저축·세액공제급) 1개 겹침만 인정
+          //  키워드 토큰 2개+ 겹침, 또는 4자+ 강한 주제 명사(연금저축·세액공제급) 1개 겹침만 인정
           const strongFit = (c: { keyword?: string | null; title?: string | null }) => {
-            const shared = [...tok(`${c.keyword} ${c.title}`)].filter((t) => myTok.has(t));
+            const shared = [...tok(String(c.keyword ?? ""))].filter((t) => myTok.has(t));
             return { score: shared.length, strong: shared.length >= 2 || shared.some((t) => t.length >= 4) };
           };
           relatedPosts = (cands ?? [])
