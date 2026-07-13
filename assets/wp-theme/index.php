@@ -45,22 +45,29 @@
 
 <nav class="pagination" aria-label="페이지"><?php echo paginate_links(['prev_text' => '이전', 'next_text' => '다음']); ?></nav>
 
-<?php if (is_home() && !is_paged()) : $pop = ateflo_popular_posts(5); if ($pop) : ?>
+<?php // ★인기 캐러셀 v2(2026-07-13 유저): 8개·순위 뱃지·조회수·좌우 버튼·우측 페이드(스크롤바 숨김)
+if (is_home() && !is_paged()) : $pop = ateflo_popular_posts(8); if ($pop) : ?>
 <section class="popular">
   <h2 class="sec-title">많이 읽은 글</h2>
-  <div class="album">
-    <?php foreach ($pop as $p) : $tu = ateflo_thumb_url($p->ID); ?>
-    <a class="al-card" href="<?php echo esc_url(get_permalink($p)); ?>">
-      <span class="al-thumb"><?php if ($tu) : ?><img src="<?php echo esc_url($tu); ?>" alt="" loading="lazy" width="150" height="110"><?php else : ?><span class="ph"><?php echo esc_html(mb_substr($p->post_title, 0, 1)); ?></span><?php endif; ?></span>
-      <span class="al-title"><?php echo esc_html(wp_trim_words($p->post_title, 10, '…')); ?></span>
-    </a>
-    <?php endforeach; ?>
+  <div class="car">
+    <button type="button" class="car-btn car-prev" aria-label="이전 글 보기" onclick="var a=this.parentNode.querySelector('.album');a.scrollBy({left:-a.clientWidth*0.9,behavior:'smooth'})">&#8249;</button>
+    <div class="album">
+      <?php $rank = 0; foreach ($pop as $p) : $rank++; $tu = ateflo_thumb_url($p->ID); $vs = (int) get_post_meta($p->ID, 'ateflo_views', true); ?>
+      <a class="al-card" href="<?php echo esc_url(get_permalink($p)); ?>">
+        <span class="al-thumb"><span class="al-rank r<?php echo min($rank, 4); ?>"><?php echo $rank; ?>위</span><?php if ($tu) : ?><img src="<?php echo esc_url($tu); ?>" alt="" loading="lazy" width="150" height="110"><?php else : ?><span class="ph"><?php echo esc_html(mb_substr($p->post_title, 0, 1)); ?></span><?php endif; ?></span>
+        <span class="al-title"><?php echo esc_html(wp_trim_words($p->post_title, 10, '…')); ?></span>
+        <?php if ($vs > 0) : ?><span class="al-views">조회 <?php echo number_format($vs); ?></span><?php endif; ?>
+      </a>
+      <?php endforeach; ?>
+    </div>
+    <button type="button" class="car-btn car-next" aria-label="다음 글 보기" onclick="var a=this.parentNode.querySelector('.album');a.scrollBy({left:a.clientWidth*0.9,behavior:'smooth'})">&#8250;</button>
+    <span class="car-fade" aria-hidden="true"></span>
   </div>
 </section>
 <?php endif; endif; ?>
 
 <?php // ★최신 글 텍스트 리스트(2026-07-12 유저: 글 쌓이면 더 보여주기) — 위 카드 10개 이후 15개, 제목+날짜만
-if (is_home() && !is_paged()) : $more = new WP_Query(['post_type' => 'post', 'post_status' => 'publish', 'posts_per_page' => 15, 'offset' => 10, 'no_found_rows' => true]);
+if (is_home() && !is_paged()) : $more = new WP_Query(['post_type' => 'post', 'post_status' => 'publish', 'posts_per_page' => 12, 'offset' => 4, 'no_found_rows' => true]);
 if ($more->have_posts()) : ?>
 <section class="txtlist">
   <h2 class="sec-title">더 볼만한 글</h2>

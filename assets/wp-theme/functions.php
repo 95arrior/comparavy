@@ -119,6 +119,11 @@ add_action('after_setup_theme', function () {
   add_theme_support('custom-logo', ['height' => 64, 'width' => 64, 'flex-width' => true]);
 });
 
+/* ── 상단 목록 4개(2026-07-13 유저: 카테고리별 최근 4개까지 — 아래 많이 읽은 글·텍스트 리스트가 이어받음) ── */
+add_action('pre_get_posts', function ($q) {
+  if (!is_admin() && $q->is_main_query() && ($q->is_home() || $q->is_category())) $q->set('posts_per_page', 4);
+});
+
 /* ── 조회수 자동 집계(플러그인 없이) — 인기 글 섹션 데이터원 ── */
 add_action('wp_head', function () {
   if (!is_singular('post') || current_user_can('edit_posts')) return;
