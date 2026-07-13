@@ -16,6 +16,10 @@ export function runQualityGate(draft: ArticleDraft, product: Product, mining?: {
   if (!body.includes(DISCLOSURE_TEXT)) issues.push({ rule: "disclosure", detail: "대가성 공식 문구 부재" });
   else if (firstLine !== DISCLOSURE_TEXT) issues.push({ rule: "disclosure", detail: `대가성 문구가 본문 첫 줄이 아님(첫 줄: "${firstLine.slice(0, 24)}…")` });
 
+  // 2-000. ★관찰 보고 화법 반복(유저 실측 3호: "~의견이 많았습니다" 반복 = 안 써본 리뷰글 티) — 글 전체 1회까지
+  const reportTone = body.match(/(의견|후기|얘기|말)(이|가)\s*(많았|자주 보였|반복(됐|되었|하는))|(다는|라는)\s*(의견|후기)(이|가)/g) ?? [];
+  if (reportTone.length > 1) issues.push({ rule: "report-tone", detail: `관찰 보고 어미 ${reportTone.length}회(허용 1) — 관찰 1번+내 목소리 해석으로: "${reportTone[1]}"` });
+
   // 2-00. ★오글 멘트(유저 실측: "판매왕 양심에 걸고 과장 없이 정성으로만")
   for (const cr of CRINGE_PATTERNS) {
     const m = cr.exec(full);

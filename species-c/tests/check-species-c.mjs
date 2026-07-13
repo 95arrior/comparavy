@@ -32,7 +32,7 @@ const okBody = [
   "출근길에 에어컨을 트는 순간 쉰내가 훅 올라옵니다. 차 에어컨 냄새 때문에 여기까지 검색하셨을 겁니다.",
   "문제는 냄새가 아니라 반복입니다.",
   MARKER_PRODUCT_IMG,
-  '전체 리뷰 2,847건 중 최근 30건을 직접 정독했습니다. "하루 만에 잡혔" 같은 얘기가 반복됩니다.',
+  '전체 리뷰 2,847건 중 최근 30건을 직접 정독했습니다. 가장 많이 언급된 건 "하루 만에 잡혔"다는 점이었어요.',
   "리뷰가 궁금하게 했다면 아래에서 실물을 볼 수 있어요.",
   MARKER_LINK_1,
   "정말 뿌리기만 하면 될까요? 🤔",
@@ -149,6 +149,12 @@ const okDraft = { titleSearch: "차 에어컨 냄새, 3분이면 잡히는 이�
 {
   t("배치 — 마커 연속(이미지+이미지) 실격", !runQualityGate({ ...okDraft, body: okBody.replace(MARKER_LINK_2, MARKER_LINK_2 + "\n\n" + MARKER_PRODUCT_IMG).replace("매일 아침이 상쾌해지는 상상, 해보셨나요 ✨\n\n" + MARKER_PRODUCT_IMG, "매일 아침이 상쾌해지는 상상, 해보셨나요 ✨") }, product, M).pass);
   t("배치 — 링크1 하단 몰림 실격", !runQualityGate({ ...okDraft, body: okBody.replace(MARKER_LINK_1 + "\n\n", "").replace(MARKER_LINK_2, MARKER_LINK_1 + "\n\n중간 문장을 하나 둡니다.\n\n" + MARKER_LINK_2) }, product, M).pass);
+}
+
+// ── 화법 v3(관찰 보고 금지) 회귀
+{
+  t("화법 — 보고 어미 2회 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n좋다는 의견이 많았습니다.\n\n튼튼하다는 후기가 자주 보였습니다." }, product, M).pass);
+  t("화법 — 보고 어미 1회 허용", runQualityGate({ ...okDraft, body: okBody + "\n\n순하다는 의견이 많았습니다." }, product, M).pass);
 }
 
 console.log(fail ? `\n${fail} FAILED` : "\nALL PASS");
