@@ -96,7 +96,7 @@ export async function GET(request: Request) {
             metaDescription: saved.meta_description ?? undefined, metaTitle: saved.meta_title ?? undefined,
             faq: Array.isArray(saved.faq) ? saved.faq : undefined,
             tags: Array.isArray(saved.tags) ? (saved.tags as string[]) : undefined,
-            featuredImage: await autoFeaturedImage(b.user_id, String(saved.keyword ?? pick.keyword), String((b as { blog_name?: string | null }).blog_name ?? ""), String(saved.id), { title: saved.title, bgUrl: /class="ateflo-banner"[^>]*>\s*<img[^>]+src="([^"]+)"/.exec(dailyHtml)?.[1] ?? null }) ?? undefined, // ★대표 이미지 v2
+            featuredImage: await autoFeaturedImage(b.user_id, String(saved.keyword ?? pick.keyword), String((b as { blog_name?: string | null }).blog_name ?? ""), String(saved.id), { title: saved.title, bgUrl: (() => { const all = [...dailyHtml.matchAll(/class="ateflo-banner"[^>]*>\s*<img[^>]+src="([^"]+)"/g)].map((m) => m[1]!); if (!all.length) return null; let h = 0; for (const ch of String(saved.id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return all[h % all.length]!; })() }) ?? undefined, // ★대표 이미지 v2
             categoryName: wpCategoryFor(String(saved.keyword ?? pick.keyword), saved.title), // ★카테고리 자동
             addToc: true, ymyl: false, status: "publish",
           });

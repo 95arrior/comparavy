@@ -32,7 +32,13 @@ export async function autoFeaturedImage(
   opts?: { title?: string | null; bgUrl?: string | null },
 ): Promise<string | null> {
   try {
-    const copy = breakThumbCopy(hookCopyFromTitle(opts?.title, String(keyword || "").trim()));
+    // ★줄당 9자 보장(고정 폰트 112px 규격) — 초과하면 마지막 어절을 덜어내고 재분할
+    let hook = hookCopyFromTitle(opts?.title, String(keyword || "").trim());
+    let copy = breakThumbCopy(hook);
+    for (let i = 0; i < 4 && copy.split("\n").some((l) => [...l].length > 9) && hook.includes(" "); i++) {
+      hook = hook.split(" ").slice(0, -1).join(" ");
+      copy = breakThumbCopy(hook);
+    }
     if (!copy.trim()) return null;
     // 배경: 본문 배너 1장을 재활용(이미 생성된 AI 일러스트 — 추가 비용 0). 실패하면 색면 포스터 폴백.
     let bgDataUrl: string | null = null;

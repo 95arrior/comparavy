@@ -232,7 +232,7 @@ async function renderAt(rawInput: ThumbInput, width: number): Promise<Buffer> {
     const brand = input.press.brandName.trim() || "BLOG";
     const lines = (input.mainCopy ?? "").split("\n").map((l) => l.trim()).filter(Boolean);
     const longest = Math.max(...lines.map((l) => [...l].length), 1);
-    const pressSize = longest <= 7 ? 148 : longest <= 9 ? 120 : Math.floor(960 / longest); // 대형화 — 문구가 주인공
+    const pressSize = longest <= 9 ? 112 : Math.floor(978 / longest); // ★고정 112(2026-07-13 유저: 사이즈 뒤죽박죽 — 무조건 통일). 9자/줄 초과 엣지만 안전 축소
     const accent = "#FFD34D"; // 핵심(마지막) 줄 포인트 — 다크 위 최고 가독 옐로
     // ★최종(2026-07-10): 풀블리드 — 액자는 배경 퀄이 오른 지금 이미지를 잘라 손해(+흰 홈판에서 경계 소실). 칩 회피는 중앙 문구+세이프 존이 담당
     const M = 0;
