@@ -471,6 +471,35 @@ function ensureSectionEmphasis(html: string): string {
   return out;
 }
 
+// ★스켈레톤 게이트 ①(2026-07-13 유저: 좋은 폼이 추첨되면 안 된다) — 마무리 요약 불릿에 명명 소제목이 없으면 '오늘의 3줄 요약' 자동 삽입
+export function ensureSummaryHeading(html: string): string {
+  if (/<h[23][^>]*>[^<]*요약[^<]*<\/h[23]>/.test(html)) return html;
+  const uls = [...html.matchAll(/<ul(?:\s[^>]*)?>[\s\S]*?<\/ul>/gi)];
+  const last = uls[uls.length - 1];
+  if (!last || last.index === undefined || last.index < html.length * 0.55) return html; // 글 뒷부분 ul만
+  const lis = last[0].match(/<li[\s\S]*?<\/li>/gi) ?? [];
+  if (lis.length < 3 || lis.length > 6) return html;
+  const texts = lis.map((li) => li.replace(/<[^>]+>/g, "").trim());
+  if (texts.some((t) => /[☐#]/.test(t))) return html; // 체크박스·해시태그 리스트는 요약이 아니다
+  const avg = texts.reduce((a, t) => a + [...t].length, 0) / texts.length;
+  const boldish = lis.filter((li) => /<b>|<strong>/i.test(li)).length;
+  if (avg > 45 || boldish * 2 < lis.length) return html; // 요약 규격(짧은 볼드 불릿)일 때만
+  return html.slice(0, last.index) + "<h2>오늘의 3줄 요약</h2>" + html.slice(last.index);
+}
+
+// ★스켈레톤 게이트 ② — 제목이 순위·비교를 약속했는데 표가 없으면 '라벨: 값' 연속 4줄+ 묶음(첫 1곳)을 표로 승격
+export function ensurePayoffTable(html: string, title?: string | null): string {
+  if (!title || !/(TOP\s*\d|톱\s*\d|순위|비교|\bvs\b|얼마|차이)/i.test(title) || /<table/i.test(html)) return html;
+  const LINE = /<p(?:\s[^>]*)?>\s*(?:<b>)?([^<:：]{2,14}?)(?:<\/b>)?\s*[:：]\s*([^<]{1,40}?)\s*<\/p>/g;
+  const CLUSTER = /(?:<p(?:\s[^>]*)?>\s*(?:<b>)?[^<:：]{2,14}(?:<\/b>)?\s*[:：]\s*[^<]{1,40}<\/p>\s*){4,}/;
+  const m = CLUSTER.exec(html);
+  if (!m) return html;
+  const rows = [...m[0].matchAll(LINE)].map((r) => `<tr><td>${r[1].trim()}</td><td>${r[2].trim()}</td></tr>`);
+  if (rows.length < 4) return html;
+  const table = `<table><tr><th>항목</th><th>내용</th></tr>${rows.join("")}</table>`;
+  return html.slice(0, m.index) + table + html.slice(m.index + m[0].length);
+}
+
 // ★AI 문체 부호 소거(유저 실측: '7월 21일 — 접수 시작 전에' — em dash는 대표적 AI 문체 신호) — 조립 시 일괄 치환
 function sanitizeAiPunct(html: string): string {
   return html
@@ -530,7 +559,7 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   const withImages = opts?.withImages ?? true;
   let idx = -1;
   // ★사진 자리는 '구조화 슬롯'으로만 — 채워진 슬롯만 이미지로, 미충족 슬롯은 줄 자체를 제거(안내문구 유출 금지).
-  let body = ensureSectionEmphasis(markToBold(capMarks(capDanger(sanitizeAiPunct(stripListEmoji(normalizeHighlights(input.bodyHtml))))))).replace(SLOT_RE, (_m, desc: string) => {
+  let body = ensurePayoffTable(ensureSummaryHeading(ensureSectionEmphasis(markToBold(capMarks(capDanger(sanitizeAiPunct(stripListEmoji(normalizeHighlights(input.bodyHtml)))))))), input.title).replace(SLOT_RE, (_m, desc: string) => {
     idx += 1;
     if (!withImages) return `<p>[사진 ${idx + 1}]</p>`; // marker 모드(수동 배치) — 명시적 선택
     const url = input.images?.[idx];
