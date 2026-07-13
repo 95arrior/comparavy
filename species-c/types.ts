@@ -14,6 +14,8 @@ export interface ProductInput {
   discountPct?: number;
   /** 상품 페이지에서 복사한 리뷰 텍스트 뭉치(자동 수집 실패 시 폴백) */
   reviewsText?: string;
+  /** ★쇼핑커넥트 발급 링크(있으면 본문 링크 자리에 자동 삽입 — 마커 교체 단계 소멸) */
+  connectLink?: string;
   /** 사용자 실사용 경험 한 줄 — 있으면 하드셀 강화 */
   myExperience?: string;
   /** 비교형: 두 번째 상품 */
@@ -33,6 +35,7 @@ export interface Product {
   commissionPct: number;
   reviewsText: string;
   myExperience: string | null;
+  connectLink: string | null;
   source: "auto" | "manual" | "mixed";
 }
 

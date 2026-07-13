@@ -52,6 +52,7 @@ export async function intake(input: ProductInput): Promise<{ product: Product; n
       commissionPct: input.commissionPct,
       reviewsText,
       myExperience: (input.myExperience ?? "").trim() || null,
+      connectLink: (() => { const l = (input.connectLink ?? "").trim(); if (!l) return null; if (!/^https:\/\/(naver\.me|[a-z.]*naver\.com)\//.test(l)) throw new Error("connectLink가 네이버 링크 형식이 아닙니다 — 쇼핑커넥트 [링크 발급]에서 복사한 URL을 넣으세요"); return l; })(),
       source: input.name && auto.name ? "mixed" : auto.name ? "auto" : "manual",
     },
     notes,

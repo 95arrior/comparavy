@@ -51,6 +51,8 @@ export function buildRichBody(body: string): string {
         html.push(BLANK);
         continue;
       }
+      // 2.5) 발급 링크 단독 줄 — 파랑 표시(에디터에서 엔터 시 링크 카드 변환)
+      if (/^https:\/\//.test(line)) { html.push(BLANK); html.push(P(size(15, esc(line), BLUE))); html.push(BLANK); continue; }
       // 3) 도입 속마음 대사 — 크게(첫인상)
       if (idx <= 2 && /^["“]/.test(line)) { html.push(P(`<b>${inline(line, 19)}</b>`)); html.push(BLANK); continue; }
       // 4) 판정 헤더 — 색 역할(추천=파랑, 아쉬움=빨강)

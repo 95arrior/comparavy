@@ -3,6 +3,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { briefToMarkdownish } from "./brief";
 import { buildRichBody } from "./richBody";
+import { MARKER_LINK_1, MARKER_LINK_2 } from "./config";
+
+/** ★발급 링크 자동 삽입(유저 확정: 입력에 링크가 오면 마커 대신 실링크) — URL 단독 줄(에디터가 링크 카드로 변환) */
+export function applyConnectLink(body: string, link: string | null): string {
+  if (!link) return body;
+  return body.split(MARKER_LINK_1).join(link).split(MARKER_LINK_2).join(link);
+}
 import type { ArticleDraft, GateResult, KeywordResult, Product, PsychBrief, QualityResult } from "./types";
 
 export function writePackage(args: {
@@ -21,7 +28,8 @@ export function writePackage(args: {
     `권장: 검색 최적화안으로 발행(신생 블로그는 검색 유입이 먼저다)`,
   ].join("\n"));
 
-  fs.writeFileSync(path.join(outDir, "02_본문.txt"), args.article.body);
+  const finalBody = applyConnectLink(args.article.body, args.product.connectLink);
+  fs.writeFileSync(path.join(outDir, "02_본문.txt"), finalBody);
 
   args.cards.forEach((c, i) => {
     const dest = path.join(outDir, "03_이미지", `${String(i + 1).padStart(2, "0")}_${c.kind}.png`);
@@ -39,7 +47,9 @@ export function writePackage(args: {
     `2-1. view.html의 [본문 복사]를 쓰면 중앙정렬·크기·형광펜 서식이 자동으로 붙습니다(권장). 02_본문.txt(플레인)를 쓴 경우에만: ==문장== 2~4곳을 드래그 → 형광펜 → == 삭제`,
     `3. 마커 교체(4곳):`,
     `   - [상품 이미지] 3~5곳(글마다 다름) → 상품 페이지의 대표·상세컷을 여러 장 저장해 각각 업로드(같은 사진 반복 금지)`,
-    `   - [쇼핑커넥트 링크 1]·[쇼핑커넥트 링크 2] → 각각 지우고 쇼핑커넥트 발급 링크 삽입(링크 카드가 상품 이미지·가격을 자동 표시)`,
+    args.product.connectLink
+      ? `   - 쇼핑커넥트 링크 2곳은 이미 본문에 삽입됨 — 붙여넣기 후 링크 줄 끝에서 엔터 한 번(링크 카드로 변환되는지 확인)`
+      : `   - [쇼핑커넥트 링크 1]·[쇼핑커넥트 링크 2] → 각각 지우고 쇼핑커넥트 발급 링크 삽입(링크 카드가 상품 이미지·가격을 자동 표시)`,
     `4. 04_태그.txt의 태그들을 태그 칸에 입력`,
     `5. 발행 전 최종 체크:`,
     `   - 대가성 문구가 본문 '맨 첫 줄'에 있는가 (규정 — 절대 지우지 말 것)`,
@@ -61,7 +71,7 @@ export function writePackage(args: {
 function buildViewHtml(args: { product: Product; keywords: KeywordResult; article: ArticleDraft; cards: { file: string; kind: string }[] }, outDir: string): string {
   const esc = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const imgs = fs.readdirSync(path.join(outDir, "03_이미지")).filter((f) => f.endsWith(".png")).map((f) => ({ name: f, b64: fs.readFileSync(path.join(outDir, "03_이미지", f)).toString("base64") }));
-  const richHtml = buildRichBody(args.article.body); // 서식(중앙정렬·크기·색·형광펜) 자동 — 복사하면 스마트에디터에 서식째 붙음
+  const richHtml = buildRichBody(applyConnectLink(args.article.body, args.product.connectLink)); // 서식+발급 링크 자동
   const bodyHtml = richHtml;
   return `<meta charset="utf-8"><title>박카상사 복붙 도우미</title>
 <body style="font-family:-apple-system,sans-serif;max-width:760px;margin:24px auto;padding:0 16px;background:#FFF7E8">
@@ -87,7 +97,7 @@ ${imgs.length ? `<div style="background:#fff;border:2px solid #2B2117;border-rad
 <script>
 function done(b){const t=b.textContent;b.textContent="복사됨!";setTimeout(()=>b.textContent=t,1200)}
 function cp(b,t){navigator.clipboard.writeText(t).then(()=>done(b))}
-document.getElementById("bodyBtn").onclick=async function(){const html=document.getElementById("bodyText").innerHTML;const blob=new Blob([html],{type:"text/html"});const plain=new Blob([${JSON.stringify(args.article.body)}],{type:"text/plain"});await navigator.clipboard.write([new ClipboardItem({"text/html":blob,"text/plain":plain})]);done(this)}
+document.getElementById("bodyBtn").onclick=async function(){const html=document.getElementById("bodyText").innerHTML;const blob=new Blob([html],{type:"text/html"});const plain=new Blob([${JSON.stringify(applyConnectLink(args.article.body, args.product.connectLink))}],{type:"text/plain"});await navigator.clipboard.write([new ClipboardItem({"text/html":blob,"text/plain":plain})]);done(this)}
 async function cpImg(b,id){const img=document.getElementById(id);const c=document.createElement("canvas");c.width=img.naturalWidth;c.height=img.naturalHeight;c.getContext("2d").drawImage(img,0,0);const bl=await new Promise(r=>c.toBlob(r,"image/png"));await navigator.clipboard.write([new ClipboardItem({"image/png":bl})]);done(b)}
 </script></body>`;
 }

@@ -5,6 +5,7 @@ import { runQualityGate, checkTitleKeyword, checkTitleHook15, checkTitleSingleNe
 import { judgeGolden } from "../keywords.ts";
 import { countSample } from "../reviews.ts";
 import { buildRichBody } from "../richBody.ts";
+import { applyConnectLink } from "../package.ts";
 import { DISCLOSURE_TEXT, MARKER_LINK_1, MARKER_LINK_2, MARKER_PRODUCT_IMG, MARKER_REVIEW_CARD } from "../config.ts";
 
 let fail = 0;
@@ -113,6 +114,13 @@ const okDraft = { titleSearch: "차 에어컨 냄새, 3분이면 잡히는 이�
   t("골드 뱃지 — blog_total<300", judgeGolden(800, 299, 1).goldBadge === true);
   t("1바늘 — 서브 문구가 제목에 오면 실격", checkTitleSingleNeedle("차 에어컨 냄새와 차량용 탈취제 추천", ["차량용 탈취제 추천"]) !== null);
   t("1바늘 — 메인만 있으면 통과", checkTitleSingleNeedle("차 에어컨 냄새, 3분이면 잡히는 이유", ["차량용 탈취제 추천"]) === null);
+}
+
+// ── 발급 링크 자동 삽입 회귀
+{
+  const linked = applyConnectLink(okBody, "https://naver.me/xTEST123");
+  t("링크 삽입 — 마커 2곳이 실링크로", (linked.match(/naver\.me\/xTEST123/g) ?? []).length === 2 && !linked.includes("쇼핑커넥트 링크"));
+  t("링크 미입력 — 마커 유지", applyConnectLink(okBody, null) === okBody);
 }
 
 // ── 리치 조립기(모바일 최적화 서식) 회귀
