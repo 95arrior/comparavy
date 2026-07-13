@@ -1,7 +1,7 @@
 // [species-c] §7 본문 생성 — 뼈대 9단 고정, 심리 임무는 브리프에서 주입, 문체는 style-guide.md에서 주입.
 import fs from "node:fs";
 import path from "node:path";
-import { ARTICLE_LENGTH, DISCLOSURE_TEXT, FAKE_REVIEW_WORDS, LLM, MARKER_LINK_1, MARKER_LINK_2, MARKER_PRODUCT_IMG, MARKER_REVIEW_CARD, SAMPLE_MIN_FOR_NUMBERS, samplePhrase, TAG_COUNT } from "./config";
+import { ARTICLE_LENGTH, DISCLOSURE_TEXT, FAKE_REVIEW_WORDS, LLM, MARKER_LINK_1, MARKER_LINK_2, MARKER_PRODUCT_IMG, SAMPLE_MIN_FOR_NUMBERS, samplePhrase, TAG_COUNT } from "./config";
 import { askJson } from "./llm";
 import type { ArticleDraft, ArticleType, KeywordResult, Product, PsychBrief, ReviewMining } from "./types";
 
@@ -46,7 +46,7 @@ export async function writeArticle(p: Product, kw: KeywordResult, brief: PsychBr
       `0. ★본문 맨 첫 줄(다른 어떤 것보다 먼저, 단독 문단): 정확히 이 문구 그대로 — "${DISCLOSURE_TEXT}"`,
       `1. 문제 공감 도입(리듬 v2 3단 고정): ①독자 속마음 따옴표 대사 1줄(브리프의 장면에서, 30자 이내 — 이 따옴표는 리뷰 인용과 별개로 허용) ②상황 짧은 서술 1~2문장 ③문제 선언 1문장 ④★이득 한 줄(교본 흡수): 이 글에서 얻는 것을 구체로 — 할인 정보가 있으면 그것(${p.discountPct ? `현재 ${p.discountPct}% 할인 중` : "할인 정보 없음 — 지어내지 마"}), 없으면 해결 약속 한 줄. 메인 키워드 자연 포함. 도입 끝에 단독 줄로: ${MARKER_PRODUCT_IMG}`,
       `★상품 이미지 자리 규칙: ${MARKER_PRODUCT_IMG} 단독 줄을 글 전체에 3~5곳 배치한다(글마다 개수·위치를 달리 — 도입 끝 1곳은 고정, 나머지는 리뷰 집계·사용 시나리오·단점·체크리스트 사이 중 내용이 이미지를 부르는 자리에). 연속 배치 금지 — 텍스트 2문단 이상 사이를 둔다.`,
-      `2. 리뷰 집계: 위 신뢰 회계 표준 문장으로 열고 + 만족 TOP3. 인용은 나열형이 자연스럽다: "'보송보송' '냄새가 줄었다' 같은 의견이 반복되었습니다"(구체 표현 2~3개 나열, 각 15자 이내). 이 섹션 끝에 단독 줄로: ${MARKER_REVIEW_CARD}`,
+      `2. 리뷰 집계: 위 신뢰 회계 표준 문장으로 열고 + 만족 TOP3. 인용은 나열형이 자연스럽다: "'보송보송' '냄새가 줄었다' 같은 의견이 반복되었습니다"(구체 표현 2~3개 나열, 각 15자 이내). 이 섹션 끝에 단독 줄로 두 번째 ${MARKER_PRODUCT_IMG} 후보 자리(내용이 부르면).`,
       `3. 핵심 스펙·사용 맥락: 스펙 나열이 아니라 '사게 만드는 확인'에 답하는 순서로. 이 섹션에 '사용 시나리오' 한 장면을 가정형으로 넣는다("비 오는 날 퇴근하고 꽂아두면, 다음 날 아침엔 ~" — ★"제가 해봤다"가 아니라 "~하면 ~됩니다" 프레임). ${TYPE_NOTE[kw.articleType]}`,
       `4. 단점 인정: 불만 TOP2 중 1~2개 정직하게 + 누구에게는 문제고 누구에게는 아닌지 구분. 화법은 "~에 민감한 분이라면 구매 전 이 부분은 꼭 고려해 보세요"(★"못 팝니다"류 거절 화법 금지 — 브랜드 비친화).`,
       `5. CTA 1: 구매 제안 2~3문장 — ★행동 지침형(교본 흡수): 링크에서 무엇을 어떻게 확인·적용하는지 순서로 안내("아래 링크에서 현재 가격을 확인하고, 진행 중인 쿠폰이 있다면 적용해 보세요" 톤 — 확인 안 된 쿠폰·세일을 단정하지 마). 조급한 재촉 금지. 끝에 단독 줄: ${MARKER_LINK_1}`,

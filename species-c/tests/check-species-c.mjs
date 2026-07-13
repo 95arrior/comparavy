@@ -32,7 +32,6 @@ const okBody = [
   "문제는 냄새가 아니라 반복입니다.",
   MARKER_PRODUCT_IMG,
   '전체 리뷰 2,847건 중 최근 30건을 직접 정독했습니다. "하루 만에 잡혔" 같은 얘기가 반복됩니다.',
-  MARKER_REVIEW_CARD,
   "냄새 얘기만큼 많던 게 건조 속도였어요.",
   MARKER_PRODUCT_IMG,
   "정말 뿌리기만 하면 될까요? 🤔",
@@ -83,8 +82,7 @@ const okDraft = { titleSearch: "차 에어컨 냄새, 3분이면 잡히는 이�
   t("오글 — '판매왕' 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n판매왕이 골랐습니다." }, product, M).pass);
   t("오글 — '양심에 걸고' 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n양심에 걸고 말씀드려요." }, product, M).pass);
   t("오글 — '정성으로만' 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n정성으로만 전해드립니다." }, product, M).pass);
-  t("리뷰 카드 마커 — 2곳이면 실격(정확히 1)", !runQualityGate({ ...okDraft, body: okBody + "\n\n" + MARKER_REVIEW_CARD }, product, M).pass);
-  t("리뷰 카드 마커 — 0곳이면 실격", !runQualityGate({ ...okDraft, body: okBody.replace(MARKER_REVIEW_CARD + "\n\n", "") }, product, M).pass);
+  t("리뷰 카드 폐지 — 마커 잔존 시 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n" + MARKER_REVIEW_CARD }, product, M).pass);
   t("훅15 — 파일럿 사고 제목 실격", checkTitleHook15("신발 냄새 없애는 법 신발 건조기 추천") !== null);
   t("훅15 — 숫자 훅 통과", checkTitleHook15("3만원대 신발 건조기, 살까 말까") === null);
   t("훅15 — 호명 훅 통과", checkTitleHook15("장마철 신발 냄새로 고민이라면") === null);
@@ -125,7 +123,7 @@ const okDraft = { titleSearch: "차 에어컨 냄새, 3분이면 잡히는 이�
   t("리치 — 하이라이트 자동 형광펜", rich.includes(`background-color:#FFF3A0`) && !rich.includes("=="));
   t("리치 — 소제목 19px 볼드", /<b><span style="font-size:19px[^"]*">[^<]*될까요/.test(rich.replace(/\s/g, (c) => c)));
   t("리치 — 판정 헤더 색 역할(파랑/빨강)", rich.includes("#1D75F7") || rich.includes("#F04452"));
-  t("리치 — 마커 교체 박스 6곳(상품3+리뷰1+링크2)", (rich.match(/이 줄을 지우고/g) ?? []).length === 6);
+  t("리치 — 마커 교체 박스 5곳(상품3+링크2)", (rich.match(/이 줄을 지우고/g) ?? []).length === 5);
 }
 
 // ── 기능 단정 완곡(외부 검수 반영) 회귀

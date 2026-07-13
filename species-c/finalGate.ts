@@ -85,7 +85,7 @@ export function runQualityGate(draft: ArticleDraft, product: Product, mining?: {
   const cnt = (m: string) => body.split(m).length - 1;
   const pi = cnt(MARKER_PRODUCT_IMG);
   if (pi < PRODUCT_IMG_RANGE.min || pi > PRODUCT_IMG_RANGE.max) issues.push({ rule: "marker", detail: `${MARKER_PRODUCT_IMG} ${pi}곳(허용 ${PRODUCT_IMG_RANGE.min}~${PRODUCT_IMG_RANGE.max} — 글마다 변동)` });
-  if (cnt(MARKER_REVIEW_CARD) !== 1) issues.push({ rule: "marker", detail: `${MARKER_REVIEW_CARD} ${cnt(MARKER_REVIEW_CARD)}곳(정확히 1 — 리뷰 분석 카드 자리)` });
+  if (cnt(MARKER_REVIEW_CARD) !== 0) issues.push({ rule: "marker", detail: `${MARKER_REVIEW_CARD} 잔존 — 리뷰 카드 폐지(유저 확정: 상품 이미지·링크만)` });
   if (cnt(MARKER_LINK_1) !== 1 || cnt(MARKER_LINK_2) !== 1) issues.push({ rule: "marker", detail: `쇼핑커넥트 링크 마커 1·2가 각 1곳이어야 함(현재 ${cnt(MARKER_LINK_1)}·${cnt(MARKER_LINK_2)})` });
   if (/\[이미지:|\[쇼핑커넥트 링크 교체 위치\]/.test(body)) issues.push({ rule: "marker", detail: "구 마커 형식 잔존([이미지:…]/링크 교체 위치)" });
 

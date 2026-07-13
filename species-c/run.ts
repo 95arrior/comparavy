@@ -101,22 +101,9 @@ async function main(): Promise<void> {
   stepLog("품질 게이트", quality.pass ? "전 규칙 통과" : `실격 ${quality.issues.length}건(패키지에 경고 동봉)`);
   quality.issues.forEach((i) => console.log(`  - [${i.rule}] ${i.detail}`));
 
-  // ⑧ 이미지: 리뷰 분석 카드 1장만 생성(유저 확정 — 2초 이해 통계 헤더+막대, 토스톤). 상품 이미지 3~5곳은 수동 업로드.
+  // ⑧ 이미지 생성 없음(유저 확정: 리뷰 카드 폐지) — [상품 이미지] 3~5곳(수동)·링크 2곳만
   const cards: { file: string; kind: string }[] = [];
-  {
-    const os = await import("node:os");
-    const path = await import("node:path");
-    const { reviewCardV2 } = await import("./design/cardsV2");
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "species-c-"));
-    const reviewPng = path.join(tmp, "review.png");
-    await reviewCardV2({
-      total: product.reviewCount, sample: reviews.sampleSize, rating: product.rating,
-      sat: reviews.satisfactionTop3.map((x) => [x.point, x.mentions] as [string, number]),
-      bad: reviews.complaintsTop2.map((x) => [x.point, x.mentions] as [string, number]),
-    }, reviewPng);
-    cards.push({ file: reviewPng, kind: "review" });
-  }
-  stepLog("이미지", "리뷰 분석 카드 1장 생성 — [상품 이미지] 3~5곳은 상품 페이지 이미지를 저장해 업로드");
+  stepLog("이미지", "생성 없음 — [상품 이미지] 3~5곳은 상품 페이지 이미지 업로드, 링크 2곳");
 
   // ⑩ 패키지 + 로그
   const outDir = writePackage({ product, gate, keywords, brief, article, cards, quality });
