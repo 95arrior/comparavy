@@ -109,15 +109,24 @@ export function bodyStyleRotation(topic: string): Exclude<BannerStyle, "stage">[
 export function buildThumbMetaphorPrompt(topic: string, copyText: string | undefined, seed: number): string {
   const palette = BANNER_PALETTES[seed % BANNER_PALETTES.length];
   const copy = (copyText ?? "").replace(/\n/g, " ").trim();
+  // ★구도 로테이션(2026-07-13 유저: 사람이 너무 많다, 키워드를 의미하는 이미지로) — 기본=키워드 오브젝트 히어로, 인물 장면은 4회 중 1회만
+  const mode = seed % 4;
+  const copyLine = copy
+    ? `THE COPY THIS IMAGE ILLUSTRATES (understand only — never render as text): "${copy}". Extract its ONE emotional point and let it shape the mood and drama of the visual.`
+    : "";
+  const subject =
+    mode === 3
+      ? `Stage the topic as ONE bold theatrical metaphor WITH a person — e.g. unpaid bills piling up → a person buried under giant invoice papers; a deadline → a calendar page burning. CHARACTER SPEC: a DESIGNED flat-vector character — distinct hairstyle, real outfit, expressive posture, head:body about 1:3, minimal face (dot eyes) fine, never a plain circle-head blob.`
+      : mode === 2
+        ? `Build a tiny isometric miniature world derived from this topic's keywords (miniature buildings, documents, objects as landscape — NO people or only tiny faceless mini-figures).`
+        : `ONE oversized HERO OBJECT derived DIRECTLY from the topic keywords — pick the single most SPECIFIC object that instantly identifies THIS topic (housing → a house with a key; loan → a giant stamped certificate; savings → a growing sprout on a ledger). NO people. ${PROP_BAN}`;
   return [
     `Premium editorial illustration for a Korean finance blog thumbnail. Topic: "${topic}" (understand only — never render as text).`,
-    copy
-      ? `THE COPY THIS IMAGE ILLUSTRATES (understand only — never render as Korean text): "${copy}". Extract its ONE emotional point and stage it as a BOLD THEATRICAL VISUAL METAPHOR the reader feels instantly — e.g. unpaid bills piling up → a person buried under giant invoice papers; a deadline → a calendar page burning; starting a business → a young person proudly opening a small shop door. The metaphor must clearly belong to THIS topic — never generic finance props.`
-      : "Stage ONE bold visual metaphor that instantly says what this topic is about — never generic finance props.",
-    "A person MAY appear and often should (people make metaphors emotional). " +
-      "CHARACTER SPEC: a DESIGNED flat-vector character — distinct hairstyle, real outfit, expressive posture, head:body about 1:3, minimal face (dot eyes) is fine, never a plain circle-head blob.",
+    copyLine,
+    subject,
+    "The visual must clearly belong to THIS topic — never generic finance props.",
     "COMPOSITION: subjects pushed toward top/bottom/edges — the CENTER band of the frame stays relatively calm and low-detail (large Korean typography will be overlaid dead-center later).",
     `Style: award-winning editorial illustration (fintech campaign grade) — rich color blocking, soft airbrush shading, subtle grain. Palette: ${palette}. Square 1:1.`,
     NO_TEXT_STRICT,
-  ].join(" ");
+  ].filter(Boolean).join(" ");
 }
