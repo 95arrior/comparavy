@@ -14,7 +14,7 @@ export const BANNER_PALETTES = [
   "soft pink and rose gold with cream background",
   "teal and mint with warm yellow accents",
   "vivid blue and sky gradient with coral accents",
-  "fresh green gradient with gold coin accents",
+  "fresh green gradient with warm gold accents",
   "warm ivory and orange with navy accents",
   "lavender and periwinkle with silver accents",
 ];
@@ -29,14 +29,13 @@ const SCENE_SETTINGS = [
   "a small storefront being proudly opened (a tiny OPEN sign is fine)",
   "an award stage with a giant trophy and confetti",
   "signing an oversized contract with a big seal stamp",
-  "a celebration with coins and confetti falling around the character",
+  "a celebration with colorful confetti falling around the character",
   "climbing giant ascending steps or blocks toward a flag",
   "presenting in front of a huge blank board",
 ];
-const OBJECT_HEROES = [
-  "a giant trophy", "a giant coin stack sculpture", "a giant document with a red seal", "a giant safe",
-  "a giant umbrella sheltering coins", "a giant key", "a giant calendar sculpture (no numbers)", "a giant medal with ribbon",
-];
+// ★기본 소품 금지(2026-07-13 유저 실측: 금고·동전이 전 썸네일에 반복 — 다 똑같아 보이고 중복 위험)
+const PROP_BAN = "BANNED default props: safes, vaults, piggy banks, coin stacks, and coins as accents — do NOT use them unless the topic is literally about them (e.g. a savings account article may show ONE piggy element).";
+const CAMERA_ANGLES = ["straight-on hero shot", "three-quarter dynamic angle", "gentle top-down view", "slightly low angle looking up"];
 
 export function buildBannerPrompt(topic: string, style: BannerStyle, seed: number, hint?: string): string {
   const palette = BANNER_PALETTES[seed % BANNER_PALETTES.length];
@@ -45,7 +44,7 @@ export function buildBannerPrompt(topic: string, style: BannerStyle, seed: numbe
   if (style === "typo3d" && en) {
     return [
       `Premium 3D typography hero image for a Korean finance blog: the word "${en}" as giant glossy 3D letters (clay/plastic render, soft studio lighting), standing on a clean pastel stage.`,
-      `Surround the letters with 2-3 small finance objects (calculator, coins, piggy bank sculpture, small chart) — objects stay small, the word "${en}" is the hero.`,
+      `Surround the letters with 2-3 small TOPIC-SPECIFIC objects (derived from what this topic is about — not generic coins) — objects stay small, the word "${en}" is the hero. ${PROP_BAN}`,
       `Palette: ${palette}. Square 1:1, generous negative space, agency-grade quality (Behance level), NOT clipart.`,
       `The ONLY text allowed in the image is exactly "${en}" — nothing else. ${NO_TEXT.replace("NO other text", "NO additional text")}`,
     ].join(" ");
@@ -53,7 +52,7 @@ export function buildBannerPrompt(topic: string, style: BannerStyle, seed: numbe
   if (style === "stage") {
     return [
       `Clean premium 3D pastel stage backdrop for a Korean finance blog banner about "${topic}" (understand only — never render as text).`,
-      "Soft rounded podium or floating card shapes at the EDGES only, 2-3 small finance objects (coin, calculator sculpture) tucked in corners — the CENTER of the frame stays EMPTY and low-detail (large Korean typography will be overlaid there later).",
+      `Soft rounded podium or floating card shapes at the EDGES only, 2-3 small TOPIC-SPECIFIC objects tucked in corners (derive from the topic — not generic coins/safes) — the CENTER of the frame stays EMPTY and low-detail (large Korean typography will be overlaid there later). ${PROP_BAN}`,
       `Palette: ${palette}. Square 1:1, soft studio lighting, agency-grade (Behance level), NOT clipart.`,
       NO_TEXT,
     ].join(" ");
@@ -61,7 +60,7 @@ export function buildBannerPrompt(topic: string, style: BannerStyle, seed: numbe
   if (style === "object") {
     return [
       `Premium graphic banner for a Korean finance blog about "${topic}" (understand only — never render as text).`,
-      `ONE oversized iconic object as the hero — start from ${OBJECT_HEROES[(seed >> 3) % OBJECT_HEROES.length]} but ADAPT it to fit THIS topic (the object must instantly say what the topic is). Centered on a bold gradient background with 2-3 tiny floating accents (confetti coins, sparkles). ${hintLine}`,
+      `ONE oversized hero object derived DIRECTLY from the topic keywords — pick the single most SPECIFIC object that instantly identifies THIS topic (bond/interest topic → a bond certificate with a rising ribbon; brokerage fees → a trading receipt and candlestick sculpture; salary deduction → a salary envelope; housing → a house silhouette). ${PROP_BAN} Camera: ${CAMERA_ANGLES[(seed >> 5) % CAMERA_ANGLES.length]}. Bold gradient background, 1-2 tiny floating accents (sparkles or small geometric shapes — NOT coins). ${hintLine}`,
       `Style: modern fintech campaign art, soft 3D or rich flat with airbrush shading, ${palette}. Square 1:1. Agency-grade, NOT clipart.`,
       NO_TEXT,
     ].join(" ");
