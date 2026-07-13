@@ -292,11 +292,33 @@ export async function generateBlogImage(slotDesc: string, articleTitle: string, 
 }
 
 /** 대표이미지 AI 배경 1장(1:1, base64) — 한글은 코드(satori)가 합성. 실패는 호출측이 코드 폴백. */
+// ★한글 원천 제거(2026-07-13 실측 3회: '시소템'·'국첟' — 금지 문구를 아무리 강화해도 프롬프트에 한글 원문이 인용되면 모델이 그대로 그린다)
+//  주제·카피를 Haiku로 영어 장면 브리프로 변환해 이미지 프롬프트에 한글이 한 글자도 없게 한다. 실패 시 한글 소거 후 진행(fail-safe).
+async function englishBrief(topic: string, copy?: string): Promise<{ topicEn: string; copyEn?: string } | null> {
+  try {
+    const Anthropic = (await import("@anthropic-ai/sdk")).default;
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const res = await client.messages.create({
+      model: "claude-haiku-4-5", max_tokens: 200,
+      messages: [{ role: "user", content: `Translate for an illustration brief (no explanations, JSON only): {"topicEn":"<the topic as a short concrete English noun phrase>","copyEn":"<the copy's emotional point in one short English sentence>"}\nTopic: ${topic}\nCopy: ${copy ?? "(none)"}` }],
+    });
+    const text = res.content.find((b) => b.type === "text")?.text ?? "";
+    const m = text.match(/\{[\s\S]*\}/);
+    if (!m) return null;
+    const j = JSON.parse(m[0]) as { topicEn?: string; copyEn?: string };
+    if (!j.topicEn || /[가-힣]/.test(`${j.topicEn}${j.copyEn ?? ""}`)) return null;
+    return { topicEn: j.topicEn.slice(0, 80), copyEn: copy ? (j.copyEn ?? "").slice(0, 120) || undefined : undefined };
+  } catch { return null; }
+}
+
 export async function generateThumbBackground(bgStyleHint: string, paletteHint: string, userSeed?: string, topic?: string, opts?: { forceStyle?: "photo" | "toss"; centerText?: boolean; copyText?: string; variant?: number }): Promise<{ base64: string; mime: string; provider?: string }> {
   const seed = (fnv((userSeed ?? "") + ":bg" + String(opts?.variant ?? 0)) + Math.floor(Math.random() * 1e9)) >>> 0;
   // ★카피 은유 극화(2026-07-13 유저 베스트 실측 — 추상 무대는 주제 무관 판정): 훅 문구의 감정 포인트를 장면으로.
-  //  중앙 비움(조판 자리)·팔레트 회전·디자인 캐릭터는 유지. 영문 소품 라벨(INVOICE 등)만 허용, 한글 금지.
-  const prompt = buildThumbMetaphorPrompt((topic ?? bgStyleHint ?? "").trim() || "재테크", opts?.copyText, seed);
+  //  중앙 비움(조판 자리)·팔레트 회전·디자인 캐릭터 유지. 텍스트는 전면 금지(그림으로만) + 프롬프트 자체를 전량 영어로.
+  const rawTopic = (topic ?? bgStyleHint ?? "").trim() || "재테크";
+  const brief = await englishBrief(rawTopic, opts?.copyText);
+  const safeTopic = brief?.topicEn ?? (rawTopic.replace(/[가-힣]+/g, " ").replace(/\s+/g, " ").trim() || "personal finance in Korea");
+  const prompt = buildThumbMetaphorPrompt(safeTopic, brief ? brief.copyEn : undefined, seed);
   return callImage(prompt, "1:1");
 }
 
