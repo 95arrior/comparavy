@@ -55,7 +55,17 @@ export default function ArticleModal({ pubStampKey, blogName,
     try {
       const r = await fetch("/api/wordpress/publish", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ articleId: article.id, status: "publish", addToc: true, addInternalLinks: true }) });
       const d = await r.json();
-      if (r.ok) { setToast("워드프레스에 발행했어요"); onUpdated({ ...article, status: "published" } as Article); }
+      if (r.ok) {
+        try {
+          const link = String((d as { link?: string }).link ?? "");
+          if (link) {
+            const origin = new URL(link).origin + "/";
+            window.open(`https://search.google.com/search-console/inspect?resource_id=${encodeURIComponent(origin)}&url=${encodeURIComponent(link)}`, "_blank"); // ★색인 요청 자동 오픈(2026-07-13) — [색인 생성 요청]만 누르면 끝
+          }
+        } catch { /* 무해 */ }
+        setToast("발행 완료 — 방금 열린 구글 탭에서 [색인 생성 요청]만 눌러주세요");
+        onUpdated({ ...article, status: "published" } as Article);
+      }
       else setToast(d.error ?? "발행하지 못했어요");
     } catch { setToast("네트워크 오류예요"); }
     setWpBusy(false);
