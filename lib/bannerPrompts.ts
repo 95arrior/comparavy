@@ -19,7 +19,8 @@ export const BANNER_PALETTES = [
   "lavender and periwinkle with silver accents",
 ];
 
-const NO_TEXT = "ABSOLUTELY NO other text, letters, numbers or Korean characters anywhere (no labels, captions, watermarks, UI). Blank surfaces on any papers/screens. No brand logos.";
+// ★텍스트 규칙 통일(2026-07-13 유저 판정: 영문 ETF 라벨=좋음, 한글 '국첟'=깨짐) — 한글 강경 금지, 영문 짧은 라벨만
+const NO_TEXT = "TEXT RULE (critical): Korean characters (Hangul) are STRICTLY FORBIDDEN anywhere in the image — AI-rendered Korean ALWAYS breaks into gibberish. If a small label feels natural, use ONLY 1-2 short ENGLISH capital words (ETF, TAX, OPEN, BANK) — nothing else. No sentences, no numbers, no gibberish pseudo-letters, no watermarks, no logos. Any other paper/screen surface stays blank.";
 
 // 캐릭터 스펙(2026-07-13 유저: 민무늬 원형 인물 금지) — 헤어·복장·자세가 있는 디자인된 캐릭터
 const CHARACTER_SPEC = "CHARACTER SPEC (when a person appears): NOT a plain circle-head blob — a DESIGNED flat-vector character at premium fintech campaign level: distinct hairstyle, real outfit (office shirt/cardigan/suit — colors from the palette), expressive posture and gesture, head:body about 1:3, soft airbrush shading on clothes. Minimal face (dot eyes, tiny smile) is fine, but silhouette and styling must look like a branded illustration character, never a generic stick figure or plain circle person.";
@@ -92,6 +93,6 @@ export function buildThumbMetaphorPrompt(topic: string, copyText: string | undef
       "CHARACTER SPEC: a DESIGNED flat-vector character — distinct hairstyle, real outfit, expressive posture, head:body about 1:3, minimal face (dot eyes) is fine, never a plain circle-head blob.",
     "COMPOSITION: subjects pushed toward top/bottom/edges — the CENTER band of the frame stays relatively calm and low-detail (large Korean typography will be overlaid dead-center later).",
     `Style: award-winning editorial illustration (fintech campaign grade) — rich color blocking, soft airbrush shading, subtle grain. Palette: ${palette}. Square 1:1.`,
-    "Small ENGLISH labels on props are allowed when natural (INVOICE, TAX, OPEN — one or two words max). ABSOLUTELY NO Korean characters, no sentences, no watermarks, no logos, no UI.",
+    NO_TEXT,
   ].join(" ");
 }
