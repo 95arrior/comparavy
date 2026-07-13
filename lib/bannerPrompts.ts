@@ -19,8 +19,13 @@ export const BANNER_PALETTES = [
   "lavender and periwinkle with silver accents",
 ];
 
-// ★텍스트 규칙 통일(2026-07-13 유저 판정: 영문 ETF 라벨=좋음, 한글 '국첟'=깨짐) — 한글 강경 금지, 영문 짧은 라벨만
-const NO_TEXT = "TEXT RULE (critical): Korean characters (Hangul) are STRICTLY FORBIDDEN anywhere in the image — AI-rendered Korean ALWAYS breaks into gibberish. If a small label feels natural, use ONLY 1-2 short ENGLISH capital words (ETF, TAX, OPEN, BANK) — nothing else. No sentences, no numbers, no gibberish pseudo-letters, no watermarks, no logos. Any other paper/screen surface stays blank.";
+// ★텍스트 규칙 = 주제 인지 함수(2026-07-13 실측 2건: 한글 '국첟' 깨짐 → 영문만 / 예시 나열(ETF·TAX)을 모델이 그대로 베껴 주택 썸네일에 ETF 문서 등장 → 예시 제거·주제 관련만)
+function noText(topic: string): string {
+  const base = "TEXT RULE (critical): Korean characters (Hangul) are STRICTLY FORBIDDEN anywhere in the image — AI-rendered Korean ALWAYS breaks into gibberish. No sentences, no numbers, no gibberish pseudo-letters, no watermarks, no logos. Any other paper/screen/sign surface stays completely blank.";
+  const en = englishToken(topic);
+  if (en) return `${base} If a small label feels natural, the ONLY word allowed is "${en}" — never any other word.`;
+  return `${base} If a sign or label feels natural, it must be ONE short ENGLISH capital word that a real object in THIS scene would naturally carry AND that belongs to THIS topic (a house may say RENT, a shop may say OPEN). NEVER write finance abbreviations or any word unrelated to the topic — when in doubt, render no text at all.`;
+}
 
 // 캐릭터 스펙(2026-07-13 유저: 민무늬 원형 인물 금지) — 헤어·복장·자세가 있는 디자인된 캐릭터
 const CHARACTER_SPEC = "CHARACTER SPEC (when a person appears): NOT a plain circle-head blob — a DESIGNED flat-vector character at premium fintech campaign level: distinct hairstyle, real outfit (office shirt/cardigan/suit — colors from the palette), expressive posture and gesture, head:body about 1:3, soft airbrush shading on clothes. Minimal face (dot eyes, tiny smile) is fine, but silhouette and styling must look like a branded illustration character, never a generic stick figure or plain circle person.";
@@ -47,7 +52,7 @@ export function buildBannerPrompt(topic: string, style: BannerStyle, seed: numbe
       `Premium 3D typography hero image for a Korean finance blog: the word "${en}" as giant glossy 3D letters (clay/plastic render, soft studio lighting), standing on a clean pastel stage.`,
       `Surround the letters with 2-3 small TOPIC-SPECIFIC objects (derived from what this topic is about — not generic coins) — objects stay small, the word "${en}" is the hero. ${PROP_BAN}`,
       `Palette: ${palette}. Square 1:1, generous negative space, agency-grade quality (Behance level), NOT clipart.`,
-      `The ONLY text allowed in the image is exactly "${en}" — nothing else. ${NO_TEXT.replace("NO other text", "NO additional text")}`,
+      `The ONLY text allowed in the image is exactly "${en}" — nothing else. ${noText(topic)}`,
     ].join(" ");
   }
   if (style === "stage") {
@@ -55,7 +60,7 @@ export function buildBannerPrompt(topic: string, style: BannerStyle, seed: numbe
       `Clean premium 3D pastel stage backdrop for a Korean finance blog banner about "${topic}" (understand only — never render as text).`,
       `Soft rounded podium or floating card shapes at the EDGES only, 2-3 small TOPIC-SPECIFIC objects tucked in corners (derive from the topic — not generic coins/safes) — the CENTER of the frame stays EMPTY and low-detail (large Korean typography will be overlaid there later). ${PROP_BAN}`,
       `Palette: ${palette}. Square 1:1, soft studio lighting, agency-grade (Behance level), NOT clipart.`,
-      NO_TEXT,
+      noText(topic),
     ].join(" ");
   }
   if (style === "object") {
@@ -63,14 +68,14 @@ export function buildBannerPrompt(topic: string, style: BannerStyle, seed: numbe
       `Premium graphic banner for a Korean finance blog about "${topic}" (understand only — never render as text).`,
       `ONE oversized hero object derived DIRECTLY from the topic keywords — pick the single most SPECIFIC object that instantly identifies THIS topic (bond/interest topic → a bond certificate with a rising ribbon; brokerage fees → a trading receipt and candlestick sculpture; salary deduction → a salary envelope; housing → a house silhouette). ${PROP_BAN} Camera: ${CAMERA_ANGLES[(seed >> 5) % CAMERA_ANGLES.length]}. Bold gradient background, 1-2 tiny floating accents (sparkles or small geometric shapes — NOT coins). ${hintLine}`,
       `Style: modern fintech campaign art, soft 3D or rich flat with airbrush shading, ${palette}. Square 1:1. Agency-grade, NOT clipart.`,
-      NO_TEXT,
+      noText(topic),
     ].join(" ");
   }
   return [
     `Flat vector illustration scene for a Korean finance blog about "${topic}" (understand only — never render as text).`,
     `A charming designed character in this setting: ${SCENE_SETTINGS[(seed >> 4) % SCENE_SETTINGS.length]} — adapted to THIS topic. ONE big symbolic object only, maximum 3 objects total. NEVER default to the desk-monitor-moneybag-chart combo. ${hintLine} ${CHARACTER_SPEC}`,
     `Style: premium editorial flat illustration (Toss/fintech campaign grade), bold color blocking, soft shadows, ${palette}. Square 1:1.`,
-    NO_TEXT,
+    noText(topic),
   ].join(" ");
 }
 
@@ -93,6 +98,6 @@ export function buildThumbMetaphorPrompt(topic: string, copyText: string | undef
       "CHARACTER SPEC: a DESIGNED flat-vector character — distinct hairstyle, real outfit, expressive posture, head:body about 1:3, minimal face (dot eyes) is fine, never a plain circle-head blob.",
     "COMPOSITION: subjects pushed toward top/bottom/edges — the CENTER band of the frame stays relatively calm and low-detail (large Korean typography will be overlaid dead-center later).",
     `Style: award-winning editorial illustration (fintech campaign grade) — rich color blocking, soft airbrush shading, subtle grain. Palette: ${palette}. Square 1:1.`,
-    NO_TEXT,
+    noText(topic),
   ].join(" ");
 }
