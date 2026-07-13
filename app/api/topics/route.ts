@@ -853,22 +853,32 @@ export async function GET(req: Request) {
   }
   const clusters = [...byCluster.values()]; // 각 클러스터는 winScore 내림차순
   const pickN = tailMode === "long" ? 10 : PICK; // long 탭=풀 10개(유저: 왕창)
+  // ★유사 코어 중복 배제(2026-07-13 실측: '신협 정기예금금리'와 '저축은행 정기예금금리' 동시 노출 — 접두 4자 클러스터가 기관명에 속음)
+  //  5자+ 연속 공유(정기예금금리급)면 같은 검색자군으로 보고 한 판에 하나만.
+  const grams5 = (t: string) => { const nk = normalizeKeyword(t); const g = new Set<string>(); for (let i = 0; i + 5 <= nk.length; i++) g.add(nk.slice(i, i + 5)); return g; };
+  const tooSimilar = (a: string, b: string) => { const ga = grams5(a); for (const g of grams5(b)) if (ga.has(g)) return true; return false; };
   const generalRows: FitItem[] = [];
   while (generalRows.length < pickN && clusters.some((c) => c.length)) {
     for (const c of clusters) { // 클러스터별로 하나씩 → 소주제 골고루
       if (generalRows.length >= pickN) break;
       const top = c.shift();
-      if (top) generalRows.push(top);
+      if (!top) continue;
+      if (generalRows.some((p) => tooSimilar(p.r.keyword, top.r.keyword))) continue; // 유사 코어 — 이번 판 제외
+      generalRows.push(top);
     }
   }
   // ★무조건 PICK개 채우기 — 필터(연도·경쟁·클러스터 중복)로 모자라면 남은 후보에서 보충.
   //  카드가 2개, 1개로 줄어드는 화면은 신뢰를 깎는다(빈자리 금지).
   if (generalRows.length < PICK) {
     const usedKw = new Set(generalRows.map((g) => normalizeKeyword(g.r.keyword)));
-    for (const item of sortedFit) {
-      if (generalRows.length >= PICK) break;
-      const nk = normalizeKeyword(item.r.keyword);
-      if (!usedKw.has(nk)) { usedKw.add(nk); generalRows.push(item); }
+    for (const pass of [0, 1]) { // 0차=비유사만, 1차=그래도 모자라면 유사 허용(빈자리 금지)
+      for (const item of sortedFit) {
+        if (generalRows.length >= PICK) break;
+        const nk = normalizeKeyword(item.r.keyword);
+        if (usedKw.has(nk)) continue;
+        if (pass === 0 && generalRows.some((p) => tooSimilar(p.r.keyword, item.r.keyword))) continue;
+        usedKw.add(nk); generalRows.push(item);
+      }
     }
   }
 

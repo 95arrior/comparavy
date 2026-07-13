@@ -5,8 +5,8 @@ const on = (v: string | undefined) => v === "1" || v === "true";
 export const FF = {
   /** 1단계 — 발행 스냅샷·순위 추적·유입/수익 임포트·되먹임 가중치 */
   get perfLoop() { return on(process.env.FF_PERF_LOOP); },
-  /** 2단계 — blog_tier 판정 + tier별 에버그린 검색량 밴드 */
-  get tierBands() { return on(process.env.FF_TIER_BANDS); },
+  /** 2단계 — blog_tier 판정 + tier별 에버그린 검색량 밴드. ★기본 ON(유저 승인 2026-07-13: 체급 안 맞는 글감 혼입 차단) — 끌 때만 FF_TIER_BANDS=0 */
+  get tierBands() { return process.env.FF_TIER_BANDS !== "0"; },
   /** 3단계 — 체류 프록시(dwell_potential) 가산 + 브리프 지시 */
   get dwellScore() { return on(process.env.FF_DWELL_SCORE); },
   /** 4단계 — tier별 트렌드:에버그린 슬롯 비율 */
