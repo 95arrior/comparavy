@@ -74,8 +74,8 @@ export function runQualityGate(draft: ArticleDraft, product: Product, mining?: {
   // 7. ★마커 4종(이미지 구성 개편): 상품 이미지 1~2, 리뷰 분석 카드 1, 링크 1·2 각 1
   const cnt = (m: string) => body.split(m).length - 1;
   const pi = cnt(MARKER_PRODUCT_IMG);
-  if (pi < 1 || pi > 2) issues.push({ rule: "marker", detail: `${MARKER_PRODUCT_IMG} ${pi}곳(허용 1~2)` });
-  if (cnt(MARKER_REVIEW_CARD) !== 1) issues.push({ rule: "marker", detail: `${MARKER_REVIEW_CARD} ${cnt(MARKER_REVIEW_CARD)}곳(정확히 1)` });
+  if (pi !== 2) issues.push({ rule: "marker", detail: `${MARKER_PRODUCT_IMG} ${pi}곳(정확히 2 — 유저 확정: 제품 자리 2)` });
+  if (cnt(MARKER_REVIEW_CARD) !== 0) issues.push({ rule: "marker", detail: `${MARKER_REVIEW_CARD} 잔존 — 이미지 생성 오프(제품 자리 2·링크 2만)` });
   if (cnt(MARKER_LINK_1) !== 1 || cnt(MARKER_LINK_2) !== 1) issues.push({ rule: "marker", detail: `쇼핑커넥트 링크 마커 1·2가 각 1곳이어야 함(현재 ${cnt(MARKER_LINK_1)}·${cnt(MARKER_LINK_2)})` });
   if (/\[이미지:|\[쇼핑커넥트 링크 교체 위치\]/.test(body)) issues.push({ rule: "marker", detail: "구 마커 형식 잔존([이미지:…]/링크 교체 위치)" });
 

@@ -1,12 +1,9 @@
 // [species-c] 진입점 — npx tsx species-c/run.ts species-c/inputs/<상품>.json
 // 파이프라인: 인테이크 → 상품 게이트 → 키워드 실측 → 리뷰 마이닝 → 심리 브리프 → 본문 → 카드 → 품질 게이트 → 패키지 → 로그
 import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
 import { writeArticle } from "./article";
 import { buildBrief } from "./brief";
-import { reviewCardV2, productFrameV2 } from "./design/cardsV2";
-import { fetchShopImage } from "./copied/naverApi";
+
 import { logPost, saveKeywordCandidates } from "./db";
 import { runQualityGate, checkTitleKeyword, checkTitleHook15, checkTitleSingleNeedle } from "./finalGate";
 import { runProductGate } from "./gate";
@@ -104,29 +101,9 @@ async function main(): Promise<void> {
   stepLog("품질 게이트", quality.pass ? "전 규칙 통과" : `실격 ${quality.issues.length}건(패키지에 경고 동봉)`);
   quality.issues.forEach((i) => console.log(`  - [${i.rule}] ${i.detail}`));
 
-  // ⑧ 이미지(개편): 리뷰 분석 카드 v2 1장 + 대표이미지 프레임(쇼핑 API 공식 이미지 매칭 시 1장 — 실패하면 조립 가이드가 수동 업로드 안내)
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "species-c-"));
+  // ⑧ 이미지 생성 오프(유저 확정 2026-07-14): 마커 배치만 — [상품 이미지] 2곳(스토어 이미지 직접 업로드)·링크 2곳
   const cards: { file: string; kind: string }[] = [];
-  const reviewPng = path.join(tmp, "review.png");
-  await reviewCardV2({
-    total: product.reviewCount,
-    sample: reviews.sampleSize,
-    sat: reviews.satisfactionTop3.map((x) => [x.point, x.mentions] as [string, number]),
-    bad: reviews.complaintsTop2.map((x) => [x.point, x.mentions] as [string, number]),
-  }, reviewPng);
-  cards.push({ file: reviewPng, kind: "review" });
-  try {
-    const img = await fetchShopImage(product.name);
-    if (img) {
-      const framePng = path.join(tmp, "product.png");
-      await productFrameV2(img, framePng);
-      cards.push({ file: framePng, kind: "product" });
-      stepLog("대표이미지", "쇼핑 API 공식 이미지 매칭 — 프레임 생성");
-    } else {
-      stepLog("대표이미지", "API 매칭 실패 — [상품 이미지] 자리는 상품 페이지 대표 이미지를 직접 저장해 업로드(조립 가이드 안내)");
-    }
-  } catch { stepLog("대표이미지", "조회 실패 — 수동 업로드 폴백"); }
-  stepLog("이미지", `${cards.length}장 렌더링 완료`);
+  stepLog("이미지", "생성 안 함 — [상품 이미지] 2곳은 상품 페이지 이미지를 저장해 업로드(조립 가이드)");
 
   // ⑩ 패키지 + 로그
   const outDir = writePackage({ product, gate, keywords, brief, article, cards, quality });

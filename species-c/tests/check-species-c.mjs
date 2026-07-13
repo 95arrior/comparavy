@@ -32,7 +32,7 @@ const okBody = [
   "문제는 냄새가 아니라 반복입니다.",
   MARKER_PRODUCT_IMG,
   '전체 리뷰 2,847건 중 최근 30건을 직접 정독했습니다. "하루 만에 잡혔" 같은 얘기가 반복됩니다.',
-  MARKER_REVIEW_CARD,
+  MARKER_PRODUCT_IMG,
   "정말 뿌리기만 하면 될까요? 🤔",
   "이 탈취제는 분사형이라 시공이 없습니다. ==구매자들이 가장 많이 꼽은 장점도 설치 부담이 없다는 점입니다.==",
   "다만 향이 강하다는 아쉬움도 있습니다. 무향을 찾는 분께는 못 팝니다.",
@@ -75,6 +75,8 @@ const okDraft = { titleSearch: "차 에어컨 냄새, 3분이면 잡히는 이�
   t("규정 — 대가성 문구가 첫 줄 아니면 실격", !runQualityGate({ ...okDraft, body: okBody.replace(DISCLOSURE_TEXT + "\n\n", "") + "\n\n" + DISCLOSURE_TEXT }, product, M).pass);
   t("규정 — 공식 문구 정확 일치(변형 실격)", !runQualityGate({ ...okDraft, body: okBody.replace(DISCLOSURE_TEXT, "이 포스팅은 쇼핑 커넥트 활동으로 수수료를 받을 수 있습니다.") }, product, M).pass);
   t("규정 — 구 마커 잔존 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n[이미지: CTA 카드]" }, product, M).pass);
+  t("이미지 오프 — 상품 이미지 1곳뿐이면 실격(정확히 2)", !runQualityGate({ ...okDraft, body: okBody.replace(MARKER_PRODUCT_IMG + "\n\n" + "정말", "정말") }, product, M).pass);
+  t("이미지 오프 — 리뷰 카드 마커 잔존 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n" + MARKER_REVIEW_CARD }, product, M).pass);
   t("훅15 — 파일럿 사고 제목 실격", checkTitleHook15("신발 냄새 없애는 법 신발 건조기 추천") !== null);
   t("훅15 — 숫자 훅 통과", checkTitleHook15("3만원대 신발 건조기, 살까 말까") === null);
   t("훅15 — 호명 훅 통과", checkTitleHook15("장마철 신발 냄새로 고민이라면") === null);

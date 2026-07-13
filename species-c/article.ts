@@ -1,7 +1,7 @@
 // [species-c] §7 본문 생성 — 뼈대 9단 고정, 심리 임무는 브리프에서 주입, 문체는 style-guide.md에서 주입.
 import fs from "node:fs";
 import path from "node:path";
-import { ARTICLE_LENGTH, DISCLOSURE_TEXT, FAKE_REVIEW_WORDS, LLM, MARKER_LINK_1, MARKER_LINK_2, MARKER_PRODUCT_IMG, MARKER_REVIEW_CARD, SAMPLE_MIN_FOR_NUMBERS, samplePhrase, TAG_COUNT } from "./config";
+import { ARTICLE_LENGTH, DISCLOSURE_TEXT, FAKE_REVIEW_WORDS, LLM, MARKER_LINK_1, MARKER_LINK_2, MARKER_PRODUCT_IMG, SAMPLE_MIN_FOR_NUMBERS, samplePhrase, TAG_COUNT } from "./config";
 import { askJson } from "./llm";
 import type { ArticleDraft, ArticleType, KeywordResult, Product, PsychBrief, ReviewMining } from "./types";
 
@@ -45,7 +45,7 @@ export async function writeArticle(p: Product, kw: KeywordResult, brief: PsychBr
       `[뼈대 — 순서 고정, 번호는 출력하지 않는다]`,
       `0. ★본문 맨 첫 줄(다른 어떤 것보다 먼저, 단독 문단): 정확히 이 문구 그대로 — "${DISCLOSURE_TEXT}"`,
       `1. 문제 공감 도입(리듬 v2 3단 고정): ①독자 속마음 따옴표 대사 1줄(브리프의 장면에서, 30자 이내 — 이 따옴표는 리뷰 인용과 별개로 허용) ②상황 짧은 서술 1~2문장 ③문제 선언 1문장. 메인 키워드 자연 포함. 도입 끝에 단독 줄로: ${MARKER_PRODUCT_IMG}`,
-      `2. 리뷰 집계: 위 신뢰 회계 표준 문장으로 열고 + 만족 TOP3. 이 섹션 끝에 단독 줄로: ${MARKER_REVIEW_CARD}`,
+      `2. 리뷰 집계: 위 신뢰 회계 표준 문장으로 열고 + 만족 TOP3. 이 섹션 끝에 단독 줄로 두 번째 ${MARKER_PRODUCT_IMG} (상품을 한 번 더 보여줄 자리).`,
       `3. 핵심 스펙·사용 맥락: 스펙 나열이 아니라 '사게 만드는 확인'에 답하는 순서로. ${TYPE_NOTE[kw.articleType]}`,
       `4. 단점 인정: 불만 TOP2 중 1~2개 정직하게 + 누구에게는 문제고 누구에게는 아닌지 구분. "이런 분께는 못 팝니다" 화법 허용.`,
       `5. CTA 1: 구매 제안 2~3문장 — ★마지막 문장은 바로 아래에 '상품 이미지·가격이 보이는 링크 카드'가 붙는다는 전제로 자연스럽게 받는 문장("바로 아래에서 가격까지 확인할 수 있어요" 류). 끝에 단독 줄: ${MARKER_LINK_1}`,
