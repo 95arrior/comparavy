@@ -66,11 +66,18 @@ if (is_home() || is_category()) : $pop = ateflo_popular_posts(8); if ($pop) : ?>
 </section>
 <?php endif; endif; ?>
 
-<?php // ★최신 글 텍스트 리스트(2026-07-12 유저: 글 쌓이면 더 보여주기) — 위 카드 10개 이후 15개, 제목+날짜만
-if (is_home()) : $atf_pg = max(1, (int) get_query_var('paged')); $txq = new WP_Query(['post_type' => 'post', 'post_status' => 'publish', 'posts_per_page' => 12, 'offset' => 4 * $atf_pg, 'no_found_rows' => true]); // ★2.4.3: 2페이지부터도 하단 섹션 유지(offset을 페이지에 맞춰 이동)
+<?php // ★2.4.5(유저 제안): 하단 추천 = 그날그날 주제 로테이션 — 카테고리를 날짜로 순환, 부족하면 '더 볼만한 글'(최신)로 폴백.
+//  offset 방식 폐기(실측: 글이 적으면 2페이지 하단이 텅 빔) — 대신 '화면에 보이는 카드 4개 제외' 최신/주제 글.
+if (is_home()) :
+  $atf_shown = wp_list_pluck($wp_query->posts, 'ID');
+  $atf_cats = get_categories(['orderby' => 'count', 'order' => 'DESC', 'number' => 6]);
+  $atf_cat = $atf_cats ? $atf_cats[(int) date('z') % count($atf_cats)] : null;
+  $txq = $atf_cat ? new WP_Query(['post_type' => 'post', 'post_status' => 'publish', 'posts_per_page' => 12, 'post__not_in' => $atf_shown, 'cat' => $atf_cat->term_id, 'no_found_rows' => true]) : null;
+  $atf_txtitle = $atf_cat ? '오늘의 주제 · ' . $atf_cat->name : '더 볼만한 글';
+  if (!$txq || $txq->post_count < 3) { $atf_txtitle = '더 볼만한 글'; $txq = new WP_Query(['post_type' => 'post', 'post_status' => 'publish', 'posts_per_page' => 12, 'post__not_in' => $atf_shown, 'no_found_rows' => true]); }
 if ($txq->have_posts()) : ?>
 <section class="txtlist">
-  <h2 class="sec-title">더 볼만한 글</h2>
+  <h2 class="sec-title"><?php echo esc_html($atf_txtitle); ?></h2>
   <ul>
     <?php while ($txq->have_posts()) : $txq->the_post(); ?>
     <li><a href="<?php the_permalink(); ?>"><span class="t"><?php the_title(); ?></span><span class="d"><?php echo get_the_date('n월 j일'); ?></span></a></li>
