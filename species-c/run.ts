@@ -5,7 +5,8 @@ import os from "node:os";
 import path from "node:path";
 import { writeArticle } from "./article";
 import { buildBrief } from "./brief";
-import { renderChecklistCard, renderCompareCard, renderCtaCard, renderReviewCard } from "./cards";
+import { reviewCardV2, productFrameV2 } from "./design/cardsV2";
+import { fetchShopImage } from "./copied/naverApi";
 import { logPost } from "./db";
 import { runQualityGate, checkTitleKeyword, checkTitleHook15 } from "./finalGate";
 import { runProductGate } from "./gate";
@@ -93,33 +94,29 @@ async function main(): Promise<void> {
   stepLog("품질 게이트", quality.pass ? "전 규칙 통과" : `실격 ${quality.issues.length}건(패키지에 경고 동봉)`);
   quality.issues.forEach((i) => console.log(`  - [${i.rule}] ${i.detail}`));
 
-  // ⑧ 이미지 카드
+  // ⑧ 이미지(개편): 리뷰 분석 카드 v2 1장 + 대표이미지 프레임(쇼핑 API 공식 이미지 매칭 시 1장 — 실패하면 조립 가이드가 수동 업로드 안내)
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "species-c-"));
   const cards: { file: string; kind: string }[] = [];
   const reviewPng = path.join(tmp, "review.png");
-  await renderReviewCard(product, reviews, reviewPng);
+  await reviewCardV2({
+    total: product.reviewCount,
+    sample: reviews.sampleSize,
+    sat: reviews.satisfactionTop3.map((x) => [x.point, x.mentions] as [string, number]),
+    bad: reviews.complaintsTop2.map((x) => [x.point, x.mentions] as [string, number]),
+  }, reviewPng);
   cards.push({ file: reviewPng, kind: "review" });
-  const ctaPng = path.join(tmp, "cta.png");
-  await renderCtaCard(product, ctaPng);
-  cards.push({ file: ctaPng, kind: "cta" });
-  const fit = reviews.buyContexts.slice(0, 3).map((b) => b.context);
-  // ★B-1(라운드1 — 실측 버그: "소음이 생각보다 큼 이 민감하다면"): 불만 원문을 직결하지 않고 독자 조건문으로 재작성
-  const no = await rewriteComplaints(reviews.complaintsTop2.map((c) => c.point));
-  const checkPng = path.join(tmp, "checklist.png");
-  await renderChecklistCard(fit.length ? fit : ["같은 문제를 겪고 있다면"], no.length ? no : ["기대치가 아주 높다면"], checkPng);
-  cards.push({ file: checkPng, kind: "checklist" });
-  // §7-3 비교형 — 두 상품의 '입력 실측값'만으로 비교표(임의 생성 금지)
-  if (input.compareWith && input.compareWith.name && keywords.articleType === "compare") {
-    const b = { ...input.compareWith, name: input.compareWith.name! };
-    const comparePng = path.join(tmp, "compare.png");
-    await renderCompareCard([
-      { label: "가격", a: `${product.price.toLocaleString()}원`, b: b.price ? `${b.price.toLocaleString()}원` : "확인 필요" },
-      { label: "평점", a: String(product.rating), b: b.rating != null ? String(b.rating) : "확인 필요" },
-      { label: "리뷰 수", a: product.reviewCount.toLocaleString(), b: b.reviewCount != null ? b.reviewCount.toLocaleString() : "확인 필요" },
-    ], product.name, b.name, comparePng);
-    cards.push({ file: comparePng, kind: "compare" });
-  }
-  stepLog("이미지 카드", `${cards.length}장 렌더링 완료`);
+  try {
+    const img = await fetchShopImage(product.name);
+    if (img) {
+      const framePng = path.join(tmp, "product.png");
+      await productFrameV2(img, framePng);
+      cards.push({ file: framePng, kind: "product" });
+      stepLog("대표이미지", "쇼핑 API 공식 이미지 매칭 — 프레임 생성");
+    } else {
+      stepLog("대표이미지", "API 매칭 실패 — [상품 이미지] 자리는 상품 페이지 대표 이미지를 직접 저장해 업로드(조립 가이드 안내)");
+    }
+  } catch { stepLog("대표이미지", "조회 실패 — 수동 업로드 폴백"); }
+  stepLog("이미지", `${cards.length}장 렌더링 완료`);
 
   // ⑩ 패키지 + 로그
   const outDir = writePackage({ product, gate, keywords, brief, article, cards, quality });

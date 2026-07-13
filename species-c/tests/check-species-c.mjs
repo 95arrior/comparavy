@@ -3,7 +3,7 @@
 import { runProductGate } from "../gate.ts";
 import { runQualityGate, checkTitleKeyword, checkTitleHook15 } from "../finalGate.ts";
 import { countSample } from "../reviews.ts";
-import { DISCLOSURE_TEXT, LINK_MARKER } from "../config.ts";
+import { DISCLOSURE_TEXT, MARKER_LINK_1, MARKER_LINK_2, MARKER_PRODUCT_IMG, MARKER_REVIEW_CARD } from "../config.ts";
 
 let fail = 0;
 const t = (name, ok) => { if (!ok) { fail++; console.log("FAIL", name); } else console.log("ok  ", name); };
@@ -24,27 +24,26 @@ const M = { sampleSize: 30, totalReviews: 2847 };
 
 // ── 품질 게이트 — 문체 v2 규격 픽스처(도입 대사·이모지 8·하이라이트 2·문단 2문장)
 const okBody = [
+  DISCLOSURE_TEXT,
   '"이 냄새 뭐야, 또 시작이네" 😩',
   "출근길에 에어컨을 트는 순간 쉰내가 훅 올라옵니다. 차 에어컨 냄새 때문에 여기까지 검색하셨을 겁니다.",
   "문제는 냄새가 아니라 반복입니다.",
-  DISCLOSURE_TEXT,
+  MARKER_PRODUCT_IMG,
   '전체 리뷰 2,847건 중 최근 30건을 직접 정독했습니다. "하루 만에 잡혔" 같은 얘기가 반복됩니다.',
-  "[이미지: 리뷰 분석 카드]",
+  MARKER_REVIEW_CARD,
   "정말 뿌리기만 하면 될까요? 🤔",
   "이 탈취제는 분사형이라 시공이 없습니다. ==구매자들이 가장 많이 꼽은 장점도 설치 부담이 없다는 점입니다.==",
   "다만 향이 강하다는 아쉬움도 있습니다. 무향을 찾는 분께는 못 팝니다.",
   "왜 장마철에 사야 할까요? ☔",
   "지금 같은 장마철이 냄새가 가장 심해지는 시기입니다. ==냄새는 습기가 마르기 전에 잡는 게 빠릅니다.==",
   "매일 아침이 상쾌해지는 상상, 해보셨나요 ✨",
-  "[이미지: CTA 카드]",
-  LINK_MARKER,
+  MARKER_LINK_1,
   "이런 분께 맞습니다 🙌",
   "차에서 냄새가 나기 시작한 분. 셀프 시공이 부담스러운 분.",
-  "[이미지: 체크리스트 카드]",
   "오늘도 그 냄새 참고 타실 건가요 😢",
   "판매왕이 깐깐하게 고른 이유가 있습니다 😊",
   "속 시원하게 해결하고 뽀송한 아침 맞으세요 💧",
-  LINK_MARKER,
+  MARKER_LINK_2,
 ].join("\n\n");
 const okDraft = { titleSearch: "차 에어컨 냄새, 3분이면 잡히는 이유", titleHook: "쉰내 나는 차, 판매왕의 처방", body: okBody, tags: ["차에어컨냄새", "차량탈취제"] };
 {
@@ -53,7 +52,7 @@ const okDraft = { titleSearch: "차 에어컨 냄새, 3분이면 잡히는 이�
   t("금지 표현(무조건) 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n무조건 사세요." }, product, M).pass);
   t("가짜 사용감 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n제가 직접 써보니 좋더라고요." }, product, M).pass);
   t("실사용 입력 있으면 사용감 허용", runQualityGate({ ...okDraft, body: okBody + "\n\n제가 직접 써보니 향이 이틀 갑니다." }, { ...product, myExperience: "이틀 써봄" }, M).pass);
-  t("링크 마커 1개 실격", !runQualityGate({ ...okDraft, body: okBody.replace(LINK_MARKER, "") }, product, M).pass);
+  t("링크 마커 누락 실격", !runQualityGate({ ...okDraft, body: okBody.replace(MARKER_LINK_2, "") }, product, M).pass);
   t("긴 리뷰 인용(15자 초과) 실격", !runQualityGate({ ...okDraft, body: okBody + '\n\n"이 부분은 정말 길고 긴 리뷰 인용문이라서 실격되어야 한다"' }, product, M).pass);
   t("풀네임 4회 반복 실격", !runQualityGate({ ...okDraft, body: okBody + `\n\n${product.name} ${product.name} ${product.name} ${product.name}` }, product, M).pass);
   t("마크다운 유출 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n## 소제목" }, product, M).pass);
@@ -69,7 +68,11 @@ const okDraft = { titleSearch: "차 에어컨 냄새, 3분이면 잡히는 이�
   t("사고 박제 — 전체 건수로 분석 주장 실격", !runQualityGate({ ...okDraft, body: okBody.replace("전체 리뷰 2,847건 중 최근 30건을 직접 정독했습니다", "실구매자 2,847건의 리뷰를 읽어봤습니다") }, product, M).pass);
   t("사고 박제 — 절대 횟수(6회 언급) 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n금방 말라요가 6회 언급되었습니다." }, product, M).pass);
   t("실사용 없는데 제목 후기 실격", !runQualityGate({ ...okDraft, titleSearch: "차 에어컨 냄새 3일 탈취제 후기" }, product, M).pass);
-  t("실사용 없는데 태그 내돈내산 실격", !runQualityGate({ ...okDraft, tags: [...okDraft.tags, "내돈내산"] }, product, M).pass);
+  t("내돈내산 — 실사용 없어도 실격", !runQualityGate({ ...okDraft, tags: [...okDraft.tags, "내돈내산"] }, product, M).pass);
+  t("내돈내산 — ★실사용 있어도 실격(규정: 대가성 글)", !runQualityGate({ ...okDraft, tags: [...okDraft.tags, "내돈내산"] }, { ...product, myExperience: "2주 사용" }, M).pass);
+  t("규정 — 대가성 문구가 첫 줄 아니면 실격", !runQualityGate({ ...okDraft, body: okBody.replace(DISCLOSURE_TEXT + "\n\n", "") + "\n\n" + DISCLOSURE_TEXT }, product, M).pass);
+  t("규정 — 공식 문구 정확 일치(변형 실격)", !runQualityGate({ ...okDraft, body: okBody.replace(DISCLOSURE_TEXT, "이 포스팅은 쇼핑 커넥트 활동으로 수수료를 받을 수 있습니다.") }, product, M).pass);
+  t("규정 — 구 마커 잔존 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n[이미지: CTA 카드]" }, product, M).pass);
   t("훅15 — 파일럿 사고 제목 실격", checkTitleHook15("신발 냄새 없애는 법 신발 건조기 추천") !== null);
   t("훅15 — 숫자 훅 통과", checkTitleHook15("3만원대 신발 건조기, 살까 말까") === null);
   t("훅15 — 호명 훅 통과", checkTitleHook15("장마철 신발 냄새로 고민이라면") === null);

@@ -1,7 +1,7 @@
 // [species-c] §7 본문 생성 — 뼈대 9단 고정, 심리 임무는 브리프에서 주입, 문체는 style-guide.md에서 주입.
 import fs from "node:fs";
 import path from "node:path";
-import { ARTICLE_LENGTH, DISCLOSURE_TEXT, FAKE_REVIEW_WORDS, LINK_MARKER, LLM, SAMPLE_MIN_FOR_NUMBERS, samplePhrase, TAG_COUNT } from "./config";
+import { ARTICLE_LENGTH, DISCLOSURE_TEXT, FAKE_REVIEW_WORDS, LLM, MARKER_LINK_1, MARKER_LINK_2, MARKER_PRODUCT_IMG, MARKER_REVIEW_CARD, SAMPLE_MIN_FOR_NUMBERS, samplePhrase, TAG_COUNT } from "./config";
 import { askJson } from "./llm";
 import type { ArticleDraft, ArticleType, KeywordResult, Product, PsychBrief, ReviewMining } from "./types";
 
@@ -43,14 +43,14 @@ export async function writeArticle(p: Product, kw: KeywordResult, brief: PsychBr
       missions,
       ``,
       `[뼈대 — 순서 고정, 번호는 출력하지 않는다]`,
-      `1. 문제 공감 도입(리듬 v2 3단 고정): ①독자 속마음 따옴표 대사 1줄(브리프의 장면에서, 30자 이내 — 이 따옴표는 리뷰 인용과 별개로 허용) ②상황 짧은 서술 1~2문장 ③문제 선언 1문장. 메인 키워드 자연 포함.`,
-      `2. 대가성 고백: 정확히 이 문구를 그대로: "${DISCLOSURE_TEXT}"`,
-      `3. 리뷰 집계: 위 신뢰 회계 표준 문장으로 열고 + 만족 TOP3. 이 섹션 끝에 단독 줄로: [이미지: 리뷰 분석 카드]`,
-      `4. 핵심 스펙·사용 맥락: 스펙 나열이 아니라 '사게 만드는 확인'에 답하는 순서로. ${TYPE_NOTE[kw.articleType]}`,
-      `5. 단점 인정: 불만 TOP2 중 1~2개 정직하게 + 누구에게는 문제고 누구에게는 아닌지 구분. "이런 분께는 못 팝니다" 화법 허용.`,
-      `6. CTA 1: 구매 제안 2~3문장. 끝에 단독 줄 두 개: [이미지: CTA 카드] 그리고 ${LINK_MARKER}`,
-      `7. 체크리스트: "이런 분께 맞습니다" 3~4줄 / "이런 분은 다시 생각하세요" 2~3줄(문장으로, 기호 없이). 끝에 단독 줄: [이미지: 체크리스트 카드]`,
-      `8. 마무리: 타겟 호명 + 짧은 CTA. 끝에 단독 줄: ${LINK_MARKER}`,
+      `0. ★본문 맨 첫 줄(다른 어떤 것보다 먼저, 단독 문단): 정확히 이 문구 그대로 — "${DISCLOSURE_TEXT}"`,
+      `1. 문제 공감 도입(리듬 v2 3단 고정): ①독자 속마음 따옴표 대사 1줄(브리프의 장면에서, 30자 이내 — 이 따옴표는 리뷰 인용과 별개로 허용) ②상황 짧은 서술 1~2문장 ③문제 선언 1문장. 메인 키워드 자연 포함. 도입 끝에 단독 줄로: ${MARKER_PRODUCT_IMG}`,
+      `2. 리뷰 집계: 위 신뢰 회계 표준 문장으로 열고 + 만족 TOP3. 이 섹션 끝에 단독 줄로: ${MARKER_REVIEW_CARD}`,
+      `3. 핵심 스펙·사용 맥락: 스펙 나열이 아니라 '사게 만드는 확인'에 답하는 순서로. ${TYPE_NOTE[kw.articleType]}`,
+      `4. 단점 인정: 불만 TOP2 중 1~2개 정직하게 + 누구에게는 문제고 누구에게는 아닌지 구분. "이런 분께는 못 팝니다" 화법 허용.`,
+      `5. CTA 1: 구매 제안 2~3문장 — ★마지막 문장은 바로 아래에 '상품 이미지·가격이 보이는 링크 카드'가 붙는다는 전제로 자연스럽게 받는 문장("바로 아래에서 가격까지 확인할 수 있어요" 류). 끝에 단독 줄: ${MARKER_LINK_1}`,
+      `6. 체크리스트(본문 텍스트로만): "이런 분께 추천해요" 3~4줄 / "이런 분껜 아쉬워요" 2~3줄(문장으로, 기호 없이).`,
+      `7. 마무리: 타겟 호명 + 짧은 CTA — 역시 마지막 문장이 아래 링크 카드를 자연스럽게 받게. 끝에 단독 줄: ${MARKER_LINK_2}`,
       ``,
       `[표면 리듬 v2 — 스타일 가이드의 골든 샘플 리듬 그대로]`,
       `• 문단당 최대 2문장, 문단 사이 빈 줄(벽돌 금지 — 게이트가 검사한다).`,

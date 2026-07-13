@@ -1,5 +1,5 @@
 // [species-c] §9 품질 게이트 — 규칙은 이 파일 한 곳에만. 하나라도 걸리면 사유와 함께 재생성.
-import { BANNED_PHRASES, DISCLOSURE_TEXT, FAKE_EXPERIENCE_PATTERNS, FAKE_REVIEW_WORDS, FULLNAME_MAX_BODY, LINK_MARKER, REVIEW_QUOTE } from "./config";
+import { ALWAYS_BANNED_WORDS, BANNED_PHRASES, DISCLOSURE_TEXT, FAKE_EXPERIENCE_PATTERNS, FAKE_REVIEW_WORDS, FULLNAME_MAX_BODY, MARKER_LINK_1, MARKER_LINK_2, MARKER_PRODUCT_IMG, MARKER_REVIEW_CARD, REVIEW_QUOTE } from "./config";
 import type { ArticleDraft, GateIssue, Product, QualityResult } from "./types";
 
 // 문체 v2(2026-07-14): 이모지는 본문 존 규칙(8~12개·금지 존), 특수 심볼(화살표·체크)은 여전히 전면 금지
@@ -11,10 +11,10 @@ export function runQualityGate(draft: ArticleDraft, product: Product, mining?: {
   const body = draft.body;
   const full = `${draft.titleSearch}\n${draft.titleHook}\n${body}\n${draft.tags.join(" ")}`;
 
-  // 1. 대가성 문구 존재·위치(본문 앞 25% 안)
-  const dIdx = body.indexOf(DISCLOSURE_TEXT);
-  if (dIdx < 0) issues.push({ rule: "disclosure", detail: "대가성 고정 문구 부재" });
-  else if (dIdx > body.length * 0.25) issues.push({ rule: "disclosure", detail: "대가성 문구가 본문 시작부(앞 25%)에 있지 않음" });
+  // 1. ★대가성 문구 — 공식 문구가 '본문 첫 줄'(규정 정합 라운드)
+  const firstLine = body.split("\n")[0]?.trim() ?? "";
+  if (!body.includes(DISCLOSURE_TEXT)) issues.push({ rule: "disclosure", detail: "대가성 공식 문구 부재" });
+  else if (firstLine !== DISCLOSURE_TEXT) issues.push({ rule: "disclosure", detail: `대가성 문구가 본문 첫 줄이 아님(첫 줄: "${firstLine.slice(0, 24)}…")` });
 
   // 2. 과장·보장 표현
   for (const ph of BANNED_PHRASES) if (full.includes(ph)) issues.push({ rule: "banned-phrase", detail: `금지 표현: "${ph}"` });
@@ -71,9 +71,13 @@ export function runQualityGate(draft: ArticleDraft, product: Product, mining?: {
   if (quotes.length > REVIEW_QUOTE.maxCount) issues.push({ rule: "quote-count", detail: `리뷰 인용 ${quotes.length}회(허용 ${REVIEW_QUOTE.maxCount})` });
   for (const q of quotes) if ([...q].length > REVIEW_QUOTE.maxLen) issues.push({ rule: "quote-length", detail: `인용 ${[...q].length}자(허용 ${REVIEW_QUOTE.maxLen}): "${q.slice(0, 20)}"` });
 
-  // 7. 링크 교체 마커 정확히 2개
-  const markers = body.split(LINK_MARKER).length - 1;
-  if (markers !== 2) issues.push({ rule: "link-marker", detail: `링크 교체 마커 ${markers}개(정확히 2개 필요)` });
+  // 7. ★마커 4종(이미지 구성 개편): 상품 이미지 1~2, 리뷰 분석 카드 1, 링크 1·2 각 1
+  const cnt = (m: string) => body.split(m).length - 1;
+  const pi = cnt(MARKER_PRODUCT_IMG);
+  if (pi < 1 || pi > 2) issues.push({ rule: "marker", detail: `${MARKER_PRODUCT_IMG} ${pi}곳(허용 1~2)` });
+  if (cnt(MARKER_REVIEW_CARD) !== 1) issues.push({ rule: "marker", detail: `${MARKER_REVIEW_CARD} ${cnt(MARKER_REVIEW_CARD)}곳(정확히 1)` });
+  if (cnt(MARKER_LINK_1) !== 1 || cnt(MARKER_LINK_2) !== 1) issues.push({ rule: "marker", detail: `쇼핑커넥트 링크 마커 1·2가 각 1곳이어야 함(현재 ${cnt(MARKER_LINK_1)}·${cnt(MARKER_LINK_2)})` });
+  if (/\[이미지:|\[쇼핑커넥트 링크 교체 위치\]/.test(body)) issues.push({ rule: "marker", detail: "구 마커 형식 잔존([이미지:…]/링크 교체 위치)" });
 
   // 8. 제목-메인 키워드 정합 + 앞 15자 훅 (기존 시스템 규칙의 취지를 독립 구현)
   //    검색 최적화 제목: 메인 키워드의 핵심 토큰(2자+)이 전부 포함 + 제목 30자 이내.
@@ -93,6 +97,10 @@ export function runQualityGate(draft: ArticleDraft, product: Product, mining?: {
         issues.push({ rule: "sample-claim", detail: `표본 아닌 숫자로 분석 주장: "${m[0]}" (실표본 ${mining.sampleSize}건)` });
       }
     }
+  }
+  // 11-0. ★내돈내산 무조건 금지(규정 정합 — 실사용 여부 무관)
+  for (const w of ALWAYS_BANNED_WORDS) {
+    if (full.includes(w)) issues.push({ rule: "always-banned", detail: `"${w}"는 실사용 여부와 무관하게 전면 금지(대가성 글)` });
   }
   // 11. ★후기 금지(라운드1 B-2) — 실사용 입력 없으면 제목·본문·태그에 후기류 단어 금지
   if (!product.myExperience) {

@@ -67,3 +67,21 @@ export async function fetchBlogTotal(keyword: string): Promise<number | null> {
     return typeof json.total === "number" ? json.total : null;
   } catch { return null; }
 }
+
+/** 쇼핑 검색 API(공식)로 상품 대표이미지 매칭 — 상품명 토큰 겹침 상위 1건. 실패 시 null(수동 업로드 폴백). */
+export async function fetchShopImage(productName: string): Promise<Buffer | null> {
+  loadEnv();
+  const id = process.env.NAVER_DATALAB_CLIENT_ID, sec = process.env.NAVER_DATALAB_SECRET;
+  if (!id || !sec) return null;
+  try {
+    const res = await fetch(`https://openapi.naver.com/v1/search/shop.json?query=${encodeURIComponent(productName)}&display=5&sort=sim`, { headers: { "X-Naver-Client-Id": id, "X-Naver-Client-Secret": sec } });
+    if (!res.ok) { await res.text(); return null; }
+    const json = (await res.json()) as { items?: { title: string; image: string }[] };
+    const toks = productName.split(/\s+/).filter((t) => t.length >= 2);
+    const hit = (json.items ?? []).find((i) => { const t = i.title.replace(/<[^>]+>/g, ""); return toks.filter((k) => t.includes(k)).length >= Math.min(2, toks.length); });
+    if (!hit?.image) return null;
+    const imgRes = await fetch(hit.image, { signal: AbortSignal.timeout(8000) });
+    if (!imgRes.ok) return null;
+    return Buffer.from(await imgRes.arrayBuffer());
+  } catch { return null; }
+}

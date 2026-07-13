@@ -46,14 +46,15 @@ export const JOURNEY_SCORE: Record<string, number> = {
   owner: 0, // 보유자형: 사용법·세척법(이미 산 사람)
 };
 
-/** 대가성 고정 문구(§7-1 2번) — 상수, 본문 시작 직후 고정, 생략 절대 불가 */
+/** ★대가성 문구(규정 정합 라운드) — 공식 문구 정확히, 본문 최상단 1행 고정, 생략 절대 불가 */
 export const DISCLOSURE_TEXT =
-  "판매왕답게 먼저 고백합니다. 이 글로 판매가 발생하면 수수료를 받습니다. 그래서 더 깐깐하게 골랐습니다.";
+  "이 포스팅은 네이버 쇼핑 커넥트 활동의 일환으로, 판매 발생 시 수수료를 제공받습니다.";
 
-/** 링크 교체 마커(§7-1 6·8번) — 정확히 2회 존재해야 게이트 통과 */
-export const LINK_MARKER = "[쇼핑커넥트 링크 교체 위치]";
-/** 이미지 삽입 마커 프리픽스 */
-export const IMAGE_MARKER_PREFIX = "[이미지:";
+/** ★본문 마커 4종(이미지 구성 개편) */
+export const MARKER_PRODUCT_IMG = "[상품 이미지]"; // 1~2곳
+export const MARKER_REVIEW_CARD = "[리뷰 분석 카드]"; // 정확히 1곳
+export const MARKER_LINK_1 = "[쇼핑커넥트 링크 1]";
+export const MARKER_LINK_2 = "[쇼핑커넥트 링크 2]";
 
 /** 금지 표현(§0-5·§9-2) — 과장·보장·의학 단정 */
 export const BANNED_PHRASES = [
@@ -96,7 +97,9 @@ export const LLM = { model: "claude-opus-4-8", briefMaxTokens: 6000, articleMaxT
 export const SAMPLE_MIN_FOR_NUMBERS = 30; // 미만이면 수치 표기 금지(정성 서술)
 export const samplePhrase = (total: number, sample: number) => `전체 리뷰 ${total.toLocaleString()}건 중 최근 ${sample}건을 직접 정독했습니다.`;
 /** 실사용 입력 없으면 제목·본문·태그 금지(라운드1 B-2) */
-export const FAKE_REVIEW_WORDS = ["후기", "사용기", "내돈내산", "직접 써보니"];
+export const FAKE_REVIEW_WORDS = ["후기", "사용기", "직접 써보니"];
+/** ★실사용 여부 무관 전면 금지(규정 정합 — 쇼핑커넥트는 대가성 글이라 '내돈내산' 자체가 허위) */
+export const ALWAYS_BANNED_WORDS = ["내돈내산"];
 
 /** 태그 개수(§7-1 9번) */
 export const TAG_COUNT = 10;

@@ -10,6 +10,7 @@ export function writePackage(args: {
 }): string {
   const slug = args.product.name.replace(/[^가-힣a-zA-Z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 30);
   const outDir = path.join(__dirname, "out", `${new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10)}-${slug}`); // KST
+  fs.rmSync(outDir, { recursive: true, force: true }); // 재생성 시 이전 산출물 잔존 방지(실측: 구 CTA·체크리스트 카드가 남음)
   fs.mkdirSync(path.join(outDir, "03_이미지"), { recursive: true });
 
   fs.writeFileSync(path.join(outDir, "01_제목.txt"), [
@@ -35,16 +36,17 @@ export function writePackage(args: {
     `1. 네이버 블로그 글쓰기 열기 → 01_제목.txt의 "검색 최적화안"을 제목에 붙여넣기`,
     `2. 02_본문.txt 전체 복사 → 본문에 붙여넣기`,
     `2-1. 본문에서 ==문장== 으로 감싼 곳(2~4곳)을 찾아: 그 문장을 드래그 → 에디터 형광펜(배경색) 적용 → 앞뒤 == 기호 삭제`,
-    `3. 본문에서 "[이미지: 리뷰 분석 카드]" 줄을 지우고 그 자리에 03_이미지/01_review.png 업로드`,
-    `   같은 방식으로 [이미지: CTA 카드] → 02_cta.png, [이미지: 체크리스트 카드] → 03_checklist.png`,
-    `4. 본문의 "[쇼핑커넥트 링크 교체 위치]" 2곳을 지우고, 쇼핑커넥트에서 발급한 이 상품 링크를 삽입`,
-    `   (쇼핑커넥트 → 링크 만들기 → 상품 URL 붙여넣기 → 발급 링크 복사)`,
-    `5. 04_태그.txt의 태그들을 태그 칸에 입력`,
-    `6. 발행 전 최종 체크:`,
-    `   - 대가성 문구가 본문 앞부분에 있는가 (있어야 정상)`,
-    `   - 이미지 3장이 모두 업로드됐는가`,
+    `3. 마커 교체(4종):`,
+    `   - [상품 이미지] → 03_이미지에 product 프레임이 있으면 그걸, 없으면 상품 페이지 대표 이미지를 저장해 업로드`,
+    `   - [리뷰 분석 카드] → 03_이미지/01_review.png 업로드`,
+    `   - [쇼핑커넥트 링크 1]·[쇼핑커넥트 링크 2] → 각각 지우고 쇼핑커넥트 발급 링크 삽입(링크 카드가 상품 이미지·가격을 자동 표시)`,
+    `4. 04_태그.txt의 태그들을 태그 칸에 입력`,
+    `5. 발행 전 최종 체크:`,
+    `   - 대가성 문구가 본문 '맨 첫 줄'에 있는가 (규정 — 절대 지우지 말 것)`,
     `   - 링크 2곳이 모두 쇼핑커넥트 발급 링크인가 (원본 상품 URL 아님)`,
     `   - 제목에 메인 키워드("${args.keywords.main.keyword}")가 들어 있는가`,
+    `   - ★블로그의 '내돈내산' 체크 기능은 사용 금지 (대가성 글 — 허위 표시가 된다)`,
+    `   - ★쇼핑커넥트 통계·정산 수치는 글·댓글·커뮤니티 어디에도 공개 금지 (약관)`,
     ``,
     `메인 키워드 실측: 월 ${args.keywords.main.vol?.toLocaleString()}회 검색 / 경쟁 문서 ${args.keywords.main.blogTotal?.toLocaleString()}개`,
   ].join("\n"));
@@ -59,8 +61,8 @@ function buildViewHtml(args: { product: Product; keywords: KeywordResult; articl
   const esc = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const imgs = fs.readdirSync(path.join(outDir, "03_이미지")).filter((f) => f.endsWith(".png")).map((f) => ({ name: f, b64: fs.readFileSync(path.join(outDir, "03_이미지", f)).toString("base64") }));
   const bodyHtml = esc(args.article.body)
-    .replace(/\[쇼핑커넥트 링크 교체 위치\]/g, '<mark style="background:#FFE27A;padding:2px 8px;border-radius:6px;font-weight:700">[쇼핑커넥트 링크 교체 위치 — 발급 링크 붙이기]</mark>')
-    .replace(/\[이미지: ([^\]]+)\]/g, '<mark style="background:#CFE3FF;padding:2px 8px;border-radius:6px;font-weight:700">[여기에 이미지 업로드: $1]</mark>')
+    .replace(/\[쇼핑커넥트 링크 ([12])\]/g, '<mark style="background:#FFE27A;padding:2px 8px;border-radius:6px;font-weight:700">[쇼핑커넥트 링크 $1 — 발급 링크 붙이기]</mark>')
+    .replace(/\[(상품 이미지|리뷰 분석 카드)\]/g, '<mark style="background:#CFE3FF;padding:2px 8px;border-radius:6px;font-weight:700">[여기에 업로드: $1]</mark>')
     .replace(/==([^=\n]{2,80})==/g, '<span style="background:#FFF3A0;padding:1px 4px;border-radius:4px">$1</span> <span style="color:#C43D2B;font-size:12px;font-weight:700">← 형광펜 후 == 삭제</span>')
     .replace(/\n/g, "<br>");
   return `<meta charset="utf-8"><title>박카상사 복붙 도우미</title>
