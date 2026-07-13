@@ -127,7 +127,7 @@ const okDraft = { titleSearch: "차 에어컨 냄새, 3분이면 잡히는 이�
 {
   const rich = buildRichBody(okBody);
   t("리치 — 전 문단 중앙정렬", !rich.includes("<p ") || !/<p style="(?!text-align:center)/.test(rich));
-  t("리치 — 대가성 첫 줄 13px 보조색", rich.indexOf("font-size:13px") < rich.indexOf("font-size:19px"));
+  t("리치 — 대가성 첫 줄 11px 2줄 내려쓰기", rich.indexOf("font-size:11px") < rich.indexOf("font-size:19px") && rich.split("font-size:11px").length - 1 >= 2);
   t("리치 — 하이라이트 자동 형광펜", rich.includes(`background-color:#FFF3A0`) && !rich.includes("=="));
   t("리치 — 소제목 19px 볼드", /<b><span style="font-size:19px[^"]*">[^<]*될까요/.test(rich.replace(/\s/g, (c) => c)));
   t("리치 — 판정 헤더 색 역할(파랑/빨강)", rich.includes("#1D75F7") || rich.includes("#F04452"));
