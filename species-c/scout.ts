@@ -20,7 +20,7 @@ async function shopSearch(query: string, display = 10): Promise<ShopItem[]> {
 
 const strip = (s: string) => s.replace(/<[^>]+>/g, "");
 
-export async function scout(): Promise<void> {
+export async function scout(theme?: string): Promise<void> {
   const month = new Date().getMonth() + 1;
   const seasonTokens = SEASON_TABLE[month] ?? [];
 
@@ -28,10 +28,11 @@ export async function scout(): Promise<void> {
   const phrases = await askJson<string[]>(
     [
       `지금은 ${month}월이다. 이 시즌 수요 테마: ${seasonTokens.join(", ")}.`,
+      theme ? `블로그 주제 고정: "${theme}" — 모든 검색어가 이 주제 카테고리 안의 상품이어야 한다(주제 전문성 보호).` : "",
       `네이버 쇼핑에서 '지금 사람들이 실제로 사는 저관여 생활용품'을 찾는 상품 검색어 12개를 만들어라.`,
       `조건: 1~5만원대 생활용품이 걸릴 검색어(가전·명품 금지), 문제 해결형 니즈(냄새·습기·정리·더위 등), 브랜드명 금지, 2~4어절.`,
       `JSON 배열: ["세탁조 클리너", ...]`,
-    ].join("\n"),
+    ].filter(Boolean).join("\n"),
     3000,
   );
 
@@ -63,4 +64,4 @@ export async function scout(): Promise<void> {
   console.log("고르는 법: 링크 열어 리뷰 300+·평점 4.3+ 확인 → 쇼핑커넥트에서 수수료율 확인 → URL·수수료율·리뷰 복사본을 입력으로.");
 }
 
-scout().catch((e) => { console.error("스카우터 실패:", e instanceof Error ? e.message : e); process.exit(1); });
+scout(process.argv[2]).catch((e) => { console.error("스카우터 실패:", e instanceof Error ? e.message : e); process.exit(1); });
