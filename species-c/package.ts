@@ -34,6 +34,7 @@ export function writePackage(args: {
     ``,
     `1. 네이버 블로그 글쓰기 열기 → 01_제목.txt의 "검색 최적화안"을 제목에 붙여넣기`,
     `2. 02_본문.txt 전체 복사 → 본문에 붙여넣기`,
+    `2-1. 본문에서 ==문장== 으로 감싼 곳(2~4곳)을 찾아: 그 문장을 드래그 → 에디터 형광펜(배경색) 적용 → 앞뒤 == 기호 삭제`,
     `3. 본문에서 "[이미지: 리뷰 분석 카드]" 줄을 지우고 그 자리에 03_이미지/01_review.png 업로드`,
     `   같은 방식으로 [이미지: CTA 카드] → 02_cta.png, [이미지: 체크리스트 카드] → 03_checklist.png`,
     `4. 본문의 "[쇼핑커넥트 링크 교체 위치]" 2곳을 지우고, 쇼핑커넥트에서 발급한 이 상품 링크를 삽입`,
@@ -60,6 +61,7 @@ function buildViewHtml(args: { product: Product; keywords: KeywordResult; articl
   const bodyHtml = esc(args.article.body)
     .replace(/\[쇼핑커넥트 링크 교체 위치\]/g, '<mark style="background:#FFE27A;padding:2px 8px;border-radius:6px;font-weight:700">[쇼핑커넥트 링크 교체 위치 — 발급 링크 붙이기]</mark>')
     .replace(/\[이미지: ([^\]]+)\]/g, '<mark style="background:#CFE3FF;padding:2px 8px;border-radius:6px;font-weight:700">[여기에 이미지 업로드: $1]</mark>')
+    .replace(/==([^=\n]{2,80})==/g, '<span style="background:#FFF3A0;padding:1px 4px;border-radius:4px">$1</span> <span style="color:#C43D2B;font-size:12px;font-weight:700">← 형광펜 후 == 삭제</span>')
     .replace(/\n/g, "<br>");
   return `<meta charset="utf-8"><title>박카상사 복붙 도우미</title>
 <body style="font-family:-apple-system,sans-serif;max-width:760px;margin:24px auto;padding:0 16px;background:#FFF7E8">

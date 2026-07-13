@@ -72,8 +72,8 @@ async function main(): Promise<void> {
 
   // 인용 상한 결정론 수리(실측: 재추첨으로 quote-count가 안 잡힘) — 4번째부터 따옴표 해제(내용 보존)
   const capQuotes = (body: string): string => {
-    let n = 0;
-    return body.replace(/"([^"\n]{1,80})"/g, (m, inner: string) => (++n <= 3 ? m : inner));
+    let n = 0; // v2: 도입 속마음 대사 1회 + 리뷰 인용 3회 = 총 4회까지, 초과는 따옴표 해제
+    return body.replace(/"([^"\n]{1,80})"/g, (m, inner: string) => (++n <= 4 ? m : inner));
   };
   // ⑦+⑨ 본문 생성 + 품질 게이트 (실격 시 사유 주입 재생성 1회)
   let article = await writeArticle(product, keywords, brief, reviews);

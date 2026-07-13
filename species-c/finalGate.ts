@@ -2,7 +2,9 @@
 import { BANNED_PHRASES, DISCLOSURE_TEXT, FAKE_EXPERIENCE_PATTERNS, FAKE_REVIEW_WORDS, FULLNAME_MAX_BODY, LINK_MARKER, REVIEW_QUOTE } from "./config";
 import type { ArticleDraft, GateIssue, Product, QualityResult } from "./types";
 
-const EMOJI_RE = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}\u{FE0F}✔✅→↓↑]/u;
+// 문체 v2(2026-07-14): 이모지는 본문 존 규칙(8~12개·금지 존), 특수 심볼(화살표·체크)은 여전히 전면 금지
+const EMOJI_RE = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B50}\u{2757}\u{2764}\u{FE0F}]/gu;
+const SYMBOL_BAN_RE = /[→↓↑✓✗]/;
 
 export function runQualityGate(draft: ArticleDraft, product: Product, mining?: { sampleSize: number; totalReviews: number }): QualityResult {
   const issues: GateIssue[] = [];
@@ -30,13 +32,43 @@ export function runQualityGate(draft: ArticleDraft, product: Product, mining?: {
   const nameCount = (body.match(new RegExp(nameEsc, "g")) ?? []).length;
   if (nameCount > FULLNAME_MAX_BODY) issues.push({ rule: "fullname-repeat", detail: `제품 풀네임 본문 ${nameCount}회(허용 ${FULLNAME_MAX_BODY})` });
 
-  // 5. 이모지·심볼
-  const em = EMOJI_RE.exec(full);
-  if (em) issues.push({ rule: "emoji", detail: `이모지·심볼 발견: ${em[0]}` });
+  // 5. 이모지 v2(존·상한) + 심볼 전면 금지
+  const sym = SYMBOL_BAN_RE.exec(full);
+  if (sym) issues.push({ rule: "symbol", detail: `특수 심볼(AI 문체): ${sym[0]}` });
+  if (((`${draft.titleSearch}${draft.titleHook}${draft.tags.join("")}`).match(EMOJI_RE) ?? []).length > 0) issues.push({ rule: "emoji-title", detail: "제목·태그 이모지 전면 금지" });
+  const emojiCount = (body.match(EMOJI_RE) ?? []).length;
+  if (emojiCount > 12 || emojiCount < 8) issues.push({ rule: "emoji-count", detail: `본문 이모지 ${emojiCount}개(허용 8~12)` });
+  // 금지 존: 대가성 문구 문단
+  const paras = body.split(/\n{2,}/);
+  const discPara = paras.find((pp) => pp.includes(DISCLOSURE_TEXT));
+  if (discPara && (discPara.match(EMOJI_RE) ?? []).length > 0) issues.push({ rule: "emoji-zone", detail: "대가성 고지 문단에 이모지" });
+  // 금지 존: 수치·가격 문장 / 단점 인정 문장
+  for (const sen of body.split(/(?<=[.!?…])\s+|\n+/)) { // 줄바꿈도 문장 경계(실측 오탐: 구두점 없는 소제목이 다음 문단과 합쳐짐)
+    if (((sen.match(EMOJI_RE) ?? []).length) === 0) continue;
+    if (/[\d][\d,.]*\s*(원|%|건|개월|분|시간|W|ml|kg)/.test(sen)) { issues.push({ rule: "emoji-zone", detail: `수치·가격 문장에 이모지: "${sen.slice(0, 24)}…"` }); break; }
+    if (/(아쉬|단점|못 팝니다|불만)/.test(sen)) { issues.push({ rule: "emoji-zone", detail: `단점 인정 문장에 이모지: "${sen.slice(0, 24)}…"` }); break; }
+  }
+  // ★문단 리듬(v2): 문단당 최대 2문장·150자(줄바꿈 목록은 줄 단위로)
+  for (const pp of paras) {
+    const plain = pp.trim();
+    if (!plain || plain.startsWith("[") || plain === DISCLOSURE_TEXT) continue;
+    const units = plain.includes("\n") ? plain.split("\n") : [plain];
+    for (const u of units) {
+      const senCount = (u.match(/[.!?…]+(?=\s|$)/g) ?? []).length;
+      if (senCount > 2 || [...u].length > 150) { issues.push({ rule: "paragraph-rhythm", detail: `문단 과밀(${senCount}문장·${[...u].length}자): "${u.slice(0, 24)}…"` }); break; }
+    }
+  }
+  // ★하이라이트 마커(v2): ==핵심 문장== 2~4곳
+  const hl = (body.match(/==[^=\n]{4,80}==/g) ?? []).length;
+  if (hl < 2 || hl > 4) issues.push({ rule: "highlight-count", detail: `하이라이트 마커 ${hl}곳(허용 2~4)` });
 
-  // 6. 리뷰 인용 길이·횟수
-  const quotes = [...body.matchAll(/"([^"\n]{1,80})"/g)].map((m) => m[1]!);
-  if (quotes.length > REVIEW_QUOTE.maxCount) issues.push({ rule: "quote-count", detail: `따옴표 인용 ${quotes.length}회(허용 ${REVIEW_QUOTE.maxCount})` });
+  // 6. 리뷰 인용 길이·횟수 — 도입 속마음 대사 1회(앞 200자·30자 이내)는 별도 허용
+  const qm = [...body.matchAll(/"([^"\n]{1,80})"/g)];
+  const hasIntro = qm.length > 0 && (qm[0]!.index ?? 0) < 200;
+  const introQ = hasIntro ? qm[0]![1]! : null;
+  if (introQ && [...introQ].length > 30) issues.push({ rule: "quote-length", detail: `도입 대사 ${[...introQ].length}자(허용 30)` });
+  const quotes = (hasIntro ? qm.slice(1) : qm).map((m) => m[1]!);
+  if (quotes.length > REVIEW_QUOTE.maxCount) issues.push({ rule: "quote-count", detail: `리뷰 인용 ${quotes.length}회(허용 ${REVIEW_QUOTE.maxCount})` });
   for (const q of quotes) if ([...q].length > REVIEW_QUOTE.maxLen) issues.push({ rule: "quote-length", detail: `인용 ${[...q].length}자(허용 ${REVIEW_QUOTE.maxLen}): "${q.slice(0, 20)}"` });
 
   // 7. 링크 교체 마커 정확히 2개
