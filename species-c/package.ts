@@ -37,7 +37,7 @@ export function writePackage(args: {
     fs.rmSync(c.file, { force: true });
   });
 
-  fs.writeFileSync(path.join(outDir, "04_태그.txt"), args.article.tags.join(", "));
+  fs.writeFileSync(path.join(outDir, "04_태그.txt"), args.article.tags.map((t) => "#" + t.replace(/\s+/g, "")).join(" ")); // 유저 확정: # 프리픽스+공백 구분
 
   fs.writeFileSync(path.join(outDir, "05_조립가이드.md"), [
     `# 조립 가이드 (5분 복붙 코스)`,
@@ -90,8 +90,8 @@ ${imgs.length ? `<div style="background:#fff;border:2px solid #2B2117;border-rad
   ${imgs.map((im, i) => `<div style="margin-top:12px"><button onclick="cpImg(this,'im${i}')">이미지 ${i + 1} 복사</button> <span style="color:#8A6F4D;font-size:13px">${esc(im.name)}</span><br><img id="im${i}" src="data:image/png;base64,${im.b64}" style="max-width:100%;border:1px solid #ddd;border-radius:8px;margin-top:6px"></div>`).join("")}
 </div>` : `<div style="background:#fff;border:2px solid #2B2117;border-radius:12px;padding:16px;margin-bottom:14px"><b>3. 이미지</b> <span style="font-size:13px;color:#8A6F4D">회색 박스 [상품 이미지] 3~5곳에 상품 페이지의 대표·상세컷을 각각 업로드하세요(같은 사진 반복 금지).</span></div>`}
 <div style="background:#fff;border:2px solid #2B2117;border-radius:12px;padding:16px;margin-bottom:14px">
-  <b>4. 태그</b> <button onclick="cp(this,${JSON.stringify(JSON.stringify(args.article.tags.join(", ")))})">태그 복사</button>
-  <div style="margin-top:8px;color:#555;font-size:14px">${esc(args.article.tags.join(", "))}</div>
+  <b>4. 태그</b> <button onclick="cp(this,${JSON.stringify(JSON.stringify(args.article.tags.map((t) => "#" + t.replace(/\s+/g, "")).join(" ")))})">태그 복사</button>
+  <div style="margin-top:8px;color:#555;font-size:14px">${esc(args.article.tags.map((t) => "#" + t.replace(/\s+/g, "")).join(" "))}</div>
 </div>
 <p style="color:#8A6F4D">발행 전 체크: 링크 2곳 교체 완료 / 이미지 3장 업로드 / 제목에 "${esc(args.keywords.main.keyword)}" 포함</p>
 <script>
