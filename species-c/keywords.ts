@@ -42,8 +42,16 @@ export async function discoverKeywords(p: Product, hasCompare: boolean, seasonSc
   // ── 소스 2: 자동완성 재귀 확장(깊이 2·중복 제거) — 문제형 상위 시드에서
   const seeds = cands.filter((c) => c.layer === "problem" || c.layer === "purchase").slice(0, 5).map((c) => c.keyword);
   const acFound = await expandAutocomplete(seeds);
-  const brandRe = new RegExp([...MATRIX.brandStop, ...p.name.split(/\s+/).filter((t) => /^[가-힣a-zA-Z]{2,}$/.test(t)).slice(0, 1)].join("|"));
+  const brandRe = new RegExp(MATRIX.brandStop.join("|")); // 유통·타사만 스톱 — 자사 모델명은 구매직전 후보로 허용(교본 흡수)
   for (const kw of acFound.filter((k) => !brandRe.test(k)).slice(0, 25)) cands.push({ keyword: kw, layer: guessLayer(kw), source: "autocomplete" });
+
+  // ── 소스 2.5: 자사 모델명 변형(교본 흡수 — 구체 모델명 검색은 구매 직전 최강. 자사명은 브랜드 스톱 예외)
+  const nameToks = p.name.split(/\s+/).filter((t) => /^[가-힣a-zA-Z0-9]{2,}$/.test(t));
+  if (nameToks.length >= 2) {
+    for (const v of [nameToks.slice(0, 2).join(" "), nameToks.slice(0, 3).join(" "), `${nameToks[0]} ${nameToks[nameToks.length - 1]}`]) {
+      cands.push({ keyword: v, layer: "purchase", source: "llm" });
+    }
+  }
 
   // ── 소스 3: 조합 매트릭스([상황]×[대상]×[문제], 사전=matrix.config.ts) — 상한 내 전량 실측
   const core = p.category.split(/\s+/).filter((t) => t.length >= 2)[0] ?? p.name.split(/\s+/)[0] ?? "";

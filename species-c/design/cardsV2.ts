@@ -44,7 +44,7 @@ const bar = (labelText: string, num: number, den: number, accent: string): Node 
       el("div", { display: "flex", width: V2.bar.w, height: V2.bar.h, backgroundColor: C.line, borderRadius: 999 }, [
         el("div", { display: "flex", width: Math.round(V2.bar.w * ratio), height: "100%", backgroundColor: accent, borderRadius: 999 }),
       ]),
-      txt(`${den}건 중 ${num}건`, { fontSize: 27, color: C.sub, marginLeft: 22 }),
+      txt(den >= 30 ? `${den}건 중 ${num}건` : num / Math.max(1, den) >= 0.7 ? "대부분 언급" : num / Math.max(1, den) >= 0.4 ? "절반쯤 언급" : "일부 언급", { fontSize: 27, color: C.sub, marginLeft: 22 }), // A-3: 표본<30이면 수치 대신 정성
     ]),
   ]);
 };
@@ -61,17 +61,23 @@ async function render(node: Node, h: number, file: string): Promise<void> {
 }
 
 // ── 1. 리뷰 분석 (1B 히어로 숫자 위계) ─────────────────────────────
-export interface ReviewCardData { total: number; sample: number; sat: [string, number][]; bad: [string, number][] }
+export interface ReviewCardData { total: number; sample: number; rating?: number; sat: [string, number][]; bad: [string, number][] }
 export async function reviewCardV2(d: ReviewCardData, file: string): Promise<void> {
-  const h = 300 + (d.sat.length + d.bad.length) * 122 + 210;
+  const h = 330 + (d.sat.length + d.bad.length) * 122 + 210;
+  const stat = (big: string, small: string, accent = C.ink): Node =>
+    el("div", { display: "flex", flexDirection: "column", alignItems: "center", flexGrow: 1, flexBasis: 0 }, [
+      txt(big, { fontSize: 88, fontWeight: 800, color: accent, lineHeight: 1 }),
+      txt(small, { fontSize: 26, color: C.sub, marginTop: 12 }),
+    ]);
   await render(card([
-    label(`실구매 리뷰 ${d.sample}건 분석`),
-    el("div", { display: "flex", alignItems: "flex-end", gap: 18, marginBottom: 44 }, [
-      txt(String(d.sample), { fontSize: 130, fontWeight: 800, color: C.ink, lineHeight: 0.9 }),
-      el("div", { display: "flex", flexDirection: "column", paddingBottom: 10 }, [
-        txt("건을 직접 정독했어요", { fontSize: 40, fontWeight: 800, color: C.ink }),
-        txt(`전체 리뷰 ${d.total.toLocaleString()}건 상품`, { fontSize: 27, color: C.sub, marginTop: 6 }),
-      ]),
+    label("실구매 리뷰 분석"),
+    // ★2초 이해 통계 헤더(유저 레퍼런스: 스토어 리뷰 요약 위젯) — 평점·리뷰수·정독 표본
+    el("div", { display: "flex", alignItems: "center", marginBottom: 40, paddingBottom: 34, borderBottom: `2px solid ${C.line}` }, [
+      stat(d.rating != null ? String(d.rating) : "-", "사용자 평점 / 5", C.blue),
+      el("div", { display: "flex", width: 2, height: 90, backgroundColor: C.line }),
+      stat(d.total.toLocaleString(), "전체 리뷰"),
+      el("div", { display: "flex", width: 2, height: 90, backgroundColor: C.line }),
+      stat(String(d.sample), "직접 정독한 리뷰"),
     ]),
     ...d.sat.map(([l, n]) => bar(l, n, d.sample, C.blue)),
     el("div", { display: "flex", height: 2, backgroundColor: C.line, margin: "16px 0 34px" }),
