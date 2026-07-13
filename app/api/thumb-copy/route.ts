@@ -30,7 +30,8 @@ export async function POST(request: Request) {
     `본문 도입(이 글의 진짜 셀링포인트 — 문구는 이 내용에서만 나와야 한다): ${String((art as { body_html?: string }).body_html ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(0, 400)}`,
     "",
     "규칙:",
-    "- ★6각도 강제 분산(전부 같은 프레임이면 실격) — 6개는 반드시 서로 다른 각도 하나씩: ①숫자 대비형(본문 실값 두 개의 충돌 — 남들 연 3.6% vs 내 통장 0.1%) ②질문형(그 돈 하루 굴리면 얼마?) ③미완결형(옮기기 전 이것 하나만) ④자격 발견형(통장만 있으면 오늘 시작) ⑤내용 요약형(CMA 금리 4곳 비교) ⑥손실 회피형(모르고 두면 이자 0원).",
+    "- ★1번 문구는 무조건 '명사 완결형'(유저 확정 스타일): 키워드를 그대로 세운 정보 약속 — '2026년 임산부 지원금 총정리', '청년도약계좌 조건 한눈에' 식(제목에 연도가 있으면 연도 포함, 끝은 총정리/한눈에/핵심 정리 중 자연스러운 것). 어그로 없이 담백하게.",
+    "- ★2~6번은 5각도 강제 분산(전부 같은 프레임이면 실격) — 반드시 서로 다른 각도 하나씩: ①숫자 대비형(본문 실값 두 개의 충돌 — 남들 연 3.6% vs 내 통장 0.1%) ②질문형(그 돈 하루 굴리면 얼마?) ③미완결형(옮기기 전 이것 하나만) ④자격 발견형(통장만 있으면 오늘 시작) ⑤손실 회피형(모르고 두면 이자 0원).",
     "- ★사실 정합(절대 조항) — 훅을 만들려고 본문에 없는 인과·위협을 지어내면 실격(실측 실격 예: 본문은 '6개월 내 퇴사 시 환수'인데 문구가 '지급일 놓치면 환수당한다' — 조건 바꿔치기). 본문이 명시한 사실만 극적으로 만들 수 있다.",
     "- ★완결된 구어 — 사람이 소리 내 말할 수 있는 문장만. '~다는 것', '~라는 게 핵심이다' 같은 문어 조각 실격.",
     "- ★주제어 의무 — 6개 전부에 이 글의 핵심 명사(제목·키워드의 실제 명사)가 들어가야 한다. '아는 사람만 써먹는 경로'처럼 무엇인지 없는 문구 실격.",
@@ -38,6 +39,16 @@ export async function POST(request: Request) {
     "- 금지: 무조건·100%·보장·충격·경악, 느낌표 2개 이상, 이모지.",
     "- 출력 계약(어기면 실패): 설명·비교·머리말 없이, 첫 글자가 [ 이고 마지막 글자가 ] 인 JSON 배열 한 줄만 출력한다. 예: [\"남들 연 3.6% 내 통장 0.1%\",\"CMA 금리 4곳 비교\"]",
   ].join("\n");
+  // ★9자/줄 다듬기(2026-07-13) — 초과 문구를 버리지 않고 어절을 덜어 규격에 맞춘다(전멸 방지+크기 통일 유지)
+  const fit9 = (c: string): string | null => {
+    let t = c.trim();
+    for (let i = 0; i < 4; i++) {
+      if ([...t].length <= 18 && breakThumbCopy(t).split("\n").every((l) => [...l].length <= 9)) return t;
+      if (!t.includes(" ")) return null;
+      t = t.split(" ").slice(0, -1).join(" ").replace(/[,，]$/, "");
+    }
+    return null;
+  };
   try {
     // ★빈손 금지 3단(실측: 간헐 '문구를 만들지 못했어요' — 필터 전멸이 원인): AI→관대한 회수→규칙 폴백
     let copies: string[] = [];
@@ -55,8 +66,8 @@ export async function POST(request: Request) {
       const cleaned = (Array.isArray(raw) ? raw : [])
         .map((c) => String(c).trim().replace(/^[\[\]"\u201c\u201d'\s]+|[\[\]"\u201c\u201d'\s]+$/g, "")) // ★대괄호·스마트따옴표 찌꺼기 소거(실측: 앞뒤 [])
         .filter((c) => c.length >= 4)
-        .map((c) => ([...c].length > 18 ? "" : c)) // ★18자 상한(유저 규격: 고정 폰트 1줄 9자·2줄 — 초과는 후보 제외)
-        .filter((c) => c && breakThumbCopy(c).split("\n").every((l) => [...l].length <= 9)) // ★9자/줄 분할 가능까지 검사(어절 배분상 불가 문구 제외)
+        .map((c) => fit9(c) ?? "") // ★폐기 대신 다듬기(실측 2026-07-13: 4중 게이트 전멸→판박이 폴백) — 18자·9자/줄 초과는 어절을 덜어 살린다
+        .filter(Boolean)
         .filter((c) => { // ★주제어 게이트(실측: '아는 사람만 써먹는 경로' — 무엇의 경로인지 부재) — 키워드·제목의 실질 명사 1개 필수
           const stop = new Set(["방법", "정리", "조건", "확인", "신청", "가능", "지금", "오늘", "이유", "핵심", "순서", "전에", "먼저"]);
           const toks = `${art.keyword ?? ""} ${art.title ?? ""}`.split(/[\s,·]+/).map((t) => t.replace(/[^가-힣a-zA-Z0-9]/g, "")).filter((t) => t.length >= 2 && !stop.has(t));
@@ -73,6 +84,13 @@ export async function POST(request: Request) {
         .filter(Boolean)
         .filter((c) => bannedHits(c).length === 0);
       copies = [...new Set(cleaned)].slice(0, 4);
+      if (copies.length === 0 && Array.isArray(raw) && raw.length > 0) {
+        // ★관대한 회수(2026-07-13 실측: 임산부 지원금 — 주제어 게이트까지 전멸→판박이 폴백): 사실 정합(숫자·금지어)만 지키고 회수
+        const src = `${art.title ?? ""} ${art.keyword ?? ""} ${art.meta_description ?? ""}`.replace(/[,\s]/g, "");
+        copies = [...new Set((raw as unknown[]).map((c) => fit9(String(c).trim().replace(/^[\[\]"\u201c\u201d'\s]+|[\[\]"\u201c\u201d'\s]+$/g, "")) ?? "")
+          .filter((c) => c && [...c].length >= 4 && bannedHits(c).length === 0)
+          .filter((c) => (c.match(/[0-9][0-9,.]*/g) ?? []).every((num) => src.includes(num.replace(/,/g, "")))))].slice(0, 4);
+      }
       if (copies.length === 0) console.error(`[thumb-copy] 시도${attempt + 1} 전멸 — raw:${Array.isArray(raw) ? raw.length : 0} (18자·분할·주제어·숫자 게이트 통과 0) kw:${String(art.keyword ?? "").slice(0, 20)}`);
     }
     if (copies.length === 0) {
@@ -81,17 +99,8 @@ export async function POST(request: Request) {
       // ★제목 훅 우선(실측: 템플릿 4종이 어떤 키워드든 판박이) — 제목의 각도(쉼표·콜론 뒤)를 1순위 폴백으로
       const { hookCopyFromTitle } = await import("@/lib/wpFeaturedImage");
       const titleHook = hookCopyFromTitle(art.title, kw).slice(0, 18);
-      // ★9자/줄 분할 검증을 폴백에도(실측: '경기도 청년안심주택, 지금 확인' — 11자 줄이 새서 썸네일 축소) — 안 쪼개지면 어절을 덜어 맞춘다
-      const fit9 = (c: string): string | null => {
-        let t = c.trim();
-        for (let i = 0; i < 4; i++) {
-          if (breakThumbCopy(t).split("\n").every((l) => [...l].length <= 9)) return t;
-          if (!t.includes(" ")) return null;
-          t = t.split(" ").slice(0, -1).join(" ").replace(/[,，]$/, "");
-        }
-        return null;
-      };
-      copies = [...new Set([titleHook, `${kw}, 이것부터`, `${kw} 그대로 두면 손해`, `${kw}, 지금 확인`]
+      const yr = (String(art.title ?? "").match(/20\d{2}년/) ?? [])[0] ?? "";
+      copies = [...new Set([`${yr ? yr + " " : ""}${kw} 총정리`, titleHook, `${kw}, 이것부터`, `${kw} 그대로 두면 손해`]
         .map(fit9).filter((c): c is string => !!c && [...c].length >= 4))].slice(0, 4);
       if (copies.length === 0) copies = [kw.slice(0, 9)];
     }
