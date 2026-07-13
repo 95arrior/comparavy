@@ -87,7 +87,7 @@ async function main(): Promise<void> {
   let article = await writeArticle(product, keywords, brief, reviews);
   article.body = capQuotes(article.body);
   const mining = { sampleSize: reviews.sampleSize, totalReviews: product.reviewCount };
-  const titleIssues = (t: string) => [checkTitleKeyword(t, keywords.main.keyword), checkTitleHook15(t), checkTitleSingleNeedle(t, keywords.subs.map((s) => s.keyword))].filter((x): x is NonNullable<typeof x> => x != null);
+  const titleIssues = (t: string) => [checkTitleKeyword(t, keywords.main.keyword), checkTitleHook15(t), checkTitleSingleNeedle(t, keywords.subs.map((s) => s.keyword), keywords.main.keyword)].filter((x): x is NonNullable<typeof x> => x != null);
   let quality = runQualityGate(article, product, mining);
   quality = { pass: quality.pass && titleIssues(article.titleSearch).length === 0, issues: [...quality.issues, ...titleIssues(article.titleSearch)] };
   if (!quality.pass) {
@@ -97,6 +97,26 @@ async function main(): Promise<void> {
     article.body = capQuotes(article.body);
     quality = runQualityGate(article, product, mining);
     quality = { pass: quality.pass && titleIssues(article.titleSearch).length === 0, issues: [...quality.issues, ...titleIssues(article.titleSearch)] };
+  }
+  // ★제목 전용 수리(실측: 제목만 실격인데 본문 전체 재추첨 — 비효율+실패 잦음): 본문 무결·제목 실격이면 제목만 다시 뽑는다(최대 2회)
+  for (let i = 0; i < 2 && !quality.pass && quality.issues.every((x) => ["title-hook15", "single-needle", "title-keyword", "title"].includes(x.rule)); i++) {
+    try {
+      const { askJson } = await import("./llm");
+      const fixed = await askJson<{ titleSearch: string; titleHook: string }>(
+        [
+          `블로그 제목 2안을 다시 써라. 메인 키워드 "${keywords.main.keyword}" 문구가 제목에 자연스럽게 포함되어야 하고, 서브 키워드(${keywords.subs.map((s) => s.keyword).join(", ")})는 넣지 마라.`,
+          `★앞 15자 자기검증: 구체 숫자·대상 호명(~라면/~인 분)·질문(?)·따옴표 발화 중 하나가 앞 15자 안에 있어야 한다. '총정리·순위·방법·이유'는 훅이 아니다.`,
+          `실격 사유: ${quality.issues.map((x) => x.detail).join(" / ")}`,
+          `상품: ${product.name} ${product.price.toLocaleString()}원. 제목 30자 이내, 이모지·후기·내돈내산 금지.`,
+          `JSON: {"titleSearch":"...","titleHook":"..."}`,
+        ].join("\n"),
+        1500,
+      );
+      if (fixed.titleSearch) { article.titleSearch = fixed.titleSearch.trim(); article.titleHook = (fixed.titleHook ?? fixed.titleSearch).trim(); }
+      quality = runQualityGate(article, product, mining);
+      quality = { pass: quality.pass && titleIssues(article.titleSearch).length === 0, issues: [...quality.issues, ...titleIssues(article.titleSearch)] };
+      if (!quality.pass) stepLog("제목 수리", `${i + 1}차 재시도`);
+    } catch { break; }
   }
   stepLog("품질 게이트", quality.pass ? "전 규칙 통과" : `실격 ${quality.issues.length}건(패키지에 경고 동봉)`);
   quality.issues.forEach((i) => console.log(`  - [${i.rule}] ${i.detail}`));

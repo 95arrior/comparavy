@@ -114,6 +114,7 @@ const okDraft = { titleSearch: "차 에어컨 냄새, 3분이면 잡히는 이�
   t("골드 뱃지 — blog_total<300", judgeGolden(800, 299, 1).goldBadge === true);
   t("1바늘 — 서브 문구가 제목에 오면 실격", checkTitleSingleNeedle("차 에어컨 냄새와 차량용 탈취제 추천", ["차량용 탈취제 추천"]) !== null);
   t("1바늘 — 메인만 있으면 통과", checkTitleSingleNeedle("차 에어컨 냄새, 3분이면 잡히는 이유", ["차량용 탈취제 추천"]) === null);
+  t("1바늘 — 가족 서브(5자+ 공유)는 면제", checkTitleSingleNeedle("곰팡이 제거제 순위, 욕실 곰팡이 제거제 뭘 살까?", ["욕실 곰팡이 제거제"], "곰팡이 제거제 순위") === null);
 }
 
 // ── 발급 링크 자동 삽입 회귀
