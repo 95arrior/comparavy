@@ -66,22 +66,20 @@ if (is_home() || is_category()) : $pop = ateflo_popular_posts(8); if ($pop) : ?>
 </section>
 <?php endif; endif; ?>
 
-<?php // ★2.4.5(유저 제안): 하단 추천 = 그날그날 주제 로테이션 — 카테고리를 날짜로 순환, 부족하면 '더 볼만한 글'(최신)로 폴백.
-//  offset 방식 폐기(실측: 글이 적으면 2페이지 하단이 텅 빔) — 대신 '화면에 보이는 카드 4개 제외' 최신/주제 글.
+<?php // ★2.4.6(유저 확정): 페이지는 상단 리스트용, 하단 섹션은 어느 페이지든 '고정' — 최신 4개(1페이지 카드) 제외 12개.
+//  '오늘의 주제'는 제목 옆 칩으로(일별 카테고리 순환), 그 주제 글을 목록 맨 앞으로 당긴다.
 if (is_home()) :
-  $atf_shown = wp_list_pluck($wp_query->posts, 'ID');
   $atf_cats = get_categories(['orderby' => 'count', 'order' => 'DESC', 'number' => 6]);
   $atf_cat = $atf_cats ? $atf_cats[(int) date('z') % count($atf_cats)] : null;
-  $txq = $atf_cat ? new WP_Query(['post_type' => 'post', 'post_status' => 'publish', 'posts_per_page' => 12, 'post__not_in' => $atf_shown, 'cat' => $atf_cat->term_id, 'no_found_rows' => true]) : null;
-  $atf_txtitle = $atf_cat ? '오늘의 주제 · ' . $atf_cat->name : '더 볼만한 글';
-  if (!$txq || $txq->post_count < 3) { $atf_txtitle = '더 볼만한 글'; $txq = new WP_Query(['post_type' => 'post', 'post_status' => 'publish', 'posts_per_page' => 12, 'post__not_in' => $atf_shown, 'no_found_rows' => true]); }
-if ($txq->have_posts()) : ?>
+  $atf_list = get_posts(['numberposts' => 12, 'offset' => 4]);
+  if ($atf_cat && $atf_list) { $atf_a = []; $atf_b = []; foreach ($atf_list as $p) { if (has_category($atf_cat->term_id, $p)) $atf_a[] = $p; else $atf_b[] = $p; } $atf_list = array_merge($atf_a, $atf_b); }
+if ($atf_list) : ?>
 <section class="txtlist">
-  <h2 class="sec-title"><?php echo esc_html($atf_txtitle); ?></h2>
+  <div class="sec-row"><h2 class="sec-title">더 볼만한 글</h2><?php if ($atf_cat) : ?><span class="tx-chip">✨ 오늘의 주제 · <?php echo esc_html($atf_cat->name); ?></span><?php endif; ?></div>
   <ul>
-    <?php while ($txq->have_posts()) : $txq->the_post(); ?>
-    <li><a href="<?php the_permalink(); ?>"><span class="t"><?php the_title(); ?></span><span class="d"><?php echo get_the_date('n월 j일'); ?></span></a></li>
-    <?php endwhile; wp_reset_postdata(); ?>
+    <?php foreach ($atf_list as $p) : ?>
+    <li><a href="<?php echo esc_url(get_permalink($p)); ?>"><span class="t"><?php echo esc_html(get_the_title($p)); ?></span><span class="d"><?php echo esc_html(get_the_date('n월 j일', $p)); ?></span></a></li>
+    <?php endforeach; ?>
   </ul>
 </section>
 <?php endif; endif; ?>

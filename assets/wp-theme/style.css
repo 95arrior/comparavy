@@ -1,7 +1,7 @@
 /*
 Theme Name: Ateflo Toss
 Description: 토스풍 초경량 블로그 테마 — 외부 요청 0, JS 0, PageSpeed 100 지향. ateflo 발행 글(.ateflo-post)과 완전 호환.
-Version: 2.4.5
+Version: 2.4.6
 Author: swooosy
 Text Domain: ateflo-toss
 */
@@ -119,8 +119,8 @@ body.admin-bar .site-head{top:32px}
 
 /* 등장 애니 — 아래→위 부드럽게(JS 0, 순차 스태거) */
 @keyframes riseIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
-.rise{animation:riseIn .6s cubic-bezier(.22,1,.36,1) both}
-.r1{animation-delay:.05s}.r2{animation-delay:.12s}.r3{animation-delay:.2s}.r4{animation-delay:.28s}.r5{animation-delay:.4s}
+.rise{animation:riseIn .4s cubic-bezier(.22,1,.36,1) both}
+.r1{animation-delay:.03s}.r2{animation-delay:.08s}.r3{animation-delay:.13s}.r4{animation-delay:.18s}.r5{animation-delay:.24s}
 @media (prefers-reduced-motion:reduce){.rise{animation:none}}
 
 /* 광고 슬롯 — 콘텐츠와 구분되되 튀지 않게(레이아웃 흔들림 방지 최소높이) */
@@ -141,7 +141,7 @@ body.admin-bar .site-head{top:32px}
 .searchbar button{border:0;background:var(--brand);color:#fff;font:inherit;font-size:14px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer}
 
 .sec-title{margin:38px 0 14px;font-size:22px;font-weight:800;letter-spacing:-.02em}
-.album{display:flex;gap:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:8px 2px 10px;margin-top:-8px;scroll-snap-type:x proximity;touch-action:pan-x pan-y;overscroll-behavior-x:contain;scrollbar-width:none;-ms-overflow-style:none}
+.album{display:flex;gap:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:8px 2px 10px;margin-top:-8px;touch-action:pan-x pan-y;scrollbar-width:none;-ms-overflow-style:none}
 .album::-webkit-scrollbar{display:none}
 .car{position:relative}
 .car-fade{position:absolute;top:2px;right:-2px;bottom:14px;width:64px;pointer-events:none;background:linear-gradient(90deg,rgba(242,244,246,0),rgba(242,244,246,.96) 88%)}
@@ -159,7 +159,7 @@ body.admin-bar .site-head{top:32px}
 .al-views{display:flex;align-items:center;gap:4px;margin-top:5px;padding:0 4px;font-size:12px;color:var(--weak)}
 .meta-views{display:inline-flex;align-items:center;gap:4px;margin-left:10px;color:var(--weak)}
 .meta-views svg{opacity:.75}
-.al-card{flex:0 0 248px;scroll-snap-align:start;background:#fff;border-radius:16px;padding:10px;box-shadow:0 1px 3px rgba(0,0,0,.05);transition:transform .3s cubic-bezier(.22,1,.36,1)}
+.al-card{flex:0 0 248px;background:#fff;border-radius:16px;padding:10px;box-shadow:0 1px 3px rgba(0,0,0,.05);transition:transform .3s cubic-bezier(.22,1,.36,1)}
 .al-card:hover{transform:translateY(-2px)}
 .al-card{transition:transform .5s cubic-bezier(.22,1,.36,1)}
 .al-thumb{display:block;position:relative;width:100%;height:165px;border-radius:10px;overflow:hidden;background:linear-gradient(135deg,#eef3ff,#dfe9ff)}
@@ -176,7 +176,7 @@ body.admin-bar .site-head{top:32px}
 .searchbar{max-width:560px}
 
 /* 스크롤 리빌 — 초경량 JS(IntersectionObserver)와 페어 */
-.reveal{opacity:0;transform:translateY(14px);transition:opacity .55s cubic-bezier(.22,1,.36,1),transform .55s cubic-bezier(.22,1,.36,1)}
+.reveal{opacity:0;transform:translateY(10px);transition:opacity .35s cubic-bezier(.22,1,.36,1),transform .35s cubic-bezier(.22,1,.36,1)}
 .reveal.in{opacity:1;transform:none}
 @media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
 
@@ -215,4 +215,7 @@ body.admin-bar .site-head{top:32px}
 .txtlist a{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:14px 18px;font-size:15.5px;font-weight:600;color:var(--ink)}
 .txtlist a:hover .t{color:var(--brand)}
 .txtlist .t{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sec-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sec-row .sec-title{margin:0}
+.tx-chip{display:inline-flex;align-items:center;padding:4px 12px;border-radius:999px;font-size:12.5px;font-weight:700;color:#1D75F7;background:linear-gradient(135deg,#EFF6FF,#E3EEFF);border:1px solid rgba(29,117,247,.15)}
 .txtlist .d{flex:0 0 auto;color:var(--weak);font-size:13px}
