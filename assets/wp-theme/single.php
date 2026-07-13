@@ -10,7 +10,7 @@
     <?php if ($hero) : ?>
       <figure class="hero-img rise r4"><img src="<?php echo esc_url($hero); ?>" alt="<?php the_title_attribute(); ?> 대표 이미지" width="720" height="405"></figure>
     <?php endif; ?>
-    <p class="post-meta rise r5"><?php the_author(); ?> · <?php echo get_the_date('Y년 n월 j일'); ?> <span class="meta-views"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.6"/></svg> <?php echo number_format((int) get_post_meta(get_the_ID(), 'ateflo_views', true)); ?></span></p>
+    <p class="post-meta rise r5"><?php the_author(); ?> · <?php echo get_the_date('Y년 n월 j일'); ?> <?php $atf_v = (int) get_post_meta(get_the_ID(), 'ateflo_views', true); if ($atf_v >= 10) : /* ★2.4.4: 10 미만 숨김 — 신생 티 방지 */ ?><span class="meta-views"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.6"/></svg> <?php echo number_format($atf_v); ?></span><?php endif; ?></p>
   </header>
   <div class="post-body"><?php the_content(); ?></div>
 </article>

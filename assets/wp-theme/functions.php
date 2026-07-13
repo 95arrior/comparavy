@@ -137,6 +137,9 @@ add_action('pre_get_posts', function ($q) {
 /* ── 조회수 자동 집계(플러그인 없이) — 인기 글 섹션 데이터원 ── */
 add_action('wp_head', function () {
   if (!is_singular('post') || current_user_can('edit_posts')) return;
+  // ★2.4.4: 봇 제외(실측: 조회수가 크롤러 카운트 — 구글봇·네이버 예티·링크 미리보기가 다 +1이었음)
+  $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+  if ($ua === '' || preg_match('/bot|crawl|spider|slurp|yeti|daum|kakao|facebook|whatsapp|telegram|preview|curl|wget|python|httpclient|scrapy|gpt|claude|bing|petal|semrush|ahrefs/i', $ua)) return;
   $id = get_the_ID();
   update_post_meta($id, 'ateflo_views', ((int) get_post_meta($id, 'ateflo_views', true)) + 1);
 });
