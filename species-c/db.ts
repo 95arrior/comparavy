@@ -38,7 +38,16 @@ export function getDb(): DatabaseSync {
       tag text                            -- 'golden' | 'gold' | null
     );
   `);
+  try { db.exec("alter table posts add column connect_link text"); } catch { /* 이미 있음 */ }
   return db;
+}
+
+/** 이전 글 상품(발급 링크 보유) — '함께 보면 좋은 제품' 크로스 링크용 */
+export function recentLinkedProducts(excludeName: string, limit = 3): { product_name: string; connect_link: string }[] {
+  const rows = getDb().prepare("select product_name, connect_link from posts where connect_link is not null and connect_link != '' and product_name != ? order by id desc").all(excludeName) as { product_name: string; connect_link: string }[];
+  const seen = new Set<string>(); const out: { product_name: string; connect_link: string }[] = [];
+  for (const r of rows) { if (!seen.has(r.product_name)) { seen.add(r.product_name); out.push(r); if (out.length >= limit) break; } }
+  return out;
 }
 
 /** 지금까지 생성한 글 수 — 글 유형 로테이션 축 */
@@ -53,11 +62,12 @@ export function saveKeywordCandidates(rows: { source: string; productName: strin
   for (const r of rows) st.run(new Date().toISOString(), r.source, r.productName, r.keyword, r.monthlySearches ?? null, r.blogTotal ?? null, r.tag ?? null);
 }
 
-export function logPost(row: { productName: string; productUrl: string; mainKeyword: string; monthlySearches: number | null; blogTotal: number | null; articleType: string; gateResult: unknown; qualityResult: unknown; outDir: string }): void {
+export function logPost(row: { productName: string; productUrl: string; mainKeyword: string; monthlySearches: number | null; blogTotal: number | null; articleType: string; gateResult: unknown; qualityResult: unknown; outDir: string; connectLink?: string | null }): void {
   getDb().prepare(
     `insert into posts (created_at, product_name, product_url, main_keyword, monthly_searches, blog_total, article_type, gate_result, quality_result, out_dir)
      values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(new Date().toISOString(), row.productName, row.productUrl, row.mainKeyword, row.monthlySearches, row.blogTotal, row.articleType, JSON.stringify(row.gateResult), JSON.stringify(row.qualityResult), row.outDir);
+  if (row.connectLink) { try { getDb().prepare("update posts set connect_link = ? where id = (select max(id) from posts)").run(row.connectLink); } catch { /* 무해 */ } }
 }
 
 /** 실적 수동 입력 훅(§10) — CSV 임포트는 이 함수를 행 단위로 호출. */

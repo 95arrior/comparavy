@@ -4,7 +4,7 @@ import fs from "node:fs";
 import { writeArticle } from "./article";
 import { buildBrief } from "./brief";
 
-import { countPosts, logPost, saveKeywordCandidates } from "./db";
+import { countPosts, logPost, recentLinkedProducts, saveKeywordCandidates } from "./db";
 import { runQualityGate, checkTitleKeyword, checkTitleHook15, checkTitleSingleNeedle } from "./finalGate";
 import { runProductGate } from "./gate";
 import { intake } from "./intake";
@@ -123,13 +123,22 @@ async function main(): Promise<void> {
   stepLog("품질 게이트", quality.pass ? "전 규칙 통과" : `실격 ${quality.issues.length}건(패키지에 경고 동봉)`);
   quality.issues.forEach((i) => console.log(`  - [${i.rule}] ${i.detail}`));
 
+  // ★함께 보면 좋은 제품(유저 확정) — 이전 글 상품의 발급 링크 크로스(게이트 통과 후 부착 — 배치 규칙과 무관)
+  try {
+    const rel = recentLinkedProducts(product.name, 3);
+    if (rel.length) {
+      article.body += "\n\n함께 보면 좋은 제품 🧺\n\n" + rel.map((r) => `${r.product_name}도 같이 찾는 분들이 많아요.\n\n${r.connect_link}`).join("\n\n");
+      stepLog("크로스 링크", rel.map((r) => r.product_name).join(" / "));
+    }
+  } catch { /* 무해 */ }
+
   // ⑧ 이미지 생성 없음(유저 확정: 리뷰 카드 폐지) — [상품 이미지] 3~5곳(수동)·링크 2곳만
   const cards: { file: string; kind: string }[] = [];
   stepLog("이미지", "생성 없음 — [상품 이미지] 3~5곳은 상품 페이지 이미지 업로드, 링크 2곳");
 
   // ⑩ 패키지 + 로그
   const outDir = writePackage({ product, gate, keywords, brief, article, cards, quality });
-  logPost({ productName: product.name, productUrl: product.url, mainKeyword: keywords.main.keyword, monthlySearches: keywords.main.vol, blogTotal: keywords.main.blogTotal, articleType: keywords.articleType, gateResult: gate, qualityResult: quality, outDir });
+  logPost({ productName: product.name, productUrl: product.url, mainKeyword: keywords.main.keyword, monthlySearches: keywords.main.vol, blogTotal: keywords.main.blogTotal, articleType: keywords.articleType, gateResult: gate, qualityResult: quality, outDir, connectLink: product.connectLink });
   stepLog("완료", `복붙 패키지: ${outDir}`);
   console.log(`  제목(검색안): ${article.titleSearch}`);
   console.log(`  본문 ${[...article.body].length.toLocaleString()}자 / 태그 ${article.tags.length}개 / 카드 ${cards.length}장`);

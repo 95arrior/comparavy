@@ -33,15 +33,15 @@ const okBody = [
   "문제는 냄새가 아니라 반복입니다.",
   MARKER_PRODUCT_IMG,
   '전체 리뷰 2,847건 중 최근 30건을 직접 정독했습니다. "하루 만에 잡혔" 같은 얘기가 반복됩니다.',
-  "냄새 얘기만큼 많던 게 건조 속도였어요.",
-  MARKER_PRODUCT_IMG,
+  "리뷰가 궁금하게 했다면 아래에서 실물을 볼 수 있어요.",
+  MARKER_LINK_1,
   "정말 뿌리기만 하면 될까요? 🤔",
   "이 탈취제는 분사형이라 시공이 없습니다. ==구매자들이 가장 많이 꼽은 장점도 설치 부담이 없다는 점입니다.==",
   "다만 향이 강하다는 아쉬움도 있습니다. 무향이 필요하시다면 구매 전 이 부분을 꼭 고려해 보세요.",
   "왜 장마철에 사야 할까요? ☔",
   "지금 같은 장마철이 냄새가 가장 심해지는 시기입니다. ==냄새는 습기가 마르기 전에 잡는 게 빠릅니다.==",
   "매일 아침이 상쾌해지는 상상, 해보셨나요 ✨",
-  MARKER_LINK_1,
+  MARKER_PRODUCT_IMG,
   "이런 분께 맞습니다 🙌",
   "차에서 냄새가 나기 시작한 분. 셀프 시공이 부담스러운 분.",
   MARKER_PRODUCT_IMG,
@@ -78,7 +78,7 @@ const okDraft = { titleSearch: "차 에어컨 냄새, 3분이면 잡히는 이�
   t("규정 — 대가성 문구가 첫 줄 아니면 실격", !runQualityGate({ ...okDraft, body: okBody.replace(DISCLOSURE_TEXT + "\n\n", "") + "\n\n" + DISCLOSURE_TEXT }, product, M).pass);
   t("규정 — 공식 문구 정확 일치(변형 실격)", !runQualityGate({ ...okDraft, body: okBody.replace(DISCLOSURE_TEXT, "이 포스팅은 쇼핑 커넥트 활동으로 수수료를 받을 수 있습니다.") }, product, M).pass);
   t("규정 — 구 마커 잔존 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n[이미지: CTA 카드]" }, product, M).pass);
-  t("이미지 자리 — 2곳이면 실격(3~5 변동)", !runQualityGate({ ...okDraft, body: okBody.replace(MARKER_PRODUCT_IMG + "\n\n" + "정말", "정말") }, product, M).pass);
+  t("이미지 자리 — 2곳이면 실격(3~5 변동)", !runQualityGate({ ...okDraft, body: okBody.replace(MARKER_PRODUCT_IMG + "\n\n" + "전체 리뷰", "전체 리뷰") }, product, M).pass);
   t("이미지 자리 — 6곳이면 실격(과다)", !runQualityGate({ ...okDraft, body: okBody + ("\n\n" + MARKER_PRODUCT_IMG).repeat(3) }, product, M).pass);
   t("오글 — '판매왕' 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n판매왕이 골랐습니다." }, product, M).pass);
   t("오글 — '양심에 걸고' 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n양심에 걸고 말씀드려요." }, product, M).pass);
@@ -143,6 +143,12 @@ const okDraft = { titleSearch: "차 에어컨 냄새, 3분이면 잡히는 이�
   t("단정 — '못 팝니다' 화법 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n이런 분께는 못 팝니다." }, product, M).pass);
   t("완곡 — '도움이 될 수 있습니다' 통과", runQualityGate({ ...okDraft, body: okBody + "\n\n냄새 완화에 도움이 될 수 있습니다." }, product, M).pass);
   t("완곡 — '살균 기능을 지원합니다' 통과", runQualityGate({ ...okDraft, body: okBody + "\n\n이 제품은 살균 기능을 지원합니다." }, product, M).pass);
+}
+
+// ── 배치 규칙(지그재그) 회귀
+{
+  t("배치 — 마커 연속(이미지+이미지) 실격", !runQualityGate({ ...okDraft, body: okBody.replace(MARKER_LINK_2, MARKER_LINK_2 + "\n\n" + MARKER_PRODUCT_IMG).replace("매일 아침이 상쾌해지는 상상, 해보셨나요 ✨\n\n" + MARKER_PRODUCT_IMG, "매일 아침이 상쾌해지는 상상, 해보셨나요 ✨") }, product, M).pass);
+  t("배치 — 링크1 하단 몰림 실격", !runQualityGate({ ...okDraft, body: okBody.replace(MARKER_LINK_1 + "\n\n", "").replace(MARKER_LINK_2, MARKER_LINK_1 + "\n\n중간 문장을 하나 둡니다.\n\n" + MARKER_LINK_2) }, product, M).pass);
 }
 
 console.log(fail ? `\n${fail} FAILED` : "\nALL PASS");

@@ -88,6 +88,15 @@ export function runQualityGate(draft: ArticleDraft, product: Product, mining?: {
   if (cnt(MARKER_REVIEW_CARD) !== 0) issues.push({ rule: "marker", detail: `${MARKER_REVIEW_CARD} 잔존 — 리뷰 카드 폐지(유저 확정: 상품 이미지·링크만)` });
   if (cnt(MARKER_LINK_1) !== 1 || cnt(MARKER_LINK_2) !== 1) issues.push({ rule: "marker", detail: `쇼핑커넥트 링크 마커 1·2가 각 1곳이어야 함(현재 ${cnt(MARKER_LINK_1)}·${cnt(MARKER_LINK_2)})` });
   if (/\[이미지:|\[쇼핑커넥트 링크 교체 위치\]/.test(body)) issues.push({ rule: "marker", detail: "구 마커 형식 잔존([이미지:…]/링크 교체 위치)" });
+  // ★배치 규칙(유저 확정: 링크 하단 몰림 금지) — 링크1은 본문 앞 65% 안, 링크2는 뒤 25% 안, 마커 연속 금지
+  const l1 = body.indexOf(MARKER_LINK_1), l2 = body.indexOf(MARKER_LINK_2);
+  if (l1 >= 0 && l1 > body.length * 0.65) issues.push({ rule: "marker-layout", detail: `링크 1이 본문 ${Math.round((l1 / body.length) * 100)}% 지점 — 리뷰 직후(앞 65% 안)로` });
+  if (l2 >= 0 && l2 < body.length * 0.75) issues.push({ rule: "marker-layout", detail: "링크 2가 마무리(뒤 25%)에 있지 않음" });
+  const paraList = body.split(/\n{2,}/).map((x) => x.trim());
+  const isMk = (x: string) => x === MARKER_PRODUCT_IMG || x === MARKER_LINK_1 || x === MARKER_LINK_2 || /^https:\/\//.test(x);
+  for (let i = 0; i + 1 < paraList.length; i++) {
+    if (isMk(paraList[i]!) && isMk(paraList[i + 1]!)) { issues.push({ rule: "marker-layout", detail: "마커·링크 연속 배치 — 사이에 본문 문단 필요" }); break; }
+  }
 
   // 8. 제목-메인 키워드 정합 + 앞 15자 훅 (기존 시스템 규칙의 취지를 독립 구현)
   //    검색 최적화 제목: 메인 키워드의 핵심 토큰(2자+)이 전부 포함 + 제목 30자 이내.

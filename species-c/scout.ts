@@ -2,7 +2,7 @@
 // 사람의 몫은 마지막 10초: 쇼핑커넥트에서 수수료율·리뷰 수 확인(로그인 내부 정보 — 자동화 불가 영역).
 import { loadEnv } from "./env";
 import { PRODUCT_GATE, SEASON_TABLE } from "./config";
-import { fetchVolumes } from "./copied/naverApi";
+import { fetchAutocomplete, fetchBlogTotal, fetchVolumes } from "./copied/naverApi";
 import { askJson } from "./llm";
 
 interface ShopItem { title: string; link: string; lprice: string; mallName: string; brand: string; category3: string; productId: string }
@@ -45,15 +45,35 @@ export async function scout(theme?: string): Promise<void> {
     .slice(0, 6);
 
   // ③ 쇼핑 API로 후보 상품 수집 → 가격 밴드 필터 → 스마트스토어 우선
-  console.log(`\n[상품 스카우터] ${month}월 시즌 후보 (검색량 실측 완료 — 마지막 확인 2가지: 쇼핑커넥트 수수료율, 리뷰 300+/평점 4.3+)\n`);
-  for (const { phrase, vol } of ranked) {
+  // ★황금 카테고리 판정(유저 확정: 상품 고르기 전에) — 카테고리별 롱테일 4개 실측, 황금(월 100~2,000·문서<500) 존재 여부
+  const goldenOf = new Map<string, string | null>();
+  for (const { phrase } of ranked) {
+    let found: string | null = null;
+    try {
+      const tails = (await fetchAutocomplete(phrase)).slice(0, 4);
+      const tvols = await fetchVolumes(tails);
+      for (const t of tails) {
+        const v = tvols.get(t);
+        if (v == null || v < 100 || v > 2000) continue;
+        const bt = await fetchBlogTotal(t);
+        if (bt != null && bt < 500) { found = `${t} (월 ${v.toLocaleString()}·문서 ${bt.toLocaleString()})`; break; }
+      }
+    } catch { /* 판정 실패 = null */ }
+    goldenOf.set(phrase, found);
+    await new Promise((r) => setTimeout(r, 200));
+  }
+  const ordered = [...ranked].sort((a, b) => Number(Boolean(goldenOf.get(b.phrase))) - Number(Boolean(goldenOf.get(a.phrase))));
+
+  console.log(`\n[상품 스카우터] ${month}월 시즌 후보 — ★황금 키워드 보유 카테고리 우선 정렬\n`);
+  for (const { phrase, vol } of ordered) {
     const items = await shopSearch(phrase, 12);
     const fit = items
       .filter((i) => { const p = Number(i.lprice); return p >= PRODUCT_GATE.priceMin && p <= PRODUCT_GATE.priceMax; })
       .filter((i) => /smartstore\.naver\.com/.test(i.link) || i.mallName)
       .slice(0, 3);
     if (!fit.length) continue;
-    console.log(`◆ "${phrase}" — 월 ${vol?.toLocaleString()}회 검색`);
+    const g = goldenOf.get(phrase);
+    console.log(`◆ "${phrase}" — 월 ${vol?.toLocaleString()}회 검색 ${g ? `★황금 발견: ${g}` : "(황금 없음 — 포화 카테고리)"}`);
     for (const f of fit) {
       console.log(`   - ${strip(f.title).slice(0, 44)} | ${Number(f.lprice).toLocaleString()}원 | ${f.mallName}`);
       console.log(`     ${f.link}`);
