@@ -315,15 +315,8 @@ export async function POST(request: Request) {
             .sort((a, b) => b.score - a.score)
             .slice(0, 2)
             .map(({ title, url }) => ({ title, url }));
-          // ★네이버→WP 크로스 링크(2026-07-13 — 신생 도메인 신호 공급, 글당 1개 상한·완전 핏만)
-          try {
-            const { data: wps } = await supabase.from("articles").select("keyword, title, wp_link").eq("user_id", user.id).eq("status", "published").not("wp_link", "is", null).order("created_at", { ascending: false }).limit(30);
-            const wpBest = (wps ?? [])
-              .map((c) => { const f = strongFit(c); return { title: String(c.title ?? ""), url: String(c.wp_link ?? ""), score: f.score, strong: f.strong }; })
-              .filter((c) => c.url && c.strong)
-              .sort((a, b) => b.score - a.score)[0];
-            if (wpBest) relatedPosts.push({ title: wpBest.title, url: wpBest.url });
-          } catch { /* 무해 */ }
+          // ★네이버→WP 크로스 링크 제거(2026-07-14 유저 확정) — 네이버는 외부 상업성 링크에 민감, 돼지통(자산)이 pigtong(신생)보다 잃을 게 크다.
+          //  WP→네이버 방향(wordpress/publish)은 유지. 재개 조건: 돼지통 체급 안정 후 — 그때도 링크 대신 '무링크 언급' 방식 우선 검토.
         } catch { /* 무해 — 링크 없이 진행 */ }
         // ★SERP 역분석(상위노출 직접 전술) — 상위 5글 제목·요약을 능가 브리프로(실패 시 빈 배열, 기존 품질 유지)
         const topPosts = channel === "wordpress" ? [] : await fetchTopPosts(keyword, 5).catch(() => []);
