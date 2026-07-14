@@ -308,13 +308,36 @@ export async function POST(request: Request) {
             const shared = [...tok(String(c.keyword ?? ""))].filter((t) => myTok.has(t));
             return { score: shared.length, strong: shared.length >= 2 || shared.some((t) => t.length >= 4) };
           };
-          relatedPosts = (cands ?? [])
-            .filter((c) => !TIMED.test(`${c.keyword ?? ""} ${c.title ?? ""}`))
-            .map((c) => { const f = strongFit(c); return { title: String(c.title ?? ""), url: String(c.naver_url ?? ""), score: f.score, strong: f.strong }; })
-            .filter((c) => c.url && c.strong)
-            .sort((a, b) => b.score - a.score)
-            .slice(0, 2)
-            .map(({ title, url }) => ({ title, url }));
+          // ★검색자 심리 판정(2026-07-14 유저: 주담대 검색자=주택 구매 심리 → 매매대출·부동산 세금 글이 핏인데 토큰 게이트가 놓침) —
+          //  표면 토큰이 아니라 '이 사람이 이어서 궁금해할 글'을 LLM이 선별(최대 3, 애매하면 0 — 늪 설계: 타고 타고 못 빠져나가게)
+          const pool2 = (cands ?? []).filter((c) => c.naver_url && !TIMED.test(`${c.keyword ?? ""} ${c.title ?? ""}`));
+          let judged = false;
+          if (pool2.length) {
+            try {
+              const Anthropic = (await import("@anthropic-ai/sdk")).default;
+              const cl = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+              const res = await cl.messages.create({
+                model: "claude-haiku-4-5", max_tokens: 400,
+                messages: [{ role: "user", content: `네이버 블로그 '함께 보면 좋은 글' 선별 — 검색자 심리 연속성 기준.\n현재 글 키워드: "${keyword}"\n이 키워드를 검색한 사람이 처한 상황·심리를 먼저 생각하라(예: 주택담보대출 → 집 구매를 준비 중인 사람 → 매매대출·부동산 세금·시장 전망이 다음 관심사).\n아래 기발행 글 중 그 사람이 이어서 실제로 궁금해할 글만 골라라. 규칙: 최대 3개, 확신 없으면 제외(0개 가능), 표면 단어 겹침이 아니라 심리 흐름으로.\n${pool2.slice(0, 30).map((c, i) => `${i}: ${c.keyword} | ${c.title}`).join("\n")}\n출력: 인덱스 JSON 배열만. 예: [2,7]` }],
+              });
+              const txt = res.content.find((b) => b.type === "text")?.text ?? "";
+              const m = txt.match(/\[[\d,\s]*\]/);
+              if (m) {
+                judged = true;
+                relatedPosts = (JSON.parse(m[0]) as number[]).slice(0, 3)
+                  .map((i) => pool2[i]).filter((x): x is NonNullable<typeof x> => Boolean(x))
+                  .map((o) => ({ title: String(o.title ?? o.keyword), url: String(o.naver_url) }));
+              }
+            } catch { /* 판정 실패 → 아래 토큰 게이트 폴백 */ }
+          }
+          if (!judged) {
+            relatedPosts = pool2
+              .map((c) => { const f = strongFit(c); return { title: String(c.title ?? ""), url: String(c.naver_url ?? ""), score: f.score, strong: f.strong }; })
+              .filter((c) => c.url && c.strong)
+              .sort((a, b) => b.score - a.score)
+              .slice(0, 2)
+              .map(({ title, url }) => ({ title, url }));
+          }
           // ★네이버→WP 크로스 링크 제거(2026-07-14 유저 확정) — 네이버는 외부 상업성 링크에 민감, 돼지통(자산)이 pigtong(신생)보다 잃을 게 크다.
           //  WP→네이버 방향(wordpress/publish)은 유지. 재개 조건: 돼지통 체급 안정 후 — 그때도 링크 대신 '무링크 언급' 방식 우선 검토.
         } catch { /* 무해 — 링크 없이 진행 */ }
