@@ -25,7 +25,7 @@ ok(!/\[간격\]/.test(plain), "plain에 [간격] 잔존 0");
 // 마킹 없는 글은 여백 안 생김
 console.log("\n③ 마킹 없으면 여백 없음:");
 const noMark = formatBody({title:"t", bodyHtml:"<p>보통 문단.</p><p>다음 문단.</p>"});
-ok(!/<br><\/p><p style="text-align:left"><br>/.test(noMark), "마킹 없는 글은 서스펜스 여백 0");
+ok(!/(?:<p style="text-align:left"><br><\/p>){3,}/.test(noMark), "마킹 없는 글은 서스펜스 여백(3칸+) 0 — 일반 2칸은 여백 다이어트 규격");
 
 console.log(fail===0?"\n통과: 서스펜스 개행 구조 정상":`\n실패: ${fail}건`);
 process.exit(fail===0?0:1);

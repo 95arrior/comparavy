@@ -78,7 +78,7 @@ export function hasPhotoLeakPlain(s: string): boolean { return new RegExp(INSTRU
 //  글당 최대 3회. 초과분은 드롭. 마킹된 개행만 안전망 압축의 예외(비마킹 과잉 빈줄은 압축 유지).
 const SUSPENSE_TOKEN_RE = /<p[^>]*>\s*\[간격\]\s*<\/p>|\[간격\]/g;
 const SUSPENSE_MAX = 3;
-const SUSPENSE_SPACER = '<p style="text-align:left"><br></p><p style="text-align:left"><br></p>'; // 빈 줄 2칸
+const SUSPENSE_SPACER = '<p style="text-align:left"><br></p><p style="text-align:left"><br></p><p style="text-align:left"><br></p>'; // ★빈 줄 3칸(2026-07-14 여백 다이어트로 일반 문단이 2칸이 되며 대비 복원 — 서스펜스=일반+1)
 const SUSPENSE_OVER = '<p style="text-align:left"><br></p>'; // 상한 초과 마킹 → 일반 여백 1칸
 export function applySuspenseBreaks(html: string): string {
   let n = 0;
@@ -249,14 +249,14 @@ function beforeBlanks(b: Blk): number {
   if (isHashtagPara(b)) return 2;
   if (isEmphasisPara(b)) return 2;
   if (!isImagePara(b) && blockLines(b.inner) >= 4) return 2; // ★3→2(실측: 과다)
-  return 1;
+  return 2; // ★여백 다이어트 반대급부(2026-07-14 유저: 빽빽함 — 승지 교본): 일반 문단 사이 기본 2칸(숨통)
 }
 function afterBlanks(b: Blk): number {
   if (isSuspenseMark(b)) return 0;
   if (/^h[1-4]$/.test(b.tag)) return 1;
   if (isEmphasisPara(b)) return 2;
   if (!isImagePara(b) && blockLines(b.inner) >= 4) return 2; // ★3→2
-  return 1;
+  return 2; // ★문단 사이 기본 2칸
 }
 /** 블록 사이 빈 줄 수(마크업) — max(앞블록 after, 뒷블록 before), 상한 3. */
 export function gapBetween(prev: { tag: string; inner: string } | null, cur: { tag: string; inner: string }): number {
@@ -536,8 +536,8 @@ function capMarks(html: string): string {
     if (/^[─\-•·\s]*$/.test(plain)) return plain; // 구분선·불릿만 감싼 형광(실측) — 태그 소거
     const len = [...plain].length;
     if (len > 70) return String(inner); // 통문단 형광 — 평문으로(볼드 도배 전이 방지, 실측)
-    if (len >= 15) { sentCount += 1; return sentCount <= 3 ? raw : (sentCount <= 5 ? `<b>${inner}</b>` : String(inner)); }
-    phraseCount += 1; return phraseCount <= 5 ? raw : String(inner);
+    if (len >= 15) { sentCount += 1; return sentCount <= 2 ? raw : (sentCount <= 4 ? `<b>${inner}</b>` : String(inner)); } // ★강조 다이어트(2026-07-14): 문장 형광 3→2
+    phraseCount += 1; return phraseCount <= 4 ? raw : String(inner); // 구 형광 5→4
   });
 }
 
