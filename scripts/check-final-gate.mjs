@@ -22,6 +22,12 @@ const cases = [
   { c: { keyword: "광주 입학지원금", title: "광주 신입생 30만원 입학지원금 신청 자격·일정·서류" }, drop: "region_niche" },
   { c: { keyword: "서울 전세보증금 반환", title: "서울 전세보증금 반환 절차, 집주인이 안 줄 때" }, drop: null },
   { c: { keyword: "인천공항 환전", title: "인천공항 환전 수수료 아끼는 법" }, drop: null },
+  // ★2026-07-14 실측 3종 — B2C 신호('소상공인')로도 구제 불가한 행사·행정, 공약 단계 유령 제도
+  { c: { keyword: "소상공인 쇼케이스데이", title: "제11회 소상공인 쇼케이스데이 발표 희망기업 접수, 8월 10일 마감" }, drop: "b2b-hard" },
+  { c: { keyword: "백년소상공인 모집", title: "백년소상공인 모집(재지정) 공고 접수, 7월 29일 마감" }, drop: "b2b-hard" },
+  { c: { keyword: "고창군 기본소득", title: "고창군 기본소득 시범도시 2028년 신청 대상자 예상" }, drop: "speculative" },
+  { c: { keyword: "소상공인 정책자금", title: "소상공인 정책자금 신청 조건과 금리, 순서대로 정리" }, drop: null },
+  { c: { keyword: "백년가게 혜택", title: "백년가게로 지정되면 받는 혜택 총정리" }, drop: null },
 ];
 let fail = 0;
 for (const { c, drop } of cases) {
