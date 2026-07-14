@@ -1,7 +1,7 @@
 /*
 Theme Name: Ateflo Toss
 Description: 토스풍 초경량 블로그 테마 — 외부 요청 0, JS 0, PageSpeed 100 지향. ateflo 발행 글(.ateflo-post)과 완전 호환.
-Version: 2.4.7
+Version: 2.4.8
 Author: swooosy
 Text Domain: ateflo-toss
 */
@@ -13,7 +13,9 @@ Text Domain: ateflo-toss
 *{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%}
 /* ★가로 잠금(2026-07-13 모바일 실측: car-btn -10px 돌출로 화면이 옆으로 밀림) */
-html,body{overflow-x:hidden;max-width:100%}
+html,body{overflow-x:clip;max-width:100%}
+.wrap,.cols,.col-main,.rows,.popular,.txtlist{max-width:100%;min-width:0}
+.album{max-width:100%}
 body{
   background:var(--bg); color:var(--ink);
   font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,"Segoe UI","Apple SD Gothic Neo","Noto Sans KR",sans-serif;

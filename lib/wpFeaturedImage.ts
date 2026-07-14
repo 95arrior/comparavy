@@ -21,6 +21,12 @@ export function hookCopyFromTitle(title: string | null | undefined, keyword: str
   }
   // 꼬리 불완전 토큰 제거(실측: "…환급액까지 한") — 마지막 단어가 1글자 연결어면 떨군다
   hook = hook.replace(/\s+(한|그|이|저|더|또|및|등)$/, "").trim();
+  // ★외꼬리 조각 방지(실측 2026-07-14: "비트코인부터" 한 어절) — 어절 1개가 연결 조사로 끝나면 제목 앞부분으로
+  if (/^\S+$/.test(hook) && /(부터|까지|처럼|보다|대신|하며)$/.test(hook)) {
+    const head = (String(title ?? "").split(/[,，:：|｜]/)[0] ?? "").replace(/\?$/, "").trim();
+    if ([...head].length >= 6) hook = [...head].length > 22 ? head.slice(0, 22).trim() : head;
+    else hook = keyword;
+  }
   return hook;
 }
 

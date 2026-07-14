@@ -23,15 +23,14 @@ export async function generateWpBanners(keyword: string, articleId: string, n = 
   const typo = await generateTypoBannerDataUrl(keyword, articleId, brandName);
   if (typo) out.push(typo);
   // 2장째부터: 순수 일러스트(글자 완전 금지)
-  const styles = bodyStyleRotation(keyword); // 영문 약어 키워드면 3D 타이포 포함(IRP 레퍼런스 — 유저 선호)
+  const styles = bodyStyleRotation(keyword).filter((st) => st !== "typo3d"); // ★typo3d 제외(2026-07-14 실측: 영문 살짝 깨짐+대표 재활용 시 조판 문구와 충돌) — 순수 일러만
   // ★한글 원천 제거(2026-07-13) — 프롬프트에 한글이 인용되면 금지 문구와 무관하게 그려진다
   const brief = await englishBrief(keyword);
   const kwEn = brief?.topicEn ?? stripHangul(keyword, "korean personal finance topic");
-  const enTok = (keyword.toUpperCase().match(/\b[A-Z]{2,5}[0-9]{0,2}\b/) ?? [])[0] ?? null;
   for (let i = 1; i < n; i++) {
     const style = styles[(seed + i) % styles.length]!;
     try {
-      const img = await callImage(buildBannerPrompt(style === "typo3d" && enTok ? `${enTok} — ${kwEn}` : kwEn, style, seed + i * 7), "1:1");
+      const img = await callImage(buildBannerPrompt(kwEn, style, seed + i * 7), "1:1");
       out.push(`data:${img.mime};base64,${img.base64}`);
     } catch (e) {
       console.error(`[wp] 배너 생성 실패(${style}) — 건너뜀:`, e instanceof Error ? e.message : e);

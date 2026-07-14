@@ -24,7 +24,7 @@ function noText(topic: string): string {
   const base = "TEXT RULE (critical): Korean characters (Hangul) are STRICTLY FORBIDDEN anywhere in the image — AI-rendered Korean ALWAYS breaks into gibberish. No sentences, no numbers, no gibberish pseudo-letters, no watermarks, no logos. Any other paper/screen/sign surface stays completely blank.";
   const en = englishToken(topic);
   if (en) return `${base} If a small label feels natural, the ONLY word allowed is "${en}" — never any other word.`;
-  return `${base} If a sign or label feels natural, it must be ONE short ENGLISH capital word that a real object in THIS scene would naturally carry AND that belongs to THIS topic (a house may say RENT, a shop may say OPEN). NEVER write finance abbreviations or any word unrelated to the topic — when in doubt, render no text at all.`;
+  return `${base} If a sign or label feels natural, it must be EXACTLY ONE short English capital word (3~8 letters, never a phrase — multi-word text always breaks) that a real object in THIS scene would naturally carry AND that belongs to THIS topic (a house may say RENT, a shop may say OPEN). NEVER write finance abbreviations or any word unrelated to the topic — when in doubt, render no text at all.`;
 }
 
 // ★썸네일 배경 전용(2026-07-13 유저: 썸네일엔 영어도 쓰지 마 — 그림으로만. 문구 조판이 위에 얹히므로 배경 글자는 소음)
