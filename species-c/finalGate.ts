@@ -1,5 +1,5 @@
 // [species-c] §9 품질 게이트 — 규칙은 이 파일 한 곳에만. 하나라도 걸리면 사유와 함께 재생성.
-import { ALWAYS_BANNED_WORDS, BANNED_PHRASES, CLAIM_PATTERNS, CRINGE_PATTERNS, PRODUCT_IMG_RANGE, DISCLOSURE_TEXT, FAKE_EXPERIENCE_PATTERNS, FAKE_REVIEW_WORDS, FULLNAME_MAX_BODY, MARKER_LINK_1, MARKER_LINK_2, MARKER_PRODUCT_IMG, MARKER_REVIEW_CARD, REVIEW_QUOTE } from "./config";
+import { ALWAYS_BANNED_WORDS, ARTICLE_LENGTH, BANNED_PHRASES, CLAIM_PATTERNS, CRINGE_PATTERNS, PRODUCT_IMG_RANGE, DISCLOSURE_TEXT, FAKE_EXPERIENCE_PATTERNS, FAKE_REVIEW_WORDS, FULLNAME_MAX_BODY, MARKER_LINK_1, MARKER_LINK_2, MARKER_PRODUCT_IMG, MARKER_REVIEW_CARD, REVIEW_QUOTE } from "./config";
 import type { ArticleDraft, GateIssue, Product, QualityResult } from "./types";
 
 // 문체 v2(2026-07-14): 이모지는 본문 존 규칙(8~12개·금지 존), 특수 심볼(화살표·체크)은 여전히 전면 금지
@@ -15,6 +15,10 @@ export function runQualityGate(draft: ArticleDraft, product: Product, mining?: {
   const firstLine = body.split("\n")[0]?.trim() ?? "";
   if (!body.includes(DISCLOSURE_TEXT)) issues.push({ rule: "disclosure", detail: "대가성 공식 문구 부재" });
   else if (firstLine !== DISCLOSURE_TEXT) issues.push({ rule: "disclosure", detail: `대가성 문구가 본문 첫 줄이 아님(첫 줄: "${firstLine.slice(0, 24)}…")` });
+
+  // 2-0000. ★분량 상한(2026-07-15 유저: 빽빽 — 구매 글은 짧을수록 전환): 상한 +15% 초과 실격
+  const bodyLen = [...body.replace(/\[[^\]]+\]/g, "")].length;
+  if (bodyLen > ARTICLE_LENGTH.max * 1.15) issues.push({ rule: "length", detail: `본문 ${bodyLen}자(상한 ${ARTICLE_LENGTH.max}·여유 15%) — 서론·중복 서술 감량` });
 
   // 2-000. ★관찰 보고 화법 반복(유저 실측 3호: "~의견이 많았습니다" 반복 = 안 써본 리뷰글 티) — 글 전체 1회까지
   const reportTone = body.match(/(의견|후기|얘기|말)(이|가)\s*(많았|자주 보였|반복(됐|되었|하는))|(다는|라는)\s*(의견|후기)(이|가)/g) ?? [];
