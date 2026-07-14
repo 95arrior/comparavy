@@ -302,6 +302,26 @@ export async function GET(req: Request) {
             ]);
             amped = [...amped].sort((x, y) => ((y as { inflow?: string }).inflow === "hit" ? 1 : 0) - ((x as { inflow?: string }).inflow === "hit" ? 1 : 0)); // 확인분 앞으로(안정 정렬 — 유입력 씨앗순 유지)
           }
+          // ★공급 보강(2026-07-15 유저 실측: '지금 뜨는'이 항상 1~2장 — 게이트 사망+새벽 씨앗 부족이 겹침)
+          //  게이트를 선적용해 '생존분'만 세고, 5장 미만이면 2차 증식으로 보충한 뒤 생존분을 캐시에 저장한다.
+          if (amped.length > 0) {
+            const g1 = finalGate(amped as { keyword: string; title: string }[]);
+            const passKeys = new Set(g1.pass.map((p) => normalizeKeyword(p.keyword)));
+            amped = amped.filter((a) => passKeys.has(normalizeKeyword(a.keyword)));
+          }
+          if (amped.length > 0 && amped.length < 5 && trends.length > 0) {
+            try {
+              const more = await amplifyForUser(trends, profile ?? null, ((profile as { id?: string } | null)?.id ?? user.id), 10);
+              const g2 = finalGate(more as { keyword: string; title: string }[]);
+              const pass2 = new Set(g2.pass.map((p) => normalizeKeyword(p.keyword)));
+              const seen = new Set(amped.map((a) => normalizeKeyword(a.keyword)));
+              for (const m of more) {
+                const nk = normalizeKeyword(m.keyword);
+                if (pass2.has(nk) && !seen.has(nk)) { seen.add(nk); amped.push(m); if (amped.length >= 12) break; }
+              }
+              console.log(`[trend-topup] 2차 증식 보충 후 ${amped.length}장`);
+            } catch { /* 보충 실패 — 있는 만큼 서빙 */ }
+          }
           if (amped.length > 0) {
             try { await pool.from("api_cache").upsert({ key: ampKey, value: amped, expires_at: new Date(Date.now() + 6 * 3600_000).toISOString(), updated_at: new Date().toISOString() }); } catch { /* ignore */ }
           } else {
