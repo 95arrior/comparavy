@@ -102,7 +102,7 @@ export const CARD = {
 };
 
 /** 본문 분량(자) */
-export const ARTICLE_LENGTH = { min: 1400, max: 1900 };
+export const ARTICLE_LENGTH = { min: 1000, max: 1450 }; // ★감량(2026-07-15 유저: 빽빽·서론 나열 — 구매 글은 짧을수록 전환)
 
 /** LLM */
 // max_tokens는 사고(thinking) 예산까지 포함 — 짜게 잡으면 JSON이 잘린다(기존 시스템 실측 교훈: thumb-copy 300 잘림 사고)

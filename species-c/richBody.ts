@@ -63,10 +63,12 @@ export function buildRichBody(body: string): string {
       if (/^이런 분께 (추천|맞)/.test(line)) { html.push(BLANK); html.push(P(`<b>${size(17, esc(line), BLUE)}</b>`)); continue; }
       if (/^(이런 분껜|이런 분은)/.test(line) || /아쉬워요\s*$/.test(line)) { html.push(BLANK); html.push(P(`<b>${size(17, esc(line), RED)}</b>`)); continue; }
       // 5) 소제목(질문 훅) — 크게+볼드, 앞 여백 2
-      if (isSubheading(line, idx)) { html.push(BLANK, BLANK); html.push(P(`<b>${inline(line, 19)}</b>`)); html.push(BLANK); continue; }
-      // 6) 본문 — 16px 중앙, 하이라이트 자동 형광펜
+      if (isSubheading(line, idx)) { html.push(BLANK, BLANK, BLANK); html.push(P(`<b>${inline(line, 19)}</b>`)); html.push(BLANK); continue; }
+      // 5.5) 결론 블록 — 파랑 볼드(구매 독자의 3초 답)
+      if (/^결론[:：]/.test(line)) { html.push(P(`<b>${inline(line, 17, BLUE)}</b>`)); html.push(BLANK, BLANK); continue; }
+      // 6) 본문 — 16px 중앙, 하이라이트 자동 형광펜, ★문단 사이 2칸(2026-07-15 여백 다이어트 이식)
       html.push(P(inline(line, 16)));
-      html.push(BLANK);
+      html.push(BLANK, BLANK);
     }
   });
   // 마지막 빈 줄 정리
