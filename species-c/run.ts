@@ -86,8 +86,13 @@ async function main(): Promise<void> {
   // ⑦+⑨ 본문 생성 + 품질 게이트 (실격 시 사유 주입 재생성 1회)
   const angleIdx = countPosts(); // 글 유형 로테이션(리뷰분석→문제해설→사용팁→구매가이드 순환)
   stepLog("글 변주", `${["리뷰 분석", "문제 해설", "사용 팁", "구매 가이드"][angleIdx % 4]} 중심(누적 ${angleIdx}글)`);
+  // 금지 형용사 결정론 순화(실측: '완벽한'이 재생성 2회에도 잔존) — 의미 보존 치환, 게이트 전 적용
+  const soften = (t: string): string => t
+    .replace(/완벽한/g, "든든한").replace(/완벽하게/g, "꼼꼼하게")
+    .replace(/절대적(으로|인)?/g, "확실히").replace(/무조건/g, "우선");
   let article = await writeArticle(product, keywords, brief, reviews, angleIdx);
-  article.body = capQuotes(article.body);
+  article.body = soften(capQuotes(article.body));
+  article.titleSearch = soften(article.titleSearch); article.titleHook = soften(article.titleHook);
   const mining = { sampleSize: reviews.sampleSize, totalReviews: product.reviewCount };
   const titleIssues = (t: string) => [checkTitleKeyword(t, keywords.main.keyword), checkTitleHook15(t), checkTitleSingleNeedle(t, keywords.subs.map((s) => s.keyword), keywords.main.keyword)].filter((x): x is NonNullable<typeof x> => x != null);
   let quality = runQualityGate(article, product, mining);
@@ -96,7 +101,8 @@ async function main(): Promise<void> {
     stepLog("품질 게이트", `1차 실격 ${quality.issues.length}건 — 재생성`);
     quality.issues.forEach((i) => console.log(`  - [${i.rule}] ${i.detail}`));
     article = await writeArticle(product, keywords, brief, reviews, angleIdx); // 프롬프트가 규칙을 이미 담고 있어 재추첨로 통과 시도
-    article.body = capQuotes(article.body);
+    article.body = soften(capQuotes(article.body));
+    article.titleSearch = soften(article.titleSearch); article.titleHook = soften(article.titleHook);
     quality = runQualityGate(article, product, mining);
     quality = { pass: quality.pass && titleIssues(article.titleSearch).length === 0, issues: [...quality.issues, ...titleIssues(article.titleSearch)] };
   }
