@@ -10,7 +10,7 @@ ok(countSuspenseMarks(body5)===5, "원본 마킹 5개");
 const rich = formatBody({title:"t", bodyHtml: body5});
 const SPRE='(?:<p style="text-align:left"><br></p>)';
 const gapAfter=(label)=>{const m=new RegExp(label+"</p>("+SPRE+"*)").exec(rich);return m?(m[1].match(/<\/p>/g)??[]).length:-1;};
-ok(gapAfter("질문 하나\\?")===2, `1번째 마킹 = 서스펜스 2칸(${gapAfter("질문 하나\\?")})`);
+ok(gapAfter("질문 하나\\?")===3, `1번째 마킹 = 서스펜스 3칸(${gapAfter("질문 하나\\?")}) — 여백 다이어트로 일반 2칸, 서스펜스=+1`);
 ok(gapAfter("셋\\.")<=1, `4번째 마킹 드롭(상한3) → 일반 여백(${gapAfter("셋\\.")}칸)`);
 ok(!/\[간격\]/.test(rich), "발행본에 [간격] 토큰 잔존 0");
 
