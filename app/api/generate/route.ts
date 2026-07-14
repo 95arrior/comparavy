@@ -310,7 +310,9 @@ export async function POST(request: Request) {
           };
           // ★검색자 심리 판정(2026-07-14 유저: 주담대 검색자=주택 구매 심리 → 매매대출·부동산 세금 글이 핏인데 토큰 게이트가 놓침) —
           //  표면 토큰이 아니라 '이 사람이 이어서 궁금해할 글'을 LLM이 선별(최대 3, 애매하면 0 — 늪 설계: 타고 타고 못 빠져나가게)
-          const pool2 = (cands ?? []).filter((c) => c.naver_url && !TIMED.test(`${c.keyword ?? ""} ${c.title ?? ""}`));
+          // ★링크 수명 원칙(2026-07-14 유저: 주담대 글은 1년 읽히는데 '7월 세제개편' 링크는 다음 달이면 낡는다) — 월 표기 시점성 글 제외
+          const MONTHLY_RE = /(^|[^0-9가-힣])(1[0-2]|[1-9])월|올해|이번\s?(주|달)|하반기|상반기/;
+          const pool2 = (cands ?? []).filter((c) => c.naver_url && !TIMED.test(`${c.keyword ?? ""} ${c.title ?? ""}`) && !MONTHLY_RE.test(String(c.title ?? "")));
           let judged = false;
           if (pool2.length) {
             try {
@@ -318,7 +320,7 @@ export async function POST(request: Request) {
               const cl = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
               const res = await cl.messages.create({
                 model: "claude-haiku-4-5", max_tokens: 400,
-                messages: [{ role: "user", content: `네이버 블로그 '함께 보면 좋은 글' 선별 — 검색자 심리 연속성 기준.\n현재 글 키워드: "${keyword}"\n이 키워드를 검색한 사람이 처한 상황·심리를 먼저 생각하라(예: 주택담보대출 → 집 구매를 준비 중인 사람 → 매매대출·부동산 세금·시장 전망이 다음 관심사).\n아래 기발행 글 중 그 사람이 이어서 실제로 궁금해할 글만 골라라. 규칙: 최대 3개, 확신 없으면 제외(0개 가능), 표면 단어 겹침이 아니라 심리 흐름으로.\n${pool2.slice(0, 30).map((c, i) => `${i}: ${c.keyword} | ${c.title}`).join("\n")}\n출력: 인덱스 JSON 배열만. 예: [2,7]` }],
+                messages: [{ role: "user", content: `네이버 블로그 '함께 보면 좋은 글' 선별 — 검색자 심리 연속성 기준.\n현재 글 키워드: "${keyword}"\n이 키워드를 검색한 사람이 처한 상황·심리를 먼저 생각하라(예: 주택담보대출 → 집 구매를 준비 중인 사람 → 매매대출·부동산 세금·시장 전망이 다음 관심사).\n아래 기발행 글 중 그 사람이 이어서 실제로 궁금해할 글만 골라라. 규칙: 최대 3개, 확신 없으면 제외(0개 가능), 표면 단어 겹침이 아니라 심리 흐름으로. ★수명 원칙: 이 글은 1년 이상 읽힐 글이다 — 특정 시점·개편 직후·시장 전망처럼 몇 달 뒤 낡을 글은 심리가 맞아도 제외.\n${pool2.slice(0, 30).map((c, i) => `${i}: ${c.keyword} | ${c.title}`).join("\n")}\n출력: 인덱스 JSON 배열만. 예: [2,7]` }],
               });
               const txt = res.content.find((b) => b.type === "text")?.text ?? "";
               const m = txt.match(/\[[\d,\s]*\]/);
