@@ -9,8 +9,8 @@ export const FF = {
   get tierBands() { return process.env.FF_TIER_BANDS !== "0"; },
   /** 3단계 — 체류 프록시(dwell_potential) 가산 + 브리프 지시 */
   get dwellScore() { return on(process.env.FF_DWELL_SCORE); },
-  /** 4단계 — tier별 트렌드:에버그린 슬롯 비율 */
-  get tierMix() { return on(process.env.FF_TIER_MIX); },
+  /** 4단계 — tier별 트렌드:에버그린 슬롯 비율. ★기본 ON(2026-07-14 유저 실행이 설계 검증: 묘목 체급은 트렌드 위주가 정답) — 끌 때만 FF_TIER_MIX=0 */
+  get tierMix() { return process.env.FF_TIER_MIX !== "0"; },
   /** 5단계 — 공유 씨앗 동시 발행 상한 + 유저 고유 관점 블록 + WP 발행 지터 */
   get seedClaim() { return on(process.env.FF_SEED_CLAIM); },
   /** 6단계 — 수익 경로 태그(high_cpc/affiliate/brandconnect) */

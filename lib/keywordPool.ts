@@ -34,6 +34,15 @@ export async function buildPoolForSub(vertical: string, sub: string, opts?: { sl
   const aiSeeds = await expandSeeds(sub, 15);
   // ★ 네이버 자동완성 — 사람들이 실제로 네이버에 치는 검색어를 시드로 추가(네이버 핏 강화). 실패해도 무관.
   const acSeeds = await fetchNaverAutocomplete(sub);
+  // ★재귀 확장(2026-07-14 — 유저 실측: 꾸준한 수요가 중복·별 2~3뿐 = 롱테일 공급 부족): 상위 제안 5개를 한 단계 더 확장(깊이 2).
+  //  species-c 바늘 광산에서 실증된 방식 — 1단 제안보다 니치한 실검색어가 나온다.
+  for (const seed2 of acSeeds.slice(0, 5)) {
+    try {
+      const deeper = await fetchNaverAutocomplete(seed2);
+      for (const d of deeper.slice(0, 6)) if (!acSeeds.includes(d)) acSeeds.push(d);
+    } catch { /* 무해 */ }
+    await sleep(150);
+  }
   const seeds = [...new Set([...baseSeeds, ...aiSeeds, ...acSeeds].map((s) => s.trim()).filter(Boolean))];
   const sleepMs = opts?.sleepMs ?? 700; // 시드당 네이버 1회(collectPoolKeywords). 시드 늘어 sub당 ~15~25초
 
