@@ -135,6 +135,16 @@ const okDraft = { titleSearch: "차 에어컨 냄새, 3분이면 잡히는 이�
   t("리치 — 마커 교체 박스 5곳(상품3+링크2)", (rich.match(/이 줄을 지우고/g) ?? []).length === 5);
 }
 
+// ── 결론 블록 서식(2026-07-15 유저 확정: 제목 분리 + 파랑 본문 + 가격 형광) 회귀
+{
+  const rich = buildRichBody("결론: 세탁조 냄새엔 이거 하나면 됩니다. 25,300원(30% 할인)이고, 넣기만 하면 되는 분께 맞아요.");
+  t("결론 — '결론' 제목 단독 파랑 볼드", /<b><span style="font-size:17px;color:#1D75F7;">결론<\/span><\/b>/.test(rich));
+  t("결론 — 본문에 '결론:' 프리픽스 잔존 금지", !rich.includes("결론:"));
+  t("결론 — 가격 토큰만 형광", rich.includes(`color:#1D75F7;background-color:#FFF3A0;">25,300원(30% 할인)</span>`));
+  t("결론 — 본문 전체 파랑", !rich.includes("color:#191F28"));
+  t("결론 — 문장 사이 빈 줄", rich.split("됩니다.")[1]?.includes(`<p style="text-align:center;"><br></p>`));
+}
+
 // ── 기능 단정 완곡(외부 검수 반영) 회귀
 {
   t("단정 — '냄새를 잡아줍니다' 실격", !runQualityGate({ ...okDraft, body: okBody + "\n\n이 제품이 냄새를 잡아줍니다." }, product, M).pass);

@@ -35,6 +35,20 @@ function inline(line: string, px: number, color = INK): string {
   return out;
 }
 
+/** 결론 블록 본문 — 전체 파랑, 가격 토큰(32,800원(5% 할인) 등)만 형광 볼드 */
+function conclusionInline(text: string): string {
+  const parts = text.split(/([\d,]+원(?:\([^)]*\))?)/g);
+  let out = "";
+  for (let i = 0; i < parts.length; i++) {
+    const seg = parts[i] ?? "";
+    if (!seg) continue;
+    out += i % 2 === 1
+      ? `<b><span style="font-size:17px;color:${BLUE};background-color:${HIGHLIGHT};">${esc(seg)}</span></b>`
+      : size(17, esc(seg), BLUE);
+  }
+  return out;
+}
+
 /** 플레인 v2 본문 → 리치 HTML. 마커는 눈에 띄는 회색 박스로 유지(에디터에서 교체 지점). */
 export function buildRichBody(body: string): string {
   const paras = body.split(/\n{2,}/).map((b) => b.trim()).filter(Boolean);
@@ -64,8 +78,14 @@ export function buildRichBody(body: string): string {
       if (/^(이런 분껜|이런 분은)/.test(line) || /아쉬워요\s*$/.test(line)) { html.push(BLANK); html.push(P(`<b>${size(17, esc(line), RED)}</b>`)); continue; }
       // 5) 소제목(질문 훅) — 크게+볼드, 앞 여백 2
       if (isSubheading(line, idx)) { html.push(BLANK, BLANK, BLANK); html.push(P(`<b>${inline(line, 19)}</b>`)); html.push(BLANK); continue; }
-      // 5.5) 결론 블록 — 파랑 볼드(구매 독자의 3초 답)
-      if (/^결론[:：]/.test(line)) { html.push(P(`<b>${inline(line, 17, BLUE)}</b>`)); html.push(BLANK, BLANK); continue; }
+      // 5.5) 결론 블록 — "결론" 제목 분리 + 파랑 본문 + 가격 형광(2026-07-15 유저 확정 서식)
+      if (/^결론[:：]/.test(line)) {
+        html.push(P(`<b>${size(17, "결론", BLUE)}</b>`));
+        const content = line.replace(/^결론[:：]\s*/, "").replace(/==/g, "");
+        const sents = content.split(/(?<=[.!?])\s+/).filter(Boolean);
+        sents.forEach((s, si) => { if (si > 0) html.push(BLANK); html.push(P(conclusionInline(s))); });
+        html.push(BLANK, BLANK); continue;
+      }
       // 6) 본문 — 16px 중앙, 하이라이트 자동 형광펜, ★문단 사이 2칸(2026-07-15 여백 다이어트 이식)
       html.push(P(inline(line, 16)));
       html.push(BLANK, BLANK);

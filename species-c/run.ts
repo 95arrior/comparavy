@@ -133,7 +133,10 @@ async function main(): Promise<void> {
   try {
     const rel = recentLinkedProducts(product.name, 3);
     if (rel.length) {
-      article.body += "\n\n함께 보면 좋은 제품 🧺\n\n" + rel.map((r) => `${r.product_name}도 같이 찾는 분들이 많아요.\n\n${r.connect_link}`).join("\n\n");
+      // 유저 확정(2026-07-15): 링크마다 설명 금지 — 포괄 한 줄 + 링크만 나열(에디터가 상품 카드로 렌더)
+      const m = new Date().getMonth() + 1;
+      const season = m >= 6 && m <= 8 ? "여름" : m >= 3 && m <= 5 ? "봄" : m >= 9 && m <= 11 ? "가을" : "겨울";
+      article.body += `\n\n함께 보면 좋은 제품 🧺\n\n${season} 필수템 목록!\n\n` + rel.map((r) => r.connect_link).join("\n\n");
       stepLog("크로스 링크", rel.map((r) => r.product_name).join(" / "));
     }
   } catch { /* 무해 */ }
