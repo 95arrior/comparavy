@@ -292,8 +292,14 @@ function arrowChainToSteps(html: string): string {
 }
 
 function styleMarkers(html: string): string {
-  // ★소제목 앞 구분선 보정(유저 실측: 구분선 부족=텍스트 과밀) — h2 직전에 구분선(또는 --- 마커)이 없으면 자동 삽입. 첫 h2 제외(도입 직후 과밀 방지)
-  // (2026-07-10) 소제목 앞 자동 구분선 폐지 — 네이버 공식 문법: 마디는 여백+세로바 소제목이 담당
+  // ★소제목 앞 구분선 재도입(2026-07-15 유저: 분량 1,800~3,000 상향의 교환 조건 — "단락마다 구분선".
+  //  7/10 폐지(색 마디만) 뒤집음: 긴 글에선 색 소제목만으로 마디가 약해 과밀하게 읽힌다. 첫 h2 제외(도입 직후 과밀 방지).
+  //  <hr>은 여백 재조립(walkBlocks 쌍태그 매칭)에서 증발 — 클로징 경계선과 동일한 생존 검증 마크업(p+span border) 사용.
+  {
+    const DIVIDER = '<p style="text-align:center;"><span style="display:inline-block;width:55%;border-top:1px solid #d9dde3;">&nbsp;</span></p>';
+    let h2Seen = 0;
+    html = html.replace(/<h2(\s[^>]*)?>/gi, (m) => { h2Seen += 1; return h2Seen === 1 ? m : `${DIVIDER}${m}`; });
+  }
 
   // ★소제목 네이버 공식 문법(유저 레퍼런스: 블로그팀 공식 — 파란 큰 소제목이 섹션 마디를 색으로 보여준다)
   html = html.replace(/<h2(\s[^>]*)?>([\s\S]*?)<\/h2>/gi, (_m, _attr, inner) => {

@@ -405,12 +405,12 @@ export async function POST(request: Request) {
         }
         // ★분량 상한 게이트(2026-07-15 실측: 네이버 목표 1,600인데 공백 제외 3,089자 발행 — 긴 글=모바일 이탈).
         //  프롬프트는 방향, 코드는 한계선. 상한+15% 초과 시 압축 재생성 1회 — 그래도 초과면 통과(발행 차단은 과잉, 로그만).
-        const lenCap = Math.round((channel === "wordpress" ? 2200 : 1600) * 1.15);
+        const lenCap = Math.round((channel === "wordpress" ? 2200 : 3000) * 1.15); // 네이버 3,000 재개정(2026-07-15 유저)
         if (charCount > lenCap) {
           void logUsage({ userId: user.id, model: "guard", kind: "overlength_retry", inputTokens: 0, outputTokens: 0 });
           try {
             const compact = await streamArticle(
-              { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ★경고: 직전 생성이 공백 제외 ${charCount.toLocaleString()}자로 목표 상한을 크게 초과했다. 이번엔 반드시 ${channel === "wordpress" ? "1,800~2,200" : "1,250~1,600"}자(공백 제외) 안에서 끝내라 — 곁가지 소제목을 통째로 버리고 문단당 문장 수를 줄여라. 핵심 답·수치·FAQ는 유지.`.trim() },
+              { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ★경고: 직전 생성이 공백 제외 ${charCount.toLocaleString()}자로 목표 상한을 크게 초과했다. 이번엔 반드시 ${channel === "wordpress" ? "1,800~2,200" : "1,800~3,000"}자(공백 제외) 안에서 끝내라 — 곁가지 소제목을 통째로 버리고 문단당 문장 수를 줄여라. 핵심 답·수치·FAQ는 유지.`.trim() },
               (bodyHtml) => send({ type: "body", html: bodyHtml }),
               (title) => send({ type: "title", title }),
               (u) => { void logUsage({ userId: user.id, model: u.model, kind: "generate", inputTokens: u.inputTokens, outputTokens: u.outputTokens }); },
