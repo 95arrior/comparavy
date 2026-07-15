@@ -20,6 +20,18 @@ export function judgeGolden(vol: number, blogTotal: number, journeyScore: number
   return { golden: vol >= 100 && vol <= 2000 && blogTotal < 500 && journeyScore >= 2, goldBadge: blogTotal < 300 };
 }
 
+// ★'추천' 꼬리 감점(2026-07-16 유저 승인 — 200키워드 SERP 실측 자료): 'OO 추천' 검색은 인기글 블록을
+//  카페·광고가 잠식(온수매트 추천 블로그 0%, 추천류 0~27%) vs 품명·비용·비교 꼬리는 블로그 89~91%.
+//  ★blog_total이 적어도 함정 — 블로그 문서가 적은 건 블로그가 그 판에서 못 이겨서다(황금 판정이 속는 지점).
+//  그래서 정렬에서 황금보다 먼저 강등하되, 컷은 아니다(대안이 전무하면 쓴다). '추천인'처럼 뒤에 글자가 붙으면 무관.
+export const RECO_TAIL_RE = /추천(?![가-힣])/;
+export function serpTailFactor(kw: string): number { return RECO_TAIL_RE.test(kw) ? 0.3 : 1; }
+/** 후보 정렬(1글 1바늘 메인 선정 순서) — ①추천 꼬리 아님 ②황금 ③점수. 테스트 가능하게 분리. */
+export function orderCandidates<T extends { keyword: string; golden: boolean; finalScore: number }>(cands: T[]): T[] {
+  const reco = (c: T) => (RECO_TAIL_RE.test(c.keyword) ? 1 : 0);
+  return [...cands].sort((a, b) => reco(a) - reco(b) || Number(b.golden) - Number(a.golden) || b.finalScore - a.finalScore);
+}
+
 export async function discoverKeywords(p: Product, hasCompare: boolean, seasonScore: number): Promise<KeywordResult> {
   // ── 소스 1: LLM 3층
   const raw = await askJson<{ keyword: string; layer: KeywordLayer }[]>(
@@ -82,7 +94,7 @@ export async function discoverKeywords(p: Product, hasCompare: boolean, seasonSc
     const { golden, goldBadge } = judgeGolden(vol, blogTotal, journeyScore);
     // 밴드: SEEDLING 유지 — 단 ★황금 태그는 하한(500) 예외
     const inBand = ((vol >= KEYWORD_BAND.volMin) || golden) && vol <= KEYWORD_BAND.volMax && blogTotal < KEYWORD_BAND.blogTotalMax;
-    const finalScore = journeyScore * (vol / Math.max(1, blogTotal)) * (inBand ? 1 : 0.25) * (golden ? 2 : 1);
+    const finalScore = journeyScore * (vol / Math.max(1, blogTotal)) * (inBand ? 1 : 0.25) * (golden ? 2 : 1) * serpTailFactor(r.keyword);
     measured.push({ keyword: r.keyword, layer: r.layer, source: r.source, vol, blogTotal, journeyScore, finalScore, inBand, golden, goldBadge });
     await new Promise((res) => setTimeout(res, 150));
   }
@@ -105,8 +117,8 @@ export async function discoverKeywords(p: Product, hasCompare: boolean, seasonSc
     if (kept.length) fitChecked = kept;
   } catch { /* 판정 실패 = 전체 유지(fail-open — 실측은 이미 끝난 후보들) */ }
 
-  // ── 1글 1바늘: 메인은 황금 우선 → 점수순 1개만
-  const sorted = [...fitChecked].sort((a, b) => Number(b.golden) - Number(a.golden) || b.finalScore - a.finalScore);
+  // ── 1글 1바늘: 메인은 ①추천 꼬리 아님 ②황금 ③점수순 1개만(추천 꼬리는 황금이어도 강등 — SERP 실측 근거)
+  const sorted = orderCandidates(fitChecked);
   const banded = sorted.filter((c) => c.inBand);
   const pickFrom = banded.length ? banded : sorted;
   const main = pickFrom[0]!;

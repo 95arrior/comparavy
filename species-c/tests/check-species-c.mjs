@@ -2,7 +2,7 @@
 // 실행: npx tsx species-c/tests/check-species-c.mjs
 import { runProductGate } from "../gate.ts";
 import { runQualityGate, checkTitleKeyword, checkTitleHook15, checkTitleSingleNeedle } from "../finalGate.ts";
-import { judgeGolden } from "../keywords.ts";
+import { judgeGolden, serpTailFactor, orderCandidates } from "../keywords.ts";
 import { countSample } from "../reviews.ts";
 import { buildRichBody } from "../richBody.ts";
 import { applyConnectLink } from "../package.ts";
@@ -115,6 +115,21 @@ const okDraft = { titleSearch: "차 에어컨 냄새, 3분이면 잡히는 이�
   t("1바늘 — 서브 문구가 제목에 오면 실격", checkTitleSingleNeedle("차 에어컨 냄새와 차량용 탈취제 추천", ["차량용 탈취제 추천"]) !== null);
   t("1바늘 — 메인만 있으면 통과", checkTitleSingleNeedle("차 에어컨 냄새, 3분이면 잡히는 이유", ["차량용 탈취제 추천"]) === null);
   t("1바늘 — 가족 서브(5자+ 공유)는 면제", checkTitleSingleNeedle("곰팡이 제거제 순위, 욕실 곰팡이 제거제 뭘 살까?", ["욕실 곰팡이 제거제"], "곰팡이 제거제 순위") === null);
+}
+
+// ── '추천' 꼬리 감점(2026-07-16 SERP 실측: 추천 검색은 카페·광고 잠식 — 온수매트 추천 블로그 0%)
+{
+  t("추천 꼬리 — 감점 계수 0.3", serpTailFactor("온수매트 추천") === 0.3);
+  t("추천 꼬리 — 문장 중간도 감점", serpTailFactor("추천 넥밴드 선풍기") === 0.3);
+  t("추천 꼬리 — '추천인'처럼 붙은 조어는 무관", serpTailFactor("추천인 코드 입력") === 1);
+  t("추천 꼬리 — 품명·비교 꼬리는 무감점", serpTailFactor("오아 넥쿨러 프로 비교") === 1);
+  const ordered = orderCandidates([
+    { keyword: "넥밴드 선풍기 추천", golden: true, finalScore: 9 },   // 황금이어도 추천 꼬리면 강등
+    { keyword: "오아 넥쿨러 프로", golden: false, finalScore: 3 },
+    { keyword: "오아 넥쿨러", golden: true, finalScore: 5 },
+  ]);
+  t("정렬 — 비추천 황금이 1순위", ordered[0].keyword === "오아 넥쿨러");
+  t("정렬 — 추천 꼬리는 황금이어도 꼴찌", ordered[2].keyword === "넥밴드 선풍기 추천");
 }
 
 // ── 발급 링크 자동 삽입 회귀
