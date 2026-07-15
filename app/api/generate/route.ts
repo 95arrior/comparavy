@@ -393,7 +393,7 @@ export async function POST(request: Request) {
         // 길이 검증 — 네이버는 좁은 주제도 '네이버 최적화로 뽑을 수 있는 만큼' 살린다(1,000자 안팎도 충분).
         // 깊이 기준으로 반려하지 않고, '명백히 실패(빈/잘린)' 글만 막는 낮은 바닥(500자)만 둔다.
         const minChars = 500;
-        const charCount = countKoreanChars(article.body_html);
+        let charCount = countKoreanChars(article.body_html);
         if (charCount < minChars) {
           if (genId) await supabase.from("articles").delete().eq("id", genId); // 자리표시 행 정리
           await refundOnce(); // 실패 = 크레딧 환불(멱등)
@@ -402,6 +402,26 @@ export async function POST(request: Request) {
             error: "글을 만드는 중 문제가 생겨 잠깐 멈췄어요. 다시 한 번 눌러 주세요. (크레딧은 차감되지 않아요)",
           });
           return;
+        }
+        // ★분량 상한 게이트(2026-07-15 실측: 네이버 목표 1,600인데 공백 제외 3,089자 발행 — 긴 글=모바일 이탈).
+        //  프롬프트는 방향, 코드는 한계선. 상한+15% 초과 시 압축 재생성 1회 — 그래도 초과면 통과(발행 차단은 과잉, 로그만).
+        const lenCap = Math.round((channel === "wordpress" ? 2200 : 1600) * 1.15);
+        if (charCount > lenCap) {
+          void logUsage({ userId: user.id, model: "guard", kind: "overlength_retry", inputTokens: 0, outputTokens: 0 });
+          try {
+            const compact = await streamArticle(
+              { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ★경고: 직전 생성이 공백 제외 ${charCount.toLocaleString()}자로 목표 상한을 크게 초과했다. 이번엔 반드시 ${channel === "wordpress" ? "1,800~2,200" : "1,250~1,600"}자(공백 제외) 안에서 끝내라 — 곁가지 소제목을 통째로 버리고 문단당 문장 수를 줄여라. 핵심 답·수치·FAQ는 유지.`.trim() },
+              (bodyHtml) => send({ type: "body", html: bodyHtml }),
+              (title) => send({ type: "title", title }),
+              (u) => { void logUsage({ userId: user.id, model: u.model, kind: "generate", inputTokens: u.inputTokens, outputTokens: u.outputTokens }); },
+            );
+            const compactCount = countKoreanChars(compact.body_html);
+            // 더 짧아졌고 최소·경험조작 통과일 때만 교체(안전 — 압축본이 더 이상하면 원본 유지)
+            if (compactCount >= minChars && compactCount < charCount && (userStory || !hasFabricatedExperience(compact.body_html))) {
+              article = compact; charCount = compactCount;
+            }
+          } catch { /* 압축 실패 — 원본 그대로(파이프 무영향) */ }
+          if (charCount > lenCap) console.log(`[overlength] user=${user.id.slice(0, 8)} ch=${channel} chars=${charCount} cap=${lenCap} — 압축 후에도 초과, 통과`);
         }
 
         // (네이버 수익형 단일 — 자영업 시절의 업체 NAP 박스 삽입 제거. 수익형 블로그에 영업장 정보는 무의미 + 전 글 공통 박스는 패턴 지문 리스크)

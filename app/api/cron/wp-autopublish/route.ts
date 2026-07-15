@@ -68,12 +68,28 @@ export async function GET(request: Request) {
       if (balance === null) { results.push({ blog: b.id, result: "no_credits" }); continue; }
 
       try {
-        const article = await generateArticle({
-          keyword: pick.keyword, channel: "wordpress", angle: undefined, type: "info", tone: b.tone || "friendly", maxWords: 5000,
+        const genInput = {
+          keyword: pick.keyword, channel: "wordpress" as const, angle: undefined, type: "info" as const, tone: b.tone || "friendly", maxWords: 5000,
           variantInstruction: "", styleInstruction: stylePersonaInstruction(b.id),
           relatedQueries: pick.suggests ?? [], newsContext: undefined, angleBrief: null, affiliate: false, // ★파생 키워드 주입
           vertical: "online", bizName: null, bizStrength: null, userStory: null, userTitle: null,
-        });
+        };
+        let article = await generateArticle(genInput);
+        // ★분량 상한 게이트(2026-07-15 — generate 라우트와 동일 원칙: 프롬프트는 방향, 코드는 한계선).
+        //  WP 상한 2,200의 +15% 초과 시 압축 재생성 1회, 그래도 초과면 통과(로그만).
+        {
+          const lenCap = Math.round(2200 * 1.15);
+          const chars = (h: string) => h.replace(/<[^>]+>/g, "").replace(/\s+/g, "").length;
+          const c0 = chars(article.body_html);
+          if (c0 > lenCap) {
+            try {
+              const compact = await generateArticle({ ...genInput, variantInstruction: `★경고: 직전 생성이 공백 제외 ${c0.toLocaleString()}자로 상한을 크게 초과했다. 반드시 1,800~2,200자(공백 제외) 안에서 끝내라 — 곁가지 소제목을 통째로 버리고 문단당 문장 수를 줄여라. 핵심 답·수치·표·FAQ는 유지.` });
+              const c1 = chars(compact.body_html);
+              if (c1 >= 500 && c1 < c0) article = compact;
+              else console.log(`[wp-auto][overlength] blog=${b.id} chars=${c0}→${c1} — 압축 실패, 원본 통과`);
+            } catch { /* 압축 실패 — 원본 그대로 */ }
+          }
+        }
         // WP 후처리 — 네이버 포맷터(스페이서·형광펜) 미적용. 마커만 정리.
         let body = stripNaverArtifacts(article.body_html); // 해시태그·마커 일괄 소거(중앙 소거기)
         // ★배너를 초안 단계에 삽입(2026-07-12 유저: 읽어보기에 이미지가 안 보임 — 승인은 최종 모습으로) — 스토리지 URL이라 DB 비대 없음
