@@ -13,7 +13,7 @@ import { revenuePath } from "@/lib/revenue";
 
 type CompLevel = "low" | "mid" | "high" | undefined;
 export interface TodayTopic {
-  keyword: string; title: string; tag?: string; newsContext?: string;
+  keyword: string; title: string; tag?: string; newsContext?: string; demandLabel?: string;
   briefText?: string; titleSearch?: string; thumb?: { mainCopy: string; subCopy: string; badge: string };
   vol?: number; comp?: CompLevel; blogTotal?: number | null; bidHigh?: boolean;
   seriesId?: string; seriesBadge?: string; series?: { title: string; arc: { role: string; angle: string }[] } | null;
