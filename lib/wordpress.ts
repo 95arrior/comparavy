@@ -178,6 +178,10 @@ export function slugify(s: string): string {
 export function stripNaverArtifacts(html: string): string {
   return (html || "")
     .replace(/<p>(?:\s|&nbsp;)*(?:#[^\s<#]{1,30}(?:\s|&nbsp;)*){3,}<\/p>/g, "") // 해시태그만으로 된 문단(3개+)
+    // ★해시태그 리스트 변형(실측 2026-07-16: 본문 하단에 <li>#정기예금특판</li> 세로 나열 노출) — 항목·단일 문단 연속형도 소거
+    .replace(/<li>(?:\s|&nbsp;)*#[^\s<#]{1,30}(?:\s|&nbsp;)*<\/li>/g, "")
+    .replace(/<(ul|ol)[^>]*>(?:\s|&nbsp;)*<\/\1>/g, "") // 태그 항목 소거 후 빈 리스트 정리
+    .replace(/(?:<p>(?:\s|&nbsp;)*#[^\s<#]{1,30}(?:\s|&nbsp;)*<\/p>(?:\s|&nbsp;)*){2,}/g, "") // 한 문단 1태그 연속형
     .replace(/(?:^|\n)(?:#[^\s<#]{1,30}\s*){3,}(?=\n|$)/g, "")                    // 태그 없는 평문 해시태그 줄
     .replace(/\[내부링크:[^\]]*\]/g, "")
     .replace(/\[(사진|이미지|차트|카드|스탯|표):[^\]]*\]/g, "");

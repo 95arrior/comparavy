@@ -248,8 +248,10 @@ async function renderAt(rawInput: ThumbInput, width: number): Promise<Buffer> {
     const pressRoot = el("div", { style: { display: "flex", width: SIZE, height: SIZE, position: "relative", overflow: "hidden", backgroundColor: "#101728" } }, [
       el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, overflow: "hidden", display: "flex" } }, bgDataUrl ? [
         el("img", { src: bgDataUrl, width: SIZE, height: SIZE, style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, objectFit: "cover" } }),
-        // 일러스트 위 가독 스크림(유저 실측 2026-07-10: 텍스트가 잘 안 보임 → 투명도 상향)
-        el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: "radial-gradient(circle at 50% 50%, rgba(8,14,28,0.60) 0%, rgba(8,14,28,0.32) 46%, rgba(8,14,28,0.10) 76%)" } }),
+        // ★스크림 다이어트(2026-07-16 유저: 일러스트가 보이게 '검정 살짝'만 — 중앙 60% 먹빛이 모든 썸네일을 어두운 단색 카드로 수렴시킴)
+        //  전면 은은한 오버레이 + 문구 지나는 중앙 밴드만 보강. 가독은 문구의 강한 텍스트 섀도(0.72)가 담당.
+        el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(8,14,28,0.28)" } }),
+        el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: "linear-gradient(180deg, rgba(8,14,28,0) 24%, rgba(8,14,28,0.34) 50%, rgba(8,14,28,0) 76%)" } }),
       ] : [
         el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: `radial-gradient(circle at 28% 18%, ${shade(flatBase, isDark(p.bg) ? 38 : 26)}, ${shade(flatBase, isDark(p.bg) ? -8 : -16)})` } }),
         el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: `radial-gradient(circle at 76% 82%, ${rgba(shade(p.point, isDark(p.bg) ? 16 : 24), isDark(p.bg) ? 0.55 : 0.42)} 0%, rgba(0,0,0,0) 55%)` } }),
