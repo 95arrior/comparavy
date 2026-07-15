@@ -176,9 +176,12 @@ export default function TodayCard({
 function DemandRow({ topic, muted, onGoPerformance, onDark }: { topic: TodayTopic; muted?: boolean; onGoPerformance?: () => void; onDark?: boolean }) {
   const isTrend = topic.tag === "issue" || topic.tag === "trend";
   const isSteady = topic.tag === "steady";
+  const isHomefeed = topic.tag === "홈판"; // ★홈판 배팅(2026-07-15) — 검색이 아니라 홈피드 확산형
   const compLabel = topic.comp === "low" ? "경쟁 낮음" : topic.comp === "mid" ? "경쟁 보통" : topic.comp === "high" ? "경쟁 높음" : null;
   // ★숏테일/롱테일 프레임(유저 제안) — 유형 칩 1개 + 자기설명 문장. '애드포스트' 칩은 정보량 0이라 폐기(2회 실측: 의미 불명).
-  const kind = isTrend
+  const kind = isHomefeed
+    ? { chip: "홈판 배팅", desc: `홈피드 확산형 · 터지면 상한 없음${topic.demandLabel?.includes("·") ? ` · ${topic.demandLabel.split("·")[1]?.trim()}` : ""}` }
+    : isTrend
     ? { chip: "지금 뜨는 키워드", desc: "숏테일 · 오늘 쓰면 첫 글로 선점할 수 있어요" }
     : isSteady
     ? { chip: "꾸준한 수요", desc: `롱테일 · 검색이 계속 있는 주제${compLabel ? ` · ${compLabel}` : ""}` }
