@@ -581,6 +581,24 @@ export async function GET(req: Request) {
       tc = g.pass;
       if (debugMode) diag.finalGateDrops = g.drops;
     }
+    // ★홈판 배팅 카드(FF_HOMEFEED_BET) — '지금 뜨는' 보드는 이 short 응답만 쓰므로 여기 최상단에 싣는다
+    //  (실측 2026-07-15: 최종 조립부에만 실어서 short 조기 return에 안 탔음). 캐시(유저·일)라 이중 비용 없음.
+    if (FF.homefeedBet) {
+      try {
+        const bet = await pickHomefeedBet(pool, user.id, sub ?? "", usedSet);
+        if (bet && finalGate([{ keyword: bet.keyword, title: bet.title }]).pass.length > 0 && !tc.some((t) => t.keyword === bet.keyword)) {
+          tc.unshift({
+            keyword: bet.keyword, title: bet.title,
+            demandLabel: `홈판 배팅 · ${bet.betType}`,
+            ssak: true, region: false, tone: bloggerType(vertical), vol: 0, comp: "low" as Comp, blogTotal: null,
+            tag: "홈판", briefText: bet.briefText,
+            thumb: { mainCopy: bet.thumbCopy, subCopy: "", badge: "홈판" },
+            demandBadge: "터지면 상한 없음 — 승부는 검색량이 아니라 반응(공감·저장)",
+            ...(FF.perfLoop ? { sel: { species: "homefeed", seedSource: "homebet", hookKey: bet.betType } } : {}),
+          } as TrendCard);
+        }
+      } catch { /* 홈판 배팅 실패 — 조용히 0장 */ }
+    }
     return NextResponse.json(debugMode ? { topics: tc, diag: { ...diag, mode: "short", trendCards: tc.length } } : { topics: tc, ...(FF.perfLoop ? { ff: { perfLoop: true } } : {}) });
   }
 
