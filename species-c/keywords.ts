@@ -58,11 +58,17 @@ export async function discoverKeywords(p: Product, hasCompare: boolean, seasonSc
   for (const kw of acFound.filter((k) => !brandRe.test(k)).slice(0, 25)) cands.push({ keyword: kw, layer: guessLayer(kw), source: "autocomplete" });
 
   // ── 소스 2.5: 자사 모델명 변형(교본 흡수 — 구체 모델명 검색은 구매 직전 최강. 자사명은 브랜드 스톱 예외)
+  //  ★브랜드×명사 전조합 보강(실측 2026-07-16: '델레고 골프 쿨토시 팔토시 손등형'에서 앞토막 조합만 만들어
+  //  ★황금 '델레고 팔토시'(180/277 사전 실측)가 후보에 아예 없었음 — 메인이 '여름 팔토시 추천' 밴드 외로 추락)
   const nameToks = p.name.split(/\s+/).filter((t) => /^[가-힣a-zA-Z0-9]{2,}$/.test(t));
   if (nameToks.length >= 2) {
-    for (const v of [nameToks.slice(0, 2).join(" "), nameToks.slice(0, 3).join(" "), `${nameToks[0]} ${nameToks[nameToks.length - 1]}`]) {
-      cands.push({ keyword: v, layer: "purchase", source: "llm" });
-    }
+    const brand = nameToks[0]!;
+    const variants = new Set<string>([
+      nameToks.slice(0, 2).join(" "),
+      nameToks.slice(0, 3).join(" "),
+      ...nameToks.slice(1).map((t) => `${brand} ${t}`), // 브랜드 × 각 카테고리 명사(델레고 쿨토시·델레고 팔토시…)
+    ]);
+    for (const v of variants) cands.push({ keyword: v, layer: "purchase", source: "llm" });
   }
 
   // ── 소스 3: 조합 매트릭스([상황]×[대상]×[문제], 사전=matrix.config.ts) — 상한 내 전량 실측
