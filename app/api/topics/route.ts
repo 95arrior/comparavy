@@ -16,6 +16,7 @@ import { amplifyForUser } from "@/lib/amplifyTopics";
 import { fetchKeywordStats, normalizeKey, fetchRelatedKeywords } from "@/lib/naverKeyword";
 import { poolScore, isBigPool } from "@/lib/trafficPool";
 import { finalGate, ANSWER_LOCKED_RE, EXPERIENCE_RE } from "@/lib/cardFinalGate";
+import { pickHomefeedBet } from "@/lib/homefeedBet";
 import { collectPoolKeywords } from "@/lib/poolCollect";
 import { fetchNaverAutocomplete } from "@/lib/naverAutocomplete";
 import { checkRateLimit } from "@/lib/rateLimit";
@@ -978,6 +979,26 @@ export async function GET(req: Request) {
     } catch { /* 헤드 배팅 실패 — 기존 파이프 무영향 */ }
   }
 
+  // ★홈판 배팅 카드(FF_HOMEFEED_BET, 2026-07-15 유저 확정 "해보자") — 검색이 아니라 홈피드 폭발을 노리는 1일 1장.
+  //  6유형 로테이션(평균 위치확인·못 받는 돈·계산 충격·통념 파괴·손해 마감·돈 타임라인), 전부 사실 기반 유형만.
+  let homefeedCards: TrendCard[] = [];
+  if (FF.homefeedBet && tailMode !== "long") {
+    try {
+      const bet = await pickHomefeedBet(pool, user.id, sub ?? "", usedSet);
+      if (bet && finalGate([{ keyword: bet.keyword, title: bet.title }]).pass.length > 0) {
+        homefeedCards = [{
+          keyword: bet.keyword, title: bet.title,
+          demandLabel: `홈판 배팅 · ${bet.betType}`,
+          ssak: true, region: false, tone: type, vol: 0, comp: "low" as Comp, blogTotal: null,
+          tag: "홈판", briefText: bet.briefText,
+          thumb: { mainCopy: bet.thumbCopy, subCopy: "", badge: "홈판" },
+          demandBadge: "터지면 상한 없음 — 승부는 검색량이 아니라 반응(공감·저장)",
+          ...(FF.perfLoop ? { sel: { species: "homefeed", seedSource: "homebet", hookKey: bet.betType } } : {}),
+        } as TrendCard];
+      }
+    } catch { /* 홈판 배팅 실패 — 조용히 0장 */ }
+  }
+
   // 트렌드(신선) 먼저, 데이터 글감은 섞어서 뒤에. 지역 카드는 섞임.
   // ★수익 증폭 카드(최우선 후보) — ①활성 시리즈 다음 화 ②hot(반응 좋아요) 단발의 후속.
   //  '더 뜨거운 이슈 인터럽트'는 클라 랭크(pickNextTopic)가 판단할 수 있게 tag로 구분만 한다. 실패=조용히 생략.
@@ -1040,19 +1061,19 @@ export async function GET(req: Request) {
   }
   // ★tier별 종족 비율(FF_TIER_MIX §4) — 상위 10슬롯의 트렌드:에버그린 배분. 별도 레이어:
   //  boost(시리즈·후속) 최우선 고정, 트렌드 내부 순서(공고 쿼터 포함)와 에버그린 내부 순서는 무수정 — 충돌 시 기존 규칙 승리.
-  let finalList = [...boostCards, ...trendCards, ...shuffled];
+  let finalList = [...boostCards, ...homefeedCards, ...trendCards, ...shuffled];
   if (FF.tierMix && tierInfo) {
     const [tw, ew] = TIER_MIX[tierInfo.tier];
     const trends = [...trendCards]; const evers = [...shuffled];
     const mixed: typeof finalList = [];
-    const room = 10 - headBetCards.length; // ★헤드 배팅이 있으면 10슬롯 중 마지막 1칸을 내준다
+    const room = 10 - headBetCards.length - homefeedCards.length; // ★홈판·헤드 배팅이 있으면 10슬롯에서 그만큼 내준다
     while ((trends.length || evers.length) && mixed.length < room) {
       const pos = mixed.length % (tw + ew);
       const pick = pos < tw ? (trends.shift() ?? evers.shift()) : (evers.shift() ?? trends.shift());
       if (!pick) break;
       mixed.push(pick);
     }
-    finalList = [...boostCards, ...mixed, ...(headBetCards as typeof finalList), ...trends, ...evers];
+    finalList = [...boostCards, ...homefeedCards, ...mixed, ...(headBetCards as typeof finalList), ...trends, ...evers];
   }
   return NextResponse.json(debugMode ? { topics: finalList, diag: { ...diag, boost: boostCards.length, trendCards: trendCards.length, poolCards: shuffled.length } } : { topics: finalList, ...(FF.tierBands && tierInfo ? { tier: { name: tierInfo.tier, note: tierInfo.note } } : {}) });
 }

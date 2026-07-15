@@ -15,4 +15,6 @@ export const FF = {
   get seedClaim() { return on(process.env.FF_SEED_CLAIM); },
   /** 6단계 — 수익 경로 태그(high_cpc/affiliate/brandconnect) */
   get revenueTag() { return on(process.env.FF_REVENUE_TAG); },
+  /** ★홈판 배팅 카드(2026-07-15 유저 확정) — 홈피드 폭발형 글감 1일 1장. 기본 ON, 끌 때만 FF_HOMEFEED_BET=0 */
+  get homefeedBet() { return process.env.FF_HOMEFEED_BET !== "0"; },
 };
