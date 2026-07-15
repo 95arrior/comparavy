@@ -8,6 +8,9 @@ import { generateWpBanners, insertBanners } from "@/lib/wpIllustration";
 import { stripNaverArtifacts, publishPost, insertInternalLinks, slugify, isYmylText, WpAuthError } from "@/lib/wordpress";
 import { decryptSecret } from "@/lib/crypto";
 
+// ★발행은 이미지 생성(최대 3장)+WP 미디어 업로드가 겹치는 무거운 경로 — 명시 상한(2026-07-16 무한 '발행 중' 실측 후 전 구간 타임아웃과 세트)
+export const maxDuration = 300;
+
 export async function POST(request: Request) {
   if (!hasSupabaseEnv()) {
     return NextResponse.json({ error: "서버 설정이 아직이에요. 잠시 후 다시 시도해 주세요." }, { status: 500 });

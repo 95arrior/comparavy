@@ -222,6 +222,7 @@ async function callOpenAIImage(prompt: string, aspectRatio: "16:9" | "1:1"): Pro
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
     body: JSON.stringify({ model: "gpt-image-1", prompt: prompt.slice(0, 4000), size, quality: "medium", n: 1 }),
+    signal: AbortSignal.timeout(90_000), // ★무한 대기 방지(2026-07-16 실측: 발행하기 무한 '발행 중' — 이미지 콜에 타임아웃 부재)
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -264,6 +265,7 @@ async function callGemini(prompt: string, aspectRatio: "16:9" | "1:1"): Promise<
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { imageConfig: { aspectRatio } } }),
+    signal: AbortSignal.timeout(90_000), // ★무한 대기 방지(2026-07-16 실측)
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {

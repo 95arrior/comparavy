@@ -34,6 +34,7 @@ export async function verifyConnection(
   const base = normalizeSiteUrl(creds.siteUrl);
   try {
     const res = await fetch(`${base}/wp-json/wp/v2/users/me`, {
+    signal: AbortSignal.timeout(20_000),
       headers: { Authorization: authHeader(creds) },
     });
     if (res.ok) return { ok: true };
@@ -299,6 +300,7 @@ export async function findOrCreateTerm(
   try {
     // 이미 있으면 그 id 사용 (정확히 같은 이름)
     const sr = await fetch(`${base}/wp-json/wp/v2/${taxonomy}?search=${encodeURIComponent(trimmed)}&per_page=100`, {
+      signal: AbortSignal.timeout(20_000),
       headers: { Authorization: authHeader(creds) },
     });
     if (sr.ok) {
@@ -308,6 +310,7 @@ export async function findOrCreateTerm(
     }
     // 없으면 생성
     const cr = await fetch(`${base}/wp-json/wp/v2/${taxonomy}`, {
+      signal: AbortSignal.timeout(20_000),
       method: "POST",
       headers: { Authorization: authHeader(creds), "Content-Type": "application/json" },
       body: JSON.stringify({ name: trimmed }),
@@ -345,7 +348,7 @@ async function uploadMedia(source: string, creds: WordPressCredentials): Promise
       buffer = Buffer.from(source.slice(comma + 1), "base64");
     } else {
       // 스토리지 등 URL → 내려받아 업로드
-      const r = await fetch(source);
+      const r = await fetch(source, { signal: AbortSignal.timeout(30_000) });
       if (!r.ok) return null;
       mime = (r.headers.get("content-type") || "image/jpeg").split(";")[0];
       buffer = Buffer.from(await r.arrayBuffer());
@@ -353,6 +356,7 @@ async function uploadMedia(source: string, creds: WordPressCredentials): Promise
     const ext = (mime.split("/")[1] || "png").replace("jpeg", "jpg").replace("svg+xml", "svg");
     const res = await fetch(`${base}/wp-json/wp/v2/media`, {
       method: "POST",
+      signal: AbortSignal.timeout(90_000),
       headers: {
         Authorization: authHeader(creds),
         "Content-Type": mime,
@@ -453,6 +457,7 @@ export async function publishPost(input: PublishInput): Promise<PublishResult> {
   const create = () =>
     fetch(`${base}/wp-json/wp/v2/posts`, {
       method: "POST",
+      signal: AbortSignal.timeout(60_000),
       headers: { Authorization: authHeader(input), "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
@@ -461,6 +466,7 @@ export async function publishPost(input: PublishInput): Promise<PublishResult> {
   if (input.postId) {
     res = await fetch(`${base}/wp-json/wp/v2/posts/${input.postId}`, {
       method: "POST",
+      signal: AbortSignal.timeout(60_000),
       headers: { Authorization: authHeader(input), "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
@@ -481,7 +487,7 @@ export async function publishPost(input: PublishInput): Promise<PublishResult> {
       ["최소 페이로드", { title: (body as Record<string, unknown>).title, content: (body as Record<string, unknown>).content, status: (body as Record<string, unknown>).status }],
     ];
     for (const [name, vb] of variants) {
-      const r2 = await fetch(url, { method: "POST", headers: { Authorization: authHeader(input), "Content-Type": "application/json" }, body: JSON.stringify(vb) });
+      const r2 = await fetch(url, { method: "POST", headers: { Authorization: authHeader(input), "Content-Type": "application/json" }, body: JSON.stringify(vb), signal: AbortSignal.timeout(30_000) });
       if (r2.ok) { console.error(`[wp] 415 회피 성공 — 제외한 필드: ${name}`); res = r2; break; }
     }
   }
@@ -515,6 +521,7 @@ export async function publishPage(
   let existingId: number | null = null;
   try {
     const sr = await fetch(`${base}/wp-json/wp/v2/pages?slug=${encodeURIComponent(page.slug)}&status=publish,draft&per_page=1`, {
+      signal: AbortSignal.timeout(20_000),
       headers: { Authorization: auth },
     });
     if (sr.ok) {
@@ -527,6 +534,7 @@ export async function publishPage(
     method: "POST",
     headers: { Authorization: auth, "Content-Type": "application/json" },
     body: JSON.stringify({ title: page.title, content: html, status: "publish", slug: page.slug }),
+    signal: AbortSignal.timeout(30_000),
   });
   if (res.status === 401 || res.status === 403) throw new WpAuthError();
   if (!res.ok) throw new Error(`페이지 발행 실패 (${res.status})`);

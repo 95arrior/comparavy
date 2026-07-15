@@ -78,7 +78,8 @@ export default function WpHome({ blogName, blogId, articles, credits, onOpenArti
     if (!reviewDraft || busy) return;
     setBusy(true);
     try {
-      const r = await fetch("/api/wordpress/publish", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ articleId: reviewDraft.id, status: "publish", addToc: true, addInternalLinks: true }) });
+      // ★클라 상한 4분(2026-07-16 실측: 무한 '발행 중') — 서버는 계속 돌 수 있으니 타임아웃 문구는 '확인' 안내로
+      const r = await fetch("/api/wordpress/publish", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ articleId: reviewDraft.id, status: "publish", addToc: true, addInternalLinks: true }), signal: AbortSignal.timeout(240_000) });
       const d = await r.json();
       if (r.ok) {
       try {
@@ -92,7 +93,11 @@ export default function WpHome({ blogName, blogId, articles, credits, onOpenArti
         setTimeout(() => window.location.reload(), 2200);
       }
       else setToast(d.error ?? "발행하지 못했어요");
-    } catch { setToast("네트워크 오류예요"); }
+    } catch (e) {
+      setToast(e instanceof Error && e.name === "TimeoutError"
+        ? "발행이 오래 걸리고 있어요 — 이미지 준비 때문일 수 있어요. 1~2분 뒤 새로고침해서 발행됐는지 확인해 주세요."
+        : "네트워크 오류예요");
+    }
     setBusy(false);
   }
 
