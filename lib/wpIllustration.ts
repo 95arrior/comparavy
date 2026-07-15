@@ -3,7 +3,7 @@
 //  ②오브젝트 은유 배너 ③플랫 일러스트 장면. 글마다 스타일 로테이션(다양성 — 유저 조건).
 //  발행 시점 생성(초안 DB 비대 방지), 실패 = 빈 배열(발행은 계속).
 import { callImage, englishBrief, stripHangul } from "./geminiImage";
-import { buildBannerPrompt, bodyStyleRotation } from "./bannerPrompts";
+import { buildBannerPrompt, buildThumbMetaphorPrompt, bodyStyleRotation } from "./bannerPrompts";
 import { createSupabaseAdminClient } from "./supabase-server";
 import { renderThumbnail } from "./thumbnailRenderer";
 import { visualIdentityFor } from "./visualIdentity";
@@ -39,12 +39,14 @@ export async function generateWpBanners(keyword: string, articleId: string, n = 
   return out;
 }
 
-/** 무대 배경 + 키워드 G마켓 산스 조판 1장 — 양 채널 공용(WP 1번 배너·네이버 대표 슬롯). 실패=null. */
+/** 무대 배경 + 키워드 G마켓 산스 조판 1장 — 양 채널 공용(WP 1번 배너·네이버 대표 슬롯). 실패=null.
+ *  ★배경 다양화(2026-07-16 유저 실측: 썸네일이 죄다 비슷 — 원인은 배경이 'stage' 한 스타일 고정) —
+ *  네이버 썸네일에서 검증된 은유 로테이션(buildThumbMetaphorPrompt, 시드로 히어로 오브젝트/미니어처/인물극 회전)으로 교체. */
 export async function generateTypoBannerDataUrl(topic: string, seedKey: string, brandName = ""): Promise<string | null> {
   try {
     const seed = fnv(`${topic}|${seedKey}`);
     const stageBrief = await englishBrief(topic); // ★무대 배경도 한글 0자(글자는 어차피 우리 조판이 얹는다)
-    const bg = await callImage(buildBannerPrompt(stageBrief?.topicEn ?? stripHangul(topic, "personal finance"), "stage", seed), "1:1");
+    const bg = await callImage(buildThumbMetaphorPrompt(stageBrief?.topicEn ?? stripHangul(topic, "personal finance"), undefined, seed), "1:1");
     const png = await renderThumbnail({
       mainCopy: breakThumbCopy(topic.trim().slice(0, 20)),
       identity: visualIdentityFor(seedKey),
