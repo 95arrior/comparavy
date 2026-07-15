@@ -23,6 +23,23 @@ export async function GET(request: Request) {
   if (!hasSupabaseEnv()) return NextResponse.json({ error: "no env" }, { status: 500 });
   const db = createSupabaseAdminClient();
 
+  // ★백필(2026-07-15) — perfLoop OFF였던 기간의 발행분(최근 15일·검증 완료·URL 보유)을 원장에 소급 등재.
+  //  ignoreDuplicates: 기존 행(선별 맥락 보유)은 절대 덮지 않는다. 실패=조용히 계속.
+  try {
+    const sinceBF = new Date(Date.now() - 15 * 86400_000).toISOString();
+    const { data: arts } = await db.from("articles")
+      .select("id, user_id, blog_id, keyword, title, naver_url, verified_at")
+      .gte("verified_at", sinceBF).not("naver_url", "is", null).not("keyword", "is", null).limit(500);
+    if (arts?.length) {
+      const rows = arts.map((a) => ({
+        article_id: a.id, user_id: a.user_id, blog_id: (a as { blog_id?: string | null }).blog_id ?? null,
+        url: (a as { naver_url?: string | null }).naver_url ?? null, keyword: a.keyword, title: a.title ?? null,
+        published_at: (a as { verified_at?: string | null }).verified_at ?? new Date().toISOString(),
+      }));
+      await db.from("post_performance").upsert(rows, { onConflict: "article_id", ignoreDuplicates: true });
+    }
+  } catch (e) { console.error("[rank-track] 백필 실패(계속 진행):", e instanceof Error ? e.message : e); }
+
   // 최근 15일 발행분 중 due 체크포인트(발행 후 N일 경과 & 해당 스냅샷 없음)
   const since = new Date(Date.now() - 15 * 86400_000).toISOString();
   const { data: posts } = await db.from("post_performance")

@@ -19,7 +19,13 @@ const NOTES: Record<BlogTier, string> = {
   ESTABLISHED: "검증된 블로그 단계예요. 수요가 큰 키워드까지 넓게 노리는 단계입니다.",
 };
 
-/** 성과 데이터 기반 tier — 데이터 부족 시 null(기존 밴드 유지). api_cache 24h는 호출측에서. */
+/** ★콜드스타트(2026-07-15 유저 확정: 밴드 사다리 — 신생기는 '시작값'이지 판정 불가가 아니다).
+ *  순위 데이터가 아직 없으면 SEEDLING에서 시작 — 스냅샷이 쌓이면 computeBlogTier가 승급으로 덮어쓴다. */
+export function coldStartTier(): TierResult {
+  return { tier: "SEEDLING", wins: 0, sample: 0, note: NOTES.SEEDLING };
+}
+
+/** 성과 데이터 기반 tier — 데이터 부족 시 null(호출측이 콜드스타트 시작값 적용). api_cache 24h는 호출측에서. */
 export async function computeBlogTier(db: SupabaseClient, userId: string, blogId: string | null): Promise<TierResult | null> {
   try {
     let q = db.from("post_performance").select("article_id, vol, published_at").eq("user_id", userId).order("published_at", { ascending: false }).limit(10);

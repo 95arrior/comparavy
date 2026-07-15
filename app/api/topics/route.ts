@@ -24,7 +24,7 @@ import { FF } from "@/config/featureFlags";
 import { getPerfWeights } from "@/lib/perfWeights";
 import { dwellPotential } from "@/lib/dwellScore";
 import { revenuePathOf, REVENUE_TAG_LABEL, type RevenuePath } from "@/lib/revenuePath";
-import { computeBlogTier, applyDemoteGuard, type TierResult, type BlogTier } from "@/lib/blogTier";
+import { computeBlogTier, applyDemoteGuard, coldStartTier, type TierResult, type BlogTier } from "@/lib/blogTier";
 import { TIER_BANDS, TIER_MIX, SEED_CLAIM_CAP, SEED_CLAIM_WINDOW_H } from "@/lib/scoreWeights";
 import { revenuePath } from "@/lib/revenue";
 import { logUsage } from "@/lib/usageLog";
@@ -365,7 +365,9 @@ export async function GET(req: Request) {
     return cards;
   }
 
-  // ★tier 밴드(FF_TIER_BANDS §2) — 성과 실측 기반 단계. 데이터 없으면 null = 기존 밴드 그대로(절대 임의 강등 없음)
+  // ★tier 밴드(FF_TIER_BANDS §2) — 성과 실측 기반 단계.
+  //  ★콜드스타트 개정(2026-07-15 유저 확정): 순위 데이터 없음 = 판정 불가(null·밴드 무효)가 아니라 신생기 '시작값'.
+  //  종전 null 폴백이 신생 블로그에 헤드 키워드를 혼입시킴(돼지통 실측: 수요 5천~8만 글 전부 30위 밖, 유입 주역은 월 300~800 니치).
   let tierInfo: TierResult | null = null;
   async function loadTier(): Promise<TierResult | null> {
     if (!FF.tierBands) return null;
@@ -376,7 +378,7 @@ export async function GET(req: Request) {
       const cached = c?.value as (TierResult & { prev?: BlogTier }) | undefined;
       if (cached && new Date(String(c!.expires_at)).getTime() > Date.now()) return cached;
       const fresh = await computeBlogTier(pool, user!.id, (profile as { id?: string } | null)?.id ?? null);
-      if (!fresh) return null;
+      if (!fresh) return coldStartTier(); // 캐시 없이 즉답 — 첫 스냅샷이 생기면 다음 판정이 실측으로 대체
       const guarded = applyDemoteGuard((cached?.tier as BlogTier | undefined) ?? null, fresh);
       try { await pool.from("api_cache").upsert({ key, value: guarded, expires_at: new Date(Date.now() + 24 * 3600_000).toISOString(), updated_at: new Date().toISOString() }); } catch { /* ignore */ }
       return guarded;
@@ -475,7 +477,18 @@ export async function GET(req: Request) {
         tc = tc.filter((c) => {
           const v = volMap[c.keyword];
           const isAnnounce = Boolean((c as { actionEnd?: string | null }).actionEnd);
-          if (!isAnnounce) return true;
+          if (!isAnnounce) {
+            // ★제로수요 원천 배제(2026-07-15 유저 절대 조건 — 실측: '전기트럭 지원금' 월 0회로 1위 해도 유입 0).
+            //  트렌드 골든타임 보호: 미측정(급등 초기라 집계 전)은 뉴스 신선도가 수요 증거라 통과,
+            //  측정됐는데 월 100회 미만이면 대형 풀·플랫폼 실측 조회·풀 스코어 구제 없을 때만 컷.
+            if (v && v.vol < 100) {
+              const ctx0 = `${c.title} ${c.keyword} ${(c.newsContext ?? "").slice(0, 200)}`;
+              const pv0 = /플랫폼 조회\s*([\d,]+)회/.exec(c.newsContext ?? "");
+              const platformViews0 = pv0 ? Number(pv0[1]!.replace(/,/g, "")) : 0;
+              if (platformViews0 < 10_000 && !isBigPool(ctx0) && poolScore(ctx0) < 3) return false;
+            }
+            return true;
+          }
           if (v && v.vol < 300) return false; // 실측 저수요 컷
           // ★미조회 공고 뒷문 봉쇄(실측: [강원] 마케터 양성 — 검색량 DB에 없는 공고명 = 아무도 안 찾음).
           //  단 잠재 풀 큰 공고(동탄 줍줍 — 공고 직후라 미조회)는 풀 스코어로 구제.
@@ -927,6 +940,37 @@ export async function GET(req: Request) {
   //  '그날 그시간' 신선함이 홈판 노출의 핵심. 1만 명이 같은 풀을 봐도 시드 회전으로 다른 조각을 봄.
   const trendCards = await buildTrendCards(new Set(topics.map((x) => normalizeKeyword(x.keyword))));
 
+  // ★헤드 배팅 슬롯(2026-07-15 유저 확정: 밴드 사다리) — 신생·성장 tier에 한 판 1장, 한 밴드 위 키워드.
+  //  지금 순위는 안 나와도 에버그린 자산 — 체급이 오르면 이 글이 뒤늦게 일한다. 실패·후보 없음=조용히 0장.
+  let headBetCards: typeof topics = [];
+  if (FF.tierBands && FF.tierMix && tierInfo && tierInfo.tier !== "ESTABLISHED" && tailMode !== "long") {
+    try {
+      const cur = TIER_BANDS[tierInfo.tier];
+      const upMax = tierInfo.tier === "SEEDLING" ? TIER_BANDS.GROWING.volMax : (TIER_BANDS.ESTABLISHED.volMax ?? 30000);
+      let hq = pool.from("keyword_pool").select("keyword, monthly_searches, competition, audience, blog_total")
+        .eq("vertical", vertical).gt("monthly_searches", cur.volMax).lte("monthly_searches", upMax)
+        .order("times_assigned", { ascending: true }).order("monthly_searches", { ascending: false }).limit(20);
+      if (sub) hq = hq.eq("sub", sub);
+      const { data: hd } = await hq;
+      const pickH = ((hd ?? []) as PoolRow[]).find((r) =>
+        !usedSet.has(normalizeKeyword(r.keyword)) && audMatch(r.keyword, r.audience) && finalGate([{ keyword: r.keyword, title: r.keyword }]).pass.length > 0);
+      if (pickH) {
+        headBetCards = [{
+          keyword: pickH.keyword, title: pickH.keyword,
+          demandLabel: demandLabel(pickH.monthly_searches, type),
+          ssak: false, region: false, tone: type,
+          vol: pickH.monthly_searches ?? 0,
+          comp: pickH.blog_total != null ? compFromBlogTotal(pickH.blog_total) : compFromLabel(pickH.competition),
+          blogTotal: pickH.blog_total ?? null,
+          bidHigh: bidHigh(pickH),
+          tag: sub || "글감",
+          demandBadge: "헤드 배팅 — 지금 체급엔 크지만, 블로그가 크면 이 글부터 일해요",
+          ...(FF.perfLoop ? { sel: { species: "evergreen", seedSource: "headbet", vol: pickH.monthly_searches ?? 0, blogTotal: pickH.blog_total ?? null, stars: pickH.blog_total != null ? filledStarsFromData(pickH.monthly_searches ?? 0, pickH.blog_total) : null } } : {}),
+        } as unknown as (typeof topics)[number]];
+      }
+    } catch { /* 헤드 배팅 실패 — 기존 파이프 무영향 */ }
+  }
+
   // 트렌드(신선) 먼저, 데이터 글감은 섞어서 뒤에. 지역 카드는 섞임.
   // ★수익 증폭 카드(최우선 후보) — ①활성 시리즈 다음 화 ②hot(반응 좋아요) 단발의 후속.
   //  '더 뜨거운 이슈 인터럽트'는 클라 랭크(pickNextTopic)가 판단할 수 있게 tag로 구분만 한다. 실패=조용히 생략.
@@ -994,13 +1038,14 @@ export async function GET(req: Request) {
     const [tw, ew] = TIER_MIX[tierInfo.tier];
     const trends = [...trendCards]; const evers = [...shuffled];
     const mixed: typeof finalList = [];
-    while ((trends.length || evers.length) && mixed.length < 10) {
+    const room = 10 - headBetCards.length; // ★헤드 배팅이 있으면 10슬롯 중 마지막 1칸을 내준다
+    while ((trends.length || evers.length) && mixed.length < room) {
       const pos = mixed.length % (tw + ew);
       const pick = pos < tw ? (trends.shift() ?? evers.shift()) : (evers.shift() ?? trends.shift());
       if (!pick) break;
       mixed.push(pick);
     }
-    finalList = [...boostCards, ...mixed, ...trends, ...evers];
+    finalList = [...boostCards, ...mixed, ...(headBetCards as typeof finalList), ...trends, ...evers];
   }
   return NextResponse.json(debugMode ? { topics: finalList, diag: { ...diag, boost: boostCards.length, trendCards: trendCards.length, poolCards: shuffled.length } } : { topics: finalList, ...(FF.tierBands && tierInfo ? { tier: { name: tierInfo.tier, note: tierInfo.note } } : {}) });
 }
