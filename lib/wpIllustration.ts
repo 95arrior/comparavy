@@ -46,7 +46,19 @@ export async function generateTypoBannerDataUrl(topic: string, seedKey: string, 
   try {
     const seed = fnv(`${topic}|${seedKey}`);
     const stageBrief = await englishBrief(topic); // ★무대 배경도 한글 0자(글자는 어차피 우리 조판이 얹는다)
-    const bg = await callImage(buildThumbMetaphorPrompt(stageBrief?.topicEn ?? stripHangul(topic, "personal finance"), undefined, seed), "1:1");
+    const topicEn = stageBrief?.topicEn ?? stripHangul(topic, "personal finance");
+    // ★배경 텍스트 검증(실측 2026-07-16: '댁급금' 깨진 한글 도장 노출 — 이 경로만 composeThumbnail의 검증이 없었음)
+    //  글자 검출 시 시드 바꿔 1회 재생성, 재실패면 null(호출측 코드 폴백).
+    let bg = await callImage(buildThumbMetaphorPrompt(topicEn, undefined, seed), "1:1");
+    {
+      const { verifyImage } = await import("./imageVerify");
+      let v = await verifyImage(bg.base64, bg.mime, "background", { bgOnly: true });
+      if (v.hasText) {
+        bg = await callImage(buildThumbMetaphorPrompt(topicEn, undefined, seed + 13), "1:1");
+        v = await verifyImage(bg.base64, bg.mime, "background", { bgOnly: true });
+        if (v.hasText) { console.error("[banner] 배경 텍스트 2연속 검출 — 코드 폴백"); return null; }
+      }
+    }
     const png = await renderThumbnail({
       mainCopy: breakThumbCopy(topic.trim().slice(0, 20)),
       identity: visualIdentityFor(seedKey),
