@@ -8,6 +8,11 @@ export const PRODUCT_GATE = {
   minCommissionKrw: 1000, // 수수료 '금액' 판정: 판매가 × 수수료율
   priceMin: 10_000, // 저관여 한 세션 구매 구간
   priceMax: 50_000,
+  // ★고단가 티어(2026-07-16 유저 확정: 30일 수익 극대화 테스트) — 시즌 가전(제습기·서큘레이터·에어컨류)은
+  //  검색자가 이미 구매 모드라 5만 상한이 수익 병목. 가격 5만~50만 허용하되 수수료액 3,000원+ 필수.
+  //  리뷰·평점 기준은 동일(신뢰 회계 불변).
+  tier2PriceMax: 500_000,
+  tier2MinCommissionKrw: 3_000,
   seasonBonus: 2, // 시즌 정합 가산점
   offSeasonPenalty: -2, // 역시즌 감점
 };

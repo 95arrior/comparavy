@@ -22,7 +22,10 @@ const M = { sampleSize: 30, totalReviews: 2847 };
   t("리뷰 미달 실격", !runProductGate({ ...product, reviewCount: 120 }, new Date("2026-07-15")).pass);
   t("평점 미달 실격", !runProductGate({ ...product, rating: 4.1 }, new Date("2026-07-15")).pass);
   t("수수료 금액 미달 실격(1만원 x 5% = 500원)", !runProductGate({ ...product, price: 10000, commissionPct: 5 }, new Date("2026-07-15")).pass);
-  t("가격 상한 초과 실격", !runProductGate({ ...product, price: 89000 }, new Date("2026-07-15")).pass);
+  // ★2티어 개정(2026-07-16 수익 극대화 테스트): 5만~50만은 수수료액 3,000+면 통과(고단가 시즌 가전)
+  t("고단가 티어 — 8.9만·12%(10,680원) 통과", runProductGate({ ...product, price: 89000, commissionPct: 12 }, new Date("2026-07-15")).pass);
+  t("고단가 티어 — 8.9만·3%(2,670원) 수수료액 미달 실격", !runProductGate({ ...product, price: 89000, commissionPct: 3 }, new Date("2026-07-15")).pass);
+  t("고단가 티어 — 50만 초과(60만) 실격", !runProductGate({ ...product, price: 600000, commissionPct: 12 }, new Date("2026-07-15")).pass);
 }
 
 // ── 품질 게이트 — 문체 v2 규격 픽스처(도입 대사·이모지 8·하이라이트 2·문단 2문장)

@@ -16,8 +16,9 @@ export function runProductGate(p: Product, now = new Date()): GateResult {
   const checks = [
     { key: "reviews", label: `리뷰 수 ${PRODUCT_GATE.minReviews}+`, pass: p.reviewCount >= PRODUCT_GATE.minReviews, detail: `${p.reviewCount.toLocaleString()}건` },
     { key: "rating", label: `평점 ${PRODUCT_GATE.minRating}+`, pass: p.rating >= PRODUCT_GATE.minRating, detail: `${p.rating}` },
-    { key: "commission", label: `수수료 금액 ${PRODUCT_GATE.minCommissionKrw.toLocaleString()}원+`, pass: commissionKrw >= PRODUCT_GATE.minCommissionKrw, detail: `${p.price.toLocaleString()}원 × ${p.commissionPct}% = ${commissionKrw.toLocaleString()}원` },
-    { key: "price", label: `판매가 ${PRODUCT_GATE.priceMin / 10000}만~${PRODUCT_GATE.priceMax / 10000}만원`, pass: p.price >= PRODUCT_GATE.priceMin && p.price <= PRODUCT_GATE.priceMax, detail: `${p.price.toLocaleString()}원` },
+    // ★2티어(2026-07-16 수익 극대화 테스트): 표준=1만~5만·수수료액 1,000+ / 고단가=5만~50만·수수료액 3,000+(시즌 가전용)
+    { key: "commission", label: `수수료 금액(구간별 하한)`, pass: p.price > PRODUCT_GATE.priceMax ? commissionKrw >= PRODUCT_GATE.tier2MinCommissionKrw : commissionKrw >= PRODUCT_GATE.minCommissionKrw, detail: `${p.price.toLocaleString()}원 × ${p.commissionPct}% = ${commissionKrw.toLocaleString()}원 (하한 ${(p.price > PRODUCT_GATE.priceMax ? PRODUCT_GATE.tier2MinCommissionKrw : PRODUCT_GATE.minCommissionKrw).toLocaleString()}원)` },
+    { key: "price", label: `판매가 ${PRODUCT_GATE.priceMin / 10000}만~${PRODUCT_GATE.priceMax / 10000}만(표준)·~${PRODUCT_GATE.tier2PriceMax / 10000}만(고단가)`, pass: p.price >= PRODUCT_GATE.priceMin && p.price <= PRODUCT_GATE.tier2PriceMax, detail: `${p.price.toLocaleString()}원${p.price > PRODUCT_GATE.priceMax ? " — 고단가 티어" : ""}` },
     { key: "season", label: "시즌 정합(가산/감점)", pass: true, detail: seasonHit.length ? `${month}월 시즌 매칭: ${seasonHit.join("·")} (+${PRODUCT_GATE.seasonBonus})` : offHit.length ? `역시즌 토큰: ${offHit.join("·")} (${PRODUCT_GATE.offSeasonPenalty})` : "시즌 중립(0)", score: seasonScore },
   ];
   return { pass: checks.every((c) => c.pass), checks, seasonScore };
