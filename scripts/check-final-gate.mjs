@@ -28,6 +28,12 @@ const cases = [
   { c: { keyword: "고창군 기본소득", title: "고창군 기본소득 시범도시 2028년 신청 대상자 예상" }, drop: "speculative" },
   { c: { keyword: "소상공인 정책자금", title: "소상공인 정책자금 신청 조건과 금리, 순서대로 정리" }, drop: null },
   { c: { keyword: "백년가게 혜택", title: "백년가게로 지정되면 받는 혜택 총정리" }, drop: null },
+  // ★2026-07-15 SERP 실측 자료 — '계산기'는 공식 위젯 잠식 유형(블로그 비중 36%), 채널 무관 하드컷.
+  //  '계산기사용법' 같은 뒤에 글자가 붙는 조어는 도구 검색이 아닐 수 있어 통과(경계 확인).
+  { c: { keyword: "4대보험 계산기", title: "4대보험 계산기, 내 월급 실수령액 확인" }, drop: "answer_tool" },
+  { c: { keyword: "부동산 양도세 계산기", title: "부동산양도세계산기, 꼭 알아야 할 것들" }, drop: "answer_tool" },
+  { c: { keyword: "라미네이트 비용", title: "라미네이트 비용, 병원마다 다른 이유" }, drop: null },
+  { c: { keyword: "연말정산 부양가족 등록", title: "연말정산 부양가족 등록, 순서대로 하는 법" }, drop: null },
 ];
 let fail = 0;
 for (const { c, drop } of cases) {
