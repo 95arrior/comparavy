@@ -586,7 +586,8 @@ export async function GET(req: Request) {
     if (FF.homefeedBet) {
       try {
         const bet = await pickHomefeedBet(pool, user.id, sub ?? "", usedSet);
-        if (bet && finalGate([{ keyword: bet.keyword, title: bet.title }]).pass.length > 0 && !tc.some((t) => t.keyword === bet.keyword)) {
+        // ★이미 생성/발행한 홈판 글감은 숨김(실측 2026-07-16: 발행했는데 카드 잔존 — 홈판 카드는 발행함 마킹 로직 밖이라 usedSet으로 직접 차단)
+        if (bet && !usedSet.has(normalizeKeyword(bet.keyword)) && finalGate([{ keyword: bet.keyword, title: bet.title }]).pass.length > 0 && !tc.some((t) => t.keyword === bet.keyword)) {
           tc.unshift({
             keyword: bet.keyword, title: bet.title,
             demandLabel: `홈판 배팅 · ${bet.betType}`,
@@ -1003,7 +1004,7 @@ export async function GET(req: Request) {
   if (FF.homefeedBet && tailMode !== "long") {
     try {
       const bet = await pickHomefeedBet(pool, user.id, sub ?? "", usedSet);
-      if (bet && finalGate([{ keyword: bet.keyword, title: bet.title }]).pass.length > 0) {
+      if (bet && !usedSet.has(normalizeKeyword(bet.keyword)) && finalGate([{ keyword: bet.keyword, title: bet.title }]).pass.length > 0) {
         homefeedCards = [{
           keyword: bet.keyword, title: bet.title,
           demandLabel: `홈판 배팅 · ${bet.betType}`,
