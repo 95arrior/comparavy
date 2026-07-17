@@ -383,7 +383,7 @@ export default function ArticleModal({ pubStampKey, blogName,
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-[14px] font-bold text-neutral-900">썸네일 문구</p>
-                <p className="mt-0.5 text-[12px] text-neutral-400">썸네일에 큰 글씨로 박을 3초 훅 — 탭하면 복사돼요.</p>
+                <p className="mt-0.5 text-[12px] text-neutral-400">썸네일은 질문, 제목이 답 — 제목을 반복하지 않는 개념 훅. 탭하면 복사돼요.</p>
               </div>
               <button onClick={fetchThumbCopies} disabled={thumbBusy} className="at-press shrink-0 rounded-lg bg-[#1D75F7]/10 px-3 py-1.5 text-[12px] font-bold text-[#1D75F7] transition hover:bg-[#1D75F7]/15 disabled:opacity-50">
                 {thumbBusy ? "만드는 중" : thumbCopies ? "다시 추천" : "✦ 추천 받기"}

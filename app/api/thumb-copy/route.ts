@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { breakThumbCopy } from "@/lib/thumbCopyBreak";
+import { breakThumbCopy, repeatsTitle } from "@/lib/thumbCopyBreak";
 import Anthropic from "@anthropic-ai/sdk";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { checkRateLimit } from "@/lib/rateLimit";
@@ -25,19 +25,22 @@ export async function POST(request: Request) {
   if (!art) return NextResponse.json({ error: "글을 찾을 수 없어요." }, { status: 404 });
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  // ★역할 분리 재설계(2026-07-17 유저 확정): 홈피드에서 썸네일과 제목은 '함께' 노출된다.
+  //  썸네일 = 개념 하나를 던지는 질문, 제목 = 그 답. 둘이 이어 읽으면 하나의 문장이 되는 세트가 목표.
+  //  제목을 요약·반복하는 문구는 실격(제목과 경쟁 금지) — 코드 게이트(titleOverlapCount)로도 강제.
   const prompt = [
-    `네이버 블로그 썸네일에 큰 글씨로 박을 '3초 훅' 문구 6개를 만들어줘. 이건 심리전이다 — 스크롤하던 손가락을 멈추고 누르게 만드는 것이 유일한 목표. 절대 조건: 각 문구는 공백 포함 18자 이내(고정 폰트 — 한 줄 9자 x 2줄). 글 제목: "${art.title}" / 키워드: "${art.keyword}"${art.meta_description ? ` / 요지: ${String(art.meta_description).slice(0, 150)}` : ""}`,
+    `네이버 블로그 썸네일에 큰 글씨로 박을 문구 6개를 만들어줘. ★대전제: 홈피드에서 썸네일과 제목은 함께 노출된다. 역할 분리 — 썸네일은 '개념 하나'를 던져 손가락을 멈추게 하고, 제목이 그 답을 잇는다. 썸네일만 보면 궁금하고, 제목을 읽으면 궁금증이 이어져 하나의 문장처럼 붙어야 한다. 절대 조건: 각 문구는 공백 포함 18자 이내(고정 폰트 — 한 줄 9자 x 2줄), 짧을수록 강하다(6~14자 지향). 글 제목: "${art.title}" / 키워드: "${art.keyword}"${art.meta_description ? ` / 요지: ${String(art.meta_description).slice(0, 150)}` : ""}`,
     `본문 도입(이 글의 진짜 셀링포인트 — 문구는 이 내용에서만 나와야 한다): ${String((art as { body_html?: string }).body_html ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(0, 400)}`,
     "",
     "규칙:",
-    "- ★1번 문구는 무조건 '명사 완결형'(유저 확정 스타일): 키워드를 그대로 세운 정보 약속 — '2026년 임산부 지원금 총정리', '청년도약계좌 조건 한눈에' 식(제목에 연도가 있으면 연도 포함, 끝은 총정리/한눈에/핵심 정리 중 자연스러운 것). 어그로 없이 담백하게.",
-    "- ★2~6번은 5각도 강제 분산(전부 같은 프레임이면 실격) — 반드시 서로 다른 각도 하나씩: ①숫자 대비형(본문 실값 두 개의 충돌 — 남들 연 3.6% vs 내 통장 0.1%) ②질문형(그 돈 하루 굴리면 얼마?) ③미완결형(옮기기 전 이것 하나만) ④자격 발견형(통장만 있으면 오늘 시작) ⑤손실 회피형(모르고 두면 이자 0원).",
+    "- ★역할 분리(절대 조항) — 제목에 이미 있는 정보를 다른 말로 반복하면 실격. 제목의 어절을 그대로 가져오는 건 앵커 1개(연도·핵심 숫자 하나)까지만. 좋은 예(제목 'AI 검색은 끝났습니다, 이제는 AI 에이전트 시대'): '검색 끝.' / '이젠 시켜만 하세요' / '내 비서가 생깁니다'. 나쁜 예: 'AI 에이전트 시대'(제목 축약), '에이전트 2027년'(제목 반복).",
+    "- ★개념 1개만 — 한 문구 = 한 개념. vs·나열·요약형 금지. '검색 끝.'처럼 명사+마침표로 끊는 punch 허용.",
+    "- ★6각도 분산(전부 같은 프레임이면 실격): ①시대 선언형(검색 끝. / 이제 시작입니다) ②소유 전환형(내 비서가 생깁니다) ③행동 전환형(이젠 시켜만 하세요) ④숫자 앵커형(본문 실값 하나만 크게) ⑤손실 회피형(모르고 두면 새는 돈) ⑥질문형(내 몫은 얼마?).",
     "- ★사실 정합(절대 조항) — 훅을 만들려고 본문에 없는 인과·위협을 지어내면 실격(실측 실격 예: 본문은 '6개월 내 퇴사 시 환수'인데 문구가 '지급일 놓치면 환수당한다' — 조건 바꿔치기). 본문이 명시한 사실만 극적으로 만들 수 있다.",
-    "- ★완결된 구어 — 사람이 소리 내 말할 수 있는 문장만. '~다는 것', '~라는 게 핵심이다' 같은 문어 조각 실격.",
-    "- ★주제어 의무 — 6개 전부에 이 글의 핵심 명사(제목·키워드의 실제 명사)가 들어가야 한다. '아는 사람만 써먹는 경로'처럼 무엇인지 없는 문구 실격.",
+    "- ★완결된 구어 — 사람이 소리 내 말할 수 있는 말만. '~다는 것', '~라는 게 핵심이다' 같은 문어 조각 실격.",
     "- ★숫자·날짜는 제목·요지·본문 도입에 실제로 있는 값만.",
-    "- 금지: 무조건·100%·보장·충격·경악, 느낌표 2개 이상, 이모지.",
-    "- 출력 계약(어기면 실패): 설명·비교·머리말 없이, 첫 글자가 [ 이고 마지막 글자가 ] 인 JSON 배열 한 줄만 출력한다. 예: [\"남들 연 3.6% 내 통장 0.1%\",\"CMA 금리 4곳 비교\"]",
+    "- 금지: 무조건·100%·보장·충격·경악·미쳤·소름·역대급·레전드·실화 등 감정 과잉 어휘(텍스트 썸네일에서 감정 과잉은 클릭을 낮춘다는 실측 — 절제된 개념 훅이 이긴다), 느낌표 2개 이상, 이모지.",
+    "- 출력 계약(어기면 실패): 설명·비교·머리말 없이, 첫 글자가 [ 이고 마지막 글자가 ] 인 JSON 배열 한 줄만 출력한다. 예: [\"검색 끝.\",\"내 비서가 생깁니다\"]",
   ].join("\n");
   // ★9자/줄 다듬기(2026-07-13) — 초과 문구를 버리지 않고 어절을 덜어 규격에 맞춘다(전멸 방지+크기 통일 유지)
   const fit9 = (c: string): string | null => {
@@ -68,11 +71,7 @@ export async function POST(request: Request) {
         .filter((c) => c.length >= 4)
         .map((c) => fit9(c) ?? "") // ★폐기 대신 다듬기(실측 2026-07-13: 4중 게이트 전멸→판박이 폴백) — 18자·9자/줄 초과는 어절을 덜어 살린다
         .filter(Boolean)
-        .filter((c) => { // ★주제어 게이트(실측: '아는 사람만 써먹는 경로' — 무엇의 경로인지 부재) — 키워드·제목의 실질 명사 1개 필수
-          const stop = new Set(["방법", "정리", "조건", "확인", "신청", "가능", "지금", "오늘", "이유", "핵심", "순서", "전에", "먼저"]);
-          const toks = `${art.keyword ?? ""} ${art.title ?? ""}`.split(/[\s,·]+/).map((t) => t.replace(/[^가-힣a-zA-Z0-9]/g, "")).filter((t) => t.length >= 2 && !stop.has(t));
-          return toks.length === 0 || toks.some((t) => c.includes(t) || (t.length >= 4 && c.includes(t.slice(0, Math.max(3, t.length - 2)))));
-        })
+        .filter((c) => !repeatsTitle(c, String(art.title ?? ""), String(art.keyword ?? ""))) // ★역할 분리 게이트(2026-07-17 유저 확정: 제목 반복=실격) — 구 주제어 의무 게이트 대체(주제 특정은 병기되는 제목의 몫, 앵커는 숫자·연도만)
         .filter((c) => { // ★숫자 근거 게이트(실측: 접수 13일인데 '7월 14일까지' 유령 날짜) — 소스에 없는 숫자 문구 제외
           const src = `${art.title ?? ""} ${art.keyword ?? ""} ${art.meta_description ?? ""} ${String((art as { body_html?: string }).body_html ?? "").replace(/<[^>]+>/g, " ").slice(0, 1200)}`.replace(/[,\s]/g, "");
           for (const num of c.match(/[0-9][0-9,.]*/g) ?? []) {
@@ -94,13 +93,10 @@ export async function POST(request: Request) {
       if (copies.length === 0) console.error(`[thumb-copy] 시도${attempt + 1} 전멸 — raw:${Array.isArray(raw) ? raw.length : 0} (18자·분할·주제어·숫자 게이트 통과 0) kw:${String(art.keyword ?? "").slice(0, 20)}`);
     }
     if (copies.length === 0) {
-      // 최후 폴백 — 규칙 기반(원가 0, 항상 성공): 키워드 훅 템플릿
+      // 최후 폴백 — 규칙 기반(원가 0, 항상 성공). ★역할 분리(2026-07-17): 제목 반복 템플릿(총정리류) 대신 개념 훅 템플릿.
       const kw = String(art.keyword ?? art.title ?? "").split(/\s+/).slice(0, 2).join(" ").slice(0, 10) || "이번 정보";
-      // ★제목 훅 우선(실측: 템플릿 4종이 어떤 키워드든 판박이) — 제목의 각도(쉼표·콜론 뒤)를 1순위 폴백으로
-      const { hookCopyFromTitle } = await import("@/lib/wpFeaturedImage");
-      const titleHook = hookCopyFromTitle(art.title, kw).slice(0, 18);
       const yr = (String(art.title ?? "").match(/20\d{2}년/) ?? [])[0] ?? "";
-      copies = [...new Set([`${yr ? yr + " " : ""}${kw} 총정리`, titleHook, `${kw}, 이것부터`, `${kw} 그대로 두면 손해`]
+      copies = [...new Set([`모르고 두면 새는 돈`, `${yr || "올해"} 달라집니다`, `내 경우는 얼마?`, `${kw} 하나만 기억`]
         .map(fit9).filter((c): c is string => !!c && [...c].length >= 4))].slice(0, 4);
       if (copies.length === 0) copies = [kw.slice(0, 9)];
     }

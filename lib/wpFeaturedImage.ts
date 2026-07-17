@@ -3,6 +3,7 @@
 import { renderThumbnail } from "./thumbnailRenderer";
 import { visualIdentityFor } from "./visualIdentity";
 import { breakThumbCopy } from "./thumbCopyBreak";
+import { bannedHits } from "./hookPatterns";
 
 /** 제목에서 훅 문구 추출 — "개인연금 세액공제, 연봉별로 얼마나 돌려받을 수 있을까" → "연봉별로 얼마나 돌려받을까" */
 export function hookCopyFromTitle(title: string | null | undefined, keyword: string): string {
@@ -40,6 +41,7 @@ export async function autoFeaturedImage(
   try {
     // ★줄당 9자 보장(고정 폰트 112px 규격) — 초과하면 마지막 어절을 덜어내고 재분할
     let hook = hookCopyFromTitle(opts?.title, String(keyword || "").trim());
+    if (bannedHits(hook).length > 0) hook = String(keyword || "").trim() || hook; // ★문구 게이트(2026-07-17 PTRP) — 감정 과잉 훅은 키워드 폴백
     let copy = breakThumbCopy(hook);
     for (let i = 0; i < 4 && copy.split("\n").some((l) => [...l].length > 9) && hook.includes(" "); i++) {
       hook = hook.split(" ").slice(0, -1).join(" ");

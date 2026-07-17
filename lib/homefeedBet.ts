@@ -5,6 +5,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { logUsage } from "./usageLog";
+import { containsBanned } from "./hookPatterns";
 
 export interface HomefeedBet {
   keyword: string;   // 주제 앵커(검색 키워드가 아니라 소재 — 예: "30대 평균 저축액")
@@ -51,7 +52,7 @@ export async function pickHomefeedBet(db: SupabaseClient, userId: string, sub: s
           `★시의성 결합(2026-07-16 개정 — 홈판은 '지금의 파도'를 탄다): 이 유형을 지금 이 계절·이 달의 상황(폭염 전기요금, 휴가비, 월급날, 세금 고지서 등 요즘 사람들이 실제로 겪는 일)과 반드시 결합하라. 계절과 무관한 무시간 주제 금지.`,
           `절대 원칙: ①거짓 사연·지어낸 경험 금지 — 공식 통계·실제 제도·계산으로만 성립하는 주제 ②전 국민 이해관계(대상이 넓을수록 좋다) ③이미 쓴 주제 제외: ${[...usedKeywords].slice(0, 40).join(", ") || "(없음)"}`,
           `제목 규격: 검색 키워드 나열이 아니라 사람이 말하듯 흐르는 '문장형' — 다음 결 중 하나: ⓐ공감 프레임("요즘 30대가 진짜 많이 하는 돈 실수") ⓑ구어체 감탄+되물음("아니 전기요금이 이렇게나 나왔다고? 이번 달 뭐가 달라진 거야") ⓒ반전 선언("적금 이자, 사실 4분의 1은 세금으로 사라집니다"). 숫자·반전 중 1개 이상 결합. ★금지선(계정 지속 — 절대): 본문이 100% 이행 못 할 약속(낚시), "안 사면 평생 후회·무조건·100%" 류 단정·공포 마케팅, 충격·경악 남발.`,
-          `JSON만 출력: {"keyword":"주제 앵커(15자 이내)","title":"훅 제목(32자 이내)","thumbCopy":"썸네일 문구(6자 이내 초단문 — 홈피드 썸네일은 글자가 적을수록 유리)","angle":"본문이 다룰 핵심 각도 2문장"}`,
+          `JSON만 출력: {"keyword":"주제 앵커(15자 이내)","title":"훅 제목(32자 이내)","thumbCopy":"썸네일 문구(6자 이내 초단문 — 글자가 적을수록 유리. ★제목을 반복하지 말고 개념 하나만 던진다: 썸네일이 질문, 제목이 답 — '검색 끝.' 결)","angle":"본문이 다룰 핵심 각도 2문장"}`,
         ].join("\n"),
       }],
     });
@@ -61,10 +62,13 @@ export async function pickHomefeedBet(db: SupabaseClient, userId: string, sub: s
     if (!m) return null;
     const raw = JSON.parse(m[0]) as { keyword?: string; title?: string; thumbCopy?: string; angle?: string };
     if (!raw.keyword || !raw.title) return null;
+    // ★문구 게이트(2026-07-17 PTRP) — 감정 과잉·과장 어휘는 텍스트 카드에서 역효과 실증. 제목 위반=오늘 배팅 스킵, 문구 위반=키워드 폴백.
+    if (containsBanned(raw.title)) { console.error("[homebet] 금지어 제목 — 스킵:", raw.title.slice(0, 30)); return null; }
+    const thumbCopy0 = (raw.thumbCopy ?? raw.keyword).slice(0, 14);
     const out: HomefeedBet = {
       keyword: raw.keyword.slice(0, 30),
       title: raw.title.slice(0, 60),
-      thumbCopy: (raw.thumbCopy ?? raw.keyword).slice(0, 14),
+      thumbCopy: containsBanned(thumbCopy0) ? raw.keyword.slice(0, 14) : thumbCopy0,
       betType: bet.key,
       briefText: [
         `[홈판 배팅 지시] 이 글은 검색 노출이 아니라 네이버 홈피드(홈판) 확산을 노린다 — 제목은 검색 질문형이 아니라 위 훅 제목을 그대로(또는 더 강하게) 쓴다.`,

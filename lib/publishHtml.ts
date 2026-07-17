@@ -92,7 +92,7 @@ export function countSuspenseMarks(html: string): number {
   return (html.match(/\[간격\]/g) ?? []).length;
 }
 
-const MOBILE_MAX_CHARS = 88; // 390px 4줄(약 22자 x 4)
+const MOBILE_MAX_CHARS = 72; // 390px 4줄(약 18자 x 4) — ★개행 v6(2026-07-17 유저: 한 줄 띄어쓰기 포함 18자 상한)
 function visLen(html: string): number {
   return html.replace(/<[^>]+>/g, "").replace(/&[a-z#0-9]{1,7};/gi, "가").length;
 }
@@ -121,28 +121,37 @@ function mergeUnbalanced(parts: string[]): string[] {
 // ★유저 교본(2026-07-07): 문단을 쪼개면(빈 줄) 흐름이 끊긴다 — 같은 문단 안에서 <br>로 '의미 구 줄바꿈'.
 //  문장별 한 줄. 문장이 길면(>44자) 쉼표·연결어미 구 경계에서 균형 줄바꿈(양쪽 12자 이상일 때만 — 고아 조각 금지).
 function breakSentence(sen: string): string {
-  // ★개행 v5(2026-07-10 최종 — 중앙 정렬 최적화): 의미 경계(조사·어미·쉼표)에서만, 폭은 여유 있게(목표 22·상한 30).
-  //  자를 자리가 어색하면 자르지 않는다(억지 절단 금지 — 자연 wrap). URL 포함 문장은 통줄(실측: 고용24 깨짐).
+  // ★개행 v6(2026-07-17 유저 확정 — 중앙 정렬 유지 조건): 한 줄 '띄어쓰기 포함 18자' 상한, 꼬리줄 5자 미만 금지(달랑 1~2자 줄 = 흉함).
+  //  의미 경계(조사·어미·쉼표) 우선, 없으면 어절(공백) 경계 폴백 — 단어 중간 억지 절단은 여전히 금지. URL 포함 문장은 통줄(실측: 고용24 깨짐).
   if (/<br/i.test(sen) || /https?:\/\//.test(sen)) return sen;
   const tokens = sen.split(/(<[^>]+>)/).filter((t) => t !== "");
   const plain = tokens.filter((t) => !t.startsWith("<")).join("");
-  if (visLen(plain) <= 27) return sen;
+  if (visLen(plain) <= 18) return sen;
   const CLAUSE = /([,，、]\s+|(?:에서|라면|다면|하면|이면|는데|면서|하고|하며|지만|므로|위해|통해|보다|까지|경우|대해|따라)\s+|[가-힣]{2,}[은는도을를]\s+)/g;
   const cutOffsets: number[] = [];
   let rest = plain, base = 0, guard = 0;
-  while (visLen(rest) > 27 && guard++ < 6) {
-    const cands: number[] = [];
+  while (visLen(rest) > 18 && guard++ < 8) {
+    const clauseCands: number[] = [];
     let m: RegExpExecArray | null;
     CLAUSE.lastIndex = 0;
-    while ((m = CLAUSE.exec(rest))) cands.push(m.index + m[0].length);
-    let best = -1, bestD = Infinity;
-    for (const cut of cands) {
-      const left = visLen(rest.slice(0, cut));
-      if (left < 12 || left > 30 || visLen(rest.slice(cut)) < 6) continue; // 우측 최소 6자 — 고아 단어 방지
-      const d = Math.abs(left - 22);
-      if (d < bestD) { bestD = d; best = cut; }
-    }
-    if (best < 0) break; // 어색하게 자를 바엔 통줄(중앙에서도 keep-all wrap이 단어는 보호)
+    while ((m = CLAUSE.exec(rest))) clauseCands.push(m.index + m[0].length);
+    // 어절(공백) 폴백 후보 — 의미 경계가 밴드 안에 없을 때만 쓴다(공백 뒤에서 자름)
+    const spaceCands: number[] = [];
+    const SP = /\s+/g;
+    while ((m = SP.exec(rest))) spaceCands.push(m.index + m[0].length);
+    const pick = (cands: number[]): number => {
+      let best = -1, bestD = Infinity;
+      for (const cut of cands) {
+        const left = visLen(rest.slice(0, cut));
+        if (left < 6 || left > 18 || visLen(rest.slice(cut)) < 5) continue; // 좌 6~18자 밴드 + 우측 최소 5자(꼬리줄 보장)
+        const d = Math.abs(left - 15);
+        if (d < bestD) { bestD = d; best = cut; }
+      }
+      return best;
+    };
+    let best = pick(clauseCands);
+    if (best < 0) best = pick(spaceCands); // 의미 경계가 없으면 어절 경계 — 18자 상한은 지킨다
+    if (best < 0) break; // 공백조차 없는 통짜 토큰 — 단어 중간 절단보다 자연 wrap
     cutOffsets.push(base + best);
     base += best;
     rest = plain.slice(base);
@@ -204,7 +213,7 @@ function styleBlocks(html: string): string {
 //  소제목 앞3·뒤1 / 문단 사이1 / 4줄↑ 긴 블록 위아래3 / 강조 문장 위아래2 / 해시태그 앞2. 연속 빈 줄 상한 4(압축 아님 — 캡만).
 export const BLANK_P = '<p style="text-align:left"><br></p>'; // 네이버 스마트에디터ONE 생존형 빈 줄
 const BLANK_CAP = 3; // ★실측: FAQ·요약 주변 여백 과다 — 상한 4→3
-const CHARS_PER_LINE_PUB = 19; // ★네이버 실측
+const CHARS_PER_LINE_PUB = 18; // ★개행 v6(2026-07-17) — 한 줄 18자 상한과 동조(여백 줄 수 추정용)
 function blockLines(inner: string): number {
   return Math.max(1, Math.ceil(visLen(inner) / CHARS_PER_LINE_PUB));
 }
@@ -304,7 +313,8 @@ function styleMarkers(html: string): string {
   // ★소제목 네이버 공식 문법(유저 레퍼런스: 블로그팀 공식 — 파란 큰 소제목이 섹션 마디를 색으로 보여준다)
   html = html.replace(/<h2(\s[^>]*)?>([\s\S]*?)<\/h2>/gi, (_m, _attr, inner) => {
     const clean = String(inner).replace(/<[^>]+>/g, "").trim();
-    return `<h2 style="text-align:center;font-size:20px;font-weight:800;color:#0073e9;word-break:keep-all">${clean}</h2>`;
+    // ★소제목 v2(2026-07-17 유저: 색상만으론 강조와 구분 안 됨 — 버티컬 라인 필수): 세로 바 = 구조, 텍스트 = 진한 검정.
+    return `<h2 style="text-align:center;word-break:keep-all"><span style="display:inline-block;border-left:4px solid #0073e9;padding-left:12px;text-align:left;font-size:19px;font-weight:800;color:#191919">${clean}</span></h2>`;
   });
   // ★※ 각주 — 작은 회색 보조문(레퍼런스 문법: 참고·단서는 본문보다 한 단계 작고 옅게)
   html = html.replace(/<p(\s[^>]*)?>\s*(※[\s\S]*?)<\/p>/gi, (_m, _attr, inner) => {
@@ -365,7 +375,7 @@ function styleMarkers(html: string): string {
   let qNum = 0; // ★FAQ 질문 자동 번호(유저 교본: 1. 2. 3. 진행감)
   html = html.replace(/<(h[2-4])(\s[^>]*)?>([\s\S]*?)<\/\1>/gi, (raw, tag, attr, inner) => {
     const plain = String(inner).replace(/<[^>]+>/g, "").trim();
-    if (/자주 묻는 질문|FAQ/i.test(plain)) return `<${tag}${attr ?? ""}><b style="background-color:#fff3a8;">${plain}</b></${tag}>`; // 헤더 형광펜
+    if (/자주 묻는 질문|FAQ/i.test(plain)) return `<${tag}${attr ?? ""}><b>${plain}</b></${tag}>`; // ★다이어트 v3(2026-07-17): 헤더 형광 배경 제거 — 볼드만
     return raw;
   });
   return html.replace(/<p(\s[^>]*)?>([\s\S]*?)<\/p>/gi, (raw, attr, inner) => {
@@ -444,7 +454,8 @@ function applySizing(html: string): string {
 
 /* ── 형광펜·해시태그 ── */
 // ★형광펜 총량 게이트(실측: 도배 — 3줄짜리 통형광 다수) — 규칙 위반은 코드가 강등한다.
-//  70자 초과=무조건 해제(면적 도배), 문장급(15~70자)=글 전체 3개까지, 구급(≤14자)=5개까지. 초과분은 볼드로.
+//  다이어트 v3(2026-07-17): 70자 초과=해제(면적 도배), 문장급(15~70자)=0(전부 볼드 강등), 구급(≤14자)=2개까지.
+//  형광은 '글에서 가장 중요한 수치·기준 하나'의 자리다 — 흔하면 아무것도 형광이 아니다.
 // ★형광 표기 정규화(두더지 종결) — 엔진이 <mark>·<b style>·<span style> 어떤 표기로 형광을 써도 <mark>로 통일.
 //  이후 capMarks(총량 게이트) 단일 관문 통과 — 표기 변형으로 게이트를 우회하는 경로 자체를 제거.
 function normalizeHighlights(html: string): string {
@@ -522,12 +533,23 @@ function sanitizeAiPunct(html: string): string {
     .replace(/[\u2018\u2019]/g, "'");
 }
 
-// ★빨강(주의) 총량 게이트 — 글 전체 4곳 초과분은 볼드로 강등(색이 흔하면 아무것도 안 보인다)
+// ★빨강(주의) 총량 게이트 — 글 전체 2곳 초과분은 볼드로 강등(색이 흔하면 아무것도 안 보인다)
+//  2026-07-17 다이어트 v3(유저: 겉만 휘황찬란 — 색·형광 과다): 4→2.
 function capDanger(html: string): string {
   let n = 0;
   return html.replace(/<span style="color:\s*#F04452[^"]*">([\s\S]*?)<\/span>/gi, (_m, inner) => {
     n += 1;
-    return n <= 4 ? `<span style="color:#F04452">${inner}</span>` : `<b>${inner}</b>`;
+    return n <= 2 ? `<span style="color:#F04452">${inner}</span>` : `<b>${inner}</b>`;
+  });
+}
+
+// ★파랑(개념 구절) 총량 게이트(다이어트 v3) — 모델이 쓴 파랑 구절은 글 전체 2곳까지, 초과분은 색만 벗긴다(볼드 유지).
+//  시스템이 나중에 입히는 파랑 구조 라벨(Q 번호 등)은 이 캡 이후 단계에서 부착되므로 영향 없음.
+function capAccent(html: string): string {
+  let n = 0;
+  return html.replace(/<span style="color:\s*#1D75F7[^"]*">([\s\S]*?)<\/span>/gi, (_m, inner) => {
+    n += 1;
+    return n <= 2 ? `<span style="color:#1D75F7">${inner}</span>` : String(inner);
   });
 }
 
@@ -542,8 +564,8 @@ function capMarks(html: string): string {
     if (/^[─\-•·\s]*$/.test(plain)) return plain; // 구분선·불릿만 감싼 형광(실측) — 태그 소거
     const len = [...plain].length;
     if (len > 70) return String(inner); // 통문단 형광 — 평문으로(볼드 도배 전이 방지, 실측)
-    if (len >= 15) { sentCount += 1; return sentCount <= 2 ? raw : (sentCount <= 4 ? `<b>${inner}</b>` : String(inner)); } // ★강조 다이어트(2026-07-14): 문장 형광 3→2
-    phraseCount += 1; return phraseCount <= 4 ? raw : String(inner); // 구 형광 5→4
+    if (len >= 15) { sentCount += 1; return sentCount <= 2 ? `<b>${inner}</b>` : String(inner); } // ★다이어트 v3(2026-07-17): 문장 형광 0 — 앞 2개는 볼드 강등, 나머지 평문
+    phraseCount += 1; return phraseCount <= 2 ? raw : String(inner); // ★다이어트 v3: 구 형광 4→2
   });
 }
 
@@ -565,7 +587,7 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   const withImages = opts?.withImages ?? true;
   let idx = -1;
   // ★사진 자리는 '구조화 슬롯'으로만 — 채워진 슬롯만 이미지로, 미충족 슬롯은 줄 자체를 제거(안내문구 유출 금지).
-  let body = ensurePayoffTable(ensureSummaryHeading(ensureSectionEmphasis(markToBold(capMarks(capDanger(sanitizeAiPunct(stripListEmoji(normalizeHighlights(input.bodyHtml)))))))), input.title).replace(SLOT_RE, (_m, desc: string) => {
+  let body = ensurePayoffTable(ensureSummaryHeading(ensureSectionEmphasis(markToBold(capMarks(capAccent(capDanger(sanitizeAiPunct(stripListEmoji(normalizeHighlights(input.bodyHtml))))))))), input.title).replace(SLOT_RE, (_m, desc: string) => {
     idx += 1;
     if (!withImages) return `<p>[사진 ${idx + 1}]</p>`; // marker 모드(수동 배치) — 명시적 선택
     const url = input.images?.[idx];

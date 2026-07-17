@@ -122,8 +122,10 @@ export function buildBodyPrompt(slotDesc: string, articleTitle: string, seed: nu
  *  topic이 있으면 그 주제를 나타내는 구체 오브젝트(차·동전·달력 등), 없으면 기존 추상. 텍스트 절대 금지 + 상단 여백. */
 export function buildThumbBgPrompt(bgStyleHint: string, paletteHint: string, seed: number, topic?: string): string {
   const mood = PHOTO_MOODS[seed % PHOTO_MOODS.length];
+  // ★결과 우선 원칙(2026-07-17 유저 확정 — "개념을 그리지 말고 결과를 그려라"): 사람은 개념보다 '변화된 삶의 결과'에 반응한다.
+  //  로봇·AI 형상은 모든 AI 콘텐츠의 클리셰 — AI를 안 보여주는 게 차별점(예: 예약 완료 화면 + 커피 마시는 사람).
   const subject = topic && topic.trim()
-    ? `Cute rounded clay-like 3D objects that clearly represent this topic (understand only — never render as text): "${topic.trim()}". Pick 2-4 real objects uniquely specific to this exact topic — NEVER generic clichés (NO piggy banks, NO plain coin stacks, NO generic calculators) unless the topic is literally about them.`
+    ? `Cute rounded clay-like 3D objects for this topic (understand only — never render as text): "${topic.trim()}". RESULT-FIRST RULE (top priority): do NOT illustrate the concept itself — illustrate the RESULT it creates in daily life, the 'after' scene (a cleared to-do list, a phone showing completed bookings, a person's unhurried coffee while the work is already done). NEVER robots, AI figures, brains, chips or circuits — every AI-related image uses those; showing the outcome instead is the differentiator. Add one small lived-in detail (a steaming mug, a slightly tilted object) so it feels like someone's real moment, not a sterile diagram. Pick 2-3 real objects uniquely specific to this topic's RESULT — NEVER generic clichés (NO piggy banks, NO plain coin stacks, NO generic calculators) unless the topic is literally about them.`
     : `Soft matte 3D abstract objects (rounded blobs, spheres, gentle geometric forms).`;
   return [
     `${subject} Floating on a solid single-color background, color palette of ${paletteHint}.`,
@@ -169,6 +171,9 @@ const METAPHOR_BANK = [
   "함정·주의 → a banana peel on a clean floor, or a mousetrap with a coin as bait",
   "성장·목돈 → a tiny seedling growing out of a jar of coins",
   "빠른 처리 → a paper plane flying across the frame leaving a color trail",
+  // ★결과 우선(2026-07-17) — 개념이 아니라 '끝난 뒤의 장면'
+  "완료·해결 → a desk with a fully checked-off list and a steaming mug, work already done",
+  "자동화·대신 처리 → a phone screen with tasks ticking themselves off while a person leans back with coffee",
 ] as const;
 
 const BG_GRAMMARS = [
@@ -197,7 +202,7 @@ export function buildThumbPhotoBgPrompt(topic: string, seed: number, center = fa
   const grammar = BG_GRAMMARS[(baseG + v) % BG_GRAMMARS.length];
   const palette = BG_PALETTES[(seed + v) % BG_PALETTES.length];
   const subjectRule = copy
-    ? `THE COPY IS THE SCRIPT (highest priority): the Korean copy overlaid on this image reads "${copy}" (understand only — never render it). Draw the IDEA this copy describes as one bold flat-illustration symbol. CLICHE BAN: do NOT default to credit cards, coins, banknotes, arrows or generic money stacks — these are exhausted; use them ONLY if the copy is literally about a card/coin. Instead pick ONE witty metaphor matching the copy's angle from this bank (or invent an equally specific one): ${METAPHOR_BANK[(seed + v) % METAPHOR_BANK.length]} / ${METAPHOR_BANK[(seed + v + 5) % METAPHOR_BANK.length]}. When a person appears, draw an appealing simple editorial character (confident line/shape work, expressive pose, like premium fintech brand mascots — not a stick figure). ${grammar} PALETTE: ${palette} (max 4 colors, subtle film grain finish). MAXIMUM 2 meaningful objects unless the grammar says otherwise — simplicity wins. LITMUS TEST: with the text hidden, a viewer should still guess the article's field. ${ATEFLO_ILLUST_STYLE}`
+    ? `THE COPY IS THE SCRIPT (highest priority): the Korean copy overlaid on this image reads "${copy}" (understand only — never render it). RESULT-FIRST RULE (2026-07-17): draw the RESULT this copy promises — the 'after' state of daily life (a cleared checklist, a booking-complete screen, freed-up time, a person at ease) — NOT the abstract concept. NEVER robots, AI figures, brains or circuits (exhausted cliché of every AI thumbnail — the outcome IS the message). CLICHE BAN: do NOT default to credit cards, coins, banknotes, arrows or generic money stacks — these are exhausted; use them ONLY if the copy is literally about a card/coin. Instead pick ONE witty metaphor matching the copy's angle from this bank (or invent an equally specific one): ${METAPHOR_BANK[(seed + v) % METAPHOR_BANK.length]} / ${METAPHOR_BANK[(seed + v + 5) % METAPHOR_BANK.length]}. When a person appears, draw an appealing simple editorial character (confident line/shape work, expressive pose, like premium fintech brand mascots — not a stick figure). ${grammar} PALETTE: ${palette} (max 4 colors, subtle film grain finish). MAXIMUM 2 meaningful objects unless the grammar says otherwise — simplicity wins. LITMUS TEST: with the text hidden, a viewer should still guess the article's field. ${ATEFLO_ILLUST_STYLE}`
     : `Flat vector illustration thumbnail for this topic (understand only — never render as text): "${topic.trim()}". ${grammar} PALETTE: ${palette}. ${ATEFLO_ILLUST_STYLE}`;
   const layout = center
     ? `Subjects arranged toward the edges/corners; the CENTER of the frame stays calm and low-detail — large Korean text will be overlaid dead-center later.`
