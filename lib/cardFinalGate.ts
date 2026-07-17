@@ -33,6 +33,15 @@ const ANSWER_TOOL_RE = /계산기(?![가-힣])/;
 export const ANSWER_LOCKED_RE = /(조회(?![가-힣])|대상자|지급일|납부\s?기간|1순위\s?조건|수령액|검진\s?(대상|항목)|신청\s?자격)/;
 export const EXPERIENCE_RE = /(비용|후기|비교|차이|장단점|신고\s?기한|(신고|환급)\s?방법|주기(?![가-힣])|종류)/;
 
+// ★AI 브리핑 한 줄 종결형(2026-07-17 전략 회의 — 제로클릭 방어). 네이버 AI 브리핑·구글 AI Overviews가
+//  답을 요약해버리면 인용돼도 클릭이 없다. 정의형(뜻·약자)은 답이 한 줄이라 하드컷,
+//  여부·시점형은 케이스 분기 여지가 있어(정답형과 같은 승률 혼합 추정) 컷이 아닌 정렬 감점.
+//  판정은 keyword에만 — title은 훅형 질문("~일까요?")이 정상이라 title 검사는 오탐.
+const AI_DEFINITION_RE = /(뜻(?![가-힣])|무슨\s?뜻|정의(?![가-힣])|영어로(?![가-힣])|약자(?![가-힣])|무엇인가요?(?![가-힣])|뭔가요|뭐예요)/;
+// 케이스 분기 신호 — 답이 조건마다 달라 AI 요약이 불가능한, 우리가 노리는 유형. 키워드에 있으면 구제.
+const CASE_BRANCH_RE = /(계산(?!기)|비교|차이|방법|조건|기준(?![가-힣])|구간|사례|시뮬|얼마나|장단점|활용|절세)/;
+export const AI_BRIEF_ENDED_RE = /(여부(?![가-힣])|나요(?![가-힣])|몇\s?(살|세|년|월|일|번|시간|개월|퍼센트|%)|언제(부터|까지)?(?![가-힣]))/;
+
 // ★애드센스 정책 게이트(2026-07-12 WP 재점화) — 구글 퍼블리셔 정책상 광고 게재 제한·계정 리스크 주제.
 //  WP(애드센스) 채널 전용 검문 — 네이버 경로는 호출하지 않는다. 규칙은 이 파일에만(게이트 중앙화 원칙).
 const ADSENSE_UNSAFE_RE = /(도박|카지노|바카라|토토|배팅|베팅|사설\s?(토토|배당)|성인\s?(용품|사이트|콘텐츠)|음란|유흥\s?(업소|알바)|조건\s?만남|출장\s?(안마|마사지)|대마|마약|필로폰|전자담배\s?액상|총기|무기\s?(제작|구입)|해킹|크랙|불법\s?(다운로드|스트리밍|사이트)|모조품|짝퉁|레플리카|개인회생\s?브로커|작업\s?대출|휴대폰\s?소액결제\s?현금화|정보이용료\s?현금화|내구제)/;
@@ -58,6 +67,8 @@ export function finalGate<T extends GateCard>(cards: T[]): { pass: T[]; drops: G
     }
     // 1.5) 정답형 도구(계산기) — 공식 위젯 잠식 유형, 블로그 자리 자체가 없다
     if (ANSWER_TOOL_RE.test(text)) { drops.push({ keyword: c.keyword, reason: "answer_tool" }); continue; }
+    // 1.6) AI 브리핑 한 줄 종결형(정의) — 케이스 분기 신호 없으면 AI 요약으로 끝나 클릭이 남지 않는 자리
+    if (AI_DEFINITION_RE.test(c.keyword) && !CASE_BRANCH_RE.test(c.keyword)) { drops.push({ keyword: c.keyword, reason: "ai_one_liner" }); continue; }
     // 2) 죽은 공고·행사(행동 창 닫힘)
     if (DEAD_RE.test(text)) { drops.push({ keyword: c.keyword, reason: "dead_event" }); continue; }
     // 3) 읽고 끝나는 뉴스성

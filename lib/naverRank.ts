@@ -25,7 +25,7 @@ export function naverPostKey(url: string | null | undefined): string | null {
 }
 
 export interface RankResult {
-  area: "blog_tab" | "integrated";
+  area: "blog_tab" | "integrated" | "ai_brief";
   rank: number | null;
   status: "ok" | "not_found" | "unknown";
 }
@@ -53,23 +53,47 @@ export async function fetchBlogTabRank(keyword: string, postUrl: string): Promis
   }
 }
 
-/** 모바일 통합검색 — 내 글 URL 존재 여부(영역 세분화는 HTML 구조 의존이라 존재/부재만 신뢰). 베스트 에포트. */
-export async function fetchIntegratedPresence(keyword: string, postUrl: string): Promise<RankResult> {
+// ★AI 브리핑 인용 판정(2026-07-17 실측 — m.search.naver.com HTML: 블록 마커 'fender_renderer-ai_briefing',
+//  인용 출처가 m.blog.naver.com/{id}/{글번호} URL로 블록 안에 존재. 블록 경계=다음 fender_renderer- 섹션).
+//  rank 의미(이 area 한정): 1=브리핑에 내 글 인용, 0=브리핑은 떴지만 미인용, null=이 검색어엔 브리핑 없음.
+export function aiBriefCitation(html: string, myKey: string): RankResult {
+  const start = html.indexOf("fender_renderer-ai_briefing");
+  if (start < 0) return { area: "ai_brief", rank: null, status: "not_found" };
+  const next = html.indexOf('data-meta-ssuid-extra="fender_renderer-', start + 100);
+  const block = html.slice(start, next > 0 ? next : start + 200_000).toLowerCase();
+  const cited = block.includes(myKey.toLowerCase());
+  return { area: "ai_brief", rank: cited ? 1 : 0, status: cited ? "ok" : "not_found" };
+}
+
+/** 모바일 통합검색 1회 요청으로 [통합 노출, AI 브리핑 인용]을 함께 측정. 베스트 에포트 — 실패는 둘 다 unknown. */
+export async function fetchIntegratedAreas(keyword: string, postUrl: string): Promise<[RankResult, RankResult]> {
   const myKey = naverPostKey(postUrl);
-  if (!myKey || !keyword.trim()) return { area: "integrated", rank: null, status: "unknown" };
+  const unknown: [RankResult, RankResult] = [
+    { area: "integrated", rank: null, status: "unknown" },
+    { area: "ai_brief", rank: null, status: "unknown" },
+  ];
+  if (!myKey || !keyword.trim()) return unknown;
   const [blogId, logNo] = myKey.split("/");
   try {
     const res = await fetch(`https://m.search.naver.com/search.naver?query=${encodeURIComponent(keyword.trim())}`, {
       headers: { "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1" },
       signal: AbortSignal.timeout(12_000),
     });
-    if (!res.ok) return { area: "integrated", rank: null, status: "unknown" };
+    if (!res.ok) return unknown;
     const html = await res.text();
     const found = html.includes(`${blogId}/${logNo}`) || (html.includes(blogId!) && html.includes(String(logNo)));
-    return { area: "integrated", rank: found ? 1 : null, status: found ? "ok" : "not_found" };
+    return [
+      { area: "integrated", rank: found ? 1 : null, status: found ? "ok" : "not_found" },
+      aiBriefCitation(html, myKey),
+    ];
   } catch {
-    return { area: "integrated", rank: null, status: "unknown" };
+    return unknown;
   }
+}
+
+/** 모바일 통합검색 — 내 글 URL 존재 여부만(구 시그니처 유지 — 내부는 fetchIntegratedAreas 공용). */
+export async function fetchIntegratedPresence(keyword: string, postUrl: string): Promise<RankResult> {
+  return (await fetchIntegratedAreas(keyword, postUrl))[0];
 }
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));

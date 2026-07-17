@@ -72,13 +72,23 @@ const GENERAL_RULES: Rule[] = [
   { test: /업계\s*최고|국내\s*최고|최고의?|유일한|1\s*등|1\s*위/g, type: "최상급", law: GENERAL_LAW, reason: "객관적 근거 없는 최상급 표현은 부당광고가 될 수 있어요.", severity: "medium", note: "수상·통계 등 근거가 있으면 괜찮지만, 없으면 완화하는 게 안전해요.", suggestion: "앞선" },
 ];
 
+// ★금융 룰셋(2026-07-17 — 수익형 경제·재테크 글의 투자권유 오인 표현). 자동 차단이 아니라 경고+대안(상단 원칙 유지).
+//  경제 글에서 '판단·해석' 콘텐츠를 강화할수록 권유 단정과의 거리 유지가 중요해진다.
+const FINANCE_LAW = "금융소비자보호법 취지(투자권유 오인)";
+const FINANCE_RULES: Rule[] = [
+  { test: /원금\s*(?:이|은|을)?\s*보장|원금\s*손실\s*(?:이|은)?\s*없/g, type: "결과보장", law: FINANCE_LAW, reason: "원금 보장·무손실 단정은 투자권유 오인 표현입니다(예금자보호 제도의 공식 안내 인용 맥락만 예외).", severity: "high", suggestion: "원금 손실 가능성이 있는" },
+  { test: /수익\s*보장|확정\s*수익|무조건\s*(?:수익|벌|오른|먹)/g, type: "결과보장", law: FINANCE_LAW, reason: "수익 보장·확정 수익 단정은 금지 수준의 위험 표현입니다.", severity: "high" },
+  { test: /(?:반드시|무조건|지금\s*당장)\s*(?:가입|매수|사\s*(?:세요|야|두))/g, type: "권유단정", law: FINANCE_LAW, reason: "특정 금융상품의 가입·매수를 단정적으로 권유하면 투자권유로 오인될 수 있습니다.", severity: "high", suggestion: "본인 조건을 확인한 뒤 판단해 보세요" },
+  { test: /가입하세요|매수하세요|사\s*두세요/g, type: "권유단정", law: FINANCE_LAW, reason: "명령형 가입·매수 권유는 정보 제공 범위를 넘어 권유로 읽힙니다.", severity: "medium", note: "안내 맥락이면 완화 표현이 안전해요.", suggestion: "가입을 검토해볼 만해요" },
+];
+
 const RULES: Record<string, Rule[]> = {
   medical: MEDICAL_RULES,
   academy: ACADEMY_RULES,
   professional: PRO_RULES,
   b2b: GENERAL_RULES,
   general: GENERAL_RULES,
-  online: GENERAL_RULES, // 수익형 — 표시광고법(최상급 과장)만 가볍게
+  online: [...FINANCE_RULES, ...GENERAL_RULES], // 수익형 — 금융(투자권유 오인) + 표시광고법(최상급 과장)
   hobby: [], // 취미·기록 — 광고규제 대상 아님
 };
 

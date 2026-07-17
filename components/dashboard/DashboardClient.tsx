@@ -6,6 +6,7 @@ import type { Article, DashboardProps, KeywordResult, KeywordStatus } from "./ty
 import CreditPaywallSheet from "./CreditPaywallSheet";
 import CreditsView from "./CreditsView";
 import ArticleList from "./ArticleList";
+import RenewalSection from "./RenewalSection";
 import ArticleModal from "./ArticleModal";
 import CenterToast from "./CenterToast";
 import WritingView, { type GenParams } from "./WritingView";
@@ -669,6 +670,8 @@ export default function DashboardClient(props: DashboardProps) {
               <main className="ateflo-page-in mx-auto max-w-2xl px-6 py-8 pb-16">
                 <p className="at-label">총 {articles.filter((a) => a.status !== "generating").length}편{articles.some((a) => isVerifiedStatus(a.status)) ? ` · 발행 ${articles.filter((a) => isVerifiedStatus(a.status)).length}편` : ""}</p>
                 <h1 className="at-headline mt-1">내 글</h1>
+                {/* ★갱신 대상(개정 시즌) — 대상 없으면 여백 포함 렌더 0(레이아웃 무영향) */}
+                <RenewalSection onRewritten={(articleId, bodyHtml) => setArticles((prev) => prev.map((a) => (a.id === articleId ? { ...a, body_html: bodyHtml } : a)))} />
                 <div className="mt-5">
                   <ArticleList
                     pubStampKey={blogProfile ? `${(blogProfile as { id?: string }).id ?? ""}:${blogProfile.vertical}:${blogProfile.sub_category ?? ""}` : ""}

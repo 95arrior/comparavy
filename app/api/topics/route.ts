@@ -15,7 +15,7 @@ import { getTrendTopics, refreshCategoryTrends, hasFreshTrends } from "@/lib/tre
 import { amplifyForUser } from "@/lib/amplifyTopics";
 import { fetchKeywordStats, normalizeKey, fetchRelatedKeywords } from "@/lib/naverKeyword";
 import { poolScore, isBigPool } from "@/lib/trafficPool";
-import { finalGate, ANSWER_LOCKED_RE, EXPERIENCE_RE } from "@/lib/cardFinalGate";
+import { finalGate, ANSWER_LOCKED_RE, EXPERIENCE_RE, AI_BRIEF_ENDED_RE } from "@/lib/cardFinalGate";
 import { pickHomefeedBet } from "@/lib/homefeedBet";
 import { collectPoolKeywords } from "@/lib/poolCollect";
 import { fetchNaverAutocomplete } from "@/lib/naverAutocomplete";
@@ -886,7 +886,8 @@ export async function GET(req: Request) {
   // 후보 집합은 매일 시드로 달라지므로(변동성) 그날의 후보 중 가장 winnable한 걸 보여준다.
   // ★SERP 성격 보정(2026-07-15 유저 승인 — 200키워드 실측 자료): 정답형(공식 DB 상단 잠식)은 별 한 개 가까이 감점,
   //  경험형(비용·후기·비교 — 블로그가 SERP를 채움)은 가점. '계산기'는 finalGate에서 하드컷.
-  const serpAdj = (kw: string): number => (ANSWER_LOCKED_RE.test(kw) ? -8 : 0) + (EXPERIENCE_RE.test(kw) ? 4 : 0);
+  // AI 브리핑 종결형(여부·시점 단답)은 요약으로 끝나 클릭이 안 남는다 — 정답형과 같은 결로 감점(2026-07-17 전략 회의)
+  const serpAdj = (kw: string): number => (ANSWER_LOCKED_RE.test(kw) ? -8 : 0) + (AI_BRIEF_ENDED_RE.test(kw) ? -6 : 0) + (EXPERIENCE_RE.test(kw) ? 4 : 0);
   const winScore = ({ r, t }: { r: PoolRow; t?: { fit?: number } }) =>
     (r.blog_total != null ? filledStarsFromData(r.monthly_searches ?? 0, r.blog_total) : 3) * 10 + axisBoost(r.keyword) + serpAdj(r.keyword) + (t?.fit ?? 1);
   // ★진짜 경쟁(문서수) '높음'은 원칙적으로 안 보여준다 — 유저가 어차피 거른다. 낮음·중간 소진 시에만 폴백.
@@ -956,7 +957,11 @@ export async function GET(req: Request) {
       bidHigh: bidHigh(r), // ★단가 높음(카테고리 상대) — 배지용
       tag: t?.tag || sub || "글감", // 칩 항상 표시 — AI 분류 없으면 세부업종으로 폴백
       // ★정답형 경고 배지(SERP 실측 자료) — 컷은 아니지만 유저가 고를 때 알고 고르게
-      ...(ANSWER_LOCKED_RE.test(r.keyword) ? { demandBadge: "공식 사이트가 상단을 차지하기 쉬운 유형 — 후순위 추천" } : {}),
+      ...(ANSWER_LOCKED_RE.test(r.keyword)
+        ? { demandBadge: "공식 사이트가 상단을 차지하기 쉬운 유형 — 후순위 추천" }
+        : AI_BRIEF_ENDED_RE.test(r.keyword)
+          ? { demandBadge: "AI 요약으로 끝나기 쉬운 유형 — 후순위 추천" }
+          : {}),
       // ★성과 루프(FF_PERF_LOOP) — 에버그린 선별 당시 실측값 운반
       ...(FF.perfLoop ? { sel: { species: "evergreen", seedSource: "pool", vol: r.monthly_searches ?? 0, blogTotal: r.blog_total ?? null, stars: r.blog_total != null ? filledStarsFromData(r.monthly_searches ?? 0, r.blog_total) : null } } : {}),
       // ★수익 경로 태그(FF_REVENUE_TAG §6) — 표시용, 선별 점수 무관

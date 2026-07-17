@@ -6,3 +6,12 @@ export function hasFabricatedExperience(html: string): boolean {
   const text = html.replace(/<[^>]+>/g, " ");
   return FABRICATED_RE.test(text);
 }
+
+// ★해석 문단 게이트(2026-07-17 전략 회의 — AI 검색 시대: 정보 나열만 있는 글은 AI 요약이 종결시켜 클릭이 안 남는다).
+//  '이 제도·수치가 독자 개인에게 뭐가 달라지는지' 해석·판단 신호가 바닥(3회) 미만이면 뉴스 요약체로 간주.
+//  프롬프트(VERTICAL_SYSTEM.online)는 방향, 이 게이트는 한계선 — 품질 심사가 아니라 최소선만 본다.
+const INTERPRET_RE = /(유리(해|합니다|한\s*편)|불리(해|합니다)|달라(져요|집니다|지는)|영향(?![력권])|체감|내\s*(경우|상황)|해당(돼요|됩니다|된다면|하는\s*분)|놓치면|챙길\s*수\s*있)/g;
+export function lacksInterpretation(html: string): boolean {
+  const text = html.replace(/<[^>]+>/g, " ");
+  return (text.match(INTERPRET_RE)?.length ?? 0) < 3;
+}

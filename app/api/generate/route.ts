@@ -6,7 +6,8 @@ import { ensureUserRow } from "@/lib/userPlan";
 import { spendCredits, addCredits, GENERATE_COST } from "@/lib/credits";
 import { streamArticle } from "@/lib/generateArticle";
 import { isReviewType, ensureDisclosure } from "@/lib/revenue";
-import { hasFabricatedExperience } from "@/lib/editorial";
+import { hasFabricatedExperience, lacksInterpretation } from "@/lib/editorial";
+import { financeCalcContext } from "@/lib/financeCalc";
 import { sanitizeUrls } from "@/lib/linkWhitelist";
 import { countKoreanChars } from "@/lib/humanizer";
 import { isDisposableEmail } from "@/lib/disposableEmail";
@@ -366,7 +367,7 @@ export async function POST(request: Request) {
             await adminDb.from("seed_claims").upsert({ category: profileRow?.sub_category || vertical, keyword_norm: keyword.replace(/\s+/g, ""), user_id: user.id }, { onConflict: "keyword_norm,user_id" });
           } catch { /* 0063 미적용/실패 — 무시 */ }
         }
-        const genInput = { keyword, channel, serpContext, relatedPosts, angle: body.angle, type, tone, maxWords, variantInstruction, styleInstruction, relatedQueries, newsContext: resolvedNewsContext, angleBrief: ((typeof body.angleBrief === "string" ? body.angleBrief.slice(0, 900) : "") + seriesDirective + angleAddon).trim() || null, affiliate: isReview, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userTitle };
+        const genInput = { keyword, channel, serpContext, relatedPosts, angle: body.angle, type, tone, maxWords, variantInstruction, styleInstruction, relatedQueries, newsContext: resolvedNewsContext, angleBrief: ((typeof body.angleBrief === "string" ? body.angleBrief.slice(0, 900) : "") + seriesDirective + angleAddon).trim() || null, affiliate: isReview, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userTitle, calcContext: financeCalcContext(keyword) };
         let article = await streamArticle(
           genInput,
           (bodyHtml) => send({ type: "body", html: bodyHtml }),
@@ -389,6 +390,21 @@ export async function POST(request: Request) {
             return;
           }
         }
+        // ★해석 문단 가드(2026-07-17 전략 회의) — 경제·정책 글이 제도·수치 나열로만 끝나면 AI 요약이 종결시켜 클릭이 안 남는다(제로클릭).
+        //  해석·판단 신호 바닥 미달 시 재생성 1회, 그래도 미달이면 통과(발행 차단은 과잉 — 분량 상한과 같은 결, 로그만).
+        if (vertical === "online" && String(profileRow?.sub_category ?? "").includes("경제") && lacksInterpretation(article.body_html)) {
+          void logUsage({ userId: user.id, model: "guard", kind: "interpretation_retry", inputTokens: 0, outputTokens: 0 });
+          try {
+            const retried = await streamArticle(
+              { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ★경고: 직전 생성이 제도·수치 나열에 그쳤다. 정보 문단마다 '그래서 독자에게 뭐가 달라지는지' 해석 문단을 짝으로 붙이고, 소득·가구·조건별로 답이 갈리는 지점을 본문 중심에 둬라(수익형 분야 지침의 해석 짝 의무).`.trim() },
+              (bodyHtml) => send({ type: "body", html: bodyHtml }),
+              (title) => send({ type: "title", title }),
+              (u) => { void logUsage({ userId: user.id, model: u.model, kind: "generate", inputTokens: u.inputTokens, outputTokens: u.outputTokens }); },
+            );
+            if (!lacksInterpretation(retried.body_html) && (userStory || !hasFabricatedExperience(retried.body_html)) && countKoreanChars(retried.body_html) >= 500) article = retried;
+          } catch { /* 재생성 실패 — 원본 그대로 */ }
+          if (lacksInterpretation(article.body_html)) console.log(`[interpretation] user=${user.id.slice(0, 8)} — 해석 신호 바닥 미달, 통과(로그만)`);
+        }
 
         // 길이 검증 — 네이버는 좁은 주제도 '네이버 최적화로 뽑을 수 있는 만큼' 살린다(1,000자 안팎도 충분).
         // 깊이 기준으로 반려하지 않고, '명백히 실패(빈/잘린)' 글만 막는 낮은 바닥(500자)만 둔다.
@@ -405,12 +421,12 @@ export async function POST(request: Request) {
         }
         // ★분량 상한 게이트(2026-07-15 실측: 네이버 목표 1,600인데 공백 제외 3,089자 발행 — 긴 글=모바일 이탈).
         //  프롬프트는 방향, 코드는 한계선. 상한+15% 초과 시 압축 재생성 1회 — 그래도 초과면 통과(발행 차단은 과잉, 로그만).
-        const lenCap = Math.round((channel === "wordpress" ? 2200 : 3000) * 1.15); // 네이버 3,000 재개정(2026-07-15 유저)
+        const lenCap = Math.round((channel === "wordpress" ? 2200 : 1800) * 1.15); // ★네이버 1,800 재재개정(2026-07-17 유저: 분량 축소 — 18자 개행에선 긴 글=도배)
         if (charCount > lenCap) {
           void logUsage({ userId: user.id, model: "guard", kind: "overlength_retry", inputTokens: 0, outputTokens: 0 });
           try {
             const compact = await streamArticle(
-              { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ★경고: 직전 생성이 공백 제외 ${charCount.toLocaleString()}자로 목표 상한을 크게 초과했다. 이번엔 반드시 ${channel === "wordpress" ? "1,800~2,200" : "1,800~3,000"}자(공백 제외) 안에서 끝내라 — 곁가지 소제목을 통째로 버리고 문단당 문장 수를 줄여라. 핵심 답·수치·FAQ는 유지.`.trim() },
+              { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ★경고: 직전 생성이 공백 제외 ${charCount.toLocaleString()}자로 목표 상한을 크게 초과했다. 이번엔 반드시 ${channel === "wordpress" ? "1,800~2,200" : "1,200~1,800"}자(공백 제외) 안에서 끝내라 — 곁가지 소제목을 통째로 버리고 문단당 문장 수를 줄여라. 핵심 답·수치·FAQ는 유지.`.trim() },
               (bodyHtml) => send({ type: "body", html: bodyHtml }),
               (title) => send({ type: "title", title }),
               (u) => { void logUsage({ userId: user.id, model: u.model, kind: "generate", inputTokens: u.inputTokens, outputTokens: u.outputTokens }); },

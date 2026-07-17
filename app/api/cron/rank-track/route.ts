@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseAdminClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { FF } from "@/config/featureFlags";
 import { RANK_CHECK_DAYS } from "@/lib/scoreWeights";
-import { fetchBlogTabRank, fetchIntegratedPresence, sleep } from "@/lib/naverRank";
+import { fetchBlogTabRank, fetchIntegratedAreas, sleep } from "@/lib/naverRank";
 
 // ★순위 추적 크론(FF_PERF_LOOP) — D+1/3/7/14에 발행 글의 노출·순위를 스냅샷.
 //  fail-soft: 개별 실패=unknown 기록 후 계속, 전체 실패=조용히 종료(글감 파이프 무영향).
@@ -62,10 +62,11 @@ export async function GET(request: Request) {
     checked += 1;
     await sleep(400 + Math.floor(Math.random() * 800)); // 요청 간 랜덤 지연(스펙 §1-2)
     const blogTab = await fetchBlogTabRank(String(p.keyword), String(p.url));
-    const integrated = await fetchIntegratedPresence(String(p.keyword), String(p.url));
+    // ★통합검색 1회 요청으로 통합 노출 + AI 브리핑 인용을 함께 측정(2026-07-17 — 어떤 글이 AI 브리핑에 인용되는지 실측 축적)
+    const [integrated, aiBrief] = await fetchIntegratedAreas(String(p.keyword), String(p.url));
     if (blogTab.status === "unknown") unknowns += 1;
     if (blogTab.rank != null) wins += 1;
-    for (const r of [blogTab, integrated]) {
+    for (const r of [blogTab, integrated, aiBrief]) {
       try {
         await db.from("rank_snapshots").upsert(
           { article_id: p.article_id, day_offset: due, area: r.area, rank: r.rank, status: r.status, checked_at: new Date().toISOString() },

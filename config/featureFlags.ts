@@ -17,4 +17,6 @@ export const FF = {
   get revenueTag() { return on(process.env.FF_REVENUE_TAG); },
   /** ★홈판 배팅 카드(2026-07-15 유저 확정) — 홈피드 폭발형 글감 1일 1장. 기본 ON, 끌 때만 FF_HOMEFEED_BET=0 */
   get homefeedBet() { return process.env.FF_HOMEFEED_BET !== "0"; },
+  /** ★갱신 대상 선정(2026-07-17 전략 회의) — 개정 시즌에 걸린 오래된 발행 글을 renewal_queue에 등재(재발행은 검토 후). 기본 ON, 끌 때만 FF_REVISION_SCAN=0 */
+  get revisionScan() { return process.env.FF_REVISION_SCAN !== "0"; },
 };

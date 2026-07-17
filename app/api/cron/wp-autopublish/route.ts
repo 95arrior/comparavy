@@ -3,6 +3,8 @@ import { createSupabaseAdminClient, hasSupabaseEnv } from "@/lib/supabase-server
 import { generateArticle } from "@/lib/generateArticle";
 import { pickWpTopic } from "@/lib/googleTopics";
 import { adsenseUnsafe } from "@/lib/cardFinalGate";
+import { lacksInterpretation } from "@/lib/editorial";
+import { financeCalcContext } from "@/lib/financeCalc";
 import { autoFeaturedImage } from "@/lib/wpFeaturedImage";
 import { wpCategoryFor } from "@/lib/wpCategory";
 import { generateWpBanners, generateWpBannersToStorage, insertBanners } from "@/lib/wpIllustration";
@@ -73,6 +75,7 @@ export async function GET(request: Request) {
           variantInstruction: "", styleInstruction: stylePersonaInstruction(b.id),
           relatedQueries: pick.suggests ?? [], newsContext: undefined, angleBrief: null, affiliate: false, // ★파생 키워드 주입
           vertical: "online", bizName: null, bizStrength: null, userStory: null, userTitle: null,
+          calcContext: financeCalcContext(pick.keyword), // ★검증된 계산 자료 — 시뮬 숫자는 코드가 계산(2026-07-17)
         };
         let article = await generateArticle(genInput);
         // ★분량 상한 게이트(2026-07-15 — generate 라우트와 동일 원칙: 프롬프트는 방향, 코드는 한계선).
@@ -89,6 +92,16 @@ export async function GET(request: Request) {
               else console.log(`[wp-auto][overlength] blog=${b.id} chars=${c0}→${c1} — 압축 실패, 원본 통과`);
             } catch { /* 압축 실패 — 원본 그대로 */ }
           }
+        }
+        // ★해석 문단 게이트(2026-07-17 전략 회의) — 경제 글이 제도·수치 나열로 끝나면 AI 요약이 종결(제로클릭).
+        //  해석·판단 신호 바닥 미달 시 재생성 1회, 그래도 미달이면 통과(분량 게이트와 같은 결 — 로그만).
+        if (sub.includes("경제") && lacksInterpretation(article.body_html)) {
+          try {
+            const retried = await generateArticle({ ...genInput, variantInstruction: "★경고: 직전 생성이 제도·수치 나열에 그쳤다. 정보 문단마다 '그래서 독자에게 뭐가 달라지는지' 해석 문단을 짝으로 붙이고, 소득·가구·조건별로 답이 갈리는 지점을 본문 중심에 둬라(수익형 분야 지침의 해석 짝 의무). 분량 1,800~2,200자(공백 제외)는 유지." });
+            const cr = retried.body_html.replace(/<[^>]+>/g, "").replace(/\s+/g, "").length;
+            if (cr >= 500 && !lacksInterpretation(retried.body_html)) article = retried;
+          } catch { /* 재생성 실패 — 원본 그대로 */ }
+          if (lacksInterpretation(article.body_html)) console.log(`[wp-auto][interpretation] blog=${b.id} — 해석 신호 바닥 미달, 통과(로그만)`);
         }
         // WP 후처리 — 네이버 포맷터(스페이서·형광펜) 미적용. 마커만 정리.
         let body = stripNaverArtifacts(article.body_html); // 해시태그·마커 일괄 소거(중앙 소거기)
