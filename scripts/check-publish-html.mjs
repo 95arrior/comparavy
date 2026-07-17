@@ -54,6 +54,12 @@ ok((loud.match(/background-color:#fff3a8/g) ?? []).length === 2, "구 형광 2�
 ok(!/background-color:#fff3a8;">이것은/.test(loud) && /<b[^>]*>이것은 열다섯/.test(loud), "문장급 형광은 볼드로 강등(형광 0)");
 ok(!/자주 묻는 질문[\s\S]{0,40}background-color/.test(buildRichHtml({ title: "t", bodyHtml: "<h2>자주 묻는 질문</h2><p>답</p>" })), "FAQ 헤더 형광 배경 제거");
 
+// ★복붙 생존형 소제목·구분선(2026-07-17 실측: border 계열 인라인 스타일은 네이버 붙여넣기에서 소실)
+const two = buildRichHtml({ title: "t", bodyHtml: "<h2>첫 소제목</h2><p>본문 하나.</p><h2>둘째 소제목</h2><p>본문 둘.</p>" });
+ok(two.includes("▍"), "소제목 세로 바 = 글자(▍)로 렌더");
+ok(two.includes("───────"), "섹션 구분선 = 문자 라인(둘째 h2 앞)");
+ok(!/border-(left|top)/.test(two), "border 인라인 스타일 미사용(복붙 소실 방지)");
+
 // ★개행 v6(2026-07-17 유저 확정) — 한 줄 띄어쓰기 포함 18자 상한 + 꼬리줄 5자 미만 금지 + 어절 폴백
 const lineCheck = (html) => {
   const lines = [...html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/g)]

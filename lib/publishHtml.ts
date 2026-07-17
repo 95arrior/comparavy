@@ -301,11 +301,11 @@ function arrowChainToSteps(html: string): string {
 }
 
 function styleMarkers(html: string): string {
-  // ★소제목 앞 구분선 재도입(2026-07-15 유저: 분량 1,800~3,000 상향의 교환 조건 — "단락마다 구분선".
-  //  7/10 폐지(색 마디만) 뒤집음: 긴 글에선 색 소제목만으로 마디가 약해 과밀하게 읽힌다. 첫 h2 제외(도입 직후 과밀 방지).
-  //  <hr>은 여백 재조립(walkBlocks 쌍태그 매칭)에서 증발 — 클로징 경계선과 동일한 생존 검증 마크업(p+span border) 사용.
+  // ★소제목 앞 구분선 재도입(2026-07-15 유저: "단락마다 구분선"). 첫 h2 제외(도입 직후 과밀 방지).
+  //  ★문자 구분선으로 교체(2026-07-17 실측: border 계열 인라인 스타일은 네이버 붙여넣기에서 소실 — 구분선·세로바 동시 실종).
+  //  글자(U+2500)와 color·정렬은 복붙에서 살아남는 검증된 속성이다.
   {
-    const DIVIDER = '<p style="text-align:center;"><span style="display:inline-block;width:55%;border-top:1px solid #d9dde3;">&nbsp;</span></p>';
+    const DIVIDER = '<p style="text-align:center;color:#d9dde3;font-size:14px">───────</p>';
     let h2Seen = 0;
     html = html.replace(/<h2(\s[^>]*)?>/gi, (m) => { h2Seen += 1; return h2Seen === 1 ? m : `${DIVIDER}${m}`; });
   }
@@ -313,8 +313,9 @@ function styleMarkers(html: string): string {
   // ★소제목 네이버 공식 문법(유저 레퍼런스: 블로그팀 공식 — 파란 큰 소제목이 섹션 마디를 색으로 보여준다)
   html = html.replace(/<h2(\s[^>]*)?>([\s\S]*?)<\/h2>/gi, (_m, _attr, inner) => {
     const clean = String(inner).replace(/<[^>]+>/g, "").trim();
-    // ★소제목 v2(2026-07-17 유저: 색상만으론 강조와 구분 안 됨 — 버티컬 라인 필수): 세로 바 = 구조, 텍스트 = 진한 검정.
-    return `<h2 style="text-align:center;word-break:keep-all"><span style="display:inline-block;border-left:4px solid #0073e9;padding-left:12px;text-align:left;font-size:19px;font-weight:800;color:#191919">${clean}</span></h2>`;
+    // ★소제목 v2.1(2026-07-17 유저: 버티컬 라인 필수 + 실측: border-left는 네이버 붙여넣기에서 소실) —
+    //  세로 바를 스타일이 아니라 '글자(▍ U+258D)'로 그린다(파란 글자 = 복붙 생존 검증됨). 텍스트는 진한 검정.
+    return `<h2 style="text-align:center;word-break:keep-all;font-size:19px;font-weight:800;color:#191919"><span style="color:#0073e9">▍</span> ${clean}</h2>`;
   });
   // ★※ 각주 — 작은 회색 보조문(레퍼런스 문법: 참고·단서는 본문보다 한 단계 작고 옅게)
   html = html.replace(/<p(\s[^>]*)?>\s*(※[\s\S]*?)<\/p>/gi, (_m, _attr, inner) => {
@@ -611,7 +612,7 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
     out = `<p style="text-align:center;"><img src="${input.topImageUrl}" alt="" /></p><p style="text-align:left"><br></p>` + out;
   }
   if (withImages && input.closingImageUrl) {
-    out += `<p><br /></p><p style="text-align:center;"><span style="display:inline-block;width:55%;border-top:1px solid #d9dde3;">&nbsp;</span></p><p style="text-align:center;"><img src="${input.closingImageUrl}" alt="" width="300" /></p>`;
+    out += `<p><br /></p><p style="text-align:center;color:#d9dde3;font-size:14px">───────</p><p style="text-align:center;"><img src="${input.closingImageUrl}" alt="" width="300" /></p>`;
   }
   return out;
 }
