@@ -126,11 +126,14 @@ function breakSentence(sen: string): string {
   if (/<br/i.test(sen) || /https?:\/\//.test(sen)) return sen;
   const tokens = sen.split(/(<[^>]+>)/).filter((t) => t !== "");
   const plain = tokens.filter((t) => !t.startsWith("<")).join("");
-  if (visLen(plain) <= 18) return sen;
+  // ★v6.1(2026-07-17 실측 3건): ①20자 이하 문장은 통줄("하면 돼요." 조각 방지 — 미세 초과는 자연 wrap이 흡수)
+  //  ②의존어('게·것·수' 등)가 줄머리로 떨어지는 분할 감점 ③숫자+단위('2주') 뒤 의존어('뒤인') 분리 감점.
+  if (visLen(plain) <= 20) return sen;
   const CLAUSE = /([,，、]\s+|(?:에서|라면|다면|하면|이면|는데|면서|하고|하며|지만|므로|위해|통해|보다|까지|경우|대해|따라)\s+|[가-힣]{2,}[은는도을를]\s+)/g;
+  const DEP_HEAD_RE = /^(게|것[이은을도]?|수[가는도]?|때[가는에도]?|중[이에]?|만[에큼]?|지|채로?|둥|편|셈|김|바|데|줄|뿐|번째?|적|만큼|정도|이상|이하|이내|안에|만에|동안|뒤[가-힣]{0,2}|전[은는에엔]?|후[가-힣]{0,2})[,.!?]?$/;
   const cutOffsets: number[] = [];
   let rest = plain, base = 0, guard = 0;
-  while (visLen(rest) > 18 && guard++ < 8) {
+  while (visLen(rest) > 20 && guard++ < 8) {
     const clauseCands: number[] = [];
     let m: RegExpExecArray | null;
     CLAUSE.lastIndex = 0;
@@ -142,16 +145,20 @@ function breakSentence(sen: string): string {
     const pick = (cands: number[]): number => {
       let best = -1, bestD = Infinity;
       for (const cut of cands) {
-        const left = visLen(rest.slice(0, cut));
-        if (left < 6 || left > 18 || visLen(rest.slice(cut)) < 5) continue; // 좌 6~18자 밴드 + 우측 최소 5자(꼬리줄 보장)
-        const d = Math.abs(left - 15);
+        const left = visLen(rest.slice(0, cut).trimEnd()); // 꼬리 공백 제외(실측: 쉼표 경계가 19로 계산돼 탈락 → 5자 조각)
+        if (left < 6 || left > 18 || visLen(rest.slice(cut)) < 6) continue; // 좌 6~18자 밴드 + 우측 최소 6자(꼬리줄 보장)
+        const nextTok = (rest.slice(cut).match(/^\S+/) ?? [""])[0];
+        const prevTok = (rest.slice(0, cut).trim().match(/\S+$/) ?? [""])[0];
+        const depPenalty = DEP_HEAD_RE.test(nextTok) ? 100 : 0; // 의존어 줄머리 — 사실상 금지
+        const numTail = /^\d/.test(prevTok) && [...nextTok].length <= 3 ? 100 : 0; // '2주 / 뒤인' — 숫자 단위와 의존어 분리 금지
+        const d = Math.abs(left - 15) + depPenalty + numTail;
         if (d < bestD) { bestD = d; best = cut; }
       }
-      return best;
+      return bestD >= 100 ? -1 : best; // 감점 후보뿐이면 이 라운드는 자르지 않는다(어색한 절단보다 긴 줄)
     };
     let best = pick(clauseCands);
     if (best < 0) best = pick(spaceCands); // 의미 경계가 없으면 어절 경계 — 18자 상한은 지킨다
-    if (best < 0) break; // 공백조차 없는 통짜 토큰 — 단어 중간 절단보다 자연 wrap
+    if (best < 0) break; // 좋은 절단점 없음 — 단어 중간 절단·의존어 고아보다 자연 wrap
     cutOffsets.push(base + best);
     base += best;
     rest = plain.slice(base);

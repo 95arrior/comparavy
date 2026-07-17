@@ -60,12 +60,13 @@ ok(two.includes("▍"), "소제목 세로 바 = 글자(▍)로 렌더");
 ok(two.includes("───────"), "섹션 구분선 = 문자 라인(둘째 h2 앞)");
 ok(!/border-(left|top)/.test(two), "border 인라인 스타일 미사용(복붙 소실 방지)");
 
-// ★개행 v6(2026-07-17 유저 확정) — 한 줄 띄어쓰기 포함 18자 상한 + 꼬리줄 5자 미만 금지 + 어절 폴백
+// ★개행 v6.1(2026-07-17 유저 확정+실측 3건) — 절단 줄은 18자 지향, 통줄·꼬리줄은 20자까지 허용(조각 방지가 우선),
+//  꼬리줄 5자 미만 금지 + 의존어 줄머리 금지 + 어절 폴백
 const lineCheck = (html) => {
   const lines = [...html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/g)]
     .flatMap((m) => m[1].split(/<br\s*\/?>/i))
     .map((s) => s.replace(/<[^>]+>/g, "").trim()).filter(Boolean);
-  return { lines, over: lines.filter((l) => [...l].length > 18), tiny: lines.filter((l) => [...l].length > 0 && [...l].length < 5) };
+  return { lines, over: lines.filter((l) => [...l].length > 20), tiny: lines.filter((l) => [...l].length > 0 && [...l].length < 5) };
 };
 const v6a = lineCheck(splitLongParagraphs("<p>이번 달부터 청년 지원금 대상이 크게 넓어져서 소득 기준을 다시 확인해 보는 것이 좋아요.</p>"));
 ok(v6a.over.length === 0, `v6: 절 경계 분할 후 18자 초과 줄 없음 (초과: ${v6a.over.join(" / ")})`);
@@ -73,6 +74,14 @@ ok(v6a.tiny.length === 0, `v6: 5자 미만 꼬리줄 없음 (꼬리: ${v6a.tiny.
 const v6b = lineCheck(splitLongParagraphs("<p>국민연금 임의가입 반납금 분할납부 제도 신청 방법 총정리 안내</p>"));
 ok(v6b.over.length === 0, `v6: 의미 경계 없어도 어절 폴백으로 18자 상한 유지 (초과: ${v6b.over.join(" / ")})`);
 ok(lineCheck(splitLongParagraphs("<p>짧은 문장은 그대로 둬요.</p>")).lines.length === 1, "v6: 18자 이하 문장은 통줄 유지");
+// ★v6.1 실측 3건(2026-07-17 유저) — 조각·의존어 고아 방지
+ok(lineCheck(splitLongParagraphs("<p>이사한 사람만 전입신고를 하면 돼요.</p>")).lines.length === 1, "v6.1: 20자 문장은 쪼개지 않는다('하면 돼요.' 조각 방지)");
+const dep1 = lineCheck(splitLongParagraphs("<p>생각하면 그때가 이미 2주 뒤인 경우가 많아요.</p>")).lines;
+ok(!dep1.some((l) => /^뒤인/.test(l)), "v6.1: '2주 / 뒤인' 분리 금지(숫자+의존어 결합)");
+const dep2 = lineCheck(splitLongParagraphs("<p>임차인이라면 보증금 보호를 위해 가능한 한 빨리 하는 게 좋아요.</p>")).lines;
+ok(!dep2.some((l) => /^게\s/.test(l)), "v6.1: 의존명사 '게' 줄머리 금지");
+const dep3 = lineCheck(splitLongParagraphs("<p>세대 전체가 이사한 게 아니라면, 이사한 당사자만 새 주소로 신고하고 나머지 가족은 기존 주소 그대로 유지해요.</p>")).lines;
+ok(!dep3.some((l) => [...l].length < 6), "v6.1: '아니라면,' 류 6자 미만 조각 없음");
 
 console.log(`\n검증: ${pass} 통과, ${fail} 실패`);
 process.exit(fail ? 1 : 0);
