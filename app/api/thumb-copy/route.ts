@@ -33,6 +33,7 @@ export async function POST(request: Request) {
     `본문 도입(이 글의 진짜 셀링포인트 — 문구는 이 내용에서만 나와야 한다): ${String((art as { body_html?: string }).body_html ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(0, 400)}`,
     "",
     "규칙:",
+    "- ★토너먼트(내부 심사 — 과정 출력 금지, 2026-07-17 유저 확정): 문구를 최소 20개 만들어 각각에 스스로 물어라 — ①'스크롤하다가 내가 정말 멈출까?' ②'왜 멈추는가'를 한 문장으로 설명할 수 있는가 ③제목과 같은 말을 하고 있지 않은가 ④본문이 증명할 수 있는가. 하나라도 막히면 그 자리에서 폐기하고 다시 만든다. 살아남은 최강 6개만 JSON으로 출력한다. 이건 경쟁이다 — 무난한 문구를 채워 넣느니 비워라.",
     "- ★역할 분리(절대 조항) — 제목에 이미 있는 정보를 다른 말로 반복하면 실격. 제목의 어절을 그대로 가져오는 건 앵커 1개(연도·핵심 숫자 하나)까지만. 좋은 예(제목 'AI 검색은 끝났습니다, 이제는 AI 에이전트 시대'): '검색 끝.' / '이젠 시켜만 하세요' / '내 비서가 생깁니다'. 나쁜 예: 'AI 에이전트 시대'(제목 축약), '에이전트 2027년'(제목 반복).",
     "- ★개념 1개만 — 한 문구 = 한 개념. vs·나열·요약형 금지. '검색 끝.'처럼 명사+마침표로 끊는 punch 허용.",
     "- ★6각도 분산(전부 같은 프레임이면 실격): ①시대 선언형(검색 끝. / 이제 시작입니다) ②소유 전환형(내 비서가 생깁니다) ③행동 전환형(이젠 시켜만 하세요) ④숫자 앵커형(본문 실값 하나만 크게) ⑤손실 회피형(모르고 두면 새는 돈) ⑥질문형(내 몫은 얼마?).",
@@ -56,8 +57,8 @@ export async function POST(request: Request) {
     // ★빈손 금지 3단(실측: 간헐 '문구를 만들지 못했어요' — 필터 전멸이 원인): AI→관대한 회수→규칙 폴백
     let copies: string[] = [];
     for (let attempt = 0; attempt < 2 && copies.length === 0; attempt++) {
-      const res = await client.messages.create({ model: "claude-haiku-4-5", max_tokens: 800, messages: [{ role: "user", content: prompt }] }); // ★800(실측 2026-07-13: 300이 6문구 JSON을 잘라 폴백 템플릿 서빙 — 에버그린 제목과 동일 병)
-      void logUsage({ userId: user.id, model: "claude-haiku-4-5", kind: "thumb_copy", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
+      const res = await client.messages.create({ model: "claude-sonnet-4-6", max_tokens: 800, messages: [{ role: "user", content: prompt }] }); // ★sonnet 승격(2026-07-17 토너먼트 자기검증 — 심사 품질이 곧 문구 품질) · 800(실측 2026-07-13: 300이 JSON을 잘라 폴백 서빙)
+      void logUsage({ userId: user.id, model: "claude-sonnet-4-6", kind: "thumb_copy", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
       const text = res.content.find((b) => b.type === "text")?.text ?? "[]";
       const m = text.match(/\[[\s\S]*\]/);
       let raw: unknown = [];
