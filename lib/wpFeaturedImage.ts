@@ -15,7 +15,21 @@ const WP_BRAND_PALETTE = { name: "wp-brand-primary", bg: "#0169F0", title: "#FFF
 //  대신 사실 기반 표현('놓치기 쉽습니다', '여기서 갈립니다'). 네이버 경로는 이 규칙을 쓰지 않는다.
 const WP_COPY_BAN_RE = /(완벽\s?정리|총\s?정리|핵심\s?정리|필수(?![가-힣])|끝판왕|공짜|대박|모르면\s?손해)/;
 
-// ★문구 LLM v2(2026-07-19 유저 CTR 카피 지침 — WP만): 6역할 로테이션 후보 → 4문 자기검사 → 게이트 통과분.
+// ★역할 예시 원문 — 베끼기 검출용(실측 2026-07-20: '여기서 많이 틀합니다' — 하이쿠가 예시를 오타로 복붙해 발행).
+//  예시는 '형식' 참고용이지 문구가 아니다. 정규화 후 예시와 같거나 한 글자 변형이면 실격.
+const COPY_EXAMPLES = ["여기서많이틀립니다", "먼저확인하세요", "이것부터하세요", "오늘확인하세요", "생각보다큽니다", "세금이달라집니다", "환급이달라집니다", "왜그럴까요", "의외였습니다", "여기서갈립니다", "3분이면됩니다", "오늘끝내세요", "마감전에", "놓치기쉽습니다", "먼저이것부터", "신청전5분", "내몫부터확인"];
+export function isExampleCopy(c: string): boolean {
+  const n = c.replace(/[\s.!?]/g, "");
+  return COPY_EXAMPLES.some((e) => {
+    if (n === e) return true;
+    if (Math.abs(n.length - e.length) > 1) return false; // 한 글자 변형('틀립니다'→'틀합니다')까지 잡는다
+    let diff = 0;
+    for (let i = 0; i < Math.min(n.length, e.length); i++) if (n[i] !== e[i]) diff++;
+    return diff + Math.abs(n.length - e.length) <= 1;
+  });
+}
+
+// ★문구 LLM v3(2026-07-20 실측 보강): 소네트 승격(하이쿠 한국어 오타) + 예시 베끼기 실격 + 각도 앵커 강제.
 //  "제목은 검색을 만족시키고, 썸네일은 클릭 이유를 만든다."
 async function llmWpThumbCopy(title: string, keyword: string): Promise<string | null> {
   const key = process.env.ANTHROPIC_API_KEY;
@@ -23,19 +37,20 @@ async function llmWpThumbCopy(title: string, keyword: string): Promise<string | 
   try {
     const client = new Anthropic({ apiKey: key });
     const res = await client.messages.create({
-      model: "claude-haiku-4-5", max_tokens: 400,
+      model: "claude-sonnet-4-6", max_tokens: 400,
       messages: [{ role: "user", content: [
         `블로그 목록에서 제목 옆에 놓일 썸네일 문구 후보 6개를 만들어줘. 너는 디자이너가 아니라 CTR 카피라이터다 — 예쁜 문구가 아니라 스크롤을 멈추게 하는 문구.`,
         `제목: "${title}" — 제목은 검색을 만족시키고, 썸네일은 '클릭 이유'를 만든다. 독자가 왜 이 제목을 검색했는지 생각하고, 가장 궁금한 한 가지만 문구에 담아라. 썸네일과 제목을 이어 읽으면 하나의 문장이 되어야 한다(좋은 예 — 제목 '정책자금, 어떻게 신청하나요?' + 문구 '먼저 이것부터' → 독자: '먼저 뭘?').`,
         `역할 6종 중 서로 다른 것 하나씩(후보마다 1역할만): ①실수(여기서 많이 틀립니다) ②행동(먼저 확인하세요) ③결과(생각보다 큽니다) ④궁금증(여기서 갈립니다) ⑤시간(3분이면 됩니다) ⑥경고 — 단 경고는 사실 기반만('놓치기 쉽습니다' — '모르면 손해' 금지).`,
         `규격: 한 줄 8~10자, 최대 2줄, 전체 20자 이내(공백 포함). 제목 키워드·주제 명사 반복 절대 금지(정책자금·IRP·총정리류 — 주제는 제목이 말한다). 금지 표현: 완벽정리·총정리·핵심정리·무조건·반드시·100%·필수·역대급·충격·대박·공짜·모르면 손해. 좋은 표현 결: 먼저·여기서·의외로·생각보다·가장 많이·이것만·오늘·지금.`,
-        `제출 전 자기검사(과정 출력 금지): ①제목과 같은 말인가 → 다시 ②썸네일만 봐도 궁금한가 → 아니면 다시 ③본문(제목이 약속한 내용)이 증명 가능한가 ④0.5초 안에 읽히는가. 통과분만 JSON 배열 한 줄로 출력: ["...","..."]`,
+        `★예시 베끼기 실격(절대) — 위 역할 예시 문구를 그대로/한 글자만 바꿔 쓰면 실격이다. 예시는 형식 참고일 뿐, 문구는 반드시 '이 제목'의 검색 이유에서 새로 만들어라(어느 글에나 붙는 범용 문구 = 실격). 맞춤법 오류도 실격.`,
+        `제출 전 자기검사(과정 출력 금지): ①제목과 같은 말인가 → 다시 ②썸네일만 봐도 궁금한가 → 아니면 다시 ③본문(제목이 약속한 내용)이 증명 가능한가 ④0.5초 안에 읽히는가 ⑤예시를 베꼈는가 → 다시. 통과분만 JSON 배열 한 줄로 출력: ["...","..."]`,
       ].join("\n") }],
     });
     const text = res.content.find((b) => b.type === "text")?.text ?? "";
     const arr = JSON.parse(text.match(/\[[\s\S]*\]/)?.[0] ?? "[]") as unknown[];
     for (const c of arr.map((x) => String(x).trim()).filter(Boolean)) {
-      if ([...c].length <= 20 && !repeatsTitle(c, title, keyword) && bannedHits(c).length === 0 && !WP_COPY_BAN_RE.test(c)) return c;
+      if ([...c].length <= 20 && !repeatsTitle(c, title, keyword) && bannedHits(c).length === 0 && !WP_COPY_BAN_RE.test(c) && !isExampleCopy(c)) return c;
     }
   } catch { /* 폴백 — 규칙 추출 */ }
   return null;
