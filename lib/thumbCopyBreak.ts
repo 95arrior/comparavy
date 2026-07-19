@@ -8,7 +8,7 @@ export function titleOverlapCount(copy: string, titleAndKeyword: string): number
   const titleToks = norm(titleAndKeyword);
   let n = 0;
   for (const tok of new Set(norm(copy))) {
-    if (titleToks.some((k) => tok === k || (k.length >= 3 && tok.startsWith(k)) || (tok.length >= 3 && k.startsWith(tok)))) n += 1;
+    if (titleToks.some((k) => tok === k || (k.length >= 3 && tok.includes(k)) || (tok.length >= 3 && k.includes(tok)))) n += 1; // 포함 관계(3자+) — 접두만 보면 '소상공인정책자금' 속 '정책자금'을 놓친다(실측 2026-07-19)
   }
   return n;
 }
@@ -20,7 +20,7 @@ export function repeatsTitle(copy: string, title: string, keyword: string): bool
   const clean = (t: string) => t.replace(/[^가-힣a-zA-Z0-9%]/g, "");
   const copyToks = (copy || "").split(/[\s,·…?!."'“”]+/).map(clean).filter((t) => [...t].length >= 2);
   const kwToks = (keyword || "").split(/[\s,·]+/).map(clean).filter((t) => [...t].length >= 2 && !/^\d/.test(t));
-  const hitsKw = copyToks.some((c) => kwToks.some((k) => c === k || (k.length >= 3 && c.startsWith(k)) || (c.length >= 3 && k.startsWith(c))));
+  const hitsKw = copyToks.some((c) => kwToks.some((k) => c === k || (k.length >= 3 && c.includes(k)) || (c.length >= 3 && k.includes(c)))); // 포함 관계(3자+) — 복합 키워드 속 핵심 명사('정책자금')까지 잡는다
   if (hitsKw) return true;
   return titleOverlapCount(copy, `${title} ${keyword}`) >= 3;
 }
