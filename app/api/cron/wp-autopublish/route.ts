@@ -105,6 +105,19 @@ export async function GET(request: Request) {
         }
         // WP 후처리 — 네이버 포맷터(스페이서·형광펜) 미적용. 마커만 정리.
         let body = stripNaverArtifacts(article.body_html); // 해시태그·마커 일괄 소거(중앙 소거기)
+        // ★함께 보면 좋은 글 — 네이버 보조 링크(2026-07-20, 마스터 지침 [7]⑧: WP 우선은 본문 내부링크가, 네이버는 보조로만).
+        //  수동 발행 경로에만 있던 WP→네이버 링크를 자동발행에도 — 핏 강한 것만 최대 2개, 없으면 섹션 자체 생략.
+        try {
+          const { data: nvs } = await db.from("articles").select("keyword, title, naver_url").eq("user_id", b.user_id).in("status", ["verified", "published"]).not("naver_url", "is", null).order("created_at", { ascending: false }).limit(30);
+          const toks = (t: string) => new Set(String(t).split(/[\s,·:]+/).map((x) => x.replace(/[^가-힣a-zA-Z0-9]/g, "")).filter((x) => x.length >= 3));
+          const kt = toks(`${pick.keyword} ${article.title ?? ""}`);
+          const fit = (o: { keyword?: string | null; title?: string | null }) => { let s = 0; for (const t of toks(`${o.keyword ?? ""} ${o.title ?? ""}`)) if (kt.has(t)) s++; return s; };
+          const best = (nvs ?? []).map((o) => ({ o, s: fit(o) })).filter((x) => x.s >= 1 && x.o.naver_url).sort((a, b2) => b2.s - a.s).slice(0, 2);
+          if (best.length) {
+            const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+            body += `<h2>함께 보면 좋은 글</h2><ul>${best.map((x) => `<li><a href="${x.o.naver_url}" target="_blank" rel="noopener">${esc(String(x.o.title ?? x.o.keyword))}</a></li>`).join("")}</ul>`;
+          }
+        } catch { /* 무해 — 링크 없이 발행 */ }
         // ★배너를 초안 단계에 삽입(2026-07-12 유저: 읽어보기에 이미지가 안 보임 — 승인은 최종 모습으로) — 스토리지 URL이라 DB 비대 없음
         try { body = insertBanners(body, await generateWpBannersToStorage(b.user_id, pick.keyword, `${b.id}-${kstDay()}-${crypto.randomUUID().slice(0, 8)}`, 3, String((b as { blog_name?: string | null }).blog_name ?? "")), pick.keyword); } catch { /* 배너 실패 — 계속 */ }
         const ins = {

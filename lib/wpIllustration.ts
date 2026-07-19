@@ -15,19 +15,16 @@ function fnv(s: string): number {
   return h >>> 0;
 }
 
-/** 본문 배너 n장 — 1장째 = AI 무대 배경 + 키워드 G마켓 산스 조판(글자 절대 안 깨짐), 나머지 = 글자 없는 일러스트. */
-export async function generateWpBanners(keyword: string, articleId: string, n = 2, brandName = ""): Promise<string[]> {
+/** 본문 배너 n장 — ★전량 무문자 일러스트(2026-07-20 유저: 본문 이미지에 한글 텍스트 금지 — 깨져 보임.
+ *  텍스트 앵커는 대표이미지 1장이 담당, 본문 배너는 그림만). 구 1번 조판 배너 폐기. */
+export async function generateWpBanners(keyword: string, articleId: string, n = 2, _brandName = ""): Promise<string[]> {
   const seed = fnv(`${keyword}|${articleId}`);
   const out: string[] = [];
-  // 1장째: 무대 배경 → 우리 조판(썸네일과 동일 파이프 — 유저 확정: 글자는 G마켓 산스)
-  const typo = await generateTypoBannerDataUrl(keyword, articleId, brandName);
-  if (typo) out.push(typo);
-  // 2장째부터: 순수 일러스트(글자 완전 금지)
-  const styles = bodyStyleRotation(keyword).filter((st) => st !== "typo3d"); // ★typo3d 제외(2026-07-14 실측: 영문 살짝 깨짐+대표 재활용 시 조판 문구와 충돌) — 순수 일러만
+  const styles = bodyStyleRotation(keyword).filter((st) => st !== "typo3d"); // ★typo3d 제외(2026-07-14 실측: 영문 살짝 깨짐) — 순수 일러만
   // ★한글 원천 제거(2026-07-13) — 프롬프트에 한글이 인용되면 금지 문구와 무관하게 그려진다
   const brief = await englishBrief(keyword);
   const kwEn = brief?.topicEn ?? stripHangul(keyword, "korean personal finance topic");
-  for (let i = 1; i < n; i++) {
+  for (let i = 0; i < n; i++) {
     const style = styles[(seed + i) % styles.length]!;
     try {
       const img = await callImage(buildBannerPrompt(kwEn, style, seed + i * 7), "1:1");
