@@ -47,6 +47,10 @@
     {
       "path": "/api/cron/revision-scan",
       "schedule": "40 17 * * 0"
+    },
+    {
+      "path": "/api/cron/gsc-sync",
+      "schedule": "10 19 * * *"
     }
   ]
 }
