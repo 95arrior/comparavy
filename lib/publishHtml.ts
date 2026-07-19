@@ -180,7 +180,8 @@ function breakSentence(sen: string): string {
     out.push(t);
     acc += tok.length;
   }
-  return out.join("");
+  // ★경계 공백 삼킴(2026-07-20 실측: '계약 종류를␣'+개행 — 줄꼬리 공백이 중앙정렬 기준점을 왼쪽으로 민다)
+  return out.join("").replace(/[  \t]+(<br\s*\/?>)/gi, "$1").replace(/(<br\s*\/?>)[  \t]+/gi, "$1");
 }
 function splitInner(inner: string): string[] {
   // ★마커 문단 보호 — 절 개행이 [관련글]/[마무리관련글]/[사진] 마커 안에 <br>을 박으면 변환 정규식이 죽는다(실측: 3층 블록 미출력·마커 원형 노출)
@@ -655,6 +656,7 @@ export function buildPlainText(input: PublishInput): string {
     .replace(/<[^>]+>/g, "")
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
+    .replace(/[ \t ]+\n/g, "\n").replace(/\n[ \t ]+/g, "\n") // ★줄꼬리·줄머리 공백 제거(2026-07-20 실측: 중앙정렬 쏠림)
     .replace(/\n{6,}/g, "\n\n\n\n\n") // 상한 4 빈 줄(=개행 5) 캡 — 압축 아님
     .replace(/^[\n\s]+|[\n\s]+$/g, "");
   return text;

@@ -82,6 +82,11 @@ const dep2 = lineCheck(splitLongParagraphs("<p>임차인이라면 보증금 보�
 ok(!dep2.some((l) => /^게\s/.test(l)), "v6.1: 의존명사 '게' 줄머리 금지");
 const dep3 = lineCheck(splitLongParagraphs("<p>세대 전체가 이사한 게 아니라면, 이사한 당사자만 새 주소로 신고하고 나머지 가족은 기존 주소 그대로 유지해요.</p>")).lines;
 ok(!dep3.some((l) => [...l].length < 6), "v6.1: '아니라면,' 류 6자 미만 조각 없음");
+// ★경계 공백 삼킴(2026-07-20 실측: '계약 종류를␣'+개행 — 중앙정렬 쏠림)
+const spaced = splitLongParagraphs("<p>상업용 전기 계약은 해당 없으니 계약 종류를 먼저 확인하세요.</p>");
+ok(!/[ \t]<br/i.test(spaced) && !/<br\s*\/?>[ \t]/i.test(spaced), "개행 경계에 공백 잔존 없음(중앙정렬 보호)");
+const plainSp = buildPlainText({ title: "t", bodyHtml: "<p>상업용 전기 계약은 해당 없으니 계약 종류를 먼저 확인하세요.</p>" });
+ok(plainSp.split("\n").every((l) => l === l.trim()), "plain 복사본 줄머리·줄꼬리 공백 없음");
 
 console.log(`\n검증: ${pass} 통과, ${fail} 실패`);
 process.exit(fail ? 1 : 0);
