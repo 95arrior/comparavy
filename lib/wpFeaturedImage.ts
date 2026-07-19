@@ -10,20 +10,31 @@ import Anthropic from "@anthropic-ai/sdk";
 //  유저별 랜덤 팔레트 대신 채널 고정색 — 목록에서 브랜드로 읽힌다. (추후 blog_profiles 색 필드로 확장 여지)
 const WP_BRAND_PALETTE = { name: "wp-brand-primary", bg: "#0169F0", title: "#FFFFFF", point: "#FFE066", panel: "#0148A8CC" };
 
-// ★문구 LLM 승격(실측 2026-07-19: 규칙 추출이 '어떻게 신청하나요' 반쪽 조각 서빙) — 역할 분리 개념 훅 3후보 중 게이트 통과분.
+// ★WP 전용 금지 표현(2026-07-19 유저 CTR 카피 지침 — 워드프레스만): '모르면 손해' 포함 과장·정리류 금지.
+//  대신 사실 기반 표현('놓치기 쉽습니다', '여기서 갈립니다'). 네이버 경로는 이 규칙을 쓰지 않는다.
+const WP_COPY_BAN_RE = /(완벽\s?정리|총\s?정리|핵심\s?정리|필수(?![가-힣])|끝판왕|공짜|대박|모르면\s?손해)/;
+
+// ★문구 LLM v2(2026-07-19 유저 CTR 카피 지침 — WP만): 6역할 로테이션 후보 → 4문 자기검사 → 게이트 통과분.
+//  "제목은 검색을 만족시키고, 썸네일은 클릭 이유를 만든다."
 async function llmWpThumbCopy(title: string, keyword: string): Promise<string | null> {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key || !title.trim()) return null;
   try {
     const client = new Anthropic({ apiKey: key });
     const res = await client.messages.create({
-      model: "claude-haiku-4-5", max_tokens: 200,
-      messages: [{ role: "user", content: `블로그 목록에서 제목 옆에 놓일 대표이미지 문구 후보 3개를 만들어줘. 역할 분리: 제목("${title}")이 답이고, 문구는 개념 하나만 던진다 — 제목 어절 반복 금지(숫자·연도 앵커 1개만 허용), 주제 명사도 금지(주제는 제목이 말한다), 공백 포함 14자 이내, 감정 과잉·낚시 금지, 완결된 구어(좋은 예: "신청 전 5분", "몰라서 새는 돈", "내 몫부터 확인"). JSON 배열만 출력: ["...","...","..."]` }],
+      model: "claude-haiku-4-5", max_tokens: 400,
+      messages: [{ role: "user", content: [
+        `블로그 목록에서 제목 옆에 놓일 썸네일 문구 후보 6개를 만들어줘. 너는 디자이너가 아니라 CTR 카피라이터다 — 예쁜 문구가 아니라 스크롤을 멈추게 하는 문구.`,
+        `제목: "${title}" — 제목은 검색을 만족시키고, 썸네일은 '클릭 이유'를 만든다. 독자가 왜 이 제목을 검색했는지 생각하고, 가장 궁금한 한 가지만 문구에 담아라. 썸네일과 제목을 이어 읽으면 하나의 문장이 되어야 한다(좋은 예 — 제목 '정책자금, 어떻게 신청하나요?' + 문구 '먼저 이것부터' → 독자: '먼저 뭘?').`,
+        `역할 6종 중 서로 다른 것 하나씩(후보마다 1역할만): ①실수(여기서 많이 틀립니다) ②행동(먼저 확인하세요) ③결과(생각보다 큽니다) ④궁금증(여기서 갈립니다) ⑤시간(3분이면 됩니다) ⑥경고 — 단 경고는 사실 기반만('놓치기 쉽습니다' — '모르면 손해' 금지).`,
+        `규격: 한 줄 8~10자, 최대 2줄, 전체 20자 이내(공백 포함). 제목 키워드·주제 명사 반복 절대 금지(정책자금·IRP·총정리류 — 주제는 제목이 말한다). 금지 표현: 완벽정리·총정리·핵심정리·무조건·반드시·100%·필수·역대급·충격·대박·공짜·모르면 손해. 좋은 표현 결: 먼저·여기서·의외로·생각보다·가장 많이·이것만·오늘·지금.`,
+        `제출 전 자기검사(과정 출력 금지): ①제목과 같은 말인가 → 다시 ②썸네일만 봐도 궁금한가 → 아니면 다시 ③본문(제목이 약속한 내용)이 증명 가능한가 ④0.5초 안에 읽히는가. 통과분만 JSON 배열 한 줄로 출력: ["...","..."]`,
+      ].join("\n") }],
     });
     const text = res.content.find((b) => b.type === "text")?.text ?? "";
     const arr = JSON.parse(text.match(/\[[\s\S]*\]/)?.[0] ?? "[]") as unknown[];
     for (const c of arr.map((x) => String(x).trim()).filter(Boolean)) {
-      if ([...c].length <= 18 && !repeatsTitle(c, title, keyword) && bannedHits(c).length === 0) return c;
+      if ([...c].length <= 20 && !repeatsTitle(c, title, keyword) && bannedHits(c).length === 0 && !WP_COPY_BAN_RE.test(c)) return c;
     }
   } catch { /* 폴백 — 규칙 추출 */ }
   return null;
@@ -71,7 +82,7 @@ export async function autoFeaturedImage(
     // ★줄당 9자 보장(고정 폰트 112px 규격) — 초과하면 마지막 어절을 덜어내고 재분할
     let hook = (await llmWpThumbCopy(String(opts?.title ?? ""), String(keyword || "").trim())) // ★1순위: 역할 분리 개념 훅(LLM, 게이트 통과분만)
       ?? hookCopyFromTitle(opts?.title, String(keyword || "").trim()); // 폴백: 규칙 추출(의문사 조각 방지 포함)
-    if (bannedHits(hook).length > 0) hook = String(keyword || "").trim() || hook; // ★문구 게이트(2026-07-17 PTRP) — 감정 과잉 훅은 키워드 폴백
+    if (bannedHits(hook).length > 0 || WP_COPY_BAN_RE.test(hook)) hook = String(keyword || "").trim() || hook; // ★문구 게이트(PTRP+WP 카피 지침) — 감정 과잉·과장 훅은 키워드 폴백
     let copy = breakThumbCopy(hook);
     for (let i = 0; i < 4 && copy.split("\n").some((l) => [...l].length > 9) && hook.includes(" "); i++) {
       hook = hook.split(" ").slice(0, -1).join(" ");
