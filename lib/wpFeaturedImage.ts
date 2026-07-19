@@ -48,17 +48,9 @@ export async function autoFeaturedImage(
       copy = breakThumbCopy(hook);
     }
     if (!copy.trim()) return null;
-    // 배경: 본문 배너 1장을 재활용(이미 생성된 AI 일러스트 — 추가 비용 0). 실패하면 색면 포스터 폴백.
-    let bgDataUrl: string | null = null;
-    if (opts?.bgUrl) {
-      try {
-        const r = await fetch(opts.bgUrl, { signal: AbortSignal.timeout(8000) });
-        if (r.ok) {
-          const mime = (r.headers.get("content-type") || "image/png").split(";")[0];
-          bgDataUrl = `data:${mime};base64,${Buffer.from(await r.arrayBuffer()).toString("base64")}`;
-        }
-      } catch { /* 색면 폴백 */ }
-    }
+    // ★단색(프라이머리) 배경 확정(2026-07-19 유저: 배너 재활용 오브젝트가 글마다 비슷한 그림 반복 — 텍스트는 그대로, 배경은 컬러로).
+    //  유저 시각 정체성 팔레트(유저별 고정 1색)가 곧 브랜드 프라이머리 — 목록에서 채널 일관성, AI 느낌 원천 제거, 비용 0.
+    const bgDataUrl: string | null = null; // 색면 포스터 경로 강제(배너 재활용 폐기 — opts.bgUrl 무시)
     const png = await renderThumbnail({
       mainCopy: copy,
       identity: visualIdentityFor(userId),
