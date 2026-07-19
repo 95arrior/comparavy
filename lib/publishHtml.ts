@@ -401,11 +401,20 @@ function styleMarkers(html: string): string {
 
 // ★나열은 표 박스로(유저 확정: 중앙 정렬 본문에서 리스트가 흐름을 끊음 — 박스에 담아 좌정렬 유지)
 function listsToTable(html: string): string {
-  // ★유저 확정: 리스트는 리스트로(모든 개수) — 중앙 불릿 문단·항목 사이 빈 줄. 표는 엔진이 비교·조건 구조로 <table>을 직접 쓸 때만(styleTables가 처리).
+  // ★유저 확정: 리스트는 리스트로 — 단 ★데이터 클러스터는 표로 승격(2026-07-20 실측: 절감률 구간 5줄이 불릿으로 나감 — "표가 압승").
+  //  승격 조건: 3항목+ 전부 '라벨: 값' 형태이고 값의 3분의 2 이상에 숫자(단가·구간·기간) — 행동 절차('정부24 접속: …')는 값에 숫자가 없어 리스트 유지.
   return html.replace(/<(ul|ol)(\s[^>]*)?>([\s\S]*?)<\/\1>/gi, (raw, tag, _attr, inner) => {
     if (/<(table|img)/i.test(inner)) return raw;
     const items = (inner.match(/<li[\s\S]*?<\/li>/gi) ?? []).map((li: string) => li.replace(/<\/?li[^>]*>/gi, "").trim()).filter(Boolean);
     if (items.length < 2) return raw;
+    const kv = items.map((it: string) => /^(?:<b>)?([^<:：]{2,16}?)(?:<\/b>)?\s*[:：]\s*([\s\S]{1,40})$/.exec(it.replace(/<(?!\/?b\b)[^>]+>/g, "").trim()));
+    if (items.length >= 3 && kv.every(Boolean)) {
+      const numeric = kv.filter((m: RegExpExecArray | null) => /\d/.test(m![2]!.replace(/<[^>]+>/g, ""))).length;
+      if (numeric * 3 >= items.length * 2) {
+        const rows = kv.map((m: RegExpExecArray | null) => `<tr><td>${m![1]!.trim()}</td><td>${m![2]!.replace(/<[^>]+>/g, "").trim()}</td></tr>`).join("");
+        return `<table><tr><th>구분</th><th>내용</th></tr>${rows}</table>`;
+      }
+    }
     const ol = String(tag).toLowerCase() === "ol";
     return items.map((it: string, i: number) => `<p style="text-align:left;word-break:keep-all">${ol ? `<b>${i + 1}.</b> ` : "• "}${it}</p>`).join(""); // ★좌정렬 풀폭(유저: 넓이 꽉꽉)
   });

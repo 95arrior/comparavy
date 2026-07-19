@@ -88,5 +88,11 @@ ok(!/[ \t]<br/i.test(spaced) && !/<br\s*\/?>[ \t]/i.test(spaced), "개행 경계
 const plainSp = buildPlainText({ title: "t", bodyHtml: "<p>상업용 전기 계약은 해당 없으니 계약 종류를 먼저 확인하세요.</p>" });
 ok(plainSp.split("\n").every((l) => l === l.trim()), "plain 복사본 줄머리·줄꼬리 공백 없음");
 
+// ★데이터 클러스터 표 승격(2026-07-20 유저 실측: 절감률 구간 불릿 — '표가 압승'). 행동 절차는 리스트 유지.
+const dataList = buildRichHtml({ title: "t", bodyHtml: "<ul><li>1~3% 절감: 1kWh당 30원</li><li>5~10% 절감: 1kWh당 60원</li><li>10~20% 절감: 1kWh당 80원</li><li>20% 이상: 최대 120원</li></ul>" });
+ok(/<table/.test(dataList) && (dataList.match(/<tr>/g) ?? []).length >= 4, "구간·단가 불릿 → 표 승격");
+const stepList = buildRichHtml({ title: "t", bodyHtml: "<ul><li>정부24 접속: 검색창에 미환급금 조회 입력</li><li>본인 인증: 카카오·네이버 간편인증 선택</li><li>결과 확인: 국세·지방세 동시 조회</li></ul>" });
+ok(!/<table/.test(stepList), "행동 절차 리스트는 표로 승격 안 함(리스트 유지)");
+
 console.log(`\n검증: ${pass} 통과, ${fail} 실패`);
 process.exit(fail ? 1 : 0);
