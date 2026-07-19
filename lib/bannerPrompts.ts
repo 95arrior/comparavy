@@ -125,6 +125,8 @@ export function buildThumbMetaphorPrompt(topic: string, copyText: string | undef
     copyLine,
     subject,
     "The visual must clearly belong to THIS topic — never generic finance props.",
+    // ★각도 고유성(2026-07-19 유저: 같은 ETF여도 추천글·설명글은 완전히 다른 그림이어야 한다)
+    "ANGLE-UNIQUE RULE: the topic phrase is a specific article ANGLE, not a category. Two articles about the same product (an ETF recommendation list vs an ETF tax guide vs a beginner walkthrough) must produce visibly DIFFERENT scenes — anchor the visual in this phrase's distinctive words (the action, the situation, the outcome), never in the category noun alone.",
     "COMPOSITION: subjects pushed toward top/bottom/edges — the CENTER band of the frame stays relatively calm and low-detail (large Korean typography will be overlaid dead-center later).",
     `Style: award-winning editorial illustration (fintech campaign grade) — rich color blocking, soft airbrush shading, subtle grain. Palette: ${palette}. Square 1:1.`,
     NO_TEXT_STRICT,

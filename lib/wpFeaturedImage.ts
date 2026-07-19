@@ -5,6 +5,7 @@ import { visualIdentityFor } from "./visualIdentity";
 import { breakThumbCopy, repeatsTitle } from "./thumbCopyBreak";
 import { bannedHits } from "./hookPatterns";
 import Anthropic from "@anthropic-ai/sdk";
+import { generateThumbBackground } from "./geminiImage";
 
 // ★WP 대표이미지 브랜드 팔레트(2026-07-19 유저 확정): 프라이머리 #0169F0 단색 + 흰 텍스트(대비 4.9:1).
 //  유저별 랜덤 팔레트 대신 채널 고정색 — 목록에서 브랜드로 읽힌다. (추후 blog_profiles 색 필드로 확장 여지)
@@ -89,12 +90,18 @@ export async function autoFeaturedImage(
       copy = breakThumbCopy(hook);
     }
     if (!copy.trim()) return null;
-    // ★단색(프라이머리) 배경 확정(2026-07-19 유저: 배너 재활용 오브젝트가 글마다 비슷한 그림 반복 — 텍스트는 그대로, 배경은 컬러로).
-    //  유저 시각 정체성 팔레트(유저별 고정 1색)가 곧 브랜드 프라이머리 — 목록에서 채널 일관성, AI 느낌 원천 제거, 비용 0.
-    const bgDataUrl: string | null = null; // 색면 포스터 경로 강제(배너 재활용 폐기 — opts.bgUrl 무시)
+    // ★2D 일러스트 배경 확정(2026-07-19 유저 재결정: 단색 대신 네이버식 플랫 일러스트 — 단, 글마다 완전히 다른 그림).
+    //  대본 = 제목 전체(각도 포함) + 훅 문구(감정 포인트) → 같은 ETF라도 추천글·설명글이 다른 장면(ANGLE-UNIQUE 규칙).
+    //  글별 시드 + 은유 극화 신규 생성(배너 재활용 아님 — 재활용이 비슷한 그림 반복의 원인이었다). 실패 시 브랜드 단색(#0169F0) 폴백.
+    let bgDataUrl: string | null = null;
+    try {
+      const bg = await generateThumbBackground("", "", `${userId}:${articleId ?? keyword}`, String(opts?.title ?? keyword), { copyText: hook });
+      bgDataUrl = `data:${bg.mime};base64,${bg.base64}`;
+    } catch (e) { console.error("[wp-thumb] AI 배경 실패 — 브랜드 단색 폴백:", e instanceof Error ? e.message.slice(0, 120) : e); }
     const png = await renderThumbnail({
       mainCopy: copy,
-      identity: { ...visualIdentityFor(userId), palette: WP_BRAND_PALETTE }, // ★프라이머리 #0169F0 고정(2026-07-19 유저)
+      // 일러스트 배경이면 원 정체성 팔레트(텍스트 색), 폴백 색면일 때만 브랜드 단색
+      identity: bgDataUrl ? visualIdentityFor(userId) : { ...visualIdentityFor(userId), palette: WP_BRAND_PALETTE },
       press: { brandName: (siteName || "").trim() || "BLOG" },
       articleId: articleId ?? keyword,
       bgDataUrl,
