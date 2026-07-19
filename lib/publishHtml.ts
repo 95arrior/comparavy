@@ -628,9 +628,8 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   if (withImages && input.topImageUrl) {
     out = `<p style="text-align:center;"><img src="${input.topImageUrl}" alt="" /></p><p style="text-align:left"><br></p>` + out;
   }
-  if (withImages && input.closingImageUrl) {
-    out += `<p><br /></p><p style="text-align:center;color:#d9dde3;font-size:14px">───────</p><p style="text-align:center;"><img src="${input.closingImageUrl}" alt="" width="300" /></p>`;
-  }
+  // ★클로징 경계선+썸네일 폐지(2026-07-20 유저: 태그 밑에 밑줄·썸네일이 고정으로 들어감 — 넣지 마라).
+  //  closingImageUrl은 하위 호환용으로 받기만 하고 렌더하지 않는다.
   return out;
 }
 
