@@ -94,5 +94,10 @@ ok(/<table/.test(dataList) && (dataList.match(/<tr>/g) ?? []).length >= 4, "구�
 const stepList = buildRichHtml({ title: "t", bodyHtml: "<ul><li>정부24 접속: 검색창에 미환급금 조회 입력</li><li>본인 인증: 카카오·네이버 간편인증 선택</li><li>결과 확인: 국세·지방세 동시 조회</li></ul>" });
 ok(!/<table/.test(stepList), "행동 절차 리스트는 표로 승격 안 함(리스트 유지)");
 
+// ★줄 경계 공백 2차(실측: '확인이␣</b><br>' — 닫는 태그 안쪽 공백·nbsp가 1차 수정을 우회)
+const tagLeak = buildRichHtml({ title: "t", bodyHtml: "<p><b>유자 확인이 </b><br>먼저다</p><p><mark>가격을 낮추지만&nbsp;</mark><br>있다</p>" });
+ok(!/[  ]<\/(b|mark|span)>?<br/i.test(tagLeak) && !/(&nbsp;|[  ])+<br/i.test(tagLeak), "닫는 태그·nbsp 낀 개행 공백도 청소");
+ok(!/[  ](<\/(?:b|span|mark)>)*<\/p>/.test(tagLeak), "문단 끝 공백 청소");
+
 console.log(`\n검증: ${pass} 통과, ${fail} 실패`);
 process.exit(fail ? 1 : 0);

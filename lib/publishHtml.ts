@@ -630,7 +630,20 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   }
   // ★클로징 경계선+썸네일 폐지(2026-07-20 유저: 태그 밑에 밑줄·썸네일이 고정으로 들어감 — 넣지 마라).
   //  closingImageUrl은 하위 호환용으로 받기만 하고 렌더하지 않는다.
-  return out;
+  return trimLineEdges(out);
+}
+
+// ★줄 경계 공백 전역 청소(2026-07-20 실측 2차: 신규 발행분에서도 '확인이␣'+개행 — 1차 수정이 '공백+닫는 태그(<b>·형광)+개행'
+//  조합과 nbsp를 못 잡았다). 개행(<br>)·문단 경계의 공백을 인라인 태그 너머까지 삼킨다 — 중앙정렬 쏠림 원천 봉쇄.
+function trimLineEdges(html: string): string {
+  const SP = "(?:&nbsp;|[ \\t\\u00a0])+";
+  const CLOSE = "(?:<\\/(?:b|strong|span|mark|u|em|i)>)*";
+  const OPEN = "(?:<(?:b|strong|span|mark|u|em|i)(?:\\s[^>]*)?>)*";
+  return html
+    .replace(new RegExp(`${SP}(${CLOSE})(<br\\s*\\/?>)`, "gi"), "$1$2")
+    .replace(new RegExp(`(<br\\s*\\/?>)(${OPEN})${SP}`, "gi"), "$1$2")
+    .replace(new RegExp(`${SP}(${CLOSE})(<\\/(?:p|h[1-4]|li|blockquote)>)`, "gi"), "$1$2")
+    .replace(new RegExp(`(<(?:p|h[1-4]|li|blockquote)(?:\\s[^>]*)?>)(${OPEN})${SP}`, "gi"), "$1$2");
 }
 
 // rich 모드 — 사진자리를 이미지로.
