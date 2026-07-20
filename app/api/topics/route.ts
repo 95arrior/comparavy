@@ -832,12 +832,16 @@ export async function GET(req: Request) {
           if (!kw || usedSet.has(normalizeKeyword(kw))) continue;
           const vol = (typeof r.monthlyMobileQcCnt === "number" ? r.monthlyMobileQcCnt : 0) + (typeof r.monthlyPcQcCnt === "number" ? r.monthlyPcQcCnt : 0);
           if (vol < 800) continue; // 실측 수요 있는 스포크만
+          if (vol > TIER_BANDS[tierInfo?.tier ?? "SEEDLING"].volMax * 1.5) continue; // ★밴드 상한(2026-07-20 검거: 스포크가 상한 없이 87,900 합류 — 오염 발행의 연관어가 오염을 재생산)
           spokes.push({ keyword: kw, monthly_searches: vol, competition: String(r.compIdx ?? "") || null });
         }
       }
       spokes = spokes.slice(0, 10);
       try { await pool.from("api_cache").upsert({ key: spokeKey, value: spokes, expires_at: new Date(Date.now() + 24 * 3600_000).toISOString(), updated_at: new Date().toISOString() }); } catch { /* ignore */ }
     }
+    // ★캐시 히트 경로도 필터(오늘치 캐시에 이미 오염분 저장돼 있음)
+    const spokeCeil = TIER_BANDS[tierInfo?.tier ?? "SEEDLING"].volMax * 1.5;
+    spokes = spokes.filter((sp) => (sp.monthly_searches ?? 0) <= spokeCeil);
     for (const sp of spokes) {
       const nk = normalizeKeyword(sp.keyword);
       if (!candidates.some((x) => normalizeKeyword(x.keyword) === nk)) {
