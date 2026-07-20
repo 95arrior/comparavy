@@ -396,9 +396,9 @@ export async function GET(req: Request) {
     // ★tier 밴드 오버라이드(FF_TIER_BANDS) — tier 판정이 있을 때만 기존 밴드 대신 적용(별도 레이어, 기존 분기 무수정)
     const tb = FF.tierBands && tierInfo ? TIER_BANDS[tierInfo.tier] : null;
     if (tb) {
-      // ★폴백 상한(2026-07-15 실측: 신생기 보드에 3,090·4,480 혼입) — 범위 해제 폴백도 밴드 상한의 3배(한 체급 위)까지만.
+      // ★폴백 상한(2026-07-15 실측: 신생기 보드에 3,090·4,480 혼입) — 범위 해제 폴백도 밴드 상한의 1.5배까지만(★2026-07-20 실측: 확장기 폴백 3배=9만 — 8.8만 헤드가 보드에 노출, 사다리 무력화).
       //  상한 자체가 없으면 풀이 얇은 날 8만짜리 헤드가 그대로 샌다(밴드 사다리 무력화).
-      q = ranged ? q.gte("monthly_searches", tb.volMin).lte("monthly_searches", tb.volMax) : q.gte("monthly_searches", Math.min(1000, tb.volMin)).lte("monthly_searches", (tb.volMax ?? 30000) * 3);
+      q = ranged ? q.gte("monthly_searches", tb.volMin).lte("monthly_searches", tb.volMax) : q.gte("monthly_searches", Math.min(1000, tb.volMin)).lte("monthly_searches", (tb.volMax ?? 30000) * 1.5);
       if (tb.blogTotalMax != null) q = q.or(`blog_total.is.null,blog_total.lt.${tb.blogTotalMax}`); // 미측정(null)은 통과 — 측정 후 별점이 거른다
     } else if (adminBest) {
       // 최상급 = '이길 수 있는 최상' — 메가 키워드(검색량 무제한)는 문서수도 메가라 제외. 적정 상한을 둔다.
@@ -414,7 +414,7 @@ export async function GET(req: Request) {
       let q2 = pool.from("keyword_pool").select(COLS).eq("vertical", vertical);
       if (useSub && sub) q2 = q2.eq("sub", sub);
       if (cluster) q2 = q2.ilike("keyword", `%${cluster}%`);
-      if (tb) { q2 = ranged ? q2.gte("monthly_searches", tb.volMin).lte("monthly_searches", tb.volMax) : q2.gte("monthly_searches", Math.min(1000, tb.volMin)).lte("monthly_searches", (tb.volMax ?? 30000) * 3); if (tb.blogTotalMax != null) q2 = q2.or(`blog_total.is.null,blog_total.lt.${tb.blogTotalMax}`); }
+      if (tb) { q2 = ranged ? q2.gte("monthly_searches", tb.volMin).lte("monthly_searches", tb.volMax) : q2.gte("monthly_searches", Math.min(1000, tb.volMin)).lte("monthly_searches", (tb.volMax ?? 30000) * 1.5); if (tb.blogTotalMax != null) q2 = q2.or(`blog_total.is.null,blog_total.lt.${tb.blogTotalMax}`); }
       else if (adminBest) q2 = ranged ? q2.gte("monthly_searches", 2000).lte("monthly_searches", 30000) : q2.gte("monthly_searches", 1000);
       else if (ranged) q2 = q2.gte("monthly_searches", 500).lte("monthly_searches", 5000);
       const fb = await q2.order(adminBest ? "monthly_searches" : "times_assigned", { ascending: adminBest ? false : true }).order("monthly_searches", { ascending: false }).limit(WINDOW);

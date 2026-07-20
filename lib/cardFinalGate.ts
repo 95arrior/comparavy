@@ -23,6 +23,10 @@ const HARD_B2B_RE = /(쇼케이스|박람회|전시회|데모데이|수출상담
 //  공약·예상 단계 제도는 글이 통째로 추측 콘텐츠가 된다(유령 정보 방지 원칙).
 const SPECULATIVE_RE = /(신청|지급|지원)\s?(대상자?|자격)\s?(예상|전망)|(1호\s?)?공약(?![가-힣])|시범\s?도시/;
 
+// ★보고서체 제목(2026-07-20 실측: '정책 변화 현황과 영향받는 주체'·'올바른 구조설계' — 증식 실패 폴백이 뉴스 원제를 그대로 노출).
+//  훅 규칙을 통과한 제목은 이런 단어로 끝나지 않는다 — 보고서 어휘 + 훅 신호(숫자·질문·호명·발화) 부재면 컷.
+const REPORT_TONE_RE = /(현황|주체|방안|구조설계|시사점|제언|고찰|동향|개요|체계)(?![가-힣])/;
+const HOOK_SIGNAL_RE = /(\d|\?|라면|까지|오늘|이번|“|"|만원|원(?![가-힣]))/;
 // ★정답형 도구 키워드(2026-07-15 유저 승인 — 200키워드 SERP 실측 자료: '4대보험 계산기' 블로그 비중 36%).
 //  계산기류는 공식 사이트·계산기 위젯이 상단을 잠식 — 검색자가 원하는 건 '도구'인데 블로그 글엔 도구가 없어
 //  문서수가 적어도(별점 높아 보여도) 블로그가 이겨본 적 없는 자리다. 채널 무관 하드컷.
@@ -69,6 +73,8 @@ export function finalGate<T extends GateCard>(cards: T[]): { pass: T[]; drops: G
     if (ANSWER_TOOL_RE.test(text)) { drops.push({ keyword: c.keyword, reason: "answer_tool" }); continue; }
     // 1.6) AI 브리핑 한 줄 종결형(정의) — 케이스 분기 신호 없으면 AI 요약으로 끝나 클릭이 남지 않는 자리
     if (AI_DEFINITION_RE.test(c.keyword) && !CASE_BRANCH_RE.test(c.keyword)) { drops.push({ keyword: c.keyword, reason: "ai_one_liner" }); continue; }
+    // 1.7) 보고서체 제목(2026-07-20 실측) — 뉴스 원제 폴백 노출 차단: 사람이 클릭할 훅이 없는 논문 목차형
+    if (REPORT_TONE_RE.test(c.title) && !HOOK_SIGNAL_RE.test(c.title)) { drops.push({ keyword: c.keyword, reason: "report_tone" }); continue; }
     // 2) 죽은 공고·행사(행동 창 닫힘)
     if (DEAD_RE.test(text)) { drops.push({ keyword: c.keyword, reason: "dead_event" }); continue; }
     // 3) 읽고 끝나는 뉴스성

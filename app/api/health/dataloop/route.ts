@@ -34,5 +34,18 @@ export async function GET(request: Request) {
     const { count } = await db.from("renewal_queue").select("id", { count: "exact", head: true }).eq("status", "pending");
     out.renewalPending = count ?? 0;
   } catch { out.renewalPending = null; }
+  // ★티어 실측(2026-07-20 — 밴드 초과 글감 진단): 블로그별 사다리 판정을 집계로 노출(채널·티어·승수·표본만)
+  try {
+    const { data: profs } = await db.from("blog_profiles").select("id, user_id, channel").limit(6);
+    const { computeBlogTier } = await import("@/lib/blogTier");
+    const tiers: unknown[] = [];
+    for (const p of profs ?? []) {
+      try {
+        const t = await computeBlogTier(db, String(p.user_id), String(p.id));
+        if (t) tiers.push({ channel: (p as { channel?: string | null }).channel ?? "naver", tier: t.tier, wins: t.wins, sample: t.sample });
+      } catch { /* skip */ }
+    }
+    out.tiers = tiers;
+  } catch { out.tiers = null; }
   return NextResponse.json(out);
 }

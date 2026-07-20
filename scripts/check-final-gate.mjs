@@ -42,6 +42,10 @@ const cases = [
   { c: { keyword: "ISA 세금 계산", title: "ISA 만기 세금 계산, 소득구간별로 다릅니다" }, drop: null }, // 분기 신호 '계산' 구제
   { c: { keyword: "연금저축 IRP 차이", title: "연금저축 IRP 차이, 내 소득이면 어디부터" }, drop: null },
   { c: { keyword: "국민연금 수령 나이", title: "국민연금 수령 나이, 출생연도별 정리" }, drop: null }, // 시점형 — 컷 아닌 감점 영역
+  // ★2026-07-20 실측 — 증식 실패 폴백이 뉴스 원제(보고서체)를 노출: 훅 신호 없는 논문 목차형 컷
+  { c: { keyword: "부동산 초과이윤 과세", title: "부동산 초과이윤 과세, 정책 변화 현황과 영향받는 주체" }, drop: "report_tone" },
+  { c: { keyword: "가족법인 절세", title: "가족법인으로 절세하기, 주의할 함정과 올바른 구조설계" }, drop: "report_tone" },
+  { c: { keyword: "재산세 부과 기준", title: "재산세 부과 현황이 궁금하다면? 7월 고지서 확인법" }, drop: null }, // 보고서 단어 있어도 훅(?·7월) 있으면 통과
 ];
 let fail = 0;
 for (const { c, drop } of cases) {
