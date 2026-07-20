@@ -1079,15 +1079,27 @@ export async function GET(req: Request) {
   } catch { /* 조용히 생략 */ }
 
   const shuffled = shuffle(topics, rng);
+  // ★밴드 불변식(2026-07-20 최종 검문 — 실측: 봉쇄 후에도 6,950~26,180 노출, 출처 미상): 어떤 경로로 왔든
+  //  응답 직전 검색량이 밴드 상한 1.5배를 넘는 카드는 차단하고 출처를 로그로 남긴다(헤드 배팅 배지는 의도된 예외).
+  const bandCeil = (FF.tierBands ? TIER_BANDS[tierInfo?.tier ?? "SEEDLING"].volMax : 30000) * 1.5;
+  const bandInvariant = <T extends { keyword?: string; vol?: number; demandBadge?: string }>(list: T[], where: string): T[] =>
+    list.filter((c) => {
+      const v = Number(c.vol ?? 0);
+      if (v > bandCeil && !String(c.demandBadge ?? "").includes("헤드 배팅")) {
+        console.error(`[band-invariant] ${where} 누출 차단: ${c.keyword} vol=${v} ceil=${bandCeil}`);
+        return false;
+      }
+      return true;
+    });
   if (tailMode === "long") {
     const g = finalGate(shuffled as { keyword: string; title: string }[]);
     if (g.drops.length) console.log("[final-gate:long]", JSON.stringify(g.drops));
     if (debugMode) diag.finalGateDrops = g.drops;
-    return NextResponse.json(debugMode ? { topics: g.pass, diag: { ...diag, mode: "long", poolCards: g.pass.length } } : { topics: g.pass, ...(FF.perfLoop ? { ff: { perfLoop: true } } : {}), ...(FF.tierBands && tierInfo ? { tier: { name: tierInfo.tier, note: tierInfo.note } } : {}) });
+    return NextResponse.json(debugMode ? { topics: bandInvariant(g.pass, "long"), diag: { ...diag, mode: "long", poolCards: g.pass.length } } : { topics: bandInvariant(g.pass, "long"), ...(FF.perfLoop ? { ff: { perfLoop: true } } : {}), ...(FF.tierBands && tierInfo ? { tier: { name: tierInfo.tier, note: tierInfo.note } } : {}) });
   }
   // ★tier별 종족 비율(FF_TIER_MIX §4) — 상위 10슬롯의 트렌드:에버그린 배분. 별도 레이어:
   //  boost(시리즈·후속) 최우선 고정, 트렌드 내부 순서(공고 쿼터 포함)와 에버그린 내부 순서는 무수정 — 충돌 시 기존 규칙 승리.
-  let finalList = [...boostCards, ...homefeedCards, ...trendCards, ...shuffled];
+  let finalList = [...boostCards, ...homefeedCards, ...trendCards, ...bandInvariant(shuffled, "home")];
   if (FF.tierMix && tierInfo) {
     const [tw, ew] = TIER_MIX[tierInfo.tier];
     const trends = [...trendCards]; const evers = [...shuffled];
