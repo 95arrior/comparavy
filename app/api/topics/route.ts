@@ -423,6 +423,8 @@ export async function GET(req: Request) {
       data = (fb.data ?? []) as unknown as typeof data;
     }
     const rows = (data ?? []) as PoolRow[];
+    // ★계측(2026-07-20 누출 추적): 이 호출의 밴드 조건·결과 최대 검색량을 자수 기록 — 근본 원인 특정용
+    try { void pool.from("api_cache").upsert({ key: "diag:fetchpool", value: { at: new Date().toISOString(), useSub, ranged, adminBest, tier: tierInfo?.tier ?? null, band: tb ? { min: tb.volMin, max: tb.volMax } : null, rows: rows.length, maxVol: rows.reduce((m, r) => Math.max(m, r.monthly_searches ?? 0), 0) }, expires_at: new Date(Date.now() + 86400_000).toISOString(), updated_at: new Date().toISOString() }); } catch { /* ignore */ }
     // 본인 작성분 제외 + 고른 대상(audience)만 통과
     const out = rows.filter((r) => !usedSet.has(normalizeKeyword(r.keyword)) && !usedForbidden(r.keyword) && !isUnsafeKeyword(r.keyword) && !staleYear(r.keyword) && audMatch(r.keyword, r.audience));
     if (debugMode) {
@@ -1080,17 +1082,24 @@ export async function GET(req: Request) {
 
   const shuffled = shuffle(topics, rng);
   // ★밴드 불변식(2026-07-20 최종 검문 — 실측: 봉쇄 후에도 6,950~26,180 노출, 출처 미상): 어떤 경로로 왔든
-  //  응답 직전 검색량이 밴드 상한 1.5배를 넘는 카드는 차단하고 출처를 로그로 남긴다(헤드 배팅 배지는 의도된 예외).
+  //  응답 직전 검색량이 밴드 상한 1.5배 초과 카드는 차단, 차단 내역은 api_cache(diag:band_leak)에 자수 기록.
   const bandCeil = (FF.tierBands ? TIER_BANDS[tierInfo?.tier ?? "SEEDLING"].volMax : 30000) * 1.5;
-  const bandInvariant = <T extends { keyword?: string; vol?: number; demandBadge?: string }>(list: T[], where: string): T[] =>
-    list.filter((c) => {
+  const bandInvariant = <T extends { keyword?: string; vol?: number; demandBadge?: string }>(list: T[], where: string): T[] => {
+    const leaked: { where: string; keyword: string; vol: number }[] = [];
+    const out = list.filter((c) => {
       const v = Number(c.vol ?? 0);
       if (v > bandCeil && !String(c.demandBadge ?? "").includes("헤드 배팅")) {
-        console.error(`[band-invariant] ${where} 누출 차단: ${c.keyword} vol=${v} ceil=${bandCeil}`);
+        leaked.push({ where, keyword: String(c.keyword ?? ""), vol: v });
         return false;
       }
       return true;
     });
+    if (leaked.length) {
+      console.error(`[band-invariant] ${where} 누출 ${leaked.length}건 차단`, JSON.stringify(leaked.slice(0, 5)));
+      try { void pool.from("api_cache").upsert({ key: "diag:band_leak", value: { at: new Date().toISOString(), tier: tierInfo?.tier ?? null, ceil: bandCeil, items: leaked.slice(0, 10) }, expires_at: new Date(Date.now() + 86400_000).toISOString(), updated_at: new Date().toISOString() }); } catch { /* ignore */ }
+    }
+    return out;
+  };
   if (tailMode === "long") {
     const g = finalGate(shuffled as { keyword: string; title: string }[]);
     if (g.drops.length) console.log("[final-gate:long]", JSON.stringify(g.drops));

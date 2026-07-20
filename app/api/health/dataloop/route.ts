@@ -62,6 +62,11 @@ export async function GET(request: Request) {
     const { count: alive } = await db.from("trend_topics").select("id", { count: "exact", head: true }).gt("expires_at", now);
     out.trendPool = { total: trendAll ?? 0, alive: alive ?? 0 };
   } catch { out.trendPool = null; }
+  // ★자수 기록 판독(2026-07-20 3차): 불변식 차단 내역 + fetchPool 실제 조건·결과
+  try {
+    const { data: diags } = await db.from("api_cache").select("key, value, updated_at").in("key", ["diag:band_leak", "diag:fetchpool"]);
+    out.diag = Object.fromEntries((diags ?? []).map((d) => [d.key, { ...(d.value as object), _updated: d.updated_at }]));
+  } catch { out.diag = null; }
   // ★카드 출처 추적(2026-07-20 2차 — 봉쇄 후에도 6,950~26,180 노출): 화면 키워드의 실제 저장값(검색량·sub·vertical)
   if (new URL(request.url).searchParams.get("probe") === "kw") {
     try {
