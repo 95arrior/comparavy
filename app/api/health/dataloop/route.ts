@@ -47,5 +47,20 @@ export async function GET(request: Request) {
     }
     out.tiers = tiers;
   } catch { out.tiers = null; }
+  // ★밴드 미적용 진단(2026-07-20 실측: SEEDLING인데 8.8만 노출) — 캐시된 티어·FF 상태·트렌드 공급량까지 한 방에
+  try {
+    const { FF } = await import("@/config/featureFlags");
+    out.ff = { tierBands: FF.tierBands, tierMix: FF.tierMix, homefeedBet: FF.homefeedBet };
+  } catch { /* ignore */ }
+  try {
+    const { data: caches } = await db.from("api_cache").select("key, value, expires_at").like("key", "blog_tier:%").limit(6);
+    out.tierCache = (caches ?? []).map((c) => ({ tier: (c.value as { tier?: string } | null)?.tier ?? null, wins: (c.value as { wins?: number } | null)?.wins ?? null, expiresAt: c.expires_at }));
+  } catch { out.tierCache = null; }
+  try {
+    const since48 = new Date(Date.now() - 48 * 3600_000).toISOString();
+    const { count: trendAll } = await db.from("trend_topics").select("id", { count: "exact", head: true });
+    const { count: trend48 } = await db.from("trend_topics").select("id", { count: "exact", head: true }).gte("updated_at", since48);
+    out.trendPool = { total: trendAll ?? 0, fresh48h: trend48 ?? 0 };
+  } catch { out.trendPool = null; }
   return NextResponse.json(out);
 }
