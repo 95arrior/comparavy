@@ -57,10 +57,10 @@ export async function GET(request: Request) {
     out.tierCache = (caches ?? []).map((c) => ({ tier: (c.value as { tier?: string } | null)?.tier ?? null, wins: (c.value as { wins?: number } | null)?.wins ?? null, expiresAt: c.expires_at }));
   } catch { out.tierCache = null; }
   try {
-    const since48 = new Date(Date.now() - 48 * 3600_000).toISOString();
+    const now = new Date().toISOString();
     const { count: trendAll } = await db.from("trend_topics").select("id", { count: "exact", head: true });
-    const { count: trend48 } = await db.from("trend_topics").select("id", { count: "exact", head: true }).gte("updated_at", since48);
-    out.trendPool = { total: trendAll ?? 0, fresh48h: trend48 ?? 0 };
+    const { count: alive } = await db.from("trend_topics").select("id", { count: "exact", head: true }).gt("expires_at", now);
+    out.trendPool = { total: trendAll ?? 0, alive: alive ?? 0 };
   } catch { out.trendPool = null; }
   return NextResponse.json(out);
 }
