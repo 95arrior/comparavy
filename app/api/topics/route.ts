@@ -370,6 +370,16 @@ export async function GET(req: Request) {
   //  ★콜드스타트 개정(2026-07-15 유저 확정): 순위 데이터 없음 = 판정 불가(null·밴드 무효)가 아니라 신생기 '시작값'.
   //  종전 null 폴백이 신생 블로그에 헤드 키워드를 혼입시킴(돼지통 실측: 수요 5천~8만 글 전부 30위 밖, 유입 주역은 월 300~800 니치).
   let tierInfo: TierResult | null = null;
+  const fpDiag: unknown[] = []; // ★계측 수집(2026-07-20)
+  const leakedAll: { where: string; keyword: string; vol: number }[] = [];
+  const writeDiag = async () => { // 응답 직전 1회 await — 서버리스에서 확실히 남긴다
+    try {
+      await pool.from("api_cache").upsert([
+        { key: "diag:fetchpool", value: { at: new Date().toISOString(), calls: fpDiag.slice(0, 8) }, expires_at: new Date(Date.now() + 86400_000).toISOString(), updated_at: new Date().toISOString() },
+        { key: "diag:band_leak", value: { at: new Date().toISOString(), items: leakedAll.slice(0, 10) }, expires_at: new Date(Date.now() + 86400_000).toISOString(), updated_at: new Date().toISOString() },
+      ]);
+    } catch { /* ignore */ }
+  };
   async function loadTier(): Promise<TierResult | null> {
     if (!FF.tierBands) return null;
     if (tierInfo) return tierInfo;
@@ -423,8 +433,8 @@ export async function GET(req: Request) {
       data = (fb.data ?? []) as unknown as typeof data;
     }
     const rows = (data ?? []) as PoolRow[];
-    // ★계측(2026-07-20 누출 추적): 이 호출의 밴드 조건·결과 최대 검색량을 자수 기록 — 근본 원인 특정용
-    try { void pool.from("api_cache").upsert({ key: "diag:fetchpool", value: { at: new Date().toISOString(), useSub, ranged, adminBest, tier: tierInfo?.tier ?? null, band: tb ? { min: tb.volMin, max: tb.volMax } : null, rows: rows.length, maxVol: rows.reduce((m, r) => Math.max(m, r.monthly_searches ?? 0), 0) }, expires_at: new Date(Date.now() + 86400_000).toISOString(), updated_at: new Date().toISOString() }); } catch { /* ignore */ }
+    // ★계측(2026-07-20 누출 추적): 이 호출의 밴드 조건·결과 최대 검색량 수집 — 응답 직전 await 기록(void는 서버리스에서 살해됨)
+    fpDiag.push({ useSub, ranged, adminBest, tier: tierInfo?.tier ?? null, band: tb ? { min: tb.volMin, max: tb.volMax } : null, rows: rows.length, maxVol: rows.reduce((m, r) => Math.max(m, r.monthly_searches ?? 0), 0) });
     // 본인 작성분 제외 + 고른 대상(audience)만 통과
     const out = rows.filter((r) => !usedSet.has(normalizeKeyword(r.keyword)) && !usedForbidden(r.keyword) && !isUnsafeKeyword(r.keyword) && !staleYear(r.keyword) && audMatch(r.keyword, r.audience));
     if (debugMode) {
@@ -1096,7 +1106,7 @@ export async function GET(req: Request) {
     });
     if (leaked.length) {
       console.error(`[band-invariant] ${where} 누출 ${leaked.length}건 차단`, JSON.stringify(leaked.slice(0, 5)));
-      try { void pool.from("api_cache").upsert({ key: "diag:band_leak", value: { at: new Date().toISOString(), tier: tierInfo?.tier ?? null, ceil: bandCeil, items: leaked.slice(0, 10) }, expires_at: new Date(Date.now() + 86400_000).toISOString(), updated_at: new Date().toISOString() }); } catch { /* ignore */ }
+      leakedAll.push(...leaked);
     }
     return out;
   };
@@ -1104,7 +1114,9 @@ export async function GET(req: Request) {
     const g = finalGate(shuffled as { keyword: string; title: string }[]);
     if (g.drops.length) console.log("[final-gate:long]", JSON.stringify(g.drops));
     if (debugMode) diag.finalGateDrops = g.drops;
-    return NextResponse.json(debugMode ? { topics: bandInvariant(g.pass, "long"), diag: { ...diag, mode: "long", poolCards: g.pass.length } } : { topics: bandInvariant(g.pass, "long"), ...(FF.perfLoop ? { ff: { perfLoop: true } } : {}), ...(FF.tierBands && tierInfo ? { tier: { name: tierInfo.tier, note: tierInfo.note } } : {}) });
+    const passLong = bandInvariant(g.pass, "long");
+    await writeDiag();
+    return NextResponse.json(debugMode ? { topics: passLong, diag: { ...diag, mode: "long", poolCards: g.pass.length } } : { topics: passLong, ...(FF.perfLoop ? { ff: { perfLoop: true } } : {}), ...(FF.tierBands && tierInfo ? { tier: { name: tierInfo.tier, note: tierInfo.note } } : {}) });
   }
   // ★tier별 종족 비율(FF_TIER_MIX §4) — 상위 10슬롯의 트렌드:에버그린 배분. 별도 레이어:
   //  boost(시리즈·후속) 최우선 고정, 트렌드 내부 순서(공고 쿼터 포함)와 에버그린 내부 순서는 무수정 — 충돌 시 기존 규칙 승리.
@@ -1122,5 +1134,6 @@ export async function GET(req: Request) {
     }
     finalList = [...boostCards, ...homefeedCards, ...mixed, ...(headBetCards as typeof finalList), ...trends, ...evers];
   }
+  await writeDiag();
   return NextResponse.json(debugMode ? { topics: finalList, diag: { ...diag, boost: boostCards.length, trendCards: trendCards.length, poolCards: shuffled.length } } : { topics: finalList, ...(FF.tierBands && tierInfo ? { tier: { name: tierInfo.tier, note: tierInfo.note } } : {}) });
 }
