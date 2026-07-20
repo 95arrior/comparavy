@@ -62,5 +62,12 @@ export async function GET(request: Request) {
     const { count: alive } = await db.from("trend_topics").select("id", { count: "exact", head: true }).gt("expires_at", now);
     out.trendPool = { total: trendAll ?? 0, alive: alive ?? 0 };
   } catch { out.trendPool = null; }
+  // ★신생 밴드 공급량(2026-07-20 — 밴드 내 키워드 고갈 여부 실측): 경제·재테크 풀에서 500~3,000 구간이 몇 개인가
+  try {
+    const { count: banded } = await db.from("keyword_pool").select("keyword", { count: "exact", head: true })
+      .eq("vertical", "online").eq("sub", "경제·재테크").gte("monthly_searches", 500).lte("monthly_searches", 3000).neq("competition", "높음");
+    const { count: all } = await db.from("keyword_pool").select("keyword", { count: "exact", head: true }).eq("vertical", "online").eq("sub", "경제·재테크");
+    out.pool = { economyTotal: all ?? 0, seedlingBand: banded ?? 0 };
+  } catch { out.pool = null; }
   return NextResponse.json(out);
 }
