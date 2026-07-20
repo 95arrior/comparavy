@@ -62,6 +62,20 @@ export async function GET(request: Request) {
     const { count: alive } = await db.from("trend_topics").select("id", { count: "exact", head: true }).gt("expires_at", now);
     out.trendPool = { total: trendAll ?? 0, alive: alive ?? 0 };
   } catch { out.trendPool = null; }
+  // ★카드 출처 추적(2026-07-20 2차 — 봉쇄 후에도 6,950~26,180 노출): 화면 키워드의 실제 저장값(검색량·sub·vertical)
+  if (new URL(request.url).searchParams.get("probe") === "kw") {
+    try {
+      const stems = ["중개수수료", "부동산경매사이트", "재테크", "P2P", "물건경매"];
+      const found: unknown[] = [];
+      for (const st of stems) {
+        const { data } = await db.from("keyword_pool").select("keyword, monthly_searches, sub, vertical, competition").ilike("keyword", `%${st}%`).order("monthly_searches", { ascending: false }).limit(3);
+        for (const r of data ?? []) found.push(r);
+      }
+      out.kwProbe = found;
+      const { data: profs2 } = await db.from("blog_profiles").select("vertical, sub_category, is_active, channel").limit(6);
+      out.profiles = profs2 ?? [];
+    } catch { out.kwProbe = null; }
+  }
   // ★신생 밴드 공급량(2026-07-20 — 밴드 내 키워드 고갈 여부 실측): 경제·재테크 풀에서 500~3,000 구간이 몇 개인가
   try {
     const { count: banded } = await db.from("keyword_pool").select("keyword", { count: "exact", head: true })
