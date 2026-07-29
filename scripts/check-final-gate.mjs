@@ -5,6 +5,7 @@ import { isPushable, pushGain, isZeroClickQuery } from "../lib/serpCtr.ts";
 import { pruneDeadTocLinks } from "../lib/wordpress.ts";
 import { lacksConditionBranch, duplicateSlotSubjects } from "../lib/editorial.ts";
 import { parseQueryText, clusterQueries } from "../lib/hubTopics.ts";
+import { scanLifespan } from "../lib/topicLifespan.ts";
 const cases = [
   { c: { keyword: "강서구 평생교육이용권", title: "강서구 평생교육이용권 2차 지원 신청 방법과 사용처" }, drop: "region_niche" },
   { c: { keyword: "대구 섬유염색업 버팀이음", title: "대구 섬유염색업 고용안정 버팀이음 프로젝트 신청 대상" }, drop: "region_niche" },
@@ -265,6 +266,33 @@ for (const [q, expect] of zeroCases) {
     if (!ok) fail++;
     console.log(ok ? "OK " : "FAIL", "| slot-dup |", name, "→", got ? "중복(재생성)" : "통과");
   }
+}
+
+// ★글감 수명·천장 판정(2026-07-29 — 측정 전용, 아직 차단 안 함). 주간 조회수 실측이 근거다:
+//  전국·상시는 살고(은행 금리비교 136·채무탕감 128·삼성카드 87), 지역·시효·회차는 죽는다(경남 추경 7·루원시티 8·대구 10).
+{
+  const lifeCases = [
+    ["은행 금리비교", "은행 금리비교, 내 통장에 맞는 최고 금리 찾는 법", []],
+    ["정부지원 채무탕감", "정부지원 채무탕감 신청 방법, 2026년 기준으로 정리했습니다", []],
+    ["삼성카드 발급조회", "삼성카드 발급조회, 심사중일 때 이렇게 확인하면 됩니다", []],
+    ["경남 2차 추경 고유가 피해지원금", "경남 2차 추경 7098억 고유가 피해지원금 대상 확인법", ["province", "round"]],
+    ["루원시티 SK 리더스뷰 청약", "루원시티 SK 리더스뷰 불법행위 재공급 청약, 7월 13일 마감", ["dated"]],
+    ["대구 임산부 친환경 꾸러미", "대구 임산부 친환경 꾸러미, 80% 지원받고 신청하는 법", ["metro_city"]],
+    ["전입신고 기간", "전입신고 기간, 늦으면 진짜 불이익이 있나요?", []], // '기간'은 시효 아님 — 오검출 방지
+    ["2026년 연말정산", "2026년 연말정산, 달라지는 공제 한도", []], // 연도만 있는 건 시효 아님
+  ];
+  for (const [kw, title, expect] of lifeCases) {
+    const got = scanLifespan(kw, title, null, 0).reasons.sort();
+    const ok = JSON.stringify(got) === JSON.stringify([...expect].sort());
+    if (!ok) fail++;
+    console.log(ok ? "OK " : "FAIL", "| lifespan |", kw.slice(0, 22).padEnd(24), "→", got.join(",") || "전국·상시");
+  }
+  // 천장 판정 — 임계 미만만 걸린다
+  const ceil = scanLifespan("1톤 전기트럭 중고 지원금", "", 40, 100).reasons.includes("low_ceiling")
+    && !scanLifespan("은행 금리비교", "", 8800, 100).reasons.includes("low_ceiling")
+    && !scanLifespan("검색량 없음", "", null, 100).reasons.includes("low_ceiling"); // 데이터 없으면 판정 보류
+  if (!ceil) fail++;
+  console.log(ceil ? "OK " : "FAIL", "| lifespan | 천장 임계 판정");
 }
 
 process.exit(fail ? 1 : 0);
