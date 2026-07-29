@@ -1,4 +1,7 @@
 import { finalGate, adsenseUnsafe } from "../lib/cardFinalGate.ts";
+import { nearDuplicate } from "../lib/diversity.ts";
+import { isStickyFrame, pickDiverseCopy } from "../lib/thumbCopyDiversity.ts";
+import { isPushable, pushGain, isZeroClickQuery } from "../lib/serpCtr.ts";
 const cases = [
   { c: { keyword: "강서구 평생교육이용권", title: "강서구 평생교육이용권 2차 지원 신청 방법과 사용처" }, drop: "region_niche" },
   { c: { keyword: "대구 섬유염색업 버팀이음", title: "대구 섬유염색업 고용안정 버팀이음 프로젝트 신청 대상" }, drop: "region_niche" },
@@ -46,6 +49,18 @@ const cases = [
   { c: { keyword: "부동산 초과이윤 과세", title: "부동산 초과이윤 과세, 정책 변화 현황과 영향받는 주체" }, drop: "report_tone" },
   { c: { keyword: "가족법인 절세", title: "가족법인으로 절세하기, 주의할 함정과 올바른 구조설계" }, drop: "report_tone" },
   { c: { keyword: "재산세 부과 기준", title: "재산세 부과 현황이 궁금하다면? 7월 고지서 확인법" }, drop: null }, // 보고서 단어 있어도 훅(?·7월) 있으면 통과
+  // ★2026-07-24 대기업/기관 사칭 대출(삼성재단대출류) 하드컷 — 실존 상품 아님(스팸·불법사금융). 정식 정부·서민금융·지원금은 통과.
+  { c: { keyword: "삼성재단대출", title: "삼성재단대출 신청 조건과 한도 정리" }, drop: "scam_loan" },
+  { c: { keyword: "현대그룹 대출", title: "현대그룹 대출 서류 없이 당일 승인" }, drop: "scam_loan" },
+  { c: { keyword: "무직자 대출", title: "무직자 대출 가능한 곳 총정리" }, drop: "scam_loan" },
+  { c: { keyword: "민생지원금 신청", title: "민생지원금 신청 방법과 대상, 언제부터 받나" }, drop: null },
+  { c: { keyword: "재난지원금 대상", title: "재난지원금 대상과 신청 기간 확인" }, drop: null },
+  { c: { keyword: "디딤돌 대출 조건", title: "디딤돌 대출 조건과 한도, 소득별 정리" }, drop: null },
+  { c: { keyword: "햇살론 자격", title: "햇살론 자격과 신청 순서 정리" }, drop: null },
+  // ★2026-07-24 스타트업 정책자금(독자=창업자 담당자 소수, B2C 신호 없음) — B2B 컷. 소상공인/청년은 B2C 신호로 통과 유지.
+  { c: { keyword: "스타트업 정책자금", title: "스타트업이 놓치기 쉬운 정부지원금·정책자금 신청 체크리스트" }, drop: "b2b_audience" },
+  { c: { keyword: "벤처기업 지원사업", title: "벤처기업 지원사업 모집, 신청 전 확인" }, drop: "b2b_audience" },
+  { c: { keyword: "청년 창업 지원금", title: "청년 창업 지원금 신청 방법과 대상" }, drop: null },
 ];
 let fail = 0;
 for (const { c, drop } of cases) {
@@ -66,4 +81,101 @@ for (const [t, bad] of ad) {
   if (!ok) fail++;
   console.log(ok ? "OK " : "FAIL", "| adsense |", t, "→", got ? "부적합" : "통과");
 }
+// ★근접 중복(2026-07-24 유저 실측: 'CMA 추천' ↔ 'CMA통장 추천'이 통째 통과) — true=같은 글로 잡아야, false=서로 다른 글.
+//  코어 명사 환원(수식어 인픽스 '통장'·'추천' 제거)으로 잡되, 다른 금융 상품(정기예금↔정기적금)은 안 잡혀야 한다.
+const dupCases = [
+  ["CMA 추천", "CMA통장 추천", true],
+  ["ETF 추천", "ETF 종류", true],
+  ["청년도약계좌 조건", "청년도약계좌 신청 방법", true],
+  ["ISA 계좌 개설 방법", "ISA 계좌 개설하는 법", true],
+  ["정기예금 금리", "정기적금 금리", false],
+  ["전세자금대출 금리", "주택담보대출 금리", false],
+  ["국민연금 수령 나이", "건강보험 피부양자 조건", false],
+];
+for (const [a, b, expect] of dupCases) {
+  const got = nearDuplicate(a, b);
+  const ok = got === expect;
+  if (!ok) fail++;
+  console.log(ok ? "OK " : "FAIL", "| dup |", `${a} ~ ${b}`, "→", got);
+}
+// ★썸네일 문구 다양성(2026-07-29 유저 실측: 발행 4편이 전부 '가장 많이 ~' 한 틀 — 목록이 한 글처럼 보였다).
+//  true=어느 글에나 붙는 범용 프레임(실격), false=이 글 고유 각도.
+const stickyCases = [
+  ["가장 많이 헷갈리는 곳", true],
+  ["가장 많이 착각하는 구간", true],
+  ["가장 많이 빠지는 함정", true],
+  ["여기서 가장 많이 걸립니다", true],
+  ["많이들 놓칩니다", true],
+  ["흔히 하는 실수", true],
+  ["신청 전 5분", false],
+  ["작년과 달라졌어요", false],
+  ["30만원이 갈립니다", false],
+  ["서류부터 챙기세요", false],
+];
+for (const [c, expect] of stickyCases) {
+  const got = isStickyFrame(c);
+  const ok = got === expect;
+  if (!ok) fail++;
+  console.log(ok ? "OK " : "FAIL", "| sticky |", c, "→", got ? "범용(실격)" : "고유");
+}
+// 역할 로테이션 — ①항상 첫 후보(실수)만 집던 v3 회귀 방지 ②범용 프레임은 1차 배제 ③전부 범용이면 그래도 하나는 낸다
+const roleCands = [
+  { role: 1, copy: "가장 많이 틀리는 곳" }, // 범용 — 대체 후보가 있으면 절대 채택되면 안 된다
+  { role: 2, copy: "서류부터 챙기세요" },
+  { role: 3, copy: "30만원이 갈립니다" },
+  { role: 4, copy: "조건이 나뉩니다" },
+  { role: 5, copy: "신청 전 5분" },
+  { role: 6, copy: "기한이 지나면" },
+];
+const pass = () => true;
+const picks = new Set(["a1", "b7", "c3", "d9", "e5", "f2", "g8", "h4"].map((s) => pickDiverseCopy(roleCands, s, pass)));
+const noSticky = [...picks].every((p) => p && !isStickyFrame(p));
+const rotates = picks.size >= 3; // 시드 8개가 최소 3역할로 흩어져야(v3는 항상 1개)
+for (const [name, ok] of [["범용 배제", noSticky], ["역할 분산", rotates]]) {
+  if (!ok) fail++;
+  console.log(ok ? "OK " : "FAIL", "| thumb-role |", name, "→", [...picks].join(" / "));
+}
+const onlySticky = pickDiverseCopy([{ role: 1, copy: "가장 많이 틀리는 곳" }], "seed", pass);
+const okFallback = onlySticky === "가장 많이 틀리는 곳"; // 전부 범용이면 2차에서 허용(문구 없음보다 낫다)
+if (!okFallback) fail++;
+console.log(okFallback ? "OK " : "FAIL", "| thumb-role | 전부 범용이면 허용 →", onlySticky);
+
+// ★승부처 판정(2026-07-29 GSC 실측: 전 키워드 5.8~7.9위·클릭 0 — 1페이지 아래쪽이 진짜 병목).
+const pushCases = [
+  [7.6, true],   // 저평가 우량주 찾는 법 — 노출 39, 최우선 승부처
+  [5.8, true],   // 새마을금고 특판
+  [10.4, true],  // 1페이지 끝자락도 승부처
+  [3.2, false],  // 이미 상위 3 — 밀 대상 아님
+  [10.9, false], // 2페이지 — 아직 이르다
+  [24.0, false],
+];
+for (const [pos, expect] of pushCases) {
+  const got = isPushable(pos);
+  const ok = got === expect;
+  if (!ok) fail++;
+  console.log(ok ? "OK " : "FAIL", "| push |", `${pos}위`, "→", got ? "승부처" : "제외");
+}
+// 순위가 나쁠수록·노출이 클수록 화력 우선순위가 높다(3위 기준 기대 클릭 증가분)
+const gainOrder = pushGain(39, 7.6) > pushGain(12, 7.9) && pushGain(39, 7.6) > pushGain(39, 4.0);
+if (!gainOrder) fail++;
+console.log(gainOrder ? "OK " : "FAIL", "| push | 우선순위 = 노출×순위갭");
+
+// ★제로클릭 검색어(2026-07-29 실측: '국채금리란'·'국채 뜻'이 노출 9·클릭 0) — 성과 집계에서 빼야 승부처가 가려지지 않는다.
+const zeroCases = [
+  ["국채금리란", true],
+  ["국채 뜻", true],
+  ["ISA란", true],
+  ["앱테크란 무엇인가요", true],
+  ["연말정산 뜻과 계산 방법", false], // 케이스 분기 신호 → 구제
+  ["전세 대란", false],               // '대란' 오검출 방지
+  ["저평가 우량주 찾는 법", false],
+  ["새마을금고 특판", false],
+];
+for (const [q, expect] of zeroCases) {
+  const got = isZeroClickQuery(q);
+  const ok = got === expect;
+  if (!ok) fail++;
+  console.log(ok ? "OK " : "FAIL", "| zero-click |", q, "→", got ? "제외" : "집계");
+}
+
 process.exit(fail ? 1 : 0);

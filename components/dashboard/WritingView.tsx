@@ -52,6 +52,7 @@ export default function WritingView({
   const [totalHtml, setTotalHtml] = useState(""); // 스트림으로 도착한 전체 HTML(제목 포함)
   const [finished, setFinished] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [revising, setRevising] = useState(false); // ★서버가 품질 가드 재생성 중 — 완성 초안은 유지한 채 '다듬는 중' 표시
 
   const titleRef = useRef("");
   const bodyRef = useRef("");
@@ -188,8 +189,14 @@ export default function WritingView({
             titleRef.current = msg.title ?? "";
             recompute();
           } else if (msg.type === "body") {
-            bodyRef.current = msg.html ?? "";
+            // ★축소 방어(2026-07-24) — 완성된 본문을 짧은 조각이 '교체'해 스켈레톤으로 붕괴하던 현상 차단.
+            //  서버 재생성은 이제 무음(body 미전송)이지만, 어떤 경로로든 크게 짧아지는 body는 무시(완결 전까지).
+            const html = msg.html ?? "";
+            if (!finished && html.length + 24 < bodyRef.current.length) continue;
+            bodyRef.current = html;
             recompute();
+          } else if (msg.type === "revising") {
+            setRevising(true); // 완성 초안은 그대로 두고 하단 상태만 '다듬는 중'
           } else if (msg.type === "done" && msg.article) {
             doneArtRef.current = msg.article;
             streamDoneRef.current = true;
@@ -277,14 +284,22 @@ export default function WritingView({
           <OpsBoard params={params} compact />
           <div className="prose prose-neutral max-w-none mt-5 [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:tracking-tight [&_h1]:leading-snug">
             <span dangerouslySetInnerHTML={{ __html: shownHtml }} />
-            {!finished && (
+            {!finished && (revising ? (
+              // ★품질 가드 재생성 중 — 완성 초안은 위에 그대로 두고, 멈춘 게 아니라 다듬는 중임을 알린다.
+              <div className="mt-5 not-prose">
+                <span className="inline-flex items-center gap-2 rounded-full bg-[#1D75F7]/10 px-3.5 py-1.5 text-[13px] font-bold text-[#1D75F7]">
+                  <span className="ateflo-skel h-3.5 w-3.5 rounded-full" />
+                  더 좋은 글로 다듬고 있어요…
+                </span>
+              </div>
+            ) : (
               // ★다음 문단의 자리 — 완결될 때까지 꼬리에 상주(제목 뒤 웹검색 구간·블록 사이 공백에도 죽은 화면 없음)
               <div className="mt-5 space-y-3 not-prose" aria-hidden>
                 <div className="ateflo-skel h-4 w-full rounded" />
                 <div className="ateflo-skel h-4 w-11/12 rounded" />
                 <div className="ateflo-skel h-4 w-3/5 rounded" />
               </div>
-            )}
+            ))}
           </div>
           </div>
         )}

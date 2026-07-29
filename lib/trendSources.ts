@@ -157,6 +157,15 @@ export async function gatherHeadlinesWithStats(category: string): Promise<{ head
     //  고갈은 즉석 수확·공고형 쿼리 다변화로 감수 — 가짜 신선보다 빈 보드가 정직하다.
   }
 
+  // ★실시간 급상승(구글 트렌드 KR) 합류(2026-07-24 유저: "민생지원금신청 왜 안 주냐") — 이 그룹은 seed="실시간급상승"이라
+  //  위 카테고리 시드 순회에서 통째로 빠져 '수집만 되고 전량 폐기'되던 실측 버그. 설계 의도(line 105 "전 카테고리 공통,
+  //  관련성은 선별 게이트가 거른다")를 복원: 씨앗으로 태워 합성 프롬프트가 보게 하고, 카테고리 정합은 합성 LLM이 재선별.
+  //  상한 8개(비관련 카테고리 노이즈 억제). fresh=true(하드코딩)만.
+  {
+    const rising = dedup.filter((h) => h.seed === "실시간급상승" && h.fresh === true).slice(0, 8);
+    if (rising.length) { perSeed["실시간급상승"] = { fresh: rising.length, unverified: 0, stale: 0 }; kept.push(...rising); }
+  }
+
   const stats: GatherStats = {
     raw: all.length,
     fresh: dedup.filter((h) => h.fresh === true).length,

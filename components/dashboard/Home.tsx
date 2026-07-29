@@ -987,8 +987,11 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
     if (src && badge) return `출처 이슈: ${src.slice(0, 22)} · ${badge}`;
     if (src) return `출처 이슈: ${src.slice(0, 30)}`; // ★카드별 진짜 혈통(씨앗 제목) — 무관 헤드라인 인용 문제의 근본 수리
     const lines = (topic.newsContext ?? "").split("\n").filter((l) => l.trim().startsWith("-"));
-    const kwToks = topic.keyword.split(/\s+/).filter((t) => t.length >= 2);
-    const hit = lines.find((l) => kwToks.some((t) => l.includes(t)));
+    // ★일반 토큰(지원/신청/정부…)은 매칭 제외(2026-07-24 실측: '스타트업 정책자금' 카드에 '호우 중대본' 헤드라인이
+    //  '신청·지원' 공통어로 오매칭돼 근거 뉴스로 붙음). 구별력 있는 고유 명사가 겹칠 때만 근거 뉴스로 인정, 아니면 중립 폴백.
+    const NEWS_GENERIC = new Set(["지원금", "지원", "신청", "정부", "보조금", "대상", "조건", "방법", "혜택", "기간", "확인", "세금", "정리", "총정리", "대책", "정책", "2025", "2026"]);
+    const kwToks = topic.keyword.split(/\s+/).filter((t) => t.length >= 2 && !NEWS_GENERIC.has(t));
+    const hit = kwToks.length ? lines.find((l) => kwToks.some((t) => l.includes(t))) : undefined;
     if (hit) { const m = hit.match(/\]\s*([^:]{6,60})/); if (m) return `근거 뉴스: ${m[1].trim().slice(0, 24)}…`; }
     return "오늘 수확된 실시간 이슈 · 신선할 때가 기회"; // ★가짜 정밀함 제거(유저 원칙: UI 숫자도 근거 필수) — 배치 공통 뭉치 건수·미실측 경쟁 주장 폐기
   })();

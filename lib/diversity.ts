@@ -42,6 +42,56 @@ export function normalizeKeyword(k: string): string {
   return k.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+// ─── 근접 중복 판정(2026-07-24 유저: "중복 빡세게 잡아줘") ───────────────
+// 표면 변주(수식어 인픽스 '통장', 조사·어순·연도)만 다른 '사실상 같은 글감'을 잡는다.
+// 실측 실패 쌍: 'CMA 추천'(7/24) ↔ 'CMA통장 추천'(7/17) — 기존 정확일치·앞4자·5-gram·bigram이
+//  전부 인픽스 '통장'에 어긋나 통과. 코어 명사로 환원해 비교하면 cma==cma로 잡힌다.
+// 수식어(각도·형식어) 목록 — 이게 있고 없고는 '검색자군'을 바꾸지 않는다(코어 명사가 같으면 같은 글).
+const DUP_MODIFIER_RE = /(통장|추천|방법|하는\s?법|후기|비교|정리|총정리|완전정리|순위|종류|유형별|유형|가격|이유|조건|기준|신청|대상|자격|혜택|알아보기|안내|정보|가입|개설|만들기|바로가기|총|완전)/g;
+// 코어 비교 시 무시할 일반 토큰(수식·행정 공통어) — 이것만 겹치는 건 '같은 글'이 아니다.
+const DUP_GENERIC_TOK = new Set(["지원금", "지원", "신청", "방법", "정리", "총정리", "조건", "기간", "확인", "세금", "혜택", "정부", "정부지원금", "보조금", "금리", "대출", "연금", "청약", "추천", "통장", "비교", "순위", "종류", "유형", "유형별", "2025", "2026"]);
+
+/** 수식어·공백·문장부호·숫자를 걷어낸 '코어 명사 키'. 두 글감의 코어가 같으면 같은 검색자군으로 본다. */
+export function coreKey(s: string): string {
+  const base = String(s ?? "")
+    .toLowerCase()
+    .replace(/[\s]+/g, "")
+    .replace(/[.,!?~·…'"“”‘’()[\]{}<>|/\\:;\-—_+*#%]/g, "")
+    .replace(/\d+년?/g, ""); // 연도·숫자 제거('2026년 유형별' ↔ '유형별')
+  return base.replace(DUP_MODIFIER_RE, "");
+}
+
+// bigram Dice(0~1) — 거의 같은 문장 판별용. 짧은 금융어 오탐(정기예금↔정기적금) 방지로 임계는 보수적.
+function bigramDice(a: string, b: string): number {
+  const norm = (s: string) => s.toLowerCase().replace(/[\s]+/g, "").replace(/[.,!?~·…'"“”‘’()[\]{}<>|/\\:;\-—_+*#%]/g, "");
+  const x = norm(a), y = norm(b);
+  if (!x || !y) return 0;
+  if (x === y) return 1;
+  const grams = (s: string) => { const g = new Map<string, number>(); for (let i = 0; i < s.length - 1; i++) { const k = s.slice(i, i + 2); g.set(k, (g.get(k) ?? 0) + 1); } return g; };
+  const ga = grams(x), gb = grams(y);
+  let inter = 0; for (const [k, v] of ga) inter += Math.min(v, gb.get(k) ?? 0);
+  return (2 * inter) / (Math.max(1, x.length - 1) + Math.max(1, y.length - 1));
+}
+
+/** 두 글감(키워드·제목)이 '사실상 같은 글'인가 — 표면 변주만 다르면 true. */
+export function nearDuplicate(a: string, b: string): boolean {
+  if (!a || !b) return false;
+  // 1) 코어 명사 정확 일치 — 수식어 인픽스만 다른 쌍(CMA추천 ↔ CMA통장추천)의 핵심 방어.
+  const ca = coreKey(a), cb = coreKey(b);
+  if (ca.length >= 2 && cb.length >= 2 && ca === cb) return true;
+  // 2) 거의 같은 문장(제목 통째 유사) — 오탐 방지로 보수적 임계.
+  if (bigramDice(a, b) >= 0.62) return true;
+  // 3) 비수식어 핵심 토큰 2개 이상이 (포함 매칭) 겹침 — 어순·조사 변주 방어.
+  const toks = (t: string) => t.replace(/[^가-힣a-z0-9 ]/gi, " ").split(/\s+/).filter((w) => w.length >= 2 && !DUP_GENERIC_TOK.has(w));
+  const at = toks(a), bt = toks(b);
+  const small = at.length <= bt.length ? at : bt, big = at.length <= bt.length ? bt : at;
+  if (small.length >= 2) {
+    const hit = small.filter((w) => big.some((x) => x === w || x.includes(w) || w.includes(x))).length;
+    if (hit >= 2 && hit / small.length >= 0.6) return true;
+  }
+  return false;
+}
+
 function hashSeed(s: string): number {
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;

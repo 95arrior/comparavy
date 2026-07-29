@@ -9,6 +9,7 @@ import { fetchNaverAutocomplete } from "./naverAutocomplete";
 import { fetchBlogTotal } from "./naverBlogSearch";
 import { fetchTrend } from "./naverDatalab";
 import { isUnsafeKeyword } from "./keywordSafety";
+import { scamLoan } from "./cardFinalGate";
 import { logUsage } from "./usageLog";
 
 // ★실시간 트렌드 글감 — 카테고리 단위로 '그날 그시간' 트렌드를 종합해 공유 풀에 저장.
@@ -152,6 +153,7 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
       const ti = (it.title ?? "").trim().slice(0, 80);
       if (!kw || !ti || seen.has(kw)) continue;
       if (isUnsafeKeyword(kw) || isUnsafeKeyword(ti)) { drops.push({ keyword: kw, title: ti, reason: "unsafe_brand" }); continue; }
+      if (scamLoan(kw) || scamLoan(ti)) { drops.push({ keyword: kw, title: ti, reason: "unsafe_brand" }); continue; } // 대기업 사칭 대출(삼성재단대출류) — 유입 차단
       if (/20(1[0-9]|2[0-3])/.test(kw) || /20(1[0-9]|2[0-3])/.test(ti)) { drops.push({ keyword: kw, title: ti, reason: "stale_year" }); continue; } // 낡은 연도
       // ★실익 게이트 — utility='없음' 또는 논평형 title은 드롭(reason: no_utility)
       const util = (it.utility ?? "").trim();

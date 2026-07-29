@@ -112,7 +112,9 @@ export async function generateArticle(
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY 가 설정되지 않았습니다.");
 
-  const client = new Anthropic({ apiKey });
+  // ★타임아웃·재시도 상한(2026-07-24 멈춤 조사) — 기본값은 timeout 무제한·maxRetries=2라
+  //  과부하 시 한 번의 생성이 조용히 2회 재시도되며 다분간 '멈춘 것처럼' 보임. 유한 실패로 바꿔 유저가 다시 누르게 한다.
+  const client = new Anthropic({ apiKey, maxRetries: 1, timeout: 120_000 });
   const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
 
   // 한국어는 글자수 기준. 한글 1자 ≈ 1.5~2토큰으로 보고 여유 있게 budget 산정.
@@ -203,7 +205,7 @@ export async function streamArticle(
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY 가 설정되지 않았습니다.");
 
-  const client = new Anthropic({ apiKey });
+  const client = new Anthropic({ apiKey, maxRetries: 1, timeout: 120_000 }); // ★멈춤 방지 — 무제한 timeout·maxRetries=2 기본값 교체
   const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
   const maxTokens = Math.min(16000, Math.ceil(input.maxWords * 2 + 1200));
   const verify = isTimeSensitive(input);

@@ -2,7 +2,7 @@ import { titleSimilarity } from "@/lib/naverRss";
 import { NextResponse, after } from "next/server";
 import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
 import { keywordsToTitles } from "@/lib/topicTitles";
-import { normalizeKeyword } from "@/lib/diversity";
+import { normalizeKeyword, nearDuplicate } from "@/lib/diversity";
 import { audienceOf, AUDIENCE_ALL } from "@/lib/audience";
 import { isUnsafeKeyword, mentionsForeignRegion } from "@/lib/keywordSafety";
 import { regionLevel, buildLocalSeeds, addressRegionTiers } from "@/lib/region";
@@ -175,6 +175,7 @@ export async function GET(req: Request) {
   const GENERIC_TOK = new Set(["지원금", "지원", "신청", "방법", "정리", "총정리", "조건", "기간", "확인", "세금", "혜택", "정부", "정부지원금", "보조금", "금리", "대출", "연금", "청약", "2025", "2026"]);
   const usedForbidden = (cand: string): boolean => {
     for (const u of usedTexts) {
+      if (nearDuplicate(cand, u)) return true; // ★코어 명사 환원 비교 — 'CMA추천' vs 쓴 글 'CMA통장추천'(인픽스 '통장')까지 차단
       if (titleSimilarity(cand, u) >= 0.58) return true; // 0.45는 과차단(실측) — 거의 같은 제목만
       const ct = new Set(cand.replace(/[^가-힣a-z0-9 ]/gi, " ").split(/\s+/).filter((w) => w.length >= 2 && !GENERIC_TOK.has(w)));
       const ut = u.replace(/[^가-힣a-z0-9 ]/gi, " ").split(/\s+/).filter((w) => w.length >= 2 && !GENERIC_TOK.has(w));
@@ -865,9 +866,14 @@ export async function GET(req: Request) {
   const titled = await keywordsToTitles(allKeywords, ctxParts.join(" / "), { localBiz: type === "local" }); // {title, tag, ok, fit} — 자영업자는 '검색자=손님' 매칭 게이트 강하게
 
   // fit 상위 후보를 넉넉히(PICK+6) 추림 — 대표 샘플이면 포화 키워드가 많이 보여서, 같은 fit 안에서 '이길 수 있는' 걸 고른다.
-  const fitTop = candidates2
+  const fitScored = candidates2
     .map((r, i) => ({ r, t: titled[i] })) // ★candidates2로 통일 — 뉴스성 필터 후 인덱스가 titled와 1:1이어야(실측: 필터로 한 칸 밀려 제목·키워드 어긋남)
-    .filter(({ t }) => t?.ok !== false && !staleYear(t?.title ?? ""))
+    .filter(({ t }) => t?.ok !== false && !staleYear(t?.title ?? ""));
+  // ★분야 주변(fit=0) 배제(2026-07-24 유저: 경제 블로그에 '그림 파는 법') — fit은 정렬만 하고 배제 안 해 얇은 날 노출됐다.
+  //  세부업종(sub)이 있고 분야 핵심(fit>=1)이 보드를 채우고도 남을 때만 뺀다(빈자리 방지 플로어 — 얇은 날은 주변도 허용).
+  const onFit = fitScored.filter(({ t }) => (t?.fit ?? 1) >= 1);
+  const fitBase = (sub && onFit.length >= PICK + 2) ? onFit : fitScored;
+  const fitTop = fitBase
     .sort((a, b) => (b.t?.fit ?? 1) - (a.t?.fit ?? 1))
     .slice(0, adminBest ? PICK + 14 : PICK + 6);
 
@@ -988,7 +994,11 @@ export async function GET(req: Request) {
   });
   // ★실시간 트렌드 글감 — 카테고리 공유 풀(크론이 뉴스+웹검색으로 채움)에서 유저별 시드 회전으로 뽑는다.
   //  '그날 그시간' 신선함이 홈판 노출의 핵심. 1만 명이 같은 풀을 봐도 시드 회전으로 다른 조각을 봄.
-  const trendCards = await buildTrendCards(new Set(topics.map((x) => normalizeKeyword(x.keyword))));
+  // ★홈 경로 트렌드 카드도 최종 검문(2026-07-24 실측: 'B2B 스타트업 정책자금'이 홈 보드에 노출 — 단기 탭만 finalGate라 홈은 무검문 누출).
+  const trendCardsRaw = await buildTrendCards(new Set(topics.map((x) => normalizeKeyword(x.keyword))));
+  const trendGate = finalGate(trendCardsRaw);
+  if (trendGate.drops.length) console.log("[final-gate:home-trend]", JSON.stringify(trendGate.drops));
+  const trendCards = trendGate.pass;
 
   // ★헤드 배팅 슬롯(2026-07-15 유저 확정: 밴드 사다리) — 신생·성장 tier에 한 판 1장, 한 밴드 위 키워드.
   //  지금 순위는 안 나와도 에버그린 자산 — 체급이 오르면 이 글이 뒤늦게 일한다. 실패·후보 없음=조용히 0장.
@@ -1114,11 +1124,25 @@ export async function GET(req: Request) {
     }
     return out;
   };
+  // ★근접 중복 최종 차단(2026-07-24 유저: "빡세게") — 어느 버킷(트렌드·에버그린·부스트·헤드)에서 왔든
+  //  사실상 같은 글감(수식어만 다른 CMA추천 ↔ CMA통장추천)은 한 판에 하나만. 앞선(우선순위 높은) 카드를 남긴다.
+  const dedupeBoard = <T extends { keyword?: string; title?: string }>(list: T[]): T[] => {
+    const kept: T[] = [];
+    for (const c of list) {
+      const kw = String(c.keyword ?? ""), ti = String(c.title ?? "");
+      const dup = kept.some((k) => {
+        const kkw = String(k.keyword ?? ""), kti = String(k.title ?? "");
+        return nearDuplicate(kw, kkw) || nearDuplicate(ti, kti) || nearDuplicate(kw, kti) || nearDuplicate(ti, kkw);
+      });
+      if (!dup) kept.push(c);
+    }
+    return kept;
+  };
   if (tailMode === "long") {
     const g = finalGate(shuffled as { keyword: string; title: string }[]);
     if (g.drops.length) console.log("[final-gate:long]", JSON.stringify(g.drops));
     if (debugMode) diag.finalGateDrops = g.drops;
-    const passLong = bandInvariant(g.pass, "long");
+    const passLong = dedupeBoard(bandInvariant(g.pass, "long"));
     await writeDiag();
     return NextResponse.json(debugMode ? { topics: passLong, diag: { ...diag, mode: "long", poolCards: g.pass.length } } : { topics: passLong, ...(FF.perfLoop ? { ff: { perfLoop: true } } : {}), ...(FF.tierBands && tierInfo ? { tier: { name: tierInfo.tier, note: tierInfo.note } } : {}) });
   }
@@ -1138,6 +1162,7 @@ export async function GET(req: Request) {
     }
     finalList = [...boostCards, ...homefeedCards, ...mixed, ...(headBetCards as typeof finalList), ...trends, ...evers];
   }
+  finalList = dedupeBoard(finalList); // ★근접 중복 최종 차단(전 버킷 교차)
   await writeDiag();
   return NextResponse.json(debugMode ? { topics: finalList, diag: { ...diag, boost: boostCards.length, trendCards: trendCards.length, poolCards: shuffled.length } } : { topics: finalList, ...(FF.tierBands && tierInfo ? { tier: { name: tierInfo.tier, note: tierInfo.note } } : {}) });
 }
