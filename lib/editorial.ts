@@ -47,3 +47,34 @@ function hasCalcExample(html: string): boolean {
 export function lacksConditionBranch(html: string): boolean {
   return !hasConditionTable(html) && !hasCalcExample(html);
 }
+
+// ★사진 슬롯 소재 중복 게이트(2026-07-29 유저 실측: 1번 '소상공인 가게 카운터 통장' / 3번 '노트북 앞에 앉은 소상공인 사업주'
+//  — '소상공인'이 겹쳐 두 장이 같은 결의 그림이 된다). 슬롯 설명은 유저가 이미지 도구에 그대로 붙여넣는 주문서라,
+//  소재가 겹치면 비슷한 그림이 두 장 나와 섹션별 핏이 무너진다. 프롬프트는 방향, 이 게이트는 한계선.
+const SLOT_STOP = new Set([
+  "사진", "이미지", "모습", "장면", "예시", "관련", "그리고", "위에", "앞에", "옆에", "함께", "하는", "있는", "앉은", "든",
+  "화면", "자료", "내용", "준비", "확인", "사용", "선택", "비교", "정리",
+]);
+function slotNouns(desc: string): Set<string> {
+  return new Set(
+    String(desc || "")
+      .replace(/^AI\s*컨셉\s*[—-]\s*/, "")
+      .replace(/[^가-힣a-zA-Z0-9\s]/g, " ")
+      .split(/\s+/)
+      .map((w) => w.replace(/(과|와|의|을|를|이|가|에|은|는)$/, "")) // 조사 제거 — '통장을'과 '통장'을 같은 소재로 본다
+      .filter((w) => [...w].length >= 2 && !SLOT_STOP.has(w)),
+  );
+}
+
+/** 사진 슬롯끼리 명사가 겹치는가 — 겹치면 같은 결의 그림이 두 장 나온다. 슬롯이 2개 미만이면 판정 대상 아님. */
+export function duplicateSlotSubjects(html: string): boolean {
+  const descs = [...String(html || "").matchAll(/\[사진:\s*([^\]]+)\]/g)].map((m) => m[1]!.trim());
+  if (descs.length < 2) return false;
+  const sets = descs.map(slotNouns);
+  for (let i = 0; i < sets.length; i++) {
+    for (let j = i + 1; j < sets.length; j++) {
+      for (const w of sets[i]!) if (sets[j]!.has(w)) return true;
+    }
+  }
+  return false;
+}

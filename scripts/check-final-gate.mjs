@@ -3,7 +3,7 @@ import { nearDuplicate } from "../lib/diversity.ts";
 import { isStickyFrame, pickDiverseCopy } from "../lib/thumbCopyDiversity.ts";
 import { isPushable, pushGain, isZeroClickQuery } from "../lib/serpCtr.ts";
 import { pruneDeadTocLinks } from "../lib/wordpress.ts";
-import { lacksConditionBranch } from "../lib/editorial.ts";
+import { lacksConditionBranch, duplicateSlotSubjects } from "../lib/editorial.ts";
 import { parseQueryText, clusterQueries } from "../lib/hubTopics.ts";
 const cases = [
   { c: { keyword: "강서구 평생교육이용권", title: "강서구 평생교육이용권 2차 지원 신청 방법과 사용처" }, drop: "region_niche" },
@@ -243,6 +243,27 @@ for (const [q, expect] of zeroCases) {
   for (const [name, ok] of [["삼성카드 묶음", hasCard], ["채무탕감 묶음", hasDebt], ["3개 미만 제외", noSingleton], ["유입% 파싱", shareParsed], ["% 찌꺼기 제거", noPct]]) {
     if (!ok) fail++;
     console.log(ok ? "OK " : "FAIL", "| hub |", name, "→", cores.join(", ") || "(없음)");
+  }
+}
+
+// ★사진 슬롯 소재 중복(2026-07-29 유저 실측: 1번 '소상공인 가게 카운터 통장' / 3번 '노트북 앞에 앉은 소상공인 사업주').
+//  슬롯 설명은 유저가 이미지 도구에 그대로 붙여넣는 주문서 — 소재가 겹치면 같은 결의 그림이 두 장 나온다.
+{
+  const real = `<p>[사진: 소상공인 가게 카운터 통장]</p><p>[사진: 4대보험 가입 서류와 근로계약서]</p><p>[사진: 노트북 앞에 앉은 소상공인 사업주]</p>`;
+  const fixed = `<p>[사진: 가게 카운터 통장]</p><p>[사진: 4대보험 가입확인서 도장]</p><p>[사진: 노트북 화면과 머그컵]</p>`;
+  const josa = `<p>[사진: 통장과 계산기]</p><p>[사진: 통장을 든 손]</p>`; // 조사만 다른 중복도 잡아야
+  const single = `<p>[사진: 원천징수영수증 계산기]</p>`; // 슬롯 1개는 판정 대상 아님
+  const slotCases = [
+    ["유저 실측(소상공인 중복)", real, true],
+    ["소재 분리본", fixed, false],
+    ["조사만 다른 중복", josa, true],
+    ["슬롯 1개", single, false],
+  ];
+  for (const [name, html, expect] of slotCases) {
+    const got = duplicateSlotSubjects(html);
+    const ok = got === expect;
+    if (!ok) fail++;
+    console.log(ok ? "OK " : "FAIL", "| slot-dup |", name, "→", got ? "중복(재생성)" : "통과");
   }
 }
 

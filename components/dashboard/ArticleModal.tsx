@@ -436,6 +436,21 @@ export default function ArticleModal({ pubStampKey, blogName,
                         {i === 0 && <span className="mr-1.5 rounded bg-[#1D75F7]/10 px-1.5 py-0.5 text-[10.5px] font-bold text-[#1D75F7] align-middle">대표</span>}
                         예: {slot.desc}
                       </p>
+                      <button onClick={async () => {
+                        // ★이미지 주문서 복사(2026-07-29 유저 워크플로: AI 자동생성 대신 외부 도구로 만들어 올린다 — 비용 0).
+                        //  슬롯 설명만 붙여넣으면 밋밋하게 나오니, 스타일·무문자 규칙까지 붙여 완성된 프롬프트로 준다.
+                        const desc = slot.desc.replace(/^AI\s*컨셉\s*[—-]\s*/, "").trim();
+                        const prompt = [
+                          `${desc}`,
+                          `한국 생활 정보 블로그 본문 이미지. 정사각형(1:1).`,
+                          `스타일: 부드러운 파스텔 톤 플랫 일러스트, 여백 넉넉하게, 오브젝트 1~2개만 크게.`,
+                          `글자 절대 금지 — 한글·영어·숫자·간판·라벨 어디에도 넣지 말 것(서류·화면 표면은 비워둘 것).`,
+                          `사람이 나오면 얼굴은 보이지 않게(뒷모습·손·정황).`,
+                        ].join("\n");
+                        try { await navigator.clipboard.writeText(prompt); setToast("이미지 주문서를 복사했어요 — 만드는 곳에 붙여넣으세요"); } catch { setToast("복사하지 못했어요"); }
+                      }} className="at-press shrink-0 rounded-lg bg-neutral-100 px-3 py-1.5 text-[12px] font-bold text-neutral-600 transition hover:bg-neutral-200">
+                        주문서 복사
+                      </button>
                       <label className="at-press shrink-0 cursor-pointer rounded-lg bg-[#1D75F7]/10 px-3 py-1.5 text-[12px] font-bold text-[#1D75F7] transition hover:bg-[#1D75F7]/15">
                         {st.busy ? "올리는 중" : st.url ? "불러오기" : "사진 올리기"}
                         <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadImage(i, f); e.target.value = ""; }} />

@@ -6,7 +6,7 @@ import { ensureUserRow } from "@/lib/userPlan";
 import { spendCredits, addCredits, GENERATE_COST } from "@/lib/credits";
 import { streamArticle } from "@/lib/generateArticle";
 import { isReviewType, ensureDisclosure } from "@/lib/revenue";
-import { hasFabricatedExperience, lacksInterpretation, lacksConditionBranch } from "@/lib/editorial";
+import { hasFabricatedExperience, lacksInterpretation, lacksConditionBranch, duplicateSlotSubjects } from "@/lib/editorial";
 import { financeCalcContext } from "@/lib/financeCalc";
 import { sanitizeUrls } from "@/lib/linkWhitelist";
 import { countKoreanChars } from "@/lib/humanizer";
@@ -430,6 +430,23 @@ export async function POST(request: Request) {
             if (!lacksConditionBranch(retried.body_html) && (userStory || !hasFabricatedExperience(retried.body_html)) && countKoreanChars(retried.body_html) >= 500) article = retried;
           } catch { /* 재생성 실패 — 원본 그대로 */ }
           if (lacksConditionBranch(article.body_html)) console.log(`[condition-branch] user=${user.id.slice(0, 8)} — 조건 분기 없음, 통과(로그만)`);
+        }
+
+        // ★사진 슬롯 소재 중복 가드(2026-07-29 유저 실측: 1번·3번에 '소상공인'이 겹쳐 같은 결의 그림 두 장).
+        //  슬롯 설명은 유저가 이미지 도구에 붙여넣는 주문서라 소재가 겹치면 섹션별 핏이 무너진다.
+        //  앞선 가드들이 재생성을 안 썼을 때만 발동(REGEN_CAP 공유 — 품질 이슈라 우선순위 마지막).
+        if (channel === "naver" && duplicateSlotSubjects(article.body_html) && regenSpent < REGEN_CAP) {
+          regenSpent++;
+          send({ type: "revising" });
+          void logUsage({ userId: user.id, model: "guard", kind: "slot_dup_retry", inputTokens: 0, outputTokens: 0 });
+          try {
+            const retried = await streamArticle(
+              { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ★경고: 직전 생성의 [사진:] 슬롯들이 같은 명사를 공유했다(같은 결의 그림이 두 장 나온다). 슬롯 역할을 지켜 소재를 완전히 분리하라 — ①1번=주제 핵심 사물 한 개 ②2번=그 섹션의 실제 서류·물건·화면 ③3번=끝낸 뒤의 생활 장면. 세 슬롯이 쓰는 명사는 하나도 겹치면 안 되고, 업종·대상 명사(소상공인·직장인 등)를 슬롯마다 반복하지 마라.`.trim() },
+              noop, noop, onGenUsage,
+            );
+            if (!duplicateSlotSubjects(retried.body_html) && (userStory || !hasFabricatedExperience(retried.body_html)) && countKoreanChars(retried.body_html) >= 500) article = retried;
+          } catch { /* 재생성 실패 — 원본 그대로 */ }
+          if (duplicateSlotSubjects(article.body_html)) console.log(`[slot-dup] user=${user.id.slice(0, 8)} — 슬롯 소재 중복, 통과(로그만)`);
         }
 
         // 길이 검증 — 네이버는 좁은 주제도 '네이버 최적화로 뽑을 수 있는 만큼' 살린다(1,000자 안팎도 충분).
