@@ -7,6 +7,7 @@ import { adpostKey } from "@/lib/course";
 import { computeLevel } from "@/lib/level";
 import RevenueDash from "./RevenueDash";
 import ApprovalInput from "./ApprovalInput";
+import PushTargets from "./PushTargets";
 import { isVerifiedStatus } from "@/lib/course";
 import type { Article } from "./types";
 
@@ -231,10 +232,13 @@ function ExpectationCard({ pub }: { pub: number }) {
 export default function PerformanceView({ blogKey,
   articles,
   onWrite,
+  onOpenArticle,
 }: {
   blogKey?: string | null;
   articles: Article[];
   onWrite: () => void;
+  /** 승부처 목록에서 글 열기(성과 → 그 글로 바로) */
+  onOpenArticle?: (articleId: string) => void;
 }) {
   const stats = useMemo(() => {
     const nonGen = articles.filter((a) => a.status !== "generating");
@@ -266,6 +270,8 @@ export default function PerformanceView({ blogKey,
         );
       })()}
       {stats.pub >= 10 && <ApprovalInput blogKey={blogKey ?? null} onChanged={() => { try { setApproved(localStorage.getItem(adpostKey("approved", blogKey)) === "1"); } catch { /* ignore */ } }} />}
+      {/* ★승부처 — 성과 화면에서 유일하게 '오늘 뭘 할지'를 답하는 카드라 사다리보다 위 */}
+      <PushTargets onOpenArticle={onOpenArticle} />
 
       {open ? (
         <PathDetail p={open} onBack={() => setOpenIdx(null)} />

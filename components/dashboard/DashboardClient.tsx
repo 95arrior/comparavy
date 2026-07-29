@@ -694,6 +694,7 @@ export default function DashboardClient(props: DashboardProps) {
                     blogKey={blogProfile ? `${(blogProfile as { id?: string }).id ?? ""}:${blogProfile.vertical}:${blogProfile.sub_category ?? ""}` : null}
                     articles={articles}
                     onWrite={() => goLabView("home")}
+                    onOpenArticle={(id) => { const a = articles.find((x) => x.id === id); if (a) setSelected(a); else goLabView("articles"); }}
                   />
                 </div>
               </main>
