@@ -48,31 +48,53 @@ export async function GET(request: Request) {
   const mine = (arts ?? []).map((a) => ({ keyword: String(a.keyword ?? ""), title: String(a.title ?? ""), searches: null }));
 
   // ② 현재 글감 풀 — 앞으로 배정될 후보(조이면 여기서 얼마가 빠지는지가 핵심)
+  //  ★표본 편향 수정(2026-07-29 1차 측정 실패): 정렬 없이 limit로 뽑으면 물리적 순서 1000행만 보게 돼
+  //   '200회 이상 0개' 같은 거짓 결론이 나온다(실제로 WP 글감 선정은 monthly_searches>=300을 요구하며 매일 돈다).
+  //   → 표본 대신 '구간별 정확 카운트'(count only)로 전수 집계한다.
   const { data: prof } = await supabase.from("blog_profiles").select("vertical, sub_category, topic").eq("user_id", user.id).eq("is_active", true).maybeSingle();
   const sub = String(prof?.sub_category ?? prof?.topic ?? "");
-  let poolQ = db.from("keyword_pool").select("keyword, monthly_searches, times_assigned").limit(3000);
-  if (prof?.vertical) poolQ = poolQ.eq("vertical", prof.vertical);
-  if (sub) poolQ = poolQ.eq("sub", sub);
-  const { data: poolRows } = await poolQ;
-  const pool = (poolRows ?? []).map((p) => ({ keyword: String(p.keyword ?? ""), title: "", searches: typeof p.monthly_searches === "number" ? p.monthly_searches : null }));
-
-  // 검색량 분포 — 임계를 정하려면 평균이 아니라 분위수를 봐야 한다
-  const dist = quantiles(pool.map((p) => p.searches).filter((x): x is number => x !== null));
-  // 임계 후보별로 '풀이 얼마나 줄어드는지' 미리 계산(한 번에 판단할 수 있게)
+  const scope = <T>(q: T): T => {
+    let qq = q as unknown as { eq: (c: string, v: unknown) => unknown };
+    if (prof?.vertical) qq = qq.eq("vertical", prof.vertical) as typeof qq;
+    if (sub) qq = qq.eq("sub", sub) as typeof qq;
+    return qq as unknown as T;
+  };
+  const countIn = async (lo: number, hi: number | null): Promise<number> => {
+    let q = scope(db.from("keyword_pool").select("id", { count: "exact", head: true })).gte("monthly_searches", lo);
+    if (hi !== null) q = q.lt("monthly_searches", hi);
+    const { count } = await q;
+    return count ?? 0;
+  };
+  const { count: poolTotal } = await scope(db.from("keyword_pool").select("id", { count: "exact", head: true }));
+  const edges: [number, number | null][] = [[0, 50], [50, 100], [100, 200], [200, 300], [300, 500], [500, 1000], [1000, 5000], [5000, null]];
+  const buckets: Record<string, number> = {};
+  for (const [lo, hi] of edges) buckets[hi === null ? `${lo}회_이상` : `${lo}~${hi - 1}회`] = await countIn(lo, hi);
+  const total = poolTotal ?? 0;
   const ceilingCuts: Record<string, string> = {};
-  if (dist) {
-    for (const t of [50, 100, 200, 500, 1000]) {
-      const under = pool.filter((p) => p.searches !== null && p.searches < t).length;
-      ceilingCuts[`${t}회_미만`] = `${under}개 (${pool.length ? Math.round((under / pool.length) * 1000) / 10 : 0}%)`;
-    }
+  let acc = 0;
+  for (const [lo, hi] of edges) {
+    if (hi === null) break;
+    acc += buckets[`${lo}~${hi - 1}회`] ?? 0;
+    ceilingCuts[`${hi}회_미만_제외시`] = `${acc}개 (${total ? Math.round((acc / total) * 1000) / 10 : 0}%) 제외 · ${total - acc}개 남음`;
   }
+  // 지역·시효 판정은 표본으로 충분(풀 키워드는 짧은 명사구라 분포가 균질) — 상위 1500개만
+  const { data: poolRows } = await scope(db.from("keyword_pool").select("keyword, monthly_searches")).order("monthly_searches", { ascending: false }).limit(1500);
+  const pool = (poolRows ?? []).map((p) => ({ keyword: String(p.keyword ?? ""), title: "", searches: typeof p.monthly_searches === "number" ? p.monthly_searches : null }));
+  const dist = quantiles(pool.map((p) => p.searches).filter((x): x is number => x !== null));
+
+  // ③ 트렌드 글감(뉴스 증식 경로) — 지역·시효 글감은 keyword_pool이 아니라 여기서 온다(1차 측정에서 확인)
+  const { data: trendRows } = await db.from("trend_topics").select("keyword, title").limit(1000);
+  const trend = (trendRows ?? []).map((t) => ({ keyword: String(t.keyword ?? ""), title: String(t.title ?? ""), searches: null }));
 
   return NextResponse.json({
     안내: "측정 전용 — 지금은 아무것도 차단하지 않습니다. ?min=100 처럼 임계를 바꿔 호출하세요.",
     임계_적용값: min || "미적용(검색량 판정 생략)",
     "①내가_쓴_글": tally(mine, 0), // 글엔 검색량이 없어 지역·시효만 판정
-    "②현재_글감_풀": tally(pool, min),
-    "글감_풀_검색량_분포": dist ?? "검색량 데이터 없음",
+    "②현재_글감_풀(상위1500 표본)": tally(pool, min),
+    "③트렌드_글감(뉴스경로)": tally(trend, 0),
+    "글감_풀_전체개수": total,
+    "글감_풀_검색량_구간별_전수": buckets,
+    "표본_상위1500_분위수": dist ?? "검색량 데이터 없음",
     "천장_임계별_제외량": ceilingCuts,
   });
 }
