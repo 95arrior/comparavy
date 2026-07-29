@@ -341,7 +341,7 @@ export interface PublishResult {
 }
 
 /** 이미지(base64 data URI 또는 http(s) URL) 1개를 WP 미디어로 업로드. 실패 시 null. */
-async function uploadMedia(source: string, creds: WordPressCredentials): Promise<{ id: number; url: string } | null> {
+export async function uploadMedia(source: string, creds: WordPressCredentials): Promise<{ id: number; url: string } | null> {
   const base = normalizeSiteUrl(creds.siteUrl);
   try {
     let buffer: Buffer;
@@ -376,6 +376,18 @@ async function uploadMedia(source: string, creds: WordPressCredentials): Promise
     // 무시
   }
   return null;
+}
+
+/** 이미 발행된 글의 대표 이미지만 교체(본문·제목·카테고리는 건드리지 않는다 — 썸네일 재생성 전용). */
+export async function setFeaturedMedia(postId: number, mediaId: number, creds: WordPressCredentials): Promise<boolean> {
+  const res = await fetch(`${normalizeSiteUrl(creds.siteUrl)}/wp-json/wp/v2/posts/${postId}`, {
+    method: "POST",
+    signal: AbortSignal.timeout(60_000),
+    headers: { Authorization: authHeader(creds), "Content-Type": "application/json" },
+    body: JSON.stringify({ featured_media: mediaId }),
+  });
+  if (res.status === 401 || res.status === 403) throw new WpAuthError("워드프레스 인증이 만료됐어요.");
+  return res.ok;
 }
 
 /**

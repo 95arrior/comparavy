@@ -32,6 +32,24 @@ export default function ArticleList({ pubStampKey,
   const [pubBusy, setPubBusy] = useState<string | null>(null); // [발행했어요] 처리 중 글 id
   const [urlFor, setUrlFor] = useState<string | null>(null); // 확인 중 → 주소 입력 펼침 글 id
   const [urlVal, setUrlVal] = useState("");
+  const [thumbBusy, setThumbBusy] = useState(false); // 썸네일 다시 만들기 처리 중
+
+  // ★썸네일만 다시 만들기(2026-07-29 유저 요청 — 문구 규칙 개선 전에 나간 글 교체).
+  //  본문·제목은 그대로. 대표 이미지 하나만 새로 만들어 워드프레스 글에 끼운다(재발행 아님 — 색인된 내용 불변).
+  async function remakeThumb(a: Article) {
+    if (thumbBusy) return;
+    setThumbBusy(true);
+    try {
+      const r = await fetch("/api/wordpress/rethumb", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ articleId: a.id }), signal: AbortSignal.timeout(240_000) });
+      const d = await r.json().catch(() => ({}));
+      setMsg(r.ok ? "썸네일을 새로 만들었어요 — 워드프레스에서 확인해 보세요" : (d.error ?? "썸네일을 바꾸지 못했어요"));
+      if (r.ok) setConfirmUnpub(null);
+    } catch (e) {
+      setMsg(e instanceof Error && e.name === "TimeoutError" ? "오래 걸리고 있어요 — 1~2분 뒤 워드프레스에서 확인해 주세요" : "네트워크 오류예요");
+    }
+    setThumbBusy(false);
+    setTimeout(() => setMsg(null), 3200);
+  }
 
   // ★수동 발행 신고(유저 제안) — 위저드 '끝냈어요'를 안 눌렀어도 목록에서 한 탭.
   //  정직한 카운터: 자기신고로 끝내지 않고 즉시 RSS 1차 확인 → 실제 발행이면 그 자리에서 verified(카운트).
@@ -266,6 +284,13 @@ export default function ArticleList({ pubStampKey,
             <p className="text-[16px] font-bold text-[color:var(--at-grey-900)]">이 글, 어떻게 할까요?</p>
             <p className="mt-2 truncate text-[13.5px] font-semibold text-neutral-800">“{confirmUnpub.title}”</p>
             <div className="mt-4 space-y-2">
+              {/* ★워드프레스 발행 글만 — 썸네일 문구 규칙이 바뀐 뒤 옛 글을 맞추는 용도(본문은 그대로) */}
+              {confirmUnpub.channel === "wordpress" && confirmUnpub.wp_post_id && (
+                <button onClick={() => remakeThumb(confirmUnpub)} disabled={thumbBusy || unpubBusy || delBusy} className="at-press w-full rounded-xl bg-[#1D75F7]/[0.07] p-3.5 text-left ring-1 ring-[#1D75F7]/15 transition hover:bg-[#1D75F7]/[0.12] disabled:opacity-50">
+                  <span className="block text-[13.5px] font-bold text-[#1D75F7]">{thumbBusy ? "만드는 중… (1~2분)" : "✦ 썸네일 다시 만들기"}</span>
+                  <span className="mt-0.5 block text-[11.5px] text-[#1D75F7]/60">대표 이미지만 새로 만들어 바꿔요 · 글 내용은 그대로예요</span>
+                </button>
+              )}
               <button onClick={async () => {
                 const r = await fetch(`/api/articles/${confirmUnpub.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ hot: true }) });
                 if (r.ok) { setMsg("반영했어요 — 내일 이 글의 후속을 준비할게요"); setTimeout(() => setMsg(null), 3000); }

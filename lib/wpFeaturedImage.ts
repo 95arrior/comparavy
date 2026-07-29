@@ -4,6 +4,7 @@ import { renderThumbnail } from "./thumbnailRenderer";
 import { visualIdentityFor } from "./visualIdentity";
 import { breakThumbCopy, repeatsTitle } from "./thumbCopyBreak";
 import { bannedHits } from "./hookPatterns";
+import { THUMB_ROLES, pickDiverseCopy, type ThumbCandidate } from "./thumbCopyDiversity";
 import Anthropic from "@anthropic-ai/sdk";
 import { generateThumbBackground } from "./geminiImage";
 
@@ -29,31 +30,43 @@ export function isExampleCopy(c: string): boolean {
   });
 }
 
-// ★문구 LLM v3(2026-07-20 실측 보강): 소네트 승격(하이쿠 한국어 오타) + 예시 베끼기 실격 + 각도 앵커 강제.
+// ★문구 LLM v4(2026-07-29 유저 실측 — 발행 4편 연속 '가장 많이 ~'): 역할 로테이션 채택 + 범용 프레임 게이트.
+//  v3는 후보 6개 중 '통과한 첫 개'를 집었는데, 모델이 항상 ①실수 역할을 먼저 내놓아 전 글이 같은 틀로 굳었다.
+//  이제 글별 시드로 시작 역할을 돌리고(thumbCopyDiversity), 후보에 역할 태그를 받아 배정 역할부터 훑는다.
 //  "제목은 검색을 만족시키고, 썸네일은 클릭 이유를 만든다."
-async function llmWpThumbCopy(title: string, keyword: string): Promise<string | null> {
+async function llmWpThumbCopy(title: string, keyword: string, seed: string): Promise<string | null> {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key || !title.trim()) return null;
   try {
     const client = new Anthropic({ apiKey: key });
+    const roleSpec = THUMB_ROLES.map((r, i) => `${i + 1}.${r.label}(${r.guide} 예: ${r.example})`).join(" ");
     const res = await client.messages.create({
-      model: "claude-sonnet-4-6", max_tokens: 400,
+      model: "claude-sonnet-4-6", max_tokens: 500,
       messages: [{ role: "user", content: [
-        `블로그 목록에서 제목 옆에 놓일 썸네일 문구 후보 6개를 만들어줘. 너는 디자이너가 아니라 CTR 카피라이터다 — 예쁜 문구가 아니라 스크롤을 멈추게 하는 문구.`,
+        `블로그 목록에서 제목 옆에 놓일 썸네일 문구 후보 ${THUMB_ROLES.length}개를 만들어줘. 너는 디자이너가 아니라 CTR 카피라이터다 — 예쁜 문구가 아니라 스크롤을 멈추게 하는 문구.`,
         `제목: "${title}" — 제목은 검색을 만족시키고, 썸네일은 '클릭 이유'를 만든다. 독자가 왜 이 제목을 검색했는지 생각하고, 가장 궁금한 한 가지만 문구에 담아라. 썸네일과 제목을 이어 읽으면 하나의 문장이 되어야 한다(좋은 예 — 제목 '정책자금, 어떻게 신청하나요?' + 문구 '먼저 이것부터' → 독자: '먼저 뭘?').`,
-        `역할 6종 중 서로 다른 것 하나씩(후보마다 1역할만): ①실수(여기서 많이 틀립니다) ②행동(먼저 확인하세요) ③결과(생각보다 큽니다) ④궁금증(여기서 갈립니다) ⑤시간(3분이면 됩니다) ⑥경고 — 단 경고는 사실 기반만('놓치기 쉽습니다' — '모르면 손해' 금지).`,
-        `규격: 한 줄 8~10자, 최대 2줄, 전체 20자 이내(공백 포함). 제목 키워드·주제 명사 반복 절대 금지(정책자금·IRP·총정리류 — 주제는 제목이 말한다). 금지 표현: 완벽정리·총정리·핵심정리·무조건·반드시·100%·필수·역대급·충격·대박·공짜·모르면 손해. 좋은 표현 결: 먼저·여기서·의외로·생각보다·가장 많이·이것만·오늘·지금.`,
-        `★예시 베끼기 실격(절대) — 위 역할 예시 문구를 그대로/한 글자만 바꿔 쓰면 실격이다. 예시는 형식 참고일 뿐, 문구는 반드시 '이 제목'의 검색 이유에서 새로 만들어라(어느 글에나 붙는 범용 문구 = 실격). 맞춤법 오류도 실격.`,
-        `제출 전 자기검사(과정 출력 금지): ①제목과 같은 말인가 → 다시 ②썸네일만 봐도 궁금한가 → 아니면 다시 ③본문(제목이 약속한 내용)이 증명 가능한가 ④0.5초 안에 읽히는가 ⑤예시를 베꼈는가 → 다시. 통과분만 JSON 배열 한 줄로 출력: ["...","..."]`,
+        `역할 ${THUMB_ROLES.length}종을 하나씩 정확히 한 개(후보마다 1역할, 역할 번호를 반드시 붙인다): ${roleSpec}. 단 경고는 사실 기반만('모르면 손해' 금지).`,
+        `규격: 한 줄 8~10자, 최대 2줄, 전체 20자 이내(공백 포함). 제목 키워드·주제 명사 반복 절대 금지(정책자금·IRP·총정리류 — 주제는 제목이 말한다). 금지 표현: 완벽정리·총정리·핵심정리·무조건·반드시·100%·필수·역대급·충격·대박·공짜·모르면 손해.`,
+        `★범용 프레임 실격(2026-07-29 실측 — 발행 글 4편이 전부 '가장 많이 헷갈리는/착각하는/빠지는'으로 나가 목록이 한 글처럼 보였다): '가장 많이·제일 많이·많이들·흔히 하는·다들 놓치는'처럼 주제를 지워도 말이 되는 틀은 전부 실격. 판정법 — 문구에서 이 글 얘기를 빼고 읽어도 자연스럽다면 그건 어느 글에나 붙는 문구다. 이 제목 고유의 각도(이 글에서만 나올 수 있는 지점·숫자·시점)로 다시 써라.`,
+        `★예시 베끼기 실격(절대) — 위 역할 예시 문구를 그대로/한 글자만 바꿔 쓰면 실격이다. 예시는 형식 참고일 뿐. 맞춤법 오류도 실격. 후보 ${THUMB_ROLES.length}개는 첫 어절이 서로 달라야 한다.`,
+        `제출 전 자기검사(과정 출력 금지): ①제목과 같은 말인가 → 다시 ②썸네일만 봐도 궁금한가 → 아니면 다시 ③본문(제목이 약속한 내용)이 증명 가능한가 ④0.5초 안에 읽히는가 ⑤예시를 베꼈거나 범용 프레임인가 → 다시. 통과분만 JSON 한 줄로 출력: [{"role":1,"copy":"..."},{"role":2,"copy":"..."}]`,
       ].join("\n") }],
     });
     const text = res.content.find((b) => b.type === "text")?.text ?? "";
-    const arr = JSON.parse(text.match(/\[[\s\S]*\]/)?.[0] ?? "[]") as unknown[];
-    for (const c of arr.map((x) => String(x).trim()).filter(Boolean)) {
-      if ([...c].length <= 20 && !repeatsTitle(c, title, keyword) && bannedHits(c).length === 0 && !WP_COPY_BAN_RE.test(c) && !isExampleCopy(c)) return c;
-    }
+    const raw = JSON.parse(text.match(/\[[\s\S]*\]/)?.[0] ?? "[]") as unknown[];
+    const cands: ThumbCandidate[] = raw.map((x) => {
+      if (x && typeof x === "object") { const o = x as { role?: unknown; copy?: unknown; text?: unknown }; return { role: (o.role ?? null) as string | number | null, copy: String(o.copy ?? o.text ?? "").trim() }; }
+      return { role: null, copy: String(x).trim() }; // 구형 문자열 배열 폴백 — 제시 순서를 역할 순서로 본다
+    }).filter((c) => c.copy);
+    return pickDiverseCopy(cands, seed, (c) =>
+      [...c].length <= 20 && !repeatsTitle(c, title, keyword) && bannedHits(c).length === 0 && !WP_COPY_BAN_RE.test(c) && !isExampleCopy(c));
   } catch { /* 폴백 — 규칙 추출 */ }
   return null;
+}
+
+/** 문구만 미리보기(발행 글 재썸네일 스크립트용) — 이미지 생성·업로드 없이 LLM 문구만 뽑는다. */
+export async function wpThumbCopyFor(title: string, keyword: string, seed: string): Promise<string | null> {
+  return llmWpThumbCopy(title, keyword, seed);
 }
 
 /** 제목에서 훅 문구 추출 — "개인연금 세액공제, 연봉별로 얼마나 돌려받을 수 있을까" → "연봉별로 얼마나 돌려받을까" */
@@ -96,7 +109,7 @@ export async function autoFeaturedImage(
 ): Promise<string | null> {
   try {
     // ★줄당 9자 보장(고정 폰트 112px 규격) — 초과하면 마지막 어절을 덜어내고 재분할
-    let hook = (await llmWpThumbCopy(String(opts?.title ?? ""), String(keyword || "").trim())) // ★1순위: 역할 분리 개념 훅(LLM, 게이트 통과분만)
+    let hook = (await llmWpThumbCopy(String(opts?.title ?? ""), String(keyword || "").trim(), `${userId}:${articleId ?? keyword}`)) // ★1순위: 역할 분리 개념 훅(LLM, 게이트 통과분 중 글별 배정 역할)
       ?? hookCopyFromTitle(opts?.title, String(keyword || "").trim()); // 폴백: 규칙 추출(의문사 조각 방지 포함)
     if (bannedHits(hook).length > 0 || WP_COPY_BAN_RE.test(hook)) hook = String(keyword || "").trim() || hook; // ★문구 게이트(PTRP+WP 카피 지침) — 감정 과잉·과장 훅은 키워드 폴백
     let copy = breakThumbCopy(hook);
