@@ -91,12 +91,35 @@ export async function GET(request: Request) {
   const { data: tc } = await db.from("api_cache").select("value, expires_at").eq("key", tierKey).maybeSingle();
   const tierVal = (tc?.value ?? null) as { tier?: string; wins?: number; sample?: number } | null;
   const MIX: Record<string, string> = { SEEDLING: "트렌드 7 : 에버그린 3", GROWING: "트렌드 5 : 에버그린 5", ESTABLISHED: "트렌드 3 : 에버그린 7" };
+  // ★단계 판정 체인 진단(2026-07-29): '판정 캐시 없음' = computeBlogTier가 null을 반환한다는 뜻
+  //  (코드상 fresh가 null이면 캐시를 저장하지 않고 콜드스타트를 반환한다 → 영원히 신생).
+  //  체인: 발행 검증 → post_performance → rank-track 크론 → rank_snapshots(D+7) → tier 판정.
+  //  어느 마디가 끊겼는지 숫자로 특정한다. 특히 blog_id 불일치는 조용히 표본을 0으로 만든다.
+  const blogId = (prof as { id?: string } | null)?.id ?? null;
+  const cnt = async (table: string, build?: (q: never) => unknown): Promise<number> => {
+    try {
+      let q = db.from(table).select("*", { count: "exact", head: true }) as never;
+      if (build) q = build(q) as never;
+      const { count } = await (q as unknown as Promise<{ count: number | null }>);
+      return count ?? 0;
+    } catch { return -1; }
+  };
+  const chain = {
+    "1_post_performance_전체": await cnt("post_performance", (q) => (q as { eq: (a: string, b: unknown) => unknown }).eq("user_id", user.id)),
+    "2_post_performance_이블로그": blogId ? await cnt("post_performance", (q) => (q as { eq: (a: string, b: unknown) => { eq: (a: string, b: unknown) => unknown } }).eq("user_id", user.id).eq("blog_id", blogId)) : "블로그 id 없음",
+    "3_rank_snapshots_전체": await cnt("rank_snapshots"),
+    "4_rank_snapshots_D+7": await cnt("rank_snapshots", (q) => (q as { eq: (a: string, b: unknown) => { eq: (a: string, b: unknown) => unknown } }).eq("day_offset", 7).eq("area", "blog_tab")),
+    "5_rank_snapshots_D+7_순위확인됨": await cnt("rank_snapshots", (q) => (q as { eq: (a: string, b: unknown) => { eq: (a: string, b: unknown) => { neq: (a: string, b: unknown) => unknown } } }).eq("day_offset", 7).eq("area", "blog_tab").neq("status", "unknown")),
+    설명: "1이 0이면 발행 검증이 스냅샷을 안 남긴 것 · 2가 1보다 훨씬 작으면 blog_id 불일치로 표본이 잘린 것 · 4가 0이면 rank-track 크론이 D+7을 못 찍은 것 · 5가 0이면 순위 조회가 전부 실패(unknown)한 것",
+  };
+
   const tierOut = tierVal?.tier
     ? { 단계: tierVal.tier, 배합: MIX[tierVal.tier] ?? "?", 승급근거: `최근 표본 ${tierVal.sample ?? "?"}건 중 D+7 상위노출 ${tierVal.wins ?? "?"}건`, 승급선: "GROWING=3건 · ESTABLISHED=5건" }
-    : { 단계: "판정 캐시 없음(신생 시작값으로 동작 중일 가능성)", 배합: MIX.SEEDLING, 승급선: "GROWING=3건 · ESTABLISHED=5건" };
+    : { 단계: "판정 캐시 없음 = computeBlogTier가 null(=신생 고정)", 배합: MIX.SEEDLING, 승급선: "GROWING=3건 · ESTABLISHED=5건" };
 
   return NextResponse.json({
     "④현재_단계": tierOut,
+    "⑤단계_판정_체인": chain,
     안내: "측정 전용 — 지금은 아무것도 차단하지 않습니다. ?min=100 처럼 임계를 바꿔 호출하세요.",
     임계_적용값: min || "미적용(검색량 판정 생략)",
     "①내가_쓴_글": tally(mine, 0), // 글엔 검색량이 없어 지역·시효만 판정
