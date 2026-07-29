@@ -51,7 +51,7 @@ export async function GET(request: Request) {
   //  ★표본 편향 수정(2026-07-29 1차 측정 실패): 정렬 없이 limit로 뽑으면 물리적 순서 1000행만 보게 돼
   //   '200회 이상 0개' 같은 거짓 결론이 나온다(실제로 WP 글감 선정은 monthly_searches>=300을 요구하며 매일 돈다).
   //   → 표본 대신 '구간별 정확 카운트'(count only)로 전수 집계한다.
-  const { data: prof } = await supabase.from("blog_profiles").select("vertical, sub_category, topic").eq("user_id", user.id).eq("is_active", true).maybeSingle();
+  const { data: prof } = await supabase.from("blog_profiles").select("id, vertical, sub_category, topic").eq("user_id", user.id).eq("is_active", true).maybeSingle();
   const sub = String(prof?.sub_category ?? prof?.topic ?? "");
   const scope = <T>(q: T): T => {
     let qq = q as unknown as { eq: (c: string, v: unknown) => unknown };

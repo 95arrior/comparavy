@@ -4,6 +4,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { RANK_WIN, TIER_PROMOTE, TIER_DEMOTE_MARGIN } from "./scoreWeights";
 
+const RANK_WIN_DAYS = 7; // 판정 재료인 D+7 스냅샷이 존재할 수 있는 최소 경과일
+
 export type BlogTier = "SEEDLING" | "GROWING" | "ESTABLISHED";
 
 export interface TierResult {
@@ -28,7 +30,15 @@ export function coldStartTier(): TierResult {
 /** 성과 데이터 기반 tier — 데이터 부족 시 null(호출측이 콜드스타트 시작값 적용). api_cache 24h는 호출측에서. */
 export async function computeBlogTier(db: SupabaseClient, userId: string, blogId: string | null): Promise<TierResult | null> {
   try {
-    let q = db.from("post_performance").select("article_id, vol, published_at").eq("user_id", userId).order("published_at", { ascending: false }).limit(10);
+    // ★창 수리(2026-07-29 계측으로 검거): 종전엔 '최근 10건'을 그대로 봤다.
+    //  하루 2편 발행이면 최근 10건 = 최근 5일치인데, 판정 재료는 D+7 스냅샷이다.
+    //  → 교집합이 구조적으로 항상 비어 sample=0 → null → 영원히 SEEDLING(트렌드 7:3 고정).
+    //  실측: rank_snapshots D+7이 80건이나 쌓여 있는데도 tier 판정 캐시가 없었다(재료는 있는데 창이 어긋난 것).
+    //  → 'D+7이 지난 글' 중에서 최근 10건을 본다.
+    const dPlus7 = new Date(Date.now() - RANK_WIN_DAYS * 86400_000).toISOString();
+    let q = db.from("post_performance").select("article_id, vol, published_at").eq("user_id", userId)
+      .lte("published_at", dPlus7)
+      .order("published_at", { ascending: false }).limit(10);
     if (blogId) q = q.eq("blog_id", blogId);
     const { data: posts } = await q;
     if (!posts?.length) return null; // 성과 루프 미가동/데이터 없음 — 판정 불가(§2-1)
