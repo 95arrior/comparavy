@@ -2,6 +2,7 @@ import { finalGate, adsenseUnsafe } from "../lib/cardFinalGate.ts";
 import { nearDuplicate } from "../lib/diversity.ts";
 import { isStickyFrame, pickDiverseCopy } from "../lib/thumbCopyDiversity.ts";
 import { isPushable, pushGain, isZeroClickQuery } from "../lib/serpCtr.ts";
+import { pruneDeadTocLinks } from "../lib/wordpress.ts";
 const cases = [
   { c: { keyword: "강서구 평생교육이용권", title: "강서구 평생교육이용권 2차 지원 신청 방법과 사용처" }, drop: "region_niche" },
   { c: { keyword: "대구 섬유염색업 버팀이음", title: "대구 섬유염색업 고용안정 버팀이음 프로젝트 신청 대상" }, drop: "region_niche" },
@@ -176,6 +177,23 @@ for (const [q, expect] of zeroCases) {
   const ok = got === expect;
   if (!ok) fail++;
   console.log(ok ? "OK " : "FAIL", "| zero-click |", q, "→", got ? "제외" : "집계");
+}
+
+// ★죽은 목차 링크(2026-07-29 유저 실측 "내부 링크가 안 눌려요" — pigtong 라이브: 목차 12개 중 toc-8~12가 대상 없음).
+//  FAQ 소제목이 목차 생성 뒤에 제거돼 링크만 남았던 사고. 대상 없는 항목은 발행 전에 빠져야 한다.
+{
+  const toc = (items) => `<div class="ateflo-toc"><p>목차</p><ul>${items.map((i) => `<li><a href="#${i}">x</a></li>`).join("")}</ul></div>`;
+  const body = `<h2 id="toc-1">A</h2><p>a</p><h2 id="toc-2">B</h2><p>b</p><h2 id="toc-3">C</h2>`;
+  const withDead = pruneDeadTocLinks(toc(["toc-1", "toc-2", "toc-3", "toc-8", "toc-9"]) + body);
+  const deadGone = !withDead.includes("#toc-8") && !withDead.includes("#toc-9");
+  const liveKept = withDead.includes("#toc-1") && withDead.includes("#toc-2") && withDead.includes("#toc-3");
+  // 살아있는 항목이 1개뿐이면 목차 블록 자체를 없앤다(빈 상자 방지)
+  const allDead = pruneDeadTocLinks(toc(["toc-8", "toc-9"]) + body);
+  const blockGone = !allDead.includes("ateflo-toc");
+  for (const [name, ok] of [["죽은 항목 제거", deadGone], ["정상 항목 보존", liveKept], ["전멸 시 목차 삭제", blockGone]]) {
+    if (!ok) fail++;
+    console.log(ok ? "OK " : "FAIL", "| toc |", name);
+  }
 }
 
 process.exit(fail ? 1 : 0);

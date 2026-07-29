@@ -128,6 +128,25 @@ function addTableOfContents(html: string): string {
   return toc + withIds;
 }
 
+/** ★죽은 목차 링크 제거(2026-07-29) — 대상 id가 본문에 없는 목차 항목(li)은 통째로 뺀다.
+ *  조립 순서가 바뀌어도 '눌러도 아무 일 없는 링크'가 발행되지 않게 하는 마지막 검문.
+ *  목차가 통째로 비면 목차 블록 자체를 없앤다(빈 상자보다 없는 게 낫다). */
+export function pruneDeadTocLinks(html: string): string {
+  if (!html.includes("ateflo-toc")) return html;
+  const ids = new Set([...html.matchAll(/\sid=["']([^"']+)["']/gi)].map((m) => m[1]!));
+  const out = html.replace(/<div class="ateflo-toc"[\s\S]*?<\/div>/i, (block) => {
+    let kept = 0;
+    const pruned = block.replace(/<li\b[^>]*>[\s\S]*?<\/li>/gi, (li) => {
+      const href = /href=["']#([^"']+)["']/i.exec(li);
+      if (href && !ids.has(href[1]!)) return ""; // 대상 없는 항목 — 제거
+      kept++;
+      return li;
+    });
+    return kept >= 2 ? pruned : ""; // 항목이 1개 이하로 남으면 목차 무의미
+  });
+  return out;
+}
+
 /**
  * 본문 텍스트에서 후보 문구(다른 글의 키워드)를 찾아 그 글로 가는 내부 링크를 단다.
  * 태그 안/기존 링크 안은 건드리지 않고, 문구당 1회·최대 4개까지. (SEO 내부링크)
@@ -419,12 +438,18 @@ export async function publishPost(input: PublishInput): Promise<PublishResult> {
   contentHtml = contentHtml.replace(/<h1(\s[^>]*)?>/gi, "<h2>").replace(/<\/h1>/gi, "</h2>");
   // 이미지가 본문 폭을 넘어 거대해지거나 가로 스크롤이 생기지 않게 제약 → 편집 화면과 동일하게 보이도록(WYSIWYG)
   contentHtml = constrainImages(contentHtml);
-  // 목차(TOC) 자동: 소제목에 앵커 달고 맨 위에 목차 (FAQ 추가 전에 적용 → FAQ는 목차에서 제외)
+  // ★순서 수정(2026-07-29 유저 실측 "내부 링크가 안 눌려요" — 라이브 실측: 목차 12개 중 5개가 죽은 링크):
+  //  기존 순서는 addToc → stripExistingFaq였다. 목차를 만드는 시점엔 평문 FAQ(자주 묻는 질문 h2 + 질문 h3들)가
+  //  아직 본문에 있어 toc-8~12 링크와 id가 생겼는데, 곧바로 stripExistingFaq가 그 소제목들을 통째로 지워버려
+  //  링크만 남고 대상이 사라졌다(눌러도 아무 일 없음). 주석의 의도('FAQ는 목차에서 제외')와 실제 순서가 어긋나 있었다.
+  //  → 평문 FAQ를 먼저 걷어내고 목차를 만든 뒤, 마이크로데이터 FAQ를 맨 끝에 붙인다.
+  const faqSection = input.faq && input.faq.length > 0 ? renderFaqSection(input.faq) : "";
+  if (input.faq && input.faq.length > 0) contentHtml = stripExistingFaq(contentHtml, input.faq);
+  // 목차(TOC) 자동: 소제목에 앵커 달고 맨 위에 목차 (FAQ는 이미 빠진 상태 → 목차엔 본문 소제목만)
   if (input.addToc) contentHtml = addTableOfContents(contentHtml);
-  // FAQ: 본문의 평문 FAQ는 제거하고, 마이크로데이터가 붙은 FAQ 섹션을 맨 끝에 한 번만 넣는다(구글 FAQ 리치결과).
-  if (input.faq && input.faq.length > 0) {
-    contentHtml = stripExistingFaq(contentHtml, input.faq) + renderFaqSection(input.faq);
-  }
+  contentHtml += faqSection; // 마이크로데이터 FAQ 섹션(구글 FAQ 리치결과) — 목차 대상 아님
+  // ★불변식: 목차 항목은 반드시 본문에 대상이 있어야 한다(순서를 다시 바꿔도 죽은 링크가 못 나가게 코드로 막는다)
+  contentHtml = pruneDeadTocLinks(contentHtml);
   const body: Record<string, unknown> = {
     title: input.title,
     // 본문(우리 규격 타이포로 감쌈) + Article 구조화 데이터(JSON-LD)
