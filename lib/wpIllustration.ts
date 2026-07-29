@@ -20,14 +20,24 @@ function fnv(s: string): number {
 export async function generateWpBanners(keyword: string, articleId: string, n = 2, _brandName = ""): Promise<string[]> {
   const seed = fnv(`${keyword}|${articleId}`);
   const out: string[] = [];
-  const styles = bodyStyleRotation(keyword).filter((st) => st !== "typo3d"); // ★typo3d 제외(2026-07-14 실측: 영문 살짝 깨짐) — 순수 일러만
+  const styles = bodyStyleRotation(keyword); // typo3d는 로테이션에서 영구 퇴출(bannerPrompts) — 여기서 거를 필요가 없어졌다
   // ★한글 원천 제거(2026-07-13) — 프롬프트에 한글이 인용되면 금지 문구와 무관하게 그려진다
   const brief = await englishBrief(keyword);
   const kwEn = brief?.topicEn ?? stripHangul(keyword, "korean personal finance topic");
+  const { verifyImage } = await import("./imageVerify");
   for (let i = 0; i < n; i++) {
     const style = styles[(seed + i) % styles.length]!;
     try {
-      const img = await callImage(buildBannerPrompt(kwEn, style, seed + i * 7), "1:1");
+      // ★글자 검증(2026-07-29 유저 실측: 본문 배너에 깨진 한글 '연만셰금환금'+'YEAR' 노출) —
+      //  이 경로만 검증이 없어 프롬프트가 무시되면 그대로 발행됐다. 조판 배너 경로(아래 generateTypoBannerDataUrl)와 같은 규격으로 맞춘다.
+      //  글자 검출 → 시드 바꿔 1회 재생성 → 재실패면 그 배너는 버린다(이미지 한 장 없는 게 깨진 글자보다 낫다).
+      let img = await callImage(buildBannerPrompt(kwEn, style, seed + i * 7), "1:1");
+      let v = await verifyImage(img.base64, img.mime, "banner", { bgOnly: true });
+      if (v.hasText) {
+        img = await callImage(buildBannerPrompt(kwEn, style, seed + i * 7 + 101), "1:1");
+        v = await verifyImage(img.base64, img.mime, "banner", { bgOnly: true });
+        if (v.hasText) { console.error(`[wp] 배너 글자 2연속 검출(${style}) — 이 장은 버림`); continue; }
+      }
       out.push(`data:${img.mime};base64,${img.base64}`);
     } catch (e) {
       console.error(`[wp] 배너 생성 실패(${style}) — 건너뜀:`, e instanceof Error ? e.message : e);

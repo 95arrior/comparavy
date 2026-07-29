@@ -3,7 +3,7 @@
 //  하드 규칙은 buildBodyPrompt/buildThumbBgPrompt 두 순수 함수에 코드로 강제(단위 테스트 대상).
 
 const MODEL = "gemini-2.5-flash-image";
-import { buildBannerPrompt, bodyStyleRotation, buildThumbMetaphorPrompt, englishToken } from "./bannerPrompts";
+import { buildBannerPrompt, bodyStyleRotation, buildThumbMetaphorPrompt } from "./bannerPrompts";
 
 export function imageReady(): boolean {
   return Boolean(process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY); // 어느 프로바이더든 키 하나면 가동
@@ -296,11 +296,10 @@ export async function generateBlogImage(slotDesc: string, articleTitle: string, 
   const seed = (base + slotN * 13 + Math.floor(Math.random() * 7)) >>> 0; // 소폭 랜덤 — 재생성 시 변주
   const hint = slotDesc.replace(/^예\s*[:：]\s*/, "").replace(/장면|모습|전경|풍경|공간/g, " ").trim();
   // ★한글 원천 제거(2026-07-13 — '국첟' 경로 뿌리 뽑기: 프롬프트에 한글이 인용되면 금지 문구와 무관하게 그려진다)
-  const enTok = englishToken(articleTitle);
   const brief = await englishBrief(articleTitle, hint || undefined);
   const topicEn = brief?.topicEn ?? stripHangul(articleTitle, "korean personal finance topic");
-  const topicForPrompt = style === "typo3d" && enTok ? `${enTok} — ${topicEn}` : topicEn; // 3D 타이포 토큰은 원문 약어 유지
-  return callImage(buildBannerPrompt(topicForPrompt, style, seed, brief?.secondaryEn), "16:9");
+  // ★약어 토큰 전달 폐기(2026-07-29) — typo3d 퇴출로 '글자를 그릴 근거'를 프롬프트에서 완전히 없앤다
+  return callImage(buildBannerPrompt(topicEn, style, seed, brief?.secondaryEn), "16:9");
 }
 
 /** 대표이미지 AI 배경 1장(1:1, base64) — 한글은 코드(satori)가 합성. 실패는 호출측이 코드 폴백. */

@@ -20,11 +20,12 @@ export const BANNER_PALETTES = [
 ];
 
 // ★텍스트 규칙 = 주제 인지 함수(2026-07-13 실측 2건: 한글 '국첟' 깨짐 → 영문만 / 예시 나열(ETF·TAX)을 모델이 그대로 베껴 주택 썸네일에 ETF 문서 등장 → 예시 제거·주제 관련만)
-function noText(topic: string): string {
-  const base = "TEXT RULE (critical): Korean characters (Hangul) are STRICTLY FORBIDDEN anywhere in the image — AI-rendered Korean ALWAYS breaks into gibberish. No sentences, no numbers, no gibberish pseudo-letters, no watermarks, no logos. Any other paper/screen/sign surface stays completely blank.";
-  const en = englishToken(topic);
-  if (en) return `${base} If a small label feels natural, the ONLY word allowed is "${en}" — never any other word.`;
-  return `${base} If a sign or label feels natural, it must be EXACTLY ONE short English capital word (3~8 letters, never a phrase — multi-word text always breaks) that a real object in THIS scene would naturally carry AND that belongs to THIS topic (a house may say RENT, a shop may say OPEN). NEVER write finance abbreviations or any word unrelated to the topic — when in doubt, render no text at all.`;
+// ★무문자 전면 강제(2026-07-29 유저 3회차 지적: "이미지에 한글 쓰지 말라니깐.. 한글 영어 아무것도 쓰지마셈").
+//  구 규칙은 '자연스러우면 영어 한 단어 허용'이라는 예외를 뒀는데, 그 틈이 실측 사고 둘을 만들었다:
+//  ①허용된 영어 한 단어('YEAR') ②예외를 여는 순간 모델이 한글 타이포까지 그려버림('연만셰금환금' — 깨진 한글).
+//  예외를 없앤다. 글자가 필요하면 우리 조판(GmarketSans)이 얹는다 — AI에게 글자를 맡기지 않는다.
+function noText(_topic: string): string {
+  return "TEXT RULE (absolute, zero exceptions): render NO text of any kind anywhere in the image — no Korean (Hangul), no English, no numbers, no single words, no abbreviations, no signage, no labels, no captions, no watermarks, no logos, no gibberish pseudo-letters. Every paper, screen, sign, box, document and product surface must be completely BLANK, or blurred out of focus. If a real object would normally carry text, render it clean and empty. There is no case where a word is acceptable.";
 }
 
 // ★썸네일 배경 전용(2026-07-13 유저: 썸네일엔 영어도 쓰지 마 — 그림으로만. 문구 조판이 위에 얹히므로 배경 글자는 소음)
@@ -99,9 +100,11 @@ export function buildBannerPrompt(topic: string, style: BannerStyle, seed: numbe
 }
 
 /** 본문용 스타일 로테이션 — 영문 약어가 있으면 3D 타이포 포함. seed로 시작점 회전(글 안에서 서로 다른 스타일). */
-export function bodyStyleRotation(topic: string): Exclude<BannerStyle, "stage">[] {
+export function bodyStyleRotation(_topic: string): Exclude<BannerStyle, "stage">[] {
   // ★풀 확장(2026-07-13 실측: 약어 없는 주제는 풀 2종 → 슬롯 1·3이 같은 스타일로 떨어져 'LOAN 남자' 판박이) — 3슬롯까지 무조건 서로 다른 스타일
-  return englishToken(topic) ? ["object", "scene", "isometric", "typo3d", "flatlay"] : ["object", "scene", "isometric", "flatlay"];
+  // ★typo3d 전면 퇴출(2026-07-29 유저: 이미지에 글자 금지) — 글자 자체가 히어로인 스타일이라 무문자 규칙과 양립 불가.
+  //  본문 배너 경로는 이미 걸러내고 있었지만(wpIllustration:23) 썸네일 경로(geminiImage:294)는 그대로 쓰고 있었다.
+  return ["object", "scene", "isometric", "flatlay"];
 }
 
 /** ★썸네일 배경 = 카피 은유 극화(2026-07-13 유저 베스트 실측: "연체금만 쌓인다" → 청구서 더미에 깔린 사람).
