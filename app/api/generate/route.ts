@@ -6,7 +6,7 @@ import { ensureUserRow } from "@/lib/userPlan";
 import { spendCredits, addCredits, GENERATE_COST } from "@/lib/credits";
 import { streamArticle } from "@/lib/generateArticle";
 import { isReviewType, ensureDisclosure } from "@/lib/revenue";
-import { hasFabricatedExperience, lacksInterpretation } from "@/lib/editorial";
+import { hasFabricatedExperience, lacksInterpretation, lacksConditionBranch } from "@/lib/editorial";
 import { financeCalcContext } from "@/lib/financeCalc";
 import { sanitizeUrls } from "@/lib/linkWhitelist";
 import { countKoreanChars } from "@/lib/humanizer";
@@ -414,6 +414,22 @@ export async function POST(request: Request) {
             if (!lacksInterpretation(retried.body_html) && (userStory || !hasFabricatedExperience(retried.body_html)) && countKoreanChars(retried.body_html) >= 500) article = retried;
           } catch { /* 재생성 실패 — 원본 그대로 */ }
           if (lacksInterpretation(article.body_html)) console.log(`[interpretation] user=${user.id.slice(0, 8)} — 해석 신호 바닥 미달, 통과(로그만)`);
+        }
+
+        // ★내 조건 분기 가드(2026-07-29 전략 회의 — AI 브리핑 인용 2,900회 대비 방문 미증가 실측).
+        //  조건 분기표도 계산 예시도 없으면 브리핑이 답을 종결시켜 인용만 남고 클릭이 안 남는다. 해석 가드와 같은 규격(재생성 1회, 미달이면 로그만).
+        if (vertical === "online" && lacksConditionBranch(article.body_html) && regenSpent < REGEN_CAP) {
+          regenSpent++;
+          send({ type: "revising" });
+          void logUsage({ userId: user.id, model: "guard", kind: "condition_branch_retry", inputTokens: 0, outputTokens: 0 });
+          try {
+            const retried = await streamArticle(
+              { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ★경고: 직전 생성에 '내 조건이면 얼마인가'가 없다. AI 요약이 그대로 종결시켜 클릭이 남지 않는 글이다. 둘 중 최소 하나를 반드시 넣어라 — ①조건 분기표(소득·연령·가입기간처럼 답이 갈리는 축을 세로로, 그 조건일 때의 실제 금액·비율을 칸에 채운 표, 머리행 포함 3행 이상) ②숫자 계산 예시('예를 들어 총급여 4,500만 원이면…' 가정값→계산 과정→결과 숫자, 가정임을 명시). 나머지 규격·분량은 유지.`.trim() },
+              noop, noop, onGenUsage,
+            );
+            if (!lacksConditionBranch(retried.body_html) && (userStory || !hasFabricatedExperience(retried.body_html)) && countKoreanChars(retried.body_html) >= 500) article = retried;
+          } catch { /* 재생성 실패 — 원본 그대로 */ }
+          if (lacksConditionBranch(article.body_html)) console.log(`[condition-branch] user=${user.id.slice(0, 8)} — 조건 분기 없음, 통과(로그만)`);
         }
 
         // 길이 검증 — 네이버는 좁은 주제도 '네이버 최적화로 뽑을 수 있는 만큼' 살린다(1,000자 안팎도 충분).

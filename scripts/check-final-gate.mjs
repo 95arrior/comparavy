@@ -3,6 +3,7 @@ import { nearDuplicate } from "../lib/diversity.ts";
 import { isStickyFrame, pickDiverseCopy } from "../lib/thumbCopyDiversity.ts";
 import { isPushable, pushGain, isZeroClickQuery } from "../lib/serpCtr.ts";
 import { pruneDeadTocLinks } from "../lib/wordpress.ts";
+import { lacksConditionBranch } from "../lib/editorial.ts";
 const cases = [
   { c: { keyword: "강서구 평생교육이용권", title: "강서구 평생교육이용권 2차 지원 신청 방법과 사용처" }, drop: "region_niche" },
   { c: { keyword: "대구 섬유염색업 버팀이음", title: "대구 섬유염색업 고용안정 버팀이음 프로젝트 신청 대상" }, drop: "region_niche" },
@@ -193,6 +194,31 @@ for (const [q, expect] of zeroCases) {
   for (const [name, ok] of [["죽은 항목 제거", deadGone], ["정상 항목 보존", liveKept], ["전멸 시 목차 삭제", blockGone]]) {
     if (!ok) fail++;
     console.log(ok ? "OK " : "FAIL", "| toc |", name);
+  }
+}
+
+// ★내 조건 분기 게이트(2026-07-29 전략 회의: AI 브리핑 인용 2,900회인데 방문 3,300명 — 인용만 되고 클릭이 안 남는다).
+//  true=분기 없음(재생성 대상), false=있음(통과). 실제 발행 글의 표 구조를 케이스로 박는다.
+{
+  const realTable = `<h2>공제 한도</h2><p>설명</p><table><tr><th>총급여 기준</th><th>공제율</th><th>900만 원 납입 시 환급액</th></tr>`
+    + `<tr><td>5,500만 원 이하</td><td>16.5%</td><td>약 148만 5,000원</td></tr>`
+    + `<tr><td>5,500만 원 초과</td><td>13.2%</td><td>약 118만 8,000원</td></tr></table>`; // pigtong 실제 발행 글
+  const calcOnly = `<p>공제율은 소득에 따라 다릅니다.</p><p>예를 들어 총급여 4,500만 원인 직장인이 900만 원을 납입하면 16.5%를 적용해 약 148만 원을 환급받습니다.</p>`;
+  const plainTable = `<table><tr><th>항목</th><th>내용</th></tr><tr><td>신청처</td><td>홈택스</td></tr><tr><td>기간</td><td>연중</td></tr></table>`; // 조건 축 없음
+  const emptyCalc = `<p>예를 들어 상황에 따라 달라질 수 있습니다.</p><p>자세한 내용은 기관에 문의하세요.</p>`; // 숫자 없는 빈 '예를 들어'
+  const listOnly = `<h2>신청 방법</h2><ul><li>홈택스 접속</li><li>서류 제출</li></ul><p>제도가 개편되었습니다.</p>`;
+  const condCases = [
+    ["실제 발행 글(조건 분기표)", realTable, false],
+    ["계산 예시만 있어도 통과", calcOnly, false],
+    ["조건 축 없는 단순 표", plainTable, true],
+    ["숫자 없는 빈 '예를 들어'", emptyCalc, true],
+    ["나열만 있는 글", listOnly, true],
+  ];
+  for (const [name, html, expect] of condCases) {
+    const got = lacksConditionBranch(html);
+    const ok = got === expect;
+    if (!ok) fail++;
+    console.log(ok ? "OK " : "FAIL", "| cond-branch |", name, "→", got ? "분기 없음(재생성)" : "통과");
   }
 }
 

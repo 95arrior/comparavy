@@ -3,7 +3,7 @@ import { createSupabaseAdminClient, hasSupabaseEnv } from "@/lib/supabase-server
 import { generateArticle } from "@/lib/generateArticle";
 import { pickWpTopic } from "@/lib/googleTopics";
 import { adsenseUnsafe } from "@/lib/cardFinalGate";
-import { lacksInterpretation } from "@/lib/editorial";
+import { lacksInterpretation, lacksConditionBranch } from "@/lib/editorial";
 import { financeCalcContext } from "@/lib/financeCalc";
 import { autoFeaturedImage } from "@/lib/wpFeaturedImage";
 import { wpCategoryFor } from "@/lib/wpCategory";
@@ -102,6 +102,16 @@ export async function GET(request: Request) {
             if (cr >= 500 && !lacksInterpretation(retried.body_html)) article = retried;
           } catch { /* 재생성 실패 — 원본 그대로 */ }
           if (lacksInterpretation(article.body_html)) console.log(`[wp-auto][interpretation] blog=${b.id} — 해석 신호 바닥 미달, 통과(로그만)`);
+        }
+        // ★내 조건 분기 게이트(2026-07-29 전략 회의 — AI 브리핑 인용 2,900회 대비 방문 미증가 실측).
+        //  '내 조건이면 얼마인가'(조건 분기표 또는 숫자 계산 예시)가 없으면 브리핑이 답을 종결시켜 인용만 남는다.
+        if (lacksConditionBranch(article.body_html)) {
+          try {
+            const retried = await generateArticle({ ...genInput, variantInstruction: "★경고: 직전 생성에 '내 조건이면 얼마인가'가 없다. AI 요약이 그대로 종결시켜 클릭이 남지 않는 글이다. 둘 중 최소 하나를 반드시 넣어라 — ①조건 분기표(소득·연령·가입기간처럼 답이 갈리는 축을 세로로, 그 조건일 때의 실제 금액·비율을 칸에 채운 표, 머리행 포함 3행 이상) ②숫자 계산 예시('예를 들어 총급여 4,500만 원이면…' 가정값→계산 과정→결과 숫자, 가정임을 명시). 분량 1,800~2,200자(공백 제외)는 유지." });
+            const cr = retried.body_html.replace(/<[^>]+>/g, "").replace(/\s+/g, "").length;
+            if (cr >= 500 && !lacksConditionBranch(retried.body_html)) article = retried;
+          } catch { /* 재생성 실패 — 원본 그대로 */ }
+          if (lacksConditionBranch(article.body_html)) console.log(`[wp-auto][condition-branch] blog=${b.id} — 조건 분기 없음, 통과(로그만)`);
         }
         // WP 후처리 — 네이버 포맷터(스페이서·형광펜) 미적용. 마커만 정리.
         let body = stripNaverArtifacts(article.body_html); // 해시태그·마커 일괄 소거(중앙 소거기)
