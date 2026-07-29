@@ -86,7 +86,17 @@ export async function GET(request: Request) {
   const { data: trendRows } = await db.from("trend_topics").select("keyword, title").limit(1000);
   const trend = (trendRows ?? []).map((t) => ({ keyword: String(t.keyword ?? ""), title: String(t.title ?? ""), searches: null }));
 
+  // ④ 현재 단계(tier) — 배합(트렌드:에버그린)을 결정하는 값. 신생이면 트렌드가 70%라 죽는 글이 양산된다.
+  const tierKey = `blog_tier:${(prof as { id?: string } | null)?.id ?? user.id}`;
+  const { data: tc } = await db.from("api_cache").select("value, expires_at").eq("key", tierKey).maybeSingle();
+  const tierVal = (tc?.value ?? null) as { tier?: string; wins?: number; sample?: number } | null;
+  const MIX: Record<string, string> = { SEEDLING: "트렌드 7 : 에버그린 3", GROWING: "트렌드 5 : 에버그린 5", ESTABLISHED: "트렌드 3 : 에버그린 7" };
+  const tierOut = tierVal?.tier
+    ? { 단계: tierVal.tier, 배합: MIX[tierVal.tier] ?? "?", 승급근거: `최근 표본 ${tierVal.sample ?? "?"}건 중 D+7 상위노출 ${tierVal.wins ?? "?"}건`, 승급선: "GROWING=3건 · ESTABLISHED=5건" }
+    : { 단계: "판정 캐시 없음(신생 시작값으로 동작 중일 가능성)", 배합: MIX.SEEDLING, 승급선: "GROWING=3건 · ESTABLISHED=5건" };
+
   return NextResponse.json({
+    "④현재_단계": tierOut,
     안내: "측정 전용 — 지금은 아무것도 차단하지 않습니다. ?min=100 처럼 임계를 바꿔 호출하세요.",
     임계_적용값: min || "미적용(검색량 판정 생략)",
     "①내가_쓴_글": tally(mine, 0), // 글엔 검색량이 없어 지역·시효만 판정

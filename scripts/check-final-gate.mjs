@@ -65,6 +65,14 @@ const cases = [
   { c: { keyword: "스타트업 정책자금", title: "스타트업이 놓치기 쉬운 정부지원금·정책자금 신청 체크리스트" }, drop: "b2b_audience" },
   { c: { keyword: "벤처기업 지원사업", title: "벤처기업 지원사업 모집, 신청 전 확인" }, drop: "b2b_audience" },
   { c: { keyword: "청년 창업 지원금", title: "청년 창업 지원금 신청 방법과 대상" }, drop: null },
+  // ★2026-07-29 수명 컷 승격(측정 후) — 날짜·회차가 박힌 글감은 그 시점이 지나면 죽는다(루원시티 91→8, 경남 2차 추경 7).
+  { c: { keyword: "루원시티 SK 리더스뷰 청약", title: "루원시티 SK 리더스뷰 불법행위 재공급 청약, 7월 13일 마감" }, drop: "dated_topic" },
+  { c: { keyword: "고유가 피해지원금", title: "2차 고유가지원금 신청 대상 확인법" }, drop: "round_topic" },
+  { c: { keyword: "한화포레나 안산고잔2차 무순위 청약", title: "한화포레나 안산고잔2차 무순위 청약 일정" }, drop: "round_topic" },
+  // 오검출 방지 — '3기 신도시'는 수년 지속 고유명사, '전입신고 기간'의 기간·연도 표기는 시효가 아니다
+  { c: { keyword: "3기 신도시 청약", title: "3기 신도시 청약, 사전청약과 뭐가 다른가요?" }, drop: null },
+  { c: { keyword: "전입신고 기간", title: "전입신고 기간, 늦으면 진짜 불이익이 있나요?" }, drop: null },
+  { c: { keyword: "2026년 연말정산", title: "2026년 연말정산, 달라지는 공제 한도" }, drop: null },
 ];
 let fail = 0;
 for (const { c, drop } of cases) {
