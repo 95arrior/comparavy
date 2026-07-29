@@ -4,6 +4,10 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { bannedHits } from "@/lib/hookPatterns";
+import { isStickyFrame } from "@/lib/thumbCopyDiversity";
+
+// ★네이버 썸네일 문구 금지(2026-07-29) — 정리류(제목 반복 유발)·느낌표·과장. WP(WP_COPY_BAN_RE)와 같은 결.
+const NAVER_COPY_BAN_RE = /(완벽\s?정리|총\s?정리|핵심\s?정리|한눈에\s?정리|모르면\s?손해|!)/;
 import { logUsage } from "@/lib/usageLog";
 
 export const maxDuration = 30;
@@ -82,7 +86,12 @@ export async function POST(request: Request) {
           return true;
         })
         .filter(Boolean)
-        .filter((c) => bannedHits(c).length === 0);
+        .filter((c) => bannedHits(c).length === 0)
+        // ★게이트 동수화(2026-07-29 유저 실측 — 발행 썸네일에서 확인): WP 경로에만 있던 두 규칙이 네이버 경로엔 없었다.
+        //  ①'전입신고 기간 총정리' — 정리류 금지어가 안 걸려 통과 ②'아직 기회 있어요' — 어느 글에나 붙는 범용 프레임
+        //  ③'148만원 돌아옵니다!' — 느낌표(감정 과잉 텍스트는 썸네일 CTR을 낮춘다는 PTRP 실측)
+        .filter((c) => !NAVER_COPY_BAN_RE.test(c))
+        .filter((c) => !isStickyFrame(c));
       copies = [...new Set(cleaned)].slice(0, 4);
       if (copies.length === 0 && Array.isArray(raw) && raw.length > 0) {
         // ★관대한 회수(2026-07-13 실측: 임산부 지원금 — 주제어 게이트까지 전멸→판박이 폴백): 사실 정합(숫자·금지어)만 지키고 회수

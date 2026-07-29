@@ -695,6 +695,13 @@ export default function DashboardClient(props: DashboardProps) {
                     articles={articles}
                     onWrite={() => goLabView("home")}
                     onOpenArticle={(id) => { const a = articles.find((x) => x.id === id); if (a) setSelected(a); else goLabView("articles"); }}
+                    onWriteKeyword={(keyword, title) => {
+                      // 허브 글감 → 홈의 글감 카드와 같은 경로(중복 draft 재진입·크레딧 0 페이월까지 동일하게 탄다)
+                      const dup = findTodayDraftByKeyword(articles, keyword);
+                      if (dup) { setSelected(dup); return; }
+                      if (credits <= 0) { setPaywall({ title }); return; }
+                      setPendingWrite({ keyword, title });
+                    }}
                   />
                 </div>
               </main>

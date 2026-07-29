@@ -8,6 +8,7 @@ import { computeLevel } from "@/lib/level";
 import RevenueDash from "./RevenueDash";
 import ApprovalInput from "./ApprovalInput";
 import PushTargets from "./PushTargets";
+import HubTopics from "./HubTopics";
 import SearchConsoleConnect from "./SearchConsoleConnect";
 import SearchPerformance from "./SearchPerformance";
 import { isVerifiedStatus } from "@/lib/course";
@@ -235,12 +236,15 @@ export default function PerformanceView({ blogKey,
   articles,
   onWrite,
   onOpenArticle,
+  onWriteKeyword,
 }: {
   blogKey?: string | null;
   articles: Article[];
   onWrite: () => void;
   /** 승부처 목록에서 글 열기(성과 → 그 글로 바로) */
   onOpenArticle?: (articleId: string) => void;
+  /** 허브 글감 → 글쓰기 진입(홈의 글감 카드와 같은 경로) */
+  onWriteKeyword?: (keyword: string, title: string) => void;
 }) {
   const stats = useMemo(() => {
     const nonGen = articles.filter((a) => a.status !== "generating");
@@ -286,6 +290,8 @@ export default function PerformanceView({ blogKey,
       {stats.pub >= 10 && <ApprovalInput blogKey={blogKey ?? null} onChanged={() => { try { setApproved(localStorage.getItem(adpostKey("approved", blogKey)) === "1"); } catch { /* ignore */ } }} />}
       {/* ★검색 성과 블록(2026-07-29) — 연결이 안 끝났으면 연결 카드만, 끝났으면 그래프+승부처.
           연결 UI가 어디에도 안 붙어 있어 'OAuth는 됐는데 사이트 선택 화면이 없는' 상태가 실제로 발생했다(유저 실측). */}
+      {/* 허브 글감 — 네이버는 유입 API가 없어 붙여넣기 입력. 서치콘솔 연결 여부와 무관하게 항상 쓸 수 있다 */}
+      <HubTopics onWriteKeyword={onWriteKeyword} />
       {gscReady === false && <SearchConsoleConnect onSaved={() => setGscReady(true)} />}
       {gscReady === true && (
         <>

@@ -4,6 +4,7 @@ import { isStickyFrame, pickDiverseCopy } from "../lib/thumbCopyDiversity.ts";
 import { isPushable, pushGain, isZeroClickQuery } from "../lib/serpCtr.ts";
 import { pruneDeadTocLinks } from "../lib/wordpress.ts";
 import { lacksConditionBranch } from "../lib/editorial.ts";
+import { parseQueryText, clusterQueries } from "../lib/hubTopics.ts";
 const cases = [
   { c: { keyword: "강서구 평생교육이용권", title: "강서구 평생교육이용권 2차 지원 신청 방법과 사용처" }, drop: "region_niche" },
   { c: { keyword: "대구 섬유염색업 버팀이음", title: "대구 섬유염색업 고용안정 버팀이음 프로젝트 신청 대상" }, drop: "region_niche" },
@@ -219,6 +220,29 @@ for (const [q, expect] of zeroCases) {
     const ok = got === expect;
     if (!ok) fail++;
     console.log(ok ? "OK " : "FAIL", "| cond-branch |", name, "→", got ? "분기 없음(재생성)" : "통과");
+  }
+}
+
+// ★허브 글감 클러스터링(2026-07-29 유저 실측 유입 검색어) — 뭉친 주제를 찾아야 허브를 세울 자리가 나온다.
+{
+  const pasted = [
+    "삼성카드 발급 심사 시간 3.13%", "삼성카드 발급취소 1.88%", "삼성카드 배송조회 1.25%",
+    "삼성카드 심사 기간 1.25%", "삼성카드 심사중 어디서 1.25%", "삼성카드 발급보류 1.95%",
+    "채무탕감제도 2.27%", "정부 채무탕감제도 신청하는법 1.30%", "정부지원 채무탕감 법률무료상담 1.30%",
+    "개인채무 탕감제도 방법 0.65%",
+    "국산 전기차 추천 순위 2.27%",
+  ].join("\n");
+  const rows = parseQueryText(pasted);
+  const cl = clusterQueries(rows, 3);
+  const cores = cl.map((c) => c.core);
+  const hasCard = cl.some((c) => c.core.includes("삼성카드") && c.queries.length >= 5);
+  const hasDebt = cl.some((c) => c.core.includes("탕감") && c.queries.length >= 3);
+  const noSingleton = cl.every((c) => c.queries.length >= 3); // 1~2개짜리는 허브 대상이 아니다
+  const shareParsed = rows.some((r) => r.share === 3.13); // '3.13%' 파싱
+  const noPct = !rows.some((r) => /%/.test(r.query)); // 검색어에 % 찌꺼기가 남으면 안 된다
+  for (const [name, ok] of [["삼성카드 묶음", hasCard], ["채무탕감 묶음", hasDebt], ["3개 미만 제외", noSingleton], ["유입% 파싱", shareParsed], ["% 찌꺼기 제거", noPct]]) {
+    if (!ok) fail++;
+    console.log(ok ? "OK " : "FAIL", "| hub |", name, "→", cores.join(", ") || "(없음)");
   }
 }
 
