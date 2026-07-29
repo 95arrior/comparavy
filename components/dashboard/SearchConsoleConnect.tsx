@@ -7,7 +7,7 @@ interface Status { connected: boolean; googleEmail: string | null; selectedSite:
 
 // 5-1: 구글 서치콘솔 연결 + 사이트 선택(저장)까지. 데이터 표시는 5-2/5-3.
 // 워드프레스 패널 안 섹션으로 렌더된다(자체 상태/요청, 기존 WP 로직과 분리).
-export default function SearchConsoleConnect() {
+export default function SearchConsoleConnect({ onSaved }: { onSaved?: () => void } = {}) {
   const [status, setStatus] = useState<Status | null>(null);
   const [sites, setSites] = useState<GscSite[] | null>(null);
   const [selected, setSelected] = useState("");
@@ -58,6 +58,7 @@ export default function SearchConsoleConnect() {
       if (!r.ok) { setErr(d.error ?? "저장하지 못했어요."); return; }
       setStatus((s) => (s ? { ...s, selectedSite: d.selectedSite, permissionLevel: d.permissionLevel } : s));
       setMsg("이 사이트의 검색 성과를 가져올 준비가 됐어요.");
+      onSaved?.(); // 성과·승부처 카드를 즉시 다시 불러오게(저장 후 새로고침 요구 금지)
     } finally {
       setBusy(false);
     }

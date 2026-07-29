@@ -8,6 +8,8 @@ import { computeLevel } from "@/lib/level";
 import RevenueDash from "./RevenueDash";
 import ApprovalInput from "./ApprovalInput";
 import PushTargets from "./PushTargets";
+import SearchConsoleConnect from "./SearchConsoleConnect";
+import SearchPerformance from "./SearchPerformance";
 import { isVerifiedStatus } from "@/lib/course";
 import type { Article } from "./types";
 
@@ -250,6 +252,18 @@ export default function PerformanceView({ blogKey,
 
   const [approved, setApproved] = useState(false);
   useEffect(() => { try { setApproved(localStorage.getItem(adpostKey("approved", blogKey)) === "1"); } catch { /* ignore */ } }, []);
+  // 서치콘솔 준비 상태 — 연결 + 사이트 선택까지 끝나야 true(둘 중 하나만 되면 그래프가 빈 화면이 된다)
+  const [gscReady, setGscReady] = useState<boolean | null>(null);
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await fetch("/api/searchconsole");
+        if (!r.ok) { setGscReady(false); return; }
+        const d = await r.json() as { connected?: boolean; selectedSite?: string | null };
+        setGscReady(Boolean(d.connected && d.selectedSite));
+      } catch { setGscReady(false); }
+    })();
+  }, []);
   const { title, paths, otherChannels } = buildPaths(stats.pub, onWrite, approved);
   const allRows = [...paths, ...otherChannels];
   const [openIdx, setOpenIdx] = useState<number | null>(null);
@@ -270,8 +284,16 @@ export default function PerformanceView({ blogKey,
         );
       })()}
       {stats.pub >= 10 && <ApprovalInput blogKey={blogKey ?? null} onChanged={() => { try { setApproved(localStorage.getItem(adpostKey("approved", blogKey)) === "1"); } catch { /* ignore */ } }} />}
-      {/* ★승부처 — 성과 화면에서 유일하게 '오늘 뭘 할지'를 답하는 카드라 사다리보다 위 */}
-      <PushTargets onOpenArticle={onOpenArticle} />
+      {/* ★검색 성과 블록(2026-07-29) — 연결이 안 끝났으면 연결 카드만, 끝났으면 그래프+승부처.
+          연결 UI가 어디에도 안 붙어 있어 'OAuth는 됐는데 사이트 선택 화면이 없는' 상태가 실제로 발생했다(유저 실측). */}
+      {gscReady === false && <SearchConsoleConnect onSaved={() => setGscReady(true)} />}
+      {gscReady === true && (
+        <>
+          <SearchPerformance />
+          {/* 승부처 — 성과 화면에서 유일하게 '오늘 뭘 할지'를 답하는 카드라 사다리보다 위 */}
+          <PushTargets onOpenArticle={onOpenArticle} />
+        </>
+      )}
 
       {open ? (
         <PathDetail p={open} onBack={() => setOpenIdx(null)} />

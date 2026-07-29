@@ -47,7 +47,7 @@ export default function PushTargets({ onOpenArticle }: { onOpenArticle?: (articl
     return (
       <div className="rounded-2xl at-glass p-5">
         <p className="text-[15px] font-bold text-neutral-900">지금 밀면 넘어가는 글</p>
-        <p className="mt-1 text-[12.5px] leading-relaxed text-neutral-400">구글 서치콘솔을 연결하면, 1페이지에 걸친 글을 자동으로 골라드려요.</p>
+        <p className="mt-1 text-[12.5px] leading-relaxed text-neutral-400">서치콘솔 연결과 <b className="text-neutral-500">사이트 선택</b>까지 끝나면, 1페이지에 걸친 글을 자동으로 골라드려요.</p>
         <a href="/api/searchconsole/connect" className="at-press mt-3 block w-full rounded-[12px] tk-grad-cta py-3 text-center text-[13.5px] font-bold text-white">서치콘솔 연결하기</a>
       </div>
     );
