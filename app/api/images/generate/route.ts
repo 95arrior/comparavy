@@ -21,7 +21,10 @@ async function uploadPng(userId: string, png: Buffer): Promise<string | null> {
   } catch { return null; }
 }
 
-export const maxDuration = 60;
+// ★180초(2026-08-01) — 배경 생성이 1회 35초대라 재시도까지 가면 70초가 넘어 60초 제한에 걸렸다.
+//  실측: 1차 성공 37초 / 1차 실패 후 재시도하면 시간 초과 → 함수가 죽고 단색 폴백으로 보였다.
+//  재시도를 넣은 쪽이 원인이므로 시간을 함께 늘린다.
+export const maxDuration = 180;
 
 function refundKeyTM(userId: string, copy: string): string { return `tm-${userId}-${copy}`.slice(0, 60); }
 
