@@ -92,7 +92,7 @@ export async function GET(request: Request) {
   //  진짜 기준은 '우리가 실제로 이긴 난이도'다. ?calibrate=이긴키워드|진키워드 로 양쪽 문서수를 재서
   //  경계를 찾는다. 이 경계는 추측이 아니라 우리 블로그의 실적에서 나온 값이다.
   const calib = url.searchParams.get("calibrate");
-  let 보정 = null as null | { 이김: { k: string; t: number | null }[]; 짐: { k: string; t: number | null }[]; 제안문턱: number | null; 근거: string };
+  let 보정: Record<string, unknown> | null = null;
   if (calib) {
     const [wonRaw = "", lostRaw = ""] = calib.split("|");
     const meas = async (list: string) => {
