@@ -11,18 +11,39 @@ export const VERIFIED_LINKS: Record<string, { root: string; name: string }> = {
   "work24.go.kr": { root: "https://www.work24.go.kr", name: "고용24" },
   "adpost.naver.com": { root: "https://adpost.naver.com", name: "애드포스트" },
   "mate.naver.com": { root: "https://mate.naver.com", name: "네이버 메이트" },
+  // ★경제·재테크 기관(2026-07-31 추가) — 실측 사고에서 출발했다: 엔진이 자본시장연구원 도메인을
+  //  'cmri.re.kr'로 지어내 본문에 실었다(실제는 kcmi.re.kr). 사전에 없으면 매번 '검색 유도'로 마스킹되니
+  //  자주 인용할 기관은 정답을 등재해 두는 편이 지어내기를 줄인다.
+  //  HTTP 200 실측(2026-07-31): fsc·fss·kdic·bok·nps·dart·krx.
+  "fsc.go.kr": { root: "https://www.fsc.go.kr", name: "금융위원회" },
+  "fss.or.kr": { root: "https://www.fss.or.kr", name: "금융감독원" },
+  "kdic.or.kr": { root: "https://www.kdic.or.kr", name: "예금보험공사" },
+  "bok.or.kr": { root: "https://www.bok.or.kr", name: "한국은행" },
+  "nps.or.kr": { root: "https://www.nps.or.kr", name: "국민연금공단" },
+  "dart.fss.or.kr": { root: "https://dart.fss.or.kr", name: "전자공시시스템" },
+  "krx.co.kr": { root: "https://www.krx.co.kr", name: "한국거래소" },
+  // ⚠ kcmi.re.kr — 이 환경(CLI)에서는 응답이 없어 자동 200 확인이 안 됐다(브라우저 외 요청 차단으로 보인다).
+  //   유저가 브라우저로 실재를 확인해 등재. 다음 점검 때 200을 다시 확인할 것.
+  "kcmi.re.kr": { root: "https://www.kcmi.re.kr", name: "자본시장연구원" },
 };
 
 // URL 패턴 — http(s) 명시 + 맨몸 도메인(gov.kr/portal… 형태)까지.
 export const URL_RE = /https?:\/\/[^\s<>"')\]]+|(?<![\w.@/])(?:[a-z0-9-]+\.)+(?:go\.kr|or\.kr|co\.kr|kr|com|net|org)(?:\/[^\s<>"')\]]*)?/gi;
 
+// 치환 자리표 — 도메인을 즉시 문구로 바꾸지 않고, 문맥을 본 뒤 cleanup에서 정리한다.
+const CUT = "@@LINKCUT@@";
+
 function domainOf(raw: string): string {
   const m = /^(?:https?:\/\/)?(?:www\.)?([^/\s]+)/i.exec(raw.trim());
   return (m?.[1] ?? "").toLowerCase();
 }
+// ★가장 구체적인 키를 먼저 본다(2026-07-31 실측): 종전엔 사전 순서대로 훑어
+//  dart.fss.or.kr이 상위 기관 fss.or.kr에 먼저 걸려 전자공시 링크가 금감원으로 바뀌었다.
+//  서브도메인이 독립 서비스인 경우(dart·work24류)를 상위 기관이 삼키면 안 된다.
+const WHITELIST_KEYS = Object.keys(VERIFIED_LINKS).sort((a, b) => b.length - a.length);
 function whitelistHit(domain: string): { root: string; name: string } | null {
-  for (const [key, v] of Object.entries(VERIFIED_LINKS)) {
-    if (domain === key || domain === `www.${key}` || domain.endsWith(`.${key}`)) return v;
+  for (const key of WHITELIST_KEYS) {
+    if (domain === key || domain === `www.${key}` || domain.endsWith(`.${key}`)) return VERIFIED_LINKS[key]!;
   }
   return null;
 }
@@ -40,7 +61,7 @@ export function sanitizeUrls(html: string, opts?: { allowNaverBlogId?: string | 
   const out0 = masked.replace(URL_RE, (raw, ...rest) => {
     const offset = rest[rest.length - 2] as number; const whole = rest[rest.length - 1] as string;
     const after = whole.slice(offset + raw.length, offset + raw.length + 24);
-    if (/^\s*(공식\s*사이트에서\s*검색|에서\s*검색)/.test(after)) return domainOf(raw); // ★중복 방지(실측: '검색 공식 사이트에서 검색')
+    void after; // (중복·비문 정리는 아래 cleanup 단계가 문맥을 보고 처리한다)
     if (/supabase\.co|supabase\.in|ateflo\.com/i.test(raw)) return raw;
     if (ownBlog && new RegExp(`^https?://(m\\.)?blog\\.naver\\.com/${ownBlog.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}(/|$)`, "i").test(raw)) return raw; // 내 블로그 글(전편 링크)
     const d = domainOf(raw);
@@ -53,9 +74,22 @@ export function sanitizeUrls(html: string, opts?: { allowNaverBlogId?: string | 
     }
     replaced += 1;
     fabricated.push(raw.slice(0, 80));
-    return `${d} 공식 사이트에서 검색`; // 사전 밖 — 경로 제거 + 검색 유도
+    return CUT; // ★사전 밖 — 도메인 문자열을 남기지 않는다(아래 cleanup이 문맥에 맞게 치운다)
   });
-  const out = out0.replace(/__ATTR(\d+)__/g, (_m, i) => masks[Number(i)] ?? "");
+  // ★지어낸 도메인을 본문에 남기지 않는다(2026-07-31 실측 사고).
+  //  종전엔 `${도메인} 공식 사이트에서 검색`으로 바꿔 가짜 주소가 그대로 노출됐다 —
+  //  링크만 죽였을 뿐 읽는 사람에겐 여전히 '알려준 주소'였고, 실제로 없는 페이지를 찾아 헤매게 만들었다.
+  //  문구 중복·비문도 같이 났다("… 공식 사이트에서 검색 공식 사이트에서 확인하세요").
+  const out1 = out0
+    .replace(new RegExp(`\\s*[(（]\\s*${CUT}\\s*[)）]`, "g"), "") // 공식 사이트(도메인) → 공식 사이트
+    .replace(new RegExp(`${CUT}\\s*(?=,?\\s*(?:의\\s*)?(?:공식\\s*)?(?:사이트|홈페이지|누리집))`, "g"), "") // 뒤에 안내가 이어지면 도메인만 삭제
+    .replace(new RegExp(`((?:공식\\s*)?(?:사이트|홈페이지|누리집)\\s*[:：]?\\s*)${CUT}`, "g"), "$1") // 앞에 안내가 있으면 도메인만 삭제
+    .replace(new RegExp(`${CUT}\\s*(?=에서)`, "g"), "공식 사이트") // "… 에서 확인하세요" 문장 유지
+    .replace(new RegExp(CUT, "g"), "공식 사이트에서 검색") // 남은 것은 검색 유도
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\s+([,.)])/g, "$1")
+    .replace(/([,·])\s*\1/g, "$1");
+  const out = out1.replace(/__ATTR(\d+)__/g, (_m, i) => masks[Number(i)] ?? "");
   return { html: out, replaced, fabricated };
 }
 export function extractUrls(html: string): string[] {
