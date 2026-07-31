@@ -87,7 +87,37 @@ export async function GET(request: Request) {
     };
   }
 
+  // ★문턱 보정(2026-08-01) — "문서 1,000건 미만"은 근거 없는 숫자였고 표본 40개 중 0개가 통과했다.
+  //  진짜 기준은 '우리가 실제로 이긴 난이도'다. ?calibrate=이긴키워드|진키워드 로 양쪽 문서수를 재서
+  //  경계를 찾는다. 이 경계는 추측이 아니라 우리 블로그의 실적에서 나온 값이다.
+  const calib = url.searchParams.get("calibrate");
+  let 보정 = null as null | { 이김: { k: string; t: number | null }[]; 짐: { k: string; t: number | null }[]; 제안문턱: number | null; 근거: string };
+  if (calib) {
+    const [wonRaw = "", lostRaw = ""] = calib.split("|");
+    const meas = async (list: string) => {
+      const out: { k: string; t: number | null }[] = [];
+      for (const k of list.split(",").map((x) => x.trim()).filter(Boolean).slice(0, 20)) out.push({ k, t: await fetchBlogTotal(k) });
+      return out;
+    };
+    const 이김 = await meas(wonRaw);
+    const 짐 = await meas(lostRaw);
+    const wonVals = 이김.map((x) => x.t).filter((n): n is number => n != null);
+    const lostVals = 짐.map((x) => x.t).filter((n): n is number => n != null);
+    // 이긴 것 중 가장 어려웠던 값 = 우리가 감당해 본 상한. 진 것 중 가장 쉬웠던 값보다 낮으면 깨끗이 갈린다.
+    const maxWon = wonVals.length ? Math.max(...wonVals) : null;
+    const minLost = lostVals.length ? Math.min(...lostVals) : null;
+    보정 = {
+      이김, 짐,
+      제안문턱: maxWon,
+      근거: maxWon == null ? "이긴 키워드 측정 실패"
+        : minLost != null && minLost <= maxWon
+        ? `겹침 있음 — 이긴 최대 ${maxWon.toLocaleString()} vs 진 최소 ${minLost.toLocaleString()}. 문서수만으로는 완전히 안 갈린다(다른 축 필요).`
+        : `깨끗이 갈림 — 이긴 최대 ${maxWon.toLocaleString()} < 진 최소 ${(minLost ?? 0).toLocaleString()}. 이 사이를 문턱으로 쓸 수 있다.`,
+    };
+  }
+
   return NextResponse.json({
+    문턱보정: 보정,
     문서수측정: {
       가능한가: 측정가능,
       시험키워드: probeWord,
