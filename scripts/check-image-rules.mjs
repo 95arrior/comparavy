@@ -117,7 +117,9 @@ console.log("\n이미지 글자 검증 — 판정 불가는 불합격(strict):")
   t2(/deep navy|midnight indigo/.test(bp2), "진한 톤 팔레트 값");
   t2(/deepBg: true/.test(gi), "★썸네일 경로는 deepBg로 생성");
   t2(!/deepBg/.test(wi), "본문 삽화는 deepBg 안 씀(파스텔 유지)");
-  t2(/center band must stay DARK/i.test(bp2), "중앙이 어둡게 유지되도록 지시");
+  // 카피가 얹히는 자리를 숫자로 못 박았는지(2026-08-01: '중앙을 비워라'가 약해서 오브젝트가 정중앙에 왔다)
+  t2(/BOTTOM 45%/.test(bp2) && /TOP 55% is EMPTY/.test(bp2), "카피 자리를 숫자로 고정(아래 45% / 위 55% 비움)");
+  t2(/keep the overall image DARK/.test(bp2), "전체를 어둡게 유지하도록 지시");
   // 텍스트 규격이 배경 작업에 휩쓸려 바뀌지 않았는지(유저 확정값 보호)
   t2(/fontFamily: identity\.fontPair\.title/.test(rd), "제목 폰트 지정 그대로");
   t2(/fontWeight: 900/.test(rd), "제목 굵기 그대로");
