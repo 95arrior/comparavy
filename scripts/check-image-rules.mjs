@@ -103,5 +103,25 @@ console.log("\n이미지 글자 검증 — 판정 불가는 불합격(strict):")
   t((cp.match(/verifyImage\(/g) ?? []).length >= 2, "★검증이 2회(1차+재시도) 이상");
 }
 
+// ★썸네일 배경 대비(2026-08-01 유저: "클릭하고 싶게" — 실물이 연보라 배경+진보라 글씨였다).
+//  ★텍스트는 건드리지 않는다(유저 확정: 폰트·크기·위치는 이미 맞춘 값). 대비는 배경에서만 만든다.
+{
+  const fs4 = await import("node:fs");
+  const bp2 = fs4.readFileSync(new URL("../lib/bannerPrompts.ts", import.meta.url), "utf-8");
+  const gi = fs4.readFileSync(new URL("../lib/geminiImage.ts", import.meta.url), "utf-8");
+  const wi = fs4.readFileSync(new URL("../lib/wpIllustration.ts", import.meta.url), "utf-8");
+  const rd = fs4.readFileSync(new URL("../lib/thumbnailRenderer.ts", import.meta.url), "utf-8");
+  const t2 = (c, label) => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "| thumbBg|", label); };
+
+  t2(/THUMB_PALETTES/.test(bp2), "썸네일 전용 진한 팔레트 존재");
+  t2(/deep navy|midnight indigo/.test(bp2), "진한 톤 팔레트 값");
+  t2(/deepBg: true/.test(gi), "★썸네일 경로는 deepBg로 생성");
+  t2(!/deepBg/.test(wi), "본문 삽화는 deepBg 안 씀(파스텔 유지)");
+  t2(/center band must stay DARK/i.test(bp2), "중앙이 어둡게 유지되도록 지시");
+  // 텍스트 규격이 배경 작업에 휩쓸려 바뀌지 않았는지(유저 확정값 보호)
+  t2(/fontFamily: identity\.fontPair\.title/.test(rd), "제목 폰트 지정 그대로");
+  t2(/fontWeight: 900/.test(rd), "제목 굵기 그대로");
+}
+
 console.log(fail === 0 ? "\n통과: 이미지 하드룰 전부 강제됨" : `\n실패: ${fail}건`);
 process.exit(fail === 0 ? 0 : 1);

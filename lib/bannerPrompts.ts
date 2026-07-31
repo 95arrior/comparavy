@@ -137,8 +137,22 @@ const TEXT_FREE_SUBJECTS =
   "sprouts and plants, water and pouring, stairs and ladders, doors and gates, bridges, umbrellas, hourglasses (no numerals), " +
   "gears, ropes and knots, building blocks, jars and containers, hands holding these objects, weather and light.";
 
-export function buildThumbMetaphorPrompt(topic: string, copyText: string | undefined, seed: number, opts?: { textSafe?: boolean }): string {
-  const palette = BANNER_PALETTES[seed % BANNER_PALETTES.length];
+// ★썸네일 전용 진한 팔레트(2026-08-01 유저 실측: "클릭하고 싶게" — 실물이 연보라 배경+진보라 글씨라 안 읽혔다).
+//  본문 삽화는 글자를 얹지 않으니 파스텔이 맞지만, 썸네일은 대형 카피가 중앙에 올라간다.
+//  ★텍스트는 건드리지 않는다(유저 확정: 폰트·크기·위치는 이미 맞춰 놓은 값) — 배경을 진하게 눌러
+//   렌더러의 밝기 판정(isDark)이 흰 글씨를 고르게 만든다. 대비는 배경 쪽에서만 만든다.
+//  메이트 감성(비비드 블루 그라데이션)을 축으로 두고 회전한다.
+const THUMB_PALETTES = [
+  "deep navy to royal blue gradient with vivid cyan rim light",
+  "midnight indigo with electric blue glow and one warm amber accent",
+  "deep teal to dark forest green with gold rim light",
+  "dark plum to deep violet with a hot pink accent glow",
+  "charcoal navy with a vivid orange accent light",
+  "deep ocean blue with turquoise highlights and soft haze",
+];
+
+export function buildThumbMetaphorPrompt(topic: string, copyText: string | undefined, seed: number, opts?: { textSafe?: boolean; deepBg?: boolean }): string {
+  const palette = opts?.deepBg ? THUMB_PALETTES[seed % THUMB_PALETTES.length] : BANNER_PALETTES[seed % BANNER_PALETTES.length];
   const copy = (copyText ?? "").replace(/\n/g, " ").trim();
   // ★구도 로테이션(2026-07-13 유저: 사람이 너무 많다, 키워드를 의미하는 이미지로) — 기본=키워드 오브젝트 히어로, 인물 장면은 4회 중 1회만
   const mode = seed % 4;
@@ -164,6 +178,9 @@ export function buildThumbMetaphorPrompt(topic: string, copyText: string | undef
     OBJECT_BUDGET,
     `FRAMING: ${CAMERA_ANGLES[seed % CAMERA_ANGLES.length]}, ${SCALE_VARIANTS[(seed >> 2) % SCALE_VARIANTS.length]}.`,
     "COMPOSITION: subjects pushed toward top/bottom/edges — the CENTER band of the frame stays relatively calm and low-detail (large Korean typography will be overlaid dead-center later).",
+    opts?.deepBg
+      ? "CONTRAST (critical — this image is a thumbnail seen small in a mobile feed): keep the overall image DARK and richly saturated so white type overlaid on the center reads instantly. The center band must stay DARK and uncluttered — no bright highlights, no pale objects, no white paper-like surfaces crossing the center. Push light and glow to the edges as rim light. Avoid pastel, washed-out, or high-key looks entirely."
+      : "",
     `Style: award-winning editorial illustration (fintech campaign grade) — rich color blocking, soft airbrush shading, subtle grain. Palette: ${palette}. Square 1:1.`,
     NO_TEXT_STRICT,
   ].filter(Boolean).join(" ");

@@ -334,7 +334,8 @@ export async function generateThumbBackground(bgStyleHint: string, paletteHint: 
   const rawTopic = (topic ?? bgStyleHint ?? "").trim() || "재테크";
   const brief = await englishBrief(rawTopic, opts?.copyText);
   const safeTopic = brief?.topicEn ?? stripHangul(rawTopic, "personal finance in Korea");
-  const prompt = buildThumbMetaphorPrompt(safeTopic, brief ? brief.secondaryEn : undefined, seed, { textSafe: opts?.textSafe });
+  // ★썸네일은 항상 진한 배경(deepBg) — 대형 카피가 중앙에 얹히는 용도라 대비가 전부다.
+  const prompt = buildThumbMetaphorPrompt(safeTopic, brief ? brief.secondaryEn : undefined, seed, { textSafe: opts?.textSafe, deepBg: true });
   return callImage(prompt, "1:1");
 }
 
