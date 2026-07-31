@@ -25,8 +25,14 @@ export interface FactIssue {
 /** 발행 판정. 구조 오류는 문단을 통째로 다시 써야 해서 값 오류보다 무겁다. */
 export type FactVerdict = "publish" | "fix" | "rewrite";
 
+// ★블록 경계를 개행으로 남긴다(2026-07-31 실측). 태그를 전부 공백으로 지우면 서로 다른 문단·목록 항목이
+//  한 줄로 붙어, 근접 판정이 남의 문단 단어와 짝을 짓는다. 실제로 잡힌 오탐 두 건이 모두 이 원인이었다:
+//   '함께 보면 좋은 글'의 CMA 링크 + '참고 자료'의 예금자보호법 → CMA 구조 오류로 오판
+//   '예금자보호기금' 문단 + 다음 문단의 계산 예시 '5,000만 원' → 한도 옛 값으로 오판
 function stripHtml(s: string): string {
-  return s.replace(/<[^>]*>/g, " ");
+  return s
+    .replace(/<\/(?:p|li|h[1-6]|tr|td|th|blockquote|div|ul|ol|table)>|<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]*>/g, " ");
 }
 
 const won = (n: number): string => `${Math.round(n / 10_000).toLocaleString("ko-KR")}만 원`;
@@ -45,7 +51,13 @@ function nearby(plain: string, a: RegExp, b: RegExp, except: RegExp | null, wind
   let m: RegExpExecArray | null;
   while ((m = re.exec(plain)) !== null) {
     if (m.index === re.lastIndex) re.lastIndex += 1; // 0길이 매칭 무한루프 방지
-    const ctx = plain.slice(Math.max(0, m.index - window), m.index + m[0].length + window);
+    const from = Math.max(0, m.index - window);
+    const raw = plain.slice(from, m.index + m[0].length + window);
+    // ★앵커가 속한 블록 밖으로는 넘어가지 않는다 — 창이 문단을 건너뛰면 남의 문장과 짝이 지어진다.
+    const rel = m.index - from;
+    const lo = raw.lastIndexOf("\n", rel);
+    const hi = raw.indexOf("\n", rel);
+    const ctx = raw.slice(lo + 1, hi === -1 ? raw.length : hi);
     if (!b.test(ctx)) continue;
     if (except && except.test(ctx)) continue; // 올바르게 부정한 문장은 통과
     hits.push(ctx.replace(/\s+/g, " ").trim());

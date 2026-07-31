@@ -90,6 +90,28 @@ for (const [kw, body, layer, expect] of cases) {
   console.log(ok ? "OK " : "FAIL", "| missing   | 스친 단어로 예금 필수항목 요구 안 함");
 }
 
+// ★[과탐 방지] 문단 경계를 넘어 짝이 지어지면 안 된다(2026-07-31 — 특판 초안에서 발견).
+//  글 끝에 항상 붙는 '함께 보면 좋은 글'·'참고 자료' 영역 때문에 재발이 확실한 유형이었다.
+{
+  const tail = `<p>보호 주체는 각 중앙회의 예금자보호기금입니다.</p><h3>계산</h3><p>5,000만 원을 연 3.5%로 1년 예치하면 세후 이자는 1,480,500원입니다.</p>`;
+  const a = scanFacts(tail, "정기예금 특판").filter((i) => i.layer === "value");
+  const okA = a.length === 0;
+  if (!okA) fail++;
+  console.log(okA ? "OK " : "FAIL", "| value     | 다른 문단의 계산 예시 5,000만을 한도 오기로 안 봄");
+
+  const links = `<p>보호 한도를 확인하세요.</p><ul><li>CMA 통장과 파킹통장 이자 차이</li></ul><p>참고 — 예금자보호법 개정 보도자료</p>`;
+  const b = scanFacts(links, "정기예금 특판").filter((i) => i.layer === "structure");
+  const okB = b.length === 0;
+  if (!okB) fail++;
+  console.log(okB ? "OK " : "FAIL", "| structure | 관련 글 목록의 CMA를 본문 오류로 안 봄");
+
+  // 같은 문장 안의 진짜 오류는 여전히 잡혀야 한다(구멍 방지 짝)
+  const real = scanFacts(`<p>CMA 계좌도 예금자보호가 되니 안심하세요.</p>`, "cma 계좌개설").filter((i) => i.layer === "structure");
+  const okC = real.length === 1;
+  if (!okC) fail++;
+  console.log(okC ? "OK " : "FAIL", "| structure | 같은 문장 안의 진짜 오류는 여전히 검출 →", real.length + "건");
+}
+
 // [판정] 구조 오류는 문단 재작성
 {
   const rewrite = factVerdict(scanFacts("퇴직소득세는 5월 종합소득세 신고로 환급받으세요.", "irp 이전")) === "rewrite";
