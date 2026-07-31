@@ -327,14 +327,14 @@ export function stripHangul(t: string, fallback: string): string {
   return t.replace(/[가-힣]+/g, " ").replace(/\s+/g, " ").trim() || fallback;
 }
 
-export async function generateThumbBackground(bgStyleHint: string, paletteHint: string, userSeed?: string, topic?: string, opts?: { forceStyle?: "photo" | "toss"; centerText?: boolean; copyText?: string; variant?: number }): Promise<{ base64: string; mime: string; provider?: string }> {
+export async function generateThumbBackground(bgStyleHint: string, paletteHint: string, userSeed?: string, topic?: string, opts?: { forceStyle?: "photo" | "toss"; centerText?: boolean; copyText?: string; variant?: number; textSafe?: boolean }): Promise<{ base64: string; mime: string; provider?: string }> {
   const seed = (fnv((userSeed ?? "") + ":bg" + String(opts?.variant ?? 0)) + Math.floor(Math.random() * 1e9)) >>> 0;
   // ★카피 은유 극화(2026-07-13 유저 베스트 실측 — 추상 무대는 주제 무관 판정): 훅 문구의 감정 포인트를 장면으로.
   //  중앙 비움(조판 자리)·팔레트 회전·디자인 캐릭터 유지. 텍스트는 전면 금지(그림으로만) + 프롬프트 자체를 전량 영어로.
   const rawTopic = (topic ?? bgStyleHint ?? "").trim() || "재테크";
   const brief = await englishBrief(rawTopic, opts?.copyText);
   const safeTopic = brief?.topicEn ?? stripHangul(rawTopic, "personal finance in Korea");
-  const prompt = buildThumbMetaphorPrompt(safeTopic, brief ? brief.secondaryEn : undefined, seed);
+  const prompt = buildThumbMetaphorPrompt(safeTopic, brief ? brief.secondaryEn : undefined, seed, { textSafe: opts?.textSafe });
   return callImage(prompt, "1:1");
 }
 

@@ -80,5 +80,28 @@ console.log("\n이미지 글자 검증 — 판정 불가는 불합격(strict):")
   must(verdictFromRaw("{}", strict).ok === false, "빈 객체를 '글자 없음'으로 읽지 않음");
 }
 
+// ★썸네일 배경 글자 혼입(2026-08-01 유저 실측: "썸네일 제작이 잘 안 되네요").
+//  원인은 예시 자체였다 — '도장 찍힌 증서', '장부 위의 새싹', '청구서 더미'는 글자가 본질인 물건이다.
+//  그래놓고 "종이는 비워라"라고 하면 모델이 모순을 텍스트로 해소한다.
+{
+  const fs3 = await import("node:fs");
+  const bp = fs3.readFileSync(new URL("../lib/bannerPrompts.ts", import.meta.url), "utf-8");
+  const cp = fs3.readFileSync(new URL("../lib/composeThumbnail.ts", import.meta.url), "utf-8");
+  const t = (c, label) => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "| thumb  |", label); };
+
+  // 기본 예시에 글자 물건이 되살아나면 안 된다
+  for (const bad of ["invoice papers", "stamped certificate", "on a ledger", "calendar page"]) {
+    t(!bp.includes(bad), `예시에 글자 물건 없음 — ${bad}`);
+  }
+  // 글자 없는 소재로 바뀌었는지
+  t(/oversized key|heavy lock|coin jar/.test(bp), "글자 없는 소재 예시로 교체됨");
+  // textSafe 모드가 존재하고 금지 범주를 갖는다
+  t(/TEXT_FREE_BAN/.test(bp) && /certificates, contracts, ledgers/.test(bp), "textSafe 금지 범주 정의됨");
+  t(/opts\?\.textSafe/.test(bp), "textSafe 옵션이 프롬프트에 반영됨");
+  // 재시도가 실제로 붙어 있는가(1회 생성 후 바로 폴백이면 실패)
+  t(/textSafe: true/.test(cp), "★썸네일 재시도가 textSafe로 돈다");
+  t((cp.match(/verifyImage\(/g) ?? []).length >= 2, "★검증이 2회(1차+재시도) 이상");
+}
+
 console.log(fail === 0 ? "\n통과: 이미지 하드룰 전부 강제됨" : `\n실패: ${fail}건`);
 process.exit(fail === 0 ? 0 : 1);

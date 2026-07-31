@@ -124,7 +124,20 @@ export function bodyStyleRotation(_topic: string): Exclude<BannerStyle, "stage">
 
 /** ★썸네일 배경 = 카피 은유 극화(2026-07-13 유저 베스트 실측: "연체금만 쌓인다" → 청구서 더미에 깔린 사람).
  *  추상 무대가 아니라 '문구의 감정 포인트'를 연극적으로 그린다. 중앙은 조판 자리로 비움. */
-export function buildThumbMetaphorPrompt(topic: string, copyText: string | undefined, seed: number): string {
+// ★글자 없는 소재로만 가는 모드(2026-08-01 유저 실측: "썸네일 제작이 잘 안 되네요").
+//  원인은 예시 자체였다 — '도장 찍힌 증서', '장부 위의 새싹', '청구서 더미'는 글자가 본질인 물건이다.
+//  그래놓고 "종이는 비워라"라고 하면 모델이 모순을 텍스트로 해소한다(실측: 배경 글자 혼입으로 폴백).
+//  재시도는 그 범주를 통째로 빼고, 글자가 존재할 수 없는 소재로만 은유를 만든다.
+const TEXT_FREE_BAN =
+  "FORBIDDEN OBJECT CATEGORIES (they inherently carry text — do not include them at all, not even blank): " +
+  "documents, papers, invoices, bills, certificates, contracts, ledgers, notebooks, books, newspapers, calendars, " +
+  "receipts, envelopes, forms, screens, phones, monitors, dashboards, charts with labels, signs, boards, packaging, labels, tickets, cards.";
+const TEXT_FREE_SUBJECTS =
+  "Build the metaphor ONLY from objects that cannot carry text: coins, keys, locks, safes/vaults, piggy banks, scales/balances, " +
+  "sprouts and plants, water and pouring, stairs and ladders, doors and gates, bridges, umbrellas, hourglasses (no numerals), " +
+  "gears, ropes and knots, building blocks, jars and containers, hands holding these objects, weather and light.";
+
+export function buildThumbMetaphorPrompt(topic: string, copyText: string | undefined, seed: number, opts?: { textSafe?: boolean }): string {
   const palette = BANNER_PALETTES[seed % BANNER_PALETTES.length];
   const copy = (copyText ?? "").replace(/\n/g, " ").trim();
   // ★구도 로테이션(2026-07-13 유저: 사람이 너무 많다, 키워드를 의미하는 이미지로) — 기본=키워드 오브젝트 히어로, 인물 장면은 4회 중 1회만
@@ -134,14 +147,16 @@ export function buildThumbMetaphorPrompt(topic: string, copyText: string | undef
     : "";
   const subject =
     mode === 3
-      ? `Stage the topic as ONE bold theatrical metaphor WITH a person — e.g. unpaid bills piling up → a person buried under giant invoice papers; a deadline → a calendar page burning. CHARACTER SPEC: a DESIGNED flat-vector character — distinct hairstyle, real outfit, expressive posture, head:body about 1:3, minimal face (dot eyes) fine, never a plain circle-head blob.`
+      ? `Stage the topic as ONE bold theatrical metaphor WITH a person — e.g. mounting costs → a person straining under a huge stack of coins; a deadline → a person racing a giant hourglass. CHARACTER SPEC: a DESIGNED flat-vector character — distinct hairstyle, real outfit, expressive posture, head:body about 1:3, minimal face (dot eyes) fine, never a plain circle-head blob.`
       : mode === 2
         ? `ONE isometric miniature vignette: a SINGLE topic-derived object or place rendered as a small 3D diorama on a rounded platform. One subject only — not a world of props, no scattered buildings or paperwork around it. ${PROP_BAN}`
-        : `ONE oversized HERO OBJECT derived DIRECTLY from the topic keywords — pick the single most SPECIFIC object that instantly identifies THIS topic (housing → a house with a key; loan → a giant stamped certificate; savings → a growing sprout on a ledger). NO people.`;
+        : `ONE oversized HERO OBJECT derived DIRECTLY from the topic keywords — pick the single most SPECIFIC object that instantly identifies THIS topic (housing → a house with an oversized key; loan → a giant key turning in a heavy lock; savings → a sprout growing out of a coin jar). NO people.`;
+  const textSafe = opts?.textSafe === true;
   return [
     `Premium editorial illustration for a Korean finance blog thumbnail. Topic: "${topic}" (understand only — never render as text).`,
     copyLine,
-    subject,
+    textSafe ? `ONE oversized HERO OBJECT derived from the topic. NO people. ${TEXT_FREE_SUBJECTS}` : subject,
+    textSafe ? TEXT_FREE_BAN : "",
     "The visual must clearly belong to THIS topic — never generic finance props.",
     // ★각도 고유성(2026-07-19 유저: 같은 ETF여도 추천글·설명글은 완전히 다른 그림이어야 한다)
     "ANGLE-UNIQUE RULE: the topic phrase is a specific article ANGLE, not a category. Two articles about the same product (an ETF recommendation list vs an ETF tax guide vs a beginner walkthrough) must produce visibly DIFFERENT scenes — anchor the visual in this phrase's distinctive words (the action, the situation, the outcome), never in the category noun alone.",

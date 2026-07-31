@@ -45,7 +45,16 @@ export async function composeThumbnail(opts: {
       //  strict — 판정 불가(오류·파싱 실패·키 없음)면 떨어뜨린다. 배경은 코드 폴백이 있어 잃는 게 없다.
       const v = await verifyImage(bg.base64, bg.mime, "abstract background", { bgOnly: true, userId: opts.userId, strict: true });
       if (!v.hasText) { bgDataUrl = `data:${bg.mime};base64,${bg.base64}`; usedAiBackground = true; }
-      else aiFailReason = "배경에 글자가 섞였어요";
+      else {
+        // ★1회 재시도(2026-08-01 유저 실측: "썸네일 제작이 잘 안 되네요" — 1회 생성 후 바로 폴백이었다).
+        //  같은 프롬프트로 또 부르면 같은 이유로 또 실패한다. 글자가 존재할 수 없는 소재로만 다시 그린다
+        //  (증서·장부·청구서처럼 글자가 본질인 물건을 범주째 빼는 모드). WP 경로엔 이미 재시도가 있었다.
+        //  총 왕복 2회 — 종전 4회 루프를 되살리지 않으면서 성공률만 올린다.
+        const bg2 = await generateThumbBackground(identity.bgStyle, paletteHint, opts.userId, opts.topicHint, { forceStyle: opts.bgStyle, centerText: opts.centerCopy, copyText: opts.thumb.mainCopy, variant: (opts.variant ?? 0) + 13, textSafe: true });
+        const v2 = await verifyImage(bg2.base64, bg2.mime, "abstract background", { bgOnly: true, userId: opts.userId, strict: true });
+        if (!v2.hasText) { bgDataUrl = `data:${bg2.mime};base64,${bg2.base64}`; usedAiBackground = true; }
+        else aiFailReason = "배경에 글자가 섞였어요(2회 시도)";
+      }
     } catch (e) { aiFailReason = `배경 생성 실패: ${String(e instanceof Error ? e.message : e).slice(0, 80)}`; }
   }
 
