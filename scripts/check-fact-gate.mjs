@@ -65,6 +65,22 @@ for (const [kw, body, layer, expect] of cases) {
   console.log(ok2 ? "OK " : "FAIL", "| missing   | 다 갖춘 글은 통과 →", none.map((i) => i.matched).join(", ") || "경고 없음");
 }
 
+// ★[과탐 방지] 주식 글의 올바른 고지가 예금 주제로 오인되면 안 된다(2026-07-31 — 자체 초안에서 발견).
+//  '예금자보호'에 '예금'이 들어 있어, "주식은 예금자보호 대상이 아니다"라는 필수 고지가
+//  예금 주제로 읽혀 '합산 기준'·'현행 한도'를 요구했다. 올바르게 쓸수록 경고가 늘면 게이트는 죽는다.
+{
+  const stock = "저평가 우량주를 고르는 기준입니다. 주식과 펀드는 예금자보호 대상이 아닙니다. 예금이나 적금과 달리 원금이 보장되지 않습니다.";
+  const wrong = scanFacts(stock, "저평가 우량주 찾는 법").filter((i) => i.layer === "missing");
+  const ok = wrong.length === 0;
+  if (!ok) fail++;
+  console.log(ok ? "OK " : "FAIL", "| missing   | 주식 글의 예금자보호 고지를 예금 주제로 오인 안 함 →", wrong.map((i) => i.matched).join(", ") || "경고 없음");
+  // 진짜 예금 글은 여전히 잡혀야 한다(구멍 방지)
+  const dep = scanFacts("저축은행 특판 금리를 비교했습니다.", "정기예금 특판").filter((i) => i.layer === "missing");
+  const ok2 = dep.length === 3;
+  if (!ok2) fail++;
+  console.log(ok2 ? "OK " : "FAIL", "| missing   | 진짜 예금 글은 여전히 필수 3항목 요구 →", dep.length + "건");
+}
+
 // [과탐 방지] 본문에 스친 단어 하나로 필수항목을 요구하면 안 된다
 {
   const aside = "퇴사 후 생활비 이야기입니다. 남은 돈은 적금에 넣어두었습니다.";
