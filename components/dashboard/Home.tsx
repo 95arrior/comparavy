@@ -710,6 +710,16 @@ export default function Home({
               <div className="hidden sm:block">
               <p className="text-center text-[16px] font-bold text-[color:var(--color-text)]">{title}</p>
               <p className="mt-0.5 text-center text-[11.5px] text-[color:var(--color-text-weak)]">{sub}</p>
+              {/* ★칩 뜻풀이(2026-08-01 유저 요청) — 카드마다 반복하면 지저분해서 열마다 한 번만 적는다.
+                  칩 이름만으로는 '홈판용/어려운 키워드'가 뭔지 모른다는 게 요지였다. */}
+              <div className="mt-1 flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-[10.5px] leading-tight text-[color:var(--color-text-weak)]">
+                {LEGEND_LANES[mode].map((k) => (
+                  <span key={k} className="whitespace-nowrap">
+                    <b className={`rounded-full px-1.5 py-px font-bold ${LANE_CHIP[k].cls}`}>{LANE_CHIP[k].label}</b>
+                    <span className="ml-1">{LANE_CHIP[k].mean}</span>
+                  </span>
+                ))}
+              </div>
               {mode === "long" && tierNote && <p className="mt-1 text-center text-[11px] text-[#1D75F7]">{tierNote}</p>}
               </div>
               <div className="mt-2 flex flex-col gap-2.5">
@@ -956,8 +966,36 @@ function TopicRow({ topic, onClick, onSwap, swapping }: {
 }
 
 // ★보드 카드(컴팩트) — 트렌드: ⏳수명 타이머 + 📰근거(뉴스 헤드라인/실검색 확인)
+// ★글감 레인 4종(2026-08-01 유저 확정 문구) — 칩이 '안정 수요/실시간 급상승' 2종뿐이라
+//  홈판·헤드 배팅이 전부 '안정 수요'로 표시되고 있었다(실측). 사장님이 카드만 보고 종류를 알 수 있어야 한다.
+const LANE_CHIP = {
+  homefeed: { label: "홈판용", cls: "bg-[#F5F3FF] text-[#7C3AED]", mean: "네이버 홈 화면에 뜨는 걸 노리는 글" },
+  golden: { label: "쉬운 검색 키워드", cls: "bg-[#EFF6FF] text-[#1D75F7]", mean: "지금 체급으로 1등 할 수 있는 것" },
+  trend: { label: "유행 키워드", cls: "bg-[#FFF1F0] text-[#F04452]", mean: "지금 뜨는 것" },
+  head: { label: "어려운 키워드", cls: "bg-[#FEF6E7] text-[#B45309]", mean: "지금은 안 되지만 나중에 일할 것" },
+  // 위 넷 중 어디도 아닌 카드(시리즈 이어쓰기 등) — 검색량 주장을 하지 않는 중립 칩.
+  other: { label: "글감", cls: "bg-neutral-100 text-neutral-500", mean: "" },
+} as const;
+type LaneKey = keyof typeof LANE_CHIP;
+/** 뜻풀이를 보여줄 네 레인(중립 칩은 설명할 게 없다). */
+const LEGEND_LANES = { short: ["homefeed", "trend"], long: ["golden", "head"] } as const;
+
+/**
+ * 카드가 어느 레인인지 — 서버가 붙인 tag/demandBadge로 판정(별도 필드를 새로 만들지 않는다).
+ * ★'쉬운 검색 키워드'는 검색량이 실제로 있을 때만 붙인다(2026-08-01). 서버는 series·steady 같은
+ *  다른 tag도 내보내는데, 그런 카드까지 기본값으로 '쉬운 검색 키워드'가 되면
+ *  "지금 체급으로 1등 할 수 있는 것"이라는 근거 없는 주장이 화면에 뜬다.
+ */
+function laneOf(topic: Topic, isTrend: boolean): LaneKey {
+  if (topic.tag === "홈판") return "homefeed";
+  if (String((topic as { demandBadge?: string }).demandBadge ?? "").includes("헤드 배팅")) return "head";
+  if (isTrend) return "trend";
+  return Number(topic.vol ?? 0) > 0 ? "golden" : "other";
+}
+
 function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () => void; onDismiss?: () => void }) {
   const isTrend = topic.tag === "trend" || topic.tag === "issue" || topic.tag === "followup";
+  const lane = LANE_CHIP[laneOf(topic, isTrend)];
   const publishedOn = (topic as { publishedOn?: string }).publishedOn;
   const [tick, setTick] = useState(() => Date.now());
   useEffect(() => {
@@ -1025,9 +1063,7 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
         {onDismiss && <span role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); onDismiss(); }} className="order-last ml-auto flex h-6 w-6 items-center justify-center rounded-full opacity-45 transition hover:bg-[#F7F8FA] hover:opacity-80" aria-label="다른 글감으로 교체"><GlassGlyph name="refresh" size={14} /></span>}
         {publishedOn
           ? <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10.5px] font-bold text-neutral-500">{publishedOn}</span>
-          : isTrend
-          ? <span className="rounded-full bg-[#FFF1F0] px-2 py-0.5 text-[10.5px] font-bold text-[#F04452]">실시간 급상승</span>
-          : <span className="rounded-full bg-[#EFF6FF] px-2 py-0.5 text-[10.5px] font-bold text-[#1D75F7]">안정 수요</span>}
+          : <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-bold ${lane.cls}`}>{lane.label}</span>}
         {topic.revenueLabel && <span className="rounded-full bg-[#F5F3EE] px-2 py-0.5 text-[10.5px] font-bold text-[#8A6D1F]">{topic.revenueLabel}</span>}
         {life && <span className="text-[10.5px] font-semibold tabular-nums text-amber-600">{life}</span>}
       </div>
