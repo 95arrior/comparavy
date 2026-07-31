@@ -1,4 +1,4 @@
-import { scanFacts, factVerdict, applyFactFix } from "../lib/factGate.ts";
+import { scanFacts, factVerdict, applyFactFix, topicMustsContext } from "../lib/factGate.ts";
 
 // ★실측 케이스(2026-07-31) — 자사 사이트에서 실제로 발행된 오류 2건이 원점이다.
 //  ① 워드프레스: 예금자보호 한도를 5천만 원으로 씀(옛 숫자)
@@ -79,6 +79,41 @@ for (const [kw, body, layer, expect] of cases) {
   const ok2 = dep.length === 3;
   if (!ok2) fail++;
   console.log(ok2 ? "OK " : "FAIL", "| missing   | 진짜 예금 글은 여전히 필수 3항목 요구 →", dep.length + "건");
+}
+
+// ★[과탐 방지] 하위 주제에 상위 주제 목록이 붙으면 안 된다(2026-07-31 유저 실측 — 네이버 발행 화면).
+//  '퇴직연금디폴트옵션' 글에 퇴사(이직) 필수항목 4건 + 연금 일반 2건, 총 6건이 통째로 떴다.
+//  글자('퇴직')만 겹칠 뿐 독자가 알아야 할 항목이 전혀 다른 주제였다.
+{
+  const dflt = `<p>퇴직연금 디폴트옵션은 가입자가 운용지시를 하지 않을 때 미리 정해둔 방법으로 운용하는 제도입니다.</p><p>DC형과 IRP 가입자가 대상입니다.</p>`;
+  const got = scanFacts(dflt, "퇴직연금디폴트옵션").filter((i) => i.layer === "missing").map((i) => i.matched);
+  const okA = !got.some((n) => /임의\s*계속|연차|분류과세|과세이연|세액공제|중도해지/.test(n));
+  if (!okA) fail++;
+  console.log(okA ? "OK " : "FAIL", "| missing   | 디폴트옵션 글에 퇴사·연금일반 항목 안 붙음 →", got.join(", ") || "경고 없음");
+
+  // 전용 목록은 제 몫을 해야 한다(구멍 방지) — DB형 제외·4주2주 절차·위험등급
+  const okB = got.length === 3;
+  if (!okB) fail++;
+  console.log(okB ? "OK " : "FAIL", "| missing   | 디폴트옵션 전용 필수 3항목 요구 →", got.length + "건");
+
+  // 진짜 퇴사 글은 여전히 잡혀야 한다
+  const quit = scanFacts("퇴사하고 나서 무엇부터 해야 하는지 정리했습니다.", "퇴사 후 할 일").filter((i) => i.layer === "missing");
+  const okC = quit.length === 4;
+  if (!okC) fail++;
+  console.log(okC ? "OK " : "FAIL", "| missing   | 진짜 퇴사 글은 여전히 필수 4항목 요구 →", quit.length + "건");
+}
+
+// ★[주입] 검사에 걸릴 항목은 생성 프롬프트에 미리 들어가야 한다 — 탐지보다 주입이 먼저.
+{
+  const ctx = topicMustsContext("퇴직연금디폴트옵션") ?? "";
+  const ok = ctx.includes("DB형") && !ctx.includes("연차");
+  if (!ok) fail++;
+  console.log(ok ? "OK " : "FAIL", "| inject    | 디폴트옵션 필수항목만 프롬프트에 주입");
+
+  const none = topicMustsContext("오늘 점심 메뉴 추천");
+  const ok2 = none === null;
+  if (!ok2) fail++;
+  console.log(ok2 ? "OK " : "FAIL", "| inject    | 무관한 주제엔 주입 안 함");
 }
 
 // [과탐 방지] 본문에 스친 단어 하나로 필수항목을 요구하면 안 된다

@@ -1,6 +1,8 @@
 // 한국어 SEO 글 생성 프롬프트 정의.
 // 출력 언어는 항상 한국어. 한국 구글 검색 의도에 맞춘 글을 만든다.
 
+import { topicMustsContext } from "@/lib/factGate";
+
 export interface OptionMeta {
   key: string;
   label: string;
@@ -498,6 +500,9 @@ export function buildUserPrompt(input: ArticlePromptInput): string {
       ? `★[오늘의 근거 자료 — 최신 뉴스] 아래는 이 글감의 오늘 자 뉴스 발췌다. 글감과 직접 관련 있는 항목만 근거로 쓰고, 무관한 항목은 완전히 무시한다. 본문의 사실관계는 이 자료를 최우선 근거로 쓰고, 자료에 없는 수치·일정은 단정하지 않는다(모델 기억보다 이 자료가 최신). 뉴스 문장을 복사하지 말고 전부 내 문장으로 재작성한다. 출처 표기는 의무가 아니다 — 특정 발표·통계 수치를 쓸 때만 언론사가 아닌 원 기관명(예: 금융위원회·한국은행)을 자연스럽게 1회 언급한다.\n${input.newsContext}`
       : "",
     input.calcContext ? input.calcContext : "",
+    // ★필수항목 주입(lib/factGate) — 발행 전 검사와 같은 목록을 생성 단계에서 미리 준다.
+    //  호출부 배선 없이 여기서 직접 부른다(모든 생성 경로가 이 프롬프트를 지난다).
+    topicMustsContext(input.keyword) ?? "",
     input.angleBrief ? input.angleBrief : "",
     input.affiliate ? "★[제휴형 규칙] 이 글은 상품 리뷰/제휴형이다. ①실제로 상품을 추천·구매 연결하는 자리에만 '[상품 링크 자리]' 마커를 넣는다(대괄호+한글만, 링크 직접 생성 금지). ②그 마커를 넣었다면 본문 맨 위에 정확히 이 문장을 함께: '이 글에는 구매 시 작성자가 수수료를 받을 수 있는 링크가 포함되어 있습니다.' ③마커를 넣지 않는 순수 정보 글이면 수수료 문구도 절대 넣지 않는다(광고글 오인 = 신뢰 하락). 수익 보장·예상 수익액 표현 금지." : "",
     input.sourceHint ? `★[근거 한 줄] 이 주제의 출처가 있다: ${input.sourceHint}. 리드 또는 관련 섹션에 근거 문장을 딱 1회 자연스럽게 넣는다(예: "${input.sourceHint} 기준"). 출처를 지어내지 말고, 준 것만 쓴다.` : "",

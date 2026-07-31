@@ -201,12 +201,21 @@ const STRUCTURE_RULES: StructureRule[] = [
 
 interface TopicMusts {
   when: RegExp; // 키워드 또는 본문이 이 주제면
+  /**
+   * ★하위 주제 분리(2026-07-31 유저 실측): '퇴직연금디폴트옵션' 글에 퇴사(이직) 필수항목 4건이 통째로 붙었다.
+   * 글자가 겹칠 뿐 독자가 알아야 할 항목이 전혀 다른 주제가 있다 — 그럴 땐 상위 목록을 통째로 건너뛴다.
+   * ★키워드로만 판정한다(본문으로 판정하면 퇴사 글이 디폴트옵션을 한 번 스치기만 해도 검사가 통째로 죽는다).
+   */
+  unless?: RegExp;
   musts: { name: string; has: RegExp }[];
 }
 
 const TOPIC_MUSTS: TopicMusts[] = [
   {
-    when: /퇴사|퇴직|이직|권고\s*사직/,
+    // ★'퇴직연금'은 여기 해당하지 않는다 — 제도(DC·IRP 운용) 글이지 퇴사 글이 아니다.
+    //  lookahead만 쓴다(가변 길이 lookbehind는 Safari에서 파싱 사망 — CLAUDE.md).
+    when: /퇴사|퇴직(?!\s*연금)|이직|권고\s*사직/,
+    unless: /퇴직\s*연금|디폴트\s*옵션|사전\s*지정\s*운용/,
     musts: [
       { name: "건강보험 임의계속가입", has: /임의\s*계속\s*가입/ },
       { name: "연차사용촉진제도", has: /연차\s*(?:사용)?\s*촉진|미사용\s*연차\s*수당/ },
@@ -231,9 +240,20 @@ const TOPIC_MUSTS: TopicMusts[] = [
   },
   {
     when: /연금\s*저축|IRP|퇴직\s*연금/i,
+    // 디폴트옵션 글은 '운용지시'가 주제라 세액공제·중도해지가 필수항목이 아니다 — 아래 전용 목록으로 간다.
+    unless: /디폴트\s*옵션|사전\s*지정\s*운용/,
     musts: [
       { name: "세액공제 한도", has: /600\s*만|900\s*만|한도/ },
       { name: "중도해지 기타소득세", has: /기타\s*소득세|중도\s*해지/ },
+    ],
+  },
+  {
+    // 사전지정운용방법(디폴트옵션) 전용 — 독자가 모르면 실제로 손해를 보는 항목만 남긴다.
+    when: /디폴트\s*옵션|사전\s*지정\s*운용/,
+    musts: [
+      { name: "적용 대상(DC·IRP만, DB형 제외)", has: /DB\s*형|확정\s*급여/i },
+      { name: "미지정 시 자동 적용 절차(4주·2주)", has: /4\s*주|2\s*주/ },
+      { name: "위험등급별 상품 선택", has: /초저위험|저위험|위험\s*등급|고위험/ },
     ],
   },
   {
@@ -290,6 +310,7 @@ export function scanFacts(text: string, keyword: string): FactIssue[] {
   // 3층 — 누락. 주제 판정은 키워드가 기준이다. 본문에 한 번 스친 단어로 필수항목을 요구하면
   //  경고가 쏟아져서 아무도 안 읽는다(과탐이 게이트를 죽인다) — 본문 기준은 3회 이상 다룬 주제만.
   for (const topic of TOPIC_MUSTS) {
+    if (topic.unless?.test(keyword)) continue; // 하위 주제 글이면 상위 목록은 통째로 건너뛴다
     if (!topic.when.test(keyword) && countMatches(plain, topic.when) < 3) continue;
     for (const must of topic.musts) {
       if (must.has.test(plain)) continue;
@@ -307,6 +328,27 @@ export function scanFacts(text: string, keyword: string): FactIssue[] {
 
   const rank: Record<FactLayer, number> = { structure: 0, value: 1, missing: 2 };
   return issues.sort((a, b) => (a.severity === b.severity ? rank[a.layer] - rank[b.layer] : a.severity === "block" ? -1 : 1));
+}
+
+/**
+ * ★탐지보다 주입이 먼저다(financeCalc과 같은 원칙 — 2026-07-31 유저 실측: 누락 6건이 검토 화면에 떴는데
+ * 3층은 자동 치환이 없어서 사람이 매번 손으로 메꾸는 구조였다). 필수항목을 생성 프롬프트에 미리 쥐여준다.
+ * ★buildUserPrompt 안에서 키워드로 직접 부른다 — 호출부(생성·자동발행·재작성)에 배선하면 빠지는 경로가 생긴다.
+ * 목록은 TOPIC_MUSTS 하나뿐이라 검사와 주입이 갈라질 수 없다.
+ */
+export function topicMustsContext(keyword: string): string | null {
+  if (!keyword) return null;
+  const names = [
+    ...new Set(
+      TOPIC_MUSTS.filter((t) => t.when.test(keyword) && !t.unless?.test(keyword)).flatMap((t) => t.musts.map((m) => m.name)),
+    ),
+  ];
+  if (!names.length) return null;
+  return [
+    `★[이 주제의 필수 항목 — 빠지면 발행 전 사실 검사에 걸린다] ${names.join(" / ")}`,
+    `- 각 항목을 이름만 스치지 말고 최소 한 단락 또는 표의 한 행으로 실제로 다룬다(독자가 모르면 손해를 보는 항목이다).`,
+    `- 이 글의 관점과 정말 무관한 항목이 있으면 억지로 끼우지 않는다 — 대신 나머지는 반드시 채운다.`,
+  ].join("\n");
 }
 
 /**

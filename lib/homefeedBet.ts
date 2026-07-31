@@ -6,6 +6,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { logUsage } from "./usageLog";
 import { containsBanned } from "./hookPatterns";
+import { fetchNews } from "./newsTopics";
 
 export interface HomefeedBet {
   keyword: string;   // 주제 앵커(검색 키워드가 아니라 소재 — 예: "30대 평균 저축액")
@@ -15,7 +16,10 @@ export interface HomefeedBet {
   betType: string;   // 오늘의 유형 라벨
 }
 
-// 6유형 로테이션(전략 합의 2026-07-15) — 전부 사실 기반으로 쓸 수 있는 유형만.
+// 8유형 로테이션(2026-07-15 합의 6종 + 2026-08-01 유저 추가 2종) — 전부 사실 기반으로 쓸 수 있는 유형만.
+// ★2026-08-01 유저 전략: "우리는 연애 블로그가 아니라 결핍을 긁는 블로그다. 특히 돈 벌고 싶은 사람."
+//  주식·시장은 결핍이 가장 센 축이면서 경제 채널 주제와 정확히 일치한다 — 연예·건강처럼 C-Rank를 깨지 않고
+//  홈판 클릭률을 가져올 수 있는 유일한 소재축. 단 종목 추천으로 넘어가면 자본시장법 리스크라 '번역'에서 멈춘다.
 const BET_TYPES = [
   { key: "평균 위치확인", hint: "통계청·한국은행 등 공식 통계로 '평균/중위값'을 까서 독자가 자기 위치를 확인하게 하는 주제(예: 30대 평균 저축액·40대 평균 연금 납입액). 댓글 유발형." },
   { key: "몰라서 못 받는 돈", hint: "조회만 하면 찾아가는 돈(미환급금·숨은 보험금·카드 포인트·통신비 환급 등) — '5분 조회, 즉시 보상' 구조. 저장·공유형." },
@@ -23,22 +27,76 @@ const BET_TYPES = [
   { key: "통념 파괴", hint: "다들 믿는 돈 상식이 사실과 다른 지점(적금 이자에서 빠지는 세금·연금 수령 시점의 함정·무이자 할부의 비용). 반전 훅." },
   { key: "손해 공포 마감", hint: "지금 안 하면 실제로 손해가 확정되는 것(이번 달 세금 가산·마감 임박 혜택·자동 해지되는 권리). 시점은 실제 제도 일정만." },
   { key: "인생 이벤트 돈 타임라인", hint: "이직·퇴사·결혼·출산·이사 앞뒤로 챙길 돈 체크리스트 — '그때 가서 알면 늦는' 순서 정리. 저장형." },
+  // ★유저 추가(2026-08-01) — 결핍이 가장 센 축. 단 '해설·번역'까지만 간다.
+  { key: "시장 급변 번역", hint: "이번 주 실제로 벌어진 증시·환율·금리·물가 뉴스 하나를 골라 '그래서 내 통장에 무슨 뜻인지'로 번역하는 주제(예: 환율이 오르면 내 장바구니·해외직구·연금계좌에 생기는 일). ★종목·테마주를 고르거나 오른다/사라고 하지 않는다 — 뉴스를 '내 돈의 언어'로 옮기는 해설이다. 실제 보도된 사실만 소재로 쓴다." },
+  { key: "돈 격차 자극", hint: "같은 월급·같은 나이인데 왜 자산이 벌어지는지, 그 갈림길이 되는 구체적 선택 하나를 숫자로 보여주는 주제(예: 같은 300만 원인데 5년 뒤 차이를 만든 한 가지). 결핍 직격 + 자기 대입형. ★특정 상품·종목을 정답으로 제시하지 않는다 — 습관·제도·세금 구조가 답이다." },
 ] as const;
 
-/** 오늘의 홈판 배팅 1장 — 유저·날짜별 캐시(api_cache 24h). 실패 = null(파이프 무영향). */
-export async function pickHomefeedBet(db: SupabaseClient, userId: string, sub: string, usedKeywords: Set<string>): Promise<HomefeedBet | null> {
+// ★투자권유 오인 하드 게이트(프롬프트는 방향, 코드는 한계선 — CLAUDE.md).
+//  주식 유형이 들어오면서 '오른다·사라·수익률 보장'류가 제목에 섞일 경로가 생겼다. 본문은 complianceFilter가 보지만
+//  홈판 카드 제목은 그 앞단이라 여기서 막는다. 걸리면 그 카드만 버린다(파이프 무영향).
+const INVEST_PUSH_RE = /(?:매수|사)\s*(?:하세요|하라|해야|타이밍)|오릅니다|상승\s*확실|급등\s*예상|목표\s*주가|수익률\s*(?:보장|확정)|무조건\s*(?:오|벌)|지금\s*사/;
+
+// ★'시장 급변 번역'은 실제 보도에 물려야 한다 — 실시간을 표방하면서 모델 기억으로 쓰면 지어낸 시황이 된다.
+//  뉴스가 안 잡히면 그 장은 만들지 않는다(빈손이 거짓보다 낫다).
+const NEWS_GROUNDED: Record<string, string> = { "시장 급변 번역": "증시 환율 금리" };
+
+async function marketNewsBlock(betKey: string): Promise<string | null> {
+  const q = NEWS_GROUNDED[betKey];
+  if (!q) return null;
+  try {
+    const items = (await fetchNews(q)).slice(0, 6);
+    if (!items.length) return null;
+    return [
+      `★[오늘의 실제 보도 — 이 안에서만 소재를 고른다] 아래 기사에 실제로 있는 사실만 쓴다.`,
+      `여기 없는 수치·종목·전망은 만들지 않는다. 쓸 만한 게 없으면 억지로 고르지 말고 가장 생활에 가까운 항목 하나를 골라 '내 돈에 무슨 뜻인지'로 번역한다.`,
+      ...items.map((it) => `- ${it.title}`),
+    ].join("\n");
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 오늘의 홈판 배팅 카드 — 유저·날짜별 캐시(api_cache 24h). 실패 = 빈 배열(파이프 무영향).
+ * ★1장 고정 → n장(2026-08-01): 홈판이 배합 40%의 정식 레인이 되면서 하루 몫만큼 뽑는다.
+ *  유형은 날짜 오프셋으로 회전시켜 서로 다른 n종을 배정한다 — 같은 날 같은 유형이 겹치면 홈판에서 서로 잡아먹는다.
+ */
+export async function pickHomefeedBets(db: SupabaseClient, userId: string, sub: string, usedKeywords: Set<string>, n = 1): Promise<HomefeedBet[]> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return null;
+  const want = Math.max(0, Math.min(n, BET_TYPES.length));
+  if (!apiKey || want === 0) return [];
   const kstDay = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
-  const cacheKey = `homebet:${userId}:${kstDay}`;
+  const cacheKey = `homebet:${userId}:${kstDay}:${want}`;
   try {
     const { data: c } = await db.from("api_cache").select("value, expires_at").eq("key", cacheKey).maybeSingle();
-    if (c?.value && new Date(String(c.expires_at)).getTime() > Date.now()) return c.value as HomefeedBet;
+    if (c?.value && new Date(String(c.expires_at)).getTime() > Date.now()) return c.value as HomefeedBet[];
   } catch { /* 캐시 조회 실패 — 생성으로 */ }
 
   const dayIdx = Math.floor(Date.now() / 86400_000) % BET_TYPES.length;
-  const bet = BET_TYPES[dayIdx]!;
+  const picked = Array.from({ length: want }, (_, i) => BET_TYPES[(dayIdx + i) % BET_TYPES.length]!);
+  const out = (await Promise.all(picked.map((bet) => genOne(apiKey, userId, sub, usedKeywords, bet)))).filter((x): x is HomefeedBet => x !== null);
+  if (out.length) {
+    try { await db.from("api_cache").upsert({ key: cacheKey, value: out, expires_at: new Date(Date.now() + 24 * 3600_000).toISOString(), updated_at: new Date().toISOString() }); } catch { /* ignore */ }
+  }
+  return out;
+}
+
+/** 유형 1개 → 카드 1장. 개별 실패는 그 장만 버린다(나머지는 살린다). */
+async function genOne(
+  apiKey: string,
+  userId: string,
+  sub: string,
+  usedKeywords: Set<string>,
+  bet: (typeof BET_TYPES)[number],
+): Promise<HomefeedBet | null> {
   try {
+    // 뉴스 그라운딩이 필요한 유형인데 기사를 못 받았으면 그 장은 포기한다(지어낸 시황 방지).
+    const newsBlock = await marketNewsBlock(bet.key);
+    if (NEWS_GROUNDED[bet.key] && !newsBlock) {
+      console.error("[homebet] 뉴스 없음 — 시장 유형 스킵:", bet.key);
+      return null;
+    }
     const client = new Anthropic({ apiKey });
     const res = await client.messages.create({
       model: "claude-sonnet-4-6",
@@ -49,6 +107,7 @@ export async function pickHomefeedBet(db: SupabaseClient, userId: string, sub: s
           `네이버 홈피드(홈판)에서 폭발적 반응을 노리는 경제 블로그 글감 1개를 만든다. 검색 SEO용이 아니다 — 홈피드는 '노출 실험 → 클릭률·체류로 판정' 구조라 스크롤을 멈추게 하는 제목이 전부다.`,
           `블로그 세부 분야: ${sub || "경제·재테크"}`,
           `오늘의 유형: [${bet.key}] — ${bet.hint}`,
+          newsBlock ?? "",
           `★시의성 결합(2026-07-16 개정 — 홈판은 '지금의 파도'를 탄다): 이 유형을 지금 이 계절·이 달의 상황(폭염 전기요금, 휴가비, 월급날, 세금 고지서 등 요즘 사람들이 실제로 겪는 일)과 반드시 결합하라. 계절과 무관한 무시간 주제 금지.`,
           `절대 원칙: ①거짓 사연·지어낸 경험 금지 — 공식 통계·실제 제도·계산으로만 성립하는 주제 ②전 국민 이해관계(대상이 넓을수록 좋다) ③이미 쓴 주제 제외: ${[...usedKeywords].slice(0, 40).join(", ") || "(없음)"}`,
           `제목 규격: 검색 키워드 나열이 아니라 사람이 말하듯 흐르는 '문장형' — 다음 결 중 하나: ⓐ공감 프레임("요즘 30대가 진짜 많이 하는 돈 실수") ⓑ구어체 감탄+되물음("아니 전기요금이 이렇게나 나왔다고? 이번 달 뭐가 달라진 거야") ⓒ반전 선언("적금 이자, 사실 4분의 1은 세금으로 사라집니다") ⓓ조건 호명+개수형(2026-07-20 추가 — 검색 의도 정합: "전기요금 폭탄 맞았다면, 이 3가지는 꼭 확인하세요"). 숫자·반전 중 1개 이상 결합. ★금지선(계정 지속 — 절대): 본문이 100% 이행 못 할 약속(낚시), "안 사면 평생 후회·무조건·100%" 류 단정·공포 마케팅, 충격·경악 남발.`,
@@ -65,6 +124,11 @@ export async function pickHomefeedBet(db: SupabaseClient, userId: string, sub: s
     if (!raw.keyword || !raw.title) return null;
     // ★문구 게이트(2026-07-17 PTRP) — 감정 과잉·과장 어휘는 텍스트 카드에서 역효과 실증. 제목 위반=오늘 배팅 스킵, 문구 위반=키워드 폴백.
     if (containsBanned(raw.title)) { console.error("[homebet] 금지어 제목 — 스킵:", raw.title.slice(0, 30)); return null; }
+    // ★투자권유 오인 — 주식 유형 추가(2026-08-01)로 생긴 경로. 제목·각도 어디에 있어도 그 장은 버린다.
+    if (INVEST_PUSH_RE.test(raw.title) || INVEST_PUSH_RE.test(raw.angle ?? "")) {
+      console.error("[homebet] 투자권유 오인 표현 — 스킵:", raw.title.slice(0, 30));
+      return null;
+    }
     const thumbCopy0 = (raw.thumbCopy ?? raw.keyword).slice(0, 14);
     const out: HomefeedBet = {
       keyword: raw.keyword.slice(0, 30),
@@ -78,10 +142,9 @@ export async function pickHomefeedBet(db: SupabaseClient, userId: string, sub: s
         `⑤★댓글 유도(2026-07-16 개정 — 댓글·체류가 홈피드 노출 점수): 마무리 직전에 독자 의견을 묻는 진짜 질문 1개를 자연스럽게 넣는다(예: "여러분은 무이자 할부, 한 달에 몇 번이나 쓰세요?") — '댓글 달아주세요' 류 부탁 금지, 대답하고 싶어지는 질문이어야 한다 ⑥크리에이터 시각 1곳 — 뻔한 정리가 아니라 이 데이터를 보는 나만의 해석 한 단락('제가 이 통계에서 진짜 놀란 건 평균이 아니라 격차예요' 결).`,
       ].join("\n"),
     };
-    try { await db.from("api_cache").upsert({ key: cacheKey, value: out, expires_at: new Date(Date.now() + 24 * 3600_000).toISOString(), updated_at: new Date().toISOString() }); } catch { /* ignore */ }
     return out;
   } catch (e) {
-    console.error("[homebet] 생성 실패(파이프 무영향):", e instanceof Error ? e.message : e);
+    console.error("[homebet] 생성 실패(이 장만 스킵):", e instanceof Error ? e.message : e);
     return null;
   }
 }

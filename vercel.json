@@ -51,6 +51,10 @@
     {
       "path": "/api/cron/gsc-sync",
       "schedule": "10 19 * * *"
+    },
+    {
+      "path": "/api/cron/tier-scan",
+      "schedule": "40 1 * * 1"
     }
   ]
 }

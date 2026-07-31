@@ -34,15 +34,48 @@ export const RANK_CHECK_DAYS = [1, 3, 7, 14] as const;    // 순위 체크 시�
 export const PERF_MIN_SAMPLE = 30;                        // 이 표본 미만 조합엔 가중치 절대 미적용(§1-4)
 export const PERF_WEIGHT_CLAMP = 0.2;                     // 보정 가중치 ±20% 클램프
 // tier별 에버그린 밴드(§2-2) — [vol하한, vol상한, blog_total상한(null=제한없음)]
+// ★신생 밴드 하향(2026-08-01 실측): 500~3,000이었는데 설계값은 100~2,000이었다. 돼지통(1개월차) 실측 —
+//  노출된 글은 전부 월 300~800 니치(KB스타기업뱅킹 1위·대법원경매정보 공고문 1위)였고,
+//  수요 5천~8만 헤드는 12개 중 0개 노출. 하한 500이 실제 승자 구간(300~800)의 아래쪽을 잘라내고 있었다.
 export const TIER_BANDS = {
-  SEEDLING: { volMin: 500, volMax: 3000, blogTotalMax: 1000 },
+  SEEDLING: { volMin: 100, volMax: 2000, blogTotalMax: 1000 },
   GROWING: { volMin: 1000, volMax: 10000, blogTotalMax: 5000 },
   ESTABLISHED: { volMin: 2000, volMax: 30000, blogTotalMax: null as number | null },
 } as const;
 // tier 승급 조건(§2-1) — 최근 10건 중 D+7 상위노출 승수
 export const TIER_PROMOTE = { GROWING: 3, ESTABLISHED: 5, ESTABLISHED_BIGWIN: { vol: 5000, wins: 2 } } as const;
 export const TIER_DEMOTE_MARGIN = 2; // 강등 보수 기준: 승급선보다 이만큼 크게 밑돌 때만 한 단계
-// tier별 트렌드:에버그린 슬롯 비율(§4)
+// ── 레인 배합(2026-08-01 유저 확정 — 4분할) ──────────────────────────────────
+// ★배경: 설계는 '황금60/트렌드25/헤드15'였는데 코드는 2분할 [트렌드,에버그린]=[7,3]이었다.
+//  신생인데 트렌드가 70% — 설계(25%)의 정반대. 돼지통 7/31 발행 5편이 전부 헤드로 나가 노출 0/5.
+//  원인 사슬: 트렌드 레인은 volBand(검색량 높을수록 상위)로 정렬되고, 트렌드 카드는 vol:0으로 만들어져
+//  bandInvariant가 구조적으로 못 거른다 → 신생 보드에 헤드가 꽂힌다.
+// ★홈판을 정식 레인으로 승격(기존 homefeedBet 1일 1장 → 배합 몫만큼). 검색은 상한이 검색량이지만
+//  홈판은 반응 게임이라 상한이 없다 — 편당 조회 150 → 1,500이 필요한데 니치 1위로는 산수가 안 된다.
+export type Lane = "golden" | "homefeed" | "trend" | "head";
+export const TIER_LANE_MIX: Record<string, Record<Lane, number>> = {
+  // 유저 선택(2026-08-01): 홈판 주력 — 목표 최단 경로. 홈판 휘발성 리스크는 인지하고 선택함.
+  SEEDLING: { golden: 35, homefeed: 40, trend: 15, head: 10 },
+  GROWING: { golden: 40, homefeed: 30, trend: 15, head: 15 },
+  ESTABLISHED: { golden: 30, homefeed: 25, trend: 15, head: 30 },
+};
+
+/** 배합 비율(%)을 총 n장에 대한 레인별 장수로 — 최대잔여법(합이 정확히 n이 되게). */
+export function laneQuota(tier: string, n: number): Record<Lane, number> {
+  const mix = TIER_LANE_MIX[tier] ?? TIER_LANE_MIX.SEEDLING;
+  const lanes = Object.keys(mix) as Lane[];
+  const exact = lanes.map((l) => ({ l, v: (mix[l] / 100) * n }));
+  const out = Object.fromEntries(exact.map((e) => [e.l, Math.floor(e.v)])) as Record<Lane, number>;
+  let left = n - lanes.reduce((s, l) => s + out[l], 0);
+  for (const e of [...exact].sort((a, b) => (b.v % 1) - (a.v % 1))) {
+    if (left <= 0) break;
+    out[e.l] += 1;
+    left -= 1;
+  }
+  return out;
+}
+
+// 구 2분할(트렌드:에버그린) — 아직 참조하는 경로가 있어 남겨두되 신규 사용 금지.
 export const TIER_MIX = { SEEDLING: [7, 3], GROWING: [5, 5], ESTABLISHED: [3, 7] } as const;
 // 씨앗 동시 발행 상한(§5) — 대형 풀 씨앗은 여유, 일반은 타이트
 export const SEED_CLAIM_CAP = { big: 5, normal: 3 } as const;
