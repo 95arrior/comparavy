@@ -1,4 +1,4 @@
-import { finalGate, adsenseUnsafe } from "../lib/cardFinalGate.ts";
+import { finalGate, adsenseUnsafe, topicIntent } from "../lib/cardFinalGate.ts";
 import { nearDuplicate } from "../lib/diversity.ts";
 import { isStickyFrame, pickDiverseCopy } from "../lib/thumbCopyDiversity.ts";
 import { isPushable, pushGain, isZeroClickQuery } from "../lib/serpCtr.ts";
@@ -301,6 +301,28 @@ for (const [q, expect] of zeroCases) {
     && !scanLifespan("검색량 없음", "", null, 100).reasons.includes("low_ceiling"); // 데이터 없으면 판정 보류
   if (!ceil) fail++;
   console.log(ceil ? "OK " : "FAIL", "| lifespan | 천장 임계 판정");
+}
+
+// ★글감 유형 신호(2026-07-31 실측 — 차단 아님, 관측용). pigtong.com 발행 26편 × 클릭 8회가 근거다.
+//  같은 검색량 구간(340~1,650)에서 행동·판단형 9편 중 4편이 클릭을 받았고, 분류·용어형 8편은 전부 0이었다.
+//  ★'저평가우량주'가 핵심 케이스 — 용어형처럼 생겼지만 판단 수식어가 있고 실제로 클릭이 났다. 오분류하면 승자를 버린다.
+{
+  const intentCases = [
+    // 클릭이 실제로 난 글 — 전부 행동판단이어야 한다
+    ["cma계좌개설", "행동판단"], ["irp이전", "행동판단"], ["정기예금특판", "행동판단"],
+    ["회사채금리", "행동판단"], ["저평가우량주", "행동판단"],
+    // 클릭 0 · 같은 검색량 구간의 분류·용어형
+    ["금융기관", "용어"], ["코인종류", "용어"], ["온투업", "용어"], ["모의주식", "용어"],
+    ["저축은행종류", "용어"], ["보통주", "용어"], ["베트남펀드", "용어"],
+    // 행동어가 있으면 길어도 용어가 아니다(오컷 방지)
+    ["퇴직연금세액공제", "행동판단"], ["증권수수료", "행동판단"],
+  ];
+  for (const [kw, expect] of intentCases) {
+    const got = topicIntent(kw);
+    const ok = got === expect;
+    if (!ok) fail++;
+    console.log(ok ? "OK " : "FAIL", "| intent   |", kw.padEnd(16), "→", got, ok ? "" : `(기대 ${expect})`);
+  }
 }
 
 process.exit(fail ? 1 : 0);
