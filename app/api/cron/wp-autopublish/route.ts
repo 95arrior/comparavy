@@ -3,6 +3,8 @@ import { createSupabaseAdminClient, hasSupabaseEnv } from "@/lib/supabase-server
 import { generateArticle } from "@/lib/generateArticle";
 import { pickWpTopic } from "@/lib/googleTopics";
 import { adsenseUnsafe } from "@/lib/cardFinalGate";
+import { factVerdict } from "@/lib/factGate";
+import { scanCompliance } from "@/lib/complianceFilter";
 import { lacksInterpretation, lacksConditionBranch } from "@/lib/editorial";
 import { financeCalcContext } from "@/lib/financeCalc";
 import { autoFeaturedImage } from "@/lib/wpFeaturedImage";
@@ -113,6 +115,39 @@ export async function GET(request: Request) {
           } catch { /* 재생성 실패 — 원본 그대로 */ }
           if (lacksConditionBranch(article.body_html)) console.log(`[wp-auto][condition-branch] blog=${b.id} — 조건 분기 없음, 통과(로그만)`);
         }
+        // ★사실 검사 게이트(2026-07-31 — 자사 사이트 실측 오류 2건이 원점: 예금자보호 옛 한도, 퇴직소득을 종합소득세로).
+        //  구조 오류는 문장이 자연스러워서 사람이 안 보면 그대로 나간다. 위 게이트들과 달리 '로그만'으로 통과시키지 않는다.
+        //  ★단 글을 버리지는 않는다 — 재생성 1회 후에도 남으면 자동발행만 막고 승인탭(draft)으로 내린다.
+        //   검토 화면의 사실 검사 패널이 무엇을 고쳐야 하는지 그대로 보여주므로, 사람 눈으로 갈 수 있으면 보내는 게 낫다.
+        let holdReason = "";
+        if (factVerdict(article.fact_issues) === "rewrite") {
+          const wrong = article.fact_issues.filter((f) => f.layer === "structure" && f.severity === "block");
+          try {
+            const retried = await generateArticle({
+              ...genInput,
+              variantInstruction: `★경고: 직전 생성이 제도를 잘못 설명했다. 아래를 반드시 바로잡아라(해당 문단은 통째로 다시 쓴다).\n${wrong.map((f) => `- ${f.title} → ${f.fix}`).join("\n")}`,
+            });
+            const cr = retried.body_html.replace(/<[^>]+>/g, "").replace(/\s+/g, "").length;
+            if (cr >= 500 && factVerdict(retried.fact_issues) !== "rewrite") article = retried;
+          } catch { /* 재생성 실패 — 원본 그대로 두고 아래에서 보류 판정 */ }
+          const left = article.fact_issues.filter((f) => f.layer === "structure" && f.severity === "block");
+          if (left.length) {
+            holdReason = left.map((f) => f.title).join(" / ");
+            console.log(`[wp-auto][fact] blog=${b.id} — 자동발행 보류, 승인탭으로: ${holdReason}`);
+          }
+        }
+        // ★광고표현 검문(2026-07-31) — scanCompliance가 검토 화면(UI)에만 붙어 있어 자동발행 경로는 무검문이었다.
+        //  게이트를 사람이 보는 화면에 두면, 사람이 안 보는 경로는 그냥 통과한다(팩트 게이트와 똑같은 패턴의 구멍).
+        //  high(거의 확실한 위반)만 자동발행을 막는다 — medium은 맥락에 따라 갈리므로 승인탭에서 사람이 판단한다.
+        //  재생성하지 않는 이유: 검토 화면에 '바꾸기' 버튼(대체 표현 1클릭 치환)이 이미 있어 사람 손이 더 싸고 정확하다.
+        {
+          const high = scanCompliance(`${article.title}\n${article.body_html}`, "online").filter((v) => v.severity === "high");
+          if (high.length) {
+            const label = high.map((v) => `‘${v.matched}’`).join(" ");
+            holdReason = holdReason ? `${holdReason} / ${label}` : label;
+            console.log(`[wp-auto][compliance] blog=${b.id} — 자동발행 보류, 승인탭으로: ${label}`);
+          }
+        }
         // WP 후처리 — 네이버 포맷터(스페이서·형광펜) 미적용. 마커만 정리.
         let body = stripNaverArtifacts(article.body_html); // 해시태그·마커 일괄 소거(중앙 소거기)
         // ★함께 보면 좋은 글 — 네이버 보조 링크(2026-07-20, 마스터 지침 [7]⑧: WP 우선은 본문 내부링크가, 네이버는 보조로만).
@@ -140,7 +175,7 @@ export async function GET(request: Request) {
         const { data: saved, error } = await db.from("articles").insert(ins).select("id, title, body_html, meta_title, meta_description, faq, tags, keyword").single();
         if (error || !saved) throw new Error(error?.message ?? "insert fail");
 
-        if (b.auto_publish === "daily") {
+        if (b.auto_publish === "daily" && !holdReason) {
           const dailyHtml = saved.body_html as string; // 배너는 위에서 이미 삽입됨
           const r = await publishPost({
             siteUrl: conn.site_url, username: conn.username, appPassword: decryptSecret(conn.app_password),
@@ -155,7 +190,7 @@ export async function GET(request: Request) {
           await db.from("articles").update({ status: "published", wp_post_id: r.id, wp_link: r.link, publish_at: new Date().toISOString() }).eq("id", saved.id);
           results.push({ blog: b.id, result: "published" });
         } else {
-          results.push({ blog: b.id, result: "review_ready" }); // 아침 승인탭 대기(draft)
+          results.push({ blog: b.id, result: holdReason ? `hold:${holdReason.slice(0, 60)}` : "review_ready" }); // 아침 승인탭 대기(draft)
         }
         void logUsage({ userId: b.user_id, model: "wp-auto", kind: "wp_autopublish", inputTokens: 0, outputTokens: 0 });
       } catch (e) {
