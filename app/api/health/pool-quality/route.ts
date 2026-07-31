@@ -8,6 +8,7 @@ import { createSupabaseServerClient, createSupabaseAdminClient, hasSupabaseEnv }
 import { TIER_BANDS } from "@/lib/scoreWeights";
 import { fetchBlogTotal } from "@/lib/naverBlogSearch";
 import { fetchSerpOpenness, isOpenBoard } from "@/lib/serpOpenness";
+import { fetchKeywordStats } from "@/lib/naverKeyword";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -139,7 +140,21 @@ export async function GET(request: Request) {
     };
   }
 
+  // ★수요 실측(?demand=키워드,키워드) — 유저 우선순위(2026-08-01): "홈판이랑 뜨는 것만 진짜 수요가 높으면 된다".
+  //  지금 '지금 뜨는' 열은 vol:0으로 나가고 있어 수요가 검증된 카드가 하나도 없다. 실제로 얼마인지 먼저 잰다.
+  const demandQ = url.searchParams.get("demand");
+  let 수요 = null as null | { keyword: string; monthly: number | null }[];
+  if (demandQ) {
+    const words = demandQ.split(",").map((x) => x.trim()).filter(Boolean).slice(0, 20);
+    const stats = await fetchKeywordStats(words);
+    수요 = words.map((w) => {
+      const st = stats.get(w.replace(/\s+/g, "").toLowerCase()) ?? stats.get(w);
+      return { keyword: w, monthly: st ? st.mobile + st.pc : null };
+    });
+  }
+
   return NextResponse.json({
+    수요실측: 수요,
     문턱보정: 보정,
     문서수측정: {
       가능한가: 측정가능,
