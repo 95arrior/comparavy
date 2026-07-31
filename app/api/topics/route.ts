@@ -873,6 +873,19 @@ export async function GET(req: Request) {
   //  세부업종(sub)이 있고 분야 핵심(fit>=1)이 보드를 채우고도 남을 때만 뺀다(빈자리 방지 플로어 — 얇은 날은 주변도 허용).
   const onFit = fitScored.filter(({ t }) => (t?.fit ?? 1) >= 1);
   const fitBase = (sub && onFit.length >= PICK + 2) ? onFit : fitScored;
+  // ★계측(2026-07-31) — 풀 147건이 살아남았는데 보드가 0장인 사고. 진단이 poolSteps와 finalGate 사이에서 끊겨 있어
+  //  '어느 마디에서 증발했는지'를 특정할 수 없었다(finalGateDrops=[] + poolCards=0 = 게이트에 아무것도 안 들어갔다는 뜻).
+  //  제목·손님매칭 단계(keywordsToTitles)가 전량 ok:false를 내면 정확히 이 증상이 된다 — 그 가설을 숫자로 확인한다.
+  if (debugMode) diag.titleStep = {
+    candidates2: candidates2.length,
+    titled: titled.length,
+    okFalse: titled.filter((t) => t?.ok === false).length,
+    staleTitle: titled.filter((t) => staleYear(t?.title ?? "")).length,
+    fitZero: titled.filter((t) => (t?.fit ?? 1) < 1).length,
+    fitScored: fitScored.length,
+    onFit: onFit.length,
+    fitBase: fitBase.length,
+  };
   const fitTop = fitBase
     .sort((a, b) => (b.t?.fit ?? 1) - (a.t?.fit ?? 1))
     .slice(0, adminBest ? PICK + 14 : PICK + 6);
@@ -1107,6 +1120,8 @@ export async function GET(req: Request) {
     }
   } catch { /* 조용히 생략 */ }
 
+  // ★계측(2026-07-31) — 조립 마디. fitTop 이후 어디서 카드가 사라지는지(클러스터 배분·유사 배제·보충 폴백).
+  if (debugMode) diag.assembleStep = { fitTop: fitTop.length, sortedFit: sortedFit.length, clusters: clusters.length, pickN, generalRows: generalRows.length, topics: topics.length };
   const shuffled = shuffle(topics, rng);
   // ★밴드 불변식(2026-07-20 최종 검문 — 실측: 봉쇄 후에도 6,950~26,180 노출, 출처 미상): 어떤 경로로 왔든
   //  응답 직전 검색량이 밴드 상한 1.5배 초과 카드는 차단, 차단 내역은 api_cache(diag:band_leak)에 자수 기록.
