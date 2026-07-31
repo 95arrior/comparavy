@@ -63,6 +63,30 @@ export async function GET(request: Request) {
   const probe = await fetchBlogTotal(probeWord);
   const 측정가능 = probe != null;
 
+  // ★표본 측정(?measure=N) — "재보면 진짜 쉬운 게 몇 개나 있나"를 알아야 문턱을 정한다.
+  //  읽기 전용 원칙은 유지한다(DB에 쓰지 않는다). 네이버 쿼터를 아끼려 기본 0, 명시할 때만 잰다.
+  const measureN = Math.max(0, Math.min(60, Number(url.searchParams.get("measure") ?? 0)));
+  let 표본 = null as null | { 잰수: number; 분포: Record<string, number>; 가장낮은5: { keyword: string; blog_total: number }[] };
+  if (measureN > 0) {
+    const targets = inBand.filter((r) => r.blog_total == null).slice(0, measureN);
+    const got: { keyword: string; blog_total: number }[] = [];
+    for (const t of targets) {
+      const n = await fetchBlogTotal(String(t.keyword));
+      if (n != null) got.push({ keyword: String(t.keyword), blog_total: n });
+    }
+    표본 = {
+      잰수: got.length,
+      분포: {
+        "1천 미만": got.filter((g) => g.blog_total < 1_000).length,
+        "1천~3천": got.filter((g) => g.blog_total >= 1_000 && g.blog_total < 3_000).length,
+        "3천~1만": got.filter((g) => g.blog_total >= 3_000 && g.blog_total < 10_000).length,
+        "1만~3만": got.filter((g) => g.blog_total >= 10_000 && g.blog_total < 30_000).length,
+        "3만 이상": got.filter((g) => g.blog_total >= 30_000).length,
+      },
+      가장낮은5: got.sort((a, b) => a.blog_total - b.blog_total).slice(0, 5),
+    };
+  }
+
   return NextResponse.json({
     문서수측정: {
       가능한가: 측정가능,
@@ -72,6 +96,7 @@ export async function GET(request: Request) {
         ? "네이버 검색 API가 응답합니다 — 미측정분을 채울 수 있습니다."
         : "네이버 검색 API가 응답하지 않습니다. 개발자센터 앱에 '검색' API가 추가돼 있어야 합니다(자격증명은 DataLab과 동일). 이게 없으면 '쉬운 키워드'라고 말할 근거 자체를 만들 수 없습니다.",
     },
+    표본측정: 표본,
     기준: { vertical, sub, 밴드: `월 ${band.volMin}~${band.volMax} 검색`, 문서수상한_현재: band.blogTotalMax },
     풀크기: { 전체: all.length, 밴드안: inBand.length },
     밴드안_문서수분포: bucket(inBand),
