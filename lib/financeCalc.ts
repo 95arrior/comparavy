@@ -22,7 +22,16 @@ export const RATES = {
 } as const;
 
 const fmtWon = (n: number): string => `${Math.round(n).toLocaleString("ko-KR")}원`;
-const fmtMan = (n: number): string => `${(n / 10_000).toLocaleString("ko-KR")}만 원`;
+// ★억 단위를 만으로 쓰지 않는다(2026-07-31 실측: 검토 화면에 "10,000만 원"이 노출됐다).
+//  한국어로 1억을 '10,000만 원'이라고 쓰는 사람은 없다. 프롬프트에 들어가면 모델이 그대로 따라 쓴다.
+const fmtMan = (n: number): string => {
+  if (n >= 100_000_000) {
+    const eok = Math.floor(n / 100_000_000);
+    const man = Math.round((n % 100_000_000) / 10_000);
+    return man ? `${eok}억 ${man.toLocaleString("ko-KR")}만 원` : `${eok}억 원`;
+  }
+  return `${(n / 10_000).toLocaleString("ko-KR")}만 원`;
+};
 
 /** 연금저축·IRP 납입액의 세액공제 환급액(지방소득세 포함 공제율). 한도 초과분은 공제 제외. */
 export function pensionRefund(salary: number, paid: number): number {
@@ -57,7 +66,9 @@ const ISA_RE = /(ISA|절세\s*계좌|중개형\s*계좌)/i;
 const INTEREST_RE = /(예금|적금|파킹|금리|이자)/;
 const HEALTH_RE = /(건강보험|건보료)/;
 // 특판·저축은행 글은 '한도'가 본문 핵심이라 INTEREST보다 먼저 잡는다(실측: 특판 글이 클릭 1위인데 한도가 틀렸다).
-const DEPOSIT_RE = /(예금자\s*보호|예금\s*보호|특판|저축\s*은행|상호\s*금융|새마을\s*금고|신협)/;
+// ★2026-07-31 실측 확대: 검토 화면에 옛 한도(5천만)가 실제로 떴다. 트리거가 좁아 한도 자료가 주입되지 않은 글이었다.
+//  탐지(factGate)보다 주입(여기)이 먼저다 — 애초에 정답을 손에 쥐여주면 고칠 일이 안 생긴다.
+const DEPOSIT_RE = /(예금|적금|예금자\s*보호|특판|저축\s*은행|상호\s*금융|새마을\s*금고|신협|파킹)/;
 
 /** keyword가 금융 계산 주제면 코드 계산 예시 블록(최대 2개)을, 아니면 null. 생성 프롬프트에 그대로 주입. */
 export function financeCalcContext(keyword: string): string | null {
@@ -86,7 +97,7 @@ export function financeCalcContext(keyword: string): string | null {
   if (blocks.length < 2 && DEPOSIT_RE.test(keyword)) {
     const d = RATES.depositProtect;
     blocks.push([
-      `[예금자보호 한도 — ${d.since}부터 ${fmtWon(d.limit)}(종전 ${fmtWon(d.prev)}에서 상향)]`,
+      `[예금자보호 한도 — ${d.since}부터 ${fmtMan(d.limit)}(종전 ${fmtMan(d.prev)}에서 상향)]`,
       `- 기준: 금융회사별로 1인당 원금+이자를 합산해 ${fmtMan(d.limit)}까지. 한 회사에 ${fmtMan(d.limit)}을 넘겨 넣으면 초과분은 보호되지 않는다.`,
       `- 은행·저축은행·보험·금융투자는 예금보험공사가, 상호금융(새마을금고·신협 등)은 각 중앙회가 보호하며 한도는 같다.`,
       `- 비대상: CMA(종금형 제외)·펀드·주식·채권·ELS 등 실적배당 상품은 예금자보호 대상이 아니다.`,

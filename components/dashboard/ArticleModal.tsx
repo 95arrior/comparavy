@@ -12,7 +12,7 @@ import { seedHasDeadline } from "@/lib/hookPatterns";
 import ThumbMakerSheet from "./ThumbMakerSheet";
 import { openNaverBlogApp } from "@/lib/naverApp";
 import { scanCompliance, applySuggestion } from "@/lib/complianceFilter";
-import { scanFacts, factVerdict } from "@/lib/factGate";
+import { scanFacts, factVerdict, applyFactFix, type FactIssue } from "@/lib/factGate";
 import GlassIcon from "@/components/GlassIcon";
 import type { Article } from "./types";
 
@@ -287,6 +287,29 @@ export default function ArticleModal({ pubStampKey, blogName,
   }, [title, bodyHtml, article.faq, article.keyword]);
   const factVerdictNow = factVerdict(facts);
 
+  // '바꾸기' — 1층 값 오류만 치환하고 즉시 저장. 해당 주제 블록 안에서만 바뀐다(applyFactFix).
+  //  2층 구조 오류·3층 누락에는 버튼이 붙지 않는다 — 문단을 다시 써야 하는 종류라 기계가 손대면 더 나빠진다.
+  async function fixFact(f: FactIssue) {
+    if (!f.replace) return;
+    const nextBody = applyFactFix(bodyHtml, f);
+    if (nextBody === bodyHtml) { setToast("고칠 자리를 찾지 못했어요"); return; }
+    setBodyHtml(nextBody);
+    try {
+      const res = await fetch(`/api/articles/${article.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body_html: nextBody }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        onUpdated(data.article);
+        setToast(`\u2018${f.replace.to}\u2019(으)로 고쳤어요`);
+      } else setToast("고치지 못했어요. 다시 시도해 주세요.");
+    } catch {
+      setToast("고치지 못했어요. 다시 시도해 주세요.");
+    }
+  }
+
   // '바꾸기' — 위반 표현을 대체 표현으로 치환하고 즉시 저장(에디터 없이 문자열 치환).
   async function fixViolation(v: (typeof compliance)[number]) {
     if (!v.suggestion) return;
@@ -380,6 +403,9 @@ export default function ArticleModal({ pubStampKey, blogName,
                     <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold ${f.severity === "block" ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-800"}`}>{f.severity === "block" ? "오류" : "확인"}</span>
                     <span className="text-sm font-semibold text-neutral-900">{f.title}</span>
                     <span className="text-[11px] text-neutral-400">{FACT_LAYER_LABEL[f.layer] ?? ""}{f.count > 1 ? ` ×${f.count}` : ""}</span>
+                    {f.replace && (
+                      <button onClick={() => fixFact(f)} className="ml-auto shrink-0 rounded-lg tk-grad-cta px-2.5 py-1 text-xs font-medium text-white transition hover:opacity-90">‘{f.replace.to}’로 바꾸기</button>
+                    )}
                   </div>
                   <p className="mt-1 text-xs leading-relaxed text-neutral-600">{f.reason}</p>
                   <p className="mt-1 text-xs leading-relaxed text-neutral-900"><span className="font-semibold">고치기</span> · {f.fix}</p>

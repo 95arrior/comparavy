@@ -1,4 +1,4 @@
-import { scanFacts, factVerdict } from "../lib/factGate.ts";
+import { scanFacts, factVerdict, applyFactFix } from "../lib/factGate.ts";
 
 // ★실측 케이스(2026-07-31) — 자사 사이트에서 실제로 발행된 오류 2건이 원점이다.
 //  ① 워드프레스: 예금자보호 한도를 5천만 원으로 씀(옛 숫자)
@@ -110,6 +110,31 @@ for (const [kw, body, layer, expect] of cases) {
   const okC = real.length === 1;
   if (!okC) fail++;
   console.log(okC ? "OK " : "FAIL", "| structure | 같은 문장 안의 진짜 오류는 여전히 검출 →", real.length + "건");
+}
+
+// ★[바꾸기] 1층 값 오류 한 번에 고치기(2026-07-31 유저 요청: "아싸리 고쳐서 나오면 좋겠다").
+//  ★같은 숫자가 계산 예시에 있으면 절대 건드리면 안 된다 — 주제 블록 안에서만 치환한다.
+{
+  const html = `<p>예금자보호 한도인 5,000만 원까지 보호됩니다.</p><p>5,000만 원을 연 3.5%로 예치하면 세후 이자는 1,480,500원입니다.</p>`;
+  const [iss] = scanFacts(html, "정기예금 금리").filter((i) => i.layer === "value");
+  const fixed = iss ? applyFactFix(html, iss) : html;
+  const okA = fixed.includes("한도인 1억 원까지");
+  if (!okA) fail++;
+  console.log(okA ? "OK " : "FAIL", "| 바꾸기    | 한도 문장만 1억 원으로 치환");
+  const okB = fixed.includes("5,000만 원을 연 3.5%");
+  if (!okB) fail++;
+  console.log(okB ? "OK " : "FAIL", "| 바꾸기    | 다른 문단의 계산 예시는 건드리지 않음");
+  const okC = !/1억 원\s*원/.test(fixed);
+  if (!okC) fail++;
+  console.log(okC ? "OK " : "FAIL", "| 바꾸기    | 조사 중복('1억 원 원') 없음");
+  const okD = scanFacts(fixed, "정기예금 금리").filter((i) => i.layer === "value").length === 0;
+  if (!okD) fail++;
+  console.log(okD ? "OK " : "FAIL", "| 바꾸기    | 고친 뒤 경고가 사라짐");
+  // 2층·3층에는 치환 재료가 붙지 않는다 — 기계가 고칠 수 있는 종류가 아니다
+  const struct = scanFacts("<p>퇴직소득세는 5월 종합소득세 신고로 환급받으세요.</p>", "irp 이전").filter((i) => i.layer === "structure");
+  const okE = struct.length > 0 && struct.every((i) => !i.replace);
+  if (!okE) fail++;
+  console.log(okE ? "OK " : "FAIL", "| 바꾸기    | 구조 오류엔 버튼이 안 붙음");
 }
 
 // [판정] 구조 오류는 문단 재작성

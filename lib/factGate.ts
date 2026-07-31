@@ -20,6 +20,12 @@ export interface FactIssue {
   reason: string; // 왜 문제인지
   fix: string; // 어떻게 고치는지
   count: number;
+  /**
+   * 버튼 한 번으로 고칠 수 있는 경우에만 채워진다(1층 값 오류 전용).
+   * 2층 구조 오류·3층 누락은 문단을 다시 써야 해서 절대 자동 치환하지 않는다 — 기계가 못 고치는 종류다.
+   * anchor는 '그 블록이 정말 이 주제인지' 재확인용 — 같은 숫자가 다른 문맥(계산 예시 등)에 있으면 건드리면 안 된다.
+   */
+  replace?: { from: string; to: string; anchor: string };
 }
 
 /** 발행 판정. 구조 오류는 문단을 통째로 다시 써야 해서 값 오류보다 무겁다. */
@@ -35,7 +41,15 @@ function stripHtml(s: string): string {
     .replace(/<[^>]*>/g, " ");
 }
 
-const won = (n: number): string => `${Math.round(n / 10_000).toLocaleString("ko-KR")}만 원`;
+// ★억은 억으로 쓴다(2026-07-31 실측: 검토 화면 안내문에 "10,000만 원"이 그대로 노출됐다).
+const won = (n: number): string => {
+  if (n >= 100_000_000) {
+    const eok = Math.floor(n / 100_000_000);
+    const man = Math.round((n % 100_000_000) / 10_000);
+    return man ? `${eok}억 ${man.toLocaleString("ko-KR")}만 원` : `${eok}억 원`;
+  }
+  return `${Math.round(n / 10_000).toLocaleString("ko-KR")}만 원`;
+};
 
 function countMatches(s: string, re: RegExp): number {
   return (s.match(new RegExp(re.source, re.flags.includes("g") ? re.flags : re.flags + "g")) ?? []).length;
@@ -45,9 +59,9 @@ function countMatches(s: string, re: RegExp): number {
  * a가 나온 자리 앞뒤 window자 안에 b가 같이 있는지 본다(문장 경계로는 못 자른다 — 한 문단에 걸쳐 틀리는 게 흔하다).
  * except가 그 창 안에 있으면 건너뛴다: "퇴직소득은 종합소득세 대상이 아니다"는 정답인데 같은 두 단어가 붙어 있다.
  */
-function nearby(plain: string, a: RegExp, b: RegExp, except: RegExp | null, window = 90): string[] {
+function nearby(plain: string, a: RegExp, b: RegExp, except: RegExp | null, window = 90): { ctx: string; hit: string }[] {
   const re = new RegExp(a.source, a.flags.includes("g") ? a.flags : a.flags + "g");
-  const hits: string[] = [];
+  const hits: { ctx: string; hit: string }[] = [];
   let m: RegExpExecArray | null;
   while ((m = re.exec(plain)) !== null) {
     if (m.index === re.lastIndex) re.lastIndex += 1; // 0길이 매칭 무한루프 방지
@@ -58,9 +72,10 @@ function nearby(plain: string, a: RegExp, b: RegExp, except: RegExp | null, wind
     const lo = raw.lastIndexOf("\n", rel);
     const hi = raw.indexOf("\n", rel);
     const ctx = raw.slice(lo + 1, hi === -1 ? raw.length : hi);
-    if (!b.test(ctx)) continue;
+    const bm = new RegExp(b.source, b.flags.replace("g", "")).exec(ctx);
+    if (!bm) continue;
     if (except && except.test(ctx)) continue; // 올바르게 부정한 문장은 통과
-    hits.push(ctx.replace(/\s+/g, " ").trim());
+    hits.push({ ctx: ctx.replace(/\s+/g, " ").trim(), hit: bm[0] });
   }
   return hits;
 }
@@ -77,17 +92,21 @@ interface ValueRule {
   title: string;
   reason: string;
   fix: string;
+  /** 결정적 치환이 가능한 규칙만 채운다 — 옛 값을 현행 값으로 바꾸면 끝나는 경우. */
+  swapTo?: string;
 }
 
 const VALUE_RULES: ValueRule[] = [
   {
     anchor: /예금자?\s*보호|예금\s*보호|보호\s*한도/,
-    stale: /5,?000\s*만|5천\s*만|50,000,000|5,?000만원/,
+    // ★뒤따르는 '원'까지 함께 잡는다 — 치환 시 '1억 원 원'이 되는 조사 중복을 막는다(2026-07-31 실측).
+    stale: /(?:5,?000\s*만|5천\s*만|50,000,000)\s*원?/,
     except: /종전|기존|이전(?:에|까지)|→|에서\s*1억|상향|까지였/,
     severity: "block",
     title: "예금자보호 한도가 옛 값(5천만 원)입니다",
     reason: `${RATES.depositProtect.since}부터 ${won(RATES.depositProtect.limit)}으로 상향됐습니다. 2025년 9월 이전 자료에는 옛 한도가 그대로 남아 있어 모델이 자주 옛 값을 씁니다.`,
     fix: `금융회사별 1인당 원금+이자 합산 ${won(RATES.depositProtect.limit)}으로 고칩니다. 옛 값을 언급하려면 "종전 ${won(RATES.depositProtect.prev)}에서 상향" 형태로만 씁니다.`,
+    swapTo: won(RATES.depositProtect.limit), // 한도는 값만 바꾸면 문장이 그대로 성립한다
   },
   {
     anchor: /연금\s*저축|IRP|세액\s*공제/i,
@@ -240,7 +259,11 @@ export function scanFacts(text: string, keyword: string): FactIssue[] {
   for (const rule of VALUE_RULES) {
     const hits = nearby(plain, rule.anchor, rule.stale, rule.except ?? null);
     if (hits.length) {
-      issues.push({ layer: "value", severity: rule.severity, matched: hits[0], title: rule.title, reason: rule.reason, fix: rule.fix, count: hits.length });
+      issues.push({
+        layer: "value", severity: rule.severity, matched: hits[0].ctx,
+        title: rule.title, reason: rule.reason, fix: rule.fix, count: hits.length,
+        ...(rule.swapTo ? { replace: { from: hits[0].hit, to: rule.swapTo, anchor: rule.anchor.source } } : {}),
+      });
     }
   }
   const pending = plain.match(PENDING_RE);
@@ -260,7 +283,7 @@ export function scanFacts(text: string, keyword: string): FactIssue[] {
   for (const rule of STRUCTURE_RULES) {
     const hits = nearby(plain, rule.a, rule.b, rule.except ?? null);
     if (hits.length) {
-      issues.push({ layer: "structure", severity: rule.severity, matched: hits[0], title: rule.title, reason: rule.reason, fix: rule.fix, count: hits.length });
+      issues.push({ layer: "structure", severity: rule.severity, matched: hits[0].ctx, title: rule.title, reason: rule.reason, fix: rule.fix, count: hits.length });
     }
   }
 
@@ -284,6 +307,22 @@ export function scanFacts(text: string, keyword: string): FactIssue[] {
 
   const rank: Record<FactLayer, number> = { structure: 0, value: 1, missing: 2 };
   return issues.sort((a, b) => (a.severity === b.severity ? rank[a.layer] - rank[b.layer] : a.severity === "block" ? -1 : 1));
+}
+
+/**
+ * '바꾸기' 한 번으로 1층 값 오류를 고친다. ★해당 주제를 다루는 블록 안에서만 치환한다 —
+ * 같은 숫자가 계산 예시("5,000만 원을 연 3.5%로")에 있으면 건드리면 안 된다(실측 오탐과 같은 자리).
+ * replace가 없는 이슈(2층 구조·3층 누락)는 원문을 그대로 돌려준다 — 기계가 고칠 수 있는 종류가 아니다.
+ */
+export function applyFactFix(html: string, issue: FactIssue): string {
+  if (!issue.replace) return html;
+  const { from, to, anchor } = issue.replace;
+  const anchorRe = new RegExp(anchor);
+  // 블록 닫는 태그를 구분자로 남긴 채 쪼갠다(캡처 그룹 → split 결과에 구분자가 함께 들어온다)
+  const parts = html.split(/(<\/(?:p|li|h[1-6]|td|th|div|blockquote)>)/gi);
+  return parts
+    .map((seg) => (anchorRe.test(seg.replace(/<[^>]*>/g, " ")) ? seg.split(from).join(to) : seg))
+    .join("");
 }
 
 /** 발행 판정 — 구조 오류(block)는 문단 재작성, 그 외 block/warn은 수정 후 발행. */
