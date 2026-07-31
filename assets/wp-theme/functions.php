@@ -157,13 +157,54 @@ add_action('wp_footer', function () { ?>
 <?php });
 
 /* 관련 글 3개 — 같은 카테고리(내부 링크·체류) */
-function ateflo_related_posts($post_id, int $n = 3): array {
+/* 제목에서 의미 토큰만 추출 — 범용어·조사 꼬리는 버린다(겹침 점수가 '방법·정리'로 부풀지 않게) */
+function ateflo_title_tokens(string $title): array {
+  $stop = ['방법','정리','총정리','조건','신청','기간','확인','이유','비교','기준','주의','사항','가이드','관련','대상','혜택','지원','제도','종류','순서','발급','지금','오늘','한번','까지','부터','어떻게','무엇','얼마'];
+  $parts = preg_split('/[^\p{Hangul}\p{Latin}0-9]+/u', $title, -1, PREG_SPLIT_NO_EMPTY);
+  $out = [];
+  foreach ($parts as $w) {
+    if (mb_strlen($w, 'UTF-8') < 2) continue;
+    if (in_array($w, $stop, true)) continue;
+    $out[$w] = true;
+  }
+  return array_keys($out);
+}
+
+/* 두 토큰 집합의 겹침 수 — 부분 포함도 인정(2차전지 ↔ 2차전지주) */
+function ateflo_token_overlap(array $a, array $b): int {
+  $n = 0;
+  foreach ($a as $x) {
+    foreach ($b as $y) {
+      if ($x === $y || mb_strpos($x, $y) !== false || mb_strpos($y, $x) !== false) { $n++; break; }
+    }
+  }
+  return $n;
+}
+
+/* ★관련글(2026-07-31 개선) — 종전엔 같은 카테고리에서 그냥 최신 3개였다.
+ *  카테고리가 굵어서(투자·재테크 등) 같은 분류 안에서도 전혀 안 이어지는 글이 붙었고,
+ *  모자라면 '최신 글'로 채워 무관한 글이 그대로 들어갔다(실측: 2차전지주 글 아래 긴급생계비·금융기관).
+ *  같은 카테고리 후보를 넉넉히 받아 제목 토큰 겹침 순으로 세운다 — 이어 읽을 만한 글이 먼저 온다.
+ */
+function ateflo_related_posts($post_id, int $n = 6): array {
   $cats = wp_get_post_categories($post_id);
-  $rel = $cats ? get_posts(['numberposts' => $n, 'category__in' => $cats, 'exclude' => [$post_id]]) : [];
+  $pool = $cats ? get_posts(['numberposts' => 24, 'category__in' => $cats, 'exclude' => [$post_id]]) : [];
+  $cur = ateflo_title_tokens((string) get_the_title($post_id));
+  usort($pool, function ($a, $b) use ($cur) {
+    $sa = ateflo_token_overlap($cur, ateflo_title_tokens((string) get_the_title($a)));
+    $sb = ateflo_token_overlap($cur, ateflo_title_tokens((string) get_the_title($b)));
+    if ($sa === $sb) return strcmp((string) $b->post_date, (string) $a->post_date); // 동점이면 최신
+    return $sb - $sa;
+  });
+  $rel = array_slice($pool, 0, $n);
   if (count($rel) < $n) { // 같은 카테고리가 모자라면 최신 글로 채움 — 자리가 비지 않게
     $ids = array_merge([$post_id], wp_list_pluck($rel, 'ID'));
     $rel = array_merge($rel, get_posts(['numberposts' => $n - count($rel), 'exclude' => $ids]));
   }
+  // ★3의 배수로 맞춘다(.rel-grid는 3열 고정) — 4개면 마지막 줄에 카드 하나만 남아 격자가 깨진다.
+  //  모바일은 1열이라 무관하지만, 데스크톱에서 빈칸 두 개가 보이는 쪽이 카드 하나 줄이는 것보다 나쁘다.
+  $keep = intdiv(count($rel), 3) * 3;
+  if ($keep >= 3) $rel = array_slice($rel, 0, $keep);
   return $rel;
 }
 
