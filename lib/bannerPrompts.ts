@@ -43,9 +43,24 @@ const SCENE_SETTINGS = [
   "climbing giant ascending steps or blocks toward a flag",
   "presenting in front of a huge blank board",
 ];
-// ★기본 소품 금지(2026-07-13 유저 실측: 금고·동전이 전 썸네일에 반복 — 다 똑같아 보이고 중복 위험)
-const PROP_BAN = "BANNED default props: safes, vaults, piggy banks, coin stacks, and coins as accents — do NOT use them unless the topic is literally about them (e.g. a savings account article may show ONE piggy element).";
+// ★기본 소품 금지(2026-07-13 금고·동전 → 2026-07-31 범주 확대).
+//  실측: 금고·동전을 막았더니 모델이 '금융 스톡 일러스트' 기본 세트로 갈아탔다 —
+//  기둥 있는 은행 건물·돋보기·자물쇠·체크리스트 클립보드·서류 더미가 모든 썸네일 배경에 깔려 전부 같은 그림이 됐다.
+//  (유저 실측: "손이랑 돈만 있으면 되는데 주변에 서류·건물·돋보기가 거의 다 배치돼서 다 비슷해 보인다")
+//  ★표기를 막으면 모델은 표기를 바꾼다 — 개별 소품이 아니라 '금융 일반 소품'이라는 범주를 막고,
+//   주제어에서 도출되는 것만 남긴다(cardFinalGate의 '표기가 아니라 결과를 검사한다'와 같은 결).
+const PROP_BAN = "BANNED generic finance props — do NOT include any of these unless the topic is literally about that object: safes, vaults, piggy banks, coin stacks or coins as accents, classical bank buildings with columns, magnifying glasses, padlocks or locks, clipboards or checklists with checkmarks, stacks of documents or paperwork, generic upward arrows, generic bar/line charts, calculators, shield icons, briefcases. EVERY object in the frame must be derivable from the topic phrase itself — if you cannot point to the word in the topic that produced an object, remove it.";
+// ★오브젝트 예산(2026-07-31) — 본문 이미지 경로(geminiImage)엔 MAXIMUM 2 하드룰이 있었는데 썸네일 경로에만 없었다.
+//  게이트가 한 경로에만 있던 패턴이 여기서도 반복됐다.
+const OBJECT_BUDGET = "OBJECT BUDGET (hard limit): at most TWO meaningful objects in the entire frame, counting background elements. If the idea seems to need more, keep only the single most specific one and delete the rest. Empty space beats a filler prop — clutter is what makes every thumbnail look the same.";
 const CAMERA_ANGLES = ["straight-on hero shot", "three-quarter dynamic angle", "gentle top-down view", "slightly low angle looking up"];
+// ★다양성 축을 소품에서 앵글·스케일로 옮긴다(2026-07-31) — 소품을 더 넣는 건 다양성이 아니라 노이즈다.
+//  앵글 4 × 스케일 3 = 12조합이 '같은 소재라도 다른 그림'을 만든다.
+const SCALE_VARIANTS = [
+  "EXTREME CLOSE-UP — the hero fills almost the whole frame and is cropped by the edges",
+  "MID SHOT — the hero sits alone with generous empty space around it",
+  "WIDE SHOT — the hero is small inside a vast empty field of the background color",
+];
 
 export function buildBannerPrompt(topic: string, style: BannerStyle, seed: number, hint?: string): string {
   const palette = BANNER_PALETTES[seed % BANNER_PALETTES.length];
@@ -121,8 +136,8 @@ export function buildThumbMetaphorPrompt(topic: string, copyText: string | undef
     mode === 3
       ? `Stage the topic as ONE bold theatrical metaphor WITH a person — e.g. unpaid bills piling up → a person buried under giant invoice papers; a deadline → a calendar page burning. CHARACTER SPEC: a DESIGNED flat-vector character — distinct hairstyle, real outfit, expressive posture, head:body about 1:3, minimal face (dot eyes) fine, never a plain circle-head blob.`
       : mode === 2
-        ? `Build a tiny isometric miniature world derived from this topic's keywords (miniature buildings, documents, objects as landscape — NO people or only tiny faceless mini-figures).`
-        : `ONE oversized HERO OBJECT derived DIRECTLY from the topic keywords — pick the single most SPECIFIC object that instantly identifies THIS topic (housing → a house with a key; loan → a giant stamped certificate; savings → a growing sprout on a ledger). NO people. ${PROP_BAN}`;
+        ? `ONE isometric miniature vignette: a SINGLE topic-derived object or place rendered as a small 3D diorama on a rounded platform. One subject only — not a world of props, no scattered buildings or paperwork around it. ${PROP_BAN}`
+        : `ONE oversized HERO OBJECT derived DIRECTLY from the topic keywords — pick the single most SPECIFIC object that instantly identifies THIS topic (housing → a house with a key; loan → a giant stamped certificate; savings → a growing sprout on a ledger). NO people.`;
   return [
     `Premium editorial illustration for a Korean finance blog thumbnail. Topic: "${topic}" (understand only — never render as text).`,
     copyLine,
@@ -130,6 +145,9 @@ export function buildThumbMetaphorPrompt(topic: string, copyText: string | undef
     "The visual must clearly belong to THIS topic — never generic finance props.",
     // ★각도 고유성(2026-07-19 유저: 같은 ETF여도 추천글·설명글은 완전히 다른 그림이어야 한다)
     "ANGLE-UNIQUE RULE: the topic phrase is a specific article ANGLE, not a category. Two articles about the same product (an ETF recommendation list vs an ETF tax guide vs a beginner walkthrough) must produce visibly DIFFERENT scenes — anchor the visual in this phrase's distinctive words (the action, the situation, the outcome), never in the category noun alone.",
+    PROP_BAN, // ★모드별로 붙이지 않는다 — 실측: 인물 장면(mode 3)에만 빠져 있었다
+    OBJECT_BUDGET,
+    `FRAMING: ${CAMERA_ANGLES[seed % CAMERA_ANGLES.length]}, ${SCALE_VARIANTS[(seed >> 2) % SCALE_VARIANTS.length]}.`,
     "COMPOSITION: subjects pushed toward top/bottom/edges — the CENTER band of the frame stays relatively calm and low-detail (large Korean typography will be overlaid dead-center later).",
     `Style: award-winning editorial illustration (fintech campaign grade) — rich color blocking, soft airbrush shading, subtle grain. Palette: ${palette}. Square 1:1.`,
     NO_TEXT_STRICT,
