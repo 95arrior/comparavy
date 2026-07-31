@@ -1,4 +1,4 @@
-import { finalGate, adsenseUnsafe, topicIntent } from "../lib/cardFinalGate.ts";
+import { finalGate, adsenseUnsafe, topicIntent, weekendAdjust } from "../lib/cardFinalGate.ts";
 import { nearDuplicate } from "../lib/diversity.ts";
 import { isStickyFrame, pickDiverseCopy } from "../lib/thumbCopyDiversity.ts";
 import { isPushable, pushGain, isZeroClickQuery } from "../lib/serpCtr.ts";
@@ -322,6 +322,28 @@ for (const [q, expect] of zeroCases) {
     const ok = got === expect;
     if (!ok) fail++;
     console.log(ok ? "OK " : "FAIL", "| intent   |", kw.padEnd(16), "→", got, ok ? "" : `(기대 ${expect})`);
+  }
+}
+
+// ★요일 축(2026-07-31 데이터랩 실측) — 주말엔 영업일 실행형만 감점. 가점은 없다(금융에 주말 상승 주제가 없었다).
+//  day: 0=일 1=월 … 5=금 6=토
+{
+  const dayCases = [
+    // 영업일 실행형 — 금·토·일엔 감점
+    ["정기예금 특판", 6, -6], ["정기예금 특판", 0, -6], ["정기예금 특판", 5, -6],
+    ["IRP 이전", 6, -6], ["CMA 계좌개설", 0, -6],
+    // 같은 글감도 평일이면 그대로
+    ["정기예금 특판", 1, 0], ["IRP 이전", 3, 0], ["CMA 계좌개설", 4, 0],
+    // 따져보는 유형 — 주말에도 감점 없음(실측 75~84%로 완만)
+    ["저평가 우량주 찾는 법", 6, 0], ["노후 준비", 0, 0], ["적금 추천", 6, 0], ["연말정산 환급금", 0, 0],
+    // ★'이전'의 오검출 방지 — '이전글·이전 연도'류가 아니라 계좌 이전만 잡혀야 한다
+    ["이전글 보기", 6, 0],
+  ];
+  for (const [kw, day, expect] of dayCases) {
+    const got = weekendAdjust(kw, day);
+    const ok = got === expect;
+    if (!ok) fail++;
+    console.log(ok ? "OK " : "FAIL", "| weekend  |", `day=${day}`, kw.padEnd(18), "→", String(got).padStart(2), ok ? "" : `(기대 ${expect})`);
   }
 }
 

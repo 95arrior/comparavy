@@ -15,7 +15,7 @@ import { getTrendTopics, refreshCategoryTrends, hasFreshTrends } from "@/lib/tre
 import { amplifyForUser } from "@/lib/amplifyTopics";
 import { fetchKeywordStats, normalizeKey, fetchRelatedKeywords } from "@/lib/naverKeyword";
 import { poolScore, isBigPool } from "@/lib/trafficPool";
-import { finalGate, ANSWER_LOCKED_RE, EXPERIENCE_RE, AI_BRIEF_ENDED_RE } from "@/lib/cardFinalGate";
+import { finalGate, ANSWER_LOCKED_RE, EXPERIENCE_RE, AI_BRIEF_ENDED_RE, weekendAdjust } from "@/lib/cardFinalGate";
 import { pickHomefeedBet } from "@/lib/homefeedBet";
 import { collectPoolKeywords } from "@/lib/poolCollect";
 import { fetchNaverAutocomplete } from "@/lib/naverAutocomplete";
@@ -912,8 +912,11 @@ export async function GET(req: Request) {
   //  경험형(비용·후기·비교 — 블로그가 SERP를 채움)은 가점. '계산기'는 finalGate에서 하드컷.
   // AI 브리핑 종결형(여부·시점 단답)은 요약으로 끝나 클릭이 안 남는다 — 정답형과 같은 결로 감점(2026-07-17 전략 회의)
   const serpAdj = (kw: string): number => (ANSWER_LOCKED_RE.test(kw) ? -8 : 0) + (AI_BRIEF_ENDED_RE.test(kw) ? -6 : 0) + (EXPERIENCE_RE.test(kw) ? 4 : 0);
+  // ★요일 축(2026-07-31 실측) — 금·토·일엔 영업일 실행형 글감을 감점한다(정기예금 특판 48%·IRP 이전 49%).
+  //  KST 기준 요일. UTC로 계산하면 자정~오전 9시에 '어제' 요일이 되어 주말 판정이 하루 밀린다.
+  const kstDow = new Date(Date.now() + 9 * 3600_000).getUTCDay();
   const winScore = ({ r, t }: { r: PoolRow; t?: { fit?: number } }) =>
-    (r.blog_total != null ? filledStarsFromData(r.monthly_searches ?? 0, r.blog_total) : 3) * 10 + axisBoost(r.keyword) + serpAdj(r.keyword) + (t?.fit ?? 1);
+    (r.blog_total != null ? filledStarsFromData(r.monthly_searches ?? 0, r.blog_total) : 3) * 10 + axisBoost(r.keyword) + serpAdj(r.keyword) + weekendAdjust(r.keyword, kstDow) + (t?.fit ?? 1);
   // ★진짜 경쟁(문서수) '높음'은 원칙적으로 안 보여준다 — 유저가 어차피 거른다. 낮음·중간 소진 시에만 폴백.
   const realCompOf = (r: PoolRow): Comp => (r.blog_total != null ? compFromBlogTotal(r.blog_total) : compFromLabel(r.competition));
   // 제목 중복 제거 + 소주제 클러스터 라운드로빈 — 비슷한 글감(영문법변환기 3개) 몰림 방지, 골고루 다양하게.
