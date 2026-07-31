@@ -776,7 +776,12 @@ export async function GET(req: Request) {
       //  검색량 탐욕 정렬은 포화 키워드만 모아 winnable 필터에서 전멸했음(경쟁높음 범람의 원인).
       const score = (r: PoolRow) =>
         (r.blog_total != null ? filledStarsFromData(r.monthly_searches ?? 0, r.blog_total) : 3) * 1_000_000 + (r.monthly_searches ?? 0);
-      const ordered = [...noForeign(low), ...noForeign(mid)].sort((a, b) => score(b) - score(a));
+      // ★high 꼬리 보충(2026-07-31 검거) — 종전엔 low+mid만 봤다. 일반 유저 경로에는 add(highF) 폴백이 있는데
+      //  관리자 경로에만 빠져 있었다(경로별 복붙 누락). 금융 풀은 경쟁 '높음'이 압도적이라
+      //  실측에서 survived 147 중 low+mid가 3건뿐 → 후보 3 → 보드 0장이 됐다.
+      //  low·mid를 항상 앞에 두므로 우선순위는 그대로다. high는 빈자리를 메우는 꼬리로만 붙는다.
+      const rank = (arr: PoolRow[]) => arr.sort((a, b) => score(b) - score(a));
+      const ordered = [...rank([...noForeign(low), ...noForeign(mid)]), ...rank([...noForeign(high)])];
       const adminWant = want * 3 + 6; // 후보 폭 확대 — 실측 후에도 winnable이 넉넉히 남게
       for (const r of ordered) {
         if (candidates.length >= adminWant) break;
@@ -876,6 +881,8 @@ export async function GET(req: Request) {
   // ★계측(2026-07-31) — 풀 147건이 살아남았는데 보드가 0장인 사고. 진단이 poolSteps와 finalGate 사이에서 끊겨 있어
   //  '어느 마디에서 증발했는지'를 특정할 수 없었다(finalGateDrops=[] + poolCards=0 = 게이트에 아무것도 안 들어갔다는 뜻).
   //  제목·손님매칭 단계(keywordsToTitles)가 전량 ok:false를 내면 정확히 이 증상이 된다 — 그 가설을 숫자로 확인한다.
+  // ★경쟁 분류 계측(2026-07-31) — 이번 사고에서 poolSteps(147)와 candidates2(3) 사이가 깜깜해 진범을 두 번에 나눠 찾았다.
+  if (debugMode) diag.compSplit = { rows: rows.length, low: low.length, mid: mid.length, high: high.length, candidates: candidates.length, adminBest };
   if (debugMode) diag.titleStep = {
     candidates2: candidates2.length,
     titled: titled.length,
