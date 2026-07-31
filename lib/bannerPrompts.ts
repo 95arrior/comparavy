@@ -179,7 +179,13 @@ export function buildThumbMetaphorPrompt(topic: string, copyText: string | undef
     `FRAMING: ${CAMERA_ANGLES[seed % CAMERA_ANGLES.length]}, ${SCALE_VARIANTS[(seed >> 2) % SCALE_VARIANTS.length]}.`,
     "COMPOSITION: subjects pushed toward top/bottom/edges — the CENTER band of the frame stays relatively calm and low-detail (large Korean typography will be overlaid dead-center later).",
     opts?.deepBg
-      ? "CONTRAST (critical — this image is a thumbnail seen small in a mobile feed): keep the overall image DARK and richly saturated so white type overlaid on the center reads instantly. The center band must stay DARK and uncluttered — no bright highlights, no pale objects, no white paper-like surfaces crossing the center. Push light and glow to the edges as rim light. Avoid pastel, washed-out, or high-key looks entirely."
+      ? "CONTRAST (critical — this image is a thumbnail seen small in a mobile feed): keep the overall image DARK and richly saturated so white type overlaid on the center reads instantly. Push light and glow to the edges as rim light. Avoid pastel, washed-out, or high-key looks entirely."
+      : ""
+    ,
+    opts?.deepBg
+      // ★구도 강제(2026-08-01 실측): '히어로 오브젝트'와 '중앙을 비워라'가 충돌해 모델이 오브젝트를 정중앙에
+      //  크게 놓았고, 밝은 전구 위에 카피가 그대로 겹쳤다. 자리를 숫자로 못 박는다.
+      ? "LAYOUT (hard requirement): the hero object sits in the BOTTOM 45% of the square, resting near the lower edge. The TOP 55% is EMPTY dark space — an unbroken dark gradient with nothing in it except faint atmosphere. Nothing bright, no object, no highlight may enter the top half. Compose as if a large headline will be placed across the upper-middle of the frame."
       : "",
     `Style: award-winning editorial illustration (fintech campaign grade) — rich color blocking, soft airbrush shading, subtle grain. Palette: ${palette}. Square 1:1.`,
     NO_TEXT_STRICT,

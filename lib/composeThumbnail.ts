@@ -7,6 +7,14 @@ import type { ThumbCopy } from "./amplifyTopics";
 // ★대표이미지 합성 통합 진입점 — 이미지 생성 라우트가 이 함수를 부른다.
 //  순서: AI 배경 생성(→텍스트 비전 검증) → 실패/텍스트검출 시 코드 폴백 배경 → satori로 한글 합성.
 //  어떤 단계가 실패해도 항상 PNG를 반환한다(발행이 막히지 않는다).
+/** 팔레트 배경이 어두운가 — 렌더러 isDark와 같은 기준(상대 휘도). */
+function isDarkPalette(hex: string): boolean {
+  const h = hex.replace("#", "");
+  const n = h.length === 3 ? h.split("").map((c) => c + c).join("") : h.slice(0, 6);
+  const r = parseInt(n.slice(0, 2), 16), g = parseInt(n.slice(2, 4), 16), b = parseInt(n.slice(4, 6), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) < 140;
+}
+
 export async function composeThumbnail(opts: {
   userId: string;
   thumb: ThumbCopy;
@@ -29,7 +37,7 @@ export async function composeThumbnail(opts: {
 }): Promise<{ png: Buffer; usedAiBackground: boolean; aiFailReason?: string }> {
   const base = visualIdentityFor(opts.userId); // ★프로덕션 경로: 실제 user.id → 유저 고정 정체성
   const pal = opts.paletteName ? PALETTES.find((x) => x.name === opts.paletteName) : null;
-  const identity = pal ? { ...base, palette: pal } : base;
+  let identity = pal ? { ...base, palette: pal } : base;
   let bgDataUrl: string | null = opts.customBgDataUrl ?? null; // 유저 배경 우선 — AI 호출 없음
   let usedAiBackground = false;
 
@@ -56,6 +64,22 @@ export async function composeThumbnail(opts: {
         else aiFailReason = "배경에 글자가 섞였어요(2회 시도)";
       }
     } catch (e) { aiFailReason = `배경 생성 실패: ${String(e instanceof Error ? e.message : e).slice(0, 80)}`; }
+  }
+
+  // ★AI 배경을 쓸 땐 팔레트를 어두운 것으로 맞춘다(2026-08-01 실측).
+  //  렌더러는 글자색·스크림을 '실제 이미지'가 아니라 '팔레트 bg 밝기'로 정한다(isDark(p.bg)).
+  //  AI 배경은 딥톤(THUMB_PALETTES)으로 만드는데 팔레트가 밝으면 어두운 글씨를 골라, 어두운 그림 위에
+  //  어두운 글씨가 얹혀 안 읽힌다(실물: 딥틸 배경 + 검은 글씨가 밝은 전구에 겹침).
+  //  ★텍스트 규격(폰트·크기·위치)은 건드리지 않는다 — 팔레트는 배경 속성이고, 글자색은 기존 로직이 알아서 따라온다.
+  if (usedAiBackground) {
+    const DARK_FOR_AI = ["navy-sky", "charcoal-gold", "slate-mint", "graphite-coral", "wine-blush"];
+    if (!isDarkPalette(identity.palette.bg)) {
+      // 유저 고정 정체성은 유지하되(시드로 고르므로 같은 유저는 늘 같은 어두운 팔레트) 밝기만 뒤집는다.
+      let h = 0; for (const c of opts.userId) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+      const darkName = DARK_FOR_AI[h % DARK_FOR_AI.length]!;
+      const darkPal = PALETTES.find((x) => x.name === darkName);
+      if (darkPal) identity = { ...identity, palette: darkPal };
+    }
   }
 
   const input: ThumbInput = {
