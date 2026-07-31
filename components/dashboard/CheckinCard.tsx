@@ -2,6 +2,12 @@
 
 import { cachedGet, invalidateGet } from "@/lib/clientFetchCache";
 
+// ★소급 입력 가능 일수(2026-08-01 유저 요청: "7일까지밖에 못 봐요, 놓친 게 있는 것 같다").
+//  4주 = 7열 격자 4줄로 딱 떨어져 가로 스크롤 없이 담긴다(가로 스크롤 지양 원칙).
+//  ★서버(app/api/checkin/route.ts)의 소급 허용 범위와 반드시 같이 움직인다 — 화면에서 고를 수 있는데
+//   서버가 거절하면 저장이 조용히 실패한다.
+const BACKFILL_DAYS = 28;
+
 import { useEffect, useState } from "react";
 import { adpostKey } from "@/lib/course";
 import { yesterdayPublished, type CourseArticleLite } from "@/lib/course";
@@ -27,6 +33,7 @@ export default function CheckinCard({ blogKey, articles, onSaved }: { blogKey?: 
     try { const raw = localStorage.getItem("ateflo_verdict_last"); if (raw) { const v = JSON.parse(raw); if (typeof v?.text === "string") setVerdict(v.text); } } catch { /* ignore */ }
   }, []);
   const [backfillDay, setBackfillDay] = useState<string | null>(null); // 빠진 날 채우기 대상
+  const [showAllDays, setShowAllDays] = useState(false); // ★지난 4주 펼치기(2026-08-01 유저: "7일까지밖에 못 봐요")
   const [statGuide, setStatGuide] = useState(false); // ★통계 보는 법(네이버 API 불가 — 손잡고 안내)
   const approved = typeof window !== "undefined" && (() => { try { return localStorage.getItem(adpostKey("approved", blogKey)) === "1"; } catch { return false; } })();
   const skipKey = `ateflo_checkin_skip_${new Date().toISOString().slice(0, 10)}`;
@@ -100,7 +107,7 @@ export default function CheckinCard({ blogKey, articles, onSaved }: { blogKey?: 
     const missed = (() => {
       const have = new Set(rows.map((r) => r.day));
       const out: string[] = [];
-      for (let i = 2; i <= 7; i++) { const d = new Date(); d.setDate(d.getDate() - i); const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; if (!have.has(k)) out.push(k); }
+      for (let i = 2; i <= BACKFILL_DAYS; i++) { const d = new Date(); d.setDate(d.getDate() - i); const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; if (!have.has(k)) out.push(k); }
       return out;
     })();
     return (
@@ -121,12 +128,15 @@ export default function CheckinCard({ blogKey, articles, onSaved }: { blogKey?: 
     );
   }
   const yPub = yesterdayPublished(articles);
-  const last7 = (() => {
+  // ★날짜 칩 — 기본 7일, 펼치면 4주(2026-08-01 유저 요청). 가로 스크롤은 쓰지 않고 7열 격자로 감싼다.
+  const dayChips = (() => {
     const map = new Map(rows.map((r) => [r.day, r] as const));
     const out: { key: string; v: number | null }[] = [];
-    for (let i = 7; i >= 1; i--) { const d = new Date(); d.setDate(d.getDate() - i); const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; out.push({ key: k, v: map.get(k)?.visitors ?? null }); }
+    const span = showAllDays ? BACKFILL_DAYS : 7;
+    for (let i = span; i >= 1; i--) { const d = new Date(); d.setDate(d.getDate() - i); const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; out.push({ key: k, v: map.get(k)?.visitors ?? null }); }
     return out;
   })();
+  const emptyCount = dayChips.filter((b) => b.v === null).length;
 
   return (
     <div className="at-rise rounded-[20px] bg-white p-5">
@@ -136,9 +146,9 @@ export default function CheckinCard({ blogKey, articles, onSaved }: { blogKey?: 
       </div>
 
       {/* ★날짜 칩 스트립(유저 실측: 날짜 찾기 힘듦·놓친 날 채우기 불편) — 탭=그 날짜 입력/수정, 빈 날이 한눈에 보인다 */}
-      <div className="mt-3 flex gap-1.5">
-        {last7.map((b) => {
-          const yesterdayKey = last7[last7.length - 1]?.key;
+      <div className="mt-3 grid grid-cols-7 gap-1.5">
+        {dayChips.map((b) => {
+          const yesterdayKey = dayChips[dayChips.length - 1]?.key;
           const selected = (backfillDay ?? yesterdayKey) === b.key;
           const d = new Date(`${b.key}T00:00:00`);
           const wd = ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
@@ -156,6 +166,9 @@ export default function CheckinCard({ blogKey, articles, onSaved }: { blogKey?: 
           );
         })}
       </div>
+      <button onClick={() => setShowAllDays((v) => !v)} className="mt-1.5 w-full text-center text-[11.5px] font-semibold text-neutral-400 transition hover:text-[#1D75F7]">
+        {showAllDays ? "최근 7일만 보기" : `지난 ${BACKFILL_DAYS}일 보기${emptyCount > 0 ? ` · 빈 날 ${emptyCount}개` : ""}`}
+      </button>
 
       {state === "done" ? (
         <div className="mt-3">

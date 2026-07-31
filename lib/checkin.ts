@@ -2,6 +2,16 @@
 //  페이스 외삽은 실데이터 기반 + '달라질 수 있어요' 문구가 있을 때만 허용(호출측 책임).
 export interface CheckinRow { day: string; visitors: number | null; revenue: number | null }
 
+// ★KST 달력 날짜(2026-08-01 실측 검거) — 서버(Vercel)는 UTC로 돈다.
+//  종전 체크인 저장은 `new Date()`의 로컬 게터로 날짜를 만들어, KST 자정~오전 9시에 하루가 통째로 밀렸다.
+//  실측: 2026-08-01 02:27 KST 입력 → 07-31이어야 하는데 07-30으로 저장.
+//  이 값은 홈판 판정(homefeedVerdict)이 발행일과 3일 창으로 대조하는 축이라 하루가 밀리면 귀속이 어긋난다.
+//  ★서버에서 '오늘/어제'를 날짜 문자열로 만들 땐 반드시 이 함수를 쓴다(브라우저 코드는 로컬이 곧 KST라 무관).
+const KST_OFFSET = 9 * 3600_000;
+export const dayKeyKST = (ms: number = Date.now()): string => new Date(ms + KST_OFFSET).toISOString().slice(0, 10);
+/** 어제(KST) — 체크인은 항상 '어제 데이터'를 받는다. */
+export const yesterdayKST = (ms: number = Date.now()): string => dayKeyKST(ms - 86400_000);
+
 export function totalRevenue(rows: CheckinRow[]): number {
   return rows.reduce((a, r) => a + (r.revenue ?? 0), 0);
 }
