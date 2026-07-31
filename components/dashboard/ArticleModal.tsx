@@ -12,7 +12,12 @@ import { seedHasDeadline } from "@/lib/hookPatterns";
 import ThumbMakerSheet from "./ThumbMakerSheet";
 import { openNaverBlogApp } from "@/lib/naverApp";
 import { scanCompliance, applySuggestion } from "@/lib/complianceFilter";
+import { scanFacts, factVerdict } from "@/lib/factGate";
+import GlassIcon from "@/components/GlassIcon";
 import type { Article } from "./types";
+
+// 사실 검사 층 이름 — 유저에게는 '층' 대신 무엇을 본 검사인지로 보여준다.
+const FACT_LAYER_LABEL: Record<string, string> = { value: "숫자", structure: "제도", missing: "빠진 항목" };
 
 // ★네이버 수익형 단일 — 글 화면은 '검토 → 복사 → 네이버 붙여넣기' 하나의 흐름.
 // 앱 안 편집기(TipTap)·워드프레스 발행·예약은 제거. 최종 탈고는 네이버 에디터에서 한다.
@@ -274,6 +279,14 @@ export default function ArticleModal({ pubStampKey, blogName,
     return [...inTitle, ...inBody].sort((a, b) => (a.severity === b.severity ? 0 : a.severity === "high" ? -1 : 1));
   }, [title, bodyHtml, vertical]);
 
+  // 발행 전 사실 검사(lib/factGate). ★저장값을 읽지 않고 매번 다시 검사한다 —
+  //  룰은 계속 늘어나는데(유저가 잡은 결함마다 등재) 생성 시점에 굳어버린 결과를 보여주면 옛 판정이 남는다.
+  const facts = useMemo(() => {
+    const faqText = (article.faq ?? []).map((f) => `${f?.question ?? ""} ${f?.answer ?? ""}`).join("\n");
+    return scanFacts(`${title}\n${bodyHtml}\n${faqText}`, article.keyword ?? "");
+  }, [title, bodyHtml, article.faq, article.keyword]);
+  const factVerdictNow = factVerdict(facts);
+
   // '바꾸기' — 위반 표현을 대체 표현으로 치환하고 즉시 저장(에디터 없이 문자열 치환).
   async function fixViolation(v: (typeof compliance)[number]) {
     if (!v.suggestion) return;
@@ -345,6 +358,35 @@ export default function ArticleModal({ pubStampKey, blogName,
           <div className="mt-3">
             <span className="rounded-full bg-[#F04452]/10 px-3 py-1 text-[12px] font-bold text-[#F04452]">홈판용</span>
             <h1 className="mt-2 text-2xl font-bold leading-tight tracking-tight sm:text-3xl">{title}</h1>
+          </div>
+        )}
+
+        {/* ★사실 검사는 광고표현 검토보다 위에 둔다 — 틀린 숫자·잘못된 제도 설명이 표현 문제보다 무겁다. */}
+        {facts.length > 0 && (
+          <div className={`mt-4 rounded-xl border p-4 ${factVerdictNow === "rewrite" ? "border-rose-300 bg-rose-50/70" : "border-amber-300 bg-amber-50/70"}`}>
+            <div className="flex items-center gap-2">
+              <GlassIcon name="search" tint={factVerdictNow === "rewrite" ? "rose" : "amber"} size={16} />
+              <p className={`text-sm font-bold ${factVerdictNow === "rewrite" ? "text-rose-900" : "text-amber-900"}`}>사실 검사 {facts.length}건</p>
+            </div>
+            <p className={`mt-1 text-xs leading-relaxed ${factVerdictNow === "rewrite" ? "text-rose-700" : "text-amber-700"}`}>
+              {factVerdictNow === "rewrite"
+                ? "제도를 잘못 설명한 곳이 있어요. 그대로 발행하면 읽는 사람이 손해를 봅니다."
+                : "발행 전 숫자와 빠진 항목을 확인하세요."}
+            </p>
+            <ul className="mt-3 space-y-2">
+              {facts.map((f, i) => (
+                <li key={i} className={`rounded-lg border bg-white px-3 py-2.5 ${f.severity === "block" ? "border-rose-200" : "border-amber-200"}`}>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold ${f.severity === "block" ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-800"}`}>{f.severity === "block" ? "오류" : "확인"}</span>
+                    <span className="text-sm font-semibold text-neutral-900">{f.title}</span>
+                    <span className="text-[11px] text-neutral-400">{FACT_LAYER_LABEL[f.layer] ?? ""}{f.count > 1 ? ` ×${f.count}` : ""}</span>
+                  </div>
+                  <p className="mt-1 text-xs leading-relaxed text-neutral-600">{f.reason}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-neutral-900"><span className="font-semibold">고치기</span> · {f.fix}</p>
+                  {f.layer !== "missing" && <p className="mt-1 truncate text-[11px] text-neutral-400">“{f.matched}”</p>}
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 

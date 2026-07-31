@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { scanFacts, type FactIssue } from "@/lib/factGate";
 import { isTimeSensitive } from "./timeSensitive";
 import {
   buildSystemPrompt,
@@ -21,6 +22,30 @@ export interface GeneratedArticle {
   tags: string[];
   /** 글쓴이에게 보여줄 짧은 메모: 검색 의도를 어떻게 보고 왜 이렇게 구성했는지 (본문 아님) */
   write_note: string;
+  /** 발행 전 사실 검사 결과(lib/factGate) — 빈 배열이면 통과. 차단이 아니라 '무엇을 어떻게 고칠지'를 들고 다닌다. */
+  fact_issues: FactIssue[];
+}
+
+/**
+ * 툴 결과를 GeneratedArticle로 확정한다. ★두 생성 경로(단발·스트리밍)가 반드시 이 함수를 지난다 —
+ *  팩트 검사를 호출부(생성·재작성·자동발행 3곳)에 복붙하면 반드시 빠지는 경로가 생긴다(게이트 중앙화 원칙).
+ *  FAQ 답변까지 함께 검사한다 — 본문은 맞는데 FAQ에서 옛 숫자가 되살아나는 게 흔하다.
+ */
+function finalize(raw: Partial<GeneratedArticle>, keyword: string): GeneratedArticle {
+  const title = (raw.title ?? "").trim();
+  const body_html = (raw.body_html ?? "").trim();
+  const faq = Array.isArray(raw.faq) ? raw.faq : [];
+  const faqText = faq.map((f) => `${f?.question ?? ""} ${f?.answer ?? ""}`).join("\n");
+  return {
+    title,
+    meta_title: clamp(raw.meta_title ?? raw.title ?? "", 60),
+    meta_description: clamp(raw.meta_description ?? "", 160),
+    body_html,
+    faq,
+    tags: cleanTags(raw.tags),
+    write_note: clamp(raw.write_note ?? "", 400),
+    fact_issues: scanFacts(`${title}\n${body_html}\n${faqText}`, keyword),
+  };
 }
 
 const SAVE_TOOL: Anthropic.Tool = {
@@ -141,15 +166,7 @@ export async function generateArticle(
 
   const raw = block.input as Partial<GeneratedArticle>;
 
-  return {
-    title: (raw.title ?? "").trim(),
-    meta_title: clamp(raw.meta_title ?? raw.title ?? "", 60),
-    meta_description: clamp(raw.meta_description ?? "", 160),
-    body_html: (raw.body_html ?? "").trim(),
-    faq: Array.isArray(raw.faq) ? raw.faq : [],
-    tags: cleanTags(raw.tags),
-    write_note: clamp(raw.write_note ?? "", 400),
-  };
+  return finalize(raw, input.keyword);
 }
 
 /**
@@ -273,13 +290,5 @@ export async function streamArticle(
     throw new Error("글 생성에 실패했습니다. 다시 시도해 주세요.");
   }
   const raw = block.input as Partial<GeneratedArticle>;
-  return {
-    title: (raw.title ?? "").trim(),
-    meta_title: clamp(raw.meta_title ?? raw.title ?? "", 60),
-    meta_description: clamp(raw.meta_description ?? "", 160),
-    body_html: (raw.body_html ?? "").trim(),
-    faq: Array.isArray(raw.faq) ? raw.faq : [],
-    tags: cleanTags(raw.tags),
-    write_note: clamp(raw.write_note ?? "", 400),
-  };
+  return finalize(raw, input.keyword);
 }

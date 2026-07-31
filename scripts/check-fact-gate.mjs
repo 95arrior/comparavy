@@ -1,0 +1,86 @@
+import { scanFacts, factVerdict } from "../lib/factGate.ts";
+
+// ★실측 케이스(2026-07-31) — 자사 사이트에서 실제로 발행된 오류 2건이 원점이다.
+//  ① 워드프레스: 예금자보호 한도를 5천만 원으로 씀(옛 숫자)
+//  ② 네이버: 퇴직소득세를 종합소득세로 환급받으라고 씀(제도 구조 오해 — 문장이 자연스러워 더 위험)
+//  ★오검출 케이스(no)를 같은 수만큼 둔다. 과탐이 나면 아무도 게이트를 안 본다.
+let fail = 0;
+
+const has = (issues, layer, sev) => issues.some((i) => i.layer === layer && (!sev || i.severity === sev));
+
+// [1층·2층] 잡아야 하는 것 / 잡으면 안 되는 것
+const cases = [
+  // 실측 ①
+  ["정기예금 특판", "저축은행 특판 예금은 예금자보호 한도인 5,000만 원까지 안전하게 보호됩니다.", "value", true],
+  // 실측 ②
+  ["irp 이전", "퇴직소득세를 더 냈다면 5월 종합소득세 신고 때 합산해서 환급받을 수 있습니다.", "structure", true],
+  // 클릭 상위 글의 위험 — CMA를 보호 대상으로 씀
+  ["cma 계좌개설", "CMA 계좌는 예금자보호가 되기 때문에 원금 걱정 없이 넣어두셔도 됩니다.", "structure", true],
+  // 관할 오류
+  ["퇴사 후 건강보험", "퇴사하면 건강보험 임의계속가입을 국세청 홈택스에서 신청하시면 됩니다.", "structure", true],
+  // 기한 단정
+  ["연말정산 누락", "신청 기한을 넘기면 무조건 안 되니 반드시 기간 안에 처리하세요.", "structure", true],
+
+  // ── 오검출 방지 ──
+  // 옛 값을 '종전'으로 정당하게 인용
+  ["정기예금 특판", "예금자보호 한도는 종전 5,000만 원에서 1억 원으로 상향됐습니다.", "value", false],
+  // 분류과세를 올바르게 서술
+  ["irp 이전", "퇴직소득은 분류과세라 종합소득세 신고 대상이 아닙니다. 회사가 원천징수로 정산을 끝냅니다.", "structure", false],
+  // CMA를 올바르게 서술
+  ["cma 계좌개설", "CMA는 종금형을 제외하면 예금자보호 대상이 아닙니다.", "structure", false],
+  // 공단 소관을 올바르게 안내
+  ["퇴사 후 건강보험", "건강보험 임의계속가입은 건강보험공단에 신청합니다. 세금 관련은 국세청 홈택스에서 따로 처리합니다.", "structure", false],
+  // 기한 초과에 구제 경로를 붙임
+  ["연말정산 누락", "신청 기한을 넘겼더라도 경정청구로 5년 안에 돌려받을 수 있습니다.", "structure", false],
+];
+
+for (const [kw, body, layer, expect] of cases) {
+  const issues = scanFacts(body, kw);
+  const got = has(issues, layer);
+  const ok = got === expect;
+  if (!ok) fail++;
+  console.log(ok ? "OK " : "FAIL", `| ${layer.padEnd(9)} |`, (expect ? "잡아야" : "통과해야").padEnd(5), "|", body.slice(0, 34));
+}
+
+// [시행 예정] 이미 시행된 제도를 예정으로 쓰는 버릇
+{
+  const issues = scanFacts("이 제도는 2025년부터 시행 예정입니다.", "예금자보호");
+  const ok = issues.some((i) => i.title.includes("시행 예정"));
+  if (!ok) fail++;
+  console.log(ok ? "OK " : "FAIL", "| value     | '시행 예정' 표현 검출");
+}
+
+// [3층 누락] 주제별 필수 언급
+{
+  const thin = "저축은행 특판 상품 금리를 비교해 봤습니다. 금리가 높은 순서로 정리했습니다.";
+  const missing = scanFacts(thin, "정기예금 특판").filter((i) => i.layer === "missing").map((i) => i.matched);
+  const ok = missing.length === 3; // 한도·비대상 구분·합산 기준
+  if (!ok) fail++;
+  console.log(ok ? "OK " : "FAIL", "| missing   | 예금 주제 필수 3항목 누락 →", missing.join(", ") || "없음");
+
+  const full = "저축은행 특판입니다. 예금자보호 한도는 1억 원이고, 금융회사별로 1인당 원금과 이자를 합산합니다. 펀드·주식은 보호 대상이 아니니 제외하고 보셔야 합니다.";
+  const none = scanFacts(full, "정기예금 특판").filter((i) => i.layer === "missing");
+  const ok2 = none.length === 0;
+  if (!ok2) fail++;
+  console.log(ok2 ? "OK " : "FAIL", "| missing   | 다 갖춘 글은 통과 →", none.map((i) => i.matched).join(", ") || "경고 없음");
+}
+
+// [과탐 방지] 본문에 스친 단어 하나로 필수항목을 요구하면 안 된다
+{
+  const aside = "퇴사 후 생활비 이야기입니다. 남은 돈은 적금에 넣어두었습니다.";
+  const issues = scanFacts(aside, "퇴사 후 생활비").filter((i) => i.layer === "missing" && i.matched.includes("합산"));
+  const ok = issues.length === 0;
+  if (!ok) fail++;
+  console.log(ok ? "OK " : "FAIL", "| missing   | 스친 단어로 예금 필수항목 요구 안 함");
+}
+
+// [판정] 구조 오류는 문단 재작성
+{
+  const rewrite = factVerdict(scanFacts("퇴직소득세는 5월 종합소득세 신고로 환급받으세요.", "irp 이전")) === "rewrite";
+  const publish = factVerdict(scanFacts("금리를 비교해 정리했습니다.", "회사채 금리")) === "publish";
+  const ok = rewrite && publish;
+  if (!ok) fail++;
+  console.log(ok ? "OK " : "FAIL", "| verdict   | 구조 오류=rewrite / 무결=publish");
+}
+
+process.exit(fail ? 1 : 0);
