@@ -31,12 +31,17 @@ const card = (lane, i) => ({ lane, keyword: `${lane}-${i}` });
 const make = (lane, n) => Array.from({ length: n }, (_, i) => card(lane, i));
 const countBy = (list) => list.reduce((m, c) => ({ ...m, [c.lane]: (m[c.lane] ?? 0) + 1 }), {});
 
-/** 서버 short 열 조립 재현: 트렌드를 밴드·쿼터로 자르고 홈판을 앞에 unshift. */
+/**
+ * 서버 short 열 조립 재현.
+ * ★핵심: 트렌드 자리는 쿼터가 아니라 '실제 확보한 홈판 장수' 기준으로 남긴다.
+ *  2026-08-01 실사이트에서 검거된 버그가 정확히 이거였다 — 쿼터(4)로 트렌드를 1장으로 먼저 잘라 놓고
+ *  홈판이 3장만 나오니 5장 열에 4장만 서빙됐다. 결품은 늘 있을 수 있고, 그때 열이 비는 게 사고다.
+ */
 function assembleShort(tier, { trendAvail = 20, homefeedAvail = 99 } = {}) {
   const q = columnQuota(tier, "short", PER_COLUMN);
-  const trends = make("trend", trendAvail).slice(0, Math.max(0, PER_COLUMN - q.homefeed));
   const homes = make("homefeed", Math.min(q.homefeed, homefeedAvail));
-  return [...homes, ...trends];
+  const trendRoom = Math.max(0, PER_COLUMN - homes.length);
+  return [...homes, ...make("trend", trendAvail).slice(0, trendRoom)];
 }
 
 /** 서버 long 열 조립 재현: 황금 쿼터 + 헤드, 남은 황금은 예비로 뒤에. */
@@ -98,6 +103,21 @@ for (const tier of Object.keys(TIER_LANE_MIX)) {
   ok(s.length >= 1, "홈판 0장이어도 short 열이 비지 않음", `→ ${s.length}장`);
   const c = countBy(s);
   ok((c.homefeed ?? 0) === 0, "홈판 0장이면 홈판 카드도 0", `→ ${c.homefeed ?? 0}`);
+  // ★[실사이트 검거 2026-08-01] 홈판이 '부분만' 나오는 경우 — 0장보다 이쪽이 훨씬 흔하다.
+  //  실제로 4장 요청에 3장이 나왔고, 트렌드가 이미 잘려 있어 열이 4장으로 서빙됐다.
+  for (const got of [1, 2, 3]) {
+    const col = onScreen(assembleShort("SEEDLING", { homefeedAvail: got, trendAvail: 20 }));
+    ok(col.length === PER_COLUMN, `홈판 ${got}/4장만 나와도 열이 5장을 채움`, `→ ${col.length}장`);
+    const c = countBy(col);
+    ok((c.homefeed ?? 0) === got, `  확보한 홈판 ${got}장은 그대로 실림`, `→ ${c.homefeed ?? 0}`);
+    ok((c.trend ?? 0) === PER_COLUMN - got, `  빈자리는 트렌드가 메움`, `→ ${c.trend ?? 0}`);
+  }
+  // 트렌드 재고까지 부족하면 열이 짧아지는 건 어쩔 수 없다 — 다만 있는 만큼은 다 실려야 한다
+  {
+    const col = onScreen(assembleShort("SEEDLING", { homefeedAvail: 2, trendAvail: 1 }));
+    ok(col.length === 3, "홈판2·트렌드1이면 3장(있는 건 다 실림)", `→ ${col.length}장`);
+  }
+
   // 헤드 후보가 없어도 long은 황금으로 채워진다
   const l = onScreen(assembleLong("SEEDLING", { headAvail: 0 }));
   ok(l.length === PER_COLUMN, "헤드 0장이어도 long 열은 5장 유지", `→ ${l.length}`);

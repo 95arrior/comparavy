@@ -647,15 +647,21 @@ export async function GET(req: Request) {
     //  채워 두었기 때문에 이제 검사가 실제로 작동한다(종전엔 트렌드 카드가 전부 vol:0이라 통과가 아니라 '못 봄'이었다).
     //  홈판은 tag='홈판'으로 면제된다 — 검색량 게임이 아니라서 밴드를 적용하는 것 자체가 틀리다.
     tc = bandInvariant(tc, "short-trend");
-    tc = tc.slice(0, Math.max(0, PER_COLUMN - colShort.homefeed)); // 홈판 자리를 먼저 비워 둔다
-    if (debugMode) diag.colShort = { ...colShort, trendGot: tc.length };
+
+    // ★홈판을 '먼저' 확보하고, 실제로 확보한 장수만큼만 트렌드 자리를 내준다(2026-08-01 실사이트 확인에서 검거).
+    //  종전엔 쿼터(4)를 기준으로 트렌드를 1장으로 먼저 잘라 놓고 홈판을 만들었다. 그런데 홈판이 3장만 나오면
+    //  트렌드는 이미 잘려 있어 메울 수가 없다 → 5장 열에 4장만 서빙됐다(실측: 홈판 3 + 트렌드 1 = 4).
+    //  결품은 '있을 수 있는 일'이고(LLM 생성·게이트·중복), 그때 열이 비는 게 진짜 사고다.
+    const homeCards: TrendCard[] = [];
     if (FF.homefeedBet) {
       try {
         const bets = await pickHomefeedBets(pool, user.id, sub ?? "", usedSet, colShort.homefeed);
-        for (const bet of [...bets].reverse()) {
-        // ★이미 생성/발행한 홈판 글감은 숨김(실측 2026-07-16: 발행했는데 카드 잔존 — 홈판 카드는 발행함 마킹 로직 밖이라 usedSet으로 직접 차단)
-        if (bet && !usedSet.has(normalizeKeyword(bet.keyword)) && finalGate([{ keyword: bet.keyword, title: bet.title }]).pass.length > 0 && !tc.some((t) => t.keyword === bet.keyword)) {
-          tc.unshift({
+        for (const bet of bets) {
+          // ★이미 생성/발행한 홈판 글감은 숨김(실측 2026-07-16: 발행했는데 카드 잔존 — 홈판 카드는 발행함 마킹 로직 밖이라 usedSet으로 직접 차단)
+          if (!bet || usedSet.has(normalizeKeyword(bet.keyword))) continue;
+          if (finalGate([{ keyword: bet.keyword, title: bet.title }]).pass.length === 0) continue;
+          if (tc.some((t) => t.keyword === bet.keyword) || homeCards.some((h) => h.keyword === bet.keyword)) continue;
+          homeCards.push({
             keyword: bet.keyword, title: bet.title,
             demandLabel: `홈판 배팅 · ${bet.betType}`,
             ssak: true, region: false, tone: bloggerType(vertical), vol: 0, comp: "low" as Comp, blogTotal: null,
@@ -665,9 +671,14 @@ export async function GET(req: Request) {
             ...(FF.perfLoop ? { sel: { species: "homefeed", seedSource: "homebet", hookKey: bet.betType } } : {}),
           } as TrendCard);
         }
-        }
-      } catch { /* 홈판 배팅 실패 — 조용히 0장 */ }
+      } catch { /* 홈판 배팅 실패 — 조용히 0장(아래에서 트렌드가 그 자리를 메운다) */ }
     }
+    const trendRoom = Math.max(0, PER_COLUMN - homeCards.length); // ★쿼터가 아니라 '실제 확보분' 기준
+    tc = [...homeCards, ...tc.slice(0, trendRoom)];
+    if (colShort.homefeed > homeCards.length) {
+      console.log(`[lane-quota:short] 홈판 미달 ${homeCards.length}/${colShort.homefeed} — 트렌드가 ${trendRoom}장으로 메움`);
+    }
+    if (debugMode) diag.colShort = { ...colShort, homefeedGot: homeCards.length, trendRoom, served: tc.length };
     return NextResponse.json(debugMode ? { topics: tc, diag: { ...diag, mode: "short", trendCards: tc.length } } : { topics: tc, ...(FF.perfLoop ? { ff: { perfLoop: true } } : {}) });
   }
 
