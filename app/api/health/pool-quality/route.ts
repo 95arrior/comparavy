@@ -7,6 +7,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient, createSupabaseAdminClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { TIER_BANDS } from "@/lib/scoreWeights";
 import { fetchBlogTotal } from "@/lib/naverBlogSearch";
+import { fetchSerpOpenness, isOpenBoard } from "@/lib/serpOpenness";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -101,12 +102,34 @@ export async function GET(request: Request) {
     };
     const 이김 = await meas(wonRaw);
     const 짐 = await meas(lostRaw);
+    // ★SERP 개방도도 같이 잰다 — 문서수로 안 갈린 걸 이게 가르는지 검증한다.
+    const openOf = async (list: string) => {
+      const out: { k: string; share: number | null; note: string | null; open: boolean }[] = [];
+      for (const k of list.split(",").map((x) => x.trim()).filter(Boolean).slice(0, 20)) {
+        const o = await fetchSerpOpenness(k);
+        out.push({ k, share: o ? Math.round(o.share * 100) / 100 : null, note: o ? `상위${o.sample} 공식${o.official}` : null, open: isOpenBoard(o) });
+      }
+      return out;
+    };
+    const 개방_이김 = await openOf(wonRaw);
+    const 개방_짐 = await openOf(lostRaw);
+    const wonOpen = 개방_이김.filter((x) => x.share != null).map((x) => x.share!);
+    const lostOpen = 개방_짐.filter((x) => x.share != null).map((x) => x.share!);
+    const minWonOpen = wonOpen.length ? Math.min(...wonOpen) : null;
+    const maxLostOpen = lostOpen.length ? Math.max(...lostOpen) : null;
     const wonVals = 이김.map((x) => x.t).filter((n): n is number => n != null);
     const lostVals = 짐.map((x) => x.t).filter((n): n is number => n != null);
     // 이긴 것 중 가장 어려웠던 값 = 우리가 감당해 본 상한. 진 것 중 가장 쉬웠던 값보다 낮으면 깨끗이 갈린다.
     const maxWon = wonVals.length ? Math.max(...wonVals) : null;
     const minLost = lostVals.length ? Math.min(...lostVals) : null;
     보정 = {
+      SERP개방도: {
+        이김: 개방_이김, 짐: 개방_짐,
+        판정: minWonOpen == null || maxLostOpen == null ? "표본 부족"
+          : minWonOpen > maxLostOpen
+          ? `★깨끗이 갈림 — 이긴 판 최저 개방도 ${minWonOpen} > 진 판 최고 ${maxLostOpen}. 이 축이 승패를 가른다.`
+          : `겹침 — 이긴 최저 ${minWonOpen} vs 진 최고 ${maxLostOpen}. 이 축만으로도 부족하다.`,
+      },
       이김, 짐,
       제안문턱: maxWon,
       근거: maxWon == null ? "이긴 키워드 측정 실패"
