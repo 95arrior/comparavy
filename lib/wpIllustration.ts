@@ -32,10 +32,10 @@ export async function generateWpBanners(keyword: string, articleId: string, n = 
       //  이 경로만 검증이 없어 프롬프트가 무시되면 그대로 발행됐다. 조판 배너 경로(아래 generateTypoBannerDataUrl)와 같은 규격으로 맞춘다.
       //  글자 검출 → 시드 바꿔 1회 재생성 → 재실패면 그 배너는 버린다(이미지 한 장 없는 게 깨진 글자보다 낫다).
       let img = await callImage(buildBannerPrompt(kwEn, style, seed + i * 7), "1:1");
-      let v = await verifyImage(img.base64, img.mime, "banner", { bgOnly: true });
+      let v = await verifyImage(img.base64, img.mime, "banner", { bgOnly: true, strict: true });
       if (v.hasText) {
         img = await callImage(buildBannerPrompt(kwEn, style, seed + i * 7 + 101), "1:1");
-        v = await verifyImage(img.base64, img.mime, "banner", { bgOnly: true });
+        v = await verifyImage(img.base64, img.mime, "banner", { bgOnly: true, strict: true });
         if (v.hasText) { console.error(`[wp] 배너 글자 2연속 검출(${style}) — 이 장은 버림`); continue; }
       }
       out.push(`data:${img.mime};base64,${img.base64}`);
@@ -59,10 +59,10 @@ export async function generateTypoBannerDataUrl(topic: string, seedKey: string, 
     let bg = await callImage(buildThumbMetaphorPrompt(topicEn, undefined, seed), "1:1");
     {
       const { verifyImage } = await import("./imageVerify");
-      let v = await verifyImage(bg.base64, bg.mime, "background", { bgOnly: true });
+      let v = await verifyImage(bg.base64, bg.mime, "background", { bgOnly: true, strict: true });
       if (v.hasText) {
         bg = await callImage(buildThumbMetaphorPrompt(topicEn, undefined, seed + 13), "1:1");
-        v = await verifyImage(bg.base64, bg.mime, "background", { bgOnly: true });
+        v = await verifyImage(bg.base64, bg.mime, "background", { bgOnly: true, strict: true });
         if (v.hasText) { console.error("[banner] 배경 텍스트 2연속 검출 — 코드 폴백"); return null; }
       }
     }

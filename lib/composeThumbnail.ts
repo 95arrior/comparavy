@@ -40,12 +40,12 @@ export async function composeThumbnail(opts: {
     try {
       const paletteHint = `${identity.palette.name.replace(/-/g, " ")}`;
       const bg = await generateThumbBackground(identity.bgStyle, paletteHint, opts.userId, opts.topicHint, { forceStyle: opts.bgStyle, centerText: opts.centerCopy, copyText: opts.thumb.mainCopy, variant: opts.variant });
-      if (opts.press) { bgDataUrl = `data:${bg.mime};base64,${bg.base64}`; usedAiBackground = true; }
-      else {
-        const v = await verifyImage(bg.base64, bg.mime, "abstract background", { bgOnly: true, userId: opts.userId });
-        if (!v.hasText) { bgDataUrl = `data:${bg.mime};base64,${bg.base64}`; usedAiBackground = true; }
-        else aiFailReason = "배경에 글자가 섞였어요";
-      }
+      // ★press 예외 삭제(2026-07-31 4회차 사고) — "하단 그라데이션이 덮으니 리스크가 낮다"는 이유로
+      //  보도형만 검증을 건너뛰고 있었다. 글자 금지에는 예외 조항을 두지 않는다(유저 확정 규칙).
+      //  strict — 판정 불가(오류·파싱 실패·키 없음)면 떨어뜨린다. 배경은 코드 폴백이 있어 잃는 게 없다.
+      const v = await verifyImage(bg.base64, bg.mime, "abstract background", { bgOnly: true, userId: opts.userId, strict: true });
+      if (!v.hasText) { bgDataUrl = `data:${bg.mime};base64,${bg.base64}`; usedAiBackground = true; }
+      else aiFailReason = "배경에 글자가 섞였어요";
     } catch (e) { aiFailReason = `배경 생성 실패: ${String(e instanceof Error ? e.message : e).slice(0, 80)}`; }
   }
 
