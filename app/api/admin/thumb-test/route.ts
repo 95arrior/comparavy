@@ -24,7 +24,7 @@ export async function GET(request: Request) {
 
   const t0 = Date.now();
   try {
-    const { png, usedAiBackground } = await composeThumbnail({
+    const { png, usedAiBackground, aiFailReason } = await composeThumbnail({
       userId: seedU,
       thumb: { mainCopy, subCopy: "지금부터 준비하는 법", badge: "경제·재테크" },
       articleId: url.searchParams.get("a") || null, // 글마다 포즈 변주 데모
@@ -34,7 +34,9 @@ export async function GET(request: Request) {
     if (metaOnly) {
       return NextResponse.json({
         ok: true, renderMs, usedAiBackground, requestedAi: useAi,
-        note: usedAiBackground ? "AI 배경 사용" : (useAi ? "AI 배경 실패→코드 폴백(정상)" : "코드 배경(무료)"),
+        // ★실패 이유를 그대로 돌려준다(2026-08-01) — '폴백됐다'만 알면 원인을 못 찾는다.
+        aiFailReason: aiFailReason ?? null,
+        note: usedAiBackground ? "AI 배경 사용" : (useAi ? "AI 배경 실패→코드 폴백" : "코드 배경(무료)"),
       }, { headers: { "cache-control": "no-store" } });
     }
     return new NextResponse(new Uint8Array(png), {
