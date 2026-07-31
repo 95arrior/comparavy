@@ -715,8 +715,8 @@ export default function Home({
               <div className="mt-1 flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-[10.5px] leading-tight text-[color:var(--color-text-weak)]">
                 {LEGEND_LANES[mode].map((k) => (
                   <span key={k} className="whitespace-nowrap">
-                    <b className={`rounded-full px-1.5 py-px font-bold ${LANE_CHIP[k].cls}`}>{LANE_CHIP[k].label}</b>
-                    <span className="ml-1">{LANE_CHIP[k].mean}</span>
+                    <b className={`rounded-full px-1.5 py-px font-bold ${LANE_STYLE[k].cls}`}>{k === "golden" ? "월 검색량" : LANE_NAME[k]}</b>
+                    <span className="ml-1">{LANE_STYLE[k].mean}</span>
                   </span>
                 ))}
               </div>
@@ -966,25 +966,28 @@ function TopicRow({ topic, onClick, onSwap, swapping }: {
 }
 
 // ★보드 카드(컴팩트) — 트렌드: ⏳수명 타이머 + 📰근거(뉴스 헤드라인/실검색 확인)
-// ★글감 레인 4종(2026-08-01 유저 확정 문구) — 칩이 '안정 수요/실시간 급상승' 2종뿐이라
-//  홈판·헤드 배팅이 전부 '안정 수요'로 표시되고 있었다(실측). 사장님이 카드만 보고 종류를 알 수 있어야 한다.
-const LANE_CHIP = {
-  homefeed: { label: "홈판용", cls: "bg-[#F5F3FF] text-[#7C3AED]", mean: "네이버 홈 화면에 뜨는 걸 노리는 글" },
-  golden: { label: "쉬운 검색 키워드", cls: "bg-[#EFF6FF] text-[#1D75F7]", mean: "지금 체급으로 1등 할 수 있는 것" },
-  trend: { label: "유행 키워드", cls: "bg-[#FFF1F0] text-[#F04452]", mean: "지금 뜨는 것" },
-  head: { label: "어려운 키워드", cls: "bg-[#FEF6E7] text-[#B45309]", mean: "지금은 안 되지만 나중에 일할 것" },
-  // 위 넷 중 어디도 아닌 카드(시리즈 이어쓰기 등) — 검색량 주장을 하지 않는 중립 칩.
-  other: { label: "글감", cls: "bg-neutral-100 text-neutral-500", mean: "" },
+// ★글감 칩(2026-08-01 유저 확정) — 검색 레인은 '월 검색량' 숫자를 그대로 칩에 박는다.
+//  왜 이렇게 바뀌었나: '쉬운 검색 키워드 / 지금 체급으로 1등 할 수 있는 것'은 예측이었고, 실측으로 반증됐다.
+//   · 문서수가 적으면 쉽다 → 틀림(문서 10,531에서 1위, 6,889에서 노출 0)
+//   · 일반 블로그가 많으면 쉽다 → 틀림(개방도 1.0에서 패, 0.5에서 1위)
+//   표본 9개로 세 번째 규칙을 만들면 과적합이라, 예측을 접고 '측정된 사실'만 말한다.
+//  월 검색량은 네이버 광고 API 실측이라 100% 참이다. 난이도 판정은 순위 표본이 쌓인 뒤에 데이터로 만든다.
+//  홈판·유행은 검색량이 없거나(0) 의미가 없어서 이름 칩을 유지한다.
+const LANE_STYLE = {
+  homefeed: { cls: "bg-[#F5F3FF] text-[#7C3AED]", mean: "네이버 홈 화면에 뜨는 걸 노리는 글" },
+  trend: { cls: "bg-[#FFF1F0] text-[#F04452]", mean: "오늘 수확한 이슈 — 신선도가 무기" },
+  golden: { cls: "bg-[#EFF6FF] text-[#1D75F7]", mean: "우리 구간(월 100~2,000)" },
+  head: { cls: "bg-[#FEF6E7] text-[#B45309]", mean: "그 위 — 지금은 버겁지만 자산" },
+  other: { cls: "bg-neutral-100 text-neutral-500", mean: "" },
 } as const;
-type LaneKey = keyof typeof LANE_CHIP;
-/** 뜻풀이를 보여줄 네 레인(중립 칩은 설명할 게 없다). */
+type LaneKey = keyof typeof LANE_STYLE;
+/** 뜻풀이를 보여줄 레인(중립 칩은 설명할 게 없다). */
 const LEGEND_LANES = { short: ["homefeed", "trend"], long: ["golden", "head"] } as const;
+const LANE_NAME: Record<LaneKey, string> = { homefeed: "홈판용", trend: "유행 키워드", golden: "검색 키워드", head: "어려운 키워드", other: "글감" };
 
 /**
  * 카드가 어느 레인인지 — 서버가 붙인 tag/demandBadge로 판정(별도 필드를 새로 만들지 않는다).
- * ★'쉬운 검색 키워드'는 검색량이 실제로 있을 때만 붙인다(2026-08-01). 서버는 series·steady 같은
- *  다른 tag도 내보내는데, 그런 카드까지 기본값으로 '쉬운 검색 키워드'가 되면
- *  "지금 체급으로 1등 할 수 있는 것"이라는 근거 없는 주장이 화면에 뜬다.
+ * ★검색 레인은 검색량이 실제로 있을 때만 붙인다. 없으면 중립('글감') — 숫자 없는 칩에 숫자를 지어내지 않는다.
  */
 function laneOf(topic: Topic, isTrend: boolean): LaneKey {
   if (topic.tag === "홈판") return "homefeed";
@@ -993,9 +996,17 @@ function laneOf(topic: Topic, isTrend: boolean): LaneKey {
   return Number(topic.vol ?? 0) > 0 ? "golden" : "other";
 }
 
+/** 칩에 실제로 찍힐 글자. 검색 레인만 숫자(실측), 나머지는 이름. */
+function laneLabel(lane: LaneKey, topic: Topic): string {
+  const v = Number(topic.vol ?? 0);
+  if ((lane === "golden" || lane === "head") && v > 0) return `월 ${v.toLocaleString()}회`;
+  return LANE_NAME[lane];
+}
+
 function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () => void; onDismiss?: () => void }) {
   const isTrend = topic.tag === "trend" || topic.tag === "issue" || topic.tag === "followup";
-  const lane = LANE_CHIP[laneOf(topic, isTrend)];
+  const laneKey = laneOf(topic, isTrend);
+  const lane = LANE_STYLE[laneKey];
   const publishedOn = (topic as { publishedOn?: string }).publishedOn;
   const [tick, setTick] = useState(() => Date.now());
   useEffect(() => {
@@ -1063,7 +1074,7 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
         {onDismiss && <span role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); onDismiss(); }} className="order-last ml-auto flex h-6 w-6 items-center justify-center rounded-full opacity-45 transition hover:bg-[#F7F8FA] hover:opacity-80" aria-label="다른 글감으로 교체"><GlassGlyph name="refresh" size={14} /></span>}
         {publishedOn
           ? <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10.5px] font-bold text-neutral-500">{publishedOn}</span>
-          : <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-bold ${lane.cls}`}>{lane.label}</span>}
+          : <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-bold tabular-nums ${lane.cls}`}>{laneLabel(laneKey, topic)}</span>}
         {topic.revenueLabel && <span className="rounded-full bg-[#F5F3EE] px-2 py-0.5 text-[10.5px] font-bold text-[#8A6D1F]">{topic.revenueLabel}</span>}
         {life && <span className="text-[10.5px] font-semibold tabular-nums text-amber-600">{life}</span>}
       </div>
