@@ -54,6 +54,11 @@ interface Topic { keyword: string; title: string; demandLabel: string; vol: numb
 
 // 소주제 군집 키(서버와 동일 규칙) — 교체 시 비슷한 소주제 중복 방지
 let freshDoneRef = false; // ?fresh=1 1회 가드
+// ★열당 활성 슬롯 수 — 서버 배합(app/api/topics의 PER_COLUMN)과 반드시 같아야 한다.
+//  2026-08-01 이중체크에서 검거: 서버에서 배합을 4분할로 고쳐도 화면이 앞 N장만 자르면 비율이 무너진다.
+//  2열 × 5장 = 하루 10편(유저 확정 발행량). 이 숫자를 바꾸면 scripts/check-board-assembly.mjs도 같이 바꾼다.
+const PER_COLUMN = 5;
+
 const clusterOf = (s: string) => s.replace(/\s+/g, "").replace(/[^가-힣a-z0-9]/gi, "").slice(0, 4);
 
 // ★표시 글감 정제 — 키워드/제목/소주제 중 하나라도 겹치면 제외 + 최대 6개(오늘 1 + 다른 글감 5, 소모 시 교체로 풀 리필).
@@ -727,8 +732,8 @@ export default function Home({
                 )}
                 {(() => {
                   const all = list ?? [];
-                  const active = all.filter((t) => !(t as { publishedOn?: string }).publishedOn).slice(0, 5);
-                  const done = all.filter((t) => (t as { publishedOn?: string }).publishedOn).slice(0, 3); // 발행함은 활성 5개와 별도(슬롯 잠식 방지)
+                  const active = all.filter((t) => !(t as { publishedOn?: string }).publishedOn).slice(0, PER_COLUMN);
+                  const done = all.filter((t) => (t as { publishedOn?: string }).publishedOn).slice(0, 3); // 발행함은 활성 슬롯과 별도(슬롯 잠식 방지)
                   return [...active, ...done];
                 })().map((t) => <BoardCard key={t.keyword} topic={t} onWrite={() => onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb, { tag: t.tag, sel: t.sel })} onDismiss={() => {
                   const nd = [...dismissedRef.current, t.keyword];
@@ -737,7 +742,7 @@ export default function Home({
                   const setter = mode === "short" ? setBoardShort : setBoardLong;
                   setter((prev) => {
                     const next = (prev ?? []).filter((x) => x.keyword !== t.keyword);
-                    if (next.length < 5) { // ★재고 소진 시 조용한 보충(실측: 치울수록 감소 — 서버 재고 5개 세대)
+                    if (next.length < PER_COLUMN) { // ★재고 소진 시 조용한 보충(실측: 치울수록 감소 — 서버 재고 5개 세대)
                       const ex = [...new Set([...nd, ...todayKeywords(articles), ...next.map((x) => x.keyword)])];
                       fetch(`/api/topics?mode=${mode}&exclude=${encodeURIComponent(ex.join(","))}`)
                         .then((r) => r.json())

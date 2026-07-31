@@ -60,7 +60,53 @@ export const TIER_LANE_MIX: Record<string, Record<Lane, number>> = {
   ESTABLISHED: { golden: 30, homefeed: 25, trend: 15, head: 30 },
 };
 
-/** 배합 비율(%)을 총 n장에 대한 레인별 장수로 — 최대잔여법(합이 정확히 n이 되게). */
+// ★열↔레인 매핑(2026-08-01 — 이중체크에서 검거).
+//  배합을 4분할로 고쳤는데 그게 유저 화면에 안 닿고 있었다: 실제로 렌더되는 보드는 '지금 뜨는'(mode=short)과
+//  '꾸준한 수요'(mode=long) 2열인데, 4분할은 렌더되지 않는 모드리스 경로에서만 돌았다(죽은 코드).
+//  두 열의 성격이 레인과 정확히 겹치므로 열을 레인의 그릇으로 쓴다:
+//    지금 뜨는  = 홈판 + 트렌드   (반응·시의성 게임 — 상한 없음)
+//    꾸준한 수요 = 황금 + 헤드     (검색 자산 게임 — 상한 = 검색량)
+//  각 열 5장 × 2열 = 하루 10편(유저 확정 발행량)과 정확히 맞는다.
+export const COLUMN_LANES = { short: ["homefeed", "trend"], long: ["golden", "head"] } as const satisfies Record<string, readonly Lane[]>;
+export type BoardColumn = keyof typeof COLUMN_LANES;
+
+/**
+ * 한 열(perColumn장) 안에서의 레인별 장수. 열 안 비율은 전체 배합에서 그 열 몫만 떼어 정규화한다.
+ * 예) 신생 홈판40·트렌드15 → short 5장 = 홈판 4 / 트렌드 1.
+ */
+export function columnQuota(tier: string, column: BoardColumn, perColumn: number): Record<Lane, number> {
+  const mix = TIER_LANE_MIX[tier] ?? TIER_LANE_MIX.SEEDLING;
+  const lanes = COLUMN_LANES[column];
+  const total = lanes.reduce((s, l) => s + mix[l], 0);
+  const out = { golden: 0, homefeed: 0, trend: 0, head: 0 } as Record<Lane, number>;
+  if (total <= 0 || perColumn <= 0) return out;
+  const exact = lanes.map((l) => ({ l, v: (mix[l] / total) * perColumn }));
+  for (const e of exact) out[e.l] = Math.floor(e.v);
+  let left = perColumn - lanes.reduce((s, l) => s + out[l], 0);
+  for (const e of [...exact].sort((a, b) => (b.v % 1) - (a.v % 1))) {
+    if (left <= 0) break;
+    out[e.l] += 1;
+    left -= 1;
+  }
+  return out;
+}
+
+/**
+ * 하루 전체 레인 쿼터 = 두 열 쿼터의 합. ★단일 진실원(2026-08-01 이중체크에서 검거).
+ * 종전엔 laneQuota(tier, 10)과 columnQuota 두 곳이 같은 값을 따로 계산해 ESTABLISHED에서 실제로 어긋났다
+ * (열합 트렌드2·헤드2 vs laneQuota 트렌드1·헤드3). 화면은 열 단위로 서빙되므로 **열이 진실**이고,
+ * 하루 총량은 그 합으로만 정의한다 — 두 경로가 드리프트할 여지를 없앤다.
+ */
+export function dayQuota(tier: string, perColumn: number): Record<Lane, number> {
+  const s = columnQuota(tier, "short", perColumn);
+  const l = columnQuota(tier, "long", perColumn);
+  return { golden: l.golden, homefeed: s.homefeed, trend: s.trend, head: l.head };
+}
+
+/**
+ * 배합 비율(%)을 총 n장에 대한 레인별 장수로 — 최대잔여법(합이 정확히 n이 되게).
+ * ★보드 조립에는 쓰지 않는다(dayQuota를 쓴다). 비율 자체를 검증·표시할 때만 쓰는 참조 구현.
+ */
 export function laneQuota(tier: string, n: number): Record<Lane, number> {
   const mix = TIER_LANE_MIX[tier] ?? TIER_LANE_MIX.SEEDLING;
   const lanes = Object.keys(mix) as Lane[];

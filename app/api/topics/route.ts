@@ -26,9 +26,10 @@ import { getPerfWeights } from "@/lib/perfWeights";
 import { dwellPotential } from "@/lib/dwellScore";
 import { revenuePathOf, REVENUE_TAG_LABEL, type RevenuePath } from "@/lib/revenuePath";
 import { computeBlogTier, applyDemoteGuard, coldStartTier, type TierResult, type BlogTier } from "@/lib/blogTier";
-import { TIER_BANDS, laneQuota, SEED_CLAIM_CAP, SEED_CLAIM_WINDOW_H } from "@/lib/scoreWeights";
-// 하루 보드 슬롯 수 — 배합(laneQuota)의 분모. 기존 조립부가 쓰던 리터럴 10을 상수화.
+import { TIER_BANDS, dayQuota, columnQuota, SEED_CLAIM_CAP, SEED_CLAIM_WINDOW_H } from "@/lib/scoreWeights";
+// 하루 보드 슬롯 수 — 배합의 분모. 화면은 2열 × 5장(Home.tsx의 활성 슬라이스)이라 10 = 하루 10편과 일치한다.
 const DAILY_BOARD = 10;
+const PER_COLUMN = DAILY_BOARD / 2;
 import { revenuePath } from "@/lib/revenue";
 import { logUsage } from "@/lib/usageLog";
 import { isAdminEmail } from "@/lib/adminStats";
@@ -460,6 +461,35 @@ export async function GET(req: Request) {
   //  돌았다 — '지금 뜨는' 열에 밴드도 배합도 적용되지 않던 구조적 우회(조사 실측). 캐시 24h라 비용 무증가.
   tierInfo = await loadTier();
 
+  const bandCeil = (FF.tierBands ? TIER_BANDS[tierInfo?.tier ?? "SEEDLING"].volMax : 30000) * 1.5;
+  const bandInvariant = <T extends { keyword?: string; vol?: number; demandBadge?: string; tag?: string }>(list: T[], where: string): T[] => {
+    const leaked: { where: string; keyword: string; vol: number }[] = [];
+    // ★검사 못 한 카드를 '통과'와 구분해 센다(2026-08-01). vol이 0/미상인 카드는 이 검사를 그냥 지나가는데,
+    //  종전엔 그게 통과와 구분이 안 돼 밴드 우회가 눈에 안 보였다(트렌드 카드는 전부 vol:0으로 만들어진다).
+    //  홈판·헤드는 애초에 검색량 게임이 아니라 면제가 맞고, 그 외 미상 카드는 진짜 사각지대라 진단에 남긴다.
+    let unchecked = 0;
+    const out = list.filter((c) => {
+      const v = Number(c.vol ?? 0);
+      const exempt = c.tag === "홈판" || String(c.demandBadge ?? "").includes("헤드 배팅");
+      if (v <= 0 && !exempt) unchecked += 1;
+      if (v > bandCeil && !String(c.demandBadge ?? "").includes("헤드 배팅")) {
+        leaked.push({ where, keyword: String(c.keyword ?? ""), vol: v });
+        return false;
+      }
+      return true;
+    });
+    if (leaked.length) {
+      console.error(`[band-invariant] ${where} 누출 ${leaked.length}건 차단`, JSON.stringify(leaked.slice(0, 5)));
+      leakedAll.push(...leaked);
+    }
+    if (unchecked) {
+      // 차단이 아니라 계측 — 이 숫자가 크면 밴드가 '통과'시킨 게 아니라 '못 본' 것이다.
+      console.log(`[band-invariant] ${where} 검색량 미상 ${unchecked}건(밴드 검사 사각)`);
+      bandUnchecked += unchecked;
+    }
+    return out;
+  };
+
   if (tailMode === "short") {
     // ★신선도 보증(실측: 지식iN 고수는 1시간 전 급상승에 진입 — 우리는 카드가 차 있으면 묵은 수확을 계속 서빙) —
     //  마지막 수확이 2시간 넘었으면 응답과 무관하게 백그라운드 재수확(구글 트렌드 급상승·뉴스 최신분 흡수). 다음 탭에서 신선분.
@@ -609,14 +639,19 @@ export async function GET(req: Request) {
       tc = g.pass;
       if (debugMode) diag.finalGateDrops = g.drops;
     }
-    // ★홈판 배팅 카드(FF_HOMEFEED_BET) — '지금 뜨는' 보드는 이 short 응답만 쓰므로 여기 최상단에 싣는다
-    //  (실측 2026-07-15: 최종 조립부에만 실어서 short 조기 return에 안 탔음). 캐시(유저·일)라 이중 비용 없음.
+    // ★'지금 뜨는' 열 = 홈판 + 트렌드 레인(2026-08-01 열↔레인 매핑). 이 열은 반응·시의성 게임이다.
+    //  종전엔 홈판 1장 + 트렌드 나머지였는데, 그러면 배합 비율이 화면에서 무의미해진다(앞 5장만 보이므로).
+    //  이제 열 안에서 레인 쿼터대로 자른다 — 신생 5장 = 홈판 4 / 트렌드 1.
+    const colShort = columnQuota(tierInfo?.tier ?? "SEEDLING", "short", PER_COLUMN);
+    // ★트렌드 레인에도 밴드를 건다(2026-08-01 — 급상승 우회 #2 봉쇄). 위에서 volMap으로 c.vol을 실제 값으로
+    //  채워 두었기 때문에 이제 검사가 실제로 작동한다(종전엔 트렌드 카드가 전부 vol:0이라 통과가 아니라 '못 봄'이었다).
+    //  홈판은 tag='홈판'으로 면제된다 — 검색량 게임이 아니라서 밴드를 적용하는 것 자체가 틀리다.
+    tc = bandInvariant(tc, "short-trend");
+    tc = tc.slice(0, Math.max(0, PER_COLUMN - colShort.homefeed)); // 홈판 자리를 먼저 비워 둔다
+    if (debugMode) diag.colShort = { ...colShort, trendGot: tc.length };
     if (FF.homefeedBet) {
       try {
-        // ★1장 → 배합 몫(2026-08-01): 홈판이 정식 레인(신생 40%)이 되면서 하루 몫만큼 싣는다.
-        //  short 경로는 tierInfo 로딩(아래 :628) 전에 return하므로 여기서 밴드와 무관하게 tier만 따로 읽는다.
-        const quota = laneQuota((await loadTier())?.tier ?? "SEEDLING", DAILY_BOARD).homefeed;
-        const bets = await pickHomefeedBets(pool, user.id, sub ?? "", usedSet, quota);
+        const bets = await pickHomefeedBets(pool, user.id, sub ?? "", usedSet, colShort.homefeed);
         for (const bet of [...bets].reverse()) {
         // ★이미 생성/발행한 홈판 글감은 숨김(실측 2026-07-16: 발행했는데 카드 잔존 — 홈판 카드는 발행함 마킹 로직 밖이라 usedSet으로 직접 차단)
         if (bet && !usedSet.has(normalizeKeyword(bet.keyword)) && finalGate([{ keyword: bet.keyword, title: bet.title }]).pass.length > 0 && !tc.some((t) => t.keyword === bet.keyword)) {
@@ -1044,19 +1079,25 @@ export async function GET(req: Request) {
   // ★헤드 배팅 슬롯(2026-07-15 유저 확정: 밴드 사다리) — 신생·성장 tier에 한 판 1장, 한 밴드 위 키워드.
   //  지금 순위는 안 나와도 에버그린 자산 — 체급이 오르면 이 글이 뒤늦게 일한다. 실패·후보 없음=조용히 0장.
   let headBetCards: typeof topics = [];
-  if (FF.tierBands && FF.tierMix && tierInfo && tierInfo.tier !== "ESTABLISHED" && tailMode !== "long") {
+  // ★N장으로 확장(2026-08-01): .find()로 1장만 만들어서 성장기 15%·확장기 30% 배합이 구조적으로 달성 불가였다.
+  //  ESTABLISHED 제외 조건도 풀었다 — 확장기는 헤드가 주력(30%)인데 0장이 나오던 모순.
+  if (FF.tierBands && FF.tierMix && tierInfo) {
     try {
       const cur = TIER_BANDS[tierInfo.tier];
-      const upMax = tierInfo.tier === "SEEDLING" ? TIER_BANDS.GROWING.volMax : (TIER_BANDS.ESTABLISHED.volMax ?? 30000);
+      // 확장기는 '한 밴드 위'가 없으므로 상단을 열어 준다(그 위가 곧 헤드다).
+      const upMax = tierInfo.tier === "SEEDLING" ? TIER_BANDS.GROWING.volMax
+        : tierInfo.tier === "GROWING" ? (TIER_BANDS.ESTABLISHED.volMax ?? 30000)
+        : 100_000;
+      const headWant = Math.max(1, columnQuota(tierInfo.tier, "long", PER_COLUMN).head);
       let hq = pool.from("keyword_pool").select("keyword, monthly_searches, competition, audience, blog_total")
         .eq("vertical", vertical).gt("monthly_searches", cur.volMax).lte("monthly_searches", upMax)
-        .order("times_assigned", { ascending: true }).order("monthly_searches", { ascending: false }).limit(20);
+        .order("times_assigned", { ascending: true }).order("monthly_searches", { ascending: false }).limit(40);
       if (sub) hq = hq.eq("sub", sub);
       const { data: hd } = await hq;
-      const pickH = ((hd ?? []) as PoolRow[]).find((r) =>
-        !usedSet.has(normalizeKeyword(r.keyword)) && audMatch(r.keyword, r.audience) && finalGate([{ keyword: r.keyword, title: r.keyword }]).pass.length > 0);
-      if (pickH) {
-        headBetCards = [{
+      const picksH = ((hd ?? []) as PoolRow[]).filter((r) =>
+        !usedSet.has(normalizeKeyword(r.keyword)) && audMatch(r.keyword, r.audience) && finalGate([{ keyword: r.keyword, title: r.keyword }]).pass.length > 0)
+        .slice(0, headWant);
+      headBetCards = picksH.map((pickH) => ({
           keyword: pickH.keyword, title: pickH.keyword,
           demandLabel: demandLabel(pickH.monthly_searches, type),
           ssak: false, region: false, tone: type,
@@ -1067,8 +1108,8 @@ export async function GET(req: Request) {
           tag: sub || "글감",
           demandBadge: "헤드 배팅 — 지금 체급엔 크지만, 블로그가 크면 이 글부터 일해요",
           ...(FF.perfLoop ? { sel: { species: "evergreen", seedSource: "headbet", vol: pickH.monthly_searches ?? 0, blogTotal: pickH.blog_total ?? null, stars: pickH.blog_total != null ? filledStarsFromData(pickH.monthly_searches ?? 0, pickH.blog_total) : null } } : {}),
-        } as unknown as (typeof topics)[number]];
-      }
+        } as unknown as (typeof topics)[number]));
+      if (debugMode) diag.headBet = { want: headWant, got: headBetCards.length };
     } catch { /* 헤드 배팅 실패 — 기존 파이프 무영향 */ }
   }
 
@@ -1078,7 +1119,8 @@ export async function GET(req: Request) {
   let homefeedCards: TrendCard[] = [];
   if (FF.homefeedBet && tailMode !== "long") {
     try {
-      const bets = await pickHomefeedBets(pool, user.id, sub ?? "", usedSet, laneQuota(tierInfo?.tier ?? "SEEDLING", DAILY_BOARD).homefeed);
+      // ★열 쿼터와 같은 n을 쓴다 — 다르면 캐시 키(homebet:...:n)가 갈라져 같은 날 LLM 생성이 두 번 돈다.
+      const bets = await pickHomefeedBets(pool, user.id, sub ?? "", usedSet, columnQuota(tierInfo?.tier ?? "SEEDLING", "short", PER_COLUMN).homefeed);
       homefeedCards = bets
         .filter((bet) => !usedSet.has(normalizeKeyword(bet.keyword)) && finalGate([{ keyword: bet.keyword, title: bet.title }]).pass.length > 0)
         .map((bet) => ({
@@ -1151,34 +1193,6 @@ export async function GET(req: Request) {
   const shuffled = shuffle(topics, rng);
   // ★밴드 불변식(2026-07-20 최종 검문 — 실측: 봉쇄 후에도 6,950~26,180 노출, 출처 미상): 어떤 경로로 왔든
   //  응답 직전 검색량이 밴드 상한 1.5배 초과 카드는 차단, 차단 내역은 api_cache(diag:band_leak)에 자수 기록.
-  const bandCeil = (FF.tierBands ? TIER_BANDS[tierInfo?.tier ?? "SEEDLING"].volMax : 30000) * 1.5;
-  const bandInvariant = <T extends { keyword?: string; vol?: number; demandBadge?: string; tag?: string }>(list: T[], where: string): T[] => {
-    const leaked: { where: string; keyword: string; vol: number }[] = [];
-    // ★검사 못 한 카드를 '통과'와 구분해 센다(2026-08-01). vol이 0/미상인 카드는 이 검사를 그냥 지나가는데,
-    //  종전엔 그게 통과와 구분이 안 돼 밴드 우회가 눈에 안 보였다(트렌드 카드는 전부 vol:0으로 만들어진다).
-    //  홈판·헤드는 애초에 검색량 게임이 아니라 면제가 맞고, 그 외 미상 카드는 진짜 사각지대라 진단에 남긴다.
-    let unchecked = 0;
-    const out = list.filter((c) => {
-      const v = Number(c.vol ?? 0);
-      const exempt = c.tag === "홈판" || String(c.demandBadge ?? "").includes("헤드 배팅");
-      if (v <= 0 && !exempt) unchecked += 1;
-      if (v > bandCeil && !String(c.demandBadge ?? "").includes("헤드 배팅")) {
-        leaked.push({ where, keyword: String(c.keyword ?? ""), vol: v });
-        return false;
-      }
-      return true;
-    });
-    if (leaked.length) {
-      console.error(`[band-invariant] ${where} 누출 ${leaked.length}건 차단`, JSON.stringify(leaked.slice(0, 5)));
-      leakedAll.push(...leaked);
-    }
-    if (unchecked) {
-      // 차단이 아니라 계측 — 이 숫자가 크면 밴드가 '통과'시킨 게 아니라 '못 본' 것이다.
-      console.log(`[band-invariant] ${where} 검색량 미상 ${unchecked}건(밴드 검사 사각)`);
-      bandUnchecked += unchecked;
-    }
-    return out;
-  };
   // ★근접 중복 최종 차단(2026-07-24 유저: "빡세게") — 어느 버킷(트렌드·에버그린·부스트·헤드)에서 왔든
   //  사실상 같은 글감(수식어만 다른 CMA추천 ↔ CMA통장추천)은 한 판에 하나만. 앞선(우선순위 높은) 카드를 남긴다.
   const dedupeBoard = <T extends { keyword?: string; title?: string }>(list: T[]): T[] => {
@@ -1197,7 +1211,18 @@ export async function GET(req: Request) {
     const g = finalGate(shuffled as { keyword: string; title: string }[]);
     if (g.drops.length) console.log("[final-gate:long]", JSON.stringify(g.drops));
     if (debugMode) diag.finalGateDrops = g.drops;
-    const passLong = dedupeBoard(bandInvariant(g.pass, "long"));
+    // ★'꾸준한 수요' 열 = 황금 + 헤드 레인(2026-08-01 열↔레인 매핑). 이 열은 검색 자산 게임이다.
+    //  종전엔 헤드 배팅이 tailMode!=='long'으로 막혀 이 열에 아예 못 들어왔다 — 헤드 배합이 화면에 도달할 길이 없었다.
+    const colLong = columnQuota(tierInfo?.tier ?? "SEEDLING", "long", PER_COLUMN);
+    const goldenPass = dedupeBoard(bandInvariant(g.pass, "long"));
+    const headsLong = (headBetCards as typeof goldenPass).slice(0, colLong.head);
+    // 황금을 먼저, 헤드는 뒤 — 앞에서 잘려도 자산 레인이 먼저 남는다. 부족분은 서로 메운다.
+    const passLong = dedupeBoard([
+      ...goldenPass.slice(0, colLong.golden),
+      ...headsLong,
+      ...goldenPass.slice(colLong.golden), // 예비(헤드가 0장이거나 중복 제거로 빌 때 채운다)
+    ]);
+    if (debugMode) diag.colLong = { ...colLong, goldenGot: goldenPass.length, headGot: headsLong.length };
     await writeDiag();
     return NextResponse.json(debugMode ? { topics: passLong, diag: { ...diag, mode: "long", poolCards: g.pass.length } } : { topics: passLong, ...(FF.perfLoop ? { ff: { perfLoop: true } } : {}), ...(FF.tierBands && tierInfo ? { tier: { name: tierInfo.tier, note: tierInfo.note } } : {}) });
   }
@@ -1207,23 +1232,43 @@ export async function GET(req: Request) {
   if (FF.tierMix && tierInfo) {
     // ★4분할 배합(2026-08-01 유저 확정) — 구 2분할 [트렌드,에버그린]은 신생 트렌드 70%였다(설계는 25%).
     //  그 결과 신생 보드에 헤드가 꽂혔고 7/31 발행 5편이 전부 노출 0이었다(실측). 이제 레인별 쿼터로 자른다.
-    const q = laneQuota(tierInfo.tier, DAILY_BOARD);
+    const q = dayQuota(tierInfo.tier, PER_COLUMN);
     const trends = [...trendCards].slice(0, q.trend);
     const evers = [...shuffled].slice(0, q.golden);
     const heads = (headBetCards as typeof finalList).slice(0, q.head);
     const homes = homefeedCards.slice(0, q.homefeed);
     // 황금(에버그린)을 뼈대로 두고 트렌드를 사이사이 끼운다 — 홈판·헤드는 배팅이라 앞뒤 고정.
-    const mixed: typeof finalList = [];
-    const t = [...trends]; const e = [...evers];
-    while (t.length || e.length) {
-      if (e.length) mixed.push(e.shift()!);
-      if (e.length && q.golden > q.trend) mixed.push(e.shift() ?? mixed[mixed.length - 1]!);
-      if (t.length) mixed.push(t.shift()!);
-    }
+    // ★레인을 균등 간격으로 인터리브한다(2026-08-01 이중체크 수리 — 랜드마인 제거 + 앞자름 내성).
+    //  종전엔 `e.shift() ?? mixed[last]`가 있어, 조건이 어긋나면 직전 카드를 한 번 더 밀어 넣는 중복 버그가
+    //  잠재해 있었다(현재 도달 불가였지만 조건 하나만 바뀌면 터진다). 그리고 홈판을 앞에 몰아넣으면
+    //  화면이 앞 5장만 자를 때 다른 레인이 통째로 사라진다 — 그래서 몰지 않고 고르게 편다.
+    const weave = (lanes: { cards: typeof finalList; step: number }[]): typeof finalList => {
+      const out: typeof finalList = [];
+      const q2 = lanes.map((l) => ({ cards: [...l.cards], step: l.step, next: 0 }));
+      while (q2.some((l) => l.cards.length)) {
+        const live = q2.filter((l) => l.cards.length);
+        live.sort((a, b) => a.next - b.next);
+        const pick = live[0]!;
+        out.push(pick.cards.shift()!);
+        pick.next += pick.step; // step이 작을수록 자주 나온다(장수가 많은 레인)
+      }
+      return out;
+    };
+    const stepOf = (n: number) => (n > 0 ? 1 / n : Number.POSITIVE_INFINITY);
+    const mixed = weave([
+      { cards: homes, step: stepOf(homes.length) },
+      { cards: evers, step: stepOf(evers.length) },
+      { cards: trends, step: stepOf(trends.length) },
+      { cards: heads, step: stepOf(heads.length) },
+    ]);
     // 남은 카드는 쿼터 밖 예비 — 앞쪽이 소진(중복 제거·게이트 탈락)됐을 때만 쓰인다.
     const spare = [...trendCards.slice(q.trend), ...shuffled.slice(q.golden)];
-    finalList = [...boostCards, ...homes, ...mixed.filter(Boolean), ...heads, ...spare];
-    if (debugMode) diag.laneQuota = { ...q, got: { golden: evers.length, homefeed: homes.length, trend: trends.length, head: heads.length } };
+    finalList = [...boostCards, ...mixed, ...spare];
+    // ★쿼터 미달을 조용히 넘기지 않는다 — 홈판 생성이 통째로 실패해도 예비가 채워 버려서 아무도 몰랐다.
+    const short = { golden: q.golden - evers.length, homefeed: q.homefeed - homes.length, trend: q.trend - trends.length, head: q.head - heads.length };
+    const missing = Object.entries(short).filter(([, v]) => v > 0);
+    if (missing.length) console.log(`[lane-quota] 미달 ${JSON.stringify(Object.fromEntries(missing))} — 예비 카드가 대신 채웠다(배합 비율 붕괴)`);
+    if (debugMode) diag.laneQuota = { want: q, got: { golden: evers.length, homefeed: homes.length, trend: trends.length, head: heads.length }, missing: Object.fromEntries(missing) };
   }
   finalList = dedupeBoard(finalList); // ★근접 중복 최종 차단(전 버킷 교차)
   await writeDiag();
