@@ -6,6 +6,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient, createSupabaseAdminClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { TIER_BANDS } from "@/lib/scoreWeights";
+import { fetchBlogTotal } from "@/lib/naverBlogSearch";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -56,7 +57,21 @@ export async function GET(request: Request) {
     미측정포함: inBand.filter((r) => r.blog_total == null || r.blog_total < cap).length,
   }));
 
+  // ★근본 원인 진단: 문서수가 97.5% 미측정인 게 '아직 안 쟀다'인지 'API 권한이 없어 못 잰다'인지 가른다.
+  //  fetchBlogTotal은 권한 없음·쿼터초과를 전부 null로 삼켜서(폴백 설계) 바깥에선 구분이 안 된다.
+  const probeWord = inBand.find((r) => r.blog_total == null)?.keyword ?? "정기예금";
+  const probe = await fetchBlogTotal(probeWord);
+  const 측정가능 = probe != null;
+
   return NextResponse.json({
+    문서수측정: {
+      가능한가: 측정가능,
+      시험키워드: probeWord,
+      결과: probe,
+      해석: 측정가능
+        ? "네이버 검색 API가 응답합니다 — 미측정분을 채울 수 있습니다."
+        : "네이버 검색 API가 응답하지 않습니다. 개발자센터 앱에 '검색' API가 추가돼 있어야 합니다(자격증명은 DataLab과 동일). 이게 없으면 '쉬운 키워드'라고 말할 근거 자체를 만들 수 없습니다.",
+    },
     기준: { vertical, sub, 밴드: `월 ${band.volMin}~${band.volMax} 검색`, 문서수상한_현재: band.blogTotalMax },
     풀크기: { 전체: all.length, 밴드안: inBand.length },
     밴드안_문서수분포: bucket(inBand),
