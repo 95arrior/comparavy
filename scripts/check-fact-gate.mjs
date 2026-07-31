@@ -103,6 +103,41 @@ for (const [kw, body, layer, expect] of cases) {
   console.log(okC ? "OK " : "FAIL", "| missing   | 진짜 퇴사 글은 여전히 필수 4항목 요구 →", quit.length + "건");
 }
 
+// ★[오탐] 조사가 끼어도 잡아야 한다(2026-08-01 실측: "중복 수급은 제한됩니다"가 '은' 때문에 미검출).
+//  한국어는 명사 사이에 조사가 끼는 게 기본이라, 붙어 있기만 기대하면 반드시 놓친다.
+{
+  const base = "<p>청년 지원금 신청 기간은 8월까지이고 예산 소진 시 조기 마감됩니다.</p>";
+  const 있음 = ["중복 수급은 제한됩니다", "중복수급 제한이 있습니다", "중복 지원은 받을 수 없습니다"];
+  for (const t of 있음) {
+    const hit = scanFacts(`${base}<p>${t}</p>`, "청년 지원금").filter((i) => i.layer === "missing").map((i) => i.matched);
+    const ok1 = !hit.includes("중복 수급 제한");
+    if (!ok1) fail++;
+    console.log(ok1 ? "OK " : "FAIL", "| missing   | 조사 끼어도 검출됨 →", t);
+  }
+  const none = scanFacts(`${base}<p>누구나 신청 가능합니다.</p>`, "청년 지원금").filter((i) => i.layer === "missing").map((i) => i.matched);
+  const ok2 = none.includes("중복 수급 제한");
+  if (!ok2) fail++;
+  console.log(ok2 ? "OK " : "FAIL", "| missing   | 진짜 빠졌을 땐 여전히 잡음 →", none.join(",") || "없음");
+}
+
+// ★[코드 게이트] 누락은 탐지에서 끝나면 안 된다(2026-08-01 유저: "이건 고쳐서 나와야 해요").
+//  프롬프트 주입만으로는 모델이 빠뜨린다 — 생성·자동발행 양쪽에 재생성 가드가 붙어 있어야 한다.
+{
+  const fs2 = await import("node:fs");
+  const gen = fs2.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8");
+  const wp = fs2.readFileSync(new URL("../app/api/cron/wp-autopublish/route.ts", import.meta.url), "utf-8");
+  const okG = /missing_musts_retry/.test(gen) && /layer === "missing"/.test(gen);
+  if (!okG) fail++;
+  console.log(okG ? "OK " : "FAIL", "| gate      | 생성 경로에 누락 재생성 가드 있음");
+  const okW = /missing-musts/.test(wp) && /layer === "missing"/.test(wp);
+  if (!okW) fail++;
+  console.log(okW ? "OK " : "FAIL", "| gate      | 자동발행 경로에도 있음(한쪽만 있으면 빠지는 경로가 생긴다)");
+  // 더 나빠진 재생성을 받아들이면 안 된다
+  const okCmp = /missAfter\.length < missBefore\.length/.test(gen);
+  if (!okCmp) fail++;
+  console.log(okCmp ? "OK " : "FAIL", "| gate      | ★줄어든 경우에만 교체(악화된 재생성 거부)");
+}
+
 // ★[주입] 검사에 걸릴 항목은 생성 프롬프트에 미리 들어가야 한다 — 탐지보다 주입이 먼저.
 {
   const ctx = topicMustsContext("퇴직연금디폴트옵션") ?? "";

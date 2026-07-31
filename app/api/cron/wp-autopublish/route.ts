@@ -115,6 +115,22 @@ export async function GET(request: Request) {
           } catch { /* 재생성 실패 — 원본 그대로 */ }
           if (lacksConditionBranch(article.body_html)) console.log(`[wp-auto][condition-branch] blog=${b.id} — 조건 분기 없음, 통과(로그만)`);
         }
+        // ★필수 항목 누락 게이트(2026-08-01 유저 실측: "이건 고쳐서 나와야 해요").
+        //  프롬프트로 미리 쥐여줘도 모델이 빠뜨린다. 빠진 이름을 그대로 박아 한 번 다시 쓴다.
+        //  ★검사 결과가 줄어든 경우에만 교체(더 나빠진 재생성은 버린다). 생성 라우트와 같은 규격.
+        {
+          const missBefore = article.fact_issues.filter((f) => f.layer === "missing");
+          if (missBefore.length > 0) {
+            const names = missBefore.map((f) => f.matched).join(", ");
+            try {
+              const retried = await generateArticle({ ...genInput, variantInstruction: `★경고: 직전 생성에서 이 주제의 필수 항목이 빠졌다 — ${names}. 독자가 모르면 손해를 보는 항목이라 빠지면 글이 성립하지 않는다. 각 항목을 이름만 스치지 말고 최소 한 단락 또는 표의 한 행으로 실제로 다뤄라(이 글 주제와 정말 무관하면 억지로 넣지 말고 나머지를 반드시 채운다). 분량 1,800~2,200자(공백 제외)는 유지.` });
+              const cr = retried.body_html.replace(/<[^>]+>/g, "").replace(/\s+/g, "").length;
+              if (cr >= 500 && retried.fact_issues.filter((f) => f.layer === "missing").length < missBefore.length) article = retried;
+            } catch { /* 재생성 실패 — 원본 그대로 */ }
+            const left = article.fact_issues.filter((f) => f.layer === "missing");
+            if (left.length) console.log(`[wp-auto][missing-musts] blog=${b.id} — ${left.map((f) => f.matched).join(",")} 남음`);
+          }
+        }
         // ★사실 검사 게이트(2026-07-31 — 자사 사이트 실측 오류 2건이 원점: 예금자보호 옛 한도, 퇴직소득을 종합소득세로).
         //  구조 오류는 문장이 자연스러워서 사람이 안 보면 그대로 나간다. 위 게이트들과 달리 '로그만'으로 통과시키지 않는다.
         //  ★단 글을 버리지는 않는다 — 재생성 1회 후에도 남으면 자동발행만 막고 승인탭(draft)으로 내린다.

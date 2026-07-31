@@ -7,6 +7,7 @@ import { spendCredits, addCredits, GENERATE_COST } from "@/lib/credits";
 import { streamArticle } from "@/lib/generateArticle";
 import { isReviewType, ensureDisclosure } from "@/lib/revenue";
 import { hasFabricatedExperience, lacksInterpretation, lacksConditionBranch, duplicateSlotSubjects } from "@/lib/editorial";
+import { scanFacts } from "@/lib/factGate";
 import { financeCalcContext } from "@/lib/financeCalc";
 import { sanitizeUrls } from "@/lib/linkWhitelist";
 import { countKoreanChars } from "@/lib/humanizer";
@@ -430,6 +431,30 @@ export async function POST(request: Request) {
             if (!lacksConditionBranch(retried.body_html) && (userStory || !hasFabricatedExperience(retried.body_html)) && countKoreanChars(retried.body_html) >= 500) article = retried;
           } catch { /* 재생성 실패 — 원본 그대로 */ }
           if (lacksConditionBranch(article.body_html)) console.log(`[condition-branch] user=${user.id.slice(0, 8)} — 조건 분기 없음, 통과(로그만)`);
+        }
+
+        // ★필수 항목 누락 가드(2026-08-01 유저 실측: "이건 고쳐서 나와야 해요").
+        //  프롬프트로 필수항목을 미리 쥐여줬는데도(topicMustsContext) 모델이 빠뜨리고 나왔다.
+        //  프롬프트는 방향, 코드가 한계선(CLAUDE.md) — 빠진 항목 이름을 그대로 박아 한 번 다시 쓴다.
+        //  ★검사 결과가 줄어든 경우에만 교체한다(더 나빠진 재생성은 버린다).
+        {
+          const missBefore = scanFacts(`${article.title}\n${article.body_html}`, keyword).filter((i) => i.layer === "missing");
+          if (missBefore.length > 0 && regenSpent < REGEN_CAP) {
+            regenSpent++;
+            send({ type: "revising" });
+            void logUsage({ userId: user.id, model: "guard", kind: "missing_musts_retry", inputTokens: 0, outputTokens: 0 });
+            const names = missBefore.map((i) => i.matched).join(", ");
+            try {
+              const retried = await streamArticle(
+                { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ★경고: 직전 생성에서 이 주제의 필수 항목이 빠졌다 — ${names}. 독자가 모르면 손해를 보는 항목이라 빠지면 글이 성립하지 않는다. 각 항목을 이름만 스치지 말고 최소 한 단락 또는 표의 한 행으로 실제로 다뤄라(해당 항목이 이 글 주제와 정말 무관하면 억지로 넣지 말고 나머지를 반드시 채운다). 나머지 규격·분량은 유지.`.trim() },
+                noop, noop, onGenUsage,
+              );
+              const missAfter = scanFacts(`${retried.title}\n${retried.body_html}`, keyword).filter((i) => i.layer === "missing");
+              if (missAfter.length < missBefore.length && (userStory || !hasFabricatedExperience(retried.body_html)) && countKoreanChars(retried.body_html) >= 500) article = retried;
+            } catch { /* 재생성 실패 — 원본 그대로 */ }
+            const left = scanFacts(`${article.title}\n${article.body_html}`, keyword).filter((i) => i.layer === "missing");
+            if (left.length) console.log(`[missing-musts] user=${user.id.slice(0, 8)} — ${left.map((i) => i.matched).join(",")} 남음(검토 화면에서 안내)`);
+          }
         }
 
         // ★사진 슬롯 소재 중복 가드(2026-07-29 유저 실측: 1번·3번에 '소상공인'이 겹쳐 같은 결의 그림 두 장).
