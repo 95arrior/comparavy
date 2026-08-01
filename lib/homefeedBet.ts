@@ -73,11 +73,26 @@ export async function pickHomefeedBets(db: SupabaseClient, userId: string, sub: 
     if (c?.value && new Date(String(c.expires_at)).getTime() > Date.now()) return c.value as HomefeedBet[];
   } catch { /* 캐시 조회 실패 — 생성으로 */ }
 
+  // ★여유분을 뽑는다(2026-08-01 실측: 4장 요청에 1장만 나왔다).
+  //  개별 생성은 여러 이유로 떨어진다 — 뉴스 없음(시장 유형), 금지어, 투자권유 표현, JSON 파싱 실패.
+  //  딱 want개만 시도하면 한 장만 떨어져도 열이 빈다. 유형은 8종이니 넉넉히 시도해 먼저 성공한 want개를 쓴다.
   const dayIdx = Math.floor(Date.now() / 86400_000) % BET_TYPES.length;
-  const picked = Array.from({ length: want }, (_, i) => BET_TYPES[(dayIdx + i) % BET_TYPES.length]!);
-  const out = (await Promise.all(picked.map((bet) => genOne(apiKey, userId, sub, usedKeywords, bet)))).filter((x): x is HomefeedBet => x !== null);
+  const tryN = Math.min(BET_TYPES.length, want + 3);
+  const picked = Array.from({ length: tryN }, (_, i) => BET_TYPES[(dayIdx + i) % BET_TYPES.length]!);
+  const settled = await Promise.all(picked.map((bet) => genOne(apiKey, userId, sub, usedKeywords, bet)));
+  const got = settled.filter((x): x is HomefeedBet => x !== null);
+  const out = got.slice(0, want);
+  if (got.length < tryN) {
+    const failed = picked.filter((_, i) => settled[i] == null).map((b) => b.key);
+    console.log(`[homebet] ${got.length}/${tryN} 성공 — 실패 유형: ${failed.join(", ")}`);
+  }
   if (out.length) {
-    try { await db.from("api_cache").upsert({ key: cacheKey, value: out, expires_at: new Date(Date.now() + 24 * 3600_000).toISOString(), updated_at: new Date().toISOString() }); } catch { /* ignore */ }
+    // ★부분 결과를 하루 종일 물고 있으면 안 된다(이번 사고의 직접 원인).
+    //  쿼터를 채웠을 때만 24시간 캐시하고, 미달이면 1시간만 — 다음 호출에서 다시 채워 본다.
+    const full = out.length >= want;
+    const ttlMs = full ? 24 * 3600_000 : 1 * 3600_000;
+    try { await db.from("api_cache").upsert({ key: cacheKey, value: out, expires_at: new Date(Date.now() + ttlMs).toISOString(), updated_at: new Date().toISOString() }); } catch { /* ignore */ }
+    if (!full) console.log(`[homebet] 쿼터 미달 ${out.length}/${want} — 1시간 뒤 재시도(짧은 캐시)`);
   }
   return out;
 }

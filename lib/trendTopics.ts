@@ -3,6 +3,7 @@ import { createSupabaseAdminClient } from "./supabase-server";
 import { fetchApplyhomeSeeds } from "./applyhome";
 import { fetchGov24Seeds } from "./gov24";
 import { fetchBizinfoSeeds } from "./bizinfoSeeds";
+import { measureTopicDemand, hasRealDemand } from "./topicDemand";
 import { gatherHeadlinesWithStats } from "./trendSources";
 import { seasonalSeeds } from "./seasonalEvents";
 import { fetchNaverAutocomplete } from "./naverAutocomplete";
@@ -299,6 +300,27 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
       rows.length = 0; rows.push(...uniq);
     }
 
+    // ★공고 씨앗 수요 게이트(2026-08-01 유저 실측 — "뜨는 것만 진짜 수요가 높으면 된다").
+    //  배경: 트렌드 풀 20건이 전부 지역 공고였고('[경북] 영주시 …', '타 시·도 입학준비금', '동탄 무순위 청약'),
+    //  게이트가 올바르게 걸러 '지금 뜨는' 열이 1장으로 말라붙었다. 공고 소스가 뉴스를 밀어낸 것이다.
+    //  공고는 '행동 기한'이 있어 가치가 있지만, 아무도 안 찾는 지역 공고는 글감이 아니다.
+    //  → 실측 수요(measureTopicDemand)로 거른다. 못 재면 제외한다 — 추정으로 통과시키지 않는다.
+    //  ★공고 총량 상한도 둔다. 뉴스가 주력이어야 하는데 공고가 자리를 다 먹으면 레인이 죽는다.
+    const NOTICE_CAP = 4;
+    let noticeUsed = 0;
+    const demandOk = async (keyword: string): Promise<boolean> => {
+      if (noticeUsed >= NOTICE_CAP) return false;
+      const d = await measureTopicDemand(keyword);
+      if (!hasRealDemand(d)) {
+        // 사유 코드는 기존 집합을 쓴다(진단 화면이 이 값으로 집계한다) — 상세는 로그로 남긴다.
+        drops.push({ keyword, title: keyword, reason: "dead_or_niche" });
+        console.log(`[notice-demand] 제외: ${keyword} — ${d ? `${d.via} 월 ${d.monthly}회` : "측정 불가"}`);
+        return false;
+      }
+      noticeUsed += 1;
+      return true;
+    };
+
     // ★청약홈 공고 씨앗(2026-07-08 유저 승인 — 돈+행동 1단계): 경제 계열 카테고리만, LLM 선별 우회(실값 보존 — 공고일·접수일·세대수 전부 API 실값)
     if (/경제|재테크|금융|부동산|투자|살아남|생활|정보/.test(category)) { // ★카테고리 폭 확대(실측 추적: sub_category 실값이 정규식 밖일 가능성)
       ah.ecoCategory = true;
@@ -306,6 +328,7 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
         const homes = await fetchApplyhomeSeeds();
         ah.fetched = homes.length;
         for (const h of homes) {
+          if (!(await demandOk(h.keyword))) continue;
           rows.push({
             category, keyword: h.keyword, title: h.title, news_context: h.newsContext,
             longtails: h.longtails ?? ([] as Longtail[]), source: "applyhome", created_at: new Date().toISOString(),
@@ -313,13 +336,14 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
             action_start: h.actionStart, action_end: h.actionEnd,
           } as (typeof rows)[number] & { action_start: string; action_end: string });
         }
-        ah.joined = homes.length;
-        if (homes.length) console.log(`[applyhome] ${category}: 공고 씨앗 ${homes.length}건 합류`);
+        ah.joined = noticeUsed;
+        console.log(`[applyhome] ${category}: 후보 ${homes.length}건 → 수요 통과 ${noticeUsed}건 합류`);
       } catch (e) { ah.error = e instanceof Error ? e.message.slice(0, 120) : "unknown"; }
       // ★보조금24(2단계 승인) — 기간 파싱된 신청형만(상시 제외), 조회수=실수요 정렬
       try {
         const govs = await fetchGov24Seeds();
-        for (const g of govs.slice(0, 4)) {
+        for (const g of govs.slice(0, 8)) {
+          if (!(await demandOk(g.keyword))) continue;
           rows.push({
             category, keyword: g.keyword, title: g.title, news_context: g.newsContext,
             longtails: [] as Longtail[], source: "gov24", created_at: new Date().toISOString(),
@@ -327,12 +351,13 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
             action_start: g.actionStart, action_end: g.actionEnd,
           } as (typeof rows)[number] & { action_start: string; action_end: string });
         }
-        if (govs.length) console.log(`[gov24] ${category}: 신청형 씨앗 ${Math.min(govs.length, 4)}건 합류`);
+        console.log(`[gov24] ${category}: 후보 ${govs.length}건 (누적 공고 ${noticeUsed}/${NOTICE_CAP})`);
       } catch (e) { console.log(`[gov24] 실패: ${e instanceof Error ? e.message : "unknown"}`); }
       // ★기업마당(3호) — 소상공인 대상 공고만(B2B 과제 게이트), 등록 48h·접수 창 규격 동일
       try {
         const biz = await fetchBizinfoSeeds();
-        for (const z of biz.slice(0, 3)) {
+        for (const z of biz.slice(0, 6)) {
+          if (!(await demandOk(z.keyword))) continue;
           rows.push({
             category, keyword: z.keyword, title: z.title, news_context: z.newsContext,
             longtails: [] as Longtail[], source: "bizinfo", created_at: new Date().toISOString(),
@@ -340,7 +365,7 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
             action_start: z.actionStart, action_end: z.actionEnd,
           } as (typeof rows)[number] & { action_start: string; action_end: string });
         }
-        if (biz.length) console.log(`[bizinfo] ${category}: 소상공인 공고 씨앗 ${Math.min(biz.length, 3)}건 합류`);
+        console.log(`[bizinfo] ${category}: 후보 ${biz.length}건 (누적 공고 ${noticeUsed}/${NOTICE_CAP})`);
       } catch (e) { console.log(`[bizinfo] 실패: ${e instanceof Error ? e.message : "unknown"}`); }
     }
 
