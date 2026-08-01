@@ -3,6 +3,7 @@ import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/sup
 import { generateArticle } from "@/lib/generateArticle";
 import { pickWpTopic } from "@/lib/googleTopics";
 import { adsenseUnsafe } from "@/lib/cardFinalGate";
+import { endedProgramOf } from "@/lib/discontinued";
 import { spendCredits, addCredits } from "@/lib/credits";
 import { WP_GENERATE_COST } from "@/lib/creditPacks";
 import { WP_DAILY_HARD_CAP } from "@/lib/scoreWeights";
@@ -41,6 +42,9 @@ export async function POST() {
   if (!pick) return NextResponse.json({ error: "지금 쓸 수 있는 글감을 찾지 못했어요. 잠시 뒤 다시 시도해 주세요." }, { status: 404 });
   const bad = adsenseUnsafe(pick.keyword);
   if (bad) return NextResponse.json({ error: "광고 정책에 맞지 않는 주제가 걸러졌어요. 다시 시도해 주세요." }, { status: 409 });
+  // ★폐지·종료 제도 차단(2026-08-01) — 이 경로도 finalGate를 안 탄다. 지금 가입 못 하는 제도로 글을 쓰면
+  //  독자가 헛걸음하므로 광고 정책과 같은 급으로 끊는다.
+  { const ep = endedProgramOf(pick.keyword); if (ep) return NextResponse.json({ error: `'${ep.name}'은 ${ep.since}이라 글감에서 제외했어요. 다시 시도해 주세요.` }, { status: 409 }); }
 
   const balance = await spendCredits(user.id, WP_GENERATE_COST, "wp_auto");
   if (balance === null) return NextResponse.json({ error: "크레딧이 부족해요.", code: "NO_CREDITS" }, { status: 402 });

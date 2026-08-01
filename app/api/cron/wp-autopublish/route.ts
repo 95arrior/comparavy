@@ -3,6 +3,7 @@ import { createSupabaseAdminClient, hasSupabaseEnv } from "@/lib/supabase-server
 import { generateArticle } from "@/lib/generateArticle";
 import { pickWpTopic } from "@/lib/googleTopics";
 import { adsenseUnsafe } from "@/lib/cardFinalGate";
+import { endedProgramOf } from "@/lib/discontinued";
 import { factVerdict } from "@/lib/factGate";
 import { scanCompliance } from "@/lib/complianceFilter";
 import { lacksInterpretation, lacksConditionBranch, isOverusedTitleShape } from "@/lib/editorial";
@@ -67,6 +68,9 @@ export async function GET(request: Request) {
       if (!pick) { results.push({ blog: b.id, result: "no_topic" }); continue; }
       // ★애드센스 정책 이중 가드(2026-07-12) — 선별이 걸렀어도 발행 직전 최종 확인(광고 정책 위반 글 자동발행 금지)
       { const bad = adsenseUnsafe(pick.keyword); if (bad) { results.push({ blog: b.id, result: `adsense_unsafe:${bad}` }); continue; } }
+      // ★폐지·종료 제도 스킵(2026-08-01) — WP는 finalGate를 타지 않으므로 여기서 따로 막는다.
+      //  '재형저축'처럼 지금 가입이 안 되는 제도로 글을 쓰면 독자가 헛걸음한다.
+      { const ep = endedProgramOf(pick.keyword); if (ep) { results.push({ blog: b.id, result: `ended_program:${ep.name}` }); continue; } }
 
       const balance = await spendCredits(b.user_id, WP_GENERATE_COST, "wp_auto");
       if (balance === null) { results.push({ blog: b.id, result: "no_credits" }); continue; }

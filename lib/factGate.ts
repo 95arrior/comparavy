@@ -8,6 +8,7 @@
 //  ★정답값은 여기서 만들지 않는다 — lib/financeCalc의 RATES 하나만 본다(값이 두 곳에 있으면 반드시 갈라진다).
 
 import { ASOF, RATES } from "@/lib/financeCalc";
+import { findEndedMisuse, endedNotice } from "@/lib/discontinued";
 
 export type FactLayer = "value" | "structure" | "missing";
 export type FactSeverity = "block" | "warn";
@@ -298,6 +299,23 @@ export function scanFacts(text: string, keyword: string): FactIssue[] {
       reason: "모델은 학습 시점 기준으로 '예정'을 씁니다. 이미 시행됐을 가능성이 높고, 시행된 제도를 예정으로 쓰면 글 전체가 낡아 보입니다.",
       fix: "시행 여부를 확인해 현재 시점 기준으로 단정합니다. 확인이 안 되면 그 문장을 뺍니다.",
       count: pending.length,
+    });
+  }
+
+  // 2층 — 폐지·종료 제도를 현재 가입 가능한 것처럼 씀(2026-08-01 유저 지시 "빡세게").
+  //  ★구조 오류로 분류한다 — 숫자가 아니라 제도 자체를 잘못 이해한 것이고, 문장이 자연스러워 사람 눈에도 안 걸린다.
+  //  독자가 그대로 따라 하면 실제로 헛걸음하므로 block이다. 사전은 lib/discontinued 한 곳(값 이원화 금지).
+  for (const hit of findEndedMisuse(plain)) {
+    issues.push({
+      layer: "structure",
+      severity: "block",
+      matched: hit.context,
+      title: `지금은 가입할 수 없는 제도입니다 — ${hit.program.name}`,
+      reason: endedNotice(hit.program),
+      fix: hit.program.replacement
+        ? `해당 문단을 다시 씁니다. '${hit.program.name}은 ${hit.program.since}'를 명시하고, 지금 가입 가능한 ${hit.program.replacement}로 안내를 돌립니다.`
+        : `해당 문단을 다시 씁니다. '${hit.program.name}은 ${hit.program.since}'를 명시하고 현재 신청 가능한 제도로 안내를 돌립니다.`,
+      count: 1,
     });
   }
 

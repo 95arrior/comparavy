@@ -3,6 +3,7 @@
 //  '강서구 평생교육이용권'·'대구 섬유염색업'이 무검문 통과). 규칙은 여기 한 곳에만 추가한다.
 import { scanLifespan } from "./topicLifespan";
 import { poolScore } from "./trafficPool";
+import { endedProgramOf } from "./discontinued";
 
 export interface GateCard { keyword: string; title: string; newsContext?: string }
 export interface GateDrop { keyword: string; reason: string }
@@ -117,6 +118,10 @@ export function finalGate<T extends GateCard>(cards: T[]): { pass: T[]; drops: G
     const text = `${c.title} ${c.keyword}`;
     // 1) 지역 협소 — 지역명이 박힌 글감은 전국 풀 신호(전국민 주제·인기지 청약 등)가 없으면 부적격.
     //    '서울시 출산가구 720만'(대집단+광역 4점)은 통과, '강서구 평생교육이용권'(0~1점)은 컷.
+    // ★폐지·종료 제도 하드컷(2026-08-01 유저 지시 "빡세게") — 실측: '재형저축'(2015년 가입 종료)이
+    //  "세금 우대받으며 모으는 방법"으로 글감에 떴다. 검색은 되지만 지금 가입하러 가면 헛걸음한다.
+    //  품질이 아니라 독자가 실제로 손해를 보는 오류라 스팸 대출과 같은 급으로 끊는다. 사전은 lib/discontinued 한 곳.
+    { const ep = endedProgramOf(text); if (ep) { drops.push({ keyword: c.keyword, reason: `ended:${ep.name}` }); continue; } }
     if (SCAM_LOAN_RE.test(text)) { drops.push({ keyword: c.keyword, reason: "scam_loan" }); continue; } // 대기업 사칭 대출(삼성재단대출류) — 법적 안전, 양 채널 하드컷
     if (SPECULATIVE_RE.test(`${text} ${(c.newsContext ?? "").slice(0, 120)}`)) { drops.push({ keyword: c.keyword, reason: "speculative" }); continue; } // 유령 제도 — 지역 구제보다 먼저
     if (HARD_B2B_RE.test(text)) { drops.push({ keyword: c.keyword, reason: "b2b-hard" }); continue; }
