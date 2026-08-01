@@ -47,7 +47,8 @@ export async function composeThumbnail(opts: {
   //  ★두 관문을 다 통과해야 한다: ①글자 없음(fail-closed — 예외 조항 금지) ②작게 줄여도 판독됨(fail-open).
   if (opts.textless && imageReady()) {
     // ★제목에서 소재를 뽑는다(2026-08-02) — 유형 고정 소재는 제목과 무관한 그림을 만든다. 실패하면 유형 폴백.
-    const subject = await subjectFromTitle(opts.topicHint ?? "", opts.textless.betType);
+    const picked = await subjectFromTitle(opts.topicHint ?? "", opts.textless.betType);
+    const subject = picked?.en ?? null;
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
         const img = await generateTextlessThumb(opts.textless.betType, opts.userId, (opts.variant ?? 0) + attempt * 7, subject, opts.topicHint);
@@ -65,7 +66,7 @@ export async function composeThumbnail(opts: {
     }
     // ★AI 2회 실패 — 직접 찍기로 넘긴다. 억지로 조판 카드를 내보내지 않는다(무문구를 고른 이유가 사라진다).
     console.log(`[textless] ${opts.textless.betType} — AI 2회 실패(${aiFailReason}), 촬영 주문서로 전환`);
-    return { png: Buffer.alloc(0), usedAiBackground: false, aiFailReason, manualBrief: manualShotBrief(opts.textless.betType, opts.userId, opts.topicHint) };
+    return { png: Buffer.alloc(0), usedAiBackground: false, aiFailReason, manualBrief: manualShotBrief(opts.textless.betType, opts.userId, opts.topicHint, picked?.ko ?? null) };
   }
 
   let bgDataUrl: string | null = opts.customBgDataUrl ?? null; // 유저 배경 우선 — AI 호출 없음

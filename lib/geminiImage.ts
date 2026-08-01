@@ -347,7 +347,8 @@ export async function generateThumbBackground(bgStyleHint: string, paletteHint: 
  *  프롬프트는 lib/thumbSubject가 조립한다(소재 문법 × 계정별 사진 프리셋).
  */
 export async function generateTextlessThumb(betType: string, userId: string, variant = 0, subject?: string | null, title?: string | null): Promise<{ base64: string; mime: string; provider: string }> {
-  return callImage(buildTextlessThumbPrompt(betType, userId, variant, subject, title), "1:1");
+  // ★16:9(2026-08-02 유저 규격) — 무문구는 조판이 없어 정사각일 이유가 없다.
+  return callImage(buildTextlessThumbPrompt(betType, userId, variant, subject, title), "16:9");
 }
 
 export const GEMINI_IMAGE_MODEL = MODEL;

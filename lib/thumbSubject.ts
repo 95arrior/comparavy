@@ -181,68 +181,55 @@ export function buildTextlessThumbPrompt(betType: string, userId: string, varian
   const p = photoPresetFor(userId);
   const subject = (subjectOverride ?? "").trim() || grammarFor(betType, title).subject;
   const seed = fnv1a(`${title ?? ""}|${subject}|${variant}`);
-  const framings = [
-    "held in one hand toward the camera",
-    "placed on a table, shot straight on",
-    "close up so it fills most of the frame",
-    "on a shelf or wall where it normally sits",
-    "seen slightly from above at a natural angle",
-    "in the room where it is actually used, a bit of the surroundings visible",
+  // ★계정 지문은 배경 밝기 한 축만 남긴다 — 나머지는 유저 규격이 정한다.
+  const bg = p.tone.includes("dark") || p.tone.includes("blue-hour") || p.tone.includes("amber")
+    ? "a dark, simple single-color gradient background"
+    : "a bright, simple single-color gradient background";
+  const hides = [
+    "cropped by the frame edge so part of it is outside the picture",
+    "partly wrapped or covered by cloth",
+    "half sunk in shadow",
+    "seen from an angle that hides its far side",
+    "emerging from darkness, the rest swallowed by it",
   ];
-  const times = ["daylight from a window", "bright indoor light", "warm evening light", "overcast soft light"];
   return [
-    // ★2026-08-02 유저 레퍼런스(실제 네이버 홈피드 썸네일 8장)로 전면 단순화.
-    //  실물은 전부 '그냥 그 물건을 찍은 사진'이었다 — 유희왕 카드 박스, 손에 든 에어컨 리모컨,
-    //  여행지 가족 뒷모습, 야경 설치물. 예술 연출도 스케일 과장도 없다.
-    //  내가 만들던 동전 탑·의자 탑은 홈피드에 존재하지 않는 종류의 사진이었다.
-    //  ★규칙을 걷어낸다: 제목에 나오는 그것을 평범하게, 밝고 선명하게 찍는다. 그게 전부다.
-    `A normal photo for a Korean blog post thumbnail. Square 1:1.`,
-    `What to shoot: ${subject}.`,
-    `Framing: ${framings[seed % framings.length]}.`,
-    `Light: ${p.tone}, ${times[(seed >>> 5) % times.length]}. Bright and clear, easy to see at a glance.`,
-    `Feel: an ordinary photo a real blogger would take with a phone. Not artistic, not staged, not a studio shot. Do not stack, pile or arrange things into sculptures — just photograph the thing as it normally is.`,
-    `It must be obvious what the photo is about even at thumbnail size.`,
-    `No faces. No brand logos or trademarks.`,
-    // ★글자 금지만은 남긴다 — 계정 리스크(유저 4회 지적)라 이건 취향 문제가 아니다.
-    `NO TEXT of any kind: no letters, numbers, Korean characters, signage, labels or watermarks. Surfaces that would normally carry writing must be blank or turned away.`,
+    // ★2026-08-02 유저 지급 프롬프트를 그대로 반영. 앞선 '평범한 폰 사진' 방향에서 다시 뒤집은 것이다 —
+    //  유저가 CTR 디자이너 규격(미니멀·림라이트·부분 은닉)을 직접 지정했다. 규격은 유저 몫이고 우리는 집행한다.
+    `You are a Korean blog thumbnail designer optimizing for click-through rate.`,
+    `Choose the single symbolic object a person would think of first for this topic, and remove everything else from the frame.`,
+    `The symbol: ${subject}.`,
+    `It occupies 60-80% of the frame. Nothing else is in the picture.`,
+    `Background: ${bg}. Simple, clean, empty.`,
+    `Lighting: strong rim light and glow around the subject.`,
+    // ★궁금증 장치 — 유저 규격의 핵심. 다 보여주면 클릭할 이유가 사라진다.
+    `★Do NOT show the object completely. Hide 20-40% of it — ${hides[seed % hides.length]}. The viewer should feel "why?", "what is that?", "what's inside?".`,
+    `Style: minimal like an Apple advertisement, curiosity-driving like a high-CTR YouTube thumbnail. Premium advertising photography, not an obvious digital composite.`,
+    `No brand names, no logos, no trademarked products.`,
+    // ★글자 금지만은 우리 규칙으로 남긴다 — 계정 리스크(유저 4회 지적).
+    `NO TEXT of any kind: no letters, numbers, Korean characters, signage, labels or watermarks.`,
   ].join("\n");
 }
 
 /** 유저가 직접 찍을 때 쓰는 한국어 주문서 — AI가 두 번 실패하면 이걸 보여준다.
- *  ★유형 키로 찾는다(2026-08-02): 종전엔 영어 소재 문자열을 키로 썼는데, 소재를 손볼 때마다
- *   번역이 조용히 안 맞았다(실측으로 회귀가 잡음). 소재는 계속 바뀌고 유형은 안 바뀐다. */
-const MANUAL_KO: Record<string, string> = {
-  "평균 위치확인": "동전 몇 개를 책상에 놓고 (옆에서 찍어 앞면이 안 보이게)",
-  "몰라서 못 받는 돈": "서랍에서 주머니나 봉투를 꺼내는 손",
-  "계산 충격": "동전 몇 개를 손에 쥐고 가까이서",
-  "통념 파괴": "저금통을 책상에 놓고",
-  "손해 공포 마감": "모래가 거의 다 떨어진 모래시계",
-  "인생 이벤트 돈 타임라인": "책상 위에 열쇠 하나",
-  "시장 급변 번역": "마트에서 장바구니를 든 채로",
-  "돈 격차 자극": "지갑을 펼쳐 놓고 (지폐는 뒷면으로)",
-};
-
-export function manualShotBrief(betType: string, userId: string, title?: string | null): string {
-  const g = grammarFor(betType, title);
+ *  ★소재는 그 글에서 뽑은 것을 그대로 쓴다(2026-08-02 실측: 새만금 채용 글에 '동전 몇 개'라는
+ *   엉뚱한 주문서가 나갔다 — 유형 폴백 표를 쓰고 있어서 제목과 무관했다). */
+export function manualShotBrief(_betType: string, userId: string, title?: string | null, subjectKo?: string | null): string {
   const p = photoPresetFor(userId);
+  const dark = p.tone.includes("dark") || p.tone.includes("blue-hour") || p.tone.includes("amber");
   return [
-    `[대표컷 주문서] ${g.device}형`,
-    `무엇을: ${MANUAL_KO[betType] ?? "동전을 높이 쌓아 옆에서 (앞면이 안 보이게)"}`,
-    `어떻게: ${p.angle.includes("overhead") ? "위에서 수직으로" : p.angle.includes("macro") ? "아주 가까이 접사로" : p.angle.includes("45") ? "45도 비스듬히" : "정면 눈높이에서"}, ${p.hands ? "손이 살짝 들어가도 좋아요(얼굴은 금지)" : "사물만, 사람 없이"}`,
-    `배경: ${p.backdrop.includes("wooden") ? "나무 책상" : p.backdrop.includes("linen") ? "천(리넨) 위" : p.backdrop.includes("wall") ? "밝은 벽 앞" : "단색 배경"}, 잡동사니 없이`,
-    `★특별하게 연출하지 마세요 — 평소에 있는 그대로, 밝고 선명하게 찍으면 됩니다.`,
-    `★피사체가 화면의 60% 이상을 채우게. 작게 줄여도 뭔지 알아볼 수 있어야 해요.`,
-    `★글자가 보이면 안 됩니다 — 고지서·영수증·통장처럼 글자 있는 물건은 쓰지 마세요.`,
-  ].join("\n");
+    `[대표컷 주문서]`,
+    title ? `글: ${String(title).slice(0, 40)}` : "",
+    `무엇을: ${(subjectKo ?? "").trim() || "이 글 하면 가장 먼저 떠오르는 물건 하나"}`,
+    `어떻게: 그 물건 하나만. 화면의 60~80%를 채우게 크게.`,
+    `배경: ${dark ? "어두운" : "밝은"} 단색 배경, 다른 물건 없이 깨끗하게`,
+    `빛: 물건 가장자리에 빛이 걸리게(역광·측광). 밋밋하지 않게.`,
+    `★다 보여주지 마세요 — 20~40%는 잘리거나 그림자에 묻히게. "뭐지?" 싶어야 눌러요.`,
+    `★글자가 보이면 안 됩니다 — 고지서·영수증·간판처럼 글자 있는 물건은 쓰지 마세요.`,
+    `★브랜드 로고가 보이면 안 됩니다.`,
+  ].filter(Boolean).join("\n");
 }
 
-/**
- * ★제목 → 썸네일 소재(2026-08-02 유저 확정: "제목과 연관있게").
- *  종전엔 소재가 홈판 유형 8종에 고정돼 있었다 — "에어컨 하루 10시간, 8월 전기요금" 글에 동전 탑이 붙었고,
- *  같은 유형이면 매번 같은 그림이라 중복까지 났다. 이제 그 글의 제목에서 뽑는다.
- *  ★실패하면 null → 호출측이 유형 폴백 소재를 쓴다(빈손이 엉뚱한 그림보다 낫다).
- */
-export async function subjectFromTitle(title: string, betType: string): Promise<string | null> {
+export async function subjectFromTitle(title: string, betType: string): Promise<{ en: string; ko: string } | null> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   const t = (title ?? "").trim();
   if (!apiKey || t.length < 2) return null;
@@ -260,17 +247,17 @@ export async function subjectFromTitle(title: string, betType: string): Promise<
         `Two rules only:`,
         `1. It must carry no writing — no receipts, documents, screens, signs, calendars or labels (their whole point is text, and the image will be rejected).`,
         `2. No brand logos or trademarked products. Describe it generically.`,
-        `Answer with JSON only: {"subject":"<short plain English phrase naming the thing and how it is shown>"}`,
+        `Answer with JSON only: {"subject":"<short plain English phrase naming the thing>","ko":"<같은 것을 한국어 한 구절로 — 유저가 직접 찍을 때 보는 주문서에 들어간다>"}`,
       ].join("\n") }],
     });
     const text = res.content.find((b) => b.type === "text")?.text ?? "";
     const m = text.match(/\{[\s\S]*\}/);
     if (!m) return null;
-    const j = JSON.parse(m[0]) as { subject?: string };
+    const j = JSON.parse(m[0]) as { subject?: string; ko?: string };
     const sub = (j.subject ?? "").trim();
     if (!sub || /[가-힣]/.test(sub)) return null;
     // ★글자가 본질인 물건만 막는다(단어 경계 필수 — de(sign)·(paper)clip 오탐 방지).
     if (/\b(receipts?|invoices?|bills?|documents?|bankbooks?|passbooks?|screens?|displays?|signs?|signage|labels?|calendars?|newspapers?|books?|notes?|notebooks?|papers?)\b/i.test(sub)) return null;
-    return sub.slice(0, 120);
+    return { en: sub.slice(0, 120), ko: (j.ko ?? "").trim().slice(0, 60) || sub.slice(0, 60) };
   } catch { return null; }
 }
