@@ -12,7 +12,9 @@ export const BODY_ALIGN: "center" | "left" = "center"; // ★2026-07-10 최종(�
 
 // ★AI 이미지 재개(유저 결정 2026-07-05) — 검토 화면 슬롯별 생성 버튼(✦·크레딧 표기)로 부활.
 //  해제 조건이던 스타일 다양화는 시드 회전(톤5×구도5×무드5)으로 충족. 슬롯 인덱스 문서순 단일화 완료.
-export const AI_IMAGES_ENABLED = true;
+// ★2026-08-02 유저 지시: 본문 이미지 AI 생성 버튼을 숨긴다(코드는 보존, 플래그만 오프).
+//  대표컷(무문구 썸네일)은 별개 경로라 영향 없다 — 여기는 본문 슬롯 얘기다.
+export const AI_IMAGES_ENABLED = false;
 
 // 글 생성 시트의 '이미지 동시 생성' 토글 — 계속 오프(생성 흐름은 침묵·심플 유지, 이미지는 검토 화면에서).
 export const AI_IMAGES_AT_CREATE = false;
