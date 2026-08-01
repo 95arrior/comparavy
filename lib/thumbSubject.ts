@@ -29,17 +29,17 @@ export interface SubjectGrammar {
 // ★소재 선정 기준: (1)글자가 없어도 성립 (2)피사체 1개(대비형은 같은 사물 2개) (3)AI가 잘 그리는 것
 //  — 사람 전신·복잡한 실내·서류 내용은 뺐다(AI 티가 가장 심하게 나는 3종).
 export const SUBJECT_GRAMMAR: SubjectGrammar[] = [
-  { betType: "평균 위치확인", device: "대비", subject: "two stacks of coins side by side seen from the side, one clearly taller, only the rims visible" },
-  { betType: "몰라서 못 받는 돈", device: "발견", subject: "a fabric drawstring pouch overflowing so much it cannot close, half pulled from the back of a drawer" },
-  { betType: "계산 충격", device: "압도", subject: "a tall precarious tower of stacked coins seen from the side, only the rims visible, extreme close-up" },
-  { betType: "통념 파괴", device: "반전", subject: "a shattered ceramic piggy bank with its contents scattered wide across the table" },
-  { betType: "손해 공포 마감", device: "시간", subject: "a wide scatter of coins seen from the side with only two left standing on their rims, the rest already swept away" },
-  { betType: "인생 이벤트 돈 타임라인", device: "정황", subject: "a completely emptied desk drawer with only one key left in the corner" },
-  { betType: "시장 급변 번역", device: "번역", subject: "a shopping basket overflowing far past its rim, shot so close it fills the frame" },
-  { betType: "돈 격차 자극", device: "대비", subject: "two piles of banknotes face-down side by side, one thick tall pile and one with two notes left" },
+  { betType: "평균 위치확인", device: "대비", subject: "a small pile of coins on a table, shot from the side so the rims face the camera" },
+  { betType: "몰라서 못 받는 돈", device: "발견", subject: "a hand pulling a small fabric pouch out of a drawer" },
+  { betType: "계산 충격", device: "압도", subject: "a hand holding a few coins, close up" },
+  { betType: "통념 파괴", device: "반전", subject: "a ceramic piggy bank on a desk" },
+  { betType: "손해 공포 마감", device: "시간", subject: "an hourglass on a windowsill with the sand nearly run out" },
+  { betType: "인생 이벤트 돈 타임라인", device: "정황", subject: "a house key on a wooden desk" },
+  { betType: "시장 급변 번역", device: "번역", subject: "a shopping basket with groceries in a store aisle" },
+  { betType: "돈 격차 자극", device: "대비", subject: "a leather wallet open on a table with a few folded notes inside, face down" },
 ];
 
-const FALLBACK_SUBJECT = "a small stack of coins seen from the side on a plain surface, only the rims visible";
+const FALLBACK_SUBJECT = "a few coins and a piggy bank on a desk";
 
 /** ★device별 연출(2026-08-02 유저 확정: "그냥 딱 어그로, 씹 어그로, 무조건 클릭").
  *  차분한 스냅으로 몰아놨던 걸 되돌린다 — 홈피드에서 지는 건 못생긴 사진이 아니라 '안 보이는 사진'이다.
@@ -95,16 +95,9 @@ export const DEVICE_STAGING: Record<SubjectGrammar["device"], string[]> = {
  *  탑은 화면을 뚫고 올라가고 세어보고 싶어지는데, 지갑은 그냥 놓여 있다. 조용하면 스크롤된다. */
 export const SCALE_RULE = "★It must stop a thumb mid-scroll. Quantity is one way (far more or far emptier than normal) but not the only one — extreme closeness, a strange angle, something caught mid-motion, one thing isolated in a huge empty frame, or a scale that feels wrong all work. Pick whichever fits this subject. ★A subject simply placed in the middle of a table with nothing happening is a failure.";
 
-export function grammarFor(betType: string, title?: string | null): SubjectGrammar {
-  const base = SUBJECT_GRAMMAR.find((g) => g.betType === betType)
-    ?? { betType, device: "정황" as const, subject: FALLBACK_SUBJECT };
-  // ★유형이 안 넘어오면(썸네일 메이커 수동 경로) 제목에서 연출을 고른다 —
-  //  안 그러면 전부 기본값 '계산 충격'=압도로 떨어져 모든 썸네일이 탑이 된다(실측).
-  const t = (title ?? "").trim();
-  if (!SUBJECT_GRAMMAR.some((g) => g.betType === betType) && t) {
-    return { ...base, device: deviceFromTitle(t) };
-  }
-  return base;
+export function grammarFor(betType: string, _title?: string | null): SubjectGrammar {
+  return SUBJECT_GRAMMAR.find((g) => g.betType === betType)
+    ?? { betType, device: "정황", subject: FALLBACK_SUBJECT };
 }
 
 /* ── 사진 프리셋 7석 ────────────────────────────────────────────────────
@@ -185,52 +178,33 @@ const TIMES = ["early morning light", "flat midday light", "late afternoon golde
 function pickBy(seed: number, arr: readonly string[]): string { return arr[seed % arr.length]!; }
 
 export function buildTextlessThumbPrompt(betType: string, userId: string, variant = 0, subjectOverride?: string | null, title?: string | null): string {
-  const g = grammarFor(betType, title);
   const p = photoPresetFor(userId);
-  const subject = (subjectOverride ?? "").trim() || g.subject; // ★제목에서 뽑은 소재 우선
-  const scene = isSceneSubject(subject);
-  // ★회전 시드 = 제목 + 재시도 회차. 같은 글은 재현되고, 글이 다르면 조합이 달라진다.
+  const subject = (subjectOverride ?? "").trim() || grammarFor(betType, title).subject;
   const seed = fnv1a(`${title ?? ""}|${subject}|${variant}`);
-  const forms = DEVICE_STAGING[g.device];
-  const staging = forms[seed % forms.length]!;
-  // ★연출이 이미 화각을 지정하면(wide/close/macro/low angle/underneath) 카메라 축은 붙이지 않는다.
-  //  안 그러면 "wide view"인데 "extreme macro"라는 모순 지시가 나간다(실측으로 확인).
-  const stagingFixesFraming = /\b(wide|close|macro|low angle|underneath|overhead|split frame)\b/i.test(staging);
-  const angle = scene
-    ? "a wide sweeping view or a dramatic low angle that conveys scale"
-    : stagingFixesFraming ? null : pickBy(seed >>> 3, ANGLES);
-  const distance = pickBy(seed >>> 7, DISTANCES);
-  const time = pickBy(seed >>> 11, TIMES);
-  const poses = ["centered in frame", "slightly off-center to the left", "slightly off-center to the right", "pushed into one corner"];
+  const framings = [
+    "held in one hand toward the camera",
+    "placed on a table, shot straight on",
+    "close up so it fills most of the frame",
+    "on a shelf or wall where it normally sits",
+    "seen slightly from above at a natural angle",
+    "in the room where it is actually used, a bit of the surroundings visible",
+  ];
+  const times = ["daylight from a window", "bright indoor light", "warm evening light", "overcast soft light"];
   return [
-    // ★2026-08-02 실측 수정: 첫 줄이 "Editorial still-life photograph"이었는데 그게 곧 상업 사진 장르라
-    //  뒤에서 "NOT an advertisement"라고 말해도 소용이 없었다(판독성 검사가 2회 다 '광고처럼 보인다'로 반려).
-    //  장르 자체를 '집에서 대충 찍은 스냅'으로 바꾼다 — 홈피드에서 이기는 건 잘 찍은 사진이 아니라 진짜 같은 사진이다.
-    `An unstaged everyday snapshot, as if someone quickly photographed this at home with a phone. Square 1:1.`,
-    `Subject: ${subject}. ${scene ? "No faces. If people appear at all they are distant and anonymous." : p.hands ? "A single human hand may enter the frame, fingers partially visible, no face." : "Objects only, no people."}`,
-    `Lighting and tone: ${p.tone}, ${time}.`,
-    angle ? `Camera: ${angle}, ${poses[seed % poses.length]}, ${distance}.` : `Camera: follow the framing the staging implies, ${poses[seed % poses.length]}.`,
-    // ★어그로 연출 — 이 한 줄이 '스크롤을 멈추게 하는' 장치다(2026-08-02 유저 확정)
-    `Staging: ${staging}`,
-    SCALE_RULE,
-    // ★장소는 소재가 정한다(2026-08-02 실측: 안전모 탑이 거실에 놓였다).
-    //  계정 지문은 '어떤 빛으로 어떤 각도에서 찍는가'이지 '어디에 두는가'가 아니다 — 배경 고정이 소재와 충돌했다.
-    `Setting: put the subject where it actually belongs in real life — a hard hat belongs on a construction site, coins belong on a desk, an outdoor AC unit belongs on a wall or balcony. For small everyday objects ${p.backdrop} is fine. Uncluttered, never a studio.`,
-    // ★축소 생존 — 홈피드 썸네일은 200~400px로 렌더된다. 명함보다 작다.
-    `Composition: it must read clearly when shrunk to a thumbnail. If the subject is an OBJECT, it fills at least 60% of the frame with exactly one focal point and no scattered props. If the subject is a PLACE or SCENE (a wide field, a factory, a construction site), then instead go for overwhelming scale — a sweeping view or a dramatic low angle that makes the space feel vast. Either way the viewer must instantly know what they are looking at.`,
-    // ★2026-08-02 실측: 명함 더미가 나왔고 종이 뭉치로만 보였다. 평면 사물은 쌓으면 실루엣이 같아진다.
-    `Silhouette: if it is an object, it must be recognizable from its outline alone at thumbnail size — never flat paper-like things stacked into a featureless block. If it is a scene, the composition itself must be readable at that size.`,
-    // ★광고 냄새 제거
-    // ★2026-08-02 유저 확정으로 완화: 종전엔 "광고처럼 보이면 안 된다"를 강하게 걸었는데,
-    //  그게 이미지를 얌전하게 만들어 클릭률을 깎았다. 홈피드에서 지는 건 못생긴 사진이 아니라 안 보이는 사진이다.
-    //  '진짜 같은 사진'이라는 최소선만 남기고, 시선 강탈 쪽으로 연다.
-    `Style: shot like a real person's photo, not a studio product shot — natural uneven light, real shadows, slightly imperfect framing. But make it impossible to scroll past: bold scale, strong contrast between the subject and the background, dramatic angle. No smiling models, no logos, no branding.`,
-    // ★글자 금지 3중
-    `ABSOLUTELY NO TEXT of any kind: no letters, no numbers, no Korean characters, no signage, no labels, no watermarks, no printed documents, no receipts, no screens showing text. Any surface that would normally carry writing must be blank or turned away from the camera.`,
-    // ★2026-08-02 실측: 광고 톤을 고쳤더니 이번엔 글자 검출에 걸렸다. 원인은 동전이었다 —
-    //  동전 앞면에는 숫자(100·500)와 글자가 새겨져 있어서, 접사로 찍으면 그게 그대로 '글자'다.
-    //  소재를 버리지 않고 방향만 돌린다: 쌓거나 세워서 모서리만 보이게 하면 글자가 사라진다.
-    `Coins: if any coin appears, it must be stacked or standing on its rim so that only the smooth edge is visible. Never show the face of a coin — coin faces carry engraved numbers and letters, which count as text.`,
+    // ★2026-08-02 유저 레퍼런스(실제 네이버 홈피드 썸네일 8장)로 전면 단순화.
+    //  실물은 전부 '그냥 그 물건을 찍은 사진'이었다 — 유희왕 카드 박스, 손에 든 에어컨 리모컨,
+    //  여행지 가족 뒷모습, 야경 설치물. 예술 연출도 스케일 과장도 없다.
+    //  내가 만들던 동전 탑·의자 탑은 홈피드에 존재하지 않는 종류의 사진이었다.
+    //  ★규칙을 걷어낸다: 제목에 나오는 그것을 평범하게, 밝고 선명하게 찍는다. 그게 전부다.
+    `A normal photo for a Korean blog post thumbnail. Square 1:1.`,
+    `What to shoot: ${subject}.`,
+    `Framing: ${framings[seed % framings.length]}.`,
+    `Light: ${p.tone}, ${times[(seed >>> 5) % times.length]}. Bright and clear, easy to see at a glance.`,
+    `Feel: an ordinary photo a real blogger would take with a phone. Not artistic, not staged, not a studio shot. Do not stack, pile or arrange things into sculptures — just photograph the thing as it normally is.`,
+    `It must be obvious what the photo is about even at thumbnail size.`,
+    `No faces. No brand logos or trademarks.`,
+    // ★글자 금지만은 남긴다 — 계정 리스크(유저 4회 지적)라 이건 취향 문제가 아니다.
+    `NO TEXT of any kind: no letters, numbers, Korean characters, signage, labels or watermarks. Surfaces that would normally carry writing must be blank or turned away.`,
   ].join("\n");
 }
 
@@ -238,14 +212,14 @@ export function buildTextlessThumbPrompt(betType: string, userId: string, varian
  *  ★유형 키로 찾는다(2026-08-02): 종전엔 영어 소재 문자열을 키로 썼는데, 소재를 손볼 때마다
  *   번역이 조용히 안 맞았다(실측으로 회귀가 잡음). 소재는 계속 바뀌고 유형은 안 바뀐다. */
 const MANUAL_KO: Record<string, string> = {
-  "평균 위치확인": "동전을 두 더미로 쌓되 한쪽은 아주 높게, 다른 쪽은 두어 개만 남기고 (옆에서 찍어 앞면이 안 보이게)",
-  "몰라서 못 받는 돈": "빈 봉투를 여러 장 겹쳐 천 밑에서 삐져나오게",
-  "계산 충격": "동전을 아슬아슬할 만큼 높이 쌓아 올리고 아래에서 올려다보며 (옆면만 보이게)",
-  "통념 파괴": "저금통을 깨거나 엎어서 내용물이 넓게 흩어진 상태로",
-  "손해 공포 마감": "동전을 넓게 흩어놓고 딱 두 개만 세워 남기기 (나머지는 치운 티가 나게)",
-  "인생 이벤트 돈 타임라인": "서랍을 완전히 비우고 열쇠 하나만 구석에",
-  "시장 급변 번역": "장바구니가 넘치도록 채우고 아주 가까이서 화면 가득",
-  "돈 격차 자극": "지폐를 뒷면으로 두 더미 쌓되 한쪽은 두툼하게, 한쪽은 두 장만",
+  "평균 위치확인": "동전 몇 개를 책상에 놓고 (옆에서 찍어 앞면이 안 보이게)",
+  "몰라서 못 받는 돈": "서랍에서 주머니나 봉투를 꺼내는 손",
+  "계산 충격": "동전 몇 개를 손에 쥐고 가까이서",
+  "통념 파괴": "저금통을 책상에 놓고",
+  "손해 공포 마감": "모래가 거의 다 떨어진 모래시계",
+  "인생 이벤트 돈 타임라인": "책상 위에 열쇠 하나",
+  "시장 급변 번역": "마트에서 장바구니를 든 채로",
+  "돈 격차 자극": "지갑을 펼쳐 놓고 (지폐는 뒷면으로)",
 };
 
 export function manualShotBrief(betType: string, userId: string, title?: string | null): string {
@@ -256,7 +230,7 @@ export function manualShotBrief(betType: string, userId: string, title?: string 
     `무엇을: ${MANUAL_KO[betType] ?? "동전을 높이 쌓아 옆에서 (앞면이 안 보이게)"}`,
     `어떻게: ${p.angle.includes("overhead") ? "위에서 수직으로" : p.angle.includes("macro") ? "아주 가까이 접사로" : p.angle.includes("45") ? "45도 비스듬히" : "정면 눈높이에서"}, ${p.hands ? "손이 살짝 들어가도 좋아요(얼굴은 금지)" : "사물만, 사람 없이"}`,
     `배경: ${p.backdrop.includes("wooden") ? "나무 책상" : p.backdrop.includes("linen") ? "천(리넨) 위" : p.backdrop.includes("wall") ? "밝은 벽 앞" : "단색 배경"}, 잡동사니 없이`,
-    `★양이 '비정상'으로 보여야 해요 — 그냥 놓인 물건은 스크롤됩니다. 너무 많거나 너무 텅 비거나.`,
+    `★특별하게 연출하지 마세요 — 평소에 있는 그대로, 밝고 선명하게 찍으면 됩니다.`,
     `★피사체가 화면의 60% 이상을 채우게. 작게 줄여도 뭔지 알아볼 수 있어야 해요.`,
     `★글자가 보이면 안 됩니다 — 고지서·영수증·통장처럼 글자 있는 물건은 쓰지 마세요.`,
   ].join("\n");
@@ -275,23 +249,18 @@ export async function subjectFromTitle(title: string, betType: string): Promise<
   try {
     const Anthropic = (await import("@anthropic-ai/sdk")).default;
     const client = new Anthropic({ apiKey });
-    const g = grammarFor(betType, t);
     const res = await client.messages.create({
       model: "claude-haiku-4-5", max_tokens: 150,
       messages: [{ role: "user", content: [
-        `A Korean personal-finance blog post has this title: "${t.slice(0, 80)}"`,
-        `Pick ONE physical object to photograph for its thumbnail. The photo will use this staging: ${DEVICE_STAGING[g.device]}`,
-        `Rules — all mandatory:`,
-        `1. It must be a concrete object that makes the reader think of the title's topic within half a second. Money objects are ideal (coins, a piggy bank, a wallet, a jar of change), but if the topic is not about money itself, pick the object that most directly symbolizes it — a job fair means empty office chairs or hard hats, an apartment subscription means a door key or a scale model, an electricity bill means an air conditioner outdoor unit or a tangle of plugs.`,
-        `1b. It does NOT have to be a small object. A PLACE or SCENE is equally good when the topic is about a place or an industry — a vast empty development field, a factory skyline at dusk, a construction site with cranes, rows of empty office chairs. Choose whichever reads faster.`,
-        `1c. ★CRITICAL — if you choose an object, it must have a DISTINCT SILHOUETTE that survives being shrunk to 200px. Flat, thin, stackable-into-sameness objects are FORBIDDEN: business cards, brochures, flyers, leaflets, sheets of paper, files, folders, books, envelopes. When piled, all of those become an indistinguishable block of paper and the thumbnail says nothing.`,
-        `1d. ★No brand logos, company marks or trademarked products — not because of the topic but because we cannot put another company's mark on our own blog image. Describe the generic thing instead ("a car assembly plant", not a named carmaker).`,
-        `2. It must carry NO writing of any kind. Bills, receipts, documents, bankbooks, screens, signs, calendars, labeled packaging and coin faces are all FORBIDDEN — writing is their essence and the image will be rejected.`,
-        `3. One object only (or two identical objects if the staging is a contrast).`,
-        `4. It must be something an ordinary Korean household actually has.`,
-        `5. It must still read clearly when the image is shrunk to a 200px thumbnail — no fine detail.`,
-        `6. It must be something that can be piled, stacked, multiplied or emptied out, because the photo exaggerates quantity: ${SCALE_RULE}`,
-        `Answer with JSON only: {"subject":"<short English noun phrase describing the object and how it is arranged>"}`,
+        `A Korean blog post is titled: "${t.slice(0, 80)}"`,
+        `Name the ONE thing to photograph for its thumbnail so that someone scrolling instantly knows what the post is about.`,
+        // ★2026-08-02 전면 단순화 — 유저 레퍼런스(실제 홈피드 썸네일)는 전부 '제목에 나온 그것'을 그냥 찍은 사진이었다.
+        //  종전엔 돈 물건·실루엣·쌓을 수 있는 것 같은 제약을 겹겹이 걸어 엉뚱한 소재로 흘렀다.
+        `Just pick the most obvious real thing from the title — if the post is about air conditioner bills, that is an air conditioner remote or the unit itself; if it is about a job fair, that is a factory or a work site; if it is about pension, that is a bankbook-free object like a piggy bank or an elderly person's hands. Do not be clever or symbolic.`,
+        `Two rules only:`,
+        `1. It must carry no writing — no receipts, documents, screens, signs, calendars or labels (their whole point is text, and the image will be rejected).`,
+        `2. No brand logos or trademarked products. Describe it generically.`,
+        `Answer with JSON only: {"subject":"<short plain English phrase naming the thing and how it is shown>"}`,
       ].join("\n") }],
     });
     const text = res.content.find((b) => b.type === "text")?.text ?? "";
@@ -300,29 +269,8 @@ export async function subjectFromTitle(title: string, betType: string): Promise<
     const j = JSON.parse(m[0]) as { subject?: string };
     const sub = (j.subject ?? "").trim();
     if (!sub || /[가-힣]/.test(sub)) return null;
-    // ★단어 경계 필수(2026-08-02 실측): 경계 없이 썼다가 de(sign)·(paper)clip이 걸려
-    //  멀쩡한 소재가 버려졌다 — 에어컨 글에도 폴백 동전 탑이 나온 원인이다.
+    // ★글자가 본질인 물건만 막는다(단어 경계 필수 — de(sign)·(paper)clip 오탐 방지).
     if (/\b(receipts?|invoices?|bills?|documents?|bankbooks?|passbooks?|screens?|displays?|signs?|signage|labels?|calendars?|newspapers?|books?|notes?|notebooks?|papers?)\b/i.test(sub)) return null;
-    // ★평면 사물 차단(2026-08-02 실측): '새만금 일자리박람회' 글에 명함 더미가 나왔고 종이 뭉치로만 보였다.
-    //  얇고 평평한 것은 쌓으면 실루엣이 전부 같아져 200px에서 무엇인지 사라진다 — 스케일 규칙과 최악의 조합이다.
-    if (/\b(business\s*cards?|name\s*cards?|brochures?|flyers?|leaflets?|pamphlets?|sheets?|files?|folders?|envelopes?|stack of paper)\b/i.test(sub)) return null;
     return sub.slice(0, 120);
   } catch { return null; }
-}
-
-/**
- * ★제목에서 연출(device)을 고른다(2026-08-02 실측: 모든 썸네일이 탑이 됐다).
- *  원인은 betType이 썸네일 시트까지 안 넘어가 전부 기본값('계산 충격'=압도=쌓기)으로 떨어진 것이다.
- *  DB 배선(selection_meta) 대신 제목 신호로 고른다 — 글마다 실제로 갈리고, 배선이 필요 없다.
- *  ★홈판 카드에서 betType이 넘어오면 그쪽이 우선이다(호출측이 정한다).
- */
-export function deviceFromTitle(title: string): SubjectGrammar["device"] {
-  const t = String(title || "");
-  if (/(마감|기한|까지|놓치면|끝나|종료|D-\d)/.test(t)) return "시간";
-  if (/(잘못|오해|사실은|알고\s*보면|의외|함정|아닙니다|오히려)/.test(t)) return "반전";
-  if (/(vs|비교|차이|어느|둘\s*중|보다)/.test(t)) return "대비";
-  if (/(못\s*받|숨은|안\s*찾|모르면|놓친|찾아가)/.test(t)) return "발견";
-  if (/(평균|중위|얼마나|몇\s*%|통계|격차|순위)/.test(t)) return "압도";
-  if (/(신청|조회|발급|접수|방법|순서|절차)/.test(t)) return "정황";
-  return "번역";
 }
