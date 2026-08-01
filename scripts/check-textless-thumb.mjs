@@ -32,7 +32,12 @@ ok(grammarFor("없는유형").subject.length > 0, "미등록 유형은 폴백 �
   ok(/one focal point/i.test(p), "★단일 피사체 요구");
   ok(/60%/.test(p), "★피사체가 화면 60% 이상(축소 생존)");
   ok(/thumbnail/i.test(p) && /shrunk/i.test(p), "작게 줄여도 읽히게 요구");
-  ok(/NOT a stock photo|NOT an advertisement/i.test(p), "★스톡·광고 톤 금지(광고로 보이면 스크롤된다)");
+  ok(/NOT a magazine, catalog, product shot, or advertisement/i.test(p), "★광고·카탈로그 톤 금지(광고로 보이면 스크롤된다)");
+  // ★2026-08-02 실측: 첫 줄이 "Editorial still-life photograph"이라 판독성 검사가 2회 다 '광고처럼 보인다'로 반려했다.
+  //  상업 사진 장르 어휘를 앞에 두면 뒤에서 아무리 부정해도 소용없다 — 그 어휘가 다시 들어오는지 검사한다.
+  ok(!/editorial|still-life|studio|seamless backdrop.{0,20}$/im.test(p.split("\n")[0]), "★첫 줄에 상업 사진 장르 어휘가 없다");
+  ok(/snapshot|phone/i.test(p), "★스냅 사진 장르로 지정(진짜 같은 사진이 이긴다)");
+  ok(/personal blog/i.test(p), "개인 블로그 사진임을 명시");
   ok(/no smiling models|no face/i.test(p), "얼굴 금지");
   ok(!/text overlay|caption|headline/i.test(p), "조판 관련 지시가 섞여 있지 않다(무문구다)");
 }

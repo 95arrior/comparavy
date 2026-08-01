@@ -61,12 +61,12 @@ export interface PhotoPreset {
 }
 
 export const PHOTO_PRESETS: PhotoPreset[] = [
-  { seat: 0, tone: "desaturated minimal, cool neutral grays", angle: "straight overhead flat lay", backdrop: "seamless solid background", hands: false },
+  { seat: 0, tone: "desaturated minimal, cool neutral grays", angle: "straight overhead flat lay", backdrop: "plain matte tabletop, nothing else on it", hands: false },
   { seat: 1, tone: "warm natural daylight, soft film grain", angle: "45-degree three-quarter view", backdrop: "worn wooden desk surface", hands: true },
-  { seat: 2, tone: "bright clean morning light", angle: "straight-on eye level", backdrop: "plain bright wall", hands: false },
+  { seat: 2, tone: "bright morning light coming through a window", angle: "straight-on eye level", backdrop: "plain bright wall", hands: false },
   { seat: 3, tone: "soft overcast diffused light", angle: "extreme macro close-up", backdrop: "blurred indoor depth of field", hands: false },
   { seat: 4, tone: "warm amber evening light, long shadows", angle: "45-degree three-quarter view", backdrop: "dark wooden surface", hands: true },
-  { seat: 5, tone: "calm blue-hour cool light", angle: "straight overhead flat lay", backdrop: "deep solid color background", hands: false },
+  { seat: 5, tone: "calm blue-hour cool light", angle: "straight overhead flat lay", backdrop: "dark matte table surface, nothing else on it", hands: false },
   { seat: 6, tone: "soft window light from the side", angle: "straight-on eye level", backdrop: "textured linen cloth", hands: false },
 ];
 
@@ -106,15 +106,18 @@ export function buildTextlessThumbPrompt(betType: string, userId: string, varian
   const p = photoPresetFor(userId);
   const poses = ["centered in frame", "slightly off-center to the left", "slightly off-center to the right"];
   return [
-    `Editorial still-life photograph for a personal finance blog thumbnail. Square 1:1.`,
+    // ★2026-08-02 실측 수정: 첫 줄이 "Editorial still-life photograph"이었는데 그게 곧 상업 사진 장르라
+    //  뒤에서 "NOT an advertisement"라고 말해도 소용이 없었다(판독성 검사가 2회 다 '광고처럼 보인다'로 반려).
+    //  장르 자체를 '집에서 대충 찍은 스냅'으로 바꾼다 — 홈피드에서 이기는 건 잘 찍은 사진이 아니라 진짜 같은 사진이다.
+    `An unstaged everyday snapshot, as if someone quickly photographed this at home with a phone. Square 1:1.`,
     `Subject: ${g.subject}. ${p.hands ? "A single human hand may enter the frame, fingers partially visible, no face." : "Objects only, no people."}`,
     `Lighting and tone: ${p.tone}.`,
     `Camera: ${p.angle}, ${poses[variant % poses.length]}.`,
-    `Background: ${p.backdrop}, uncluttered.`,
+    `Setting: ${p.backdrop}. A real lived-in home or desk, not a studio.`,
     // ★축소 생존 — 홈피드 썸네일은 200~400px로 렌더된다. 명함보다 작다.
     `Composition: the subject fills at least 60% of the frame and reads clearly even when the image is shrunk to a thumbnail. Exactly one focal point. No clutter, no scattered props.`,
     // ★광고 냄새 제거
-    `Style: authentic documentary photograph, natural imperfection, muted realistic color. NOT a stock photo, NOT an advertisement, no glossy studio polish, no smiling models, no logos, no branding.`,
+    `Style: it must look like a photo from a personal blog, NOT a magazine, catalog, product shot, or advertisement. Slightly imperfect framing, natural uneven lighting with real shadows, muted everyday color. No studio lighting, no seamless backdrop, no glossy polish, no smiling models, no logos, no branding, no props arranged for the camera.`,
     // ★글자 금지 3중
     `ABSOLUTELY NO TEXT of any kind: no letters, no numbers, no Korean characters, no signage, no labels, no watermarks, no printed documents, no receipts, no screens showing text. Any surface that would normally carry writing must be blank or turned away from the camera.`,
   ].join("\n");
