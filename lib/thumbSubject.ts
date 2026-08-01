@@ -244,14 +244,18 @@ export async function subjectFromTitle(title: string, betType: string): Promise<
         // ★2026-08-02 전면 단순화 — 유저 레퍼런스(실제 홈피드 썸네일)는 전부 '제목에 나온 그것'을 그냥 찍은 사진이었다.
         //  종전엔 돈 물건·실루엣·쌓을 수 있는 것 같은 제약을 겹겹이 걸어 엉뚱한 소재로 흘렀다.
         // ★2026-08-02 실측: '유리 상자·커튼' 같은 추상 조형이 나왔다. 추상은 주제를 못 말한다.
-        `Pick a CONCRETE, INSTANTLY RECOGNIZABLE object that people already associate with this topic — a job fair means an employee ID badge on a lanyard or a hard hat; air conditioner bills mean the remote or the outdoor unit; pension means a piggy bank; a housing subscription means a door key or an apartment model.`,
-        `★It must be a real, nameable thing. Never an abstract shape, a glass box, a cube, drapery, light beams or any sculpture-like invention — those say nothing about the topic.`,
-        `The object will be rendered as a glossy 3D hero product shot with neon rim light, so choose something that looks good rendered that way.`,
+        // ★2026-08-02 실측: 예시를 주면 모델이 그대로 베낀다. 건강보험료 글에 '사원증 + 공사장 크레인'이 나왔는데
+        //  그건 내가 프롬프트에 적어둔 예시 문장이었다. 기준만 남기고 예시는 전부 뺀다.
+        `Pick a CONCRETE, INSTANTLY RECOGNIZABLE physical object that a Korean reader already associates with THIS specific topic. Derive it from the title itself — do not reach for a generic "money" or "work" prop.`,
+        `★It must be a real, nameable thing with a distinctive shape. Never an abstract form (a box, a cube, drapery, light beams, a glowing panel) — those say nothing.`,
+        // ★카드·증서류 금지 — 글자를 빼면 빈 사각형이 된다(고지서와 같은 병).
+        `★Never a card, badge, ID, certificate, ticket, envelope or any flat rectangle whose meaning comes from what is printed on it. With the text removed those become a blank slab and the thumbnail says nothing.`,
+        `It will be rendered as a glossy 3D hero shot with neon rim light, so pick something with volume and a readable outline.`,
         `Two rules only:`,
         `1. It must carry no writing — no receipts, documents, screens, signs, calendars or labels (their whole point is text, and the image will be rejected).`,
         `2. No brand logos or trademarked products. Describe it generically.`,
         // ★배경 실루엣도 함께 뽑는다(2026-08-02 유저: "실루엣이라도 뒷쪽에 줘, 호기심 가게").
-        `Also name what should sit BEHIND it as a glowing night silhouette — a place tied to the topic (a factory skyline, cranes, an office tower, an apartment block). Generic structures only, never a named company.`,
+        `Also name what should sit BEHIND it as a glowing night silhouette — a real place tied to THIS topic specifically. Generic structures only, never a named company. If no place fits the topic, say "none".`,
         `Answer with JSON only: {"subject":"<short plain English phrase naming the thing>","backdrop":"<short English phrase for the background silhouette>","ko":"<소재를 한국어 한 구절로 — 유저가 직접 찍을 때 보는 주문서에 들어간다>"}`,
       ].join("\n") }],
     });
@@ -263,6 +267,10 @@ export async function subjectFromTitle(title: string, betType: string): Promise<
     if (!sub || /[가-힣]/.test(sub)) return null;
     // ★글자가 본질인 물건만 막는다(단어 경계 필수 — de(sign)·(paper)clip 오탐 방지).
     if (/\b(receipts?|invoices?|bills?|documents?|bankbooks?|passbooks?|screens?|displays?|signs?|signage|labels?|calendars?|newspapers?|books?|notes?|notebooks?|papers?)\b/i.test(sub)) return null;
+    // ★평평한 사각형 = 글자를 빼면 빈 판이 된다(2026-08-02 실측: 사원증이 빈 직사각형으로 나왔다).
+    if (/\b(cards?|badges?|IDs?|identification|certificates?|tickets?|envelopes?|passes?|placards?|panels?|plaques?)\b/i.test(sub)) return null;
+    // ★추상 조형도 여기서 한 번 더 막는다.
+    if (/\b(cube|box|panel|drapery|curtain|light beams?|glow(ing)? (rectangle|shape|form))\b/i.test(sub)) return null;
     return { en: sub.slice(0, 120), backdrop: (j.backdrop ?? "").trim().slice(0, 90) || null, ko: (j.ko ?? "").trim().slice(0, 60) || sub.slice(0, 60) };
   } catch { return null; }
 }

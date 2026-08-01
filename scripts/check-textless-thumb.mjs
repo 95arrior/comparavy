@@ -48,8 +48,29 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
 {
   const ts = fs.readFileSync(new URL("../lib/thumbSubject.ts", import.meta.url), "utf-8");
   ok(/CONCRETE, INSTANTLY RECOGNIZABLE/.test(ts), "★구체적이고 즉시 알아보는 물건을 요구");
-  ok(/Never an abstract shape, a glass box, a cube, drapery/.test(ts), "★추상 조형(유리상자·큐브·커튼) 금지");
-  ok(/employee ID badge/.test(ts), "예시가 레퍼런스와 같은 결(사원증)");
+  ok(/Never an abstract form/.test(ts), "★추상 조형 금지");
+  ok(!/employee ID badge/.test(ts), "★사원증 예시가 제거됨(모델이 베껴서 엉뚱한 글에 붙었다)");
+}
+
+// ── ③-2 예시 복사·빈 사각형 차단(2026-08-02 실측 사고) ────────────────
+//  건강보험료 글에 '사원증 + 공사장 크레인'이 나왔다. 그건 내가 프롬프트에 적어둔 예시 문장이었다.
+//  ★모델은 예시를 주면 베낀다. 그리고 사원증·카드류는 글자를 빼면 빈 사각형이 된다(고지서와 같은 병).
+{
+  const ts = fs.readFileSync(new URL("../lib/thumbSubject.ts", import.meta.url), "utf-8");
+  ok(!/employee ID badge on a lanyard or a hard hat/.test(ts), "★소재 예시가 프롬프트에서 제거됨(베끼기 방지)");
+  ok(!/a factory skyline, cranes, an office tower, an apartment block/.test(ts), "★배경 예시도 제거됨");
+  ok(/Derive it from the title itself/.test(ts), "제목에서 직접 도출하라고 지시");
+  ok(/Never a card, badge, ID, certificate/.test(ts), "★카드·증서류 금지(글자 빼면 빈 판)");
+  ok(/blank slab/.test(ts), "빈 판이 되는 이유를 명시");
+
+  const RE_FLAT = /\b(cards?|badges?|IDs?|identification|certificates?|tickets?|envelopes?|passes?|placards?|panels?|plaques?)\b/i;
+  const RE_ABS = /\b(cube|box|panel|drapery|curtain|light beams?|glow(ing)? (rectangle|shape|form))\b/i;
+  for (const t of ["a glowing employee ID badge on a lanyard", "a glass cube", "a curtain over a window"])
+    ok(RE_FLAT.test(t) || RE_ABS.test(t), "★빈 사각형·추상 조형 차단", t);
+  for (const t of ["a stethoscope coiled on a desk", "a hospital reception bell", "a pill organizer"])
+    ok(!RE_FLAT.test(t) && !RE_ABS.test(t), "멀쩡한 소재는 통과", t);
+  for (const g of SUBJECT_GRAMMAR)
+    ok(!RE_FLAT.test(g.subject) && !RE_ABS.test(g.subject), `[${g.betType}] 폴백도 빈 사각형이 아님`);
 }
 
 // ── ④ 네온 색이 글마다 갈리는가 ────────────────────────────────────────
