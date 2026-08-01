@@ -47,7 +47,7 @@ const FALLBACK_SUBJECT = "a small stack of coins seen from the side on a plain s
 export const DEVICE_STAGING: Record<SubjectGrammar["device"], string> = {
   대비: "Two piles of the SAME object with an absurd quantity gap — one towering, one down to a couple of pieces. The gap must be visible in half a second.",
   발견: "A huge quantity is hidden and only a small part spills into view, implying much more behind. Make the viewer want to pull the rest out.",
-  압도: "One object stacked or piled far beyond anything normal — towering, precarious, filling the frame top to bottom. Shot from a low angle so it looms over the viewer.",
+  압도: "Overwhelming quantity or size — but pick the form that actually fits this subject: stacked into a tower, spread wall-to-wall across the floor, lined up in endless rows, hanging in a dense cluster, or one single object shot so huge it fills the frame. ★Do not default to stacking — a tower of safety helmets in a living room is absurd. Shot from a low or wide angle so it looms.",
   반전: "A large quantity in a state it should never be in — toppled, spilled everywhere, broken open. The mess itself is the shock.",
   시간: "Almost everything is gone and only the last one or two remain, with the empty space where the rest used to be clearly visible.",
   정황: "The aftermath, made extreme — either an abnormally large amount left behind, or a space so completely emptied that the absence is loud.",
@@ -59,9 +59,16 @@ export const DEVICE_STAGING: Record<SubjectGrammar["device"], string> = {
  *  탑은 화면을 뚫고 올라가고 세어보고 싶어지는데, 지갑은 그냥 놓여 있다. 조용하면 스크롤된다. */
 export const SCALE_RULE = "★The quantity or scale must feel ABNORMAL — for an object that means far more or far emptier than normal; for a place that means overwhelming vastness or a dramatic low angle — far more, far taller, or far emptier than could ever be normal. A single object simply placed on a table is a failure. If the viewer would not react with 'whoa, that much?', it is wrong.";
 
-export function grammarFor(betType: string): SubjectGrammar {
-  return SUBJECT_GRAMMAR.find((g) => g.betType === betType)
-    ?? { betType, device: "정황", subject: FALLBACK_SUBJECT };
+export function grammarFor(betType: string, title?: string | null): SubjectGrammar {
+  const base = SUBJECT_GRAMMAR.find((g) => g.betType === betType)
+    ?? { betType, device: "정황" as const, subject: FALLBACK_SUBJECT };
+  // ★유형이 안 넘어오면(썸네일 메이커 수동 경로) 제목에서 연출을 고른다 —
+  //  안 그러면 전부 기본값 '계산 충격'=압도로 떨어져 모든 썸네일이 탑이 된다(실측).
+  const t = (title ?? "").trim();
+  if (!SUBJECT_GRAMMAR.some((g) => g.betType === betType) && t) {
+    return { ...base, device: deviceFromTitle(t) };
+  }
+  return base;
 }
 
 /* ── 사진 프리셋 7석 ────────────────────────────────────────────────────
@@ -127,8 +134,8 @@ export function isSceneSubject(subject: string): boolean {
   return /\b(field|fields|factory|plant|site|skyline|landscape|view|rows of|aerial|horizon|yard|complex|district|street|road|bridge|port|warehouse)\b/i.test(subject || "");
 }
 
-export function buildTextlessThumbPrompt(betType: string, userId: string, variant = 0, subjectOverride?: string | null): string {
-  const g = grammarFor(betType);
+export function buildTextlessThumbPrompt(betType: string, userId: string, variant = 0, subjectOverride?: string | null, title?: string | null): string {
+  const g = grammarFor(betType, title);
   const p = photoPresetFor(userId);
   const subject = (subjectOverride ?? "").trim() || g.subject; // ★제목에서 뽑은 소재 우선
   const scene = isSceneSubject(subject);
@@ -144,7 +151,9 @@ export function buildTextlessThumbPrompt(betType: string, userId: string, varian
     // ★어그로 연출 — 이 한 줄이 '스크롤을 멈추게 하는' 장치다(2026-08-02 유저 확정)
     `Staging: ${DEVICE_STAGING[g.device]}`,
     SCALE_RULE,
-    `Setting: ${p.backdrop}. A real lived-in home or desk, not a studio.`,
+    // ★장소는 소재가 정한다(2026-08-02 실측: 안전모 탑이 거실에 놓였다).
+    //  계정 지문은 '어떤 빛으로 어떤 각도에서 찍는가'이지 '어디에 두는가'가 아니다 — 배경 고정이 소재와 충돌했다.
+    `Setting: put the subject where it actually belongs in real life — a hard hat belongs on a construction site, coins belong on a desk, an outdoor AC unit belongs on a wall or balcony. For small everyday objects ${p.backdrop} is fine. Uncluttered, never a studio.`,
     // ★축소 생존 — 홈피드 썸네일은 200~400px로 렌더된다. 명함보다 작다.
     `Composition: it must read clearly when shrunk to a thumbnail. If the subject is an OBJECT, it fills at least 60% of the frame with exactly one focal point and no scattered props. If the subject is a PLACE or SCENE (a wide field, a factory, a construction site), then instead go for overwhelming scale — a sweeping view or a dramatic low angle that makes the space feel vast. Either way the viewer must instantly know what they are looking at.`,
     // ★2026-08-02 실측: 명함 더미가 나왔고 종이 뭉치로만 보였다. 평면 사물은 쌓으면 실루엣이 같아진다.
@@ -177,8 +186,8 @@ const MANUAL_KO: Record<string, string> = {
   "돈 격차 자극": "지폐를 뒷면으로 두 더미 쌓되 한쪽은 두툼하게, 한쪽은 두 장만",
 };
 
-export function manualShotBrief(betType: string, userId: string): string {
-  const g = grammarFor(betType);
+export function manualShotBrief(betType: string, userId: string, title?: string | null): string {
+  const g = grammarFor(betType, title);
   const p = photoPresetFor(userId);
   return [
     `[대표컷 주문서] ${g.device}형`,
@@ -204,7 +213,7 @@ export async function subjectFromTitle(title: string, betType: string): Promise<
   try {
     const Anthropic = (await import("@anthropic-ai/sdk")).default;
     const client = new Anthropic({ apiKey });
-    const g = grammarFor(betType);
+    const g = grammarFor(betType, t);
     const res = await client.messages.create({
       model: "claude-haiku-4-5", max_tokens: 150,
       messages: [{ role: "user", content: [
@@ -237,4 +246,21 @@ export async function subjectFromTitle(title: string, betType: string): Promise<
     if (/\b(business\s*cards?|name\s*cards?|brochures?|flyers?|leaflets?|pamphlets?|sheets?|files?|folders?|envelopes?|stack of paper)\b/i.test(sub)) return null;
     return sub.slice(0, 120);
   } catch { return null; }
+}
+
+/**
+ * ★제목에서 연출(device)을 고른다(2026-08-02 실측: 모든 썸네일이 탑이 됐다).
+ *  원인은 betType이 썸네일 시트까지 안 넘어가 전부 기본값('계산 충격'=압도=쌓기)으로 떨어진 것이다.
+ *  DB 배선(selection_meta) 대신 제목 신호로 고른다 — 글마다 실제로 갈리고, 배선이 필요 없다.
+ *  ★홈판 카드에서 betType이 넘어오면 그쪽이 우선이다(호출측이 정한다).
+ */
+export function deviceFromTitle(title: string): SubjectGrammar["device"] {
+  const t = String(title || "");
+  if (/(마감|기한|까지|놓치면|끝나|종료|D-\d)/.test(t)) return "시간";
+  if (/(잘못|오해|사실은|알고\s*보면|의외|함정|아닙니다|오히려)/.test(t)) return "반전";
+  if (/(vs|비교|차이|어느|둘\s*중|보다)/.test(t)) return "대비";
+  if (/(못\s*받|숨은|안\s*찾|모르면|놓친|찾아가)/.test(t)) return "발견";
+  if (/(평균|중위|얼마나|몇\s*%|통계|격차|순위)/.test(t)) return "압도";
+  if (/(신청|조회|발급|접수|방법|순서|절차)/.test(t)) return "정황";
+  return "번역";
 }

@@ -50,7 +50,7 @@ export async function composeThumbnail(opts: {
     const subject = await subjectFromTitle(opts.topicHint ?? "", opts.textless.betType);
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
-        const img = await generateTextlessThumb(opts.textless.betType, opts.userId, (opts.variant ?? 0) + attempt * 7, subject);
+        const img = await generateTextlessThumb(opts.textless.betType, opts.userId, (opts.variant ?? 0) + attempt * 7, subject, opts.topicHint);
         const v = await verifyImage(img.base64, img.mime, "textless still life", { bgOnly: true, userId: opts.userId, strict: true });
         if (v.hasText) { aiFailReason = "이미지에 글자가 섞였어요"; continue; }
         const leg = await verifyThumbLegible(img.base64, img.mime, { userId: opts.userId });
@@ -65,7 +65,7 @@ export async function composeThumbnail(opts: {
     }
     // ★AI 2회 실패 — 직접 찍기로 넘긴다. 억지로 조판 카드를 내보내지 않는다(무문구를 고른 이유가 사라진다).
     console.log(`[textless] ${opts.textless.betType} — AI 2회 실패(${aiFailReason}), 촬영 주문서로 전환`);
-    return { png: Buffer.alloc(0), usedAiBackground: false, aiFailReason, manualBrief: manualShotBrief(opts.textless.betType, opts.userId) };
+    return { png: Buffer.alloc(0), usedAiBackground: false, aiFailReason, manualBrief: manualShotBrief(opts.textless.betType, opts.userId, opts.topicHint) };
   }
 
   let bgDataUrl: string | null = opts.customBgDataUrl ?? null; // 유저 배경 우선 — AI 호출 없음

@@ -1,4 +1,4 @@
-import { SUBJECT_GRAMMAR, PHOTO_PRESETS, DEVICE_STAGING, SCALE_RULE, isSceneSubject, grammarFor, photoPresetFor, buildTextlessThumbPrompt, manualShotBrief } from "../lib/thumbSubject.ts";
+import { SUBJECT_GRAMMAR, PHOTO_PRESETS, DEVICE_STAGING, SCALE_RULE, isSceneSubject, deviceFromTitle, grammarFor, photoPresetFor, buildTextlessThumbPrompt, manualShotBrief } from "../lib/thumbSubject.ts";
 import { legibilityFromRaw } from "../lib/imageVerify.ts";
 import fs from "node:fs";
 
@@ -121,6 +121,31 @@ ok(grammarFor("없는유형").subject.length > 0, "미등록 유형은 폴백 �
     for (const t of ["a stack of receipts", "an electricity bill on a table", "a phone screen showing numbers", "a wall calendar", "a notebook computer closed"])
       ok(RE.test(t), "글자 물건은 차단", t);
   }
+}
+
+// ── ③-4 연출이 글마다 갈린다 ───────────────────────────────────────────
+//  ★실측(2026-08-02): 모든 썸네일이 탑이 됐다. betType이 썸네일 시트까지 안 넘어가
+//   전부 기본값('계산 충격'=압도=쌓기)으로 떨어졌기 때문이다 — 안전모 탑이 거실에 놓였다.
+//   DB 배선 대신 제목 신호로 고른다. 이 테스트가 '전부 같은 연출'로 되돌아가는 걸 막는다.
+{
+  const 케이스 = [
+    ["근로장려금 신청 마감 8월 31일까지", "시간"],
+    ["무이자 할부가 오히려 더 비쌀 수 있는 이유", "반전"],
+    ["연금저축 vs IRP 어느 쪽이 유리한가", "대비"],
+    ["안 찾아간 숨은 돈 조회하세요", "발견"],
+    ["30대 평균 저축액 통계", "압도"],
+    ["실업급여 신청 방법과 순서", "정황"],
+  ];
+  for (const [t, want] of 케이스) ok(deviceFromTitle(t) === want, `제목→연출 ${want}`, t.slice(0, 24));
+  ok(new Set(케이스.map(([t]) => deviceFromTitle(t))).size === 6, "★여섯 글이 여섯 연출로 갈린다(전부 탑이 되지 않는다)");
+
+  // 유형이 안 넘어오는 수동 경로에서도 제목이 연출을 정한다
+  const 마감 = buildTextlessThumbPrompt("", "u1", 0, "safety helmets", "채용 마감 임박");
+  const 평균 = buildTextlessThumbPrompt("", "u1", 0, "coins", "30대 평균 저축액");
+  ok(!/Overwhelming quantity/.test(마감), "★마감 글은 압도(쌓기) 연출이 아니다");
+  ok(/Overwhelming quantity/.test(평균), "평균 글은 압도 연출");
+  ok(/Do not default to stacking/.test(평균), "★쌓기 고정을 금지하는 문구가 있다(소재에 맞는 형태로)");
+  ok(/where it actually belongs in real life/.test(평균), "★장소는 소재가 정한다(안전모는 현장, 동전은 책상)");
 }
 
 // ── ④ 판독성 검사는 fail-open ─────────────────────────────────────────
