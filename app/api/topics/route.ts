@@ -506,6 +506,11 @@ export async function GET(req: Request) {
       try { const { data: fsRow } = await pool.from("api_cache").select("value").eq("key", `fresh_stats:${sub}`).maybeSingle(); if (fsRow?.value) diag.freshStats = fsRow.value; } catch { /* ignore */ }
     }
     let tc = await buildTrendCards(new Set());
+    // ★트렌드 공급 깔때기(2026-08-02) — 백로그의 "착수 전 trend drops 로그로 컷 지점 실측 먼저"에 대한 답.
+    //  '지금 뜨는' 열이 1~2장으로 마르는 일이 반복되는데, 종전엔 어느 마디에서 말랐는지 남는 게 없었다
+    //  (finalGate·bandInvariant는 각자 로그를 찍지만 '몇 장이 들어와 몇 장이 남았는지'는 아무도 안 셌다).
+    //  컷을 완화하기 전에 먼저 잰다 — 근거 없이 게이트를 열면 저품질 글감이 그대로 보드에 오른다.
+    const funnel = { built: tc.length, demandCut: 0, zeroDemand: 0, lowDemand: 0, unlistedAnnounce: 0, afterDemand: 0, afterGate: 0, afterBand: 0 };
     // ★수요 신호(유저 확정: 신선하지만 아무도 안 찾는 씨앗 문제) — 실측 검색량 부착. 폐기 아닌 표시(지자체 틈새=저수요·경쟁공백 가치는 유저 판단)
     if (tc.length > 0) {
       // ★fail-closed(실측 2026-07-11 새벽: 검색량 API 실패 시 catch가 선별 게이트·쿼터까지 통째로 건너뛰어
@@ -540,11 +545,11 @@ export async function GET(req: Request) {
               const ctx0 = `${c.title} ${c.keyword} ${(c.newsContext ?? "").slice(0, 200)}`;
               const pv0 = /플랫폼 조회\s*([\d,]+)회/.exec(c.newsContext ?? "");
               const platformViews0 = pv0 ? Number(pv0[1]!.replace(/,/g, "")) : 0;
-              if (platformViews0 < 10_000 && !isBigPool(ctx0) && poolScore(ctx0) < 3) return false;
+              if (platformViews0 < 10_000 && !isBigPool(ctx0) && poolScore(ctx0) < 3) { funnel.zeroDemand++; return false; }
             }
             return true;
           }
-          if (v && v.vol < 300) return false; // 실측 저수요 컷
+          if (v && v.vol < 300) { funnel.lowDemand++; return false; } // 실측 저수요 컷
           // ★미조회 공고 뒷문 봉쇄(실측: [강원] 마케터 양성 — 검색량 DB에 없는 공고명 = 아무도 안 찾음).
           //  단 잠재 풀 큰 공고(동탄 줍줍 — 공고 직후라 미조회)는 풀 스코어로 구제.
           //  플랫폼 실측 조회 1만 회 이상(보조금24·기업마당 newsContext의 '플랫폼 조회 N회')도 실수요 증거로 구제
@@ -552,10 +557,12 @@ export async function GET(req: Request) {
           if (!v) {
             const pv = /플랫폼 조회\s*([\d,]+)회/.exec(c.newsContext ?? "");
             const platformViews = pv ? Number(pv[1]!.replace(/,/g, "")) : 0;
-            if (platformViews < 10_000 && poolScore(`${c.title} ${c.keyword} ${(c.newsContext ?? "").slice(0, 200)}`) < 3) return false;
+            if (platformViews < 10_000 && poolScore(`${c.title} ${c.keyword} ${(c.newsContext ?? "").slice(0, 200)}`) < 3) { funnel.unlistedAnnounce++; return false; }
           }
           return true;
         });
+        funnel.afterDemand = tc.length;
+        funnel.demandCut = funnel.built - tc.length;
         // ★수요(실측) + 풀 스코어(잠재 독자 크기 — 유저 회의 확정: 동탄 줍줍 vs 지방 소단지) 결합 정렬
         // ★되먹임 가중치(FF_PERF_LOOP §1-4) — 표본 30+ 조합만 ±20% 곱셈 보정. 실패/미가동=전부 1(현행 동일)
         const pw = FF.perfLoop ? await getPerfWeights(pool) : null;
@@ -637,6 +644,7 @@ export async function GET(req: Request) {
       const g = finalGate(tc);
       if (g.drops.length) console.log("[final-gate:short]", JSON.stringify(g.drops));
       tc = g.pass;
+      funnel.afterGate = tc.length;
       if (debugMode) diag.finalGateDrops = g.drops;
     }
     // ★'지금 뜨는' 열 = 홈판 + 트렌드 레인(2026-08-01 열↔레인 매핑). 이 열은 반응·시의성 게임이다.
@@ -647,20 +655,24 @@ export async function GET(req: Request) {
     //  채워 두었기 때문에 이제 검사가 실제로 작동한다(종전엔 트렌드 카드가 전부 vol:0이라 통과가 아니라 '못 봄'이었다).
     //  홈판은 tag='홈판'으로 면제된다 — 검색량 게임이 아니라서 밴드를 적용하는 것 자체가 틀리다.
     tc = bandInvariant(tc, "short-trend");
+    funnel.afterBand = tc.length;
 
     // ★홈판을 '먼저' 확보하고, 실제로 확보한 장수만큼만 트렌드 자리를 내준다(2026-08-01 실사이트 확인에서 검거).
     //  종전엔 쿼터(4)를 기준으로 트렌드를 1장으로 먼저 잘라 놓고 홈판을 만들었다. 그런데 홈판이 3장만 나오면
     //  트렌드는 이미 잘려 있어 메울 수가 없다 → 5장 열에 4장만 서빙됐다(실측: 홈판 3 + 트렌드 1 = 4).
     //  결품은 '있을 수 있는 일'이고(LLM 생성·게이트·중복), 그때 열이 비는 게 진짜 사고다.
     const homeCards: TrendCard[] = [];
+    // ★손실 회계(2026-08-02) — 종전엔 세 필터가 전부 조용히 continue라서, 화면에 2장만 떠도
+    //  '생성이 안 된 건지 걸러진 건지'를 알 방법이 없었다. 결품이 상시화된 레인에서 이건 눈을 감는 것이다.
+    const homeDrop = { used: 0, gate: 0, dup: 0 };
     if (FF.homefeedBet) {
       try {
         const bets = await pickHomefeedBets(pool, user.id, sub ?? "", usedSet, colShort.homefeed);
         for (const bet of bets) {
           // ★이미 생성/발행한 홈판 글감은 숨김(실측 2026-07-16: 발행했는데 카드 잔존 — 홈판 카드는 발행함 마킹 로직 밖이라 usedSet으로 직접 차단)
-          if (!bet || usedSet.has(normalizeKeyword(bet.keyword))) continue;
-          if (finalGate([{ keyword: bet.keyword, title: bet.title }]).pass.length === 0) continue;
-          if (tc.some((t) => t.keyword === bet.keyword) || homeCards.some((h) => h.keyword === bet.keyword)) continue;
+          if (!bet || usedSet.has(normalizeKeyword(bet.keyword))) { homeDrop.used++; continue; }
+          if (finalGate([{ keyword: bet.keyword, title: bet.title }], { anchorKeyword: true }).pass.length === 0) { homeDrop.gate++; continue; }
+          if (tc.some((t) => t.keyword === bet.keyword) || homeCards.some((h) => h.keyword === bet.keyword)) { homeDrop.dup++; continue; }
           homeCards.push({
             keyword: bet.keyword, title: bet.title,
             demandLabel: `홈판 배팅 · ${bet.betType}`,
@@ -671,14 +683,25 @@ export async function GET(req: Request) {
             ...(FF.perfLoop ? { sel: { species: "homefeed", seedSource: "homebet", hookKey: bet.betType } } : {}),
           } as TrendCard);
         }
-      } catch { /* 홈판 배팅 실패 — 조용히 0장(아래에서 트렌드가 그 자리를 메운다) */ }
+      } catch (e) {
+        // ★조용한 0장 금지 — 홈판이 통째로 실패하면 화면은 '트렌드만 있는 열'로 보이고 원인이 안 남는다.
+        console.error("[homebet] 배팅 단계 실패 — 홈판 0장:", e instanceof Error ? e.message : e);
+      }
     }
+    const trendStock = tc.length; // ★메우기 전 트렌드 재고 — 홈판이 비어도 트렌드가 없으면 열은 못 채운다
     const trendRoom = Math.max(0, PER_COLUMN - homeCards.length); // ★쿼터가 아니라 '실제 확보분' 기준
     tc = [...homeCards, ...tc.slice(0, trendRoom)];
     if (colShort.homefeed > homeCards.length) {
-      console.log(`[lane-quota:short] 홈판 미달 ${homeCards.length}/${colShort.homefeed} — 트렌드가 ${trendRoom}장으로 메움`);
+      console.log(`[lane-quota:short] 홈판 미달 ${homeCards.length}/${colShort.homefeed} — 하류 탈락(이미쓴 ${homeDrop.used}·게이트 ${homeDrop.gate}·중복 ${homeDrop.dup}), 트렌드가 ${trendRoom}장까지 메움`);
     }
-    if (debugMode) diag.colShort = { ...colShort, homefeedGot: homeCards.length, trendRoom, served: tc.length };
+    // ★열이 비는 게 진짜 사고다(위 주석의 원칙) — 그런데 종전엔 '못 메운 경우'가 로그에 안 남았다.
+    //  홈판이 결품이어도 트렌드 재고가 있으면 열은 찬다. 둘 다 모자랄 때만 열이 빈다 — 그 순간을 남긴다.
+    if (tc.length < PER_COLUMN) {
+      console.log(`[lane-quota:short] ★열 결품 ${tc.length}/${PER_COLUMN} — 홈판 ${homeCards.length} + 트렌드 재고 ${trendStock}(자리 ${trendRoom}). 두 레인 모두 공급 부족.`);
+      // ★트렌드가 어느 마디에서 말랐는지 — 이 줄이 컷 완화의 근거가 된다(추측으로 게이트를 열지 않는다)
+      console.log(`[trend-funnel] 증식 ${funnel.built} → 수요컷 -${funnel.demandCut}(제로 ${funnel.zeroDemand}·저수요 ${funnel.lowDemand}·미조회공고 ${funnel.unlistedAnnounce}) → ${funnel.afterDemand} → 게이트 ${funnel.afterGate} → 밴드 ${funnel.afterBand}`);
+    }
+    if (debugMode) diag.colShort = { ...colShort, homefeedGot: homeCards.length, homeDrop, trendRoom, served: tc.length, trendFunnel: funnel };
     return NextResponse.json(debugMode ? { topics: tc, diag: { ...diag, mode: "short", trendCards: tc.length } } : { topics: tc, ...(FF.perfLoop ? { ff: { perfLoop: true } } : {}) });
   }
 
@@ -1133,7 +1156,7 @@ export async function GET(req: Request) {
       // ★열 쿼터와 같은 n을 쓴다 — 다르면 캐시 키(homebet:...:n)가 갈라져 같은 날 LLM 생성이 두 번 돈다.
       const bets = await pickHomefeedBets(pool, user.id, sub ?? "", usedSet, columnQuota(tierInfo?.tier ?? "SEEDLING", "short", PER_COLUMN).homefeed);
       homefeedCards = bets
-        .filter((bet) => !usedSet.has(normalizeKeyword(bet.keyword)) && finalGate([{ keyword: bet.keyword, title: bet.title }]).pass.length > 0)
+        .filter((bet) => !usedSet.has(normalizeKeyword(bet.keyword)) && finalGate([{ keyword: bet.keyword, title: bet.title }], { anchorKeyword: true }).pass.length > 0)
         .map((bet) => ({
           keyword: bet.keyword, title: bet.title,
           demandLabel: `홈판 배팅 · ${bet.betType}`,
