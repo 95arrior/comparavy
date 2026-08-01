@@ -8,6 +8,9 @@ import type { Article } from "./types";
 //  80대 규격: 할 일이 항상 위에서 아래로 하나씩.
 const ADSENSE_GOAL = 30; // 애드센스 신청 기준 글 수(통설 보수치)
 
+// ★검토 대기 글을 몇 장까지 보여줄지(2026-08-01 유저 지시). 1장이면 밤새 쌓인 글을 하나씩만 처리하게 된다.
+const WP_REVIEW_SHOWN = 5;
+
 export default function WpHome({ blogName, blogId, articles, credits, onOpenArticle, onAddBlog }: {
   blogName: string;
   blogId: string;
@@ -18,7 +21,10 @@ export default function WpHome({ blogName, blogId, articles, credits, onOpenArti
 }) {
   const pub = articles.filter((a) => a.status === "published").length;
   const pct = Math.min(100, Math.round((pub / ADSENSE_GOAL) * 100));
-  const reviewDraft = articles.find((a) => a.status === "draft"); // 아침 승인탭 대기(자동 생성분)
+  // ★대기 글은 여러 장 보여준다(2026-08-01 유저: "하나씩 뜨는데 5개 정도로").
+  //  종전엔 find로 1장만 집어서, 크론이 밤새 여러 편을 만들어 둬도 하나씩만 처리할 수 있었다.
+  const reviewDrafts = articles.filter((a) => a.status === "draft").slice(0, WP_REVIEW_SHOWN);
+  const reviewDraft = reviewDrafts[0]; // 히어로 카드(가장 오래 기다린 글)
   const [genBusy, setGenBusy] = useState(false);
   const [genErr, setGenErr] = useState<string | null>(null);
   async function generateFirstNow() {
@@ -33,6 +39,7 @@ export default function WpHome({ blogName, blogId, articles, credits, onOpenArti
     finally { setGenBusy(false); }
   }
   const [busy, setBusy] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [pagesBusy, setPagesBusy] = useState(false);
   const trustKey = `ateflo_trustpages_${blogId ?? ""}`;
@@ -74,12 +81,14 @@ export default function WpHome({ blogName, blogId, articles, credits, onOpenArti
     setSetup((s) => { const n = { ...s, [k]: !s[k] }; try { localStorage.setItem(setupKey, JSON.stringify(n)); } catch { /* ignore */ } return n; });
   }
 
-  async function publishNow() {
-    if (!reviewDraft || busy) return;
+  async function publishNow(target?: { id: string; title?: string }) {
+    const draft = target ?? reviewDraft;
+    if (!draft || busy) return;
     setBusy(true);
+    setBusyId(draft.id);
     try {
       // ★클라 상한 4분(2026-07-16 실측: 무한 '발행 중') — 서버는 계속 돌 수 있으니 타임아웃 문구는 '확인' 안내로
-      const r = await fetch("/api/wordpress/publish", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ articleId: reviewDraft.id, status: "publish", addToc: true, addInternalLinks: true }), signal: AbortSignal.timeout(240_000) });
+      const r = await fetch("/api/wordpress/publish", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ articleId: draft.id, status: "publish", addToc: true, addInternalLinks: true }), signal: AbortSignal.timeout(240_000) });
       const d = await r.json();
       if (r.ok) {
       try {
@@ -99,6 +108,7 @@ export default function WpHome({ blogName, blogId, articles, credits, onOpenArti
         : "네트워크 오류예요");
     }
     setBusy(false);
+    setBusyId(null);
   }
 
   const SETUP_ITEMS = [
@@ -184,7 +194,7 @@ export default function WpHome({ blogName, blogId, articles, credits, onOpenArti
               {onOpenArticle && (
                 <button onClick={() => onOpenArticle(reviewDraft)} className="at-press flex-1 rounded-[14px] bg-white/15 py-3.5 text-[15px] font-bold text-white backdrop-blur-[2px]">읽어보기</button>
               )}
-              <button onClick={publishNow} disabled={busy} className="at-press tk-hero-cta flex-1 rounded-[14px] py-3.5 text-[15px] font-bold disabled:opacity-60">{busy ? "발행 중…" : "발행하기"}</button>
+              <button onClick={() => publishNow(reviewDraft)} disabled={busy} className="at-press tk-hero-cta flex-1 rounded-[14px] py-3.5 text-[15px] font-bold disabled:opacity-60">{busy && busyId === reviewDraft.id ? "발행 중…" : "발행하기"}</button>
             </div>
           </div>
         </div>
@@ -197,6 +207,24 @@ export default function WpHome({ blogName, blogId, articles, credits, onOpenArti
             {genBusy ? <><span className="tk-wand" aria-hidden>✦</span>글을 만들고 있어요… (1~2분)</> : pub === 0 ? "첫 글 지금 만들어보기" : "다음 글 지금 만들어보기"}
           </button>
           {genErr && <p className="mt-2 text-[12.5px] font-medium text-amber-600">{genErr}</p>}
+        </div>
+      )}
+
+      {/* 대기 중인 나머지 글 — 히어로 1장 + 여기 최대 4장(2026-08-01 유저 지시) */}
+      {reviewDrafts.length > 1 && (
+        <div className="tk-seq-2 mt-3 flex flex-col gap-2">
+          <p className="px-1 text-[12.5px] font-semibold text-[color:var(--color-text-weak)]">검토 대기 {reviewDrafts.length}편</p>
+          {reviewDrafts.slice(1).map((d) => (
+            <div key={d.id} className="flex items-center gap-2 rounded-[14px] bg-white px-4 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+              <p className="min-w-0 flex-1 truncate text-[13.5px] font-bold text-neutral-800">{d.title}</p>
+              {onOpenArticle && (
+                <button onClick={() => onOpenArticle(d)} className="at-press shrink-0 rounded-[10px] px-2.5 py-1.5 text-[12.5px] font-bold text-[color:var(--color-brand)]">읽어보기</button>
+              )}
+              <button onClick={() => publishNow(d)} disabled={busy} className="at-press shrink-0 rounded-[10px] bg-[color:var(--color-brand)]/[0.08] px-3 py-1.5 text-[12.5px] font-bold text-[color:var(--color-brand)] disabled:opacity-50">
+                {busy && busyId === d.id ? "발행 중…" : "발행"}
+              </button>
+            </div>
+          ))}
         </div>
       )}
 

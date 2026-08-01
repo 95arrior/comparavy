@@ -5,7 +5,7 @@ import { pickWpTopic } from "@/lib/googleTopics";
 import { adsenseUnsafe } from "@/lib/cardFinalGate";
 import { factVerdict } from "@/lib/factGate";
 import { scanCompliance } from "@/lib/complianceFilter";
-import { lacksInterpretation, lacksConditionBranch } from "@/lib/editorial";
+import { lacksInterpretation, lacksConditionBranch, isOverusedTitleShape } from "@/lib/editorial";
 import { financeCalcContext } from "@/lib/financeCalc";
 import { autoFeaturedImage } from "@/lib/wpFeaturedImage";
 import { wpCategoryFor } from "@/lib/wpCategory";
@@ -114,6 +114,17 @@ export async function GET(request: Request) {
             if (cr >= 500 && !lacksConditionBranch(retried.body_html)) article = retried;
           } catch { /* 재생성 실패 — 원본 그대로 */ }
           if (lacksConditionBranch(article.body_html)) console.log(`[wp-auto][condition-branch] blog=${b.id} — 조건 분기 없음, 통과(로그만)`);
+        }
+        // ★제목 뼈대 수렴 게이트(2026-08-01 유저 실측: 31편 중 7편이 '~ 전 확인할 N가지').
+        //  프롬프트 로테이션이 돌아도 한 형식 안에서 예시 뼈대를 베껴 획일화된다.
+        //  구글이 대량 생산 신호로 읽는 영역이라(애드센스 채널) 코드로 막는다.
+        if (isOverusedTitleShape(article.title)) {
+          try {
+            const retried = await generateArticle({ ...genInput, variantInstruction: `★경고: 직전 제목 "${article.title}"은 이 블로그가 이미 과다 사용한 뼈대다('~ 전 확인할 N가지' 류). 완전히 다른 문형으로 다시 지어라 — 검색자가 실제로 칠 질문 그대로 쓰거나, 글의 결론을 제목에 박거나, 구체 숫자를 문장 안 자연스러운 자리에 넣는다. 본문 내용·분량은 유지.` });
+            const cr = retried.body_html.replace(/<[^>]+>/g, "").replace(/\s+/g, "").length;
+            if (cr >= 500 && !isOverusedTitleShape(retried.title)) article = retried;
+          } catch { /* 재생성 실패 — 원본 그대로 */ }
+          if (isOverusedTitleShape(article.title)) console.log(`[wp-auto][title-shape] blog=${b.id} — 과다 뼈대 잔존: ${article.title}`);
         }
         // ★필수 항목 누락 게이트(2026-08-01 유저 실측: "이건 고쳐서 나와야 해요").
         //  프롬프트로 미리 쥐여줘도 모델이 빠뜨린다. 빠진 이름을 그대로 박아 한 번 다시 쓴다.

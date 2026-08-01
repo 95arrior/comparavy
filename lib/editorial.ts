@@ -78,3 +78,36 @@ export function duplicateSlotSubjects(html: string): boolean {
   }
   return false;
 }
+
+
+// ★제목 뼈대 수렴 게이트(2026-08-01 유저 실측: WP 31편 중 7편이 '~ 전 확인할 N가지'였다).
+//  프롬프트 로테이션은 돌고 있었지만, 한 형식 안에서 예시 뼈대를 그대로 베껴 제목이 획일화됐다.
+//  구글은 같은 틀의 대량 제목을 '대량 생산 사이트' 신호로 읽는다 — 애드센스가 걸린 채널이라 특히 위험하다.
+//  프롬프트는 방향, 코드가 한계선(CLAUDE.md).
+const TITLE_OVERUSED_RE = [
+  /전\s*(?:확인할|알아야\s*할|봐야\s*할|체크할)\s*\d+\s*가지/,   // ~ 전 확인할 5가지
+  /시작\s*전\s*\d+\s*가지/,
+  /법\s*[:：]/,                                                  // ~는 법: 부제 (2026-07-16에 잡았던 옛 수렴 — '고르는 법:'도 같은 틀)
+  /총정리\s*[:：]/,
+];
+
+/** 제목이 과다 사용된 뼈대인가 — 걸리면 재생성 대상. */
+export function isOverusedTitleShape(title: string): boolean {
+  const t = (title ?? "").trim();
+  return TITLE_OVERUSED_RE.some((re) => re.test(t));
+}
+
+/**
+ * 최근 제목들과 뼈대가 겹치는가 — 한국어 제목은 앞(주제어)이 아니라 **뒤(어미 쪽)가 수렴**한다.
+ * '중국주식 시작 / 저축은행 종류 선택 / 온투업 투자'는 다 다르지만 끝은 전부 '전 확인할 N가지'다.
+ * 그래서 마지막 3어절만 뼈대로 본다(숫자는 #으로 뭉갠다).
+ */
+export function titleShapeClashes(title: string, recentTitles: string[], threshold = 2): boolean {
+  const shape = (t: string) => {
+    const toks = (t ?? "").replace(/[0-9]+/g, "#").replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
+    return toks.slice(-3).join(" ");
+  };
+  const s = shape(title);
+  if (s.length < 4) return false;
+  return recentTitles.filter((r) => shape(r) === s).length >= threshold;
+}
