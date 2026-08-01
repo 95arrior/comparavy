@@ -75,7 +75,9 @@ export async function POST(request: Request) {
   // ★썸네일 메이커(유저 요청 2026-07-05) — 문구·배경색·톤 선택형. 3D(AI) 배경=IMAGE_COST, 심플(코드) 배경=무료.
   if (body.thumbMaker === true) {
     const mainRaw = String(body.mainCopy ?? "").trim().slice(0, 40);
-    if (!mainRaw) return NextResponse.json({ error: "썸네일 문구를 입력해 주세요." }, { status: 400 });
+    // ★무문구 모드는 문구가 없는 게 정상이다(2026-08-02) — 조판을 하지 않으므로 문구가 들어갈 자리가 없다.
+    //  이 검증이 남아 있어 '문구 없이'를 고르면 400으로 막혔다(클라이언트만 고치고 서버를 놓쳤다).
+    if (!mainRaw && body.textless !== true) return NextResponse.json({ error: "썸네일 문구를 입력해 주세요." }, { status: 400 });
     const { breakThumbCopy } = await import("@/lib/thumbCopyBreak");
     const paletteName = typeof body.paletteName === "string" ? body.paletteName.slice(0, 30) : undefined;
     const wash = typeof body.wash === "number" ? Math.min(0.85, Math.max(0, body.wash)) : 0.35;
@@ -143,7 +145,9 @@ export async function POST(request: Request) {
       void logUsage({ userId: user.id, model: "thumb", kind: "thumb_maker", inputTokens: 0, outputTokens: aiBg && usedAiBackground ? 1290 : 0 });
       return NextResponse.json({ ok: true, url, dataUrl: url ? undefined : `data:image/png;base64,${png.toString("base64")}`, usedAiBackground, aiFailReason, credits: balance ?? undefined });
     } catch {
-      if (aiBg) await addCredits(user.id, IMAGE_COST, "refund_image", refundKeyTM(user.id, mainRaw)).catch(() => null);
+      // ★무문구는 mainRaw가 빈 값이라 환불 키가 매번 같아진다 — 멱등 처리에 걸려 재시도 시 환불이 안 먹는다.
+      //  그 경로만 매번 다른 키를 쓴다(성공 경로엔 영향 없음).
+      if (aiBg) await addCredits(user.id, IMAGE_COST, "refund_image", mainRaw ? refundKeyTM(user.id, mainRaw) : crypto.randomUUID()).catch(() => null);
       return NextResponse.json({ error: "썸네일을 만들지 못했어요. 크레딧은 돌려드렸어요." }, { status: 502 });
     }
   }
