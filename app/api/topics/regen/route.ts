@@ -60,6 +60,10 @@ export async function POST() {
   // ④ 이 유저의 오늘 캐시 무효화 — 증식 결과·스포크(다음 로드에서 새 씨앗·새 시드로 재조립)
   try { await admin.from("api_cache").delete().like("key", `amp:v5:${user.id}:%`); } catch { /* ignore */ }
   try { await admin.from("api_cache").delete().like("key", `spokes:${user.id}:%`); } catch { /* ignore */ }
+  // ★홈판 캐시도 함께 지운다(2026-08-02 검거) — 종전엔 증식·스포크만 지워서 '글감 새로 받기'를 눌러도
+  //  홈판 카드는 옛 결과를 그대로 물고 있었다. 홈판이 배합의 40%인데 갈이가 안 되면 '새로 받기'가 절반만 도는 셈이고,
+  //  결품이 났을 때 유저가 다시 눌러도 같은 결품이 재생된다(캐시 TTL이 끝날 때까지).
+  try { await admin.from("api_cache").delete().like("key", `homebet:${user.id}:%`); } catch { /* ignore */ }
 
   return NextResponse.json({ ok: true, seeds });
 }
