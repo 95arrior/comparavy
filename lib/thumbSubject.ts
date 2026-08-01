@@ -177,53 +177,49 @@ const TIMES = ["early morning light", "flat midday light", "late afternoon golde
 
 function pickBy(seed: number, arr: readonly string[]): string { return arr[seed % arr.length]!; }
 
+// ★네온 글로우 색 — 계정 지문은 이 한 축만(2026-08-02 레퍼런스: 보라 네온 림라이트).
+const GLOW_COLORS = ["electric violet", "deep blue", "cyan", "magenta", "amber gold", "emerald green", "crimson red"];
+
 export function buildTextlessThumbPrompt(betType: string, userId: string, variant = 0, subjectOverride?: string | null, title?: string | null): string {
   const p = photoPresetFor(userId);
   const subject = (subjectOverride ?? "").trim() || grammarFor(betType, title).subject;
   const seed = fnv1a(`${title ?? ""}|${subject}|${variant}`);
-  // ★계정 지문은 배경 밝기 한 축만 남긴다 — 나머지는 유저 규격이 정한다.
-  const bg = p.tone.includes("dark") || p.tone.includes("blue-hour") || p.tone.includes("amber")
-    ? "a dark, simple single-color gradient background"
-    : "a bright, simple single-color gradient background";
-  const hides = [
-    "cropped by the frame edge so part of it is outside the picture",
-    "partly wrapped or covered by cloth",
-    "half sunk in shadow",
-    "seen from an angle that hides its far side",
-    "emerging from darkness, the rest swallowed by it",
-  ];
+  const glow = GLOW_COLORS[p.seat % GLOW_COLORS.length]!;
+  const angles = ["hanging and lit from behind", "standing upright, lit from one side", "floating slightly above the surface", "seen at a low three-quarter angle"];
   return [
-    // ★2026-08-02 유저 지급 프롬프트를 그대로 반영. 앞선 '평범한 폰 사진' 방향에서 다시 뒤집은 것이다 —
-    //  유저가 CTR 디자이너 규격(미니멀·림라이트·부분 은닉)을 직접 지정했다. 규격은 유저 몫이고 우리는 집행한다.
-    `You are a Korean blog thumbnail designer optimizing for click-through rate.`,
-    `Choose the single symbolic object a person would think of first for this topic, and remove everything else from the frame.`,
-    `The symbol: ${subject}.`,
-    `It occupies 60-80% of the frame. Nothing else is in the picture.`,
-    `Background: ${bg}. Simple, clean, empty.`,
-    `Lighting: strong rim light and glow around the subject.`,
-    // ★궁금증 장치 — 유저 규격의 핵심. 다 보여주면 클릭할 이유가 사라진다.
-    `★Do NOT show the object completely. Hide 20-40% of it — ${hides[seed % hides.length]}. The viewer should feel "why?", "what is that?", "what's inside?".`,
-    `Style: minimal like an Apple advertisement, curiosity-driving like a high-CTR YouTube thumbnail. Premium advertising photography, not an obvious digital composite.`,
-    `No brand names, no logos, no trademarked products.`,
-    // ★글자 금지만은 우리 규칙으로 남긴다 — 계정 리스크(유저 4회 지적).
-    `NO TEXT of any kind: no letters, numbers, Korean characters, signage, labels or watermarks.`,
+    // ★2026-08-02 유저 레퍼런스(사원증 + 공장 야경 + 보라 네온 글로우)로 재해석.
+    //  내가 처음 읽었을 때 네 군데를 틀렸다 — 기록해 둔다:
+    //   ① "그 외 요소 제거"를 배경까지 비우는 것으로 읽었다 → 레퍼런스는 배경에 '흐린 맥락'이 있다
+    //   ② "20~40% 숨긴다"를 물체를 덮는 것으로 읽었다 → 어둠에 주변이 잠기는 것이다
+    //   ③ "프리미엄 광고 사진"을 실사로 읽었다 → 3D 렌더·CG 룩이다
+    //   ④ 16:9로 만들었다 → 홈피드는 정사각이다
+    `A premium 3D product-render style thumbnail for a Korean blog post. Square 1:1.`,
+    `Hero object: ${subject}. It is the single symbol of this topic and it occupies 60-80% of the frame, ${angles[seed % angles.length]}.`,
+    `Render it clean and glossy like a high-end CG advertisement — not a photograph, not an obvious digital collage.`,
+    `Lighting: strong ${glow} neon rim light wrapping the object, with a soft glow spilling onto the surface beneath it.`,
+    // ★배경은 비우는 게 아니라 '어둠에 잠기게' 한다 — 맥락은 남기되 주인공을 방해하지 않는다.
+    `Background: a dark scene related to the topic, thrown far out of focus and swallowed by darkness — only faint lights and blurred silhouettes remain. Never an empty flat backdrop, and never anything sharp enough to compete with the hero object.`,
+    `The darkness should hide roughly a third of the scene so the viewer wonders what is back there.`,
+    `Mood: minimal like an Apple ad, curiosity-driving like a high-CTR YouTube thumbnail.`,
+    `No brand names, no logos, no trademarked products or marks of real companies.`,
+    // ★글자 금지 — 계정 리스크(유저 4회 지적). 이것만은 우리 규칙으로 유지한다.
+    `NO TEXT of any kind: no letters, numbers, Korean characters, signage, labels or watermarks anywhere in the image.`,
   ].join("\n");
 }
 
 /** 유저가 직접 찍을 때 쓰는 한국어 주문서 — AI가 두 번 실패하면 이걸 보여준다.
- *  ★소재는 그 글에서 뽑은 것을 그대로 쓴다(2026-08-02 실측: 새만금 채용 글에 '동전 몇 개'라는
- *   엉뚱한 주문서가 나갔다 — 유형 폴백 표를 쓰고 있어서 제목과 무관했다). */
+ *  ★AI는 3D 렌더로 만들지만 유저는 사진을 찍는다 — 규격을 '찍을 수 있는 말'로 옮긴다. */
 export function manualShotBrief(_betType: string, userId: string, title?: string | null, subjectKo?: string | null): string {
   const p = photoPresetFor(userId);
-  const dark = p.tone.includes("dark") || p.tone.includes("blue-hour") || p.tone.includes("amber");
+  const glowKo = ["보라", "파랑", "청록", "자홍", "주황", "초록", "빨강"][p.seat % 7];
   return [
     `[대표컷 주문서]`,
     title ? `글: ${String(title).slice(0, 40)}` : "",
     `무엇을: ${(subjectKo ?? "").trim() || "이 글 하면 가장 먼저 떠오르는 물건 하나"}`,
-    `어떻게: 그 물건 하나만. 화면의 60~80%를 채우게 크게.`,
-    `배경: ${dark ? "어두운" : "밝은"} 단색 배경, 다른 물건 없이 깨끗하게`,
-    `빛: 물건 가장자리에 빛이 걸리게(역광·측광). 밋밋하지 않게.`,
-    `★다 보여주지 마세요 — 20~40%는 잘리거나 그림자에 묻히게. "뭐지?" 싶어야 눌러요.`,
+    `어떻게: 그 물건 하나만, 화면의 60~80%를 채우게 크게.`,
+    `배경: 어둡게. 뒤에 뭔가 있긴 한데 흐릿하게 뭉개지도록(초점을 물건에만).`,
+    `빛: ${glowKo}색 조명을 물건 뒤나 옆에서 비춰 가장자리가 빛나게. 폰 손전등에 색셀로판 하나면 됩니다.`,
+    `★배경 3분의 1쯤은 어둠에 묻히게 — "뒤에 뭐가 있지?" 싶어야 눌러요.`,
     `★글자가 보이면 안 됩니다 — 고지서·영수증·간판처럼 글자 있는 물건은 쓰지 마세요.`,
     `★브랜드 로고가 보이면 안 됩니다.`,
   ].filter(Boolean).join("\n");
@@ -243,7 +239,10 @@ export async function subjectFromTitle(title: string, betType: string): Promise<
         `Name the ONE thing to photograph for its thumbnail so that someone scrolling instantly knows what the post is about.`,
         // ★2026-08-02 전면 단순화 — 유저 레퍼런스(실제 홈피드 썸네일)는 전부 '제목에 나온 그것'을 그냥 찍은 사진이었다.
         //  종전엔 돈 물건·실루엣·쌓을 수 있는 것 같은 제약을 겹겹이 걸어 엉뚱한 소재로 흘렀다.
-        `Just pick the most obvious real thing from the title — if the post is about air conditioner bills, that is an air conditioner remote or the unit itself; if it is about a job fair, that is a factory or a work site; if it is about pension, that is a bankbook-free object like a piggy bank or an elderly person's hands. Do not be clever or symbolic.`,
+        // ★2026-08-02 실측: '유리 상자·커튼' 같은 추상 조형이 나왔다. 추상은 주제를 못 말한다.
+        `Pick a CONCRETE, INSTANTLY RECOGNIZABLE object that people already associate with this topic — a job fair means an employee ID badge on a lanyard or a hard hat; air conditioner bills mean the remote or the outdoor unit; pension means a piggy bank; a housing subscription means a door key or an apartment model.`,
+        `★It must be a real, nameable thing. Never an abstract shape, a glass box, a cube, drapery, light beams or any sculpture-like invention — those say nothing about the topic.`,
+        `The object will be rendered as a glossy 3D hero product shot with neon rim light, so choose something that looks good rendered that way.`,
         `Two rules only:`,
         `1. It must carry no writing — no receipts, documents, screens, signs, calendars or labels (their whole point is text, and the image will be rejected).`,
         `2. No brand logos or trademarked products. Describe it generically.`,
