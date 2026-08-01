@@ -52,16 +52,16 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   ok(/employee ID badge/.test(ts), "예시가 레퍼런스와 같은 결(사원증)");
 }
 
-// ── ④ 계정 지문은 글로우 색 한 축 ───────────────────────────────────────
+// ── ④ 네온 색이 글마다 갈리는가 ────────────────────────────────────────
+//  ★유저: "늘 같은 네온색이 나오면 안 돼요." 종전엔 계정 좌석에 묶여 한 블로그는 늘 한 색이었다.
 {
-  ok(PHOTO_PRESETS.length === 7, `프리셋 7석 (현재 ${PHOTO_PRESETS.length})`);
-  const glows = new Set(PHOTO_PRESETS.map((_, i) => {
-    process.env.ATEFLO_PHOTO_ASSIGN = `seat${i}:${i}`;
-    return /intense ([a-z ]+) neon rim/.exec(buildTextlessThumbPrompt("", `seat${i}`, 0, "x", "t"))?.[1];
-  }));
-  delete process.env.ATEFLO_PHOTO_ASSIGN;
-  ok(glows.size === 7, `★7석의 글로우 색이 전부 다름 (현재 ${glows.size})`);
-  ok(photoPresetFor("blog-x").seat === photoPresetFor("blog-x").seat, "같은 계정은 항상 같은 색");
+  const glow = (t, u = "u1", v = 0) => /intense ([a-z ]+) neon rim/.exec(buildTextlessThumbPrompt("", u, v, "x", t))?.[1];
+  const 제목들 = ["에어컨 전기요금", "새만금 채용", "30대 평균 저축액", "숨은 보험금", "연금저축 비교", "실업급여 신청", "건보료 정산"];
+  ok(new Set(제목들.map((t) => glow(t))).size >= 4, "★한 계정 안에서도 글마다 색이 갈린다", `현재 ${new Set(제목들.map((t) => glow(t))).size}종`);
+  ok(new Set(["u1", "u2", "u3"].map((u) => glow("에어컨 전기요금", u))).size >= 2, "★같은 글이라도 계정이 다르면 색이 갈린다");
+  ok(glow("에어컨 전기요금") === glow("에어컨 전기요금"), "같은 입력은 재현된다");
+  ok(PHOTO_PRESETS.length === 7, `프리셋 7석 유지 (현재 ${PHOTO_PRESETS.length})`);
+  ok(photoPresetFor("blog-x").seat === photoPresetFor("blog-x").seat, "좌석 배정 자체는 계정 고정");
 }
 
 // ── ⑤ 촬영 주문서가 그 글을 따르고 규격과 맞는가 ────────────────────────

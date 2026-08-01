@@ -177,14 +177,16 @@ const TIMES = ["early morning light", "flat midday light", "late afternoon golde
 
 function pickBy(seed: number, arr: readonly string[]): string { return arr[seed % arr.length]!; }
 
-// ★네온 글로우 색 — 계정 지문은 이 한 축만(2026-08-02 레퍼런스: 보라 네온 림라이트).
+// ★네온 글로우 색(2026-08-02 유저: "늘 같은 네온색이 나오면 안 돼요").
+//  종전엔 계정 좌석에 묶어 한 블로그는 늘 같은 색이었다 — 앨범이 단조로워진다.
+//  이제 글마다 돌린다. 시드에 userId를 섞어, 같은 제목이라도 계정이 다르면 색이 갈린다.
 const GLOW_COLORS = ["electric violet", "deep blue", "cyan", "magenta", "amber gold", "emerald green", "crimson red"];
 
 export function buildTextlessThumbPrompt(betType: string, userId: string, variant = 0, subjectOverride?: string | null, title?: string | null, backdrop?: string | null): string {
   const p = photoPresetFor(userId);
   const subject = (subjectOverride ?? "").trim() || grammarFor(betType, title).subject;
   const seed = fnv1a(`${title ?? ""}|${subject}|${variant}`);
-  const glow = GLOW_COLORS[p.seat % GLOW_COLORS.length]!;
+  const glow = GLOW_COLORS[fnv1a(`${userId}|${title ?? ""}|${variant}|glow`) % GLOW_COLORS.length]!;
   const angles = ["hanging and lit from behind", "standing upright, lit from one side", "floating slightly above the surface", "seen at a low three-quarter angle"];
   return [
     // ★2026-08-02 유저 레퍼런스(사원증 + 공장 야경 + 보라 네온 글로우)로 재해석.
@@ -213,7 +215,7 @@ export function buildTextlessThumbPrompt(betType: string, userId: string, varian
  *  ★AI는 3D 렌더로 만들지만 유저는 사진을 찍는다 — 규격을 '찍을 수 있는 말'로 옮긴다. */
 export function manualShotBrief(_betType: string, userId: string, title?: string | null, subjectKo?: string | null): string {
   const p = photoPresetFor(userId);
-  const glowKo = ["보라", "파랑", "청록", "자홍", "주황", "초록", "빨강"][p.seat % 7];
+  const glowKo = ["보라", "파랑", "청록", "자홍", "주황", "초록", "빨강"][fnv1a(`${userId}|${title ?? ""}|0|glow`) % 7];
   return [
     `[대표컷 주문서]`,
     title ? `글: ${String(title).slice(0, 40)}` : "",
