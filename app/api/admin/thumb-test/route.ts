@@ -36,6 +36,8 @@ export async function GET(request: Request) {
       articleId: url.searchParams.get("a") || null, // 글마다 포즈 변주 데모
       useAiBackground: useAi,
       textless: textlessType ? { betType: textlessType } : undefined,
+      // ★무문구는 제목에서 소재를 뽑는다 — 실사 때도 실제 제목을 넘겨야 그 경로가 검증된다(?copy=에 제목을 넣는다)
+      topicHint: mainCopy,
     });
     const renderMs = Date.now() - t0;
     if (metaOnly) {
