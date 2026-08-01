@@ -118,8 +118,12 @@ export const ENDING_TOP_MAX = 0.55;  // 같은 3음절 종결이 전체의 55%�
 export const ENDING_YO_MAX = 0.75;
 export const ENDING_MIN_SENTENCES = 8; // 이보다 짧은 글은 판정하지 않는다(표본 부족)
 
-/** AI 티가 가장 심한 연결형 종결 — 프롬프트에서 금지한 것들. */
-const BANNED_ENDINGS = /(인데요|면서요|라서요|는데요)\s*[.!?]/g;
+// ★2026-08-02 재정의: 처음엔 '~인데요·~면서요'를 AI 신호로 보고 막았는데, 유저 레퍼런스(실제 블로그 10편)가
+//  그걸 자연스럽게 쓴다("…에코프로비엠 주가인데요.", "공매도 치고 싶게 생겼는데요."). 금지를 철회한다.
+//  ★진짜 AI 티는 어미가 아니라 '감정 반응이 없는 것'이다 — 사실만 고르게 나열하면 기계 글이다.
+//   레퍼런스의 사람 냄새는 전부 반응에서 나온다: "젠장", "후우", "이건 좀 아쉽습니다", "ㅎㅎ".
+const REACTION_RE = /(네요|군요|죠[.!?]|싶(?:네|습니|어|기도)|아쉽|놀랍|다행|답답|씁쓸|허탈|막막|후우|허참|젠장|ㅎㅎ|ㅋㅋ|좀\s*그렇|생각보다|솔직히|의외로)/g;
+export const REACTION_MIN = 4; // 이보다 적으면 감정 없는 정보 나열로 본다
 
 /** 문장 끝 2~3음절을 종결로 본다. '~니다/~해요/~예요/~죠' 등이 여기서 갈린다. */
 function endingKeys(html: string): string[] {
@@ -134,24 +138,30 @@ function endingKeys(html: string): string[] {
   return keys;
 }
 
-export interface EndingReport { sentences: number; topKey: string | null; topRatio: number; yoRatio: number; banned: string[]; monotone: boolean }
+export interface EndingReport { sentences: number; topKey: string | null; topRatio: number; yoRatio: number; reactions: number; flat: boolean; monotone: boolean }
 
 export function endingReport(html: string): EndingReport {
   const keys = endingKeys(html);
-  const banned = [...String(stripTags(html)).matchAll(BANNED_ENDINGS)].map((m) => m[1]!);
-  if (keys.length < ENDING_MIN_SENTENCES) return { sentences: keys.length, topKey: null, topRatio: 0, yoRatio: 0, banned, monotone: banned.length > 0 };
+  const reactions = (stripTags(html).match(REACTION_RE) ?? []).length;
+  if (keys.length < ENDING_MIN_SENTENCES) return { sentences: keys.length, topKey: null, topRatio: 0, yoRatio: 0, reactions, flat: false, monotone: false };
   const count = new Map<string, number>();
   for (const k of keys) count.set(k, (count.get(k) ?? 0) + 1);
   let topKey: string | null = null, top = 0;
   for (const [k, n] of count) if (n > top) { top = n; topKey = k; }
   const topRatio = top / keys.length;
   const yoRatio = keys.filter((k) => k.endsWith("요")).length / keys.length;
-  return { sentences: keys.length, topKey, topRatio, yoRatio, banned, monotone: yoRatio > ENDING_YO_MAX || topRatio > ENDING_TOP_MAX || banned.length > 0 };
+  const flat = reactions < REACTION_MIN; // ★감정 반응 부재 — 이게 진짜 AI 티다
+  return { sentences: keys.length, topKey, topRatio, yoRatio, reactions, flat, monotone: yoRatio > ENDING_YO_MAX || topRatio > ENDING_TOP_MAX };
 }
 
-/** 어미가 단조로운가 — 한 종결이 과반을 넘거나 금지 어미가 섞였으면 true. */
+/** 어미가 단조로운가 — 한 종결이 과반을 넘으면 true. */
 export function hasMonotoneEndings(html: string): boolean {
   return endingReport(html).monotone;
+}
+
+/** 감정 반응이 없는 정보 나열인가 — 어미를 섞어도 이게 없으면 기계 글로 읽힌다. */
+export function isFlatTone(html: string): boolean {
+  return endingReport(html).flat;
 }
 
 // ═══ 소제목-본문 정합(2026-08-02 유저: "네이버 AI가 소제목과 본문이 일치하는지까지 본다") ═══
