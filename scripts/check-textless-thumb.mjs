@@ -32,7 +32,8 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   ok(!/swallowed by darkness/i.test(p), "★전부 어둠에 잠기게 하던 지시가 제거됨");
   ok(/intense .* neon rim light/i.test(p) && /vivid and high-contrast/i.test(p), "★강한 네온·선명한 대비(피드에서 튀게)");
   ok(/Apple ad/i.test(p) && /YouTube thumbnail/i.test(p), "애플 미니멀 + 유튜브 CTR");
-  ok(/No brand names, no logos/i.test(p), "브랜드·로고 금지");
+  ok(/No company names or trademarked marks/i.test(p), "회사 상표 금지");
+  ok(/lettering-free symbol/i.test(p), "★글자 없는 심볼(십자·방패·집 윤곽)은 허용");
   ok(/NO TEXT of any kind/i.test(p), "★글자 금지(계정 리스크 — 우리 규칙)");
   ok(!/16:9/.test(p), "★16:9가 되살아나지 않음");
 }
@@ -109,6 +110,11 @@ ok(SUBJECT_GRAMMAR.length === 8, `홈판 8유형 폴백 유지 (현재 ${SUBJECT
   ok(legibilityFromRaw("완전 쓰레기").ok, "★파싱 실패면 통과(막으면 썸네일이 아예 없어진다)");
   ok(legibilityFromRaw('{"looksLikeAd":true}').ok === true, "★광고처럼 보여도 통과(어그로 우선)");
   ok(legibilityFromRaw('{"identifiableWhenTiny":false}').ok === false, "작게 줄여 안 보이면 불합격");
+  // ★2026-08-02 완화: 게이트를 겹겹이 쌓아 AI가 아예 못 만드는 상태가 됐다(유저 지적).
+  //  실제로 막는 건 '피사체 하나'와 '작게 줄여도 보임' 둘뿐이다.
+  ok(legibilityFromRaw('{"nameableInOneWord":false}').ok === true, "★한 단어로 못 대도 통과(반려 사유에서 제외)");
+  const ct2 = fs.readFileSync(new URL("../lib/composeThumbnail.ts", import.meta.url), "utf-8");
+  ok(/attempt < 3/.test(ct2), "★재시도 3회(2회로는 자주 전멸했다)");
 
   const ct = fs.readFileSync(new URL("../lib/composeThumbnail.ts", import.meta.url), "utf-8");
   ok(/manualShotBrief/.test(ct), "★AI 2회 실패 시 촬영 주문서로 전환");

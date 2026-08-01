@@ -190,6 +190,8 @@ export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots
         {shotBrief && (
           <div className="mt-2 rounded-2xl bg-neutral-50 p-4">
             <p className="text-[12.5px] font-bold text-neutral-900">직접 찍어주세요</p>
+            {/* ★왜 실패했는지 보여준다(2026-08-02) — 사유가 안 보여서 매번 추측으로 원인을 찾고 있었다 */}
+            {err && <p className="mt-0.5 text-[11px] font-medium text-amber-600">AI가 못 만든 이유: {err.replace(/^이미지를 못 만들었어요 \(|\) · 크레딧은 환불됐어요$/g, "")}</p>}
             <pre className="mt-1.5 whitespace-pre-wrap break-words font-sans text-[12px] leading-relaxed text-neutral-600">{shotBrief}</pre>
             <button onClick={() => fileRef.current?.click()} className="at-press mt-2.5 w-full rounded-xl bg-white py-2.5 text-[12.5px] font-bold text-neutral-800 ring-1 ring-neutral-200">
               찍은 사진 올리기

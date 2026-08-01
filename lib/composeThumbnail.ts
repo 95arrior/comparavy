@@ -49,23 +49,22 @@ export async function composeThumbnail(opts: {
     // ★제목에서 소재를 뽑는다(2026-08-02) — 유형 고정 소재는 제목과 무관한 그림을 만든다. 실패하면 유형 폴백.
     const picked = await subjectFromTitle(opts.topicHint ?? "", opts.textless.betType);
     const subject = picked?.en ?? null;
-    for (let attempt = 0; attempt < 2; attempt++) {
+    // ★재시도 2 → 3(2026-08-02): 게이트가 여럿이라 2회로는 자주 전멸했다. 한 번 더 준다.
+    for (let attempt = 0; attempt < 3; attempt++) {
       try {
         const img = await generateTextlessThumb(opts.textless.betType, opts.userId, (opts.variant ?? 0) + attempt * 7, subject, opts.topicHint, picked?.backdrop ?? null);
         const v = await verifyImage(img.base64, img.mime, "textless still life", { bgOnly: true, userId: opts.userId, strict: true });
         if (v.hasText) { aiFailReason = "이미지에 글자가 섞였어요"; continue; }
         const leg = await verifyThumbLegible(img.base64, img.mime, { userId: opts.userId });
         if (!leg.ok) {
-          aiFailReason = !leg.single ? "피사체가 여러 개예요(작게 줄이면 뭉개져요)"
-            : !leg.nameable ? "무엇인지 한 단어로 안 나와요(실루엣이 뭉뚱그려져요)"
-            : "작게 줄이면 뭘 찍었는지 안 보여요";
+          aiFailReason = !leg.single ? "피사체가 여러 개예요(작게 줄이면 뭉개져요)" : "작게 줄이면 뭘 찍었는지 안 보여요";
           continue;
         }
         return { png: Buffer.from(img.base64, "base64"), usedAiBackground: true, textlessImage: { base64: img.base64, mime: img.mime } };
       } catch (e) { aiFailReason = `이미지 생성 실패: ${String(e instanceof Error ? e.message : e).slice(0, 80)}`; }
     }
     // ★AI 2회 실패 — 직접 찍기로 넘긴다. 억지로 조판 카드를 내보내지 않는다(무문구를 고른 이유가 사라진다).
-    console.log(`[textless] ${opts.textless.betType} — AI 2회 실패(${aiFailReason}), 촬영 주문서로 전환`);
+    console.log(`[textless] ${opts.textless.betType} — AI 3회 실패(${aiFailReason}), 촬영 주문서로 전환`);
     return { png: Buffer.alloc(0), usedAiBackground: false, aiFailReason, manualBrief: manualShotBrief(opts.textless.betType, opts.userId, opts.topicHint, picked?.ko ?? null) };
   }
 

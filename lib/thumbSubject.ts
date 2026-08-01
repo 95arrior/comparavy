@@ -205,7 +205,7 @@ export function buildTextlessThumbPrompt(betType: string, userId: string, varian
     `Background: ${(backdrop ?? "").trim() || "a night scene from this topic"} — recognizable STRUCTURES rendered as glowing silhouettes (factory buildings, cranes, towers, an office block), clearly readable in outline but soft and out of focus. Plenty of bright bokeh lights scattered through it. Never an empty black backdrop.`,
     `★Keep the background bright enough to see — this is a lit night scene, not a dark room. The hero object still reads first because of its rim light, not because everything else is black.`,
     `Mood: minimal like an Apple ad, curiosity-driving like a high-CTR YouTube thumbnail.`,
-    `No brand names, no logos, no trademarked products or marks of real companies.`,
+    `No company names or trademarked marks. A plain lettering-free symbol (a cross, a shield, a house outline) is allowed and welcome.`,
     // ★글자 금지 — 계정 리스크(유저 4회 지적). 이것만은 우리 규칙으로 유지한다.
     `NO TEXT of any kind: no letters, numbers, Korean characters, signage, labels or watermarks anywhere in the image.`,
   ].join("\n");
@@ -253,7 +253,7 @@ export async function subjectFromTitle(title: string, betType: string): Promise<
         `It will be rendered as a glossy 3D hero shot with neon rim light, so pick something with volume and a readable outline.`,
         `Two rules only:`,
         `1. It must carry no writing — no receipts, documents, screens, signs, calendars or labels (their whole point is text, and the image will be rejected).`,
-        `2. No brand logos or trademarked products. Describe it generically.`,
+        `2. No company logos or trademarked products — an AI cannot draw a real logo, it produces a garbled fake mark, which is worse than none. But a plain SYMBOL with no lettering is fine and often the fastest read: a medical cross for health insurance, a shield for pension, a house outline for housing. Use one when the topic is tied to an institution.`,
         // ★배경 실루엣도 함께 뽑는다(2026-08-02 유저: "실루엣이라도 뒷쪽에 줘, 호기심 가게").
         `Also name what should sit BEHIND it as a glowing night silhouette — a real place tied to THIS topic specifically. Generic structures only, never a named company. If no place fits the topic, say "none".`,
         `Answer with JSON only: {"subject":"<short plain English phrase naming the thing>","backdrop":"<short English phrase for the background silhouette>","ko":"<소재를 한국어 한 구절로 — 유저가 직접 찍을 때 보는 주문서에 들어간다>"}`,

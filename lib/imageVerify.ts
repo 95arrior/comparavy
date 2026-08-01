@@ -68,7 +68,10 @@ export function legibilityFromRaw(raw: string): LegibilityVerdict {
   // ★2026-08-02 유저 확정("그냥 딱 어그로, 무조건 클릭") — adLike는 관측만 하고 반려하지 않는다.
   //  실측: 이 판정이 이미지를 얌전하게 만들어 클릭률을 깎고 있었다(1차 시도가 이것 때문에 2회 반려).
   //  홈피드에서 지는 건 못생긴 사진이 아니라 안 보이는 사진이다 — 그래서 single·identifiable만 남긴다.
-  return { single, identifiable, adLike, nameable, ok: single && identifiable && nameable };
+  // ★2026-08-02 완화: nameable("한 단어로 이름 대기")을 반려 사유에서 뺀다.
+  //  게이트를 겹겹이 쌓았더니 AI가 2회 모두 떨어져 아예 못 만드는 상태가 됐다(유저 지적).
+  //  관측은 유지하되, 실제로 막는 건 '피사체 하나'와 '작게 줄여도 보임' 둘뿐이다.
+  return { single, identifiable, adLike, nameable, ok: single && identifiable };
 }
 
 /** 무문구 썸네일이 작은 크기에서 살아남는가. 실패하면 호출측이 재생성 1회. */
