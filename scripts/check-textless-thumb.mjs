@@ -1,4 +1,4 @@
-import { SUBJECT_GRAMMAR, PHOTO_PRESETS, grammarFor, photoPresetFor, buildTextlessThumbPrompt, manualShotBrief } from "../lib/thumbSubject.ts";
+import { SUBJECT_GRAMMAR, PHOTO_PRESETS, DEVICE_STAGING, grammarFor, photoPresetFor, buildTextlessThumbPrompt, manualShotBrief } from "../lib/thumbSubject.ts";
 import { legibilityFromRaw } from "../lib/imageVerify.ts";
 import fs from "node:fs";
 
@@ -34,12 +34,13 @@ ok(grammarFor("없는유형").subject.length > 0, "미등록 유형은 폴백 �
   ok(/one focal point/i.test(p), "★단일 피사체 요구");
   ok(/60%/.test(p), "★피사체가 화면 60% 이상(축소 생존)");
   ok(/thumbnail/i.test(p) && /shrunk/i.test(p), "작게 줄여도 읽히게 요구");
-  ok(/NOT a magazine, catalog, product shot, or advertisement/i.test(p), "★광고·카탈로그 톤 금지(광고로 보이면 스크롤된다)");
+  ok(/impossible to scroll past/i.test(p), "★스크롤 못 지나가게 — 어그로 지시가 있다");
+  ok(/bold scale|strong contrast|dramatic angle/i.test(p), "★과장은 구도·스케일로 만든다");
   // ★2026-08-02 실측: 첫 줄이 "Editorial still-life photograph"이라 판독성 검사가 2회 다 '광고처럼 보인다'로 반려했다.
   //  상업 사진 장르 어휘를 앞에 두면 뒤에서 아무리 부정해도 소용없다 — 그 어휘가 다시 들어오는지 검사한다.
-  ok(!/editorial|still-life|studio|seamless backdrop.{0,20}$/im.test(p.split("\n")[0]), "★첫 줄에 상업 사진 장르 어휘가 없다");
+  ok(!/editorial|still-life/i.test(p.split("\n")[0]), "★첫 줄에 상업 사진 장르 어휘가 없다");
   ok(/snapshot|phone/i.test(p), "★스냅 사진 장르로 지정(진짜 같은 사진이 이긴다)");
-  ok(/personal blog/i.test(p), "개인 블로그 사진임을 명시");
+  ok(/Staging:/.test(p), "★device별 어그로 연출이 주입된다");
   // ★2026-08-02 실측 2차: 광고 톤을 고쳤더니 글자 검출에 걸렸다 — 동전 앞면의 숫자(100·500)가 원인.
   ok(/only the smooth edge is visible|Never show the face of a coin/i.test(p), "★동전은 모서리만 보이게(앞면 숫자=글자)");
   ok(/no smiling models|no face/i.test(p), "얼굴 금지");
@@ -77,12 +78,26 @@ ok(grammarFor("없는유형").subject.length > 0, "미등록 유형은 폴백 �
   }
 }
 
+// ── ③-2 제목에서 뽑은 소재가 유형 폴백을 이긴다 ────────────────────────
+//  ★유형 고정 소재는 제목과 무관한 그림을 만든다 — "에어컨 전기요금" 글에 동전 탑이 붙던 실측 문제.
+{
+  const 폴백 = buildTextlessThumbPrompt("계산 충격", "u1");
+  const 제목소재 = buildTextlessThumbPrompt("계산 충격", "u1", 0, "an air conditioner outdoor unit covered in dust");
+  ok(/tower of stacked coins/.test(폴백), "소재 미지정이면 유형 폴백을 쓴다");
+  ok(/air conditioner outdoor unit/.test(제목소재), "★제목에서 뽑은 소재가 주입된다");
+  ok(!/tower of stacked coins/.test(제목소재), "★주입되면 폴백 소재는 안 쓴다");
+  ok(Object.keys(DEVICE_STAGING).length === 7, `연출 7종(대비·발견·압도·반전·시간·정황·번역) (현재 ${Object.keys(DEVICE_STAGING).length})`);
+}
+
 // ── ④ 판독성 검사는 fail-open ─────────────────────────────────────────
 {
   ok(legibilityFromRaw("완전 쓰레기").ok, "★파싱 실패면 통과(fail-open — 막으면 썸네일이 아예 없어진다)");
   ok(legibilityFromRaw('{"singleSubject":false}').ok === false, "피사체 여러 개면 불합격");
   ok(legibilityFromRaw('{"identifiableWhenTiny":false}').ok === false, "작게 줄여 안 보이면 불합격");
-  ok(legibilityFromRaw('{"looksLikeAd":true}').ok === false, "광고처럼 보이면 불합격");
+  // ★2026-08-02 유저 확정("어그로, 무조건 클릭") — adLike는 관측만 하고 반려하지 않는다.
+  //  이 판정이 이미지를 얌전하게 만들어 클릭률을 깎고 있었다(실측: 1차 시도가 이것 때문에 2회 반려).
+  ok(legibilityFromRaw('{"looksLikeAd":true}').ok === true, "★광고처럼 보여도 통과(어그로 우선 — 반려하지 않는다)");
+  ok(legibilityFromRaw('{"looksLikeAd":true}').adLike === true, "다만 관측은 유지(나중에 판단 근거로)");
   ok(legibilityFromRaw('{"singleSubject":true,"identifiableWhenTiny":true,"looksLikeAd":false}').ok, "셋 다 통과면 합격");
 }
 

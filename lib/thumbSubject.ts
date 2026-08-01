@@ -19,7 +19,10 @@ export interface SubjectGrammar {
   betType: string;
   /** 구도가 만드는 감정 — 글자 없이 긴장을 만드는 유일한 수단 */
   device: "대비" | "발견" | "압도" | "반전" | "시간" | "정황" | "번역";
-  /** 이미지 모델용 영어 소재. ★단일 피사체 원칙 — 200px로 줄여도 살아남게. */
+  /** ★폴백 소재(2026-08-02 개정) — 제목에서 소재를 못 뽑았을 때만 쓴다.
+   *  주 경로는 제목·키워드에서 뽑는다(subjectFromTitle) — 유형 고정 소재는 제목과 무관한 그림을 만든다:
+   *  "에어컨 하루 10시간, 8월 전기요금" 글에 동전 탑이 붙는 게 실측된 문제였고, 같은 유형이면 매번 같은 그림이라
+   *  중복까지 났다. 유형은 이제 '구도와 감정'(device)만 정하고, '무엇을 찍나'는 그 글이 정한다. */
   subject: string;
 }
 
@@ -37,6 +40,19 @@ export const SUBJECT_GRAMMAR: SubjectGrammar[] = [
 ];
 
 const FALLBACK_SUBJECT = "a small stack of coins seen from the side on a plain surface, only the rims visible";
+
+/** ★device별 연출(2026-08-02 유저 확정: "그냥 딱 어그로, 씹 어그로, 무조건 클릭").
+ *  차분한 스냅으로 몰아놨던 걸 되돌린다 — 홈피드에서 지는 건 못생긴 사진이 아니라 '안 보이는 사진'이다.
+ *  단 과장은 구도·스케일로만 만든다. 채도를 올리거나 없는 물건을 지어내는 건 여전히 금지. */
+export const DEVICE_STAGING: Record<SubjectGrammar["device"], string> = {
+  대비: "Two versions of the same object side by side with an extreme, almost absurd size difference. The gap must be impossible to miss.",
+  발견: "The object is mostly hidden and only a sliver is revealed, as if caught mid-discovery. Make the viewer want to pull it out.",
+  압도: "One object stacked, piled or scaled far beyond normal, towering and precarious. Shot from low angle so it looms over the viewer.",
+  반전: "The object is upside-down, broken open, or in a state it should never be in. Something is clearly wrong.",
+  시간: "The object is caught at the last possible second, about to run out or fall. Maximum tension, no resolution.",
+  정황: "The aftermath of something that already happened. Empty, abandoned, one object left behind.",
+  번역: "An ordinary everyday object shot so close and so large that it feels confrontational.",
+};
 
 export function grammarFor(betType: string): SubjectGrammar {
   return SUBJECT_GRAMMAR.find((g) => g.betType === betType)
@@ -101,23 +117,29 @@ export function photoPresetFor(userId: string): PhotoPreset {
  * ★글자 금지를 프롬프트에서도 세 번 말한다. 코드 게이트(verifyImage)가 최종 방어지만,
  *  생성 단계에서 줄여야 재시도 비용이 안 든다(실측: 글자 검출 탈락이 썸네일 실패의 최대 원인이었다).
  */
-export function buildTextlessThumbPrompt(betType: string, userId: string, variant = 0): string {
+export function buildTextlessThumbPrompt(betType: string, userId: string, variant = 0, subjectOverride?: string | null): string {
   const g = grammarFor(betType);
   const p = photoPresetFor(userId);
+  const subject = (subjectOverride ?? "").trim() || g.subject; // ★제목에서 뽑은 소재 우선
   const poses = ["centered in frame", "slightly off-center to the left", "slightly off-center to the right"];
   return [
     // ★2026-08-02 실측 수정: 첫 줄이 "Editorial still-life photograph"이었는데 그게 곧 상업 사진 장르라
     //  뒤에서 "NOT an advertisement"라고 말해도 소용이 없었다(판독성 검사가 2회 다 '광고처럼 보인다'로 반려).
     //  장르 자체를 '집에서 대충 찍은 스냅'으로 바꾼다 — 홈피드에서 이기는 건 잘 찍은 사진이 아니라 진짜 같은 사진이다.
     `An unstaged everyday snapshot, as if someone quickly photographed this at home with a phone. Square 1:1.`,
-    `Subject: ${g.subject}. ${p.hands ? "A single human hand may enter the frame, fingers partially visible, no face." : "Objects only, no people."}`,
+    `Subject: ${subject}. ${p.hands ? "A single human hand may enter the frame, fingers partially visible, no face." : "Objects only, no people."}`,
     `Lighting and tone: ${p.tone}.`,
     `Camera: ${p.angle}, ${poses[variant % poses.length]}.`,
+    // ★어그로 연출 — 이 한 줄이 '스크롤을 멈추게 하는' 장치다(2026-08-02 유저 확정)
+    `Staging: ${DEVICE_STAGING[g.device]}`,
     `Setting: ${p.backdrop}. A real lived-in home or desk, not a studio.`,
     // ★축소 생존 — 홈피드 썸네일은 200~400px로 렌더된다. 명함보다 작다.
     `Composition: the subject fills at least 60% of the frame and reads clearly even when the image is shrunk to a thumbnail. Exactly one focal point. No clutter, no scattered props.`,
     // ★광고 냄새 제거
-    `Style: it must look like a photo from a personal blog, NOT a magazine, catalog, product shot, or advertisement. Slightly imperfect framing, natural uneven lighting with real shadows, muted everyday color. No studio lighting, no seamless backdrop, no glossy polish, no smiling models, no logos, no branding, no props arranged for the camera.`,
+    // ★2026-08-02 유저 확정으로 완화: 종전엔 "광고처럼 보이면 안 된다"를 강하게 걸었는데,
+    //  그게 이미지를 얌전하게 만들어 클릭률을 깎았다. 홈피드에서 지는 건 못생긴 사진이 아니라 안 보이는 사진이다.
+    //  '진짜 같은 사진'이라는 최소선만 남기고, 시선 강탈 쪽으로 연다.
+    `Style: shot like a real person's photo, not a studio product shot — natural uneven light, real shadows, slightly imperfect framing. But make it impossible to scroll past: bold scale, strong contrast between the subject and the background, dramatic angle. No smiling models, no logos, no branding.`,
     // ★글자 금지 3중
     `ABSOLUTELY NO TEXT of any kind: no letters, no numbers, no Korean characters, no signage, no labels, no watermarks, no printed documents, no receipts, no screens showing text. Any surface that would normally carry writing must be blank or turned away from the camera.`,
     // ★2026-08-02 실측: 광고 톤을 고쳤더니 이번엔 글자 검출에 걸렸다. 원인은 동전이었다 —
@@ -149,4 +171,45 @@ export function manualShotBrief(betType: string, userId: string): string {
     `★피사체가 화면의 60% 이상을 채우게. 작게 줄여도 뭔지 알아볼 수 있어야 해요.`,
     `★글자가 보이면 안 됩니다 — 고지서·영수증·통장처럼 글자 있는 물건은 쓰지 마세요.`,
   ].join("\n");
+}
+
+/**
+ * ★제목 → 썸네일 소재(2026-08-02 유저 확정: "제목과 연관있게").
+ *  종전엔 소재가 홈판 유형 8종에 고정돼 있었다 — "에어컨 하루 10시간, 8월 전기요금" 글에 동전 탑이 붙었고,
+ *  같은 유형이면 매번 같은 그림이라 중복까지 났다. 이제 그 글의 제목에서 뽑는다.
+ *  ★제약을 모델에 그대로 넘긴다: 글자가 없는 물건만(고지서·영수증·화면은 글자가 본질이라 실격),
+ *   하나만, 한국 가정에 실제로 있는 것. 실패하면 null → 호출측이 유형 폴백 소재를 쓴다.
+ */
+export async function subjectFromTitle(title: string, betType: string): Promise<string | null> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const t = (title ?? "").trim();
+  if (!apiKey || t.length < 2) return null;
+  try {
+    const Anthropic = (await import("@anthropic-ai/sdk")).default;
+    const client = new Anthropic({ apiKey });
+    const g = grammarFor(betType);
+    const res = await client.messages.create({
+      model: "claude-haiku-4-5", max_tokens: 150,
+      messages: [{ role: "user", content: [
+        `A Korean personal-finance blog post has this title: "${t.slice(0, 80)}"`,
+        `Pick ONE physical object to photograph for its thumbnail. The photo will use this staging: ${DEVICE_STAGING[g.device]}`,
+        `Rules — all mandatory:`,
+        `1. The object must be instantly recognizable as related to the title's topic.`,
+        `2. ★It must carry NO writing of any kind. Bills, receipts, documents, bankbooks, screens, signs, calendars, labeled packaging and coin faces are all FORBIDDEN — writing is their essence and the image will be rejected.`,
+        `3. One object only (or two identical objects if the staging is a contrast).`,
+        `4. It must be something an ordinary Korean household actually has.`,
+        `5. It must still read clearly when the image is shrunk to a 200px thumbnail — no fine detail.`,
+        `Answer with JSON only: {"subject":"<short English noun phrase describing the object and how it is arranged>"}`,
+      ].join("\n") }],
+    });
+    const text = res.content.find((b) => b.type === "text")?.text ?? "";
+    const m = text.match(/\{[\s\S]*\}/);
+    if (!m) return null;
+    const j = JSON.parse(m[0]) as { subject?: string };
+    const sub = (j.subject ?? "").trim();
+    if (!sub || /[가-힣]/.test(sub)) return null;
+    // ★모델이 규칙을 어겨 글자 물건을 골랐으면 버린다(프롬프트는 방향, 코드는 한계선)
+    if (/receipt|invoice|bill(?!board)|document|bankbook|passbook|screen|display|sign|label|calendar|newspaper|book|note|paper/i.test(sub)) return null;
+    return sub.slice(0, 120);
+  } catch { return null; }
 }

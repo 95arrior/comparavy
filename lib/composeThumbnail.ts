@@ -2,7 +2,7 @@ import { visualIdentityFor, PALETTES } from "./visualIdentity";
 import { renderThumbnail, type ThumbInput } from "./thumbnailRenderer";
 import { generateThumbBackground, generateTextlessThumb, imageReady } from "./geminiImage";
 import { verifyImage, verifyThumbLegible } from "./imageVerify";
-import { manualShotBrief } from "./thumbSubject";
+import { manualShotBrief, subjectFromTitle } from "./thumbSubject";
 import type { ThumbCopy } from "./amplifyTopics";
 
 // ★대표이미지 합성 통합 진입점 — 이미지 생성 라우트가 이 함수를 부른다.
@@ -46,16 +46,16 @@ export async function composeThumbnail(opts: {
   //  유저 확정 운영 방식: "AI로 먼저 뽑고 안 되면 직접 찍을게요" → AI 2회 시도, 실패하면 촬영 주문서를 준다.
   //  ★두 관문을 다 통과해야 한다: ①글자 없음(fail-closed — 예외 조항 금지) ②작게 줄여도 판독됨(fail-open).
   if (opts.textless && imageReady()) {
+    // ★제목에서 소재를 뽑는다(2026-08-02) — 유형 고정 소재는 제목과 무관한 그림을 만든다. 실패하면 유형 폴백.
+    const subject = await subjectFromTitle(opts.topicHint ?? "", opts.textless.betType);
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
-        const img = await generateTextlessThumb(opts.textless.betType, opts.userId, (opts.variant ?? 0) + attempt * 7);
+        const img = await generateTextlessThumb(opts.textless.betType, opts.userId, (opts.variant ?? 0) + attempt * 7, subject);
         const v = await verifyImage(img.base64, img.mime, "textless still life", { bgOnly: true, userId: opts.userId, strict: true });
         if (v.hasText) { aiFailReason = "이미지에 글자가 섞였어요"; continue; }
         const leg = await verifyThumbLegible(img.base64, img.mime, { userId: opts.userId });
         if (!leg.ok) {
-          aiFailReason = !leg.single ? "피사체가 여러 개예요(작게 줄이면 뭉개져요)"
-            : !leg.identifiable ? "작게 줄이면 뭘 찍었는지 안 보여요"
-            : "광고 사진처럼 보여요";
+          aiFailReason = !leg.single ? "피사체가 여러 개예요(작게 줄이면 뭉개져요)" : "작게 줄이면 뭘 찍었는지 안 보여요";
           continue;
         }
         return { png: Buffer.from(img.base64, "base64"), usedAiBackground: true, textlessImage: { base64: img.base64, mime: img.mime } };
