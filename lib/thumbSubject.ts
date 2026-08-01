@@ -57,7 +57,7 @@ export const DEVICE_STAGING: Record<SubjectGrammar["device"], string> = {
 /** ★모든 연출에 공통으로 거는 규칙(2026-08-02 유저 피드백) — 이게 '동전 탑 풍'의 정체다.
  *  실측: 동전 탑은 "너무 좋다", 빈 지갑 두 장은 "손이 안 간다"였다. 차이는 소재가 아니라 스케일이었다.
  *  탑은 화면을 뚫고 올라가고 세어보고 싶어지는데, 지갑은 그냥 놓여 있다. 조용하면 스크롤된다. */
-export const SCALE_RULE = "★The quantity or scale must feel ABNORMAL — far more, far taller, or far emptier than could ever be normal. A single object simply placed on a table is a failure. If the viewer would not react with 'whoa, that much?', it is wrong.";
+export const SCALE_RULE = "★The quantity or scale must feel ABNORMAL — for an object that means far more or far emptier than normal; for a place that means overwhelming vastness or a dramatic low angle — far more, far taller, or far emptier than could ever be normal. A single object simply placed on a table is a failure. If the viewer would not react with 'whoa, that much?', it is wrong.";
 
 export function grammarFor(betType: string): SubjectGrammar {
   return SUBJECT_GRAMMAR.find((g) => g.betType === betType)
@@ -122,27 +122,33 @@ export function photoPresetFor(userId: string): PhotoPreset {
  * ★글자 금지를 프롬프트에서도 세 번 말한다. 코드 게이트(verifyImage)가 최종 방어지만,
  *  생성 단계에서 줄여야 재시도 비용이 안 든다(실측: 글자 검출 탈락이 썸네일 실패의 최대 원인이었다).
  */
+/** 소재가 '장면(장소·현장)'인가 — 장면이면 손·단일 초점 지시가 어울리지 않는다(실측: 벌판 사진에 손 지시가 붙었다). */
+export function isSceneSubject(subject: string): boolean {
+  return /\b(field|fields|factory|plant|site|skyline|landscape|view|rows of|aerial|horizon|yard|complex|district|street|road|bridge|port|warehouse)\b/i.test(subject || "");
+}
+
 export function buildTextlessThumbPrompt(betType: string, userId: string, variant = 0, subjectOverride?: string | null): string {
   const g = grammarFor(betType);
   const p = photoPresetFor(userId);
   const subject = (subjectOverride ?? "").trim() || g.subject; // ★제목에서 뽑은 소재 우선
+  const scene = isSceneSubject(subject);
   const poses = ["centered in frame", "slightly off-center to the left", "slightly off-center to the right"];
   return [
     // ★2026-08-02 실측 수정: 첫 줄이 "Editorial still-life photograph"이었는데 그게 곧 상업 사진 장르라
     //  뒤에서 "NOT an advertisement"라고 말해도 소용이 없었다(판독성 검사가 2회 다 '광고처럼 보인다'로 반려).
     //  장르 자체를 '집에서 대충 찍은 스냅'으로 바꾼다 — 홈피드에서 이기는 건 잘 찍은 사진이 아니라 진짜 같은 사진이다.
     `An unstaged everyday snapshot, as if someone quickly photographed this at home with a phone. Square 1:1.`,
-    `Subject: ${subject}. ${p.hands ? "A single human hand may enter the frame, fingers partially visible, no face." : "Objects only, no people."}`,
+    `Subject: ${subject}. ${scene ? "No faces. If people appear at all they are distant and anonymous." : p.hands ? "A single human hand may enter the frame, fingers partially visible, no face." : "Objects only, no people."}`,
     `Lighting and tone: ${p.tone}.`,
-    `Camera: ${p.angle}, ${poses[variant % poses.length]}.`,
+    scene ? `Camera: a wide sweeping view or a dramatic low angle that conveys scale, ${poses[variant % poses.length]}.` : `Camera: ${p.angle}, ${poses[variant % poses.length]}.`,
     // ★어그로 연출 — 이 한 줄이 '스크롤을 멈추게 하는' 장치다(2026-08-02 유저 확정)
     `Staging: ${DEVICE_STAGING[g.device]}`,
     SCALE_RULE,
     `Setting: ${p.backdrop}. A real lived-in home or desk, not a studio.`,
     // ★축소 생존 — 홈피드 썸네일은 200~400px로 렌더된다. 명함보다 작다.
-    `Composition: the subject fills at least 60% of the frame and reads clearly even when the image is shrunk to a thumbnail. Exactly one focal point. No clutter, no scattered props.`,
+    `Composition: it must read clearly when shrunk to a thumbnail. If the subject is an OBJECT, it fills at least 60% of the frame with exactly one focal point and no scattered props. If the subject is a PLACE or SCENE (a wide field, a factory, a construction site), then instead go for overwhelming scale — a sweeping view or a dramatic low angle that makes the space feel vast. Either way the viewer must instantly know what they are looking at.`,
     // ★2026-08-02 실측: 명함 더미가 나왔고 종이 뭉치로만 보였다. 평면 사물은 쌓으면 실루엣이 같아진다.
-    `Silhouette: the object must be recognizable from its outline alone at thumbnail size. Do not photograph flat paper-like things stacked into a featureless block.`,
+    `Silhouette: if it is an object, it must be recognizable from its outline alone at thumbnail size — never flat paper-like things stacked into a featureless block. If it is a scene, the composition itself must be readable at that size.`,
     // ★광고 냄새 제거
     // ★2026-08-02 유저 확정으로 완화: 종전엔 "광고처럼 보이면 안 된다"를 강하게 걸었는데,
     //  그게 이미지를 얌전하게 만들어 클릭률을 깎았다. 홈피드에서 지는 건 못생긴 사진이 아니라 안 보이는 사진이다.
@@ -206,7 +212,9 @@ export async function subjectFromTitle(title: string, betType: string): Promise<
         `Pick ONE physical object to photograph for its thumbnail. The photo will use this staging: ${DEVICE_STAGING[g.device]}`,
         `Rules — all mandatory:`,
         `1. It must be a concrete object that makes the reader think of the title's topic within half a second. Money objects are ideal (coins, a piggy bank, a wallet, a jar of change), but if the topic is not about money itself, pick the object that most directly symbolizes it — a job fair means empty office chairs or hard hats, an apartment subscription means a door key or a scale model, an electricity bill means an air conditioner outdoor unit or a tangle of plugs.`,
-        `1b. ★CRITICAL — the object must have a DISTINCT SILHOUETTE that survives being shrunk to 200px. Flat, thin, stackable-into-sameness objects are FORBIDDEN: business cards, brochures, flyers, leaflets, sheets of paper, files, folders, books, envelopes. When piled, all of those become an indistinguishable block of paper and the thumbnail says nothing. Choose something with a recognizable three-dimensional shape.`,
+        `1b. It does NOT have to be a small object. A PLACE or SCENE is equally good when the topic is about a place or an industry — a vast empty development field, a factory skyline at dusk, a construction site with cranes, rows of empty office chairs. Choose whichever reads faster.`,
+        `1c. ★CRITICAL — if you choose an object, it must have a DISTINCT SILHOUETTE that survives being shrunk to 200px. Flat, thin, stackable-into-sameness objects are FORBIDDEN: business cards, brochures, flyers, leaflets, sheets of paper, files, folders, books, envelopes. When piled, all of those become an indistinguishable block of paper and the thumbnail says nothing.`,
+        `1d. ★No brand logos, company marks or trademarked products — not because of the topic but because we cannot put another company's mark on our own blog image. Describe the generic thing instead ("a car assembly plant", not a named carmaker).`,
         `2. It must carry NO writing of any kind. Bills, receipts, documents, bankbooks, screens, signs, calendars, labeled packaging and coin faces are all FORBIDDEN — writing is their essence and the image will be rejected.`,
         `3. One object only (or two identical objects if the staging is a contrast).`,
         `4. It must be something an ordinary Korean household actually has.`,

@@ -1,4 +1,4 @@
-import { SUBJECT_GRAMMAR, PHOTO_PRESETS, DEVICE_STAGING, SCALE_RULE, grammarFor, photoPresetFor, buildTextlessThumbPrompt, manualShotBrief } from "../lib/thumbSubject.ts";
+import { SUBJECT_GRAMMAR, PHOTO_PRESETS, DEVICE_STAGING, SCALE_RULE, isSceneSubject, grammarFor, photoPresetFor, buildTextlessThumbPrompt, manualShotBrief } from "../lib/thumbSubject.ts";
 import { legibilityFromRaw } from "../lib/imageVerify.ts";
 import fs from "node:fs";
 
@@ -45,6 +45,17 @@ ok(grammarFor("없는유형").subject.length > 0, "미등록 유형은 폴백 �
   ok(/snapshot|phone/i.test(p), "★스냅 사진 장르로 지정(진짜 같은 사진이 이긴다)");
   ok(/Staging:/.test(p), "★device별 어그로 연출이 주입된다");
   ok(/Silhouette:/.test(p), "★실루엣 관문이 프롬프트에 있다(평면 사물 금지)");
+  // ★장면(장소·현장)도 소재가 된다(2026-08-02 유저: "새만금 드넓은 벌판·공장") — 사물 강제가 과했다
+  {
+    ok(isSceneSubject('a vast empty development field at dusk'), '벌판=장면으로 판별');
+    ok(isSceneSubject('a car assembly plant skyline'), '공장=장면으로 판별');
+    ok(!isSceneSubject('a tall tower of stacked coins'), '동전 탑=사물로 판별');
+    const sc = buildTextlessThumbPrompt('계산 충격', 'u2', 0, 'a vast empty development field at dusk');
+    ok(!/A single human hand may enter/.test(sc), '★장면엔 손 지시가 안 붙는다');
+    ok(/wide sweeping view or a dramatic low angle/.test(sc), '★장면은 규모 구도로 찍는다');
+    const ob = buildTextlessThumbPrompt('계산 충격', 'u2', 0, 'a tall tower of stacked coins');
+    ok(!/wide sweeping view/.test(ob), '사물엔 규모 구도 지시가 안 붙는다');
+  }
   // ★2026-08-02 유저 실측: 동전 탑="너무 좋다", 빈 지갑="손이 안 간다". 차이는 소재가 아니라 스케일이었다.
   ok(/ABNORMAL/.test(p), "★스케일 과장이 전 유형에 의무로 걸린다");
   ok(/simply placed on a table is a failure/i.test(p), "★그냥 놓인 사물은 실패로 명시");
