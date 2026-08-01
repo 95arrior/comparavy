@@ -6,7 +6,7 @@ import { ensureUserRow } from "@/lib/userPlan";
 import { spendCredits, addCredits, GENERATE_COST } from "@/lib/credits";
 import { streamArticle } from "@/lib/generateArticle";
 import { isReviewType, ensureDisclosure } from "@/lib/revenue";
-import { hasFabricatedExperience, lacksInterpretation, lacksConditionBranch, duplicateSlotSubjects, lacksKeywordFloor, keywordOccurrences, keywordOverstuffed, headingMismatches, coreKeywordOf, KEYWORD_FLOOR } from "@/lib/editorial";
+import { hasFabricatedExperience, lacksInterpretation, lacksConditionBranch, duplicateSlotSubjects, lacksKeywordFloor, keywordOccurrences, keywordOverstuffed, headingMismatches, coreKeywordOf, endingReport, KEYWORD_FLOOR } from "@/lib/editorial";
 import { scanFacts } from "@/lib/factGate";
 import { financeCalcContext } from "@/lib/financeCalc";
 import { sanitizeUrls } from "@/lib/linkWhitelist";
@@ -410,6 +410,14 @@ export async function POST(request: Request) {
           const miss = scanFacts(`${(a as { title?: string }).title ?? ""}\n${a.body_html}`, keyword).filter((i) => i.layer === "missing");
           if (miss.length) {
             w.push(`이 주제의 필수 항목이 빠졌다 — ${miss.map((i) => i.matched).join(", ")}. 독자가 모르면 손해를 보는 항목이라 빠지면 글이 성립하지 않는다. 각 항목을 이름만 스치지 말고 최소 한 단락 또는 표의 한 행으로 실제로 다뤄라(정말 이 글 주제와 무관하면 억지로 넣지 말고 나머지를 반드시 채운다).`);
+          }
+          // ★어미 단조로움(2026-08-02 유저: "요요요 면서요 거든요 말투가 왜이럼, 더 AI같음").
+          //  프롬프트로 "섞어라"라고 해도 모델은 한 종결로 수렴한다 — 실제로 세서 지적한다.
+          const er = endingReport(a.body_html);
+          if (er.banned.length) {
+            w.push(`AI 티가 나는 연결형 종결이 섞였다 — ${[...new Set(er.banned)].join(", ")}. '~인데요·~면서요·~라서요·~는데요'는 쓰지 마라.`);
+          } else if (er.monotone) {
+            w.push(`문장 종결이 단조롭다(문장의 ${Math.round(er.yoRatio * 100)}%가 '요'로 끝난다). 어미를 섞어라 — 몇 문장은 '~합니다'로, 몇 문장은 명사·체언으로 끊어라('여기까지가 기본.', '문제는 시점.'). 같은 종결을 3연속 쓰지 마라.`);
           }
           const mm = headingMismatches(a.body_html);
           if (mm.length) {

@@ -109,6 +109,51 @@ export function keywordOverstuffed(html: string, keyword: string): boolean {
   return (n * kwLen) / total > KEYWORD_DENSITY_MAX;
 }
 
+// ═══ 어미 단조로움(2026-08-02 유저: "요요요 면서요 거든요 말투가 왜이럼, 더 AI같음") ═══
+//  프롬프트로 "어미를 섞어라"라고 해도 모델은 금방 한 종결로 수렴한다. 코드가 실제로 센다.
+//  ★품질 심사가 아니라 최소선이다 — '한 종결이 전체의 몇 %인가'와 '금지 어미가 몇 개인가' 둘만 본다.
+export const ENDING_TOP_MAX = 0.55;  // 같은 3음절 종결이 전체의 55%를 넘으면 단조롭다
+//  ★유저 불만의 정체는 "요요요" — 세부 어미가 달라도 전부 '요'로 끝나면 같은 소리로 읽힌다.
+//   그래서 '요 종결 비율'을 따로 잰다(이게 주 지표이고 3음절 분포는 보조다).
+export const ENDING_YO_MAX = 0.75;
+export const ENDING_MIN_SENTENCES = 8; // 이보다 짧은 글은 판정하지 않는다(표본 부족)
+
+/** AI 티가 가장 심한 연결형 종결 — 프롬프트에서 금지한 것들. */
+const BANNED_ENDINGS = /(인데요|면서요|라서요|는데요)\s*[.!?]/g;
+
+/** 문장 끝 2~3음절을 종결로 본다. '~니다/~해요/~예요/~죠' 등이 여기서 갈린다. */
+function endingKeys(html: string): string[] {
+  const text = stripTags(html).replace(/\s+/g, " ");
+  const sents = text.split(/(?<=[.!?])\s+/).map((x) => x.trim()).filter((x) => [...x].length >= 6);
+  const keys: string[] = [];
+  for (const sn of sents) {
+    const core = sn.replace(/[.!?"'”’)\]]+$/g, "");
+    const tail = [...core].slice(-3).join("");
+    if (tail) keys.push(tail);
+  }
+  return keys;
+}
+
+export interface EndingReport { sentences: number; topKey: string | null; topRatio: number; yoRatio: number; banned: string[]; monotone: boolean }
+
+export function endingReport(html: string): EndingReport {
+  const keys = endingKeys(html);
+  const banned = [...String(stripTags(html)).matchAll(BANNED_ENDINGS)].map((m) => m[1]!);
+  if (keys.length < ENDING_MIN_SENTENCES) return { sentences: keys.length, topKey: null, topRatio: 0, yoRatio: 0, banned, monotone: banned.length > 0 };
+  const count = new Map<string, number>();
+  for (const k of keys) count.set(k, (count.get(k) ?? 0) + 1);
+  let topKey: string | null = null, top = 0;
+  for (const [k, n] of count) if (n > top) { top = n; topKey = k; }
+  const topRatio = top / keys.length;
+  const yoRatio = keys.filter((k) => k.endsWith("요")).length / keys.length;
+  return { sentences: keys.length, topKey, topRatio, yoRatio, banned, monotone: yoRatio > ENDING_YO_MAX || topRatio > ENDING_TOP_MAX || banned.length > 0 };
+}
+
+/** 어미가 단조로운가 — 한 종결이 과반을 넘거나 금지 어미가 섞였으면 true. */
+export function hasMonotoneEndings(html: string): boolean {
+  return endingReport(html).monotone;
+}
+
 // ═══ 소제목-본문 정합(2026-08-02 유저: "네이버 AI가 소제목과 본문이 일치하는지까지 본다") ═══
 //  소제목이 던진 말을 그 아래 본문이 받지 않으면, 사람에게도 검색엔진에게도 '딴 얘기'가 된다.
 //  ★품질 심사가 아니라 최소선만 본다 — 소제목의 핵심어가 그 섹션 본문에 하나도 없으면 실격.
