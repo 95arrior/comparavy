@@ -16,10 +16,14 @@ export default function WriteTypeSheet({
   title: string;
   titleAlt?: string; // 검색형 제목(2안). title=클릭형. 다르면 유저가 고른다.
   recommendSearch?: boolean; // ★종족별 추천 — 롱테일(꾸준 수요)=검색형이 정답, 트렌드=클릭형(홈피드)
-  onPick: (opts: { withImages: boolean; title?: string }) => void;
+  onPick: (opts: { withImages: boolean; title?: string; experience?: string }) => void;
   onClose: () => void;
 }) {
   const [withImages, setWithImages] = useState(false);
+  // ★경험 한 줄(2026-08-02 유저 확정) — 네이버는 경험이 담긴 글을 좋아하는데, 없는 경험은 지어낼 수 없다.
+  //  그래서 '진짜 경험이 있을 때만' 받는다. 기본은 접힘 — 선택 입력이 스텝처럼 보이면 매번 멈칫하게 된다.
+  const [expOpen, setExpOpen] = useState(false);
+  const [experience, setExperience] = useState("");
   const hasTwo = !!titleAlt && titleAlt.trim() && titleAlt.trim() !== title.trim();
   const [pickTitle, setPickTitle] = useState(recommendSearch && titleAlt?.trim() ? (titleAlt as string) : title);
   useEffect(() => {
@@ -78,8 +82,39 @@ export default function WriteTypeSheet({
           </span>
         </button>}
 
+        {/* 내 경험 한 줄 — 있으면 이 글만의 재료가 되고, 없으면 그냥 지나간다(강요하지 않는다) */}
+        <div className="mt-3">
+          <button
+            onClick={() => setExpOpen((v) => !v)}
+            className="flex w-full items-center gap-2 rounded-2xl bg-neutral-50 px-4 py-3 text-left transition active:scale-[0.99]"
+          >
+            <span className="min-w-0 flex-1">
+              <span className="block text-[13px] font-bold text-neutral-900">겪어본 일이 있나요? <span className="font-medium text-neutral-400">(선택)</span></span>
+              <span className="mt-0.5 block text-[11px] leading-snug text-neutral-500">
+                {experience.trim() ? experience.trim().slice(0, 28) + (experience.trim().length > 28 ? "…" : "") : "한 줄만 적어주시면 이 글에 녹여드려요"}
+              </span>
+            </span>
+            <span className={`shrink-0 text-neutral-300 transition-transform ${expOpen ? "rotate-180" : ""}`}>⌄</span>
+          </button>
+          {/* 열림/닫힘은 높이 전환으로 — 주변 요소가 튀지 않게(레이아웃 안정) */}
+          <div className={`grid transition-all duration-300 ease-out ${expOpen ? "mt-2 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
+            <div className="overflow-hidden">
+              <textarea
+                value={experience}
+                onChange={(e) => setExperience(e.target.value.slice(0, 200))}
+                rows={2}
+                placeholder="예: 작년에 연말정산 잘못해서 30만 원 토해냈어요"
+                className="w-full resize-none rounded-2xl bg-white px-4 py-3 text-[13px] leading-relaxed text-neutral-900 outline-none ring-1 ring-neutral-200 transition placeholder:text-neutral-300 focus:ring-[#1D75F7]"
+              />
+              <p className="mt-1.5 px-1 text-[11px] leading-snug text-neutral-400">
+                적어주신 범위 안에서만 써요. 없는 경험은 절대 지어내지 않아요.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <button
-          onClick={() => onPick({ withImages: AI_IMAGES_AT_CREATE && withImages, title: pickTitle })}
+          onClick={() => onPick({ withImages: AI_IMAGES_AT_CREATE && withImages, title: pickTitle, experience: experience.trim() || undefined })}
           className="at-press mt-4 w-full rounded-xl tk-grad-cta py-3.5 text-[15px] font-semibold text-white transition hover:opacity-90"
         >
           이 글 쓰기

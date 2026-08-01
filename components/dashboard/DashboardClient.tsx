@@ -535,7 +535,7 @@ export default function DashboardClient(props: DashboardProps) {
             titleAlt={pendingWrite.titleSearch}
             recommendSearch={pendingWrite.tag !== "trend" && pendingWrite.tag !== "followup" && pendingWrite.tag !== "series"}
             onClose={() => setPendingWrite(null)}
-            onPick={({ withImages, title: pickedTitle }) => {
+            onPick={({ withImages, title: pickedTitle, experience }) => {
               setSelected(null);
               setGenParams({
                 keyword: pendingWrite.keyword,
@@ -544,6 +544,7 @@ export default function DashboardClient(props: DashboardProps) {
                 tone: blogProfile.tone,
                 promo: false,
                 withImages,
+                userExperience: experience, // ★경험 한 줄(L1) — 있을 때만 1인칭이 열린다
                 newsContext: pendingWrite.newsContext,
                 angleBrief: pendingWrite.briefText,
                 thumb: pendingWrite.thumb,

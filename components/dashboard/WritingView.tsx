@@ -13,6 +13,8 @@ export interface GenParams {
   tone: string;
   promo: boolean; // true=홍보용(업장 연결) | false=정보성(순수 정보) — 네이버 수익형 단일 후 기본 false
   userStory?: string; // 직접 쓴 '내 이야기'(있으면 핵심 재료로 우리 품질로 재구성)
+  /** ★경험 한 줄(L1) — 이 글감에 대해 실제로 겪은 일. 있을 때만 본문 1인칭 경험 서술이 열린다(없으면 지어내기 금지 유지) */
+  userExperience?: string;
   /** ★이미지 동시 생성 — 글이 써지는 동안 사진 자리 앞 3곳을 병렬 생성(장당 4크레딧) */
   withImages?: boolean;
   /** ★오늘 이슈 글감 — 최신 뉴스 발췌(근거 자료). 있으면 엔진이 이 사실관계 기반으로 쓴다 */
