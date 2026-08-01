@@ -95,19 +95,26 @@ export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots
     <div className="ateflo-backdrop-in fixed inset-0 z-[70] flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center sm:p-6" onClick={onClose}>
       <div className="ateflo-sheet-up at-thin-scroll flex max-h-[92vh] w-full max-w-md flex-col overflow-y-auto at-glass-strong rounded-t-3xl p-6 shadow-2xl sm:rounded-3xl" style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom))" }} onClick={(e) => e.stopPropagation()}>
         <p className="text-[17px] font-bold text-neutral-900">썸네일 만들기</p>
-        <p className="mt-1 text-[12.5px] text-neutral-400">문구가 주인공이에요 — 배경은 은은하게 깔려요.</p>
+        <p className="mt-1 text-[12.5px] text-neutral-400">{bgKind === "textless" ? "사진이 주인공이에요 — 글자 없이 스크롤을 멈춥니다." : "문구가 주인공이에요 — 배경은 은은하게 깔려요."}</p>
 
-        {/* 문구 — 추천 칩 클릭 또는 직접 입력 */}
+        {/* 문구 — 추천 칩 클릭 또는 직접 입력. ★무문구 모드에선 통째로 숨긴다(조판이 없어 들어갈 자리가 없다) */}
+        {bgKind !== "textless" && <>
         <p className="mt-4 text-[13px] font-bold text-neutral-700">문구</p>
         {copies && copies.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {copies.map((c) => (
-              <button key={c} onClick={() => setText(c)} className={`at-press rounded-full px-3 py-1.5 text-[12.5px] font-bold transition ${text === c ? "tk-grad-cta text-white" : "bg-neutral-50 text-neutral-700 ring-1 ring-black/[0.05]"}`}>{c}</button>
+              <button key={c} onClick={() => setText((v) => (v === c ? "" : c))} className={`at-press rounded-full px-3 py-1.5 text-[12.5px] font-bold transition ${text === c ? "tk-grad-cta text-white" : "bg-neutral-50 text-neutral-700 ring-1 ring-black/[0.05]"}`}>{c}</button>
             ))}
           </div>
         )}
         <input value={text} onChange={(e) => setText([...e.target.value].slice(0, 18).join(""))} placeholder="직접 입력 (최대 18자)"
           className="mt-2 w-full rounded-[12px] bg-neutral-50 px-4 py-3 text-[14px] font-semibold outline-none ring-1 ring-black/[0.05] placeholder:text-neutral-300 focus:ring-2 focus:ring-[#1D75F7]/30" />
+        </>}
+        {bgKind === "textless" && (
+          <p className="mt-4 rounded-[12px] bg-[#1D75F7]/[0.06] px-4 py-3 text-[12.5px] font-medium leading-relaxed text-[#1D75F7]">
+            글자 없이 사진 한 장으로 만들어요. 제목에서 소재를 뽑아 그립니다.
+          </p>
+        )}
 
         {/* 배경색 */}
         <p className="mt-4 text-[13px] font-bold text-neutral-700">배경색</p>
@@ -150,9 +157,9 @@ export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots
             // ★무문구(2026-08-02) — 조판 없이 이미지 한 장. 홈피드에서 조판 카드는 광고로 읽힌다.
             { k: "textless" as const, label: "문구 없이", sub: `홈판 · ${IMAGE_COST}cr` },
           ].map((o) => (
-            <button key={o.k} onClick={() => { setBgKind(o.k); if (o.k === "upload") fileRef.current?.click(); }} className={`at-press rounded-[12px] px-2 py-2.5 text-center transition ${bgKind === o.k ? "bg-[#1D75F7]/[0.08] ring-1 ring-[#1D75F7]/40" : "bg-neutral-50"}`}>
-              <span className={`block text-[12.5px] font-bold ${bgKind === o.k ? "text-[#1D75F7]" : "text-neutral-700"}`}>{o.label}</span>
-              <span className={`mt-0.5 block text-[10.5px] ${o.k === "upload" && customBg ? "text-emerald-600 font-semibold" : "text-neutral-400"}`}>{o.sub}</span>
+            <button key={o.k} onClick={() => { setBgKind(o.k); if (o.k === "upload") fileRef.current?.click(); }} className={`at-press rounded-[12px] px-2 py-2.5 text-center transition ${bgKind === o.k ? "bg-[#1D75F7] ring-2 ring-[#1D75F7]" : "bg-neutral-50"}`}>
+              <span className={`block text-[12.5px] font-bold ${bgKind === o.k ? "text-white" : "text-neutral-700"}`}>{o.label}</span>
+              <span className={`mt-0.5 block text-[10.5px] ${bgKind === o.k ? "text-white/80" : o.k === "upload" && customBg ? "text-emerald-600 font-semibold" : "text-neutral-400"}`}>{o.sub}</span>
             </button>
           ))}
         </div>
@@ -173,7 +180,7 @@ export default function ThumbMakerSheet({ articleId, articleTitle, copies, slots
           } catch { setErr("사진을 읽지 못했어요. 다른 사진으로 시도해 주세요."); }
         }} />
 
-        <button onClick={make} disabled={!text.trim() || busy} className="at-press tk-grad-cta mt-4 w-full rounded-[12px] py-3.5 text-[15px] font-bold text-white disabled:opacity-50">
+        <button onClick={make} disabled={(bgKind !== "textless" && !text.trim()) || busy} className="at-press tk-grad-cta mt-4 w-full rounded-[12px] py-3.5 text-[15px] font-bold text-white disabled:opacity-50">
           {busy
             ? <><span className="tk-wand mr-1.5" aria-hidden>✦</span>썸네일을 만들고 있어요</>
             : <>{preview ? "다시 만들기" : "썸네일 만들기"}<span className="ml-1.5 text-[12.5px] font-semibold text-white/75">{bgKind === "photo" || bgKind === "textless" ? `· ${IMAGE_COST}크레딧` : "· 무료"}</span></>}

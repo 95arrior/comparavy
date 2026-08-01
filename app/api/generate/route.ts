@@ -396,13 +396,20 @@ export async function POST(request: Request) {
         //   앵커의 핵심어(미환급금)를 세면 하한의 목적('무엇에 관한 글인지 판정되게')은 그대로 달성된다.
         const isHomefeedLane = (body.selectionMeta as { species?: string } | undefined)?.species === "homefeed";
         const floorTarget = isHomefeedLane ? coreKeywordOf(keyword) : keyword;
-        const specWarnings = (a: { body_html: string }): string => {
+        const specWarnings = (a: { body_html: string; title?: string }): string => {
           const w: string[] = [];
           if (keywordFloorApplies && lacksKeywordFloor(a.body_html, floorTarget)) {
             const n = keywordOccurrences(a.body_html, floorTarget);
             w.push(`메인 키워드 "${floorTarget}"가 본문에 ${n}회뿐이다(최소 ${KEYWORD_FLOOR}회). 제목·도입·소제목·본문 문단에 나눠 심어 ${KEYWORD_FLOOR}회 이상 나오게 하되, 억지 문장을 만들지 말고 '이 제도·이것'처럼 뭉갠 지시어를 키워드 원형으로 되돌려라.`);
           } else if (keywordOverstuffed(a.body_html, floorTarget)) { // 도배 상한은 양 채널 공통
             w.push(`메인 키워드 "${floorTarget}"가 과다 반복됐다(도배는 저품질 신호). 5~8회 구간으로 줄이고 나머지는 자연스러운 지시어로 바꿔라.`);
+          }
+          // ★필수 항목 누락도 함께 싣는다(2026-08-02 유저: "글 생성할 때 딱 보고 알아서 수정해서 나오게").
+          //  누락 가드는 재생성 대기열 5번째라, 앞의 넷 중 하나가 예산을 쓰면 고쳐질 기회를 못 얻고
+          //  그대로 검토 화면 안내로 떴다. 어느 가드가 재생성을 쓰든 누락도 같이 고쳐지게 한다.
+          const miss = scanFacts(`${(a as { title?: string }).title ?? ""}\n${a.body_html}`, keyword).filter((i) => i.layer === "missing");
+          if (miss.length) {
+            w.push(`이 주제의 필수 항목이 빠졌다 — ${miss.map((i) => i.matched).join(", ")}. 독자가 모르면 손해를 보는 항목이라 빠지면 글이 성립하지 않는다. 각 항목을 이름만 스치지 말고 최소 한 단락 또는 표의 한 행으로 실제로 다뤄라(정말 이 글 주제와 무관하면 억지로 넣지 말고 나머지를 반드시 채운다).`);
           }
           const mm = headingMismatches(a.body_html);
           if (mm.length) {
