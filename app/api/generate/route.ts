@@ -6,7 +6,7 @@ import { ensureUserRow } from "@/lib/userPlan";
 import { spendCredits, addCredits, GENERATE_COST } from "@/lib/credits";
 import { streamArticle } from "@/lib/generateArticle";
 import { isReviewType, ensureDisclosure } from "@/lib/revenue";
-import { hasFabricatedExperience, lacksInterpretation, lacksConditionBranch, duplicateSlotSubjects } from "@/lib/editorial";
+import { hasFabricatedExperience, lacksInterpretation, lacksConditionBranch, duplicateSlotSubjects, lacksKeywordFloor, keywordOccurrences, keywordOverstuffed, headingMismatches, coreKeywordOf, KEYWORD_FLOOR } from "@/lib/editorial";
 import { scanFacts } from "@/lib/factGate";
 import { financeCalcContext } from "@/lib/financeCalc";
 import { sanitizeUrls } from "@/lib/linkWhitelist";
@@ -72,6 +72,7 @@ export async function POST(request: Request) {
     tone?: string;
     promo?: boolean; // true=홍보용(업장 연결) | false=정보성(순수 정보). 네이버 수익형 단일 후 기본 false
     userStory?: string; // '내 이야기' 재료
+    userExperience?: string; // ★경험 레이어 L1(2026-08-02) — 이 글감에 대해 실제로 겪은 일 한 줄(선택)
     newsContext?: string; // ★오늘 이슈 — 최신 뉴스 발췌(근거 자료)
     angleBrief?: string; // ★C단계 앵글 브리프(무중복 증식)
     selectionMeta?: Record<string, unknown>; // ★성과 루프(FF_PERF_LOOP) — 선별 맥락(발행 스냅샷용)
@@ -85,6 +86,10 @@ export async function POST(request: Request) {
   }
 
   const userStory = (body.userStory ?? "").trim().slice(0, 4000); // '내 이야기' 재료(상한)
+  // ★경험 한 줄(L1) — userStory와 배타적으로 다루지 않는다. userStory는 '이 이야기로 글을 써라'(글감 정의)라
+  //  userTitle을 덮어쓰지만, 이건 '이 글감에 내 경험을 얹어라'(재료 추가)라 제목·글감을 건드리면 안 된다.
+  //  같은 필드를 재사용했다면 카드가 고른 홈판 제목이 키워드로 덮어써졌을 것이다(route.ts의 userTitle 라인).
+  const userExperience = (body.userExperience ?? "").trim().slice(0, 300);
   let keyword = (body.keyword ?? "").trim();
   const userTitle = userStory && keyword ? keyword.slice(0, 80) : null; // 사장님이 직접 쓴 제목(이야기+제목 둘 다일 때)
   // '내 이야기'인데 제목을 안 적으면, 이야기 첫 구절을 파이프라인 키워드로(실제 제목은 아래서 AI가 핏하게 유도).
@@ -368,7 +373,7 @@ export async function POST(request: Request) {
             await adminDb.from("seed_claims").upsert({ category: profileRow?.sub_category || vertical, keyword_norm: keyword.replace(/\s+/g, ""), user_id: user.id }, { onConflict: "keyword_norm,user_id" });
           } catch { /* 0063 미적용/실패 — 무시 */ }
         }
-        const genInput = { keyword, channel, serpContext, relatedPosts, angle: body.angle, type, tone, maxWords, variantInstruction, styleInstruction, relatedQueries, newsContext: resolvedNewsContext, angleBrief: ((typeof body.angleBrief === "string" ? body.angleBrief.slice(0, 900) : "") + seriesDirective + angleAddon).trim() || null, affiliate: isReview, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userTitle, calcContext: financeCalcContext(keyword) };
+        const genInput = { keyword, channel, serpContext, relatedPosts, angle: body.angle, type, tone, maxWords, variantInstruction, styleInstruction, relatedQueries, newsContext: resolvedNewsContext, angleBrief: ((typeof body.angleBrief === "string" ? body.angleBrief.slice(0, 900) : "") + seriesDirective + angleAddon).trim() || null, affiliate: isReview, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userExperience: userExperience || null, userTitle, calcContext: financeCalcContext(keyword) };
         // ★재생성 무음화 + 상한(2026-07-24 멈춤·재작성 조사): 가드 재생성이 클라이언트로 스트리밍되면 이미 뜬 완성
         //  본문이 짧은 재생성 조각으로 '교체'돼 화면이 스켈레톤으로 붕괴('다시 작성' 현상). 초기 생성만 스트리밍하고,
         //  재생성은 무음 콜백으로 돌린 뒤 최종본은 done(saved)으로 넘긴다. 스택 재생성(최대 4회 생성)이 maxDuration을
@@ -377,6 +382,34 @@ export async function POST(request: Request) {
         const REGEN_CAP = 1;
         let regenSpent = 0;
         const noop = () => { /* 재생성은 화면에 안 흘린다 — 붕괴 방지 */ };
+
+        // ★노출 규격 결함 수집(2026-08-02 유저 확정: 키워드 5회 하한 + 소제목-본문 일치).
+        //  재생성 예산은 REGEN_CAP=1로 전 가드가 공유한다. 그래서 이 두 결함은 '전용 재생성'만 기다리지 않고
+        //  앞선 가드가 재생성을 쓸 때 그 프롬프트에 함께 실어 보낸다 — 먼저 걸린 가드가 예산을 다 쓰면
+        //  뒤 결함이 영영 안 고쳐지는 선착순 문제를 피한다(실측 설계: 가드 6개가 예산 1개를 두고 경쟁).
+        //  ★키워드 하한은 네이버 채널 전용이다 — 워드프레스는 구글 모드라 규격이 정반대다
+        //   ("키워드 반복 금지, 원형은 제목·첫 문단·h2 1~2곳만"). 두 채널에 같은 하한을 씌우면 구글 쪽이 과최적화된다.
+        //   소제목-본문 일치는 채널 무관(양쪽 다 검색엔진이 대조한다).
+        const keywordFloorApplies = channel === "naver";
+        //  ★홈판 레인은 세는 대상이 다르다 — 카드의 keyword가 검색 키워드가 아니라 '주제 앵커'라서,
+        //   그 문구를 통째로 5회 박으면 글이 부자연스러워진다("7월 미환급금"을 다섯 번 쓸 자리가 없다).
+        //   앵커의 핵심어(미환급금)를 세면 하한의 목적('무엇에 관한 글인지 판정되게')은 그대로 달성된다.
+        const isHomefeedLane = (body.selectionMeta as { species?: string } | undefined)?.species === "homefeed";
+        const floorTarget = isHomefeedLane ? coreKeywordOf(keyword) : keyword;
+        const specWarnings = (a: { body_html: string }): string => {
+          const w: string[] = [];
+          if (keywordFloorApplies && lacksKeywordFloor(a.body_html, floorTarget)) {
+            const n = keywordOccurrences(a.body_html, floorTarget);
+            w.push(`메인 키워드 "${floorTarget}"가 본문에 ${n}회뿐이다(최소 ${KEYWORD_FLOOR}회). 제목·도입·소제목·본문 문단에 나눠 심어 ${KEYWORD_FLOOR}회 이상 나오게 하되, 억지 문장을 만들지 말고 '이 제도·이것'처럼 뭉갠 지시어를 키워드 원형으로 되돌려라.`);
+          } else if (keywordOverstuffed(a.body_html, floorTarget)) { // 도배 상한은 양 채널 공통
+            w.push(`메인 키워드 "${floorTarget}"가 과다 반복됐다(도배는 저품질 신호). 5~8회 구간으로 줄이고 나머지는 자연스러운 지시어로 바꿔라.`);
+          }
+          const mm = headingMismatches(a.body_html);
+          if (mm.length) {
+            w.push(`소제목과 그 아래 본문이 어긋났다 — ${mm.slice(0, 3).map((h) => `"${h}"`).join(", ")}. 소제목의 핵심 단어가 그 섹션 본문에 그대로 등장해야 한다(네이버 AI가 둘의 일치를 대조한다). 소제목을 본문에 맞게 고치거나 본문을 소제목에 맞게 고쳐라.`);
+          }
+          return w.length ? ` ★함께 고칠 규격: ${w.join(" / ")}` : "";
+        };
         let article = await streamArticle(
           genInput,
           (bodyHtml) => send({ type: "body", html: bodyHtml }),
@@ -384,17 +417,17 @@ export async function POST(request: Request) {
           onGenUsage,
         );
         // ★경험 조작 가드 — '제가 써보니' 류 검출 시 재생성 1회(경고 주입, 무음), 재검출은 아래 실패 흐름으로.
-        if (!userStory && hasFabricatedExperience(article.body_html)) {
+        if (!userStory && !userExperience && hasFabricatedExperience(article.body_html)) {
           if (regenSpent < REGEN_CAP) {
             regenSpent++;
             send({ type: "revising" });
             void logUsage({ userId: user.id, model: "guard", kind: "fabricated_retry", inputTokens: 0, outputTokens: 0 });
             article = await streamArticle(
-              { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ★경고: 직전 생성에서 '제가 써보니/직접 해보니' 같은 지어낸 개인 경험 서술이 검출됐다. 이번엔 절대 금지 — 판단은 조건 비교의 분석 판단('조건만 보면 A가 유리해요')으로만.`.trim() },
+              { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ★경고: 직전 생성에서 '제가 써보니/직접 해보니' 같은 지어낸 개인 경험 서술이 검출됐다. 이번엔 절대 금지 — 판단은 조건 비교의 분석 판단('조건만 보면 A가 유리해요')으로만.${specWarnings(article)}`.trim() },
               noop, noop, onGenUsage,
             );
           }
-          if (hasFabricatedExperience(article.body_html)) {
+          if (!userStory && !userExperience && hasFabricatedExperience(article.body_html)) {
             if (genId) await supabase.from("articles").delete().eq("id", genId);
             await refundOnce();
             send({ type: "error", error: "글을 만드는 중 문제가 생겨 잠깐 멈췄어요. 다시 한 번 눌러 주세요. (크레딧은 차감되지 않아요)" });
@@ -409,10 +442,10 @@ export async function POST(request: Request) {
           void logUsage({ userId: user.id, model: "guard", kind: "interpretation_retry", inputTokens: 0, outputTokens: 0 });
           try {
             const retried = await streamArticle(
-              { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ★경고: 직전 생성이 제도·수치 나열에 그쳤다. 정보 문단마다 '그래서 독자에게 뭐가 달라지는지' 해석 문단을 짝으로 붙이고, 소득·가구·조건별로 답이 갈리는 지점을 본문 중심에 둬라(수익형 분야 지침의 해석 짝 의무).`.trim() },
+              { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ★경고: 직전 생성이 제도·수치 나열에 그쳤다. 정보 문단마다 '그래서 독자에게 뭐가 달라지는지' 해석 문단을 짝으로 붙이고, 소득·가구·조건별로 답이 갈리는 지점을 본문 중심에 둬라(수익형 분야 지침의 해석 짝 의무).${specWarnings(article)}`.trim() },
               noop, noop, onGenUsage,
             );
-            if (!lacksInterpretation(retried.body_html) && (userStory || !hasFabricatedExperience(retried.body_html)) && countKoreanChars(retried.body_html) >= 500) article = retried;
+            if (!lacksInterpretation(retried.body_html) && (userStory || userExperience || !hasFabricatedExperience(retried.body_html)) && countKoreanChars(retried.body_html) >= 500) article = retried;
           } catch { /* 재생성 실패 — 원본 그대로 */ }
           if (lacksInterpretation(article.body_html)) console.log(`[interpretation] user=${user.id.slice(0, 8)} — 해석 신호 바닥 미달, 통과(로그만)`);
         }
@@ -425,12 +458,40 @@ export async function POST(request: Request) {
           void logUsage({ userId: user.id, model: "guard", kind: "condition_branch_retry", inputTokens: 0, outputTokens: 0 });
           try {
             const retried = await streamArticle(
-              { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ★경고: 직전 생성에 '내 조건이면 얼마인가'가 없다. AI 요약이 그대로 종결시켜 클릭이 남지 않는 글이다. 둘 중 최소 하나를 반드시 넣어라 — ①조건 분기표(소득·연령·가입기간처럼 답이 갈리는 축을 세로로, 그 조건일 때의 실제 금액·비율을 칸에 채운 표, 머리행 포함 3행 이상) ②숫자 계산 예시('예를 들어 총급여 4,500만 원이면…' 가정값→계산 과정→결과 숫자, 가정임을 명시). 나머지 규격·분량은 유지.`.trim() },
+              { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ★경고: 직전 생성에 '내 조건이면 얼마인가'가 없다. AI 요약이 그대로 종결시켜 클릭이 남지 않는 글이다. 둘 중 최소 하나를 반드시 넣어라 — ①조건 분기표(소득·연령·가입기간처럼 답이 갈리는 축을 세로로, 그 조건일 때의 실제 금액·비율을 칸에 채운 표, 머리행 포함 3행 이상) ②숫자 계산 예시('예를 들어 총급여 4,500만 원이면…' 가정값→계산 과정→결과 숫자, 가정임을 명시). 나머지 규격·분량은 유지.${specWarnings(article)}`.trim() },
               noop, noop, onGenUsage,
             );
-            if (!lacksConditionBranch(retried.body_html) && (userStory || !hasFabricatedExperience(retried.body_html)) && countKoreanChars(retried.body_html) >= 500) article = retried;
+            if (!lacksConditionBranch(retried.body_html) && (userStory || userExperience || !hasFabricatedExperience(retried.body_html)) && countKoreanChars(retried.body_html) >= 500) article = retried;
           } catch { /* 재생성 실패 — 원본 그대로 */ }
           if (lacksConditionBranch(article.body_html)) console.log(`[condition-branch] user=${user.id.slice(0, 8)} — 조건 분기 없음, 통과(로그만)`);
+        }
+
+        // ★노출 규격 가드(2026-08-02 유저 확정) — 키워드 5회 하한 + 소제목-본문 일치.
+        //  둘 다 '검색·AI 브리핑이 이 글을 무엇에 관한 글로 읽는가'를 정하는 최소선이다.
+        //  프롬프트는 방향, 코드가 한계선(CLAUDE.md). 앞선 가드가 예산을 안 썼을 때만 전용 재생성을 쓴다.
+        //  ★재생성이 더 나빠지면 버린다 — 결함 수가 줄었을 때만 교체한다.
+        {
+          const deficits = (a: { body_html: string }): number =>
+            (keywordFloorApplies && lacksKeywordFloor(a.body_html, floorTarget) ? 1 : 0) + headingMismatches(a.body_html).length;
+          const before = deficits(article);
+          if (before > 0 && regenSpent < REGEN_CAP) {
+            regenSpent++;
+            send({ type: "revising" });
+            void logUsage({ userId: user.id, model: "guard", kind: "exposure_spec_retry", inputTokens: 0, outputTokens: 0 });
+            try {
+              const retried = await streamArticle(
+                { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ★경고: 직전 생성이 노출 규격에 미달했다.${specWarnings(article)} 나머지 규격·분량은 유지.`.trim() },
+                noop, noop, onGenUsage,
+              );
+              if (deficits(retried) < before && (userStory || userExperience || !hasFabricatedExperience(retried.body_html)) && countKoreanChars(retried.body_html) >= 500) article = retried;
+            } catch { /* 재생성 실패 — 원본 그대로 */ }
+          }
+          // 남은 결함은 로그만(발행 차단은 과잉 — 다른 최소선 가드들과 같은 결).
+          if (keywordFloorApplies && lacksKeywordFloor(article.body_html, floorTarget)) {
+            console.log(`[keyword-floor] user=${user.id.slice(0, 8)} kw=${floorTarget} — ${keywordOccurrences(article.body_html, floorTarget)}/${KEYWORD_FLOOR}회, 통과(로그만)`);
+          }
+          const mmLeft = headingMismatches(article.body_html);
+          if (mmLeft.length) console.log(`[heading-match] user=${user.id.slice(0, 8)} — 어긋난 소제목 ${mmLeft.length}개: ${mmLeft.slice(0, 3).join(" | ")}`);
         }
 
         // ★필수 항목 누락 가드(2026-08-01 유저 실측: "이건 고쳐서 나와야 해요").
@@ -450,7 +511,7 @@ export async function POST(request: Request) {
                 noop, noop, onGenUsage,
               );
               const missAfter = scanFacts(`${retried.title}\n${retried.body_html}`, keyword).filter((i) => i.layer === "missing");
-              if (missAfter.length < missBefore.length && (userStory || !hasFabricatedExperience(retried.body_html)) && countKoreanChars(retried.body_html) >= 500) article = retried;
+              if (missAfter.length < missBefore.length && (userStory || userExperience || !hasFabricatedExperience(retried.body_html)) && countKoreanChars(retried.body_html) >= 500) article = retried;
             } catch { /* 재생성 실패 — 원본 그대로 */ }
             const left = scanFacts(`${article.title}\n${article.body_html}`, keyword).filter((i) => i.layer === "missing");
             if (left.length) console.log(`[missing-musts] user=${user.id.slice(0, 8)} — ${left.map((i) => i.matched).join(",")} 남음(검토 화면에서 안내)`);
@@ -469,7 +530,7 @@ export async function POST(request: Request) {
               { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ★경고: 직전 생성의 [사진:] 슬롯들이 같은 명사를 공유했다(같은 결의 그림이 두 장 나온다). 슬롯 역할을 지켜 소재를 완전히 분리하라 — ①1번=주제 핵심 사물 한 개 ②2번=그 섹션의 실제 서류·물건·화면 ③3번=끝낸 뒤의 생활 장면. 세 슬롯이 쓰는 명사는 하나도 겹치면 안 되고, 업종·대상 명사(소상공인·직장인 등)를 슬롯마다 반복하지 마라.`.trim() },
               noop, noop, onGenUsage,
             );
-            if (!duplicateSlotSubjects(retried.body_html) && (userStory || !hasFabricatedExperience(retried.body_html)) && countKoreanChars(retried.body_html) >= 500) article = retried;
+            if (!duplicateSlotSubjects(retried.body_html) && (userStory || userExperience || !hasFabricatedExperience(retried.body_html)) && countKoreanChars(retried.body_html) >= 500) article = retried;
           } catch { /* 재생성 실패 — 원본 그대로 */ }
           if (duplicateSlotSubjects(article.body_html)) console.log(`[slot-dup] user=${user.id.slice(0, 8)} — 슬롯 소재 중복, 통과(로그만)`);
         }

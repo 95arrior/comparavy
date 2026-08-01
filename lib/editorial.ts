@@ -48,6 +48,114 @@ export function lacksConditionBranch(html: string): boolean {
   return !hasConditionTable(html) && !hasCalcExample(html);
 }
 
+// ═══ 메인 키워드 출현 하한·상한(2026-08-02 유저 확정: "제목 메인키워드는 무조건 본문에 5번 이상") ═══
+//  배경: 네이버 AI 브리핑·검색이 이 글을 '무엇에 관한 글'로 판정하려면 키워드가 본문에 실재해야 한다.
+//  ★그동안 우리에겐 상한만 있었다("억지 반복 금지") — 하한이 없으니 2~3회로 말라도 아무도 몰랐다.
+//   그래서 양쪽을 박는다. 1,400~2,100자 글에서 5회는 도배가 아니라 정상 밀도다(6자 키워드면 약 1.5~2%).
+//   상한은 그대로 지킨다 — 과최적화는 여전히 저품질 신호다.
+export const KEYWORD_FLOOR = 5;          // 본문 원형 출현 하한(유저 확정)
+export const KEYWORD_DENSITY_MAX = 0.025; // 밀도 상한 2.5% — 넘으면 도배
+export const KEYWORD_COUNT_MAX = 12;      // 절대 개수 상한(짧은 글에서 밀도가 먼저 걸리게 두되 안전판)
+
+const stripTags = (html: string): string => String(html || "").replace(/<[^>]+>/g, " ");
+
+/** 본문에 메인 키워드 원형이 몇 번 나오는가. 공백 차이는 같은 것으로 본다('연말정산 환급'≡'연말정산환급'). */
+export function keywordOccurrences(html: string, keyword: string): number {
+  const kw = String(keyword || "").replace(/\s+/g, "");
+  if ([...kw].length < 2) return 0;
+  const text = stripTags(html).replace(/\s+/g, "");
+  if (!text) return 0;
+  let n = 0;
+  let i = text.indexOf(kw);
+  while (i !== -1) { n++; i = text.indexOf(kw, i + kw.length); }
+  return n;
+}
+
+/**
+ * ★앵커 문구에서 '셀 수 있는 핵심어'를 뽑는다(2026-08-02 실측 후 추가).
+ *  홈판 카드의 keyword는 검색 키워드가 아니라 주제 앵커다 — "7월 미환급금", "월급날 자동이체 함정" 같은 소재 문구.
+ *  이런 문구를 본문에 5회 그대로 박으라고 하면 글이 부자연스러워진다(그리고 모델은 못 지킨다).
+ *  그래서 홈판 레인에서는 앵커의 최장 토큰('미환급금', '자동이체')을 세는 대상으로 삼는다 —
+ *  '이 글이 무엇에 관한 글인지 판정되게 한다'는 하한의 목적은 그대로 달성된다.
+ */
+export function coreKeywordOf(keyword: string): string {
+  const all = String(keyword || "")
+    .split(/\s+/)
+    .map((t) => t.replace(/[^가-힣a-zA-Z0-9]/g, ""))
+    .filter((t) => [...t].length >= 2);
+  // ★숫자로 시작하는 토큰은 핵심어가 아니라 수식어다(7월·30대·2026) —
+  //  빼지 않으면 "30대 평균 저축액"의 핵심어가 '30대'로 잡혀 엉뚱한 말을 세게 된다(실측).
+  const nouns = all.filter((t) => !/^\d/.test(t));
+  const pool = nouns.length ? nouns : all;
+  if (pool.length === 0) return String(keyword || "").trim();
+  return pool.reduce((a, b) => ([...b].length > [...a].length ? b : a));
+}
+
+/** 키워드가 하한 미달인가 — 미달이면 이 글은 '무엇에 관한 글'인지 검색엔진이 판정하기 어렵다. */
+export function lacksKeywordFloor(html: string, keyword: string, floor = KEYWORD_FLOOR): boolean {
+  const kw = String(keyword || "").replace(/\s+/g, "");
+  if ([...kw].length < 2) return false; // 키워드가 없거나 너무 짧으면 판정 대상 아님
+  return keywordOccurrences(html, keyword) < floor;
+}
+
+/** 키워드 도배인가 — 밀도 또는 절대 개수 상한 초과. 하한을 넣었으니 반대쪽도 같이 지킨다. */
+export function keywordOverstuffed(html: string, keyword: string): boolean {
+  const n = keywordOccurrences(html, keyword);
+  if (n === 0) return false;
+  if (n > KEYWORD_COUNT_MAX) return true;
+  const kwLen = [...String(keyword || "").replace(/\s+/g, "")].length;
+  const total = [...stripTags(html).replace(/\s+/g, "")].length;
+  if (total < 200) return false; // 너무 짧은 본문은 밀도 판정이 무의미
+  return (n * kwLen) / total > KEYWORD_DENSITY_MAX;
+}
+
+// ═══ 소제목-본문 정합(2026-08-02 유저: "네이버 AI가 소제목과 본문이 일치하는지까지 본다") ═══
+//  소제목이 던진 말을 그 아래 본문이 받지 않으면, 사람에게도 검색엔진에게도 '딴 얘기'가 된다.
+//  ★품질 심사가 아니라 최소선만 본다 — 소제목의 핵심어가 그 섹션 본문에 하나도 없으면 실격.
+const HEADING_STOP = new Set([
+  "무엇", "어떻게", "언제", "어디서", "누가", "얼마", "얼마나", "왜", "이것", "그것", "정리", "총정리",
+  "확인", "주의", "자주", "묻는", "질문", "요약", "핵심", "방법", "경우", "대해", "관해", "알아야",
+  "하나요", "인가요", "일까요", "있나요", "되나요", "합니다", "해야", "위한", "위해", "그리고", "하지만",
+]);
+
+/** 스켈레톤 고정 소제목 — 내용 소제목이 아니므로 정합 판정에서 제외한다. */
+const SKELETON_HEADING = /(자주\s*묻는\s*질문|오늘의\s*3줄\s*요약|많이\s*하는\s*실수|3줄\s*요약)/;
+
+function headingCoreTokens(h: string): string[] {
+  return String(h || "")
+    .replace(/[^가-힣a-zA-Z0-9\s]/g, " ")
+    .split(/\s+/)
+    .map((w) => w.replace(/(은|는|이|가|을|를|의|에|도|와|과|로|으로|에서|부터|까지)$/, ""))
+    .filter((w) => [...w].length >= 2 && !HEADING_STOP.has(w));
+}
+
+/**
+ * 소제목과 그 아래 본문이 어긋난 h2 목록을 돌려준다(빈 배열이면 통과).
+ * 핵심어가 하나도 없는 소제목만 잡는다 — 부분 일치·동의어까지 요구하면 오탐이 난다.
+ */
+export function headingMismatches(html: string): string[] {
+  const src = String(html || "");
+  const parts = src.split(/<h2[^>]*>/i).slice(1); // 첫 h2 이전(도입부)은 판정 대상 아님
+  const out: string[] = [];
+  for (const part of parts) {
+    const close = part.search(/<\/h2>/i);
+    if (close === -1) continue;
+    const heading = stripTags(part.slice(0, close)).trim();
+    if (!heading || SKELETON_HEADING.test(heading)) continue;
+    const bodyText = stripTags(part.slice(close)).replace(/\s+/g, "");
+    if (!bodyText) { out.push(heading); continue; }
+    const toks = headingCoreTokens(heading);
+    if (toks.length === 0) continue; // 판정할 핵심어가 없는 소제목(예: '이런 분이라면')은 통과
+    if (!toks.some((t) => bodyText.includes(t))) out.push(heading);
+  }
+  return out;
+}
+
+/** 소제목-본문 정합 실패가 있는가. */
+export function hasHeadingMismatch(html: string): boolean {
+  return headingMismatches(html).length > 0;
+}
+
 // ★사진 슬롯 소재 중복 게이트(2026-07-29 유저 실측: 1번 '소상공인 가게 카운터 통장' / 3번 '노트북 앞에 앉은 소상공인 사업주'
 //  — '소상공인'이 겹쳐 두 장이 같은 결의 그림이 된다). 슬롯 설명은 유저가 이미지 도구에 그대로 붙여넣는 주문서라,
 //  소재가 겹치면 비슷한 그림이 두 장 나와 섹션별 핏이 무너진다. 프롬프트는 방향, 이 게이트는 한계선.
