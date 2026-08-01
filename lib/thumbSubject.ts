@@ -26,17 +26,17 @@ export interface SubjectGrammar {
 // ★소재 선정 기준: (1)글자가 없어도 성립 (2)피사체 1개(대비형은 같은 사물 2개) (3)AI가 잘 그리는 것
 //  — 사람 전신·복잡한 실내·서류 내용은 뺐다(AI 티가 가장 심하게 나는 3종).
 export const SUBJECT_GRAMMAR: SubjectGrammar[] = [
-  { betType: "평균 위치확인", device: "대비", subject: "two stacks of coins side by side, one clearly taller than the other" },
+  { betType: "평균 위치확인", device: "대비", subject: "two stacks of coins side by side seen from the side, one clearly taller, only the rims visible" },
   { betType: "몰라서 못 받는 돈", device: "발견", subject: "a plain unmarked envelope peeking out from under a folded cloth" },
-  { betType: "계산 충격", device: "압도", subject: "a glass jar overflowing with coins, extreme close-up" },
-  { betType: "통념 파괴", device: "반전", subject: "an upside-down ceramic piggy bank with coins spilled around it" },
-  { betType: "손해 공포 마감", device: "시간", subject: "a small hourglass beside a single coin, sand almost finished" },
+  { betType: "계산 충격", device: "압도", subject: "a tall precarious tower of stacked coins seen from the side, only the rims visible, extreme close-up" },
+  { betType: "통념 파괴", device: "반전", subject: "an upside-down ceramic piggy bank alone on a table, nothing spilled" },
+  { betType: "손해 공포 마감", device: "시간", subject: "a small hourglass with the sand almost finished, one coin standing upright on its rim beside it" },
   { betType: "인생 이벤트 돈 타임라인", device: "정황", subject: "a single key resting on an empty wooden desk" },
   { betType: "시장 급변 번역", device: "번역", subject: "a shopping basket handle held in one hand, groceries blurred behind" },
   { betType: "돈 격차 자극", device: "대비", subject: "two leather wallets side by side, one thick and one flat" },
 ];
 
-const FALLBACK_SUBJECT = "a small stack of coins on a plain surface, close-up";
+const FALLBACK_SUBJECT = "a small stack of coins seen from the side on a plain surface, only the rims visible";
 
 export function grammarFor(betType: string): SubjectGrammar {
   return SUBJECT_GRAMMAR.find((g) => g.betType === betType)
@@ -120,6 +120,10 @@ export function buildTextlessThumbPrompt(betType: string, userId: string, varian
     `Style: it must look like a photo from a personal blog, NOT a magazine, catalog, product shot, or advertisement. Slightly imperfect framing, natural uneven lighting with real shadows, muted everyday color. No studio lighting, no seamless backdrop, no glossy polish, no smiling models, no logos, no branding, no props arranged for the camera.`,
     // ★글자 금지 3중
     `ABSOLUTELY NO TEXT of any kind: no letters, no numbers, no Korean characters, no signage, no labels, no watermarks, no printed documents, no receipts, no screens showing text. Any surface that would normally carry writing must be blank or turned away from the camera.`,
+    // ★2026-08-02 실측: 광고 톤을 고쳤더니 이번엔 글자 검출에 걸렸다. 원인은 동전이었다 —
+    //  동전 앞면에는 숫자(100·500)와 글자가 새겨져 있어서, 접사로 찍으면 그게 그대로 '글자'다.
+    //  소재를 버리지 않고 방향만 돌린다: 쌓거나 세워서 모서리만 보이게 하면 글자가 사라진다.
+    `Coins: if any coin appears, it must be stacked or standing on its rim so that only the smooth edge is visible. Never show the face of a coin — coin faces carry engraved numbers and letters, which count as text.`,
   ].join("\n");
 }
 

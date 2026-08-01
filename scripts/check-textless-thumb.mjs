@@ -17,6 +17,8 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
 const 금지소재 = /receipt|invoice|bill|bankbook|passbook|document|paper.*writing|sign(board)?|label|screen|display|calendar|newspaper/i;
 for (const g of SUBJECT_GRAMMAR) {
   ok(!금지소재.test(g.subject), `[${g.betType}] 글자가 본질인 소재 아님`, g.subject.slice(0, 48));
+  // 동전이 들어간 소재는 반드시 방향을 지정해야 한다(안 하면 앞면이 나와 글자로 잡힌다)
+  if (/coin/i.test(g.subject)) ok(/rim|from the side|edge/i.test(g.subject), `[${g.betType}] 동전 방향 지정됨`, g.subject.slice(0, 52));
 }
 ok(SUBJECT_GRAMMAR.length === 8, `홈판 8유형 전부 커버 (현재 ${SUBJECT_GRAMMAR.length})`);
 ok(new Set(SUBJECT_GRAMMAR.map((g) => g.subject)).size === 8, "★8유형의 소재가 서로 다름(같으면 유형 구분이 죽는다)");
@@ -38,6 +40,8 @@ ok(grammarFor("없는유형").subject.length > 0, "미등록 유형은 폴백 �
   ok(!/editorial|still-life|studio|seamless backdrop.{0,20}$/im.test(p.split("\n")[0]), "★첫 줄에 상업 사진 장르 어휘가 없다");
   ok(/snapshot|phone/i.test(p), "★스냅 사진 장르로 지정(진짜 같은 사진이 이긴다)");
   ok(/personal blog/i.test(p), "개인 블로그 사진임을 명시");
+  // ★2026-08-02 실측 2차: 광고 톤을 고쳤더니 글자 검출에 걸렸다 — 동전 앞면의 숫자(100·500)가 원인.
+  ok(/only the smooth edge is visible|Never show the face of a coin/i.test(p), "★동전은 모서리만 보이게(앞면 숫자=글자)");
   ok(/no smiling models|no face/i.test(p), "얼굴 금지");
   ok(!/text overlay|caption|headline/i.test(p), "조판 관련 지시가 섞여 있지 않다(무문구다)");
 }
