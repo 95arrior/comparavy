@@ -346,9 +346,9 @@ export async function generateThumbBackground(bgStyleHint: string, paletteHint: 
  *  이쪽은 '완성된 한 장'이라 중앙을 비우면 안 된다 — 피사체가 화면을 채워야 한다.
  *  프롬프트는 lib/thumbSubject가 조립한다(소재 문법 × 계정별 사진 프리셋).
  */
-export async function generateTextlessThumb(betType: string, userId: string, variant = 0, subject?: string | null, title?: string | null): Promise<{ base64: string; mime: string; provider: string }> {
+export async function generateTextlessThumb(betType: string, userId: string, variant = 0, subject?: string | null, title?: string | null, backdrop?: string | null): Promise<{ base64: string; mime: string; provider: string }> {
   // ★정사각(2026-08-02 레퍼런스 확인) — 홈피드 카드가 정사각이라 16:9는 잘린다.
-  return callImage(buildTextlessThumbPrompt(betType, userId, variant, subject, title), "1:1");
+  return callImage(buildTextlessThumbPrompt(betType, userId, variant, subject, title, backdrop), "1:1");
 }
 
 export const GEMINI_IMAGE_MODEL = MODEL;

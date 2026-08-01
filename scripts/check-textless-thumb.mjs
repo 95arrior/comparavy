@@ -20,11 +20,17 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   ok(/Square 1:1/.test(p), "★정사각(홈피드 카드가 정사각 — 오독 ④)");
   ok(/60-80%/.test(p), "히어로가 화면 60~80%");
   ok(/neon rim light/i.test(p), "네온 림라이트");
-  ok(/glow spilling/i.test(p), "바닥으로 번지는 글로우");
-  ok(/dark scene related to the topic/i.test(p), "★배경은 비우지 않고 주제 맥락을 남긴다(오독 ①)");
-  ok(/Never an empty flat backdrop/i.test(p), "★텅 빈 배경 금지");
-  ok(/swallowed by darkness/i.test(p), "★어둠에 잠기게 — 물체를 덮는 게 아니다(오독 ②)");
-  ok(/wonders what is back there/i.test(p), "궁금증 유도");
+  ok(/glow pooling on the surface/i.test(p), "바닥으로 번지는 글로우");
+  // ★2차 교정(2026-08-02): "swallowed by darkness"로 전부 검정으로 뭉갰더니
+  //  유저 지적 — "실루엣이라도 뒷쪽에 줘, 호기심 가게" / "밝기가 너무 약해서 눈에 안 뜀".
+  //  맥락이 읽혀야 궁금해진다. 다 지우면 궁금한 게 아니라 아무것도 없는 것이다.
+  ok(/recognizable STRUCTURES/i.test(p), "★배경에 알아볼 수 있는 구조물 실루엣");
+  ok(/clearly readable in outline/i.test(p), "★윤곽은 읽히게(다 뭉개지 않는다)");
+  ok(/bright bokeh lights/i.test(p), "밝은 보케 불빛");
+  ok(/Never an empty black backdrop/i.test(p), "★텅 빈 검정 배경 금지");
+  ok(/bright enough to see/i.test(p), "★배경 밝기 하한(어두운 방이 아니라 불 켜진 야경)");
+  ok(!/swallowed by darkness/i.test(p), "★전부 어둠에 잠기게 하던 지시가 제거됨");
+  ok(/intense .* neon rim light/i.test(p) && /vivid and high-contrast/i.test(p), "★강한 네온·선명한 대비(피드에서 튀게)");
   ok(/Apple ad/i.test(p) && /YouTube thumbnail/i.test(p), "애플 미니멀 + 유튜브 CTR");
   ok(/No brand names, no logos/i.test(p), "브랜드·로고 금지");
   ok(/NO TEXT of any kind/i.test(p), "★글자 금지(계정 리스크 — 우리 규칙)");
@@ -51,7 +57,7 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   ok(PHOTO_PRESETS.length === 7, `프리셋 7석 (현재 ${PHOTO_PRESETS.length})`);
   const glows = new Set(PHOTO_PRESETS.map((_, i) => {
     process.env.ATEFLO_PHOTO_ASSIGN = `seat${i}:${i}`;
-    return /strong ([a-z ]+) neon rim/.exec(buildTextlessThumbPrompt("", `seat${i}`, 0, "x", "t"))?.[1];
+    return /intense ([a-z ]+) neon rim/.exec(buildTextlessThumbPrompt("", `seat${i}`, 0, "x", "t"))?.[1];
   }));
   delete process.env.ATEFLO_PHOTO_ASSIGN;
   ok(glows.size === 7, `★7석의 글로우 색이 전부 다름 (현재 ${glows.size})`);

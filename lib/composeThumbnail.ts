@@ -51,7 +51,7 @@ export async function composeThumbnail(opts: {
     const subject = picked?.en ?? null;
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
-        const img = await generateTextlessThumb(opts.textless.betType, opts.userId, (opts.variant ?? 0) + attempt * 7, subject, opts.topicHint);
+        const img = await generateTextlessThumb(opts.textless.betType, opts.userId, (opts.variant ?? 0) + attempt * 7, subject, opts.topicHint, picked?.backdrop ?? null);
         const v = await verifyImage(img.base64, img.mime, "textless still life", { bgOnly: true, userId: opts.userId, strict: true });
         if (v.hasText) { aiFailReason = "이미지에 글자가 섞였어요"; continue; }
         const leg = await verifyThumbLegible(img.base64, img.mime, { userId: opts.userId });

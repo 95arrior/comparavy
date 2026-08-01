@@ -180,7 +180,7 @@ function pickBy(seed: number, arr: readonly string[]): string { return arr[seed 
 // ★네온 글로우 색 — 계정 지문은 이 한 축만(2026-08-02 레퍼런스: 보라 네온 림라이트).
 const GLOW_COLORS = ["electric violet", "deep blue", "cyan", "magenta", "amber gold", "emerald green", "crimson red"];
 
-export function buildTextlessThumbPrompt(betType: string, userId: string, variant = 0, subjectOverride?: string | null, title?: string | null): string {
+export function buildTextlessThumbPrompt(betType: string, userId: string, variant = 0, subjectOverride?: string | null, title?: string | null, backdrop?: string | null): string {
   const p = photoPresetFor(userId);
   const subject = (subjectOverride ?? "").trim() || grammarFor(betType, title).subject;
   const seed = fnv1a(`${title ?? ""}|${subject}|${variant}`);
@@ -196,10 +196,12 @@ export function buildTextlessThumbPrompt(betType: string, userId: string, varian
     `A premium 3D product-render style thumbnail for a Korean blog post. Square 1:1.`,
     `Hero object: ${subject}. It is the single symbol of this topic and it occupies 60-80% of the frame, ${angles[seed % angles.length]}.`,
     `Render it clean and glossy like a high-end CG advertisement — not a photograph, not an obvious digital collage.`,
-    `Lighting: strong ${glow} neon rim light wrapping the object, with a soft glow spilling onto the surface beneath it.`,
-    // ★배경은 비우는 게 아니라 '어둠에 잠기게' 한다 — 맥락은 남기되 주인공을 방해하지 않는다.
-    `Background: a dark scene related to the topic, thrown far out of focus and swallowed by darkness — only faint lights and blurred silhouettes remain. Never an empty flat backdrop, and never anything sharp enough to compete with the hero object.`,
-    `The darkness should hide roughly a third of the scene so the viewer wonders what is back there.`,
+    `Lighting: intense ${glow} neon rim light wrapping the object, bright and saturated, with a strong glow pooling on the surface beneath it. The whole image should feel vivid and high-contrast, not murky — it must pop in a crowded feed.`,
+    // ★배경(2026-08-02 2차 교정) — 종전엔 "swallowed by darkness"라 전부 검정으로 뭉갰다.
+    //  유저: "실루엣이라도 뒷쪽에 줘, 호기심 가게" + "밝기가 너무 약해서 눈에 안 뜀".
+    //  ★맥락이 읽혀야 궁금해진다. 다 지우면 궁금한 게 아니라 아무것도 없는 것이다.
+    `Background: ${(backdrop ?? "").trim() || "a night scene from this topic"} — recognizable STRUCTURES rendered as glowing silhouettes (factory buildings, cranes, towers, an office block), clearly readable in outline but soft and out of focus. Plenty of bright bokeh lights scattered through it. Never an empty black backdrop.`,
+    `★Keep the background bright enough to see — this is a lit night scene, not a dark room. The hero object still reads first because of its rim light, not because everything else is black.`,
     `Mood: minimal like an Apple ad, curiosity-driving like a high-CTR YouTube thumbnail.`,
     `No brand names, no logos, no trademarked products or marks of real companies.`,
     // ★글자 금지 — 계정 리스크(유저 4회 지적). 이것만은 우리 규칙으로 유지한다.
@@ -225,7 +227,7 @@ export function manualShotBrief(_betType: string, userId: string, title?: string
   ].filter(Boolean).join("\n");
 }
 
-export async function subjectFromTitle(title: string, betType: string): Promise<{ en: string; ko: string } | null> {
+export async function subjectFromTitle(title: string, betType: string): Promise<{ en: string; backdrop: string | null; ko: string } | null> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   const t = (title ?? "").trim();
   if (!apiKey || t.length < 2) return null;
@@ -246,17 +248,19 @@ export async function subjectFromTitle(title: string, betType: string): Promise<
         `Two rules only:`,
         `1. It must carry no writing — no receipts, documents, screens, signs, calendars or labels (their whole point is text, and the image will be rejected).`,
         `2. No brand logos or trademarked products. Describe it generically.`,
-        `Answer with JSON only: {"subject":"<short plain English phrase naming the thing>","ko":"<같은 것을 한국어 한 구절로 — 유저가 직접 찍을 때 보는 주문서에 들어간다>"}`,
+        // ★배경 실루엣도 함께 뽑는다(2026-08-02 유저: "실루엣이라도 뒷쪽에 줘, 호기심 가게").
+        `Also name what should sit BEHIND it as a glowing night silhouette — a place tied to the topic (a factory skyline, cranes, an office tower, an apartment block). Generic structures only, never a named company.`,
+        `Answer with JSON only: {"subject":"<short plain English phrase naming the thing>","backdrop":"<short English phrase for the background silhouette>","ko":"<소재를 한국어 한 구절로 — 유저가 직접 찍을 때 보는 주문서에 들어간다>"}`,
       ].join("\n") }],
     });
     const text = res.content.find((b) => b.type === "text")?.text ?? "";
     const m = text.match(/\{[\s\S]*\}/);
     if (!m) return null;
-    const j = JSON.parse(m[0]) as { subject?: string; ko?: string };
+    const j = JSON.parse(m[0]) as { subject?: string; backdrop?: string; ko?: string };
     const sub = (j.subject ?? "").trim();
     if (!sub || /[가-힣]/.test(sub)) return null;
     // ★글자가 본질인 물건만 막는다(단어 경계 필수 — de(sign)·(paper)clip 오탐 방지).
     if (/\b(receipts?|invoices?|bills?|documents?|bankbooks?|passbooks?|screens?|displays?|signs?|signage|labels?|calendars?|newspapers?|books?|notes?|notebooks?|papers?)\b/i.test(sub)) return null;
-    return { en: sub.slice(0, 120), ko: (j.ko ?? "").trim().slice(0, 60) || sub.slice(0, 60) };
+    return { en: sub.slice(0, 120), backdrop: (j.backdrop ?? "").trim().slice(0, 90) || null, ko: (j.ko ?? "").trim().slice(0, 60) || sub.slice(0, 60) };
   } catch { return null; }
 }
