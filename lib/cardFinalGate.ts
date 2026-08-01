@@ -111,7 +111,15 @@ export function scamLoan(text: string): string | null {
 }
 
 /** 응답 직전 최종 검문 — 통과 카드와 탈락 사유를 함께 반환(관측 가능). */
-export function finalGate<T extends GateCard>(cards: T[]): { pass: T[]; drops: GateDrop[] } {
+/**
+ * @param opts.anchorKeyword ★홈판 레인 전용(2026-08-02 실측). 홈판 카드의 keyword는 검색 키워드가 아니라
+ *  '주제 앵커(소재)'이고, 제목과 앵커가 **같은 LLM 호출에서 함께** 나온다 — 즉 아래 4)가 막으려는
+ *  '짝 밀림'(다른 씨앗의 제목이 붙는 조립 오류)이 구조적으로 일어날 수 없는 경로다.
+ *  그런데 규칙 4)는 토큰 교집합을 요구하므로 좋은 홈판 제목이 조립 오류로 오인돼 버려졌다:
+ *    앵커 "7월 숨은 환급금" ← 제목 "이번 달 월급 들어오기 전에, 먼저 찾아갈 돈이 있습니다" (실측 탈락)
+ *  그래서 이 레인에서만 4)를 끈다. 나머지 게이트(지역·폐지제도·수명·안전)는 전부 그대로 적용된다.
+ */
+export function finalGate<T extends GateCard>(cards: T[], opts?: { anchorKeyword?: boolean }): { pass: T[]; drops: GateDrop[] } {
   const pass: T[] = [];
   const drops: GateDrop[] = [];
   for (const c of cards) {
@@ -155,6 +163,8 @@ export function finalGate<T extends GateCard>(cards: T[]): { pass: T[]; drops: G
       if (life.reasons.includes("dated")) { drops.push({ keyword: c.keyword, reason: "dated_topic" }); continue; }
       if (life.reasons.includes("round")) { drops.push({ keyword: c.keyword, reason: "round_topic" }); continue; } }
     // 4) 제목-키워드 정합(짝 밀림류 최후 방어) — 실질 토큰 교집합 0이면 조립 오류로 간주
+    //    ★앵커 레인(홈판)은 이 검사를 건너뛴다 — 위 opts.anchorKeyword 주석 참조.
+    if (opts?.anchorKeyword) { pass.push(c); continue; }
     const toks = (t: string) => new Set(t.replace(/[^가-힣a-zA-Z0-9 ]/g, " ").split(/\s+/).filter((w) => w.length >= 2));
     const kt = toks(c.keyword), tt = toks(c.title);
     const overlap = [...kt].some((w) => tt.has(w) || [...tt].some((x) => x.includes(w) || w.includes(x)));

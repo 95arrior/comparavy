@@ -7,6 +7,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { logUsage } from "./usageLog";
 import { containsBanned } from "./hookPatterns";
 import { fetchNews } from "./newsTopics";
+import { readSignals, pickTitleType, titleTypeDirective } from "./titleTypes";
+import { validateHomefeedTitle } from "./titleRules";
 
 export interface HomefeedBet {
   keyword: string;   // 주제 앵커(검색 키워드가 아니라 소재 — 예: "30대 평균 저축액")
@@ -14,6 +16,7 @@ export interface HomefeedBet {
   thumbCopy: string; // 썸네일 훅 문구(12자 이내)
   briefText: string; // 생성 엔진에 넘길 홈판 지시
   betType: string;   // 오늘의 유형 라벨
+  titleType?: string; // ★적합도로 고른 제목 유형 key(2026-08-02) — 본문 생성이 같은 유형을 이어받는다
 }
 
 // 8유형 로테이션(2026-07-15 합의 6종 + 2026-08-01 유저 추가 2종) — 전부 사실 기반으로 쓸 수 있는 유형만.
@@ -112,6 +115,10 @@ async function genOne(
       console.error("[homebet] 뉴스 없음 — 시장 유형 스킵:", bet.key);
       return null;
     }
+    // ★제목 유형은 추첨이 아니라 이 글감에 맞는 것을 고른다(2026-08-02) — 유형 신호는 소재 힌트·오늘 기사에서 읽는다.
+    //  경험형은 여기서 뽑히지 않는다(카드 생성 시점엔 운영자 실경험이 없다) — 그 유형은 본문 생성 단계에서 열린다.
+    const signals = readSignals(`${bet.key} ${bet.hint} ${newsBlock ?? ""}`, { userExperience: false });
+    const titleType = pickTitleType(signals);
     const client = new Anthropic({ apiKey });
     const res = await client.messages.create({
       model: "claude-sonnet-4-6",
@@ -125,7 +132,10 @@ async function genOne(
           newsBlock ?? "",
           `★시의성 결합(2026-07-16 개정 — 홈판은 '지금의 파도'를 탄다): 이 유형을 지금 이 계절·이 달의 상황(폭염 전기요금, 휴가비, 월급날, 세금 고지서 등 요즘 사람들이 실제로 겪는 일)과 반드시 결합하라. 계절과 무관한 무시간 주제 금지.`,
           `절대 원칙: ①거짓 사연·지어낸 경험 금지 — 공식 통계·실제 제도·계산으로만 성립하는 주제 ②전 국민 이해관계(대상이 넓을수록 좋다) ③이미 쓴 주제 제외: ${[...usedKeywords].slice(0, 40).join(", ") || "(없음)"}`,
-          `제목 규격: 검색 키워드 나열이 아니라 사람이 말하듯 흐르는 '문장형' — 다음 결 중 하나: ⓐ공감 프레임("요즘 30대가 진짜 많이 하는 돈 실수") ⓑ구어체 감탄+되물음("아니 전기요금이 이렇게나 나왔다고? 이번 달 뭐가 달라진 거야") ⓒ반전 선언("적금 이자, 사실 4분의 1은 세금으로 사라집니다") ⓓ조건 호명+개수형(2026-07-20 추가 — 검색 의도 정합: "전기요금 폭탄 맞았다면, 이 3가지는 꼭 확인하세요"). 숫자·반전 중 1개 이상 결합. ★금지선(계정 지속 — 절대): 본문이 100% 이행 못 할 약속(낚시), "안 사면 평생 후회·무조건·100%" 류 단정·공포 마케팅, 충격·경악 남발.`,
+          `제목 규격: 검색 키워드 나열이 아니라 사람이 말하듯 흐르는 '문장형'. 아래 지정 유형의 결로 쓴다 — 유형은 이 글감의 신호를 읽어 고른 것이므로 바꾸지 마라.`,
+          titleTypeDirective(titleType),
+          `길이는 20~45자. 느낌표·물음표는 각각 최대 1개까지 쓸 수 있다(훅이 살아난다 — 다만 2개 이상은 유튜브식 어그로라 실격). 숫자·반전 중 1개 이상 결합.`,
+          `★금지선(계정 지속 — 절대): 본문이 100% 이행 못 할 약속(낚시), "안 사면 평생 후회·무조건·100%" 류 단정·공포 마케팅, 충격·경악 남발.`,
           `★토너먼트 자기검증(내부 심사 — 과정 출력 금지): 제목·썸네일 문구 후보를 각각 10개 이상 만들어 스스로 물어라 — '스크롤하다 내가 정말 멈출까?', '왜 멈추는지 한 문장으로 설명되는가?', '제목과 썸네일이 같은 말을 하고 있진 않은가?'. 통과 못 하면 폐기하고 다시. 최강 1세트만 출력한다 — 이건 경쟁이다.`,
           `JSON만 출력: {"keyword":"주제 앵커(15자 이내)","title":"훅 제목(32자 이내)","thumbCopy":"썸네일 문구(6자 이내 초단문 — 글자가 적을수록 유리. ★제목을 반복하지 말고 개념 하나만 던진다: 썸네일이 질문, 제목이 답 — '검색 끝.' 결)","angle":"본문이 다룰 핵심 각도 2문장"}`,
         ].join("\n"),
@@ -144,15 +154,24 @@ async function genOne(
       console.error("[homebet] 투자권유 오인 표현 — 스킵:", raw.title.slice(0, 30));
       return null;
     }
+    // ★홈판 제목 규격 게이트(2026-08-02) — 프롬프트는 방향, 코드는 한계선.
+    //  길이·부호 남용·키워드 실종을 여기서 잡는다. 걸리면 그 장만 버린다(다른 유형이 자리를 채운다).
+    const tv = validateHomefeedTitle(raw.title, raw.keyword);
+    if (!tv.ok) {
+      console.error(`[homebet] 제목 규격 위반(${tv.reason}) — 스킵: 앵커="${raw.keyword}" 제목="${raw.title.slice(0, 40)}"`);
+      return null;
+    }
     const thumbCopy0 = (raw.thumbCopy ?? raw.keyword).slice(0, 14);
     const out: HomefeedBet = {
       keyword: raw.keyword.slice(0, 30),
       title: raw.title.slice(0, 60),
       thumbCopy: containsBanned(thumbCopy0) ? raw.keyword.slice(0, 14) : thumbCopy0,
       betType: bet.key,
+      titleType: titleType.key,
       briefText: [
         `[홈판 배팅 지시] 이 글은 검색 노출이 아니라 네이버 홈피드(홈판) 확산을 노린다 — 제목은 검색 질문형이 아니라 위 훅 제목을 그대로(또는 더 강하게) 쓴다.`,
-        `유형: ${bet.key}. 핵심 각도: ${(raw.angle ?? "").slice(0, 300)}`,
+        `유형: ${bet.key} / 제목 유형: ${titleType.name} — ★본문 이행 의무: ${titleType.payoff}`,
+        `핵심 각도: ${(raw.angle ?? "").slice(0, 300)}`,
         `규칙: ①모든 수치는 공식 통계·실제 제도 기반 — 출처와 기준 시점 명시, 지어낸 사연 금지 ②도입 3문장 안에 '멈춤 포인트'(반전 수치·의외 사실)를 박는다 — 홈판은 3초 안에 스크롤이 지나간다 ③독자가 자기 상황을 대입할 분기(나이대·상황별)를 반드시 넣는다 ④마무리에 저장 유도(체크리스트·계산 순서) — 홈판 글의 승부는 공감·저장 반응이다.`,
         `⑤★댓글 유도(2026-07-16 개정 — 댓글·체류가 홈피드 노출 점수): 마무리 직전에 독자 의견을 묻는 진짜 질문 1개를 자연스럽게 넣는다(예: "여러분은 무이자 할부, 한 달에 몇 번이나 쓰세요?") — '댓글 달아주세요' 류 부탁 금지, 대답하고 싶어지는 질문이어야 한다 ⑥크리에이터 시각 1곳 — 뻔한 정리가 아니라 이 데이터를 보는 나만의 해석 한 단락('제가 이 통계에서 진짜 놀란 건 평균이 아니라 격차예요' 결).`,
       ].join("\n"),
