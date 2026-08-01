@@ -106,8 +106,12 @@ export async function POST(request: Request) {
       } catch { /* ignore */ }
       const FONT_ALLOW = ["GmarketSansBold", "BlackHanSans", "Pretendard-Black", "Jua"];
       const fontTitle = FONT_ALLOW.includes(String(body.fontName)) ? String(body.fontName) : "GmarketSansBold";
-      const { png, usedAiBackground, aiFailReason } = await composeThumbnail({
+      // ★무문구 모드(2026-08-02) — 조판 없이 이미지 한 장이 곧 썸네일.
+      //  홈판 유형 키로 소재 문법이 갈린다(lib/thumbSubject). 실패하면 촬영 주문서를 돌려준다.
+      const textless = body.textless === true ? { betType: String(body.betType ?? "계산 충격") } : undefined;
+      const { png, usedAiBackground, aiFailReason, manualBrief } = await composeThumbnail({
         userId: user.id,
+        textless,
         thumb: { mainCopy: breakThumbCopy(mainRaw), subCopy: "", badge: "" },
         articleId: articleId ?? mainRaw,
         useAiBackground: aiBg,
@@ -120,6 +124,12 @@ export async function POST(request: Request) {
         centerCopy: false,
         press: { brandName: brandName || String(body.brandName ?? "").trim() || "MY BLOG" }, // ★전 배경 공통 보도형(유저 확정: 3D도 좌하단 — 앨범 레이아웃 통일)
       });
+      // ★무문구가 2회 실패하면 조판 카드로 되돌아가지 않는다 — 억지로 문구를 얹으면 무문구를 고른 이유가 사라진다.
+      //  대신 촬영 주문서를 주고 크레딧을 환불한다(유저 확정: "AI로 먼저 뽑고 안 되면 직접 찍을게요").
+      if (textless && !usedAiBackground) {
+        await addCredits(user.id, IMAGE_COST, "refund_image", crypto.randomUUID()).catch(() => null);
+        return NextResponse.json({ ok: false, textlessFailed: true, aiFailReason, manualBrief, error: `이미지를 못 만들었어요 (${aiFailReason ?? "원인 미상"}) · 크레딧은 환불됐어요` });
+      }
       // AI 배경 실패로 코드 폴백됐으면 과금 취소(받은 것만 청구)
       if (aiBg && !usedAiBackground) { await addCredits(user.id, IMAGE_COST, "refund_image", crypto.randomUUID()).catch(() => null); }
       const url = await uploadPng(user.id, png);

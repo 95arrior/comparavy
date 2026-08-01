@@ -24,6 +24,9 @@ export async function GET(request: Request) {
   const metaOnly = url.searchParams.get("meta") === "1";
   const mainCopy = (url.searchParams.get("copy") || "지금 바꿔야\n하는 이유").replace(/\\n/g, "\n").slice(0, 24);
   const seedU = url.searchParams.get("u") || user.id;
+  // ★무문구 실사(2026-08-02) — ?textless=<홈판 유형>으로 조판 없는 이미지 한 장을 실제로 뽑아 본다.
+  //  프롬프트가 의도대로 나오는지는 한 장 뽑아 봐야 안다(로컬엔 이미지 키가 없어 여기서만 가능).
+  const textlessType = url.searchParams.get("textless");
 
   const t0 = Date.now();
   try {
@@ -32,6 +35,7 @@ export async function GET(request: Request) {
       thumb: { mainCopy, subCopy: "지금부터 준비하는 법", badge: "경제·재테크" },
       articleId: url.searchParams.get("a") || null, // 글마다 포즈 변주 데모
       useAiBackground: useAi,
+      textless: textlessType ? { betType: textlessType } : undefined,
     });
     const renderMs = Date.now() - t0;
     if (metaOnly) {
@@ -39,6 +43,7 @@ export async function GET(request: Request) {
         ok: true, renderMs, usedAiBackground, requestedAi: useAi,
         // ★실패 이유를 그대로 돌려준다(2026-08-01) — '폴백됐다'만 알면 원인을 못 찾는다.
         aiFailReason: aiFailReason ?? null,
+        textless: textlessType ?? null,
         note: usedAiBackground ? "AI 배경 사용" : (useAi ? "AI 배경 실패→코드 폴백" : "코드 배경(무료)"),
       }, { headers: { "cache-control": "no-store" } });
     }
