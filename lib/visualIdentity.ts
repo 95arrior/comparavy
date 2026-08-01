@@ -101,14 +101,48 @@ export interface VisualIdentity {
   bodyTone: string;
 }
 
+/* ★시각 프리셋 10석(2026-08-02 유저 확정 — 최대 10명 운영).
+   해시 조합(720가지)은 '충돌 확률이 낮다'일 뿐 0이 아니다. 10명 중 둘이 같은 레이아웃·팔레트를 받으면
+   피드에서 같은 블로그로 보인다 — 그게 정확히 우리가 없애려는 지문이다.
+   그래서 10석은 서로 최대한 멀리 떨어진 조합을 사람이 골라 고정한다(레이아웃 10종을 전부 다르게 쓰고,
+   팔레트도 겹치지 않게 배정). 11번째부터는 기존 해시로 폴백한다(10석 설계가 깨지지 않게 뒤에 붙인다). */
+const VISUAL_PRESETS: { layout: LayoutKey; paletteIdx: number; fontIdx: number; bgIdx: number; toneIdx: number }[] = [
+  { layout: "center-cluster", paletteIdx: 0, fontIdx: 0, bgIdx: 0, toneIdx: 0 },
+  { layout: "right-mass", paletteIdx: 1, fontIdx: 1, bgIdx: 1, toneIdx: 1 },
+  { layout: "diagonal-flow", paletteIdx: 2, fontIdx: 2, bgIdx: 2, toneIdx: 2 },
+  { layout: "left-blob", paletteIdx: 3, fontIdx: 3, bgIdx: 3, toneIdx: 3 },
+  { layout: "ring-accent", paletteIdx: 4, fontIdx: 4, bgIdx: 4, toneIdx: 4 },
+  { layout: "arch-bottom", paletteIdx: 5, fontIdx: 5, bgIdx: 5, toneIdx: 5 },
+  { layout: "stacked-mass", paletteIdx: 6, fontIdx: 0, bgIdx: 6, toneIdx: 6 },
+  { layout: "corner-pop", paletteIdx: 7, fontIdx: 1, bgIdx: 7, toneIdx: 7 },
+  { layout: "wide-band", paletteIdx: 8, fontIdx: 2, bgIdx: 0, toneIdx: 0 },
+  { layout: "split-tone", paletteIdx: 9, fontIdx: 3, bgIdx: 1, toneIdx: 1 },
+];
+
+/** 환경변수로 1:1 고정 배정("id:0,id2:5"). 10명 운영을 시작하면 이걸로 못 박는다(충돌 0 보장). */
+function visualSeatFromEnv(userId: string): number | null {
+  const raw = process.env.ATEFLO_VISUAL_ASSIGN;
+  if (!raw) return null;
+  for (const pair of raw.split(",")) {
+    const [id, seat] = pair.split(":").map((x) => x.trim());
+    if (id === userId && seat !== undefined) {
+      const n = Number(seat);
+      if (Number.isInteger(n) && n >= 0 && n < VISUAL_PRESETS.length) return n;
+    }
+  }
+  return null;
+}
+
 /** 유저별 고정 시각 정체성. 같은 userId는 항상 같은 조합. */
 export function visualIdentityFor(userId: string): VisualIdentity {
   const h = fnv1a(userId + "|visual");
+  const seat = visualSeatFromEnv(userId) ?? h % VISUAL_PRESETS.length;
+  const p = VISUAL_PRESETS[seat]!;
   return {
-    layout: LAYOUTS[h % LAYOUTS.length],
-    palette: PALETTES[(h >>> 4) % PALETTES.length],
-    fontPair: FONT_PAIRS[(h >>> 8) % FONT_PAIRS.length],
-    bgStyle: BG_STYLES[(h >>> 12) % BG_STYLES.length],
-    bodyTone: BODY_TONES[(h >>> 16) % BODY_TONES.length],
+    layout: p.layout,
+    palette: PALETTES[p.paletteIdx % PALETTES.length],
+    fontPair: FONT_PAIRS[p.fontIdx % FONT_PAIRS.length],
+    bgStyle: BG_STYLES[p.bgIdx % BG_STYLES.length],
+    bodyTone: BODY_TONES[p.toneIdx % BODY_TONES.length],
   };
 }
