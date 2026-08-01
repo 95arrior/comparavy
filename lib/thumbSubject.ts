@@ -44,20 +44,56 @@ const FALLBACK_SUBJECT = "a small stack of coins seen from the side on a plain s
 /** ★device별 연출(2026-08-02 유저 확정: "그냥 딱 어그로, 씹 어그로, 무조건 클릭").
  *  차분한 스냅으로 몰아놨던 걸 되돌린다 — 홈피드에서 지는 건 못생긴 사진이 아니라 '안 보이는 사진'이다.
  *  단 과장은 구도·스케일로만 만든다. 채도를 올리거나 없는 물건을 지어내는 건 여전히 금지. */
-export const DEVICE_STAGING: Record<SubjectGrammar["device"], string> = {
-  대비: "Two piles of the SAME object with an absurd quantity gap — one towering, one down to a couple of pieces. The gap must be visible in half a second.",
-  발견: "A huge quantity is hidden and only a small part spills into view, implying much more behind. Make the viewer want to pull the rest out.",
-  압도: "Overwhelming quantity or size — but pick the form that actually fits this subject: stacked into a tower, spread wall-to-wall across the floor, lined up in endless rows, hanging in a dense cluster, or one single object shot so huge it fills the frame. ★Do not default to stacking — a tower of safety helmets in a living room is absurd. Shot from a low or wide angle so it looms.",
-  반전: "A large quantity in a state it should never be in — toppled, spilled everywhere, broken open. The mess itself is the shock.",
-  시간: "Almost everything is gone and only the last one or two remain, with the empty space where the rest used to be clearly visible.",
-  정황: "The aftermath, made extreme — either an abnormally large amount left behind, or a space so completely emptied that the absence is loud.",
-  번역: "An ordinary everyday object shot so close and so large that it fills the entire frame and feels confrontational.",
+export const DEVICE_STAGING: Record<SubjectGrammar["device"], string[]> = {
+  대비: [
+    "Two piles of the same thing with an absurd quantity gap — one towering, one down to a couple of pieces.",
+    "The same object twice, one worn to ruin and one untouched, side by side.",
+    "One enormous version next to one tiny version of the same thing.",
+    "A split frame: one half crammed full, the other half bare.",
+  ],
+  발견: [
+    "A huge quantity mostly hidden, only a sliver spilling into view.",
+    "Something pulled halfway out of a drawer, the rest still in shadow.",
+    "A cover lifted just enough to reveal what is underneath.",
+    "Seen through a narrow gap, as if you were not meant to see it.",
+  ],
+  압도: [
+    "Stacked into a precarious tower shot from a low angle so it looms.",
+    "Spread wall to wall across the floor until it runs out of frame.",
+    "Lined up in endless rows receding into the distance.",
+    "Packed so densely it fills every inch of the frame.",
+    "One single object shot so close and huge it becomes overwhelming.",
+  ],
+  반전: [
+    "Toppled and spilled everywhere, mid-collapse.",
+    "Upside-down, in a position it could never be in normally.",
+    "Broken open with the inside exposed.",
+    "Something ordinary placed somewhere it absolutely does not belong.",
+  ],
+  시간: [
+    "Almost everything gone, only the last one or two left, with the empty space where the rest was.",
+    "Caught mid-fall, a fraction of a second before it hits.",
+    "Half consumed, half still intact, the boundary sharp.",
+    "The very last one, isolated in a vast empty frame.",
+  ],
+  정황: [
+    "The aftermath — abandoned, still warm, nobody there.",
+    "One thing left behind in a space that has been completely emptied.",
+    "Traces of use everywhere but no person in sight.",
+    "Packed up and ready to leave, nothing else remaining.",
+  ],
+  번역: [
+    "Shot so close it fills the entire frame and feels confrontational.",
+    "An extreme macro on the one detail that matters.",
+    "A wide view where the ordinary thing dominates everything around it.",
+    "From directly underneath, looking up, so it towers.",
+  ],
 };
 
 /** ★모든 연출에 공통으로 거는 규칙(2026-08-02 유저 피드백) — 이게 '동전 탑 풍'의 정체다.
  *  실측: 동전 탑은 "너무 좋다", 빈 지갑 두 장은 "손이 안 간다"였다. 차이는 소재가 아니라 스케일이었다.
  *  탑은 화면을 뚫고 올라가고 세어보고 싶어지는데, 지갑은 그냥 놓여 있다. 조용하면 스크롤된다. */
-export const SCALE_RULE = "★The quantity or scale must feel ABNORMAL — for an object that means far more or far emptier than normal; for a place that means overwhelming vastness or a dramatic low angle — far more, far taller, or far emptier than could ever be normal. A single object simply placed on a table is a failure. If the viewer would not react with 'whoa, that much?', it is wrong.";
+export const SCALE_RULE = "★It must stop a thumb mid-scroll. Quantity is one way (far more or far emptier than normal) but not the only one — extreme closeness, a strange angle, something caught mid-motion, one thing isolated in a huge empty frame, or a scale that feels wrong all work. Pick whichever fits this subject. ★A subject simply placed in the middle of a table with nothing happening is a failure.";
 
 export function grammarFor(betType: string, title?: string | null): SubjectGrammar {
   const base = SUBJECT_GRAMMAR.find((g) => g.betType === betType)
@@ -134,22 +170,48 @@ export function isSceneSubject(subject: string): boolean {
   return /\b(field|fields|factory|plant|site|skyline|landscape|view|rows of|aerial|horizon|yard|complex|district|street|road|bridge|port|warehouse)\b/i.test(subject || "");
 }
 
+/* ── 글별 회전축(2026-08-02 유저: "경우의 수를 무궁무진하게, 아직 타이트하다") ──
+   종전엔 톤·각도·배경이 전부 계정 프리셋에 묶여 있어 같은 계정이면 늘 같은 조합이 나왔다.
+   ★계정 지문으로 남길 것은 '빛(톤)' 하나면 충분하다 — 사람도 카메라 각도는 매번 바꾼다.
+   각도·거리·시간대·연출 형태를 글별로 돌리면 조합이 곱셈으로 늘어난다. */
+const ANGLES = [
+  "straight overhead flat lay", "45-degree three-quarter view", "straight-on eye level",
+  "extreme macro close-up", "low angle looking up", "tilted dutch angle",
+  "shot from behind the subject", "wide establishing view",
+];
+const DISTANCES = ["filling the frame edge to edge", "with a little breathing room", "small in a large empty space", "so close it crops past the edges"];
+const TIMES = ["early morning light", "flat midday light", "late afternoon golden light", "blue dusk", "a single lamp in a dark room"];
+
+function pickBy(seed: number, arr: readonly string[]): string { return arr[seed % arr.length]!; }
+
 export function buildTextlessThumbPrompt(betType: string, userId: string, variant = 0, subjectOverride?: string | null, title?: string | null): string {
   const g = grammarFor(betType, title);
   const p = photoPresetFor(userId);
   const subject = (subjectOverride ?? "").trim() || g.subject; // ★제목에서 뽑은 소재 우선
   const scene = isSceneSubject(subject);
-  const poses = ["centered in frame", "slightly off-center to the left", "slightly off-center to the right"];
+  // ★회전 시드 = 제목 + 재시도 회차. 같은 글은 재현되고, 글이 다르면 조합이 달라진다.
+  const seed = fnv1a(`${title ?? ""}|${subject}|${variant}`);
+  const forms = DEVICE_STAGING[g.device];
+  const staging = forms[seed % forms.length]!;
+  // ★연출이 이미 화각을 지정하면(wide/close/macro/low angle/underneath) 카메라 축은 붙이지 않는다.
+  //  안 그러면 "wide view"인데 "extreme macro"라는 모순 지시가 나간다(실측으로 확인).
+  const stagingFixesFraming = /\b(wide|close|macro|low angle|underneath|overhead|split frame)\b/i.test(staging);
+  const angle = scene
+    ? "a wide sweeping view or a dramatic low angle that conveys scale"
+    : stagingFixesFraming ? null : pickBy(seed >>> 3, ANGLES);
+  const distance = pickBy(seed >>> 7, DISTANCES);
+  const time = pickBy(seed >>> 11, TIMES);
+  const poses = ["centered in frame", "slightly off-center to the left", "slightly off-center to the right", "pushed into one corner"];
   return [
     // ★2026-08-02 실측 수정: 첫 줄이 "Editorial still-life photograph"이었는데 그게 곧 상업 사진 장르라
     //  뒤에서 "NOT an advertisement"라고 말해도 소용이 없었다(판독성 검사가 2회 다 '광고처럼 보인다'로 반려).
     //  장르 자체를 '집에서 대충 찍은 스냅'으로 바꾼다 — 홈피드에서 이기는 건 잘 찍은 사진이 아니라 진짜 같은 사진이다.
     `An unstaged everyday snapshot, as if someone quickly photographed this at home with a phone. Square 1:1.`,
     `Subject: ${subject}. ${scene ? "No faces. If people appear at all they are distant and anonymous." : p.hands ? "A single human hand may enter the frame, fingers partially visible, no face." : "Objects only, no people."}`,
-    `Lighting and tone: ${p.tone}.`,
-    scene ? `Camera: a wide sweeping view or a dramatic low angle that conveys scale, ${poses[variant % poses.length]}.` : `Camera: ${p.angle}, ${poses[variant % poses.length]}.`,
+    `Lighting and tone: ${p.tone}, ${time}.`,
+    angle ? `Camera: ${angle}, ${poses[seed % poses.length]}, ${distance}.` : `Camera: follow the framing the staging implies, ${poses[seed % poses.length]}.`,
     // ★어그로 연출 — 이 한 줄이 '스크롤을 멈추게 하는' 장치다(2026-08-02 유저 확정)
-    `Staging: ${DEVICE_STAGING[g.device]}`,
+    `Staging: ${staging}`,
     SCALE_RULE,
     // ★장소는 소재가 정한다(2026-08-02 실측: 안전모 탑이 거실에 놓였다).
     //  계정 지문은 '어떤 빛으로 어떤 각도에서 찍는가'이지 '어디에 두는가'가 아니다 — 배경 고정이 소재와 충돌했다.
