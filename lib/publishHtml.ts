@@ -587,6 +587,25 @@ function capMarks(html: string): string {
   });
 }
 
+// ★형광 하한(2026-08-02 유저 확정) — 그동안 형광에는 상한만 있었다(다이어트 v3: 구 형광 2곳).
+//  상한만 있으면 '0곳으로 끝나는 글'이 정상처럼 통과한다 — 훑어 읽는 독자가 그 글의 핵심 숫자를 못 건진다.
+//  ★상한은 손대지 않는다(도배는 여전히 실패다). 하한 1곳만 새로 둔다.
+//  ★무엇이 가장 중요한지는 코드가 판단하지 않는다 — '숫자+단위를 품은 첫 짧은 볼드 구절'이라는
+//   기계적 기준만 쓴다(수치는 이 블로그에서 늘 결론을 나르는 자리다). capMarks 뒤·markToBold 앞에서만 돈다.
+const KEY_FIGURE_RE = /\d[\d,.]*\s*(?:원|만\s?원|억|%|퍼센트|년|개월|일|배|위|명|건)/;
+function ensureKeyFigureMark(html: string): string {
+  if (/<mark/i.test(html)) return html; // 이미 형광이 있으면 손대지 않는다(상한 초과 유발 금지)
+  let done = false;
+  return html.replace(/<b>([\s\S]*?)<\/b>/g, (raw, inner) => {
+    if (done) return raw;
+    const plain = String(inner).replace(/<[^>]+>/g, "").trim();
+    const len = [...plain].length;
+    if (len < 2 || len > 20 || !KEY_FIGURE_RE.test(plain)) return raw; // 문장 통째 볼드는 형광 대상이 아니다
+    done = true;
+    return `<mark>${inner}</mark>`;
+  });
+}
+
 function markToBold(html: string): string {
   // ★전부 인라인(유저 교본 최종: 단독 줄 강제가 '…경향' 형광 뒤 '이 있어요' 고아 조각을 만들었다) — 문장 흐름 절대 보존
   html = html.replace(/<mark(?:\s[^>]*)?>([\s\S]*?)<\/mark>/g, '<b style="background-color:#fff3a8;">$1</b>');
@@ -605,7 +624,7 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   const withImages = opts?.withImages ?? true;
   let idx = -1;
   // ★사진 자리는 '구조화 슬롯'으로만 — 채워진 슬롯만 이미지로, 미충족 슬롯은 줄 자체를 제거(안내문구 유출 금지).
-  let body = ensurePayoffTable(ensureSummaryHeading(ensureSectionEmphasis(markToBold(capMarks(capAccent(capDanger(sanitizeAiPunct(stripListEmoji(normalizeHighlights(input.bodyHtml))))))))), input.title).replace(SLOT_RE, (_m, desc: string) => {
+  let body = ensurePayoffTable(ensureSummaryHeading(ensureSectionEmphasis(markToBold(ensureKeyFigureMark(capMarks(capAccent(capDanger(sanitizeAiPunct(stripListEmoji(normalizeHighlights(input.bodyHtml)))))))))), input.title).replace(SLOT_RE, (_m, desc: string) => {
     idx += 1;
     if (!withImages) return `<p>[사진 ${idx + 1}]</p>`; // marker 모드(수동 배치) — 명시적 선택
     const url = input.images?.[idx];
