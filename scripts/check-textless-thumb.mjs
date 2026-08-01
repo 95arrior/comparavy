@@ -89,6 +89,22 @@ ok(grammarFor("없는유형").subject.length > 0, "미등록 유형은 폴백 �
   ok(Object.keys(DEVICE_STAGING).length === 7, `연출 7종(대비·발견·압도·반전·시간·정황·번역) (현재 ${Object.keys(DEVICE_STAGING).length})`);
 }
 
+// ── ③-3 소재 필터는 단어 경계가 있어야 한다 ────────────────────────────
+//  ★실측(2026-08-02): 경계 없이 쓴 정규식이 de(sign)·(paper)clip을 걸러 멀쩡한 소재를 버렸고,
+//   그래서 에어컨 글에도 폴백 동전 탑이 나왔다. 필터가 과하면 제목 연관이 통째로 죽는다.
+{
+  const src = fs.readFileSync(new URL("../lib/thumbSubject.ts", import.meta.url), "utf-8");
+  const m = /if \((\/\\b\(receipts.+?\/i)\.test\(sub\)\) return null;/.exec(src);
+  ok(Boolean(m), "소재 필터 정규식을 소스에서 읽음");
+  if (m) {
+    const RE = new RegExp(m[1].replace(/^\//, "").replace(/\/i$/, ""), "i");
+    for (const t of ["an air conditioner outdoor unit covered in dust", "a designer wallet on a desk", "a paperclip holder"])
+      ok(!RE.test(t), "★멀쩡한 소재는 통과", t);
+    for (const t of ["a stack of receipts", "an electricity bill on a table", "a phone screen showing numbers", "a wall calendar", "a notebook computer closed"])
+      ok(RE.test(t), "글자 물건은 차단", t);
+  }
+}
+
 // ── ④ 판독성 검사는 fail-open ─────────────────────────────────────────
 {
   ok(legibilityFromRaw("완전 쓰레기").ok, "★파싱 실패면 통과(fail-open — 막으면 썸네일이 아예 없어진다)");

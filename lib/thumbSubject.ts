@@ -209,7 +209,9 @@ export async function subjectFromTitle(title: string, betType: string): Promise<
     const sub = (j.subject ?? "").trim();
     if (!sub || /[가-힣]/.test(sub)) return null;
     // ★모델이 규칙을 어겨 글자 물건을 골랐으면 버린다(프롬프트는 방향, 코드는 한계선)
-    if (/receipt|invoice|bill(?!board)|document|bankbook|passbook|screen|display|sign|label|calendar|newspaper|book|note|paper/i.test(sub)) return null;
+    // ★단어 경계 필수(2026-08-02 실측): 처음엔 경계 없이 썼다가 de(sign)·(note)book·(paper)clip이
+    //  전부 걸려 멀쩡한 소재가 버려졌다 — 에어컨 글에도 폴백 동전 탑이 나온 원인이다.
+    if (/\b(receipts?|invoices?|bills?|documents?|bankbooks?|passbooks?|screens?|displays?|signs?|signage|labels?|calendars?|newspapers?|books?|notes?|notebooks?|papers?)\b/i.test(sub)) return null;
     return sub.slice(0, 120);
   } catch { return null; }
 }
