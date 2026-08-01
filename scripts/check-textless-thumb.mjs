@@ -44,6 +44,7 @@ ok(grammarFor("없는유형").subject.length > 0, "미등록 유형은 폴백 �
   ok(!/editorial|still-life/i.test(p.split("\n")[0]), "★첫 줄에 상업 사진 장르 어휘가 없다");
   ok(/snapshot|phone/i.test(p), "★스냅 사진 장르로 지정(진짜 같은 사진이 이긴다)");
   ok(/Staging:/.test(p), "★device별 어그로 연출이 주입된다");
+  ok(/Silhouette:/.test(p), "★실루엣 관문이 프롬프트에 있다(평면 사물 금지)");
   // ★2026-08-02 유저 실측: 동전 탑="너무 좋다", 빈 지갑="손이 안 간다". 차이는 소재가 아니라 스케일이었다.
   ok(/ABNORMAL/.test(p), "★스케일 과장이 전 유형에 의무로 걸린다");
   ok(/simply placed on a table is a failure/i.test(p), "★그냥 놓인 사물은 실패로 명시");
@@ -120,7 +121,8 @@ ok(grammarFor("없는유형").subject.length > 0, "미등록 유형은 폴백 �
   //  이 판정이 이미지를 얌전하게 만들어 클릭률을 깎고 있었다(실측: 1차 시도가 이것 때문에 2회 반려).
   ok(legibilityFromRaw('{"looksLikeAd":true}').ok === true, "★광고처럼 보여도 통과(어그로 우선 — 반려하지 않는다)");
   ok(legibilityFromRaw('{"looksLikeAd":true}').adLike === true, "다만 관측은 유지(나중에 판단 근거로)");
-  ok(legibilityFromRaw('{"singleSubject":true,"identifiableWhenTiny":true,"looksLikeAd":false}').ok, "셋 다 통과면 합격");
+  ok(legibilityFromRaw('{"nameableInOneWord":false}').ok === false, "★한 단어로 이름을 못 대면 불합격(명함 더미=종이 뭉치)");
+  ok(legibilityFromRaw('{"singleSubject":true,"identifiableWhenTiny":true,"looksLikeAd":false,"nameableInOneWord":true}').ok, "전부 통과면 합격");
 }
 
 // ── ⑤ AI 실패 시 촬영 주문서 ───────────────────────────────────────────

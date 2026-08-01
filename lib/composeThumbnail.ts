@@ -55,7 +55,9 @@ export async function composeThumbnail(opts: {
         if (v.hasText) { aiFailReason = "이미지에 글자가 섞였어요"; continue; }
         const leg = await verifyThumbLegible(img.base64, img.mime, { userId: opts.userId });
         if (!leg.ok) {
-          aiFailReason = !leg.single ? "피사체가 여러 개예요(작게 줄이면 뭉개져요)" : "작게 줄이면 뭘 찍었는지 안 보여요";
+          aiFailReason = !leg.single ? "피사체가 여러 개예요(작게 줄이면 뭉개져요)"
+            : !leg.nameable ? "무엇인지 한 단어로 안 나와요(실루엣이 뭉뚱그려져요)"
+            : "작게 줄이면 뭘 찍었는지 안 보여요";
           continue;
         }
         return { png: Buffer.from(img.base64, "base64"), usedAiBackground: true, textlessImage: { base64: img.base64, mime: img.mime } };

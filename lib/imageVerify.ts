@@ -51,27 +51,30 @@ export function verdictFromRaw(raw: string, opts?: VerifyOpts): ImageVerdict {
 //  픽셀 단위 검사는 이미지 디코더가 없어 못 한다(sharp 미설치) — 대신 이미 쓰고 있는 비전 모델에 묻는다.
 //  ★fail-open이다. 판정 불가면 통과시킨다 — 글자 검사(fail-closed)와 달리 여기는 '취향' 영역이고,
 //   떨어뜨리면 썸네일이 아예 없어진다. 글자 사고와 달리 잃는 게 크다.
-export interface LegibilityVerdict { single: boolean; identifiable: boolean; adLike: boolean; ok: boolean }
+export interface LegibilityVerdict { single: boolean; identifiable: boolean; adLike: boolean; nameable: boolean; ok: boolean }
 
 export function legibilityFromRaw(raw: string): LegibilityVerdict {
   const m = /\{[\s\S]*\}/.exec(raw ?? "");
-  const pass: LegibilityVerdict = { single: true, identifiable: true, adLike: false, ok: true };
+  const pass: LegibilityVerdict = { single: true, identifiable: true, adLike: false, nameable: true, ok: true };
   if (!m) return pass;
   let j: Record<string, unknown>;
   try { j = JSON.parse(m[0]) as Record<string, unknown>; } catch { return pass; }
   const single = j.singleSubject !== false;
   const identifiable = j.identifiableWhenTiny !== false;
   const adLike = j.looksLikeAd === true;
+  // ★실루엣 관문(2026-08-02 실측: 명함 더미가 '종이 뭉치'로만 보였다) — 무엇인지 한 단어로 말할 수 있어야 한다.
+  //  identifiable("뭘 찍었는지 알겠나")은 '종이 더미'라고 답해도 통과였다. 이건 '한 단어로 이름 대기'를 요구한다.
+  const nameable = j.nameableInOneWord !== false;
   // ★2026-08-02 유저 확정("그냥 딱 어그로, 무조건 클릭") — adLike는 관측만 하고 반려하지 않는다.
   //  실측: 이 판정이 이미지를 얌전하게 만들어 클릭률을 깎고 있었다(1차 시도가 이것 때문에 2회 반려).
   //  홈피드에서 지는 건 못생긴 사진이 아니라 안 보이는 사진이다 — 그래서 single·identifiable만 남긴다.
-  return { single, identifiable, adLike, ok: single && identifiable };
+  return { single, identifiable, adLike, nameable, ok: single && identifiable && nameable };
 }
 
 /** 무문구 썸네일이 작은 크기에서 살아남는가. 실패하면 호출측이 재생성 1회. */
 export async function verifyThumbLegible(base64: string, mime: string, opts?: { userId?: string }): Promise<LegibilityVerdict> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return { single: true, identifiable: true, adLike: false, ok: true };
+  if (!apiKey) return { single: true, identifiable: true, adLike: false, nameable: true, ok: true };
   try {
     const client = new Anthropic({ apiKey });
     const res = await client.messages.create({
@@ -79,14 +82,14 @@ export async function verifyThumbLegible(base64: string, mime: string, opts?: { 
       max_tokens: 160,
       messages: [{ role: "user", content: [
         { type: "image", source: { type: "base64", media_type: (mime || "image/png") as "image/png", data: base64 } },
-        { type: "text", text: `이 이미지는 블로그 썸네일로 쓰인다. 실제로는 명함보다 작게(가로 200픽셀 정도) 표시된다. (1)초점이 되는 피사체가 딱 하나인가(잡동사니가 흩어져 있으면 아니다) (2)그 크기로 줄였을 때도 무엇을 찍었는지 알아볼 수 있는가 (3)스톡 사진이나 광고처럼 보이는가(반질반질한 스튜디오 톤, 웃는 모델, 과한 채도). JSON만: {"singleSubject":bool,"identifiableWhenTiny":bool,"looksLikeAd":bool,"why":"짧게"}` },
+        { type: "text", text: `이 이미지는 블로그 썸네일로 쓰인다. 실제로는 명함보다 작게(가로 200픽셀 정도) 표시된다. (1)초점이 되는 피사체가 딱 하나인가(잡동사니가 흩어져 있으면 아니다) (2)그 크기로 줄였을 때도 무엇을 찍었는지 알아볼 수 있는가 (3)스톡 사진이나 광고처럼 보이는가(반질반질한 스튜디오 톤, 웃는 모델, 과한 채도) (4)★그 크기에서 실루엣만 보고 이게 '무엇'인지 한 단어로 댈 수 있는가 — '종이 뭉치'·'무언가 쌓인 것'처럼 뭉뚱그린 답밖에 안 나오면 아니다. JSON만: {"singleSubject":bool,"identifiableWhenTiny":bool,"looksLikeAd":bool,"nameableInOneWord":bool,"why":"짧게"}` },
       ] }],
     });
     void logUsage({ userId: opts?.userId, model: "claude-haiku-4-5", kind: "thumb_legibility", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
     const t = res.content[0]?.type === "text" ? res.content[0].text : "";
     return legibilityFromRaw(t);
   } catch {
-    return { single: true, identifiable: true, adLike: false, ok: true }; // fail-open
+    return { single: true, identifiable: true, adLike: false, nameable: true, ok: true }; // fail-open
   }
 }
 

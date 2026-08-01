@@ -30,7 +30,7 @@ export interface SubjectGrammar {
 //  — 사람 전신·복잡한 실내·서류 내용은 뺐다(AI 티가 가장 심하게 나는 3종).
 export const SUBJECT_GRAMMAR: SubjectGrammar[] = [
   { betType: "평균 위치확인", device: "대비", subject: "two stacks of coins side by side seen from the side, one clearly taller, only the rims visible" },
-  { betType: "몰라서 못 받는 돈", device: "발견", subject: "a thick bundle of plain unmarked envelopes spilling out from under a folded cloth" },
+  { betType: "몰라서 못 받는 돈", device: "발견", subject: "a fabric drawstring pouch overflowing so much it cannot close, half pulled from the back of a drawer" },
   { betType: "계산 충격", device: "압도", subject: "a tall precarious tower of stacked coins seen from the side, only the rims visible, extreme close-up" },
   { betType: "통념 파괴", device: "반전", subject: "a shattered ceramic piggy bank with its contents scattered wide across the table" },
   { betType: "손해 공포 마감", device: "시간", subject: "a wide scatter of coins seen from the side with only two left standing on their rims, the rest already swept away" },
@@ -141,6 +141,8 @@ export function buildTextlessThumbPrompt(betType: string, userId: string, varian
     `Setting: ${p.backdrop}. A real lived-in home or desk, not a studio.`,
     // ★축소 생존 — 홈피드 썸네일은 200~400px로 렌더된다. 명함보다 작다.
     `Composition: the subject fills at least 60% of the frame and reads clearly even when the image is shrunk to a thumbnail. Exactly one focal point. No clutter, no scattered props.`,
+    // ★2026-08-02 실측: 명함 더미가 나왔고 종이 뭉치로만 보였다. 평면 사물은 쌓으면 실루엣이 같아진다.
+    `Silhouette: the object must be recognizable from its outline alone at thumbnail size. Do not photograph flat paper-like things stacked into a featureless block.`,
     // ★광고 냄새 제거
     // ★2026-08-02 유저 확정으로 완화: 종전엔 "광고처럼 보이면 안 된다"를 강하게 걸었는데,
     //  그게 이미지를 얌전하게 만들어 클릭률을 깎았다. 홈피드에서 지는 건 못생긴 사진이 아니라 안 보이는 사진이다.
@@ -203,7 +205,8 @@ export async function subjectFromTitle(title: string, betType: string): Promise<
         `A Korean personal-finance blog post has this title: "${t.slice(0, 80)}"`,
         `Pick ONE physical object to photograph for its thumbnail. The photo will use this staging: ${DEVICE_STAGING[g.device]}`,
         `Rules — all mandatory:`,
-        `1. It must be an object that instantly reads as MONEY or a household bill/appliance tied to the title's topic — coins, banknotes bundled face-down, a piggy bank, a wallet, a jar of change, an electricity meter, an air conditioner unit, a gas valve. Never a generic lifestyle object (shoes, plants, mugs, books) — this is a money blog and the thumbnail must say money in half a second.`,
+        `1. It must be a concrete object that makes the reader think of the title's topic within half a second. Money objects are ideal (coins, a piggy bank, a wallet, a jar of change), but if the topic is not about money itself, pick the object that most directly symbolizes it — a job fair means empty office chairs or hard hats, an apartment subscription means a door key or a scale model, an electricity bill means an air conditioner outdoor unit or a tangle of plugs.`,
+        `1b. ★CRITICAL — the object must have a DISTINCT SILHOUETTE that survives being shrunk to 200px. Flat, thin, stackable-into-sameness objects are FORBIDDEN: business cards, brochures, flyers, leaflets, sheets of paper, files, folders, books, envelopes. When piled, all of those become an indistinguishable block of paper and the thumbnail says nothing. Choose something with a recognizable three-dimensional shape.`,
         `2. It must carry NO writing of any kind. Bills, receipts, documents, bankbooks, screens, signs, calendars, labeled packaging and coin faces are all FORBIDDEN — writing is their essence and the image will be rejected.`,
         `3. One object only (or two identical objects if the staging is a contrast).`,
         `4. It must be something an ordinary Korean household actually has.`,
@@ -221,6 +224,9 @@ export async function subjectFromTitle(title: string, betType: string): Promise<
     // ★단어 경계 필수(2026-08-02 실측): 경계 없이 썼다가 de(sign)·(paper)clip이 걸려
     //  멀쩡한 소재가 버려졌다 — 에어컨 글에도 폴백 동전 탑이 나온 원인이다.
     if (/\b(receipts?|invoices?|bills?|documents?|bankbooks?|passbooks?|screens?|displays?|signs?|signage|labels?|calendars?|newspapers?|books?|notes?|notebooks?|papers?)\b/i.test(sub)) return null;
+    // ★평면 사물 차단(2026-08-02 실측): '새만금 일자리박람회' 글에 명함 더미가 나왔고 종이 뭉치로만 보였다.
+    //  얇고 평평한 것은 쌓으면 실루엣이 전부 같아져 200px에서 무엇인지 사라진다 — 스케일 규칙과 최악의 조합이다.
+    if (/\b(business\s*cards?|name\s*cards?|brochures?|flyers?|leaflets?|pamphlets?|sheets?|files?|folders?|envelopes?|stack of paper)\b/i.test(sub)) return null;
     return sub.slice(0, 120);
   } catch { return null; }
 }
