@@ -298,16 +298,32 @@ function renderFaqSection(faq: { question: string; answer: string }[]): string {
  * → 발행 시 마이크로데이터 FAQ를 새로 붙이므로 중복을 막는다.
  * 매칭: '자주 묻는 질문' H2와, FAQ 질문과 같은 텍스트의 H3 + 바로 뒤 P.
  */
-function stripExistingFaq(html: string, faq: { question: string; answer: string }[]): string {
+export function stripExistingFaq(html: string, faq: { question: string; answer: string }[]): string {
   let out = html;
-  const questions = new Set(faq.map((f) => f.question.trim()));
-  // '자주 묻는 질문' 제목 제거
+  // ★질문 텍스트 정규화(2026-08-01 실측 사고) — 발행된 글에 FAQ가 두 번 나왔다.
+  //  프롬프트는 "질문 문단은 'Q. '로 시작"으로 바뀌었는데(articlePrompt) 지우는 쪽은 옛 형식
+  //  (<h2>자주 묻는 질문</h2> + <h3>질문</h3><p>답</p>)만 찾고 있었다. 실제 마크업은
+  //  <p><strong>Q. 질문</strong><br />답</p> 이고, 앞 제목도 모델이 자유롭게 쓴다("가장 많이 물어보는 것부터요").
+  //  → 접두사·태그·공백을 걷어낸 '질문 알맹이'로 비교한다.
+  const norm = (t: string) => t.replace(/<[^>]+>/g, "").replace(/^\s*(?:Q\s*[.:)]?|질문)\s*/i, "").replace(/\s+/g, " ").trim();
+  const questions = new Set(faq.map((f) => norm(f.question)));
+  const isFaqQ = (t: string) => questions.has(norm(t));
+
+  // 옛 형식 — '자주 묻는 질문' H2 + 질문 H3 + 다음 P
   out = out.replace(/<h2[^>]*>\s*자주\s*묻는\s*질문\s*<\/h2>/gi, "");
-  // 질문 H3 + 다음 P 제거
-  out = out.replace(/<h3[^>]*>([\s\S]*?)<\/h3>\s*<p[^>]*>[\s\S]*?<\/p>/gi, (m, inner: string) => {
-    const text = inner.replace(/<[^>]+>/g, "").trim();
-    return questions.has(text) ? "" : m;
+  out = out.replace(/<h3[^>]*>([\s\S]*?)<\/h3>\s*<p[^>]*>[\s\S]*?<\/p>/gi, (m, inner: string) => (isFaqQ(inner) ? "" : m));
+
+  // 현행 형식 — <p><strong>Q. 질문</strong><br />답</p> (한 문단 안에 질문+답)
+  out = out.replace(/<p[^>]*>\s*(?:<(?:strong|b)[^>]*>)?\s*Q\s*[.:)]?\s*([\s\S]*?)<\/p>/gi, (m, inner: string) => {
+    const q = String(inner).split(/<br\s*\/?>/i)[0] ?? "";
+    return isFaqQ(q) ? "" : m;
   });
+
+  // ★남은 안내 문단 정리 — FAQ를 지우고 나면 "가장 많이 물어보는 것부터요." 같은 도입만 떠 있다.
+  //  질문이 하나도 안 남았을 때만, 그리고 그 문단이 실제로 FAQ를 여는 말일 때만 지운다(본문 훼손 방지).
+  if (!/Q\s*[.:)]/i.test(out)) {
+    out = out.replace(/<p[^>]*>[^<]{0,40}(?:물어보|자주\s*묻|궁금한\s*것)[^<]{0,40}<\/p>\s*/gi, "");
+  }
   return out;
 }
 
