@@ -1,4 +1,4 @@
-import { SUBJECT_GRAMMAR, PHOTO_PRESETS, DEVICE_STAGING, grammarFor, photoPresetFor, buildTextlessThumbPrompt, manualShotBrief } from "../lib/thumbSubject.ts";
+import { SUBJECT_GRAMMAR, PHOTO_PRESETS, DEVICE_STAGING, SCALE_RULE, grammarFor, photoPresetFor, buildTextlessThumbPrompt, manualShotBrief } from "../lib/thumbSubject.ts";
 import { legibilityFromRaw } from "../lib/imageVerify.ts";
 import fs from "node:fs";
 
@@ -19,6 +19,9 @@ for (const g of SUBJECT_GRAMMAR) {
   ok(!금지소재.test(g.subject), `[${g.betType}] 글자가 본질인 소재 아님`, g.subject.slice(0, 48));
   // 동전이 들어간 소재는 반드시 방향을 지정해야 한다(안 하면 앞면이 나와 글자로 잡힌다)
   if (/coin/i.test(g.subject)) ok(/rim|from the side|edge/i.test(g.subject), `[${g.betType}] 동전 방향 지정됨`, g.subject.slice(0, 52));
+  // ★폴백 소재에도 수량·스케일 표현이 있어야 한다 — '그냥 놓인 지갑'이 실측으로 죽었다
+  ok(/tower|stack|pile|piles|overflow|spill|scatter|shatter|emptied|bundle|left|towering|far past/i.test(g.subject),
+     `[${g.betType}] 폴백 소재에 스케일이 있다`, g.subject.slice(0, 56));
 }
 ok(SUBJECT_GRAMMAR.length === 8, `홈판 8유형 전부 커버 (현재 ${SUBJECT_GRAMMAR.length})`);
 ok(new Set(SUBJECT_GRAMMAR.map((g) => g.subject)).size === 8, "★8유형의 소재가 서로 다름(같으면 유형 구분이 죽는다)");
@@ -41,6 +44,9 @@ ok(grammarFor("없는유형").subject.length > 0, "미등록 유형은 폴백 �
   ok(!/editorial|still-life/i.test(p.split("\n")[0]), "★첫 줄에 상업 사진 장르 어휘가 없다");
   ok(/snapshot|phone/i.test(p), "★스냅 사진 장르로 지정(진짜 같은 사진이 이긴다)");
   ok(/Staging:/.test(p), "★device별 어그로 연출이 주입된다");
+  // ★2026-08-02 유저 실측: 동전 탑="너무 좋다", 빈 지갑="손이 안 간다". 차이는 소재가 아니라 스케일이었다.
+  ok(/ABNORMAL/.test(p), "★스케일 과장이 전 유형에 의무로 걸린다");
+  ok(/simply placed on a table is a failure/i.test(p), "★그냥 놓인 사물은 실패로 명시");
   // ★2026-08-02 실측 2차: 광고 톤을 고쳤더니 글자 검출에 걸렸다 — 동전 앞면의 숫자(100·500)가 원인.
   ok(/only the smooth edge is visible|Never show the face of a coin/i.test(p), "★동전은 모서리만 보이게(앞면 숫자=글자)");
   ok(/no smiling models|no face/i.test(p), "얼굴 금지");
@@ -86,7 +92,7 @@ ok(grammarFor("없는유형").subject.length > 0, "미등록 유형은 폴백 �
   ok(/tower of stacked coins/.test(폴백), "소재 미지정이면 유형 폴백을 쓴다");
   ok(/air conditioner outdoor unit/.test(제목소재), "★제목에서 뽑은 소재가 주입된다");
   ok(!/tower of stacked coins/.test(제목소재), "★주입되면 폴백 소재는 안 쓴다");
-  ok(Object.keys(DEVICE_STAGING).length === 7, `연출 7종(대비·발견·압도·반전·시간·정황·번역) (현재 ${Object.keys(DEVICE_STAGING).length})`);
+  ok(SCALE_RULE.includes("ABNORMAL") && Object.keys(DEVICE_STAGING).length === 7, `연출 7종(대비·발견·압도·반전·시간·정황·번역) (현재 ${Object.keys(DEVICE_STAGING).length})`);
 }
 
 // ── ③-3 소재 필터는 단어 경계가 있어야 한다 ────────────────────────────
@@ -120,9 +126,10 @@ ok(grammarFor("없는유형").subject.length > 0, "미등록 유형은 폴백 �
 // ── ⑤ AI 실패 시 촬영 주문서 ───────────────────────────────────────────
 {
   const brief = manualShotBrief("돈 격차 자극", "user-a");
-  ok(/지갑/.test(brief), "주문서가 한국어 소재로 번역돼 있다");
+  ok(/지폐/.test(brief), "주문서가 한국어 소재로 번역돼 있다");
   ok(/글자가 보이면 안 됩니다/.test(brief), "★주문서에도 글자 금지가 있다");
   ok(/60%/.test(brief), "주문서에도 축소 생존 기준이 있다");
+  ok(/비정상/.test(brief), "★주문서에도 스케일 과장 기준이 있다");
 
   const ct = fs.readFileSync(new URL("../lib/composeThumbnail.ts", import.meta.url), "utf-8");
   ok(/textless/.test(ct), "★무문구 경로가 배선됨");

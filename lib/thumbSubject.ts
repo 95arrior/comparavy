@@ -30,13 +30,13 @@ export interface SubjectGrammar {
 //  — 사람 전신·복잡한 실내·서류 내용은 뺐다(AI 티가 가장 심하게 나는 3종).
 export const SUBJECT_GRAMMAR: SubjectGrammar[] = [
   { betType: "평균 위치확인", device: "대비", subject: "two stacks of coins side by side seen from the side, one clearly taller, only the rims visible" },
-  { betType: "몰라서 못 받는 돈", device: "발견", subject: "a plain unmarked envelope peeking out from under a folded cloth" },
+  { betType: "몰라서 못 받는 돈", device: "발견", subject: "a thick bundle of plain unmarked envelopes spilling out from under a folded cloth" },
   { betType: "계산 충격", device: "압도", subject: "a tall precarious tower of stacked coins seen from the side, only the rims visible, extreme close-up" },
-  { betType: "통념 파괴", device: "반전", subject: "an upside-down ceramic piggy bank alone on a table, nothing spilled" },
-  { betType: "손해 공포 마감", device: "시간", subject: "a small hourglass with the sand almost finished, one coin standing upright on its rim beside it" },
-  { betType: "인생 이벤트 돈 타임라인", device: "정황", subject: "a single key resting on an empty wooden desk" },
-  { betType: "시장 급변 번역", device: "번역", subject: "a shopping basket handle held in one hand, groceries blurred behind" },
-  { betType: "돈 격차 자극", device: "대비", subject: "two leather wallets side by side, one thick and one flat" },
+  { betType: "통념 파괴", device: "반전", subject: "a shattered ceramic piggy bank with its contents scattered wide across the table" },
+  { betType: "손해 공포 마감", device: "시간", subject: "a wide scatter of coins seen from the side with only two left standing on their rims, the rest already swept away" },
+  { betType: "인생 이벤트 돈 타임라인", device: "정황", subject: "a completely emptied desk drawer with only one key left in the corner" },
+  { betType: "시장 급변 번역", device: "번역", subject: "a shopping basket overflowing far past its rim, shot so close it fills the frame" },
+  { betType: "돈 격차 자극", device: "대비", subject: "two piles of banknotes face-down side by side, one thick tall pile and one with two notes left" },
 ];
 
 const FALLBACK_SUBJECT = "a small stack of coins seen from the side on a plain surface, only the rims visible";
@@ -45,14 +45,19 @@ const FALLBACK_SUBJECT = "a small stack of coins seen from the side on a plain s
  *  차분한 스냅으로 몰아놨던 걸 되돌린다 — 홈피드에서 지는 건 못생긴 사진이 아니라 '안 보이는 사진'이다.
  *  단 과장은 구도·스케일로만 만든다. 채도를 올리거나 없는 물건을 지어내는 건 여전히 금지. */
 export const DEVICE_STAGING: Record<SubjectGrammar["device"], string> = {
-  대비: "Two versions of the same object side by side with an extreme, almost absurd size difference. The gap must be impossible to miss.",
-  발견: "The object is mostly hidden and only a sliver is revealed, as if caught mid-discovery. Make the viewer want to pull it out.",
-  압도: "One object stacked, piled or scaled far beyond normal, towering and precarious. Shot from low angle so it looms over the viewer.",
-  반전: "The object is upside-down, broken open, or in a state it should never be in. Something is clearly wrong.",
-  시간: "The object is caught at the last possible second, about to run out or fall. Maximum tension, no resolution.",
-  정황: "The aftermath of something that already happened. Empty, abandoned, one object left behind.",
-  번역: "An ordinary everyday object shot so close and so large that it feels confrontational.",
+  대비: "Two piles of the SAME object with an absurd quantity gap — one towering, one down to a couple of pieces. The gap must be visible in half a second.",
+  발견: "A huge quantity is hidden and only a small part spills into view, implying much more behind. Make the viewer want to pull the rest out.",
+  압도: "One object stacked or piled far beyond anything normal — towering, precarious, filling the frame top to bottom. Shot from a low angle so it looms over the viewer.",
+  반전: "A large quantity in a state it should never be in — toppled, spilled everywhere, broken open. The mess itself is the shock.",
+  시간: "Almost everything is gone and only the last one or two remain, with the empty space where the rest used to be clearly visible.",
+  정황: "The aftermath, made extreme — either an abnormally large amount left behind, or a space so completely emptied that the absence is loud.",
+  번역: "An ordinary everyday object shot so close and so large that it fills the entire frame and feels confrontational.",
 };
+
+/** ★모든 연출에 공통으로 거는 규칙(2026-08-02 유저 피드백) — 이게 '동전 탑 풍'의 정체다.
+ *  실측: 동전 탑은 "너무 좋다", 빈 지갑 두 장은 "손이 안 간다"였다. 차이는 소재가 아니라 스케일이었다.
+ *  탑은 화면을 뚫고 올라가고 세어보고 싶어지는데, 지갑은 그냥 놓여 있다. 조용하면 스크롤된다. */
+export const SCALE_RULE = "★The quantity or scale must feel ABNORMAL — far more, far taller, or far emptier than could ever be normal. A single object simply placed on a table is a failure. If the viewer would not react with 'whoa, that much?', it is wrong.";
 
 export function grammarFor(betType: string): SubjectGrammar {
   return SUBJECT_GRAMMAR.find((g) => g.betType === betType)
@@ -132,6 +137,7 @@ export function buildTextlessThumbPrompt(betType: string, userId: string, varian
     `Camera: ${p.angle}, ${poses[variant % poses.length]}.`,
     // ★어그로 연출 — 이 한 줄이 '스크롤을 멈추게 하는' 장치다(2026-08-02 유저 확정)
     `Staging: ${DEVICE_STAGING[g.device]}`,
+    SCALE_RULE,
     `Setting: ${p.backdrop}. A real lived-in home or desk, not a studio.`,
     // ★축소 생존 — 홈피드 썸네일은 200~400px로 렌더된다. 명함보다 작다.
     `Composition: the subject fills at least 60% of the frame and reads clearly even when the image is shrunk to a thumbnail. Exactly one focal point. No clutter, no scattered props.`,
@@ -149,25 +155,29 @@ export function buildTextlessThumbPrompt(betType: string, userId: string, varian
   ].join("\n");
 }
 
-/** 유저가 직접 찍을 때 쓰는 한국어 주문서 — AI가 두 번 실패하면 이걸 보여준다. */
+/** 유저가 직접 찍을 때 쓰는 한국어 주문서 — AI가 두 번 실패하면 이걸 보여준다.
+ *  ★유형 키로 찾는다(2026-08-02): 종전엔 영어 소재 문자열을 키로 썼는데, 소재를 손볼 때마다
+ *   번역이 조용히 안 맞았다(실측으로 회귀가 잡음). 소재는 계속 바뀌고 유형은 안 바뀐다. */
+const MANUAL_KO: Record<string, string> = {
+  "평균 위치확인": "동전을 두 더미로 쌓되 한쪽은 아주 높게, 다른 쪽은 두어 개만 남기고 (옆에서 찍어 앞면이 안 보이게)",
+  "몰라서 못 받는 돈": "빈 봉투를 여러 장 겹쳐 천 밑에서 삐져나오게",
+  "계산 충격": "동전을 아슬아슬할 만큼 높이 쌓아 올리고 아래에서 올려다보며 (옆면만 보이게)",
+  "통념 파괴": "저금통을 깨거나 엎어서 내용물이 넓게 흩어진 상태로",
+  "손해 공포 마감": "동전을 넓게 흩어놓고 딱 두 개만 세워 남기기 (나머지는 치운 티가 나게)",
+  "인생 이벤트 돈 타임라인": "서랍을 완전히 비우고 열쇠 하나만 구석에",
+  "시장 급변 번역": "장바구니가 넘치도록 채우고 아주 가까이서 화면 가득",
+  "돈 격차 자극": "지폐를 뒷면으로 두 더미 쌓되 한쪽은 두툼하게, 한쪽은 두 장만",
+};
+
 export function manualShotBrief(betType: string, userId: string): string {
   const g = grammarFor(betType);
   const p = photoPresetFor(userId);
-  const ko: Record<string, string> = {
-    "two stacks of coins side by side, one clearly taller than the other": "동전을 두 더미로 쌓되 한쪽을 확연히 높게",
-    "a plain unmarked envelope peeking out from under a folded cloth": "접힌 천 밑으로 빈 봉투 모서리만 살짝 보이게",
-    "a glass jar overflowing with coins, extreme close-up": "유리병에 동전을 가득 채우고 아주 가까이서",
-    "an upside-down ceramic piggy bank with coins spilled around it": "저금통을 거꾸로 엎고 동전이 쏟아진 상태로",
-    "a small hourglass beside a single coin, sand almost finished": "모래시계 옆에 동전 하나, 모래가 거의 다 떨어진 순간",
-    "a single key resting on an empty wooden desk": "빈 책상 위에 열쇠 하나만",
-    "a shopping basket handle held in one hand, groceries blurred behind": "장바구니 손잡이를 든 손, 뒤는 흐리게",
-    "two leather wallets side by side, one thick and one flat": "지갑 두 개를 나란히, 하나는 두툼하고 하나는 납작하게",
-  };
   return [
     `[대표컷 주문서] ${g.device}형`,
-    `무엇을: ${ko[g.subject] ?? "동전 몇 개를 단순한 바닥 위에 가까이서"}`,
+    `무엇을: ${MANUAL_KO[betType] ?? "동전을 높이 쌓아 옆에서 (앞면이 안 보이게)"}`,
     `어떻게: ${p.angle.includes("overhead") ? "위에서 수직으로" : p.angle.includes("macro") ? "아주 가까이 접사로" : p.angle.includes("45") ? "45도 비스듬히" : "정면 눈높이에서"}, ${p.hands ? "손이 살짝 들어가도 좋아요(얼굴은 금지)" : "사물만, 사람 없이"}`,
     `배경: ${p.backdrop.includes("wooden") ? "나무 책상" : p.backdrop.includes("linen") ? "천(리넨) 위" : p.backdrop.includes("wall") ? "밝은 벽 앞" : "단색 배경"}, 잡동사니 없이`,
+    `★양이 '비정상'으로 보여야 해요 — 그냥 놓인 물건은 스크롤됩니다. 너무 많거나 너무 텅 비거나.`,
     `★피사체가 화면의 60% 이상을 채우게. 작게 줄여도 뭔지 알아볼 수 있어야 해요.`,
     `★글자가 보이면 안 됩니다 — 고지서·영수증·통장처럼 글자 있는 물건은 쓰지 마세요.`,
   ].join("\n");
@@ -177,8 +187,7 @@ export function manualShotBrief(betType: string, userId: string): string {
  * ★제목 → 썸네일 소재(2026-08-02 유저 확정: "제목과 연관있게").
  *  종전엔 소재가 홈판 유형 8종에 고정돼 있었다 — "에어컨 하루 10시간, 8월 전기요금" 글에 동전 탑이 붙었고,
  *  같은 유형이면 매번 같은 그림이라 중복까지 났다. 이제 그 글의 제목에서 뽑는다.
- *  ★제약을 모델에 그대로 넘긴다: 글자가 없는 물건만(고지서·영수증·화면은 글자가 본질이라 실격),
- *   하나만, 한국 가정에 실제로 있는 것. 실패하면 null → 호출측이 유형 폴백 소재를 쓴다.
+ *  ★실패하면 null → 호출측이 유형 폴백 소재를 쓴다(빈손이 엉뚱한 그림보다 낫다).
  */
 export async function subjectFromTitle(title: string, betType: string): Promise<string | null> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -194,11 +203,12 @@ export async function subjectFromTitle(title: string, betType: string): Promise<
         `A Korean personal-finance blog post has this title: "${t.slice(0, 80)}"`,
         `Pick ONE physical object to photograph for its thumbnail. The photo will use this staging: ${DEVICE_STAGING[g.device]}`,
         `Rules — all mandatory:`,
-        `1. The object must be instantly recognizable as related to the title's topic.`,
-        `2. ★It must carry NO writing of any kind. Bills, receipts, documents, bankbooks, screens, signs, calendars, labeled packaging and coin faces are all FORBIDDEN — writing is their essence and the image will be rejected.`,
+        `1. It must be an object that instantly reads as MONEY or a household bill/appliance tied to the title's topic — coins, banknotes bundled face-down, a piggy bank, a wallet, a jar of change, an electricity meter, an air conditioner unit, a gas valve. Never a generic lifestyle object (shoes, plants, mugs, books) — this is a money blog and the thumbnail must say money in half a second.`,
+        `2. It must carry NO writing of any kind. Bills, receipts, documents, bankbooks, screens, signs, calendars, labeled packaging and coin faces are all FORBIDDEN — writing is their essence and the image will be rejected.`,
         `3. One object only (or two identical objects if the staging is a contrast).`,
         `4. It must be something an ordinary Korean household actually has.`,
         `5. It must still read clearly when the image is shrunk to a 200px thumbnail — no fine detail.`,
+        `6. It must be something that can be piled, stacked, multiplied or emptied out, because the photo exaggerates quantity: ${SCALE_RULE}`,
         `Answer with JSON only: {"subject":"<short English noun phrase describing the object and how it is arranged>"}`,
       ].join("\n") }],
     });
@@ -208,9 +218,8 @@ export async function subjectFromTitle(title: string, betType: string): Promise<
     const j = JSON.parse(m[0]) as { subject?: string };
     const sub = (j.subject ?? "").trim();
     if (!sub || /[가-힣]/.test(sub)) return null;
-    // ★모델이 규칙을 어겨 글자 물건을 골랐으면 버린다(프롬프트는 방향, 코드는 한계선)
-    // ★단어 경계 필수(2026-08-02 실측): 처음엔 경계 없이 썼다가 de(sign)·(note)book·(paper)clip이
-    //  전부 걸려 멀쩡한 소재가 버려졌다 — 에어컨 글에도 폴백 동전 탑이 나온 원인이다.
+    // ★단어 경계 필수(2026-08-02 실측): 경계 없이 썼다가 de(sign)·(paper)clip이 걸려
+    //  멀쩡한 소재가 버려졌다 — 에어컨 글에도 폴백 동전 탑이 나온 원인이다.
     if (/\b(receipts?|invoices?|bills?|documents?|bankbooks?|passbooks?|screens?|displays?|signs?|signage|labels?|calendars?|newspapers?|books?|notes?|notebooks?|papers?)\b/i.test(sub)) return null;
     return sub.slice(0, 120);
   } catch { return null; }
