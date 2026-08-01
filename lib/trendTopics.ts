@@ -7,6 +7,7 @@ import { measureTopicDemand, hasRealDemand } from "./topicDemand";
 import { preemptionScore, preemptionNote, preemptWindow } from "./preemption";
 import { gatherHeadlinesWithStats } from "./trendSources";
 import { seasonalSeeds } from "./seasonalEvents";
+import { econSeeds } from "./econCalendar";
 import { fetchNaverAutocomplete } from "./naverAutocomplete";
 import { fetchBlogTotal } from "./naverBlogSearch";
 import { fetchTrend } from "./naverDatalab";
@@ -175,6 +176,16 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
       if (seen.has(ev.keyword)) continue;
       seen.add(ev.keyword);
       rows.push({ category, keyword: ev.keyword, title: ev.title, news_context: `[시즌 이슈: ${ev.title}] ★반드시 '${category}' 카테고리 관점으로만 다룬다 — 이 블로그 주제와 무관한 일반 시즌 글 금지(예: 자동차 블로그면 휴가철 장거리 운전 전 점검·차량 용품, 여행 블로그면 여행지·예약). 제목에도 카테고리 관점이 드러나야 한다.`, longtails: [] as Longtail[], source: "season", created_at: new Date().toISOString(), expires_at: expires });
+    }
+
+    // ★경제 지표 발표 선점(2026-08-02) — 금통위·물가·고용은 발표일이 몇 달 전에 공표된다.
+    //  언제 터질지 100% 아는 유일한 재료라 선점 창(발표 D-2~D-0)에만 씨앗으로 넣는다.
+    //  뉴스 신선도 게이트 면제 — 확정 일정이라 '오늘 기사'가 근거일 필요가 없다.
+    for (const ev of econSeeds(category)) {
+      if (seen.has(ev.keyword)) continue;
+      seen.add(ev.keyword);
+      rows.push({ category, keyword: ev.keyword, title: ev.title, news_context: ev.newsContext, longtails: [] as Longtail[], source: "season", created_at: new Date().toISOString(), expires_at: expires });
+      console.log(`[econ-preempt] ${category}: ${ev.keyword} — ${ev.title}`);
     }
 
     // ★자동완성 발굴 — 카테고리 루트어의 실검색 확장(무료·무제한). 브랜드성 후보 제외. source=discover(배지 분리).
