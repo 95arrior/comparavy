@@ -45,6 +45,48 @@ export function verdictFromRaw(raw: string, opts?: VerifyOpts): ImageVerdict {
   return { hasText, hasFace, matchesScene, ok: !hasText && !hasFace && matchesScene };
 }
 
+// ★무문구 썸네일 판독성 검사(2026-08-02) — 글자가 없어지면 이미지 혼자 3초를 버텨야 한다.
+//  홈피드 썸네일은 200~400px로 렌더된다(명함보다 작다). 여기서 실패하는 유형은 정해져 있다:
+//   ① 피사체가 2개 이상이라 축소 시 뭉갬  ② 뭘 찍었는지 모르겠음  ③ 스톡 사진·광고처럼 보임
+//  픽셀 단위 검사는 이미지 디코더가 없어 못 한다(sharp 미설치) — 대신 이미 쓰고 있는 비전 모델에 묻는다.
+//  ★fail-open이다. 판정 불가면 통과시킨다 — 글자 검사(fail-closed)와 달리 여기는 '취향' 영역이고,
+//   떨어뜨리면 썸네일이 아예 없어진다. 글자 사고와 달리 잃는 게 크다.
+export interface LegibilityVerdict { single: boolean; identifiable: boolean; adLike: boolean; ok: boolean }
+
+export function legibilityFromRaw(raw: string): LegibilityVerdict {
+  const m = /\{[\s\S]*\}/.exec(raw ?? "");
+  const pass: LegibilityVerdict = { single: true, identifiable: true, adLike: false, ok: true };
+  if (!m) return pass;
+  let j: Record<string, unknown>;
+  try { j = JSON.parse(m[0]) as Record<string, unknown>; } catch { return pass; }
+  const single = j.singleSubject !== false;
+  const identifiable = j.identifiableWhenTiny !== false;
+  const adLike = j.looksLikeAd === true;
+  return { single, identifiable, adLike, ok: single && identifiable && !adLike };
+}
+
+/** 무문구 썸네일이 작은 크기에서 살아남는가. 실패하면 호출측이 재생성 1회. */
+export async function verifyThumbLegible(base64: string, mime: string, opts?: { userId?: string }): Promise<LegibilityVerdict> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return { single: true, identifiable: true, adLike: false, ok: true };
+  try {
+    const client = new Anthropic({ apiKey });
+    const res = await client.messages.create({
+      model: "claude-haiku-4-5",
+      max_tokens: 160,
+      messages: [{ role: "user", content: [
+        { type: "image", source: { type: "base64", media_type: (mime || "image/png") as "image/png", data: base64 } },
+        { type: "text", text: `이 이미지는 블로그 썸네일로 쓰인다. 실제로는 명함보다 작게(가로 200픽셀 정도) 표시된다. (1)초점이 되는 피사체가 딱 하나인가(잡동사니가 흩어져 있으면 아니다) (2)그 크기로 줄였을 때도 무엇을 찍었는지 알아볼 수 있는가 (3)스톡 사진이나 광고처럼 보이는가(반질반질한 스튜디오 톤, 웃는 모델, 과한 채도). JSON만: {"singleSubject":bool,"identifiableWhenTiny":bool,"looksLikeAd":bool,"why":"짧게"}` },
+      ] }],
+    });
+    void logUsage({ userId: opts?.userId, model: "claude-haiku-4-5", kind: "thumb_legibility", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
+    const t = res.content[0]?.type === "text" ? res.content[0].text : "";
+    return legibilityFromRaw(t);
+  } catch {
+    return { single: true, identifiable: true, adLike: false, ok: true }; // fail-open
+  }
+}
+
 export async function verifyImage(
   base64: string, mime: string, sceneDesc: string, opts?: VerifyOpts,
 ): Promise<ImageVerdict> {

@@ -1,7 +1,8 @@
 import { visualIdentityFor, PALETTES } from "./visualIdentity";
 import { renderThumbnail, type ThumbInput } from "./thumbnailRenderer";
-import { generateThumbBackground, imageReady } from "./geminiImage";
-import { verifyImage } from "./imageVerify";
+import { generateThumbBackground, generateTextlessThumb, imageReady } from "./geminiImage";
+import { verifyImage, verifyThumbLegible } from "./imageVerify";
+import { manualShotBrief } from "./thumbSubject";
 import type { ThumbCopy } from "./amplifyTopics";
 
 // ★대표이미지 합성 통합 진입점 — 이미지 생성 라우트가 이 함수를 부른다.
@@ -34,14 +35,39 @@ export async function composeThumbnail(opts: {
   variant?: number; // 재생성 회차 — 장면 각도 로테이션(같은 소재 반복 금지)
   /** 주제 힌트(글 제목) — 배경 오브젝트가 주제를 그리게(추상 blob 금지 판정) */
   topicHint?: string;
-}): Promise<{ png: Buffer; usedAiBackground: boolean; aiFailReason?: string }> {
+  /** ★무문구 모드(2026-08-02 유저 확정) — 조판 없이 이미지 한 장이 곧 썸네일. 홈판 유형 키를 함께 준다. */
+  textless?: { betType: string };
+}): Promise<{ png: Buffer; usedAiBackground: boolean; aiFailReason?: string; textlessImage?: { base64: string; mime: string }; manualBrief?: string }> {
   const base = visualIdentityFor(opts.userId); // ★프로덕션 경로: 실제 user.id → 유저 고정 정체성
   const pal = opts.paletteName ? PALETTES.find((x) => x.name === opts.paletteName) : null;
   let identity = pal ? { ...base, palette: pal } : base;
+  let aiFailReason: string | undefined;
+  // ★무문구 경로(2026-08-02) — 조판을 얹지 않고 이미지 한 장을 그대로 돌려준다.
+  //  유저 확정 운영 방식: "AI로 먼저 뽑고 안 되면 직접 찍을게요" → AI 2회 시도, 실패하면 촬영 주문서를 준다.
+  //  ★두 관문을 다 통과해야 한다: ①글자 없음(fail-closed — 예외 조항 금지) ②작게 줄여도 판독됨(fail-open).
+  if (opts.textless && imageReady()) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const img = await generateTextlessThumb(opts.textless.betType, opts.userId, (opts.variant ?? 0) + attempt * 7);
+        const v = await verifyImage(img.base64, img.mime, "textless still life", { bgOnly: true, userId: opts.userId, strict: true });
+        if (v.hasText) { aiFailReason = "이미지에 글자가 섞였어요"; continue; }
+        const leg = await verifyThumbLegible(img.base64, img.mime, { userId: opts.userId });
+        if (!leg.ok) {
+          aiFailReason = !leg.single ? "피사체가 여러 개예요(작게 줄이면 뭉개져요)"
+            : !leg.identifiable ? "작게 줄이면 뭘 찍었는지 안 보여요"
+            : "광고 사진처럼 보여요";
+          continue;
+        }
+        return { png: Buffer.from(img.base64, "base64"), usedAiBackground: true, textlessImage: { base64: img.base64, mime: img.mime } };
+      } catch (e) { aiFailReason = `이미지 생성 실패: ${String(e instanceof Error ? e.message : e).slice(0, 80)}`; }
+    }
+    // ★AI 2회 실패 — 직접 찍기로 넘긴다. 억지로 조판 카드를 내보내지 않는다(무문구를 고른 이유가 사라진다).
+    console.log(`[textless] ${opts.textless.betType} — AI 2회 실패(${aiFailReason}), 촬영 주문서로 전환`);
+    return { png: Buffer.alloc(0), usedAiBackground: false, aiFailReason, manualBrief: manualShotBrief(opts.textless.betType, opts.userId) };
+  }
+
   let bgDataUrl: string | null = opts.customBgDataUrl ?? null; // 유저 배경 우선 — AI 호출 없음
   let usedAiBackground = false;
-
-  let aiFailReason: string | undefined;
   if (!bgDataUrl && opts.useAiBackground !== false && imageReady()) {
     // ★속도 우선(실측: 제작 시간 급증 — 재시도 루프가 AI 왕복 4회까지) — 1회 생성, 보도형(press)은 검증 스킵
     //  (press는 하단 다크 그라데이션+대형 카피가 배경을 덮어 배경 소글자 리스크가 낮다. Gemini는 텍스트 금지 준수율도 높음)

@@ -4,6 +4,7 @@
 
 const MODEL = "gemini-2.5-flash-image";
 import { buildBannerPrompt, bodyStyleRotation, buildThumbMetaphorPrompt } from "./bannerPrompts";
+import { buildTextlessThumbPrompt } from "./thumbSubject";
 
 export function imageReady(): boolean {
   return Boolean(process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY); // 어느 프로바이더든 키 하나면 가동
@@ -337,6 +338,16 @@ export async function generateThumbBackground(bgStyleHint: string, paletteHint: 
   // ★썸네일은 항상 진한 배경(deepBg) — 대형 카피가 중앙에 얹히는 용도라 대비가 전부다.
   const prompt = buildThumbMetaphorPrompt(safeTopic, brief ? brief.secondaryEn : undefined, seed, { textSafe: opts?.textSafe, deepBg: true });
   return callImage(prompt, "1:1");
+}
+
+/**
+ * ★무문구 썸네일 생성(2026-08-02) — 조판을 얹지 않고 이미지 혼자 문 역할을 한다.
+ *  기존 generateThumbBackground와 배타다: 저쪽은 '중앙을 비운 배경'(카피가 얹힐 자리)이고,
+ *  이쪽은 '완성된 한 장'이라 중앙을 비우면 안 된다 — 피사체가 화면을 채워야 한다.
+ *  프롬프트는 lib/thumbSubject가 조립한다(소재 문법 × 계정별 사진 프리셋).
+ */
+export async function generateTextlessThumb(betType: string, userId: string, variant = 0): Promise<{ base64: string; mime: string; provider: string }> {
+  return callImage(buildTextlessThumbPrompt(betType, userId, variant), "1:1");
 }
 
 export const GEMINI_IMAGE_MODEL = MODEL;

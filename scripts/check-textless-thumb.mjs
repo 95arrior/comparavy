@@ -1,0 +1,94 @@
+import { SUBJECT_GRAMMAR, PHOTO_PRESETS, grammarFor, photoPresetFor, buildTextlessThumbPrompt, manualShotBrief } from "../lib/thumbSubject.ts";
+import { legibilityFromRaw } from "../lib/imageVerify.ts";
+import fs from "node:fs";
+
+// ★무문구 썸네일 회귀(2026-08-02 유저: "이건 문이에요, 우리 글을 여는 문. 완벽하지 않으면 안 들어와요").
+//  이 테스트가 지키는 것:
+//   ① 글자가 본질인 소재가 다시 기어들어오지 않는가(고지서·영수증·통장 — 설계 중 걸러낸 함정)
+//   ② 프롬프트가 글자 금지·단일 피사체·축소 생존을 실제로 말하는가
+//   ③ 7석이 서로 충분히 다른가(무문구가 되면 팔레트가 아니라 사진 톤이 유일한 구분선이다)
+//   ④ 판독성 검사가 fail-open인가(글자 검사와 달리 여기서 막으면 썸네일이 아예 없어진다)
+let fail = 0;
+const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "|", l, e); };
+
+// ── ① 글자가 본질인 소재 금지 ──────────────────────────────────────────
+//  설계 초안에 고지서·영수증·통장을 넣었다가 걷어냈다 — 이미지 모델이 그리면 반드시
+//  텅 빈 판이 되거나 가짜 글자가 박힌다(articlePrompt [금지 1]과 같은 이유).
+const 금지소재 = /receipt|invoice|bill|bankbook|passbook|document|paper.*writing|sign(board)?|label|screen|display|calendar|newspaper/i;
+for (const g of SUBJECT_GRAMMAR) {
+  ok(!금지소재.test(g.subject), `[${g.betType}] 글자가 본질인 소재 아님`, g.subject.slice(0, 48));
+}
+ok(SUBJECT_GRAMMAR.length === 8, `홈판 8유형 전부 커버 (현재 ${SUBJECT_GRAMMAR.length})`);
+ok(new Set(SUBJECT_GRAMMAR.map((g) => g.subject)).size === 8, "★8유형의 소재가 서로 다름(같으면 유형 구분이 죽는다)");
+
+// 모르는 유형이 와도 죽지 않는다
+ok(grammarFor("없는유형").subject.length > 0, "미등록 유형은 폴백 소재로");
+
+// ── ② 프롬프트가 실제로 말하는가 ───────────────────────────────────────
+{
+  const p = buildTextlessThumbPrompt("계산 충격", "user-a");
+  ok(/NO TEXT/i.test(p), "★글자 금지가 프롬프트에 명시");
+  ok(/no Korean characters/i.test(p), "한글 금지 명시(실측 사고가 한글 '은행'이었다)");
+  ok(/one focal point/i.test(p), "★단일 피사체 요구");
+  ok(/60%/.test(p), "★피사체가 화면 60% 이상(축소 생존)");
+  ok(/thumbnail/i.test(p) && /shrunk/i.test(p), "작게 줄여도 읽히게 요구");
+  ok(/NOT a stock photo|NOT an advertisement/i.test(p), "★스톡·광고 톤 금지(광고로 보이면 스크롤된다)");
+  ok(/no smiling models|no face/i.test(p), "얼굴 금지");
+  ok(!/text overlay|caption|headline/i.test(p), "조판 관련 지시가 섞여 있지 않다(무문구다)");
+}
+
+// ── ③ 7석이 서로 다른가 ────────────────────────────────────────────────
+{
+  ok(PHOTO_PRESETS.length === 7, `사진 프리셋 7석 (현재 ${PHOTO_PRESETS.length})`);
+  ok(new Set(PHOTO_PRESETS.map((p) => p.tone)).size === 7, "★7석의 촬영 톤이 전부 다름");
+  const angles = new Set(PHOTO_PRESETS.map((p) => p.angle));
+  ok(angles.size >= 4, `카메라 각도가 4종 이상 (현재 ${angles.size})`);
+  ok(new Set(PHOTO_PRESETS.map((p) => p.backdrop)).size === 7, "배경 처리가 전부 다름");
+  // ★손 포함은 소수여야 한다 — AI가 가장 잘 망가뜨리는 게 손가락이다
+  const hands = PHOTO_PRESETS.filter((p) => p.hands).length;
+  ok(hands <= 2, `손 포함은 2석 이하 (현재 ${hands}석 — AI 손가락 붕괴 위험)`);
+
+  // 같은 계정은 항상 같은 스타일(블로그 내 일관성), 프롬프트도 계정마다 갈린다
+  ok(photoPresetFor("blog-x").seat === photoPresetFor("blog-x").seat, "같은 계정은 항상 같은 사진 프리셋");
+  process.env.ATEFLO_PHOTO_ASSIGN = "blog-1:5,blog-2:2";
+  ok(photoPresetFor("blog-1").seat === 5, "★환경변수 1:1 배정이 해시를 이긴다(7명 운영 시 충돌 0)");
+  delete process.env.ATEFLO_PHOTO_ASSIGN;
+
+  // ★해시 배정만으로는 7석이 안 갈린다 — 7명을 7석에 해시로 넣으면 최소 1쌍 충돌 확률이 99.4%다
+  //  (1 - 7!/7^7). 무문구에선 사진 톤이 유일한 구분선이라 충돌이 곧 '같은 블로그로 보임'이다.
+  //  그래서 환경변수 1:1 배정이 선택이 아니라 필수다 — 그 경로가 실제로 7석을 전부 갈라내는지 검사한다.
+  {
+    const ids = ["u1", "u2", "u3", "u4", "u5", "u6", "u7"];
+    process.env.ATEFLO_PHOTO_ASSIGN = ids.map((id, i) => `${id}:${i}`).join(",");
+    const seats = ids.map((id) => photoPresetFor(id).seat);
+    ok(new Set(seats).size === 7, "★환경변수 배정이면 7석이 전부 다르다(충돌 0)");
+    const prompts = ids.map((id) => buildTextlessThumbPrompt("계산 충격", id));
+    ok(new Set(prompts).size === 7, "★같은 유형이라도 7명의 프롬프트가 전부 다르다");
+    delete process.env.ATEFLO_PHOTO_ASSIGN;
+  }
+}
+
+// ── ④ 판독성 검사는 fail-open ─────────────────────────────────────────
+{
+  ok(legibilityFromRaw("완전 쓰레기").ok, "★파싱 실패면 통과(fail-open — 막으면 썸네일이 아예 없어진다)");
+  ok(legibilityFromRaw('{"singleSubject":false}').ok === false, "피사체 여러 개면 불합격");
+  ok(legibilityFromRaw('{"identifiableWhenTiny":false}').ok === false, "작게 줄여 안 보이면 불합격");
+  ok(legibilityFromRaw('{"looksLikeAd":true}').ok === false, "광고처럼 보이면 불합격");
+  ok(legibilityFromRaw('{"singleSubject":true,"identifiableWhenTiny":true,"looksLikeAd":false}').ok, "셋 다 통과면 합격");
+}
+
+// ── ⑤ AI 실패 시 촬영 주문서 ───────────────────────────────────────────
+{
+  const brief = manualShotBrief("돈 격차 자극", "user-a");
+  ok(/지갑/.test(brief), "주문서가 한국어 소재로 번역돼 있다");
+  ok(/글자가 보이면 안 됩니다/.test(brief), "★주문서에도 글자 금지가 있다");
+  ok(/60%/.test(brief), "주문서에도 축소 생존 기준이 있다");
+
+  const ct = fs.readFileSync(new URL("../lib/composeThumbnail.ts", import.meta.url), "utf-8");
+  ok(/textless/.test(ct), "★무문구 경로가 배선됨");
+  ok(/manualShotBrief/.test(ct), "★AI 2회 실패 시 촬영 주문서로 전환(유저 확정 운영 방식)");
+  ok(/strict: true/.test(ct), "무문구 경로도 글자 검사는 fail-closed");
+}
+
+console.log(fail ? `\n실패 ${fail}건` : "\n통과: 무문구 썸네일");
+process.exit(fail ? 1 : 0);
