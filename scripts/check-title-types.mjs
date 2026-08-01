@@ -1,5 +1,5 @@
 import { readSignals, pickTitleType, fitScore, TITLE_TYPES } from "../lib/titleTypes.ts";
-import { validateHomefeedTitle } from "../lib/titleRules.ts";
+import { validateHomefeedTitle, staleMonthIn } from "../lib/titleRules.ts";
 import { coreKeywordOf } from "../lib/editorial.ts";
 import fs from "node:fs";
 
@@ -80,6 +80,21 @@ for (const [kw, t] of 앵커실측) {
     const got = coreKeywordOf(kw);
     ok(got === want, `앵커 핵심어 "${kw}" → ${want}`, got === want ? "" : `(실제: ${got})`);
   }
+}
+
+// ★지난 달 시의성 회귀(2026-08-02 실측: 8월 2일에 홈판 4장이 전부 7월 소재였다).
+//  원인은 프롬프트에 오늘 날짜가 없던 것 — kstDay를 캐시 키에만 쓰고 프롬프트엔 안 넘겼다.
+{
+  const 팔월 = new Date("2026-08-02T03:00:00+09:00");
+  ok(staleMonthIn("7월에 무이자 할부 쓰면 오히려 비용이 더 드는 경우", 팔월) === 7, "★실측 사고 문구(7월에 …)를 차단");
+  ok(staleMonthIn("7월분 건보료 정산", 팔월) === 7, "조사가 붙어도 차단(7월분)");
+  ok(staleMonthIn("9월 재산세 2기, 미리 준비할 것", 팔월) === null, "다가올 달은 통과(선행 발행 전략)");
+  ok(staleMonthIn("최대 12개월 무이자", 팔월) === null, "기간 표현(12개월)은 오탐 아님");
+  ok(staleMonthIn("8월 전기요금 고지서", 팔월) === null, "이번 달은 통과");
+  const hb2 = fs.readFileSync(new URL("../lib/homefeedBet.ts", import.meta.url), "utf-8");
+  ok(/오늘은 \$\{todayKst\}/.test(hb2), "★홈판 프롬프트에 오늘 날짜가 주입됨");
+  ok(/staleMonthIn/.test(hb2), "★지난 달 코드 게이트가 배선됨");
+  ok(/소재 중복 — 제외/.test(hb2), "★같은 날 소재 중복 카드 제거가 배선됨");
 }
 
 // ★검색 제목 규격이 홈판을 잡아먹지 않는지 — 느낌표는 검색에선 금지, 홈판에선 허용이어야 한다

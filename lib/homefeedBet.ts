@@ -8,7 +8,8 @@ import { logUsage } from "./usageLog";
 import { containsBanned } from "./hookPatterns";
 import { fetchNews } from "./newsTopics";
 import { readSignals, pickTitleType, titleTypeDirective } from "./titleTypes";
-import { validateHomefeedTitle } from "./titleRules";
+import { coreKeywordOf } from "./editorial";
+import { validateHomefeedTitle, staleMonthIn } from "./titleRules";
 
 export interface HomefeedBet {
   keyword: string;   // 주제 앵커(검색 키워드가 아니라 소재 — 예: "30대 평균 저축액")
@@ -84,10 +85,26 @@ export async function pickHomefeedBets(db: SupabaseClient, userId: string, sub: 
   const picked = Array.from({ length: tryN }, (_, i) => BET_TYPES[(dayIdx + i) % BET_TYPES.length]!);
   const settled = await Promise.all(picked.map((bet) => genOne(apiKey, userId, sub, usedKeywords, bet)));
   const got = settled.filter((x): x is HomefeedBet => x !== null);
-  const out = got.slice(0, want);
-  if (got.length < tryN) {
+  // ★소재 중복 제거(2026-08-02 유저: "중복 글은 절대 안 돼요 — 저품질 낙인").
+  //  카드 n장은 Promise.all로 '동시에' 만들어져 서로를 보지 못한다. 유형은 8종으로 갈라 두었지만
+  //  유형이 달라도 소재는 겹칠 수 있다(계산 충격도 전기요금, 손해 공포 마감도 전기요금).
+  //  같은 소재 두 장이 같은 날 나가면 네이버에서 서로 잡아먹고, 반복되면 유사문서로 읽힌다.
+  //  앵커의 핵심어로 판정한다 — 표기가 달라도('7월 전기요금'·'전기요금 폭탄') 핵심어는 같다.
+  const deduped: HomefeedBet[] = [];
+  const usedCores = new Set<string>();
+  for (const b of got) {
+    const core = coreKeywordOf(b.keyword);
+    if (usedCores.has(core)) {
+      console.log(`[homebet] 소재 중복 — 제외: ${b.betType} / ${b.keyword} (핵심어 ${core})`);
+      continue;
+    }
+    usedCores.add(core);
+    deduped.push(b);
+  }
+  const out = deduped.slice(0, want);
+  if (got.length < tryN || deduped.length < got.length) {
     const failed = picked.filter((_, i) => settled[i] == null).map((b) => b.key);
-    console.log(`[homebet] ${got.length}/${tryN} 성공 — 실패 유형: ${failed.join(", ")}`);
+    console.log(`[homebet] ${got.length}/${tryN} 생성 성공 — 실패 유형: ${failed.join(", ") || "없음"} / 소재중복 제외 ${got.length - deduped.length}장`);
   }
   if (out.length) {
     // ★부분 결과를 하루 종일 물고 있으면 안 된다(이번 사고의 직접 원인).
@@ -117,6 +134,10 @@ async function genOne(
     }
     // ★제목 유형은 추첨이 아니라 이 글감에 맞는 것을 고른다(2026-08-02) — 유형 신호는 소재 힌트·오늘 기사에서 읽는다.
     //  경험형은 여기서 뽑히지 않는다(카드 생성 시점엔 운영자 실경험이 없다) — 그 유형은 본문 생성 단계에서 열린다.
+    const kstNow = new Date(Date.now() + 9 * 3600_000);
+    const todayKst = kstNow.toISOString().slice(0, 10);
+    const curMonth = kstNow.getUTCMonth() + 1;
+    const prevMonth = ((curMonth + 10) % 12) + 1;
     const signals = readSignals(`${bet.key} ${bet.hint} ${newsBlock ?? ""}`, { userExperience: false });
     const titleType = pickTitleType(signals);
     const client = new Anthropic({ apiKey });
@@ -130,6 +151,9 @@ async function genOne(
           `블로그 세부 분야: ${sub || "경제·재테크"}`,
           `오늘의 유형: [${bet.key}] — ${bet.hint}`,
           newsBlock ?? "",
+          // ★오늘 날짜 주입(2026-08-02 검거) — 종전엔 kstDay를 캐시 키에만 쓰고 프롬프트엔 안 넘겼다.
+          //  모델은 오늘이 며칠인지 모른 채 '이 달'을 찍었고, 8월 2일에 4장 전부 7월 소재가 나왔다.
+          `★오늘은 ${todayKst}(한국시간)이다. 지금은 ${curMonth}월이다. ★지난 달(${prevMonth}월) 일을 지금 벌어지는 일처럼 쓰지 마라 — 시의성은 반드시 이번 달(${curMonth}월) 또는 앞으로 올 일 기준이다. 달을 제목·키워드에 넣을 거면 ${curMonth}월 이후만 쓴다.`,
           `★시의성 결합(2026-07-16 개정 — 홈판은 '지금의 파도'를 탄다): 이 유형을 지금 이 계절·이 달의 상황(폭염 전기요금, 휴가비, 월급날, 세금 고지서 등 요즘 사람들이 실제로 겪는 일)과 반드시 결합하라. 계절과 무관한 무시간 주제 금지.`,
           `절대 원칙: ①거짓 사연·지어낸 경험 금지 — 공식 통계·실제 제도·계산으로만 성립하는 주제 ②전 국민 이해관계(대상이 넓을수록 좋다) ③이미 쓴 주제 제외: ${[...usedKeywords].slice(0, 40).join(", ") || "(없음)"}`,
           `제목 규격: 검색 키워드 나열이 아니라 사람이 말하듯 흐르는 '문장형'. 아래 지정 유형의 결로 쓴다 — 유형은 이 글감의 신호를 읽어 고른 것이므로 바꾸지 마라.`,
@@ -156,6 +180,12 @@ async function genOne(
     }
     // ★홈판 제목 규격 게이트(2026-08-02) — 프롬프트는 방향, 코드는 한계선.
     //  길이·부호 남용·키워드 실종을 여기서 잡는다. 걸리면 그 장만 버린다(다른 유형이 자리를 채운다).
+    // ★지난 달 시의성 — 프롬프트로 날짜를 줘도 모델은 틀릴 수 있다. 걸리면 그 장만 버린다.
+    const stale = staleMonthIn(`${raw.title} ${raw.keyword} ${raw.angle ?? ""}`);
+    if (stale !== null) {
+      console.error(`[homebet] 지난 달(${stale}월) 소재 — 스킵: ${raw.title.slice(0, 40)}`);
+      return null;
+    }
     const tv = validateHomefeedTitle(raw.title, raw.keyword);
     if (!tv.ok) {
       console.error(`[homebet] 제목 규격 위반(${tv.reason}) — 스킵: 앵커="${raw.keyword}" 제목="${raw.title.slice(0, 40)}"`);

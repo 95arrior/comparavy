@@ -48,6 +48,25 @@ export function validateHomefeedTitle(title: string, keyword: string): { ok: boo
   return { ok: true };
 }
 
+// ★지난 달 시의성 게이트(2026-08-02 유저 실측: 8월 2일에 "7월에 무이자 할부 쓰면" 카드가 떴다 — 4장 전부 지난달).
+//  원인은 홈판 카드 프롬프트에 오늘 날짜가 안 들어가던 것이고(모델이 달을 찍었다), 프롬프트를 고쳐도
+//  모델은 또 틀릴 수 있으니 코드가 한계선을 잡는다(CLAUDE.md).
+//  ★'지난 달'만 막는다 — 다가올 달(9월 재산세 예고 등)은 선행 발행 전략상 정상이다.
+//   ★뒤에 조사가 붙어도 잡아야 한다('7월에·7월부터·7월분') — 처음에 (?![가-힣]) 부정탐색을 넣었다가
+//    정작 실측 사고 문구인 "7월에 무이자 할부"가 통과했다. '12개월·6개월'은 숫자 뒤가 '개'라
+//    이 패턴에 애초에 걸리지 않으므로 부정탐색이 필요 없다.
+export function staleMonthIn(text: string, now: Date = new Date()): number | null {
+  const kst = new Date(now.getTime() + 9 * 3600_000);
+  const cur = kst.getUTCMonth() + 1;
+  for (const m of String(text || "").matchAll(/(\d{1,2})\s?월/g)) {
+    const mm = Number(m[1]);
+    if (mm < 1 || mm > 12) continue;
+    const behind = (cur - mm + 12) % 12; // 1~6이면 지난 달로 본다(7 이상은 다가올 달로 해석)
+    if (behind >= 1 && behind <= 6) return mm;
+  }
+  return null;
+}
+
 /** 게이트 위반 시 규칙 조립 폴백 — 키워드 실값 + 일반 수식만(지어낼 것이 없는 조합), 25~40자 맞춤. */
 export function fallbackSearchTitle(keyword: string): string {
   const kw = keyword.trim();
