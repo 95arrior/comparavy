@@ -3,6 +3,7 @@ import { createSupabaseAdminClient } from "./supabase-server";
 import { fetchApplyhomeSeeds } from "./applyhome";
 import { fetchGov24Seeds } from "./gov24";
 import { fetchBizinfoSeeds } from "./bizinfoSeeds";
+import { fetchDartIPOSeeds, ipoAdviceLeak } from "./dartIPO";
 import { measureTopicDemand, hasRealDemand } from "./topicDemand";
 import { preemptionScore, preemptionNote, preemptWindow } from "./preemption";
 import { gatherHeadlinesWithStats } from "./trendSources";
@@ -20,7 +21,7 @@ import { logUsage } from "./usageLog";
 //  스케일: 유저 무관(카테고리당 1회) → 1만·100만 명 동일 비용. 유저는 이 풀에서 시드 회전으로 다른 조각을 봄.
 
 export interface Longtail { kw: string; blogTotal: number | null }
-export type SeedSource = "news" | "season" | "discover" | "applyhome" | "gov24" | "bizinfo";
+export type SeedSource = "news" | "season" | "discover" | "applyhome" | "gov24" | "bizinfo" | "dart";
 export interface TrendTopic {
   keyword: string;
   title: string;
@@ -329,7 +330,10 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
     interface NoticeCand {
       keyword: string; title: string; newsContext: string | null;
       longtails: Longtail[]; source: SeedSource;
-      actionStart: string; actionEnd: string;
+      // ★행동 창을 모르는 소스가 있다(DART 증권신고서는 청약일이 본문 PDF 안에 있고 목록 API엔 없다).
+      //  모르면 비워 둔다 — 날짜를 지어내면 '마감 지남'을 잘못 판정해 살아 있는 글감을 죽인다.
+      //  preemptWindow는 시작일이 없으면 "open"으로 본다(마감 판정만 못 할 뿐 파이프는 정상).
+      actionStart?: string; actionEnd?: string;
     }
     const cands: NoticeCand[] = [];
 
@@ -348,6 +352,17 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
         const biz = await fetchBizinfoSeeds();
         for (const z of biz.slice(0, 6)) cands.push({ keyword: z.keyword, title: z.title, newsContext: z.newsContext, longtails: [], source: "bizinfo", actionStart: z.actionStart, actionEnd: z.actionEnd });
       } catch (e) { console.log(`[bizinfo] 실패: ${e instanceof Error ? e.message : "unknown"}`); }
+      // ★공모주(DART 증권신고서) — 청약 일정이 확정되는 순간의 1차 문서라 그 종목 글이 아직 0편이다.
+      //  ★자본시장법 경계: 절차 정보까지만. 투자권유가 새면 그 씨앗만 버린다(파이프 무영향).
+      try {
+        const ipos = await fetchDartIPOSeeds();
+        for (const p of ipos.slice(0, 4)) {
+          const leak = ipoAdviceLeak(`${p.keyword} ${p.title}`);
+          if (leak) { console.log(`[dart] 투자권유 표현 — 스킵: ${leak}`); continue; }
+          cands.push({ keyword: p.keyword, title: p.title, newsContext: p.newsContext, longtails: [], source: "dart" });
+        }
+        console.log(`[dart] 공모 씨앗 ${ipos.length}건`);
+      } catch (e) { console.log(`[dart] 실패: ${e instanceof Error ? e.message : "unknown"}`); }
     }
 
     if (cands.length > 0) {
