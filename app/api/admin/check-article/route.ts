@@ -54,6 +54,23 @@ export async function GET(request: Request) {
   if (!art) return NextResponse.json({ error: "글 없음(id 확인 또는 발행글 필요)" }, { status: 404 });
 
   const body = String(art.body_html ?? "");
+
+  // ★원문 읽기 모드(2026-08-02) — ?raw=1. 구조 지표만으로는 문장 흐름·인용구·재미를 판정할 수 없다.
+  //  text/plain으로 돌려 줄바꿈이 살아 있게 한다(JSON 한 줄이면 사람이 못 읽는다).
+  if (url0.searchParams.get("raw") === "1") {
+    const marked = body
+      .replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, "\n\n### $1\n")
+      .replace(/<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi, "\n[인용] $1\n")
+      .replace(/<table[\s\S]*?<\/table>/gi, "\n[표]\n")
+      .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, "· $1\n")
+      .replace(/<\/(p|ul|ol|div)>/gi, "\n")
+      .replace(/<[^>]+>/g, "")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+    return new NextResponse(`[제목] ${art.title}\n[작성] ${art.created_at}\n\n${marked}`, {
+      headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" },
+    });
+  }
   const published = formatBody({ title: art.title ?? "", bodyHtml: body }); // 발행 실제 HTML(정렬·데이터박스·분할 적용)
 
   // ① 문단 줄 수
