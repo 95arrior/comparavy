@@ -57,3 +57,20 @@ export async function expandAutocomplete(
   }
   return out;
 }
+
+// ★광고 API 키워드 띄어쓰기 복원(2026-08-02 유저 화면 실측).
+//  네이버 검색광고 API는 relKeyword를 공백 없이 준다 — '신용카드발급신용점수', '전세보증금반환확약서'.
+//  그걸 제목에 그대로 박으니 사람이 안 치는 말이 카드에 떴다("신용카드발급신용점수, 이것만 알면 됩니다").
+//  ★자동완성이 정답을 안다: 같은 글자열의 '사람이 쓰는 띄어쓰기'를 그대로 돌려준다.
+//   실측 — 신용카드발급신용점수 → '신용카드발급 신용점수' / 전세보증금반환확약서 → '전세보증금 반환 확약서'
+//   반대로 '개인신용정보서'처럼 원래 붙여 쓰는 말은 자동완성도 붙여 쓴다 → 건드리지 않는다.
+//  실패하면 원본 그대로(graceful) — 표기를 우리가 추측해서 만들지는 않는다.
+export async function naturalizeKeyword(keyword: string): Promise<string> {
+  const k = String(keyword || "").trim();
+  if (!k || /\s/.test(k) || [...k].length < 6) return k; // 이미 띄어져 있거나 짧으면 볼 것 없다
+  const cmp = (x: string) => x.replace(/\s+/g, "");
+  const list = await fetchNaverAutocomplete(k);
+  // 같은 글자열인데 공백이 들어간 형태만 채택 — 다른 단어가 붙은 확장형은 제외한다
+  const hit = list.find((x) => cmp(x) === k && x !== k);
+  return hit ?? k;
+}

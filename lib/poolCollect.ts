@@ -7,6 +7,7 @@
 //   · '가격·비용·예약' 등 전환 의도 키워드는 보존(좋은 글감)
 // 글감형(질문 제목) 변환은 추천(표시) 단계에서 — 풀엔 원본만 저장(검색량·중복추적 정확).
 import { fetchRelatedKeywords, parseCount, normalizeKey } from "./naverKeyword";
+import { naturalizeKeyword } from "./naverAutocomplete";
 import { isUnsafeKeyword } from "./keywordSafety";
 
 const MIN_MOBILE = 50; // 풀 하한(틈새 발굴 100보다 낮춤 — 롱테일 풍부하게). 30 이하는 잡음이라 50 균형.
@@ -59,5 +60,12 @@ export async function collectPoolKeywords(seed: string): Promise<PoolKeyword[]> 
     out.push({ keyword, monthlySearches: total, compIdx: String(k.compIdx ?? ""), adDepth: typeof k.plAvgDepth === "number" ? k.plAvgDepth : 0 });
   }
   out.sort((a, b) => b.monthlySearches - a.monthlySearches); // 검색량 많은 순
+  // ★띄어쓰기 복원(2026-08-02 유저 화면 실측) — 광고 API는 relKeyword를 공백 없이 준다.
+  //  그대로 제목에 박으니 '신용카드발급신용점수, 이것만 알면 됩니다'가 카드로 떴다. 사람이 안 치는 말이다.
+  //  ★여기서 한 번만 고친다 — 풀에 저장되는 값을 사람 표기로 만들어야 하류(제목·본문·해시태그)가 전부 산다.
+  //  상위 40개만 본다(자동완성 호출 비용). 실패하면 원본 유지라 잃는 게 없다.
+  const head = out.slice(0, 40);
+  const natural = await Promise.all(head.map((k) => naturalizeKeyword(k.keyword).catch(() => k.keyword)));
+  head.forEach((k, i) => { if (natural[i] && natural[i] !== k.keyword) k.keyword = natural[i]; });
   return out;
 }
