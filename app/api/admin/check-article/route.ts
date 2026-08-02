@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { isAdminEmail } from "@/lib/adminStats";
 import { formatBody, countPhotoSlots, hasPhotoLeak } from "@/lib/publishHtml";
+import { BODY_ALIGN } from "@/config/publish";
 import { extractUrls, VERIFIED_LINKS } from "@/lib/linkWhitelist";
 
 export const dynamic = "force-dynamic";
@@ -64,11 +65,15 @@ export async function GET(request: Request) {
   const paraLines = paras.map((t) => ({ preview: t.slice(0, 24), lines: Math.max(1, Math.ceil(t.length / CHARS_PER_LINE)) }));
   const over = paraLines.filter((p) => p.lines > MAX_LINES);
 
-  // ② 정렬 커버리지 — 발행 HTML(buildRichHtml)의 전 블록에 text-align 있는지
-  // 전 블록(div 데이터박스 포함)이 정렬(center 또는 left) 명시됐는지. li는 부모(ul/div) 정렬 상속이라 제외.
-  const blocks = [...published.matchAll(/<(p|h1|h2|h3|h4|blockquote|ul|ol|div)(\s[^>]*)?>/gi)];
-  const noAlign = blocks.filter((b) => !/text-align:left/i.test(b[0]));
-  const centerBlocks = blocks.filter((b) => /text-align:center/i.test(b[0])).length; // left 동결 — center는 0이어야
+  // ② 정렬 커버리지 — ★2026-08-02 수정: 이 검사가 왼쪽 정렬을 기대하고 있어서 항상 실패로 떴다.
+  //  본문 정렬은 2026-07-10 유저 A/B 실측으로 '중앙'이 확정됐는데(config/publish BODY_ALIGN) 검사기만 안 고쳤다.
+  //  항상 실패하는 검사는 아무 정보도 주지 못하고, 진짜 정렬 사고가 나도 못 잡는다.
+  //  이제 설정값을 읽어 그 정렬이 전 블록에 깔렸는지 본다(리스트·표는 좌측 유지가 정상이라 제외).
+  const wantAlign = BODY_ALIGN; // "center" | "left"
+  const blocks = [...published.matchAll(/<(p|h1|h2|h3|h4|blockquote)(\s[^>]*)?>/gi)];
+  const alignRe = new RegExp(`text-align:\\s*${wantAlign}`, "i");
+  const noAlign = blocks.filter((b) => !alignRe.test(b[0]));
+  const centerBlocks = blocks.filter((b) => /text-align:\s*center/i.test(b[0])).length;
 
   // ③ 발행 안전성 — 원인 분류(마커 수 vs 이미지 수) + 유출 0 증명
   const markerCount = countPhotoSlots(body);
@@ -100,10 +105,11 @@ export async function GET(request: Request) {
       all_paragraphs: paraLines,
     },
     alignment: {
+      expected: wantAlign,               // ★설정값(config/publish BODY_ALIGN)을 기준으로 판정
       total_blocks: blocks.length,
-      missing_align_left: noAlign.length,
+      missing_expected_align: noAlign.length,
       center_blocks: centerBlocks,
-      pass: noAlign.length === 0 && centerBlocks === 0,
+      pass: noAlign.length === 0,
       missing_sample: noAlign.slice(0, 5).map((b) => b[0]),
     },
   }, { headers: { "cache-control": "no-store" } });

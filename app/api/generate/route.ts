@@ -6,7 +6,7 @@ import { ensureUserRow } from "@/lib/userPlan";
 import { spendCredits, addCredits, GENERATE_COST } from "@/lib/credits";
 import { streamArticle } from "@/lib/generateArticle";
 import { isReviewType, ensureDisclosure } from "@/lib/revenue";
-import { hasFabricatedExperience, lacksInterpretation, lacksConditionBranch, duplicateSlotSubjects, lacksKeywordFloor, keywordOccurrences, keywordOverstuffed, headingMismatches, coreKeywordOf, endingReport, KEYWORD_FLOOR } from "@/lib/editorial";
+import { hasFabricatedExperience, lacksInterpretation, lacksConditionBranch, duplicateSlotSubjects, lacksKeywordFloor, keywordOccurrences, keywordOverstuffed, headingMismatches, coreKeywordOf, endingReport, spacingDefects, longParagraphs, emojiCount, photoSlotShortfall, EMOJI_MIN, PARA_MAX_LINES, KEYWORD_FLOOR } from "@/lib/editorial";
 import { scanFacts } from "@/lib/factGate";
 import { financeCalcContext } from "@/lib/financeCalc";
 import { sanitizeUrls } from "@/lib/linkWhitelist";
@@ -413,6 +413,26 @@ export async function POST(request: Request) {
           }
           // ★어미 단조로움(2026-08-02 유저: "요요요 면서요 거든요 말투가 왜이럼, 더 AI같음").
           //  프롬프트로 "섞어라"라고 해도 모델은 한 종결로 수렴한다 — 실제로 세서 지적한다.
+          // ★띄어쓰기 붙음(2026-08-02 발행글 실측) — 사람 글에는 없는 오류라 기계 생성 신호로 읽힌다.
+          const sp = spacingDefects(a.body_html);
+          if (sp.length) {
+            w.push(`띄어쓰기가 붙었다 — ${sp.slice(0, 5).map((x) => `"${x}"`).join(", ")}. 조사·어미 뒤는 반드시 띄어 쓴다.`);
+          }
+          // ★문단 4줄 초과(실측: 69문단 중 9개, 최대 7줄) — 모바일에서 벽돌이 되고 그대로 이탈이다.
+          const lp = longParagraphs(a.body_html);
+          if (lp.length) {
+            w.push(`문단 ${lp.length}개가 모바일 ${PARA_MAX_LINES}줄을 넘는다(가장 긴 것 ${Math.max(...lp.map((x) => x.lines))}줄, 예: "${lp[0]!.preview}…"). 한 문단은 1~2문장으로 끊어라 — 길면 문장을 나눠 새 문단으로 보낸다.`);
+          }
+          // ★이모지 하한(실측: 규격 3~6인데 실제 0개) — 상한만 있고 하한이 없었다.
+          const ec = emojiCount(a.body_html);
+          if (ec < EMOJI_MIN) {
+            w.push(`이모지가 ${ec}개뿐이다. 섹션 리드나 체크 목록에 ${EMOJI_MIN}~5개를 자연스럽게 넣어라(📌 ✅ 💡 ⏰ 👇 정도). 없으면 글이 딱딱하게 읽힌다.`);
+          }
+          // ★사진 슬롯(실측: 섹션이 여럿인데 마커가 하한 3개에 딱 붙음) — 네이버는 사진이 체류·노출에 크게 작용한다.
+          const ps = photoSlotShortfall(a.body_html);
+          if (ps) {
+            w.push(`[사진:] 자리가 ${ps.slots}개뿐이다(소제목 ${ps.sections}개). ${ps.want}개까지 늘려라 — 섹션 경계마다 하나씩 두되 소재는 서로 겹치지 않게.`);
+          }
           const er = endingReport(a.body_html);
           // ★감정 반응 부재가 진짜 AI 티다(2026-08-02 레퍼런스 재정의) — 어미보다 이게 먼저다.
           if (er.flat) {

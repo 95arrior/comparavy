@@ -109,6 +109,75 @@ export function keywordOverstuffed(html: string, keyword: string): boolean {
   return (n * kwLen) / total > KEYWORD_DENSITY_MAX;
 }
 
+// ═══ 띄어쓰기 붙음(2026-08-02 발행글 실측) ═══
+//  실측: "건강보험 임의계속가입은퇴직 후", "지역가입자로 전환되면서보험료" — 미리보기 24자 안에서만 2건 나왔다.
+//  ★이건 사람이 쓴 글에서는 나오지 않는 오류라, 네이버가 기계 생성으로 읽는 대표 신호다.
+//  ★그런데 우리 파이프라인에 띄어쓰기 검사가 아예 없었다.
+//  한국어 띄어쓰기를 일반적으로 판정하는 건 불가능하다 — 오탐이 나면 멀쩡한 글이 반려된다.
+//  그래서 '사람은 절대 안 붙여 쓰는 자리' 네 가지만 고정밀로 잡는다.
+const SPACING_PATTERNS: { re: RegExp; why: string }[] = [
+  // ① 조사 뒤에 숫자가 붙음 — "연차는1일". 앞이 숫자면 제외("1만1000원"의 '만1').
+  { re: /(?<![0-9])[가-힣](?:은|는|이|가|을|를|와|과|로|도|의|에)\d/g, why: "조사 뒤 숫자" },
+  // ② 연결어미 뒤에 명사가 붙음 — "전환되면서보험료". 뒤가 1자(조사)면 정상이라 2자 이상만.
+  { re: /(?:면서|지만|으며|이며|하며|되며|라서|으로써)[가-힣]{2,}/g, why: "연결어미 뒤 명사" },
+  // ③ 숫자+단위 뒤에 명사가 붙음 — "36개월건강보험". 흔한 접미사는 제외한다.
+  { re: /\d+\s?(?:년|월|일|원|만원|개월|시간|주)(?!분할|연장|이내|이상|이하|미만|초과|정도|이후|이전|동안|만에|짜리|단위|입|이|였|까지|부터|밖에|남짓|가량|치|간|째|차|분)[가-힣]{2,}/g, why: "수량 뒤 명사" },
+  // ④ 긴 어절 한가운데 목적격·주제격 조사 — "임의계속가입은퇴직", "주택담보대출을받는".
+  //   조사가 마지막 글자면 정상이므로 제외하고, 흔한 합성어 오탐을 피하려 '이/가'는 넣지 않는다.
+  { re: /(?<![가-힣])[가-힣]{3,}(?:은|는|을|를)[가-힣]{2,}(?![가-힣])/g, why: "어절 중간 조사" },
+];
+
+/** 붙여 쓴 자리 목록(중복 제거, 최대 8). 빈 배열이면 통과. */
+export function spacingDefects(html: string): string[] {
+  const text = stripTags(html).replace(/\s+/g, " ");
+  const hits: string[] = [];
+  for (const { re } of SPACING_PATTERNS) {
+    for (const m of text.matchAll(re)) {
+      const v = m[0].trim();
+      if (v && !hits.includes(v)) hits.push(v);
+    }
+  }
+  return hits.slice(0, 8);
+}
+
+export function hasSpacingDefect(html: string): boolean {
+  return spacingDefects(html).length > 0;
+}
+
+// ═══ 문단 길이(2026-08-02 발행글 실측: 69문단 중 9개가 4줄 초과, 최대 7줄) ═══
+//  규격은 "한 문단 1~2문장"인데 지켜지지 않았다. 모바일 390px에서 5줄 이상은 벽돌이고,
+//  네이버는 모바일이 압도적이라 이게 곧 이탈이다. 프롬프트에만 있던 규칙을 코드로 올린다.
+const CHARS_PER_LINE = 23; // 390px 프레임(본문폭 ~350px, 15px 한글) — check-article과 같은 기준
+export const PARA_MAX_LINES = 4;
+
+/** 4줄을 넘는 문단들의 미리보기. 표·리스트·데이터박스는 대상이 아니다(산문 문단만). */
+export function longParagraphs(html: string): { preview: string; lines: number }[] {
+  const prose = String(html || "").replace(/<(table|ul|ol|div)[\s\S]*?<\/\1>/gi, "");
+  return [...prose.matchAll(/<(p|blockquote)[^>]*>([\s\S]*?)<\/\1>/gi)]
+    .map((m) => m[2].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim())
+    .filter(Boolean)
+    .map((t) => ({ preview: t.slice(0, 20), lines: Math.max(1, Math.ceil([...t].length / CHARS_PER_LINE)) }))
+    .filter((x) => x.lines > PARA_MAX_LINES);
+}
+
+// ═══ 이모지 하한(2026-08-02 발행글 실측: 규격 3~6인데 실제 0개) ═══
+//  상한(6)만 코드에 있고 하한이 없어서 0개로 나가도 아무도 몰랐다. 형광펜과 같은 병이다.
+const EMOJI_RE = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/gu;
+export const EMOJI_MIN = 2;
+export function emojiCount(html: string): number {
+  return (stripTags(html).match(EMOJI_RE) ?? []).length;
+}
+
+// ═══ 사진 슬롯 수(2026-08-02 실측: 마커 3개 = 하한에 딱 붙음) ═══
+//  규격은 "하한 3, 상한 min(섹션 수, 7)"인데 섹션이 5개여도 3개만 나온다.
+//  네이버는 사진이 체류·노출에 크게 작용하는데 최소로만 나가고 있었다.
+export function photoSlotShortfall(html: string): { slots: number; sections: number; want: number } | null {
+  const slots = (String(html || "").match(/\[사진:/g) ?? []).length;
+  const sections = (String(html || "").match(/<h2/gi) ?? []).length;
+  const want = Math.min(Math.max(3, sections), 6); // 섹션만큼(3~6)
+  return slots < want ? { slots, sections, want } : null;
+}
+
 // ═══ 어미 단조로움(2026-08-02 유저: "요요요 면서요 거든요 말투가 왜이럼, 더 AI같음") ═══
 //  프롬프트로 "어미를 섞어라"라고 해도 모델은 금방 한 종결로 수렴한다. 코드가 실제로 센다.
 //  ★품질 심사가 아니라 최소선이다 — '한 종결이 전체의 몇 %인가'와 '금지 어미가 몇 개인가' 둘만 본다.
