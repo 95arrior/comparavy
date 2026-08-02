@@ -31,8 +31,22 @@ export interface TitledTopic {
  * 한 번의 AI 호출에서 제목 + 내용 카테고리 분류 + 노이즈 판별을 같이 한다.
  * AI 키 없음/오류면 템플릿으로 채우고 ok=true(드롭 안 함).
  */
+// ★한 번에 보낼 최대 개수(2026-08-02 실측). 60개를 한 번에 보내니 max_tokens 8000에서도 40개만 왔다.
+//  토큰을 키우는 걸로는 못 막는다 — 목록이 길어지면 언제든 다시 잘린다. 개수 의존을 없앤다.
+//  ★잘린 항목은 단순히 제목만 잃는 게 아니다: o가 undefined가 되면서 ok가 기본값 true가 되어
+//   'AI가 부적격이라 판정한 글감'과 구분이 사라진다. 실제로 '시흥은계한양수자인'(아파트 이름)이
+//   그렇게 보드에 올라왔다. 잘림은 품질 저하가 아니라 게이트 무효화다.
+const TITLE_BATCH = 20;
+
 export async function keywordsToTitles(keywords: string[], context?: string, opts?: { localBiz?: boolean }): Promise<TitledTopic[]> {
   if (keywords.length === 0) return [];
+  // 배치 분할 — 조각마다 독립 호출하고 순서대로 이어 붙인다(인덱스 정합이 생명이다).
+  if (keywords.length > TITLE_BATCH) {
+    const chunks: string[][] = [];
+    for (let i = 0; i < keywords.length; i += TITLE_BATCH) chunks.push(keywords.slice(i, i + TITLE_BATCH));
+    const parts = await Promise.all(chunks.map((c) => keywordsToTitles(c, context, opts)));
+    return parts.flat();
+  }
   const apiKey = process.env.ANTHROPIC_API_KEY;
   const fallback = (): TitledTopic[] => keywords.map((k, i) => ({ title: templateTitle(k, i), tag: "", ok: true, fit: 1, templated: true }));
   if (!apiKey) return fallback();
@@ -65,7 +79,7 @@ export async function keywordsToTitles(keywords: string[], context?: string, opt
       //  '총정리·이것만 알면'으로 서빙. 훅 미달 제목의 숨은 원인)
       // ★2000이면 키워드 35~45개에서 JSON이 잘린다(2026-08-02 실측: 보드 4장이 전부 템플릿).
       //  잘린 뒤 항목은 템플릿으로 떨어지는데, 그게 진짜 제목과 동등하게 경쟁해 보드를 채웠다.
-      max_tokens: 8000,
+      max_tokens: 4000, // 배치 20개면 충분(항목당 100토큰 내외)
       messages: [
         {
           role: "user",
