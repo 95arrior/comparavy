@@ -140,6 +140,32 @@ const VALUE_RULES: ValueRule[] = [
 // 시점 표현은 값이 아니라 '아직 안 됐다'는 단정이라 따로 본다 — 이미 시행됐는데 예정으로 쓰면 글 전체가 낡아 보인다.
 const PENDING_RE = /(\d{4}\s*년[^.\n]{0,20}?)(?:부터\s*)?시행\s*(?:될\s*)?예정|도입\s*예정|시행\s*예정/g;
 
+// ★이미 지난 시행일을 '앞으로 바뀐다'처럼 쓰는 것(2026-08-02 유저 실측).
+//  실물: 예금자보호 한도 글이 "기존 한도=5,000만 원 → 1억 원, 시행일=2025년 9월 1일"을 변경 예정처럼 실었다.
+//  1억 원 상향은 2025년 9월 1일 시행돼 지금 11개월째 적용 중이다 — 이건 예고가 아니라 이미 된 일이다.
+//  ★'예정'이라는 단어가 없어서 PENDING_RE에 안 걸렸다. 낡음은 단어가 아니라 '날짜와 시제의 불일치'다.
+const FUTURE_TENSE = /(?:시행|적용|상향|인상|인하|변경|개편|도입|바뀝|달라집|오릅|내립)(?:됩니다|니다|해요|어요|될\s*예정|할\s*예정)|부터\s*(?:적용|시행)|앞으로|이제부터|곧/;
+const DATE_RE = /(20\d{2})\s*년\s*(\d{1,2})\s*월(?:\s*(\d{1,2})\s*일)?/g;
+// ★'2025년 9월 1일부터 시행돼 지금 적용 중입니다' — 이건 정답이다(현재 시제). 미래형으로 오독하면 안 된다.
+//  '부터 시행'이라는 조각만 보면 이것도 걸린다. 이미 됐다는 신호가 같은 문장에 있으면 통과시킨다.
+const ALREADY_DONE = /(?:시행|적용|상향|인상|인하|변경|개편|도입)\s*(?:중|돼|되어|된|됐|했)|적용\s*중|시행\s*중|였습니다|왔습니다|올랐|내렸|바뀌었/;
+
+/** 이미 지난 날짜가 미래형 서술과 같은 문장에 있으면 반환. graceDays 지난 것만 본다(막 시행된 건 '이제부터'가 맞다). */
+export function staleFutureDates(plain: string, now = new Date(), graceDays = 45): { matched: string; date: string }[] {
+  const today = new Date(now.getTime() + 9 * 3600_000); // KST
+  const cutoff = today.getTime() - graceDays * 86400_000;
+  const out: { matched: string; date: string }[] = [];
+  for (const sent of String(plain || "").split(/(?<=[.!?。])\s+|\n+/)) {
+    if (!FUTURE_TENSE.test(sent) || ALREADY_DONE.test(sent)) continue;
+    for (const m of sent.matchAll(DATE_RE)) {
+      const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3] ?? 1)];
+      const t = Date.UTC(y, mo - 1, d);
+      if (t < cutoff) { out.push({ matched: sent.replace(/\s+/g, " ").trim().slice(0, 90), date: m[0] }); break; }
+    }
+  }
+  return out;
+}
+
 // ────────────────────────────────────────────────────────────────────────────
 // 2층. 절차·관할 구조 — 숫자는 맞는데 제도를 잘못 이해한 경우. 자동 검증이 가장 안 되는 층.
 // ────────────────────────────────────────────────────────────────────────────
@@ -299,6 +325,18 @@ export function scanFacts(text: string, keyword: string): FactIssue[] {
       reason: "모델은 학습 시점 기준으로 '예정'을 씁니다. 이미 시행됐을 가능성이 높고, 시행된 제도를 예정으로 쓰면 글 전체가 낡아 보입니다.",
       fix: "시행 여부를 확인해 현재 시점 기준으로 단정합니다. 확인이 안 되면 그 문장을 뺍니다.",
       count: pending.length,
+    });
+  }
+
+  for (const h of staleFutureDates(plain)) {
+    issues.push({
+      layer: "value",
+      severity: "warn",
+      matched: h.matched,
+      title: `이미 지난 날짜(${h.date})를 앞으로 바뀔 일처럼 썼습니다`,
+      reason: "그 날짜는 이미 지났습니다. 시행된 제도를 예고처럼 쓰면 독자는 '아직 안 됐구나'로 읽고, 글 전체가 낡아 보입니다.",
+      fix: "'~부터 시행됩니다'를 '~부터 시행돼 지금 적용 중입니다'처럼 현재 시제로 고칩니다. 바뀐 뒤 무엇이 달라졌는지가 독자가 원하는 정보입니다.",
+      count: 1,
     });
   }
 

@@ -22,7 +22,7 @@ export interface PublishInput {
 
 const PHOTO_RE = /\[사진:\s*([^\]]+)\]/g;
 // ★슬롯 통합 — 사진·카드 둘 다 이미지 슬롯. 문서 순서로 인덱싱, images 맵이 URL 제공(사진=Gemini, 카드=satori).
-const SLOT_RE = /\[(?:사진|카드|차트):\s*([^\]]+)\]/g;
+const SLOT_RE = /\[(사진|카드|차트):\s*([^\]]+)\]/g;
 export interface Slot { type: "photo" | "card"; desc: string }
 // 본문의 슬롯을 문서 순서로 파싱(생성 파이프라인이 타입별로 렌더).
 export function parseSlots(bodyHtml: string): Slot[] {
@@ -624,10 +624,16 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   const withImages = opts?.withImages ?? true;
   let idx = -1;
   // ★사진 자리는 '구조화 슬롯'으로만 — 채워진 슬롯만 이미지로, 미충족 슬롯은 줄 자체를 제거(안내문구 유출 금지).
-  let body = ensurePayoffTable(ensureSummaryHeading(ensureSectionEmphasis(markToBold(ensureKeyFigureMark(capMarks(capAccent(capDanger(sanitizeAiPunct(stripListEmoji(normalizeHighlights(input.bodyHtml)))))))))), input.title).replace(SLOT_RE, (_m, desc: string) => {
-    idx += 1;
-    if (!withImages) return `<p>[사진 ${idx + 1}]</p>`; // marker 모드(수동 배치) — 명시적 선택
+  let body = ensurePayoffTable(ensureSummaryHeading(ensureSectionEmphasis(markToBold(ensureKeyFigureMark(capMarks(capAccent(capDanger(sanitizeAiPunct(stripListEmoji(normalizeHighlights(input.bodyHtml)))))))))), input.title).replace(SLOT_RE, (_m, kind: string, desc: string) => {
+    idx += 1; // ★문서순 인덱스는 종류와 무관하게 증가시킨다(검토 화면 imgs[i]와 짝이 맞아야 한다)
     const url = input.images?.[idx];
+    // ★안 채워진 카드·차트는 줄째로 지운다(2026-08-02 유저 실측).
+    //  실물: "[이미지 2 — 여기에 삽입] 표현: 비교 | 은행 예금자보호 한도 변경 | 기존 한도=5,000만 원…"
+    //  카드·차트는 코드가 자동 생성하는 자리다. 생성이 안 됐다면 사람이 대신 넣을 것이 없다 —
+    //  사진처럼 '여기에 삽입하세요' 안내를 남기면 라벨=값 원문이 독자에게 그대로 노출된다.
+    //  ★자동 슬롯의 미충족은 '빈자리'가 아니라 '없는 자리'다. 사진(사람이 채움)과 반대로 처리한다.
+    if (kind !== "사진" && !url) return "";
+    if (!withImages) return `<p>[사진 ${idx + 1}]</p>`; // marker 모드(수동 배치) — 명시적 선택
     if (!url) {
       // ★미충족 → 명시 마커(유저 확정: 에디터에서 이 자리에 이미지를 넣고 마커를 지우는 흐름 — 대괄호 유지로 눈에 띄게)
       return `<p style="text-align:center;background-color:#f5f6f8;padding:10px 8px;font-size:13px;color:#8b95a1">[이미지 ${idx + 1} — 여기에 삽입]<br>표현: ${desc.trim().slice(0, 60)}</p>`;
