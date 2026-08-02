@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient, hasSupabaseEnv } from "@/lib/supabase-server";
 import { hasGscEnv, gscQuery } from "@/lib/gsc";
+import { fetchDartIPOSeeds, ipoAdviceLeak } from "@/lib/dartIPO";
 
 // ★데이터 루프 헬스(2026-07-20) — 성과 루프 적재 상태를 '집계 숫자만' 공개(키워드·수치 등 내용 없음).
 //  배경: 유저 수동 확인 없이 운영 점검("서치콘솔 들어왔어?")에 즉답하기 위한 관측용. 민감정보 0 원칙.
 //  ?probe=gsc — GSC 연결 자체를 시험(행 수·에러 메시지만 반환, 비밀값·데이터 내용 없음).
+//  ?probe=dart — 공모주 수확기가 프로덕션에서 실제로 도는지(2026-08-02 키 등록). 회사명은 공시 공개정보라 노출 무해.
+//   ★로컬에서 되는 것과 프로덕션에서 되는 것은 다르다 — 환경변수는 배포 시점에 묶인다.
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
@@ -19,6 +22,22 @@ export async function GET(request: Request) {
       out.gscProbe = { ok: true, rows: rows.length };
     } catch (e) {
       out.gscProbe = { ok: false, error: (e instanceof Error ? e.message : String(e)).slice(0, 200) };
+    }
+  }
+  if (new URL(request.url).searchParams.get("probe") === "dart") {
+    out.dartKeySet = Boolean(process.env.DART_API_KEY);
+    try {
+      const seeds = await fetchDartIPOSeeds();
+      out.dartProbe = {
+        ok: true,
+        seeds: seeds.length,
+        priced: seeds.filter((x) => x.priced).length,
+        // ★게이트가 프로덕션에서도 도는지 함께 본다 — 여기서 leaked가 0이 아니면 즉시 봐야 한다
+        leaked: seeds.filter((x) => ipoAdviceLeak(`${x.keyword} ${x.title}`)).length,
+        sample: seeds.slice(0, 5).map((x) => `${x.corpName}${x.priced ? "(확정)" : ""}`),
+      };
+    } catch (e) {
+      out.dartProbe = { ok: false, error: (e instanceof Error ? e.message : String(e)).slice(0, 200) };
     }
   }
   try {
