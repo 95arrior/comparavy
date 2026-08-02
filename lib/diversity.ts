@@ -173,3 +173,47 @@ export function sameProductFamily(a: string, b: string): boolean {
   for (const ch of l) { if (ch === s[i]) i += 1; if (i === s.length) return true; }
   return false;
 }
+
+// ─── 형제 글감(2026-08-02 유저 제보) ──────────────────────────────────────
+//  실측: WP 초안에 '중국주식 시작 전 확인할 5가지'와 '일본주식 시작 전 확인할 5가지'가 나란히 쌓였다.
+//  머리는 갈아끼우고 꼬리는 그대로 둔 쌍인데, 기존 방어 셋이 전부 못 잡는다(계산 확인):
+//   coreKey     '중국주식' ≠ '일본주식' — DUP_MODIFIER_RE에 '주식'이 없어 환원되지 않는다
+//   bigramDice  {중국,국주,주식} vs {일본,본주,주식} → 2×1/(3+3) = 0.333 < 0.62
+//   sameProductFamily  부분수열 아님('중'≠'일') → false
+//  ★그래서 반대쪽에서 본다 — sameProductFamily가 '앞이 같고 뒤가 늘어난' 쌍을 보는 함수라면,
+//   이건 '뒤가 같고 앞만 다른' 쌍을 본다. 같은 상품군에 수식어만 갈아끼운 형제다.
+//
+//  ★과차단 방어: 꼬리가 일반어면 형제로 보지 않는다. '에세이 추천'과 '적금 추천'은 꼬리('추천')만
+//   같을 뿐 다른 글이다. DUP_GENERIC_TOK(수식·행정 공통어)를 그대로 재사용하고 형식어를 더한다 —
+//   기준을 두 곳에 따로 두면 반드시 드리프트한다.
+const SIBLING_GENERIC_TAIL = new Set([
+  ...DUP_GENERIC_TOK,
+  "후기", "안내", "정보", "가입", "개설", "자격", "대상", "기준", "가격", "이유", "차이", "전망",
+  "하는법", "보는법", "사용법", "계산기", "필요서류", "가지", "정리",
+]);
+
+/**
+ * 꼬리는 같고 머리만 다른 '형제 글감'인가 — 중국주식 ↔ 일본주식, 청년적금 ↔ 직장인적금.
+ * ★일부러 보수적으로 짰다: 꼬리 2자 이상 + 일반어 아님 + 양쪽 머리가 실제로 다를 것.
+ *  놓치는 쪽(국민연금↔개인연금은 '연금'이 일반어라 통과)이 잘못 막는 쪽보다 낫다.
+ */
+export function siblingKeywords(a: string, b: string): boolean {
+  const cmp = (x: string) => String(x ?? "").toLowerCase().replace(/[\s·,]/g, "");
+  const x = cmp(a), y = cmp(b);
+  if (!x || !y || x === y) return false; // 완전 일치는 근접중복의 몫이다
+  const ax = [...x], ay = [...y];
+  let tail = 0;
+  while (tail < ax.length && tail < ay.length && ax[ax.length - 1 - tail] === ay[ay.length - 1 - tail]) tail += 1;
+  if (tail < 2) return false;                       // 꼬리 1자는 우연이다(정기예금 ↔ 정기적금의 '금')
+  if (tail === ax.length || tail === ay.length) return false; // 한쪽이 다른 쪽 꼬리에 통째로 포함 = 포함검사의 몫
+  const suffix = ax.slice(ax.length - tail).join("");
+  if (SIBLING_GENERIC_TAIL.has(suffix)) return false;
+  return true;
+}
+
+/** 최근 글감들과의 최대 문장 유사도(0~1) — 다양성 정렬의 감점 축. 하드 컷이 아니라 순서만 민다. */
+export function maxSimilarity(kw: string, others: readonly string[]): number {
+  let m = 0;
+  for (const o of others) { const d = bigramDice(kw, o); if (d > m) m = d; }
+  return m;
+}
