@@ -29,15 +29,26 @@ export function validateSearchTitle(ts: string, keyword: string): { ok: boolean;
   // 핵심 키워드 선두 배치 — 첫 토큰이 키워드 토큰으로 시작해야
   const toks = coreTokens(keyword);
   const head = ts.slice(0, 14);
-  if (toks.length > 0 && !toks.some((t) => head.includes(t))) return { ok: false, reason: "keyword_not_front" };
-  // ★실검색어가 두 어절 이상이면 '맨 앞에 통째로'를 요구한다(2026-08-02 유저 실성과 역추적).
-  //  근거: "삼성카드 발급조회, 심사중일 때…"가 지금도 1페이지·누적 조회 상위다.
-  //  검색어와 제목 앞부분이 문자 그대로 같을 때 질의-문서 정합이 최고점이 된다.
-  //  ★한 어절짜리(굵은 머리말)엔 걸지 않는다 — 거기까지 강제하면 제목이 전부 같은 틀이 된다.
+  // ★두 어절 이상 실검색어는 아래 '통째로 + 앞쪽 절반' 규칙이 맡는다.
+  //  옛 토큰 규칙(앞 14자 안에 토큰 하나)을 함께 걸면 유저 지급 예시가 죽는다 —
+  //  "현실적으로 숨만 쉬어도 나가는 4인가족 한달 생활비 수준"은 앞 14자가 전부 어그로다(실측).
+  const multiWord = keyword.trim().split(/\s+/).length >= 2;
+  if (!multiWord && toks.length > 0 && !toks.some((t) => head.includes(t))) return { ok: false, reason: "keyword_not_front" };
+  // ★실검색어를 '통째로, 표기 그대로' 담았는가(2026-08-02 유저 실성과 역추적 → 같은 날 유저가 교정).
+  //  1차로 '맨 앞 고정'을 걸었더니 유저가 바로 잡았다 — 그건 제목을 전부 같은 틀로 만든다.
+  //   유저 예시: "현실적으로 숨만 쉬어도 나가는 [4인가족 한달 생활비] 수준"
+  //   → 어그로가 문을 열고, 실검색어가 통째로 박히고, 뒤가 받친다. 검색어는 앞이 아니라 '안'에 있다.
+  //  ★그래서 지키는 건 둘이다: 통째로 있을 것(쪼개지 마라) + 앞쪽 절반에 있을 것(꼬리에 붙이면 약하다).
+  //  한 어절짜리(굵은 머리말)엔 걸지 않는다 — 그건 어차피 아무 데나 들어간다.
   const kwTrim = keyword.trim();
   if (kwTrim.split(/\s+/).length >= 2) {
     const cmp = (x: string) => x.replace(/\s+/g, "").toLowerCase();
-    if (!cmp(ts).startsWith(cmp(kwTrim))) return { ok: false, reason: "lead_not_exact" };
+    const tc = cmp(ts), kc = cmp(kwTrim);
+    // ★위치는 안 본다(2026-08-02 — 내가 두 번 과하게 잡았고 두 번 다 유저 예시가 죽었다).
+    //  '맨 앞 고정' → 유저 교정. 그다음 '앞쪽 절반' → 유저가 준 예시 자체가 탈락했다:
+    //  "현실적으로 숨만 쉬어도 나가는|4인가족 한달 생활비|수준"은 문구가 24자 중 13번째에서 시작한다.
+    //  ★유저 규칙은 하나다 — 검색어를 통째로, 표기 그대로. 어그로를 어디에 두느냐는 창작의 몫이다.
+    if (!tc.includes(kc)) return { ok: false, reason: "phrase_split" }; // 쪼개져 들어감 = 검색어가 아니게 됨
   }
   // 동급 키워드 병렬 금지 — 같은 카테고리 명사가 2회 이상 = "A대출 B대출" 유형
   const nouns = ts.match(CATEGORY_NOUN) ?? [];
@@ -93,14 +104,19 @@ export function staleMonthIn(text: string, now: Date = new Date()): number | nul
 /** 게이트 위반 시 규칙 조립 폴백 — 키워드 실값 + 일반 수식만(지어낼 것이 없는 조합), 25~40자 맞춤. */
 export function fallbackSearchTitle(keyword: string): string {
   const kw = keyword.trim();
+  // ★2026-08-02 유저 실측 — 화면에 '개인신용정보서 총정리'가 떴다. 그건 창작이 아니라 이 폴백이었다.
+  //  '총정리'는 유저가 금지한 틀이고(썸네일 카피 금지어에도 있다), 무엇보다 폴백이 자주 발동할수록
+  //  모든 글감이 같은 얼굴이 된다. 폴백도 제목이어야 한다 — 검색어를 살리면서 궁금하게.
+  //  ★유저 지급 결: "현실적으로 숨만 쉬어도 나가는 4인가족 한달 생활비 수준"
   const candidates = [
-    `${kw} 조건과 신청 방법, 순서대로 총정리`,
-    `${kw} 신청 전 확인할 조건과 기간, 방법 정리`,
-    `${kw} 조건부터 신청 방법과 기간까지 한눈에 정리`,
-    `${kw} 알아보기 전 꼭 확인할 조건과 신청 순서 정리`,
+    `${kw}, 모르고 넘어가면 나만 손해입니다`,
+    `${kw}, 신청 전에 이것부터 확인하세요`,
+    `${kw} 하기 전에 놓치기 쉬운 것들`,
+    `막상 해보면 헷갈리는 ${kw}, 순서대로 정리했습니다`,
+    `${kw}, 처음이라면 여기부터 보세요`,
   ];
   for (const c of candidates) { const n = [...c].length; if (n >= 25 && n <= 40) return c; }
-  const base = `${kw} 조건부터 신청 방법과 기간까지 한눈에 정리`;
+  const base = `${kw}, 신청 전에 이것부터 확인하세요`;
   return [...base].length > 40 ? [...base].slice(0, 40).join("") : base;
 }
 

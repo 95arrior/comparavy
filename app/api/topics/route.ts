@@ -671,6 +671,11 @@ export async function GET(req: Request) {
         for (const bet of bets) {
           // ★이미 생성/발행한 홈판 글감은 숨김(실측 2026-07-16: 발행했는데 카드 잔존 — 홈판 카드는 발행함 마킹 로직 밖이라 usedSet으로 직접 차단)
           if (!bet || usedSet.has(normalizeKeyword(bet.keyword))) { homeDrop.used++; continue; }
+          // ★발행한 글과의 유사 검사(2026-08-02 유저 실측: "이직 전 3일, 이것 안 하면 퇴직금 줄어듭니다"가
+          //  아침에 올린 글과 겹쳐 나왔다). 홈판 카드는 이 게이트를 통째로 안 지나고 있었다 —
+          //  usedSet은 '키워드 정확 일치'만 보는데, 홈판 keyword는 검색어가 아니라 주제 앵커라 거의 안 걸린다.
+          //  ★홈판은 앵커가 느슨한 만큼 제목으로 봐야 한다. 검색 레인과 같은 게이트를 태운다.
+          if (usedForbidden(`${bet.title} ${bet.keyword}`)) { homeDrop.used++; continue; }
           if (finalGate([{ keyword: bet.keyword, title: bet.title }], { anchorKeyword: true }).pass.length === 0) { homeDrop.gate++; continue; }
           if (tc.some((t) => t.keyword === bet.keyword) || homeCards.some((h) => h.keyword === bet.keyword)) { homeDrop.dup++; continue; }
           homeCards.push({

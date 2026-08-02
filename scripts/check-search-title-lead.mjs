@@ -1,4 +1,5 @@
-import { validateSearchTitle, restoreSearchPhrase } from "../lib/titleRules.ts";
+import { validateSearchTitle, restoreSearchPhrase, fallbackSearchTitle } from "../lib/titleRules.ts";
+import { finalGate } from "../lib/cardFinalGate.ts";
 import { searchTitleReport } from "../lib/editorial.ts";
 import { expandAutocomplete } from "../lib/naverAutocomplete.ts";
 import fs from "node:fs";
@@ -27,11 +28,42 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   ok(r?.spacingChanged === false, "표기 그대로");
 }
 
-// ── ② 앞머리가 아니면 걸리는가 ─────────────────────────────────────────
+// ── ② 어그로 + 검색어 결합(★유저 교정 2026-08-02) ──────────────────────
+//  1차로 '맨 앞 고정'을 걸었더니 유저가 바로 잡았다: "센스있는 클릭 유도 어그로성 제목을 통해
+//  자동완성이랑 결합한거죠?" — 맨 앞 강제는 제목을 전부 같은 틀로 만든다.
+//  ★지키는 건 둘: 통째로 있을 것(쪼개지 마라) + 앞쪽 절반에 있을 것(꼬리에 붙이면 약하다).
 {
-  const t = "심사중일 때 삼성카드 발급조회 이렇게 확인하면 됩니다";
-  ok(validateSearchTitle(t, "삼성카드 발급조회").reason === "lead_not_exact", "★키워드가 들어 있어도 뒤에 있으면 불합격");
-  ok(searchTitleReport(t, "삼성카드 발급조회")?.leads === false, "leads=false로 보고");
+  // 유저 지급 예시 — 어그로가 문을 열고 검색어가 통째로 박힌다
+  const good = "현실적으로 숨만 쉬어도 나가는 4인가족 한달 생활비 수준";
+  const v = validateSearchTitle(good, "4인가족 한달 생활비");
+  ok(v.ok, "★유저 지급 예시가 통과한다(어그로 앞 + 검색어 통째로)", v.reason ?? "");
+
+  // 쪼개 넣으면 검색어가 아니게 된다
+  ok(validateSearchTitle("4인가족의 한 달 생활비는 대체 얼마나 나오는 걸까요", "4인가족 한달 생활비").reason === "phrase_split",
+     "★쪼개서 끼워 넣으면 불합격");
+  // ★위치는 보지 않는다 — 내가 '맨 앞'과 '앞쪽 절반'을 차례로 걸었고 둘 다 유저 예시를 죽였다.
+  //  유저 규칙은 하나다: 통째로, 표기 그대로. 어그로를 어디에 두느냐는 창작의 몫이다.
+  ok(validateSearchTitle("생활비 줄이는 법 고민하다 찾은 4인가족 한달 생활비", "4인가족 한달 생활비").ok,
+     "★위치는 강제하지 않는다(과잉 제약 재발 방지)");
+  // 맨 앞도 당연히 통과(삼성카드 결)
+  ok(validateSearchTitle("삼성카드 발급조회, 심사중일 때 이렇게 확인하면 됩니다", "삼성카드 발급조회").ok,
+     "맨 앞 배치도 통과");
+  ok(searchTitleReport(good, "4인가족 한달 생활비")?.contains === true, "포함 여부 보고");
+}
+
+// ── ②-2 제목이 제목이 아닌 것(유저 실측: 화면에 '대부업체'가 카드로) ──────
+{
+  const drops = (t, k) => finalGate([{ keyword: k, title: t }], { anchorKeyword: true }).drops[0]?.reason;
+  ok(drops("대부업체", "대부업체") === "title_is_label", "★키워드 원문만 있는 건 제목이 아니다");
+  ok(drops("개인신용정보서 총정리", "개인신용정보서") === "title_is_label", "★키워드+'총정리'만 = 라벨");
+  // ★전면 금지는 과잉이었다 — 내용이 있는 제목은 '총정리'가 들어가도 통과해야 한다(기존 회귀가 잡았다)
+  ok(!drops("백년가게로 지정되면 받는 혜택 총정리", "백년가게 혜택"), "★내용 있는 제목은 통과");
+  ok(drops("실업급여조건 정리", "실업급여조건") === "title_is_label", "키워드+'정리'도 라벨");
+  ok(!drops("삼성카드 발급조회, 심사중일 때 이렇게 확인하면 됩니다", "삼성카드 발급조회"), "멀쩡한 제목은 통과");
+  ok(!drops("현실적으로 숨만 쉬어도 나가는 4인가족 한달 생활비 수준", "4인가족 한달 생활비"), "유저 예시 통과");
+  // ★폴백이 스스로 금지 틀을 만들면 안 된다(실측: '개인신용정보서 총정리'가 폴백 출력이었다)
+  for (const k of ["개인신용정보서", "실업급여조건", "4인가족 한달 생활비"])
+    ok(!/총정리|완벽정리|핵심정리/.test(fallbackSearchTitle(k)), "★폴백이 금지 틀을 안 쓴다", fallbackSearchTitle(k));
 }
 
 // ── ③ 표기 훼손을 되돌리는가(거부 대신 수리) ───────────────────────────

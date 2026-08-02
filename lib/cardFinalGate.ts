@@ -129,6 +129,22 @@ export function finalGate<T extends GateCard>(cards: T[], opts?: { anchorKeyword
     // ★폐지·종료 제도 하드컷(2026-08-01 유저 지시 "빡세게") — 실측: '재형저축'(2015년 가입 종료)이
     //  "세금 우대받으며 모으는 방법"으로 글감에 떴다. 검색은 되지만 지금 가입하러 가면 헛걸음한다.
     //  품질이 아니라 독자가 실제로 손해를 보는 오류라 스팸 대출과 같은 급으로 끊는다. 사전은 lib/discontinued 한 곳.
+    // ★제목이 제목이 아닌 것(2026-08-02 유저 실측 — 화면에 '대부업체' 한 단어가 카드로 떴다).
+    //  키워드를 그대로 놓거나 거기에 '총정리·정리' 한 마디만 붙인 건 제목이 아니라 라벨이다.
+    //  클릭할 이유가 없고, 홈판이든 검색이든 이런 건 지나쳐진다.
+    //  ★'총정리'류는 유저가 금지한 틀이다(썸네일 카피 금지어와 같은 계열) — 폴백에서도 뺐다.
+    {
+      const cmp = (x: string) => String(x || "").replace(/\s+/g, "").toLowerCase();
+      const bare = cmp(c.title).replace(/[,·.!?]/g, "");
+      const kwc = cmp(c.keyword);
+      // ★'총정리'를 전면 금지하려다 되돌렸다(2026-08-02) — 유저가 말한 적 없는 내 추론이었고,
+      //  '백년가게로 지정되면 받는 혜택 총정리'처럼 내용이 있는 제목까지 죽였다(기존 회귀가 잡아냈다).
+      //  진짜 결함은 '총정리'라는 단어가 아니라 '키워드에 그 한 마디만 붙인 라벨'이다.
+      const stripped = bare.replace(kwc, "").replace(/^(총정리|완벽정리|핵심정리|정리|모음|안내)$/, "");
+      if (kwc && bare.includes(kwc) && stripped.length === 0) {
+        drops.push({ keyword: c.keyword, reason: "title_is_label" }); continue;
+      }
+    }
     { const ep = endedProgramOf(text); if (ep) { drops.push({ keyword: c.keyword, reason: `ended:${ep.name}` }); continue; } }
     if (SCAM_LOAN_RE.test(text)) { drops.push({ keyword: c.keyword, reason: "scam_loan" }); continue; } // 대기업 사칭 대출(삼성재단대출류) — 법적 안전, 양 채널 하드컷
     if (SPECULATIVE_RE.test(`${text} ${(c.newsContext ?? "").slice(0, 120)}`)) { drops.push({ keyword: c.keyword, reason: "speculative" }); continue; } // 유령 제도 — 지역 구제보다 먼저
