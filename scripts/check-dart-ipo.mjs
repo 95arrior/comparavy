@@ -44,6 +44,45 @@ for (const [raw, want] of [
   if (saved) process.env.DART_API_KEY = saved;
 }
 
+// ── ④-2 실호출로 확인된 것(2026-08-02, 최근 14일 39건) ────────────────
+//  ★필드명은 추측이 아니라 실측이다:
+//   corp_code, corp_name, stock_code, corp_cls, report_nm, rcept_no, flr_nm, rcept_dt, rm
+//  미상장 14 / 상장사 25로 갈렸고, stock_code 유무가 실제로 그 경계였다.
+{
+  const src = fs.readFileSync(new URL("../lib/dartIPO.ts", import.meta.url), "utf-8");
+
+  // ★스팩 — 실호출에서 '엔에이치기업인수목적34호'가 씨앗으로 올라왔다.
+  //  껍데기 법인이라 쓸 내용이 없고 검색 수요도 없는데, 숫자만 바꿔 매달 쏟아진다.
+  ok(/SPAC_RE/.test(src), "★스팩 제외 규칙 존재");
+  const SPAC = /기업인수목적|스팩|제\s*\d+\s*호\s*(?:기업인수|스팩)/;
+  for (const n of ["엔에이치기업인수목적34호", "하나금융25호스팩", "IBKS제27호기업인수목적"])
+    ok(SPAC.test(n), "★스팩 검거", n);
+  for (const n of ["딜리셔스", "케이앤에스아이앤씨", "스카이랩스", "와이즈플래닛컴퍼니", "글로벌테크놀로지"])
+    ok(!SPAC.test(n), "실제 사업회사는 통과", n);
+
+  // ★[발행조건확정] = 공모가·청약일이 확정된 시점(실호출에서 딜리셔스가 이 상태였다). 선점 가치 최고.
+  ok(/발행조건확정/.test(src), "★발행조건 확정 건을 식별한다");
+  ok(/Number\(b\.priced\) - Number\(a\.priced\)/.test(src), "★확정 건이 정렬 1순위");
+
+  // 실측된 보고서명들이 실제로 IPO 문서로 인식되는가
+  const REPORT = /증권신고서\s*\(\s*지분증권\s*\)|투자설명서/;
+  for (const r of ["[발행조건확정]증권신고서(지분증권)", "[기재정정]투자설명서", "[첨부정정]증권신고서(지분증권)", "투자설명서"])
+    ok(REPORT.test(r), "실측 보고서명 인식", r);
+  for (const r of ["분기보고서", "주요사항보고서(유상증자결정)"])
+    ok(!REPORT.test(r), "무관한 보고서는 제외", r);
+}
+
+// ── ④-3 게이트가 자기 규칙문을 위반으로 읽지 않는가 ────────────────────
+//  ★실측 사고: 진단 스크립트가 newsContext까지 검사했더니, 거기 적힌 금지어 목록
+//   ('유망·기대주·따상…')을 스스로 잡아 멀쩡한 씨앗 5건이 전부 누출로 찍혔다.
+//   규칙문과 위반문은 다르다 — 프로덕션은 keyword+title만 본다.
+{
+  const tt = fs.readFileSync(new URL("../lib/trendTopics.ts", import.meta.url), "utf-8");
+  ok(/ipoAdviceLeak\(`\$\{p\.keyword\} \$\{p\.title\}`\)/.test(tt), "★검사 범위는 keyword+title(지시문 제외)");
+  const dg = fs.readFileSync(new URL("./diagnose-dart.mjs", import.meta.url), "utf-8");
+  ok(!/ipoAdviceLeak\(`\$\{s\.keyword\} \$\{s\.title\}\\n\$\{s\.newsContext\}`\)/.test(dg), "★진단기도 같은 범위로 정렬됨");
+}
+
 // ── ⑤ 소스 코드가 지켜야 할 선 ─────────────────────────────────────────
 {
   const src = fs.readFileSync(new URL("../lib/dartIPO.ts", import.meta.url), "utf-8");

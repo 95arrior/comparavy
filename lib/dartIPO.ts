@@ -12,6 +12,8 @@ export interface DartIPOSeed {
   keyword: string;
   title: string;
   corpName: string;
+  /** 공모가·일정이 확정된 공시인가(=청약 임박). 선점 가치가 가장 높은 순간. */
+  priced: boolean;
   rceptNo: string;
   rceptDt: string;   // YYYY-MM-DD (공시 접수일)
   newsContext: string;
@@ -21,6 +23,11 @@ const LIST_EP = "https://opendart.fss.or.kr/api/list.json";
 
 /** 증권신고서(지분증권) = 공모 절차의 출발 문서. 정정신고서는 일정이 바뀐 것이라 함께 본다. */
 const IPO_REPORT_RE = /증권신고서\s*\(\s*지분증권\s*\)|투자설명서/;
+
+// ★스팩(기업인수목적회사) 제외 — 2026-07-31 실호출에서 '엔에이치기업인수목적34호'가 씨앗으로 올라왔다.
+//  스팩은 사업이 없는 껍데기 법인이라 '이 회사가 뭐 하는 곳인지' 쓸 내용이 없고, 검색 수요도 사실상 없다.
+//  숫자만 붙은 이름이 매달 쏟아져 씨앗 자리를 잠식한다 — 검색자=독자 정합 원칙에서 탈락.
+const SPAC_RE = /기업인수목적|스팩|제\s*\d+\s*호\s*(?:기업인수|스팩)/;
 
 /** 원문에 있어도 우리가 먼저 꺼내지 않는 숫자 — 판단을 부추긴다. */
 const JUDGMENT_NUMBERS_RE = /공모가|희망\s*가격|밴드|경쟁률|수요\s*예측|따상|의무\s*보유\s*확약/;
@@ -82,30 +89,36 @@ export async function fetchDartIPOSeeds(opts?: { days?: number; now?: Date }): P
     if (!IPO_REPORT_RE.test(reportNm) || !corpRaw || !rceptNo || rceptDt.length !== 8) continue;
     // 이미 상장된 회사의 유상증자·주주배정은 제외 — '공모주 청약' 검색자가 찾는 대상이 아니다
     if ((it.stock_code ?? "").trim()) continue;
+    if (SPAC_RE.test(corpRaw)) continue; // 스팩 — 쓸 내용도 검색 수요도 없다
     const corp = shortCorpName(corpRaw);
     if (!corp || seen.has(corp)) continue; // 같은 회사의 정정신고서 중복 제거(최신 건이 먼저 온다)
     seen.add(corp);
 
     const isAmend = /정정/.test(reportNm);
+    // ★[발행조건확정]은 공모가·청약일이 확정된 시점이다 — 선점 가치가 가장 높다(실호출에서 확인).
+    const priced = /발행조건확정/.test(reportNm);
     const docUrl = `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=${rceptNo}`;
     out.push({
       keyword: `${corp} 공모주 청약`.slice(0, 40),
       // ★제목은 사실만 — '유망·기대'류를 넣는 순간 투자권유가 된다
       title: isAmend ? `${corp} 공모 일정 정정 공시, 달라진 점` : `${corp} 공모주 청약, 일정과 방법 정리`,
       corpName: corp,
+      priced,
       rceptNo,
       rceptDt: dash(rceptDt),
       newsContext: [
         `- [DART 공시 실데이터] ${corpRaw} | 보고서 ${reportNm} | 접수일 ${dash(rceptDt)} | 제출인 ${(it.flr_nm ?? "").trim() || "-"} | 원문 ${docUrl}`,
+        priced ? `- 이 공시는 발행조건이 확정된 건이라 청약일이 임박했다. 독자가 지금 확인해야 할 절차를 앞쪽에 배치한다.` : "",
         `※ 위 항목 외의 수치를 지어내지 마라. 청약일·공모 규모·주관사 같은 구체 정보는 위 원문에 있으니 "DART 공시 원문에서 확인" 프레임으로 안내한다.`,
         `※ ★이 글은 절차 안내다 — 청약 방법, 증거금·배정 방식 같은 제도 설명, 일정 확인처까지만 쓴다.`,
         `※ ★투자 판단을 부추기는 서술 금지: 유망·기대주·따상·수익률·"넣어야 한다"·목표가. 공모가·희망밴드·경쟁률도 먼저 꺼내지 않는다.`,
         `※ 이 글은 특정 종목의 매수 권유가 아니라 일반적인 제도·절차 정보 제공이라는 점이 자연스럽게 드러나야 한다.`,
-      ].join("\n"),
+      ].filter(Boolean).join("\n"),
     });
   }
   // 최신 공시 우선 — 선점은 '먼저 나온 문서'가 이긴다
-  out.sort((a, b) => b.rceptDt.localeCompare(a.rceptDt) || a.corpName.localeCompare(b.corpName));
+  // 발행조건 확정 건 먼저(청약 임박) → 그다음 최신 공시 순
+  out.sort((a, b) => Number(b.priced) - Number(a.priced) || b.rceptDt.localeCompare(a.rceptDt) || a.corpName.localeCompare(b.corpName));
   return out.slice(0, 5);
 }
 

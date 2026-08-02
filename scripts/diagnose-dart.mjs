@@ -32,10 +32,13 @@ for (const x of list.slice(0, 8))
 const seeds = await fetchDartIPOSeeds({ days });
 console.log(`\n③ 씨앗 ${seeds.length}건`);
 for (const s of seeds) {
-  const leak = ipoAdviceLeak(`${s.keyword} ${s.title}\n${s.newsContext}`);
+  // ★검사 범위는 프로덕션과 같아야 한다(keyword+title).
+  //  newsContext까지 넣었더니 거기 적힌 금지어 목록('유망·기대주·따상…')을 스스로 잡아
+  //  멀쩡한 씨앗 5건이 전부 누출로 찍혔다 — 규칙문을 위반문으로 읽은 것이다.
+  const leak = ipoAdviceLeak(`${s.keyword} ${s.title}`);
   console.log(`   • ${s.keyword}`);
   console.log(`     제목: ${s.title}`);
   console.log(`     공시: ${s.rceptDt} / ${s.rceptNo}`);
-  console.log(`     투자권유 검사: ${leak ? `★누출 "${leak}"` : "통과"}`);
+  console.log(`     투자권유 검사: ${leak ? `★누출 "${leak}"` : "통과"}${s.priced ? " | ★발행조건 확정(청약 임박)" : ""}`);
 }
 if (!seeds.length) console.log("   (최근 공모 공시 없음 — 기간을 늘려보세요: node scripts/diagnose-dart.mjs 30)");
