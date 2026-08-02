@@ -109,7 +109,16 @@ export async function keywordsToTitles(keywords: string[], context?: string, opt
       const o = arr[i] as { t?: unknown; c?: unknown; ok?: unknown; f?: unknown } | undefined;
       let title = o && typeof o.t === "string" && o.t.trim() ? o.t.trim() : templateTitle(k, i);
       // ★키워드 포함 보증(유저 확정: 키워드 없는 제목은 노출 판정 자체가 안 된다) — 핵심 토큰 전무 시 템플릿 폴백
-      { const toks = k.split(/\s+/).filter((t) => t.length >= 2); if (toks.length > 0 && !toks.some((t) => title.includes(t))) title = templateTitle(k, i); }
+      // ★공백을 무시하고 비교한다(2026-08-02 유저 화면 실측: 제목 4장이 전부 템플릿이었다).
+      //  네이버 광고 API 키워드는 공백이 없다('주식창보는법'). 모델은 당연히 '주식창 보는 법'이라 쓴다.
+      //  글자 그대로 비교하니 포함 실패로 읽혀 매번 템플릿으로 강등됐다 — 창작이 통째로 버려지고 있었다.
+      //  ★키워드가 들어갔는지를 보는 검사인데, 표기 차이를 위반으로 읽으면 검사가 아니라 파괴다.
+      {
+        const cmp = (x: string) => x.replace(/\s+/g, "");
+        const tc = cmp(title);
+        const toks = k.split(/\s+/).filter((t) => t.length >= 2);
+        if (toks.length > 0 && !toks.some((t) => tc.includes(cmp(t)))) title = templateTitle(k, i);
+      }
       const tag = o && typeof o.c === "string" ? o.c.trim() : "";
       const ok = o ? o.ok !== false : true; // 명시적 false만 노이즈로 제외
       const fit = o && typeof o.f === "number" ? Math.max(0, Math.min(2, o.f)) : 1; // 업종 적합도

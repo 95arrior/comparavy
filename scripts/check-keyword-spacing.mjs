@@ -45,5 +45,28 @@ for (const k of ["실업급여 조건", "청약", ""]) {
   ok(/금지/.test(tt) && /훅이 아니다/.test(tt), "프롬프트의 금지 규칙은 그대로 유지");
 }
 
-console.log(fail ? `\n실패 ${fail}건` : "\n통과: 키워드 띄어쓰기 · 폴백 자기모순");
+// ── ⑤ 폴백 과발동(2026-08-02 유저 화면: 제목 4장이 전부 템플릿) ─────────
+//  ★키워드 포함 검사가 공백을 그대로 비교했다. 광고 API 키워드는 공백이 없고('주식창보는법')
+//   모델은 당연히 '주식창 보는 법'이라 쓴다 → 포함 실패로 읽혀 창작이 통째로 버려졌다.
+//   키워드가 들어갔는지 보는 검사인데, 표기 차이를 위반으로 읽으면 검사가 아니라 파괴다.
+{
+  const tt2 = fs.readFileSync(new URL("../lib/topicTitles.ts", import.meta.url), "utf-8");
+  const guard = tt2.slice(tt2.indexOf("★키워드 포함 보증"), tt2.indexOf("const tag ="));
+  ok(/replace\(\/\\s\+\/g, ""\)/.test(guard), "★포함 검사가 공백을 무시한다");
+
+  // 실제 판정 재현 — 고친 규칙이면 통과, 옛 규칙이면 탈락
+  const cmp = (x) => x.replace(/\s+/g, "");
+  const pass = (title, k) => {
+    const toks = k.split(/\s+/).filter((t) => t.length >= 2);
+    return toks.length === 0 || toks.some((t) => cmp(title).includes(cmp(t)));
+  };
+  for (const [t, k] of [
+    ["주식창 보는 법, 처음이면 이것부터", "주식창보는법"],
+    ["데이트레이딩 시작 전 알아야 할 것", "데이트레이딩"],
+    ["전세보증금 반환 확약서 쓰는 법", "전세보증금반환확약서"],
+  ]) ok(pass(t, k), "★띄어 쓴 제목도 키워드 포함으로 인정", `${k} ← ${t}`);
+  ok(!pass("전혀 관계없는 제목입니다", "주식창보는법"), "진짜 누락은 여전히 탈락");
+}
+
+console.log(fail ? `\n실패 ${fail}건` : "\n통과: 키워드 띄어쓰기 · 폴백 자기모순 · 폴백 과발동");
 process.exit(fail ? 1 : 0);
