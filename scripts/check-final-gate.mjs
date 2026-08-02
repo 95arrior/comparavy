@@ -8,6 +8,14 @@ import { parseQueryText, clusterQueries } from "../lib/hubTopics.ts";
 import { scanLifespan } from "../lib/topicLifespan.ts";
 const cases = [
   { c: { keyword: "강서구 평생교육이용권", title: "강서구 평생교육이용권 2차 지원 신청 방법과 사용처" }, drop: "region_niche" },
+  // ★2026-08-02 유저 화면 실측 — 이게 카드로 떴다. poolScore가 '청년·지원'을 전국민 신호로 보고
+  //  +3을 줘서 지역 협소성을 상쇄했다. 그 프로그램은 의정부 청년만 신청한다.
+  //  전국민 주제어가 붙었다고 전국 수요가 되지는 않는다.
+  { c: { keyword: "의정부시 청년 지원", title: "의정부시 청년 투자환경, 일자리·주거 원스톱 지원 프로그램" }, drop: "region_niche" },
+  { c: { keyword: "천안시 청년 지원금", title: "천안시 청년 월세 지원금 신청 조건과 방법" }, drop: "region_niche" },
+  // ★광역은 살려야 한다 — 문턱을 일괄로 올렸다가 아래 둘이 죽었고 기존 회귀가 잡아냈다.
+  //  광역은 전국 인지도가 있어 타지역 사람도 검색한다. 문제는 기초지자체다.
+  { c: { keyword: "경기도 청년 지원", title: "경기도 청년 기본소득 신청 조건과 지급일 정리" }, drop: null },
   { c: { keyword: "대구 섬유염색업 버팀이음", title: "대구 섬유염색업 고용안정 버팀이음 프로젝트 신청 대상" }, drop: "region_niche" },
   { c: { keyword: "서울시 출산가구 주거비", title: "서울시 무주택 출산가구 720만원 주거비 지원" }, drop: null },
   { c: { keyword: "동탄 무순위 청약", title: "동탄 레이크파크 무순위 줍줍, 접수 전 확인" }, drop: null },
