@@ -393,7 +393,11 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
         rows.push({
           category, keyword: m.c.keyword, title: m.c.title, news_context: m.c.newsContext,
           longtails: m.c.longtails, source: m.c.source, created_at: new Date().toISOString(),
-          expires_at: `${m.c.actionEnd}T23:59:59+09:00`, // 카드 만료 = 접수 마감(유저 확정)
+          // 카드 만료 = 접수 마감(유저 확정). ★단 행동 창이 없는 소스(DART 공모주)는 마감일이 없다 —
+          //  종전엔 그대로 조립해서 "undefinedT23:59:59+09:00"이 들어갔고, timestamp 파싱 실패로
+          //  ★그 씨앗 하나가 배치 전체를 죽였다(강등 재시도 3번도 expires_at은 안 벗기니 전부 실패).
+          //  겉으로는 '채택 로그는 찍히는데 풀은 빔' — 중복키 사고와 똑같은 얼굴이라 같이 묻혀 있었다.
+          expires_at: m.c.actionEnd ? `${m.c.actionEnd}T23:59:59+09:00` : expires,
           action_start: m.c.actionStart, action_end: m.c.actionEnd,
         } as (typeof rows)[number] & { action_start: string; action_end: string });
       }
@@ -447,7 +451,8 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
     const dist: Record<string, number> = {};
     for (const d of drops) dist[d.reason] = (dist[d.reason] ?? 0) + 1;
     console.log(`[trend-drops] ${category}:`, JSON.stringify(dist), JSON.stringify(drops.map((d) => `${d.reason}:${d.keyword}`)));
-    return { generated: rows.length, drops, applyhome: ah };
+    // ★실제로 들어간 건수로 보고한다 — rows.length는 중복 제거 전 숫자라 로그가 풀보다 부풀었다.
+    return { generated: uniqRows.length, drops, applyhome: ah };
   } catch {
     return { generated: 0, drops };
   }

@@ -96,6 +96,27 @@ for (const [raw, want] of [
   ok(/fetchDartIPOSeeds/.test(tt), "★씨앗 풀에 배선됨");
   ok(/ipoAdviceLeak\(/.test(tt), "★수확 시점에도 투자권유 게이트가 돈다");
   ok(/actionStart\?: string/.test(tt), "★행동 창을 모르면 비워 둔다(날짜 날조 금지)");
+
+  // ★비워 둔 행동 창이 저장 행에서 어떻게 쓰이는가 — 위 규칙의 나머지 반쪽(2026-08-02 2차 사고).
+  //  종전: expires_at: `${m.c.actionEnd}T23:59:59+09:00` → 공모주는 마감일이 없으니
+  //  "undefinedT23:59:59+09:00"이 들어갔고, timestamp 파싱 실패로 배치 전체가 죽었다.
+  //  강등 재시도(action 컬럼 제거·source 제거)는 expires_at을 안 벗기니 세 번 다 같은 이유로 실패했다.
+  //  밖에서 보이는 얼굴은 '채택 로그는 찍히는데 풀은 0건' — 중복키 사고와 구분이 안 됐다.
+  ok(/expires_at: m\.c\.actionEnd \? `\$\{m\.c\.actionEnd\}T23:59:59\+09:00` : expires/.test(tt),
+    "★★마감일 없는 씨앗도 유효한 만료값을 갖는다(한 건이 배치 전체를 죽이지 않게)");
+  ok(!/expires_at: `\$\{m\.c\.actionEnd\}T/.test(tt), "무조건 조립 금지(undefined 문자열 방지)");
+}
+
+// ── ⑥ 저장 실패를 성공으로 위장하지 않는가 ─────────────────────────────
+//  ★이 저장소의 반복 사고: 조용한 실패. 수확 로그만 보고 '됐다'고 판단하면 며칠을 날린다.
+{
+  const tt = fs.readFileSync(new URL("../lib/trendTopics.ts", import.meta.url), "utf-8");
+  ok(/console\.error\(`\[trend-upsert\]/.test(tt), "★저장 실패는 error로 남긴다");
+  ok(/generated: uniqRows\.length/.test(tt), "★보고 건수 = 실제로 넣은 건수(중복 제거 후)");
+  // 넣고 나서 지운다 — 실패해도 옛 씨앗은 남는다
+  const upsertAt = tt.indexOf("const upsert = async (list");
+  const deleteAt = tt.indexOf('.delete().eq("category", category)');
+  ok(upsertAt > 0 && deleteAt > upsertAt, "★파괴는 저장 성공 이후에만(순서 반전 유지)");
 }
 
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 공모주 수확기(절차 정보 경계)");
