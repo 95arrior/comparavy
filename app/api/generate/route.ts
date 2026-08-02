@@ -411,7 +411,15 @@ export async function POST(request: Request) {
           // ★필수 항목 누락도 함께 싣는다(2026-08-02 유저: "글 생성할 때 딱 보고 알아서 수정해서 나오게").
           //  누락 가드는 재생성 대기열 5번째라, 앞의 넷 중 하나가 예산을 쓰면 고쳐질 기회를 못 얻고
           //  그대로 검토 화면 안내로 떴다. 어느 가드가 재생성을 쓰든 누락도 같이 고쳐지게 한다.
-          const miss = scanFacts(`${(a as { title?: string }).title ?? ""}\n${a.body_html}`, keyword).filter((i) => i.layer === "missing");
+          const allFacts = scanFacts(`${(a as { title?: string }).title ?? ""}\n${a.body_html}`, keyword);
+          // ★사실 오류도 재생성으로 고친다(2026-08-02 유저: "검사할 거 있음 너가 수정해서 뽑으라니깐").
+          //  값만 바꾸면 되는 건 finalize가 이미 치환했다 — 여기 남는 건 서술 방식 문제라 다시 쓰는 수밖에 없다.
+          //  종전엔 이 층을 생성 게이트에서 아예 빼놔서(missing만 봄) 전부 검토 화면 숙제로 넘어갔다.
+          const wrongFacts = allFacts.filter((i) => i.layer !== "missing" && !i.replace);
+          if (wrongFacts.length) {
+            w.push(`사실·시점 오류가 있다 — ${wrongFacts.map((i) => `${i.title}(고치기: ${i.fix})`).join(" / ")}. 검토 화면에 숙제로 남기지 말고 지금 고쳐 써라.`);
+          }
+          const miss = allFacts.filter((i) => i.layer === "missing");
           if (miss.length) {
             w.push(`이 주제의 필수 항목이 빠졌다 — ${miss.map((i) => i.matched).join(", ")}. 독자가 모르면 손해를 보는 항목이라 빠지면 글이 성립하지 않는다. 각 항목을 이름만 스치지 말고 최소 한 단락 또는 표의 한 행으로 실제로 다뤄라(정말 이 글 주제와 무관하면 억지로 넣지 말고 나머지를 반드시 채운다).`);
           }
@@ -587,7 +595,7 @@ export async function POST(request: Request) {
           void logUsage({ userId: user.id, model: "guard", kind: "slot_dup_retry", inputTokens: 0, outputTokens: 0 });
           try {
             const retried = await streamArticle(
-              { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ★경고: 직전 생성의 [사진:] 슬롯들이 같은 명사를 공유했다(같은 결의 그림이 두 장 나온다). 슬롯 역할을 지켜 소재를 완전히 분리하라 — ①1번=주제 핵심 사물 한 개 ②2번=그 섹션의 실제 서류·물건·화면 ③3번=끝낸 뒤의 생활 장면. 세 슬롯이 쓰는 명사는 하나도 겹치면 안 되고, 업종·대상 명사(소상공인·직장인 등)를 슬롯마다 반복하지 마라.`.trim() },
+              { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ★경고: 직전 생성의 [사진:] 슬롯들이 같은 명사를 공유했다(같은 결의 그림이 두 장 나온다). 슬롯 역할을 지켜 소재를 완전히 분리하라 — ①1번=주제 핵심 사물 한 개 ②2번 이후=사물 클로즈업 반복 금지, 사람이 그 일을 하는 정황(얼굴 없이 손·뒷모습)·그 일이 벌어지는 장소·끝난 뒤의 생활 장면으로 결을 바꿔라. 계산기·명세서·영수증·서류·고지서·통장 같은 뻔한 소품은 쓰지 마라. 슬롯끼리 명사가 하나도 겹치면 안 되고, 업종·대상 명사(소상공인·직장인 등)를 슬롯마다 반복하지 마라.`.trim() },
               noop, noop, onGenUsage,
             );
             if (!duplicateSlotSubjects(retried.body_html) && (userStory || userExperience || !hasFabricatedExperience(retried.body_html)) && countKoreanChars(retried.body_html) >= 500) article = retried;

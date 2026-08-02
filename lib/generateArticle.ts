@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { scanFacts, type FactIssue } from "@/lib/factGate";
+import { scanFacts, applyFactFix, type FactIssue } from "@/lib/factGate";
 import { isTimeSensitive } from "./timeSensitive";
 import {
   buildSystemPrompt,
@@ -33,9 +33,23 @@ export interface GeneratedArticle {
  */
 function finalize(raw: Partial<GeneratedArticle>, keyword: string): GeneratedArticle {
   const title = (raw.title ?? "").trim();
-  const body_html = (raw.body_html ?? "").trim();
+  let body_html = (raw.body_html ?? "").trim();
   const faq = Array.isArray(raw.faq) ? raw.faq : [];
   const faqText = faq.map((f) => `${f?.question ?? ""} ${f?.answer ?? ""}`).join("\n");
+
+  // ★고칠 수 있는 건 여기서 고쳐서 내보낸다(2026-08-02 유저: "검사할 거 있음 너가 수정해서 뽑으라니깐").
+  //  종전엔 옛 한도·옛 요율처럼 '값만 바꾸면 문장이 그대로 성립하는' 오류까지 검토 화면 안내로 넘겼다.
+  //  그건 검사가 아니라 숙제 떠넘기기다 — 치환 규칙(replace)이 붙은 오류는 사람 손이 필요 없다.
+  //  ★모델을 다시 부르지 않는다(비용 0, 결정적). 재생성이 필요한 건 서술 방식 문제뿐이다.
+  //  같은 오류가 치환 뒤에도 남으면 무한 반복이 되므로, 한 번 돌고 줄어들 때만 계속한다.
+  for (let pass = 0; pass < 3; pass++) {
+    const fixable = scanFacts(`${title}\n${body_html}\n${faqText}`, keyword).filter((i) => i.replace);
+    if (!fixable.length) break;
+    const before = body_html;
+    for (const issue of fixable) body_html = applyFactFix(body_html, issue);
+    if (body_html === before) break; // 치환이 본문에 안 닿았다(FAQ 쪽 오류 등) — 검토 화면이 맡는다
+  }
+
   return {
     title,
     meta_title: clamp(raw.meta_title ?? raw.title ?? "", 60),
