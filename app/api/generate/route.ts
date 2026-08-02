@@ -6,7 +6,7 @@ import { ensureUserRow } from "@/lib/userPlan";
 import { spendCredits, addCredits, GENERATE_COST } from "@/lib/credits";
 import { streamArticle } from "@/lib/generateArticle";
 import { isReviewType, ensureDisclosure } from "@/lib/revenue";
-import { hasFabricatedExperience, lacksInterpretation, lacksConditionBranch, duplicateSlotSubjects, lacksKeywordFloor, keywordOccurrences, keywordOverstuffed, headingMismatches, coreKeywordOf, endingReport, spacingDefects, longParagraphs, emojiCount, photoSlotShortfall, skeletonReport, EMOJI_MIN, PARA_MAX_LINES, KEYWORD_FLOOR } from "@/lib/editorial";
+import { hasFabricatedExperience, lacksInterpretation, lacksConditionBranch, duplicateSlotSubjects, lacksKeywordFloor, keywordOccurrences, keywordOverstuffed, headingMismatches, coreKeywordOf, endingReport, spacingDefects, longParagraphs, emojiCount, photoSlotShortfall, stockPropSlots, photoSceneShortfall, skeletonReport, EMOJI_MIN, PARA_MAX_LINES, KEYWORD_FLOOR } from "@/lib/editorial";
 import { scanFacts } from "@/lib/factGate";
 import { financeCalcContext } from "@/lib/financeCalc";
 import { sanitizeUrls } from "@/lib/linkWhitelist";
@@ -436,6 +436,17 @@ export async function POST(request: Request) {
           const ps = photoSlotShortfall(a.body_html);
           if (ps) {
             w.push(`[사진:] 자리가 ${ps.slots}개뿐이다(소제목 ${ps.sections}개). ${ps.want}개까지 늘려라 — 섹션 경계마다 하나씩 두되 소재는 서로 겹치지 않게.`);
+          }
+          // ★진부한 소품(2026-08-02 유저: "매번 계산기와 급여명세서 클로즈업 이런거만 넣지마")
+          //  프롬프트 예시를 모델이 베끼고 있었다. 예시는 지웠고, 여기서 한 번 더 막는다.
+          const stale = stockPropSlots(a.body_html);
+          if (stale.length) {
+            w.push(`사진 소재가 진부하다(${stale.map((x) => x.prop).join("·")}). 이 물건들은 쓰지 마라 — 글자가 본질이라 그림에서 빈 종이가 되고, 모든 글이 똑같아 보인다. 그 주제가 실제로 벌어지는 자리로 바꿔라(고지서를 든 손이 아니라 창문 열린 방의 실외기, 서류가 아니라 창구 앞 대기 의자).`);
+          }
+          // ★장면이 하나도 없음 — 물건 나열만 있으면 스크롤이 안 멈춘다(체류시간).
+          const sc = photoSceneShortfall(a.body_html);
+          if (sc) {
+            w.push(`사진 ${sc.slots}장이 전부 물건 클로즈업이다. 최소 한 장은 '장면'으로 바꿔라 — 사람이 그 일을 하는 정황(얼굴 없이 손·뒷모습), 그 일이 벌어지는 장소, 끝난 뒤의 생활 컷. 독자는 물건이 아니라 자기 상황이 겹쳐 보일 때 멈춘다.`);
           }
           // ★스켈레톤 준수(2026-08-02 전문 감사) — FAQ 개수·3줄 요약 줄수·도입 인용구.
           //  고정 스켈레톤인데 개수가 조용히 늘어나 있었다(FAQ 4개, 요약 5줄, 인용구 없음).

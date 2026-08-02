@@ -178,6 +178,41 @@ export function photoSlotShortfall(html: string): { slots: number; sections: num
   return slots < want ? { slots, sections, want } : null;
 }
 
+// ═══ 사진 소재 진부함(2026-08-02 유저: "매번 계산기와 급여명세서 클로즈업 이런것만 넣지마") ═══
+//  ★두 가지 병이 겹쳐 있었다:
+//   ① 프롬프트에 '원천징수영수증과 계산기'를 예시로 적어뒀다 → 모델이 그대로 베꼈다(썸네일에서 겪은 것과 같은 사고).
+//   ② 슬롯 2번 역할이 '실제 물건·서류·화면'이라 서류 클로즈업으로 유도했다.
+//  게다가 서류·명세서류는 글자가 본질이라 글자를 빼면 빈 종이가 된다 — 우리 이미지 규칙(글자 금지)과 정면 충돌.
+//  ★체류시간은 '물건'이 아니라 '장면'이 만든다. 자기 상황이 겹쳐 보여야 스크롤이 멈춘다.
+const STOCK_PROPS = [
+  "계산기", "급여명세서", "명세서", "원천징수", "영수증", "서류", "고지서", "돋보기",
+  "통장", "도장", "신분증", "클립보드", "청구서", "장부", "결재판",
+];
+
+/** 진부한 소품이 박힌 사진 슬롯. 하나라도 있으면 결함. */
+export function stockPropSlots(html: string): { desc: string; prop: string }[] {
+  const out: { desc: string; prop: string }[] = [];
+  for (const m of String(html || "").matchAll(/\[사진:\s*([^\]]+)\]/g)) {
+    const desc = m[1].trim();
+    const prop = STOCK_PROPS.find((w) => desc.includes(w));
+    if (prop) out.push({ desc: desc.slice(0, 40), prop });
+  }
+  return out;
+}
+
+/**
+ * 사진이 전부 같은 결인가. ★"모든 글이 똑같아 보인다"의 정체는 슬롯 간 차이가 없는 것이다.
+ * 장면 신호(사람·장소·행동·시간)가 하나도 없이 물건 나열만 있으면 결함.
+ */
+const SCENE_HINT = /(손|뒷모습|앞에|위에|들여다|바라보|기다리|줄|창가|책상|주방|식탁|현관|거리|매장|창구|사무실|방|밤|아침|저녁|출근|퇴근|앉아|서서|걸어|열린|정리된)/;
+
+export function photoSceneShortfall(html: string): { slots: number; scenes: number } | null {
+  const descs = [...String(html || "").matchAll(/\[사진:\s*([^\]]+)\]/g)].map((m) => m[1]);
+  if (descs.length < 2) return null;
+  const scenes = descs.filter((d) => SCENE_HINT.test(d)).length;
+  return scenes < 1 ? { slots: descs.length, scenes } : null; // 최소 한 장은 장면이어야 한다
+}
+
 // ═══ 스켈레톤 준수(2026-08-02 발행글 전문 감사) ═══
 //  실측 「주식창, 처음 열면…」: FAQ 4개(규격 2), 3줄 요약 5줄(규격 3), 도입 인용구 훅 없음.
 //  고정 스켈레톤은 "좋은 폼이 추첨되지 않게" 못 박은 것인데(2026-07-13), 개수가 조용히 늘어나 있었다.
