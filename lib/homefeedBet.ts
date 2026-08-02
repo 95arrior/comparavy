@@ -66,12 +66,22 @@ async function marketNewsBlock(betKey: string): Promise<string | null> {
  * ★1장 고정 → n장(2026-08-01): 홈판이 배합 40%의 정식 레인이 되면서 하루 몫만큼 뽑는다.
  *  유형은 날짜 오프셋으로 회전시켜 서로 다른 n종을 배정한다 — 같은 날 같은 유형이 겹치면 홈판에서 서로 잡아먹는다.
  */
-export async function pickHomefeedBets(db: SupabaseClient, userId: string, sub: string, usedKeywords: Set<string>, n = 1): Promise<HomefeedBet[]> {
+export async function pickHomefeedBets(
+  db: SupabaseClient, userId: string, sub: string, usedKeywords: Set<string>, n = 1,
+  opts?: {
+    /** 발행한 글과 유사한가(제목까지 본다). ★호출측 게이트를 여기로 끌어온 이유는 아래 캐시 설명 참고. */
+    isDup?: (title: string, keyword: string) => boolean;
+    /** 최근 발행 제목 — 모델에게 '이런 제목은 이미 썼다'를 보여준다. 키워드만 주면 제목이 겹친다(실측). */
+    recentTitles?: string[];
+  },
+): Promise<HomefeedBet[]> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   const want = Math.max(0, Math.min(n, BET_TYPES.length));
   if (!apiKey || want === 0) return [];
   const kstDay = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
-  const cacheKey = `homebet:${userId}:${kstDay}:${want}`;
+  // ★캐시 키에 버전을 둔다 — 판정 규칙이 바뀌면 옛 캐시는 '규칙 이전에 통과한 것'이라 못 믿는다.
+  //  v2(2026-08-02): 발행글 유사 판정을 캐시 이전으로 옮겼다. 그 전 캐시는 걸러지지 않은 상태라 무효.
+  const cacheKey = `homebet:v2:${userId}:${kstDay}:${want}`;
   try {
     const { data: c } = await db.from("api_cache").select("value, expires_at").eq("key", cacheKey).maybeSingle();
     if (c?.value && new Date(String(c.expires_at)).getTime() > Date.now()) return c.value as HomefeedBet[];
@@ -83,8 +93,19 @@ export async function pickHomefeedBets(db: SupabaseClient, userId: string, sub: 
   const dayIdx = Math.floor(Date.now() / 86400_000) % BET_TYPES.length;
   const tryN = Math.min(BET_TYPES.length, want + 3);
   const picked = Array.from({ length: tryN }, (_, i) => BET_TYPES[(dayIdx + i) % BET_TYPES.length]!);
-  const settled = await Promise.all(picked.map((bet) => genOne(apiKey, userId, sub, usedKeywords, bet)));
-  const got = settled.filter((x): x is HomefeedBet => x !== null);
+  const settled = await Promise.all(picked.map((bet) => genOne(apiKey, userId, sub, usedKeywords, bet, opts?.recentTitles)));
+  let got = settled.filter((x): x is HomefeedBet => x !== null);
+  // ★발행한 글과의 유사 판정을 '캐시에 넣기 전에' 한다(2026-08-02 실측 사고).
+  //  종전엔 호출측(topics/route)이 캐시에서 꺼낸 뒤 걸렀다. 그러면 이렇게 된다:
+  //   생성 4장 → 캐시 저장 → 호출측이 4장 전부 '이미 쓴'으로 탈락 → 홈판 0장
+  //   → 다시 뽑아도 같은 캐시가 나와 또 0장 → ★내일까지 복구 불가.
+  //  실측 로그: "[lane-quota:short] 홈판 미달 0/4 — 하류 탈락(이미쓴 4·게이트 0·중복 0)"
+  //  ★거르는 자리와 캐시하는 자리가 어긋나면 캐시는 '실패를 굳히는 장치'가 된다.
+  if (opts?.isDup) {
+    const before = got.length;
+    got = got.filter((b) => !opts.isDup!(b.title, b.keyword));
+    if (got.length < before) console.log(`[homebet] 발행글과 유사 — 제외 ${before - got.length}장`);
+  }
   // ★소재 중복 제거(2026-08-02 유저: "중복 글은 절대 안 돼요 — 저품질 낙인").
   //  카드 n장은 Promise.all로 '동시에' 만들어져 서로를 보지 못한다. 유형은 8종으로 갈라 두었지만
   //  유형이 달라도 소재는 겹칠 수 있다(계산 충격도 전기요금, 손해 공포 마감도 전기요금).
@@ -124,6 +145,7 @@ async function genOne(
   sub: string,
   usedKeywords: Set<string>,
   bet: (typeof BET_TYPES)[number],
+  recentTitles?: string[],
 ): Promise<HomefeedBet | null> {
   try {
     // 뉴스 그라운딩이 필요한 유형인데 기사를 못 받았으면 그 장은 포기한다(지어낸 시황 방지).
@@ -156,6 +178,11 @@ async function genOne(
           `★오늘은 ${todayKst}(한국시간)이다. 지금은 ${curMonth}월이다. ★지난 달(${prevMonth}월) 일을 지금 벌어지는 일처럼 쓰지 마라 — 시의성은 반드시 이번 달(${curMonth}월) 또는 앞으로 올 일 기준이다. 달을 제목·키워드에 넣을 거면 ${curMonth}월 이후만 쓴다.`,
           `★시의성 결합(2026-07-16 개정 — 홈판은 '지금의 파도'를 탄다): 이 유형을 지금 이 계절·이 달의 상황(폭염 전기요금, 휴가비, 월급날, 세금 고지서 등 요즘 사람들이 실제로 겪는 일)과 반드시 결합하라. 계절과 무관한 무시간 주제 금지.`,
           `절대 원칙: ①거짓 사연·지어낸 경험 금지 — 공식 통계·실제 제도·계산으로만 성립하는 주제 ②전 국민 이해관계(대상이 넓을수록 좋다) ③이미 쓴 주제 제외: ${[...usedKeywords].slice(0, 40).join(", ") || "(없음)"}`,
+          // ★키워드만 주면 제목이 겹친다(2026-08-02 실측: 홈판 4장이 전부 '이미 쓴'으로 탈락).
+          //  모델은 주제를 피해도 같은 각도·같은 문장 틀로 돌아온다 — 실제 제목을 보여줘야 피한다.
+          (recentTitles ?? []).length
+            ? `★이미 쓴 제목들(이것과 비슷한 각도·소재·문장 틀은 전부 피하라 — 비슷하면 버려진다):\n${(recentTitles ?? []).slice(0, 15).map((t) => `- ${t}`).join("\n")}`
+            : "",
           `제목 규격: 검색 키워드 나열이 아니라 사람이 말하듯 흐르는 '문장형'. 아래 지정 유형의 결로 쓴다 — 유형은 이 글감의 신호를 읽어 고른 것이므로 바꾸지 마라.`,
           titleTypeDirective(titleType),
           `길이는 20~45자. 느낌표·물음표는 각각 최대 1개까지 쓸 수 있다(훅이 살아난다 — 다만 2개 이상은 유튜브식 어그로라 실격). 숫자·반전 중 1개 이상 결합.`,

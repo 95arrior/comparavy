@@ -667,7 +667,14 @@ export async function GET(req: Request) {
     const homeDrop = { used: 0, gate: 0, dup: 0 };
     if (FF.homefeedBet) {
       try {
-        const bets = await pickHomefeedBets(pool, user.id, sub ?? "", usedSet, colShort.homefeed);
+        // ★유사 판정을 생성 안으로 넘긴다(2026-08-02 실측: 캐시된 4장이 전부 여기서 탈락해 홈판이 하루 종일 0장).
+        //  거르는 자리와 캐시하는 자리가 어긋나면 캐시가 '실패를 굳히는 장치'가 된다.
+        //  최근 제목도 함께 넘긴다 — 키워드만 주면 모델이 주제만 피하고 같은 문장 틀로 돌아온다.
+        const recentTitles = recent14.map((a) => String(a.title ?? "")).filter(Boolean).slice(0, 15);
+        const bets = await pickHomefeedBets(pool, user.id, sub ?? "", usedSet, colShort.homefeed, {
+          isDup: (title, keyword) => usedForbidden(`${title} ${keyword}`),
+          recentTitles,
+        });
         for (const bet of bets) {
           // ★이미 생성/발행한 홈판 글감은 숨김(실측 2026-07-16: 발행했는데 카드 잔존 — 홈판 카드는 발행함 마킹 로직 밖이라 usedSet으로 직접 차단)
           if (!bet || usedSet.has(normalizeKeyword(bet.keyword))) { homeDrop.used++; continue; }
@@ -675,6 +682,8 @@ export async function GET(req: Request) {
           //  아침에 올린 글과 겹쳐 나왔다). 홈판 카드는 이 게이트를 통째로 안 지나고 있었다 —
           //  usedSet은 '키워드 정확 일치'만 보는데, 홈판 keyword는 검색어가 아니라 주제 앵커라 거의 안 걸린다.
           //  ★홈판은 앵커가 느슨한 만큼 제목으로 봐야 한다. 검색 레인과 같은 게이트를 태운다.
+          //  ★1차 방어는 pickHomefeedBets 안(캐시 이전)에서 끝났다. 여기는 이중 방어다 —
+          //   캐시가 이 게이트를 붙이기 전에 저장된 것일 수 있어서(기존 캐시 소진 전까지).
           if (usedForbidden(`${bet.title} ${bet.keyword}`)) { homeDrop.used++; continue; }
           if (finalGate([{ keyword: bet.keyword, title: bet.title }], { anchorKeyword: true }).pass.length === 0) { homeDrop.gate++; continue; }
           if (tc.some((t) => t.keyword === bet.keyword) || homeCards.some((h) => h.keyword === bet.keyword)) { homeDrop.dup++; continue; }
