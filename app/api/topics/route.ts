@@ -2,7 +2,7 @@ import { titleSimilarity } from "@/lib/naverRss";
 import { NextResponse, after } from "next/server";
 import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
 import { keywordsToTitles } from "@/lib/topicTitles";
-import { normalizeKeyword, nearDuplicate } from "@/lib/diversity";
+import { normalizeKeyword, nearDuplicate, sameProductFamily } from "@/lib/diversity";
 import { audienceOf, AUDIENCE_ALL } from "@/lib/audience";
 import { isUnsafeKeyword, mentionsForeignRegion } from "@/lib/keywordSafety";
 import { regionLevel, buildLocalSeeds, addressRegionTiers } from "@/lib/region";
@@ -1258,7 +1258,10 @@ export async function GET(req: Request) {
       const kw = String(c.keyword ?? ""), ti = String(c.title ?? "");
       const dup = kept.some((k) => {
         const kkw = String(k.keyword ?? ""), kti = String(k.title ?? "");
-        return nearDuplicate(kw, kkw) || nearDuplicate(ti, kti) || nearDuplicate(kw, kti) || nearDuplicate(ti, kkw);
+        // ★같은 상품군까지 본다(2026-08-02 실측: '연금펀드'와 '연금저축펀드'가 한 판에 같이 떴다).
+        //  nearDuplicate는 인픽스 '저축'을 못 넘었고 제목 유사도는 0.39로 낮았다 — 그 사이를 메운다.
+        return nearDuplicate(kw, kkw) || nearDuplicate(ti, kti) || nearDuplicate(kw, kti) || nearDuplicate(ti, kkw)
+          || sameProductFamily(kw, kkw);
       });
       if (!dup) kept.push(c);
     }

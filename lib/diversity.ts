@@ -152,3 +152,24 @@ export function hammingDistance(a: string, b: string): number {
   }
   return d;
 }
+
+// ★같은 상품군 판정(2026-08-02 유저 화면 실측 — 보드에 이 둘이 같이 떴다):
+//   "연금펀드로 노후자금 준비, 수익률과 수수료 비교"
+//   "연금저축펀드 가입 전 수수료와 수익률 비교"
+//  거의 같은 글인데 nearDuplicate가 못 잡았다(코어 환원이 인픽스 '저축'을 못 지웠다).
+//  제목 유사도도 0.39로 낮다 — 표현이 다르면 문장 비교로는 안 잡힌다.
+//
+//  ★판별 기준: 짧은 키워드가 긴 키워드 안에 '순서대로' 들어가는가(부분수열).
+//   연금펀드 ⊂ 연금저축펀드  → 연·금·(저축 건너뜀)·펀·드 = 같은 상품군 ✓
+//   주담대이율 ⊄ 주담대환대출 → '이'가 없다. 이율과 환대출은 다른 글이다 ✓
+//   신용카드환급 ⊄ 통신비환급금 → '용'이 없다 ✓
+//  글자 단순 포함(includes)으로는 인픽스를 못 넘고, 유사도로는 과차단된다. 그 사이가 여기다.
+export function sameProductFamily(a: string, b: string): boolean {
+  const cmp = (x: string) => String(x || "").replace(/[\s·,]/g, "").toLowerCase();
+  let [s, l] = [cmp(a), cmp(b)];
+  if (s.length > l.length) [s, l] = [l, s];
+  if ([...s].length < 4) return false; // 너무 짧으면 우연히 걸린다('대출'이 아무 데나 들어간다)
+  let i = 0;
+  for (const ch of l) { if (ch === s[i]) i += 1; if (i === s.length) return true; }
+  return false;
+}
