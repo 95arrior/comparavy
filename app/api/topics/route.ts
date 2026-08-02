@@ -978,7 +978,16 @@ export async function GET(req: Request) {
   // ★분야 주변(fit=0) 배제(2026-07-24 유저: 경제 블로그에 '그림 파는 법') — fit은 정렬만 하고 배제 안 해 얇은 날 노출됐다.
   //  세부업종(sub)이 있고 분야 핵심(fit>=1)이 보드를 채우고도 남을 때만 뺀다(빈자리 방지 플로어 — 얇은 날은 주변도 허용).
   const onFit = fitScored.filter(({ t }) => (t?.fit ?? 1) >= 1);
-  const fitBase = (sub && onFit.length >= PICK + 2) ? onFit : fitScored;
+  let fitBase = (sub && onFit.length >= PICK + 2) ? onFit : fitScored;
+  // ★템플릿 제목을 뒤로 민다(2026-08-02 유저 화면: 보드 4장이 전부 템플릿이었다).
+  //  원인은 max_tokens 초과로 응답 뒤쪽이 잘린 것인데, 잘린 항목은 템플릿 제목에 fit=1·ok=true가 붙어
+  //  AI가 실제로 지은 제목과 '동등하게' 경쟁했다. 그래서 보드가 틀 문장으로 찼다.
+  //  ★폴백은 마지막 보루여야지 후보가 되면 안 된다. 진짜 제목이 충분하면 템플릿은 쓰지 않는다.
+  {
+    const real = fitBase.filter(({ t }) => !t?.templated);
+    if (real.length >= PICK) fitBase = real;
+    else if (real.length) fitBase = [...real, ...fitBase.filter(({ t }) => t?.templated)]; // 모자라면 뒤에 붙여 빈자리만 메움
+  }
   // ★계측(2026-07-31) — 풀 147건이 살아남았는데 보드가 0장인 사고. 진단이 poolSteps와 finalGate 사이에서 끊겨 있어
   //  '어느 마디에서 증발했는지'를 특정할 수 없었다(finalGateDrops=[] + poolCards=0 = 게이트에 아무것도 안 들어갔다는 뜻).
   //  제목·손님매칭 단계(keywordsToTitles)가 전량 ok:false를 내면 정확히 이 증상이 된다 — 그 가설을 숫자로 확인한다.

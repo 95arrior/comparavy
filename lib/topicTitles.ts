@@ -21,6 +21,8 @@ export interface TitledTopic {
   title: string; // 짧은 글감 제목(한 줄)
   tag: string;   // 내용 카테고리 칩(맛집·블로그·재테크 등). 분류 불가/노이즈면 ""
   ok: boolean;   // 의미 있는 주제면 true. 노이즈(스블 자네·블연플 등)면 false → 호출측에서 제외
+  /** ★AI 제목이 아니라 템플릿 폴백인가(2026-08-02). 선택에서 후순위로 밀기 위한 표식. */
+  templated?: boolean;
   fit: number;   // 업종 핵심 적합도 2(핵심)/1(관련)/0(주변). context 있을 때만 의미, 없으면 1
 }
 
@@ -32,7 +34,7 @@ export interface TitledTopic {
 export async function keywordsToTitles(keywords: string[], context?: string, opts?: { localBiz?: boolean }): Promise<TitledTopic[]> {
   if (keywords.length === 0) return [];
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  const fallback = (): TitledTopic[] => keywords.map((k, i) => ({ title: templateTitle(k, i), tag: "", ok: true, fit: 1 }));
+  const fallback = (): TitledTopic[] => keywords.map((k, i) => ({ title: templateTitle(k, i), tag: "", ok: true, fit: 1, templated: true }));
   if (!apiKey) return fallback();
 
   // ★자영업자(동네 손님 받는 업장): '검색자 = 잠재 손님' 매칭을 1순위 게이트로. 분야가 같아도 검색자가 손님 아니면 제외.
@@ -61,7 +63,9 @@ export async function keywordsToTitles(keywords: string[], context?: string, opt
       model: "claude-haiku-4-5",
       // ★2000으로 상향(실측 2026-07-10: 키워드 13개분 JSON이 700을 넘어 잘림 → 파싱 실패 → 보드 전체가 템플릿 폴백
       //  '총정리·이것만 알면'으로 서빙. 훅 미달 제목의 숨은 원인)
-      max_tokens: 2000,
+      // ★2000이면 키워드 35~45개에서 JSON이 잘린다(2026-08-02 실측: 보드 4장이 전부 템플릿).
+      //  잘린 뒤 항목은 템플릿으로 떨어지는데, 그게 진짜 제목과 동등하게 경쟁해 보드를 채웠다.
+      max_tokens: 8000,
       messages: [
         {
           role: "user",
@@ -105,9 +109,15 @@ export async function keywordsToTitles(keywords: string[], context?: string, opt
         arr = objs.map((s) => { try { return JSON.parse(s); } catch { return undefined; } });
       }
     }
+    // ★몇 개가 템플릿으로 떨어졌는지 남긴다 — 조용히 폴백하면 원인 추적이 안 된다(오늘 이걸로 헤맸다).
+    if (arr.length < keywords.length) {
+      console.log(`[topicTitles] 응답 부족 — ${arr.length}/${keywords.length}건만 파싱(나머지는 템플릿). max_tokens 초과 의심`);
+    }
     return keywords.map((k, i) => {
       const o = arr[i] as { t?: unknown; c?: unknown; ok?: unknown; f?: unknown } | undefined;
-      let title = o && typeof o.t === "string" && o.t.trim() ? o.t.trim() : templateTitle(k, i);
+      const aiTitle = o && typeof o.t === "string" && o.t.trim() ? o.t.trim() : "";
+      let templated = !aiTitle;
+      let title = aiTitle || templateTitle(k, i);
       // ★키워드 포함 보증(유저 확정: 키워드 없는 제목은 노출 판정 자체가 안 된다) — 핵심 토큰 전무 시 템플릿 폴백
       // ★공백을 무시하고 비교한다(2026-08-02 유저 화면 실측: 제목 4장이 전부 템플릿이었다).
       //  네이버 광고 API 키워드는 공백이 없다('주식창보는법'). 모델은 당연히 '주식창 보는 법'이라 쓴다.
@@ -117,12 +127,12 @@ export async function keywordsToTitles(keywords: string[], context?: string, opt
         const cmp = (x: string) => x.replace(/\s+/g, "");
         const tc = cmp(title);
         const toks = k.split(/\s+/).filter((t) => t.length >= 2);
-        if (toks.length > 0 && !toks.some((t) => tc.includes(cmp(t)))) title = templateTitle(k, i);
+        if (toks.length > 0 && !toks.some((t) => tc.includes(cmp(t)))) { title = templateTitle(k, i); templated = true; }
       }
       const tag = o && typeof o.c === "string" ? o.c.trim() : "";
       const ok = o ? o.ok !== false : true; // 명시적 false만 노이즈로 제외
       const fit = o && typeof o.f === "number" ? Math.max(0, Math.min(2, o.f)) : 1; // 업종 적합도
-      return { title, tag, ok, fit };
+      return { title, tag, ok, fit, templated };
     });
   } catch (e) {
     console.error("[topicTitles] AI 제목 실패 — 템플릿 폴백:", e instanceof Error ? e.message : e);
