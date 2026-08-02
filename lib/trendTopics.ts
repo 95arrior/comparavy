@@ -405,17 +405,44 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
     }
 
     const admin = createSupabaseAdminClient();
-    // ★게이트 통과 씨앗이 있으니 이 카테고리 기존 행 전체 purge 후 새로 넣는다(뉴스 문구형 잔재 일괄 정리).
-    try { await admin.from("trend_topics").delete().eq("category", category); } catch { /* ignore */ }
-    const { error: upErr } = await admin.from("trend_topics").upsert(rows, { onConflict: "category,keyword" });
+    // ★키워드 중복 최종 제거(2026-08-02 실측 사고) — 위쪽 uniq 이후에도 선점 공고(preempt)를 rows에 더 밀어넣는다.
+    //  그때 키워드가 겹치면 upsert가 "ON CONFLICT ... cannot affect row a second time"으로 통째로 실패한다.
+    //  ★한 건의 중복이 배치 전체를 죽인다 — 그러니 여기서 마지막으로 한 번 더 접는다.
+    const seenKw = new Set<string>();
+    const uniqRows = rows.filter((r) => {
+      const k = String((r as { keyword?: string }).keyword ?? "");
+      if (!k || seenKw.has(k)) return false;
+      seenKw.add(k); return true;
+    });
+    if (uniqRows.length < rows.length) console.log(`[trend-upsert] ${category}: 중복 키워드 ${rows.length - uniqRows.length}건 제거(선점 공고와 씨앗 충돌)`);
+
+    // ★넣고 나서 지운다(순서 반전 — 2026-08-02 실측 사고의 핵심).
+    //  종전엔 'delete 먼저 → upsert'였다. upsert가 실패하면 그 카테고리는 통째로 빈 채 남는다.
+    //  게다가 세 번의 강등 재시도가 전부 같은 중복 오류로 실패하는데 에러를 삼켜서, 밖에서는
+    //  '수확은 성공했다고 로그가 찍히는데 풀은 비어 있는' 상태로 보였다(증식 0의 진짜 원인).
+    //  ★파괴는 성공 이후에만 한다. 실패하면 옛 씨앗이라도 남는 게 빈손보다 낫다.
+    const upsert = async (list: unknown[]) => admin.from("trend_topics").upsert(list, { onConflict: "category,keyword" });
+    let { error: upErr } = await upsert(uniqRows);
     if (upErr) { // source(0050)·action(0061) 컬럼 미적용 방어 — 순차 강등 재시도
-      const noAction = rows.map((r) => { const { action_start: _a, action_end: _b, ...rest } = r as Record<string, unknown>; return rest; });
-      const { error: e2 } = await admin.from("trend_topics").upsert(noAction, { onConflict: "category,keyword" });
-      if (e2) {
+      const noAction = uniqRows.map((r) => { const { action_start: _a, action_end: _b, ...rest } = r as Record<string, unknown>; return rest; });
+      ({ error: upErr } = await upsert(noAction));
+      if (upErr) {
         const bare = noAction.map((r) => { const { source: _s, ...rest } = r as Record<string, unknown>; return rest; });
-        await admin.from("trend_topics").upsert(bare, { onConflict: "category,keyword" });
+        ({ error: upErr } = await upsert(bare));
       }
     }
+    if (upErr) {
+      // ★조용히 넘기지 않는다 — 이걸 삼켜서 원인을 찾는 데 오래 걸렸다.
+      console.error(`[trend-upsert] ${category}: 저장 실패 — ${upErr.message?.slice(0, 160)} (기존 씨앗 유지)`);
+      return { generated: 0, drops, applyhome: ah };
+    }
+    // 저장에 성공했을 때만 이번 세트에 없는 옛 행을 정리한다(뉴스 문구형 잔재 일괄 제거).
+    try {
+      const keep = [...seenKw];
+      let del = admin.from("trend_topics").delete().eq("category", category);
+      if (keep.length) del = del.not("keyword", "in", `(${keep.map((k) => `"${k.replace(/"/g, '""')}"`).join(",")})`);
+      await del;
+    } catch { /* 정리 실패 — 새 씨앗은 이미 들어갔으니 서빙에는 지장 없다 */ }
     // 게이트별 탈락 분포 로그 — 튜닝 기준 데이터
     const dist: Record<string, number> = {};
     for (const d of drops) dist[d.reason] = (dist[d.reason] ?? 0) + 1;
