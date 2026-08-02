@@ -6,7 +6,7 @@ import { ensureUserRow } from "@/lib/userPlan";
 import { spendCredits, addCredits, GENERATE_COST } from "@/lib/credits";
 import { streamArticle } from "@/lib/generateArticle";
 import { isReviewType, ensureDisclosure } from "@/lib/revenue";
-import { hasFabricatedExperience, lacksInterpretation, lacksConditionBranch, duplicateSlotSubjects, lacksKeywordFloor, keywordOccurrences, keywordOverstuffed, headingMismatches, coreKeywordOf, endingReport, spacingDefects, longParagraphs, emojiCount, photoSlotShortfall, EMOJI_MIN, PARA_MAX_LINES, KEYWORD_FLOOR } from "@/lib/editorial";
+import { hasFabricatedExperience, lacksInterpretation, lacksConditionBranch, duplicateSlotSubjects, lacksKeywordFloor, keywordOccurrences, keywordOverstuffed, headingMismatches, coreKeywordOf, endingReport, spacingDefects, longParagraphs, emojiCount, photoSlotShortfall, skeletonReport, EMOJI_MIN, PARA_MAX_LINES, KEYWORD_FLOOR } from "@/lib/editorial";
 import { scanFacts } from "@/lib/factGate";
 import { financeCalcContext } from "@/lib/financeCalc";
 import { sanitizeUrls } from "@/lib/linkWhitelist";
@@ -396,7 +396,11 @@ export async function POST(request: Request) {
         //   앵커의 핵심어(미환급금)를 세면 하한의 목적('무엇에 관한 글인지 판정되게')은 그대로 달성된다.
         const isHomefeedLane = (body.selectionMeta as { species?: string } | undefined)?.species === "homefeed";
         const floorTarget = isHomefeedLane ? coreKeywordOf(keyword) : keyword;
-        const specWarnings = (a: { body_html: string; title?: string }): string => {
+        //  ★2026-08-02 검거: 종전엔 이 함수가 문자열만 돌려줬고, 재생성 발동 조건(deficits)은
+        //   키워드·소제목 둘만 세고 있었다. 그래서 띄어쓰기·문단·이모지·사진 결함은 경고 문구는 만들어졌지만
+        //   재생성이 안 일어나 한 번도 모델에 전달되지 않았다(실측: 09:04 생성 글이 사진 0·이모지 0으로 통과).
+        //   결함 목록을 배열로 돌려주고, 발동 조건도 이 배열 길이로 통일한다.
+        const specDefects = (a: { body_html: string; title?: string }): string[] => {
           const w: string[] = [];
           if (keywordFloorApplies && lacksKeywordFloor(a.body_html, floorTarget)) {
             const n = keywordOccurrences(a.body_html, floorTarget);
@@ -433,6 +437,9 @@ export async function POST(request: Request) {
           if (ps) {
             w.push(`[사진:] 자리가 ${ps.slots}개뿐이다(소제목 ${ps.sections}개). ${ps.want}개까지 늘려라 — 섹션 경계마다 하나씩 두되 소재는 서로 겹치지 않게.`);
           }
+          // ★스켈레톤 준수(2026-08-02 전문 감사) — FAQ 개수·3줄 요약 줄수·도입 인용구.
+          //  고정 스켈레톤인데 개수가 조용히 늘어나 있었다(FAQ 4개, 요약 5줄, 인용구 없음).
+          for (const i of skeletonReport(a.body_html).issues) w.push(i);
           const er = endingReport(a.body_html);
           // ★감정 반응 부재가 진짜 AI 티다(2026-08-02 레퍼런스 재정의) — 어미보다 이게 먼저다.
           if (er.flat) {
@@ -445,6 +452,10 @@ export async function POST(request: Request) {
           if (mm.length) {
             w.push(`소제목과 그 아래 본문이 어긋났다 — ${mm.slice(0, 3).map((h) => `"${h}"`).join(", ")}. 소제목의 핵심 단어가 그 섹션 본문에 그대로 등장해야 한다(네이버 AI가 둘의 일치를 대조한다). 소제목을 본문에 맞게 고치거나 본문을 소제목에 맞게 고쳐라.`);
           }
+          return w;
+        };
+        const specWarnings = (a: { body_html: string; title?: string }): string => {
+          const w = specDefects(a);
           return w.length ? ` ★함께 고칠 규격: ${w.join(" / ")}` : "";
         };
         let article = await streamArticle(
@@ -508,8 +519,9 @@ export async function POST(request: Request) {
         //  프롬프트는 방향, 코드가 한계선(CLAUDE.md). 앞선 가드가 예산을 안 썼을 때만 전용 재생성을 쓴다.
         //  ★재생성이 더 나빠지면 버린다 — 결함 수가 줄었을 때만 교체한다.
         {
-          const deficits = (a: { body_html: string }): number =>
-            (keywordFloorApplies && lacksKeywordFloor(a.body_html, floorTarget) ? 1 : 0) + headingMismatches(a.body_html).length;
+          // ★발동 조건을 결함 배열 길이로 통일한다 — 새 검사를 추가할 때 여기를 같이 안 고쳐서
+          //  게이트가 조용히 죽는 사고가 났다(2026-08-02). 이제 specDefects에 넣으면 자동으로 발동한다.
+          const deficits = (a: { body_html: string; title?: string }): number => specDefects(a).length;
           const before = deficits(article);
           if (before > 0 && regenSpent < REGEN_CAP) {
             regenSpent++;

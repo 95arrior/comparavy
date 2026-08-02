@@ -178,6 +178,34 @@ export function photoSlotShortfall(html: string): { slots: number; sections: num
   return slots < want ? { slots, sections, want } : null;
 }
 
+// ═══ 스켈레톤 준수(2026-08-02 발행글 전문 감사) ═══
+//  실측 「주식창, 처음 열면…」: FAQ 4개(규격 2), 3줄 요약 5줄(규격 3), 도입 인용구 훅 없음.
+//  고정 스켈레톤은 "좋은 폼이 추첨되지 않게" 못 박은 것인데(2026-07-13), 개수가 조용히 늘어나 있었다.
+//  ★다이어트 v3의 이유: FAQ 3개+ / 요약 줄이 늘면 덩어리로 보인다.
+export interface SkeletonReport { faq: number; summaryLines: number; hasOpeningQuote: boolean; issues: string[] }
+
+export function skeletonReport(html: string): SkeletonReport {
+  const h = String(html || "");
+  const text = stripTags(h);
+  // FAQ — 'Q. '로 시작하는 문단 수(규격: 'Q. '로 시작하게 되어 있다)
+  const faq = (text.match(/(?:^|\s)Q\.\s/g) ?? []).length
+    || [...h.matchAll(/<p[^>]*>\s*(?:<[^>]+>)*\s*Q[.\s]/gi)].length;
+  // 3줄 요약 — '요약' 소제목 뒤 첫 <ul>의 <li> 수
+  let summaryLines = 0;
+  const sm = /<h2[^>]*>[^<]*요약[^<]*<\/h2>([\s\S]*?)(?=<h2|$)/i.exec(h);
+  if (sm) summaryLines = (sm[1].match(/<li/gi) ?? []).length;
+  // 도입 인용구 훅 — 본문 첫 블록이 blockquote인가
+  const firstBlock = /<(p|blockquote|h2|ul|ol|table)/i.exec(h);
+  const hasOpeningQuote = firstBlock?.[1]?.toLowerCase() === "blockquote";
+
+  const issues: string[] = [];
+  if (faq > 2) issues.push(`자주 묻는 질문이 ${faq}개다(규격 2개). 본문이 못 다룬 것만 2개로 줄여라 — 3개 이상이면 덩어리로 보인다.`);
+  if (summaryLines > 3) issues.push(`'오늘의 3줄 요약'이 ${summaryLines}줄이다. 정확히 3줄로 줄여라 — 각 줄은 볼드 없이 20자 이내 완결 문장.`);
+  if (summaryLines > 0 && summaryLines < 3) issues.push(`3줄 요약이 ${summaryLines}줄뿐이다. 정확히 3줄로 채워라.`);
+  if (!hasOpeningQuote) issues.push(`도입 인용구 훅이 없다. 본문 첫 줄은 <blockquote> 한 문장(40자 이내)으로 아픔만 찌른다 — 해결책은 담지 않는다.`);
+  return { faq, summaryLines, hasOpeningQuote, issues };
+}
+
 // ═══ 어미 단조로움(2026-08-02 유저: "요요요 면서요 거든요 말투가 왜이럼, 더 AI같음") ═══
 //  프롬프트로 "어미를 섞어라"라고 해도 모델은 금방 한 종결로 수렴한다. 코드가 실제로 센다.
 //  ★품질 심사가 아니라 최소선이다 — '한 종결이 전체의 몇 %인가'와 '금지 어미가 몇 개인가' 둘만 본다.

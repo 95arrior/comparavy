@@ -107,11 +107,15 @@ export async function GET(request: Request) {
     publish_safety: {
       marker_count: markerCount,       // 본문 [사진:] 마커 수
       image_count: imageCount,         // 실제 생성 이미지 레코드 수
-      slot_image_synced: markerCount <= 3 && imageCount <= markerCount, // 슬롯≤3 & 이미지≤마커
+      // ★2026-08-02 수정: 종전 조건(markerCount<=3 && imageCount<=markerCount)은 0·0도 참이라
+      //  사진이 하나도 없는 글을 '동기화 정상'으로 통과시켰다(실측: 마커 0·이미지 0인데 pass=true).
+      slot_image_synced: markerCount >= 3 && imageCount <= markerCount,
+      photo_slots_ok: markerCount >= 3, // 규격 하한 3
       photo_leak: hasPhotoLeak(richWithImgs), // 발행 HTML에 [사진/지시 잔존?
       emoji_count: emojiHit,           // 발행 HTML 이모지 수
       broken_paren_paragraphs: brokenParen, // 미닫힌 괄호로 쪼개진 문단 수
-      pass: !hasPhotoLeak(richWithImgs) && emojiHit === 0 && brokenParen === 0,
+      // ★이모지는 하한이 생겼다(2026-08-02) — 0개도 결함이다. 종전엔 0을 통과 조건으로 두고 있었다.
+      pass: !hasPhotoLeak(richWithImgs) && brokenParen === 0 && markerCount >= 3 && emojiHit >= 2,
     },
     mobile_390px: {
       max_lines_threshold: MAX_LINES,

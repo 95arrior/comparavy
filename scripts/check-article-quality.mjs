@@ -1,4 +1,4 @@
-import { spacingDefects, hasSpacingDefect, longParagraphs, emojiCount, photoSlotShortfall, EMOJI_MIN, PARA_MAX_LINES } from "../lib/editorial.ts";
+import { spacingDefects, hasSpacingDefect, longParagraphs, emojiCount, photoSlotShortfall, skeletonReport, EMOJI_MIN, PARA_MAX_LINES } from "../lib/editorial.ts";
 import { BODY_ALIGN } from "../config/publish.ts";
 import fs from "node:fs";
 
@@ -71,10 +71,45 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   ok(BODY_ALIGN === "center", `현재 설정은 ${BODY_ALIGN}(유저 A/B 실측 확정)`);
 }
 
-// ── ⑥ 생성 경로 배선 ───────────────────────────────────────────────────
+// ── ⑥ 스켈레톤 준수(2026-08-02 전문 감사) ──────────────────────────────
+//  실측 「주식창, 처음 열면…」: FAQ 4개(규격 2), 3줄 요약이 5줄, 도입 인용구 훅 없음.
+//  고정 스켈레톤은 "좋은 폼이 추첨되지 않게" 못 박은 건데 개수가 조용히 늘어나 있었다.
+{
+  const 실측 = "<p>도입 문장</p><blockquote>핵심 요약</blockquote><h2>a</h2><p>Q. 하나</p><p>Q. 둘</p><p>Q. 셋</p><p>Q. 넷</p><h2>오늘의 3줄 요약</h2><ul><li>1</li><li>2</li><li>3</li><li>4</li><li>5</li></ul>";
+  const 규격 = "<blockquote>세금이 먼저 빠져나갑니다</blockquote><h2>a</h2><p>Q. 하나</p><p>Q. 둘</p><h2>오늘의 3줄 요약</h2><ul><li>1</li><li>2</li><li>3</li></ul>";
+  const r = skeletonReport(실측);
+  ok(r.faq === 4 && r.summaryLines === 5 && !r.hasOpeningQuote, "실측 글의 결함을 그대로 재현", `FAQ ${r.faq}·요약 ${r.summaryLines}줄·인용구 ${r.hasOpeningQuote}`);
+  ok(r.issues.length === 3, "★세 결함을 모두 지적", `${r.issues.length}건`);
+  ok(skeletonReport(규격).issues.length === 0, "규격을 지키면 통과");
+}
+
+// ── ⑦ ★게이트가 실제로 발동하는가(2026-08-02 검거) ─────────────────────
+//  ★가장 중요한 회귀다. 검사를 만들어놓고 발동 조건(deficits)에 안 넣어서
+//   띄어쓰기·문단·이모지·사진 결함이 경고 문구만 만들어지고 한 번도 전달되지 않았다.
+//   실측: 게이트 배포 29분 뒤 생성된 글이 사진 0·이모지 0·문단 24% 초과로 그냥 통과했다.
 {
   const gr = fs.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8");
-  for (const [fn, label] of [["spacingDefects", "띄어쓰기"], ["longParagraphs", "문단 길이"], ["emojiCount", "이모지 하한"], ["photoSlotShortfall", "사진 슬롯"]])
+  ok(/const specDefects/.test(gr), "결함을 배열로 모은다");
+  ok(/const deficits = \(a: \{ body_html: string; title\?: string \}\): number => specDefects\(a\)\.length/.test(gr),
+     "★재생성 발동 조건이 결함 배열 길이로 통일됨(새 검사가 자동으로 발동한다)");
+  ok(!/lacksKeywordFloor\(a\.body_html, floorTarget\) \? 1 : 0\) \+ headingMismatches/.test(gr),
+     "★옛 발동 조건(키워드·소제목 둘만 세던 것)이 제거됨");
+}
+
+// ── ⑧ 검사 엔드포인트의 구멍 ───────────────────────────────────────────
+//  실측: 마커 0·이미지 0인데 slot_image_synced=true, pass=true로 통과했다.
+//  0<=3 이고 0<=0 이라 참이 된 것이다 — '사진이 아예 없는 글'을 정상으로 봤다.
+{
+  const ca = fs.readFileSync(new URL("../app/api/admin/check-article/route.ts", import.meta.url), "utf-8");
+  ok(/markerCount >= 3 && imageCount <= markerCount/.test(ca), "★사진 0개를 통과시키던 조건 수정");
+  ok(/markerCount >= 3 && emojiHit >= 2/.test(ca), "★pass 조건에 사진·이모지 하한 반영");
+  ok(!/emojiHit === 0/.test(ca), "이모지 0을 통과 조건으로 두던 것 제거");
+}
+
+// ── ⑨ 생성 경로 배선 ───────────────────────────────────────────────────
+{
+  const gr = fs.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8");
+  for (const [fn, label] of [["spacingDefects", "띄어쓰기"], ["longParagraphs", "문단 길이"], ["emojiCount", "이모지 하한"], ["photoSlotShortfall", "사진 슬롯"], ["skeletonReport", "스켈레톤"]])
     ok(new RegExp(fn).test(gr), `★${label} 게이트가 생성 경로에 배선됨`);
   const ap = fs.readFileSync(new URL("../lib/articlePrompt.ts", import.meta.url), "utf-8");
   ok(/띄어쓰기\(2026-08-02 실측 결함\)/.test(ap), "프롬프트에도 띄어쓰기 규격 명시");
