@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { validateSearchTitle, fallbackSearchTitle, ensureKeywordInTitle } from "./titleRules";
+import { validateSearchTitle, restoreSearchPhrase, fallbackSearchTitle, ensureKeywordInTitle } from "./titleRules";
 import { logUsage } from "./usageLog";
 import type { TrendTopic } from "./trendTopics";
 import { pickHookPattern, OPEN_LOOP_GUIDE, containsBanned } from "./hookPatterns";
@@ -200,7 +200,7 @@ ${OPEN_LOOP_GUIDE}
 ★출력 규칙(반드시):
 - keyword: 그 씨앗의 실검증검색어 목록에서 그대로 하나 고른다(새로 지어내지 않는다). 목록이 없으면 비운다.
 - titleClick: 홈 피드 클릭형 제목 — 배정된 훅 패턴을 적용하고 열린 고리 원칙을 지킨다(답 숨김).
-- titleSearch: 검색형 제목 — 고른 keyword를 자연스럽게 포함(여긴 훅보다 검색 적합 우선).
+- titleSearch: 검색형 제목 — ★고른 keyword를 제목 맨 앞에 '표기 그대로' 놓는다(띄어쓰기까지 바꾸지 마라. 사람들이 실제로 치는 표기가 맞춤법보다 우선이다 — '실업급여조건'을 '실업급여 조건'으로 고치면 정합이 깨진다). 그 뒤에 무엇을 알려줄지 잇는다. 예: "○○○○, 심사중일 때 이렇게 확인하면 됩니다". 여긴 훅보다 검색 적합이 우선이다.
 - reader: 온보딩 축 기반 독자 한 문장 페르소나.
 - hook: 첫 문단이 잡을 긴장 한 줄(배정된 서두 유형에 맞게).
 - thumbMain: 대표이미지 메인 카피. 1~2줄, 전체 20자 이내, 줄바꿈은 \\n. ★역할 분리(2026-07-17 확정): 썸네일과 제목은 함께 노출된다 — 썸네일은 개념 하나를 던지고 제목이 답을 잇는다. 제목의 어절 반복은 앵커 1개(연도·핵심 숫자)까지만, 제목 축약·요약형 실격('검색 끝.', '내 비서가 생깁니다' 결). 열린 고리(답 숨기고 궁금증만). 느낌표 금지.
@@ -262,6 +262,9 @@ ${OPEN_LOOP_GUIDE}
       let titleSearch = (it.titleSearch ?? b.seed.title).trim().slice(0, 80);
       // ★검색용 코드 게이트(유저 확정: 키워드 선두·25~40자·병렬 금지·특수문자 금지) — 위반 시 키워드 실값 규칙 조립로 폴백
       {
+        // ★거부 전에 수리부터 — 폴백은 '조건과 신청 방법, 순서대로 총정리' 같은 틀이라 쓸수록 글이 똑같아진다.
+        //  표기만 어긋난 경우(실업급여 조건 ↔ 실업급여조건)는 되돌리면 그대로 살릴 수 있다.
+        titleSearch = restoreSearchPhrase(titleSearch, kw);
         const v = validateSearchTitle(titleSearch, kw);
         if (!v.ok) titleSearch = fallbackSearchTitle(kw);
       }

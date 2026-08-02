@@ -9,7 +9,7 @@ import { preemptionScore, preemptionNote, preemptWindow } from "./preemption";
 import { gatherHeadlinesWithStats } from "./trendSources";
 import { seasonalSeeds } from "./seasonalEvents";
 import { econSeeds } from "./econCalendar";
-import { fetchNaverAutocomplete } from "./naverAutocomplete";
+import { expandAutocomplete } from "./naverAutocomplete";
 import { fetchBlogTotal } from "./naverBlogSearch";
 import { fetchTrend } from "./naverDatalab";
 import { isUnsafeKeyword } from "./keywordSafety";
@@ -195,7 +195,9 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
       const BRANDY = /(카드|캐피탈|저축은행|뱅크|페이|증권|보험|생명|화재|의정석|리츠|KODEX|TIGER|ACE|RISE|SOL|PLUS|KBSTAR|ARIRANG|HANARO|KOSEF|액티브|합성|커버드콜|레버리지|인버스|ETN)/i;
       const roots = [...new Set(rows.slice(0, 6).map((r) => r.keyword.split(/\s+/)[0]))].slice(0, 4);
       for (const root of roots) {
-        const acs = await fetchNaverAutocomplete(root).catch(() => []);
+        // ★2단 확장(2026-08-02) — 1단은 '고객센터·홈페이지·발급'처럼 굵고 경쟁 심한 머리말만 준다.
+        //  검색자의 진짜 문장('발급조회·발급보류·자진퇴사 실업급여 조건')은 한 단계 더 들어가야 나온다.
+        const acs = await expandAutocomplete(root).catch(() => []);
         for (const cand of acs) {
           if (rows.length >= 26) break;
           const kw = cand.trim();
@@ -239,7 +241,7 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
       let acs: string[] = [];
       let matchedIdx = -1;
       for (let qi = 0; qi < queries.length; qi++) {
-        acs = await fetchNaverAutocomplete(queries[qi]).catch(() => []);
+        acs = await expandAutocomplete(queries[qi]).catch(() => []); // ★2단 확장 — 롱테일은 2단에 있다
         if (acs.length > 0) { matchedIdx = qi; break; }
       }
       // ★폴백 생존 처리 — 전체 키워드가 자동완성에 없으면(matchedIdx>0) 원 키워드는 유령.
@@ -262,7 +264,14 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
         row.keyword = repl.trim(); // 제목(뉴스 각도)은 유지, 키워드만 실검색어로
       }
       // 관련성 게이트 — (교체됐다면 새 키워드 기준) 핵심 명사 포함 필수. 위반 롱테일 제거.
-      const cand = acs.filter((a) => a.trim() !== row.keyword && relOK(row.keyword, a) && !isUnsafeKeyword(a)).slice(0, 8);
+      // ★구체적인 것부터 본다(2026-08-02) — 2단 확장을 켜면 후보가 9→39개로 늘지만
+      //  자동완성은 굵은 것(1단: '삼성카드 발급')을 앞에 준다. 그대로 8개를 자르면 2단이 통째로 잘리고,
+      //  경쟁도 측정 예산(GAP_PER_SEED)도 전부 1단에 쓰인다 — 정확히 우리가 피하려던 키워드들이다.
+      //  어절이 많을수록 의도가 뾰족하고 경쟁이 얕다('삼성카드 발급' < '삼성카드 발급보류').
+      const cand = acs
+        .filter((a) => a.trim() !== row.keyword && relOK(row.keyword, a) && !isUnsafeKeyword(a))
+        .sort((a, b) => b.trim().split(/\s+/).length - a.trim().split(/\s+/).length || [...b].length - [...a].length)
+        .slice(0, 8);
       ltTotal += cand.length;
       const longtails: Longtail[] = [];
       for (let i = 0; i < cand.length; i++) {

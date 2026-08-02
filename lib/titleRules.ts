@@ -8,6 +8,20 @@ function coreTokens(keyword: string): string[] {
   return keyword.split(/\s+/).map((t) => t.trim()).filter((t) => t.length >= 2);
 }
 
+// ★실검색어 표기 복원(2026-08-02 — 유저가 실성과에서 역추적).
+//  사람들은 '실업급여조건'을 치는데 우리는 보기 좋게 '실업급여 조건'으로 쓴다. 그 순간 질의-문서 정합이 깨진다.
+//  자동완성이 알려주는 건 '무엇을 검색하는가'만이 아니라 '어떻게 표기해서 치는가'다 — 맞춤법보다 실제 표기가 먼저다.
+//  압축했을 때 같은 문자열이 제목 안에 있으면, 그 구간을 실검색어 표기로 되돌린다(뜻은 그대로, 표기만 교정).
+export function restoreSearchPhrase(title: string, phrase: string): string {
+  const t = String(title || ""), p = String(phrase || "").trim();
+  if (!t || !p || t.includes(p)) return t;
+  const chars = [...p.replace(/\s+/g, "")];
+  if (chars.length < 2) return t;
+  // 글자 사이에 공백이 끼어 있어도 잡는다: '실업급여 조건' ← '실업\s*급여\s*조\s*건'
+  const re = new RegExp(chars.map((c) => c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("\\s*"));
+  return re.test(t) ? t.replace(re, p) : t;
+}
+
 export function validateSearchTitle(ts: string, keyword: string): { ok: boolean; reason?: string } {
   const len = [...ts].length;
   if (len < 25 || len > 40) return { ok: false, reason: `len_${len}` };
@@ -16,6 +30,15 @@ export function validateSearchTitle(ts: string, keyword: string): { ok: boolean;
   const toks = coreTokens(keyword);
   const head = ts.slice(0, 14);
   if (toks.length > 0 && !toks.some((t) => head.includes(t))) return { ok: false, reason: "keyword_not_front" };
+  // ★실검색어가 두 어절 이상이면 '맨 앞에 통째로'를 요구한다(2026-08-02 유저 실성과 역추적).
+  //  근거: "삼성카드 발급조회, 심사중일 때…"가 지금도 1페이지·누적 조회 상위다.
+  //  검색어와 제목 앞부분이 문자 그대로 같을 때 질의-문서 정합이 최고점이 된다.
+  //  ★한 어절짜리(굵은 머리말)엔 걸지 않는다 — 거기까지 강제하면 제목이 전부 같은 틀이 된다.
+  const kwTrim = keyword.trim();
+  if (kwTrim.split(/\s+/).length >= 2) {
+    const cmp = (x: string) => x.replace(/\s+/g, "").toLowerCase();
+    if (!cmp(ts).startsWith(cmp(kwTrim))) return { ok: false, reason: "lead_not_exact" };
+  }
   // 동급 키워드 병렬 금지 — 같은 카테고리 명사가 2회 이상 = "A대출 B대출" 유형
   const nouns = ts.match(CATEGORY_NOUN) ?? [];
   const uniq = new Set(nouns);

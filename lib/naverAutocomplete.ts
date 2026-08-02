@@ -24,3 +24,36 @@ export async function fetchNaverAutocomplete(query: string): Promise<string[]> {
     return [];
   }
 }
+
+// ★2단 확장(2026-08-02 — 유저가 실성과에서 역추적해 찾은 것).
+//  유저 관찰: 성과 낸 글의 제목이 "삼성카드 발급조회, 심사중일 때…"였고 지금도 1페이지·누적 조회 상위다.
+//  실측해 보니 '삼성카드 발급조회'는 1단 자동완성 10개 안에 없다 — '삼성카드 발급'을 한 번 더 넣어야 나온다.
+//   1단: 고객센터·홈페이지·발급·결제일별·추천·이용내역·해지·몰·앱  ← 전부 굵고 경쟁 심한 머리말
+//   2단: 발급조회·발급기간·발급조건·발급보류·발급취소·발급혜택      ← 의도가 뾰족하고 경쟁이 얕다
+//  ★1단은 '무엇을'까지고, 2단이 '무엇을 어떻게'다. 검색자의 진짜 문장은 2단에 있다.
+//  자동완성은 랭킹 요인이 아니라 수요의 증거다 — 다만 사람들이 실제로 치는 '표기 그대로'를 알려준다는 게 핵심이다
+//  (띄어쓰기·어순까지. 우리가 임의로 '발급 조회'로 바꿔 쓰면 그 정합이 깨진다).
+export async function expandAutocomplete(
+  query: string,
+  opts?: { branch?: number; perNode?: number; limit?: number },
+): Promise<string[]> {
+  const branch = opts?.branch ?? 5;   // 1단에서 몇 개를 더 팔지
+  const perNode = opts?.perNode ?? 6; // 가지마다 몇 개를 가져올지
+  const limit = opts?.limit ?? 40;
+  const first = await fetchNaverAutocomplete(query);
+  if (!first.length) return [];
+  const out: string[] = [...first];
+  const seen = new Set(out.map((x) => x.replace(/\s+/g, "")));
+  // ★순차 호출이 아니라 병렬 — 비공식 엔드포인트라 실패는 조용히 넘어간다(fetchNaverAutocomplete가 빈 배열).
+  const nested = await Promise.all(first.slice(0, branch).map((q) => fetchNaverAutocomplete(q)));
+  for (const list of nested) {
+    for (const kw of list.slice(0, perNode)) {
+      const k = kw.replace(/\s+/g, "");
+      if (seen.has(k)) continue;
+      seen.add(k);
+      out.push(kw);
+      if (out.length >= limit) return out;
+    }
+  }
+  return out;
+}

@@ -178,6 +178,45 @@ export function photoSlotShortfall(html: string): { slots: number; sections: num
   return slots < want ? { slots, sections, want } : null;
 }
 
+// ═══ 검색형 제목 = 실검색어 표기 그대로(2026-08-02 유저가 실성과에서 역추적) ═══
+//  유저 관찰: "삼성카드 발급조회, 심사중일 때 이렇게 확인하면 됩니다"가 지금도 1페이지·누적 조회 상위다.
+//  유저 가설은 '제목에 자동완성 문장이 들어가서'였고, 실측해 보니 기제는 한 겹 더 있었다:
+//   ① 자동완성은 랭킹 요인이 아니라 '수요의 증거'다. 네이버가 자동완성 일치를 보고 올려주지는 않는다.
+//   ② 실제로 작동한 건 '검색어와 제목 앞부분이 문자 그대로 같다'는 것 — 질의-문서 정합이 최고점이다.
+//   ③ ★그래서 자동완성이 결정적인 이유는 따로 있다: 사람들이 실제로 치는 '표기'를 알려준다.
+//      실측 예 — 사람들은 '실업급여 조건'이 아니라 '실업급여조건'을 친다(2단 자동완성에 그렇게 뜬다).
+//      우리가 보기 좋게 띄어 쓰면 그 정합이 깨진다. 맞춤법보다 실제 표기가 우선이다.
+//  ★그래서 검사하는 것: 검색형 제목이 '고른 실검색어'로 시작하는가 + 그 표기를 바꾸지 않았는가.
+
+/** 공백·조사를 지운 비교용 형태 — '실업급여 조건'과 '실업급여조건'을 같은 것으로 본다. */
+function compressKo(s: string): string {
+  return String(s || "").replace(/\s+/g, "").toLowerCase();
+}
+
+export interface SearchTitleReport {
+  leads: boolean;        // 제목이 그 검색어로 시작하는가
+  contains: boolean;     // 어디든 들어 있기는 한가
+  spacingChanged: boolean; // 들어 있지만 띄어쓰기를 바꿨는가(실검색어 표기 훼손)
+}
+
+/**
+ * 검색형 제목이 실검색어를 '맨 앞에, 표기 그대로' 담았는가.
+ * ★홈판(어그로) 제목에는 쓰지 않는다 — 거기는 검색이 아니라 스크롤 싸움이라 규칙이 반대다.
+ */
+export function searchTitleReport(title: string, phrase: string): SearchTitleReport | null {
+  const t = String(title || "").trim();
+  const p = String(phrase || "").trim();
+  if (!t || !p) return null;
+  const tc = compressKo(t), pc = compressKo(p);
+  if (!pc || !tc.includes(pc)) return { leads: false, contains: false, spacingChanged: false };
+  return {
+    leads: tc.startsWith(pc),
+    contains: true,
+    // 압축하면 같은데 원문 그대로는 없다 = 띄어쓰기를 우리가 바꿨다
+    spacingChanged: !t.includes(p),
+  };
+}
+
 // ═══ 사진 소재 진부함(2026-08-02 유저: "매번 계산기와 급여명세서 클로즈업 이런것만 넣지마") ═══
 //  ★두 가지 병이 겹쳐 있었다:
 //   ① 프롬프트에 '원천징수영수증과 계산기'를 예시로 적어뒀다 → 모델이 그대로 베꼈다(썸네일에서 겪은 것과 같은 사고).
