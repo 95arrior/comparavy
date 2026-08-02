@@ -80,6 +80,23 @@ export async function GET(request: Request) {
     const { count: trendAll } = await db.from("trend_topics").select("id", { count: "exact", head: true });
     const { count: alive } = await db.from("trend_topics").select("id", { count: "exact", head: true }).gt("expires_at", now);
     out.trendPool = { total: trendAll ?? 0, alive: alive ?? 0 };
+    // ★카테고리별 분해(2026-08-02) — '[trend-funnel] 증식 0'을 쫓다 벽에 부딪혔다.
+    //  풀에는 56건이 살아 있는데 카드가 0장이었다. 로컬에서 재현하려 했으나
+    //  .env.local의 Supabase 값이 비어 있어(프로덕션에서만 주입) 조회 자체가 불가능했다.
+    //  ★전체 숫자만으로는 '어느 카테고리의 씨앗인가'를 알 수 없다 — 그게 증식 0의 열쇠다.
+    //  actionEnd가 있는 씨앗은 공고형(직접 카드, 최대 3장)이고, 없는 것만 증식 대상이다.
+    const { data: rows } = await db.from("trend_topics")
+      .select("category, source, action_end").gt("expires_at", now).limit(500);
+    const byCat: Record<string, { alive: number; 공고형: number; 증식대상: number; sources: Record<string, number> }> = {};
+    for (const r of rows ?? []) {
+      const c = String((r as { category?: string }).category ?? "(없음)");
+      byCat[c] ??= { alive: 0, 공고형: 0, 증식대상: 0, sources: {} };
+      byCat[c].alive += 1;
+      if ((r as { action_end?: string | null }).action_end) byCat[c].공고형 += 1; else byCat[c].증식대상 += 1;
+      const src = String((r as { source?: string }).source ?? "?");
+      byCat[c].sources[src] = (byCat[c].sources[src] ?? 0) + 1;
+    }
+    out.trendByCategory = byCat;
   } catch { out.trendPool = null; }
   // ★자수 기록 판독(2026-07-20 3차): 불변식 차단 내역 + fetchPool 실제 조건·결과
   try {
