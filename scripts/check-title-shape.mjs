@@ -158,6 +158,13 @@ ok(!titleShapeClashes("조선관련주, 지금 사도 되는 걸까요?", 수렴
   const gr = fs.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8");
   ok(/validateTitleTail\(String\(\(a as \{ title\?: string \}\)\.title/.test(gr), "★발행 제목이 게이트를 지난다(되돌릴 수 없는 자리)");
   ok(/validateTitleTail\(title\)/.test(tt), "★검색 카드 제목도 게이트를 지난다");
+
+  // ★트렌드 레인 — 유저 화면에서 유일하게 새던 경로(말줄임표·'정리'가 그대로 통과했다)
+  const at = fs.readFileSync(new URL("../lib/amplifyTopics.ts", import.meta.url), "utf-8");
+  ok(/validateTitleTail\(titleClick\)/.test(at), "★트렌드 카드 제목도 게이트를 지난다");
+  ok(/title-tail:trend/.test(at), "★버릴 때 로그를 남긴다(조용히 사라지면 원인을 못 찾는다)");
+  // ★씨앗 제목은 뉴스 헤드라인이라 '…'이 흔하다 — 버리기 전에 우리 문장부호로 고쳐 살린다
+  ok(/const repaired = titleClick\.replace/.test(at), "★말줄임표는 고쳐서 살려 본 뒤 그래도 미달이면 버린다");
 }
 
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 제목 뼈대");

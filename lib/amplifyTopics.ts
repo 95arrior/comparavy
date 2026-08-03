@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { PUBLISH_TITLE_FORMULA } from "./titleTypes";
+import { validateTitleTail } from "./titleRules";
 import { validateSearchTitle, restoreSearchPhrase, fallbackSearchTitle, ensureKeywordInTitle } from "./titleRules";
 import { logUsage } from "./usageLog";
 import type { TrendTopic } from "./trendTopics";
@@ -275,6 +276,23 @@ ${OPEN_LOOP_GUIDE}
       }
       // ★홈판용도 키워드 포함 보증 — 훅만 남고 키워드가 빠지면 노출 판정 자체가 안 된다
       titleClick = ensureKeywordInTitle(titleClick, kw, titleSearch);
+      // ★꼬리 게이트(2026-08-04 유저 화면에서 검거) — 트렌드 레인만 게이트를 안 지나고 있었다.
+      //  실측 통과분: '2026년 양도소득세 공제 변경사항...보유기간별 절세 전략',
+      //  '따로 사는 무주택 부부도 전세대출 공제 받는다...신청 조건 정리' — 말줄임표와 '정리'가 그대로 살았다.
+      //  ★씨앗 제목(뉴스 헤드라인)을 그대로 쓰면 반드시 이 꼴이 된다: 헤드라인엔 '…'과 '정리'가 흔하다.
+      //  미달이면 말줄임표를 우리 문장부호로 바꾸고, 그래도 미달이면 그 카드를 버린다(빈자리가 낫다).
+      {
+        const tv = validateTitleTail(titleClick);
+        if (!tv.ok) {
+          const repaired = titleClick.replace(/(\.\.\.|…)\s*/g, ", ").replace(/\s*,\s*,/g, ",").trim();
+          if (validateTitleTail(repaired).ok) {
+            titleClick = repaired;
+          } else {
+            console.log(`[title-tail:trend] 규격 미달 — 카드 버림: ${titleClick.slice(0, 34)} (${tv.reason})`);
+            continue;
+          }
+        }
+      }
       // ★자르지 않는다 — 원문 그대로 받고 뒤에서 검증(초과 시 재생성→반려). 금지어·느낌표만 즉시 제거.
       let thumbMain = (it.thumbMain ?? "").replace(/!/g, "").trim();
       if (containsBanned(thumbMain)) thumbMain = "";
