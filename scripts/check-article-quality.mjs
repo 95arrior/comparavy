@@ -1,4 +1,4 @@
-import { spacingDefects, hasSpacingDefect, longParagraphs, emojiCount, photoSlotShortfall, skeletonReport, hasFabricatedExperience, sectionBudgetReport, tailSummaryBullets, EMOJI_MIN, PARA_MAX_LINES } from "../lib/editorial.ts";
+import { spacingDefects, hasSpacingDefect, longParagraphs, emojiCount, photoSlotShortfall, skeletonReport, hasFabricatedExperience, sectionBudgetReport, tailSummaryBullets, ensureHashtags, EMOJI_MIN, PARA_MAX_LINES } from "../lib/editorial.ts";
 import { BODY_ALIGN } from "../config/publish.ts";
 import fs from "node:fs";
 
@@ -254,6 +254,41 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   ok(!/countKoreanChars\(/.test(gr), "★생성 경로가 옛 카운터를 안 쓴다(분량 판정은 읽는 분량으로)");
   const art = fs.readFileSync(new URL("../app/api/articles/[id]/route.ts", import.meta.url), "utf-8");
   ok(/countBodyChars\(/.test(art), "★화면에 표시되는 char_count도 같은 자로 잰다");
+}
+
+
+// ── ⑥-7 ★해시태그·내부링크는 분량 예산 밖이다(2026-08-03 유저 제보) ────
+//  실측: 분량을 조였더니 모델이 해시태그를 곁가지로 보고 통째로 버렸다.
+//  ★이건 내가 만든 부작용이다 — '곁가지를 버려라'가 노출 장치까지 쓸어갔다.
+//  해시태그·링크 카드는 네이버 편집기에서 본문 글자로 안 들어간다. 버려도 분량은 안 줄고
+//  노출·회유 장치만 잃는다. 즉 없을 이유가 전혀 없다.
+{
+  const 없음 = "<p>무기명채권은 소지인이 곧 소유자입니다.</p>";
+  const r = ensureHashtags(없음, "무기명채권 세금", "재테크");
+  ok(/#/.test(r), "★해시태그가 없으면 코드가 채운다", r.replace(/<[^>]+>/g, " ").trim().slice(0, 40));
+
+  // ★지어내지 않는다 — 키워드에서 파생한 것만(해시태그는 사실 주장이 아니라 분류 라벨이다)
+  const tags = (r.match(/#[^\s#<]+/g) ?? []).map((t) => t.slice(1));
+  ok(tags.every((t) => "무기명채권세금재테크".includes(t.replace(/\s/g, ""))), "★키워드 파생만 쓴다(없는 말 금지)", tags.join(","));
+
+  // ★이미 있으면 손대지 않는다(모델이 잘 쓴 태그를 덮지 않는다)
+  const 있음 = "<p>본문</p><p>#무기명채권 #채권투자 #세금 #금융소득</p>";
+  ok(ensureHashtags(있음, "무기명채권") === 있음, "★이미 있으면 그대로 둔다");
+
+  // ★핵심: 해시태그를 붙여도 분량이 안 늘어야 한다 — 늘면 예산 게이트가 애먼 걸 자르게 된다
+  const a = sectionBudgetReport("<h2>s</h2>" + 없음, 330).sections[0].chars;
+  const b = sectionBudgetReport("<h2>s</h2>" + r, 330).sections[0].chars;
+  ok(a === b, "★해시태그는 분량에 안 잡힌다(예산 중립)", `${a}자 → ${b}자`);
+
+  // ★프롬프트에도 '예산 밖'이라고 적혀 있는가 — 코드만 고치면 모델은 계속 버리려 든다
+  const ap = fs.readFileSync(new URL("../lib/articlePrompt.ts", import.meta.url), "utf-8");
+  ok(/예산 밖\(줄이지 마라\)/.test(ap), "★분량 예산 블록에 '예산 밖' 항목이 명시됨");
+  ok(/해시태그[\s\S]{0,80}생략 금지/.test(ap), "★해시태그 생략 금지가 명시됨");
+
+  // ★내부링크도 같은 이유로 살린다 — 0개로 흐르던 선별 규칙을 '1~2개 기본'으로
+  const gr = fs.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8");
+  ok(/1~2개는 고르는 것을 기본/.test(gr), "★내부링크 선별이 '1~2개 기본'으로 바뀜");
+  ok(/ensureHashtags\(urlClean\.html/.test(gr), "★해시태그 보장이 생성 경로에 배선됨");
 }
 
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 발행글 품질(띄어쓰기·문단·이모지·사진·정렬)");

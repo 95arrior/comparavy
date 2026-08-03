@@ -11,7 +11,7 @@ import { scanFacts } from "@/lib/factGate";
 import { financeCalcContext } from "@/lib/financeCalc";
 import { sanitizeUrls } from "@/lib/linkWhitelist";
 import { countBodyChars } from "@/lib/humanizer";
-import { sectionBudgetReport, tailSummaryBullets } from "@/lib/editorial";
+import { sectionBudgetReport, tailSummaryBullets, ensureHashtags } from "@/lib/editorial";
 import { sectionBudgetFor, targetMaxFor } from "@/lib/articlePrompt";
 import { isDisposableEmail } from "@/lib/disposableEmail";
 import { checkRateLimit } from "@/lib/rateLimit";
@@ -329,7 +329,7 @@ export async function POST(request: Request) {
               const cl = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
               const res = await cl.messages.create({
                 model: "claude-haiku-4-5", max_tokens: 400,
-                messages: [{ role: "user", content: `네이버 블로그 '함께 보면 좋은 글' 선별 — 검색자 심리 연속성 기준.\n현재 글 키워드: "${keyword}"\n이 키워드를 검색한 사람이 처한 상황·심리를 먼저 생각하라(예: 주택담보대출 → 집 구매를 준비 중인 사람 → 매매대출·부동산 세금·시장 전망이 다음 관심사).\n아래 기발행 글 중 그 사람이 이어서 실제로 궁금해할 글만 골라라. 규칙: 최대 3개, 확신 없으면 제외(0개 가능), 표면 단어 겹침이 아니라 심리 흐름으로. ★수명 원칙: 이 글은 1년 이상 읽힐 글이다 — 특정 시점·개편 직후·시장 전망처럼 몇 달 뒤 낡을 글은 심리가 맞아도 제외.\n${pool2.slice(0, 30).map((c, i) => `${i}: ${c.keyword} | ${c.title}`).join("\n")}\n출력: 인덱스 JSON 배열만. 예: [2,7]` }],
+                messages: [{ role: "user", content: `네이버 블로그 '함께 보면 좋은 글' 선별 — 검색자 심리 연속성 기준.\n현재 글 키워드: "${keyword}"\n이 키워드를 검색한 사람이 처한 상황·심리를 먼저 생각하라(예: 주택담보대출 → 집 구매를 준비 중인 사람 → 매매대출·부동산 세금·시장 전망이 다음 관심사).\n아래 기발행 글 중 그 사람이 이어서 실제로 궁금해할 글만 골라라. 규칙: ★1~2개는 고르는 것을 기본으로 한다(유저 확정 2026-08-03 — 내부링크는 체류·회유의 핵심이고, 네이버 편집기에서 링크 카드로 들어가 본문 분량을 잡아먹지 않는다. 즉 넣어서 손해 볼 게 없다). 심리 흐름이 약해도 '같은 분야에서 이어 읽을 만한' 정도면 1개는 고른다. 최대 3개. 정말 아무 연결도 없을 때만 0개. 표면 단어 겹침이 아니라 심리 흐름으로. ★수명 원칙: 이 글은 1년 이상 읽힐 글이다 — 특정 시점·개편 직후·시장 전망처럼 몇 달 뒤 낡을 글은 심리가 맞아도 제외.\n${pool2.slice(0, 30).map((c, i) => `${i}: ${c.keyword} | ${c.title}`).join("\n")}\n출력: 인덱스 JSON 배열만. 예: [2,7]` }],
               });
               const txt = res.content.find((b) => b.type === "text")?.text ?? "";
               const m = txt.match(/\[[\d,\s]*\]/);
@@ -690,7 +690,10 @@ export async function POST(request: Request) {
         // (네이버 수익형 단일 — 자영업 시절의 업체 NAP 박스 삽입 제거. 수익형 블로그에 영업장 정보는 무의미 + 전 글 공통 박스는 패턴 지문 리스크)
         const urlClean = sanitizeUrls(ensureDisclosure(article.body_html, isReview), { allowNaverBlogId: (profileRow as { naver_blog_id?: string | null } | null)?.naver_blog_id }); // ★URL 정화 — 내 블로그 전편 링크는 통과
         if (urlClean.replaced > 0) console.log(`[url-sanitize] user=${user.id.slice(0, 8)} replaced=${urlClean.replaced} fabricated=${JSON.stringify(urlClean.fabricated)}`);
-        let finalBody = urlClean.html;
+        // ★해시태그 보장(2026-08-03 유저 제보: 통째로 사라졌다) — 프롬프트는 방향, 이건 한계선.
+        //  해시태그는 네이버 편집기에서 태그 영역으로 빠져 본문 글자가 아니다. 버려도 분량은 안 줄고
+        //  노출 장치만 잃으므로 없을 이유가 없다. 모델이 또 버려도 여기서 채운다(키워드 파생만, 지어내지 않는다).
+        let finalBody = ensureHashtags(urlClean.html, keyword, (article as { tag?: string }).tag);
         if (prevUrl) { // ★전편 링크 자동 삽입(verified만) — 마커를 실제 링크로. 미충족 시 마커 유지(위저드 안내 폴백)
           finalBody = finalBody.includes("[전편 링크 자리]")
             ? finalBody.replace("[전편 링크 자리]", `<a href="${prevUrl}">${(prevTitle ?? "전편 글").replace(/</g, "")}</a>`)

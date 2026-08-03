@@ -297,6 +297,27 @@ export function sectionBudgetReport(html: string, perSection: number): SectionBu
   return { sections, issues };
 }
 
+// ★해시태그 보장(2026-08-03 유저 실측: 분량을 조였더니 모델이 통째로 버렸다).
+//  프롬프트에 '생략 금지'를 넣었지만 프롬프트는 방향이고 이건 한계선이다 —
+//  해시태그는 네이버 편집기에서 태그 영역으로 빠져 본문 글자가 아니라, 버려도 분량이 안 줄고
+//  노출 장치만 잃는다. 즉 없을 이유가 전혀 없으므로 없으면 코드가 채운다.
+//  ★지어내지 않는다: 키워드에서 파생한 것만 쓴다(해시태그는 사실 주장이 아니라 분류 라벨이다).
+export function ensureHashtags(html: string, keyword: string, tag?: string): string {
+  const text = String(html || "").replace(/<[^>]+>/g, " ");
+  const existing = (text.match(/#[^\s#]+/g) ?? []).length;
+  if (existing >= 3) return html; // 이미 있으면 손대지 않는다
+  const kw = String(keyword || "").trim();
+  if (!kw) return html;
+  const core = kw.replace(/\s+/g, "");
+  const parts = kw.split(/\s+/).map((t) => t.replace(/[^가-힣a-zA-Z0-9]/g, "")).filter((t) => [...t].length >= 2);
+  const cand = [core, ...parts, (tag ?? "").replace(/\s+/g, "")]
+    .map((t) => t.trim()).filter(Boolean);
+  const uniq = [...new Set(cand)].filter((t) => [...t].length >= 2).slice(0, 5);
+  if (uniq.length === 0) return html;
+  const line = `<p>${uniq.map((t) => `#${t}`).join(" ")}</p>`;
+  return `${html}\n${line}`;
+}
+
 // ═══ 폐기 블록 부활 감시(2026-08-03 실측) ═══
 //  ★'오늘의 3줄 요약'을 폐기했더니 소제목 없이 글 끝 불릿으로 되살아났다.
 //   skeletonReport는 <h2>...요약...</h2>를 찾으므로 소제목이 없으면 못 잡는다 — 우회당한 것이다.
