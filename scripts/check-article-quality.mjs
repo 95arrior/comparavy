@@ -1,4 +1,4 @@
-import { spacingDefects, hasSpacingDefect, longParagraphs, emojiCount, photoSlotShortfall, skeletonReport, EMOJI_MIN, PARA_MAX_LINES } from "../lib/editorial.ts";
+import { spacingDefects, hasSpacingDefect, longParagraphs, emojiCount, photoSlotShortfall, skeletonReport, hasFabricatedExperience, EMOJI_MIN, PARA_MAX_LINES } from "../lib/editorial.ts";
 import { BODY_ALIGN } from "../config/publish.ts";
 import fs from "node:fs";
 
@@ -114,6 +114,34 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   ok(!/charCount > lenCap && regenSpent < REGEN_CAP/.test(gr), "★공용 예산(REGEN_CAP) 경쟁에서 빠졌다 — 앞선 가드가 다 써도 발동한다");
   ok(/dropSections/.test(gr), "★초과폭에 비례해 '버릴 소제목 수'를 코드가 계산해 준다");
   ok(/\[length\]/.test(gr), "★초과·정상 모두 로그로 남긴다(문턱을 감으로 옮기지 않기 위해)");
+}
+
+// ── ⑥-3 ★상위 글 4편 실측에서 뒤집은 규격(2026-08-03) ────────────────
+//  유저 제공 레퍼런스(삼성전자 배당·엔비디아 시총·비트코인·서울 재산세) 공통 구조:
+//  본문은 1,100~1,300자인데 정보량은 우리보다 많다. 차이는 '정보를 무엇이 나르는가'였다 —
+//  표·캡처가 정보를 나르고 텍스트는 해석만 한다. 우리는 정보를 문장으로 날라서 7,000자가 됐다.
+{
+  const ap = fs.readFileSync(new URL("../lib/articlePrompt.ts", import.meta.url), "utf-8");
+
+  // ① 표 재서술 금지 — 종전 규칙("표 내용은 본문 텍스트로도 서술한다")이 표를 넣어도 분량이 안 줄게 만들었다
+  ok(!/표 내용은 본문 텍스트로도 서술한다/.test(ap), "★'표를 본문으로 다시 서술' 규칙이 제거됨");
+  ok(/핵심 한 행'?만 골라/.test(ap), "★표 뒤에는 핵심 한 행만 해석한다");
+
+  // ② 관점 섹션 — 정보 섹션만 쌓이면 길어지고 '그래서 어쩌라고'가 남는다
+  ok(/관점 섹션/.test(ap), "★소제목 중 최소 1개는 관점 섹션");
+
+  // ③ FAQ 조건부 — 레퍼런스 4편 중 FAQ가 있는 글이 0편이었다
+  ok(/신청·절차·자격·기한이 있는 글감일 때만/.test(ap), "★FAQ가 조건부로 전환됨");
+
+  // ④ 1인칭 판단 허용 / 경험 날조 금지 — 이 둘을 같이 눌러서 정보 나열만 남았다
+  ok(/1인칭 판단·반응은 쓴다/.test(ap), "★1인칭 판단·반응 허용이 명시됨");
+  ok(/경험 서술은 어느 경우든 금지/.test(ap), "★경험 날조 금지선은 유지됨");
+
+  // ★가드가 판단까지 잡으면 안 된다 — 허용하기로 한 문장이 실제로 통과하는지 확인
+  const 판단문 = "<p>솔직히 이 금액은 좀 아쉽습니다. 저라면 자격 조회부터 먼저 하겠습니다.</p>";
+  const 경험문 = "<p>제가 직접 신청해 보니 3일 걸렸습니다.</p>";
+  ok(!hasFabricatedExperience(판단문), "★판단·반응 문장은 경험 가드를 통과한다");
+  ok(hasFabricatedExperience(경험문), "★경험 서술은 여전히 잡힌다");
 }
 
 // ── ⑦ ★게이트가 실제로 발동하는가(2026-08-02 검거) ─────────────────────
