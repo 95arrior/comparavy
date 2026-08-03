@@ -40,5 +40,18 @@ ok(compressToSearchKeyword("소상공인 정부 지원금 효과 분석") === "�
 ok(compressToSearchKeyword("부동산 규제 정책 변화") === "부동산 규제", "정책 변화 제거");
 ok(compressToSearchKeyword("전세대출 조건은") === "전세대출 조건", "조사 제거");
 
+// ── ★가짜 근거 뉴스(2026-08-03 유저 화면에서 검거) ─────────────────────
+//  실측: '청년 ISA 2026년 신설'과 '40억원 초고가주택 종부세' 두 카드에 똑같이
+//  '근로장려금 최대 360만원 확대' 뉴스가 근거로 붙었다. 셋 다 서로 무관하다.
+//  ★원인: 키워드 토큰이 '하나라도' 겹치면 근거로 인정했다 — '청년' 하나가 겹쳤을 뿐이다.
+//  ★가짜 근거는 없는 근거보다 나쁘다: 방금 홈판에 출처를 붙여 만든 신뢰를 바로 옆에서 깎는다.
+{
+  const home = fs.readFileSync(new URL("../components/dashboard/Home.tsx", import.meta.url), "utf-8");
+  ok(/const core = kwToks\.reduce/.test(home), "★최장 토큰이 겹칠 때만 근거로 인정한다");
+  ok(!/kwToks\.some\(\(t\) => l\.includes\(t\)\)/.test(home), "★'한 토큰이라도 겹치면 인정'하던 조건이 제거됨");
+  ok(/\[\.\.\.core\]\.length >= 3/.test(home), "★짧은 토큰(2자)은 근거 판정에 쓰지 않는다");
+  ok(/오늘 수확된 실시간 이슈/.test(home), "★못 찾으면 정직한 중립 문구로 폴백한다");
+}
+
 console.log(fail === 0 ? "\n통과: 구조 불변식 전부 성립" : `\n실패: ${fail}건`);
 process.exit(fail === 0 ? 0 : 1);

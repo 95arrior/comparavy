@@ -1054,7 +1054,13 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
     //  '신청·지원' 공통어로 오매칭돼 근거 뉴스로 붙음). 구별력 있는 고유 명사가 겹칠 때만 근거 뉴스로 인정, 아니면 중립 폴백.
     const NEWS_GENERIC = new Set(["지원금", "지원", "신청", "정부", "보조금", "대상", "조건", "방법", "혜택", "기간", "확인", "세금", "정리", "총정리", "대책", "정책", "2025", "2026"]);
     const kwToks = topic.keyword.split(/\s+/).filter((t) => t.length >= 2 && !NEWS_GENERIC.has(t));
-    const hit = kwToks.length ? lines.find((l) => kwToks.some((t) => l.includes(t))) : undefined;
+    // ★한 토큰만 겹쳐도 근거로 인정하던 걸 막는다(2026-08-03 유저 화면에서 검거).
+    //  실측: '청년 ISA 신설'과 '40억 초고가주택 종부세' 두 카드에 똑같이 '근로장려금 확대' 뉴스가 붙었다.
+    //  '청년'처럼 흔한 토큰 하나가 겹쳤을 뿐인데 근거로 승격된 것이다.
+    //  ★가짜 근거는 없는 근거보다 나쁘다 — 방금 홈판에 출처를 붙여 만든 신뢰를 옆에서 깎는다.
+    //  그래서 '가장 구별력 있는 토큰(최장어)'이 겹칠 때만 인정한다. 아니면 중립 폴백으로 간다.
+    const core = kwToks.reduce((a, b) => ([...b].length > [...a].length ? b : a), "");
+    const hit = [...core].length >= 3 ? lines.find((l) => l.includes(core)) : undefined;
     if (hit) { const m = hit.match(/\]\s*([^:]{6,60})/); if (m) return `근거 뉴스: ${m[1].trim().slice(0, 24)}…`; }
     return "오늘 수확된 실시간 이슈 · 신선할 때가 기회"; // ★가짜 정밀함 제거(유저 원칙: UI 숫자도 근거 필수) — 배치 공통 뭉치 건수·미실측 경쟁 주장 폐기
   })();
