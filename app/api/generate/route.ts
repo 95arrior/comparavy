@@ -11,6 +11,8 @@ import { scanFacts } from "@/lib/factGate";
 import { financeCalcContext } from "@/lib/financeCalc";
 import { sanitizeUrls } from "@/lib/linkWhitelist";
 import { countKoreanChars } from "@/lib/humanizer";
+import { sectionBudgetReport, tailSummaryBullets } from "@/lib/editorial";
+import { sectionBudgetFor, targetMaxFor } from "@/lib/articlePrompt";
 import { isDisposableEmail } from "@/lib/disposableEmail";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { normalizeKeyword, pickVariant, pickAngle, simhash } from "@/lib/diversity";
@@ -415,6 +417,17 @@ export async function POST(request: Request) {
           // ★사실 오류도 재생성으로 고친다(2026-08-02 유저: "검사할 거 있음 너가 수정해서 뽑으라니깐").
           //  값만 바꾸면 되는 건 finalize가 이미 치환했다 — 여기 남는 건 서술 방식 문제라 다시 쓰는 수밖에 없다.
           //  종전엔 이 층을 생성 게이트에서 아예 빼놔서(missing만 봄) 전부 검토 화면 숙제로 넘어갔다.
+          // ★분량 예산 한계선(2026-08-03 유저 실측: 목표 1,800인데 2,603자 — 섹션마다 1.3~1.7배).
+          //  종전엔 예산을 프롬프트로만 줬다. 총량 게이트(lenCap)는 '다 쓴 뒤'에야 알기 때문에
+          //  압축 재생성이라는 비싼 수를 써야 했는데, 어느 섹션이 부풀었는지 짚어 주면
+          //  다른 가드가 도는 그 재생성에 얹혀서 정확히 그 자리만 줄일 수 있다(예산 절약).
+          for (const i of sectionBudgetReport(a.body_html, sectionBudgetFor(targetMaxFor(channel))).issues) w.push(i);
+          // ★폐기 블록 부활(2026-08-03 실측) — '오늘의 3줄 요약'을 소제목 없이 끝 불릿으로 되살렸다.
+          //  이름으로 찾던 검사를 우회한 것이라, 모양으로 잡는다.
+          const tailBullets = tailSummaryBullets(a.body_html);
+          if (tailBullets > 0) {
+            w.push(`글 끝에 본문을 되짚는 요약 불릿 ${tailBullets}개가 있다. 이 묶음을 통째로 삭제하라 — 글 앞 '바쁘면 이것만'이 이미 결론을 줬고, 끝에서 다시 요약하는 블록은 폐기됐다(체크박스 점검 리스트는 예외로 허용된다).`);
+          }
           const wrongFacts = allFacts.filter((i) => i.layer !== "missing" && !i.replace);
           if (wrongFacts.length) {
             w.push(`사실·시점 오류가 있다 — ${wrongFacts.map((i) => `${i.title}(고치기: ${i.fix})`).join(" / ")}. 검토 화면에 숙제로 남기지 말고 지금 고쳐 써라.`);
@@ -642,7 +655,7 @@ export async function POST(request: Request) {
         //  ③ 압축 후에도 초과면 로그만 남기고 통과.
         // ★수리 원칙: 분량은 '품질 보강'(더 넣기)과 성격이 반대인 '한계선'(줄이기)이다.
         //  보강 가드와 예산을 나눠 쓰면 한계선이 늘 진다 — 그래서 전용 예산을 준다.
-        const lenCap = Math.round((channel === "wordpress" ? 2200 : 1800) * 1.15); // ★네이버 1,800 재재개정(2026-07-17 유저: 분량 축소 — 18자 개행에선 긴 글=도배)
+        const lenCap = Math.round(targetMaxFor(channel) * 1.15); // ★목표 상한은 targetMaxFor가 단일 진실원(프롬프트·게이트가 같은 숫자를 본다)
         const targetLabel = channel === "wordpress" ? "1,800~2,200" : "1,200~1,800";
         // ★압축 2단계이되 '시간이 있을 때만'(2026-08-03 사고 수리) — 횟수 상한만으로는 maxDuration을 못 지킨다.
         //  앞선 가드가 이미 재생성을 돌렸다면 여기서 2회를 더 돌릴 시간이 대개 없다. 그때는 초과를 안고 발행하는 게

@@ -1,4 +1,4 @@
-import { spacingDefects, hasSpacingDefect, longParagraphs, emojiCount, photoSlotShortfall, skeletonReport, hasFabricatedExperience, EMOJI_MIN, PARA_MAX_LINES } from "../lib/editorial.ts";
+import { spacingDefects, hasSpacingDefect, longParagraphs, emojiCount, photoSlotShortfall, skeletonReport, hasFabricatedExperience, sectionBudgetReport, tailSummaryBullets, EMOJI_MIN, PARA_MAX_LINES } from "../lib/editorial.ts";
 import { BODY_ALIGN } from "../config/publish.ts";
 import fs from "node:fs";
 
@@ -175,6 +175,58 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   const ap = fs.readFileSync(new URL("../lib/articlePrompt.ts", import.meta.url), "utf-8");
   ok(/띄어쓰기\(2026-08-02 실측 결함\)/.test(ap), "프롬프트에도 띄어쓰기 규격 명시");
   ok(/하한 2 — 실측으로 0개가 나갔다/.test(ap), "프롬프트에도 이모지 하한 명시");
+}
+
+
+// ── ⑥-4 ★분량 예산 한계선(2026-08-03 유저 실측: 목표 1,800인데 2,603자) ──
+//  프롬프트로만 예산을 줬더니 섹션마다 1.3~1.7배로 넘겼다.
+//  '프롬프트는 방향, 코드는 한계선'(CLAUDE.md)을 분량에만 안 지키고 있었다.
+{
+  const BUDGET = 330; // 네이버: (1800 - 고정블록 480) / 소제목 4
+  // ★유저가 잡은 실물 그대로 — 2금융권 섹션이 546자였다(예산의 1.7배)
+  const 실측 = "<h2>2금융권 진입 기준</h2>" + "<p>소득 증빙이 어렵다면 저축은행과 캐피탈이 현실적인 경로입니다.</p>".repeat(20)
+    + "<h2>짧은 섹션</h2><p>여기는 예산 안에 들어온다.</p>";
+  const r = sectionBudgetReport(실측, BUDGET);
+  ok(r.sections.length === 2, "소제목 단위로 글자수를 센다", `${r.sections.length}개`);
+  ok(r.issues.length === 1, "★예산 초과 섹션만 지적한다(짧은 섹션은 통과)", `${r.issues.length}건`);
+  ok(/2금융권/.test(r.issues[0] ?? ""), "★어느 섹션이 부풀었는지 이름으로 짚는다");
+
+  // ★1.3배까지는 봐준다 — 1.0배로 조이면 매번 걸려서 재생성만 돈다(품질 심사가 아니라 최소선)
+  const 경계 = `<h2>경계</h2><p>${"가".repeat(Math.round(BUDGET * 1.2))}</p>`;
+  ok(sectionBudgetReport(경계, BUDGET).issues.length === 0, "★1.2배는 통과(최소선이지 품질 심사가 아니다)");
+
+  // ★FAQ는 섹션 예산이 아니라 자기 예산(≈100자)으로 잰다 — 같은 자로 재면 안 된다
+  const faq = `<h2>자주 묻는 질문</h2><p>${"가".repeat(300)}</p>`;
+  const fr = sectionBudgetReport(faq, BUDGET);
+  ok(fr.issues.some((i) => /자주 묻는 질문/.test(i)), "★FAQ 초과는 따로 잡는다", fr.issues[0] ?? "");
+}
+
+// ── ⑥-5 ★폐기 블록이 이름을 바꿔 되살아나는 것 ────────────────────────
+//  실측: '오늘의 3줄 요약'을 폐기했더니 소제목 없이 글 끝 불릿 5개로 돌아왔다.
+//  이름(<h2>요약</h2>)으로 찾던 검사를 우회한 것이라, 모양으로 잡는다.
+{
+  const 본문 = "<p>본문 문단이 길게 이어지는 상황을 만든다</p>".repeat(40); // ★불릿이 글 뒷부분(70% 이후)에 오게 — 문턱을 실제로 넘겨야 검사가 의미가 있다
+  const 요약부활 = 본문 + "<ul>"
+    + ["1금융권, DSR 40% 규제로 소득 없으면 한도 0", "LTV 한도 계산, 감정가 곱하기 한도 빼기 선순위 잔액",
+       "2금융권, 저축은행과 캐피탈이 현실적 경로입니다", "대체 소득 증빙, 임대차 계약서가 있으면 조건이 달라짐",
+       "신청 순서, 신용 이력 확인 후 연체 정리 순서로"].map((t) => `<li>${t}</li>`).join("") + "</ul>";
+  ok(tailSummaryBullets(요약부활) === 5, "★소제목 없는 끝 요약 불릿을 잡는다", `${tailSummaryBullets(요약부활)}개`);
+
+  // ★허용된 뒷부분 목록과 구분해야 한다 — 규격이 명시적으로 허용한 것들이다
+  const 체크리스트 = 본문 + "<ul><li>□ 한전ON에서 신청</li><li>□ 정부24 조회</li><li>□ 계좌 확인</li><li>□ 서류 준비하기</li></ul>";
+  ok(tailSummaryBullets(체크리스트) === 0, "★체크박스 점검 리스트는 허용(저장률 장치)");
+  const 도움 = 본문 + "<ul><li>이사 예정이라면 도움 돼요</li><li>전세 계약 앞두면 도움 돼요</li><li>보증금 올랐다면 해당돼요</li><li>재계약을 앞두고 있다면 해당됩니다</li></ul>";
+  ok(tailSummaryBullets(도움) === 0, "★'이런 분께 도움 돼요' 목록은 허용");
+  const 짧은목록 = 본문 + "<ul><li>가</li><li>나</li><li>다</li></ul>";
+  ok(tailSummaryBullets(짧은목록) === 0, "3개 이하 짧은 목록은 요약이 아니다");
+}
+
+// ★게이트가 생성 경로에 실제로 배선됐는가 — 만들어놓고 안 부르면 아무 일도 안 일어난다
+{
+  const gr = fs.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8");
+  ok(/sectionBudgetReport\(a\.body_html/.test(gr), "★섹션 예산 게이트가 결함 수집에 배선됨");
+  ok(/tailSummaryBullets\(a\.body_html\)/.test(gr), "★끝 요약 불릿 게이트가 결함 수집에 배선됨");
+  ok(/targetMaxFor\(channel\)/.test(gr), "★목표 상한이 단일 진실원(targetMaxFor)에서 온다");
 }
 
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 발행글 품질(띄어쓰기·문단·이모지·사진·정렬)");

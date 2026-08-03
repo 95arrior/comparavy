@@ -258,6 +258,55 @@ export function photoSceneShortfall(html: string): { slots: number; scenes: numb
 //  ★다이어트 v3의 이유: FAQ 3개+ / 요약 줄이 늘면 덩어리로 보인다.
 export interface SkeletonReport { faq: number; summaryLines: number; hasOpeningQuote: boolean; issues: string[] }
 
+// ═══ 분량 예산 한계선(2026-08-03 유저 실측: 목표 1,800인데 2,603자) ═══
+//  ★프롬프트로만 예산을 줬더니 섹션마다 1.3~1.7배로 넘겼다. CLAUDE.md의 '프롬프트는 방향, 코드는 한계선'을
+//   분량에만 안 지키고 있었다. 총량 게이트(lenCap)는 '다 쓴 뒤'에야 알기 때문에 압축 재생성이라는 비싼 수를
+//   써야 한다 — 섹션 단위로 어디가 부풀었는지 짚어 주면 한 번의 재생성으로 정확히 그 자리만 줄일 수 있다.
+//  ★품질 심사가 아니라 최소선이다: '예산의 1.3배를 넘긴 섹션'만 지적한다(1.0배로 조이면 매번 걸린다).
+export interface SectionBudgetReport { sections: { title: string; chars: number }[]; issues: string[] }
+
+const textLen = (s: string) => stripTags(s).replace(/\s/g, "").length;
+
+export function sectionBudgetReport(html: string, perSection: number): SectionBudgetReport {
+  const h = String(html || "");
+  const parts = [...h.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>([\s\S]*?)(?=<h2|$)/gi)];
+  const sections = parts.map((m) => ({ title: stripTags(m[1]).trim().slice(0, 24), chars: textLen(m[2]) }));
+  const issues: string[] = [];
+  // ★고정 블록(FAQ)은 섹션 예산이 아니라 자기 예산(≈100자)을 쓴다 — 같은 자로 재면 안 된다.
+  const isFaq = (t: string) => /자주\s*묻는|FAQ/i.test(t);
+  const over = sections.filter((s) => !isFaq(s.title) && s.chars > perSection * 1.3);
+  for (const s of over) {
+    issues.push(`'${s.title}' 섹션이 ${s.chars.toLocaleString()}자다(예산 ${perSection}자). 이 섹션에서 곁가지 문단을 버리거나 나열을 표로 바꿔 ${perSection}자 안으로 줄여라 — 소제목을 새로 쪼개지 마라(총량이 더 커진다).`);
+  }
+  const faq = sections.find((s) => isFaq(s.title));
+  if (faq && faq.chars > 160) {
+    issues.push(`'자주 묻는 질문'이 ${faq.chars}자다(예산 100자). 답은 질문당 딱 1문장으로 줄여라 — 배경 설명·조건 나열은 본문이 이미 했다.`);
+  }
+  return { sections, issues };
+}
+
+// ═══ 폐기 블록 부활 감시(2026-08-03 실측) ═══
+//  ★'오늘의 3줄 요약'을 폐기했더니 소제목 없이 글 끝 불릿으로 되살아났다.
+//   skeletonReport는 <h2>...요약...</h2>를 찾으므로 소제목이 없으면 못 잡는다 — 우회당한 것이다.
+//   ★그래서 '이름'이 아니라 '모양'으로 잡는다: 글 뒷부분에 있는, 본문을 되짚는 긴 불릿 묶음.
+//   허용되는 뒷부분 목록과 구분해야 한다 — 체크박스(□) 리스트와 '이런 분께 도움 돼요'는 규격이 허용한 것이다.
+export function tailSummaryBullets(html: string): number {
+  const h = String(html || "");
+  const uls = [...h.matchAll(/<ul(?:\s[^>]*)?>[\s\S]*?<\/ul>/gi)];
+  for (const m of uls) {
+    if (m.index === undefined || m.index < h.length * 0.7) continue; // 글 뒷부분만
+    const lis = m[0].match(/<li[\s\S]*?<\/li>/gi) ?? [];
+    if (lis.length < 4) continue; // 3개 이하는 '이런 분께' 류 짧은 목록
+    const texts = lis.map((li) => stripTags(li).trim());
+    if (texts.some((t) => /[□☐]/.test(t))) continue; // 체크리스트는 허용(저장률 장치)
+    if (/도움\s*(이\s*)?돼|해당(되|하)/.test(texts.join(" "))) continue; // '이런 분께 도움 돼요' 류
+    // 본문 요약 불릿의 지문: 항목이 길고(설명이 붙고) 쉼표로 '항목, 설명' 구조를 이룬다
+    const avg = texts.reduce((a, t) => a + t.replace(/\s/g, "").length, 0) / texts.length;
+    if (avg >= 20) return lis.length;
+  }
+  return 0;
+}
+
 export function skeletonReport(html: string): SkeletonReport {
   const h = String(html || "");
   const text = stripTags(h);
