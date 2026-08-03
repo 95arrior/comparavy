@@ -257,6 +257,25 @@ export function photoSceneShortfall(html: string): { slots: number; scenes: numb
   return scenes < 1 ? { slots: descs.length, scenes } : null; // 최소 한 장은 장면이어야 한다
 }
 
+// ═══ 뻔한 사진 차단(2026-08-04 유저 실측: "다 의미 없는 것들이라") ═══
+//  실측 5장: 스마트폰 화면 보는 손 / 달력에 날짜 표시하는 손 / 노트북으로 홈택스 조회 /
+//  스마트폰 앱 스크롤 / 식탁 위 스마트폰과 커피잔. 다섯 중 셋이 '화면 보는 손'이다.
+//  ★프롬프트는 이미 "'~화면을 보는' 형식 금지"라고 못 박고 있었는데 그대로 통과했다 — 또 샜다.
+//  ★그리고 이건 우리만의 문제가 아니라 이 소재군 자체가 죽었다: 경제 블로그 열에 아홉이
+//   같은 스톡 사진을 쓴다. 유저가 제공한 상위 4편에는 '화면 보는 손'이 한 장도 없다.
+const CLICHE_SCENE_RE = /(스마트폰|휴대폰|핸드폰|모바일|노트북|태블릿|모니터|화면)/;
+const CLICHE_ACT_RE = /(보는|보고|들여다|내려다|확인하는|조회하는|스크롤|터치|입력하는|클릭)/;
+
+/** 뻔한 '기기 화면 보는 장면' 슬롯 목록. 전체의 절반을 넘으면 그 글은 스톡 사진 세트가 된다. */
+export function clichePhotoSlots(html: string): { total: number; cliche: number; samples: string[] } | null {
+  const descs = [...String(html || "").matchAll(/\[사진:\s*([^\]]+)\]/g)].map((m) => m[1].trim());
+  if (descs.length === 0) return null;
+  const bad = descs.filter((d) => CLICHE_SCENE_RE.test(d) && CLICHE_ACT_RE.test(d));
+  // ★한 장은 봐준다(신청·조회형 글은 화면이 소재일 수 있다). 문제는 '세트로 나오는 것'이다.
+  if (bad.length <= 1 || bad.length * 2 <= descs.length) return null;
+  return { total: descs.length, cliche: bad.length, samples: bad.slice(0, 3) };
+}
+
 // ═══ 스켈레톤 준수(2026-08-02 발행글 전문 감사) ═══
 //  실측 「주식창, 처음 열면…」: FAQ 4개(규격 2), 3줄 요약 5줄(규격 3), 도입 인용구 훅 없음.
 //  고정 스켈레톤은 "좋은 폼이 추첨되지 않게" 못 박은 것인데(2026-07-13), 개수가 조용히 늘어나 있었다.

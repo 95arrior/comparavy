@@ -1,6 +1,8 @@
 // 본문/배경 이미지 프롬프트 하드룰 단위 테스트 — AI 콜 없이 순수 함수만 검증.
 //   npx tsx scripts/check-image-rules.mjs
 import { buildBodyPrompt, buildThumbBgPrompt, IMAGE_HARD_RULES } from "../lib/geminiImage.ts";
+import { clichePhotoSlots } from "../lib/editorial.ts";
+import fs from "node:fs";
 import { buildThumbMetaphorPrompt } from "../lib/bannerPrompts.ts";
 import { verdictFromRaw } from "../lib/imageVerify.ts";
 
@@ -123,6 +125,36 @@ console.log("\n이미지 글자 검증 — 판정 불가는 불합격(strict):")
   // 텍스트 규격이 배경 작업에 휩쓸려 바뀌지 않았는지(유저 확정값 보호)
   t2(/fontFamily: identity\.fontPair\.title/.test(rd), "제목 폰트 지정 그대로");
   t2(/fontWeight: 900/.test(rd), "제목 굵기 그대로");
+}
+
+// ── ★뻔한 사진 세트(2026-08-04 유저 실측: "다 의미 없는 것들이라") ──────
+//  실측 5장: 스마트폰 화면 보는 손 / 달력에 날짜 표시하는 손 / 노트북으로 홈택스 조회 /
+//  스마트폰 앱 스크롤 / 식탁 위 스마트폰과 커피잔 — 다섯 중 셋이 '화면 보는 손'이다.
+//  ★프롬프트는 이미 "'~화면을 보는' 형식 금지"였는데 그대로 통과했다. 코드로 잡는다.
+{
+  const 실측 = "<p>[사진: 스마트폰 화면을 내려다보는 손, 신청 완료 화면][사진: 달력에 날짜를 표시하는 손]"
+    + "[사진: 집에서 노트북을 열고 홈택스를 조회하는 모습][사진: 스마트폰 앱 화면을 두 손가락으로 스크롤하는 장면]"
+    + "[사진: 식탁 위에 놓인 스마트폰과 커피잔, 가정 내 일상 장면]</p>";
+  const ok = (c, label, extra = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "| cliche |", label, extra); };
+  const r = clichePhotoSlots(실측);
+  ok(r !== null && r.cliche >= 3, "★유저가 잡은 실물 세트를 잡는다", r ? `${r.cliche}/${r.total}장` : "못 잡음");
+
+  // ★한 장은 봐준다 — 신청·조회형 글은 화면이 진짜 소재일 수 있다. 문제는 '세트로 나오는 것'이다.
+  const 한장만 = "<p>[사진: 스마트폰 화면을 보는 손][사진: 은행 창구 앞 대기줄][사진: 아파트 단지 항공 뷰]</p>";
+  ok(clichePhotoSlots(한장만) === null, "★한 장은 통과(과교정 방어)");
+
+  // ★장면형은 전부 통과해야 한다 — 프롬프트가 권장하는 형태다
+  const 장면 = "<p>[사진: 은행 창구 앞 대기 의자와 번호표][사진: 아파트 단지를 올려다보는 시선][사진: 역 주변 단지 항공 뷰]</p>";
+  ok(clichePhotoSlots(장면) === null, "★권장 장면형은 통과");
+
+  // ★배선 — 만들어놓고 안 부르면 아무 일도 안 일어난다
+  const gr = fs.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8");
+  ok(/clichePhotoSlots\(a\.body_html\)/.test(gr), "★생성 경로에 배선됨");
+
+  // ★데이터 먼저 — 프롬프트가 차트·카드를 사진보다 앞세우는가
+  const ap = fs.readFileSync(new URL("../lib/articlePrompt.ts", import.meta.url), "utf-8");
+  ok(/시각 요소는 '데이터 먼저'/.test(ap), "★숫자 있는 섹션은 차트·카드 우선");
+  ok(/기기 화면 보는 손'은 한 장도 없었다/.test(ap), "★상위 글 실측 근거가 프롬프트에 박혀 있다");
 }
 
 console.log(fail === 0 ? "\n통과: 이미지 하드룰 전부 강제됨" : `\n실패: ${fail}건`);

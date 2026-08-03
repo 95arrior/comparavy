@@ -11,7 +11,7 @@ import { scanFacts } from "@/lib/factGate";
 import { financeCalcContext } from "@/lib/financeCalc";
 import { sanitizeUrls } from "@/lib/linkWhitelist";
 import { countBodyChars } from "@/lib/humanizer";
-import { sectionBudgetReport, tailSummaryBullets, ensureHashtags } from "@/lib/editorial";
+import { sectionBudgetReport, tailSummaryBullets, ensureHashtags, clichePhotoSlots } from "@/lib/editorial";
 import { validateTitleTail } from "@/lib/titleRules";
 import { sectionBudgetFor, targetMaxFor } from "@/lib/articlePrompt";
 import { isDisposableEmail } from "@/lib/disposableEmail";
@@ -473,6 +473,14 @@ export async function POST(request: Request) {
             w.push(`사진 소재가 진부하다(${stale.map((x) => x.prop).join("·")}). 이 물건들은 쓰지 마라 — 글자가 본질이라 그림에서 빈 종이가 되고, 모든 글이 똑같아 보인다. 그 주제가 실제로 벌어지는 자리로 바꿔라(고지서를 든 손이 아니라 창문 열린 방의 실외기, 서류가 아니라 창구 앞 대기 의자).`);
           }
           // ★장면이 하나도 없음 — 물건 나열만 있으면 스크롤이 안 멈춘다(체류시간).
+          // ★뻔한 사진 세트 차단(2026-08-04 유저: "다 의미 없는 것들이라") —
+          //  실측 5장 중 셋이 '스마트폰 화면 보는 손'이었다. 프롬프트는 이미 금지하고 있었는데 샜다.
+          {
+            const cl = clichePhotoSlots(a.body_html);
+            if (cl) {
+              w.push(`사진 ${cl.total}장 중 ${cl.cliche}장이 '기기 화면 보는 장면'이다(${cl.samples.join(" / ")}). 경제 블로그가 다 쓰는 스톡 사진이라 아무 의미가 없다. ★그 섹션에 숫자·구간·비교가 있으면 [사진:] 대신 [차트:]나 [카드:]로 바꿔라. 사진으로 남길 것은 '장소·사물의 배치'로 다시 써라(예: 은행 창구 앞 대기줄, 아파트 단지 항공 뷰).`);
+            }
+          }
           const sc = photoSceneShortfall(a.body_html);
           if (sc) {
             w.push(`사진 ${sc.slots}장이 전부 물건 클로즈업이다. 최소 한 장은 '장면'으로 바꿔라 — 사람이 그 일을 하는 정황(얼굴 없이 손·뒷모습), 그 일이 벌어지는 장소, 끝난 뒤의 생활 컷. 독자는 물건이 아니라 자기 상황이 겹쳐 보일 때 멈춘다.`);
