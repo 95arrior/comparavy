@@ -2,6 +2,7 @@ import { spacingDefects, hasSpacingDefect, longParagraphs, emojiCount, photoSlot
 import { BODY_ALIGN } from "../config/publish.ts";
 import fs from "node:fs";
 import { capFaq } from "../lib/publishHtml.ts";
+import { ensureRelatedLinks } from "../lib/editorial.ts";
 
 // ★발행글 감사 회귀(2026-08-02) — 실제 발행물 「퇴사 전날까지 받을 수 있는 돈」을 검사해 나온 결함들.
 //  이 다섯은 전부 '규격은 있는데 코드가 안 재던' 것들이다. 프롬프트만으로는 지켜지지 않는다는 게 실측으로 확인됐다.
@@ -288,8 +289,9 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
 
   // ★내부링크도 같은 이유로 살린다 — 0개로 흐르던 선별 규칙을 '1~2개 기본'으로
   const gr = fs.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8");
-  ok(/1~2개는 고르는 것을 기본/.test(gr), "★내부링크 선별이 '1~2개 기본'으로 바뀜");
-  ok(/ensureHashtags\(urlClean\.html/.test(gr), "★해시태그 보장이 생성 경로에 배선됨");
+  // ★2026-08-04 개정: LLM 심리 판정을 폐기하고 '판정 없이 최근 글 2~3개'로 바꿨다(유저 확정).
+  ok(/판정 없이 최근 글/.test(gr), "★내부링크는 판정 없이 최근 글에서 뽑는다");
+  ok(/ensureHashtags\(finalBody/.test(gr), "★해시태그 보장이 생성 경로에 배선됨(내부링크 뒤에 붙는다)");
 
   // ★모델이 만든 태그를 1순위로 쓴다(2026-08-03 유저 화면에서 확인) —
   //  모델은 tags 필드에는 잘 넣고 본문 하단에만 안 썼다. 그 태그가 키워드 파생보다 훨씬 낫다:
@@ -359,7 +361,8 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   ok(/다시<\/button>/.test(am), "★실패했을 때 유저가 다시 시도할 길이 있다");
 
   // ★함께 보면 좋은 글 2~3개 고정(유저: "핏한 게 없어도 넣어라")
-  ok(/relatedPosts\.length < 2/.test(gr), "★내부링크가 2개 미만이면 보강한다");
+  // ★보강 로직은 ensureRelatedLinks로 옮겼다 — 모델이 안 써도 코드가 붙인다(더 확실한 자리).
+  ok(/ensureRelatedLinks\(urlClean\.html/.test(gr), "★내부링크를 코드가 보장한다");
 
   // ★이미지 설명 상세화 + AI 인용 구조
   const ap = fs.readFileSync(new URL("../lib/articlePrompt.ts", import.meta.url), "utf-8");
@@ -439,6 +442,44 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   ok(/<\\\/\(p\|li\|td\|tr\|h\[1-6\]\|div\)>/.test(ig) || /li\|td\|tr/.test(ig), "★<li>·<td>도 줄바꿈으로 바꾼다(항목이 한 줄로 뭉치던 원인)");
   ok(/split\(\/\\s\*\[\|;·\]\\s\*\/\)/.test(ig) || /\[\|;·\]/.test(ig), "★구분자가 섞인 줄은 쪼갠다");
   ok(/length <= 40/.test(ig), "★긴 항목은 버린다(렌더러가 잘라 말이 끊긴다)");
+}
+
+
+// ── ⑥-11 ★함께 보면 좋은 글 — 코드가 보장한다(2026-08-04 유저 확정) ──────
+//  유저: "설명 하지 말고 그냥 2-3개씩 넣자. 함께보는 글도 적지 말고. 꼭 연관 없어도 될 것 같다."
+//  ★종전엔 ①모델이 마커를 써야 링크가 나왔고(안 쓰면 0개) ②하이쿠가 심리 연속성으로 판정했는데
+//   규칙이 "확신 없으면 0개"라 링크가 통째로 빠지는 날이 잦았다. 부탁이 아니라 실행으로 바꾼다.
+//  ★근거: 링크 카드는 네이버 편집기에서 본문 분량을 안 먹는다 — 넣어서 잃을 게 없다.
+//   그리고 재테크 블로그의 최근 글은 어차피 대부분 재테크라 판정 없이 뽑아도 크게 안 어긋난다.
+{
+  const posts = [
+    { title: "연말정산 환급 조건", url: "https://blog.naver.com/x/1?tr=1" },
+    { title: "신용카드 고르는 기준", url: "https://blog.naver.com/x/2" },
+    { title: "전세대출 한도", url: "https://blog.naver.com/x/3" },
+    { title: "중복 글", url: "https://blog.naver.com/x/1" },
+  ];
+  const body = "<p>본문</p><p>마무리 문장</p>";
+  const r = ensureRelatedLinks(body, posts);
+  ok((r.match(/\[마무리관련글:/g) ?? []).length === 3, "★없으면 3개를 붙인다(모델에 맡기지 않는다)");
+  ok(!/\| 중복 글/.test(r), "★같은 URL은 한 번만 — 트래킹 파라미터 달라도 같은 글이다");
+  ok(!/연결 이유|유리합니다/.test(r), "★설명 문장을 넣지 않는다");
+  ok(ensureRelatedLinks(body, []) === body, "★후보가 없으면 그대로 둔다");
+
+  const has2 = body + "<p>[마무리관련글: https://a/1 | 제목1]</p><p>[마무리관련글: https://a/2 | 제목2]</p>";
+  ok(ensureRelatedLinks(has2, posts) === has2, "★모델이 2개 넣었으면 손대지 않는다(과교정 방어)");
+  const has1 = body + "<p>[마무리관련글: https://blog.naver.com/x/1 | 이미 있음]</p>";
+  const r2 = ensureRelatedLinks(has1, posts);
+  ok((r2.match(/\[마무리관련글:/g) ?? []).length === 3, "★1개면 2개 더 채운다");
+  ok(!/x\/1 \| 연말정산/.test(r2), "★이미 걸린 URL은 다시 안 넣는다");
+
+  // ★배선 — 만들어놓고 안 부르면 아무 일도 안 일어난다(오늘 다섯 번 겪었다)
+  const gr = fs.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8");
+  ok(/ensureRelatedLinks\(urlClean\.html, relatedPosts\)/.test(gr), "★생성 경로에 배선됨");
+  ok(!/심리 연속성 기준/.test(gr), "★LLM 심리 판정이 제거됨(0개로 흐르던 원인)");
+  const ph = fs.readFileSync(new URL("../lib/publishHtml.ts", import.meta.url), "utf-8");
+  ok(!/\$\{reason\.trim\(\)\}/.test(ph), "★렌더에서 설명 문장이 제거됨");
+  const ap = fs.readFileSync(new URL("../lib/articlePrompt.ts", import.meta.url), "utf-8");
+  ok(/마무리 관련글은 시스템이 붙인다/.test(ap), "★프롬프트가 '네가 쓰지 마라'로 바뀜(두 곳이 다투지 않게)");
 }
 
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 발행글 품질(띄어쓰기·문단·이모지·사진·정렬)");

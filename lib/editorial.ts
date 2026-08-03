@@ -317,6 +317,28 @@ export function eligibilityTableIssues(html: string): EligibilityIssue[] {
   return issues.slice(0, 4);
 }
 
+// ═══ 함께 보면 좋은 글 — 코드가 보장한다(2026-08-04 유저 확정) ═══
+//  ★종전엔 모델이 [마무리관련글:] 마커를 써야 링크가 나왔다. 안 쓰면 0개다 —
+//   실제로 링크가 통째로 빠지는 글이 계속 나왔다. 부탁이 아니라 실행이어야 한다.
+//  ★유저 확정: 설명 문장 없이, 연관 판정 없이, 2~3개 고정.
+//   근거: 링크 카드는 네이버 편집기에서 본문 분량을 안 먹는다 — 넣어서 잃을 게 없다.
+//   그리고 재테크 블로그의 최근 글은 어차피 대부분 재테크라, 판정 없이 뽑아도 크게 안 어긋난다.
+export function ensureRelatedLinks(html: string, posts: { title: string; url: string }[]): string {
+  const h = String(html || "");
+  if (!posts.length) return h;
+  const existing = (h.match(/\[마무리관련글:/g) ?? []).length;
+  if (existing >= 2) return h; // 모델이 이미 충분히 넣었으면 손대지 않는다
+  // 이미 걸린 URL은 다시 넣지 않는다 — 같은 글이 두 번 나오면 안 된다(유저 지적).
+  const used = new Set([...h.matchAll(/\[마무리관련글:\s*(https?:[^\s|\]]+)/g)].map((m) => m[1].split("?")[0]));
+  const add = posts
+    .filter((p) => p.url && !used.has(p.url.split("?")[0]))
+    .filter((p, i, arr) => arr.findIndex((x) => x.url.split("?")[0] === p.url.split("?")[0]) === i)
+    .slice(0, Math.max(0, 3 - existing));
+  if (!add.length) return h;
+  const markers = add.map((p) => `<p>[마무리관련글: ${p.url} | ${String(p.title).slice(0, 60)}]</p>`).join("");
+  return `${h}\n${markers}`;
+}
+
 // ═══ 분량 하드컷(2026-08-04 유저 확정: "최대 2500자를 넘지 마세요") ═══
 //  ★지금까지 분량 게이트는 전부 '경고 → 재생성' 구조였다. 재생성이 실패하거나 예산이 없으면
 //   그냥 통과했고, 그래서 유저가 네 번 연속 긴 글을 받았다. 부탁이 아니라 실행이어야 한다.

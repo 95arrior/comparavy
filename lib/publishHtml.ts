@@ -365,9 +365,14 @@ function styleMarkers(html: string): string {
     }
   }
   // ★내부링크 마커 — 하단 3층(유저 확정: 유저가 네이버 링크 카드로 직접 삽입 — 시스템은 그 직전까지 준비)
-  html = html.replace(/\[마무리관련글:\s*(https?:[^\s|\]]+)\s*\|\s*([^|\]]+)\|\s*([^\]]+)\]/g, (_m, url: string, _t: string, reason: string) => {
+  // ★설명 문장 제거(2026-08-04 유저 확정: "함께 보는 글도 적지 말고").
+  //  종전엔 '연결 이유 한 줄'을 모델이 지어냈다 — 근거 없는 설득이고 두 줄을 먹었다.
+  //  유저가 준 상위 글 4편에도 이런 설명은 없다. 링크 제목만으로 충분하다.
+  //  ★마커는 3부(URL|제목|이유)와 2부(URL|제목) 둘 다 받는다 — 옛 글의 마커도 깨지지 않게.
+  html = html.replace(/\[마무리관련글:\s*(https?:[^\s|\]]+)\s*\|\s*([^|\]]+?)\s*(?:\|[^\]]*)?\]/g, (_m, url: string, title: string) => {
     const clean = url.split("?")[0]; // 트래킹 파라미터 제거 — 원형만
-    return `<p style="text-align:center;font-size:15px;font-weight:700">함께 보면 좋은 글</p><p style="text-align:center;font-size:13.5px;color:#4e5968">${reason.trim()}</p><p style="text-align:center;background-color:#f5f6f8;padding:10px 8px;font-size:13px;color:#8b95a1">[링크 카드 자리 — 아래 주소를 링크 버튼에 붙여넣으세요]</p><p style="text-align:center;font-size:13px">${clean}</p>`;
+    const t = String(title).trim().replace(/</g, "");
+    return `<p style="text-align:center;font-size:15px;font-weight:700">함께 보면 좋은 글</p><p style="text-align:center;font-size:13.5px;color:#4e5968">${t}</p><p style="text-align:center;background-color:#f5f6f8;padding:10px 8px;font-size:13px;color:#8b95a1">[링크 카드 자리 — 아래 주소를 링크 버튼에 붙여넣으세요]</p><p style="text-align:center;font-size:13px">${clean}</p>`;
   });
   // ★중간 [관련글:] 마커 — 전면 제거(유저 확정: 내부링크는 하단 '함께 보면 좋은 글'만) — 기존 생성 글의 마커도 조립 시 소거
   html = html.replace(/\[관련글:\s*(https?:[^\s|\]]+)\s*\|\s*([^\]]+)\]/g, "");

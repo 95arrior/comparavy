@@ -11,7 +11,7 @@ import { scanFacts } from "@/lib/factGate";
 import { financeCalcContext } from "@/lib/financeCalc";
 import { sanitizeUrls } from "@/lib/linkWhitelist";
 import { countBodyChars } from "@/lib/humanizer";
-import { sectionBudgetReport, tailSummaryBullets, ensureHashtags, clichePhotoSlots, hardTrimToLimit, eligibilityTableIssues } from "@/lib/editorial";
+import { sectionBudgetReport, tailSummaryBullets, ensureHashtags, clichePhotoSlots, hardTrimToLimit, eligibilityTableIssues, ensureRelatedLinks } from "@/lib/editorial";
 import { validateTitleTail } from "@/lib/titleRules";
 import { listToTable } from "@/lib/publishHtml";
 import { sectionBudgetFor, targetMaxFor } from "@/lib/articlePrompt";
@@ -324,48 +324,23 @@ export async function POST(request: Request) {
           // ★링크 수명 원칙(2026-07-14 유저: 주담대 글은 1년 읽히는데 '7월 세제개편' 링크는 다음 달이면 낡는다) — 월 표기 시점성 글 제외
           const MONTHLY_RE = /(^|[^0-9가-힣])(1[0-2]|[1-9])월|올해|이번\s?(주|달)|하반기|상반기/;
           const pool2 = (cands ?? []).filter((c) => c.naver_url && !TIMED.test(`${c.keyword ?? ""} ${c.title ?? ""}`) && !MONTHLY_RE.test(String(c.title ?? "")));
-          let judged = false;
-          if (pool2.length) {
-            try {
-              const Anthropic = (await import("@anthropic-ai/sdk")).default;
-              const cl = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-              const res = await cl.messages.create({
-                model: "claude-haiku-4-5", max_tokens: 400,
-                messages: [{ role: "user", content: `네이버 블로그 '함께 보면 좋은 글' 선별 — 검색자 심리 연속성 기준.\n현재 글 키워드: "${keyword}"\n이 키워드를 검색한 사람이 처한 상황·심리를 먼저 생각하라(예: 주택담보대출 → 집 구매를 준비 중인 사람 → 매매대출·부동산 세금·시장 전망이 다음 관심사).\n아래 기발행 글 중 그 사람이 이어서 실제로 궁금해할 글만 골라라. 규칙: ★1~2개는 고르는 것을 기본으로 한다(유저 확정 2026-08-03 — 내부링크는 체류·회유의 핵심이고, 네이버 편집기에서 링크 카드로 들어가 본문 분량을 잡아먹지 않는다. 즉 넣어서 손해 볼 게 없다). 심리 흐름이 약해도 '같은 분야에서 이어 읽을 만한' 정도면 1개는 고른다. 최대 3개. 정말 아무 연결도 없을 때만 0개. 표면 단어 겹침이 아니라 심리 흐름으로. ★수명 원칙: 이 글은 1년 이상 읽힐 글이다 — 특정 시점·개편 직후·시장 전망처럼 몇 달 뒤 낡을 글은 심리가 맞아도 제외.\n${pool2.slice(0, 30).map((c, i) => `${i}: ${c.keyword} | ${c.title}`).join("\n")}\n출력: 인덱스 JSON 배열만. 예: [2,7]` }],
-              });
-              const txt = res.content.find((b) => b.type === "text")?.text ?? "";
-              const m = txt.match(/\[[\d,\s]*\]/);
-              if (m) {
-                judged = true;
-                relatedPosts = (JSON.parse(m[0]) as number[]).slice(0, 3)
-                  .map((i) => pool2[i]).filter((x): x is NonNullable<typeof x> => Boolean(x))
-                  .map((o) => ({ title: String(o.title ?? o.keyword), url: String(o.naver_url) }));
-              }
-            } catch { /* 판정 실패 → 아래 토큰 게이트 폴백 */ }
-          }
-          if (!judged) {
-            relatedPosts = pool2
-              .map((c) => { const f = strongFit(c); return { title: String(c.title ?? ""), url: String(c.naver_url ?? ""), score: f.score, strong: f.strong }; })
-              .filter((c) => c.url && c.strong)
-              .sort((a, b) => b.score - a.score)
-              .slice(0, 2)
-              .map(({ title, url }) => ({ title, url }));
-          }
-          // ★2~3개 보장(2026-08-04 유저 확정: "함께보면 좋은글 2-3개 고정, 핏한 게 없어도 넣어라").
-          //  종전엔 LLM이 '확신 없으면 0개'로 흘러 링크가 통째로 빠지는 날이 있었다.
-          //  ★내부링크는 체류·회유 장치이고 네이버 편집기에서 링크 카드로 들어가 본문 분량을 안 먹는다 —
-          //   즉 넣어서 잃을 게 없다. 심리 연결이 약하면 같은 분야 최근 글로라도 채운다.
-          if (relatedPosts.length < 2) {
-            const have = new Set(relatedPosts.map((r) => r.url));
-            for (const c of pool2) {
-              if (relatedPosts.length >= 2) break;
-              const url = String((c as { naver_url?: string }).naver_url ?? "");
-              if (!url || have.has(url)) continue;
-              have.add(url);
-              relatedPosts.push({ title: String(c.title ?? c.keyword ?? "관련 글"), url });
-            }
-            console.log(`[related] 보강 → ${relatedPosts.length}개(풀 ${pool2.length})`);
-          }
+          // ★LLM 심리 판정 폐기(2026-08-04 유저 확정: "꼭 연관 없어도 될 것 같은데").
+          //  종전엔 하이쿠에게 '검색자 심리 연속성'으로 고르게 했는데, 규칙이 "확신 없으면 0개"라
+          //  링크가 통째로 빠지는 날이 잦았다. 호출 1회에 시간·비용도 썼다.
+          //  ★재테크 블로그의 최근 글은 어차피 대부분 재테크다 — 판정 없이 뽑아도 크게 안 어긋나고,
+          //   링크 카드는 네이버 편집기에서 본문 분량을 안 먹으니 넣어서 잃을 게 없다.
+          //  ★단 하나는 지킨다: 같은 글이 두 번 나오지 않게 URL로 중복을 거른다.
+          const seenUrl = new Set<string>();
+          relatedPosts = pool2
+            .map((c) => ({ title: String(c.title ?? c.keyword ?? "관련 글"), url: String((c as { naver_url?: string }).naver_url ?? "") }))
+            .filter((r) => {
+              const u = r.url.split("?")[0];
+              if (!u || seenUrl.has(u)) return false;
+              seenUrl.add(u);
+              return true;
+            })
+            .slice(0, 3);
+          console.log(`[related] ${relatedPosts.length}개(풀 ${pool2.length}) — 판정 없이 최근 글`);
           // ★네이버→WP 크로스 링크 제거(2026-07-14 유저 확정) — 네이버는 외부 상업성 링크에 민감, 돼지통(자산)이 pigtong(신생)보다 잃을 게 크다.
           //  WP→네이버 방향(wordpress/publish)은 유지. 재개 조건: 돼지통 체급 안정 후 — 그때도 링크 대신 '무링크 언급' 방식 우선 검토.
         } catch { /* 무해 — 링크 없이 진행 */ }
@@ -753,7 +728,10 @@ export async function POST(request: Request) {
         // ★해시태그 보장(2026-08-03 유저 제보: 통째로 사라졌다) — 프롬프트는 방향, 이건 한계선.
         //  해시태그는 네이버 편집기에서 태그 영역으로 빠져 본문 글자가 아니다. 버려도 분량은 안 줄고
         //  노출 장치만 잃으므로 없을 이유가 없다. 모델이 또 버려도 여기서 채운다(키워드 파생만, 지어내지 않는다).
-        let finalBody = ensureHashtags(urlClean.html, keyword, (article as { tag?: string }).tag, (article as { tags?: unknown }).tags);
+        // ★내부링크 보장(2026-08-04 유저 확정) — 모델이 마커를 안 써도 코드가 붙인다.
+        //  종전엔 모델 몫이라 링크가 통째로 빠지는 글이 계속 나왔다.
+        let finalBody = ensureRelatedLinks(urlClean.html, relatedPosts);
+        finalBody = ensureHashtags(finalBody, keyword, (article as { tag?: string }).tag, (article as { tags?: unknown }).tags);
         if (prevUrl) { // ★전편 링크 자동 삽입(verified만) — 마커를 실제 링크로. 미충족 시 마커 유지(위저드 안내 폴백)
           finalBody = finalBody.includes("[전편 링크 자리]")
             ? finalBody.replace("[전편 링크 자리]", `<a href="${prevUrl}">${(prevTitle ?? "전편 글").replace(/</g, "")}</a>`)
