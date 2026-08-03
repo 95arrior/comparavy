@@ -11,7 +11,7 @@ import { scanFacts } from "@/lib/factGate";
 import { financeCalcContext } from "@/lib/financeCalc";
 import { sanitizeUrls } from "@/lib/linkWhitelist";
 import { countBodyChars } from "@/lib/humanizer";
-import { sectionBudgetReport, tailSummaryBullets, ensureHashtags, clichePhotoSlots, hardTrimToLimit } from "@/lib/editorial";
+import { sectionBudgetReport, tailSummaryBullets, ensureHashtags, clichePhotoSlots, hardTrimToLimit, eligibilityTableIssues } from "@/lib/editorial";
 import { validateTitleTail } from "@/lib/titleRules";
 import { listToTable } from "@/lib/publishHtml";
 import { sectionBudgetFor, targetMaxFor } from "@/lib/articlePrompt";
@@ -447,6 +447,11 @@ export async function POST(request: Request) {
           {
             const tv = validateTitleTail(String((a as { title?: string }).title ?? ""));
             if (!tv.ok) w.push(`제목이 규격 미달이다 — ${tv.reason}. ★제목 구조: [수식절] + [핵심 키워드 명사구] + [여운 꼬리].`);
+          }
+          // ★자격 요건 표 검증(2026-08-04 유저 실측) — 이 표가 그대로 이미지 카드가 된다.
+          //  이미지는 발행 뒤 고치기 어렵고, 자격은 틀리면 독자가 신청 손해를 본다(3원칙의 법적 안전).
+          for (const it of eligibilityTableIssues(a.body_html)) {
+            w.push(`자격 요건 표가 부정확하다 — '${it.row}': ${it.why}.`);
           }
           const tailBullets = tailSummaryBullets(a.body_html);
           if (tailBullets > 0) {

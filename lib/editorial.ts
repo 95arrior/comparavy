@@ -257,6 +257,66 @@ export function photoSceneShortfall(html: string): { slots: number; scenes: numb
   return scenes < 1 ? { slots: descs.length, scenes } : null; // 최소 한 장은 장면이어야 한다
 }
 
+// ═══ 자격 요건 표 검증(2026-08-04 유저 실측: 데이터 카드의 연령 구간이 틀렸다) ═══
+//  실물: '만 18~34세 | 청년미래적금, 청년월세지원, 국민취업지원제도 청년특례'
+//  ★셋의 실제 하한이 19·19·15로 서로 다른데 한 행에 묶고 단일 범위를 붙였다 —
+//   묶는 순간 어떤 숫자를 써도 틀린다. 그리고 청년기본법 기준은 19세라 '18세'는 어느 제도에도 안 맞는다.
+//  ★왜 급한가: 이 표가 그대로 이미지 카드가 된다(인포그래픽은 본문 표를 옮긴다).
+//   이미지는 발행 뒤 고치기 어렵고, 자격 요건은 틀리면 독자가 실제로 신청 손해를 본다.
+//   유저 3원칙의 '법적 안전'에 걸리는 종류다.
+//  ★과교정 방지: 산문의 연령 언급은 보지 않는다. 표 안만 본다.
+
+/** 자격 수치 — 연령 구간·소득 상한처럼 '신청 자격'을 가르는 값. */
+const ELIGIBILITY_RE = /(만\s*\d{1,2}\s*[~∼-]\s*\d{1,2}\s*세|\d{1,2}\s*세\s*(이상|이하|미만|초과)|연\s*소득\s*\d|소득\s*\d{1,3}\s*(만\s*원|%)\s*(이하|미만))/;
+/** 출처 신호 — 기관명 또는 기준 시점. 이게 있으면 '확인 가능한 값'으로 본다. */
+const SOURCE_RE = /(국토교통부|고용노동부|보건복지부|기획재정부|행정안전부|금융위원회|금융감독원|국세청|중소벤처기업부|여성가족부|교육부|국민연금공단|건강보험공단|근로복지공단|주택도시보증공사|서울시|경기도|지자체|공단|공사|\d{4}\s*년\s*\d{1,2}\s*월\s*기준|기준일|공식\s*안내)/;
+/** 제도명으로 읽히는 토큰 — 나열 개수를 셀 때 쓴다. */
+const PROGRAM_RE = /[가-힣]{2,}(적금|지원|지원금|제도|계좌|수당|급여|바우처|공제|연금|보험|대출|특례|사업)/g;
+
+export interface EligibilityIssue { row: string; why: string }
+
+/**
+ * 표 안의 자격 요건 결함을 찾는다. 두 가지만 본다(최소선 — 품질 심사가 아니다):
+ *  ① 서로 다른 제도 3개 이상을 한 행에 묶고 단일 연령 구간을 붙인 것
+ *  ② 표에 자격 수치가 있는데 그 표 근처에 출처가 없는 것
+ */
+export function eligibilityTableIssues(html: string): EligibilityIssue[] {
+  const h = String(html || "");
+  const issues: EligibilityIssue[] = [];
+  for (const m of h.matchAll(/<table[\s\S]*?<\/table>/gi)) {
+    const table = m[0];
+    const at = m.index ?? 0;
+    // 표 앞뒤 400자를 '근처'로 본다 — 출처는 보통 표 바로 위나 아래에 적는다.
+    const near = stripTags(h.slice(Math.max(0, at - 400), at + table.length + 400));
+    const hasSource = SOURCE_RE.test(near);
+
+    for (const r of table.matchAll(/<tr[\s\S]*?<\/tr>/gi)) {
+      const cells = [...r[0].matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map((c) => stripTags(c[1]).trim());
+      if (cells.length < 2) continue;
+      const rowText = cells.join(" | ");
+      if (!ELIGIBILITY_RE.test(rowText)) continue;
+
+      // ① 여러 제도를 한 행에 묶었는가 — 제도명이 3개 이상이면 하한이 다를 수밖에 없다
+      const programs = new Set((rowText.match(PROGRAM_RE) ?? []).map((x) => x.trim()));
+      if (programs.size >= 3) {
+        issues.push({
+          row: rowText.slice(0, 60),
+          why: `제도 ${programs.size}개를 한 행에 묶고 단일 자격 구간을 붙였다(${[...programs].slice(0, 3).join(", ")}…). 제도마다 하한이 달라 어떤 숫자를 써도 틀린다 — 제도별로 행을 나누거나, 자격 구간 열을 빼고 '제도별 상이'로 쓴다`,
+        });
+        continue; // 같은 행에서 ②까지 중복 지적하지 않는다
+      }
+      // ② 자격 수치인데 출처가 없는가
+      if (!hasSource) {
+        issues.push({
+          row: rowText.slice(0, 60),
+          why: "자격 수치(연령·소득)인데 표 근처에 근거 기관·기준 시점이 없다. 표 바로 아래에 '출처: 기관명 · YYYY년 M월 기준'을 적거나, 확인이 안 되면 그 열을 빼라 — 자격은 틀리면 독자가 신청 손해를 본다",
+        });
+      }
+    }
+  }
+  return issues.slice(0, 4);
+}
+
 // ═══ 분량 하드컷(2026-08-04 유저 확정: "최대 2500자를 넘지 마세요") ═══
 //  ★지금까지 분량 게이트는 전부 '경고 → 재생성' 구조였다. 재생성이 실패하거나 예산이 없으면
 //   그냥 통과했고, 그래서 유저가 네 번 연속 긴 글을 받았다. 부탁이 아니라 실행이어야 한다.

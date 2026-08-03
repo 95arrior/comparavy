@@ -1,4 +1,4 @@
-import { spacingDefects, hasSpacingDefect, longParagraphs, emojiCount, photoSlotShortfall, skeletonReport, hasFabricatedExperience, sectionBudgetReport, tailSummaryBullets, ensureHashtags, hardTrimToLimit, HARD_CHAR_LIMIT, EMOJI_MIN, PARA_MAX_LINES } from "../lib/editorial.ts";
+import { spacingDefects, hasSpacingDefect, longParagraphs, emojiCount, photoSlotShortfall, skeletonReport, hasFabricatedExperience, sectionBudgetReport, tailSummaryBullets, ensureHashtags, hardTrimToLimit, HARD_CHAR_LIMIT, eligibilityTableIssues, EMOJI_MIN, PARA_MAX_LINES } from "../lib/editorial.ts";
 import { BODY_ALIGN } from "../config/publish.ts";
 import fs from "node:fs";
 
@@ -367,6 +367,45 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   ok(/하드 상한 2,500자/.test(ap), "★프롬프트에도 하드 상한이 명시됨");
   const md = fs.readFileSync(new URL("../CLAUDE.md", import.meta.url), "utf-8");
   ok(/하드 상한 2,500자/.test(md), "★CLAUDE.md와 코드가 같은 숫자를 본다");
+}
+
+
+// ── ⑥-9 ★자격 요건 표(2026-08-04 유저 실측: 데이터 카드가 틀린 연령을 박았다) ──
+//  실물: '만 18~34세 | 청년미래적금, 청년월세지원, 국민취업지원제도 청년특례'
+//  ★셋의 실제 하한이 19·19·15로 다르다 — 묶는 순간 어떤 숫자를 써도 틀린다.
+//   그리고 청년기본법 기준이 19세라 '18세'는 어느 제도에도 안 맞는 숫자였다.
+//  ★이 표가 그대로 이미지 카드가 된다: 이미지는 발행 뒤 고치기 어렵고, 자격이 틀리면
+//   독자가 실제로 신청 손해를 본다(3원칙의 법적 안전).
+{
+  const T = (rows) => `<table>${rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join("")}</tr>`).join("")}</table>`;
+
+  // ★유저가 잡은 실물 그대로
+  const 실물 = T([["나이 구간", "주요 해당 제도", "유의사항"],
+    ["만 18~34세", "청년미래적금, 청년월세지원, 국민취업지원제도 청년특례", "대부분 제도의 기본 기준"],
+    ["만 35~39세", "국민취업지원제도 일반형, 청년형 ISA 일부", "청년 특례 적용 안 되는 제도 많음"]]);
+  const r = eligibilityTableIssues(실물);
+  ok(r.length > 0, "★유저가 잡은 실물 표를 잡는다", r[0]?.why.slice(0, 40) ?? "못 잡음");
+  ok(/한 행에 묶고/.test(r[0]?.why ?? ""), "★'제도를 묶었다'는 진짜 원인을 짚는다");
+
+  ok(eligibilityTableIssues(T([["대상", "연령"], ["청년월세지원", "만 19~34세"]])).length > 0,
+     "★자격 수치인데 출처가 없으면 잡는다");
+
+  // ★과교정 방어 — 이 셋이 막히면 이 게이트는 못 쓴다
+  ok(eligibilityTableIssues("<p>출처: 국토교통부 · 2026년 1월 기준</p>" + T([["대상", "연령"], ["청년월세지원", "만 19~34세"]])).length === 0,
+     "★출처가 있으면 통과");
+  ok(eligibilityTableIssues(T([["보유 수량", "세전", "세후"], ["100주", "37,400원", "31,600원"]])).length === 0,
+     "★자격 수치 없는 표는 손대지 않는다");
+  ok(eligibilityTableIssues("<p>만 19~34세 청년이라면 신청할 수 있습니다.</p>").length === 0,
+     "★산문의 연령 언급은 보지 않는다(표만 본다)");
+
+  // ★두 층 다 배선됐는가 — 한 층만 막으면 다른 경로로 샌다(오늘 다섯 번 겪은 일)
+  const gr = fs.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8");
+  ok(/eligibilityTableIssues\(a\.body_html\)/.test(gr), "★층1: 생성 시 결함으로 올린다");
+  const ig = fs.readFileSync(new URL("../app/api/infographic/route.ts", import.meta.url), "utf-8");
+  ok(/eligibilityTableIssues\(html\)/.test(ig), "★층2: 카드 생성 자체를 거부한다(재생성에 의존하지 않는다)");
+  ok(/status: 422/.test(ig), "★거부 이유를 유저에게 보여준다");
+  const ap = fs.readFileSync(new URL("../lib/articlePrompt.ts", import.meta.url), "utf-8");
+  ok(/자격 요건 표 규칙/.test(ap), "★프롬프트에도 규칙이 있다(애초에 안 만드는 게 낫다)");
 }
 
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 발행글 품질(띄어쓰기·문단·이모지·사진·정렬)");

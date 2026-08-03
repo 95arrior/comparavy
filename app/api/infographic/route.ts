@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { eligibilityTableIssues } from "@/lib/editorial";
 import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
 import { renderBarChart, renderTableCard, renderChecklistCard, renderStatCard, renderBeforeAfterCard, renderCompositionCard, renderTrendChart } from "@/lib/infographicRenderer";
 import { parseCardMarker, verifyNumbersInBody, parseChartMarker, verifyChartNumbers } from "@/lib/cardMarker";
@@ -56,6 +57,19 @@ export async function POST(req: Request) {
   try { const { data: bp } = await supabase.from("blog_profiles").select("blog_name").eq("user_id", user.id).order("created_at", { ascending: true }).limit(1).single(); brand = (bp?.blog_name ?? "").trim() || brand; } catch { /* ignore */ }
 
   const html = String((article as { body_html?: string }).body_html ?? "");
+  // ★자격 요건 표는 근거 없이 카드로 만들지 않는다(2026-08-04 유저 실측).
+  //  실물: '만 18~34세 | 청년미래적금, 청년월세지원, 국민취업지원제도 청년특례' —
+  //  셋의 하한이 19·19·15로 달라 묶는 순간 틀린다. 그게 그대로 이미지가 됐다.
+  //  ★생성 게이트(specDefects)는 재생성에 의존하므로 실패할 수 있다. 여기는 '거부'라 확실하다.
+  //   이미지는 발행 뒤 고치기 어렵다 — 만들기 전에 막는 게 유일하게 확실한 방어다.
+  {
+    const el = eligibilityTableIssues(html);
+    if (el.length > 0) {
+      return NextResponse.json({
+        error: `자격 요건이 확인되지 않아 카드를 만들지 않았어요 — ${el[0].why}. 본문 표를 고친 뒤 다시 눌러 주세요(틀린 자격이 이미지로 박히면 되돌리기 어려워요).`,
+      }, { status: 422 });
+    }
+  }
   const wantChecklist = /체크리스트|절차|순서|준비물/.test(slotDesc);
   const table = parseFirstTable(html);
   const checklist = parseChecklist(html);
