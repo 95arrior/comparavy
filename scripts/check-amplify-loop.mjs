@@ -1,4 +1,5 @@
 // 수익 증폭 검증 — 성립 기준·가중 상한/하한·급등·공격 잠금.
+import fs from "node:fs";
 import { bumpMixWeight, isSpike, attackEligible } from "../lib/checkin.ts";
 import { MIX_WEIGHT_CAP, MIX_WEIGHT_FLOOR } from "../lib/scoreWeights.ts";
 let fail=0; const ok=(c,m)=>{if(!c){fail++;console.log(`  !! ${m}`);}else console.log(`  OK ${m}`);};
@@ -29,6 +30,18 @@ ok(parse({title:"지원금 완전 정복",arc:[{role:"개요",angle:"a"},{role:"
 ok(parse({title:"x",arc:[{role:"개요",angle:"a"},{role:"자격",angle:"b"}]})===null, "2화 = 단발(억지 시리즈 금지)");
 ok(parse(null)===null && parse({title:"x",arc:"no"})===null, "미설계 = 단발");
 ok(parse({title:"x",arc:[{role:"a",angle:"1"},{role:"b",angle:"2"},{role:"c",angle:"3"},{role:"d",angle:"4"},{role:"e",angle:"5"}]})===null, "5화+ = 반려(3~4화만)");
+
+// ── ★캐시 버전(2026-08-04 유저 실측) ───────────────────────────────────
+//  증식 규칙(제목 공식·꼬리 게이트)을 바꿨는데 amp 캐시 버전을 안 올려서 옛 카드가 그대로 서빙됐다.
+//  증식이 안 도니 진단(amp-funnel)도 영영 "기록 없음"이었다.
+//  ★규칙을 바꾸면 캐시 버전을 같이 올린다 — 같은 날 홈판(homebet v3)에서 이미 겪은 일이다.
+{
+  const chk = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "|", l, e); };
+  const tr = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
+  const m = tr.match(/amp:v(\d+):/);
+  chk(!!m, "★증식 캐시 키에 버전 자리가 있다", m ? `amp:v${m[1]}` : "없음");
+  chk(!!m && Number(m[1]) >= 6, "★제목 규격 개정에 맞춰 버전이 올라갔다", m ? `v${m[1]}` : "");
+}
 
 console.log(fail===0?"\n통과: 증폭 루프 코어":"\n실패: "+fail);
 process.exit(fail?1:0);
