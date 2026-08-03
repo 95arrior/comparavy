@@ -3,6 +3,7 @@ import { NextResponse, after } from "next/server";
 import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
 import { keywordsToTitles } from "@/lib/topicTitles";
 import { lastAmplifyDiag } from "@/lib/amplifyTopics";
+import { validateTitleTail } from "@/lib/titleRules";
 import { normalizeKeyword, nearDuplicate, sameProductFamily } from "@/lib/diversity";
 import { audienceOf, AUDIENCE_ALL } from "@/lib/audience";
 import { isUnsafeKeyword, mentionsForeignRegion } from "@/lib/keywordSafety";
@@ -350,14 +351,21 @@ export async function GET(req: Request) {
             try { await pool.from("api_cache").upsert({ key: ampKey, value: amped, expires_at: new Date(Date.now() + 6 * 3600_000).toISOString(), updated_at: new Date().toISOString() }); } catch { /* ignore */ }
           } else {
             // ★증식 실패 폴백 — 원본 씨앗이라도 유저 시드로 회전해 보여준다(홈 빈 화면 방지).
+            // ★2026-08-04 유저 실측: 이 폴백이 조용히 돌고 있었고, 씨앗 제목이 뉴스 헤드라인이라
+            //  '…보유세 폭증...내 집 세금은 얼마?'처럼 말줄임표가 그대로 화면에 나왔다.
+            //  ★폴백도 제목 규격을 지켜야 한다 — 폴백이 규격을 어기면 규칙이 가장 자주 깨지는 곳이 우리 코드가 된다.
+            console.log(`[trend-fallback] user=${user.id.slice(0, 8)} 증식 0장 — 씨앗 원문으로 대체(씨앗 ${trends.length})`);
             amped = [...trends]
               .sort((a, b) => (seedFrom(a.keyword + user!.id) % 997) - (seedFrom(b.keyword + user!.id) % 997))
               .slice(0, 3)
               .map((t) => {
                 // 실검증 롱테일(gap 낮은 것) 우선 — 뉴스 티 제거. 없으면 씨앗 keyword.
                 const lt = (t.longtails ?? [])[0];
-                return { keyword: lt?.kw ?? t.keyword, title: t.title, newsContext: t.newsContext, source: t.source };
-              });
+                // 말줄임표는 우리 문장부호로 바꿔서 살린다(뉴스 헤드라인 티를 지운다).
+                const fixed = String(t.title ?? "").replace(/(\.\.\.|…)\s*/g, ", ").replace(/\s*,\s*,/g, ",").trim();
+                return { keyword: lt?.kw ?? t.keyword, title: validateTitleTail(fixed).ok ? fixed : "", newsContext: t.newsContext, source: t.source };
+              })
+              .filter((x) => x.title); // 규격 미달은 버린다 — 빈자리가 규격 어긴 카드보다 낫다
           }
         }
       }
