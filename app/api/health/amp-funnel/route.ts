@@ -15,11 +15,18 @@ export async function GET() {
   const db = createSupabaseAdminClient();
   const { data } = await db.from("api_cache").select("value").eq("key", "diag:amp-funnel").maybeSingle();
   const v = (data?.value ?? null) as null | {
-    seeds: number; want: number; briefs: number; parsed: number; out: number; at?: string;
+    seeds: number; want: number; briefs: number; parsed: number; out: number; at?: string; stage?: string;
     drop: { placeholder: number; noBrief: number; dupKeyword: number; orphan: number; titleTail: number };
+  };
+  // ★배포 식별(2026-08-04) — "고쳤는데 화면은 그대로"를 오늘만 세 번 겪었다.
+  //  어느 빌드가 떠 있는지 응답에 박아 두면 배포 타이밍 추측이 끝난다.
+  const build = {
+    커밋: (process.env.VERCEL_GIT_COMMIT_SHA ?? "local").slice(0, 7),
+    배포시각: process.env.VERCEL_DEPLOYMENT_ID ? undefined : "로컬",
   };
   if (!v) {
     return NextResponse.json({
+      build,
       상태: "아직 기록 없음",
       안내: "글감을 한 번 새로 받으면(트렌드 증식이 돌면) 여기에 기록됩니다. 캐시가 살아 있으면 증식이 안 돌 수 있어요.",
     });
@@ -27,7 +34,9 @@ export async function GET() {
 
   const 손실 = v.want - v.out;
   return NextResponse.json({
+    build,
     잰시각: v.at ?? null,
+    끊긴지점: v.stage ?? "완료",
     흐름: `씨앗 ${v.seeds} → 요청 ${v.want} → 브리프 ${v.briefs} → 모델 반환 ${v.parsed} → 카드 ${v.out}`,
     잃은수: 손실,
     탈락사유: {

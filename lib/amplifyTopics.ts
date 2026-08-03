@@ -150,9 +150,31 @@ function coreOf(text: string): string {
  */
 /** ★마지막 증식 진단(2026-08-04) — debug 응답이 읽어 간다. 프로세스 메모리라 최신 1건만 유지된다. */
 export let lastAmplifyDiag: {
-  seeds: number; want: number; briefs: number; parsed: number; out: number;
+  seeds: number; want: number; briefs: number; parsed: number; out: number; stage?: string;
   drop: { placeholder: number; noBrief: number; dupKeyword: number; orphan: number; titleTail: number };
 } | null = null;
+
+const NO_DROP = { placeholder: 0, noBrief: 0, dupKeyword: 0, orphan: 0, titleTail: 0 };
+
+/**
+ * ★진단을 남긴다 — 성공/실패 '모든' 종료 경로에서 부른다(2026-08-04 유저 실측에서 검거).
+ *  종전엔 성공 경로에서만 남겨서, 정작 진단이 필요한 실패(씨앗 0·파싱 실패·예외)에서는
+ *  기록이 통째로 비었다. "아직 기록 없음"이 곧 증상인데 그걸 구분할 방법이 없었다.
+ *  ★실패한 자리를 stage로 남긴다 — 어디서 끊겼는지가 답이다.
+ */
+async function saveAmpDiag(d: NonNullable<typeof lastAmplifyDiag>): Promise<void> {
+  lastAmplifyDiag = d;
+  console.log(`[amp-funnel] ${d.stage ?? "done"} | 씨앗 ${d.seeds} → 요청 ${d.want} → 브리프 ${d.briefs} → 모델 반환 ${d.parsed} → 카드 ${d.out} | 탈락 ${JSON.stringify(d.drop)}`);
+  try {
+    const db = createSupabaseAdminClient();
+    await db.from("api_cache").upsert({
+      key: "diag:amp-funnel",
+      value: { ...d, at: new Date().toISOString() },
+      expires_at: new Date(Date.now() + 3 * 86400_000).toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+  } catch { /* 진단 저장 실패는 파이프에 영향 없다 */ }
+}
 
 export async function amplifyForUser(
   seeds: TrendTopic[],
@@ -161,7 +183,11 @@ export async function amplifyForUser(
   want = 3,
 ): Promise<AmplifiedTopic[]> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey || seeds.length === 0) return [];
+  if (!apiKey || seeds.length === 0) {
+    // ★여기서 끊기면 증식은 시작조차 안 한 것이다 — 씨앗이 없거나 키가 없다.
+    void saveAmpDiag({ seeds: seeds.length, want, briefs: 0, parsed: 0, out: 0, drop: { ...NO_DROP }, stage: !apiKey ? "중단: API 키 없음" : "중단: 씨앗 0개" });
+    return [];
+  }
 
   const day = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
   const axis = userAxis(profile);
@@ -239,7 +265,11 @@ ${OPEN_LOOP_GUIDE}
     void logUsage({ userId, model: "claude-haiku-4-5", kind: "amplify", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
     const text = res.content[0]?.type === "text" ? res.content[0].text : "";
     const m = /\[[\s\S]*\]/.exec(text);
-    if (!m) return [];
+    if (!m) {
+      // ★모델 응답에서 JSON을 못 찾았다 — 출력이 잘렸거나 형식을 어긴 것이다.
+      await saveAmpDiag({ seeds: seeds.length, want, briefs: briefs.length, parsed: 0, out: 0, drop: { ...NO_DROP }, stage: "중단: 모델 응답 파싱 실패" });
+      return [];
+    }
     const parsed = JSON.parse(m[0]) as { seedIndex?: number; keyword?: string; titleClick?: string; titleSearch?: string; reader?: string; hook?: string; thumbMain?: string; thumbSub?: string; verdict?: string; cutList?: string[]; branchAxis?: string; series?: { title?: string; arc?: { role?: string; angle?: string }[] } | null }[];
     const out: AmplifiedTopic[] = [];
     const seen = new Set<string>();
@@ -358,22 +388,11 @@ ${OPEN_LOOP_GUIDE}
     for (const o of out) if (!validThumbMain(o.thumb.mainCopy)) o.thumb.mainCopy = "";
     // ★증식 진단(2026-08-04) — 항상 로그로 남기고, 마지막 결과를 모듈에 보관해 debug 응답이 읽어 간다.
     //  ★유저가 매번 로그를 뒤지게 하지 않는다: 주소 하나로 보이면 그게 자동이다.
-    lastAmplifyDiag = { seeds: seeds.length, want, briefs: briefs.length, parsed: parsed.length, out: out.length, drop };
-    console.log(`[amp-funnel] 씨앗 ${seeds.length} → 요청 ${want} → 브리프 ${briefs.length} → 모델 반환 ${parsed.length} → 카드 ${out.length} | 탈락 ${JSON.stringify(drop)}`);
-    // ★저장소에도 남긴다(2026-08-04) — 모듈 변수만 두면 서버리스에서 못 읽는다.
-    //  요청마다 인스턴스가 다를 수 있어서 '방금 돈 진단'이 다음 요청엔 비어 있다.
-    //  ★진단을 만들어놓고 읽을 수 없으면 없는 것과 같다(오늘 다섯 번째로 배우는 교훈).
-    try {
-      const db = createSupabaseAdminClient();
-      await db.from("api_cache").upsert({
-        key: "diag:amp-funnel",
-        value: { ...lastAmplifyDiag, at: new Date().toISOString() },
-        expires_at: new Date(Date.now() + 3 * 86400_000).toISOString(),
-        updated_at: new Date().toISOString(),
-      });
-    } catch { /* 진단 저장 실패는 파이프에 영향 없다 */ }
+    await saveAmpDiag({ seeds: seeds.length, want, briefs: briefs.length, parsed: parsed.length, out: out.length, drop, stage: "완료" });
     return out;
-  } catch {
+  } catch (e) {
+    // ★예외로 죽어도 흔적을 남긴다 — 조용한 실패가 오늘 하루를 잡아먹었다.
+    await saveAmpDiag({ seeds: seeds.length, want, briefs: 0, parsed: 0, out: 0, drop: { ...NO_DROP }, stage: `중단: 예외 — ${e instanceof Error ? e.message.slice(0, 80) : "알 수 없음"}` });
     return [];
   }
 }
