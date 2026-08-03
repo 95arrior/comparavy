@@ -26,10 +26,28 @@ function parseFirstTable(html: string): { headers: string[]; rows: string[][] } 
   return { headers, rows };
 }
 
+// ★2026-08-04 유저 실측 수리: 카드에 '…급여 신청|육아휴직 시작일 이후 매월 단'처럼
+//  구분자가 그대로 노출되고 글자가 잘렸다. 원인 두 겹이었다.
+//   ① <li>·<td>를 줄바꿈으로 안 바꿔서 여러 항목이 한 줄로 뭉쳤다(</p>·<br>만 처리했다).
+//   ② 모델이 마커 형식의 구분자(| ;)를 본문에 흘리면 그게 한 항목이 됐다.
+//  ★그리고 긴 항목은 렌더러가 잘라 말이 끊긴다 — 길면 애초에 항목으로 쓰지 않는다.
 function parseChecklist(html: string): string[] {
-  const text = html.replace(/<br\s*\/?\s*>/gi, "\n").replace(/<\/p>/gi, "\n");
+  const text = html
+    .replace(/<br\s*\/?\s*>/gi, "\n")
+    .replace(/<\/(p|li|td|tr|h[1-6]|div)>/gi, "\n");
   const lines = stripTagsKeepLines(text).split("\n").map((l) => l.trim());
-  const items = lines.filter((l) => /^[☐□✅✔]/.test(l)).map((l) => l.replace(/^[☐□✅✔]\s*/, "").trim()).filter(Boolean);
+  const items: string[] = [];
+  for (const l of lines) {
+    if (!/^[☐□✅✔]/.test(l)) continue;
+    const body = l.replace(/^[☐□✅✔]\s*/, "").trim();
+    // 구분자가 섞여 있으면 쪼갠다 — 한 줄에 여러 항목이 들어온 경우다.
+    for (const part of body.split(/\s*[|;·]\s*/)) {
+      const t = part.replace(/^[☐□✅✔]\s*/, "").trim();
+      // ★40자 넘는 항목은 버린다: 렌더러가 잘라 말이 중간에서 끊긴다(유저 실측 '…매월 단').
+      //  체크리스트는 짧은 행동 단위여야 한다 — 문장이면 카드가 아니라 본문이 맡을 몫이다.
+      if (t && [...t].length <= 40) items.push(t);
+    }
+  }
   return items;
 }
 function stripTagsKeepLines(html: string): string {

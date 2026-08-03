@@ -562,22 +562,46 @@ function capAccent(html: string): string {
 }
 
 // ★FAQ 개수 상한을 코드가 지킨다(2026-08-03 유저 실물: 규격 2개인데 3개, 블록이 283자로 예산의 2.8배).
-//  종전엔 skeletonReport가 '3개다'라고 경고만 하고 재생성 프롬프트에 실어 보냈다. 그런데
-//  재생성 예산(REGEN_CAP=1)을 가드 여럿이 나눠 쓰고, 고쳐졌는지 재검사도 안 해서 그대로 발행됐다.
-//  ★형광펜은 초과분을 시스템이 자동 해제한다(capMarks). FAQ도 같은 자리에서 같은 방식으로 자른다 —
-//   모델에게 부탁해서 되는 일이 아니고, 잘라도 정보가 사라지지 않는다(본문이 이미 답한 것들이다).
-function capFaq(html: string): string {
+//  종전엔 skeletonReport가 '3개다'라고 경고만 하고 재생성 프롬프트에 실어 보냈다.
+//  재생성 예산을 가드 여럿이 나눠 쓰고 고쳐졌는지 재검사도 안 해서 그대로 발행됐다.
+//
+// ★★2026-08-04 치명적 버그 수리(유저 실측: 글이 FAQ에서 뚝 끝났다).
+//  1차 구현은 '3번째 Q부터 다음 h2 전까지'를 잘랐다. 그런데 FAQ는 보통 마지막 섹션이라
+//  다음 h2가 없고(클로징엔 h2가 없다), 그러면 cutTo = html.length가 되어
+//  ★클로징이 통째로 같이 삭제됐다. 글이 '자주 묻는 질문' 답변에서 끝나 버린다.
+//  ★교훈: '어디까지 지울지'를 문서 끝으로 잡으면 안 된다 — 지울 것의 경계로 잡아야 한다.
+//   그래서 이제 Q&A 블록 '자체'만 지운다. 답변은 그 Q 뒤의 <p> 몇 개까지로 한정하고,
+//   <p>가 아닌 블록(표·리스트·이미지)을 만나면 거기서 멈춘다 — 그 뒤는 클로징 영역이다.
+export function capFaq(html: string): string {
   const QA_MAX = 2;
-  // 'Q. '로 시작하는 문단이 규격 표식이다(프롬프트가 그렇게 쓰라고 못 박았다).
-  const blocks = [...html.matchAll(/<p[^>]*>\s*(?:<[^>]+>\s*)*Q[.．]\s/gi)];
-  if (blocks.length <= QA_MAX) return html;
-  // 3번째 Q 문단이 시작하는 지점부터, 다음 소제목(h2) 전까지를 잘라낸다.
-  const cutFrom = blocks[QA_MAX]!.index;
-  if (cutFrom === undefined) return html;
-  const rest = html.slice(cutFrom);
-  const nextH2 = rest.search(/<h2[\s>]/i);
-  const cutTo = nextH2 === -1 ? html.length : cutFrom + nextH2;
-  return html.slice(0, cutFrom) + html.slice(cutTo);
+  // 최상위 블록으로 쪼갠다(태그 단위). 문자열 인덱스로 자르면 경계를 놓친다.
+  const blocks = [...html.matchAll(/<(p|h[1-6]|ul|ol|table|blockquote|div)[\s\S]*?<\/\1>/gi)];
+  if (blocks.length === 0) return html;
+  const isQ = (b: string) => /^<p[^>]*>\s*(?:<[^>]+>\s*)*Q[.．]\s/i.test(b);
+  const isP = (b: string) => /^<p[\s>]/i.test(b);
+
+  const qIdx = blocks.map((m, i) => (isQ(m[0]) ? i : -1)).filter((i) => i >= 0);
+  if (qIdx.length <= QA_MAX) return html;
+
+  // 지울 블록 인덱스 집합 — 3번째 Q부터, 각 Q와 그 답변(<p> 최대 3개)만.
+  const kill = new Set<number>();
+  for (const qi of qIdx.slice(QA_MAX)) {
+    kill.add(qi);
+    for (let j = qi + 1, n = 0; j < blocks.length && n < 3; j++, n++) {
+      const b = blocks[j]![0];
+      if (isQ(b) || !isP(b)) break; // 다음 Q이거나 <p>가 아니면 답변이 끝난 것 — 그 뒤는 안 건드린다
+      kill.add(j);
+    }
+  }
+  if (kill.size === 0) return html;
+  // 뒤에서부터 지운다 — 앞을 지우면 인덱스가 밀린다.
+  let out = html;
+  for (const i of [...kill].sort((a, b) => b - a)) {
+    const m = blocks[i]!;
+    if (m.index === undefined) continue;
+    out = out.slice(0, m.index) + out.slice(m.index + m[0].length);
+  }
+  return out;
 }
 
 // ★리스트 → 표 자동 변환(2026-08-04 유저 확정: "리스트가 많은 부분은 표로").
@@ -585,7 +609,6 @@ function capFaq(html: string): string {
 //  ★모델은 표를 만들기 싫어한다(불릿이 훨씬 쓰기 쉽다). 그러면 코드가 바꿔 준다.
 //  변환 조건은 좁게 잡는다 — 모든 리스트를 표로 만들면 리듬이 죽는다:
 //   ① li가 3개 이상 ② 각 li가 '항목, 설명' 구조(첫 쉼표로 갈림) ③ 항목 쪽이 짧다(20자 이내)
-//   이 셋을 다 만족하면 '조건 나열'이지 '흐름'이 아니다 — 표가 읽기 훨씬 낫고 AI 인용에도 유리하다.
 export function listToTable(html: string): string {
   return html.replace(/<ul(?:\s[^>]*)?>([\s\S]*?)<\/ul>/gi, (raw, inner: string) => {
     const lis = [...String(inner).matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)].map((m) => m[1]);

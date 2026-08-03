@@ -1,6 +1,7 @@
 import { spacingDefects, hasSpacingDefect, longParagraphs, emojiCount, photoSlotShortfall, skeletonReport, hasFabricatedExperience, sectionBudgetReport, tailSummaryBullets, ensureHashtags, hardTrimToLimit, HARD_CHAR_LIMIT, eligibilityTableIssues, EMOJI_MIN, PARA_MAX_LINES } from "../lib/editorial.ts";
 import { BODY_ALIGN } from "../config/publish.ts";
 import fs from "node:fs";
+import { capFaq } from "../lib/publishHtml.ts";
 
 // ★발행글 감사 회귀(2026-08-02) — 실제 발행물 「퇴사 전날까지 받을 수 있는 돈」을 검사해 나온 결함들.
 //  이 다섯은 전부 '규격은 있는데 코드가 안 재던' 것들이다. 프롬프트만으로는 지켜지지 않는다는 게 실측으로 확인됐다.
@@ -406,6 +407,38 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   ok(/status: 422/.test(ig), "★거부 이유를 유저에게 보여준다");
   const ap = fs.readFileSync(new URL("../lib/articlePrompt.ts", import.meta.url), "utf-8");
   ok(/자격 요건 표 규칙/.test(ap), "★프롬프트에도 규칙이 있다(애초에 안 만드는 게 낫다)");
+}
+
+
+// ── ⑥-10 ★★글이 FAQ에서 뚝 끝나던 치명적 버그(2026-08-04 유저 실측) ──────
+//  capFaq 1차 구현이 '3번째 Q부터 다음 h2 전까지'를 잘랐다. 그런데 FAQ는 보통 마지막 섹션이고
+//  클로징엔 h2가 없다 — 그래서 cutTo가 문서 끝이 되어 ★클로징이 통째로 삭제됐다.
+//  ★교훈: '어디까지 지울지'를 문서 끝으로 잡으면 안 된다. 지울 것의 경계로 잡아야 한다.
+{
+  const html = "<h2>본문 섹션</h2><p>내용입니다.</p>"
+    + "<h2>자주 묻는 질문</h2>"
+    + "<p>Q. 첫째 질문인가요?</p><p>첫째 답변입니다.</p>"
+    + "<p>Q. 둘째 질문인가요?</p><p>둘째 답변입니다.</p>"
+    + "<p>Q. 셋째 질문인가요?</p><p>셋째 답변입니다.</p>"
+    + "<p>Q. 넷째 질문인가요?</p><p>넷째 답변입니다.</p>"
+    + "<ul><li>□ 체크 하나</li><li>□ 체크 둘</li></ul>"
+    + "<p>조건은 기관마다 다르니 공식 안내를 확인하세요.</p>"
+    + "<p>오늘은 자격 조회부터 해보세요.</p>";
+  const out = capFaq(html);
+  ok((out.match(/Q[.．]/g) ?? []).length === 2, "Q&A가 2개로 줄었다");
+  ok(/체크 하나/.test(out), "★클로징 체크리스트가 살아 있다");
+  ok(/공식 안내를 확인하세요/.test(out), "★신뢰 문구가 살아 있다");
+  ok(/자격 조회부터 해보세요/.test(out), "★마지막 CTA가 살아 있다 — 글이 FAQ에서 끝나면 안 된다");
+  ok(!/셋째 질문|넷째 질문/.test(out), "3~4번째 Q&A만 지워졌다");
+
+  const two = "<h2>FAQ</h2><p>Q. 하나</p><p>답</p><p>Q. 둘</p><p>답</p><p>클로징</p>";
+  ok(capFaq(two) === two, "★Q&A 2개면 손대지 않는다(과교정 방어)");
+
+  // ★데이터 카드 끊김 — 구분자 노출·항목 뭉침·글자 잘림
+  const ig = fs.readFileSync(new URL("../app/api/infographic/route.ts", import.meta.url), "utf-8");
+  ok(/<\\\/\(p\|li\|td\|tr\|h\[1-6\]\|div\)>/.test(ig) || /li\|td\|tr/.test(ig), "★<li>·<td>도 줄바꿈으로 바꾼다(항목이 한 줄로 뭉치던 원인)");
+  ok(/split\(\/\\s\*\[\|;·\]\\s\*\/\)/.test(ig) || /\[\|;·\]/.test(ig), "★구분자가 섞인 줄은 쪼갠다");
+  ok(/length <= 40/.test(ig), "★긴 항목은 버린다(렌더러가 잘라 말이 끊긴다)");
 }
 
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 발행글 품질(띄어쓰기·문단·이모지·사진·정렬)");
