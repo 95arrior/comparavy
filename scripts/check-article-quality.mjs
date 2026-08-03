@@ -1,4 +1,4 @@
-import { spacingDefects, hasSpacingDefect, longParagraphs, emojiCount, photoSlotShortfall, skeletonReport, hasFabricatedExperience, sectionBudgetReport, tailSummaryBullets, ensureHashtags, EMOJI_MIN, PARA_MAX_LINES } from "../lib/editorial.ts";
+import { spacingDefects, hasSpacingDefect, longParagraphs, emojiCount, photoSlotShortfall, skeletonReport, hasFabricatedExperience, sectionBudgetReport, tailSummaryBullets, ensureHashtags, hardTrimToLimit, HARD_CHAR_LIMIT, EMOJI_MIN, PARA_MAX_LINES } from "../lib/editorial.ts";
 import { BODY_ALIGN } from "../config/publish.ts";
 import fs from "node:fs";
 
@@ -302,6 +302,60 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   ok(/#주식리딩방/.test(noModel), "★모델 태그가 없을 때만 키워드에서 파생한다(폴백)");
 
   ok(/\(article as \{ tags\?: unknown \}\)\.tags/.test(gr), "★모델 태그가 생성 경로에서 실제로 전달된다");
+
+  // ★'이미 있다' 오판 방어(2026-08-04 유저: "아직도 본문에 안 붙는다").
+  //  종전엔 태그만 벗기고 /#[^\\s#]+/로 셌다 — HTML 엔티티(&#39; 결)의 '#39;'과 본문의 '#1'이
+  //  해시태그로 세어졌고, 셋만 오인되면 '이미 있다'로 보고 통째로 건너뛰었다.
+  const 엔티티 = "<p>&#39;신청&#39; 절차입니다.</p><p>&#39;확인&#39;이 먼저입니다.</p><p>&#39;마감&#39; 주의.</p>";
+  ok(ensureHashtags(엔티티, "주식 리딩방", "재테크", 모델태그) !== 엔티티, "★HTML 엔티티를 해시태그로 오인하지 않는다");
+  const 번호 = "<p>#1 순위는 이것.</p><p>#2 는 저것.</p><p>#3 도 있음.</p><p>마무리.</p>";
+  ok(ensureHashtags(번호, "주식 리딩방", "재테크", 모델태그) !== 번호, "★본문의 '#1' 표기를 해시태그로 오인하지 않는다");
+  const 진짜 = "<p>본문</p><p>#주식방 #리딩방사기 #불법투자자문 #주식피해</p>";
+  ok(ensureHashtags(진짜, "주식 리딩방", "재테크", 모델태그) === 진짜, "★진짜 해시태그가 있으면 건너뛴다(중복 방지)");
+}
+
+
+// ── ⑥-8 ★분량 하드컷(2026-08-04 유저: "최대 2500자를 넘지 마세요") ──────
+//  ★지금까지 분량 게이트는 전부 '경고 → 재생성'이었다. 재생성이 실패하거나 예산이 없으면 그냥 통과했고,
+//   그래서 유저가 네 번 연속 긴 글을 받았다. 부탁이 아니라 실행이어야 한다.
+{
+  const cnt = (h) => h.replace(/<[^>]+>/g, "").replace(/\s/g, "").length;
+  ok(HARD_CHAR_LIMIT === 2500, "★하드 상한 2,500자(유저 확정)", String(HARD_CHAR_LIMIT));
+
+  const sec = (t, n) => `<h2>${t}</h2><p>${"가".repeat(n)}</p>`;
+  const 긴글 = sec("첫 섹션", 800) + sec("둘째 섹션", 800) + sec("자주 묻는 질문", 700) + sec("셋째 섹션", 800) + "<p>마무리 문장</p>";
+  const r = hardTrimToLimit(긴글, cnt);
+  ok(cnt(r.html) <= 2500, "★상한 안으로 줄인다", `${cnt(긴글)}자 → ${cnt(r.html)}자`);
+  ok(r.removed.includes("자주 묻는 질문"), "★FAQ부터 뺀다(본문이 이미 답한 것이라 손실이 가장 적다)", r.removed.join(","));
+  ok(/마무리 문장/.test(r.html), "★클로징은 보존한다(뚝 끊긴 글이 되면 안 된다)");
+
+  // ★과교정 방어 — 상한 안이면 손대지 않는다
+  const 짧은글 = sec("가", 300) + sec("나", 300);
+  ok(hardTrimToLimit(짧은글, cnt).removed.length === 0, "★상한 안이면 그대로 둔다");
+  // ★소제목 2개 이하로는 줄이지 않는다(글이 아니게 된다)
+  const 두섹션 = sec("가", 2000) + sec("나", 2000);
+  ok(hardTrimToLimit(두섹션, cnt).removed.length === 0, "★소제목 2개 미만으로는 안 줄인다");
+
+  const gr = fs.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8");
+  ok(/hardTrimToLimit\(article\.body_html/.test(gr), "★생성 경로에 배선됨(압축 재생성 실패해도 상한은 지켜진다)");
+  ok(/\[hard-trim\]/.test(gr), "★자를 때 무엇을 뺐는지 로그로 남긴다");
+
+  // ★리스트 → 표(유저: "리스트가 많은 부분은 표로")
+  const ph = fs.readFileSync(new URL("../lib/publishHtml.ts", import.meta.url), "utf-8");
+  ok(/function listToTable/.test(ph), "★리스트를 표로 바꾸는 변환이 있다");
+  ok(/listToTable\(capFaq/.test(ph), "★발행 파이프라인에 배선됨");
+  ok(/체크리스트는 그대로 둔다/.test(ph), "★체크리스트는 표로 바꾸지 않는다(저장률 장치)");
+
+  // ★함께 보면 좋은 글 2~3개 고정(유저: "핏한 게 없어도 넣어라")
+  ok(/relatedPosts\.length < 2/.test(gr), "★내부링크가 2개 미만이면 보강한다");
+
+  // ★이미지 설명 상세화 + AI 인용 구조
+  const ap = fs.readFileSync(new URL("../lib/articlePrompt.ts", import.meta.url), "utf-8");
+  ok(/슬롯 설명 규격/.test(ap), "★사진 설명에 장소·시간·구도까지 요구한다");
+  ok(/AI 인용 구조/.test(ap), "★수치는 표나 '라벨: 값'으로 세우게 한다");
+  ok(/하드 상한 2,500자/.test(ap), "★프롬프트에도 하드 상한이 명시됨");
+  const md = fs.readFileSync(new URL("../CLAUDE.md", import.meta.url), "utf-8");
+  ok(/하드 상한 2,500자/.test(md), "★CLAUDE.md와 코드가 같은 숫자를 본다");
 }
 
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 발행글 품질(띄어쓰기·문단·이모지·사진·정렬)");

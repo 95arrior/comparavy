@@ -580,6 +580,34 @@ function capFaq(html: string): string {
   return html.slice(0, cutFrom) + html.slice(cutTo);
 }
 
+// ★리스트 → 표 자동 변환(2026-08-04 유저 확정: "리스트가 많은 부분은 표로").
+//  프롬프트로 '3개 이상 나열은 표'라고 여러 번 못 박았는데 계속 '• 항목, 설명' 불릿으로 나왔다.
+//  ★모델은 표를 만들기 싫어한다(불릿이 훨씬 쓰기 쉽다). 그러면 코드가 바꿔 준다.
+//  변환 조건은 좁게 잡는다 — 모든 리스트를 표로 만들면 리듬이 죽는다:
+//   ① li가 3개 이상 ② 각 li가 '항목, 설명' 구조(첫 쉼표로 갈림) ③ 항목 쪽이 짧다(20자 이내)
+//   이 셋을 다 만족하면 '조건 나열'이지 '흐름'이 아니다 — 표가 읽기 훨씬 낫고 AI 인용에도 유리하다.
+function listToTable(html: string): string {
+  return html.replace(/<ul(?:\s[^>]*)?>([\s\S]*?)<\/ul>/gi, (raw, inner: string) => {
+    const lis = [...String(inner).matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)].map((m) => m[1]);
+    if (lis.length < 3 || lis.length > 8) return raw;
+    const rows: [string, string][] = [];
+    for (const li of lis) {
+      const plain = li.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+      if (/[□☐]/.test(plain)) return raw; // 체크리스트는 그대로 둔다(저장률 장치)
+      const cut = plain.indexOf(",");
+      if (cut < 2 || cut > 20) return raw; // '항목, 설명' 구조가 아니면 흐름형 리스트다
+      const head = plain.slice(0, cut).trim();
+      const body = plain.slice(cut + 1).trim();
+      if (!head || body.length < 4) return raw;
+      rows.push([head, body]);
+    }
+    const th = '<th style="border:1px solid #ddd;padding:8px 10px;background:#f7f8fa;text-align:left;font-size:14px;word-break:keep-all">';
+    const td = '<td style="border:1px solid #ddd;padding:8px 10px;text-align:left;font-size:14px;word-break:keep-all">';
+    const body = rows.map(([h, b]) => `<tr>${td}${h}</td>${td}${b}</td></tr>`).join("");
+    return `<table style="width:100%;border-collapse:collapse;margin:8px 0"><tr>${th}항목</th>${th}내용</th></tr>${body}</table>`;
+  });
+}
+
 function capMarks(html: string): string {
   // ★고아 태그 방어 — <mark> 열림/닫힘 불균형이면 형광 전부 해제(도배보다 무강조가 낫다)
   const opens = (html.match(/<mark(\s[^>]*)?>/g) ?? []).length;
@@ -633,7 +661,7 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   const withImages = opts?.withImages ?? true;
   let idx = -1;
   // ★사진 자리는 '구조화 슬롯'으로만 — 채워진 슬롯만 이미지로, 미충족 슬롯은 줄 자체를 제거(안내문구 유출 금지).
-  let body = ensurePayoffTable(capFaq(ensureSectionEmphasis(markToBold(ensureKeyFigureMark(capMarks(capAccent(capDanger(sanitizeAiPunct(stripListEmoji(normalizeHighlights(input.bodyHtml)))))))))), input.title).replace(SLOT_RE, (_m, kind: string, desc: string) => {
+  let body = ensurePayoffTable(listToTable(capFaq(ensureSectionEmphasis(markToBold(ensureKeyFigureMark(capMarks(capAccent(capDanger(sanitizeAiPunct(stripListEmoji(normalizeHighlights(input.bodyHtml))))))))))), input.title).replace(SLOT_RE, (_m, kind: string, desc: string) => {
     idx += 1; // ★문서순 인덱스는 종류와 무관하게 증가시킨다(검토 화면 imgs[i]와 짝이 맞아야 한다)
     const url = input.images?.[idx];
     // ★안 채워진 카드·차트는 줄째로 지운다(2026-08-02 유저 실측).

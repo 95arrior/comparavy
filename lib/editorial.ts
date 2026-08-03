@@ -257,6 +257,40 @@ export function photoSceneShortfall(html: string): { slots: number; scenes: numb
   return scenes < 1 ? { slots: descs.length, scenes } : null; // 최소 한 장은 장면이어야 한다
 }
 
+// ═══ 분량 하드컷(2026-08-04 유저 확정: "최대 2500자를 넘지 마세요") ═══
+//  ★지금까지 분량 게이트는 전부 '경고 → 재생성' 구조였다. 재생성이 실패하거나 예산이 없으면
+//   그냥 통과했고, 그래서 유저가 네 번 연속 긴 글을 받았다. 부탁이 아니라 실행이어야 한다.
+//  ★자를 때 원칙: 뒤에서부터 섹션을 통째로 뺀다. 문장 중간을 자르면 글이 망가진다.
+//   클로징(마지막 블록)과 해시태그는 반드시 남긴다 — 그게 없으면 글이 뚝 끊긴 것처럼 보인다.
+export const HARD_CHAR_LIMIT = 2500;
+
+/** 본문을 하드 상한 안으로 줄인다. 섹션(h2) 단위로 뒤에서부터 제거하고, 클로징·해시태그는 보존한다. */
+export function hardTrimToLimit(html: string, count: (h: string) => number, limit = HARD_CHAR_LIMIT): { html: string; removed: string[] } {
+  let cur = String(html || "");
+  const removed: string[] = [];
+  if (count(cur) <= limit) return { html: cur, removed };
+
+  // 섹션 경계 파싱 — [시작, 끝, 제목]
+  const sections = () => [...cur.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/gi)].map((m) => ({
+    start: m.index ?? 0,
+    title: stripTags(m[1]).trim(),
+  }));
+
+  // ★뒤에서 두 번째 섹션부터 지운다 — 마지막 섹션 뒤에는 클로징이 붙어 있어 통째로 지우면 마무리가 사라진다.
+  //  FAQ가 있으면 그것부터(본문이 이미 답한 것이라 손실이 가장 적다).
+  for (let guard = 0; guard < 6 && count(cur) > limit; guard++) {
+    const secs = sections();
+    if (secs.length <= 2) break; // 소제목 2개 미만으로는 줄이지 않는다(글이 아니게 된다)
+    const faqIdx = secs.findIndex((x) => /자주\s*묻는|FAQ/i.test(x.title));
+    const idx = faqIdx >= 0 ? faqIdx : secs.length - 2;
+    const from = secs[idx]!.start;
+    const to = idx + 1 < secs.length ? secs[idx + 1]!.start : cur.length;
+    removed.push(secs[idx]!.title || "(제목 없음)");
+    cur = cur.slice(0, from) + cur.slice(to);
+  }
+  return { html: cur, removed };
+}
+
 // ═══ 뻔한 사진 차단(2026-08-04 유저 실측: "다 의미 없는 것들이라") ═══
 //  실측 5장: 스마트폰 화면 보는 손 / 달력에 날짜 표시하는 손 / 노트북으로 홈택스 조회 /
 //  스마트폰 앱 스크롤 / 식탁 위 스마트폰과 커피잔. 다섯 중 셋이 '화면 보는 손'이다.
@@ -322,8 +356,16 @@ export function sectionBudgetReport(html: string, perSection: number): SectionBu
 //  노출 장치만 잃는다. 즉 없을 이유가 전혀 없으므로 없으면 코드가 채운다.
 //  ★지어내지 않는다: 키워드에서 파생한 것만 쓴다(해시태그는 사실 주장이 아니라 분류 라벨이다).
 export function ensureHashtags(html: string, keyword: string, tag?: string, modelTags?: unknown): string {
-  const text = String(html || "").replace(/<[^>]+>/g, " ");
-  const existing = (text.match(/#[^\s#]+/g) ?? []).length;
+  // ★세는 방식을 좁힌다(2026-08-04 유저: "아직도 본문에 안 붙는다").
+  //  종전엔 태그만 벗기고 /#[^\s#]+/로 셌다 — HTML 엔티티(&#39; 결)가 남아 '#39;'이 해시태그로 잡히고,
+  //  본문 중간의 '#1' 같은 것도 세어졌다. 셋만 오인되면 '이미 있다'로 보고 통째로 건너뛴다.
+  //  ★해시태그는 '글 끝에 모여 있는 한글·영숫자 태그'다 — 그 형태만 센다.
+  const text = String(html || "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&[a-zA-Z#0-9]{1,8};/g, " "); // 엔티티 제거(여기서 #이 새어 들어왔다)
+  // ★위치로 자르지 않는다(짧은 본문에서 오작동한다 — 실측: 진짜 해시태그가 있는데 또 붙였다).
+  //  형태만으로 충분히 갈린다: '#1' 같은 한 글자 표기는 2자 하한에서 걸러지고, 엔티티는 위에서 지웠다.
+  const existing = (text.match(/#[가-힣A-Za-z0-9_]{2,}/g) ?? []).length;
   if (existing >= 3) return html; // 이미 있으면 손대지 않는다
   // ★1순위는 모델이 만든 태그다(2026-08-03 유저 화면에서 확인: 모델은 tags 필드에는 잘 넣고
   //  본문 하단에만 안 썼다). 주제에 맞게 만든 태그라 키워드 파생보다 훨씬 낫다 —

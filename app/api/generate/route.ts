@@ -11,7 +11,7 @@ import { scanFacts } from "@/lib/factGate";
 import { financeCalcContext } from "@/lib/financeCalc";
 import { sanitizeUrls } from "@/lib/linkWhitelist";
 import { countBodyChars } from "@/lib/humanizer";
-import { sectionBudgetReport, tailSummaryBullets, ensureHashtags, clichePhotoSlots } from "@/lib/editorial";
+import { sectionBudgetReport, tailSummaryBullets, ensureHashtags, clichePhotoSlots, hardTrimToLimit } from "@/lib/editorial";
 import { validateTitleTail } from "@/lib/titleRules";
 import { sectionBudgetFor, targetMaxFor } from "@/lib/articlePrompt";
 import { isDisposableEmail } from "@/lib/disposableEmail";
@@ -349,6 +349,21 @@ export async function POST(request: Request) {
               .sort((a, b) => b.score - a.score)
               .slice(0, 2)
               .map(({ title, url }) => ({ title, url }));
+          }
+          // ★2~3개 보장(2026-08-04 유저 확정: "함께보면 좋은글 2-3개 고정, 핏한 게 없어도 넣어라").
+          //  종전엔 LLM이 '확신 없으면 0개'로 흘러 링크가 통째로 빠지는 날이 있었다.
+          //  ★내부링크는 체류·회유 장치이고 네이버 편집기에서 링크 카드로 들어가 본문 분량을 안 먹는다 —
+          //   즉 넣어서 잃을 게 없다. 심리 연결이 약하면 같은 분야 최근 글로라도 채운다.
+          if (relatedPosts.length < 2) {
+            const have = new Set(relatedPosts.map((r) => r.url));
+            for (const c of pool2) {
+              if (relatedPosts.length >= 2) break;
+              const url = String((c as { naver_url?: string }).naver_url ?? "");
+              if (!url || have.has(url)) continue;
+              have.add(url);
+              relatedPosts.push({ title: String(c.title ?? c.keyword ?? "관련 글"), url });
+            }
+            console.log(`[related] 보강 → ${relatedPosts.length}개(풀 ${pool2.length})`);
           }
           // ★네이버→WP 크로스 링크 제거(2026-07-14 유저 확정) — 네이버는 외부 상업성 링크에 민감, 돼지통(자산)이 pigtong(신생)보다 잃을 게 크다.
           //  WP→네이버 방향(wordpress/publish)은 유지. 재개 조건: 돼지통 체급 안정 후 — 그때도 링크 대신 '무링크 언급' 방식 우선 검토.
@@ -699,6 +714,17 @@ export async function POST(request: Request) {
               article = compact; charCount = compactCount;
             } else break; // 더 안 줄었으면 한 번 더 돌려도 같다 — 예산 낭비를 막는다
           } catch { break; /* 압축 실패 — 원본 그대로(파이프 무영향) */ }
+        }
+        // ★하드컷(2026-08-04 유저 확정: "최대 2500자를 넘지 마세요") — 여기는 부탁이 아니라 실행이다.
+        //  위 압축은 재생성이라 실패할 수 있다(시간 예산·모델 거부). 그때도 상한은 지켜져야 한다.
+        //  ★섹션 단위로 뒤에서부터 뺀다: 문장 중간을 자르면 글이 망가지고, 클로징이 사라지면 뚝 끊긴다.
+        {
+          const trimmed = hardTrimToLimit(article.body_html, countBodyChars);
+          if (trimmed.removed.length) {
+            article = { ...article, body_html: trimmed.html };
+            charCount = countBodyChars(trimmed.html);
+            console.log(`[hard-trim] user=${user.id.slice(0, 8)} 섹션 제거 ${trimmed.removed.length}개(${trimmed.removed.join(" / ")}) → ${charCount}자`);
+          }
         }
         // ★결과를 항상 남긴다 — 통과한 것도 남겨야 '얼마나 자주, 얼마나 초과하는지' 분포가 쌓인다(문턱을 감으로 옮기지 않기 위해).
         console.log(`[length] user=${user.id.slice(0, 8)} ch=${channel} chars=${charCount} cap=${lenCap} ${charCount > lenCap ? `★초과(${(charCount / lenCap).toFixed(2)}배) — 압축 ${LEN_REGEN_CAP}회 후에도 초과, 통과` : "ok"}`);
