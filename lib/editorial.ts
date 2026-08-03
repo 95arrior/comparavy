@@ -302,17 +302,23 @@ export function sectionBudgetReport(html: string, perSection: number): SectionBu
 //  해시태그는 네이버 편집기에서 태그 영역으로 빠져 본문 글자가 아니라, 버려도 분량이 안 줄고
 //  노출 장치만 잃는다. 즉 없을 이유가 전혀 없으므로 없으면 코드가 채운다.
 //  ★지어내지 않는다: 키워드에서 파생한 것만 쓴다(해시태그는 사실 주장이 아니라 분류 라벨이다).
-export function ensureHashtags(html: string, keyword: string, tag?: string): string {
+export function ensureHashtags(html: string, keyword: string, tag?: string, modelTags?: unknown): string {
   const text = String(html || "").replace(/<[^>]+>/g, " ");
   const existing = (text.match(/#[^\s#]+/g) ?? []).length;
   if (existing >= 3) return html; // 이미 있으면 손대지 않는다
+  // ★1순위는 모델이 만든 태그다(2026-08-03 유저 화면에서 확인: 모델은 tags 필드에는 잘 넣고
+  //  본문 하단에만 안 썼다). 주제에 맞게 만든 태그라 키워드 파생보다 훨씬 낫다 —
+  //  '리딩방 사기'·'불공정거래 신고'처럼 키워드에서는 절대 못 뽑는 말이 여기 있다.
+  const fromModel = (Array.isArray(modelTags) ? modelTags : [])
+    .map((t) => String(t ?? "").replace(/^#/, "").replace(/\s+/g, "").trim())
+    .filter((t) => [...t].length >= 2);
   const kw = String(keyword || "").trim();
-  if (!kw) return html;
-  const core = kw.replace(/\s+/g, "");
-  const parts = kw.split(/\s+/).map((t) => t.replace(/[^가-힣a-zA-Z0-9]/g, "")).filter((t) => [...t].length >= 2);
-  const cand = [core, ...parts, (tag ?? "").replace(/\s+/g, "")]
-    .map((t) => t.trim()).filter(Boolean);
-  const uniq = [...new Set(cand)].filter((t) => [...t].length >= 2).slice(0, 5);
+  // 2순위 폴백 — 모델 태그가 없을 때만 키워드에서 파생한다(지어내지 않는다).
+  const fromKeyword = kw
+    ? [kw.replace(/\s+/g, ""), ...kw.split(/\s+/).map((t) => t.replace(/[^가-힣a-zA-Z0-9]/g, "")), (tag ?? "").replace(/\s+/g, "")]
+    : [];
+  const cand = (fromModel.length >= 3 ? fromModel : [...fromModel, ...fromKeyword]).map((t) => t.trim()).filter(Boolean);
+  const uniq = [...new Set(cand)].filter((t) => [...t].length >= 2).slice(0, 6);
   if (uniq.length === 0) return html;
   const line = `<p>${uniq.map((t) => `#${t}`).join(" ")}</p>`;
   return `${html}\n${line}`;

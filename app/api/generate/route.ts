@@ -693,7 +693,7 @@ export async function POST(request: Request) {
         // ★해시태그 보장(2026-08-03 유저 제보: 통째로 사라졌다) — 프롬프트는 방향, 이건 한계선.
         //  해시태그는 네이버 편집기에서 태그 영역으로 빠져 본문 글자가 아니다. 버려도 분량은 안 줄고
         //  노출 장치만 잃으므로 없을 이유가 없다. 모델이 또 버려도 여기서 채운다(키워드 파생만, 지어내지 않는다).
-        let finalBody = ensureHashtags(urlClean.html, keyword, (article as { tag?: string }).tag);
+        let finalBody = ensureHashtags(urlClean.html, keyword, (article as { tag?: string }).tag, (article as { tags?: unknown }).tags);
         if (prevUrl) { // ★전편 링크 자동 삽입(verified만) — 마커를 실제 링크로. 미충족 시 마커 유지(위저드 안내 폴백)
           finalBody = finalBody.includes("[전편 링크 자리]")
             ? finalBody.replace("[전편 링크 자리]", `<a href="${prevUrl}">${(prevTitle ?? "전편 글").replace(/</g, "")}</a>`)

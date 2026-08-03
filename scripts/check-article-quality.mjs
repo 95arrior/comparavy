@@ -289,6 +289,19 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   const gr = fs.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8");
   ok(/1~2개는 고르는 것을 기본/.test(gr), "★내부링크 선별이 '1~2개 기본'으로 바뀜");
   ok(/ensureHashtags\(urlClean\.html/.test(gr), "★해시태그 보장이 생성 경로에 배선됨");
+
+  // ★모델이 만든 태그를 1순위로 쓴다(2026-08-03 유저 화면에서 확인) —
+  //  모델은 tags 필드에는 잘 넣고 본문 하단에만 안 썼다. 그 태그가 키워드 파생보다 훨씬 낫다:
+  //  '리딩방 사기'·'불공정거래 신고'는 키워드에서 절대 못 뽑는 말이다.
+  const 모델태그 = ["주식방", "리딩방 사기", "불법투자자문", "불공정거래 신고", "주식 피해"];
+  const withModel = ensureHashtags("<p>주식 리딩방 피해가 늘고 있습니다.</p>", "주식 리딩방", "재테크", 모델태그);
+  ok(/#리딩방사기/.test(withModel), "★모델 태그를 본문 하단에 그대로 쓴다", withModel.replace(/<[^>]+>/g, " ").trim().slice(-40));
+  ok(!/#주식리딩방/.test(withModel), "★모델 태그가 충분하면 키워드 파생을 섞지 않는다");
+
+  const noModel = ensureHashtags("<p>본문입니다.</p>", "주식 리딩방", "재테크", []);
+  ok(/#주식리딩방/.test(noModel), "★모델 태그가 없을 때만 키워드에서 파생한다(폴백)");
+
+  ok(/\(article as \{ tags\?: unknown \}\)\.tags/.test(gr), "★모델 태그가 생성 경로에서 실제로 전달된다");
 }
 
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 발행글 품질(띄어쓰기·문단·이모지·사진·정렬)");
