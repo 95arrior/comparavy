@@ -183,6 +183,12 @@ export async function GET(req: Request) {
       const ct = new Set(cand.replace(/[^가-힣a-z0-9 ]/gi, " ").split(/\s+/).filter((w) => w.length >= 2 && !GENERIC_TOK.has(w)));
       const ut = u.replace(/[^가-힣a-z0-9 ]/gi, " ").split(/\s+/).filter((w) => w.length >= 2 && !GENERIC_TOK.has(w));
       if (ut.length >= 2) { const hit = ut.filter((w) => ct.has(w)).length; if (hit >= 2 && hit / ut.length >= 0.6) return true; }
+      // ★고유 제도명 하나만 겹쳐도 같은 주제다(2026-08-04 유저 실측: '근로장려금 신청 기한'을 쓴 날
+      //  '근로장려금, 이 조건 하나 때문'이 또 나왔다). 종전엔 겹치는 토큰 2개를 요구해서 통과했다 —
+      //  '근로장려금'은 하나만 겹쳐도 같은 글감이다. ★4자 이상 고유어만 본다(짧은 일반어는 과차단이 된다).
+      const long = (x: string) => x.replace(/[^가-힣a-z0-9 ]/gi, " ").split(/\s+/)
+        .filter((w) => [...w].length >= 4 && !GENERIC_TOK.has(w));
+      const lu = long(u); if (lu.length && lu.some((w) => cand.replace(/\s+/g, "").includes(w))) return true;
     }
     return false;
   };
