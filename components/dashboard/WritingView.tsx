@@ -64,6 +64,11 @@ export default function WritingView({
   const fetchedRef = useRef(false);
   const abortRef = useRef<AbortController | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  // ★무응답 감시(2026-08-03 유저 실측: '다듬고 있어요'에서 20분 멈춤).
+  //  서버 함수가 maxDuration에 걸려 죽으면 스트림이 done 이벤트 없이 끊기거나 그대로 조용해진다.
+  //  종전 코드는 두 경우 모두 아무 처리도 안 해서 스피너가 영원히 돌았다 — 유저는 기다릴 수밖에 없다.
+  const lastEventAtRef = useRef(0);
+  const watchdogRef = useRef<"none" | "timeout" | "silence">("none");
 
   // ★이미지 동시 생성 — 스트리밍 중 [사진:] 마커가 나타나는 즉시(앞 3곳) 병렬 생성 시작.
   //  글이 끝날 때쯤 이미지도 끝나 → 대기시간에 일이 2배(지루함 해소). 결과 URL은 검토 화면이 이어받음.
@@ -154,9 +159,26 @@ export default function WritingView({
   }
 
   async function run() {
+    // ★감시 기준(서버 maxDuration=300초를 알고 짠다):
+    //  · 총 시간 330초 — 이걸 넘으면 서버 함수는 확실히 죽었다(300초 + 여유 30초).
+    //  · 무응답 180초 — 재생성 중엔 서버가 조용해지는 게 정상이라 넉넉히 잡는다(1회 생성이 60~120초).
+    //    이보다 짧게 잡으면 멀쩡한 재생성을 끊어 버린다.
+    const HARD_LIMIT_MS = 330_000;
+    const SILENCE_LIMIT_MS = 180_000;
+    const startedAt = Date.now();
+    lastEventAtRef.current = startedAt;
+    let watchdog: ReturnType<typeof setInterval> | undefined;
     try {
       const ctrl = new AbortController();
       abortRef.current = ctrl;
+      watchdog = setInterval(() => {
+        if (streamDoneRef.current) return;
+        const now = Date.now();
+        if (now - startedAt > HARD_LIMIT_MS) watchdogRef.current = "timeout";
+        else if (now - lastEventAtRef.current > SILENCE_LIMIT_MS) watchdogRef.current = "silence";
+        else return;
+        ctrl.abort(); // 아래 catch가 watchdogRef를 보고 사용자에게 진실을 안내한다
+      }, 5_000);
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -175,6 +197,7 @@ export default function WritingView({
       while (!done) {
         const chunk = await reader.read();
         if (chunk.done) break;
+        lastEventAtRef.current = Date.now(); // 살아 있다는 유일한 증거 — 본문 조각도 신호로 친다
         buf += decoder.decode(chunk.value, { stream: true });
         const parts = buf.split("\n\n");
         buf = parts.pop() ?? "";
@@ -210,9 +233,18 @@ export default function WritingView({
           }
         }
       }
+      // ★done 이벤트 없이 스트림이 닫힌 경우 — 종전엔 여기서 조용히 빠져나가 스피너가 영원히 돌았다.
+      //  서버가 죽으면 응답 본문은 그냥 닫힌다. '끝났다는 신호를 못 받은 것'과 '끝난 것'은 다르다.
+      if (!streamDoneRef.current) setError("__TIMEOUT__");
     } catch (e) {
-      if (e instanceof DOMException && e.name === "AbortError") return;
+      if (e instanceof DOMException && e.name === "AbortError") {
+        // 감시견이 끊은 것과 사용자가 화면을 떠난 것을 구분한다 — 후자는 아무것도 띄우지 않는다.
+        if (watchdogRef.current !== "none") setError(watchdogRef.current === "timeout" ? "__TIMEOUT__" : "__DISCONNECT__");
+        return;
+      }
       setError("__DISCONNECT__");
+    } finally {
+      if (watchdog) clearInterval(watchdog);
     }
   }
 
@@ -243,7 +275,21 @@ export default function WritingView({
 
       <div className="mx-auto max-w-3xl px-6 py-8 pb-24">
         {error ? (
-          error === "__DISCONNECT__" ? (
+          /* ★시간 초과(2026-08-03) — 연결 끊김과 구분한다. 서버 함수가 한도에 걸려 죽은 경우라
+             '계속 만들어지고 있어요'는 사실이 아니다. 겁주지도, 거짓 안심을 주지도 않는다. */
+          error === "__TIMEOUT__" ? (
+            <div className="rounded-2xl at-glass p-6 text-center">
+              <p className="text-[16px] font-extrabold text-neutral-900">시간이 오래 걸려 멈췄어요</p>
+              <p className="mt-2 text-[13.5px] leading-relaxed text-neutral-500">
+                만드는 데 예상보다 오래 걸려서 중간에 멈췄어요.
+                <br />‘내 글’에 <b className="text-neutral-700">초안이 남아 있을 수 있으니</b> 먼저 확인해 보시고,
+                <br />없으면 다시 한 번 눌러 주세요.
+              </p>
+              <button onClick={onExit} className="at-press mt-5 rounded-xl tk-grad-cta px-6 py-3 text-[14px] font-bold text-white transition hover:opacity-90">
+                내 글에서 확인하기
+              </button>
+            </div>
+          ) : error === "__DISCONNECT__" ? (
             /* ★연결 끊김 — 서버는 계속 쓰고 저장한다(자리표시 행 포함). 겁주지 말고 진실을 안내 */
             <div className="rounded-2xl at-glass p-6 text-center">
               <p className="text-[16px] font-extrabold text-neutral-900">연결이 잠깐 끊겼어요</p>
