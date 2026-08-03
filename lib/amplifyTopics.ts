@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { createSupabaseAdminClient } from "./supabase-server";
 import { PUBLISH_TITLE_FORMULA } from "./titleTypes";
 import { validateTitleTail } from "./titleRules";
 import { validateSearchTitle, restoreSearchPhrase, fallbackSearchTitle, ensureKeywordInTitle } from "./titleRules";
@@ -359,6 +360,18 @@ ${OPEN_LOOP_GUIDE}
     //  ★유저가 매번 로그를 뒤지게 하지 않는다: 주소 하나로 보이면 그게 자동이다.
     lastAmplifyDiag = { seeds: seeds.length, want, briefs: briefs.length, parsed: parsed.length, out: out.length, drop };
     console.log(`[amp-funnel] 씨앗 ${seeds.length} → 요청 ${want} → 브리프 ${briefs.length} → 모델 반환 ${parsed.length} → 카드 ${out.length} | 탈락 ${JSON.stringify(drop)}`);
+    // ★저장소에도 남긴다(2026-08-04) — 모듈 변수만 두면 서버리스에서 못 읽는다.
+    //  요청마다 인스턴스가 다를 수 있어서 '방금 돈 진단'이 다음 요청엔 비어 있다.
+    //  ★진단을 만들어놓고 읽을 수 없으면 없는 것과 같다(오늘 다섯 번째로 배우는 교훈).
+    try {
+      const db = createSupabaseAdminClient();
+      await db.from("api_cache").upsert({
+        key: "diag:amp-funnel",
+        value: { ...lastAmplifyDiag, at: new Date().toISOString() },
+        expires_at: new Date(Date.now() + 3 * 86400_000).toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+    } catch { /* 진단 저장 실패는 파이프에 영향 없다 */ }
     return out;
   } catch {
     return [];

@@ -27,7 +27,7 @@ import { getPerfWeights } from "@/lib/perfWeights";
 import { dwellPotential } from "@/lib/dwellScore";
 import { revenuePathOf, REVENUE_TAG_LABEL, type RevenuePath } from "@/lib/revenuePath";
 import { computeBlogTier, applyDemoteGuard, coldStartTier, type TierResult, type BlogTier } from "@/lib/blogTier";
-import { TIER_BANDS, dayQuota, columnQuota, SEED_CLAIM_CAP, SEED_CLAIM_WINDOW_H } from "@/lib/scoreWeights";
+import { TIER_BANDS, dayQuota, columnQuota, COLUMN_SIZE, SEED_CLAIM_CAP, SEED_CLAIM_WINDOW_H } from "@/lib/scoreWeights";
 // 하루 보드 슬롯 수 — 배합의 분모. 화면은 2열 × 5장(Home.tsx의 활성 슬라이스)이라 10 = 하루 10편과 일치한다.
 const DAILY_BOARD = 10;
 const PER_COLUMN = DAILY_BOARD / 2;
@@ -184,12 +184,21 @@ export async function GET(req: Request) {
       const ct = new Set(cand.replace(/[^가-힣a-z0-9 ]/gi, " ").split(/\s+/).filter((w) => w.length >= 2 && !GENERIC_TOK.has(w)));
       const ut = u.replace(/[^가-힣a-z0-9 ]/gi, " ").split(/\s+/).filter((w) => w.length >= 2 && !GENERIC_TOK.has(w));
       if (ut.length >= 2) { const hit = ut.filter((w) => ct.has(w)).length; if (hit >= 2 && hit / ut.length >= 0.6) return true; }
-      // ★고유 제도명 하나만 겹쳐도 같은 주제다(2026-08-04 유저 실측: '근로장려금 신청 기한'을 쓴 날
-      //  '근로장려금, 이 조건 하나 때문'이 또 나왔다). 종전엔 겹치는 토큰 2개를 요구해서 통과했다 —
-      //  '근로장려금'은 하나만 겹쳐도 같은 글감이다. ★4자 이상 고유어만 본다(짧은 일반어는 과차단이 된다).
-      const long = (x: string) => x.replace(/[^가-힣a-z0-9 ]/gi, " ").split(/\s+/)
-        .filter((w) => [...w].length >= 4 && !GENERIC_TOK.has(w));
-      const lu = long(u); if (lu.length && lu.some((w) => cand.replace(/\s+/g, "").includes(w))) return true;
+      // ★고유 제도명이 '양쪽의 핵심어'로 겹치면 같은 주제다(2026-08-04).
+      //  발단: '근로장려금 신청 기한'을 쓴 날 '근로장려금, 이 조건 하나 때문'이 또 나왔다(토큰 2개 요구를 통과).
+      //  ★그런데 1차 수정("4자 이상 토큰이 하나라도 겹치면 차단")은 과차단이었다 —
+      //   발행 이력 121건의 4자+ 토큰 수백 개가 전부 차단선이 되어 보드가 통째로 비었다(유저 실측 served:0).
+      //  ★그래서 '핵심어끼리'만 본다: 양쪽에서 가장 긴 토큰이 같을 때만 같은 글감으로 판정한다.
+      //   '근로장려금 신청 기한'과 '…근로장려금, 이 조건'은 둘 다 핵심어가 근로장려금 → 차단.
+      //   '무직자주택담보대출 기준'과 '전세대출 공제'는 핵심어가 달라 → 통과.
+      // ★'핵심어끼리 비교'도 실패했다 — 제목의 서술어가 더 길어서 핵심어를 밀어낸다
+      //  ('신청했는데도'(6자) > '근로장려금'(5자)). 그래서 최장어가 아니라 '교집합'을 본다.
+      //  ★5자 이상 고유어가 하나라도 겹치면 같은 글감이다. 5자 하한이 일반어를 걸러 준다
+      //   (4자로 내리면 '신청기간'·'지원대상' 같은 말이 걸려 과차단이 된다 — 그게 보드를 비웠다).
+      const bigToks = (x: string) => x.replace(/[^가-힣a-z0-9 ]/gi, " ").split(/\s+/)
+        .filter((w) => [...w].length >= 5 && !GENERIC_TOK.has(w));
+      const cs = new Set(bigToks(cand));
+      if (cs.size && bigToks(u).some((w) => cs.has(w))) return true;
     }
     return false;
   };
@@ -657,7 +666,7 @@ export async function GET(req: Request) {
     // ★'지금 뜨는' 열 = 홈판 + 트렌드 레인(2026-08-01 열↔레인 매핑). 이 열은 반응·시의성 게임이다.
     //  종전엔 홈판 1장 + 트렌드 나머지였는데, 그러면 배합 비율이 화면에서 무의미해진다(앞 5장만 보이므로).
     //  이제 열 안에서 레인 쿼터대로 자른다 — 신생 5장 = 홈판 4 / 트렌드 1.
-    const colShort = columnQuota(tierInfo?.tier ?? "SEEDLING", "short", PER_COLUMN);
+    const colShort = columnQuota(tierInfo?.tier ?? "SEEDLING", "short", COLUMN_SIZE.short);
     // ★트렌드 레인에도 밴드를 건다(2026-08-01 — 급상승 우회 #2 봉쇄). 위에서 volMap으로 c.vol을 실제 값으로
     //  채워 두었기 때문에 이제 검사가 실제로 작동한다(종전엔 트렌드 카드가 전부 vol:0이라 통과가 아니라 '못 봄'이었다).
     //  홈판은 tag='홈판'으로 면제된다 — 검색량 게임이 아니라서 밴드를 적용하는 것 자체가 틀리다.
@@ -711,15 +720,15 @@ export async function GET(req: Request) {
       }
     }
     const trendStock = tc.length; // ★메우기 전 트렌드 재고 — 홈판이 비어도 트렌드가 없으면 열은 못 채운다
-    const trendRoom = Math.max(0, PER_COLUMN - homeCards.length); // ★쿼터가 아니라 '실제 확보분' 기준
+    const trendRoom = Math.max(0, COLUMN_SIZE.short - homeCards.length); // ★쿼터가 아니라 '실제 확보분' 기준
     tc = [...homeCards, ...tc.slice(0, trendRoom)];
     if (colShort.homefeed > homeCards.length) {
       console.log(`[lane-quota:short] 홈판 미달 ${homeCards.length}/${colShort.homefeed} — 하류 탈락(이미쓴 ${homeDrop.used}·게이트 ${homeDrop.gate}·중복 ${homeDrop.dup}), 트렌드가 ${trendRoom}장까지 메움`);
     }
     // ★열이 비는 게 진짜 사고다(위 주석의 원칙) — 그런데 종전엔 '못 메운 경우'가 로그에 안 남았다.
     //  홈판이 결품이어도 트렌드 재고가 있으면 열은 찬다. 둘 다 모자랄 때만 열이 빈다 — 그 순간을 남긴다.
-    if (tc.length < PER_COLUMN) {
-      console.log(`[lane-quota:short] ★열 결품 ${tc.length}/${PER_COLUMN} — 홈판 ${homeCards.length} + 트렌드 재고 ${trendStock}(자리 ${trendRoom}). 두 레인 모두 공급 부족.`);
+    if (tc.length < COLUMN_SIZE.short) {
+      console.log(`[lane-quota:short] ★열 결품 ${tc.length}/${COLUMN_SIZE.short} — 홈판 ${homeCards.length} + 트렌드 재고 ${trendStock}(자리 ${trendRoom}). 두 레인 모두 공급 부족.`);
       // ★트렌드가 어느 마디에서 말랐는지 — 이 줄이 컷 완화의 근거가 된다(추측으로 게이트를 열지 않는다)
       console.log(`[trend-funnel] 증식 ${funnel.built} → 수요컷 -${funnel.demandCut}(제로 ${funnel.zeroDemand}·저수요 ${funnel.lowDemand}·미조회공고 ${funnel.unlistedAnnounce}) → ${funnel.afterDemand} → 게이트 ${funnel.afterGate} → 밴드 ${funnel.afterBand}`);
     }
@@ -1156,7 +1165,7 @@ export async function GET(req: Request) {
       const upMax = tierInfo.tier === "SEEDLING" ? TIER_BANDS.GROWING.volMax
         : tierInfo.tier === "GROWING" ? (TIER_BANDS.ESTABLISHED.volMax ?? 30000)
         : 100_000;
-      const headWant = Math.max(1, columnQuota(tierInfo.tier, "long", PER_COLUMN).head);
+      const headWant = Math.max(1, columnQuota(tierInfo.tier, "long", COLUMN_SIZE.long).head);
       let hq = pool.from("keyword_pool").select("keyword, monthly_searches, competition, audience, blog_total")
         .eq("vertical", vertical).gt("monthly_searches", cur.volMax).lte("monthly_searches", upMax)
         .order("times_assigned", { ascending: true }).order("monthly_searches", { ascending: false }).limit(40);
@@ -1188,7 +1197,7 @@ export async function GET(req: Request) {
   if (FF.homefeedBet && tailMode !== "long") {
     try {
       // ★열 쿼터와 같은 n을 쓴다 — 다르면 캐시 키(homebet:...:n)가 갈라져 같은 날 LLM 생성이 두 번 돈다.
-      const bets = await pickHomefeedBets(pool, user.id, sub ?? "", usedSet, columnQuota(tierInfo?.tier ?? "SEEDLING", "short", PER_COLUMN).homefeed);
+      const bets = await pickHomefeedBets(pool, user.id, sub ?? "", usedSet, columnQuota(tierInfo?.tier ?? "SEEDLING", "short", COLUMN_SIZE.short).homefeed);
       homefeedCards = bets
         .filter((bet) => !usedSet.has(normalizeKeyword(bet.keyword)) && finalGate([{ keyword: bet.keyword, title: bet.title }], { anchorKeyword: true }).pass.length > 0)
         .map((bet) => ({
@@ -1285,7 +1294,7 @@ export async function GET(req: Request) {
     if (debugMode) diag.finalGateDrops = g.drops;
     // ★'꾸준한 수요' 열 = 황금 + 헤드 레인(2026-08-01 열↔레인 매핑). 이 열은 검색 자산 게임이다.
     //  종전엔 헤드 배팅이 tailMode!=='long'으로 막혀 이 열에 아예 못 들어왔다 — 헤드 배합이 화면에 도달할 길이 없었다.
-    const colLong = columnQuota(tierInfo?.tier ?? "SEEDLING", "long", PER_COLUMN);
+    const colLong = columnQuota(tierInfo?.tier ?? "SEEDLING", "long", COLUMN_SIZE.long);
     const goldenPass = dedupeBoard(bandInvariant(g.pass, "long"));
     const headsLong = (headBetCards as typeof goldenPass).slice(0, colLong.head);
     // 황금을 먼저, 헤드는 뒤 — 앞에서 잘려도 자산 레인이 먼저 남는다. 부족분은 서로 메운다.
@@ -1304,7 +1313,7 @@ export async function GET(req: Request) {
   if (FF.tierMix && tierInfo) {
     // ★4분할 배합(2026-08-01 유저 확정) — 구 2분할 [트렌드,에버그린]은 신생 트렌드 70%였다(설계는 25%).
     //  그 결과 신생 보드에 헤드가 꽂혔고 7/31 발행 5편이 전부 노출 0이었다(실측). 이제 레인별 쿼터로 자른다.
-    const q = dayQuota(tierInfo.tier, PER_COLUMN);
+    const q = dayQuota(tierInfo.tier, 0);
     const trends = [...trendCards].slice(0, q.trend);
     const evers = [...shuffled].slice(0, q.golden);
     const heads = (headBetCards as typeof finalList).slice(0, q.head);

@@ -57,7 +57,9 @@ let freshDoneRef = false; // ?fresh=1 1회 가드
 // ★열당 활성 슬롯 수 — 서버 배합(app/api/topics의 PER_COLUMN)과 반드시 같아야 한다.
 //  2026-08-01 이중체크에서 검거: 서버에서 배합을 4분할로 고쳐도 화면이 앞 N장만 자르면 비율이 무너진다.
 //  2열 × 5장 = 하루 10편(유저 확정 발행량). 이 숫자를 바꾸면 scripts/check-board-assembly.mjs도 같이 바꾼다.
-const PER_COLUMN = 5;
+// ★열별 장수(2026-08-04 유저 확정: 꾸준한 수요 축소 · 홈판 확대) — 서버(lib/scoreWeights COLUMN_SIZE)와 같아야 한다.
+//  ★같은 값을 두 곳에서 따로 적으면 반드시 드리프트한다 — 여기 숫자를 바꾸면 서버도 같이 바꾼다.
+const COLUMN_SIZE = { short: 7, long: 3 } as const;
 
 const clusterOf = (s: string) => s.replace(/\s+/g, "").replace(/[^가-힣a-z0-9]/gi, "").slice(0, 4);
 
@@ -742,7 +744,7 @@ export default function Home({
                 )}
                 {(() => {
                   const all = list ?? [];
-                  const active = all.filter((t) => !(t as { publishedOn?: string }).publishedOn).slice(0, PER_COLUMN);
+                  const active = all.filter((t) => !(t as { publishedOn?: string }).publishedOn).slice(0, COLUMN_SIZE[mode]);
                   const done = all.filter((t) => (t as { publishedOn?: string }).publishedOn).slice(0, 3); // 발행함은 활성 슬롯과 별도(슬롯 잠식 방지)
                   return [...active, ...done];
                 })().map((t) => <BoardCard key={t.keyword} topic={t} onWrite={() => onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb, { tag: t.tag, sel: t.sel })} onDismiss={() => {
@@ -752,7 +754,7 @@ export default function Home({
                   const setter = mode === "short" ? setBoardShort : setBoardLong;
                   setter((prev) => {
                     const next = (prev ?? []).filter((x) => x.keyword !== t.keyword);
-                    if (next.length < PER_COLUMN) { // ★재고 소진 시 조용한 보충(실측: 치울수록 감소 — 서버 재고 5개 세대)
+                    if (next.length < COLUMN_SIZE[mode]) { // ★재고 소진 시 조용한 보충(실측: 치울수록 감소 — 서버 재고 5개 세대)
                       const ex = [...new Set([...nd, ...todayKeywords(articles), ...next.map((x) => x.keyword)])];
                       fetch(`/api/topics?mode=${mode}&exclude=${encodeURIComponent(ex.join(","))}`)
                         .then((r) => r.json())

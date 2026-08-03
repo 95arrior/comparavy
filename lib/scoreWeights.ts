@@ -55,7 +55,12 @@ export const TIER_DEMOTE_MARGIN = 2; // 강등 보수 기준: 승급선보다 �
 export type Lane = "golden" | "homefeed" | "trend" | "head";
 export const TIER_LANE_MIX: Record<string, Record<Lane, number>> = {
   // 유저 선택(2026-08-01): 홈판 주력 — 목표 최단 경로. 홈판 휘발성 리스크는 인지하고 선택함.
-  SEEDLING: { golden: 35, homefeed: 40, trend: 15, head: 10 },
+  // ★2026-08-04 유저 확정: "꾸준한 수요를 2~3개로 줄이고 홈판 비중을 늘립시다."
+  //  연료론 전환의 논리적 귀결이다 — 홈판이 지수를 올려 검색 글을 끌어올린다면 홈판에 더 태워야 한다.
+  //  ★열 크기도 같이 바꾼다(아래 COLUMN_SIZE): 지금 뜨는 7장 / 꾸준한 수요 3장.
+  //  ★헤드 5→10: 열이 3장으로 줄면 5%로는 자리가 0이 된다. 헤드는 밴드 사다리 장치라
+  //   '꾸준한 수요를 줄이자'가 '헤드를 버리자'는 뜻은 아니다 — 체급이 오르면 그 글이 뒤늦게 일한다.
+  SEEDLING: { golden: 20, homefeed: 50, trend: 20, head: 10 },
   GROWING: { golden: 40, homefeed: 30, trend: 15, head: 15 },
   ESTABLISHED: { golden: 30, homefeed: 25, trend: 15, head: 30 },
 };
@@ -69,6 +74,9 @@ export const TIER_LANE_MIX: Record<string, Record<Lane, number>> = {
 //  각 열 5장 × 2열 = 하루 10편(유저 확정 발행량)과 정확히 맞는다.
 export const COLUMN_LANES = { short: ["homefeed", "trend"], long: ["golden", "head"] } as const satisfies Record<string, readonly Lane[]>;
 export type BoardColumn = keyof typeof COLUMN_LANES;
+// ★열별 장수(2026-08-04 유저 확정) — 종전엔 두 열이 각각 5장으로 고정이었다.
+//  꾸준한 수요를 3장으로 줄이고 그만큼을 지금 뜨는 열로 옮긴다. 하루 총량 10편은 그대로다.
+export const COLUMN_SIZE = { short: 7, long: 3 } as const satisfies Record<BoardColumn, number>;
 
 /**
  * 한 열(perColumn장) 안에서의 레인별 장수. 열 안 비율은 전체 배합에서 그 열 몫만 떼어 정규화한다.
@@ -97,9 +105,11 @@ export function columnQuota(tier: string, column: BoardColumn, perColumn: number
  * (열합 트렌드2·헤드2 vs laneQuota 트렌드1·헤드3). 화면은 열 단위로 서빙되므로 **열이 진실**이고,
  * 하루 총량은 그 합으로만 정의한다 — 두 경로가 드리프트할 여지를 없앤다.
  */
-export function dayQuota(tier: string, perColumn: number): Record<Lane, number> {
-  const s = columnQuota(tier, "short", perColumn);
-  const l = columnQuota(tier, "long", perColumn);
+export function dayQuota(tier: string, _perColumn = 0): Record<Lane, number> {
+  // ★열 크기는 COLUMN_SIZE가 정한다(2026-08-04) — 종전엔 두 열이 같은 수라 인자 하나로 됐다.
+  //  지금은 지금 뜨는 7 / 꾸준한 수요 3으로 다르다. 인자는 호환용으로만 남긴다.
+  const s = columnQuota(tier, "short", COLUMN_SIZE.short);
+  const l = columnQuota(tier, "long", COLUMN_SIZE.long);
   return { golden: l.golden, homefeed: s.homefeed, trend: s.trend, head: l.head };
 }
 
