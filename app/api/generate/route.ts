@@ -10,7 +10,7 @@ import { hasFabricatedExperience, lacksInterpretation, lacksConditionBranch, dup
 import { scanFacts } from "@/lib/factGate";
 import { financeCalcContext } from "@/lib/financeCalc";
 import { sanitizeUrls } from "@/lib/linkWhitelist";
-import { countKoreanChars } from "@/lib/humanizer";
+import { countBodyChars } from "@/lib/humanizer";
 import { sectionBudgetReport, tailSummaryBullets } from "@/lib/editorial";
 import { sectionBudgetFor, targetMaxFor } from "@/lib/articlePrompt";
 import { isDisposableEmail } from "@/lib/disposableEmail";
@@ -541,7 +541,7 @@ export async function POST(request: Request) {
               { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ★경고: 직전 생성이 제도·수치 나열에 그쳤다. 정보 문단마다 '그래서 독자에게 뭐가 달라지는지' 해석 문단을 짝으로 붙이고, 소득·가구·조건별로 답이 갈리는 지점을 본문 중심에 둬라(수익형 분야 지침의 해석 짝 의무).${specWarnings(article)}`.trim() },
               noop, noop, onGenUsage,
             );
-            if (!lacksInterpretation(retried.body_html) && (userStory || userExperience || !hasFabricatedExperience(retried.body_html)) && countKoreanChars(retried.body_html) >= 500) article = retried;
+            if (!lacksInterpretation(retried.body_html) && (userStory || userExperience || !hasFabricatedExperience(retried.body_html)) && countBodyChars(retried.body_html) >= 500) article = retried;
           } catch { /* 재생성 실패 — 원본 그대로 */ }
           if (lacksInterpretation(article.body_html)) console.log(`[interpretation] user=${user.id.slice(0, 8)} — 해석 신호 바닥 미달, 통과(로그만)`);
         }
@@ -557,7 +557,7 @@ export async function POST(request: Request) {
               { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ★경고: 직전 생성에 '내 조건이면 얼마인가'가 없다. AI 요약이 그대로 종결시켜 클릭이 남지 않는 글이다. 둘 중 최소 하나를 반드시 넣어라 — ①조건 분기표(소득·연령·가입기간처럼 답이 갈리는 축을 세로로, 그 조건일 때의 실제 금액·비율을 칸에 채운 표, 머리행 포함 3행 이상) ②숫자 계산 예시('예를 들어 총급여 4,500만 원이면…' 가정값→계산 과정→결과 숫자, 가정임을 명시). 나머지 규격·분량은 유지.${specWarnings(article)}`.trim() },
               noop, noop, onGenUsage,
             );
-            if (!lacksConditionBranch(retried.body_html) && (userStory || userExperience || !hasFabricatedExperience(retried.body_html)) && countKoreanChars(retried.body_html) >= 500) article = retried;
+            if (!lacksConditionBranch(retried.body_html) && (userStory || userExperience || !hasFabricatedExperience(retried.body_html)) && countBodyChars(retried.body_html) >= 500) article = retried;
           } catch { /* 재생성 실패 — 원본 그대로 */ }
           if (lacksConditionBranch(article.body_html)) console.log(`[condition-branch] user=${user.id.slice(0, 8)} — 조건 분기 없음, 통과(로그만)`);
         }
@@ -580,7 +580,7 @@ export async function POST(request: Request) {
                 { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ★경고: 직전 생성이 노출 규격에 미달했다.${specWarnings(article)} 나머지 규격·분량은 유지.`.trim() },
                 noop, noop, onGenUsage,
               );
-              if (deficits(retried) < before && (userStory || userExperience || !hasFabricatedExperience(retried.body_html)) && countKoreanChars(retried.body_html) >= 500) article = retried;
+              if (deficits(retried) < before && (userStory || userExperience || !hasFabricatedExperience(retried.body_html)) && countBodyChars(retried.body_html) >= 500) article = retried;
             } catch { /* 재생성 실패 — 원본 그대로 */ }
           }
           // 남은 결함은 로그만(발행 차단은 과잉 — 다른 최소선 가드들과 같은 결).
@@ -608,7 +608,7 @@ export async function POST(request: Request) {
                 noop, noop, onGenUsage,
               );
               const missAfter = scanFacts(`${retried.title}\n${retried.body_html}`, keyword).filter((i) => i.layer === "missing");
-              if (missAfter.length < missBefore.length && (userStory || userExperience || !hasFabricatedExperience(retried.body_html)) && countKoreanChars(retried.body_html) >= 500) article = retried;
+              if (missAfter.length < missBefore.length && (userStory || userExperience || !hasFabricatedExperience(retried.body_html)) && countBodyChars(retried.body_html) >= 500) article = retried;
             } catch { /* 재생성 실패 — 원본 그대로 */ }
             const left = scanFacts(`${article.title}\n${article.body_html}`, keyword).filter((i) => i.layer === "missing");
             if (left.length) console.log(`[missing-musts] user=${user.id.slice(0, 8)} — ${left.map((i) => i.matched).join(",")} 남음(검토 화면에서 안내)`);
@@ -627,7 +627,7 @@ export async function POST(request: Request) {
               { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ★경고: 직전 생성의 [사진:] 슬롯들이 같은 명사를 공유했다(같은 결의 그림이 두 장 나온다). 슬롯 역할을 지켜 소재를 완전히 분리하라 — ①1번=주제 핵심 사물 한 개 ②2번 이후=사물 클로즈업 반복 금지, 사람이 그 일을 하는 정황(얼굴 없이 손·뒷모습)·그 일이 벌어지는 장소·끝난 뒤의 생활 장면으로 결을 바꿔라. 계산기·명세서·영수증·서류·고지서·통장 같은 뻔한 소품은 쓰지 마라. 슬롯끼리 명사가 하나도 겹치면 안 되고, 업종·대상 명사(소상공인·직장인 등)를 슬롯마다 반복하지 마라.`.trim() },
               noop, noop, onGenUsage,
             );
-            if (!duplicateSlotSubjects(retried.body_html) && (userStory || userExperience || !hasFabricatedExperience(retried.body_html)) && countKoreanChars(retried.body_html) >= 500) article = retried;
+            if (!duplicateSlotSubjects(retried.body_html) && (userStory || userExperience || !hasFabricatedExperience(retried.body_html)) && countBodyChars(retried.body_html) >= 500) article = retried;
           } catch { /* 재생성 실패 — 원본 그대로 */ }
           if (duplicateSlotSubjects(article.body_html)) console.log(`[slot-dup] user=${user.id.slice(0, 8)} — 슬롯 소재 중복, 통과(로그만)`);
         }
@@ -635,7 +635,7 @@ export async function POST(request: Request) {
         // 길이 검증 — 네이버는 좁은 주제도 '네이버 최적화로 뽑을 수 있는 만큼' 살린다(1,000자 안팎도 충분).
         // 깊이 기준으로 반려하지 않고, '명백히 실패(빈/잘린)' 글만 막는 낮은 바닥(500자)만 둔다.
         const minChars = 500;
-        let charCount = countKoreanChars(article.body_html);
+        let charCount = countBodyChars(article.body_html);
         if (charCount < minChars) {
           if (genId) await supabase.from("articles").delete().eq("id", genId); // 자리표시 행 정리
           await refundOnce(); // 실패 = 크레딧 환불(멱등)
@@ -677,7 +677,7 @@ export async function POST(request: Request) {
               { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ${지시}`.trim() },
               noop, noop, onGenUsage,
             );
-            const compactCount = countKoreanChars(compact.body_html);
+            const compactCount = countBodyChars(compact.body_html);
             // 더 짧아졌고 최소·경험조작 통과일 때만 교체(안전 — 압축본이 더 이상하면 원본 유지)
             if (compactCount >= minChars && compactCount < charCount && (userStory || !hasFabricatedExperience(compact.body_html))) {
               article = compact; charCount = compactCount;

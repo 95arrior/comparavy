@@ -5,7 +5,7 @@
  * 샘플 키워드로 글 1편을 생성한 뒤 16개 항목을 점검한다.
  */
 import { generateArticle } from "../lib/generateArticle";
-import { detectCliches, countKoreanChars } from "../lib/humanizer";
+import { detectCliches, countBodyChars } from "../lib/humanizer";
 
 const SAMPLE = {
   keyword: "초보자를 위한 블로그 글쓰기 방법",
@@ -25,7 +25,7 @@ interface Check {
 }
 
 function run(article: Awaited<ReturnType<typeof generateArticle>>): Check[] {
-  const charCount = countKoreanChars(article.body_html);
+  const charCount = countBodyChars(article.body_html);
   const bodyCliches = detectCliches(article.body_html);
   const titleCliches = detectCliches(article.title);
   const usedTags = Array.from(article.body_html.matchAll(/<\s*([a-zA-Z0-9]+)/g)).map((m) =>

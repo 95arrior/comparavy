@@ -5,7 +5,7 @@ import { generateArticle } from "@/lib/generateArticle";
 import { isReviewType, ensureDisclosure } from "@/lib/revenue";
 import { hasFabricatedExperience } from "@/lib/editorial";
 import { sanitizeUrls } from "@/lib/linkWhitelist";
-import { countKoreanChars } from "@/lib/humanizer";
+import { countBodyChars } from "@/lib/humanizer";
 import { normalizeKeyword, pickVariant, pickAngle, simhash } from "@/lib/diversity";
 import { isAdminEmail } from "@/lib/adminStats";
 import { logUsage } from "@/lib/usageLog";
@@ -127,7 +127,7 @@ export async function POST(request: Request) {
       const urlClean = sanitizeUrls(ensureDisclosure(article.body_html, isReview), { allowNaverBlogId: (profileRow as { naver_blog_id?: string | null } | null)?.naver_blog_id });
       if (urlClean.replaced > 0) console.log(`[url-sanitize] pregen user=${user.id.slice(0, 8)} replaced=${urlClean.replaced}`);
       const finalBody = urlClean.html;
-      const charCount = countKoreanChars(finalBody);
+      const charCount = countBodyChars(finalBody);
       if (charCount < 500) throw new Error("too-short");
 
       const upPayload: Record<string, unknown> = {

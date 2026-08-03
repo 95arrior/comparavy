@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
-import { countKoreanChars } from "@/lib/humanizer";
+import { countBodyChars } from "@/lib/humanizer";
 import { bumpMixWeight } from "@/lib/checkin";
 import { isReviewType } from "@/lib/revenue";
 
@@ -56,7 +56,7 @@ export async function PATCH(
   if (typeof body.title === "string") update.title = body.title;
   if (typeof body.body_html === "string") {
     update.body_html = body.body_html;
-    update.char_count = countKoreanChars(body.body_html);
+    update.char_count = countBodyChars(body.body_html);
   }
   if (typeof body.meta_title === "string") update.meta_title = body.meta_title.slice(0, 60);
   if (typeof body.meta_description === "string") {

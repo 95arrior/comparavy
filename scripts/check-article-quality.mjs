@@ -229,5 +229,32 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   ok(/targetMaxFor\(channel\)/.test(gr), "★목표 상한이 단일 진실원(targetMaxFor)에서 온다");
 }
 
+
+// ── ⑥-6 ★'읽는 분량'만 센다(2026-08-03 유저: "이거 글자수 거짓 같던데") ──
+//  화면엔 2,917자인데 실제 본문은 2,603자였다. 종전 카운터는 태그·공백만 빼고 나머지를 전부 셌다:
+//  [사진:] 슬롯 마커(발행 시 이미지가 된다)·해시태그(네이버는 본문 분량으로 안 친다)·URL(링크 버튼).
+//  이걸 같이 세면 목표 1,800이 실제로는 '본문 1,500 + 부속물 300'이 되어 의도와 달라진다.
+{
+  const BUDGET = 330;
+  const 본문만 = "<h2>섹션</h2><p>" + "가".repeat(200) + "</p>";
+  const 부속물포함 = "<h2>섹션</h2><p>" + "가".repeat(200) + "</p>"
+    + "<p>[사진: 은행 창구 앞 대기 의자와 번호표 뽑는 손]</p>"
+    + "<p>[전편 링크 자리]</p>"
+    + "<p>https://blog.naver.com/rider95-/224364896745</p>"
+    + "<p>#무직자주택담보대출 #무직자대출 #주택담보대출한도 #LTV기준 #후순위담보대출</p>";
+  const a = sectionBudgetReport(본문만, BUDGET).sections[0].chars;
+  const b = sectionBudgetReport(부속물포함, BUDGET).sections[0].chars;
+  ok(a === 200, "본문 글자수를 정확히 센다", `${a}자`);
+  ok(b === a, "★슬롯 마커·해시태그·URL은 분량에 안 넣는다", `부속물 포함 ${b}자 (본문만 ${a}자)`);
+
+  // ★총량 게이트와 섹션 게이트가 같은 자를 써야 한다 — 다르면 '섹션 합은 예산 안인데 총량 초과'가 생긴다
+  const hum = fs.readFileSync(new URL("../lib/humanizer.ts", import.meta.url), "utf-8");
+  ok(/export function countBodyChars/.test(hum), "★'읽는 분량' 카운터가 있다");
+  const gr = fs.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8");
+  ok(!/countKoreanChars\(/.test(gr), "★생성 경로가 옛 카운터를 안 쓴다(분량 판정은 읽는 분량으로)");
+  const art = fs.readFileSync(new URL("../app/api/articles/[id]/route.ts", import.meta.url), "utf-8");
+  ok(/countBodyChars\(/.test(art), "★화면에 표시되는 char_count도 같은 자로 잰다");
+}
+
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 발행글 품질(띄어쓰기·문단·이모지·사진·정렬)");
 process.exit(fail ? 1 : 0);

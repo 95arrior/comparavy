@@ -265,7 +265,14 @@ export interface SkeletonReport { faq: number; summaryLines: number; hasOpeningQ
 //  ★품질 심사가 아니라 최소선이다: '예산의 1.3배를 넘긴 섹션'만 지적한다(1.0배로 조이면 매번 걸린다).
 export interface SectionBudgetReport { sections: { title: string; chars: number }[]; issues: string[] }
 
-const textLen = (s: string) => stripTags(s).replace(/\s/g, "").length;
+// ★섹션 글자수도 '읽는 분량'으로 센다(2026-08-03) — 슬롯 마커·해시태그·URL은 발행되면 글자가 아니다.
+//  총량 게이트(countBodyChars)와 다른 자로 재면 '섹션 합은 예산 안인데 총량은 초과' 같은 모순이 생긴다.
+const textLen = (s: string) => stripTags(s)
+  .replace(/\[(사진|카드|차트)\s*:[^\]]*\]/g, " ")
+  .replace(/\[[^\]]{0,40}(자리|삽입)[^\]]{0,20}\]/g, " ")
+  .replace(/https?:\/\/\S+/g, " ")
+  .replace(/#[^\s#]+/g, " ")
+  .replace(/\s/g, "").length;
 
 export function sectionBudgetReport(html: string, perSection: number): SectionBudgetReport {
   const h = String(html || "");
