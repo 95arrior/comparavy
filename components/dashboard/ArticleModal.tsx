@@ -197,6 +197,23 @@ export default function ArticleModal({ pubStampKey, blogName,
     setThumbBusy(false);
   }
 
+  // ★자동 생성 배선(2026-08-04 유저 실측에서 검거) — makeInfographic이 정의만 되고 호출부가 없었다.
+  //  화면은 "데이터 카드 · 자동으로 만들어져요"라고 약속하는데 아무 일도 안 일어났다.
+  //  ★약속한 UI 문구는 그 자체로 명세다 — 자동이라고 썼으면 자동이어야 한다.
+  //  크레딧 0이라 사진과 달리 유저 동의를 물을 이유도 없다.
+  useEffect(() => {
+    if (!DATA_CARDS_ENABLED) return;
+    const slots = parseSlots(bodyHtml);
+    for (let i = 0; i < slots.length; i++) {
+      const sl = slots[i]!;
+      if (sl.type !== "card") continue;
+      const st = imgs[i];
+      if (st?.url || st?.busy || st?.err) continue; // 이미 있거나 도는 중이거나 실패한 건 건드리지 않는다
+      void makeInfographic(i, sl.desc);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bodyHtml, imgs]);
+
   // ★자료 이미지(크레딧 0) — 본문 표·체크리스트를 '공들인 인포그래픽'으로(유저 레퍼런스: 부동산원 차트)
   async function makeInfographic(i: number, slot: string) {
     if (imgs[i]?.busy) return;
@@ -489,8 +506,14 @@ export default function ArticleModal({ pubStampKey, blogName,
                     <div key={i} className="rounded-xl bg-white/70 p-3.5 ring-1 ring-black/[0.04]">
                       <div className="flex items-center gap-3">
                         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#1D75F7]/10 text-[11px] font-bold text-[#1D75F7]">{i + 1}</span>
-                        <p className="min-w-0 flex-1 truncate text-[13px] font-medium text-neutral-700">데이터 카드 · 자동으로 만들어져요</p>
+                        <p className="min-w-0 flex-1 truncate text-[13px] font-medium text-neutral-700">
+                          {st.url ? "데이터 카드" : st.busy ? "데이터 카드 · 만드는 중…" : st.err ? `데이터 카드 · ${st.err}` : "데이터 카드 · 자동으로 만들어져요"}
+                        </p>
                         {st.url && <span className="text-[11px] font-bold text-emerald-600">완료</span>}
+                        {/* ★실패했을 때 다시 시도할 길(2026-08-04) — 자동 생성이 실패하면 유저가 할 수 있는 게 없었다 */}
+                        {!st.url && !st.busy && st.err && (
+                          <button onClick={() => makeInfographic(i, slot.desc)} className="at-press shrink-0 rounded-lg bg-[#1D75F7]/[0.08] px-3 py-1.5 text-[12px] font-bold text-[#1D75F7]">다시</button>
+                        )}
                       </div>
                       {st.url && <img src={st.url} alt="" className="mt-3 max-h-56 w-full rounded-lg object-cover" />}
                     </div>

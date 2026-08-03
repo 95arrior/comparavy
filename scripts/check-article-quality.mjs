@@ -345,6 +345,17 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   ok(/function listToTable/.test(ph), "★리스트를 표로 바꾸는 변환이 있다");
   ok(/listToTable\(capFaq/.test(ph), "★발행 파이프라인에 배선됨");
   ok(/체크리스트는 그대로 둔다/.test(ph), "★체크리스트는 표로 바꾸지 않는다(저장률 장치)");
+  // ★표는 '저장물'에도 있어야 한다(2026-08-04 유저 실측: 데이터 카드가 안 만들어졌다).
+  //  인포그래픽 API는 body_html의 <table>·☐를 재료로 쓴다 — 화면에만 표면 카드가 안 나온다.
+  //  그리고 화면과 저장이 다르면 그 자체로 사고다(같은 글이 두 모습이 된다).
+  ok(/listToTable\(article\.body_html\)/.test(gr), "★리스트→표가 저장 시점에도 적용된다");
+  ok(/export function listToTable/.test(ph), "★변환 함수가 export돼 두 경로가 같은 것을 쓴다");
+
+  // ★데이터 카드 자동 생성 — 화면이 "자동으로 만들어져요"라고 약속하는데 호출부가 없었다
+  const am = fs.readFileSync(new URL("../components/dashboard/ArticleModal.tsx", import.meta.url), "utf-8");
+  ok(/void makeInfographic\(i, sl\.desc\)/.test(am), "★카드 슬롯을 보면 자동으로 만든다(약속한 UI 문구는 명세다)");
+  ok(/if \(st\?\.url \|\| st\?\.busy \|\| st\?\.err\) continue/.test(am), "★이미 있거나 도는 중이거나 실패한 건 다시 안 부른다(무한 루프 방지)");
+  ok(/다시<\/button>/.test(am), "★실패했을 때 유저가 다시 시도할 길이 있다");
 
   // ★함께 보면 좋은 글 2~3개 고정(유저: "핏한 게 없어도 넣어라")
   ok(/relatedPosts\.length < 2/.test(gr), "★내부링크가 2개 미만이면 보강한다");

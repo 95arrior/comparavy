@@ -586,7 +586,7 @@ function capFaq(html: string): string {
 //  변환 조건은 좁게 잡는다 — 모든 리스트를 표로 만들면 리듬이 죽는다:
 //   ① li가 3개 이상 ② 각 li가 '항목, 설명' 구조(첫 쉼표로 갈림) ③ 항목 쪽이 짧다(20자 이내)
 //   이 셋을 다 만족하면 '조건 나열'이지 '흐름'이 아니다 — 표가 읽기 훨씬 낫고 AI 인용에도 유리하다.
-function listToTable(html: string): string {
+export function listToTable(html: string): string {
   return html.replace(/<ul(?:\s[^>]*)?>([\s\S]*?)<\/ul>/gi, (raw, inner: string) => {
     const lis = [...String(inner).matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)].map((m) => m[1]);
     if (lis.length < 3 || lis.length > 8) return raw;

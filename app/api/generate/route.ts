@@ -13,6 +13,7 @@ import { sanitizeUrls } from "@/lib/linkWhitelist";
 import { countBodyChars } from "@/lib/humanizer";
 import { sectionBudgetReport, tailSummaryBullets, ensureHashtags, clichePhotoSlots, hardTrimToLimit } from "@/lib/editorial";
 import { validateTitleTail } from "@/lib/titleRules";
+import { listToTable } from "@/lib/publishHtml";
 import { sectionBudgetFor, targetMaxFor } from "@/lib/articlePrompt";
 import { isDisposableEmail } from "@/lib/disposableEmail";
 import { checkRateLimit } from "@/lib/rateLimit";
@@ -718,6 +719,18 @@ export async function POST(request: Request) {
         // ★하드컷(2026-08-04 유저 확정: "최대 2500자를 넘지 마세요") — 여기는 부탁이 아니라 실행이다.
         //  위 압축은 재생성이라 실패할 수 있다(시간 예산·모델 거부). 그때도 상한은 지켜져야 한다.
         //  ★섹션 단위로 뒤에서부터 뺀다: 문장 중간을 자르면 글이 망가지고, 클로징이 사라지면 뚝 끊긴다.
+        // ★리스트 → 표를 '저장물'에 적용한다(2026-08-04 유저 실측에서 검거).
+        //  종전엔 formatBody(화면 표시)에만 걸어서 저장된 body_html은 여전히 리스트였다.
+        //  ★그러면 인포그래픽 API가 본문에서 <table>을 못 찾아 데이터 카드가 만들어지지 않는다
+        //   (그 API는 body_html의 표·체크리스트를 재료로 쓴다).
+        //  ★그리고 화면과 저장이 다르면 그 자체로 사고다 — 같은 글이 두 모습이 된다.
+        {
+          const tabled = listToTable(article.body_html);
+          if (tabled !== article.body_html) {
+            article = { ...article, body_html: tabled };
+            console.log(`[list-to-table] user=${user.id.slice(0, 8)} 리스트를 표로 변환`);
+          }
+        }
         {
           const trimmed = hardTrimToLimit(article.body_html, countBodyChars);
           if (trimmed.removed.length) {
