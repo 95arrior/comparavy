@@ -7,6 +7,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { logUsage } from "./usageLog";
 import { containsBanned } from "./hookPatterns";
 import { fetchNews } from "./newsTopics";
+import { getTrendTopics } from "./trendTopics";
+import { normalizeKeyword } from "./diversity";
 import { readSignals, pickTitleType, titleTypeDirective } from "./titleTypes";
 import { coreKeywordOf } from "./editorial";
 import { validateHomefeedTitle, staleMonthIn } from "./titleRules";
@@ -44,6 +46,44 @@ const INVEST_PUSH_RE = /(?:매수|사)\s*(?:하세요|하라|해야|타이밍)|�
 // ★'시장 급변 번역'은 실제 보도에 물려야 한다 — 실시간을 표방하면서 모델 기억으로 쓰면 지어낸 시황이 된다.
 //  뉴스가 안 잡히면 그 장은 만들지 않는다(빈손이 거짓보다 낫다).
 const NEWS_GROUNDED: Record<string, string> = { "시장 급변 번역": "증시 환율 금리" };
+
+// ★실데이터 그라운딩(2026-08-03 유저 지적 — "홈판도 트렌드 키워드로 만들어야 한다").
+//  ★우리는 청약홈·보조금24·기업마당·DART를 이미 수확하고 있는데, 홈판은 그걸 하나도 안 쓰고 있었다.
+//   일반 뉴스 검색(fetchNews)만 보고, 그것도 일부 유형만 받았다. 나머지는 뉴스 없이 만들어졌다.
+//   그 결과 홈판 카드가 '환율'·'자산 격차'·'저축액'처럼 전부 일반론이 됐다 — 지금 벌어지는 일이 아니다.
+//  ★홈피드는 시의성·이슈성이 노출 요인이다. 공고·공시는 '마감이 있는 지금 일'이라 그 축에서 가장 강하다
+//   (유저 제공 상위 글 4편도 전부 날짜가 박힌 실데이터였다: 8월 배당 지급일·시총 돌파·재산세 상승).
+//  ★단 홈판 keyword는 검색어가 아니라 주제 앵커다 — 씨앗을 '소재'로 주되 키워드를 그대로 베끼게 하지 않는다.
+async function liveSeedBlock(sub: string, exclude: Set<string>): Promise<string | null> {
+  try {
+    const seeds = await getTrendTopics(sub || "경제·재테크");
+    if (!seeds.length) return null;
+    const now = Date.now();
+    // 행동 창(접수·마감)이 살아 있는 공고를 앞에 세운다 — 홈피드에서 가장 강한 건 '지금 안 하면 끝'이다.
+    const scored = seeds
+      .filter((t) => !exclude.has(normalizeKeyword(t.keyword)))
+      .map((t) => {
+        const end = t.actionEnd ? new Date(`${t.actionEnd}T23:59:59+09:00`).getTime() : null;
+        const live = end != null && end >= now;
+        const soon = live && end - now <= 7 * 86400_000;
+        return { t, score: (soon ? 3 : live ? 2 : 0) + (t.source && t.source !== "news" ? 1 : 0) };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8);
+    if (!scored.length) return null;
+    return [
+      `★[오늘 수확한 실제 이슈 — 이 안에서 소재를 고른다] 공고·공시·뉴스에서 실제로 확인된 것들이다.`,
+      `여기 없는 일정·금액·기관은 만들지 않는다. 하나를 골라 '그래서 내 돈에 무슨 뜻인지'로 번역한다.`,
+      `★키워드를 그대로 베끼지 마라 — 홈판 제목은 검색어가 아니라 사람을 멈추게 하는 문장이다.`,
+      ...scored.map(({ t }) => {
+        const win = t.actionEnd ? ` (마감 ${t.actionEnd})` : "";
+        return `- [${t.source ?? "news"}] ${t.title || t.keyword}${win}`;
+      }),
+    ].join("\n");
+  } catch {
+    return null; // 실데이터 실패 = 기존 뉴스 경로로 폴백(파이프 무영향)
+  }
+}
 
 async function marketNewsBlock(betKey: string): Promise<string | null> {
   const q = NEWS_GROUNDED[betKey];
@@ -154,13 +194,17 @@ async function genOne(
       console.error("[homebet] 뉴스 없음 — 시장 유형 스킵:", bet.key);
       return null;
     }
+    // ★실데이터 씨앗을 모든 유형에 준다(2026-08-03) — 뉴스 그라운딩은 일부 유형만 받아서
+    //  나머지 유형이 일반론으로 흘렀다. 공고·공시는 유형과 무관하게 '지금 일'을 준다.
+    const seedBlock = await liveSeedBlock(sub, usedKeywords);
+    if (seedBlock) console.log(`[homebet] 실데이터 씨앗 주입 — ${bet.key}`);
     // ★제목 유형은 추첨이 아니라 이 글감에 맞는 것을 고른다(2026-08-02) — 유형 신호는 소재 힌트·오늘 기사에서 읽는다.
     //  경험형은 여기서 뽑히지 않는다(카드 생성 시점엔 운영자 실경험이 없다) — 그 유형은 본문 생성 단계에서 열린다.
     const kstNow = new Date(Date.now() + 9 * 3600_000);
     const todayKst = kstNow.toISOString().slice(0, 10);
     const curMonth = kstNow.getUTCMonth() + 1;
     const prevMonth = ((curMonth + 10) % 12) + 1;
-    const signals = readSignals(`${bet.key} ${bet.hint} ${newsBlock ?? ""}`, { userExperience: false });
+    const signals = readSignals(`${bet.key} ${bet.hint} ${newsBlock ?? ""} ${seedBlock ?? ""}`, { userExperience: false });
     const titleType = pickTitleType(signals);
     const client = new Anthropic({ apiKey });
     const res = await client.messages.create({
@@ -172,6 +216,7 @@ async function genOne(
           `네이버 홈피드(홈판)에서 폭발적 반응을 노리는 경제 블로그 글감 1개를 만든다. 검색 SEO용이 아니다 — 홈피드는 '노출 실험 → 클릭률·체류로 판정' 구조라 스크롤을 멈추게 하는 제목이 전부다.`,
           `블로그 세부 분야: ${sub || "경제·재테크"}`,
           `오늘의 유형: [${bet.key}] — ${bet.hint}`,
+          seedBlock ?? "",
           newsBlock ?? "",
           // ★오늘 날짜 주입(2026-08-02 검거) — 종전엔 kstDay를 캐시 키에만 쓰고 프롬프트엔 안 넘겼다.
           //  모델은 오늘이 며칠인지 모른 채 '이 달'을 찍었고, 8월 2일에 4장 전부 7월 소재가 나왔다.

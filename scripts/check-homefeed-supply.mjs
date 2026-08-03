@@ -51,4 +51,22 @@ const rt = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url
 }
 
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 홈판 공급(캐시가 실패를 굳히지 않게)");
+// ── ★홈판을 실데이터로(2026-08-03 유저 지적: "홈판도 트렌드 키워드로 만들어야 한다") ──
+//  우리는 청약홈·보조금24·기업마당·DART를 이미 수확하는데 홈판은 하나도 안 쓰고 있었다.
+//  일반 뉴스 검색만 보고, 그것도 일부 유형만 받아서 나머지는 일반론으로 흘렀다
+//  (실측 카드: 환율·자산 격차·저축액·퇴직금 — 전부 '지금 일'이 아니다).
+//  ★홈피드는 시의성이 노출 요인이고, 공고·공시는 '마감이 있는 지금 일'이라 그 축에서 가장 강하다.
+{
+  const hb = fs.readFileSync(new URL("../lib/homefeedBet.ts", import.meta.url), "utf-8");
+  ok(/getTrendTopics/.test(hb), "★홈판이 수확된 씨앗 풀을 읽는다");
+  ok(/liveSeedBlock/.test(hb), "★실데이터 그라운딩 블록이 있다");
+  ok(/const seedBlock = await liveSeedBlock/.test(hb), "★모든 유형에 주입된다(뉴스 그라운딩은 일부 유형뿐이었다)");
+  ok(/actionEnd/.test(hb), "★행동 창(마감)이 살아 있는 공고를 우선한다");
+  ok(/키워드를 그대로 베끼지 마라/.test(hb), "★홈판 keyword는 주제 앵커라 씨앗을 베끼지 않게 막는다");
+  // ★씨앗 조회가 실패해도 홈판이 죽으면 안 된다 — 기존 뉴스 경로로 폴백
+  ok(/return null; \/\/ 실데이터 실패/.test(hb), "★씨앗 조회 실패는 조용히 폴백(파이프 무영향)");
+  // ★트렌드 레인과 같은 씨앗을 쓰면 한 보드에 중복이 뜬다 — 이미 쓴 것은 제외
+  ok(/liveSeedBlock\(sub, usedKeywords\)/.test(hb), "★이미 쓴 키워드를 씨앗 후보에서 뺀다(트렌드 레인과 중복 방지)");
+}
+
 process.exit(fail ? 1 : 0);
