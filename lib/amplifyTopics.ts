@@ -259,7 +259,11 @@ ${OPEN_LOOP_GUIDE}
   try {
     const res = await client.messages.create({
       model: "claude-haiku-4-5",
-      max_tokens: 1100,
+      // ★2026-08-04 유저 실측에서 검거: 1100 고정이라 출력이 잘려 JSON이 깨졌고,
+      //  파싱 예외로 증식이 통째로 0장이 됐다(진단: position 1018에서 파싱 실패).
+      //  항목당 제목 2개·페르소나·훅·썸네일 2개·판결·컷리스트·분기축·시리즈 아크를 요구한다 —
+      //  한 항목이 250~320토큰이다. 개수에 비례해 잡는다.
+      max_tokens: Math.min(8000, 600 + want * 340),
       messages: [{ role: "user", content: prompt }],
     });
     void logUsage({ userId, model: "claude-haiku-4-5", kind: "amplify", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
@@ -270,7 +274,38 @@ ${OPEN_LOOP_GUIDE}
       await saveAmpDiag({ seeds: seeds.length, want, briefs: briefs.length, parsed: 0, out: 0, drop: { ...NO_DROP }, stage: "중단: 모델 응답 파싱 실패" });
       return [];
     }
-    const parsed = JSON.parse(m[0]) as { seedIndex?: number; keyword?: string; titleClick?: string; titleSearch?: string; reader?: string; hook?: string; thumbMain?: string; thumbSub?: string; verdict?: string; cutList?: string[]; branchAxis?: string; series?: { title?: string; arc?: { role?: string; angle?: string }[] } | null }[];
+    type Amp = { seedIndex?: number; keyword?: string; titleClick?: string; titleSearch?: string; reader?: string; hook?: string; thumbMain?: string; thumbSub?: string; verdict?: string; cutList?: string[]; branchAxis?: string; series?: { title?: string; arc?: { role?: string; angle?: string }[] } | null };
+    // ★부분 복구(2026-08-04 유저 실측) — 배열을 통째로 파싱하다 하나가 깨지면 전부 0장이 됐다.
+    //  출력이 잘리면 마지막 항목만 불완전한데, 그것 때문에 앞의 멀쩡한 항목까지 버리고 있었다.
+    //  ★깨진 하나를 버리고 나머지를 살린다 — 4장이라도 있는 게 0장보다 낫다.
+    const parseLoose = (raw: string): Amp[] => {
+      try { return JSON.parse(raw) as Amp[]; } catch { /* 아래 항목 단위 복구로 */ }
+      const items: Amp[] = [];
+      let depth = 0, start = -1;
+      for (let i = 0; i < raw.length; i++) {
+        const ch = raw[i];
+        if (ch === '"') { // 문자열 안의 중괄호는 세지 않는다
+          i++;
+          while (i < raw.length && !(raw[i] === '"' && raw[i - 1] !== "\\")) i++;
+          continue;
+        }
+        if (ch === "{") { if (depth === 0) start = i; depth++; }
+        else if (ch === "}") {
+          depth--;
+          if (depth === 0 && start >= 0) {
+            try { items.push(JSON.parse(raw.slice(start, i + 1)) as Amp); } catch { /* 이 항목만 버린다 */ }
+            start = -1;
+          }
+        }
+      }
+      return items;
+    };
+    const parsed = parseLoose(m[0]);
+    if (parsed.length === 0) {
+      await saveAmpDiag({ seeds: seeds.length, want, briefs: briefs.length, parsed: 0, out: 0, drop: { ...NO_DROP }, stage: "중단: JSON 복구도 실패(항목 0개)" });
+      return [];
+    }
+    if (!m[0].trim().endsWith("]")) console.log(`[amp] 출력이 잘렸다 — 복구로 ${parsed.length}개 살림(max_tokens 재검토 필요)`);
     const out: AmplifiedTopic[] = [];
     const seen = new Set<string>();
     // ★증식 손실 회계(2026-08-04 유저: "씨앗 19개인데 증식 4장, 왜?").
