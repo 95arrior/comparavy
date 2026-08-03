@@ -369,9 +369,17 @@ export function scanFacts(text: string, keyword: string): FactIssue[] {
 
   // 3층 — 누락. 주제 판정은 키워드가 기준이다. 본문에 한 번 스친 단어로 필수항목을 요구하면
   //  경고가 쏟아져서 아무도 안 읽는다(과탐이 게이트를 죽인다) — 본문 기준은 3회 이상 다룬 주제만.
+  // ★본문 3회 문턱이 낮았다(2026-08-03 유저 실물에서 검거): '노무상담' 글이 사실검사 4건을 받았다.
+  //  상담 타이밍을 다루는 글이라 '퇴직 직후'·'퇴직서'·'퇴직금'이 자연스럽게 5번 나왔을 뿐인데
+  //  퇴사 정산 글로 오인돼 '건강보험 임의계속가입'·'IRP 과세이연'을 요구했다.
+  //  ★이건 예금 오탐(위 257행 주석)과 같은 종류다 — 단어 출현을 주제로 착각한 것.
+  //  ★소제목을 본다: 그게 진짜 주제면 h2에 나온다. 노무상담 글의 소제목 넷엔 '퇴직'이 없고,
+  //   퇴사 정산 글이라면 '퇴직금'·'건강보험'이 소제목에 선다. 본문 카운트는 6회로 올려 보조로만 쓴다.
+  const headingText = stripHtml((String(text).match(/<h2[^>]*>[\s\S]*?<\/h2>/gi) ?? []).join(" "));
   for (const topic of TOPIC_MUSTS) {
     if (topic.unless?.test(keyword)) continue; // 하위 주제 글이면 상위 목록은 통째로 건너뛴다
-    if (!topic.when.test(keyword) && countMatches(plain, topic.when) < 3) continue;
+    const isTopic = topic.when.test(keyword) || topic.when.test(headingText) || countMatches(plain, topic.when) >= 6;
+    if (!isTopic) continue;
     for (const must of topic.musts) {
       if (must.has.test(plain)) continue;
       issues.push({
