@@ -110,7 +110,7 @@ for (const [kw, t] of 앵커실측) {
 }
 
 // ★유형 7종이 전부 살아 있는지(하나라도 죽으면 로테이션이 좁아진다)
-ok(TITLE_TYPES.length === 7, `유형 7종 유지 (현재 ${TITLE_TYPES.length})`);
+ok(TITLE_TYPES.length === 8, `유형 8종 유지 — 논쟁형 포함 (현재 ${TITLE_TYPES.length})`);
 for (const t of TITLE_TYPES) ok(Boolean(t.payoff), `${t.name}에 본문 이행 의무가 정의됨`);
 
 
@@ -136,6 +136,51 @@ for (const t of TITLE_TYPES) ok(Boolean(t.payoff), `${t.name}에 본문 이행 �
   // ★홈판은 검색 레인 규칙에 잡아먹히면 안 된다 — keyword가 검색어가 아니라 주제 앵커다.
   const src = fs.readFileSync(new URL("../lib/titleTypes.ts", import.meta.url), "utf-8");
   ok(/주제 앵커/.test(src), "★홈판 keyword가 주제 앵커라는 단서가 남아 있다(검색 규칙 오적용 방지)");
+}
+
+
+// ── ★논쟁형 안전축(2026-08-03 유저 확정 — 홈피드 전략 문서 반영) ────────
+//  근거: 홈피드 노출 점수의 핵심이 체류·댓글인데 댓글을 만드는 가장 강한 장치가 논쟁이다.
+//  ★단 유저 3원칙은 법적안전 > 노출극대 > 계정지속 순서다. 재테크에서 '확실한 주장'은
+//   투자 권유(금소법)가 될 수 있고 의료·정치는 계정 리스크다 — 노출을 얻고 계정을 거는 거래는 안 한다.
+//  ★그래서 축을 프롬프트가 아니라 코드로 막는다: '한쪽 편을 들어라'와 '이건 빼라'를 같은
+//   프롬프트에 넣으면 모델이 반드시 한쪽을 흘린다(CLAUDE.md).
+{
+  const 열림 = readSignals("청년도약계좌 5년 묶이는데 과연 이득일까 중도 해지하면 손해");
+  ok(열림.debatable && !열림.unsafeDebate, "제도 실효성 논쟁은 안전축으로 읽힌다");
+  ok(fitScore("debate", 열림) > 0, "★안전축이면 논쟁형이 후보로 열린다", `${fitScore("debate", 열림)}점`);
+
+  // ★위험축 셋은 신호가 있어도 후보에서 완전히 빠져야 한다(-1)
+  for (const [t, why] of [
+    ["삼성전자 주식 지금 사도 될까 과연 이득일까", "투자 권유(금소법)"],
+    ["이 영양제 정말 필요 없다는 의사들 논란", "의료 단정"],
+    ["이번 선거 공약 과연 맞을까 논란", "정치"],
+  ]) {
+    const s2 = readSignals(t);
+    ok(s2.unsafeDebate, `위험 소재로 읽는다 — ${why}`);
+    ok(fitScore("debate", s2) === -1, `★${why} 소재엔 논쟁형이 안 열린다`, `${fitScore("debate", s2)}점`);
+  }
+
+  // ★없는 논쟁을 만들지 않는다 — 논쟁 표지가 없으면 안 연다(문서의 '어그로와 전략의 차이')
+  ok(fitScore("debate", readSignals("연말정산 환급금 신청 방법과 준비 서류")) === -1, "★논쟁 표지가 없으면 안 연다");
+
+  // ★비교축이 뚜렷하면 비교형에 양보 — 논쟁형은 '비교로 안 풀리는 것'을 맡는다
+  const 비교 = readSignals("연금저축과 IRP 비교, 어느 쪽이 유리한지 과연 따져보면 300만원 차이");
+  ok(pickTitleType(비교).key !== "debate", "★비교축이 있으면 비교형이 이긴다", pickTitleType(비교).key);
+
+  const t = TITLE_TYPE_BY_KEY.debate;
+  ok(/양비론 금지/.test(t.guide), "★'상황에 따라 다릅니다'로 끝내는 것을 막는다");
+  ok(/반대편 논리/.test(t.payoff), "★반대편 논리 요약을 본문 의무로 둔다(조롱 대신 반박을 부르게)");
+}
+
+// ── ★반전형 조건부 완화(2026-08-03 유저 확정) ──────────────────────────
+//  종전엔 단정 경구체를 일괄 금지했는데, 그러면 문서가 말하는 '신선함'이 죽는다.
+//  ★기준은 근거다: 본문에 출처 있는 숫자·조항이 있으면 단정, 없으면 조건형.
+{
+  const t = TITLE_TYPE_BY_KEY.twist;
+  ok(/단정형 조건부 허용/.test(t.guide), "★단정형이 조건부로 허용됨");
+  ok(/근거를 못 대면/.test(t.guide), "★근거 없으면 조건형으로 되돌아간다");
+  ok(/수치|조항/.test(t.payoff), "본문 이행 의무에 근거가 남아 있다");
 }
 
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 홈판 제목 유형");

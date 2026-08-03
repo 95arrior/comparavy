@@ -46,7 +46,46 @@ export async function GET() {
     const revenue30 = (rev ?? []).reduce((s, r) => s + Number(r.revenue_krw ?? 0), 0);
     const inflow30 = (inf ?? []).reduce((s, r) => s + Number(r.inflow ?? 0), 0);
 
-    return NextResponse.json({ enabled: true, winners, losers, watching, minSample: PERF_MIN_SAMPLE, revenue30, inflow30 });
+    // ★연료론 계측(2026-08-03 유저 확정 — 홈피드 전략 문서 반영).
+    //  주장: 홈판은 그 글의 조회가 목적이 아니라, 그 트래픽으로 블로그 지수를 올려
+    //  '검색 글'의 순위를 끌어올리는 연료다. 유저 결정으로 이 프레임을 전제로 삼는다.
+    //  ★다만 이건 업계 통설이지 우리 실측이 아니다. 전제로 쓰되 틀렸을 때 알 수 있어야 한다 —
+    //   그래서 같은 화면에 반증 지표를 붙인다: 검색 글 각각에 대해 '발행 직전 14일간 홈판 편수'를 세고,
+    //   홈판 0편 구간과 1편 이상 구간의 D+7 승률을 비교한다. 연료론이 맞다면 뒤가 높아야 한다.
+    //  ★표본이 적을 땐 판정하지 않는다(승률 차이는 표본 10개 밑에서 아무 뜻이 없다).
+    const 연료 = await (async () => {
+      try {
+        const { data: all } = await admin.from("post_performance")
+          .select("article_id, species, published_at").eq("user_id", user.id).limit(4000);
+        const rows = (all ?? []).filter((r) => r.published_at);
+        const homeDays = rows.filter((r) => r.species === "homefeed").map((r) => new Date(String(r.published_at)).getTime());
+        const search = rows.filter((r) => r.species === "evergreen");
+        const WINDOW = 14 * 86400_000;
+        const bucket = { 없음: { win: 0, total: 0 }, 있음: { win: 0, total: 0 } };
+        for (const a of search) {
+          const w = winBy.get(String(a.article_id));
+          if (w === undefined) continue; // 아직 D+7 스냅샷이 없는 글은 세지 않는다
+          const t = new Date(String(a.published_at)).getTime();
+          const priorHome = homeDays.filter((h) => h < t && t - h <= WINDOW).length;
+          const b = priorHome > 0 ? bucket.있음 : bucket.없음;
+          b.total += 1; if (w) b.win += 1;
+        }
+        const rate = (b: { win: number; total: number }) => (b.total ? Math.round((b.win / b.total) * 100) : null);
+        const 충분 = bucket.없음.total >= PERF_MIN_SAMPLE && bucket.있음.total >= PERF_MIN_SAMPLE;
+        return {
+          설명: "검색 글이 '발행 직전 14일 안에 홈판 글이 있었는지'로 갈라 D+7 승률을 비교한다. 연료론이 맞다면 '홈판 있음'이 높아야 한다.",
+          홈판없이_발행: { 표본: bucket.없음.total, 승률: rate(bucket.없음) },
+          홈판이후_발행: { 표본: bucket.있음.total, 승률: rate(bucket.있음) },
+          판정: !충분
+            ? `표본 부족 — 지켜보는 중(각 구간 ${PERF_MIN_SAMPLE}편 이상 필요)`
+            : (rate(bucket.있음) ?? 0) > (rate(bucket.없음) ?? 0)
+            ? `★연료론 지지 — 홈판 이후 발행분이 ${(rate(bucket.있음) ?? 0) - (rate(bucket.없음) ?? 0)}%p 높다`
+            : `★연료론 반증 — 홈판 이후가 더 높지 않다. 홈판 배합(현재 신생 40%)을 재검토할 근거다`,
+        };
+      } catch { return null; } // 계측 실패는 대시보드를 막지 않는다
+    })();
+
+    return NextResponse.json({ enabled: true, winners, losers, watching, minSample: PERF_MIN_SAMPLE, revenue30, inflow30, 연료 });
   } catch (e) {
     console.error("[perf] 요약 실패:", e instanceof Error ? e.message : e);
     return NextResponse.json({ enabled: true, winners: [], losers: [], watching: [], minSample: PERF_MIN_SAMPLE, revenue30: 0, inflow30: 0 });
