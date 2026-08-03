@@ -617,25 +617,43 @@ export async function POST(request: Request) {
           return;
         }
         // ★분량 상한 게이트(2026-07-15 실측: 네이버 목표 1,600인데 공백 제외 3,089자 발행 — 긴 글=모바일 이탈).
-        //  프롬프트는 방향, 코드는 한계선. 상한+15% 초과 시 압축 재생성 1회 — 그래도 초과면 통과(발행 차단은 과잉, 로그만).
+        //  프롬프트는 방향, 코드는 한계선.
+        // ★2026-08-03 전면 수리(유저 실측: 7,000~8,000자). 종전 게이트가 세 겹으로 무력했다:
+        //  ① 재생성 예산 REGEN_CAP=1을 가드 7개가 공유했고 이 게이트가 맨 마지막이었다 — 앞의 6개 중
+        //     하나만 발동해도 분량 게이트는 아예 못 돈다. 게다가 경제 블로그는 전용 가드(lacksInterpretation)가
+        //     더 붙어서 예산을 먼저 뺏길 확률이 구조적으로 높다. 즉 '경제 블로그일수록 분량이 안 잡힌다'.
+        //  ② 압축 1회. 3배 초과를 한 번에 목표로 줄이라는 건 안 되는 요구다.
+        //  ③ 압축 후에도 초과면 로그만 남기고 통과.
+        // ★수리 원칙: 분량은 '품질 보강'(더 넣기)과 성격이 반대인 '한계선'(줄이기)이다.
+        //  보강 가드와 예산을 나눠 쓰면 한계선이 늘 진다 — 그래서 전용 예산을 준다.
         const lenCap = Math.round((channel === "wordpress" ? 2200 : 1800) * 1.15); // ★네이버 1,800 재재개정(2026-07-17 유저: 분량 축소 — 18자 개행에선 긴 글=도배)
-        if (charCount > lenCap && regenSpent < REGEN_CAP) {
-          regenSpent++;
+        const targetLabel = channel === "wordpress" ? "1,800~2,200" : "1,200~1,800";
+        const LEN_REGEN_CAP = 2; // 압축 2단계 — 1차는 '버릴 것 지정', 2차는 더 강하게
+        for (let lenPass = 0; lenPass < LEN_REGEN_CAP && charCount > lenCap; lenPass++) {
           send({ type: "revising" });
           void logUsage({ userId: user.id, model: "guard", kind: "overlength_retry", inputTokens: 0, outputTokens: 0 });
+          // ★초과폭에 비례해 '무엇을 버릴지'를 코드가 계산해서 준다 — "짧게 써라"로는 3배를 못 줄인다.
+          //  넘치는 글자를 섹션 예산(고정 블록 제외분 ÷ 4)으로 나눠 버릴 소제목 수를 낸다.
+          const over = charCount - lenCap;
+          const perSection = Math.max(150, Math.round((lenCap - 480) / 4));
+          const dropSections = Math.min(2, Math.max(1, Math.round(over / perSection)));
+          const 지시 = lenPass === 0
+            ? `★경고: 직전 생성이 공백 제외 ${charCount.toLocaleString()}자로 목표(${targetLabel}자)의 상한을 ${(charCount / lenCap).toFixed(1)}배 초과했다. 이번엔 반드시 ${targetLabel}자 안에서 끝내라. 구체적으로: ① 본문 소제목(h2)을 ${dropSections}개 통째로 버려라(가장 곁가지인 것부터 — 남는 소제목은 3~4개) ② 남은 각 섹션은 공백 제외 ${perSection}자 이내 ③ 조건 분기·비교·구간 데이터는 문단으로 풀지 말고 표로 바꿔라(같은 정보가 1/3 글자로 들어간다) ④ 배경 설명·일반론 문단은 전부 삭제. 핵심 답·수치·FAQ 2개·클로징 체크리스트는 유지.`
+            : `★2차 경고: 아직도 ${charCount.toLocaleString()}자다(상한 ${lenCap.toLocaleString()}자). 이번엔 과감하게 버려라 — 소제목 3개, 각 섹션 ${perSection}자 이내, 설명 문단은 섹션당 최대 2개. 아는 것을 다 쓰지 마라. 검색자가 찾으러 온 답 하나와 그 답을 쓰는 데 필요한 것만 남기고 나머지는 전부 삭제한다.`;
           try {
             const compact = await streamArticle(
-              { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ★경고: 직전 생성이 공백 제외 ${charCount.toLocaleString()}자로 목표 상한을 크게 초과했다. 이번엔 반드시 ${channel === "wordpress" ? "1,800~2,200" : "1,200~1,800"}자(공백 제외) 안에서 끝내라 — 곁가지 소제목을 통째로 버리고 문단당 문장 수를 줄여라. 핵심 답·수치·FAQ는 유지.`.trim() },
+              { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ${지시}`.trim() },
               noop, noop, onGenUsage,
             );
             const compactCount = countKoreanChars(compact.body_html);
             // 더 짧아졌고 최소·경험조작 통과일 때만 교체(안전 — 압축본이 더 이상하면 원본 유지)
             if (compactCount >= minChars && compactCount < charCount && (userStory || !hasFabricatedExperience(compact.body_html))) {
               article = compact; charCount = compactCount;
-            }
-          } catch { /* 압축 실패 — 원본 그대로(파이프 무영향) */ }
-          if (charCount > lenCap) console.log(`[overlength] user=${user.id.slice(0, 8)} ch=${channel} chars=${charCount} cap=${lenCap} — 압축 후에도 초과, 통과`);
+            } else break; // 더 안 줄었으면 한 번 더 돌려도 같다 — 예산 낭비를 막는다
+          } catch { break; /* 압축 실패 — 원본 그대로(파이프 무영향) */ }
         }
+        // ★결과를 항상 남긴다 — 통과한 것도 남겨야 '얼마나 자주, 얼마나 초과하는지' 분포가 쌓인다(문턱을 감으로 옮기지 않기 위해).
+        console.log(`[length] user=${user.id.slice(0, 8)} ch=${channel} chars=${charCount} cap=${lenCap} ${charCount > lenCap ? `★초과(${(charCount / lenCap).toFixed(2)}배) — 압축 ${LEN_REGEN_CAP}회 후에도 초과, 통과` : "ok"}`);
 
         // (네이버 수익형 단일 — 자영업 시절의 업체 NAP 박스 삽입 제거. 수익형 블로그에 영업장 정보는 무의미 + 전 글 공통 박스는 패턴 지문 리스크)
         const urlClean = sanitizeUrls(ensureDisclosure(article.body_html, isReview), { allowNaverBlogId: (profileRow as { naver_blog_id?: string | null } | null)?.naver_blog_id }); // ★URL 정화 — 내 블로그 전편 링크는 통과

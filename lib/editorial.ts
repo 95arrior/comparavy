@@ -274,8 +274,11 @@ export function skeletonReport(html: string): SkeletonReport {
 
   const issues: string[] = [];
   if (faq > 2) issues.push(`자주 묻는 질문이 ${faq}개다(규격 2개). 본문이 못 다룬 것만 2개로 줄여라 — 3개 이상이면 덩어리로 보인다.`);
-  if (summaryLines > 3) issues.push(`'오늘의 3줄 요약'이 ${summaryLines}줄이다. 정확히 3줄로 줄여라 — 각 줄은 볼드 없이 20자 이내 완결 문장.`);
-  if (summaryLines > 0 && summaryLines < 3) issues.push(`3줄 요약이 ${summaryLines}줄뿐이다. 정확히 3줄로 채워라.`);
+  // ★'오늘의 3줄 요약' 블록 폐기(2026-08-03 유저 확정) — 줄 수를 따지던 검사를 '존재하면 위반'으로 뒤집는다.
+  //  이유: 글 맨 앞 '바쁘면 이것만'이 이미 결론을 준다. 끝에서 또 요약하면 같은 일을 앞뒤로 두 번 하는 것이고,
+  //  그 중복이 분량 예산을 밀어내고 있었다(목표 1,800에 실측 7,000~8,000자).
+  //  ★계측(summaryLines)은 남긴다 — 폐기가 실제로 화면에 닿았는지 세려면 숫자가 있어야 한다.
+  if (summaryLines > 0) issues.push(`'오늘의 3줄 요약' 블록은 폐기됐다(${summaryLines}줄 발견). 이 소제목과 목록을 통째로 삭제하라 — 글 앞의 '바쁘면 이것만'이 이미 결론을 줬으므로 끝에서 다시 요약하지 않는다.`);
   if (!hasOpeningQuote) issues.push(`도입 인용구 훅이 없다. 본문 첫 줄은 <blockquote> 한 문장(40자 이내)으로 아픔만 찌른다 — 해결책은 담지 않는다.`);
   return { faq, summaryLines, hasOpeningQuote, issues };
 }

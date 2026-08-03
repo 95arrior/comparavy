@@ -506,21 +506,11 @@ function ensureSectionEmphasis(html: string): string {
   return out;
 }
 
-// ★스켈레톤 게이트 ①(2026-07-13 유저: 좋은 폼이 추첨되면 안 된다) — 마무리 요약 불릿에 명명 소제목이 없으면 '오늘의 3줄 요약' 자동 삽입
-export function ensureSummaryHeading(html: string): string {
-  if (/<h[23][^>]*>[^<]*요약[^<]*<\/h[23]>/.test(html)) return html;
-  const uls = [...html.matchAll(/<ul(?:\s[^>]*)?>[\s\S]*?<\/ul>/gi)];
-  const last = uls[uls.length - 1];
-  if (!last || last.index === undefined || last.index < html.length * 0.55) return html; // 글 뒷부분 ul만
-  const lis = last[0].match(/<li[\s\S]*?<\/li>/gi) ?? [];
-  if (lis.length < 3 || lis.length > 6) return html;
-  const texts = lis.map((li) => li.replace(/<[^>]+>/g, "").trim());
-  if (texts.some((t) => /[☐#]/.test(t))) return html; // 체크박스·해시태그 리스트는 요약이 아니다
-  const avg = texts.reduce((a, t) => a + [...t].length, 0) / texts.length;
-  const boldish = lis.filter((li) => /<b>|<strong>/i.test(li)).length;
-  if (avg > 45 || boldish * 2 < lis.length) return html; // 요약 규격(짧은 볼드 불릿)일 때만
-  return html.slice(0, last.index) + "<h2>오늘의 3줄 요약</h2>" + html.slice(last.index);
-}
+// ★스켈레톤 게이트 ①(2026-07-13) 폐기 — '오늘의 3줄 요약' 블록 자체가 폐기됐다(2026-08-03 유저 확정).
+//  종전엔 마무리 불릿에 명명 소제목이 없으면 이 자리에서 '오늘의 3줄 요약' h2를 자동으로 꽂았다.
+//  ★프롬프트에서만 블록을 빼고 이걸 남겨 뒀다면, 프롬프트엔 없는 소제목이 발행 때 다시 꽂혔을 것이다
+//   — 같은 규격이 여러 곳에 박혀 있으면 한 곳만 고쳤을 때 조용히 되살아난다. 그래서 같이 지운다.
+//  (이 함수를 부르던 곳은 아래 파이프라인 한 곳뿐이었다.)
 
 // ★스켈레톤 게이트 ② — 제목이 순위·비교를 약속했는데 표가 없으면 '라벨: 값' 연속 4줄+ 묶음(첫 1곳)을 표로 승격
 export function ensurePayoffTable(html: string, title?: string | null): string {
@@ -624,7 +614,7 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   const withImages = opts?.withImages ?? true;
   let idx = -1;
   // ★사진 자리는 '구조화 슬롯'으로만 — 채워진 슬롯만 이미지로, 미충족 슬롯은 줄 자체를 제거(안내문구 유출 금지).
-  let body = ensurePayoffTable(ensureSummaryHeading(ensureSectionEmphasis(markToBold(ensureKeyFigureMark(capMarks(capAccent(capDanger(sanitizeAiPunct(stripListEmoji(normalizeHighlights(input.bodyHtml)))))))))), input.title).replace(SLOT_RE, (_m, kind: string, desc: string) => {
+  let body = ensurePayoffTable(ensureSectionEmphasis(markToBold(ensureKeyFigureMark(capMarks(capAccent(capDanger(sanitizeAiPunct(stripListEmoji(normalizeHighlights(input.bodyHtml))))))))), input.title).replace(SLOT_RE, (_m, kind: string, desc: string) => {
     idx += 1; // ★문서순 인덱스는 종류와 무관하게 증가시킨다(검토 화면 imgs[i]와 짝이 맞아야 한다)
     const url = input.images?.[idx];
     // ★안 채워진 카드·차트는 줄째로 지운다(2026-08-02 유저 실측).

@@ -76,11 +76,44 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
 //  고정 스켈레톤은 "좋은 폼이 추첨되지 않게" 못 박은 건데 개수가 조용히 늘어나 있었다.
 {
   const 실측 = "<p>도입 문장</p><blockquote>핵심 요약</blockquote><h2>a</h2><p>Q. 하나</p><p>Q. 둘</p><p>Q. 셋</p><p>Q. 넷</p><h2>오늘의 3줄 요약</h2><ul><li>1</li><li>2</li><li>3</li><li>4</li><li>5</li></ul>";
-  const 규격 = "<blockquote>세금이 먼저 빠져나갑니다</blockquote><h2>a</h2><p>Q. 하나</p><p>Q. 둘</p><h2>오늘의 3줄 요약</h2><ul><li>1</li><li>2</li><li>3</li></ul>";
+  // ★규격 개정(2026-08-03 유저 확정) — '오늘의 3줄 요약' 블록 폐기. 글 앞 '바쁘면 이것만'과 하는 일이 같고,
+  //  그 중복이 분량 예산을 밀어내고 있었다(목표 1,800에 실측 7,000~8,000자). 이제 요약 블록은 '있으면 위반'이다.
+  const 규격 = "<blockquote>세금이 먼저 빠져나갑니다</blockquote><h2>a</h2><p>Q. 하나</p><p>Q. 둘</p>";
   const r = skeletonReport(실측);
   ok(r.faq === 4 && r.summaryLines === 5 && !r.hasOpeningQuote, "실측 글의 결함을 그대로 재현", `FAQ ${r.faq}·요약 ${r.summaryLines}줄·인용구 ${r.hasOpeningQuote}`);
   ok(r.issues.length === 3, "★세 결함을 모두 지적", `${r.issues.length}건`);
   ok(skeletonReport(규격).issues.length === 0, "규격을 지키면 통과");
+
+  // ★폐기된 블록이 살아 돌아오면 잡는가 — 3줄이어도(종전 '정답') 이제는 위반이다.
+  const 폐기블록 = "<blockquote>훅</blockquote><h2>a</h2><p>Q. 하나</p><p>Q. 둘</p><h2>오늘의 3줄 요약</h2><ul><li>1</li><li>2</li><li>3</li></ul>";
+  const dep = skeletonReport(폐기블록);
+  ok(dep.issues.some((i) => /폐기/.test(i)), "★폐기된 '3줄 요약' 블록을 지적", dep.issues.join(" / ") || "지적 없음");
+
+  // ★자동 삽입도 같이 죽었는가 — 프롬프트에서만 빼고 이걸 남기면 발행 때 소제목이 되살아난다.
+  const ph = fs.readFileSync(new URL("../lib/publishHtml.ts", import.meta.url), "utf-8");
+  ok(!/export function ensureSummaryHeading/.test(ph), "★'3줄 요약' 자동 삽입 함수가 제거됨");
+  ok(!/ensureSummaryHeading\(/.test(ph), "★발행 파이프라인에서도 호출이 제거됨");
+
+  // ★프롬프트 목차에서도 빠졌는가(세 곳이 따로 놀면 또 되살아난다)
+  const ap = fs.readFileSync(new URL("../lib/articlePrompt.ts", import.meta.url), "utf-8");
+  ok(!/"9\. '오늘의 3줄 요약'/.test(ap), "★프롬프트 목차에서 제거됨");
+}
+
+// ── ⑥-2 ★분량 예산(2026-08-03 유저 실측: 목표 1,800인데 7,000~8,000자) ───
+//  원인은 모델이 아니라 우리였다: 규격 총합이 이미 목표를 넘고 있었고(규칙 수십 개 vs 숫자 하나),
+//  분량 게이트는 재생성 예산을 가드 7개와 나눠 쓰느라 사실상 발동하지 못했다.
+{
+  const ap = fs.readFileSync(new URL("../lib/articlePrompt.ts", import.meta.url), "utf-8");
+  ok(/◎분량 예산/.test(ap), "★블록별 예산이 프롬프트에 있다(총량 숫자 하나로는 안 지켜졌다)");
+  ok(/const sectionBudget/.test(ap), "섹션 예산을 코드가 계산한다(채널별로 갈린다)");
+  ok(!/280자가 상한/.test(ap), "★섹션 상한 숫자를 목차에 중복해 박지 않는다(드리프트 방지)");
+  ok(/쪼개지' 말고 '줄여라|쪼개지'? 말고/.test(ap), "★'넘으면 쪼개라'(길수록 더 길어지는 되먹임)를 제거했다");
+
+  const gr = fs.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8");
+  ok(/LEN_REGEN_CAP/.test(gr), "★분량 게이트가 전용 재생성 예산을 가진다");
+  ok(!/charCount > lenCap && regenSpent < REGEN_CAP/.test(gr), "★공용 예산(REGEN_CAP) 경쟁에서 빠졌다 — 앞선 가드가 다 써도 발동한다");
+  ok(/dropSections/.test(gr), "★초과폭에 비례해 '버릴 소제목 수'를 코드가 계산해 준다");
+  ok(/\[length\]/.test(gr), "★초과·정상 모두 로그로 남긴다(문턱을 감으로 옮기지 않기 위해)");
 }
 
 // ── ⑦ ★게이트가 실제로 발동하는가(2026-08-02 검거) ─────────────────────
