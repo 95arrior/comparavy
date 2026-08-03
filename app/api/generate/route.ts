@@ -477,15 +477,31 @@ export async function POST(request: Request) {
           const w = specDefects(a);
           return w.length ? ` ★함께 고칠 규격: ${w.join(" / ")}` : "";
         };
+        // ★시간 예산(2026-08-03 — 유저 실측 사고: 생성이 20분째 '다듬고 있어요'에서 멈춤).
+        //  maxDuration은 300초인데 종전엔 경과 시간을 아무도 재지 않았다. 재생성이 쌓여 300초를 넘기면
+        //  함수가 죽고, 클라이언트는 종료 이벤트를 못 받아 영원히 스피너에 갇힌다.
+        //  ★종전에 'REGEN_CAP=1'이 이걸 막고 있었다 — 하지만 그건 시간을 잰 게 아니라 횟수로 대충 눌러둔 것이라,
+        //   분량 게이트에 전용 예산을 주는 순간 곧바로 터졌다(내가 그렇게 터뜨렸다).
+        //   횟수가 아니라 시간을 재는 게 맞다: 1회 생성이 실제로 얼마 걸렸는지 재서 다음 재생성 여유를 판단한다.
+        const genStartedAt = Date.now();
         let article = await streamArticle(
           genInput,
           (bodyHtml) => send({ type: "body", html: bodyHtml }),
           (title) => send({ type: "title", title }),
           onGenUsage,
         );
+        const firstGenMs = Date.now() - genStartedAt; // 실측 1회 생성 시간(모델·글 길이에 따라 크게 다르다)
+        const TIME_BUDGET_MS = 300_000 - 45_000; // maxDuration에서 저장·마무리 몫을 뺀 실사용 예산
+        /** 재생성을 한 번 더 돌릴 시간이 남았는가 — 남은 시간이 '실측 1회 생성 × 1.25'보다 적으면 포기한다. */
+        const hasTimeForRegen = () => {
+          const left = TIME_BUDGET_MS - (Date.now() - genStartedAt);
+          const need = Math.max(20_000, firstGenMs * 1.25); // 압축본은 보통 더 짧지만 안전 쪽으로 잡는다
+          if (left < need) console.log(`[time-budget] user=${user.id.slice(0, 8)} 재생성 포기 — 남음 ${Math.round(left / 1000)}초 < 필요 ${Math.round(need / 1000)}초(1회 실측 ${Math.round(firstGenMs / 1000)}초)`);
+          return left >= need;
+        };
         // ★경험 조작 가드 — '제가 써보니' 류 검출 시 재생성 1회(경고 주입, 무음), 재검출은 아래 실패 흐름으로.
         if (!userStory && !userExperience && hasFabricatedExperience(article.body_html)) {
-          if (regenSpent < REGEN_CAP) {
+          if (regenSpent < REGEN_CAP && hasTimeForRegen()) {
             regenSpent++;
             send({ type: "revising" });
             void logUsage({ userId: user.id, model: "guard", kind: "fabricated_retry", inputTokens: 0, outputTokens: 0 });
@@ -503,7 +519,7 @@ export async function POST(request: Request) {
         }
         // ★해석 문단 가드(2026-07-17 전략 회의) — 경제·정책 글이 제도·수치 나열로만 끝나면 AI 요약이 종결시켜 클릭이 안 남는다(제로클릭).
         //  해석·판단 신호 바닥 미달 시 재생성 1회, 그래도 미달이면 통과(발행 차단은 과잉 — 분량 상한과 같은 결, 로그만).
-        if (vertical === "online" && String(profileRow?.sub_category ?? "").includes("경제") && lacksInterpretation(article.body_html) && regenSpent < REGEN_CAP) {
+        if (vertical === "online" && String(profileRow?.sub_category ?? "").includes("경제") && lacksInterpretation(article.body_html) && regenSpent < REGEN_CAP && hasTimeForRegen()) {
           regenSpent++;
           send({ type: "revising" });
           void logUsage({ userId: user.id, model: "guard", kind: "interpretation_retry", inputTokens: 0, outputTokens: 0 });
@@ -519,7 +535,7 @@ export async function POST(request: Request) {
 
         // ★내 조건 분기 가드(2026-07-29 전략 회의 — AI 브리핑 인용 2,900회 대비 방문 미증가 실측).
         //  조건 분기표도 계산 예시도 없으면 브리핑이 답을 종결시켜 인용만 남고 클릭이 안 남는다. 해석 가드와 같은 규격(재생성 1회, 미달이면 로그만).
-        if (vertical === "online" && lacksConditionBranch(article.body_html) && regenSpent < REGEN_CAP) {
+        if (vertical === "online" && lacksConditionBranch(article.body_html) && regenSpent < REGEN_CAP && hasTimeForRegen()) {
           regenSpent++;
           send({ type: "revising" });
           void logUsage({ userId: user.id, model: "guard", kind: "condition_branch_retry", inputTokens: 0, outputTokens: 0 });
@@ -542,7 +558,7 @@ export async function POST(request: Request) {
           //  게이트가 조용히 죽는 사고가 났다(2026-08-02). 이제 specDefects에 넣으면 자동으로 발동한다.
           const deficits = (a: { body_html: string; title?: string }): number => specDefects(a).length;
           const before = deficits(article);
-          if (before > 0 && regenSpent < REGEN_CAP) {
+          if (before > 0 && regenSpent < REGEN_CAP && hasTimeForRegen()) {
             regenSpent++;
             send({ type: "revising" });
             void logUsage({ userId: user.id, model: "guard", kind: "exposure_spec_retry", inputTokens: 0, outputTokens: 0 });
@@ -568,7 +584,7 @@ export async function POST(request: Request) {
         //  ★검사 결과가 줄어든 경우에만 교체한다(더 나빠진 재생성은 버린다).
         {
           const missBefore = scanFacts(`${article.title}\n${article.body_html}`, keyword).filter((i) => i.layer === "missing");
-          if (missBefore.length > 0 && regenSpent < REGEN_CAP) {
+          if (missBefore.length > 0 && regenSpent < REGEN_CAP && hasTimeForRegen()) {
             regenSpent++;
             send({ type: "revising" });
             void logUsage({ userId: user.id, model: "guard", kind: "missing_musts_retry", inputTokens: 0, outputTokens: 0 });
@@ -589,7 +605,7 @@ export async function POST(request: Request) {
         // ★사진 슬롯 소재 중복 가드(2026-07-29 유저 실측: 1번·3번에 '소상공인'이 겹쳐 같은 결의 그림 두 장).
         //  슬롯 설명은 유저가 이미지 도구에 붙여넣는 주문서라 소재가 겹치면 섹션별 핏이 무너진다.
         //  앞선 가드들이 재생성을 안 썼을 때만 발동(REGEN_CAP 공유 — 품질 이슈라 우선순위 마지막).
-        if (channel === "naver" && duplicateSlotSubjects(article.body_html) && regenSpent < REGEN_CAP) {
+        if (channel === "naver" && duplicateSlotSubjects(article.body_html) && regenSpent < REGEN_CAP && hasTimeForRegen()) {
           regenSpent++;
           send({ type: "revising" });
           void logUsage({ userId: user.id, model: "guard", kind: "slot_dup_retry", inputTokens: 0, outputTokens: 0 });
@@ -628,8 +644,11 @@ export async function POST(request: Request) {
         //  보강 가드와 예산을 나눠 쓰면 한계선이 늘 진다 — 그래서 전용 예산을 준다.
         const lenCap = Math.round((channel === "wordpress" ? 2200 : 1800) * 1.15); // ★네이버 1,800 재재개정(2026-07-17 유저: 분량 축소 — 18자 개행에선 긴 글=도배)
         const targetLabel = channel === "wordpress" ? "1,800~2,200" : "1,200~1,800";
+        // ★압축 2단계이되 '시간이 있을 때만'(2026-08-03 사고 수리) — 횟수 상한만으로는 maxDuration을 못 지킨다.
+        //  앞선 가드가 이미 재생성을 돌렸다면 여기서 2회를 더 돌릴 시간이 대개 없다. 그때는 초과를 안고 발행하는 게
+        //  20분 멈춘 화면보다 낫다 — 초과분은 [length] 로그에 남으므로 다음 규격 개정의 근거가 된다.
         const LEN_REGEN_CAP = 2; // 압축 2단계 — 1차는 '버릴 것 지정', 2차는 더 강하게
-        for (let lenPass = 0; lenPass < LEN_REGEN_CAP && charCount > lenCap; lenPass++) {
+        for (let lenPass = 0; lenPass < LEN_REGEN_CAP && charCount > lenCap && hasTimeForRegen(); lenPass++) {
           send({ type: "revising" });
           void logUsage({ userId: user.id, model: "guard", kind: "overlength_retry", inputTokens: 0, outputTokens: 0 });
           // ★초과폭에 비례해 '무엇을 버릴지'를 코드가 계산해서 준다 — "짧게 써라"로는 3배를 못 줄인다.
