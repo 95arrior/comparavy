@@ -561,6 +561,25 @@ function capAccent(html: string): string {
   });
 }
 
+// ★FAQ 개수 상한을 코드가 지킨다(2026-08-03 유저 실물: 규격 2개인데 3개, 블록이 283자로 예산의 2.8배).
+//  종전엔 skeletonReport가 '3개다'라고 경고만 하고 재생성 프롬프트에 실어 보냈다. 그런데
+//  재생성 예산(REGEN_CAP=1)을 가드 여럿이 나눠 쓰고, 고쳐졌는지 재검사도 안 해서 그대로 발행됐다.
+//  ★형광펜은 초과분을 시스템이 자동 해제한다(capMarks). FAQ도 같은 자리에서 같은 방식으로 자른다 —
+//   모델에게 부탁해서 되는 일이 아니고, 잘라도 정보가 사라지지 않는다(본문이 이미 답한 것들이다).
+function capFaq(html: string): string {
+  const QA_MAX = 2;
+  // 'Q. '로 시작하는 문단이 규격 표식이다(프롬프트가 그렇게 쓰라고 못 박았다).
+  const blocks = [...html.matchAll(/<p[^>]*>\s*(?:<[^>]+>\s*)*Q[.．]\s/gi)];
+  if (blocks.length <= QA_MAX) return html;
+  // 3번째 Q 문단이 시작하는 지점부터, 다음 소제목(h2) 전까지를 잘라낸다.
+  const cutFrom = blocks[QA_MAX]!.index;
+  if (cutFrom === undefined) return html;
+  const rest = html.slice(cutFrom);
+  const nextH2 = rest.search(/<h2[\s>]/i);
+  const cutTo = nextH2 === -1 ? html.length : cutFrom + nextH2;
+  return html.slice(0, cutFrom) + html.slice(cutTo);
+}
+
 function capMarks(html: string): string {
   // ★고아 태그 방어 — <mark> 열림/닫힘 불균형이면 형광 전부 해제(도배보다 무강조가 낫다)
   const opens = (html.match(/<mark(\s[^>]*)?>/g) ?? []).length;
@@ -614,7 +633,7 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   const withImages = opts?.withImages ?? true;
   let idx = -1;
   // ★사진 자리는 '구조화 슬롯'으로만 — 채워진 슬롯만 이미지로, 미충족 슬롯은 줄 자체를 제거(안내문구 유출 금지).
-  let body = ensurePayoffTable(ensureSectionEmphasis(markToBold(ensureKeyFigureMark(capMarks(capAccent(capDanger(sanitizeAiPunct(stripListEmoji(normalizeHighlights(input.bodyHtml))))))))), input.title).replace(SLOT_RE, (_m, kind: string, desc: string) => {
+  let body = ensurePayoffTable(capFaq(ensureSectionEmphasis(markToBold(ensureKeyFigureMark(capMarks(capAccent(capDanger(sanitizeAiPunct(stripListEmoji(normalizeHighlights(input.bodyHtml)))))))))), input.title).replace(SLOT_RE, (_m, kind: string, desc: string) => {
     idx += 1; // ★문서순 인덱스는 종류와 무관하게 증가시킨다(검토 화면 imgs[i]와 짝이 맞아야 한다)
     const url = input.images?.[idx];
     // ★안 채워진 카드·차트는 줄째로 지운다(2026-08-02 유저 실측).
