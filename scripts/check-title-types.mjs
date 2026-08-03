@@ -1,4 +1,4 @@
-import { readSignals, pickTitleType, fitScore, TITLE_TYPES } from "../lib/titleTypes.ts";
+import { readSignals, pickTitleType, fitScore, TITLE_TYPES, TITLE_SHAPE_RULE, TITLE_TYPE_BY_KEY, titleTypeDirective } from "../lib/titleTypes.ts";
 import { validateHomefeedTitle, staleMonthIn } from "../lib/titleRules.ts";
 import { coreKeywordOf } from "../lib/editorial.ts";
 import fs from "node:fs";
@@ -112,6 +112,31 @@ for (const [kw, t] of 앵커실측) {
 // ★유형 7종이 전부 살아 있는지(하나라도 죽으면 로테이션이 좁아진다)
 ok(TITLE_TYPES.length === 7, `유형 7종 유지 (현재 ${TITLE_TYPES.length})`);
 for (const t of TITLE_TYPES) ok(Boolean(t.payoff), `${t.name}에 본문 이행 의무가 정의됨`);
+
+
+// ── ★제목 모양 규칙(2026-08-03 상위 경제 블로그 제목 44개 실측) ──────────
+//  유형은 '무엇을 약속하느냐', 모양은 '어떻게 끝맺느냐' — 둘은 직교한다.
+//  종전엔 모양이 안 정해져서 예시 7개가 전부 '~습니다'로 닫혀 있었다.
+//  닫힌 문장은 그 자체로 답처럼 읽혀서 들어올 이유가 줄어든다(상위 제목은 명사구·전언형으로 끊는다).
+{
+  ok(/명사구 또는 전언형/.test(TITLE_SHAPE_RULE), "★모양 규칙에 종결 형태가 명시됨");
+  ok(/~습니다\/~됩니다\/~입니다'로 문장을 닫지 마라|문장을 닫지 마라/.test(TITLE_SHAPE_RULE), "★문장 종결 금지가 명시됨");
+  ok(/전언형/.test(TITLE_SHAPE_RULE), "★사적 경험 없이 후킹하는 전언형 우회로가 명시됨");
+
+  // ★유형 지시에 모양 규칙이 실제로 실려 나가는가 — 정의만 해두고 안 내려보내면 아무 일도 안 일어난다.
+  const directive = titleTypeDirective(TITLE_TYPE_BY_KEY.curious);
+  ok(directive.includes("제목 모양"), "★모양 규칙이 유형 지시와 함께 프롬프트로 나간다");
+
+  // ★예시 7개가 문장으로 닫히지 않는가 — 예시가 규칙을 어기면 모델은 예시를 따른다
+  //  (검색 레인에서 실제로 그랬다: '이것만 알면'을 금지해놓고 예시가 그걸 쓰고 있었다).
+  for (const t of TITLE_TYPES) {
+    ok(!/(습니다|됩니다|입니다)$/.test(t.example.trim()), `${t.name} 예시가 문장으로 닫히지 않는다`, t.example);
+  }
+
+  // ★홈판은 검색 레인 규칙에 잡아먹히면 안 된다 — keyword가 검색어가 아니라 주제 앵커다.
+  const src = fs.readFileSync(new URL("../lib/titleTypes.ts", import.meta.url), "utf-8");
+  ok(/주제 앵커/.test(src), "★홈판 keyword가 주제 앵커라는 단서가 남아 있다(검색 규칙 오적용 방지)");
+}
 
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 홈판 제목 유형");
 process.exit(fail ? 1 : 0);
