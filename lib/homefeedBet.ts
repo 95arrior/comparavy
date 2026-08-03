@@ -20,6 +20,9 @@ export interface HomefeedBet {
   briefText: string; // 생성 엔진에 넘길 홈판 지시
   betType: string;   // 오늘의 유형 라벨
   titleType?: string; // ★적합도로 고른 제목 유형 key(2026-08-02) — 본문 생성이 같은 유형을 이어받는다
+  /** ★이 카드가 실제로 근거한 수확 이슈(2026-08-03 유저 요청: "출처를 써줘야 진짜인지 안다").
+   *  빈 값이면 실데이터 없이 만들어진 카드다 — 그것도 화면에 드러나야 판단할 수 있다. */
+  sourceTitle?: string;
 }
 
 // 8유형 로테이션(2026-07-15 합의 6종 + 2026-08-01 유저 추가 2종) — 전부 사실 기반으로 쓸 수 있는 유형만.
@@ -121,7 +124,9 @@ export async function pickHomefeedBets(
   const kstDay = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
   // ★캐시 키에 버전을 둔다 — 판정 규칙이 바뀌면 옛 캐시는 '규칙 이전에 통과한 것'이라 못 믿는다.
   //  v2(2026-08-02): 발행글 유사 판정을 캐시 이전으로 옮겼다. 그 전 캐시는 걸러지지 않은 상태라 무효.
-  const cacheKey = `homebet:v2:${userId}:${kstDay}:${want}`;
+  // ★v3(2026-08-03) — 실데이터 씨앗 주입 + 출처 표기가 들어갔다. 버전을 안 올리면 24h 캐시가
+  //  옛 카드를 그대로 서빙해서 "코드는 고쳤는데 화면은 그대로"가 된다(유저 실측으로 확인).
+  const cacheKey = `homebet:v3:${userId}:${kstDay}:${want}`;
   try {
     const { data: c } = await db.from("api_cache").select("value, expires_at").eq("key", cacheKey).maybeSingle();
     if (c?.value && new Date(String(c.expires_at)).getTime() > Date.now()) return c.value as HomefeedBet[];
@@ -233,7 +238,8 @@ async function genOne(
           `길이는 20~45자. 느낌표·물음표는 각각 최대 1개까지 쓸 수 있다(훅이 살아난다 — 다만 2개 이상은 유튜브식 어그로라 실격). 숫자·반전 중 1개 이상 결합.`,
           `★금지선(계정 지속 — 절대): 본문이 100% 이행 못 할 약속(낚시), "안 사면 평생 후회·무조건·100%" 류 단정·공포 마케팅, 충격·경악 남발.`,
           `★토너먼트 자기검증(내부 심사 — 과정 출력 금지): 제목·썸네일 문구 후보를 각각 10개 이상 만들어 스스로 물어라 — '스크롤하다 내가 정말 멈출까?', '왜 멈추는지 한 문장으로 설명되는가?', '제목과 썸네일이 같은 말을 하고 있진 않은가?'. 통과 못 하면 폐기하고 다시. 최강 1세트만 출력한다 — 이건 경쟁이다.`,
-          `JSON만 출력: {"keyword":"주제 앵커(15자 이내)","title":"훅 제목(32자 이내)","thumbCopy":"썸네일 문구(6자 이내 초단문 — 글자가 적을수록 유리. ★제목을 반복하지 말고 개념 하나만 던진다: 썸네일이 질문, 제목이 답 — '검색 끝.' 결)","angle":"본문이 다룰 핵심 각도 2문장"}`,
+          `JSON만 출력: {"keyword":"주제 앵커(15자 이내)","title":"훅 제목(32자 이내)","thumbCopy":"썸네일 문구(6자 이내 초단문 — 글자가 적을수록 유리. ★제목을 반복하지 말고 개념 하나만 던진다: 썸네일이 질문, 제목이 답 — '검색 끝.' 결)","angle":"본문이 다룰 핵심 각도 2문장","src":"위 [오늘 수확한 실제 이슈] 목록에서 실제로 쓴 항목을 그대로 옮긴다(30자 이내). 목록을 안 썼거나 목록이 없었으면 빈 문자열."}`,
+          `★src는 정직하게 적는다 — 유저가 이 카드가 진짜 실데이터에서 나왔는지 확인하는 자리다. 안 썼으면서 적으면 그게 거짓말이다.`,
         ].join("\n"),
       }],
     });
@@ -241,7 +247,7 @@ async function genOne(
     const text = res.content.map((x) => (x.type === "text" ? x.text : "")).join("");
     const m = text.match(/\{[\s\S]*\}/);
     if (!m) return null;
-    const raw = JSON.parse(m[0]) as { keyword?: string; title?: string; thumbCopy?: string; angle?: string };
+    const raw = JSON.parse(m[0]) as { keyword?: string; title?: string; thumbCopy?: string; angle?: string; src?: string };
     if (!raw.keyword || !raw.title) return null;
     // ★문구 게이트(2026-07-17 PTRP) — 감정 과잉·과장 어휘는 텍스트 카드에서 역효과 실증. 제목 위반=오늘 배팅 스킵, 문구 위반=키워드 폴백.
     if (containsBanned(raw.title)) { console.error("[homebet] 금지어 제목 — 스킵:", raw.title.slice(0, 30)); return null; }
@@ -270,6 +276,9 @@ async function genOne(
       thumbCopy: containsBanned(thumbCopy0) ? raw.keyword.slice(0, 14) : thumbCopy0,
       betType: bet.key,
       titleType: titleType.key,
+      // ★출처(2026-08-03 유저 요청) — 모델이 실제로 쓴 수확 이슈를 그대로 옮긴다.
+      //  씨앗 블록이 없었으면 빈 값이고, 그러면 화면에도 출처가 안 뜬다 — '실데이터가 아니었다'는 사실이 보여야 한다.
+      sourceTitle: seedBlock ? String(raw.src ?? "").trim().slice(0, 40) || undefined : undefined,
       briefText: [
         `[홈판 배팅 지시] 이 글은 검색 노출이 아니라 네이버 홈피드(홈판) 확산을 노린다 — 제목은 검색 질문형이 아니라 위 훅 제목을 그대로(또는 더 강하게) 쓴다.`,
         `유형: ${bet.key} / 제목 유형: ${titleType.name} — ★본문 이행 의무: ${titleType.payoff}`,

@@ -32,7 +32,9 @@ const rt = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url
 
 // ── ③ 규칙이 바뀌면 옛 캐시를 못 믿는다 ────────────────────────────────
 {
-  ok(/homebet:v2:/.test(hb), "★캐시 키에 버전 — 판정 규칙 변경 시 옛 캐시 무효화");
+  // ★버전 숫자를 박지 않는다(2026-08-03) — v2를 박아뒀더니 정당한 버전업(v3)이 실패로 잡혔다.
+  //  이 검사가 지켜야 할 것은 "버전이 2다"가 아니라 "버전 자리가 있다"이다.
+  ok(/homebet:v\d+:/.test(hb), "★캐시 키에 버전 — 판정 규칙 변경 시 옛 캐시 무효화", (hb.match(/homebet:v\d+/) ?? [])[0] ?? "");
 }
 
 // ── ④ 모델에게 '이미 쓴 제목'을 보여주는가 ─────────────────────────────
@@ -67,6 +69,27 @@ console.log(fail ? `\n실패 ${fail}건` : "\n통과: 홈판 공급(캐시가 �
   ok(/return null; \/\/ 실데이터 실패/.test(hb), "★씨앗 조회 실패는 조용히 폴백(파이프 무영향)");
   // ★트렌드 레인과 같은 씨앗을 쓰면 한 보드에 중복이 뜬다 — 이미 쓴 것은 제외
   ok(/liveSeedBlock\(sub, usedKeywords\)/.test(hb), "★이미 쓴 키워드를 씨앗 후보에서 뺀다(트렌드 레인과 중복 방지)");
+}
+
+// ── ★출처 표기(2026-08-03 유저 요청: "출처 어디서 가져왔는지 써줘야 진짜구나 안다") ──
+//  ★유저가 화면에서 확인할 수 없으면 우리가 뭘 고쳤는지 알 방법이 없다. 신뢰의 문제다.
+//  그리고 출처가 '없다'는 것도 보여줘야 한다 — 실데이터 없이 만든 카드라는 사실이 판단 재료다.
+{
+  const hb = fs.readFileSync(new URL("../lib/homefeedBet.ts", import.meta.url), "utf-8");
+  ok(/sourceTitle\?: string;/.test(hb), "★출처 필드가 카드 타입에 있다");
+  ok(/"src":"위 \[오늘 수확한 실제 이슈\]/.test(hb), "★모델이 실제로 쓴 항목을 보고하게 한다");
+  ok(/정직하게 적는다/.test(hb), "★안 쓰고 적으면 거짓말이라고 못 박았다");
+
+  // ★캐시 버전 — 안 올리면 24h 캐시가 옛 카드를 그대로 서빙한다(유저 실측: 카드 4장이 글자까지 동일했다)
+  ok(/homebet:v3:/.test(hb), "★실데이터 주입에 맞춰 캐시 버전을 올렸다");
+
+  const tr = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
+  ok((tr.match(/sourceTitle: bet\.sourceTitle/g) ?? []).length === 2, "★홈판 카드 두 경로 모두 출처를 넘긴다");
+
+  // ★화면까지 닿는가 — 홈판은 isTrend가 false라 기존 출처 분기를 못 탔다(고친 자리)
+  const home = fs.readFileSync(new URL("../components/dashboard/Home.tsx", import.meta.url), "utf-8");
+  ok(/topic\.tag === "홈판"/.test(home) && /근거 이슈:/.test(home), "★홈판 카드가 화면에서 출처를 렌더한다");
+  ok(/실데이터 없이 만든 카드/.test(home), "★출처가 없으면 없다고 표시한다");
 }
 
 process.exit(fail ? 1 : 0);

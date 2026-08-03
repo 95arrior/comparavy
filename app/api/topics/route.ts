@@ -691,7 +691,8 @@ export async function GET(req: Request) {
             keyword: bet.keyword, title: bet.title,
             demandLabel: `홈판 배팅 · ${bet.betType}`,
             ssak: true, region: false, tone: bloggerType(vertical), vol: 0, comp: "low" as Comp, blogTotal: null,
-            tag: "홈판", briefText: bet.briefText,
+            // ★출처 노출(2026-08-03 유저 요청) — 화면이 '출처 이슈: …'로 렌더한다. 실데이터 카드인지 눈으로 확인 가능하게.
+            tag: "홈판", briefText: bet.briefText, sourceTitle: bet.sourceTitle,
             thumb: { mainCopy: bet.thumbCopy, subCopy: "", badge: "홈판" },
             demandBadge: "터지면 상한 없음 — 승부는 검색량이 아니라 반응(공감·저장)",
             ...(FF.perfLoop ? { sel: { species: "homefeed", seedSource: "homebet", hookKey: bet.betType } } : {}),
@@ -1184,7 +1185,8 @@ export async function GET(req: Request) {
           keyword: bet.keyword, title: bet.title,
           demandLabel: `홈판 배팅 · ${bet.betType}`,
           ssak: true, region: false, tone: type, vol: 0, comp: "low" as Comp, blogTotal: null,
-          tag: "홈판", briefText: bet.briefText,
+          // ★출처 노출(2026-08-03 유저 요청) — 화면이 '출처 이슈: …'로 렌더한다. 실데이터 카드인지 눈으로 확인 가능하게.
+          tag: "홈판", briefText: bet.briefText, sourceTitle: bet.sourceTitle,
           thumb: { mainCopy: bet.thumbCopy, subCopy: "", badge: "홈판" },
           demandBadge: "터지면 상한 없음 — 승부는 검색량이 아니라 반응(공감·저장)",
           ...(FF.perfLoop ? { sel: { species: "homefeed", seedSource: "homebet", hookKey: bet.betType } } : {}),

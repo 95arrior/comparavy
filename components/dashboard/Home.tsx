@@ -1033,6 +1033,15 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
         return `노출 기회 ${"★".repeat(st)}${"☆".repeat(5 - st)} ${verdict} · 검색 ${topic.vol.toLocaleString()}회/월(최근 30일)`;
       }
       if (topic.vol > 0) return `검색 ${topic.vol.toLocaleString()}회/월(최근 30일) · 경쟁 ${topic.comp === "low" ? "낮음" : topic.comp === "mid" ? "보통" : "높음"} · 한 번 잡으면 오래 유입`;
+      // ★홈판 카드의 출처(2026-08-03 유저 요청: "출처 어디서 가져왔는지 써줘야 진짜인지 안다").
+      //  홈판은 isTrend가 false라 아래 출처 분기를 아예 못 탔다 — vol이 0이라 여기서 끝나 버렸다.
+      //  ★출처가 없으면 없다고 보여준다: 실데이터 없이 만들어진 카드라는 사실도 판단 재료다.
+      const hsrc = (topic as { sourceTitle?: string }).sourceTitle;
+      if (topic.tag === "홈판") {
+        return hsrc
+          ? `근거 이슈: ${hsrc.slice(0, 26)} · ${topic.demandLabel ?? "홈판 배팅"}`
+          : `${topic.demandLabel ?? "홈판 배팅"} · 실데이터 없이 만든 카드`;
+      }
       return topic.demandLabel ?? "지속 검색되는 주제";
     }
     const badge = (topic as { demandBadge?: string }).demandBadge;
