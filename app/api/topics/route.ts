@@ -2,6 +2,7 @@ import { titleSimilarity } from "@/lib/naverRss";
 import { NextResponse, after } from "next/server";
 import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
 import { keywordsToTitles } from "@/lib/topicTitles";
+import { lastAmplifyDiag } from "@/lib/amplifyTopics";
 import { normalizeKeyword, nearDuplicate, sameProductFamily } from "@/lib/diversity";
 import { audienceOf, AUDIENCE_ALL } from "@/lib/audience";
 import { isUnsafeKeyword, mentionsForeignRegion } from "@/lib/keywordSafety";
@@ -722,6 +723,9 @@ export async function GET(req: Request) {
       // ★트렌드가 어느 마디에서 말랐는지 — 이 줄이 컷 완화의 근거가 된다(추측으로 게이트를 열지 않는다)
       console.log(`[trend-funnel] 증식 ${funnel.built} → 수요컷 -${funnel.demandCut}(제로 ${funnel.zeroDemand}·저수요 ${funnel.lowDemand}·미조회공고 ${funnel.unlistedAnnounce}) → ${funnel.afterDemand} → 게이트 ${funnel.afterGate} → 밴드 ${funnel.afterBand}`);
     }
+    // ★증식 진단을 함께 싣는다(2026-08-04 유저 요청) — '씨앗 19개인데 증식 4장'의 어디가 병목인지
+    //  로그를 뒤지지 않고 주소 하나로 보이게 한다. 한 번 보고 고치면 되는 자리다.
+    if (debugMode) diag.ampFunnel = lastAmplifyDiag;
     if (debugMode) diag.colShort = { ...colShort, homefeedGot: homeCards.length, homeDrop, trendRoom, served: tc.length, trendFunnel: funnel };
     return NextResponse.json(debugMode ? { topics: tc, diag: { ...diag, mode: "short", trendCards: tc.length } } : { topics: tc, ...(FF.perfLoop ? { ff: { perfLoop: true } } : {}) });
   }

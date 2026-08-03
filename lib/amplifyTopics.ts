@@ -147,6 +147,12 @@ function coreOf(text: string): string {
  * 신선·검증된 씨앗들 × 유저 개인화 → 무중복 글감 N개(앵글 브리프 포함).
  * 구조 조합은 코드가 결정론적 배정(무중복), 창작은 LLM. 실패 시 [].
  */
+/** ★마지막 증식 진단(2026-08-04) — debug 응답이 읽어 간다. 프로세스 메모리라 최신 1건만 유지된다. */
+export let lastAmplifyDiag: {
+  seeds: number; want: number; briefs: number; parsed: number; out: number;
+  drop: { placeholder: number; noBrief: number; dupKeyword: number; orphan: number; titleTail: number };
+} | null = null;
+
 export async function amplifyForUser(
   seeds: TrendTopic[],
   profile: AmplifyProfile | null,
@@ -236,19 +242,23 @@ ${OPEN_LOOP_GUIDE}
     const parsed = JSON.parse(m[0]) as { seedIndex?: number; keyword?: string; titleClick?: string; titleSearch?: string; reader?: string; hook?: string; thumbMain?: string; thumbSub?: string; verdict?: string; cutList?: string[]; branchAxis?: string; series?: { title?: string; arc?: { role?: string; angle?: string }[] } | null }[];
     const out: AmplifiedTopic[] = [];
     const seen = new Set<string>();
+    // ★증식 손실 회계(2026-08-04 유저: "씨앗 19개인데 증식 4장, 왜?").
+    //  종전엔 전부 조용한 continue라 '몇 장 요청해서 몇 장 나왔다'만 보이고 어디서 죽었는지 알 수 없었다.
+    //  ★결품이 상시화된 단계에서 조용한 continue는 눈을 감는 것이다.
+    const drop = { placeholder: 0, noBrief: 0, dupKeyword: 0, orphan: 0, titleTail: 0 };
     for (const it of parsed) {
       let b = briefs[(Number(it.seedIndex) || 1) - 1] ?? briefs[0];
       // ★플레이스홀더 게이트(실측: '최대 OO만원' 제목 노출) — 미확인 수치 자리표시가 있으면 카드 폐기
       const PLACEHOLDER = /(OO|ОО|○○|◯◯|□□|XX|NN|몇\s?만\s?원|[０-９]*＿+|\bN\s?(?=만\s?원|원|개|%|년|월|일))/;
-      if (PLACEHOLDER.test(String(it.titleClick ?? "")) || PLACEHOLDER.test(String(it.titleSearch ?? ""))) continue;
-      if (!b) continue;
+      if (PLACEHOLDER.test(String(it.titleClick ?? "")) || PLACEHOLDER.test(String(it.titleSearch ?? ""))) { drop.placeholder++; continue; }
+      if (!b) { drop.noBrief++; continue; }
       let kw = (it.keyword ?? "").trim().slice(0, 60);
       if (validLongtails.size > 0 && !validLongtails.has(kw.replace(/\s+/g, ""))) {
         kw = b.lts.find((l) => !seen.has(l.replace(/\s+/g, ""))) ?? b.seed.keyword;
       }
       if (!kw) kw = b.seed.keyword;
       const nk = kw.replace(/\s+/g, "");
-      if (seen.has(nk)) continue;
+      if (seen.has(nk)) { drop.dupKeyword++; continue; }
       seen.add(nk);
       // ★혈통 재귀속(실측 2026-07-10: '서울 토허' 제목 카드에 '진안군 기본소득' 근거 뉴스 — LLM이 신고한 seedIndex를
       //  그대로 믿어 다른 씨앗의 newsContext·sourceTitle이 붙었고, 그 근거로 본문까지 쓰게 되는 사고).
@@ -260,7 +270,7 @@ ${OPEN_LOOP_GUIDE}
         const kt = tok(`${kw} ${String(it.titleClick ?? "")}`);
         const st = tok(`${b.seed.keyword} ${b.seed.title}`);
         const hit = [...kt].some((w) => st.has(w) || [...st].some((s2) => s2.includes(w) || w.includes(s2)));
-        if (!hit) continue;
+        if (!hit) { drop.orphan++; continue; }
       }
       // ★금지어 필터 — 어그로/약속류가 든 제목·카피는 안전한 씨앗 제목으로 폴백.
       let titleClick = (it.titleClick ?? b.seed.title).trim().slice(0, 80);
@@ -289,6 +299,7 @@ ${OPEN_LOOP_GUIDE}
             titleClick = repaired;
           } else {
             console.log(`[title-tail:trend] 규격 미달 — 카드 버림: ${titleClick.slice(0, 34)} (${tv.reason})`);
+            drop.titleTail++;
             continue;
           }
         }
@@ -344,6 +355,10 @@ ${OPEN_LOOP_GUIDE}
     }
     // 여전히 유효하지 않으면 반려 — 빈 카피(렌더러는 카피 없이 배경+배지만, 깨진 문구는 렌더 불가).
     for (const o of out) if (!validThumbMain(o.thumb.mainCopy)) o.thumb.mainCopy = "";
+    // ★증식 진단(2026-08-04) — 항상 로그로 남기고, 마지막 결과를 모듈에 보관해 debug 응답이 읽어 간다.
+    //  ★유저가 매번 로그를 뒤지게 하지 않는다: 주소 하나로 보이면 그게 자동이다.
+    lastAmplifyDiag = { seeds: seeds.length, want, briefs: briefs.length, parsed: parsed.length, out: out.length, drop };
+    console.log(`[amp-funnel] 씨앗 ${seeds.length} → 요청 ${want} → 브리프 ${briefs.length} → 모델 반환 ${parsed.length} → 카드 ${out.length} | 탈락 ${JSON.stringify(drop)}`);
     return out;
   } catch {
     return [];
