@@ -78,5 +78,29 @@ ok(!titleShapeClashes("조선관련주, 지금 사도 되는 걸까요?", 수렴
   }
 }
 
+
+// ── ★제목 경로가 넷이다(2026-08-03 유저 실측에서 검거) ─────────────────
+//  카드 제목에만 공식을 넣었는데 '실제 발행되는 제목'은 generateArticle이 따로 만들고 있었다.
+//  그 지시가 "핵심 키워드를 앞쪽에, 검색 의도에 맞게"뿐이라 이런 게 나왔다:
+//   '신생아 전세대출 조건, 따로 사는 무주택 부부도 공제받는 방법'
+//   — 수식절 없음·답까지 줌·'방법'으로 닫힘. 상위 44개와 정반대다.
+//  ★공식을 한 곳에 두고 세 경로가 같이 읽게 한다 — 따로 두면 반드시 드리프트한다.
+{
+  const tt = fs.readFileSync(new URL("../lib/titleTypes.ts", import.meta.url), "utf-8");
+  ok(/export const PUBLISH_TITLE_FORMULA/.test(tt), "★발행 제목 공식이 단일 진실원으로 있다");
+  ok(/실격 예: '신생아 전세대출 조건/.test(tt), "★유저가 잡은 실물이 실격 예로 박혀 있다");
+  ok(/하는 방법', '~ 정리'/.test(tt) || /완결 금지/.test(tt), "★'방법·정리'로 닫는 것을 금지한다");
+
+  // ★가장 중요한 경로 — 실제로 발행되는 제목
+  const ga = fs.readFileSync(new URL("../lib/generateArticle.ts", import.meta.url), "utf-8");
+  ok(/PUBLISH_TITLE_FORMULA/.test(ga), "★발행 제목 생성이 공식을 읽는다(여기가 진짜 제목이다)");
+  ok(!/핵심 키워드를 앞쪽에 자연스럽게, 검색 의도에 맞게" \}/.test(ga), "★공식 없던 옛 지시가 제거됨");
+
+  // ★트렌드 레인 — 카드 제목 경로 중 유일하게 빠져 있던 곳
+  const at = fs.readFileSync(new URL("../lib/amplifyTopics.ts", import.meta.url), "utf-8");
+  ok(/PUBLISH_TITLE_FORMULA/.test(at), "★트렌드 레인 제목도 같은 공식을 읽는다");
+  ok(/titleSearch는 아래 별도 규격/.test(at), "★titleSearch는 일부러 완결형이라는 단서를 남긴다(오적용 방지)");
+}
+
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 제목 뼈대");
 process.exit(fail ? 1 : 0);

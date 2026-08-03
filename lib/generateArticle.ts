@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { PUBLISH_TITLE_FORMULA } from "./titleTypes";
 import { scanFacts, applyFactFix, type FactIssue } from "@/lib/factGate";
 import { isTimeSensitive } from "./timeSensitive";
 import {
@@ -68,7 +69,7 @@ const SAVE_TOOL: Anthropic.Tool = {
   input_schema: {
     type: "object",
     properties: {
-      title: { type: "string", description: "글 제목(H1). 핵심 키워드를 앞쪽에 자연스럽게, 검색 의도에 맞게" },
+      title: { type: "string", description: `글 제목(H1). 이 제목이 실제로 발행된다.\n${PUBLISH_TITLE_FORMULA}` },
       body_html: {
         type: "string",
         description:
