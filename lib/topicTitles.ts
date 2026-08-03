@@ -1,5 +1,6 @@
 // 키워드 → 매력적인 질문/클릭형 글감 제목 변환. haiku 1회 일괄 변환, 실패 시 템플릿 폴백.
 import Anthropic from "@anthropic-ai/sdk";
+import { validateTitleTail } from "./titleRules";
 
 // 템플릿 폴백 — AI 키 없음/오류 시. 키워드를 자연스러운 글감 제목으로.
 // ★2026-08-02 유저 화면 실측 — 카드 5장 중 3장이 이 템플릿이었다.
@@ -159,6 +160,15 @@ export async function keywordsToTitles(keywords: string[], context?: string, opt
       const aiTitle = o && typeof o.t === "string" && o.t.trim() ? o.t.trim() : "";
       let templated = !aiTitle;
       let title = aiTitle || templateTitle(k, i);
+      // ★꼬리 게이트(2026-08-04) — 프롬프트로만 두니 '~정리'·'~방법'·'~기초'가 계속 통과했다.
+      //  규격 미달 제목은 템플릿 폴백으로 떨어뜨린다: 밋밋한 폴백이 규격 어긴 AI 제목보다 낫다
+      //  (폴백도 같은 공식으로 다시 썼기 때문이다).
+      if (aiTitle && !validateTitleTail(title).ok) {
+        console.log(`[title-tail] 규격 미달 — 폴백: ${title.slice(0, 30)}`);
+        title = templateTitle(k, i);
+        templated = true;
+      }
+
       // ★키워드 포함 보증(유저 확정: 키워드 없는 제목은 노출 판정 자체가 안 된다) — 핵심 토큰 전무 시 템플릿 폴백
       // ★공백을 무시하고 비교한다(2026-08-02 유저 화면 실측: 제목 4장이 전부 템플릿이었다).
       //  네이버 광고 API 키워드는 공백이 없다('주식창보는법'). 모델은 당연히 '주식창 보는 법'이라 쓴다.

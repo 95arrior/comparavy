@@ -12,6 +12,7 @@ import { financeCalcContext } from "@/lib/financeCalc";
 import { sanitizeUrls } from "@/lib/linkWhitelist";
 import { countBodyChars } from "@/lib/humanizer";
 import { sectionBudgetReport, tailSummaryBullets, ensureHashtags } from "@/lib/editorial";
+import { validateTitleTail } from "@/lib/titleRules";
 import { sectionBudgetFor, targetMaxFor } from "@/lib/articlePrompt";
 import { isDisposableEmail } from "@/lib/disposableEmail";
 import { checkRateLimit } from "@/lib/rateLimit";
@@ -424,6 +425,13 @@ export async function POST(request: Request) {
           for (const i of sectionBudgetReport(a.body_html, sectionBudgetFor(targetMaxFor(channel))).issues) w.push(i);
           // ★폐기 블록 부활(2026-08-03 실측) — '오늘의 3줄 요약'을 소제목 없이 끝 불릿으로 되살렸다.
           //  이름으로 찾던 검사를 우회한 것이라, 모양으로 잡는다.
+          // ★발행 제목 꼬리 게이트(2026-08-04 유저: "빡세게 잡아주세요") — 프롬프트로만 두니 계속 샜다.
+          //  '~정리'·'~방법'·'~기초'로 끝나는 제목이 반복해서 통과했고, 유저가 네 번 잡아냈다.
+          //  ★이건 발행되는 제목이다 — 카드 제목과 달리 되돌릴 수 없다.
+          {
+            const tv = validateTitleTail(String((a as { title?: string }).title ?? ""));
+            if (!tv.ok) w.push(`제목이 규격 미달이다 — ${tv.reason}. ★제목 구조: [수식절] + [핵심 키워드 명사구] + [여운 꼬리].`);
+          }
           const tailBullets = tailSummaryBullets(a.body_html);
           if (tailBullets > 0) {
             w.push(`글 끝에 본문을 되짚는 요약 불릿 ${tailBullets}개가 있다. 이 묶음을 통째로 삭제하라 — 글 앞 '바쁘면 이것만'이 이미 결론을 줬고, 끝에서 다시 요약하는 블록은 폐기됐다(체크박스 점검 리스트는 예외로 허용된다).`);

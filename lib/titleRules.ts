@@ -89,6 +89,39 @@ export function validateHomefeedTitle(title: string, keyword: string): { ok: boo
 //   ★뒤에 조사가 붙어도 잡아야 한다('7월에·7월부터·7월분') — 처음에 (?![가-힣]) 부정탐색을 넣었다가
 //    정작 실측 사고 문구인 "7월에 무이자 할부"가 통과했다. '12개월·6개월'은 숫자 뒤가 '개'라
 //    이 패턴에 애초에 걸리지 않으므로 부정탐색이 필요 없다.
+// ═══ 발행 제목 꼬리 게이트(2026-08-04 유저: "빡세게 잡아주세요. 계속 실패가 나오면 안 됩니다") ═══
+//  상위 44개 실측의 핵심은 '어떻게 끝맺느냐'였다. 그런데 프롬프트로만 두니 계속 샜다 —
+//  '~정리'·'~방법'·'~기초'·'~내용'이 반복해서 통과했다(유저가 네 번 잡아냈다).
+//  ★꼬리는 판정이 확실하다. 수식절 유무는 오탐 위험이 커서 프롬프트에 남기고, 꼬리만 코드로 막는다.
+//  ★공통점: 상위 제목은 전부 '명사(구)'로 끝난다 — 종결어미로 닫지 않고, 안내형 명사로도 닫지 않는다.
+
+/** 답까지 줘 버리는 안내형 꼬리 — 이걸로 끝나면 클릭할 이유가 없다. */
+const DEAD_TAIL_RE = /(총정리|정리|방법|기초|내용|안내|가이드|알아야\s*할\s*것들?|확인하는\s*법|보는\s*법|하는\s*법|시작할까|이것만\s*알면|모음|리스트)$/;
+/** 문장으로 닫힌 제목 — 그 자체로 답처럼 읽혀 들어올 이유가 줄어든다. */
+const CLOSED_SENT_RE = /(습니다|됩니다|입니다|합니다|드립니다|있습니다|없습니다|해요|예요|이에요|네요)$/;
+/** 뉴스 헤드라인을 그대로 옮긴 흔적 — 말줄임표는 우리가 쓸 문장부호가 아니다. */
+const HEADLINE_RE = /(\.\.\.|…)/;
+
+/**
+ * 발행 제목·카드 제목 공통 꼬리 검사. ok=false면 그 제목은 규격 미달이다.
+ * ★검사 대상은 '끝맺음'뿐이다 — 수식절 유무까지 코드로 재면 멀쩡한 제목이 죽는다
+ *  (실측 44개 중 '생각없이 …쓴 신혼부부의 후회'처럼 수식절 형태가 다양하다).
+ */
+export function validateTitleTail(title: string): { ok: boolean; reason?: string } {
+  const t = String(title || "").trim().replace(/[?!.]+$/, "");
+  if (!t) return { ok: false, reason: "제목이 비었다" };
+  if (HEADLINE_RE.test(title)) return { ok: false, reason: "말줄임표(…)가 있다 — 뉴스 헤드라인을 그대로 옮긴 흔적이다. 우리 문장으로 다시 써라" };
+  if (CLOSED_SENT_RE.test(t)) {
+    const tail = (t.match(CLOSED_SENT_RE) ?? [""])[0];
+    return { ok: false, reason: `'${tail}'로 문장을 닫았다 — 닫힌 제목은 답처럼 읽혀 클릭할 이유가 없다. 명사구나 전언형('~다는 현실','~한 이유','~ 기준')으로 끊어라` };
+  }
+  if (DEAD_TAIL_RE.test(t)) {
+    const tail = (t.match(DEAD_TAIL_RE) ?? [""])[0];
+    return { ok: false, reason: `'${tail}'로 끝났다 — 답까지 준 안내형 꼬리다. 궁금한 채로 끊어라('~다는 현실','~하는 사람 특징','~한 이유','~ 기준','~ 경우의 수')` };
+  }
+  return { ok: true };
+}
+
 export function staleMonthIn(text: string, now: Date = new Date()): number | null {
   const kst = new Date(now.getTime() + 9 * 3600_000);
   const cur = kst.getUTCMonth() + 1;

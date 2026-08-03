@@ -1,5 +1,6 @@
 import { isOverusedTitleShape, titleShapeClashes } from "../lib/editorial.ts";
 import fs from "node:fs";
+import { validateTitleTail } from "../lib/titleRules.ts";
 
 // ★제목 뼈대 수렴 회귀(2026-08-01 유저 실측) — WP 31편 중 7편이 '~ 전 확인할 N가지'였다.
 //  2026-07-16에 '~하는 법/정리: 부제' 콜론형 수렴을 한 번 잡았는데 다른 형태로 재발했다.
@@ -100,6 +101,63 @@ ok(!titleShapeClashes("조선관련주, 지금 사도 되는 걸까요?", 수렴
   const at = fs.readFileSync(new URL("../lib/amplifyTopics.ts", import.meta.url), "utf-8");
   ok(/PUBLISH_TITLE_FORMULA/.test(at), "★트렌드 레인 제목도 같은 공식을 읽는다");
   ok(/titleSearch는 아래 별도 규격/.test(at), "★titleSearch는 일부러 완결형이라는 단서를 남긴다(오적용 방지)");
+}
+
+
+// ── ★꼬리 게이트(2026-08-04 유저: "빡세게 잡아주세요. 계속 실패가 나오면 안 됩니다") ──
+//  프롬프트로만 두니 '~정리'·'~방법'·'~기초'·'~내용'이 반복해서 통과했다(유저가 네 번 잡아냈다).
+//  ★꼬리는 판정이 확실하다. 수식절 유무는 오탐 위험이 커서 프롬프트에 남기고 꼬리만 코드로 막는다.
+{
+  // ★유저가 실제로 잡아낸 것들 — 전부 막혀야 한다
+  const 실격 = [
+    ["연말정산기간 전에 챙길 공제항목 정리", "정리"],
+    ["신생아 전세대출 조건, 따로 사는 무주택 부부도 공제받는 방법", "방법"],
+    ["개인신용정보서 열람, 대출 전 확인하는 법", "확인하는 법"],
+    ["수익률 놓치고 시작하는 사람 많다는 적립식투자 기초", "기초"],
+    ["분기마다 뒤늦게 챙긴다는 세무조정료 내용", "내용"],
+    ["청년 ISA 2026년 신설...비과세 한도와 가입 조건 정리", "말줄임표+정리"],
+    ["무직자주택담보대출, 모르고 넘어가면 손해인 기준 정리", "정리"],
+    ["대출 거절되고 나서야 열어본 개인신용정보서, 이렇게 읽으면 됩니다", "됩니다"],
+  ];
+  for (const [t, why] of 실격) {
+    const r = validateTitleTail(t);
+    ok(!r.ok, `★실격: ${why}`, t.slice(0, 26));
+  }
+
+  // ★오탐 방어가 더 중요하다 — 유저가 준 상위 44개 중 대표를 반드시 통과시켜야 한다.
+  //  여기서 하나라도 막히면 이 게이트는 못 쓴다(멀쩡한 제목이 템플릿으로 강등된다).
+  const 통과 = [
+    "은근히 상대적 박탈감 느낀다는 40대 순자산 현실",
+    "월 실수령 350만원인데 재테크 못하는 사람 특징",
+    "로또 20억원 당첨되도 못가는 우리나라 공식 1등 부자 동네",
+    "생각보다 격차 커서 씁쓸한 대한민국 17개 지역별 순자산 순위",
+    "생각없이 재건축 빌라에 2억 넘게 쓴 신혼부부의 후회",
+    "회사 8년 다녔는데 연금저축펀드 아직 모르는 동생한테 추천해준 ETF",
+    "한달 생활비 450만원이라 허덕이기 싫어 만든 재테크 습관",
+    "48일만에 무너진 달러 환율 1460원, 지금 줍줍해도 될까?",
+    "20억 자가에 사는데도 하우스푸어라고 씁쓸하다는 중산층 기준",
+    "이번 달 넘기면 10% 깎인다는, 근로장려금 기한 후 신청 현실",
+    "실적 좋아도 빠지는 투자자 많다는 반도체대장주 선정 기준",
+    "은근히 복잡한 현금화 수수료가 진짜 손실인 이유",
+  ];
+  for (const t of 통과) {
+    const r = validateTitleTail(t);
+    ok(r.ok, "★통과해야 하는 상위 제목", `${t.slice(0, 24)}${r.ok ? "" : " ← " + r.reason}`);
+  }
+
+  // ★폴백 템플릿도 자기 게이트를 통과해야 한다 — 규격 미달 제목을 폴백으로 떨어뜨리는데
+  //  그 폴백이 또 미달이면 무한히 미달이다(규칙이 가장 자주 깨지는 곳이 우리 코드가 된다).
+  const tt = fs.readFileSync(new URL("../lib/topicTitles.ts", import.meta.url), "utf-8");
+  const tpl = (tt.match(/const TEMPLATES = \[([\s\S]*?)\];/) ?? ["", ""])[1];
+  for (const m of tpl.matchAll(/`([^`]+)`/g)) {
+    const sample = m[1].replace(/\$\{k\}/g, "연말정산기간");
+    ok(validateTitleTail(sample).ok, "★폴백 템플릿이 게이트를 통과한다", sample);
+  }
+
+  // ★배선 — 만들어놓고 안 부르면 아무 일도 안 일어난다
+  const gr = fs.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8");
+  ok(/validateTitleTail\(String\(\(a as \{ title\?: string \}\)\.title/.test(gr), "★발행 제목이 게이트를 지난다(되돌릴 수 없는 자리)");
+  ok(/validateTitleTail\(title\)/.test(tt), "★검색 카드 제목도 게이트를 지난다");
 }
 
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 제목 뼈대");
