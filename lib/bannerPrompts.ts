@@ -151,6 +151,8 @@ const THUMB_PALETTES = [
   "deep ocean blue with turquoise highlights and soft haze",
 ];
 
+import { thumbHookOf, HOOK_DIRECTION } from "./thumbHook";
+
 export function buildThumbMetaphorPrompt(topic: string, copyText: string | undefined, seed: number, opts?: { textSafe?: boolean; deepBg?: boolean }): string {
   const palette = opts?.deepBg ? THUMB_PALETTES[seed % THUMB_PALETTES.length] : BANNER_PALETTES[seed % BANNER_PALETTES.length];
   const copy = (copyText ?? "").replace(/\n/g, " ").trim();
@@ -166,8 +168,13 @@ export function buildThumbMetaphorPrompt(topic: string, copyText: string | undef
         ? `ONE isometric miniature vignette: a SINGLE topic-derived object or place rendered as a small 3D diorama on a rounded platform. One subject only — not a world of props, no scattered buildings or paperwork around it. ${PROP_BAN}`
         : `ONE oversized HERO OBJECT derived DIRECTLY from the topic keywords — pick the single most SPECIFIC object that instantly identifies THIS topic (housing → a house with an oversized key; loan → a giant key turning in a heavy lock; savings → a sprout growing out of a coin jar). NO people.`;
   const textSafe = opts?.textSafe === true;
+  // ★훅 연출이 주제보다 앞선다(2026-08-05 유저 확정: "키워드에 맞는 일러스트가 나오면 안 된다").
+  //  주제는 '무엇을 그릴지'를 정하고, 훅은 '어떤 순간을 그릴지'를 정한다 — 클릭을 만드는 쪽은 후자다.
+  const hook = HOOK_DIRECTION[thumbHookOf(`${copy} ${topic}`)];
   return [
     `Premium editorial illustration for a Korean finance blog thumbnail. Topic: "${topic}" (understand only — never render as text).`,
+    `CORE RULE (overrides everything below): do NOT illustrate the keyword itself. Illustrate the MOMENT JUST BEFORE THE ANSWER — a resolved scene leaves nothing to wonder about and the thumb scrolls past. Leave exactly one unanswered question that only the article can close.`,
+    hook,
     copyLine,
     textSafe ? `ONE oversized HERO OBJECT derived from the topic. NO people. ${TEXT_FREE_SUBJECTS}` : subject,
     textSafe ? TEXT_FREE_BAN : "",

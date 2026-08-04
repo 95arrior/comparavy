@@ -1,6 +1,6 @@
 // 본문/배경 이미지 프롬프트 하드룰 단위 테스트 — AI 콜 없이 순수 함수만 검증.
 //   npx tsx scripts/check-image-rules.mjs
-import { buildBodyPrompt, buildThumbBgPrompt, IMAGE_HARD_RULES } from "../lib/geminiImage.ts";
+import { buildBodyPrompt, IMAGE_HARD_RULES } from "../lib/geminiImage.ts";
 import { clichePhotoSlots } from "../lib/editorial.ts";
 import fs from "node:fs";
 import { buildThumbMetaphorPrompt } from "../lib/bannerPrompts.ts";
@@ -24,12 +24,13 @@ for (let seed = 0; seed < 40; seed += 7) {
   must(!/realistic lifestyle photograph/.test(p) && !/3d emoji/.test(p), `[seed${seed}] 스타일 순수성(폐기된 실사·이모지 혼입 금지)`);
 }
 
-console.log("\n대표이미지 배경 프롬프트:");
+// ★2026-08-05: buildThumbBgPrompt(말랑한 3D 오브젝트)는 아무도 안 부르던 죽은 빌더라 제거됐다.
+//  살아 있는 썸네일 경로는 buildThumbMetaphorPrompt(문구 일러스트) 하나다 — 검증 대상을 그쪽으로 옮긴다.
+console.log("\n대표이미지 배경 프롬프트(살아 있는 경로):");
 for (let seed = 0; seed < 24; seed += 8) {
-  const p = buildThumbBgPrompt("soft-gradient", "warm coral, cream", seed).toLowerCase();
-  must(/no text of any kind/.test(p), `[seed${seed}] 배경 텍스트 금지`);
-  must(/top 35% a clean empty area/.test(p), `[seed${seed}] 상단 여백(합성 자리)`);
-  must(/3d abstract objects/.test(p), `[seed${seed}] 말랑한 3D 오브젝트`);
+  const p = buildThumbMetaphorPrompt("연말정산 환급 신청", "13월의 월급", seed, { deepBg: true }).toLowerCase();
+  must(/no text/.test(p), `[seed${seed}] 배경 텍스트 금지`);
+  must(/hook =/.test(p), `[seed${seed}] ★훅 연출이 실린다(키워드 그림 금지)`);
   must(/1:1/.test(p), `[seed${seed}] 1:1`);
 }
 

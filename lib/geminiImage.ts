@@ -121,44 +121,7 @@ export function buildBodyPrompt(slotDesc: string, articleTitle: string, seed: nu
 
 /** 대표이미지 AI 배경 프롬프트(순수 함수) — ★주제 인식(실측 비교 판정: 추상 blob은 짜침, 주제 오브젝트가 정답).
  *  topic이 있으면 그 주제를 나타내는 구체 오브젝트(차·동전·달력 등), 없으면 기존 추상. 텍스트 절대 금지 + 상단 여백. */
-export function buildThumbBgPrompt(bgStyleHint: string, paletteHint: string, seed: number, topic?: string): string {
-  const mood = PHOTO_MOODS[seed % PHOTO_MOODS.length];
-  // ★결과 우선 원칙(2026-07-17 유저 확정 — "개념을 그리지 말고 결과를 그려라"): 사람은 개념보다 '변화된 삶의 결과'에 반응한다.
-  //  로봇·AI 형상은 모든 AI 콘텐츠의 클리셰 — AI를 안 보여주는 게 차별점(예: 예약 완료 화면 + 커피 마시는 사람).
-  const subject = topic && topic.trim()
-    ? `Cute rounded clay-like 3D objects for this topic (understand only — never render as text): "${topic.trim()}". RESULT-FIRST RULE (top priority): do NOT illustrate the concept itself — illustrate the RESULT it creates in daily life, the 'after' scene (a cleared to-do list, a phone showing completed bookings, a person's unhurried coffee while the work is already done). NEVER robots, AI figures, brains, chips or circuits — every AI-related image uses those; showing the outcome instead is the differentiator. Add one small lived-in detail (a steaming mug, a slightly tilted object) so it feels like someone's real moment, not a sterile diagram. Pick 2-3 real objects uniquely specific to this topic's RESULT — NEVER generic clichés (NO piggy banks, NO plain coin stacks, NO generic calculators) unless the topic is literally about them.`
-    : `Soft matte 3D abstract objects (rounded blobs, spheres, gentle geometric forms).`;
-  return [
-    `${subject} Floating on a solid single-color background, color palette of ${paletteHint}.`,
-    `Playful premium 3D render like a Toss/Danggeun event card illustration. Objects arranged in the LOWER two-thirds — keep the TOP 35% a clean empty area (text goes there later).`,
-    `${mood} mood, soft studio lighting, tactile clay-like material, no busy clutter. Square 1:1 composition.`,
-    "ABSOLUTELY NO text of any kind: no letters, numbers, Korean characters, signs, labels, captions, watermarks, or logos anywhere.",
-  ].join(" ");
-}
 /** 실사 배경(썸네일) — 주제 씬 사진. center=true면 중앙 저디테일(정중앙 텍스트용), 아니면 상단 여백형. */
-// ★클릭 훅 연출(2026-08-05 유저 확정 — 종전 emotionOf는 정의만 되고 아무 데서도 안 쓰였다).
-//  유저 지시: "키워드에 맞는 일러스트가 나오면 안 된다. 글 유형에 따라 결핍이면 결핍, 포모면 포모,
-//   호기심 증폭 — 지나가면 '아 왜 안 눌렀지' 하고 되찾는 썸네일이어야 한다."
-//  ★핵심 원칙(제목의 '열린 고리'와 짝): 답을 그리지 마라 — 답 '직전'을 그려라.
-//   다 끝난 장면은 궁금할 게 없다. 그래서 종전의 '결과를 그려라(완료된 체크리스트·여유로운 커피)'는
-//   이득·해결 유형에만 남기고, 결핍·포모·호기심에는 정반대 연출(결여·닫히는 중·가려짐)을 준다.
-export type ThumbHook = "lack" | "closing" | "hidden" | "gain" | "fork";
-export function thumbHookOf(text: string): ThumbHook {
-  const t = String(text || "");
-  if (/(마감|마지막|오늘까지|이번\s?주까지|끝나|종료|소멸|늦으면|서둘|선착순|남은|곧|D-|기한)/.test(t)) return "closing";
-  if (/(나만|다들|남들|못 받|안 받|놓치|모르고|빠뜨|제외|탈락|거부|없는|부족|새는|줄어|손해|빼앗)/.test(t)) return "lack";
-  if (/(비교|차이|vs|VS|뭐가|어디가|어느|선택|고르|나을까|갈린|둘 중)/.test(t)) return "fork";
-  if (/(받는|받을|환급|혜택|지원|아끼|절약|무료|추가|더 준|올랐|커진|생긴|얼마)/.test(t)) return "gain";
-  return "hidden"; // 기본은 호기심 — 답을 감추는 쪽이 늘 안전하다
-}
-const HOOK_DIRECTION: Record<ThumbHook, string> = {
-  lack: "HOOK = LACK (결핍 — '나만 없다'). Draw an ABSENCE that is visibly felt: one empty slot in a row of full ones, an envelope that is flat while others bulge, a hand reaching where nothing is left, one chair pulled out and empty at a full table. The viewer must feel 'wait — is mine the empty one?'. NEVER draw the thing being received; draw its missing shape.",
-  closing: "HOOK = CLOSING WINDOW (포모 — '지금 아니면'). Draw something in the ACT of closing/ending, mid-motion, not yet gone: a door almost shut with light still spilling, an ice cube nearly melted, the last piece being lifted away, a bus already pulling out with its door half open. Motion must be caught at the last possible instant — urgency without alarm.",
-  hidden: "HOOK = HIDDEN ANSWER (호기심 — 답 감추기). Draw the moment JUST BEFORE the reveal: a lid lifting a crack with light escaping, a curtain caught mid-pull, a drawer half open with the contents unreadable, an envelope with the flap raised but its paper still inside. The answer must be present but NOT visible — the eye should strain to see what's inside. This is the strongest hook: never resolve it.",
-  gain: "HOOK = UNEXPECTED GAIN (이득 — '이만큼이나?'). Draw a SCALE SURPRISE: something small producing something absurdly larger than expected, a lifted rug corner revealing more than fits, a container overflowing past its own size. The surprise is in the proportion, not in coins or bills.",
-  fork: "HOOK = FORK (선택 — '어느 쪽이 나지?'). Draw two paths/objects at the split moment with the choice UNRESOLVED — a balance scale still tipping, two doors identical but one warmer, footsteps stopping exactly at the split. Never show which one wins.",
-};
-
 // ★구도 코드 배정(유저 확정: 프롬프트 재량 로테이션이 미작동 — 전부 사람+오브젝트) — 문구 주어가 구도를 결정한다
 export function compositionOf(copy: string): 0 | 1 | 2 {
   // (c) 대비: 전/후·손익·비교 페어
@@ -204,39 +167,11 @@ const BG_PALETTES = [
   "solid warm coral background (#ff7f6e family), hero object in teal and cream",
 ];
 
-export function buildThumbPhotoBgPrompt(topic: string, seed: number, center = false, opts?: { copyText?: string; variant?: number }): string {
-  const tone = PHOTO_TONES[seed % PHOTO_TONES.length];
-  const copy = opts?.copyText?.trim() ?? "";
-  const v = Math.max(0, opts?.variant ?? 0);
-  // 문구 주어 → 시작 문법 매핑(사람=인물 문법, 그 외=심볼), variant·seed로 문법×팔레트 회전
-  // 시작 문법 균등 분산(실측: 항상 GIANT OBJECT 시작 → 다시 만들기도 비슷) — 사람 문구는 TINY PEOPLE 우선, 그 외 seed·문구 해시 균등
-  let ch = 0; for (const c2 of copy) ch = (ch * 31 + c2.charCodeAt(0)) >>> 0;
-  const baseG = compositionOf(copy) === 0 ? 2 : (seed + ch) % BG_GRAMMARS.length;
-  const grammar = BG_GRAMMARS[(baseG + v) % BG_GRAMMARS.length];
-  const palette = BG_PALETTES[(seed + v) % BG_PALETTES.length];
-  // ★훅 연출이 최상위다(2026-08-05 유저 확정) — 주제를 그리는 게 아니라 '왜 눌러야 하는지'를 그린다.
-  //  판정 재료는 문구가 있으면 문구, 없으면 제목(무문구 모드가 곧 기본이라 여기가 진짜 승부처다).
-  const hookSrc = copy || topic || "";
-  const hook = HOOK_DIRECTION[thumbHookOf(hookSrc)];
-  const CORE = "CORE RULE (overrides everything below): do NOT illustrate the keyword. Illustrate the MOMENT JUST BEFORE THE ANSWER. A finished, resolved scene has nothing left to wonder about — the viewer scrolls past. The image must leave one unanswered question that only the article can close.";
-  const CLICHE = "CLICHE BAN: no credit cards, coin stacks, banknotes, piggy banks, arrows, calculators, robots, brains or circuits — these are exhausted and read as stock. Use one of these ONLY if the topic is literally about that object.";
-  const subjectRule = copy
-    ? `${CORE} ${hook} CONTEXT (understand only — never render as text): the Korean copy overlaid later reads "${copy}"; the topic is "${topic.trim()}". ${CLICHE} Pick ONE witty metaphor that serves the HOOK above (or invent an equally specific one): ${METAPHOR_BANK[(seed + v) % METAPHOR_BANK.length]} / ${METAPHOR_BANK[(seed + v + 5) % METAPHOR_BANK.length]}. When a person appears, draw an appealing simple editorial character (confident line/shape work, expressive pose, like premium fintech brand mascots — not a stick figure). ${grammar} PALETTE: ${palette} (max 4 colors, subtle film grain finish). MAXIMUM 2 meaningful objects unless the grammar says otherwise — simplicity wins. LITMUS TEST: with the text hidden, a viewer should still feel the unanswered question. ${ATEFLO_ILLUST_STYLE}`
-    // ★무문구(글자 없는 일러스트) — 유저가 원하는 기본형. 글자가 없으므로 그림 하나가 훅을 통째로 져야 한다.
-    //  종전엔 "이 주제를 그려라" 한 줄뿐이라 밋밋한 개념 그림이 나왔다. 여기에 훅을 최대 강도로 싣는다.
-    : `${CORE} ${hook} CONTEXT (understand only — never render as text): the article's topic is "${topic.trim()}". There will be NO text on this image — the illustration alone must stop the thumb, so the hook must be unmistakable at thumbnail size. ${CLICHE} Take the topic's single most concrete everyday object and stage it in the hook's moment (or use this metaphor if it fits: ${METAPHOR_BANK[(seed + v) % METAPHOR_BANK.length]}). ${grammar} PALETTE: ${palette} (max 4 colors, subtle film grain finish). ONE hero idea only — a viewer at 200px must read it instantly. ${ATEFLO_ILLUST_STYLE}`;
-  const layout = center
-    ? `Subjects arranged toward the edges/corners; the CENTER of the frame stays calm and low-detail — large Korean text will be overlaid dead-center later.`
-    : `Main subject in the UPPER two-thirds; the BOTTOM third must stay calm and low-detail (soft surface, gentle falloff) — text overlay goes there.`;
-  return [
-    subjectRule,
-    "Bold larger-than-life scale that stops a scrolling thumb — one big symbol, generous negative space.",
-    layout,
-    "Square 1:1 composition.",
-    "ABSOLUTELY NO text of any kind: no letters, numbers, Korean characters, signs, labels, captions, watermarks, or logos anywhere. This includes text ON objects: shipping containers, boxes, documents, bills, storefronts and machines must have BLANK or blurred surfaces — no container markings, no fake brand names, no gibberish lettering (no 'GOAI TAE'-style pseudo-text). If a surface would normally carry text, render it clean or out of focus.",
-  ].join(" ");
-}
-
+// ★buildThumbPhotoBgPrompt / buildThumbBgPrompt 제거(2026-08-05).
+//  둘 다 export만 되고 실제 썸네일 경로에서는 아무도 부르지 않는 죽은 함수였다.
+//  오늘 훅 연출을 여기에 먼저 넣었다가 화면이 그대로여서 한 번 헛돌았다 — 살아 있는 함수는
+//  buildThumbMetaphorPrompt(문구 일러스트)와 buildTextlessThumbPrompt(무문구) 둘뿐이다.
+//  죽은 코드를 남겨두면 다음 사람도 같은 자리에서 시간을 잃는다.
 
 // ★프로바이더 스위치(유저 결정: GPT 품질 우위) — OPENAI_API_KEY 있으면 gpt-image-1, 없으면 Gemini 폴백.
 //  원가: gpt-image-1 medium 1024²≈$0.04(~60원) — IMAGE_COST 6cr(300~400원) 마진 유지. 실패 시 상호 폴백.

@@ -1,3 +1,4 @@
+import { thumbHookOf, HOOK_DIRECTION } from "./thumbHook";
 // ★무문구 썸네일 설계(2026-08-02 유저 확정: "이건 문이에요, 우리 글을 여는 문").
 //
 //  왜 무문구인가 — 근거 셋:
@@ -182,31 +183,39 @@ function pickBy(seed: number, arr: readonly string[]): string { return arr[seed 
 //  이제 글마다 돌린다. 시드에 userId를 섞어, 같은 제목이라도 계정이 다르면 색이 갈린다.
 const GLOW_COLORS = ["electric violet", "deep blue", "cyan", "magenta", "amber gold", "emerald green", "crimson red"];
 
+// ★토스피드 결 단색 팔레트(2026-08-05) — 밝고 채도 높은 한 색이 화면을 채운다.
+const TOSS_PALETTES = [
+  "a vivid signal red (#e8402d family) with cream and charcoal objects",
+  "a bright toss blue (#3182f6 family) with white and navy objects",
+  "a fresh green (#12b76a family) with cream and dark ink objects",
+  "a warm amber yellow (#ffc933 family) with navy and white objects",
+  "a soft violet (#6b5cff family) with peach and pale blue objects",
+  "a deep teal (#0f766e family) with sand and off-white objects",
+  "a coral pink (#ff7f6e family) with teal and cream objects",
+];
+
 export function buildTextlessThumbPrompt(betType: string, userId: string, variant = 0, subjectOverride?: string | null, title?: string | null, backdrop?: string | null): string {
-  const p = photoPresetFor(userId);
   const subject = (subjectOverride ?? "").trim() || grammarFor(betType, title).subject;
   const seed = fnv1a(`${title ?? ""}|${subject}|${variant}`);
-  const glow = GLOW_COLORS[fnv1a(`${userId}|${title ?? ""}|${variant}|glow`) % GLOW_COLORS.length]!;
-  const angles = ["hanging and lit from behind", "standing upright, lit from one side", "floating slightly above the surface", "seen at a low three-quarter angle"];
+  const hook = HOOK_DIRECTION[thumbHookOf(`${title ?? ""} ${subject}`)];
+  const palette = TOSS_PALETTES[fnv1a(`${userId}|${title ?? ""}|${variant}|pal`) % TOSS_PALETTES.length]!;
+  void backdrop; // ★야경 배경은 플랫 일러스트에서 쓰지 않는다(단색 배경이 규격) — 인자는 하위 호환으로 받기만
   return [
-    // ★2026-08-02 유저 레퍼런스(사원증 + 공장 야경 + 보라 네온 글로우)로 재해석.
-    //  내가 처음 읽었을 때 네 군데를 틀렸다 — 기록해 둔다:
-    //   ① "그 외 요소 제거"를 배경까지 비우는 것으로 읽었다 → 레퍼런스는 배경에 '흐린 맥락'이 있다
-    //   ② "20~40% 숨긴다"를 물체를 덮는 것으로 읽었다 → 어둠에 주변이 잠기는 것이다
-    //   ③ "프리미엄 광고 사진"을 실사로 읽었다 → 3D 렌더·CG 룩이다
-    //   ④ 16:9로 만들었다 → 홈피드는 정사각이다
-    `A premium 3D product-render style thumbnail for a Korean blog post. Square 1:1.`,
-    `Hero object: ${subject}. It is the single symbol of this topic and it occupies 60-80% of the frame, ${angles[seed % angles.length]}.`,
-    `Render it clean and glossy like a high-end CG advertisement — not a photograph, not an obvious digital collage.`,
-    `Lighting: intense ${glow} neon rim light wrapping the object, bright and saturated, with a strong glow pooling on the surface beneath it. The whole image should feel vivid and high-contrast, not murky — it must pop in a crowded feed.`,
-    // ★배경(2026-08-02 2차 교정) — 종전엔 "swallowed by darkness"라 전부 검정으로 뭉갰다.
-    //  유저: "실루엣이라도 뒷쪽에 줘, 호기심 가게" + "밝기가 너무 약해서 눈에 안 뜀".
-    //  ★맥락이 읽혀야 궁금해진다. 다 지우면 궁금한 게 아니라 아무것도 없는 것이다.
-    `Background: ${(backdrop ?? "").trim() || "a night scene from this topic"} — recognizable STRUCTURES rendered as glowing silhouettes (factory buildings, cranes, towers, an office block), clearly readable in outline but soft and out of focus. Plenty of bright bokeh lights scattered through it. Never an empty black backdrop.`,
-    `★Keep the background bright enough to see — this is a lit night scene, not a dark room. The hero object still reads first because of its rim light, not because everything else is black.`,
-    `Mood: minimal like an Apple ad, curiosity-driving like a high-CTR YouTube thumbnail.`,
-    `No company names or trademarked marks. A plain lettering-free symbol (a cross, a shield, a house outline) is allowed and welcome.`,
-    // ★글자 금지 — 계정 리스크(유저 4회 지적). 이것만은 우리 규칙으로 유지한다.
+    // ★2026-08-05 유저 재지정(토스피드 레퍼런스) — 종전 규격이던 '3D 네온 제품 렌더 + 야경 보케'를 대체한다.
+    //  그 규격은 2026-08-02 유저 레퍼런스(사원증+공장 야경)로 만든 것인데, 오늘 유저가 토스피드 화면을 주며
+    //  "이런 일러스트로, 토스톤이 아닌데?"라고 정정했다. 스타일 축을 플랫 일러스트로 옮긴다.
+    `A flat vector editorial illustration for a Korean money/finance blog thumbnail. Square 1:1.`,
+    // ★훅이 먼저다 — 무엇을 그릴지(주제)보다 어떤 순간을 그릴지(훅)가 클릭을 만든다.
+    `CORE RULE (overrides everything below): do NOT illustrate the keyword itself. Illustrate the MOMENT JUST BEFORE THE ANSWER. There is NO text on this image — the illustration alone must stop the thumb, so the unanswered question has to be readable at 200px.`,
+    hook,
+    `Subject material: ${subject} — use it only as the raw object; stage it in the hook's moment above.`,
+    // 토스피드 결 — 단색 배경 + 단순한 형태 + 굵은 실루엣
+    `STYLE (non-negotiable): flat 2D vector illustration in the style of a Toss(토스) feed card or a modern fintech brand blog — bold simple shapes, clean confident outlines, minimal detail, slight paper-grain texture. NOT a 3D render, NOT photorealistic, NOT glossy CG, NO neon glow, NO bokeh, NO night scenes.`,
+    `BACKGROUND: one flat saturated solid color filling the entire frame — ${palette}. No gradients beyond a whisper, no scenery, no depth.`,
+    `OBJECTS: one or two simple objects only, oversized and centered-ish, drawn with generous negative space. If a person appears, draw them in the same flat style — simple rounded shapes, minimal facial features, expressive posture over detail.`,
+    `The illustration must feel designed by a brand studio, not generated: confident composition, deliberate color blocking, nothing cluttered.`,
+    `No company names or trademarked marks. A plain lettering-free symbol (a cross, a shield, a house outline) is allowed.`,
+    // ★글자 금지 — 계정 리스크(유저 4회 지적). 스타일이 바뀌어도 이것만은 그대로다.
     `NO TEXT of any kind: no letters, numbers, Korean characters, signage, labels or watermarks anywhere in the image.`,
   ].join("\n");
 }
