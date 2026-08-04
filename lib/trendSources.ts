@@ -103,6 +103,16 @@ async function fetchGoogleNews(query: string, seed: string, now: number): Promis
 /** 신선도 게이트가 적용된 헤드라인 + 분포 통계. */
 
 // ── 구글 트렌드 KR 급상승 RSS — 유일한 공식 '실시간 인기 통계'(검색량 근사치 동봉). 전 카테고리 공통, 관련성은 선별 게이트가 거른다.
+// ★씨앗 라벨을 상수로 뺀다(2026-08-04) — 이 표식이 파이프라인 끝(밴드 우회 판정)까지 살아 있어야 한다.
+//  종전엔 급상승 헤드라인이 합성 단계에서 source:"news"로 뭉개져, '지금 뜨는 열은 실시간이어야 한다'는
+//  유저 요구를 코드가 지킬 방법 자체가 없었다(무엇이 실시간 유래인지 알 수 없었다).
+export const RISING_SEED = "실시간급상승";
+export const RISING_TAG = "실시간 급상승";
+/** 급상승 헤드라인 제목에서 실제 검색어만 뽑는다. 형식: `[실시간 급상승 2만+ 검색] 키워드 — 뉴스제목` */
+export function risingKeywordOf(title: string): string {
+  const m = new RegExp(`^\\[${RISING_TAG}[^\\]]*\\]\\s*([^—]+)`).exec(String(title || ""));
+  return (m?.[1] ?? "").trim();
+}
 let gtCache: { at: number; items: Headline[] } | null = null;
 export async function fetchGoogleTrendsKR(now: number): Promise<Headline[]> {
   if (gtCache && now - gtCache.at < 10 * 60_000) return gtCache.items;
@@ -118,7 +128,7 @@ export async function fetchGoogleTrendsKR(now: number): Promise<Headline[]> {
       const traffic = (b.match(/<ht:approx_traffic>([^<]+)<\/ht:approx_traffic>/)?.[1] ?? "").trim();
       const newsTitle = dec((b.match(/<ht:news_item_title>([^<]+)<\/ht:news_item_title>/)?.[1] ?? "").trim());
       if (!kw) continue;
-      items.push({ title: `[실시간 급상승 ${traffic || "?"} 검색] ${kw}${newsTitle ? ` — ${newsTitle}` : ""}`, description: newsTitle, press: "구글트렌드", seed: "실시간급상승", fresh: true });
+      items.push({ title: `[${RISING_TAG} ${traffic || "?"} 검색] ${kw}${newsTitle ? ` — ${newsTitle}` : ""}`, description: newsTitle, press: "구글트렌드", seed: RISING_SEED, fresh: true });
     }
     gtCache = { at: now, items };
     return items;
@@ -162,8 +172,8 @@ export async function gatherHeadlinesWithStats(category: string): Promise<{ head
   //  관련성은 선별 게이트가 거른다")를 복원: 씨앗으로 태워 합성 프롬프트가 보게 하고, 카테고리 정합은 합성 LLM이 재선별.
   //  상한 8개(비관련 카테고리 노이즈 억제). fresh=true(하드코딩)만.
   {
-    const rising = dedup.filter((h) => h.seed === "실시간급상승" && h.fresh === true).slice(0, 8);
-    if (rising.length) { perSeed["실시간급상승"] = { fresh: rising.length, unverified: 0, stale: 0 }; kept.push(...rising); }
+    const rising = dedup.filter((h) => h.seed === RISING_SEED && h.fresh === true).slice(0, 8);
+    if (rising.length) { perSeed[RISING_SEED] = { fresh: rising.length, unverified: 0, stale: 0 }; kept.push(...rising); }
   }
 
   const stats: GatherStats = {

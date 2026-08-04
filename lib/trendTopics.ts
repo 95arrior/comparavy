@@ -6,7 +6,7 @@ import { fetchBizinfoSeeds } from "./bizinfoSeeds";
 import { fetchDartIPOSeeds, ipoAdviceLeak } from "./dartIPO";
 import { measureTopicDemand, hasRealDemand } from "./topicDemand";
 import { preemptionScore, preemptionNote, preemptWindow } from "./preemption";
-import { gatherHeadlinesWithStats } from "./trendSources";
+import { gatherHeadlinesWithStats, RISING_SEED, risingKeywordOf } from "./trendSources";
 import { seasonalSeeds } from "./seasonalEvents";
 import { econSeeds } from "./econCalendar";
 import { expandAutocomplete } from "./naverAutocomplete";
@@ -21,7 +21,9 @@ import { logUsage } from "./usageLog";
 //  스케일: 유저 무관(카테고리당 1회) → 1만·100만 명 동일 비용. 유저는 이 풀에서 시드 회전으로 다른 조각을 봄.
 
 export interface Longtail { kw: string; blogTotal: number | null }
-export type SeedSource = "news" | "season" | "discover" | "applyhome" | "gov24" | "bizinfo" | "dart";
+// ★"rising"(2026-08-04 유저 상시 요구: "지금 뜨는은 실제로 효과 있는 실시간 키워드 or 대형 선점 가능한 것") —
+//  구글 트렌드 KR 급상승 유래. 이 표식이 있어야 밴드 우회 판정을 할 수 있다(없으면 전부 news로 뭉개진다).
+export type SeedSource = "news" | "season" | "discover" | "applyhome" | "gov24" | "bizinfo" | "dart" | "rising";
 export interface TrendTopic {
   keyword: string;
   title: string;
@@ -157,6 +159,9 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
     const seen = new Set<string>();
     const rows = [];
     const expires = new Date(Date.now() + FRESH_MS).toISOString();
+    // 이번 수확에 들어온 실시간 급상승 검색어들 — 합성 결과에 살아남았는지 대조할 원본
+    const risingKws = heads.filter((h) => h.seed === RISING_SEED).map((h) => risingKeywordOf(h.title)).filter((x) => x.length >= 2);
+    const risingTagged: string[] = [];
     // 논평형 title 보조 게이트(정규식) — utility 판정 누수 방어.
     const COMMENTARY_RE = /(가 아니라 .+(다|였다)|의 명과 암|에 던진 질문|의 민낯|잔혹사|를 둘러싼|의 그림자)/;
     for (const it of parsed) {
@@ -170,7 +175,12 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
       const util = (it.utility ?? "").trim();
       if (util === "없음" || COMMENTARY_RE.test(ti)) { drops.push({ keyword: kw, title: ti, reason: "no_utility" }); continue; }
       seen.add(kw);
-      rows.push({ category, keyword: kw, title: ti, news_context: ctx, longtails: [] as Longtail[], source: "news", created_at: new Date().toISOString(), expires_at: expires });
+      // ★실시간 급상승 혈통 보존 — 합성 결과가 급상승 검색어를 품고 있으면 그 카드는 '실시간 유래'다.
+      //  씨앗을 직접 밀어 넣지 않고 태깅만 하는 이유: 급상승은 전 카테고리 공통이라 무관한 게 대부분인데,
+      //  합성 LLM이 이미 카테고리 정합으로 걸러 준다. 살아남은 것만 실시간으로 인정하면 노이즈가 안 는다.
+      const risingHit = risingKws.find((rk) => rk.length >= 2 && (kw.includes(rk) || ti.includes(rk)));
+      if (risingHit) risingTagged.push(kw);
+      rows.push({ category, keyword: kw, title: ti, news_context: ctx, longtails: [] as Longtail[], source: risingHit ? "rising" : "news", created_at: new Date().toISOString(), expires_at: expires });
     }
     // ★시즌 캘린더 주입 — D-14 이내 예측 가능 이슈(뉴스 신선도 게이트 면제, 자동완성 게이트는 동일 적용)
     for (const ev of seasonalSeeds(category)) {
@@ -211,6 +221,8 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
     }
 
     if (rows.length === 0) return { generated: 0, drops };
+    // ★실시간 유입 계측 — 수확은 됐는데 합성에서 전멸하는지, 애초에 안 들어오는지를 구분한다.
+    console.log(`[rising] ${category}: 급상승 수확 ${risingKws.length} → 합성 생존 ${risingTagged.length}${risingTagged.length ? ` (${risingTagged.slice(0, 3).join(", ")})` : ""}`);
 
     // ★B단계: 씨앗별 자동완성 롱테일(실검증) + gap(예산). 자동완성은 비공식·무제한(무료), gap(fetchBlogTotal)만 쿼터 소비.
     //  예산 계산: 30 카테고리 × GAP_BUDGET(60)/refresh × 4 refresh/day = 7,200/day (네이버 검색 API 25,000/일 한도의 약 29%).

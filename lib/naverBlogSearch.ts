@@ -9,19 +9,34 @@ const ENDPOINT = "https://openapi.naver.com/v1/search/blog.json";
  * display=1로 최소 응답만 받고 total만 쓴다.
  */
 export async function fetchBlogTotal(query: string): Promise<number | null> {
+  return (await fetchBlogTotalDetailed(query)).total;
+}
+
+/**
+ * ★사유까지 돌려주는 판(2026-08-04 백필 실측에서 필요해졌다).
+ *  종전엔 권한 없음·쿼터 초과·429·네트워크 실패·'측정값 없음'이 전부 null 하나로 뭉개져서,
+ *  백필이 12번 연속 실패했을 때 "왜"를 서버 로그도 없이 추측해야 했다.
+ *  ★429(호출 과다)는 '실패'가 아니라 '천천히 하라'는 신호다 — 호출측이 구분해서 물러설 수 있어야 한다.
+ */
+export async function fetchBlogTotalDetailed(query: string): Promise<{ total: number | null; status: number | null; reason: string | null }> {
   const id = process.env.NAVER_DATALAB_CLIENT_ID;
   const secret = process.env.NAVER_DATALAB_SECRET;
   const q = query.trim();
-  if (!id || !secret || !q) return null;
+  if (!id || !secret) return { total: null, status: null, reason: "자격증명없음" };
+  if (!q) return { total: null, status: null, reason: "빈질의" };
   try {
     const res = await fetch(`${ENDPOINT}?query=${encodeURIComponent(q)}&display=1`, {
       headers: { "X-Naver-Client-Id": id, "X-Naver-Client-Secret": secret },
     });
-    if (!res.ok) return null; // 권한 없음(검색 API 미추가)·쿼터초과 등 → 폴백
+    if (!res.ok) {
+      const reason = res.status === 429 ? "호출과다(429)" : res.status === 401 || res.status === 403 ? `권한(${res.status})` : `HTTP ${res.status}`;
+      return { total: null, status: res.status, reason };
+    }
     const data = (await res.json()) as { total?: number };
-    return typeof data.total === "number" && data.total >= 0 ? data.total : null;
-  } catch {
-    return null;
+    if (typeof data.total === "number" && data.total >= 0) return { total: data.total, status: 200, reason: null };
+    return { total: null, status: 200, reason: "total없음" };
+  } catch (e) {
+    return { total: null, status: null, reason: `네트워크(${e instanceof Error ? e.name : "?"})` };
   }
 }
 

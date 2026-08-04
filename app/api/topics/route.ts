@@ -379,6 +379,9 @@ export async function GET(req: Request) {
         // ★momentum 배지 분리 — 뉴스/시즌='지금 뜨는 중', 자동완성 발굴='꾸준히 찾는 주제'(뜨는 척 금지)
         const demandLabel = src === "discover" ? "꾸준히 찾는 주제" : "지금 뜨는 중";
         cards.push({ keyword: t.keyword, title: t.title, expiresAt: seedExpiry, demandLabel: (t as { inflow?: string }).inflow === "hit" ? "실검색 확인 · 지금 뜨는 중" : demandLabel, ssak: true, region: false, tone: bt, vol: 0, comp: "low" as Comp, blogTotal: null, tag: src === "discover" ? "steady" : "trend", newsContext: t.newsContext ?? undefined, sourceTitle: (t as { sourceTitle?: string | null }).sourceTitle ?? undefined, titleSearch: (t as { titleSearch?: string }).titleSearch, briefText: (t as { briefText?: string }).briefText, hookKey: (t as { hookKey?: string }).hookKey, thumb: (t as { thumb?: { mainCopy: string; subCopy: string; badge: string } }).thumb, brief: (t as { brief?: unknown }).brief, series: (t as { series?: unknown }).series ?? null,
+          // ★급상승 표식은 성과루프 플래그와 무관하게 카드에 직접 단다 — sel(계측용)에만 두면
+          //  FF_PERF_LOOP가 꺼지는 순간 실시간 레인이 통째로 죽는다(상관없는 스위치에 목숨을 걸지 않는다).
+          ...(src === "rising" ? { risingSeed: true } : {}),
           ...(FF.perfLoop ? { sel: (() => { const bf = (t as { brief?: { intent?: string; opening?: string; flow?: string } }).brief; return { species: "trend", seedSource: src ?? "news", hookKey: (t as { hookKey?: string }).hookKey ?? null, structure: bf ? [bf.intent, bf.opening, bf.flow].filter(Boolean).join("|") || null : null }; })() } : {}),
           ...(FF.revenueTag ? (() => { const rp = revenuePathOf({ keyword: t.keyword, title: t.title }); return rp === "none" ? {} : { revenuePath: rp, revenueLabel: REVENUE_TAG_LABEL[rp as Exclude<RevenuePath, "none">] }; })() : {}) });
       }
@@ -501,6 +504,12 @@ export async function GET(req: Request) {
       const v = Number(c.vol ?? 0);
       const exempt = c.tag === "홈판" || String(c.demandBadge ?? "").includes("헤드 배팅");
       if (v <= 0 && !exempt) unchecked += 1;
+      // ★실시간 급상승 우회(2026-07-24 유저 확정 — 2026-08-01 '우회 봉쇄'가 이 예외까지 같이 덮었다).
+      //  유저 상시 요구: "지금 뜨는은 실제로 효과 있는 실시간 키워드, 혹은 대형이어도 선점 가능한 것."
+      //  ★단 무조건 우회는 8.8만 헤드가 신생 보드에 꽂히던 그 실패로 돌아가는 길이다.
+      //   '선점 가능'을 말이 아니라 숫자로 증명한 것만 통과시킨다 — 문서수를 재서 상한 미만일 때만.
+      //   측정 못 했으면 우회 없음(모르는 것을 근거로 대형을 들이지 않는다).
+      if ((c as { risingPass?: boolean }).risingPass === true) return true;
       if (v > bandCeil && !String(c.demandBadge ?? "").includes("헤드 배팅")) {
         leaked.push({ where, keyword: String(c.keyword ?? ""), vol: v });
         return false;
@@ -683,7 +692,32 @@ export async function GET(req: Request) {
     // ★트렌드 레인에도 밴드를 건다(2026-08-01 — 급상승 우회 #2 봉쇄). 위에서 volMap으로 c.vol을 실제 값으로
     //  채워 두었기 때문에 이제 검사가 실제로 작동한다(종전엔 트렌드 카드가 전부 vol:0이라 통과가 아니라 '못 봄'이었다).
     //  홈판은 tag='홈판'으로 면제된다 — 검색량 게임이 아니라서 밴드를 적용하는 것 자체가 틀리다.
+    // ★실시간 급상승 카드의 '선점 가능' 증명(2026-08-04) — 밴드를 우회시키려면 근거가 있어야 한다.
+    //  급상승 키워드는 방금 뜬 것이라 검색량은 크고 문서수는 아직 얇을 수 있다 — 그 교집합이 유저가 말한
+    //  '대형이어도 선점 가능한 것'이다. 그러니 그 자리에서 문서수를 재서 통과 여부를 정한다.
+    //  ★대상은 급상승 유래 카드뿐(보통 0~2장)이라 호출 비용이 거의 없다.
+    {
+      const risingCards = tc.filter((c) => (c as { risingSeed?: boolean }).risingSeed === true || (c.sel as { seedSource?: string } | undefined)?.seedSource === "rising");
+      const rising = { seen: risingCards.length, measured: 0, pass: 0, tooMany: 0, unmeasured: 0 };
+      if (risingCards.length) {
+        await Promise.all(risingCards.map(async (c) => {
+          const total = await fetchBlogTotal(c.keyword);
+          if (total == null) { rising.unmeasured += 1; return; } // 못 쟀으면 우회 없음 — 일반 밴드 규칙으로 간다
+          rising.measured += 1;
+          (c as { blogTotal?: number | null }).blogTotal = total;
+          if (total < DOC_HARD_MAX) {
+            (c as { risingPass?: boolean }).risingPass = true;
+            rising.pass += 1;
+            c.demandBadge = `실시간 급상승 · 지금 글 ${total.toLocaleString("ko-KR")}편 — 선점 구간`;
+          } else rising.tooMany += 1;
+        }));
+        console.log(`[rising-lane] 카드 ${rising.seen} → 측정 ${rising.measured} · 선점통과 ${rising.pass} · 포화 ${rising.tooMany} · 미측정 ${rising.unmeasured}`);
+      }
+      if (debugMode) diag.rising = rising;
+    }
     tc = bandInvariant(tc, "short-trend");
+    // ★자리 배분에서도 실시간을 앞에 세운다 — 통과시켜 놓고 뒤로 밀면 화면에는 안 보인다(유저가 보는 건 앞 몇 장뿐).
+    tc = [...tc.filter((c) => (c as { risingPass?: boolean }).risingPass === true), ...tc.filter((c) => (c as { risingPass?: boolean }).risingPass !== true)];
     funnel.afterBand = tc.length;
 
     // ★홈판을 '먼저' 확보하고, 실제로 확보한 장수만큼만 트렌드 자리를 내준다(2026-08-01 실사이트 확인에서 검거).
