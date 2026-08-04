@@ -33,8 +33,9 @@ console.log("\n② 미측정(null)은 통과 — 모르는 것을 벌하지 않�
 
 console.log("\n③ 자리가 남으면 '문서수 적은 순'으로 보충(보드를 비우지 않는다):");
 {
+  // ★밴드 값이 바뀌어도 이 검증은 흔들리면 안 된다 — 규칙(정렬·보충·절대상한)을 재는 자리라 상한은 고정값으로 준다.
   const thin = [row("under", 800), row("over-9k", 9000), row("over-2k", 2000), row("over-5k", 5000), row("way-over", 40000)];
-  const cut = applyDocCut(thin, docOf, { docMax: SEEDLING, need: 3 });
+  const cut = applyDocCut(thin, docOf, { docMax: 1000, need: 3 });
   ok(cut.kept.map((x) => x.keyword).join(",") === "under,over-2k,over-5k", "★상한 미만 먼저, 그다음 2,000 → 5,000 순으로 채운다");
   ok(!cut.kept.some((x) => (x.blog_total ?? 0) >= DOC_HARD_MAX), "★절대 상한 위는 자리가 비어도 안 넣는다");
   ok(cut.refilled === 2 && cut.dropped === 2, "보충 2 · 탈락 2 계측");
@@ -52,6 +53,15 @@ console.log("\n⑤ 성장기 밴드(5,000)도 같은 규칙:");
   const g = [row("a", 4900), row("b", 6000), row("c", 12000)];
   const cut = applyDocCut(g, docOf, { docMax: TIER_BANDS.GROWING.blogTotalMax, need: 3 });
   ok(cut.kept.map((x) => x.keyword).join(",") === "a,b", "밴드 미만 + 보충 1(1만 미만) — 1만 이상은 제외");
+}
+
+console.log("\n⑤-2 밴드 사다리 상한 — 실측으로 정한 값인가:");
+{
+  // ★2026-08-04 개정(1,000 → 3,000). 근거: 경제·재테크 측정 분포에서 1,000 미만은 0.5~2.8%뿐이었다.
+  //  상한 1,000은 엄격한 기준이 아니라 재고가 없는 기준이었다. 값을 다시 바꾼다면 그때도 근거는 분포다.
+  ok(SEEDLING === 3000, `신생 문서수 상한 = 3,000 (현재 ${SEEDLING})`);
+  ok(TIER_BANDS.GROWING.blogTotalMax > SEEDLING, "성장기 상한이 신생보다 높다(사다리가 뒤집히지 않는다)");
+  ok(SEEDLING < DOC_HARD_MAX, "밴드 상한은 절대 상한보다 낮다");
 }
 
 console.log("\n⑥ 배선 — 만들어놓고 안 부르면 아무 일도 안 일어난다:");

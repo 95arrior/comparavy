@@ -781,6 +781,9 @@ export async function GET(req: Request) {
     }
     // ★증식 진단을 함께 싣는다(2026-08-04 유저 요청) — '씨앗 19개인데 증식 4장'의 어디가 병목인지
     //  로그를 뒤지지 않고 주소 하나로 보이게 한다. 한 번 보고 고치면 되는 자리다.
+    // ★밴드가 무엇을 잘랐는지 보여준다(2026-08-04 실측: 게이트 4 → 밴드 1, 즉 3장이 여기서 죽었다).
+    //  잘린 것이 '대형이라 못 이길 것'인지 '대형인데 선점 가능한 것'인지는 키워드를 봐야 판단할 수 있다.
+    if (debugMode) diag.bandCut = { ceil: bandCeil, items: leakedAll.filter((x) => x.where === "short-trend").slice(0, 8) };
     if (debugMode) diag.ampFunnel = lastAmplifyDiag;
     // ★홈판 생성 진단도 함께(2026-08-04) — '홈판 2/5'가 화면에 뜨는데 이유는 서버 로그에만 있었다.
     //  homeDrop(하류 탈락)이 전부 0인데 결품이면 원인은 생성 안쪽이다 — 그 안쪽을 여기서 보여준다.

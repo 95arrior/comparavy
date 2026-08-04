@@ -139,7 +139,15 @@ export async function pickHomefeedBets(
     if (c?.value && new Date(String(c.expires_at)).getTime() > Date.now()) {
       const cached = c.value as HomefeedBet[];
       // ★캐시 히트도 진단에 남긴다 — 안 남기면 '오늘은 생성이 안 돌았다'와 '생성이 실패했다'가 구분되지 않는다.
-      lastHomebetDiag = { want, tryN: 0, round1: cached.length, round2: 0, dupDropped: 0, out: cached.length, failBy: {}, cached: true, at: new Date().toISOString() };
+      //  ★그리고 생성 당시의 진단을 되살린다 — 캐시가 이유까지 덮으면 결품만 남고 원인은 사라진다.
+      let genDiag: typeof lastHomebetDiag = null;
+      try {
+        const { data: d } = await db.from("api_cache").select("value").eq("key", `${cacheKey}:diag`).maybeSingle();
+        if (d?.value) genDiag = d.value as typeof lastHomebetDiag;
+      } catch { /* 진단 복원 실패는 파이프에 영향 없다 */ }
+      lastHomebetDiag = genDiag
+        ? { ...genDiag, cached: true }
+        : { want, tryN: 0, round1: cached.length, round2: 0, dupDropped: 0, out: cached.length, failBy: {}, cached: true, at: new Date().toISOString() };
       return cached;
     }
   } catch { /* 캐시 조회 실패 — 생성으로 */ }
@@ -227,6 +235,9 @@ export async function pickHomefeedBets(
     const full = out.length >= want;
     const ttlMs = full ? 24 * 3600_000 : 1 * 3600_000;
     try { await db.from("api_cache").upsert({ key: cacheKey, value: out, expires_at: new Date(Date.now() + ttlMs).toISOString(), updated_at: new Date().toISOString() }); } catch { /* ignore */ }
+    // ★생성 진단도 함께 남긴다(2026-08-04 실측: 캐시 히트가 진단을 덮어써서 '왜 3장인지'가 사라졌다).
+    //  캐시가 살아 있는 동안에도 결품의 이유는 계속 물어볼 수 있어야 한다 — 이유가 사라지면 결품만 남는다.
+    try { await db.from("api_cache").upsert({ key: `${cacheKey}:diag`, value: lastHomebetDiag, expires_at: new Date(Date.now() + ttlMs).toISOString(), updated_at: new Date().toISOString() }); } catch { /* ignore */ }
     if (!full) console.log(`[homebet] 쿼터 미달 ${out.length}/${want} — 1시간 뒤 재시도(짧은 캐시)`);
   }
   return out;
