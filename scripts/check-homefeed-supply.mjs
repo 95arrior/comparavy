@@ -133,4 +133,14 @@ console.log(fail ? `\n실패 ${fail}건` : "\n통과: 홈판 공급(캐시가 �
   ok(/ripeHomefeedPosts \+= 1/.test(rt) && /ripeness:/.test(rt), "★엔드포인트가 익음 분포를 계산해 함께 보여준다");
 }
 
+// ★쓴 카드는 캐시에서도 빠지고 빈 자리는 다시 채운다(2026-08-05 유저 실측: 홈판 2장을 다 발행했는데 그대로 남아 있었다)
+{
+  const hb = fs.readFileSync(new URL("../lib/homefeedBet.ts", import.meta.url), "utf-8");
+  ok(/alive = cached\.filter\(/.test(hb), "★캐시에서 꺼낼 때 '이미 쓴 것'을 걸러낸다");
+  ok(/if \(alive\.length >= want\)/.test(hb), "★남은 게 충분하면 그대로 쓴다(불필요한 재생성 없음)");
+  ok(/const aliveTypes = new Set\(alive\.map/.test(hb), "★부족분만 새로 만들되 이미 있는 유형은 다시 안 뽑는다");
+  ok(/const got = \[\.\.\.alive, \.\.\.r1\.cards\]|let got = \[\.\.\.alive, \.\.\.r1\.cards\]/.test(hb), "★살아남은 카드를 앞에 세워 합친다");
+  ok(/부족분 \$\{want - alive\.length\}장을 새로 만든다/.test(hb), "★몇 장을 왜 새로 만드는지 로그로 남긴다");
+}
+
 process.exit(fail ? 1 : 0);

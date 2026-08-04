@@ -138,6 +138,7 @@ export async function pickHomefeedBets(
   //  옛 카드를 그대로 서빙해서 "코드는 고쳤는데 화면은 그대로"가 된다(유저 실측으로 확인).
   // ★v4(2026-08-04) — 보충 라운드가 생겼다. 옛 캐시는 '한 번만 시도하고 끝낸' 결과라 미달이 굳어 있다.
   const cacheKey = `homebet:v4:${userId}:${kstDay}:${want}`;
+  let alive: HomefeedBet[] = []; // 캐시에서 살아남은(아직 안 쓴) 카드 — 부족분만 새로 만든다
   try {
     const { data: c } = await db.from("api_cache").select("value, expires_at").eq("key", cacheKey).maybeSingle();
     if (c?.value && new Date(String(c.expires_at)).getTime() > Date.now()) {
@@ -149,10 +150,19 @@ export async function pickHomefeedBets(
         const { data: d } = await db.from("api_cache").select("value").eq("key", `${cacheKey}:diag`).maybeSingle();
         if (d?.value) genDiag = d.value as typeof lastHomebetDiag;
       } catch { /* 진단 복원 실패는 파이프에 영향 없다 */ }
-      lastHomebetDiag = genDiag
-        ? { ...genDiag, cached: true }
-        : { want, tryN: 0, round1: cached.length, round2: 0, dupDropped: 0, out: cached.length, failBy: {}, cached: true, at: new Date().toISOString() };
-      return cached;
+      // ★쓴 카드는 캐시에서도 빼고, 빈 자리는 다시 채운다(2026-08-05 유저 실측에서 검거).
+      //  실물: 홈판 2장을 다 발행했는데 같은 카드가 그대로 남아 있었다.
+      //  종전 구조: 캐시는 하루치 세트를 통째로 들고 있고, '이미 쓴 것' 판정은 호출측(topics)에서만 했다.
+      //  그러면 발행할수록 홈판 자리는 줄어들고 그 자리를 트렌드가 메운다 — 배합이 홈판 50%인데
+      //  정작 홈판을 쓸수록 홈판이 사라지는 구조였다. 쓴 만큼 다시 만들어 주는 게 맞다.
+      alive = cached.filter((b) => !usedKeywords.has(normalizeKeyword(b.keyword)) && !(opts?.isDup?.(b.title, b.keyword)));
+      if (alive.length >= want) {
+        lastHomebetDiag = genDiag
+          ? { ...genDiag, cached: true, out: alive.length }
+          : { want, tryN: 0, round1: alive.length, round2: 0, dupDropped: 0, out: alive.length, failBy: {}, cached: true, at: new Date().toISOString() };
+        return alive.slice(0, want);
+      }
+      console.log(`[homebet] 캐시 ${cached.length}장 중 ${alive.length}장 생존(쓴 글 제외) — 부족분 ${want - alive.length}장을 새로 만든다`);
     }
   } catch { /* 캐시 조회 실패 — 생성으로 */ }
 
@@ -160,8 +170,13 @@ export async function pickHomefeedBets(
   //  개별 생성은 여러 이유로 떨어진다 — 뉴스 없음(시장 유형), 금지어, 투자권유 표현, JSON 파싱 실패.
   //  딱 want개만 시도하면 한 장만 떨어져도 열이 빈다. 유형은 8종이니 넉넉히 시도해 먼저 성공한 want개를 쓴다.
   const dayIdx = Math.floor(Date.now() / 86400_000) % BET_TYPES.length;
-  const tryN = Math.min(BET_TYPES.length, want + 3);
-  const picked = Array.from({ length: tryN }, (_, i) => BET_TYPES[(dayIdx + i) % BET_TYPES.length]!);
+  // ★살아남은 카드가 있으면 그만큼만 새로 만든다 — 이미 있는 유형은 다시 뽑지 않는다(같은 유형 두 장 방지).
+  const aliveTypes = new Set(alive.map((b) => b.betType));
+  const need = Math.max(0, want - alive.length);
+  const tryN = Math.min(BET_TYPES.length - aliveTypes.size, need + 3);
+  const picked = Array.from({ length: BET_TYPES.length }, (_, i) => BET_TYPES[(dayIdx + i) % BET_TYPES.length]!)
+    .filter((b) => !aliveTypes.has(b.key))
+    .slice(0, Math.max(1, tryN));
   // ★탈락 사유 회계(2026-08-04) — 종전엔 전부 console.error라 화면에서는 '홈판 2/5'만 보이고 왜인지는 알 수 없었다.
   //  홈판 결품이 상시화된 지금, 사유 없는 결품 보고는 다음 사람에게 아무것도 넘겨주지 않는다.
   const failBy: Record<string, number> = {};
@@ -176,7 +191,7 @@ export async function pickHomefeedBets(
     return { cards, failedTypes };
   };
   const r1 = await runRound(picked, usedKeywords);
-  let got = r1.cards;
+  let got = [...alive, ...r1.cards]; // 살아남은 카드가 먼저 — 오늘 이미 검증된 것들이다
   // ★발행한 글과의 유사 판정을 '캐시에 넣기 전에' 한다(2026-08-02 실측 사고).
   //  종전엔 호출측(topics/route)이 캐시에서 꺼낸 뒤 걸렀다. 그러면 이렇게 된다:
   //   생성 4장 → 캐시 저장 → 호출측이 4장 전부 '이미 쓴'으로 탈락 → 홈판 0장
