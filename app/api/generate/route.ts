@@ -13,7 +13,7 @@ import { sanitizeUrls } from "@/lib/linkWhitelist";
 import { countBodyChars } from "@/lib/humanizer";
 import { finalizeArticleBody } from "@/lib/finalizeBody";
 import { relatedPostsFor } from "@/lib/relatedPosts";
-import { sectionBudgetReport, tailSummaryBullets, clichePhotoSlots, eligibilityTableIssues } from "@/lib/editorial";
+import { sectionBudgetReport, tailSummaryBullets, clichePhotoSlots, eligibilityTableIssues, answerFirstDefects, stiltedInterjections } from "@/lib/editorial";
 import { validateTitleTail } from "@/lib/titleRules";
 import { sectionBudgetFor, targetMaxFor } from "@/lib/articlePrompt";
 import { isDisposableEmail } from "@/lib/disposableEmail";
@@ -397,6 +397,17 @@ export async function POST(request: Request) {
           const miss = allFacts.filter((i) => i.layer === "missing");
           if (miss.length) {
             w.push(`이 주제의 필수 항목이 빠졌다 — ${miss.map((i) => i.matched).join(", ")}. 독자가 모르면 손해를 보는 항목이라 빠지면 글이 성립하지 않는다. 각 항목을 이름만 스치지 말고 최소 한 단락 또는 표의 한 행으로 실제로 다뤄라(정말 이 글 주제와 무관하면 억지로 넣지 말고 나머지를 반드시 채운다).`);
+          }
+          // ★본문 즉답 이행(2026-08-04 — 퀵백 대응). 제목을 '답을 숨기고 궁금하게'로 강하게 만든 만큼,
+          //  본문 첫 화면이 답을 줘야 한다. 안 그러면 클릭을 올리는 장치가 곧 감점 장치가 된다.
+          for (const d of answerFirstDefects(a.body_html)) {
+            w.push(`${d}. 첫 소제목 전에 ①검색 질문의 답을 완결된 문장으로 ②'바쁘면 이것만' 결론 한 줄(판결+핵심 숫자 1개)을 배치하라 — 도입은 인용구 1문장 + 리드 3문장까지다.`);
+          }
+          // ★어색한 감탄사(2026-08-04 유저: "말투 허참, 이런 쓰지마요"). 코드가 지우기는 하지만,
+          //  지워진 자리에 어색한 문장이 남는 것보다 처음부터 안 쓰는 편이 낫다.
+          const st = stiltedInterjections(a.body_html);
+          if (st.length) {
+            w.push(`요즘 안 쓰는 감탄사가 있다 — ${st.map((x) => `"${x}"`).join(", ")}. 옛날 말투·연극 대사 톤 금지, 지금 사람이 말하듯 담백하게 쓴다.`);
           }
           // ★어미 단조로움(2026-08-02 유저: "요요요 면서요 거든요 말투가 왜이럼, 더 AI같음").
           //  프롬프트로 "섞어라"라고 해도 모델은 한 종결로 수렴한다 — 실제로 세서 지적한다.

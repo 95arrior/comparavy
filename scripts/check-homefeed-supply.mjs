@@ -84,7 +84,9 @@ console.log(fail ? `\n실패 ${fail}건` : "\n통과: 홈판 공급(캐시가 �
   ok(/homebet:v4:/.test(hb), "★생성 규칙(보충 라운드)이 바뀌어 캐시 버전을 올렸다 — 안 올리면 미달이 굳는다");
 
   const tr = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
-  ok((tr.match(/sourceTitle: bet\.sourceTitle/g) ?? []).length === 2, "★홈판 카드 두 경로 모두 출처를 넘긴다");
+  ok((tr.match(/sourceTitle: bet\.sourceTitle,/g) ?? []).length === 2, "★홈판 카드 두 경로 모두 출처를 넘긴다");
+  // ★선별 맥락(sel)에도 실어야 발행 위저드의 '글감(뉴스)' 안내가 그 기사를 짚어 준다(2026-08-04)
+  ok((tr.match(/sourceTitle: bet\.sourceTitle \?\? null/g) ?? []).length === 2, "★출처가 selection_meta로도 넘어간다(발행 안내가 기사를 짚는다)");
 
   // ★화면까지 닿는가 — 홈판은 isTrend가 false라 기존 출처 분기를 못 탔다(고친 자리)
   const home = fs.readFileSync(new URL("../components/dashboard/Home.tsx", import.meta.url), "utf-8");

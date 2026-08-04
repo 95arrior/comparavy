@@ -28,6 +28,7 @@ export default function NaverPublishSheet({
   articleId,
   aiImageIdx,
   closingImageUrl,
+  sourceTitle,
   onCopied,
   onDone,
   onClose,
@@ -42,6 +43,8 @@ export default function NaverPublishSheet({
   targetBlogId?: string | null;
   /** 완료 화면 주소 확정용(선택 입력 — 발행 직후가 주소를 들고 있는 순간) */
   articleId?: string;
+  /** 이 글이 근거한 실제 기사 제목 — 있을 때만 '글감(뉴스) 연동'을 권한다 */
+  sourceTitle?: string | null;
   aiImageIdx?: number[];
   closingImageUrl?: string | null; // ★탭만 연다 — 클립보드 접근 금지(회귀 테스트로 고정)
   onCopied?: () => void; // 본문 복사 검증 성공 시(상태 모델 copied 전이)
@@ -182,6 +185,18 @@ export default function NaverPublishSheet({
             {hasPrevSlot && (
               <p className="mt-3 rounded-xl bg-neutral-50 px-4 py-2.5 text-[12.5px] font-medium text-neutral-600">전편 글 주소를 본문의 [전편 링크 자리]에 붙여 넣으세요.</p>
             )}
+            {/* ★글감(뉴스) 연동 안내 — 근거 기사가 있는 글에만(2026-08-04). 주제와 안 맞는 글감을 넣으면 오히려 저품질이라,
+                이 글이 실제로 근거한 기사가 있을 때만 권한다. 없으면 이 안내 자체가 안 뜬다. */}
+            <div className="mt-3 rounded-xl bg-[#F7F8FA] px-4 py-3">
+              <p className="text-[12.5px] font-bold text-neutral-800">📎 글감으로 근거를 붙이면 좋아요 <span className="font-medium text-neutral-400">(선택)</span></p>
+              <p className="mt-1 text-[12px] leading-relaxed text-neutral-500">
+                에디터 상단 <b className="text-neutral-700">[글감]</b> → <b className="text-neutral-700">뉴스</b>에서 {sourceTitle ? "아래 기사를" : "이 글 주제와 맞는 기사를"} 찾아 본문 중간에 넣으면 공신력이 올라가요.
+                주제와 다른 글감은 넣지 마세요 — 안 맞는 글감은 오히려 감점이에요.
+              </p>
+              {sourceTitle && (
+                <p className="mt-2 rounded-lg bg-white px-3 py-2 text-[12px] font-medium leading-snug text-neutral-700 ring-1 ring-black/[0.04]">{sourceTitle}</p>
+              )}
+            </div>
             <button onClick={() => setScreen(4)} className={`${bigBtn} mt-4`} style={{ background: BLUE }}>다음</button>
           </div>
         )}

@@ -382,7 +382,7 @@ export async function GET(req: Request) {
           // ★급상승 표식은 성과루프 플래그와 무관하게 카드에 직접 단다 — sel(계측용)에만 두면
           //  FF_PERF_LOOP가 꺼지는 순간 실시간 레인이 통째로 죽는다(상관없는 스위치에 목숨을 걸지 않는다).
           ...(src === "rising" ? { risingSeed: true } : {}),
-          ...(FF.perfLoop ? { sel: (() => { const bf = (t as { brief?: { intent?: string; opening?: string; flow?: string } }).brief; return { species: "trend", seedSource: src ?? "news", hookKey: (t as { hookKey?: string }).hookKey ?? null, structure: bf ? [bf.intent, bf.opening, bf.flow].filter(Boolean).join("|") || null : null }; })() } : {}),
+          ...(FF.perfLoop ? { sel: (() => { const bf = (t as { brief?: { intent?: string; opening?: string; flow?: string } }).brief; return { species: "trend", seedSource: src ?? "news", sourceTitle: (t as { sourceTitle?: string | null }).sourceTitle ?? null, cluster: clusterKey(t.keyword), hookKey: (t as { hookKey?: string }).hookKey ?? null, structure: bf ? [bf.intent, bf.opening, bf.flow].filter(Boolean).join("|") || null : null }; })() } : {}),
           ...(FF.revenueTag ? (() => { const rp = revenuePathOf({ keyword: t.keyword, title: t.title }); return rp === "none" ? {} : { revenuePath: rp, revenueLabel: REVENUE_TAG_LABEL[rp as Exclude<RevenuePath, "none">] }; })() : {}) });
       }
         for (const c of cards) {
@@ -758,7 +758,7 @@ export async function GET(req: Request) {
             tag: "홈판", briefText: bet.briefText, sourceTitle: bet.sourceTitle,
             thumb: { mainCopy: bet.thumbCopy, subCopy: "", badge: "홈판" },
             demandBadge: "터지면 상한 없음 — 승부는 검색량이 아니라 반응(공감·저장)",
-            ...(FF.perfLoop ? { sel: { species: "homefeed", seedSource: "homebet", hookKey: bet.betType } } : {}),
+            ...(FF.perfLoop ? { sel: { species: "homefeed", seedSource: "homebet", sourceTitle: bet.sourceTitle ?? null, cluster: clusterKey(bet.keyword), hookKey: bet.betType } } : {}),
           } as TrendCard);
         }
       } catch (e) {
@@ -1232,7 +1232,7 @@ export async function GET(req: Request) {
           ? { demandBadge: "AI 요약으로 끝나기 쉬운 유형 — 후순위 추천" }
           : {}),
       // ★성과 루프(FF_PERF_LOOP) — 에버그린 선별 당시 실측값 운반
-      ...(FF.perfLoop ? { sel: { species: "evergreen", seedSource: "pool", vol: r.monthly_searches ?? 0, blogTotal: r.blog_total ?? null, stars: r.blog_total != null ? filledStarsFromData(r.monthly_searches ?? 0, r.blog_total) : null } } : {}),
+      ...(FF.perfLoop ? { sel: { species: "evergreen", seedSource: "pool", cluster: clusterKey(r.keyword), vol: r.monthly_searches ?? 0, blogTotal: r.blog_total ?? null, stars: r.blog_total != null ? filledStarsFromData(r.monthly_searches ?? 0, r.blog_total) : null } } : {}),
       // ★수익 경로 태그(FF_REVENUE_TAG §6) — 표시용, 선별 점수 무관
       ...(FF.revenueTag ? (() => { const rp = revenuePathOf({ keyword: r.keyword, title: t?.title ?? null, adDepth: r.ad_depth ?? null }); return rp === "none" ? {} : { revenuePath: rp, revenueLabel: REVENUE_TAG_LABEL[rp as Exclude<RevenuePath, "none">] }; })() : {}),
     };
@@ -1300,7 +1300,7 @@ export async function GET(req: Request) {
           tag: "홈판", briefText: bet.briefText, sourceTitle: bet.sourceTitle,
           thumb: { mainCopy: bet.thumbCopy, subCopy: "", badge: "홈판" },
           demandBadge: "터지면 상한 없음 — 승부는 검색량이 아니라 반응(공감·저장)",
-          ...(FF.perfLoop ? { sel: { species: "homefeed", seedSource: "homebet", hookKey: bet.betType } } : {}),
+          ...(FF.perfLoop ? { sel: { species: "homefeed", seedSource: "homebet", sourceTitle: bet.sourceTitle ?? null, cluster: clusterKey(bet.keyword), hookKey: bet.betType } } : {}),
         } as TrendCard));
     } catch { /* 홈판 배팅 실패 — 조용히 0장 */ }
   }

@@ -535,8 +535,23 @@ export default function DashboardClient(props: DashboardProps) {
             titleAlt={pendingWrite.titleSearch}
             recommendSearch={pendingWrite.tag !== "trend" && pendingWrite.tag !== "followup" && pendingWrite.tag !== "series"}
             onClose={() => setPendingWrite(null)}
-            onPick={({ withImages, title: pickedTitle, experience }) => {
+            onPick={async ({ withImages, title: pickedTitle, experience }) => {
               setSelected(null);
+              // ★0초 열람은 여기서 판정한다(2026-08-04) — 사전 생성분은 '경험 없이, 그 제목으로' 만들어졌다.
+              //  그러니 경험을 적었거나 제목을 바꿨으면 그 글은 더 이상 이 요청의 답이 아니다 → 새로 쓴다.
+              //  둘 다 그대로면 이미 만들어 둔 글을 그대로 연다(종전의 0초 경로를 그대로 보존).
+              const sameTitle = !pickedTitle || pickedTitle === pendingWrite.title;
+              if (!experience && sameTitle) {
+                try {
+                  const g = await fetch(`/api/pregen?keyword=${encodeURIComponent(pendingWrite.keyword)}`);
+                  const gd = await g.json();
+                  if (gd.status === "ready" && gd.articleId) {
+                    const r = await fetch("/api/pregen/claim", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ articleId: gd.articleId }) });
+                    const d = await r.json();
+                    if (r.ok && d.article) { setSelected(d.article); setPendingWrite(null); return; }
+                  }
+                } catch { /* 사전 생성분이 없거나 실패 — 아래 일반 생성으로 자연 폴백 */ }
+              }
               setGenParams({
                 keyword: pendingWrite.keyword,
                 angle: pickedTitle ?? pendingWrite.title,

@@ -477,21 +477,13 @@ export default function Home({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [first?.keyword, credits, info.publishedToday, info.hasDraftToday]);
 
-  // ★열람 = 차감 → 0초 검토. 실패는 일반 경로 자연 폴백.
-  async function readToday() {
+  // ★'오늘의 글'도 확인 시트를 거친다(2026-08-04).
+  //  종전엔 여기서 바로 claim해서 0초로 열었는데, 그 경로만 '겪어본 일 한 줄'을 물어볼 자리가 없었다 —
+  //  하루 한 편의 대표 글이 정작 경험을 못 받는 구조였다(경험은 지어내지 않고 받는 것이 우리 원칙이다).
+  //  ★0초는 잃지 않는다: 시트에서 경험을 비우고 제목을 그대로 두면 그때 claim한다(DashboardClient가 판정).
+  function readToday() {
     const f = first;
-    if (!preReadyId || !f) return;
-    const t0 = performance.now();
-    try {
-      const r = await fetch("/api/pregen/claim", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ articleId: preReadyId }) });
-      const d = await r.json();
-      if (r.ok && d.article) {
-        console.log(`[pregen] tap→shown ${(performance.now() - t0).toFixed(0)}ms`); // 계측: 열람 체감
-        onSelect(d.article);
-        return;
-      }
-    } catch { /* 폴백 */ }
-    setPreReadyId(null);
+    if (!f) return;
     onWriteKeyword(f.keyword, f.title, f.newsContext, f.briefText, f.titleSearch, f.thumb, { tag: f.tag, sel: f.sel });
   }
   // ★쓴 글은 시트에서도 제외(실측: 오늘 쓴 2편이 '다른 글감'에 계속 노출) — 키워드·제목 모두 대조
@@ -561,7 +553,7 @@ export default function Home({
         const todayDraft = articles.find((a) => a.status === "draft" && new Date(a.created_at).toDateString() === new Date().toDateString());
         const goWrite = () => {
           if (todayDraft) { onSelect(todayDraft); return; } // 쓰던 초안 직접 열기(키워드 불일치여도 안전)
-          if (preReadyId) { void readToday(); return; }      // 사전 생성분 0초 열람
+          if (preReadyId) { readToday(); return; }      // 사전 생성분 — 시트를 거쳐 열람(경험 비면 0초 claim)
           if (first) { onWriteKeyword(first.keyword, first.title, first.newsContext, first.briefText, first.titleSearch, first.thumb, { tag: first.tag, sel: first.sel }); return; } // 일반 생성
           setRoutineSheet("topics");
         };

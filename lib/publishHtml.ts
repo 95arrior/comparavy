@@ -356,24 +356,36 @@ function styleMarkers(html: string): string {
 
   // ★엔진이 평문으로 쓴 '함께 보면 좋은 글' 라벨 소거(규격 위반 실측: 블록 2회) — 라벨은 시스템 산출(하단 3층) 전용
   html = html.replace(/<p[^>]*>\s*(?:<b[^>]*>)?\s*함께\s?보면\s?좋은\s?글\s*[:：]?\s*(?:<\/b>)?\s*<\/p>/g, "");
-  // ★마무리 마커 2개+ 방어 — 마지막 것만 3층 블록, 앞엣것은 제거(중간 링크 전면 폐기 — 유저 확정)
+  // ★'함께 보면 좋은 글' — 마커 2~3개를 한 블록으로 묶는다(2026-08-04 유저: "2~3개도 링크 본문에 나오게,
+  //  이상한 데 숨기지 말고"). 종전엔 마커마다 제 블록을 만들어 같은 제목이 두세 번 반복되거나,
+  //  '마지막 것만 남기는' 옛 방어가 앞엣것을 지워 결국 한 개만 남았다 — 둘 다 유저가 원한 모습이 아니다.
+  //  ★안내 문구 상자도 뺀다. 독자가 보는 본문에 시스템 지시문이 서 있을 이유가 없다 —
+  //   제목 아래 주소를 그대로 두면 네이버 편집기가 붙여넣는 순간 링크로 만든다.
   {
-    const finals = [...html.matchAll(/\[마무리관련글:\s*(https?:[^\s|\]]+)\s*\|\s*([^|\]]+)\|\s*([^\]]+)\]/g)];
-    for (let i = 0; i < finals.length - 1; i++) {
-      const f = finals[i];
-      if (f) html = html.replace(f[0], "");
+    const marks = [...html.matchAll(/\[마무리관련글:\s*(https?:[^\s|\]]+)\s*\|\s*([^|\]]+?)\s*(?:\|[^\]]*)?\]/g)];
+    if (marks.length) {
+      const seen = new Set<string>();
+      const items: string[] = [];
+      for (const m of marks) {
+        const url = String(m[1]).split("?")[0]; // 트래킹 파라미터 제거 — 원형만
+        const title = String(m[2]).trim().replace(/</g, "");
+        if (!url || seen.has(url)) continue; // 같은 글 두 번 금지
+        seen.add(url);
+        if (items.length >= 3) continue;     // 유저 확정: 2~3개
+        items.push(`<p style="text-align:center;font-size:13.5px;color:#4e5968">${title}<br><span style="font-size:12.5px;color:#8b95a1">${url}</span></p>`);
+      }
+      const block = items.length
+        ? `<p style="text-align:center;font-size:15px;font-weight:700">함께 보면 좋은 글</p>${items.join("")}`
+        : "";
+      // 첫 마커 자리에 블록을 놓고(=해시태그 위), 나머지 마커는 문단째 지운다
+      let placed = false;
+      html = html.replace(/<p[^>]*>\s*\[마무리관련글:[^\]]*\]\s*<\/p>|\[마무리관련글:[^\]]*\]/g, () => {
+        if (placed) return "";
+        placed = true;
+        return block;
+      });
     }
   }
-  // ★내부링크 마커 — 하단 3층(유저 확정: 유저가 네이버 링크 카드로 직접 삽입 — 시스템은 그 직전까지 준비)
-  // ★설명 문장 제거(2026-08-04 유저 확정: "함께 보는 글도 적지 말고").
-  //  종전엔 '연결 이유 한 줄'을 모델이 지어냈다 — 근거 없는 설득이고 두 줄을 먹었다.
-  //  유저가 준 상위 글 4편에도 이런 설명은 없다. 링크 제목만으로 충분하다.
-  //  ★마커는 3부(URL|제목|이유)와 2부(URL|제목) 둘 다 받는다 — 옛 글의 마커도 깨지지 않게.
-  html = html.replace(/\[마무리관련글:\s*(https?:[^\s|\]]+)\s*\|\s*([^|\]]+?)\s*(?:\|[^\]]*)?\]/g, (_m, url: string, title: string) => {
-    const clean = url.split("?")[0]; // 트래킹 파라미터 제거 — 원형만
-    const t = String(title).trim().replace(/</g, "");
-    return `<p style="text-align:center;font-size:15px;font-weight:700">함께 보면 좋은 글</p><p style="text-align:center;font-size:13.5px;color:#4e5968">${t}</p><p style="text-align:center;background-color:#f5f6f8;padding:10px 8px;font-size:13px;color:#8b95a1">[링크 카드 자리 — 아래 주소를 링크 버튼에 붙여넣으세요]</p><p style="text-align:center;font-size:13px">${clean}</p>`;
-  });
   // ★중간 [관련글:] 마커 — 전면 제거(유저 확정: 내부링크는 하단 '함께 보면 좋은 글'만) — 기존 생성 글의 마커도 조립 시 소거
   html = html.replace(/\[관련글:\s*(https?:[^\s|\]]+)\s*\|\s*([^\]]+)\]/g, "");
   // ★변환에 실패한 마커는 반드시 지운다(2026-08-04 유저 실물: 대괄호 원문 3줄이 글 끝에 그대로 노출).

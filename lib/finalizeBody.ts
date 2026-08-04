@@ -6,7 +6,7 @@
 //  주석엔 "후처리(generate와 동일)"이라고 적혀 있었는데 동일하지 않았다.
 //  ★CLAUDE.md의 반복 교훈 그대로다: 규칙을 소스별로 복붙하면 반드시 빠지는 경로가 생긴다.
 //   그래서 마감은 이 함수 하나로만 한다 — 새 마감 규칙은 여기에만 추가한다.
-import { ensureHashtags, ensureRelatedLinks, hardTrimToLimit } from "./editorial";
+import { ensureHashtags, ensureRelatedLinks, hardTrimToLimit, stripStilted } from "./editorial";
 import { ensureDisclosure } from "./revenue";
 import { listToTable } from "./publishHtml";
 import { sanitizeUrls } from "./linkWhitelist";
@@ -29,6 +29,8 @@ export interface FinalizeResult {
   charCount: number;
   /** 계측용 — 호출측이 로그로 남긴다(무엇이 실제로 일어났는지가 보여야 한다) */
   tabled: boolean;
+  /** 어색한 감탄사를 걷어냈는가 */
+  destilted: boolean;
   trimmedSections: string[];
   urlReplaced: number;
   fabricatedUrls: string[];
@@ -37,7 +39,9 @@ export interface FinalizeResult {
 
 /** 저장 직전 본문 마감. 순서가 곧 규칙이다 — 표로 바꾸고, 분량을 자르고, 주소를 정화한 뒤, 링크·태그를 붙인다. */
 export function finalizeArticleBody(input: FinalizeInput): FinalizeResult {
-  const src = String(input.bodyHtml || "");
+  const src0 = String(input.bodyHtml || "");
+  // ⓪ 어색한 감탄사 제거(2026-08-04 유저: "허참 같은 거 쓰지 마요") — 문장 첫머리 감탄사만 걷어낸다
+  const src = stripStilted(src0);
   // ① 리스트 → 표(저장물에 적용해야 인포그래픽 API가 <table>을 찾는다)
   const tabled = listToTable(src);
   // ② 분량 하드컷 — 뒤에서부터 섹션 단위로(문장 중간을 자르면 글이 망가진다)
@@ -54,6 +58,7 @@ export function finalizeArticleBody(input: FinalizeInput): FinalizeResult {
     html,
     charCount: countBodyChars(html),
     tabled: tabled !== src,
+    destilted: src !== src0,
     trimmedSections: trim.removed,
     urlReplaced: clean.replaced,
     fabricatedUrls: clean.fabricated,

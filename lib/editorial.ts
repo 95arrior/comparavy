@@ -53,6 +53,62 @@ export function lacksConditionBranch(html: string): boolean {
   return !hasConditionTable(html) && !hasCalcExample(html);
 }
 
+// ═══ 어색한 감탄사(2026-08-04 유저: "말투 허참. 이런 쓰지마요 이상해요 자연스럽게") ═══
+//  실물: 본문에 '허참' 같은 옛날 말투 감탄사가 섞였다. 요즘 사람이 안 쓰는 말이 한 번 나오면
+//  그 글 전체가 '사람이 안 쓴 글'로 읽힌다 — 우리가 가장 피하려는 신호다.
+//  ★프롬프트로 "자연스럽게"라고 해봐야 모델은 매번 다른 말로 돌아온다. 목록을 코드가 들고 지운다.
+//   지우는 방식은 보수적으로: 문장 첫머리에서 감탄사 + 뒤따르는 쉼표·공백만 걷어낸다(문장은 그대로 산다).
+const STILTED_WORDS = ["허참", "거참", "원참", "허허", "어허", "어이쿠", "아이쿠", "아뿔싸", "이런이런", "에구머니", "어머나", "자자"];
+const STILTED_LEAD_RE = new RegExp(`(^|>|<br\\s*/?>|[.!?]\\s*)\\s*(?:${STILTED_WORDS.join("|")})\\s*[,，!]?\\s*`, "g");
+/** 본문에 남아 있는 어색한 감탄사들(경고용). */
+export function stiltedInterjections(html: string): string[] {
+  const text = stripTags(html);
+  return [...new Set(STILTED_WORDS.filter((w) => new RegExp(`(^|[\\s>,.!?"'(])${w}`).test(text)))];
+}
+/** 문장 첫머리 감탄사만 걷어낸다 — 문장 자체는 건드리지 않는다. */
+export function stripStilted(html: string): string {
+  return String(html || "").replace(STILTED_LEAD_RE, "$1");
+}
+
+// ═══ 본문 즉답 이행(2026-08-04 확정 — 퀵백 대응) ═══
+//  배경: 제목을 '답을 숨기고 궁금하게'로 강하게 만들수록 클릭은 오르지만, 본문 첫 화면이 답을 안 주면
+//  독자는 즉시 뒤로 간다. 네이버는 그 '퀵백'을 감점으로 읽는다 — 클릭을 올리는 장치가 감점 장치가 된다.
+//  ★프롬프트엔 이미 '리드 즉답'·'바쁘면 이것만'이 있었다. 그런데 부탁이었다 — 지켜졌는지 아무도 안 쟀다.
+//  ★코드는 의미를 못 읽는다. 그래서 '답이 있는가'를 직접 묻지 않고, 답이 있을 때 반드시 남는 흔적을 센다:
+//   ①메타 안내로 시작하지 않았는가 ②도입부에 판결·수치 신호가 있는가 ③답이 늦지 않았는가(도입부 길이).
+//  이 셋은 기계적으로 판정 가능하고, 통과했는데 답이 없는 글은 사실상 만들기 어렵다.
+const ANSWER_META_RE = /(알아보겠습니다|살펴보겠습니다|살펴볼게요|알아볼게요|정리해\s?보겠습니다|정리해\s?봤습니다|소개하겠습니다|설명드리겠습니다|이야기해\s?볼게요|다뤄보겠습니다)/;
+// 판결·행동 신호(결론이 앞에 왔을 때 남는 말투)
+const ANSWER_VERDICT_RE = /(결론부터|먼저\s|우선\s|바로\s|~?하면\s?됩니다|하시면\s?됩니다|유리|불리|가능합니다|어렵습니다|해당(?:됩니다|돼요|되지)|받을\s?수\s?있|신청하면|기준입니다|입니다\.|이에요\.|예요\.)/;
+// 수치 신호(금액·비율·기간 — 이 블로그에서 결론은 거의 항상 숫자를 동반한다)
+const ANSWER_FIGURE_RE = /\d[\d,.]*\s*(?:원|만\s?원|억|%|퍼센트|년|개월|주|일|배|회|명|건|세)/;
+/** 첫 <h2> 이전(도입부) HTML. h2가 없으면 앞 1,200자를 도입부로 본다. */
+function introOf(html: string): string {
+  const h = String(html || "");
+  const i = h.search(/<h2[\s>]/i);
+  return i > 0 ? h.slice(0, i) : h.slice(0, 1200);
+}
+export const INTRO_MAX_CHARS = 500; // 인용구 1문장 + 리드 3문장 + '바쁘면 이것만' ≈ 350자. 500이면 명백히 늦은 것.
+/** 본문이 '즉답 이행'을 어겼는가 — 어겼으면 사유들, 지켰으면 빈 배열. */
+export function answerFirstDefects(html: string): string[] {
+  const intro = introOf(html);
+  const plainAll = stripTags(intro).replace(/\s+/g, " ").trim();
+  if (!plainAll) return ["도입부가 비었다"];
+  const out: string[] = [];
+  if (ANSWER_META_RE.test(plainAll)) out.push("도입부가 '~알아보겠습니다' 류 메타 안내로 시작한다(답이 아니라 예고다)");
+  // 인용구(문제 제기 담당)는 답 신호에서 제외한다 — 그 자리는 원래 아픔만 찌르는 자리다.
+  const afterQuote = stripTags(intro.replace(/<blockquote[\s\S]*?<\/blockquote>/gi, " ")).replace(/\s+/g, " ").trim();
+  const hasFigure = ANSWER_FIGURE_RE.test(afterQuote);
+  const hasVerdict = ANSWER_VERDICT_RE.test(afterQuote);
+  const hasBoldLead = /<b[^>]*>[\s\S]{6,}?<\/b>/i.test(intro.replace(/<blockquote[\s\S]*?<\/blockquote>/gi, " ")); // '바쁘면 이것만' 규격
+  if (!hasFigure && !hasVerdict && !hasBoldLead) out.push("도입부에 결론(판결·수치·강조 결론 블록)이 하나도 없다");
+  if ([...plainAll].length > INTRO_MAX_CHARS) out.push(`첫 소제목까지 ${[...plainAll].length}자다 — 답이 늦다(${INTRO_MAX_CHARS}자 안에 결론이 나와야 한다)`);
+  return out;
+}
+export function lacksAnswerFirst(html: string): boolean {
+  return answerFirstDefects(html).length > 0;
+}
+
 // ═══ 메인 키워드 출현 하한·상한(2026-08-02 유저 확정: "제목 메인키워드는 무조건 본문에 5번 이상") ═══
 //  배경: 네이버 AI 브리핑·검색이 이 글을 '무엇에 관한 글'로 판정하려면 키워드가 본문에 실재해야 한다.
 //  ★그동안 우리에겐 상한만 있었다("억지 반복 금지") — 하한이 없으니 2~3회로 말라도 아무도 몰랐다.

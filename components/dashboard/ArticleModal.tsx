@@ -715,6 +715,7 @@ export default function ArticleModal({ pubStampKey, blogName,
             onOpenNaverWrite={openNaverWrite}
             targetBlogId={naverBlogId}
             articleId={article.id}
+            sourceTitle={((article as { selection_meta?: { sourceTitle?: string } | null }).selection_meta)?.sourceTitle ?? null}
             onDone={markNaverPublished}
             onClose={() => setNaverOpen(false)}
           />
