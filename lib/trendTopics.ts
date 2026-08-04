@@ -6,7 +6,7 @@ import { fetchBizinfoSeeds } from "./bizinfoSeeds";
 import { fetchDartIPOSeeds, ipoAdviceLeak } from "./dartIPO";
 import { measureTopicDemand, hasRealDemand } from "./topicDemand";
 import { preemptionScore, preemptionNote, preemptWindow } from "./preemption";
-import { gatherHeadlinesWithStats, RISING_SEED, risingKeywordOf } from "./trendSources";
+import { gatherHeadlinesWithStats, RISING_SEED, risingKeywordOf, seedsFor } from "./trendSources";
 import { seasonalSeeds } from "./seasonalEvents";
 import { econSeeds } from "./econCalendar";
 import { expandAutocomplete } from "./naverAutocomplete";
@@ -182,6 +182,32 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
       if (risingHit) risingTagged.push(kw);
       rows.push({ category, keyword: kw, title: ti, news_context: ctx, longtails: [] as Longtail[], source: risingHit ? "rising" : "news", created_at: new Date().toISOString(), expires_at: expires });
     }
+    // ★실시간 급상승 직접 주입(2026-08-05 — 태깅만으로는 생존이 0이었다).
+    //  유저 상시 요구: "'지금 뜨는'은 실제로 효과 있는 실시간 키워드여야 한다."
+    //  ★어제는 '합성 결과가 급상승 검색어를 품으면 태깅'만 했는데, 합성 LLM이 급상승어를 거의 안 골라
+    //   diag.rising.seen이 0이었다 — 표식만 있고 실물이 없었다. 그러면 씨앗으로 직접 넣어야 한다.
+    //  ★단 급상승은 전 카테고리 공통이라 무관한 게 대부분이다(연예·스포츠). 그래서 관문을 둔다:
+    //   이 카테고리의 씨앗 단어와 실제로 겹치는 것만 받는다. 나머지는 애초에 안 들인다.
+    {
+      const catWords = new Set<string>(seedsFor(category).flatMap((w: string) => w.split(/\s+/)).filter((w: string) => w.length >= 2));
+      let injected = 0;
+      for (const rk of risingKws) {
+        if (injected >= 3) break; // 하루 상한 — 실시간이 보드를 통째로 먹지 않게
+        const kw = compressToSearchKeyword(rk);
+        if (!kw || seen.has(kw)) continue;
+        if (isUnsafeKeyword(kw) || scamLoan(kw)) continue;
+        // 카테고리 정합 — 급상승어가 이 분야 말과 겹치거나, 분야 씨앗 단어를 품고 있을 때만
+        const fits = [...catWords].some((w) => kw.includes(w) || w.includes(kw));
+        // 이 분야와 무관한 급상승어는 애초에 안 들인다
+        if (!fits) { drops.push({ keyword: kw, title: rk, reason: "dead_or_niche" }); continue; }
+        seen.add(kw);
+        risingTagged.push(kw);
+        injected += 1;
+        rows.push({ category, keyword: kw, title: `${kw}, 지금 왜 갑자기 찾을까`, news_context: `[실시간 급상승] 구글 트렌드 KR에서 지금 급상승 중인 검색어다. ★'${category}' 관점으로만 다룬다 — 이 분야와 무관한 일반 이슈 글 금지. 사람들이 지금 이 말을 왜 찾는지부터 짚고, 그 다음 내 돈·내 조건으로 번역한다.`, longtails: [] as Longtail[], source: "rising", created_at: new Date().toISOString(), expires_at: expires });
+      }
+      if (injected) console.log(`[rising] ${category}: 급상승 직접 주입 ${injected}개`);
+    }
+
     // ★시즌 캘린더 주입 — D-14 이내 예측 가능 이슈(뉴스 신선도 게이트 면제, 자동완성 게이트는 동일 적용)
     for (const ev of seasonalSeeds(category)) {
       if (seen.has(ev.keyword)) continue;

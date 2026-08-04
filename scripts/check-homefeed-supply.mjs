@@ -144,7 +144,11 @@ console.log(fail ? `\n실패 ${fail}건` : "\n통과: 홈판 공급(캐시가 �
 
   // ★2026-08-05 유저 실측: "12시 지났는데 엔화·전기차가 그대로다"
   ok(/Math\.floor\(\(Date\.now\(\) \+ 9 \* 3600_000\) \/ 86400_000\)/.test(hb), "★유형 회전이 KST 자정 기준이다(UTC면 오전 9시에 회전한다)");
-  ok(/opts\?\.recentKeywords/.test(hb) && /seededCores/.test(hb), "★최근 쓴 소재의 핵심어를 미리 차단한다");
+  ok(/opts\?\.recentKeywords/.test(hb) && /seededCores/.test(hb), "★최근 쓴 소재를 미리 차단한다");
+  // ★핵심어 한 개로는 못 막는다(2026-08-05 재발: 엔화 글 쓴 다음 날 또 엔화) —
+  //  coreKeywordOf는 가장 긴 토큰을 고르므로 '엔화 오를수록 통장'에서 '오를수록'이 뽑힌다.
+  ok(/const repeatsRecent =/.test(hb) && /recentTopicTokens\.has\(w\)/.test(hb), "★실질 토큰 겹침으로 소재 반복을 막는다");
+  ok(/최근 소재 반복 — 제외/.test(hb), "★겹친 말이 무엇인지 로그로 남긴다");
   const tr2 = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
   ok((tr2.match(/recentKeywords: recent14/g) ?? []).length === 2, "★두 경로 모두 최근 키워드를 넘긴다");
 }

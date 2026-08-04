@@ -37,7 +37,7 @@ const SEEDS: Record<string, string[]> = {
   "원예/식물": ["실내식물 추천", "식물 키우기", "다육이 관리", "베란다 텃밭", "화분 분갈이", "공기정화식물"],
 };
 
-function seedsFor(category: string): string[] {
+export function seedsFor(category: string): string[] {
   const key = Object.keys(SEEDS).find((k) => category.includes(k) || k.includes(category));
   if (key) return SEEDS[key]; // ★6개 전부 사용
   // ★세부 카테고리(주식·강아지·지원금 등) — 부모 대분류 시드 상속 + 세부어 구체 시드 2개(전 카테고리 정합)
