@@ -60,6 +60,30 @@ export function compressToSearchKeyword(raw: string): string {
   return toks.join(" ").trim();
 }
 
+// ★합성 금지 게이트(2026-08-05 유저 확정: "합성 금지시키세요").
+//  배경: 8월 4일 네이버 경제 인기유입검색어 20개가 우리 글감에 단 1개도 없었다.
+//  원인은 원천이 아니라 합성이었다 — 뉴스는 들어왔는데 LLM이 원어를 조합어로 바꿔 검색어가 아니게 됐다.
+//   실제 뉴스: "2026 세제개편안 발표… ISA 비과세 한도 상향"
+//   우리 합성: "ISA 비과세 한도 조건"   ← 아무도 안 치는 말
+//   실제 검색: "세제개편안" / "isa 개편" ← 뉴스에 나온 말 그대로
+//  ★프롬프트는 방향, 코드가 한계선(CLAUDE.md) — 원문에 없는 말이 섞이면 그 글감은 버린다.
+//   비교는 공백·조사를 무시한다(표기 흔들림까지 잡으면 정상 추출도 죽는다).
+const SYNTH_JOSA = /(은|는|이|가|을|를|의|에|에서|으로|로|와|과|도|만|까지|부터|보다|께|에게|한|할|된|되는|하는)$/;
+function synthNorm(t: string): string {
+  return String(t || "").toLowerCase().replace(/[^가-힣a-z0-9]/g, "");
+}
+/** keyword의 모든 실질 토큰이 원문에 실재하는가. 하나라도 없으면 '만든 말'이다. */
+export function isExtractedFromSource(keyword: string, sourceText: string): boolean {
+  const src = synthNorm(sourceText);
+  if (!src) return true; // 대조할 원문이 없으면 판정하지 않는다(수확을 막지 않는다)
+  const toks = String(keyword || "").split(/\s+/)
+    .map((w) => w.replace(SYNTH_JOSA, ""))
+    .map(synthNorm)
+    .filter((w) => w.length >= 2);
+  if (!toks.length) return false;
+  return toks.every((w) => src.includes(w));
+}
+
 /** 카테고리의 살아있는 트렌드 글감을 읽는다(만료 제외). */
 export async function getTrendTopics(category: string): Promise<TrendTopic[]> {
   try {
@@ -90,7 +114,7 @@ export async function hasFreshTrends(category: string): Promise<boolean> {
 }
 
 // 게이트 탈락 기록 — 이후 튜닝의 기준 데이터(stale은 소스층 [trend-fresh] 로그, 여기는 합성 이후 게이트).
-export interface SeedDrop { keyword: string; title: string; reason: "unsafe_brand" | "stale_year" | "no_utility" | "gap" | "dead_or_niche" }
+export interface SeedDrop { keyword: string; title: string; reason: "unsafe_brand" | "stale_year" | "no_utility" | "gap" | "dead_or_niche" | "synthesized" }
 export interface RefreshResult { generated: number; drops: SeedDrop[]; applyhome?: { ecoCategory: boolean; keySet: boolean; fetched: number; joined: number; error?: string } }
 
 /** 카테고리 트렌드 갱신 — 뉴스+웹검색 종합 → AI 합성 → 풀 저장. 크론에서만 호출. */
@@ -128,7 +152,12 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
 규칙:
 - 그날의 신선함이 최우선. 오래된·뻔한 주제(예: 은행 금리 비교만 반복)는 피하고 분야 전체에 걸쳐 다양하게 흩어라.
 - 검색하는 사람이 실익을 얻는 정보성만. 연예인·유명인·사건사고·정치공방·부고·루머·자극적 가십은 절대 제외.
-- ★keyword = 사람이 네이버 검색창에 실제로 칠 2~3어절 '명사구'다. 조사·서술어를 붙이지 말고, '분석·전망·현황·동향·효과·변화·영향·정책·방안·이슈' 같은 논평/분석어를 넣지 마라. (나쁜 예: "소상공인 지원금 효과 분석", "부동산 규제 정책 변화" → 좋은 예: "소상공인 지원금", "부동산 규제")
+- ★★keyword는 만들지 마라. 위 헤드라인에 '실제로 등장한 말'을 그대로 뽑아라(2026-08-05 유저 확정 — 최우선 규칙).
+  사람들은 발표에 나온 말을 그대로 검색한다: 뉴스에 '2026 세제개편안'이 있으면 사람들은 '세제개편안'을 친다.
+  네가 '비과세 한도 상향 조건' 같은 말을 만들면, 그건 말은 되지만 아무도 안 치는 검색어다.
+  ★제도명·상품명·기업명·이벤트명은 원문 표기 그대로(띄어쓰기까지). 짧아도 된다 — 'isa', '민생지원금'처럼 1~2어절이 실제로 가장 강하다.
+  ★원문에 없는 단어를 keyword에 넣으면 그 글감은 폐기된다(코드가 원문 대조로 검증한다).
+- ★keyword = 사람이 네이버 검색창에 실제로 칠 명사구다. 조사·서술어를 붙이지 말고, '분석·전망·현황·동향·효과·변화·영향·정책·방안·이슈' 같은 논평/분석어를 넣지 마라. (나쁜 예: "소상공인 지원금 효과 분석", "부동산 규제 정책 변화" → 좋은 예: "소상공인 지원금", "부동산 규제")
 - ★keyword는 '하나의 일관된 검색 주제'여야 한다. 서로 다른 두 뉴스·개념을 억지로 붙이지 마라. (나쁜 예: "전기차 미니 원전", "AI 생산혁명 부동산", "카타르 인프라 투자" — 이건 무관한 헤드라인을 합친 것) 실제로 그 단어 조합을 통째로 검색창에 칠 사람이 있어야 한다.
 - ★특정 인물명·회사 인사(신임사장 등)·지역 행정소식처럼 '검색 실익'이 없는 건 제외한다.
 - title=클릭할 블로그 제목.
@@ -160,6 +189,8 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
     const ctx = heads.slice(0, 6).map((n) => `- [${n.press || n.seed}] ${n.title}: ${n.description.slice(0, 130)}`).join("\n") || null;
 
     const seen = new Set<string>();
+    // ★대조 원문 — 합성에 넣어 준 헤드라인 전체(제목+요약). 여기 없는 말은 모델이 만든 것이다.
+    const sourceCorpus = heads.map((h) => `${h.title} ${h.description ?? ""}`).join(" ");
     const rows = [];
     const expires = new Date(Date.now() + FRESH_MS).toISOString();
     // 이번 수확에 들어온 실시간 급상승 검색어들 — 합성 결과에 살아남았는지 대조할 원본
@@ -177,6 +208,11 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
       // ★실익 게이트 — utility='없음' 또는 논평형 title은 드롭(reason: no_utility)
       const util = (it.utility ?? "").trim();
       if (util === "없음" || COMMENTARY_RE.test(ti)) { drops.push({ keyword: kw, title: ti, reason: "no_utility" }); continue; }
+      // ★합성 금지 — 원문에 없는 말이 섞인 글감은 버린다(위 isExtractedFromSource 참고)
+      if (!isExtractedFromSource(kw, sourceCorpus)) {
+        drops.push({ keyword: kw, title: ti, reason: "synthesized" });
+        continue;
+      }
       seen.add(kw);
       // ★실시간 급상승 혈통 보존 — 합성 결과가 급상승 검색어를 품고 있으면 그 카드는 '실시간 유래'다.
       //  씨앗을 직접 밀어 넣지 않고 태깅만 하는 이유: 급상승은 전 카테고리 공통이라 무관한 게 대부분인데,

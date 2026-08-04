@@ -723,7 +723,10 @@ export async function GET(req: Request) {
           if (total == null) { rising.unmeasured += 1; return; } // 못 쟀으면 우회 없음 — 일반 밴드 규칙으로 간다
           rising.measured += 1;
           (c as { blogTotal?: number | null }).blogTotal = total;
-          if (total < DOC_HARD_MAX) {
+          // ★문서수 상한 폐지(2026-08-05 유저 확정: "문서수 상한율 폐지하세요").
+          //  이유(유저): 지금 네이버는 홈판 때문에 신생 블로그도 상위 노출이 잘 된다.
+          //  ★막지 않고 '보여준다' — 문서수는 배지에 그대로 적어 유저가 카드를 보고 판단한다.
+          {
             (c as { risingPass?: boolean }).risingPass = true;
             rising.pass += 1;
             // ★배지는 문서수 구간대로 정직하게 말한다(2026-08-05 유저 지적: "7,486편인데 선점 구간?").
@@ -731,6 +734,7 @@ export async function GET(req: Request) {
             //  통과와 선점은 다른 말이고, 그 둘을 같은 말로 쓰면 유저가 우리 배지를 못 믿게 된다.
             const room = total < 1000 ? "거의 안 쓰인 자리" : total < 3000 ? "아직 얇은 자리" : "이미 쌓인 자리 — 각도로 승부";
             c.demandBadge = `실시간 급상승 · 지금 글 ${total.toLocaleString("ko-KR")}편 — ${room}`;
+            void DOC_HARD_MAX; // 상한은 더 이상 통과 조건이 아니다(표시·정렬 재료로만 남는다)
             // ★공고·모집성 키워드는 '행동 창'이 생명인데, 자동완성·급상승 유래에는 마감일 정보가 없다.
             //  (청약홈·보조금24 씨앗은 actionEnd를 갖지만 이 경로는 그게 없다 — 유저가 '7월 공고 아니냐'고 물은 자리다.)
             //  ★그러면 모른다고 말하고, 본문이 반드시 확인하게 지시한다. 아는 척이 제일 위험하다.
@@ -738,13 +742,19 @@ export async function GET(req: Request) {
               c.demandBadge += " · 일정 확인 필요";
               (c as { briefText?: string }).briefText = `${(c as { briefText?: string }).briefText ?? ""}\n★[일정 확인 의무] 이 글감은 실시간 검색 급상승에서 왔지만 공고 일정 정보가 없다. 공고가 이미 마감됐을 수 있다 — 반드시 공식 공고(청약홈·해당 기관)에서 접수 기간을 확인하고, 지난 공고면 '지금 신청하세요'로 쓰지 마라. 지난 공고라면 후속 일정(당첨자 발표·계약·잔여세대·다음 차수) 관점으로 쓰고, 그 사실을 본문에 명시한다.`.trim();
             }
-          } else rising.tooMany += 1;
+          }
         }));
         console.log(`[rising-lane] 카드 ${rising.seen} → 측정 ${rising.measured} · 선점통과 ${rising.pass} · 포화 ${rising.tooMany} · 미측정 ${rising.unmeasured}`);
       }
       if (debugMode) diag.rising = rising;
     }
-    tc = bandInvariant(tc, "short-trend");
+    // ★'지금 뜨는' 열에서 검색량 밴드를 해제한다(2026-08-05 유저 확정).
+    //  근거: 8월 4일 네이버 경제 인기유입검색어 20개(ISA·세제개편안·민생지원금·근로장려금 지급일…)는
+    //  전부 월 검색량 수만~수십만이다. 신생 밴드(100~2,000, 상한 3,000)는 그 구간을 통째로 차단한다 —
+    //  즉 우리는 '실제로 유입이 나는 구간'을 스스로 배제하고 있었다.
+    //  ★유저 판단: 지금 네이버는 홈판 덕에 신생도 상위 노출이 된다. 검색량으로 미리 겁먹지 않는다.
+    //   대형이 상위에 못 가면 그때 수정한다 — 안 해보고 막지 않는다.
+    if (debugMode) diag.bandOff = { note: "지금 뜨는 열은 검색량 밴드 미적용(2026-08-05)", ceil: bandCeil };
     // ★자리 배분에서도 실시간을 앞에 세운다 — 통과시켜 놓고 뒤로 밀면 화면에는 안 보인다(유저가 보는 건 앞 몇 장뿐).
     tc = [...tc.filter((c) => (c as { risingPass?: boolean }).risingPass === true), ...tc.filter((c) => (c as { risingPass?: boolean }).risingPass !== true)];
     funnel.afterBand = tc.length;

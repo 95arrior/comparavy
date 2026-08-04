@@ -13,46 +13,30 @@ const row = (keyword, blog_total) => ({ keyword, blog_total });
 const docOf = (x) => x.blog_total;
 const SEEDLING = TIER_BANDS.SEEDLING.blogTotalMax; // 1,000
 
-console.log("① 유저 실물 — 신생 보드에 선 고문서수 카드:");
+console.log("① 문서수는 컷이 아니라 순서다(2026-08-05 유저: 상한 폐지):");
 {
+  // ★연혁: 08-04엔 '상한 초과 탈락'이었다. 하루 만에 반대 문제(열이 빔·유입 구간 배제)가 드러나 순서로 바꿨다.
   const real = [row("패시브인컴", 29407), row("신불자대출", 40867), row("금융공기업 채용", 42140), row("무담보사채", 49280)];
-  const cut = applyDocCut(real, docOf, { docMax: SEEDLING, need: 7 });
-  ok(cut.kept.length === 0, "★4장 전부 탈락 — 절대 상한(1만) 위는 보충 대상도 아니다");
-  ok(cut.dropped === 4, "탈락 4건으로 계측된다");
-  // 종전 코드가 왜 못 걸렀는지 — 이 셋이 전부 '컷'이 아니라 '정렬'이었다
-  ok(compFromBlogTotal(49280) === "mid", "★등급으로는 mid — high 폴백 규칙에 안 걸린다(종전 통과 이유)");
-  ok(filledStarsFromData(1790, 49280) >= 2, "★별점도 2개는 돼서 정렬로만 뒤로 밀렸다(컷이 아니었다)");
+  const cut = applyDocCut(real, docOf, { docMax: SEEDLING, need: 3 });
+  ok(cut.kept.length === 3, "★자리가 있으면 큰 문서수도 선다(막지 않는다)");
+  ok(cut.kept[0].blog_total === 29407, "★그래도 문서 적은 순으로 앞에 선다");
+  ok(cut.dropped === 1, "정원을 넘는 만큼만 빠진다");
 }
 
-console.log("\n② 미측정(null)은 통과 — 모르는 것을 벌하지 않는다:");
+console.log("\n② 좋은 자리가 있으면 그게 먼저다:");
 {
-  const mixed = [row("a", null), row("b", null), row("c", 500), row("d", 30000)];
-  const cut = applyDocCut(mixed, docOf, { docMax: SEEDLING, need: 7 });
-  ok(cut.kept.length === 3 && cut.kept.every((x) => x.blog_total !== 30000), "미측정 2 + 상한 미만 1만 남는다");
+  const mixed = [row("big", 40000), row("small", 800), row("mid", 4000), row("none", null)];
+  const cut = applyDocCut(mixed, docOf, { docMax: SEEDLING, need: 4 });
+  const order = cut.kept.map((x) => x.keyword);
+  ok(order[0] === "small" || order[0] === "none", "★상한 미만·미측정이 앞줄");
+  ok(order.includes("big"), "★큰 자리도 자리가 남으면 들어온다");
 }
 
-console.log("\n③ 자리가 남으면 '문서수 적은 순'으로 보충(보드를 비우지 않는다):");
+console.log("\n③ 미측정은 벌하지 않는다:");
 {
-  // ★밴드 값이 바뀌어도 이 검증은 흔들리면 안 된다 — 규칙(정렬·보충·절대상한)을 재는 자리라 상한은 고정값으로 준다.
-  const thin = [row("under", 800), row("over-9k", 9000), row("over-2k", 2000), row("over-5k", 5000), row("way-over", 40000)];
-  const cut = applyDocCut(thin, docOf, { docMax: 1000, need: 3 });
-  ok(cut.kept.map((x) => x.keyword).join(",") === "under,over-2k,over-5k", "★상한 미만 먼저, 그다음 2,000 → 5,000 순으로 채운다");
-  ok(!cut.kept.some((x) => (x.blog_total ?? 0) >= DOC_HARD_MAX), "★절대 상한 위는 자리가 비어도 안 넣는다");
-  ok(cut.refilled === 2 && cut.dropped === 2, "보충 2 · 탈락 2 계측");
-}
-
-console.log("\n④ 자리가 넉넉하면 보충하지 않는다(과교정 방어):");
-{
-  const rich = [row("a", 100), row("b", 200), row("c", 300), row("d", 4000)];
-  const cut = applyDocCut(rich, docOf, { docMax: SEEDLING, need: 3 });
-  ok(cut.kept.length === 3 && cut.refilled === 0, "상한 미만이 이미 충분하면 초과분은 안 들어온다");
-}
-
-console.log("\n⑤ 성장기 밴드(5,000)도 같은 규칙:");
-{
-  const g = [row("a", 4900), row("b", 6000), row("c", 12000)];
-  const cut = applyDocCut(g, docOf, { docMax: TIER_BANDS.GROWING.blogTotalMax, need: 3 });
-  ok(cut.kept.map((x) => x.keyword).join(",") === "a,b", "밴드 미만 + 보충 1(1만 미만) — 1만 이상은 제외");
+  const m = [row("a", null), row("b", null), row("c", 500)];
+  const cut = applyDocCut(m, docOf, { docMax: SEEDLING, need: 3 });
+  ok(cut.kept.length === 3, "미측정 2 + 측정 1 전부 통과");
 }
 
 console.log("\n⑤-2 밴드 사다리 상한 — 실측으로 정한 값인가:");

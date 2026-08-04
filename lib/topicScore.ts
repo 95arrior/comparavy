@@ -46,22 +46,28 @@ export const starsFor = (vol: number, comp: Comp): string => {
   return "★".repeat(filled) + "☆".repeat(5 - filled);
 };
 
-// ★밴드 문서수 컷(2026-08-04 유저 실측·확정) — 신생 보드에 문서수 29,407·40,867·49,280 카드가 섰다.
-//  원인: 밴드 상한은 쿼리에만 있었고(미측정 null은 통과), 서빙 직전에 측정된 값은 별점 '정렬'에만 쓰였다.
-//  측정해 놓고 안 거르면 재는 의미가 없다 — 측정값은 컷이어야 한다.
-//  ★정책: 상한 초과는 탈락. 단 자리가 남으면 '문서수 적은 순'으로만 보충한다(보드를 비우지 않는다).
-//   절대 상한(hardMax) 위는 보충 대상도 아니다 — 신생 계정이 못 이기는 판은 자리를 채울 값어치가 없다.
-//  ★미측정(null)은 통과 — 모르는 것을 벌하지 않는다(대신 백필로 미측정을 줄이는 게 정공법).
+// ★문서수 순위(2026-08-05 개정 — 유저: "문서수 상한율 폐지하세요").
+//  연혁: 2026-08-04에는 '상한 초과 탈락'이었다(신생 보드에 4만짜리가 서던 사고 대응).
+//  ★그런데 하루 만에 반대 문제가 드러났다 — 상한이 열을 비우고, 실제 유입이 나는 구간을 통째로 배제했다.
+//   유저 판단: 지금 네이버는 홈판 때문에 신생 블로그도 상위 노출이 잘 된다. 검색량·문서수로 미리 겁먹지 않는다.
+//  ★그래서 막지 않고 '순서로 말한다': 문서 적은 자리가 먼저 서고, 모자라면 큰 자리도 선다.
+//   문서수는 카드 배지에 그대로 적히므로 최종 판단은 유저가 카드를 보고 한다.
+//  ★미측정(null)은 앞줄 — 모르는 것을 벌하지 않는다.
 export const DOC_HARD_MAX = 10_000;
 export function applyDocCut<T>(
   items: T[],
   docTotal: (x: T) => number | null | undefined,
   opts: { docMax: number; need: number; hardMax?: number },
 ): { kept: T[]; within: number; over: number; refilled: number; dropped: number } {
-  const hardMax = opts.hardMax ?? DOC_HARD_MAX;
+  // ★상한 폐지(2026-08-05 유저 확정: "문서수 상한율 폐지하세요").
+  //  이유(유저): 지금 네이버는 홈판 때문에 신생 블로그도 상위 노출이 잘 된다.
+  //  ★그래서 '탈락'이 아니라 '뒤로 밀기'로 바꾼다 — 좋은 자리(문서 적은 것)가 먼저 서고,
+  //   그게 모자라면 큰 자리도 선다. 막지 않고 순서로 말한다.
+  //   문서수는 카드 배지에 그대로 적히므로, 최종 판단은 유저가 카드를 보고 한다.
+  void opts.hardMax; // 절대 상한 없음(하위 호환으로 받기만)
   const within = items.filter((x) => docTotal(x) == null || (docTotal(x) as number) < opts.docMax);
   const over = items
-    .filter((x) => { const d = docTotal(x); return d != null && d >= opts.docMax && d < hardMax; })
+    .filter((x) => { const d = docTotal(x); return d != null && d >= opts.docMax; })
     .sort((a, b) => (docTotal(a) ?? 0) - (docTotal(b) ?? 0)); // 그나마 이길 만한 순
   const refill = over.slice(0, Math.max(0, opts.need - within.length));
   return { kept: [...within, ...refill], within: within.length, over: over.length, refilled: refill.length, dropped: items.length - within.length - refill.length };

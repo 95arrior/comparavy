@@ -6,7 +6,6 @@
 //  무엇이 실시간 유래인지 코드가 알 방법조차 없었다 — 그래서 요구를 지킬 수가 없었다.
 import fs from "node:fs";
 import { risingKeywordOf, RISING_SEED, RISING_TAG } from "../lib/trendSources.ts";
-import { DOC_HARD_MAX } from "../lib/topicScore.ts";
 
 let fail = 0;
 const ok = (c, m) => { if (!c) { fail++; console.log(`  !! ${m}`); } else console.log(`  OK ${m}`); };
@@ -40,7 +39,10 @@ console.log("\n③ 밴드 우회는 '선점 가능'을 숫자로 증명한 것�
   const rt = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
   ok(/risingPass\?: boolean \}\)\.risingPass === true\) return true;/.test(rt), "★risingPass 카드는 밴드를 통과한다");
   ok(/const total = await fetchBlogTotal\(c\.keyword\);/.test(rt) && /rising\.unmeasured \+= 1; return;/.test(rt), "★문서수를 재고, 못 쟀으면 우회하지 않는다");
-  ok(/if \(total < DOC_HARD_MAX\)/.test(rt), `★상한(${DOC_HARD_MAX.toLocaleString("en-US")}) 미만일 때만 통과 — 포화 키워드는 실시간이어도 못 이긴다`);
+  // ★2026-08-05 유저 확정: 문서수 상한 폐지("신생도 홈판 덕에 상위 노출 잘 된다"). 막지 않고 배지로 보여준다.
+  ok(!/if \(total < DOC_HARD_MAX\)/.test(rt), "★문서수 상한이 통과 조건에서 빠졌다(막지 않는다)");
+  ok(/지금 글 \$\{total\.toLocaleString\("ko-KR"\)\}편/.test(rt), "★대신 문서수를 배지에 그대로 적는다(판단은 유저가)");
+  ok(/diag\.bandOff/.test(rt), "★'지금 뜨는' 열의 검색량 밴드 해제가 계측에 남는다");
   ok(/risingSeed: true/.test(rt) && /상관없는 스위치에 목숨을 걸지 않는다/.test(rt), "★표식이 FF_PERF_LOOP와 무관하게 카드에 실린다");
   ok(/tc = \[\.\.\.tc\.filter\(\(c\) => \(c as \{ risingPass\?: boolean \}\)\.risingPass === true\)/.test(rt), "★통과한 실시간 카드를 앞에 세운다(뒤로 밀면 화면에 안 보인다)");
   ok(/diag\.rising = rising/.test(rt), "★debug 응답에 실린다(수집·측정·통과·포화·미측정)");
