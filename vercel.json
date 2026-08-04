@@ -55,6 +55,10 @@
     {
       "path": "/api/cron/tier-scan",
       "schedule": "40 1 * * 1"
+    },
+    {
+      "path": "/api/cron/doc-backfill",
+      "schedule": "15 */6 * * *"
     }
   ]
 }
