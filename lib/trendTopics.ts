@@ -9,6 +9,7 @@ import { measureTopicDemand, hasRealDemand } from "./topicDemand";
 import { preemptionScore, preemptionNote, preemptWindow } from "./preemption";
 import { gatherHeadlinesWithStats, RISING_SEED, risingKeywordOf, seedsFor } from "./trendSources";
 import { harvestBrandBuzz, hasBrandAxis } from "./brandBuzz";
+import { harvestCommunity, communityBrief } from "./communityBuzz";
 import { seasonalSeeds } from "./seasonalEvents";
 import { econSeeds } from "./econCalendar";
 import { policySeeds } from "./policyCalendar";
@@ -251,6 +252,27 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
         rows.push({ category, keyword: kw, title: `${kw}, 지금 왜 갑자기 찾을까`, news_context: `[실시간 급상승] 구글 트렌드 KR에서 지금 급상승 중인 검색어다. ★'${category}' 관점으로만 다룬다 — 이 분야와 무관한 일반 이슈 글 금지. 사람들이 지금 이 말을 왜 찾는지부터 짚고, 그 다음 내 돈·내 조건으로 번역한다.`, longtails: [] as Longtail[], source: "rising", created_at: new Date().toISOString(), expires_at: expires });
       }
       if (injected) console.log(`[rising] ${category}: 급상승 직접 주입 ${injected}개`);
+    }
+
+    // ★커뮤니티 수확 주입(2026-08-05 — 설계 4단계). 뽐뿌 쿠폰·핫딜 RSS, 최근 창만.
+    //  근거: 케이뱅크 황금캡슐·삼성 온누리상품권의 1차 확산지가 커뮤니티였다(뉴스는 그 뒤).
+    //  ★창 밖(오래된 글)은 아예 안 본다 — 뒷북을 구조적으로 막는 유일한 방법이다.
+    if (/경제|재테크|금융|투자|부업|앱테크/.test(category)) {
+      try {
+        const cs = await harvestCommunity();
+        let added = 0;
+        for (const c of cs) {
+          const kw = compressToSearchKeyword(c.keyword);
+          if (!kw || seen.has(kw)) continue;
+          if (isUnsafeKeyword(kw, brandOk) || scamLoan(kw)) continue;
+          seen.add(kw);
+          added += 1;
+          rows.push({ category, keyword: kw, title: c.title, news_context: communityBrief(c), longtails: [] as Longtail[], source: "rising", created_at: new Date().toISOString(), expires_at: expires });
+        }
+        if (added) console.log(`[community] ${category}: ${added}건 — ${cs.slice(0, 3).map((x) => `${x.keyword}(${x.minutesAgo}분 전)`).join(", ")}`);
+      } catch (e) {
+        console.error("[community] 수집 실패:", e instanceof Error ? e.message : e);
+      }
     }
 
     // ★기업 액션 공시 주입(2026-08-05 — 설계 3단계). 무상증자·유상증자·주식분할 결정.
