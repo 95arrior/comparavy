@@ -799,6 +799,24 @@ export async function GET(req: Request) {
     }
     const trendStock = tc.length; // ★메우기 전 트렌드 재고 — 홈판이 비어도 트렌드가 없으면 열은 못 채운다
     const trendRoom = Math.max(0, COLUMN_SIZE.short - homeCards.length); // ★쿼터가 아니라 '실제 확보분' 기준
+    // ★홈판과 트렌드가 같은 소재를 들고 오는 것을 막는다(2026-08-05 유저 화면에서 검거:
+    //  '페이코 포인트'가 홈판 1장 + 유행 1장으로 같은 열에 나란히 섰다).
+    //  두 레인은 같은 씨앗 창고를 보는데 서로를 안 봤다 — 종전 검사는 키워드 '정확 일치'뿐이라
+    //  '페이코 포인트 출금'과 '누적된 페이코 포인트'가 다른 것으로 통과했다.
+    //  ★같은 날 같은 소재 두 장은 네이버에서 서로 잡아먹는다(유저 절대조건: 중복 금지).
+    {
+      const STOP = new Set(["지원금", "신청", "방법", "조건", "기준", "정리", "혜택", "제도", "현실", "이유", "기한", "경우", "사람", "비율", "출금", "납부"]);
+      const toks = (t: string) => String(t || "").split(/[\s·,]+/).map((w) => w.replace(/[^가-힣a-zA-Z0-9]/g, ""))
+        .filter((w) => [...w].length >= 2 && !STOP.has(w));
+      const homeToks = new Set(homeCards.flatMap((h) => toks(`${h.keyword} ${h.title}`)));
+      const before = tc.length;
+      tc = tc.filter((t) => {
+        const hit = toks(`${t.keyword} ${t.title}`).find((w) => homeToks.has(w));
+        if (hit) console.log(`[lane-dup] 홈판과 같은 소재 — 트렌드 카드 제외: "${t.keyword}" (겹친 말 '${hit}')`);
+        return !hit;
+      });
+      if (debugMode) diag.laneDup = before - tc.length;
+    }
     tc = [...homeCards, ...tc.slice(0, trendRoom)];
     if (colShort.homefeed > homeCards.length) {
       console.log(`[lane-quota:short] 홈판 미달 ${homeCards.length}/${colShort.homefeed} — 하류 탈락(이미쓴 ${homeDrop.used}·게이트 ${homeDrop.gate}·중복 ${homeDrop.dup}), 트렌드가 ${trendRoom}장까지 메움`);
