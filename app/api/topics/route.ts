@@ -726,7 +726,18 @@ export async function GET(req: Request) {
           if (total < DOC_HARD_MAX) {
             (c as { risingPass?: boolean }).risingPass = true;
             rising.pass += 1;
-            c.demandBadge = `실시간 급상승 · 지금 글 ${total.toLocaleString("ko-KR")}편 — 선점 구간`;
+            // ★배지는 문서수 구간대로 정직하게 말한다(2026-08-05 유저 지적: "7,486편인데 선점 구간?").
+            //  1만 미만이면 통과시키기로 했지만, 7천 편은 '선점'이 아니다 — 이미 쌓인 자리다.
+            //  통과와 선점은 다른 말이고, 그 둘을 같은 말로 쓰면 유저가 우리 배지를 못 믿게 된다.
+            const room = total < 1000 ? "거의 안 쓰인 자리" : total < 3000 ? "아직 얇은 자리" : "이미 쌓인 자리 — 각도로 승부";
+            c.demandBadge = `실시간 급상승 · 지금 글 ${total.toLocaleString("ko-KR")}편 — ${room}`;
+            // ★공고·모집성 키워드는 '행동 창'이 생명인데, 자동완성·급상승 유래에는 마감일 정보가 없다.
+            //  (청약홈·보조금24 씨앗은 actionEnd를 갖지만 이 경로는 그게 없다 — 유저가 '7월 공고 아니냐'고 물은 자리다.)
+            //  ★그러면 모른다고 말하고, 본문이 반드시 확인하게 지시한다. 아는 척이 제일 위험하다.
+            if (/(청약|공고|모집|접수|분양|특별공급|무순위)/.test(c.keyword)) {
+              c.demandBadge += " · 일정 확인 필요";
+              (c as { briefText?: string }).briefText = `${(c as { briefText?: string }).briefText ?? ""}\n★[일정 확인 의무] 이 글감은 실시간 검색 급상승에서 왔지만 공고 일정 정보가 없다. 공고가 이미 마감됐을 수 있다 — 반드시 공식 공고(청약홈·해당 기관)에서 접수 기간을 확인하고, 지난 공고면 '지금 신청하세요'로 쓰지 마라. 지난 공고라면 후속 일정(당첨자 발표·계약·잔여세대·다음 차수) 관점으로 쓰고, 그 사실을 본문에 명시한다.`.trim();
+            }
           } else rising.tooMany += 1;
         }));
         console.log(`[rising-lane] 카드 ${rising.seen} → 측정 ${rising.measured} · 선점통과 ${rising.pass} · 포화 ${rising.tooMany} · 미측정 ${rising.unmeasured}`);
