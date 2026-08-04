@@ -150,6 +150,16 @@ export async function pickHomefeedBets(
   //  옛 캐시는 그 필터 이전에 저장된 세트라, 버전을 안 올리면 발행한 소재(엔화)가 하루 종일 남는다.
   const cacheKey = `homebet:v6:${userId}:${kstDay}:${want}`;
   let alive: HomefeedBet[] = []; // 캐시에서 살아남은(아직 안 쓴) 카드 — 부족분만 새로 만든다
+  // ★최근 소재 기억(2026-08-05 — 엔화가 세 번째로 떴다. 앞선 두 번의 수리가 다 뚫렸다).
+  //  왜 뚫렸나: 판정 재료가 '발행한 글'뿐이었다. 그런데 카드는 발행 안 해도 이미 보여준 소재다.
+  //  게다가 표기가 흔들리면(엔화 → 엔·원 동조 → 환율) 토큰이 안 겹쳐 매번 새 소재로 보였다.
+  //  ★그래서 '보여준 카드'를 3일간 DB에 누적해 제외 목록에 얹는다. 발행 여부와 무관하다.
+  const recentKey = `homebet:recent:${userId}`;
+  let shownRecently: string[] = [];
+  try {
+    const { data: rc } = await db.from("api_cache").select("value, expires_at").eq("key", recentKey).maybeSingle();
+    if (rc?.value && new Date(String(rc.expires_at)).getTime() > Date.now()) shownRecently = (rc.value as string[]) ?? [];
+  } catch { /* 기억 조회 실패 — 이번 판은 기억 없이 간다 */ }
   // ★소재 반복은 '핵심어 한 개'로는 못 막는다(2026-08-05 재발: 엔화 글을 쓴 다음 날 또 엔화 카드).
   //  coreKeywordOf는 가장 긴 토큰을 고르는데, '엔화 오를수록 통장'이면 '오를수록'이 뽑혀 소재를 못 가리킨다.
   //  ★그래서 최근에 쓴 글의 '실질 토큰'을 통째로 들고, 새 카드가 그 중 하나라도 품으면 같은 소재로 본다.
@@ -160,9 +170,27 @@ export async function pickHomefeedBets(
   const recentTopicTokens = new Set<string>([
     ...(opts?.recentKeywords ?? []).flatMap(topicTokens),
     ...(opts?.recentTitles ?? []).flatMap(topicTokens),
+    ...shownRecently.flatMap(topicTokens), // ★보여준 카드(발행 안 했어도) — 3일 기억
   ]);
+  // ★주제 축 — 표기가 흔들려도 같은 얘기인 것들을 한 묶음으로 본다(2026-08-05).
+  //  실측: '엔화 폭등' → '엔·원 동조' → '환율 1400원대'. 토큰은 매번 다른데 독자에겐 같은 소재다.
+  //  ★사전을 크게 만들지 않는다 — 실제로 반복된 축만 넣고, 새 반복이 관측되면 그때 추가한다.
+  const TOPIC_AXES: RegExp[] = [
+    /(엔화|엔·원|엔원|환율|원달러|달러|엔저)/,
+    /(전기차|충전|충전비)/,
+    /(포인트|캐시백|적립)/,
+    /(청약|분양|무순위)/,
+  ];
+  const axisOf = (t: string): number => TOPIC_AXES.findIndex((re) => re.test(t));
+  const recentAxes = new Set<number>(
+    [...(opts?.recentKeywords ?? []), ...(opts?.recentTitles ?? []), ...shownRecently]
+      .map(axisOf).filter((i) => i >= 0),
+  );
   const repeatsRecent = (b: HomefeedBet): string | null => {
-    for (const w of topicTokens(`${b.keyword} ${b.title}`)) if (recentTopicTokens.has(w)) return w;
+    const text = `${b.keyword} ${b.title}`;
+    for (const w of topicTokens(text)) if (recentTopicTokens.has(w)) return w;
+    const ax = axisOf(text);
+    if (ax >= 0 && recentAxes.has(ax)) return `같은 주제 축(${TOPIC_AXES[ax]!.source.slice(1, 12)}…)`;
     return null;
   };
   const seededCores = recentTopicTokens.size;
@@ -184,10 +212,7 @@ export async function pickHomefeedBets(
       //  정작 홈판을 쓸수록 홈판이 사라지는 구조였다. 쓴 만큼 다시 만들어 주는 게 맞다.
       // ★최근 소재 반복 판정도 여기서 건다(2026-08-05 재발: 엔화 글을 발행했는데 캐시의 엔화 카드가 살아남았다).
       //  생성 경로에만 걸어 뒀더니 캐시 히트에서는 옛 카드가 그대로 나왔다 — 필터는 '꺼내는 자리'에도 있어야 한다.
-      const cacheRepeat = (b: HomefeedBet): boolean => {
-        for (const w of topicTokens(`${b.keyword} ${b.title}`)) if (recentTopicTokens.has(w)) return true;
-        return false;
-      };
+      const cacheRepeat = (b: HomefeedBet): boolean => repeatsRecent(b) !== null;
       alive = cached.filter((b) => !usedKeywords.has(normalizeKeyword(b.keyword)) && !(opts?.isDup?.(b.title, b.keyword)) && !cacheRepeat(b));
       if (alive.length >= want) {
         lastHomebetDiag = genDiag
@@ -305,6 +330,11 @@ export async function pickHomefeedBets(
     //  캐시가 살아 있는 동안에도 결품의 이유는 계속 물어볼 수 있어야 한다 — 이유가 사라지면 결품만 남는다.
     try { await db.from("api_cache").upsert({ key: `${cacheKey}:diag`, value: lastHomebetDiag, expires_at: new Date(Date.now() + ttlMs).toISOString(), updated_at: new Date().toISOString() }); } catch { /* ignore */ }
     if (!full) console.log(`[homebet] 쿼터 미달 ${out.length}/${want} — 1시간 뒤 재시도(짧은 캐시)`);
+    // ★보여준 소재를 3일 기억에 적재한다 — 다음 판이 같은 소재를 다시 만들지 않게.
+    try {
+      const merged = [...out.map((b) => `${b.keyword} ${b.title}`), ...shownRecently].slice(0, 60);
+      await db.from("api_cache").upsert({ key: recentKey, value: merged, expires_at: new Date(Date.now() + 3 * 86400_000).toISOString(), updated_at: new Date().toISOString() });
+    } catch { /* 기억 저장 실패 — 다음 회차 */ }
   }
   return out;
 }

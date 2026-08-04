@@ -148,6 +148,11 @@ console.log(fail ? `\n실패 ${fail}건` : "\n통과: 홈판 공급(캐시가 �
   // ★핵심어 한 개로는 못 막는다(2026-08-05 재발: 엔화 글 쓴 다음 날 또 엔화) —
   //  coreKeywordOf는 가장 긴 토큰을 고르므로 '엔화 오를수록 통장'에서 '오를수록'이 뽑힌다.
   ok(/const repeatsRecent =/.test(hb) && /recentTopicTokens\.has\(w\)/.test(hb), "★실질 토큰 겹침으로 소재 반복을 막는다");
+  // ★엔화가 세 번 떴다(2026-08-05). 앞선 두 수리가 다 뚫린 이유 두 가지를 같이 막는다.
+  ok(/homebet:recent:/.test(hb) && /3 \* 86400_000/.test(hb), "★보여준 카드를 3일 기억한다(발행 안 해도 이미 보여준 소재다)");
+  ok(/const TOPIC_AXES/.test(hb) && /엔화\|엔·원\|엔원\|환율/.test(hb), "★주제 축 — 표기가 흔들려도(엔화→엔·원→환율) 같은 소재로 본다");
+  ok(/const cacheRepeat = \(b: HomefeedBet\): boolean => repeatsRecent\(b\) !== null/.test(hb), "★캐시 경로와 생성 경로가 같은 판정을 쓴다");
+  ok(/새 반복이 관측되면 그때 추가한다/.test(hb), "★축 사전을 미리 크게 만들지 않는다(과교정 방어)");
   ok(/최근 소재 반복 — 제외/.test(hb), "★겹친 말이 무엇인지 로그로 남긴다");
   // ★필터는 '꺼내는 자리'에도 있어야 한다(2026-08-05 재발: 엔화 글을 발행했는데 캐시의 엔화 카드가 살아남았다)
   ok(/const cacheRepeat =/.test(hb) && /&& !cacheRepeat\(b\)/.test(hb), "★캐시에서 꺼낼 때도 최근 소재 반복을 거른다");
