@@ -751,6 +751,8 @@ export async function GET(req: Request) {
         const bets = await pickHomefeedBets(pool, user.id, sub ?? "", usedSet, colShort.homefeed, {
           isDup: (title, keyword) => usedForbidden(`${title} ${keyword}`),
           recentTitles,
+          // ★최근 14일 키워드 — 소재(핵심어) 반복을 코드가 막는다(2026-08-05: 어제 쓴 엔화·전기차가 오늘 또 섰다)
+          recentKeywords: recent14.map((a) => String(a.keyword ?? "")).filter(Boolean).slice(0, 30),
         });
         for (const bet of bets) {
           // ★이미 생성/발행한 홈판 글감은 숨김(실측 2026-07-16: 발행했는데 카드 잔존 — 홈판 카드는 발행함 마킹 로직 밖이라 usedSet으로 직접 차단)
@@ -1309,7 +1311,10 @@ export async function GET(req: Request) {
   if (FF.homefeedBet && tailMode !== "long") {
     try {
       // ★열 쿼터와 같은 n을 쓴다 — 다르면 캐시 키(homebet:...:n)가 갈라져 같은 날 LLM 생성이 두 번 돈다.
-      const bets = await pickHomefeedBets(pool, user.id, sub ?? "", usedSet, columnQuota(tierInfo?.tier ?? "SEEDLING", "short", COLUMN_SIZE.short).homefeed);
+      const bets = await pickHomefeedBets(pool, user.id, sub ?? "", usedSet, columnQuota(tierInfo?.tier ?? "SEEDLING", "short", COLUMN_SIZE.short).homefeed, {
+        // ★두 경로가 같은 재료를 받아야 한다 — 한쪽만 소재 차단을 하면 경로에 따라 다른 카드가 나온다
+        recentKeywords: recent14.map((a) => String(a.keyword ?? "")).filter(Boolean).slice(0, 30),
+      });
       homefeedCards = bets
         .filter((bet) => !usedSet.has(normalizeKeyword(bet.keyword)) && finalGate([{ keyword: bet.keyword, title: bet.title }], { anchorKeyword: true }).pass.length > 0)
         .map((bet) => ({

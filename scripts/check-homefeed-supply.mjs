@@ -82,7 +82,7 @@ console.log(fail ? `\n실패 ${fail}건` : "\n통과: 홈판 공급(캐시가 �
   ok(/정직하게 적는다/.test(hb), "★안 쓰고 적으면 거짓말이라고 못 박았다");
 
   // ★캐시 버전 — 안 올리면 24h 캐시가 옛 카드를 그대로 서빙한다(유저 실측: 카드 4장이 글자까지 동일했다)
-  ok(/homebet:v4:/.test(hb), "★생성 규칙(보충 라운드)이 바뀌어 캐시 버전을 올렸다 — 안 올리면 미달이 굳는다");
+  ok(/homebet:v5:/.test(hb), "★생성 규칙이 바뀌면 캐시 버전을 올린다 — 안 올리면 어제 세트가 오늘도 선다");
 
   const tr = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
   ok((tr.match(/sourceTitle: bet\.sourceTitle,/g) ?? []).length === 2, "★홈판 카드 두 경로 모두 출처를 넘긴다");
@@ -141,6 +141,12 @@ console.log(fail ? `\n실패 ${fail}건` : "\n통과: 홈판 공급(캐시가 �
   ok(/const aliveTypes = new Set\(alive\.map/.test(hb), "★부족분만 새로 만들되 이미 있는 유형은 다시 안 뽑는다");
   ok(/const got = \[\.\.\.alive, \.\.\.r1\.cards\]|let got = \[\.\.\.alive, \.\.\.r1\.cards\]/.test(hb), "★살아남은 카드를 앞에 세워 합친다");
   ok(/부족분 \$\{want - alive\.length\}장을 새로 만든다/.test(hb), "★몇 장을 왜 새로 만드는지 로그로 남긴다");
+
+  // ★2026-08-05 유저 실측: "12시 지났는데 엔화·전기차가 그대로다"
+  ok(/Math\.floor\(\(Date\.now\(\) \+ 9 \* 3600_000\) \/ 86400_000\)/.test(hb), "★유형 회전이 KST 자정 기준이다(UTC면 오전 9시에 회전한다)");
+  ok(/opts\?\.recentKeywords/.test(hb) && /seededCores/.test(hb), "★최근 쓴 소재의 핵심어를 미리 차단한다");
+  const tr2 = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
+  ok((tr2.match(/recentKeywords: recent14/g) ?? []).length === 2, "★두 경로 모두 최근 키워드를 넘긴다");
 }
 
 process.exit(fail ? 1 : 0);

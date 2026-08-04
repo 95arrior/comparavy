@@ -126,6 +126,9 @@ export async function pickHomefeedBets(
     isDup?: (title: string, keyword: string) => boolean;
     /** 최근 발행 제목 — 모델에게 '이런 제목은 이미 썼다'를 보여준다. 키워드만 주면 제목이 겹친다(실측). */
     recentTitles?: string[];
+    /** ★최근 14일 글의 키워드 — 소재(핵심어) 반복을 코드가 막는다(2026-08-05).
+     *  프롬프트의 '이미 쓴 주제 제외' 목록만으로는 모델이 '엔화 폭등 내 돈'을 피해도 '엔화 지갑'으로 돌아온다. */
+    recentKeywords?: string[];
   },
 ): Promise<HomefeedBet[]> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -137,7 +140,9 @@ export async function pickHomefeedBets(
   // ★v3(2026-08-03) — 실데이터 씨앗 주입 + 출처 표기가 들어갔다. 버전을 안 올리면 24h 캐시가
   //  옛 카드를 그대로 서빙해서 "코드는 고쳤는데 화면은 그대로"가 된다(유저 실측으로 확인).
   // ★v4(2026-08-04) — 보충 라운드가 생겼다. 옛 캐시는 '한 번만 시도하고 끝낸' 결과라 미달이 굳어 있다.
-  const cacheKey = `homebet:v4:${userId}:${kstDay}:${want}`;
+  // ★v5(2026-08-05) — 유형 회전이 KST 자정 기준으로 바뀌고, 최근 소재 차단이 생겼다.
+  //  옛 캐시는 '어제 유형 · 어제 소재'로 만들어진 세트라 그대로 두면 오늘도 같은 카드가 선다.
+  const cacheKey = `homebet:v5:${userId}:${kstDay}:${want}`;
   let alive: HomefeedBet[] = []; // 캐시에서 살아남은(아직 안 쓴) 카드 — 부족분만 새로 만든다
   try {
     const { data: c } = await db.from("api_cache").select("value, expires_at").eq("key", cacheKey).maybeSingle();
@@ -169,7 +174,11 @@ export async function pickHomefeedBets(
   // ★여유분을 뽑는다(2026-08-01 실측: 4장 요청에 1장만 나왔다).
   //  개별 생성은 여러 이유로 떨어진다 — 뉴스 없음(시장 유형), 금지어, 투자권유 표현, JSON 파싱 실패.
   //  딱 want개만 시도하면 한 장만 떨어져도 열이 빈다. 유형은 8종이니 넉넉히 시도해 먼저 성공한 want개를 쓴다.
-  const dayIdx = Math.floor(Date.now() / 86400_000) % BET_TYPES.length;
+  // ★유형 회전을 KST 자정 기준으로(2026-08-05 유저 실측에서 검거: "12시 지났는데 엔화·전기차가 그대로다").
+  //  종전엔 UTC 자정 기준이라 회전이 KST 오전 9시에 일어났다 — 우리 하루(kstDay)와 9시간 어긋난 것이다.
+  //  그래서 자정~오전 9시 사이엔 어제와 같은 유형 조합이 나오고, 씨앗도 밤새 그대로라 같은 주제가 반복됐다.
+  //  CLAUDE.md에 이미 적힌 원칙 그대로다: 날짜 키는 로컬(KST) 기준. 유형 회전도 날짜 키다.
+  const dayIdx = Math.floor((Date.now() + 9 * 3600_000) / 86400_000) % BET_TYPES.length;
   // ★살아남은 카드가 있으면 그만큼만 새로 만든다 — 이미 있는 유형은 다시 뽑지 않는다(같은 유형 두 장 방지).
   const aliveTypes = new Set(alive.map((b) => b.betType));
   const need = Math.max(0, want - alive.length);
@@ -208,7 +217,13 @@ export async function pickHomefeedBets(
   //  유형이 달라도 소재는 겹칠 수 있다(계산 충격도 전기요금, 손해 공포 마감도 전기요금).
   //  같은 소재 두 장이 같은 날 나가면 네이버에서 서로 잡아먹고, 반복되면 유사문서로 읽힌다.
   //  앵커의 핵심어로 판정한다 — 표기가 달라도('7월 전기요금'·'전기요금 폭탄') 핵심어는 같다.
-  const usedCores = new Set<string>();
+  // ★최근에 쓴 소재의 핵심어를 미리 넣어 둔다 — 같은 소재를 다시 만들면 그 자리에서 걸린다.
+  //  실물: 어제 '엔화 폭등 내 돈'·'전기차 충전비 함정'을 발행했는데 오늘 또 엔화·전기차 카드가 섰다.
+  const usedCores = new Set<string>([
+    ...(opts?.recentKeywords ?? []).map((k) => coreKeywordOf(k)).filter((c) => [...c].length >= 2),
+    ...(opts?.recentTitles ?? []).map((t) => coreKeywordOf(t)).filter((c) => [...c].length >= 2),
+  ]);
+  const seededCores = usedCores.size;
   let dupDropped = 0;
   const dedupeInto = (target: HomefeedBet[], cards: HomefeedBet[]) => {
     for (const b of cards) {
@@ -246,7 +261,7 @@ export async function pickHomefeedBets(
     failBy, cached: false, at: new Date().toISOString(),
   };
   if (out.length < want || dupDropped > 0) {
-    console.log(`[homebet] ${out.length}/${want} — 1차 생성 ${got.length}/${tryN} · 보충 ${round2} · 소재중복 제외 ${dupDropped} · 탈락사유 ${JSON.stringify(failBy)}`);
+    console.log(`[homebet] ${out.length}/${want} — 1차 생성 ${got.length}/${tryN} · 보충 ${round2} · 소재중복 제외 ${dupDropped}(최근 소재 ${seededCores}개 사전 차단) · 탈락사유 ${JSON.stringify(failBy)}`);
   }
   if (out.length) {
     // ★부분 결과를 하루 종일 물고 있으면 안 된다(이번 사고의 직접 원인).
