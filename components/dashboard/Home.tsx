@@ -290,6 +290,9 @@ export default function Home({
   // ★사전 생성(생성 경험 v2) — 홈 진입 시 오늘의 글 1편을 서버 백그라운드로. 홈에 어떤 진행 표시도 없다(침묵 원칙).
   const preFiredRef = useRef<string | null>(null);
   const [preReadyId, setPreReadyId] = useState<string | null>(null);
+  // ★원천 탭(2026-08-05 유저 목업) — 어느 원천에서 온 글감인지 눌러서 걸러 본다.
+  //  빈 칸은 눌리지 않지만 그대로 남긴다: '없다'가 보여야 이슈가 없는 건지 우리가 못 잡은 건지 갈린다.
+  const [slotTab, setSlotTab] = useState<string>("전체");
   const todayDate = localDayStr();
   const topicsCacheKey = () => `ateflo_topics_v30_${todayDate}_${profileKey ?? ""}_normal`;
 
@@ -681,25 +684,24 @@ export default function Home({
               0인 칸이 그대로 보여야 '이슈가 없는 것'과 '우리가 못 잡은 것'을 구분할 수 있다. */}
           {(() => {
             const SLOTS = ["캘린더", "청약", "정부지원", "공시", "실시간", "홈판", "뉴스", "시즌"];
-            const cards = [...clean];
-            const countOf = (label: string) => cards.filter((t) => {
-              const tt = t as { tag?: string; slot?: string; risingSeed?: boolean };
-              if (label === "홈판") return tt.tag === "홈판";
-              if (label === "실시간") return tt.risingSeed === true;
-              return tt.slot === label;
-            }).length;
-            const rows = SLOTS.map((s) => ({ s, n: countOf(s) }));
-            if (!cards.length) return null;
+            const all = [...(boardShort ?? []), ...(boardLong ?? [])];
+            if (!all.length) return null;
+            const rows = [{ s: "전체", n: all.length }, ...SLOTS.map((s) => ({ s, n: all.filter((t) => slotMatch(t, s)).length }))];
             return (
               <div className="mb-2 flex flex-wrap items-center gap-1.5">
                 <span className="text-[11px] font-bold text-neutral-400">글감 출처</span>
-                {rows.map(({ s, n }) => (
-                  <span key={s}
-                    className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${n > 0 ? "bg-[#1D75F7]/10 text-[#1D75F7]" : "bg-neutral-100 text-neutral-300"}`}
-                    title={n > 0 ? `${s} ${n}개` : `${s} 없음 — 이슈가 없거나, 우리가 못 잡은 것`}>
-                    {s} {n}
-                  </span>
-                ))}
+                {rows.map(({ s, n }) => {
+                  const on = slotTab === s;
+                  const empty = n === 0 && s !== "전체";
+                  return (
+                    <button key={s} onClick={() => setSlotTab(on ? "전체" : s)} disabled={empty}
+                      className={`at-press rounded-full px-2.5 py-1 text-[11px] font-bold tabular-nums transition ${
+                        on ? "bg-[#F04452] text-white" : empty ? "cursor-default bg-neutral-100 text-neutral-300" : "bg-neutral-100 text-neutral-500 hover:bg-neutral-200"}`}
+                      title={empty ? `${s} 없음 — 이슈가 없거나, 우리가 못 잡은 것` : `${s} ${n}개 보기`}>
+                      {s} {n}
+                    </button>
+                  );
+                })}
               </div>
             );
           })()}
@@ -725,7 +727,8 @@ export default function Home({
             ))}
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {([["short", "지금 뜨는", "현재 실시간 인기 키워드 글감이에요", boardShort], ["long", "꾸준한 수요", "지속적으로 수요가 있는 글감이에요", boardLong]] as const).map(([mode, title, sub, list]) => (
+          {/* ★원천 탭이 켜져 있으면 두 열 모두 그 원천만 보여준다(2026-08-05 유저 목업) */}
+          {([["short", "지금 뜨는", "현재 실시간 인기 키워드 글감이에요", boardShort?.filter((t) => slotMatch(t, slotTab)) ?? null], ["long", "꾸준한 수요", "지속적으로 수요가 있는 글감이에요", boardLong?.filter((t) => slotMatch(t, slotTab)) ?? null]] as const).map(([mode, title, sub, list]) => (
             <div key={mode} className={`min-w-0 ${boardTab === mode ? "" : "hidden sm:block"}`}>
               <div className="hidden sm:block">
               <p className="text-center text-[16px] font-bold text-[color:var(--color-text)]">{title}</p>
@@ -985,6 +988,15 @@ function TopicRow({ topic, onClick, onSwap, swapping }: {
   );
 }
 
+// ★원천 칸 판정 — 탭·집계가 같은 규칙을 쓴다(두 곳에서 따로 세면 숫자가 어긋난다).
+function slotMatch(t: unknown, label: string): boolean {
+  const tt = t as { tag?: string; slot?: string; risingSeed?: boolean };
+  if (label === "전체") return true;
+  if (label === "홈판") return tt.tag === "홈판";
+  if (label === "실시간") return tt.risingSeed === true;
+  return tt.slot === label;
+}
+
 // ★보드 카드(컴팩트) — 트렌드: ⏳수명 타이머 + 📰근거(뉴스 헤드라인/실검색 확인)
 // ★글감 칩(2026-08-01 유저 확정) — 검색 레인은 '월 검색량' 숫자를 그대로 칩에 박는다.
 //  왜 이렇게 바뀌었나: '쉬운 검색 키워드 / 지금 체급으로 1등 할 수 있는 것'은 예측이었고, 실측으로 반증됐다.
@@ -1121,8 +1133,32 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
         {topic.revenueLabel && <span className="rounded-full bg-[#F5F3EE] px-2 py-0.5 text-[10.5px] font-bold text-[#8A6D1F]">{topic.revenueLabel}</span>}
         {life && <span className="text-[10.5px] font-semibold tabular-nums text-amber-600">{life}</span>}
       </div>
-      <p className="mt-2 line-clamp-2 text-[14.5px] font-bold leading-snug text-[color:var(--color-text)]">{topic.title}</p>
+      {/* ★키워드 명시(2026-08-05 유저 목업) — 제목보다 먼저 '무슨 키워드로 가져온 글감인지'를 보여준다.
+          제목은 창작이고 키워드는 사실이다. 사실을 먼저 보여야 유저가 판정할 수 있다. */}
+      {(() => {
+        const kw = (topic as { seedKeyword?: string }).seedKeyword || topic.keyword;
+        return kw ? <p className="mt-2 text-[11.5px] font-bold text-[#1D75F7]">{kw}</p> : null;
+      })()}
+      <p className="mt-1 line-clamp-2 text-[14.5px] font-bold leading-snug text-[color:var(--color-text)]">{topic.title}</p>
       {evidence && <p className="mt-1.5 line-clamp-2 text-[12px] leading-snug text-neutral-400">{evidence}</p>}
+      {/* ★출처 + 문서수(유저 목업) — 어디서 가져왔는지, 그 자리에 글이 몇 편인지.
+          문서수는 '적을수록 선점'이라는 걸 유저가 바로 읽을 수 있게 숫자 그대로 둔다. */}
+      {(() => {
+        const slot = (topic as { slot?: string }).slot;
+        const bt = (topic as { blogTotal?: number | null }).blogTotal;
+        if (!slot && bt == null) return null;
+        return (
+          <div className="mt-1.5 flex flex-wrap items-center gap-1">
+            {slot && <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10.5px] font-bold text-neutral-500">출처 {slot}</span>}
+            {bt != null && (
+              <span className={`rounded px-1.5 py-0.5 text-[10.5px] font-bold tabular-nums ${bt < 3000 ? "bg-emerald-50 text-emerald-600" : bt < 30000 ? "bg-amber-50 text-amber-700" : "bg-neutral-100 text-neutral-500"}`}
+                title="네이버 블로그 문서 수 — 적을수록 선점하기 좋아요">
+                문서 {bt.toLocaleString("ko-KR")}편
+              </span>
+            )}
+          </div>
+        );
+      })()}
       {pubAdvice && <p className={`mt-1 text-[11px] font-semibold ${pubAdvice.hot ? "text-[#F04452]" : "text-neutral-400"}`}>{pubAdvice.text}</p>}
     </button>
   );

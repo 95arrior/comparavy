@@ -74,6 +74,13 @@ console.log("\n⑤ 배선 — 씨앗으로 실제로 들어가는가:");
   const home = fs.readFileSync(new URL("../components/dashboard/Home.tsx", import.meta.url), "utf-8");
   ok(/글감 출처/.test(home), "★화면에 원천 칸 현황이 뜬다");
   ok(/이슈가 없거나, 우리가 못 잡은 것/.test(home), "★빈 칸의 의미를 툴팁으로 알려준다");
+  // ★유저 목업(2026-08-05): 탭으로 걸러 보기 + 카드에 키워드·출처·문서수 명시
+  ok(/const \[slotTab, setSlotTab\]/.test(home), "★원천 탭 상태가 있다(눌러서 걸러 본다)");
+  ok(/function slotMatch/.test(home), "★탭과 집계가 같은 판정 함수를 쓴다(따로 세면 숫자가 어긋난다)");
+  ok(/boardShort\?\.filter\(\(t\) => slotMatch\(t, slotTab\)\)/.test(home), "★탭이 두 열 모두에 걸린다");
+  ok(/text-\[11\.5px\] font-bold text-\[#1D75F7\]/.test(home) && /seedKeyword/.test(home), "★카드가 키워드를 제목보다 먼저 보여준다");
+  ok(/출처 \{slot\}/.test(home), "★카드에 출처가 박힌다");
+  ok(/문서 \{bt\.toLocaleString/.test(home) && /적을수록 선점하기 좋아요/.test(home), "★문서 수를 숫자 그대로 + 적을수록 선점임을 알린다");
 }
 
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 고정 캘린더");
