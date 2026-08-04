@@ -298,7 +298,9 @@ export async function GET(req: Request) {
       // ★v6(2026-08-04) — 제목 꼬리 게이트·공식이 증식에 들어갔다. 버전을 안 올리면 캐시된 옛 카드가
       //  그대로 서빙되고 증식 자체가 안 돌아 진단(amp-funnel)도 영영 비어 있다(유저 실측으로 확인).
       //  ★규칙을 바꾸면 캐시 버전을 같이 올린다 — 오늘 홈판(v3)에서 이미 겪은 일이다.
-      const ampKey = `amp:v6:${user.id}:${(profile as { id?: string } | null)?.id ??"solo"}:${kstDay}:${excludeSet.size}:${trends.length}:${tailMode === "short" ? "s" : "n"}:r${regenNonce}`; // short=전용 캐시(증식량 다름) // ★v5=씨앗 세대 포함 — 재수확 직후(0→15) 캐시 자동 무효화(실측: 수확해도 옛 세트 서빙) // ★v4=블로그별 격리 — 전환 시 이전 블로그 글감 서빙 사고(실측: 자동차 블로그에 캘리포니아비치) 차단
+      // ★v7(2026-08-05): 실시간 씨앗 우선 배치 + 카드에 씨앗 키워드 싣기. 옛 캐시는 둘 다 없는 세트라
+      //  버전을 안 올리면 화면이 '수확 키워드' 없이 옛 표기(월 검색량)로 남는다.
+      const ampKey = `amp:v7:${user.id}:${(profile as { id?: string } | null)?.id ??"solo"}:${kstDay}:${excludeSet.size}:${trends.length}:${tailMode === "short" ? "s" : "n"}:r${regenNonce}`; // short=전용 캐시(증식량 다름) // ★v5=씨앗 세대 포함 — 재수확 직후(0→15) 캐시 자동 무효화(실측: 수확해도 옛 세트 서빙) // ★v4=블로그별 격리 — 전환 시 이전 블로그 글감 서빙 사고(실측: 자동차 블로그에 캘리포니아비치) 차단
       let amped: { keyword: string; title: string; titleSearch?: string; newsContext: string | null; sourceTitle?: string | null; briefText?: string; hookKey?: string; thumb?: { mainCopy: string; subCopy: string; badge: string }; brief?: unknown; source?: string }[] = [];
       try {
         const { data: c } = await pool.from("api_cache").select("value, expires_at").eq("key", ampKey).single();

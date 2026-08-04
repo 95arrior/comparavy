@@ -82,7 +82,7 @@ console.log(fail ? `\n실패 ${fail}건` : "\n통과: 홈판 공급(캐시가 �
   ok(/정직하게 적는다/.test(hb), "★안 쓰고 적으면 거짓말이라고 못 박았다");
 
   // ★캐시 버전 — 안 올리면 24h 캐시가 옛 카드를 그대로 서빙한다(유저 실측: 카드 4장이 글자까지 동일했다)
-  ok(/homebet:v5:/.test(hb), "★생성 규칙이 바뀌면 캐시 버전을 올린다 — 안 올리면 어제 세트가 오늘도 선다");
+  ok(/homebet:v6:/.test(hb), "★생성 규칙이 바뀌면 캐시 버전을 올린다 — 안 올리면 발행한 소재가 하루 종일 남는다");
 
   const tr = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
   ok((tr.match(/sourceTitle: bet\.sourceTitle,/g) ?? []).length === 2, "★홈판 카드 두 경로 모두 출처를 넘긴다");

@@ -40,7 +40,7 @@ ok(parse({title:"x",arc:[{role:"a",angle:"1"},{role:"b",angle:"2"},{role:"c",ang
   const tr = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
   const m = tr.match(/amp:v(\d+):/);
   chk(!!m, "★증식 캐시 키에 버전 자리가 있다", m ? `amp:v${m[1]}` : "없음");
-  chk(!!m && Number(m[1]) >= 6, "★제목 규격 개정에 맞춰 버전이 올라갔다", m ? `v${m[1]}` : "");
+  chk(!!m && Number(m[1]) >= 7, "★규칙이 바뀌면 버전을 올린다(실시간 우선·씨앗 키워드)", m ? `v${m[1]}` : "");
 }
 
 // ── ★JSON 파싱 실패로 증식이 통째로 0장이던 것(2026-08-04 유저 진단으로 검거) ──
