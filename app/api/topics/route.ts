@@ -448,7 +448,13 @@ export async function GET(req: Request) {
       q = ranged ? q.gte("monthly_searches", tb.volMin).lte("monthly_searches", tb.volMax) : q.gte("monthly_searches", Math.min(1000, tb.volMin)).lte("monthly_searches", (tb.volMax ?? 30000) * 1.5);
       // ★미측정(null)은 여기서 통과시킨다 — 실제 컷은 측정 직후 applyDocCut이 건다(2026-08-04).
       //  종전 주석은 "측정 후 별점이 거른다"였는데, 별점은 정렬 가중치일 뿐 아무것도 거르지 않았다.
-      if (tb.blogTotalMax != null) q = q.or(`blog_total.is.null,blog_total.lt.${tb.blogTotalMax}`);
+      // ★쿼리 상한은 밴드 상한이 아니라 '보충 상한'(DOC_HARD_MAX)으로 연다(2026-08-05 유저 실측에서 검거).
+      //  사고: 백필로 문서수가 채워지자 '꾸준한 수요' 열이 통째로 비었다. 신생 밴드 실측 분포는
+      //  3,000 미만 3% · 10,000 미만 8% · 3만 이상 81% — 밴드 상한으로 쿼리를 막으면 후보가 3%만 남는다.
+      //  ★유저 확정 정책은 '컷 + 자리 남으면 문서수 오름차순 보충(1만 미만)'이었다. 그런데 보충 후보가
+      //   쿼리에서 미리 잘려 나가 정책이 반쪽으로만 작동했다 — 컷은 살고 보충은 죽은 상태였다.
+      //   상한을 여기서 열고, 실제 판정은 applyDocCut 한 곳에서만 한다(3,000 초과는 자리가 남을 때만).
+      if (tb.blogTotalMax != null) q = q.or(`blog_total.is.null,blog_total.lt.${Math.max(tb.blogTotalMax, DOC_HARD_MAX)}`);
     } else if (adminBest) {
       // 최상급 = '이길 수 있는 최상' — 메가 키워드(검색량 무제한)는 문서수도 메가라 제외. 적정 상한을 둔다.
       q = ranged ? q.gte("monthly_searches", 2000).lte("monthly_searches", 30000) : q.gte("monthly_searches", 1000).lte("monthly_searches", 45000); // ★상한 봉쇄(2026-07-20) — 관리자 모드 폴백도 무상한 금지
@@ -1086,9 +1092,14 @@ export async function GET(req: Request) {
   //  종전엔 fitTop 13~20개를 Promise.all로 동시에 쏴서 네이버가 429로 끊었다 → 측정 실패 → blog_total이
   //  null로 남고 → ①문서수 컷이 걸 대상이 사라지고 ②화면 경쟁도가 광고경쟁(compIdx) 폴백으로 표시됐다.
   //  ★같은 실수를 백필에서 먼저 했다(동시성 6에서 12연속 실패). 여기가 같은 병이었는데 증상만 달랐다.
-  const measureDiag = { need: 0, ok: 0, fail: 0, reasons: {} as Record<string, number> };
+  const measureDiag = { need: 0, ok: 0, fail: 0, cutShort: false, reasons: {} as Record<string, number> };
   {
-    const need = fitTop.filter(({ r }) => r.blog_total == null);
+    // ★한 요청에서 재는 개수를 제한한다(2026-08-05 유저 실측: 기본 경로가 504로 죽었다).
+    //  창고를 채우는 건 백필 크론의 몫이다 — 서빙은 '지금 보여줄 것'만 재고 나머지는 다음으로 넘긴다.
+    const MEASURE_CAP = 8;
+    const MEASURE_MS = 6000; // 이 요청에서 측정에 쓸 시간 상한
+    const startedMeasure = Date.now();
+    const need = fitTop.filter(({ r }) => r.blog_total == null).slice(0, MEASURE_CAP);
     measureDiag.need = need.length;
     const CONC = 3;
     for (let i = 0; i < need.length; i += CONC) {
@@ -1105,6 +1116,7 @@ export async function GET(req: Request) {
         writes.push(pool.from("keyword_pool").update({ blog_total: d.total }).eq("keyword", r.keyword).then(() => null, () => null));
       }
       if (writes.length) await Promise.all(writes);
+      if (Date.now() - startedMeasure > MEASURE_MS) { measureDiag.cutShort = true; break; }
       if (i + CONC < need.length) await new Promise((res) => setTimeout(res, 120));
     }
     if (measureDiag.fail) console.log(`[doc-measure] 필요 ${measureDiag.need} · 성공 ${measureDiag.ok} · 실패 ${measureDiag.fail} ${JSON.stringify(measureDiag.reasons)}`);

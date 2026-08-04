@@ -64,6 +64,16 @@ console.log("\n⑤-2 밴드 사다리 상한 — 실측으로 정한 값인가:"
   ok(SEEDLING < DOC_HARD_MAX, "밴드 상한은 절대 상한보다 낮다");
 }
 
+console.log("\n⑤-3 쿼리 상한 — 보충 후보를 미리 자르지 않는가(2026-08-05 실측: 열이 통째로 비었다):");
+{
+  const rt = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
+  // ★신생 밴드 실측: 3,000 미만 3% · 10,000 미만 8% · 3만 이상 81%.
+  //  쿼리를 밴드 상한(3,000)으로 막으면 후보의 3%만 남아 '컷은 살고 보충은 죽는' 상태가 된다.
+  ok(/Math\.max\(tb\.blogTotalMax, DOC_HARD_MAX\)/.test(rt), "★쿼리는 보충 상한(1만)까지 열고, 판정은 applyDocCut 한 곳에서만 한다");
+  ok(/const MEASURE_CAP = \d+/.test(rt) && /MEASURE_MS/.test(rt), "★서빙 중 측정에 개수·시간 상한이 있다(기본 경로 504 방어)");
+  ok(/cutShort/.test(rt), "★상한에 걸려 덜 쟀으면 그 사실을 남긴다");
+}
+
 console.log("\n⑥ 배선 — 만들어놓고 안 부르면 아무 일도 안 일어난다:");
 {
   const rt = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
