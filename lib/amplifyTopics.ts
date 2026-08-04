@@ -152,6 +152,8 @@ function coreOf(text: string): string {
 export let lastAmplifyDiag: {
   seeds: number; want: number; briefs: number; parsed: number; out: number; stage?: string;
   drop: { placeholder: number; noBrief: number; dupKeyword: number; orphan: number; titleTail: number };
+  // ★모델 호출 자체의 계측(2026-08-04) — 'parsed 8'만으로는 '모델이 8개만 줬다'와 '잘려서 8개만 건졌다'가 구분되지 않는다.
+  call?: { chunks: number; stopReasons: (string | null)[]; truncated: number; outTokens: (number | null)[]; maxTokens: number; noJson: number };
 } | null = null;
 
 const NO_DROP = { placeholder: 0, noBrief: 0, dupKeyword: 0, orphan: 0, titleTail: 0 };
@@ -213,7 +215,9 @@ export async function amplifyForUser(
   const validLongtails = new Set<string>();
   for (const b of briefs) for (const kw of b.lts) validLongtails.add(kw.replace(/\s+/g, ""));
 
-  const seedList = briefs.map((b, i) => [
+  const client = new Anthropic({ apiKey });
+  const buildPrompt = (chunk: typeof briefs) => {
+  const seedList = chunk.map((b, i) => [
     `${i + 1}번 씨앗:`,
     `  실검증검색어=[${b.lts.join(", ") || "(없음)"}]`,
     `  시의성코어="${b.core || "(없음)"}"`,
@@ -221,8 +225,7 @@ export async function amplifyForUser(
     `  배정된 제목 훅 패턴: ${b.hook.name} — ${b.hook.guide}`,
   ].join("\n")).join("\n");
 
-  const client = new Anthropic({ apiKey });
-  const prompt = `이 블로그 운영자에게 맞춘 글감 ${briefs.length}개를 만들어라. 각 글감은 아래 '배정된 구조·훅'을 그대로 따르고, 창작 부분만 채운다.\n★이 글감들은 '지금 뜨는 트렌드' 종족 — title은 네이버 홈피드(홈판) 노출이 주 싸움터다.\n${PUBLISH_TITLE_FORMULA}\n★위 공식은 title에 적용한다(titleSearch는 아래 별도 규격 — 검색·AI브리핑용이라 일부러 완결형이다).\n[제목 규칙] (1)앞 15자 자기검증(의무) — 제목을 쓴 뒤 앞 15자만 잘라 스스로 검사하라: 구체 숫자(금액·개수·기간), 대상 호명(~라면/~인 사람), 시점(오늘/이번 주/마감), 질문(?), 따옴표 속마음 발화(“나만 몰랐나”…) 중 하나가 그 안에 있는가? '이유·비교·총정리·방법·조건'은 훅이 아니다. 없으면 재작성. 미달 예: 'ETF 투자할 때 ISA 절세계좌를 써야 하는 이유' / 통과 예: '세금 57만원 아끼는, ETF는 ISA부터'(본문 근거 숫자일 때만). 낚시성 금지. (2)검색 키워드는 제목에서 빠지지 않되 위치는 유연하게 — 훅이 문을 열고 키워드가 뒤를 받친다. (3)제목에 쓰는 숫자·금액·날짜는 씨앗 자료(뉴스·브리프)에 근거가 있는 값만 — 근거 없는 숫자는 만들지 않는다. 자리표시(OO만원·N만원·□□ 등) 절대 금지: 금액을 확인 못 하면 금액 없는 제목으로 쓴다(예: '서울시 출산 가구 주거비 지원, 신청 조건과 방법'). (4)이 종족은 기간제(스파이크) 글이므로 날짜·마감 훅 허용 — 단 실제 날짜가 자료에 있을 때만. (5)★정의형 금지(2026-07-17 유저: '~란 무엇인가요'는 약하다 — 사람은 '무엇'보다 '왜 알아야 하는데'를 먼저 궁금해한다): '정말 ~일까?', '다음은 ~입니다', '~를 알아야 하는 이유' 프레임으로 쓴다. (6)★토너먼트 자기검증(내부 심사 — 과정 출력 금지): titleClick·thumbMain은 후보를 여럿 만들어 '스크롤하다 내가 정말 멈출까? 왜 멈추는지 한 문장으로 설명되는가? 본문이 증명할 수 있는가? 제목과 썸네일이 같은 말은 아닌가?'를 통과한 승자만 적는다 — 무난한 후보는 폐기가 낫다. titleSearch는 반대로 검색창·AI 브리핑용 — [규격] ①핵심 키워드 정확히 1개를 제목 맨 앞에(네이버는 제목으로 키워드를 판정한다 — 키워드가 흐리면 본문이 좋아도 노출이 안 된다) ②동급 키워드 병렬 금지('A대출 B대출 C대출 총정리' 유형 — 서로를 흐린다). 보조 수식(조건·방법·기간·신청)은 허용 ③공백 포함 25~40자 ④특수문자·이모지 금지 ⑤후킹 금지, 의도 완결.
+  return `이 블로그 운영자에게 맞춘 글감 ${chunk.length}개를 만들어라. 각 글감은 아래 '배정된 구조·훅'을 그대로 따르고, 창작 부분만 채운다.\n★이 글감들은 '지금 뜨는 트렌드' 종족 — title은 네이버 홈피드(홈판) 노출이 주 싸움터다.\n${PUBLISH_TITLE_FORMULA}\n★위 공식은 title에 적용한다(titleSearch는 아래 별도 규격 — 검색·AI브리핑용이라 일부러 완결형이다).\n[제목 규칙] (1)앞 15자 자기검증(의무) — 제목을 쓴 뒤 앞 15자만 잘라 스스로 검사하라: 구체 숫자(금액·개수·기간), 대상 호명(~라면/~인 사람), 시점(오늘/이번 주/마감), 질문(?), 따옴표 속마음 발화(“나만 몰랐나”…) 중 하나가 그 안에 있는가? '이유·비교·총정리·방법·조건'은 훅이 아니다. 없으면 재작성. 미달 예: 'ETF 투자할 때 ISA 절세계좌를 써야 하는 이유' / 통과 예: '세금 57만원 아끼는, ETF는 ISA부터'(본문 근거 숫자일 때만). 낚시성 금지. (2)검색 키워드는 제목에서 빠지지 않되 위치는 유연하게 — 훅이 문을 열고 키워드가 뒤를 받친다. (3)제목에 쓰는 숫자·금액·날짜는 씨앗 자료(뉴스·브리프)에 근거가 있는 값만 — 근거 없는 숫자는 만들지 않는다. 자리표시(OO만원·N만원·□□ 등) 절대 금지: 금액을 확인 못 하면 금액 없는 제목으로 쓴다(예: '서울시 출산 가구 주거비 지원, 신청 조건과 방법'). (4)이 종족은 기간제(스파이크) 글이므로 날짜·마감 훅 허용 — 단 실제 날짜가 자료에 있을 때만. (5)★정의형 금지(2026-07-17 유저: '~란 무엇인가요'는 약하다 — 사람은 '무엇'보다 '왜 알아야 하는데'를 먼저 궁금해한다): '정말 ~일까?', '다음은 ~입니다', '~를 알아야 하는 이유' 프레임으로 쓴다. (6)★토너먼트 자기검증(내부 심사 — 과정 출력 금지): titleClick·thumbMain은 후보를 여럿 만들어 '스크롤하다 내가 정말 멈출까? 왜 멈추는지 한 문장으로 설명되는가? 본문이 증명할 수 있는가? 제목과 썸네일이 같은 말은 아닌가?'를 통과한 승자만 적는다 — 무난한 후보는 폐기가 낫다. titleSearch는 반대로 검색창·AI 브리핑용 — [규격] ①핵심 키워드 정확히 1개를 제목 맨 앞에(네이버는 제목으로 키워드를 판정한다 — 키워드가 흐리면 본문이 좋아도 노출이 안 된다) ②동급 키워드 병렬 금지('A대출 B대출 C대출 총정리' 유형 — 서로를 흐린다). 보조 수식(조건·방법·기간·신청)은 허용 ③공백 포함 25~40자 ④특수문자·이모지 금지 ⑤후킹 금지, 의도 완결.
 
 [운영자 개인화 축]
 ${axis || "(일반)"}
@@ -255,25 +258,9 @@ ${OPEN_LOOP_GUIDE}
 - 시의성코어가 있으면 제목과 thumbMain에 살린다.
 - 금지: 무조건·100%·보장·충격류, 본문이 못 지킬 약속.
 - JSON 배열만: [{"seedIndex":1,"keyword":"...","titleClick":"...","titleSearch":"...","reader":"...","hook":"...","thumbMain":"...","thumbSub":"...","verdict":"...","cutList":["..."],"branchAxis":"...","series":{"title":"...","arc":[{"role":"...","angle":"..."}]} 또는 null}]`;
+  };
 
   try {
-    const res = await client.messages.create({
-      model: "claude-haiku-4-5",
-      // ★2026-08-04 유저 실측에서 검거: 1100 고정이라 출력이 잘려 JSON이 깨졌고,
-      //  파싱 예외로 증식이 통째로 0장이 됐다(진단: position 1018에서 파싱 실패).
-      //  항목당 제목 2개·페르소나·훅·썸네일 2개·판결·컷리스트·분기축·시리즈 아크를 요구한다 —
-      //  한 항목이 250~320토큰이다. 개수에 비례해 잡는다.
-      max_tokens: Math.min(8000, 600 + want * 340),
-      messages: [{ role: "user", content: prompt }],
-    });
-    void logUsage({ userId, model: "claude-haiku-4-5", kind: "amplify", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
-    const text = res.content[0]?.type === "text" ? res.content[0].text : "";
-    const m = /\[[\s\S]*\]/.exec(text);
-    if (!m) {
-      // ★모델 응답에서 JSON을 못 찾았다 — 출력이 잘렸거나 형식을 어긴 것이다.
-      await saveAmpDiag({ seeds: seeds.length, want, briefs: briefs.length, parsed: 0, out: 0, drop: { ...NO_DROP }, stage: "중단: 모델 응답 파싱 실패" });
-      return [];
-    }
     type Amp = { seedIndex?: number; keyword?: string; titleClick?: string; titleSearch?: string; reader?: string; hook?: string; thumbMain?: string; thumbSub?: string; verdict?: string; cutList?: string[]; branchAxis?: string; series?: { title?: string; arc?: { role?: string; angle?: string }[] } | null };
     // ★부분 복구(2026-08-04 유저 실측) — 배열을 통째로 파싱하다 하나가 깨지면 전부 0장이 됐다.
     //  출력이 잘리면 마지막 항목만 불완전한데, 그것 때문에 앞의 멀쩡한 항목까지 버리고 있었다.
@@ -300,12 +287,49 @@ ${OPEN_LOOP_GUIDE}
       }
       return items;
     };
-    const parsed = parseLoose(m[0]);
+    // ★한 번에 15개를 시키지 않는다(2026-08-04 유저 실측: 브리프 15 → 파싱 8, 어제는 9 — 늘 절반).
+    //  진범은 출력 예산이었다. 한 항목은 제목 2개·페르소나·훅·썸네일 2개·판결·컷리스트·분기축·시리즈 아크까지
+    //  요구하므로 한글 500자 안팎 = 550~650토큰이다. 340으로 잡은 추정치가 절반이었고, 15개면
+    //  예산(5,700)이 9~10개째에서 바닥나 뒤가 잘렸다 — 복구가 살린 8개가 그 흔적이다.
+    //  ★조각으로 나눠 동시에 부른다: 예산이 조각마다 넉넉해 잘릴 일이 없고, 병렬이라 체감 시간은 그대로다.
+    //   한 조각이 실패해도 나머지는 산다(종전엔 한 번의 호출이 전부였다).
+    const CHUNK = 6;
+    const PER_ITEM_TOKENS = 650; // ★실측 기반 — 추정치를 낮게 잡으면 조용히 잘린다
+    const chunks: (typeof briefs)[] = [];
+    for (let i = 0; i < briefs.length; i += CHUNK) chunks.push(briefs.slice(i, i + CHUNK));
+    const callChunk = async (chunk: typeof briefs, offset: number) => {
+      const maxTokens = Math.min(16000, 800 + chunk.length * PER_ITEM_TOKENS);
+      const res = await client.messages.create({
+        model: "claude-haiku-4-5",
+        max_tokens: maxTokens,
+        messages: [{ role: "user", content: buildPrompt(chunk) }],
+      });
+      void logUsage({ userId, model: "claude-haiku-4-5", kind: "amplify", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
+      const text = res.content[0]?.type === "text" ? res.content[0].text : "";
+      const m = /\[[\s\S]*\]/.exec(text);
+      const items = m ? parseLoose(m[0]) : [];
+      // ★조각 안에서 매긴 씨앗 번호를 전체 번호로 되돌린다 — 안 되돌리면 2번 조각의 카드가 1번 조각 씨앗에 붙는다(혈통 사고).
+      for (const it of items) it.seedIndex = offset + (Number(it.seedIndex) || 1);
+      return { items, stopReason: res.stop_reason ?? null, outTokens: res.usage?.output_tokens ?? null, maxTokens, gotJson: !!m };
+    };
+    const results = await Promise.all(chunks.map((c, i) => callChunk(c, i * CHUNK).catch((e) => ({
+      items: [] as Amp[], stopReason: `error: ${e instanceof Error ? e.message.slice(0, 60) : "?"}`, outTokens: null, maxTokens: 0, gotJson: false,
+    }))));
+    const parsed = results.flatMap((r) => r.items);
+    // ★잘림을 눈에 보이게 남긴다 — 종전 진단은 '파싱 8'만 보여줘서 '모델이 8개만 줬다'와 구분이 안 됐다.
+    const callMeta = {
+      chunks: chunks.length,
+      stopReasons: results.map((r) => r.stopReason),
+      truncated: results.filter((r) => r.stopReason === "max_tokens").length,
+      outTokens: results.map((r) => r.outTokens),
+      maxTokens: results[0]?.maxTokens ?? 0,
+      noJson: results.filter((r) => !r.gotJson).length,
+    };
+    if (callMeta.truncated > 0) console.log(`[amp] ★출력 잘림 ${callMeta.truncated}/${chunks.length}조각 — max_tokens ${callMeta.maxTokens} 재검토(항목당 ${PER_ITEM_TOKENS} 가정)`);
     if (parsed.length === 0) {
-      await saveAmpDiag({ seeds: seeds.length, want, briefs: briefs.length, parsed: 0, out: 0, drop: { ...NO_DROP }, stage: "중단: JSON 복구도 실패(항목 0개)" });
+      await saveAmpDiag({ seeds: seeds.length, want, briefs: briefs.length, parsed: 0, out: 0, drop: { ...NO_DROP }, stage: `중단: 모델 응답 0개 — ${JSON.stringify(callMeta.stopReasons)}`, call: callMeta });
       return [];
     }
-    if (!m[0].trim().endsWith("]")) console.log(`[amp] 출력이 잘렸다 — 복구로 ${parsed.length}개 살림(max_tokens 재검토 필요)`);
     const out: AmplifiedTopic[] = [];
     const seen = new Set<string>();
     // ★증식 손실 회계(2026-08-04 유저: "씨앗 19개인데 증식 4장, 왜?").
@@ -423,7 +447,7 @@ ${OPEN_LOOP_GUIDE}
     for (const o of out) if (!validThumbMain(o.thumb.mainCopy)) o.thumb.mainCopy = "";
     // ★증식 진단(2026-08-04) — 항상 로그로 남기고, 마지막 결과를 모듈에 보관해 debug 응답이 읽어 간다.
     //  ★유저가 매번 로그를 뒤지게 하지 않는다: 주소 하나로 보이면 그게 자동이다.
-    await saveAmpDiag({ seeds: seeds.length, want, briefs: briefs.length, parsed: parsed.length, out: out.length, drop, stage: "완료" });
+    await saveAmpDiag({ seeds: seeds.length, want, briefs: briefs.length, parsed: parsed.length, out: out.length, drop, stage: "완료", call: callMeta });
     return out;
   } catch (e) {
     // ★예외로 죽어도 흔적을 남긴다 — 조용한 실패가 오늘 하루를 잡아먹었다.

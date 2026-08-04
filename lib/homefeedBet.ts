@@ -109,6 +109,12 @@ async function marketNewsBlock(betKey: string): Promise<string | null> {
  * ★1장 고정 → n장(2026-08-01): 홈판이 배합 40%의 정식 레인이 되면서 하루 몫만큼 뽑는다.
  *  유형은 날짜 오프셋으로 회전시켜 서로 다른 n종을 배정한다 — 같은 날 같은 유형이 겹치면 홈판에서 서로 잡아먹는다.
  */
+/** ★마지막 홈판 생성 진단(2026-08-04) — debug 응답이 읽어 간다. '홈판 2/5'의 이유가 화면에 보여야 한다. */
+export let lastHomebetDiag: {
+  want: number; tryN: number; round1: number; round2: number; dupDropped: number; out: number;
+  failBy: Record<string, number>; cached: boolean; at: string;
+} | null = null;
+
 export async function pickHomefeedBets(
   db: SupabaseClient, userId: string, sub: string, usedKeywords: Set<string>, n = 1,
   opts?: {
@@ -126,10 +132,16 @@ export async function pickHomefeedBets(
   //  v2(2026-08-02): 발행글 유사 판정을 캐시 이전으로 옮겼다. 그 전 캐시는 걸러지지 않은 상태라 무효.
   // ★v3(2026-08-03) — 실데이터 씨앗 주입 + 출처 표기가 들어갔다. 버전을 안 올리면 24h 캐시가
   //  옛 카드를 그대로 서빙해서 "코드는 고쳤는데 화면은 그대로"가 된다(유저 실측으로 확인).
-  const cacheKey = `homebet:v3:${userId}:${kstDay}:${want}`;
+  // ★v4(2026-08-04) — 보충 라운드가 생겼다. 옛 캐시는 '한 번만 시도하고 끝낸' 결과라 미달이 굳어 있다.
+  const cacheKey = `homebet:v4:${userId}:${kstDay}:${want}`;
   try {
     const { data: c } = await db.from("api_cache").select("value, expires_at").eq("key", cacheKey).maybeSingle();
-    if (c?.value && new Date(String(c.expires_at)).getTime() > Date.now()) return c.value as HomefeedBet[];
+    if (c?.value && new Date(String(c.expires_at)).getTime() > Date.now()) {
+      const cached = c.value as HomefeedBet[];
+      // ★캐시 히트도 진단에 남긴다 — 안 남기면 '오늘은 생성이 안 돌았다'와 '생성이 실패했다'가 구분되지 않는다.
+      lastHomebetDiag = { want, tryN: 0, round1: cached.length, round2: 0, dupDropped: 0, out: cached.length, failBy: {}, cached: true, at: new Date().toISOString() };
+      return cached;
+    }
   } catch { /* 캐시 조회 실패 — 생성으로 */ }
 
   // ★여유분을 뽑는다(2026-08-01 실측: 4장 요청에 1장만 나왔다).
@@ -138,8 +150,21 @@ export async function pickHomefeedBets(
   const dayIdx = Math.floor(Date.now() / 86400_000) % BET_TYPES.length;
   const tryN = Math.min(BET_TYPES.length, want + 3);
   const picked = Array.from({ length: tryN }, (_, i) => BET_TYPES[(dayIdx + i) % BET_TYPES.length]!);
-  const settled = await Promise.all(picked.map((bet) => genOne(apiKey, userId, sub, usedKeywords, bet, opts?.recentTitles)));
-  let got = settled.filter((x): x is HomefeedBet => x !== null);
+  // ★탈락 사유 회계(2026-08-04) — 종전엔 전부 console.error라 화면에서는 '홈판 2/5'만 보이고 왜인지는 알 수 없었다.
+  //  홈판 결품이 상시화된 지금, 사유 없는 결품 보고는 다음 사람에게 아무것도 넘겨주지 않는다.
+  const failBy: Record<string, number> = {};
+  const runRound = async (types: typeof picked, used: Set<string>) => {
+    const rs = await Promise.all(types.map((bet) => genOne(apiKey, userId, sub, used, bet, opts?.recentTitles)));
+    const cards: HomefeedBet[] = [];
+    const failedTypes: typeof picked = [];
+    rs.forEach((r, i) => {
+      if (r.card) cards.push(r.card);
+      else { failBy[r.fail ?? "?"] = (failBy[r.fail ?? "?"] ?? 0) + 1; failedTypes.push(types[i]!); }
+    });
+    return { cards, failedTypes };
+  };
+  const r1 = await runRound(picked, usedKeywords);
+  let got = r1.cards;
   // ★발행한 글과의 유사 판정을 '캐시에 넣기 전에' 한다(2026-08-02 실측 사고).
   //  종전엔 호출측(topics/route)이 캐시에서 꺼낸 뒤 걸렀다. 그러면 이렇게 된다:
   //   생성 4장 → 캐시 저장 → 호출측이 4장 전부 '이미 쓴'으로 탈락 → 홈판 0장
@@ -156,21 +181,45 @@ export async function pickHomefeedBets(
   //  유형이 달라도 소재는 겹칠 수 있다(계산 충격도 전기요금, 손해 공포 마감도 전기요금).
   //  같은 소재 두 장이 같은 날 나가면 네이버에서 서로 잡아먹고, 반복되면 유사문서로 읽힌다.
   //  앵커의 핵심어로 판정한다 — 표기가 달라도('7월 전기요금'·'전기요금 폭탄') 핵심어는 같다.
-  const deduped: HomefeedBet[] = [];
   const usedCores = new Set<string>();
-  for (const b of got) {
-    const core = coreKeywordOf(b.keyword);
-    if (usedCores.has(core)) {
-      console.log(`[homebet] 소재 중복 — 제외: ${b.betType} / ${b.keyword} (핵심어 ${core})`);
-      continue;
+  let dupDropped = 0;
+  const dedupeInto = (target: HomefeedBet[], cards: HomefeedBet[]) => {
+    for (const b of cards) {
+      const core = coreKeywordOf(b.keyword);
+      if (usedCores.has(core)) {
+        dupDropped += 1;
+        console.log(`[homebet] 소재 중복 — 제외: ${b.betType} / ${b.keyword} (핵심어 ${core})`);
+        continue;
+      }
+      usedCores.add(core);
+      target.push(b);
     }
-    usedCores.add(core);
-    deduped.push(b);
+  };
+  const deduped: HomefeedBet[] = [];
+  dedupeInto(deduped, got);
+
+  // ★보충 라운드(2026-08-04 유저 실측: want 5 → 2장). 1차에서 떨어진 유형을 '이번에 이미 잡힌 소재'를 제외 목록에
+  //  얹어 다시 부른다 — 유형 8종을 한 번씩 쓰고 끝내면, 절반이 떨어진 날은 그대로 결품으로 굳는다.
+  //  ★한 번만 더 한다(무한 재시도 금지 — 비용도 시간도 유저가 기다리는 응답 안에 있다).
+  let round2 = 0;
+  if (deduped.length < want && r1.failedTypes.length) {
+    const need = want - deduped.length;
+    const retryTypes = r1.failedTypes.slice(0, Math.min(r1.failedTypes.length, need + 1));
+    const used2 = new Set([...usedKeywords, ...deduped.map((b) => b.keyword)]); // 이번에 잡은 소재도 '이미 쓴 주제'로 넘긴다
+    const r2 = await runRound(retryTypes, used2);
+    round2 = r2.cards.length;
+    let fresh = r2.cards;
+    if (opts?.isDup) fresh = fresh.filter((b) => !opts.isDup!(b.title, b.keyword));
+    dedupeInto(deduped, fresh);
+    console.log(`[homebet] 보충 라운드 — 재시도 ${retryTypes.length}유형 → ${r2.cards.length}장 생성, 최종 ${deduped.length}/${want}`);
   }
   const out = deduped.slice(0, want);
-  if (got.length < tryN || deduped.length < got.length) {
-    const failed = picked.filter((_, i) => settled[i] == null).map((b) => b.key);
-    console.log(`[homebet] ${got.length}/${tryN} 생성 성공 — 실패 유형: ${failed.join(", ") || "없음"} / 소재중복 제외 ${got.length - deduped.length}장`);
+  lastHomebetDiag = {
+    want, tryN, round1: got.length, round2, dupDropped, out: out.length,
+    failBy, cached: false, at: new Date().toISOString(),
+  };
+  if (out.length < want || dupDropped > 0) {
+    console.log(`[homebet] ${out.length}/${want} — 1차 생성 ${got.length}/${tryN} · 보충 ${round2} · 소재중복 제외 ${dupDropped} · 탈락사유 ${JSON.stringify(failBy)}`);
   }
   if (out.length) {
     // ★부분 결과를 하루 종일 물고 있으면 안 된다(이번 사고의 직접 원인).
@@ -191,13 +240,13 @@ async function genOne(
   usedKeywords: Set<string>,
   bet: (typeof BET_TYPES)[number],
   recentTitles?: string[],
-): Promise<HomefeedBet | null> {
+): Promise<{ card: HomefeedBet | null; fail: string | null }> {
   try {
     // 뉴스 그라운딩이 필요한 유형인데 기사를 못 받았으면 그 장은 포기한다(지어낸 시황 방지).
     const newsBlock = await marketNewsBlock(bet.key);
     if (NEWS_GROUNDED[bet.key] && !newsBlock) {
       console.error("[homebet] 뉴스 없음 — 시장 유형 스킵:", bet.key);
-      return null;
+      return { card: null, fail: "뉴스없음" };
     }
     // ★실데이터 씨앗을 모든 유형에 준다(2026-08-03) — 뉴스 그라운딩은 일부 유형만 받아서
     //  나머지 유형이 일반론으로 흘렀다. 공고·공시는 유형과 무관하게 '지금 일'을 준다.
@@ -246,15 +295,15 @@ async function genOne(
     void logUsage({ userId, model: "claude-sonnet-4-6", kind: "homefeed_bet", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
     const text = res.content.map((x) => (x.type === "text" ? x.text : "")).join("");
     const m = text.match(/\{[\s\S]*\}/);
-    if (!m) return null;
+    if (!m) return { card: null, fail: "JSON없음" };
     const raw = JSON.parse(m[0]) as { keyword?: string; title?: string; thumbCopy?: string; angle?: string; src?: string };
-    if (!raw.keyword || !raw.title) return null;
+    if (!raw.keyword || !raw.title) return { card: null, fail: "필수필드누락" };
     // ★문구 게이트(2026-07-17 PTRP) — 감정 과잉·과장 어휘는 텍스트 카드에서 역효과 실증. 제목 위반=오늘 배팅 스킵, 문구 위반=키워드 폴백.
-    if (containsBanned(raw.title)) { console.error("[homebet] 금지어 제목 — 스킵:", raw.title.slice(0, 30)); return null; }
+    if (containsBanned(raw.title)) { console.error("[homebet] 금지어 제목 — 스킵:", raw.title.slice(0, 30)); return { card: null, fail: "금지어" }; }
     // ★투자권유 오인 — 주식 유형 추가(2026-08-01)로 생긴 경로. 제목·각도 어디에 있어도 그 장은 버린다.
     if (INVEST_PUSH_RE.test(raw.title) || INVEST_PUSH_RE.test(raw.angle ?? "")) {
       console.error("[homebet] 투자권유 오인 표현 — 스킵:", raw.title.slice(0, 30));
-      return null;
+      return { card: null, fail: "투자권유오인" };
     }
     // ★홈판 제목 규격 게이트(2026-08-02) — 프롬프트는 방향, 코드는 한계선.
     //  길이·부호 남용·키워드 실종을 여기서 잡는다. 걸리면 그 장만 버린다(다른 유형이 자리를 채운다).
@@ -262,12 +311,12 @@ async function genOne(
     const stale = staleMonthIn(`${raw.title} ${raw.keyword} ${raw.angle ?? ""}`);
     if (stale !== null) {
       console.error(`[homebet] 지난 달(${stale}월) 소재 — 스킵: ${raw.title.slice(0, 40)}`);
-      return null;
+      return { card: null, fail: `지난달소재(${stale}월)` };
     }
     const tv = validateHomefeedTitle(raw.title, raw.keyword);
     if (!tv.ok) {
       console.error(`[homebet] 제목 규격 위반(${tv.reason}) — 스킵: 앵커="${raw.keyword}" 제목="${raw.title.slice(0, 40)}"`);
-      return null;
+      return { card: null, fail: `제목규격(${tv.reason})` };
     }
     const thumbCopy0 = (raw.thumbCopy ?? raw.keyword).slice(0, 14);
     const out: HomefeedBet = {
@@ -287,9 +336,9 @@ async function genOne(
         `⑤★댓글 유도(2026-07-16 개정 — 댓글·체류가 홈피드 노출 점수): 마무리 직전에 독자 의견을 묻는 진짜 질문 1개를 자연스럽게 넣는다(예: "여러분은 무이자 할부, 한 달에 몇 번이나 쓰세요?") — '댓글 달아주세요' 류 부탁 금지, 대답하고 싶어지는 질문이어야 한다 ⑥크리에이터 시각 1곳 — 뻔한 정리가 아니라 이 데이터를 보는 나만의 해석 한 단락('제가 이 통계에서 진짜 놀란 건 평균이 아니라 격차예요' 결).`,
       ].join("\n"),
     };
-    return out;
+    return { card: out, fail: null };
   } catch (e) {
     console.error("[homebet] 생성 실패(이 장만 스킵):", e instanceof Error ? e.message : e);
-    return null;
+    return { card: null, fail: `예외: ${e instanceof Error ? e.message.slice(0, 40) : "?"}` };
   }
 }

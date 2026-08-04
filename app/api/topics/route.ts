@@ -18,7 +18,7 @@ import { amplifyForUser } from "@/lib/amplifyTopics";
 import { fetchKeywordStats, normalizeKey, fetchRelatedKeywords } from "@/lib/naverKeyword";
 import { poolScore, isBigPool } from "@/lib/trafficPool";
 import { finalGate, ANSWER_LOCKED_RE, EXPERIENCE_RE, AI_BRIEF_ENDED_RE, weekendAdjust } from "@/lib/cardFinalGate";
-import { pickHomefeedBets } from "@/lib/homefeedBet";
+import { pickHomefeedBets, lastHomebetDiag } from "@/lib/homefeedBet";
 import { collectPoolKeywords } from "@/lib/poolCollect";
 import { fetchNaverAutocomplete } from "@/lib/naverAutocomplete";
 import { checkRateLimit } from "@/lib/rateLimit";
@@ -748,6 +748,9 @@ export async function GET(req: Request) {
     // ★증식 진단을 함께 싣는다(2026-08-04 유저 요청) — '씨앗 19개인데 증식 4장'의 어디가 병목인지
     //  로그를 뒤지지 않고 주소 하나로 보이게 한다. 한 번 보고 고치면 되는 자리다.
     if (debugMode) diag.ampFunnel = lastAmplifyDiag;
+    // ★홈판 생성 진단도 함께(2026-08-04) — '홈판 2/5'가 화면에 뜨는데 이유는 서버 로그에만 있었다.
+    //  homeDrop(하류 탈락)이 전부 0인데 결품이면 원인은 생성 안쪽이다 — 그 안쪽을 여기서 보여준다.
+    if (debugMode) diag.homeBet = lastHomebetDiag;
     if (debugMode) diag.colShort = { ...colShort, homefeedGot: homeCards.length, homeDrop, trendRoom, served: tc.length, trendFunnel: funnel };
     return NextResponse.json(debugMode ? { topics: tc, diag: { ...diag, mode: "short", trendCards: tc.length } } : { topics: tc, ...(FF.perfLoop ? { ff: { perfLoop: true } } : {}) });
   }

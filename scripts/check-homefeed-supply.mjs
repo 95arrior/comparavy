@@ -81,7 +81,7 @@ console.log(fail ? `\n실패 ${fail}건` : "\n통과: 홈판 공급(캐시가 �
   ok(/정직하게 적는다/.test(hb), "★안 쓰고 적으면 거짓말이라고 못 박았다");
 
   // ★캐시 버전 — 안 올리면 24h 캐시가 옛 카드를 그대로 서빙한다(유저 실측: 카드 4장이 글자까지 동일했다)
-  ok(/homebet:v3:/.test(hb), "★실데이터 주입에 맞춰 캐시 버전을 올렸다");
+  ok(/homebet:v4:/.test(hb), "★생성 규칙(보충 라운드)이 바뀌어 캐시 버전을 올렸다 — 안 올리면 미달이 굳는다");
 
   const tr = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
   ok((tr.match(/sourceTitle: bet\.sourceTitle/g) ?? []).length === 2, "★홈판 카드 두 경로 모두 출처를 넘긴다");
@@ -90,6 +90,25 @@ console.log(fail ? `\n실패 ${fail}건` : "\n통과: 홈판 공급(캐시가 �
   const home = fs.readFileSync(new URL("../components/dashboard/Home.tsx", import.meta.url), "utf-8");
   ok(/topic\.tag === "홈판"/.test(home) && /근거 이슈:/.test(home), "★홈판 카드가 화면에서 출처를 렌더한다");
   ok(/실데이터 없이 만든 카드/.test(home), "★출처가 없으면 없다고 표시한다");
+}
+
+// ★결품의 이유가 화면에 보여야 한다(2026-08-04 유저 실측: 홈판 want 5 → 2장, homeDrop은 전부 0).
+//  하류 탈락이 0인데 결품이면 원인은 생성 안쪽이다. 그런데 그 안쪽은 전부 console.error뿐이라
+//  서버 로그를 뒤지지 않고는 '뉴스 없음'인지 '제목 규격'인지 '소재 중복'인지 알 수 없었다.
+{
+  const hb = fs.readFileSync(new URL("../lib/homefeedBet.ts", import.meta.url), "utf-8");
+  ok(/export let lastHomebetDiag/.test(hb), "★홈판 생성 진단을 남긴다");
+  ok(/fail: "뉴스없음"/.test(hb) && /fail: `제목규격/.test(hb) && /fail: "JSON없음"/.test(hb), "★탈락 사유를 종류별로 센다");
+  ok(/failBy\[r\.fail/.test(hb), "★사유별 집계가 진단에 담긴다");
+  ok(/cached: true/.test(hb), "★캐시 히트도 남긴다('생성이 안 돌았다'와 '생성이 실패했다'는 다르다)");
+
+  // ★보충 라운드 — 유형 8종을 한 번씩 쓰고 끝내면 절반이 떨어진 날은 그대로 결품이 된다
+  ok(/보충 라운드/.test(hb) && /const r2 = await runRound\(retryTypes, used2\)/.test(hb), "★부족하면 떨어진 유형을 한 번 더 시도한다");
+  ok(/\.\.\.deduped\.map\(\(b\) => b\.keyword\)/.test(hb), "★재시도엔 이번에 잡은 소재를 제외 목록에 얹는다(같은 소재 재생산 금지)");
+  ok(!/while\s*\(/.test(hb.split("보충 라운드")[1] ?? ""), "★재시도는 한 번만(무한 루프 금지 — 유저가 기다리는 응답 안이다)");
+
+  const tr = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
+  ok(/diag\.homeBet = lastHomebetDiag/.test(tr), "★debug 응답에 실린다(주소 하나로 판별)");
 }
 
 process.exit(fail ? 1 : 0);
