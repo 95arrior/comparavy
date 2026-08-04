@@ -323,17 +323,27 @@ export function eligibilityTableIssues(html: string): EligibilityIssue[] {
 //  ★유저 확정: 설명 문장 없이, 연관 판정 없이, 2~3개 고정.
 //   근거: 링크 카드는 네이버 편집기에서 본문 분량을 안 먹는다 — 넣어서 잃을 게 없다.
 //   그리고 재테크 블로그의 최근 글은 어차피 대부분 재테크라, 판정 없이 뽑아도 크게 안 어긋난다.
+//  ★2026-08-04 재발 — 그 '보장'이 모델에게 또 뚫렸다(유저 실물: 링크 자리에 대괄호 원문 3줄).
+//   모델이 URL 없는 껍데기 `[마무리관련글: | 제목]`을 세 개 써 놨고, 개수만 세던 아래 코드가
+//   "이미 2개 이상 있으니 손대지 않는다"로 판단해 진짜 링크를 붙이지 않았다.
+//   URL이 없으니 렌더러의 변환 정규식(https? 필수)도 못 잡아 마커가 원문 그대로 독자에게 갔다.
+//  ★그래서 정책을 바꾼다: 이 자리의 마커는 100% 코드가 만든다. 모델이 쓴 마무리 마커는
+//   유효하든 아니든 전부 버린다(프롬프트가 이미 '쓰지 마라'인 자리다 — 두 곳이 다투면 지는 쪽은 늘 독자).
+/** 본문에서 마무리 관련글 마커를 문단째 걷어낸다(모델이 쓴 것 = 전부 무효). */
+export function stripFinalRelatedMarkers(html: string): string {
+  return String(html || "")
+    // 마커만 든 문단은 문단째로 — 빈 <p>를 남기면 여백만 뜬다
+    .replace(/<p[^>]*>\s*\[마무리관련글:[^\]]*\]\s*<\/p>/g, "")
+    .replace(/\[마무리관련글:[^\]]*\]/g, "");
+}
+
 export function ensureRelatedLinks(html: string, posts: { title: string; url: string }[]): string {
-  const h = String(html || "");
+  const h = stripFinalRelatedMarkers(html);
   if (!posts.length) return h;
-  const existing = (h.match(/\[마무리관련글:/g) ?? []).length;
-  if (existing >= 2) return h; // 모델이 이미 충분히 넣었으면 손대지 않는다
-  // 이미 걸린 URL은 다시 넣지 않는다 — 같은 글이 두 번 나오면 안 된다(유저 지적).
-  const used = new Set([...h.matchAll(/\[마무리관련글:\s*(https?:[^\s|\]]+)/g)].map((m) => m[1].split("?")[0]));
   const add = posts
-    .filter((p) => p.url && !used.has(p.url.split("?")[0]))
-    .filter((p, i, arr) => arr.findIndex((x) => x.url.split("?")[0] === p.url.split("?")[0]) === i)
-    .slice(0, Math.max(0, 3 - existing));
+    .filter((p) => /^https?:\/\//i.test(String(p.url || ""))) // 주소가 없는 후보는 링크가 될 수 없다
+    .filter((p, i, arr) => arr.findIndex((x) => x.url.split("?")[0] === p.url.split("?")[0]) === i) // 같은 글 두 번 금지
+    .slice(0, 3);
   if (!add.length) return h;
   const markers = add.map((p) => `<p>[마무리관련글: ${p.url} | ${String(p.title).slice(0, 60)}]</p>`).join("");
   return `${h}\n${markers}`;

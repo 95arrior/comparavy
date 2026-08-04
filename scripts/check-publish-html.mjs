@@ -99,5 +99,20 @@ const tagLeak = buildRichHtml({ title: "t", bodyHtml: "<p><b>유자 확인이 </
 ok(!/[  ]<\/(b|mark|span)>?<br/i.test(tagLeak) && !/(&nbsp;|[  ])+<br/i.test(tagLeak), "닫는 태그·nbsp 낀 개행 공백도 청소");
 ok(!/[  ](<\/(?:b|span|mark)>)*<\/p>/.test(tagLeak), "문단 끝 공백 청소");
 
+// ★함께 보면 좋은 글 — 렌더까지 살아 있는가(2026-08-04 유저 실물: 글 끝에 대괄호 원문 3줄)
+{
+  const url = "https://blog.naver.com/pigtong2025/223812345678";
+  const marked = { title: "t", bodyHtml: `<p>본문 문장이 여기에 있습니다.</p><p>[마무리관련글: ${url} | 출산지원금 타임라인]</p>` };
+  const withOwn = buildRichHtml({ ...marked, ownNaverBlogId: "pigtong2025" });
+  ok(/함께 보면 좋은 글/.test(withOwn) && withOwn.includes(url), "관련글 마커 → 3층 블록(내 블로그 아이디 있을 때)");
+  // ★실측 원인: 렌더가 URL 정화를 한 번 더 돌리며 주소를 지웠고, 주소 잃은 마커는 변환되지 않았다.
+  const noOwn = buildRichHtml(marked); // 프로필에 naver_blog_id가 없는 경우
+  ok(/함께 보면 좋은 글/.test(noOwn) && noOwn.includes(url), "★내 블로그 아이디가 없어도 마커 주소는 살아남는다");
+  ok(!/\[마무리관련글:/.test(noOwn), "★마커 원문이 독자에게 노출되지 않는다");
+  // 이미 저장된 옛 글의 깨진 마커 — 링크는 못 만들어도 원문 노출은 절대 없다
+  const broken = buildRichHtml({ title: "t", bodyHtml: "<p>본문 문장이 여기에 있습니다.</p><p>[마무리관련글: | 주소 없는 옛 글]</p>" });
+  ok(!/\[마무리관련글:/.test(broken) && !/주소 없는 옛 글/.test(broken), "★깨진 마커는 문단째 사라진다(원문 노출 금지)");
+}
+
 console.log(`\n검증: ${pass} 통과, ${fail} 실패`);
 process.exit(fail ? 1 : 0);

@@ -465,12 +465,16 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   ok(!/연결 이유|유리합니다/.test(r), "★설명 문장을 넣지 않는다");
   ok(ensureRelatedLinks(body, []) === body, "★후보가 없으면 그대로 둔다");
 
-  const has2 = body + "<p>[마무리관련글: https://a/1 | 제목1]</p><p>[마무리관련글: https://a/2 | 제목2]</p>";
-  ok(ensureRelatedLinks(has2, posts) === has2, "★모델이 2개 넣었으면 손대지 않는다(과교정 방어)");
-  const has1 = body + "<p>[마무리관련글: https://blog.naver.com/x/1 | 이미 있음]</p>";
-  const r2 = ensureRelatedLinks(has1, posts);
-  ok((r2.match(/\[마무리관련글:/g) ?? []).length === 3, "★1개면 2개 더 채운다");
-  ok(!/x\/1 \| 연말정산/.test(r2), "★이미 걸린 URL은 다시 안 넣는다");
+  // ★2026-08-04 실측 재발 — 모델이 URL 없는 껍데기를 3개 써 놓자 '이미 있음'으로 세어 코드가 손을 뗐고,
+  //  주소 없는 마커는 렌더 변환도 못 통과해 대괄호 원문이 독자 화면에 그대로 노출됐다.
+  const husk = body + "<p>[마무리관련글: | 출산지원금 타임라인]</p><p>[마무리관련글: | 배달 라이더 수입]</p><p>[마무리관련글: | 정부지원금 대출]</p>";
+  const r3 = ensureRelatedLinks(husk, posts);
+  ok(!/\[마무리관련글:\s*\|/.test(r3), "★URL 없는 껍데기 마커는 남지 않는다(실측 사고)");
+  ok((r3.match(/\[마무리관련글: https/g) ?? []).length === 3, "★껍데기를 걷어내고 진짜 주소 3개를 붙인다");
+  const modelMade = body + "<p>[마무리관련글: https://a/1 | 제목1]</p><p>[마무리관련글: https://a/2 | 제목2]</p>";
+  const r4 = ensureRelatedLinks(modelMade, posts);
+  ok(!/https:\/\/a\/1/.test(r4) && (r4.match(/\[마무리관련글:/g) ?? []).length === 3, "★모델이 쓴 마커는 유효해도 버리고 코드가 다시 만든다(자리의 주인은 하나)");
+  ok(!/<p>\s*<\/p>/.test(r4), "★마커만 있던 문단은 문단째 걷어낸다(빈 여백 금지)");
 
   // ★배선 — 만들어놓고 안 부르면 아무 일도 안 일어난다(오늘 다섯 번 겪었다)
   const gr = fs.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8");

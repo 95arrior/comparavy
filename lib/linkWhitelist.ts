@@ -56,8 +56,14 @@ export function sanitizeUrls(html: string, opts?: { allowNaverBlogId?: string | 
   let replaced = 0;
   const fabricated: string[] = [];
   // ★태그 속성(src/href) 내부는 구조적으로 보호 — 마스킹 후 본문 텍스트 URL만 검사, 마지막에 복원.
+  // ★내부링크 마커도 같이 보호(2026-08-04 실측): 마커 URL은 모델이 아니라 코드가 DB(articles.naver_url)에서
+  //  넣는다 — 지어낸 주소일 수 없다. 그런데 화면 렌더(formatBody)가 이 함수를 한 번 더 돌리면서,
+  //  프로필에 naver_blog_id가 없거나 주소 형태가 화이트리스트 모양(blog.naver.com/{내아이디}/…)과 다르면
+  //  주소만 지워졌고, 주소 잃은 마커는 변환 정규식을 못 통과해 대괄호 원문이 독자에게 노출됐다.
   const masks: string[] = [];
-  const masked = html.replace(/(src|href)="[^"]*"/gi, (m) => { masks.push(m); return `__ATTR${masks.length - 1}__`; });
+  const masked = html
+    .replace(/\[(?:마무리)?관련글:[^\]]*\]/g, (m) => { masks.push(m); return `__ATTR${masks.length - 1}__`; })
+    .replace(/(src|href)="[^"]*"/gi, (m) => { masks.push(m); return `__ATTR${masks.length - 1}__`; });
   const out0 = masked.replace(URL_RE, (raw, ...rest) => {
     const offset = rest[rest.length - 2] as number; const whole = rest[rest.length - 1] as string;
     const after = whole.slice(offset + raw.length, offset + raw.length + 24);
