@@ -91,7 +91,7 @@ console.log(fail ? `\n실패 ${fail}건` : "\n통과: 홈판 공급(캐시가 �
 
   // ★화면까지 닿는가 — 홈판은 isTrend가 false라 기존 출처 분기를 못 탔다(고친 자리)
   const home = fs.readFileSync(new URL("../components/dashboard/Home.tsx", import.meta.url), "utf-8");
-  ok(/topic\.tag === "홈판"/.test(home) && /근거 이슈:/.test(home), "★홈판 카드가 화면에서 출처를 렌더한다");
+  ok(/topic\.tag === "홈판"/.test(home) && /수확 씨앗:/.test(home), "★홈판 카드가 화면에서 씨앗(키워드)을 렌더한다");
   ok(/실데이터 없이 만든 카드/.test(home), "★출처가 없으면 없다고 표시한다");
 }
 
