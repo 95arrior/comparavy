@@ -228,9 +228,9 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
           if (isUnsafeKeyword(kw, brandOk) || scamLoan(kw)) continue;
           seen.add(kw);
           added += 1;
-          rows.push({ category, keyword: kw, title: `${kw}, 지금 챙기면 되는 것`, news_context: `[브랜드 버즈] 네이버 자동완성에서 '${b.brand}' 뒤에 지금 실제로 붙어 검색되는 말이다 — 진행 중인 이벤트·혜택일 가능성이 높다. ★확인되지 않은 금액·기간·당첨 조건을 지어내지 마라. 공식 공지에서 확인되는 사실만 쓰고, 확인이 안 되면 '공식 앱·홈페이지에서 확인' 톤으로 남긴다. 이 글의 임무는 '지금 뭘 하면 되는지'를 순서로 주는 것이다.`, longtails: [] as Longtail[], source: "rising", created_at: new Date().toISOString(), expires_at: expires });
+          rows.push({ category, keyword: kw, title: `${kw}, 지금 챙기면 되는 것`, news_context: `[브랜드 버즈${b.momentum != null ? ` · 모멘텀 ${b.momentum}배, 피크 ${b.peakDaysAgo}일 전` : ""}] 네이버 자동완성에서 '${b.brand}' 뒤에 지금 실제로 붙어 검색되는 말이다 — 진행 중인 이벤트·혜택일 가능성이 높다. ★확인되지 않은 금액·기간·당첨 조건을 지어내지 마라. 공식 공지에서 확인되는 사실만 쓰고, 확인이 안 되면 '공식 앱·홈페이지에서 확인' 톤으로 남긴다. 이 글의 임무는 '지금 뭘 하면 되는지'를 순서로 주는 것이다.`, longtails: [] as Longtail[], source: "rising", created_at: new Date().toISOString(), expires_at: expires });
         }
-        if (added) console.log(`[brand-buzz] ${category}: ${added}개 주입 — ${buzz.slice(0, 3).map((x) => x.keyword).join(", ")}`);
+        if (added) console.log(`[brand-buzz] ${category}: ${added}개 주입 — ${buzz.slice(0, 3).map((x) => `${x.keyword}(모멘텀 ${x.momentum ?? "?"})`).join(", ")}`);
       }
     } catch { /* 수확 실패는 조용히 — 기존 씨앗 파이프는 그대로 돈다 */ }
 

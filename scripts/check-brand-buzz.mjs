@@ -53,6 +53,18 @@ console.log("\n③-2 ★진짜 진범 — 브랜드명이 안전 게이트에 �
   ok((tt2.match(/isUnsafeKeyword\([^)]*brandOk\)/g) ?? []).length >= 5, "★합성·급상승·브랜드버즈·롱테일 전 지점에 같은 판정을 건다");
 }
 
+console.log("\n③-3 선도 — '지금 열려 있는 창'만(2026-08-05 유저: 일주일 지나 나오면 선점 실패):");
+{
+  const src = fs.readFileSync(new URL("../lib/brandBuzz.ts", import.meta.url), "utf-8");
+  ok(/fetchKeywordMomentum/.test(src), "★데이터랩 일별 추이로 선도를 잰다(월 단위로는 일주일이 한 점에 뭉개진다)");
+  ok(/MOMENTUM_MIN = 0\.\d+/.test(src) && /PEAK_MAX_DAYS = \d+/.test(src), "★기준 둘 — 꺾였는가 / 피크가 오래됐는가");
+  ok(/판정 불가 = 통과/.test(src), "★재는 도구가 죽어도 수확은 멈추지 않는다");
+  ok(/선점 창 닫힘 — 제외/.test(src), "★버린 이유를 모멘텀·피크와 함께 남긴다");
+  const dl = fs.readFileSync(new URL("../lib/naverDatalab.ts", import.meta.url), "utf-8");
+  ok(/timeUnit: "date"/.test(dl), "★일 단위로 조회한다");
+  ok(/AbortSignal\.timeout\(/.test(dl), "타임아웃이 있다");
+}
+
 console.log("\n④ 배선 — 씨앗으로 실제로 들어가는가:");
 {
   const tt = fs.readFileSync(new URL("../lib/trendTopics.ts", import.meta.url), "utf-8");

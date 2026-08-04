@@ -84,3 +84,53 @@ export async function fetchTrend(keywords: string[]): Promise<TrendResult> {
 
   return { series, items };
 }
+
+// ★키워드 모멘텀(2026-08-05 유저 지적: "케이뱅크 황금캡슐, 일주일 지나 지금 나오면 선점 실패").
+//  브랜드 이벤트는 '지금 열려 있는가'가 전부다. 자동완성에 남아 있다고 지금 뜨는 건 아니다 —
+//  피크가 지난 말은 이미 남들이 다 썼고, 우리가 늦게 들어가면 문서 수만 늘린다.
+//  ★그래서 일별 추이로 잰다: 최근 3일 평균 vs 그 앞 7일 평균. 오르는 중이면 창이 열려 있고,
+//   꺾였으면 닫힌 것이다. 월 단위(fetchTrend)로는 이 판별이 불가능하다 — 일주일이 한 점에 뭉개진다.
+export interface Momentum {
+  recent: number;      // 최근 3일 평균 비율
+  prior: number;       // 그 앞 7일 평균 비율
+  ratio: number;       // recent / prior (1보다 크면 오르는 중)
+  peakDaysAgo: number; // 최고점이 며칠 전인가(0=오늘)
+}
+export async function fetchKeywordMomentum(keywords: string[]): Promise<Map<string, Momentum>> {
+  const out = new Map<string, Momentum>();
+  const picks = Array.from(new Set(keywords.map((k) => k.trim()).filter(Boolean))).slice(0, 5);
+  if (!picks.length || !hasDatalabEnv()) return out; // 키 없으면 판정 불가 — 호출측이 통과로 처리한다
+  const end = new Date();
+  const start = new Date(end.getTime() - 20 * 86400_000);
+  try {
+    const res = await fetch(ENDPOINT, {
+      method: "POST",
+      headers: {
+        "X-Naver-Client-Id": process.env.NAVER_DATALAB_CLIENT_ID ?? "",
+        "X-Naver-Client-Secret": process.env.NAVER_DATALAB_SECRET ?? "",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        startDate: ymd(start), endDate: ymd(end), timeUnit: "date",
+        keywordGroups: picks.map((k) => ({ groupName: k, keywords: [k] })),
+      }),
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!res.ok) return out;
+    const json = (await res.json()) as { results?: { title: string; data: { period: string; ratio: number }[] }[] };
+    for (const r of json.results ?? []) {
+      const data = (r.data ?? []).slice().sort((a, b) => a.period.localeCompare(b.period));
+      if (data.length < 5) continue;
+      const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
+      const recent = avg(data.slice(-3).map((d) => d.ratio));
+      const prior = avg(data.slice(-10, -3).map((d) => d.ratio));
+      const peakIdx = data.reduce((best, d, i) => (d.ratio > data[best]!.ratio ? i : best), 0);
+      out.set(r.title, {
+        recent, prior,
+        ratio: prior > 0 ? recent / prior : (recent > 0 ? 99 : 0),
+        peakDaysAgo: data.length - 1 - peakIdx,
+      });
+    }
+  } catch { /* 실패 = 판정 불가 — 호출측이 통과로 처리한다(수확을 막지 않는다) */ }
+  return out;
+}

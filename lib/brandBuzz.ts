@@ -13,6 +13,7 @@
 //   '케이뱅크'를 치면 '케이뱅크 황금캡슐'이 뜬다 — 그 자체가 실시간 신호다(무료·무제한).
 //   그래서 브랜드를 씨앗으로 자동완성을 돌려, 이벤트·혜택 신호가 붙은 것을 글감으로 들인다.
 import { fetchNaverAutocomplete } from "./naverAutocomplete";
+import { fetchKeywordMomentum } from "./naverDatalab";
 
 // 경제·재테크 채널의 브랜드 축. ★하드코딩이지만 이유가 있다 — 브랜드는 분야마다 다르고,
 //  '지금 뜨는 이벤트'는 브랜드 없이는 검색어가 성립하지 않는다(사람은 '케이뱅크'부터 친다).
@@ -30,7 +31,14 @@ const BUZZ_RE = /(이벤트|캡슐|룰렛|출석|퀴즈|응모|당첨|쿠폰|캐
 // 대출 유인·사칭 계열은 아예 배제(3원칙의 법적 안전 — 여기서도 같은 선을 지킨다)
 const BUZZ_BLOCK = /(대출|한도조회|신용점수|연체|회생|파산)/;
 
-export interface BrandBuzz { keyword: string; brand: string }
+export interface BrandBuzz { keyword: string; brand: string; momentum?: number; peakDaysAgo?: number }
+
+// ★선도 기준(2026-08-05 유저: "일주일 지나 지금 나오면 선점 실패").
+//  자동완성에 남아 있다 ≠ 지금 뜨는 중이다. 피크가 지난 이벤트는 이미 남들이 다 썼다.
+//  최근 3일이 그 앞 7일의 이 비율 밑으로 떨어졌으면 창이 닫힌 것으로 본다.
+const MOMENTUM_MIN = 0.75;
+//  그리고 최고점이 이 날짜보다 오래됐으면, 지금 오르는 것처럼 보여도 늦은 것이다.
+const PEAK_MAX_DAYS = 6;
 
 /**
  * 브랜드별 자동완성에서 '이벤트·혜택' 신호가 붙은 실제 검색어를 거둔다.
@@ -62,6 +70,28 @@ export async function harvestBrandBuzz(category: string, limit = 6, budgetMs = 1
     }
     await new Promise((r) => setTimeout(r, 120)); // 예의 있는 간격
   }
+  if (!out.length) return out;
+
+  // ★선도 판정 — 데이터랩 일별 추이로 '지금 열려 있는 창'만 남긴다(한 번의 호출로 최대 5개).
+  //  ★판정 불가(키 없음·API 실패)는 통과로 둔다 — 재는 도구가 죽었다고 수확까지 멈추면 안 된다.
+  try {
+    const mo = await fetchKeywordMomentum(out.map((b) => b.keyword));
+    if (mo.size) {
+      const kept: BrandBuzz[] = [];
+      for (const b of out) {
+        const m = mo.get(b.keyword);
+        if (!m) { kept.push(b); continue; } // 판정 불가 = 통과
+        b.momentum = Math.round(m.ratio * 100) / 100;
+        b.peakDaysAgo = m.peakDaysAgo;
+        if (m.ratio < MOMENTUM_MIN || m.peakDaysAgo > PEAK_MAX_DAYS) {
+          console.log(`[brand-buzz] 선점 창 닫힘 — 제외: ${b.keyword} (모멘텀 ${b.momentum}, 피크 ${m.peakDaysAgo}일 전)`);
+          continue;
+        }
+        kept.push(b);
+      }
+      return kept.slice(0, limit);
+    }
+  } catch { /* 판정 실패 = 전부 통과(수확을 막지 않는다) */ }
   return out.slice(0, limit);
 }
 
