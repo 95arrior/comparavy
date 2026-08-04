@@ -9,7 +9,7 @@ import { audienceOf, AUDIENCE_ALL } from "@/lib/audience";
 import { isUnsafeKeyword, mentionsForeignRegion } from "@/lib/keywordSafety";
 import { regionLevel, buildLocalSeeds, addressRegionTiers } from "@/lib/region";
 import { bloggerType, type BloggerType } from "@/lib/bloggerTypes";
-import { compFromLabel, compFromBlogTotal, filledStarsFromData, type Comp } from "@/lib/topicScore";
+import { compFromLabel, compFromBlogTotal, filledStarsFromData, applyDocCut, DOC_HARD_MAX, type Comp } from "@/lib/topicScore";
 import { fetchBlogTotal } from "@/lib/naverBlogSearch";
 import { resolveLocalPlan, generateLocalKeywords, generateAudienceTopics, type LocalScope } from "@/lib/aiSeeds";
 import { buildPoolForSub } from "@/lib/keywordPool";
@@ -443,7 +443,9 @@ export async function GET(req: Request) {
       // ★폴백 상한(2026-07-15 실측: 신생기 보드에 3,090·4,480 혼입) — 범위 해제 폴백도 밴드 상한의 1.5배까지만(★2026-07-20 실측: 확장기 폴백 3배=9만 — 8.8만 헤드가 보드에 노출, 사다리 무력화).
       //  상한 자체가 없으면 풀이 얇은 날 8만짜리 헤드가 그대로 샌다(밴드 사다리 무력화).
       q = ranged ? q.gte("monthly_searches", tb.volMin).lte("monthly_searches", tb.volMax) : q.gte("monthly_searches", Math.min(1000, tb.volMin)).lte("monthly_searches", (tb.volMax ?? 30000) * 1.5);
-      if (tb.blogTotalMax != null) q = q.or(`blog_total.is.null,blog_total.lt.${tb.blogTotalMax}`); // 미측정(null)은 통과 — 측정 후 별점이 거른다
+      // ★미측정(null)은 여기서 통과시킨다 — 실제 컷은 측정 직후 applyDocCut이 건다(2026-08-04).
+      //  종전 주석은 "측정 후 별점이 거른다"였는데, 별점은 정렬 가중치일 뿐 아무것도 거르지 않았다.
+      if (tb.blogTotalMax != null) q = q.or(`blog_total.is.null,blog_total.lt.${tb.blogTotalMax}`);
     } else if (adminBest) {
       // 최상급 = '이길 수 있는 최상' — 메가 키워드(검색량 무제한)는 문서수도 메가라 제외. 적정 상한을 둔다.
       q = ranged ? q.gte("monthly_searches", 2000).lte("monthly_searches", 30000) : q.gte("monthly_searches", 1000).lte("monthly_searches", 45000); // ★상한 봉쇄(2026-07-20) — 관리자 모드 폴백도 무상한 금지
@@ -1034,7 +1036,7 @@ export async function GET(req: Request) {
     onFit: onFit.length,
     fitBase: fitBase.length,
   };
-  const fitTop = fitBase
+  let fitTop = fitBase
     .sort((a, b) => (b.t?.fit ?? 1) - (a.t?.fit ?? 1))
     .slice(0, adminBest ? PICK + 14 : PICK + 6);
 
@@ -1049,6 +1051,26 @@ export async function GET(req: Request) {
       try { await pool.from("keyword_pool").update({ blog_total: total }).eq("keyword", r.keyword); } catch { /* 캐싱 실패해도 진행 */ }
     }),
   );
+
+  // ★밴드 문서수 컷(2026-08-04 유저 실측에서 검거 — 신생 보드에 문서수 29,407·40,867·49,280 카드가 섰다)
+  //  종전 주석은 "미측정(null)은 통과 — 측정 후 별점이 거른다"였는데, 별점은 거르지 않는다. 정렬 가중치일 뿐이다.
+  //  ★사고의 전체 그림: 쿼리 시점엔 blog_total이 null이라 밴드 상한을 통과 → 바로 위에서 그 자리에서 측정 →
+  //   4만짜리가 붙었는데 컷이 없어 그대로 화면에 섰다. 그리고 측정값이 DB에 캐시되니 나중에 재면 위반 0건으로
+  //   보인다(pool-quality가 "이 경로는 깨끗하다"고 답한 이유 — 위반은 쿼리 뒤에 만들어진다).
+  //  ★유저 확정 정책: 상한 초과는 탈락시키되, 자리가 남으면 '문서수 적은 순'으로만 보충한다(보드는 비우지 않는다).
+  //   단 절대 상한 위는 무조건 제외 — 신생 계정이 못 이기는 판이면 자리를 채울 값어치가 없다.
+  //  ★판정은 lib/topicScore.applyDocCut 한 곳에만 둔다 — 같은 규칙을 두 곳에서 계산하면 반드시 어긋난다.
+  {
+    const tbCut = FF.tierBands ? TIER_BANDS[tierInfo?.tier ?? "SEEDLING"] : null;
+    const docMax = tbCut?.blogTotalMax ?? null;
+    if (docMax != null) {
+      const need = (tailMode === "long" ? 10 : PICK) + 4; // 뒤 단계(중복·유사 배제)가 깎을 몫까지 여유
+      const cut = applyDocCut(fitTop, (x) => x.r.blog_total, { docMax, need });
+      if (debugMode) diag.docCut = { docMax, hardMax: DOC_HARD_MAX, before: fitTop.length, within: cut.within, over: cut.over, refilled: cut.refilled, dropped: cut.dropped, refillMax: cut.kept.reduce((m, x) => Math.max(m, x.r.blog_total ?? 0), 0) };
+      if (cut.dropped > 0 || cut.refilled > 0) console.log(`[doc-cut] tier=${tierInfo?.tier ?? "SEEDLING"} max=${docMax} 통과 ${cut.within} · 보충 ${cut.refilled} · 탈락 ${cut.dropped}`);
+      fitTop = cut.kept;
+    }
+  }
 
   // ★핵심 축 유지 — 네이버 공식 '주제 전문성·일관성': 초반엔 한 우물이 전문 출처 인식에 유리.
   // 유저가 이미 쓴 글 키워드의 토큰(불용어 제외)을 축으로 삼아, 같은 축 후보에 가산점(별 반 개 수준 — 선점을 뒤집진 않음).

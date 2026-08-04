@@ -46,6 +46,27 @@ export const starsFor = (vol: number, comp: Comp): string => {
   return "★".repeat(filled) + "☆".repeat(5 - filled);
 };
 
+// ★밴드 문서수 컷(2026-08-04 유저 실측·확정) — 신생 보드에 문서수 29,407·40,867·49,280 카드가 섰다.
+//  원인: 밴드 상한은 쿼리에만 있었고(미측정 null은 통과), 서빙 직전에 측정된 값은 별점 '정렬'에만 쓰였다.
+//  측정해 놓고 안 거르면 재는 의미가 없다 — 측정값은 컷이어야 한다.
+//  ★정책: 상한 초과는 탈락. 단 자리가 남으면 '문서수 적은 순'으로만 보충한다(보드를 비우지 않는다).
+//   절대 상한(hardMax) 위는 보충 대상도 아니다 — 신생 계정이 못 이기는 판은 자리를 채울 값어치가 없다.
+//  ★미측정(null)은 통과 — 모르는 것을 벌하지 않는다(대신 백필로 미측정을 줄이는 게 정공법).
+export const DOC_HARD_MAX = 10_000;
+export function applyDocCut<T>(
+  items: T[],
+  docTotal: (x: T) => number | null | undefined,
+  opts: { docMax: number; need: number; hardMax?: number },
+): { kept: T[]; within: number; over: number; refilled: number; dropped: number } {
+  const hardMax = opts.hardMax ?? DOC_HARD_MAX;
+  const within = items.filter((x) => docTotal(x) == null || (docTotal(x) as number) < opts.docMax);
+  const over = items
+    .filter((x) => { const d = docTotal(x); return d != null && d >= opts.docMax && d < hardMax; })
+    .sort((a, b) => (docTotal(a) ?? 0) - (docTotal(b) ?? 0)); // 그나마 이길 만한 순
+  const refill = over.slice(0, Math.max(0, opts.need - within.length));
+  return { kept: [...within, ...refill], within: within.length, over: over.length, refilled: refill.length, dropped: items.length - within.length - refill.length };
+}
+
 // 네이버 경쟁도 라벨(낮음/중간/높음) → Comp.
 export const compFromLabel = (label: string | null | undefined): Comp => {
   const s = (label ?? "").trim();
