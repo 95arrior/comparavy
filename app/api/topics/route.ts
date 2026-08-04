@@ -138,6 +138,25 @@ function pickDiverse(rows: PoolRow[], n: number, rnd: () => number = Math.random
   return out;
 }
 
+// ★원천 칸 — 카드가 어느 원천에서 왔는지 한 단어로. 화면·진단이 같은 이름을 쓴다.
+//  유저 요청(2026-08-05): "청약홈 칸에 글감이 있고 없고를 알고, 인터넷엔 이슈인데 없으면 바로 캐치"
+const SLOT_LABEL: Record<string, string> = {
+  calendar: "캘린더", applyhome: "청약", gov24: "정부지원", bizinfo: "기업지원",
+  dart: "공시", rising: "실시간", news: "뉴스", season: "시즌", discover: "발굴", homebet: "홈판",
+};
+function slotOf(c: { tag?: string; sel?: unknown; risingSeed?: boolean }): string {
+  if (c.tag === "홈판") return "홈판";
+  if (c.risingSeed === true) return "실시간";
+  const src = (c.sel as { seedSource?: string } | undefined)?.seedSource ?? "";
+  return SLOT_LABEL[src] ?? (src || "기타");
+}
+function slotCount(cards: { tag?: string; sel?: unknown; risingSeed?: boolean }[]): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const label of Object.values(SLOT_LABEL)) out[label] = 0; // 0인 칸도 보여야 '없다'가 보인다
+  for (const c of cards) { const k = slotOf(c); out[k] = (out[k] ?? 0) + 1; }
+  return out;
+}
+
 export async function GET(req: Request) {
   // 인증·프로필은 유저 클라이언트(RLS) — 본인 확인 + 본인 프로필만 읽음.
   const supabase = await createSupabaseServerClient();
@@ -384,6 +403,7 @@ export async function GET(req: Request) {
           // ★급상승 표식은 성과루프 플래그와 무관하게 카드에 직접 단다 — sel(계측용)에만 두면
           //  FF_PERF_LOOP가 꺼지는 순간 실시간 레인이 통째로 죽는다(상관없는 스위치에 목숨을 걸지 않는다).
           ...(src === "rising" ? { risingSeed: true } : {}),
+          ...({ slot: SLOT_LABEL[src ?? "news"] ?? "뉴스" }), // ★화면이 칸으로 묶는 단위(스프레드 — 타입 초과 속성 검사 회피)
           // ★씨앗 키워드를 화면까지 올린다(2026-08-05 유저: "어떤 키워드로 생성됐는지 그 키워드만 보여줘")
           ...((t as { seedKeyword?: string }).seedKeyword ? { seedKeyword: (t as { seedKeyword?: string }).seedKeyword } : {}),
           ...(FF.perfLoop ? { sel: (() => { const bf = (t as { brief?: { intent?: string; opening?: string; flow?: string } }).brief; return { species: "trend", seedSource: src ?? "news", sourceTitle: (t as { sourceTitle?: string | null }).sourceTitle ?? null, cluster: clusterKey(t.keyword), hookKey: (t as { hookKey?: string }).hookKey ?? null, structure: bf ? [bf.intent, bf.opening, bf.flow].filter(Boolean).join("|") || null : null }; })() } : {}),
@@ -847,6 +867,9 @@ export async function GET(req: Request) {
     // ★홈판 생성 진단도 함께(2026-08-04) — '홈판 2/5'가 화면에 뜨는데 이유는 서버 로그에만 있었다.
     //  homeDrop(하류 탈락)이 전부 0인데 결품이면 원인은 생성 안쪽이다 — 그 안쪽을 여기서 보여준다.
     if (debugMode) diag.homeBet = lastHomebetDiag;
+    // ★원천 칸 집계(2026-08-05 유저 요청: "카테고리 칸을 나눠서, 청약홈 칸에 글감이 있고 없고를 알게").
+    //  어느 원천이 조용한지 한눈에 보이면, '이슈가 없는 것'과 '우리가 못 잡은 것'을 구분할 수 있다.
+    if (debugMode) diag.slots = slotCount(tc);
     if (debugMode) diag.colShort = { ...colShort, homefeedGot: homeCards.length, homeDrop, trendRoom, served: tc.length, trendFunnel: funnel };
     return NextResponse.json(debugMode ? { topics: tc, diag: { ...diag, mode: "short", trendCards: tc.length } } : { topics: tc, ...(FF.perfLoop ? { ff: { perfLoop: true } } : {}) });
   }

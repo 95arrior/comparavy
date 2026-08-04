@@ -677,6 +677,32 @@ export default function Home({
               </p>
             );
           })()}
+          {/* ★원천 칸 현황(2026-08-05 유저 요청: "카테고리 칸을 나눠서 — 청약홈 칸에 글감이 있고 없고를 알게").
+              0인 칸이 그대로 보여야 '이슈가 없는 것'과 '우리가 못 잡은 것'을 구분할 수 있다. */}
+          {(() => {
+            const SLOTS = ["캘린더", "청약", "정부지원", "공시", "실시간", "홈판", "뉴스", "시즌"];
+            const cards = [...clean];
+            const countOf = (label: string) => cards.filter((t) => {
+              const tt = t as { tag?: string; slot?: string; risingSeed?: boolean };
+              if (label === "홈판") return tt.tag === "홈판";
+              if (label === "실시간") return tt.risingSeed === true;
+              return tt.slot === label;
+            }).length;
+            const rows = SLOTS.map((s) => ({ s, n: countOf(s) }));
+            if (!cards.length) return null;
+            return (
+              <div className="mb-2 flex flex-wrap items-center gap-1.5">
+                <span className="text-[11px] font-bold text-neutral-400">글감 출처</span>
+                {rows.map(({ s, n }) => (
+                  <span key={s}
+                    className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${n > 0 ? "bg-[#1D75F7]/10 text-[#1D75F7]" : "bg-neutral-100 text-neutral-300"}`}
+                    title={n > 0 ? `${s} ${n}개` : `${s} 없음 — 이슈가 없거나, 우리가 못 잡은 것`}>
+                    {s} {n}
+                  </span>
+                ))}
+              </div>
+            );
+          })()}
           {/* ★글감 새로 받기 — 크론 안 기다리고 두 보드 갈이(1시간 2회) */}
           <div className="mb-2 flex justify-end gap-1.5">
             {ffPerf && (

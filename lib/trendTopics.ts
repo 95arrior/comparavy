@@ -10,6 +10,7 @@ import { gatherHeadlinesWithStats, RISING_SEED, risingKeywordOf, seedsFor } from
 import { harvestBrandBuzz, hasBrandAxis } from "./brandBuzz";
 import { seasonalSeeds } from "./seasonalEvents";
 import { econSeeds } from "./econCalendar";
+import { policySeeds } from "./policyCalendar";
 import { expandAutocomplete } from "./naverAutocomplete";
 import { fetchBlogTotal } from "./naverBlogSearch";
 import { fetchTrend } from "./naverDatalab";
@@ -24,7 +25,8 @@ import { logUsage } from "./usageLog";
 export interface Longtail { kw: string; blogTotal: number | null }
 // ★"rising"(2026-08-04 유저 상시 요구: "지금 뜨는은 실제로 효과 있는 실시간 키워드 or 대형 선점 가능한 것") —
 //  구글 트렌드 KR 급상승 유래. 이 표식이 있어야 밴드 우회 판정을 할 수 있다(없으면 전부 news로 뭉개진다).
-export type SeedSource = "news" | "season" | "discover" | "applyhome" | "gov24" | "bizinfo" | "dart" | "rising";
+// ★"calendar"(2026-08-05) — 미리 공표된 일정(세금·지급·계절·정책). 선점의 최상위 재료.
+export type SeedSource = "news" | "season" | "discover" | "applyhome" | "gov24" | "bizinfo" | "dart" | "rising" | "calendar";
 export interface TrendTopic {
   keyword: string;
   title: string;
@@ -248,6 +250,16 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
         rows.push({ category, keyword: kw, title: `${kw}, 지금 왜 갑자기 찾을까`, news_context: `[실시간 급상승] 구글 트렌드 KR에서 지금 급상승 중인 검색어다. ★'${category}' 관점으로만 다룬다 — 이 분야와 무관한 일반 이슈 글 금지. 사람들이 지금 이 말을 왜 찾는지부터 짚고, 그 다음 내 돈·내 조건으로 번역한다.`, longtails: [] as Longtail[], source: "rising", created_at: new Date().toISOString(), expires_at: expires });
       }
       if (injected) console.log(`[rising] ${category}: 급상승 직접 주입 ${injected}개`);
+    }
+
+    // ★고정 캘린더 주입(2026-08-05 — 설계 1단계). 세금·지급·계절·주간·정책 일정.
+    //  ★이게 선점의 최상위 재료다: 날짜가 미리 적혀 있으므로 '그날 이미 색인돼 있는 상태'를 만들 수 있다.
+    //   6/27·8/4 전수 조사에서 상위 유입의 절반 이상이 이런 '미리 알 수 있던 일정'이었다.
+    for (const ev of policySeeds(category)) {
+      if (seen.has(ev.keyword)) continue;
+      seen.add(ev.keyword);
+      rows.push({ category, keyword: ev.keyword, title: ev.title, news_context: ev.newsContext, longtails: [] as Longtail[], source: "calendar", created_at: new Date().toISOString(), expires_at: expires });
+      console.log(`[calendar] ${category}: ${ev.slot} — ${ev.keyword}`);
     }
 
     // ★브랜드 버즈 주입(2026-08-05 유저 지적: "케이뱅크 황금캡슐 같은 글이 왜 안 나오냐").
