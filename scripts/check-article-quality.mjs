@@ -6,6 +6,8 @@ import { ensureRelatedLinks } from "../lib/editorial.ts";
 
 // ★발행글 감사 회귀(2026-08-02) — 실제 발행물 「퇴사 전날까지 받을 수 있는 돈」을 검사해 나온 결함들.
 //  이 다섯은 전부 '규격은 있는데 코드가 안 재던' 것들이다. 프롬프트만으로는 지켜지지 않는다는 게 실측으로 확인됐다.
+const fin2 = fs.readFileSync(new URL("../lib/finalizeBody.ts", import.meta.url), "utf-8");   // 마감 조립(두 경로 공용)
+const rp = fs.readFileSync(new URL("../lib/relatedPosts.ts", import.meta.url), "utf-8");     // 관련글 후보(두 경로 공용)
 let fail = 0;
 const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "|", l, e); };
 
@@ -290,8 +292,8 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   // ★내부링크도 같은 이유로 살린다 — 0개로 흐르던 선별 규칙을 '1~2개 기본'으로
   const gr = fs.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8");
   // ★2026-08-04 개정: LLM 심리 판정을 폐기하고 '판정 없이 최근 글 2~3개'로 바꿨다(유저 확정).
-  ok(/판정 없이 최근 글/.test(gr), "★내부링크는 판정 없이 최근 글에서 뽑는다");
-  ok(/ensureHashtags\(finalBody/.test(gr), "★해시태그 보장이 생성 경로에 배선됨(내부링크 뒤에 붙는다)");
+  ok(/판정은 하지 않는다/.test(rp), "★내부링크는 판정 없이 최근 글에서 뽑는다(lib/relatedPosts)");
+  ok(/ensureHashtags\(withLinks/.test(fin2), "★해시태그 보장이 마감에 배선됨(내부링크 뒤에 붙는다)");
 
   // ★모델이 만든 태그를 1순위로 쓴다(2026-08-03 유저 화면에서 확인) —
   //  모델은 tags 필드에는 잘 넣고 본문 하단에만 안 썼다. 그 태그가 키워드 파생보다 훨씬 낫다:
@@ -340,7 +342,7 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   ok(hardTrimToLimit(두섹션, cnt).removed.length === 0, "★소제목 2개 미만으로는 안 줄인다");
 
   const gr = fs.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8");
-  ok(/hardTrimToLimit\(article\.body_html/.test(gr), "★생성 경로에 배선됨(압축 재생성 실패해도 상한은 지켜진다)");
+  ok(/hardTrimToLimit\(tabled/.test(fin2), "★마감에 배선됨(압축 재생성 실패해도 상한은 지켜진다)");
   ok(/\[hard-trim\]/.test(gr), "★자를 때 무엇을 뺐는지 로그로 남긴다");
 
   // ★리스트 → 표(유저: "리스트가 많은 부분은 표로")
@@ -351,7 +353,7 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   // ★표는 '저장물'에도 있어야 한다(2026-08-04 유저 실측: 데이터 카드가 안 만들어졌다).
   //  인포그래픽 API는 body_html의 <table>·☐를 재료로 쓴다 — 화면에만 표면 카드가 안 나온다.
   //  그리고 화면과 저장이 다르면 그 자체로 사고다(같은 글이 두 모습이 된다).
-  ok(/listToTable\(article\.body_html\)/.test(gr), "★리스트→표가 저장 시점에도 적용된다");
+  ok(/listToTable\(src\)/.test(fin2), "★리스트→표가 저장 시점에도 적용된다");
   ok(/export function listToTable/.test(ph), "★변환 함수가 export돼 두 경로가 같은 것을 쓴다");
 
   // ★데이터 카드 자동 생성 — 화면이 "자동으로 만들어져요"라고 약속하는데 호출부가 없었다
@@ -362,7 +364,7 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
 
   // ★함께 보면 좋은 글 2~3개 고정(유저: "핏한 게 없어도 넣어라")
   // ★보강 로직은 ensureRelatedLinks로 옮겼다 — 모델이 안 써도 코드가 붙인다(더 확실한 자리).
-  ok(/ensureRelatedLinks\(urlClean\.html/.test(gr), "★내부링크를 코드가 보장한다");
+  ok(/ensureRelatedLinks\(clean\.html/.test(fin2), "★내부링크를 코드가 보장한다");
 
   // ★이미지 설명 상세화 + AI 인용 구조
   const ap = fs.readFileSync(new URL("../lib/articlePrompt.ts", import.meta.url), "utf-8");
@@ -477,8 +479,17 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   ok(!/<p>\s*<\/p>/.test(r4), "★마커만 있던 문단은 문단째 걷어낸다(빈 여백 금지)");
 
   // ★배선 — 만들어놓고 안 부르면 아무 일도 안 일어난다(오늘 다섯 번 겪었다)
+  // ★2026-08-04 2차 검거: 경로가 둘이었다. /api/generate엔 마감이 다 있었는데 /api/pregen(카드에서 바로
+  //  열리는 글)엔 URL 정화까지만 있어 링크도 해시태그도 없는 글이 유저에게 갔다. 마감은 한 함수로만 한다.
+  const fin = fs.readFileSync(new URL("../lib/finalizeBody.ts", import.meta.url), "utf-8");
+  ok(/ensureRelatedLinks\(clean\.html, related\)/.test(fin) && /ensureHashtags\(withLinks/.test(fin), "★마감 함수가 관련글·해시태그를 붙인다");
+  ok(/listToTable\(src\)/.test(fin) && /hardTrimToLimit\(tabled/.test(fin), "★리스트→표·분량 하드컷도 같은 마감 안에 있다");
   const gr = fs.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8");
-  ok(/ensureRelatedLinks\(urlClean\.html, relatedPosts\)/.test(gr), "★생성 경로에 배선됨");
+  const pg = fs.readFileSync(new URL("../app/api/pregen/route.ts", import.meta.url), "utf-8");
+  ok(/finalizeArticleBody\(\{/.test(gr), "★생성 경로가 마감 함수를 부른다");
+  ok(/finalizeArticleBody\(\{/.test(pg), "★사전생성(pregen) 경로도 같은 마감 함수를 부른다");
+  ok(/relatedPostsFor\(/.test(gr) && /relatedPostsFor\(/.test(pg), "★관련글 후보도 두 경로가 같은 함수를 쓴다");
+  ok(!/ensureRelatedLinks/.test(gr) && !/ensureHashtags/.test(gr), "★라우트가 마감 단계를 따로 복붙하지 않는다(드리프트 원천 차단)");
   ok(!/심리 연속성 기준/.test(gr), "★LLM 심리 판정이 제거됨(0개로 흐르던 원인)");
   const ph = fs.readFileSync(new URL("../lib/publishHtml.ts", import.meta.url), "utf-8");
   ok(!/\$\{reason\.trim\(\)\}/.test(ph), "★렌더에서 설명 문장이 제거됨");

@@ -11,9 +11,10 @@ import { scanFacts } from "@/lib/factGate";
 import { financeCalcContext } from "@/lib/financeCalc";
 import { sanitizeUrls } from "@/lib/linkWhitelist";
 import { countBodyChars } from "@/lib/humanizer";
-import { sectionBudgetReport, tailSummaryBullets, ensureHashtags, clichePhotoSlots, hardTrimToLimit, eligibilityTableIssues, ensureRelatedLinks } from "@/lib/editorial";
+import { finalizeArticleBody } from "@/lib/finalizeBody";
+import { relatedPostsFor } from "@/lib/relatedPosts";
+import { sectionBudgetReport, tailSummaryBullets, clichePhotoSlots, eligibilityTableIssues } from "@/lib/editorial";
 import { validateTitleTail } from "@/lib/titleRules";
-import { listToTable } from "@/lib/publishHtml";
 import { sectionBudgetFor, targetMaxFor } from "@/lib/articlePrompt";
 import { isDisposableEmail } from "@/lib/disposableEmail";
 import { checkRateLimit } from "@/lib/rateLimit";
@@ -298,52 +299,9 @@ export async function POST(request: Request) {
           }
         } catch { /* 시리즈 실패 = 단발로 자연 폴백(테이블 미적용 포함) */ }
 
-        // ★내부링크(허브 앤 스포크) — 같은 블로그의 확정 URL 글 중 키워드 토큰 겹침 상위 2개
-        let relatedPosts: { title: string; url: string }[] = [];
-        try {
-          const blogIdForLink = (profileRow as { id?: string } | null)?.id ?? null;
-          let rq = supabase.from("articles").select("keyword, title, naver_url, created_at").eq("user_id", user.id).in("status", ["verified", "published"]).not("naver_url", "is", null).order("created_at", { ascending: false }).limit(30);
-          if (blogIdForLink) rq = rq.or(`blog_id.eq.${blogIdForLink},blog_id.is.null`);
-          const { data: cands } = await rq;
-          // ★유저 실측 반영(ETF 글에 부동산 청약 추천): ①기간제(청약·마감형) 글 제외 — 접수가 끝나면 죽은 링크 ②범용 단어 겹침 배제 — 실질 주제 토큰만
-          const STOP = new Set(["방법", "정리", "총정리", "조건", "신청", "기간", "확인", "이유", "비교", "기준", "주의", "사항", "완벽", "가이드", "하는", "해야", "알아야", "지금", "오늘", "관련", "대상", "혜택", "지원", "제도", "종류", "순서", "발급"]);
-          const TIMED = /(무순위|청약|공고|마감|접수|모집|선착순|추첨)/; // 행동 창이 닫히면 수명이 끝나는 글
-          // ★어미 조각 배제(2026-07-13 실측: 정책대출 글↔임산부 지원금 — '신청하는'·'순서대로' 같은 4자 동사 조각이 '강한 명사'로 오인돼 통과)
-          const VERBAL = /(하는|되는|받는|하기|해요|대로|까지|부터|위한|없이|좋은|바뀐|놓친)$/;
-          const tok = (t: string) => new Set(String(t).split(/[\s·,]+/).map((x) => x.replace(/[^가-힣a-zA-Z0-9]/g, "")).filter((x) => x.length >= 2 && !STOP.has(x) && !VERBAL.test(x)));
-          // ★키워드끼리만 대조(제목·앵글은 어미 조각 유입원) — 키워드는 명사구라 깨끗하다
-          const myTok = tok(keyword);
-          // ★완전 핏만(2026-07-13 유저 확정: 애매하면 아예 생략 — 글은 쌓이니 핏이 생기면 그때) —
-          //  키워드 토큰 2개+ 겹침, 또는 4자+ 강한 주제 명사(연금저축·세액공제급) 1개 겹침만 인정
-          const strongFit = (c: { keyword?: string | null; title?: string | null }) => {
-            const shared = [...tok(String(c.keyword ?? ""))].filter((t) => myTok.has(t));
-            return { score: shared.length, strong: shared.length >= 2 || shared.some((t) => t.length >= 4) };
-          };
-          // ★검색자 심리 판정(2026-07-14 유저: 주담대 검색자=주택 구매 심리 → 매매대출·부동산 세금 글이 핏인데 토큰 게이트가 놓침) —
-          //  표면 토큰이 아니라 '이 사람이 이어서 궁금해할 글'을 LLM이 선별(최대 3, 애매하면 0 — 늪 설계: 타고 타고 못 빠져나가게)
-          // ★링크 수명 원칙(2026-07-14 유저: 주담대 글은 1년 읽히는데 '7월 세제개편' 링크는 다음 달이면 낡는다) — 월 표기 시점성 글 제외
-          const MONTHLY_RE = /(^|[^0-9가-힣])(1[0-2]|[1-9])월|올해|이번\s?(주|달)|하반기|상반기/;
-          const pool2 = (cands ?? []).filter((c) => c.naver_url && !TIMED.test(`${c.keyword ?? ""} ${c.title ?? ""}`) && !MONTHLY_RE.test(String(c.title ?? "")));
-          // ★LLM 심리 판정 폐기(2026-08-04 유저 확정: "꼭 연관 없어도 될 것 같은데").
-          //  종전엔 하이쿠에게 '검색자 심리 연속성'으로 고르게 했는데, 규칙이 "확신 없으면 0개"라
-          //  링크가 통째로 빠지는 날이 잦았다. 호출 1회에 시간·비용도 썼다.
-          //  ★재테크 블로그의 최근 글은 어차피 대부분 재테크다 — 판정 없이 뽑아도 크게 안 어긋나고,
-          //   링크 카드는 네이버 편집기에서 본문 분량을 안 먹으니 넣어서 잃을 게 없다.
-          //  ★단 하나는 지킨다: 같은 글이 두 번 나오지 않게 URL로 중복을 거른다.
-          const seenUrl = new Set<string>();
-          relatedPosts = pool2
-            .map((c) => ({ title: String(c.title ?? c.keyword ?? "관련 글"), url: String((c as { naver_url?: string }).naver_url ?? "") }))
-            .filter((r) => {
-              const u = r.url.split("?")[0];
-              if (!u || seenUrl.has(u)) return false;
-              seenUrl.add(u);
-              return true;
-            })
-            .slice(0, 3);
-          console.log(`[related] ${relatedPosts.length}개(풀 ${pool2.length}) — 판정 없이 최근 글`);
-          // ★네이버→WP 크로스 링크 제거(2026-07-14 유저 확정) — 네이버는 외부 상업성 링크에 민감, 돼지통(자산)이 pigtong(신생)보다 잃을 게 크다.
-          //  WP→네이버 방향(wordpress/publish)은 유지. 재개 조건: 돼지통 체급 안정 후 — 그때도 링크 대신 '무링크 언급' 방식 우선 검토.
-        } catch { /* 무해 — 링크 없이 진행 */ }
+        // ★내부링크 후보 — 판정은 lib/relatedPosts 한 곳에서(pregen 경로도 같은 함수를 쓴다).
+        //  ★네이버→WP 크로스 링크는 넣지 않는다(2026-07-14 유저 확정) — 네이버는 외부 상업성 링크에 민감하다.
+        const relatedPosts = await relatedPostsFor(supabase, user.id, (profileRow as { id?: string } | null)?.id ?? null, keyword);
         // ★SERP 역분석(상위노출 직접 전술) — 상위 5글 제목·요약을 능가 브리프로(실패 시 빈 배열, 기존 품질 유지)
         const topPosts = channel === "wordpress" ? [] : await fetchTopPosts(keyword, 5).catch(() => []);
         const fmtAge = (pd?: string) => {
@@ -704,34 +662,24 @@ export async function POST(request: Request) {
         //  ★그러면 인포그래픽 API가 본문에서 <table>을 못 찾아 데이터 카드가 만들어지지 않는다
         //   (그 API는 body_html의 표·체크리스트를 재료로 쓴다).
         //  ★그리고 화면과 저장이 다르면 그 자체로 사고다 — 같은 글이 두 모습이 된다.
-        {
-          const tabled = listToTable(article.body_html);
-          if (tabled !== article.body_html) {
-            article = { ...article, body_html: tabled };
-            console.log(`[list-to-table] user=${user.id.slice(0, 8)} 리스트를 표로 변환`);
-          }
-        }
-        {
-          const trimmed = hardTrimToLimit(article.body_html, countBodyChars);
-          if (trimmed.removed.length) {
-            article = { ...article, body_html: trimmed.html };
-            charCount = countBodyChars(trimmed.html);
-            console.log(`[hard-trim] user=${user.id.slice(0, 8)} 섹션 제거 ${trimmed.removed.length}개(${trimmed.removed.join(" / ")}) → ${charCount}자`);
-          }
-        }
+        // ★마감 조립은 lib/finalizeBody 한 곳에서 한다(2026-08-04) — 아래 finalize 호출이 그 자리다.
+        //  종전엔 이 자리에 리스트→표·하드컷이 흩어져 있었고, pregen 경로엔 그게 통째로 빠져 있었다.
         // ★결과를 항상 남긴다 — 통과한 것도 남겨야 '얼마나 자주, 얼마나 초과하는지' 분포가 쌓인다(문턱을 감으로 옮기지 않기 위해).
         console.log(`[length] user=${user.id.slice(0, 8)} ch=${channel} chars=${charCount} cap=${lenCap} ${charCount > lenCap ? `★초과(${(charCount / lenCap).toFixed(2)}배) — 압축 ${LEN_REGEN_CAP}회 후에도 초과, 통과` : "ok"}`);
 
         // (네이버 수익형 단일 — 자영업 시절의 업체 NAP 박스 삽입 제거. 수익형 블로그에 영업장 정보는 무의미 + 전 글 공통 박스는 패턴 지문 리스크)
-        const urlClean = sanitizeUrls(ensureDisclosure(article.body_html, isReview), { allowNaverBlogId: (profileRow as { naver_blog_id?: string | null } | null)?.naver_blog_id }); // ★URL 정화 — 내 블로그 전편 링크는 통과
-        if (urlClean.replaced > 0) console.log(`[url-sanitize] user=${user.id.slice(0, 8)} replaced=${urlClean.replaced} fabricated=${JSON.stringify(urlClean.fabricated)}`);
-        // ★해시태그 보장(2026-08-03 유저 제보: 통째로 사라졌다) — 프롬프트는 방향, 이건 한계선.
-        //  해시태그는 네이버 편집기에서 태그 영역으로 빠져 본문 글자가 아니다. 버려도 분량은 안 줄고
-        //  노출 장치만 잃으므로 없을 이유가 없다. 모델이 또 버려도 여기서 채운다(키워드 파생만, 지어내지 않는다).
-        // ★내부링크 보장(2026-08-04 유저 확정) — 모델이 마커를 안 써도 코드가 붙인다.
-        //  종전엔 모델 몫이라 링크가 통째로 빠지는 글이 계속 나왔다.
-        let finalBody = ensureRelatedLinks(urlClean.html, relatedPosts);
-        finalBody = ensureHashtags(finalBody, keyword, (article as { tag?: string }).tag, (article as { tags?: unknown }).tags);
+        // ★마감 조립(리스트→표 · 하드컷 · 고지 · URL정화 · 관련글 · 해시태그) — 한 곳에서 한다.
+        const fin = finalizeArticleBody({
+          bodyHtml: article.body_html, keyword, isReview,
+          ownNaverBlogId: (profileRow as { naver_blog_id?: string | null } | null)?.naver_blog_id,
+          relatedPosts, modelTags: (article as { tags?: unknown }).tags, tag: (article as { tag?: string }).tag,
+        });
+        if (fin.tabled) console.log(`[list-to-table] user=${user.id.slice(0, 8)} 리스트를 표로 변환`);
+        if (fin.trimmedSections.length) console.log(`[hard-trim] user=${user.id.slice(0, 8)} 섹션 제거 ${fin.trimmedSections.length}개(${fin.trimmedSections.join(" / ")})`);
+        if (fin.urlReplaced > 0) console.log(`[url-sanitize] user=${user.id.slice(0, 8)} replaced=${fin.urlReplaced} fabricated=${JSON.stringify(fin.fabricatedUrls)}`);
+        console.log(`[finalize] user=${user.id.slice(0, 8)} 관련글 ${fin.relatedAdded}개(후보 ${relatedPosts.length}) · ${fin.charCount}자`);
+        charCount = fin.charCount;
+        let finalBody = fin.html;
         if (prevUrl) { // ★전편 링크 자동 삽입(verified만) — 마커를 실제 링크로. 미충족 시 마커 유지(위저드 안내 폴백)
           finalBody = finalBody.includes("[전편 링크 자리]")
             ? finalBody.replace("[전편 링크 자리]", `<a href="${prevUrl}">${(prevTitle ?? "전편 글").replace(/</g, "")}</a>`)

@@ -6,6 +6,8 @@ import { isReviewType, ensureDisclosure } from "@/lib/revenue";
 import { hasFabricatedExperience } from "@/lib/editorial";
 import { sanitizeUrls } from "@/lib/linkWhitelist";
 import { countBodyChars } from "@/lib/humanizer";
+import { finalizeArticleBody } from "@/lib/finalizeBody";
+import { relatedPostsFor } from "@/lib/relatedPosts";
 import { normalizeKeyword, pickVariant, pickAngle, simhash } from "@/lib/diversity";
 import { isAdminEmail } from "@/lib/adminStats";
 import { logUsage } from "@/lib/usageLog";
@@ -122,12 +124,22 @@ export async function POST(request: Request) {
       });
       void logUsage({ userId: user.id, model: "pregen-generate", kind: "generate", inputTokens: 0, outputTokens: 0 });
 
-      // 후처리(generate와 동일): 경험 가드(사전 생성은 재시도 없이 폐기 — 무해) → 대가성 → URL 정화 → 분량
+      // ★후처리는 generate와 '같은 함수'로 한다(2026-08-04 유저 화면에서 검거).
+      //  종전 이 자리 주석은 "generate와 동일"이었는데 실제로는 URL 정화까지만 있었다 —
+      //  리스트→표·분량 하드컷·함께 보면 좋은 글·해시태그가 통째로 빠져 있었고,
+      //  카드에서 바로 열리는 글은 대부분 이 경로라 유저가 받은 글에 링크도 태그도 없었다.
+      //  ★같은 규칙을 두 곳에 복붙하지 않는다 — 마감은 finalizeArticleBody 하나뿐이다.
       if (hasFabricatedExperience(article.body_html)) throw new Error("fabricated");
-      const urlClean = sanitizeUrls(ensureDisclosure(article.body_html, isReview), { allowNaverBlogId: (profileRow as { naver_blog_id?: string | null } | null)?.naver_blog_id });
-      if (urlClean.replaced > 0) console.log(`[url-sanitize] pregen user=${user.id.slice(0, 8)} replaced=${urlClean.replaced}`);
-      const finalBody = urlClean.html;
-      const charCount = countBodyChars(finalBody);
+      const related = await relatedPostsFor(adminDb, user.id, (profileRow as { id?: string } | null)?.id ?? null, keyword);
+      const fin = finalizeArticleBody({
+        bodyHtml: article.body_html, keyword, isReview,
+        ownNaverBlogId: (profileRow as { naver_blog_id?: string | null } | null)?.naver_blog_id,
+        relatedPosts: related, modelTags: article.tags, tag: undefined,
+      });
+      if (fin.urlReplaced > 0) console.log(`[url-sanitize] pregen user=${user.id.slice(0, 8)} replaced=${fin.urlReplaced}`);
+      console.log(`[finalize] pregen user=${user.id.slice(0, 8)} 관련글 ${fin.relatedAdded}개(후보 ${related.length}) · ${fin.charCount}자${fin.trimmedSections.length ? ` · 섹션 제거 ${fin.trimmedSections.length}` : ""}`);
+      const finalBody = fin.html;
+      const charCount = fin.charCount;
       if (charCount < 500) throw new Error("too-short");
 
       const upPayload: Record<string, unknown> = {
