@@ -63,5 +63,15 @@ console.log("\n④ 배선 — 씨앗으로 실제로 들어가는가:");
   ok(/MONEY_BUZZ/.test(tt), "★급상승 정합 관문도 '돈 되는 이벤트' 신호를 인정하게 넓혔다");
 }
 
+console.log("\n⑤ 손으로 당겨 쓸 수 있는가(2026-08-05 유저: 5시 수확을 지금 땡긴다):");
+{
+  const cr = fs.readFileSync(new URL("../app/api/cron/trend-refresh/route.ts", import.meta.url), "utf-8");
+  ok(/isAdminEmail\(user\.email\)/.test(cr), "★관리자 세션이면 브라우저에서 바로 돌릴 수 있다(종전엔 크론 시크릿만)");
+  ok(/const force = url\.searchParams\.get\("force"\) === "1"/.test(cr) && /if \(!force && await hasFreshTrends/.test(cr), "★force=1이면 신선도 검사를 건너뛴다 — 안 그러면 '신선함'으로 스킵된다");
+  ok(/const onlySub =/.test(cr), "★sub 지정 — 전체 30개를 돌리지 않는다(타임아웃 방지)");
+  ok(/실시간 씨앗\(rising\)/.test(cr), "★들어왔는지를 응답에서 바로 보여준다(다시 물어보지 않아도 되게)");
+  ok(/dropTop/.test(cr), "★안 들어왔으면 왜인지(탈락 사유)도 같이 준다");
+}
+
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 브랜드 버즈 수확");
 process.exit(fail ? 1 : 0);
