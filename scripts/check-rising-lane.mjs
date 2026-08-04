@@ -32,7 +32,7 @@ console.log("\n② 혈통 보존 — 합성 결과가 급상승 검색어를 품
   ok(/급상승 직접 주입/.test(tt), "★급상승 검색어를 씨앗으로 직접 주입한다");
   ok(/injected >= 3/.test(tt), "★하루 상한이 있다(실시간이 보드를 통째로 먹지 않게)");
   ok(/const fits = \[\.\.\.catWords\]\.some/.test(tt), "★카테고리 정합 관문 — 무관한 급상승어(연예·스포츠)는 안 들인다");
-  ok(/isUnsafeKeyword\(kw\) \|\| scamLoan\(kw\)/.test(tt), "★안전 게이트는 직접 주입에도 그대로 적용된다");
+  ok(/isUnsafeKeyword\(kw, brandOk\) \|\| scamLoan\(kw\)/.test(tt), "★안전 게이트는 직접 주입에도 그대로 적용된다(금융 브랜드만 분야로 열림)");
 }
 
 console.log("\n③ 밴드 우회는 '선점 가능'을 숫자로 증명한 것만:");

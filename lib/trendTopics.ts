@@ -13,7 +13,7 @@ import { econSeeds } from "./econCalendar";
 import { expandAutocomplete } from "./naverAutocomplete";
 import { fetchBlogTotal } from "./naverBlogSearch";
 import { fetchTrend } from "./naverDatalab";
-import { isUnsafeKeyword } from "./keywordSafety";
+import { isUnsafeKeyword, financeBrandAllowed } from "./keywordSafety";
 import { scamLoan } from "./cardFinalGate";
 import { logUsage } from "./usageLog";
 
@@ -97,6 +97,8 @@ export interface RefreshResult { generated: number; drops: SeedDrop[]; applyhome
 export async function refreshCategoryTrends(category: string): Promise<RefreshResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   const drops: SeedDrop[] = [];
+  // ★금융 브랜드 허용 여부는 분야로 갈린다(2026-08-05) — 재테크 채널에선 브랜드 이벤트가 본업 소재다.
+  const brandOk = { allowFinanceBrand: financeBrandAllowed(category) };
   const ah: NonNullable<RefreshResult["applyhome"]> = { ecoCategory: false, keySet: Boolean(process.env.DATA_GO_KR_KEY), fetched: 0, joined: 0 };
   if (!apiKey) return { generated: 0, drops };
 
@@ -169,7 +171,7 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
       const kw = compressToSearchKeyword((it.keyword ?? "").trim()); // ★검색형 명사구로 정규화(조사·분석/논평어 제거)
       const ti = (it.title ?? "").trim().slice(0, 80);
       if (!kw || !ti || seen.has(kw)) continue;
-      if (isUnsafeKeyword(kw) || isUnsafeKeyword(ti)) { drops.push({ keyword: kw, title: ti, reason: "unsafe_brand" }); continue; }
+      if (isUnsafeKeyword(kw, brandOk) || isUnsafeKeyword(ti, brandOk)) { drops.push({ keyword: kw, title: ti, reason: "unsafe_brand" }); continue; }
       if (scamLoan(kw) || scamLoan(ti)) { drops.push({ keyword: kw, title: ti, reason: "unsafe_brand" }); continue; } // 대기업 사칭 대출(삼성재단대출류) — 유입 차단
       if (/20(1[0-9]|2[0-3])/.test(kw) || /20(1[0-9]|2[0-3])/.test(ti)) { drops.push({ keyword: kw, title: ti, reason: "stale_year" }); continue; } // 낡은 연도
       // ★실익 게이트 — utility='없음' 또는 논평형 title은 드롭(reason: no_utility)
@@ -196,7 +198,7 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
         if (injected >= 3) break; // 하루 상한 — 실시간이 보드를 통째로 먹지 않게
         const kw = compressToSearchKeyword(rk);
         if (!kw || seen.has(kw)) continue;
-        if (isUnsafeKeyword(kw) || scamLoan(kw)) continue;
+        if (isUnsafeKeyword(kw, brandOk) || scamLoan(kw)) continue;
         // 카테고리 정합 — 급상승어가 이 분야 말과 겹치거나, 분야 씨앗 단어를 품고 있을 때만
         // ★정합 판정 둘 중 하나(2026-08-05 보강): 분야 일반명사와 겹치거나, '돈 되는 이벤트' 신호가 있거나.
         //  일반명사 겹침만 보면 '케이뱅크 황금캡슐'류가 영영 못 들어온다 — 그 말엔 '금리'도 '지원금'도 없다.
@@ -223,7 +225,7 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
         for (const b of buzz) {
           const kw = compressToSearchKeyword(b.keyword);
           if (!kw || seen.has(kw)) continue;
-          if (isUnsafeKeyword(kw) || scamLoan(kw)) continue;
+          if (isUnsafeKeyword(kw, brandOk) || scamLoan(kw)) continue;
           seen.add(kw);
           added += 1;
           rows.push({ category, keyword: kw, title: `${kw}, 지금 챙기면 되는 것`, news_context: `[브랜드 버즈] 네이버 자동완성에서 '${b.brand}' 뒤에 지금 실제로 붙어 검색되는 말이다 — 진행 중인 이벤트·혜택일 가능성이 높다. ★확인되지 않은 금액·기간·당첨 조건을 지어내지 마라. 공식 공지에서 확인되는 사실만 쓰고, 확인이 안 되면 '공식 앱·홈페이지에서 확인' 톤으로 남긴다. 이 글의 임무는 '지금 뭘 하면 되는지'를 순서로 주는 것이다.`, longtails: [] as Longtail[], source: "rising", created_at: new Date().toISOString(), expires_at: expires });
@@ -318,7 +320,7 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
         const INFO_RE = /(방법|조건|신청|추천|비교|후기|금리|지원|혜택|기간|환급|계산|순위|비용|가격|일정|자격|서류|대상)/;
         const repl = qIsCore ? acs.find((c) => {
           const ct = c.trim();
-          return norm(ct).includes(qn) && !seen.has(compressToSearchKeyword(ct)) && !isUnsafeKeyword(ct)
+          return norm(ct).includes(qn) && !seen.has(compressToSearchKeyword(ct)) && !isUnsafeKeyword(ct, brandOk)
             && [...ct].length >= 5 && !JUNK_RE.test(ct) && !(BRANDY_RE.test(ct) && !INFO_RE.test(ct));
         }) : undefined;
         if (!repl) { (row as typeof row & { longtails?: Longtail[] }).longtails = []; continue; } // → gap 드롭
@@ -331,7 +333,7 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
       //  경쟁도 측정 예산(GAP_PER_SEED)도 전부 1단에 쓰인다 — 정확히 우리가 피하려던 키워드들이다.
       //  어절이 많을수록 의도가 뾰족하고 경쟁이 얕다('삼성카드 발급' < '삼성카드 발급보류').
       const cand = acs
-        .filter((a) => a.trim() !== row.keyword && relOK(row.keyword, a) && !isUnsafeKeyword(a))
+        .filter((a) => a.trim() !== row.keyword && relOK(row.keyword, a) && !isUnsafeKeyword(a, brandOk))
         .sort((a, b) => b.trim().split(/\s+/).length - a.trim().split(/\s+/).length || [...b].length - [...a].length)
         .slice(0, 8);
       ltTotal += cand.length;

@@ -88,7 +88,16 @@ const BRANDS = [
   // 온라인 판매·쇼핑몰 빌더 등 타사 SaaS(특정 서비스 '사용법' 글은 경쟁사 홍보꼴 → 글감 부적격)
   // 일반 주제(스마트스토어·쿠팡파트너스·애드센스 등)는 정상 콘텐츠라 차단 안 함.
   "마이셀즈", "아임웹", "카페24", "식스샵", "고도몰", "메이크샵", "NHN커머스", "샵바이프리미엄", "위사", "imweb",
-  // 금융 브랜드 서비스·앱(실측 유입: 디지로카·카드의정석 등 — 타사 브랜드 글감 부적격)
+];
+
+// ★금융 브랜드는 따로 뗀다(2026-08-05 유저 지시: "브랜드명 게이트 통과 가능하게").
+//  배경: 유명 블로거가 7/29에 '케이뱅크 황금캡슐 이벤트'로 대박이 났는데 우리 보드엔 그런 글감이
+//  한 번도 못 떴다. 진범이 여기였다 — 케이뱅크·카카오뱅크·토스뱅크가 차단 목록에 있었다.
+//  ★그 차단은 자영업(로컬 업체) 시절 논리였다: '타사 브랜드 글은 경쟁사 홍보꼴'.
+//   그런데 지금 채널은 수익형 재테크 블로그다 — 금융 브랜드의 이벤트·혜택이 곧 본업 소재다.
+//  ★그래서 분야로 가른다: 경제·금융 분야에서는 통과, 그 외 분야에서는 종전대로 차단.
+//   고객센터·전화번호(CS_BRAND_RE)와 ETF 상품명은 여기서도 그대로 막힌다 — 푼 것은 '브랜드명'뿐이다.
+const FINANCE_BRANDS = [
   "디지로카", "카드의정석", "신한쏠", "쏠뱅크", "토스뱅크", "카카오뱅크", "케이뱅크", "리브엠", "모니모",
 ];
 
@@ -101,9 +110,10 @@ function isEtfProductName(kw: string): boolean {
   return ETF_PREFIX.test(s) || (/ETF|ETN/i.test(s) && ETF_PATTERN.test(s));
 }
 
-function hasBrand(kw: string): boolean {
+function hasBrand(kw: string, allowFinanceBrand = false): boolean {
   const s = kw.replace(/\s+/g, "");
-  return BRANDS.some((b) => s.includes(b)) || isEtfProductName(s);
+  if (BRANDS.some((b) => s.includes(b)) || isEtfProductName(s)) return true;
+  return allowFinanceBrand ? false : FINANCE_BRANDS.some((b) => s.includes(b));
 }
 
 // ★가십·이슈성 인물 시그널 — 연예·유명인 가십 글감 차단(허위조작정보법: 조회 10만+ 허위글 최대 5천만원 배상).
@@ -147,14 +157,22 @@ function looksLikeBizName(kw: string): boolean {
   return true; // 그 외 = 고유명사(업체명/인물명) → 차단
 }
 
-/** 풀 입력·서빙·생성에서 제외해야 하는 위험 키워드(타사 업체명·가십·브랜드)면 true. */
-export function isUnsafeKeyword(keyword: string): boolean {
+/**
+ * 풀 입력·서빙·생성에서 제외해야 하는 위험 키워드(타사 업체명·가십·브랜드)면 true.
+ * @param opts.allowFinanceBrand 금융 브랜드명만 통과시킨다(경제·금융 분야 전용 — 그 분야에선 본업 소재다).
+ *   ★푸는 것은 '브랜드명'뿐이다. 가십·의료·업체명·고객센터·ETF 상품명은 이 옵션과 무관하게 그대로 막힌다.
+ */
+export function isUnsafeKeyword(keyword: string, opts?: { allowFinanceBrand?: boolean }): boolean {
   const kw = String(keyword ?? "").trim();
   if (!kw) return false;
   if (looksLikeBizName(kw)) return true;
   if (hasGossipSignal(kw)) return true; // 연예·유명인 가십(법적 지뢰) — 전면 차단
   if (hasSensitiveTopic(kw)) return true; // 의료·발달장애·정신건강 — 씨앗층 의료 클린
   if (CS_BRAND_RE.test(kw.replace(/\s+/g, ""))) return true; // 고객센터·캐피탈류(브랜드 CS)
-  if (hasBrand(kw)) return true;
+  if (hasBrand(kw, opts?.allowFinanceBrand)) return true;
   return false;
+}
+/** 이 카테고리에서 금융 브랜드명을 글감으로 써도 되는가(경제·재테크·금융 계열만). */
+export function financeBrandAllowed(category: string): boolean {
+  return /(경제|재테크|금융|투자|부업|블로그수익|앱테크)/.test(String(category ?? ""));
 }

@@ -5,6 +5,7 @@
 //  ①씨앗 수확 쿼리가 분야 일반명사뿐 ②급상승 정합 관문이 일반명사 겹침만 봄 ③검색광고 풀에 신조어 없음
 import fs from "node:fs";
 import { hasBrandAxis } from "../lib/brandBuzz.ts";
+import { isUnsafeKeyword, financeBrandAllowed } from "../lib/keywordSafety.ts";
 
 let fail = 0;
 const ok = (c, m) => { if (!c) { fail++; console.log(`  !! ${m}`); } else console.log(`  OK ${m}`); };
@@ -34,12 +35,30 @@ console.log("\n③ 자동완성 호출 자체의 안전장치:");
   ok(/AbortSignal\.timeout\(/.test(ac), "★타임아웃이 있다 — 한 번 매달리면 수확이 멈춘다");
 }
 
+console.log("\n③-2 ★진짜 진범 — 브랜드명이 안전 게이트에 막혀 있었다(2026-08-05):");
+{
+  // 유저가 두 번 물은 그 자리. 수확기를 만들어도 이 게이트에서 버려지면 아무 일도 안 일어난다.
+  ok(isUnsafeKeyword("케이뱅크 황금캡슐"), "종전(분야 무관)엔 차단됐다 — 이게 진범이었다");
+  ok(!isUnsafeKeyword("케이뱅크 황금캡슐", { allowFinanceBrand: true }), "★재테크 분야에선 통과한다");
+  ok(!isUnsafeKeyword("카카오뱅크 26주적금", { allowFinanceBrand: true }), "★같은 계열 전부 통과");
+  // ★푼 것은 '브랜드명'뿐이다 — 나머지 안전선은 그대로여야 한다
+  ok(isUnsafeKeyword("케이뱅크 고객센터", { allowFinanceBrand: true }), "★고객센터·전화번호는 여전히 차단");
+  ok(isUnsafeKeyword("KODEX 레버리지", { allowFinanceBrand: true }), "★ETF 상품명은 여전히 차단");
+  ok(isUnsafeKeyword("오스템 임플란트", { allowFinanceBrand: true }), "★의료·타업종 브랜드는 여전히 차단");
+  ok(isUnsafeKeyword("배우 김OO 열애설", { allowFinanceBrand: true }), "★가십은 여전히 차단(법적 지뢰)");
+  ok(financeBrandAllowed("경제·재테크") && !financeBrandAllowed("반려동물"), "★허용은 분야로 갈린다");
+
+  const tt2 = fs.readFileSync(new URL("../lib/trendTopics.ts", import.meta.url), "utf-8");
+  ok(/const brandOk = \{ allowFinanceBrand: financeBrandAllowed\(category\) \}/.test(tt2), "★수확 파이프가 분야로 판정한다");
+  ok((tt2.match(/isUnsafeKeyword\([^)]*brandOk\)/g) ?? []).length >= 5, "★합성·급상승·브랜드버즈·롱테일 전 지점에 같은 판정을 건다");
+}
+
 console.log("\n④ 배선 — 씨앗으로 실제로 들어가는가:");
 {
   const tt = fs.readFileSync(new URL("../lib/trendTopics.ts", import.meta.url), "utf-8");
   ok(/harvestBrandBuzz\(category/.test(tt), "★수확기가 트렌드 갱신에서 호출된다");
   ok(/source: "rising"/.test(tt), "★실시간 종족으로 들어간다(밴드 우회 판정 대상)");
-  ok(/isUnsafeKeyword\(kw\) \|\| scamLoan\(kw\)/.test(tt), "안전 게이트는 그대로 적용된다");
+  ok(/isUnsafeKeyword\(kw, brandOk\) \|\| scamLoan\(kw\)/.test(tt), "안전 게이트는 그대로 적용된다(브랜드만 분야로 열림)");
   ok(/확인되지 않은 금액·기간·당첨 조건을 지어내지 마라/.test(tt), "★이벤트 글의 최대 리스크(지어낸 조건)를 지시로 막는다");
   ok(/MONEY_BUZZ/.test(tt), "★급상승 정합 관문도 '돈 되는 이벤트' 신호를 인정하게 넓혔다");
 }
