@@ -7,8 +7,11 @@ export async function fetchNaverAutocomplete(query: string): Promise<string[]> {
   if (q.length < 2) return [];
   try {
     const url = `https://ac.search.naver.com/nx/ac?q=${encodeURIComponent(q)}&con=0&frm=nv&ans=2&r_format=json&r_enc=UTF-8&r_unicode=0&t_koreng=1&run=2&rev=4&q_enc=UTF-8&st=100`;
+    // ★타임아웃(2026-08-05) — 비공식 엔드포인트라 응답이 아예 안 오는 경우가 있다.
+    //  이 호출은 수확 크론 안에서 브랜드 수만큼 도는데, 한 번 매달리면 수확 전체가 멈춘다.
     const res = await fetch(url, {
       headers: { "User-Agent": "Mozilla/5.0", Referer: "https://search.naver.com/" },
+      signal: AbortSignal.timeout(3500),
     });
     if (!res.ok) return [];
     const j = (await res.json()) as { items?: unknown[][] };

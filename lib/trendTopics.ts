@@ -7,6 +7,7 @@ import { fetchDartIPOSeeds, ipoAdviceLeak } from "./dartIPO";
 import { measureTopicDemand, hasRealDemand } from "./topicDemand";
 import { preemptionScore, preemptionNote, preemptWindow } from "./preemption";
 import { gatherHeadlinesWithStats, RISING_SEED, risingKeywordOf, seedsFor } from "./trendSources";
+import { harvestBrandBuzz, hasBrandAxis } from "./brandBuzz";
 import { seasonalSeeds } from "./seasonalEvents";
 import { econSeeds } from "./econCalendar";
 import { expandAutocomplete } from "./naverAutocomplete";
@@ -197,7 +198,10 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
         if (!kw || seen.has(kw)) continue;
         if (isUnsafeKeyword(kw) || scamLoan(kw)) continue;
         // 카테고리 정합 — 급상승어가 이 분야 말과 겹치거나, 분야 씨앗 단어를 품고 있을 때만
-        const fits = [...catWords].some((w) => kw.includes(w) || w.includes(kw));
+        // ★정합 판정 둘 중 하나(2026-08-05 보강): 분야 일반명사와 겹치거나, '돈 되는 이벤트' 신호가 있거나.
+        //  일반명사 겹침만 보면 '케이뱅크 황금캡슐'류가 영영 못 들어온다 — 그 말엔 '금리'도 '지원금'도 없다.
+        const MONEY_BUZZ = /(이벤트|캡슐|룰렛|출석|응모|당첨|쿠폰|캐시백|리워드|포인트|적금|예금|특판|파킹|환급|지급|공모주|청약|보조금|지원금|세금|금리|대출한도|카드)/;
+        const fits = [...catWords].some((w) => kw.includes(w) || w.includes(kw)) || MONEY_BUZZ.test(kw);
         // 이 분야와 무관한 급상승어는 애초에 안 들인다
         if (!fits) { drops.push({ keyword: kw, title: rk, reason: "dead_or_niche" }); continue; }
         seen.add(kw);
@@ -207,6 +211,26 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
       }
       if (injected) console.log(`[rising] ${category}: 급상승 직접 주입 ${injected}개`);
     }
+
+    // ★브랜드 버즈 주입(2026-08-05 유저 지적: "케이뱅크 황금캡슐 같은 글이 왜 안 나오냐").
+    //  자동완성이 '지금 브랜드 뒤에 붙여 치는 말'을 알려준다 — 이벤트·혜택 신호가 붙은 것만 들인다.
+    //  ★이 축이 없으면 우리 보드엔 브랜드 이벤트 글감이 들어올 길이 아예 없었다(뉴스 쿼리도, 급상승 관문도,
+    //   검색광고 풀도 전부 이런 말을 못 잡는다). 유명 블로거가 7/29에 그 글로 대박 난 자리다.
+    try {
+      if (hasBrandAxis(category)) {
+        const buzz = await harvestBrandBuzz(category, 4);
+        let added = 0;
+        for (const b of buzz) {
+          const kw = compressToSearchKeyword(b.keyword);
+          if (!kw || seen.has(kw)) continue;
+          if (isUnsafeKeyword(kw) || scamLoan(kw)) continue;
+          seen.add(kw);
+          added += 1;
+          rows.push({ category, keyword: kw, title: `${kw}, 지금 챙기면 되는 것`, news_context: `[브랜드 버즈] 네이버 자동완성에서 '${b.brand}' 뒤에 지금 실제로 붙어 검색되는 말이다 — 진행 중인 이벤트·혜택일 가능성이 높다. ★확인되지 않은 금액·기간·당첨 조건을 지어내지 마라. 공식 공지에서 확인되는 사실만 쓰고, 확인이 안 되면 '공식 앱·홈페이지에서 확인' 톤으로 남긴다. 이 글의 임무는 '지금 뭘 하면 되는지'를 순서로 주는 것이다.`, longtails: [] as Longtail[], source: "rising", created_at: new Date().toISOString(), expires_at: expires });
+        }
+        if (added) console.log(`[brand-buzz] ${category}: ${added}개 주입 — ${buzz.slice(0, 3).map((x) => x.keyword).join(", ")}`);
+      }
+    } catch { /* 수확 실패는 조용히 — 기존 씨앗 파이프는 그대로 돈다 */ }
 
     // ★시즌 캘린더 주입 — D-14 이내 예측 가능 이슈(뉴스 신선도 게이트 면제, 자동완성 게이트는 동일 적용)
     for (const ev of seasonalSeeds(category)) {
