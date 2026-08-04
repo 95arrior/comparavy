@@ -668,7 +668,15 @@ export async function GET(req: Request) {
           if (v) {
             c.vol = v.vol;
             const scope = v.base ? `'${v.base}' 기준 ` : ""; // 부분 매치는 조회 기준어 명시 — 전체 키워드 검색량으로 오독 방지
-            (c as { demandBadge?: string }).demandBadge = v.vol >= 1000 ? `${scope}월 ${v.vol.toLocaleString()}회 검색` : v.vol > 0 ? `${scope}월 ${v.vol.toLocaleString()}회 · 수요 낮음(경쟁 공백일 수 있음)` : `${scope}월 10회 미만 검색 · 수요 낮음`; // vol 0 = keywordstool '<10' 실측(미집계 아님)
+            // ★'수요 낮음' 판정을 트렌드 카드에서 뺀다(2026-08-05 유저 지적).
+            //  월 검색량은 '지난 30일 평균'이고, 트렌드는 정의상 이번 주에 생긴 수요라 평균에 희석된다 —
+            //  즉 트렌드를 에버그린 잣대로 재고 '수요 낮음'이라 부르는 자기모순이었다.
+            //  ★숫자는 남긴다(스파이크가 꺼진 뒤 남는 바닥 수요 = 글의 수명 가늠). 판정 문구만 뺀다.
+            (c as { demandBadge?: string }).demandBadge = v.vol >= 1000
+              ? `${scope}월 ${v.vol.toLocaleString()}회 검색`
+              : v.vol > 0
+                ? `${scope}월 ${v.vol.toLocaleString()}회 · 지금 뜨는 주제라 평균은 낮게 잡혀요`
+                : `${scope}월 평균은 아직 안 잡혀요 — 이제 막 뜨는 말이에요`; // vol 0 = keywordstool '<10' 실측(미집계 아님)
           }
         }
       }

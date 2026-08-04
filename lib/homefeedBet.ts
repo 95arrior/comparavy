@@ -64,6 +64,10 @@ async function liveSeedBlock(sub: string, exclude: Set<string>): Promise<string 
     const now = Date.now();
     // 행동 창(접수·마감)이 살아 있는 공고를 앞에 세운다 — 홈피드에서 가장 강한 건 '지금 안 하면 끝'이다.
     const scored = seeds
+      // ★discover(자동완성 발굴) 씨앗은 홈판 근거로 쓰지 않는다(2026-08-05 유저 화면에서 검거).
+      //  실물: 홈판 카드 근거가 '[discover] 전기차 추천, 지금 확인할 것들'이었다 — 그건 '꾸준한 수요'
+      //  씨앗이지 오늘의 이슈가 아니다. 홈피드의 생명은 시의성인데 근거에 시의성이 없으면 앞뒤가 안 맞는다.
+      .filter((t) => t.source !== "discover")
       .filter((t) => !exclude.has(normalizeKeyword(t.keyword)))
       .map((t) => {
         const end = t.actionEnd ? new Date(`${t.actionEnd}T23:59:59+09:00`).getTime() : null;

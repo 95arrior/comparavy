@@ -1039,7 +1039,10 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
       return topic.demandLabel ?? "지속 검색되는 주제";
     }
     const badge = (topic as { demandBadge?: string }).demandBadge;
-    if (topic.demandLabel?.includes("실검색 확인")) return badge ? `실검색 급증 확인 · ${badge}` : "네이버 자동완성에서 실검색 급증 확인";
+    // ★'급증'은 쓰지 않는다(2026-08-05 유저 지적). 코드가 하는 일은 자동완성 1회 조회다 —
+    //  '사람들이 실제로 치는 말인가'는 확인되지만 '어제보다 늘었는가'는 재지 않는다(시계열 비교 없음).
+    //  확인한 것만 말한다. 부풀린 배지는 그 자체로 우리 판단을 흐린다.
+    if (topic.demandLabel?.includes("실검색 확인")) return badge ? `실검색 확인 · ${badge}` : "네이버 자동완성에 뜨는 말 — 실제로 검색돼요";
     const src = (topic as { sourceTitle?: string }).sourceTitle;
     if (src && badge) return `출처 이슈: ${src.slice(0, 22)} · ${badge}`;
     if (src) return `출처 이슈: ${src.slice(0, 30)}`; // ★카드별 진짜 혈통(씨앗 제목) — 무관 헤드라인 인용 문제의 근본 수리

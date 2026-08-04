@@ -745,3 +745,56 @@ export function titleShapeClashes(title: string, recentTitles: string[], thresho
   if (s.length < 4) return false;
   return recentTitles.filter((r) => shape(r) === s).length >= threshold;
 }
+
+// ═══ 혈통 검증(2026-08-05) — 근거와 내용이 어긋난 카드를 버린다 ═══
+//  실물 둘: ①씨앗 '2026년 65세 이상 꼭 받아야 할…' → 카드 '2026 정부지원금 놓치는 청년의 현실'
+//          ②씨앗 '2026년 신규 1인 소상공인 육아지원금' → 카드 '충북출산육아지원금 기한'
+//  ★왜 위험한가: 카드에는 씨앗의 뉴스 근거(newsContext·sourceTitle)가 함께 붙는다.
+//   근거가 다른 얘기를 하는데 그 근거로 본문까지 쓰면, 글 전체가 틀린 출처 위에 서게 된다.
+//  ★종전 방어(토큰 교집합)가 못 잡은 이유: '2026·지원금·육아지원금' 같은 범용어만 겹쳐도 통과했다.
+//   그래서 겹침을 세기 전에 범용어를 빼고, 그다음 '서로 배타적인 것'을 따로 본다.
+const LINEAGE_STOP = new Set(["2024", "2025", "2026", "2027", "지원금", "정부지원금", "보조금", "혜택", "신청", "기준", "조건", "방법", "제도", "정책", "총정리", "정리", "대상", "기한", "안내", "확대", "신규", "변경", "개편", "현실", "이유"]);
+// 서로 배타적인 대상 축 — 한쪽이 씨앗에, 반대쪽이 카드에 있으면 같은 얘기일 수 없다.
+const EXCLUSIVE_AXES: [RegExp, RegExp][] = [
+  [/(청년|20대|30대|사회초년생|신입)/, /(노인|어르신|고령|65세|70세|시니어|정년|은퇴)/],
+  [/(무주택|세입자|임차인|전세|월세)/, /(다주택|집주인|임대인|보유세)/],
+  [/(소상공인|자영업|사업자|창업)/, /(직장인|근로자|월급쟁이|재직)/],
+  [/(출산|임신|육아|영유아|어린이집)/, /(취업|이직|퇴직|실업급여)/],
+];
+/** 카드가 씨앗과 같은 얘기인가. 어긋나면 사유, 맞으면 null. */
+export function lineageConflict(seedText: string, cardText: string): string | null {
+  const s = stripTags(seedText), c = stripTags(cardText);
+  for (const [a, b] of EXCLUSIVE_AXES) {
+    if (a.test(s) && b.test(c) && !a.test(c)) return `근거는 '${(s.match(a) ?? [])[0]}' 얘긴데 카드는 '${(c.match(b) ?? [])[0]}'`;
+    if (b.test(s) && a.test(c) && !b.test(c)) return `근거는 '${(s.match(b) ?? [])[0]}' 얘긴데 카드는 '${(c.match(a) ?? [])[0]}'`;
+  }
+  // ★지역 창작 — 씨앗에 없는 지역명이 카드에만 있으면 그 지역 정보는 지어낸 것이다(가장 위험한 종류).
+  const REGION = /(서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주)/g;
+  const inCard = [...new Set(c.match(REGION) ?? [])];
+  const inSeed = new Set(c ? (s.match(REGION) ?? []) : []);
+  const invented = inCard.filter((r) => !inSeed.has(r));
+  if (invented.length) return `근거에 없는 지역 '${invented[0]}'이 카드에 생겼다`;
+  return null;
+}
+/** 범용어를 뺀 실질 토큰 교집합 — 혈통 판정의 재료. */
+function lineageShared(seedText: string, cardText: string): string[] {
+  const tok = (t: string) => new Set(stripTags(t).replace(/[^가-힣a-zA-Z0-9 ]/g, " ").split(/\s+/)
+    .map((w) => w.trim()).filter((w) => w.length >= 2 && !LINEAGE_STOP.has(w)));
+  const st = tok(seedText);
+  const out: string[] = [];
+  for (const w of tok(cardText)) if (st.has(w) || [...st].some((x) => x.includes(w) || w.includes(x))) out.push(w);
+  return out;
+}
+export function lineageOverlap(seedText: string, cardText: string): number {
+  return lineageShared(seedText, cardText).length;
+}
+/**
+ * 이 카드를 이 씨앗의 자식으로 볼 수 있는가.
+ * ★기준 둘 중 하나: 실질 토큰 2개 겹침, 또는 4자 이상 주제 명사 1개 겹침('전세보증금'·'연금저축'급).
+ *  2개만 요구하면 '전세보증금 반환보증'↔'전세보증금 반환대출'처럼 명백히 같은 주제가 잘려 나간다 —
+ *  혈통을 지키려다 결품을 만들면 그것도 사고다. 대신 범용어는 애초에 세지 않으므로 헐거워지지 않는다.
+ */
+export function lineageAttached(seedText: string, cardText: string): boolean {
+  const shared = lineageShared(seedText, cardText);
+  return shared.length >= 2 || shared.some((w) => [...w].length >= 4);
+}

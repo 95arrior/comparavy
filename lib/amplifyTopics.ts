@@ -6,6 +6,7 @@ import { validateSearchTitle, restoreSearchPhrase, fallbackSearchTitle, ensureKe
 import { logUsage } from "./usageLog";
 import type { TrendTopic } from "./trendTopics";
 import { pickHookPattern, OPEN_LOOP_GUIDE, containsBanned } from "./hookPatterns";
+import { lineageConflict, lineageAttached } from "./editorial";
 import { FF } from "@/config/featureFlags";
 import { dwellPotential, DWELL_BRIEF_DIRECTIVE } from "./dwellScore";
 
@@ -356,11 +357,20 @@ ${OPEN_LOOP_GUIDE}
       const own = briefs.find((x) => x.seed.keyword.replace(/\s+/g, "") === nk || x.lts.some((l) => l.replace(/\s+/g, "") === nk));
       if (own) b = own;
       else {
-        const tok = (t: string) => new Set(t.replace(/[^가-힣a-zA-Z0-9 ]/g, " ").split(/\s+/).filter((w) => w.length >= 2));
-        const kt = tok(`${kw} ${String(it.titleClick ?? "")}`);
-        const st = tok(`${b.seed.keyword} ${b.seed.title}`);
-        const hit = [...kt].some((w) => st.has(w) || [...st].some((s2) => s2.includes(w) || w.includes(s2)));
-        if (!hit) { drop.orphan++; continue; }
+        // ★범용어를 뺀 실질 토큰만 센다(2026-08-05 개정) — 종전엔 '2026·지원금'만 겹쳐도 통과해서
+        //  '65세 이상' 씨앗에서 '청년' 카드가 나왔다. 겹침 1개는 우연일 수 있어 2개를 요구한다.
+        if (!lineageAttached(`${b.seed.keyword} ${b.seed.title}`, `${kw} ${String(it.titleClick ?? "")}`)) { drop.orphan++; continue; }
+      }
+      // ★혈통 상충 — 귀속이 됐어도 '근거와 내용이 서로 배타적'이면 버린다.
+      //  카드에는 씨앗의 뉴스 근거가 함께 붙는다. 근거가 다른 얘기를 하는데 그 근거로 본문까지 쓰면
+      //  글 전체가 틀린 출처 위에 선다 — 링크 하나 틀린 것과 차원이 다른 사고다.
+      {
+        const conflict = lineageConflict(`${b.seed.keyword} ${b.seed.title}`, `${kw} ${String(it.titleClick ?? "")}`);
+        if (conflict) {
+          console.log(`[lineage] 혈통 어긋남 — 카드 버림: ${conflict} | 씨앗="${b.seed.keyword}" 카드="${kw}"`);
+          drop.orphan++;
+          continue;
+        }
       }
       // ★금지어 필터 — 어그로/약속류가 든 제목·카피는 안전한 씨앗 제목으로 폴백.
       let titleClick = (it.titleClick ?? b.seed.title).trim().slice(0, 80);
