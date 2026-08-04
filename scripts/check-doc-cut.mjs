@@ -74,6 +74,16 @@ console.log("\n⑤-3 쿼리 상한 — 보충 후보를 미리 자르지 않는�
   ok(/cutShort/.test(rt), "★상한에 걸려 덜 쟀으면 그 사실을 남긴다");
 }
 
+console.log("\n⑤-4 무거운 수집은 응답 밖으로(2026-08-05: 열이 통째로 비고 기본 경로가 504):");
+{
+  const rt = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
+  // ★재고가 얇아지면 게으른 풀 수집이 매 요청마다 발동해 60초를 넘긴다 —
+  //  정확히 채워야 할 때 응답이 죽는 구조였다. 채우는 일은 백그라운드로 보낸다.
+  ok(/after\(async \(\) => \{\s*try \{ await buildPoolForSub/.test(rt), "★게으른 풀 수집이 after()로 빠졌다");
+  ok(!/await buildPoolForSub\(vertical, sub, \{ sleepMs: 300 \}\);\s*\} catch \{\s*\/\* 수집 실패해도 빈 결과로 진행/.test(rt), "★응답 안에서 기다리지 않는다");
+  ok(/pool-warm:lazy/.test(rt), "★언제 발동했는지 로그로 남긴다");
+}
+
 console.log("\n⑥ 배선 — 만들어놓고 안 부르면 아무 일도 안 일어난다:");
 {
   const rt = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");

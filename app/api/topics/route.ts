@@ -834,15 +834,15 @@ export async function GET(req: Request) {
     if (goodCount < HEALTHY) {
       const seedRl = await checkRateLimit(supabase, user.id, "pool_seed", 20, 600);
       if (seedRl.ok) {
-        try {
-          await buildPoolForSub(vertical, sub, { sleepMs: 300 });
-        } catch {
-          /* 수집 실패해도 빈 결과로 진행 */
-        }
-        for (const [useSub, ranged] of steps) {
-          rows = await fetchPool(useSub, ranged);
-          if (rows.length >= PICK) break;
-        }
+        // ★풀 수집을 응답 밖으로 뺀다(2026-08-05 유저 실측: '꾸준한 수요' 열이 통째로 비고 기본 경로가 504).
+        //  buildPoolForSub는 네이버 수집을 요청 안에서 돈다 — 재고가 얇아지면 매 요청마다 발동해
+        //  60초를 넘기고, 그러면 응답이 통째로 죽어 열이 '채우는 중'으로 남는다.
+        //  ★재고가 얇을수록 더 자주 죽는다 — 정확히 채워야 할 때 못 채우는 구조였다.
+        //  이제 백그라운드로 채우고 이번 응답은 있는 재고로 낸다. 다음 요청이 채워진 풀을 본다.
+        after(async () => {
+          try { await buildPoolForSub(vertical, sub, { sleepMs: 300 }); } catch { /* 수집 실패 — 다음 회차 */ }
+        });
+        console.log(`[pool-warm:lazy] ${sub} 재고 부족(${goodCount}/${HEALTHY}) — 백그라운드 수집 시작(이번 응답은 기존 재고로)`);
       }
     }
   }
