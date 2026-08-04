@@ -26,6 +26,29 @@ const BRANDS: Record<string, string[]> = {
   ],
 };
 
+// ★돈 축(2026-08-05 유저: "뱅크 쪽만 하지 말고 청약·지원금·재테크, 사람들이 포모 오는 걸 다 가져와야 한다").
+//  브랜드는 '누가'이고, 이건 '무엇'이다. 사람이 검색창에 치는 시작 말들 — 뒤에 붙는 말이 곧 지금 뜨는 이슈다.
+//  ★각 축은 자기 신호어를 갖는다. 브랜드엔 '이벤트·캡슐'이 맞고, 청약엔 '무순위·특별공급'이 맞다.
+const MONEY_AXES: { seed: string; signal: RegExp }[] = [
+  // 청약 — 행동 창이 명확하고 경쟁이 곧 화제다
+  { seed: "청약", signal: /(무순위|줍줍|특별공급|사전청약|경쟁률|당첨|추첨|일정|공고|미분양|잔여세대)/ },
+  { seed: "아파트 청약", signal: /(무순위|특별공급|경쟁률|당첨|일정|공고)/ },
+  // 지원금·환급 — 결핍과 마감이 동시에 걸린다
+  { seed: "지원금", signal: /(신청|지급|대상|기간|접수|마감|조회|얼마|받는법)/ },
+  { seed: "정부지원금", signal: /(신청|지급|대상|기간|접수|조회|얼마)/ },
+  { seed: "환급금", signal: /(조회|신청|숨은|미환급|찾는법|얼마)/ },
+  { seed: "바우처", signal: /(신청|지급|대상|사용처|기간|잔액)/ },
+  // 재테크 — 지금 돈이 몰리는 곳
+  { seed: "공모주", signal: /(청약|일정|경쟁률|상장|환불|따상|수요예측)/ },
+  { seed: "적금", signal: /(특판|금리|이벤트|고금리|비교|만기)/ },
+  { seed: "파킹통장", signal: /(금리|비교|이벤트|한도)/ },
+  { seed: "앱테크", signal: /(추천|순위|하루|포인트|현금화)/ },
+  // 세금 — 시기마다 폭발한다
+  { seed: "연말정산", signal: /(환급|공제|간소화|일정|추가납부)/ },
+  { seed: "종합소득세", signal: /(신고|기간|환급|대상|가산세)/ },
+  { seed: "재산세", signal: /(납부|조회|기간|카드|분납)/ },
+];
+
 // ★이벤트·혜택 신호 — 이게 붙어야 '지금 뜨는 돈 되는 말'이다. 없으면 브랜드 일반 정보라 안 들인다.
 const BUZZ_RE = /(이벤트|캡슐|룰렛|출석|퀴즈|응모|당첨|쿠폰|캐시백|리워드|포인트|적금|특판|파킹|무료|지급|혜택|추첨|선착순|오픈)/;
 // 대출 유인·사칭 계열은 아예 배제(3원칙의 법적 안전 — 여기서도 같은 선을 지킨다)
@@ -47,26 +70,32 @@ const PEAK_MAX_DAYS = 6;
 export async function harvestBrandBuzz(category: string, limit = 6, budgetMs = 12_000): Promise<BrandBuzz[]> {
   const brands = BRANDS[category] ?? BRANDS[Object.keys(BRANDS).find((k) => category.includes(k) || k.includes(category)) ?? ""];
   if (!brands?.length) return [];
+  // ★브랜드 축과 돈 축을 함께 돈다 — 브랜드만 돌면 '은행 이벤트 블로그'가 된다(유저 지적).
+  //  돈 축이 먼저다: 청약·지원금은 검색량도 크고 행동 창(마감)이 있어 포모가 세다.
+  const axes: { seed: string; signal: RegExp }[] = [
+    ...MONEY_AXES,
+    ...brands.map((b) => ({ seed: b, signal: BUZZ_RE })),
+  ];
   const startedAt = Date.now();
   const out: BrandBuzz[] = [];
   const seen = new Set<string>();
-  for (const brand of brands) {
+  for (const { seed: axis, signal } of axes) {
     if (out.length >= limit) break;
-    // ★시간 예산 — 브랜드가 늘어도 수확 전체를 붙잡지 않는다(비공식 엔드포인트는 느려질 수 있다)
-    if (Date.now() - startedAt > budgetMs) { console.log(`[brand-buzz] 시간 예산 소진 — ${out.length}개에서 중단`); break; }
+    // ★시간 예산 — 축이 늘어도 수확 전체를 붙잡지 않는다(비공식 엔드포인트는 느려질 수 있다)
+    if (Date.now() - startedAt > budgetMs) { console.log(`[buzz] 시간 예산 소진 — ${out.length}개에서 중단`); break; }
     let items: string[] = [];
-    try { items = await fetchNaverAutocomplete(brand); } catch { continue; }
+    try { items = await fetchNaverAutocomplete(axis); } catch { continue; }
     for (const raw of items) {
       const kw = String(raw).trim();
       if (!kw || kw.length < 4 || kw.length > 30) continue;
-      if (!kw.includes(brand)) continue;          // 브랜드가 빠진 제안은 다른 얘기다
-      if (!BUZZ_RE.test(kw)) continue;            // 이벤트·혜택 신호가 없으면 일반 정보
+      if (!kw.includes(axis)) continue;           // 축이 빠진 제안은 다른 얘기다
+      if (!signal.test(kw)) continue;             // 그 축의 신호가 없으면 일반 정보
       if (BUZZ_BLOCK.test(kw)) continue;          // 대출 유인 계열 배제
       const nk = kw.replace(/\s+/g, "");
       if (seen.has(nk)) continue;
       seen.add(nk);
-      out.push({ keyword: kw, brand });
-      break; // 브랜드당 1개 — 한 브랜드가 보드를 먹지 않게
+      out.push({ keyword: kw, brand: axis });
+      break; // 축당 1개 — 한 축이 보드를 먹지 않게
     }
     await new Promise((r) => setTimeout(r, 120)); // 예의 있는 간격
   }

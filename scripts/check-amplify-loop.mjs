@@ -57,6 +57,9 @@ ok(parse({title:"x",arc:[{role:"a",angle:"1"},{role:"b",angle:"2"},{role:"c",ang
   //  한 항목은 한글 500자 안팎(제목 2·페르소나·훅·썸네일 2·판결·컷리스트·분기축·시리즈 아크) = 550~650토큰.
   //  ★한 번에 15개를 시키지 않고 조각으로 나눠 동시에 부른다 — 조각마다 예산이 넉넉하고, 하나가 실패해도 나머지는 산다.
   chk(/const CHUNK = \d+/.test(src) && /chunks\.map\(\(c, i\) => callChunk/.test(src), "★조각으로 나눠 동시 호출한다");
+  // ★실시간 씨앗이 정원 경쟁에서 지면 '지금 뜨는' 열이 뉴스 롱테일로만 찬다(2026-08-05 실측: 씨앗 4개 → 카드 0장)
+  chk(/rotated0\.filter\(isLive\)/.test(src), "★실시간(rising) 씨앗을 증식 정원 맨 앞에 세운다");
+  chk(/live: liveIn/.test(src), "★몇 개가 들어갔는지 진단에 남긴다(0이면 열이 롱테일로만 찬다는 뜻)");
   chk(/PER_ITEM_TOKENS = 6\d\d/.test(src), "★항목당 토큰 추정이 실측 기반(550~650)으로 올라갔다");
   chk(/max_tokens: maxTokens/.test(src) && /800 \+ chunk\.length \* PER_ITEM_TOKENS/.test(src), "★토큰 상한이 조각 크기에 비례한다");
   chk(/it\.seedIndex = offset \+/.test(src), "★조각 번호를 전체 번호로 되돌린다(안 하면 2번 조각 카드가 1번 씨앗에 붙는 혈통 사고)");

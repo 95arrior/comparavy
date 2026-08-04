@@ -220,7 +220,7 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
     //   검색광고 풀도 전부 이런 말을 못 잡는다). 유명 블로거가 7/29에 그 글로 대박 난 자리다.
     try {
       if (hasBrandAxis(category)) {
-        const buzz = await harvestBrandBuzz(category, 4);
+        const buzz = await harvestBrandBuzz(category, 6, 20_000); // 축이 브랜드+돈 15개로 늘어 예산도 넓힌다
         let added = 0;
         for (const b of buzz) {
           const kw = compressToSearchKeyword(b.keyword);

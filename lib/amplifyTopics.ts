@@ -155,6 +155,8 @@ function coreOf(text: string): string {
 /** ★마지막 증식 진단(2026-08-04) — debug 응답이 읽어 간다. 프로세스 메모리라 최신 1건만 유지된다. */
 export let lastAmplifyDiag: {
   seeds: number; want: number; briefs: number; parsed: number; out: number; stage?: string;
+  /** 증식 정원에 들어간 실시간(rising) 씨앗 수 — 0이면 '지금 뜨는' 열이 뉴스 롱테일로만 찬다는 뜻 */
+  live?: number;
   drop: { placeholder: number; noBrief: number; dupKeyword: number; orphan: number; titleTail: number };
   // ★모델 호출 자체의 계측(2026-08-04) — 'parsed 8'만으로는 '모델이 8개만 줬다'와 '잘려서 8개만 건졌다'가 구분되지 않는다.
   call?: { chunks: number; stopReasons: (string | null)[]; truncated: number; outTokens: (number | null)[]; maxTokens: number; noJson: number };
@@ -202,8 +204,15 @@ export async function amplifyForUser(
   const KEEP = Math.min(8, seeds.length);
   const head = seeds.slice(0, KEEP);
   const tail = seeds.slice(KEEP).sort((a, b) => (fnv(a.keyword + userId) % 997) - (fnv(b.keyword + userId) % 997));
-  const rotated = [...head, ...tail];
+  // ★실시간(rising) 씨앗을 맨 앞에 세운다(2026-08-05 유저 실측: 브랜드 버즈 4개가 들어왔는데 카드가 0장).
+  //  씨앗은 created_at 역순으로 오지만, 수확 한 번에 27개가 들어오면 실시간 몇 개는 뒤로 밀려 증식에서 빠진다.
+  //  ★'지금 뜨는' 열의 존재 이유가 실시간인데, 그 씨앗이 정원 경쟁에서 지면 열이 뉴스 롱테일로만 찬다.
+  const isLive = (t: TrendTopic) => t.source === "rising";
+  const rotated0 = [...head, ...tail];
+  const rotated = [...rotated0.filter(isLive), ...rotated0.filter((t) => !isLive(t))];
   const picks = rotated.slice(0, Math.min(want, rotated.length));
+  const liveIn = picks.filter(isLive).length;
+  if (liveIn) console.log(`[amp] 실시간 씨앗 ${liveIn}개를 증식 정원에 우선 배치(전체 ${picks.length})`);
 
   const badge = (profile?.sub_category || "정보").toString().slice(0, 10);
   // 각 씨앗에 구조 조합 + 훅 패턴(코드 배정, 배치 내 직전 제외) + 실검증 롱테일을 붙여 LLM에 브리핑
@@ -461,7 +470,7 @@ ${OPEN_LOOP_GUIDE}
     for (const o of out) if (!validThumbMain(o.thumb.mainCopy)) o.thumb.mainCopy = "";
     // ★증식 진단(2026-08-04) — 항상 로그로 남기고, 마지막 결과를 모듈에 보관해 debug 응답이 읽어 간다.
     //  ★유저가 매번 로그를 뒤지게 하지 않는다: 주소 하나로 보이면 그게 자동이다.
-    await saveAmpDiag({ seeds: seeds.length, want, briefs: briefs.length, parsed: parsed.length, out: out.length, drop, stage: "완료", call: callMeta });
+    await saveAmpDiag({ seeds: seeds.length, want, briefs: briefs.length, parsed: parsed.length, out: out.length, drop, stage: "완료", call: callMeta, live: liveIn });
     return out;
   } catch (e) {
     // ★예외로 죽어도 흔적을 남긴다 — 조용한 실패가 오늘 하루를 잡아먹었다.

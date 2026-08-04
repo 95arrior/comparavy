@@ -149,6 +149,8 @@ console.log(fail ? `\n실패 ${fail}건` : "\n통과: 홈판 공급(캐시가 �
   //  coreKeywordOf는 가장 긴 토큰을 고르므로 '엔화 오를수록 통장'에서 '오를수록'이 뽑힌다.
   ok(/const repeatsRecent =/.test(hb) && /recentTopicTokens\.has\(w\)/.test(hb), "★실질 토큰 겹침으로 소재 반복을 막는다");
   ok(/최근 소재 반복 — 제외/.test(hb), "★겹친 말이 무엇인지 로그로 남긴다");
+  // ★필터는 '꺼내는 자리'에도 있어야 한다(2026-08-05 재발: 엔화 글을 발행했는데 캐시의 엔화 카드가 살아남았다)
+  ok(/const cacheRepeat =/.test(hb) && /&& !cacheRepeat\(b\)/.test(hb), "★캐시에서 꺼낼 때도 최근 소재 반복을 거른다");
   const tr2 = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
   ok((tr2.match(/recentKeywords: recent14/g) ?? []).length === 2, "★두 경로 모두 최근 키워드를 넘긴다");
 }

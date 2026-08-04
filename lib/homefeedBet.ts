@@ -148,6 +148,22 @@ export async function pickHomefeedBets(
   //  옛 캐시는 '어제 유형 · 어제 소재'로 만들어진 세트라 그대로 두면 오늘도 같은 카드가 선다.
   const cacheKey = `homebet:v5:${userId}:${kstDay}:${want}`;
   let alive: HomefeedBet[] = []; // 캐시에서 살아남은(아직 안 쓴) 카드 — 부족분만 새로 만든다
+  // ★소재 반복은 '핵심어 한 개'로는 못 막는다(2026-08-05 재발: 엔화 글을 쓴 다음 날 또 엔화 카드).
+  //  coreKeywordOf는 가장 긴 토큰을 고르는데, '엔화 오를수록 통장'이면 '오를수록'이 뽑혀 소재를 못 가리킨다.
+  //  ★그래서 최근에 쓴 글의 '실질 토큰'을 통째로 들고, 새 카드가 그 중 하나라도 품으면 같은 소재로 본다.
+  const TOPIC_STOP = new Set(["지원금", "신청", "방법", "조건", "기준", "정리", "총정리", "혜택", "제도", "정책", "현실", "이유", "기한", "안내", "변경", "개편", "확대", "얼마", "누구", "지금", "올해", "내년", "이번", "통장", "사람", "경우", "차이", "구조", "선택", "기회", "가지"]);
+  const topicTokens = (t: string) => String(t || "").split(/[\s·,]+/)
+    .map((w) => w.replace(/[^가-힣a-zA-Z0-9]/g, ""))
+    .filter((w) => [...w].length >= 2 && !TOPIC_STOP.has(w) && !/^\d+$/.test(w));
+  const recentTopicTokens = new Set<string>([
+    ...(opts?.recentKeywords ?? []).flatMap(topicTokens),
+    ...(opts?.recentTitles ?? []).flatMap(topicTokens),
+  ]);
+  const repeatsRecent = (b: HomefeedBet): string | null => {
+    for (const w of topicTokens(`${b.keyword} ${b.title}`)) if (recentTopicTokens.has(w)) return w;
+    return null;
+  };
+  const seededCores = recentTopicTokens.size;
   try {
     const { data: c } = await db.from("api_cache").select("value, expires_at").eq("key", cacheKey).maybeSingle();
     if (c?.value && new Date(String(c.expires_at)).getTime() > Date.now()) {
@@ -164,7 +180,13 @@ export async function pickHomefeedBets(
       //  종전 구조: 캐시는 하루치 세트를 통째로 들고 있고, '이미 쓴 것' 판정은 호출측(topics)에서만 했다.
       //  그러면 발행할수록 홈판 자리는 줄어들고 그 자리를 트렌드가 메운다 — 배합이 홈판 50%인데
       //  정작 홈판을 쓸수록 홈판이 사라지는 구조였다. 쓴 만큼 다시 만들어 주는 게 맞다.
-      alive = cached.filter((b) => !usedKeywords.has(normalizeKeyword(b.keyword)) && !(opts?.isDup?.(b.title, b.keyword)));
+      // ★최근 소재 반복 판정도 여기서 건다(2026-08-05 재발: 엔화 글을 발행했는데 캐시의 엔화 카드가 살아남았다).
+      //  생성 경로에만 걸어 뒀더니 캐시 히트에서는 옛 카드가 그대로 나왔다 — 필터는 '꺼내는 자리'에도 있어야 한다.
+      const cacheRepeat = (b: HomefeedBet): boolean => {
+        for (const w of topicTokens(`${b.keyword} ${b.title}`)) if (recentTopicTokens.has(w)) return true;
+        return false;
+      };
+      alive = cached.filter((b) => !usedKeywords.has(normalizeKeyword(b.keyword)) && !(opts?.isDup?.(b.title, b.keyword)) && !cacheRepeat(b));
       if (alive.length >= want) {
         lastHomebetDiag = genDiag
           ? { ...genDiag, cached: true, out: alive.length }
@@ -224,22 +246,7 @@ export async function pickHomefeedBets(
   // ★최근에 쓴 소재의 핵심어를 미리 넣어 둔다 — 같은 소재를 다시 만들면 그 자리에서 걸린다.
   //  실물: 어제 '엔화 폭등 내 돈'·'전기차 충전비 함정'을 발행했는데 오늘 또 엔화·전기차 카드가 섰다.
   const usedCores = new Set<string>();
-  // ★소재 반복은 '핵심어 한 개'로는 못 막는다(2026-08-05 재발: 엔화 글을 쓴 다음 날 또 엔화 카드).
-  //  coreKeywordOf는 가장 긴 토큰을 고르는데, '엔화 오를수록 통장'이면 '오를수록'이 뽑혀 소재를 못 가리킨다.
-  //  ★그래서 최근에 쓴 글의 '실질 토큰'을 통째로 들고, 새 카드가 그 중 하나라도 품으면 같은 소재로 본다.
-  const TOPIC_STOP = new Set(["지원금", "신청", "방법", "조건", "기준", "정리", "총정리", "혜택", "제도", "정책", "현실", "이유", "기한", "안내", "변경", "개편", "확대", "얼마", "누구", "지금", "올해", "내년", "이번", "통장", "사람", "경우", "차이", "구조", "선택", "기회", "가지"]);
-  const topicTokens = (t: string) => String(t || "").split(/[\s·,]+/)
-    .map((w) => w.replace(/[^가-힣a-zA-Z0-9]/g, ""))
-    .filter((w) => [...w].length >= 2 && !TOPIC_STOP.has(w) && !/^\d+$/.test(w));
-  const recentTopicTokens = new Set<string>([
-    ...(opts?.recentKeywords ?? []).flatMap(topicTokens),
-    ...(opts?.recentTitles ?? []).flatMap(topicTokens),
-  ]);
-  const repeatsRecent = (b: HomefeedBet): string | null => {
-    for (const w of topicTokens(`${b.keyword} ${b.title}`)) if (recentTopicTokens.has(w)) return w;
-    return null;
-  };
-  const seededCores = recentTopicTokens.size;
+
   let dupDropped = 0;
   const dedupeInto = (target: HomefeedBet[], cards: HomefeedBet[]) => {
     for (const b of cards) {
