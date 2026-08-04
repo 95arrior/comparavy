@@ -23,6 +23,14 @@ export interface HomefeedInput {
   homefeedPublishDays: string[];
   /** 홈판이 아닌 글의 발행일 — 대조군. */
   otherPublishDays: string[];
+  /**
+   * ★익은 홈판 글 수(2026-08-04 유저 관찰로 추가) — 발행 후 RIPE_DAYS 이상 지난 것.
+   *  유저 실측: "지금 홈판에 노출되는 건 홈판 전략 전에 쓴 옛 글이고, 지금 글들은 아직 노출이 안 됐다."
+   *  홈피드 추천은 반응 데이터가 쌓인 뒤에 붙는 것으로 보인다 — 그렇다면 갓 낸 글로 '안 터졌다'고
+   *  판정하는 건 오판이다. 되돌리라는 결론은 익은 표본 위에서만 낸다.
+   *  미제공이면 종전 동작 유지(하위호환).
+   */
+  ripeHomefeedPosts?: number;
 }
 
 export type Verdict = "insufficient" | "revert" | "hold" | "promising";
@@ -45,6 +53,8 @@ export interface HomefeedVerdict {
 const ATTRIB_WINDOW_DAYS = 3; // 홈판 노출은 발행 당일~며칠 사이에 붙는다(그 밖은 귀속하지 않는다)
 const MIN_DAYS = 10;          // 이보다 적으면 판정하지 않는다 — 소표본으로 40% 배합을 뒤집으면 안 된다
 const MIN_POSTS = 8;          // 홈판 글이 이만큼은 나가 봐야 '안 터진다'고 말할 수 있다
+export const RIPE_DAYS = 7;   // 홈판 글이 '익었다'고 보는 최소 경과일(홈피드 순환은 즉시가 아니다)
+const MIN_RIPE = 5;           // 익은 글이 이만큼은 돼야 되돌림을 논한다
 
 const dayNum = (d: string): number => Date.parse(`${d}T00:00:00Z`);
 
@@ -90,6 +100,15 @@ export function judgeHomefeed(input: HomefeedInput): HomefeedVerdict {
     notes.push(`관측 ${observedDays}일 · 홈판 ${homefeedPosts}편 — 판정 최소선(${MIN_DAYS}일 / ${MIN_POSTS}편) 미달.`);
     notes.push("이 구간에서는 어떤 결론도 내지 않는다. 소표본으로 배합을 뒤집으면 그게 더 큰 손해다.");
     return { verdict: "insufficient", headline: "아직 판정할 수 없어요 — 표본이 부족합니다", observedDays, homefeedPosts, spikes, spikeAttribution, bestDay, medianVisitors, notes };
+  }
+
+  // ★익음 게이트 — 표본 수는 찼는데 그 글들이 아직 안 익었으면 판정하지 않는다.
+  const ripe = input.ripeHomefeedPosts ?? homefeedPosts;
+  if (ripe < MIN_RIPE) {
+    notes.push(`홈판 ${homefeedPosts}편 중 발행 ${RIPE_DAYS}일이 지난 것은 ${ripe}편입니다(최소 ${MIN_RIPE}편 필요).`);
+    notes.push("홈피드 노출은 발행 즉시가 아니라 반응이 쌓인 뒤에 붙습니다 — 갓 낸 글로 '안 터졌다'고 판정하면 오판입니다.");
+    notes.push("지금 홈피드에서 들어오는 유입이 있다면 그건 이전 글들의 몫일 수 있습니다. 두 시기를 섞어 보지 마세요.");
+    return { verdict: "insufficient", headline: "아직 판정할 수 없어요 — 홈판 글이 덜 익었습니다", observedDays, homefeedPosts, spikes, spikeAttribution, bestDay, medianVisitors, notes };
   }
 
   if (spikes.length === 0) {

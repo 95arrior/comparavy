@@ -3,7 +3,7 @@
 //  ?days=21 로 관측 창을 바꿔 볼 수 있다(기본 21 — 2주 베팅 + 앞 기준선 1주).
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient, createSupabaseAdminClient, hasSupabaseEnv } from "@/lib/supabase-server";
-import { judgeHomefeed, type DayPoint } from "@/lib/homefeedVerdict";
+import { judgeHomefeed, RIPE_DAYS, type DayPoint } from "@/lib/homefeedVerdict";
 import { TIER_LANE_MIX, type Lane } from "@/lib/scoreWeights";
 import { computeBlogTier, coldStartTier } from "@/lib/blogTier";
 
@@ -39,14 +39,25 @@ export async function GET(request: Request) {
     .gte("published_at", since.toISOString()).limit(1000);
   const homefeedPublishDays: string[] = [];
   const otherPublishDays: string[] = [];
+  // ★익음 분포(2026-08-04 유저 관찰: "지금 홈판에 노출되는 건 홈판 전략 전 옛 글이고, 지금 글은 아직 노출 전")
+  //  홈피드 순환은 즉시가 아니다 — 갓 낸 글을 표본에 넣고 '안 터졌다'고 판정하면 오판이다.
+  const ripeness = { "D+0~2": 0, "D+3~6": 0, "D+7~13": 0, "D+14+": 0 };
+  let ripeHomefeedPosts = 0;
   for (const p of pp ?? []) {
     if (!p.published_at) continue;
     const d = kstDay(String(p.published_at));
     const isHome = p.species === "homefeed" || (p as { seed_source?: string | null }).seed_source === "homebet";
     (isHome ? homefeedPublishDays : otherPublishDays).push(d);
+    if (!isHome) continue;
+    const ageDays = Math.floor((Date.now() - Date.parse(String(p.published_at))) / 86400_000);
+    if (ageDays >= RIPE_DAYS) ripeHomefeedPosts += 1;
+    if (ageDays <= 2) ripeness["D+0~2"] += 1;
+    else if (ageDays <= 6) ripeness["D+3~6"] += 1;
+    else if (ageDays <= 13) ripeness["D+7~13"] += 1;
+    else ripeness["D+14+"] += 1;
   }
 
-  const verdict = judgeHomefeed({ days, homefeedPublishDays, otherPublishDays });
+  const verdict = judgeHomefeed({ days, homefeedPublishDays, otherPublishDays, ripeHomefeedPosts });
 
   // ★공급 계측(2026-08-02 — 판정 실행에서 발견한 진짜 문제).
   //  30일 실측: 배합은 homefeed 40%인데 실제 발행 97편 중 홈판은 3편(3.1%)이었다.
@@ -94,6 +105,8 @@ export async function GET(request: Request) {
         ? "홈판이 배합 목표의 절반에도 못 미칩니다 — 판정보다 공급 경로를 먼저 보세요(카드 결품·유저 선택)."
         : "레인 공급은 배합 목표 범위 안입니다.",
     },
+    // ★익음 — 홈판 글이 몇 편이나 '판정할 만큼' 익었는가. 이게 낮으면 verdict는 품질이 아니라 시간을 판정한 것이다.
+    ripeness: { ripeDays: RIPE_DAYS, ripePosts: ripeHomefeedPosts, 분포: ripeness },
     verdict,
   });
 }

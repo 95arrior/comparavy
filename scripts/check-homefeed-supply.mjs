@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { judgeHomefeed, RIPE_DAYS } from "../lib/homefeedVerdict.ts";
 
 // ★2026-08-02 실측 로그가 원점:
 //   [lane-quota:short] 홈판 미달 0/4 — 하류 탈락(이미쓴 4·게이트 0·중복 0)
@@ -111,6 +112,25 @@ console.log(fail ? `\n실패 ${fail}건` : "\n통과: 홈판 공급(캐시가 �
 
   const tr = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
   ok(/diag\.homeBet = lastHomebetDiag/.test(tr), "★debug 응답에 실린다(주소 하나로 판별)");
+}
+
+
+// ★익음 게이트(2026-08-04 유저 관찰: "지금 홈판에 노출되는 건 홈판 전략 전 옛 글이고, 지금 글은 아직 노출 전").
+//  홈피드 순환은 발행 즉시가 아니다. 갓 낸 글을 표본에 넣고 '안 터졌다'며 배합을 되돌리면 그게 오판이다.
+{
+  const days = Array.from({ length: 14 }, (_, i) => ({ day: `2026-07-${String(i + 10).padStart(2, "0")}`, visitors: 100 }));
+  const posts = Array.from({ length: 10 }, (_, i) => `2026-07-${String(i + 12).padStart(2, "0")}`);
+  const 덜익음 = judgeHomefeed({ days, homefeedPublishDays: posts, otherPublishDays: [], ripeHomefeedPosts: 2 });
+  ok(덜익음.verdict === "insufficient", "★표본은 찼어도 덜 익었으면 판정하지 않는다");
+  ok(덜익음.notes.some((n) => n.includes("반응이 쌓인 뒤")), "★이유를 남긴다(노출은 즉시가 아니다)");
+  ok(덜익음.notes.some((n) => n.includes("이전 글들의 몫")), "★옛 글 유입과 섞어 보지 말라고 못 박는다");
+
+  const 익음 = judgeHomefeed({ days, homefeedPublishDays: posts, otherPublishDays: [], ripeHomefeedPosts: 9 });
+  ok(익음.verdict !== "insufficient", "★익으면 정상 판정으로 넘어간다(게이트가 영구 보류가 되지 않는다)");
+  ok(RIPE_DAYS === 7, "익음 기준 = 발행 D+7");
+
+  const rt = fs.readFileSync(new URL("../app/api/health/homefeed-bet/route.ts", import.meta.url), "utf-8");
+  ok(/ripeHomefeedPosts \+= 1/.test(rt) && /ripeness:/.test(rt), "★엔드포인트가 익음 분포를 계산해 함께 보여준다");
 }
 
 process.exit(fail ? 1 : 0);
