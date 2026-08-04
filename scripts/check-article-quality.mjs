@@ -490,6 +490,12 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   ok(/finalizeArticleBody\(\{/.test(pg), "★사전생성(pregen) 경로도 같은 마감 함수를 부른다");
   ok(/relatedPostsFor\(/.test(gr) && /relatedPostsFor\(/.test(pg), "★관련글 후보도 두 경로가 같은 함수를 쓴다");
   ok(!/ensureRelatedLinks/.test(gr) && !/ensureHashtags/.test(gr), "★라우트가 마감 단계를 따로 복붙하지 않는다(드리프트 원천 차단)");
+  // ★사전 생성분은 '미리' 만들어진다 — 마감 규칙을 고쳐도 대기 중이던 글은 옛 몸이다(2026-08-05 유저 재제보).
+  //  여는 순간 한 번 더 태운다. finalizeArticleBody는 멱등이라 두 번 걸어도 같은 결과다.
+  const cl = fs.readFileSync(new URL("../app/api/pregen/claim/route.ts", import.meta.url), "utf-8");
+  ok(/finalizeArticleBody\(\{/.test(cl), "★열람(claim) 시점에도 마감을 다시 태운다");
+  ok(/if \(fin\.html !== updated\.body_html\)/.test(cl), "★바뀐 게 있을 때만 저장한다(불필요한 쓰기 없음)");
+  ok(/열람 자체를 막지 않는다/.test(cl), "★마감 재적용이 실패해도 글은 열린다");
   ok(!/심리 연속성 기준/.test(gr), "★LLM 심리 판정이 제거됨(0개로 흐르던 원인)");
   const ph = fs.readFileSync(new URL("../lib/publishHtml.ts", import.meta.url), "utf-8");
   ok(!/\$\{reason\.trim\(\)\}/.test(ph), "★렌더에서 설명 문장이 제거됨");
