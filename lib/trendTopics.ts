@@ -4,6 +4,7 @@ import { fetchApplyhomeSeeds } from "./applyhome";
 import { fetchGov24Seeds } from "./gov24";
 import { fetchBizinfoSeeds } from "./bizinfoSeeds";
 import { fetchDartIPOSeeds, ipoAdviceLeak } from "./dartIPO";
+import { fetchCorpActionSeeds } from "./dartCorpAction";
 import { measureTopicDemand, hasRealDemand } from "./topicDemand";
 import { preemptionScore, preemptionNote, preemptWindow } from "./preemption";
 import { gatherHeadlinesWithStats, RISING_SEED, risingKeywordOf, seedsFor } from "./trendSources";
@@ -250,6 +251,28 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
         rows.push({ category, keyword: kw, title: `${kw}, 지금 왜 갑자기 찾을까`, news_context: `[실시간 급상승] 구글 트렌드 KR에서 지금 급상승 중인 검색어다. ★'${category}' 관점으로만 다룬다 — 이 분야와 무관한 일반 이슈 글 금지. 사람들이 지금 이 말을 왜 찾는지부터 짚고, 그 다음 내 돈·내 조건으로 번역한다.`, longtails: [] as Longtail[], source: "rising", created_at: new Date().toISOString(), expires_at: expires });
       }
       if (injected) console.log(`[rising] ${category}: 급상승 직접 주입 ${injected}개`);
+    }
+
+    // ★기업 액션 공시 주입(2026-08-05 — 설계 3단계). 무상증자·유상증자·주식분할 결정.
+    //  근거: 8/4 '알테오젠 무상증자'가 new로 진입했는데, 신호탄은 7/16 공시였다(19일 전).
+    //  ★공시 당일이 1차 폭발이고, 권리락·기준일·상장일마다 다시 터진다 — 후속 창은 브리프에 남긴다.
+    if (/경제|재테크|금융|투자|주식/.test(category)) {
+      try {
+        const acts = await fetchCorpActionSeeds();
+        let added = 0;
+        for (const a2 of acts) {
+          const kw = compressToSearchKeyword(a2.keyword);
+          if (!kw || seen.has(kw)) continue;
+          if (isUnsafeKeyword(kw, brandOk) || scamLoan(kw)) continue;
+          seen.add(kw);
+          added += 1;
+          rows.push({ category, keyword: kw, title: a2.title, news_context: `${a2.newsContext}\n★후속 창(추정): ${a2.followFrom}~${a2.followTo} 사이에 권리락·신주배정 관련 검색이 다시 오른다. 그 시점을 겨냥해 일정 표를 본문에 둔다.`, longtails: [] as Longtail[], source: "dart", created_at: new Date().toISOString(), expires_at: expires });
+        }
+        if (added) console.log(`[corp-action] ${category}: ${added}건 — ${acts.slice(0, 3).map((x) => x.keyword).join(", ")}`);
+      } catch (e) {
+        // ★조용한 0 금지 — 원천이 죽으면 그 사실이 로그에 남아야 한다
+        console.error("[corp-action] 수집 실패:", e instanceof Error ? e.message : e);
+      }
     }
 
     // ★고정 캘린더 주입(2026-08-05 — 설계 1단계). 세금·지급·계절·주간·정책 일정.

@@ -83,5 +83,22 @@ console.log("\n⑤ 배선 — 씨앗으로 실제로 들어가는가:");
   ok(/문서 \{bt\.toLocaleString/.test(home) && /적을수록 선점하기 좋아요/.test(home), "★문서 수를 숫자 그대로 + 적을수록 선점임을 알린다");
 }
 
+console.log("\n⑥ 3단계 — 기업 액션 공시(동적 원천):");
+{
+  const ca = fs.readFileSync(new URL("../lib/dartCorpAction.ts", import.meta.url), "utf-8");
+  // ★근거: 8/4 '알테오젠 무상증자' new 진입 — 신호탄은 7/16 공시(19일 전)
+  ok(/무상증자\\s\*결정\|유상증자/.test(ca), "★무상증자·유상증자 결정 공시를 잡는다");
+  ok(/pblntf_ty=I/.test(ca), "★거래소 수시공시에서 잡는다(무상증자 결정이 오는 곳)");
+  ok(/if \(!\(it\.stock_code \?\? ""\)\.trim\(\)\) continue;/.test(ca), "상장사만(비상장은 검색 수요가 없다)");
+  ok(/followFrom/.test(ca) && /addDays\(dt, 14\)/.test(ca), "★후속 창(권리락·기준일)을 예약한다 — 한 번 터지고 끝나지 않는다");
+  ok(/확인 못 한 날짜는 절대 지어내지 마라/.test(ca), "★정확한 일정은 원문에서 — 추정 날짜 단정 금지");
+  ok(/투자 판단을 부추기는 서술 금지/.test(ca), "★제도 설명까지만(투자권유 선 유지)");
+  ok(/out\.slice\(0, 6\)/.test(ca), "하루 상한 — 공시가 몰리는 날 보드를 먹지 않게");
+
+  const tt2 = fs.readFileSync(new URL("../lib/trendTopics.ts", import.meta.url), "utf-8");
+  ok(/fetchCorpActionSeeds\(\)/.test(tt2), "★수확 파이프에 배선됐다");
+  ok(/\[corp-action\] 수집 실패/.test(tt2), "★원천이 죽으면 로그에 남는다(조용한 0 금지)");
+}
+
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 고정 캘린더");
 process.exit(fail ? 1 : 0);

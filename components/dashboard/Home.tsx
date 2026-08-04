@@ -129,8 +129,25 @@ export default function Home({
   const [boardTab, setBoardTab] = useState<"short" | "long">("short"); // 모바일 탭
   const [boardShort, setBoardShort] = useState<Topic[] | null>(null);
   const [boardLong, setBoardLong] = useState<Topic[] | null>(null);
+  // ★보드 세션 캐시(2026-08-05 유저: "탭 누르고 다른 메뉴 갔다오면 항상 새로고침돼서 로딩이 오래 걸린다").
+  //  홈이 언마운트→재마운트될 때마다 topics를 다시 불렀다. 그 호출은 증식·홈판 생성까지 도는 무거운 경로다.
+  //  ★글감은 '지금 이 순간'이 아니라 '오늘'의 것이다 — 메뉴를 오갈 때마다 새로 뽑을 이유가 없다.
+  //   새로 받는 건 [글감 새로 받기] 버튼이 이미 있다. 자동 갱신은 그 버튼의 존재 이유를 지운다.
+  const BOARD_TTL = 30 * 60_000; // 30분 — 그 안에 돌아오면 있던 보드를 그대로 보여준다
+  const boardCacheKey = `ateflo_board_${localDayStr()}_${profileKey ?? ""}`;
   useEffect(() => {
     let alive = true;
+    // 캐시 먼저 — 있으면 네트워크를 아예 안 탄다
+    try {
+      const raw = sessionStorage.getItem(boardCacheKey);
+      if (raw) {
+        const c = JSON.parse(raw) as { at: number; short: Topic[]; long: Topic[] };
+        if (Date.now() - c.at < BOARD_TTL && Array.isArray(c.short)) {
+          setBoardShort(c.short); setBoardLong(c.long ?? []);
+          return; // ★네트워크 호출 없음
+        }
+      }
+    } catch { /* 캐시 손상 — 아래에서 새로 받는다 */ }
     (async () => {
       try {
         const usedKw = todayKeywords(articles);
@@ -138,10 +155,13 @@ export default function Home({
         const q = (mode: string) => fetch(`/api/topics?mode=${mode}${ex.length ? `&exclude=${encodeURIComponent(ex.join(","))}` : ""}`).then((r) => r.json()).catch(() => ({ topics: [] }));
         const [sh, lo] = await Promise.all([q("short"), q("long")]);
         if (!alive) return;
-        setBoardShort(sanitizeTopics(Array.isArray(sh.topics) ? sh.topics : [])); // 전체 보관 — 치우면 다음이 올라옴
+        const shortList = sanitizeTopics(Array.isArray(sh.topics) ? sh.topics : []);
+        const longList = sanitizeTopics(Array.isArray(lo.topics) ? lo.topics : []);
+        setBoardShort(shortList); // 전체 보관 — 치우면 다음이 올라옴
         if ((sh as { ff?: { perfLoop?: boolean } }).ff?.perfLoop || (lo as { ff?: { perfLoop?: boolean } }).ff?.perfLoop) setFfPerf(true);
         const tn = (lo as { tier?: { note?: string } }).tier?.note; if (tn) setTierNote(tn);
-        setBoardLong(sanitizeTopics(Array.isArray(lo.topics) ? lo.topics : []));
+        setBoardLong(longList);
+        try { sessionStorage.setItem(boardCacheKey, JSON.stringify({ at: Date.now(), short: shortList, long: longList })); } catch { /* 용량 초과 — 캐시 없이 진행 */ }
       } catch { if (alive) { setBoardShort([]); setBoardLong([]); } }
     })();
     return () => { alive = false; };
@@ -161,11 +181,17 @@ export default function Home({
       const d = await r.json().catch(() => ({}));
       if (!r.ok) { setRegenMsg(d.error ?? "잠시 후 다시 시도해 주세요"); setTimeout(() => setRegenMsg(null), 4000); return; }
       setBoardShort(null); setBoardLong(null); // 스켈레톤 — 새 세트 로드
+      try { sessionStorage.removeItem(boardCacheKey); } catch { /* ignore */ } // ★새로 받기가 캐시를 비운다(그게 이 버튼의 일이다)
       const ex = [...new Set([...dismissedRef.current, ...todayKeywords(articles)])];
       const q = (mode: string) => fetch(`/api/topics?mode=${mode}${ex.length ? `&exclude=${encodeURIComponent(ex.join(","))}` : ""}`).then((r) => r.json()).catch(() => ({ topics: [] }));
       const [sh, lo] = await Promise.all([q("short"), q("long")]);
       setBoardShort(sanitizeTopics(Array.isArray(sh.topics) ? sh.topics : []).filter((g) => !dismissedRef.current.includes(g.keyword)));
-      setBoardLong(sanitizeTopics(Array.isArray(lo.topics) ? lo.topics : []).filter((g) => !dismissedRef.current.includes(g.keyword)));
+      const nl = sanitizeTopics(Array.isArray(lo.topics) ? lo.topics : []).filter((g) => !dismissedRef.current.includes(g.keyword));
+      setBoardLong(nl);
+      try {
+        const ns = sanitizeTopics(Array.isArray(sh.topics) ? sh.topics : []).filter((g) => !dismissedRef.current.includes(g.keyword));
+        sessionStorage.setItem(boardCacheKey, JSON.stringify({ at: Date.now(), short: ns, long: nl }));
+      } catch { /* ignore */ }
     } catch { setRegenMsg("네트워크 오류예요"); setTimeout(() => setRegenMsg(null), 4000); }
     finally { setRegenBusy(false); }
   }
