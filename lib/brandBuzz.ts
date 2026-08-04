@@ -84,6 +84,11 @@ const BUZZ_RE = /(이벤트|캡슐|룰렛|출석|퀴즈|응모|당첨|쿠폰|캐
 //  ★남기는 선은 둘: 불법사금융 유인(무직자·작업대출·신용불량)과 투자권유 오인(급등·매수·추천 종목).
 //   이 둘은 3원칙(법적 안전·계정 지속)이라 유저가 폭을 넓히라고 해도 유지한다.
 const BUZZ_BLOCK = /(무직자|작업대출|신용불량|연체자|회생|파산|일수|사채|급전|당일대출|한도조회|신용점수\s?올리기|급등주|추천주|매수\s?타이밍|수익률\s?보장|리딩방)/;
+// ★민간 대출 상품(2026-08-05 유저: "대출추천은 역시 안 돼") — 수확 단계에서 먼저 막는다.
+//  브랜드 축이 '○○뱅크 대출 이벤트'를 물어올 수 있어서, 최종 게이트에만 두면 쿼터만 쓰고 버려진다.
+//  ★공적·정책 금융(햇살론·디딤돌·버팀목 등)은 제도 안내라 예외 — 유저 표현으로 '조건부 허용'.
+const PUBLIC_LOAN = /(햇살론|디딤돌|버팀목|보금자리론|새희망홀씨|미소금융|서민금융|주택도시기금|사잇돌|바꿔드림론)/;
+const LOAN_PRODUCT = /(대출|주담대|마이너스통장|대환|한도)/;
 
 export interface BrandBuzz { keyword: string; brand: string; momentum?: number; peakDaysAgo?: number }
 
@@ -126,7 +131,8 @@ export async function harvestBrandBuzz(category: string, limit = 6, budgetMs = 1
       if (!kw || kw.length < 4 || kw.length > 30) continue;
       if (!kw.includes(axis)) continue;           // 축이 빠진 제안은 다른 얘기다
       if (!signal.test(kw)) continue;             // 그 축의 신호가 없으면 일반 정보
-      if (BUZZ_BLOCK.test(kw)) continue;          // 대출 유인 계열 배제
+      if (BUZZ_BLOCK.test(kw)) continue;          // 불법사금융·투자권유 유인 배제
+      if (LOAN_PRODUCT.test(kw) && !PUBLIC_LOAN.test(kw)) continue; // 민간 대출 상품 — 공적 금융만 예외
       const nk = kw.replace(/\s+/g, "");
       if (seen.has(nk)) continue;
       seen.add(nk);

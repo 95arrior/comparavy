@@ -355,4 +355,21 @@ for (const [q, expect] of zeroCases) {
   }
 }
 
+
+// ★민간 대출 상품 배제(2026-08-05 유저 확정: "대출추천은 역시 안 돼").
+//  실물 둘: '대출 거절되고 나서야 확인한다는 플러스론 조건', '금리 부담 크다는 삼성생명주담대 가입 전 체크사항'.
+//  ★금융 브랜드를 열면서 같이 들어왔다 — 브랜드는 열되 '대출 상품 영업'은 열지 않는다.
+//   금소법 광고 규제에 가장 가깝고, 상품 조건은 수시로 바뀌어 틀린 글이 되기 쉽다(3원칙: 법적 안전).
+//  ★단 공적·정책 금융은 제도 안내라 예외 — 유저 표현으로 '조건부 허용'.
+{
+  const { privateLoanTopic } = await import("../lib/cardFinalGate.ts");
+  const ok = (c, m) => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "|", m); };
+  const cut = ["대출 거절되고 나서야 확인한다는 플러스론 조건", "삼성생명주담대 가입 전 체크사항", "마이너스통장 한도", "신용대출 갈아타기"];
+  for (const t of cut) ok(privateLoanTopic(t) !== null, `민간 대출 상품 배제: ${t.slice(0, 18)}`);
+  const pass = ["햇살론 유스 신청 조건", "디딤돌 대출 한도", "버팀목 전세자금대출 조건", "보금자리론 금리", "사잇돌 대출 자격"];
+  for (const t of pass) ok(privateLoanTopic(t) === null, `★공적 금융은 통과(제도 안내): ${t.slice(0, 16)}`);
+  const unrelated = ["주택청약종합저축 소득공제", "전세보증금 반환보증", "연말정산 환급"];
+  for (const t of unrelated) ok(privateLoanTopic(t) === null, `무관 소재는 안 걸린다: ${t.slice(0, 14)}`);
+}
+
 process.exit(fail ? 1 : 0);

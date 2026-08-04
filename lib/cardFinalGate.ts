@@ -113,6 +113,25 @@ export function scamLoan(text: string): string | null {
   return m ? m[0] : null;
 }
 
+// ★민간 대출 상품 글감 배제(2026-08-05 유저 확정: "대출추천은 역시 안 돼").
+//  실물: '대출 거절되고 나서야 확인한다는 플러스론 조건', '금리 부담 크다는 삼성생명주담대 가입 전 체크사항'.
+//  오늘 금융 브랜드를 열면서 같이 들어온 것들이다 — 브랜드는 열되 '대출 상품 영업'은 열지 않는다.
+//  ★이유: ①금소법(금융소비자보호법) 광고 규제에 가장 가까운 소재고 ②상품 조건은 수시로 바뀌어
+//   틀린 글이 되기 쉽고 ③애드센스·계정 관점에서도 대출 유인 글은 위험군이다(3원칙: 법적 안전·계정 지속).
+//  ★단 '공적·정책 금융'은 예외다(유저: "공식 ~ 이런 건 조건부 허용"). 그건 상품 영업이 아니라 제도 안내다.
+const PUBLIC_LOAN_RE = /(햇살론|디딤돌|버팀목|보금자리론|새희망홀씨|미소금융|근로자햇살론|서민금융진흥원|주택도시기금|국민행복기금|사잇돌|바꿔드림론|청년전용\s*버팀목)/;
+const LOAN_PRODUCT_RE = /(대출|론|주담대|신용대출|담보대출|마이너스통장|한도조회|대환)/;
+/**
+ * 민간 대출 상품 글감인가(=배제 대상). 공적·정책 금융은 제도 안내라 통과시킨다.
+ * @returns 배제해야 하면 매치 문자열, 아니면 null
+ */
+export function privateLoanTopic(text: string): string | null {
+  const t = String(text || "");
+  if (PUBLIC_LOAN_RE.test(t)) return null; // 공적 금융 — 제도 안내는 허용(조건부)
+  const m = LOAN_PRODUCT_RE.exec(t);
+  return m ? m[0] : null;
+}
+
 /** 응답 직전 최종 검문 — 통과 카드와 탈락 사유를 함께 반환(관측 가능). */
 /**
  * @param opts.anchorKeyword ★홈판 레인 전용(2026-08-02 실측). 홈판 카드의 keyword는 검색 키워드가 아니라
@@ -150,6 +169,8 @@ export function finalGate<T extends GateCard>(cards: T[], opts?: { anchorKeyword
     }
     { const ep = endedProgramOf(text); if (ep) { drops.push({ keyword: c.keyword, reason: `ended:${ep.name}` }); continue; } }
     if (SCAM_LOAN_RE.test(text)) { drops.push({ keyword: c.keyword, reason: "scam_loan" }); continue; } // 대기업 사칭 대출(삼성재단대출류) — 법적 안전, 양 채널 하드컷
+    // ★민간 대출 상품(2026-08-05 유저: "대출추천은 역시 안 돼") — 공적·정책 금융(햇살론·디딤돌 등)은 예외
+    { const pl = privateLoanTopic(text); if (pl) { drops.push({ keyword: c.keyword, reason: "loan_product" }); continue; } }
     if (SPECULATIVE_RE.test(`${text} ${(c.newsContext ?? "").slice(0, 120)}`)) { drops.push({ keyword: c.keyword, reason: "speculative" }); continue; } // 유령 제도 — 지역 구제보다 먼저
     if (HARD_B2B_RE.test(text)) { drops.push({ keyword: c.keyword, reason: "b2b-hard" }); continue; }
     // ★기초지자체가 제목 앞머리에 오면 문턱을 올린다(2026-08-02 유저 화면 실측).
