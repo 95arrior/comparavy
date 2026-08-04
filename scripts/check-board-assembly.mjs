@@ -200,4 +200,23 @@ console.log(fail ? `\n실패 ${fail}건` : "\n통과: 보드 조립 + 홈판 판
       "★화면 열 크기가 서버와 일치한다", m ? `화면 ${m[1]}/${m[2]}` : "못 찾음");
 }
 
+
+// ★검증 가능성(2026-08-05 유저: "어떤 키워드로 글감이 생성됐는지 그 키워드만 써줘").
+//  월 검색량은 지난 30일 평균이라 '지금 뜨는가'를 증명하지 못한다 — 증명 못 하는 숫자를 근거처럼
+//  붙이면 장식이다. '지금 뜨는' 열은 씨앗 키워드를 그대로 보여준다.
+{
+  const home = fs.readFileSync(new URL("../components/dashboard/Home.tsx", import.meta.url), "utf-8");
+  ok(/수확 키워드: \$\{seedKw/.test(home), "★트렌드 카드가 씨앗 키워드를 보여준다");
+  ok(/⚡실시간 수확: \$\{seedKw/.test(home), "★실시간(rising) 유래는 따로 표시한다");
+  ok(/수확 씨앗: \$\{hsrc/.test(home), "★홈판 카드도 어느 씨앗에서 나왔는지 앞에 세운다");
+  ok(/⚠실데이터 없이 만든 카드/.test(home), "★실데이터 없이 만든 카드는 경고로 남긴다(판단 재료)");
+
+  const amp = fs.readFileSync(new URL("../lib/amplifyTopics.ts", import.meta.url), "utf-8");
+  ok(/seedKeyword: b\.seed\.keyword/.test(amp), "★증식 카드가 씨앗 키워드를 들고 나온다");
+  const rt = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
+  ok(/seedKeyword: \(t as \{ seedKeyword\?: string \}\)\.seedKeyword/.test(rt), "★서버가 화면까지 실어 보낸다");
+  const hb = fs.readFileSync(new URL("../lib/homefeedBet.ts", import.meta.url), "utf-8");
+  ok(/키워드 부분'을 그대로 옮긴다/.test(hb), "★홈판 씨앗 목록에 키워드를 넣고, 그걸 보고하게 한다");
+}
+
 process.exit(fail ? 1 : 0);

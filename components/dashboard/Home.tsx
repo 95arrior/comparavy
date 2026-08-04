@@ -1032,13 +1032,24 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
       //  ★출처가 없으면 없다고 보여준다: 실데이터 없이 만들어진 카드라는 사실도 판단 재료다.
       const hsrc = (topic as { sourceTitle?: string }).sourceTitle;
       if (topic.tag === "홈판") {
+        // ★홈판도 '어느 씨앗에서 나왔는가'를 앞에 세운다 — 유저가 검증하는 자리다.
         return hsrc
-          ? `근거 이슈: ${hsrc.slice(0, 26)} · ${topic.demandLabel ?? "홈판 배팅"}`
-          : `${topic.demandLabel ?? "홈판 배팅"} · 실데이터 없이 만든 카드`;
+          ? `수확 씨앗: ${hsrc.slice(0, 30)}`
+          : `${topic.demandLabel ?? "홈판 배팅"} · ⚠실데이터 없이 만든 카드`;
       }
       return topic.demandLabel ?? "지속 검색되는 주제";
     }
     const badge = (topic as { demandBadge?: string }).demandBadge;
+    // ★'지금 뜨는' 열은 씨앗 키워드를 그대로 보여준다(2026-08-05 유저 확정).
+    //  유저: "어떤 키워드로 글감이 생성됐는지 그 키워드만 써줘. 기준 월 검색량 이런 건 필요 없다 —
+    //   저게 나오면 거짓이거나 잘못된 글감이니까(지금 뜨는 근거는 월평균이 아니다)."
+    //  ★맞는 말이다. 월 검색량은 지난 30일 평균이라 '지금 뜨는가'를 증명하지 못한다.
+    //   증명하지 못하는 숫자를 근거처럼 붙이면, 그건 근거가 아니라 장식이다.
+    const seedKw = (topic as { seedKeyword?: string }).seedKeyword;
+    if (seedKw) {
+      const live = (topic as { risingSeed?: boolean }).risingSeed === true;
+      return live ? `⚡실시간 수확: ${seedKw.slice(0, 28)}` : `수확 키워드: ${seedKw.slice(0, 30)}`;
+    }
     // ★'급증'은 쓰지 않는다(2026-08-05 유저 지적). 코드가 하는 일은 자동완성 1회 조회다 —
     //  '사람들이 실제로 치는 말인가'는 확인되지만 '어제보다 늘었는가'는 재지 않는다(시계열 비교 없음).
     //  확인한 것만 말한다. 부풀린 배지는 그 자체로 우리 판단을 흐린다.

@@ -82,9 +82,13 @@ async function liveSeedBlock(sub: string, exclude: Set<string>): Promise<string 
       `★[오늘 수확한 실제 이슈 — 이 안에서 소재를 고른다] 공고·공시·뉴스에서 실제로 확인된 것들이다.`,
       `여기 없는 일정·금액·기관은 만들지 않는다. 하나를 골라 '그래서 내 돈에 무슨 뜻인지'로 번역한다.`,
       `★키워드를 그대로 베끼지 마라 — 홈판 제목은 검색어가 아니라 사람을 멈추게 하는 문장이다.`,
+      `★src에는 위 목록에서 실제로 쓴 줄의 '키워드 부분'을 그대로 옮긴다(유저가 이 카드가 어느 씨앗에서 나왔는지 눈으로 검증한다).`,
+      // ★키워드를 함께 준다(2026-08-05 유저: "어떤 키워드로 글감이 생성됐는지 그 키워드만 보여줘").
+      //  모델이 src에 이 줄을 그대로 옮기므로, 키워드가 줄 안에 있어야 화면에서 검증이 된다.
       ...scored.map(({ t }) => {
         const win = t.actionEnd ? ` (마감 ${t.actionEnd})` : "";
-        return `- [${t.source ?? "news"}] ${t.title || t.keyword}${win}`;
+        const kw = (t.keyword || "").trim();
+        return `- [${t.source ?? "news"}] ${kw ? `${kw} — ` : ""}${t.title || kw}${win}`;
       }),
     ].join("\n");
   } catch {

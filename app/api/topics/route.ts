@@ -382,6 +382,8 @@ export async function GET(req: Request) {
           // ★급상승 표식은 성과루프 플래그와 무관하게 카드에 직접 단다 — sel(계측용)에만 두면
           //  FF_PERF_LOOP가 꺼지는 순간 실시간 레인이 통째로 죽는다(상관없는 스위치에 목숨을 걸지 않는다).
           ...(src === "rising" ? { risingSeed: true } : {}),
+          // ★씨앗 키워드를 화면까지 올린다(2026-08-05 유저: "어떤 키워드로 생성됐는지 그 키워드만 보여줘")
+          ...((t as { seedKeyword?: string }).seedKeyword ? { seedKeyword: (t as { seedKeyword?: string }).seedKeyword } : {}),
           ...(FF.perfLoop ? { sel: (() => { const bf = (t as { brief?: { intent?: string; opening?: string; flow?: string } }).brief; return { species: "trend", seedSource: src ?? "news", sourceTitle: (t as { sourceTitle?: string | null }).sourceTitle ?? null, cluster: clusterKey(t.keyword), hookKey: (t as { hookKey?: string }).hookKey ?? null, structure: bf ? [bf.intent, bf.opening, bf.flow].filter(Boolean).join("|") || null : null }; })() } : {}),
           ...(FF.revenueTag ? (() => { const rp = revenuePathOf({ keyword: t.keyword, title: t.title }); return rp === "none" ? {} : { revenuePath: rp, revenueLabel: REVENUE_TAG_LABEL[rp as Exclude<RevenuePath, "none">] }; })() : {}) });
       }

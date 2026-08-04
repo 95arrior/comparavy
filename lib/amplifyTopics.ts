@@ -45,6 +45,9 @@ export interface AmplifiedTopic {
   hookKey: string;   // 적용된 훅 패턴 key
   thumb: ThumbCopy;  // 대표이미지 합성 카피
   source?: string;   // 씨앗 출처(news/season/discover) — 배지 분리
+  /** ★이 카드가 자란 씨앗의 키워드(2026-08-05 유저 요청: "어떤 키워드로 글감이 생성됐는지 그 키워드만").
+   *  화면이 이걸 그대로 보여준다 — 검증은 우리가 주장하는 게 아니라 유저가 눈으로 하는 것이다. */
+  seedKeyword?: string;
   // ★시리즈(수익 증폭 Part 1) — 성립 기준 통과 씨앗만. 미달=단발(강제 금지 — 억지 4부작이 더 나쁘다).
   series?: { title: string; arc: { role: string; angle: string }[] } | null;
 }
@@ -424,6 +427,7 @@ ${OPEN_LOOP_GUIDE}
         hookKey: b.hook.key,
         thumb: { mainCopy: thumbMain, subCopy: thumbSub, badge },
         source: b.seed.source,
+        seedKeyword: b.seed.keyword,
         series: (() => { // 성립 기준: arc 3~4화 + 각 화 role·angle 완비. 미달 = null(단발)
           const sr = it.series;
           if (!sr || !sr.title || !Array.isArray(sr.arc)) return null;
