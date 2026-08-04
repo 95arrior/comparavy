@@ -10,7 +10,7 @@ import { isUnsafeKeyword, mentionsForeignRegion } from "@/lib/keywordSafety";
 import { regionLevel, buildLocalSeeds, addressRegionTiers } from "@/lib/region";
 import { bloggerType, type BloggerType } from "@/lib/bloggerTypes";
 import { compFromLabel, compFromBlogTotal, filledStarsFromData, applyDocCut, DOC_HARD_MAX, type Comp } from "@/lib/topicScore";
-import { fetchBlogTotal } from "@/lib/naverBlogSearch";
+import { fetchBlogTotal, fetchBlogTotalDetailed } from "@/lib/naverBlogSearch";
 import { resolveLocalPlan, generateLocalKeywords, generateAudienceTopics, type LocalScope } from "@/lib/aiSeeds";
 import { buildPoolForSub } from "@/lib/keywordPool";
 import { getTrendTopics, refreshCategoryTrends, hasFreshTrends } from "@/lib/trendTopics";
@@ -1082,15 +1082,33 @@ export async function GET(req: Request) {
 
   // ── 진짜 콘텐츠 경쟁(blog_total) 채우기 (fitTop 전체) ──
   // 미수집(null)이면 네이버 블로그검색 1회 → 풀에 캐싱(전 유저 공용). 첫 1회만 호출, 이후 캐시.
-  await Promise.all(
-    fitTop.map(async ({ r }) => {
-      if (r.blog_total != null) return;
-      const total = await fetchBlogTotal(r.keyword);
-      if (total == null) return;
-      r.blog_total = total;
-      try { await pool.from("keyword_pool").update({ blog_total: total }).eq("keyword", r.keyword); } catch { /* 캐싱 실패해도 진행 */ }
-    }),
-  );
+  // ★한꺼번에 던지지 않는다(2026-08-04 유저 화면에서 검거: 신생 보드에 '경쟁 높음' 카드 2장).
+  //  종전엔 fitTop 13~20개를 Promise.all로 동시에 쏴서 네이버가 429로 끊었다 → 측정 실패 → blog_total이
+  //  null로 남고 → ①문서수 컷이 걸 대상이 사라지고 ②화면 경쟁도가 광고경쟁(compIdx) 폴백으로 표시됐다.
+  //  ★같은 실수를 백필에서 먼저 했다(동시성 6에서 12연속 실패). 여기가 같은 병이었는데 증상만 달랐다.
+  const measureDiag = { need: 0, ok: 0, fail: 0, reasons: {} as Record<string, number> };
+  {
+    const need = fitTop.filter(({ r }) => r.blog_total == null);
+    measureDiag.need = need.length;
+    const CONC = 3;
+    for (let i = 0; i < need.length; i += CONC) {
+      const got = await Promise.all(need.slice(i, i + CONC).map(async ({ r }) => ({ r, d: await fetchBlogTotalDetailed(r.keyword) })));
+      const writes: PromiseLike<unknown>[] = [];
+      for (const { r, d } of got) {
+        if (d.total == null) {
+          measureDiag.fail += 1;
+          const k = d.reason ?? "?"; measureDiag.reasons[k] = (measureDiag.reasons[k] ?? 0) + 1;
+          continue;
+        }
+        measureDiag.ok += 1;
+        r.blog_total = d.total;
+        writes.push(pool.from("keyword_pool").update({ blog_total: d.total }).eq("keyword", r.keyword).then(() => null, () => null));
+      }
+      if (writes.length) await Promise.all(writes);
+      if (i + CONC < need.length) await new Promise((res) => setTimeout(res, 120));
+    }
+    if (measureDiag.fail) console.log(`[doc-measure] 필요 ${measureDiag.need} · 성공 ${measureDiag.ok} · 실패 ${measureDiag.fail} ${JSON.stringify(measureDiag.reasons)}`);
+  }
 
   // ★밴드 문서수 컷(2026-08-04 유저 실측에서 검거 — 신생 보드에 문서수 29,407·40,867·49,280 카드가 섰다)
   //  종전 주석은 "미측정(null)은 통과 — 측정 후 별점이 거른다"였는데, 별점은 거르지 않는다. 정렬 가중치일 뿐이다.
@@ -1106,6 +1124,7 @@ export async function GET(req: Request) {
     if (docMax != null) {
       const need = (tailMode === "long" ? 10 : PICK) + 4; // 뒤 단계(중복·유사 배제)가 깎을 몫까지 여유
       const cut = applyDocCut(fitTop, (x) => x.r.blog_total, { docMax, need });
+      if (debugMode) diag.docMeasure = measureDiag;
       if (debugMode) diag.docCut = { docMax, hardMax: DOC_HARD_MAX, before: fitTop.length, within: cut.within, over: cut.over, refilled: cut.refilled, dropped: cut.dropped, refillMax: cut.kept.reduce((m, x) => Math.max(m, x.r.blog_total ?? 0), 0) };
       if (cut.dropped > 0 || cut.refilled > 0) console.log(`[doc-cut] tier=${tierInfo?.tier ?? "SEEDLING"} max=${docMax} 통과 ${cut.within} · 보충 ${cut.refilled} · 탈락 ${cut.dropped}`);
       fitTop = cut.kept;

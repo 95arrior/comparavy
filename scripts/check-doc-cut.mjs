@@ -68,10 +68,14 @@ console.log("\n⑥ 배선 — 만들어놓고 안 부르면 아무 일도 안 �
 {
   const rt = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
   ok(/applyDocCut\(fitTop/.test(rt), "★topics 경로에 배선됨");
-  const measureAt = rt.indexOf("fetchBlogTotal(r.keyword)");
+  const measureAt = rt.indexOf("fetchBlogTotalDetailed(r.keyword)");
   const cutAt = rt.indexOf("applyDocCut(fitTop");
   ok(measureAt > 0 && cutAt > measureAt, "★컷이 측정보다 뒤에 있다(순서가 뒤집히면 컷은 다시 무력해진다)");
   ok(/diag\.docCut/.test(rt), "★계측이 debug 응답에 남는다(다음에 또 의심되면 주소 하나로 판별)");
+  // ★측정이 실패하면 컷은 걸 대상이 없다 — 화면엔 '경쟁 높음'(광고경쟁 폴백) 카드가 선다(유저 실측)
+  ok(!/await Promise\.all\(\s*fitTop\.map/.test(rt), "★서빙 중 측정을 한꺼번에 던지지 않는다(429로 전멸)");
+  ok(/const CONC = 3;/.test(rt) && /setTimeout\(res, 120\)/.test(rt), "★동시성 3 + 간격 — 백필에서 배운 값 그대로");
+  ok(/diag\.docMeasure = measureDiag/.test(rt), "★측정 성공·실패·사유가 debug에 남는다");
 }
 
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 밴드 문서수 컷");
