@@ -54,7 +54,13 @@ console.log("\n⑤ 브리프:");
   ok(/투자 판단을 부추기는 서술 금지/.test(src), "투자권유 선 유지");
 }
 
-console.log("\n⑥ 배선:");
+console.log("\n⑥ 비용 — 카테고리마다 반복하지 않는가:");
+{
+  ok(/sweepMemo/.test(src) && /psychMemo/.test(src), "★쓸어담기·판정을 한 번만 한다");
+  ok(/35 × 30 = 1,050번/.test(src), "★반복하면 얼마나 드는지 코드에 적혀 있다");
+}
+
+console.log("\n⑦ 배선:");
 {
   ok(/harvestNewsPsych\(/.test(tt), "★수확 파이프가 부른다");
   ok(/source: "newspsych"/.test(tt) && /\| "newspsych"/.test(tt), "★자기 칸을 갖는다");

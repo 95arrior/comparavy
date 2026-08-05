@@ -53,8 +53,17 @@ interface Head { title: string; desc: string; press: string; minutesAgo: number 
 
 const strip = (s: string) => s.replace(/<[^>]*>/g, "").replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#39;/g, "'").trim();
 
+// ★한 번의 크론 실행 안에서 쓸어담기를 재사용한다(2026-08-05).
+//  수확은 카테고리마다 돈다(최대 30개). 그런데 이 쓸어담기는 카테고리와 무관한 '돈 이슈 전반'이라
+//  카테고리마다 다시 훑으면 뉴스 API를 35 × 30 = 1,050번 때린다 — 쿼터도 시간(300초)도 못 버틴다.
+//  ★결과는 같은데 비용만 30배인 자리다. 짧은 TTL 메모로 한 번만 훑는다.
+let sweepMemo: { at: number; windowMin: number; heads: Head[] } | null = null;
+const SWEEP_TTL_MS = 10 * 60_000;
+let psychMemo: { at: number; headKey: string; seeds: PsychSeed[] } | null = null;
+
 /** 최근 windowMin 분 안의 기사만. ★창 밖은 안 본다 — 뒷북을 구조로 막는다. */
 export async function sweepMorningNews(windowMin = 120, perQuery = 5): Promise<Head[]> {
+  if (sweepMemo && sweepMemo.windowMin === windowMin && Date.now() - sweepMemo.at < SWEEP_TTL_MS) return sweepMemo.heads;
   const id = process.env.NAVER_DATALAB_CLIENT_ID, secret = process.env.NAVER_DATALAB_SECRET;
   if (!id || !secret) throw new Error("NAVER_NEWS_ENV_MISSING");
   const now = Date.now();
@@ -83,7 +92,9 @@ export async function sweepMorningNews(windowMin = 120, perQuery = 5): Promise<H
       }
     } catch { /* 다음 질의로 */ }
   }
-  return out.sort((a, b) => a.minutesAgo - b.minutesAgo);
+  const sorted = out.sort((a, b) => a.minutesAgo - b.minutesAgo);
+  sweepMemo = { at: Date.now(), windowMin, heads: sorted };
+  return sorted;
 }
 
 const SYSTEM = [
@@ -164,6 +175,8 @@ export async function harvestNewsPsych(opts?: { windowMin?: number; limit?: numb
   const limit = opts?.limit ?? 5;
   const heads = await sweepMorningNews(opts?.windowMin ?? 120);
   if (!heads.length) return [];
+  // ★판정(LLM)과 자동완성 확정도 카테고리마다 반복하면 30배다 — 같은 기사 묶음이면 결과를 재쓴다.
+  if (psychMemo && Date.now() - psychMemo.at < SWEEP_TTL_MS && psychMemo.headKey === heads[0]!.title) return psychMemo.seeds.slice(0, limit);
   const picks = await judgeSearchIntent(heads, limit * 2);
 
   const out: PsychSeed[] = [];
@@ -196,6 +209,7 @@ export async function harvestNewsPsych(opts?: { windowMin?: number; limit?: numb
     });
     await new Promise((r) => setTimeout(r, 120));
   }
+  psychMemo = { at: Date.now(), headKey: heads[0]!.title, seeds: out };
   return out;
 }
 
