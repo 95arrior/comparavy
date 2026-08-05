@@ -489,6 +489,82 @@ export function ensureRelatedLinks(html: string, posts: { title: string; url: st
 //  ★자를 때 원칙: 뒤에서부터 섹션을 통째로 뺀다. 문장 중간을 자르면 글이 망가진다.
 //   클로징(마지막 블록)과 해시태그는 반드시 남긴다 — 그게 없으면 글이 뚝 끊긴 것처럼 보인다.
 // ★2,500 → 3,200(2026-08-05 유저 확정: 체류시간·광고 슬롯 확보). 상한이지 목표가 아니다.
+// ═══ 경고 색상(2026-08-06 유저: "경고·긴박·긴급·중요·함정 이런 건 레드로") ═══
+//  ★색은 모델이 매번 다른 값을 쓴다(#f00, red, crimson, #e74c3c…). 톤이 섞이면 조잡해 보이고,
+//   40~70대 화면에서 '진짜 위험'과 '그냥 강조'가 구분이 안 된다. 그래서 한 값으로 눌러 통일한다.
+//  ★남발도 막는다 — 빨강이 여러 곳이면 어느 것도 경고로 안 읽힌다(볼드 남발과 같은 병).
+export const ALERT_RED = "#e5342b";
+export const ALERT_MAX = 3;
+// ★붉은가는 '앞자리'로 못 정한다 — #d9dde3(구분선 회색)도 d로 시작한다.
+//  실제로 처음 이렇게 짰다가 회색 구분선이 빨개질 뻔했다. R이 G·B보다 뚜렷이 커야 빨강이다.
+const NAMED_RED = /^(red|crimson|firebrick|tomato|orangered|indianred|darkred)$/i;
+function isReddish(v: string): boolean {
+  const t = v.trim().toLowerCase();
+  if (NAMED_RED.test(t)) return true;
+  const rgb = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/.exec(t);
+  let r: number, g: number, b: number;
+  if (rgb) { [r, g, b] = [Number(rgb[1]), Number(rgb[2]), Number(rgb[3])]; }
+  else {
+    const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/.exec(t);
+    if (!m) return false;
+    const hex = m[1]!.length === 3 ? m[1]!.split("").map((c) => c + c).join("") : m[1]!;
+    r = parseInt(hex.slice(0, 2), 16); g = parseInt(hex.slice(2, 4), 16); b = parseInt(hex.slice(4, 6), 16);
+  }
+  return r >= 130 && r - g >= 60 && r - b >= 60; // 회색·분홍빛 연회색은 걸러진다
+}
+/** 붉은 계열 글자색을 한 값으로 통일하고 상한을 넘는 것은 일반 볼드로 되돌린다. */
+export function normalizeAlertColor(html: string, max = ALERT_MAX): { html: string; kept: number; demoted: number } {
+  let kept = 0, demoted = 0;
+  // ★배경색(형광펜)은 건드리지 않는다 — 'background-color'가 'color'로 잡히지 않게 앞을 확인한다
+  const out = String(html || "").replace(/([\w-]*)(color\s*:\s*[^;"']+)/gi, (m, prefix: string, decl: string) => {
+    if (/background|border|outline/i.test(prefix)) return m;
+    const val = decl.replace(/^color\s*:\s*/i, "");
+    if (!isReddish(val)) return m;
+    if (kept < max) { kept += 1; return `${prefix}color:${ALERT_RED}`; }
+    demoted += 1;
+    return `${prefix}font-weight:700`; // 상한 초과분은 색을 빼고 굵기만 남긴다
+  });
+  return { html: out, kept, demoted };
+}
+
+// ═══ 문단 쪼개기(2026-08-06 유저 화면: 한 문단 13줄) ═══
+//  ★게이트를 두는 것만으로는 안 잡혔다. specDefects는 '경고'라 재생성 예산이 없으면 그대로 발행된다 —
+//   유저가 본 13줄 문단이 정확히 그 경로로 나갔다(게이트는 울렸는데 아무도 안 막았다).
+//  ★CLAUDE.md 원칙: 프롬프트는 방향, 코드는 한계선. 문단 길이는 코드가 보장할 수 있는 종류다.
+//   여러 문장이 든 문단은 문장 경계에서 기계적으로 나누면 뜻이 안 상한다.
+//   ★반대로 '한 문장이 긴 것'은 코드가 못 고친다(다시 써야 한다) — 그건 게이트로 모델에 돌려보낸다.
+const SENT_SPLIT_RE = /(?<=[.!?。][\s"'\u201d\u2019)\]]*)(?=\S)/g;
+export function splitLongParagraphs(html: string, maxLines = PARA_MAX_LINES): { html: string; split: number } {
+  let split = 0;
+  const out = String(html || "").replace(/<p\b([^>]*)>([\s\S]*?)<\/p>/g, (m, attr: string, inner: string) => {
+    const plain = inner.replace(/<[^>]+>/g, "");
+    if (Math.ceil([...plain].length / CHARS_PER_LINE) <= maxLines) return m;
+    // ★태그가 문장을 가로지르면 쪼갤 때 태그가 깨진다 — 그런 문단은 건드리지 않는다.
+    //  (열고 닫는 짝이 문장 안에서 완결된 경우만 안전하다)
+    const parts = inner.split(SENT_SPLIT_RE).map((x) => x.trim()).filter(Boolean);
+    if (parts.length < 2) return m; // 한 문장짜리 = 코드로는 못 고친다(게이트가 모델에 돌려보낸다)
+    const balanced = (t: string) => {
+      const o = (t.match(/<(?!\/)(?!br|img|hr)[a-zA-Z]/g) ?? []).length;
+      const c = (t.match(/<\/[a-zA-Z]/g) ?? []).length;
+      return o === c;
+    };
+    if (!parts.every(balanced)) return m;
+    // 문장을 이어 붙이되 상한을 넘기 직전에 문단을 끊는다
+    const buckets: string[] = [];
+    let cur = "";
+    for (const s of parts) {
+      const next = cur ? `${cur} ${s}` : s;
+      const lines = Math.ceil([...next.replace(/<[^>]+>/g, "")].length / CHARS_PER_LINE);
+      if (cur && lines > maxLines) { buckets.push(cur); cur = s; } else { cur = next; }
+    }
+    if (cur) buckets.push(cur);
+    if (buckets.length < 2) return m;
+    split += buckets.length - 1;
+    return buckets.map((b) => `<p${attr}>${b}</p>`).join("");
+  });
+  return { html: out, split };
+}
+
 export const HARD_CHAR_LIMIT = 3200;
 
 /** 본문을 하드 상한 안으로 줄인다. 섹션(h2) 단위로 뒤에서부터 제거하고, 클로징·해시태그는 보존한다. */

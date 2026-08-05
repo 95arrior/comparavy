@@ -6,7 +6,7 @@ import { ensureUserRow } from "@/lib/userPlan";
 import { spendCredits, addCredits, GENERATE_COST } from "@/lib/credits";
 import { streamArticle } from "@/lib/generateArticle";
 import { isReviewType, ensureDisclosure } from "@/lib/revenue";
-import { hasFabricatedExperience, lacksInterpretation, lacksConditionBranch, duplicateSlotSubjects, lacksKeywordFloor, keywordOccurrences, keywordOverstuffed, headingMismatches, coreKeywordOf, endingReport, spacingDefects, longParagraphs, emojiCount, photoSlotShortfall, stockPropSlots, photoSceneShortfall, skeletonReport, boldOveruse, textWallRuns, emphasisShortfall, longSentences, SENT_MAX_CHARS, EMOJI_MIN, PARA_MAX_LINES, KEYWORD_FLOOR } from "@/lib/editorial";
+import { hasFabricatedExperience, lacksInterpretation, lacksConditionBranch, duplicateSlotSubjects, lacksKeywordFloor, keywordOccurrences, keywordOverstuffed, headingMismatches, coreKeywordOf, endingReport, spacingDefects, emojiCount, photoSlotShortfall, stockPropSlots, photoSceneShortfall, skeletonReport, boldOveruse, textWallRuns, emphasisShortfall, longSentences, SENT_MAX_CHARS, EMOJI_MIN, KEYWORD_FLOOR } from "@/lib/editorial";
 import { scanFacts } from "@/lib/factGate";
 import { financeCalcContext } from "@/lib/financeCalc";
 import { sanitizeUrls } from "@/lib/linkWhitelist";
@@ -417,11 +417,13 @@ export async function POST(request: Request) {
           if (sp.length) {
             w.push(`띄어쓰기가 붙었다 — ${sp.slice(0, 5).map((x) => `"${x}"`).join(", ")}. 조사·어미 뒤는 반드시 띄어 쓴다.`);
           }
-          // ★문단 4줄 초과(실측: 69문단 중 9개, 최대 7줄) — 모바일에서 벽돌이 되고 그대로 이탈이다.
-          const lp = longParagraphs(a.body_html);
-          if (lp.length) {
-            w.push(`문단 ${lp.length}개가 모바일 ${PARA_MAX_LINES}줄을 넘는다(가장 긴 것 ${Math.max(...lp.map((x) => x.lines))}줄, 예: "${lp[0]!.preview}…"). 한 문단은 1~2문장으로 끊어라 — 길면 문장을 나눠 새 문단으로 보낸다.`);
-          }
+          // ★문단 길이는 여기서 경고하지 않는다(2026-08-06 정리).
+          //  종전엔 4줄 넘는 문단을 전부 경고했는데, 그 경고는 두 종류를 섞고 있었다:
+          //   ⓐ 여러 문장이 든 문단 → 문장 경계에서 나누면 그만이다. 이제 마감(splitLongParagraphs)이 무조건 나눈다.
+          //   ⓑ 한 문장이 긴 것 → 나눌 자리가 없다. 다시 써야 하므로 아래 longSentences가 모델에 돌려보낸다.
+          //  ★ⓐ까지 경고로 남기면 어차피 코드가 고칠 걸로 재생성 예산을 태우고,
+          //   게다가 규격을 지킨 90자 한 문장(=5줄)도 4줄 상한에 걸려 영구 결함이 된다(상한 두 개가 서로 모순).
+          //  ★CLAUDE.md: 보장 자리의 주인은 하나여야 한다.
           // ★볼드 남발(2026-08-05 스펙 5-4) — "문단당 최대 1개, 핵심 수치·결론 문장에만".
           //  프롬프트엔 '섹션당 1문장'이 있었지만 재는 코드가 없었다. 전부 강조하면 아무것도 강조가 아니다.
           const bo = boldOveruse(a.body_html);

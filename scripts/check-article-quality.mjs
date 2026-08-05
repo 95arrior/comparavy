@@ -101,6 +101,10 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   ok(!/ensureSummaryHeading\(/.test(ph), "★발행 파이프라인에서도 호출이 제거됨");
 
   // ★프롬프트 목차에서도 빠졌는가(세 곳이 따로 놀면 또 되살아난다)
+  // ★문단 길이는 2026-08-06부터 게이트가 아니라 마감(splitLongParagraphs)이 보장한다.
+  //  경고로 두면 재생성 예산이 없을 때 그대로 발행되고(유저가 본 13줄이 그 경로),
+  //  게다가 규격을 지킨 90자 한 문장이 4줄 상한에 영구히 걸린다. 보장 자리의 주인은 하나여야 한다.
+  ok(/splitLongParagraphs/.test(fs.readFileSync(new URL("../lib/finalizeBody.ts", import.meta.url), "utf-8")), "★문단 길이는 마감이 보장한다");
   const ap = fs.readFileSync(new URL("../lib/articlePrompt.ts", import.meta.url), "utf-8");
   ok(!/"9\. '오늘의 3줄 요약'/.test(ap), "★프롬프트 목차에서 제거됨");
 }
@@ -176,7 +180,7 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
 // ── ⑨ 생성 경로 배선 ───────────────────────────────────────────────────
 {
   const gr = fs.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8");
-  for (const [fn, label] of [["spacingDefects", "띄어쓰기"], ["longParagraphs", "문단 길이"], ["emojiCount", "이모지 하한"], ["photoSlotShortfall", "사진 슬롯"], ["skeletonReport", "스켈레톤"]])
+  for (const [fn, label] of [["spacingDefects", "띄어쓰기"], ["emojiCount", "이모지 하한"], ["photoSlotShortfall", "사진 슬롯"], ["skeletonReport", "스켈레톤"]])
     ok(new RegExp(fn).test(gr), `★${label} 게이트가 생성 경로에 배선됨`);
   const ap = fs.readFileSync(new URL("../lib/articlePrompt.ts", import.meta.url), "utf-8");
   ok(/띄어쓰기\(2026-08-02 실측 결함\)/.test(ap), "프롬프트에도 띄어쓰기 규격 명시");
@@ -348,7 +352,7 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   ok(hardTrimToLimit(두섹션, cnt).removed.length === 0, "★소제목 2개 미만으로는 안 줄인다");
 
   const gr = fs.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8");
-  ok(/hardTrimToLimit\(tabled/.test(fin2), "★마감에 배선됨(압축 재생성 실패해도 상한은 지켜진다)");
+  ok(/hardTrimToLimit\(/.test(fin2), "★마감에 배선됨(압축 재생성 실패해도 상한은 지켜진다)");
   ok(/\[hard-trim\]/.test(gr), "★자를 때 무엇을 뺐는지 로그로 남긴다");
 
   // ★리스트 → 표(유저: "리스트가 많은 부분은 표로")
@@ -494,7 +498,7 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   //  열리는 글)엔 URL 정화까지만 있어 링크도 해시태그도 없는 글이 유저에게 갔다. 마감은 한 함수로만 한다.
   const fin = fs.readFileSync(new URL("../lib/finalizeBody.ts", import.meta.url), "utf-8");
   ok(/ensureRelatedLinks\(clean\.html, related\)/.test(fin) && /ensureHashtags\(withLinks/.test(fin), "★마감 함수가 관련글·해시태그를 붙인다");
-  ok(/listToTable\(src\)/.test(fin) && /hardTrimToLimit\(tabled/.test(fin), "★리스트→표·분량 하드컷도 같은 마감 안에 있다");
+  ok(/listToTable\(src\)/.test(fin) && /hardTrimToLimit\(/.test(fin), "★리스트→표·분량 하드컷도 같은 마감 안에 있다");
   const gr = fs.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8");
   const pg = fs.readFileSync(new URL("../app/api/pregen/route.ts", import.meta.url), "utf-8");
   ok(/finalizeArticleBody\(\{/.test(gr), "★생성 경로가 마감 함수를 부른다");
@@ -545,6 +549,71 @@ console.log(fail ? `\n실패 ${fail}건` : "\n통과: 발행글 품질(띄어쓰
   const gr2 = fs.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8");
   ok(/emphasisShortfall\(a\.body_html\)/.test(gr2), "★생성 경로에 강조 게이트가 물려 있다");
   ok(/longSentences\(a\.body_html\)/.test(gr2), "★긴 문장 게이트도 물려 있다");
+}
+
+
+// ★문단 쪼개기 — 게이트(경고)만으로는 안 잡혔다. 재생성 예산이 없으면 그대로 발행된다.
+//  유저가 본 13줄 문단이 그 경로였다. 그래서 마감에서 코드가 무조건 나눈다.
+{
+  const { splitLongParagraphs, longParagraphs } = await import("../lib/editorial.ts");
+  const { finalizeArticleBody } = await import("../lib/finalizeBody.ts");
+  const many = "<p>국토교통부는 2026년 5월 발표에서 도시형생활주택 인허가 인센티브를 확대한다고 밝혔습니다. 상가와 오피스, 지식산업센터의 주거용 전환도 지원합니다. 주택도시기금 대출 한도는 최대 1억 2,000만 원까지 늘어납니다. 금리는 3%대이며 2027년까지 적용됩니다.</p>";
+  const r = splitLongParagraphs(many);
+  ok(r.split >= 1 && longParagraphs(r.html).length === 0, "★여러 문장 문단은 문장 경계에서 나뉜다", `${r.split}회`);
+  ok(!/[.!?]<\/p>\s*<p>[^가-힣<]/.test(r.html), "문장 중간에서 자르지 않는다");
+
+  // ★한 문장짜리는 코드가 못 고친다 — 건드리면 문장이 깨진다. 게이트가 모델에 돌려보내는 몫이다.
+  const one = "<p>국토교통부는 2026년 5월 발표에서 도시형생활주택 인허가 인센티브 확대, 상가·오피스·지식산업센터의 주거용 전환 지원, 주택도시기금 대출 한도 확대(최대 1억 2,000만 원)를 핵심으로 제시했습니다.</p>";
+  ok(splitLongParagraphs(one).split === 0, "★한 문장짜리 문단은 건드리지 않는다");
+
+  const short = "<p>짧은 문단입니다.</p>";
+  ok(splitLongParagraphs(short).html === short, "짧은 문단은 그대로");
+
+  // 태그가 문장을 가로지르면 쪼갤 때 태그가 깨진다 — 그런 문단은 손대지 않는다
+  const crossing = "<p><b>국토교통부는 2026년 5월 발표에서 도시형생활주택 인허가 인센티브를 확대한다고 밝혔습니다. 상가와 오피스의 주거용 전환도</b> 함께 지원합니다. 대출 한도는 최대 1억 2,000만 원입니다.</p>";
+  const rc = splitLongParagraphs(crossing);
+  ok((rc.html.match(/<b>/g) ?? []).length === (rc.html.match(/<\/b>/g) ?? []).length, "★태그 짝이 깨지지 않는다");
+
+  // ★마감 라인에 배선됐는가 — 여기 빠지면 pregen 경로만 조용히 안 나뉜다(경로 둘 사고의 재발)
+  const fin3 = fs.readFileSync(new URL("../lib/finalizeBody.ts", import.meta.url), "utf-8");
+  ok(/splitLongParagraphs\(tabled\)/.test(fin3), "★마감에 배선됨(generate·pregen 공통)");
+  // ★리터럴 인자로 순서를 검사하면 마감에 단계가 하나 낄 때마다 깨진다 — 순서 자체를 본다.
+  ok(fin3.indexOf("splitLongParagraphs(") < fin3.indexOf("hardTrimToLimit("),
+    "★분량 하드컷보다 먼저 나눈다(나중에 하면 잘려나갈 섹션을 헛되이 쪼갠다)");
+  const out = finalizeArticleBody({ bodyHtml: many, keyword: "도시형생활주택", isReview: false });
+  ok(out.paragraphsSplit >= 1 && longParagraphs(out.html).length === 0, "★마감을 거치면 긴 문단이 남지 않는다");
+
+  // ★상한 두 개가 서로 모순이면 안 된다: 규격을 지킨 90자 한 문장은 영구 결함이 되면 안 된다
+  const gr3 = fs.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8");
+  ok(!/longParagraphs\(a\.body_html\)/.test(gr3), "★문단 길이는 경고하지 않는다(코드가 보장하는 몫)");
+}
+
+
+// ★경고 빨강(2026-08-06 유저: "폰트 색상도 경고·긴박·긴급·중요한 거·함정 이런 건 레드로").
+{
+  const { normalizeAlertColor, ALERT_RED, ALERT_MAX } = await import("../lib/editorial.ts");
+  const one = (c) => normalizeAlertColor(`<p><span style="color:${c}">x</span></p>`, 9);
+  for (const c of ["red", "crimson", "#e74c3c", "#ff0000", "#f00", "rgb(229,52,43)"])
+    ok(one(c).kept === 1 && one(c).html.includes(ALERT_RED), `빨강 계열 통일: ${c}`);
+
+  // ★'앞자리로 붉은지 판정'하면 회색 구분선이 빨개진다 — 처음 그렇게 짰다가 잡았다.
+  //  아래는 전부 publishHtml이 실제로 쓰는 색이다. 하나라도 오판하면 발행본 색이 망가진다.
+  for (const c of ["#d9dde3", "#d5d9df", "#8b95a1", "#4e5968", "#191919", "#0073e9", "#1D75F7", "#33363d", "#e5e8eb"])
+    ok(one(c).kept === 0 && one(c).html.includes(c), `★빨강 아님(발행 팔레트 보존): ${c}`);
+
+  ok(/background-color:#fff3a8/.test(normalizeAlertColor('<span style="background-color:#fff3a8">x</span>').html), "★형광펜(배경색)은 건드리지 않는다");
+
+  // ★남발 상한 — 빨강이 여러 곳이면 어느 것도 경고로 안 읽힌다(볼드 남발과 같은 병)
+  const many = "<p>" + Array.from({ length: 6 }, (_, i) => `<span style="color:red">${i}</span>`).join(" ") + "</p>";
+  const r = normalizeAlertColor(many);
+  ok(r.kept === ALERT_MAX && r.demoted === 3, `★상한 ${ALERT_MAX}곳 초과분은 색을 뺀다`, `살림 ${r.kept}/뺌 ${r.demoted}`);
+  ok(!/color:red/.test(r.html) && /font-weight:700/.test(r.html), "초과분은 굵기만 남는다");
+
+  const fin4 = fs.readFileSync(new URL("../lib/finalizeBody.ts", import.meta.url), "utf-8");
+  ok(/normalizeAlertColor\(para\.html\)/.test(fin4), "★마감에 배선됨(generate·pregen 공통)");
+  const ap4 = fs.readFileSync(new URL("../lib/articlePrompt.ts", import.meta.url), "utf-8");
+  ok(/위험 신호는 빨강으로/.test(ap4) && ap4.includes(ALERT_RED), "★프롬프트의 빨강 값이 코드 상수와 같다");
+  ok(/최대 3곳/.test(ap4), "프롬프트에도 상한 명시");
 }
 
 process.exit(fail ? 1 : 0);
