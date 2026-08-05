@@ -211,6 +211,38 @@ export function hasSpacingDefect(html: string): boolean {
 const CHARS_PER_LINE = 23; // 390px 프레임(본문폭 ~350px, 15px 한글) — check-article과 같은 기준
 export const PARA_MAX_LINES = 4;
 
+// ★볼드 남발 검출(2026-08-05 스펙 5-4) — "문단당 최대 1개, 핵심 수치·결론 문장에만".
+//  프롬프트에 '섹션당 1문장'이라고 써 뒀지만 재는 코드가 없었다.
+//  ★전부 강조하면 아무것도 강조가 아니다 — 이건 모델이 습관적으로 어기는 종류라 코드가 막아야 한다.
+export function boldOveruse(html: string): { text: string; count: number }[] {
+  const out: { text: string; count: number }[] = [];
+  for (const m of String(html || "").matchAll(/<p\b[^>]*>([\s\S]*?)<\/p>/g)) {
+    const inner = m[1] ?? "";
+    const count = (inner.match(/<(?:b|strong)\b/g) ?? []).length;
+    if (count >= 2) out.push({ text: inner.replace(/<[^>]+>/g, "").slice(0, 30), count });
+  }
+  return out;
+}
+
+// ★시각 브레이크 리듬(스펙 5-6) — "3~5문단마다 시각 요소 1회, 순수 텍스트 나열 금지".
+//  텍스트만 길게 이어지면 스크롤이 빨라지고, 그 구간에 광고가 있으면 인지도 못 하고 지나간다.
+const VISUAL_TAG_RE = /^<(?:h[1-4]|table|ul|ol|blockquote|figure|img|hr)/i;
+const IMG_MARKER_RE = /\[(?:사진|카드|차트|브랜드|표|인물)\s*:/;
+/** 시각 요소 없이 연속된 산문 문단이 max를 넘는 구간을 돌려준다. */
+export function textWallRuns(html: string, max = 5): { at: number; run: number }[] {
+  const blocks = String(html || "").match(/<(?:p|h[1-4]|table|ul|ol|blockquote|figure|hr)\b[\s\S]*?<\/(?:p|h[1-4]|table|ul|ol|blockquote|figure)>|<(?:img|hr)\b[^>]*>/g) ?? [];
+  const out: { at: number; run: number }[] = [];
+  let run = 0, start = 0;
+  blocks.forEach((b, i) => {
+    const visual = VISUAL_TAG_RE.test(b) || IMG_MARKER_RE.test(b);
+    if (visual) { if (run > max) out.push({ at: start, run }); run = 0; return; }
+    if (run === 0) start = i;
+    run += 1;
+  });
+  if (run > max) out.push({ at: start, run });
+  return out;
+}
+
 /** 4줄을 넘는 문단들의 미리보기. 표·리스트·데이터박스는 대상이 아니다(산문 문단만). */
 export function longParagraphs(html: string): { preview: string; lines: number }[] {
   const prose = String(html || "").replace(/<(table|ul|ol|div)[\s\S]*?<\/\1>/gi, "");

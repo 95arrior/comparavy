@@ -59,5 +59,25 @@ console.log("\n⑤ 분량 상향:");
   ok(/상한이 올랐다고 채우라는 뜻이 아니다/.test(ap), "★'오바 금지' 단서가 살아 있다(유저 조건)");
 }
 
+console.log("\n⑥ 본문 규칙(스펙 5절):");
+{
+  const ed = fs.readFileSync(new URL("../lib/editorial.ts", import.meta.url), "utf-8");
+  const gr = fs.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8");
+  // ★프롬프트는 방향, 코드는 한계선 — 모델이 습관적으로 어기는 건 코드가 막는다
+  ok(/export function boldOveruse/.test(ed), "★볼드 남발을 코드가 잰다");
+  ok(/export function textWallRuns/.test(ed), "★시각 브레이크 없는 구간을 코드가 잰다");
+  ok(/boldOveruse\(a\.body_html\)/.test(gr) && /textWallRuns\(a\.body_html\)/.test(gr), "★생성 경로에 실제로 물려 있다");
+  ok(/전부 강조하면 아무것도 강조가 아니다/.test(gr), "왜 막는지가 경고문에 있다");
+
+  // ★인용구 3용도 — 종전엔 '속마음 인용' 하나뿐이라 도입부에만 몰렸다
+  ok(/인용구\(blockquote\)는 세 가지 용도로만 쓰고/.test(ap), "★인용구 3용도가 명시됐다");
+  ok(/한곳에 몰지 마라/.test(ap), "배치까지 지시한다");
+  ok(/바로 다음 문단에서 답한다/.test(ap), "★속마음 인용은 즉시 답이 붙는다(대화체 리듬)");
+  // ★스펙의 '○○씨는 이렇게 신청했다'는 우리 규칙(경험 날조 금지)과 충돌한다 — 조건을 붙여 받았다
+  ok(/가상의 인물을 만들지 마라/.test(ap), "★사례 인용에 인물 날조 금지가 걸려 있다");
+  ok(/인용 형식은 '사실'로 읽히므로 날조의 피해가 가장 크다/.test(ap), "★왜 인용구에서 특히 위험한지가 적혀 있다");
+  ok(/한 문단에 최대 1개/.test(ap), "볼드 규칙이 프롬프트에도 있다");
+}
+
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 이미지 주문서 + 분량");
 process.exit(fail ? 1 : 0);

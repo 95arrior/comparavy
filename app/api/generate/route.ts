@@ -6,7 +6,7 @@ import { ensureUserRow } from "@/lib/userPlan";
 import { spendCredits, addCredits, GENERATE_COST } from "@/lib/credits";
 import { streamArticle } from "@/lib/generateArticle";
 import { isReviewType, ensureDisclosure } from "@/lib/revenue";
-import { hasFabricatedExperience, lacksInterpretation, lacksConditionBranch, duplicateSlotSubjects, lacksKeywordFloor, keywordOccurrences, keywordOverstuffed, headingMismatches, coreKeywordOf, endingReport, spacingDefects, longParagraphs, emojiCount, photoSlotShortfall, stockPropSlots, photoSceneShortfall, skeletonReport, EMOJI_MIN, PARA_MAX_LINES, KEYWORD_FLOOR } from "@/lib/editorial";
+import { hasFabricatedExperience, lacksInterpretation, lacksConditionBranch, duplicateSlotSubjects, lacksKeywordFloor, keywordOccurrences, keywordOverstuffed, headingMismatches, coreKeywordOf, endingReport, spacingDefects, longParagraphs, emojiCount, photoSlotShortfall, stockPropSlots, photoSceneShortfall, skeletonReport, boldOveruse, textWallRuns, EMOJI_MIN, PARA_MAX_LINES, KEYWORD_FLOOR } from "@/lib/editorial";
 import { scanFacts } from "@/lib/factGate";
 import { financeCalcContext } from "@/lib/financeCalc";
 import { sanitizeUrls } from "@/lib/linkWhitelist";
@@ -420,6 +420,18 @@ export async function POST(request: Request) {
           const lp = longParagraphs(a.body_html);
           if (lp.length) {
             w.push(`문단 ${lp.length}개가 모바일 ${PARA_MAX_LINES}줄을 넘는다(가장 긴 것 ${Math.max(...lp.map((x) => x.lines))}줄, 예: "${lp[0]!.preview}…"). 한 문단은 1~2문장으로 끊어라 — 길면 문장을 나눠 새 문단으로 보낸다.`);
+          }
+          // ★볼드 남발(2026-08-05 스펙 5-4) — "문단당 최대 1개, 핵심 수치·결론 문장에만".
+          //  프롬프트엔 '섹션당 1문장'이 있었지만 재는 코드가 없었다. 전부 강조하면 아무것도 강조가 아니다.
+          const bo = boldOveruse(a.body_html);
+          if (bo.length) {
+            w.push(`한 문단에 굵은 글씨가 2개 이상인 문단이 ${bo.length}개다(예: "${bo[0]!.text}…" ${bo[0]!.count}개). 문단당 하나만 — 그 문단에서 가장 중요한 수치나 결론 한 곳에만 쓴다. 전부 강조하면 아무것도 강조가 아니다.`);
+          }
+          // ★텍스트벽(스펙 5-6) — 시각 요소 없이 산문이 길게 이어지면 스크롤이 빨라지고,
+          //  그 구간에 광고가 있으면 인지도 못 하고 지나간다(애드포스트 시인성).
+          const tw = textWallRuns(a.body_html);
+          if (tw.length) {
+            w.push(`시각 요소 없이 문단만 ${Math.max(...tw.map((x) => x.run))}개 연속으로 이어지는 구간이 ${tw.length}곳 있다. 3~5문단마다 표·[사진:]·인용구 중 하나를 넣어 끊어라 — 글이 텍스트벽이 되면 그 구간에서 이탈한다.`);
           }
           // ★이모지 하한(실측: 규격 3~6인데 실제 0개) — 상한만 있고 하한이 없었다.
           const ec = emojiCount(a.body_html);
