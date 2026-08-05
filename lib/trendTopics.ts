@@ -238,7 +238,20 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
       //  합성 LLM이 이미 카테고리 정합으로 걸러 준다. 살아남은 것만 실시간으로 인정하면 노이즈가 안 는다.
       const risingHit = risingKws.find((rk) => rk.length >= 2 && (kw.includes(rk) || ti.includes(rk)));
       if (risingHit) risingTagged.push(kw);
-      rows.push({ category, keyword: kw, title: ti, news_context: ctx, longtails: [] as Longtail[], source: risingHit ? "rising" : "news", created_at: new Date().toISOString(), expires_at: expires });
+      // ★이 키워드를 만든 '그 기사'만 근거로 붙인다(2026-08-05 유저 화면에서 검거).
+      //  종전엔 배치가 본 기사 6개를 통째로 붙였다 — '국민행복카드 바우처' 글감에
+      //  보훈부·참전수당·집단수용시설 기사가 근거로 실렸고, 본문이 그걸 재료로 쓴다.
+      //  ★서빙 시점에 카드별 근거를 고르는 건 추측이라 두 번 실패했다. 그런데 여기는 다르다:
+      //   방금 이 헤드라인 묶음에서 뽑은 키워드라, 그 말이 실제로 들어 있는 기사만 고르면 추측이 아니다.
+      //  ★한 건도 못 찾으면 기사를 안 붙인다 — 가짜 근거는 없는 근거보다 나쁘다.
+      const kwToks = kw.split(/\s+/).map((w) => w.replace(/[^가-힣a-zA-Z0-9]/g, "")).filter((w) => [...w].length >= 2);
+      const ownHeads = kwToks.length
+        ? heads.filter((h) => { const t = `${h.title} ${h.description ?? ""}`; return kwToks.some((w) => t.includes(w)); }).slice(0, 3)
+        : [];
+      const ownCtx = ownHeads.length
+        ? ownHeads.map((n) => `- [${n.press || n.seed}] ${n.title}: ${n.description.slice(0, 130)}`).join("\n")
+        : `[근거 기사 없음] 이 글감의 키워드는 오늘 기사 묶음에서 뽑았지만, 그 말이 실제로 들어간 기사를 특정하지 못했다.\n★그러니 기사를 인용하지 마라 — 확인 가능한 제도·공식 안내만으로 쓴다.`;
+      rows.push({ category, keyword: kw, title: ti, news_context: ownCtx, longtails: [] as Longtail[], source: risingHit ? "rising" : "news", created_at: new Date().toISOString(), expires_at: expires });
     }
     // ★실시간 급상승 직접 주입(2026-08-05 — 태깅만으로는 생존이 0이었다).
     //  유저 상시 요구: "'지금 뜨는'은 실제로 효과 있는 실시간 키워드여야 한다."

@@ -69,12 +69,14 @@ export async function sweepMorningNews(windowMin = 120, perQuery = 5): Promise<H
   const now = Date.now();
   const out: Head[] = [];
   const seen = new Set<string>();
+  let queryOk = 0; // ★질의가 전부 실패해도 빈 배열이면 '오늘은 기사가 없네'로 읽힌다 — 그건 거짓이다
 
   for (const q of SWEEP_QUERIES) {
     try {
       const res = await fetch(`${NEWS_EP}?query=${encodeURIComponent(q)}&display=${perQuery}&sort=date`,
         { headers: { "X-Naver-Client-Id": id, "X-Naver-Client-Secret": secret }, signal: AbortSignal.timeout(8000) });
       if (!res.ok) continue;
+      queryOk += 1;
       const j = (await res.json()) as { items?: { title?: string; description?: string; originallink?: string; link?: string; pubDate?: string }[] };
       for (const it of j.items ?? []) {
         const t = Date.parse(it.pubDate ?? "");
@@ -92,6 +94,8 @@ export async function sweepMorningNews(windowMin = 120, perQuery = 5): Promise<H
       }
     } catch { /* 다음 질의로 */ }
   }
+  // ★한 질의도 안 열렸으면 원천이 죽은 것이다(쿼터 소진·키 만료) — 사실대로 던진다.
+  if (!queryOk) throw new Error("NEWS_SWEEP_ALL_FAILED");
   const sorted = out.sort((a, b) => a.minutesAgo - b.minutesAgo);
   sweepMemo = { at: Date.now(), windowMin, heads: sorted };
   return sorted;

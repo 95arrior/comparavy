@@ -35,6 +35,12 @@ const PROPER_RE = /(카카오|토스|네이버|케이뱅크|카뱅|국민|신한
 const ACTION_RE = /(줍줍|무순위|잔여세대|취소분|특별공급|사전청약|본청약|청약|분양|당첨|추첨|접수|신청|모집|공고|마감|지급|지원금|장려금|환급|보조금|바우처|상품권|캐시백|포인트|이벤트|당첨자|발표|납부|신고|공제|감면|인상|인하|개편|시행|폐지|증자|분할|배당|권리락|상장)/;
 
 // 숫자·차수·연도 — "3차", "2026년", "1억"처럼 특정된 말
+// 흔한 말 — 고유명사 뒤에 이것만 붙으면 아직 '무엇에 대한 말'인지 특정되지 않는다
+const GENERIC_NOUN = new Set([
+  "부동산", "아파트", "주택", "청약", "카드", "은행", "보험", "대출", "주식", "투자", "펀드", "예금", "적금",
+  "경제", "정책", "지원", "혜택", "정보", "소식", "뉴스", "시장", "가격", "금리", "요금", "세금", "연금",
+  "서비스", "상품", "혜택", "이벤트", "행사", "제도", "사업", "안내", "방법", "조건", "기준", "현황",
+]);
 const SPECIFIC_RE = /(\d{4}년|\d+차|\d+회차|\d+월|\d+억|\d+만원|\d+%)/;
 
 export interface PreemptVerdict {
@@ -82,12 +88,22 @@ export function preemptVerdict(
   const hasAction = ACTION_RE.test(kw);
   if (hasAction) hits.push("행동·돈 신호");
 
-  // ★고유성(지역/브랜드/숫자) 하나 + 행동 신호가 함께 있어야 한다.
-  //  행동어만 있으면 "지원금 신청"처럼 뭉뚱그린 말이 되고, 고유명사만 있으면 "동탄 부동산"처럼 막연하다.
-  //  둘이 만나야 "동탄 줍줍"이 된다 — 사람이 실제로 그렇게 친다.
+  // ★고유성(지역/브랜드/숫자)이 먼저다 — 이게 없으면 기사 말투다("부동산 공급").
   const hasProper = hits.some((h) => h !== "행동·돈 신호");
   if (!hasProper) return { eligible: false, reasons, blockedBy: "고유명사·숫자가 없음(기사 말투일 가능성)" };
-  if (!hasAction) return { eligible: false, reasons, blockedBy: "지금 뭘 해야 하는지가 없음" };
+
+  // ★그다음 '무엇에 대한 말인지'가 특정돼야 한다.
+  //  행동어가 있으면 그걸로 충분하고("동탄 줍줍"),
+  //  ★없어도 고유한 이름이 붙어 있으면 검색어가 된다 — "케이뱅크 황금캡슐"이 그 실물이다.
+  //   (2026-08-05 실측: 행동어를 필수로 걸었더니 유저가 반드시 잡으라고 한 이 실물이 막혔다.)
+  //  막아야 하는 건 고유명사에 '흔한 말'만 붙은 것이다: "동탄 부동산", "케이뱅크 은행".
+  if (!hasAction) {
+    const specific = kw.split(/\s+/)
+      .map((w) => w.replace(/[^가-힣a-zA-Z0-9]/g, ""))
+      .filter((w) => [...w].length >= 2 && !GENERIC_NOUN.has(w) && !PROPER_RE.test(w) && !REGION_RE.test(w));
+    if (!specific.length) return { eligible: false, reasons, blockedBy: "흔한 말만 붙어 있음(무엇에 대한 말인지 특정 안 됨)" };
+    hits.push(`고유 이름 '${specific[0]}'`);
+  }
 
   reasons.push(...hits);
   return { eligible: true, reasons, blockedBy: null };

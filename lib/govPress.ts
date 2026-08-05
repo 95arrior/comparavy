@@ -58,6 +58,9 @@ const MONEY_TERMS = [
 
 // 우리 글감이 될 수 없는 것 — 조직·인사·행사·해외
 const SKIP_RE = /(인사발령|임명|위촉|간담회|업무협약|MOU|개최한다|정상회의|공동위원회|현장점검|적발|단속|처분|수거|검사 실시|기념식|공모전|시상)/;
+// ★통계·보고서 발간물(2026-08-05 실측: '건설근로자공제회 사업연보'가 글감이 됐다 — 월 검색 0회).
+//  이건 '무슨 일이 생겼다'가 아니라 '작년 숫자를 정리했다'다. 검색하러 오는 사람이 없다.
+const REPORT_RE = /(연보|백서|통계(?!청)|실태조사|동향\s*분석|보고서\s*(발간|발표)|자료집|편람|연차보고)/;
 
 const MONTH_D = /(\d{1,2})\s*[.월]\s*(\d{1,2})\s*[.일]?/;
 
@@ -168,7 +171,7 @@ export async function harvestGovPress(opts?: { pages?: number; limit?: number; m
   for (const r of raws) {
     if (!MINISTRIES.some((m) => r.ministry.includes(m))) continue;
     if (r.date < cutoff) continue;
-    if (SKIP_RE.test(r.title)) continue;
+    if (SKIP_RE.test(r.title) || REPORT_RE.test(r.title)) continue;
     const k = pressKeywordOf(r.title);
     if (!k) continue;
     const nk = k.keyword.replace(/\s+/g, "");

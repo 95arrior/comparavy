@@ -145,6 +145,8 @@ function pickDiverse(rows: PoolRow[], n: number, rnd: () => number = Math.random
 //  월 100회 미만이면 상위 1등을 해도 하루 3명이다 — 쓸 이유가 없다.
 //  ★상한이 아니라 하한이다. 검색량 밴드 해제(대형 막지 않기)와 충돌하지 않는다.
 const DEMAND_MIN = 100;
+// ★선점 면제 상한 — 미증명 카드가 보드를 먹지 않게(2026-08-05 실측: 수확 5건 중 3건이 월 0회였다)
+const PREEMPT_MAX = 2;
 const SLOT_LABEL: Record<string, string> = {
   calendar: "캘린더", applyhome: "청약", gov24: "정부지원", bizinfo: "기업지원",
   newspsych: "아침뉴스", gov: "정부발표", dart: "공시", rising: "실시간", news: "뉴스", season: "시즌", discover: "발굴", homebet: "홈판",
@@ -854,6 +856,7 @@ export async function GET(req: Request) {
             //  ★못 잰 건 자르지 않는다(측정 실패와 '수요 없음'은 다른 말이다).
             const before = tc.length;
             const weak: { keyword: string; vol: number; why: string }[] = [];
+            let preemptUsed = 0;
             const kept: typeof tc = [];
             for (const c of tc) {
               const measured = (c as { volMeasured?: boolean }).volMeasured === true;
@@ -864,7 +867,13 @@ export async function GET(req: Request) {
               if (!measured || v >= DEMAND_MIN) { kept.push(c); continue; }
               const src = (c as { seedSource?: string }).seedSource ?? (c.sel as { seedSource?: string } | undefined)?.seedSource ?? null;
               const pv = preemptVerdict(c.keyword, src, (c as { blogTotal?: number | null }).blogTotal ?? null);
-              if (pv.eligible) {
+              // ★선점 면제는 보드당 2장까지(2026-08-05 실측).
+              //  면제 조건(신선한 원천 + 문서 적음 + 구체적인 말)은 '오늘 터진 것'을 살리려고 만들었는데,
+              //  그물이 넓어 잔챙이도 함께 들어온다: 'OK캐시백 청호나이스'(월 0회), '건설근로자공제회 사업연보'(월 0회).
+              //  ★터질지 안 터질지는 지금 알 수 없다 — 그래서 막는 대신 자리를 제한한다.
+              //   수요가 증명된 카드가 미증명 카드에 밀려나지 않게 하는 게 이 상한의 일이다.
+              if (pv.eligible && preemptUsed < PREEMPT_MAX) {
+                preemptUsed += 1;
                 (c as { preemptWhy?: string }).preemptWhy = preemptWhy(pv) ?? undefined;
                 kept.push(c);
                 console.log(`[preempt] 검색량 0 면제 — ${c.keyword} (${pv.reasons.join("·")})`);

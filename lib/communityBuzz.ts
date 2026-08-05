@@ -89,6 +89,7 @@ export async function harvestCommunity(windowMin = 240, limit = 6): Promise<Comm
   const now = Date.now();
   const out: CommunitySeed[] = [];
   const seen = new Set<string>();
+  let feedOk = 0; // ★피드가 전부 죽었는데 '오늘은 소식이 없네'로 읽히면 몇 주를 모른 채 지나간다
   for (const f of FEEDS) {
     if (out.length >= limit) break;
     let xml = "";
@@ -99,6 +100,7 @@ export async function harvestCommunity(windowMin = 240, limit = 6): Promise<Comm
       });
       if (!res.ok) continue;
       xml = await res.text();
+      feedOk += 1;
     } catch { continue; }
 
     for (const it of parseRss(xml)) {
@@ -122,6 +124,8 @@ export async function harvestCommunity(windowMin = 240, limit = 6): Promise<Comm
       });
     }
   }
+  // ★피드가 하나도 안 열렸으면 '수확 0'이 아니라 '원천이 죽음'이다 — 사실대로 던진다(조용한 0 금지).
+  if (!feedOk) throw new Error("COMMUNITY_ALL_FEEDS_DOWN");
   // ★자동완성으로 '진짜 검색어'를 확정한다(2026-08-05 실호출에서 배운 것).
   //  커뮤니티는 '무엇이 지금 도는지'를 알려주고, 자동완성은 '사람들이 어떻게 치는지'를 알려준다.
   //  둘을 합쳐야 검색어가 된다 — 커뮤니티 제목만 쓰면 아무도 안 치는 문장이 키워드가 된다.
