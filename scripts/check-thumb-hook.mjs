@@ -51,5 +51,27 @@ console.log("\n③ 죽은 프롬프트 빌더 제거:");
   ok(/export const HOOK_DIRECTION/.test(th), "★훅 판정이 독립 모듈 — 경로마다 복붙하지 않는다");
 }
 
+
+// ★썸네일 문구 규격 반전(2026-08-06 유저: "글의 제목을 임팩트 있게 팩트만 짧게").
+//  종전 규칙은 '제목과 다른 말을 하라'(2026-07-17 역할 분리)였는데,
+//  유저가 준 레퍼런스 썸네일이 전부 제목의 핵심을 그대로 쓰고 있었다 — ★실물이 규칙을 이긴다.
+{
+  const tc = fs.readFileSync(new URL("../app/api/thumb-copy/route.ts", import.meta.url), "utf-8");
+  ok(/글 제목의 핵심을 임팩트 있게 압축한 것이다/.test(tc), "★문구는 제목의 핵심을 압축한다");
+  ok(/팩트만 담는다/.test(tc), "★팩트만(수식·감상 금지)");
+  ok(/윗줄은 '무엇에 대한 글인지'/.test(tc), "★2줄 구조가 명시됐다");
+  ok(!/역할 분리\(절대 조항\)/.test(tc), "★'제목 반복 실격' 조항이 폐기됐다");
+  ok(!/repeatsTitle\(c,/.test(tc), "★그 게이트도 제거됨(두면 정답이 전멸한다)");
+  ok(/cn\.length >= tn\.length \* 0\.75/.test(tc), "★다만 제목 통째 복사는 여전히 실격");
+  // ★유저 레퍼런스가 쓰는 말을 우리가 금지하고 있었다
+  ok(!/모르면\\s\?손해/.test(tc), "★'모르면 손해'가 금지어에서 빠졌다(레퍼런스가 쓰는 문구)");
+
+  const ir = fs.readFileSync(new URL("../lib/infographicRenderer.ts", import.meta.url), "utf-8");
+  // ★데이터 카드 잘림(유저 화면: '생애최초 LTV 80%(최대 4.' 에서 끊김)
+  ok(/const longest = Math\.max/.test(ir), "★가장 긴 값을 기준으로 글자 크기를 정한다");
+  ok(/satori는 넘친 글자를 조용히 자른다/.test(ir), "왜 재야 하는지가 코드에 적혀 있다");
+  ok(/const fsAfter/.test(ir), "★'변경 후' 강조 +4가 잘림의 마지막 한 방이 되지 않게");
+}
+
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 썸네일 훅 연출");
 process.exit(fail ? 1 : 0);

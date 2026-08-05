@@ -112,18 +112,26 @@ export async function renderStatCard(opts: { title: string; value: string; label
 export interface BeforeAfterRow { label: string; before: string; after: string }
 export async function renderBeforeAfterCard(opts: { title: string; beforeHead?: string; afterHead?: string; rows: BeforeAfterRow[]; brand: string }): Promise<Buffer> {
   const rows = opts.rows.slice(0, 4);
-  const fs1 = rows.length >= 3 ? 27 : 32;
+  // ★긴 값이 잘리던 걸 막는다(2026-08-05 유저 화면: '생애최초 LTV 80%(최대 4.' 에서 끊겼다).
+  //  종전엔 '줄 수'만 보고 글자 크기를 정했다 — 줄이 적어도 값이 길면 칸을 넘친다.
+  //  ★satori는 넘친 글자를 조용히 자른다. 그러니 '가장 긴 칸'을 기준으로 크기를 정해야 한다.
+  const longest = Math.max(...rows.flatMap((r) => [r.before, r.after].map((v) => [...String(v ?? "")].length)), 1);
+  const byRows = rows.length >= 3 ? 27 : 32;
+  const byLen = longest >= 22 ? 19 : longest >= 18 ? 22 : longest >= 14 ? 25 : longest >= 11 ? 28 : 32;
+  const fs1 = Math.min(byRows, byLen);
+  // ★'변경 후'는 강조라 종전엔 +4였는데, 길면 그 +4가 잘림의 마지막 한 방이 된다.
+  const fsAfter = longest >= 14 ? fs1 : fs1 + 4;
   const header = el("div", { style: { display: "flex", marginTop: 4 } }, [
-    el("div", { style: { display: "flex", flex: 1 } }),
+    el("div", { style: { display: "flex", flex: 0.85 } }),
     el("div", { style: { display: "flex", flex: 1.2, justifyContent: "center", fontFamily: "B", fontSize: 24, color: WEAK } }, opts.beforeHead ?? "기존"),
     el("div", { style: { display: "flex", width: 56 } }),
-    el("div", { style: { display: "flex", flex: 1.2, justifyContent: "center", fontFamily: "T", fontSize: 24, color: BLUE } }, opts.afterHead ?? "변경 후"),
+    el("div", { style: { display: "flex", flex: 1.4, justifyContent: "center", fontFamily: "T", fontSize: 24, color: BLUE } }, opts.afterHead ?? "변경 후"),
   ]);
   const lines = rows.map((r, i) => el("div", { style: { display: "flex", alignItems: "center", padding: "22px 0", borderBottom: i === rows.length - 1 ? "none" : `2px solid ${LINE}` } }, [
-    el("div", { style: { display: "flex", flex: 1, fontFamily: "B", fontSize: fs1 - 3, color: INK } }, r.label),
+    el("div", { style: { display: "flex", flex: 0.85, fontFamily: "B", fontSize: fs1 - 3, color: INK } }, r.label),
     el("div", { style: { display: "flex", flex: 1.2, justifyContent: "center", fontFamily: "R", fontSize: fs1, color: WEAK, textDecoration: "line-through" } }, r.before),
     el("div", { style: { display: "flex", width: 56, justifyContent: "center", fontFamily: "T", fontSize: fs1, color: BLUE } }, "→"),
-    el("div", { style: { display: "flex", flex: 1.2, justifyContent: "center", fontFamily: "T", fontSize: fs1 + 4, color: BLUE } }, r.after),
+    el("div", { style: { display: "flex", flex: 1.4, justifyContent: "center", fontFamily: "T", fontSize: fsAfter, color: BLUE } }, r.after),
   ]));
   return toPng(frame(opts.title, opts.brand, [el("div", { style: { display: "flex", flexDirection: "column", justifyContent: "center", flexGrow: 1 } }, [header, ...lines])]));
 }
