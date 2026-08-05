@@ -208,8 +208,44 @@ export function hasSpacingDefect(html: string): boolean {
 // ═══ 문단 길이(2026-08-02 발행글 실측: 69문단 중 9개가 4줄 초과, 최대 7줄) ═══
 //  규격은 "한 문단 1~2문장"인데 지켜지지 않았다. 모바일 390px에서 5줄 이상은 벽돌이고,
 //  네이버는 모바일이 압도적이라 이게 곧 이탈이다. 프롬프트에만 있던 규칙을 코드로 올린다.
-const CHARS_PER_LINE = 23; // 390px 프레임(본문폭 ~350px, 15px 한글) — check-article과 같은 기준
+// ★18자(2026-08-06 유저 화면에서 검거: 한 문단이 13줄이었다).
+//  종전 23자는 실제 렌더와 달랐다 — 개행 v6는 '한 줄 띄어쓰기 포함 18자'로 감싼다(MOBILE_MAX_CHARS 72 = 18×4).
+//  ★재는 자와 그리는 자가 다른 숫자를 보면, 게이트는 통과인데 화면은 벽돌이 된다.
+const CHARS_PER_LINE = 18;
 export const PARA_MAX_LINES = 4;
+
+// ★긴 '문장' 게이트(2026-08-06 유저 화면). 실물: "국토교통부는 … 핵심으로 제시했습니다."가 한 문장으로 13줄이었다.
+//  ★문단을 나눠도 못 고치는 종류다 — 개행은 문장 단위로 일어나므로, 문장 자체가 길면 통줄로 남는다.
+//  40~70대 독자가 주 타겟이라 한 호흡이 길면 읽다가 놓친다.
+export const SENT_MAX_CHARS = 90; // 18자 기준 5줄
+
+// ★강조가 아예 없는 글을 막는다(2026-08-06 유저: "너무 검적색 일반 두께로 쭉 길게 쓰니깐 가독성이 떨어져").
+//  상한(형광 2곳)만 있고 하한이 없어서 0개로 나가도 아무도 몰랐다 — 이모지와 같은 병이다.
+//  ★타겟이 40~70대라 '어디가 중요한지'가 눈에 안 들어오면 그냥 나간다.
+export const BOLD_MIN_PER_1000 = 2;  // 1,000자당 굵은 글씨 최소 2곳
+export const MARK_MIN = 1;           // 형광펜 최소 1곳(상한 2곳은 기존 규칙)
+export function emphasisShortfall(html: string): { chars: number; bold: number; mark: number; wantBold: number } | null {
+  const h = String(html || "");
+  const chars = h.replace(/<[^>]+>/g, "").replace(/\s/g, "").length;
+  if (chars < 400) return null; // 너무 짧은 글은 강조가 없어도 읽힌다
+  const bold = (h.match(/<(?:b|strong)\b/g) ?? []).length;
+  // 형광펜은 표기가 바뀐다(mark / b+background) — 결과(배경색)로 센다(게이트 중앙화 원칙)
+  const mark = (h.match(/<mark\b/g) ?? []).length + (h.match(/background(?:-color)?\s*:\s*(?!transparent|none)/gi) ?? []).length;
+  const wantBold = Math.max(2, Math.round((chars / 1000) * BOLD_MIN_PER_1000));
+  return bold < wantBold || mark < MARK_MIN ? { chars, bold, mark, wantBold } : null;
+}
+export function longSentences(html: string): { preview: string; chars: number }[] {
+  const prose = String(html || "").replace(/<(table|ul|ol)[\s\S]*?<\/\1>/gi, "");
+  const out: { preview: string; chars: number }[] = [];
+  for (const m of prose.matchAll(/<(p|blockquote)[^>]*>([\s\S]*?)<\/\1>/gi)) {
+    const text = m[2]!.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    for (const sent of text.split(/(?<=[.?!])\s+/)) {
+      const n = [...sent].length;
+      if (n > SENT_MAX_CHARS) out.push({ preview: sent.slice(0, 24), chars: n });
+    }
+  }
+  return out;
+}
 
 // ★볼드 남발 검출(2026-08-05 스펙 5-4) — "문단당 최대 1개, 핵심 수치·결론 문장에만".
 //  프롬프트에 '섹션당 1문장'이라고 써 뒀지만 재는 코드가 없었다.

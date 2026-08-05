@@ -515,4 +515,36 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
 }
 
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 발행글 품질(띄어쓰기·문단·이모지·사진·정렬)");
+
+// ★가독성 게이트(2026-08-06 유저 화면: 한 문단 13줄 + 강조 0곳).
+//  ★재는 자와 그리는 자가 다른 숫자를 보면 게이트는 통과인데 화면은 벽돌이 된다.
+{
+  const { longSentences, emphasisShortfall, SENT_MAX_CHARS } = await import("../lib/editorial.ts");
+  const real = "<p>국토교통부는 2026년 5월 발표에서 도시형생활주택 인허가 인센티브 확대, 상가·오피스·지식산업센터의 주거용 전환 지원, 주택도시기금 대출 한도 확대(도시형생활주택 건설 시 최대 1억 2,000만 원·3%대 금리, 2027년까지)를 핵심으로 제시했습니다.</p>";
+  const ls = longSentences(real);
+  ok(ls.length === 1 && ls[0].chars > 100, "★유저 화면의 실물 문장을 잡는다", `${ls[0]?.chars}자`);
+  ok(longSentences("<p>짧은 문장입니다. 이것도 짧습니다.</p>").length === 0, "짧은 문장은 통과");
+  ok(SENT_MAX_CHARS === 90, "한 문장 상한 90자(18자 × 5줄)");
+
+  // ★한 줄 글자수 — 게이트가 실제 렌더(18자)와 같은 숫자를 봐야 한다
+  const ed = fs.readFileSync(new URL("../lib/editorial.ts", import.meta.url), "utf-8");
+  ok(/const CHARS_PER_LINE = 18/.test(ed), "★한 줄 18자(종전 23자는 실제보다 28% 적게 셌다)");
+  ok(/재는 자와 그리는 자가 다른 숫자를 보면/.test(ed), "왜 맞춰야 하는지가 코드에 적혀 있다");
+
+  // ★강조 하한 — 상한만 있고 하한이 없어서 0개로 나가도 아무도 몰랐다
+  const plain = "<p>" + "가".repeat(600) + "</p>";
+  const em = emphasisShortfall(plain);
+  ok(em !== null && em.bold === 0 && em.mark === 0, "★강조가 0인 글을 잡는다");
+  ok(emphasisShortfall("<p>짧은 글</p>") === null, "짧은 글은 강조가 없어도 통과");
+  const rich = "<p>" + "가".repeat(600) + "<b>핵심</b></p><p><b>결론</b> <mark>중요</mark></p>";
+  ok(emphasisShortfall(rich) === null, "굵은 글씨 2곳 + 형광 1곳이면 통과");
+  // 형광펜은 표기가 바뀐다 — 결과(배경색)로 센다(게이트 중앙화 원칙)
+  const styled = "<p>" + "가".repeat(600) + "<b>가</b></p><p><b>나</b> <b style=\"background:#ff0\">다</b></p>";
+  ok(emphasisShortfall(styled) === null, "★<mark> 대신 배경색을 써도 형광으로 센다");
+
+  const gr2 = fs.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8");
+  ok(/emphasisShortfall\(a\.body_html\)/.test(gr2), "★생성 경로에 강조 게이트가 물려 있다");
+  ok(/longSentences\(a\.body_html\)/.test(gr2), "★긴 문장 게이트도 물려 있다");
+}
+
 process.exit(fail ? 1 : 0);

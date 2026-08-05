@@ -6,7 +6,7 @@ import { ensureUserRow } from "@/lib/userPlan";
 import { spendCredits, addCredits, GENERATE_COST } from "@/lib/credits";
 import { streamArticle } from "@/lib/generateArticle";
 import { isReviewType, ensureDisclosure } from "@/lib/revenue";
-import { hasFabricatedExperience, lacksInterpretation, lacksConditionBranch, duplicateSlotSubjects, lacksKeywordFloor, keywordOccurrences, keywordOverstuffed, headingMismatches, coreKeywordOf, endingReport, spacingDefects, longParagraphs, emojiCount, photoSlotShortfall, stockPropSlots, photoSceneShortfall, skeletonReport, boldOveruse, textWallRuns, EMOJI_MIN, PARA_MAX_LINES, KEYWORD_FLOOR } from "@/lib/editorial";
+import { hasFabricatedExperience, lacksInterpretation, lacksConditionBranch, duplicateSlotSubjects, lacksKeywordFloor, keywordOccurrences, keywordOverstuffed, headingMismatches, coreKeywordOf, endingReport, spacingDefects, longParagraphs, emojiCount, photoSlotShortfall, stockPropSlots, photoSceneShortfall, skeletonReport, boldOveruse, textWallRuns, emphasisShortfall, longSentences, SENT_MAX_CHARS, EMOJI_MIN, PARA_MAX_LINES, KEYWORD_FLOOR } from "@/lib/editorial";
 import { scanFacts } from "@/lib/factGate";
 import { financeCalcContext } from "@/lib/financeCalc";
 import { sanitizeUrls } from "@/lib/linkWhitelist";
@@ -433,6 +433,18 @@ export async function POST(request: Request) {
           const tw = textWallRuns(a.body_html);
           if (tw.length) {
             w.push(`시각 요소 없이 문단만 ${Math.max(...tw.map((x) => x.run))}개 연속으로 이어지는 구간이 ${tw.length}곳 있다. 3~5문단마다 표·[사진:]·인용구 중 하나를 넣어 끊어라 — 글이 텍스트벽이 되면 그 구간에서 이탈한다.`);
+          }
+          // ★강조 하한(2026-08-06 유저: "너무 검적색 일반 두께로 쭉 길게 쓰니깐 가독성이 떨어져").
+          //  타겟이 40~70대라 '어디가 중요한지'가 눈에 안 들어오면 읽다가 나간다.
+          const em = emphasisShortfall(a.body_html);
+          if (em) {
+            w.push(`강조가 부족하다(${em.chars}자에 굵은 글씨 ${em.bold}곳·형광펜 ${em.mark}곳). 굵은 글씨는 ${em.wantBold}곳 이상 — 각 문단에서 가장 중요한 수치나 결론 한 곳에만. 형광펜(<mark>)은 글 전체에서 가장 중요한 한 문장에 1~2곳. ★검은 글씨만 길게 이어지면 40~70대 독자가 어디를 봐야 할지 몰라 그냥 나간다.`);
+          }
+          // ★긴 문장(2026-08-06 유저 화면: 한 문장이 13줄이었다) — 문단을 나눠도 못 고치는 종류다.
+          //  개행은 문장 단위로 일어나므로 문장 자체가 길면 통줄로 남는다.
+          const ls = longSentences(a.body_html);
+          if (ls.length) {
+            w.push(`한 문장이 너무 긴 곳이 ${ls.length}군데다(가장 긴 것 ${Math.max(...ls.map((x) => x.chars))}자, 예: "${ls[0]!.preview}…"). 한 문장은 ${SENT_MAX_CHARS}자 안으로 — 나열이 길면 문장을 끊거나 표·목록으로 옮겨라. ★모바일에서 한 줄이 18자라 긴 문장은 그대로 글자벽이 된다.`);
           }
           // ★이모지 하한(실측: 규격 3~6인데 실제 0개) — 상한만 있고 하한이 없었다.
           const ec = emojiCount(a.body_html);
