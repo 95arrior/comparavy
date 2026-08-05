@@ -140,6 +140,10 @@ function pickDiverse(rows: PoolRow[], n: number, rnd: () => number = Math.random
 
 // ★원천 칸 — 카드가 어느 원천에서 왔는지 한 단어로. 화면·진단이 같은 이름을 쓴다.
 //  유저 요청(2026-08-05): "청약홈 칸에 글감이 있고 없고를 알고, 인터넷엔 이슈인데 없으면 바로 캐치"
+// ★수요 하한(2026-08-05 유저: "남들이 관심 없는 키워드는 아니죠?").
+//  월 100회 미만이면 상위 1등을 해도 하루 3명이다 — 쓸 이유가 없다.
+//  ★상한이 아니라 하한이다. 검색량 밴드 해제(대형 막지 않기)와 충돌하지 않는다.
+const DEMAND_MIN = 100;
 const SLOT_LABEL: Record<string, string> = {
   calendar: "캘린더", applyhome: "청약", gov24: "정부지원", bizinfo: "기업지원",
   gov: "정부발표", dart: "공시", rising: "실시간", news: "뉴스", season: "시즌", discover: "발굴", homebet: "홈판",
@@ -792,6 +796,33 @@ export async function GET(req: Request) {
             }
           }
         }));
+        // ★검색량 측정(2026-08-05 유저: "남들이 관심 없는 키워드는 아니죠?").
+        //  ★그동안 트렌드 카드의 vol은 0 고정이었다 — 문서 수만 보고 '얇은 자리'라고 말하고 있었다.
+        //   문서가 1,174편이어도 아무도 안 찾는 말이면 쓸 이유가 없다. 반쪽짜리 판단이었다.
+        //  ★검색량 밴드 해제(유저 확정)는 '상한'을 없앤 것이지 '아무거나 쓰자'가 아니다.
+        //   대형 키워드를 막지 않되, 수요가 없는 말은 거른다 — 이 둘은 서로 다른 이야기다.
+        try {
+          const need = tc.filter((c) => Number(c.vol ?? 0) === 0).map((c) => c.keyword);
+          if (need.length) {
+            const stats = await fetchKeywordStats(need, 4); // 키는 normalizeKey(공백 제거)
+            let noDemand = 0;
+            for (const c of tc) {
+              const st = stats.get(normalizeKey(c.keyword));
+              if (st) { c.vol = st.mobile + st.pc; (c as { volMeasured?: boolean }).volMeasured = true; }
+            }
+            // ★수요 하한 — 못 잰 건 자르지 않는다(측정 실패와 '수요 없음'은 다른 말이다).
+            const before = tc.length;
+            const weak = tc.filter((c) => (c as { volMeasured?: boolean }).volMeasured === true && Number(c.vol ?? 0) < DEMAND_MIN);
+            if (weak.length) {
+              tc = tc.filter((c) => !((c as { volMeasured?: boolean }).volMeasured === true && Number(c.vol ?? 0) < DEMAND_MIN));
+              noDemand = before - tc.length;
+              console.log(`[demand] 수요 미달 제외 ${noDemand}장(월 ${DEMAND_MIN}회 미만) — ${weak.map((c) => `${c.keyword}(${c.vol}회)`).join(", ")}`);
+              if (debugMode) diag.noDemand = weak.map((c) => ({ keyword: c.keyword, vol: Number(c.vol ?? 0) }));
+            }
+          }
+        } catch (e) {
+          console.error("[demand] 검색량 측정 실패:", e instanceof Error ? e.message : e);
+        }
         // ★뒷북으로 판정된 카드는 보드에서 뺀다 — 재고 나서 안 거를 거면 재는 의미가 없다(CLAUDE.md).
         const staleOut = tc.filter((c) => (c as { risingStale?: boolean }).risingStale === true);
         if (staleOut.length) {

@@ -750,7 +750,7 @@ export default function Home({
           {/* ★두 열 머리말·범례 폐기(2026-08-05 유저: "이거 폐기, 그냥 랜덤으로 박스 나오게").
               카드마다 우측 하단에 ⚡지금 뜨는 / 🌱꾸준한 수요가 붙으므로 머리말이 하는 일이 없어졌다.
               모바일 모드 탭도 같이 없앤다 — 나눌 열이 없으면 나눠 볼 탭도 없다. */}
-          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+          <div className="grid grid-cols-1 items-stretch gap-2.5 sm:grid-cols-2">
             {(() => {
               // ★한 판으로 섞는다(유저 목업). 열로 나누지 않으니 mode는 카드가 들고 다닌다 —
               //  치우기·보충이 어느 재고에서 일어나야 하는지는 여전히 알아야 한다.
@@ -1155,9 +1155,12 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
     //  ★못 쟀으면 아무 말도 안 한다 — 모르는 상태에서 하는 조언은 전부 추측이다.
     if (bt == null) return null;
     if (isTrend) {
-      if (bt < 1000) return "이 말로 쓴 글이 거의 없어서 지금 올리면 초기 순위를 잡아요";
-      if (bt < 3000) return "아직 얇은 자리라 지금 올리면 상위를 노려볼 만해요";
-      return `이미 ${bt.toLocaleString("ko-KR")}편이 있어요 — 남들이 안 다룬 각도라야 이겨요`;
+      // ★수요와 공급을 같이 말한다 — 문서만 보면 '아무도 안 찾는 빈 자리'를 기회로 착각한다
+      const v = Number(topic.vol ?? 0);
+      const demand = v > 0 ? `월 ${v.toLocaleString("ko-KR")}명이 찾는데 ` : "";
+      if (bt < 1000) return `${demand}쓴 글이 거의 없어요 — 지금 올리면 초기 순위를 잡아요`;
+      if (bt < 3000) return `${demand}아직 얇은 자리예요 — 지금 올리면 상위를 노려볼 만해요`;
+      return `${demand}이미 ${bt.toLocaleString("ko-KR")}편이 있어요 — 남들이 안 다룬 각도라야 이겨요`;
     }
     if (Number(topic.vol ?? 0) > 0) {
       return bt < 3000 ? "검색은 꾸준한데 글이 적어요 — 한 번 잡으면 오래 유입돼요" : "검색이 꾸준한 자리예요 — 깊이로 승부해요";
@@ -1184,31 +1187,41 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
     return { text: "17~19시 발행 추천 · 2순위 6~7시", hot: false };
   })();
   return (
-    <button onClick={onWrite} className={`${publishedOn ? "opacity-55 saturate-50 " : ""}at-press rounded-[16px] bg-white p-4 text-left shadow-[0_1px_3px_rgba(0,0,0,0.05)] tk-tr hover:shadow-[0_4px_14px_-6px_rgba(29,117,247,0.18)]`}>
+    <button onClick={onWrite} className={`${publishedOn ? "opacity-55 saturate-50 " : ""}at-press flex h-full flex-col rounded-[16px] bg-white p-3.5 text-left shadow-[0_1px_3px_rgba(0,0,0,0.05)] tk-tr hover:shadow-[0_4px_14px_-6px_rgba(29,117,247,0.18)]`}>
       {/* ★박스 규격(2026-08-05 유저 목업) — 상단 칩 3개는 '항상' 뜬다.
           키워드=사실 · 출처=어디서 · 문서=그 자리에 몇 편. 셋 다 유저가 카드를 판정하는 재료다.
           ★유저 지시: "절대 글감 박스 콘텐츠 내용들은 거짓이 있으면 안 됨" — 여기 적히는 건 전부 측정·수확 실값이다. */}
-      <div className="flex flex-wrap items-center gap-1.5">
-        <span className="rounded-md bg-[#F1EEFF] px-2 py-1 text-[11px] font-extrabold text-[#6B4DE6]">
+      <div className="flex flex-wrap items-center gap-1">
+        <span className="max-w-full truncate rounded bg-[#F1EEFF] px-1.5 py-0.5 text-[10px] font-bold text-[#6B4DE6]">
           키워드 : {(topic as { seedKeyword?: string }).seedKeyword || topic.keyword}
         </span>
-        {srcLabel && <span className="rounded-md bg-[#F1F3F5] px-2 py-1 text-[11px] font-extrabold text-[#4E5968]">출처 : {srcLabel}</span>}
+        {srcLabel && <span className="shrink-0 rounded bg-[#F1F3F5] px-1.5 py-0.5 text-[10px] font-bold text-[#4E5968]">출처 : {srcLabel}</span>}
         {/* ★0과 '못 잼'은 다른 말이다 — 못 잰 자리에 0을 적으면 선점 최적으로 오해한다 */}
         {bt != null ? (
-          <span className={`rounded-md px-2 py-1 text-[11px] font-extrabold tabular-nums ${bt < 3000 ? "bg-[#E7F7EF] text-[#0B8C4E]" : bt < 30000 ? "bg-[#FFF3E0] text-[#C2670A]" : "bg-[#FFECEC] text-[#D63A3A]"}`}
+          <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold tabular-nums ${bt < 3000 ? "bg-[#E7F7EF] text-[#0B8C4E]" : bt < 30000 ? "bg-[#FFF3E0] text-[#C2670A]" : "bg-[#FFECEC] text-[#D63A3A]"}`}
             title="네이버 블로그 문서 수 — 적을수록 선점하기 좋아요">
             문서 : {bt.toLocaleString("ko-KR")}편
           </span>
         ) : (
-          <span className="rounded-md bg-[#F1F3F5] px-2 py-1 text-[11px] font-extrabold text-[#8B95A1]" title="문서 수를 못 쟀어요 — 0편이라는 뜻이 아닙니다">문서 : 못 쟀어요</span>
+          <span className="shrink-0 rounded bg-[#F1F3F5] px-1.5 py-0.5 text-[10px] font-bold text-[#8B95A1]" title="문서 수를 못 쟀어요 — 0편이라는 뜻이 아닙니다">문서 : 못 쟀어요</span>
         )}
-        {publishedOn && <span className="rounded-md bg-neutral-100 px-2 py-1 text-[11px] font-extrabold text-neutral-500">{publishedOn}</span>}
+        {/* ★검색량(2026-08-05 유저: "남들이 관심 없는 키워드는 아니죠?").
+            문서 수만으로는 '얇은 자리'인지 '아무도 안 찾는 자리'인지 구분이 안 된다 — 둘 다 적어야 판단이 된다. */}
+        {Number(topic.vol ?? 0) > 0 && (
+          <span className="shrink-0 rounded bg-[#EAF2FF] px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-[#1D75F7]" title="네이버 광고 API 실측 — 최근 30일 월 검색수">
+            검색 : {Number(topic.vol).toLocaleString("ko-KR")}회/월
+          </span>
+        )}
+        {publishedOn && <span className="shrink-0 rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] font-bold text-neutral-500">{publishedOn}</span>}
         {onDismiss && <span role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); onDismiss(); }} className="ml-auto flex h-6 w-6 items-center justify-center rounded-full opacity-45 transition hover:bg-[#F7F8FA] hover:opacity-80" aria-label="다른 글감으로 교체"><GlassGlyph name="refresh" size={14} /></span>}
       </div>
-      <p className="mt-2 line-clamp-2 text-[15px] font-extrabold leading-snug text-[color:var(--color-text)]">{topic.title}</p>
+      {/* ★제목 2줄 고정(2026-08-05 유저: "글감 제목도 줄여서 단을 넘어가지 않게").
+          line-clamp만으로는 1줄짜리 카드와 2줄짜리 카드의 키가 달라져 박스가 들쭉날쭉해진다 —
+          min-h로 두 줄 자리를 늘 확보해 박스 규격을 일정하게 만든다. */}
+      <p className="mt-1.5 line-clamp-2 min-h-[2.5rem] text-[13.5px] font-extrabold leading-[1.28] text-[color:var(--color-text)]">{topic.title}</p>
       {/* ★근거 — 어떤 근거로 가져왔고(수확 사실) 어떻게 쓸 것인지(활용 계획)를 한 줄에. 둘 다 실값에서만 만든다. */}
-      <p className="mt-1.5 line-clamp-2 text-[11.5px] leading-snug text-[#8B95A1]">근거 : {evidence}{usePlan ? ` → ${usePlan}` : ""}</p>
-      <div className="mt-2 flex items-center gap-2">
+      <p className="mt-1 line-clamp-2 min-h-[2rem] text-[11px] leading-[1.35] text-[#8B95A1]">근거 : {evidence}{usePlan ? ` → ${usePlan}` : ""}</p>
+      <div className="mt-auto flex items-center gap-2 pt-2">
         {pubAdvice && <span className={`text-[11px] font-semibold ${pubAdvice.hot ? "text-[#F04452]" : "text-neutral-400"}`}>{pubAdvice.text}</span>}
         {life && <span className="text-[10.5px] font-semibold tabular-nums text-amber-600">{life}</span>}
         {topic.revenueLabel && <span className="rounded-full bg-[#F5F3EE] px-2 py-0.5 text-[10.5px] font-bold text-[#8A6D1F]">{topic.revenueLabel}</span>}
