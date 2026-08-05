@@ -1058,6 +1058,15 @@ export async function GET(req: Request) {
       } catch (e) { console.error("[hitrate] 서빙 기록 실패:", e instanceof Error ? e.message : e); }
     });
     if (debugMode) diag.slots = slotCount(tc);
+    // ★씨앗 단계의 원천 분포 — '증식에서 밀렸나'와 '애초에 없었나'를 가른다
+    if (debugMode) {
+      try {
+        const seeds = await getTrendTopics(sub || vertical || "");
+        diag.seedsBySource = seeds.reduce<Record<string, number>>((m, t) => {
+          const k = (t as { source?: string }).source ?? "미상"; m[k] = (m[k] ?? 0) + 1; return m;
+        }, {});
+      } catch { /* 진단용 조회 실패는 응답에 영향 없다 */ }
+    }
     // ★얼마나 걸렸고 무엇을 생략했는지 남긴다 — 504가 나면 원인을 추측하게 되면 안 된다
     if (debugMode) diag.timing = { elapsedMs: Date.now() - reqStart, softBudgetMs: SOFT_BUDGET_MS, degraded: overBudget() };
     if (debugMode) diag.colShort = { ...colShort, homefeedGot: homeCards.length, homeDrop, trendRoom, served: tc.length, trendFunnel: funnel };

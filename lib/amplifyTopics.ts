@@ -159,6 +159,9 @@ function coreOf(text: string): string {
  * 구조 조합은 코드가 결정론적 배정(무중복), 창작은 LLM. 실패 시 [].
  */
 /** ★마지막 증식 진단(2026-08-04) — debug 응답이 읽어 간다. 프로세스 메모리라 최신 1건만 유지된다. */
+/** ★원천별 씨앗·정원 현황 — 어느 단계에서 사라졌는지 가르기 위한 것 */
+export let ampSourceDiag: { seedsBySource: Record<string, number>; pickedBySource: Record<string, number> } | null = null;
+
 export let lastAmplifyDiag: {
   seeds: number; want: number; briefs: number; parsed: number; out: number; stage?: string;
   /** 증식 정원에 들어간 실시간(rising) 씨앗 수 — 0이면 '지금 뜨는' 열이 뉴스 롱테일로만 찬다는 뜻 */
@@ -188,7 +191,7 @@ async function saveAmpDiag(d: NonNullable<typeof lastAmplifyDiag>): Promise<void
     const db = createSupabaseAdminClient();
     await db.from("api_cache").upsert({
       key: "diag:amp-funnel",
-      value: { ...d, at: new Date().toISOString() },
+      value: { ...d, ...(ampSourceDiag ?? {}), at: new Date().toISOString() },
       expires_at: new Date(Date.now() + 3 * 86400_000).toISOString(),
       updated_at: new Date().toISOString(),
     });
@@ -244,6 +247,13 @@ export async function amplifyForUser(
   }
   picks.length = Math.min(picks.length, want);
   if (quotaLog.length) console.log(`[amp] 희소 원천 우선 배치 — ${quotaLog.join(" ")} (정원 ${picks.length}/${want})`);
+  // ★어느 원천이 씨앗에 있었고 정원에 들어갔는지 남긴다(2026-08-05).
+  //  캘린더·정부발표·공시가 계속 0인데, 씨앗이 없어서인지 정원에서 밀려서인지
+  //  탈락해서인지를 구분할 방법이 없었다 — 셋은 고쳐야 할 곳이 전혀 다르다.
+  const bySource = (arr: TrendTopic[]) => arr.reduce<Record<string, number>>((m, t) => {
+    const k = t.source ?? "미상"; m[k] = (m[k] ?? 0) + 1; return m;
+  }, {});
+  ampSourceDiag = { seedsBySource: bySource(seeds), pickedBySource: bySource(picks) };
   const liveIn = picks.filter(isLive).length;
   if (liveIn) console.log(`[amp] 실시간 씨앗 ${liveIn}개를 증식 정원에 배치(전체 ${picks.length})`);
 
