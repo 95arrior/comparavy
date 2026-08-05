@@ -425,6 +425,9 @@ export async function GET(req: Request) {
           // ★slot은 여기서 안 붙인다 — 서빙 직전 stampSlots가 전 카드에 한 번에 찍는다(주인은 하나).
           //  대신 원천만 남긴다: sel(성과루프 플래그)이 꺼져도 칸이 살아 있어야 한다.
           ...({ seedSource: src ?? "news" }),
+          // ★마감을 카드까지 들고 온다(2026-08-05): 씨앗엔 action_end가 있는데 카드에서 잃어버려
+          //  수명 컷이 '아직 안 온 마감'을 지난 날짜로 오인해 잘랐다(법인세 중간예납 실측).
+          ...((t as { actionEnd?: string | null }).actionEnd ? { actionEnd: (t as { actionEnd?: string | null }).actionEnd } : {}),
           // ★씨앗 키워드를 화면까지 올린다(2026-08-05 유저: "어떤 키워드로 생성됐는지 그 키워드만 보여줘")
           ...((t as { seedKeyword?: string }).seedKeyword ? { seedKeyword: (t as { seedKeyword?: string }).seedKeyword } : {}),
           ...(FF.perfLoop ? { sel: (() => { const bf = (t as { brief?: { intent?: string; opening?: string; flow?: string } }).brief; return { species: "trend", seedSource: src ?? "news", sourceTitle: (t as { sourceTitle?: string | null }).sourceTitle ?? null, cluster: clusterKey(t.keyword), hookKey: (t as { hookKey?: string }).hookKey ?? null, structure: bf ? [bf.intent, bf.opening, bf.flow].filter(Boolean).join("|") || null : null }; })() } : {}),
@@ -738,7 +741,11 @@ export async function GET(req: Request) {
       } catch { /* 폴백 실패 — 빈 응답 그대로 */ }
     }
     {
-      const g = finalGate(tc);
+      // ★마감·원천을 함께 넘긴다 — 수명 컷이 '아직 안 온 마감'을 죽이지 않게(2026-08-05 실측 수리)
+      const g = finalGate(tc.map((c) => Object.assign(c, {
+        actionEnd: (c as { actionEnd?: string | null }).actionEnd ?? null,
+        seedSource: (c as { seedSource?: string }).seedSource ?? (c.sel as { seedSource?: string } | undefined)?.seedSource ?? null,
+      })));
       if (g.drops.length) console.log("[final-gate:short]", JSON.stringify(g.drops));
       tc = g.pass;
       funnel.afterGate = tc.length;

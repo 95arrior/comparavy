@@ -5,7 +5,13 @@ import { scanLifespan } from "./topicLifespan";
 import { poolScore } from "./trafficPool";
 import { endedProgramOf } from "./discontinued";
 
-export interface GateCard { keyword: string; title: string; newsContext?: string }
+export interface GateCard {
+  keyword: string; title: string; newsContext?: string;
+  /** 확정 마감일(YYYY-MM-DD). 있으면 '날짜가 박혔다'가 결함이 아니라 이 글감의 값이다 */
+  actionEnd?: string | null;
+  /** 씨앗 원천 — calendar·gov는 날짜를 잡는 게 존재 이유다 */
+  seedSource?: string | null;
+}
 export interface GateDrop { keyword: string; reason: string }
 
 // 주의: '가구·친구·도구·입구'의 구, '일시·당시·역시·다시'의 시, '장군'의 군은 지명이 아님(실측 오탐: 일시적1가구2주택) — 서버 전용이라 lookbehind 허용
@@ -237,7 +243,19 @@ export function finalGate<T extends GateCard>(cards: T[], opts?: { anchorKeyword
     //  측정으로 확인한 안전선: 내 발행 글 기준 9%, 트렌드 95개 중 15개 제외(80개 남음) — 발행 지속에 지장 없음.
     //  검색량 임계는 추가하지 않는다 — 밴드 사다리(TIER_BANDS)가 이미 통제 중이라 이중으로 조이면 신생 밴드와 충돌한다.
     { const life = scanLifespan(c.keyword, c.title, null, 0);
-      if (life.reasons.includes("dated")) { drops.push({ keyword: c.keyword, reason: "dated_topic" }); continue; }
+      // ★수명 컷의 예외(2026-08-05 실측: '법인세 중간예납, 8월 31일까지 해야 하는 것'이 잘렸다).
+      //  이 규칙은 '마감이 지나면 죽는 글감'을 막으려고 만든 것이다(루원시티 청약 91 → 8).
+      //  그런데 캘린더·정부발표 원천은 '아직 안 온 마감을 미리 잡는 것'이 존재 이유다 —
+      //  ★막으려던 것과 정반대인 글감을, 같은 규칙이 자르고 있었다.
+      //  갈림: 마감이 아직 안 지났으면 지금이 그 글감의 전성기다. 지난 마감만 죽는다.
+      const aEnd = (c.actionEnd ?? "").trim();
+      const futureDeadline = /^\d{4}-\d{2}-\d{2}$/.test(aEnd)
+        && Date.parse(`${aEnd}T23:59:59+09:00`) >= Date.now();
+      // ★마감을 아는 카드는 마감으로만 판정한다 — 원천을 이유로 지난 마감까지 봐주면 안 된다.
+      //  마감을 모르는 캘린더·정부발표 카드만 원천으로 구제한다(그 원천은 아직 안 온 일정만 낸다).
+      const datedBySource = !aEnd && (c.seedSource === "calendar" || c.seedSource === "gov");
+      const exemptDated = aEnd ? futureDeadline : datedBySource;
+      if (life.reasons.includes("dated") && !exemptDated) { drops.push({ keyword: c.keyword, reason: "dated_topic" }); continue; }
       if (life.reasons.includes("round")) { drops.push({ keyword: c.keyword, reason: "round_topic" }); continue; } }
     // 4) 제목-키워드 정합(짝 밀림류 최후 방어) — 실질 토큰 교집합 0이면 조립 오류로 간주
     //    ★앵커 레인(홈판)은 이 검사를 건너뛴다 — 위 opts.anchorKeyword 주석 참조.

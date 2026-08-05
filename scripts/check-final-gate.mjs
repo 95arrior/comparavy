@@ -372,4 +372,25 @@ for (const [q, expect] of zeroCases) {
   for (const t of unrelated) ok(privateLoanTopic(t) === null, `무관 소재는 안 걸린다: ${t.slice(0, 14)}`);
 }
 
+
+// ★수명 컷의 예외(2026-08-05 유저 실측: finalGateDrops에 '법인세 중간예납 — dated_topic'이 찍혔다).
+//  이 규칙은 '마감이 지나면 죽는 글감'을 막으려고 만들었는데(루원시티 청약 91 → 8),
+//  캘린더·정부발표는 '아직 안 온 마감을 미리 잡는 것'이 존재 이유다 —
+//  ★막으려던 것과 정반대인 글감을 같은 규칙이 자르고 있었다.
+console.log("\n수명 컷 — 마감이 지났는가로만 가른다:");
+{
+  const one = (o) => { const r = finalGate([o]); return r.pass.length ? "통과" : r.drops[0].reason; };
+  const fu = new Date(Date.now() + 20 * 86400_000).toISOString().slice(0, 10);
+  const pa = new Date(Date.now() - 20 * 86400_000).toISOString().slice(0, 10);
+  const chk = (got, want, msg) => { const good = got === want; if (!good) fail++; console.log(good ? "OK " : "FAIL", "|", msg, "→", got); };
+  chk(one({ keyword: "법인세 중간예납", title: `법인세 중간예납, ${Number(fu.slice(5, 7))}월 ${Number(fu.slice(8))}일까지 해야 하는 것`, actionEnd: fu, seedSource: "gov" }), "통과",
+    "★아직 안 온 마감은 지금이 전성기다");
+  chk(one({ keyword: "근로장려금", title: "근로장려금, 5월 1일까지 신청", actionEnd: pa, seedSource: "gov" }), "dated_topic",
+    "★지난 마감은 원천이 gov여도 죽는다");
+  chk(one({ keyword: "주민세", title: "주민세, 8월 16일부터 내는 것", seedSource: "calendar" }), "통과",
+    "마감 모르는 캘린더 카드는 원천으로 구제");
+  chk(one({ keyword: "루원시티 청약", title: "루원시티 청약, 7월 13일 마감", seedSource: "news" }), "dated_topic",
+    "★일반 뉴스의 날짜 글감은 그대로 컷");
+}
+
 process.exit(fail ? 1 : 0);
