@@ -994,8 +994,21 @@ function hash32(s: string): number {
   for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
   return h >>> 0;
 }
-function shuffleStable<T extends { t: { keyword: string } }>(items: T[]): T[] {
-  return [...items].sort((a, b) => hash32(a.t.keyword) - hash32(b.t.keyword));
+/**
+ * ★좋은 글감이 먼저 오게(2026-08-05). 정렬 재료는 '수요÷공급' — 둘 다 실측값이다.
+ *  예측(난이도·별점)은 표본이 쌓일 때까지 하지 않기로 했으니, 여기서도 판정하지 않고 정렬만 한다.
+ *  실측(같은 날): 페이코 포인트 출금 3,210/33 = 97 · 건설근로자 1,570/387 = 4.1 · 주민세 10,040/96,871 = 0.10
+ *  ★못 잰 카드는 가운데에 둔다 — 모른다고 맨 뒤로 밀면 새 원천이 영원히 안 보인다.
+ */
+function opportunity(t: { vol?: number; blogTotal?: number | null }): number {
+  const v = Number(t.vol ?? 0);
+  const b = t.blogTotal;
+  if (typeof b !== "number" || !v) return 0.3; // 미측정 — 중간 자리
+  return b > 0 ? v / b : v;
+}
+function shuffleStable<T extends { t: { keyword: string; vol?: number; blogTotal?: number | null } }>(items: T[]): T[] {
+  return [...items].sort((a, b) =>
+    opportunity(b.t) - opportunity(a.t) || hash32(a.t.keyword) - hash32(b.t.keyword));
 }
 
 function slotMatch(t: unknown, label: string): boolean {
@@ -1117,9 +1130,16 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
       ?? (topic as { seedSource?: string }).seedSource ?? "";
     const st = (topic as { sourceTitle?: string }).sourceTitle;
     if (srcKey === "news") return st ? `방금 올라온 기사에서 나온 말 — "${st.slice(0, 26)}"` : "방금 올라온 경제 기사에서 나온 말";
-    if (srcKey === "rising") return "지금 검색이 오르고 있는 말 — 급상승·자동완성에서 함께 잡혔어요";
+    // ★종전 문구는 두 원천에서 '동시에' 잡혔다고 단정했다 — 실제로는 둘 중 하나에서 온다.
+    //  확인 못 한 걸 단정하면 그게 곧 거짓이다. 확인한 것만 말한다.
+    if (srcKey === "rising") return "지금 사람들이 실제로 치고 있는 말이에요";
     if (srcKey === "community") return "커뮤니티에 방금 올라온 혜택 소식이라 곧 검색이 몰려요";
-    if (srcKey === "gov") return st ? `부처가 낸 보도자료에 적힌 일정 — "${st.slice(0, 26)}"` : "부처가 낸 보도자료에 적힌 일정이에요";
+    // ★모든 보도자료가 '일정'은 아니다(사업연보·통계 발표 등) — 마감이 있을 때만 일정이라고 부른다
+    if (srcKey === "gov") {
+      const hasDeadline = Boolean((topic as { actionEnd?: string | null }).actionEnd);
+      const head = hasDeadline ? "부처가 낸 보도자료에 적힌 일정" : "부처가 오늘 낸 보도자료에서 나온 말";
+      return st ? `${head} — "${st.slice(0, 26)}"` : `${head}이에요`;
+    }
     if (srcKey === "calendar") return "날짜가 미리 확정된 일정 — 그날 몰릴 검색을 먼저 잡아둬요";
     if (srcKey === "dart") return "기업이 낸 공시라 일정마다 검색이 다시 올라와요";
     if (srcKey === "discover") return "네이버 자동완성에 실제로 뜨는 말 — 사람들이 이렇게 검색해요";
@@ -1192,12 +1212,14 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
           키워드=사실 · 출처=어디서 · 문서=그 자리에 몇 편. 셋 다 유저가 카드를 판정하는 재료다.
           ★유저 지시: "절대 글감 박스 콘텐츠 내용들은 거짓이 있으면 안 됨" — 여기 적히는 건 전부 측정·수확 실값이다. */}
       <div className="flex flex-wrap items-center gap-1">
+        {/* ★홈판 카드의 keyword는 검색어가 아니라 '주제 앵커'다(2026-08-05 유저 화면: "코스피 급등 내 돈").
+            그걸 '키워드'라고 적으면 사장님이 검색어로 오해한다 — 아무도 그렇게 검색하지 않는다. */}
         <span className="max-w-full truncate rounded bg-[#F1EEFF] px-1.5 py-0.5 text-[10px] font-bold text-[#6B4DE6]">
-          키워드 : {(topic as { seedKeyword?: string }).seedKeyword || topic.keyword}
+          {topic.tag === "홈판" ? "주제" : "키워드"} : {(topic as { seedKeyword?: string }).seedKeyword || topic.keyword}
         </span>
         {srcLabel && <span className="shrink-0 rounded bg-[#F1F3F5] px-1.5 py-0.5 text-[10px] font-bold text-[#4E5968]">출처 : {srcLabel}</span>}
         {/* ★0과 '못 잼'은 다른 말이다 — 못 잰 자리에 0을 적으면 선점 최적으로 오해한다 */}
-        {bt != null ? (
+        {topic.tag === "홈판" ? null : bt != null ? (
           <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold tabular-nums ${bt < 3000 ? "bg-[#E7F7EF] text-[#0B8C4E]" : bt < 30000 ? "bg-[#FFF3E0] text-[#C2670A]" : "bg-[#FFECEC] text-[#D63A3A]"}`}
             title="네이버 블로그 문서 수 — 적을수록 선점하기 좋아요">
             문서 : {bt.toLocaleString("ko-KR")}편
@@ -1226,8 +1248,12 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
         {life && <span className="text-[10.5px] font-semibold tabular-nums text-amber-600">{life}</span>}
         {topic.revenueLabel && <span className="rounded-full bg-[#F5F3EE] px-2 py-0.5 text-[10.5px] font-bold text-[#8A6D1F]">{topic.revenueLabel}</span>}
         {/* ★레인 배지는 우측 하단(유저 목업). 검색 레인은 실측 검색량을 그대로 적는다. */}
-        <span className={`ml-auto flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold tabular-nums ${isTrend ? "bg-[#FFECEC] text-[#F04452]" : "bg-[#E7F7EF] text-[#0B8C4E]"}`}>
-          <span aria-hidden>{isTrend ? "⚡" : "🌱"}</span>{isTrend ? "지금 뜨는" : laneKey === "golden" || laneKey === "head" ? laneLabel(laneKey, topic) : "꾸준한 수요"}
+        {/* ★홈판을 '꾸준한 수요'로 적던 오류(2026-08-05 유저 화면) — 홈판은 검색 수요로 가는 글이 아니다.
+            배지가 그 카드의 승부처를 말해야 한다. 틀린 배지는 잘못된 기대를 만든다. */}
+        <span className={`ml-auto flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold tabular-nums ${
+          topic.tag === "홈판" ? "bg-[#F5F0FF] text-[#7C3AED]" : isTrend ? "bg-[#FFECEC] text-[#F04452]" : "bg-[#E7F7EF] text-[#0B8C4E]"}`}>
+          <span aria-hidden>{topic.tag === "홈판" ? "🏠" : isTrend ? "⚡" : "🌱"}</span>
+          {topic.tag === "홈판" ? "홈 노출용" : isTrend ? "지금 뜨는" : laneKey === "golden" || laneKey === "head" ? laneLabel(laneKey, topic) : "꾸준한 수요"}
         </span>
       </div>
     </button>

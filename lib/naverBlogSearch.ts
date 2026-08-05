@@ -24,8 +24,16 @@ export async function fetchBlogTotalDetailed(query: string): Promise<{ total: nu
   const q = query.trim();
   if (!id || !secret) return { total: null, status: null, reason: "자격증명없음" };
   if (!q) return { total: null, status: null, reason: "빈질의" };
+  // ★정확 구문으로 센다(2026-08-05 실측에서 드러난 근본 결함).
+  //  따옴표가 없으면 네이버 블로그 검색은 어절을 느슨하게 푼다 — 두 단어가 '따로' 들어간 글까지 센다:
+  //    부동산 공급              → 3,288,558편   "부동산 공급"              → 36,988편
+  //    건설근로자공제회 퇴직공제금 →     3,963편   "건설근로자공제회 퇴직공제금" →    387편
+  //  ★유저가 문서 수를 쓰는 목적은 '경쟁 분석'이다(유저 원문). 위 숫자는 경쟁이 아니라 소음이다.
+  //   부풀려진 값으로 뒷북 컷·선점 판정·"이미 N편 있어요" 문구가 전부 돌고 있었다.
+  //  ★이미 따옴표가 있으면 덧씌우지 않는다.
+  const phrase = /^".*"$/.test(q) || !/\s/.test(q) ? q : `"${q}"`;
   try {
-    const res = await fetch(`${ENDPOINT}?query=${encodeURIComponent(q)}&display=1`, {
+    const res = await fetch(`${ENDPOINT}?query=${encodeURIComponent(phrase)}&display=1`, {
       headers: { "X-Naver-Client-Id": id, "X-Naver-Client-Secret": secret },
     });
     if (!res.ok) {
