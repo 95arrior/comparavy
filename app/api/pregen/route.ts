@@ -16,6 +16,7 @@ import { stylePersonaInstruction } from "@/lib/stylePersona";
 import { newsContextFor } from "@/lib/newsTopics";
 import { isTimeSensitive } from "@/lib/timeSensitive";
 import { fetchNaverAutocomplete } from "@/lib/naverAutocomplete";
+import { PROMPT_SPEC_VERSION } from "@/lib/articlePrompt";
 
 // ★사전 생성(생성 경험 v2) — 홈 진입 트리거로 '오늘의 글' 1편을 백그라운드 생성(after(), 크론 금지).
 //  크레딧 정책: 여기서는 차감 0. 차감은 열람(claim) 시점에만. 미열람분은 다음 진입 시 lazy 만료(원가=회사 부담, pregen_expired 로그).
@@ -54,12 +55,20 @@ export async function POST(request: Request) {
 
   // ★lazy 만료 — 전날 미열람 사전 생성분 폐기(차감 0이었으므로 무해, 원가는 회사 부담으로 로그)
   const todayStartKst = new Date(); todayStartKst.setHours(0, 0, 0, 0);
-  const { data: stale } = await supabase.from("articles").select("id").eq("user_id", user.id)
-    .in("status", ["pre_generating", "pre_generated"]).lt("created_at", todayStartKst.toISOString());
+  // ★규격이 바뀌면 오늘 만든 것도 폐기한다(2026-08-05 실측).
+  //  종전엔 '자정 이전'만 만료라, 낮에 본문 규격을 바꿔도 그날 미리 만든 글은 옛 규격으로 나갔다.
+  //  ★유저가 새 이미지 마커를 못 본 이유가 이것이었다 — 배포는 됐는데 글이 어제 규격이었다.
+  const { data: pend } = await supabase.from("articles").select("id, created_at, selection_meta").eq("user_id", user.id)
+    .in("status", ["pre_generating", "pre_generated"]);
+  const stale = (pend ?? []).filter((r) => {
+    if (new Date(String(r.created_at)).getTime() < todayStartKst.getTime()) return true;
+    const v = Number((r.selection_meta as { specV?: number } | null)?.specV ?? 0);
+    return v !== PROMPT_SPEC_VERSION; // 규격이 다르면 오늘 것이어도 버린다
+  });
   if (stale && stale.length > 0) {
     await supabase.from("articles").delete().in("id", stale.map((s) => s.id));
     void logUsage({ userId: user.id, model: "pregen", kind: "pregen_expired", inputTokens: 0, outputTokens: stale.length });
-    console.log(`[pregen] expired=${stale.length} user=${user.id.slice(0, 8)}`);
+    console.log(`[pregen] expired=${stale.length} user=${user.id.slice(0, 8)} (규격 v${PROMPT_SPEC_VERSION})`);
   }
 
   // 중복 방지 — 오늘 같은 키워드로 사전 생성/초안/발행이 이미 있으면 재트리거 금지
@@ -69,7 +78,7 @@ export async function POST(request: Request) {
 
   // 자리표시 행 — 진행 중 표식(중복 트리거 차단의 실체)
   const { data: ph, error: phErr } = await supabase.from("articles")
-    .insert({ user_id: user.id, keyword, title, body_html: "", char_count: 0, status: "pre_generating" })
+    .insert({ user_id: user.id, keyword, title, body_html: "", char_count: 0, status: "pre_generating", selection_meta: { specV: PROMPT_SPEC_VERSION } })
     .select("id").single();
   if (phErr || !ph) return NextResponse.json({ status: "skip" });
   const phId = ph.id as string;

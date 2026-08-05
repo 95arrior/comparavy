@@ -40,14 +40,15 @@ console.log("\n③ 태그 맨 앞에 들어가는가:");
 {
   const h = `<p>본문</p><p style="text-align:center">#근로장려금 #지급일 #신청방법</p>`;
   ok(/^#실손보험/.test(leadHashtag(h, "실손보험").match(/#[^<]+/)[0]), "★맨 앞에 붙는다");
-  ok(/^#지급일 #근로장려금/.test(leadHashtag(h, "지급일").match(/#[^<]+/)[0]), "★이미 있으면 순서만 앞으로(중복 금지)");
+  void 0;
+  ok(leadHashtag(h, "지급일").match(/#[^<]+/)[0].trim() === "#지급일", "★이미 있던 말이어도 그것 하나만 남는다");
   // ★대표 태그가 없는 글(근로장려금 같은 경우)은 '안 넣기'가 아니라 원래 태그 그대로 나간다(유저 확인).
   ok(leadHashtag(h, "") === h, "★대표 태그가 없으면 기존 태그 여러 개가 그대로 유지된다");
-  // ★대표 태그는 '하나 더 얹는 것'이지 '하나를 바꾸는 것'이 아니다
-  //  (2026-08-05 실측: 개수를 유지하려고 뒤를 자르다 '소득기준'이 사라졌다).
-  const before = (h.match(/#[가-힣A-Za-z0-9_]{2,}/g) ?? []).length;
-  const after = (leadHashtag(h, "실손보험").match(/#[가-힣A-Za-z0-9_]{2,}/g) ?? []).length;
-  ok(after === before + 1, `★대표 태그를 넣어도 기존 태그를 잃지 않는다 (${before} → ${after})`);
+  // ★대표 태그가 있으면 그것 하나만 남긴다(2026-08-05 유저 확정: "이런 애들은 #분양만 들어가야 하는데").
+  //  태그가 여럿이면 네이버가 어느 것을 광고 기준으로 삼을지 불확실하다 —
+  //  하나만 둬야 하단 파워링크가 그 키워드 계열로 확실히 바뀐다(이 기능의 목적).
+  const after = (leadHashtag(h, "실손보험").match(/#[가-힣A-Za-z0-9_]{2,}/g) ?? []);
+  ok(after.length === 1 && after[0] === "#실손보험", `★대표 태그가 있으면 그것 하나만 (${after.join(" ")})`);
   ok(leadHashtag("<p>본문만</p>", "실손보험") === "<p>본문만</p>", "태그 줄이 없으면 만들지 않는다");
 }
 
@@ -63,6 +64,28 @@ console.log("\n④ 배선:");
   // ★이미지는 '그 문단이 말하는 대상'을 그대로 지목한다(유저: SK하이닉스 주가 문단 → SK하이닉스 로고)
   ok(/그 문단이 말하고 있는 대상'을 그대로 지목한다/.test(ap), "★이미지가 문맥과 직결된다");
   ok(/유저가 무엇을 검색하면 되는지'로 쓴다/.test(ap), "★설명이 검색어에 가깝게 쓰인다");
+}
+
+console.log("\n⑤ 규격을 바꾸면 사전 생성분이 폐기되는가:");
+{
+  const ap2 = fs.readFileSync(new URL("../lib/articlePrompt.ts", import.meta.url), "utf-8");
+  const pg = fs.readFileSync(new URL("../app/api/pregen/route.ts", import.meta.url), "utf-8");
+  // ★실측(2026-08-05): 이미지 마커 3종을 배포했는데 화면엔 옛 [사진:] 두 개만 떴다.
+  //  사전 생성 글이 자정에만 만료돼서, 낮에 규격을 바꿔도 그날 미리 만든 글은 옛 규격으로 나갔다.
+  ok(/export const PROMPT_SPEC_VERSION/.test(ap2), "★규격 버전이 있다");
+  ok(/specV: PROMPT_SPEC_VERSION/.test(pg), "★사전 생성분에 규격 버전을 새긴다");
+  ok(/규격이 다르면 오늘 것이어도 버린다/.test(pg), "★버전이 다르면 오늘 것도 폐기");
+  ok(/본문 규격을 바꾸면 이 숫자를 올린다/.test(ap2), "다음 사람이 올릴 줄 알게 적어 뒀다");
+}
+
+console.log("\n⑥ 내부 링크가 통째로 사라지지 않는가:");
+{
+  const rp = fs.readFileSync(new URL("../lib/relatedPosts.ts", import.meta.url), "utf-8");
+  // ★실측: 경제·재테크 블로그는 제목에 '청약·공고'와 'N월·올해'가 거의 항상 들어간다.
+  //  수명 게이트 둘이 겹치면 후보가 전멸하고, 그러면 회유 장치를 통째로 잃는다.
+  ok(/수명 게이트로 전멸/.test(rp), "★전멸했을 때만 한 단계 물러선다");
+  ok(/날짜가 박힌 글\(MONTHLY\)은 여전히 빼되/.test(rp), "★날짜 박힌 글은 계속 제외(원래 목적 유지)");
+  ok(/확정 URL\(naver_url\)이 있는 글이 하나도 없다/.test(rp), "★진짜 원인이 URL 미확정이면 그걸 로그로 말한다");
 }
 
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 대표 태그 + 이미지 문맥");

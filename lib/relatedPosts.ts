@@ -34,11 +34,22 @@ export async function relatedPostsFor(
       .limit(30);
     if (blogId) rq = rq.or(`blog_id.eq.${blogId},blog_id.is.null`);
     const { data: cands } = await rq;
-    const pool = (cands ?? []).filter((c) => c.naver_url
-      && !TIMED.test(`${c.keyword ?? ""} ${c.title ?? ""}`)
+    const withUrl = (cands ?? []).filter((c) => !!c.naver_url);
+    const pool = withUrl.filter((c) =>
+      !TIMED.test(`${c.keyword ?? ""} ${c.title ?? ""}`)
       && !MONTHLY_RE.test(String(c.title ?? "")));
+    // ★두 필터가 겹치면 후보가 통째로 사라진다(2026-08-05 유저 실측: 관련글이 하나도 안 붙었다).
+    //  경제·재테크 블로그는 제목에 '청약·공고·접수'와 'N월·올해'가 거의 항상 들어간다 —
+    //  수명 게이트가 옳더라도, 그 결과가 '내부 링크 0'이면 회유 장치를 통째로 잃는다.
+    //  ★그래서 전멸했을 때만 한 단계 물러선다: 날짜가 박힌 글(MONTHLY)은 여전히 빼되,
+    //   공고성 글(TIMED)은 받아들인다. 지난 공고라도 내 글이고, 링크가 없는 것보다는 낫다.
+    const relaxed = pool.length >= 2 ? pool
+      : [...pool, ...withUrl.filter((c) => !pool.includes(c) && !MONTHLY_RE.test(String(c.title ?? "")))];
+    if (pool.length < 2 && relaxed.length > pool.length) {
+      console.log(`[related] 수명 게이트로 전멸 — 공고성 글까지 받아 ${pool.length} → ${relaxed.length}개(날짜 박힌 글은 계속 제외)`);
+    }
     const seen = new Set<string>();
-    const out = pool
+    const out = relaxed
       .map((c) => ({ title: String(c.title ?? c.keyword ?? "관련 글"), url: String((c as { naver_url?: string }).naver_url ?? "") }))
       .filter((r) => {
         const u = r.url.split("?")[0];
@@ -47,7 +58,7 @@ export async function relatedPostsFor(
         return true;
       })
       .slice(0, 3);
-    console.log(`[related] 후보 ${out.length}개(확정 URL 글 ${cands?.length ?? 0} → 수명 게이트 통과 ${pool.length})`);
+    console.log(`[related] 후보 ${out.length}개 · 확정 URL 글 ${withUrl.length}/${cands?.length ?? 0} · 수명 게이트 통과 ${pool.length}${withUrl.length === 0 ? " ★확정 URL(naver_url)이 있는 글이 하나도 없다 — 발행 확인이 안 된 상태다" : ""}`);
     return out;
   } catch {
     return []; // 무해 — 링크 없이 진행
