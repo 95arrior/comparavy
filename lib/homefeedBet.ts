@@ -388,7 +388,10 @@ async function genOne(
     const client = new Anthropic({ apiKey });
     const res = await client.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 500,
+      // ★700으로 올린다(2026-08-05 실측: failBy {"JSON없음":2}).
+      //  회피 목록을 60개로 넓히자 모델이 '왜 이걸 골랐는지' 설명을 붙이며 길어졌고,
+      //  500토큰에서 JSON이 잘려 파싱이 실패했다 — 넓힌 게 오히려 생산을 깎았다.
+      max_tokens: 700,
       messages: [{
         role: "user",
         content: [
@@ -407,8 +410,10 @@ async function genOne(
           // ★넘긴 목록을 여기서 15개로 잘라 버리고 있었다(2026-08-05 실측에서 검거).
           //  호출측이 45개를 줘도 모델은 15개만 봤고, 판정은 발행 글 128건 전부와 했다 —
           //  ★넓힌 게 무효였다. 넘어온 만큼 다 보여준다(그래야 피할 수 있다).
+          // ★제목 60개를 통째로 주면 입력이 길어져 모델이 산만해진다(실측: JSON 파싱 실패 2건).
+          //  피해야 할 건 '문장'이 아니라 '소재'다 — 앞부분만 잘라 소재만 보여준다.
           (recentTitles ?? []).length
-            ? `★이미 쓴 제목들(이것과 비슷한 각도·소재·문장 틀은 전부 피하라 — 비슷하면 버려진다):\n${(recentTitles ?? []).map((t) => `- ${t}`).join("\n")}`
+            ? `★이미 쓴 소재들(이것과 같은 소재·각도는 전부 피하라 — 비슷하면 버려진다):\n${(recentTitles ?? []).map((t) => `- ${t.slice(0, 24)}`).join("\n")}`
             : "",
           `제목 규격: 검색 키워드 나열이 아니라 사람이 말하듯 흐르는 '문장형'. 아래 지정 유형의 결로 쓴다 — 유형은 이 글감의 신호를 읽어 고른 것이므로 바꾸지 마라.`,
           titleTypeDirective(titleType),
@@ -423,7 +428,12 @@ async function genOne(
     void logUsage({ userId, model: "claude-sonnet-4-6", kind: "homefeed_bet", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
     const text = res.content.map((x) => (x.type === "text" ? x.text : "")).join("");
     const m = text.match(/\{[\s\S]*\}/);
-    if (!m) return { card: null, fail: "JSON없음" };
+    if (!m) {
+      // ★'JSON이 아예 없다'와 '길어서 잘렸다'는 원인이 다르다 — 뭉치면 다음 사람이 또 헤맨다
+      const cut = res.stop_reason === "max_tokens";
+      if (cut) console.error(`[homebet] 출력이 잘림(max_tokens) — ${bet.key}`);
+      return { card: null, fail: cut ? "출력잘림" : "JSON없음" };
+    }
     const raw = JSON.parse(m[0]) as { keyword?: string; title?: string; thumbCopy?: string; angle?: string; src?: string };
     if (!raw.keyword || !raw.title) return { card: null, fail: "필수필드누락" };
     // ★문구 게이트(2026-07-17 PTRP) — 감정 과잉·과장 어휘는 텍스트 카드에서 역효과 실증. 제목 위반=오늘 배팅 스킵, 문구 위반=키워드 폴백.

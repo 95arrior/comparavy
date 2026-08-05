@@ -1020,7 +1020,19 @@ export async function GET(req: Request) {
     // ★밴드가 무엇을 잘랐는지 보여준다(2026-08-04 실측: 게이트 4 → 밴드 1, 즉 3장이 여기서 죽었다).
     //  잘린 것이 '대형이라 못 이길 것'인지 '대형인데 선점 가능한 것'인지는 키워드를 봐야 판단할 수 있다.
     if (debugMode) diag.bandCut = { ceil: bandCeil, items: leakedAll.filter((x) => x.where === "short-trend").slice(0, 8) };
-    if (debugMode) diag.ampFunnel = lastAmplifyDiag;
+    // ★증식 진단이 계속 null이었다(2026-08-05 유저 진단 3회 연속).
+    //  saveAmpDiag가 DB에 남기는데 여기서는 메모리 변수만 읽었다 —
+    //  증식 캐시가 맞거나 람다가 새로 뜨면 그 변수는 비어 있다.
+    //  ★그래서 '지어낸 지역명·말투를 실제로 잡았는가'를 며칠째 확인하지 못했다.
+    if (debugMode) {
+      diag.ampFunnel = lastAmplifyDiag;
+      if (!diag.ampFunnel) {
+        try {
+          const { data: ad } = await pool.from("api_cache").select("value").eq("key", "diag:amp-funnel").maybeSingle();
+          if (ad?.value) diag.ampFunnel = { ...(ad.value as object), fromCache: true };
+        } catch { /* 진단 복원 실패는 응답에 영향 없다 */ }
+      }
+    }
     // ★홈판 생성 진단도 함께(2026-08-04) — '홈판 2/5'가 화면에 뜨는데 이유는 서버 로그에만 있었다.
     //  homeDrop(하류 탈락)이 전부 0인데 결품이면 원인은 생성 안쪽이다 — 그 안쪽을 여기서 보여준다.
     if (debugMode) diag.homeBet = lastHomebetDiag;
