@@ -933,7 +933,7 @@ export async function GET(req: Request) {
         const recentTitles = [...new Set([
           ...recent14.map((a) => String(a.title ?? "")),
           ...[...usedTexts],
-        ])].filter(Boolean).slice(0, 45);
+        ])].filter(Boolean).slice(0, 60);
         const bets = await pickHomefeedBets(pool, user.id, sub ?? "", usedSet, colShort.homefeed, {
           isDup: (title, keyword) => usedForbidden(`${title} ${keyword}`),
           recentTitles,
