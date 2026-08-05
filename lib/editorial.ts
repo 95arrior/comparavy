@@ -559,7 +559,10 @@ export function leadHashtag(html: string, lead: string): string {
   if (!m) return h; // 해시태그 줄이 없으면 손대지 않는다(ensureHashtags가 먼저 돈다)
   const tags = (m[2]!.match(/#[가-힣A-Za-z0-9_]{2,}/g) ?? []).map((t) => t.trim());
   const rest = tags.filter((t) => t.replace(/^#/, "").replace(/\s+/g, "") !== w);
-  const next = [`#${w}`, ...rest].slice(0, Math.max(tags.length, 1));
+  // ★개수를 유지하려고 뒤를 자르지 않는다(2026-08-05 실측: 대표 태그를 넣자 '소득기준'이 사라졌다).
+  //  대표 태그는 '하나 더 얹는 것'이지 '하나를 바꾸는 것'이 아니다 —
+  //  네이버 태그는 30개까지 되므로 하나 늘어난다고 잃는 게 없다.
+  const next = [`#${w}`, ...rest].slice(0, 12);
   return h.replace(m[0], `${m[1]}${next.join(" ")}${m[3]}`);
 }
 
