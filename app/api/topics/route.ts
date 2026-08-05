@@ -17,7 +17,7 @@ import { getTrendTopics, refreshCategoryTrends, hasFreshTrends } from "@/lib/tre
 import { amplifyForUser } from "@/lib/amplifyTopics";
 import { fetchKeywordStats, normalizeKey, fetchRelatedKeywords } from "@/lib/naverKeyword";
 import { poolScore, isBigPool } from "@/lib/trafficPool";
-import { finalGate, ANSWER_LOCKED_RE, EXPERIENCE_RE, AI_BRIEF_ENDED_RE, weekendAdjust } from "@/lib/cardFinalGate";
+import { finalGate, ANSWER_LOCKED_RE, EXPERIENCE_RE, AI_BRIEF_ENDED_RE, weekendAdjust, staleForRising, RISING_STALE_MAX } from "@/lib/cardFinalGate";
 import { pickHomefeedBets, lastHomebetDiag } from "@/lib/homefeedBet";
 import { collectPoolKeywords } from "@/lib/poolCollect";
 import { fetchNaverAutocomplete } from "@/lib/naverAutocomplete";
@@ -143,17 +143,31 @@ function pickDiverse(rows: PoolRow[], n: number, rnd: () => number = Math.random
 const SLOT_LABEL: Record<string, string> = {
   calendar: "캘린더", applyhome: "청약", gov24: "정부지원", bizinfo: "기업지원",
   gov: "정부발표", dart: "공시", rising: "실시간", news: "뉴스", season: "시즌", discover: "발굴", homebet: "홈판",
+  community: "커뮤니티", pool: "검색풀", series: "시리즈", followup: "후속",
 };
-function slotOf(c: { tag?: string; sel?: unknown; risingSeed?: boolean }): string {
+// ★칸 판정은 여기 하나뿐이다(2026-08-05 유저 실측: "전체 10인데 실시간 5 뉴스 1").
+//  원인은 slot을 '카드 만드는 한 군데'에서만 붙여, 다른 경로로 만든 카드가 어느 칸에도 안 잡힌 것.
+//  그래서 서빙 직전에 전 카드를 여기로 통과시킨다 — 붙이는 자와 세는 자가 같아야 숫자가 안 어긋난다.
+function slotOf(c: { tag?: string; sel?: unknown; risingSeed?: boolean; seedSource?: string }): string {
   if (c.tag === "홈판") return "홈판";
+  const srcEarly = (c.sel as { seedSource?: string } | undefined)?.seedSource ?? c.seedSource ?? "";
+  if (srcEarly === "community") return "커뮤니티"; // ★실시간 배지는 달되 칸은 따로 — 원천이 죽은 걸 알아야 한다
   if (c.risingSeed === true) return "실시간";
-  const src = (c.sel as { seedSource?: string } | undefined)?.seedSource ?? "";
-  return SLOT_LABEL[src] ?? (src || "기타");
+  if (c.tag === "series") return "시리즈";
+  if (c.tag === "followup") return "후속";
+  const src = (c.sel as { seedSource?: string } | undefined)?.seedSource ?? c.seedSource ?? "";
+  if (src) return SLOT_LABEL[src] ?? src;
+  // ★남은 건 키워드 풀에서 온 검색 레인 카드다 — '기타'로 묻으면 칸 합계가 전체와 안 맞는다
+  return "검색풀";
 }
-function slotCount(cards: { tag?: string; sel?: unknown; risingSeed?: boolean }[]): Record<string, number> {
+/** 서빙 직전에 모든 카드에 칸을 찍는다. 이 함수를 거치지 않고 내보내는 응답이 있으면 안 된다. */
+function stampSlots<T extends object>(cards: T[]): T[] {
+  return cards.map((c) => ({ ...c, slot: slotOf(c) }));
+}
+function slotCount(cards: object[]): Record<string, number> {
   const out: Record<string, number> = {};
   for (const label of Object.values(SLOT_LABEL)) out[label] = 0; // 0인 칸도 보여야 '없다'가 보인다
-  for (const c of cards) { const k = slotOf(c); out[k] = (out[k] ?? 0) + 1; }
+  for (const c of cards) { const k = slotOf(c as Parameters<typeof slotOf>[0]); out[k] = (out[k] ?? 0) + 1; }
   return out;
 }
 
@@ -402,8 +416,10 @@ export async function GET(req: Request) {
         cards.push({ keyword: t.keyword, title: t.title, expiresAt: seedExpiry, demandLabel: (t as { inflow?: string }).inflow === "hit" ? "실검색 확인 · 지금 뜨는 중" : demandLabel, ssak: true, region: false, tone: bt, vol: 0, comp: "low" as Comp, blogTotal: null, tag: src === "discover" ? "steady" : "trend", newsContext: t.newsContext ?? undefined, sourceTitle: (t as { sourceTitle?: string | null }).sourceTitle ?? undefined, titleSearch: (t as { titleSearch?: string }).titleSearch, briefText: (t as { briefText?: string }).briefText, hookKey: (t as { hookKey?: string }).hookKey, thumb: (t as { thumb?: { mainCopy: string; subCopy: string; badge: string } }).thumb, brief: (t as { brief?: unknown }).brief, series: (t as { series?: unknown }).series ?? null,
           // ★급상승 표식은 성과루프 플래그와 무관하게 카드에 직접 단다 — sel(계측용)에만 두면
           //  FF_PERF_LOOP가 꺼지는 순간 실시간 레인이 통째로 죽는다(상관없는 스위치에 목숨을 걸지 않는다).
-          ...(src === "rising" ? { risingSeed: true } : {}),
-          ...({ slot: SLOT_LABEL[src ?? "news"] ?? "뉴스" }), // ★화면이 칸으로 묶는 단위(스프레드 — 타입 초과 속성 검사 회피)
+          ...(src === "rising" || src === "community" ? { risingSeed: true } : {}), // 커뮤니티도 실시간 종족(뒷북 컷·배지 대상)
+          // ★slot은 여기서 안 붙인다 — 서빙 직전 stampSlots가 전 카드에 한 번에 찍는다(주인은 하나).
+          //  대신 원천만 남긴다: sel(성과루프 플래그)이 꺼져도 칸이 살아 있어야 한다.
+          ...({ seedSource: src ?? "news" }),
           // ★씨앗 키워드를 화면까지 올린다(2026-08-05 유저: "어떤 키워드로 생성됐는지 그 키워드만 보여줘")
           ...((t as { seedKeyword?: string }).seedKeyword ? { seedKeyword: (t as { seedKeyword?: string }).seedKeyword } : {}),
           ...(FF.perfLoop ? { sel: (() => { const bf = (t as { brief?: { intent?: string; opening?: string; flow?: string } }).brief; return { species: "trend", seedSource: src ?? "news", sourceTitle: (t as { sourceTitle?: string | null }).sourceTitle ?? null, cluster: clusterKey(t.keyword), hookKey: (t as { hookKey?: string }).hookKey ?? null, structure: bf ? [bf.intent, bf.opening, bf.flow].filter(Boolean).join("|") || null : null }; })() } : {}),
@@ -735,7 +751,11 @@ export async function GET(req: Request) {
     //  '대형이어도 선점 가능한 것'이다. 그러니 그 자리에서 문서수를 재서 통과 여부를 정한다.
     //  ★대상은 급상승 유래 카드뿐(보통 0~2장)이라 호출 비용이 거의 없다.
     {
-      const risingCards = tc.filter((c) => (c as { risingSeed?: boolean }).risingSeed === true || (c.sel as { seedSource?: string } | undefined)?.seedSource === "rising");
+      // ★측정 대상 = 실시간 카드 + 문서 수가 비어 있는 모든 카드(2026-08-05 유저: "이거는 또 문서가 없네요").
+      //  문서 수는 유저가 카드를 보고 판단하는 유일한 재료다 — 빈칸이면 판단을 못 한다.
+      //  실시간이 아닌 카드는 재기만 하고 뒷북 컷은 걸지 않는다(검색 레인은 축적이 목적).
+      const isRising = (c: (typeof tc)[number]) => (c as { risingSeed?: boolean }).risingSeed === true || (c.sel as { seedSource?: string } | undefined)?.seedSource === "rising";
+      const risingCards = tc.filter((c) => isRising(c) || (c as { blogTotal?: number | null }).blogTotal == null);
       const rising = { seen: risingCards.length, measured: 0, pass: 0, tooMany: 0, unmeasured: 0 };
       if (risingCards.length) {
         await Promise.all(risingCards.map(async (c) => {
@@ -743,6 +763,10 @@ export async function GET(req: Request) {
           if (total == null) { rising.unmeasured += 1; return; } // 못 쟀으면 우회 없음 — 일반 밴드 규칙으로 간다
           rising.measured += 1;
           (c as { blogTotal?: number | null }).blogTotal = total;
+          // ★뒷북 컷(2026-08-05 유저 실물: 문서 345,434편이 '⚡실시간 수확'으로 섰다).
+          //  실시간이라 주장하는데 문서가 이미 쌓였으면 그 주장이 거짓이다 — 라벨을 못 믿게 만든다.
+          if (isRising(c) && staleForRising(total)) { (c as { risingStale?: boolean }).risingStale = true; rising.tooMany += 1; return; }
+          if (!isRising(c)) return; // 검색 레인 카드는 문서 수만 채우고 배지는 건드리지 않는다
           // ★문서수 상한 폐지(2026-08-05 유저 확정: "문서수 상한율 폐지하세요").
           //  이유(유저): 지금 네이버는 홈판 때문에 신생 블로그도 상위 노출이 잘 된다.
           //  ★막지 않고 '보여준다' — 문서수는 배지에 그대로 적어 유저가 카드를 보고 판단한다.
@@ -764,7 +788,14 @@ export async function GET(req: Request) {
             }
           }
         }));
-        console.log(`[rising-lane] 카드 ${rising.seen} → 측정 ${rising.measured} · 선점통과 ${rising.pass} · 포화 ${rising.tooMany} · 미측정 ${rising.unmeasured}`);
+        // ★뒷북으로 판정된 카드는 보드에서 뺀다 — 재고 나서 안 거를 거면 재는 의미가 없다(CLAUDE.md).
+        const staleOut = tc.filter((c) => (c as { risingStale?: boolean }).risingStale === true);
+        if (staleOut.length) {
+          tc = tc.filter((c) => (c as { risingStale?: boolean }).risingStale !== true);
+          console.log(`[rising-lane] 뒷북 제외 ${staleOut.length}장(문서 ${RISING_STALE_MAX.toLocaleString("ko-KR")}편 초과) — ${staleOut.map((c) => `${c.keyword}(${(c as { blogTotal?: number }).blogTotal?.toLocaleString("ko-KR")}편)`).join(", ")}`);
+          if (debugMode) diag.risingStale = staleOut.map((c) => ({ keyword: c.keyword, blogTotal: (c as { blogTotal?: number }).blogTotal ?? null }));
+        }
+        console.log(`[rising-lane] 카드 ${rising.seen} → 측정 ${rising.measured} · 선점통과 ${rising.pass} · 뒷북제외 ${rising.tooMany} · 미측정 ${rising.unmeasured}`);
       }
       if (debugMode) diag.rising = rising;
     }
@@ -869,6 +900,7 @@ export async function GET(req: Request) {
     if (debugMode) diag.homeBet = lastHomebetDiag;
     // ★원천 칸 집계(2026-08-05 유저 요청: "카테고리 칸을 나눠서, 청약홈 칸에 글감이 있고 없고를 알게").
     //  어느 원천이 조용한지 한눈에 보이면, '이슈가 없는 것'과 '우리가 못 잡은 것'을 구분할 수 있다.
+    tc = stampSlots(tc);
     if (debugMode) diag.slots = slotCount(tc);
     if (debugMode) diag.colShort = { ...colShort, homefeedGot: homeCards.length, homeDrop, trendRoom, served: tc.length, trendFunnel: funnel };
     return NextResponse.json(debugMode ? { topics: tc, diag: { ...diag, mode: "short", trendCards: tc.length } } : { topics: tc, ...(FF.perfLoop ? { ff: { perfLoop: true } } : {}) });
@@ -919,7 +951,7 @@ export async function GET(req: Request) {
       if (rows.length >= PICK) break;
     }
   }
-  if (rows.length === 0) { const tc = await buildTrendCards(new Set()); return NextResponse.json(debugMode ? { topics: tc, diag: { ...diag, note: "pool 0 — trend only", trendCards: tc.length } } : { topics: tc }); }
+  if (rows.length === 0) { const tc = stampSlots(await buildTrendCards(new Set())); return NextResponse.json(debugMode ? { topics: tc, slots: slotCount(tc), diag: { ...diag, note: "pool 0 — trend only", trendCards: tc.length } } : { topics: tc }); }
 
   // ── 경쟁도 티어 ──
   // 낮음 = 싹 키워드(전설·희귀), 중간 = 일반(기본), 높음 = 빅키워드(최후)
@@ -1118,7 +1150,7 @@ export async function GET(req: Request) {
   const NEWSY_POOL = /(실적발표|실적 발표|어닝|주가 전망|증시 전망|환율 전망|공모주 일정|급등주|테마주|수혜주)/;
   const candidates2 = candidates.filter((r) => !NEWSY_POOL.test(r.keyword));
   const allKeywords = candidates2.map((r) => r.keyword);
-  if (allKeywords.length === 0) { const tc = await buildTrendCards(new Set()); return NextResponse.json(debugMode ? { topics: tc, diag: { ...diag, note: "allKeywords 0", trendCards: tc.length } } : { topics: tc }); }
+  if (allKeywords.length === 0) { const tc = stampSlots(await buildTrendCards(new Set())); return NextResponse.json(debugMode ? { topics: tc, slots: slotCount(tc), diag: { ...diag, note: "allKeywords 0", trendCards: tc.length } } : { topics: tc }); }
   // 통합 맥락(분야·대상·사용자 지역) → AI가 브랜드·타지역·대상불일치·무관 키워드까지 한 번에 거름
   const ctxParts = [`분야: ${sub || vertical}`];
   if (audActive) ctxParts.push(`대상: ${audSel.filter((a) => a !== AUDIENCE_ALL).join("·")}`);
@@ -1488,7 +1520,8 @@ export async function GET(req: Request) {
     ]);
     if (debugMode) diag.colLong = { ...colLong, goldenGot: goldenPass.length, headGot: headsLong.length };
     await writeDiag();
-    return NextResponse.json(debugMode ? { topics: passLong, diag: { ...diag, mode: "long", poolCards: g.pass.length } } : { topics: passLong, ...(FF.perfLoop ? { ff: { perfLoop: true } } : {}), ...(FF.tierBands && tierInfo ? { tier: { name: tierInfo.tier, note: tierInfo.note } } : {}) });
+    const passLongS = stampSlots(passLong);
+    return NextResponse.json(debugMode ? { topics: passLongS, diag: { ...diag, mode: "long", poolCards: g.pass.length, slots: slotCount(passLongS) } } : { topics: passLongS, ...(FF.perfLoop ? { ff: { perfLoop: true } } : {}), ...(FF.tierBands && tierInfo ? { tier: { name: tierInfo.tier, note: tierInfo.note } } : {}) });
   }
   // ★tier별 종족 비율(FF_TIER_MIX §4) — 상위 10슬롯의 트렌드:에버그린 배분. 별도 레이어:
   //  boost(시리즈·후속) 최우선 고정, 트렌드 내부 순서(공고 쿼터 포함)와 에버그린 내부 순서는 무수정 — 충돌 시 기존 규칙 승리.
@@ -1536,5 +1569,6 @@ export async function GET(req: Request) {
   }
   finalList = dedupeBoard(finalList); // ★근접 중복 최종 차단(전 버킷 교차)
   await writeDiag();
-  return NextResponse.json(debugMode ? { topics: finalList, diag: { ...diag, boost: boostCards.length, trendCards: trendCards.length, poolCards: shuffled.length } } : { topics: finalList, ...(FF.tierBands && tierInfo ? { tier: { name: tierInfo.tier, note: tierInfo.note } } : {}) });
+  finalList = stampSlots(finalList);
+  return NextResponse.json(debugMode ? { topics: finalList, diag: { ...diag, slots: slotCount(finalList), boost: boostCards.length, trendCards: trendCards.length, poolCards: shuffled.length } } : { topics: finalList, ...(FF.tierBands && tierInfo ? { tier: { name: tierInfo.tier, note: tierInfo.note } } : {}) });
 }

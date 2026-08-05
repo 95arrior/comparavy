@@ -72,7 +72,12 @@ console.log("\n⑤ 배선:");
 {
   const tt = fs.readFileSync(new URL("../lib/trendTopics.ts", import.meta.url), "utf-8");
   ok(/harvestCommunity\(\)/.test(tt), "★수확 파이프에 배선됐다");
-  ok(/source: "rising"/.test(tt), "실시간 종족으로 들어간다");
+  // ★자기 칸(2026-08-05 유저: "요구사항 대비 미달"). rising에 섞으면 커뮤니티가 죽어도 못 알아챈다.
+  ok(/source: "community"/.test(tt), "★커뮤니티 원천으로 들어간다(자기 칸)");
+  const rt2 = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
+  ok(/community: "커뮤니티"/.test(rt2), "★칸 이름이 서버에 있다");
+  ok(/srcEarly === "community"\) return "커뮤니티"/.test(rt2), "★실시간 배지보다 칸 판정이 먼저다(안 그러면 실시간에 흡수된다)");
+  ok(/src === "rising" \|\| src === "community" \? \{ risingSeed: true \}/.test(rt2), "★그래도 실시간 종족이라 뒷북 컷·배지는 함께 받는다");
   ok(/\[community\] 수집 실패/.test(tt), "★원천이 죽으면 로그에 남는다(조용한 0 금지)");
 }
 

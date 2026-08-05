@@ -29,7 +29,7 @@ export interface Longtail { kw: string; blogTotal: number | null }
 // ★"rising"(2026-08-04 유저 상시 요구: "지금 뜨는은 실제로 효과 있는 실시간 키워드 or 대형 선점 가능한 것") —
 //  구글 트렌드 KR 급상승 유래. 이 표식이 있어야 밴드 우회 판정을 할 수 있다(없으면 전부 news로 뭉개진다).
 // ★"calendar"(2026-08-05) — 미리 공표된 일정(세금·지급·계절·정책). 선점의 최상위 재료.
-export type SeedSource = "news" | "season" | "discover" | "applyhome" | "gov24" | "bizinfo" | "dart" | "rising" | "calendar" | "gov";
+export type SeedSource = "news" | "season" | "discover" | "applyhome" | "gov24" | "bizinfo" | "dart" | "rising" | "calendar" | "gov" | "community";
 export interface TrendTopic {
   keyword: string;
   title: string;
@@ -268,7 +268,10 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
           if (isUnsafeKeyword(kw, brandOk) || scamLoan(kw)) continue;
           seen.add(kw);
           added += 1;
-          rows.push({ category, keyword: kw, title: c.title, news_context: communityBrief(c), longtails: [] as Longtail[], source: "rising", created_at: new Date().toISOString(), expires_at: expires });
+          // ★자기 칸을 준다(2026-08-05 유저: "요구사항 대비 미달입니다").
+          //  종전엔 rising으로 넣어 ⚡실시간 칸에 섞였다 — 커뮤니티가 죽어도 실시간이 차 있으면 못 알아챈다.
+          //  칸을 나눈 이유가 "비어 있으면 바로 캐치"인데, 섞이면 그 목적이 통째로 사라진다.
+          rows.push({ category, keyword: kw, title: c.title, news_context: communityBrief(c), longtails: [] as Longtail[], source: "community", created_at: new Date().toISOString(), expires_at: expires });
         }
         if (added) console.log(`[community] ${category}: ${added}건 — ${cs.slice(0, 3).map((x) => `${x.keyword}(${x.minutesAgo}분 전)`).join(", ")}`);
       } catch (e) {

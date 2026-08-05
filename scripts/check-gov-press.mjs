@@ -65,7 +65,7 @@ console.log("\n⑤ 배선:");
 {
   const tt = fs.readFileSync(new URL("../lib/trendTopics.ts", import.meta.url), "utf-8");
   ok(/harvestGovPress\(\)/.test(tt), "★수확 파이프가 부른다");
-  ok(/source: "gov"/.test(tt) && /\| "gov";/.test(tt), "★gov 원천으로 들어간다(자기 칸을 갖는다)");
+  ok(/source: "gov"/.test(tt) && /\| "gov"/.test(tt), "★gov 원천으로 들어간다(자기 칸을 갖는다)");
   ok(/\[gov-press\] 수집 실패/.test(tt), "★원천이 죽으면 로그에 남는다");
   ok(/expires_at: g\.deadline \?/.test(tt), "★마감일이 글감의 수명이다(마감 지난 글감이 보드에 남으면 안 된다)");
 

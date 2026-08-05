@@ -710,7 +710,7 @@ export default function Home({
               0인 칸이 그대로 보여야 '이슈가 없는 것'과 '우리가 못 잡은 것'을 구분할 수 있다. */}
           {(() => {
             // ★칸은 SLOT_LABEL(서버)과 같은 목록이어야 한다 — 빠진 칸은 '없다'조차 안 보인다(유저 요구의 핵심)
-            const SLOTS = ["정부발표", "캘린더", "청약", "정부지원", "기업지원", "공시", "실시간", "홈판", "뉴스", "시즌", "발굴"];
+            const SLOTS = ["정부발표", "캘린더", "청약", "정부지원", "기업지원", "공시", "실시간", "커뮤니티", "홈판", "뉴스", "시즌", "발굴", "검색풀", "시리즈", "후속"];
             const all = [...(boardShort ?? []), ...(boardLong ?? [])];
             if (!all.length) return null;
             const rows = [{ s: "전체", n: all.length }, ...SLOTS.map((s) => ({ s, n: all.filter((t) => slotMatch(t, s)).length }))];
@@ -1177,10 +1177,18 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
         return (
           <div className="mt-1.5 flex flex-wrap items-center gap-1">
             {slot && <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10.5px] font-bold text-neutral-500">출처 {slot}</span>}
-            {bt != null && (
+            {/* ★문서 수는 빈칸으로 두지 않는다(2026-08-05 유저: "문서가 없음 0으로 표기해야합니다").
+                다만 0과 '못 잼'은 다른 말이다 — 0을 못 잰 자리에 적으면 선점 최적으로 오해한다.
+                그래서 0은 0으로, 못 잰 건 못 쟀다고 적는다. */}
+            {bt != null ? (
               <span className={`rounded px-1.5 py-0.5 text-[10.5px] font-bold tabular-nums ${bt < 3000 ? "bg-emerald-50 text-emerald-600" : bt < 30000 ? "bg-amber-50 text-amber-700" : "bg-neutral-100 text-neutral-500"}`}
                 title="네이버 블로그 문서 수 — 적을수록 선점하기 좋아요">
-                문서 {bt.toLocaleString("ko-KR")}편
+                문서 {bt.toLocaleString("ko-KR")}편{bt === 0 ? " · 아무도 안 썼어요" : ""}
+              </span>
+            ) : (
+              <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10.5px] font-bold text-neutral-400"
+                title="네이버 블로그 문서 수를 못 쟀어요 — 0편이라는 뜻이 아닙니다">
+                문서 못 쟀어요
               </span>
             )}
           </div>

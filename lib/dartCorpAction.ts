@@ -17,7 +17,19 @@ import { shortCorpName } from "./dartIPO";
 const LIST_EP = "https://opendart.fss.or.kr/api/list.json";
 
 // 검색 수요가 실제로 있는 기업 액션만. '결정' 공시가 1차 폭발 시점이다.
-const ACTION_RE = /(무상증자\s*결정|유상증자\s*결정|주식분할\s*결정|주식병합\s*결정|주식배당\s*결정|자기주식\s*취득\s*결정|현물배당\s*결정)/;
+// ★공시명 실물(2026-08-05, DART 키로 10일치 실측):
+//   "주요사항보고서(유상증자결정)" 53 · "주요사항보고서(자기주식취득결정)" 16 · "유상증자결정" 7
+//   · "주요사항보고서(유무상증자결정)" 2 · "주요사항보고서(무상증자결정)" 1
+//  → 괄호 안에 들어 있다. 종전 정규식은 "무상증자 결정"처럼 띄어쓰기를 가정해 하나도 못 잡았다.
+const ACTION_RE = /(유무상증자결정|무상증자결정|유상증자결정|주식분할결정|주식병합결정|주식배당결정|자기주식취득결정|현물배당결정)/;
+// ★[기재정정]·[첨부정정]은 예전 결정을 다시 낸 것이다 — 신호탄이 아니라 뒷북이다.
+const AMEND_RE = /^\[[^\]]*정정\]/;
+// ★검색 폭발력 순서. 무상증자는 드물지만 터지면 크다(8/4 알테오젠 new 진입).
+//  유상증자는 흔한데(10일에 53건) 대부분 소형주라 검색 수요가 얕다 — 뒤로 민다.
+const ACTION_RANK: Record<string, number> = {
+  무상증자결정: 0, 유무상증자결정: 1, 주식분할결정: 2, 주식배당결정: 3,
+  자기주식취득결정: 4, 현물배당결정: 5, 주식병합결정: 6, 유상증자결정: 7,
+};
 // 스팩·리츠는 개인 검색 수요가 거의 없다
 const SKIP_RE = /(스팩|기업인수목적|리츠|위탁관리부동산투자)/;
 
@@ -40,7 +52,9 @@ const addDays = (ymdDash: string, n: number) => new Date(Date.parse(`${ymdDash}T
 
 /**
  * 최근 N일 기업 액션 공시. 실패는 throw(조용한 0 금지 — 원천이 죽은 걸 알아야 한다).
- * ★pblntf_ty=I(거래소 수시공시)에서 잡는다 — 무상증자 결정은 여기로 온다.
+ * ★유형 실측(2026-08-05, 키 실호출): 증자 "결정"은 B(주요사항보고서)·J(거래소)에 온다.
+ *  종전엔 I(거래소 수시공시)만 봤는데 거긴 "결과·확정"뿐이라 10일치에서 0건이었다 —
+ *  키가 없어 실호출을 못 해 몇 달을 조용히 놀고 있을 뻔한 자리다.
  */
 export async function fetchCorpActionSeeds(opts?: { days?: number; now?: Date }): Promise<CorpActionSeed[]> {
   const key = process.env.DART_API_KEY;
@@ -50,31 +64,36 @@ export async function fetchCorpActionSeeds(opts?: { days?: number; now?: Date })
   const bgn = ymd(new Date(now.getTime() - days * 86400_000));
   const end = ymd(now);
 
-  const url = `${LIST_EP}?crtfc_key=${encodeURIComponent(key)}&bgn_de=${bgn}&end_de=${end}&pblntf_ty=I&page_count=100`;
-  const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
-  if (!res.ok) throw new Error(`DART_HTTP_${res.status}`);
-  const j = (await res.json()) as {
-    status?: string; message?: string;
-    list?: { corp_name?: string; stock_code?: string; report_nm?: string; rcept_no?: string; rcept_dt?: string }[];
-  };
-  if (j.status && j.status !== "000") {
-    if (j.status === "013") return []; // 데이터 없음 — 정상
-    throw new Error(`DART_${j.status}_${(j.message ?? "").slice(0, 40)}`);
+  // ★유형 실측(2026-08-05): 증자'결정'은 B(주요사항보고서)·J(거래소)에 온다.
+  //  종전엔 I(거래소 수시공시)만 봤는데 거기엔 '결과·확정'만 있어서 늘 0건이었다.
+  type DartItem = { corp_name?: string; stock_code?: string; report_nm?: string; rcept_no?: string; rcept_dt?: string };
+  const list: DartItem[] = [];
+  for (const ty of ["B", "J"] as const) {
+    const url = `${LIST_EP}?crtfc_key=${encodeURIComponent(key)}&bgn_de=${bgn}&end_de=${end}&pblntf_ty=${ty}&page_count=100`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
+    if (!res.ok) throw new Error(`DART_HTTP_${res.status}`);
+    const j = (await res.json()) as { status?: string; message?: string; list?: DartItem[] };
+    if (j.status && j.status !== "000") {
+      if (j.status === "013") continue; // 데이터 없음 — 정상
+      throw new Error(`DART_${j.status}_${(j.message ?? "").slice(0, 40)}`);
+    }
+    list.push(...(j.list ?? []));
   }
 
-  const out: CorpActionSeed[] = [];
+  const out: (CorpActionSeed & { rank: number })[] = [];
   const seen = new Set<string>();
-  for (const it of j.list ?? []) {
+  for (const it of list) {
     const reportNm = (it.report_nm ?? "").trim();
     const corpRaw = (it.corp_name ?? "").trim();
     const rceptNo = (it.rcept_no ?? "").trim();
     const rceptDt = (it.rcept_dt ?? "").trim();
+    if (AMEND_RE.test(reportNm)) continue; // 정정 공시 = 뒷북
     const m = ACTION_RE.exec(reportNm);
     if (!m || !corpRaw || !rceptNo || rceptDt.length !== 8) continue;
     if (SKIP_RE.test(corpRaw)) continue;
     if (!(it.stock_code ?? "").trim()) continue; // 상장사만 — 비상장은 검색 수요가 없다
     const corp = shortCorpName(corpRaw);
-    const action = m[0].replace(/\s*결정$/, "").trim();
+    const action = m[0].replace(/결정$/, "").trim();
     const kw = `${corp} ${action}`.slice(0, 40);
     if (!corp || seen.has(kw)) continue;
     seen.add(kw);
@@ -82,6 +101,7 @@ export async function fetchCorpActionSeeds(opts?: { days?: number; now?: Date })
     const dt = dash(rceptDt);
     const docUrl = `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=${rceptNo}`;
     out.push({
+      rank: ACTION_RANK[m[0]] ?? 9,
       keyword: kw,                       // ★원어 그대로(합성 금지)
       title: `${kw}, 일정과 내 주식에 생기는 일`,
       corpName: corp, action, rceptDt: dt, docUrl,
@@ -97,5 +117,7 @@ export async function fetchCorpActionSeeds(opts?: { days?: number; now?: Date })
       ].join("\n"),
     });
   }
-  return out.slice(0, 6); // 하루 상한 — 공시가 몰리는 날 보드를 통째로 먹지 않게
+  // ★터질 순서대로. 흔한 유상증자가 드문 무상증자를 밀어내면 안 된다.
+  out.sort((a, b) => a.rank - b.rank || (a.rceptDt < b.rceptDt ? 1 : -1));
+  return out.slice(0, 6).map(({ rank, ...s }) => { void rank; return s; }); // 하루 상한 — 공시가 몰리는 날 보드를 통째로 먹지 않게
 }

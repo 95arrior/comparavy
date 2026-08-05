@@ -132,6 +132,29 @@ export function privateLoanTopic(text: string): string | null {
   return m ? m[0] : null;
 }
 
+// ★소비형 글감(2026-08-05 유저 실물: "우리은행 퀴즈" 문서 61,399편이 실시간 칸에 섰다).
+//  정답만 보고 3초에 나가는 검색은 체류가 0이다 — 퀵백 감점이고 애드포스트 단가도 최하위다.
+//  ★커뮤니티 수확기에만 있던 필터라 자동완성·브랜드버즈 경로가 무검문이었다. 중앙으로 올린다.
+const CONSUME_ONLY_RE = /(퀴즈|정답(?![가-힣])|룰렛|출석체크|뽑기|덧글이벤트|댓글이벤트)/;
+/** 정답 소비형 글감인가(=배제 대상). @returns 매치 문자열 또는 null */
+export function consumeOnlyTopic(text: string): string | null {
+  const m = CONSUME_ONLY_RE.exec(String(text || ""));
+  return m ? m[0] : null;
+}
+
+// ★실시간 레인 뒷북 컷(2026-08-05 유저: "문서가 많으면 이미 선점 기회를 놓친 키워드").
+//  ★검색량과 문서 수는 다른 축이다 — 이 둘을 같이 풀었던 게 잘못이었다:
+//   · 검색량 밴드 해제(유저 확정) = "대형 키워드라고 막지 마라" → 유지한다.
+//   · 문서 수 = "이미 남들이 다 썼다" → 실시간이라 주장하는 카드에는 반드시 컷이어야 한다.
+//  34만 편 쌓인 키워드는 우리가 이기고 지고의 문제가 아니라, 애초에 '지금 뜨는 것'이 아니다.
+//  실물 근거(유저 화면): 네이버페이 쿠폰등록 345,434 · 우리은행 퀴즈 61,399 · 현대카드 m포인트몰 28,957
+//  ★검색 레인(꾸준한 수요)에는 적용하지 않는다 — 거긴 선점이 아니라 축적이 목적이다.
+export const RISING_STALE_MAX = 20_000;
+/** 실시간 씨앗인데 이미 문서가 쌓였는가(=뒷북). 못 쟀으면(null) 판단하지 않는다. */
+export function staleForRising(blogTotal: number | null | undefined): boolean {
+  return typeof blogTotal === "number" && blogTotal > RISING_STALE_MAX;
+}
+
 /** 응답 직전 최종 검문 — 통과 카드와 탈락 사유를 함께 반환(관측 가능). */
 /**
  * @param opts.anchorKeyword ★홈판 레인 전용(2026-08-02 실측). 홈판 카드의 keyword는 검색 키워드가 아니라
@@ -171,6 +194,8 @@ export function finalGate<T extends GateCard>(cards: T[], opts?: { anchorKeyword
     if (SCAM_LOAN_RE.test(text)) { drops.push({ keyword: c.keyword, reason: "scam_loan" }); continue; } // 대기업 사칭 대출(삼성재단대출류) — 법적 안전, 양 채널 하드컷
     // ★민간 대출 상품(2026-08-05 유저: "대출추천은 역시 안 돼") — 공적·정책 금융(햇살론·디딤돌 등)은 예외
     { const pl = privateLoanTopic(text); if (pl) { drops.push({ keyword: c.keyword, reason: "loan_product" }); continue; } }
+    // ★정답 소비형(퀴즈·룰렛·뽑기) — 관심도가 높아도 체류가 0이라 우리가 먹을 게 없다
+    { const co = consumeOnlyTopic(text); if (co) { drops.push({ keyword: c.keyword, reason: `consume_only:${co}` }); continue; } }
     if (SPECULATIVE_RE.test(`${text} ${(c.newsContext ?? "").slice(0, 120)}`)) { drops.push({ keyword: c.keyword, reason: "speculative" }); continue; } // 유령 제도 — 지역 구제보다 먼저
     if (HARD_B2B_RE.test(text)) { drops.push({ keyword: c.keyword, reason: "b2b-hard" }); continue; }
     // ★기초지자체가 제목 앞머리에 오면 문턱을 올린다(2026-08-02 유저 화면 실측).
