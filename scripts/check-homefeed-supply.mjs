@@ -184,7 +184,11 @@ console.log(fail ? `\n실패 ${fail}건` : "\n통과: 홈판 공급(캐시가 �
   // ★필터는 '꺼내는 자리'에도 있어야 한다(2026-08-05 재발: 엔화 글을 발행했는데 캐시의 엔화 카드가 살아남았다)
   ok(/const cacheRepeat =/.test(hb) && /&& !cacheRepeat\(b\)/.test(hb), "★캐시에서 꺼낼 때도 최근 소재 반복을 거른다");
   const tr2 = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
-  ok((tr2.match(/recentKeywords: recent14/g) ?? []).length === 2, "★두 경로 모두 최근 키워드를 넘긴다");
+  // ★고정 개수로 재면 호출 지점이 늘 때마다 테스트가 깨지기만 하고 정작 '빠진 곳'은 못 잡는다.
+  //  실제로 지켜야 할 건 '모든 호출이 최근 키워드를 넘기는가'다 — 그걸 센다.
+  const calls = (tr2.match(/pickHomefeedBets\(/g) ?? []).length;
+  const withRecent = (tr2.match(/recentKeywords: recent14/g) ?? []).length;
+  ok(calls >= 2 && withRecent === calls, `★모든 홈판 호출이 최근 키워드를 넘긴다 (호출 ${calls} · 전달 ${withRecent})`);
 }
 
 process.exit(fail ? 1 : 0);

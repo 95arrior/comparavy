@@ -256,7 +256,11 @@ export function finalGate<T extends GateCard>(cards: T[], opts?: { anchorKeyword
       const datedBySource = !aEnd && (c.seedSource === "calendar" || c.seedSource === "gov");
       const exemptDated = aEnd ? futureDeadline : datedBySource;
       if (life.reasons.includes("dated") && !exemptDated) { drops.push({ keyword: c.keyword, reason: "dated_topic" }); continue; }
-      if (life.reasons.includes("round")) { drops.push({ keyword: c.keyword, reason: "round_topic" }); continue; } }
+      // ★차수도 같은 예외를 받는다(2026-08-05 실측: '더 리치먼드 미아(2차) 무순위 청약'이 잘렸다).
+      //  이 규칙은 '그 회차가 끝나면 죽는 글감'을 막으려는 것이다(경남 2차 추경 주 7회).
+      //  ★그런데 무순위·특별공급 청약은 차수가 붙는 게 정상이고, 접수가 아직 안 끝났으면
+      //   지금이 그 글감의 전성기다 — dated와 정확히 같은 구조인데 예외만 빠져 있었다.
+      if (life.reasons.includes("round") && !exemptDated) { drops.push({ keyword: c.keyword, reason: "round_topic" }); continue; } }
     // 4) 제목-키워드 정합(짝 밀림류 최후 방어) — 실질 토큰 교집합 0이면 조립 오류로 간주
     //    ★앵커 레인(홈판)은 이 검사를 건너뛴다 — 위 opts.anchorKeyword 주석 참조.
     if (opts?.anchorKeyword) { pass.push(c); continue; }

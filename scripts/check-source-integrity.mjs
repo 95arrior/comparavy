@@ -132,5 +132,18 @@ console.log("\n⑧ 수요 게이트는 하나인가:");
   ok(/if \(need\.length \|\| seedNeed\.length\) \{/.test(rt), "측정만 건너뛰고 판정은 유지");
 }
 
+console.log("\n⑨ 모르는 걸 근거로 자르지 않는가:");
+{
+  const rt = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
+  // ★실측(2026-08-05): '주민세 조회 방법'(vol 40)이 잘렸다. 씨앗 '주민세'는 월 10,040회인데
+  //  예산 초과로 씨앗 검색량을 못 재서 롱테일 숫자만 보고 죽였다.
+  ok(/seedUnknown/.test(rt) && /모르는 걸 근거로 자르면, 느린 날마다 좋은 글감이 사라진다/.test(rt),
+    "★씨앗을 못 쟀으면 컷하지 않는다");
+  ok(/!measured \|\| seedUnknown \|\| v >= floor \|\| rescued/.test(rt), "판정에 실제로 반영됐다");
+  // ★'다음에 하자'가 '영영 안 함'이 되는 자리
+  ok(/'다음에 하자'가 '영영 안 함'이 되는 자리였다/.test(rt), "★홈판을 배경에서 만들어 캐시를 데운다");
+  ok(/\[homebet\] 배경 생성 완료/.test(rt), "배경 생성이 로그에 남는다");
+}
+
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 원천 무결성");
 process.exit(fail ? 1 : 0);

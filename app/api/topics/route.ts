@@ -904,9 +904,16 @@ export async function GET(req: Request) {
               //  클러스터 수요가 큰 멀쩡한 글감이 통째로 죽는다 — 롱테일 글은 클러스터에서 유입을 받는다.
               const v = Math.max(Number(c.vol ?? 0), Number((c as { seedVol?: number }).seedVol ?? 0));
               // ★공고(마감 있는 것)는 문턱이 높다 — 아무도 안 찾는 공고명이 뒷문으로 들어오던 자리다.
+              // ★씨앗을 못 쟀으면 클러스터 판단이 불가능하다 — 컷하지 않는다(2026-08-05 실측).
+              //  실물: '주민세 조회 방법'(vol 40)이 잘렸다. 씨앗 '주민세'는 월 10,040회인데
+              //  예산 초과로 씨앗 검색량을 못 재서 롱테일 숫자만 보고 죽인 것이다.
+              //  ★모르는 걸 근거로 자르면, 느린 날마다 좋은 글감이 사라진다.
+              const sk0 = (c as { seedKeyword?: string }).seedKeyword;
+              const seedUnknown = !!sk0 && sk0.replace(/\s+/g, "") !== c.keyword.replace(/\s+/g, "")
+                && (c as { seedVol?: number }).seedVol == null;
               const isAnnounce = Boolean((c as { actionEnd?: string | null }).actionEnd);
               const floor = isAnnounce ? 300 : DEMAND_MIN;
-              if (!measured || v >= floor || rescued) {
+              if (!measured || seedUnknown || v >= floor || rescued) {
                 if (rescued && measured && v < floor) console.log(`[demand] 구제 — ${c.keyword}(수요 ${v}, 플랫폼조회 ${rs?.platformViews ?? 0}·풀 ${rs?.poolScore ?? 0})`);
                 kept.push(c); continue;
               }
@@ -984,6 +991,20 @@ export async function GET(req: Request) {
         ])].filter(Boolean).slice(0, 60);
         // ★늦었으면 홈판 '생성'은 건너뛴다(LLM 8회로 이 경로에서 제일 무겁다).
         //  캐시가 있으면 그건 그대로 쓴다 — 생성만 다음 요청으로 미룬다.
+        // ★예산 초과면 이번엔 건너뛰되, 배경에서 만들어 캐시를 데워 둔다(2026-08-05 실측).
+        //  종전엔 그냥 건너뛰기만 해서, 서빙이 늘 22초를 넘는 지금은 홈판이 영영 안 만들어졌다 —
+        //  ★'다음에 하자'가 '영영 안 함'이 되는 자리였다.
+        if (overBudget()) {
+          after(async () => {
+            try {
+              await pickHomefeedBets(createSupabaseAdminClient(), user.id, sub ?? "", usedSet, colShort.homefeed, {
+                isDup: (title, keyword) => usedForbidden(`${title} ${keyword}`), recentTitles,
+                recentKeywords: recent14.map((a) => String(a.keyword ?? "")).filter(Boolean).slice(0, 30),
+              });
+              console.log("[homebet] 배경 생성 완료 — 다음 요청부터 캐시에서 나간다");
+            } catch (e) { console.error("[homebet] 배경 생성 실패:", e instanceof Error ? e.message : e); }
+          });
+        }
         const bets = overBudget() ? [] : await pickHomefeedBets(pool, user.id, sub ?? "", usedSet, colShort.homefeed, {
           isDup: (title, keyword) => usedForbidden(`${title} ${keyword}`),
           recentTitles,

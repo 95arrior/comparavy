@@ -391,6 +391,12 @@ console.log("\n수명 컷 — 마감이 지났는가로만 가른다:");
     "마감 모르는 캘린더 카드는 원천으로 구제");
   chk(one({ keyword: "루원시티 청약", title: "루원시티 청약, 7월 13일 마감", seedSource: "news" }), "dated_topic",
     "★일반 뉴스의 날짜 글감은 그대로 컷");
+  // ★차수도 같은 예외를 받아야 한다(2026-08-05 실측: 청약홈 공고 '더 리치먼드 미아(2차) 무순위'가 잘렸다).
+  //  무순위·특별공급은 차수가 붙는 게 정상이고, 접수가 안 끝났으면 지금이 전성기다.
+  chk(one({ keyword: "더 리치먼드 미아 2차 무순위 청약", title: "더 리치먼드 미아(2차) 무순위 청약, 접수 안내", seedSource: "applyhome", actionEnd: fu }), "통과",
+    "★접수 중인 2차 공고는 산다");
+  chk(one({ keyword: "더 리치먼드 미아 2차 무순위 청약", title: "더 리치먼드 미아(2차) 무순위 청약, 접수 안내", seedSource: "applyhome", actionEnd: pa }), "round_topic",
+    "★접수가 끝난 2차 공고는 죽는다");
 }
 
 process.exit(fail ? 1 : 0);
