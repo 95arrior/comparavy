@@ -28,41 +28,50 @@ const d = (m: number, day: number) => `${y}-${String(m).padStart(2, "0")}-${Stri
 
 // ── 세금 — 납부·신고 기한은 법으로 정해져 있다(가장 확실한 원천) ──
 const TAX: CalEvent[] = [
-  { date: d(1, 15), slot: "tax", lead: 7, confidence: "confirmed",
+  { date: d(1, 15), slot: "tax", lead: 14, confidence: "confirmed",
     label: "연말정산 간소화 서비스 개통", keywords: ["연말정산", "연말정산 간소화"],
     brief: "간소화 자료 조회가 열리는 날이다. 무엇을 확인하고 무엇이 자동으로 안 잡히는지(월세·안경·기부금) 순서로 정리한다." },
-  { date: d(5, 1), slot: "tax", lead: 5, confidence: "confirmed",
+  { date: d(5, 1), slot: "tax", lead: 14, confidence: "confirmed",
     label: "종합소득세 신고 시작(5/1~5/31)", keywords: ["종합소득세", "종합소득세 신고"],
     brief: "신고 기간 시작이다. 대상자 판별(누가 해야 하나)과 단순경비율·기준경비율 갈림을 먼저 준다." },
-  { date: d(7, 25), slot: "tax", lead: 3, confidence: "confirmed",
+  // ★8월 실물(2026-08-05 확인 — 유저: "캘린더가 안 돌아가나요?"에서 드러난 8월 공백을 메운다).
+  //  주민세 개인분은 지방세법상 매년 8/16~8/31이 납부기간이다(2026년도 동일함을 확인).
+  //  ★납부 시작일을 잡는다 — 마감일에 쓰면 이미 늦다. 검색은 고지서가 도착하는 8월 중순부터 오른다.
+  { date: d(8, 16), slot: "tax", lead: 14, confidence: "confirmed",
+    label: "주민세 개인분 납부 시작(8/16~8/31)", keywords: ["주민세", "주민세 납부"],
+    brief: "고지서가 도착하는 시기다. 누가 대상인지(7/1 기준 세대주)·얼마인지 지자체마다 다르다는 점·안 왔을 때 위택스 조회 순서를 준다. ★금액은 지자체마다 달라 단정하지 마라 — 조회 방법을 주는 게 이 글의 값이다." },
+  { date: d(8, 31), slot: "tax", lead: 14, confidence: "confirmed",
+    label: "법인세 중간예납 기한(8/31)", keywords: ["법인세 중간예납", "중간예납"],
+    brief: "12월 결산 법인의 중간예납 기한이다. 대상 판별과 두 가지 계산 방식(직전 사업연도 기준 vs 가결산) 갈림을 먼저 준다." },
+  { date: d(7, 25), slot: "tax", lead: 10, confidence: "confirmed",
     label: "부가가치세 확정신고(1기)", keywords: ["부가세", "부가가치세 신고"],
     brief: "개인 일반과세자 1기 확정신고 기한. 간이과세자와 기한이 다르다는 점을 먼저 가른다." },
-  { date: d(7, 16), slot: "tax", lead: 5, confidence: "confirmed",
+  { date: d(7, 16), slot: "tax", lead: 14, confidence: "confirmed",
     label: "재산세 납부(7월분, 16~31일)", keywords: ["재산세", "재산세 납부"],
     brief: "7월분은 주택 1/2과 건축물이다. 9월분과 무엇이 다른지, 카드 납부·분납 조건을 함께 준다." },
-  { date: d(9, 16), slot: "tax", lead: 5, confidence: "confirmed",
+  { date: d(9, 16), slot: "tax", lead: 14, confidence: "confirmed",
     label: "재산세 납부(9월분, 16~30일)", keywords: ["재산세", "재산세 9월"],
     brief: "9월분은 토지와 주택 나머지 1/2이다. 7월에 낸 사람이 또 내는 이유를 먼저 설명한다." },
-  { date: d(6, 16), slot: "tax", lead: 3, confidence: "confirmed",
+  { date: d(6, 16), slot: "tax", lead: 10, confidence: "confirmed",
     label: "자동차세 납부(1기, 16~30일)", keywords: ["자동차세", "자동차세 납부"],
     brief: "연납 할인을 놓친 사람이 지금 할 수 있는 것과, 카드 무이자·분할 납부를 정리한다." },
-  { date: d(12, 16), slot: "tax", lead: 3, confidence: "confirmed",
+  { date: d(12, 16), slot: "tax", lead: 10, confidence: "confirmed",
     label: "자동차세 납부(2기, 16~31일)", keywords: ["자동차세", "자동차세 2기"],
     brief: "2기 납부와 내년 연납 신청(1월) 안내를 한 글에서 잇는다." },
-  { date: d(4, 20), slot: "tax", lead: 5, confidence: "estimated",
+  { date: d(4, 20), slot: "tax", lead: 14, confidence: "estimated",
     label: "건강보험료 연말정산(4월 급여 반영)", keywords: ["건강보험료 정산", "건보료 정산"],
     brief: "4월 급여에서 추가 징수·환급이 갈린다. 왜 사람마다 다른지(전년 보수 변동) 조건으로 가른다. ★정산 반영 시점은 사업장마다 다를 수 있으니 단정하지 않는다." },
 ];
 
 // ── 지급·환급 — '언제 들어오나'는 매년 같은 시기에 폭발한다 ──
 const BENEFIT: CalEvent[] = [
-  { date: d(8, 25), slot: "benefit", lead: 7, confidence: "estimated",
+  { date: d(8, 25), slot: "benefit", lead: 14, confidence: "estimated",
     label: "근로장려금 정기 지급(8월 말~9월)", keywords: ["근로장려금", "근로장려금 지급일"],
     brief: "정기 신청분 지급 시기다. 지급일·지급액 조회 방법과 감액 사유를 준다. ★확정 지급일은 국세청 공지로 확인하고, 확인 못 했으면 '조회 방법'으로 쓴다." },
-  { date: d(6, 15), slot: "benefit", lead: 5, confidence: "estimated",
+  { date: d(6, 15), slot: "benefit", lead: 14, confidence: "estimated",
     label: "근로장려금 반기 신청(상반기분)", keywords: ["근로장려금 반기", "근로장려금 신청"],
     brief: "반기 신청과 정기 신청의 차이(대상·시기·지급 시점)를 먼저 가른다." },
-  { date: d(5, 1), slot: "benefit", lead: 5, confidence: "confirmed",
+  { date: d(5, 1), slot: "benefit", lead: 14, confidence: "confirmed",
     label: "근로·자녀장려금 정기 신청(5월)", keywords: ["근로장려금 신청", "자녀장려금"],
     brief: "5월 정기 신청 기간이다. 재산·소득 요건을 가구 유형별로 나눠 준다." },
 ];
@@ -91,16 +100,16 @@ const SEASON: CalEvent[] = [
 //  ★2026 세제개편안: 8/3 세제발전심의위 확정·발표 → 8/4~20 입법예고 → 8/27 차관회의 → 9/1 국무회의 → 9/3 국회 제출
 //   (기획재정부 보도자료로 확인. 이 후속 일정마다 같은 키워드가 다시 폭발한다.)
 const POLICY: CalEvent[] = [
-  { date: d(8, 27), slot: "policy", lead: 3, confidence: "confirmed",
+  { date: d(8, 27), slot: "policy", lead: 10, confidence: "confirmed",
     label: "2026 세제개편안 차관회의", keywords: ["세제개편안", "부동산 세제개편"],
     brief: "세제개편안이 차관회의를 거치는 날이다. 발표안 대비 무엇이 바뀌었는지, 내 세금에 걸리는 항목만 골라 정리한다. ★확정 전 단계임을 명시한다." },
-  { date: d(9, 1), slot: "policy", lead: 3, confidence: "confirmed",
+  { date: d(9, 1), slot: "policy", lead: 10, confidence: "confirmed",
     label: "2026 세제개편안 국무회의", keywords: ["세제개편안", "세법개정안"],
     brief: "국무회의 상정일이다. 시행 시기(언제부터 적용되나)를 항목별로 가르는 게 임무다." },
-  { date: d(9, 3), slot: "policy", lead: 3, confidence: "confirmed",
+  { date: d(9, 3), slot: "policy", lead: 10, confidence: "confirmed",
     label: "2026 세제개편안 정기국회 제출", keywords: ["세제개편안", "세법개정안"],
     brief: "국회 제출일이다. 국회 논의에서 바뀔 수 있는 항목과 확정된 항목을 구분해 준다." },
-  { date: d(8, 25), slot: "policy", lead: 3, confidence: "estimated",
+  { date: d(8, 25), slot: "policy", lead: 10, confidence: "estimated",
     label: "2027년도 예산안 발표(8월 말)", keywords: ["예산안", "내년 예산"],
     brief: "예산안에서 '내 돈에 걸리는 것'(지원금·바우처·세액공제)만 골라 정리한다. ★국회 확정 전이라 단정하지 않는다." },
 ];

@@ -1110,11 +1110,19 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
     //   저게 나오면 거짓이거나 잘못된 글감이니까(지금 뜨는 근거는 월평균이 아니다)."
     //  ★맞는 말이다. 월 검색량은 지난 30일 평균이라 '지금 뜨는가'를 증명하지 못한다.
     //   증명하지 못하는 숫자를 근거처럼 붙이면, 그건 근거가 아니라 장식이다.
-    const seedKw = (topic as { seedKeyword?: string }).seedKeyword;
-    if (seedKw) {
-      const live = (topic as { risingSeed?: boolean }).risingSeed === true;
-      return live ? `⚡실시간 수확: ${seedKw.slice(0, 28)}` : `수확 키워드: ${seedKw.slice(0, 30)}`;
-    }
+    // ★근거는 '왜 이 말을 잡았는가'다(2026-08-05 유저: "수확 키워드? 이게 근거가 될 수 없어요").
+    //  종전엔 키워드를 한 번 더 적어놓고 근거라고 불렀다 — 같은 말을 반복한 것이지 이유가 아니다.
+    //  ★출처별로 '무엇을 보고 잡았는지'를 사실대로 적는다. 모르면 주장하지 않는다.
+    const srcKey = (topic as { seedSource?: string; sel?: { seedSource?: string } }).sel?.seedSource
+      ?? (topic as { seedSource?: string }).seedSource ?? "";
+    const st = (topic as { sourceTitle?: string }).sourceTitle;
+    if (srcKey === "news") return st ? `방금 올라온 기사에서 나온 말 — "${st.slice(0, 26)}"` : "방금 올라온 경제 기사에서 나온 말";
+    if (srcKey === "rising") return "지금 검색이 오르고 있는 말 — 급상승·자동완성에서 함께 잡혔어요";
+    if (srcKey === "community") return "커뮤니티에 방금 올라온 혜택 소식이라 곧 검색이 몰려요";
+    if (srcKey === "gov") return st ? `부처가 낸 보도자료에 적힌 일정 — "${st.slice(0, 26)}"` : "부처가 낸 보도자료에 적힌 일정이에요";
+    if (srcKey === "calendar") return "날짜가 미리 확정된 일정 — 그날 몰릴 검색을 먼저 잡아둬요";
+    if (srcKey === "dart") return "기업이 낸 공시라 일정마다 검색이 다시 올라와요";
+    if (srcKey === "discover") return "네이버 자동완성에 실제로 뜨는 말 — 사람들이 이렇게 검색해요";
     // ★'급증'은 쓰지 않는다(2026-08-05 유저 지적). 코드가 하는 일은 자동완성 1회 조회다 —
     //  '사람들이 실제로 치는 말인가'는 확인되지만 '어제보다 늘었는가'는 재지 않는다(시계열 비교 없음).
     //  확인한 것만 말한다. 부풀린 배지는 그 자체로 우리 판단을 흐린다.
@@ -1141,8 +1149,19 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
       if (d >= 0) return `${aEnd.slice(5).replace("-", "월 ")}일 마감이라 지금 쓰면 마감 전에 색인돼요`;
     }
     if (topic.tag === "홈판") return "네이버 홈 화면 노출을 노리고 써요";
-    if (isTrend) return bt != null && bt < 3000 ? "아직 글이 얇을 때 먼저 올려 선점해요" : "신선할 때 올려 상위를 노려요";
-    if (Number(topic.vol ?? 0) > 0) return "검색이 꾸준해서 한 번 잡으면 오래 유입돼요";
+    // ★활용 계획은 문서 수와 모순되면 안 된다(2026-08-05 유저 지적):
+    //  "문서 67,988건인데 신선할 때 올리라는 게 뭔 말이에요" — 맞는 말이다. 그건 거짓이었다.
+    //  문서 수가 곧 '이 자리가 비었는가'인데, 비지 않은 자리에 '선점하세요'라고 쓰면 카드가 거짓말을 한다.
+    //  ★못 쟀으면 아무 말도 안 한다 — 모르는 상태에서 하는 조언은 전부 추측이다.
+    if (bt == null) return null;
+    if (isTrend) {
+      if (bt < 1000) return "이 말로 쓴 글이 거의 없어서 지금 올리면 초기 순위를 잡아요";
+      if (bt < 3000) return "아직 얇은 자리라 지금 올리면 상위를 노려볼 만해요";
+      return `이미 ${bt.toLocaleString("ko-KR")}편이 있어요 — 남들이 안 다룬 각도라야 이겨요`;
+    }
+    if (Number(topic.vol ?? 0) > 0) {
+      return bt < 3000 ? "검색은 꾸준한데 글이 적어요 — 한 번 잡으면 오래 유입돼요" : "검색이 꾸준한 자리예요 — 깊이로 승부해요";
+    }
     return null; // ★할 말이 없으면 안 쓴다 — 채우려고 지어내지 않는다
   })();
   const pubAdvice = (() => {

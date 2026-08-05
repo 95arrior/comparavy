@@ -206,8 +206,12 @@ console.log(fail ? `\n실패 ${fail}건` : "\n통과: 보드 조립 + 홈판 판
 //  붙이면 장식이다. '지금 뜨는' 열은 씨앗 키워드를 그대로 보여준다.
 {
   const home = fs.readFileSync(new URL("../components/dashboard/Home.tsx", import.meta.url), "utf-8");
-  ok(/수확 키워드: \$\{seedKw/.test(home), "★트렌드 카드가 씨앗 키워드를 보여준다");
-  ok(/⚡실시간 수확: \$\{seedKw/.test(home), "★실시간(rising) 유래는 따로 표시한다");
+  // ★규격 교체(2026-08-05 유저 2차): 씨앗 키워드는 이제 상단 '키워드 : ' 칩이 전담한다.
+  //  근거 자리에 키워드를 한 번 더 적던 걸 폐기했다 — 유저: "수확 키워드? 이게 근거가 될 수 없어요".
+  //  같은 말을 반복하는 건 이유가 아니다. 근거 자리는 '왜 잡았는가'만 말한다.
+  ok(/키워드 : \{\(topic as \{ seedKeyword\?: string \}\)\.seedKeyword \|\| topic\.keyword\}/.test(home), "★씨앗 키워드는 상단 칩이 보여준다");
+  ok(/왜 이 말을 잡았는가/.test(home) && /srcKey === "news"/.test(home), "★근거 자리는 출처별로 '왜 잡았는지'를 말한다");
+  ok(!/수확 키워드: \$\{seedKw/.test(home), "★키워드를 근거라고 부르던 문구가 되살아나지 않는다");
   ok(/수확 씨앗: \$\{hsrc/.test(home), "★홈판 카드도 어느 씨앗에서 나왔는지 앞에 세운다");
   ok(/⚠실데이터 없이 만든 카드/.test(home), "★실데이터 없이 만든 카드는 경고로 남긴다(판단 재료)");
 

@@ -8,7 +8,12 @@ import { CATEGORIES } from "./categories";
 export interface Headline { title: string; description: string; press: string; seed: string; fresh: boolean | null } // fresh: true=48h내, false=오래됨, null=미확인
 export interface GatherStats { raw: number; fresh: number; unverified: number; stale: number; kept: number; perSeed: Record<string, { fresh: number; unverified: number; stale: number }> }
 
-const FRESH_WINDOW_MS = 48 * 3600_000; // 48시간
+// ★신선도 창 1시간(2026-08-05 유저 지시: "출처 네이버 뉴스까지 가져올 거면 1시간 이내의 진짜 핫한 걸").
+//  종전 48시간이 만든 사고: 이틀 지난 기사로 잡은 키워드에 이미 블로그 6만 편이 쌓여 있는데
+//  카드에는 '지금 뜨는'이 붙었다 — 배지가 거짓이 됐다.
+//  ★실측(2026-08-05, 경제 뉴스 120건): 1시간 이내 104건 · 1~3시간 7건 · 3~6시간 7건 · 6~24시간 2건.
+//   sort=date라 최신부터 온다. 1시간으로 좁혀도 재고가 마르지 않는다 — 48시간은 아무것도 안 거르고 있었다.
+const FRESH_WINDOW_MS = 1 * 3600_000; // 1시간
 
 // 카테고리별 소주제 시드 — 이걸로 각각 뉴스를 긁어 편향을 깬다. 없으면 generic 폴백.
 const SEEDS: Record<string, string[]> = {
@@ -153,7 +158,7 @@ export async function gatherHeadlinesWithStats(category: string): Promise<{ head
     dedup.push(h);
   }
 
-  // ★신선도 게이트(시드별): fresh(48h내)만 기본 채택. 파싱실패(null)는 시드의 확인 신선이 3개 미만일 때만 보충. stale은 버림.
+  // ★신선도 게이트(시드별): fresh(1h내)만 기본 채택. 파싱실패(null)는 시드의 확인 신선이 3개 미만일 때만 보충. stale은 버림.
   const perSeed: GatherStats["perSeed"] = {};
   const kept: Headline[] = [];
   for (const s of seeds) {

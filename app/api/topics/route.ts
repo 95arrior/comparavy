@@ -754,7 +754,11 @@ export async function GET(req: Request) {
       // ★측정 대상 = 실시간 카드 + 문서 수가 비어 있는 모든 카드(2026-08-05 유저: "이거는 또 문서가 없네요").
       //  문서 수는 유저가 카드를 보고 판단하는 유일한 재료다 — 빈칸이면 판단을 못 한다.
       //  실시간이 아닌 카드는 재기만 하고 뒷북 컷은 걸지 않는다(검색 레인은 축적이 목적).
-      const isRising = (c: (typeof tc)[number]) => (c as { risingSeed?: boolean }).risingSeed === true || (c.sel as { seedSource?: string } | undefined)?.seedSource === "rising";
+      // ★'지금 뜨는' 배지를 다는 카드는 전부 뒷북 컷 대상이다(2026-08-05 유저 실물).
+      //  종전엔 rising 씨앗만 쟀는데, 뉴스 씨앗 카드가 문서 67,988편으로 '지금 뜨는' 배지를 달고 섰다.
+      //  ★배지를 다는 기준과 컷을 거는 기준이 다르면, 그 차이만큼 카드가 거짓말을 한다.
+      const isRising = (c: (typeof tc)[number]) => c.tag === "trend" || c.tag === "issue" || c.tag === "followup"
+        || (c as { risingSeed?: boolean }).risingSeed === true || (c.sel as { seedSource?: string } | undefined)?.seedSource === "rising";
       const risingCards = tc.filter((c) => isRising(c) || (c as { blogTotal?: number | null }).blogTotal == null);
       const rising = { seen: risingCards.length, measured: 0, pass: 0, tooMany: 0, unmeasured: 0 };
       if (risingCards.length) {
