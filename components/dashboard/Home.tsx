@@ -747,79 +747,49 @@ export default function Home({
             </button>
           </div>
           {perfSheet && <PerfImportSheet onClose={() => setPerfSheet(false)} />}
-          {/* 모바일: 탭 전환(한 컬럼 풀폭) */}
-          <div className="mb-3 flex gap-1.5 sm:hidden">
-            {([["short", "지금 뜨는"], ["long", "꾸준한 수요"]] as const).map(([k, label]) => (
-              <button key={k} onClick={() => setBoardTab(k)} className={`at-press flex-1 rounded-[12px] py-2.5 text-[13.5px] font-bold transition ${boardTab === k ? "bg-[#1D75F7]/[0.08] text-[#1D75F7] ring-1 ring-[#1D75F7]/40" : "bg-white text-neutral-500 shadow-[0_1px_3px_rgba(0,0,0,0.05)]"}`}>{label}</button>
-            ))}
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {/* ★원천 탭이 켜져 있으면 두 열 모두 그 원천만 보여준다(2026-08-05 유저 목업) */}
-          {([["short", "지금 뜨는", "현재 실시간 인기 키워드 글감이에요", boardShort?.filter((t) => slotMatch(t, slotTab)) ?? null], ["long", "꾸준한 수요", "지속적으로 수요가 있는 글감이에요", boardLong?.filter((t) => slotMatch(t, slotTab)) ?? null]] as const).map(([mode, title, sub, list]) => (
-            <div key={mode} className={`min-w-0 ${boardTab === mode ? "" : "hidden sm:block"}`}>
-              <div className="hidden sm:block">
-              <p className="text-center text-[16px] font-bold text-[color:var(--color-text)]">{title}</p>
-              <p className="mt-0.5 text-center text-[11.5px] text-[color:var(--color-text-weak)]">{sub}</p>
-              {/* ★칩 뜻풀이(2026-08-01 유저 요청) — 카드마다 반복하면 지저분해서 열마다 한 번만 적는다.
-                  칩 이름만으로는 '홈판용/어려운 키워드'가 뭔지 모른다는 게 요지였다. */}
-              <div className="mt-1 flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-[10.5px] leading-tight text-[color:var(--color-text-weak)]">
-                {LEGEND_LANES[mode].map((k) => (
-                  <span key={k} className="whitespace-nowrap">
-                    <b className={`rounded-full px-1.5 py-px font-bold ${LANE_STYLE[k].cls}`}>{k === "golden" ? "월 검색량" : LANE_NAME[k]}</b>
-                    <span className="ml-1">{LANE_STYLE[k].mean}</span>
-                  </span>
-                ))}
-              </div>
-              {mode === "long" && tierNote && <p className="mt-1 text-center text-[11px] text-[#1D75F7]">{tierNote}</p>}
-              </div>
-              <div className="mt-2 flex flex-col gap-2.5">
-                {list === null && [0, 1, 2].map((i) => <div key={i} className="ateflo-skel h-[86px] rounded-[14px]" />)}
-                {list !== null && list.length === 0 && (
-                  <div className="rounded-[14px] bg-white px-3 py-5 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
-                    <p className="flex items-center justify-center gap-1.5 text-[12px] font-bold text-[#1D75F7]"><span className="tk-wand" aria-hidden>✦</span>{mode === "short" ? "실시간 이슈를 수확하고 있어요" : "글감을 채우고 있어요…"}</p>
-                    {mode === "short" && (
-                      <button onClick={async () => {
-                        setBoardShort(null); // 스켈레톤 복귀
-                        try {
-                          const ex = [...new Set([...dismissedRef.current, ...todayKeywords(articles)])];
-                          const r = await fetch(`/api/topics?mode=short${ex.length ? `&exclude=${encodeURIComponent(ex.join(","))}` : ""}`);
-                          const d = await r.json();
-                          setBoardShort(sanitizeTopics(Array.isArray(d.topics) ? d.topics : []).filter((g) => !dismissedRef.current.includes(g.keyword)));
-                        } catch { setBoardShort([]); }
-                      }} className="at-press mx-auto mt-3 block rounded-[10px] bg-[#1D75F7]/[0.08] px-4 py-2 text-[12.5px] font-bold text-[#1D75F7]">지금 다시 수확하기</button>
-                    )}
-                  </div>
-                )}
-                {(() => {
-                  const all = list ?? [];
-                  const active = all.filter((t) => !(t as { publishedOn?: string }).publishedOn).slice(0, COLUMN_SIZE[mode]);
-                  const done = all.filter((t) => (t as { publishedOn?: string }).publishedOn).slice(0, 3); // 발행함은 활성 슬롯과 별도(슬롯 잠식 방지)
-                  return [...active, ...done];
-                })().map((t) => <BoardCard key={t.keyword} topic={t} onWrite={() => onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb, { tag: t.tag, sel: t.sel })} onDismiss={() => {
-                  const nd = [...dismissedRef.current, t.keyword];
-                  dismissedRef.current = nd; setDismissed(nd);
-                  try { localStorage.setItem(todayKey, JSON.stringify(nd)); } catch { /* ignore */ }
-                  const setter = mode === "short" ? setBoardShort : setBoardLong;
-                  setter((prev) => {
-                    const next = (prev ?? []).filter((x) => x.keyword !== t.keyword);
-                    if (next.length < COLUMN_SIZE[mode]) { // ★재고 소진 시 조용한 보충(실측: 치울수록 감소 — 서버 재고 5개 세대)
-                      const ex = [...new Set([...nd, ...todayKeywords(articles), ...next.map((x) => x.keyword)])];
-                      fetch(`/api/topics?mode=${mode}&exclude=${encodeURIComponent(ex.join(","))}`)
-                        .then((r) => r.json())
-                        .then((d) => {
-                          const got = sanitizeTopics(Array.isArray(d.topics) ? d.topics : []);
-                          setter((cur) => {
-                            const have = new Set((cur ?? []).map((x) => x.keyword));
-                            return [...(cur ?? []), ...got.filter((g) => !have.has(g.keyword) && !nd.includes(g.keyword))];
-                          });
-                        }).catch(() => { /* 무해 */ });
-                    }
-                    return next;
-                  });
-                }} />)}
-              </div>
-            </div>
-          ))}
+          {/* ★두 열 머리말·범례 폐기(2026-08-05 유저: "이거 폐기, 그냥 랜덤으로 박스 나오게").
+              카드마다 우측 하단에 ⚡지금 뜨는 / 🌱꾸준한 수요가 붙으므로 머리말이 하는 일이 없어졌다.
+              모바일 모드 탭도 같이 없앤다 — 나눌 열이 없으면 나눠 볼 탭도 없다. */}
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+            {(() => {
+              // ★한 판으로 섞는다(유저 목업). 열로 나누지 않으니 mode는 카드가 들고 다닌다 —
+              //  치우기·보충이 어느 재고에서 일어나야 하는지는 여전히 알아야 한다.
+              const pick = (list: Topic[] | null, mode: "short" | "long"): { t: Topic; mode: "short" | "long" }[] => {
+                const all = (list ?? []).filter((t) => slotMatch(t, slotTab));
+                const active = all.filter((t) => !(t as { publishedOn?: string }).publishedOn).slice(0, COLUMN_SIZE[mode]);
+                const done = all.filter((t) => (t as { publishedOn?: string }).publishedOn).slice(0, 3);
+                return [...active, ...done].map((t) => ({ t, mode }));
+              };
+              if (boardShort === null && boardLong === null) return [0, 1, 2, 3].map((k) => <div key={k} className="ateflo-skel h-[118px] rounded-[16px]" />);
+              const merged = shuffleStable([...pick(boardShort, "short"), ...pick(boardLong, "long")]);
+              if (!merged.length) return (
+                <div className="col-span-full rounded-[16px] bg-white px-3 py-6 text-center shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+                  <p className="flex items-center justify-center gap-1.5 text-[12.5px] font-bold text-[#1D75F7]"><span className="tk-wand" aria-hidden>✦</span>글감을 모으고 있어요</p>
+                </div>
+              );
+              return merged.map(({ t, mode }) => <BoardCard key={`${mode}:${t.keyword}`} topic={t} onWrite={() => onWriteKeyword(t.keyword, t.title, t.newsContext, t.briefText, t.titleSearch, t.thumb, { tag: t.tag, sel: t.sel })} onDismiss={() => {
+                const nd = [...dismissedRef.current, t.keyword];
+                dismissedRef.current = nd; setDismissed(nd);
+                try { localStorage.setItem(todayKey, JSON.stringify(nd)); } catch { /* ignore */ }
+                const setter = mode === "short" ? setBoardShort : setBoardLong;
+                setter((prev) => {
+                  const next = (prev ?? []).filter((x) => x.keyword !== t.keyword);
+                  if (next.length < COLUMN_SIZE[mode]) { // ★재고 소진 시 조용한 보충(실측: 치울수록 감소)
+                    const ex = [...new Set([...nd, ...todayKeywords(articles), ...next.map((x) => x.keyword)])];
+                    fetch(`/api/topics?mode=${mode}&exclude=${encodeURIComponent(ex.join(","))}`)
+                      .then((r) => r.json())
+                      .then((d) => {
+                        const got = sanitizeTopics(Array.isArray(d.topics) ? d.topics : []);
+                        setter((cur) => {
+                          const have = new Set((cur ?? []).map((x) => x.keyword));
+                          return [...(cur ?? []), ...got.filter((g) => !have.has(g.keyword) && !nd.includes(g.keyword))];
+                        });
+                      }).catch(() => { /* 무해 */ });
+                  }
+                  return next;
+                });
+              }} />);
+            })()}
           </div>
         </div>
       )}
@@ -1016,6 +986,18 @@ function TopicRow({ topic, onClick, onSwap, swapping }: {
 }
 
 // ★원천 칸 판정 — 탭·집계가 같은 규칙을 쓴다(두 곳에서 따로 세면 숫자가 어긋난다).
+// ★섞되 흔들리지 않게(2026-08-05 유저: "그냥 랜덤으로 박스 나오게").
+//  Math.random으로 섞으면 리렌더마다 카드 순서가 바뀐다 — 글감을 읽는 중에 자리가 튄다.
+//  그래서 키워드 해시로 정렬한다: 보기엔 무작위인데 같은 목록이면 항상 같은 순서다.
+function hash32(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+function shuffleStable<T extends { t: { keyword: string } }>(items: T[]): T[] {
+  return [...items].sort((a, b) => hash32(a.t.keyword) - hash32(b.t.keyword));
+}
+
 function slotMatch(t: unknown, label: string): boolean {
   const tt = t as { tag?: string; slot?: string; risingSeed?: boolean };
   if (label === "전체") return true;
@@ -1062,6 +1044,24 @@ function laneLabel(lane: LaneKey, topic: Topic): string {
   return LANE_NAME[lane];
 }
 
+// ★출처는 '구체적인 이름'으로 적는다(2026-08-05 유저 목업: "출처 : DART API").
+//  ★그리고 이 표의 유일한 규칙은 '사실만'이다 — 유저 지시: "절대 거짓이 있으면 안 됨".
+//   칸 이름(실시간·공시)은 우리 내부 분류지 출처가 아니다. 어디서 실제로 가져왔는지를 쓴다.
+//   여러 상류가 섞이는 칸은, 그 전부에 대해 참인 이름만 쓴다(실시간 = 구글 트렌드 급상승 + 네이버 자동완성
+//   → 둘 다 '지금 뜨는 말' 탐지라 "실시간 급상승"은 참이다. "DART"처럼 한쪽만 참인 이름은 쓰지 않는다).
+const SOURCE_LABEL: Record<string, string> = {
+  gov: "정책브리핑 보도자료", calendar: "확정 일정표", dart: "DART 공시", community: "커뮤니티(뽐뿌)",
+  rising: "실시간 급상승", news: "네이버 뉴스", discover: "네이버 자동완성", applyhome: "청약홈",
+  gov24: "보조금24", bizinfo: "기업마당", season: "시즌 일정", homebet: "홈피드 배팅", pool: "검색량 실측",
+};
+function sourceLabelOf(topic: Topic): string | null {
+  const t = topic as { seedSource?: string; sel?: { seedSource?: string }; slot?: string };
+  const src = t.sel?.seedSource ?? t.seedSource ?? "";
+  if (src && SOURCE_LABEL[src]) return SOURCE_LABEL[src];
+  // ★모르면 지어내지 않는다 — 칸 이름을 그대로 두거나(그건 참이다), 아무것도 안 쓴다.
+  return t.slot ?? null;
+}
+
 function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () => void; onDismiss?: () => void }) {
   const isTrend = topic.tag === "trend" || topic.tag === "issue" || topic.tag === "followup";
   const laneKey = laneOf(topic, isTrend);
@@ -1081,11 +1081,11 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
     if (h >= 24) return `D-${Math.ceil(ms / 86400_000)}`; // 24시간+ = 날짜가 읽기 쉽다(실측: 1377:43:50 혼란)
     return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}` : `${m}:${String(sec).padStart(2, "0")}`;
   })();
+  const bt = (topic as { blogTotal?: number | null }).blogTotal;
   // ★근거 — 사실 기반 설득(실측 버그: 무관 헤드라인 3연속): 카드 키워드와 겹치는 헤드라인만, 없으면 정직한 일반 근거
   const evidence = (() => {
     if (!isTrend) {
       // 꾸준: ★판단형(2026-07-13 유저: 날것 문서 수는 뭘 하란 건지 모른다) — 별점+판결을 앞세우고 수치는 보조로
-      const bt = (topic as { blogTotal?: number | null }).blogTotal;
       if (topic.vol > 0 && bt != null && bt > 0) {
         const st = filledStarsFromData(topic.vol, bt);
         const verdict = st >= 4 ? "지금 선점 기회" : st >= 3 ? "해볼 만한 자리" : "꾸준 유입용";
@@ -1131,6 +1131,20 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
     //   가짜 근거는 없는 근거보다 나쁘다 — 신뢰를 만들려고 붙인 표시가 신뢰를 깎는다.
     return "오늘 수확된 실시간 이슈 · 신선할 때가 기회";
   })();
+  const srcLabel = sourceLabelOf(topic);
+  // ★활용 계획 — "어떻게 글감으로 쓸 건지"(유저 목업).
+  //  ★있는 값에서만 만든다. 없는 날짜·수치를 붙이면 그 순간 카드가 거짓말이 된다(유저: "절대").
+  const usePlan = (() => {
+    const aEnd = (topic as { actionEnd?: string | null }).actionEnd;
+    if (aEnd) {
+      const d = Math.ceil((new Date(`${aEnd}T23:59:59+09:00`).getTime() - Date.now()) / 86400_000);
+      if (d >= 0) return `${aEnd.slice(5).replace("-", "월 ")}일 마감이라 지금 쓰면 마감 전에 색인돼요`;
+    }
+    if (topic.tag === "홈판") return "네이버 홈 화면 노출을 노리고 써요";
+    if (isTrend) return bt != null && bt < 3000 ? "아직 글이 얇을 때 먼저 올려 선점해요" : "신선할 때 올려 상위를 노려요";
+    if (Number(topic.vol ?? 0) > 0) return "검색이 꾸준해서 한 번 잡으면 오래 유입돼요";
+    return null; // ★할 말이 없으면 안 쓴다 — 채우려고 지어내지 않는다
+  })();
   const pubAdvice = (() => {
     if (publishedOn) return null; // 발행한 카드 — 추천 문구 없음(유저 확정)
     const h = new Date().getHours();
@@ -1152,49 +1166,38 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
   })();
   return (
     <button onClick={onWrite} className={`${publishedOn ? "opacity-55 saturate-50 " : ""}at-press rounded-[16px] bg-white p-4 text-left shadow-[0_1px_3px_rgba(0,0,0,0.05)] tk-tr hover:shadow-[0_4px_14px_-6px_rgba(29,117,247,0.18)]`}>
-      <div className="flex items-center gap-1">
-        {onDismiss && <span role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); onDismiss(); }} className="order-last ml-auto flex h-6 w-6 items-center justify-center rounded-full opacity-45 transition hover:bg-[#F7F8FA] hover:opacity-80" aria-label="다른 글감으로 교체"><GlassGlyph name="refresh" size={14} /></span>}
-        {publishedOn
-          ? <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10.5px] font-bold text-neutral-500">{publishedOn}</span>
-          : <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-bold tabular-nums ${lane.cls}`}>{laneLabel(laneKey, topic)}</span>}
-        {topic.revenueLabel && <span className="rounded-full bg-[#F5F3EE] px-2 py-0.5 text-[10.5px] font-bold text-[#8A6D1F]">{topic.revenueLabel}</span>}
-        {life && <span className="text-[10.5px] font-semibold tabular-nums text-amber-600">{life}</span>}
+      {/* ★박스 규격(2026-08-05 유저 목업) — 상단 칩 3개는 '항상' 뜬다.
+          키워드=사실 · 출처=어디서 · 문서=그 자리에 몇 편. 셋 다 유저가 카드를 판정하는 재료다.
+          ★유저 지시: "절대 글감 박스 콘텐츠 내용들은 거짓이 있으면 안 됨" — 여기 적히는 건 전부 측정·수확 실값이다. */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="rounded-md bg-[#F1EEFF] px-2 py-1 text-[11px] font-extrabold text-[#6B4DE6]">
+          키워드 : {(topic as { seedKeyword?: string }).seedKeyword || topic.keyword}
+        </span>
+        {srcLabel && <span className="rounded-md bg-[#F1F3F5] px-2 py-1 text-[11px] font-extrabold text-[#4E5968]">출처 : {srcLabel}</span>}
+        {/* ★0과 '못 잼'은 다른 말이다 — 못 잰 자리에 0을 적으면 선점 최적으로 오해한다 */}
+        {bt != null ? (
+          <span className={`rounded-md px-2 py-1 text-[11px] font-extrabold tabular-nums ${bt < 3000 ? "bg-[#E7F7EF] text-[#0B8C4E]" : bt < 30000 ? "bg-[#FFF3E0] text-[#C2670A]" : "bg-[#FFECEC] text-[#D63A3A]"}`}
+            title="네이버 블로그 문서 수 — 적을수록 선점하기 좋아요">
+            문서 : {bt.toLocaleString("ko-KR")}편
+          </span>
+        ) : (
+          <span className="rounded-md bg-[#F1F3F5] px-2 py-1 text-[11px] font-extrabold text-[#8B95A1]" title="문서 수를 못 쟀어요 — 0편이라는 뜻이 아닙니다">문서 : 못 쟀어요</span>
+        )}
+        {publishedOn && <span className="rounded-md bg-neutral-100 px-2 py-1 text-[11px] font-extrabold text-neutral-500">{publishedOn}</span>}
+        {onDismiss && <span role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); onDismiss(); }} className="ml-auto flex h-6 w-6 items-center justify-center rounded-full opacity-45 transition hover:bg-[#F7F8FA] hover:opacity-80" aria-label="다른 글감으로 교체"><GlassGlyph name="refresh" size={14} /></span>}
       </div>
-      {/* ★키워드 명시(2026-08-05 유저 목업) — 제목보다 먼저 '무슨 키워드로 가져온 글감인지'를 보여준다.
-          제목은 창작이고 키워드는 사실이다. 사실을 먼저 보여야 유저가 판정할 수 있다. */}
-      {(() => {
-        const kw = (topic as { seedKeyword?: string }).seedKeyword || topic.keyword;
-        return kw ? <p className="mt-2 text-[11.5px] font-bold text-[#1D75F7]">{kw}</p> : null;
-      })()}
-      <p className="mt-1 line-clamp-2 text-[14.5px] font-bold leading-snug text-[color:var(--color-text)]">{topic.title}</p>
-      {evidence && <p className="mt-1.5 line-clamp-2 text-[12px] leading-snug text-neutral-400">{evidence}</p>}
-      {/* ★출처 + 문서수(유저 목업) — 어디서 가져왔는지, 그 자리에 글이 몇 편인지.
-          문서수는 '적을수록 선점'이라는 걸 유저가 바로 읽을 수 있게 숫자 그대로 둔다. */}
-      {(() => {
-        const slot = (topic as { slot?: string }).slot;
-        const bt = (topic as { blogTotal?: number | null }).blogTotal;
-        if (!slot && bt == null) return null;
-        return (
-          <div className="mt-1.5 flex flex-wrap items-center gap-1">
-            {slot && <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10.5px] font-bold text-neutral-500">출처 {slot}</span>}
-            {/* ★문서 수는 빈칸으로 두지 않는다(2026-08-05 유저: "문서가 없음 0으로 표기해야합니다").
-                다만 0과 '못 잼'은 다른 말이다 — 0을 못 잰 자리에 적으면 선점 최적으로 오해한다.
-                그래서 0은 0으로, 못 잰 건 못 쟀다고 적는다. */}
-            {bt != null ? (
-              <span className={`rounded px-1.5 py-0.5 text-[10.5px] font-bold tabular-nums ${bt < 3000 ? "bg-emerald-50 text-emerald-600" : bt < 30000 ? "bg-amber-50 text-amber-700" : "bg-neutral-100 text-neutral-500"}`}
-                title="네이버 블로그 문서 수 — 적을수록 선점하기 좋아요">
-                문서 {bt.toLocaleString("ko-KR")}편{bt === 0 ? " · 아무도 안 썼어요" : ""}
-              </span>
-            ) : (
-              <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10.5px] font-bold text-neutral-400"
-                title="네이버 블로그 문서 수를 못 쟀어요 — 0편이라는 뜻이 아닙니다">
-                문서 못 쟀어요
-              </span>
-            )}
-          </div>
-        );
-      })()}
-      {pubAdvice && <p className={`mt-1 text-[11px] font-semibold ${pubAdvice.hot ? "text-[#F04452]" : "text-neutral-400"}`}>{pubAdvice.text}</p>}
+      <p className="mt-2 line-clamp-2 text-[15px] font-extrabold leading-snug text-[color:var(--color-text)]">{topic.title}</p>
+      {/* ★근거 — 어떤 근거로 가져왔고(수확 사실) 어떻게 쓸 것인지(활용 계획)를 한 줄에. 둘 다 실값에서만 만든다. */}
+      <p className="mt-1.5 line-clamp-2 text-[11.5px] leading-snug text-[#8B95A1]">근거 : {evidence}{usePlan ? ` → ${usePlan}` : ""}</p>
+      <div className="mt-2 flex items-center gap-2">
+        {pubAdvice && <span className={`text-[11px] font-semibold ${pubAdvice.hot ? "text-[#F04452]" : "text-neutral-400"}`}>{pubAdvice.text}</span>}
+        {life && <span className="text-[10.5px] font-semibold tabular-nums text-amber-600">{life}</span>}
+        {topic.revenueLabel && <span className="rounded-full bg-[#F5F3EE] px-2 py-0.5 text-[10.5px] font-bold text-[#8A6D1F]">{topic.revenueLabel}</span>}
+        {/* ★레인 배지는 우측 하단(유저 목업). 검색 레인은 실측 검색량을 그대로 적는다. */}
+        <span className={`ml-auto flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold tabular-nums ${isTrend ? "bg-[#FFECEC] text-[#F04452]" : "bg-[#E7F7EF] text-[#0B8C4E]"}`}>
+          <span aria-hidden>{isTrend ? "⚡" : "🌱"}</span>{isTrend ? "지금 뜨는" : laneKey === "golden" || laneKey === "head" ? laneLabel(laneKey, topic) : "꾸준한 수요"}
+        </span>
+      </div>
     </button>
   );
 }
