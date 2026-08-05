@@ -120,7 +120,7 @@ async function marketNewsBlock(betKey: string): Promise<string | null> {
 /** ★마지막 홈판 생성 진단(2026-08-04) — debug 응답이 읽어 간다. '홈판 2/5'의 이유가 화면에 보여야 한다. */
 export let lastHomebetDiag: {
   want: number; tryN: number; round1: number; round2: number; dupDropped: number; out: number;
-  failBy: Record<string, number>; dupWithUsed?: number; cached: boolean; at: string;
+  failBy: Record<string, number>; dupWithUsed?: number; dupReasons?: string[]; cached: boolean; at: string;
 } | null = null;
 
 export async function pickHomefeedBets(
@@ -204,8 +204,16 @@ export async function pickHomefeedBets(
   const repeatsRecent = (b: HomefeedBet): string | null => {
     const text = `${b.keyword} ${b.title}`;
     const toks = topicTokens(text);
-    // ① 발행한 글과 겹치면 한 개라도 막는다 — 다만 두 글자 흔한 말은 제외(우연히 겹친다)
-    for (const w of toks) if ([...w].length >= 3 && publishedTokens.has(w)) return w;
+    // ① 발행한 글과 겹칠 때(2026-08-05 3차 수리 — out 0이 계속됐다).
+    //  ★3글자 하나만 겹쳐도 막았더니 경제 블로그에서는 아무것도 못 만든다:
+    //   '보조금'·'전기요금'·'건강보험' 같은 분야 공통어가 발행 글마다 들어 있어서,
+    //   무엇을 만들든 그중 하나는 반드시 겹친다. 소재가 같은 게 아니라 분야가 같은 것뿐이다.
+    //  ★그래서 '얼마나 특정한 말인가'로 나눈다:
+    //   · 4글자 이상(근로장려금·주택도시기금) — 이건 소재 그 자체다. 하나만 겹쳐도 막는다.
+    //   · 2~3글자(보조금·청약) — 분야 공통어다. 두 개 이상 겹쳐야 같은 소재로 본다.
+    for (const w of toks) if ([...w].length >= 4 && publishedTokens.has(w)) return w;
+    const shortHits = toks.filter((w) => [...w].length >= 2 && publishedTokens.has(w));
+    if (shortHits.length >= 2) return shortHits.slice(0, 2).join("+");
     // ② 보여만 준 카드는 두 개 이상 겹쳐야 같은 소재로 본다
     const shownHits = toks.filter((w) => shownTokens.has(w));
     if (shownHits.length >= 2) return shownHits.slice(0, 2).join("+");
@@ -301,18 +309,21 @@ export async function pickHomefeedBets(
   const usedCores = new Set<string>();
 
   let dupDropped = 0;
+  const dupReasons: string[] = []; // ★무엇이 왜 죽었는지 — 숫자만 남기면 다음에도 추측하게 된다
   const dedupeInto = (target: HomefeedBet[], cards: HomefeedBet[]) => {
     for (const b of cards) {
       // ★최근에 쓴 소재를 다시 만들었으면 여기서 버린다 — 같은 블로그에 같은 소재가 이틀 연속 서면 안 된다.
       const rep = repeatsRecent(b);
       if (rep) {
         dupDropped += 1;
+        dupReasons.push(`${b.keyword} ← ${rep}`);
         console.log(`[homebet] 최근 소재 반복 — 제외: ${b.betType} / ${b.keyword} (겹친 말 '${rep}')`);
         continue;
       }
       const core = coreKeywordOf(b.keyword);
       if (usedCores.has(core)) {
         dupDropped += 1;
+        dupReasons.push(`${b.keyword} ← 핵심어 ${core}`);
         console.log(`[homebet] 소재 중복 — 제외: ${b.betType} / ${b.keyword} (핵심어 ${core})`);
         continue;
       }
@@ -341,7 +352,7 @@ export async function pickHomefeedBets(
   const out = deduped.slice(0, want);
   lastHomebetDiag = {
     want, tryN, round1: got.length, round2, dupDropped, out: out.length,
-    failBy, dupWithUsed, cached: false, at: new Date().toISOString(),
+    failBy, dupWithUsed, dupReasons: dupReasons.slice(0, 8), cached: false, at: new Date().toISOString(),
   };
   if (out.length < want || dupDropped > 0) {
     console.log(`[homebet] ${out.length}/${want} — 1차 생성 ${got.length}/${tryN} · 보충 ${round2} · 소재중복 제외 ${dupDropped}(최근 소재 ${seededCores}개 사전 차단) · 탈락사유 ${JSON.stringify(failBy)}`);

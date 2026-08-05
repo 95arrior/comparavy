@@ -76,6 +76,13 @@ const rt = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url
   //  '3글자 하나만 겹쳐도 탈락'하는 벽이 60개 제목만큼 두꺼워졌다 — 내가 만든 악화였다.
   ok(/blockTitles/.test(hb), "★차단용 목록이 따로 있다");
   ok(/차단 토큰\(코드\) — 넓으면 아무것도 못 만든다/.test(hb), "왜 나눠야 하는지가 코드에 적혀 있다");
+  // ★3차 수리(2026-08-05): 3글자 하나만 겹쳐도 막았더니 경제 블로그에서는 아무것도 못 만든다.
+  //  '보조금'·'전기요금'은 분야 공통어라 무엇을 만들든 겹친다 — 소재가 같은 게 아니라 분야가 같은 것뿐이다.
+  ok(/\[\.\.\.w\]\.length >= 4 && publishedTokens\.has\(w\)/.test(hb), "★4글자 이상(소재 그 자체)은 하나만 겹쳐도 막는다");
+  ok(/shortHits\.length >= 2/.test(hb), "★2~3글자 분야 공통어는 두 개 이상 겹쳐야 막는다");
+  ok(/소재가 같은 게 아니라 분야가 같은 것뿐이다/.test(hb), "왜 나눴는지가 코드에 적혀 있다");
+  // ★숫자만 남기면 다음에도 추측하게 된다
+  ok(/dupReasons/.test(hb), "★무엇이 왜 죽었는지 진단에 남긴다");
   const rt3 = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
   const bt = (rt3.match(/blockTitles: recent14/g) ?? []).length;
   const pk = (rt3.match(/pickHomefeedBets\(/g) ?? []).length;
@@ -183,7 +190,7 @@ console.log(fail ? `\n실패 ${fail}건` : "\n통과: 홈판 공급(캐시가 �
   //  중복을 막으려던 규칙이 생산 자체를 막았다. 발행한 글과 보여만 준 카드를 다르게 다룬다.
   ok(/const repeatsRecent =/.test(hb) && /publishedTokens\.has\(w\)/.test(hb), "★발행한 글과 겹치면 하나라도 막는다");
   ok(/shownHits\.length >= 2/.test(hb), "★보여만 준 카드는 두 개 이상 겹쳐야 같은 소재로 본다(재고가 마르지 않게)");
-  ok(/\[\.\.\.w\]\.length >= 3 && publishedTokens/.test(hb), "★두 글자 흔한 말은 우연히 겹친다 — 세 글자부터");
+
   // ★엔화가 세 번 떴다(2026-08-05). 앞선 두 수리가 다 뚫린 이유 두 가지를 같이 막는다.
   ok(/homebet:recent:/.test(hb) && /3 \* 86400_000/.test(hb), "★보여준 카드를 3일 기억한다(발행 안 해도 이미 보여준 소재다)");
   ok(/const TOPIC_AXES/.test(hb) && /엔화\|엔·원\|엔원\|환율/.test(hb), "★주제 축 — 표기가 흔들려도(엔화→엔·원→환율) 같은 소재로 본다");
