@@ -410,7 +410,8 @@ export function ensureRelatedLinks(html: string, posts: { title: string; url: st
 //   그냥 통과했고, 그래서 유저가 네 번 연속 긴 글을 받았다. 부탁이 아니라 실행이어야 한다.
 //  ★자를 때 원칙: 뒤에서부터 섹션을 통째로 뺀다. 문장 중간을 자르면 글이 망가진다.
 //   클로징(마지막 블록)과 해시태그는 반드시 남긴다 — 그게 없으면 글이 뚝 끊긴 것처럼 보인다.
-export const HARD_CHAR_LIMIT = 2500;
+// ★2,500 → 3,200(2026-08-05 유저 확정: 체류시간·광고 슬롯 확보). 상한이지 목표가 아니다.
+export const HARD_CHAR_LIMIT = 3200;
 
 /** 본문을 하드 상한 안으로 줄인다. 섹션(h2) 단위로 뒤에서부터 제거하고, 클로징·해시태그는 보존한다. */
 export function hardTrimToLimit(html: string, count: (h: string) => number, limit = HARD_CHAR_LIMIT): { html: string; removed: string[] } {

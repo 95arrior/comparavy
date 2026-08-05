@@ -22,14 +22,22 @@ export interface PublishInput {
 
 const PHOTO_RE = /\[사진:\s*([^\]]+)\]/g;
 // ★슬롯 통합 — 사진·카드 둘 다 이미지 슬롯. 문서 순서로 인덱싱, images 맵이 URL 제공(사진=Gemini, 카드=satori).
-const SLOT_RE = /\[(사진|카드|차트):\s*([^\]]+)\]/g;
+// ★유저가 찾아 넣는 3종 추가(2026-08-05): 브랜드·표·인물.
+//  ★이걸 안 넣으면 새 마커가 파싱 대상이 아니라 대괄호째로 발행본에 노출된다 —
+//   마커를 만들 때는 '그리는 쪽'과 '지우는 쪽'을 반드시 같이 고쳐야 한다.
+const SLOT_RE = /\[(사진|카드|차트|브랜드|표|인물):\s*([^\]]+)\]/g;
 export interface Slot { type: "photo" | "card"; desc: string }
 // 본문의 슬롯을 문서 순서로 파싱(생성 파이프라인이 타입별로 렌더).
 export function parseSlots(bodyHtml: string): Slot[] {
   const out: Slot[] = [];
-  const re = /\[(사진|카드|차트):\s*([^\]]+)\]/g;
+  const re = /\[(사진|카드|차트|브랜드|표|인물):\s*([^\]]+)\]/g;
+  const FIND = new Set(["브랜드", "표", "인물"]); // 유저가 웹에서 찾아 넣는 것 — 우리가 그리지 않는다
   let m: RegExpExecArray | null;
-  while ((m = re.exec(bodyHtml))) out.push({ type: m[1] === "사진" ? "photo" : "card", desc: (m[1] === "차트" ? "차트: " : "") + m[2].trim() });
+  while ((m = re.exec(bodyHtml))) {
+    const kind = m[1]!;
+    const prefix = kind === "차트" ? "차트: " : FIND.has(kind) ? `${kind} 찾기: ` : "";
+    out.push({ type: kind === "카드" ? "card" : "photo", desc: prefix + m[2]!.trim() });
+  }
   return out;
 }
 // 카드 마커 desc('라벨=값 | 라벨=값') → CardItem 파싱.
@@ -38,8 +46,8 @@ export function parseCardItems(desc: string): { label: string; value: string }[]
 }
 // ★유출 판정 — '콜론형 원본 마커([사진: 설명])'와 '독자용 지시 문구'만 유출로 본다.
 //  깨끗한 '[사진 N]'(모바일 삽입 위치 표시)은 정상이라 건드리지 않는다.
-const PHOTO_MARKER_ANY_G = /\[\s*(?:사진|카드)[^\]]*\]/g;         // 모든 [사진/카드...] (rich에선 하나도 없어야)
-const INSTRUCTION_SRC = "\\[\\s*사진\\s*:[\\s\\S]*?\\]|사진을?\\s*(여기에\\s*)?(올려|넣어|추가|삽입)\\s*주세요";
+const PHOTO_MARKER_ANY_G = /\[\s*(?:사진|카드|브랜드|표|인물)[^\]]*\]/g;         // 모든 [사진/카드...] (rich에선 하나도 없어야)
+const INSTRUCTION_SRC = "\\[\\s*(?:사진|브랜드|표|인물)\\s*:[\\s\\S]*?\\]|사진을?\\s*(여기에\\s*)?(올려|넣어|추가|삽입)\\s*주세요";
 const INSTRUCTION_G = new RegExp(INSTRUCTION_SRC, "g");        // 콜론형 + 지시 문구
 // 이모지·픽토그램·기호(화살표 U+2190~21FF·가운뎃점·불릿은 보존).
 const EMOJI_RE = /[\u{1F1E6}-\u{1F1FF}\u{1F300}-\u{1FAFF}\u{1F000}-\u{1F0FF}\u{2300}-\u{23FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{2049}\u{203C}\u{2122}\u{2139}]/gu;

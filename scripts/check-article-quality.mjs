@@ -325,12 +325,16 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
 //   그래서 유저가 네 번 연속 긴 글을 받았다. 부탁이 아니라 실행이어야 한다.
 {
   const cnt = (h) => h.replace(/<[^>]+>/g, "").replace(/\s/g, "").length;
-  ok(HARD_CHAR_LIMIT === 2500, "★하드 상한 2,500자(유저 확정)", String(HARD_CHAR_LIMIT));
+  // ★2,500 → 3,200 상향(2026-08-05 유저 확정: "분량 필요하다면 더 늘려도 돼요. 체류시간에 도움이 되니깐.
+  //  대신 너무 길게 오바하지만 않게"). 종전 값은 '노출' 하나만 보고 정했는데,
+  //  애드포스트 수익은 노출 × 체류 × 슬롯이라 짧은 글은 슬롯도 체류도 함께 잃는다.
+  //  ★상한이 사라진 게 아니다 — 자르는 장치는 그대로 살아 있어야 한다(이게 없으면 7,000자 글이 다시 나온다).
+  ok(HARD_CHAR_LIMIT === 3200, "★하드 상한 3,200자(2026-08-05 상향)", String(HARD_CHAR_LIMIT));
 
   const sec = (t, n) => `<h2>${t}</h2><p>${"가".repeat(n)}</p>`;
-  const 긴글 = sec("첫 섹션", 800) + sec("둘째 섹션", 800) + sec("자주 묻는 질문", 700) + sec("셋째 섹션", 800) + "<p>마무리 문장</p>";
+  const 긴글 = sec("첫 섹션", 1000) + sec("둘째 섹션", 1000) + sec("자주 묻는 질문", 900) + sec("셋째 섹션", 1000) + "<p>마무리 문장</p>";
   const r = hardTrimToLimit(긴글, cnt);
-  ok(cnt(r.html) <= 2500, "★상한 안으로 줄인다", `${cnt(긴글)}자 → ${cnt(r.html)}자`);
+  ok(cnt(r.html) <= HARD_CHAR_LIMIT, "★상한 안으로 줄인다", `${cnt(긴글)}자 → ${cnt(r.html)}자`);
   ok(r.removed.includes("자주 묻는 질문"), "★FAQ부터 뺀다(본문이 이미 답한 것이라 손실이 가장 적다)", r.removed.join(","));
   ok(/마무리 문장/.test(r.html), "★클로징은 보존한다(뚝 끊긴 글이 되면 안 된다)");
 
@@ -370,9 +374,12 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   const ap = fs.readFileSync(new URL("../lib/articlePrompt.ts", import.meta.url), "utf-8");
   ok(/슬롯 설명 규격/.test(ap), "★사진 설명에 장소·시간·구도까지 요구한다");
   ok(/AI 인용 구조/.test(ap), "★수치는 표나 '라벨: 값'으로 세우게 한다");
-  ok(/하드 상한 2,500자/.test(ap), "★프롬프트에도 하드 상한이 명시됨");
+  ok(/하드 상한 3,200자/.test(ap), "★프롬프트에도 하드 상한이 명시됨");
   const md = fs.readFileSync(new URL("../CLAUDE.md", import.meta.url), "utf-8");
-  ok(/하드 상한 2,500자/.test(md), "★CLAUDE.md와 코드가 같은 숫자를 본다");
+  // ★숫자를 박아두면 상한을 올릴 때마다 이 검사만 깨진다(2026-08-05 실측).
+  //  지켜야 할 건 '2,500'이 아니라 '코드와 문서가 같은 값을 본다'다 — 상수에서 읽어 대조한다.
+  const mdNum = /하드 상한 ([\d,]+)자/.exec(md)?.[1]?.replace(/,/g, "");
+  ok(Number(mdNum) === HARD_CHAR_LIMIT, "★CLAUDE.md와 코드가 같은 숫자를 본다", `문서 ${mdNum} · 코드 ${HARD_CHAR_LIMIT}`);
 }
 
 
