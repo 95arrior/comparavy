@@ -104,19 +104,17 @@ for (const tier of Object.keys(TIER_LANE_MIX)) {
   ok(s.length >= 1, "홈판 0장이어도 short 열이 비지 않음", `→ ${s.length}장`);
   const c = countBy(s);
   ok((c.homefeed ?? 0) === 0, "홈판 0장이면 홈판 카드도 0", `→ ${c.homefeed ?? 0}`);
-  // ★[실사이트 검거 2026-08-01] 홈판이 '부분만' 나오는 경우 — 0장보다 이쪽이 훨씬 흔하다.
-  //  실제로 4장 요청에 3장이 나왔고, 트렌드가 이미 잘려 있어 열이 4장으로 서빙됐다.
-  for (const got of [1, 2, 3]) {
-    const col = onScreen(assembleShort("SEEDLING", { homefeedAvail: got, trendAvail: 20 }));
-    ok(col.length === PER.short, `홈판 ${got}/4장만 나와도 열이 5장을 채움`, `→ ${col.length}장`);
-    const c = countBy(col);
-    ok((c.homefeed ?? 0) === got, `  확보한 홈판 ${got}장은 그대로 실림`, `→ ${c.homefeed ?? 0}`);
-    ok((c.trend ?? 0) === PER.short - got, `  빈자리는 트렌드가 메움`, `→ ${c.trend ?? 0}`);
-  }
-  // 트렌드 재고까지 부족하면 열이 짧아지는 건 어쩔 수 없다 — 다만 있는 만큼은 다 실려야 한다
+  // ★홈판 레인 폐지(2026-08-05 유저 확정) — 조립이 홈판 없이도 열을 채우는가만 본다.
+  //  종전엔 '홈판이 부분만 나올 때'를 검증했는데, 이제 홈판은 0이 정상이다.
   {
-    const col = onScreen(assembleShort("SEEDLING", { homefeedAvail: 2, trendAvail: 1 }));
-    ok(col.length === 3, "홈판2·트렌드1이면 3장(있는 건 다 실림)", `→ ${col.length}장`);
+    const col = onScreen(assembleShort("SEEDLING", { homefeedAvail: 0, trendAvail: 20 }));
+    ok(col.length === PER.short, "홈판 없이도 열이 가득 찬다", `→ ${col.length}장`);
+    ok((countBy(col).homefeed ?? 0) === 0, "홈판 카드는 실리지 않는다", `→ ${countBy(col).homefeed ?? 0}`);
+  }
+  // 트렌드 재고가 부족하면 열이 짧아지는 건 어쩔 수 없다 — 다만 있는 만큼은 다 실려야 한다
+  {
+    const col = onScreen(assembleShort("SEEDLING", { homefeedAvail: 0, trendAvail: 3 }));
+    ok(col.length === 3, "트렌드 3장뿐이면 3장(있는 건 다 실림)", `→ ${col.length}장`);
   }
 
   // 헤드 후보가 없어도 long은 황금으로 채워진다
@@ -188,7 +186,9 @@ console.log(fail ? `\n실패 ${fail}건` : "\n통과: 보드 조립 + 홈판 판
   const l = columnQuota("SEEDLING", "long", COLUMN_SIZE.long);
   chk(s.homefeed + s.trend === COLUMN_SIZE.short, "★지금 뜨는 열 쿼터 합이 열 크기와 같다", `홈판 ${s.homefeed}·유행 ${s.trend}`);
   chk(l.golden + l.head === COLUMN_SIZE.long, "★꾸준한 수요 열도 마찬가지", `검색 ${l.golden}·어려운 ${l.head}`);
-  chk(s.homefeed >= 5, "★홈판이 하루 5편 이상(비중 확대 확인)", String(s.homefeed));
+  // ★홈판 레인 폐지(2026-08-05 유저 확정) — 지켜야 할 것은 '지금 뜨는 열이 전부 트렌드로 찬다'다
+  chk(s.homefeed === 0, "★홈판 레인 폐지", String(s.homefeed));
+  chk(s.trend === COLUMN_SIZE.short, "★지금 뜨는 열을 트렌드가 전부 채운다", String(s.trend));
 
   const d = dayQuota("SEEDLING");
   chk(d.golden + d.homefeed + d.trend + d.head === 10, "★하루 쿼터 합 = 10편", JSON.stringify(d));

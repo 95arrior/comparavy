@@ -65,9 +65,15 @@ export const TIER_LANE_MIX: Record<string, Record<Lane, number>> = {
   //  ★열 크기도 같이 바꾼다(아래 COLUMN_SIZE): 지금 뜨는 7장 / 꾸준한 수요 3장.
   //  ★헤드 5→10: 열이 3장으로 줄면 5%로는 자리가 0이 된다. 헤드는 밴드 사다리 장치라
   //   '꾸준한 수요를 줄이자'가 '헤드를 버리자'는 뜻은 아니다 — 체급이 오르면 그 글이 뒤늦게 일한다.
-  SEEDLING: { golden: 20, homefeed: 50, trend: 20, head: 10 },
-  GROWING: { golden: 40, homefeed: 30, trend: 15, head: 15 },
-  ESTABLISHED: { golden: 30, homefeed: 25, trend: 15, head: 30 },
+  // ★홈판 레인 폐지(2026-08-05 유저 확정: "굳이 홈판용을 빼지 말자. 그냥 지금 뜨는·꾸준한 수요 두 개로 가자.
+  //  어차피 홈판은 랜덤이라 둘 중에 알아서 가져가겠지").
+  //  ★맞는 판단이다. 홈판 전용 카드는 '검색 키워드가 아니라 주제 앵커'라 별도 규격이 필요했고,
+  //   그 규격 때문에 결품이 상시화됐다(오늘만 세 번 수리하고도 out 0). 네이버 홈피드는 어떤 글이든
+  //   가져갈 수 있으므로, 전용 레인을 두는 대신 좋은 글을 두 종족으로 꾸준히 내는 쪽이 낫다.
+  //  ★코드는 남긴다(homefeed 키 0) — 되돌리고 싶으면 숫자만 되돌리면 된다.
+  SEEDLING: { golden: 40, homefeed: 0, trend: 50, head: 10 },
+  GROWING: { golden: 50, homefeed: 0, trend: 30, head: 20 },
+  ESTABLISHED: { golden: 40, homefeed: 0, trend: 25, head: 35 },
 };
 
 // ★열↔레인 매핑(2026-08-01 — 이중체크에서 검거).

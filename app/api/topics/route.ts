@@ -998,7 +998,11 @@ export async function GET(req: Request) {
         // ★예산 초과면 이번엔 건너뛰되, 배경에서 만들어 캐시를 데워 둔다(2026-08-05 실측).
         //  종전엔 그냥 건너뛰기만 해서, 서빙이 늘 22초를 넘는 지금은 홈판이 영영 안 만들어졌다 —
         //  ★'다음에 하자'가 '영영 안 함'이 되는 자리였다.
-        if (overBudget()) {
+        if (colShort.homefeed <= 0) {
+          // ★홈판 레인 폐지(2026-08-05 유저 확정) — 만들 자리가 없으면 만들지 않는다.
+          //  LLM 8회가 서빙 경로에서 통째로 빠진다(504와 22초 초과의 최대 원인이었다).
+          console.log("[homebet] 레인 폐지 — 생성 건너뜀");
+        } else if (overBudget()) {
           after(async () => {
             try {
               await pickHomefeedBets(createSupabaseAdminClient(), user.id, sub ?? "", usedSet, colShort.homefeed, {
@@ -1011,7 +1015,7 @@ export async function GET(req: Request) {
             } catch (e) { console.error("[homebet] 배경 생성 실패:", e instanceof Error ? e.message : e); }
           });
         }
-        const bets = overBudget() ? [] : await pickHomefeedBets(pool, user.id, sub ?? "", usedSet, colShort.homefeed, {
+        const bets = (colShort.homefeed <= 0 || overBudget()) ? [] : await pickHomefeedBets(pool, user.id, sub ?? "", usedSet, colShort.homefeed, {
           isDup: (title, keyword) => usedForbidden(`${title} ${keyword}`),
           recentTitles,
           // ★최근 14일 키워드 — 소재(핵심어) 반복을 코드가 막는다(2026-08-05: 어제 쓴 엔화·전기차가 오늘 또 섰다)
