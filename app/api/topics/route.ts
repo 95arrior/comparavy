@@ -17,6 +17,7 @@ import { getTrendTopics, refreshCategoryTrends, hasFreshTrends } from "@/lib/tre
 import { amplifyForUser } from "@/lib/amplifyTopics";
 import { fetchKeywordStats, normalizeKey, fetchRelatedKeywords } from "@/lib/naverKeyword";
 import { poolScore, isBigPool } from "@/lib/trafficPool";
+import { preemptVerdict, preemptWhy } from "@/lib/preemptGate";
 import { finalGate, ANSWER_LOCKED_RE, EXPERIENCE_RE, AI_BRIEF_ENDED_RE, weekendAdjust, staleForRising, RISING_STALE_MAX } from "@/lib/cardFinalGate";
 import { pickHomefeedBets, lastHomebetDiag } from "@/lib/homefeedBet";
 import { collectPoolKeywords } from "@/lib/poolCollect";
@@ -810,14 +811,32 @@ export async function GET(req: Request) {
               const st = stats.get(normalizeKey(c.keyword));
               if (st) { c.vol = st.mobile + st.pc; (c as { volMeasured?: boolean }).volMeasured = true; }
             }
-            // ★수요 하한 — 못 잰 건 자르지 않는다(측정 실패와 '수요 없음'은 다른 말이다).
+            // ★수요 하한 — 다만 '선점형'은 면제한다(2026-08-05 유저 제기).
+            //  검색량은 지난 30일 평균이라 오늘 터진 일을 원리상 담지 못한다.
+            //  즉 검색량 0에는 "영영 안 찾음"과 "아직 안 왔음"이 섞여 있다 — 그 둘을 preemptGate가 가른다.
+            //  ★못 잰 건 자르지 않는다(측정 실패와 '수요 없음'은 다른 말이다).
             const before = tc.length;
-            const weak = tc.filter((c) => (c as { volMeasured?: boolean }).volMeasured === true && Number(c.vol ?? 0) < DEMAND_MIN);
+            const weak: { keyword: string; vol: number; why: string }[] = [];
+            const kept: typeof tc = [];
+            for (const c of tc) {
+              const measured = (c as { volMeasured?: boolean }).volMeasured === true;
+              const v = Number(c.vol ?? 0);
+              if (!measured || v >= DEMAND_MIN) { kept.push(c); continue; }
+              const src = (c as { seedSource?: string }).seedSource ?? (c.sel as { seedSource?: string } | undefined)?.seedSource ?? null;
+              const pv = preemptVerdict(c.keyword, src, (c as { blogTotal?: number | null }).blogTotal ?? null);
+              if (pv.eligible) {
+                (c as { preemptWhy?: string }).preemptWhy = preemptWhy(pv) ?? undefined;
+                kept.push(c);
+                console.log(`[preempt] 검색량 0 면제 — ${c.keyword} (${pv.reasons.join("·")})`);
+                continue;
+              }
+              weak.push({ keyword: c.keyword, vol: v, why: pv.blockedBy ?? "수요 미달" });
+            }
             if (weak.length) {
-              tc = tc.filter((c) => !((c as { volMeasured?: boolean }).volMeasured === true && Number(c.vol ?? 0) < DEMAND_MIN));
+              tc = kept;
               noDemand = before - tc.length;
-              console.log(`[demand] 수요 미달 제외 ${noDemand}장(월 ${DEMAND_MIN}회 미만) — ${weak.map((c) => `${c.keyword}(${c.vol}회)`).join(", ")}`);
-              if (debugMode) diag.noDemand = weak.map((c) => ({ keyword: c.keyword, vol: Number(c.vol ?? 0) }));
+              console.log(`[demand] 수요 미달 제외 ${noDemand}장(월 ${DEMAND_MIN}회 미만) — ${weak.map((w) => `${w.keyword}(${w.vol}회, ${w.why})`).join(", ")}`);
+              if (debugMode) diag.noDemand = weak;
             }
           }
         } catch (e) {
@@ -936,6 +955,24 @@ export async function GET(req: Request) {
     // ★원천 칸 집계(2026-08-05 유저 요청: "카테고리 칸을 나눠서, 청약홈 칸에 글감이 있고 없고를 알게").
     //  어느 원천이 조용한지 한눈에 보이면, '이슈가 없는 것'과 '우리가 못 잡은 것'을 구분할 수 있다.
     tc = stampSlots(tc);
+    // ★적중률 원장(2026-08-05 유저: "적중률 재는 기능 만들어주세요").
+    //  ★재는 대상은 '우리 추천이 맞았나'지 '유저가 썼나'가 아니다 — 발행 여부와 무관하게 낸 것을 전부 남긴다.
+    //   유저가 쓴 것만 세면 원천 평가가 아니라 유저 취향 평가가 된다.
+    //  ★응답을 막지 않는다(after) — 계측 때문에 화면이 느려지면 계측을 끄게 된다.
+    after(async () => {
+      try {
+        const day = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
+        const rows = tc.map((c) => ({
+          user_id: user.id, blog_id: (profile as { id?: string } | null)?.id ?? null, date: day,
+          keyword: c.keyword, norm: c.keyword.replace(/\s+/g, "").toLowerCase(),
+          seed_source: (c as { seedSource?: string }).seedSource ?? (c.sel as { seedSource?: string } | undefined)?.seedSource ?? null,
+          lane: c.tag === "홈판" ? "homefeed" : (c as { risingSeed?: boolean }).risingSeed || c.tag === "trend" ? "trend" : "steady",
+          vol: Number(c.vol ?? 0) || null, blog_total: (c as { blogTotal?: number | null }).blogTotal ?? null,
+          preempt: Boolean((c as { preemptWhy?: string }).preemptWhy),
+        }));
+        if (rows.length) await createSupabaseAdminClient().from("served_topics").upsert(rows, { onConflict: "user_id,date,norm" });
+      } catch (e) { console.error("[hitrate] 서빙 기록 실패:", e instanceof Error ? e.message : e); }
+    });
     if (debugMode) diag.slots = slotCount(tc);
     if (debugMode) diag.colShort = { ...colShort, homefeedGot: homeCards.length, homeDrop, trendRoom, served: tc.length, trendFunnel: funnel };
     return NextResponse.json(debugMode ? { topics: tc, diag: { ...diag, mode: "short", trendCards: tc.length } } : { topics: tc, ...(FF.perfLoop ? { ff: { perfLoop: true } } : {}) });

@@ -7,6 +7,21 @@ import { useEffect, useState } from "react";
 interface SummaryRow { label: string; sample: number; rate: number; mature: boolean }
 interface Summary { enabled: boolean; winners: SummaryRow[]; losers: SummaryRow[]; watching: SummaryRow[]; minSample: number; revenue30: number; inflow30: number }
 
+// ★글감 적중률(2026-08-05 유저 요청) — "우리가 낸 글감이 실제 유입 검색어에 있었나".
+//  ★북극성은 적중률이 아니라 커버리지다: 조금 내고 다 맞히면 적중률은 100%지만 아무것도 못 덮은 것이다.
+interface SourceStat { source: string; served: number; hit: number; rate: number; inflow: number; avgLead: number }
+interface Hitrate {
+  ready: boolean; reason?: string; howto?: string; days: number;
+  servedCount?: number; inflowCount?: number; hitCount?: number; coverage?: number;
+  sources?: SourceStat[]; missed?: { date: string; keyword: string; inflow: number }[];
+  hits?: { keyword: string; inflow_keyword: string; inflow: number; lead_days: number; seed_source: string | null }[];
+}
+const SOURCE_KO: Record<string, string> = {
+  gov: "정책브리핑", calendar: "확정 일정", dart: "DART 공시", community: "커뮤니티",
+  rising: "실시간 급상승", news: "네이버 뉴스", discover: "자동완성", applyhome: "청약홈",
+  gov24: "보조금24", bizinfo: "기업마당", season: "시즌", homebet: "홈피드 배팅", pool: "검색풀", 미상: "미상",
+};
+
 export default function PerfImportSheet({ onClose }: { onClose: () => void }) {
   const [kind, setKind] = useState<"inflow" | "revenue">("inflow");
   const [text, setText] = useState("");
@@ -15,9 +30,11 @@ export default function PerfImportSheet({ onClose }: { onClose: () => void }) {
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
+  const [hr, setHr] = useState<Hitrate | null>(null);
 
   useEffect(() => {
     fetch("/api/perf-summary").then((r) => r.json()).then((d) => { if (d?.enabled) setSummary(d as Summary); }).catch(() => null);
+    fetch("/api/hitrate?days=7").then((r) => r.json()).then((d) => setHr(d as Hitrate)).catch(() => null);
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -34,6 +51,7 @@ export default function PerfImportSheet({ onClose }: { onClose: () => void }) {
       else {
         setMsg(kind === "inflow" ? `유입 키워드 ${d.imported}개를 기록했어요${d.poolCandidates ? ` (새 글감 후보 ${d.poolCandidates}개 발견)` : ""}.` : `일별 수익 ${d.imported}건을 기록했어요.`);
         setText("");
+        fetch("/api/hitrate?days=7").then((r) => r.json()).then((d) => setHr(d as Hitrate)).catch(() => null);
       }
     } catch { setErr("네트워크 오류예요. 다시 시도해 주세요."); }
     setBusy(false);
@@ -65,6 +83,59 @@ export default function PerfImportSheet({ onClose }: { onClose: () => void }) {
         </button>
         {msg && <p className="mt-2 text-[12.5px] font-semibold text-emerald-600">{msg}</p>}
         {err && <p className="mt-2 text-[12.5px] font-medium text-amber-600">{err}</p>}
+
+        {/* ★글감 적중률 — 이 화면의 존재 이유다. 원천을 다섯 개 붙였는데 어느 게 일하는지 증거가 없었다. */}
+        {hr && (
+          <div className="mt-5 border-t border-black/[0.06] pt-4">
+            <p className="text-[13.5px] font-bold text-neutral-800">글감 적중률 <span className="text-[11.5px] font-semibold text-neutral-400">최근 {hr.days}일</span></p>
+            {!hr.ready ? (
+              // ★재료가 없으면 0%라고 쓰지 않는다 — 0과 '아직 못 잼'은 다른 말이다
+              <div className="mt-2 rounded-[12px] bg-neutral-50 p-3">
+                <p className="text-[12.5px] font-bold text-neutral-600">{hr.reason}</p>
+                <p className="mt-1 text-[11.5px] leading-relaxed text-neutral-400">{hr.howto}</p>
+              </div>
+            ) : (
+              <>
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {([["커버리지", `${hr.coverage}%`, "실제 유입 검색어 중 우리가 미리 낸 비율"],
+                     ["적중", `${hr.hitCount}건`, "유입 검색어와 맞은 글감 수"],
+                     ["낸 글감", `${hr.servedCount}개`, "같은 기간에 보드에 올린 글감"]] as const).map(([k, v, t]) => (
+                    <div key={k} className="rounded-[12px] bg-neutral-50 p-2.5 text-center" title={t}>
+                      <p className="text-[10.5px] font-bold text-neutral-400">{k}</p>
+                      <p className="mt-0.5 text-[16px] font-extrabold tabular-nums text-[#1D75F7]">{v}</p>
+                    </div>
+                  ))}
+                </div>
+                {!!hr.sources?.length && (
+                  <div className="mt-3">
+                    <p className="text-[12px] font-bold text-neutral-600">원천별 성적</p>
+                    <div className="mt-1.5 flex flex-col gap-1">
+                      {hr.sources.filter((s) => s.served > 0).map((s) => (
+                        <div key={s.source} className="flex items-center gap-2 rounded-[10px] bg-neutral-50 px-2.5 py-1.5">
+                          <span className="w-[74px] shrink-0 truncate text-[11.5px] font-bold text-neutral-600">{SOURCE_KO[s.source] ?? s.source}</span>
+                          <span className="flex-1 text-[11px] tabular-nums text-neutral-400">{s.hit}/{s.served}</span>
+                          {s.hit > 0 && s.avgLead > 0 && <span className="text-[10.5px] font-semibold text-emerald-600">{s.avgLead}일 먼저</span>}
+                          <span className={`text-[12px] font-extrabold tabular-nums ${s.rate >= 20 ? "text-emerald-600" : s.rate > 0 ? "text-[#1D75F7]" : "text-neutral-300"}`}>{s.rate}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {/* ★놓친 것이 더 중요하다 — 여기가 다음에 붙일 원천을 알려준다 */}
+                {!!hr.missed?.length && (
+                  <div className="mt-3">
+                    <p className="text-[12px] font-bold text-amber-600">놓친 유입 검색어 <span className="font-semibold text-neutral-400">— 여기가 다음에 메울 자리예요</span></p>
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {hr.missed.slice(0, 14).map((m) => (
+                        <span key={`${m.date}${m.keyword}`} className="rounded bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-700">{m.keyword}<span className="ml-1 tabular-nums opacity-60">{m.inflow}</span></span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
 
         {summary && (summary.winners.length + summary.losers.length + summary.watching.length > 0 || summary.inflow30 > 0) && (
           <div className="mt-5 border-t border-black/[0.06] pt-4">
