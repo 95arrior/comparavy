@@ -1,4 +1,5 @@
-import { finalGate, adsenseUnsafe, topicIntent, weekendAdjust } from "../lib/cardFinalGate.ts";
+import fs from "node:fs";
+import { finalGate, adsenseUnsafe, topicIntent, weekendAdjust, consumeOnlyTopic } from "../lib/cardFinalGate.ts";
 import { nearDuplicate } from "../lib/diversity.ts";
 import { isStickyFrame, pickDiverseCopy } from "../lib/thumbCopyDiversity.ts";
 import { isPushable, pushGain, isZeroClickQuery } from "../lib/serpCtr.ts";
@@ -83,6 +84,7 @@ const cases = [
   { c: { keyword: "2026년 연말정산", title: "2026년 연말정산, 달라지는 공제 한도" }, drop: null },
 ];
 let fail = 0;
+const chk_ = (c, m) => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "|", m); };
 for (const { c, drop } of cases) {
   const g = finalGate([c]);
   const got = g.drops[0]?.reason ?? null;
@@ -397,6 +399,19 @@ console.log("\n수명 컷 — 마감이 지났는가로만 가른다:");
     "★접수 중인 2차 공고는 산다");
   chk(one({ keyword: "더 리치먼드 미아 2차 무순위 청약", title: "더 리치먼드 미아(2차) 무순위 청약, 접수 안내", seedSource: "applyhome", actionEnd: pa }), "round_topic",
     "★접수가 끝난 2차 공고는 죽는다");
+}
+
+// ★소비형(퀴즈·정답) 차단 — 2026-08-06 유저 판단으로 '유지' 확정.
+//  8/5 인기유입검색어 20개 중 4개(20%)가 은행 앱 퀴즈였는데도 안 연다: 3원칙의 계정지속이 먼저다.
+//  ★이 검사의 임무는 '알고 안 한다'는 기록을 지키는 것이다 — 수치가 코드에서 사라지면
+//   다음에 누군가 "유입 20%를 왜 버리지?"로 되돌린다.
+{
+  const gate = fs.readFileSync(new URL("../lib/cardFinalGate.ts", import.meta.url), "utf-8");
+  for (const q of ["케이뱅크 황금캡슐 퀴즈", "우리은행 여름간식 퀴즈", "출석체크 이벤트", "룰렛 이벤트"])
+    chk_(consumeOnlyTopic(q) !== null, `★소비형 차단: ${q}`);
+  chk_(consumeOnlyTopic("근로장려금 지급일") === null, "정상 글감은 통과");
+  chk_(/4개\(20%\)가 은행 앱 퀴즈였다/.test(gate), "★치르고 있는 값이 숫자로 적혀 있다");
+  chk_(/알고 안 한다/.test(gate), "★'몰라서'가 아니라 '알고 안 한다'가 기록돼 있다");
 }
 
 process.exit(fail ? 1 : 0);
