@@ -83,19 +83,9 @@ const SEASON: CalEvent[] = [
     brief: "정부·지자체 숙박 할인과 근로자 휴가지원 사업을 신청 순서로 정리한다." },
 ];
 
-// ── 주간 — 매주 같은 요일에 반복된다 ──
-//  ★토요일 로또는 경제 카테고리 상위 단골이다(6/27 실측: 'new'로 진입).
-function weeklyLotto(now: Date): CalEvent[] {
-  const kst = new Date(now.getTime() + 9 * 3600_000);
-  const dow = kst.getUTCDay();               // 0=일 … 6=토
-  const untilSat = (6 - dow + 7) % 7;        // 다음 토요일까지
-  const sat = new Date(kst.getTime() + untilSat * 86400_000);
-  return [{
-    date: sat.toISOString().slice(0, 10), slot: "weekly", lead: 1, confidence: "confirmed",
-    label: "로또 추첨(매주 토)", keywords: ["로또", "로또 당첨번호"],
-    brief: "추첨일이다. ★번호를 예측하거나 추천하지 마라(사행성 유인 금지). 당첨금 세금·수령 기한·지급 절차처럼 '확인 가능한 사실'만 다룬다.",
-  }];
-}
+// ── 주간 반복 일정 ──
+//  ★로또는 뺐다(2026-08-05 유저 지시). 6/27 실측에서 상위 단골이긴 했으나 유저가 이 축을 닫았다.
+//   되살리지 마라 — 검색량만 보고 다시 넣기 쉬운 자리다.
 
 // ── 정책 발표 — 연례 일정. 2026년 실측 확인분 ──
 //  ★2026 세제개편안: 8/3 세제발전심의위 확정·발표 → 8/4~20 입법예고 → 8/27 차관회의 → 9/1 국무회의 → 9/3 국회 제출
@@ -131,7 +121,7 @@ export interface UpcomingCal extends CalEvent { dday: number }
  */
 export function upcomingCal(now: Date = new Date()): UpcomingCal[] {
   const t = todayKstNum(now);
-  return [...CAL_EVENTS, ...weeklyLotto(now)]
+  return [...CAL_EVENTS]
     .map((e) => ({ ...e, dday: Math.round((dayNumKst(e.date) - t) / 86400_000) }))
     .filter((e) => e.dday >= 0 && e.dday <= e.lead)
     .sort((a, b) => a.dday - b.dday);

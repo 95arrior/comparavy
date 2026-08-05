@@ -33,9 +33,12 @@ console.log("\n② 실측으로 확인한 일정이 들어 있는가:");
   // 6/27 조사에서 확인된 것
   ok(has("근로장려금"), "★근로장려금 지급일");
   ok(has("냉방지원금"), "★냉방지원금(6/27 유입 실물)");
-  // 로또는 매주 생성되므로 CAL_EVENTS에 없다 — 금·토에만 창이 열린다(lead 1)
-  ok(upcomingCal(new Date("2026-08-07T12:00:00+09:00")).some((e) => e.keywords.includes("로또")), "★로또는 금요일(D-1)에 뜬다");
-  ok(!upcomingCal(new Date("2026-08-05T12:00:00+09:00")).some((e) => e.keywords.includes("로또")), "★수요일엔 안 뜬다(너무 이르다)");
+  // ★로또 제외(2026-08-05 유저 지시) — 어느 날짜에도 나오면 안 된다.
+  //  검색량이 커서 다시 넣고 싶어지는 자리다. 그래서 '안 나온다'를 테스트로 못 박는다.
+  for (const d of ["2026-08-05", "2026-08-07", "2026-08-08"]) {
+    ok(!upcomingCal(new Date(`${d}T12:00:00+09:00`)).some((e) => e.keywords.some((k) => k.includes("로또"))), `★로또 없음 (${d})`);
+  }
+  ok(!CAL_EVENTS.some((e) => e.keywords.some((k) => k.includes("로또"))), "★고정 일정에도 로또 없음");
 }
 
 console.log("\n③ 선행 트리거 — lead일 안에만 뜬다:");
