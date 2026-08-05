@@ -11,7 +11,10 @@ const ok = (c, m) => { if (!c) { fail++; console.log(`  !! ${m}`); } else consol
 
 console.log("① 상단 칩 3개 — 항상, 접두어까지:");
 {
-  ok(/: \{\(topic as \{ seedKeyword/.test(home), "★'키워드 : ' 접두어");
+  // ★칩의 키워드는 '숫자를 잰 그 말'이어야 한다(2026-08-05 실측: 칩은 씨앗, 문서 수는 글감 키워드였다)
+  ok(/\? "주제" : "키워드"\} : \{topic\.keyword\}/.test(home), "★칩이 실제로 잰 키워드를 보여준다");
+  ok(/씨앗은 아래 근거 줄에서 밝힌다/.test(home) && /seedNote/.test(home), "★씨앗은 근거 줄에서 밝힌다");
+  ok(/volBase/.test(home) && /기준\)/.test(home), "★검색량이 부분 매치면 무슨 말 기준인지 적는다(잣대가 다르면 그게 거짓이다)");
   ok(/출처 : \{srcLabel\}/.test(home), "★'출처 : ' 접두어");
   ok(/문서 : \{bt\.toLocaleString/.test(home), "★'문서 : ' 접두어");
   // ★빈칸 금지 — 못 쟀으면 못 쟀다고 적는다(0으로 적으면 선점 최적으로 오해한다)

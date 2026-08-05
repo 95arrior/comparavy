@@ -1161,6 +1161,11 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
     return "오늘 수확된 실시간 이슈 · 신선할 때가 기회";
   })();
   const srcLabel = sourceLabelOf(topic);
+  // ★씨앗이 글감 키워드와 다르면 밝힌다 — 칩은 '잰 말'을 보여주므로, 어디서 왔는지는 여기서 말한다
+  const seedNote = (() => {
+    const sk = (topic as { seedKeyword?: string }).seedKeyword;
+    return sk && sk.replace(/\s+/g, "") !== topic.keyword.replace(/\s+/g, "") ? ` (씨앗: ${sk})` : "";
+  })();
   // ★활용 계획 — "어떻게 글감으로 쓸 건지"(유저 목업).
   //  ★있는 값에서만 만든다. 없는 날짜·수치를 붙이면 그 순간 카드가 거짓말이 된다(유저: "절대").
   const usePlan = (() => {
@@ -1215,8 +1220,12 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
       <div className="flex flex-wrap items-center gap-1">
         {/* ★홈판 카드의 keyword는 검색어가 아니라 '주제 앵커'다(2026-08-05 유저 화면: "코스피 급등 내 돈").
             그걸 '키워드'라고 적으면 사장님이 검색어로 오해한다 — 아무도 그렇게 검색하지 않는다. */}
+        {/* ★칩의 키워드는 '숫자를 잰 그 말'이어야 한다(2026-08-05 유저 실측).
+            종전엔 칩에 씨앗을, 숫자는 글감 키워드로 재서 서로 다른 말을 나란히 붙였다 —
+            "페이코 포인트 출금" 칩 옆에 "문서 2편"(그건 '페이코 포인트 출금 방법'의 값)이 섰다.
+            씨앗은 아래 근거 줄에서 밝힌다. */}
         <span className="max-w-full truncate rounded bg-[#F1EEFF] px-1.5 py-0.5 text-[10px] font-bold text-[#6B4DE6]">
-          {topic.tag === "홈판" ? "주제" : "키워드"} : {(topic as { seedKeyword?: string }).seedKeyword || topic.keyword}
+          {topic.tag === "홈판" ? "주제" : "키워드"} : {topic.keyword}
         </span>
         {srcLabel && <span className="shrink-0 rounded bg-[#F1F3F5] px-1.5 py-0.5 text-[10px] font-bold text-[#4E5968]">출처 : {srcLabel}</span>}
         {/* ★0과 '못 잼'은 다른 말이다 — 못 잰 자리에 0을 적으면 선점 최적으로 오해한다 */}
@@ -1231,8 +1240,13 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
         {/* ★검색량(2026-08-05 유저: "남들이 관심 없는 키워드는 아니죠?").
             문서 수만으로는 '얇은 자리'인지 '아무도 안 찾는 자리'인지 구분이 안 된다 — 둘 다 적어야 판단이 된다. */}
         {Number(topic.vol ?? 0) > 0 && (
-          <span className="shrink-0 rounded bg-[#EAF2FF] px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-[#1D75F7]" title="네이버 광고 API 실측 — 최근 30일 월 검색수">
+          <span className="shrink-0 rounded bg-[#EAF2FF] px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-[#1D75F7]"
+            title={(topic as { volBase?: string }).volBase
+              ? `'${(topic as { volBase?: string }).volBase}' 기준 월 검색수예요 — 긴 구는 광고 데이터가 없어 앞부분으로 쟀어요`
+              : "네이버 광고 API 실측 — 최근 30일 월 검색수"}>
             검색 : {Number(topic.vol).toLocaleString("ko-KR")}회/월
+            {/* ★무엇을 기준으로 잰 값인지 숨기지 않는다 — 문서 수와 잣대가 다르면 그게 곧 거짓이 된다 */}
+            {(topic as { volBase?: string }).volBase ? <span className="font-semibold opacity-70"> ({(topic as { volBase?: string }).volBase} 기준)</span> : null}
           </span>
         )}
         {publishedOn && <span className="shrink-0 rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] font-bold text-neutral-500">{publishedOn}</span>}
@@ -1243,7 +1257,9 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
           min-h로 두 줄 자리를 늘 확보해 박스 규격을 일정하게 만든다. */}
       <p className="mt-1.5 line-clamp-2 min-h-[2.5rem] text-[13.5px] font-extrabold leading-[1.28] text-[color:var(--color-text)]">{topic.title}</p>
       {/* ★근거 — 어떤 근거로 가져왔고(수확 사실) 어떻게 쓸 것인지(활용 계획)를 한 줄에. 둘 다 실값에서만 만든다. */}
-      <p className="mt-1 line-clamp-2 min-h-[2rem] text-[11px] leading-[1.35] text-[#8B95A1]">근거 : {evidence}{usePlan ? ` → ${usePlan}` : ""}</p>
+      <p className="mt-1 line-clamp-2 min-h-[2rem] text-[11px] leading-[1.35] text-[#8B95A1]">
+        근거 : {evidence}{seedNote}{usePlan ? ` → ${usePlan}` : ""}
+      </p>
       <div className="mt-auto flex items-center gap-2 pt-2">
         {pubAdvice && <span className={`text-[11px] font-semibold ${pubAdvice.hot ? "text-[#F04452]" : "text-neutral-400"}`}>{pubAdvice.text}</span>}
         {life && <span className="text-[10.5px] font-semibold tabular-nums text-amber-600">{life}</span>}

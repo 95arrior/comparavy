@@ -195,6 +195,19 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
     const ctx = heads.slice(0, 6).map((n) => `- [${n.press || n.seed}] ${n.title}: ${n.description.slice(0, 130)}`).join("\n") || null;
 
     const seen = new Set<string>();
+    // ★근접 중복(2026-08-05 실측: 캘린더 '주민세'와 시즌 '주민세 납부'가 둘 다 씨앗이 됐다).
+    //  문자열이 달라 seen을 통과했고, 증식에서 시즌이 이겨 캘린더 칸이 0으로 남았다 —
+    //  같은 소재가 두 원천으로 들어오면 먼저 잡은 쪽(더 확실한 근거를 가진 쪽)이 이겨야 한다.
+    const nearDup = (kw: string): boolean => {
+      const a = kw.replace(/\s+/g, "");
+      if (a.length < 3) return false;
+      for (const b of seen) {
+        const c = b.replace(/\s+/g, "");
+        if (c.length < 3) continue;
+        if (a.includes(c) || c.includes(a)) return true;
+      }
+      return false;
+    };
     // ★대조 원문 — 합성에 넣어 준 헤드라인 전체(제목+요약). 여기 없는 말은 모델이 만든 것이다.
     const sourceCorpus = heads.map((h) => `${h.title} ${h.description ?? ""}`).join(" ");
     const rows = [];
@@ -386,7 +399,7 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
 
     // ★시즌 캘린더 주입 — D-14 이내 예측 가능 이슈(뉴스 신선도 게이트 면제, 자동완성 게이트는 동일 적용)
     for (const ev of seasonalSeeds(category)) {
-      if (seen.has(ev.keyword)) continue;
+      if (seen.has(ev.keyword) || nearDup(ev.keyword)) continue; // ★캘린더가 먼저 잡은 소재면 양보한다
       seen.add(ev.keyword);
       rows.push({ category, keyword: ev.keyword, title: ev.title, news_context: `[시즌 이슈: ${ev.title}] ★반드시 '${category}' 카테고리 관점으로만 다룬다 — 이 블로그 주제와 무관한 일반 시즌 글 금지(예: 자동차 블로그면 휴가철 장거리 운전 전 점검·차량 용품, 여행 블로그면 여행지·예약). 제목에도 카테고리 관점이 드러나야 한다.`, longtails: [] as Longtail[], source: "season", created_at: new Date().toISOString(), expires_at: expires });
     }
@@ -395,7 +408,7 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
     //  언제 터질지 100% 아는 유일한 재료라 선점 창(발표 D-2~D-0)에만 씨앗으로 넣는다.
     //  뉴스 신선도 게이트 면제 — 확정 일정이라 '오늘 기사'가 근거일 필요가 없다.
     for (const ev of econSeeds(category)) {
-      if (seen.has(ev.keyword)) continue;
+      if (seen.has(ev.keyword) || nearDup(ev.keyword)) continue; // ★캘린더가 먼저 잡은 소재면 양보한다
       seen.add(ev.keyword);
       rows.push({ category, keyword: ev.keyword, title: ev.title, news_context: ev.newsContext, longtails: [] as Longtail[], source: "season", created_at: new Date().toISOString(), expires_at: expires });
       console.log(`[econ-preempt] ${category}: ${ev.keyword} — ${ev.title}`);

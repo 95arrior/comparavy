@@ -148,7 +148,7 @@ export async function pickHomefeedBets(
   //  옛 캐시는 '어제 유형 · 어제 소재'로 만들어진 세트라 그대로 두면 오늘도 같은 카드가 선다.
   // ★v6(2026-08-05) — 캐시에서 꺼낼 때도 '최근 소재 반복'을 거르도록 바꿨다.
   //  옛 캐시는 그 필터 이전에 저장된 세트라, 버전을 안 올리면 발행한 소재(엔화)가 하루 종일 남는다.
-  const cacheKey = `homebet:v6:${userId}:${kstDay}:${want}`;
+  const cacheKey = `homebet:v7:${userId}:${kstDay}:${want}`;
   let alive: HomefeedBet[] = []; // 캐시에서 살아남은(아직 안 쓴) 카드 — 부족분만 새로 만든다
   // ★최근 소재 기억(2026-08-05 — 엔화가 세 번째로 떴다. 앞선 두 번의 수리가 다 뚫렸다).
   //  왜 뚫렸나: 판정 재료가 '발행한 글'뿐이었다. 그런데 카드는 발행 안 해도 이미 보여준 소재다.
@@ -167,11 +167,18 @@ export async function pickHomefeedBets(
   const topicTokens = (t: string) => String(t || "").split(/[\s·,]+/)
     .map((w) => w.replace(/[^가-힣a-zA-Z0-9]/g, ""))
     .filter((w) => [...w].length >= 2 && !TOPIC_STOP.has(w) && !/^\d+$/.test(w));
-  const recentTopicTokens = new Set<string>([
+  // ★두 기억을 나눈다(2026-08-05 실측: round1 4장 → dupDropped 4 → out 0, 홈판 전멸).
+  //  종전엔 '토큰 하나만 겹쳐도 중복'이었다. 3일치가 쌓이면 토큰 집합이 커져서 뭘 만들어도 걸린다 —
+  //  중복을 막으려던 규칙이 생산 자체를 막고 있었다.
+  //  ★쓴 글과 보여만 준 카드는 무게가 다르다:
+  //   · 발행한 글 → 같은 말이 하나만 겹쳐도 곤란하다(내 글끼리 잡아먹는다)
+  //   · 보여만 준 카드 → 독자는 본 적이 없다. 하나 겹쳤다고 버리면 재고가 마른다.
+  const publishedTokens = new Set<string>([
     ...(opts?.recentKeywords ?? []).flatMap(topicTokens),
     ...(opts?.recentTitles ?? []).flatMap(topicTokens),
-    ...shownRecently.flatMap(topicTokens), // ★보여준 카드(발행 안 했어도) — 3일 기억
   ]);
+  const shownTokens = new Set<string>(shownRecently.flatMap(topicTokens));
+  const recentTopicTokens = new Set<string>([...publishedTokens, ...shownTokens]);
   // ★주제 축 — 표기가 흔들려도 같은 얘기인 것들을 한 묶음으로 본다(2026-08-05).
   //  실측: '엔화 폭등' → '엔·원 동조' → '환율 1400원대'. 토큰은 매번 다른데 독자에겐 같은 소재다.
   //  ★사전을 크게 만들지 않는다 — 실제로 반복된 축만 넣고, 새 반복이 관측되면 그때 추가한다.
@@ -188,7 +195,13 @@ export async function pickHomefeedBets(
   );
   const repeatsRecent = (b: HomefeedBet): string | null => {
     const text = `${b.keyword} ${b.title}`;
-    for (const w of topicTokens(text)) if (recentTopicTokens.has(w)) return w;
+    const toks = topicTokens(text);
+    // ① 발행한 글과 겹치면 한 개라도 막는다 — 다만 두 글자 흔한 말은 제외(우연히 겹친다)
+    for (const w of toks) if ([...w].length >= 3 && publishedTokens.has(w)) return w;
+    // ② 보여만 준 카드는 두 개 이상 겹쳐야 같은 소재로 본다
+    const shownHits = toks.filter((w) => shownTokens.has(w));
+    if (shownHits.length >= 2) return shownHits.slice(0, 2).join("+");
+    // ③ 주제 축은 표기가 흔들려도 같은 얘기다 — 이건 하나만 걸려도 막는다(정밀한 판정이라)
     const ax = axisOf(text);
     if (ax >= 0 && recentAxes.has(ax)) return `같은 주제 축(${TOPIC_AXES[ax]!.source.slice(1, 12)}…)`;
     return null;

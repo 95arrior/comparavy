@@ -82,7 +82,7 @@ console.log(fail ? `\n실패 ${fail}건` : "\n통과: 홈판 공급(캐시가 �
   ok(/정직하게 적는다/.test(hb), "★안 쓰고 적으면 거짓말이라고 못 박았다");
 
   // ★캐시 버전 — 안 올리면 24h 캐시가 옛 카드를 그대로 서빙한다(유저 실측: 카드 4장이 글자까지 동일했다)
-  ok(/homebet:v6:/.test(hb), "★생성 규칙이 바뀌면 캐시 버전을 올린다 — 안 올리면 발행한 소재가 하루 종일 남는다");
+  ok(/homebet:v7:/.test(hb), "★생성 규칙이 바뀌면 캐시 버전을 올린다 — 안 올리면 발행한 소재가 하루 종일 남는다");
 
   const tr = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
   ok((tr.match(/sourceTitle: bet\.sourceTitle,/g) ?? []).length === 2, "★홈판 카드 두 경로 모두 출처를 넘긴다");
@@ -147,7 +147,11 @@ console.log(fail ? `\n실패 ${fail}건` : "\n통과: 홈판 공급(캐시가 �
   ok(/opts\?\.recentKeywords/.test(hb) && /seededCores/.test(hb), "★최근 쓴 소재를 미리 차단한다");
   // ★핵심어 한 개로는 못 막는다(2026-08-05 재발: 엔화 글 쓴 다음 날 또 엔화) —
   //  coreKeywordOf는 가장 긴 토큰을 고르므로 '엔화 오를수록 통장'에서 '오를수록'이 뽑힌다.
-  ok(/const repeatsRecent =/.test(hb) && /recentTopicTokens\.has\(w\)/.test(hb), "★실질 토큰 겹침으로 소재 반복을 막는다");
+  // ★한 개 겹침으로 전부 막았더니 홈판이 전멸했다(2026-08-05 실측: round1 4 → dupDropped 4 → out 0).
+  //  중복을 막으려던 규칙이 생산 자체를 막았다. 발행한 글과 보여만 준 카드를 다르게 다룬다.
+  ok(/const repeatsRecent =/.test(hb) && /publishedTokens\.has\(w\)/.test(hb), "★발행한 글과 겹치면 하나라도 막는다");
+  ok(/shownHits\.length >= 2/.test(hb), "★보여만 준 카드는 두 개 이상 겹쳐야 같은 소재로 본다(재고가 마르지 않게)");
+  ok(/\[\.\.\.w\]\.length >= 3 && publishedTokens/.test(hb), "★두 글자 흔한 말은 우연히 겹친다 — 세 글자부터");
   // ★엔화가 세 번 떴다(2026-08-05). 앞선 두 수리가 다 뚫린 이유 두 가지를 같이 막는다.
   ok(/homebet:recent:/.test(hb) && /3 \* 86400_000/.test(hb), "★보여준 카드를 3일 기억한다(발행 안 해도 이미 보여준 소재다)");
   ok(/const TOPIC_AXES/.test(hb) && /엔화\|엔·원\|엔원\|환율/.test(hb), "★주제 축 — 표기가 흔들려도(엔화→엔·원→환율) 같은 소재로 본다");
