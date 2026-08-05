@@ -29,6 +29,10 @@
       "schedule": "0 */4 * * *"
     },
     {
+      "path": "/api/cron/trend-refresh",
+      "schedule": "0 1 * * *"
+    },
+    {
       "path": "/api/cron/verify-posts",
       "schedule": "*/10 * * * *"
     },

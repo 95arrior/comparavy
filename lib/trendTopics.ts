@@ -14,6 +14,7 @@ import { seasonalSeeds } from "./seasonalEvents";
 import { econSeeds } from "./econCalendar";
 import { policySeeds } from "./policyCalendar";
 import { harvestGovPress } from "./govPress";
+import { harvestNewsPsych } from "./newsPsych";
 import { expandAutocomplete } from "./naverAutocomplete";
 import { fetchBlogTotal } from "./naverBlogSearch";
 import { fetchTrend } from "./naverDatalab";
@@ -29,7 +30,7 @@ export interface Longtail { kw: string; blogTotal: number | null }
 // ★"rising"(2026-08-04 유저 상시 요구: "지금 뜨는은 실제로 효과 있는 실시간 키워드 or 대형 선점 가능한 것") —
 //  구글 트렌드 KR 급상승 유래. 이 표식이 있어야 밴드 우회 판정을 할 수 있다(없으면 전부 news로 뭉개진다).
 // ★"calendar"(2026-08-05) — 미리 공표된 일정(세금·지급·계절·정책). 선점의 최상위 재료.
-export type SeedSource = "news" | "season" | "discover" | "applyhome" | "gov24" | "bizinfo" | "dart" | "rising" | "calendar" | "gov" | "community";
+export type SeedSource = "news" | "season" | "discover" | "applyhome" | "gov24" | "bizinfo" | "dart" | "rising" | "calendar" | "gov" | "community" | "newspsych";
 export interface TrendTopic {
   keyword: string;
   title: string;
@@ -298,6 +299,29 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
       } catch (e) {
         // ★조용한 0 금지 — 원천이 죽으면 그 사실이 로그에 남아야 한다
         console.error("[corp-action] 수집 실패:", e instanceof Error ? e.message : e);
+      }
+    }
+
+    // ★아침 뉴스 → 검색 심리 → 자동완성 확정(2026-08-05 유저 지시:
+    //  "오전 9시 10시에 모든 뉴스 크롤링해서 검색하는 사람의 심리를 파악해서 '이건 검색하겠는데?'").
+    //  ★기존 뉴스 경로와 다른 점: 기사 제목을 키워드로 쓰지 않는다.
+    //   기사에서 고유명사만 뽑고, 그 뒤에 붙는 말은 자동완성에게 물어본다 —
+    //   즉 최종 키워드는 '사람들이 실제로 치고 있다'고 네이버가 증명한 말이다(합성 금지 유지).
+    if (/경제|재테크|금융|투자|부업|부동산|세금|정책|생활|육아|시니어/.test(category)) {
+      try {
+        const ps = await harvestNewsPsych({ windowMin: 120, limit: 5 });
+        let added = 0;
+        for (const g of ps) {
+          const kw = compressToSearchKeyword(g.keyword);
+          if (!kw || seen.has(kw)) continue;
+          if (isUnsafeKeyword(kw, brandOk) || scamLoan(kw)) continue;
+          seen.add(kw);
+          added += 1;
+          rows.push({ category, keyword: kw, title: `${kw}, 지금 확인하면 되는 것`, news_context: g.newsContext, longtails: [] as Longtail[], source: "newspsych", created_at: new Date().toISOString(), expires_at: expires });
+        }
+        if (added) console.log(`[news-psych] ${category}: ${added}건 — ${ps.slice(0, 3).map((x) => `${x.keyword}(←${x.anchor})`).join(", ")}`);
+      } catch (e) {
+        console.error("[news-psych] 수집 실패:", e instanceof Error ? e.message : e);
       }
     }
 

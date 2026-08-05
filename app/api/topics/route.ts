@@ -147,7 +147,7 @@ function pickDiverse(rows: PoolRow[], n: number, rnd: () => number = Math.random
 const DEMAND_MIN = 100;
 const SLOT_LABEL: Record<string, string> = {
   calendar: "캘린더", applyhome: "청약", gov24: "정부지원", bizinfo: "기업지원",
-  gov: "정부발표", dart: "공시", rising: "실시간", news: "뉴스", season: "시즌", discover: "발굴", homebet: "홈판",
+  newspsych: "아침뉴스", gov: "정부발표", dart: "공시", rising: "실시간", news: "뉴스", season: "시즌", discover: "발굴", homebet: "홈판",
   community: "커뮤니티", pool: "검색풀", series: "시리즈", followup: "후속",
 };
 // ★칸 판정은 여기 하나뿐이다(2026-08-05 유저 실측: "전체 10인데 실시간 5 뉴스 1").
