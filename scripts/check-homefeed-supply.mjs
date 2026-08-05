@@ -42,7 +42,10 @@ const rt = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url
 //  ★키워드만 주면 모델은 주제만 피하고 같은 각도·문장 틀로 돌아온다(실측: 4장 전부 탈락).
 {
   ok(/recentTitles/.test(hb), "★생성 프롬프트가 최근 제목을 받는다");
-  ok(/이미 쓴 제목들/.test(hb), "프롬프트에 실제 제목 목록이 들어간다");
+  // ★제목 전문 60개를 주니 모델 출력이 길어져 JSON이 잘렸다(2026-08-05 실측 failBy JSON없음:2).
+  //  피해야 할 건 문장이 아니라 소재다 — 앞 24자만 준다.
+  ok(/이미 쓴 소재들/.test(hb), "프롬프트에 이미 쓴 소재 목록이 들어간다");
+  ok(/t\.slice\(0, 24\)/.test(hb), "★제목 전문이 아니라 소재만(입력이 길면 출력이 산만해진다)");
   ok(/recentTitles,/.test(rt) || /recentTitles\b/.test(rt), "★호출측이 최근 제목을 넘긴다");
   ok(/recent14\.map/.test(rt), "최근 14일 발행분에서 뽑는다");
 }
@@ -118,7 +121,10 @@ console.log(fail ? `\n실패 ${fail}건` : "\n통과: 홈판 공급(캐시가 �
 {
   const hb = fs.readFileSync(new URL("../lib/homefeedBet.ts", import.meta.url), "utf-8");
   ok(/export let lastHomebetDiag/.test(hb), "★홈판 생성 진단을 남긴다");
-  ok(/fail: "뉴스없음"/.test(hb) && /fail: `제목규격/.test(hb) && /fail: "JSON없음"/.test(hb), "★탈락 사유를 종류별로 센다");
+  ok(/fail: "뉴스없음"/.test(hb) && /fail: `제목규격/.test(hb) && /fail: cut \? "출력잘림" : "JSON없음"/.test(hb), "★탈락 사유를 종류별로 센다");
+  // ★'JSON이 아예 없다'와 '길어서 잘렸다'는 원인이 다르다 — 뭉치면 다음 사람이 또 헤맨다
+  ok(/res\.stop_reason === "max_tokens"/.test(hb), "★출력 잘림을 따로 센다");
+  ok(/max_tokens: 700/.test(hb), "출력 예산을 올렸다");
   ok(/failBy\[r\.fail/.test(hb), "★사유별 집계가 진단에 담긴다");
   ok(/cached: true/.test(hb), "★캐시 히트도 남긴다('생성이 안 돌았다'와 '생성이 실패했다'는 다르다)");
 
