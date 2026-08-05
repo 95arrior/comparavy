@@ -23,9 +23,13 @@ const read = (p) => fs.readFileSync(new URL(p, import.meta.url), "utf-8");
 
   // ★핵심 회귀: 재생성 호출부가 전부 시간 게이트를 통과하는가.
   //  하나라도 빠지면 그 경로로 maxDuration을 넘길 수 있다.
-  const regenSites = (gr.match(/regenSpent < REGEN_CAP/g) ?? []).length;
-  const timed = (gr.match(/regenSpent < REGEN_CAP && hasTimeForRegen\(\)/g) ?? []).length;
-  ok(regenSites > 0 && regenSites === timed, "★재생성 가드 전부에 시간 게이트가 배선됨", `${timed}/${regenSites}`);
+  // ★고정 문자열로 세면 조건이 조금만 달라져도 깨진다(2026-08-05: 이미지 부족에 전용 예산을 주면서
+  //  'regenSpent < REGEN_CAP || imgUrgent' 형태가 생겼고, 시간 게이트는 멀쩡한데 검사만 실패했다).
+  //  ★지켜야 할 건 '문장 모양'이 아니라 '재생성이 시간 게이트 없이 일어나지 않는다'다.
+  //   재생성이 실제로 소비되는 자리(regenSpent++)마다 그 앞 조건문에 시간 게이트가 있는지 본다.
+  const spots = [...gr.matchAll(/regenSpent\+\+/g)].map((m) => m.index ?? 0);
+  const ungated = spots.filter((i) => !/hasTimeForRegen\(\)/.test(gr.slice(Math.max(0, i - 700), i)));
+  ok(spots.length > 0 && ungated.length === 0, "★재생성 가드 전부에 시간 게이트가 배선됨", `${spots.length - ungated.length}/${spots.length}`);
   ok(/lenPass < LEN_REGEN_CAP && charCount > lenCap && hasTimeForRegen\(\)/.test(gr), "★분량 압축 루프도 시간 게이트를 지난다");
 
   // maxDuration에서 저장·마무리 몫을 빼 두었는가 — 예산을 300초 꽉 채우면 저장하다 죽는다

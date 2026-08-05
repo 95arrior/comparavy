@@ -272,7 +272,10 @@ export function photoSlotShortfall(html: string): { slots: number; sections: num
   const slots = (h.match(/\[(?:사진|브랜드|표|인물):/g) ?? []).length;
   const photoOnly = (h.match(/\[사진:/g) ?? []).length;
   const sections = (h.match(/<h2/gi) ?? []).length;
-  const want = Math.min(Math.max(3, sections), 6); // 섹션만큼(3~6)
+  // ★하한 3 → 5(2026-08-05 유저: "5개 이상 이미지 넣어야 하지 않을까요").
+  //  종전 하한은 'AI가 그려 주던 시절' 기준이다. 지금은 유저가 직접 찾아 넣고,
+  //  이미지가 체류·광고 시인성을 만든다 — 적으면 텍스트벽이 되고 그 구간에서 이탈한다.
+  const want = Math.min(Math.max(5, sections), 8);
   // ★[사진:]은 최소 1장 유지 — 도입부 첫인상은 장면 컷이 맡는다(브랜드 로고로 대신할 수 없다).
   if (slots < want || photoOnly < 1) return { slots, sections, want, photoOnly };
   return null;

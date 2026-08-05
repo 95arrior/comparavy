@@ -60,8 +60,10 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   const 섹션5_사진3 = "<h2>a</h2><h2>b</h2><h2>c</h2><h2>d</h2><h2>e</h2><p>[사진: 1][사진: 2][사진: 3]</p>";
   const r = photoSlotShortfall(섹션5_사진3);
   ok(r !== null && r.slots === 3 && r.want === 5, "★섹션 5개인데 사진 3개면 부족으로 잡는다", JSON.stringify(r));
-  ok(photoSlotShortfall("<h2>a</h2><h2>b</h2><p>[사진: 1][사진: 2][사진: 3]</p>") === null, "섹션이 적으면 3개로 충분");
-  ok(photoSlotShortfall("<h2>a</h2>".repeat(9) + "[사진: 1]".repeat(6)) === null, "상한 6에서 멈춘다(과다 요구 금지)");
+  // ★하한 3 → 5(2026-08-05 유저: "5개 이상 이미지 넣어야 하지 않을까요") — 섹션이 적어도 5장은 요구한다
+  ok(photoSlotShortfall("<h2>a</h2><h2>b</h2>" + "[사진: x]".repeat(5)) === null, "섹션이 적어도 5장이면 충분");
+  ok(photoSlotShortfall("<h2>a</h2><h2>b</h2>" + "[사진: x]".repeat(3)) !== null, "★3장은 이제 부족");
+  ok(photoSlotShortfall("<h2>a</h2>".repeat(12) + "[사진: x]".repeat(8)) === null, "상한 8에서 멈춘다(과다 요구 금지)");
 }
 
 // ── ⑤ 정렬 검사기가 설정을 따르는가 ────────────────────────────────────
@@ -372,7 +374,9 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
 
   // ★이미지 설명 상세화 + AI 인용 구조
   const ap = fs.readFileSync(new URL("../lib/articlePrompt.ts", import.meta.url), "utf-8");
-  ok(/슬롯 설명 규격/.test(ap), "★사진 설명에 장소·시간·구도까지 요구한다");
+  // ★규칙이 뒤집혔다(2026-08-05 유저: "주저리 부저리 쓰지 마세요, 그냥 대충 툭 '서울 아파트 단지'").
+  //  종전 '상세하게'는 AI가 그려 주던 시절 것이고, 지금은 유저가 그 문장을 검색창에 넣는다.
+  ok(/설명은 짧게, 검색어처럼 쓴다/.test(ap), "★사진 설명은 짧은 검색어형");
   ok(/AI 인용 구조/.test(ap), "★수치는 표나 '라벨: 값'으로 세우게 한다");
   ok(/하드 상한 3,200자/.test(ap), "★프롬프트에도 하드 상한이 명시됨");
   const md = fs.readFileSync(new URL("../CLAUDE.md", import.meta.url), "utf-8");

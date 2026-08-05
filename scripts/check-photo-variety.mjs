@@ -51,7 +51,8 @@ for (const d of ["창문 열린 방의 에어컨 실외기", "아파트 단지�
 }
 
 // ── ⑥ 사진 개수 하한은 그대로인가(회귀) ────────────────────────────────
-ok(photoSlotShortfall("<h2>a</h2><h2>b</h2><h2>c</h2><h2>d</h2><p>[사진: x]</p>")?.want === 4, "섹션 4개면 사진 4장 요구");
+// ★하한 5로 상향(2026-08-05) — 섹션 수와 무관하게 최소 5장
+  ok(photoSlotShortfall("<h2>a</h2>".repeat(4) + "[사진: x]".repeat(4))?.want === 5, "섹션 4개여도 5장 요구");
 
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 본문 사진 다양성");
 process.exit(fail ? 1 : 0);

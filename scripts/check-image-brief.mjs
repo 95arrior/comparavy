@@ -59,7 +59,7 @@ console.log("\n③ 마커가 발행본에 새지 않는가:");
   // ★마커를 늘리면 '세는 쪽'도 같이 늘려야 한다 — 안 그러면 충분한 글이 '사진 부족'으로 지적받는다
   const { photoSlotShortfall } = await import("../lib/editorial.ts");
   const h2 = "<h2>a</h2><h2>b</h2><h2>c</h2>";
-  ok(photoSlotShortfall(h2 + "[사진: 1][브랜드: x][표: y]") === null, "★브랜드·표로 채워도 '부족'이 아니다");
+  ok(photoSlotShortfall(h2 + "[사진: 1][브랜드: x][표: y][인물: z][브랜드: w]") === null, "★브랜드·표·인물로 채워도 '부족'이 아니다");
   ok(photoSlotShortfall(h2 + "[브랜드: a][표: b][인물: c]")?.photoOnly === 0, "★그래도 [사진:] 최소 1장은 요구한다(도입부 첫인상)");
 }
 
@@ -96,6 +96,26 @@ console.log("\n⑥ 본문 규칙(스펙 5절):");
   ok(/가상의 인물을 만들지 마라/.test(ap), "★사례 인용에 인물 날조 금지가 걸려 있다");
   ok(/인용 형식은 '사실'로 읽히므로 날조의 피해가 가장 크다/.test(ap), "★왜 인용구에서 특히 위험한지가 적혀 있다");
   ok(/한 문단에 최대 1개/.test(ap), "볼드 규칙이 프롬프트에도 있다");
+}
+
+console.log("\n⑦ 이미지 개수·설명 길이(2026-08-05 유저 화면):");
+{
+  const ed2 = fs.readFileSync(new URL("../lib/editorial.ts", import.meta.url), "utf-8");
+  const gr2 = fs.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8");
+  const ap2 = fs.readFileSync(new URL("../lib/articlePrompt.ts", import.meta.url), "utf-8");
+  // ★유저: "이미지가 하나만 나오는 경우도 있네요 / 5개 이상 넣어야 하지 않을까요"
+  ok(/Math\.max\(5, sections\), 8\)/.test(ed2), "★이미지 하한 3 → 5, 상한 8");
+  ok(/하한 5\(2026-08-05 유저 확정/.test(ap2), "프롬프트에도 하한 5");
+  // ★경고만 하면 그대로 발행된다 — 공용 예산을 앞 가드가 다 쓰면 재시도조차 못 받았다
+  ok(/imgUrgent/.test(gr2) && /전용 예산으로 재생성/.test(gr2), "★이미지 부족은 전용 재생성 예산을 받는다");
+  ok(/regenSpent < REGEN_CAP \|\| imgUrgent/.test(gr2), "공용 예산이 바닥나도 발동한다");
+
+  // ★유저: "주저리 부저리 쓰지 마세요. 그냥 대충 툭 '서울 아파트 단지' 이런 식으로."
+  //  종전 규칙('상세하게 쓴다')은 AI가 그려 주던 시절 것이다 — 지금은 유저가 검색으로 찾는다.
+  ok(/설명은 짧게, 검색어처럼 쓴다/.test(ap2), "★설명은 짧게(검색어형)");
+  ok(/명사구 2~5어절/.test(ap2), "길이 규격이 명시됐다");
+  ok(/길어서 검색이 불가능하다/.test(ap2), "왜 길면 안 되는지가 적혀 있다");
+  ok(!/★상세할수록 그림이 구체적으로 나온다/.test(ap2), "★'상세하게' 규칙이 제거됐다(뒤집힌 규칙이 남아 있으면 모델이 헷갈린다)");
 }
 
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 이미지 주문서 + 분량");

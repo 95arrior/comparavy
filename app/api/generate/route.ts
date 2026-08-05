@@ -567,13 +567,21 @@ export async function POST(request: Request) {
           //  게이트가 조용히 죽는 사고가 났다(2026-08-02). 이제 specDefects에 넣으면 자동으로 발동한다.
           const deficits = (a: { body_html: string; title?: string }): number => specDefects(a).length;
           const before = deficits(article);
-          if (before > 0 && regenSpent < REGEN_CAP && hasTimeForRegen()) {
+          // ★이미지 부족은 전용 예산을 준다(2026-08-05 유저 실측: 이미지 자리가 1곳인 글이 나갔다).
+          //  종전엔 공용 예산(REGEN_CAP=1)을 앞 가드들과 나눠 써서, 앞에서 한 번 쓰면
+          //  이미지 부족은 재시도 자체를 못 받았다 — 경고만 남고 그대로 발행됐다.
+          //  ★이미지는 체류·광고 시인성에 직결한다(분량 게이트에 전용 예산을 준 것과 같은 이유).
+          const imgShort = photoSlotShortfall(article.body_html);
+          const imgUrgent = !!imgShort && imgShort.slots < 3;
+          const budgetOk = regenSpent < REGEN_CAP || imgUrgent;
+          if (before > 0 && budgetOk && hasTimeForRegen()) {
             regenSpent++;
+            if (imgUrgent && regenSpent > REGEN_CAP) console.log(`[img-slot] 전용 예산으로 재생성 — 이미지 자리 ${imgShort!.slots}곳(필요 ${imgShort!.want})`);
             send({ type: "revising" });
             void logUsage({ userId: user.id, model: "guard", kind: "exposure_spec_retry", inputTokens: 0, outputTokens: 0 });
             try {
               const retried = await streamArticle(
-                { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ★경고: 직전 생성이 노출 규격에 미달했다.${specWarnings(article)} 나머지 규격·분량은 유지.`.trim() },
+                { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ★경고: 직전 생성이 노출 규격에 미달했다.${specWarnings(article)}${imgUrgent ? " ★특히 이미지 자리가 심각하게 모자란다 — [사진:]·[브랜드:]·[표:]·[인물:]을 합쳐 최소 5곳을 문단 사이에 배치해라. 설명은 짧게, 검색어처럼(예: '서울 아파트 단지')." : ""} 나머지 규격·분량은 유지.`.trim() },
                 noop, noop, onGenUsage,
               );
               if (deficits(retried) < before && (userStory || userExperience || !hasFabricatedExperience(retried.body_html)) && countBodyChars(retried.body_html) >= 500) article = retried;
