@@ -134,7 +134,11 @@ export default function Home({
   //  ★글감은 '지금 이 순간'이 아니라 '오늘'의 것이다 — 메뉴를 오갈 때마다 새로 뽑을 이유가 없다.
   //   새로 받는 건 [글감 새로 받기] 버튼이 이미 있다. 자동 갱신은 그 버튼의 존재 이유를 지운다.
   const BOARD_TTL = 30 * 60_000; // 30분 — 그 안에 돌아오면 있던 보드를 그대로 보여준다
-  const boardCacheKey = `ateflo_board_${localDayStr()}_${profileKey ?? ""}`;
+  // ★발행하면 캐시가 무효가 되어야 한다(2026-08-05 유저 실측: 발행한 글감이 그대로 또 떴다).
+  //  종전 키는 날짜+블로그뿐이라 '글을 발행했다'는 사실이 키에 안 들어갔다 —
+  //  캐시가 30분 살아 있는 동안 이미 쓴 글감이 계속 서 있었다.
+  //  ★내 글 수를 키에 넣으면 발행·삭제가 곧 캐시 무효다(따로 지우는 코드가 필요 없다).
+  const boardCacheKey = `ateflo_board_${localDayStr()}_${profileKey ?? ""}_${articles.length}`;
   useEffect(() => {
     let alive = true;
     // 캐시 먼저 — 있으면 네트워크를 아예 안 탄다

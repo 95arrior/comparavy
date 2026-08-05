@@ -152,6 +152,8 @@ function pickDiverse(rows: PoolRow[], n: number, rnd: () => number = Math.random
 const DEMAND_MIN = 100;
 // ★선점 면제 상한 — 미증명 카드가 보드를 먹지 않게(2026-08-05 실측: 수확 5건 중 3건이 월 0회였다)
 const PREEMPT_MAX = 2;
+// ★발행 대조에서 무시할 흔한 말 — 이것들이 겹친다고 같은 글감은 아니다
+const PUB_GENERIC = new Set(["신청방법", "신청자격", "지원금액", "확인방법", "총정리", "알아보기", "정리하기"]);
 const SLOT_LABEL: Record<string, string> = {
   calendar: "캘린더", applyhome: "청약", gov24: "정부지원", bizinfo: "기업지원",
   newspsych: "아침뉴스", gov: "정부발표", dart: "공시", rising: "실시간", news: "뉴스", season: "시즌", discover: "발굴", homebet: "홈판",
@@ -297,6 +299,7 @@ export async function GET(req: Request) {
       // ★최근 7일 발행 키워드(유저 확정: 같은 키워드 연속 발행=노출 잠식) — 감점+표시(제외 아님: 후속·시리즈 판단은 유저)
       const recentPub = new Set<string>();
       const pubDateByKw = new Map<string, string>(); // 정규화 키워드 → 발행 근사일(direct=확정 시각·rss=생성일)
+      const pubKwRaw = new Map<string, string>(); // ★띄어쓰기가 살아 있는 원문 키워드 → 어절 대조에 쓴다
       try {
         const { data: rp } = await pool.from("articles").select("keyword, verified_at, verified_via, created_at").eq("user_id", user.id)
           .in("status", ["verified", "published", "copied"]).gte("created_at", new Date(Date.now() - 7 * 86400_000).toISOString()).limit(60); // copied 포함 — 복사(발행 진행) 후 주소 확정 전 몇 시간 동안 카드가 활성 잔존하던 실측
@@ -305,7 +308,7 @@ export async function GET(req: Request) {
           if (!k) continue;
           recentPub.add(k);
           const basis = (r as { verified_via?: string | null }).verified_via === "direct" ? r.verified_at : ((r as { created_at?: string }).created_at ?? r.verified_at);
-          if (basis && !pubDateByKw.has(k)) pubDateByKw.set(k, String(basis));
+          if (basis && !pubDateByKw.has(k)) { pubDateByKw.set(k, String(basis)); pubKwRaw.set(String(r.keyword ?? ""), String(basis)); }
         }
       } catch { /* ignore */ }
       const isRecentDup = (kw: string) => { const n = kw.replace(/\s+/g, ""); return n.length > 0 && (recentPub.has(n) || [...recentPub].some((r) => r.length >= 4 && (n.includes(r) || r.includes(n)))); };
@@ -450,6 +453,21 @@ export async function GET(req: Request) {
         let pubAt = pubDateByKw.get(norm);
         if (!pubAt) { // ★포함 관계 매칭(실측: 루원시티 — 생성 파이프가 키워드를 다듬어 완전일치 실패) — 6자+ 상호 포함이면 같은 글감
           for (const [k, v] of pubDateByKw) { if (k.length >= 6 && (norm.includes(k) || k.includes(norm))) { pubAt = v; break; } }
+        }
+        // ★뒤 어절만 달라도 같은 글감이다(2026-08-05 유저 실측: 발행했는데 같은 단지가 또 떴다).
+        //  발행 '더 리치먼드 미아(2차) 신청' vs 카드 '더 리치먼드 미아(2차) 무순위 청약' —
+        //  서로 포함이 아니라 위 검사를 통과했다. ★앞이 같고 뒤가 다른 게 이 파이프의 전형인데
+        //  '상호 포함'은 그걸 원리상 못 잡는다. 고유한 말(4자 이상)이 겹치면 같은 글감으로 본다.
+        if (!pubAt) {
+          const distinct = (t: string) => t.split(/\s+/)
+            .map((w) => w.replace(/[^가-힣a-zA-Z0-9]/g, ""))
+            .filter((w) => [...w].length >= 4 && !PUB_GENERIC.has(w));
+          const mine = new Set(distinct(c.keyword));
+          if (mine.size) {
+            for (const [k, v] of pubKwRaw) {
+              if (distinct(k).some((w) => mine.has(w))) { pubAt = v; break; }
+            }
+          }
         }
         if (pubAt) { // ★발행함 상태(유저 확정: 청약 카드는 접수 마감까지 살아있어 발행 후에도 잔존 — 삭제 대신 상태 전환, 접수일 후속 글 재활용 여지)
           const d = new Date(pubAt);

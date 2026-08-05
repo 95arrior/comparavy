@@ -14,6 +14,16 @@ export interface GatherStats { raw: number; fresh: number; unverified: number; s
 //  ★실측(2026-08-05, 경제 뉴스 120건): 1시간 이내 104건 · 1~3시간 7건 · 3~6시간 7건 · 6~24시간 2건.
 //   sort=date라 최신부터 온다. 1시간으로 좁혀도 재고가 마르지 않는다 — 48시간은 아무것도 안 거르고 있었다.
 const FRESH_WINDOW_MS = 1 * 3600_000; // 1시간
+// ★행동 창이 긴 주제는 창을 넓힌다(2026-08-05 유저 실측: '더샵 분당센트로 줍줍 5가구'를 놓쳤다).
+//  그 기사는 17시간 전이라 1시간 창 밖이었는데, 정작 접수는 8/5~8/11로 아직 진행 중이었다 —
+//  ★'기사가 몇 시간 전인가'와 '아직 신청할 수 있는가'는 다른 문제다.
+//  1시간 창은 '지금 뜨는 이슈'를 위한 것이고, 청약·접수·마감처럼 며칠 열려 있는 건은
+//  어제 기사여도 선점 가치가 그대로다. ★게다가 청약홈 오픈API는 이런 신규 회차가 늦게 올라온다
+//   (실측: 8월 임의공급 4차가 API에는 없고 2월 공고만 있었다) — 뉴스가 더 빠른 자리다.
+//  ★'마감'만 넣으면 장 마감세까지 걸린다(실측 오탐: '코스피 3% 상승 마감세').
+//   접수와 묶인 말만 본다 — 이 창은 '아직 신청할 수 있는 건'을 위한 것이다.
+const ACTION_WINDOW_RE = /(줍줍|무순위|임의공급|잔여세대|취소분|특별공급|사전청약|본청약|청약|접수|모집\s?기간|모집\s?공고|(접수|신청)\s?마감|마감\s?임박|마감일|신청\s?기간|공고)/;
+const ACTION_WINDOW_MS = 24 * 3600_000;
 
 // 카테고리별 소주제 시드 — 이걸로 각각 뉴스를 긁어 편향을 깬다. 없으면 generic 폴백.
 const SEEDS: Record<string, string[]> = {
@@ -66,6 +76,14 @@ function freshOf(pubDate: string | undefined, now: number): boolean | null {
   return now - t <= FRESH_WINDOW_MS;
 }
 
+/** 제목에 '행동 창'이 있으면 더 오래된 기사도 신선으로 본다(위 주석 참조). */
+function freshForTitle(pubDate: string | undefined, now: number, title: string): boolean | null {
+  const t = Date.parse(String(pubDate ?? ""));
+  if (Number.isNaN(t)) return null;
+  const win = ACTION_WINDOW_RE.test(title) ? ACTION_WINDOW_MS : FRESH_WINDOW_MS;
+  return now - t <= win;
+}
+
 async function fetchNaverNews(query: string, seed: string, now: number): Promise<Headline[]> {
   const id = process.env.NAVER_DATALAB_CLIENT_ID, secret = process.env.NAVER_DATALAB_SECRET;
   if (!id || !secret) return [];
@@ -78,7 +96,7 @@ async function fetchNaverNews(query: string, seed: string, now: number): Promise
       title: strip(it.title ?? ""), description: strip(it.description ?? ""),
       press: (() => { try { return new URL(it.originallink || it.link || "").hostname.replace(/^www\./, ""); } catch { return ""; } })(),
       seed,
-      fresh: freshOf(it.pubDate, now),
+      fresh: freshForTitle(it.pubDate, now, strip(it.title ?? "")),
     })).filter((n) => n.title);
   } catch { return []; }
 }
@@ -99,7 +117,7 @@ async function fetchGoogleNews(query: string, seed: string, now: number): Promis
       const src = /<source[^>]*>([\s\S]*?)<\/source>/.exec(block)?.[1] ?? "";
       const pub = /<pubDate>([\s\S]*?)<\/pubDate>/.exec(block)?.[1] ?? "";
       const title = strip(t.replace(/ - [^-]+$/, "")); // 구글은 제목 끝에 ' - 언론사'
-      if (title) items.push({ title, description: strip(d).slice(0, 160), press: strip(src), seed, fresh: freshOf(pub, now) });
+      if (title) items.push({ title, description: strip(d).slice(0, 160), press: strip(src), seed, fresh: freshForTitle(pub, now, title) });
     }
     return items;
   } catch { return []; }
