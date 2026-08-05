@@ -69,7 +69,11 @@ export function finalizeArticleBody(input: FinalizeInput): FinalizeResult {
   // ⑤ 해시태그 — 모델이 빠뜨려도 여기서 채운다
   // ★대표 태그를 맨 앞으로(2026-08-05 유저 지시) — 하단 파워링크가 그 계열로 바뀐다.
   //  단가 조회는 네트워크라 여기(동기 조립)에서 하지 않는다. 부르는 쪽이 재서 넘긴다.
-  const html = leadHashtag(ensureHashtags(withLinks, input.keyword, input.tag, input.modelTags), input.leadTag ?? "");
+  // ★마감은 몇 번 돌아도 결과가 같아야 한다(claim이 그 전제로 다시 태운다).
+  //  태그 줄을 걷어내고 다시 붙이는 과정에서 블록 사이 빈 줄이 매번 하나씩 쌓였다 —
+  //  화면엔 안 보이지만 '바뀌었다'로 판정돼 매번 DB를 다시 쓴다. 블록 사이 개행은 의미가 없으니 눌러 둔다.
+  const html = leadHashtag(ensureHashtags(withLinks, input.keyword, input.tag, input.modelTags), input.leadTag ?? "")
+    .replace(/\n{2,}/g, "\n");
   return {
     html,
     charCount: countBodyChars(html),

@@ -695,39 +695,36 @@ export function leadHashtag(html: string, lead: string): string {
 }
 
 export function ensureHashtags(html: string, keyword: string, tag?: string, modelTags?: unknown): string {
-  // ★세는 방식을 좁힌다(2026-08-04 유저: "아직도 본문에 안 붙는다").
-  //  종전엔 태그만 벗기고 /#[^\s#]+/로 셌다 — HTML 엔티티(&#39; 결)가 남아 '#39;'이 해시태그로 잡히고,
-  //  본문 중간의 '#1' 같은 것도 세어졌다. 셋만 오인되면 '이미 있다'로 보고 통째로 건너뛴다.
-  //  ★해시태그는 '글 끝에 모여 있는 한글·영숫자 태그'다 — 그 형태만 센다.
-  const text = String(html || "")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&[a-zA-Z#0-9]{1,8};/g, " "); // 엔티티 제거(여기서 #이 새어 들어왔다)
-  // ★위치로 자르지 않는다(짧은 본문에서 오작동한다 — 실측: 진짜 해시태그가 있는데 또 붙였다).
-  //  형태만으로 충분히 갈린다: '#1' 같은 한 글자 표기는 2자 하한에서 걸러지고, 엔티티는 위에서 지웠다.
-  const existing = (text.match(/#[가-힣A-Za-z0-9_]{2,}/g) ?? []).length;
-  if (existing >= 3) return html; // 이미 있으면 손대지 않는다
-  // ★글 끝에 태그 줄이 이미 있으면 개수와 무관하게 손대지 않는다(2026-08-06 실측 버그).
-  //  개수(3개)로만 판단하던 탓에, 대표 태그 하나만 남긴 글(=의도된 1개)을 '부족하다'고 보고
-  //  줄을 하나 더 붙였다. 그래서 카드에서 글을 여는 순간(claim에서 마감이 다시 돌 때)
-  //  #신혼부부대출 → #신혼부부대출 #신혼부부대출 #디딤돌대출 #내집마련로 불어났다.
-  //  ★마감은 몇 번 돌아도 같은 결과여야 한다 — claim은 그걸 전제로 마감을 다시 태운다.
-  if (TAIL_TAG_LINE_RE.test(String(html || ""))) return html;
-  // ★1순위는 모델이 만든 태그다(2026-08-03 유저 화면에서 확인: 모델은 tags 필드에는 잘 넣고
-  //  본문 하단에만 안 썼다). 주제에 맞게 만든 태그라 키워드 파생보다 훨씬 낫다 —
+  // ★2026-08-06 재작성. 종전 방식은 '태그가 몇 개인지 세어 보고 부족하면 뒤에 붙인다'였는데,
+  //  마감이 여러 번 도는 구조(pregen 저장 → 유저가 열 때 claim에서 재적용)에서 결과가 매번 달라졌다.
+  //  ★게다가 태그 줄 뒤에 관련글 마커가 붙기 때문에 '글 맨 끝'을 봐서는 기존 태그 줄을 못 찾는다 —
+  //   실제로 그렇게 고쳤다가 관련글이 있는 글에서만 태그가 또 불어났다(관련글 없는 테스트만 통과).
+  //  ★그래서 세지 않는다: 태그 줄을 전부 걷어내고, 하나를 다시 만들어 맨 끝에 놓는다.
+  //   몇 번을 돌려도 결과가 같고, 태그는 항상 글의 마지막 줄이 된다(네이버 관례이기도 하다).
+  const h0 = String(html || "");
+  const found: string[] = [];
+  // 해시태그만으로 이뤄진 문단 = 태그 줄. 산문 속에 섞인 #는 건드리지 않는다.
+  const stripped = h0.replace(/<p[^>]*>\s*((?:#[가-힣A-Za-z0-9_]{2,}\s*)+)<\/p>/g, (_m, inner: string) => {
+    found.push(...(inner.match(/#[가-힣A-Za-z0-9_]{2,}/g) ?? []).map((t) => t.slice(1)));
+    return "";
+  });
+  // ★이미 있던 태그가 1순위다 — 대표 태그 하나만 남긴 글(의도된 1개)을 되살릴 수 있어야 한다.
+  //  2순위는 모델이 만든 태그(2026-08-03 유저 화면: 모델은 tags 필드엔 잘 넣고 본문 하단엔 안 썼다).
   //  '리딩방 사기'·'불공정거래 신고'처럼 키워드에서는 절대 못 뽑는 말이 여기 있다.
   const fromModel = (Array.isArray(modelTags) ? modelTags : [])
     .map((t) => String(t ?? "").replace(/^#/, "").replace(/\s+/g, "").trim())
     .filter((t) => [...t].length >= 2);
   const kw = String(keyword || "").trim();
-  // 2순위 폴백 — 모델 태그가 없을 때만 키워드에서 파생한다(지어내지 않는다).
+  // 3순위 폴백 — 위가 다 비었을 때만 키워드에서 파생한다(지어내지 않는다).
   const fromKeyword = kw
     ? [kw.replace(/\s+/g, ""), ...kw.split(/\s+/).map((t) => t.replace(/[^가-힣a-zA-Z0-9]/g, "")), (tag ?? "").replace(/\s+/g, "")]
     : [];
-  const cand = (fromModel.length >= 3 ? fromModel : [...fromModel, ...fromKeyword]).map((t) => t.trim()).filter(Boolean);
-  const uniq = [...new Set(cand)].filter((t) => [...t].length >= 2).slice(0, 6);
-  if (uniq.length === 0) return html;
-  const line = `<p>${uniq.map((t) => `#${t}`).join(" ")}</p>`;
-  return `${html}\n${line}`;
+  // ★이미 태그 줄이 있었으면 그것만 쓴다 — 열 때마다 태그가 늘어나는 걸 막는 핵심이다.
+  const cand = found.length ? found
+    : (fromModel.length >= 3 ? fromModel : [...fromModel, ...fromKeyword]);
+  const uniq = [...new Set(cand.map((t) => t.trim()).filter(Boolean))].filter((t) => [...t].length >= 2).slice(0, 6);
+  if (uniq.length === 0) return h0;
+  return `${stripped.replace(/\s+$/, "")}\n<p>${uniq.map((t) => `#${t}`).join(" ")}</p>`;
 }
 
 // ═══ 폐기 블록 부활 감시(2026-08-03 실측) ═══

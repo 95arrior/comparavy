@@ -106,6 +106,21 @@ console.log("\n⑦ 마감이 몇 번 돌아도 같은가(멱등):");
   const tags = (h) => (h.match(/#[가-힣A-Za-z0-9_]{2,}/g) ?? []);
   const lines = (h) => (h.match(/<p[^>]*>(?:\s*#[가-힣A-Za-z0-9_]{2,})+\s*<\/p>/g) ?? []).length;
 
+  // ★★관련글이 있을 때도 반드시 검사한다(2026-08-06 실측 구멍).
+  //  처음 고칠 때 '태그 줄은 글 맨 끝에 있다'고 보고 고쳤는데, 태그 줄 뒤에는 관련글 마커가 붙는다.
+  //  관련글 없는 케이스만 테스트해서 통과했고, 유저 글(관련글 있음)에서는 그대로 불어났다.
+  //  ★테스트가 실제 경로를 안 태우면 통과는 아무것도 보장하지 않는다.
+  const REL = [{ title: "디딤돌대출 조건", url: "https://blog.naver.com/me/111" }];
+  for (const [label, relatedPosts] of [["관련글 없음", []], ["★관련글 있음(실제 경로)", REL]]) {
+    const x1 = finalizeArticleBody({ bodyHtml: body, leadTag: "신혼부부대출", relatedPosts, ...c });
+    const x2 = finalizeArticleBody({ bodyHtml: x1.html, relatedPosts, ...c });
+    const x3 = finalizeArticleBody({ bodyHtml: x2.html, relatedPosts, ...c });
+    ok(x1.html === x2.html && x2.html === x3.html, `${label}: 세 번 마감해도 같다`);
+    ok(tags(x2.html).length === 1 && lines(x2.html) === 1, `${label}: 대표 태그 1개 유지`, tags(x2.html).join(" "));
+    // ★태그는 글의 마지막 줄이어야 한다 — 관련글 블록 위에 있으면 유저 눈에는 '태그가 없다'로 보인다
+    ok(/<p>(?:\s*#[가-힣A-Za-z0-9_]{2,})+\s*<\/p>\s*$/.test(x2.html), `${label}: ★태그가 글의 마지막 줄`);
+  }
+
   const a1 = finalizeArticleBody({ bodyHtml: body, leadTag: "신혼부부대출", ...c });
   const a2 = finalizeArticleBody({ bodyHtml: a1.html, ...c });
   const a3 = finalizeArticleBody({ bodyHtml: a2.html, ...c });
