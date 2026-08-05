@@ -221,7 +221,11 @@ export function buildTextlessThumbPrompt(betType: string, userId: string, varian
     `LIGHTING: clean studio light on the subject so its form reads crisply against the flat background. Add 2-3 small four-point sparkle glints around the subject. Keep the subject's own colors true — the vivid color lives in the background, not on the subject.`,
     `RENDER STYLE: crisp 3D-render / product-visualization look for the subject (clean edges, believable materials, gentle ambient occlusion), sitting on a flat graphic background. High contrast between subject and background so the silhouette is unmistakable when small.`,
     `Composition must feel deliberate and poster-like: centered, symmetrical, generous margin around the subject, nothing cluttered at the edges.`,
-    `No company names or trademarked marks. A plain lettering-free symbol (a cross, a shield, a house outline) is allowed.`,
+    // ★심볼 허용 문구를 뺀다(2026-08-05 유저 화면에서 검거: 맨 위 중앙에 집 아이콘이 떴다).
+    //  '집 윤곽 같은 심볼은 괜찮다'고 적어 뒀더니 모델이 주제와 무관한 아이콘을 배경에 얹었다.
+    //  ★이 규격에서 화면에 있어야 할 것은 '주제의 실물' 하나뿐이다 — 장식 아이콘은 그 하나를 흐린다.
+    `Nothing else in the frame: no floating icons, no badges, no small symbols in the corners or at the top. Only the subject, its shadow, the sparkles, and the background.`,
+    `No company names or trademarked wordmarks.`,
     // ★글자 금지 — 계정 리스크(유저 4회 지적). 규격이 세 번 바뀌어도 이것만은 그대로다.
     //  유저 지시도 "문구 없이"였다 — 레퍼런스 건물에 보이는 로고는 AI가 그리면 반드시 깨진다.
     `NO TEXT of any kind: no letters, numbers, Korean characters, signage, labels, logos or watermarks anywhere in the image.`,
@@ -263,17 +267,28 @@ export async function subjectFromTitle(title: string, betType: string): Promise<
         // ★2026-08-02 실측: '유리 상자·커튼' 같은 추상 조형이 나왔다. 추상은 주제를 못 말한다.
         // ★2026-08-02 실측: 예시를 주면 모델이 그대로 베낀다. 건강보험료 글에 '사원증 + 공사장 크레인'이 나왔는데
         //  그건 내가 프롬프트에 적어둔 예시 문장이었다. 기준만 남기고 예시는 전부 뺀다.
-        `Pick a CONCRETE, INSTANTLY RECOGNIZABLE physical object that a Korean reader already associates with THIS specific topic. Derive it from the title itself — do not reach for a generic "money" or "work" prop.`,
+        // ★2026-08-05 유저 실측: '양평역 한라비발디 2단지 무순위 청약' 글에 '손바닥 위 동전'이 나왔다.
+        //  제목에 고유명사(단지명)가 있는데 일반 소품으로 흘렀다 — 그게 이 실패의 전형이다.
+        `★If the title contains a proper noun (an apartment complex, a brand, a company, a place, a product), THAT is the subject. Name it directly — for "양평역 한라비발디 2단지" the answer is the Halla Vivaldi apartment complex itself, not coins or a hand.`,
+        `Pick a CONCRETE, INSTANTLY RECOGNIZABLE thing that a Korean reader already associates with THIS specific topic. Derive it from the title itself — do not reach for a generic "money" or "work" prop.`,
+        `★Buildings, places and structures are valid subjects (an apartment complex, a bank branch, a government office). Do not restrict yourself to hand-held objects.`,
+        // ★실물이 없는 주제가 있다(2026-08-05 실측: '주민세 조회 방법'에서 소재 추출이 실패했다).
+        //  세금·조회·신청 같은 절차형은 물건이 종이·화면뿐이라 전부 금지에 걸린다 —
+        //  ★그럴 때 빈손으로 돌아오면 폴백이 엉뚱한 소품(동전·손)을 쓴다. 장소로 답하게 한다.
+        `★If the topic has no physical object (a tax, a filing procedure, an online lookup), answer with the PLACE where it happens instead — a district office building, a city hall, a bank branch exterior. Never answer with a document, a screen or "none".`,
         `★It must be a real, nameable thing with a distinctive shape. Never an abstract form (a box, a cube, drapery, light beams, a glowing panel) — those say nothing.`,
         // ★카드·증서류 금지 — 글자를 빼면 빈 사각형이 된다(고지서와 같은 병).
         `★Never a card, badge, ID, certificate, ticket, envelope or any flat rectangle whose meaning comes from what is printed on it. With the text removed those become a blank slab and the thumbnail says nothing.`,
-        `It will be rendered as a glossy 3D hero shot with neon rim light, so pick something with volume and a readable outline.`,
+        `It will be rendered as a large centered 3D hero shot on a flat vivid sunburst background, so pick something with volume and a silhouette that reads at 200px.`,
         `Two rules only:`,
         `1. It must carry no writing — no receipts, documents, screens, signs, calendars or labels (their whole point is text, and the image will be rejected).`,
-        `2. No company logos or trademarked products — an AI cannot draw a real logo, it produces a garbled fake mark, which is worse than none. But a plain SYMBOL with no lettering is fine and often the fastest read: a medical cross for health insurance, a shield for pension, a house outline for housing. Use one when the topic is tied to an institution.`,
-        // ★배경 실루엣도 함께 뽑는다(2026-08-02 유저: "실루엣이라도 뒷쪽에 줘, 호기심 가게").
-        `Also name what should sit BEHIND it as a glowing night silhouette — a real place tied to THIS topic specifically. Generic structures only, never a named company. If no place fits the topic, say "none".`,
-        `Answer with JSON only: {"subject":"<short plain English phrase naming the thing>","backdrop":"<short English phrase for the background silhouette>","ko":"<소재를 한국어 한 구절로 — 유저가 직접 찍을 때 보는 주문서에 들어간다>"}`,
+        // ★심볼 제안을 없앤다(2026-08-05 유저 화면: 썸네일 맨 위에 집 아이콘이 떴다).
+        //  '집 윤곽 같은 심볼이 빠른 읽기'라고 권했더니 실물 대신·실물 위에 아이콘이 얹혔다.
+        //  ★이 규격이 원하는 건 아이콘이 아니라 '그 주제의 실물'이다.
+        `2. No company logos or trademarked wordmarks — an AI cannot draw a real logo, it produces a garbled fake mark. ★And do not fall back to a generic icon or symbol (a house outline, a shield, a cross): this thumbnail must show the actual thing the article is about, rendered as a real object.`,
+        // ★배경 실루엣은 더 이상 뽑지 않는다(2026-08-05 3차 규격) — 배경은 단색 방사면이다.
+        //  야경 실루엣을 같이 주면 모델이 배경을 채우려 들어 규격이 흐려진다.
+        `Answer with JSON only: {"subject":"<short plain English phrase naming the thing>","ko":"<소재를 한국어 한 구절로 — 유저가 직접 찍을 때 보는 주문서에 들어간다>"}`,
       ].join("\n") }],
     });
     const text = res.content.find((b) => b.type === "text")?.text ?? "";
@@ -285,7 +300,9 @@ export async function subjectFromTitle(title: string, betType: string): Promise<
     // ★글자가 본질인 물건만 막는다(단어 경계 필수 — de(sign)·(paper)clip 오탐 방지).
     if (/\b(receipts?|invoices?|bills?|documents?|bankbooks?|passbooks?|screens?|displays?|signs?|signage|labels?|calendars?|newspapers?|books?|notes?|notebooks?|papers?)\b/i.test(sub)) return null;
     // ★평평한 사각형 = 글자를 빼면 빈 판이 된다(2026-08-02 실측: 사원증이 빈 직사각형으로 나왔다).
-    if (/\b(cards?|badges?|IDs?|identification|certificates?|tickets?|envelopes?|passes?|placards?|panels?|plaques?)\b/i.test(sub)) return null;
+    // ★팜플렛·브로슈어·도면 추가(2026-08-05 실측: '디에이치 방배' 글에 '아파트 분양 팜플렛'이 나왔다).
+    //  종이류는 글자가 본질이라 글자를 빼면 빈 종이가 된다 — 카드·증서와 같은 병이다.
+    if (/\b(cards?|badges?|IDs?|identification|certificates?|tickets?|envelopes?|passes?|placards?|panels?|plaques?|brochures?|pamphlets?|leaflets?|flyers?|catalogs?|floor ?plans?|blueprints?)\b/i.test(sub)) return null;
     // ★추상 조형도 여기서 한 번 더 막는다.
     if (/\b(cube|box|panel|drapery|curtain|light beams?|glow(ing)? (rectangle|shape|form))\b/i.test(sub)) return null;
     return { en: sub.slice(0, 120), backdrop: (j.backdrop ?? "").trim().slice(0, 90) || null, ko: (j.ko ?? "").trim().slice(0, 60) || sub.slice(0, 60) };

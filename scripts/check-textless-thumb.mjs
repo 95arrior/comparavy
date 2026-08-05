@@ -32,8 +32,10 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   ok(!/JUST BEFORE the reveal/i.test(p), "★'답 직전의 순간' 은유 지시가 빠졌다(새 규격과 상충)");
   ok(!/flat vector editorial illustration/i.test(p), "★플랫 벡터 규격이 되살아나지 않는다");
   ok(/square \(1:1\)/i.test(p), "★정사각(홈피드 카드가 정사각)");
-  ok(/No company names or trademarked marks/i.test(p), "회사 상표 금지");
-  ok(/lettering-free symbol/i.test(p), "★글자 없는 심볼(십자·방패·집 윤곽)은 허용");
+  ok(/No company names or trademarked wordmarks/i.test(p), "회사 상표 금지");
+  // ★이 허용 문구가 유저 화면의 '맨 위 집 아이콘'을 불렀다(2026-08-05) — 제거가 맞다.
+  //  이 규격이 원하는 건 심볼이 아니라 '주제의 실물' 하나뿐이다.
+  ok(!/lettering-free symbol/i.test(p), "★심볼 허용 문구가 제거됨(집 아이콘을 부른 원인)");
   ok(/NO TEXT of any kind/i.test(p), "★글자 금지(계정 리스크 — 우리 규칙)");
   ok(!/16:9/.test(p), "★16:9가 되살아나지 않음");
 }
@@ -122,6 +124,29 @@ ok(SUBJECT_GRAMMAR.length === 8, `홈판 8유형 폴백 유지 (현재 ${SUBJECT
   ok(/manualShotBrief/.test(ct), "★AI 2회 실패 시 촬영 주문서로 전환");
   ok(/strict: true/.test(ct), "무문구도 글자 검사는 fail-closed");
   ok(/picked\?\.ko/.test(ct), "★주문서에 한국어 소재가 전달된다");
+}
+
+
+// ★2026-08-05 유저 화면에서 잡은 두 결함 — 규격은 맞는데 '무엇을 그릴지'가 틀렸다.
+//  실물: '양평역 한라비발디 2단지 무순위 청약' 글에 손바닥 위 동전이 나왔고, 맨 위에 집 아이콘이 떴다.
+{
+  const src = fs.readFileSync(new URL("../lib/thumbSubject.ts", import.meta.url), "utf-8");
+  const p2 = buildTextlessThumbPrompt("", "u1", 0, "Halla Vivaldi apartment complex", "양평역 한라비발디 2단지 무순위");
+  // ① 장식 아이콘 — 내 프롬프트가 '집 윤곽 같은 심볼은 괜찮다'고 적어 둬서 모델이 얹었다
+  ok(!/house outline\) is allowed/i.test(p2), "★'심볼 허용' 문구가 제거됨(집 아이콘을 부른 원인)");
+  ok(/no floating icons, no badges, no small symbols/i.test(p2), "★장식 아이콘을 명시적으로 막는다");
+  ok(!/a house outline for housing/.test(src), "★소재 고르는 쪽에서도 아이콘 폴백을 뺐다");
+  ok(/do not fall back to a generic icon or symbol/.test(src), "실물을 요구한다");
+
+  // ② 소재 — 제목에 고유명사가 있으면 그게 주제다
+  ok(/If the title contains a proper noun/.test(src), "★고유명사가 있으면 그것이 소재");
+  ok(/not coins or a hand/.test(src), "실패 사례가 프롬프트에 박혀 있다");
+  ok(/Buildings, places and structures are valid subjects/.test(src), "★건물·장소도 소재가 된다(작은 소품만 고르던 편향)");
+  ok(/If the topic has no physical object/.test(src), "★실물 없는 절차형은 '장소'로 답하게 한다");
+  ok(/brochures\?\|pamphlets\?/.test(src), "★팜플렛·도면도 금지(종이는 글자가 본질)");
+
+  // ③ 배경 실루엣 요청 제거 — 단색 방사 배경과 충돌한다
+  ok(!/glowing night silhouette/.test(src), "★야경 실루엣 요청이 빠졌다(새 배경 규격과 충돌)");
 }
 
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 무문구 썸네일(유저 지급 CTR 규격)");
