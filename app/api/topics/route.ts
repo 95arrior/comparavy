@@ -908,12 +908,16 @@ export async function GET(req: Request) {
               //  실물: '주민세 조회 방법'(vol 40)이 잘렸다. 씨앗 '주민세'는 월 10,040회인데
               //  예산 초과로 씨앗 검색량을 못 재서 롱테일 숫자만 보고 죽인 것이다.
               //  ★모르는 걸 근거로 자르면, 느린 날마다 좋은 글감이 사라진다.
+              // ★문서 수를 못 쟀으면 선점 판정이 불가능하다 — 그것도 컷 근거가 될 수 없다(2026-08-05 실측).
+              //  실물: '더 리치먼드 미아(2차) 무순위 청약'이 "문서 수를 못 쟀음"으로 잘렸다.
+              //  예산 초과로 측정을 못 한 것뿐인데, 그 무지가 곧 탈락 사유가 됐다.
+              const docUnknown = (c as { blogTotal?: number | null }).blogTotal == null;
               const sk0 = (c as { seedKeyword?: string }).seedKeyword;
               const seedUnknown = !!sk0 && sk0.replace(/\s+/g, "") !== c.keyword.replace(/\s+/g, "")
                 && (c as { seedVol?: number }).seedVol == null;
               const isAnnounce = Boolean((c as { actionEnd?: string | null }).actionEnd);
               const floor = isAnnounce ? 300 : DEMAND_MIN;
-              if (!measured || seedUnknown || v >= floor || rescued) {
+              if (!measured || seedUnknown || docUnknown || v >= floor || rescued) {
                 if (rescued && measured && v < floor) console.log(`[demand] 구제 — ${c.keyword}(수요 ${v}, 플랫폼조회 ${rs?.platformViews ?? 0}·풀 ${rs?.poolScore ?? 0})`);
                 kept.push(c); continue;
               }
@@ -1058,6 +1062,28 @@ export async function GET(req: Request) {
         return !hit;
       });
       if (debugMode) diag.laneDup = before - tc.length;
+    }
+    // ★마지막 한 단계(2026-08-05 실측): 정원을 떼어 증식까지 보냈는데 여기서 다시 밀렸다.
+    //  pickedBySource는 calendar 1·dart 1이 들어갔다고 하는데 화면 칸은 0이었다 —
+    //  후보 12장 중 자리는 7장뿐이고, 정렬이 수 많은 뉴스를 앞에 세운 탓이다.
+    //  ★희소한 원천일수록 값이 크다는 판단은 증식에서만이 아니라 '내보낼 때'도 같아야 한다.
+    //   여기서 밀리면 앞 단계에서 자리를 떼어 준 게 통째로 헛일이 된다.
+    {
+      const RARE = ["calendar", "gov", "dart", "applyhome", "gov24", "bizinfo", "community", "newspsych"];
+      const srcOf = (c: (typeof tc)[number]) =>
+        (c as { seedSource?: string }).seedSource ?? (c.sel as { seedSource?: string } | undefined)?.seedSource ?? "";
+      const head: typeof tc = [];
+      const taken = new Set<(typeof tc)[number]>();
+      for (const r of RARE) {
+        if (head.length >= trendRoom) break;
+        const hit = tc.find((c) => !taken.has(c) && srcOf(c) === r);
+        if (hit) { head.push(hit); taken.add(hit); }
+      }
+      if (head.length) {
+        const rest = tc.filter((c) => !taken.has(c));
+        tc = [...head, ...rest];
+        console.log(`[lane-quota:short] 희소 원천 자리 확보 ${head.length}장 — ${head.map((c) => srcOf(c)).join(", ")}`);
+      }
     }
     tc = [...homeCards, ...tc.slice(0, trendRoom)];
     if (colShort.homefeed > homeCards.length) {

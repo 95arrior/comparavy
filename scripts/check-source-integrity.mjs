@@ -139,10 +139,25 @@ console.log("\n⑨ 모르는 걸 근거로 자르지 않는가:");
   //  예산 초과로 씨앗 검색량을 못 재서 롱테일 숫자만 보고 죽였다.
   ok(/seedUnknown/.test(rt) && /모르는 걸 근거로 자르면, 느린 날마다 좋은 글감이 사라진다/.test(rt),
     "★씨앗을 못 쟀으면 컷하지 않는다");
-  ok(/!measured \|\| seedUnknown \|\| v >= floor \|\| rescued/.test(rt), "판정에 실제로 반영됐다");
+  ok(/!measured \|\| seedUnknown \|\| docUnknown \|\| v >= floor \|\| rescued/.test(rt), "판정에 실제로 반영됐다(씨앗)");
   // ★'다음에 하자'가 '영영 안 함'이 되는 자리
   ok(/'다음에 하자'가 '영영 안 함'이 되는 자리였다/.test(rt), "★홈판을 배경에서 만들어 캐시를 데운다");
   ok(/\[homebet\] 배경 생성 완료/.test(rt), "배경 생성이 로그에 남는다");
+}
+
+console.log("\n⑩ 희소 원천이 마지막에 다시 밀리지 않는가:");
+{
+  const rt = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
+  // ★실측(2026-08-05): pickedBySource는 calendar 1·dart 1이 증식에 들어갔다고 했는데 화면 칸은 0이었다.
+  //  후보 12장 중 자리는 7장뿐이고 정렬이 수 많은 뉴스를 앞에 세웠다 —
+  //  앞 단계에서 자리를 떼어 준 게 통째로 헛일이 됐다.
+  ok(/희소 원천 자리 확보/.test(rt), "★내보낼 때도 희소 원천에 자리를 준다");
+  ok(/const RARE = \["calendar", "gov", "dart", "applyhome"/.test(rt), "대상 원천 목록이 있다");
+  ok(/여기서 밀리면 앞 단계에서 자리를 떼어 준 게 통째로 헛일이 된다/.test(rt), "왜 필요한지가 코드에 적혀 있다");
+
+  // ★모르는 것을 탈락 사유로 쓰지 않는다 — 씨앗 검색량·문서 수 둘 다
+  ok(/docUnknown/.test(rt) && /그 무지가 곧 탈락 사유가 됐다/.test(rt), "★문서 수를 못 쟀어도 자르지 않는다");
+  ok(/!measured \|\| seedUnknown \|\| docUnknown \|\| v >= floor \|\| rescued/.test(rt), "판정에 실제로 반영됐다");
 }
 
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 원천 무결성");
