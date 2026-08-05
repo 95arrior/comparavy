@@ -103,5 +103,18 @@ console.log("\n⑥ 애초에 안 뽑아야 하는 것:");
   ok(/수요가 증명된 카드가 미증명 카드에 밀려나지 않게/.test(rt), "왜 제한하는지가 코드에 적혀 있다");
 }
 
+console.log("\n⑦ 서빙이 느려도 화면은 뜨는가:");
+{
+  const rt = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
+  // ★실측(2026-08-05): maxDuration이 60초인데 서빙 경로에 측정이 계속 얹혀 504가 났다.
+  //  문서 수(전 카드)·검색량·씨앗 검색량·홈판 LLM 8회·증식 LLM이 수확 직후 한꺼번에 돈다.
+  ok(/export const maxDuration = 300/.test(rt), "★상한을 올려 504를 막는다(안전망)");
+  ok(/SOFT_BUDGET_MS/.test(rt) && /overBudget\(\)/.test(rt), "★상한만 올리면 5분을 기다린다 — 늦으면 선택적 보강을 건너뛴다");
+  ok(/overBudget\(\) \? \[\] : await pickHomefeedBets/.test(rt), "★제일 무거운 홈판 생성부터 미룬다(캐시는 그대로 쓴다)");
+  ok(/실시간 카드는 안 재면 거짓 배지가 나가므로 반드시 잰다/.test(rt), "★거짓을 만드는 측정은 안 건너뛴다");
+  ok(/숫자가 하나 비는 것보다 화면이 안 뜨는 게 훨씬 나쁘다/.test(rt), "무엇을 우선하는지가 코드에 적혀 있다");
+  ok(/diag\.timing = \{ elapsedMs/.test(rt), "★소요 시간·생략 여부를 진단에 남긴다(원인을 추측하지 않게)");
+}
+
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 원천 무결성");
 process.exit(fail ? 1 : 0);

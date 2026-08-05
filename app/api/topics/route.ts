@@ -40,7 +40,12 @@ import { isAdminEmail } from "@/lib/adminStats";
 // 사장의 blog_profile(vertical + sub_category)로 keyword_pool에서 글감 3개를 뽑는다.
 // Stage 2-B 분산: ① least-used 우선(times_assigned asc) ② 본인이 이미 쓴 키워드 제외 ③ 그 안 랜덤.
 export const dynamic = "force-dynamic";
-export const maxDuration = 60; // 신규 카테고리 첫 요청은 lazy-fill(네이버 수집)이 요청 안에서 돌아 시간 필요
+// ★300초로 올린다(2026-08-05 유저 실측 504). 60초였는데 서빙 경로에 측정이 계속 얹혔다:
+//  문서 수(전 카드)·검색량·씨앗 검색량·홈판 생성(LLM 8회)·증식(LLM). 수확 직후엔 캐시가 다 비어 한꺼번에 돈다.
+//  ★다만 상한을 올리는 건 안전망일 뿐이다 — 5분을 기다리게 하면 안 된다.
+//   아래 SOFT_BUDGET_MS가 늦어지면 '있으면 좋은 것'부터 건너뛴다(카드는 나가고, 숫자만 덜 붙는다).
+export const maxDuration = 300;
+const SOFT_BUDGET_MS = 22_000; // 이 시간을 넘기면 선택적 보강을 건너뛴다
 
 const PICK = 5; // 홈 5~6개 동적 노출(오늘 1 + 다른 글감 4~5)
 const WINDOW = 150; // least-used 윈도우 크기 — 이 안에서 랜덤(반복 많으면 키우고, 마이너 자주 뜨면 줄임)
@@ -179,6 +184,8 @@ function slotCount(cards: object[]): Record<string, number> {
 }
 
 export async function GET(req: Request) {
+  const reqStart = Date.now();
+  const overBudget = () => Date.now() - reqStart > SOFT_BUDGET_MS;
   // 인증·프로필은 유저 클라이언트(RLS) — 본인 확인 + 본인 프로필만 읽음.
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -785,7 +792,13 @@ export async function GET(req: Request) {
       //  ★배지를 다는 기준과 컷을 거는 기준이 다르면, 그 차이만큼 카드가 거짓말을 한다.
       const isRising = (c: (typeof tc)[number]) => c.tag === "trend" || c.tag === "issue" || c.tag === "followup"
         || (c as { risingSeed?: boolean }).risingSeed === true || (c.sel as { seedSource?: string } | undefined)?.seedSource === "rising";
-      const risingCards = tc.filter((c) => isRising(c) || (c as { blogTotal?: number | null }).blogTotal == null);
+      // ★늦었으면 '뒷북 컷 판정에 꼭 필요한 카드'만 잰다(2026-08-05 유저 실측 504 이후).
+      //  실시간 카드는 안 재면 거짓 배지가 나가므로 반드시 잰다. 나머지 문서 수는 없으면 '못 쟀어요'로 적힌다 —
+      //  ★숫자가 하나 비는 것보다 화면이 안 뜨는 게 훨씬 나쁘다.
+      const risingCards = overBudget()
+        ? tc.filter((c) => isRising(c) && (c as { blogTotal?: number | null }).blogTotal == null)
+        : tc.filter((c) => isRising(c) || (c as { blogTotal?: number | null }).blogTotal == null);
+      if (overBudget()) console.log(`[topics] 예산 초과 — 문서 측정을 실시간 카드로 좁힘(${risingCards.length}장)`);
       const rising = { seen: risingCards.length, measured: 0, pass: 0, tooMany: 0, unmeasured: 0 };
       if (risingCards.length) {
         await Promise.all(risingCards.map(async (c) => {
@@ -834,7 +847,8 @@ export async function GET(req: Request) {
           const seedNeed = tc.map((c) => (c as { seedKeyword?: string }).seedKeyword).filter((x): x is string => !!x);
           // ★씨앗 검색량이 화면에 안 뜨던 이유(2026-08-05 유저 화면): need가 비면 이 블록을 통째로 건너뛴다.
           //  volMap이 이미 vol을 채운 카드만 있으면 need가 0이라 씨앗도 영영 못 쟀다.
-          if (need.length || seedNeed.length) {
+          // ★늦었으면 씨앗 검색량은 포기한다(카드는 나간다) — 없으면 근거 한 줄이 짧아질 뿐이다
+          if ((need.length || seedNeed.length) && !overBudget()) {
             // ★씨앗(클러스터) 검색량도 함께 잰다(2026-08-05).
             //  증식이 씨앗을 롱테일로 늘리므로 글감 키워드의 검색량은 늘 작다(주민세 10,040 → 긴 구 50).
             //  글이 실제로 받을 유입의 상한은 클러스터 수요다 — 그걸 안 보여주면
@@ -934,7 +948,9 @@ export async function GET(req: Request) {
           ...recent14.map((a) => String(a.title ?? "")),
           ...[...usedTexts],
         ])].filter(Boolean).slice(0, 60);
-        const bets = await pickHomefeedBets(pool, user.id, sub ?? "", usedSet, colShort.homefeed, {
+        // ★늦었으면 홈판 '생성'은 건너뛴다(LLM 8회로 이 경로에서 제일 무겁다).
+        //  캐시가 있으면 그건 그대로 쓴다 — 생성만 다음 요청으로 미룬다.
+        const bets = overBudget() ? [] : await pickHomefeedBets(pool, user.id, sub ?? "", usedSet, colShort.homefeed, {
           isDup: (title, keyword) => usedForbidden(`${title} ${keyword}`),
           recentTitles,
           // ★최근 14일 키워드 — 소재(핵심어) 반복을 코드가 막는다(2026-08-05: 어제 쓴 엔화·전기차가 오늘 또 섰다)
@@ -1030,6 +1046,8 @@ export async function GET(req: Request) {
       } catch (e) { console.error("[hitrate] 서빙 기록 실패:", e instanceof Error ? e.message : e); }
     });
     if (debugMode) diag.slots = slotCount(tc);
+    // ★얼마나 걸렸고 무엇을 생략했는지 남긴다 — 504가 나면 원인을 추측하게 되면 안 된다
+    if (debugMode) diag.timing = { elapsedMs: Date.now() - reqStart, softBudgetMs: SOFT_BUDGET_MS, degraded: overBudget() };
     if (debugMode) diag.colShort = { ...colShort, homefeedGot: homeCards.length, homeDrop, trendRoom, served: tc.length, trendFunnel: funnel };
     return NextResponse.json(debugMode ? { topics: slimDebug ? [] : tc, diag: { ...diag, mode: "short", trendCards: tc.length } } : { topics: tc, ...(FF.perfLoop ? { ff: { perfLoop: true } } : {}) });
   }
