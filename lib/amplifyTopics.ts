@@ -146,7 +146,11 @@ function userAxis(profile: AmplifyProfile | null): string {
 
 // 시의성 코어 추출 — 씨앗 제목/키워드에서 '지금인 이유' 단어.
 function coreOf(text: string): string {
-  const m = /(확대|개편|신설|인상|인하|동결|마감|출시|시행|개정|폐지|신청|변경|이번|2026)/.exec(text);
+  // ★말 안에 박힌 조각을 시의성 코어로 읽으면 안 된다(2026-08-05 유저 진단에서 검거).
+  //  실측: "최저임금 월급, 지금 확인하면 되는 것" → '확인하면'의 '인하'가 매치돼 coreWord="인하"가 됐다.
+  //  ★최저임금 인상 기사인데 본문에 '인하'를 살리라고 지시한 것 — 글이 정반대를 말하게 된다.
+  //  한글엔 단어 경계가 없으니 '앞 글자가 한글이면 단어 안'으로 본다(확인하면 ✘, 요금 인하 ✔).
+  const m = /(?<![가-힣])(확대|개편|신설|인상|인하|동결|마감|출시|시행|개정|폐지|신청|변경|이번|2026)/.exec(text);
   return m ? m[1] : "";
 }
 
@@ -159,14 +163,16 @@ export let lastAmplifyDiag: {
   seeds: number; want: number; briefs: number; parsed: number; out: number; stage?: string;
   /** 증식 정원에 들어간 실시간(rising) 씨앗 수 — 0이면 '지금 뜨는' 열이 뉴스 롱테일로만 찬다는 뜻 */
   live?: number;
-  drop: { placeholder: number; noBrief: number; dupKeyword: number; orphan: number; titleTail: number; region: number };
+  drop: { placeholder: number; noBrief: number; dupKeyword: number; orphan: number; titleTail: number; region: number; speech: number };
   // ★모델 호출 자체의 계측(2026-08-04) — 'parsed 8'만으로는 '모델이 8개만 줬다'와 '잘려서 8개만 건졌다'가 구분되지 않는다.
   call?: { chunks: number; stopReasons: (string | null)[]; truncated: number; outTokens: (number | null)[]; maxTokens: number; noJson: number };
 } | null = null;
 
-const NO_DROP = { placeholder: 0, noBrief: 0, dupKeyword: 0, orphan: 0, titleTail: 0, region: 0 };
+const NO_DROP = { placeholder: 0, noBrief: 0, dupKeyword: 0, orphan: 0, titleTail: 0, region: 0, speech: 0 };
 
 // ★증식이 붙일 수 있는 지역명 — 씨앗·근거에 없으면 지어낸 것이다(전국 글감이 남의 동네 글이 된다)
+// 요청·질문 종결형 — 검색창에 치는 말이 아니다
+const SPEECH_TAIL_RE = /(알려주세요|알려줘|해주세요|해줘|주세요|인가요|일까요|할까요|되나요|있나요|맞나요|뭔가요|어때요|어떻게요)\s*$/;
 const ADDED_REGION_RE = /(서울|부산|대구|인천|광주|대전|울산|세종|수원|성남|용인|고양|화성|청주|천안|전주|포항|창원|김해|제주|춘천|원주|강릉|목포|여수|구미|경주|안동|평택|파주|김포|남양주|의정부|안양|부천|광명|시흥|군포|하남|이천|양평|가평)(?![가-힣])/;
 
 /**
@@ -288,8 +294,13 @@ ${OPEN_LOOP_GUIDE}
 - thumbMain: 대표이미지 메인 카피. 1~2줄, 전체 20자 이내, 줄바꿈은 \\n. ★역할 분리(2026-07-17 확정): 썸네일과 제목은 함께 노출된다 — 썸네일은 개념 하나를 던지고 제목이 답을 잇는다. 제목의 어절 반복은 앵커 1개(연도·핵심 숫자)까지만, 제목 축약·요약형 실격('검색 끝.', '내 비서가 생깁니다' 결). 열린 고리(답 숨기고 궁금증만). 느낌표 금지.
 - thumbSub: 대표이미지 서브 카피 15자 이내(없으면 빈 문자열).
 - verdict: 이 글의 한 문장 판결 — 독자가 지금 해야 할 행동/선택(예: "오늘 6시 전 카드사 앱 신청이 결론"). 판단은 조건 비교의 분석 판단만 — 경험 지어내기·보장 표현 금지.
+  ★★자료에 없는 숫자를 넣지 마라(2026-08-05 실측 위반: "1,000시간 기준 대략 220만 원대 예상" — 근거 없는 계산이었다).
+   금액·기간·소요일수·비율은 씨앗 자료에 적힌 값만 쓴다. 없으면 숫자 없이 '무엇을 어디서 확인하라'로 쓴다.
+   '예상·추정·대략'을 붙여도 지어낸 숫자는 지어낸 숫자다 — 독자는 그걸 사실로 읽는다.
 - cutList: 이 글에서 다루지 않을 하위 소재 1~3개(각각 "소재 — 짧은 이유"). ★적합한 게 없으면 빈 배열 — 억지로 채우지 않는다.
 - branchAxis: 독자 상황 분기 축과 분기 2~4개 한 줄(예: "가구형태: 1인→13만 기준 / 맞벌이→+1 기준"). ★글감이 분기에 안 맞으면 빈 문자열.
+  ★★분기의 '결과값'도 자료에 있는 것만(2026-08-05 실측 위반: "계좌: 신한→30분 / 타행→1~2일" — 아무 근거 없는 소요시간이었다).
+   근거가 없으면 결과값을 빼고 축만 쓴다("계좌 은행에 따라") — 본문이 그 숫자를 사실처럼 쓴다.
 - series: ★씨앗이 '하위 주제 3개 이상으로 자연 분해'될 때만 3~4화 시리즈 아크를 설계(제목+각 화의 역할·각도). 분해가 억지스러우면 null — 시리즈 강제 금지.
   아크는 씨앗 성격에 맞게 설계하되 참고 패턴(고정 아님): ①정책·혜택형=개요·훅→자격·조건→신청 단계→거절·사후 ②정보·비교형=고르는 기준→후보 비교→상황별 선택→활용·관리 ③리뷰·경험형=고르는 기준→스펙·첫인상 정보→사용자 후기 종합→총평·추천 대상.
   ★role은 그 화의 역할 명사(예: "자격·조건", "신청 단계") — 패턴 이름("정책·혜택형")을 넣지 마라.
@@ -375,7 +386,7 @@ ${OPEN_LOOP_GUIDE}
     // ★증식 손실 회계(2026-08-04 유저: "씨앗 19개인데 증식 4장, 왜?").
     //  종전엔 전부 조용한 continue라 '몇 장 요청해서 몇 장 나왔다'만 보이고 어디서 죽었는지 알 수 없었다.
     //  ★결품이 상시화된 단계에서 조용한 continue는 눈을 감는 것이다.
-    const drop = { placeholder: 0, noBrief: 0, dupKeyword: 0, orphan: 0, titleTail: 0, region: 0 };
+    const drop = { placeholder: 0, noBrief: 0, dupKeyword: 0, orphan: 0, titleTail: 0, region: 0, speech: 0 };
     for (const it of parsed) {
       let b = briefs[(Number(it.seedIndex) || 1) - 1] ?? briefs[0];
       // ★플레이스홀더 게이트(실측: '최대 OO만원' 제목 노출) — 미확인 수치 자리표시가 있으면 카드 폐기
@@ -399,6 +410,14 @@ ${OPEN_LOOP_GUIDE}
         // ★범용어를 뺀 실질 토큰만 센다(2026-08-05 개정) — 종전엔 '2026·지원금'만 겹쳐도 통과해서
         //  '65세 이상' 씨앗에서 '청년' 카드가 나왔다. 겹침 1개는 우연일 수 있어 2개를 요구한다.
         if (!lineageAttached(`${b.seed.keyword} ${b.seed.title}`, `${kw} ${String(it.titleClick ?? "")}`)) { drop.orphan++; continue; }
+        // ★검색어가 아닌 말투를 막는다(2026-08-05 유저 화면: '국민행복카드 바우처 신청 방법 알려주세요').
+        //  아무도 검색창에 '알려주세요'라고 치지 않는다 — 요청·질문 종결형은 키워드가 아니라 말이다.
+        //  ★이런 키워드는 문서 수가 0으로 나와 '선점 최적'처럼 보이는데, 실은 아무도 안 찾는 자리다.
+        if (SPEECH_TAIL_RE.test(kw)) {
+          drop.speech++;
+          console.log(`[amp] 검색어가 아닌 말투 — 카드 버림: ${kw}`);
+          continue;
+        }
         // ★없던 지역명을 지어 붙이는 걸 막는다(2026-08-05 유저 화면에서 검거).
         //  실측: 씨앗 '아파트 청약 일정' → 카드 '청주 아파트 청약 일정 2026'. 청주는 어디에도 없던 말이다.
         //  ★유저 확정 규칙은 '키워드 합성 금지'다. 수확기엔 합성 게이트가 있는데 증식기엔 없었다 —
