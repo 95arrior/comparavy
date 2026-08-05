@@ -15,6 +15,7 @@ import { econSeeds } from "./econCalendar";
 import { policySeeds } from "./policyCalendar";
 import { harvestGovPress } from "./govPress";
 import { harvestNewsPsych } from "./newsPsych";
+import { consumeOnlyTopic } from "./cardFinalGate";
 import { expandAutocomplete } from "./naverAutocomplete";
 import { fetchBlogTotal } from "./naverBlogSearch";
 import { fetchTrend } from "./naverDatalab";
@@ -120,7 +121,7 @@ export async function hasFreshTrends(category: string): Promise<boolean> {
 }
 
 // 게이트 탈락 기록 — 이후 튜닝의 기준 데이터(stale은 소스층 [trend-fresh] 로그, 여기는 합성 이후 게이트).
-export interface SeedDrop { keyword: string; title: string; reason: "unsafe_brand" | "stale_year" | "no_utility" | "gap" | "dead_or_niche" | "synthesized" }
+export interface SeedDrop { keyword: string; title: string; reason: "unsafe_brand" | "stale_year" | "no_utility" | "gap" | "dead_or_niche" | "synthesized" | "consume_only" }
 export interface RefreshResult { generated: number; drops: SeedDrop[]; applyhome?: { ecoCategory: boolean; keySet: boolean; fetched: number; joined: number; error?: string } }
 
 /** 카테고리 트렌드 갱신 — 뉴스+웹검색 종합 → AI 합성 → 풀 저장. 크론에서만 호출. */
@@ -222,6 +223,9 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
       const ti = (it.title ?? "").trim().slice(0, 80);
       if (!kw || !ti || seen.has(kw)) continue;
       if (isUnsafeKeyword(kw, brandOk) || isUnsafeKeyword(ti, brandOk)) { drops.push({ keyword: kw, title: ti, reason: "unsafe_brand" }); continue; }
+      // ★정답 소비형(퀴즈·룰렛·뽑기) — 카드 관문이 어차피 자른다. 씨앗 단계에서 막아 정원을 아낀다.
+      //  실측(2026-08-05): '우리은행 퀴즈'가 매 수확마다 씨앗 자리를 먹고 관문에서 죽었다.
+      if (consumeOnlyTopic(kw)) { drops.push({ keyword: kw, title: ti, reason: "consume_only" }); continue; }
       if (scamLoan(kw) || scamLoan(ti)) { drops.push({ keyword: kw, title: ti, reason: "unsafe_brand" }); continue; } // 대기업 사칭 대출(삼성재단대출류) — 유입 차단
       if (/20(1[0-9]|2[0-3])/.test(kw) || /20(1[0-9]|2[0-3])/.test(ti)) { drops.push({ keyword: kw, title: ti, reason: "stale_year" }); continue; } // 낡은 연도
       // ★실익 게이트 — utility='없음' 또는 논평형 title은 드롭(reason: no_utility)
@@ -266,7 +270,7 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
         if (injected >= 3) break; // 하루 상한 — 실시간이 보드를 통째로 먹지 않게
         const kw = compressToSearchKeyword(rk);
         if (!kw || seen.has(kw)) continue;
-        if (isUnsafeKeyword(kw, brandOk) || scamLoan(kw)) continue;
+        if (isUnsafeKeyword(kw, brandOk) || scamLoan(kw) || consumeOnlyTopic(kw)) continue; // ★소비형(퀴즈·룰렛)은 씨앗 자리도 낭비다
         // 카테고리 정합 — 급상승어가 이 분야 말과 겹치거나, 분야 씨앗 단어를 품고 있을 때만
         // ★정합 판정 둘 중 하나(2026-08-05 보강): 분야 일반명사와 겹치거나, '돈 되는 이벤트' 신호가 있거나.
         //  일반명사 겹침만 보면 '케이뱅크 황금캡슐'류가 영영 못 들어온다 — 그 말엔 '금리'도 '지원금'도 없다.
@@ -292,7 +296,7 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
         for (const c of cs) {
           const kw = compressToSearchKeyword(c.keyword);
           if (!kw || seen.has(kw)) continue;
-          if (isUnsafeKeyword(kw, brandOk) || scamLoan(kw)) continue;
+          if (isUnsafeKeyword(kw, brandOk) || scamLoan(kw) || consumeOnlyTopic(kw)) continue; // ★소비형(퀴즈·룰렛)은 씨앗 자리도 낭비다
           seen.add(kw);
           added += 1;
           // ★자기 칸을 준다(2026-08-05 유저: "요구사항 대비 미달입니다").
@@ -316,7 +320,7 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
         for (const a2 of acts) {
           const kw = compressToSearchKeyword(a2.keyword);
           if (!kw || seen.has(kw)) continue;
-          if (isUnsafeKeyword(kw, brandOk) || scamLoan(kw)) continue;
+          if (isUnsafeKeyword(kw, brandOk) || scamLoan(kw) || consumeOnlyTopic(kw)) continue; // ★소비형(퀴즈·룰렛)은 씨앗 자리도 낭비다
           seen.add(kw);
           added += 1;
           rows.push({ category, keyword: kw, title: a2.title, news_context: `${a2.newsContext}\n★후속 창(추정): ${a2.followFrom}~${a2.followTo} 사이에 권리락·신주배정 관련 검색이 다시 오른다. 그 시점을 겨냥해 일정 표를 본문에 둔다.`, longtails: [] as Longtail[], source: "dart", created_at: new Date().toISOString(), expires_at: expires });
@@ -340,7 +344,7 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
         for (const g of ps) {
           const kw = compressToSearchKeyword(g.keyword);
           if (!kw || seen.has(kw)) continue;
-          if (isUnsafeKeyword(kw, brandOk) || scamLoan(kw)) continue;
+          if (isUnsafeKeyword(kw, brandOk) || scamLoan(kw) || consumeOnlyTopic(kw)) continue; // ★소비형(퀴즈·룰렛)은 씨앗 자리도 낭비다
           seen.add(kw);
           added += 1;
           rows.push({ category, keyword: kw, title: `${kw}, 지금 확인하면 되는 것`, news_context: g.newsContext, longtails: [] as Longtail[], source: "newspsych", created_at: new Date().toISOString(), expires_at: expires });
@@ -362,7 +366,7 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
         for (const g of gps) {
           const kw = compressToSearchKeyword(g.keyword);
           if (!kw || seen.has(kw)) continue;
-          if (isUnsafeKeyword(kw, brandOk) || scamLoan(kw)) continue;
+          if (isUnsafeKeyword(kw, brandOk) || scamLoan(kw) || consumeOnlyTopic(kw)) continue; // ★소비형(퀴즈·룰렛)은 씨앗 자리도 낭비다
           seen.add(kw);
           added += 1;
           rows.push({
@@ -401,7 +405,7 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
         for (const b of buzz) {
           const kw = compressToSearchKeyword(b.keyword);
           if (!kw || seen.has(kw)) continue;
-          if (isUnsafeKeyword(kw, brandOk) || scamLoan(kw)) continue;
+          if (isUnsafeKeyword(kw, brandOk) || scamLoan(kw) || consumeOnlyTopic(kw)) continue; // ★소비형(퀴즈·룰렛)은 씨앗 자리도 낭비다
           seen.add(kw);
           added += 1;
           rows.push({ category, keyword: kw, title: `${kw}, 지금 챙기면 되는 것`, news_context: `[브랜드 버즈${b.momentum != null ? ` · 모멘텀 ${b.momentum}배, 피크 ${b.peakDaysAgo}일 전` : ""}] 네이버 자동완성에서 '${b.brand}' 뒤에 지금 실제로 붙어 검색되는 말이다 — 진행 중인 이벤트·혜택일 가능성이 높다. ★확인되지 않은 금액·기간·당첨 조건을 지어내지 마라. 공식 공지에서 확인되는 사실만 쓰고, 확인이 안 되면 '공식 앱·홈페이지에서 확인' 톤으로 남긴다. 이 글의 임무는 '지금 뭘 하면 되는지'를 순서로 주는 것이다.`, longtails: [] as Longtail[], source: "rising", created_at: new Date().toISOString(), expires_at: expires });
