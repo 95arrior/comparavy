@@ -801,8 +801,14 @@ export async function GET(req: Request) {
             // ★배지는 문서수 구간대로 정직하게 말한다(2026-08-05 유저 지적: "7,486편인데 선점 구간?").
             //  1만 미만이면 통과시키기로 했지만, 7천 편은 '선점'이 아니다 — 이미 쌓인 자리다.
             //  통과와 선점은 다른 말이고, 그 둘을 같은 말로 쓰면 유저가 우리 배지를 못 믿게 된다.
-            const room = total < 1000 ? "거의 안 쓰인 자리" : total < 3000 ? "아직 얇은 자리" : "이미 쌓인 자리 — 각도로 승부";
-            c.demandBadge = `실시간 급상승 · 지금 글 ${total.toLocaleString("ko-KR")}편 — ${room}`;
+            // ★배지는 그 카드의 실제 출처를 말해야 한다(2026-08-05 유저 화면: 청약홈 공고에 '실시간 급상승'이 붙었다).
+            //  뒷북 컷 대상을 '지금 뜨는' 전 카드로 넓히면서, 이 자리도 같이 넓혀 버린 게 원인이다 —
+            //  ★컷의 범위와 라벨의 범위는 다르다. 급상승에서 온 것만 급상승이라 부른다.
+            //  문서 수는 칩이 이미 보여준다 — 여기서 또 적으면 같은 말을 두 번 하는 것이다.
+            const fromRising = (c as { risingSeed?: boolean }).risingSeed === true
+              || (c.sel as { seedSource?: string } | undefined)?.seedSource === "rising"
+              || (c as { seedSource?: string }).seedSource === "rising";
+            if (fromRising) c.demandBadge = "실시간 급상승";
             void DOC_HARD_MAX; // 상한은 더 이상 통과 조건이 아니다(표시·정렬 재료로만 남는다)
             // ★공고·모집성 키워드는 '행동 창'이 생명인데, 자동완성·급상승 유래에는 마감일 정보가 없다.
             //  (청약홈·보조금24 씨앗은 actionEnd를 갖지만 이 경로는 그게 없다 — 유저가 '7월 공고 아니냐'고 물은 자리다.)
@@ -820,13 +826,15 @@ export async function GET(req: Request) {
         //   대형 키워드를 막지 않되, 수요가 없는 말은 거른다 — 이 둘은 서로 다른 이야기다.
         try {
           const need = tc.filter((c) => Number(c.vol ?? 0) === 0).map((c) => c.keyword);
-          if (need.length) {
+          const seedNeed = tc.map((c) => (c as { seedKeyword?: string }).seedKeyword).filter((x): x is string => !!x);
+          // ★씨앗 검색량이 화면에 안 뜨던 이유(2026-08-05 유저 화면): need가 비면 이 블록을 통째로 건너뛴다.
+          //  volMap이 이미 vol을 채운 카드만 있으면 need가 0이라 씨앗도 영영 못 쟀다.
+          if (need.length || seedNeed.length) {
             // ★씨앗(클러스터) 검색량도 함께 잰다(2026-08-05).
             //  증식이 씨앗을 롱테일로 늘리므로 글감 키워드의 검색량은 늘 작다(주민세 10,040 → 긴 구 50).
             //  글이 실제로 받을 유입의 상한은 클러스터 수요다 — 그걸 안 보여주면
             //  "월 50명"만 보고 멀쩡한 글감을 버리게 된다. 대신 무엇을 잰 값인지 반드시 밝힌다.
-            const seedKws = tc.map((c) => (c as { seedKeyword?: string }).seedKeyword).filter((x): x is string => !!x);
-            const stats = await fetchKeywordStats([...new Set([...need, ...seedKws])], 5); // 키는 normalizeKey(공백 제거)
+            const stats = await fetchKeywordStats([...new Set([...need, ...seedNeed])], 5); // 키는 normalizeKey(공백 제거)
             let noDemand = 0;
             for (const c of tc) {
               const st = stats.get(normalizeKey(c.keyword));

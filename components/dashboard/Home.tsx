@@ -1117,7 +1117,8 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
       }
       return topic.demandLabel ?? "지속 검색되는 주제";
     }
-    const badge = (topic as { demandBadge?: string }).demandBadge;
+    // ★칩이 이미 보여주는 것을 근거에서 또 말하지 않는다(유저 화면: 칩 '문서 4편' + 근거 '지금 글 4편')
+    const badge = (topic as { demandBadge?: string }).demandBadge?.replace(/\s*·?\s*지금 글 [\d,]+편[^·]*/g, "").trim();
     // ★'지금 뜨는' 열은 씨앗 키워드를 그대로 보여준다(2026-08-05 유저 확정).
     //  유저: "어떤 키워드로 글감이 생성됐는지 그 키워드만 써줘. 기준 월 검색량 이런 건 필요 없다 —
     //   저게 나오면 거짓이거나 잘못된 글감이니까(지금 뜨는 근거는 월평균이 아니다)."
@@ -1188,9 +1189,15 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
     if (isTrend) {
       // ★수요와 공급을 같이 말한다 — 문서만 보면 '아무도 안 찾는 빈 자리'를 기회로 착각한다
       const v = Number(topic.vol ?? 0);
-      const demand = v > 0 ? `월 ${v.toLocaleString("ko-KR")}명이 찾는데 ` : "";
-      if (bt < 1000) return `${demand}쓴 글이 거의 없어요 — 지금 올리면 초기 순위를 잡아요`;
-      if (bt < 3000) return `${demand}아직 얇은 자리예요 — 지금 올리면 상위를 노려볼 만해요`;
+      // ★수요는 클러스터로 말한다 — 롱테일 숫자만 보이면 멀쩡한 글감을 버리게 된다
+      const sv = (topic as { seedVol?: number }).seedVol ?? 0;
+      const demandN = Math.max(v, sv);
+      const demand = demandN > 0 ? `월 ${demandN.toLocaleString("ko-KR")}명이 찾는데 ` : "";
+      // ★"거의 없어요" 임계를 조인다(2026-08-05 유저 화면: 129편·183편에도 '거의 없어요'가 붙었다).
+      //  과장은 신뢰를 깎는다 — 사장님이 눈으로 세어보면 바로 들킨다.
+      if (bt <= 30) return `${demand}쓴 글이 ${bt}편뿐이에요 — 지금 올리면 초기 순위를 잡아요`;
+      if (bt < 300) return `${demand}아직 얇은 자리예요 — 지금 올리면 상위를 노려볼 만해요`;
+      if (bt < 3000) return `${demand}${bt.toLocaleString("ko-KR")}편이 있어요 — 각도를 잡으면 비집을 만해요`;
       return `${demand}이미 ${bt.toLocaleString("ko-KR")}편이 있어요 — 남들이 안 다룬 각도라야 이겨요`;
     }
     if (Number(topic.vol ?? 0) > 0) {
@@ -1262,12 +1269,15 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
           min-h로 두 줄 자리를 늘 확보해 박스 규격을 일정하게 만든다. */}
       <p className="mt-1.5 line-clamp-2 min-h-[2.5rem] text-[13.5px] font-extrabold leading-[1.28] text-[color:var(--color-text)]">{topic.title}</p>
       {/* ★근거 — 어떤 근거로 가져왔고(수확 사실) 어떻게 쓸 것인지(활용 계획)를 한 줄에. 둘 다 실값에서만 만든다. */}
-      <p className="mt-1 line-clamp-2 min-h-[2rem] text-[11px] leading-[1.35] text-[#8B95A1]">
+      {/* ★3줄까지 — 마감·클러스터 수요가 잘려 나가면 판단 재료가 사라진다(유저 화면에서 잘림 확인) */}
+      <p className="mt-1 line-clamp-3 min-h-[2rem] text-[11px] leading-[1.35] text-[#8B95A1]">
         근거 : {evidence}{seedNote}{usePlan ? ` → ${usePlan}` : ""}
       </p>
       <div className="mt-auto flex items-center gap-2 pt-2">
         {pubAdvice && <span className={`text-[11px] font-semibold ${pubAdvice.hot ? "text-[#F04452]" : "text-neutral-400"}`}>{pubAdvice.text}</span>}
-        {life && <span className="text-[10.5px] font-semibold tabular-nums text-amber-600">{life}</span>}
+        {/* ★마감 D-N(발행 조언)과 카드 수명이 같은 'D-' 표기라 서로 다른 숫자가 나란히 섰다(유저 화면 D-5/D-6).
+            수명은 '이 카드가 보드에서 사라질 때까지'라 성격이 다르다 — 표기를 갈라 혼동을 없앤다. */}
+        {life && <span className="text-[10.5px] font-semibold tabular-nums text-neutral-400" title="이 글감이 보드에서 사라질 때까지 남은 시간">글감 수명 {life}</span>}
         {topic.revenueLabel && <span className="rounded-full bg-[#F5F3EE] px-2 py-0.5 text-[10.5px] font-bold text-[#8A6D1F]">{topic.revenueLabel}</span>}
         {/* ★레인 배지는 우측 하단(유저 목업). 검색 레인은 실측 검색량을 그대로 적는다. */}
         {/* ★홈판을 '꾸준한 수요'로 적던 오류(2026-08-05 유저 화면) — 홈판은 검색 수요로 가는 글이 아니다.
