@@ -18,12 +18,20 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
 //   (실제로 그 사이 이 파일이 계속 FAIL을 냈다. 테스트가 틀렸는데 코드를 의심하게 만든다.)
 {
   const p = buildTextlessThumbPrompt("", "u1", 0, "a glowing employee ID badge on a lanyard", "새만금 채용");
-  ok(/flat vector editorial illustration/i.test(p), "★플랫 벡터 일러스트(토스피드 톤)");
-  ok(/NOT a 3D render/i.test(p), "★3D 렌더 아님을 못 박는다(옛 규격이 되살아나지 않게)");
-  // ★금지어는 '없어야' 하는 게 아니라 '금지된다고 적혀야' 한다 — 단어 유무만 보면 반대로 읽는다
-  ok(/NO neon glow/i.test(p) && /NO bokeh/i.test(p), "★네온·보케를 금지어로 못 박는다");
-  ok(!/glow pooling on the surface/i.test(p), "★바닥 글로우 제거됨");
-  ok(/Square 1:1/.test(p), "★정사각(홈피드 카드가 정사각)");
+  // ★3차 규격(2026-08-05 유저 레퍼런스): 비비드 단색 방사 배경 + 정중앙 대칭 + 주제 실물 크게.
+  //  같은 날 오전의 '플랫 벡터 토스톤'을 대체한다. 8/2의 '3D 네온 + 공장 야경'과도 다르다 —
+  //  ★차이는 배경이다: 야경·보케가 아니라 '한 가지 색으로 꽉 찬 방사선(sunburst)'.
+  ok(/radial sunburst rays/i.test(p), "★방사선 배경(레퍼런스의 핵심)");
+  ok(/halftone dot pattern in the corners/i.test(p), "모서리 하프톤 도트");
+  ok(/one vivid saturated color filling the whole frame/i.test(p), "★배경은 강조 색상 한 가지로 꽉");
+  ok(/no night city, no bokeh/i.test(p), "★야경·보케는 여전히 금지(8/2 규격이 되살아나지 않게)");
+  ok(/70-85% of the frame/.test(p), "★주제가 화면의 70~85%");
+  ok(/Render the actual thing, not a metaphor/i.test(p), "★은유가 아니라 주제의 실물(유저: 디에이치 아파트를 딱 박은 거야)");
+  ok(/four-point sparkle glints/i.test(p), "반짝임 효과");
+  // ★훅 은유 지시가 남아 있으면 모델이 아파트 대신 '열리는 뚜껑'을 그린다 — 상충하는 지시는 나쁜 쪽이 이긴다
+  ok(!/JUST BEFORE the reveal/i.test(p), "★'답 직전의 순간' 은유 지시가 빠졌다(새 규격과 상충)");
+  ok(!/flat vector editorial illustration/i.test(p), "★플랫 벡터 규격이 되살아나지 않는다");
+  ok(/square \(1:1\)/i.test(p), "★정사각(홈피드 카드가 정사각)");
   ok(/No company names or trademarked marks/i.test(p), "회사 상표 금지");
   ok(/lettering-free symbol/i.test(p), "★글자 없는 심볼(십자·방패·집 윤곽)은 허용");
   ok(/NO TEXT of any kind/i.test(p), "★글자 금지(계정 리스크 — 우리 규칙)");

@@ -28,11 +28,16 @@ console.log("\n② 살아 있는 두 경로에 실제로 실리는가(★오늘 
   ok(/MOMENT JUST BEFORE THE ANSWER/.test(withCopy), "★'답 직전을 그려라'가 최상위 규칙");
   ok(withCopy.indexOf("HOOK =") < withCopy.indexOf("Palette"), "★훅이 팔레트보다 앞(우선순위가 순서로 드러남)");
 
+  // ★무문구 경로에서는 훅 은유를 뺐다(2026-08-05 3차 규격 — 유저 레퍼런스).
+  //  그 규격의 핵심은 '주제의 실물을 정중앙에 크게'인데, 훅은 '답 직전의 순간'을 은유로 그리라고 한다 —
+  //  둘을 같이 주면 모델이 아파트 대신 '열리는 뚜껑'을 그린다. ★상충하는 지시는 나쁜 쪽이 이긴다.
+  //  ★훅은 문구가 있는 경로가 계속 맡는다(위 withCopy 검사) — 거기선 서사가 먹힌다.
   const textless = buildTextlessThumbPrompt("손해 공포 마감", "u1", 0, null, "오늘 마감되는 청년 지원금");
-  ok(/HOOK = CLOSING WINDOW/.test(textless), "★무문구 경로에도 유형 연출이 실린다");
-  ok(/flat vector editorial illustration/i.test(textless), "★토스피드 결 — 플랫 벡터 일러스트");
-  ok(/NOT a 3D render/.test(textless) && /NO neon glow/.test(textless), "★종전 3D 네온·야경 규격을 명시적으로 배제한다");
-  ok(/one flat saturated solid color/.test(textless), "★단색 배경(토스 카드 결)");
+  ok(!/HOOK = /.test(textless), "★무문구 경로에는 훅 은유를 넣지 않는다(실물 규격과 상충)");
+  ok(/Render the actual thing, not a metaphor/i.test(textless), "★대신 '은유 말고 실물'이 최상위 규칙");
+  ok(/radial sunburst rays/i.test(textless), "★방사 배경(3차 규격)");
+  ok(/one vivid saturated color filling the whole frame/i.test(textless), "★단색 배경은 유지(색만 고채도로)");
+  ok(/no night city, no bokeh/i.test(textless), "★야경·보케 배제는 그대로");
   ok(/NO TEXT of any kind/.test(textless), "★글자 금지는 스타일이 바뀌어도 그대로(유저 4회 지적)");
 }
 

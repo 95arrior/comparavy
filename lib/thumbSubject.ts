@@ -184,39 +184,47 @@ function pickBy(seed: number, arr: readonly string[]): string { return arr[seed 
 const GLOW_COLORS = ["electric violet", "deep blue", "cyan", "magenta", "amber gold", "emerald green", "crimson red"];
 
 // ★토스피드 결 단색 팔레트(2026-08-05) — 밝고 채도 높은 한 색이 화면을 채운다.
+// ★배경 단색(방사 배경) 팔레트 — 유저: "배경은 강조 색상 느낌 랜덤으로".
+//  레퍼런스가 강한 전자청색이라 채도를 높게 잡는다. 글마다·계정마다 색이 갈리게 회전한다.
 const TOSS_PALETTES = [
-  "a vivid signal red (#e8402d family) with cream and charcoal objects",
-  "a bright toss blue (#3182f6 family) with white and navy objects",
-  "a fresh green (#12b76a family) with cream and dark ink objects",
-  "a warm amber yellow (#ffc933 family) with navy and white objects",
-  "a soft violet (#6b5cff family) with peach and pale blue objects",
-  "a deep teal (#0f766e family) with sand and off-white objects",
-  "a coral pink (#ff7f6e family) with teal and cream objects",
+  "an electric royal blue (#2a2aff family)",
+  "a vivid signal red (#e8402d family)",
+  "a deep violet (#6b21ff family)",
+  "a hot magenta (#e0219e family)",
+  "a bright cyan teal (#00b3c7 family)",
+  "a vivid orange (#ff6a13 family)",
+  "a rich emerald green (#0aa14f family)",
 ];
 
 export function buildTextlessThumbPrompt(betType: string, userId: string, variant = 0, subjectOverride?: string | null, title?: string | null, backdrop?: string | null): string {
   const subject = (subjectOverride ?? "").trim() || grammarFor(betType, title).subject;
   const seed = fnv1a(`${title ?? ""}|${subject}|${variant}`);
-  const hook = HOOK_DIRECTION[thumbHookOf(`${title ?? ""} ${subject}`)];
+  void HOOK_DIRECTION; void thumbHookOf; // ★훅 은유는 이 규격에서 쓰지 않는다(위 주석) — import는 다른 경로가 쓴다
   const palette = TOSS_PALETTES[fnv1a(`${userId}|${title ?? ""}|${variant}|pal`) % TOSS_PALETTES.length]!;
   void backdrop; // ★야경 배경은 플랫 일러스트에서 쓰지 않는다(단색 배경이 규격) — 인자는 하위 호환으로 받기만
   return [
-    // ★2026-08-05 유저 재지정(토스피드 레퍼런스) — 종전 규격이던 '3D 네온 제품 렌더 + 야경 보케'를 대체한다.
-    //  그 규격은 2026-08-02 유저 레퍼런스(사원증+공장 야경)로 만든 것인데, 오늘 유저가 토스피드 화면을 주며
-    //  "이런 일러스트로, 토스톤이 아닌데?"라고 정정했다. 스타일 축을 플랫 일러스트로 옮긴다.
-    `A flat vector editorial illustration for a Korean money/finance blog thumbnail. Square 1:1.`,
-    // ★훅이 먼저다 — 무엇을 그릴지(주제)보다 어떤 순간을 그릴지(훅)가 클릭을 만든다.
-    `CORE RULE (overrides everything below): do NOT illustrate the keyword itself. Illustrate the MOMENT JUST BEFORE THE ANSWER. There is NO text on this image — the illustration alone must stop the thumb, so the unanswered question has to be readable at 200px.`,
-    hook,
-    `Subject material: ${subject} — use it only as the raw object; stage it in the hook's moment above.`,
-    // 토스피드 결 — 단색 배경 + 단순한 형태 + 굵은 실루엣
-    `STYLE (non-negotiable): flat 2D vector illustration in the style of a Toss(토스) feed card or a modern fintech brand blog — bold simple shapes, clean confident outlines, minimal detail, slight paper-grain texture. NOT a 3D render, NOT photorealistic, NOT glossy CG, NO neon glow, NO bokeh, NO night scenes.`,
-    `BACKGROUND: one flat saturated solid color filling the entire frame — ${palette}. No gradients beyond a whisper, no scenery, no depth.`,
-    `OBJECTS: one or two simple objects only, oversized and centered-ish, drawn with generous negative space. If a person appears, draw them in the same flat style — simple rounded shapes, minimal facial features, expressive posture over detail.`,
-    `The illustration must feel designed by a brand studio, not generated: confident composition, deliberate color blocking, nothing cluttered.`,
+    // ★2026-08-05 유저 3차 재지정 — 레퍼런스: 비비드 단색 방사 배경 + 정중앙 대칭 + 주제 실물 크게.
+    //  같은 날 오전의 '플랫 벡터 토스톤'을 대체한다. 그리고 8/2의 '3D 네온 + 공장 야경'과도 다르다 —
+    //  ★차이는 배경이다: 야경·보케가 아니라 '한 가지 색으로 꽉 찬 방사선(sunburst)'이다.
+    //  유저 원문: "배경은 강조 색상 느낌 랜덤으로, 대신 가운데 핵심 이미지는 주제에 딱 맞는 이미지.
+    //   지금은 디에이치 아파트 이야기니깐 디에이치 아파트를 딱 박은 거야."
+    `A bold, high-impact square (1:1) thumbnail for a Korean money/finance blog. Poster-like, symmetrical, made to stop the thumb at 200px.`,
+    // ★이 규격의 승부처는 '무엇이 한가운데 박혀 있는가'다 — 은유가 아니라 그 주제의 실물.
+    `CENTERPIECE (most important): a single, instantly recognizable REAL subject of this article, rendered large and centered, facing the viewer straight on. It must fill roughly 70-85% of the frame and sit slightly above center with a soft contact shadow beneath it.`,
+    `Subject: ${subject}. ★Render the actual thing, not a metaphor for it — if the article is about an apartment complex, draw that apartment complex; if it is about a card, draw that card. No signposts, no crossroads, no scales, no light bulbs.`,
+    // ★훅 지시문은 넣지 않는다(2026-08-05 3차 규격). 그 지시는 '답 직전의 순간'을 은유로 그리라는 것인데,
+    //  이 규격의 핵심은 정반대다 — 주제의 실물을 정중앙에 크게 박는 것이다.
+    //  둘을 같이 주면 모델이 아파트 대신 '열리는 뚜껑·젖혀지는 커튼'을 그린다(상충하는 지시는 나쁜 쪽이 이긴다).
+    //  ★훅은 썸네일 문구가 맡는다 — 이 이미지는 문구 없이 나가고, 클릭은 '무엇이 박혀 있나'가 만든다.
+    // 배경 — 레퍼런스의 핵심
+    `BACKGROUND (non-negotiable): one vivid saturated color filling the whole frame — ${palette} — with radial sunburst rays bursting outward from directly behind the subject, and a subtle halftone dot pattern in the corners. The background is flat and graphic: no scenery, no night city, no bokeh, no photographic depth.`,
+    `LIGHTING: clean studio light on the subject so its form reads crisply against the flat background. Add 2-3 small four-point sparkle glints around the subject. Keep the subject's own colors true — the vivid color lives in the background, not on the subject.`,
+    `RENDER STYLE: crisp 3D-render / product-visualization look for the subject (clean edges, believable materials, gentle ambient occlusion), sitting on a flat graphic background. High contrast between subject and background so the silhouette is unmistakable when small.`,
+    `Composition must feel deliberate and poster-like: centered, symmetrical, generous margin around the subject, nothing cluttered at the edges.`,
     `No company names or trademarked marks. A plain lettering-free symbol (a cross, a shield, a house outline) is allowed.`,
-    // ★글자 금지 — 계정 리스크(유저 4회 지적). 스타일이 바뀌어도 이것만은 그대로다.
-    `NO TEXT of any kind: no letters, numbers, Korean characters, signage, labels or watermarks anywhere in the image.`,
+    // ★글자 금지 — 계정 리스크(유저 4회 지적). 규격이 세 번 바뀌어도 이것만은 그대로다.
+    //  유저 지시도 "문구 없이"였다 — 레퍼런스 건물에 보이는 로고는 AI가 그리면 반드시 깨진다.
+    `NO TEXT of any kind: no letters, numbers, Korean characters, signage, labels, logos or watermarks anywhere in the image.`,
   ].join("\n");
 }
 
