@@ -12,6 +12,7 @@ import { financeCalcContext } from "@/lib/financeCalc";
 import { sanitizeUrls } from "@/lib/linkWhitelist";
 import { countBodyChars } from "@/lib/humanizer";
 import { finalizeArticleBody } from "@/lib/finalizeBody";
+import { pickTopBidTag } from "@/lib/adBid";
 import { relatedPostsFor } from "@/lib/relatedPosts";
 import { sectionBudgetReport, tailSummaryBullets, clichePhotoSlots, eligibilityTableIssues, answerFirstDefects, stiltedInterjections } from "@/lib/editorial";
 import { validateTitleTail } from "@/lib/titleRules";
@@ -694,7 +695,22 @@ export async function POST(request: Request) {
 
         // (네이버 수익형 단일 — 자영업 시절의 업체 NAP 박스 삽입 제거. 수익형 블로그에 영업장 정보는 무의미 + 전 글 공통 박스는 패턴 지문 리스크)
         // ★마감 조립(리스트→표 · 하드컷 · 고지 · URL정화 · 관련글 · 해시태그) — 한 곳에서 한다.
+        // ★대표 태그 — 글 주제와 묶인 말 중 광고 단가가 가장 높은 하나를 태그 맨 앞에(2026-08-05 유저 지시).
+        //  실패해도 글은 나간다(단가 조회는 있으면 좋은 것이지 필수가 아니다).
+        let leadTag = "";
+        try {
+          const pick = await pickTopBidTag(
+            article.body_html,
+            (article as { keyword?: string }).keyword ?? keyword,
+            Array.isArray((article as { tags?: unknown }).tags) ? ((article as { tags?: string[] }).tags ?? []) : [],
+          );
+          if (pick) {
+            leadTag = pick.keyword;
+            console.log(`[ad-bid] 대표 태그 '${pick.keyword}' ${pick.bid.toLocaleString()}원${pick.runnerUp ? ` (차점 ${pick.runnerUp.keyword} ${pick.runnerUp.bid.toLocaleString()}원)` : ""}`);
+          }
+        } catch (e) { console.error("[ad-bid] 실패:", e instanceof Error ? e.message : e); }
         const fin = finalizeArticleBody({
+          leadTag,
           bodyHtml: article.body_html, keyword, isReview,
           ownNaverBlogId: (profileRow as { naver_blog_id?: string | null } | null)?.naver_blog_id,
           relatedPosts, modelTags: (article as { tags?: unknown }).tags, tag: (article as { tag?: string }).tag,

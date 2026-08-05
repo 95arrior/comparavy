@@ -543,6 +543,26 @@ export function sectionBudgetReport(html: string, perSection: number): SectionBu
 //  해시태그는 네이버 편집기에서 태그 영역으로 빠져 본문 글자가 아니라, 버려도 분량이 안 줄고
 //  노출 장치만 잃는다. 즉 없을 이유가 전혀 없으므로 없으면 코드가 채운다.
 //  ★지어내지 않는다: 키워드에서 파생한 것만 쓴다(해시태그는 사실 주장이 아니라 분류 라벨이다).
+/**
+ * ★대표 태그를 맨 앞에 끼워 넣는다(2026-08-05 유저 지시).
+ *  유저 방법: 발행 후 [태그 수정]에서 고단가 키워드를 태그 맨 앞에 하나 넣으면
+ *  하단 파워링크가 그 계열 광고로 바뀐다 → 애드포스트 단가가 오른다.
+ *  ★이미 있으면 순서만 앞으로 당긴다(중복으로 두 번 넣지 않는다).
+ *  ★안전선: 여기 넣는 말은 반드시 본문에 등장하는 것이어야 한다 —
+ *   무관한 고단가 태그는 광고주 타겟과 어긋나 신고·정지 위험이다(유저가 함께 준 주의사항).
+ */
+export function leadHashtag(html: string, lead: string): string {
+  const w = String(lead || "").replace(/\s+/g, "");
+  if (w.length < 2) return html;
+  const h = String(html || "");
+  const m = /(<p[^>]*>)((?:\s*#[가-힣A-Za-z0-9_]{2,})+\s*)(<\/p>)/.exec(h);
+  if (!m) return h; // 해시태그 줄이 없으면 손대지 않는다(ensureHashtags가 먼저 돈다)
+  const tags = (m[2]!.match(/#[가-힣A-Za-z0-9_]{2,}/g) ?? []).map((t) => t.trim());
+  const rest = tags.filter((t) => t.replace(/^#/, "").replace(/\s+/g, "") !== w);
+  const next = [`#${w}`, ...rest].slice(0, Math.max(tags.length, 1));
+  return h.replace(m[0], `${m[1]}${next.join(" ")}${m[3]}`);
+}
+
 export function ensureHashtags(html: string, keyword: string, tag?: string, modelTags?: unknown): string {
   // ★세는 방식을 좁힌다(2026-08-04 유저: "아직도 본문에 안 붙는다").
   //  종전엔 태그만 벗기고 /#[^\s#]+/로 셌다 — HTML 엔티티(&#39; 결)가 남아 '#39;'이 해시태그로 잡히고,

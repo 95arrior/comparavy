@@ -6,7 +6,7 @@
 //  주석엔 "후처리(generate와 동일)"이라고 적혀 있었는데 동일하지 않았다.
 //  ★CLAUDE.md의 반복 교훈 그대로다: 규칙을 소스별로 복붙하면 반드시 빠지는 경로가 생긴다.
 //   그래서 마감은 이 함수 하나로만 한다 — 새 마감 규칙은 여기에만 추가한다.
-import { ensureHashtags, ensureRelatedLinks, hardTrimToLimit, stripStilted } from "./editorial";
+import { ensureHashtags, ensureRelatedLinks, hardTrimToLimit, leadHashtag, stripStilted } from "./editorial";
 import { ensureDisclosure } from "./revenue";
 import { listToTable } from "./publishHtml";
 import { sanitizeUrls } from "./linkWhitelist";
@@ -21,6 +21,8 @@ export interface FinalizeInput {
   relatedPosts?: { title: string; url: string }[];
   /** 모델이 만든 태그(해시태그 1순위 재료) */
   modelTags?: unknown;
+  /** ★대표 태그(광고 단가 최고) — 태그 맨 앞에 온다. 부르는 쪽이 재서 넘긴다. */
+  leadTag?: string;
   tag?: string;
 }
 
@@ -53,7 +55,9 @@ export function finalizeArticleBody(input: FinalizeInput): FinalizeResult {
   const withLinks = ensureRelatedLinks(clean.html, related);
   const relatedAdded = (withLinks.match(/\[마무리관련글:/g) ?? []).length;
   // ⑤ 해시태그 — 모델이 빠뜨려도 여기서 채운다
-  const html = ensureHashtags(withLinks, input.keyword, input.tag, input.modelTags);
+  // ★대표 태그를 맨 앞으로(2026-08-05 유저 지시) — 하단 파워링크가 그 계열로 바뀐다.
+  //  단가 조회는 네트워크라 여기(동기 조립)에서 하지 않는다. 부르는 쪽이 재서 넘긴다.
+  const html = leadHashtag(ensureHashtags(withLinks, input.keyword, input.tag, input.modelTags), input.leadTag ?? "");
   return {
     html,
     charCount: countBodyChars(html),
