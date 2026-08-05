@@ -637,8 +637,22 @@ export async function GET(req: Request) {
         }
       } catch { /* 검색량 '조회' 실패 — volMap 빈 채로 진행(아래 게이트는 API 무관하게 항상 실행) */ }
       {
-        // ★수요 기반 선별(유저 확정: 표시만 하던 검색량을 선별에 사용 — '수요 낮음'을 최상단에 올리는 자기모순 제거)
-        tc = tc.filter((c) => {
+        // ★수요 컷을 여기서 하지 않는다(2026-08-05 — 게이트 중앙화 위반을 바로잡는다).
+        //  실측: 씨앗은 dart 4·calendar 1·gov24 1이 다 들어왔는데 카드가 0장이었다.
+        //  ★수요 게이트가 두 개였고, 먼저 도는 이 게이트가 아직 재지 않은 값(씨앗 클러스터 검색량)과
+        //   선점 판정을 모른 채 잘라내고 있었다. 게다가 그 탈락은 진단에 항목으로 안 남아
+        //   '어디서 사라졌나'를 며칠 동안 못 찾았다.
+        //  ★여기서는 구제 사유만 계산해 카드에 붙이고, 컷은 문서·씨앗 검색량까지 다 잰 뒤 한 곳에서 한다.
+        for (const c of tc) {
+          const ctx0 = `${c.title} ${c.keyword} ${(c.newsContext ?? "").slice(0, 200)}`;
+          const pv0 = /플랫폼 조회\s*([\d,]+)회/.exec(c.newsContext ?? "");
+          (c as { rescue?: { platformViews: number; bigPool: boolean; poolScore: number } }).rescue = {
+            platformViews: pv0 ? Number(pv0[1]!.replace(/,/g, "")) : 0,
+            bigPool: isBigPool(ctx0),
+            poolScore: poolScore(ctx0),
+          };
+        }
+        const _unusedDemandFilter = (c: (typeof tc)[number]) => {
           const v = volMap[c.keyword];
           const isAnnounce = Boolean((c as { actionEnd?: string | null }).actionEnd);
           if (!isAnnounce) {
@@ -664,7 +678,8 @@ export async function GET(req: Request) {
             if (platformViews < 10_000 && poolScore(`${c.title} ${c.keyword} ${(c.newsContext ?? "").slice(0, 200)}`) < 3) { funnel.unlistedAnnounce++; return false; }
           }
           return true;
-        });
+        };
+        void _unusedDemandFilter; // ★규칙은 아래 단일 게이트로 옮겼다(참조만 남겨 히스토리를 보존)
         funnel.afterDemand = tc.length;
         funnel.demandCut = funnel.built - tc.length;
         // ★수요(실측) + 풀 스코어(잠재 독자 크기 — 유저 회의 확정: 동탄 줍줍 vs 지방 소단지) 결합 정렬
@@ -848,12 +863,17 @@ export async function GET(req: Request) {
           // ★씨앗 검색량이 화면에 안 뜨던 이유(2026-08-05 유저 화면): need가 비면 이 블록을 통째로 건너뛴다.
           //  volMap이 이미 vol을 채운 카드만 있으면 need가 0이라 씨앗도 영영 못 쟀다.
           // ★늦었으면 씨앗 검색량은 포기한다(카드는 나간다) — 없으면 근거 한 줄이 짧아질 뿐이다
-          if ((need.length || seedNeed.length) && !overBudget()) {
+          if (need.length || seedNeed.length) {
             // ★씨앗(클러스터) 검색량도 함께 잰다(2026-08-05).
             //  증식이 씨앗을 롱테일로 늘리므로 글감 키워드의 검색량은 늘 작다(주민세 10,040 → 긴 구 50).
             //  글이 실제로 받을 유입의 상한은 클러스터 수요다 — 그걸 안 보여주면
             //  "월 50명"만 보고 멀쩡한 글감을 버리게 된다. 대신 무엇을 잰 값인지 반드시 밝힌다.
-            const stats = await fetchKeywordStats([...new Set([...need, ...seedNeed])], 5); // 키는 normalizeKey(공백 제거)
+            // ★늦었으면 씨앗 검색량은 포기하되 컷은 그대로 돈다(2026-08-05).
+            //  종전엔 예산 초과 시 이 블록을 통째로 건너뛰어 수요 게이트 자체가 안 돌았다 —
+            //  '느리면 아무거나 나간다'가 되는 자리였다.
+            const stats = overBudget()
+              ? new Map<string, { mobile: number; pc: number; compIdx: string; adDepth: number }>()
+              : await fetchKeywordStats([...new Set([...need, ...seedNeed])], 5); // 키는 normalizeKey(공백 제거)
             let noDemand = 0;
             for (const c of tc) {
               const st = stats.get(normalizeKey(c.keyword));
@@ -874,11 +894,22 @@ export async function GET(req: Request) {
             const kept: typeof tc = [];
             for (const c of tc) {
               const measured = (c as { volMeasured?: boolean }).volMeasured === true;
+              // ★옮겨 온 구제 규칙(종전 게이트에 있던 것) — 검색량 DB에 없어도 실수요 증거가 있으면 산다.
+              //  · 플랫폼 실측 조회 1만 이상(보조금24·기업마당) · 대형 풀 · 풀 스코어 3 이상
+              //  실측 근거: 귀농 주택구입지원(조회 2.2만)이 풀 스코어 0으로 버려지던 구멍.
+              const rs = (c as { rescue?: { platformViews: number; bigPool: boolean; poolScore: number } }).rescue;
+              const rescued = !!rs && (rs.platformViews >= 10_000 || rs.bigPool || rs.poolScore >= 3);
               // ★수요는 클러스터로 잰다(2026-08-05). 증식이 씨앗을 롱테일로 늘리므로 글감 키워드의
               //  검색량은 늘 작다(주민세 10,040 → 긴 구 50). 그 작은 숫자로 하한을 걸면
               //  클러스터 수요가 큰 멀쩡한 글감이 통째로 죽는다 — 롱테일 글은 클러스터에서 유입을 받는다.
               const v = Math.max(Number(c.vol ?? 0), Number((c as { seedVol?: number }).seedVol ?? 0));
-              if (!measured || v >= DEMAND_MIN) { kept.push(c); continue; }
+              // ★공고(마감 있는 것)는 문턱이 높다 — 아무도 안 찾는 공고명이 뒷문으로 들어오던 자리다.
+              const isAnnounce = Boolean((c as { actionEnd?: string | null }).actionEnd);
+              const floor = isAnnounce ? 300 : DEMAND_MIN;
+              if (!measured || v >= floor || rescued) {
+                if (rescued && measured && v < floor) console.log(`[demand] 구제 — ${c.keyword}(수요 ${v}, 플랫폼조회 ${rs?.platformViews ?? 0}·풀 ${rs?.poolScore ?? 0})`);
+                kept.push(c); continue;
+              }
               const src = (c as { seedSource?: string }).seedSource ?? (c.sel as { seedSource?: string } | undefined)?.seedSource ?? null;
               const pv = preemptVerdict(c.keyword, src, (c as { blogTotal?: number | null }).blogTotal ?? null);
               // ★선점 면제는 보드당 2장까지(2026-08-05 실측).
@@ -898,6 +929,9 @@ export async function GET(req: Request) {
             if (weak.length) {
               tc = kept;
               noDemand = before - tc.length;
+              // ★깔때기 숫자도 여기서 채운다 — 컷이 한 곳이니 세는 곳도 한 곳이어야 한다
+              funnel.demandCut = noDemand;
+              funnel.afterDemand = tc.length;
               console.log(`[demand] 수요 미달 제외 ${noDemand}장(월 ${DEMAND_MIN}회 미만) — ${weak.map((w) => `${w.keyword}(${w.vol}회, ${w.why})`).join(", ")}`);
               if (debugMode) diag.noDemand = weak;
             }

@@ -116,5 +116,21 @@ console.log("\n⑦ 서빙이 느려도 화면은 뜨는가:");
   ok(/diag\.timing = \{ elapsedMs/.test(rt), "★소요 시간·생략 여부를 진단에 남긴다(원인을 추측하지 않게)");
 }
 
+console.log("\n⑧ 수요 게이트는 하나인가:");
+{
+  const rt = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
+  // ★실측(2026-08-05): 씨앗은 dart 4·calendar 1·gov24 1이 다 들어왔는데 카드가 0장이었다.
+  //  수요 게이트가 두 개였고, 먼저 도는 쪽이 아직 재지 않은 값(씨앗 클러스터 검색량)과
+  //  선점 판정을 모른 채 잘라냈다. 게다가 그 탈락은 진단에 항목으로 안 남아 며칠을 못 찾았다.
+  ok(/게이트 중앙화 위반을 바로잡는다/.test(rt), "★컷은 한 곳에서만 한다");
+  ok(/void _unusedDemandFilter/.test(rt), "옛 게이트는 컷을 하지 않는다(히스토리만 보존)");
+  ok(/const floor = isAnnounce \? 300 : DEMAND_MIN/.test(rt), "★공고는 문턱이 높다(아무도 안 찾는 공고명 차단)");
+  ok(/rs\.platformViews >= 10_000 \|\| rs\.bigPool \|\| rs\.poolScore >= 3/.test(rt), "★구제 규칙이 함께 옮겨왔다(귀농 주택구입지원 구멍)");
+  ok(/funnel\.demandCut = noDemand/.test(rt), "★세는 곳도 한 곳(컷과 카운트가 어긋나지 않게)");
+  // ★느리다고 게이트를 건너뛰면 '느리면 아무거나 나간다'가 된다
+  ok(/종전엔 예산 초과 시 이 블록을 통째로 건너뛰어 수요 게이트 자체가 안 돌았다/.test(rt), "★예산 초과여도 컷은 돈다");
+  ok(/if \(need\.length \|\| seedNeed\.length\) \{/.test(rt), "측정만 건너뛰고 판정은 유지");
+}
+
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 원천 무결성");
 process.exit(fail ? 1 : 0);
