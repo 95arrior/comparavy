@@ -26,7 +26,10 @@ const PHOTO_RE = /\[사진:\s*([^\]]+)\]/g;
 //  ★이걸 안 넣으면 새 마커가 파싱 대상이 아니라 대괄호째로 발행본에 노출된다 —
 //   마커를 만들 때는 '그리는 쪽'과 '지우는 쪽'을 반드시 같이 고쳐야 한다.
 const SLOT_RE = /\[(사진|카드|차트|브랜드|표|인물):\s*([^\]]+)\]/g;
-export interface Slot { type: "photo" | "card"; desc: string }
+// ★"find" = 유저가 웹에서 찾아 넣는 자리(브랜드·표·인물). AI로 그리면 안 된다 —
+//  로고·표는 애초에 그릴 수 없고(글자), 크레딧만 태우고 쓰레기 이미지가 나온다.
+//  ★타입을 안 나누면 소비하는 쪽이 desc 문자열을 냄새 맡아 판단하게 된다(반드시 어긋난다).
+export interface Slot { type: "photo" | "card" | "find"; desc: string }
 // 본문의 슬롯을 문서 순서로 파싱(생성 파이프라인이 타입별로 렌더).
 export function parseSlots(bodyHtml: string): Slot[] {
   const out: Slot[] = [];
@@ -36,7 +39,7 @@ export function parseSlots(bodyHtml: string): Slot[] {
   while ((m = re.exec(bodyHtml))) {
     const kind = m[1]!;
     const prefix = kind === "차트" ? "차트: " : FIND.has(kind) ? `${kind} 찾기: ` : "";
-    out.push({ type: kind === "카드" ? "card" : "photo", desc: prefix + m[2]!.trim() });
+    out.push({ type: FIND.has(kind) ? "find" : kind === "카드" ? "card" : "photo", desc: prefix + m[2]!.trim() });
   }
   return out;
 }

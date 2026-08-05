@@ -42,6 +42,22 @@ console.log("\n③ 마커가 발행본에 새지 않는가:");
   ok(slots[2].desc.startsWith("표 찾기: "), "표도 마찬가지");
   ok(slots[3].desc.startsWith("인물 찾기: "), "인물도 마찬가지");
   ok(/사진\|카드\|브랜드\|표\|인물/.test(ph), "★유출 검사도 새 마커를 본다");
+  // ★AI가 그리면 안 되는 자리다 — 로고·표는 그릴 수 없고 크레딧만 태운다.
+  //  타입을 안 나누면 소비하는 쪽이 desc 문자열을 냄새 맡아 판단하게 된다(반드시 어긋난다).
+  ok(slots[1].type === "find" && slots[2].type === "find" && slots[3].type === "find", "★세 마커는 'find' 타입(AI 생성 대상 아님)");
+  ok(slots[0].type === "photo", "[사진:]은 그대로 photo");
+  const am = fs.readFileSync(new URL("../components/dashboard/ArticleModal.tsx", import.meta.url), "utf-8");
+  ok(/slot\.type === "find"/.test(am) && /직접 구해요/.test(am), "★화면이 '직접 구하는 자리'로 보여준다");
+  ok(/캡션에 출처를 남겨주세요/.test(am), "출처 표기 안내가 화면에 뜬다");
+  ok(/filter\(\(x\) => x\.type === "photo"\)/.test(am), "★AI 생성기에는 photo만 넘어간다");
+  const wv = fs.readFileSync(new URL("../components/dashboard/WritingView.tsx", import.meta.url), "utf-8");
+  ok(/if \(slot\.type === "find"\) continue;/.test(wv), "★자동 생성 루프도 명시적으로 건너뛴다(우연히 맞는 건 다음에 깨진다)");
+
+  // ★마커를 늘리면 '세는 쪽'도 같이 늘려야 한다 — 안 그러면 충분한 글이 '사진 부족'으로 지적받는다
+  const { photoSlotShortfall } = await import("../lib/editorial.ts");
+  const h2 = "<h2>a</h2><h2>b</h2><h2>c</h2>";
+  ok(photoSlotShortfall(h2 + "[사진: 1][브랜드: x][표: y]") === null, "★브랜드·표로 채워도 '부족'이 아니다");
+  ok(photoSlotShortfall(h2 + "[브랜드: a][표: b][인물: c]")?.photoOnly === 0, "★그래도 [사진:] 최소 1장은 요구한다(도입부 첫인상)");
 }
 
 console.log("\n④ 광고·체류 배치:");

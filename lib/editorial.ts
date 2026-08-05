@@ -264,11 +264,18 @@ export function emojiCount(html: string): number {
 // ═══ 사진 슬롯 수(2026-08-02 실측: 마커 3개 = 하한에 딱 붙음) ═══
 //  규격은 "하한 3, 상한 min(섹션 수, 7)"인데 섹션이 5개여도 3개만 나온다.
 //  네이버는 사진이 체류·노출에 크게 작용하는데 최소로만 나가고 있었다.
-export function photoSlotShortfall(html: string): { slots: number; sections: number; want: number } | null {
-  const slots = (String(html || "").match(/\[사진:/g) ?? []).length;
-  const sections = (String(html || "").match(/<h2/gi) ?? []).length;
+export function photoSlotShortfall(html: string): { slots: number; sections: number; want: number; photoOnly: number } | null {
+  const h = String(html || "");
+  // ★새 마커 3종도 이미지 자리다(2026-08-05). 종전엔 [사진:]만 세서,
+  //  브랜드·표·인물로 시각 요소를 충분히 채운 글이 '사진 부족'으로 지적받았다 —
+  //  ★그러면 모델이 필요도 없는 [사진:]을 더 넣는다. 마커를 늘리면 '세는 쪽'도 같이 늘려야 한다.
+  const slots = (h.match(/\[(?:사진|브랜드|표|인물):/g) ?? []).length;
+  const photoOnly = (h.match(/\[사진:/g) ?? []).length;
+  const sections = (h.match(/<h2/gi) ?? []).length;
   const want = Math.min(Math.max(3, sections), 6); // 섹션만큼(3~6)
-  return slots < want ? { slots, sections, want } : null;
+  // ★[사진:]은 최소 1장 유지 — 도입부 첫인상은 장면 컷이 맡는다(브랜드 로고로 대신할 수 없다).
+  if (slots < want || photoOnly < 1) return { slots, sections, want, photoOnly };
+  return null;
 }
 
 // ═══ 검색형 제목 = 실검색어 표기 그대로(2026-08-02 유저가 실성과에서 역추적) ═══

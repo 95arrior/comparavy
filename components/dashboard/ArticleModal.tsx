@@ -488,7 +488,7 @@ export default function ArticleModal({ pubStampKey, blogName,
 
           <div className="mt-4 rounded-2xl at-glass p-5">
             <div className="flex items-center justify-between gap-3">
-              <p className="text-[14px] font-bold text-neutral-900">이미지 자리 {parseSlots(bodyHtml).filter((sl) => sl.type === "photo" || DATA_CARDS_ENABLED).length}곳</p>
+              <p className="text-[14px] font-bold text-neutral-900">이미지 자리 {parseSlots(bodyHtml).filter((sl) => sl.type !== "card" || DATA_CARDS_ENABLED).length}곳</p>
               {typeof credits === "number" && (
                 <span className="shrink-0 rounded-full bg-[#F7F8FA] px-2.5 py-1 text-[11.5px] font-bold tabular-nums text-neutral-500">크레딧 {credits.toLocaleString("ko-KR")}</span>
               )}
@@ -500,6 +500,30 @@ export default function ArticleModal({ pubStampKey, blogName,
             <div className="mt-3 space-y-2.5">
               {parseSlots(bodyHtml).map((slot, i) => {
                 const st = imgs[i] ?? {};
+                // ★찾아 넣는 자리(브랜드·표·인물) — AI가 그리는 자리가 아니다(2026-08-05).
+                //  로고·표는 애초에 그릴 수 없고, 여기서 생성 버튼을 보여주면 크레딧만 태운다.
+                //  ★유저가 할 일은 '검색해서 구하기'다 — 무엇을 구해야 하는지가 한눈에 보여야 한다.
+                if (slot.type === "find") {
+                  const [what, how] = slot.desc.replace(/^(브랜드|표|인물) 찾기: /, "").split("|").map((x) => x.trim());
+                  const kind = /^(브랜드|표|인물)/.exec(slot.desc)?.[1] ?? "이미지";
+                  return (
+                    <div key={i} className="rounded-xl bg-[#FFF9E9] p-3.5 ring-1 ring-[#E8B84B]/25">
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#E8B84B]/20 text-[11px] font-bold text-[#A9761A]">{i + 1}</span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[13px] font-bold text-neutral-800">{kind} 찾아 넣기 · {what}</p>
+                          {how && <p className="mt-0.5 truncate text-[11.5px] text-neutral-500">{how}</p>}
+                        </div>
+                        {st.url
+                          ? <span className="shrink-0 text-[11px] font-bold text-emerald-600">넣음</span>
+                          : <span className="shrink-0 rounded-lg bg-[#E8B84B]/15 px-2.5 py-1 text-[11px] font-bold text-[#A9761A]">직접 구해요</span>}
+                      </div>
+                      {/^출처표기$/m.test(slot.desc.split("|").slice(-1)[0]?.trim() ?? "") && (
+                        <p className="mt-1.5 text-[11px] text-[#A9761A]">출처가 있는 이미지예요 — 캡션에 출처를 남겨주세요.</p>
+                      )}
+                    </div>
+                  );
+                }
                 if (slot.type === "card") {
                   if (!DATA_CARDS_ENABLED) return null; // 카드 봉인 — 행 자체 미표시(문서순 인덱스는 유지)
                   return (

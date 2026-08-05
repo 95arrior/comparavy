@@ -86,6 +86,9 @@ export default function WritingView({
     for (let i = 0; i < slots.length; i++) {
       if (imgStartedRef.current.has(i)) continue;
       const slot = slots[i];
+      // ★찾아 넣는 자리는 자동 생성 대상이 아니다(2026-08-05). 지금은 카드 봉인 때문에 우연히
+      //  건너뛰어지지만, 봉인이 풀리면 로고·표를 AI가 그리려 든다 — 명시적으로 막는다.
+      if (slot.type === "find") continue;
       const isPhoto = slot.type === "photo";
       if (isPhoto && !firePhotos) continue; // AI 봉인 — 사진 슬롯은 검토 화면 업로드로
       if (!isPhoto && !DATA_CARDS_ENABLED) continue; // 카드 봉인 — 수치는 데이터 줄이 맡음
