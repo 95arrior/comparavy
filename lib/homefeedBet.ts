@@ -130,6 +130,8 @@ export async function pickHomefeedBets(
     isDup?: (title: string, keyword: string) => boolean;
     /** 최근 발행 제목 — 모델에게 '이런 제목은 이미 썼다'를 보여준다. 키워드만 주면 제목이 겹친다(실측). */
     recentTitles?: string[];
+    /** ★차단 판정에만 쓰는 좁은 목록(없으면 recentTitles를 쓴다) — 넓히면 아무것도 못 만든다 */
+    blockTitles?: string[];
     /** ★최근 14일 글의 키워드 — 소재(핵심어) 반복을 코드가 막는다(2026-08-05).
      *  프롬프트의 '이미 쓴 주제 제외' 목록만으로는 모델이 '엔화 폭등 내 돈'을 피해도 '엔화 지갑'으로 돌아온다. */
     recentKeywords?: string[];
@@ -173,9 +175,15 @@ export async function pickHomefeedBets(
   //  ★쓴 글과 보여만 준 카드는 무게가 다르다:
   //   · 발행한 글 → 같은 말이 하나만 겹쳐도 곤란하다(내 글끼리 잡아먹는다)
   //   · 보여만 준 카드 → 독자는 본 적이 없다. 하나 겹쳤다고 버리면 재고가 마른다.
+  // ★차단용과 회피용을 나눈다(2026-08-05 실측: out 0, dupDropped 4 — 8장이 전멸했다).
+  //  ★내가 만든 악화다. 프롬프트가 볼 회피 목록을 15 → 60으로 넓혔는데,
+  //   그 목록이 차단 토큰으로도 함께 쓰여서 '3글자 하나만 겹쳐도 탈락'하는 벽이 60개 제목만큼 두꺼워졌다.
+  //  둘은 목적이 다르다:
+  //   · 회피 목록(프롬프트) — 넓을수록 좋다. 모델이 피할 수 있다.
+  //   · 차단 토큰(코드) — 넓으면 아무것도 못 만든다. 최근 것만 본다.
   const publishedTokens = new Set<string>([
     ...(opts?.recentKeywords ?? []).flatMap(topicTokens),
-    ...(opts?.recentTitles ?? []).flatMap(topicTokens),
+    ...(opts?.blockTitles ?? opts?.recentTitles ?? []).flatMap(topicTokens),
   ]);
   const shownTokens = new Set<string>(shownRecently.flatMap(topicTokens));
   const recentTopicTokens = new Set<string>([...publishedTokens, ...shownTokens]);

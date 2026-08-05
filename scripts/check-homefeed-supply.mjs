@@ -71,6 +71,15 @@ const rt = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url
   ok(/넓힌 게 무효였다/.test(hb), "왜 자르면 안 되는지가 코드에 적혀 있다");
   ok(/백지에서 주제를 떠올리지 마라/.test(hb), "★씨앗 안에서 고르게 한다(백지에서 만들면 반드시 겹친다)");
   ok(/억지로 만든 카드는 어차피 중복으로 죽는다/.test(hb), "★마땅한 게 없으면 포기하게 한다");
+  // ★회피용과 차단용을 나눈다(2026-08-05 실측: out 0, dupDropped 4 — 8장 전멸).
+  //  프롬프트 회피 목록을 15 → 60으로 넓혔더니 그게 차단 토큰으로도 쓰여
+  //  '3글자 하나만 겹쳐도 탈락'하는 벽이 60개 제목만큼 두꺼워졌다 — 내가 만든 악화였다.
+  ok(/blockTitles/.test(hb), "★차단용 목록이 따로 있다");
+  ok(/차단 토큰\(코드\) — 넓으면 아무것도 못 만든다/.test(hb), "왜 나눠야 하는지가 코드에 적혀 있다");
+  const rt3 = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
+  const bt = (rt3.match(/blockTitles: recent14/g) ?? []).length;
+  const pk = (rt3.match(/pickHomefeedBets\(/g) ?? []).length;
+  ok(bt === pk, `★모든 호출이 차단 목록을 좁게 넘긴다 (호출 ${pk} · 전달 ${bt})`);
 }
 
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 홈판 공급(캐시가 실패를 굳히지 않게)");
