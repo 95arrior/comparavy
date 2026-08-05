@@ -152,3 +152,21 @@ export async function pickTopBidTag(
   }
   return { keyword: ranked[0]!.keyword, bid: ranked[0]!.bid, runnerUp: ranked[1] ?? null };
 }
+
+/**
+ * 대표 태그 한 개(고단가) — 부르는 쪽마다 복붙하지 않게 여기 둔다.
+ * ★실패해도 글은 나간다: 단가 조회는 있으면 좋은 것이지 필수가 아니다.
+ *  ★2026-08-06: generate에만 있고 pregen(카드에서 바로 열리는 글)에는 통째로 빠져 있었다 —
+ *   유저가 받는 글의 다수가 pregen 경로라, 기능이 사실상 절반만 켜져 있던 셈이다.
+ */
+export async function leadTagFor(bodyHtml: string, keyword: string, tags: unknown, where: string): Promise<string> {
+  try {
+    const pick = await pickTopBidTag(bodyHtml, keyword, Array.isArray(tags) ? (tags as string[]) : []);
+    if (!pick) return "";
+    console.log(`[ad-bid] ${where} 대표 태그 '${pick.keyword}' ${pick.bid.toLocaleString()}원${pick.runnerUp ? ` (차점 ${pick.runnerUp.keyword} ${pick.runnerUp.bid.toLocaleString()}원)` : ""}`);
+    return pick.keyword;
+  } catch (e) {
+    console.error(`[ad-bid] ${where} 실패:`, e instanceof Error ? e.message : e);
+    return "";
+  }
+}

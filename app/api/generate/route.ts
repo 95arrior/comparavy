@@ -12,7 +12,7 @@ import { financeCalcContext } from "@/lib/financeCalc";
 import { sanitizeUrls } from "@/lib/linkWhitelist";
 import { countBodyChars } from "@/lib/humanizer";
 import { finalizeArticleBody } from "@/lib/finalizeBody";
-import { pickTopBidTag } from "@/lib/adBid";
+import { leadTagFor } from "@/lib/adBid";
 import { relatedPostsFor } from "@/lib/relatedPosts";
 import { sectionBudgetReport, tailSummaryBullets, clichePhotoSlots, eligibilityTableIssues, answerFirstDefects, stiltedInterjections } from "@/lib/editorial";
 import { validateTitleTail } from "@/lib/titleRules";
@@ -419,7 +419,7 @@ export async function POST(request: Request) {
           }
           // ★문단 길이는 여기서 경고하지 않는다(2026-08-06 정리).
           //  종전엔 4줄 넘는 문단을 전부 경고했는데, 그 경고는 두 종류를 섞고 있었다:
-          //   ⓐ 여러 문장이 든 문단 → 문장 경계에서 나누면 그만이다. 이제 마감(splitLongParagraphs)이 무조건 나눈다.
+          //   ⓐ 여러 문장이 든 문단 → 문장 경계에서 나누면 그만이다. 이제 마감(splitMultiSentenceParagraphs)이 무조건 나눈다.
           //   ⓑ 한 문장이 긴 것 → 나눌 자리가 없다. 다시 써야 하므로 아래 longSentences가 모델에 돌려보낸다.
           //  ★ⓐ까지 경고로 남기면 어차피 코드가 고칠 걸로 재생성 예산을 태우고,
           //   게다가 규격을 지킨 90자 한 문장(=5줄)도 4줄 상한에 걸려 영구 결함이 된다(상한 두 개가 서로 모순).
@@ -719,18 +719,7 @@ export async function POST(request: Request) {
         // ★마감 조립(리스트→표 · 하드컷 · 고지 · URL정화 · 관련글 · 해시태그) — 한 곳에서 한다.
         // ★대표 태그 — 글 주제와 묶인 말 중 광고 단가가 가장 높은 하나를 태그 맨 앞에(2026-08-05 유저 지시).
         //  실패해도 글은 나간다(단가 조회는 있으면 좋은 것이지 필수가 아니다).
-        let leadTag = "";
-        try {
-          const pick = await pickTopBidTag(
-            article.body_html,
-            (article as { keyword?: string }).keyword ?? keyword,
-            Array.isArray((article as { tags?: unknown }).tags) ? ((article as { tags?: string[] }).tags ?? []) : [],
-          );
-          if (pick) {
-            leadTag = pick.keyword;
-            console.log(`[ad-bid] 대표 태그 '${pick.keyword}' ${pick.bid.toLocaleString()}원${pick.runnerUp ? ` (차점 ${pick.runnerUp.keyword} ${pick.runnerUp.bid.toLocaleString()}원)` : ""}`);
-          }
-        } catch (e) { console.error("[ad-bid] 실패:", e instanceof Error ? e.message : e); }
+        const leadTag = await leadTagFor(article.body_html, (article as { keyword?: string }).keyword ?? keyword, (article as { tags?: unknown }).tags, "generate");
         const fin = finalizeArticleBody({
           leadTag,
           bodyHtml: article.body_html, keyword, isReview,

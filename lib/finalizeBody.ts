@@ -6,7 +6,7 @@
 //  주석엔 "후처리(generate와 동일)"이라고 적혀 있었는데 동일하지 않았다.
 //  ★CLAUDE.md의 반복 교훈 그대로다: 규칙을 소스별로 복붙하면 반드시 빠지는 경로가 생긴다.
 //   그래서 마감은 이 함수 하나로만 한다 — 새 마감 규칙은 여기에만 추가한다.
-import { ensureHashtags, ensureRelatedLinks, hardTrimToLimit, leadHashtag, normalizeAlertColor, splitLongParagraphs, stripStilted } from "./editorial";
+import { ensureHashtags, ensureRelatedLinks, hardTrimToLimit, leadHashtag, normalizeAlertColor, splitMultiSentenceParagraphs, stripStilted } from "./editorial";
 import { ensureDisclosure } from "./revenue";
 import { listToTable } from "./publishHtml";
 import { sanitizeUrls } from "./linkWhitelist";
@@ -54,7 +54,7 @@ export function finalizeArticleBody(input: FinalizeInput): FinalizeResult {
   // ①-b ★문단 쪼개기(2026-08-06) — 4줄 넘는 문단을 문장 경계에서 나눈다.
   //  게이트는 경고라 재생성 예산이 없으면 그냥 나간다(유저가 본 13줄 문단이 그 경로였다).
   //  ★분량 하드컷보다 먼저 해야 한다 — 나중에 하면 잘려나간 섹션을 헛되이 쪼개게 된다.
-  const para = splitLongParagraphs(tabled);
+  const para = splitMultiSentenceParagraphs(tabled);
   // ①-c ★경고 빨강 통일·상한(2026-08-06 유저: "경고·긴박·긴급·중요·함정은 레드로").
   //  모델은 빨강을 매번 다른 값으로 쓰고, 재미 붙으면 여러 곳에 뿌린다 — 그러면 어느 것도 경고로 안 읽힌다.
   const alert = normalizeAlertColor(para.html);

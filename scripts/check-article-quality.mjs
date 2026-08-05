@@ -101,10 +101,10 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   ok(!/ensureSummaryHeading\(/.test(ph), "★발행 파이프라인에서도 호출이 제거됨");
 
   // ★프롬프트 목차에서도 빠졌는가(세 곳이 따로 놀면 또 되살아난다)
-  // ★문단 길이는 2026-08-06부터 게이트가 아니라 마감(splitLongParagraphs)이 보장한다.
+  // ★문단 길이는 2026-08-06부터 게이트가 아니라 마감(splitMultiSentenceParagraphs)이 보장한다.
   //  경고로 두면 재생성 예산이 없을 때 그대로 발행되고(유저가 본 13줄이 그 경로),
   //  게다가 규격을 지킨 90자 한 문장이 4줄 상한에 영구히 걸린다. 보장 자리의 주인은 하나여야 한다.
-  ok(/splitLongParagraphs/.test(fs.readFileSync(new URL("../lib/finalizeBody.ts", import.meta.url), "utf-8")), "★문단 길이는 마감이 보장한다");
+  ok(/splitMultiSentenceParagraphs/.test(fs.readFileSync(new URL("../lib/finalizeBody.ts", import.meta.url), "utf-8")), "★문단 길이는 마감이 보장한다");
   const ap = fs.readFileSync(new URL("../lib/articlePrompt.ts", import.meta.url), "utf-8");
   ok(!/"9\. '오늘의 3줄 요약'/.test(ap), "★프롬프트 목차에서 제거됨");
 }
@@ -555,30 +555,30 @@ console.log(fail ? `\n실패 ${fail}건` : "\n통과: 발행글 품질(띄어쓰
 // ★문단 쪼개기 — 게이트(경고)만으로는 안 잡혔다. 재생성 예산이 없으면 그대로 발행된다.
 //  유저가 본 13줄 문단이 그 경로였다. 그래서 마감에서 코드가 무조건 나눈다.
 {
-  const { splitLongParagraphs, longParagraphs } = await import("../lib/editorial.ts");
+  const { splitMultiSentenceParagraphs, longParagraphs } = await import("../lib/editorial.ts");
   const { finalizeArticleBody } = await import("../lib/finalizeBody.ts");
   const many = "<p>국토교통부는 2026년 5월 발표에서 도시형생활주택 인허가 인센티브를 확대한다고 밝혔습니다. 상가와 오피스, 지식산업센터의 주거용 전환도 지원합니다. 주택도시기금 대출 한도는 최대 1억 2,000만 원까지 늘어납니다. 금리는 3%대이며 2027년까지 적용됩니다.</p>";
-  const r = splitLongParagraphs(many);
+  const r = splitMultiSentenceParagraphs(many);
   ok(r.split >= 1 && longParagraphs(r.html).length === 0, "★여러 문장 문단은 문장 경계에서 나뉜다", `${r.split}회`);
   ok(!/[.!?]<\/p>\s*<p>[^가-힣<]/.test(r.html), "문장 중간에서 자르지 않는다");
 
   // ★한 문장짜리는 코드가 못 고친다 — 건드리면 문장이 깨진다. 게이트가 모델에 돌려보내는 몫이다.
   const one = "<p>국토교통부는 2026년 5월 발표에서 도시형생활주택 인허가 인센티브 확대, 상가·오피스·지식산업센터의 주거용 전환 지원, 주택도시기금 대출 한도 확대(최대 1억 2,000만 원)를 핵심으로 제시했습니다.</p>";
-  ok(splitLongParagraphs(one).split === 0, "★한 문장짜리 문단은 건드리지 않는다");
+  ok(splitMultiSentenceParagraphs(one).split === 0, "★한 문장짜리 문단은 건드리지 않는다");
 
   const short = "<p>짧은 문단입니다.</p>";
-  ok(splitLongParagraphs(short).html === short, "짧은 문단은 그대로");
+  ok(splitMultiSentenceParagraphs(short).html === short, "짧은 문단은 그대로");
 
   // 태그가 문장을 가로지르면 쪼갤 때 태그가 깨진다 — 그런 문단은 손대지 않는다
   const crossing = "<p><b>국토교통부는 2026년 5월 발표에서 도시형생활주택 인허가 인센티브를 확대한다고 밝혔습니다. 상가와 오피스의 주거용 전환도</b> 함께 지원합니다. 대출 한도는 최대 1억 2,000만 원입니다.</p>";
-  const rc = splitLongParagraphs(crossing);
+  const rc = splitMultiSentenceParagraphs(crossing);
   ok((rc.html.match(/<b>/g) ?? []).length === (rc.html.match(/<\/b>/g) ?? []).length, "★태그 짝이 깨지지 않는다");
 
   // ★마감 라인에 배선됐는가 — 여기 빠지면 pregen 경로만 조용히 안 나뉜다(경로 둘 사고의 재발)
   const fin3 = fs.readFileSync(new URL("../lib/finalizeBody.ts", import.meta.url), "utf-8");
-  ok(/splitLongParagraphs\(tabled\)/.test(fin3), "★마감에 배선됨(generate·pregen 공통)");
+  ok(/splitMultiSentenceParagraphs\(tabled\)/.test(fin3), "★마감에 배선됨(generate·pregen 공통)");
   // ★리터럴 인자로 순서를 검사하면 마감에 단계가 하나 낄 때마다 깨진다 — 순서 자체를 본다.
-  ok(fin3.indexOf("splitLongParagraphs(") < fin3.indexOf("hardTrimToLimit("),
+  ok(fin3.indexOf("splitMultiSentenceParagraphs(") < fin3.indexOf("hardTrimToLimit("),
     "★분량 하드컷보다 먼저 나눈다(나중에 하면 잘려나갈 섹션을 헛되이 쪼갠다)");
   const out = finalizeArticleBody({ bodyHtml: many, keyword: "도시형생활주택", isReview: false });
   ok(out.paragraphsSplit >= 1 && longParagraphs(out.html).length === 0, "★마감을 거치면 긴 문단이 남지 않는다");

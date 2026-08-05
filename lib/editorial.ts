@@ -530,11 +530,15 @@ export function normalizeAlertColor(html: string, max = ALERT_MAX): { html: stri
 // ═══ 문단 쪼개기(2026-08-06 유저 화면: 한 문단 13줄) ═══
 //  ★게이트를 두는 것만으로는 안 잡혔다. specDefects는 '경고'라 재생성 예산이 없으면 그대로 발행된다 —
 //   유저가 본 13줄 문단이 정확히 그 경로로 나갔다(게이트는 울렸는데 아무도 안 막았다).
+//  ★publishHtml에도 splitLongParagraphs가 있다 — 이름은 비슷해도 맡는 자리가 다르다.
+//   저쪽은 '네이버 복붙 렌더'에서 2문장씩 묶는 것이고(발행 직전 가공),
+//   여기는 '저장본' 자체를 고친다. 워드프레스는 저장본(body_html)을 그대로 발행하므로
+//   여기서 안 나누면 WP 글에는 긴 문단이 그대로 나간다. 그래서 둘 다 필요하다.
 //  ★CLAUDE.md 원칙: 프롬프트는 방향, 코드는 한계선. 문단 길이는 코드가 보장할 수 있는 종류다.
 //   여러 문장이 든 문단은 문장 경계에서 기계적으로 나누면 뜻이 안 상한다.
 //   ★반대로 '한 문장이 긴 것'은 코드가 못 고친다(다시 써야 한다) — 그건 게이트로 모델에 돌려보낸다.
 const SENT_SPLIT_RE = /(?<=[.!?。][\s"'\u201d\u2019)\]]*)(?=\S)/g;
-export function splitLongParagraphs(html: string, maxLines = PARA_MAX_LINES): { html: string; split: number } {
+export function splitMultiSentenceParagraphs(html: string, maxLines = PARA_MAX_LINES): { html: string; split: number } {
   let split = 0;
   const out = String(html || "").replace(/<p\b([^>]*)>([\s\S]*?)<\/p>/g, (m, attr: string, inner: string) => {
     const plain = inner.replace(/<[^>]+>/g, "");
@@ -666,11 +670,18 @@ export function sectionBudgetReport(html: string, perSection: number): SectionBu
  *  ★안전선: 여기 넣는 말은 반드시 본문에 등장하는 것이어야 한다 —
  *   무관한 고단가 태그는 광고주 타겟과 어긋나 신고·정지 위험이다(유저가 함께 준 주의사항).
  */
+// ★글 '끝'의 해시태그 줄. 본문 중간에 모델이 쓴 태그가 있어도 우리가 다루는 건 마지막 줄이다.
+const TAIL_TAG_LINE_RE = /<p[^>]*>(?:\s*#[가-힣A-Za-z0-9_]{2,})+\s*<\/p>\s*$/;
+
 export function leadHashtag(html: string, lead: string): string {
   const w = String(lead || "").replace(/\s+/g, "");
   if (w.length < 2) return html;
   const h = String(html || "");
-  const m = /(<p[^>]*>)((?:\s*#[가-힣A-Za-z0-9_]{2,})+\s*)(<\/p>)/.exec(h);
+  // ★'첫' 태그 줄이 아니라 '마지막' 태그 줄을 고친다(2026-08-06).
+  //  모델이 본문 중간에 태그를 쓰면 첫 매치가 그쪽이라, 엉뚱한 자리를 대표 태그로 바꿔놓고
+  //  정작 글 끝의 태그 줄은 그대로 남았다.
+  const all = [...h.matchAll(/(<p[^>]*>)((?:\s*#[가-힣A-Za-z0-9_]{2,})+\s*)(<\/p>)/g)];
+  const m = all[all.length - 1];
   if (!m) return h; // 해시태그 줄이 없으면 손대지 않는다(ensureHashtags가 먼저 돈다)
   const tags = (m[2]!.match(/#[가-힣A-Za-z0-9_]{2,}/g) ?? []).map((t) => t.trim());
   void tags;
@@ -695,6 +706,12 @@ export function ensureHashtags(html: string, keyword: string, tag?: string, mode
   //  형태만으로 충분히 갈린다: '#1' 같은 한 글자 표기는 2자 하한에서 걸러지고, 엔티티는 위에서 지웠다.
   const existing = (text.match(/#[가-힣A-Za-z0-9_]{2,}/g) ?? []).length;
   if (existing >= 3) return html; // 이미 있으면 손대지 않는다
+  // ★글 끝에 태그 줄이 이미 있으면 개수와 무관하게 손대지 않는다(2026-08-06 실측 버그).
+  //  개수(3개)로만 판단하던 탓에, 대표 태그 하나만 남긴 글(=의도된 1개)을 '부족하다'고 보고
+  //  줄을 하나 더 붙였다. 그래서 카드에서 글을 여는 순간(claim에서 마감이 다시 돌 때)
+  //  #신혼부부대출 → #신혼부부대출 #신혼부부대출 #디딤돌대출 #내집마련로 불어났다.
+  //  ★마감은 몇 번 돌아도 같은 결과여야 한다 — claim은 그걸 전제로 마감을 다시 태운다.
+  if (TAIL_TAG_LINE_RE.test(String(html || ""))) return html;
   // ★1순위는 모델이 만든 태그다(2026-08-03 유저 화면에서 확인: 모델은 tags 필드에는 잘 넣고
   //  본문 하단에만 안 썼다). 주제에 맞게 만든 태그라 키워드 파생보다 훨씬 낫다 —
   //  '리딩방 사기'·'불공정거래 신고'처럼 키워드에서는 절대 못 뽑는 말이 여기 있다.

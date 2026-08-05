@@ -7,6 +7,7 @@ import { hasFabricatedExperience } from "@/lib/editorial";
 import { sanitizeUrls } from "@/lib/linkWhitelist";
 import { countBodyChars } from "@/lib/humanizer";
 import { finalizeArticleBody } from "@/lib/finalizeBody";
+import { leadTagFor } from "@/lib/adBid";
 import { relatedPostsFor } from "@/lib/relatedPosts";
 import { normalizeKeyword, pickVariant, pickAngle, simhash } from "@/lib/diversity";
 import { isAdminEmail } from "@/lib/adminStats";
@@ -144,6 +145,9 @@ export async function POST(request: Request) {
         bodyHtml: article.body_html, keyword, isReview,
         ownNaverBlogId: (profileRow as { naver_blog_id?: string | null } | null)?.naver_blog_id,
         relatedPosts: related, modelTags: article.tags, tag: undefined,
+        // ★대표 태그(2026-08-06) — 종전엔 generate에만 있었다. 카드에서 여는 글이 다수인데
+        //  그 경로엔 통째로 빠져 있어서 고단가 태그 기능이 절반만 켜져 있었다.
+        leadTag: await leadTagFor(article.body_html, keyword, article.tags, "pregen"),
       });
       if (fin.urlReplaced > 0) console.log(`[url-sanitize] pregen user=${user.id.slice(0, 8)} replaced=${fin.urlReplaced}`);
       console.log(`[finalize] pregen user=${user.id.slice(0, 8)} 관련글 ${fin.relatedAdded}개(후보 ${related.length}) · ${fin.charCount}자${fin.trimmedSections.length ? ` · 섹션 제거 ${fin.trimmedSections.length}` : ""}`);

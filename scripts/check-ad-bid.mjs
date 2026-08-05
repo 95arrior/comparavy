@@ -55,8 +55,14 @@ console.log("\n③ 태그 맨 앞에 들어가는가:");
 console.log("\n④ 배선:");
 {
   const gr = fs.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8");
-  ok(/pickTopBidTag\(/.test(gr), "★생성 경로가 단가를 잰다");
-  ok(/\[ad-bid\] 실패/.test(gr), "실패해도 글은 나간다");
+  // ★유저가 받는 글은 경로가 둘이다. generate만 배선하면 기능이 절반만 켜진다
+  //  (2026-08-06 실측: 카드에서 여는 글(pregen)에는 대표 태그가 통째로 없었다).
+  const pg = fs.readFileSync(new URL("../app/api/pregen/route.ts", import.meta.url), "utf-8");
+  for (const [src, where] of [[gr, "생성"], [pg, "★사전 생성(카드에서 여는 글)"]])
+    ok(/leadTagFor\(/.test(src), `${where} 경로가 단가를 잰다`);
+  const ab = fs.readFileSync(new URL("../lib/adBid.ts", import.meta.url), "utf-8");
+  ok(/\[ad-bid\] \$\{where\} 실패/.test(ab), "실패해도 글은 나간다");
+  ok(/export async function leadTagFor/.test(ab), "★계산은 한 곳(경로별 복붙 금지)");
   const fb = fs.readFileSync(new URL("../lib/finalizeBody.ts", import.meta.url), "utf-8");
   ok(/leadHashtag\(ensureHashtags\(/.test(fb), "★해시태그를 만든 뒤 맨 앞으로 당긴다(순서 중요)");
   ok(/단가 조회는 네트워크라 여기\(동기 조립\)에서 하지 않는다/.test(fb), "조립 함수는 동기로 유지");
@@ -86,6 +92,35 @@ console.log("\n⑥ 내부 링크가 통째로 사라지지 않는가:");
   ok(/수명 게이트로 전멸/.test(rp), "★전멸했을 때만 한 단계 물러선다");
   ok(/날짜가 박힌 글\(MONTHLY\)은 여전히 빼되/.test(rp), "★날짜 박힌 글은 계속 제외(원래 목적 유지)");
   ok(/확정 URL\(naver_url\)이 있는 글이 하나도 없다/.test(rp), "★진짜 원인이 URL 미확정이면 그걸 로그로 말한다");
+}
+
+console.log("\n⑦ 마감이 몇 번 돌아도 같은가(멱등):");
+{
+  // ★실측 버그(2026-08-06): pregen이 대표 태그 1개로 저장한 글을 유저가 카드에서 여는 순간
+  //  claim이 마감을 다시 태우는데, ensureHashtags가 '태그가 3개 미만이니 부족하다'고 보고
+  //  줄을 하나 더 붙였다 → #신혼부부대출 이 #신혼부부대출 #신혼부부대출 #디딤돌대출 #내집마련로 불었다.
+  //  ★claim은 '마감은 멱등'을 전제로 다시 태운다 — 그 전제가 깨져 있었다.
+  const { finalizeArticleBody } = await import("../lib/finalizeBody.ts");
+  const body = "<h2>자격</h2><p>연 소득 7,000만 원 이하가 대상입니다. 혼인 7년 이내여야 합니다.</p>";
+  const c = { keyword: "신혼부부 매매대출", isReview: false, modelTags: ["신혼부부대출", "디딤돌대출", "내집마련"] };
+  const tags = (h) => (h.match(/#[가-힣A-Za-z0-9_]{2,}/g) ?? []);
+  const lines = (h) => (h.match(/<p[^>]*>(?:\s*#[가-힣A-Za-z0-9_]{2,})+\s*<\/p>/g) ?? []).length;
+
+  const a1 = finalizeArticleBody({ bodyHtml: body, leadTag: "신혼부부대출", ...c });
+  const a2 = finalizeArticleBody({ bodyHtml: a1.html, ...c });
+  const a3 = finalizeArticleBody({ bodyHtml: a2.html, ...c });
+  ok(a1.html === a2.html && a2.html === a3.html, "★대표 태그 글을 세 번 마감해도 그대로");
+  ok(tags(a2.html).length === 1 && lines(a2.html) === 1, "★열어도 대표 태그 1개 그대로", tags(a2.html).join(" "));
+
+  const b1 = finalizeArticleBody({ bodyHtml: body, ...c });
+  const b2 = finalizeArticleBody({ bodyHtml: b1.html, ...c });
+  ok(b1.html === b2.html && lines(b2.html) === 1, "★대표 태그 없는 글도 태그 줄이 안 불어난다", tags(b2.html).join(" "));
+
+  // 대표 태그는 '마지막' 태그 줄을 고친다 — 본문 중간 태그를 잘못 집으면 글 끝은 그대로 남는다
+  const { leadHashtag } = await import("../lib/editorial.ts");
+  const mid = "<p>#중간태그 #딴것</p><p>본문</p><p>#끝태그 #둘째</p>";
+  const r = leadHashtag(mid, "실손보험");
+  ok(/<p>#중간태그 #딴것<\/p>/.test(r) && /<p>#실손보험<\/p>\s*$/.test(r), "★글 끝의 태그 줄을 고친다");
 }
 
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 대표 태그 + 이미지 문맥");
