@@ -159,12 +159,15 @@ export let lastAmplifyDiag: {
   seeds: number; want: number; briefs: number; parsed: number; out: number; stage?: string;
   /** 증식 정원에 들어간 실시간(rising) 씨앗 수 — 0이면 '지금 뜨는' 열이 뉴스 롱테일로만 찬다는 뜻 */
   live?: number;
-  drop: { placeholder: number; noBrief: number; dupKeyword: number; orphan: number; titleTail: number };
+  drop: { placeholder: number; noBrief: number; dupKeyword: number; orphan: number; titleTail: number; region: number };
   // ★모델 호출 자체의 계측(2026-08-04) — 'parsed 8'만으로는 '모델이 8개만 줬다'와 '잘려서 8개만 건졌다'가 구분되지 않는다.
   call?: { chunks: number; stopReasons: (string | null)[]; truncated: number; outTokens: (number | null)[]; maxTokens: number; noJson: number };
 } | null = null;
 
-const NO_DROP = { placeholder: 0, noBrief: 0, dupKeyword: 0, orphan: 0, titleTail: 0 };
+const NO_DROP = { placeholder: 0, noBrief: 0, dupKeyword: 0, orphan: 0, titleTail: 0, region: 0 };
+
+// ★증식이 붙일 수 있는 지역명 — 씨앗·근거에 없으면 지어낸 것이다(전국 글감이 남의 동네 글이 된다)
+const ADDED_REGION_RE = /(서울|부산|대구|인천|광주|대전|울산|세종|수원|성남|용인|고양|화성|청주|천안|전주|포항|창원|김해|제주|춘천|원주|강릉|목포|여수|구미|경주|안동|평택|파주|김포|남양주|의정부|안양|부천|광명|시흥|군포|하남|이천|양평|가평)(?![가-힣])/;
 
 /**
  * ★진단을 남긴다 — 성공/실패 '모든' 종료 경로에서 부른다(2026-08-04 유저 실측에서 검거).
@@ -212,9 +215,31 @@ export async function amplifyForUser(
   const isLive = (t: TrendTopic) => t.source === "rising";
   const rotated0 = [...head, ...tail];
   const rotated = [...rotated0.filter(isLive), ...rotated0.filter((t) => !isLive(t))];
-  const picks = rotated.slice(0, Math.min(want, rotated.length));
+
+  // ★원천별 최소 정원(2026-08-05 유저 진단에서 검거: 캘린더·정부발표·공시·청약이 전부 0장).
+  //  씨앗은 들어와 있는데 카드가 안 됐다 — 증식 정원(15)을 뉴스·자동완성이 수로 밀어 이겼기 때문이다.
+  //  ★희소한 원천일수록 값이 크다: 캘린더·공시·공고는 하루 1~2개뿐인데 그게 선점의 핵심 재료다.
+  //   수로 겨루게 두면 원천을 여섯 개 붙인 의미가 사라진다. 각자 자리를 먼저 떼어준다.
+  const QUOTA: Partial<Record<string, number>> = {
+    calendar: 2, gov: 2, dart: 1, applyhome: 2, gov24: 1, bizinfo: 1, community: 1, newspsych: 2,
+  };
+  const picks: TrendTopic[] = [];
+  const taken = new Set<TrendTopic>();
+  const quotaLog: string[] = [];
+  for (const [src, n] of Object.entries(QUOTA)) {
+    const got = rotated.filter((t) => t.source === src && !taken.has(t)).slice(0, n ?? 1);
+    for (const g of got) { picks.push(g); taken.add(g); }
+    if (got.length) quotaLog.push(`${src}:${got.length}`);
+  }
+  for (const t of rotated) {
+    if (picks.length >= want) break;
+    if (taken.has(t)) continue;
+    picks.push(t); taken.add(t);
+  }
+  picks.length = Math.min(picks.length, want);
+  if (quotaLog.length) console.log(`[amp] 희소 원천 우선 배치 — ${quotaLog.join(" ")} (정원 ${picks.length}/${want})`);
   const liveIn = picks.filter(isLive).length;
-  if (liveIn) console.log(`[amp] 실시간 씨앗 ${liveIn}개를 증식 정원에 우선 배치(전체 ${picks.length})`);
+  if (liveIn) console.log(`[amp] 실시간 씨앗 ${liveIn}개를 증식 정원에 배치(전체 ${picks.length})`);
 
   const badge = (profile?.sub_category || "정보").toString().slice(0, 10);
   // 각 씨앗에 구조 조합 + 훅 패턴(코드 배정, 배치 내 직전 제외) + 실검증 롱테일을 붙여 LLM에 브리핑
@@ -350,7 +375,7 @@ ${OPEN_LOOP_GUIDE}
     // ★증식 손실 회계(2026-08-04 유저: "씨앗 19개인데 증식 4장, 왜?").
     //  종전엔 전부 조용한 continue라 '몇 장 요청해서 몇 장 나왔다'만 보이고 어디서 죽었는지 알 수 없었다.
     //  ★결품이 상시화된 단계에서 조용한 continue는 눈을 감는 것이다.
-    const drop = { placeholder: 0, noBrief: 0, dupKeyword: 0, orphan: 0, titleTail: 0 };
+    const drop = { placeholder: 0, noBrief: 0, dupKeyword: 0, orphan: 0, titleTail: 0, region: 0 };
     for (const it of parsed) {
       let b = briefs[(Number(it.seedIndex) || 1) - 1] ?? briefs[0];
       // ★플레이스홀더 게이트(실측: '최대 OO만원' 제목 노출) — 미확인 수치 자리표시가 있으면 카드 폐기
@@ -374,6 +399,19 @@ ${OPEN_LOOP_GUIDE}
         // ★범용어를 뺀 실질 토큰만 센다(2026-08-05 개정) — 종전엔 '2026·지원금'만 겹쳐도 통과해서
         //  '65세 이상' 씨앗에서 '청년' 카드가 나왔다. 겹침 1개는 우연일 수 있어 2개를 요구한다.
         if (!lineageAttached(`${b.seed.keyword} ${b.seed.title}`, `${kw} ${String(it.titleClick ?? "")}`)) { drop.orphan++; continue; }
+        // ★없던 지역명을 지어 붙이는 걸 막는다(2026-08-05 유저 화면에서 검거).
+        //  실측: 씨앗 '아파트 청약 일정' → 카드 '청주 아파트 청약 일정 2026'. 청주는 어디에도 없던 말이다.
+        //  ★유저 확정 규칙은 '키워드 합성 금지'다. 수확기엔 합성 게이트가 있는데 증식기엔 없었다 —
+        //   그래서 여기가 무검문이었다. 지역명은 특히 위험하다: 글이 통째로 남의 동네 이야기가 된다.
+        {
+          const src = `${b.seed.keyword} ${b.seed.title} ${b.seed.newsContext ?? ""} ${(b.seed as { sourceTitle?: string }).sourceTitle ?? ""}`;
+          const added = ADDED_REGION_RE.exec(kw);
+          if (added && !src.includes(added[0])) {
+            drop.region++;
+            console.log(`[amp] 없던 지역명 — 카드 버림: ${kw} (지어낸 말 '${added[0]}')`);
+            continue;
+          }
+        }
       }
       // ★혈통 상충 — 귀속이 됐어도 '근거와 내용이 서로 배타적'이면 버린다.
       //  카드에는 씨앗의 뉴스 근거가 함께 붙는다. 근거가 다른 얘기를 하는데 그 근거로 본문까지 쓰면

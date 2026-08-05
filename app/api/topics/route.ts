@@ -914,7 +914,14 @@ export async function GET(req: Request) {
         // ★유사 판정을 생성 안으로 넘긴다(2026-08-02 실측: 캐시된 4장이 전부 여기서 탈락해 홈판이 하루 종일 0장).
         //  거르는 자리와 캐시하는 자리가 어긋나면 캐시가 '실패를 굳히는 장치'가 된다.
         //  최근 제목도 함께 넘긴다 — 키워드만 주면 모델이 주제만 피하고 같은 문장 틀로 돌아온다.
-        const recentTitles = recent14.map((a) => String(a.title ?? "")).filter(Boolean).slice(0, 15);
+        // ★생성기가 피해야 할 목록과 판정 목록이 어긋나 있었다(2026-08-05 유저 진단에서 검거).
+        //  생성기엔 최근 15개만 줬는데, 판정(usedForbidden)은 발행 글 128건 전부와 대조한다 —
+        //  ★눈을 가려놓고 만들게 한 뒤 못 맞혔다고 버린 셈이다. 8장 중 7장이 여기서 죽었다.
+        //  판정에 쓰는 것과 같은 목록을 준다(길이만 제한 — 프롬프트가 무한정 길어지면 안 된다).
+        const recentTitles = [...new Set([
+          ...recent14.map((a) => String(a.title ?? "")),
+          ...[...usedTexts],
+        ])].filter(Boolean).slice(0, 45);
         const bets = await pickHomefeedBets(pool, user.id, sub ?? "", usedSet, colShort.homefeed, {
           isDup: (title, keyword) => usedForbidden(`${title} ${keyword}`),
           recentTitles,

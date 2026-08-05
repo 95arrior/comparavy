@@ -120,7 +120,7 @@ async function marketNewsBlock(betKey: string): Promise<string | null> {
 /** ★마지막 홈판 생성 진단(2026-08-04) — debug 응답이 읽어 간다. '홈판 2/5'의 이유가 화면에 보여야 한다. */
 export let lastHomebetDiag: {
   want: number; tryN: number; round1: number; round2: number; dupDropped: number; out: number;
-  failBy: Record<string, number>; cached: boolean; at: string;
+  failBy: Record<string, number>; dupWithUsed?: number; cached: boolean; at: string;
 } | null = null;
 
 export async function pickHomefeedBets(
@@ -273,10 +273,15 @@ export async function pickHomefeedBets(
   //   → 다시 뽑아도 같은 캐시가 나와 또 0장 → ★내일까지 복구 불가.
   //  실측 로그: "[lane-quota:short] 홈판 미달 0/4 — 하류 탈락(이미쓴 4·게이트 0·중복 0)"
   //  ★거르는 자리와 캐시하는 자리가 어긋나면 캐시는 '실패를 굳히는 장치'가 된다.
+  let dupWithUsed = 0;
   if (opts?.isDup) {
     const before = got.length;
     got = got.filter((b) => !opts.isDup!(b.title, b.keyword));
-    if (got.length < before) console.log(`[homebet] 발행글과 유사 — 제외 ${before - got.length}장`);
+    dupWithUsed = before - got.length;
+    // ★진단에 남긴다(2026-08-05 유저 진단에서 검거): failBy가 {}인데 round1이 1이었다.
+    //  8장을 만들었는데 7장이 여기서 조용히 죽었고, 어디에도 안 적혔다 —
+    //  ★결품의 진짜 원인이 진단에 없으면 며칠을 엉뚱한 데서 찾게 된다.
+    if (dupWithUsed) console.log(`[homebet] 발행글과 유사 — 제외 ${dupWithUsed}장`);
   }
   // ★소재 중복 제거(2026-08-02 유저: "중복 글은 절대 안 돼요 — 저품질 낙인").
   //  카드 n장은 Promise.all로 '동시에' 만들어져 서로를 보지 못한다. 유형은 8종으로 갈라 두었지만
@@ -328,7 +333,7 @@ export async function pickHomefeedBets(
   const out = deduped.slice(0, want);
   lastHomebetDiag = {
     want, tryN, round1: got.length, round2, dupDropped, out: out.length,
-    failBy, cached: false, at: new Date().toISOString(),
+    failBy, dupWithUsed, cached: false, at: new Date().toISOString(),
   };
   if (out.length < want || dupDropped > 0) {
     console.log(`[homebet] ${out.length}/${want} — 1차 생성 ${got.length}/${tryN} · 보충 ${round2} · 소재중복 제외 ${dupDropped}(최근 소재 ${seededCores}개 사전 차단) · 탈락사유 ${JSON.stringify(failBy)}`);

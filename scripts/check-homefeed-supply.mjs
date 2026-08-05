@@ -53,6 +53,18 @@ const rt = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url
   ok(/usedForbidden\(`\$\{bet\.title\} \$\{bet\.keyword\}`\)/.test(rt), "★하류 방어 유지(옛 캐시 소진 전까지)");
 }
 
+
+// ★결품의 진짜 원인이 진단에 없었다(2026-08-05 유저 진단: failBy {} 인데 round1 1, out 0).
+//  8장을 만들어 7장이 호출측 중복검사에서 조용히 죽었는데 어디에도 안 적혔다.
+{
+  const rt2 = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
+  ok(/dupWithUsed/.test(hb), "★발행글 유사 탈락 수를 진단에 남긴다");
+  ok(/결품의 진짜 원인이 진단에 없으면/.test(hb), "왜 남겨야 하는지가 코드에 적혀 있다");
+  // ★생성기가 피할 목록 = 판정에 쓰는 목록. 어긋나면 눈 가리고 만들게 한 뒤 버리는 셈이다.
+  ok(/눈을 가려놓고 만들게 한 뒤 못 맞혔다고 버린 셈이다/.test(rt2), "★피할 목록과 판정 목록을 맞춘다");
+  ok(/\.\.\.\[\.\.\.usedTexts\],/.test(rt2), "★판정에 쓰는 발행 이력을 생성기에도 준다");
+}
+
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 홈판 공급(캐시가 실패를 굳히지 않게)");
 // ── ★홈판을 실데이터로(2026-08-03 유저 지적: "홈판도 트렌드 키워드로 만들어야 한다") ──
 //  우리는 청약홈·보조금24·기업마당·DART를 이미 수확하는데 홈판은 하나도 안 쓰고 있었다.
