@@ -12,13 +12,17 @@
 //   - http://www.ppomppu.co.kr/rss.php?id=ppomppu → 핫딜(상품권·페이백이 여기 섞여 온다)
 //  ★pubDate가 있어 '최근 N분' 창이 실제로 가능하다 — 이게 이 원천의 핵심 가치다.
 
+import { fetchNaverAutocomplete } from "./naverAutocomplete";
+
 export interface CommunitySeed {
-  keyword: string;   // ★원어 — "[카카오뱅크] AI 퀴즈" → "카카오뱅크 AI 퀴즈"
+  keyword: string;   // ★원어 — 자동완성으로 확정되면 그 표기를 그대로 쓴다
   title: string;
   brand: string;
+  hint: string;      // 제목에서 뽑은 이벤트 힌트(자동완성 대조용)
   postedAt: string;  // ISO
   minutesAgo: number;
   board: string;
+  verified: boolean; // 자동완성에 실제로 있는 말인가
 }
 
 const FEEDS: { id: string; board: string }[] = [
@@ -34,18 +38,34 @@ const CONSUME_RE = /(퀴즈|정답|룰렛|출석|뽑기|응모|추첨|1등|룰�
 // 제품 특가(핫딜) 제외 — 가격/무배 패턴. 우리 채널은 쇼핑 블로그가 아니다.
 const DEAL_RE = /(\d{1,3},\d{3}\s*원|\d+만\s?원대|무배|무료배송|최저가|특가|\(\s*\d[\d,]*\s*\/)/;
 
-/** 제목에서 원어 키워드를 뽑는다. "[카카오뱅크] AI 퀴즈" → { brand: "카카오뱅크", keyword: "카카오뱅크 AI 퀴즈" } */
-export function parseCommunityTitle(raw: string): { brand: string; keyword: string } | null {
+/**
+ * 제목에서 브랜드와 '검색어 후보'를 뽑는다.
+ * ★실호출로 배운 것(2026-08-05): 커뮤니티 제목은 검색어가 아니라 말투다.
+ *   "[네이버페이] 적립챌린지, 해외결제, 스파오 등 19원 받으세요" ← 이걸 통째로 키워드로 쓰면 아무도 안 친다.
+ *   그래서 브랜드 + '첫 명사 덩어리'까지만 남긴다. 나머지 확정은 자동완성이 한다(아래 harvestCommunity).
+ */
+export function parseCommunityTitle(raw: string): { brand: string; keyword: string; hint: string } | null {
   const t = String(raw || "").trim();
   const m = /^\[([^\]]{2,20})\]\s*(.+)$/.exec(t);
   if (!m) return null;
   const brand = m[1].trim();
-  const rest = m[2].trim().replace(/\s{2,}/g, " ").slice(0, 30);
+  let rest = m[2].trim();
   if (!brand || rest.length < 2) return null;
-  // ★날짜 코드(260805)·순번 같은 잡음 제거 — 검색어에 안 들어가는 말이다
-  const clean = rest.replace(/\b\d{6,8}\b/g, "").replace(/\s{2,}/g, " ").trim();
-  if (clean.length < 2) return null;
-  return { brand, keyword: `${brand} ${clean}`.slice(0, 40) };
+  // 날짜 코드·순번 제거 → 첫 구분자(쉼표·중점·괄호)까지만 → 서술어 꼬리 제거
+  rest = rest.replace(/\b\d{6,8}\b/g, " ").replace(/\s{2,}/g, " ").trim();
+  rest = rest.split(/[,·(){}\[\]/|]/)[0]!.trim();
+  rest = rest.replace(/\s*(받으세요|받기|하세요|하기|드려요|줍니다|주세요|가능|안내|이벤트\s*중)\s*$/g, "").trim();
+  // ★명사형만 남긴다(2026-08-05 실호출에서 배운 것): "생일가까우신 분은" 같은 서술형은 검색어가 아니다.
+  //  조사·어미로 끝나는 어절은 버린다 — 사람은 그렇게 검색창에 치지 않는다.
+  const JOSA_END = /(은|는|이|가|을|를|의|도|만|에|에서|으로|로|과|와|께|부터|까지|라|다|요|죠|네|음|함)$/;
+  const VERB_END = /(하는|되는|주는|받는|있는|없는|같은|드린|우신|하신|이신|보신|신|운|던)$/;
+  const words = rest.split(/\s+/).filter(Boolean)
+    .filter((w) => [...w].length >= 2 && !VERB_END.test(w) && !JOSA_END.test(w));
+  // 숫자+단위 꼬리(15p·19원)는 검색어가 아니다 — 수량은 매번 바뀐다
+  const nouns = words.filter((w) => !/^\d+[a-zA-Z가-힣]?$/.test(w));
+  const hint = nouns.slice(0, 2).join(" ").slice(0, 20);
+  if (hint.length < 2) return null;
+  return { brand, keyword: `${brand} ${hint}`.slice(0, 40), hint };
 }
 
 function parseRss(xml: string): { title: string; pubDate: string }[] {
@@ -96,13 +116,34 @@ export async function harvestCommunity(windowMin = 240, limit = 6): Promise<Comm
       if (seen.has(nk)) continue;
       seen.add(nk);
       out.push({
-        keyword: p.keyword, brand: p.brand, board: f.board,
+        keyword: p.keyword, brand: p.brand, hint: p.hint, board: f.board,
         title: `${p.keyword}, 지금 확인하면 되는 것`,
-        postedAt: new Date(ts).toISOString(), minutesAgo,
+        postedAt: new Date(ts).toISOString(), minutesAgo, verified: false,
       });
     }
   }
-  return out.sort((a, b) => a.minutesAgo - b.minutesAgo).slice(0, limit); // 최신 우선
+  // ★자동완성으로 '진짜 검색어'를 확정한다(2026-08-05 실호출에서 배운 것).
+  //  커뮤니티는 '무엇이 지금 도는지'를 알려주고, 자동완성은 '사람들이 어떻게 치는지'를 알려준다.
+  //  둘을 합쳐야 검색어가 된다 — 커뮤니티 제목만 쓰면 아무도 안 치는 문장이 키워드가 된다.
+  const picked = out.sort((a, b) => a.minutesAgo - b.minutesAgo).slice(0, limit * 2);
+  const done: CommunitySeed[] = [];
+  const unverified: CommunitySeed[] = [];
+  for (const s of picked) {
+    if (done.length >= limit) break;
+    try {
+      const sug = await fetchNaverAutocomplete(s.brand);
+      // 브랜드 뒤에 붙어 실제로 검색되는 말 중, 이 글의 힌트와 겹치는 것
+      const hit = sug.find((x) => x.includes(s.brand) && x.includes(s.hint.slice(0, 3)));
+      if (hit) { done.push({ ...s, keyword: hit.slice(0, 40), verified: true }); continue; }
+    } catch { /* 자동완성 실패 — 아래 미확정으로 */ }
+    unverified.push(s);
+    await new Promise((r) => setTimeout(r, 120));
+  }
+  // ★자동완성에 없는 건 최대 1개만 태운다(2026-08-05 실측: 뽐뿌 쿠폰판은 잔챙이 포인트가 대부분이다).
+  //  다만 0으로 만들지는 않는다 — 방금 터진 대형일수록 자동완성이 아직 안 따라온다.
+  //  가장 최근 것 하나만 남기고, 나머지는 버린다.
+  if (done.length < limit && unverified.length) done.push(unverified[0]!);
+  return done.slice(0, limit);
 }
 
 /** 씨앗 브리프 — 커뮤니티 글은 '방금 올라온 사실'이지 검증된 정보가 아니다. */

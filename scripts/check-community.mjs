@@ -14,10 +14,18 @@ console.log("① 제목에서 원어 키워드를 뽑는가(합성 금지 원칙
 {
   const a = parseCommunityTitle("[카카오뱅크] AI 퀴즈");
   ok(a?.brand === "카카오뱅크" && a?.keyword === "카카오뱅크 AI 퀴즈", `실물 파싱: ${a?.keyword}`);
-  const b = parseCommunityTitle("[페이북] 260805 1등뽑기");
-  ok(b?.keyword === "페이북 1등뽑기", `★날짜 코드를 뺀다(검색어에 안 들어가는 말): ${b?.keyword}`);
-  const c = parseCommunityTitle("[삼성전자] 온누리상품권 20% 페이백");
-  ok(c?.keyword === "삼성전자 온누리상품권 20% 페이백", `브랜드+이벤트 원어: ${c?.keyword}`);
+  // ★실호출로 배운 것(2026-08-05): 커뮤니티 제목은 검색어가 아니라 말투다 — 압축이 필요하다
+  const b = parseCommunityTitle("[네이버페이] 적립챌린지, 해외결제, 스파오 등 19원 받으세요");
+  ok(b?.keyword === "네이버페이 적립챌린지", `★문장을 검색어로 압축: ${b?.keyword}`);
+  const c = parseCommunityTitle("[네이버페이] 생일가까우신 분은 축하포인트도 줍줍");
+  ok(!/가까우신|분은/.test(c?.keyword ?? ""), `★서술형·조사 어절은 버린다: ${c?.keyword}`);
+  const d = parseCommunityTitle("[OK캐시백] 르노 15p");
+  ok(!/15p/.test(d?.keyword ?? ""), `★숫자+단위 꼬리는 검색어가 아니다(수량은 매번 바뀐다): ${d?.keyword}`);
+  // ★유저가 든 실물 둘 — 이게 나와야 이 원천이 값을 한다
+  const e = parseCommunityTitle("[케이뱅크] 황금캡슐 이벤트");
+  ok(e?.keyword === "케이뱅크 황금캡슐 이벤트", `★케이뱅크 황금캡슐: ${e?.keyword}`);
+  const f = parseCommunityTitle("[삼성전자] 온누리상품권 20% 페이백");
+  ok(/온누리상품권/.test(f?.keyword ?? ""), `★삼성 온누리상품권(6/27 유입 4슬롯): ${f?.keyword}`);
   ok(parseCommunityTitle("그냥 제목입니다") === null, "대괄호 형식이 아니면 안 쓴다");
   ok(parseCommunityTitle("[a]") === null, "내용이 없으면 안 쓴다");
 }
@@ -46,11 +54,14 @@ console.log("\n③ 시간 창 — 뒷북을 구조로 막는가:");
   ok(/harvestCommunity\(windowMin = 240/.test(src), "기본 창 = 수확 간격(4시간)");
   ok(/창을 크론보다 좁게 잡으면 그 사이에 올라온 것을 구조적으로 못 본다/.test(src), "★유저의 60분 지시와 크론 주기의 관계가 적혀 있다");
   ok(/sort\(\(a, b\) => a\.minutesAgo - b\.minutesAgo\)/.test(src), "최신 우선");
+  // ★실측: 뽐뿌 쿠폰판은 잔챙이 포인트가 대부분이다 — 자동완성에 실재하는 것만 우선한다
+  ok(/verified: true/.test(src) && /fetchNaverAutocomplete\(s\.brand\)/.test(src), "★자동완성으로 '진짜 검색어'를 확정한다");
+  ok(/unverified\.length\) done\.push\(unverified\[0\]!\)/.test(src), "★미확정은 1개만 태운다(0으로 만들지도 않는다 — 방금 터진 대형은 자동완성이 늦다)");
 }
 
 console.log("\n④ 브리프 — 커뮤니티 글은 신호지 근거가 아니다:");
 {
-  const b = communityBrief({ keyword: "케이뱅크 포인트", brand: "케이뱅크", board: "쿠폰·이벤트", title: "t", postedAt: "", minutesAgo: 12 });
+  const b = communityBrief({ keyword: "케이뱅크 포인트", brand: "케이뱅크", hint: "포인트", board: "쿠폰·이벤트", title: "t", postedAt: "", minutesAgo: 12, verified: true });
   ok(/12분 전에 올라온 소식/.test(b), "언제 올라온 글인지 명시");
   ok(/지어내지 마라/.test(b), "★확인 안 된 금액·조건 지어내기 금지");
   ok(/시작 신호일 뿐 근거가 아니다/.test(b), "★커뮤니티 글의 지위를 못 박는다");
