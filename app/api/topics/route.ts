@@ -721,6 +721,9 @@ export async function GET(req: Request) {
             //   "페이코 포인트 출금 방법" 문서 2편(4어절) · 검색 3,210회(3어절, 실제 4어절은 130회)
             //  ★숨기지 않고 무엇을 기준으로 잰 값인지 화면에 적는다.
             if (v.base) (c as { volBase?: string }).volBase = v.base;
+            // ★수요 하한이 이 경로를 안 타고 있었다(2026-08-05): volMap이 채운 카드는 need에 안 들어가
+            //  volMeasured가 false로 남아, 검색 50회짜리도 하한 검사를 통과했다.
+            (c as { volMeasured?: boolean }).volMeasured = true;
             const scope = v.base ? `'${v.base}' 기준 ` : ""; // 부분 매치는 조회 기준어 명시 — 전체 키워드 검색량으로 오독 방지
             // ★'수요 낮음' 판정을 트렌드 카드에서 뺀다(2026-08-05 유저 지적).
             //  월 검색량은 '지난 30일 평균'이고, 트렌드는 정의상 이번 주에 생긴 수요라 평균에 희석된다 —
@@ -818,11 +821,21 @@ export async function GET(req: Request) {
         try {
           const need = tc.filter((c) => Number(c.vol ?? 0) === 0).map((c) => c.keyword);
           if (need.length) {
-            const stats = await fetchKeywordStats(need, 4); // 키는 normalizeKey(공백 제거)
+            // ★씨앗(클러스터) 검색량도 함께 잰다(2026-08-05).
+            //  증식이 씨앗을 롱테일로 늘리므로 글감 키워드의 검색량은 늘 작다(주민세 10,040 → 긴 구 50).
+            //  글이 실제로 받을 유입의 상한은 클러스터 수요다 — 그걸 안 보여주면
+            //  "월 50명"만 보고 멀쩡한 글감을 버리게 된다. 대신 무엇을 잰 값인지 반드시 밝힌다.
+            const seedKws = tc.map((c) => (c as { seedKeyword?: string }).seedKeyword).filter((x): x is string => !!x);
+            const stats = await fetchKeywordStats([...new Set([...need, ...seedKws])], 5); // 키는 normalizeKey(공백 제거)
             let noDemand = 0;
             for (const c of tc) {
               const st = stats.get(normalizeKey(c.keyword));
               if (st) { c.vol = st.mobile + st.pc; (c as { volMeasured?: boolean }).volMeasured = true; }
+              const sk = (c as { seedKeyword?: string }).seedKeyword;
+              if (sk && sk.replace(/\s+/g, "") !== c.keyword.replace(/\s+/g, "")) {
+                const ss = stats.get(normalizeKey(sk));
+                if (ss) (c as { seedVol?: number }).seedVol = ss.mobile + ss.pc;
+              }
             }
             // ★수요 하한 — 다만 '선점형'은 면제한다(2026-08-05 유저 제기).
             //  검색량은 지난 30일 평균이라 오늘 터진 일을 원리상 담지 못한다.
@@ -833,7 +846,10 @@ export async function GET(req: Request) {
             const kept: typeof tc = [];
             for (const c of tc) {
               const measured = (c as { volMeasured?: boolean }).volMeasured === true;
-              const v = Number(c.vol ?? 0);
+              // ★수요는 클러스터로 잰다(2026-08-05). 증식이 씨앗을 롱테일로 늘리므로 글감 키워드의
+              //  검색량은 늘 작다(주민세 10,040 → 긴 구 50). 그 작은 숫자로 하한을 걸면
+              //  클러스터 수요가 큰 멀쩡한 글감이 통째로 죽는다 — 롱테일 글은 클러스터에서 유입을 받는다.
+              const v = Math.max(Number(c.vol ?? 0), Number((c as { seedVol?: number }).seedVol ?? 0));
               if (!measured || v >= DEMAND_MIN) { kept.push(c); continue; }
               const src = (c as { seedSource?: string }).seedSource ?? (c.sel as { seedSource?: string } | undefined)?.seedSource ?? null;
               const pv = preemptVerdict(c.keyword, src, (c as { blogTotal?: number | null }).blogTotal ?? null);
@@ -843,7 +859,7 @@ export async function GET(req: Request) {
                 console.log(`[preempt] 검색량 0 면제 — ${c.keyword} (${pv.reasons.join("·")})`);
                 continue;
               }
-              weak.push({ keyword: c.keyword, vol: v, why: pv.blockedBy ?? "수요 미달" });
+              weak.push({ keyword: c.keyword, vol: v, why: pv.blockedBy ?? "수요 미달" }); // v = 클러스터 기준
             }
             if (weak.length) {
               tc = kept;

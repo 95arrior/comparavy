@@ -66,6 +66,9 @@ console.log("\n④ 배선:");
   const rt = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
   ok(/preemptVerdict\(c\.keyword/.test(rt), "★수요 하한이 선점형을 죽이지 않게 판별기를 부른다");
   ok(/const DEMAND_MIN = 100/.test(rt), "수요 하한이 있다");
+  // ★하한은 클러스터로 잰다 — 롱테일 글감의 작은 숫자로 재면 멀쩡한 글감이 통째로 죽는다
+  ok(/Math\.max\(Number\(c\.vol \?\? 0\), Number\(\(c as \{ seedVol\?: number \}\)\.seedVol \?\? 0\)\)/.test(rt), "★수요는 클러스터(씨앗) 기준으로 잰다");
+  ok(/volMeasured\?: boolean \}\)\.volMeasured = true;/.test(rt), "★volMap이 채운 카드도 '측정됨'으로 표시(하한이 그 경로를 안 타고 있었다)");
   ok(/상한이 아니라 하한이라/.test(rt) || /하한이다/.test(rt), "★상한(밴드 해제)과 하한이 다른 축임을 적어둔다");
   ok(/served_topics/.test(rt) && /after\(async \(\) => \{/.test(rt), "★서빙한 글감을 남긴다(응답은 막지 않는다)");
   ok(/발행 여부와 무관하게 낸 것을 전부 남긴다/.test(rt), "★재는 대상은 '우리 추천이 맞았나'지 '유저가 썼나'가 아니다");

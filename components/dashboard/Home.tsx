@@ -1164,7 +1164,12 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
   // ★씨앗이 글감 키워드와 다르면 밝힌다 — 칩은 '잰 말'을 보여주므로, 어디서 왔는지는 여기서 말한다
   const seedNote = (() => {
     const sk = (topic as { seedKeyword?: string }).seedKeyword;
-    return sk && sk.replace(/\s+/g, "") !== topic.keyword.replace(/\s+/g, "") ? ` (씨앗: ${sk})` : "";
+    if (!sk || sk.replace(/\s+/g, "") === topic.keyword.replace(/\s+/g, "")) return "";
+    // ★클러스터 수요를 함께 밝힌다(2026-08-05): 글감 키워드는 씨앗을 늘린 롱테일이라 검색량이 늘 작다
+    //  (주민세 10,040 → 긴 구 50). 이 글이 받을 유입의 상한은 씨앗 쪽이다 —
+    //  안 보여주면 "월 50명"만 보고 멀쩡한 글감을 버리게 된다.
+    const sv = (topic as { seedVol?: number }).seedVol;
+    return sv ? ` (씨앗 '${sk}'는 월 ${sv.toLocaleString("ko-KR")}회)` : ` (씨앗: ${sk})`;
   })();
   // ★활용 계획 — "어떻게 글감으로 쓸 건지"(유저 목업).
   //  ★있는 값에서만 만든다. 없는 날짜·수치를 붙이면 그 순간 카드가 거짓말이 된다(유저: "절대").
