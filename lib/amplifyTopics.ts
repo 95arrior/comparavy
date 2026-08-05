@@ -166,12 +166,12 @@ export let lastAmplifyDiag: {
   seeds: number; want: number; briefs: number; parsed: number; out: number; stage?: string;
   /** 증식 정원에 들어간 실시간(rising) 씨앗 수 — 0이면 '지금 뜨는' 열이 뉴스 롱테일로만 찬다는 뜻 */
   live?: number;
-  drop: { placeholder: number; noBrief: number; dupKeyword: number; orphan: number; titleTail: number; region: number; speech: number };
+  drop: { placeholder: number; noBrief: number; dupKeyword: number; orphan: number; titleTail: number; region: number; speech: number; lineage: number };
   // ★모델 호출 자체의 계측(2026-08-04) — 'parsed 8'만으로는 '모델이 8개만 줬다'와 '잘려서 8개만 건졌다'가 구분되지 않는다.
   call?: { chunks: number; stopReasons: (string | null)[]; truncated: number; outTokens: (number | null)[]; maxTokens: number; noJson: number };
 } | null = null;
 
-const NO_DROP = { placeholder: 0, noBrief: 0, dupKeyword: 0, orphan: 0, titleTail: 0, region: 0, speech: 0 };
+const NO_DROP = { placeholder: 0, noBrief: 0, dupKeyword: 0, orphan: 0, titleTail: 0, region: 0, speech: 0, lineage: 0 };
 
 // ★증식이 붙일 수 있는 지역명 — 씨앗·근거에 없으면 지어낸 것이다(전국 글감이 남의 동네 글이 된다)
 // 요청·질문 종결형 — 검색창에 치는 말이 아니다
@@ -396,7 +396,7 @@ ${OPEN_LOOP_GUIDE}
     // ★증식 손실 회계(2026-08-04 유저: "씨앗 19개인데 증식 4장, 왜?").
     //  종전엔 전부 조용한 continue라 '몇 장 요청해서 몇 장 나왔다'만 보이고 어디서 죽었는지 알 수 없었다.
     //  ★결품이 상시화된 단계에서 조용한 continue는 눈을 감는 것이다.
-    const drop = { placeholder: 0, noBrief: 0, dupKeyword: 0, orphan: 0, titleTail: 0, region: 0, speech: 0 };
+    const drop = { placeholder: 0, noBrief: 0, dupKeyword: 0, orphan: 0, titleTail: 0, region: 0, speech: 0, lineage: 0 };
     for (const it of parsed) {
       let b = briefs[(Number(it.seedIndex) || 1) - 1] ?? briefs[0];
       // ★플레이스홀더 게이트(실측: '최대 OO만원' 제목 노출) — 미확인 수치 자리표시가 있으면 카드 폐기
@@ -420,6 +420,19 @@ ${OPEN_LOOP_GUIDE}
         // ★범용어를 뺀 실질 토큰만 센다(2026-08-05 개정) — 종전엔 '2026·지원금'만 겹쳐도 통과해서
         //  '65세 이상' 씨앗에서 '청년' 카드가 나왔다. 겹침 1개는 우연일 수 있어 2개를 요구한다.
         if (!lineageAttached(`${b.seed.keyword} ${b.seed.title}`, `${kw} ${String(it.titleClick ?? "")}`)) { drop.orphan++; continue; }
+        // ★공시 글감이 공시 얘기를 안 하는 걸 막는다(2026-08-05 유저 화면에서 검거).
+        //  실물: 씨앗 '현대그린푸드 자기주식취득'(DART 공시) → 카드 '현대그린푸드 채용 사이트'.
+        //  회사명만 살아남고 정작 공시 내용(자기주식취득)이 통째로 사라져 전혀 다른 주제가 됐다.
+        //  ★혈통 검사(lineageAttached)는 '현대그린푸드'가 겹쳐서 통과시킨다 — 회사명은 소재가 아니다.
+        //   공시에서 온 글감의 소재는 '그 회사가 무엇을 했는가'이고, 그게 빠지면 근거와 글이 어긋난다.
+        if (b.seed.source === "dart") {
+          const act = /(유무상증자|무상증자|유상증자|주식분할|주식병합|주식배당|자기주식취득|현물배당|권리락|신주)/.exec(b.seed.keyword);
+          if (act && !kw.includes(act[1]!)) {
+            drop.lineage++;
+            console.log(`[amp] 공시 내용이 빠짐 — 카드 버림: ${kw} (씨앗 '${b.seed.keyword}'의 '${act[1]}'가 사라졌다)`);
+            continue;
+          }
+        }
         // ★검색어가 아닌 말투를 막는다(2026-08-05 유저 화면: '국민행복카드 바우처 신청 방법 알려주세요').
         //  아무도 검색창에 '알려주세요'라고 치지 않는다 — 요청·질문 종결형은 키워드가 아니라 말이다.
         //  ★이런 키워드는 문서 수가 0으로 나와 '선점 최적'처럼 보이는데, 실은 아무도 안 찾는 자리다.
