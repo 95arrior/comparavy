@@ -12,26 +12,18 @@ let fail = 0;
 const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "|", l, e); };
 
 // ── ① 레퍼런스 규격이 그대로 들어갔는가 ─────────────────────────────────
-//  ★유저 레퍼런스: 사원증 + 공장 야경 + 보라 네온 글로우, 정사각, 3D 렌더 룩.
-//   내가 처음 읽었을 때 네 군데를 틀렸다 — 그 넷이 다시 틀어지지 않게 고정한다.
+//  ★규격 교체(2026-08-05): 종전은 '3D 제품 렌더 + 공장 야경 + 네온 글로우'였다.
+//   그날 유저가 토스피드 화면을 주며 "토스톤 그 일러스트가 아닌데? 기존인데?"라고 정정했다.
+//   ★그래서 이 테스트도 갈아끼운다 — 낡은 테스트를 남겨두면 '유저가 기각한 규격'을 코드가 지키게 된다.
+//   (실제로 그 사이 이 파일이 계속 FAIL을 냈다. 테스트가 틀렸는데 코드를 의심하게 만든다.)
 {
   const p = buildTextlessThumbPrompt("", "u1", 0, "a glowing employee ID badge on a lanyard", "새만금 채용");
-  ok(/3D product-render/i.test(p), "★3D 렌더 룩(실사 사진 아님 — 오독 ③)");
-  ok(/Square 1:1/.test(p), "★정사각(홈피드 카드가 정사각 — 오독 ④)");
-  ok(/60-80%/.test(p), "히어로가 화면 60~80%");
-  ok(/neon rim light/i.test(p), "네온 림라이트");
-  ok(/glow pooling on the surface/i.test(p), "바닥으로 번지는 글로우");
-  // ★2차 교정(2026-08-02): "swallowed by darkness"로 전부 검정으로 뭉갰더니
-  //  유저 지적 — "실루엣이라도 뒷쪽에 줘, 호기심 가게" / "밝기가 너무 약해서 눈에 안 뜀".
-  //  맥락이 읽혀야 궁금해진다. 다 지우면 궁금한 게 아니라 아무것도 없는 것이다.
-  ok(/recognizable STRUCTURES/i.test(p), "★배경에 알아볼 수 있는 구조물 실루엣");
-  ok(/clearly readable in outline/i.test(p), "★윤곽은 읽히게(다 뭉개지 않는다)");
-  ok(/bright bokeh lights/i.test(p), "밝은 보케 불빛");
-  ok(/Never an empty black backdrop/i.test(p), "★텅 빈 검정 배경 금지");
-  ok(/bright enough to see/i.test(p), "★배경 밝기 하한(어두운 방이 아니라 불 켜진 야경)");
-  ok(!/swallowed by darkness/i.test(p), "★전부 어둠에 잠기게 하던 지시가 제거됨");
-  ok(/intense .* neon rim light/i.test(p) && /vivid and high-contrast/i.test(p), "★강한 네온·선명한 대비(피드에서 튀게)");
-  ok(/Apple ad/i.test(p) && /YouTube thumbnail/i.test(p), "애플 미니멀 + 유튜브 CTR");
+  ok(/flat vector editorial illustration/i.test(p), "★플랫 벡터 일러스트(토스피드 톤)");
+  ok(/NOT a 3D render/i.test(p), "★3D 렌더 아님을 못 박는다(옛 규격이 되살아나지 않게)");
+  // ★금지어는 '없어야' 하는 게 아니라 '금지된다고 적혀야' 한다 — 단어 유무만 보면 반대로 읽는다
+  ok(/NO neon glow/i.test(p) && /NO bokeh/i.test(p), "★네온·보케를 금지어로 못 박는다");
+  ok(!/glow pooling on the surface/i.test(p), "★바닥 글로우 제거됨");
+  ok(/Square 1:1/.test(p), "★정사각(홈피드 카드가 정사각)");
   ok(/No company names or trademarked marks/i.test(p), "회사 상표 금지");
   ok(/lettering-free symbol/i.test(p), "★글자 없는 심볼(십자·방패·집 윤곽)은 허용");
   ok(/NO TEXT of any kind/i.test(p), "★글자 금지(계정 리스크 — 우리 규칙)");
@@ -74,10 +66,12 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
     ok(!RE_FLAT.test(g.subject) && !RE_ABS.test(g.subject), `[${g.betType}] 폴백도 빈 사각형이 아님`);
 }
 
-// ── ④ 네온 색이 글마다 갈리는가 ────────────────────────────────────────
-//  ★유저: "늘 같은 네온색이 나오면 안 돼요." 종전엔 계정 좌석에 묶여 한 블로그는 늘 한 색이었다.
+// ── ④ 주조색이 글마다 갈리는가 ────────────────────────────────────────
+//  ★유저: "늘 같은 색이 나오면 안 돼요." 종전엔 계정 좌석에 묶여 한 블로그는 늘 한 색이었다.
+//  ★2026-08-05 규격 교체로 네온 → 토스 팔레트가 됐다. 색을 읽는 자리도 함께 옮긴다.
+//   (이 자리를 안 옮겨서 '1종'으로 오탐이 났다 — 규칙을 바꾸면 그걸 재는 자도 같이 바꿔야 한다.)
 {
-  const glow = (t, u = "u1", v = 0) => /intense ([a-z ]+) neon rim/.exec(buildTextlessThumbPrompt("", u, v, "x", t))?.[1];
+  const glow = (t, u = "u1", v = 0) => /#([0-9a-f]{6})/i.exec(buildTextlessThumbPrompt("", u, v, "x", t))?.[1];
   const 제목들 = ["에어컨 전기요금", "새만금 채용", "30대 평균 저축액", "숨은 보험금", "연금저축 비교", "실업급여 신청", "건보료 정산"];
   ok(new Set(제목들.map((t) => glow(t))).size >= 4, "★한 계정 안에서도 글마다 색이 갈린다", `현재 ${new Set(제목들.map((t) => glow(t))).size}종`);
   ok(new Set(["u1", "u2", "u3"].map((u) => glow("에어컨 전기요금", u))).size >= 2, "★같은 글이라도 계정이 다르면 색이 갈린다");

@@ -13,6 +13,7 @@ import { harvestCommunity, communityBrief } from "./communityBuzz";
 import { seasonalSeeds } from "./seasonalEvents";
 import { econSeeds } from "./econCalendar";
 import { policySeeds } from "./policyCalendar";
+import { harvestGovPress } from "./govPress";
 import { expandAutocomplete } from "./naverAutocomplete";
 import { fetchBlogTotal } from "./naverBlogSearch";
 import { fetchTrend } from "./naverDatalab";
@@ -28,7 +29,7 @@ export interface Longtail { kw: string; blogTotal: number | null }
 // ★"rising"(2026-08-04 유저 상시 요구: "지금 뜨는은 실제로 효과 있는 실시간 키워드 or 대형 선점 가능한 것") —
 //  구글 트렌드 KR 급상승 유래. 이 표식이 있어야 밴드 우회 판정을 할 수 있다(없으면 전부 news로 뭉개진다).
 // ★"calendar"(2026-08-05) — 미리 공표된 일정(세금·지급·계절·정책). 선점의 최상위 재료.
-export type SeedSource = "news" | "season" | "discover" | "applyhome" | "gov24" | "bizinfo" | "dart" | "rising" | "calendar";
+export type SeedSource = "news" | "season" | "discover" | "applyhome" | "gov24" | "bizinfo" | "dart" | "rising" | "calendar" | "gov";
 export interface TrendTopic {
   keyword: string;
   title: string;
@@ -294,6 +295,35 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
       } catch (e) {
         // ★조용한 0 금지 — 원천이 죽으면 그 사실이 로그에 남아야 한다
         console.error("[corp-action] 수집 실패:", e instanceof Error ? e.message : e);
+      }
+    }
+
+    // ★정부 보도자료 주입(2026-08-05 — 설계 5단계). 정책브리핑 전 부처 목록.
+    //  ★고정 캘린더는 내가 손으로 넣은 것만 있다 — 보도자료는 '새 마감일'을 매일 물어온다.
+    //   실물: 국세청 "8.31.까지 법인세 중간예납" (8/4 공표 → T-27일 선점 창).
+    //  ★부처 RSS는 전멸이라 목록 HTML을 판다 — 구조가 바뀌면 0건이 되므로 실패를 반드시 로그로 남긴다.
+    if (/경제|재테크|금융|투자|부동산|세금|정책|생활|육아|시니어/.test(category)) {
+      try {
+        const gps = await harvestGovPress();
+        let added = 0;
+        for (const g of gps) {
+          const kw = compressToSearchKeyword(g.keyword);
+          if (!kw || seen.has(kw)) continue;
+          if (isUnsafeKeyword(kw, brandOk) || scamLoan(kw)) continue;
+          seen.add(kw);
+          added += 1;
+          rows.push({
+            category, keyword: kw, title: g.title, news_context: g.newsContext, longtails: [] as Longtail[],
+            source: "gov", created_at: new Date().toISOString(),
+            // ★마감이 있으면 그게 이 글감의 수명이다 — 마감 지난 글감이 보드에 남으면 안 된다
+            expires_at: g.deadline ? new Date(`${g.deadline}T23:59:59+09:00`).toISOString() : expires,
+            ...(g.deadline ? { action_end: g.deadline } : {}),
+          });
+        }
+        if (added) console.log(`[gov-press] ${category}: ${added}건 — ${gps.slice(0, 3).map((x) => `${x.keyword}${x.deadline ? `(마감 ${x.deadline})` : ""}`).join(", ")}`);
+      } catch (e) {
+        // ★조용한 0 금지 — HTML 구조가 바뀌면 여기서만 알 수 있다
+        console.error("[gov-press] 수집 실패:", e instanceof Error ? e.message : e);
       }
     }
 

@@ -142,7 +142,7 @@ function pickDiverse(rows: PoolRow[], n: number, rnd: () => number = Math.random
 //  유저 요청(2026-08-05): "청약홈 칸에 글감이 있고 없고를 알고, 인터넷엔 이슈인데 없으면 바로 캐치"
 const SLOT_LABEL: Record<string, string> = {
   calendar: "캘린더", applyhome: "청약", gov24: "정부지원", bizinfo: "기업지원",
-  dart: "공시", rising: "실시간", news: "뉴스", season: "시즌", discover: "발굴", homebet: "홈판",
+  gov: "정부발표", dart: "공시", rising: "실시간", news: "뉴스", season: "시즌", discover: "발굴", homebet: "홈판",
 };
 function slotOf(c: { tag?: string; sel?: unknown; risingSeed?: boolean }): string {
   if (c.tag === "홈판") return "홈판";

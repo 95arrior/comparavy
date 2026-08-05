@@ -18,7 +18,9 @@ ok(trip74.some((s) => s.keyword === "여름 휴가철"), "7/4 여행 → 여름 
 const dec20 = new Date("2026-12-20T00:00:00");
 // 1/15/2027 → D-26 범위 밖; 1/5 기준 D-10 활성
 const jan5 = new Date("2027-01-05T00:00:00");
-ok(!seasonalSeeds("경제·재테크", dec20).some((s)=>s.keyword==="연말정산"), "12/20 → 연말정산 D-26 미주입");
+// ★연말정산 선행이 45일로 넓어졌다(lib/seasonalEvents.ts). 유저 방향이 "먼저 선점"이라 D-26은 주입이 맞다 —
+//  12월에 미리 색인돼 있어야 1월 검색이 몰릴 때 우리 글이 위에 있다. 테스트가 옛 좁은 창에 머물러 FAIL이었다.
+ok(seasonalSeeds("경제·재테크", dec20).some((s)=>s.keyword==="연말정산"), "12/20 → 연말정산 D-26 주입(선점 창 45일)");
 ok(seasonalSeeds("경제·재테크", jan5).some((s)=>s.keyword==="연말정산"), "1/5 → 연말정산 D-10 주입");
 
 // ② 신선도 게이트 판정(freshOf 로직 재현: 48h)

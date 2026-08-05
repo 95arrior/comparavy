@@ -6,7 +6,9 @@ const nv = buildSystemPrompt("general");
 const nv2 = buildSystemPrompt("general", "naver");
 const wp = buildSystemPrompt("general", "wordpress");
 ok(nv === nv2, "기본값=naver (기존 호출 무변경)");
-ok(nv.includes("네이버 블로그 모드") && !nv.includes("워드프레스 모드"), "네이버 = 네이버 규격만");
+// ★단순 언급으로 판정하면 안 된다: 공용 지시문에 "(구글/워드프레스 모드에선 …)" 같은 괄호 설명이 섞여
+//  네이버 프롬프트에도 그 낱말이 들어간다. 배타는 '규격 블록(═══ 헤더)'이 들어갔는지로 본다.
+ok(nv.includes("═══ 네이버 블로그 모드") && !nv.includes("═══ 구글/워드프레스 모드"), "네이버 = 네이버 규격 블록만");
 ok(wp.includes("구글/워드프레스 모드") && !wp.includes("네이버 블로그 모드"), "WP = 구글 규격만(배타)");
 ok(["AI Overviews", "E-E-A-T", "Helpful Content", "[내부링크:"].every((k) => wp.includes(k)), "WP 4규격(인용·경험·독자가치·클러스터)");
 ok(wp.includes("해시태그·형광펜 문법은 쓰지 않는다"), "네이버 문법 침투 금지");

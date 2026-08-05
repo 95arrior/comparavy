@@ -709,7 +709,8 @@ export default function Home({
           {/* ★원천 칸 현황(2026-08-05 유저 요청: "카테고리 칸을 나눠서 — 청약홈 칸에 글감이 있고 없고를 알게").
               0인 칸이 그대로 보여야 '이슈가 없는 것'과 '우리가 못 잡은 것'을 구분할 수 있다. */}
           {(() => {
-            const SLOTS = ["캘린더", "청약", "정부지원", "공시", "실시간", "홈판", "뉴스", "시즌"];
+            // ★칸은 SLOT_LABEL(서버)과 같은 목록이어야 한다 — 빠진 칸은 '없다'조차 안 보인다(유저 요구의 핵심)
+            const SLOTS = ["정부발표", "캘린더", "청약", "정부지원", "기업지원", "공시", "실시간", "홈판", "뉴스", "시즌", "발굴"];
             const all = [...(boardShort ?? []), ...(boardLong ?? [])];
             if (!all.length) return null;
             const rows = [{ s: "전체", n: all.length }, ...SLOTS.map((s) => ({ s, n: all.filter((t) => slotMatch(t, s)).length }))];
