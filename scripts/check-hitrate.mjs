@@ -77,6 +77,13 @@ console.log("\n④ 배선:");
 
   const sheet = fs.readFileSync(new URL("../components/dashboard/PerfImportSheet.tsx", import.meta.url), "utf-8");
   ok(/글감 적중률/.test(sheet), "화면에 붙었다");
+  // ★스크린샷 입력(2026-08-05 유저: "이미지 넣고 싶은데 못 넣게 되어 있는데?")
+  ok(/onDrop=/.test(sheet) && /onPaste=/.test(sheet) && /type="file"/.test(sheet), "★끌어놓기·붙여넣기·파일선택 셋 다 된다");
+  ok(/맞는지 보고 고친 다음 기록하기를 눌러주세요/.test(sheet), "★읽은 결과를 바로 저장하지 않고 확인받는다");
+  const ocr = fs.readFileSync(new URL("../app/api/perf-import/ocr/route.ts", import.meta.url), "utf-8");
+  ok(!/insert|upsert/.test(ocr), "★읽기 전용 — 이 API는 저장하지 않는다(확인 없이 들어가면 지표가 거짓말한다)");
+  ok(/지어내지 마라/.test(ocr) && /추측 금지/.test(ocr), "★안 보이는 값을 지어내지 않게 지시한다");
+  ok(/MAX_BYTES/.test(ocr) && /ALLOWED/.test(ocr), "크기·형식 방어");
   ok(/커버리지/.test(sheet) && /놓친 유입 검색어/.test(sheet), "★적중률만이 아니라 커버리지·놓친 것을 보여준다");
 
   const mig = fs.readFileSync(new URL("../supabase/migrations/0066_topic_hitrate.sql", import.meta.url), "utf-8");

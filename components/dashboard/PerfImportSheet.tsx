@@ -31,6 +31,8 @@ export default function PerfImportSheet({ onClose }: { onClose: () => void }) {
   const [err, setErr] = useState<string | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [hr, setHr] = useState<Hitrate | null>(null);
+  const [ocrBusy, setOcrBusy] = useState(false);
+  const [ocrNote, setOcrNote] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/perf-summary").then((r) => r.json()).then((d) => { if (d?.enabled) setSummary(d as Summary); }).catch(() => null);
@@ -40,6 +42,34 @@ export default function PerfImportSheet({ onClose }: { onClose: () => void }) {
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ★스크린샷 읽기(2026-08-05 유저: "이미지 넣고 싶은데 못 넣게 되어 있는데?").
+  //  ★읽은 결과를 바로 저장하지 않는다 — 아래 입력칸에 채워 넣고, 유저가 눈으로 보고 고친 뒤 저장한다.
+  //   이건 적중률의 재료다. 잘못 읽은 값이 그대로 들어가면 지표가 조용히 거짓말을 한다.
+  async function readImage(file: File) {
+    if (!file.type.startsWith("image/") || ocrBusy) return;
+    setOcrBusy(true); setErr(null); setMsg(null); setOcrNote(null);
+    try {
+      const b64 = await new Promise<string>((res, rej) => {
+        const fr = new FileReader();
+        fr.onload = () => res(String(fr.result));
+        fr.onerror = () => rej(new Error("read"));
+        fr.readAsDataURL(file);
+      });
+      const r = await fetch("/api/perf-import/ocr", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: b64, mime: file.type }),
+      });
+      const d = await r.json();
+      if (!r.ok) { setErr(d.error ?? "이미지를 읽지 못했어요."); return; }
+      const rows = (d.rows ?? []) as { keyword: string; inflow: number }[];
+      if (!rows.length) { setErr(d.note || "표를 못 찾았어요. 유입 검색어 표가 보이게 잘라서 올려주세요."); return; }
+      setKind("inflow");
+      setText(rows.map((x) => `${x.keyword}\t${x.inflow}`).join("\n"));
+      setOcrNote(`${rows.length}줄을 읽었어요. 맞는지 보고 고친 다음 기록하기를 눌러주세요.`);
+    } catch { setErr("이미지를 읽지 못했어요. 표를 붙여넣는 방법도 그대로 쓸 수 있어요."); }
+    setOcrBusy(false);
+  }
 
   async function submit() {
     if (!text.trim() || busy) return;
@@ -76,7 +106,21 @@ export default function PerfImportSheet({ onClose }: { onClose: () => void }) {
         {kind === "inflow" && (
           <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-2 w-full rounded-[10px] bg-neutral-50 px-3 py-2 text-[13px] font-semibold text-neutral-700 outline-none ring-1 ring-black/[0.05]" />
         )}
-        <textarea value={text} onChange={(e) => setText(e.target.value)} rows={6} placeholder={kind === "inflow" ? "예)\n재산세 납부 방법  120\n전세계약주의사항  85" : "예)\n2026-07-10  1,234\n2026-07-09  980"}
+        {/* ★이미지로 넣기 — 크리에이터 어드바이저 표는 드래그 복사가 잘 안 된다(특히 모바일).
+            매일 넣어야 하는 자료라 입력이 번거로우면 안 넣게 되고, 안 넣으면 적중률이 영원히 안 나온다. */}
+        {kind === "inflow" && (
+          <label
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) void readImage(f); }}
+            className="at-press mt-2 flex cursor-pointer items-center justify-center gap-2 rounded-[12px] border border-dashed border-[#1D75F7]/35 bg-[#1D75F7]/[0.04] px-3 py-3 text-[12.5px] font-bold text-[#1D75F7] transition hover:bg-[#1D75F7]/[0.08]">
+            <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) void readImage(f); e.currentTarget.value = ""; }} />
+            {ocrBusy ? <><span className="tk-wand" aria-hidden>✦</span>이미지 읽는 중…</> : <>스크린샷으로 넣기 — 찍어서 올리거나 여기에 끌어다 놓으세요</>}
+          </label>
+        )}
+        {ocrNote && <p className="mt-1.5 text-[11.5px] font-semibold text-[#1D75F7]">{ocrNote}</p>}
+        <textarea value={text} onChange={(e) => setText(e.target.value)} rows={6}
+          onPaste={(e) => { const f = [...(e.clipboardData?.items ?? [])].find((i) => i.type.startsWith("image/"))?.getAsFile(); if (f) { e.preventDefault(); void readImage(f); } }} placeholder={kind === "inflow" ? "예)\n재산세 납부 방법  120\n전세계약주의사항  85" : "예)\n2026-07-10  1,234\n2026-07-09  980"}
           className="mt-2 w-full rounded-[12px] bg-neutral-50 px-4 py-3 text-[13px] font-medium outline-none ring-1 ring-black/[0.05] placeholder:text-neutral-300 focus:ring-2 focus:ring-[#1D75F7]/30" />
         <button onClick={submit} disabled={!text.trim() || busy} className="at-press tk-grad-cta mt-3 w-full rounded-[12px] py-3.5 text-[15px] font-bold text-white disabled:opacity-50">
           {busy ? "기록하는 중" : "기록하기"}
