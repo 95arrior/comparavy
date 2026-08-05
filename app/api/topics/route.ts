@@ -249,7 +249,10 @@ export async function GET(req: Request) {
   const tailMode = new URL(req.url).searchParams.get("mode"); // ★숏/롱테일 전용 요청(유저 제안: 탭=그 순간 그 종족만 왕창)
   const excludeSet = new Set(exclude.map((e) => normalizeKeyword(e))); // 교체로 제외한 것들 — 풀 전멸 시 되살릴 수 있게 분리 보관
   // ★X-ray(관리자 진단) — ?debug=1이면 각 단계 생존 수를 응답에 동봉(실측: 공급 0 원인 추적)
-  const debugMode = new URL(req.url).searchParams.get("debug") === "1" && isAdminEmail(user.email);
+  // ★진단만 보는 모드(2026-08-05): debug=1은 카드 본문까지 다 실려 브라우저에서 잘린다.
+  //  유저가 매번 긴 JSON에서 필요한 부분을 찾아 잘라 붙이고 있었다 — 그 마찰이 관측을 포기하게 만든다.
+  const slimDebug = new URL(req.url).searchParams.get("debug") === "diag" && isAdminEmail(user.email);
+  const debugMode = slimDebug || (new URL(req.url).searchParams.get("debug") === "1" && isAdminEmail(user.email));
   const diag: Record<string, unknown> = debugMode ? { vertical, sub, usedSet: usedSet.size, usedTexts: usedTexts.length, exclude: excludeSet.size } : {};
   for (const e of exclude) usedSet.add(normalizeKeyword(e));
   // 토픽 클러스터(주제 이어가기): 이 토큰이 든 키워드만 → 한 주제 깊이 파기. %_ 이스케이프.
@@ -1019,7 +1022,7 @@ export async function GET(req: Request) {
     });
     if (debugMode) diag.slots = slotCount(tc);
     if (debugMode) diag.colShort = { ...colShort, homefeedGot: homeCards.length, homeDrop, trendRoom, served: tc.length, trendFunnel: funnel };
-    return NextResponse.json(debugMode ? { topics: tc, diag: { ...diag, mode: "short", trendCards: tc.length } } : { topics: tc, ...(FF.perfLoop ? { ff: { perfLoop: true } } : {}) });
+    return NextResponse.json(debugMode ? { topics: slimDebug ? [] : tc, diag: { ...diag, mode: "short", trendCards: tc.length } } : { topics: tc, ...(FF.perfLoop ? { ff: { perfLoop: true } } : {}) });
   }
 
   // 단계적 폴백: (sub+적정범위) → (sub+전체). ★vertical 전체 폴백 제거(실측: 자동차 블로그에 '파쇄기' —
@@ -1067,7 +1070,7 @@ export async function GET(req: Request) {
       if (rows.length >= PICK) break;
     }
   }
-  if (rows.length === 0) { const tc = stampSlots(await buildTrendCards(new Set())); return NextResponse.json(debugMode ? { topics: tc, slots: slotCount(tc), diag: { ...diag, note: "pool 0 — trend only", trendCards: tc.length } } : { topics: tc }); }
+  if (rows.length === 0) { const tc = stampSlots(await buildTrendCards(new Set())); return NextResponse.json(debugMode ? { topics: slimDebug ? [] : tc, slots: slotCount(tc), diag: { ...diag, note: "pool 0 — trend only", trendCards: tc.length } } : { topics: tc }); }
 
   // ── 경쟁도 티어 ──
   // 낮음 = 싹 키워드(전설·희귀), 중간 = 일반(기본), 높음 = 빅키워드(최후)
@@ -1266,7 +1269,7 @@ export async function GET(req: Request) {
   const NEWSY_POOL = /(실적발표|실적 발표|어닝|주가 전망|증시 전망|환율 전망|공모주 일정|급등주|테마주|수혜주)/;
   const candidates2 = candidates.filter((r) => !NEWSY_POOL.test(r.keyword));
   const allKeywords = candidates2.map((r) => r.keyword);
-  if (allKeywords.length === 0) { const tc = stampSlots(await buildTrendCards(new Set())); return NextResponse.json(debugMode ? { topics: tc, slots: slotCount(tc), diag: { ...diag, note: "allKeywords 0", trendCards: tc.length } } : { topics: tc }); }
+  if (allKeywords.length === 0) { const tc = stampSlots(await buildTrendCards(new Set())); return NextResponse.json(debugMode ? { topics: slimDebug ? [] : tc, slots: slotCount(tc), diag: { ...diag, note: "allKeywords 0", trendCards: tc.length } } : { topics: tc }); }
   // 통합 맥락(분야·대상·사용자 지역) → AI가 브랜드·타지역·대상불일치·무관 키워드까지 한 번에 거름
   const ctxParts = [`분야: ${sub || vertical}`];
   if (audActive) ctxParts.push(`대상: ${audSel.filter((a) => a !== AUDIENCE_ALL).join("·")}`);
@@ -1637,7 +1640,7 @@ export async function GET(req: Request) {
     if (debugMode) diag.colLong = { ...colLong, goldenGot: goldenPass.length, headGot: headsLong.length };
     await writeDiag();
     const passLongS = stampSlots(passLong);
-    return NextResponse.json(debugMode ? { topics: passLongS, diag: { ...diag, mode: "long", poolCards: g.pass.length, slots: slotCount(passLongS) } } : { topics: passLongS, ...(FF.perfLoop ? { ff: { perfLoop: true } } : {}), ...(FF.tierBands && tierInfo ? { tier: { name: tierInfo.tier, note: tierInfo.note } } : {}) });
+    return NextResponse.json(debugMode ? { topics: slimDebug ? [] : passLongS, diag: { ...diag, mode: "long", poolCards: g.pass.length, slots: slotCount(passLongS) } } : { topics: passLongS, ...(FF.perfLoop ? { ff: { perfLoop: true } } : {}), ...(FF.tierBands && tierInfo ? { tier: { name: tierInfo.tier, note: tierInfo.note } } : {}) });
   }
   // ★tier별 종족 비율(FF_TIER_MIX §4) — 상위 10슬롯의 트렌드:에버그린 배분. 별도 레이어:
   //  boost(시리즈·후속) 최우선 고정, 트렌드 내부 순서(공고 쿼터 포함)와 에버그린 내부 순서는 무수정 — 충돌 시 기존 규칙 승리.
@@ -1686,5 +1689,5 @@ export async function GET(req: Request) {
   finalList = dedupeBoard(finalList); // ★근접 중복 최종 차단(전 버킷 교차)
   await writeDiag();
   finalList = stampSlots(finalList);
-  return NextResponse.json(debugMode ? { topics: finalList, diag: { ...diag, slots: slotCount(finalList), boost: boostCards.length, trendCards: trendCards.length, poolCards: shuffled.length } } : { topics: finalList, ...(FF.tierBands && tierInfo ? { tier: { name: tierInfo.tier, note: tierInfo.note } } : {}) });
+  return NextResponse.json(debugMode ? { topics: slimDebug ? [] : finalList, diag: { ...diag, slots: slotCount(finalList), boost: boostCards.length, trendCards: trendCards.length, poolCards: shuffled.length } } : { topics: finalList, ...(FF.tierBands && tierInfo ? { tier: { name: tierInfo.tier, note: tierInfo.note } } : {}) });
 }
