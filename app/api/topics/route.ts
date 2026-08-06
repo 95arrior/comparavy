@@ -1557,8 +1557,10 @@ export async function GET(req: Request) {
   //  ★판정은 lib/topicScore.applyDocCut 한 곳에만 둔다 — 같은 규칙을 두 곳에서 계산하면 반드시 어긋난다.
   {
     const tbCut = FF.tierBands ? TIER_BANDS[tierInfo?.tier ?? "SEEDLING"] : null;
-    const docMax = tbCut?.blogTotalMax ?? null;
-    if (docMax != null) {
+    // ★밴드 상한이 없어도 절대 상한은 돈다(2026-08-07 실측: 관리자 경로에서 문서 759,554가 보드에 섰다).
+    //  docMax가 null이면 이 블록 전체가 건너뛰어져 절대 상한까지 같이 죽는 구조였다.
+    const docMax = tbCut?.blogTotalMax ?? DOC_HARD_MAX;
+    {
       const need = (tailMode === "long" ? 10 : PICK) + 4; // 뒤 단계(중복·유사 배제)가 깎을 몫까지 여유
       const cut = applyDocCut(fitTop, (x) => x.r.blog_total, { docMax, need });
       if (debugMode) diag.docMeasure = measureDiag;

@@ -13,14 +13,23 @@ const row = (keyword, blog_total) => ({ keyword, blog_total });
 const docOf = (x) => x.blog_total;
 const SEEDLING = TIER_BANDS.SEEDLING.blogTotalMax; // 1,000
 
-console.log("① 문서수는 컷이 아니라 순서다(2026-08-05 유저: 상한 폐지):");
+console.log("① 순서 + 절대 상한(2026-08-07 재확정):");
 {
-  // ★연혁: 08-04엔 '상한 초과 탈락'이었다. 하루 만에 반대 문제(열이 빔·유입 구간 배제)가 드러나 순서로 바꿨다.
+  // ★연혁: 08-04 '상한 초과 탈락' → 08-05 유저 폐지("홈판 덕에 노출 잘 된다") → 08-07 절대 상한 부활.
+  //  폐지의 전제(홈판)가 같은 날 폐지됐고 홈 유입 실측 1.92%. 이긴 글 4편 전부 문서 수백 편 이하였고,
+  //  문서 759,554(소상공인지원사업)가 '보충'으로 보드에 섰다 — 발행 슬롯이 하루 3~4편뿐인데
+  //  못 이길 자리에 쓰는 게 진짜 비용이다. ★빈 줄이 못 이길 카드보다 낫다.
   const real = [row("패시브인컴", 29407), row("신불자대출", 40867), row("금융공기업 채용", 42140), row("무담보사채", 49280)];
   const cut = applyDocCut(real, docOf, { docMax: SEEDLING, need: 3 });
-  ok(cut.kept.length === 3, "★자리가 있으면 큰 문서수도 선다(막지 않는다)");
-  ok(cut.kept[0].blog_total === 29407, "★그래도 문서 적은 순으로 앞에 선다");
-  ok(cut.dropped === 1, "정원을 넘는 만큼만 빠진다");
+  ok(cut.kept.length === 0, "★절대 상한(1만) 위는 자리가 남아도 안 선다");
+  const soft = [row("a", 4000), row("b", 8000), row("c", 40000)];
+  const cut2 = applyDocCut(soft, docOf, { docMax: SEEDLING, need: 3 });
+  ok(cut2.kept.length === 2 && cut2.kept[0].blog_total === 4000, "★밴드 초과~절대 상한 사이만 문서 적은 순으로 보충");
+  ok(!cut2.kept.some((x) => x.blog_total === 40000), "절대 상한 위는 보충에서도 제외");
+  // 유저 실물: 클라우드펀딩 31,470 · 소상공인지원사업 759,554가 보드에 섰던 그 날
+  const user실물 = [row("삼성증권IRP계좌개설", 5302), row("클라우드펀딩", 31470), row("소상공인지원사업", 759554)];
+  const cut3 = applyDocCut(user실물, docOf, { docMax: SEEDLING, need: 3 });
+  ok(cut3.kept.length === 1 && cut3.kept[0].keyword === "삼성증권IRP계좌개설", "★유저 실물 재현: IRP만 남는다");
 }
 
 console.log("\n② 좋은 자리가 있으면 그게 먼저다:");
@@ -29,7 +38,7 @@ console.log("\n② 좋은 자리가 있으면 그게 먼저다:");
   const cut = applyDocCut(mixed, docOf, { docMax: SEEDLING, need: 4 });
   const order = cut.kept.map((x) => x.keyword);
   ok(order[0] === "small" || order[0] === "none", "★상한 미만·미측정이 앞줄");
-  ok(order.includes("big"), "★큰 자리도 자리가 남으면 들어온다");
+  ok(order.includes("mid") && !order.includes("big"), "★보충은 절대 상한 아래에서만(4만은 제외)");
 }
 
 console.log("\n③ 미측정은 벌하지 않는다:");
