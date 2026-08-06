@@ -414,4 +414,14 @@ console.log("\n수명 컷 — 마감이 지났는가로만 가른다:");
   chk_(/알고 안 한다/.test(gate), "★'몰라서'가 아니라 '알고 안 한다'가 기록돼 있다");
 }
 
+// ★선점 게이트(2026-08-07 실측: '추석 민생지원금'이 자동완성에 지역별로 뜨는데 보드에 없었다).
+//  원인 둘: newspsych 레인이 신선 목록에 없었고, 명절이 고유성 판정에 없었다.
+{
+  const { preemptVerdict } = await import("../lib/preemptGate.ts");
+  chk_(preemptVerdict("추석 민생지원금", "newspsych", 872).eligible === true, "★newspsych 레인도 선점 면제를 받는다(자동완성 확정 레인)");
+  chk_(preemptVerdict("추석 민생지원금", "news", 872).eligible === true, "★명절은 숫자와 같은 고유성이다");
+  chk_(preemptVerdict("추석 부동산", "news", 800).eligible === false, "★명절+흔한 말은 여전히 기사 말투로 막는다");
+  chk_(preemptVerdict("부동산 공급", "news", 800).eligible === false, "일반명사 조합은 여전히 막는다");
+}
+
 process.exit(fail ? 1 : 0);

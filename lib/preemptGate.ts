@@ -23,7 +23,11 @@
 //   일반명사 두 개를 붙인 기사 말투는 검색어가 아니다. 그게 이 게이트가 잡는 것이다.
 
 /** 검색량이 없어도 통과시킬 수 있는 신호원 — '방금 왔다'가 증명되는 원천만 */
-const FRESH_SOURCES = new Set(["rising", "community", "gov", "dart", "calendar", "news", "applyhome", "gov24", "bizinfo"]);
+// ★newspsych 추가(2026-08-07 실측 사고): '추석 민생지원금'이 자동완성에 지역별로 뜨는데 보드에 없었다.
+//  newspsych는 아침 뉴스→검색심리→자동완성 '확정' 레인이다(2026-08-05 유저 지시로 만든 것) —
+//  자동완성이 확인한 말인데 목록에 빠져 있어서, 이 레인의 검색량 0짜리는 전부 수요 게이트에서 죽었다.
+//  ★레인을 새로 만들면 이 목록에도 넣어야 한다 — 수확기와 게이트 목록이 따로 놀면 레인이 조용히 무력화된다.
+const FRESH_SOURCES = new Set(["rising", "community", "gov", "dart", "calendar", "news", "applyhome", "gov24", "bizinfo", "newspsych", "event"]);
 
 // 지역명 — 사람이 지역을 붙여 검색하면 그건 구체적인 의도다("동탄 줍줍", "창릉 청약")
 const REGION_RE = /(동탄|창릉|왕숙|교산|과천|위례|검단|송도|청라|영종|마곡|고덕|미사|다산|별내|지축|삼송|운정|한강신도시|세종|평택|화성|용인|수원|성남|하남|남양주|김포|파주|의정부|광명|안양|부천|인천|서울|부산|대구|대전|광주|울산|제주|강남|송파|서초|마포|성동|노원)/;
@@ -42,6 +46,10 @@ const GENERIC_NOUN = new Set([
   "서비스", "상품", "혜택", "이벤트", "행사", "제도", "사업", "안내", "방법", "조건", "기준", "현황",
 ]);
 const SPECIFIC_RE = /(\d{4}년|\d+차|\d+회차|\d+월|\d+억|\d+만원|\d+%)/;
+// ★명절·시기 — "추석 민생지원금"(2026-08-07 실측)이 고유명사 없음으로 잘렸다.
+//  추석·설날은 숫자와 같은 역할을 한다: '언제의 무엇'인지 특정한다. 지역명과 같은 층의 고유성이다.
+//  ★한 글자 '설'은 넣지 않는다(설명·설치를 다 잡는다) — 두 글자 이상 명절명만.
+const SEASON_RE = /(추석|설날|명절|연말|연초|새해|어린이날|어버이날|크리스마스|블랙프라이데이|수능)/;
 
 export interface PreemptVerdict {
   /** 검색량 하한을 면제해도 되는가 */
@@ -85,6 +93,7 @@ export function preemptVerdict(
   if (REGION_RE.test(kw)) hits.push("지역명");
   if (PROPER_RE.test(kw)) hits.push("브랜드·기관명");
   if (SPECIFIC_RE.test(kw)) hits.push("숫자·차수");
+  if (SEASON_RE.test(kw)) hits.push("명절·시기");
   const hasAction = ACTION_RE.test(kw);
   if (hasAction) hits.push("행동·돈 신호");
 
@@ -100,7 +109,7 @@ export function preemptVerdict(
   if (!hasAction) {
     const specific = kw.split(/\s+/)
       .map((w) => w.replace(/[^가-힣a-zA-Z0-9]/g, ""))
-      .filter((w) => [...w].length >= 2 && !GENERIC_NOUN.has(w) && !PROPER_RE.test(w) && !REGION_RE.test(w));
+      .filter((w) => [...w].length >= 2 && !GENERIC_NOUN.has(w) && !PROPER_RE.test(w) && !REGION_RE.test(w) && !SEASON_RE.test(w));
     if (!specific.length) return { eligible: false, reasons, blockedBy: "흔한 말만 붙어 있음(무엇에 대한 말인지 특정 안 됨)" };
     hits.push(`고유 이름 '${specific[0]}'`);
   }
