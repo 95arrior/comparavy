@@ -70,9 +70,12 @@ export async function GET(request: Request) {
   let 이긴글수요: { 합계: number; 중앙값: number | null; 하루기대: number } | null = null;
   try {
     const st = await fetchKeywordStats(winners.map((w) => w.keyword));
+    // ★KeywordStat에는 total이 없다 — pc + mobile이다(2026-08-07 실측 버그).
+    //  `.total ?? 0`으로 읽으면 전부 0이 되고, 진단이 늘 "상품 없음"이라고 답한다.
+    //  ★없는 필드를 ?? 0으로 받으면 조회 실패와 '수요 0'이 같은 값이 된다 — 제일 위험한 형태다.
     const vols = winners.map((w) => {
       const v = st.get(w.keyword) ?? st.get(w.keyword.replace(/\s+/g, ""));
-      return v ? Number((v as { total?: number }).total ?? 0) : null;
+      return v ? Number(v.pc ?? 0) + Number(v.mobile ?? 0) : null;
     });
     const known = vols.filter((v): v is number => v != null);
     if (known.length) {
