@@ -102,7 +102,7 @@ export function briefToDirective(b: AngleBrief): string {
     section((v) => `- 톤·문장 리듬: ${v}`, b.tone),
     section((v) => `- 첫 문단 훅: ${v}`, b.hook),
     section((v) => `- 시의성 코어 '${v}'는 제목과 도입에 반드시 살린다.`, b.coreWord),
-    section((v) => `- ★판결(verdict): "${v}" — 리드 직후 '바쁘면 이것만' 결론 블록의 핵심으로 쓴다.`, b.verdict),
+    section((v) => `- ★판결(verdict): "${v}" — 리드 즉답 한 문장의 핵심으로 쓴다(결론 요약 블록은 폐기됐다 — 조건·행동까지 도입부에 풀지 마라).`, b.verdict),
     section((v) => `- ★덜어냄(cut): 다음 소재는 본문에서 다루지 않는다(범위 선언 1회만): ${v}`, (b.cutList ?? []).join(" / ")),
     section((v) => `- ★상황 분기: ${v} — 자격·조건 섹션 근처에 분기 블록 1회.`, b.branchAxis),
     "위 방향을 이 글의 뼈대로 삼되, 엔진의 안전·품질·모바일 포맷 규칙은 그대로 지킨다.",

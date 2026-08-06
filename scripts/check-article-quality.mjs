@@ -82,7 +82,7 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
 //  고정 스켈레톤은 "좋은 폼이 추첨되지 않게" 못 박은 건데 개수가 조용히 늘어나 있었다.
 {
   const 실측 = "<p>도입 문장</p><blockquote>핵심 요약</blockquote><h2>a</h2><p>Q. 하나</p><p>Q. 둘</p><p>Q. 셋</p><p>Q. 넷</p><h2>오늘의 3줄 요약</h2><ul><li>1</li><li>2</li><li>3</li><li>4</li><li>5</li></ul>";
-  // ★규격 개정(2026-08-03 유저 확정) — '오늘의 3줄 요약' 블록 폐기. 글 앞 '바쁘면 이것만'과 하는 일이 같고,
+  // ★규격 개정(2026-08-03 유저 확정) — '오늘의 3줄 요약' 블록 폐기(그 뒤 2026-08-07엔 '바쁘면 이것만'도 체류 사유로 폐기).
   //  그 중복이 분량 예산을 밀어내고 있었다(목표 1,800에 실측 7,000~8,000자). 이제 요약 블록은 '있으면 위반'이다.
   const 규격 = "<blockquote>세금이 먼저 빠져나갑니다</blockquote><h2>a</h2><p>Q. 하나</p><p>Q. 둘</p>";
   const r = skeletonReport(실측);
@@ -621,6 +621,21 @@ console.log(fail ? `\n실패 ${fail}건` : "\n통과: 발행글 품질(띄어쓰
   const ap4 = fs.readFileSync(new URL("../lib/articlePrompt.ts", import.meta.url), "utf-8");
   ok(/위험 신호는 빨강으로/.test(ap4) && ap4.includes(ALERT_RED), "★프롬프트의 빨강 값이 코드 상수와 같다");
   ok(/최대 3곳/.test(ap4), "프롬프트에도 상한 명시");
+}
+
+// ★'바쁘면 이것만' 폐기(2026-08-07 유저: "이것 때매 체류시간 안 나올 것 같아").
+//  유저 실물: 블록이 날짜·지역·조건·행동까지 담아 도입부에서 글이 끝났다.
+//  리드 즉답(한 문장 판결)은 남는다 — 폐기는 '블록'이지 '결론 먼저' 원칙이 아니다.
+{
+  const ap5 = fs.readFileSync(new URL("../lib/articlePrompt.ts", import.meta.url), "utf-8");
+  ok(!/"3\. '바쁘면 이것만'/.test(ap5), "★스켈레톤에서 블록이 사라졌다");
+  ok(/바쁘면 이것만' 폐기\(2026-08-07 유저 확정/.test(ap5), "왜 뺐는지가 적혀 있다(부활 방지)");
+  ok(/<b> 단독 결론 문단을 두지 마라/.test(ap5), "★옛 규격 잔재까지 금지로 뒤집었다");
+  const { FIXED_BLOCKS } = await import("../lib/articlePrompt.ts");
+  ok(FIXED_BLOCKS === 400, "★예산에서도 80자가 빠졌다(안 빼면 유령 예산이 남는다)", `${FIXED_BLOCKS}`);
+  ok(/리드 즉답 한 문장의 핵심으로/.test(fs.readFileSync(new URL("../lib/amplifyTopics.ts", import.meta.url), "utf-8")), "★브리프 판결도 블록이 아니라 리드로 간다");
+  const { PROMPT_SPEC_VERSION } = await import("../lib/articlePrompt.ts");
+  ok(PROMPT_SPEC_VERSION >= 3, "★규격 버전 상승 — 오늘 미리 만든 글이 옛 규격으로 나가지 않는다");
 }
 
 process.exit(fail ? 1 : 0);
