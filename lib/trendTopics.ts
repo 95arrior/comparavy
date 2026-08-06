@@ -31,7 +31,7 @@ export interface Longtail { kw: string; blogTotal: number | null }
 // ★"rising"(2026-08-04 유저 상시 요구: "지금 뜨는은 실제로 효과 있는 실시간 키워드 or 대형 선점 가능한 것") —
 //  구글 트렌드 KR 급상승 유래. 이 표식이 있어야 밴드 우회 판정을 할 수 있다(없으면 전부 news로 뭉개진다).
 // ★"calendar"(2026-08-05) — 미리 공표된 일정(세금·지급·계절·정책). 선점의 최상위 재료.
-export type SeedSource = "news" | "season" | "discover" | "applyhome" | "gov24" | "bizinfo" | "dart" | "rising" | "calendar" | "gov" | "community" | "newspsych";
+export type SeedSource = "news" | "season" | "discover" | "applyhome" | "gov24" | "bizinfo" | "dart" | "rising" | "calendar" | "gov" | "community" | "newspsych" | "event";
 export interface TrendTopic {
   keyword: string;
   title: string;
