@@ -1095,7 +1095,9 @@ export async function GET(req: Request) {
     //  ★희소한 원천일수록 값이 크다는 판단은 증식에서만이 아니라 '내보낼 때'도 같아야 한다.
     //   여기서 밀리면 앞 단계에서 자리를 떼어 준 게 통째로 헛일이 된다.
     {
-      const RARE = ["calendar", "gov", "dart", "applyhome", "gov24", "bizinfo", "community", "newspsych"];
+      // ★event가 맨 앞(2026-08-07) — 사건 파일럿 카드는 하루 한 장뿐이고 수명이 반나절이라,
+      //  예약 없이 정렬에 맡기면 뉴스 물량에 밀려 못 서고 그대로 만료된다.
+      const RARE = ["event", "calendar", "gov", "dart", "applyhome", "gov24", "bizinfo", "community", "newspsych"];
       const srcOf = (c: (typeof tc)[number]) =>
         (c as { seedSource?: string }).seedSource ?? (c.sel as { seedSource?: string } | undefined)?.seedSource ?? "";
       const head: typeof tc = [];

@@ -1068,7 +1068,7 @@ function laneLabel(lane: LaneKey, topic: Topic): string {
 //   여러 상류가 섞이는 칸은, 그 전부에 대해 참인 이름만 쓴다(실시간 = 구글 트렌드 급상승 + 네이버 자동완성
 //   → 둘 다 '지금 뜨는 말' 탐지라 "실시간 급상승"은 참이다. "DART"처럼 한쪽만 참인 이름은 쓰지 않는다).
 const SOURCE_LABEL: Record<string, string> = {
-  newspsych: "아침 뉴스", gov: "정책브리핑 보도자료", calendar: "확정 일정표", dart: "DART 공시", community: "커뮤니티(뽐뿌)",
+  event: "오늘 사건(실보도)", newspsych: "아침 뉴스", gov: "정책브리핑 보도자료", calendar: "확정 일정표", dart: "DART 공시", community: "커뮤니티(뽐뿌)",
   rising: "실시간 급상승", news: "네이버 뉴스", discover: "네이버 자동완성", applyhome: "청약홈",
   gov24: "보조금24", bizinfo: "기업마당", season: "시즌 일정", homebet: "홈피드 배팅", pool: "검색량 실측",
 };
@@ -1135,6 +1135,7 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
     const srcKey = (topic as { seedSource?: string; sel?: { seedSource?: string } }).sel?.seedSource
       ?? (topic as { seedSource?: string }).seedSource ?? "";
     const st = (topic as { sourceTitle?: string }).sourceTitle;
+    if (srcKey === "event") return "오늘 실제로 벌어지고 있는 일이에요 — 검색이 몰리기 전에 서는 자리";
     if (srcKey === "newspsych") return "오늘 아침 기사를 보고 사람들이 검색할 말이에요";
     if (srcKey === "news") return st ? `방금 올라온 기사에서 나온 말 — "${st.slice(0, 26)}"` : "방금 올라온 경제 기사에서 나온 말";
     // ★종전 문구는 두 원천에서 '동시에' 잡혔다고 단정했다 — 실제로는 둘 중 하나에서 온다.
