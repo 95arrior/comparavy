@@ -424,4 +424,16 @@ console.log("\n수명 컷 — 마감이 지났는가로만 가른다:");
   chk_(preemptVerdict("부동산 공급", "news", 800).eligible === false, "일반명사 조합은 여전히 막는다");
 }
 
+// ★시각(N시) 오탐(2026-08-07 — 사건 카드 다섯 번째 사망 지점).
+//  '오늘 오후 2시'의 '2시'가 지명 시로 읽혀 region_niche 컷. 사건·일정 카드는 시각 표기가 기본이라
+//  이 오탐 하나가 사건 레인 전체를 죽인다. 숫자 뒤의 시는 시각이지 도시가 아니다.
+{
+  chk_(finalGate([{ keyword: "부동산 공급대책", title: "그린벨트 풀리나… 오늘 오후 2시, 공급대책 윤곽 나온다는데", seedSource: "event" }]).drops.length === 0,
+    "★'오후 2시'가 지역으로 안 읽힌다(사건 카드 실물)");
+  chk_(finalGate([{ keyword: "근로장려금 지급일", title: "근로장려금, 오후 6시 마감 전에 확인해야 하는 것" }]).drops.length === 0,
+    "시각 표기 일반 카드도 통과");
+  chk_(finalGate([{ keyword: "의정부시 청년 프로그램", title: "의정부시 청년 투자환경, 일자리·주거 원스톱 지원 프로그램" }]).drops[0]?.reason === "region_niche",
+    "★진짜 지자체 컷은 그대로(오탐 수리가 본탐을 못 풀게)");
+}
+
 process.exit(fail ? 1 : 0);
