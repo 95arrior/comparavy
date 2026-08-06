@@ -10,6 +10,7 @@
 //   확정 안 된 것은 전부 '알려졌다' 전언으로 박았고, 본문 지시에도 단정 금지를 실었다.
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient, createSupabaseAdminClient, hasSupabaseEnv } from "@/lib/supabase-server";
+import { getTrendTopics } from "@/lib/trendTopics";
 
 export const dynamic = "force-dynamic";
 
@@ -60,10 +61,31 @@ export async function GET() {
   }], { onConflict: "category,keyword" });
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
 
+  // ★자가 진단(2026-08-07 — '주입 ok인데 보드에 없음'을 세 번 겪고 추가).
+  //  '넣었다'는 응답만으로는 아무것도 보장 안 된다는 걸 오늘 배웠다.
+  //  넣고 → 다시 읽고 → 보드가 쓰는 바로 그 서빙 쿼리(getTrendTopics)까지 돌려서
+  //  어느 단계까지 살아 있는지를 이 응답이 직접 말한다.
+  const { data: back } = await admin.from("trend_topics")
+    .select("keyword, source, created_at, expires_at")
+    .eq("category", category).eq("keyword", CARD.keyword).maybeSingle();
+  const served = await getTrendTopics(category);
+  const eventInServe = served.filter((t) => t.source === "event").map((t) => t.keyword);
+  const rowSource = (back as { source?: string } | null)?.source ?? null;
+
+  const 진단 = !back
+    ? "★행이 저장 직후에 없다 — upsert가 겉으로만 성공(스키마 불일치 가능). 이 메시지를 그대로 전달해달라."
+    : rowSource !== "event"
+      ? `★행은 있는데 source가 '${rowSource}'다 — 수확이 같은 키워드를 만들어 덮어썼다. 카드가 일반 ${rowSource} 씨앗으로 강등돼 정원 경쟁에 밀린 것이다.`
+      : eventInServe.length === 0
+        ? "★행은 event로 살아 있는데 서빙 쿼리(최신 40행)에 안 잡힌다 — 같은 카테고리 행이 40개를 넘어 밀렸을 가능성."
+        : `정상 — 서빙 쿼리에 event 카드 ${eventInServe.length}장이 잡힌다(${eventInServe.join(", ")}). 이제 '글감 새로 받기'를 누르면 보드에 선다.`;
+
   return NextResponse.json({
     ok: true,
     넣은곳: category,
     카드: CARD.title,
-    다음: "앱에서 '글감 새로 받기'를 누르면 이 카드가 보드에 선다. 카드를 열어 평소처럼 생성·발행하면 된다.",
+    진단,
+    행: back ?? null,
+    서빙에잡힌event: eventInServe,
   });
 }
