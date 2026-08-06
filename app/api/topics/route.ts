@@ -155,7 +155,7 @@ const PREEMPT_MAX = 2;
 // ★발행 대조에서 무시할 흔한 말 — 이것들이 겹친다고 같은 글감은 아니다
 const PUB_GENERIC = new Set(["신청방법", "신청자격", "지원금액", "확인방법", "총정리", "알아보기", "정리하기"]);
 const SLOT_LABEL: Record<string, string> = {
-  calendar: "캘린더", applyhome: "청약", gov24: "정부지원", bizinfo: "기업지원",
+  event: "사건", calendar: "캘린더", applyhome: "청약", gov24: "정부지원", bizinfo: "기업지원",
   newspsych: "아침뉴스", gov: "정부발표", dart: "공시", rising: "실시간", news: "뉴스", season: "시즌", discover: "발굴", homebet: "홈판",
   community: "커뮤니티", pool: "검색풀", series: "시리즈", followup: "후속",
 };
@@ -312,6 +312,25 @@ export async function GET(req: Request) {
         }
       } catch { /* ignore */ }
       const isRecentDup = (kw: string) => { const n = kw.replace(/\s+/g, ""); return n.length > 0 && (recentPub.has(n) || [...recentPub].some((r) => r.length >= 4 && (n.includes(r) || r.includes(n)))); };
+
+      // ★사건 카드(event) — 증식(LLM) 우회 직접 카드화(2026-08-07 실측: 주입은 됐는데 보드에 안 섰다).
+      //  두 가지 이유로 공고와 같은 직행이어야 한다:
+      //  ① 정원 경쟁 — 증식 정원(QUOTA)에 event가 없어 씨앗 27개 사이에서 밀리면 카드가 되기 전에 끝난다.
+      //     서빙 예약(RARE)만 넣은 건 반쪽이었다 — 그 앞 단계에서 이미 죽는다.
+      //  ② 사실 보증 — 사건 브리프는 '실보도 사실만, 없는 수치 금지'를 박아 둔 문서다.
+      //     LLM 증식이 다시 쓰면 그 보증이 깨진다. 공고 카드와 정확히 같은 원칙(실값 변형 금지)이다.
+      const eventSeeds = trends.filter((t) => (t as { source?: string }).source === "event");
+      trends = trends.filter((t) => (t as { source?: string }).source !== "event");
+      for (const ev of eventSeeds.slice(0, 2)) {
+        if (existing.has(ev.keyword)) continue;
+        cards.push({
+          keyword: ev.keyword, title: ev.title, expiresAt: ev.expiresAt ?? null,
+          demandLabel: "오늘 실제로 벌어지는 일 — 검색이 몰리기 전에 서는 자리", ssak: true, region: false, tone: bt,
+          vol: 0, comp: "low" as Comp, blogTotal: null, tag: "trend",
+          newsContext: ev.newsContext ?? undefined, sourceTitle: `오늘 사건(실보도): ${ev.title}`,
+          ...(FF.perfLoop ? { sel: { species: "trend", seedSource: "event" } } : {}),
+        });
+      }
 
       // ★청약홈 공고 씨앗 — 증식(LLM) 우회 직접 카드화: 제목·날짜가 전부 API 실값이라 변형 금지(유저 신뢰 원칙)
       const announceSeeds = trends.filter((t) => (t as { actionEnd?: string | null }).actionEnd);

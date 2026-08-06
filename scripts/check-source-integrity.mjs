@@ -170,5 +170,19 @@ console.log("\n⑩ 희소 원천이 마지막에 다시 밀리지 않는가:");
   ok(/!measured \|\| seedUnknown \|\| docUnknown \|\| v >= floor \|\| rescued/.test(rt), "판정에 실제로 반영됐다");
 }
 
+console.log("\n사건 카드 직행(2026-08-07 실측: 주입은 됐는데 보드에 안 섰다):");
+{
+  // ★두 단계 배선이 다 있어야 한다. 서빙 예약(RARE)만 넣은 건 반쪽이었다 —
+  //  증식 정원(QUOTA)에 event가 없어 씨앗 경쟁에서 밀리면 카드가 되기 전에 죽는다.
+  //  해법은 정원 추가가 아니라 '증식 우회 직행'이다: 사건 브리프는 실보도 사실만 담은 문서라
+  //  LLM이 다시 쓰면 그 보증이 깨진다(공고 카드와 같은 원칙).
+  const rt2 = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
+  ok(/const eventSeeds = trends\.filter/.test(rt2), "★event 씨앗은 증식 전에 분리된다");
+  ok(/source === "event"/.test(rt2) && /증식\(LLM\) 우회 직접 카드화\(2026-08-07/.test(rt2), "★LLM 증식을 우회한다(사실 보증 유지)");
+  ok(/event: "사건"/.test(rt2), "★칸 라벨에 '사건'이 있다(없으면 칸 합계가 어긋난다)");
+  const home = fs.readFileSync(new URL("../components/dashboard/Home.tsx", import.meta.url), "utf-8");
+  ok(/"사건", "아침뉴스"/.test(home), "★화면 칩에도 '사건' 칸이 있다(서버 목록과 동일해야)");
+}
+
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 원천 무결성");
 process.exit(fail ? 1 : 0);
