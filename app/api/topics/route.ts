@@ -954,6 +954,15 @@ export async function GET(req: Request) {
                 && (c as { seedVol?: number }).seedVol == null;
               const isAnnounce = Boolean((c as { actionEnd?: string | null }).actionEnd);
               const floor = isAnnounce ? 300 : DEMAND_MIN;
+              // ★사건(event) 카드는 이 게이트의 질문이 애초에 안 맞는다(2026-08-07 실서버 로그로 검거 —
+              //  여섯 번째 사망 지점: "부동산 공급대책(0회, 문서 6,664편 — 이미 쌓인 자리)"로 컷).
+              //  · 검색량(지난 30일 평균)은 '오늘 터진 사건'을 원리상 못 담는다 — 0이 정상이다.
+              //  · 문서 수는 '키워드'의 역사다 — 공급대책은 몇 년째 반복된 말이라 쌓여 있는 게 정상이고,
+              //    사건 카드의 우위는 빈 자리가 아니라 타이밍이다(권리락에서 배운 그것).
+              //  수요 증거는 주입 시점의 사건 크기(뉴스 밀도·실보도)가 이미 대신한다. 파일럿은 손 선별이고,
+              //  자동 수확기가 생기면 그쪽 컷(사건 크기)이 이 자리를 맡는다.
+              const evSrc = ((c as { seedSource?: string }).seedSource ?? (c.sel as { seedSource?: string } | undefined)?.seedSource) === "event";
+              if (evSrc) { kept.push(c); continue; }
               if (!measured || seedUnknown || docUnknown || v >= floor || rescued) {
                 if (rescued && measured && v < floor) console.log(`[demand] 구제 — ${c.keyword}(수요 ${v}, 플랫폼조회 ${rs?.platformViews ?? 0}·풀 ${rs?.poolScore ?? 0})`);
                 kept.push(c); continue;

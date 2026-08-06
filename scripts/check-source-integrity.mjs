@@ -186,6 +186,12 @@ console.log("\n사건 카드 직행(2026-08-07 실측: 주입은 됐는데 보�
   //  주입 → 버튼 → 삭제. event 행은 청소 면제여야 한다(자기 expires_at으로 죽는다).
   const tt2 = fs.readFileSync(new URL("../lib/trendTopics.ts", import.meta.url), "utf-8");
   ok(/source\.neq\.event/.test(tt2), "★수확 청소가 event 행을 지우지 않는다");
+  // ★여섯 번째 사망 지점(실서버 로그): 수요 게이트가 "0회·문서 6,664편 — 이미 쌓인 자리"로 컷.
+  //  검색량(30일 평균)은 오늘 사건을 원리상 못 담고, 문서 수는 키워드의 역사일 뿐이다 —
+  //  사건 카드의 우위는 빈 자리가 아니라 타이밍이다. 수요 게이트는 event를 묻지 않는다.
+  const rt3 = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
+  ok(/이 게이트의 질문이 애초에 안 맞는다/.test(rt3) && /if \(evSrc\) \{ kept\.push\(c\); continue; \}/.test(rt3),
+    "★수요 게이트가 event 카드를 묻지 않는다");
   ok(/자기 expires_at\(수 시간\)으로 죽는다/.test(tt2), "좀비 방지 근거가 적혀 있다");
 }
 
