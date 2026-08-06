@@ -687,7 +687,12 @@ ${newsList || "(뉴스 수집 실패 — 분야 상식으로 다양하게 만들
     // 저장에 성공했을 때만 이번 세트에 없는 옛 행을 정리한다(뉴스 문구형 잔재 일괄 제거).
     try {
       const keep = [...seenKw];
-      let del = admin.from("trend_topics").delete().eq("category", category);
+      // ★event(사건 파일럿) 행은 청소하지 않는다(2026-08-07 실측 사고).
+      //  '글감 새로 받기'가 수확을 즉시 돌리는데, 이 청소가 '이번 수확 세트에 없는 행'을 다 지우므로
+      //  손으로 주입한 사건 카드가 버튼 한 번에 삭제됐다 — 주입 ok 응답을 보고도 보드에 안 선 이유다.
+      //  event 행은 자기 expires_at(수 시간)으로 죽는다 — 좀비가 될 수 없어 면제가 안전하다.
+      let del = admin.from("trend_topics").delete().eq("category", category)
+        .or("source.is.null,source.neq.event");
       if (keep.length) del = del.not("keyword", "in", `(${keep.map((k) => `"${k.replace(/"/g, '""')}"`).join(",")})`);
       await del;
     } catch { /* 정리 실패 — 새 씨앗은 이미 들어갔으니 서빙에는 지장 없다 */ }
