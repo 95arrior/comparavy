@@ -976,6 +976,10 @@ export async function GET(req: Request) {
                 if (rescued && measured && v < floor) console.log(`[demand] 구제 — ${c.keyword}(수요 ${v}, 플랫폼조회 ${rs?.platformViews ?? 0}·풀 ${rs?.poolScore ?? 0})`);
                 kept.push(c); continue;
               }
+              // ★로또 하한 미달 청약은 선점 면제도 못 받는다(2026-08-07).
+              //  지역명+'청약·무순위' 행동어라 면제 조건을 늘 충족한다 — 여기서 안 막으면 하한이 유명무실하다.
+              //  선점 면제는 '오늘 터진 검색어'를 살리는 문이지, 전국이 안 쳐다보는 단지의 뒷문이 아니다.
+              if (applySrc) { weak.push({ keyword: c.keyword, vol: v, why: `청약 로또 하한(${APPLYHOME_LOTTO_MIN.toLocaleString()}회) 미달` }); continue; }
               const src = (c as { seedSource?: string }).seedSource ?? (c.sel as { seedSource?: string } | undefined)?.seedSource ?? null;
               const pv = preemptVerdict(c.keyword, src, (c as { blogTotal?: number | null }).blogTotal ?? null);
               // ★선점 면제는 보드당 2장까지(2026-08-05 실측).

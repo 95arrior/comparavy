@@ -206,6 +206,8 @@ console.log("\n청약 로또 하한(2026-08-07 유저 확정):");
   const ah = fs.readFileSync(new URL("../lib/applyhome.ts", import.meta.url), "utf-8");
   ok(/왜 이 청약이 로또로 불리는가/.test(ah), "★브리프가 시세차익 각도를 지시한다");
   ok(/차익을 숫자로 단정하지 마라/.test(ah), "★차익 수치 지어내기는 금지(확인 방법 안내로)");
+  // ★뒷문 봉쇄: 지역명+청약 행동어는 선점 면제 조건을 늘 충족한다 — 하한 미달 청약은 면제 경로도 못 탄다
+  ok(/청약 로또 하한.*미달/.test(rt4) && /선점 면제도 못 받는다/.test(rt4), "★하한 미달 청약은 선점 면제로도 못 살아난다");
   void APPLYHOME_LOTTO_MIN;
 }
 
