@@ -150,6 +150,12 @@ function pickDiverse(rows: PoolRow[], n: number, rnd: () => number = Math.random
 //  월 100회 미만이면 상위 1등을 해도 하루 3명이다 — 쓸 이유가 없다.
 //  ★상한이 아니라 하한이다. 검색량 밴드 해제(대형 막지 않기)와 충돌하지 않는다.
 const DEMAND_MIN = 100;
+// ★청약 로또 하한(2026-08-07 유저 확정: "청약은 무조건 줍줍이나 진짜 시세차익을 많이 낼 수 있는
+//  비싼 동네여야만 해. 아무 청약이나 가져오면 의미없어").
+//  시세차익을 분양가·시세 API 없이 가장 정직하게 재는 방법이 단지명 검색량이다 —
+//  전국이 쳐다보는 로또는 공고 전부터 단지명이 검색된다.
+//  실측 기준: 장위 푸르지오 마크원 50,100회(로또, 통과) vs 천안 아이파크 시티 2,780회(일반, 컷).
+export const APPLYHOME_LOTTO_MIN = 10_000;
 // ★선점 면제 상한 — 미증명 카드가 보드를 먹지 않게(2026-08-05 실측: 수확 5건 중 3건이 월 0회였다)
 const PREEMPT_MAX = 2;
 // ★발행 대조에서 무시할 흔한 말 — 이것들이 겹친다고 같은 글감은 아니다
@@ -953,7 +959,10 @@ export async function GET(req: Request) {
               const seedUnknown = !!sk0 && sk0.replace(/\s+/g, "") !== c.keyword.replace(/\s+/g, "")
                 && (c as { seedVol?: number }).seedVol == null;
               const isAnnounce = Boolean((c as { actionEnd?: string | null }).actionEnd);
-              const floor = isAnnounce ? 300 : DEMAND_MIN;
+              // ★청약(청약홈)은 문턱이 로또급이다 — 전국이 안 쳐다보는 단지는 1위를 해도 유입 천장이 바닥이고,
+              //  글도 '시세차익' 각도가 성립하지 않는다(유저 확정 2026-08-07).
+              const applySrc = ((c as { seedSource?: string }).seedSource ?? (c.sel as { seedSource?: string } | undefined)?.seedSource) === "applyhome";
+              const floor = applySrc ? APPLYHOME_LOTTO_MIN : isAnnounce ? 300 : DEMAND_MIN;
               // ★사건(event) 카드는 이 게이트의 질문이 애초에 안 맞는다(2026-08-07 실서버 로그로 검거 —
               //  여섯 번째 사망 지점: "부동산 공급대책(0회, 문서 6,664편 — 이미 쌓인 자리)"로 컷).
               //  · 검색량(지난 30일 평균)은 '오늘 터진 사건'을 원리상 못 담는다 — 0이 정상이다.

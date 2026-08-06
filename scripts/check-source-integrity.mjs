@@ -131,7 +131,7 @@ console.log("\n⑧ 수요 게이트는 하나인가:");
   //  선점 판정을 모른 채 잘라냈다. 게다가 그 탈락은 진단에 항목으로 안 남아 며칠을 못 찾았다.
   ok(/게이트 중앙화 위반을 바로잡는다/.test(rt), "★컷은 한 곳에서만 한다");
   ok(/void _unusedDemandFilter/.test(rt), "옛 게이트는 컷을 하지 않는다(히스토리만 보존)");
-  ok(/const floor = isAnnounce \? 300 : DEMAND_MIN/.test(rt), "★공고는 문턱이 높다(아무도 안 찾는 공고명 차단)");
+  ok(/applySrc \? APPLYHOME_LOTTO_MIN : isAnnounce \? 300 : DEMAND_MIN/.test(rt), "★공고는 문턱이 높다 — 청약은 로또급(10,000), 나머지 공고 300");
   ok(/rs\.platformViews >= 10_000 \|\| rs\.bigPool \|\| rs\.poolScore >= 3/.test(rt), "★구제 규칙이 함께 옮겨왔다(귀농 주택구입지원 구멍)");
   ok(/funnel\.demandCut = noDemand/.test(rt), "★세는 곳도 한 곳(컷과 카운트가 어긋나지 않게)");
   // ★느리다고 게이트를 건너뛰면 '느리면 아무거나 나간다'가 된다
@@ -193,6 +193,20 @@ console.log("\n사건 카드 직행(2026-08-07 실측: 주입은 됐는데 보�
   ok(/이 게이트의 질문이 애초에 안 맞는다/.test(rt3) && /if \(evSrc\) \{ kept\.push\(c\); continue; \}/.test(rt3),
     "★수요 게이트가 event 카드를 묻지 않는다");
   ok(/자기 expires_at\(수 시간\)으로 죽는다/.test(tt2), "좀비 방지 근거가 적혀 있다");
+}
+
+console.log("\n청약 로또 하한(2026-08-07 유저 확정):");
+{
+  // "청약은 무조건 줍줍이나 진짜 시세차익 많이 낼 수 있는 비싼 동네여야만" —
+  // 실측 기준: 장위 푸르지오 50,100(통과) vs 천안 아이파크 2,780(컷).
+  const rt4 = fs.readFileSync(new URL("../app/api/topics/route.ts", import.meta.url), "utf-8");
+  const { APPLYHOME_LOTTO_MIN } = await import("../app/api/topics/route.ts").catch(() => ({ APPLYHOME_LOTTO_MIN: null }));
+  ok(/APPLYHOME_LOTTO_MIN = 10_000/.test(rt4), "★청약 전용 하한 10,000이 있다");
+  ok(/applySrc \? APPLYHOME_LOTTO_MIN : isAnnounce \? 300 : DEMAND_MIN/.test(rt4), "★청약홈 카드에만 로또 하한이 걸린다");
+  const ah = fs.readFileSync(new URL("../lib/applyhome.ts", import.meta.url), "utf-8");
+  ok(/왜 이 청약이 로또로 불리는가/.test(ah), "★브리프가 시세차익 각도를 지시한다");
+  ok(/차익을 숫자로 단정하지 마라/.test(ah), "★차익 수치 지어내기는 금지(확인 방법 안내로)");
+  void APPLYHOME_LOTTO_MIN;
 }
 
 console.log(fail ? `\n실패 ${fail}건` : "\n통과: 원천 무결성");
