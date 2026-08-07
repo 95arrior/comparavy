@@ -464,4 +464,14 @@ console.log("\n수명 컷 — 마감이 지났는가로만 가른다:");
   chk_(finalGate([{ keyword: "전세보증금 반환", title: "전세보증금 그리고 이사할 때 확인할 것", seedSource: "news" }]).drops.length === 0, "★접속사 '그리고'는 지역이 아니다(오탐 지뢰 방어)");
 }
 
+// ★채용은 유명 대기업·공기업만(2026-08-07 유저: "그 포모랑 결핍이랑 다른 결이에요").
+//  대기업 성과급은 전 국민 포모지만, 일반 회사 채용은 그 회사 지원자만 본다(한 줌 모수).
+{
+  chk_(finalGate([{ keyword: "중견기업 경력직 채용", title: "OO테크 경력직 채용, 지원 조건", seedSource: "news" }]).drops[0]?.reason === "recruit_minor", "★일반 기업 채용 차단");
+  chk_(finalGate([{ keyword: "현대그린푸드 채용 사이트", title: "현대그린푸드 사내카페 운영", seedSource: "dart" }]).drops[0]?.reason === "recruit_minor", "★계열사 이름이 비슷해도 성과급 포모 급이 아니면 차단(실물)");
+  chk_(finalGate([{ keyword: "하나금융그룹 청라 채용", title: "하나금융그룹이 청라로 옮겼는데", seedSource: "newspsych" }]).drops.length === 0, "★유명 금융그룹 채용은 통과(성과급 포모 실재)");
+  chk_(finalGate([{ keyword: "삼성전자 성과급", title: "삼성전자 성과급, 올해 지급 기준", seedSource: "news" }]).drops.length === 0, "성과급 글감 자체는 채용이 아니다 — 통과");
+  chk_(finalGate([{ keyword: "국민취업지원제도 신청", title: "국민취업지원제도 신청, 조건 정리", seedSource: "newspsych" }]).drops.length === 0, "★'취업'이 들어가도 지원금 제도는 통과");
+}
+
 process.exit(fail ? 1 : 0);
