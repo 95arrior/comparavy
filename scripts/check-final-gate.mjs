@@ -455,4 +455,13 @@ console.log("\n수명 컷 — 마감이 지났는가로만 가른다:");
   chk_(finalGate([{ keyword: "추석 민생지원금", title: "추석 민생지원금, 지역별 신청 방법" }]).drops.length === 0, "전 국민 지원금 통과");
 }
 
+// ★지역화폐 이름 = 지역명(2026-08-07 실측: '동백전 교통카드'가 보드에 섰다 — 부산 시민만 가진 카드).
+{
+  chk_(finalGate([{ keyword: "동백전 교통카드 타지역", title: "사회초년생이 놓치는 동백전, 지역 제한 없이 쓰려면", seedSource: "news" }]).drops[0]?.reason === "region_niche", "★동백전(부산 지역화폐) 차단 — 유저 실물");
+  chk_(finalGate([{ keyword: "온누리상품권 환급", title: "온누리상품권 환급, 이번 주말 조건", seedSource: "news" }]).drops.length === 0, "전국 상품권은 통과");
+  chk_(finalGate([{ keyword: "K패스 교통카드", title: "K패스 교통카드 환급 조건 정리", seedSource: "news" }]).drops.length === 0, "전국 교통카드는 통과");
+  // ★강원 '그리고카드'를 목록에 넣었다가 바로 잡은 지뢰 — 접속사와 같은 글자라 모든 글이 걸린다
+  chk_(finalGate([{ keyword: "전세보증금 반환", title: "전세보증금 그리고 이사할 때 확인할 것", seedSource: "news" }]).drops.length === 0, "★접속사 '그리고'는 지역이 아니다(오탐 지뢰 방어)");
+}
+
 process.exit(fail ? 1 : 0);
