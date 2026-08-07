@@ -11,6 +11,28 @@ const MONTHLY_RE = /(^|[^0-9가-힣])(1[0-2]|[1-9])월|올해|이번\s?(주|달)
 
 export interface RelatedPost { title: string; url: string }
 
+// ★시리즈 우선(2026-08-07 유저 확정 ② — 지수 레버 '세션당 2페이지').
+//  종전엔 최신순 3개(연관 무관 — 2026-08-04 유저 확정)였는데, 같은 사건의 전편이 있으면
+//  그게 최신 글보다 훨씬 잘 눌린다: 공급대책 2탄을 읽는 사람에게 1탄이 곧 다음 페이지다.
+//  ★연관 판정을 되살리는 게 아니다 — 후보를 자르지 않고 '순서만' 바꾼다(자르면 링크 결품이 재발한다).
+const SERIES_GENERIC = new Set(["신청방법", "신청자격", "확인방법", "총정리", "정리", "방법", "조건", "기준", "지원금", "청약"]);
+export function seriesFirst<T extends { keyword?: string | null; title?: string | null }>(cands: T[], keyword: string): T[] {
+  const toks = (t: string) => new Set(String(t || "").split(/\s+/)
+    .map((w) => w.replace(/[^가-힣a-zA-Z0-9]/g, ""))
+    .filter((w) => [...w].length >= 4 && !SERIES_GENERIC.has(w)));
+  const mine = toks(keyword);
+  if (!mine.size) return cands;
+  const shared = (c: T) => {
+    const theirs = toks(`${c.keyword ?? ""} ${c.title ?? ""}`);
+    let n = 0; for (const w of theirs) if (mine.has(w)) n += 1;
+    return n;
+  };
+  // 안정 정렬 — 겹침 많은 순, 같으면 원래 순서(최신순) 유지
+  return cands.map((c, i) => ({ c, i, sc: shared(c) }))
+    .sort((a, b) => b.sc - a.sc || a.i - b.i)
+    .map((x) => x.c);
+}
+
 /**
  * 같은 블로그의 확정 URL 글에서 관련글 후보 최대 3개.
  * ★연관 판정은 하지 않는다(2026-08-04 유저 확정: "꼭 연관 없어도 될 것 같은데").
@@ -22,7 +44,7 @@ export async function relatedPostsFor(
   db: SupabaseClient,
   userId: string,
   blogId: string | null,
-  _keyword: string,
+  keyword: string,
 ): Promise<RelatedPost[]> {
   try {
     let rq = db.from("articles")
@@ -49,7 +71,7 @@ export async function relatedPostsFor(
       console.log(`[related] 수명 게이트로 전멸 — 공고성 글까지 받아 ${pool.length} → ${relaxed.length}개(날짜 박힌 글은 계속 제외)`);
     }
     const seen = new Set<string>();
-    const out = relaxed
+    const out = seriesFirst(relaxed, keyword)
       .map((c) => ({ title: String(c.title ?? c.keyword ?? "관련 글"), url: String((c as { naver_url?: string }).naver_url ?? "") }))
       .filter((r) => {
         const u = r.url.split("?")[0];

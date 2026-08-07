@@ -729,6 +729,21 @@ export function ensureHashtags(html: string, keyword: string, tag?: string, mode
   return `${stripped.replace(/\s+$/, "")}\n<p>${uniq.map((t) => `#${t}`).join(" ")}</p>`;
 }
 
+// ═══ 클로징 댓글 유도 질문(2026-08-07 유저 확정 — 지수 레버) ═══
+//  ★프롬프트에만 두면 이모지·형광펜과 같은 병으로 죽는다(규칙은 있는데 아무도 안 재서 0개로 나감).
+//  판정: 글 끝부분(해시태그·관련글 마커 제외 마지막 500자)에 물음표 문장이 있는가.
+//  FAQ의 'Q.'와 혼동 방지: FAQ는 글 끝이 아니라 클로징 앞이고, 끝 500자만 보므로 대부분 겹치지 않는다.
+export function closingQuestionMissing(html: string): boolean {
+  const tail = String(html || "")
+    .replace(/<p[^>]*>\s*(?:#[가-힣A-Za-z0-9_]{2,}\s*)+<\/p>/g, " ")      // 해시태그 줄 제외
+    .replace(/\[(?:마무리)?관련글:[^\]]*\]/g, " ")                        // 관련글 마커 제외
+    .replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(-500);
+  if (!tail) return true;
+  // 'Q.'로 시작하는 FAQ 질문은 유도 질문이 아니다 — 그것만 있는 경우를 걸러야 해서 Q. 문장은 지우고 본다
+  const woFaq = tail.replace(/Q[.．][^?？]*[?？]/g, " ");
+  return !/[?？]/.test(woFaq);
+}
+
 // ═══ 폐기 블록 부활 감시(2026-08-03 실측) ═══
 //  ★'오늘의 3줄 요약'을 폐기했더니 소제목 없이 글 끝 불릿으로 되살아났다.
 //   skeletonReport는 <h2>...요약...</h2>를 찾으므로 소제목이 없으면 못 잡는다 — 우회당한 것이다.

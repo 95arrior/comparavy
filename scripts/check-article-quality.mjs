@@ -638,4 +638,26 @@ console.log(fail ? `\n실패 ${fail}건` : "\n통과: 발행글 품질(띄어쓰
   ok(PROMPT_SPEC_VERSION >= 3, "★규격 버전 상승 — 오늘 미리 만든 글이 옛 규격으로 나가지 않는다");
 }
 
+// ★지수 레버 2종(2026-08-07 유저 확정: "②③ 지금 넣어") — 댓글 유도 질문 + 시리즈 우선 링크.
+{
+  const { closingQuestionMissing } = await import("../lib/editorial.ts");
+  ok(closingQuestionMissing("<p>본문입니다. 오늘 확인해 보세요.</p><p>#태그</p>") === true, "★질문 없는 클로징을 잡는다");
+  ok(closingQuestionMissing("<p>본문. 여러분 지역은 얼마로 나왔나요? 오늘 확인해 보세요.</p><p>#태그</p>") === false, "유도 질문이 있으면 통과");
+  // ★FAQ의 Q.는 유도 질문이 아니다 — 그걸로 통과되면 게이트가 유명무실해진다
+  ok(closingQuestionMissing("<p>Q. 언제까지인가요? A. 8월입니다. 오늘 신청하세요.</p>") === true, "★FAQ 물음표만으로는 통과 못 한다");
+  ok(/closingQuestionMissing\(a\.body_html\)/.test(fs.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8")), "★생성 경로에 배선됨");
+  ok(/댓글 유도 질문 1문장/.test(fs.readFileSync(new URL("../lib/articlePrompt.ts", import.meta.url), "utf-8")), "프롬프트에도 규격 명시");
+
+  const { seriesFirst } = await import("../lib/relatedPosts.ts");
+  const cands = [
+    { keyword: "전세사기 피해자 신청", title: "전세사기 피해자 신청 서류" },
+    { keyword: "부동산 공급대책", title: "발표 전인데도 움직임 뚜렷한, 부동산 공급대책" },
+    { keyword: "근로장려금", title: "근로장려금 지급일" },
+  ];
+  ok(seriesFirst(cands, "부동산 공급대책 발표 내용")[0].keyword === "부동산 공급대책", "★2탄의 관련글 맨 앞은 1탄(시리즈 체인)");
+  ok(seriesFirst(cands, "자동차세 환급")[0].keyword === "전세사기 피해자 신청", "겹침이 없으면 최신순 유지(후보를 자르지 않는다)");
+  const { PROMPT_SPEC_VERSION } = await import("../lib/articlePrompt.ts");
+  ok(PROMPT_SPEC_VERSION >= 4, "★규격 버전 상승(사전 생성분 폐기)");
+}
+
 process.exit(fail ? 1 : 0);

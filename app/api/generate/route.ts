@@ -6,7 +6,7 @@ import { ensureUserRow } from "@/lib/userPlan";
 import { spendCredits, addCredits, GENERATE_COST } from "@/lib/credits";
 import { streamArticle } from "@/lib/generateArticle";
 import { isReviewType, ensureDisclosure } from "@/lib/revenue";
-import { hasFabricatedExperience, lacksInterpretation, lacksConditionBranch, duplicateSlotSubjects, lacksKeywordFloor, keywordOccurrences, keywordOverstuffed, headingMismatches, coreKeywordOf, endingReport, spacingDefects, emojiCount, photoSlotShortfall, stockPropSlots, photoSceneShortfall, skeletonReport, boldOveruse, textWallRuns, emphasisShortfall, longSentences, SENT_MAX_CHARS, EMOJI_MIN, KEYWORD_FLOOR } from "@/lib/editorial";
+import { hasFabricatedExperience, lacksInterpretation, lacksConditionBranch, duplicateSlotSubjects, lacksKeywordFloor, keywordOccurrences, keywordOverstuffed, headingMismatches, coreKeywordOf, endingReport, spacingDefects, emojiCount, photoSlotShortfall, stockPropSlots, photoSceneShortfall, skeletonReport, boldOveruse, textWallRuns, emphasisShortfall, longSentences, closingQuestionMissing, SENT_MAX_CHARS, EMOJI_MIN, KEYWORD_FLOOR } from "@/lib/editorial";
 import { scanFacts } from "@/lib/factGate";
 import { financeCalcContext } from "@/lib/financeCalc";
 import { sanitizeUrls } from "@/lib/linkWhitelist";
@@ -447,6 +447,11 @@ export async function POST(request: Request) {
           const ls = longSentences(a.body_html);
           if (ls.length) {
             w.push(`한 문장이 너무 긴 곳이 ${ls.length}군데다(가장 긴 것 ${Math.max(...ls.map((x) => x.chars))}자, 예: "${ls[0]!.preview}…"). 한 문장은 ${SENT_MAX_CHARS}자 안으로 — 나열이 길면 문장을 끊거나 표·목록으로 옮겨라. ★모바일에서 한 줄이 18자라 긴 문장은 그대로 글자벽이 된다.`);
+          }
+          // ★클로징 댓글 유도 질문(2026-08-07 유저 확정 — 지수 레버).
+          //  댓글·공감은 초기 반응 신호인데 우리 글은 받을 생각 자체를 안 하고 있었다.
+          if (closingQuestionMissing(a.body_html)) {
+            w.push(`클로징에 댓글 유도 질문이 없다. CTA 바로 앞에 독자가 한 줄로 답할 수 있는 구체 질문 1문장을 넣어라('여러분 지역은 얼마로 나왔나요?' 결) — '어떠셨나요?' 같은 인사치레 말고 자기 상황을 말하게 하는 질문.`);
           }
           // ★이모지 하한(실측: 규격 3~6인데 실제 0개) — 상한만 있고 하한이 없었다.
           const ec = emojiCount(a.body_html);
