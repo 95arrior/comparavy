@@ -219,26 +219,39 @@ export async function callImage(prompt: string, aspectRatio: "16:9" | "1:1"): Pr
   }
 }
 
+// ★순간 과부하 재시도(2026-08-07 유저 실물: "This model is currently experiencing high demand" → 단색 폴백).
+//  구글 쪽 수요 폭주는 몇 초 뒤 재시도하면 붙는 경우가 많다 — 한 번 실패로 바로 폴백하면
+//  유저는 다시 만들기(6크레딧 흐름)를 손으로 눌러야 한다. ★일시 장애 패턴일 때만 1회 재시도.
+//  쿼터(429)는 재시도해도 같은 답이라 즉시 던진다 — 재시도는 시간만 태운다.
+const TRANSIENT_RE = /(high demand|overloaded|try again|temporarily|unavailable|internal error)/i;
 async function callGemini(prompt: string, aspectRatio: "16:9" | "1:1"): Promise<{ base64: string; mime: string }> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error("NOT_READY");
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { imageConfig: { aspectRatio } } }),
-    signal: AbortSignal.timeout(90_000), // ★무한 대기 방지(2026-07-16 실측)
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const msg = data?.error?.message ?? `Gemini ${res.status}`;
-    const quota = res.status === 429 || /quota|billing|exhausted/i.test(msg);
-    // 어떤 제한(분당 RPM/일일 RPD/티어)인지 원문을 로그로 — 잔액 있어도 429가 나는 원인 구분용
-    if (quota) console.error(`[image] gemini 429 원문: ${msg.slice(0, 400)}`);
-    throw new Error(quota ? "QUOTA" : msg);
+  for (let attempt = 1; ; attempt++) {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { imageConfig: { aspectRatio } } }),
+      signal: AbortSignal.timeout(90_000), // ★무한 대기 방지(2026-07-16 실측)
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = data?.error?.message ?? `Gemini ${res.status}`;
+      const quota = res.status === 429 || /quota|billing|exhausted/i.test(msg);
+      // 어떤 제한(분당 RPM/일일 RPD/티어)인지 원문을 로그로 — 잔액 있어도 429가 나는 원인 구분용
+      if (quota) console.error(`[image] gemini 429 원문: ${msg.slice(0, 400)}`);
+      const transient = !quota && (res.status >= 500 || TRANSIENT_RE.test(msg));
+      if (transient && attempt < 2) {
+        console.log(`[image] 일시 장애 — 3초 뒤 재시도(${attempt}/1): ${msg.slice(0, 80)}`);
+        await new Promise((r) => setTimeout(r, 3_000));
+        continue;
+      }
+      throw new Error(quota ? "QUOTA" : msg);
+    }
+    const parts = data?.candidates?.[0]?.content?.parts ?? [];
+    for (const p of parts) if (p.inlineData?.data) return { base64: p.inlineData.data, mime: p.inlineData.mimeType ?? "image/png" };
+    throw new Error("이미지가 생성되지 않았어요.");
   }
-  const parts = data?.candidates?.[0]?.content?.parts ?? [];
-  for (const p of parts) if (p.inlineData?.data) return { base64: p.inlineData.data, mime: p.inlineData.mimeType ?? "image/png" };
-  throw new Error("이미지가 생성되지 않았어요.");
 }
 
 /** 본문 이미지 1장(실사, base64). userSeed로 계정 축 + 요청 난수 변주. 실패 시 throw. */
