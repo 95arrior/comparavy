@@ -499,6 +499,13 @@ export async function GET(req: Request) {
           (c as { publishedOn?: string }).publishedOn = Number.isNaN(d.getTime()) ? "발행함" : `${d.getMonth() + 1}/${d.getDate()} 발행함`;
         } else if (isRecentDup(c.keyword)) c.demandBadge = "최근 7일 내 발행한 키워드 — 연속 발행은 서로 노출을 잠식해요";
       }
+      // ★발행함 카드는 뒷줄로(2026-08-07 저녁 유저: "글감 나오는 뽄세가 이상한데" — 8/3 발행분이 앞줄을 차지).
+      //  ★제외가 아니라 순서만 바꾼다 — '발행함 잔존은 후속·시리즈 판단용'(유저 확정)은 유지하되,
+      //   아직 안 쓴 글감이 발행 완료분보다 앞에 서는 게 보드의 존재 이유다.
+      //   접수 마감이 살아 있는 공고(청약 등 actionEnd 보유)는 예외 — 마감 전 재확인이 그 카드의 일이다.
+      const pubBack = (c: (typeof cards)[number]) =>
+        (c as { publishedOn?: string }).publishedOn && !(c as { actionEnd?: string | null }).actionEnd ? 1 : 0;
+      cards.sort((x, y) => pubBack(x) - pubBack(y)); // 안정 정렬 — 그룹 안 순서는 유지
     } catch { /* 트렌드 없이 진행 */ }
     return cards;
   }

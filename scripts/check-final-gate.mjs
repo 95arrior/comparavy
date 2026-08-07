@@ -474,4 +474,13 @@ console.log("\n수명 컷 — 마감이 지났는가로만 가른다:");
   chk_(finalGate([{ keyword: "국민취업지원제도 신청", title: "국민취업지원제도 신청, 조건 정리", seedSource: "newspsych" }]).drops.length === 0, "★'취업'이 들어가도 지원금 제도는 통과");
 }
 
+// ★공시 혈통 최종 검문(2026-08-07 저녁 실물: DART 칩을 단 '현대그린푸드 본사 사내카페'가 섰다).
+//  증식 단계 혈통 검사가 있는데도 새어 나왔다 — 어느 경로로 샜든 최종 관문이 결과를 검사한다.
+{
+  chk_(finalGate([{ keyword: "현대그린푸드 본사 사내카페", title: "현대그린푸드 사내카페 vs 외부 카페, 직원이라도 선택지가 생긴 이유", seedSource: "dart" }]).drops[0]?.reason === "dart_lineage", "★공시 카드가 공시 얘기를 안 하면 실격(사내카페 실물)");
+  chk_(finalGate([{ keyword: "뉴로메카 무상증자 받으려면", title: "뉴로메카 무상증자, 기준일 이전에 이미 떨어진 투자자들이 있는 이유", seedSource: "dart" }]).drops.length === 0, "★교본(무상증자)은 통과");
+  chk_(finalGate([{ keyword: "알테오젠 권리락", title: "알테오젠 권리락, 오늘 주가가 왜 이렇게 보이나", seedSource: "dart" }]).drops.length === 0, "권리락도 통과");
+  chk_(finalGate([{ keyword: "골프존홀딩스 공개매수 신청방법", title: "골프존홀딩스 공개매수, 일반 주주도 참여할 때", seedSource: "newspsych" }]).drops.length === 0, "다른 원천엔 이 검문을 안 건다");
+}
+
 process.exit(fail ? 1 : 0);

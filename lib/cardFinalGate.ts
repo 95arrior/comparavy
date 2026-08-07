@@ -51,6 +51,12 @@ const SPECULATIVE_RE = /(신청|지급|지원)\s?(대상자?|자격)\s?(예상|�
 //  목록은 유저 지적이 나올 때마다 늘린다(2026-08-07 시작: 건설근로자·장학금 계열).
 const NARROW_AUDIENCE_RE = /(건설근로자|공제회(?![가-힣])|장학금|학자금|어업인|어선원|농업인|임업인|축산농가|참전용사|보훈(?![가-힣])|국가유공자)/;
 
+// ★공시 혈통 최종 검문(2026-08-07 저녁 실물: 'DART 공시' 칩을 단 "현대그린푸드 본사 사내카페 vs 외부 카페"가 섰다).
+//  증식 단계의 혈통 검사(amplifyTopics)가 있는데도 새어 나왔다 — 어느 경로로 샜든,
+//  ★공시에서 왔다고 주장하는 카드가 공시 얘기를 안 하면 그 자체로 실격이다. 최종 관문이 결과를 검사한다.
+//  회사명은 소재가 아니다 — 공시 글감의 소재는 '그 회사가 무엇을 했는가'다.
+const DART_ACTION_RE = /(증자|주식\s?분할|주식\s?병합|주식\s?배당|자기주식|현물배당|권리락|신주|상장|공개매수|기준일|배당\s?결정|분할\s?합병|감자(?![가-힣]))/;
+
 // ★채용 글감(2026-08-07 유저 확정: "대기업·공기업, 보너스·성과급 많이 주는 그 유명한 데 아닌 이상 빼세요.
 //  그 포모랑 결핍이랑 다른 결이에요").
 //  대기업 채용·성과급은 '나도 저기 가고 싶다'는 전 국민 포모를 긁지만,
@@ -245,6 +251,8 @@ export function finalGate<T extends GateCard>(cards: T[], opts?: { anchorKeyword
     if (NARROW_AUDIENCE_RE.test(text)) { drops.push({ keyword: c.keyword, reason: "narrow_audience" }); continue; }
     // ★채용은 유명 대기업·공기업(성과급 포모)만(2026-08-07 유저 확정)
     if (RECRUIT_RE.test(text) && !MAJOR_EMPLOYER_RE.test(text)) { drops.push({ keyword: c.keyword, reason: "recruit_minor" }); continue; }
+    // ★공시 카드가 공시 얘기를 안 하면 실격(2026-08-07 — 사내카페 실물)
+    if (c.seedSource === "dart" && !DART_ACTION_RE.test(text)) { drops.push({ keyword: c.keyword, reason: "dart_lineage" }); continue; }
     if (HARD_B2B_RE.test(text)) { drops.push({ keyword: c.keyword, reason: "b2b-hard" }); continue; }
     // ★기초지자체가 제목 앞머리에 오면 문턱을 올린다(2026-08-02 유저 화면 실측).
     //  통과한 실물: "의정부시 청년 투자환경, 일자리·주거 원스톱 지원 프로그램"

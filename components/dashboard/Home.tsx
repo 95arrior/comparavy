@@ -1203,7 +1203,7 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
       //  과장은 신뢰를 깎는다 — 사장님이 눈으로 세어보면 바로 들킨다.
       if (bt <= 30) return `${demand}쓴 글이 ${bt}편뿐이에요 — 지금 올리면 초기 순위를 잡아요`;
       if (bt < 300) return `${demand}아직 얇은 자리예요 — 지금 올리면 상위를 노려볼 만해요`;
-      if (bt < 3000) return `${demand}${bt.toLocaleString("ko-KR")}편이 있어요 — 각도를 잡으면 비집을 만해요`;
+      if (bt < 3000) return `${demand}${bt.toLocaleString("ko-KR")}편이 있어요 — 각도를 잡으면 비집고 들어갈 만해요`;
       return `${demand}이미 ${bt.toLocaleString("ko-KR")}편이 있어요 — 남들이 안 다룬 각도라야 이겨요`;
     }
     if (Number(topic.vol ?? 0) > 0) {
