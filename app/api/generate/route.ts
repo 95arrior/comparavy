@@ -21,7 +21,7 @@ import { isDisposableEmail } from "@/lib/disposableEmail";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { normalizeKeyword, pickVariant, pickAngle, simhash } from "@/lib/diversity";
 import { looksLikeGarbageKeyword, looksLikeNonsenseStory } from "@/lib/keywordGuard";
-import { isUnsafeKeyword } from "@/lib/keywordSafety";
+import { isUnsafeKeyword, financeBrandAllowed } from "@/lib/keywordSafety";
 import { deriveStoryTopic, validateStoryMeaning } from "@/lib/aiSeeds";
 import { explicitAudienceOf, AUDIENCE_ALL } from "@/lib/audience";
 import { isAdminEmail } from "@/lib/adminStats";
@@ -107,10 +107,9 @@ export async function POST(request: Request) {
   // 2차(싼 모델): 'asdfqwer'·무작위 음절·의미 없는 문장 등 규칙을 통과한 무의미 입력 차단
   // (AI 의미판별 게이트 제거 — 추천 글감/실제 주제를 가끔 잘못 막던 false-positive 방지.
   //  난타·자모만 같은 명백한 쓰레기는 위 looksLikeGarbageKeyword(규칙)로 확정 차단.)
-  // 타사 업체명·인물명·브랜드는 글감으로 금지(상표권·명예훼손·비교광고 위험)
-  if (isUnsafeKeyword(keyword)) {
-    return NextResponse.json({ error: "특정 업체명·브랜드는 글감으로 쓸 수 없어요. (상표권·명예훼손 위험) 일반 주제로 입력해 주세요." }, { status: 400 });
-  }
+  // 타사 업체명·인물명·브랜드 금지 검사는 프로필 조회 '뒤'에서 한다(아래) — 금융 브랜드 허용(2026-08-05)이
+  // 분야로 갈리는데, 여기(프로필 이전)서 옵션 없이 검사하면 재테크 채널에서 '케이뱅크 황금캡슐'류
+  // 직접 입력만 막힌다(씨앗·보드 경로와 불일치, 2026-08-10 실측).
 
   // ★'내 이야기'(userStory) — 생성 '전' 엄격 검증. 가비지/테스트면 비싼 생성 자체를 막아 비용·크레딧 0.
   //   (길이 검증은 생성 '후'라 이미 비용 발생 → 여기서 먼저 막는다.)
@@ -139,6 +138,11 @@ export async function POST(request: Request) {
     .eq("user_id", user.id).eq("is_active", true)
     .maybeSingle();
   const vertical = profileRow?.vertical ?? "general";
+  // 타사 업체명·인물명·브랜드는 글감으로 금지(상표권·명예훼손·비교광고 위험).
+  // ★금융 브랜드만 분야 예외(2026-08-05) — 재테크 채널에선 브랜드 이벤트가 본업 소재다. 가십·의료·업체명·CS·ETF는 그대로 차단.
+  if (isUnsafeKeyword(keyword, { allowFinanceBrand: financeBrandAllowed(`${vertical} ${(profileRow as { sub_category?: string } | null)?.sub_category ?? ""}`) })) {
+    return NextResponse.json({ error: "특정 업체명·브랜드는 글감으로 쓸 수 없어요. (상표권·명예훼손 위험) 일반 주제로 입력해 주세요." }, { status: 400 });
+  }
   // ★멀티 블로그 시드 — 문체 페르소나·구조·앵글이 블로그별로 갈린다(같은 계정의 블로그끼리도 다른 지문)
   const seedId = (profileRow as { id?: string } | null)?.id ?? user.id;
   // tone/type은 '명시적으로 보낸 값 우선', 없을 때만 업종 기본값 폴백(general은 매핑 없음=현행 howto/friendly).
