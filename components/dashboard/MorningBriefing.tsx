@@ -45,6 +45,7 @@ export default function MorningBriefing({ onWrite }: { onWrite: (keyword: string
       const data = await res.json();
       if (!res.ok) { setErr(data.error ?? "분석에 실패했어요. 다시 시도해 주세요."); return; }
       setItems(data.items as BriefItem[]);
+      setOpen(false); // 결과는 접힌 화면에 뜬다 — 분석이 끝나면 바로 보여줘야 한다(붙여넣기 원문은 볼 일이 끝났다)
       // 오늘 목록을 기록 — 내일부터 'N일째'가 자동으로 계산된다(같은 날 재분석은 합집합).
       const parsed: string[] = Array.isArray(data.parsedKeywords) ? data.parsedKeywords : [];
       const rest = loadHistory().filter((d) => d.date !== today);
