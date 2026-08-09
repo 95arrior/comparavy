@@ -1,5 +1,6 @@
 "use client";
 import PerfImportSheet from "./PerfImportSheet";
+import MorningBriefing from "./MorningBriefing";
 
 import { cachedGet, invalidateGet } from "@/lib/clientFetchCache";
 
@@ -737,6 +738,8 @@ export default function Home({
               </div>
             );
           })()}
+          {/* ★아침 브리핑(답안지 레인 1단계) — 어드바이저 인기유입검색어 붙여넣기 → 오늘 심을 키워드. 기존 보드와 분리된 추가 레인 */}
+          <MorningBriefing onWrite={(kw, sel) => onWriteKeyword(kw, kw, undefined, undefined, undefined, undefined, { sel })} />
           {/* ★글감 새로 받기 — 크론 안 기다리고 두 보드 갈이(1시간 2회) */}
           <div className="mb-2 flex justify-end gap-1.5">
             {ffPerf && (
