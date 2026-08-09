@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 /**
  * ★아침 브리핑(답안지 레인 1단계, 2026-08-10) — docs/answer-sheet-lane.md
@@ -24,28 +24,69 @@ function loadHistory(): DayLog[] {
   } catch { return []; }
 }
 
+/** 스크린샷을 서버로 보내기 전 축소(레티나 캡처 수 MB → 수백 KB, 비전 인식엔 충분). */
+function shrinkImage(file: File): Promise<string | null> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, 1400 / img.width);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { URL.revokeObjectURL(url); resolve(null); return; }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL("image/jpeg", 0.85));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    img.src = url;
+  });
+}
+
 export default function MorningBriefing({ onWrite }: { onWrite: (keyword: string, sel: Record<string, unknown>) => void }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
+  const [images, setImages] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [items, setItems] = useState<BriefItem[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  // 스크린샷 지원 — 유저의 자연 습관은 캡처(⌘V·파일 선택 둘 다). 텍스트 복사를 가르치지 않는다.
+  async function addFiles(files: FileList | File[] | null) {
+    if (!files) return;
+    const picked = Array.from(files).filter((f) => f.type.startsWith("image/")).slice(0, 4 - images.length);
+    for (const f of picked) {
+      const dataUrl = await shrinkImage(f);
+      if (dataUrl) setImages((prev) => (prev.length >= 4 ? prev : [...prev, dataUrl]));
+    }
+  }
+  function onPaste(e: React.ClipboardEvent) {
+    const files = Array.from(e.clipboardData?.items ?? [])
+      .filter((it) => it.kind === "file" && it.type.startsWith("image/"))
+      .map((it) => it.getAsFile())
+      .filter((f): f is File => Boolean(f));
+    if (files.length > 0) { e.preventDefault(); void addFiles(files); }
+  }
 
   async function analyze() {
     const raw = text.trim();
-    if (!raw || busy) return;
+    if ((!raw && images.length === 0) || busy) return;
     setBusy(true); setErr(null);
     try {
       const today = kstToday();
       const history = loadHistory().filter((d) => d.date !== today);
       const res = await fetch("/api/briefing", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: raw, history }),
+        body: JSON.stringify({ text: raw, images, history }),
       });
       const data = await res.json();
       if (!res.ok) { setErr(data.error ?? "분석에 실패했어요. 다시 시도해 주세요."); return; }
       setItems(data.items as BriefItem[]);
       setOpen(false); // 결과는 접힌 화면에 뜬다 — 분석이 끝나면 바로 보여줘야 한다(붙여넣기 원문은 볼 일이 끝났다)
+      setImages([]); // 다음 붙여넣기를 위해 비운다(원문 텍스트는 남겨 재분석 가능)
       // 오늘 목록을 기록 — 내일부터 'N일째'가 자동으로 계산된다(같은 날 재분석은 합집합).
       const parsed: string[] = Array.isArray(data.parsedKeywords) ? data.parsedKeywords : [];
       const rest = loadHistory().filter((d) => d.date !== today);
@@ -83,13 +124,32 @@ export default function MorningBriefing({ onWrite }: { onWrite: (keyword: string
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
+            onPaste={onPaste}
             rows={4}
-            placeholder={"블로그 통계 → 크리에이터 어드바이저 → 검색 유입 트렌드 화면을\n전체 선택(⌘A) 복사해서 그대로 붙여넣으면 돼요"}
+            placeholder={"통계(크리에이터 어드바이저) → 검색 유입 트렌드 화면의\n스크린샷을 여기 붙여넣거나(⌘V), 화면 글자를 복사해 넣어도 돼요"}
             className="w-full resize-none rounded-xl border border-neutral-200 bg-[#FAFBFC] p-3 text-[13px] leading-relaxed text-neutral-800 outline-none transition focus:border-[#1D75F7]/50 focus:bg-white"
           />
+          <div className="mt-2 flex items-center gap-2">
+            {images.map((src, i) => (
+              <div key={i} className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-neutral-200">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={src} alt={`스크린샷 ${i + 1}`} className="h-full w-full object-cover" />
+                <button onClick={() => setImages((prev) => prev.filter((_, j) => j !== i))} aria-label="스크린샷 빼기"
+                  className="absolute right-0 top-0 flex h-4 w-4 items-center justify-center rounded-bl-lg bg-black/50 text-[10px] font-bold text-white">×</button>
+              </div>
+            ))}
+            {images.length < 4 && (
+              <button onClick={() => fileRef.current?.click()}
+                className="at-press h-12 shrink-0 rounded-lg border border-dashed border-neutral-300 px-3 text-[12px] font-bold text-neutral-400 transition hover:border-[#1D75F7]/50 hover:text-[#1D75F7]">
+                {images.length > 0 ? "+ 추가" : "스크린샷 올리기"}
+              </button>
+            )}
+            <input ref={fileRef} type="file" accept="image/*" multiple className="hidden"
+              onChange={(e) => { void addFiles(e.target.files); e.target.value = ""; }} />
+          </div>
           <button
             onClick={analyze}
-            disabled={busy || !text.trim()}
+            disabled={busy || (!text.trim() && images.length === 0)}
             className="at-press mt-2 w-full rounded-xl bg-[#1D75F7] py-2.5 text-[13px] font-bold text-white transition hover:bg-[#1667DE] disabled:opacity-50"
           >
             {busy ? "검색어 추출하고 문서수 재는 중…" : "오늘 심을 키워드 고르기"}

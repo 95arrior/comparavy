@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase-server";
+import { logUsage } from "@/lib/usageLog";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { isAdminEmail } from "@/lib/adminStats";
 import { parseAnswerSheet, daysSeenIn } from "@/lib/answerSheet";
@@ -30,13 +32,50 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `분석이 너무 잦아요. ${rl.retryAfterSec ?? 60}초 후 다시 시도해 주세요.` }, { status: 429 });
   }
 
-  let body: { text?: string; history?: { date: string; keywords: string[] }[] };
+  let body: { text?: string; images?: string[]; history?: { date: string; keywords: string[] }[] };
   try { body = await request.json(); } catch {
     return NextResponse.json({ error: "요청이 올바르지 않아요." }, { status: 400 });
   }
-  const { keywords, droppedNewsy } = parseAnswerSheet(body.text ?? "");
+
+  // ★스크린샷 지원(2026-08-10 유저: "이미지 안 들어가는데") — 유저의 자연 습관은 캡처다. 텍스트 복사를 가르치는 대신
+  //  이미지를 읽는다(뇌빼기). 비전으로 검색어 줄만 뽑아 텍스트와 합친 뒤, 아래 동일 파이프(파서→측정)를 태운다.
+  let visionText = "";
+  const images = (Array.isArray(body.images) ? body.images : []).slice(0, 4);
+  if (images.length > 0) {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) return NextResponse.json({ error: "AI 설정이 아직이에요." }, { status: 500 });
+    const blocks: Anthropic.ImageBlockParam[] = [];
+    for (const dataUrl of images) {
+      const m = /^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/=]+)$/.exec(String(dataUrl));
+      if (!m || m[2].length > 2_500_000) continue; // 손상·과대 이미지는 조용히 건너뛴다(클라가 축소해 보냄)
+      blocks.push({ type: "image", source: { type: "base64", media_type: m[1] as "image/png" | "image/jpeg" | "image/webp", data: m[2] } });
+    }
+    if (blocks.length > 0) {
+      try {
+        const client = new Anthropic({ apiKey });
+        const res = await client.messages.create({
+          model: "claude-haiku-4-5",
+          max_tokens: 800,
+          messages: [{
+            role: "user",
+            content: [
+              ...blocks,
+              { type: "text", text: "네이버 크리에이터 어드바이저 '인기유입검색어' 화면 캡처야. 화면에 보이는 검색어만 위에서 아래 순서 그대로, 한 줄에 하나씩 출력해. 순위 변동 표시(▲·▼·new·-)와 숫자, 날짜, 탭 이름, 안내 문구는 빼. 검색어 외 다른 말은 아무것도 쓰지 마." },
+            ],
+          }],
+        });
+        void logUsage({ userId: user.id, model: "claude-haiku-4-5", kind: "briefing_vision", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
+        const t = res.content.find((b) => b.type === "text");
+        visionText = t && t.type === "text" ? t.text : "";
+      } catch {
+        return NextResponse.json({ error: "스크린샷을 읽지 못했어요. 다시 시도하거나 화면 글자를 복사해 붙여넣어 주세요." }, { status: 502 });
+      }
+    }
+  }
+
+  const { keywords, droppedNewsy } = parseAnswerSheet(`${body.text ?? ""}\n${visionText}`);
   if (keywords.length === 0) {
-    return NextResponse.json({ error: "검색어를 못 찾았어요. 통계 화면을 전체 선택해서 그대로 붙여넣어 주세요." }, { status: 400 });
+    return NextResponse.json({ error: "검색어를 못 찾았어요. 통계 화면을 전체 선택해 복사하거나, 검색어 목록이 보이는 스크린샷을 붙여넣어 주세요." }, { status: 400 });
   }
   const history = Array.isArray(body.history) ? body.history.slice(0, 7) : [];
 
