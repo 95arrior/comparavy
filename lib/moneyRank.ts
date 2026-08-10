@@ -84,6 +84,62 @@ export async function condenseRanking(titles: string[], userId?: string | null):
   } catch { return []; }
 }
 
+/**
+ * ★빈틈 찾기(2026-08-11 유저: "붐빔인데 어떻게 빈틈을 비집고 들어갈까 빡세게 연구") — 붐빔 키워드의 꼬리 발굴.
+ *  실측 3빈틈: ①시간(새 회차·날짜 꼬리는 텅 빔 — 민생지원금 48만→추석 2.4만→깊은 꼬리 수천)
+ *  ②의도(지식iN 실질문 = 대중 수요의 구체 상황 — "갈아타기 후 해지") ③이름(일반명사 대신 실명·숫자).
+ *  방법: 자동완성(사람들이 지금 붙여 치는 말) + 지식iN 최신 질문(진짜 다음 질문)을 그 자리에서 수확 →
+ *  꼬리 후보 압축 → 문서수 실측 → 게이트 통과분만 돌려준다. 판단은 코드(문서수), 모델은 후보만.
+ */
+export async function findGapTails(headKeyword: string, userId?: string | null): Promise<{ keyword: string; hint: string }[]> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return [];
+  const { fetchNaverAutocomplete } = await import("./naverAutocomplete");
+  const [auto, kinRaw] = await Promise.all([
+    fetchNaverAutocomplete(headKeyword).catch(() => [] as string[]),
+    (async () => {
+      const id = process.env.NAVER_DATALAB_CLIENT_ID, secret = process.env.NAVER_DATALAB_SECRET;
+      if (!id || !secret) return [] as string[];
+      try {
+        const res = await fetch(`https://openapi.naver.com/v1/search/kin.json?query=${encodeURIComponent(headKeyword)}&sort=date&display=10`, {
+          headers: { "X-Naver-Client-Id": id, "X-Naver-Client-Secret": secret },
+        });
+        if (!res.ok) return [];
+        const d = (await res.json()) as { items?: { title?: string }[] };
+        return (d.items ?? []).map((i) => String(i.title ?? "").replace(/<[^>]+>/g, "").trim()).filter(Boolean);
+      } catch { return []; }
+    })(),
+  ]);
+  if (auto.length === 0 && kinRaw.length === 0) return [];
+  const client = new Anthropic({ apiKey });
+  const res = await client.messages.create({
+    model: "claude-haiku-4-5",
+    max_tokens: 500,
+    messages: [{
+      role: "user",
+      content: [
+        `대형 검색어 "${headKeyword}"는 블로그 글이 너무 많아 정면으로는 못 이긴다. 아래 실측 재료에서 '빈틈 꼬리 키워드' 4개를 골라라.`,
+        "재료1 = 네이버 자동완성(사람들이 지금 붙여 치는 말):", ...auto.slice(0, 10).map((a) => `- ${a}`),
+        "재료2 = 지식iN 최신 질문(진짜 다음 질문):", ...kinRaw.map((k) => `- ${k}`),
+        "★규칙: 재료에 실제로 있는 말에서만 만들 것(지어내기 금지). 구체 상황·조건·날짜·대상이 붙은 꼬리 우선(신청기간·중도해지·대상 제외·지급일 같은).",
+        `머리 명사("${headKeyword}"의 핵심어)는 유지하되 2~5어절 검색형으로. hint = 이 꼬리를 고른 근거 한 줄(10자 내).`,
+        '출력 JSON 배열만: [{"k":"...","hint":"질문 몰림"}]',
+      ].join("\n"),
+    }],
+  });
+  void logUsage({ userId, model: "claude-haiku-4-5", kind: "money_rank_gap", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
+  const t = res.content.find((b) => b.type === "text");
+  const m = /\[[\s\S]*\]/.exec(t && t.type === "text" ? t.text : "");
+  if (!m) return [];
+  try {
+    const arr = JSON.parse(m[0]) as { k?: string; hint?: string }[];
+    return arr
+      .map((x) => ({ keyword: String(x.k ?? "").trim().slice(0, 40), hint: String(x.hint ?? "").trim().slice(0, 16) }))
+      .filter((x) => x.keyword.length >= 2)
+      .slice(0, 4);
+  } catch { return []; }
+}
+
 /** 판정 — 검색각은 문서수 게이트, 초과는 '붐빔'(홈판각 후보)으로 남겨 보여준다(버리지 않는 게 이 레인의 핵심). */
 export async function judgeMoneyRank(
   cands: Omit<MoneyRankItem, "docs" | "verdict" | "reason">[],

@@ -48,6 +48,23 @@ export default function MoneyRankCard({ onWrite }: { onWrite: (keyword: string, 
   const [err, setErr] = useState<string | null>(null);
   const [countdown, setCountdown] = useState("");
   const slotRef = useRef<string>("");
+  // ★빈틈 찾기(2026-08-11) — 붐빔 소재의 꼬리를 실측 재료에서 발굴(머리 키워드별 결과/로딩 상태)
+  const [gaps, setGaps] = useState<Record<string, Item[] | "loading">>({});
+
+  async function findGap(head: string, newsTitle: string) {
+    if (gaps[head]) return;
+    setGaps((g) => ({ ...g, [head]: "loading" }));
+    try {
+      const res = await fetch("/api/money-rank/gap", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keyword: head, newsTitle }),
+      });
+      const data = await res.json();
+      setGaps((g) => ({ ...g, [head]: res.ok ? (data.items as Item[]) : [] }));
+    } catch {
+      setGaps((g) => ({ ...g, [head]: [] }));
+    }
+  }
 
   async function scan() {
     if (busy) return;
@@ -115,16 +132,42 @@ export default function MoneyRankCard({ onWrite }: { onWrite: (keyword: string, 
               </button>
             </div>
           ))}
-          {crowded.slice(0, 4).map((i) => (
-            <div key={i.keyword} className="flex items-center gap-2 rounded-xl bg-[#FAFBFC] px-3 py-2">
-              <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-bold ${CAT_COLOR[i.cat] ?? "bg-neutral-100 text-neutral-500"}`}>{i.cat}</span>
-              <span className="min-w-0 flex-1 truncate text-[13px]"><b className="font-semibold text-neutral-700">{i.issue}</b><span className="text-neutral-400"> — 검색은 붐빔({(i.docs ?? 0) >= 10000 ? `${Math.round((i.docs ?? 0) / 10000)}만` : i.docs}편)</span></span>
-              <button onClick={() => onWrite(i.keyword, i.newsTitle || undefined, { species: "money_rank", mrAngle: "homefeed", mrCat: i.cat, mrDocs: i.docs })}
-                className="at-press shrink-0 rounded-full bg-white px-3 py-1 text-[11.5px] font-bold text-[#1D75F7] shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition hover:bg-[#F5F9FF]">
-                홈판각 쓰기
-              </button>
-            </div>
-          ))}
+          {crowded.slice(0, 4).map((i) => {
+            const gap = gaps[i.keyword];
+            return (
+              <div key={i.keyword}>
+                <div className="flex items-center gap-2 rounded-xl bg-[#FAFBFC] px-3 py-2">
+                  <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-bold ${CAT_COLOR[i.cat] ?? "bg-neutral-100 text-neutral-500"}`}>{i.cat}</span>
+                  <span className="min-w-0 flex-1 truncate text-[13px]"><b className="font-semibold text-neutral-700">{i.issue}</b><span className="text-neutral-400"> — 검색은 붐빔({(i.docs ?? 0) >= 10000 ? `${Math.round((i.docs ?? 0) / 10000)}만` : i.docs}편)</span></span>
+                  <button onClick={() => void findGap(i.keyword, i.newsTitle)} disabled={gap === "loading"}
+                    className="at-press shrink-0 rounded-full bg-white px-3 py-1 text-[11.5px] font-bold text-emerald-600 shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition hover:bg-emerald-50 disabled:opacity-60">
+                    {gap === "loading" ? "빈틈 찾는 중…" : "빈틈 찾기"}
+                  </button>
+                  <button onClick={() => onWrite(i.keyword, i.newsTitle || undefined, { species: "money_rank", mrAngle: "homefeed", mrCat: i.cat, mrDocs: i.docs })}
+                    className="at-press shrink-0 rounded-full bg-white px-3 py-1 text-[11.5px] font-bold text-[#1D75F7] shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition hover:bg-[#F5F9FF]">
+                    홈판각 쓰기
+                  </button>
+                </div>
+                {Array.isArray(gap) && (
+                  <div className="ml-6 mt-1 space-y-1">
+                    {gap.filter((t) => t.verdict === "direct").length === 0 && (
+                      <p className="px-3 py-1.5 text-[12px] text-neutral-400">빈 꼬리가 안 보여요 — 이 소재는 홈판각이 답이에요</p>
+                    )}
+                    {gap.filter((t) => t.verdict === "direct").map((t) => (
+                      <div key={t.keyword} className="flex items-center gap-2 rounded-xl bg-emerald-50/60 px-3 py-1.5">
+                        <span className="min-w-0 flex-1 truncate text-[12.5px] font-bold text-neutral-800">{t.keyword}<span className="ml-1.5 font-semibold text-emerald-600">· {t.issue}</span></span>
+                        {t.docs != null && <span className="shrink-0 text-[11px] font-semibold text-neutral-500">글 {t.docs.toLocaleString()}편</span>}
+                        <button onClick={() => onWrite(t.keyword, t.newsTitle || i.newsTitle || undefined, { species: "money_rank", mrAngle: "gap", mrHead: i.keyword, mrDocs: t.docs })}
+                          className="at-press shrink-0 rounded-full bg-emerald-500 px-3 py-1 text-[11px] font-bold text-white transition hover:bg-emerald-600">
+                          이 꼬리로 쓰기
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
           {writtenOnes.slice(0, 3).map((i) => (
             <div key={i.keyword} className="flex items-center gap-2 rounded-xl bg-[#FAFBFC] px-3 py-2">
               <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-neutral-400">{i.issue} — {i.keyword}</span>
