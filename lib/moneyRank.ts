@@ -95,21 +95,29 @@ export async function findGapTails(headKeyword: string, userId?: string | null):
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return [];
   const { fetchNaverAutocomplete } = await import("./naverAutocomplete");
-  const [auto, kinRaw] = await Promise.all([
+  // ★머리 명사로 줄여 조회(2026-08-11 유저: "대부분 빈틈 각이 안 나온다") — 합성된 긴 키워드
+  //  ("강남 2차 아파트 7억원 하락 급매 증가")를 자동완성에 넣으면 아무도 그렇게 안 쳐서 재료가 텅 빈다.
+  //  사람들이 실제로 치는 건 앞 1~2어절이다 — 긴 원문과 짧은 머리 둘 다 조회해 재료를 합친다.
+  const shortHead = headKeyword.split(/\s+/).slice(0, 2).join(" ");
+  const kinFetch = async (q: string) => {
+    const id = process.env.NAVER_DATALAB_CLIENT_ID, secret = process.env.NAVER_DATALAB_SECRET;
+    if (!id || !secret) return [] as string[];
+    try {
+      const res = await fetch(`https://openapi.naver.com/v1/search/kin.json?query=${encodeURIComponent(q)}&sort=date&display=10`, {
+        headers: { "X-Naver-Client-Id": id, "X-Naver-Client-Secret": secret },
+      });
+      if (!res.ok) return [];
+      const d = (await res.json()) as { items?: { title?: string }[] };
+      return (d.items ?? []).map((i) => String(i.title ?? "").replace(/<[^>]+>/g, "").trim()).filter(Boolean);
+    } catch { return []; }
+  };
+  const [autoFull, autoShort, kinShort] = await Promise.all([
     fetchNaverAutocomplete(headKeyword).catch(() => [] as string[]),
-    (async () => {
-      const id = process.env.NAVER_DATALAB_CLIENT_ID, secret = process.env.NAVER_DATALAB_SECRET;
-      if (!id || !secret) return [] as string[];
-      try {
-        const res = await fetch(`https://openapi.naver.com/v1/search/kin.json?query=${encodeURIComponent(headKeyword)}&sort=date&display=10`, {
-          headers: { "X-Naver-Client-Id": id, "X-Naver-Client-Secret": secret },
-        });
-        if (!res.ok) return [];
-        const d = (await res.json()) as { items?: { title?: string }[] };
-        return (d.items ?? []).map((i) => String(i.title ?? "").replace(/<[^>]+>/g, "").trim()).filter(Boolean);
-      } catch { return []; }
-    })(),
+    shortHead !== headKeyword ? fetchNaverAutocomplete(shortHead).catch(() => [] as string[]) : Promise.resolve([] as string[]),
+    kinFetch(shortHead),
   ]);
+  const auto = Array.from(new Set([...autoFull, ...autoShort]));
+  const kinRaw = kinShort;
   if (auto.length === 0 && kinRaw.length === 0) return [];
   const client = new Anthropic({ apiKey });
   const res = await client.messages.create({
