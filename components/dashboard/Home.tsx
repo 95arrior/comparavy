@@ -1,6 +1,6 @@
 "use client";
 import PerfImportSheet from "./PerfImportSheet";
-import RadarCard from "./RadarCard";
+// import RadarCard from "./RadarCard"; // 2026-08-11 화면에서 내림(코드 보존)
 
 import { cachedGet, invalidateGet } from "@/lib/clientFetchCache";
 
@@ -738,8 +738,8 @@ export default function Home({
               </div>
             );
           })()}
-          {/* ★결핍 레이더 — 지식iN 질문·카페 버즈 수확(유저 입력 없음). 어드바이저 붙여넣기 카드는 폐기(2026-08-10 유저: "저기 나오는 정보 별로야" — 후행지표였다) */}
-          <RadarCard onWrite={(kw, sel) => onWriteKeyword(kw, kw, undefined, undefined, undefined, undefined, { sel })} />
+          {/* ★결핍 레이더 카드 내림(2026-08-11 유저 지시 — 픽이 초니치 롱테일로 흘러 "풀이 너무 작다").
+              코드(lib/lackRadar·/api/radar·RadarCard)는 남긴다. 후속: 머니 랭킹 카드(뉴스 랭킹 기반, 작전 승인 대기) */}
           {/* ★글감 새로 받기 — 크론 안 기다리고 두 보드 갈이(1시간 2회) */}
           <div className="mb-2 flex justify-end gap-1.5">
             {ffPerf && (
