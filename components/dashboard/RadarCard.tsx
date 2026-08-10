@@ -7,9 +7,9 @@ import { useState } from "react";
  * 어드바이저 스크린샷 카드(MorningBriefing)의 후속 — 유저 입력이 아예 없다.
  */
 
-interface RadarItem { keyword: string; src: "kin" | "cafe"; heat: number; docs: number | null; verdict: "direct" | "variant" | "written" | "unmeasured" | "blocked"; reason?: string }
+interface RadarItem { keyword: string; src: "kin" | "cafe" | "news"; heat: number; docs: number | null; verdict: "direct" | "variant" | "written" | "unmeasured" | "blocked"; reason?: string }
 
-const SRC_LABEL: Record<RadarItem["src"], string> = { kin: "질문", cafe: "카페" };
+const SRC_LABEL: Record<RadarItem["src"], string> = { kin: "질문", cafe: "카페", news: "돈 뉴스" };
 
 export default function RadarCard({ onWrite }: { onWrite: (keyword: string, sel: Record<string, unknown>) => void }) {
   const [busy, setBusy] = useState(false);

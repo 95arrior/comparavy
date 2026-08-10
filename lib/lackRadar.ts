@@ -21,13 +21,16 @@ const KIN_QUERIES = [
   "대출 금리", "퇴직금 세금", "건강보험료", "포인트 현금화",
 ];
 const CAFE_QUERIES = ["은행 이벤트", "앱테크 이벤트", "적금 특판", "카드 혜택"];
+// ★돈 뉴스(포모) 축(2026-08-10 유저: "포모 오는 돈 뉴스가 없는데") — '지금 터진 돈 사건'.
+//  단, 예고형 대형 발표 추격은 함정이다(부동산 공급대책 3일 6회 실측) — 마감·특판·출시·공시형만 담는다.
+const NEWS_QUERIES = ["적금 특판 출시", "지원금 신청 마감", "무상증자 결정", "환급 신청 시작", "이벤트 선착순", "금리 인상 예금"];
 
-export interface RawBuzz { title: string; src: "kin" | "cafe" }
-export interface RadarCandidate { keyword: string; src: "kin" | "cafe"; heat: number }
+export interface RawBuzz { title: string; src: "kin" | "cafe" | "news" }
+export interface RadarCandidate { keyword: string; src: "kin" | "cafe" | "news"; heat: number }
 
 const strip = (s: string) => s.replace(/<[^>]+>/g, "").replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").trim();
 
-async function searchNaver(kind: "kin" | "cafearticle", query: string, display: number): Promise<string[]> {
+async function searchNaver(kind: "kin" | "cafearticle" | "news", query: string, display: number): Promise<string[]> {
   const id = process.env.NAVER_DATALAB_CLIENT_ID;
   const secret = process.env.NAVER_DATALAB_SECRET;
   if (!id || !secret) return [];
@@ -52,6 +55,10 @@ export async function harvestBuzz(): Promise<RawBuzz[]> {
     for (const t of await searchNaver("cafearticle", q, 8)) out.push({ title: t, src: "cafe" });
     await new Promise((r) => setTimeout(r, 120));
   }
+  for (const q of NEWS_QUERIES) {
+    for (const t of await searchNaver("news", q, 6)) out.push({ title: t, src: "news" });
+    await new Promise((r) => setTimeout(r, 120));
+  }
   // 제목 중복 제거(같은 질문이 여러 쿼리에 걸림)
   const seen = new Set<string>();
   return out.filter((b) => { const k = b.title.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
@@ -67,6 +74,7 @@ export async function condenseBuzz(raw: RawBuzz[], userId?: string | null): Prom
   if (!apiKey || raw.length === 0) return [];
   const kinList = raw.filter((r) => r.src === "kin").map((r) => `- ${r.title}`).join("\n").slice(0, 6000);
   const cafeList = raw.filter((r) => r.src === "cafe").map((r) => `- ${r.title}`).join("\n").slice(0, 4000);
+  const newsList = raw.filter((r) => r.src === "news").map((r) => `- ${r.title}`).join("\n").slice(0, 4000);
   const client = new Anthropic({ apiKey });
   const res = await client.messages.create({
     model: "claude-haiku-4-5",
@@ -74,7 +82,7 @@ export async function condenseBuzz(raw: RawBuzz[], userId?: string | null): Prom
     messages: [{
       role: "user",
       content: [
-        "아래는 방금 수확한 네이버 지식iN 최신 질문(kin)과 카페 최신글(cafe) 제목이다.",
+        "아래는 방금 수확한 네이버 지식iN 최신 질문(kin)·카페 최신글(cafe)·돈 뉴스(news) 제목이다.",
         "돈 벌고 싶거나 돈 나갈까 걱정하는 사람이 실제로 검색할 '검색형 키워드'(명사구, 2~5어절)로 압축해라.",
         "★규칙:",
         "- 돈이 들어오거나 나가는 소재만(지원금·금리·이벤트·환급·세금·보험료·연금·청약·앱테크). 스포츠·가십·사건사고·구인·광고·스캠 뉴스는 버려라.",
@@ -85,9 +93,12 @@ export async function condenseBuzz(raw: RawBuzz[], userId?: string | null): Prom
         "  '청년미래적금 갈아타기 후 해지 방법'은 '청년미래적금'(대형 키워드, 못 이김)이 아니라",
         "  '청년미래적금 갈아타기 해지'(그 상황을 검색할 사람이 실제로 있는 롱테일)다.",
         "  상황 꼬리가 없는 한 단어짜리 대형 키워드는 아예 내지 마라.",
+        "★news는 '놓치면 손해'(포모)만 골라라: 특판 출시·신청 마감·선착순·무상증자·환급 시작처럼 기한이나 한정이 걸린 것.",
+        "  정부 대책·시장 전망 같은 대형 헤드라인 뉴스는 버려라 — 언론이 점령해서 블로그가 못 이긴다.",
+        "  news 키워드에는 대상 이름을 살려라(예: '○○은행 특판 적금 조건', '○○ 무상증자 일정').",
         '출력은 JSON 배열만: [{"k":"청년미래적금 중도 해지","src":"kin","n":2}]. 최대 15개.',
         "",
-        "[kin]", kinList, "", "[cafe]", cafeList,
+        "[kin]", kinList, "", "[cafe]", cafeList, "", "[news]", newsList,
       ].join("\n"),
     }],
   });
@@ -98,13 +109,13 @@ export async function condenseBuzz(raw: RawBuzz[], userId?: string | null): Prom
   try {
     const arr = JSON.parse(m[0]) as { k?: string; src?: string; n?: number }[];
     return arr
-      .map((x) => ({ keyword: String(x.k ?? "").trim().slice(0, 40), src: (x.src === "cafe" ? "cafe" : "kin") as "kin" | "cafe", heat: Math.max(1, Math.min(20, Number(x.n) || 1)) }))
+      .map((x) => ({ keyword: String(x.k ?? "").trim().slice(0, 40), src: (x.src === "cafe" || x.src === "news" ? x.src : "kin") as "kin" | "cafe" | "news", heat: Math.max(1, Math.min(20, Number(x.n) || 1)) }))
       .filter((x) => x.keyword.length >= 2)
       .slice(0, 15);
   } catch { return []; }
 }
 
-export interface RadarItem { keyword: string; src: "kin" | "cafe"; heat: number; docs: number | null; verdict: "direct" | "variant" | "written" | "unmeasured" | "blocked"; reason?: string }
+export interface RadarItem { keyword: string; src: "kin" | "cafe" | "news"; heat: number; docs: number | null; verdict: "direct" | "variant" | "written" | "unmeasured" | "blocked"; reason?: string }
 
 /** 후보 → 판정(답안지 레인과 같은 뼈대). written/브랜드 허용은 호출측이 프로필로 만든 걸 받는다. */
 export async function judgeCandidates(cands: RadarCandidate[], opts: { written: Set<string>; normalize: (k: string) => string; allowFinanceBrand: boolean; budgetMs?: number }): Promise<RadarItem[]> {
