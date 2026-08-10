@@ -214,7 +214,7 @@ export function hasSpacingDefect(html: string): boolean {
 //  종전 23자는 실제 렌더와 달랐다 — 개행 v6는 '한 줄 띄어쓰기 포함 18자'로 감싼다(MOBILE_MAX_CHARS 72 = 18×4).
 //  ★재는 자와 그리는 자가 다른 숫자를 보면, 게이트는 통과인데 화면은 벽돌이 된다.
 const CHARS_PER_LINE = 18;
-export const PARA_MAX_LINES = 4;
+export const PARA_MAX_LINES = 3; // ★4→3(2026-08-11 유저: '이런 식으로 나눠주셔야' — 모바일 3줄 넘으면 문단을 쪼갠다)
 
 // ★긴 '문장' 게이트(2026-08-06 유저 화면). 실물: "국토교통부는 … 핵심으로 제시했습니다."가 한 문장으로 13줄이었다.
 //  ★문단을 나눠도 못 고치는 종류다 — 개행은 문장 단위로 일어나므로, 문장 자체가 길면 통줄로 남는다.
@@ -225,7 +225,7 @@ export const SENT_MAX_CHARS = 90; // 18자 기준 5줄
 //  상한(형광 2곳)만 있고 하한이 없어서 0개로 나가도 아무도 몰랐다 — 이모지와 같은 병이다.
 //  ★타겟이 40~70대라 '어디가 중요한지'가 눈에 안 들어오면 그냥 나간다.
 export const BOLD_MIN_PER_1000 = 2;  // 1,000자당 굵은 글씨 최소 2곳
-export const MARK_MIN = 2;           // ★1→2(2026-08-11 유저: "노란 형광 강조가 부족, 검정만 쭉") — 상한은 3곳
+export const MARK_MIN = 3;           // ★2→3(2026-08-11 유저 2차: '아직 많이 부족, 핵심이 묻혀요') — 상한은 4곳
 export function emphasisShortfall(html: string): { chars: number; bold: number; mark: number; wantBold: number } | null {
   const h = String(html || "");
   const chars = h.replace(/<[^>]+>/g, "").replace(/\s/g, "").length;
@@ -294,7 +294,7 @@ export function longParagraphs(html: string): { preview: string; lines: number }
 // ═══ 이모지 하한(2026-08-02 발행글 실측: 규격 3~6인데 실제 0개) ═══
 //  상한(6)만 코드에 있고 하한이 없어서 0개로 나가도 아무도 몰랐다. 형광펜과 같은 병이다.
 const EMOJI_RE = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/gu;
-export const EMOJI_MIN = 4;          // ★2→4(2026-08-11 유저: "적절한 이모지 심심하지 않게") — 상한 6·리듬 게이트 유지
+export const EMOJI_MIN = 5;          // ★4→5(2026-08-11 유저 2차: '이모지 수가 많이 부족') — 상한 8(publishHtml EMOJI_CAP과 짝)·리듬 게이트 유지
 export function emojiCount(html: string): number {
   return (stripTags(html).match(EMOJI_RE) ?? []).length;
 }
