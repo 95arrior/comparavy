@@ -173,19 +173,21 @@ function copyBlock(input: ThumbInput, tpl: Template): El {
   const p = identity.palette, ft = identity.fontPair.title, fb = identity.fontPair.body;
   const onDark = isDark(p.bg);
   const hasMain = (mainCopy ?? "").trim().length > 0;
-  const T = hasMain ? titleEl(mainCopy, p, ft, input.centerCopy ? "center" : tpl.align, onDark) : null;
+  // ★문구는 항상 좌측 정렬(2026-08-11 유저: "중앙 배치 문구가 이미지를 가려 클릭률이 저조" — 위치만 좌측으로).
+  //  템플릿 align은 오브젝트 배치에만 남고, 카피 정렬은 좌측 고정 — 중앙이 비어 그림(하단 히어로)이 온전히 보인다.
+  const T = hasMain ? titleEl(mainCopy, p, ft, "left", onDark) : null;
   // 서브: 메인이 '약할 때'(단 1줄·6자 이하)만 예외적으로 보조 1줄. 그 외 생략.
   const weakMain = hasMain && mainCopy.split("\n").filter((l) => l.trim()).length === 1 && [...mainCopy.trim()].length <= 6;
-  const S = (subCopy && subCopy.trim() && weakMain) ? subEl(subCopy, p, fb, tpl.align) : null;
+  const S = (subCopy && subCopy.trim() && weakMain) ? subEl(subCopy, p, fb, "left") : null;
   if (input.centerCopy) {
     return el("div", { style: {
       position: "absolute", top: 0, left: 60, right: 60, bottom: 0, display: "flex", flexDirection: "column",
-      alignItems: "center", justifyContent: "center", gap: 16,
+      alignItems: "flex-start", justifyContent: "center", gap: 16,
     } }, [T, S].filter(Boolean));
   }
   return el("div", { style: {
     position: "absolute", top: 92, left: 80, right: 80, display: "flex", flexDirection: "column",
-    alignItems: tpl.align === "center" ? "center" : "flex-start", gap: 16,
+    alignItems: "flex-start", gap: 16,
   } }, [T, S].filter(Boolean));
 }
 
