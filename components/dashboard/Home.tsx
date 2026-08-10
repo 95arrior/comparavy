@@ -1,6 +1,6 @@
 "use client";
 import PerfImportSheet from "./PerfImportSheet";
-import MorningBriefing from "./MorningBriefing";
+import RadarCard from "./RadarCard";
 
 import { cachedGet, invalidateGet } from "@/lib/clientFetchCache";
 
@@ -738,8 +738,8 @@ export default function Home({
               </div>
             );
           })()}
-          {/* ★아침 브리핑(답안지 레인 1단계) — 어드바이저 인기유입검색어 붙여넣기 → 오늘 심을 키워드. 기존 보드와 분리된 추가 레인 */}
-          <MorningBriefing onWrite={(kw, sel) => onWriteKeyword(kw, kw, undefined, undefined, undefined, undefined, { sel })} />
+          {/* ★결핍 레이더 — 지식iN 질문·카페 버즈 수확(유저 입력 없음). 어드바이저 붙여넣기 카드는 폐기(2026-08-10 유저: "저기 나오는 정보 별로야" — 후행지표였다) */}
+          <RadarCard onWrite={(kw, sel) => onWriteKeyword(kw, kw, undefined, undefined, undefined, undefined, { sel })} />
           {/* ★글감 새로 받기 — 크론 안 기다리고 두 보드 갈이(1시간 2회) */}
           <div className="mb-2 flex justify-end gap-1.5">
             {ffPerf && (
