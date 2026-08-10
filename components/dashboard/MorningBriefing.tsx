@@ -9,7 +9,7 @@ import { useRef, useState } from "react";
  * 판단은 전부 서버 몫(뇌빼기) — 유저는 복사·붙여넣기·버튼 하나.
  */
 
-interface BriefItem { keyword: string; days: number; docs: number | null; verdict: "direct" | "variant" | "unmeasured" | "blocked"; reason?: string }
+interface BriefItem { keyword: string; days: number; docs: number | null; verdict: "direct" | "variant" | "written" | "unmeasured" | "blocked"; reason?: string }
 interface DayLog { date: string; keywords: string[] }
 
 const LS_KEY = "ateflo_answer_sheet_days";
@@ -88,7 +88,11 @@ export default function MorningBriefing({ onWrite }: { onWrite: (keyword: string
       setOpen(false); // 결과는 접힌 화면에 뜬다 — 분석이 끝나면 바로 보여줘야 한다(붙여넣기 원문은 볼 일이 끝났다)
       setImages([]); // 다음 붙여넣기를 위해 비운다(원문 텍스트는 남겨 재분석 가능)
       // 오늘 목록을 기록 — 내일부터 'N일째'가 자동으로 계산된다(같은 날 재분석은 합집합).
-      const parsed: string[] = Array.isArray(data.parsedKeywords) ? data.parsedKeywords : [];
+      // ★검증된 것만 저장(2026-08-10): 스크린샷 오독('민심지않금')이 기록에 들어가면 연속일수가 오염된다.
+      //  문서수가 실측된 키워드(직행·변형)와 이미 심은 키워드만 실존이 증명된 것이다.
+      const parsed: string[] = (data.items as BriefItem[] ?? [])
+        .filter((i) => i.verdict === "direct" || i.verdict === "variant" || i.verdict === "written")
+        .map((i) => i.keyword);
       const rest = loadHistory().filter((d) => d.date !== today);
       const prevToday = loadHistory().find((d) => d.date === today)?.keywords ?? [];
       const merged = Array.from(new Set([...prevToday, ...parsed]));
@@ -102,6 +106,7 @@ export default function MorningBriefing({ onWrite }: { onWrite: (keyword: string
 
   const picks = (items ?? []).filter((i) => i.verdict === "direct");
   const variants = (items ?? []).filter((i) => i.verdict === "variant");
+  const writtenOnes = (items ?? []).filter((i) => i.verdict === "written");
   const restCount = (items ?? []).filter((i) => i.verdict === "unmeasured" || i.verdict === "blocked").length;
 
   return (
@@ -182,6 +187,12 @@ export default function MorningBriefing({ onWrite }: { onWrite: (keyword: string
             <div key={i.keyword} className="flex items-center gap-2 rounded-xl bg-[#FAFBFC] px-3 py-2">
               <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-neutral-600">{i.keyword}</span>
               <span className="shrink-0 rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-bold text-amber-600">글 {i.docs?.toLocaleString()}편 — 이미 붐벼요</span>
+            </div>
+          ))}
+          {writtenOnes.slice(0, 4).map((i) => (
+            <div key={i.keyword} className="flex items-center gap-2 rounded-xl bg-[#FAFBFC] px-3 py-2">
+              <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-neutral-400">{i.keyword}</span>
+              <span className="shrink-0 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[11px] font-bold text-emerald-600">이미 심었어요 ✓</span>
             </div>
           ))}
           {restCount > 0 && (

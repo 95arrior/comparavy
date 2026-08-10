@@ -8,6 +8,7 @@ import { parseAnswerSheet, daysSeenIn } from "@/lib/answerSheet";
 import { fetchBlogTotalDetailed } from "@/lib/naverBlogSearch";
 import { isUnsafeKeyword, financeBrandAllowed } from "@/lib/keywordSafety";
 import { DOC_HARD_MAX } from "@/lib/topicScore";
+import { normalizeKeyword } from "@/lib/diversity";
 
 export const maxDuration = 60;
 
@@ -85,7 +86,13 @@ export async function POST(request: Request) {
     .eq("user_id", user.id).eq("is_active", true).maybeSingle();
   const brandOk = { allowFinanceBrand: financeBrandAllowed(`${profileRow?.vertical ?? ""} ${profileRow?.sub_category ?? ""}`) };
 
-  type Item = { keyword: string; days: number; docs: number | null; verdict: "direct" | "variant" | "unmeasured" | "blocked"; reason?: string };
+  // ★이미 심은 키워드 판별(2026-08-10 유저: "하루 이틀 중복인 것들이 있어서") — 답안지 지속형은 매일 다시 오르므로
+  //  '연속 등장'과 '이미 베팅함'을 갈라야 한다. article_patterns가 생성 시점마다 (user_id, keyword_norm)을 남긴다.
+  const { data: usedRows } = await supabase
+    .from("article_patterns").select("keyword_norm").eq("user_id", user.id).limit(1000);
+  const written = new Set((usedRows ?? []).map((r: { keyword_norm: string }) => r.keyword_norm));
+
+  type Item = { keyword: string; days: number; docs: number | null; verdict: "direct" | "variant" | "written" | "unmeasured" | "blocked"; reason?: string };
   const items: Item[] = [];
   const startedAt = Date.now();
   const TIME_BUDGET_MS = 45_000; // maxDuration 60s에서 응답 몫을 뺀 측정 예산
@@ -94,6 +101,10 @@ export async function POST(request: Request) {
 
   for (const kw of keywords) {
     const days = daysSeenIn(kw, history) + 1; // 오늘 포함 N일째
+    if (written.has(normalizeKeyword(kw))) {
+      items.push({ keyword: kw, days, docs: null, verdict: "written", reason: "이미 심은 키워드" });
+      continue; // 측정도 생략 — 베팅 대상이 아니다
+    }
     if (isUnsafeKeyword(kw, brandOk)) {
       items.push({ keyword: kw, days, docs: null, verdict: "blocked", reason: "업체명·가십·상품명 차단" });
       continue;
@@ -121,7 +132,7 @@ export async function POST(request: Request) {
   }
 
   // 직행(문서 적은 순) → 변형 → 미측정 → 차단. 어드바이저 순서는 유입순이라 동률이면 원래 순서 유지(stable sort).
-  const rank: Record<Item["verdict"], number> = { direct: 0, variant: 1, unmeasured: 2, blocked: 3 };
+  const rank: Record<Item["verdict"], number> = { direct: 0, variant: 1, written: 2, unmeasured: 3, blocked: 4 };
   items.sort((a, b) => rank[a.verdict] - rank[b.verdict] || (a.docs ?? Infinity) - (b.docs ?? Infinity));
 
   return NextResponse.json({ items, parsedKeywords: keywords, droppedNewsy, docMax: DOC_HARD_MAX });
