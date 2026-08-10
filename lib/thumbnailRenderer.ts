@@ -185,8 +185,10 @@ function copyBlock(input: ThumbInput, tpl: Template): El {
       alignItems: "flex-start", justifyContent: "center", gap: 16,
     } }, [T, S].filter(Boolean));
   }
+  // ★하단 좌측(2026-08-11 유저: "하단에는 약간 그라데이션, 글자 좀 잘 보이게") — 이미지가 상단에 온전히 보이고
+  //  카피는 하단 스크림 위에 얹힌다. 바닥에서 180px 띄우는 이유 = 홈판 카드가 좌하단에 채널 칩을 오버레이(2026-07-10 실측).
   return el("div", { style: {
-    position: "absolute", top: 92, left: 80, right: 80, display: "flex", flexDirection: "column",
+    position: "absolute", left: 80, right: 80, bottom: 180, display: "flex", flexDirection: "column",
     alignItems: "flex-start", gap: 16,
   } }, [T, S].filter(Boolean));
 }
@@ -224,9 +226,10 @@ async function renderAt(rawInput: ThumbInput, width: number): Promise<Buffer> {
   const backdropTint = [shade(p.bg, dark ? 13 : -9)];
   const backdrop: El[] = (bgDataUrl || !tpl.backdrop) ? [] : [shapeEl(tpl.backdrop, backdropTint)];
   const objects: El[] = bgDataUrl ? [] : posedObjects.map((s) => shapeEl(s, tints));
-  // AI 배경 위 카피 대비 스크림(상단만 은은히).
+  // AI 배경 위 카피 대비 스크림 — ★하단 그라데이션(2026-08-11 유저: "하단에는 약간 그라데이션, 글자 좀 잘 보이게").
+  //  카피가 하단 좌측으로 내려갔으므로 스크림도 아래에서 위로 — 상단 이미지는 건드리지 않는다.
   const scrim: El | null = bgDataUrl
-    ? el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: `linear-gradient(180deg, ${dark ? "rgba(0,0,0,0.42)" : "rgba(255,255,255,0.34)"}, rgba(0,0,0,0) 55%)` } })
+    ? el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: "linear-gradient(0deg, rgba(6,8,14,0.72), rgba(6,8,14,0.38) 32%, rgba(0,0,0,0) 56%)" } })
     : null;
 
   // ★보도형 — 실사 위 다크 그라데이션 + 좌하단 카피 + 브랜드 프레임(운영자가 공들인 제작물 문법)

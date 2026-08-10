@@ -184,15 +184,16 @@ export function buildThumbMetaphorPrompt(topic: string, copyText: string | undef
     PROP_BAN, // ★모드별로 붙이지 않는다 — 실측: 인물 장면(mode 3)에만 빠져 있었다
     OBJECT_BUDGET,
     `FRAMING: ${CAMERA_ANGLES[seed % CAMERA_ANGLES.length]}, ${SCALE_VARIANTS[(seed >> 2) % SCALE_VARIANTS.length]}.`,
-    "COMPOSITION: subjects pushed toward top/bottom/edges — the CENTER band of the frame stays relatively calm and low-detail (large Korean typography will be overlaid dead-center later).",
+    "COMPOSITION: subjects pushed toward the top and edges — the LOWER-LEFT area of the frame stays relatively calm and low-detail (large Korean typography will be overlaid on the lower-left later).",
     opts?.deepBg
-      ? "CONTRAST (critical — this image is a thumbnail seen small in a mobile feed): keep the overall image DARK and richly saturated so white type overlaid on the center reads instantly. Push light and glow to the edges as rim light. Avoid pastel, washed-out, or high-key looks entirely."
+      ? "CONTRAST (critical — this image is a thumbnail seen small in a mobile feed): keep the overall image DARK and richly saturated so white type overlaid on the lower half reads instantly. Push light and glow to the upper edges as rim light. Avoid pastel, washed-out, or high-key looks entirely."
       : ""
     ,
     opts?.deepBg
-      // ★구도 강제(2026-08-01 실측): '히어로 오브젝트'와 '중앙을 비워라'가 충돌해 모델이 오브젝트를 정중앙에
-      //  크게 놓았고, 밝은 전구 위에 카피가 그대로 겹쳤다. 자리를 숫자로 못 박는다.
-      ? "LAYOUT (hard requirement): the hero object sits in the BOTTOM 45% of the square, resting near the lower edge. The TOP 55% is EMPTY dark space — an unbroken dark gradient with nothing in it except faint atmosphere. Nothing bright, no object, no highlight may enter the top half. Compose as if a large headline will be placed across the upper-middle of the frame."
+      // ★구도 강제(2026-08-01 실측): '히어로 오브젝트'와 '비워라'가 충돌해 모델이 오브젝트를 정중앙에 크게 놓았고,
+      //  카피가 그대로 겹쳤다. 자리를 숫자로 못 박는다. ★상하 반전(2026-08-11 유저: 문구=하단 좌측+그라데이션,
+      //  이미지가 가려져 클릭률 저조) — 히어로가 위, 헤드라인 자리가 아래로 바뀌었다.
+      ? "LAYOUT (hard requirement): the hero object sits in the TOP 55% of the square, clearly visible. The BOTTOM 45% stays CALM and dark — low detail, no bright object, no highlight (a dark gradient and a left-aligned Korean headline will be overlaid on the lower-left later). Nothing important may sit in the bottom half."
       : "",
     `Style: award-winning editorial illustration (fintech campaign grade) — rich color blocking, soft airbrush shading, subtle grain. Palette: ${palette}. Square 1:1.`,
     NO_TEXT_STRICT,

@@ -26,12 +26,14 @@ export function repeatsTitle(copy: string, title: string, keyword: string): bool
 }
 
 const UNIT_MERGE_RE = /(\d[\d,.]*[만억천]?)\s+(원|명|개|배|년|월|일|살|번|위|시간|분)(?=\s|$)/g;
-const BOUND_HEAD_RE = /^(원|전|후|중|시|것|수|만|억|배|개|명|위|살|번)$/; // 줄머리에 오면 어색한 의존어('내'는 소유격 줄머리가 자연스러워 제외)
+const BOUND_HEAD_RE = /^(원|전|후|중|시|것|수|만|억|배|개|명|위|살|번|곳|데|때|줄|뿐|채|만큼)(이|가|은|는|을|를|도|의|에|로|만)?$/; // 줄머리에 오면 어색한 의존어('내'는 소유격 줄머리가 자연스러워 제외). ★곳·데·때 추가(2026-08-11 실측: "1만명 잘 / 곳이 없다" — '잘 곳'이 관형형+의존명사 한 몸인데 균형 점수가 갈라놨다)
 // ★줄꼬리 금지어(2026-07-17 실측: "2027년 내 / 비서가 생깁니다" — 소유격 '내'가 윗줄 꼬리에 매달림) —
 //  소유격·관형사는 다음 어절과 한 몸이라 줄 끝에 오면 어색하다. 줄꼬리 분할은 강한 감점.
 const BOUND_TAIL_RE = /^(내|그|이|저|내가|우리|첫|한|두|세|네|새|온|올|이런|그런|저런|어떤)$/;
 export function breakThumbCopy(text: string): string {
-  const t = (text || "").trim().replace(/\s+/g, " ").replace(UNIT_MERGE_RE, "$1$2");
+  const t = (text || "").trim().replace(/\s+/g, " ").replace(UNIT_MERGE_RE, "$1$2")
+    // ★띄어 온 조사 붙이기(2026-08-11 실측: "잘 곳 이 없다" — 조사가 홀로 떨어지면 어느 분할이든 어색하다)
+    .replace(/([가-힣]+)\s+(이|가|은|는|을|를|와|과|도|의)(?=\s|$)/g, "$1$2");
   const chars = [...t];
   if (chars.length <= 9 || !t.includes(" ")) return t;
   const words = t.split(" ");
