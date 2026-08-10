@@ -23,7 +23,11 @@ const KIN_QUERIES = [
 const CAFE_QUERIES = ["은행 이벤트", "앱테크 이벤트", "적금 특판", "카드 혜택"];
 // ★돈 뉴스(포모) 축(2026-08-10 유저: "포모 오는 돈 뉴스가 없는데") — '지금 터진 돈 사건'.
 //  단, 예고형 대형 발표 추격은 함정이다(부동산 공급대책 3일 6회 실측) — 마감·특판·출시·공시형만 담는다.
-const NEWS_QUERIES = ["적금 특판 출시", "지원금 신청 마감", "무상증자 결정", "환급 신청 시작", "이벤트 선착순", "금리 인상 예금"];
+const NEWS_QUERIES = ["적금 특판 출시", "지원금 신청 마감", "무상증자 결정", "환급 신청 시작", "은행 이벤트 선착순", "금리 인상 예금"];
+// ★분야 정합 코드 게이트(2026-08-10 유저: "폭스바겐 아틀라스가 왜 나오지, 난 경제 블로그인데") —
+//  결핍 판정을 모델에만 맡기면 '할인=돈'으로 자동차·여행 프로모션이 샌다. 판단은 코드가 한다:
+//  경제·재테크 신호어가 하나도 없는 키워드는 후보 자격이 없다(포지티브 게이트 — 블랙리스트는 늘 뚫린다).
+export const MONEY_SIGNAL_RE = /(금리|적금|예금|대출|보험료|연금|국민연금|퇴직|세금|소득세|재산세|종부세|공제|연말정산|환급|절세|지원금|보조금|장려금|수당|바우처|급여|계좌|통장|청약|분양|전세|월세|등기|무상증자|유상증자|배당|공모주|권리락|주식|증권|isa|etf|채무|회생|파산|신용|카드|캐시백|페이|포인트|앱테크|패스|민생|건강보험|국민취업|실업급여|재테크)/i;
 
 export interface RawBuzz { title: string; src: "kin" | "cafe" | "news" }
 export interface RadarCandidate { keyword: string; src: "kin" | "cafe" | "news"; heat: number }
@@ -84,6 +88,8 @@ export async function condenseBuzz(raw: RawBuzz[], userId?: string | null): Prom
       content: [
         "아래는 방금 수확한 네이버 지식iN 최신 질문(kin)·카페 최신글(cafe)·돈 뉴스(news) 제목이다.",
         "돈 벌고 싶거나 돈 나갈까 걱정하는 사람이 실제로 검색할 '검색형 키워드'(명사구, 2~5어절)로 압축해라.",
+        "★이 블로그는 경제·재테크 전문이다. 금융·세금·정부지원·연금·부동산·주식·앱테크 소재만 남겨라.",
+        "  자동차·여행·쇼핑·가전 같은 소비 프로모션은 돈이 걸려 있어도 전부 버려라(할인은 재테크가 아니다).",
         "★규칙:",
         "- 돈이 들어오거나 나가는 소재만(지원금·금리·이벤트·환급·세금·보험료·연금·청약·앱테크). 스포츠·가십·사건사고·구인·광고·스캠 뉴스는 버려라.",
         "- 특정 개인 이름·상호가 주어인 것은 버려라.",
@@ -111,6 +117,7 @@ export async function condenseBuzz(raw: RawBuzz[], userId?: string | null): Prom
     return arr
       .map((x) => ({ keyword: String(x.k ?? "").trim().slice(0, 40), src: (x.src === "cafe" || x.src === "news" ? x.src : "kin") as "kin" | "cafe" | "news", heat: Math.max(1, Math.min(20, Number(x.n) || 1)) }))
       .filter((x) => x.keyword.length >= 2)
+      .filter((x) => MONEY_SIGNAL_RE.test(x.keyword)) // ★분야 게이트 — 모델이 봐줘도 코드가 자른다
       .slice(0, 15);
   } catch { return []; }
 }
