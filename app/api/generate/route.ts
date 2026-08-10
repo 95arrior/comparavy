@@ -22,6 +22,7 @@ import { checkRateLimit } from "@/lib/rateLimit";
 import { normalizeKeyword, pickVariant, pickAngle, simhash } from "@/lib/diversity";
 import { looksLikeGarbageKeyword, looksLikeNonsenseStory } from "@/lib/keywordGuard";
 import { isUnsafeKeyword, financeBrandAllowed } from "@/lib/keywordSafety";
+import { crossCheckFacts } from "@/lib/factCrossCheck";
 import { deriveStoryTopic, validateStoryMeaning } from "@/lib/aiSeeds";
 import { explicitAudienceOf, AUDIENCE_ALL } from "@/lib/audience";
 import { isAdminEmail } from "@/lib/adminStats";
@@ -553,6 +554,29 @@ export async function POST(request: Request) {
             send({ type: "error", error: "글을 만드는 중 문제가 생겨 잠깐 멈췄어요. 다시 한 번 눌러 주세요. (크레딧은 차감되지 않아요)" });
             return;
           }
+        }
+        // ★팩트 크로스체크 가드(2026-08-11 유저: "최신 정보와 잘못된 정보 2번 체킹" — 61점 사고:
+        //  예탁금 시행일이 발표 후 7/31로 조기 변경됐는데 생성 근거가 발표 시점 기사라 8/5로 나갔다).
+        //  factGate 교훈대로 자기 검수가 아니라 '지금 새로 검색한 최신 근거'와 대조한다. 시사·숫자 글만(뉴스 2조회+sonnet 1콜).
+        if (timeSensitiveGen || numericSensitive) {
+          try {
+            const fx = await crossCheckFacts(article.body_html, keyword, user.id);
+            if (fx.length && regenSpent < REGEN_CAP && hasTimeForRegen()) {
+              regenSpent++;
+              send({ type: "revising" });
+              void logUsage({ userId: user.id, model: "guard", kind: "fact_xcheck_retry", inputTokens: 0, outputTokens: 0 });
+              const fixLines = fx.map((i) => `"${i.quote}" → ${i.fix}`).join(" / ");
+              try {
+                const retried = await streamArticle(
+                  { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ★경고: 직전 생성에서 최신 근거와 어긋나는 사실이 검출됐다. 아래 교정을 그대로 반영하고, 같은 숫자가 FAQ·요약·표에 반복되면 전부 함께 고쳐라(하나만 고치면 글이 자기모순이 된다): ${fixLines}${specWarnings(article)}`.trim() },
+                  noop, noop, onGenUsage,
+                );
+                if ((userStory || userExperience || !hasFabricatedExperience(retried.body_html)) && countBodyChars(retried.body_html) >= 500) article = retried;
+              } catch { /* 재생성 실패 — 원본 유지 */ }
+            } else if (fx.length) {
+              console.log(`[fact-xcheck] user=${user.id.slice(0, 8)} 이슈 ${fx.length}건 — 재생성 예산 없음, 통과(로그): ${fx.map((i) => i.kind).join(",")}`);
+            }
+          } catch { /* 검증 자체의 실패는 발행을 막지 않는다 */ }
         }
         // ★해석 문단 가드(2026-07-17 전략 회의) — 경제·정책 글이 제도·수치 나열로만 끝나면 AI 요약이 종결시켜 클릭이 안 남는다(제로클릭).
         //  해석·판단 신호 바닥 미달 시 재생성 1회, 그래도 미달이면 통과(발행 차단은 과잉 — 분량 상한과 같은 결, 로그만).
