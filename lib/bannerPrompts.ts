@@ -195,6 +195,8 @@ export function buildThumbMetaphorPrompt(topic: string, copyText: string | undef
       //  이미지가 가려져 클릭률 저조) — 히어로가 위, 헤드라인 자리가 아래로 바뀌었다.
       ? "LAYOUT (hard requirement): the hero object sits in the TOP 55% of the square, clearly visible. The BOTTOM 45% stays CALM and dark — low detail, no bright object, no highlight (a dark gradient and a left-aligned Korean headline will be overlaid on the lower-left later). Nothing important may sit in the bottom half."
       : "",
+    // ★풀블리드 강제(2026-08-11 유저 실물: 회색 태블릿 베젤 안에 그림 — 액자는 화면 낭비+싸구려 목업 느낌)
+    "FULL-BLEED (hard requirement): the artwork fills the ENTIRE square edge-to-edge. NEVER draw any frame, border, bezel, mat, rounded card, device or screen mockup, or margin band around the artwork — no poster-on-a-wall, no photo-inside-a-frame.",
     `Style: award-winning editorial illustration (fintech campaign grade) — rich color blocking, soft airbrush shading, subtle grain. Palette: ${palette}. Square 1:1.`,
     NO_TEXT_STRICT,
   ].filter(Boolean).join(" ");
