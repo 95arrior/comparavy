@@ -4,7 +4,8 @@ import { checkRateLimit } from "@/lib/rateLimit";
 import { isAdminEmail } from "@/lib/adminStats";
 import { financeBrandAllowed } from "@/lib/keywordSafety";
 import { normalizeKeyword } from "@/lib/diversity";
-import { harvestRankingNews, condenseRanking, judgeMoneyRank } from "@/lib/moneyRank";
+import { harvestRankingNews, condenseRanking, judgeMoneyRank, attachSimilar } from "@/lib/moneyRank";
+import { isVerifiedStatus } from "@/lib/course";
 
 export const maxDuration = 60;
 
@@ -48,5 +49,9 @@ export async function POST() {
   }
   if (cands.length === 0) return NextResponse.json({ items: [], harvested: titles.length });
   const items = await judgeMoneyRank(cands, { written, normalize: normalizeKeyword, allowFinanceBrand });
+  // ★소재 근접 중복 표기(유저: "글 썼던 건 표기, 중복 걱정") — 최근 글과 실질 토큰 2+ 겹침이면 발행 여부와 함께 알린다
+  const { data: recent } = await supabase.from("articles").select("keyword,title,status")
+    .eq("user_id", user.id).order("created_at", { ascending: false }).limit(200);
+  attachSimilar(items, recent ?? [], isVerifiedStatus);
   return NextResponse.json({ items, harvested: titles.length });
 }

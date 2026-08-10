@@ -8,7 +8,18 @@ import { useEffect, useRef, useState } from "react";
  * 카운트다운을 상시 명시(유저: "명시해주거나 카운트다운"). 소재마다 검색각(게이트 통과)·홈판각(붐빔=대중 관심) 분기.
  */
 
-interface Item { issue: string; keyword: string; cat: string; docs: number | null; verdict: "direct" | "crowded" | "written" | "blocked" | "unmeasured"; reason?: string; newsTitle: string }
+interface Item { issue: string; keyword: string; cat: string; docs: number | null; verdict: "direct" | "crowded" | "written" | "blocked" | "unmeasured"; reason?: string; newsTitle: string; similar?: { title: string; published: boolean } }
+
+/** ★소재 근접 중복 배지(2026-08-11 유저: "글 썼던 건 표기 좀 — 발행완료까지 된 건 중복 걱정") — 막지 않고 알린다 */
+function SimilarChip({ similar }: { similar?: { title: string; published: boolean } }) {
+  if (!similar) return null;
+  return (
+    <span title={similar.title}
+      className={`shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-bold ${similar.published ? "bg-rose-50 text-rose-500" : "bg-amber-50 text-amber-600"}`}>
+      {similar.published ? "발행한 소재 ⚠" : "초안에 있음"}
+    </span>
+  );
+}
 
 const SLOTS: [number, string][] = [[6 * 60 + 30, "06:30"], [9 * 60 + 30, "09:30"], [13 * 60, "13:00"], [17 * 60 + 30, "17:30"]];
 const CACHE_KEY = "ateflo_money_rank";
@@ -125,6 +136,7 @@ export default function MoneyRankCard({ onWrite }: { onWrite: (keyword: string, 
             <div key={i.keyword} className="flex items-center gap-2 rounded-xl bg-[#F5F9FF] px-3 py-2">
               <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-bold ${CAT_COLOR[i.cat] ?? "bg-neutral-100 text-neutral-500"}`}>{i.cat}</span>
               <span className="min-w-0 flex-1 truncate text-[13px]"><b className="font-bold text-neutral-900">{i.issue}</b><span className="text-neutral-400"> — {i.keyword}</span></span>
+              <SimilarChip similar={i.similar} />
               {i.docs != null && <span className="shrink-0 text-[11.5px] font-semibold text-neutral-500">글 {i.docs.toLocaleString()}편</span>}
               <button onClick={() => onWrite(i.keyword, i.newsTitle || undefined, { species: "money_rank", mrAngle: "search", mrCat: i.cat, mrDocs: i.docs })}
                 className="at-press shrink-0 rounded-full bg-[#1D75F7] px-3 py-1 text-[11.5px] font-bold text-white transition hover:bg-[#1667DE]">
@@ -139,6 +151,7 @@ export default function MoneyRankCard({ onWrite }: { onWrite: (keyword: string, 
                 <div className="flex items-center gap-2 rounded-xl bg-[#FAFBFC] px-3 py-2">
                   <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-bold ${CAT_COLOR[i.cat] ?? "bg-neutral-100 text-neutral-500"}`}>{i.cat}</span>
                   <span className="min-w-0 flex-1 truncate text-[13px]"><b className="font-semibold text-neutral-700">{i.issue}</b><span className="text-neutral-400"> — 검색은 붐빔({(i.docs ?? 0) >= 10000 ? `${Math.round((i.docs ?? 0) / 10000)}만` : i.docs}편)</span></span>
+                  <SimilarChip similar={i.similar} />
                   <button onClick={() => void findGap(i.keyword, i.newsTitle)} disabled={gap === "loading"}
                     className="at-press shrink-0 rounded-full bg-white px-3 py-1 text-[11.5px] font-bold text-emerald-600 shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition hover:bg-emerald-50 disabled:opacity-60">
                     {gap === "loading" ? "빈틈 찾는 중…" : "빈틈 찾기"}
@@ -156,6 +169,7 @@ export default function MoneyRankCard({ onWrite }: { onWrite: (keyword: string, 
                     {gap.filter((t) => t.verdict === "direct").map((t) => (
                       <div key={t.keyword} className="flex items-center gap-2 rounded-xl bg-emerald-50/60 px-3 py-1.5">
                         <span className="min-w-0 flex-1 truncate text-[12.5px] font-bold text-neutral-800">{t.keyword}<span className="ml-1.5 font-semibold text-emerald-600">· {t.issue}</span></span>
+                        <SimilarChip similar={t.similar} />
                         {t.docs != null && <span className="shrink-0 text-[11px] font-semibold text-neutral-500">글 {t.docs.toLocaleString()}편</span>}
                         <button onClick={() => onWrite(t.keyword, t.newsTitle || i.newsTitle || undefined, { species: "money_rank", mrAngle: "gap", mrHead: i.keyword, mrDocs: t.docs })}
                           className="at-press shrink-0 rounded-full bg-emerald-500 px-3 py-1 text-[11px] font-bold text-white transition hover:bg-emerald-600">

@@ -44,6 +44,42 @@ export interface MoneyRankItem {
   verdict: "direct" | "crowded" | "written" | "blocked" | "unmeasured";
   reason?: string;
   newsTitle: string; // 원 뉴스 제목 — 생성 시 newsContext 재료
+  /** ★소재 근접 중복(2026-08-11 유저: "글 썼던 건 표기 좀, 중복으로 쓸까 봐 걱정") — 같은 소재의 기존 글 */
+  similar?: { title: string; published: boolean };
+}
+
+// 근접 중복 판별용 실질 토큰 — 어느 소재에나 붙는 범용어는 겹침으로 안 센다
+const GENERIC_TOKEN_RE = /^(조건|방법|일정|신청|확인|정리|이유|경우|지금|오늘|기준|대상|안내|총정리|변경|시작|마감|가입|추가|모집|20\d\d년?|올해)$/;
+function coreTokens(s: string): Set<string> {
+  return new Set(
+    String(s ?? "").split(/[^가-힣a-zA-Z0-9]+/)
+      .map((t) => t.trim().toLowerCase())
+      .filter((t) => [...t].length >= 2 && !GENERIC_TOKEN_RE.test(t)),
+  );
+}
+
+/**
+ * ★소재 근접 중복 표기 — keyword_norm 정확 일치만 보면 표현만 다른 같은 소재를 놓친다
+ *  (실측 우려: 어제 "하이닉스 용인공장 직원 주거"로 쓴 글이 오늘 "용인 반도체 주거 대책"으로 또 뜸).
+ *  실질 토큰 2개 이상 겹치면 같은 소재로 보고, 기존 글의 발행 여부까지 실어 준다(막지 않고 알린다 — 판단은 유저).
+ */
+export function attachSimilar(items: MoneyRankItem[], articles: { keyword?: string | null; title?: string | null; status?: string | null }[], isPublished: (status: string) => boolean): void {
+  const pool = articles.map((a) => ({
+    tokens: coreTokens(`${a.keyword ?? ""} ${a.title ?? ""}`),
+    title: String(a.title ?? a.keyword ?? "").slice(0, 40),
+    published: isPublished(String(a.status ?? "")),
+  })).filter((a) => a.tokens.size > 0);
+  for (const it of items) {
+    if (it.verdict === "written" || it.verdict === "blocked") continue;
+    const mine = coreTokens(`${it.keyword} ${it.issue}`);
+    let best: { title: string; published: boolean } | null = null;
+    for (const a of pool) {
+      let overlap = 0;
+      for (const t of mine) if (a.tokens.has(t)) overlap += 1;
+      if (overlap >= 2 && (!best || (a.published && !best.published))) best = { title: a.title, published: a.published };
+    }
+    if (best) it.similar = best;
+  }
 }
 
 /** 랭킹 제목 더미 → 돈 소재 분류·검색 꼬리 생성(haiku 1회). */

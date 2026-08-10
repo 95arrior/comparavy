@@ -4,7 +4,8 @@ import { checkRateLimit } from "@/lib/rateLimit";
 import { isAdminEmail } from "@/lib/adminStats";
 import { financeBrandAllowed } from "@/lib/keywordSafety";
 import { normalizeKeyword } from "@/lib/diversity";
-import { findGapTails, judgeMoneyRank } from "@/lib/moneyRank";
+import { findGapTails, judgeMoneyRank, attachSimilar } from "@/lib/moneyRank";
+import { isVerifiedStatus } from "@/lib/course";
 
 export const maxDuration = 60;
 
@@ -39,5 +40,8 @@ export async function POST(request: Request) {
     tails.map((t) => ({ issue: t.hint, keyword: t.keyword, cat: "빈틈", newsTitle: body.newsTitle ?? "" })),
     { written, normalize: normalizeKeyword, allowFinanceBrand },
   );
+  const { data: recent } = await supabase.from("articles").select("keyword,title,status")
+    .eq("user_id", user.id).order("created_at", { ascending: false }).limit(200);
+  attachSimilar(items, recent ?? [], isVerifiedStatus);
   return NextResponse.json({ items });
 }
