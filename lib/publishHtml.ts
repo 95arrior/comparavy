@@ -176,7 +176,8 @@ function breakSentence(sen: string): string {
         const prevTok = (rest.slice(0, cut).trim().match(/\S+$/) ?? [""])[0];
         const depPenalty = DEP_HEAD_RE.test(nextTok) ? 100 : 0; // 의존어 줄머리 — 사실상 금지
         const numTail = /^\d/.test(prevTok) && [...nextTok].length <= 3 ? 100 : 0; // '2주 / 뒤인' — 숫자 단위와 의존어 분리 금지
-        const d = Math.abs(left - 15) + depPenalty + numTail;
+        const dateSplit = /\d+(년|월)[,，]?$/.test(prevTok) && /^\d/.test(nextTok) ? 100 : 0; // ★'7월 / 22일' 분리 금지(2026-08-11 유저: "날짜 내려쓰면 보기 이상해요")
+        const d = Math.abs(left - 15) + depPenalty + numTail + dateSplit;
         if (d < bestD) { bestD = d; best = cut; }
       }
       return bestD >= 100 ? -1 : best; // 감점 후보뿐이면 이 라운드는 자르지 않는다(어색한 절단보다 긴 줄)

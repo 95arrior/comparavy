@@ -59,7 +59,10 @@ export function lacksConditionBranch(html: string): boolean {
 //  ★프롬프트로 "자연스럽게"라고 해봐야 모델은 매번 다른 말로 돌아온다. 목록을 코드가 들고 지운다.
 //   지우는 방식은 보수적으로: 문장 첫머리에서 감탄사 + 뒤따르는 쉼표·공백만 걷어낸다(문장은 그대로 산다).
 const STILTED_WORDS = ["허참", "거참", "원참", "허허", "어허", "어이쿠", "아이쿠", "아뿔싸", "이런이런", "에구머니", "어머나", "자자"];
-const STILTED_LEAD_RE = new RegExp(`(^|>|<br\\s*/?>|[.!?]\\s*)\\s*(?:${STILTED_WORDS.join("|")})\\s*[,，!]?\\s*`, "g");
+const STILTED_LEAD_RE = new RegExp(`(^|>|<br\\s*/?>|[.!?]\\s*)\\s*(?:${STILTED_WORDS.join("|")})(?![가-힣])\\s*[,，!]?\\s*`, "g"); // ★(?![가-힣]) 경계 — '허허벌판'의 허허를 깎던 버그(2026-08-11 실측)
+// ★위치 무관 박멸(2026-08-11 유저: "강력하게 막으세요" — 문장 중간의 '허참'이 살아남았다).
+//  한글 아닌 경계로 감싸 '허허벌판' 같은 단어 속은 안 건드리고, 홀로 선 감탄사만 지운다.
+const STILTED_ANY_RE = new RegExp(`(^|[^가-힣])(?:${STILTED_WORDS.join("|")})[,，!]?(?=$|[^가-힣])`, "g");
 /** 본문에 남아 있는 어색한 감탄사들(경고용). */
 export function stiltedInterjections(html: string): string[] {
   const text = stripTags(html);
@@ -67,7 +70,8 @@ export function stiltedInterjections(html: string): string[] {
 }
 /** 문장 첫머리 감탄사만 걷어낸다 — 문장 자체는 건드리지 않는다. */
 export function stripStilted(html: string): string {
-  return String(html || "").replace(STILTED_LEAD_RE, "$1");
+  // 첫머리 패스(문장 구조 보존) → 위치 무관 패스(중간에 박힌 것 박멸) 순서
+  return String(html || "").replace(STILTED_LEAD_RE, "$1").replace(STILTED_ANY_RE, "$1").replace(/  +/g, " ");
 }
 
 // ═══ 본문 즉답 이행(2026-08-04 확정 — 퀵백 대응) ═══

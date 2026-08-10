@@ -462,6 +462,11 @@ export async function POST(request: Request) {
           if (ec < EMOJI_MIN) {
             w.push(`이모지가 ${ec}개뿐이다. 섹션 리드나 체크 목록에 ${EMOJI_MIN}~5개를 자연스럽게 넣어라(📌 ✅ 💡 ⏰ 👇 정도). 없으면 글이 딱딱하게 읽힌다.`);
           }
+          // ★표 하한(2026-08-11 유저: "표가 부족하네 빡세게") — 리스트는 마감에서 표로 변환되므로 같이 센다.
+          const tableish = (a.body_html.match(/<table/gi) ?? []).length + (a.body_html.match(/<[uo]l\b/gi) ?? []).length;
+          if (tableish < 2) {
+            w.push(`표·목록이 ${tableish}개뿐이다. 조건별 금액·대상 비교·일정 중 두 곳 이상을 표나 목록으로 바꿔라 — 항목 3개 넘는 나열을 문장으로 이어 쓰면 실격.`);
+          }
           // ★사진 슬롯(실측: 섹션이 여럿인데 마커가 하한 3개에 딱 붙음) — 네이버는 사진이 체류·노출에 크게 작용한다.
           const ps = photoSlotShortfall(a.body_html);
           if (ps) {
