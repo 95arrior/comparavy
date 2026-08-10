@@ -128,13 +128,27 @@ function mergeUnbalanced(parts: string[]): string[] {
   return out;
 }
 
+// ★주소 보호(2026-08-11 유저: "주소는 띄어쓰기 없이 한 문단에서 끝내") — 프로토콜 없는 도메인까지 잡는다
+const BARE_URL_RE = /(https?:\/\/|www\.|[a-z0-9-]{2,}\.(?:go|or|co)\.kr\b|[a-z0-9-]{2,}\.(?:kr|com|net|org)\b)/i;
+/** 모델이 주소 안에 넣은 공백·개행을 재접합한다("bokjiro.go. kr" → "bokjiro.go.kr"). 좌변을 ASCII 도메인 조각으로 한정해 한글 문장 끝 마침표는 안 건드린다. */
+export function fixBrokenUrls(html: string): string {
+  let out = String(html || "");
+  const SEP = String.raw`(?:\s|<br\s*\/?\s*>)+`;
+  const FRAG = new RegExp(String.raw`([A-Za-z0-9-]{2,}\.)` + SEP + String.raw`((?:[A-Za-z0-9-]+\.)*(?:kr|com|net|org|go|or|co)\b)`, "g");
+  for (let i = 0; i < 3; i++) out = out.replace(FRAG, "$1$2");
+  out = out.replace(/([A-Za-z0-9-]{2,})\s+\.((?:go|or|co)\.kr|kr|com|net|org)\b/g, "$1.$2");
+  return out;
+}
+
 /* ── 안전망: 4줄 초과 문단 자동 분할 (문장 → 쉼표 → 어절) ── */
 // ★유저 교본(2026-07-07): 문단을 쪼개면(빈 줄) 흐름이 끊긴다 — 같은 문단 안에서 <br>로 '의미 구 줄바꿈'.
 //  문장별 한 줄. 문장이 길면(>44자) 쉼표·연결어미 구 경계에서 균형 줄바꿈(양쪽 12자 이상일 때만 — 고아 조각 금지).
 function breakSentence(sen: string): string {
   // ★개행 v6(2026-07-17 유저 확정 — 중앙 정렬 유지 조건): 한 줄 '띄어쓰기 포함 18자' 상한, 꼬리줄 5자 미만 금지(달랑 1~2자 줄 = 흉함).
   //  의미 경계(조사·어미·쉼표) 우선, 없으면 어절(공백) 경계 폴백 — 단어 중간 억지 절단은 여전히 금지. URL 포함 문장은 통줄(실측: 고용24 깨짐).
-  if (/<br/i.test(sen) || /https?:\/\//.test(sen)) return sen;
+  // ★URL 감지 확장(2026-08-11 유저 실물: "kr가 밑줄로 내려감") — https만 보던 게 구멍이었다.
+  //  프로토콜 없는 주소(www.gov.kr·bokjiro.go.kr)도 통줄 — 주소 포함 문장은 절대 안 자른다.
+  if (/<br/i.test(sen) || BARE_URL_RE.test(sen)) return sen;
   const tokens = sen.split(/(<[^>]+>)/).filter((t) => t !== "");
   const plain = tokens.filter((t) => !t.startsWith("<")).join("");
   // ★v6.1(2026-07-17 실측 3건): ①20자 이하 문장은 통줄("하면 돼요." 조각 방지 — 미세 초과는 자연 wrap이 흡수)
@@ -197,6 +211,7 @@ function breakSentence(sen: string): string {
 function splitInner(inner: string): string[] {
   // ★마커 문단 보호 — 절 개행이 [관련글]/[마무리관련글]/[사진] 마커 안에 <br>을 박으면 변환 정규식이 죽는다(실측: 3층 블록 미출력·마커 원형 노출)
   if (/\[(?:마무리)?관련글:|\[(?:사진|카드|차트):|\[링크 카드/.test(inner)) return [inner];
+  inner = fixBrokenUrls(inner); // ★주소 재접합을 개행보다 먼저 — 붙여야 통줄 보호(BARE_URL_RE)가 잡는다(2026-08-11)
   if (visLen(inner) <= MOBILE_MAX_CHARS && !/(?<=[?!])\s|(?<=[^\d]\.)\s/.test(inner.replace(/<[^>]+>/g, ""))) return [breakSentence(inner)]; // ★단문 문단도 절 개행은 적용(실측: 한 문장 문단이 통줄로 남음)
   const sentences = mergeUnbalanced(inner.split(/(?:<br\s*\/?>)|(?<=[?!])\s+|(?<=[^\d]\.)\s+/g).map((x) => x.trim()).filter(Boolean));
   if (sentences.length <= 1) return [breakSentence(inner)];
