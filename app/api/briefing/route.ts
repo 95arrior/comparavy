@@ -60,7 +60,7 @@ export async function POST(request: Request) {
             role: "user",
             content: [
               ...blocks,
-              { type: "text", text: "네이버 크리에이터 어드바이저 '인기유입검색어' 화면 캡처야. 화면에 보이는 검색어만 위에서 아래 순서 그대로, 한 줄에 하나씩 출력해. 순위 변동 표시(▲·▼·new·-)와 숫자, 날짜, 탭 이름, 안내 문구는 빼. 검색어 외 다른 말은 아무것도 쓰지 마." },
+              { type: "text", text: "네이버 크리에이터 어드바이저 '인기유입검색어' 화면 캡처야. 화면에 보이는 검색어만 위에서 아래 순서 그대로, 한 줄에 하나씩 출력해. 순위 변동 표시(▲·▼·new·-)와 숫자, 날짜, 탭 이름, 안내 문구는 빼. ★글자가 조금이라도 불확실하거나 흐린 줄은 아예 빼라 — 비슷하게 지어내는 것이 최악이다(이 목록은 그대로 검색 베팅에 쓰인다). 검색어 외 다른 말은 아무것도 쓰지 마." },
             ],
           }],
         });
@@ -107,6 +107,11 @@ export async function POST(request: Request) {
     if (r.status === 429) backedOff = true;
     if (r.total == null) {
       items.push({ keyword: kw, days, docs: null, verdict: "unmeasured", reason: r.reason ?? undefined });
+    } else if (r.total === 0) {
+      // ★문서 0편 = 최고 추천이 아니라 오독 신호다(2026-08-10 실측: 비전이 '민생지원금'을 '민심지않금'으로
+      //  읽으면 그 오타는 문서 0편이라 direct 최상위로 둔갑한다). 어드바이저에 오른 진짜 검색어가
+      //  블로그 글 0편인 경우는 사실상 없다 — 유입을 만들었다는 건 이미 글이 있다는 뜻이다.
+      items.push({ keyword: kw, days, docs: 0, verdict: "unmeasured", reason: "글 0편 — 잘못 읽혔을 수 있어요" });
     } else if (r.total < DOC_HARD_MAX) {
       items.push({ keyword: kw, days, docs: r.total, verdict: "direct" });
     } else {
