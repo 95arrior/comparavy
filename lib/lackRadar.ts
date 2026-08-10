@@ -14,6 +14,7 @@ import { fetchBlogTotalDetailed } from "./naverBlogSearch";
 import { isUnsafeKeyword } from "./keywordSafety";
 import { DOC_HARD_MAX } from "./topicScore";
 import { logUsage } from "./usageLog";
+import { fetchKeywordStats, normalizeKey } from "./naverKeyword";
 
 // 결핍 축 — 돈이 들어오거나(지원금·이벤트·금리) 나가는(세금·보험료·연체) 자리만.
 const KIN_QUERIES = [
@@ -122,7 +123,7 @@ export async function condenseBuzz(raw: RawBuzz[], userId?: string | null): Prom
   } catch { return []; }
 }
 
-export interface RadarItem { keyword: string; src: "kin" | "cafe" | "news"; heat: number; docs: number | null; verdict: "direct" | "variant" | "written" | "unmeasured" | "blocked"; reason?: string }
+export interface RadarItem { keyword: string; src: "kin" | "cafe" | "news"; heat: number; docs: number | null; verdict: "direct" | "variant" | "written" | "unmeasured" | "blocked"; reason?: string; vol?: number | null }
 
 /** 후보 → 판정(답안지 레인과 같은 뼈대). written/브랜드 허용은 호출측이 프로필로 만든 걸 받는다. */
 export async function judgeCandidates(cands: RadarCandidate[], opts: { written: Set<string>; normalize: (k: string) => string; allowFinanceBrand: boolean; budgetMs?: number }): Promise<RadarItem[]> {
@@ -156,5 +157,28 @@ export async function judgeCandidates(cands: RadarCandidate[], opts: { written: 
   const rank: Record<RadarItem["verdict"], number> = { direct: 0, variant: 1, written: 2, unmeasured: 3, blocked: 4 };
   // 직행 안에서는 열기(몰린 건수) 큰 순 → 문서 적은 순
   items.sort((a, b) => rank[a.verdict] - rank[b.verdict] || b.heat - a.heat || (a.docs ?? Infinity) - (b.docs ?? Infinity));
+  return items;
+}
+
+/**
+ * ★골드 정렬(2026-08-10 유저: "잘 생각해서 최적화로 돈 되는 것만 추려서") —
+ *  '돈 되는 정도'는 감이 아니라 수요÷공급 비대칭이다: 골드 점수 = 월 검색량 ÷ 문서수.
+ *  황금캡슐이 좋았던 이유가 정확히 이 비율(카테고리 1위 수요 / 3.7천 공급)이었다.
+ *  ★검색광고 DB에 없는 키워드(vol null)는 수요 0이 아니라 '신조어·이벤트'일 수 있다
+ *   (실측: 케이뱅크 황금캡슐도 광고 DB에 없었다) — 그래서 null은 감점하지 않고 heat로 대신 세운다.
+ *   내리는 건 '검색량이 실측됐는데 얇은 것'(vol<100·몰림 없음)뿐이다.
+ */
+export function goldRank(items: RadarItem[], stats: Map<string, { mobile: number; pc: number }>): RadarItem[] {
+  const score = (i: RadarItem): number => {
+    if (i.verdict !== "direct") return -1;
+    const s = stats.get(normalizeKey(i.keyword));
+    i.vol = s ? s.mobile + s.pc : null;
+    if (i.vol == null) return i.heat >= 2 ? 5 : 2; // 신생 추정 — 몰림이 있으면 골드급 대우
+    if (i.vol < 100 && i.heat < 2) { i.reason = "수요 얇음"; return 0.1; }
+    return Math.min(20, i.vol / Math.max(i.docs ?? 1, 1));
+  };
+  const scored = new Map(items.map((i) => [i.keyword, score(i)]));
+  const rank: Record<RadarItem["verdict"], number> = { direct: 0, variant: 1, written: 2, unmeasured: 3, blocked: 4 };
+  items.sort((a, b) => rank[a.verdict] - rank[b.verdict] || (scored.get(b.keyword) ?? 0) - (scored.get(a.keyword) ?? 0));
   return items;
 }

@@ -1,20 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * ★결핍 레이더(2026-08-10) — 버튼 하나로 지식iN 질문·카페 버즈를 수확해 오늘 심을 소재를 받는다.
  * 어드바이저 스크린샷 카드(MorningBriefing)의 후속 — 유저 입력이 아예 없다.
  */
 
-interface RadarItem { keyword: string; src: "kin" | "cafe" | "news"; heat: number; docs: number | null; verdict: "direct" | "variant" | "written" | "unmeasured" | "blocked"; reason?: string }
+interface RadarItem { keyword: string; src: "kin" | "cafe" | "news"; heat: number; docs: number | null; verdict: "direct" | "variant" | "written" | "unmeasured" | "blocked"; reason?: string; vol?: number | null }
 
 const SRC_LABEL: Record<RadarItem["src"], string> = { kin: "질문", cafe: "카페", news: "돈 뉴스" };
+// ★자동 수확 캐시 — 홈에 들어오면 항상 채워져 있어야 한다(유저: "매번 노출해줘야 해"). 3시간이면 결핍·뉴스 리듬에 충분.
+const CACHE_KEY = "ateflo_radar_cache";
+const CACHE_TTL_MS = 3 * 60 * 60 * 1000;
 
 export default function RadarCard({ onWrite }: { onWrite: (keyword: string, sel: Record<string, unknown>) => void }) {
   const [busy, setBusy] = useState(false);
   const [items, setItems] = useState<RadarItem[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const autoRan = useRef(false);
 
   async function scan() {
     if (busy) return;
@@ -24,12 +28,28 @@ export default function RadarCard({ onWrite }: { onWrite: (keyword: string, sel:
       const data = await res.json();
       if (!res.ok) { setErr(data.error ?? "수확에 실패했어요. 다시 시도해 주세요."); return; }
       setItems(data.items as RadarItem[]);
+      try { localStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), items: data.items })); } catch { /* 저장 실패는 무해 */ }
     } catch {
       setErr("네트워크가 잠깐 불안정해요. 다시 시도해 주세요.");
     } finally {
       setBusy(false);
     }
   }
+
+  // 홈 진입 시 자동 수확 — 캐시가 신선하면 그걸 먼저 보여주고, 오래됐으면 조용히 새로 수확한다.
+  useEffect(() => {
+    if (autoRan.current) return;
+    autoRan.current = true;
+    try {
+      const c = JSON.parse(localStorage.getItem(CACHE_KEY) ?? "null") as { at: number; items: RadarItem[] } | null;
+      if (c?.items?.length) {
+        setItems(c.items);
+        if (Date.now() - c.at < CACHE_TTL_MS) return;
+      }
+    } catch { /* 캐시 손상은 새 수확으로 */ }
+    void scan();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const picks = (items ?? []).filter((i) => i.verdict === "direct");
   const variants = (items ?? []).filter((i) => i.verdict === "variant");
@@ -59,11 +79,13 @@ export default function RadarCard({ onWrite }: { onWrite: (keyword: string, sel:
               지금은 선점 구간 소재가 없어요 — 몇 시간 뒤 다시 수확해 보세요.
             </p>
           )}
-          {picks.slice(0, 8).map((i) => (
+          {picks.slice(0, 5).map((i) => (
             <div key={i.keyword} className="flex items-center gap-2 rounded-xl bg-[#F5F9FF] px-3 py-2">
               <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-neutral-900">{i.keyword}</span>
               <span className="shrink-0 rounded-md bg-white px-1.5 py-0.5 text-[11px] font-bold text-[#1D75F7]">{SRC_LABEL[i.src]}{i.heat >= 2 ? ` ${i.heat}건` : ""}</span>
-              {i.docs != null && <span className="shrink-0 text-[11.5px] font-semibold text-neutral-500">글 {i.docs.toLocaleString()}편</span>}
+              <span className="shrink-0 text-[11.5px] font-semibold text-neutral-500">
+                {i.vol != null ? `월 ${i.vol.toLocaleString()}회` : "신생"}{i.docs != null ? ` · 글 ${i.docs.toLocaleString()}편` : ""}
+              </span>
               <button
                 onClick={() => onWrite(i.keyword, { species: "lack_radar", radarSrc: i.src, radarHeat: i.heat, radarDocs: i.docs })}
                 className="at-press shrink-0 rounded-full bg-[#1D75F7] px-3 py-1 text-[11.5px] font-bold text-white transition hover:bg-[#1667DE]"

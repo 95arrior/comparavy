@@ -4,7 +4,8 @@ import { checkRateLimit } from "@/lib/rateLimit";
 import { isAdminEmail } from "@/lib/adminStats";
 import { financeBrandAllowed } from "@/lib/keywordSafety";
 import { normalizeKeyword } from "@/lib/diversity";
-import { harvestBuzz, condenseBuzz, judgeCandidates } from "@/lib/lackRadar";
+import { harvestBuzz, condenseBuzz, judgeCandidates, goldRank } from "@/lib/lackRadar";
+import { fetchKeywordStats } from "@/lib/naverKeyword";
 
 export const maxDuration = 60;
 
@@ -51,5 +52,9 @@ export async function POST() {
     return NextResponse.json({ items: [], harvested: raw.length });
   }
   const items = await judgeCandidates(cands, { written, normalize: normalizeKeyword, allowFinanceBrand });
+  // ★골드 정렬 — 직행 픽의 월 검색량을 재서 수요÷공급으로 세운다(돈 되는 순). 실패해도 판정은 그대로 산다.
+  const directKws = items.filter((i) => i.verdict === "direct").map((i) => i.keyword);
+  const stats = directKws.length > 0 ? await fetchKeywordStats(directKws, 2).catch(() => new Map()) : new Map();
+  goldRank(items, stats);
   return NextResponse.json({ items, harvested: raw.length });
 }
