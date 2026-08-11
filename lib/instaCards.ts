@@ -122,7 +122,7 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
       caption: String(j.caption ?? "").trim().slice(0, 1200),
       clip: segments.length >= 3 && hook.say ? { hook, segments, character, background: backgroundDesc, styleAnchor: anchor, basePrompt,
         topHook: String((clipRaw as { topHook?: string } | undefined)?.topHook ?? "").trim().slice(0, 60),
-        oneTake: String(clipRaw && "oneTake" in clipRaw ? (clipRaw as { oneTake?: string }).oneTake ?? "" : "").trim().slice(0, 130),
+        oneTake: noBlog(String(clipRaw && "oneTake" in clipRaw ? (clipRaw as { oneTake?: string }).oneTake ?? "" : "").trim()).slice(0, 310), // ★130 잔재 제거(실물: 대사가 '왜냐면 나는 '에서 잘림)
         parts: (Array.isArray((clipRaw as { parts?: unknown[] } | undefined)?.parts) ? (clipRaw as { parts: unknown[] }).parts : [])
           .map((x) => typeof x === "object" && x
             ? { say: noBlog(String((x as { say?: string }).say ?? "").trim()).slice(0, 260), scene: String((x as { scene?: string }).scene ?? "").trim().slice(0, 240) }
