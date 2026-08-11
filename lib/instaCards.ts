@@ -48,7 +48,7 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
         "  각 세그 motion = 그 컷의 동작·표정·카메라만 영어 1~2문장(캐릭터·배경·스타일 묘사 금지 — 코드가 구워서 합친다). 예: 'The character leans in and points at the viewer with a warning face, subtle push-in.'",
         "  styleAnchor = 스타일 한 줄(영어): 'Consistent 2D cartoon style, soft shading, subtle smooth motion.' 결 — ★'reference image' 같은 말 금지(이미지 없는 모드에서 오류를 만든다).",
         "  cta = 마무리 대사(반말): '블로그 링크에서 최신 기준 확인하고, 증권사에도 꼭 물어봐! 그래야 정확해' 결. 대사 전부 글에 있는 사실만.",
-        "  oneTake = ★30초 통대본(2026-08-11 유저: '이미지 하나+대사 통으로, 하나씩은 너무 오래 걸려'): 한 번에 읽는 완결 대사 150~180자(한국어 30초 분량 — 절대 초과 금지). 구성 = 훅 1문장 + 가장 돈 되는 핵심 3개(각 1문장) + CTA 1문장. 같은 화자(키워드 당사자)·같은 반말. 컷 대사를 복붙하지 말고 30초에 맞게 새로 압축해라.",
+        "  oneTake = ★20초 통대본(2026-08-11 유저 확정 — 영상 툴 상한 20초): 한 번에 읽는 완결 대사 100~120자(한국어 20초 분량 — 절대 초과 금지). 구성 = 훅 1문장 + 가장 돈 되는 핵심 2개(각 1문장) + CTA 1문장(짧게). 같은 화자(키워드 당사자)·같은 반말. 컷 대사를 복붙하지 말고 30초에 맞게 새로 압축해라.",
         "",
         '출력 JSON만: {"cover":"...","cards":[{"head":"...","body":"..."}],"cta":{"head":"...","body":"..."},"caption":"...","clip":{"hook":{"say":"...","motion":"..."},"character":"...","background":"...","styleAnchor":"...","segments":[{"say":"...","motion":"..."}],"cta":"...","oneTake":"..."}}',
         "", "[본문]", text,
@@ -85,7 +85,7 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
       cards,
       cta: { head: String(j.cta?.head ?? "지금 확인").trim().slice(0, 40), body: String(j.cta?.body ?? "자세한 내용은 프로필 링크에").trim().slice(0, 200) },
       caption: String(j.caption ?? "").trim().slice(0, 1200),
-      clip: segments.length >= 3 && hook.say ? { hook, segments, character, background: backgroundDesc, styleAnchor: anchor, oneTake: String(clipRaw && "oneTake" in clipRaw ? (clipRaw as { oneTake?: string }).oneTake ?? "" : "").trim().slice(0, 240), cta: String(clipRaw?.cta ?? "블로그 링크에서 최신 기준 확인하고, 증권사에도 꼭 물어봐! 그래야 정확해").trim().slice(0, 160) } : undefined,
+      clip: segments.length >= 3 && hook.say ? { hook, segments, character, background: backgroundDesc, styleAnchor: anchor, oneTake: String(clipRaw && "oneTake" in clipRaw ? (clipRaw as { oneTake?: string }).oneTake ?? "" : "").trim().slice(0, 160), cta: String(clipRaw?.cta ?? "블로그 링크에서 최신 기준 확인하고, 증권사에도 꼭 물어봐! 그래야 정확해").trim().slice(0, 160) } : undefined,
     };
   } catch { return null; }
 }
