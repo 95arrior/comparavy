@@ -49,7 +49,7 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
         "  각 세그 motion = 그 컷의 동작·표정·카메라만 영어 1~2문장(캐릭터·배경·스타일 묘사 금지 — 코드가 구워서 합친다). 예: 'The character leans in and points at the viewer with a warning face, subtle push-in.'",
         "  styleAnchor = 스타일 한 줄(영어): 'Consistent 2D cartoon style, soft shading, subtle smooth motion.' 결 — ★'reference image' 같은 말 금지(이미지 없는 모드에서 오류를 만든다).",
         "  cta = 마무리 대사(반말): '블로그 링크에서 최신 기준 확인하고, 증권사에도 꼭 물어봐! 그래야 정확해' 결. 대사 전부 글에 있는 사실만.",
-        "  parts = ★20초짜리 3부작(2026-08-11 유저 3차 조정): 배열 3개, 각 {say, scene}. say = 120~150자·문장 4~5개(유저 실측: 80~110자는 느리게 읽혀 남았다 — 상세히 써도 됨, 150자 초과만 금지). 1편=훅+사건 상세, 끝은 반드시 궁금하게 끊기('그래서 어떻게 됐게?'). 2편=미니 훅+전개 상세, 끝은 또 끊기. 3편=결말+핵심 원리+CTA('자세한 건 블로그 봐!'). 같은 화자·반말. scene = 그 편 내용에 맞는 시각 연출 영어 1~2문장(유저: '시계 나오는 그런 다양한 설명 너무 좋았다') — 캐릭터 곁에 등장하는 소품·행동·카메라를 구체적으로, 단 글자 없이 그릴 수 있는 것만(예: 근태 얘기 = a giant cartoon clock popping up beside the character / 돈 얘기 = coins raining down). oneTake = 단독 완결판 120~150자. 같은 화자(키워드 당사자)·같은 반말. 컷 대사를 복붙하지 말고 30초에 맞게 새로 압축해라.",
+        "  parts = ★20초짜리 3부작(2026-08-11 유저 3차 조정): 배열 3개, 각 {say, scene}. say = ★200~240자(2026-08-11 유저 캘리브레이션: 95자=8초 실측 → 초당 약 12자 → 20초=220자 안팎. 240자 초과만 금지 — 상세하게 채워라). 1편=훅+사건 상세, 끝은 반드시 궁금하게 끊기('그래서 어떻게 됐게?'). 2편=미니 훅+전개 상세, 끝은 또 끊기. 3편=결말+핵심 원리+CTA('자세한 건 블로그 봐!'). 같은 화자·반말. scene = 그 편 내용에 맞는 시각 연출 영어 1~2문장(유저: '시계 나오는 그런 다양한 설명 너무 좋았다') — 캐릭터 곁에 등장하는 소품·행동·카메라를 구체적으로, 단 글자 없이 그릴 수 있는 것만(예: 근태 얘기 = a giant cartoon clock popping up beside the character / 돈 얘기 = coins raining down). oneTake = 단독 완결판 120~150자. 같은 화자(키워드 당사자)·같은 반말. 컷 대사를 복붙하지 말고 30초에 맞게 새로 압축해라.",
         "",
         '출력 JSON만: {"cover":"...","cards":[{"head":"...","body":"..."}],"cta":{"head":"...","body":"..."},"caption":"...","clip":{"hook":{"say":"...","motion":"..."},"character":"...","background":"...","styleAnchor":"...","segments":[{"say":"...","motion":"..."}],"cta":"...","oneTake":"...","parts":[{"say":"1편 대사","scene":"영어 연출"},{"say":"2편","scene":"..."},{"say":"3편","scene":"..."}]}}',
         "", "[본문]", text,
@@ -92,8 +92,8 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
         oneTake: String(clipRaw && "oneTake" in clipRaw ? (clipRaw as { oneTake?: string }).oneTake ?? "" : "").trim().slice(0, 130),
         parts: (Array.isArray((clipRaw as { parts?: unknown[] } | undefined)?.parts) ? (clipRaw as { parts: unknown[] }).parts : [])
           .map((x) => typeof x === "object" && x
-            ? { say: String((x as { say?: string }).say ?? "").trim().slice(0, 170), scene: String((x as { scene?: string }).scene ?? "").trim().slice(0, 240) }
-            : { say: String(x ?? "").trim().slice(0, 170), scene: "" })
+            ? { say: String((x as { say?: string }).say ?? "").trim().slice(0, 260), scene: String((x as { scene?: string }).scene ?? "").trim().slice(0, 240) }
+            : { say: String(x ?? "").trim().slice(0, 260), scene: "" })
           .filter((x) => x.say).slice(0, 3), cta: String(clipRaw?.cta ?? "블로그 링크에서 최신 기준 확인하고, 증권사에도 꼭 물어봐! 그래야 정확해").trim().slice(0, 160) } : undefined,
     };
   } catch { return null; }
