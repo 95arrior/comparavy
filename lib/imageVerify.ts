@@ -13,20 +13,22 @@ import { logUsage } from "./usageLog";
 //   ④ composeThumbnail의 press 모드는 검증 자체를 건너뜀
 //  ★배경 검증은 fail-closed로 바꾼다. 배경은 떨어져도 코드 폴백이 항상 있어서 잃는 게 없다 —
 //   '검증 실패는 발행 막지 않음'이라는 원칙은 대안이 없는 경로에나 맞는 말이었다.
-export interface ImageVerdict { hasText: boolean; hasFace: boolean; matchesScene: boolean; hasFrame: boolean; ok: boolean }
+export interface ImageVerdict { hasText: boolean; hasFace: boolean; matchesScene: boolean; hasFrame: boolean; offTopic: boolean; ok: boolean }
 
 export interface VerifyOpts {
   bgOnly?: boolean;
   userId?: string;
   /** 판정 불가(오류·파싱 실패·키 없음)를 '글자 있음'으로 본다. 코드 폴백이 있는 배경 경로에서 켠다. */
   strict?: boolean;
+  /** 느슨한 소속감 검사용 주제(있을 때만 검사) */
+  topic?: string;
 }
 
 /** 판정 불가 상태의 결과 — strict면 불합격으로 떨어뜨린다. */
 export function unknownVerdict(strict: boolean | undefined): ImageVerdict {
   return strict
-    ? { hasText: true, hasFace: false, matchesScene: true, hasFrame: false, ok: false }
-    : { hasText: false, hasFace: false, matchesScene: true, hasFrame: false, ok: true };
+    ? { hasText: true, hasFace: false, matchesScene: true, hasFrame: false, offTopic: false, ok: false }
+    : { hasText: false, hasFace: false, matchesScene: true, hasFrame: false, offTopic: false, ok: true };
 }
 
 /**
@@ -43,7 +45,10 @@ export function verdictFromRaw(raw: string, opts?: VerifyOpts): ImageVerdict {
   const hasFace = j.hasFace === true;
   const matchesScene = opts?.bgOnly ? true : (j.matchesScene !== false);
   const hasFrame = j.hasFrame === true; // ★액자·베젤(2026-08-11 유저 실물: 회색 태블릿 베젤 안에 그림) — 필드가 없으면 false(구 프롬프트 호환)
-  return { hasText, hasFace, matchesScene, hasFrame, ok: !hasText && !hasFace && matchesScene && !hasFrame };
+  // ★느슨한 소속감(2026-08-11 유저 선택): '전혀 무관'이 명시적으로 true일 때만 — 판정 불가·필드 없음은 통과(fail-open).
+  //  8/2 과반려 사고(게이트 겹겹 → 썸네일 전멸)의 재발을 막는 안전핀이다. 은유·상징은 정상이다.
+  const offTopic = j.offTopic === true;
+  return { hasText, hasFace, matchesScene, hasFrame, offTopic, ok: !hasText && !hasFace && matchesScene && !hasFrame && !offTopic };
 }
 
 // ★무문구 썸네일 판독성 검사(2026-08-02) — 글자가 없어지면 이미지 혼자 3초를 버텨야 한다.
@@ -106,8 +111,11 @@ export async function verifyImage(
     const client = new Anthropic({ apiKey });
     // ★잘린 글자·사물 표면 글자를 명시한다 — 실측 사고가 '카드 위에 부분적으로 잘린 한글 두 글자'였다.
     //  where를 함께 요구하는 이유는 값 자체가 필요해서가 아니라, 근거를 대게 하면 실제로 들여다보기 때문이다.
+    const topicQ = opts?.topic
+      ? ` (3)이 그림이 "${opts.topic}" 주제 블로그 글의 썸네일이라 할 때 '전혀 무관'해 보이는가 — 은유·상징·간접 연출은 전부 정상이다. 주제와 어떤 연상도 이어지지 않는 완전 딴판일 때만 true.`
+      : "";
     const q = opts?.bgOnly
-      ? `이 이미지를 두 가지로 점검한다. (1)글자·문자·숫자·로고·워터마크가 조금이라도 보이는가? 간판·카드·표지판·버튼·책·서류 같은 사물 표면에 적힌 글자, 화면 밖으로 잘려 일부만 보이는 글자, 흐릿하거나 작은 글자도 전부 '있음'으로 본다. (2)그림이 가장자리까지 꽉 차지 않고 액자·프레임·베젤·기기 목업·단색 여백 띠 안에 들어가 있는가(그림이 안쪽 사각형에만 있고 바깥이 다른 색 띠면 '있음'). JSON만: {"hasText":bool,"hasFrame":bool,"where":"짧게"}`
+      ? `이 이미지를 점검한다. (1)글자·문자·숫자·로고·워터마크가 조금이라도 보이는가? 간판·카드·표지판·버튼·책·서류 같은 사물 표면에 적힌 글자, 화면 밖으로 잘려 일부만 보이는 글자, 흐릿하거나 작은 글자도 전부 '있음'으로 본다. (2)그림이 가장자리까지 꽉 차지 않고 액자·프레임·베젤·기기 목업·단색 여백 띠 안에 들어가 있는가(그림이 안쪽 사각형에만 있고 바깥이 다른 색 띠면 '있음').${topicQ} JSON만: {"hasText":bool,"hasFrame":bool${opts?.topic ? ',"offTopic":bool' : ""},"where":"짧게"}`
       : `이 이미지를 점검한다. (1)글자·문자·숫자·로고·워터마크가 보이는가 — 사물 표면에 적힌 글자와 잘려서 일부만 보이는 글자도 포함한다 (2)사람 얼굴(이목구비)이 보이는가 (3)"${sceneDesc}" 장면과 대체로 맞는가. JSON만: {"hasText":bool,"hasFace":bool,"matchesScene":bool,"where":"짧게"}`;
     const res = await client.messages.create({
       model: "claude-haiku-4-5",
