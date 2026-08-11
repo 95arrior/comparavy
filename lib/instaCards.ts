@@ -71,10 +71,20 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
   //  (2026-08-12 유저 재보정: 초당 14자는 말이 너무 빨랐다 → 12.5자, 18~20초 = 220~250자)
   // ★어려운 단어 코드 감지(2026-08-11 유저: '초딩이 들어도 알아듣게' — 프롬프트만으론 모델이 용어를 남긴다)
   const HARD_TERM_RE = /(청구권|처분|기각|소멸|재직|구성원|호황|슈퍼사이클|대용증권|이수번호|산정|귀속|경과조치|법인차량)/g;
+  // ★재작성 후 재검증 루프(2026-08-12 실측: 1회 재작성이 186자·용어 잔존인 채 통과 — 고친 결과를 다시 재봐야 게이트다)
   async function fitOneTake(current: string): Promise<string> {
-    const len = [...current].length;
-    const hardTerms = Array.from(new Set(current.match(HARD_TERM_RE) ?? []));
-    if (len >= 220 && len <= 255 && hardTerms.length === 0) return current;
+    let best = current;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const len = [...best].length;
+      const hardTerms = Array.from(new Set(best.match(HARD_TERM_RE) ?? []));
+      if (len >= 220 && len <= 255 && hardTerms.length === 0) return best;
+      const next = await rewriteOneTake(best, len, hardTerms);
+      if (next === best) return best; // 재작성 실패·개선 없음 — 더 돌려도 같다
+      best = next;
+    }
+    return best;
+  }
+  async function rewriteOneTake(current: string, len: number, hardTerms: string[]): Promise<string> {
     try {
       const fix = await client.messages.create({
         model: "claude-haiku-4-5",
@@ -89,7 +99,8 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
       const ft = fix.content.find((b) => b.type === "text");
       const fixed = (ft && ft.type === "text" ? ft.text : "").trim().replace(/^["'\s]+|["'\s]+$/g, "");
       const flen = [...fixed].length;
-      return flen >= 190 && flen <= 270 ? fixed : current;
+      // 넓은 수용 창 — 최종 판정은 fitOneTake 루프가 다시 잰다(여기서 좁히면 개선분도 버린다)
+      return flen >= 180 && flen <= 280 ? fixed : current;
     } catch { return current; }
   }
   const t = res.content.find((b) => b.type === "text");
