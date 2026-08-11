@@ -94,11 +94,12 @@ export default function InstaCardsSheet({ articleId, onClose }: { articleId: str
               <div className="rounded-xl bg-[#F7F8FA] p-3">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-[12.5px] font-extrabold text-neutral-700">🎬 클립 대본 — 10초 컷 {pack.clip.segments.length + 1}개</p>
-                  <div className="flex shrink-0 gap-1">
-                    <button onClick={() => copy("clipsay", [pack.clip!.hook.say, ...pack.clip!.segments.map((g) => g.say), pack.clip!.cta].join("\n\n"))} className="rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-neutral-500">{copied === "clipsay" ? "✓" : "대사만 (TTS용)"}</button>
-                    <button onClick={() => copy("clip", [{ n: 1, ...pack.clip!.hook }, ...pack.clip!.segments.map((g, i) => ({ n: i + 2, ...g }))].map((g) => `[컷 ${g.n} 대사] ${g.say}\n[컷 ${g.n} 프롬프트] ${g.motion}`).concat(`[마무리 대사] ${pack.clip!.cta}`).join("\n\n"))} className="rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-neutral-500">{copied === "clip" ? "✓" : "전체"}</button>
-                  </div>
+                  <button onClick={() => copy("clip", [{ n: 1, ...pack.clip!.hook }, ...pack.clip!.segments.map((g, i) => ({ n: i + 2, ...g }))].map((g) => `[컷 ${g.n} 대사] ${g.say}\n[컷 ${g.n} 프롬프트] ${g.motion}`).concat(`[마무리 대사] ${pack.clip!.cta}`).join("\n\n"))} className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-neutral-500">{copied === "clip" ? "✓" : "대사+프롬프트"}</button>
                 </div>
+                <button onClick={() => copy("clipsay", [pack.clip!.hook.say, ...pack.clip!.segments.map((g) => g.say), pack.clip!.cta].join("\n\n"))}
+                  className="at-press mt-2 w-full rounded-xl bg-[#8134AF] py-2.5 text-[13px] font-bold text-white transition hover:opacity-90">
+                  {copied === "clipsay" ? "복사됨 ✓ — TTS에 그대로 붙여넣으세요" : "🎤 대본 통째로 복사 (TTS용)"}
+                </button>
                 <div className="mt-1.5 space-y-1.5">
                   {[{ ...pack.clip.hook, label: "훅 컷 1" }, ...pack.clip.segments.map((g, i) => ({ ...g, label: `컷 ${i + 2}` }))].map((g, i) => (
                     <div key={i} className="rounded-lg bg-white p-2">
