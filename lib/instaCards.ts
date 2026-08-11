@@ -54,7 +54,7 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
         "★마지막 관문(2026-08-11 유저 확정 — 출력 직전 4개 자가 검문, 하나라도 미달이면 고쳐서 출력):",
         "  ①알기 쉬운가 — 중학생이 한 번 듣고 이해되나? 전문용어가 남았으면 일상어로 번역하거나 삭제.",
         "  ②팩트인가 — 대사의 모든 숫자·날짜·사실이 본문에 실재하나? 본문에 없으면 그 문장을 삭제(새 사실 창작 절대 금지).",
-        "  ③재밌는가 — 무관한 구경꾼이 낄낄대며 끝까지 볼 수다인가? 정보 나열로 읽히면 뒷담화 리듬('글쎄', '어머', '~지?')을 다시 입혀라.",
+        "  ③재밌는가 — 무관한 구경꾼이 낄낄대며 끝까지 볼 수다인가? 정보 나열로 읽히면 뒷담화 리듬('글쎄', '어머', '~지?')을 다시 입혀라. ★그리고 무심코 스크롤하던 사람이 첫 문장에서 멈출까? 첫 문장이 약하면 전체를 다시 써라.",
         "  ④댓글을 부르나 — 3편 마무리에 시청자가 한 줄로 답할 질문 1개 필수. 자기 상황을 말하게 하거나('여러분 회사 성과급 규정은 어때?') 편을 가르게 하라('이 해고, 심하다 vs 당연하다?'). '어떠셨나요' 같은 인사치레 금지.",
         "  oneTake = ★20초 단일 대본, 이거 하나만 만든다(2026-08-11 유저 최종 확정 — 3부작은 편마다 TTS 목소리가 달라져 폐기): 270~290자(유저 재캘리브레이션: 115자=8초 실측 → 초당 14자 × 20초. 300자 초과 금지). ★구조(유저가 '딱 좋다'고 한 실물 문체 그대로): ①실명 훅 1문장 ②사건 팩트 속사포 — 짧은 문장으로 증거·숫자를 쌓아라('사원증 카드키, GPS, 법인차량 기록. 다 걸렸어. 1~27분 만에 퇴근. 6개월 반복.') — 정리가 쌓일수록 궁금증이 폭발하게 ③절정 직전에 끊기('그럼 내가 어떻게 된 거냐고?') ④'자세한 내용은 아래를 확인해!'로 마감. 같은 화자·반말·뒷담화 톤.",
         "",
@@ -64,6 +64,29 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
     }],
   });
   void logUsage({ userId, model: "claude-haiku-4-5", kind: "insta_cards", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
+
+  // ★20초 분량 코드 검증(2026-08-11 유저: "20초 대본인데 왜 9초? 두 번 체크해") — 프롬프트는 방향, 코드는 자로 잰다.
+  //  250~300자 밖이면 본문을 근거로 딱 맞게 한 번 재작성(새 사실 금지). 그래도 안 맞으면 그대로 두되 화면 초 표시가 알린다.
+  async function fitOneTake(current: string): Promise<string> {
+    const len = [...current].length;
+    if (len >= 250 && len <= 300) return current;
+    try {
+      const fix = await client.messages.create({
+        model: "claude-haiku-4-5",
+        max_tokens: 600,
+        messages: [{ role: "user", content: [
+          `아래 20초 클립 대사를 정확히 270~290자(공백 포함)로 ${len < 250 ? "늘려" : "줄여"} 다시 써라. 지금은 ${len}자다.`,
+          "규칙: 화자·반말·문체·구조(실명 훅→팩트 속사포→절정 직전 끊기→'자세한 내용은 아래를 확인해!') 유지. 새 사실 금지 — 대사와 [본문]에 있는 것만. '블로그' 단어 금지. 대사 본문만 출력(따옴표·설명 없이).",
+          "", "[현재 대사]", current, "", "[본문]", text.slice(0, 3000),
+        ].join("\n") }],
+      });
+      void logUsage({ userId, model: "claude-haiku-4-5", kind: "insta_cards_fit", inputTokens: fix.usage?.input_tokens, outputTokens: fix.usage?.output_tokens });
+      const ft = fix.content.find((b) => b.type === "text");
+      const fixed = (ft && ft.type === "text" ? ft.text : "").trim().replace(/^["'\s]+|["'\s]+$/g, "");
+      const flen = [...fixed].length;
+      return flen >= 200 && flen <= 320 ? fixed : current;
+    } catch { return current; }
+  }
   const t = res.content.find((b) => b.type === "text");
   const m = /\{[\s\S]*\}/.exec(t && t.type === "text" ? t.text : "");
   if (!m) return null;
@@ -92,7 +115,7 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
     const hook: { say: string; motion: string } = typeof hookRaw === "object" && hookRaw
       ? { say: noBlog(String(hookRaw.say ?? "").trim()).slice(0, 160), motion: bake(String(hookRaw.motion ?? "The character bursts into frame pointing at the camera with an excited face, quick zoom-in.").trim().slice(0, 220)) }
       : { say: noBlog(String(hookRaw ?? "").trim()).slice(0, 160), motion: bake("The character bursts into frame pointing at the camera with an excited face, quick zoom-in.") };
-    return {
+    const pack = {
       cover: String(j.cover).trim().slice(0, 60),
       cards,
       cta: { head: String(j.cta?.head ?? "지금 확인").trim().slice(0, 40), body: String(j.cta?.body ?? "자세한 내용은 프로필 링크에").trim().slice(0, 200) },
@@ -106,5 +129,7 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
             : { say: noBlog(String(x ?? "").trim()).slice(0, 260), scene: "" })
           .filter((x) => x.say).slice(0, 3), cta: noBlog(String(clipRaw?.cta ?? "자세한 내용은 아래를 확인해 봐!").trim()).slice(0, 160) } : undefined,
     };
+    if (pack.clip?.oneTake) pack.clip.oneTake = noBlog(await fitOneTake(pack.clip.oneTake)).slice(0, 320);
+    return pack;
   } catch { return null; }
 }
