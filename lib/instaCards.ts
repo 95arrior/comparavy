@@ -137,8 +137,13 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
       cta: { head: String(j.cta?.head ?? "지금 확인").trim().slice(0, 40), body: String(j.cta?.body ?? "자세한 내용은 프로필 링크에").trim().slice(0, 200) },
       caption: String(j.caption ?? "").trim().slice(0, 1200),
       clip: segments.length >= 3 && hook.say ? { hook, segments, character, background: backgroundDesc, styleAnchor: anchor, basePrompt,
-        // ★영상 프롬프트 하나로 완결(2026-08-12 유저: '행동으로 표현 + 텍스트 절대 금지') — basePrompt(캐릭터·배경·무텍스트)+연기 지시를 코드가 조립
-        videoPrompt: `${basePrompt} ${String((clipRaw as { acting?: string } | undefined)?.acting ?? "").trim().slice(0, 500)}`.replace(/\s+/g, " ").trim().slice(0, 1300),
+        // ★영상 프롬프트(2026-08-12 유저 실측 2건 수리: 힉스필드가 못 알아들음 — ①1300자 기계 절단이 단어 중간에서 끊김 ②이미지를 넣는 모드라 캐릭터·배경 묘사가 중복·과다).
+        //  이미지가 캐릭터를 들고 오므로 프롬프트는 '입력 이미지 그대로'+연기+무텍스트만. →화살표는 then으로, 절단은 단어 경계에서만.
+        videoPrompt: (() => {
+          const acting = String((clipRaw as { acting?: string } | undefined)?.acting ?? "").trim().replace(/\s*→\s*/g, ", then ");
+          const cut = (t: string, n: number) => ([...t].length <= n ? t : `${t.slice(0, n).replace(/\s+\S*$/, "")}.`);
+          return `The character from the input image, unchanged in design and outfit. ${cut(acting, 600)} Vertical 9:16, head and upper body filling the frame, smooth cartoon motion. Absolutely no text, captions, subtitles, letters or numbers anywhere in the frame — especially no Korean Hangul. The character only talks with natural mouth movement.`.replace(/\s+/g, " ").trim();
+        })(),
         topHook: (String((clipRaw as { topHook?: string } | undefined)?.topHook ?? "").trim() || String(j.cover ?? "").trim()).slice(0, 60), // ★빈 값 폴백(2026-08-12 실측: 모델이 topHook을 빼먹음) — 표지가 같은 실명+숫자 문법이라 대체 가능
         oneTake: noBlog(String(clipRaw && "oneTake" in clipRaw ? (clipRaw as { oneTake?: string }).oneTake ?? "" : "").trim()).slice(0, 310), // ★130 잔재 제거(실물: 대사가 '왜냐면 나는 '에서 잘림)
         parts: (Array.isArray((clipRaw as { parts?: unknown[] } | undefined)?.parts) ? (clipRaw as { parts: unknown[] }).parts : [])
