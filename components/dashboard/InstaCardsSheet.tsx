@@ -105,12 +105,12 @@ export default function InstaCardsSheet({ articleId, onClose }: { articleId: str
                   </div>
                 )}
                 <div className="mt-2 space-y-1.5">
-                  {pack.clip.parts.map((pt, i) => (
+                  {pack.clip.parts.map((raw) => (typeof raw === "string" ? { say: raw, scene: "" } : { say: raw?.say ?? "", scene: raw?.scene ?? "" })).map((pt, i) => (
                     <div key={i} className="rounded-xl border border-[#8134AF]/30 bg-white p-2.5">
                       <div className="flex items-center justify-between gap-2">
                         <p className="text-[11.5px] font-extrabold text-[#8134AF]">⚡ {i + 1}편 / {pack.clip!.parts!.length}편 — 20초</p>
                         <button onClick={() => copy(`pt${i}`, pack.clip!.basePrompt
-                          ? `${pack.clip!.basePrompt} ${pt.scene} The character speaks in Korean with an energetic, friendly tone, saying: "${pt.say}"`
+                          ? `${pack.clip!.basePrompt} ${pt.scene} The character speaks in Korean with an energetic, friendly tone, saying: "${pt.say}"`.replace(/\s*undefined\s*/g, " ")
                           : pt.say)} className="shrink-0 rounded-full bg-[#8134AF] px-2.5 py-1 text-[10.5px] font-bold text-white">{copied === `pt${i}` ? "✓" : "프롬프트+대사 복사"}</button>
                       </div>
                       <p className="mt-1 text-[12px] leading-relaxed text-neutral-700">{pt.say}</p>
