@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 
 interface InstaCard { head: string; body: string }
 interface ClipSegment { say: string; motion: string }
-interface ClipScript { hook: string; segments: ClipSegment[]; styleAnchor: string; cta: string }
+interface ClipScript { hook: ClipSegment; segments: ClipSegment[]; styleAnchor: string; cta: string }
 interface InstaPack { cover: string; cards: InstaCard[]; cta: InstaCard; caption: string; clip?: ClipScript }
 
 export default function InstaCardsSheet({ articleId, onClose }: { articleId: string; onClose: () => void }) {
@@ -41,7 +41,7 @@ export default function InstaCardsSheet({ articleId, onClose }: { articleId: str
   }
   const allText = pack
     ? [`[표지]\n${pack.cover}`, ...pack.cards.map((c, i) => `[${i + 2}장] ${c.head}\n${c.body}`), `[마지막 장] ${pack.cta.head}\n${pack.cta.body}`, `[캡션]\n${pack.caption}`,
-       ...(pack.clip && Array.isArray(pack.clip.segments) ? [`[클립 대본]\n공통 프롬프트: ${pack.clip.styleAnchor}\n훅: ${pack.clip.hook}\n${pack.clip.segments.map((g, i) => `컷${i + 2}: ${g.say} (모션: ${g.motion})`).join("\n")}\n마무리: ${pack.clip.cta}`] : [])].join("\n\n")
+       ...(pack.clip && Array.isArray(pack.clip.segments) && typeof pack.clip.hook === "object" ? [`[클립 대본]\n컷1: ${pack.clip.hook.say} (프롬프트: ${pack.clip.hook.motion})\n${pack.clip.segments.map((g, i) => `컷${i + 2}: ${g.say} (프롬프트: ${g.motion})`).join("\n")}\n마무리: ${pack.clip.cta}`] : [])].join("\n\n")
     : "";
 
   return (
@@ -90,23 +90,27 @@ export default function InstaCardsSheet({ articleId, onClose }: { articleId: str
               </div>
               <p className="mt-1 whitespace-pre-line text-[12px] leading-relaxed text-neutral-500">{pack.caption}</p>
             </div>
-            {pack.clip && Array.isArray(pack.clip.segments) && (
+            {pack.clip && Array.isArray(pack.clip.segments) && typeof pack.clip.hook === "object" && (
               <div className="rounded-xl bg-[#F7F8FA] p-3">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-[12.5px] font-extrabold text-neutral-700">🎬 클립 대본 — 10초 컷 {pack.clip.segments.length + 1}개</p>
-                  <button onClick={() => copy("clip", [`[공통 스타일 프롬프트] ${pack.clip!.styleAnchor}`, `[훅 컷] ${pack.clip!.hook}`, ...pack.clip!.segments.map((g, i) => `[컷 ${i + 2}] ${g.say}\n  모션: ${g.motion}`), `[마무리 대사] ${pack.clip!.cta}`].join("\n\n"))} className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-neutral-500">{copied === "clip" ? "✓" : "대본+프롬프트 복사"}</button>
+                  <div className="flex shrink-0 gap-1">
+                    <button onClick={() => copy("clipsay", [pack.clip!.hook.say, ...pack.clip!.segments.map((g) => g.say), pack.clip!.cta].join("\n\n"))} className="rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-neutral-500">{copied === "clipsay" ? "✓" : "대사만 (TTS용)"}</button>
+                    <button onClick={() => copy("clip", [{ n: 1, ...pack.clip!.hook }, ...pack.clip!.segments.map((g, i) => ({ n: i + 2, ...g }))].map((g) => `[컷 ${g.n} 대사] ${g.say}\n[컷 ${g.n} 프롬프트] ${g.motion}`).concat(`[마무리 대사] ${pack.clip!.cta}`).join("\n\n"))} className="rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-neutral-500">{copied === "clip" ? "✓" : "전체"}</button>
+                  </div>
                 </div>
-                <p className="mt-1.5 rounded-lg bg-white px-2.5 py-1.5 text-[11px] leading-relaxed text-neutral-400">공통 프롬프트: {pack.clip.styleAnchor}</p>
-                <p className="mt-1.5 text-[12.5px] font-bold text-neutral-800">🎤 "{pack.clip.hook}"</p>
                 <div className="mt-1.5 space-y-1.5">
-                  {pack.clip.segments.map((g, i) => (
+                  {[{ ...pack.clip.hook, label: "훅 컷 1" }, ...pack.clip.segments.map((g, i) => ({ ...g, label: `컷 ${i + 2}` }))].map((g, i) => (
                     <div key={i} className="rounded-lg bg-white p-2">
-                      <p className="text-[12px] leading-relaxed text-neutral-700"><b>컷 {i + 2}.</b> {g.say}</p>
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-[12px] leading-relaxed text-neutral-700"><b>{g.label}.</b> 🎤 {g.say}</p>
+                        <button onClick={() => copy(`cm${i}`, g.motion)} className="shrink-0 rounded-full bg-[#8134AF]/10 px-2 py-0.5 text-[10.5px] font-bold text-[#8134AF]">{copied === `cm${i}` ? "✓" : "프롬프트 복사"}</button>
+                      </div>
                       <p className="mt-0.5 text-[11px] italic leading-relaxed text-[#8134AF]">🎥 {g.motion}</p>
                     </div>
                   ))}
                 </div>
-                <p className="mt-1.5 text-[12px] font-semibold text-[#1D75F7]">마무리: "{pack.clip.cta}"</p>
+                <p className="mt-1.5 text-[12px] font-semibold text-[#1D75F7]">마무리 대사: "{pack.clip.cta}" — 마지막 컷 영상에 얹으면 돼요</p>
               </div>
             )}
             <button onClick={() => copy("all", allText)} className="at-press w-full rounded-xl bg-[#1D75F7] py-2.5 text-[13px] font-bold text-white transition hover:bg-[#1667DE]">{copied === "all" ? "전체 복사됨 ✓" : "전체 복사 (메모용)"}</button>

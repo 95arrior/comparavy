@@ -10,7 +10,8 @@ import { logUsage } from "./usageLog";
 
 export interface InstaCard { head: string; body: string }
 export interface ClipSegment { say: string; motion: string }
-export interface ClipScript { hook: string; segments: ClipSegment[]; styleAnchor: string; cta: string }
+// ★hook도 컷이다(2026-08-11 유저: "첫 번째 컷 프롬프트가 없네요") + motion엔 styleAnchor가 구워져 나간다(유저: "공통 프롬프트면 그냥 내장해주세요")
+export interface ClipScript { hook: ClipSegment; segments: ClipSegment[]; styleAnchor: string; cta: string }
 export interface InstaPack { cover: string; cards: InstaCard[]; cta: InstaCard; caption: string; clip?: ClipScript }
 
 export async function articleToInstaCards(title: string, bodyHtml: string, keyword: string, userId?: string | null): Promise<InstaPack | null> {
@@ -33,13 +34,13 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
         "[마지막 장 cta] head=행동 한 줄, body=오늘 할 첫걸음 + '자세한 계산·최신 기준은 프로필 링크에'.",
         "[caption] 인스타 캡션: 훅 1줄 + 핵심 요약 2~3줄 + 해시태그 12~15개(#재테크 #경제 같은 대중 태그 + 소재 태그. 한 줄에 몰아서).",
         "[클립 clip] 네이버 클립용 — 캐릭터가 '키워드 그 자체'가 되어 가르치듯 말한다(2026-08-11 유저 확정 규격·예시):",
-        "  hook = 의인화 오프닝: '나 {키워드 핵심}인데! {가장 충격적인 돈 팩트 한 문장}! 지금부터 빠르게 알려줄게! 잘 들어!' 결 — 유저 실례: '나 레버리지인데! 주식 1억 있어도 현금 3천만원 없으면 이제 못 산대!'",
+        "  hook = 의인화 오프닝 컷 {say, motion}: say는 '나 {키워드 핵심}인데! {가장 충격적인 돈 팩트 한 문장}! 지금부터 빠르게 알려줄게! 잘 들어!' 결(유저 실례: '나 레버리지인데! 주식 1억 있어도 현금 3천만원 없으면 이제 못 산대!'), motion은 시선을 확 잡는 등장 동작(예: 'The character bursts into frame pointing at the camera with wide excited eyes, quick zoom-in').",
         "  segments = 4~5개(★6개 미만 엄수 — 유저: '리스트가 너무 많고 짧아, 붙여서 10초짜리로'). 각 세그 say = 10초 분량(2~3문장을 붙인 60~90자, 재밌게 누굴 가르치듯 '~거든요/~해요/~해 보세요', 한 세그에 관련 정보 2~3개 묶기). 마지막 세그는 행동 지시('지금 계좌 현금 확인해 보세요' + '자세한 계산은 블로그에 정리해 뒀어요').",
         "  각 세그 motion = 그 컷의 이미지-투-비디오 모션 프롬프트(영어 1~2문장): 유저가 만든 고정 캐릭터 이미지가 이 컷에서 취할 동작·표정·카메라만 짧게. 예: 'The character leans in and points at the viewer with a warning face, subtle push-in.' 배경·스타일 묘사 금지(styleAnchor가 담당).",
         "  styleAnchor = 모든 컷 앞에 붙일 공통 프롬프트(영어 1문장): 같은 캐릭터·같은 톤 유지 지시. 예: 'Same character as the reference image, consistent outfit and proportions, clean studio background, subtle 2D cartoon motion.'",
         "  cta = 마무리 대사: '블로그 링크에서 최신 기준 확인하고 거래 증권사에도 물어봐야 정확해요' 결. 대사 전부 글에 있는 사실만.",
         "",
-        '출력 JSON만: {"cover":"...","cards":[{"head":"...","body":"..."}],"cta":{"head":"...","body":"..."},"caption":"...","clip":{"hook":"...","styleAnchor":"...","segments":[{"say":"...","motion":"..."}],"cta":"..."}}',
+        '출력 JSON만: {"cover":"...","cards":[{"head":"...","body":"..."}],"cta":{"head":"...","body":"..."},"caption":"...","clip":{"hook":{"say":"...","motion":"..."},"styleAnchor":"...","segments":[{"say":"...","motion":"..."}],"cta":"..."}}',
         "", "[본문]", text,
       ].join("\n"),
     }],
@@ -55,17 +56,24 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
       .filter((c) => c.head && c.body)
       .slice(0, 8); // 표지+내용 8+CTA = 최대 10장(인스타 캐러셀 상한)
     if (!j.cover || cards.length < 3) return null;
-    const clipRaw = j.clip as { hook?: string; styleAnchor?: string; segments?: { say?: string; motion?: string }[]; cta?: string } | undefined;
+    const clipRaw = j.clip as { hook?: { say?: string; motion?: string } | string; styleAnchor?: string; segments?: { say?: string; motion?: string }[]; cta?: string } | undefined;
+    const anchor = String(clipRaw?.styleAnchor ?? "Same character as the reference image, consistent outfit and proportions, clean studio background, subtle 2D cartoon motion.").trim().slice(0, 220);
+    // ★공통 프롬프트는 각 컷 motion에 구워서 내보낸다(유저: "그냥 내장해주세요") — 복사 한 번이 곧 힉스필드 입력이 되게.
+    const bake = (m: string) => `${anchor} ${m}`.trim().slice(0, 420);
     const segments = (Array.isArray(clipRaw?.segments) ? clipRaw!.segments : [])
-      .map((g) => ({ say: String(g?.say ?? "").trim().slice(0, 160), motion: String(g?.motion ?? "").trim().slice(0, 220) }))
+      .map((g) => ({ say: String(g?.say ?? "").trim().slice(0, 160), motion: bake(String(g?.motion ?? "").trim().slice(0, 220)) }))
       .filter((g) => g.say)
       .slice(0, 5); // ★6개 미만(유저 확정)
+    const hookRaw = clipRaw?.hook;
+    const hook: { say: string; motion: string } = typeof hookRaw === "object" && hookRaw
+      ? { say: String(hookRaw.say ?? "").trim().slice(0, 160), motion: bake(String(hookRaw.motion ?? "The character bursts into frame pointing at the camera with an excited face, quick zoom-in.").trim().slice(0, 220)) }
+      : { say: String(hookRaw ?? "").trim().slice(0, 160), motion: bake("The character bursts into frame pointing at the camera with an excited face, quick zoom-in.") };
     return {
       cover: String(j.cover).trim().slice(0, 60),
       cards,
       cta: { head: String(j.cta?.head ?? "지금 확인").trim().slice(0, 40), body: String(j.cta?.body ?? "자세한 내용은 프로필 링크에").trim().slice(0, 200) },
       caption: String(j.caption ?? "").trim().slice(0, 1200),
-      clip: segments.length >= 3 ? { hook: String(clipRaw?.hook ?? "").trim().slice(0, 160), segments, styleAnchor: String(clipRaw?.styleAnchor ?? "Same character as the reference image, consistent outfit and proportions, subtle 2D cartoon motion.").trim().slice(0, 220), cta: String(clipRaw?.cta ?? "블로그 링크에서 최신 기준 확인하고 거래 증권사에도 물어봐야 정확해요").trim().slice(0, 160) } : undefined,
+      clip: segments.length >= 3 && hook.say ? { hook, segments, styleAnchor: anchor, cta: String(clipRaw?.cta ?? "블로그 링크에서 최신 기준 확인하고 거래 증권사에도 물어봐야 정확해요").trim().slice(0, 160) } : undefined,
     };
   } catch { return null; }
 }
