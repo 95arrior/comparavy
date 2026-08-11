@@ -12,7 +12,7 @@ export interface InstaCard { head: string; body: string }
 export interface ClipSegment { say: string; motion: string }
 // ★hook도 컷이다 + 캐릭터·배경 묘사를 프롬프트에 통째로 굽는다(2026-08-11 유저: "캐릭터까지 묘사, 프롬프트에 아예 녹여내자" —
 //  'reference image' 문구는 이미지 없는 모드에서 오류·혼란을 만든다. 글로 고정하면 어느 모드든 돌고 컷 간 일관성도 글이 보장).
-export interface ClipScript { hook: ClipSegment; segments: ClipSegment[]; character: string; background: string; styleAnchor: string; cta: string; oneTake: string; parts: string[] }
+export interface ClipScript { hook: ClipSegment; segments: ClipSegment[]; character: string; background: string; styleAnchor: string; cta: string; oneTake: string; parts: string[]; basePrompt: string }
 export interface InstaPack { cover: string; cards: InstaCard[]; cta: InstaCard; caption: string; clip?: ClipScript }
 
 export async function articleToInstaCards(title: string, bodyHtml: string, keyword: string, userId?: string | null): Promise<InstaPack | null> {
@@ -71,7 +71,9 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
     const backgroundDesc = String(clipRaw?.background ?? "").trim().slice(0, 200);
     const anchor = String(clipRaw?.styleAnchor ?? "Consistent 2D cartoon style, soft shading, subtle smooth motion.").trim().slice(0, 160);
     // ★캐릭터·배경·스타일을 각 컷에 통째로 굽는다(유저: "프롬프트에 아예 녹여내자") — 복사 한 번 = 완성 프롬프트, 레퍼런스 이미지 의존 없음.
-    const bake = (m: string) => `${character} ${backgroundDesc} ${anchor} Vertical 9:16 portrait video, the character centered with head and upper body filling the frame. The exact same character and background in every shot. Absolutely NO text, captions, subtitles, letters or numbers anywhere in the frame — the character talks with natural mouth movement only, never showing written words. ${m}`.replace(/\s+/g, " ").trim().slice(0, 960);
+    // ★basePrompt를 한 곳에서 만든다(같은 값 두 곳 = 드리프트, CLAUDE.md) — 컷 프롬프트와 편별 통합 프롬프트가 같은 접두를 쓴다
+    const basePrompt = `${character} ${backgroundDesc} ${anchor} Vertical 9:16 portrait video, the character centered with head and upper body filling the frame. The exact same character and background in every shot. Absolutely NO text, captions, subtitles, letters or numbers anywhere in the frame — the character talks with natural mouth movement only, never showing written words.`.replace(/\s+/g, " ").trim();
+    const bake = (m: string) => `${basePrompt} ${m}`.replace(/\s+/g, " ").trim().slice(0, 960);
     const segments = (Array.isArray(clipRaw?.segments) ? clipRaw!.segments : [])
       .map((g) => ({ say: String(g?.say ?? "").trim().slice(0, 160), motion: bake(String(g?.motion ?? "").trim().slice(0, 220)) }))
       .filter((g) => g.say)
@@ -85,7 +87,7 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
       cards,
       cta: { head: String(j.cta?.head ?? "지금 확인").trim().slice(0, 40), body: String(j.cta?.body ?? "자세한 내용은 프로필 링크에").trim().slice(0, 200) },
       caption: String(j.caption ?? "").trim().slice(0, 1200),
-      clip: segments.length >= 3 && hook.say ? { hook, segments, character, background: backgroundDesc, styleAnchor: anchor,
+      clip: segments.length >= 3 && hook.say ? { hook, segments, character, background: backgroundDesc, styleAnchor: anchor, basePrompt,
         oneTake: String(clipRaw && "oneTake" in clipRaw ? (clipRaw as { oneTake?: string }).oneTake ?? "" : "").trim().slice(0, 130),
         parts: (Array.isArray((clipRaw as { parts?: unknown[] } | undefined)?.parts) ? (clipRaw as { parts: unknown[] }).parts : [])
           .map((x) => String(x ?? "").trim().slice(0, 130)).filter(Boolean).slice(0, 3), cta: String(clipRaw?.cta ?? "블로그 링크에서 최신 기준 확인하고, 증권사에도 꼭 물어봐! 그래야 정확해").trim().slice(0, 160) } : undefined,

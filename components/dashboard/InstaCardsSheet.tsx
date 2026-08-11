@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 
 interface InstaCard { head: string; body: string }
 interface ClipSegment { say: string; motion: string }
-interface ClipScript { hook: ClipSegment; segments: ClipSegment[]; character: string; background: string; styleAnchor: string; cta: string; oneTake?: string; parts?: string[] }
+interface ClipScript { hook: ClipSegment; segments: ClipSegment[]; character: string; background: string; styleAnchor: string; cta: string; oneTake?: string; parts?: string[]; basePrompt?: string }
 interface InstaPack { cover: string; cards: InstaCard[]; cta: InstaCard; caption: string; clip?: ClipScript }
 
 export default function InstaCardsSheet({ articleId, onClose }: { articleId: string; onClose: () => void }) {
@@ -102,7 +102,9 @@ export default function InstaCardsSheet({ articleId, onClose }: { articleId: str
                       <div key={i} className="rounded-xl border border-[#8134AF]/30 bg-[#8134AF]/[0.04] p-2.5">
                         <div className="flex items-center justify-between gap-2">
                           <p className="text-[11.5px] font-extrabold text-[#8134AF]">⚡ {i + 1}편 / {pack.clip!.parts!.length}편 — 20초 대본</p>
-                          <button onClick={() => copy(`pt${i}`, pt)} className="shrink-0 rounded-full bg-[#8134AF] px-2.5 py-1 text-[10.5px] font-bold text-white">{copied === `pt${i}` ? "✓" : "복사"}</button>
+                          <button onClick={() => copy(`pt${i}`, pack.clip!.basePrompt
+                            ? `${pack.clip!.basePrompt} The character speaks in Korean with an energetic, friendly tone, saying: "${pt}"`
+                            : pt)} className="shrink-0 rounded-full bg-[#8134AF] px-2.5 py-1 text-[10.5px] font-bold text-white">{copied === `pt${i}` ? "✓" : "프롬프트+대사 복사"}</button>
                         </div>
                         <p className="mt-1 text-[12px] leading-relaxed text-neutral-700">{pt}</p>
                       </div>
