@@ -8,6 +8,7 @@ import { IMAGE_COST } from "@/lib/creditPacks";
 import CenterToast from "./CenterToast";
 import { copyImage as clipCopyImage, saveImage as clipSaveImage } from "@/lib/clipboard";
 import NaverPublishSheet from "./NaverPublishSheet";
+import InstaCardsSheet from "./InstaCardsSheet";
 import { seedHasDeadline } from "@/lib/hookPatterns";
 import ThumbMakerSheet from "./ThumbMakerSheet";
 import { openNaverBlogApp } from "@/lib/naverApp";
@@ -51,6 +52,7 @@ export default function ArticleModal({ pubStampKey, blogName,
   const [title, setTitle] = useState(article.title);
   const [bodyHtml, setBodyHtml] = useState(article.body_html);
   const [naverOpen, setNaverOpen] = useState(false); // 네이버 복붙 발행 시트
+  const [instaOpen, setInstaOpen] = useState(false); // ★인스타 카드뉴스(2026-08-11)
   // ★듀얼 채널 — WP 글은 네이버 위저드 대신 원클릭 WP 발행
   const isWp = (article as { channel?: string }).channel === "wordpress";
   const [wpBusy, setWpBusy] = useState(false);
@@ -360,12 +362,20 @@ export default function ArticleModal({ pubStampKey, blogName,
           <button onClick={onClose} className="flex items-center gap-1.5 text-sm text-neutral-500 transition hover:text-neutral-900">
             <span className="text-base leading-none">←</span> 목록으로
           </button>
-          <button
-            onClick={() => (isWp ? publishToWp() : setNaverOpen(true))}
-            className="hidden rounded-xl bg-[#03C75A] px-5 py-2.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-95 md:inline-block"
-          >
-            {isWp ? (wpBusy ? "발행 중…" : "워드프레스에 발행") : "네이버에 올리기"}
-          </button>
+          <div className="flex items-center gap-2">
+            {!isWp && (
+              <button onClick={() => setInstaOpen(true)}
+                className="hidden rounded-xl bg-gradient-to-r from-[#F58529] via-[#DD2A7B] to-[#8134AF] px-4 py-2.5 text-[14px] font-bold text-white transition hover:opacity-90 active:scale-95 md:inline-block">
+                인스타 카드
+              </button>
+            )}
+            <button
+              onClick={() => (isWp ? publishToWp() : setNaverOpen(true))}
+              className="hidden rounded-xl bg-[#03C75A] px-5 py-2.5 text-[15px] font-bold text-white transition hover:opacity-90 active:scale-95 md:inline-block"
+            >
+              {isWp ? (wpBusy ? "발행 중…" : "워드프레스에 발행") : "네이버에 올리기"}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -659,7 +669,11 @@ export default function ArticleModal({ pubStampKey, blogName,
         <button onClick={async () => {
           if (!window.confirm("이 글을 완전히 삭제할까요? 내 글 목록에서도 사라지고 복구할 수 없어요.")) return;
           const r = await fetch(`/api/articles/${article.id}`, { method: "DELETE" });
-          if (r.ok) { onUpdated({ ...article, status: "deleted" } as Article); onClose(); }
+          if (r.ok) {
+            // ★파생 로컬 데이터 동반 삭제(CLAUDE.md 규칙 — 드리프트 수리하며 insta 키 포함)
+            try { for (const k of ["imgs", "thumb", "tcopy", "insta"]) localStorage.removeItem(`ateflo_${k}_${article.id}`); } catch { /* 무해 */ }
+            onUpdated({ ...article, status: "deleted" } as Article); onClose();
+          }
           else setToast("삭제하지 못했어요");
         }} className="mt-5 w-full py-2 text-center text-[12.5px] font-medium text-neutral-300 transition hover:text-red-500">글 삭제하기</button>
 
@@ -727,7 +741,8 @@ export default function ArticleModal({ pubStampKey, blogName,
           />
         )}
 
-        {naverOpen && (
+        {instaOpen && <InstaCardsSheet articleId={article.id} onClose={() => setInstaOpen(false)} />}
+      {naverOpen && (
           <NaverPublishSheet
             title={pubTitle}
             bodyHtml={bodyHtml}
