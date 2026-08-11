@@ -22,7 +22,7 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
   const client = new Anthropic({ apiKey });
   const res = await client.messages.create({
     model: "claude-haiku-4-5",
-    max_tokens: 1900,
+    max_tokens: 3200, // ★1900→3200(2026-08-11 실측: 컷별 모션 프롬프트 추가 후 실본문에서 JSON이 상한에 잘려 복불복 실패 — 로컬 짧은 본문만 성공)
     messages: [{
       role: "user",
       content: [
