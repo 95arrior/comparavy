@@ -90,61 +90,32 @@ export default function InstaCardsSheet({ articleId, onClose }: { articleId: str
               </div>
               <p className="mt-1 whitespace-pre-line text-[12px] leading-relaxed text-neutral-500">{pack.caption}</p>
             </div>
-            {pack.clip && Array.isArray(pack.clip.segments) && typeof pack.clip.hook === "object" && (
+            {pack.clip && Array.isArray(pack.clip.parts) && pack.clip.parts.length >= 2 && (
               <div className="rounded-xl bg-[#F7F8FA] p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-[12.5px] font-extrabold text-neutral-700">🎬 클립 대본 — 10초 컷 {pack.clip.segments.length + 1}개</p>
-                  <button onClick={() => copy("clip", [{ n: 1, ...pack.clip!.hook }, ...pack.clip!.segments.map((g, i) => ({ n: i + 2, ...g }))].map((g) => `[컷 ${g.n} 대사] ${g.say}\n[컷 ${g.n} 프롬프트] ${g.motion}`).concat(`[마무리 대사] ${pack.clip!.cta}`).join("\n\n"))} className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-neutral-500">{copied === "clip" ? "✓" : "대사+프롬프트"}</button>
-                </div>
-                {Array.isArray(pack.clip.parts) && pack.clip.parts.length >= 2 ? (
-                  <div className="mt-2 space-y-1.5">
-                    {pack.clip.parts.map((pt, i) => (
-                      <div key={i} className="rounded-xl border border-[#8134AF]/30 bg-[#8134AF]/[0.04] p-2.5">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="text-[11.5px] font-extrabold text-[#8134AF]">⚡ {i + 1}편 / {pack.clip!.parts!.length}편 — 20초 대본</p>
-                          <button onClick={() => copy(`pt${i}`, pack.clip!.basePrompt
-                            ? `${pack.clip!.basePrompt} The character speaks in Korean with an energetic, friendly tone, saying: "${pt}"`
-                            : pt)} className="shrink-0 rounded-full bg-[#8134AF] px-2.5 py-1 text-[10.5px] font-bold text-white">{copied === `pt${i}` ? "✓" : "프롬프트+대사 복사"}</button>
-                        </div>
-                        <p className="mt-1 text-[12px] leading-relaxed text-neutral-700">{pt}</p>
-                      </div>
-                    ))}
-                  </div>
-                ) : pack.clip.oneTake ? (
-                  <div className="mt-2 rounded-xl border border-[#8134AF]/30 bg-[#8134AF]/[0.04] p-2.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-[11.5px] font-extrabold text-[#8134AF]">⚡ 20초 통대본 — 오늘 만들 영상엔 이거 하나면 끝</p>
-                      <button onClick={() => copy("onetake", pack.clip!.oneTake!)} className="shrink-0 rounded-full bg-[#8134AF] px-2.5 py-1 text-[10.5px] font-bold text-white">{copied === "onetake" ? "✓" : "복사"}</button>
-                    </div>
-                    <p className="mt-1 text-[12px] leading-relaxed text-neutral-700">{pack.clip.oneTake}</p>
-                  </div>
-                ) : null}
-                <button onClick={() => copy("clipsay", [pack.clip!.hook.say, ...pack.clip!.segments.map((g) => g.say), pack.clip!.cta].join("\n\n"))}
-                  className="at-press mt-2 w-full rounded-xl bg-[#8134AF] py-2.5 text-[13px] font-bold text-white transition hover:opacity-90">
-                  {copied === "clipsay" ? "복사됨 ✓ — TTS에 그대로 붙여넣으세요" : "🎤 컷별 풀대본 — 여러 컷으로 나눠 만들 때만 (길어요)"}
-                </button>
+                <p className="text-[12.5px] font-extrabold text-neutral-700">🎬 클립 3부작 — 캐릭터 이미지 1장 + 편당 프롬프트 1개면 끝</p>
                 {pack.clip.character && (
                   <div className="mt-2 rounded-lg bg-white p-2.5">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-[11.5px] font-extrabold text-neutral-600">🧸 이 주제의 캐릭터 (모든 컷 동일)</p>
+                      <p className="text-[11.5px] font-extrabold text-neutral-600">🧸 캐릭터 (모든 편 동일)</p>
                       <button onClick={() => copy("char", `${pack.clip!.character} ${pack.clip!.background} Character sheet, full body, front view, plain background, no text.`)}
                         className="shrink-0 rounded-full bg-[#8134AF]/10 px-2 py-0.5 text-[10.5px] font-bold text-[#8134AF]">{copied === "char" ? "✓" : "캐릭터 이미지용 프롬프트"}</button>
                     </div>
-                    <p className="mt-1 text-[11px] leading-relaxed text-neutral-500">{pack.clip.character} <span className="text-neutral-400">{pack.clip.background}</span></p>
+                    <p className="mt-1 text-[11px] leading-relaxed text-neutral-500">{pack.clip.character}</p>
                   </div>
                 )}
-                <div className="mt-1.5 space-y-1.5">
-                  {[{ ...pack.clip.hook, label: "훅 컷 1" }, ...pack.clip.segments.map((g, i) => ({ ...g, label: `컷 ${i + 2}` }))].map((g, i) => (
-                    <div key={i} className="rounded-lg bg-white p-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="text-[12px] leading-relaxed text-neutral-700"><b>{g.label}.</b> 🎤 {g.say}</p>
-                        <button onClick={() => copy(`cm${i}`, g.motion)} className="shrink-0 rounded-full bg-[#8134AF]/10 px-2 py-0.5 text-[10.5px] font-bold text-[#8134AF]">{copied === `cm${i}` ? "✓" : "프롬프트 복사"}</button>
+                <div className="mt-2 space-y-1.5">
+                  {pack.clip.parts.map((pt, i) => (
+                    <div key={i} className="rounded-xl border border-[#8134AF]/30 bg-white p-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-[11.5px] font-extrabold text-[#8134AF]">⚡ {i + 1}편 / {pack.clip!.parts!.length}편 — 20초</p>
+                        <button onClick={() => copy(`pt${i}`, pack.clip!.basePrompt
+                          ? `${pack.clip!.basePrompt} The character speaks in Korean with an energetic, friendly tone, saying: "${pt}"`
+                          : pt)} className="shrink-0 rounded-full bg-[#8134AF] px-2.5 py-1 text-[10.5px] font-bold text-white">{copied === `pt${i}` ? "✓" : "프롬프트+대사 복사"}</button>
                       </div>
-                      <p className="mt-0.5 text-[11px] italic leading-relaxed text-[#8134AF]">🎥 {g.motion}</p>
+                      <p className="mt-1 text-[12px] leading-relaxed text-neutral-700">{pt}</p>
                     </div>
                   ))}
                 </div>
-                <p className="mt-1.5 text-[12px] font-semibold text-[#1D75F7]">마무리 대사: "{pack.clip.cta}" — 마지막 컷 영상에 얹으면 돼요</p>
               </div>
             )}
             <button onClick={() => copy("all", allText)} className="at-press w-full rounded-xl bg-[#1D75F7] py-2.5 text-[13px] font-bold text-white transition hover:bg-[#1667DE]">{copied === "all" ? "전체 복사됨 ✓" : "전체 복사 (메모용)"}</button>
