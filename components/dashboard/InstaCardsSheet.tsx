@@ -9,7 +9,8 @@ import { useEffect, useState } from "react";
 
 interface InstaCard { head: string; body: string }
 interface ClipSegment { say: string; motion: string }
-interface ClipScript { hook: ClipSegment; segments: ClipSegment[]; character: string; background: string; styleAnchor: string; cta: string; oneTake?: string; parts?: string[]; basePrompt?: string }
+interface ClipPart { say: string; scene: string }
+interface ClipScript { hook: ClipSegment; segments: ClipSegment[]; character: string; background: string; styleAnchor: string; cta: string; oneTake?: string; parts?: ClipPart[]; basePrompt?: string }
 interface InstaPack { cover: string; cards: InstaCard[]; cta: InstaCard; caption: string; clip?: ClipScript }
 
 export default function InstaCardsSheet({ articleId, onClose }: { articleId: string; onClose: () => void }) {
@@ -109,10 +110,11 @@ export default function InstaCardsSheet({ articleId, onClose }: { articleId: str
                       <div className="flex items-center justify-between gap-2">
                         <p className="text-[11.5px] font-extrabold text-[#8134AF]">⚡ {i + 1}편 / {pack.clip!.parts!.length}편 — 20초</p>
                         <button onClick={() => copy(`pt${i}`, pack.clip!.basePrompt
-                          ? `${pack.clip!.basePrompt} The character speaks in Korean with an energetic, friendly tone, saying: "${pt}"`
-                          : pt)} className="shrink-0 rounded-full bg-[#8134AF] px-2.5 py-1 text-[10.5px] font-bold text-white">{copied === `pt${i}` ? "✓" : "프롬프트+대사 복사"}</button>
+                          ? `${pack.clip!.basePrompt} ${pt.scene} The character speaks in Korean with an energetic, friendly tone, saying: "${pt.say}"`
+                          : pt.say)} className="shrink-0 rounded-full bg-[#8134AF] px-2.5 py-1 text-[10.5px] font-bold text-white">{copied === `pt${i}` ? "✓" : "프롬프트+대사 복사"}</button>
                       </div>
-                      <p className="mt-1 text-[12px] leading-relaxed text-neutral-700">{pt}</p>
+                      <p className="mt-1 text-[12px] leading-relaxed text-neutral-700">{pt.say}</p>
+                      {pt.scene && <p className="mt-0.5 text-[10.5px] italic leading-relaxed text-[#8134AF]/80">🎬 {pt.scene}</p>}
                     </div>
                   ))}
                 </div>
