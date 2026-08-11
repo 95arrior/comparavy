@@ -117,7 +117,7 @@ export default function InstaCardsSheet({ articleId, onClose }: { articleId: str
                   {pack.clip.oneTake && (
                     <div className="rounded-xl border border-[#8134AF]/30 bg-white p-2.5">
                       <div className="flex items-center justify-between gap-2">
-                        <p className={`text-[11.5px] font-extrabold ${Math.round([...pack.clip.oneTake].length / 14) >= 17 && Math.round([...pack.clip.oneTake].length / 14) <= 21 ? "text-[#8134AF]" : "text-rose-500"}`}>⚡ 20초 대본 · 약 {Math.max(1, Math.round([...pack.clip.oneTake].length / 14))}초{Math.round([...pack.clip.oneTake].length / 14) < 17 ? " — 짧음, [다시] 추천" : ""}</p>
+                        <p className="text-[11.5px] font-extrabold text-[#8134AF]">⚡ 대본 · <b>약 {Math.max(1, Math.round([...pack.clip.oneTake].length / 14))}초</b> — 영상 길이를 이 초수로 설정하세요</p>
                         <button onClick={() => copy("onetake", pack.clip!.oneTake!)} className="shrink-0 rounded-full bg-[#8134AF] px-2.5 py-1 text-[10.5px] font-bold text-white">{copied === "onetake" ? "✓" : "대사만 복사"}</button>
                       </div>
                       <p className="mt-1 text-[12px] leading-relaxed text-neutral-700">{pack.clip.oneTake}</p>
