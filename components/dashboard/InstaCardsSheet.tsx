@@ -8,7 +8,8 @@ import { useEffect, useState } from "react";
  */
 
 interface InstaCard { head: string; body: string }
-interface InstaPack { cover: string; cards: InstaCard[]; cta: InstaCard; caption: string }
+interface ClipScript { hook: string; lines: string[]; cta: string }
+interface InstaPack { cover: string; cards: InstaCard[]; cta: InstaCard; caption: string; clip?: ClipScript }
 
 export default function InstaCardsSheet({ articleId, onClose }: { articleId: string; onClose: () => void }) {
   const [pack, setPack] = useState<InstaPack | null>(null);
@@ -38,7 +39,8 @@ export default function InstaCardsSheet({ articleId, onClose }: { articleId: str
     void navigator.clipboard.writeText(text).then(() => { setCopied(label); setTimeout(() => setCopied(null), 1200); });
   }
   const allText = pack
-    ? [`[표지]\n${pack.cover}`, ...pack.cards.map((c, i) => `[${i + 2}장] ${c.head}\n${c.body}`), `[마지막 장] ${pack.cta.head}\n${pack.cta.body}`, `[캡션]\n${pack.caption}`].join("\n\n")
+    ? [`[표지]\n${pack.cover}`, ...pack.cards.map((c, i) => `[${i + 2}장] ${c.head}\n${c.body}`), `[마지막 장] ${pack.cta.head}\n${pack.cta.body}`, `[캡션]\n${pack.caption}`,
+       ...(pack.clip ? [`[클립 대사]\n훅: ${pack.clip.hook}\n${pack.clip.lines.map((l, i) => `${i + 1}. ${l}`).join("\n")}\n마무리: ${pack.clip.cta}`] : [])].join("\n\n")
     : "";
 
   return (
@@ -46,7 +48,7 @@ export default function InstaCardsSheet({ articleId, onClose }: { articleId: str
       <div className="max-h-[86vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-5 sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="mb-3 flex items-center justify-between">
           <div>
-            <h3 className="text-[15px] font-extrabold text-neutral-900">인스타 카드뉴스</h3>
+            <h3 className="text-[15px] font-extrabold text-neutral-900">인스타 카드 + 클립 대사</h3>
             <p className="mt-0.5 text-[12px] text-neutral-500">문구만 만들어요 — 이미지는 직접 구해서 카드마다 얹으면 돼요 (총 {pack ? pack.cards.length + 2 : "6~10"}장)</p>
           </div>
           <div className="flex gap-1.5">
@@ -87,6 +89,19 @@ export default function InstaCardsSheet({ articleId, onClose }: { articleId: str
               </div>
               <p className="mt-1 whitespace-pre-line text-[12px] leading-relaxed text-neutral-500">{pack.caption}</p>
             </div>
+            {pack.clip && (
+              <div className="rounded-xl bg-[#F7F8FA] p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[12.5px] font-extrabold text-neutral-700">🎬 네이버 클립 대사 ({pack.clip.lines.length + 2}컷)</p>
+                  <button onClick={() => copy("clip", [`[훅] ${pack.clip!.hook}`, ...pack.clip!.lines.map((l, i) => `${i + 1}. ${l}`), `[마무리] ${pack.clip!.cta}`].join("\n"))} className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-neutral-500">{copied === "clip" ? "✓" : "대본 복사"}</button>
+                </div>
+                <p className="mt-1.5 text-[12.5px] font-bold text-neutral-800">"{pack.clip.hook}"</p>
+                <ol className="mt-1 space-y-0.5">
+                  {pack.clip.lines.map((l, i) => <li key={i} className="text-[12px] leading-relaxed text-neutral-600">{i + 1}. {l}</li>)}
+                </ol>
+                <p className="mt-1 text-[12px] font-semibold text-[#1D75F7]">마무리: "{pack.clip.cta}"</p>
+              </div>
+            )}
             <button onClick={() => copy("all", allText)} className="at-press w-full rounded-xl bg-[#1D75F7] py-2.5 text-[13px] font-bold text-white transition hover:bg-[#1667DE]">{copied === "all" ? "전체 복사됨 ✓" : "전체 복사 (메모용)"}</button>
           </div>
         )}

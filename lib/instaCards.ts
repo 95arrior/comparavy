@@ -9,7 +9,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { logUsage } from "./usageLog";
 
 export interface InstaCard { head: string; body: string }
-export interface InstaPack { cover: string; cards: InstaCard[]; cta: InstaCard; caption: string }
+export interface ClipScript { hook: string; lines: string[]; cta: string }
+export interface InstaPack { cover: string; cards: InstaCard[]; cta: InstaCard; caption: string; clip?: ClipScript }
 
 export async function articleToInstaCards(title: string, bodyHtml: string, keyword: string, userId?: string | null): Promise<InstaPack | null> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -19,7 +20,7 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
   const client = new Anthropic({ apiKey });
   const res = await client.messages.create({
     model: "claude-haiku-4-5",
-    max_tokens: 1400,
+    max_tokens: 1900,
     messages: [{
       role: "user",
       content: [
@@ -30,8 +31,9 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
         "[카드 cards] 4~8장. 각 장 = head(한 줄 12자 내) + body(2~3줄, 줄당 18자 내, \\n 구분). 표지의 궁금증을 순서대로 푼다: 무슨 일이 → 왜 → 핵심 숫자·조건 → 함정 → 지금 할 것. 앞 장 끝이 다음 장을 궁금하게(넘기게 만드는 흐름).",
         "[마지막 장 cta] head=행동 한 줄, body=오늘 할 첫걸음 + '자세한 계산·최신 기준은 프로필 링크에'.",
         "[caption] 인스타 캡션: 훅 1줄 + 핵심 요약 2~3줄 + 해시태그 12~15개(#재테크 #경제 같은 대중 태그 + 소재 태그. 한 줄에 몰아서).",
+        "[클립 clip] 네이버 클립용 캐릭터 대사(2026-08-11 유저: '캐릭터가 말하는, 간단명료 핵심 대사만'): hook=첫 3초 대사(결핍·돈 훅을 말로 — '현금 3천만 없으면 이제 못 삽니다' 결), lines=6~10문장(카드와 같은 흐름을 구어체 짧은 대사로 — 한 문장에 한 정보, 말하듯 '~예요/~거든요', 문어체·긴 종속절 금지), cta=마지막 대사('자세한 계산은 블로그에 정리해뒀어요' 결). 대사도 글에 있는 사실만.",
         "",
-        '출력 JSON만: {"cover":"...","cards":[{"head":"...","body":"..."}],"cta":{"head":"...","body":"..."},"caption":"..."}',
+        '출력 JSON만: {"cover":"...","cards":[{"head":"...","body":"..."}],"cta":{"head":"...","body":"..."},"caption":"...","clip":{"hook":"...","lines":["..."],"cta":"..."}}',
         "", "[본문]", text,
       ].join("\n"),
     }],
@@ -47,11 +49,14 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
       .filter((c) => c.head && c.body)
       .slice(0, 8); // 표지+내용 8+CTA = 최대 10장(인스타 캐러셀 상한)
     if (!j.cover || cards.length < 3) return null;
+    const clipRaw = j.clip as { hook?: string; lines?: unknown[]; cta?: string } | undefined;
+    const clipLines = (Array.isArray(clipRaw?.lines) ? clipRaw!.lines : []).map((l) => String(l ?? "").trim().slice(0, 90)).filter(Boolean).slice(0, 10);
     return {
       cover: String(j.cover).trim().slice(0, 60),
       cards,
       cta: { head: String(j.cta?.head ?? "지금 확인").trim().slice(0, 40), body: String(j.cta?.body ?? "자세한 내용은 프로필 링크에").trim().slice(0, 200) },
       caption: String(j.caption ?? "").trim().slice(0, 1200),
+      clip: clipLines.length >= 4 ? { hook: String(clipRaw?.hook ?? "").trim().slice(0, 90), lines: clipLines, cta: String(clipRaw?.cta ?? "자세한 건 블로그에 정리해뒀어요").trim().slice(0, 90) } : undefined,
     };
   } catch { return null; }
 }
