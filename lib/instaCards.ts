@@ -75,6 +75,8 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
       .slice(0, 8); // 표지+내용 8+CTA = 최대 10장(인스타 캐러셀 상한)
     if (!j.cover || cards.length < 3) return null;
     const clipRaw = j.clip as { hook?: { say?: string; motion?: string } | string; character?: string; background?: string; styleAnchor?: string; segments?: { say?: string; motion?: string }[]; cta?: string } | undefined;
+    // ★플랫폼 중립 강제(2026-08-11 유저 2차: "아직도 블로그라는데") — 프롬프트는 방향, 코드는 한계선. 대사의 '블로그'를 '아래'로 치환.
+    const noBlog = (t: string) => t.replace(/블로그\s?링크/g, "아래").replace(/블로그/g, "아래");
     const character = String(clipRaw?.character ?? "").trim().slice(0, 320);
     const backgroundDesc = String(clipRaw?.background ?? "").trim().slice(0, 200);
     const anchor = String(clipRaw?.styleAnchor ?? "Consistent 2D cartoon style, soft shading, subtle smooth motion.").trim().slice(0, 160);
@@ -88,8 +90,8 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
       .slice(0, 5); // ★6개 미만(유저 확정)
     const hookRaw = clipRaw?.hook;
     const hook: { say: string; motion: string } = typeof hookRaw === "object" && hookRaw
-      ? { say: String(hookRaw.say ?? "").trim().slice(0, 160), motion: bake(String(hookRaw.motion ?? "The character bursts into frame pointing at the camera with an excited face, quick zoom-in.").trim().slice(0, 220)) }
-      : { say: String(hookRaw ?? "").trim().slice(0, 160), motion: bake("The character bursts into frame pointing at the camera with an excited face, quick zoom-in.") };
+      ? { say: noBlog(String(hookRaw.say ?? "").trim()).slice(0, 160), motion: bake(String(hookRaw.motion ?? "The character bursts into frame pointing at the camera with an excited face, quick zoom-in.").trim().slice(0, 220)) }
+      : { say: noBlog(String(hookRaw ?? "").trim()).slice(0, 160), motion: bake("The character bursts into frame pointing at the camera with an excited face, quick zoom-in.") };
     return {
       cover: String(j.cover).trim().slice(0, 60),
       cards,
@@ -100,9 +102,9 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
         oneTake: String(clipRaw && "oneTake" in clipRaw ? (clipRaw as { oneTake?: string }).oneTake ?? "" : "").trim().slice(0, 130),
         parts: (Array.isArray((clipRaw as { parts?: unknown[] } | undefined)?.parts) ? (clipRaw as { parts: unknown[] }).parts : [])
           .map((x) => typeof x === "object" && x
-            ? { say: String((x as { say?: string }).say ?? "").trim().slice(0, 260), scene: String((x as { scene?: string }).scene ?? "").trim().slice(0, 240) }
-            : { say: String(x ?? "").trim().slice(0, 260), scene: "" })
-          .filter((x) => x.say).slice(0, 3), cta: String(clipRaw?.cta ?? "자세한 내용은 아래를 확인해 봐!").trim().slice(0, 160) } : undefined,
+            ? { say: noBlog(String((x as { say?: string }).say ?? "").trim()).slice(0, 260), scene: String((x as { scene?: string }).scene ?? "").trim().slice(0, 240) }
+            : { say: noBlog(String(x ?? "").trim()).slice(0, 260), scene: "" })
+          .filter((x) => x.say).slice(0, 3), cta: noBlog(String(clipRaw?.cta ?? "자세한 내용은 아래를 확인해 봐!").trim()).slice(0, 160) } : undefined,
     };
   } catch { return null; }
 }
