@@ -139,7 +139,7 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
       clip: segments.length >= 3 && hook.say ? { hook, segments, character, background: backgroundDesc, styleAnchor: anchor, basePrompt,
         // ★영상 프롬프트 하나로 완결(2026-08-12 유저: '행동으로 표현 + 텍스트 절대 금지') — basePrompt(캐릭터·배경·무텍스트)+연기 지시를 코드가 조립
         videoPrompt: `${basePrompt} ${String((clipRaw as { acting?: string } | undefined)?.acting ?? "").trim().slice(0, 500)}`.replace(/\s+/g, " ").trim().slice(0, 1300),
-        topHook: String((clipRaw as { topHook?: string } | undefined)?.topHook ?? "").trim().slice(0, 60),
+        topHook: (String((clipRaw as { topHook?: string } | undefined)?.topHook ?? "").trim() || String(j.cover ?? "").trim()).slice(0, 60), // ★빈 값 폴백(2026-08-12 실측: 모델이 topHook을 빼먹음) — 표지가 같은 실명+숫자 문법이라 대체 가능
         oneTake: noBlog(String(clipRaw && "oneTake" in clipRaw ? (clipRaw as { oneTake?: string }).oneTake ?? "" : "").trim()).slice(0, 310), // ★130 잔재 제거(실물: 대사가 '왜냐면 나는 '에서 잘림)
         parts: (Array.isArray((clipRaw as { parts?: unknown[] } | undefined)?.parts) ? (clipRaw as { parts: unknown[] }).parts : [])
           .map((x) => typeof x === "object" && x
