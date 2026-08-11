@@ -13,7 +13,7 @@ export interface ClipSegment { say: string; motion: string }
 // ★hook도 컷이다 + 캐릭터·배경 묘사를 프롬프트에 통째로 굽는다(2026-08-11 유저: "캐릭터까지 묘사, 프롬프트에 아예 녹여내자" —
 //  'reference image' 문구는 이미지 없는 모드에서 오류·혼란을 만든다. 글로 고정하면 어느 모드든 돌고 컷 간 일관성도 글이 보장).
 export interface ClipPart { say: string; scene: string }
-export interface ClipScript { hook: ClipSegment; segments: ClipSegment[]; character: string; background: string; styleAnchor: string; cta: string; oneTake: string; parts: ClipPart[]; basePrompt: string; topHook: string }
+export interface ClipScript { hook: ClipSegment; segments: ClipSegment[]; character: string; background: string; styleAnchor: string; cta: string; oneTake: string; parts: ClipPart[]; basePrompt: string; videoPrompt: string; topHook: string }
 export interface InstaPack { cover: string; cards: InstaCard[]; cta: InstaCard; caption: string; clip?: ClipScript }
 
 export async function articleToInstaCards(title: string, bodyHtml: string, keyword: string, userId?: string | null): Promise<InstaPack | null> {
@@ -56,9 +56,10 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
         "  ②팩트인가 — 대사의 모든 숫자·날짜·사실이 본문에 실재하나? 본문에 없으면 그 문장을 삭제(새 사실 창작 절대 금지).",
         "  ③재밌는가 — 무관한 구경꾼이 낄낄대며 끝까지 볼 수다인가? 정보 나열로 읽히면 뒷담화 리듬('글쎄', '어머', '~지?')을 다시 입혀라. ★그리고 무심코 스크롤하던 사람이 첫 문장에서 멈출까? 첫 문장이 약하면 전체를 다시 써라.",
         "  ④댓글을 부르나 — 3편 마무리에 시청자가 한 줄로 답할 질문 1개 필수. 자기 상황을 말하게 하거나('여러분 회사 성과급 규정은 어때?') 편을 가르게 하라('이 해고, 심하다 vs 당연하다?'). '어떠셨나요' 같은 인사치레 금지.",
-        "  oneTake = ★단일 대본 하나만(2026-08-11 유저 최종 정정: '오차범위는 20초에서 1~2초 — 18~20초'): ★250~290자를 반드시 지켜라(초당 14자 실측 × 18~20초). 이보다 짧으면 팩트를 더 넣어 채우고, 넘으면 줄여라. ★구조 = 사건→소개→팩트→유입, 뉴스 팩트체크식으로 짧게: ①실명 훅 1문장(사건) ②한 줄 소개 ③팩트 속사포 — 짧은 문장으로 증거·숫자 쌓기('사원증 카드키, GPS, 법인차량 기록. 다 걸렸어. 1~27분 만에 퇴근. 6개월 반복.') ④절정 직전 끊기+'자세한 내용은 아래를 확인해!'(유입). 같은 화자·반말·뒷담화 톤.",
+        "  oneTake = ★단일 대본 하나만: ★220~250자를 반드시 지켜라(초당 12.5자 × 18~20초 — 2026-08-12 유저 재보정: '말이 너무 빨라, 쫌만 줄이면 될 듯'). 짧으면 팩트를 넣어 채우고, 넘으면 줄여라. ★구조 = 사건→소개→팩트→유입: ①실명 훅 1문장(사건) ②한 줄 소개 ③팩트 속사포 — 짧은 문장으로 증거·숫자 쌓기 ④절정 직전 끊기+'자세한 내용은 아래를 확인해!'(유입). ★강약 조절(2026-08-12 유저: '강약이 없어서 재미가 없어 — 이 짧은 시간에 빨려들어가야 해'): 문장 길이를 들쭉날쭉하게 — 3~7자 초단문('다 걸렸어.', '근데 반전.')을 3개 이상 박고, 핵심 숫자·반전 직전엔 '…'로 반 박자 뜸('그 돈이… 통째로 사라져'), 물음표 1개로 시청자에게 되묻기('말이 돼?'). 같은 길이 문장 3연속 금지 — 속사포와 뜸이 번갈아야 빨려든다. 같은 화자·반말·뒷담화 톤.",
+        "  acting = ★영상 생성용 연기 지시(2026-08-12 유저: '내용을 행동으로 표현 — 텍스트는 한글이 깨져서 절대 금지'): 영어 3~4문장. 20초 대본의 흐름(충격 사건→수다 설명→숫자 속사포→반전·마무리)을 캐릭터의 몸짓·표정 팬터마임으로 순서대로: 예 'Gasps and covers mouth in shock → leans in close whispering like sharing gossip → counts rapidly on fingers with widening eyes → freezes, shrugs dramatically, then points downward with a sly grin.' 글자·숫자가 보일 소품(문서·차트 눈금·시계 숫자판) 금지 — 행동과 표정만.",
         "",
-        '출력 JSON만: {"cover":"...","cards":[{"head":"...","body":"..."}],"cta":{"head":"...","body":"..."},"caption":"...","clip":{"hook":{"say":"...","motion":"..."},"character":"...","background":"...","styleAnchor":"...","segments":[{"say":"...","motion":"..."}],"cta":"...","oneTake":"...","topHook":"실명+숫자 후킹\\n두 줄까지"}}',
+        '출력 JSON만: {"cover":"...","cards":[{"head":"...","body":"..."}],"cta":{"head":"...","body":"..."},"caption":"...","clip":{"hook":{"say":"...","motion":"..."},"character":"...","background":"...","styleAnchor":"...","segments":[{"say":"...","motion":"..."}],"cta":"...","oneTake":"...","acting":"영어 연기 지시 3~4문장","topHook":"실명+숫자 후킹\\n두 줄까지"}}',
         "", "[본문]", text,
       ].join("\n"),
     }],
@@ -66,20 +67,21 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
   void logUsage({ userId, model: "claude-haiku-4-5", kind: "insta_cards", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
 
   // ★20초 분량 코드 검증(2026-08-11 유저: "20초 대본인데 왜 9초? 두 번 체크해") — 프롬프트는 방향, 코드는 자로 잰다.
-  //  250~300자 밖이면 본문을 근거로 딱 맞게 한 번 재작성(새 사실 금지). 그래도 안 맞으면 그대로 두되 화면 초 표시가 알린다.
+  //  220~255자 밖이면 본문을 근거로 딱 맞게 한 번 재작성(새 사실 금지). 그래도 안 맞으면 그대로 두되 화면 초 표시가 알린다.
+  //  (2026-08-12 유저 재보정: 초당 14자는 말이 너무 빨랐다 → 12.5자, 18~20초 = 220~250자)
   // ★어려운 단어 코드 감지(2026-08-11 유저: '초딩이 들어도 알아듣게' — 프롬프트만으론 모델이 용어를 남긴다)
   const HARD_TERM_RE = /(청구권|처분|기각|소멸|재직|구성원|호황|슈퍼사이클|대용증권|이수번호|산정|귀속|경과조치|법인차량)/g;
   async function fitOneTake(current: string): Promise<string> {
     const len = [...current].length;
     const hardTerms = Array.from(new Set(current.match(HARD_TERM_RE) ?? []));
-    if (len >= 250 && len <= 300 && hardTerms.length === 0) return current;
+    if (len >= 220 && len <= 255 && hardTerms.length === 0) return current;
     try {
       const fix = await client.messages.create({
         model: "claude-haiku-4-5",
         max_tokens: 600,
         messages: [{ role: "user", content: [
-          `아래 클립 대사를 정확히 260~285자(공백 포함)로 ${len < 250 ? "본문의 팩트를 더 넣어 늘려" : len > 300 ? "줄여" : "같은 길이로"} 다시 써라. 지금은 ${len}자다. 문장은 반드시 완결로 끝나야 한다.${hardTerms.length ? ` ★다음 단어는 초등학생 생활어로 바꿔라(예: 청구권→받을 돈, 처분→잘렸어, 기각→법원이 안 된대, 재직→회사 다니는, 호황→돈 엄청 버는 때): ${hardTerms.join(", ")}` : ""}`,
-          "규칙: 화자·반말·문체·구조(실명 훅→팩트 속사포→절정 직전 끊기→'자세한 내용은 아래를 확인해!') 유지. 새 사실 금지 — 대사와 [본문]에 있는 것만. '블로그' 단어 금지. 대사 본문만 출력(따옴표·설명 없이).",
+          `아래 클립 대사를 정확히 225~245자(공백 포함)로 ${len < 220 ? "본문의 팩트를 더 넣어 늘려" : len > 255 ? "줄여" : "같은 길이로"} 다시 써라. 지금은 ${len}자다. 문장은 반드시 완결로 끝나야 한다.${hardTerms.length ? ` ★다음 단어는 초등학생 생활어로 바꿔라(예: 청구권→받을 돈, 처분→잘렸어, 기각→법원이 안 된대, 재직→회사 다니는, 호황→돈 엄청 버는 때): ${hardTerms.join(", ")}` : ""}`,
+          "규칙: 화자·반말·문체·구조(실명 훅→팩트 속사포→절정 직전 끊기→'자세한 내용은 아래를 확인해!') 유지. ★강약 리듬 유지 — 3~7자 초단문 3개 이상, 반전 직전 '…' 뜸, 물음표 1개(같은 길이 문장 3연속 금지). 새 사실 금지 — 대사와 [본문]에 있는 것만. '블로그' 단어 금지. 대사 본문만 출력(따옴표·설명 없이).",
           "", "[현재 대사]", current, "", "[본문]", text.slice(0, 3000),
         ].join("\n") }],
       });
@@ -87,7 +89,7 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
       const ft = fix.content.find((b) => b.type === "text");
       const fixed = (ft && ft.type === "text" ? ft.text : "").trim().replace(/^["'\s]+|["'\s]+$/g, "");
       const flen = [...fixed].length;
-      return flen >= 200 && flen <= 320 ? fixed : current;
+      return flen >= 190 && flen <= 270 ? fixed : current;
     } catch { return current; }
   }
   const t = res.content.find((b) => b.type === "text");
@@ -108,7 +110,7 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
     const anchor = String(clipRaw?.styleAnchor ?? "Consistent 2D cartoon style, soft shading, subtle smooth motion.").trim().slice(0, 160);
     // ★캐릭터·배경·스타일을 각 컷에 통째로 굽는다(유저: "프롬프트에 아예 녹여내자") — 복사 한 번 = 완성 프롬프트, 레퍼런스 이미지 의존 없음.
     // ★basePrompt를 한 곳에서 만든다(같은 값 두 곳 = 드리프트, CLAUDE.md) — 컷 프롬프트와 편별 통합 프롬프트가 같은 접두를 쓴다
-    const basePrompt = `${character} ${backgroundDesc} ${anchor} Vertical 9:16 portrait video, the character centered with head and upper body filling the frame. The exact same character and background in every shot. Absolutely NO text, captions, subtitles, letters or numbers anywhere in the frame — the character talks with natural mouth movement only, never showing written words.`.replace(/\s+/g, " ").trim();
+    const basePrompt = `${character} ${backgroundDesc} ${anchor} Vertical 9:16 portrait video, the character centered with head and upper body filling the frame. The exact same character and background in every shot. Absolutely NO text, captions, subtitles, letters or numbers anywhere in the frame — especially no Korean Hangul, which always renders as broken glyphs. The character talks with natural mouth movement only, never showing written words.`.replace(/\s+/g, " ").trim();
     const bake = (m: string) => `${basePrompt} ${m}`.replace(/\s+/g, " ").trim().slice(0, 960);
     const segments = (Array.isArray(clipRaw?.segments) ? clipRaw!.segments : [])
       .map((g) => ({ say: String(g?.say ?? "").trim().slice(0, 160), motion: bake(String(g?.motion ?? "").trim().slice(0, 220)) }))
@@ -124,6 +126,8 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
       cta: { head: String(j.cta?.head ?? "지금 확인").trim().slice(0, 40), body: String(j.cta?.body ?? "자세한 내용은 프로필 링크에").trim().slice(0, 200) },
       caption: String(j.caption ?? "").trim().slice(0, 1200),
       clip: segments.length >= 3 && hook.say ? { hook, segments, character, background: backgroundDesc, styleAnchor: anchor, basePrompt,
+        // ★영상 프롬프트 하나로 완결(2026-08-12 유저: '행동으로 표현 + 텍스트 절대 금지') — basePrompt(캐릭터·배경·무텍스트)+연기 지시를 코드가 조립
+        videoPrompt: `${basePrompt} ${String((clipRaw as { acting?: string } | undefined)?.acting ?? "").trim().slice(0, 500)}`.replace(/\s+/g, " ").trim().slice(0, 1300),
         topHook: String((clipRaw as { topHook?: string } | undefined)?.topHook ?? "").trim().slice(0, 60),
         oneTake: noBlog(String(clipRaw && "oneTake" in clipRaw ? (clipRaw as { oneTake?: string }).oneTake ?? "" : "").trim()).slice(0, 310), // ★130 잔재 제거(실물: 대사가 '왜냐면 나는 '에서 잘림)
         parts: (Array.isArray((clipRaw as { parts?: unknown[] } | undefined)?.parts) ? (clipRaw as { parts: unknown[] }).parts : [])

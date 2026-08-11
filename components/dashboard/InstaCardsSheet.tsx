@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 interface InstaCard { head: string; body: string }
 interface ClipSegment { say: string; motion: string }
 interface ClipPart { say: string; scene: string }
-interface ClipScript { hook: ClipSegment; segments: ClipSegment[]; character: string; background: string; styleAnchor: string; cta: string; oneTake?: string; parts?: ClipPart[]; basePrompt?: string; topHook?: string }
+interface ClipScript { hook: ClipSegment; segments: ClipSegment[]; character: string; background: string; styleAnchor: string; cta: string; oneTake?: string; parts?: ClipPart[]; basePrompt?: string; videoPrompt?: string; topHook?: string }
 interface InstaPack { cover: string; cards: InstaCard[]; cta: InstaCard; caption: string; clip?: ClipScript }
 
 export default function InstaCardsSheet({ articleId, onClose }: { articleId: string; onClose: () => void }) {
@@ -113,11 +113,20 @@ export default function InstaCardsSheet({ articleId, onClose }: { articleId: str
                     <p className="mt-1 text-[11px] leading-relaxed text-neutral-500">{pack.clip.character}</p>
                   </div>
                 )}
+                {pack.clip.videoPrompt && (
+                  <div className="mt-2 rounded-lg bg-white p-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[11.5px] font-extrabold text-neutral-600">🎬 영상 프롬프트 (행동 연기 · 텍스트 절대 금지 내장)</p>
+                      <button onClick={() => copy("vprompt", pack.clip!.videoPrompt!)} className="shrink-0 rounded-full bg-[#8134AF]/10 px-2 py-0.5 text-[10.5px] font-bold text-[#8134AF]">{copied === "vprompt" ? "✓" : "프롬프트 복사"}</button>
+                    </div>
+                    <p className="mt-1 line-clamp-3 text-[11px] leading-relaxed text-neutral-500">{pack.clip.videoPrompt}</p>
+                  </div>
+                )}
                 <div className="mt-2 space-y-1.5">
                   {pack.clip.oneTake && (
                     <div className="rounded-xl border border-[#8134AF]/30 bg-white p-2.5">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-[11.5px] font-extrabold text-[#8134AF]">⚡ 대본 · <b>약 {Math.max(1, Math.round([...pack.clip.oneTake].length / 14))}초</b> — 영상 길이를 이 초수로 설정하세요</p>
+                        <p className="text-[11.5px] font-extrabold text-[#8134AF]">⚡ 대본 · <b>약 {Math.max(1, Math.round([...pack.clip.oneTake].length / 12.5))}초</b> — 영상 길이를 이 초수로 설정하세요</p>
                         <button onClick={() => copy("onetake", pack.clip!.oneTake!)} className="shrink-0 rounded-full bg-[#8134AF] px-2.5 py-1 text-[10.5px] font-bold text-white">{copied === "onetake" ? "✓" : "대사만 복사"}</button>
                       </div>
                       <p className="mt-1 text-[12px] leading-relaxed text-neutral-700">{pack.clip.oneTake}</p>
