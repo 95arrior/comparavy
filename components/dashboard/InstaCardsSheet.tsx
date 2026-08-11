@@ -99,7 +99,7 @@ export default function InstaCardsSheet({ articleId, onClose }: { articleId: str
                 {pack.clip.oneTake && (
                   <div className="mt-2 rounded-xl border border-[#8134AF]/30 bg-[#8134AF]/[0.04] p-2.5">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-[11.5px] font-extrabold text-[#8134AF]">⚡ 20초 통대본 — 이미지 1장 + 이 대사 한 방이면 끝</p>
+                      <p className="text-[11.5px] font-extrabold text-[#8134AF]">⚡ 20초 통대본 — 오늘 만들 영상엔 이거 하나면 끝</p>
                       <button onClick={() => copy("onetake", pack.clip!.oneTake!)} className="shrink-0 rounded-full bg-[#8134AF] px-2.5 py-1 text-[10.5px] font-bold text-white">{copied === "onetake" ? "✓" : "복사"}</button>
                     </div>
                     <p className="mt-1 text-[12px] leading-relaxed text-neutral-700">{pack.clip.oneTake}</p>
@@ -107,7 +107,7 @@ export default function InstaCardsSheet({ articleId, onClose }: { articleId: str
                 )}
                 <button onClick={() => copy("clipsay", [pack.clip!.hook.say, ...pack.clip!.segments.map((g) => g.say), pack.clip!.cta].join("\n\n"))}
                   className="at-press mt-2 w-full rounded-xl bg-[#8134AF] py-2.5 text-[13px] font-bold text-white transition hover:opacity-90">
-                  {copied === "clipsay" ? "복사됨 ✓ — TTS에 그대로 붙여넣으세요" : "🎤 컷별 풀대본 복사 (60초판)"}
+                  {copied === "clipsay" ? "복사됨 ✓ — TTS에 그대로 붙여넣으세요" : "🎤 컷별 풀대본 — 여러 컷으로 나눠 만들 때만 (길어요)"}
                 </button>
                 {pack.clip.character && (
                   <div className="mt-2 rounded-lg bg-white p-2.5">
