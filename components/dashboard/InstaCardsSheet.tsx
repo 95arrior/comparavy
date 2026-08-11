@@ -91,9 +91,9 @@ export default function InstaCardsSheet({ articleId, onClose }: { articleId: str
               </div>
               <p className="mt-1 whitespace-pre-line text-[12px] leading-relaxed text-neutral-500">{pack.caption}</p>
             </div>
-            {pack.clip && Array.isArray(pack.clip.parts) && pack.clip.parts.length >= 2 && (
+            {pack.clip && (pack.clip.oneTake || pack.clip.topHook) && (
               <div className="rounded-xl bg-[#F7F8FA] p-3">
-                <p className="text-[12.5px] font-extrabold text-neutral-700">🎬 클립 3부작 — 캐릭터 이미지 1장 + 편당 프롬프트 1개면 끝</p>
+                <p className="text-[12.5px] font-extrabold text-neutral-700">🎬 클립 — 캐릭터 이미지 1장 + 20초 대사 하나면 끝</p>
                 {pack.clip.topHook && (
                   <div className="mt-2 rounded-lg bg-[#111] p-2.5">
                     <div className="flex items-center justify-between gap-2">
@@ -114,16 +114,15 @@ export default function InstaCardsSheet({ articleId, onClose }: { articleId: str
                   </div>
                 )}
                 <div className="mt-2 space-y-1.5">
-                  {pack.clip.parts.map((raw) => (typeof raw === "string" ? { say: raw, scene: "" } : { say: raw?.say ?? "", scene: raw?.scene ?? "" })).map((pt, i) => (
-                    <div key={i} className="rounded-xl border border-[#8134AF]/30 bg-white p-2.5">
+                  {pack.clip.oneTake && (
+                    <div className="rounded-xl border border-[#8134AF]/30 bg-white p-2.5">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-[11.5px] font-extrabold text-[#8134AF]">⚡ {i + 1}편 / {pack.clip!.parts!.length}편 · 약 {Math.max(1, Math.round([...pt.say].length / 12))}초</p>
-                        <button onClick={() => copy(`pt${i}`, pt.say)} className="shrink-0 rounded-full bg-[#8134AF] px-2.5 py-1 text-[10.5px] font-bold text-white">{copied === `pt${i}` ? "✓" : "대사만 복사"}</button>
+                        <p className="text-[11.5px] font-extrabold text-[#8134AF]">⚡ 20초 대본 · 약 {Math.max(1, Math.round([...pack.clip.oneTake].length / 14))}초</p>
+                        <button onClick={() => copy("onetake", pack.clip!.oneTake!)} className="shrink-0 rounded-full bg-[#8134AF] px-2.5 py-1 text-[10.5px] font-bold text-white">{copied === "onetake" ? "✓" : "대사만 복사"}</button>
                       </div>
-                      <p className="mt-1 text-[12px] leading-relaxed text-neutral-700">{pt.say}</p>
-                      {pt.scene && <p className="mt-0.5 text-[10.5px] italic leading-relaxed text-[#8134AF]/80">🎬 {pt.scene}</p>}
+                      <p className="mt-1 text-[12px] leading-relaxed text-neutral-700">{pack.clip.oneTake}</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             )}
