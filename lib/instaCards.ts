@@ -67,15 +67,18 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
 
   // ★20초 분량 코드 검증(2026-08-11 유저: "20초 대본인데 왜 9초? 두 번 체크해") — 프롬프트는 방향, 코드는 자로 잰다.
   //  250~300자 밖이면 본문을 근거로 딱 맞게 한 번 재작성(새 사실 금지). 그래도 안 맞으면 그대로 두되 화면 초 표시가 알린다.
+  // ★어려운 단어 코드 감지(2026-08-11 유저: '초딩이 들어도 알아듣게' — 프롬프트만으론 모델이 용어를 남긴다)
+  const HARD_TERM_RE = /(청구권|처분|기각|소멸|재직|구성원|호황|슈퍼사이클|대용증권|이수번호|산정|귀속|경과조치|법인차량)/g;
   async function fitOneTake(current: string): Promise<string> {
     const len = [...current].length;
-    if (len >= 250 && len <= 300) return current; // ★목표 창 18~20초(유저 정정: 오차 1~2초) — 짧아도 길어도 고친다
+    const hardTerms = Array.from(new Set(current.match(HARD_TERM_RE) ?? []));
+    if (len >= 250 && len <= 300 && hardTerms.length === 0) return current;
     try {
       const fix = await client.messages.create({
         model: "claude-haiku-4-5",
         max_tokens: 600,
         messages: [{ role: "user", content: [
-          `아래 클립 대사를 정확히 260~285자(공백 포함)로 ${len < 250 ? "본문의 팩트를 더 넣어 늘려" : "줄여"} 다시 써라. 지금은 ${len}자다. 문장은 반드시 완결로 끝나야 한다.`,
+          `아래 클립 대사를 정확히 260~285자(공백 포함)로 ${len < 250 ? "본문의 팩트를 더 넣어 늘려" : len > 300 ? "줄여" : "같은 길이로"} 다시 써라. 지금은 ${len}자다. 문장은 반드시 완결로 끝나야 한다.${hardTerms.length ? ` ★다음 단어는 초등학생 생활어로 바꿔라(예: 청구권→받을 돈, 처분→잘렸어, 기각→법원이 안 된대, 재직→회사 다니는, 호황→돈 엄청 버는 때): ${hardTerms.join(", ")}` : ""}`,
           "규칙: 화자·반말·문체·구조(실명 훅→팩트 속사포→절정 직전 끊기→'자세한 내용은 아래를 확인해!') 유지. 새 사실 금지 — 대사와 [본문]에 있는 것만. '블로그' 단어 금지. 대사 본문만 출력(따옴표·설명 없이).",
           "", "[현재 대사]", current, "", "[본문]", text.slice(0, 3000),
         ].join("\n") }],
