@@ -12,7 +12,7 @@ export interface InstaCard { head: string; body: string }
 export interface ClipSegment { say: string; motion: string }
 // ★hook도 컷이다 + 캐릭터·배경 묘사를 프롬프트에 통째로 굽는다(2026-08-11 유저: "캐릭터까지 묘사, 프롬프트에 아예 녹여내자" —
 //  'reference image' 문구는 이미지 없는 모드에서 오류·혼란을 만든다. 글로 고정하면 어느 모드든 돌고 컷 간 일관성도 글이 보장).
-export interface ClipScript { hook: ClipSegment; segments: ClipSegment[]; character: string; background: string; styleAnchor: string; cta: string; oneTake: string }
+export interface ClipScript { hook: ClipSegment; segments: ClipSegment[]; character: string; background: string; styleAnchor: string; cta: string; oneTake: string; parts: string[] }
 export interface InstaPack { cover: string; cards: InstaCard[]; cta: InstaCard; caption: string; clip?: ClipScript }
 
 export async function articleToInstaCards(title: string, bodyHtml: string, keyword: string, userId?: string | null): Promise<InstaPack | null> {
@@ -48,9 +48,9 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
         "  각 세그 motion = 그 컷의 동작·표정·카메라만 영어 1~2문장(캐릭터·배경·스타일 묘사 금지 — 코드가 구워서 합친다). 예: 'The character leans in and points at the viewer with a warning face, subtle push-in.'",
         "  styleAnchor = 스타일 한 줄(영어): 'Consistent 2D cartoon style, soft shading, subtle smooth motion.' 결 — ★'reference image' 같은 말 금지(이미지 없는 모드에서 오류를 만든다).",
         "  cta = 마무리 대사(반말): '블로그 링크에서 최신 기준 확인하고, 증권사에도 꼭 물어봐! 그래야 정확해' 결. 대사 전부 글에 있는 사실만.",
-        "  oneTake = ★20초 통대본(2026-08-11 유저 실측 2차: '안 들려, 너무 빨라' — TTS는 숨 쉴 틈까지 필요하다): 80~110자, 문장 최대 4개(훅 1 + 핵심 2 + 짧은 CTA 1). 절대 초과 금지 — 길면 핵심을 1개로 줄여서라도 지켜라. 같은 화자(키워드 당사자)·같은 반말. 컷 대사를 복붙하지 말고 30초에 맞게 새로 압축해라.",
+        "  parts = ★20초짜리 3부작 대본(2026-08-11 유저 확정: '3등분해야겠다'): 배열 3개, 각 80~110자·문장 최대 4개(절대 초과 금지 — TTS 숨 쉴 틈 필요). 1편=훅+사건 제시, 끝은 반드시 궁금하게 끊기('그래서 어떻게 됐게?'). 2편=미니 훅 1문장+전개, 끝은 또 끊기. 3편=결말 공개+핵심 원리 1개+CTA('자세한 건 블로그 봐!'). 같은 화자·반말. oneTake = 1편만 만들 때 쓸 단독 완결판 80~110자(훅+핵심1+CTA). 같은 화자(키워드 당사자)·같은 반말. 컷 대사를 복붙하지 말고 30초에 맞게 새로 압축해라.",
         "",
-        '출력 JSON만: {"cover":"...","cards":[{"head":"...","body":"..."}],"cta":{"head":"...","body":"..."},"caption":"...","clip":{"hook":{"say":"...","motion":"..."},"character":"...","background":"...","styleAnchor":"...","segments":[{"say":"...","motion":"..."}],"cta":"...","oneTake":"..."}}',
+        '출력 JSON만: {"cover":"...","cards":[{"head":"...","body":"..."}],"cta":{"head":"...","body":"..."},"caption":"...","clip":{"hook":{"say":"...","motion":"..."},"character":"...","background":"...","styleAnchor":"...","segments":[{"say":"...","motion":"..."}],"cta":"...","oneTake":"...","parts":["1편","2편","3편"]}}',
         "", "[본문]", text,
       ].join("\n"),
     }],
@@ -71,7 +71,7 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
     const backgroundDesc = String(clipRaw?.background ?? "").trim().slice(0, 200);
     const anchor = String(clipRaw?.styleAnchor ?? "Consistent 2D cartoon style, soft shading, subtle smooth motion.").trim().slice(0, 160);
     // ★캐릭터·배경·스타일을 각 컷에 통째로 굽는다(유저: "프롬프트에 아예 녹여내자") — 복사 한 번 = 완성 프롬프트, 레퍼런스 이미지 의존 없음.
-    const bake = (m: string) => `${character} ${backgroundDesc} ${anchor} Vertical 9:16 portrait video, the character centered with head and upper body filling the frame. The exact same character and background in every shot. ${m}`.replace(/\s+/g, " ").trim().slice(0, 960);
+    const bake = (m: string) => `${character} ${backgroundDesc} ${anchor} Vertical 9:16 portrait video, the character centered with head and upper body filling the frame. The exact same character and background in every shot. Absolutely NO text, captions, subtitles, letters or numbers anywhere in the frame — the character talks with natural mouth movement only, never showing written words. ${m}`.replace(/\s+/g, " ").trim().slice(0, 960);
     const segments = (Array.isArray(clipRaw?.segments) ? clipRaw!.segments : [])
       .map((g) => ({ say: String(g?.say ?? "").trim().slice(0, 160), motion: bake(String(g?.motion ?? "").trim().slice(0, 220)) }))
       .filter((g) => g.say)
@@ -85,7 +85,10 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
       cards,
       cta: { head: String(j.cta?.head ?? "지금 확인").trim().slice(0, 40), body: String(j.cta?.body ?? "자세한 내용은 프로필 링크에").trim().slice(0, 200) },
       caption: String(j.caption ?? "").trim().slice(0, 1200),
-      clip: segments.length >= 3 && hook.say ? { hook, segments, character, background: backgroundDesc, styleAnchor: anchor, oneTake: String(clipRaw && "oneTake" in clipRaw ? (clipRaw as { oneTake?: string }).oneTake ?? "" : "").trim().slice(0, 130), cta: String(clipRaw?.cta ?? "블로그 링크에서 최신 기준 확인하고, 증권사에도 꼭 물어봐! 그래야 정확해").trim().slice(0, 160) } : undefined,
+      clip: segments.length >= 3 && hook.say ? { hook, segments, character, background: backgroundDesc, styleAnchor: anchor,
+        oneTake: String(clipRaw && "oneTake" in clipRaw ? (clipRaw as { oneTake?: string }).oneTake ?? "" : "").trim().slice(0, 130),
+        parts: (Array.isArray((clipRaw as { parts?: unknown[] } | undefined)?.parts) ? (clipRaw as { parts: unknown[] }).parts : [])
+          .map((x) => String(x ?? "").trim().slice(0, 130)).filter(Boolean).slice(0, 3), cta: String(clipRaw?.cta ?? "블로그 링크에서 최신 기준 확인하고, 증권사에도 꼭 물어봐! 그래야 정확해").trim().slice(0, 160) } : undefined,
     };
   } catch { return null; }
 }
