@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 
 interface InstaCard { head: string; body: string }
 interface ClipSegment { say: string; motion: string }
-interface ClipScript { hook: ClipSegment; segments: ClipSegment[]; styleAnchor: string; cta: string }
+interface ClipScript { hook: ClipSegment; segments: ClipSegment[]; character: string; background: string; styleAnchor: string; cta: string }
 interface InstaPack { cover: string; cards: InstaCard[]; cta: InstaCard; caption: string; clip?: ClipScript }
 
 export default function InstaCardsSheet({ articleId, onClose }: { articleId: string; onClose: () => void }) {
@@ -100,6 +100,16 @@ export default function InstaCardsSheet({ articleId, onClose }: { articleId: str
                   className="at-press mt-2 w-full rounded-xl bg-[#8134AF] py-2.5 text-[13px] font-bold text-white transition hover:opacity-90">
                   {copied === "clipsay" ? "복사됨 ✓ — TTS에 그대로 붙여넣으세요" : "🎤 대본 통째로 복사 (TTS용)"}
                 </button>
+                {pack.clip.character && (
+                  <div className="mt-2 rounded-lg bg-white p-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[11.5px] font-extrabold text-neutral-600">🧸 이 주제의 캐릭터 (모든 컷 동일)</p>
+                      <button onClick={() => copy("char", `${pack.clip!.character} ${pack.clip!.background} Character sheet, full body, front view, plain background, no text.`)}
+                        className="shrink-0 rounded-full bg-[#8134AF]/10 px-2 py-0.5 text-[10.5px] font-bold text-[#8134AF]">{copied === "char" ? "✓" : "캐릭터 이미지용 프롬프트"}</button>
+                    </div>
+                    <p className="mt-1 text-[11px] leading-relaxed text-neutral-500">{pack.clip.character} <span className="text-neutral-400">{pack.clip.background}</span></p>
+                  </div>
+                )}
                 <div className="mt-1.5 space-y-1.5">
                   {[{ ...pack.clip.hook, label: "훅 컷 1" }, ...pack.clip.segments.map((g, i) => ({ ...g, label: `컷 ${i + 2}` }))].map((g, i) => (
                     <div key={i} className="rounded-lg bg-white p-2">
