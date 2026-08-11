@@ -13,7 +13,7 @@ export interface ClipSegment { say: string; motion: string }
 // ★hook도 컷이다 + 캐릭터·배경 묘사를 프롬프트에 통째로 굽는다(2026-08-11 유저: "캐릭터까지 묘사, 프롬프트에 아예 녹여내자" —
 //  'reference image' 문구는 이미지 없는 모드에서 오류·혼란을 만든다. 글로 고정하면 어느 모드든 돌고 컷 간 일관성도 글이 보장).
 export interface ClipPart { say: string; scene: string }
-export interface ClipScript { hook: ClipSegment; segments: ClipSegment[]; character: string; background: string; styleAnchor: string; cta: string; oneTake: string; parts: ClipPart[]; basePrompt: string }
+export interface ClipScript { hook: ClipSegment; segments: ClipSegment[]; character: string; background: string; styleAnchor: string; cta: string; oneTake: string; parts: ClipPart[]; basePrompt: string; topHook: string }
 export interface InstaPack { cover: string; cards: InstaCard[]; cta: InstaCard; caption: string; clip?: ClipScript }
 
 export async function articleToInstaCards(title: string, bodyHtml: string, keyword: string, userId?: string | null): Promise<InstaPack | null> {
@@ -50,6 +50,7 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
         "  각 세그 motion = 그 컷의 동작·표정·카메라만 영어 1~2문장(캐릭터·배경·스타일 묘사 금지 — 코드가 구워서 합친다). 예: 'The character leans in and points at the viewer with a warning face, subtle push-in.'",
         "  styleAnchor = 스타일 한 줄(영어): 'Consistent 2D cartoon style, soft shading, subtle smooth motion.' 결 — ★'reference image' 같은 말 금지(이미지 없는 모드에서 오류를 만든다).",
         "  cta = 마무리 대사(반말): '자세한 내용은 아래를 확인해 봐!' 결. ★플랫폼 중립(2026-08-11 유저: 다양한 곳에 쓰게): 대사에 '블로그'라는 단어 금지 — 클립·릴스·쇼츠 어디서든 통하게 항상 '아래'로 가리킨다. 대사 전부 글에 있는 사실만.",
+        "  topHook = ★영상 상단 고정 후킹 문구(2026-08-11 유저: '3초 법칙 자극 + 키워드 무조건 삽입 — SK하이닉스 얘긴데 실명이 빠지면 안 되죠'): 1~2줄(\\n), 줄당 12자 내. ★핵심 고유명사·키워드 필수(브랜드·기업·제도 실명) + 숫자 앵커 + 충격 대비. 예: 'SK하이닉스 성과급 10억\\n1분 퇴근에 날아갔다'. 밋밋한 설명형('~하는 이유') 금지 — 스크롤 멈추는 자극형만.",
         "★마지막 관문(2026-08-11 유저 확정 — 출력 직전 4개 자가 검문, 하나라도 미달이면 고쳐서 출력):",
         "  ①알기 쉬운가 — 중학생이 한 번 듣고 이해되나? 전문용어가 남았으면 일상어로 번역하거나 삭제.",
         "  ②팩트인가 — 대사의 모든 숫자·날짜·사실이 본문에 실재하나? 본문에 없으면 그 문장을 삭제(새 사실 창작 절대 금지).",
@@ -57,7 +58,7 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
         "  ④댓글을 부르나 — 3편 마무리에 시청자가 한 줄로 답할 질문 1개 필수. 자기 상황을 말하게 하거나('여러분 회사 성과급 규정은 어때?') 편을 가르게 하라('이 해고, 심하다 vs 당연하다?'). '어떠셨나요' 같은 인사치레 금지.",
         "  parts = ★20초짜리 3부작(2026-08-11 유저 3차 조정): 배열 3개, 각 {say, scene}. say = ★200~240자(2026-08-11 유저 캘리브레이션: 95자=8초 실측 → 초당 약 12자 → 20초=220자 안팎. 240자 초과만 금지 — 상세하게 채워라). 1편=훅+사건 상세, 끝은 반드시 궁금하게 끊기('그래서 어떻게 됐게?'). 2편=미니 훅+전개 상세, 끝은 또 끊기. 3편=결말+핵심 원리+CTA('자세한 내용은 아래를 확인해 봐!'). 같은 화자·반말. scene = 그 편 내용에 맞는 시각 연출 영어 1~2문장(유저: '시계 나오는 그런 다양한 설명 너무 좋았다') — 캐릭터 곁에 등장하는 소품·행동·카메라를 구체적으로, 단 글자 없이 그릴 수 있는 것만(예: 근태 얘기 = a giant cartoon clock popping up beside the character / 돈 얘기 = coins raining down). oneTake = 단독 완결판 120~150자. 같은 화자(키워드 당사자)·같은 반말. 컷 대사를 복붙하지 말고 30초에 맞게 새로 압축해라.",
         "",
-        '출력 JSON만: {"cover":"...","cards":[{"head":"...","body":"..."}],"cta":{"head":"...","body":"..."},"caption":"...","clip":{"hook":{"say":"...","motion":"..."},"character":"...","background":"...","styleAnchor":"...","segments":[{"say":"...","motion":"..."}],"cta":"...","oneTake":"...","parts":[{"say":"1편 대사","scene":"영어 연출"},{"say":"2편","scene":"..."},{"say":"3편","scene":"..."}]}}',
+        '출력 JSON만: {"cover":"...","cards":[{"head":"...","body":"..."}],"cta":{"head":"...","body":"..."},"caption":"...","clip":{"hook":{"say":"...","motion":"..."},"character":"...","background":"...","styleAnchor":"...","segments":[{"say":"...","motion":"..."}],"cta":"...","oneTake":"...","parts":[{"say":"1편 대사","scene":"영어 연출"},{"say":"2편","scene":"..."},{"say":"3편","scene":"..."}],"topHook":"실명+숫자 후킹\\n두 줄까지"}}',
         "", "[본문]", text,
       ].join("\n"),
     }],
@@ -95,6 +96,7 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
       cta: { head: String(j.cta?.head ?? "지금 확인").trim().slice(0, 40), body: String(j.cta?.body ?? "자세한 내용은 프로필 링크에").trim().slice(0, 200) },
       caption: String(j.caption ?? "").trim().slice(0, 1200),
       clip: segments.length >= 3 && hook.say ? { hook, segments, character, background: backgroundDesc, styleAnchor: anchor, basePrompt,
+        topHook: String((clipRaw as { topHook?: string } | undefined)?.topHook ?? "").trim().slice(0, 60),
         oneTake: String(clipRaw && "oneTake" in clipRaw ? (clipRaw as { oneTake?: string }).oneTake ?? "" : "").trim().slice(0, 130),
         parts: (Array.isArray((clipRaw as { parts?: unknown[] } | undefined)?.parts) ? (clipRaw as { parts: unknown[] }).parts : [])
           .map((x) => typeof x === "object" && x

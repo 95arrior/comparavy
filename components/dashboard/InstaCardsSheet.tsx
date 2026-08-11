@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 interface InstaCard { head: string; body: string }
 interface ClipSegment { say: string; motion: string }
 interface ClipPart { say: string; scene: string }
-interface ClipScript { hook: ClipSegment; segments: ClipSegment[]; character: string; background: string; styleAnchor: string; cta: string; oneTake?: string; parts?: ClipPart[]; basePrompt?: string }
+interface ClipScript { hook: ClipSegment; segments: ClipSegment[]; character: string; background: string; styleAnchor: string; cta: string; oneTake?: string; parts?: ClipPart[]; basePrompt?: string; topHook?: string }
 interface InstaPack { cover: string; cards: InstaCard[]; cta: InstaCard; caption: string; clip?: ClipScript }
 
 export default function InstaCardsSheet({ articleId, onClose }: { articleId: string; onClose: () => void }) {
@@ -94,6 +94,15 @@ export default function InstaCardsSheet({ articleId, onClose }: { articleId: str
             {pack.clip && Array.isArray(pack.clip.parts) && pack.clip.parts.length >= 2 && (
               <div className="rounded-xl bg-[#F7F8FA] p-3">
                 <p className="text-[12.5px] font-extrabold text-neutral-700">🎬 클립 3부작 — 캐릭터 이미지 1장 + 편당 프롬프트 1개면 끝</p>
+                {pack.clip.topHook && (
+                  <div className="mt-2 rounded-lg bg-[#111] p-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[10.5px] font-bold text-white/60">📌 영상 상단 고정 문구 (편집에서 얹기 — 전 편 동일)</p>
+                      <button onClick={() => copy("tophook", pack.clip!.topHook!)} className="shrink-0 rounded-full bg-white/15 px-2 py-0.5 text-[10.5px] font-bold text-white">{copied === "tophook" ? "✓" : "복사"}</button>
+                    </div>
+                    <p className="mt-1 whitespace-pre-line text-center text-[14px] font-extrabold leading-snug text-[#FFD34D]">{pack.clip.topHook}</p>
+                  </div>
+                )}
                 {pack.clip.character && (
                   <div className="mt-2 rounded-lg bg-white p-2.5">
                     <div className="flex items-center justify-between gap-2">
