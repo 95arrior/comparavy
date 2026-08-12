@@ -93,7 +93,7 @@ export default function InstaCardsSheet({ articleId, onClose }: { articleId: str
             </div>
             {pack.clip && (pack.clip.oneTake || pack.clip.topHook) && (
               <div className="rounded-xl bg-[#F7F8FA] p-3">
-                <p className="text-[12.5px] font-extrabold text-neutral-700">🎬 클립 — 캐릭터 이미지 1장 + 20초 대사 하나면 끝</p>
+                <p className="text-[12.5px] font-extrabold text-neutral-700">🎬 클립 — 캐릭터 이미지 1장 + 15초 광고 대사면 끝</p>
                 {pack.clip.topHook && (
                   <div className="mt-2 rounded-lg bg-[#111] p-2.5">
                     <div className="flex items-center justify-between gap-2">
