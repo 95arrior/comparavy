@@ -109,7 +109,7 @@ export default function InstaCardsSheet({ articleId, onClose }: { articleId: str
                   <div className="mt-2 rounded-lg bg-white p-2.5">
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-[11.5px] font-extrabold text-neutral-600">🧸 캐릭터 (모든 편 동일)</p>
-                      <button onClick={() => copy("char", `${pack.clip!.character} ${pack.clip!.background} Cute 3D rendered mascot figure, Pixar-style render, soft studio lighting, glossy vinyl-toy texture, full body, front view, plain background, no text, no letters, no numbers.`)}
+                      <button onClick={() => copy("char", `${pack.clip!.character} ${pack.clip!.background} Cute 3D rendered mascot figure, Pixar-style render, soft studio lighting, glossy vinyl-toy texture, full body, front view, plain background. No text or letters except the brand wordmark that is part of the logo body itself.`)}
                         className="shrink-0 rounded-full bg-[#8134AF]/10 px-2 py-0.5 text-[10.5px] font-bold text-[#8134AF]">{copied === "char" ? "✓" : "캐릭터 이미지용 프롬프트"}</button>
                     </div>
                     <p className="mt-1 text-[11px] leading-relaxed text-neutral-500">{pack.clip.character}</p>
