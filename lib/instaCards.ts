@@ -71,6 +71,13 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
   //  (2026-08-12 유저 2차 확정: '15초짜리 광고' — 초당 12.5자 × 14~16초. 요약이 아니라 티저)
   // ★어려운 단어 코드 감지(2026-08-11 유저: '초딩이 들어도 알아듣게' — 프롬프트만으론 모델이 용어를 남긴다)
   const HARD_TERM_RE = /(청구권|처분|기각|소멸|재직|구성원|호황|슈퍼사이클|대용증권|이수번호|산정|귀속|경과조치|법인차량)/g;
+  // ★확정 치환 최후 방어선(2026-08-12 실측: 재작성 2회를 돌려도 haiku가 '재직·호황'을 남긴다 — 아는 단어는 코드가 직접 갈아끼운다)
+  const EASY_MAP: [RegExp, string][] = [
+    [/재직 중일 때만/g, "회사 다닐 때만"], [/재직 중인/g, "회사 다니는"], [/재직/g, "회사 다니는 중"],
+    [/호황/g, "돈 엄청 버는 때"], [/슈퍼사이클/g, "초대박 시기"], [/해고 처분/g, "해고"],
+    [/기각(됐|되었)/g, "퇴짜 맞았"], [/청구권/g, "받을 권리"], [/소멸(돼|되)/g, "사라지"],
+  ];
+  const easyWords = (t: string) => EASY_MAP.reduce((acc, [re, to]) => acc.replace(re, to), t);
   // ★재작성 후 재검증 루프(2026-08-12 실측: 1회 재작성이 186자·용어 잔존인 채 통과 — 고친 결과를 다시 재봐야 게이트다)
   async function fitOneTake(current: string): Promise<string> {
     let best = current;
@@ -152,7 +159,7 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
             : { say: noBlog(String(x ?? "").trim()).slice(0, 260), scene: "" })
           .filter((x) => x.say).slice(0, 3), cta: noBlog(String(clipRaw?.cta ?? "자세한 내용은 아래를 확인해 봐!").trim()).slice(0, 160) } : undefined,
     };
-    if (pack.clip?.oneTake) pack.clip.oneTake = noBlog(await fitOneTake(pack.clip.oneTake)).slice(0, 320);
+    if (pack.clip?.oneTake) pack.clip.oneTake = noBlog(easyWords(await fitOneTake(pack.clip.oneTake))).slice(0, 320);
     return pack;
   } catch { return null; }
 }
