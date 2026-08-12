@@ -40,6 +40,8 @@ export default function InstaCardsSheet({ articleId, onClose }: { articleId: str
   function copy(label: string, text: string) {
     void navigator.clipboard.writeText(text).then(() => { setCopied(label); setTimeout(() => setCopied(null), 1200); });
   }
+  // ★대화식 포맷(2026-08-12 유저 실측: 힉스필드가 'A: 문장' 줄바꿈 형식이어야 말로 인식) — 문장마다 A: 접두. lookbehind 금지(Safari 원칙)라 replace로 분리.
+  const toDialog = (t: string) => t.replace(/([.!?…])\s+/g, "$1\n").split("\n").map((x) => x.trim()).filter(Boolean).map((x) => `A: ${x}`).join("\n");
   const allText = pack
     ? [`[표지]\n${pack.cover}`, ...pack.cards.map((c, i) => `[${i + 2}장] ${c.head}\n${c.body}`), `[마지막 장] ${pack.cta.head}\n${pack.cta.body}`, `[캡션]\n${pack.caption}`,
        ...(pack.clip && Array.isArray(pack.clip.segments) && typeof pack.clip.hook === "object" ? [`[클립 대본]\n컷1: ${pack.clip.hook.say} (프롬프트: ${pack.clip.hook.motion})\n${pack.clip.segments.map((g, i) => `컷${i + 2}: ${g.say} (프롬프트: ${g.motion})`).join("\n")}\n마무리: ${pack.clip.cta}`] : [])].join("\n\n")
@@ -127,7 +129,10 @@ export default function InstaCardsSheet({ articleId, onClose }: { articleId: str
                     <div className="rounded-xl border border-[#8134AF]/30 bg-white p-2.5">
                       <div className="flex items-center justify-between gap-2">
                         <p className="text-[11.5px] font-extrabold text-[#8134AF]">⚡ 대본 · <b>약 {Math.max(1, Math.round([...pack.clip.oneTake].length / 12.5))}초</b> — 영상 길이를 이 초수로 설정하세요</p>
-                        <button onClick={() => copy("onetake", pack.clip!.oneTake!)} className="shrink-0 rounded-full bg-[#8134AF] px-2.5 py-1 text-[10.5px] font-bold text-white">{copied === "onetake" ? "✓" : "대사만 복사"}</button>
+                        <div className="flex shrink-0 gap-1">
+                          <button onClick={() => copy("onetakeA", toDialog(pack.clip!.oneTake!))} className="rounded-full bg-[#8134AF] px-2.5 py-1 text-[10.5px] font-bold text-white">{copied === "onetakeA" ? "✓" : "A: 대화식 복사"}</button>
+                          <button onClick={() => copy("onetake", pack.clip!.oneTake!)} className="rounded-full bg-[#8134AF]/10 px-2.5 py-1 text-[10.5px] font-bold text-[#8134AF]">{copied === "onetake" ? "✓" : "통짜 복사"}</button>
+                        </div>
                       </div>
                       <p className="mt-1 text-[12px] leading-relaxed text-neutral-700">{pack.clip.oneTake}</p>
                     </div>
