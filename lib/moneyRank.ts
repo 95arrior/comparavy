@@ -46,6 +46,8 @@ export interface MoneyRankItem {
   newsTitle: string; // 원 뉴스 제목 — 생성 시 newsContext 재료
   /** ★소재 근접 중복(2026-08-11 유저: "글 썼던 건 표기 좀, 중복으로 쓸까 봐 걱정") — 같은 소재의 기존 글 */
   similar?: { title: string; published: boolean };
+  /** ★대형 스파이크 후보(2026-08-12 판정: 300 벽의 답은 니치 수십 편이 아니라 SK하이닉스급 대형 히트 재현) */
+  big?: boolean;
 }
 
 // 근접 중복 판별용 실질 토큰 — 어느 소재에나 붙는 범용어는 겹침으로 안 센다
@@ -103,7 +105,8 @@ export async function condenseRanking(titles: string[], userId?: string | null):
         "  예: '청년 140만명 50만원 적립' 뉴스 → kw '청년도약계좌 가입 조건' (일반명사 하나로 뭉개지 말 것).",
         "- 제목이 '이곳·이것·~한 곳'으로 이름을 숨겼으면, 제목의 다른 단서로 실명을 알 때만 실명으로 kw를 만들어라. 모르면 그 소재는 버려라(지어내기 금지).",
         "- issue = 사람이 알아보는 소재 한 줄(15자 내), newsTitle = 원 제목 그대로.",
-        '출력 JSON 배열만: [{"issue":"청년도약계좌 140만 돌파","kw":"청년도약계좌 가입 조건","cat":"지원금","newsTitle":"..."}]. 최대 10개, 돈 파괴력 큰 순.',
+        "★big 판정(2026-08-12 확정 — 일 300 벽의 답은 대형 히트 재현): 전 국민이 아는 실명(대기업·유명 브랜드·전국 제도)이 낀 '사건'이면 big=true. 기준은 'SK하이닉스 1분 퇴근 10억 판결'급 — 검색 폭발이 예상되는 소재. 일반 니치 정보는 big=false.",
+        '출력 JSON 배열만: [{"issue":"청년도약계좌 140만 돌파","kw":"청년도약계좌 가입 조건","cat":"지원금","big":false,"newsTitle":"..."}]. 최대 10개, 돈 파괴력 큰 순.',
         "",
         ...titles.map((t) => `- ${t}`),
       ].join("\n"),
@@ -114,9 +117,9 @@ export async function condenseRanking(titles: string[], userId?: string | null):
   const m = /\[[\s\S]*\]/.exec(t && t.type === "text" ? t.text : "");
   if (!m) return [];
   try {
-    const arr = JSON.parse(m[0]) as { issue?: string; kw?: string; cat?: string; newsTitle?: string }[];
+    const arr = JSON.parse(m[0]) as { issue?: string; kw?: string; cat?: string; big?: boolean; newsTitle?: string }[];
     return arr
-      .map((x) => ({ issue: String(x.issue ?? "").trim().slice(0, 30), keyword: String(x.kw ?? "").trim().slice(0, 40), cat: String(x.cat ?? "").trim().slice(0, 10), newsTitle: String(x.newsTitle ?? "").trim().slice(0, 120) }))
+      .map((x) => ({ issue: String(x.issue ?? "").trim().slice(0, 30), keyword: String(x.kw ?? "").trim().slice(0, 40), cat: String(x.cat ?? "").trim().slice(0, 10), big: x.big === true, newsTitle: String(x.newsTitle ?? "").trim().slice(0, 120) }))
       .filter((x) => x.keyword.length >= 2 && x.issue.length >= 2)
       .slice(0, 10);
   } catch { return []; }
