@@ -324,6 +324,16 @@ export async function POST(request: Request) {
           : null;
         // ★유저 고유 관점 블록(FF_SEED_CLAIM §5-2) — 온보딩/설정 한 줄(my_angle)을 본문에 자연스럽게(없으면 생략, 발행 비차단)
         const myAngle = FF.seedClaim ? String((profileRow as { my_angle?: string | null } | null)?.my_angle ?? "").trim().slice(0, 120) : "";
+        // ★제목 유니폼 게이트(2026-08-13 유저 실측: 최근 29편 중 23편(79%)이 '~다는' 전언형 — 공식이 도장이 됐다.
+        //  유저: "제목 진짜 중요합니다"). 최근 제목을 프롬프트에 보여줘 겹침을 금지하고,
+        //  전언형 비율이 1/3 이상이면 이번 편은 전언형 자체를 막는다 — 어겼는지는 specDefects가 재확인(재생성 편승).
+        const { data: recentTitleRows } = await supabase.from("articles").select("title").eq("user_id", user.id).not("title", "is", null).order("created_at", { ascending: false }).limit(8);
+        const recentTitles = (recentTitleRows ?? []).map((r) => String((r as { title?: string }).title ?? "").trim()).filter(Boolean);
+        const JEONEON_RE = /(다는|라는|다던)[\s,.!?]/;
+        const banJeoneon = recentTitles.length >= 3 && recentTitles.filter((t) => JEONEON_RE.test(`${t} `)).length / recentTitles.length >= 1 / 3;
+        const titleDirective = recentTitles.length
+          ? `\n[제목 다양화] 최근 제목: ${recentTitles.slice(0, 6).map((t) => `"${t}"`).join(" / ")} — 이 목록과 같은 틀·같은 어미 반복 금지.${banJeoneon ? " ★이번 제목은 전언형 어미('~다는/~라는/~다던') 절대 금지 — 명사구 컷·질문형·숫자 대비형·시점형 중에서 골라라." : ""}`
+          : "";
         const angleAddon = myAngle ? `\n[유저 고유 관점] 운영자가 밝힌 한 줄: "${myAngle}" — 본문 중간에 이 관점·상황이 자연스럽게 묻어나는 문단 1개를 넣어라(광고 아님, 없는 경험 지어내기 금지, 이 한 줄의 범위 안에서만).` : "";
         // ★씨앗 클레임(FF_SEED_CLAIM §5-1) — 트렌드 씨앗 글감만(뉴스 맥락 보유), 실패해도 생성은 계속
         if (FF.seedClaim && body.newsContext) {
@@ -331,7 +341,7 @@ export async function POST(request: Request) {
             await adminDb.from("seed_claims").upsert({ category: profileRow?.sub_category || vertical, keyword_norm: keyword.replace(/\s+/g, ""), user_id: user.id }, { onConflict: "keyword_norm,user_id" });
           } catch { /* 0063 미적용/실패 — 무시 */ }
         }
-        const genInput = { keyword, channel, serpContext, relatedPosts, angle: body.angle, type, tone, maxWords, variantInstruction, styleInstruction, relatedQueries, newsContext: resolvedNewsContext, angleBrief: ((typeof body.angleBrief === "string" ? body.angleBrief.slice(0, 900) : "") + seriesDirective + angleAddon).trim() || null, affiliate: isReview, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userExperience: userExperience || null, userTitle, calcContext: financeCalcContext(keyword) };
+        const genInput = { keyword, channel, serpContext, relatedPosts, angle: body.angle, type, tone, maxWords, variantInstruction, styleInstruction, relatedQueries, newsContext: resolvedNewsContext, angleBrief: ((typeof body.angleBrief === "string" ? body.angleBrief.slice(0, 900) : "") + seriesDirective + angleAddon + titleDirective).trim() || null, affiliate: isReview, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userExperience: userExperience || null, userTitle, calcContext: financeCalcContext(keyword) };
         // ★재생성 무음화 + 상한(2026-07-24 멈춤·재작성 조사): 가드 재생성이 클라이언트로 스트리밍되면 이미 뜬 완성
         //  본문이 짧은 재생성 조각으로 '교체'돼 화면이 스켈레톤으로 붕괴('다시 작성' 현상). 초기 생성만 스트리밍하고,
         //  재생성은 무음 콜백으로 돌린 뒤 최종본은 done(saved)으로 넘긴다. 스택 재생성(최대 4회 생성)이 maxDuration을
@@ -360,6 +370,8 @@ export async function POST(request: Request) {
         //   결함 목록을 배열로 돌려주고, 발동 조건도 이 배열 길이로 통일한다.
         const specDefects = (a: { body_html: string; title?: string }): string[] => {
           const w: string[] = [];
+          // ★제목 어미 재확인(전언형 금지 상태에서 또 전언형이면 재생성에 실어 고친다)
+          if (banJeoneon && JEONEON_RE.test(`${a.title ?? ""} `)) w.push("제목이 또 전언형('~다는/~라는')이다 — 최근 제목들과 어미가 겹친다. 내용·키워드는 유지하고 제목만 명사구 컷·질문형·숫자 대비형·시점형 중 하나로 다시 써라.");
           if (keywordFloorApplies && lacksKeywordFloor(a.body_html, floorTarget)) {
             const n = keywordOccurrences(a.body_html, floorTarget);
             w.push(`메인 키워드 "${floorTarget}"가 본문에 ${n}회뿐이다(최소 ${KEYWORD_FLOOR}회). 제목·도입·소제목·본문 문단에 나눠 심어 ${KEYWORD_FLOOR}회 이상 나오게 하되, 억지 문장을 만들지 말고 '이 제도·이것'처럼 뭉갠 지시어를 키워드 원형으로 되돌려라.`);
