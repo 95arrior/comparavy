@@ -56,7 +56,7 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
         "  ②팩트인가 — 대사의 모든 숫자·날짜·사실이 본문에 실재하나? 본문에 없으면 그 문장을 삭제(새 사실 창작 절대 금지).",
         "  ③재밌는가 — 무관한 구경꾼이 낄낄대며 끝까지 볼 수다인가? 정보 나열로 읽히면 뒷담화 리듬('글쎄', '어머', '~지?')을 다시 입혀라. ★그리고 무심코 스크롤하던 사람이 첫 문장에서 멈출까? 첫 문장이 약하면 전체를 다시 써라.",
         "  ④댓글을 부르나 — 3편 마무리에 시청자가 한 줄로 답할 질문 1개 필수. 자기 상황을 말하게 하거나('여러분 회사 성과급 규정은 어때?') 편을 가르게 하라('이 해고, 심하다 vs 당연하다?'). '어떠셨나요' 같은 인사치레 금지.",
-        "  oneTake = ★단일 대본 하나만: ★220~250자를 반드시 지켜라(초당 12.5자 × 18~20초 — 2026-08-12 유저 재보정: '말이 너무 빨라, 쫌만 줄이면 될 듯'). 짧으면 팩트를 넣어 채우고, 넘으면 줄여라. ★구조 = 사건→소개→팩트→유입: ①실명 훅 1문장(사건) ②한 줄 소개 ③팩트 속사포 — 짧은 문장으로 증거·숫자 쌓기 ④절정 직전 끊기+'자세한 내용은 아래를 확인해!'(유입). ★강약 조절(2026-08-12 유저: '강약이 없어서 재미가 없어 — 이 짧은 시간에 빨려들어가야 해'): 문장 길이를 들쭉날쭉하게 — 3~7자 초단문('다 걸렸어.', '근데 반전.')을 3개 이상 박고, 핵심 숫자·반전 직전엔 '…'로 반 박자 뜸('그 돈이… 통째로 사라져'), 물음표 1개로 시청자에게 되묻기('말이 돼?'). 같은 길이 문장 3연속 금지 — 속사포와 뜸이 번갈아야 빨려든다. 같은 화자·반말·뒷담화 톤.",
+        "  oneTake = ★15초 티저 광고 대본(2026-08-12 유저 확정: '15초짜리 광고라고 생각하고 짜야 해 — 너무 궁금해서 글로 읽어봐야 할 것 같게'): ★175~205자(초당 12.5자 × 약 14~16초). ★이건 요약이 아니라 광고다 — 목적은 정보 전달이 아니라 아래(글) 클릭이다. 구조: ①의인화 훅 — 반드시 '나 {키워드 핵심}인데!'로 시작(유저 실례: '나 삼성전자 투자 공시인데!') + 가장 충격적인 돈 팩트 1개 ②사건 초간단 정리 — 초등학생도 아는 쉬운 팩트 2~3개만, 어려운 세부·조건·숫자 계산은 전부 아래로 미룬다('복잡한 계산은 아래에 다 정리해뒀어') ③★열린 고리(핵심 심리 장치): 제일 궁금한 대목을 던지고 절대 풀지 마라 — 이유·결말·반전의 답을 대본에서 말하는 순간 클릭할 이유가 사라진다('근데 왜 그랬는지가 진짜 소름인데…', '이게 끝이 아니야. 진짜 반전은…') ④'자세한 내용은 아래를 확인해!'. 강약: 3~7자 초단문 2개 이상 + '…' 뜸 1개 이상 + 물음표 1개. 반말·뒷담화 톤 유지.",
         "  acting = ★영상 생성용 연기 지시(2026-08-12 유저: '내용을 행동으로 표현 — 텍스트는 한글이 깨져서 절대 금지'): 영어 3~4문장. 20초 대본의 흐름(충격 사건→수다 설명→숫자 속사포→반전·마무리)을 캐릭터의 몸짓·표정 팬터마임으로 순서대로: 예 'Gasps and covers mouth in shock → leans in close whispering like sharing gossip → counts rapidly on fingers with widening eyes → freezes, shrugs dramatically, then points downward with a sly grin.' 글자·숫자가 보일 소품(문서·차트 눈금·시계 숫자판) 금지 — 행동과 표정만.",
         "",
         '출력 JSON만: {"cover":"...","cards":[{"head":"...","body":"..."}],"cta":{"head":"...","body":"..."},"caption":"...","clip":{"hook":{"say":"...","motion":"..."},"character":"...","background":"...","styleAnchor":"...","segments":[{"say":"...","motion":"..."}],"cta":"...","oneTake":"...","acting":"영어 연기 지시 3~4문장","topHook":"실명+숫자 후킹\\n두 줄까지"}}',
@@ -67,8 +67,8 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
   void logUsage({ userId, model: "claude-haiku-4-5", kind: "insta_cards", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
 
   // ★20초 분량 코드 검증(2026-08-11 유저: "20초 대본인데 왜 9초? 두 번 체크해") — 프롬프트는 방향, 코드는 자로 잰다.
-  //  220~255자 밖이면 본문을 근거로 딱 맞게 한 번 재작성(새 사실 금지). 그래도 안 맞으면 그대로 두되 화면 초 표시가 알린다.
-  //  (2026-08-12 유저 재보정: 초당 14자는 말이 너무 빨랐다 → 12.5자, 18~20초 = 220~250자)
+  //  175~210자 밖이면 본문을 근거로 딱 맞게 한 번 재작성(새 사실 금지). 그래도 안 맞으면 그대로 두되 화면 초 표시가 알린다.
+  //  (2026-08-12 유저 2차 확정: '15초짜리 광고' — 초당 12.5자 × 14~16초. 요약이 아니라 티저)
   // ★어려운 단어 코드 감지(2026-08-11 유저: '초딩이 들어도 알아듣게' — 프롬프트만으론 모델이 용어를 남긴다)
   const HARD_TERM_RE = /(청구권|처분|기각|소멸|재직|구성원|호황|슈퍼사이클|대용증권|이수번호|산정|귀속|경과조치|법인차량)/g;
   // ★재작성 후 재검증 루프(2026-08-12 실측: 1회 재작성이 186자·용어 잔존인 채 통과 — 고친 결과를 다시 재봐야 게이트다)
@@ -77,7 +77,7 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
     for (let attempt = 0; attempt < 2; attempt++) {
       const len = [...best].length;
       const hardTerms = Array.from(new Set(best.match(HARD_TERM_RE) ?? []));
-      if (len >= 220 && len <= 255 && hardTerms.length === 0) return best;
+      if (len >= 175 && len <= 210 && hardTerms.length === 0) return best; // 15초 광고(유저 2026-08-12 재확정)
       const next = await rewriteOneTake(best, len, hardTerms);
       if (next === best) return best; // 재작성 실패·개선 없음 — 더 돌려도 같다
       best = next;
@@ -90,8 +90,8 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
         model: "claude-haiku-4-5",
         max_tokens: 600,
         messages: [{ role: "user", content: [
-          `아래 클립 대사를 정확히 225~245자(공백 포함)로 ${len < 220 ? "본문의 팩트를 더 넣어 늘려" : len > 255 ? "줄여" : "같은 길이로"} 다시 써라. 지금은 ${len}자다. 문장은 반드시 완결로 끝나야 한다.${hardTerms.length ? ` ★다음 단어는 초등학생 생활어로 바꿔라(예: 청구권→받을 돈, 처분→잘렸어, 기각→법원이 안 된대, 재직→회사 다니는, 호황→돈 엄청 버는 때): ${hardTerms.join(", ")}` : ""}`,
-          "규칙: 화자·반말·문체·구조(실명 훅→팩트 속사포→절정 직전 끊기→'자세한 내용은 아래를 확인해!') 유지. ★강약 리듬 유지 — 3~7자 초단문 3개 이상, 반전 직전 '…' 뜸, 물음표 1개(같은 길이 문장 3연속 금지). 새 사실 금지 — 대사와 [본문]에 있는 것만. '블로그' 단어 금지. 대사 본문만 출력(따옴표·설명 없이).",
+          `아래 클립 대사를 정확히 180~200자(공백 포함)로 ${len < 175 ? "쉬운 팩트를 더 넣어 늘려" : len > 210 ? "줄여" : "같은 길이로"} 다시 써라. 지금은 ${len}자다. 문장은 반드시 완결로 끝나야 한다.${hardTerms.length ? ` ★다음 단어는 초등학생 생활어로 바꿔라(예: 청구권→받을 돈, 처분→잘렸어, 기각→법원이 안 된대, 재직→회사 다니는, 호황→돈 엄청 버는 때): ${hardTerms.join(", ")}` : ""}`,
+          "규칙: 화자·반말·문체·구조(의인화 훅 '나 {키워드}인데!'→쉬운 사건 정리→열린 고리→'자세한 내용은 아래를 확인해!') 유지. ★이건 광고다 — 이유·결말·반전의 답을 새로 밝히지 마라(궁금증이 클릭 연료다). ★강약 리듬 유지 — 3~7자 초단문 3개 이상, 반전 직전 '…' 뜸, 물음표 1개(같은 길이 문장 3연속 금지). 새 사실 금지 — 대사와 [본문]에 있는 것만. '블로그' 단어 금지. 대사 본문만 출력(따옴표·설명 없이).",
           "", "[현재 대사]", current, "", "[본문]", text.slice(0, 3000),
         ].join("\n") }],
       });
@@ -100,7 +100,7 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
       const fixed = (ft && ft.type === "text" ? ft.text : "").trim().replace(/^["'\s]+|["'\s]+$/g, "");
       const flen = [...fixed].length;
       // 넓은 수용 창 — 최종 판정은 fitOneTake 루프가 다시 잰다(여기서 좁히면 개선분도 버린다)
-      return flen >= 180 && flen <= 280 ? fixed : current;
+      return flen >= 160 && flen <= 230 ? fixed : current;
     } catch { return current; }
   }
   const t = res.content.find((b) => b.type === "text");
