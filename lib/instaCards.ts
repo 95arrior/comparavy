@@ -45,10 +45,10 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
         "   ③한 컷에 개념 하나 + 콕 박히는 숫자 하나만 — 정보를 쑤셔 넣지 마라. 어려운 세부는 '자세한 건 블로그에'로 미룬다.",
         "   ④재미 장치를 컷마다 1개: 충격 대비('1억 있어도 나 못 사'), 실감 숫자('나 하루 거래 12조였는데 3조로 쪼그라들었어'), 가벼운 되물음('빡세지?', '억울하지?').",
         "   ⑤마지막 세그 = 행동 지시('지금 계좌에 진짜 현금 얼마 있는지 봐 봐' + '자세한 계산은 블로그에 정리해 뒀어').",
-        "  character = ★주제를 의인화한 캐릭터의 영어 외형 묘사 2문장(2026-08-11 유저: '캐릭터까지 묘사해서 프롬프트에 녹여내자'): 종·형태·색·복장·표정 스타일을 구체적으로 — 이 묘사만 읽고 누가 그려도 같은 캐릭터가 나오게. ★타겟 40~60대 문법(2026-08-11 유저 확정): 둥글둥글 단순한 국민 캐릭터 감성(카카오프렌즈 결), 굵은 윤곽선·원색 고대비·디테일 최소, 표정은 크고 과장되게(멀리서도 읽히게), 복장에 신뢰 소품 딱 1개(동그란 안경·조끼·넥타이 중 — 친절한 은행 창구 직원 느낌). 금지: Z세대 밈·네온 코드, 로봇·외계인(이질감), 사기꾼풍 과장. 몸이나 배경에 글자·숫자 금지. 예(레버리지): 'A round bouncy green coin character with two bold red upward-arrow horns on its head, wearing a tiny navy suit vest, with big expressive cartoon eyes and a confident grin.'",
+        "  character = ★주제를 의인화한 캐릭터의 영어 외형 묘사 2문장(2026-08-11 유저: '캐릭터까지 묘사해서 프롬프트에 녹여내자'): 종·형태·색·복장·표정 스타일을 구체적으로 — 이 묘사만 읽고 누가 그려도 같은 캐릭터가 나오게. ★타겟 40~60대 문법(2026-08-11 유저 확정): 둥글둥글 단순한 국민 캐릭터 감성(카카오프렌즈 결)이되 ★반드시 3D 렌더 피규어 질감(2026-08-12 유저: '2D로 나오는데 입체감 있어야 해') — 'cute 3D rendered mascot, soft rounded volume like a vinyl toy figure, glossy eyes, Pixar-style render' 문구 필수, 'flat/2D illustration' 계열 단어 금지. 원색 고대비·디테일 최소, 표정은 크고 과장되게(멀리서도 읽히게), 복장에 신뢰 소품 딱 1개(동그란 안경·조끼·넥타이 중 — 친절한 은행 창구 직원 느낌). 금지: Z세대 밈·네온 코드, 로봇·외계인(이질감), 사기꾼풍 과장. 몸이나 배경에 글자·숫자 금지. 예(레버리지): 'A cute 3D rendered mascot, a round bouncy green coin with soft rounded volume like a vinyl toy figure, two bold red upward-arrow horns on its head, tiny navy suit vest, big glossy expressive eyes and a confident grin, Pixar-style render.'",
         "  background = 모든 컷 공통 배경 영어 1문장(주제 분위기, 글자 없는 요소만). 예: 'A clean pastel trading-floor studio with soft glowing chart shapes on the back wall.'",
         "  각 세그 motion = 그 컷의 동작·표정·카메라만 영어 1~2문장(캐릭터·배경·스타일 묘사 금지 — 코드가 구워서 합친다). 예: 'The character leans in and points at the viewer with a warning face, subtle push-in.'",
-        "  styleAnchor = 스타일 한 줄(영어): 'Consistent 2D cartoon style, soft shading, subtle smooth motion.' 결 — ★'reference image' 같은 말 금지(이미지 없는 모드에서 오류를 만든다).",
+        "  styleAnchor = 스타일 한 줄(영어): 'Consistent Pixar-style 3D render, soft studio lighting, glossy toy-figure texture, subtle smooth motion.' 결 — ★2D/flat 금지(입체감 필수) — ★'reference image' 같은 말 금지(이미지 없는 모드에서 오류를 만든다).",
         "  cta = 마무리 대사(반말): '자세한 내용은 아래를 확인해 봐!' 결. ★플랫폼 중립(2026-08-11 유저: 다양한 곳에 쓰게): 대사에 '블로그'라는 단어 금지 — 클립·릴스·쇼츠 어디서든 통하게 항상 '아래'로 가리킨다. 대사 전부 글에 있는 사실만.",
         "  topHook = ★영상 상단 고정 후킹 문구(2026-08-11 유저: '3초 법칙 자극 + 키워드 무조건 삽입 — SK하이닉스 얘긴데 실명이 빠지면 안 되죠'): 1~2줄(\\n), 줄당 12자 내. ★핵심 고유명사·키워드 필수(브랜드·기업·제도 실명) + 숫자 앵커 + 충격 대비. 예: 'SK하이닉스 성과급 10억\\n1분 퇴근에 날아갔다'. 밋밋한 설명형('~하는 이유') 금지 — 스크롤 멈추는 자극형만.",
         "★마지막 관문(2026-08-11 유저 확정 — 출력 직전 4개 자가 검문, 하나라도 미달이면 고쳐서 출력):",
@@ -118,7 +118,7 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
     const noBlog = (t: string) => t.replace(/블로그\s?링크/g, "아래").replace(/블로그/g, "아래");
     const character = String(clipRaw?.character ?? "").trim().slice(0, 320);
     const backgroundDesc = String(clipRaw?.background ?? "").trim().slice(0, 200);
-    const anchor = String(clipRaw?.styleAnchor ?? "Consistent 2D cartoon style, soft shading, subtle smooth motion.").trim().slice(0, 160);
+    const anchor = String(clipRaw?.styleAnchor ?? "Consistent Pixar-style 3D render, soft studio lighting, glossy toy-figure texture, subtle smooth motion.").trim().replace(/2D cartoon/gi, "Pixar-style 3D render").slice(0, 160);
     // ★캐릭터·배경·스타일을 각 컷에 통째로 굽는다(유저: "프롬프트에 아예 녹여내자") — 복사 한 번 = 완성 프롬프트, 레퍼런스 이미지 의존 없음.
     // ★basePrompt를 한 곳에서 만든다(같은 값 두 곳 = 드리프트, CLAUDE.md) — 컷 프롬프트와 편별 통합 프롬프트가 같은 접두를 쓴다
     const basePrompt = `${character} ${backgroundDesc} ${anchor} Vertical 9:16 portrait video, the character centered with head and upper body filling the frame. The exact same character and background in every shot. Absolutely NO text, captions, subtitles, letters or numbers anywhere in the frame — especially no Korean Hangul, which always renders as broken glyphs. The character talks with natural mouth movement only, never showing written words.`.replace(/\s+/g, " ").trim();
