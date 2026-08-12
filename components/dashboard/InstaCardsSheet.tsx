@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 interface InstaCard { head: string; body: string }
 interface ClipSegment { say: string; motion: string }
 interface ClipPart { say: string; scene: string }
-interface ClipScript { hook: ClipSegment; segments: ClipSegment[]; character: string; background: string; styleAnchor: string; cta: string; oneTake?: string; parts?: ClipPart[]; basePrompt?: string; videoPrompt?: string; topHook?: string }
+interface ClipScript { hook: ClipSegment; segments: ClipSegment[]; character: string; background: string; styleAnchor: string; cta: string; oneTake?: string; parts?: ClipPart[]; basePrompt?: string; videoPrompt?: string; topHook?: string; clipCaption?: string }
 interface InstaPack { cover: string; cards: InstaCard[]; cta: InstaCard; caption: string; clip?: ClipScript }
 
 export default function InstaCardsSheet({ articleId, onClose }: { articleId: string; onClose: () => void }) {
@@ -122,6 +122,15 @@ export default function InstaCardsSheet({ articleId, onClose }: { articleId: str
                       <button onClick={() => copy("vprompt", pack.clip!.videoPrompt!)} className="shrink-0 rounded-full bg-[#8134AF]/10 px-2 py-0.5 text-[10.5px] font-bold text-[#8134AF]">{copied === "vprompt" ? "✓" : "프롬프트 복사"}</button>
                     </div>
                     <p className="mt-1 line-clamp-3 text-[11px] leading-relaxed text-neutral-500">{pack.clip.videoPrompt}</p>
+                  </div>
+                )}
+                {pack.clip.clipCaption && (
+                  <div className="mt-2 rounded-lg bg-white p-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[11.5px] font-extrabold text-neutral-600">🔗 설명란 문구 (이 줄 아래에 블로그 주소 붙이기)</p>
+                      <button onClick={() => copy("ccap", pack.clip!.clipCaption!)} className="shrink-0 rounded-full bg-[#8134AF]/10 px-2 py-0.5 text-[10.5px] font-bold text-[#8134AF]">{copied === "ccap" ? "✓" : "복사"}</button>
+                    </div>
+                    <p className="mt-1 text-[12px] leading-relaxed text-neutral-600">{pack.clip.clipCaption}</p>
                   </div>
                 )}
                 <div className="mt-2 space-y-1.5">

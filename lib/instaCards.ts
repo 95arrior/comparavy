@@ -13,7 +13,7 @@ export interface ClipSegment { say: string; motion: string }
 // ★hook도 컷이다 + 캐릭터·배경 묘사를 프롬프트에 통째로 굽는다(2026-08-11 유저: "캐릭터까지 묘사, 프롬프트에 아예 녹여내자" —
 //  'reference image' 문구는 이미지 없는 모드에서 오류·혼란을 만든다. 글로 고정하면 어느 모드든 돌고 컷 간 일관성도 글이 보장).
 export interface ClipPart { say: string; scene: string }
-export interface ClipScript { hook: ClipSegment; segments: ClipSegment[]; character: string; background: string; styleAnchor: string; cta: string; oneTake: string; parts: ClipPart[]; basePrompt: string; videoPrompt: string; topHook: string }
+export interface ClipScript { hook: ClipSegment; segments: ClipSegment[]; character: string; background: string; styleAnchor: string; cta: string; oneTake: string; parts: ClipPart[]; basePrompt: string; videoPrompt: string; topHook: string; clipCaption: string }
 export interface InstaPack { cover: string; cards: InstaCard[]; cta: InstaCard; caption: string; clip?: ClipScript }
 
 export async function articleToInstaCards(title: string, bodyHtml: string, keyword: string, userId?: string | null): Promise<InstaPack | null> {
@@ -58,8 +58,9 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
         "  ④댓글을 부르나 — 3편 마무리에 시청자가 한 줄로 답할 질문 1개 필수. 자기 상황을 말하게 하거나('여러분 회사 성과급 규정은 어때?') 편을 가르게 하라('이 해고, 심하다 vs 당연하다?'). '어떠셨나요' 같은 인사치레 금지.",
         "  oneTake = ★15초 티저 광고 대본(2026-08-12 유저 확정: '15초짜리 광고라고 생각하고 짜야 해 — 너무 궁금해서 글로 읽어봐야 할 것 같게'): ★175~205자(초당 12.5자 × 약 14~16초). ★이건 요약이 아니라 광고다 — 목적은 정보 전달이 아니라 아래(글) 클릭이다. 구조: ①의인화 훅 — 반드시 '나 {키워드 핵심}인데!'로 시작(유저 실례: '나 삼성전자 투자 공시인데!') + 가장 충격적인 돈 팩트 1개 ②사건 초간단 정리 — 초등학생도 아는 쉬운 팩트 2~3개만, 어려운 세부·조건·숫자 계산은 전부 아래로 미룬다('복잡한 계산은 아래에 다 정리해뒀어') ③★열린 고리(핵심 심리 장치): 제일 궁금한 대목을 던지고 절대 풀지 마라 — 이유·결말·반전의 답을 대본에서 말하는 순간 클릭할 이유가 사라진다('근데 왜 그랬는지가 진짜 소름인데…', '이게 끝이 아니야. 진짜 반전은…') ④'자세한 내용은 아래를 확인해!'. ★정보량 상한(2026-08-12 유저 실측: 문장 11개짜리는 '15초 동안 소화가 안 되고 잘 안 들린다'): 문장 7개 이하, 숫자 2개까지 — 팩트가 4개 넘으면 아무것도 안 들린다. ★공시·펀드 용어(조합·수시납입·집행·출자·수혜 같은 것)는 번역도 말고 아예 빼라 — 그 설명이 곧 글의 몫이다. ★매수 타이밍·결론('~할 때 사야 돈 본다')도 답이다 — 말하는 순간 클릭 이유가 사라진다. 강약: 3~7자 초단문 2개 이상 + '…' 뜸 1개 이상 + 물음표 1개. 반말·뒷담화 톤 유지.",
         "  acting = ★영상 생성용 연기 지시(2026-08-12 유저: '내용을 행동으로 표현 — 텍스트는 한글이 깨져서 절대 금지'): 영어 3~4문장. 20초 대본의 흐름(충격 사건→수다 설명→숫자 속사포→반전·마무리)을 캐릭터의 몸짓·표정 팬터마임으로 순서대로: 예 'Gasps and covers mouth in shock → leans in close whispering like sharing gossip → counts rapidly on fingers with widening eyes → freezes, shrugs dramatically, then points downward with a sly grin.' 글자·숫자가 보일 소품(문서·차트 눈금·시계 숫자판) 금지 — 행동과 표정만.",
+        "  clipCaption = ★클립 설명란 링크 문구 1줄(2026-08-12 유저: '주소만 떡 쓰면 스팸 같고 클릭이 안 나온다'): 대본이 참은 답을 예고 + 클릭 비용 낮추는 말, 같은 화자 반말 톤. 공식: '{영상이 안 푼 답 예고}, {3분 정리·표로 정리}해뒀어 👇' (예: '어떤 부품 회사들인지, 언제 사야 하는지… 여기 다 정리해뒀어 👇'). 공손 광고체(확인하세요·방문 부탁) 금지 — 그게 스팸 신호다. 링크는 유저가 뒤에 붙인다.",
         "",
-        '출력 JSON만: {"cover":"...","cards":[{"head":"...","body":"..."}],"cta":{"head":"...","body":"..."},"caption":"...","clip":{"hook":{"say":"...","motion":"..."},"character":"...","background":"...","styleAnchor":"...","segments":[{"say":"...","motion":"..."}],"cta":"...","oneTake":"...","acting":"영어 연기 지시 3~4문장","topHook":"실명+숫자 후킹\\n두 줄까지"}}',
+        '출력 JSON만: {"cover":"...","cards":[{"head":"...","body":"..."}],"cta":{"head":"...","body":"..."},"caption":"...","clip":{"hook":{"say":"...","motion":"..."},"character":"...","background":"...","styleAnchor":"...","segments":[{"say":"...","motion":"..."}],"cta":"...","oneTake":"...","acting":"영어 연기 지시 3~4문장","clipCaption":"링크 위 한 줄(반말+👇)","topHook":"실명+숫자 후킹\\n두 줄까지"}}',
         "", "[본문]", text,
       ].join("\n"),
     }],
@@ -152,7 +153,8 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
           const cut = (t: string, n: number) => ([...t].length <= n ? t : `${t.slice(0, n).replace(/\s+\S*$/, "")}.`);
           return `The character from the input image, unchanged in design and outfit. ${cut(acting, 600)} Vertical 9:16, head and upper body filling the frame, smooth cartoon motion. Absolutely no captions, subtitles or overlay text anywhere in the frame — especially no Korean Hangul. Lettering that is part of the character's own logo body is fine. The character only talks with natural mouth movement.`.replace(/\s+/g, " ").trim();
         })(),
-        topHook: (String((clipRaw as { topHook?: string } | undefined)?.topHook ?? "").trim() || String(j.cover ?? "").trim()).slice(0, 60), // ★빈 값 폴백(2026-08-12 실측: 모델이 topHook을 빼먹음) — 표지가 같은 실명+숫자 문법이라 대체 가능
+        topHook: (String((clipRaw as { topHook?: string } | undefined)?.topHook ?? "").trim() || String(j.cover ?? "").trim()).slice(0, 60),
+        clipCaption: noBlog(String((clipRaw as { clipCaption?: string } | undefined)?.clipCaption ?? "").trim()).slice(0, 120), // ★빈 값 폴백(2026-08-12 실측: 모델이 topHook을 빼먹음) — 표지가 같은 실명+숫자 문법이라 대체 가능
         oneTake: noBlog(String(clipRaw && "oneTake" in clipRaw ? (clipRaw as { oneTake?: string }).oneTake ?? "" : "").trim()).slice(0, 310), // ★130 잔재 제거(실물: 대사가 '왜냐면 나는 '에서 잘림)
         parts: (Array.isArray((clipRaw as { parts?: unknown[] } | undefined)?.parts) ? (clipRaw as { parts: unknown[] }).parts : [])
           .map((x) => typeof x === "object" && x
