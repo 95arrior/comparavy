@@ -372,6 +372,10 @@ export async function POST(request: Request) {
           const w: string[] = [];
           // ★제목 어미 재확인(전언형 금지 상태에서 또 전언형이면 재생성에 실어 고친다)
           if (banJeoneon && JEONEON_RE.test(`${a.title ?? ""} `)) w.push("제목이 또 전언형('~다는/~라는')이다 — 최근 제목들과 어미가 겹친다. 내용·키워드는 유지하고 제목만 명사구 컷·질문형·숫자 대비형·시점형 중 하나로 다시 써라.");
+          // ★끝단어 반복 게이트(2026-08-13 실측: 전언형을 깨자 같은 날 두 편이 둘 다 '~이유'로 끝남 — 도장은 어미를 바꿔가며 재발한다)
+          const lastWordOf = (t: string) => (String(t ?? "").trim().split(/\s+/).pop() ?? "").replace(/[^가-힣a-zA-Z0-9]/g, "");
+          const myEnd = lastWordOf(a.title ?? "");
+          if (myEnd && recentTitles.filter((t) => lastWordOf(t) === myEnd).length >= 2) w.push(`제목 끝 단어 '${myEnd}'가 최근 제목들과 겹친다 — 끝맺음을 다른 형(질문형·숫자 대비·시점형·다른 명사)으로 바꿔라.`);
           if (keywordFloorApplies && lacksKeywordFloor(a.body_html, floorTarget)) {
             const n = keywordOccurrences(a.body_html, floorTarget);
             w.push(`메인 키워드 "${floorTarget}"가 본문에 ${n}회뿐이다(최소 ${KEYWORD_FLOOR}회). 제목·도입·소제목·본문 문단에 나눠 심어 ${KEYWORD_FLOOR}회 이상 나오게 하되, 억지 문장을 만들지 말고 '이 제도·이것'처럼 뭉갠 지시어를 키워드 원형으로 되돌려라.`);
