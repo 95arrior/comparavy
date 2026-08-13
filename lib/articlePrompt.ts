@@ -128,6 +128,8 @@ export interface ArticlePromptInput {
   userExperience?: string | null;
   /** 사장님이 직접 정한 제목 — 있으면 이 제목을 그대로 쓰고, 본문이 제목과 어긋나지 않게 작성. */
   userTitle?: string | null;
+  /** ★홈판 서사 모드(2026-08-14 유저 승인) — 홈피드 유입용 글: 완결 정보문이 아니라 완독·반응용 서사. */
+  homefeedNarrative?: boolean;
   /** ★계정별 스타일 페르소나(lib/stylePersona) — 같은 계정은 항상 같은 스타일, 계정 간은 다르게(1만 계정 지문 방지). 유저 프롬프트에 주입(캐싱 보존). */
   styleInstruction?: string | null;
   /** ★네이버 자동완성 실데이터 — 검색자들이 실제로 함께 찾는 검색어(관련 질문 점령을 추측→실데이터로). */
@@ -566,6 +568,17 @@ export function targetMaxFor(channel: string): number {
 
 export function buildUserPrompt(input: ArticlePromptInput): string {
   const typeInstruction = TYPE_INSTRUCTIONS[input.type] ?? "";
+  // ★홈판 서사 모드(2026-08-14 유저 승인: "본문 이대로 가는 게 맞아?" — 검색 완결문과 홈피드 서사는 장르가 다르다)
+  const narrativeBlock = input.homefeedNarrative ? [
+    "★★홈판 서사 모드 — 이 글은 검색이 아니라 홈피드 유입용이다. 아래 지시가 다른 구조 규칙(소제목 수·FAQ·확인처 안내·분량)과 충돌하면 이 모드가 이긴다:",
+    "- 목표는 정보 완결이 아니라 완독과 반응이다 — 스크롤하다 멈춘 사람이 끝까지 읽고 한마디 남기고 싶어지는 글.",
+    "- 도입 = 장면·관찰로 시작(관찰 전언: '발표 다음 날 부동산 커뮤니티에서 제일 많이 보인 반응은 ~였습니다'). 제도 개요·정의로 시작 금지.",
+    "- 전개 = 질문 축 하나: 제목이 던진 질문을 독자와 같이 좁혀간다('같이 계산해 보죠'). 개요→상세→항목 나열 구조 금지. 소제목(h2)은 2~3개면 충분하다.",
+    "- ★감정 지점 1개 의무: 근거 자료에 실재하는 사례·사건으로 공감이나 의심을 만든다(예: 사전청약 당첨자 입주 지연). 없는 사례 지어내기 절대 금지 — 근거에 없으면 이 장치는 생략한다.",
+    "- 표는 최대 1개(가장 아픈 대비 하나만), FAQ 섹션 금지, 확인처·출처 나열 금지(필요하면 마지막에 한 문장).",
+    "- 문단은 1~2문장 리듬으로 더 짧게. 숫자는 글 전체에 5개 이하 — 서사에 필요한 것만.",
+    "- 마무리 = 안전축 논쟁 질문('이 대책, 신호탄이다 vs 숫자 놀음이다 — 어느 쪽으로 보시나요?') 또는 자기 상황 말하기. 축은 제도 실효성·소비 습관만(투자 권유·정치·의료 금지).",
+  ].join("\n") : "";
   const toneInstruction = TONE_INSTRUCTIONS[input.tone] ?? "";
   const toneEnding = TONE_ENDINGS[input.tone] ?? TONE_ENDINGS.friendly;
 
@@ -577,6 +590,7 @@ export function buildUserPrompt(input: ArticlePromptInput): string {
   //   상한은 열어 두되 '오바 금지'가 조건이다 — 늘린 만큼 정보가 늘어야 하고, 반복으로 채우면 실격.
   let targetMin = input.channel === "wordpress" ? 2000 : 1600;
   let targetMax = Math.min(input.channel === "wordpress" ? 2800 : 2400, input.maxWords);
+  if (input.homefeedNarrative) { targetMin = 1200; targetMax = Math.min(1600, input.maxWords || 1600); } // ★서사 모드: 완독이 확산 신호라 짧게(2026-08-14)
   targetMin = Math.min(targetMin, targetMax);
 
   // ★섹션 예산 = (목표 상한 − 고정 블록 합) ÷ 소제목 수 (2026-08-03).
@@ -625,6 +639,7 @@ export function buildUserPrompt(input: ArticlePromptInput): string {
 
   return [
     `핵심 키워드: ${input.keyword}`,
+    narrativeBlock,
     input.angle ? `글의 관점/각도: ${input.angle}` : "",
     titleBlock,
     storyBlock,

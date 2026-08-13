@@ -342,13 +342,18 @@ export async function POST(request: Request) {
             await adminDb.from("seed_claims").upsert({ category: profileRow?.sub_category || vertical, keyword_norm: keyword.replace(/\s+/g, ""), user_id: user.id }, { onConflict: "keyword_norm,user_id" });
           } catch { /* 0063 미적용/실패 — 무시 */ }
         }
+        const selMeta = body.selectionMeta as { species?: string; mrAngle?: string } | undefined;
+        const isHomefeedLane = selMeta?.species === "homefeed";
+        // ★홈판 서사 모드(2026-08-14 유저 승인) — 홈판 배팅 카드 + 머니랭킹 '홈판각 쓰기' 둘 다
+        const narrativeMode = channel === "naver" && (isHomefeedLane || selMeta?.mrAngle === "homefeed");
+        if (narrativeMode) console.log(`[narrative] user=${user.id.slice(0, 8)} 홈판 서사 모드 ON (${selMeta?.species ?? "?"})`);
         // ★홈피드 제목 파이프(2026-08-14 유저 확정: "99% 홈판 — CTR 카피라이터로서 후보→선정→본문 연결")
         const hfTitle = channel === "naver" && !userTitle
           ? await pickHomefeedTitle({ keyword, brief: typeof body.angleBrief === "string" ? body.angleBrief : null, news: resolvedNewsContext, recentTitles, userId: user.id })
           : null;
         const hfDirective = hfTitle ? ` ★제목 확정(홈피드 CTR 픽): "${hfTitle.title}" — 제목은 반드시 이것을 글자 그대로 쓴다. 도입 첫 2~3문장은 이 제목이 건 약속(질문·숫자·상황)에 바로 답한다 — 약속과 다른 도입은 낚시라 확산이 죽는다.` : "";
         if (hfTitle) console.log(`[hf-title] user=${user.id.slice(0, 8)} "${hfTitle.title}" (${hfTitle.why})`);
-        const genInput = { keyword, channel, serpContext, relatedPosts, angle: body.angle, type, tone, maxWords, variantInstruction: `${variantInstruction}${hfDirective}`, styleInstruction, relatedQueries, newsContext: resolvedNewsContext, angleBrief: ((typeof body.angleBrief === "string" ? body.angleBrief.slice(0, 900) : "") + seriesDirective + angleAddon + titleDirective).trim() || null, affiliate: isReview, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userExperience: userExperience || null, userTitle, calcContext: financeCalcContext(keyword) };
+        const genInput = { keyword, channel, serpContext, relatedPosts, angle: body.angle, type, tone, maxWords, variantInstruction: `${variantInstruction}${hfDirective}`, styleInstruction, relatedQueries, newsContext: resolvedNewsContext, angleBrief: ((typeof body.angleBrief === "string" ? body.angleBrief.slice(0, 900) : "") + seriesDirective + angleAddon + titleDirective).trim() || null, affiliate: isReview, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userExperience: userExperience || null, userTitle, homefeedNarrative: narrativeMode, calcContext: financeCalcContext(keyword) };
         // ★재생성 무음화 + 상한(2026-07-24 멈춤·재작성 조사): 가드 재생성이 클라이언트로 스트리밍되면 이미 뜬 완성
         //  본문이 짧은 재생성 조각으로 '교체'돼 화면이 스켈레톤으로 붕괴('다시 작성' 현상). 초기 생성만 스트리밍하고,
         //  재생성은 무음 콜백으로 돌린 뒤 최종본은 done(saved)으로 넘긴다. 스택 재생성(최대 4회 생성)이 maxDuration을
@@ -369,7 +374,6 @@ export async function POST(request: Request) {
         //  ★홈판 레인은 세는 대상이 다르다 — 카드의 keyword가 검색 키워드가 아니라 '주제 앵커'라서,
         //   그 문구를 통째로 5회 박으면 글이 부자연스러워진다("7월 미환급금"을 다섯 번 쓸 자리가 없다).
         //   앵커의 핵심어(미환급금)를 세면 하한의 목적('무엇에 관한 글인지 판정되게')은 그대로 달성된다.
-        const isHomefeedLane = (body.selectionMeta as { species?: string } | undefined)?.species === "homefeed";
         const floorTarget = isHomefeedLane ? coreKeywordOf(keyword) : keyword;
         //  ★2026-08-02 검거: 종전엔 이 함수가 문자열만 돌려줬고, 재생성 발동 조건(deficits)은
         //   키워드·소제목 둘만 세고 있었다. 그래서 띄어쓰기·문단·이모지·사진 결함은 경고 문구는 만들어졌지만
@@ -501,7 +505,7 @@ export async function POST(request: Request) {
           }
           // ★표 하한(2026-08-11 유저: "표가 부족하네 빡세게") — 리스트는 마감에서 표로 변환되므로 같이 센다.
           const tableish = (a.body_html.match(/<table/gi) ?? []).length + (a.body_html.match(/<[uo]l\b/gi) ?? []).length;
-          if (tableish < 2) {
+          if (tableish < (narrativeMode ? 1 : 2)) { // ★서사 모드는 표 1개(2026-08-14 — 완독 리듬이 우선)
             w.push(`표·목록이 ${tableish}개뿐이다. 조건별 금액·대상 비교·일정 중 두 곳 이상을 표나 목록으로 바꿔라 — 항목 3개 넘는 나열을 문장으로 이어 쓰면 실격.`);
           }
           // ★사진 슬롯(실측: 섹션이 여럿인데 마커가 하한 3개에 딱 붙음) — 네이버는 사진이 체류·노출에 크게 작용한다.
