@@ -34,7 +34,7 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
         "[표지 cover] 홈피드 훅 문법 — 결핍을 긁거나 돈으로 유혹. ★핵심 고유명사·키워드 필수(2026-08-11 유저: 'SK하이닉스 얘긴데 실명이 빠지면 안 되죠' — 표지도 동일): 기업·브랜드·제도 실명 + 숫자 앵커를 반드시 넣는다. 최대 2줄(\\n), 줄당 12자 내. 제목 문장 통째 반복 금지 — 표지는 궁금증, 카드가 답. 예: 'SK하이닉스 10억\\n1분 퇴근에 증발'.",
         "[카드 cards] 4~8장. 각 장 = head(한 줄 12자 내) + body(2~3줄, 줄당 18자 내, \\n 구분). 표지의 궁금증을 순서대로 푼다: 무슨 일이 → 왜 → 핵심 숫자·조건 → 함정 → 지금 할 것. 앞 장 끝이 다음 장을 궁금하게(넘기게 만드는 흐름).",
         "[마지막 장 cta] head=행동 한 줄, body=오늘 할 첫걸음 + '자세한 계산·최신 기준은 프로필 링크에'.",
-        "[caption] 인스타 캡션: 훅 1줄 + 핵심 요약 2~3줄 + 해시태그 12~15개(#재테크 #경제 같은 대중 태그 + 소재 태그. 한 줄에 몰아서).",
+        "[caption] 인스타 캡션: 훅 1줄 + 핵심 요약 2~3줄 + 해시태그 ★딱 5개(2026-08-14 유저: '5개밖에 안 들어가') — 소재 실명 2~3개+대중 태그 2개, ★띄어쓰기 없이 붙여서: '#sk하이닉스#솔리다임#주식투자' 형식.",
         "[클립 clip] 네이버 클립용 — 캐릭터가 '키워드 그 자체'가 되어 가르치듯 말한다(2026-08-11 유저 확정 규격·예시):",
         "  hook = 의인화 오프닝 컷 {say, motion}: say는 '나 {키워드 핵심}인데! {가장 충격적인 돈 팩트 한 문장}! 지금부터 빠르게 알려줄게! 잘 들어!' 결(유저 실례: '나 레버리지인데! 주식 1억 있어도 현금 3천만원 없으면 이제 못 산대!'), motion은 시선을 확 잡는 등장 동작(예: 'The character bursts into frame pointing at the camera with wide excited eyes, quick zoom-in').",
         "  segments = 4~5개(★6개 미만 엄수). 각 세그 say = 10초 분량(2~3문장, 60~90자). ★대사 규칙(2026-08-11 유저 2·3차: '알기 쉽게 재밌게 + 말투 통일'):",
@@ -151,7 +151,13 @@ export async function articleToInstaCards(title: string, bodyHtml: string, keywo
       cover: String(j.cover).trim().slice(0, 60),
       cards,
       cta: { head: String(j.cta?.head ?? "지금 확인").trim().slice(0, 40), body: String(j.cta?.body ?? "자세한 내용은 프로필 링크에").trim().slice(0, 200) },
-      caption: String(j.caption ?? "").trim().slice(0, 1200),
+      // ★해시태그 5개·무공백 연결 강제(2026-08-14 유저 확정 — 프롬프트는 방향, 코드는 한계선)
+      caption: (() => {
+        const raw = String(j.caption ?? "").trim();
+        const tags = (raw.match(/#[^#\s]+/g) ?? []).slice(0, 5);
+        const text = raw.replace(/#[^#\s]+/g, "").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+        return `${text}${tags.length ? `\n\n${tags.join("")}` : ""}`.trim().slice(0, 1200);
+      })(),
       clip: segments.length >= 3 && hook.say ? { hook, segments, character, background: backgroundDesc, styleAnchor: anchor, basePrompt,
         // ★영상 프롬프트(2026-08-12 유저 실측 2건 수리: 힉스필드가 못 알아들음 — ①1300자 기계 절단이 단어 중간에서 끊김 ②이미지를 넣는 모드라 캐릭터·배경 묘사가 중복·과다).
         //  이미지가 캐릭터를 들고 오므로 프롬프트는 '입력 이미지 그대로'+연기+무텍스트만. →화살표는 then으로, 절단은 단어 경계에서만.
