@@ -377,6 +377,10 @@ export async function POST(request: Request) {
           const myEnd = lastWordOf(a.title ?? "");
           if (myEnd && recentTitles.filter((t) => lastWordOf(t) === myEnd).length >= 2) w.push(`제목 끝 단어 '${myEnd}'가 최근 제목들과 겹친다 — 끝맺음을 다른 형(질문형·숫자 대비·시점형·다른 명사)으로 바꿔라.`);
           // ★이중 마무리 게이트(2026-08-14 실측: 비트코인 글 — 댓글 질문으로 닫은 뒤에 요약 불릿이 또 붙어 부록처럼 읽힘)
+          // ★라벨형 소제목 게이트(2026-08-14 유저: '소제목에서 관심·흥미 유도') — 짧은 명사 라벨('상품 개요')이 2개 이상이면 훅형으로 재작성
+          const h2s = [...a.body_html.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/gi)].map((m) => m[1].replace(/<[^>]+>/g, "").trim()).filter(Boolean);
+          const labelish = h2s.filter((h) => [...h].length <= 9 && !/[?!…]|[을를이가은는도]\s|까$|나$|법$/.test(h));
+          if (labelish.length >= 2) w.push(`소제목이 명사 라벨형이다('${labelish.slice(0, 2).join("', '")}') — 독자의 질문·상황이 담긴 훅형으로 바꿔라('8.15% 진짜 다 받을 수 있을까' 결, 세부 키워드는 유지).`);
           // ★표 칸수 불일치(2026-08-14 실측: '총 납입액' 행이 셀 하나 — 렌더는 코드가 빈 칸으로 메우지만 내용은 모델이 고쳐야 한다)
           const uneven = (a.body_html.match(/<table[\s\S]*?<\/table>/gi) ?? []).some((t) => {
             const ns = (t.match(/<tr[\s\S]*?<\/tr>/gi) ?? []).map((r) => (r.match(/<t[dh]\b/gi) ?? []).length).filter((n) => n > 0);
