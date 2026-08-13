@@ -36,3 +36,11 @@ console.log("\n전부 통과");
   ok(fixedD.indexOf("<ul>") < fixedD.indexOf("댓글로"), "★실측: 댓글 뒤 요약 불릿을 앞으로 재배치");
   ok(fixDoubleClosing("<p>본문</p><p>댓글로 남겨주세요.</p>") === "<p>본문</p><p>댓글로 남겨주세요.</p>", "불릿 없으면 그대로");
 }
+
+// ★문단 경계 도메인 재접합(2026-08-14 실물: 청약홈(applyhome. </p><p> co.kr))
+{
+  const { fixBrokenUrls } = await import("../lib/publishHtml.ts");
+  ok(fixBrokenUrls("<p>청약홈(applyhome.</p><p>co.kr) 또는 LH</p>") === "<p>청약홈(applyhome.co.kr) 또는 LH</p>", "★실측: 문단으로 갈린 도메인 재접합");
+  ok(fixBrokenUrls("<p>fsc.go.</p><p>kr 공지</p>") === "<p>fsc.go.kr 공지</p>", "백로그 케이스(fsc.go./kr)도 해결");
+  ok(fixBrokenUrls("<p>확인했습니다.</p><p>korea 지원금</p>").includes("</p><p>"), "일반 문장 경계는 안 붙임");
+}

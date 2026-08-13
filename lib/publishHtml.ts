@@ -170,7 +170,8 @@ export function fixDoubleClosing(html: string): string {
 
 export function fixBrokenUrls(html: string): string {
   let out = String(html || "");
-  const SEP = String.raw`(?:\s|<br\s*\/?\s*>)+`;
+  // ★문단 경계도 이음(2026-08-14 실물: '청약홈(applyhome.' </p><p> 'co.kr)' — 문단 쪼개기가 도메인 중간을 갈랐다)
+  const SEP = String.raw`(?:\s|<br\s*\/?\s*>|<\/p>\s*(?:<p[^>]*>\s*<\/p>\s*)*<p[^>]*>)+`;
   const FRAG = new RegExp(String.raw`([A-Za-z0-9-]{2,}\.)` + SEP + String.raw`((?:[A-Za-z0-9-]+\.)*(?:kr|com|net|org|go|or|co)\b)`, "g");
   for (let i = 0; i < 3; i++) out = out.replace(FRAG, "$1$2");
   out = out.replace(/([A-Za-z0-9-]{2,})\s+\.((?:go|or|co)\.kr|kr|com|net|org)\b/g, "$1.$2");
