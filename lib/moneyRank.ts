@@ -8,6 +8,7 @@
 //  결핍 레이더(lackRadar)는 화면에서 내려감(2026-08-11 유저 지시) — 코드는 남긴다.
 
 import Anthropic from "@anthropic-ai/sdk";
+import { normalizeStaleYear } from "./cardFinalGate";
 import { fetchBlogTotalDetailed } from "./naverBlogSearch";
 import { isUnsafeKeyword } from "./keywordSafety";
 import { DOC_HARD_MAX } from "./topicScore";
@@ -119,7 +120,7 @@ export async function condenseRanking(titles: string[], userId?: string | null):
   try {
     const arr = JSON.parse(m[0]) as { issue?: string; kw?: string; cat?: string; big?: boolean; newsTitle?: string }[];
     return arr
-      .map((x) => ({ issue: String(x.issue ?? "").trim().slice(0, 30), keyword: String(x.kw ?? "").trim().slice(0, 40), cat: String(x.cat ?? "").trim().slice(0, 10), big: x.big === true, newsTitle: String(x.newsTitle ?? "").trim().slice(0, 120) }))
+      .map((x) => ({ issue: normalizeStaleYear(String(x.issue ?? "").trim()).slice(0, 30), keyword: normalizeStaleYear(String(x.kw ?? "").trim()).slice(0, 40), cat: String(x.cat ?? "").trim().slice(0, 10), big: x.big === true, newsTitle: String(x.newsTitle ?? "").trim().slice(0, 120) }))
       .filter((x) => x.keyword.length >= 2 && x.issue.length >= 2)
       .slice(0, 10);
   } catch { return []; }
@@ -183,7 +184,7 @@ export async function findGapTails(headKeyword: string, userId?: string | null):
   try {
     const arr = JSON.parse(m[0]) as { k?: string; hint?: string }[];
     return arr
-      .map((x) => ({ keyword: String(x.k ?? "").trim().slice(0, 40), hint: String(x.hint ?? "").trim().slice(0, 16) }))
+      .map((x) => ({ keyword: normalizeStaleYear(String(x.k ?? "").trim()).slice(0, 40), hint: String(x.hint ?? "").trim().slice(0, 16) }))
       .filter((x) => x.keyword.length >= 2)
       .slice(0, 4);
   } catch { return []; }

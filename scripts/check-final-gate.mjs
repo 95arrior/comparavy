@@ -483,4 +483,15 @@ console.log("\n수명 컷 — 마감이 지났는가로만 가른다:");
   chk_(finalGate([{ keyword: "골프존홀딩스 공개매수 신청방법", title: "골프존홀딩스 공개매수, 일반 주주도 참여할 때", seedSource: "newspsych" }]).drops.length === 0, "다른 원천엔 이 검문을 안 건다");
 }
 
+// ★낡은 연도 정정(2026-08-14 유저 실측: "비거주 1주택자 전세대출 제한 2025" — 뉴스는 올해 건)
+{
+  const { normalizeStaleYear } = await import("../lib/cardFinalGate.ts");
+  const now = new Date("2026-08-14T09:00:00+09:00");
+  chk_(normalizeStaleYear("비거주 1주택자 전세대출 제한 2025", now) === "비거주 1주택자 전세대출 제한 2026", "★실측 실물: 2025 → 2026");
+  chk_(normalizeStaleYear("2024년 지원금 총정리", now) === "2026년 지원금 총정리", "2년 전 연도도 올해로");
+  chk_(normalizeStaleYear("2026 출산지원금 타임라인", now) === "2026 출산지원금 타임라인", "올해는 그대로");
+  chk_(normalizeStaleYear("2027년 최저임금 예고", now) === "2027년 최저임금 예고", "미래 연도는 그대로(선행 발행)");
+  chk_(normalizeStaleYear("2025년 귀속 연말정산", new Date("2026-01-15T09:00:00+09:00")) === "2025년 귀속 연말정산", "1월의 작년 표기는 정당(연말정산 귀속)");
+}
+
 process.exit(fail ? 1 : 0);

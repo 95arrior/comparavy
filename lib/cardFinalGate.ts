@@ -322,3 +322,16 @@ export function finalGate<T extends GateCard>(cards: T[], opts?: { anchorKeyword
   }
   return { pass, drops };
 }
+
+/** ★낡은 연도 정정(2026-08-14 유저 실측: '비거주 1주택자 전세대출 제한 2025' — 뉴스는 올해 건인데 모델이 학습 시절 연도를 붙임).
+ *  지금 뜨는 뉴스에서 나온 글감의 과거 연도는 오타다 — 올해로 고친다. 올해·미래 연도는 그대로(선행 발행 전략).
+ *  예외: 1월엔 작년 표기가 정당할 수 있다(연말정산 귀속 등) — 그때만 작년을 살려둔다. */
+export function normalizeStaleYear(text: string, now: Date = new Date(Date.now() + 9 * 3600_000)): string {
+  const y = now.getFullYear();
+  return String(text ?? "").replace(/(20\d{2})(년?)/g, (m, yr: string, suffix: string) => {
+    const n = Number(yr);
+    if (n >= y) return m;
+    if (n === y - 1 && now.getMonth() === 0) return m;
+    return `${y}${suffix}`;
+  });
+}
