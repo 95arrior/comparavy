@@ -148,6 +148,26 @@ export function normalizeTableColumns(html: string): string {
   });
 }
 
+/** ★소수점 재접합(2026-08-14 실측: 'PF 금리 0.5%p'가 '0.' / '5%p' 줄로 쪼개져 발행) — 숫자.줄바꿈.숫자는 소수점이다. */
+export function fixSplitDecimals(html: string): string {
+  return String(html ?? "").replace(/(\d)\.\s*(?:<\/p>\s*<p[^>]*>|<br\s*\/?>|\n)+\s*(\d)/gi, "$1.$2");
+}
+
+/** ★이중 마무리 재배치(2026-08-14 실측 2회: 댓글 질문 뒤에 요약 불릿이 또 붙음 — 경고 게이트는 재생성 예산이 없으면 그대로 나간다).
+ *  댓글 문단 뒤의 불릿 블록을 댓글 문단 앞으로 옮긴다 — 내용은 그대로, 순서만 바로잡는다. */
+export function fixDoubleClosing(html: string): string {
+  const s = String(html ?? "");
+  const ci = s.lastIndexOf("댓글");
+  if (ci < 0) return s;
+  const pStart = s.lastIndexOf("<p", ci);
+  const pEnd = s.indexOf("</p>", ci);
+  if (pStart < 0 || pEnd < 0) return s;
+  const tail = s.slice(pEnd + 4);
+  const m = tail.match(/^(?:\s|<(?:ul|ol)[\s\S]*?<\/(?:ul|ol)>|<p[^>]*>\s*(?:•|·)[\s\S]*?<\/p>|<blockquote[\s\S]*?<\/blockquote>)+/i);
+  if (!m || !/<(ul|ol)|•|·/.test(m[0])) return s;
+  return s.slice(0, pStart) + m[0].trim() + s.slice(pStart, pEnd + 4) + tail.slice(m[0].length);
+}
+
 export function fixBrokenUrls(html: string): string {
   let out = String(html || "");
   const SEP = String.raw`(?:\s|<br\s*\/?\s*>)+`;
@@ -750,7 +770,7 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   const withImages = opts?.withImages ?? true;
   let idx = -1;
   // ★사진 자리는 '구조화 슬롯'으로만 — 채워진 슬롯만 이미지로, 미충족 슬롯은 줄 자체를 제거(안내문구 유출 금지).
-  let body = normalizeTableColumns(ensurePayoffTable(listToTable(capFaq(ensureSectionEmphasis(markToBold(ensureKeyFigureMark(capMarks(capAccent(capDanger(sanitizeAiPunct(stripListEmoji(normalizeHighlights(input.bodyHtml))))))))))), input.title)).replace(SLOT_RE, (_m, kind: string, desc: string) => {
+  let body = normalizeTableColumns(ensurePayoffTable(listToTable(capFaq(ensureSectionEmphasis(markToBold(ensureKeyFigureMark(capMarks(capAccent(capDanger(sanitizeAiPunct(stripListEmoji(normalizeHighlights(fixSplitDecimals(fixDoubleClosing(input.bodyHtml))))))))))))), input.title)).replace(SLOT_RE, (_m, kind: string, desc: string) => {
     idx += 1; // ★문서순 인덱스는 종류와 무관하게 증가시킨다(검토 화면 imgs[i]와 짝이 맞아야 한다)
     const url = input.images?.[idx];
     // ★안 채워진 카드·차트는 줄째로 지운다(2026-08-02 유저 실측).

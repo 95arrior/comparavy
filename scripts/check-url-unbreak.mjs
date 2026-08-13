@@ -25,3 +25,14 @@ console.log("\n전부 통과");
   ok(ns.every((n) => n === 3), "★실측 실물: 칸 모자란 행을 빈 칸으로 채워 3칸 정렬", JSON.stringify(ns));
   ok(!/undefined/.test(out), "지어낸 값 없음(빈 칸만)");
 }
+
+// ★소수점 재접합 + 이중 마무리 재배치(2026-08-14 실측: '0.5%p'가 '0.'/'5%p'로 쪼개짐, 댓글 질문 뒤 요약 불릿)
+{
+  const { fixSplitDecimals, fixDoubleClosing } = await import("../lib/publishHtml.ts");
+  ok(fixSplitDecimals("<p>착공하면 0.</p><p>5%p에 해당하는</p>") === "<p>착공하면 0.5%p에 해당하는</p>", "★실측: 소수점 문단 쪼개짐 재접합");
+  ok(fixSplitDecimals("<p>2026. 8. 11. 기준</p>") === "<p>2026. 8. 11. 기준</p>", "날짜 표기는 안 건드림(공백 소수점 아님)");
+  const doubled = "<p>본문</p><p>댓글로 남겨주세요.</p><ul><li>핵심 총량 150만</li></ul><p>#태그</p>";
+  const fixedD = fixDoubleClosing(doubled);
+  ok(fixedD.indexOf("<ul>") < fixedD.indexOf("댓글로"), "★실측: 댓글 뒤 요약 불릿을 앞으로 재배치");
+  ok(fixDoubleClosing("<p>본문</p><p>댓글로 남겨주세요.</p>") === "<p>본문</p><p>댓글로 남겨주세요.</p>", "불릿 없으면 그대로");
+}
