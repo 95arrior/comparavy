@@ -21,7 +21,7 @@ export async function pickHomefeedTitle(args: {
     const client = new Anthropic({ apiKey });
     const res = await client.messages.create({
       model: "claude-haiku-4-5",
-      max_tokens: 900,
+      max_tokens: 1600, // ★900은 후보 6개+채점 JSON이 잘렸다(2026-08-14 실측: 파싱 실패→픽 무음 소실)
       messages: [{
         role: "user",
         content: [
@@ -39,13 +39,19 @@ export async function pickHomefeedTitle(args: {
     });
     void logUsage({ userId: args.userId, model: "claude-haiku-4-5", kind: "homefeed_title", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
     const t = res.content.find((b) => b.type === "text");
-    const m = /\{[\s\S]*\}/.exec(t && t.type === "text" ? t.text : "");
-    if (!m) return null;
-    const j = JSON.parse(m[0]) as { best?: string; why?: string };
-    const best = String(j.best ?? "").trim().replace(/^["']|["']$/g, "").slice(0, 80);
-    if (!best) return null;
+    const textOut = t && t.type === "text" ? t.text : "";
+    let best = "";
+    let why = "";
+    const m = /\{[\s\S]*\}/.exec(textOut);
+    if (m) {
+      try { const j = JSON.parse(m[0]) as { best?: string; why?: string }; best = String(j.best ?? "").trim(); why = String(j.why ?? ""); } catch { /* 잘린 JSON — 아래 폴백 */ }
+    }
+    if (!best) { const bm = /"best"\s*:\s*"([^"]+)"/.exec(textOut); if (bm) best = bm[1].trim(); } // ★잘려도 best만 건진다
+    best = best.replace(/^["']|["']$/g, "").slice(0, 80);
+    if (!best) { console.log("[hf-title] 픽 실패 — best 없음(출력 잘림 의심)"); return null; }
     // 홈판 규격 게이트 — 미달이면 픽을 버리고 기존 경로(본문 생성기가 직접 짓기)로 둔다. 나쁜 픽 강제가 최악이다.
-    if (!validateHomefeedTitle(best, args.keyword).ok) return null;
-    return { title: best, why: String(j.why ?? "").slice(0, 120) };
+    const v = validateHomefeedTitle(best, args.keyword);
+    if (!v.ok) { console.log(`[hf-title] 픽 실격(${v.reason}): "${best}"`); return null; }
+    return { title: best, why: why.slice(0, 120) };
   } catch { return null; }
 }
