@@ -14,6 +14,7 @@ import { countBodyChars } from "@/lib/humanizer";
 import { finalizeArticleBody } from "@/lib/finalizeBody";
 import { leadTagFor } from "@/lib/adBid";
 import { relatedPostsFor } from "@/lib/relatedPosts";
+import { pickHomefeedTitle } from "@/lib/homefeedTitlePick";
 import { sectionBudgetReport, tailSummaryBullets, clichePhotoSlots, eligibilityTableIssues, answerFirstDefects, stiltedInterjections } from "@/lib/editorial";
 import { validateTitleTail } from "@/lib/titleRules";
 import { sectionBudgetFor, targetMaxFor } from "@/lib/articlePrompt";
@@ -341,7 +342,13 @@ export async function POST(request: Request) {
             await adminDb.from("seed_claims").upsert({ category: profileRow?.sub_category || vertical, keyword_norm: keyword.replace(/\s+/g, ""), user_id: user.id }, { onConflict: "keyword_norm,user_id" });
           } catch { /* 0063 미적용/실패 — 무시 */ }
         }
-        const genInput = { keyword, channel, serpContext, relatedPosts, angle: body.angle, type, tone, maxWords, variantInstruction, styleInstruction, relatedQueries, newsContext: resolvedNewsContext, angleBrief: ((typeof body.angleBrief === "string" ? body.angleBrief.slice(0, 900) : "") + seriesDirective + angleAddon + titleDirective).trim() || null, affiliate: isReview, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userExperience: userExperience || null, userTitle, calcContext: financeCalcContext(keyword) };
+        // ★홈피드 제목 파이프(2026-08-14 유저 확정: "99% 홈판 — CTR 카피라이터로서 후보→선정→본문 연결")
+        const hfTitle = channel === "naver" && !userTitle
+          ? await pickHomefeedTitle({ keyword, brief: typeof body.angleBrief === "string" ? body.angleBrief : null, news: resolvedNewsContext, recentTitles, userId: user.id })
+          : null;
+        const hfDirective = hfTitle ? ` ★제목 확정(홈피드 CTR 픽): "${hfTitle.title}" — 제목은 반드시 이것을 글자 그대로 쓴다. 도입 첫 2~3문장은 이 제목이 건 약속(질문·숫자·상황)에 바로 답한다 — 약속과 다른 도입은 낚시라 확산이 죽는다.` : "";
+        if (hfTitle) console.log(`[hf-title] user=${user.id.slice(0, 8)} "${hfTitle.title}" (${hfTitle.why})`);
+        const genInput = { keyword, channel, serpContext, relatedPosts, angle: body.angle, type, tone, maxWords, variantInstruction: `${variantInstruction}${hfDirective}`, styleInstruction, relatedQueries, newsContext: resolvedNewsContext, angleBrief: ((typeof body.angleBrief === "string" ? body.angleBrief.slice(0, 900) : "") + seriesDirective + angleAddon + titleDirective).trim() || null, affiliate: isReview, vertical, bizName: promo ? profileRow?.biz_name : null, bizStrength: promo ? profileRow?.biz_strength : null, userStory: userStory || null, userExperience: userExperience || null, userTitle, calcContext: financeCalcContext(keyword) };
         // ★재생성 무음화 + 상한(2026-07-24 멈춤·재작성 조사): 가드 재생성이 클라이언트로 스트리밍되면 이미 뜬 완성
         //  본문이 짧은 재생성 조각으로 '교체'돼 화면이 스켈레톤으로 붕괴('다시 작성' 현상). 초기 생성만 스트리밍하고,
         //  재생성은 무음 콜백으로 돌린 뒤 최종본은 done(saved)으로 넘긴다. 스택 재생성(최대 4회 생성)이 maxDuration을
@@ -371,11 +378,11 @@ export async function POST(request: Request) {
         const specDefects = (a: { body_html: string; title?: string }): string[] => {
           const w: string[] = [];
           // ★제목 어미 재확인(전언형 금지 상태에서 또 전언형이면 재생성에 실어 고친다)
-          if (banJeoneon && JEONEON_RE.test(`${a.title ?? ""} `)) w.push("제목이 또 전언형('~다는/~라는')이다 — 최근 제목들과 어미가 겹친다. 내용·키워드는 유지하고 제목만 명사구 컷·질문형·숫자 대비형·시점형 중 하나로 다시 써라.");
+          if (!hfTitle && banJeoneon && JEONEON_RE.test(`${a.title ?? ""} `)) w.push("제목이 또 전언형('~다는/~라는')이다 — 최근 제목들과 어미가 겹친다. 내용·키워드는 유지하고 제목만 명사구 컷·질문형·숫자 대비형·시점형 중 하나로 다시 써라.");
           // ★끝단어 반복 게이트(2026-08-13 실측: 전언형을 깨자 같은 날 두 편이 둘 다 '~이유'로 끝남 — 도장은 어미를 바꿔가며 재발한다)
           const lastWordOf = (t: string) => (String(t ?? "").trim().split(/\s+/).pop() ?? "").replace(/[^가-힣a-zA-Z0-9]/g, "");
           const myEnd = lastWordOf(a.title ?? "");
-          if (myEnd && recentTitles.filter((t) => lastWordOf(t) === myEnd).length >= 2) w.push(`제목 끝 단어 '${myEnd}'가 최근 제목들과 겹친다 — 끝맺음을 다른 형(질문형·숫자 대비·시점형·다른 명사)으로 바꿔라.`);
+          if (!hfTitle && myEnd && recentTitles.filter((t) => lastWordOf(t) === myEnd).length >= 2) w.push(`제목 끝 단어 '${myEnd}'가 최근 제목들과 겹친다 — 끝맺음을 다른 형(질문형·숫자 대비·시점형·다른 명사)으로 바꿔라.`);
           // ★이중 마무리 게이트(2026-08-14 실측: 비트코인 글 — 댓글 질문으로 닫은 뒤에 요약 불릿이 또 붙어 부록처럼 읽힘)
           // ★라벨형 소제목 게이트(2026-08-14 유저: '소제목에서 관심·흥미 유도') — 짧은 명사 라벨('상품 개요')이 2개 이상이면 훅형으로 재작성
           const h2s = [...a.body_html.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/gi)].map((m) => m[1].replace(/<[^>]+>/g, "").trim()).filter(Boolean);

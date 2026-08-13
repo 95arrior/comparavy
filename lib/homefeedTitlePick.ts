@@ -1,0 +1,51 @@
+// ★홈피드 제목 파이프(2026-08-14 유저 확정 — "현재 홈판이 압도적, 우리는 99% 홈판을 노려야 한다.
+//  CTR 카피라이터로서 ①클릭률 높은 제목 후보 ②최적 선정 ③제목과 자연스럽게 연결되는 본문").
+//  홈피드는 검색과 로직이 다르다: 특정 검색어 1등이 아니라 '이 콘텐츠를 이 사람에게 보여줬을 때
+//  반응할 확률' 게임 — 후보 노출→반응 확인→확장/감소. 그래서 제목을 본문과 한 몸으로 뽑지 않고,
+//  후보 6개를 만들어 자가 채점으로 1개를 고른 뒤 본문이 그 제목의 약속을 이행하게 한다.
+import Anthropic from "@anthropic-ai/sdk";
+import { logUsage } from "./usageLog";
+import { TITLE_SHAPE_RULE } from "./titleTypes";
+import { validateHomefeedTitle } from "./titleRules";
+
+export async function pickHomefeedTitle(args: {
+  keyword: string;
+  brief?: string | null;
+  news?: string | null;
+  recentTitles?: string[];
+  userId?: string | null;
+}): Promise<{ title: string; why: string } | null> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return null;
+  try {
+    const client = new Anthropic({ apiKey });
+    const res = await client.messages.create({
+      model: "claude-haiku-4-5",
+      max_tokens: 900,
+      messages: [{
+        role: "user",
+        content: [
+          `너는 네이버 홈피드 전문 CTR 카피라이터다. 키워드 "${args.keyword}" 글의 제목 후보 6개를 만들고, 스스로 채점해 최고 1개를 골라라.`,
+          "★홈피드 로직: 검색 상위노출이 아니라 '피드를 스크롤하던 사람이 멈추고 반응할 확률' 게임이다. 멈추게 하는 3요소 = 내 상황 대입(공감) · 구체 숫자 · 호기심 갭(안 누르면 손해).",
+          "채점 기준(후보마다): ①스크롤 중 3초 안에 멈출까 ②'내 얘기네'로 느껴질까 ③안 누르면 손해 같을까 ④★제목이 건 약속을 본문이 지킬 수 있나 — 본문이 못 지킬 과장은 낚시라 확산이 죽는다(즉시 감점).",
+          "후보 6개는 서로 다른 결로(공감형·숫자 대비형·질문형·시점형·반전형·손해 회피형) — 같은 어미 반복 금지.",
+          TITLE_SHAPE_RULE,
+          args.recentTitles?.length ? `최근 발행 제목(같은 틀·어미와 겹치면 감점): ${args.recentTitles.slice(0, 6).map((t) => `"${t}"`).join(" / ")}` : "",
+          args.news ? `[최신 근거]\n${String(args.news).slice(0, 800)}` : "",
+          args.brief ? `[글감 브리프]\n${String(args.brief).slice(0, 500)}` : "",
+          '출력 JSON만: {"candidates":["6개"],"best":"후보 중 1개 그대로","why":"고른 이유 한 줄"}',
+        ].filter(Boolean).join("\n"),
+      }],
+    });
+    void logUsage({ userId: args.userId, model: "claude-haiku-4-5", kind: "homefeed_title", inputTokens: res.usage?.input_tokens, outputTokens: res.usage?.output_tokens });
+    const t = res.content.find((b) => b.type === "text");
+    const m = /\{[\s\S]*\}/.exec(t && t.type === "text" ? t.text : "");
+    if (!m) return null;
+    const j = JSON.parse(m[0]) as { best?: string; why?: string };
+    const best = String(j.best ?? "").trim().replace(/^["']|["']$/g, "").slice(0, 80);
+    if (!best) return null;
+    // 홈판 규격 게이트 — 미달이면 픽을 버리고 기존 경로(본문 생성기가 직접 짓기)로 둔다. 나쁜 픽 강제가 최악이다.
+    if (!validateHomefeedTitle(best, args.keyword).ok) return null;
+    return { title: best, why: String(j.why ?? "").slice(0, 120) };
+  } catch { return null; }
+}
