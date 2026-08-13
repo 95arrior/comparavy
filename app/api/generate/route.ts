@@ -376,6 +376,9 @@ export async function POST(request: Request) {
           const lastWordOf = (t: string) => (String(t ?? "").trim().split(/\s+/).pop() ?? "").replace(/[^가-힣a-zA-Z0-9]/g, "");
           const myEnd = lastWordOf(a.title ?? "");
           if (myEnd && recentTitles.filter((t) => lastWordOf(t) === myEnd).length >= 2) w.push(`제목 끝 단어 '${myEnd}'가 최근 제목들과 겹친다 — 끝맺음을 다른 형(질문형·숫자 대비·시점형·다른 명사)으로 바꿔라.`);
+          // ★이중 마무리 게이트(2026-08-14 실측: 비트코인 글 — 댓글 질문으로 닫은 뒤에 요약 불릿이 또 붙어 부록처럼 읽힘)
+          const ci = a.body_html.lastIndexOf("댓글");
+          if (ci > 0 && /<li|(^|>)\s*•/.test(a.body_html.slice(ci + 40))) w.push("마무리(댓글 질문) 뒤에 요약 불릿·부록이 붙어 있다 — 마무리가 두 번 나온다. 요약은 마무리 앞으로 옮기고 댓글 질문이 글의 마지막 문단이 되게 하라.");
           if (keywordFloorApplies && lacksKeywordFloor(a.body_html, floorTarget)) {
             const n = keywordOccurrences(a.body_html, floorTarget);
             w.push(`메인 키워드 "${floorTarget}"가 본문에 ${n}회뿐이다(최소 ${KEYWORD_FLOOR}회). 제목·도입·소제목·본문 문단에 나눠 심어 ${KEYWORD_FLOOR}회 이상 나오게 하되, 억지 문장을 만들지 말고 '이 제도·이것'처럼 뭉갠 지시어를 키워드 원형으로 되돌려라.`);
