@@ -374,7 +374,7 @@ export async function POST(request: Request) {
         //  ★홈판 레인은 세는 대상이 다르다 — 카드의 keyword가 검색 키워드가 아니라 '주제 앵커'라서,
         //   그 문구를 통째로 5회 박으면 글이 부자연스러워진다("7월 미환급금"을 다섯 번 쓸 자리가 없다).
         //   앵커의 핵심어(미환급금)를 세면 하한의 목적('무엇에 관한 글인지 판정되게')은 그대로 달성된다.
-        const floorTarget = isHomefeedLane ? coreKeywordOf(keyword) : keyword;
+        const floorTarget = narrativeMode ? coreKeywordOf(keyword) : keyword; // ★서사 모드 전체(머니랭킹 홈판각 포함) — 앵커 문구 통째 5회는 부자연(2026-08-14)
         //  ★2026-08-02 검거: 종전엔 이 함수가 문자열만 돌려줬고, 재생성 발동 조건(deficits)은
         //   키워드·소제목 둘만 세고 있었다. 그래서 띄어쓰기·문단·이모지·사진 결함은 경고 문구는 만들어졌지만
         //   재생성이 안 일어나 한 번도 모델에 전달되지 않았다(실측: 09:04 생성 글이 사진 0·이모지 0으로 통과).
