@@ -541,7 +541,11 @@ export default function DashboardClient(props: DashboardProps) {
               //  그러니 경험을 적었거나 제목을 바꿨으면 그 글은 더 이상 이 요청의 답이 아니다 → 새로 쓴다.
               //  둘 다 그대로면 이미 만들어 둔 글을 그대로 연다(종전의 0초 경로를 그대로 보존).
               const sameTitle = !pickedTitle || pickedTitle === pendingWrite.title;
-              if (!experience && sameTitle) {
+              // ★홈판 서사 모드는 0초 경로 금지(2026-08-14 실측: 홈판각 클릭이 '생성을 안 하고' 사전 생성분(완결형)을 열었다 —
+              //  pregen은 selectionMeta 없이 만들어져 서사 모드가 아니다. 서사 글감은 반드시 새로 생성한다).
+              const selHf = pendingWrite.sel as { mrAngle?: string; species?: string } | undefined;
+              const isNarrativeWrite = selHf?.mrAngle === "homefeed" || selHf?.species === "homefeed";
+              if (!experience && sameTitle && !isNarrativeWrite) {
                 try {
                   const g = await fetch(`/api/pregen?keyword=${encodeURIComponent(pendingWrite.keyword)}`);
                   const gd = await g.json();
