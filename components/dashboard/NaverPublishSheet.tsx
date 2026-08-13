@@ -209,7 +209,8 @@ export default function NaverPublishSheet({
             <p className="mt-2 rounded-xl bg-[#F7F8FA] px-3.5 py-2.5 text-[12px] leading-relaxed text-neutral-500">💡 발행 전 마지막 손맛 2가지 — ①맨 위 인용구를 클릭해 <b className="text-neutral-700">인용구 스타일</b>(말풍선·포스트잇 등)을 글마다 다르게 골라보세요 ②섹션 사이 <b className="text-neutral-700">네이버 스티커 1~2개</b>. 둘 다 사람이 쓴 글이라는 신호예요.</p>
             {articleId && (
               <div className="mt-3 rounded-xl bg-neutral-50 px-4 py-3">
-                <p className="text-[12.5px] font-bold text-neutral-700">글 주소를 붙여넣으면 확인이 바로 끝나요 <span className="font-medium text-neutral-400">(선택)</span></p>
+                <p className="text-[12.5px] font-bold text-neutral-700">발행한 글 주소를 붙여넣어 주세요</p>
+                <p className="mt-0.5 text-[12px] leading-relaxed text-neutral-500">주소가 있어야 다음 글부터 <b className="text-neutral-700">'함께 보면 좋은 글'로 서로 연결</b>돼요 — 글끼리 오가는 체류가 검색 지수를 올려요.</p>
                 <div className="mt-2 flex gap-2">
                   <input value={doneUrl} onChange={(e) => setDoneUrl(e.target.value)} placeholder="https://blog.naver.com/..." className="min-w-0 flex-1 rounded-lg bg-white px-3 py-2 text-[13px] outline-none ring-1 ring-black/[0.06]" />
                   <button onClick={async () => {
@@ -233,7 +234,12 @@ export default function NaverPublishSheet({
                 <p className="mt-1 text-[12px] leading-relaxed text-neutral-500">붙여넣은 사진은 네이버가 대표로 인식하지 못할 때가 있어요. 발행 화면에서 대표이미지가 비어 있으면 — 본문에서 그 사진을 지우고, 같은 자리에서 사진 버튼으로 다시 올리면 대표로 지정할 수 있어요.</p>
               </div>
             )}
-            <button onClick={onDone} className={`${bigBtn} mt-4`} style={{ background: BLUE }}>발행까지 끝냈어요</button>
+            {/* ★버튼 위계 역전(2026-08-14 유저: "관련 글 링크 안 나오네" — 주소 없이 끝내면 관련글 후보가 영원히 0) */}
+            {articleId ? (
+              <button onClick={onDone} className="at-press mt-4 w-full rounded-xl py-3 text-[13px] font-semibold text-neutral-400 transition hover:text-neutral-600">주소 없이 끝내기 (글 연결 안 됨)</button>
+            ) : (
+              <button onClick={onDone} className={`${bigBtn} mt-4`} style={{ background: BLUE }}>발행까지 끝냈어요</button>
+            )}
           </div>
         )}
 
