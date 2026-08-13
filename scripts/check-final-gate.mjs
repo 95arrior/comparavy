@@ -494,4 +494,15 @@ console.log("\n수명 컷 — 마감이 지났는가로만 가른다:");
   chk_(normalizeStaleYear("2025년 귀속 연말정산", new Date("2026-01-15T09:00:00+09:00")) === "2025년 귀속 연말정산", "1월의 작년 표기는 정당(연말정산 귀속)");
 }
 
+// ★엔터 소재 컷 + 혈통 범용어(2026-08-14 실측: 보도자료 '창업 프로젝트' → 영화 '프로젝트 헤일메리 ott 언제' 증식)
+{
+  const { finalGate } = await import("../lib/cardFinalGate.ts");
+  const { lineageOverlap } = await import("../lib/editorial.ts");
+  const r1 = finalGate([{ title: "프로젝트 헬메리 OTT 구독 vs 구매, 보는 시점이 다르다", keyword: "프로젝트 헤일메리 ott 언제" }]);
+  chk_(r1.pass.length === 0, "★실측 실물: 영화 OTT 글감은 컷");
+  const r2 = finalGate([{ title: "넷플릭스 구독료 인상, 지금 갈아탈 요금제", keyword: "넷플릭스 요금제 가격" }]);
+  chk_(r2.pass.length === 1, "구독료·요금 돈 각도는 통과");
+  chk_(lineageOverlap("창업 프로젝트, 달라지는 것 정리", "프로젝트 헤일메리 ott 언제") === 0, "★'프로젝트' 하나로는 혈통이 성립하지 않는다");
+}
+
 process.exit(fail ? 1 : 0);

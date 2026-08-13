@@ -218,6 +218,11 @@ export function finalGate<T extends GateCard>(cards: T[], opts?: { anchorKeyword
   const drops: GateDrop[] = [];
   for (const c of cards) {
     const text = `${c.title} ${c.keyword}`;
+    // ★엔터 소재 컷(2026-08-14 실측: 영화 '프로젝트 헤일메리 ott 언제'가 황금 점수로 추천됨) —
+    //  검색자=영화 팬이지 경제 독자가 아니다(검색자≠손님). 구독료·요금제 같은 돈 각도가 아니라 작품 자체면 컷.
+    if (/(ott|넷플릭스|디즈니플러스|티빙|웨이브|쿠팡플레이)\s*(언제|공개|출시|방영)|영화|드라마|개봉|웹툰|아이돌|콘서트|팬미팅/i.test(text) && !/(요금|구독료|가격|인상|할인|환불)/.test(text)) {
+      drops.push({ keyword: c.keyword, reason: "entertainment" }); continue;
+    }
     // 1) 지역 협소 — 지역명이 박힌 글감은 전국 풀 신호(전국민 주제·인기지 청약 등)가 없으면 부적격.
     //    '서울시 출산가구 720만'(대집단+광역 4점)은 통과, '강서구 평생교육이용권'(0~1점)은 컷.
     // ★폐지·종료 제도 하드컷(2026-08-01 유저 지시 "빡세게") — 실측: '재형저축'(2015년 가입 종료)이
