@@ -162,10 +162,19 @@ export function fixDoubleClosing(html: string): string {
   const pStart = s.lastIndexOf("<p", ci);
   const pEnd = s.indexOf("</p>", ci);
   if (pStart < 0 || pEnd < 0) return s;
-  const tail = s.slice(pEnd + 4);
-  const m = tail.match(/^(?:\s|<(?:ul|ol)[\s\S]*?<\/(?:ul|ol)>|<p[^>]*>\s*(?:•|·)[\s\S]*?<\/p>|<blockquote[\s\S]*?<\/blockquote>)+/i);
-  if (!m || !/<(ul|ol)|•|·/.test(m[0])) return s;
-  return s.slice(0, pStart) + m[0].trim() + s.slice(pStart, pEnd + 4) + tail.slice(m[0].length);
+  // ★한 덩어리 정규식 금지(2026-08-14 실측: (?:…[\s\S]*?…)+ 중첩 수량자가 특정 본문에서 백트래킹 폭발 —
+  //  생성 저장이 300초 타임아웃으로 죽었다). 앞에서부터 조각을 하나씩 소비하는 선형 루프로 잰다.
+  let rest = s.slice(pEnd + 4);
+  let block = "";
+  const CHUNK = /^\s*(<(ul|ol)[^>]*>[\s\S]*?<\/\2>|<p[^>]*>\s*[•·][\s\S]*?<\/p>|<blockquote[^>]*>[\s\S]*?<\/blockquote>)/i;
+  for (let i = 0; i < 12; i++) {
+    const m = CHUNK.exec(rest);
+    if (!m) break;
+    block += m[0];
+    rest = rest.slice(m[0].length);
+  }
+  if (!block || !/<(ul|ol)|[•·]/.test(block)) return s;
+  return s.slice(0, pStart) + block.trim() + s.slice(pStart, pEnd + 4) + rest;
 }
 
 export function fixBrokenUrls(html: string): string {
