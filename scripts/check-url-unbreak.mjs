@@ -14,3 +14,14 @@ ok(fixBrokenUrls("신청을 마쳤습니다. kr 지역은") === "신청을 마�
 
 if (fail) { console.log(`\n${fail}건 실패`); process.exit(1); }
 console.log("\n전부 통과");
+
+// ★표 칸수 정규화(2026-08-14 실측: 농협 적금 표 — '총 납입액' 행이 셀 하나라 3칸 표가 어긋남)
+{
+  const { normalizeTableColumns } = await import("../lib/publishHtml.ts");
+  const tbl = '<table><tr><td>구분</td><td>기본</td><td>최고</td></tr><tr><td>총 납입액</td><td>3,600,000원</td></tr></table>';
+  const out = normalizeTableColumns(tbl);
+  const rows = out.match(/<tr[\s\S]*?<\/tr>/g) ?? [];
+  const ns = rows.map((r) => (r.match(/<td/g) ?? []).length);
+  ok(ns.every((n) => n === 3), "★실측 실물: 칸 모자란 행을 빈 칸으로 채워 3칸 정렬", JSON.stringify(ns));
+  ok(!/undefined/.test(out), "지어낸 값 없음(빈 칸만)");
+}

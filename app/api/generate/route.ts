@@ -377,6 +377,12 @@ export async function POST(request: Request) {
           const myEnd = lastWordOf(a.title ?? "");
           if (myEnd && recentTitles.filter((t) => lastWordOf(t) === myEnd).length >= 2) w.push(`제목 끝 단어 '${myEnd}'가 최근 제목들과 겹친다 — 끝맺음을 다른 형(질문형·숫자 대비·시점형·다른 명사)으로 바꿔라.`);
           // ★이중 마무리 게이트(2026-08-14 실측: 비트코인 글 — 댓글 질문으로 닫은 뒤에 요약 불릿이 또 붙어 부록처럼 읽힘)
+          // ★표 칸수 불일치(2026-08-14 실측: '총 납입액' 행이 셀 하나 — 렌더는 코드가 빈 칸으로 메우지만 내용은 모델이 고쳐야 한다)
+          const uneven = (a.body_html.match(/<table[\s\S]*?<\/table>/gi) ?? []).some((t) => {
+            const ns = (t.match(/<tr[\s\S]*?<\/tr>/gi) ?? []).map((r) => (r.match(/<t[dh]\b/gi) ?? []).length).filter((n) => n > 0);
+            return ns.length > 1 && Math.min(...ns) !== Math.max(...ns);
+          });
+          if (uneven) w.push("표의 행마다 칸수가 다르다 — 모든 행을 머리행과 같은 칸수로 맞춰라(값이 양쪽 동일하면 같은 값을 두 칸에 다 써라).");
           const ci = a.body_html.lastIndexOf("댓글");
           if (ci > 0 && /<li|(^|>)\s*•/.test(a.body_html.slice(ci + 40))) w.push("마무리(댓글 질문) 뒤에 요약 불릿·부록이 붙어 있다 — 마무리가 두 번 나온다. 요약은 마무리 앞으로 옮기고 댓글 질문이 글의 마지막 문단이 되게 하라.");
           if (keywordFloorApplies && lacksKeywordFloor(a.body_html, floorTarget)) {

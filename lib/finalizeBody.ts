@@ -8,7 +8,7 @@
 //   그래서 마감은 이 함수 하나로만 한다 — 새 마감 규칙은 여기에만 추가한다.
 import { ensureHashtags, ensureRelatedLinks, hardTrimToLimit, leadHashtag, normalizeAlertColor, splitMultiSentenceParagraphs, stripStilted } from "./editorial";
 import { ensureDisclosure } from "./revenue";
-import { listToTable, fixBrokenUrls } from "./publishHtml";
+import { listToTable, fixBrokenUrls, normalizeTableColumns } from "./publishHtml";
 import { sanitizeUrls } from "./linkWhitelist";
 import { countBodyChars } from "./humanizer";
 
@@ -51,7 +51,7 @@ export function finalizeArticleBody(input: FinalizeInput): FinalizeResult {
   //   + ★주소 재접합(2026-08-11 유저: "주소는 띄어쓰기 없이") — 모델이 "go. kr"처럼 쪼개 쓴 도메인을 저장 전에 붙인다
   const src = fixBrokenUrls(stripStilted(src0));
   // ① 리스트 → 표(저장물에 적용해야 인포그래픽 API가 <table>을 찾는다)
-  const tabled = listToTable(src);
+  const tabled = normalizeTableColumns(listToTable(src)); // ★표 칸수 정규화(2026-08-14 실측: 칸 모자란 행이 표를 뒤틀어 보이게 함)
   // ①-b ★문단 쪼개기(2026-08-06) — 4줄 넘는 문단을 문장 경계에서 나눈다.
   //  게이트는 경고라 재생성 예산이 없으면 그냥 나간다(유저가 본 13줄 문단이 그 경로였다).
   //  ★분량 하드컷보다 먼저 해야 한다 — 나중에 하면 잘려나간 섹션을 헛되이 쪼개게 된다.

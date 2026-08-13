@@ -131,6 +131,23 @@ function mergeUnbalanced(parts: string[]): string[] {
 // ★주소 보호(2026-08-11 유저: "주소는 띄어쓰기 없이 한 문단에서 끝내") — 프로토콜 없는 도메인까지 잡는다
 const BARE_URL_RE = /(https?:\/\/|www\.|[a-z0-9-]{2,}\.(?:go|or|co)\.kr\b|[a-z0-9-]{2,}\.(?:kr|com|net|org)\b)/i;
 /** 모델이 주소 안에 넣은 공백·개행을 재접합한다("bokjiro.go. kr" → "bokjiro.go.kr"). 좌변을 ASCII 도메인 조각으로 한정해 한글 문장 끝 마침표는 안 건드린다. */
+/** ★표 칸수 정규화(2026-08-14 실측: '농협 적금' 표에서 '총 납입액' 행이 셀 하나라 3칸 표가 어긋나 보임).
+ *  머리행보다 칸이 모자란 행은 빈 칸으로 채운다 — 값을 지어내지 않고 렌더 붕괴만 막는다(내용 교정은 재생성 게이트 몫). */
+export function normalizeTableColumns(html: string): string {
+  return String(html ?? "").replace(/<table[\s\S]*?<\/table>/gi, (tbl) => {
+    const rows = tbl.match(/<tr[\s\S]*?<\/tr>/gi) ?? [];
+    const count = (r: string) => (r.match(/<t[dh]\b/gi) ?? []).length;
+    const max = Math.max(0, ...rows.map(count));
+    if (!max) return tbl;
+    let out = tbl;
+    for (const r of rows) {
+      const c = count(r);
+      if (c > 0 && c < max) out = out.replace(r, r.replace(/<\/tr>/i, `${"<td></td>".repeat(max - c)}</tr>`));
+    }
+    return out;
+  });
+}
+
 export function fixBrokenUrls(html: string): string {
   let out = String(html || "");
   const SEP = String.raw`(?:\s|<br\s*\/?\s*>)+`;
@@ -733,7 +750,7 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   const withImages = opts?.withImages ?? true;
   let idx = -1;
   // ★사진 자리는 '구조화 슬롯'으로만 — 채워진 슬롯만 이미지로, 미충족 슬롯은 줄 자체를 제거(안내문구 유출 금지).
-  let body = ensurePayoffTable(listToTable(capFaq(ensureSectionEmphasis(markToBold(ensureKeyFigureMark(capMarks(capAccent(capDanger(sanitizeAiPunct(stripListEmoji(normalizeHighlights(input.bodyHtml))))))))))), input.title).replace(SLOT_RE, (_m, kind: string, desc: string) => {
+  let body = normalizeTableColumns(ensurePayoffTable(listToTable(capFaq(ensureSectionEmphasis(markToBold(ensureKeyFigureMark(capMarks(capAccent(capDanger(sanitizeAiPunct(stripListEmoji(normalizeHighlights(input.bodyHtml))))))))))), input.title)).replace(SLOT_RE, (_m, kind: string, desc: string) => {
     idx += 1; // ★문서순 인덱스는 종류와 무관하게 증가시킨다(검토 화면 imgs[i]와 짝이 맞아야 한다)
     const url = input.images?.[idx];
     // ★안 채워진 카드·차트는 줄째로 지운다(2026-08-02 유저 실측).
