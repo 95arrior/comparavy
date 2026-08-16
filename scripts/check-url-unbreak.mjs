@@ -44,3 +44,15 @@ console.log("\n전부 통과");
   ok(fixBrokenUrls("<p>fsc.go.</p><p>kr 공지</p>") === "<p>fsc.go.kr 공지</p>", "백로그 케이스(fsc.go./kr)도 해결");
   ok(fixBrokenUrls("<p>확인했습니다.</p><p>korea 지원금</p>").includes("</p><p>"), "일반 문장 경계는 안 붙임");
 }
+
+// ★도메인 문단 3조각 + <br> 스페이서(2026-08-17 실물: rt.molit.go.kr)
+{
+  const { fixBrokenUrls } = await import("../lib/publishHtml.ts");
+  const broken = "<p>공개시스템(rt.</p><p><br></p><p><br></p><p>molit.go.</p><p><br></p><p>kr)에서 확인</p>";
+  const fixed = fixBrokenUrls(broken);
+  ok(fixed.includes("rt.molit.go.kr"), "★실물: <br> 스페이서 사이 세 조각 도메인 재접합");
+  const { splitMultiSentenceParagraphs } = await import("../lib/editorial.ts");
+  const long = "<p>" + "앞 문장입니다. ".repeat(6) + "확인은 rt.molit.go.kr에서 하면 됩니다. " + "뒤 문장입니다. ".repeat(6) + "</p>";
+  const sp = splitMultiSentenceParagraphs(long).html;
+  ok(sp.includes("rt.molit.go.kr"), "★문단 쪼개기가 도메인을 안 가른다(URL 봉인)");
+}

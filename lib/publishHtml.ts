@@ -230,7 +230,7 @@ export function fixDoubleClosing(html: string): string {
 export function fixBrokenUrls(html: string): string {
   let out = String(html || "");
   // ★문단 경계도 이음(2026-08-14 실물: '청약홈(applyhome.' </p><p> 'co.kr)' — 문단 쪼개기가 도메인 중간을 갈랐다)
-  const SEP = String.raw`(?:\s|<br\s*\/?\s*>|<\/p>\s*(?:<p[^>]*>\s*<\/p>\s*)*<p[^>]*>)+`;
+  const SEP = String.raw`(?:\s|<br\s*\/?\s*>|<\/p>\s*(?:<p[^>]*>(?:\s|<br\s*\/?\s*>)*<\/p>\s*)*<p[^>]*>)+`; // ★<br> 스페이서 문단도 통과(2026-08-17 실물: rt.molit.go.kr이 여백 문단 사이로 세 조각)
   const FRAG = new RegExp(String.raw`([A-Za-z0-9-]{2,}\.)` + SEP + String.raw`((?:[A-Za-z0-9-]+\.)*(?:kr|com|net|org|go|or|co)\b)`, "g");
   for (let i = 0; i < 3; i++) out = out.replace(FRAG, "$1$2");
   out = out.replace(/([A-Za-z0-9-]{2,})\s+\.((?:go|or|co)\.kr|kr|com|net|org)\b/g, "$1.$2");
@@ -830,7 +830,7 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   const withImages = opts?.withImages ?? true;
   let idx = -1;
   // ★사진 자리는 '구조화 슬롯'으로만 — 채워진 슬롯만 이미지로, 미충족 슬롯은 줄 자체를 제거(안내문구 유출 금지).
-  let body = normalizeTableColumns(ensurePayoffTable(listToTable(capFaq(ensureSectionEmphasis(markToBold(ensureKeyFigureMark(capMarks(capAccent(capDanger(sanitizeAiPunct(stripListEmoji(normalizeHighlights(fixSplitDecimals(fixDoubleClosing(demoteEmptyMarks(capQuotes(stripFakeDividers(input.bodyHtml), 1))))))))))))))), input.title)).replace(SLOT_RE, (_m, kind: string, desc: string) => {
+  let body = normalizeTableColumns(ensurePayoffTable(listToTable(capFaq(ensureSectionEmphasis(markToBold(ensureKeyFigureMark(capMarks(capAccent(capDanger(sanitizeAiPunct(stripListEmoji(normalizeHighlights(fixSplitDecimals(fixDoubleClosing(demoteEmptyMarks(capQuotes(stripFakeDividers(fixBrokenUrls(input.bodyHtml)), 1))))))))))))))), input.title)).replace(SLOT_RE, (_m, kind: string, desc: string) => {
     idx += 1; // ★문서순 인덱스는 종류와 무관하게 증가시킨다(검토 화면 imgs[i]와 짝이 맞아야 한다)
     const url = input.images?.[idx];
     // ★안 채워진 카드·차트는 줄째로 지운다(2026-08-02 유저 실측).

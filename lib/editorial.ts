@@ -563,7 +563,16 @@ export function splitMultiSentenceParagraphs(html: string, maxLines = PARA_MAX_L
     if (Math.ceil([...plain].length / CHARS_PER_LINE) <= maxLines) return m;
     // ★태그가 문장을 가로지르면 쪼갤 때 태그가 깨진다 — 그런 문단은 건드리지 않는다.
     //  (열고 닫는 짝이 문장 안에서 완결된 경우만 안전하다)
-    const parts = inner.split(SENT_SPLIT_RE).map((x) => x.trim()).filter(Boolean);
+    // ★URL 마스킹(2026-08-17 실물: 'rt.molit.go.kr'이 도메인 마침표마다 세 문단으로 갈림 —
+    //  왼쪽 전환으로 문단 쪼개기가 주 개행이 되며 드러난 구멍. 쪼개기 전 도메인을 봉인하고 끝나고 되살린다)
+    const urlTokens: string[] = [];
+    const maskedInner = inner.replace(/(https?:\/\/\S+|[a-zA-Z0-9-]{2,}(?:\.[a-zA-Z0-9-]{2,}){1,4}(?:\/\S*)?)/g, (u) => {
+      if (!/^https?:/i.test(u) && !/\.(kr|com|net|org|go|co|or|io)(\b|\/|$)/i.test(u)) return u; // 도메인 꼴이 아닌 건 그대로
+      urlTokens.push(u);
+      return `\u0000${urlTokens.length - 1}\u0000`;
+    });
+    const unmask = (t: string) => t.replace(/\u0000(\d+)\u0000/g, (_x, n) => urlTokens[Number(n)] ?? "");
+    const parts = maskedInner.split(SENT_SPLIT_RE).map((x) => x.trim()).filter(Boolean);
     if (parts.length < 2) return m; // 한 문장짜리 = 코드로는 못 고친다(게이트가 모델에 돌려보낸다)
     const balanced = (t: string) => {
       const o = (t.match(/<(?!\/)(?!br|img|hr)[a-zA-Z]/g) ?? []).length;
@@ -582,7 +591,7 @@ export function splitMultiSentenceParagraphs(html: string, maxLines = PARA_MAX_L
     if (cur) buckets.push(cur);
     if (buckets.length < 2) return m;
     split += buckets.length - 1;
-    return buckets.map((b) => `<p${attr}>${b}</p>`).join("");
+    return unmask(buckets.map((b) => `<p${attr}>${b}</p>`).join(""));
   });
   return { html: out, split };
 }
