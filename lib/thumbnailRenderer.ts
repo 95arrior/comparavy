@@ -253,10 +253,9 @@ async function renderAt(rawInput: ThumbInput, width: number): Promise<Buffer> {
     const pressRoot = el("div", { style: { display: "flex", width: SIZE, height: SIZE, position: "relative", overflow: "hidden", backgroundColor: "#101728" } }, [
       el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, overflow: "hidden", display: "flex" } }, bgDataUrl ? [
         el("img", { src: bgDataUrl, width: SIZE, height: SIZE, style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, objectFit: "cover" } }),
-        // ★스크림 다이어트(2026-07-16 유저: 일러스트가 보이게 '검정 살짝'만 — 중앙 60% 먹빛이 모든 썸네일을 어두운 단색 카드로 수렴시킴)
-        //  전면 은은한 오버레이 + 문구 지나는 중앙 밴드만 보강. 가독은 문구의 강한 텍스트 섀도(0.72)가 담당.
-        el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(8,14,28,0.28)" } }),
-        el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: "linear-gradient(180deg, rgba(8,14,28,0) 24%, rgba(8,14,28,0.34) 50%, rgba(8,14,28,0) 76%)" } }),
+        // ★전면 오버레이 폐지(2026-08-17 유저: "전체 블러 하지 말고 하단만") — 이미지 v2가 상반신 클로즈업+하단 여백을
+        //  주므로 상단은 원본 그대로 두고, 문구가 앉는 하단만 그라데이션으로 어둡게. 가독은 텍스트 섀도(0.72)와 분담.
+        el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: "linear-gradient(0deg, rgba(6,8,14,0.78), rgba(6,8,14,0.42) 26%, rgba(0,0,0,0) 48%)" } }),
       ] : [
         el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: `radial-gradient(circle at 28% 18%, ${shade(flatBase, isDark(p.bg) ? 38 : 26)}, ${shade(flatBase, isDark(p.bg) ? -8 : -16)})` } }),
         el("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: `radial-gradient(circle at 76% 82%, ${rgba(shade(p.point, isDark(p.bg) ? 16 : 24), isDark(p.bg) ? 0.55 : 0.42)} 0%, rgba(0,0,0,0) 55%)` } }),
@@ -264,10 +263,17 @@ async function renderAt(rawInput: ThumbInput, width: number): Promise<Buffer> {
       ]),
       // 브랜드 — 상단 얇게(하단은 채널 칩 세이프 존)
       el("div", { style: { position: "absolute", left: 0, right: 0, top: M + 34, display: "flex", justifyContent: "center", fontFamily: identity.fontPair.body, fontSize: 19, fontWeight: 500, color: "rgba(255,255,255,0.65)", letterSpacing: 8 } }, brand),
-      // 문구 — 진짜 정중앙(유저 확정 2026-07-10: 중앙은 홈판 칩에 안 가림), 마지막 줄 옐로 포인트(핵심 강조)
-      el("div", { style: { position: "absolute", left: 48, right: 48, top: 0, bottom: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 } },
-        lines.map((l, i) => el("div", { style: { display: "flex", textAlign: "center", fontFamily: identity.fontPair.title, fontSize: pressSize, fontWeight: 900, color: i === lines.length - 1 && lines.length > 1 ? accent : "#FFFFFF", lineHeight: 1.16, letterSpacing: -Math.round(pressSize * 0.03), wordBreak: "keep-all", textShadow: bgDataUrl ? "0 3px 14px rgba(0,0,0,0.72), 0 8px 44px rgba(0,0,0,0.6)" : "0 4px 34px rgba(0,0,0,0.5)" } }, l))),
-      input.subCopy && input.subCopy.trim() ? el("div", { style: { position: "absolute", left: 48, right: 48, top: Math.round(SIZE * 0.72), display: "flex", justifyContent: "center", fontFamily: identity.fontPair.body, fontSize: 30, fontWeight: 500, color: "rgba(255,255,255,0.75)" } }, input.subCopy.trim()) : null,
+      // 문구 — ★하단 배치(2026-08-17 유저: 이미지 v2가 하단 여백을 남기므로 문구는 아래로, 정중앙 폐기).
+      //  이미지 배경일 때만 — 색면은 하단 스크림이 없어 중앙 유지. bottom 175 = 채널 칩 세이프 존(하단 15%) 위.
+      el("div", { style: bgDataUrl
+        ? { position: "absolute", left: 48, right: 48, bottom: 175, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", gap: 10 }
+        : { position: "absolute", left: 48, right: 48, top: 0, bottom: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 } },
+        [
+          // 이미지 배경이면 subCopy는 문구 기둥 위 작은 줄로 합류(별도 절대 배치는 하단 문구와 겹친다)
+          bgDataUrl && input.subCopy?.trim() ? el("div", { style: { display: "flex", fontFamily: identity.fontPair.body, fontSize: 30, fontWeight: 500, color: "rgba(255,255,255,0.78)", textShadow: "0 2px 12px rgba(0,0,0,0.7)" } }, input.subCopy.trim()) : null,
+          ...lines.map((l, i) => el("div", { style: { display: "flex", textAlign: "center", fontFamily: identity.fontPair.title, fontSize: pressSize, fontWeight: 900, color: i === lines.length - 1 && lines.length > 1 ? accent : "#FFFFFF", lineHeight: 1.16, letterSpacing: -Math.round(pressSize * 0.03), wordBreak: "keep-all", textShadow: bgDataUrl ? "0 3px 14px rgba(0,0,0,0.72), 0 8px 44px rgba(0,0,0,0.6)" : "0 4px 34px rgba(0,0,0,0.5)" } }, l)),
+        ].filter(Boolean)),
+      !bgDataUrl && input.subCopy && input.subCopy.trim() ? el("div", { style: { position: "absolute", left: 48, right: 48, top: Math.round(SIZE * 0.72), display: "flex", justifyContent: "center", fontFamily: identity.fontPair.body, fontSize: 30, fontWeight: 500, color: "rgba(255,255,255,0.75)" } }, input.subCopy.trim()) : null,
       // 하단 15% — 세이프 존(채널 칩 자리): 의도적으로 빈 공간
     ].filter(Boolean));
     const pressFonts = [
