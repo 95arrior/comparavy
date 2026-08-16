@@ -1229,11 +1229,11 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
       if (now < st) { const d = Math.ceil((st - now) / 86400_000); return { text: `접수 ${d === 0 ? "오늘" : `D-${d}`} — 지금 발행하면 접수일에 선점돼요`, hot: true }; }
       if (now <= en) { const d = Math.ceil((en - now) / 86400_000); return { text: `접수 중 · 마감 ${d <= 1 ? "임박" : `D-${d}`} — 마감 임박 훅이 통하는 시점`, hot: true }; }
     }
-    if (isTrend) return { text: "지금 바로 발행 추천 — 신선도가 순위", hot: true };
+    if (isTrend) return { text: "신선도가 순위 — 지금 발행", hot: true };
     if (h >= 17 && h < 19) return { text: "지금이 발행하기 좋은 시간이에요", hot: true };
     if (h >= 6 && h < 8) return { text: "지금 발행 좋아요 — 출근길과 점심을 커버해요", hot: true };
-    if (h < 6) return { text: "아침 6시 이후 발행 추천 — 읽는 사람이 많은 시간에 가장 신선한 상태로 내보내는 게 유리해요", hot: false };
-    return { text: "17~19시 발행 추천 · 2순위 6~7시", hot: false };
+    if (h < 6) return { text: "6시 이후 발행 추천", hot: false };
+    return { text: "17~19시 발행 추천", hot: false };
   })();
   return (
     <button onClick={onWrite} className={`${publishedOn ? "opacity-55 saturate-50 " : ""}at-press flex h-full flex-col rounded-[16px] bg-white p-3.5 text-left shadow-[0_1px_3px_rgba(0,0,0,0.05)] tk-tr hover:shadow-[0_4px_14px_-6px_rgba(29,117,247,0.18)]`}>
@@ -1247,6 +1247,13 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
             종전엔 칩에 씨앗을, 숫자는 글감 키워드로 재서 서로 다른 말을 나란히 붙였다 —
             "페이코 포인트 출금" 칩 옆에 "문서 2편"(그건 '페이코 포인트 출금 방법'의 값)이 섰다.
             씨앗은 아래 근거 줄에서 밝힌다. */}
+        {/* ★판 라벨 상단 승격(2026-08-17 유저 승인: "꾸준한 수요·지금 뜨는 게 명확하게 안 보인다") —
+            이 카드가 어느 판에서 싸우는지가 첫 정보다. 하단 중복 배지는 제거했다. */}
+        <span className={`shrink-0 flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-extrabold ${
+          topic.tag === "홈판" ? "bg-[#F5F0FF] text-[#7C3AED]" : isTrend ? "bg-[#FFECEC] text-[#F04452]" : "bg-[#E7F7EF] text-[#0B8C4E]"}`}>
+          <span aria-hidden>{topic.tag === "홈판" ? "🏠" : isTrend ? "⚡" : "🌱"}</span>
+          {topic.tag === "홈판" ? "홈판 서사감" : isTrend ? "지금 뜨는 · 실시간" : "꾸준한 수요 · 검색"}
+        </span>
         <span className="max-w-full truncate rounded bg-[#F1EEFF] px-1.5 py-0.5 text-[10px] font-bold text-[#6B4DE6]">
           {topic.tag === "홈판" ? "주제" : "키워드"} : {topic.keyword}
         </span>
@@ -1293,11 +1300,11 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
         {/* ★레인 배지는 우측 하단(유저 목업). 검색 레인은 실측 검색량을 그대로 적는다. */}
         {/* ★홈판을 '꾸준한 수요'로 적던 오류(2026-08-05 유저 화면) — 홈판은 검색 수요로 가는 글이 아니다.
             배지가 그 카드의 승부처를 말해야 한다. 틀린 배지는 잘못된 기대를 만든다. */}
-        <span className={`ml-auto flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold tabular-nums ${
-          topic.tag === "홈판" ? "bg-[#F5F0FF] text-[#7C3AED]" : isTrend ? "bg-[#FFECEC] text-[#F04452]" : "bg-[#E7F7EF] text-[#0B8C4E]"}`}>
-          <span aria-hidden>{topic.tag === "홈판" ? "🏠" : isTrend ? "⚡" : "🌱"}</span>
-          {topic.tag === "홈판" ? "홈 노출용" : isTrend ? "지금 뜨는" : laneKey === "golden" || laneKey === "head" ? laneLabel(laneKey, topic) : "꾸준한 수요"}
-        </span>
+        {(laneKey === "golden" || laneKey === "head") && (
+          <span className="ml-auto flex shrink-0 items-center gap-1 rounded-full bg-[#E7F7EF] px-2 py-0.5 text-[11px] font-extrabold tabular-nums text-[#0B8C4E]">
+            {laneLabel(laneKey, topic)}
+          </span>
+        )}
       </div>
     </button>
   );

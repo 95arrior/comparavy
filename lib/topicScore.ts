@@ -54,6 +54,11 @@ export const starsFor = (vol: number, comp: Comp): string => {
 //   문서수는 카드 배지에 그대로 적히므로 최종 판단은 유저가 카드를 보고 한다.
 //  ★미측정(null)은 앞줄 — 모르는 것을 벌하지 않는다.
 export const DOC_HARD_MAX = 10_000;
+// ★꾸준(에버그린) 열 보충 상한(2026-08-17 유저 승인: "수량만 많고 할 만한 게 없다") —
+//  8/14 순위 실측: 우리 지수로 문서 수천 대는 6~7위가 천장(조회 몇 개). 1만까지 보충하니
+//  '못 이길 카드'가 열을 채웠다. 보충은 5,000 아래에서만 — 열이 비면 정직하게 비운다.
+//  머니랭킹 검색각(실시간)은 신선도 부스트가 있어 DOC_HARD_MAX(1만) 유지.
+export const EVERGREEN_TOPUP_MAX = 5_000;
 export function applyDocCut<T>(
   items: T[],
   docTotal: (x: T) => number | null | undefined,

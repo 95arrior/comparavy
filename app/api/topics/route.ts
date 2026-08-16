@@ -9,7 +9,7 @@ import { audienceOf, AUDIENCE_ALL } from "@/lib/audience";
 import { isUnsafeKeyword, mentionsForeignRegion } from "@/lib/keywordSafety";
 import { regionLevel, buildLocalSeeds, addressRegionTiers } from "@/lib/region";
 import { bloggerType, type BloggerType } from "@/lib/bloggerTypes";
-import { compFromLabel, compFromBlogTotal, filledStarsFromData, applyDocCut, DOC_HARD_MAX, type Comp } from "@/lib/topicScore";
+import { EVERGREEN_TOPUP_MAX, compFromLabel, compFromBlogTotal, filledStarsFromData, applyDocCut, DOC_HARD_MAX, type Comp } from "@/lib/topicScore";
 import { fetchBlogTotal, fetchBlogTotalDetailed } from "@/lib/naverBlogSearch";
 import { resolveLocalPlan, generateLocalKeywords, generateAudienceTopics, type LocalScope } from "@/lib/aiSeeds";
 import { buildPoolForSub } from "@/lib/keywordPool";
@@ -439,13 +439,15 @@ export async function GET(req: Request) {
               .sort((a, b) => (seedFrom(a.keyword + user!.id) % 997) - (seedFrom(b.keyword + user!.id) % 997))
               .slice(0, 3)
               .map((t) => {
-                // 실검증 롱테일(gap 낮은 것) 우선 — 뉴스 티 제거. 없으면 씨앗 keyword.
+                // ★실검증 롱테일 있는 씨앗만 살린다(2026-08-17 유저 승인: "수량만 많고 할 만한 게 없다" —
+                //  8/14 크레딧 사고 때 이 폴백이 뉴스 헤드라인 원문을 카드로 채웠다. 검증 없는 씨앗은 버린다).
                 const lt = (t.longtails ?? [])[0];
+                if (!lt?.kw) return { keyword: "", title: "", newsContext: t.newsContext, source: t.source };
                 // 말줄임표는 우리 문장부호로 바꿔서 살린다(뉴스 헤드라인 티를 지운다).
                 const fixed = String(t.title ?? "").replace(/(\.\.\.|…)\s*/g, ", ").replace(/\s*,\s*,/g, ",").trim();
                 return { keyword: lt?.kw ?? t.keyword, title: validateTitleTail(fixed).ok ? fixed : "", newsContext: t.newsContext, source: t.source };
               })
-              .filter((x) => x.title); // 규격 미달은 버린다 — 빈자리가 규격 어긴 카드보다 낫다
+              .filter((x) => x.title && x.keyword); // 규격 미달·미검증 씨앗은 버린다 — 빈자리가 못 이길 카드보다 낫다
           }
         }
       }
@@ -1569,7 +1571,7 @@ export async function GET(req: Request) {
     const docMax = tbCut?.blogTotalMax ?? DOC_HARD_MAX;
     {
       const need = (tailMode === "long" ? 10 : PICK) + 4; // 뒤 단계(중복·유사 배제)가 깎을 몫까지 여유
-      const cut = applyDocCut(fitTop, (x) => x.r.blog_total, { docMax, need });
+      const cut = applyDocCut(fitTop, (x) => x.r.blog_total, { docMax, need, hardMax: EVERGREEN_TOPUP_MAX }); // ★꾸준 열 보충은 5,000까지만(2026-08-17)
       if (debugMode) diag.docMeasure = measureDiag;
       if (debugMode) diag.docCut = { docMax, hardMax: DOC_HARD_MAX, before: fitTop.length, within: cut.within, over: cut.over, refilled: cut.refilled, dropped: cut.dropped, refillMax: cut.kept.reduce((m, x) => Math.max(m, x.r.blog_total ?? 0), 0) };
       if (cut.dropped > 0 || cut.refilled > 0) console.log(`[doc-cut] tier=${tierInfo?.tier ?? "SEEDLING"} max=${docMax} 통과 ${cut.within} · 보충 ${cut.refilled} · 탈락 ${cut.dropped}`);
