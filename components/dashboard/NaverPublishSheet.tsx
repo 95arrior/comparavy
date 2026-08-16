@@ -206,7 +206,7 @@ export default function NaverPublishSheet({
           <div className="mt-5">
             <p className="text-[17px] font-bold text-neutral-900">발행 버튼까지 눌렀나요?</p>
             <p className="mt-1 text-[13px] leading-relaxed text-neutral-500">네이버에서 발행을 마쳤다면 아래를 눌러 오늘 미션을 끝내세요.</p>
-            <p className="mt-2 rounded-xl bg-[#F7F8FA] px-3.5 py-2.5 text-[12px] leading-relaxed text-neutral-500">📱 발행 전 <b className="text-neutral-700">모바일 미리보기 10초</b> — 딱 4개만 보세요: ①첫 화면이 답답한가 ②7줄 넘는 글벽이 있는가 ③한 화면에 강조·도형이 3개 이상 겹치는가 ④첫 이미지까지 너무 먼가. 하나라도 YES면 그 부분만 손보고 발행하세요. (+인용구 스타일 한 번 바꿔주면 사람 손맛)</p>
+            <p className="mt-2 rounded-xl bg-[#F7F8FA] px-3.5 py-2.5 text-[12px] leading-relaxed text-neutral-500">📱 발행 전 <b className="text-neutral-700">모바일 미리보기 10초</b> — 6체크: ①첫 화면 답답? ②7줄 글벽? ③강조 겹침? ④첫 이미지 멂? ⑤한 화면에 장식 3종 이상?(형광·볼드·인용구·이모지·표 동시 노출) ⑥3초 안에 "이 글에서 뭘 얻는지" 보임? 하나라도 YES(⑥은 NO)면 그 부분만 손보고 발행. 스티커는 기본 0개예요.</p>
             {articleId && (
               <div className="mt-3 rounded-xl bg-neutral-50 px-4 py-3">
                 <p className="text-[12.5px] font-bold text-neutral-700">발행한 글 주소를 붙여넣어 주세요</p>

@@ -65,6 +65,8 @@ export interface MoneyRankItem {
   why?: string;
   /** 썸네일 장면(경제 때문에 벌어진 장면) */
   scene?: string;
+  /** ★HOME_SCORE 원점수 분해(2026-08-17 v2.1 ③ — 'HOME 88이 왜 88인가'를 한 달 뒤 역추적할 수 있어야 한다) */
+  hfParts?: { mass: number; money: number; fresh: number; surprise: number; persona: number; visual: number; debate: number; dna: number };
 }
 
 // 근접 중복 판별용 실질 토큰 — 어느 소재에나 붙는 범용어는 겹침으로 안 센다
@@ -126,12 +128,14 @@ export async function condenseRanking(titles: string[], userId?: string | null):
         "★소재마다 반드시 판정(2026-08-17 설계③ — 홈판 정체성='오늘 내 돈에 생긴 일'):",
         "  fit = 경제 적합도 0~100(카테고리와 별개): 지갑·월급·집·통장·세금과의 거리. 예: 아파트 대출 98, 국민연금 95, 편의점 물가 92, SSD 환불 58, 연차 계산 55, 친일재산 환수 20.",
         "  lane = 주 무대(★검색 문서수로 정하지 마라 — 경쟁이 심하다고 홈으로 돌리는 것 금지): 이 질문들로 판정 — 누가 영향받나? 실제 돈이 얼마나 달라지나? 지금 왜 봐야 하나? '내 얘기'로 느낄 범위가 넓나? 한 장의 이미지로 표현되나? → 넓은 대중+내 돈이면 home, 특정 검색 의도(방법·기준·평면도·계산)면 search, 둘 다면 hybrid. ★지역 한정 소재(특정 시·구 청약 등)는 무조건 search.",
-        "  hfScore = 100점(lane이 home/hybrid일 때만 의미): 대중성25(지갑 직결 — ATM수수료·카드값·적금·월급·전기요금·배달비·보험료·대출이자·관리비·세금·환급금·국민연금·퇴직금) + 내돈직결20 + 지금성15 + 반전·의외성10 + 대상 명확함10 + 이미지 한 장 표현10 + 선택·논쟁5 + 승자DNA 일치5(모르면 0).",
+        "  hfScore = 100점(lane이 home/hybrid일 때만 의미) — ★항목별 원점수를 parts로 함께 출력: mass 대중성25(지갑 직결 — ATM수수료·카드값·적금·월급·전기요금·배달비·보험료·대출이자·관리비·세금·환급금·국민연금·퇴직금) + money 내돈직결20 + fresh 지금성15 + surprise 반전·의외성10 + persona 대상명확10 + visual 이미지 한 장 표현10 + debate 선택·논쟁5 + dna 승자DNA 일치5(모르면 0).",
+        "  ★hybrid 조건(2026-08-17 v2.1 ④): 검색 의도 질문과 홈 질문이 실질적으로 같을 때만 — '국민연금 월급 300 얼마'(검색)='월급 300이면 얼마나 더 빠질까'(홈)는 hybrid 가능, '납부확인서 발급 방법'(검색)≠'개편되면 얼마 줄까'(홈)는 금지(둘 중 하나만).",
+        "  ★why 금지 표현(2026-08-17 v2.1 ⑤): '많은 관심'·'화제'·'주목' 같은 추상어만 있는 why는 실격 — 누가·어떤 돈·왜 자기 문제인지 구체로.",
         "  person = 영향받는 사람(직장인·1인가구·1주택자…), money = 달라지는 돈(월급 감소·생활비 증가·이자 N만원…). ★이 둘 중 하나라도 못 적으면 홈 후보 아님 — lane을 search로.",
         "  why = '왜 홈에서 누를까' 한 문장(예: '월급에서 실제 돈이 빠지는 문제라 직장인 다수가 자기 이야기로 느낌'). ★이 문장을 못 만들면 홈 후보가 아니다.",
         "  scene = 썸네일 장면 — 경제 사건이 아니라 '경제 때문에 벌어진 장면'(급여명세서 보는 사람·계산대에서 지갑 여는 손). 차트·건물·돈다발 금지.",
         "  hfAngle = 파급효과 변환 한 줄('뉴스→내 돈→갈등→선택'): '월급은 그대로인데 다음 달부터 이 돈이 더 빠져나간다' 결. 검색형 요약 금지.",
-        '출력 JSON 배열만: [{"issue":"...","kw":"...","cat":"연금","big":false,"fit":95,"lane":"home","hfScore":84,"person":"직장인","money":"월급 감소","why":"...","scene":"...","hfAngle":"...","newsTitle":"..."}]. 최대 10개, 돈 파괴력 큰 순. fit 60 미만인 소재는 아예 출력하지 마라.',
+        '출력 JSON 배열만: [{"issue":"...","kw":"...","cat":"연금","big":false,"fit":95,"lane":"home","hfScore":84,"parts":{"mass":23,"money":19,"fresh":14,"surprise":8,"persona":9,"visual":9,"debate":3,"dna":0},"person":"직장인","money":"월급 감소","why":"...","scene":"...","hfAngle":"...","newsTitle":"..."}]. 최대 10개, 돈 파괴력 큰 순. fit 60 미만인 소재는 아예 출력하지 마라.',
         "",
         ...titles.map((t) => `- ${t}`),
       ].join("\n"),
@@ -142,7 +146,11 @@ export async function condenseRanking(titles: string[], userId?: string | null):
   const m = /\[[\s\S]*\]/.exec(t && t.type === "text" ? t.text : "");
   if (!m) return [];
   try {
-    const arr = JSON.parse(m[0]) as { issue?: string; kw?: string; cat?: string; big?: boolean; fit?: number; lane?: string; hfScore?: number; person?: string; money?: string; why?: string; scene?: string; hfAngle?: string; newsTitle?: string }[];
+    const arr = JSON.parse(m[0]) as { issue?: string; kw?: string; cat?: string; big?: boolean; fit?: number; lane?: string; hfScore?: number; parts?: Record<string, number>; person?: string; money?: string; why?: string; scene?: string; hfAngle?: string; newsTitle?: string }[];
+    // ★WHY_HOME 검증(v2.1 ⑤): 추상어만 있는 why는 홈 자격 박탈(why를 비워 homeReady가 떨어지게)
+    const WHY_ABSTRACT_RE = /(관심|화제|주목|인기|궁금)/;
+    const WHY_CONCRETE_RE = /([0-9]|원|돈|월급|지출|보험료|생활비|이자|세금|지갑|카드|통장|환급|가격|비용|계산|비교)/;
+    const validWhy = (w: string) => !!w && !(WHY_ABSTRACT_RE.test(w) && !WHY_CONCRETE_RE.test(w));
     const REGION_RE = /(서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주|시흥|송파|강남|진주)/;
     return arr
       .map((x) => ({ issue: stripStaleYear(String(x.issue ?? "").trim()).slice(0, 30), keyword: stripStaleYear(String(x.kw ?? "").trim()).slice(0, 40), cat: String(x.cat ?? "").trim().slice(0, 10), big: x.big === true,
@@ -150,7 +158,8 @@ export async function condenseRanking(titles: string[], userId?: string | null):
         lane: (["home", "search", "hybrid"].includes(String(x.lane)) ? x.lane : "search") as "home" | "search" | "hybrid",
         hfScore: Math.max(0, Math.min(100, Math.round(Number(x.hfScore ?? 0)))),
         person: String(x.person ?? "").trim().slice(0, 24), money: String(x.money ?? "").trim().slice(0, 30),
-        why: String(x.why ?? "").trim().slice(0, 90), scene: String(x.scene ?? "").trim().slice(0, 60),
+        why: (() => { const w = String(x.why ?? "").trim().slice(0, 90); return validWhy(w) ? w : ""; })(), scene: String(x.scene ?? "").trim().slice(0, 60),
+        hfParts: x.parts ? { mass: Number(x.parts.mass ?? 0), money: Number(x.parts.money ?? 0), fresh: Number(x.parts.fresh ?? 0), surprise: Number(x.parts.surprise ?? 0), persona: Number(x.parts.persona ?? 0), visual: Number(x.parts.visual ?? 0), debate: Number(x.parts.debate ?? 0), dna: Number(x.parts.dna ?? 0) } : undefined,
         hfAngle: stripStaleYear(String(x.hfAngle ?? "").trim()).slice(0, 60), newsTitle: String(x.newsTitle ?? "").trim().slice(0, 120) }))
       .filter((x) => x.keyword.length >= 2 && x.issue.length >= 2)
       .filter((x) => !isEntertainmentTopic(`${x.issue} ${x.keyword} ${x.newsTitle}`)) // ★엔터 컷 공유(2026-08-17) — 랭킹 뉴스의 영화·흥행 소재 차단

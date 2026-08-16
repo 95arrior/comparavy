@@ -1577,7 +1577,9 @@ export async function GET(req: Request) {
       fitTop = fitTop.filter((x) => { const v = x.r.monthly_searches; return v == null || v === 0 || v >= 240; });
       fitTop = fitTop.map((x) => {
         const v = x.r.monthly_searches ?? 0;
-        // ★부모 키워드로 잰 검색량은 0.2 할인(2026-08-17 설계③: 5.2만은 '송파 롯데캐슬'의 수요지 '…1세대 불법행위 재공급'의 수요가 아니다)
+        // ★parent_volume_confidence_penalty(2026-08-17 v2.1 ②로 명명 확정): 이것은 '정확 검색량 추정'이 아니라
+        //  정렬 신뢰 페널티다 — 부모와 자식 수요 사이에 고정 비율은 존재하지 않으므로, 파생 수치를 정확 수요처럼
+        //  표시·저장하는 것은 금지(화면엔 '부모: N회/월'과 '정확 수요: 미측정'만). 페널티는 순위 계산 내부용.
         const eff = (x.r as { vol_base?: string | null }).vol_base ? v * 0.2 : v;
         return { x, ratio: eff > 0 ? eff / Math.max(1, x.r.blog_total ?? 1) : -1 };
       }).sort((a, b) => b.ratio - a.ratio).map((e) => e.x);

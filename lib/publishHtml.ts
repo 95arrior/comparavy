@@ -150,6 +150,43 @@ export function normalizeTableColumns(html: string): string {
 
 /** ★소수점 재접합(2026-08-14 실측: 'PF 금리 0.5%p'가 '0.' / '5%p' 줄로 쪼개져 발행) — 숫자.줄바꿈.숫자는 소수점이다. */
 /** ★문자 구분선 제거(2026-08-17 유저: ━━·──는 모바일에서 인위적 — 구분은 이미지·소제목이 한다) */
+/** ★rich 복사 화이트리스트(2026-08-17 유저 v2.1 발행①): 프로그램 HTML이 네이버 문서의 레이아웃(정렬·크기·글꼴·여백)을
+ *  통제하지 않는다 — 살아남는 서식은 볼드·형광(배경색)·표 데이터·이미지뿐. 나머지 스타일은 전부 벗겨 네이버 기본에 맡긴다.
+ *  예외: 이미지만 든 문단의 가운데 정렬은 유지(유저: 사진은 가운데). */
+/** ★정보 없는 형광 해제(2026-08-17 유저 발행④): 강조 문장에 숫자·조건·결론 신호가 없으면('많은 분들이 궁금'류) 형광을 벗긴다. */
+export function demoteEmptyMarks(html: string): string {
+  const INFO_RE = /[0-9]|만\s?원|억|%|까지|부터|기준|결론|결국|신청|마감/;
+  const EMPTY_RE = /(궁금|많은 분|알아두|중요합니다|주목|관심)/;
+  return String(html ?? "")
+    .replace(/<mark[^>]*>([\s\S]*?)<\/mark>/gi, (m, inner) => {
+      const t = inner.replace(/<[^>]+>/g, "");
+      return !INFO_RE.test(t) && EMPTY_RE.test(t) ? inner : m;
+    })
+    .replace(/<(b|span)([^>]*background[^>]*)>([\s\S]*?)<\/\1>/gi, (m, tag, attr, inner) => {
+      const t = inner.replace(/<[^>]+>/g, "");
+      return !INFO_RE.test(t) && EMPTY_RE.test(t) ? `<${tag}>${inner}</${tag}>` : m;
+    });
+}
+
+export function sanitizeRichWhitelist(html: string): string {
+  let out = String(html ?? "");
+  out = out.replace(/<(p|h2|h3|blockquote|li|ul|ol|span|b|strong|td|th|tr|table)(\s[^>]*)?>/gi, (m, tag, attr) => {
+    const a = String(attr ?? "");
+    const isImgOnlyP = /^p$/i.test(tag) && false; // 이미지 문단은 아래 별도 패스에서 처리
+    const styleM = /style="([^"]*)"/i.exec(a);
+    let keep = "";
+    if (styleM) {
+      const bg = /background(?:-color)?\s*:\s*([^;"']+)/i.exec(styleM[1]);
+      if (bg && !/^(transparent|none|#fff|#ffffff|white)$/i.test(bg[1].trim())) keep = `background-color:${bg[1].trim()}`;
+    }
+    void isImgOnlyP;
+    return `<${tag}${keep ? ` style="${keep}"` : ""}>`;
+  });
+  // 이미지 문단 가운데 복원
+  out = out.replace(/<p>(\s*<img[^>]*>\s*)<\/p>/gi, '<p style="text-align:center">$1</p>');
+  return out;
+}
+
 export function stripFakeDividers(html: string): string {
   return String(html ?? "").replace(/<p[^>]*>\s*(?:[─━═—\-_=·•]\s*){4,}<\/p>/g, "").replace(/(?:[─━═]{4,})/g, "");
 }
@@ -793,7 +830,7 @@ export function formatBody(input: PublishInput, opts?: { withImages?: boolean })
   const withImages = opts?.withImages ?? true;
   let idx = -1;
   // ★사진 자리는 '구조화 슬롯'으로만 — 채워진 슬롯만 이미지로, 미충족 슬롯은 줄 자체를 제거(안내문구 유출 금지).
-  let body = normalizeTableColumns(ensurePayoffTable(listToTable(capFaq(ensureSectionEmphasis(markToBold(ensureKeyFigureMark(capMarks(capAccent(capDanger(sanitizeAiPunct(stripListEmoji(normalizeHighlights(fixSplitDecimals(fixDoubleClosing(capQuotes(stripFakeDividers(input.bodyHtml), 2)))))))))))))), input.title)).replace(SLOT_RE, (_m, kind: string, desc: string) => {
+  let body = normalizeTableColumns(ensurePayoffTable(listToTable(capFaq(ensureSectionEmphasis(markToBold(ensureKeyFigureMark(capMarks(capAccent(capDanger(sanitizeAiPunct(stripListEmoji(normalizeHighlights(fixSplitDecimals(fixDoubleClosing(demoteEmptyMarks(capQuotes(stripFakeDividers(input.bodyHtml), 1))))))))))))))), input.title)).replace(SLOT_RE, (_m, kind: string, desc: string) => {
     idx += 1; // ★문서순 인덱스는 종류와 무관하게 증가시킨다(검토 화면 imgs[i]와 짝이 맞아야 한다)
     const url = input.images?.[idx];
     // ★안 채워진 카드·차트는 줄째로 지운다(2026-08-02 유저 실측).
@@ -842,7 +879,7 @@ function trimLineEdges(html: string): string {
 
 // rich 모드 — 사진자리를 이미지로.
 export function buildRichHtml(input: PublishInput): string {
-  return formatBody(input, { withImages: true });
+  return sanitizeRichWhitelist(formatBody(input, { withImages: true }));
 }
 // marker 모드 — 이미지 없이 [사진 N] 마커만.
 export function buildMarkerHtml(input: PublishInput): string {

@@ -24,6 +24,7 @@ import { normalizeKeyword, pickVariant, pickAngle, simhash } from "@/lib/diversi
 import { looksLikeGarbageKeyword, looksLikeNonsenseStory } from "@/lib/keywordGuard";
 import { isUnsafeKeyword, financeBrandAllowed } from "@/lib/keywordSafety";
 import { crossCheckFacts } from "@/lib/factCrossCheck";
+import { scoreIntentCoverage } from "@/lib/intentCoverage";
 import { deriveStoryTopic, validateStoryMeaning } from "@/lib/aiSeeds";
 import { explicitAudienceOf, AUDIENCE_ALL } from "@/lib/audience";
 import { isAdminEmail } from "@/lib/adminStats";
@@ -638,6 +639,39 @@ export async function POST(request: Request) {
               console.log(`[fact-xcheck] user=${user.id.slice(0, 8)} 이슈 ${fx.length}건 — 재생성 예산 없음, 통과(로그): ${fx.map((i) => i.kind).join(",")}`);
             }
           } catch { /* 검증 자체의 실패는 발행을 막지 않는다 */ }
+        }
+        // ★INTENT_COVERAGE(2026-08-17 유저 v2.1 ① — INTENT_MATCH와 분리): 제목이 약속했어도 본문이 검색 질문을
+        //  '실제로 해결'했는지 별도 채점. 실물: '평면도'가 제목·도입에 있어도 본문이 모델하우스 얘기면 검색자는 답을 못 받는다.
+        //  <80 → 미해결 목록을 주입해 재생성 → 재채점 <70이면 발행 실패(환불) — 70~79는 채점 노이즈 여지로 경고 통과(로그).
+        if (channel === "naver" && !narrativeMode) {
+          try {
+            const cov1 = await scoreIntentCoverage(keyword, article.title ?? "", article.body_html, user.id);
+            if (cov1 && cov1.score < 80) {
+              console.log(`[intent-cov] user=${user.id.slice(0, 8)} 1차 ${cov1.score}점 — 미해결: ${cov1.missing.join(" / ")}`);
+              if (regenSpent < REGEN_CAP + 1 && hasTimeForRegen()) { // 의도 미충족은 검색각의 존재 이유라 전용 예산 1
+                regenSpent++;
+                send({ type: "revising" });
+                void logUsage({ userId: user.id, model: "guard", kind: "intent_cov_retry", inputTokens: 0, outputTokens: 0 });
+                try {
+                  const retried = await streamArticle(
+                    { ...genInput, variantInstruction: `${genInput.variantInstruction ?? ""} ★경고: 검색자가 "${keyword}"로 얻고 싶은 답을 본문이 실제로 해결하지 못했다. 다음 요구 답변을 본문 중심에 구체 정보(구조·수치·기준)로 채워라 — 언급만 하는 건 해결이 아니다: ${cov1.missing.join(" / ") || "검색 의도의 핵심 답"}.${specWarnings(article)}`.trim() },
+                    noop, noop, onGenUsage,
+                  );
+                  if ((userStory || userExperience || !hasFabricatedExperience(retried.body_html)) && countBodyChars(retried.body_html) >= 500) {
+                    const cov2 = await scoreIntentCoverage(keyword, retried.title ?? "", retried.body_html, user.id);
+                    if (cov2 && cov2.score >= (cov1.score ?? 0)) article = retried;
+                    if (cov2 && cov2.score < 70) {
+                      if (genId) await supabase.from("articles").delete().eq("id", genId);
+                      await refundOnce();
+                      send({ type: "error", error: `이 글이 검색 의도("${keyword}")에 충분히 답하지 못해 발행을 막았어요. 다시 눌러 주세요. (크레딧은 차감되지 않아요)` });
+                      return;
+                    }
+                    if (cov2) console.log(`[intent-cov] user=${user.id.slice(0, 8)} 2차 ${cov2.score}점 ${cov2.score >= 80 ? "통과" : "경고 통과(70~79)"}`);
+                  }
+                } catch { /* 재생성 실패 — 1차 결과로 계속 */ }
+              }
+            }
+          } catch { /* 채점 자체의 실패는 발행을 막지 않는다 */ }
         }
         // ★해석 문단 가드(2026-07-17 전략 회의) — 경제·정책 글이 제도·수치 나열로만 끝나면 AI 요약이 종결시켜 클릭이 안 남는다(제로클릭).
         //  해석·판단 신호 바닥 미달 시 재생성 1회, 그래도 미달이면 통과(발행 차단은 과잉 — 분량 상한과 같은 결, 로그만).

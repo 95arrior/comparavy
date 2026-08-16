@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
  * 카운트다운을 상시 명시(유저: "명시해주거나 카운트다운"). 소재마다 검색각(게이트 통과)·홈판각(붐빔=대중 관심) 분기.
  */
 
-interface Item { issue: string; keyword: string; cat: string; docs: number | null; verdict: "direct" | "crowded" | "written" | "blocked" | "unmeasured"; reason?: string; newsTitle: string; similar?: { title: string; published: boolean }; big?: boolean; hfScore?: number; hfAngle?: string; fit?: number; lane?: "home" | "search" | "hybrid"; person?: string; money?: string; why?: string; scene?: string }
+interface Item { issue: string; keyword: string; cat: string; docs: number | null; verdict: "direct" | "crowded" | "written" | "blocked" | "unmeasured"; reason?: string; newsTitle: string; similar?: { title: string; published: boolean }; big?: boolean; hfScore?: number; hfAngle?: string; fit?: number; lane?: "home" | "search" | "hybrid"; person?: string; money?: string; why?: string; scene?: string; hfParts?: { mass: number; money: number; fresh: number; surprise: number; persona: number; visual: number; debate: number; dna: number } }
 
 /** ★소재 근접 중복 배지(2026-08-11 유저: "글 썼던 건 표기 좀 — 발행완료까지 된 건 중복 걱정") — 막지 않고 알린다 */
 function SimilarChip({ similar }: { similar?: { title: string; published: boolean } }) {
@@ -120,7 +120,8 @@ export default function MoneyRankCard({ onWrite }: { onWrite: (keyword: string, 
     i.lane === "hybrid" ? "★하이브리드: 제목·썸네일은 홈형으로, 본문에는 검색 답(기준·방법·숫자)을 충분히 담는다 — 글은 하나만." : "",
   ].filter(Boolean).join(" ") || undefined;
   const HomeChips = ({ i }: { i: Item }) => homeReady(i) ? (
-    <span className="mt-1 block truncate pl-1 text-[11px] text-[#7C3AED]" title={i.why}>🔥 HOME {i.hfScore} · {i.person} · {i.money} — {i.why}</span>
+    <span className="mt-1 block truncate pl-1 text-[11px] text-[#7C3AED]" title={`${i.why}${i.hfParts ? ` | 대중성 ${i.hfParts.mass} · 돈 ${i.hfParts.money} · 신선도 ${i.hfParts.fresh} · 반전 ${i.hfParts.surprise} · 대상 ${i.hfParts.persona} · 이미지 ${i.hfParts.visual} · 논쟁 ${i.hfParts.debate} · DNA ${i.hfParts.dna}` : ""}`}>
+      🔥 HOME {i.hfScore}{i.hfParts ? ` · 대중성 ${i.hfParts.mass} · 돈 ${i.hfParts.money} · 신선도 ${i.hfParts.fresh} · DNA ${i.hfParts.dna}` : ""} · {i.person} — {i.why}</span>
   ) : null;
   const picks = (items ?? []).filter((i) => i.verdict === "direct").sort(bigFirst);
   const crowded = (items ?? []).filter((i) => i.verdict === "crowded").sort(bigFirst);
