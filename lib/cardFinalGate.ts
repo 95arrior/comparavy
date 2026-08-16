@@ -219,8 +219,8 @@ export function finalGate<T extends GateCard>(cards: T[], opts?: { anchorKeyword
   for (const c of cards) {
     const text = `${c.title} ${c.keyword}`;
     // ★엔터 소재 컷(2026-08-14 실측: 영화 '프로젝트 헤일메리 ott 언제'가 황금 점수로 추천됨) —
-    //  검색자=영화 팬이지 경제 독자가 아니다(검색자≠손님). 구독료·요금제 같은 돈 각도가 아니라 작품 자체면 컷.
-    if (/(ott|넷플릭스|디즈니플러스|티빙|웨이브|쿠팡플레이)\s*(언제|공개|출시|방영)|영화|드라마|개봉|웹툰|아이돌|콘서트|팬미팅/i.test(text) && !/(요금|구독료|가격|인상|할인|환불)/.test(text)) {
+    //  검색자=영화 팬이지 경제 독자가 아니다(검색자≠손님). 판정은 isEntertainmentTopic 한 곳(머니랭킹도 같은 자를 쓴다).
+    if (isEntertainmentTopic(text)) {
       drops.push({ keyword: c.keyword, reason: "entertainment" }); continue;
     }
     // 1) 지역 협소 — 지역명이 박힌 글감은 전국 풀 신호(전국민 주제·인기지 청약 등)가 없으면 부적격.
@@ -331,6 +331,13 @@ export function finalGate<T extends GateCard>(cards: T[], opts?: { anchorKeyword
 /** ★낡은 연도 정정(2026-08-14 유저 실측: '비거주 1주택자 전세대출 제한 2025' — 뉴스는 올해 건인데 모델이 학습 시절 연도를 붙임).
  *  지금 뜨는 뉴스에서 나온 글감의 과거 연도는 오타다 — 올해로 고친다. 올해·미래 연도는 그대로(선행 발행 전략).
  *  예외: 1월엔 작년 표기가 정당할 수 있다(연말정산 귀속 등) — 그때만 작년을 살려둔다. */
+/** ★엔터 소재 판정 — 작품 자체면 true, 구독료·요금 같은 돈 각도는 false(2026-08-17 머니랭킹과 공유). */
+export function isEntertainmentTopic(text: string): boolean {
+  const t = String(text ?? "");
+  return /(ott|넷플릭스|디즈니플러스|티빙|웨이브|쿠팡플레이)\s*(언제|공개|출시|방영)|영화|드라마|개봉|웹툰|아이돌|콘서트|팬미팅|흥행|관객수/i.test(t)
+    && !/(요금|구독료|가격|인상|할인|환불|투자|매출|주가)/.test(t);
+}
+
 export function normalizeStaleYear(text: string, now: Date = new Date(Date.now() + 9 * 3600_000)): string {
   const y = now.getFullYear();
   return String(text ?? "").replace(/(20\d{2})(년?)/g, (m, yr: string, suffix: string) => {

@@ -8,7 +8,7 @@
 //  결핍 레이더(lackRadar)는 화면에서 내려감(2026-08-11 유저 지시) — 코드는 남긴다.
 
 import Anthropic from "@anthropic-ai/sdk";
-import { normalizeStaleYear } from "./cardFinalGate";
+import { normalizeStaleYear, isEntertainmentTopic } from "./cardFinalGate";
 import { fetchBlogTotalDetailed } from "./naverBlogSearch";
 import { isUnsafeKeyword } from "./keywordSafety";
 import { DOC_HARD_MAX } from "./topicScore";
@@ -122,6 +122,7 @@ export async function condenseRanking(titles: string[], userId?: string | null):
     return arr
       .map((x) => ({ issue: normalizeStaleYear(String(x.issue ?? "").trim()).slice(0, 30), keyword: normalizeStaleYear(String(x.kw ?? "").trim()).slice(0, 40), cat: String(x.cat ?? "").trim().slice(0, 10), big: x.big === true, newsTitle: String(x.newsTitle ?? "").trim().slice(0, 120) }))
       .filter((x) => x.keyword.length >= 2 && x.issue.length >= 2)
+      .filter((x) => !isEntertainmentTopic(`${x.issue} ${x.keyword} ${x.newsTitle}`)) // ★엔터 컷 공유(2026-08-17) — 랭킹 뉴스의 영화·흥행 소재 차단
       .slice(0, 10);
   } catch { return []; }
 }
