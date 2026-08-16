@@ -545,79 +545,9 @@ export default function Home({
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="opacity-50"><path d="m6 9 6 6 6-6" /></svg>
       </button>
 
-      {/* ★2분할 헤더(유저 목업) — 좌: 우리가 함께한 여정 / 우: 오늘 기록 */}
-      <button onClick={onGoPerformance} className="tk-seq-1 tk-cta tk-card-glow mt-3 block w-full rounded-[20px] p-6 text-left shadow-[0_2px_12px_-4px_rgba(29,117,247,0.12)]">
-        <div className="flex items-stretch gap-5">
-          <div className="min-w-0 flex-1">
-            <p className="text-[13px] text-[color:var(--color-text-weak)]">우리가 함께한 여정</p>
-            <div className="mt-2 flex items-baseline gap-2">
-              <span className="tk-grad-text text-[34px] font-extrabold leading-none tracking-[-0.02em] tabular-nums">{info.finished ? "완주" : info.day > 0 ? `D-${info.day}` : "D-20"}</span>
-              <span className="text-[14px] font-semibold tabular-nums text-[color:var(--color-brand)]"><CountUp to={progressPercent(info)} duration={800} />%</span>
-            </div>
-            <div className="tk-gauge mt-3 h-2 w-full rounded-full bg-[#E8EDF7]">
-              <div className="tk-gauge-fill" style={{ width: `${Math.max(progressPercent(info), 3)}%` }} />
-            </div>
-            <p className="mt-2.5 truncate text-[12px] text-[color:var(--color-text-sub)]">
-              {info.streak > 0 ? `${info.streak}일 연속 발행 · ` : ""}
-              {(() => { const d = Math.floor(credits / (GENERATE_COST * blogCount)); return d > 0 ? `크레딧 약 ${d > 999 ? "999+" : d}일치` : "크레딧 충전 필요"; })()}
-            </p>
-          </div>
-          <div className="w-px shrink-0 bg-[color:var(--color-line)]" />
-          <div className="w-[46%] shrink-0 sm:w-[38%]">
-            <p className="text-[13px] text-[color:var(--color-text-weak)]">오늘 기록</p>
-            <div className="mt-2 space-y-1.5">
-              {([["글 발행", info.publishedToday, "board"], ["이웃 미션", neighborDone, "neighbor"], ["아침 체크인", checkinDone, "checkin"]] as const).map(([label, done, act]) => (
-                <span key={label} role="button" tabIndex={0}
-                  onClick={(e) => { e.stopPropagation(); if (act === "board") { try { document.getElementById("topic-board")?.scrollIntoView({ behavior: "smooth" }); } catch { /* ignore */ } } else setRoutineSheet(act as "neighbor" | "checkin"); }}
-                  className="flex items-center gap-2 rounded-lg px-1 py-0.5 text-[12.5px] transition hover:bg-[#F7F8FA]">
-                  <span className={`flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold ${done ? "tk-grad-cta text-white" : "bg-neutral-100 text-neutral-300"}`}>{done ? "✓" : ""}</span>
-                  <span className={done ? "font-semibold text-[color:var(--color-text)]" : "text-[color:var(--color-text-weak)]"}>{label}</span>
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </button>
+      {/* 여정·오늘 기록 헤더 제거(2026-08-17 유저: '이 부분 필요 없어요') */}
 
-      {/* ★오늘 가이드 원카드(토스 이체식) — 화면엔 항상 '지금 할 행동 1개'. 스텝퍼·라인·루프를 전부 흡수. */}
-      {(() => {
-        type G = { emoji: string; title: string; sub: string; cta: string; onGo: () => void; alt?: { label: string; onGo: () => void } };
-        if (!hydrated) return <div className="tk-seq-1 mt-3 ateflo-skel h-[168px] rounded-[20px]" />; // 자리 고정 — 잔상·시프트 방지
-        const wantCheckin = guideKind === "checkin";
-        const noCredit = guideKind === "credit";
-        const todayDraft = articles.find((a) => a.status === "draft" && new Date(a.created_at).toDateString() === new Date().toDateString());
-        const goWrite = () => {
-          if (todayDraft) { onSelect(todayDraft); return; } // 쓰던 초안 직접 열기(키워드 불일치여도 안전)
-          if (preReadyId) { readToday(); return; }      // 사전 생성분 — 시트를 거쳐 열람(경험 비면 0초 claim)
-          if (first) { onWriteKeyword(first.keyword, first.title, first.newsContext, first.briefText, first.titleSearch, first.thumb, { tag: first.tag, sel: first.sel }); return; } // 일반 생성
-          setRoutineSheet("topics");
-        };
-        const g: G | null = goldenTime
-          ? { emoji: "⚡", title: "지금 30분이 골든타임", sub: "방금 글과 같은 주제의 이웃에게 인사 — 첫 반응이 노출을 열어요", cta: "이웃 미션 시작", onGo: () => setRoutineSheet("neighbor") }
-          : wantCheckin
-          ? { emoji: "🌅", title: "어제 성적 확인부터", sub: "30초면 끝나요 — 숫자가 오늘 방향을 정해줘요", cta: "체크인 하기", onGo: () => setRoutineSheet("checkin") }
-          : pubCountToday >= 10
-          ? { emoji: "🌙", title: "오늘은 충분해요", sub: `${pubCountToday}편 발행 — 과속은 오히려 독이에요. 내일 아침에 만나요`, cta: "이웃 미션 마무리", onGo: () => setRoutineSheet("neighbor") }
-          : info.hasDraftToday && !info.publishedToday
-          ? { emoji: "📝", title: "쓰던 글이 기다리고 있어요", sub: "읽어보고 마음에 들면 바로 발행해요", cta: "이어서 검토하기", onGo: goWrite }
-          : noCredit
-          ? { emoji: "🔋", title: "크레딧이 다 떨어졌어요", sub: "충전하면 바로 다음 글을 쓸 수 있어요", cta: "충전하기", onGo: onOpenCredits }
-          : pubCountToday === 0
-          ? null // ★첫 글 상태 = 카드 없음(유저 확정: 보드에서 바로 고른다)
-          : pubCountToday === 1
-          ? { emoji: "💪", title: "오늘은 2편이 기본이에요", sub: `${nextSlotLabel} 한 편 더 — 시간을 나눠 올리면 노출 기회도 두 배`, cta: "2편째 글감 고르기", onGo: () => setRoutineSheet("topics") } // 선택지 없음 — 2편은 기본(유저 확정)
-          : { emoji: "🔥", title: `오늘 ${Math.max(pubCountToday, 1)}편 — 기본 몫 끝!`, sub: "더 쓰면 그만큼 빨라져요. 무리는 금물", cta: "글 추가로 더 쓰기", onGo: () => setRoutineSheet("topics"), alt: { label: "이웃 미션 하기", onGo: () => setRoutineSheet("neighbor") } }; // 2편+ = 선택 2개(유저 확정)
-        if (!g) return null;
-        return (
-          <div className="tk-seq-1 tk-card-glow mt-3 rounded-[20px] bg-white p-6 shadow-[0_2px_12px_-4px_rgba(29,117,247,0.12)]">
-            <p className="text-[26px] leading-none" aria-hidden>{g.emoji}</p>
-            <p className="mt-2.5 text-[18px] font-bold leading-snug text-[color:var(--color-text)]">{g.title}</p>
-            <p className="mt-1 text-[13px] leading-relaxed text-[color:var(--color-text-weak)]">{g.sub}</p>
-            <button onClick={g.onGo} className="at-press mt-4 w-full rounded-[14px] tk-grad-cta py-3.5 text-[15px] font-bold text-white transition hover:opacity-90">{g.cta}</button>
-            {g.alt && <button onClick={g.alt.onGo} className="mt-2 w-full py-1.5 text-center text-[13px] font-semibold text-[color:var(--color-text-weak)] transition hover:text-[color:var(--color-brand)]">{g.alt.label}</button>}
-          </div>
-        );
-      })()}
+      {/* 오늘 가이드 카드 제거(2026-08-17) — 골든타임·체크인·이웃 미션 CTA 일괄 */}
 
       {/* 크레딧 소진 예고 — 잔여 3편 이하 + 실사용 페이스로 예측 가능할 때만(지어내기 금지) */}
       {(() => {
@@ -635,49 +565,11 @@ export default function Home({
       })()}
 
 
-      {/* ★공격 모드 잠금해제(Part 3) — 조건 충족 시 자동 제안(사다리 문법). 조건 미달 초보 = 존재 자체 비노출. */}
-      {(() => {
-        try {
-          if (typeof window === "undefined") return null;
-          if (localStorage.getItem("ateflo_attack_mode") === "1" || localStorage.getItem("ateflo_attack_offer") === "1") return null;
-          const verified = articles.filter((a) => isVerifiedStatus(a.status)).length;
-          const approved = localStorage.getItem(adpostKey("approved", profileKey)) === "1";
-          const last7 = articles.filter((a) => a.status !== "generating" && new Date(a.created_at).getTime() >= Date.now() - 7 * 86400000).length;
-          if (!attackEligible(verified, approved, last7)) return null;
-          return (
-            <button onClick={() => { try { localStorage.setItem("ateflo_attack_mode", "1"); localStorage.setItem("ateflo_attack_offer", "1"); } catch { /* ignore */ } loadTopics(); }}
-              className="at-rise mt-3 flex w-full items-center justify-between rounded-2xl bg-neutral-900 px-5 py-4 text-left transition hover:bg-neutral-800">
-              <span className="min-w-0 flex-1">
-                <span className="text-[13.5px] font-bold text-white">공격 모드가 열렸어요</span>
-                <span className="mt-0.5 block text-[12px] text-white/60">단가 높은 글감과 더 큰 싸움 — 신뢰 쌓인 블로그의 다음 단계예요. 켜면 오늘 글감부터 바뀌어요.</span>
-              </span>
-              <span className="shrink-0 text-[12.5px] font-bold text-white">켜기</span>
-            </button>
-          );
-        } catch { return null; }
-      })()}
+      {/* 공격 모드(사다리) 배너 제거(2026-08-17) */}
 
-      {/* 진단 분기 — 3일 연속 방문 0 + 발행 있음일 때만(원인 단정 없이 확인 안내) */}
-      <DiagnosisCard articles={articles} />
+      {/* 진단 카드 제거(2026-08-17) */}
 
-      {/* 잠금해제 1회성 — 승인 입력 시 새 수익원 안내 */}
-      {(() => {
-        try {
-          if (typeof window !== "undefined" && localStorage.getItem(adpostKey("approved", profileKey)) === "1" && localStorage.getItem("ateflo_unlock_shown") !== "1") {
-            return (
-              <button onClick={() => { try { localStorage.setItem("ateflo_unlock_shown", "1"); } catch { /* ignore */ } onGoPerformance(); }}
-                className="at-rise mt-3 flex w-full items-center justify-between rounded-[12px] border border-[color:var(--color-line)] bg-[color:var(--color-brand-weak)] px-5 py-3.5 text-left tk-tr">
-                <span className="min-w-0 flex-1">
-                  <span className="text-[13px] font-semibold text-[color:var(--color-text)]">새로운 수익원이 열렸어요</span>
-                  <span className="mt-0.5 block text-[13px] text-[color:var(--color-text-sub)]">쇼핑커넥트를 시작할 수 있어요 · 가이드 보기</span>
-                </span>
-                <span className="shrink-0 text-[13px] font-semibold text-[color:var(--color-text)]">열기</span>
-              </button>
-            );
-          }
-        } catch { /* ignore */ }
-        return null;
-      })()}
+      {/* 수익원 잠금해제 배너 제거(2026-08-17) */}
 
       {/* 오늘의 글 히어로 퇴역(유저 확정: 보드가 주인공) — 추천·0초 쓰기는 가이드 원카드가 흡수 */}
 
@@ -744,19 +636,14 @@ export default function Home({
           <MoneyRankCard onWrite={(kw, newsContext, sel, brief) => onWriteKeyword(kw, kw, newsContext, brief, undefined, undefined, { sel })} />
           {/* ★글감 새로 받기 — 크론 안 기다리고 두 보드 갈이(1시간 2회) */}
           <div className="mb-2 flex justify-end gap-1.5">
-            {ffPerf && (
-              <button onClick={() => setPerfSheet(true)}
-                className="at-press flex items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-[12px] font-bold text-neutral-500 shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition hover:text-[#1D75F7]">
-                성과 기록
-              </button>
-            )}
+            {/* 성과 기록 버튼 제거(2026-08-17) */}
             <button onClick={regenBoards} disabled={regenBusy}
               className="at-press flex items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-[12px] font-bold text-neutral-500 shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition hover:text-[#1D75F7] disabled:opacity-70">
               <span className={`inline-block ${regenBusy ? "animate-spin" : ""}`} aria-hidden>↻</span>
               {regenMsg ?? (regenBusy ? "새 글감 받는 중…" : "글감 새로 받기")}
             </button>
           </div>
-          {perfSheet && <PerfImportSheet onClose={() => setPerfSheet(false)} />}
+          {/* 성과 입력 시트 제거(2026-08-17) — 피드백 루프 공사에서 새로 설계 */}
           {/* ★두 열 머리말·범례 폐기(2026-08-05 유저: "이거 폐기, 그냥 랜덤으로 박스 나오게").
               카드마다 우측 하단에 ⚡지금 뜨는 / 🌱꾸준한 수요가 붙으므로 머리말이 하는 일이 없어졌다.
               모바일 모드 탭도 같이 없앤다 — 나눌 열이 없으면 나눠 볼 탭도 없다. */}

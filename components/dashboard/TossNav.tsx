@@ -23,7 +23,6 @@ const NAV_ICON: Record<NavKey, string> = { home: "nav-home", articles: "nav-arti
 const NAV: { key: NavKey; label: string }[] = [
   { key: "home", label: "홈" },
   { key: "articles", label: "내 글" },
-  { key: "performance", label: "성과" },
   { key: "more", label: "내정보" },
 ];
 

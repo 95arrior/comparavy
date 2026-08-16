@@ -425,12 +425,11 @@ export default function DashboardClient(props: DashboardProps) {
   // 토스 하단/상단 탭 ↔ 기존 tab/labView 매핑
   const navKey: NavKey =
     tab === "lab"
-      ? labView === "articles" ? "articles" : labView === "performance" ? "performance" : "home"
+      ? labView === "articles" ? "articles" : "home"
       : "more"; // account/admin → 더보기
   const onNav = (k: NavKey) => {
     if (k === "home") goTab("lab");
     else if (k === "articles") goLabView("articles");
-    else if (k === "performance") goLabView("performance");
     else goTab("account"); // 더보기
   };
   const showNav = !selected && !genParams && !page && !!blogProfile; // 온보딩·편집·생성·풀페이지엔 탭바 숨김
@@ -649,27 +648,7 @@ export default function DashboardClient(props: DashboardProps) {
               />
             )}
 
-            {/* 키워드 발굴 */}
-            {labView === "keywords" && (
-              <main className="mx-auto max-w-5xl px-6 py-10">
-                <button onClick={() => goLabView("home")} className="mb-4 -ml-1 flex items-center gap-1 text-sm text-neutral-400 transition hover:text-neutral-700"><span className="text-base leading-none">←</span> 홈</button>
-                {nextStepBanner}
-                <KeywordFinder
-                  blogName={blogProfile?.blog_name ?? null}
-                  topic={kwTopic}
-                  onTopicChange={setKwTopic}
-                  status={kwStatus}
-                  results={kwResults}
-                  error={kwError}
-                  searchedTopic={kwSearchedTopic}
-                  onSearch={runKeywordSearch}
-                  onCancel={cancelKeywordSearch}
-                  onQueue={handleQueue}
-                  welcomeTopic={welcomeBlog}
-                  onDismissWelcome={() => setWelcomeBlog(null)}
-                />
-              </main>
-            )}
+            {/* 키워드 발굴 제거(2026-08-17 유저: 글감은 보드·머니랭킹으로 일원화) */}
 
             {/* 발행 계획 */}
             {labView === "queue" && (
@@ -680,7 +659,7 @@ export default function DashboardClient(props: DashboardProps) {
                   queue={queue}
                   onDelete={handleDeleteQueue}
                   onOpenArticle={(id) => { const a = articles.find((x) => x.id === id); if (a) setSelected(a); else goLabView("articles"); }}
-                  onGoFind={() => goLabView("keywords")}
+                  onGoFind={() => goLabView("home")}
                 />
               </main>
             )}
@@ -704,28 +683,7 @@ export default function DashboardClient(props: DashboardProps) {
               </main>
             )}
 
-            {/* 성과 — 발행 흐름 + 수익화 여정 */}
-            {labView === "performance" && (
-              <main className="ateflo-page-in mx-auto max-w-2xl px-6 py-8 pb-16">
-                <p className="at-label">{blogProfile.blog_name ?? "내 블로그"}</p>
-                <h1 className="at-headline mt-1">성과</h1>
-                <div className="mt-5">
-                  <PerformanceView
-                    blogKey={blogProfile ? `${(blogProfile as { id?: string }).id ?? ""}:${blogProfile.vertical}:${blogProfile.sub_category ?? ""}` : null}
-                    articles={articles}
-                    onWrite={() => goLabView("home")}
-                    onOpenArticle={(id) => { const a = articles.find((x) => x.id === id); if (a) setSelected(a); else goLabView("articles"); }}
-                    onWriteKeyword={(keyword, title) => {
-                      // 허브 글감 → 홈의 글감 카드와 같은 경로(중복 draft 재진입·크레딧 0 페이월까지 동일하게 탄다)
-                      const dup = findTodayDraftByKeyword(articles, keyword);
-                      if (dup) { setSelected(dup); return; }
-                      if (credits <= 0) { setPaywall({ title }); return; }
-                      setPendingWrite({ keyword, title });
-                    }}
-                  />
-                </div>
-              </main>
-            )}
+            {/* 성과 페이지 제거(2026-08-17 유저: '성과도 그냥 없애요') — 성과 데이터는 추후 피드백 루프(승자 DNA) 공사에서 새 형태로 */}
           </div>
         )}
 
