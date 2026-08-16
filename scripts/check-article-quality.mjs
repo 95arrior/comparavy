@@ -184,7 +184,13 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
     ok(new RegExp(fn).test(gr), `★${label} 게이트가 생성 경로에 배선됨`);
   const ap = fs.readFileSync(new URL("../lib/articlePrompt.ts", import.meta.url), "utf-8");
   ok(/띄어쓰기\(2026-08-02 실측 결함\)/.test(ap), "프롬프트에도 띄어쓰기 규격 명시");
-  ok(/필요할 때만 0~4개/.test(ap), "★프롬프트가 이모지 상한 문법을 쓴다(2026-08-17 반전: 최솟값 강제는 반복 문법 — 하한 폐지·상한 4)");
+  {
+    // ★파일 grep이 아니라 '조립된 네이버 프롬프트'를 검사한다(2026-08-17 실측: 규칙이 구글 배열(죽은 자리)에 들어가 있어도 파일 grep은 통과했다)
+    const { buildUserPrompt, buildSystemPrompt } = await import("../lib/articlePrompt.ts");
+    const assembled = buildSystemPrompt("online", "naver") + "\n" + buildUserPrompt({ keyword: "테스트", type: "howto", tone: "friendly", maxWords: 2400, channel: "naver" });
+    ok(/필요할 때만 0~4개/.test(assembled), "★조립된 네이버 프롬프트가 이모지 상한 문법을 쓴다");
+    ok(!/글 전체 5~8개/.test(assembled), "★옛 하한 5~8이 조립본에서 소멸");
+  }
 }
 
 
