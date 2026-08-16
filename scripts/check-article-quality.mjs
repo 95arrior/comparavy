@@ -550,7 +550,7 @@ console.log(fail ? `\n실패 ${fail}건` : "\n통과: 발행글 품질(띄어쓰
   const rich = "<p>" + "가".repeat(600) + "<b>핵심</b></p><p><b>결론</b> <mark>하나</mark> <mark>둘</mark> <mark>셋</mark></p>";
   ok(emphasisShortfall(rich) === null, "굵은 글씨 2곳 + 형광 3곳이면 통과(MARK_MIN=3, 2026-08-11 상향)");
   // 형광펜은 표기가 바뀐다 — 결과(배경색)로 센다(게이트 중앙화 원칙)
-  const styled = "<p>" + "가".repeat(600) + "<b>가</b></p><p><b>나</b> <b style=\"background:#ff0\">다</b></p>";
+  const styled = "<p>" + "가".repeat(600) + "<b>가</b></p><p><b>나</b> <b style=\"background:#ff0\">다</b> <b style=\"background:#ff0\">라</b> <b style=\"background:#ff0\">마</b></p>";
   ok(emphasisShortfall(styled) === null, "★<mark> 대신 배경색을 써도 형광으로 센다");
 
   const gr2 = fs.readFileSync(new URL("../app/api/generate/route.ts", import.meta.url), "utf-8");
