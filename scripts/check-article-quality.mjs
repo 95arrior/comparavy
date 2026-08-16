@@ -74,7 +74,7 @@ const ok = (c, l, e = "") => { if (!c) fail++; console.log(c ? "OK " : "FAIL", "
   ok(/BODY_ALIGN/.test(ca), "★검사기가 설정값(BODY_ALIGN)을 읽는다");
   ok(!/missing_align_left/.test(ca), "'left 고정' 필드명이 제거됨");
   ok(/expected: wantAlign/.test(ca), "기대 정렬을 응답에 표시");
-  ok(BODY_ALIGN === "center", `현재 설정은 ${BODY_ALIGN}(유저 A/B 실측 확정)`);
+  ok(BODY_ALIGN === "left", `현재 설정은 ${BODY_ALIGN}(2026-08-17 유저 반전 — 왼쪽+자연 문단, 7/10 중앙 A/B를 본인이 뒤집음)`);
 }
 
 // ── ⑥ 스켈레톤 준수(2026-08-02 전문 감사) ──────────────────────────────
