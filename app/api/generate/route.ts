@@ -392,6 +392,22 @@ export async function POST(request: Request) {
           const h2s = [...a.body_html.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/gi)].map((m) => m[1].replace(/<[^>]+>/g, "").trim()).filter(Boolean);
           const labelish = h2s.filter((h) => [...h].length <= 9 && !/[?!…]|[을를이가은는도]\s|까$|나$|법$/.test(h));
           if (labelish.length >= 2) w.push(`소제목이 명사 라벨형이다('${labelish.slice(0, 2).join("', '")}') — 독자의 질문·상황이 담긴 훅형으로 바꿔라('8.15% 진짜 다 받을 수 있을까' 결, 세부 키워드는 유지).`);
+          // ★INTENT_MATCH(2026-08-17 설계③ 실물: 키워드 '평면도'인데 제목이 '모델하우스 이유' — 검색 의도가 바뀌면 검색각 실격)
+          if (!narrativeMode && !hfTitle) {
+            const INTENT_STOP = /^(방법|조건|기준|정리|총정리|일정|신청|확인|비교|후기|이유)$/;
+            const kwToks = keyword.split(/\s+/).map((t) => t.replace(/[^가-힣a-zA-Z0-9]/g, "")).filter((t) => [...t].length >= 2);
+            const intentTok = [...kwToks].reverse().find((t) => !INTENT_STOP.test(t)); // 마지막 실질 의도어(평면도·분양가·수익률…)
+            if (intentTok && !(a.title ?? "").includes(intentTok) && !a.body_html.slice(0, 800).includes(intentTok)) {
+              w.push(`검색 키워드의 의도어 '${intentTok}'가 제목에도 도입에도 없다 — 검색자는 정확히 그걸 알고 싶어 왔다. 제목과 도입이 '${intentTok}'에 답하게 다시 써라.`);
+            }
+          }
+          // ★추상명사 제목 페널티(2026-08-17 설계③: '핵심·순서·이유·내용·포인트'가 구체 돈·대상 없이 서면 AI 냄새)
+          {
+            const t = a.title ?? "";
+            if (/(핵심|순서|이유|내용|포인트|체크|알아야 할 것)\s*$/.test(t.trim()) && !/[0-9]|만원|억|%|직장인|신혼|1인|가구|세대/.test(t)) {
+              w.push("제목이 추상명사('핵심·순서·이유')로 끝나는데 구체 돈·대상이 없다 — 금액·대상·사건 중 2개를 넣어 구체화하라.");
+            }
+          }
           // ★홈판 첫 화면 게이트(2026-08-17 유저: 첫 120자 안에 금액·결과·변화 — 낚시 아님 확인)
           if (narrativeMode) {
             const lead = a.body_html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 200);

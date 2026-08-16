@@ -1575,8 +1575,12 @@ export async function GET(req: Request) {
       //  ①수요 하한: 월 240회(일 8) 미만은 꾸준 열 자격 없음(측정된 것만 판정, 미측정은 통과)
       //  ②정렬: 문서수가 아니라 수요÷경쟁(vol/docs) 비율 내림차순 — 문서수는 컷(applyDocCut)이지 정렬이 아니다
       fitTop = fitTop.filter((x) => { const v = x.r.monthly_searches; return v == null || v === 0 || v >= 240; });
-      fitTop = fitTop.map((x) => ({ x, ratio: (x.r.monthly_searches ?? 0) > 0 ? (x.r.monthly_searches ?? 0) / Math.max(1, x.r.blog_total ?? 1) : -1 }))
-        .sort((a, b) => b.ratio - a.ratio).map((e) => e.x);
+      fitTop = fitTop.map((x) => {
+        const v = x.r.monthly_searches ?? 0;
+        // ★부모 키워드로 잰 검색량은 0.2 할인(2026-08-17 설계③: 5.2만은 '송파 롯데캐슬'의 수요지 '…1세대 불법행위 재공급'의 수요가 아니다)
+        const eff = (x.r as { vol_base?: string | null }).vol_base ? v * 0.2 : v;
+        return { x, ratio: eff > 0 ? eff / Math.max(1, x.r.blog_total ?? 1) : -1 };
+      }).sort((a, b) => b.ratio - a.ratio).map((e) => e.x);
       const cut = applyDocCut(fitTop, (x) => x.r.blog_total, { docMax, need, hardMax: EVERGREEN_TOPUP_MAX }); // ★꾸준 열 보충은 5,000까지만(2026-08-17)
       if (debugMode) diag.docMeasure = measureDiag;
       if (debugMode) diag.docCut = { docMax, hardMax: DOC_HARD_MAX, before: fitTop.length, within: cut.within, over: cut.over, refilled: cut.refilled, dropped: cut.dropped, refillMax: cut.kept.reduce((m, x) => Math.max(m, x.r.blog_total ?? 0), 0) };

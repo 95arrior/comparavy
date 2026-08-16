@@ -49,10 +49,22 @@ export interface MoneyRankItem {
   similar?: { title: string; published: boolean };
   /** ★대형 스파이크 후보(2026-08-12 판정: 300 벽의 답은 니치 수십 편이 아니라 SK하이닉스급 대형 히트 재현) */
   big?: boolean;
-  /** ★홈판 점수(2026-08-17 유저 설계: 대중성25+내돈20+지금성15+반전15+갈등10+이미지화10+댓글5, 70 미만=홈판각 비활성) */
+  /** ★홈판 점수 v2(2026-08-17 설계③: 대중성25+내돈20+지금성15+반전10+대상명확10+이미지화10+논쟁5+DNA5, 75 미만=홈판 비활성) */
   hfScore?: number;
   /** ★파급효과 각도 — 뉴스 사건이 아니라 '뉴스→내 돈→갈등→선택' 변환 한 줄(홈판각 쓰기의 브리프가 된다) */
   hfAngle?: string;
+  /** ★경제 적합도 0~100(카테고리와 별개 — 친일재산 환수=20, 편의점 물가=92). 60 미만은 머니랭킹 진입 금지 */
+  fit?: number;
+  /** ★주 무대 판정 — 검색 문서수와 무관하게 소재 성격으로 정한다(붐빔→홈판 자동 전환 폐지) */
+  lane?: "home" | "search" | "hybrid";
+  /** 영향받는 사람(없으면 홈 후보 아님) */
+  person?: string;
+  /** 달라지는 돈(없으면 홈 후보 아님) */
+  money?: string;
+  /** ★'왜 홈에서 누를까' 한 문장 — AI가 이 문장을 못 만들면 홈 후보가 아니다 */
+  why?: string;
+  /** 썸네일 장면(경제 때문에 벌어진 장면) */
+  scene?: string;
 }
 
 // 근접 중복 판별용 실질 토큰 — 어느 소재에나 붙는 범용어는 겹침으로 안 센다
@@ -96,12 +108,12 @@ export async function condenseRanking(titles: string[], userId?: string | null):
   const client = new Anthropic({ apiKey });
   const res = await client.messages.create({
     model: "claude-haiku-4-5",
-    max_tokens: 1200,
+    max_tokens: 2600, // ★1200→2600(2026-08-17 설계③ — 필드 6개 추가로 JSON 잘림 방지)
     messages: [{
       role: "user",
       content: [
         "아래는 지금 네이버 '많이 본 뉴스' 랭킹 제목이다. 경제·재테크 블로그의 글감으로 쓸 '돈 되는 소재'만 골라라.",
-        "분류(cat): 지원금 | 주식 | 대출 | 부동산 | 세금 | 생활비 | 앱테크 — 이 7개에 안 들어가면 버려라.",
+        "분류(cat) 12종(2026-08-17 재편 — 분류가 틀리면 승자 DNA 학습까지 오염된다): 투자 | 부동산 | 세금 | 정부지원 | 은행저축 | 보험 | 직장급여 | 연금 | 생활물가 | 소비자환불 | 청약 | 기업증시. ★오분류 실측 금지 사례: 실손보험→보험(세금 아님), 연차 계산→직장급여(생활비 아님), 친일재산 환수→어디에도 못 넣으면 fit을 낮춰라.",
         "★규칙:",
         "- 정치 공방·사건사고·연예·스포츠는 돈 얘기가 스쳐도 버려라.",
         "★주식 종목 소재는 두 유형만(2026-08-11 유저 확정 — 용인 글 실증): ①날짜 있는 사건(공모주 청약·무상증자·권리락·배당락·상장·자사주) ②생활 접점(공장·채용·주거·성과급). 시황·전망·목표주가·매수매도 각도는 만들지 마라 — 못 이기는 붐빔이고 투자권유는 법 리스크다('~주가 전망'·'~상한가 분석'류 kw 금지).",
@@ -111,10 +123,15 @@ export async function condenseRanking(titles: string[], userId?: string | null):
         "- 제목이 '이곳·이것·~한 곳'으로 이름을 숨겼으면, 제목의 다른 단서로 실명을 알 때만 실명으로 kw를 만들어라. 모르면 그 소재는 버려라(지어내기 금지).",
         "- issue = 사람이 알아보는 소재 한 줄(15자 내), newsTitle = 원 제목 그대로.",
         "★big 판정(2026-08-12 확정 — 일 300 벽의 답은 대형 히트 재현): 전 국민이 아는 실명(대기업·유명 브랜드·전국 제도)이 낀 '사건'이면 big=true. 기준은 'SK하이닉스 1분 퇴근 10억 판결'급 — 검색 폭발이 예상되는 소재. 일반 니치 정보는 big=false.",
-        "★홈판 평가(2026-08-17 유저 설계 — 홈판 정체성은 '오늘 나온 경제뉴스'가 아니라 '오늘 내 돈에 생긴 일'):",
-        "  hfScore = 100점 휴리스틱: 대중성 25(지갑 직결 소재 — ATM수수료·카드값·적금·월급·전기요금·배달비·보험료·대출이자·관리비·세금·환급금·국민연금·퇴직금이면 만점, '2차전지 전환사채'류 산업 이슈는 바닥) + 내 돈 관련성 20 + 지금성 15 + 반전·의외성 15 + 선택·갈등 10 + 이미지화 가능성 10(돈이 빠져나가는 '장면'이 그려지나) + 댓글 논쟁성 5.",
-        "  hfAngle = 뉴스 사건이 아니라 파급효과로 변환한 홈판 각도 한 줄: '뉴스→내 돈→갈등→선택' 구조. 예: 금융정책 뉴스 → '월급은 그대로인데 다음 달부터 이 돈이 더 빠져나간다' / '30대 직장인이 가장 먼저 확인할 건 따로 있다'. 검색형 요약('대상·조건 총정리') 금지 — 스크롤 멈추는 각도만.",
-        '출력 JSON 배열만: [{"issue":"청년도약계좌 140만 돌파","kw":"청년도약계좌 가입 조건","cat":"지원금","big":false,"hfScore":82,"hfAngle":"월급날 자동이체보다 먼저 확인할 게 생겼다","newsTitle":"..."}]. 최대 10개, 돈 파괴력 큰 순.',
+        "★소재마다 반드시 판정(2026-08-17 설계③ — 홈판 정체성='오늘 내 돈에 생긴 일'):",
+        "  fit = 경제 적합도 0~100(카테고리와 별개): 지갑·월급·집·통장·세금과의 거리. 예: 아파트 대출 98, 국민연금 95, 편의점 물가 92, SSD 환불 58, 연차 계산 55, 친일재산 환수 20.",
+        "  lane = 주 무대(★검색 문서수로 정하지 마라 — 경쟁이 심하다고 홈으로 돌리는 것 금지): 이 질문들로 판정 — 누가 영향받나? 실제 돈이 얼마나 달라지나? 지금 왜 봐야 하나? '내 얘기'로 느낄 범위가 넓나? 한 장의 이미지로 표현되나? → 넓은 대중+내 돈이면 home, 특정 검색 의도(방법·기준·평면도·계산)면 search, 둘 다면 hybrid. ★지역 한정 소재(특정 시·구 청약 등)는 무조건 search.",
+        "  hfScore = 100점(lane이 home/hybrid일 때만 의미): 대중성25(지갑 직결 — ATM수수료·카드값·적금·월급·전기요금·배달비·보험료·대출이자·관리비·세금·환급금·국민연금·퇴직금) + 내돈직결20 + 지금성15 + 반전·의외성10 + 대상 명확함10 + 이미지 한 장 표현10 + 선택·논쟁5 + 승자DNA 일치5(모르면 0).",
+        "  person = 영향받는 사람(직장인·1인가구·1주택자…), money = 달라지는 돈(월급 감소·생활비 증가·이자 N만원…). ★이 둘 중 하나라도 못 적으면 홈 후보 아님 — lane을 search로.",
+        "  why = '왜 홈에서 누를까' 한 문장(예: '월급에서 실제 돈이 빠지는 문제라 직장인 다수가 자기 이야기로 느낌'). ★이 문장을 못 만들면 홈 후보가 아니다.",
+        "  scene = 썸네일 장면 — 경제 사건이 아니라 '경제 때문에 벌어진 장면'(급여명세서 보는 사람·계산대에서 지갑 여는 손). 차트·건물·돈다발 금지.",
+        "  hfAngle = 파급효과 변환 한 줄('뉴스→내 돈→갈등→선택'): '월급은 그대로인데 다음 달부터 이 돈이 더 빠져나간다' 결. 검색형 요약 금지.",
+        '출력 JSON 배열만: [{"issue":"...","kw":"...","cat":"연금","big":false,"fit":95,"lane":"home","hfScore":84,"person":"직장인","money":"월급 감소","why":"...","scene":"...","hfAngle":"...","newsTitle":"..."}]. 최대 10개, 돈 파괴력 큰 순. fit 60 미만인 소재는 아예 출력하지 마라.',
         "",
         ...titles.map((t) => `- ${t}`),
       ].join("\n"),
@@ -125,11 +142,20 @@ export async function condenseRanking(titles: string[], userId?: string | null):
   const m = /\[[\s\S]*\]/.exec(t && t.type === "text" ? t.text : "");
   if (!m) return [];
   try {
-    const arr = JSON.parse(m[0]) as { issue?: string; kw?: string; cat?: string; big?: boolean; hfScore?: number; hfAngle?: string; newsTitle?: string }[];
+    const arr = JSON.parse(m[0]) as { issue?: string; kw?: string; cat?: string; big?: boolean; fit?: number; lane?: string; hfScore?: number; person?: string; money?: string; why?: string; scene?: string; hfAngle?: string; newsTitle?: string }[];
+    const REGION_RE = /(서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주|시흥|송파|강남|진주)/;
     return arr
-      .map((x) => ({ issue: stripStaleYear(String(x.issue ?? "").trim()).slice(0, 30), keyword: stripStaleYear(String(x.kw ?? "").trim()).slice(0, 40), cat: String(x.cat ?? "").trim().slice(0, 10), big: x.big === true, hfScore: Math.max(0, Math.min(100, Math.round(Number(x.hfScore ?? 0)))), hfAngle: stripStaleYear(String(x.hfAngle ?? "").trim()).slice(0, 60), newsTitle: String(x.newsTitle ?? "").trim().slice(0, 120) }))
+      .map((x) => ({ issue: stripStaleYear(String(x.issue ?? "").trim()).slice(0, 30), keyword: stripStaleYear(String(x.kw ?? "").trim()).slice(0, 40), cat: String(x.cat ?? "").trim().slice(0, 10), big: x.big === true,
+        fit: Math.max(0, Math.min(100, Math.round(Number(x.fit ?? 0)))),
+        lane: (["home", "search", "hybrid"].includes(String(x.lane)) ? x.lane : "search") as "home" | "search" | "hybrid",
+        hfScore: Math.max(0, Math.min(100, Math.round(Number(x.hfScore ?? 0)))),
+        person: String(x.person ?? "").trim().slice(0, 24), money: String(x.money ?? "").trim().slice(0, 30),
+        why: String(x.why ?? "").trim().slice(0, 90), scene: String(x.scene ?? "").trim().slice(0, 60),
+        hfAngle: stripStaleYear(String(x.hfAngle ?? "").trim()).slice(0, 60), newsTitle: String(x.newsTitle ?? "").trim().slice(0, 120) }))
       .filter((x) => x.keyword.length >= 2 && x.issue.length >= 2)
       .filter((x) => !isEntertainmentTopic(`${x.issue} ${x.keyword} ${x.newsTitle}`)) // ★엔터 컷 공유(2026-08-17) — 랭킹 뉴스의 영화·흥행 소재 차단
+      .filter((x) => (x.fit ?? 0) >= 60) // ★ECONOMIC_FIT 60 미만 진입 금지(2026-08-17 설계③ — 친일재산 환수류 차단)
+      .map((x) => (REGION_RE.test(`${x.issue} ${x.keyword}`) ? { ...x, lane: "search" as const, hfScore: Math.min(x.hfScore ?? 0, 50) } : x)) // ★지역 소재=검색 전용(홈판·전국 랭킹 금지, 검색 니치는 허용)
       .slice(0, 10);
   } catch { return []; }
 }

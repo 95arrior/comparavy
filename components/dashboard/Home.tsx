@@ -1159,9 +1159,9 @@ function BoardCard({ topic, onWrite, onDismiss }: { topic: Topic; onWrite: () =>
         {Number(topic.vol ?? 0) > 0 && (
           <span className="shrink-0 rounded bg-[#EAF2FF] px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-[#1D75F7]"
             title={(topic as { volBase?: string }).volBase
-              ? `'${(topic as { volBase?: string }).volBase}' 기준 월 검색수예요 — 긴 구는 광고 데이터가 없어 앞부분으로 쟀어요`
+              ? `★부모 주제('${(topic as { volBase?: string }).volBase}')의 검색량이에요 — 이 꼬리 키워드의 '정확 수요'는 이보다 훨씬 작습니다(2026-08-17: 부모 수요를 내 수요로 착각 금지)`
               : "네이버 광고 API 실측 — 최근 30일 월 검색수"}>
-            검색 : {Number(topic.vol).toLocaleString("ko-KR")}회/월
+            {(topic as { volBase?: string }).volBase ? "부모" : "검색"} : {Number(topic.vol).toLocaleString("ko-KR")}회/월
             {/* ★무엇을 기준으로 잰 값인지 숨기지 않는다 — 문서 수와 잣대가 다르면 그게 곧 거짓이 된다 */}
             {(topic as { volBase?: string }).volBase ? <span className="font-semibold opacity-70"> ({(topic as { volBase?: string }).volBase} 기준)</span> : null}
           </span>

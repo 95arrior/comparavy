@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
  * 카운트다운을 상시 명시(유저: "명시해주거나 카운트다운"). 소재마다 검색각(게이트 통과)·홈판각(붐빔=대중 관심) 분기.
  */
 
-interface Item { issue: string; keyword: string; cat: string; docs: number | null; verdict: "direct" | "crowded" | "written" | "blocked" | "unmeasured"; reason?: string; newsTitle: string; similar?: { title: string; published: boolean }; big?: boolean; hfScore?: number; hfAngle?: string }
+interface Item { issue: string; keyword: string; cat: string; docs: number | null; verdict: "direct" | "crowded" | "written" | "blocked" | "unmeasured"; reason?: string; newsTitle: string; similar?: { title: string; published: boolean }; big?: boolean; hfScore?: number; hfAngle?: string; fit?: number; lane?: "home" | "search" | "hybrid"; person?: string; money?: string; why?: string; scene?: string }
 
 /** ★소재 근접 중복 배지(2026-08-11 유저: "글 썼던 건 표기 좀 — 발행완료까지 된 건 중복 걱정") — 막지 않고 알린다 */
 function SimilarChip({ similar }: { similar?: { title: string; published: boolean } }) {
@@ -111,6 +111,17 @@ export default function MoneyRankCard({ onWrite }: { onWrite: (keyword: string, 
   }, []);
 
   const bigFirst = (a: Item, b: Item) => Number(b.big === true) - Number(a.big === true); // ★대형 스파이크 후보 우선(2026-08-12 판정: 300 벽의 답은 대형 히트 재현)
+  // ★홈 자격(2026-08-17 설계③): 붐빔이라서가 아니라 — lane 판정 + 점수 75 + 경제적합 70 + 사람·돈·이유 실재. 하나라도 없으면 홈 버튼 금지.
+  const homeReady = (i: Item) => (i.lane === "home" || i.lane === "hybrid") && (i.hfScore ?? 0) >= 75 && (i.fit ?? 0) >= 70 && !!i.person && !!i.money && !!i.why;
+  const homeBrief = (i: Item) => [
+    i.hfAngle ? `홈판 각도(파급효과): ${i.hfAngle} — 뉴스 사건 요약이 아니라 이 각도(내 돈에 생긴 일)로 쓴다.` : "",
+    i.person || i.money ? `대상: ${i.person || "일반"} / 달라지는 돈: ${i.money || "?"}.` : "",
+    i.scene ? `대표 썸네일 장면: ${i.scene}.` : "",
+    i.lane === "hybrid" ? "★하이브리드: 제목·썸네일은 홈형으로, 본문에는 검색 답(기준·방법·숫자)을 충분히 담는다 — 글은 하나만." : "",
+  ].filter(Boolean).join(" ") || undefined;
+  const HomeChips = ({ i }: { i: Item }) => homeReady(i) ? (
+    <span className="mt-1 block truncate pl-1 text-[11px] text-[#7C3AED]" title={i.why}>🔥 HOME {i.hfScore} · {i.person} · {i.money} — {i.why}</span>
+  ) : null;
   const picks = (items ?? []).filter((i) => i.verdict === "direct").sort(bigFirst);
   const crowded = (items ?? []).filter((i) => i.verdict === "crowded").sort(bigFirst);
   const writtenOnes = (items ?? []).filter((i) => i.verdict === "written");
@@ -139,10 +150,18 @@ export default function MoneyRankCard({ onWrite }: { onWrite: (keyword: string, 
               <span className="min-w-0 flex-1 truncate text-[13px]">{i.big && <span className="mr-1 rounded bg-orange-100 px-1 py-0.5 text-[10px] font-extrabold text-orange-600">🔥 대형</span>}<b className="font-bold text-neutral-900">{i.issue}</b><span className="text-neutral-400"> — {i.keyword}</span></span>
               <SimilarChip similar={i.similar} />
               {i.docs != null && <span className="shrink-0 text-[11.5px] font-semibold text-neutral-500">글 {i.docs.toLocaleString()}편</span>}
-              <button onClick={() => onWrite(i.keyword, i.newsTitle || undefined, { species: "money_rank", mrAngle: "search", mrCat: i.cat, mrDocs: i.docs })}
-                className="at-press shrink-0 rounded-full bg-[#1D75F7] px-3 py-1 text-[11.5px] font-bold text-white transition hover:bg-[#1667DE]">
-                검색각 쓰기
-              </button>
+              {(i.lane ?? "search") !== "home" && (
+                <button onClick={() => onWrite(i.keyword, i.newsTitle || undefined, { species: "money_rank", mrAngle: "search", mrCat: i.cat, mrDocs: i.docs })}
+                  className="at-press shrink-0 rounded-full bg-[#1D75F7] px-3 py-1 text-[11.5px] font-bold text-white transition hover:bg-[#1667DE]">
+                  검색각 쓰기
+                </button>
+              )}
+              {homeReady(i) && (
+                <button onClick={() => onWrite(i.keyword, i.newsTitle || undefined, { species: "money_rank", mrAngle: "homefeed", mrCat: i.cat, mrDocs: i.docs, hfScore: i.hfScore ?? null, lane: i.lane ?? null }, homeBrief(i))}
+                  className="at-press shrink-0 rounded-full bg-[#7C3AED] px-3 py-1 text-[11.5px] font-bold text-white transition hover:opacity-90">
+                  홈판 쓰기
+                </button>
+              )}
             </div>
           ))}
           {crowded.slice(0, 4).map((i) => {
@@ -157,19 +176,20 @@ export default function MoneyRankCard({ onWrite }: { onWrite: (keyword: string, 
                     className="at-press shrink-0 rounded-full bg-white px-3 py-1 text-[11.5px] font-bold text-emerald-600 shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition hover:bg-emerald-50 disabled:opacity-60">
                     {gap === "loading" ? "빈틈 찾는 중…" : "빈틈 찾기"}
                   </button>
-                  {/* ★홈판 점수 게이트(2026-08-17 유저 설계: 70 미만이면 홈판 버튼 자체를 비활성 — 홈판 정체성은 '오늘 내 돈에 생긴 일') */}
-                  {(i.hfScore ?? 0) > 0 && <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-extrabold tabular-nums ${(i.hfScore ?? 0) >= 70 ? "bg-[#F5F0FF] text-[#7C3AED]" : "bg-neutral-100 text-neutral-400"}`} title={i.hfAngle ? `홈판 각도: ${i.hfAngle}` : "홈판 점수"}>홈판 {i.hfScore}</span>}
-                  <button onClick={() => onWrite(i.keyword, i.newsTitle || undefined, { species: "money_rank", mrAngle: "homefeed", mrCat: i.cat, mrDocs: i.docs, hfScore: i.hfScore ?? null }, i.hfAngle ? `홈판 각도(파급효과): ${i.hfAngle} — 뉴스 사건 요약이 아니라 이 각도(내 돈에 생긴 일)로 쓴다.` : undefined)}
-                    disabled={(i.hfScore ?? 100) < 70}
-                    title={(i.hfScore ?? 100) < 70 ? `홈판 점수 ${i.hfScore} — 70 미만은 홈판 각이 아니에요(검색각·빈틈으로)` : undefined}
-                    className="at-press shrink-0 rounded-full bg-white px-3 py-1 text-[11.5px] font-bold text-[#1D75F7] shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition hover:bg-[#F5F9FF] disabled:cursor-default disabled:opacity-35">
-                    홈판각 쓰기
-                  </button>
+                  {/* ★붐빔→홈판 자동 전환 폐지(2026-08-17 설계③): 검색이 붐빈다고 홈으로 돌리지 않는다.
+                      홈 버튼은 lane 판정+점수 75+적합 70+사람·돈·이유가 전부 있을 때만 — 아니면 빈틈(검색 니치)만. */}
+                  {homeReady(i) && (
+                    <button onClick={() => onWrite(i.keyword, i.newsTitle || undefined, { species: "money_rank", mrAngle: "homefeed", mrCat: i.cat, mrDocs: i.docs, hfScore: i.hfScore ?? null, lane: i.lane ?? null }, homeBrief(i))}
+                      className="at-press shrink-0 rounded-full bg-[#7C3AED] px-3 py-1 text-[11.5px] font-bold text-white transition hover:opacity-90">
+                      홈판 쓰기
+                    </button>
+                  )}
                 </div>
+                <HomeChips i={i} />
                 {Array.isArray(gap) && (
                   <div className="ml-6 mt-1 space-y-1">
                     {gap.filter((t) => t.verdict === "direct").length === 0 && (
-                      <p className="px-3 py-1.5 text-[12px] text-neutral-400">빈 꼬리가 안 보여요 — 이 소재는 홈판각이 답이에요</p>
+                      <p className="px-3 py-1.5 text-[12px] text-neutral-400">빈 꼬리가 안 보여요 — 이 소재는 지나가도 돼요(붐빔이라고 홈판으로 돌리지 않아요)</p>
                     )}
                     {gap.filter((t) => t.verdict === "direct").map((t) => (
                       <div key={t.keyword} className="flex items-center gap-2 rounded-xl bg-emerald-50/60 px-3 py-1.5">
